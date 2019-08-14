@@ -30,13 +30,6 @@ static SDLKeyboardDevice* sdl_keyboard = NULL;
 
 extern void dc_exit();
 
-#ifdef TARGET_PANDORA
-	extern char OSD_Info[128];
-	extern int OSD_Delay;
-	extern char OSD_Counters[256];
-	extern int OSD_Counter;
-#endif
-
 extern u32 mo_buttons;
 extern s32 mo_x_abs;
 extern s32 mo_y_abs;
@@ -80,11 +73,13 @@ void input_sdl_init()
 
 	SDL_SetRelativeMouseMode(SDL_FALSE);
 
+#if HOST_OS != OS_DARWIN
 	sdl_keyboard = new SDLKeyboardDevice(0);
 	sdl_kb_gamepad = std::make_shared<SDLKbGamepadDevice>(0);
 	GamepadDevice::Register(sdl_kb_gamepad);
 	sdl_mouse_gamepad = std::make_shared<SDLMouseGamepadDevice>(0);
 	GamepadDevice::Register(sdl_mouse_gamepad);
+#endif
 }
 
 static int mouse_prev_x = -1;
@@ -124,6 +119,7 @@ void input_sdl_handle(u32 port)
 			case SDL_QUIT:
 				dc_exit();
 				break;
+#if HOST_OS != OS_DARWIN
 			case SDL_KEYDOWN:
 			case SDL_KEYUP:
 				sdl_kb_gamepad->gamepad_btn_input(event.key.keysym.sym, event.type == SDL_KEYDOWN);
@@ -140,7 +136,7 @@ void input_sdl_handle(u32 port)
 				for (int i = 0; event.text.text[i] != '\0'; i++)
 					sdl_keyboard->keyboard_character(event.text.text[i]);
 				break;
-
+#endif
 			case SDL_JOYBUTTONDOWN:
 			case SDL_JOYBUTTONUP:
 				{
@@ -157,6 +153,7 @@ void input_sdl_handle(u32 port)
 				}
 				break;
 
+#if HOST_OS != OS_DARWIN
 			case SDL_MOUSEMOTION:
 				set_mouse_position(event.motion.x, event.motion.y);
 				SET_FLAG(mo_buttons, 1 << 2, event.motion.state & SDL_BUTTON_LMASK);
@@ -185,7 +182,7 @@ void input_sdl_handle(u32 port)
 			case SDL_MOUSEWHEEL:
 				mo_wheel_delta -= event.wheel.y * 35;
 				break;
-
+#endif
 			case SDL_JOYDEVICEADDED:
 				sdl_open_joystick(event.jdevice.which);
 				break;
@@ -199,16 +196,13 @@ void input_sdl_handle(u32 port)
 
 void sdl_window_set_text(const char* text)
 {
-	#ifdef TARGET_PANDORA
-		strncpy(OSD_Counters, text, 256);
-	#else
-		if(window)
-		{
-			SDL_SetWindowTitle(window, text);    // *TODO*  Set Icon also...
-		}
-	#endif
+	if (window)
+	{
+		SDL_SetWindowTitle(window, text);    // *TODO*  Set Icon also...
+	}
 }
 
+#if HOST_OS != OS_DARWIN
 void sdl_window_create()
 {
 	if (SDL_WasInit(SDL_INIT_VIDEO) == 0)
@@ -291,3 +285,5 @@ void gl_term()
 {
 	SDL_GL_DeleteContext(glcontext);
 }
+#endif
+

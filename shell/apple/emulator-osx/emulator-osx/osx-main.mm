@@ -16,6 +16,9 @@
 #include "rend/gui.h"
 #include "osx_keyboard.h"
 #include "osx_gamepad.h"
+#if defined(USE_SDL)
+#include "sdl/sdl.h"
+#endif
 
 OSXKeyboardDevice keyboard(0);
 static std::shared_ptr<OSXKbGamepadDevice> kb_gamepad(0);
@@ -48,19 +51,27 @@ void os_SetWindowText(const char * text) {
 }
 
 void os_DoEvents() {
-
 }
 
-
 void UpdateInputState(u32 port) {
-
+#if defined(USE_SDL)
+	input_sdl_handle(port);
+#endif
 }
 
 void os_CreateWindow() {
-
 }
 
-void os_SetupInput() {
+void os_SetupInput()
+{
+#if defined(USE_SDL)
+	if (SDL_Init(0) != 0)
+	{
+		die("SDL: Initialization failed!");
+	}
+	input_sdl_init();
+#endif
+
 	kb_gamepad = std::make_shared<OSXKbGamepadDevice>(0);
 	GamepadDevice::Register(kb_gamepad);
 	mouse_gamepad = std::make_shared<OSXMouseGamepadDevice>(0);
@@ -73,7 +84,6 @@ void* libPvr_GetRenderTarget() {
 
 void* libPvr_GetRenderSurface() {
     return 0;
-
 }
 
 bool gl_init(void*, void*) {
@@ -81,7 +91,6 @@ bool gl_init(void*, void*) {
 }
 
 void gl_term() {
-
 }
 
 void common_linux_setup();
