@@ -197,6 +197,9 @@ struct SRamChip : MemChip
 
 // flash logical blocks
 #define FLASH_USER_SYSCFG 0x05
+#define FLASH_USER_INET 0x80
+#define FLASH_USER_ISP1 0xC0
+#define FLASH_USER_ISP2 0xC6
 
 struct flash_syscfg_block {
   u16 block_id;
@@ -209,6 +212,25 @@ struct flash_syscfg_block {
   u8 autostart;
   u8 unknown2[4];
   u8 reserved[50];
+};
+
+struct flash_isp1_block {
+	u16 block_id;
+	u8 _unknown[4];
+	char sega[4];
+	char username[28];
+	char password[16];
+	char phone[8];
+	u16 crc;
+};
+
+struct flash_isp2_block {
+	u16 block_id;
+	char sega[4];
+	char username[28];
+	char password[16];
+	char phone[12];
+	u16 crc;
 };
 
 // header block in block-allocated partition
