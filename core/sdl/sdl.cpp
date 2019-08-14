@@ -71,9 +71,9 @@ void input_sdl_init()
 	if (SDL_WasInit(SDL_INIT_HAPTIC) == 0)
 		SDL_InitSubSystem(SDL_INIT_HAPTIC);
 
+#if HOST_OS != OS_DARWIN
 	SDL_SetRelativeMouseMode(SDL_FALSE);
 
-#if HOST_OS != OS_DARWIN
 	sdl_keyboard = new SDLKeyboardDevice(0);
 	sdl_kb_gamepad = std::make_shared<SDLKbGamepadDevice>(0);
 	GamepadDevice::Register(sdl_kb_gamepad);
@@ -116,10 +116,11 @@ void input_sdl_handle(u32 port)
 	{
 		switch (event.type)
 		{
-			case SDL_QUIT:
+#if HOST_OS != OS_DARWIN
+		case SDL_QUIT:
 				dc_exit();
 				break;
-#if HOST_OS != OS_DARWIN
+
 			case SDL_KEYDOWN:
 			case SDL_KEYUP:
 				sdl_kb_gamepad->gamepad_btn_input(event.key.keysym.sym, event.type == SDL_KEYDOWN);
