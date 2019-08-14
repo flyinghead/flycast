@@ -368,13 +368,21 @@ void replay_input()
 		replay_file = get_record_input(false);
 		replay_inited = true;
 	}
+	u64 now = sh4_sched_now64();
+	if (settings.bios.UseReios)
+	{
+		// Account for the swirl time
+		if (settings.dreamcast.broadcast == 0)
+			now = std::max((int64_t)now - 2152626532L, 0L);
+		else
+			now = std::max((int64_t)now - 2191059108L, 0L);
+	}
 	if (replay_file == NULL)
 	{
-		if (next_event > 0 && sh4_sched_now64() - next_event > SH4_MAIN_CLOCK * 5)
+		if (next_event > 0 && now - next_event > SH4_MAIN_CLOCK * 5)
 			die("Automation time-out after 5 s\n");
 		return;
 	}
-	u64 now = sh4_sched_now64();
 	while (next_event <= now)
 	{
 		if (next_event > 0)
