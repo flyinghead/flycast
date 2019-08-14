@@ -16,7 +16,7 @@ workflows:
     steps:
     - activate-ssh-key@4.0.3:	
         run_if: '{{getenv "SSH_RSA_PRIVATE_KEY" | ne ""}}'
-    - brew-install
+    - brew-install:
         title: Install SDL2
         inputs:
         - packages: "sdl2"
