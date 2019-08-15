@@ -58,6 +58,14 @@ static void reios_pre_init()
 	}
 }
 
+static u32 decode_iso733(iso733_t v)
+{
+	return ((v >> 56) & 0x000000FF)
+			| ((v >> 40) & 0x0000FF00)
+			| ((v >> 24) & 0x00FF0000)
+			| ((v >> 8) & 0xFF000000);
+}
+
 static bool reios_locate_bootfile(const char* bootfile="1ST_READ.BIN")
 {
 	reios_pre_init();
@@ -74,8 +82,8 @@ static bool reios_locate_bootfile(const char* bootfile="1ST_READ.BIN")
 	if (pvd->type == 1 && !memcmp(pvd->id, ISO_STANDARD_ID, strlen(ISO_STANDARD_ID)) && pvd->version == 1)
 	{
 		INFO_LOG(REIOS, "iso9660 PVD found");
-		u32 lba = pvd->root_directory_record.extent & 0xffffffff;
-		u32 len = pvd->root_directory_record.size & 0xffffffff;
+		u32 lba = decode_iso733(pvd->root_directory_record.extent);
+		u32 len = decode_iso733(pvd->root_directory_record.size);
 		
 		data_len = ((len + 2047) / 2048) * 2048;
 
@@ -99,8 +107,8 @@ static bool reios_locate_bootfile(const char* bootfile="1ST_READ.BIN")
 		{
 			INFO_LOG(REIOS, "Found %.*s at offset %X", bootfile_len, bootfile, i);
 
-			u32 lba = dir->extent & 0xffffffff;
-			u32 len = dir->size & 0xffffffff;
+			u32 lba = decode_iso733(dir->extent);
+			u32 len = decode_iso733(dir->size);
 			
 			if (!memcmp(bootfile, "0WINCEOS.BIN", 12))
 			{
