@@ -31,8 +31,6 @@ after_build:
       
       move %EXE_PATH% artifacts\flycast-win_%PLATFORM%-%CONFIGURATION%-%APPVEYOR_REPO_COMMIT%.exe
       
-      copy %EXTRA_PATH%\libgcc_s_seh-1.dll artifacts && copy %EXTRA_PATH%\libwinpthread-1.dll artifacts && copy %EXTRA_PATH%\libgomp-1.dll artifacts
-
 artifacts:
   - path: artifacts
     name: flycast-win_$(PLATFORM)-$(CONFIGURATION)-$(APPVEYOR_REPO_COMMIT)
