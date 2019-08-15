@@ -65,10 +65,6 @@ void os_CreateWindow() {
 void os_SetupInput()
 {
 #if defined(USE_SDL)
-	if (SDL_Init(0) != 0)
-	{
-		die("SDL: Initialization failed!");
-	}
 	input_sdl_init();
 #endif
 
