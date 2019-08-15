@@ -318,7 +318,7 @@ static bool reset_requested;
 
 int reicast_init(int argc, char* argv[])
 {
-#if defined(_WIN32) || defined(TEST_AUTOMATION)
+#if defined(TEST_AUTOMATION)
 	setbuf(stdout, 0);
 	setbuf(stderr, 0);
 #endif
@@ -357,7 +357,8 @@ int reicast_init(int argc, char* argv[])
 
 void set_platform(int platform)
 {
-	_vmem_unprotect_vram(0, VRAM_SIZE);
+	if (VRAM_SIZE != 0)
+		_vmem_unprotect_vram(0, VRAM_SIZE);
 	switch (platform)
 	{
 	case DC_PLATFORM_DREAMCAST:
@@ -440,7 +441,7 @@ static int get_game_platform(const char *path)
 		return DC_PLATFORM_DREAMCAST;	// unknown
 	if (!stricmp(dot, ".zip") || !stricmp(dot, ".7z"))
 		return naomi_cart_GetPlatform(path);
-	if (!stricmp(dot, ".bin") || !stricmp(dot, ".dat"))
+	if (!stricmp(dot, ".bin") || !stricmp(dot, ".dat") || !stricmp(dot, ".lst"))
 		return DC_PLATFORM_NAOMI;
 
 	return DC_PLATFORM_DREAMCAST;

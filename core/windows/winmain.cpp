@@ -689,41 +689,15 @@ int main(int argc, char **argv)
 #else
 #pragma comment(linker, "/subsystem:windows")
 
-int CALLBACK WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine,int nCmdShowCmd)
+int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShowCmd)
 
 {
-	LogManager::Init();
-	int argc=0;
-	wchar* cmd_line=GetCommandLineA();
-	wchar** argv=CommandLineToArgvA(cmd_line,&argc);
-	for (int i = 0; i < argc; i++)
-	{
-		if (!stricmp(argv[i], "-console"))
-		{
-			if (AllocConsole())
-			{
-				freopen("CON", "w", stdout);
-				freopen("CON", "w", stderr);
-				freopen("CON", "r", stdin);
-			}
-			SetConsoleCtrlHandler((PHANDLER_ROUTINE)CtrlHandler, TRUE);
-		}
-		else if (!stricmp(argv[i], "-log"))
-		{
-			const char *logfile;
-			if (i < argc - 1)
-			{
-				logfile = argv[i + 1];
-				i++;
-			}
-			else
-				logfile = "flycast-log.txt";
-			freopen(logfile, "w", stdout);
-			freopen(logfile, "w", stderr);
-		}
-	}
+	int argc = 0;
+	wchar* cmd_line = GetCommandLineA();
+	wchar** argv = CommandLineToArgvA(cmd_line, &argc);
 
 #endif
+	LogManager::Init();
 
 	ReserveBottomMemory();
 	SetupPath();
