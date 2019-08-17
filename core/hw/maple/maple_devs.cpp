@@ -8,6 +8,7 @@
 #include "hw/naomi/naomi_cart.h"
 #include "hw/pvr/spg.h"
 #include "input/gamepad.h"
+#include <math.h>
 #include <time.h>
 
 #include "deps/zlib/zlib.h"
@@ -1298,13 +1299,13 @@ struct maple_mouse : maple_base
 
 	static u16 mo_cvt(f32 delta)
 	{
-		delta+=0x200 + 0.5;
-		if (delta<=0)
-			delta=0;
-		else if (delta>0x3FF)
-			delta=0x3FF;
+		delta += 0x200;
+		if (delta <= 0)
+			delta = 0;
+		else if (delta > 0x3FF)
+			delta = 0x3FF;
 
-		return (u16) delta;
+		return (u16)lroundf(delta);
 	}
 
 	virtual u32 dma(u32 cmd)

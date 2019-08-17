@@ -1931,7 +1931,7 @@ bool RenderFrame()
 	{
 		if (settings.rend.ScreenScaling != 100 || gl.swap_buffer_not_preserved)
 		{
-			init_output_framebuffer(screen_width * screen_scaling + 0.5f, screen_height * screen_scaling + 0.5f);
+			init_output_framebuffer((int)lroundf(screen_width * screen_scaling), (int)lroundf(screen_height * screen_scaling));
 		}
 		else
 		{
@@ -1945,9 +1945,9 @@ bool RenderFrame()
 
 	bool wide_screen_on = !is_rtt && settings.rend.WideScreen
 			&& pvrrc.fb_X_CLIP.min == 0
-			&& int((pvrrc.fb_X_CLIP.max + 1) / scale_x + 0.5f) == 640
+			&& lroundf((pvrrc.fb_X_CLIP.max + 1) / scale_x) == 640L
 			&& pvrrc.fb_Y_CLIP.min == 0
-			&& int((pvrrc.fb_Y_CLIP.max + 1) / scale_y + 0.5f) == 480;
+			&& lroundf((pvrrc.fb_Y_CLIP.max + 1) / scale_y) == 480L;
 
 	//Color is cleared by the background plane
 
@@ -2024,9 +2024,9 @@ bool RenderFrame()
 
 					glcache.ClearColor(0.f, 0.f, 0.f, 0.f);
 					glcache.Enable(GL_SCISSOR_TEST);
-					glScissor(0, 0, scaled_offs_x + 0.5f, screen_height * screen_scaling + 0.5f);
+					glScissor(0, 0, (GLsizei)lroundf(scaled_offs_x), (GLsizei)lroundf(screen_height * screen_scaling));
 					glClear(GL_COLOR_BUFFER_BIT);
-					glScissor(screen_width * screen_scaling - scaled_offs_x + 0.5f, 0, scaled_offs_x + 1.f, screen_height * screen_scaling + 0.5f);
+					glScissor((GLint)lroundf(screen_width * screen_scaling - scaled_offs_x), 0, (GLsizei)lroundf(scaled_offs_x) + 1, (GLsizei)lroundf(screen_height * screen_scaling));
 					glClear(GL_COLOR_BUFFER_BIT);
 				}
 			}
@@ -2038,7 +2038,7 @@ bool RenderFrame()
 				height *= settings.rend.RenderToTextureUpscale;
 			}
 
-			glScissor(min_x + 0.5f, min_y + 0.5f, width + 0.5f, height + 0.5f);
+			glScissor((GLint)lroundf(min_x), (GLint)lroundf(min_y), (GLsizei)lroundf(width), (GLsizei)lroundf(height));
 			glcache.Enable(GL_SCISSOR_TEST);
 		}
 

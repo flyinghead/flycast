@@ -1085,7 +1085,7 @@ u32 CalcAegSteps(float t)
 	//44.1*ms = samples
 	double scnt=44.1*t;
 	double steps=aeg_allsteps/scnt;
-	return (u32)(steps+0.5);
+	return (u32)lroundf(steps);
 }
 void sgc_Init()
 {

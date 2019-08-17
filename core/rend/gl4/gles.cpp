@@ -751,8 +751,8 @@ static bool RenderFrame()
 			gl4ShaderUniforms.scale_coefs[2] = 1 - 2 * ds2s_offs_x / screen_width;
 			gl4ShaderUniforms.scale_coefs[3] = -1;
 		}
-		rendering_width = screen_width * screen_scaling + 0.5f;
-		rendering_height = screen_height * screen_scaling + 0.5f;
+		rendering_width = (int)lroundf(screen_width * screen_scaling);
+		rendering_height = (int)lroundf(screen_height * screen_scaling);
 	}
 	resize(rendering_width, rendering_height);
 
@@ -859,9 +859,9 @@ static bool RenderFrame()
 
 	bool wide_screen_on = !is_rtt && settings.rend.WideScreen
 			&& pvrrc.fb_X_CLIP.min == 0
-			&& int((pvrrc.fb_X_CLIP.max + 1) / scale_x + 0.5f) == 640
+			&& lroundf((pvrrc.fb_X_CLIP.max + 1) / scale_x) == 640L
 			&& pvrrc.fb_Y_CLIP.min == 0
-			&& int((pvrrc.fb_Y_CLIP.max + 1) / scale_y + 0.5f) == 480;
+			&& lroundf((pvrrc.fb_Y_CLIP.max + 1) / scale_y) == 480L;
 
 	//Color is cleared by the background plane
 
@@ -937,9 +937,9 @@ static bool RenderFrame()
 
 					glcache.ClearColor(0.f, 0.f, 0.f, 0.f);
 					glcache.Enable(GL_SCISSOR_TEST);
-					glScissor(0, 0, scaled_offs_x + 0.5f, rendering_height);
+					glScissor(0, 0, (GLsizei)lroundf(scaled_offs_x), rendering_height);
 					glClear(GL_COLOR_BUFFER_BIT);
-					glScissor(screen_width * screen_scaling - scaled_offs_x + 0.5f, 0, scaled_offs_x + 1.f, rendering_height);
+					glScissor((GLint)lroundf(screen_width * screen_scaling - scaled_offs_x), 0, (GLsizei)lroundf(scaled_offs_x) + 1, rendering_height);
 					glClear(GL_COLOR_BUFFER_BIT);
 				}
 			}
@@ -951,7 +951,7 @@ static bool RenderFrame()
 				height *= settings.rend.RenderToTextureUpscale;
 			}
 
-			glScissor(min_x + 0.5f, min_y + 0.5f, width + 0.5f, height + 0.5f);
+			glScissor((GLint)lroundf(min_x), (GLint)lroundf(min_y), (GLsizei)lroundf(width), (GLsizei)lroundf(height));
 			glcache.Enable(GL_SCISSOR_TEST);
 		}
 
@@ -988,7 +988,7 @@ struct gl4rend : Renderer
 	{
 		screen_width=w;
 		screen_height=h;
-		resize(w * settings.rend.ScreenScaling / 100.f + 0.5f, h * settings.rend.ScreenScaling / 100.f + 0.5f);
+		resize(lroundf(w * settings.rend.ScreenScaling / 100.f), lroundf(h * settings.rend.ScreenScaling / 100.f));
 	}
 	void Term()
 	{
