@@ -17,6 +17,7 @@
 #include "hw/sh4/modules/mmu.h"
 #include "imgread/common.h"
 #include "reios/reios.h"
+#include "reios/gdrom_hle.h"
 #include <map>
 #include <set>
 #include "rend/gles/gles.h"
@@ -24,7 +25,7 @@
 #include "hw/sh4/dyna/ngen.h"
 #include "hw/naomi/naomi_cart.h"
 
-#define REICAST_SKIP(size) do { *(u8**)data += size; *total_size += size; } while (false)
+#define REICAST_SKIP(size) do { *(u8**)data += (size); *total_size += (size); } while (false)
 
 extern "C" void DYNACALL TAWriteSQ(u32 address,u8* sqb);
 
@@ -34,9 +35,11 @@ enum serialize_version_enum {
 	V3,
 	V4,
 	V5_LIBRETRO_UNSUPPORTED,
-	V6_LIBRETRO,
+	V6_LIBRETRO_UNSUPPORTED,
+	V7_LIBRETRO,
 
 	V5 = 800,
+	V6 = 801,
 } ;
 
 //./core/hw/arm7/arm_mem.cpp
@@ -313,7 +316,7 @@ bool dc_serialize(void **data, unsigned int *total_size)
 {
 	int i = 0;
 	int j = 0;
-	serialize_version_enum version = V5;
+	serialize_version_enum version = V6;
 
 	*total_size = 0 ;
 
@@ -570,6 +573,8 @@ bool dc_serialize(void **data, unsigned int *total_size)
 
 	if (CurrentCartridge != NULL)
 	   CurrentCartridge->Serialize(data, total_size);
+	
+	gd_hle_state.Serialize(data, total_size);
 
 	DEBUG_LOG(SAVESTATE, "Saved %d bytes", *total_size);
 
@@ -613,15 +618,6 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 
 	REICAST_USA(aica_reg,0x8000);
 
-	u16 dummyshort;
-
-	REICAST_SKIP(4 * 16); 			// volume_lut
-	REICAST_SKIP(4 * 256 + 768);	// tl_lut. Due to a previous bug this is not 4 * (256 + 768)
-	REICAST_SKIP(4 * 64);			// AEG_ATT_SPS
-	REICAST_SKIP(4 * 64);			// AEG_DSR_SPS
-	REICAST_US(dummyshort);			// pl
-	REICAST_US(dummyshort);			// pr
-
 	channel_unserialize(data, total_size) ;
 
 	REICAST_USA(cdda_sector,CDDA_SIZE);
@@ -629,7 +625,7 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 	REICAST_SKIP(4 * 64);			// mxlr
 	REICAST_US(i);					// samples_gen
 
-	register_unserialize(sb_regs, data, total_size, V6_LIBRETRO) ;
+	register_unserialize(sb_regs, data, total_size, V7_LIBRETRO) ;
 	REICAST_US(SB_ISTNRM);
 	REICAST_US(SB_FFST_rc);
 	REICAST_US(SB_FFST);
@@ -740,17 +736,19 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 	REICAST_USA(vram.data, vram.size);
 	REICAST_USA(OnChipRAM.data,OnChipRAM_SIZE);
 
-	register_unserialize(CCN, data, total_size, V6_LIBRETRO) ;
-	register_unserialize(UBC, data, total_size, V6_LIBRETRO) ;
-	register_unserialize(BSC, data, total_size, V6_LIBRETRO) ;
-	register_unserialize(DMAC, data, total_size, V6_LIBRETRO) ;
-	register_unserialize(CPG, data, total_size, V6_LIBRETRO) ;
-	register_unserialize(RTC, data, total_size, V6_LIBRETRO) ;
-	register_unserialize(INTC, data, total_size, V6_LIBRETRO) ;
-	register_unserialize(TMU, data, total_size, V6_LIBRETRO) ;
-	register_unserialize(SCI, data, total_size, V6_LIBRETRO) ;
-	register_unserialize(SCIF, data, total_size, V6_LIBRETRO) ;
+	register_unserialize(CCN, data, total_size, V7_LIBRETRO) ;
+	register_unserialize(UBC, data, total_size, V7_LIBRETRO) ;
+	register_unserialize(BSC, data, total_size, V7_LIBRETRO) ;
+	register_unserialize(DMAC, data, total_size, V7_LIBRETRO) ;
+	register_unserialize(CPG, data, total_size, V7_LIBRETRO) ;
+	register_unserialize(RTC, data, total_size, V7_LIBRETRO) ;
+	register_unserialize(INTC, data, total_size, V7_LIBRETRO) ;
+	register_unserialize(TMU, data, total_size, V7_LIBRETRO) ;
+	register_unserialize(SCI, data, total_size, V7_LIBRETRO) ;
+	register_unserialize(SCIF, data, total_size, V7_LIBRETRO) ;
 
+	u16 dummyshort;
+	
 	REICAST_USA(mem_b.data, mem_b.size);
 	REICAST_US(dummyshort);		// IRLPriority
 	REICAST_USA(InterruptEnvId,32);
@@ -851,7 +849,6 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 	REICAST_USA(sq_remap,64);
 #else
 	REICAST_USA(ITLB_LRU_USE,64);
-	REICAST_US(i);	// mmu_error_TT
 #endif
 	REICAST_US(NullDriveDiscType);
 	REICAST_USA(q_subchannel,96);
@@ -926,6 +923,7 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 
 	if (CurrentCartridge != NULL)
 		CurrentCartridge->Unserialize(data, total_size);
+	gd_hle_state.Unserialize(data, total_size);
 
 	DEBUG_LOG(SAVESTATE, "Loaded %d bytes (libretro compat)", *total_size);
 
@@ -941,12 +939,16 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 	*total_size = 0 ;
 
 	REICAST_US(version) ;
-	if (version == V6_LIBRETRO)
+	if (version == V7_LIBRETRO)
 		return dc_unserialize_libretro(data, total_size);
-	if (version != V4 && version != V5)
+	if (version != V4 && version < V5)
 	{
 		WARN_LOG(SAVESTATE, "Save State version not supported: %d", version);
 		return false;
+	}
+	else
+	{
+		DEBUG_LOG(SAVESTATE, "Loading state version %d", version);
 	}
 	REICAST_US(aica_interr) ;
 	REICAST_US(aica_reg_L) ;
@@ -1275,6 +1277,8 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 
 	if (CurrentCartridge != NULL)
 		CurrentCartridge->Unserialize(data, total_size);
+	if (version >= V6)
+		gd_hle_state.Unserialize(data, total_size);
 
 	DEBUG_LOG(SAVESTATE, "Loaded %d bytes", *total_size);
 

@@ -50,3 +50,66 @@
 #define CTOC_TRACK(n) (n<<16)
 
 void gdrom_hle_op();
+
+typedef enum { BIOS_ERROR = -1, BIOS_INACTIVE, BIOS_ACTIVE, BIOS_COMPLETED, BIOS_DATA_AVAIL } gd_bios_status;
+struct gdrom_hle_state_t
+{
+	u32 last_request_id;
+	u32 next_request_id;
+	gd_bios_status status;
+	u32 command;
+	u32 params[4];
+	u32 result[4];
+	u32 cur_sector;
+	u32 multi_read_sector;
+	u32 multi_read_offset;
+	u32 multi_read_count;
+	u32 multi_read_total;
+	u32 multi_callback;
+	u32 multi_callback_arg;
+	bool dma_trans_ended;
+	u64 xfer_end_time;
+	
+	bool Serialize(void **data, unsigned int *total_size)
+	{
+		REICAST_S(last_request_id);
+		REICAST_S(next_request_id);
+		REICAST_S(status);
+		REICAST_S(command);
+		REICAST_S(params);
+		REICAST_S(result);
+		REICAST_S(cur_sector);
+		REICAST_S(multi_read_sector);
+		REICAST_S(multi_read_offset);
+		REICAST_S(multi_read_count);
+		REICAST_S(multi_read_total);
+		REICAST_S(multi_callback);
+		REICAST_S(multi_callback_arg);
+		REICAST_S(dma_trans_ended);
+		REICAST_S(xfer_end_time);
+		
+		return true;
+	}
+	bool Unserialize(void **data, unsigned int *total_size)
+	{
+		REICAST_US(last_request_id);
+		REICAST_US(next_request_id);
+		REICAST_US(status);
+		REICAST_US(command);
+		REICAST_US(params);
+		REICAST_US(result);
+		REICAST_US(cur_sector);
+		REICAST_US(multi_read_sector);
+		REICAST_US(multi_read_offset);
+		REICAST_US(multi_read_count);
+		REICAST_US(multi_read_total);
+		REICAST_US(multi_callback);
+		REICAST_US(multi_callback_arg);
+		REICAST_US(dma_trans_ended);
+		REICAST_US(xfer_end_time);
+		
+		return true;
+	}
+};
+extern gdrom_hle_state_t gd_hle_state;
+

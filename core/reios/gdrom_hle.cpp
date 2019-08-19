@@ -20,26 +20,6 @@
 
 #define debugf(...) DEBUG_LOG(REIOS, __VA_ARGS__)
 
-// FIXME Serialize
-typedef enum { BIOS_ERROR = -1, BIOS_INACTIVE, BIOS_ACTIVE, BIOS_COMPLETED, BIOS_DATA_AVAIL } gd_bios_status;
-struct gdrom_hle_state_t
-{
-	u32 last_request_id;
-	u32 next_request_id;
-	gd_bios_status status;
-	u32 command;
-	u32 params[4];
-	u32 result[4];
-	u32 cur_sector;
-	u32 multi_read_sector;
-	u32 multi_read_offset;
-	u32 multi_read_count;
-	u32 multi_read_total;
-	u32 multi_callback;
-	u32 multi_callback_arg;
-	bool dma_trans_ended;
-	u64 xfer_end_time;
-};
 gdrom_hle_state_t gd_hle_state = { 0xffffffff, 2, BIOS_INACTIVE };
 
 static void GDROM_HLE_ReadSES()
@@ -238,7 +218,7 @@ static void multi_xfer()
 	if (!dma)
 	{
 		gd_hle_state.result[2] = gd_hle_state.multi_read_total - gd_hle_state.multi_read_count;
-		gd_hle_state.result[3] = 0;
+		gd_hle_state.result[3] = 0;	// 1 hangs Bust-a-Move-4
 		if (gd_hle_state.multi_callback != 0)
 		{
 			Sh4cntx.r[4] = gd_hle_state.multi_callback_arg;

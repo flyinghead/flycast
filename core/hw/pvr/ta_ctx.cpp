@@ -127,7 +127,7 @@ TA_context* rqueue;
 cResetEvent frame_finished;
 
 double last_frame = 0;
-u64 last_cyces = 0;
+u64 last_cycles = 0;
 
 bool QueueRender(TA_context* ctx)
 {
@@ -143,8 +143,8 @@ bool QueueRender(TA_context* ctx)
  	//Try to limit speed to a "sane" level
  	//Speed is also limited via audio, but audio
  	//is sometimes not accurate enough (android, vista+)
- 	u32 cycle_span = sh4_sched_now64() - last_cyces;
- 	last_cyces = sh4_sched_now64();
+	u32 cycle_span = (u32)(sh4_sched_now64() - last_cycles);
+	last_cycles = sh4_sched_now64();
  	double time_span = os_GetSeconds() - last_frame;
  	last_frame = os_GetSeconds();
 
@@ -158,7 +158,8 @@ bool QueueRender(TA_context* ctx)
 		frame_finished.Wait();
 	}
 
-	if (rqueue) {
+	if (rqueue)
+	{
 		// FIXME if the discarded render is a RTT we'll have a texture missing. But waiting for the current frame to finish kills performance...
 		tactx_Recycle(ctx);
 		fskip++;
