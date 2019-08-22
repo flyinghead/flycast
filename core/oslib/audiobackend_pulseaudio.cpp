@@ -25,6 +25,7 @@ static u32 pulseaudio_push(void* frame, u32 samples, bool wait)
 	if (pa_simple_write(pulse_stream, frame, (size_t) samples*4, NULL) < 0) {
 		WARN_LOG(AUDIO, stderr, "PulseAudio: pa_simple_write() failed!");
 	}
+	return 0;
 }
 
 static void pulseaudio_term() {
