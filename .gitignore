@@ -25,7 +25,6 @@ xcuserdata
 profile
 *.moved-aside
 DerivedData
-.idea/
 *.hmap
 emulator.xccheckout
 reicast.xccheckout
@@ -67,8 +66,11 @@ ant.properties
 
 # Android Studio
 .gradle
-.idea
 *.iml
 .externalNativeBuild
 gradle.properties
 shell/android-studio/reicast/src/main/assets/build
+
+# JetBrains IDES
+.idea/
+cmake-build-*/
