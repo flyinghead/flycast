@@ -650,7 +650,7 @@ void armv_prof(OpType opt,u32 op,u32 flg);
 extern "C" void arm_dispatch();
 extern "C" void arm_exit();
 extern "C" void DYNACALL
-#if BUILD_COMPILER == COMPILER_GCC
+#ifdef __GNUC__
 	// Avoid inlining / duplicating / whatever
 	__attribute__ ((optimize(0)))
 #endif
@@ -690,7 +690,7 @@ u32 DYNACALL DoMemOp(u32 addr,u32 data)
 }
 
 //findfirstset -- used in LDM/STM handling
-#if HOST_CPU==CPU_X86 && BUILD_COMPILER != COMPILER_GCC
+#if HOST_CPU==CPU_X86 && !defined(__GNUC__)
 #include <intrin.h>
 
 u32 findfirstset(u32 v)

@@ -60,7 +60,7 @@
 
 #include "build.h"
 
-#if BUILD_COMPILER == COMPILER_GCC
+#ifdef __GNUC__
 	#define __fastcall BALLZZ!!
 #endif
 

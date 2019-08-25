@@ -15,7 +15,7 @@ void WriteSample(s16 right, s16 left);
 
 u32 static INLINE bitscanrev(u32 v)
 {
-#if (BUILD_COMPILER==COMPILER_GCC)
+#ifdef __GNUC__
 	return 31-__builtin_clz(v);
 #else
 	unsigned long rv;
