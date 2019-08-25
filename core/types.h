@@ -2,7 +2,7 @@
 
 #include "build.h"
 
-#if BUILD_COMPILER==COMPILER_VC
+#ifdef _MSC_VER
 #define DECL_ALIGN(x) __declspec(align(x))
 #else
 #ifndef __forceinline
@@ -17,7 +17,7 @@
 
 #if HOST_CPU == CPU_X86
 
-	#if BUILD_COMPILER==COMPILER_VC
+	#ifdef _MSC_VER
 	#define DYNACALL  __fastcall
 	#else
 	//android defines fastcall as regparm(3), it doesn't work for us
@@ -28,7 +28,7 @@
 	#define DYNACALL
 #endif
 
-#if BUILD_COMPILER==COMPILER_VC
+#ifdef _MSC_VER
 #ifdef _CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES
 #undef _CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES
 #endif
@@ -49,7 +49,7 @@
 
 
 
-#if BUILD_COMPILER==COMPILER_VC
+#ifdef _MSC_VER
 //SHUT UP M$ COMPILER !@#!@$#
 #ifdef _CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES
 #undef _CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES
@@ -288,7 +288,7 @@ int darw_printf(const wchar* Text,...);
 using namespace std;
 
 //used for asm-olny functions
-#if defined(X86) && COMPILER_VC==BUILD_COMPILER
+#if defined(X86) && defined(_MSC_VER)
 #define naked   __declspec( naked )
 #else
 #define naked __attribute__((naked))
@@ -308,13 +308,13 @@ using namespace std;
 #endif
 
 //no inline -- fixme
-#if BUILD_COMPILER == COMPILER_VC
+#ifdef _MSC_VER
 #define NOINLINE __declspec(noinline)
 #else
 #define NOINLINE __attribute__ ((noinline))
 #endif
 
-#if BUILD_COMPILER == COMPILER_VC
+#ifdef _MSC_VER
 #define likely(x) x
 #define unlikely(x) x
 #else

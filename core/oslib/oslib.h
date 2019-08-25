@@ -9,7 +9,7 @@ void os_CreateWindow();
 void os_SetupInput();
 void WriteSample(s16 right, s16 left);
 
-#if BUILD_COMPILER==COMPILER_VC
+#ifdef _MSC_VER
 #include <intrin.h>
 #endif
 

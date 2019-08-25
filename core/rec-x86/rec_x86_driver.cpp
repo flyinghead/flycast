@@ -36,7 +36,7 @@ void DetectCpuFeatures() {
 	if (detected) return;
 	detected=true;
 
-	#if BUILD_COMPILER == COMPILER_VC
+	#ifdef _MSC_VER
 	#include <intrin.h>
 	int info[4];
 	__cpuid(info, 1);
