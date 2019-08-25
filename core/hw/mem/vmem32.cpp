@@ -31,7 +31,7 @@
 #include <fcntl.h>           /* For O_* constants */
 #include <unistd.h>
 #include <errno.h>
-#ifdef _ANDROID
+#ifdef __ANDROID__
 #include <linux/ashmem.h>
 #endif
 #endif

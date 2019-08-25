@@ -16,7 +16,7 @@
     You should have received a copy of the GNU General Public License
     along with reicast.  If not, see <https://www.gnu.org/licenses/>.
  */
-#ifdef _ANDROID
+#ifdef __ANDROID__
 
 #include "gui_android.h"
 #include "gui.h"
@@ -65,4 +65,4 @@ void gui_display_vjoy_commands(int screen_width, int screen_height, float scalin
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData(), false);
 }
 
-#endif // _ANDROID
+#endif // __ANDROID__

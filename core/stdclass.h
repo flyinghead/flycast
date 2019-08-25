@@ -11,7 +11,7 @@
 #endif
 
 
-#ifdef _ANDROID
+#ifdef __ANDROID__
 #include <sys/mman.h>
 #undef PAGE_MASK
 #define PAGE_MASK (PAGE_SIZE-1)

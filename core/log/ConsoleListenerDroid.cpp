@@ -1,7 +1,7 @@
 // Copyright 2015 Dolphin Emulator Project
 // Licensed under GPLv2+
 // Refer to the license.txt file included.
-#ifdef _ANDROID
+#ifdef __ANDROID__
 
 #include <android/log.h>
 
@@ -43,4 +43,4 @@ void ConsoleListener::Log(LogTypes::LOG_LEVELS level, const char* text)
   __android_log_write(logLevel, LOG_TAG, text);
 }
 
-#endif // _ANDROID
+#endif // __ANDROID__

@@ -264,7 +264,7 @@ CSYM(arm_exit):
 
 @@@@@@
 @matrix mul
-#ifndef _ANDROID
+#ifndef __ANDROID__
 .global CSYM(ftrv_asm)
 HIDDEN(ftrv_asm)
 CSYM(ftrv_asm):

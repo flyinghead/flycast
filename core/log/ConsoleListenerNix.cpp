@@ -1,7 +1,7 @@
 // Copyright 2015 Dolphin Emulator Project
 // Licensed under GPLv2+
 // Refer to the license.txt file included.
-#if !defined(_WIN32) && !defined(_ANDROID)
+#if !defined(_WIN32) && !defined(__ANDROID__)
 #include <cstdio>
 #include <cstring>
 
@@ -50,4 +50,4 @@ void ConsoleListener::Log(LogTypes::LOG_LEVELS level, const char* text)
   }
   fprintf(stderr, "%s%s%s", color_attr, text, reset_attr);
 }
-#endif // !_WIN32 && !_ANDROID
+#endif // !_WIN32 && !__ANDROID__

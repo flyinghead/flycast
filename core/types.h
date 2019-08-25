@@ -711,7 +711,7 @@ inline bool is_u16(u32 v) { return (u16)v==(u32)v; }
 
 static inline void do_nada(...) { }
 
-#ifdef _ANDROID
+#ifdef __ANDROID__
 #include <android/log.h>
 
 #ifdef printf

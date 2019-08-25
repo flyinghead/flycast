@@ -1,6 +1,6 @@
 #include "context.h"
 
-#if defined(_ANDROID)
+#if defined(__ANDROID__)
 	#include <asm/sigcontext.h>
 #else
 	#if HOST_OS == OS_DARWIN
