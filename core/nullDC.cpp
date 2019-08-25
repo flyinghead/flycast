@@ -42,7 +42,7 @@ static bool disable_vmem32_game;
 
 cThread emu_thread(&dc_run, NULL);
 
-#if HOST_OS==OS_WINDOWS
+#ifdef _WIN32
 #include <windows.h>
 #endif
 
@@ -55,7 +55,7 @@ cThread emu_thread(&dc_run, NULL);
  **/
 int64_t get_time_usec(void)
 {
-#if HOST_OS==OS_WINDOWS
+#ifdef _WIN32
    static LARGE_INTEGER freq;
    LARGE_INTEGER count;
 

@@ -300,7 +300,7 @@ void bm_Periodical_1s()
 	bm_CleanupDeletedBlocks();
 
 	if (rebuild_counter>0) rebuild_counter--;
-#if HOST_OS==OS_WINDOWS && 0
+#if defined(_WIN32) && 0
 	std::sort(all_blocks.begin(),all_blocks.end(),UDgreaterX);
 
 	map<u32,u32> vmap;
@@ -373,7 +373,7 @@ void bm_Rebuild()
 
 		if (all_blocks[i]->staging_runs<0 && do_opts)
 		{
-//#if HOST_OS==OS_WINDOWS
+//#ifdef _WIN32
 			//constprop(all_blocks[i]);
 //#endif
 		}

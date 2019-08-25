@@ -673,7 +673,7 @@ void dump_screenshot(u8 *buffer, u32 width, u32 height)
 			return;
 		created_context = false;
 		eglMakeCurrent(gl.setup.display, NULL, NULL, EGL_NO_CONTEXT);
-#if HOST_OS == OS_WINDOWS
+#ifdef _WIN32
 		ReleaseDC((HWND)gl.setup.native_wind,(HDC)gl.setup.native_disp);
 #else
 		if (gl.setup.context != NULL)
@@ -687,13 +687,13 @@ void dump_screenshot(u8 *buffer, u32 width, u32 height)
 			close( fbdev );
 		fbdev=-1;
 #endif
-#endif	// !OS_WINDOWS
+#endif	// !_WIN32
 		gl.setup.context = EGL_NO_CONTEXT;
 		gl.setup.surface = EGL_NO_SURFACE;
 		gl.setup.display = EGL_NO_DISPLAY;
 	}
 
-#elif HOST_OS == OS_WINDOWS && !defined(USE_SDL)
+#elif defined(_WIN32) && !defined(USE_SDL)
 	#define WGL_DRAW_TO_WINDOW_ARB         0x2001
 	#define WGL_ACCELERATION_ARB           0x2003
 	#define WGL_SWAP_METHOD_ARB            0x2007
@@ -2034,7 +2034,7 @@ bool RenderFrame()
 		glBufferData(GL_ARRAY_BUFFER, pvrrc.verts.bytes(), pvrrc.verts.head(), GL_STREAM_DRAW);
 		upload_vertex_indices();
 	}
-	#if HOST_OS==OS_WINDOWS
+	#ifdef _WIN32
 		//Sleep(40); //to test MT stability
 	#endif
 

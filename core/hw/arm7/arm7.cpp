@@ -601,7 +601,7 @@ u8* icPtr;
 u8* ICache;
 
 extern const u32 ICacheSize=1024*1024;
-#if HOST_OS == OS_WINDOWS
+#ifdef _WIN32
 u8 ARM7_TCB[ICacheSize+4096];
 #elif HOST_OS == OS_LINUX
 
@@ -2083,7 +2083,7 @@ void FlushCache()
 
 
 #if HOST_CPU == CPU_X86
-#if HOST_OS == OS_WINDOWS
+#ifdef _WIN32
 #include <Windows.h>
 #endif
 

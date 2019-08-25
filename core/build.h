@@ -283,7 +283,7 @@
 #endif
 
 #ifndef FEAT_HAS_NIXPROF
-  #if HOST_OS != OS_WINDOWS
+  #ifndef _WIN32
     #define FEAT_HAS_NIXPROF 1
   #endif
 #endif

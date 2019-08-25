@@ -69,7 +69,7 @@ void select_directory_popup(const char *prompt, float scaling, StringCallback ca
 		const char *home = getenv("HOME");
 		if (home != NULL)
 			select_current_directory = home;
-#elif HOST_OS == OS_WINDOWS
+#elif defined(_WIN32)
 		const char *home = getenv("HOMEPATH");
 		const char *home_drive = getenv("HOMEDRIVE");
 		if (home != NULL)

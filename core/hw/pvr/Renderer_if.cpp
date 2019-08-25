@@ -528,7 +528,7 @@ void rend_start_render()
 			max_mvo=max(max_mvo,ctx->rend.global_param_mvo.used());
 			max_modt=max(max_modt,ctx->rend.modtrig.used());
 
-#if HOST_OS==OS_WINDOWS && 0
+#if defined(_WIN32) && 0
 			printf("max: idx: %d, vtx: %d, op: %d, pt: %d, tr: %d, mvo: %d, modt: %d, ov: %d\n", max_idx, max_vtx, max_op, max_pt, max_tr, max_mvo, max_modt, ovrn);
 #endif
 			if (QueueRender(ctx))
@@ -555,7 +555,7 @@ void rend_start_render()
 void rend_end_render()
 {
 #if 1 //also disabled the printf, it takes quite some time ...
-	#if HOST_OS!=OS_WINDOWS && !(defined(__ANDROID__) || defined(TARGET_PANDORA))
+	#if !defined(_WIN32) && !(defined(__ANDROID__) || defined(TARGET_PANDORA))
 		//too much console spam.
 		//TODO: how about a counter?
 		//if (!re.state) printf("Render > Extended time slice ...\n");

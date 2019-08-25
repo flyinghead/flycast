@@ -1,5 +1,5 @@
 #include "oslib/audiostream.h"
-#if HOST_OS==OS_WINDOWS
+#ifdef _WIN32
 #include "oslib.h"
 #include <initguid.h>
 #include <dsound.h>

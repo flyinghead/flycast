@@ -43,7 +43,7 @@ void* OS_aligned_malloc(size_t align, size_t size)
         void *result;
 	#ifdef __MINGW32__
 		return __mingw_aligned_malloc(size, align);
-        #elif HOST_OS == OS_WINDOWS
+        #elif defined(_WIN32)
                 result = _aligned_malloc(size, align);
         #else
                 if(posix_memalign(&result, align, size)) result = 0;
@@ -56,7 +56,7 @@ void OS_aligned_free(void *ptr)
 {
 	#ifdef __MINGW32__
 		__mingw_aligned_free(ptr);
-        #elif HOST_OS == OS_WINDOWS
+        #elif defined(_WIN32)
                 _aligned_free(ptr);
         #else
                 free(ptr);

@@ -710,7 +710,7 @@ void gen_hande(u32 w, u32 sz, u32 mode)
 	{
 		//General
 
-		#if HOST_OS != OS_WINDOWS
+		#ifndef _WIN32
 			//maintain 16 byte alignment
 			x86e->Emit(op_sub32, ESP, 12);
 		#endif
@@ -722,7 +722,7 @@ void gen_hande(u32 w, u32 sz, u32 mode)
 			}
 			else
 			{
-				#if HOST_OS == OS_WINDOWS
+				#ifdef _WIN32
 					//on linux, we have scratch space on esp
 					x86e->Emit(op_sub32,ESP,8);
 				#endif
@@ -741,7 +741,7 @@ void gen_hande(u32 w, u32 sz, u32 mode)
 				x86e->Emit(op_movd_xmm_from_r32,XMM1,EDX);
 			}
 		}
-		#if HOST_OS != OS_WINDOWS
+		#ifndef _WIN32
 			//maintain 16 byte alignment
 			if ((sz == SZ_64F) && w == 1) {
 				x86e->Emit(op_add32, ESP, 4);

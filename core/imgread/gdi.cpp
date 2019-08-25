@@ -7,7 +7,7 @@
 
 string normalize_path_separator(string path)
 {
-#if HOST_OS == OS_WINDOWS
+#ifdef _WIN32
 	std::replace(path.begin(), path.end(), '/', '\\');
 #endif
 
@@ -19,7 +19,7 @@ string normalize_path_separator(string path)
 string OS_dirname(string file)
 {
 	file = normalize_path_separator(file);
-	#if HOST_OS == OS_WINDOWS
+	#ifdef _WIN32
 		const char sep = '\\';
 	#else
 		const char sep = '/';

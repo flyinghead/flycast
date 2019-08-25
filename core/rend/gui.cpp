@@ -1301,7 +1301,7 @@ static void gui_display_settings()
 #else
 					"OSX"
 #endif
-#elif HOST_OS == OS_WINDOWS
+#elif defined(_WIN32)
 					"Windows"
 #else
 					"Unknown"
