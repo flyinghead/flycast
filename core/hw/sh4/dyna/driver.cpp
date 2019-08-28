@@ -353,17 +353,6 @@ u32 DYNACALL rdv_DoInterrupts_pc(u32 pc) {
 	next_pc = pc;
 	UpdateINTC();
 
-	//We can only safely relocate/etc stuff here, as in other generic update cases
-	//There's a RET, meaning the code can't move around
-	//Interrupts happen at least 50 times/second, so its not a problem ..
-	/*
-	if (rebuild_counter == 0)
-	{
-		// TODO: Why is this commented, etc.
-		//bm_Rebuild();
-	}
-	*/
-
 	return next_pc;
 }
 

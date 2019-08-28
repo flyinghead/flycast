@@ -1244,6 +1244,9 @@ static void gui_display_settings()
 				ImGui::Checkbox("HLE BIOS", &settings.bios.UseReios);
 	            ImGui::SameLine();
 	            ShowHelpMarker("Use high-level BIOS emulation if BIOS files are not found");
+				ImGui::Checkbox("Force Windows CE", &settings.dreamcast.ForceWindowsCE);
+	            ImGui::SameLine();
+	            ShowHelpMarker("Enable full MMU emulation and other Windows CE settings");
 #ifndef _ANDROID
 				ImGui::Checkbox("Serial Console", &settings.debug.SerialConsole);
 	            ImGui::SameLine();

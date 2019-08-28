@@ -37,7 +37,6 @@ static bool rtt_to_buffer_game;
 static bool safemode_game;
 static bool tr_poly_depth_mask_game;
 static bool extra_depth_game;
-static bool full_mmu_game;
 static bool disable_vmem32_game;
 
 cThread emu_thread(&dc_run, NULL);
@@ -139,16 +138,15 @@ void LoadSpecialSettings()
 		safemode_game = false;
 		tr_poly_depth_mask_game = false;
 		extra_depth_game = false;
-		full_mmu_game = false;
 		disable_vmem32_game = false;
 
-		if (reios_windows_ce || !strncmp("T26702N", reios_product_number, 7)) // PBA Tour Bowling 2001
+		if (reios_windows_ce || settings.dreamcast.ForceWindowsCE
+				|| !strncmp("T26702N", reios_product_number, 7)) // PBA Tour Bowling 2001
 		{
 			INFO_LOG(BOOT, "Enabling Full MMU and Extra depth scaling for Windows CE game");
 			settings.rend.ExtraDepthScale = 0.1;
 			extra_depth_game = true;
 			settings.dreamcast.FullMMU = true;
-			full_mmu_game = true;
 			settings.aica.NoBatch = true;
 		}
 
@@ -595,6 +593,7 @@ void InitSettings()
 	settings.dreamcast.broadcast	= 4;	// default
 	settings.dreamcast.language     = 6;	// default
 	settings.dreamcast.FullMMU      = false;
+	settings.dreamcast.ForceWindowsCE = false;
 	settings.dynarec.SmcCheckLevel  = FullCheck;
 	settings.aica.DSPEnabled		= false;
 	settings.aica.LimitFPS			= LimitFPSEnabled;
@@ -680,8 +679,8 @@ void LoadSettings(bool game_specific)
 	settings.dreamcast.broadcast	= cfgLoadInt(config_section, "Dreamcast.Broadcast", settings.dreamcast.broadcast);
 	settings.dreamcast.language     = cfgLoadInt(config_section, "Dreamcast.Language", settings.dreamcast.language);
 	settings.dreamcast.FullMMU      = cfgLoadBool(config_section, "Dreamcast.FullMMU", settings.dreamcast.FullMMU);
-	if (settings.dreamcast.FullMMU)
-		// Not really related but full mmu games are usually using Windows CE, which requires NoBatch
+	settings.dreamcast.ForceWindowsCE = cfgLoadBool(config_section, "Dreamcast.ForceWindowsCE", settings.dreamcast.ForceWindowsCE);
+	if (settings.dreamcast.ForceWindowsCE)
 		settings.aica.NoBatch = true;
 	settings.aica.LimitFPS			= (LimitFPSEnum)cfgLoadInt(config_section, "aica.LimitFPS", (int)settings.aica.LimitFPS);
 	settings.aica.DSPEnabled		= cfgLoadBool(config_section, "aica.DSPEnabled", settings.aica.DSPEnabled);
@@ -817,8 +816,7 @@ void SaveSettings()
 	cfgSaveInt("config", "Dreamcast.Cable", settings.dreamcast.cable);
 	cfgSaveInt("config", "Dreamcast.Region", settings.dreamcast.region);
 	cfgSaveInt("config", "Dreamcast.Broadcast", settings.dreamcast.broadcast);
-	if (!full_mmu_game || !settings.dreamcast.FullMMU)
-		cfgSaveBool("config", "Dreamcast.FullMMU", settings.dreamcast.FullMMU);
+	cfgSaveBool("config", "Dreamcast.ForceWindowsCE", settings.dreamcast.ForceWindowsCE);
 	cfgSaveBool("config", "Dynarec.idleskip", settings.dynarec.idleskip);
 	cfgSaveBool("config", "Dynarec.unstable-opt", settings.dynarec.unstable_opt);
 	if (!safemode_game || !settings.dynarec.safemode)
