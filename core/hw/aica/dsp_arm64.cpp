@@ -99,7 +99,7 @@ public:
 		Mov(ADRS_REG, 0);
 		Ldr(MDEC_CT, dsp_operand(&DSP->regs.MDEC_CT));
 
-#ifndef _ANDROID
+#ifndef __ANDROID__
 		Instruction* instr_cur = GetBuffer()->GetEndAddress<Instruction*>();
 		DEBUG_LOG(AICA_ARM, "DSP PROLOGUE");
 		Disassemble(instr_start, instr_cur);
@@ -356,7 +356,7 @@ public:
 				Add(w1, w1, w2);
 				Str(w1, mem_operand);
 			}
-#ifndef _ANDROID
+#ifndef __ANDROID__
 			instr_cur = GetBuffer()->GetEndAddress<Instruction*>();
 			DEBUG_LOG(AICA_ARM, "DSP STEP %d: %04x %04x %04x %04x", step, mpro[0], mpro[1], mpro[2], mpro[3]);
 			Disassemble(instr_start, instr_cur);
@@ -378,7 +378,7 @@ public:
 		Ldp(x19, x20, MemOperand(sp, 80));
 		Ldp(x29, x30, MemOperand(sp, 96, PostIndex));
 		Ret();
-#ifndef _ANDROID
+#ifndef __ANDROID__
 		instr_cur = GetBuffer()->GetEndAddress<Instruction*>();
 		DEBUG_LOG(AICA_ARM, "DSP EPILOGUE");
 		Disassemble(instr_start, instr_cur);
@@ -534,7 +534,7 @@ void dsp_step()
 		dsp_recompile();
 	}
 
-#ifdef _ANDROID
+#ifdef __ANDROID__
 	((void (*)())&dsp.DynCode)();
 #endif
 }

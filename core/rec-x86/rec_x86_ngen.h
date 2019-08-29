@@ -14,7 +14,7 @@
 
 void ngen_opcode(RuntimeBlockInfo* block, shil_opcode* op,x86_block* x86e, bool staging, bool optimise);
 
-#if BUILD_COMPILER == COMPILER_GCC
+#ifdef __GNUC__
 extern "C" 
 {
 #endif	
@@ -29,7 +29,7 @@ void ngen_mainloop(void* cntx);
 void DYNACALL ngen_blockcheckfail(u32 addr);
 void DYNACALL ngen_blockcheckfail2(u32 addr);
 
-#if BUILD_COMPILER == COMPILER_GCC
+#ifdef __GNUC__
 }
 #endif
 

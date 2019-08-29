@@ -321,7 +321,7 @@ public:
 
 	BlockCompiler(u8 *code_ptr) : Xbyak::CodeGenerator(emit_FreeSpace(), code_ptr), regalloc(this)
 	{
-		#if HOST_OS == OS_WINDOWS
+		#ifdef _WIN32
 			call_regs.push_back(ecx);
 			call_regs.push_back(edx);
 			call_regs.push_back(r8d);

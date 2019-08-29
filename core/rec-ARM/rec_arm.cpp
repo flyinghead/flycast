@@ -57,7 +57,7 @@ struct DynaRBI: RuntimeBlockInfo
 };
 
 
-#ifdef _ANDROID
+#ifdef __ANDROID__
 #include <sys/syscall.h>  // for cache flushing.
 #endif
 
@@ -71,7 +71,7 @@ void CacheFlush(void* code, void* pEnd)
 #elif !defined(ARMCC)
 void CacheFlush(void* code, void* pEnd)
 {
-#if !defined(_ANDROID) && HOST_OS!=OS_DARWIN
+#if !defined(__ANDROID__) && HOST_OS!=OS_DARWIN
 	__clear_cache((void*)code, pEnd);
 #else
 	void* start=code;

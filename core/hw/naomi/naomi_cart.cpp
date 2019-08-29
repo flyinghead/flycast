@@ -37,7 +37,7 @@
 Cartridge *CurrentCartridge;
 bool bios_loaded = false;
 
-#if HOST_OS == OS_WINDOWS
+#ifdef _WIN32
 	typedef HANDLE fd_t;
 	#define INVALID_FD INVALID_HANDLE_VALUE
 #else
@@ -348,7 +348,7 @@ static void naomi_cart_LoadZip(const char *filename)
 	}
 }
 
-#if HOST_OS == OS_WINDOWS
+#ifdef _WIN32
 #define CloseFile(f)	CloseHandle(f)
 #else
 #define CloseFile(f)	close(f)
@@ -513,7 +513,7 @@ void naomi_cart_LoadRom(const char* file)
 			RomCacheMap[i] = INVALID_FD;
 			continue;
 		}
-#if HOST_OS == OS_WINDOWS
+#ifdef _WIN32
 		RomCache = CreateFile(t, FILE_READ_ACCESS, FILE_SHARE_READ, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
 #else
 		RomCache = open(t, O_RDONLY);
@@ -526,7 +526,7 @@ void naomi_cart_LoadRom(const char* file)
 			break;
 		}
 
-#if HOST_OS == OS_WINDOWS
+#ifdef _WIN32
 		// Windows doesn't allow mapping a read-only file to a memory area larger than the file size
 		BY_HANDLE_FILE_INFORMATION file_info;
 		GetFileInformationByHandle(RomCache, &file_info);

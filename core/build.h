@@ -283,7 +283,7 @@
 #endif
 
 #ifndef FEAT_HAS_NIXPROF
-  #if HOST_OS != OS_WINDOWS
+  #ifndef _WIN32
     #define FEAT_HAS_NIXPROF 1
   #endif
 #endif
@@ -314,7 +314,7 @@
 
 #define COMPILER_VC_OR_CLANG_WIN32 ((BUILD_COMPILER == COMPILER_VC) || (BUILD_COMPILER == COMPILER_CLANG) && HOST_OS == OS_WINDOWS)
 
-#if BUILD_COMPILER!=COMPILER_VC
+#ifndef _MSC_VER
 #define ATTR_USED   __attribute__((used))
 #define ATTR_UNUSED __attribute__((used))
 #else

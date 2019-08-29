@@ -76,7 +76,7 @@ static void *get_proc(const char *proc)
 	CFRelease(procname);
 	return res;
 }
-#elif defined(_ANDROID)
+#elif defined(__ANDROID__)
 #include <dlfcn.h>
 #include <EGL/egl.h>
 

@@ -11,7 +11,7 @@ extern u32 ta_type_lut[256];
 	Render/TA thread -> ta data -> draw lists -> draw
 */
 
-#if HOST_OS==OS_WINDOWS
+#ifdef _WIN32
 extern u32 SQW,DMAW;
 #define SQWC(x) (SQW+=x)
 #define DMAWC(x) (DMAW+=x)

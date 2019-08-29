@@ -444,7 +444,7 @@ bool vmem_4gb_space;
 static VMemType vmemstatus;
 
 void* malloc_pages(size_t size) {
-#if HOST_OS == OS_WINDOWS
+#ifdef _WIN32
 	return _aligned_malloc(size, PAGE_SIZE);
 #elif defined(_ISOC11_SOURCE)
 	return aligned_alloc(PAGE_SIZE, size);

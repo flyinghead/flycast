@@ -72,7 +72,7 @@ namespace ImGui
 }
 */
 
-#ifdef _ANDROID
+#ifdef __ANDROID__
 #include <android/log.h>
 
 #define LOG_TAG   "flycast"

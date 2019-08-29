@@ -222,7 +222,7 @@ int DreamcastSecond(int tag, int c, int j)
 {
 	RealTimeClock++;
 
-#if 1 //HOST_OS==OS_WINDOWS
+#if 1 //defined(_WIN32)
 	prof_periodical();
 #endif
 

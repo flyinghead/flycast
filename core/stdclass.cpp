@@ -161,7 +161,7 @@ bool make_directory(const string& path)
 // Thread & related platform dependant code
 #if !defined(HOST_NO_THREADS)
 
-#if HOST_OS==OS_WINDOWS
+#ifdef _WIN32
 void cThread::Start() {
 	verify(hThread == NULL);
 	hThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)entry, param, 0, NULL);
@@ -191,7 +191,7 @@ void cThread::WaitToEnd() {
 #endif
 
 
-#if HOST_OS==OS_WINDOWS
+#ifdef _WIN32
 cResetEvent::cResetEvent() {
 		hEvent = CreateEvent(
 		NULL,             // default security attributes
