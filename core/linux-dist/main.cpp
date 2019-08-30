@@ -14,10 +14,6 @@
 #include "log/LogManager.h"
 #include <unistd.h>
 
-#if defined(TARGET_EMSCRIPTEN)
-	#include <emscripten.h>
-#endif
-
 #if defined(SUPPORT_DISPMANX)
 	#include "linux-dist/dispmanx.h"
 #endif
@@ -110,10 +106,6 @@ void os_SetupInput()
 
 void UpdateInputState(u32 port)
 {
-	#if defined(TARGET_EMSCRIPTEN)
-		return;
-	#endif
-
 	#if defined(USE_JOYSTICK)
 		input_joystick_handle(joystick_fd, port);
 	#endif
@@ -375,14 +367,10 @@ int main(int argc, wchar* argv[])
 	if (reicast_init(argc, argv))
 		die("Reicast initialization failed\n");
 
-	#if !defined(TARGET_EMSCRIPTEN)
-		#if FEAT_HAS_NIXPROF
-		install_prof_handler(1);
-		#endif
-		rend_thread(NULL);
-	#else
-		emscripten_set_main_loop(&dc_run, 100, false);
+	#if FEAT_HAS_NIXPROF
+	install_prof_handler(1);
 	#endif
+	rend_thread(NULL);
 
 	#ifdef TARGET_PANDORA
 		clean_exit(0);
@@ -406,12 +394,7 @@ int get_mic_data(u8* buffer) { return 0; }
 
 void os_DebugBreak()
 {
-	#if !defined(TARGET_EMSCRIPTEN)
-		raise(SIGTRAP);
-	#else
-		ERROR_LOG(COMMON, "DEBUGBREAK!");
-		exit(-1);
-	#endif
+	raise(SIGTRAP);
 }
 
 
