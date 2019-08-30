@@ -643,6 +643,9 @@ private:
 			if (!is_allocated(bitmap, phys_id)) {
 				break;
 			}
+			// if the current block has been rewritten, use it
+			if (lookup_block(offset, size, *(u16*)&this->data[offset + phys_id * FLASH_BLOCK_SIZE]) != phys_id)
+				break;
 
 			phys_id++;
 		}
