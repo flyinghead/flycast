@@ -65,12 +65,6 @@ void emit_WriteCodeCache()
 	bm_WriteBlockMap(pt2+".map");
 }
 
-void RASDASD()
-{
-	LastAddr=LastAddr_min;
-	memset(emit_GetCCPtr(),0xCC,emit_FreeSpace());
-}
-
 void clear_temp_cache(bool full)
 {
 	//printf("recSh4:Temp Code Cache clear at %08X\n", curr_pc);
@@ -78,7 +72,7 @@ void clear_temp_cache(bool full)
 	bm_ResetTempCache(full);
 }
 
-void recSh4_ClearCache()
+static void recSh4_ClearCache()
 {
 	INFO_LOG(DYNAREC, "recSh4:Dynarec Cache clear at %08X free space %d", next_pc, emit_FreeSpace());
 	LastAddr=LastAddr_min;
@@ -87,7 +81,7 @@ void recSh4_ClearCache()
 	clear_temp_cache(true);
 }
 
-void recSh4_Run()
+static void recSh4_Run()
 {
 	sh4_int_bCpuRun=true;
 
@@ -140,7 +134,7 @@ u32 emit_FreeSpace()
 }
 
 // pc must be a physical address
-SmcCheckEnum DoCheck(u32 pc)
+static SmcCheckEnum DoCheck(u32 pc)
 {
 
 	switch (settings.dynarec.SmcCheckLevel) {
@@ -471,34 +465,34 @@ void* DYNACALL rdv_LinkBlock(u8* code,u32 dpc)
 	
 	return (void*)rv;
 }
-void recSh4_Stop()
+static void recSh4_Stop()
 {
 	Sh4_int_Stop();
 }
 
-void recSh4_Start()
+static void recSh4_Start()
 {
 	Sh4_int_Start();
 }
 
-void recSh4_Step()
+static void recSh4_Step()
 {
 	Sh4_int_Step();
 }
 
-void recSh4_Skip()
+static void recSh4_Skip()
 {
 	Sh4_int_Skip();
 }
 
-void recSh4_Reset(bool hard)
+static void recSh4_Reset(bool hard)
 {
 	Sh4_int_Reset(hard);
 	recSh4_ClearCache();
 	bm_Reset();
 }
 
-void recSh4_Init()
+static void recSh4_Init()
 {
 	INFO_LOG(DYNAREC, "recSh4 Init");
 	Sh4_int_Init();
@@ -511,7 +505,8 @@ void recSh4_Init()
 	verify(rcb_noffs(&p_sh4rcb->cntx.sh4_sched_next) == -152);
 	verify(rcb_noffs(&p_sh4rcb->cntx.interrupt_pend) == -148);
 	
-	if (_nvmem_enabled()) {
+	if (_nvmem_enabled())
+	{
 		if (!_nvmem_4gb_space())
 		{
 			verify(mem_b.data==((u8*)p_sh4rcb->sq_buffer+512+0x0C000000));
@@ -541,14 +536,14 @@ void recSh4_Init()
 	bm_ResetCache();
 }
 
-void recSh4_Term()
+static void recSh4_Term()
 {
 	INFO_LOG(DYNAREC, "recSh4 Term");
 	bm_Term();
 	Sh4_int_Term();
 }
 
-bool recSh4_IsCpuRunning()
+static bool recSh4_IsCpuRunning()
 {
 	return Sh4_int_IsCpuRunning();
 }

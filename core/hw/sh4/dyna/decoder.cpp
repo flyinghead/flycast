@@ -56,22 +56,24 @@ const char idle_hash[] =
 	//looks like this one is
 	">1:08:AF4AC687:08BA1CD0:18592E67:45174350:C9EADF11";
 
-shil_param mk_imm(u32 immv)
+static inline shil_param mk_imm(u32 immv)
 {
 	return shil_param(FMT_IMM,immv);
 }
-shil_param mk_reg(Sh4RegType reg)
+
+static inline shil_param mk_reg(Sh4RegType reg)
 {
 	return shil_param(reg);
 }
-shil_param mk_regi(int reg)
+
+static inline shil_param mk_regi(int reg)
 {
 	return mk_reg((Sh4RegType)reg);
 }
 
 state_t state ;
 
-void Emit(shilop op,shil_param rd=shil_param(),shil_param rs1=shil_param(),shil_param rs2=shil_param(),u32 flags=0,shil_param rs3=shil_param(),shil_param rd2=shil_param())
+static void Emit(shilop op,shil_param rd=shil_param(),shil_param rs1=shil_param(),shil_param rs2=shil_param(),u32 flags=0,shil_param rs3=shil_param(),shil_param rd2=shil_param())
 {
 	shil_opcode sp;
 		
@@ -88,7 +90,7 @@ void Emit(shilop op,shil_param rd=shil_param(),shil_param rs1=shil_param(),shil_
 	blk->oplist.push_back(sp);
 }
 
-void dec_fallback(u32 op)
+static void dec_fallback(u32 op)
 {
 	shil_opcode opcd;
 	opcd.op=shop_ifb;
@@ -103,7 +105,7 @@ void dec_fallback(u32 op)
 	blk->oplist.push_back(opcd);
 }
 
-void dec_DynamicSet(u32 regbase,u32 offs=0)
+static void dec_DynamicSet(u32 regbase,u32 offs=0)
 {
 	if (offs==0)
 		Emit(shop_jdyn,reg_pc_dyn,mk_reg((Sh4RegType)regbase));
@@ -111,7 +113,7 @@ void dec_DynamicSet(u32 regbase,u32 offs=0)
 		Emit(shop_jdyn,reg_pc_dyn,mk_reg((Sh4RegType)regbase),mk_imm(offs));
 }
 
-void dec_End(u32 dst,BlockEndType flags,bool delay)
+static void dec_End(u32 dst,BlockEndType flags,bool delay)
 {
 	if (state.ngen.OnlyDynamicEnds && flags == BET_StaticJump)
 	{
@@ -394,7 +396,7 @@ const Sh4RegType CREGS[] =
 	reg_r7_Bank,
 };
 
-void dec_param(DecParam p,shil_param& r1,shil_param& r2, u32 op)
+static void dec_param(DecParam p,shil_param& r1,shil_param& r2, u32 op)
 {
 	switch(p)
 	{
@@ -579,7 +581,7 @@ Sh4RegType div_som_reg1;
 Sh4RegType div_som_reg2;
 Sh4RegType div_som_reg3;
 
-u32 MatchDiv32(u32 pc , Sh4RegType &reg1,Sh4RegType &reg2 , Sh4RegType &reg3)
+static u32 MatchDiv32(u32 pc , Sh4RegType &reg1,Sh4RegType &reg2 , Sh4RegType &reg3)
 {
 
 	u32 v_pc=pc;
@@ -630,7 +632,8 @@ u32 MatchDiv32(u32 pc , Sh4RegType &reg1,Sh4RegType &reg2 , Sh4RegType &reg3)
 	
 	return match;
 }
-bool MatchDiv32u(u32 op,u32 pc)
+
+static bool MatchDiv32u(u32 op,u32 pc)
 {
 	if (settings.dynarec.safemode)
 		return false;
@@ -652,7 +655,7 @@ bool MatchDiv32u(u32 op,u32 pc)
 		return false;
 }
 
-bool MatchDiv32s(u32 op,u32 pc)
+static bool MatchDiv32s(u32 op,u32 pc)
 {
 	if (settings.dynarec.safemode)
 		return false;
@@ -700,7 +703,7 @@ bool MatchDiv0S_0(u32 pc)
 }
 */
 
-bool dec_generic(u32 op)
+static bool dec_generic(u32 op)
 {
 	DecMode mode;DecParam d;DecParam s;shilop natop;u32 e;
 	if (OpDesc[op]->decode==0)
@@ -714,17 +717,6 @@ bool dec_generic(u32 op)
 	s=(DecParam)((inf>>8)&0xFF);
 	natop=(shilop)((inf>>0)&0xFF);
 
-	/*
-	if ((op&0xF00F)==0x300E)
-	{
-		return false;
-	}*/
-
-	/*
-	if (mode==DM_ADC)
-		return false;
-	*/
-
 	bool transfer_64=false;
 	if (op>=0xF000)
 	{
@@ -734,9 +726,7 @@ bool dec_generic(u32 op)
 			return false;
 
 		if (state.cpu.FSZ64 && (d==PRM_FRN_SZ || d==PRM_FRM_SZ || s==PRM_FRN_SZ || s==PRM_FRM_SZ))
-		{
-			transfer_64=true;
-		}
+			transfer_64 = true;
 	}
 
 	shil_param rs1,rs2,rs3,rd;
@@ -1036,25 +1026,6 @@ bool dec_DecodeBlock(RuntimeBlockInfo* rbi,u32 max_cycles)
 				}
 				else
 				{
-					/*
-					if (MatchDiv0S_0(state.cpu.rpc))
-					{
-						//can also be emitted as
-						//sar   r2,31
-						//subcs r1,1
-						//in arm
-
-						//r1=r1-sign bit
-						//r2=sign mask
-						Emit(shop_shl,mk_reg(reg_sr_T),mk_reg(reg_r2),mk_imm(31));
-						Emit(shop_sar,mk_reg(reg_r2),mk_reg(reg_r2),mk_imm(31));
-						Emit(shop_sub,mk_reg(reg_r1),mk_reg(reg_r1),mk_reg(reg_sr_T));
-						blk->guest_cycles+=CPU_RATIO*4;
-						state.cpu.rpc+=2*4;
-						continue;
-					}
-					*/
-
 					u32 op = IReadMem16(state.cpu.rpc);
 
 					if (op==0 && state.cpu.is_delayslot)
@@ -1103,13 +1074,6 @@ bool dec_DecodeBlock(RuntimeBlockInfo* rbi,u32 max_cycles)
 									dec_End(state.cpu.rpc+2,BET_StaticJump,false);
 								}
 							}
-							/*
-							else if (state.info.has_readm || state.info.has_writem)
-							{
-								if (!state.cpu.is_delayslot)
-								dec_End(state.cpu.rpc+2,BET_StaticJump,false);
-							}
-							*/
 						}
 						else
 						{

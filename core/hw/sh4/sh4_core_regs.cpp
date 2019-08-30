@@ -11,7 +11,7 @@ Sh4RCB* p_sh4rcb;
 sh4_if  sh4_cpu;
 u8* sh4_dyna_rcb;
 
-INLINE void ChangeGPR()
+static INLINE void ChangeGPR()
 {
 	u32 temp;
 	for (int i=0;i<8;i++)
@@ -22,7 +22,7 @@ INLINE void ChangeGPR()
 	}
 }
 
-INLINE void ChangeFP()
+static INLINE void ChangeFP()
 {
 	u32 temp;
 	for (int i=0;i<16;i++)

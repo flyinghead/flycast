@@ -293,18 +293,10 @@ bool mem_region_release(void *start, size_t len);
 void *mem_region_map_file(void *file_handle, void *dest, size_t len, size_t offset, bool readwrite);
 bool mem_region_unmap_file(void *start, size_t len);
 
-// Locked memory class, was used for texture invalidation purposes.
-class VLockedMemory {
+class VArray2 {
 public:
 	u8* data;
 	unsigned size;
-
-	void SetRegion(void* ptr, unsigned size) {
-		this->data = (u8*)ptr;
-		this->size = size;
-	}
-	void *getPtr() const { return data; }
-	unsigned getSize() const { return size; }
 
 	void Zero() {
 		memset(data, 0, size);
@@ -314,7 +306,7 @@ public:
 #ifdef MEM_BOUND_CHECK
         if (i >= size)
 		{
-        	ERROR_LOG(COMMON, "Error: VLockedMemory , index out of range (%d > %d)\n", i, size - 1);
+        	ERROR_LOG(COMMON, "Error: VArray2 , index out of range (%d > %d)\n", i, size - 1);
 			MEM_DO_BREAK;
 		}
 #endif

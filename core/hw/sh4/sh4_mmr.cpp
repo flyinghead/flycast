@@ -156,11 +156,6 @@ offset>>=2;
 template <u32 sz,class T>
 T DYNACALL ReadMem_P4(u32 addr)
 {
-	/*if (((addr>>26)&0x7)==7)
-	{
-	return ReadMem_area7(addr,sz);	
-	}*/
-
 	switch((addr>>24)&0xFF)
 	{
 
@@ -170,29 +165,24 @@ T DYNACALL ReadMem_P4(u32 addr)
 	case 0xE3:
 		INFO_LOG(SH4, "Unhandled p4 read [Store queue] 0x%x", addr);
 		return 0;
-		break;
 
 	case 0xF0:
 		return 0;
-		break;
 
 	case 0xF1:
 		return 0;
-		break;
 
 	case 0xF2:
 		{
 			u32 entry=(addr>>8)&3;
 			return ITLB[entry].Address.reg_data | (ITLB[entry].Data.V<<8);
 		}
-		break;
 
 	case 0xF3:
 		{
 			u32 entry=(addr>>8)&3;
 			return ITLB[entry].Data.reg_data;
 		}
-		break;
 
 	case 0xF4:
 		{
@@ -203,11 +193,9 @@ T DYNACALL ReadMem_P4(u32 addr)
 			//printf("Unhandled p4 read [Operand cache address array] %d:%d,%d  0x%x\n",Set,W,A,addr);
 			return 0;
 		}
-		break;
 
 	case 0xF5:
 		return 0;
-		break;
 
 	case 0xF6:
 		{
@@ -217,14 +205,12 @@ T DYNACALL ReadMem_P4(u32 addr)
 			rv|=UTLB[entry].Data.V<<8;
 			return rv;
 		}
-		break;
 
 	case 0xF7:
 		{
 			u32 entry=(addr>>8)&63;
 			return UTLB[entry].Data.reg_data;
 		}
-		break;
 
 	case 0xFF:
 		INFO_LOG(SH4, "Unhandled p4 read [area7] 0x%x", addr);
@@ -261,11 +247,9 @@ void DYNACALL WriteMem_P4(u32 addr,T data)
 
 	case 0xF0:
 		return;
-		break;
 
 	case 0xF1:
 		return;
-		break;
 
 	case 0xF2:
 		{
@@ -275,7 +259,6 @@ void DYNACALL WriteMem_P4(u32 addr,T data)
 			ITLB_Sync(entry);
 			return;
 		}
-		break;
 
 	case 0xF3:
 		{
@@ -302,49 +285,45 @@ void DYNACALL WriteMem_P4(u32 addr,T data)
 			//printf("Unhandled p4 Write [Operand cache address array] %d:%d,%d  0x%x = %x\n",Set,W,A,addr,data);
 			return;
 		}
-		break;
 
 	case 0xF5:
 		//printf("Unhandled p4 Write [Operand cache data array] 0x%x = %x\n",addr,data);
 		return;
-		break;
 
 	case 0xF6:
 		{
 			if (addr&0x80)
 			{
-				#ifdef NO_MMU
+#ifdef NO_MMU
 				INFO_LOG(SH4, "Unhandled p4 Write [Unified TLB address array, Associative Write] 0x%x = %x", addr, data);
-				#endif
+#endif
 
 				CCN_PTEH_type t;
 				t.reg_data=data;
 
 				u32 va=t.VPN<<10;
 
+#ifndef NO_MMU
 				for (int i=0;i<64;i++)
 				{
-					#ifndef NO_MMU
 					if (mmu_match(va,UTLB[i].Address,UTLB[i].Data))
 					{
 						UTLB[i].Data.V=((u32)data>>8)&1;
 						UTLB[i].Data.D=((u32)data>>9)&1;
 						UTLB_Sync(i);
 					}
-					#endif
 				}
 
 				for (int i=0;i<4;i++)
 				{
-					#ifndef NO_MMU
 					if (mmu_match(va,ITLB[i].Address,ITLB[i].Data))
 					{
 						ITLB[i].Data.V=((u32)data>>8)&1;
 						ITLB[i].Data.D=((u32)data>>9)&1;
 						ITLB_Sync(i);
 					}
-					#endif
 				}
+#endif
 			}
 			else
 			{

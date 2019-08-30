@@ -19,22 +19,22 @@ InterruptInfo* SCIRE;
 
 //Interrupts
 //arm side
-u32 GetL(u32 witch)
+u32 GetL(u32 which)
 {
-	if (witch>7)
-		witch=7; //higher bits share bit 7
+	if (which > 7)
+		which = 7; //higher bits share bit 7
 
-	u32 bit=1<<witch;
-	u32 rv=0;
+	u32 bit = 1 << which;
+	u32 rv = 0;
 
 	if (CommonData->SCILV0 & bit)
-		rv=1;
+		rv = 1;
 
 	if (CommonData->SCILV1 & bit)
-		rv|=2;
+		rv |= 2;
 	
 	if (CommonData->SCILV2 & bit)
-		rv|=4;
+		rv |= 4;
 
 	return rv;
 }

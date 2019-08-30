@@ -56,7 +56,7 @@ u32 interrupt_vmask; // Vector of masked interrupts             (-1 inhibits all
 u32 decoded_srimask; // Vector of interrupts allowed by SR.IMSK (-1 inhibits all interrupts)
 
 //bit 0 ~ 27 : interrupt source 27:0. 0 = lowest level, 27 = highest level.
-void recalc_pending_itrs()
+static void recalc_pending_itrs()
 {
 	Sh4cntx.interrupt_pend=interrupt_vpend&interrupt_vmask&decoded_srimask;
 }

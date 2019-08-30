@@ -62,7 +62,7 @@ extern DECL_ALIGN(4096) dsp_t dsp;
 extern AicaTimer timers[3];
 
 //./core/hw/aica/aica_if.o
-extern VLockedMemory aica_ram;
+extern VArray2 aica_ram;
 extern u32 VREG;//video reg =P
 extern u32 ARMRST;//arm reset reg
 extern u32 rtc_EN;
@@ -162,7 +162,7 @@ extern u32 ta_fsm_cl;
 extern bool pal_needs_update;
 
 //./core/rend/TexCache.o
-extern VLockedMemory vram;
+extern VArray2 vram;
 
 //./core/hw/sh4/sh4_mmr.o
 extern Array<u8> OnChipRAM;
@@ -178,7 +178,7 @@ extern Array<RegisterStruct> SCI;   //SCI  : 8 registers
 extern Array<RegisterStruct> SCIF; //SCIF : 10 registers
 
 //./core/hw/sh4/sh4_mem.o
-extern VLockedMemory mem_b;
+extern VArray2 mem_b;
 
 //./core/hw/sh4/sh4_interrupts.o
 extern DECL_ALIGN(64) u16 InterruptEnvId[32];

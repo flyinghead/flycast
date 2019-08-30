@@ -34,7 +34,6 @@ bool unprotected_pages[RAM_SIZE_MAX/PAGE_SIZE];
 static std::set<RuntimeBlockInfo*> blocks_per_page[RAM_SIZE_MAX/PAGE_SIZE];
 
 bm_Map blkmap;
-u32 bm_gc_luc,bm_gcf_luc;
 // Stats
 u32 protected_blocks;
 u32 unprotected_blocks;
@@ -45,7 +44,7 @@ u32 unprotected_blocks;
 // This returns an executable address
 DynarecCodeEntryPtr DYNACALL bm_GetCode(u32 addr)
 {
-	DynarecCodeEntryPtr rv = (DynarecCodeEntryPtr)FPCA(addr);
+	DynarecCodeEntryPtr rv = FPCA(addr);
 
 	return rv;
 }
@@ -227,7 +226,7 @@ void bm_Periodical_1s()
 
 void bm_vmem_pagefill(void** ptr, u32 size_bytes)
 {
-	for (size_t i=0; i < size_bytes / sizeof(ptr[0]); i++)
+	for (size_t i = 0; i < size_bytes / sizeof(ptr[0]); i++)
 	{
 		ptr[i]=(void*)ngen_FailedToFindBlock;
 	}

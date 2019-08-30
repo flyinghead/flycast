@@ -2084,7 +2084,7 @@ void FlushCache()
 
 #if HOST_CPU == CPU_X86
 #if HOST_OS == OS_WINDOWS
-#include <Windows.h>
+#include <windows.h>
 #endif
 
 // These have to be declared somewhere or linker dies

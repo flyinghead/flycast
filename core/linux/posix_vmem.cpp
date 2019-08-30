@@ -3,9 +3,6 @@
 // There's some minimal amount of platform specific hacks to support
 // Android and OSX since they are slightly different in some areas.
 
-// This implements the VLockedMemory interface, as defined in _vmem.h
-// The implementation allows it to be empty (that is, to not lock memory).
-
 #include <sys/mman.h>
 #include <sys/types.h>
 #include <sys/stat.h>
