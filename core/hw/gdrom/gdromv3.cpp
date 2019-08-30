@@ -16,6 +16,7 @@
 #include "hw/sh4/sh4_sched.h"
 
 #include "hw/sh4/sh4_sched.h"
+#include "hw/sh4/sh4_interpreter.h"
 
 int gdrom_schid;
 
@@ -1077,7 +1078,7 @@ void GDROM_DmaStart(u32 addr, u32 data)
 		DEBUG_LOG(GDROM, "GDROM-DMA start addr %08X len %d", SB_GDSTAR, SB_GDLEN);
 
 		int ticks = getGDROMTicks();
-		if (ticks < 448)	// FIXME #define
+		if (ticks < SH4_TIMESLICE)
 		{
 			ticks = GDRomschd(0,0,0);
 		}

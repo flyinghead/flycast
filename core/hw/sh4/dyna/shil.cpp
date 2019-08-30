@@ -26,7 +26,6 @@ void AnalyseBlock(RuntimeBlockInfo* blk)
 {
 	SSAOptimizer optim(blk);
 	optim.Optimize();
-	return;
 }
 
 string name_reg(Sh4RegType reg)

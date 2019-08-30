@@ -174,7 +174,7 @@ void SB_SFRES_write32(u32 addr, u32 data)
 {
 	if ((u16)data==0x7611)
 	{
-		printf("SB/HOLLY: System reset requested\n");
+		INFO_LOG(SH4, "SB/HOLLY: System reset requested");
 		dc_request_reset();
 	}
 }

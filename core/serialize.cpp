@@ -193,7 +193,6 @@ extern Sh4RCB* p_sh4rcb;
 
 //./core/hw/sh4/sh4_sched.o
 extern u64 sh4_sched_ffb;
-extern u32 sh4_sched_intr;
 extern vector<sched_list> sch_list;
 
 //./core/hw/sh4/interpr/sh4_interpreter.o
@@ -464,7 +463,7 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	REICAST_S((*p_sh4rcb).cntx);
 
 	REICAST_S(sh4_sched_ffb);
-	REICAST_S(sh4_sched_intr);
+	REICAST_S(i);	// sh4_sched_intr
 
 	REICAST_S(sch_list[aica_schid].tag) ;
 	REICAST_S(sch_list[aica_schid].start) ;
@@ -776,7 +775,7 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 	REICAST_US(i);			// old_dn
 
 	REICAST_US(sh4_sched_ffb);
-	REICAST_US(sh4_sched_intr);
+	REICAST_US(i);			// sh4_sched_intr
 
 	REICAST_US(sch_list[aica_schid].tag) ;
 	REICAST_US(sch_list[aica_schid].start) ;
@@ -1140,7 +1139,7 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 	}
 
 	REICAST_US(sh4_sched_ffb);
-	REICAST_US(sh4_sched_intr);
+	REICAST_US(i);		// sh4_sched_intr
 
 	REICAST_US(sch_list[aica_schid].tag) ;
 	REICAST_US(sch_list[aica_schid].start) ;

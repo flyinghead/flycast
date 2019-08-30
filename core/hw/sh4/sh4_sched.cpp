@@ -22,7 +22,6 @@
 
 */
 u64 sh4_sched_ffb;
-u32 sh4_sched_intr;
 
 
 vector<sched_list> sch_list;	// using list as external inside a macro confuses clang and msc
@@ -153,7 +152,6 @@ void sh4_sched_tick(int cycles)
 	if (Sh4cntx.sh4_sched_next<0)
 	{
 		u32 fztime=sh4_sched_now()-cycles;
-		sh4_sched_intr++;
 		if (sh4_sched_next_id!=-1)
 		{
 			for (int i=0;i<sch_list.size();i++)

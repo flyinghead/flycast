@@ -550,7 +550,7 @@ void RuntimeBlockInfo::Discard()
 void RuntimeBlockInfo::SetProtectedFlags()
 {
 	// Don't write protect rom and BIOS/IP.BIN (Grandia II)
-	if (!IsOnRam(addr) || (vaddr & 0x1FFF0000) == 0x0c000000)
+	if (!IsOnRam(addr) || (addr & 0x1FFF0000) == 0x0c000000)
 	{
 		this->read_only = false;
 		unprotected_blocks++;

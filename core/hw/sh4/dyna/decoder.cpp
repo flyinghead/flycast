@@ -103,8 +103,6 @@ void dec_fallback(u32 op)
 	blk->oplist.push_back(opcd);
 }
 
-#if 1
-
 void dec_DynamicSet(u32 regbase,u32 offs=0)
 {
 	if (offs==0)
@@ -353,7 +351,6 @@ sh4dec(i0100_nnnn_0010_0101)
 	Emit(shop_ror,rn,rn,mk_imm(1));
 	*/
 }
-#endif
 
 const Sh4RegType SREGS[] =
 {
