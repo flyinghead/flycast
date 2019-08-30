@@ -201,7 +201,7 @@ struct maple_sega_controller: maple_base
 	}
 
 	virtual u32 transform_kcode(u32 kcode) {
-		return kcode;
+		return kcode | 0xF901;		// mask off DPad2, C, D and Z;
 	}
 
 	virtual u32 get_analog_axis(int index, const PlainJoystickState &pjs) {

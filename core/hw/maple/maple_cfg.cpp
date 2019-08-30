@@ -79,7 +79,6 @@ struct MapleConfigMap : IMapleConfigMap
 		pjs->kcode=kcode[player_num];
 		if (settings.platform.system == DC_PLATFORM_DREAMCAST)
 		{
-			pjs->kcode |= 0xF901;		// mask off DPad2, C, D and Z
 			pjs->joy[PJAI_X1]=GetBtFromSgn(joyx[player_num]);
 			pjs->joy[PJAI_Y1]=GetBtFromSgn(joyy[player_num]);
 			pjs->trigger[PJTI_R]=rt[player_num];
