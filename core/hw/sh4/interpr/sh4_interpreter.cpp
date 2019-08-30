@@ -7,29 +7,14 @@
 #include "../sh4_interpreter.h"
 #include "../sh4_opcode_list.h"
 #include "../sh4_core.h"
-#include "../sh4_rom.h"
-#include "../sh4_if.h"
-#include "hw/pvr/pvr_mem.h"
 #include "hw/aica/aica_if.h"
-#include "../modules/dmac.h"
-#include "hw/gdrom/gdrom_if.h"
-#include "hw/maple/maple_if.h"
 #include "../sh4_interrupts.h"
-#include "../modules/tmu.h"
 #include "hw/sh4/sh4_mem.h"
-#include "../modules/ccn.h"
 #include "profiler/profiler.h"
 #include "../dyna/blockmanager.h"
 #include "../sh4_sched.h"
 
-#include <time.h>
-#include <float.h>
-
 #define CPU_RATIO      (8)
-
-//uh uh
-#define GetN(str) ((str>>8) & 0xf)
-#define GetM(str) ((str>>4) & 0xf)
 
 static s32 l;
 
@@ -199,39 +184,24 @@ int rtc_schid = -1;
 
 const int AICA_TICK=145124;
 
-int AicaUpdate(int tag, int c, int j)
+static int AicaUpdate(int tag, int c, int j)
 {
-	//gpc_counter=0;
-	//bm_Periodical_14k();
-
-	//static int aica_sample_cycles=0;
-	//aica_sample_cycles+=14336*AICA_SAMPLE_GCM;
-
-	//if (aica_sample_cycles>=AICA_SAMPLE_CYCLES)
-	{
-		UpdateArm(512*32);
-		UpdateAica(1*32);
-		//aica_sample_cycles-=AICA_SAMPLE_CYCLES;
-	}
+	UpdateArm(512*32);
+	UpdateAica(1*32);
 
 	return AICA_TICK;
 }
 
-
-int DreamcastSecond(int tag, int c, int j)
+static int DreamcastSecond(int tag, int c, int j)
 {
 	RealTimeClock++;
 
-#if 1 //HOST_OS==OS_WINDOWS
 	prof_periodical();
-#endif
 
 #if FEAT_SHREC != DYNAREC_NONE
 	bm_Periodical_1s();
 #endif
 
-	//printf("%d ticks\n",sh4_sched_intr);
-	sh4_sched_intr=0;
 	return SH4_MAIN_CLOCK;
 }
 
@@ -294,17 +264,3 @@ void Sh4_int_Term()
 	Sh4_int_Stop();
 	INFO_LOG(INTERPRETER, "Sh4 Term");
 }
-
-/*
-bool sh4_exept_raised;
-void sh4_int_RaiseExeption(u32 ExeptionCode, u32 VectorAddress)
-{
-	sh4_exept_raised = true;
-
-	sh4_ex_ExeptionCode = ExeptionCode;
-	sh4_ex_VectorAddress = VectorAddress;
-
-	//save reg context
-	SaveSh4Regs(&sh4_ex_SRC);
-}
-*/
