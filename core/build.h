@@ -211,9 +211,6 @@
 #elif defined(TARGET_GCW0)
 	#define HOST_OS OS_LINUX
 	#define HOST_CPU CPU_MIPS
-#elif defined(TARGET_EMSCRIPTEN)
-	#define HOST_OS OS_LINUX
-	#define HOST_CPU CPU_GENERIC
 #elif defined(TARGET_IPHONE)
     #define HOST_OS OS_DARWIN
     #define HOST_CPU CPU_ARM
