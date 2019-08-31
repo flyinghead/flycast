@@ -191,9 +191,7 @@ void mmu_raise_exception(u32 mmu_error, u32 address, u32 am)
 			RaiseException(0x40, 0x400);
 		else							//ITLBMISS - Instruction TLB Miss Exception
 			RaiseException(0x40, 0x400);
-
 		return;
-		break;
 
 		//TLB Multihit
 	case MMU_ERROR_TLB_MHIT:
@@ -212,7 +210,6 @@ void mmu_raise_exception(u32 mmu_error, u32 address, u32 am)
 			verify(false);
 		}
 		return;
-		break;
 
 		//Mem is write protected , firstwrite
 	case MMU_ERROR_FIRSTWRITE:
@@ -220,16 +217,20 @@ void mmu_raise_exception(u32 mmu_error, u32 address, u32 am)
 		verify(am == MMU_TT_DWRITE);
 		//FIRSTWRITE - Initial Page Write Exception
 		RaiseException(0x80, 0x100);
-
 		return;
-		break;
 
 		//data read/write missasligned
 	case MMU_ERROR_BADADDR:
 		if (am == MMU_TT_DWRITE)			//WADDERR - Write Data Address Error
+		{
+			printf_mmu("MMU_ERROR_BADADDR(dw) 0x%X", address);
 			RaiseException(0x100, 0x100);
+		}
 		else if (am == MMU_TT_DREAD)		//RADDERR - Read Data Address Error
+		{
+			printf_mmu("MMU_ERROR_BADADDR(dr) 0x%X", address);
 			RaiseException(0xE0, 0x100);
+		}
 		else							//IADDERR - Instruction Address Error
 		{
 #ifdef TRACE_WINCE_SYSCALLS
@@ -237,11 +238,8 @@ void mmu_raise_exception(u32 mmu_error, u32 address, u32 am)
 #endif
 				printf_mmu("MMU_ERROR_BADADDR(i) 0x%X", address);
 			RaiseException(0xE0, 0x100);
-			return;
 		}
-		printf_mmu("MMU_ERROR_BADADDR(d) 0x%X, handled", address);
 		return;
-		break;
 
 		//Can't Execute
 	case MMU_ERROR_EXECPROT:
@@ -250,7 +248,6 @@ void mmu_raise_exception(u32 mmu_error, u32 address, u32 am)
 		//EXECPROT - Instruction TLB Protection Violation Exception
 		RaiseException(0xA0, 0x100);
 		return;
-		break;
 	}
 
 	die("Unknown mmu_error");
