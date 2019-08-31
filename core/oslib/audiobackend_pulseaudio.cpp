@@ -23,8 +23,9 @@ static void pulseaudio_init()
 static u32 pulseaudio_push(void* frame, u32 samples, bool wait)
 {
 	if (pa_simple_write(pulse_stream, frame, (size_t) samples*4, NULL) < 0) {
-		WARN_LOG(AUDIO, stderr, "PulseAudio: pa_simple_write() failed!");
+		WARN_LOG(AUDIO, "PulseAudio: pa_simple_write() failed!");
 	}
+	return 0;
 }
 
 static void pulseaudio_term() {
@@ -32,7 +33,7 @@ static void pulseaudio_term() {
 	{
 		// Make sure that every single sample was played
 		if (pa_simple_drain(pulse_stream, NULL) < 0) {
-			WARN_LOG(AUDIO, stderr, "PulseAudio: pa_simple_drain() failed!");
+			WARN_LOG(AUDIO, "PulseAudio: pa_simple_drain() failed!");
 		}
 		pa_simple_free(pulse_stream);
 	}

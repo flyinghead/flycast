@@ -264,7 +264,7 @@ void bm_Reset()
 static void bm_LockPage(u32 addr)
 {
 	addr = addr & (RAM_MASK - PAGE_MASK);
-	if (!mmu_enabled())
+	if (!mmu_enabled() || !_nvmem_4gb_space())
 		mem_region_lock(virt_ram_base + 0x0C000000 + addr, PAGE_SIZE);
 	if (_nvmem_4gb_space())
 	{
@@ -277,7 +277,7 @@ static void bm_LockPage(u32 addr)
 static void bm_UnlockPage(u32 addr)
 {
 	addr = addr & (RAM_MASK - PAGE_MASK);
-	if (!mmu_enabled())
+	if (!mmu_enabled() || !_nvmem_4gb_space())
 		mem_region_unlock(virt_ram_base + 0x0C000000 + addr, PAGE_SIZE);
 	if (_nvmem_4gb_space())
 	{
@@ -608,7 +608,7 @@ bool bm_RamWriteAccess(void *p)
 			return false;
 	}
 	u32 addr = (u8*)p - virt_ram_base;
-	if (mmu_enabled() && (addr & 0x80000000) == 0)
+	if (mmu_enabled() && _nvmem_4gb_space() && (addr & 0x80000000) == 0)
 		// If mmu enabled, let vmem32 manage user space
 		// shouldn't be necessary since it's called first
 		return false;

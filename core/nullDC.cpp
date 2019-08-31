@@ -41,7 +41,7 @@ static bool disable_vmem32_game;
 
 cThread emu_thread(&dc_run, NULL);
 
-#if HOST_OS==OS_WINDOWS
+#ifdef _WIN32
 #include <windows.h>
 #endif
 
@@ -54,7 +54,7 @@ cThread emu_thread(&dc_run, NULL);
  **/
 int64_t get_time_usec(void)
 {
-#if HOST_OS==OS_WINDOWS
+#ifdef _WIN32
    static LARGE_INTEGER freq;
    LARGE_INTEGER count;
 
@@ -65,7 +65,7 @@ int64_t get_time_usec(void)
    if (!QueryPerformanceCounter(&count))
       return 0;
    return count.QuadPart * 1000000 / freq.QuadPart;
-#elif defined(_POSIX_MONOTONIC_CLOCK) || defined(__QNX__) || defined(ANDROID) || defined(__MACH__) || HOST_OS==OS_LINUX
+#elif defined(_POSIX_MONOTONIC_CLOCK) || defined(__QNX__) || defined(__ANDROID__) || defined(__MACH__) || HOST_OS==OS_LINUX
    struct timespec tv = {0};
    if (clock_gettime(CLOCK_MONOTONIC, &tv) < 0)
       return 0;
@@ -649,7 +649,7 @@ void InitSettings()
 	settings.dispmanx.Keep_Aspect = true;
 #endif
 
-#if (HOST_OS != OS_LINUX || defined(_ANDROID) || defined(TARGET_PANDORA))
+#if (HOST_OS != OS_LINUX || defined(__ANDROID__) || defined(TARGET_PANDORA))
 	settings.aica.BufferSize = 2048;
 #else
 	settings.aica.BufferSize = 1024;
@@ -746,7 +746,7 @@ void LoadSettings(bool game_specific)
 	settings.dispmanx.Keep_Aspect	= cfgLoadBool(game_specific ? cfgGetGameId() : "dispmanx", "maintain_aspect", settings.dispmanx.Keep_Aspect);
 #endif
 
-#if (HOST_OS != OS_LINUX || defined(_ANDROID) || defined(TARGET_PANDORA))
+#if (HOST_OS != OS_LINUX || defined(__ANDROID__) || defined(TARGET_PANDORA))
 	settings.aica.BufferSize=2048;
 #else
 	settings.aica.BufferSize=1024;
@@ -899,7 +899,7 @@ void SaveSettings()
 
 	GamepadDevice::SaveMaplePorts();
 
-#ifdef _ANDROID
+#ifdef __ANDROID__
 	void SaveAndroidSettings();
 	SaveAndroidSettings();
 #endif

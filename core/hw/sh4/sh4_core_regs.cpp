@@ -69,7 +69,7 @@ void SetFloatStatusReg()
 		old_dn=fpscr.DN ;
         
         //Correct rounding is required by some games (SOTB, etc)
-#if BUILD_COMPILER == COMPILER_VC
+#ifdef _MSC_VER
         if (fpscr.RM == 1)  //if round to 0 , set the flag
             _controlfp(_RC_CHOP, _MCW_RC);
         else

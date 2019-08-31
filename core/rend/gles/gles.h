@@ -3,7 +3,7 @@
 #include <atomic>
 #include "rend/rend.h"
 
-#if (defined(GLES) && HOST_OS != OS_DARWIN && !defined(USE_SDL)) || defined(_ANDROID)
+#if (defined(GLES) && HOST_OS != OS_DARWIN && !defined(USE_SDL)) || defined(__ANDROID__)
 #define USE_EGL
 #include <EGL/egl.h>
 #include <EGL/eglext.h>

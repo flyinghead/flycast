@@ -227,8 +227,10 @@ static const char *wince_methods[][256] = {
 		},
 };
 
+#ifdef TRACE_WINCE_SYSCALLS
 extern u32 unresolved_ascii_string;
 extern u32 unresolved_unicode_string;
+#endif
 
 static inline std::string get_unicode_string(u32 addr)
 {
@@ -238,7 +240,9 @@ static inline std::string get_unicode_string(u32 addr)
 		u16 c;
 		if (!read_mem16(addr, c))
 		{
+#ifdef TRACE_WINCE_SYSCALLS
 			unresolved_unicode_string = addr;
+#endif
 			return "(page fault)";
 		}
 		if (c == 0)
@@ -256,7 +260,9 @@ static inline std::string get_ascii_string(u32 addr)
 		u8 c;
 		if (!read_mem8(addr++, c))
 		{
+#ifdef TRACE_WINCE_SYSCALLS
 			unresolved_ascii_string = addr;
+#endif
 			return "(page fault)";
 		}
 		if (c == 0)

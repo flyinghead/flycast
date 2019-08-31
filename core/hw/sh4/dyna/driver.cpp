@@ -24,7 +24,7 @@
 #if FEAT_SHREC != DYNAREC_NONE
 
 u8 SH4_TCB[CODE_SIZE + TEMP_CODE_SIZE + 4096]
-#if HOST_OS == OS_WINDOWS || FEAT_SHREC != DYNAREC_JIT
+#if defined(_WIN32) || FEAT_SHREC != DYNAREC_JIT
 	;
 #elif HOST_OS == OS_LINUX
 	__attribute__((section(".text")));

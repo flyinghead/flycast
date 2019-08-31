@@ -17,7 +17,7 @@
 #define MAP_NOSYNC       0 //missing from linux :/ -- could be the cause of android slowness ?
 #endif
 
-#ifdef _ANDROID
+#ifdef __ANDROID__
 	#include <linux/ashmem.h>
 	#ifndef ASHMEM_DEVICE
 	#define ASHMEM_DEVICE "/dev/ashmem"
@@ -41,7 +41,7 @@ int ashmem_create_region(const char *name, size_t size) {
 
 	return fd;
 }
-#endif  // #ifdef _ANDROID
+#endif  // #ifdef __ANDROID__
 
 bool mem_region_lock(void *start, size_t len)
 {
@@ -106,7 +106,7 @@ bool mem_region_unmap_file(void *start, size_t len)
 // Allocates memory via a fd on shmem/ahmem or even a file on disk
 static int allocate_shared_filemem(unsigned size) {
 	int fd = -1;
-	#if defined(_ANDROID)
+	#if defined(__ANDROID__)
 	// Use Android's specific shmem stuff.
 	fd = ashmem_create_region(0, size);
 	#else

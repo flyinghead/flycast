@@ -4,14 +4,14 @@
 #include <vector>
 #include <string.h>
 
-#if HOST_OS!=OS_WINDOWS
+#ifndef _WIN32
 #include <pthread.h>
 #else
 #include <windows.h>
 #endif
 
 
-#ifdef _ANDROID
+#ifdef __ANDROID__
 #include <sys/mman.h>
 #undef PAGE_MASK
 #define PAGE_MASK (PAGE_SIZE-1)
@@ -171,7 +171,7 @@ private:
 	ThreadEntryFP* entry;
 	void* param;
 public :
-	#if HOST_OS==OS_WINDOWS
+	#ifdef _WIN32
 	HANDLE hThread;
 	#else
 	pthread_t *hThread;
@@ -191,7 +191,7 @@ typedef void* EVENTHANDLE;
 class cResetEvent
 {
 private:
-#if HOST_OS==OS_WINDOWS
+#ifdef _WIN32
 	EVENTHANDLE hEvent;
 #else
 	pthread_mutex_t mutx;
@@ -211,7 +211,7 @@ public :
 class cMutex
 {
 private:
-#if HOST_OS==OS_WINDOWS
+#ifdef _WIN32
 	CRITICAL_SECTION cs;
 #else
 	pthread_mutex_t mutx;
@@ -221,7 +221,7 @@ public :
 	bool state;
 	cMutex()
 	{
-#if HOST_OS==OS_WINDOWS
+#ifdef _WIN32
 		InitializeCriticalSection(&cs);
 #else
 		pthread_mutex_init ( &mutx, NULL);
@@ -229,7 +229,7 @@ public :
 	}
 	~cMutex()
 	{
-#if HOST_OS==OS_WINDOWS
+#ifdef _WIN32
 		DeleteCriticalSection(&cs);
 #else
 		pthread_mutex_destroy(&mutx);
@@ -237,7 +237,7 @@ public :
 	}
 	void Lock()
 	{
-#if HOST_OS==OS_WINDOWS
+#ifdef _WIN32
 		EnterCriticalSection(&cs);
 #else
 		pthread_mutex_lock(&mutx);
@@ -245,7 +245,7 @@ public :
 	}
 	bool TryLock()
 	{
-#if HOST_OS==OS_WINDOWS
+#ifdef _WIN32
 		return TryEnterCriticalSection(&cs);
 #else
 		return pthread_mutex_trylock(&mutx)==0;
@@ -253,7 +253,7 @@ public :
 	}
 	void Unlock()
 	{
-#if HOST_OS==OS_WINDOWS
+#ifdef _WIN32
 		LeaveCriticalSection(&cs);
 #else
 		pthread_mutex_unlock(&mutx);

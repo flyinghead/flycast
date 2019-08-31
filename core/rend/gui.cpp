@@ -121,7 +121,7 @@ void gui_init()
     ImGui::GetStyle().ItemSpacing = ImVec2(8, 8);		// from 8,4
     ImGui::GetStyle().ItemInnerSpacing = ImVec2(4, 6);	// from 4,4
     //ImGui::GetStyle().WindowRounding = 0;
-#ifdef _ANDROID
+#ifdef __ANDROID__
     ImGui::GetStyle().GrabMinSize = 20.0f;				// from 10
     ImGui::GetStyle().ScrollbarSize = 24.0f;			// from 16
     ImGui::GetStyle().TouchExtraPadding = ImVec2(1, 1);	// from 0,0
@@ -183,7 +183,7 @@ void ImGui_Impl_NewFrame()
 		io.MousePos = ImVec2(-FLT_MAX, -FLT_MAX);
 	else
 		io.MousePos = ImVec2(real_x, real_y);
-#ifdef _ANDROID
+#ifdef __ANDROID__
 	// Put the "mouse" outside the screen one frame after a touch up
 	// This avoids buttons and the like to stay selected
 	if ((mo_buttons & 0xf) == 0xf)
@@ -809,7 +809,7 @@ static void gui_display_settings()
             {
             	ImGui::AlignTextToFramePadding();
                 ImGui::Text("%s", get_writable_config_path("").c_str());
-#ifdef _ANDROID
+#ifdef __ANDROID__
                 ImGui::SameLine(ImGui::GetContentRegionAvailWidth() - ImGui::CalcTextSize("Change").x - ImGui::GetStyle().FramePadding.x);
                 if (ImGui::Button("Change"))
                 	gui_state = Onboarding;
@@ -923,7 +923,7 @@ static void gui_display_settings()
 
 					controller_mapping_popup(gamepad);
 
-#ifdef _ANDROID
+#ifdef __ANDROID__
 					if (gamepad->is_virtual_gamepad())
 					{
 						if (ImGui::Button("Edit"))
@@ -1247,7 +1247,7 @@ static void gui_display_settings()
 				ImGui::Checkbox("Force Windows CE", &settings.dreamcast.ForceWindowsCE);
 	            ImGui::SameLine();
 	            ShowHelpMarker("Enable full MMU emulation and other Windows CE settings");
-#ifndef _ANDROID
+#ifndef __ANDROID
 				ImGui::Checkbox("Serial Console", &settings.debug.SerialConsole);
 	            ImGui::SameLine();
 	            ShowHelpMarker("Dump the Dreamcast serial console to stdout");
@@ -1298,7 +1298,7 @@ static void gui_display_settings()
 #endif
 						);
 		    	ImGui::Text("Operating System: %s",
-#ifdef _ANDROID
+#ifdef __ANDROID__
 					"Android"
 #elif HOST_OS == OS_LINUX
 					"Linux"
@@ -1308,7 +1308,7 @@ static void gui_display_settings()
 #else
 					"OSX"
 #endif
-#elif HOST_OS == OS_WINDOWS
+#elif defined(_WIN32)
 					"Windows"
 #else
 					"Unknown"
@@ -1320,7 +1320,7 @@ static void gui_display_settings()
 				ImGui::Text("Renderer: %s", (const char *)glGetString(GL_RENDERER));
 				ImGui::Text("Version: %s", (const char *)glGetString(GL_VERSION));
 		    }
-#ifdef _ANDROID
+#ifdef __ANDROID__
 		    ImGui::Separator();
 		    if (ImGui::Button("Send Logs")) {
 		    	void android_send_logs();
@@ -1344,7 +1344,7 @@ static void gui_display_settings()
    	settings.dynarec.Enable = (bool)dynarec_enabled;
 }
 
-#ifdef _ANDROID
+#ifdef __ANDROID__
 static std::string current_library_path("/storage/emulated/0/Download");
 #else
 static std::string current_library_path("/home/raph/RetroPie/roms/dreamcast/");
@@ -1563,7 +1563,7 @@ void gui_display_ui()
 	case VJoyEdit:
 		break;
 	case VJoyEditCommands:
-#ifdef _ANDROID
+#ifdef __ANDROID__
 		gui_display_vjoy_commands(screen_width, screen_height, scaling);
 #endif
 		break;

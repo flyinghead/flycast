@@ -91,7 +91,7 @@ void prof_periodical()
 	//for (u32 i=0;i<all_blocks
 	return;
 
-	#if HOST_OS!=OS_WINDOWS
+	#ifndef _WIN32
 		return;
 	#endif
 

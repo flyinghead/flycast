@@ -30,7 +30,7 @@ int fbdev = -1;
 #define GL_MAJOR_VERSION                  0x821B
 #endif
 #endif
-#ifdef _ANDROID
+#ifdef __ANDROID__
 #include <android/native_window.h> // requires ndk r5 or newer
 #endif
 #include "deps/libpng/png.h"
@@ -583,7 +583,7 @@ static void do_swap_automation()
 					return false;
 				}
 			}
-#ifdef _ANDROID
+#ifdef __ANDROID__
 			EGLint format;
 			if (!eglGetConfigAttrib(gl.setup.display, config, EGL_NATIVE_VISUAL_ID, &format))
 			{
@@ -707,7 +707,7 @@ static void do_swap_automation()
 			return;
 		created_context = false;
 		eglMakeCurrent(gl.setup.display, NULL, NULL, EGL_NO_CONTEXT);
-#if HOST_OS == OS_WINDOWS
+#ifdef _WIN32
 		ReleaseDC((HWND)gl.setup.native_wind,(HDC)gl.setup.native_disp);
 #else
 		if (gl.setup.context != NULL)
@@ -721,13 +721,13 @@ static void do_swap_automation()
 			close( fbdev );
 		fbdev=-1;
 #endif
-#endif	// !OS_WINDOWS
+#endif	// !_WIN32
 		gl.setup.context = EGL_NO_CONTEXT;
 		gl.setup.surface = EGL_NO_SURFACE;
 		gl.setup.display = EGL_NO_DISPLAY;
 	}
 
-#elif HOST_OS == OS_WINDOWS && !defined(USE_SDL)
+#elif defined(_WIN32) && !defined(USE_SDL)
 	#define WGL_DRAW_TO_WINDOW_ARB         0x2001
 	#define WGL_ACCELERATION_ARB           0x2003
 	#define WGL_SWAP_METHOD_ARB            0x2007
@@ -1247,7 +1247,7 @@ void gl_load_osd_resources()
 	gl.OSD_SHADER.scale = glGetUniformLocation(gl.OSD_SHADER.program, "scale");
 	glUniform1i(glGetUniformLocation(gl.OSD_SHADER.program, "tex"), 0);		//bind osd texture to slot 0
 
-#ifdef _ANDROID
+#ifdef __ANDROID__
 	int w, h;
 	if (osd_tex == 0)
 		osd_tex = loadPNG(get_readonly_data_path(DATA_PATH "buttons.png"), w, h);
@@ -1403,7 +1403,7 @@ void UpdateFogTexture(u8 *fog_table, GLenum texture_slot, GLint fog_image_format
 extern u16 kcode[4];
 extern u8 rt[4],lt[4];
 
-#if defined(_ANDROID)
+#if defined(__ANDROID__)
 extern float vjoy_pos[14][8];
 #else
 
@@ -1428,7 +1428,7 @@ float vjoy_pos[14][8]=
 	{96,320,64,64},         //ANALOG_POINT
 	{1}
 };
-#endif // !_ANDROID
+#endif // !__ANDROID__
 
 static List<Vertex> osd_vertices;
 static bool osd_vertices_overrun;
@@ -1507,7 +1507,7 @@ static void osd_gen_vertices()
 
 void OSD_DRAW(bool clear_screen)
 {
-#ifdef _ANDROID
+#ifdef __ANDROID__
 	if (osd_tex == 0)
 		gl_load_osd_resources();
 	if (osd_tex != 0)
@@ -2055,7 +2055,7 @@ bool RenderFrame()
 		glBufferData(GL_ARRAY_BUFFER, pvrrc.verts.bytes(), pvrrc.verts.head(), GL_STREAM_DRAW);
 		upload_vertex_indices();
 	}
-	#if HOST_OS==OS_WINDOWS
+	#ifdef _WIN32
 		//Sleep(40); //to test MT stability
 	#endif
 

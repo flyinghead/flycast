@@ -4,7 +4,7 @@ SH4_TIMESLICE = 448
 CPU_RUNNING = 135266148
 PC = 135266120
 
-EXTERN bm_GetCode2: PROC
+EXTERN bm_GetCodeByVAddr: PROC
 EXTERN UpdateSystem_INTC: PROC
 EXTERN cycle_counter: dword
 EXTERN p_sh4rcb: qword
@@ -33,7 +33,7 @@ run_loop:
 slice_loop:
 	mov rax, qword ptr [p_sh4rcb]
 	mov ecx, dword ptr[PC + rax]
-	call bm_GetCode2
+	call bm_GetCodeByVAddr
 	call rax
 	mov ecx, dword ptr [cycle_counter]
 	test ecx, ecx
