@@ -112,13 +112,6 @@ struct maple_device
 	virtual void get_lightgun_pos() {};
 };
 
-struct _NaomiState
-{
-	u8 Cmd;
-	u8 Mode;
-	u8 Node;
-};
-
 maple_device* maple_Create(MapleDeviceType type);
 #define SIZE_OF_MIC_DATA	480 //ALSO DEFINED IN SipEmulator.java
 #ifndef TARGET_PANDORA

@@ -48,7 +48,6 @@ void Sh4_int_Reset(bool hard);
 void Sh4_int_Init();
 void Sh4_int_Term();
 bool Sh4_int_IsCpuRunning();
-void sh4_int_RaiseExeption(u32 ExeptionCode,u32 VectorAddr);
 u32 Sh4_int_GetRegister(Sh4RegType reg);
 void Sh4_int_SetRegister(Sh4RegType reg,u32 regdata);
 //Other things (mainly used by the cpu core

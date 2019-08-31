@@ -294,18 +294,7 @@ using namespace std;
 #define naked __attribute__((naked))
 #endif
 
-
-#if DEBUG
-//force
-#define INLINE
-//sugest
-#define SINLINE
-#else
-//force
 #define INLINE __forceinline
-//sugest
-#define SINLINE __inline
-#endif
 
 //no inline -- fixme
 #if BUILD_COMPILER == COMPILER_VC
@@ -832,14 +821,6 @@ void libARM_Update(u32 cycles);
 				{*(u16*)&arr[addr]=(u16)data;}		\
 			else if (sz==4)							\
 			{*(u32*)&arr[addr]=data;}}
-
-#define WriteMemArrRet(arr,addr,data,sz)				\
-			{if(sz==1)								\
-				{arr[addr]=(u8)data;return;}				\
-			else if (sz==2)							\
-				{*(u16*)&arr[addr]=(u16)data;return;}		\
-			else if (sz==4)							\
-			{*(u32*)&arr[addr]=data;return;}}
 
 struct OnLoad
 {

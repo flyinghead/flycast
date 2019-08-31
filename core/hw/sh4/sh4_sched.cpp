@@ -110,7 +110,8 @@ void sh4_sched_request(int id, int cycles)
 	sh4_sched_ffts();
 }
 
-int sh4_sched_elapsed(int id)
+/* Returns how much time has passed for this callback */
+static int sh4_sched_elapsed(int id)
 {
 	if (sch_list[id].end!=-1)
 	{
@@ -122,7 +123,7 @@ int sh4_sched_elapsed(int id)
 		return -1;
 }
 
-void handle_cb(int id)
+static void handle_cb(int id)
 {
 	int remain=sch_list[id].end-sch_list[id].start;
 	int elapsd=sh4_sched_elapsed(id);

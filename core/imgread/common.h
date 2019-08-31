@@ -90,9 +90,6 @@ extern signed int sns_asc;
 extern signed int sns_ascq;
 extern signed int sns_key;
 
-
-void PatchRegion_0(u8* sector,int size);
-void PatchRegion_6(u8* sector,int size);
 void ConvToc(u32* to,TocInfo* from);
 void GetDriveToc(u32* to,DiskArea area);
 void GetDriveSector(u8 * buff,u32 StartSector,u32 SectorCount,u32 secsz);

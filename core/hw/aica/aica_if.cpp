@@ -3,7 +3,7 @@
 		Handles RTC, Display mode reg && arm reset reg !
 	arm7 is handled on a separate arm plugin now
 */
-#include "types.h"
+
 #include "aica_if.h"
 #include "hw/sh4/sh4_mem.h"
 #include "hw/holly/sb.h"

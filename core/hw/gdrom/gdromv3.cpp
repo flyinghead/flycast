@@ -100,7 +100,8 @@ void libCore_CDDA_Sector(s16* sector)
 void gd_spi_pio_end(u8* buffer,u32 len,gd_states next_state=gds_pio_end);
 void gd_process_spi_cmd();
 void gd_process_ata_cmd();
-void FillReadBuffer()
+
+static void FillReadBuffer()
 {
 	read_buff.cache_index=0;
 	u32 count = read_params.remaining_sectors;

@@ -20,17 +20,6 @@ u32 ta_type_lut[256];
 #endif
 #define PLD(ptr,offs) //  __asm __volatile ( "pld	 [%0, #" #offs "]\n"::"r" (ptr): );
 
-#if HOST_CPU==CPU_X86
-extern u32 TA_VTXC,TA_SPRC,TA_EOSC,TA_PPC,TA_SPC,TA_EOLC,TA_V64HC;
-
-#define TA_VTX (TA_VTXC++)
-#define TA_SPR (TA_SPRC++)
-#define TA_EOS (TA_EOSC++)
-#define TA_PP (TA_PPC++)
-#define TA_SP (TA_SPC++)
-#define TA_EOL (TA_EOLC++)
-#define TA_V64H (TA_V64HC++)
-#else
 #define TA_VTX 
 #define TA_SPR 
 #define TA_EOS 
@@ -38,20 +27,11 @@ extern u32 TA_VTXC,TA_SPRC,TA_EOSC,TA_PPC,TA_SPC,TA_EOLC,TA_V64HC;
 #define TA_SP 
 #define TA_EOL 
 #define TA_V64H 
-#endif
-
 	
 //cache state vars
 u32 tileclip_val=0;
 
 u8 f32_su8_tbl[65536];
-/*
-__forceinline
-u8 float_to_satu8(float val)
-{
-	return f32_su8_tbl[((u32&)val)>>16];
-}
-*/
 #define float_to_satu8(val) f32_su8_tbl[((u32&)val)>>16]
 
 /*
@@ -70,7 +50,7 @@ u8 float_to_satu8_2(float val)
 }
 
 #define saturate01(x) (((s32&)x)<0?0:(s32&)x>0x3f800000?1:x)
-u8 float_to_satu8_math(float val)
+static u8 float_to_satu8_math(float val)
 {
 	return u8(saturate01(val)*255);
 }
@@ -115,33 +95,21 @@ const u32 SZ64=2;
 typedef Ta_Dma* DYNACALL TaListFP(Ta_Dma* data,Ta_Dma* data_end);
 typedef void TACALL TaPolyParamFP(void* ptr);
 
-//#define TaCmd ((TaListFP*&)sh4rcb.tacmd_void)
 TaListFP* TaCmd;
 	
 u32 CurrentList;
 TaListFP* VerxexDataFP;
 bool ListIsFinished[5];
 
-f32 f16(u16 v)
+static f32 f16(u16 v)
 {
 	u32 z=v<<16;
 	return *(f32*)&z;
 }
 
-	
-#if HOST_CPU==CPU_X86
-extern u32 TA_VTX_O;
-#define TA_VTX_OVH(n) (TA_VTX_O+=n);
-#else
-#define TA_VTX_OVH(n)
-#endif
-
-
-
 #define vdrc vd_rc
 
-	//Splitter function (normally ta_dma_main , modified for split dma's)
-	//extern TaListFP* TaCmd;
+//Splitter function (normally ta_dma_main , modified for split dma's)
 
 template<u32 instance>
 class FifoSplitter
@@ -772,7 +740,8 @@ public:
 		CurrentPP=&nullPP;
 		CurrentPPlist=0;
 
-		if (ListType == ListType_Opaque_Modifier_Volume || ListType == ListType_Translucent_Modifier_Volume)
+		if (ListType == ListType_Opaque_Modifier_Volume
+				|| ListType == ListType_Translucent_Modifier_Volume)
 			EndModVol();
 	}
 
@@ -1445,6 +1414,7 @@ public:
 		}
 	}
 
+	//Mod Volume Vertex handlers
 	static void StartModVol(TA_ModVolParam* param)
 	{
 		EndModVol();
@@ -1540,7 +1510,6 @@ bool ta_parse_vdrc(TA_context* ctx)
 			do
 			{
 				ta_data =TaCmd(ta_data,ta_data_end);
-
 			}
 			while(ta_data<=ta_data_end);
 
@@ -1583,7 +1552,7 @@ bool ta_parse_vdrc(TA_context* ctx)
 
 //decode a vertex in the native pvr format
 //used for bg poly
-void decode_pvr_vertex(u32 base,u32 ptr,Vertex* cv)
+static void decode_pvr_vertex(u32 base,u32 ptr,Vertex* cv)
 {
 	//ISP
 	//TSP
@@ -1601,40 +1570,44 @@ void decode_pvr_vertex(u32 base,u32 ptr,Vertex* cv)
 	//Base Col
 	//Offset Col
 
-	//XYZ are _allways_ there :)
-	cv->x=vrf(ptr);ptr+=4;
-	cv->y=vrf(ptr);ptr+=4;
-	cv->z=vrf(ptr);ptr+=4;
+	//XYZ are _always_ there :)
+	cv->x = vrf(ptr);
+	ptr += 4;
+	cv->y = vrf(ptr);
+	ptr += 4;
+	cv->z = vrf(ptr);
+	ptr += 4;
 
 	if (isp.Texture)
 	{	//Do texture , if any
 		if (isp.UV_16b)
 		{
-			u32 uv=vri(ptr);
+			u32 uv = vri(ptr);
 			cv->u = f16((u16)uv);
 			cv->v = f16((u16)(uv >> 16));
 			ptr+=4;
 		}
 		else
 		{
-			cv->u=vrf(ptr);ptr+=4;
-			cv->v=vrf(ptr);ptr+=4;
+			cv->u = vrf(ptr);
+			ptr += 4;
+			cv->v = vrf(ptr);
+			ptr += 4;
 		}
 	}
 
 	//Color
-	u32 col=vri(ptr);ptr+=4;
-	vert_packed_color_(cv->col,col);
+	u32 col = vri(ptr);
+	ptr += 4;
+	vert_packed_color_(cv->col, col);
 	if (isp.Offset)
 	{
 		//Intensity color (can be missing too ;p)
-		u32 col=vri(ptr);ptr+=4;
-		vert_packed_color_(cv->spc,col);
+		u32 col = vri(ptr);
+		ptr += 4;
+		vert_packed_color_(cv->spc, col);
 	}
 }
-
-
-#define satu255(x) (((s32&)x)<0?0:(s32&)x>0x437f0000?255:(u8)x)
 
 void vtxdec_init()
 {

@@ -29,7 +29,6 @@
 #include "mmu_impl.h"
 #include "ccn.h"
 #include "hw/sh4/sh4_mem.h"
-#include "oslib/oslib.h"
 
 extern TLB_Entry UTLB[64];
 // Used when FullMMU is off
@@ -38,8 +37,6 @@ extern u32 sq_remap[64];
 //#define TRACE_WINCE_SYSCALLS
 
 #include "wince.h"
-
-extern const u32 mmu_mask[4];
 
 const TLB_Entry *lru_entry = NULL;
 static u32 lru_mask;

@@ -53,13 +53,9 @@ void CalculateSync()
 	else
 	{
 		if (FB_R_CTRL.vclk_div)
-		{
 			scale_y = 1.0f;//non interlaced VGA mode has full resolution :)
-		}
 		else
-		{
 			scale_y = 0.5f;//non interlaced modes have half resolution
-		}
 	}
 
 	rend_set_fb_scale(scale_x,scale_y);
@@ -288,15 +284,11 @@ void spg_Reset(bool hard)
 	CalculateSync();
 }
 
-
-extern u32 PVR_VTXC;
-
 void SetREP(TA_context* cntx)
 {
 	if (cntx && !cntx->rend.Overrun)
 	{
 		VertexCount+= cntx->rend.verts.used();
-		PVR_VTXC+= cntx->rend.verts.used();
 		int render_end_pending_cycles= cntx->rend.verts.used()*60;
 		//if (render_end_pending_cycles<500000)
 		render_end_pending_cycles+=500000*3;

@@ -25,7 +25,7 @@ Disc*(*drivers[])(const wchar* path)=
 
 u8 q_subchannel[96];
 
-void PatchRegion_0(u8* sector,int size)
+static void PatchRegion_0(u8* sector, int size)
 {
 #ifndef NOT_REICAST
 	if (settings.imgread.PatchRegion==0)
@@ -45,7 +45,8 @@ void PatchRegion_0(u8* sector,int size)
 	u8* p_area_symbol=&usersect[0x30];
 	memcpy(p_area_symbol,"JUE     ",8);
 }
-void PatchRegion_6(u8* sector,int size)
+
+static void PatchRegion_6(u8* sector, int size)
 {
 #ifndef NOT_REICAST
 	if (settings.imgread.PatchRegion==0)
@@ -70,58 +71,46 @@ void PatchRegion_6(u8* sector,int size)
 bool ConvertSector(u8* in_buff , u8* out_buff , int from , int to,int sector)
 {
 	//get subchannel data, if any
-	if (from==2448)
+	if (from == 2448)
 	{
-		memcpy(q_subchannel,in_buff+2352,96);
-		from-=96;
+		memcpy(q_subchannel, in_buff + 2352, 96);
+		from -= 96;
 	}
 	//if no conversion
-	if (to==from)
+	if (to == from)
 	{
-		memcpy(out_buff,in_buff,to);
+		memcpy(out_buff, in_buff, to);
 		return true;
 	}
 	switch (to)
 	{
 	case 2340:
-		{
-			verify((from==2352));
-			memcpy(out_buff,&in_buff[12],2340);
-		}
+		verify(from == 2352);
+		memcpy(out_buff, &in_buff[12], 2340);
 		break;
 	case 2328:
-		{
-			verify((from==2352));
-			memcpy(out_buff,&in_buff[24],2328);
-		}
+		verify(from == 2352);
+		memcpy(out_buff, &in_buff[24], 2328);
 		break;
 	case 2336:
-		verify(from>=2336);
-		verify((from==2352));
-		memcpy(out_buff,&in_buff[0x10],2336);
+		verify(from == 2352);
+		memcpy(out_buff, &in_buff[0x10], 2336);
 		break;
 	case 2048:
+		verify(from == 2448 || from == 2352 || from == 2336);
+		if (from == 2352 || from == 2448)
 		{
-			verify(from>=2048);
-			verify((from==2448) || (from==2352) || (from==2336));
-			if ((from == 2352) || (from == 2448))
-			{
-				if (in_buff[15]==1)
-				{
-					memcpy(out_buff,&in_buff[0x10],2048); //0x10 -> mode1
-				}
-				else
-					memcpy(out_buff,&in_buff[0x18],2048); //0x18 -> mode2 (all forms ?)
-			}
+			if (in_buff[15] == 1)
+				memcpy(out_buff, &in_buff[0x10], 2048); //0x10 -> mode1
 			else
-				memcpy(out_buff,&in_buff[0x8],2048);	//hmm only possible on mode2.Skip the mode2 header
+				memcpy(out_buff, &in_buff[0x18], 2048); //0x18 -> mode2 (all forms ?)
 		}
+		else
+			memcpy(out_buff, &in_buff[0x8], 2048);	//hmm only possible on mode2.Skip the mode2 header
 		break;
 	case 2352:
 		//if (from >= 2352)
-		{
-			memcpy(out_buff,&in_buff[0],2352);
-		}
+		memcpy(out_buff, &in_buff[0], 2352);
 		break;
 	default :
 		INFO_LOG(GDROM, "Sector conversion from %d to %d not supported \n", from , to);
@@ -157,22 +146,21 @@ bool InitDrive_(wchar* fn)
 	//try all drivers
 	disc = OpenDisc(fn);
 
-	if (disc!=0)
+	if (disc != NULL)
 	{
 		INFO_LOG(GDROM, "gdrom: Opened image \"%s\"", fn);
-		NullDriveDiscType=Busy;
-#ifndef NOT_REICAST
-		libCore_gdrom_disc_change();
-#endif
-//		Sleep(400); //busy for a bit // what, really ?
-		return true;
+		NullDriveDiscType = Busy;
 	}
 	else
 	{
 		INFO_LOG(GDROM, "gdrom: Failed to open image \"%s\"", fn);
-		NullDriveDiscType=NoDisk; //no disc :)
+		NullDriveDiscType = NoDisk; //no disc :)
 	}
-	return false;
+#ifndef NOT_REICAST
+	libCore_gdrom_disc_change();
+#endif
+
+	return disc != NULL;
 }
 
 #ifndef NOT_REICAST
@@ -291,7 +279,7 @@ void TermDrive()
 //
 //convert our nice toc struct to dc's native one :)
 
-u32 CreateTrackInfo(u32 ctrl,u32 addr,u32 fad)
+static u32 CreateTrackInfo(u32 ctrl, u32 addr, u32 fad)
 {
 	u8 p[4];
 	p[0]=(ctrl<<4)|(addr<<0);
@@ -301,7 +289,8 @@ u32 CreateTrackInfo(u32 ctrl,u32 addr,u32 fad)
 
 	return *(u32*)p;
 }
-u32 CreateTrackInfo_se(u32 ctrl,u32 addr,u32 tracknum)
+
+static u32 CreateTrackInfo_se(u32 ctrl, u32 addr, u32 tracknum)
 {
 	u8 p[4];
 	p[0]=(ctrl<<4)|(addr<<0);
@@ -342,9 +331,7 @@ void GetDriveToc(u32* to,DiskArea area)
 	if (area==DoubleDensity)
 		first_track=3;
 	else if (disc->type==GdRom)
-	{
 		last_track=2;
-	}
 
 	//Generate the TOC info
 
@@ -359,14 +346,10 @@ void GetDriveToc(u32* to,DiskArea area)
 			to[101]=CreateTrackInfo(disc->LeadOut.CTRL,disc->LeadOut.ADDR,13085);
 	}
 	else
-	{
 		to[101] = CreateTrackInfo(disc->LeadOut.CTRL, disc->LeadOut.ADDR, disc->LeadOut.StartFAD);
-	}
 
 	for (u32 i=first_track-1;i<last_track;i++)
-	{
 		to[i]=CreateTrackInfo(disc->tracks[i].CTRL,disc->tracks[i].ADDR,disc->tracks[i].StartFAD);
-	}
 }
 
 void GetDriveSessionInfo(u8* to,u8 session)

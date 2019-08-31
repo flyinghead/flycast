@@ -38,11 +38,6 @@ u64 sh4_sched_now64();
 void sh4_sched_request(int id, int cycles);
 
 /*
-	Returns how much time has passed for this callback
-*/
-int sh4_sched_elapsed(int id);
-
-/*
 	Tick for *cycles*
 */
 void sh4_sched_tick(int cycles);

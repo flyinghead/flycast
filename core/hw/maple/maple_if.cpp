@@ -36,7 +36,7 @@ int maple_schid;
 	DMA continuation on suspect, etc ...
 */
 
-void maple_DoDma();
+static void maple_DoDma();
 static void maple_handle_reconnect();
 
 //really hackish
@@ -115,8 +115,7 @@ bool IsOnSh4Ram(u32 addr)
 	return false;
 }
 
-u32 dmacount=0;
-void maple_DoDma()
+static void maple_DoDma()
 {
 	verify(SB_MDEN &1)
 	verify(SB_MDST &1)
@@ -127,7 +126,6 @@ void maple_DoDma()
 	bool last = false;
 	while (last != true)
 	{
-		dmacount++;
 		u32 header_1 = ReadMem32_nommu(addr);
 		u32 header_2 = ReadMem32_nommu(addr + 4) &0x1FFFFFE0;
 

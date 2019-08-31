@@ -30,8 +30,6 @@ struct PolyParam
 	u32 first;		//entry index , holds vertex/pos data
 	u32 count;
 
-	//lets see what more :)
-
 	u32 texid;
 
 	TSP tsp;
@@ -57,8 +55,6 @@ struct ModTriangle
 {
 	f32 x0,y0,z0,x1,y1,z1,x2,y2,z2;
 };
-
-void decode_pvr_vertex(u32 base,u32 ptr,Vertex* cv);
 
 struct  tad_context
 {

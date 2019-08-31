@@ -223,8 +223,6 @@ typedef void InitFP();
 typedef void TermFP();
 typedef bool IsCpuRunningFP();
 
-typedef void sh4_int_RaiseExeptionFP(u32 ExeptionCode,u32 VectorAddress);
-
 /*
 	The interface stuff should be replaced with something nicer
 */

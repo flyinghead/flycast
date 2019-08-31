@@ -29,9 +29,6 @@ struct RuntimeBlockInfo: RuntimeBlockInfo_Core
 	u32 runs;
 	s32 staging_runs;
 
-	/*
-		
-	*/
 	fpscr_t fpu_cfg;
 	u32 guest_cycles;
 	u32 guest_opcodes;

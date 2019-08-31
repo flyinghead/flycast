@@ -11,15 +11,6 @@ extern u32 ta_type_lut[256];
 	Render/TA thread -> ta data -> draw lists -> draw
 */
 
-#if HOST_OS==OS_WINDOWS
-extern u32 SQW,DMAW;
-#define SQWC(x) (SQW+=x)
-#define DMAWC(x) (DMAW+=x)
-#else
-#define SQWC(x)
-#define DMAWC(x)
-#endif
-
 #if HOST_CPU == CPU_X86
 #include <xmmintrin.h>
 struct simd256_t
@@ -82,7 +73,7 @@ u8 ta_fsm[2049];	//[2048] stores the current state
 u32 ta_fsm_cl=7;
 
 
-void fill_fsm(ta_state st, s8 pt, s8 obj, ta_state next, u32 proc=0, u32 sz64=0)
+static void fill_fsm(ta_state st, s8 pt, s8 obj, ta_state next, u32 proc=0, u32 sz64=0)
 {
 	for (int i=0;i<8;i++)
 	{
@@ -332,13 +323,11 @@ void DYNACALL ta_thd_data32_i(void* data)
 
 void DYNACALL ta_vtx_data32(void* data)
 {
-	SQWC(1);
 	ta_thd_data32_i(data);
 }
 
 void ta_vtx_data(u32* data, u32 size)
 {
-	DMAWC(size);
 	while(size>4)
 	{
 		ta_thd_data32_i(data);
