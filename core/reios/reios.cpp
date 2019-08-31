@@ -183,6 +183,10 @@ char* reios_disk_id() {
 	memcpy(&reios_software_company[0], &buf[112],   16 * sizeof(char));
 	memcpy(&reios_software_name[0], &buf[128],   128 * sizeof(char));
 	reios_windows_ce = memcmp("0WINCEOS.BIN", &reios_boot_filename[0], 12) == 0;
+	INFO_LOG(REIOS, "hardware %.16s maker %.16s device %.16s area %.8s periph %.8s product %.10s version %.6s date %.16s boot %.16s softco %.16s name %.128s",
+			reios_hardware_id, reios_maker_id, reios_device_info, reios_area_symbols,
+			reios_peripherals, reios_product_number, reios_product_version,
+			reios_releasedate, reios_boot_filename, reios_software_company, reios_software_name);
 
 	return reios_product_number;
 }
@@ -391,14 +395,16 @@ static void reios_sys_gd2()
 
 static void reios_sys_misc()
 {
-	WARN_LOG(REIOS, "reios_sys_misc - r7: 0x%08X, r4 0x%08X, r5 0x%08X, r6 0x%08X", r[7], r[4], r[5], r[6]);
+	INFO_LOG(REIOS, "reios_sys_misc - r7: 0x%08X, r4 0x%08X, r5 0x%08X, r6 0x%08X", r[7], r[4], r[5], r[6]);
 	switch (r[4])
 	{
 	case 2:	// check disk
 		r[0] = 0;
+		// Reload part of IP.BIN bootstrap
+		libGDR_ReadSector(GetMemPtr(0x8c008100, 0), base_fad, 7, 2048);
 		break;
+
 	default:
-		r[0] = 0;
 		break;
 	}
 }
