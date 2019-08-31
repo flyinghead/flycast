@@ -29,7 +29,7 @@ static void GDROM_HLE_ReadSES()
 	u32 ba = gd_hle_state.params[2];
 	u32 bb = gd_hle_state.params[3];
 
-	WARN_LOG(REIOS, "GDROM_HLE_ReadSES: doing nothing w/ %d, %d, %d, %d", s, b, ba, bb);
+	INFO_LOG(REIOS, "GDROM_HLE_ReadSES: doing nothing w/ %d, %d, %d, %d", s, b, ba, bb);
 }
 
 static void GDROM_HLE_ReadTOC()
@@ -281,11 +281,11 @@ static void GD_HLE_Command(u32 cc)
 
 
 	case GDCC_PLAY_SECTOR:
-		WARN_LOG(REIOS, "GDROM: CMD PLAYSEC?");
+		INFO_LOG(REIOS, "GDROM: CMD PLAYSEC?");
 		break;
 
 	case GDCC_RELEASE:
-		WARN_LOG(REIOS, "GDROM: CMD RELEASE?");
+		INFO_LOG(REIOS, "GDROM: CMD RELEASE?");
 		break;
 
 	case GDCC_STOP:
@@ -331,7 +331,7 @@ static void GD_HLE_Command(u32 cc)
 			u32 sector = gd_hle_state.params[0];
 			u32 num = gd_hle_state.params[1];
 
-			WARN_LOG(REIOS, "GDROM: CMD READ Sector=%d, Num=%d", sector, num);
+			INFO_LOG(REIOS, "GDROM: CMD READ Sector=%d, Num=%d", sector, num);
 			gd_hle_state.status = BIOS_DATA_AVAIL;
 			gd_hle_state.multi_read_sector = sector;
 			gd_hle_state.multi_read_count = num * 2048;
@@ -460,7 +460,7 @@ static void GD_HLE_Command(u32 cc)
 			u32 num = gd_hle_state.params[1];
 			bool dma = cc == GDCC_MULTI_DMAREAD;
 
-			WARN_LOG(REIOS, "GDROM: MULTI_%sREAD Sector=%d, Num=%d", dma ? "DMA" : "PIO", sector, num);
+			INFO_LOG(REIOS, "GDROM: MULTI_%sREAD Sector=%d, Num=%d", dma ? "DMA" : "PIO", sector, num);
 
 			gd_hle_state.status = BIOS_DATA_AVAIL;
 			gd_hle_state.multi_read_sector = sector;
@@ -480,7 +480,7 @@ static void GD_HLE_Command(u32 cc)
 			u32 dest = gd_hle_state.params[0];
 			u32 size = gd_hle_state.params[1];
 			bool dma = cc == GDCC_REQ_DMA_TRANS;
-			WARN_LOG(REIOS, "GDROM: REQ_%s_TRANS dest %x size %x", dma ? "DMA" : "PIO",
+			INFO_LOG(REIOS, "GDROM: REQ_%s_TRANS dest %x size %x", dma ? "DMA" : "PIO",
 					dest, size);
 			if (dma)
 				multi_xfer<true>();
@@ -672,7 +672,7 @@ void gdrom_hle_op()
 			//	3 	Sector size in bytes (normally 2048)
 			//
 			// Returns: zero if successful, -1 if failure
-			WARN_LOG(REIOS, "GDROM: HLE GDROM_SECTOR_MODE PTR_r4:%X",r[4]);
+			INFO_LOG(REIOS, "GDROM: HLE GDROM_SECTOR_MODE PTR_r4:%X",r[4]);
 			for(int i=0; i<4; i++) {
 				SecMode[i] = ReadMem32(r[4]+(i<<2));
 				INFO_LOG(REIOS, "%08X", SecMode[i]);
@@ -681,7 +681,7 @@ void gdrom_hle_op()
 			break;
 
 		case GDROM_G1_DMA_END:
-			WARN_LOG(REIOS, "GDROM: G1_DMA_END callback %x arg %x", r[4], r[5]);
+			INFO_LOG(REIOS, "GDROM: G1_DMA_END callback %x arg %x", r[4], r[5]);
 			gd_hle_state.multi_callback = r[4];
 			gd_hle_state.multi_callback_arg = r[5];
 			r[0] = 0;
@@ -696,7 +696,7 @@ void gdrom_hle_op()
 		case GDROM_REQ_DMA_TRANS:
 			gd_hle_state.params[0] = ReadMem32(r[5]);
 			gd_hle_state.params[1] = ReadMem32(r[5] + 4);
-			WARN_LOG(REIOS, "GDROM: REQ_DMA_TRANS req_id %x dest %x size %x",
+			INFO_LOG(REIOS, "GDROM: REQ_DMA_TRANS req_id %x dest %x size %x",
 					r[4], gd_hle_state.params[0], gd_hle_state.params[1]);
 
 			if (gd_hle_state.status != BIOS_DATA_AVAIL || gd_hle_state.params[1] > gd_hle_state.multi_read_count)
@@ -713,7 +713,7 @@ void gdrom_hle_op()
 		case GDROM_REQ_PIO_TRANS:
 			gd_hle_state.params[0] = ReadMem32(r[5]);
 			gd_hle_state.params[1] = ReadMem32(r[5] + 4);
-			WARN_LOG(REIOS, "GDROM: REQ_PIO_TRANS req_id %x dest %x size %x",
+			INFO_LOG(REIOS, "GDROM: REQ_PIO_TRANS req_id %x dest %x size %x",
 					r[4], gd_hle_state.params[0], gd_hle_state.params[1]);
 			if (gd_hle_state.status != BIOS_DATA_AVAIL || gd_hle_state.params[1] > gd_hle_state.multi_read_count)
 			{
@@ -729,7 +729,7 @@ void gdrom_hle_op()
 		case GDROM_CHECK_DMA_TRANS:
 			{
 				u32 len_addr = r[5];
-				WARN_LOG(REIOS, "GDROM: CHECK_DMA_TRANS req_id %x len_addr %x -> %x", r[4], len_addr, gd_hle_state.multi_read_count);
+				INFO_LOG(REIOS, "GDROM: CHECK_DMA_TRANS req_id %x len_addr %x -> %x", r[4], len_addr, gd_hle_state.multi_read_count);
 				if (gd_hle_state.status == BIOS_DATA_AVAIL)
 				{
 					WriteMem32(len_addr, gd_hle_state.multi_read_count);
@@ -743,7 +743,7 @@ void gdrom_hle_op()
 			break;
 
 		case GDROM_SET_PIO_CALLBACK:
-			WARN_LOG(REIOS, "GDROM: SET_PIO_CALLBACK callback %x arg %x", r[4], r[5]);
+			INFO_LOG(REIOS, "GDROM: SET_PIO_CALLBACK callback %x arg %x", r[4], r[5]);
 			gd_hle_state.multi_callback = r[4];
 			gd_hle_state.multi_callback_arg = r[5];
 			r[0] = 0;
@@ -752,7 +752,7 @@ void gdrom_hle_op()
 		case GDROM_CHECK_PIO_TRANS:
 			{
 				u32 len_addr = r[5];
-				WARN_LOG(REIOS, "GDROM: CHECK_PIO_TRANS req_id %x len_addr %x -> %x", r[4], len_addr, gd_hle_state.multi_read_count);
+				INFO_LOG(REIOS, "GDROM: CHECK_PIO_TRANS req_id %x len_addr %x -> %x", r[4], len_addr, gd_hle_state.multi_read_count);
 				if (gd_hle_state.status == BIOS_DATA_AVAIL)
 				{
 					WriteMem32(len_addr, gd_hle_state.multi_read_count);
