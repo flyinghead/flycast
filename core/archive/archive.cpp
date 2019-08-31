@@ -20,8 +20,8 @@
  */
 
 #include "archive.h"
-#include "7zArchive.h"
 #ifndef _MSC_VER
+#include "7zArchive.h"
 #include "ZipArchive.h"
 #endif
 
