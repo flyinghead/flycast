@@ -103,20 +103,12 @@ static void add_isp_to_nvmem(DCFlashChip *flash)
 	}
 }
 
-static bool nvmem_load(const string& root)
+void FixUpFlash()
 {
-	bool rc;
-	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
-		rc = sys_nvmem->Load(root, getRomPrefix(), "%nvmem.bin;%flash_wb.bin;%flash.bin;%flash.bin.bin", "nvram");
-	else
-		rc = sys_nvmem->Load(get_game_save_prefix() + ".nvmem");
-	if (!rc)
-		INFO_LOG(FLASHROM, "flash/nvmem is missing, will create new file...");
-	
 	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
 	{
 		static_cast<DCFlashChip*>(sys_nvmem)->Validate();
-		
+
 		// overwrite factory flash settings
 		if (settings.dreamcast.region <= 2)
 		{
@@ -133,11 +125,11 @@ static bool nvmem_load(const string& root)
 			sys_nvmem->data[0x1a004] = '0' + settings.dreamcast.broadcast;
 			sys_nvmem->data[0x1a0a4] = '0' + settings.dreamcast.broadcast;
 		}
-		
+
 		// overwrite user settings
 		struct flash_syscfg_block syscfg;
 		int res = static_cast<DCFlashChip*>(sys_nvmem)->ReadBlock(FLASH_PT_USER, FLASH_USER_SYSCFG, &syscfg);
-		
+
 		if (!res)
 		{
 			// write out default settings
@@ -153,12 +145,23 @@ static bool nvmem_load(const string& root)
 		syscfg.time_hi = time >> 16;
 		if (settings.dreamcast.language <= 5)
 			syscfg.lang = settings.dreamcast.language;
-		
+
 		if (static_cast<DCFlashChip*>(sys_nvmem)->WriteBlock(FLASH_PT_USER, FLASH_USER_SYSCFG, &syscfg) != 1)
 			WARN_LOG(FLASHROM, "Failed to save time and language to flash RAM");
 
 		add_isp_to_nvmem(static_cast<DCFlashChip*>(sys_nvmem));
 	}
+}
+
+static bool nvmem_load(const string& root)
+{
+	bool rc;
+	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
+		rc = sys_nvmem->Load(root, getRomPrefix(), "%nvmem.bin;%flash_wb.bin;%flash.bin;%flash.bin.bin", "nvram");
+	else
+		rc = sys_nvmem->Load(get_game_save_prefix() + ".nvmem");
+	if (!rc)
+		INFO_LOG(FLASHROM, "flash/nvmem is missing, will create new file...");
 	
 	if (settings.platform.system == DC_PLATFORM_ATOMISWAVE)
 		sys_rom->Load(get_game_save_prefix() + ".nvmem2");
@@ -207,15 +210,15 @@ bool LoadHle(const string& root)
 	return reios_init(sys_rom->data, sys_nvmem);
 }
 
-u32 ReadFlash(u32 addr,u32 sz) { return sys_nvmem->Read(addr,sz); }
-void WriteFlash(u32 addr,u32 data,u32 sz) { sys_nvmem->Write(addr,data,sz); }
+static u32 ReadFlash(u32 addr,u32 sz) { return sys_nvmem->Read(addr,sz); }
+static void WriteFlash(u32 addr,u32 data,u32 sz) { sys_nvmem->Write(addr,data,sz); }
 
-u32 ReadBios(u32 addr,u32 sz)
+static u32 ReadBios(u32 addr,u32 sz)
 {
 	return sys_rom->Read(addr, sz);
 }
 
-void WriteBios(u32 addr,u32 data,u32 sz)
+static void WriteBios(u32 addr,u32 data,u32 sz)
 {
 	if (settings.platform.system == DC_PLATFORM_ATOMISWAVE)
 	{
@@ -484,7 +487,7 @@ void sh4_area0_Term()
 
 
 //AREA 0
-_vmem_handler area0_handler;
+static _vmem_handler area0_handler;
 
 
 void map_area0_init()

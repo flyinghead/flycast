@@ -650,7 +650,11 @@ private:
 			phys_id++;
 		}
 
-		verify(phys_id < phys_end);
+		if (phys_id >= phys_end)
+		{
+			WARN_LOG(FLASHROM, "Cannot allocate block in flash. Full?");
+			return 0;
+		}
 
 		// mark the block as allocated
 		set_allocated(bitmap, phys_id);

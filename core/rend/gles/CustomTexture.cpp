@@ -82,7 +82,7 @@ void CustomTexture::LoaderThread()
 
 std::string CustomTexture::GetGameId()
 {
-   std::string game_id = reios_product_number;
+   std::string game_id(ip_meta.product_number, sizeof(ip_meta.product_number));
    const size_t str_end = game_id.find_last_not_of(" ");
    if (str_end == std::string::npos)
 	  return "";

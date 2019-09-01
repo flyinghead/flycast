@@ -630,7 +630,7 @@ void gdrom_hle_op()
 			//
 			// Returns: zero if successful, nonzero if failure
 			WriteMem32(r[4] + 0, (gd_hle_state.status == BIOS_DATA_AVAIL || SecNumber.Status == GD_PLAY) ? 3 : 1);
-			if (strstr(reios_device_info, "GD-ROM") != NULL)
+			if (memcmp(ip_meta.disk_type, "GD-ROM", sizeof(ip_meta.disk_type)) == 0)
 				WriteMem32(r[4] + 4, GdRom);
 			else
 				WriteMem32(r[4] + 4, libGDR_GetDiscType());

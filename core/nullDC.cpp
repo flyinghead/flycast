@@ -38,6 +38,8 @@ static bool safemode_game;
 static bool tr_poly_depth_mask_game;
 static bool extra_depth_game;
 static bool disable_vmem32_game;
+static int forced_game_region = -1;
+static int forced_game_cable = -1;
 
 cThread emu_thread(&dc_run, NULL);
 
@@ -133,15 +135,20 @@ void LoadSpecialSettings()
 {
 	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
 	{
-		INFO_LOG(BOOT, "Game ID is [%s]", reios_product_number);
+		char prod_id[sizeof(ip_meta.product_number) + 1] = {0};
+		memcpy(prod_id, ip_meta.product_number, sizeof(ip_meta.product_number));
+
+		NOTICE_LOG(BOOT, "Game ID is [%s]", prod_id);
 		rtt_to_buffer_game = false;
 		safemode_game = false;
 		tr_poly_depth_mask_game = false;
 		extra_depth_game = false;
 		disable_vmem32_game = false;
+		forced_game_region = -1;
+		forced_game_cable = -1;
 
-		if (reios_windows_ce || settings.dreamcast.ForceWindowsCE
-				|| !strncmp("T26702N", reios_product_number, 7)) // PBA Tour Bowling 2001
+		if (ip_meta.isWindowsCE() || settings.dreamcast.ForceWindowsCE
+				|| !strncmp("T26702N", prod_id, 7)) // PBA Tour Bowling 2001
 		{
 			INFO_LOG(BOOT, "Enabling Full MMU and Extra depth scaling for Windows CE game");
 			settings.rend.ExtraDepthScale = 0.1;
@@ -151,98 +158,151 @@ void LoadSpecialSettings()
 		}
 
 		// Tony Hawk's Pro Skater 2
-		if (!strncmp("T13008D", reios_product_number, 7) || !strncmp("T13006N", reios_product_number, 7)
+		if (!strncmp("T13008D", prod_id, 7) || !strncmp("T13006N", prod_id, 7)
 				// Tony Hawk's Pro Skater 1
-				|| !strncmp("T40205N", reios_product_number, 7)
+				|| !strncmp("T40205N", prod_id, 7)
 				// Tony Hawk's Skateboarding
-				|| !strncmp("T40204D", reios_product_number, 7)
+				|| !strncmp("T40204D", prod_id, 7)
 				// Skies of Arcadia
-				|| !strncmp("MK-51052", reios_product_number, 8)
+				|| !strncmp("MK-51052", prod_id, 8)
 				// Eternal Arcadia (JP)
-				|| !strncmp("HDR-0076", reios_product_number, 8)
+				|| !strncmp("HDR-0076", prod_id, 8)
 				// Flag to Flag (US)
-				|| !strncmp("MK-51007", reios_product_number, 8)
+				|| !strncmp("MK-51007", prod_id, 8)
 				// Super Speed Racing (JP)
-				|| !strncmp("HDR-0013", reios_product_number, 8)
+				|| !strncmp("HDR-0013", prod_id, 8)
 				// Yu Suzuki Game Works Vol. 1
-				|| !strncmp("6108099", reios_product_number, 7)
+				|| !strncmp("6108099", prod_id, 7)
 				// L.O.L
-				|| !strncmp("T2106M", reios_product_number, 6)
+				|| !strncmp("T2106M", prod_id, 6)
 				// Miss Moonlight
-				|| !strncmp("T18702M", reios_product_number, 7)
+				|| !strncmp("T18702M", prod_id, 7)
 				// Tom Clancy's Rainbow Six (US)
-				|| !strncmp("T40401N", reios_product_number, 7)
+				|| !strncmp("T40401N", prod_id, 7)
 				// Tom Clancy's Rainbow Six incl. Eagle Watch Missions (EU)
-				|| !strncmp("T-45001D05", reios_product_number, 10))
+				|| !strncmp("T-45001D05", prod_id, 10))
 		{
+			INFO_LOG(BOOT, "Enabling render to texture buffer for game %s", prod_id);
 			settings.rend.RenderToTextureBuffer = 1;
 			rtt_to_buffer_game = true;
 		}
-		if (!strncmp("HDR-0176", reios_product_number, 8) || !strncmp("RDC-0057", reios_product_number, 8))
+		if (!strncmp("HDR-0176", prod_id, 8) || !strncmp("RDC-0057", prod_id, 8))
 		{
+			INFO_LOG(BOOT, "Enabling translucent depth multipass for game %s", prod_id);
 			// Cosmic Smash
 			settings.rend.TranslucentPolygonDepthMask = 1;
 			tr_poly_depth_mask_game = true;
 		}
 		// Demolition Racer
-		if (!strncmp("T15112N", reios_product_number, 7)
+		if (!strncmp("T15112N", prod_id, 7)
 				// Ducati World - Racing Challenge (NTSC)
-				|| !strncmp("T-8113N", reios_product_number, 7)
+				|| !strncmp("T-8113N", prod_id, 7)
 				// Ducati World (PAL)
-				|| !strncmp("T-8121D-50", reios_product_number, 10))
+				|| !strncmp("T-8121D-50", prod_id, 10))
 		{
-			INFO_LOG(BOOT, "Enabling Dynarec safe mode for game %s", reios_product_number);
+			INFO_LOG(BOOT, "Enabling Dynarec safe mode for game %s", prod_id);
 			settings.dynarec.safemode = 1;
 			safemode_game = true;
 		}
 		// NHL 2K2
-		if (!strncmp("MK-51182", reios_product_number, 8))
+		if (!strncmp("MK-51182", prod_id, 8))
 		{
-			INFO_LOG(BOOT, "Enabling Extra depth scaling for game %s", reios_product_number);
+			INFO_LOG(BOOT, "Enabling Extra depth scaling for game %s", prod_id);
 			settings.rend.ExtraDepthScale = 10000;
 			extra_depth_game = true;
 		}
 		// Re-Volt (US, EU)
-		else if (!strncmp("T-8109N", reios_product_number, 7) || !strncmp("T8107D  50", reios_product_number, 10))
+		else if (!strncmp("T-8109N", prod_id, 7) || !strncmp("T8107D  50", prod_id, 10))
 		{
-			INFO_LOG(BOOT, "Enabling Extra depth scaling for game %s", reios_product_number);
+			INFO_LOG(BOOT, "Enabling Extra depth scaling for game %s", prod_id);
 			settings.rend.ExtraDepthScale = 100;
 			extra_depth_game = true;
 		}
 		// Super Producers
-		if (!strncmp("T14303M", reios_product_number, 7)
+		if (!strncmp("T14303M", prod_id, 7)
 			// Giant Killers
-			|| !strncmp("T45401D 50", reios_product_number, 10)
+			|| !strncmp("T45401D 50", prod_id, 10)
 			// Wild Metal (US)
-			|| !strncmp("T42101N 00", reios_product_number, 10)
+			|| !strncmp("T42101N 00", prod_id, 10)
 			// Wild Metal (EU)
-			|| !strncmp("T40501D-50", reios_product_number, 10)
+			|| !strncmp("T40501D-50", prod_id, 10)
 			// Resident Evil 2 (US)
-			|| !strncmp("T1205N", reios_product_number, 6)
+			|| !strncmp("T1205N", prod_id, 6)
 			// Resident Evil 2 (EU)
-			|| !strncmp("T7004D  50", reios_product_number, 10)
+			|| !strncmp("T7004D  50", prod_id, 10)
 			// Rune Jade
-			|| !strncmp("T14304M", reios_product_number, 7)
+			|| !strncmp("T14304M", prod_id, 7)
 			// Marionette Company
-			|| !strncmp("T5202M", reios_product_number, 6)
+			|| !strncmp("T5202M", prod_id, 6)
 			// Marionette Company 2
-			|| !strncmp("T5203M", reios_product_number, 6)
+			|| !strncmp("T5203M", prod_id, 6)
 			// Maximum Pool (for online support)
-			|| !strncmp("T11010N", reios_product_number, 7)
+			|| !strncmp("T11010N", prod_id, 7)
 			// StarLancer (US) (for online support)
-			|| !strncmp("T40209N", reios_product_number, 7)
+			|| !strncmp("T40209N", prod_id, 7)
 			// StarLancer (EU) (for online support)
-			|| !strncmp("T17723D 05", reios_product_number, 10)
+			|| !strncmp("T17723D 05", prod_id, 10)
 			)
 		{
-			INFO_LOG(BOOT, "Disabling 32-bit virtual memory for game %s", reios_product_number);
+			INFO_LOG(BOOT, "Disabling 32-bit virtual memory for game %s", prod_id);
 			settings.dynarec.disable_vmem32 = true;
 			disable_vmem32_game = true;
+		}
+		std::string areas(ip_meta.area_symbols, sizeof(ip_meta.area_symbols));
+		bool region_usa = areas.find('U') != std::string::npos;
+		bool region_eu = areas.find('E') != std::string::npos;
+		bool region_japan = areas.find('J') != std::string::npos;
+		if (region_usa || region_eu || region_japan)
+		{
+			switch (settings.dreamcast.region)
+			{
+			case 0: // Japan
+				if (!region_japan)
+				{
+					NOTICE_LOG(BOOT, "Japan region not supported. Using %s instead", region_usa ? "USA" : "Europe");
+					settings.dreamcast.region = region_usa ? 1 : 2;
+					forced_game_region = settings.dreamcast.region;
+				}
+				break;
+			case 1: // USA
+				if (!region_usa)
+				{
+					NOTICE_LOG(BOOT, "USA region not supported. Using %s instead", region_eu ? "Europe" : "Japan");
+					settings.dreamcast.region = region_eu ? 2 : 0;
+					forced_game_region = settings.dreamcast.region;
+				}
+				break;
+			case 2: // Europe
+				if (!region_eu)
+				{
+					NOTICE_LOG(BOOT, "Europe region not supported. Using %s instead", region_usa ? "USA" : "Japan");
+					settings.dreamcast.region = region_usa ? 1 : 0;
+					forced_game_region = settings.dreamcast.region;
+				}
+				break;
+			case 3: // Default
+				if (region_usa)
+					settings.dreamcast.region = 1;
+				else if (region_eu)
+					settings.dreamcast.region = 2;
+				else
+					settings.dreamcast.region = 0;
+				forced_game_region = settings.dreamcast.region;
+				break;
+			}
+		}
+		else
+			WARN_LOG(BOOT, "No region specified in IP.BIN");
+		if (settings.dreamcast.cable <= 1 && !ip_meta.supportsVGA())
+		{
+			NOTICE_LOG(BOOT, "Game doesn't support VGA. Using TV Composite instead");
+			settings.dreamcast.cable = 3;
+			forced_game_cable = settings.dreamcast.cable;
 		}
 	}
 	else if (settings.platform.system == DC_PLATFORM_NAOMI || settings.platform.system == DC_PLATFORM_ATOMISWAVE)
 	{
-		INFO_LOG(BOOT, "Game ID is [%s]", naomi_game_id);
+		NOTICE_LOG(BOOT, "Game ID is [%s]", naomi_game_id);
 
 		if (!strcmp("METAL SLUG 6", naomi_game_id) || !strcmp("WAVE RUNNER GP", naomi_game_id))
 		{
@@ -491,6 +551,7 @@ void dc_start_game(const char *path)
 			if (DiscSwap())
 				LoadCustom();
 		}
+		FixUpFlash();
 	}
 	else if (settings.platform.system == DC_PLATFORM_NAOMI || settings.platform.system == DC_PLATFORM_ATOMISWAVE)
 	{
@@ -787,7 +848,11 @@ void LoadCustom()
 	char *reios_id;
 	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
 	{
-		reios_id = reios_disk_id();
+		static char _disk_id[sizeof(ip_meta.product_number) + 1];
+
+		reios_disk_id();
+		memcpy(_disk_id, ip_meta.product_number, sizeof(ip_meta.product_number));
+		reios_id = _disk_id;
 
 		char *p = reios_id + strlen(reios_id) - 1;
 		while (p >= reios_id && *p == ' ')
@@ -813,8 +878,10 @@ void LoadCustom()
 void SaveSettings()
 {
 	cfgSaveBool("config", "Dynarec.Enabled", settings.dynarec.Enable);
-	cfgSaveInt("config", "Dreamcast.Cable", settings.dreamcast.cable);
-	cfgSaveInt("config", "Dreamcast.Region", settings.dreamcast.region);
+	if (forced_game_cable == -1 || forced_game_cable != settings.dreamcast.cable)
+		cfgSaveInt("config", "Dreamcast.Cable", settings.dreamcast.cable);
+	if (forced_game_region == -1 || forced_game_region != settings.dreamcast.region)
+		cfgSaveInt("config", "Dreamcast.Region", settings.dreamcast.region);
 	cfgSaveInt("config", "Dreamcast.Broadcast", settings.dreamcast.broadcast);
 	cfgSaveBool("config", "Dreamcast.ForceWindowsCE", settings.dreamcast.ForceWindowsCE);
 	cfgSaveBool("config", "Dynarec.idleskip", settings.dynarec.idleskip);

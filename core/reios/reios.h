@@ -12,11 +12,33 @@ void reios_term();
 
 void DYNACALL reios_trap(u32 op);
 
-char* reios_disk_id();
-extern char reios_device_info[17];
-extern char reios_software_name[129];
-extern char reios_product_number[11];
-extern bool reios_windows_ce;
+void reios_disk_id();
+
+struct ip_meta_t
+{
+	char hardware_id[16];
+	char maker_id[16];
+	char ks[5];
+	char disk_type[6];
+	char disk_num[5];
+	char area_symbols[8];
+	char ctrl[4];
+	char dev;
+	char vga;
+	char wince;
+	char _unk1;
+	char product_number[10];
+	char product_version[6];
+	char release_date[8];
+	char _unk2[8];
+	char boot_filename[16];
+	char software_company[16];
+	char software_name[128];
+
+	bool isWindowsCE() { return wince == '1' || memcmp("0WINCEOS.BIN", boot_filename, 12) == 0; }
+	bool supportsVGA() { return vga == '1'; }
+};
+extern ip_meta_t ip_meta;
 
 #define REIOS_OPCODE 0x085B
 
