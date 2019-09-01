@@ -288,8 +288,8 @@ int darw_printf(const wchar* Text,...);
 using namespace std;
 
 //used for asm-olny functions
-#if defined(X86) && defined(_MSC_VER)
-#define naked   __declspec( naked )
+#ifdef _M_IX86
+#define naked __declspec(naked)
 #else
 #define naked __attribute__((naked))
 #endif
