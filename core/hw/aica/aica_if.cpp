@@ -342,8 +342,6 @@ void aica_sb_Init()
 	//NRM
 	//6
 	sb_rio_register(SB_ADST_addr,RIO_WF,0,&Write_SB_ADST);
-	//sb_regs[((SB_ADST_addr-SB_BASE)>>2)].flags=REG_32BIT_READWRITE | REG_READ_DATA;
-	//sb_regs[((SB_ADST_addr-SB_BASE)>>2)].writeFunction=Write_SB_ADST;
 
 	//I really need to implement G2 dma (and rest dmas actually) properly
 	//THIS IS NOT AICA, its G2-EXT (BBA)
@@ -352,8 +350,6 @@ void aica_sb_Init()
 	sb_rio_register(SB_E2ST_addr,RIO_WF,0,&Write_SB_E2ST);
 	sb_rio_register(SB_DDST_addr,RIO_WF,0,&Write_SB_DDST);
 
-	//sb_regs[((SB_E1ST_addr-SB_BASE)>>2)].flags=REG_32BIT_READWRITE | REG_READ_DATA;
-	//sb_regs[((SB_E1ST_addr-SB_BASE)>>2)].writeFunction=Write_SB_E1ST;
 	dma_sched_id = sh4_sched_register(0, &dma_end_sched);
 }
 

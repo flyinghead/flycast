@@ -81,7 +81,7 @@ s32 libGDR_Init()
 {
 	libCore_gdrom_disc_change();
 	settings.imgread.PatchRegion = true;
-	return rv_ok;
+	return 0;
 }
 
 //called when exiting from sh4 thread , from the new thread context (for any thread specific init) :P

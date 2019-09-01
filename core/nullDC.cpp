@@ -109,7 +109,7 @@ s32 plugins_Init()
 	if (s32 rv = libARM_Init())
 		return rv;
 
-	return rv_ok;
+	return 0;
 }
 
 void plugins_Term()

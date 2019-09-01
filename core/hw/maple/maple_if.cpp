@@ -241,18 +241,7 @@ void maple_Init()
 {
 	sb_rio_register(SB_MDST_addr,RIO_WF,0,&maple_SB_MDST_Write);
 	sb_rio_register(SB_MDEN_addr,RIO_WF,0,&maple_SB_MDEN_Write);
-
-	/*
-	sb_regs[(SB_MDST_addr-SB_BASE)>>2].flags=REG_32BIT_READWRITE | REG_READ_DATA;
-	sb_regs[(SB_MDST_addr-SB_BASE)>>2].writeFunction=maple_SB_MDST_Write;
-	*/
-
 	sb_rio_register(SB_MSHTCL_addr,RIO_WF,0,&maple_SB_MSHTCL_Write);
-	
-	/*
-	sb_regs[(SB_MSHTCL_addr-SB_BASE)>>2].flags=REG_32BIT_READWRITE;
-	sb_regs[(SB_MSHTCL_addr-SB_BASE)>>2].writeFunction=maple_SB_MSHTCL_Write;
-	*/
 
 	maple_schid=sh4_sched_register(0,&maple_schd);
 }

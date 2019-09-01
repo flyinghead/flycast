@@ -613,10 +613,7 @@ void sb_Reset(bool hard)
 	if (hard)
 	{
 		for (u32 i = 0; i < sb_regs.Size; i++)
-		{
-			if (!(sb_regs[i].flags & (REG_RO|REG_WO|REG_RF)))
-				sb_regs[i].data32 = 0;
-		}
+			sb_regs[i].reset();
 	}
 	SB_ISTNRM = 0;
 	SB_FFST_rc = 0;

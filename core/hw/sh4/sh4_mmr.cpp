@@ -824,8 +824,34 @@ void sh4_mmr_init()
 	ubc_init();
 }
 
-void sh4_mmr_reset()
+void sh4_mmr_reset(bool hard)
 {
+	if (hard)
+	{
+		for (int i = 0; i < 30; i++)
+		{
+			if (i < CCN.Size)
+				CCN[i].reset();
+			if (i < UBC.Size)
+				UBC[i].reset();
+			if (i < BSC.Size)
+				BSC[i].reset();
+			if (i < DMAC.Size)
+				DMAC[i].reset();
+			if (i < CPG.Size)
+				CPG[i].reset();
+			if (i < RTC.Size)
+				RTC[i].reset();
+			if (i < INTC.Size)
+				INTC[i].reset();
+			if (i < TMU.Size)
+				TMU[i].reset();
+			if (i < SCI.Size)
+				SCI[i].reset();
+			if (i < SCIF.Size)
+				SCIF[i].reset();
+		}
+	}
 	OnChipRAM.Zero();
 	//Reset register values
 	bsc_reset();

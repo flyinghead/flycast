@@ -11,7 +11,7 @@ s32 libARM_Init()
 {
 	arm_Init();
 
-	return rv_ok;
+	return 0;
 }
 
 //called when plugin is unloaded by emu, only if dcInit is called (eg, not called to enumerate plugins)

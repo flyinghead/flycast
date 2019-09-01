@@ -8,6 +8,10 @@
 #include "types.h"
 #include "ConsoleListener.h"
 
+#ifndef LOG_TAG
+#define LOG_TAG   "flycast"
+#endif
+
 ConsoleListener::ConsoleListener()
 {
 }

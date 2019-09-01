@@ -35,7 +35,7 @@ void DYNACALL WriteMem_sq_32(u32 address,u32 data);*/
 
 //Init/Res/Term
 void sh4_mmr_init();
-void sh4_mmr_reset();
+void sh4_mmr_reset(bool hard);
 void sh4_mmr_term();
 
 void sh4_rio_reg(Array<RegisterStruct>& arr, u32 addr, RegIO flags, u32 sz, RegReadAddrFP* rp=0, RegWriteAddrFP* wp=0);

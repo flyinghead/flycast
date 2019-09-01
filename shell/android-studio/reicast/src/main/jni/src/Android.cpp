@@ -196,7 +196,6 @@ void os_SetupInput()
 
 void os_SetWindowText(char const *Text)
 {
-    putinf("%s",Text);
 }
 
 JNIEXPORT jstring JNICALL Java_com_reicast_emulator_emu_JNIdc_initEnvironment(JNIEnv *env, jobject obj, jobject emulator, jstring homeDirectory)

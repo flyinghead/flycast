@@ -4,6 +4,8 @@
 #include <initguid.h>
 #include <dsound.h>
 
+#define verifyc(x) verify(!FAILED(x))
+
 void* SoundThread(void* param);
 #define V2_BUFFERSZ (16*1024)
 
