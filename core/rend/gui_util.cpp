@@ -23,14 +23,12 @@
 #include <stdlib.h>
 #ifdef _MSC_VER
 #include <io.h>
-#include "dirent/dirent.h"
-#define S_ISDIR(mode) (((mode) & _S_IFMT) == _S_IFDIR)
 #define access _access
 #define R_OK   4
 #else
-#include <dirent.h>
 #include <unistd.h>
 #endif
+#include <dirent.h>
 #include <sys/stat.h>
 
 #include "types.h"
