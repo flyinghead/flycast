@@ -22,11 +22,7 @@
 #include <sstream>
 #include <sys/types.h>
 #include <sys/stat.h>
-#ifdef _MSC_VER
-#include "dirent/dirent.h"
-#else
 #include <dirent.h>
-#endif
 
 #include "deps/libpng/png.h"
 #include "reios/reios.h"

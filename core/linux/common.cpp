@@ -15,7 +15,7 @@
 #include <signal.h>
 #include <sys/param.h>
 #include <sys/time.h>
-#if !defined(TARGET_BSD) && !defined(__ANDROID__) && !defined(TARGET_IPHONE) && !defined(TARGET_OSX) && !defined(TARGET_OSX_X64)
+#if defined(__linux__) && !defined(__ANDROID__)
   #include <sys/personality.h>
   #include <dlfcn.h>
 #endif
@@ -175,11 +175,11 @@ void enable_runfast()
 }
 
 void linux_fix_personality() {
-        #if !defined(TARGET_BSD) && !defined(__ANDROID__) && !defined(TARGET_OS_MAC)
-          DEBUG_LOG(BOOT, "Personality: %08X", personality(0xFFFFFFFF));
-          personality(~READ_IMPLIES_EXEC & personality(0xFFFFFFFF));
-          DEBUG_LOG(BOOT, "Updated personality: %08X", personality(0xFFFFFFFF));
-        #endif
+#if defined(__linux__) && !defined(__ANDROID__)
+	DEBUG_LOG(BOOT, "Personality: %08X", personality(0xFFFFFFFF));
+	personality(~READ_IMPLIES_EXEC & personality(0xFFFFFFFF));
+	DEBUG_LOG(BOOT, "Updated personality: %08X", personality(0xFFFFFFFF));
+#endif
 }
 
 void linux_rpi2_init() {

@@ -18,12 +18,7 @@
  */
 #include <algorithm>
 #include <math.h>
-#ifdef _MSC_VER
-#include "dirent/dirent.h"
-#define S_ISDIR(mode) (((mode) & _S_IFMT) == _S_IFDIR)
-#else
 #include <dirent.h>
-#endif
 #include <sys/stat.h>
 
 #include "gui.h"

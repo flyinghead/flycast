@@ -45,7 +45,13 @@ inline int LeastSignificantSetBit(u32 val)
 inline int LeastSignificantSetBit(u64 val)
 {
   unsigned long index;
+#ifdef _WIN64
   _BitScanForward64(&index, val);
+#else
+  if (!_BitScanForward(&index, (u32)val) && _BitScanForward(&index, (u32)(val >> 32))) {
+    index += 32;
+  }
+#endif
   return (int)index;
 }
 #else

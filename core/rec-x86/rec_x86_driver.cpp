@@ -613,12 +613,12 @@ enum mem_op_type
 	SZ_64F,
 };
 
-static DYNACALL s32 ReadMem8SX32(u32 addr)
+static s32 DYNACALL ReadMem8SX32(u32 addr)
 {
 	return (s32)(s8)ReadMem8(addr);
 }
 
-static DYNACALL s32 ReadMem16SX32(u32 addr)
+static s32 DYNACALL ReadMem16SX32(u32 addr)
 {
 	return (s32)(s16)ReadMem16(addr);
 }

@@ -589,9 +589,6 @@
     <ClCompile Include="..\core\deps\imgui\imgui_widgets.cpp">
       <Filter>deps\imgui</Filter>
     </ClCompile>
-    <ClCompile Include="..\core\deps\dirent\dirent.c">
-      <Filter>deps\dirent</Filter>
-    </ClCompile>
     <ClCompile Include="..\core\input\gamepad_device.cpp">
       <Filter>input</Filter>
     </ClCompile>
