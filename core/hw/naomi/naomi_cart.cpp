@@ -152,7 +152,9 @@ static Game *FindGame(const char *filename)
 {
 	const char *p = strrchr(filename, '/');
 #ifdef _WIN32
-	p = strrchr(p == NULL ? filename : p, '\\');
+	 const char *p2 = strrchr(filename, '\\');
+	 if (p2 > p)
+		 p = p2;
 #endif
 	if (p == NULL)
 		p = filename;
