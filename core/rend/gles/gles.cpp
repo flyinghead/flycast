@@ -33,7 +33,7 @@ int fbdev = -1;
 #ifdef __ANDROID__
 #include <android/native_window.h> // requires ndk r5 or newer
 #endif
-#include "deps/libpng/png.h"
+#include <png.h>
 
 /*
 GL|ES 2

@@ -24,7 +24,7 @@
 #include <sys/stat.h>
 #include <dirent.h>
 
-#include "deps/libpng/png.h"
+#include <png.h>
 #include "reios/reios.h"
 
 void CustomTexture::LoaderThread()
