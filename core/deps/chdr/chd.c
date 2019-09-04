@@ -54,7 +54,7 @@
 #endif // CHD5_LZMA
 #include "deps/crypto/md5.h"
 #include "deps/crypto/sha1.h"
-#include "deps/zlib/zlib.h"
+#include <zlib.h>
 
 #define TRUE 1
 #define FALSE 0

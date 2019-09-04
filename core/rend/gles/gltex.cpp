@@ -3,9 +3,10 @@
 #include "rend/TexCache.h"
 #include "hw/pvr/pvr_mem.h"
 #include "hw/mem/_vmem.h"
-#include "deps/libpng/png.h"
 #include "deps/xxhash/xxhash.h"
 #include "CustomTexture.h"
+
+#include <png.h>
 
 /*
 Textures

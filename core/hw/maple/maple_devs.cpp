@@ -11,7 +11,7 @@
 #include <math.h>
 #include <time.h>
 
-#include "deps/zlib/zlib.h"
+#include <zlib.h>
 #include "deps/xxhash/xxhash.h"
 
 #define LOGJVS(...) DEBUG_LOG(JVS, __VA_ARGS__)

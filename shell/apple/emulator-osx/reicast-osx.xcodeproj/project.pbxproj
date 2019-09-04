@@ -2725,6 +2725,8 @@
 					"../../../core/deps/picotcp/**",
 					../../../core/deps/flac/include,
 					../../../core/deps/flac/src/libFLAC/include,
+					../../../core/deps/libpng,
+					../../../core/deps/zlib,
 					/usr/local/include,
 				);
 				INFOPLIST_FILE = "emulator-osx/Info.plist";
@@ -2765,6 +2767,8 @@
 					"../../../core/deps/picotcp/**",
 					../../../core/deps/flac/include,
 					../../../core/deps/flac/src/libFLAC/include,
+					../../../core/deps/libpng,
+					../../../core/deps/zlib,
 					/usr/local/include,
 				);
 				INFOPLIST_FILE = "emulator-osx/Info.plist";
@@ -2899,6 +2903,8 @@
 					"../../../core/deps/picotcp/**",
 					../../../core/deps/flac/include,
 					../../../core/deps/flac/src/libFLAC/include,
+					../../../core/deps/libpng,
+					../../../core/deps/zlib,
 					/usr/local/include,
 				);
 				INFOPLIST_FILE = "emulator-osx/Info.plist";
@@ -3011,6 +3017,8 @@
 					"../../../core/deps/picotcp/**",
 					../../../core/deps/flac/include,
 					../../../core/deps/flac/src/libFLAC/include,
+					../../../core/deps/libpng,
+					../../../core/deps/zlib,
 					/usr/local/include,
 				);
 				INFOPLIST_FILE = "emulator-osx/Info.plist";

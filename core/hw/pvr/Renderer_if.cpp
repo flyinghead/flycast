@@ -5,7 +5,7 @@
 #include "rend/gui.h"
 #include "hw/mem/_vmem.h"
 
-#include "deps/zlib/zlib.h"
+#include <zlib.h>
 
 #include "deps/crypto/md5.h"
 

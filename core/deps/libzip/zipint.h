@@ -34,7 +34,7 @@
   IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "zlib/zlib.h"
+#include <zlib.h>
 
 #ifdef _MSC_VER
 #define ZIP_EXTERN __declspec(dllimport)
