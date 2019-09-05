@@ -122,9 +122,6 @@ void AICADSP_Step(struct dsp_t *DSP)
 		else
 			INPUTS = 0;
 
-		INPUTS <<= 8;
-		INPUTS >>= 8;
-
 		if (IWT)
 		{
 			u32 IWA = (IPtr[1] >> 1) & 0x1F;
@@ -141,34 +138,28 @@ void AICADSP_Step(struct dsp_t *DSP)
 			if (BSEL)
 				B = ACC;
 			else
-			{
 				B = DSP->TEMP[(TRA + DSP->regs.MDEC_CT) & 0x7F];
-				B <<= 8;  //Sign extend
-				B >>= 8;
-			}
 			if (NEGB)
-				B = 0 - B;
+				B = -B;
 		}
 		else
+		{
 			B = 0;
+		}
 
 		// X
 		if (XSEL)
 			X = INPUTS;
 		else
-		{
 			X = DSP->TEMP[(TRA + DSP->regs.MDEC_CT) & 0x7F];
-			X <<= 8;
-			X >>= 8;
-		}
 
 		// Y
 		if (YSEL == 0)
 			Y = FRC_REG;
 		else if (YSEL == 1)
-			Y = DSPData->COEF[COEF] >> 3;	//COEF is 16 bits
+			Y = ((s32)(s16)DSPData->COEF[COEF]) >> 3;	//COEF is 16 bits
 		else if (YSEL == 2)
-			Y = (Y_REG >> 11) & 0x1FFF;
+			Y = Y_REG >> 11;
 		else if (YSEL == 3)
 			Y = (Y_REG >> 4) & 0x0FFF;
 
@@ -179,43 +170,31 @@ void AICADSP_Step(struct dsp_t *DSP)
 		// There's a 1-step delay at the output of the X*Y + B adder. So we use the ACC value from the previous step.
 		if (SHIFT == 0)
 		{
-			SHIFTED = ACC >> 2;				// 26 bits -> 24 bits
-			if (SHIFTED > 0x0007FFFF)
-				SHIFTED = 0x0007FFFF;
-			if (SHIFTED < (-0x00080000))
-				SHIFTED = -0x00080000;
+			SHIFTED = ACC;
+			if (SHIFTED > 0x007FFFFF)
+				SHIFTED = 0x007FFFFF;
+			if (SHIFTED < (-0x00800000))
+				SHIFTED = -0x00800000;
 		}
 		else if (SHIFT == 1)
 		{
-			SHIFTED = ACC >> 1;				// 26 bits -> 24 bits and x2 scale
-			if (SHIFTED > 0x0007FFFF)
-				SHIFTED = 0x0007FFFF;
-			if (SHIFTED < (-0x00080000))
-				SHIFTED = -0x00080000;
+			SHIFTED = ACC << 1;		// x2 scale
+			if (SHIFTED > 0x007FFFFF)
+				SHIFTED = 0x007FFFFF;
+			if (SHIFTED < (-0x00800000))
+				SHIFTED = -0x00800000;
 		}
 		else if (SHIFT == 2)
 		{
-			SHIFTED = ACC >> 1;
-			SHIFTED <<= 8;
-			SHIFTED >>= 8;
+			SHIFTED = ACC << 1;		// x2 scale
 		}
 		else if (SHIFT == 3)
 		{
-			SHIFTED = ACC >> 2;
-			SHIFTED <<= 8;
-			SHIFTED >>= 8;
+			SHIFTED = ACC;
 		}
 
 		// ACCUM
-		Y <<= 19;
-		Y >>= 19;
-
-		s64 v = ((s64)X * (s64)Y) >> 10;	// magic value from dynarec. 1 sign bit + 24-1 bits + 13-1 bits -> 26 bits?
-		v <<= 6;	// 26 bits only
-		v >>= 6;
-		ACC = v + B;
-		ACC <<= 6;	// 26 bits only
-		ACC >>= 6;
+		ACC = (((s64)X * (s64)Y) >> 12) + B;
 
 		if (TWT)
 		{
@@ -228,7 +207,7 @@ void AICADSP_Step(struct dsp_t *DSP)
 			if (SHIFT == 3)
 				FRC_REG = SHIFTED & 0x0FFF;
 			else
-				FRC_REG = (SHIFTED >> 11) & 0x1FFF;
+				FRC_REG = SHIFTED >> 11;
 		}
 
 		if (step & 1)
@@ -282,16 +261,15 @@ void AICADSP_Step(struct dsp_t *DSP)
 		if (ADRL)
 		{
 			if (SHIFT == 3)
-				ADRS_REG = (SHIFTED >> 12) & 0xFFF;
+				ADRS_REG = SHIFTED >> 12;
 			else
-				ADRS_REG = (INPUTS >> 16);
+				ADRS_REG = INPUTS >> 16;
 		}
 
 		if (EWT)
 		{
 			u32 EWA = (IPtr[2] >> 8) & 0x0F;
-			// 4 ????
-			DSPData->EFREG[EWA] += SHIFTED >> 4;	// dynarec uses = instead of +=
+			DSPData->EFREG[EWA] = SHIFTED >> 4;
 		}
 
 	}

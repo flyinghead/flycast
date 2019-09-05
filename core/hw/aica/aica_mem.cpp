@@ -95,6 +95,7 @@ void WriteReg(u32 addr,u32 data)
 			dsp_writenmem(addr);
 			dsp_writenmem(addr+1);
 		}
+		return;
 	}
 	if (sz==1)
 		WriteAicaReg<1>(addr,data);

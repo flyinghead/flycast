@@ -99,7 +99,7 @@ public:
 		Mov(ADRS_REG, 0);
 		Ldr(MDEC_CT, dsp_operand(&DSP->regs.MDEC_CT));
 
-#ifndef __ANDROID__
+#if 0
 		Instruction* instr_cur = GetBuffer()->GetEndAddress<Instruction*>();
 		DEBUG_LOG(AICA_ARM, "DSP PROLOGUE");
 		Disassemble(instr_start, instr_cur);
@@ -115,7 +115,6 @@ public:
 			if (op.XSEL || op.YRL || (op.ADRL && op.SHIFT != 3))
 			{
 				verify(op.IRA < 0x38);
-				bool sign_extend = true;
 				if (op.IRA <= 0x1f)
 					//INPUTS = DSP->MEMS[op.IRA];
 					Ldr(INPUTS, dsp_operand(DSP->MEMS, op.IRA));
@@ -134,12 +133,7 @@ public:
 				else
 				{
 					Mov(INPUTS, 0);
-					sign_extend = false;
 				}
-
-				// sign extend 24 bits
-				if (sign_extend)
-					Sbfiz(INPUTS, INPUTS, 0, 24);
 			}
 
 			if (op.IWT)
@@ -165,8 +159,6 @@ public:
 						Mov(w1, MDEC_CT);
 					Bfc(w1, 7, 25);
 					Ldr(B, dsp_operand(DSP->TEMP, x1));
-					// sign extend 24 bits
-					Sbfiz(B, B, 0, 24);
 				}
 				if (op.NEGB)
 					//B = 0 - B;
@@ -190,8 +182,6 @@ public:
 					Mov(w1, MDEC_CT);
 				Bfc(w1, 7, 25);
 				Ldr(X, dsp_operand(DSP->TEMP, x1));
-				// sign extend 24 bits
-				Sbfiz(X, X, 0, 24);
 			}
 
 			// Y
@@ -199,9 +189,6 @@ public:
 			{
 				//Y = FRC_REG;
 				Mov(Y, FRC_REG);
-				//Y <<= 19;
-				//Y >>= 19;
-				// FRC_REG has 13 bits
 			}
 			else if (op.YSEL == 1)
 			{
@@ -210,8 +197,8 @@ public:
 				Sbfx(Y, Y, 3, 13);
 			}
 			else if (op.YSEL == 2)
-				//Y = (Y_REG >> 11) & 0x1FFF;
-				Sbfx(Y, Y_REG, 11, 13);
+				//Y = Y_REG >> 11;
+				Asr(Y, Y_REG, 11);
 			else if (op.YSEL == 3)
 				//Y = (Y_REG >> 4) & 0x0FFF;
 				Sbfx(Y, Y_REG, 4, 12);
@@ -226,21 +213,19 @@ public:
 				// There's a 1-step delay at the output of the X*Y + B adder. So we use the ACC value from the previous step.
 				if (op.SHIFT == 0)
 				{
-					//SHIFTED = ACC >> 2;				// 26 bits -> 24 bits
-					Asr(SHIFTED, ACC, 2);
-					// SHIFTED = clamp(SHIFTED, -0x80000, 0x7FFFF)
+					// SHIFTED = clamp(ACC, -0x80000, 0x7FFFF)
 					Mov(w0, 0x80000);
 					Neg(w1, w0);
-					Cmp(SHIFTED, w1);
-					Csel(SHIFTED, w1, SHIFTED, lt);
+					Cmp(ACC, w1);
+					Csel(SHIFTED, w1, ACC, lt);
 					Sub(w0, w0, 1);
 					Cmp(SHIFTED, w0);
 					Csel(SHIFTED, w0, SHIFTED, gt);
 				}
 				else if (op.SHIFT == 1)
 				{
-					//SHIFTED = ACC >> 1;				// 26 bits -> 24 bits and x2 scale
-					Asr(SHIFTED, ACC, 1);
+					//SHIFTED = ACC << 1;	// x2 scale
+					Lsl(SHIFTED, ACC, 1);
 					// SHIFTED = clamp(SHIFTED, -0x80000, 0x7FFFF)
 					Mov(w0, 0x80000);
 					Neg(w1, w0);
@@ -252,40 +237,28 @@ public:
 				}
 				else if (op.SHIFT == 2)
 				{
-					//SHIFTED = ACC >> 1;
-					Asr(SHIFTED, ACC, 1);
-
-					// sign extend 24 bits
-					Sbfiz(SHIFTED, SHIFTED, 0, 24);
+					//SHIFTED = ACC << 1;	// x2 scale
+					Lsl(SHIFTED, ACC, 1);
 				}
 				else if (op.SHIFT == 3)
 				{
-					//SHIFTED = ACC >> 2;
-					Asr(SHIFTED, ACC, 2);
-					// sign extend 24 bits
-					Sbfiz(SHIFTED, SHIFTED, 0, 24);
+					//SHIFTED = ACC;
+					Mov(SHIFTED, ACC);
 				}
 			}
 
 			// ACCUM
-			//s64 v = ((s64)X * (s64)Y) >> 10;	// magic value from dynarec. 1 sign bit + 24-1 bits + 13-1 bits -> 26 bits?
+			//ACC = (((s64)X * (s64)Y) >> 12) + B;
 			const Register& X64 = Register::GetXRegFromCode(X_alias->GetCode());
 			const Register& Y64 = Register::GetXRegFromCode(Y.GetCode());
 			Sxtw(X64, *X_alias);
 			Sxtw(Y64, Y);
 			Mul(x0, X64, Y64);
-			Asr(x0, x0, 10);
-			// sign extend 26 bits
+			Asr(x0, x0, 12);
 			if (op.ZERO)
-				Sbfiz(ACC, w0, 0, 26);
+				Mov(ACC, w0);
 			else
-			{
-				Sbfiz(w0, w0, 0, 26);
-				//ACC = v + B;
 				Add(ACC, w0, B);
-				// sign extend 26 bits
-				Sbfiz(ACC, ACC, 0, 26);
-			}
 
 			if (op.TWT)
 			{
@@ -304,8 +277,8 @@ public:
 					//FRC_REG = SHIFTED & 0x0FFF;
 					Ubfx(FRC_REG, SHIFTED, 0, 12);
 				else
-					//FRC_REG = (SHIFTED >> 11) & 0x1FFF;
-					Ubfx(FRC_REG, SHIFTED, 11, 13);
+					//FRC_REG = SHIFTED >> 11;
+					Asr(FRC_REG, SHIFTED, 11);
 			}
 
 			if (step & 1)
@@ -339,24 +312,21 @@ public:
 			if (op.ADRL)
 			{
 				if (op.SHIFT == 3)
-					//ADRS_REG = (SHIFTED >> 12) & 0xFFF;
-					Ubfx(ADRS_REG, SHIFTED, 12, 12);
+					//ADRS_REG = SHIFTED >> 12;
+					Asr(ADRS_REG, SHIFTED, 12);
 				else
-					//ADRS_REG = (INPUTS >> 16);
-					Ubfx(ADRS_REG, INPUTS, 16, 16);
+					//ADRS_REG = INPUTS >> 16;
+					Asr(ADRS_REG, INPUTS, 16);
 			}
 
 			if (op.EWT)
 			{
-				// 4 ????
-				//DSPData->EFREG[op.EWA] += SHIFTED >> 4;	// x86 dynarec uses = instead of +=
+				//DSPData->EFREG[op.EWA] = SHIFTED >> 4;
 				MemOperand mem_operand = dspdata_operand(DSPData->EFREG, op.EWA);
-				Ldr(w1, mem_operand);
-				Asr(w2, SHIFTED, 4);
-				Add(w1, w1, w2);
+				Asr(w1, SHIFTED, 4);
 				Str(w1, mem_operand);
 			}
-#ifndef __ANDROID__
+#if 0
 			instr_cur = GetBuffer()->GetEndAddress<Instruction*>();
 			DEBUG_LOG(AICA_ARM, "DSP STEP %d: %04x %04x %04x %04x", step, mpro[0], mpro[1], mpro[2], mpro[3]);
 			Disassemble(instr_start, instr_cur);
@@ -378,7 +348,7 @@ public:
 		Ldp(x19, x20, MemOperand(sp, 80));
 		Ldp(x29, x30, MemOperand(sp, 96, PostIndex));
 		Ret();
-#ifndef __ANDROID__
+#if 0
 		instr_cur = GetBuffer()->GetEndAddress<Instruction*>();
 		DEBUG_LOG(AICA_ARM, "DSP EPILOGUE");
 		Disassemble(instr_start, instr_cur);
@@ -534,9 +504,7 @@ void dsp_step()
 		dsp_recompile();
 	}
 
-#ifdef __ANDROID__
 	((void (*)())&dsp.DynCode)();
-#endif
 }
 
 void dsp_writenmem(u32 addr)
