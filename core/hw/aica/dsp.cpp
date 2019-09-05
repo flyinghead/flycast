@@ -39,10 +39,10 @@ u16 DYNACALL PACK(s32 val)
 		exponent += 1;
 	}
 	if (exponent < 12)
-		val = (val << exponent) & 0x3FFFFF;
+		val <<= exponent;
 	else
 		val <<= 11;
-	val >>= 11;
+	val = (val >> 11) & 0x7FF;	// avoid sign extension of mantissa
 	val |= sign << 15;
 	val |= exponent << 11;
 
@@ -58,11 +58,12 @@ s32 DYNACALL UNPACK(u16 val)
 	exponent = (val >> 11) & 0xF;
 	mantissa = val & 0x7FF;
 	uval = mantissa << 11;
+	uval |= sign << 22;		// take the sign in bit 22
 	if (exponent > 11)
-		exponent = 11;
+		exponent = 11;		// cap exponent to 11 for denormals
 	else
-		uval |= (sign ^ 1) << 22;
-	uval |= sign << 23;
+		uval ^= 1 << 22;	// reverse bit 22 for normals
+	uval |= sign << 23;		// actual sign bit
 	uval <<= 8;
 	uval >>= 8;
 	uval >>= exponent;
