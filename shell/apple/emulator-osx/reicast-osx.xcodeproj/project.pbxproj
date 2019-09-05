@@ -207,7 +207,6 @@
 		AE43537322C9420C005E19CE /* ConsoleListenerNix.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE43536C22C9420C005E19CE /* ConsoleListenerNix.cpp */; };
 		AE43537422C9420C005E19CE /* ConsoleListenerWin.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE43536D22C9420C005E19CE /* ConsoleListenerWin.cpp */; };
 		AE43537522C9420C005E19CE /* LogManager.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE43536F22C9420C005E19CE /* LogManager.cpp */; };
-		AE649BB62188689000EF4A81 /* xxhash.c in Sources */ = {isa = PBXBuildFile; fileRef = AE649BB42188689000EF4A81 /* xxhash.c */; };
 		AE649BF3218C552500EF4A81 /* bitmath.c in Sources */ = {isa = PBXBuildFile; fileRef = AE649BCD218C552500EF4A81 /* bitmath.c */; };
 		AE649BF4218C552500EF4A81 /* bitreader.c in Sources */ = {isa = PBXBuildFile; fileRef = AE649BCE218C552500EF4A81 /* bitreader.c */; };
 		AE649BF5218C552500EF4A81 /* cpu.c in Sources */ = {isa = PBXBuildFile; fileRef = AE649BCF218C552500EF4A81 /* cpu.c */; };
@@ -688,8 +687,6 @@
 		AE43537122C9420C005E19CE /* StringUtil.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = StringUtil.h; sourceTree = "<group>"; };
 		AE60BD9F22256E2500FA8A5B /* osx_keyboard.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = osx_keyboard.h; sourceTree = "<group>"; };
 		AE60BDA02225725800FA8A5B /* osx_gamepad.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = osx_gamepad.h; sourceTree = "<group>"; };
-		AE649BB42188689000EF4A81 /* xxhash.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = xxhash.c; sourceTree = "<group>"; };
-		AE649BB52188689000EF4A81 /* xxhash.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = xxhash.h; sourceTree = "<group>"; };
 		AE649BBA218C552500EF4A81 /* all.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = all.h; sourceTree = "<group>"; };
 		AE649BBB218C552500EF4A81 /* assert.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = assert.h; sourceTree = "<group>"; };
 		AE649BBC218C552500EF4A81 /* callback.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = callback.h; sourceTree = "<group>"; };
@@ -1073,7 +1070,6 @@
 				AEFF7ECE214D9D580068CE11 /* picotcp */,
 				AE8C273A21122E2500D4D8F4 /* xbrz */,
 				AE1E292620947D4700FC6BA2 /* xbyak */,
-				AE649BB32188689000EF4A81 /* xxhash */,
 				84B7BDA01B72720100F9733F /* zlib */,
 			);
 			name = deps;
@@ -1752,15 +1748,6 @@
 			);
 			name = log;
 			path = ../../../core/log;
-			sourceTree = "<group>";
-		};
-		AE649BB32188689000EF4A81 /* xxhash */ = {
-			isa = PBXGroup;
-			children = (
-				AE649BB42188689000EF4A81 /* xxhash.c */,
-				AE649BB52188689000EF4A81 /* xxhash.h */,
-			);
-			path = xxhash;
 			sourceTree = "<group>";
 		};
 		AE649BB7218C552500EF4A81 /* flac */ = {
@@ -2528,7 +2515,6 @@
 				84B7BF661B72720200F9733F /* nullDC.cpp in Sources */,
 				AEE6279422247C0A00EC7E89 /* gui_util.cpp in Sources */,
 				84B7BF291B72720200F9733F /* sgc_if.cpp in Sources */,
-				AE649BB62188689000EF4A81 /* xxhash.c in Sources */,
 				84B7BF5E1B72720200F9733F /* ImgReader.cpp in Sources */,
 				84B7BEB51B72720200F9733F /* sha1.cpp in Sources */,
 				84B7BF2C1B72720200F9733F /* vbaARM.cpp in Sources */,
@@ -2632,6 +2618,7 @@
 					CHD5_FLAC,
 					"HAVE_CONFIG_H=1",
 					"USE_SDL=1",
+					XXH_INLINE_ALL,
 				);
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
@@ -2685,6 +2672,7 @@
 					"HAVE_CONFIG_H=1",
 					RELEASE,
 					"USE_SDL=1",
+					XXH_INLINE_ALL,
 				);
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
@@ -2726,6 +2714,7 @@
 					../../../core/deps/flac/include,
 					../../../core/deps/flac/src/libFLAC/include,
 					../../../core/deps/libpng,
+					../../../core/deps/xxhash,
 					../../../core/deps/zlib,
 					/usr/local/include,
 				);
@@ -2768,6 +2757,7 @@
 					../../../core/deps/flac/include,
 					../../../core/deps/flac/src/libFLAC/include,
 					../../../core/deps/libpng,
+					../../../core/deps/xxhash,
 					../../../core/deps/zlib,
 					/usr/local/include,
 				);
@@ -2859,6 +2849,7 @@
 					_7ZIP_ST,
 					CHD5_FLAC,
 					"HAVE_CONFIG_H=1",
+					XXH_INLINE_ALL,
 					"${CFLAGS}",
 				);
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
@@ -2904,6 +2895,7 @@
 					../../../core/deps/flac/include,
 					../../../core/deps/flac/src/libFLAC/include,
 					../../../core/deps/libpng,
+					../../../core/deps/xxhash,
 					../../../core/deps/zlib,
 					/usr/local/include,
 				);
@@ -2979,6 +2971,7 @@
 					CHD5_FLAC,
 					"HAVE_CONFIG_H=1",
 					RELEASE,
+					XXH_INLINE_ALL,
 					"${CFLAGS}",
 				);
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
@@ -3018,6 +3011,7 @@
 					../../../core/deps/flac/include,
 					../../../core/deps/flac/src/libFLAC/include,
 					../../../core/deps/libpng,
+					../../../core/deps/xxhash,
 					../../../core/deps/zlib,
 					/usr/local/include,
 				);
