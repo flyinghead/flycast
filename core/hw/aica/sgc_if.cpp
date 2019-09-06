@@ -290,11 +290,18 @@ struct ChannelEx
 	{
 		//used in adpcm decoding
 		s32 last_quant;
-		//SampleType prev_sample;
+		// Saved quantization and previous sample used in PCMS mode 2 (yamaha ADPCM)
+		s32 loopstart_quant;
+		SampleType loopstart_prev_sample;
+		bool in_loop;
+
 		void Reset(ChannelEx* ch)
 		{
 			last_quant=127;
-			//prev_sample=0;
+			loopstart_quant = 0;
+			loopstart_prev_sample = 0;
+			in_loop = false;
+
 			ch->s0=0;
 		}
 	} adpcm;
@@ -773,7 +780,9 @@ __forceinline void StepDecodeSample(ChannelEx* ch,u32 CA)
 	s16* sptr16=(s16*)ch->SA;
 	s8* sptr8=(s8*)sptr16;
 	u8* uptr8=(u8*)sptr16;
-	u32 next_addr = CA + 1 >= ch->loop.LEA ? ch->loop.LSA : CA + 1;
+	u32 next_addr = CA + 1;
+	if (next_addr >= ch->loop.LEA)
+		next_addr = ch->loop.LSA;
 
 	SampleType s0,s1;
 	switch(PCMS)
@@ -807,24 +816,44 @@ __forceinline void StepDecodeSample(ChannelEx* ch,u32 CA)
 	case 2:
 	case 3:
 		{
-			//u32 offs=CA;
 			u8 ad1 = uptr8[CA >> 1];
 			u8 ad2 = uptr8[next_addr >> 1];
 
-			u8 sf=(CA&1)*4;
-			ad1>>=sf;
-			ad2>>=4-sf;
-		
-			ad1&=0xF;
-			ad2&=0xF;
+			ad1 >>= (CA & 1) * 4;
+			ad2 >>= (next_addr & 1) * 4;
 
-			s32 q=ch->adpcm.last_quant;
-			s0=DecodeADPCM(ad1,ch->s0,q);
-			ch->adpcm.last_quant=q;
+			ad1 &= 0xF;
+			ad2 &= 0xF;
+
+			s32 q = ch->adpcm.last_quant;
+			if (PCMS == 2 && CA == ch->loop.LSA)
+			{
+				if (!ch->adpcm.in_loop)
+				{
+					ch->adpcm.in_loop = true;
+					ch->adpcm.loopstart_quant = q;
+					ch->adpcm.loopstart_prev_sample = ch->s0;
+				}
+				else
+				{
+					q = ch->adpcm.loopstart_quant;
+					ch->s0 = ch->adpcm.loopstart_prev_sample;
+				}
+			}
+			s0 = DecodeADPCM(ad1, ch->s0, q);
+			ch->adpcm.last_quant = q;
 			if (last)
-				s1=DecodeADPCM(ad2,s0,q);
+			{
+				SampleType prev = s0;
+				if (PCMS == 2 && next_addr == ch->loop.LSA && ch->adpcm.in_loop)
+				{
+					q = ch->adpcm.loopstart_quant;
+					prev = ch->adpcm.loopstart_prev_sample;
+				}
+				s1 = DecodeADPCM(ad2, prev, q);
+			}
 			else
-				s1=0;
+				s1 = 0;
 		}
 		break;
 	}
@@ -855,13 +884,13 @@ void StreamStep(ChannelEx* ch)
 
 		u32 ca_t=CA;
 		if (PCMS==3)
-			ca_t&=~3;	//adpcm "stream" mode needs this ...
+			ca_t&=~3;	// in adpcm "stream" mode, LEA and LSA are supposed to be 4-sample aligned
+						// but some games don't respect this rule
 
 		if (LPSLNK)
 		{
 			if ((ch->AEG.state==EG_Attack) && (CA>=ch->loop.LSA))
 			{
-				
 				step_printf("[%d]LPSLNK : Switching to EG_Decay1 %X", ch->ChannelNumber, ch->AEG.GetValue());
 				ch->SetAegState(EG_Decay1);
 			}
@@ -873,6 +902,8 @@ void StreamStep(ChannelEx* ch)
 			CA = ch->loop.LSA;
 			if (LPCTL == 0)
 				ch->disable();
+			else
+				step_printf("[%d]LPCTL : Looping LSA %x LEA %x", ch->ChannelNumber, ch->loop.LSA, ch->loop.LEA);
 		}
 
 		ch->CA=CA;
