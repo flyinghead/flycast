@@ -10,7 +10,7 @@
 #include "hw/mem/vmem32.h"
 #include "hw/sh4/modules/mmu.h"
 #include "deps/xbrz/xbrz.h"
-#include "deps/xxhash/xxhash.h"
+#include <xxhash.h>
 
 u8* vq_codebook;
 u32 palette_index;

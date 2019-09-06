@@ -12,7 +12,7 @@
 #include <time.h>
 
 #include <zlib.h>
-#include "deps/xxhash/xxhash.h"
+#include <xxhash.h>
 
 #define LOGJVS(...) DEBUG_LOG(JVS, __VA_ARGS__)
 
