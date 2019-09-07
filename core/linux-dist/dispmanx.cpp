@@ -1,6 +1,6 @@
 #if defined(SUPPORT_DISPMANX)
-#include "linux-dist/dispmanx.h"
-#include "linux-dist/main.h"
+#include "dispmanx.h"
+#include "main.h"
 
 #include <bcm_host.h>
 #include <EGL/egl.h>

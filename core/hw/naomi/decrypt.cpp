@@ -3,7 +3,7 @@
 /* Borrowed from yabause */
 /* Based on mame 315-5881_crypt.cpp and stvprot.cpp */
 
-#include <stdlib.h>
+#include <cstdlib>
 #include "naomi_cart.h"
 
 typedef struct sbox_s {

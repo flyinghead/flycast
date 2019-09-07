@@ -6,8 +6,8 @@
 #include <termios.h>
 #include <fcntl.h>
 #include <semaphore.h>
-#include <stdarg.h>
-#include <signal.h>
+#include <cstdarg>
+#include <csignal>
 #include <sys/param.h>
 #include <sys/time.h>
 #include "hw/sh4/dyna/blockmanager.h"
@@ -15,11 +15,11 @@
 #include <unistd.h>
 
 #if defined(SUPPORT_DISPMANX)
-	#include "linux-dist/dispmanx.h"
+	#include "dispmanx.h"
 #endif
 
 #if defined(SUPPORT_X11)
-	#include "linux-dist/x11.h"
+	#include "x11.h"
 #endif
 
 #if defined(USE_SDL)
@@ -31,11 +31,11 @@
 #endif
 
 #if defined(USE_EVDEV)
-	#include "linux-dist/evdev.h"
+	#include "evdev.h"
 #endif
 
 #if defined(USE_JOYSTICK)
-	#include "linux-dist/joystick.h"
+	#include "joystick.h"
 #endif
 
 #ifdef TARGET_PANDORA
@@ -284,12 +284,12 @@ std::vector<string> find_system_config_dirs()
 		string s = (string)getenv("XDG_CONFIG_DIRS");
 
 		string::size_type pos = 0;
-		string::size_type n = s.find(":", pos);
+		string::size_type n = s.find(':', pos);
 		while(n != std::string::npos)
 		{
 			dirs.push_back(s.substr(pos, n-pos) + "/reicast");
 			pos = n + 1;
-			n = s.find(":", pos);
+			n = s.find(':', pos);
 		}
 		// Separator not found
 		dirs.push_back(s.substr(pos) + "/reicast");
@@ -310,12 +310,12 @@ std::vector<string> find_system_data_dirs()
 		string s = (string)getenv("XDG_DATA_DIRS");
 
 		string::size_type pos = 0;
-		string::size_type n = s.find(":", pos);
+		string::size_type n = s.find(':', pos);
 		while(n != std::string::npos)
 		{
 			dirs.push_back(s.substr(pos, n-pos) + "/reicast");
 			pos = n + 1;
-			n = s.find(":", pos);
+			n = s.find(':', pos);
 		}
 		// Separator not found
 		dirs.push_back(s.substr(pos) + "/reicast");
@@ -341,12 +341,12 @@ int main(int argc, wchar* argv[])
 	set_user_data_dir(find_user_data_dir());
 	std::vector<string> dirs;
 	dirs = find_system_config_dirs();
-	for(unsigned int i = 0; i < dirs.size(); i++)
+	for (std::size_t i = 0; i < dirs.size(); i++)
 	{
 		add_system_data_dir(dirs[i]);
 	}
 	dirs = find_system_data_dirs();
-	for(unsigned int i = 0; i < dirs.size(); i++)
+	for (std::size_t i = 0; i < dirs.size(); i++)
 	{
 		add_system_data_dir(dirs[i]);
 	}

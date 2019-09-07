@@ -53,4 +53,4 @@ extern void TermAudio();
 u32 GetAudioBackendCount();
 void SortAudioBackends();
 audiobackend_t* GetAudioBackend(int num);
-audiobackend_t* GetAudioBackend(std::string slug);
+audiobackend_t* GetAudioBackend(const std::string& slug);

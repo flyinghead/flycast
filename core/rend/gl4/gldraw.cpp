@@ -1,4 +1,4 @@
-#include <math.h>
+#include <cmath>
 #include "gl4.h"
 #include "rend/gles/glcache.h"
 #include "rend/rend.h"
@@ -347,7 +347,7 @@ static void DrawModVols(int first, int count)
 	glcache.DepthMask(GL_FALSE);
 	glcache.DepthFunc(Zfunction[4]);
 
-	if(0)
+	if(false)
 	{
 		//simply draw the volumes -- for debugging
 		SetCull(0);
@@ -467,7 +467,7 @@ void gl4DrawStrips(GLuint output_fbo, int width, int height)
 	glcache.Disable(GL_BLEND);
 	glProvokingVertex(GL_LAST_VERTEX_CONVENTION);
 
-	RenderPass previous_pass = {0};
+	RenderPass previous_pass = {};
 	int render_pass_count = pvrrc.render_passes.used();
 
 	for (int render_pass = 0; render_pass < render_pass_count; render_pass++)

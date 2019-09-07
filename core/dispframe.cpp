@@ -1,4 +1,4 @@
-#include <signal.h>
+#include <csignal>
 #include "cfg/cfg.h"
 #include "rend/TexCache.h"
 #include "rend/rend.h"

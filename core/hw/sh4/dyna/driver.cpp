@@ -14,8 +14,8 @@
 #include "hw/aica/aica_if.h"
 #include "hw/gdrom/gdrom_if.h"
 
-#include <time.h>
-#include <float.h>
+#include <ctime>
+#include <cfloat>
 
 #include "blockmanager.h"
 #include "ngen.h"

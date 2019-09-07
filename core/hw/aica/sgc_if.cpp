@@ -2,7 +2,7 @@
 #include "dsp.h"
 #include "aica_mem.h"
 #include "hw/aica/aica_if.h"
-#include <math.h>
+#include <cmath>
 #include <algorithm>
 using namespace std;
 #undef FAR

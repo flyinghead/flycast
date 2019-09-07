@@ -4,7 +4,7 @@
 	Bits and pieces from redream (https://github.com/inolen/redream)
 */
 
-#include <stdio.h>
+#include <cstdio>
 #include "types.h"
 #include "hw/sh4/sh4_mem.h"
 #include "hw/sh4/sh4_sched.h"
@@ -15,6 +15,11 @@
 #include "hw/gdrom/gdromv3.h"
 #include "hw/holly/holly_intc.h"
 #include "reios.h"
+
+#ifdef _MSC_VER
+#undef min
+#include <algorithm>
+#endif
 
 #define SWAP32(a) ((((a) & 0xff) << 24)  | (((a) & 0xff00) << 8) | (((a) >> 8) & 0xff00) | (((a) >> 24) & 0xff))
 
@@ -93,7 +98,7 @@ static void read_sectors_to(u32 addr, u32 sector, u32 count)
 	{
 		libGDR_ReadSector((u8 *)temp, sector, 1, sizeof(temp));
 
-		for (int i = 0; i < ARRAY_SIZE(temp); i++)
+		for (std::size_t i = 0; i < ARRAY_SIZE(temp); i++)
 		{
 			if (virtual_addr)
 				WriteMem32(addr, temp[i]);
@@ -394,7 +399,7 @@ static void GD_HLE_Command(u32 cc)
 			// coded to 0x02 on boot
 			ver[len - 1] = 0x02;
 
-			for (int i = 0; i < len; i++)
+			for (u32 i = 0; i < len; i++)
 				WriteMem8(dest++, ver[i]);
 		}
 		break;

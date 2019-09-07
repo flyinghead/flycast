@@ -3,8 +3,6 @@
 
 #include "types.h"
 #include "arm7.h"
-#include "arm_mem.h"
-
 
 //called when plugin is used by emu (you should do first time init here)
 s32 libARM_Init()

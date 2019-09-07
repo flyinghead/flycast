@@ -1,4 +1,4 @@
-#include "oslib/audiostream.h"
+#include "audiostream.h"
 #if USE_ALSA
 #include <alsa/asoundlib.h>
 #include "cfg/cfg.h"
@@ -18,7 +18,7 @@ static void alsa_init()
 	string device = cfgLoadStr("alsa", "device", "");
 
 	int rc = -1;
-	if (device == "" || device == "auto")
+	if (device.empty() || device == "auto")
 	{
 		INFO_LOG(AUDIO, "ALSA: trying to determine audio device");
 
@@ -188,7 +188,7 @@ std::vector<std::string> alsa_get_devicelist()
 		return result;
 
 	// special value to automatically detect on initialization
-	result.push_back("auto");
+	result.emplace_back("auto");
 
 	char** n = hints;
 	while (*n != NULL)
@@ -214,7 +214,7 @@ std::vector<std::string> alsa_get_devicelist()
 				}
 				*/
 
-				result.push_back(name);
+				result.emplace_back(name);
 			}
 
 		}

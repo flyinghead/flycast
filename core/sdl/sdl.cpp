@@ -1,6 +1,5 @@
 
 #if defined(USE_SDL)
-#include <map>
 #include "types.h"
 #include "cfg/cfg.h"
 #include "linux-dist/main.h"

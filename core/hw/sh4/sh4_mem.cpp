@@ -19,10 +19,6 @@
 //main system mem
 VArray2 mem_b;
 
-void _vmem_init();
-void _vmem_reset();
-void _vmem_term();
-
 //MEM MAPPINNGG
 
 //AREA 1

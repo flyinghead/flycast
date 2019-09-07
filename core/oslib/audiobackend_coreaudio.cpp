@@ -12,7 +12,7 @@
     It does work on my macmini though
  */
 
-#include "oslib/audiostream.h"
+#include "audiostream.h"
 
 #if HOST_OS == OS_DARWIN
 #include <atomic>

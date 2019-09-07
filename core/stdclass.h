@@ -1,8 +1,8 @@
 #pragma once
 #include "types.h"
-#include <stdlib.h>
+#include <cstdlib>
 #include <vector>
-#include <string.h>
+#include <cstring>
 
 #ifndef _WIN32
 #include <pthread.h>

@@ -22,8 +22,8 @@
 
 #if !defined(_MSC_VER) && (BUILD_COMPILER!=COMPILER_CLANG || !defined(WIN32))
 
-#include <stdio.h>
-#include <errno.h>
+#include <cstdio>
+#include <cerrno>
 
 #include "net_platform.h"
 

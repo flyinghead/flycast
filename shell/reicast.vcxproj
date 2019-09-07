@@ -472,7 +472,6 @@
     <ClInclude Include="..\core\hw\sh4\modules\mmu.h" />
     <ClInclude Include="..\core\hw\sh4\modules\mmu_impl.h" />
     <ClInclude Include="..\core\hw\sh4\modules\modules.h" />
-    <ClInclude Include="..\core\hw\sh4\modules\tmu.h" />
     <ClInclude Include="..\core\hw\sh4\sh4_if.h" />
     <ClInclude Include="..\core\hw\sh4\sh4_interrupts.h" />
     <ClInclude Include="..\core\hw\sh4\sh4_mmr.h" />
@@ -502,16 +501,6 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Naomi Release|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Slow|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Naomi Debug|x64'">true</ExcludedFromBuild>
-    </ClInclude>
-    <ClInclude Include="..\core\linux\typedefs.h">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Slow|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Naomi Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Slow|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Naomi Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Fast|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Naomi Release|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Fast|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Naomi Release|x64'">true</ExcludedFromBuild>
     </ClInclude>
     <ClInclude Include="..\core\oslib\audiobackend_directsound.h" />
     <ClInclude Include="..\core\oslib\audiostream.h" />

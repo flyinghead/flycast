@@ -1,7 +1,7 @@
 #include <locale>
 
 #ifdef _WIN32
-#include <Windows.h>
+#include <windows.h>
 constexpr u32 CODEPAGE_SHIFT_JIS = 932;
 constexpr u32 CODEPAGE_WINDOWS_1252 = 1252;
 #else

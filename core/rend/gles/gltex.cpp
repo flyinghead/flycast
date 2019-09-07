@@ -464,8 +464,8 @@ bool TextureCacheData::Delete()
 	if (lock_block)
 		libCore_vramlock_Unlock_block(lock_block);
 	lock_block=0;
-	if (custom_image_data != NULL)
-		delete [] custom_image_data;
+
+	delete[] custom_image_data;
 	
 	return true;
 }

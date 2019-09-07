@@ -5,9 +5,9 @@
 	Nothing too interesting here, really
 */
 
-#include <stdio.h>
-#include <ctype.h>
-#include <string.h>
+#include <cstdio>
+#include <cctype>
+#include <cstring>
 
 #include "cfg/cfg.h"
 

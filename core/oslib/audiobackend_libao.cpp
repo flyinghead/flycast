@@ -1,4 +1,4 @@
-#include "oslib/audiostream.h"
+#include "audiostream.h"
 #ifdef USE_LIBAO
 
 #include <ao/ao.h>

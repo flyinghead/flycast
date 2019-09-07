@@ -109,9 +109,6 @@ void DecodeInst(u32 *IPtr,_INST *i)
 
 const bool SUPPORT_NOFL=false;
 
-
-#define assert verify
-
 #pragma warning(disable:4311)
 
 #define DYNBUF  0x10000

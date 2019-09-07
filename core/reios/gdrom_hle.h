@@ -45,9 +45,9 @@
 #define MISC_SETVECTOR			0x01
 
 #define CTOC_LBA(n) (n)
-#define CTOC_ADR(n) (n<<24)
-#define CTOC_CTRL(n) (n<<28)
-#define CTOC_TRACK(n) (n<<16)
+#define CTOC_ADR(n) ((n)<<24)
+#define CTOC_CTRL(n) ((n)<<28)
+#define CTOC_TRACK(n) ((n)<<16)
 
 void gdrom_hle_op();
 

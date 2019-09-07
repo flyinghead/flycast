@@ -3,21 +3,16 @@
 #if FEAT_HAS_NIXPROF
 #include "cfg/cfg.h"
 
-#include <inttypes.h>
+#include <cinttypes>
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <pthread.h>
-#include <unistd.h>
+#include <cstdio>
+#include <cstdlib>
 #include <pthread.h>
 #include <unistd.h>
 #include <sys/types.h>
-#include <stdio.h>
 #include <memory.h>
-#include <signal.h>
+#include <csignal>
 //#include <sys/ucontext.h>
-#include <stdio.h>
-#include <signal.h>
 //#include <execinfo.h>
 #include <sys/syscall.h>
 #include <sys/stat.h>
@@ -27,8 +22,7 @@
 //#include <curses.h>
 #include <fcntl.h>
 #include <semaphore.h>
-#include <stdarg.h>
-#include <signal.h>
+#include <cstdarg>
 #include <sys/param.h>
 #include <sys/mman.h>
 #include <sys/time.h>
@@ -44,9 +38,8 @@
 @brief     Getting the callstack under Android 
 @author    Peter Holtwick 
 */ 
-#include <unwind.h> 
-#include <stdio.h> 
-#include <string.h> 
+#include <unwind.h>
+#include <cstring>
 
 static int tick_count=0;
 static pthread_t proft;

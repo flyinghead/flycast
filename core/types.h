@@ -67,8 +67,8 @@
 #pragma warning( disable : 4100)
 #endif
 
-#include <stdint.h>
-#include <stddef.h>
+#include <cstdint>
+#include <cstddef>
 
 //basic types
 typedef int8_t  s8;
@@ -237,8 +237,8 @@ void libCore_CDDA_Sector(s16* sector);
 
 
 //includes from CRT
-#include <stdlib.h>
-#include <stdio.h>
+#include <cstdlib>
+#include <cstdio>
 
 #if HOST_OS == OS_DARWIN
 int darw_printf(const wchar* Text,...);

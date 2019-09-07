@@ -17,7 +17,7 @@
     along with reicast.  If not, see <https://www.gnu.org/licenses/>.
  */
 #include <algorithm>
-#include <math.h>
+#include <cmath>
 #include <dirent.h>
 #include <sys/stat.h>
 
@@ -1388,7 +1388,7 @@ static void add_game_directory(const std::string& path, std::vector<GameMedia>& 
 		}
 		else
 		{
-			std::string::size_type dotpos = name.find_last_of(".");
+			std::string::size_type dotpos = name.find_last_of('.');
 			if (dotpos == std::string::npos || dotpos == name.size() - 1)
 				continue;
 			std::string extension = name.substr(dotpos);

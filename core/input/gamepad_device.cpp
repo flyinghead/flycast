@@ -17,7 +17,7 @@
     along with reicast.  If not, see <https://www.gnu.org/licenses/>.
  */
 #include <algorithm>
-#include <limits.h>
+#include <climits>
 #include "gamepad_device.h"
 #include "rend/gui.h"
 #include "oslib/oslib.h"

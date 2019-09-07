@@ -139,7 +139,7 @@ struct Track
 		else
 			return false;
 	}
-	void Destroy() { if (file) delete file; file=0; }
+	void Destroy() { delete file; file=0; }
 };
 
 struct Disc

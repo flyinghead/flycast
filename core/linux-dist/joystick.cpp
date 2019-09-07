@@ -1,7 +1,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/types.h>
-#include "linux-dist/joystick.h"
+#include "joystick.h"
 
 #if defined(USE_JOYSTICK)
 #include <linux/joystick.h>

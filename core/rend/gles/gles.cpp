@@ -1,4 +1,4 @@
-#include <math.h>
+#include <cmath>
 #include "glcache.h"
 #include "rend/TexCache.h"
 #include "cfg/cfg.h"

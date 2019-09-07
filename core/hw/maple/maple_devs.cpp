@@ -8,8 +8,8 @@
 #include "hw/naomi/naomi_cart.h"
 #include "hw/pvr/spg.h"
 #include "input/gamepad.h"
-#include <math.h>
-#include <time.h>
+#include <cmath>
+#include <ctime>
 
 #include <zlib.h>
 #include <xxhash.h>

@@ -57,8 +57,7 @@ ArchiveFile* SzArchive::OpenFile(const char* name)
 	u16 fname[512];
 	for (int i = 0; i < szarchive.NumFiles; i++)
 	{
-		unsigned isDir = SzArEx_IsDir(&szarchive, i);
-		if (isDir)
+		if (SzArEx_IsDir(&szarchive, i))
 			continue;
 
 		int len = SzArEx_GetFileNameUtf16(&szarchive, i, fname);

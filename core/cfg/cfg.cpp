@@ -5,7 +5,7 @@
 */
 
 #define _CRT_SECURE_NO_DEPRECATE (1)
-#include <errno.h>
+#include <cerrno>
 #include "cfg.h"
 #include "ini.h"
 

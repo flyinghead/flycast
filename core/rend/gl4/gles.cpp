@@ -1,4 +1,4 @@
-#include <math.h>
+#include <cmath>
 #include "gl4.h"
 #include "rend/gles/glcache.h"
 #include "rend/TexCache.h"

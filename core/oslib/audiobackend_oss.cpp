@@ -1,4 +1,4 @@
-#include "oslib/audiostream.h"
+#include "audiostream.h"
 #ifdef USE_OSS
 #include <sys/ioctl.h>
 #include <sys/fcntl.h>
