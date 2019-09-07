@@ -24,6 +24,7 @@ bool CharArrayFromFormatV(char* out, int outsize, const char* format, va_list ar
   int writtenCount;
 
 #ifdef _WIN32
+#if 0 // _WIN32: Disabled for now since _create_locale is not available on windows 7
   // You would think *printf are simple, right? Iterate on each character,
   // if it's a format specifier handle it properly, etc.
   //
@@ -51,6 +52,9 @@ bool CharArrayFromFormatV(char* out, int outsize, const char* format, va_list ar
   if (!c_locale)
     c_locale = _create_locale(LC_ALL, "C");
   writtenCount = _vsnprintf_l(out, outsize, format, c_locale, args);
+#else
+  writtenCount = vsnprintf(out, outsize, format, args);
+#endif
 #else
 #if !defined(__ANDROID__) && !defined(__HAIKU__) && !defined(__OpenBSD__)
   locale_t previousLocale = uselocale(GetCLocale());
