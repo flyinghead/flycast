@@ -2,7 +2,7 @@
 #if defined(USE_SDL_AUDIO)
 
 #include <SDL2/SDL.h>
-#include "oslib/audiostream.h"
+#include "audiostream.h"
 #include "stdclass.h"
 
 static SDL_AudioDeviceID audiodev;

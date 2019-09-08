@@ -1,4 +1,4 @@
-#include "oslib/audiostream.h"
+#include "audiostream.h"
 #if USE_OMX
 
 #include <IL/OMX_Broadcom.h>

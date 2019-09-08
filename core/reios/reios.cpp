@@ -183,11 +183,11 @@ static void reios_sys_system() {
 			u8 data[24] = {0};
 
 			// read system_id from 0x0001a056
-			for (int i  = 0; i < 8; i++)
+			for (u32 i  = 0; i < 8; i++)
 				data[i] = flashrom->Read8(0x1a056 + i);
 
 			// read system_props from 0x0001a000
-			for (int i  = 0; i < 5; i++)
+			for (u32 i  = 0; i < 5; i++)
 				data[8 + i] = flashrom->Read8(0x1a000 + i);
 
 			// system settings
@@ -294,7 +294,7 @@ static void reios_sys_flashrom() {
 				u32 size = r[6];
 
 				debugf("reios_sys_flashrom: FLASHROM_READ offs %x dest %08x size %x", offset, dest, size);
-				for (int i = 0; i < size; i++)
+				for (u32 i = 0; i < size; i++)
 					WriteMem8(dest++, flashrom->Read8(offset + i));
 
 				r[0] = size;
@@ -318,7 +318,7 @@ static void reios_sys_flashrom() {
 
 				debugf("reios_sys_flashrom: FLASHROM_WRITE offs %x src %08x size %x", offs, src, size);
 
-				for (int i = 0; i < size; i++)
+				for (u32 i = 0; i < size; i++)
 					flashrom->data[offs + i] &= ReadMem8(src + i);
 
 				r[0] = size;
@@ -610,7 +610,7 @@ static void reios_boot()
 	//Infinite loop for arm !
 	WriteMem32(0x80800000, 0xEAFFFFFE);
 
-	if (settings.reios.ElfFile.size()) {
+	if (!settings.reios.ElfFile.empty()) {
 		if (!reios_loadElf(settings.reios.ElfFile)) {
 			msgboxf("Failed to open %s", MBX_ICONERROR, settings.reios.ElfFile.c_str());
 		}
@@ -654,7 +654,7 @@ static void reios_boot()
 static std::map<u32, hook_fp*> hooks;
 static std::map<hook_fp*, u32> hooks_rev;
 
-#define SYSCALL_ADDR_MAP(addr) ((addr & 0x1FFFFFFF) | 0x80000000)
+#define SYSCALL_ADDR_MAP(addr) (((addr) & 0x1FFFFFFF) | 0x80000000)
 
 static void register_hook(u32 pc, hook_fp* fn) {
 	hooks[SYSCALL_ADDR_MAP(pc)] = fn;

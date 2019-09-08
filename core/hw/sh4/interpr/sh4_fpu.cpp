@@ -1,6 +1,6 @@
 #include "types.h"
-#include <math.h>
-#include <float.h>
+#include <cmath>
+#include <cfloat>
 
 
 #include "sh4_opcodes.h"

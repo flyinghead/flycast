@@ -20,7 +20,7 @@
 #include <string>
 #include <vector>
 #include <algorithm>
-#include <stdlib.h>
+#include <cstdlib>
 #ifdef _MSC_VER
 #include <io.h>
 #define access _access

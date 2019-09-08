@@ -30,7 +30,7 @@
 #include <sys/stat.h>        /* For mode constants */
 #include <fcntl.h>           /* For O_* constants */
 #include <unistd.h>
-#include <errno.h>
+#include <cerrno>
 #ifdef __ANDROID__
 #include <linux/ashmem.h>
 #endif

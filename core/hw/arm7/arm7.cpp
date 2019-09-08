@@ -2,8 +2,6 @@
 #include "arm_mem.h"
 #include "virt_arm.h"
 
-#include <map>
-
 #define arm_printf(...) DEBUG_LOG(AICA_ARM, __VA_ARGS__)
 
 #define CPUReadMemoryQuick(addr) (*(u32*)&aica_ram[addr&ARAM_MASK])

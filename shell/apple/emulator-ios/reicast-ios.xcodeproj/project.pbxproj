@@ -263,7 +263,6 @@
 		84967C8E1B8F492C005F1140 /* pngwutil.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pngwutil.c; sourceTree = "<group>"; };
 		8497BCBC1A41A0E900EFB9ED /* common.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = common.cpp; sourceTree = "<group>"; };
 		8497BCBD1A41A0E900EFB9ED /* nixprof.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = nixprof.cpp; path = nixprof/nixprof.cpp; sourceTree = "<group>"; };
-		8497BCBE1A41A0E900EFB9ED /* typedefs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = typedefs.h; sourceTree = "<group>"; };
 		8497BCCD1A41BFD800EFB9ED /* coreio.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = coreio.cpp; sourceTree = "<group>"; };
 		8497BCCE1A41BFD800EFB9ED /* coreio.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = coreio.h; sourceTree = "<group>"; };
 		849C0D601B072C07008BAAA4 /* context.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = context.cpp; sourceTree = "<group>"; };
@@ -553,7 +552,6 @@
 		9C7A3A4418C806DF0070BB5F /* rtc.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = rtc.cpp; sourceTree = "<group>"; };
 		9C7A3A4518C806DF0070BB5F /* serial.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = serial.cpp; sourceTree = "<group>"; };
 		9C7A3A4618C806DF0070BB5F /* tmu.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = tmu.cpp; sourceTree = "<group>"; };
-		9C7A3A4718C806DF0070BB5F /* tmu.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = tmu.h; sourceTree = "<group>"; };
 		9C7A3A4818C806DF0070BB5F /* ubc.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ubc.cpp; sourceTree = "<group>"; };
 		9C7A3A4918C806DF0070BB5F /* sh4_core.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = sh4_core.h; sourceTree = "<group>"; };
 		9C7A3A4A18C806DF0070BB5F /* sh4_core_regs.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = sh4_core_regs.cpp; sourceTree = "<group>"; };
@@ -659,7 +657,6 @@
 				849C0D611B072C07008BAAA4 /* context.h */,
 				8497BCBC1A41A0E900EFB9ED /* common.cpp */,
 				8497BCBD1A41A0E900EFB9ED /* nixprof.cpp */,
-				8497BCBE1A41A0E900EFB9ED /* typedefs.h */,
 			);
 			path = linux;
 			sourceTree = "<group>";
@@ -1298,7 +1295,6 @@
 				9C7A3A4418C806DF0070BB5F /* rtc.cpp */,
 				9C7A3A4518C806DF0070BB5F /* serial.cpp */,
 				9C7A3A4618C806DF0070BB5F /* tmu.cpp */,
-				9C7A3A4718C806DF0070BB5F /* tmu.h */,
 				9C7A3A4818C806DF0070BB5F /* ubc.cpp */,
 			);
 			path = modules;

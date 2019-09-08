@@ -1,5 +1,5 @@
 #include "types.h"
-#include <string.h>
+#include <cstring>
 
 #include "maple_if.h"
 #include "maple_cfg.h"

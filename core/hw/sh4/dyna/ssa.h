@@ -18,11 +18,11 @@
     You should have received a copy of the GNU General Public License
     along with reicast.  If not, see <https://www.gnu.org/licenses/>.
  */
-#include <stdio.h>
+#include <cstdio>
 #include <set>
 #include <map>
 #include <deque>
-#include <math.h>
+#include <cmath>
 #include "types.h"
 #include "decoder.h"
 #include "hw/sh4/modules/mmu.h"

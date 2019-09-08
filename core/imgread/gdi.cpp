@@ -164,7 +164,3 @@ Disc* gdi_parse(const char* file)
 	}
 	return 0;
 }
-
-void iso_term()
-{
-}

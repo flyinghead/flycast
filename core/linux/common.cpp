@@ -11,8 +11,8 @@
 #include <termios.h>
 #include <fcntl.h>
 #include <semaphore.h>
-#include <stdarg.h>
-#include <signal.h>
+#include <cstdarg>
+#include <csignal>
 #include <sys/param.h>
 #include <sys/time.h>
 #if defined(__linux__) && !defined(__ANDROID__)

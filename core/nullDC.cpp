@@ -988,10 +988,10 @@ static void cleanup_serialize(void *data)
 static string get_savestate_file_path()
 {
 	string state_file = cfgLoadStr("config", "image", "noname.chd");
-	size_t lastindex = state_file.find_last_of("/");
+	size_t lastindex = state_file.find_last_of('/');
 	if (lastindex != -1)
 		state_file = state_file.substr(lastindex + 1);
-	lastindex = state_file.find_last_of(".");
+	lastindex = state_file.find_last_of('.');
 	if (lastindex != -1)
 		state_file = state_file.substr(0, lastindex);
 	state_file = state_file + ".state";

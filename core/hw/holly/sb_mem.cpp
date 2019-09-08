@@ -422,7 +422,6 @@ void  DYNACALL WriteMem_area0(u32 addr,T data)
 	{
 		libExtDevice_WriteMem_A0_010(addr,data,sz);
 	}
-	return;
 }
 
 //Init/Res/Term

@@ -1089,7 +1089,7 @@ void DrawStrips()
 	//We use sampler 0
 	glActiveTexture(GL_TEXTURE0);
 
-	RenderPass previous_pass = {0};
+	RenderPass previous_pass = {};
     for (int render_pass = 0; render_pass < pvrrc.render_passes.used(); render_pass++) {
         const RenderPass& current_pass = pvrrc.render_passes.head()[render_pass];
 

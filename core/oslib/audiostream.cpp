@@ -1,6 +1,6 @@
-#include <limits.h>
+#include <climits>
 #include "cfg/cfg.h"
-#include "oslib/oslib.h"
+#include "oslib.h"
 #include "audiostream.h"
 
 struct SoundFrame { s16 l;s16 r; };
@@ -82,7 +82,7 @@ bool RegisterAudioBackend(audiobackend_t *backend)
 	return true;
 }
 
-audiobackend_t* GetAudioBackend(std::string slug)
+audiobackend_t* GetAudioBackend(const std::string& slug)
 {
 	if (slug == "none")
 	{

@@ -1,7 +1,7 @@
 #pragma once
 #include "types.h"
 #include "oslib/oslib.h"
-#include "assert.h"
+#include <cassert>
 
 #define SCIEB_addr 0x289C
 #define SCIPD_addr (0x289C+4)

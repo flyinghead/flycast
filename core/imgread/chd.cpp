@@ -24,8 +24,8 @@ struct CHDDisc : Disc
 
 	~CHDDisc()
 	{
-		if (hunk_mem)
-			delete [] hunk_mem;
+		delete[] hunk_mem;
+
 		if (chd)
 			chd_close(chd);
 	}

@@ -2,7 +2,7 @@
 #include "aica_if.h"
 #include "sgc_if.h"
 #include "aica_mem.h"
-#include <math.h>
+#include <cmath>
 #include "hw/holly/holly_intc.h"
 #include "hw/holly/sb.h"
 

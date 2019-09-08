@@ -269,9 +269,7 @@ bool DiscSwap(u32 fileflags)
 
 void TermDrive()
 {
-	if (disc != NULL)
-		delete disc;
-
+	delete disc;
 	disc = NULL;
 }
 

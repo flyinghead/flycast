@@ -46,7 +46,7 @@ bool bios_loaded = false;
 
 	#include <unistd.h>
 	#include <fcntl.h>
-	#include <errno.h>
+	#include <cerrno>
 #endif
 
 fd_t*	RomCacheMap = NULL;
@@ -586,8 +586,6 @@ void naomi_cart_LoadRom(const char* file)
 	CurrentCartridge = new DecryptedCartridge(RomPtr, RomSize);
 	strcpy(naomi_game_id, CurrentCartridge->GetGameId().c_str());
 	NOTICE_LOG(NAOMI, "NAOMI GAME ID [%s]", naomi_game_id);
-
-	return;
 }
 
 void naomi_cart_Close()

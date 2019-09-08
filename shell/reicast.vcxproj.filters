@@ -1004,9 +1004,6 @@
     <ClInclude Include="..\core\hw\sh4\modules\mmu.h">
       <Filter>hw\sh4\modules</Filter>
     </ClInclude>
-    <ClInclude Include="..\core\hw\sh4\modules\tmu.h">
-      <Filter>hw\sh4\modules</Filter>
-    </ClInclude>
     <ClInclude Include="..\core\hw\sh4\dyna\blockmanager.h">
       <Filter>hw\sh4\dyna</Filter>
     </ClInclude>
@@ -1066,9 +1063,6 @@
     </ClInclude>
     <ClInclude Include="..\core\deps\libelf\elf32.h">
       <Filter>deps\libelf</Filter>
-    </ClInclude>
-    <ClInclude Include="..\core\linux\typedefs.h">
-      <Filter>linux</Filter>
     </ClInclude>
     <ClInclude Include="..\core\deps\chdpsr\cdipsr.h">
       <Filter>deps\chdpsr</Filter>

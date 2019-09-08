@@ -11,7 +11,7 @@
 #include "hw/holly/holly_intc.h"
 #include "hw/sh4/sh4_sched.h"
 
-#include <time.h>
+#include <ctime>
 
 VArray2 aica_ram;
 u32 VREG;//video reg =P
@@ -75,9 +75,8 @@ void WriteMem_aica_rtc(u32 addr,u32 data,u32 sz)
 		rtc_EN=data&1;
 		return;
 	}
-
-	return;
 }
+
 u32 ReadMem_aica_reg(u32 addr,u32 sz)
 {
 	addr&=0x7FFF;

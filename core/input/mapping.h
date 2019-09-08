@@ -18,7 +18,7 @@
  */
 #pragma once
 #include <map>
-#include <stdio.h>
+#include <cstdio>
 #include "types.h"
 #include "gamepad.h"
 

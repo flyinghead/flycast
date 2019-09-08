@@ -12,8 +12,8 @@
 
 #include "types.h"
 #include "cfg/cfg.h"
-#include "linux-dist/x11.h"
-#include "linux-dist/main.h"
+#include "x11.h"
+#include "main.h"
 #include "rend/gui.h"
 #include "input/gamepad.h"
 
@@ -85,7 +85,7 @@ void* x11_vis;
 
 extern bool dump_frame_switch;
 
-void dc_exit(void);
+void dc_exit();
 
 enum
 {

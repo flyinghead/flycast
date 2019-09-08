@@ -1,4 +1,4 @@
-#include "oslib/audiostream.h"
+#include "audiostream.h"
 #ifdef _WIN32
 #include "oslib.h"
 #include <initguid.h>

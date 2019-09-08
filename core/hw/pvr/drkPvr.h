@@ -5,9 +5,9 @@
 
 //bleh stupid windoze header
 #include "types.h"
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
+#include <cstdlib>
+#include <cstdio>
+#include <cstring>
 
 #include "helper_classes.h"
 
