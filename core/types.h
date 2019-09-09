@@ -675,3 +675,17 @@ public:
 
 	std::string reason;
 };
+
+enum serialize_version_enum {
+	V1,
+	V2,
+	V3,
+	V4,
+	V5_LIBRETRO_UNSUPPORTED,
+	V6_LIBRETRO_UNSUPPORTED,
+	V7_LIBRETRO,
+
+	V5 = 800,
+	V6 = 801,
+	V7 = 802,
+} ;

@@ -30,19 +30,6 @@
 
 extern "C" void DYNACALL TAWriteSQ(u32 address,u8* sqb);
 
-enum serialize_version_enum {
-	V1,
-	V2,
-	V3,
-	V4,
-	V5_LIBRETRO_UNSUPPORTED,
-	V6_LIBRETRO_UNSUPPORTED,
-	V7_LIBRETRO,
-
-	V5 = 800,
-	V6 = 801,
-} ;
-
 //./core/hw/arm7/arm_mem.cpp
 extern bool aica_interr;
 extern u32 aica_reg_L;
@@ -316,7 +303,7 @@ bool dc_serialize(void **data, unsigned int *total_size)
 {
 	int i = 0;
 	int j = 0;
-	serialize_version_enum version = V6;
+	serialize_version_enum version = V7;
 
 	*total_size = 0 ;
 
@@ -618,7 +605,7 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 
 	REICAST_USA(aica_reg,0x8000);
 
-	channel_unserialize(data, total_size) ;
+	channel_unserialize(data, total_size, V7_LIBRETRO);
 
 	REICAST_USA(cdda_sector,CDDA_SIZE);
 	REICAST_US(cdda_index);
@@ -988,7 +975,7 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 		REICAST_SKIP(2);
 		REICAST_SKIP(2);
 	}
-	channel_unserialize(data, total_size) ;
+	channel_unserialize(data, total_size, version);
 
 	REICAST_USA(cdda_sector,CDDA_SIZE);
 	REICAST_US(cdda_index);

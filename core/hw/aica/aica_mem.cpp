@@ -39,19 +39,10 @@ void WriteReg(u32 addr,u32 data)
 	if (addr < 0x2000)
 	{
 		//Channel data
-		u32 chan=addr>>7;
-		u32 reg=addr&0x7F;
-		if (sz==1)
-		{
-			WriteMemArr(aica_reg,addr,data,1);
-			WriteChannelReg8(chan,reg);
-		}
-		else
-		{
-			WriteMemArr(aica_reg,addr,data,2);
-			WriteChannelReg8(chan,reg);
-			WriteChannelReg8(chan,reg+1);
-		}
+		u32 chan = addr >> 7;
+		u32 reg = addr & 0x7F;
+		WriteMemArr(aica_reg, addr, data, sz);
+		WriteChannelReg(chan, reg, sz);
 		return;
 	}
 
