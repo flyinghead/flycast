@@ -1010,6 +1010,9 @@ static void gui_display_settings()
 		    	ImGui::Checkbox("Rotate screen 90°", &settings.rend.Rotate90);
 	            ImGui::SameLine();
 	            ShowHelpMarker("Rotate the screen 90° counterclockwise");
+		    	ImGui::Checkbox("Delay Frame Swapping", &settings.rend.DelayFrameSwapping);
+	            ImGui::SameLine();
+	            ShowHelpMarker("Useful to avoid flashing screen or glitchy videos. Not recommended on slow platforms");
 		    	ImGui::SliderInt("Scaling", (int *)&settings.rend.ScreenScaling, 1, 100);
 	            ImGui::SameLine();
 	            ShowHelpMarker("Downscaling factor relative to native screen resolution. Higher is better");

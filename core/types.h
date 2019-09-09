@@ -448,6 +448,7 @@ struct settings_t
 		bool FloatVMUs;
 		bool Rotate90;			// Rotate the screen 90 deg CC
 		bool PerStripSorting;
+		bool DelayFrameSwapping; // Delay swapping frame until FB_R_SOF matches FB_W_SOF
 	} rend;
 
 	struct
