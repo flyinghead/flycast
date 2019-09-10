@@ -655,6 +655,7 @@ void InitSettings()
 	settings.dreamcast.language     = 6;	// default
 	settings.dreamcast.FullMMU      = false;
 	settings.dreamcast.ForceWindowsCE = false;
+	settings.dreamcast.HideLegacyNaomiRoms = true;
 	settings.dynarec.SmcCheckLevel  = FullCheck;
 	settings.aica.DSPEnabled		= false;
 	settings.aica.LimitFPS			= LimitFPSEnabled;
@@ -836,6 +837,7 @@ void LoadSettings(bool game_specific)
 				break;
 			start = end + 1;
 		}
+		settings.dreamcast.HideLegacyNaomiRoms = cfgLoadBool(config_section, "Dreamcast.HideLegacyNaomiRoms", settings.dreamcast.HideLegacyNaomiRoms);
 	}
 /*
 	//make sure values are valid
@@ -966,6 +968,7 @@ void SaveSettings()
 		paths += path;
 	}
 	cfgSaveStr("config", "Dreamcast.ContentPath", paths.c_str());
+	cfgSaveBool("config", "Dreamcast.HideLegacyNaomiRoms", settings.dreamcast.HideLegacyNaomiRoms);
 
 	GamepadDevice::SaveMaplePorts();
 

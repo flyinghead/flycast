@@ -813,6 +813,10 @@ static void gui_display_settings()
             }
             ImGui::SameLine();
             ShowHelpMarker("The directory where reicast saves configuration files and VMUs. BIOS files should be in the data subdirectory");
+	    	if (ImGui::Checkbox("Hide Legacy Naomi Roms", &settings.dreamcast.HideLegacyNaomiRoms))
+	    		game_list_done = false;
+            ImGui::SameLine();
+            ShowHelpMarker("Hide .bin, .dat and .lst files from the content browser");
 
 			ImGui::PopStyleVar();
 			ImGui::EndTabItem();
@@ -1004,10 +1008,10 @@ static void gui_display_settings()
 		    	ImGui::Checkbox("Show FPS Counter", &settings.rend.ShowFPS);
 	            ImGui::SameLine();
 	            ShowHelpMarker("Show on-screen frame/sec counter");
-		    	ImGui::Checkbox("Show VMU in game", &settings.rend.FloatVMUs);
+		    	ImGui::Checkbox("Show VMU In-game", &settings.rend.FloatVMUs);
 	            ImGui::SameLine();
-	            ShowHelpMarker("Show the VMU LCD screens while in game");
-		    	ImGui::Checkbox("Rotate screen 90°", &settings.rend.Rotate90);
+	            ShowHelpMarker("Show the VMU LCD screens while in-game");
+		    	ImGui::Checkbox("Rotate Screen 90°", &settings.rend.Rotate90);
 	            ImGui::SameLine();
 	            ShowHelpMarker("Rotate the screen 90° counterclockwise");
 		    	ImGui::Checkbox("Delay Frame Swapping", &settings.rend.DelayFrameSwapping);
@@ -1396,8 +1400,9 @@ static void add_game_directory(const std::string& path, std::vector<GameMedia>& 
 				continue;
 			std::string extension = name.substr(dotpos);
 			if (stricmp(extension.c_str(), ".zip") && stricmp(extension.c_str(), ".7z")
-					&& stricmp(extension.c_str(), ".bin") && stricmp(extension.c_str(), ".lst")
-					&& stricmp(extension.c_str(), ".dat")
+					&& (settings.dreamcast.HideLegacyNaomiRoms
+							|| (stricmp(extension.c_str(), ".bin") && stricmp(extension.c_str(), ".lst")
+									&& stricmp(extension.c_str(), ".dat")))
 					&& stricmp(extension.c_str(), ".cdi") && stricmp(extension.c_str(), ".gdi")
 					&& stricmp(extension.c_str(), ".chd")  && stricmp(extension.c_str(), ".cue"))
 				continue;

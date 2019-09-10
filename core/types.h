@@ -476,6 +476,7 @@ struct settings_t
 		std::vector<std::string> ContentPath;
 		bool FullMMU;
 		bool ForceWindowsCE;
+		bool HideLegacyNaomiRoms;
 	} dreamcast;
 
 	struct
@@ -484,9 +485,7 @@ struct settings_t
 		u32 BufferSize;		//In samples ,*4 for bytes (1024)
 		LimitFPSEnum LimitFPS;
 		u32 GlobalFocus;	//0 -> only hwnd , (1) -> Global
-		u32 BufferCount;	//BufferCount+2 buffers used , max 60 , default 0
 		u32 CDDAMute;
-		u32 GlobalMute;
 		bool DSPEnabled;
 		bool OldSyncronousDma;		// 1 -> sync dma (old behavior), 0 -> async dma (fixes some games, partial implementation)
 		bool NoBatch;
