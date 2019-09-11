@@ -497,6 +497,11 @@ void gl4DrawStrips(GLuint output_fbo, int width, int height)
 			previous_pass = current_pass;
 			continue;
 		}
+        DEBUG_LOG(RENDERER, "Render pass %d OP %d PT %d TR %d", render_pass + 1,
+        		current_pass.op_count - previous_pass.op_count,
+				current_pass.pt_count - previous_pass.pt_count,
+				current_pass.tr_count - previous_pass.tr_count);
+
 		glBindVertexArray(gl4.vbo.main_vao);
 
 		if (!skip_op_pt)

@@ -23,7 +23,6 @@ u32 Line_Cycles=0;
 u32 Frame_Cycles=0;
 int render_end_schid;
 int vblank_schid;
-int time_sync;
 
 void CalculateSync()
 {
@@ -66,11 +65,6 @@ void CalculateSync()
 	prv_cur_scanline=0;
 
 	sh4_sched_request(vblank_schid,Line_Cycles);
-}
-
-int elapse_time(int tag, int cycl, int jit)
-{
-	return min(max(Frame_Cycles,(u32)1*1000*1000),(u32)8*1000*1000);
 }
 
 double speed_load_mspdf;
@@ -268,9 +262,6 @@ bool spg_Init()
 {
 	render_end_schid=sh4_sched_register(0,&rend_end_sch);
 	vblank_schid=sh4_sched_register(0,&spg_line_sched);
-	time_sync=sh4_sched_register(0,&elapse_time);
-
-	sh4_sched_request(time_sync,8*1000*1000);
 
 	return true;
 }

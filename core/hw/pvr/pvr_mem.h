@@ -1,7 +1,6 @@
 #pragma once
 #include "types.h"
 
-u32 pvr_map32(u32 offset32);
 f32 vrf(u32 addr);
 u32 vri(u32 addr);
 
@@ -20,17 +19,7 @@ void DYNACALL pvr_write_area1_32(u32 addr,u32 data);
 u32 pvr_ReadReg(u32 addr);
 void pvr_WriteReg(u32 paddr,u32 data);
 
-void pvr_Update(u32 cycles);
-
-//Init/Term , global
-void pvr_Init();
-void pvr_Term();
-//Reset -> Reset - Initialise
-void pvr_Reset(bool Manual);
-
 void TAWrite(u32 address,u32* data,u32 count);
 extern "C" void DYNACALL TAWriteSQ(u32 address,u8* sqb);
 
 void YUV_init();
-//registers 
-#define PVR_BASE 0x005F8000

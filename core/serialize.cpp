@@ -140,7 +140,6 @@ extern u32 in_vblank;
 extern u32 clc_pvr_scanline;
 extern int render_end_schid;
 extern int vblank_schid;
-extern int time_sync;
 
 //./core/hw/pvr/ta.o
 extern u8 ta_fsm[2049];	//[2048] stores the current state
@@ -488,9 +487,9 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	REICAST_S(sch_list[vblank_schid].start) ;
 	REICAST_S(sch_list[vblank_schid].end) ;
 
-	REICAST_S(sch_list[time_sync].tag) ;
-	REICAST_S(sch_list[time_sync].start) ;
-	REICAST_S(sch_list[time_sync].end) ;
+	REICAST_S(i); // sch_list[time_sync].tag
+	REICAST_S(i); // sch_list[time_sync].start
+	REICAST_S(i); // sch_list[time_sync].end
 
 #ifdef ENABLE_MODEM
 	REICAST_S(sch_list[modem_sched].tag) ;
@@ -800,9 +799,9 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 	REICAST_US(sch_list[vblank_schid].start) ;
 	REICAST_US(sch_list[vblank_schid].end) ;
 
-	REICAST_US(sch_list[time_sync].tag) ;
-	REICAST_US(sch_list[time_sync].start) ;
-	REICAST_US(sch_list[time_sync].end) ;
+	REICAST_US(i); // sch_list[time_sync].tag
+	REICAST_US(i); // sch_list[time_sync].start
+	REICAST_US(i); // sch_list[time_sync].end
 #ifdef ENABLE_MODEM
 	REICAST_US(sch_list[modem_sched].tag) ;
     REICAST_US(sch_list[modem_sched].start) ;
@@ -1164,9 +1163,9 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 	REICAST_US(sch_list[vblank_schid].start) ;
 	REICAST_US(sch_list[vblank_schid].end) ;
 
-	REICAST_US(sch_list[time_sync].tag) ;
-	REICAST_US(sch_list[time_sync].start) ;
-	REICAST_US(sch_list[time_sync].end) ;
+	REICAST_US(i); // sch_list[time_sync].tag
+	REICAST_US(i); // sch_list[time_sync].start
+	REICAST_US(i); // sch_list[time_sync].end
 
 #ifdef ENABLE_MODEM
 	REICAST_US(sch_list[modem_sched].tag) ;

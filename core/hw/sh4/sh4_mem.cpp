@@ -10,7 +10,6 @@
 #include "modules/modules.h"
 #include "hw/pvr/pvr_mem.h"
 #include "hw/sh4/sh4_core.h"
-//#include "hw/sh4/rec_v1/blockmanager.h"
 #include "hw/mem/_vmem.h"
 #include "modules/mmu.h"
 
@@ -22,14 +21,15 @@ VArray2 mem_b;
 //MEM MAPPINNGG
 
 //AREA 1
-_vmem_handler area1_32b;
-void map_area1_init()
+static _vmem_handler area1_32b;
+
+static void map_area1_init()
 {
 	area1_32b = _vmem_register_handler(pvr_read_area1_8,pvr_read_area1_16,pvr_read_area1_32,
 									pvr_write_area1_8,pvr_write_area1_16,pvr_write_area1_32);
 }
 
-void map_area1(u32 base)
+static void map_area1(u32 base)
 {
 	//map vram
 	
@@ -45,35 +45,35 @@ void map_area1(u32 base)
 }
 
 //AREA 2
-void map_area2_init()
+static void map_area2_init()
 {
 	//nothing to map :p
 }
 
-void map_area2(u32 base)
+static void map_area2(u32 base)
 {
 	//nothing to map :p
 }
 
 
 //AREA 3
-void map_area3_init()
+static void map_area3_init()
 {
 }
 
-void map_area3(u32 base)
+static void map_area3(u32 base)
 {
 	//32x2 or 16x4
 	_vmem_map_block_mirror(mem_b.data,0x0C | base,0x0F | base,RAM_SIZE);
 }
 
 //AREA 4
-void map_area4_init()
+static void map_area4_init()
 {
 	
 }
 
-void map_area4(u32 base)
+static void map_area4(u32 base)
 {
 	//TODO : map later
 
@@ -98,23 +98,23 @@ void DYNACALL WriteMem_extdev_T(u32 addr,T data)
 }
 
 _vmem_handler area5_handler;
-void map_area5_init()
+static void map_area5_init()
 {
 	area5_handler = _vmem_register_handler_Template(ReadMem_extdev_T,WriteMem_extdev_T);
 }
 
-void map_area5(u32 base)
+static void map_area5(u32 base)
 {
 	//map whole region to plugin handler :)
 	_vmem_map_handler(area5_handler,base|0x14,base|0x17);
 }
 
 //AREA 6	--	Unassigned 
-void map_area6_init()
+static void map_area6_init()
 {
 	//nothing to map :p
 }
-void map_area6(u32 base)
+static void map_area6(u32 base)
 {
 	//nothing to map :p
 }
@@ -297,14 +297,6 @@ void WriteMemBlock_nommu_sq(u32 dst,u32* src)
 	}
 }
 
-void WriteMemBlock_ptr(u32 addr,u32* data,u32 size)
-{
-#ifndef NO_MMU
-	die("failed\n");
-#endif
-	WriteMemBlock_nommu_ptr(addr,data,size);
-}
-
 //Get pointer to ram area , 0 if error
 //For debugger(gdb) - dynarec
 u8* GetMemPtr(u32 Addr,u32 size)
@@ -328,13 +320,6 @@ u8* GetMemPtr(u32 Addr,u32 size)
 	}
 }
 
-//Get information about an area , eg ram /size /anything
-//For dynarec - needs to be done
-void GetMemInfo(u32 addr,u32 size)
-{
-	//needs to be done
-}
-
 bool IsOnRam(u32 addr)
 {
 	if (((addr>>26)&0x7)==3)
@@ -346,10 +331,4 @@ bool IsOnRam(u32 addr)
 	}
 
 	return false;
-}
-
-u32 GetRamPageFromAddress(u32 RamAddress)
-{
-	verify(IsOnRam(RamAddress));
-	return (RamAddress & RAM_MASK)/PAGE_SIZE;
 }

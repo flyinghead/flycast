@@ -2,6 +2,7 @@
 #include "ta_ctx.h"
 
 #include "hw/sh4/sh4_sched.h"
+#include "oslib/oslib.h"
 
 extern u32 fskip;
 extern u32 FrameCount;
@@ -191,10 +192,10 @@ void FinishRender(TA_context* ctx)
 	frame_finished.Set();
 }
 
-cMutex mtx_pool;
+static cMutex mtx_pool;
 
-vector<TA_context*> ctx_pool;
-vector<TA_context*> ctx_list;
+static vector<TA_context*> ctx_pool;
+static vector<TA_context*> ctx_list;
 
 TA_context* tactx_Alloc()
 {

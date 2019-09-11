@@ -51,9 +51,6 @@ static inline void DYNACALL WriteMemArm(u32 addr,T data)
 #define arm_WriteMem16 WriteMemArm<2,u16>
 #define arm_WriteMem32 WriteMemArm<4,u32>
 
-u32 sh4_ReadMem_reg(u32 addr,u32 size);
-void sh4_WriteMem_reg(u32 addr,u32 data,u32 size);
-
 extern bool aica_interr;
 extern u32 aica_reg_L;
 extern bool e68k_out;

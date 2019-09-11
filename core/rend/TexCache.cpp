@@ -27,7 +27,7 @@ u32 detwiddle[2][8][1024];
 //twiddle works on 64b words
 
 
-u32 twiddle_slow(u32 x,u32 y,u32 x_sz,u32 y_sz)
+static u32 twiddle_slow(u32 x,u32 y,u32 x_sz,u32 y_sz)
 {
 	u32 rv=0;//low 2 bits are directly passed  -> needs some misc stuff to work.However
 			 //Pvr internally maps the 64b banks "as if" they were twiddled :p
@@ -59,7 +59,7 @@ u32 twiddle_slow(u32 x,u32 y,u32 x_sz,u32 y_sz)
 	return rv;
 }
 
-void BuildTwiddleTables()
+static void BuildTwiddleTables()
 {
 	for (u32 s=0;s<8;s++)
 	{
@@ -173,13 +173,6 @@ added_it:
 }
  
 cMutex vramlist_lock;
-
-//simple IsInRange test
-inline bool IsInRange(vram_block* block,u32 offset)
-{
-	return (block->start<=offset) && (block->end>=offset);
-}
-
 
 vram_block* libCore_vramlock_Lock(u32 start_offset64,u32 end_offset64,void* userdata)
 {

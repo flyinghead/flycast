@@ -745,10 +745,10 @@ public:
 	static void glob_param_bdc_(T* pp)
 	{
 		if (CurrentPP == NULL
-			|| CurrentPP->pcw.full != pp->pcw.full ||
-			CurrentPP->tcw.full != pp->tcw.full || 
-			CurrentPP->tsp.full != pp->tsp.full || 
-			CurrentPP->isp.full != pp->isp.full)
+			|| CurrentPP->pcw.full != pp->pcw.full
+			|| CurrentPP->tcw.full != pp->tcw.full
+			|| CurrentPP->tsp.full != pp->tsp.full
+			|| CurrentPP->isp.full != pp->isp.full)
 		{
 			PolyParam* d_pp = CurrentPP;
 			if (d_pp == NULL || d_pp->count != 0)

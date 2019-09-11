@@ -4,17 +4,12 @@
 
 	Most of this was hacked together when i needed support for YUV-dma for thps2 ;)
 */
-#include "types.h"
 #include "pvr_mem.h"
-#include "ta.h"
-#include "pvr_regs.h"
 #include "Renderer_if.h"
-#include "hw/mem/_vmem.h"
-
-//TODO : move code later to a plugin
-//TODO : Fix registers arrays , they must be smaller now doe to the way SB registers are handled
-#include "hw/holly/holly_intc.h"
 #include "hw/holly/sb.h"
+#include "hw/holly/holly_intc.h"
+
+static u32 pvr_map32(u32 offset32);
 
 //YUV converter code :)
 //inits the YUV converter
@@ -37,7 +32,7 @@ void YUV_init()
 	YUV_x_curr=0;
 	YUV_y_curr=0;
 
-	YUV_dest=TA_YUV_TEX_BASE&VRAM_MASK;//TODO : add the masking needed
+	YUV_dest = TA_YUV_TEX_BASE & VRAM_MASK;
 	TA_YUV_TEX_CNT=0;
 	YUV_blockcount = (TA_YUV_TEX_CTRL.yuv_u_size + 1) * (TA_YUV_TEX_CTRL.yuv_v_size + 1);
 
@@ -47,7 +42,7 @@ void YUV_init()
 		YUV_x_size=16;
 		YUV_y_size=16;
 	}
-	else // yesh!!!
+	else
 	{
 		YUV_x_size = (TA_YUV_TEX_CTRL.yuv_u_size + 1) * 16;
 		YUV_y_size = (TA_YUV_TEX_CTRL.yuv_v_size + 1) * 16;
@@ -55,34 +50,7 @@ void YUV_init()
 	YUV_index = 0;
 }
 
-
-static INLINE u8 GetY420(int x, int y,u8* base)
-{
-	//u32 base=0;
-	if (x > 7)
-	{
-		x -= 8;
-		base += 64;
-	}
-
-	if (y > 7)
-	{
-		y -= 8;
-		base += 128;
-	}
-	
-	return base[x+y*8];
-}
-
-static INLINE u8 GetUV420(int x, int y,u8* base)
-{
-	int realx=x>>1;
-	int realy=y>>1;
-
-	return base[realx+realy*8];
-}
-
-void YUV_Block8x8(u8* inuv,u8* iny, u8* out)
+static void YUV_Block8x8(u8* inuv, u8* iny, u8* out)
 {
 	u8* line_out_0=out+0;
 	u8* line_out_1=out+YUV_x_size*2;
@@ -269,8 +237,6 @@ void TAWrite(u32 address,u32* data,u32 count)
 	}
 }
 
-#include "hw/sh4/sh4_mmr.h"
-
 void NOINLINE MemWrite32(void* dst, void* src)
 {
 	memcpy((u64*)dst,(u64*)src,32);
@@ -313,16 +279,9 @@ extern "C" void DYNACALL TAWriteSQ(u32 address,u8* sqb)
 
 //Misc interface
 
-//Reset -> Reset - Initialise to default values
-void pvr_Reset(bool Manual)
-{
-	if (!Manual)
-		vram.Zero();
-}
-
 #define VRAM_BANK_BIT 0x400000
 
-u32 pvr_map32(u32 offset32)
+static u32 pvr_map32(u32 offset32)
 {
 	//64b wide bus is achieved by interleaving the banks every 32 bits
 	const u32 bank_bit = VRAM_BANK_BIT;

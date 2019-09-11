@@ -10,7 +10,7 @@
 u32 sb_ReadMem(u32 addr,u32 sz);
 void sb_WriteMem(u32 addr,u32 data,u32 sz);
 void sb_Init();
-void sb_Reset(bool Manual);
+void sb_Reset(bool hard);
 void sb_Term();
 
 extern Array<RegisterStruct> sb_regs;

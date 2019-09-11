@@ -39,7 +39,6 @@ int darw_printf(const wchar* text, ...)
 }
 
 u16 kcode[4] = { 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF };
-u32 vks[4];
 s8 joyx[4],joyy[4];
 u8 rt[4],lt[4];
 

@@ -1093,6 +1093,11 @@ void DrawStrips()
     for (int render_pass = 0; render_pass < pvrrc.render_passes.used(); render_pass++) {
         const RenderPass& current_pass = pvrrc.render_passes.head()[render_pass];
 
+        DEBUG_LOG(RENDERER, "Render pass %d OP %d PT %d TR %d", render_pass + 1,
+        		current_pass.op_count - previous_pass.op_count,
+				current_pass.pt_count - previous_pass.pt_count,
+				current_pass.tr_count - previous_pass.tr_count);
+
 		//initial state
 		glcache.Enable(GL_DEPTH_TEST);
 		glcache.DepthMask(GL_TRUE);

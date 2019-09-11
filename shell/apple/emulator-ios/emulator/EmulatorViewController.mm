@@ -23,7 +23,6 @@
 #define USE_CRT_SHADER 0
 
 extern u16 kcode[4];
-extern u32 vks[4];
 extern s8 joyx[4],joyy[4];
 extern u8 rt[4],lt[4];
 

@@ -1480,26 +1480,6 @@ extern u8 rt[4], lt[4];
 char EEPROM[0x100];
 bool EEPROM_loaded = false;
 
-static u16 getJoystickXAxis()
-{
-	return (joyx[0] + 128) << 8;
-}
-
-static u16 getJoystickYAxis()
-{
-	return (joyy[0] + 128) << 8;
-}
-
-static u16 getLeftTriggerAxis()
-{
-	return lt[0] << 8;
-}
-
-static u16 getRightTriggerAxis()
-{
-	return rt[0] << 8;
-}
-
 u32 naomi_button_mapping[] = {
 		NAOMI_SERVICE_KEY,	// DC_BTN_C
 		NAOMI_BTN1_KEY,		// DC_BTN_B

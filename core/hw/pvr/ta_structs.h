@@ -1,6 +1,8 @@
 //structs were getting tooo many , so i moved em here !
 
 #pragma once
+#include "types.h"
+
 //bits that affect drawing (for caching params)
 #define PCW_DRAW_MASK (0x000000CE)
 

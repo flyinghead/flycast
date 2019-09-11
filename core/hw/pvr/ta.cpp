@@ -1,5 +1,6 @@
 #include "ta.h"
 #include "ta_ctx.h"
+#include "hw/holly/holly_intc.h"
 
 extern u32 ta_type_lut[256];
 
@@ -91,7 +92,7 @@ static void fill_fsm(ta_state st, s8 pt, s8 obj, ta_state next, u32 proc=0, u32 
 	}
 }
 
-void fill_fsm()
+static void fill_fsm()
 {
 	//initialise to invalid
 	for (int i=0;i<2048;i++)
@@ -194,7 +195,7 @@ void fill_fsm()
 	fill_fsm(TAS_MLV64_H,-1,-1,TAS_MLV64); //64 MH -> expect M64
 }
 
-const HollyInterruptID ListEndInterrupt[5]=
+static const HollyInterruptID ListEndInterrupt[5]=
 {
 	holly_OPAQUE,
 	holly_OPAQUEMOD,
@@ -204,7 +205,7 @@ const HollyInterruptID ListEndInterrupt[5]=
 };
 
 
-NOINLINE void DYNACALL ta_handle_cmd(u32 trans)
+static NOINLINE void DYNACALL ta_handle_cmd(u32 trans)
 {
 	Ta_Dma* dat=(Ta_Dma*)(ta_tad.thd_data-32);
 
@@ -283,7 +284,7 @@ void ta_vtx_SoftReset()
 	ta_cur_state=TAS_NS;
 }
 
-INLINE
+static INLINE
 void DYNACALL ta_thd_data32_i(void* data)
 {
 	if (ta_ctx == NULL)

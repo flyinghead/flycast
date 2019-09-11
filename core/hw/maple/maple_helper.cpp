@@ -1,4 +1,4 @@
-#include "types.h"
+#include "maple_helper.h"
 #include "maple_if.h"
 
 u32 maple_GetBusId(u32 addr)
