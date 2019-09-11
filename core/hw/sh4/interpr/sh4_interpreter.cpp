@@ -109,6 +109,8 @@ void Sh4_int_Reset(bool hard)
 	}
 	else
 	{
+		if (hard)
+			memset(&p_sh4rcb->cntx, 0, sizeof(p_sh4rcb->cntx));
 		next_pc = 0xA0000000;
 
 		memset(r,0,sizeof(r));

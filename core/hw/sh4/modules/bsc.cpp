@@ -111,10 +111,9 @@ void bsc_init()
 
 	//note: naomi//aw might depend on rfcr
 	sh4_rio_reg(BSC, BSC_RFCR_addr, RIO_RO, 16);
-	BSC_RFCR.full = 17;
 }
 
-void bsc_reset()
+void bsc_reset(bool hard)
 {
 	/*
 	BSC BCR1 H'FF80 0000 H'1F80 0000 32 H'0000 0000*2 Held Held Held Bclk
@@ -149,9 +148,11 @@ void bsc_reset()
 	BSC_RTCNT.full=0x0;
 	BSC_RTCOR.full=0x0;
 	BSC_PCTRA.full=0x0;
-	//BSC_PDTRA.full; undef
+	if (hard)
+		BSC_PDTRA.full = 0;
 	BSC_PCTRB.full=0x0;
-	//BSC_PDTRB.full; undef
+	if (hard)
+		BSC_PDTRB.full = 0;
 	BSC_GPIOIC.full=0x0;
 
 	BSC_RFCR.full = 17;

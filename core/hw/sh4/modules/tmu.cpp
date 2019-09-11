@@ -10,24 +10,23 @@
 
 #define tmu_underflow 0x0100
 #define tmu_UNIE      0x0020
-/*
-u32 tmu_prescaler[3];
-u32 tmu_prescaler_shift[3];
-u32 tmu_prescaler_mask[3];
-*/
 
 u32 tmu_shift[3];
 u32 tmu_mask[3];
 u64 tmu_mask64[3];
 
-const u32 tmu_ch_bit[3]={1,2,4};
-
 u32 old_mode[3] = {0xFFFF,0xFFFF,0xFFFF};
 
-const InterruptID tmu_intID[3]={sh4_TMU0_TUNI0,sh4_TMU1_TUNI1,sh4_TMU2_TUNI2};
+static const InterruptID tmu_intID[3]={sh4_TMU0_TUNI0,sh4_TMU1_TUNI1,sh4_TMU2_TUNI2};
 int tmu_sched[3];
 
 #if 0
+const u32 tmu_ch_bit[3]={1,2,4};
+
+u32 tmu_prescaler[3];
+u32 tmu_prescaler_shift[3];
+u32 tmu_prescaler_mask[3];
+
 //Accurate counts for the channel ch
 template<u32 ch>
 void UpdateTMU_chan(u32 clc)
@@ -302,8 +301,17 @@ void tmu_init()
 }
 
 
-void tmu_reset()
+void tmu_reset(bool hard)
 {
+	if (hard)
+	{
+		memset(tmu_shift, 0, sizeof(tmu_shift));
+		memset(tmu_mask, 0, sizeof(tmu_mask));
+		memset(tmu_mask64, 0, sizeof(tmu_mask64));
+		memset(old_mode, 0xFF, sizeof(old_mode));
+		memset(tmu_ch_base, 0, sizeof(tmu_ch_base));
+		memset(tmu_ch_base64, 0, sizeof(tmu_ch_base64));
+	}
 	TMU_TOCR=TMU_TSTR=0;
 	TMU_TCOR(0) = TMU_TCOR(1) = TMU_TCOR(2) = 0xffffffff;
 //	TMU_TCNT(0) = TMU_TCNT(1) = TMU_TCNT(2) = 0xffffffff;

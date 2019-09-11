@@ -2,7 +2,7 @@
 #include "types.h"
 
 void bsc_init();
-void bsc_reset();
+void bsc_reset(bool hard);
 void bsc_term();
 
 
@@ -31,7 +31,7 @@ void ubc_reset();
 void ubc_term();
 
 void tmu_init();
-void tmu_reset();
+void tmu_reset(bool hard);
 void tmu_term();
 
 void ccn_init();
