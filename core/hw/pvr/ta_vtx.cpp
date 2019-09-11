@@ -1215,7 +1215,7 @@ public:
 	{
 		//printf("Sprite\n");
 		PolyParam* d_pp=CurrentPP;
-		if (CurrentPP->count!=0)
+		if (CurrentPP == NULL || CurrentPP->count != 0)
 		{
 			d_pp=CurrentPPlist->Append(); 
 			CurrentPP=d_pp;
