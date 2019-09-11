@@ -434,8 +434,8 @@ struct ChannelEx
 	{
 		ccd=(ChannelCommonData*)&ccd_raw[cn*0x80];
 		ChannelNumber = cn;
-		for (u32 i=0;i<0x80;i++)
-			RegWrite(i, 1);
+		for (u32 i = 0; i < 0x80; i += 2)
+			RegWrite(i, 2);
 		disable();
 	}
 	void disable()
