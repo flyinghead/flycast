@@ -57,9 +57,8 @@ static u8 float_to_satu8_math(float val)
 
 //vdec state variables
 ModTriangle* lmr=0;
-PolyParam nullPP;
 
-PolyParam* CurrentPP=&nullPP;
+PolyParam* CurrentPP;
 List<PolyParam>* CurrentPPlist;
 
 //TA state vars	
@@ -78,10 +77,6 @@ extern u32 ta_type_lut[256];
 void TA_ListCont();
 void TA_ListInit();
 void TA_SoftReset();
-
-//hehe
-//as it seems, bit 1,2 are type, bit 0 is mod volume :p
-
 
 //misc ones
 const u32 ListType_None=-1;
@@ -277,7 +272,7 @@ case num : {\
 	template <u32 poly_type,u32 poly_size>
 	static Ta_Dma* TACALL ta_poly_data(Ta_Dma* data,Ta_Dma* data_end)
 	{
-		__assume(data<=data_end);
+		verify(data<=data_end);
 
 					//If SZ64  && 32 bytes
 #define IS_FIST_HALF ((poly_size!=SZ32) && (data==data_end))
@@ -731,40 +726,35 @@ public:
 		else if (ListType==ListType_Translucent)
 			CurrentPPlist=&vdrc.global_param_tr;
 
-		CurrentPP=&nullPP;
+		CurrentPP = NULL;
 	}
 
 	__forceinline
 		static void EndList(u32 ListType)
 	{
-		CurrentPP=&nullPP;
-		CurrentPPlist=0;
+		CurrentPP = NULL;
+		CurrentPPlist = NULL;
 
 		if (ListType == ListType_Opaque_Modifier_Volume
 				|| ListType == ListType_Translucent_Modifier_Volume)
 			EndModVol();
 	}
 
-	/*
-	if (CurrentPP==0 || CurrentPP->pcw.full!=pp->pcw.full || \
-	CurrentPP->tcw.full!=pp->tcw.full || \
-	CurrentPP->tsp.full!=pp->tsp.full || \
-	CurrentPP->isp.full!=pp->isp.full	) \
-	*/
 	//Polys  -- update code on sprites if that gets updated too --
 	template<class T>
 	static void glob_param_bdc_(T* pp)
 	{
-		if (CurrentPP->pcw.full!=pp->pcw.full || 
-			CurrentPP->tcw.full!=pp->tcw.full || 
-			CurrentPP->tsp.full!=pp->tsp.full || 
-			CurrentPP->isp.full!=pp->isp.full	) 
+		if (CurrentPP == NULL
+			|| CurrentPP->pcw.full != pp->pcw.full ||
+			CurrentPP->tcw.full != pp->tcw.full || 
+			CurrentPP->tsp.full != pp->tsp.full || 
+			CurrentPP->isp.full != pp->isp.full)
 		{
-			PolyParam* d_pp=CurrentPP;
-			if (CurrentPP->count!=0)
+			PolyParam* d_pp = CurrentPP;
+			if (d_pp == NULL || d_pp->count != 0)
 			{
-				d_pp=CurrentPPlist->Append(); 
-				CurrentPP=d_pp;
+				d_pp = CurrentPPlist->Append();
+				CurrentPP = d_pp;
 			}
 			d_pp->first=vdrc.idx.used(); 
 			d_pp->count=0; 
