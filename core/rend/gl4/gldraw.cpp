@@ -45,7 +45,7 @@ static GLuint texSamplers[2];
 static GLuint depth_fbo;
 GLuint depthSaveTexId;
 
-static gl4PipelineShader *gl4GetProgram(u32 cp_AlphaTest, u32 pp_ClipTestMode,
+static gl4PipelineShader *gl4GetProgram(u32 cp_AlphaTest, s32 pp_ClipTestMode,
 							u32 pp_Texture, u32 pp_UseAlpha, u32 pp_IgnoreTexA, u32 pp_ShadInstr, u32 pp_Offset,
 							u32 pp_FogCtrl, bool pp_TwoVolumes, u32 pp_DepthFunc, bool pp_Gouraud, bool pp_BumpMap, bool fog_clamping, int pass)
 {
@@ -56,7 +56,7 @@ static gl4PipelineShader *gl4GetProgram(u32 cp_AlphaTest, u32 pp_ClipTestMode,
 	}
 	u32 rv=0;
 
-	rv|=pp_ClipTestMode;
+	rv |= (pp_ClipTestMode + 1);
 	rv<<=1; rv|=cp_AlphaTest;
 	rv<<=1; rv|=pp_Texture;
 	rv<<=1; rv|=pp_UseAlpha;
@@ -692,7 +692,7 @@ static void gl4_draw_quad_texture(GLuint texture, float w, float h)
 	glcache.Disable(GL_CULL_FACE);
 	glcache.Disable(GL_BLEND);
 
-	ShaderUniforms.trilinear_alpha = 1.0;
+	gl4ShaderUniforms.trilinear_alpha = 1.0;
 
 	CurrentShader = gl4GetProgram(0,
 				0,
@@ -722,11 +722,14 @@ static void gl4_draw_quad_texture(GLuint texture, float w, float h)
 	};
 	GLushort indices[] = { 0, 1, 2, 1, 3 };
 
-	gl4SetupMainVBO();
+	glBindVertexArray(gl4.vbo.main_vao);
+	glBindBuffer(GL_ARRAY_BUFFER, gl4.vbo.geometry);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl4.vbo.idxs);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STREAM_DRAW);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STREAM_DRAW);
 
 	glDrawElements(GL_TRIANGLE_STRIP, 5, GL_UNSIGNED_SHORT, (void *)0);
+	glCheck();
 }
 
 void gl4DrawFramebuffer(float w, float h)

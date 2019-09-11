@@ -2052,8 +2052,6 @@ bool RenderFrame()
 		glcache.ClearColor(0.f, 0.f, 0.f, 0.f);
 		glClear(GL_COLOR_BUFFER_BIT);
 		DrawFramebuffer(dc_width, dc_height);
-		glBufferData(GL_ARRAY_BUFFER, pvrrc.verts.bytes(), pvrrc.verts.head(), GL_STREAM_DRAW);
-		upload_vertex_indices();
 	}
 	#ifdef _WIN32
 		//Sleep(40); //to test MT stability

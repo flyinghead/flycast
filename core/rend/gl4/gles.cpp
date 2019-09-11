@@ -857,17 +857,7 @@ static bool RenderFrame()
 		}
 	}
 
-	bool wide_screen_on = !is_rtt && settings.rend.WideScreen
-			&& pvrrc.fb_X_CLIP.min == 0
-			&& lroundf((pvrrc.fb_X_CLIP.max + 1) / scale_x) == 640L
-			&& pvrrc.fb_Y_CLIP.min == 0
-			&& lroundf((pvrrc.fb_Y_CLIP.max + 1) / scale_y) == 480L;
-
-	//Color is cleared by the background plane
-
 	glcache.Disable(GL_SCISSOR_TEST);
-
-	//move vertex to gpu
 
 	if (!pvrrc.isRenderFramebuffer)
 	{
@@ -875,6 +865,7 @@ static bool RenderFrame()
 		glBindBuffer(GL_ARRAY_BUFFER, gl4.vbo.geometry); glCheck();
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl4.vbo.idxs); glCheck();
 
+		//move vertex to gpu
 		glBufferData(GL_ARRAY_BUFFER,pvrrc.verts.bytes(),pvrrc.verts.head(),GL_STREAM_DRAW); glCheck();
 
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER,pvrrc.idx.bytes(),pvrrc.idx.head(),GL_STREAM_DRAW);
@@ -900,6 +891,12 @@ static bool RenderFrame()
 			DEBUG_LOG(RENDERER, "SCI: %d, %f", pvrrc.fb_X_CLIP.max, dc2s_scale_h);
 			DEBUG_LOG(RENDERER, "SCI: %f, %f, %f, %f", offs_x+pvrrc.fb_X_CLIP.min/scale_x,(pvrrc.fb_Y_CLIP.min/scale_y)*dc2s_scale_h,(pvrrc.fb_X_CLIP.max-pvrrc.fb_X_CLIP.min+1)/scale_x*dc2s_scale_h,(pvrrc.fb_Y_CLIP.max-pvrrc.fb_Y_CLIP.min+1)/scale_y*dc2s_scale_h);
 		#endif
+
+		bool wide_screen_on = !is_rtt && settings.rend.WideScreen
+				&& pvrrc.fb_X_CLIP.min == 0
+				&& lroundf((pvrrc.fb_X_CLIP.max + 1) / scale_x) == 640L
+				&& pvrrc.fb_Y_CLIP.min == 0
+				&& lroundf((pvrrc.fb_Y_CLIP.max + 1) / scale_y) == 480L;
 
 		if (!wide_screen_on)
 		{
@@ -963,6 +960,7 @@ static bool RenderFrame()
 	{
 		glBindFramebuffer(GL_FRAMEBUFFER, output_fbo);
 
+		glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 		glcache.ClearColor(0.f, 0.f, 0.f, 0.f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
