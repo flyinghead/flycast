@@ -725,7 +725,15 @@ u32,f1,(f32 f1),
 	if (f1 > 2147483520.0f) // IEEE 754: 0x4effffff
 		return 0x7fffffff;
 	else
-		return (s32)f1;
+	{
+		s32 res = (s32)f1;
+#if HOST_CPU == CPU_X86 || HOST_CPU == CPU_X64
+		// Fix result sign for Intel CPUs
+		if (res == 0x80000000 && *(s32 *)&f1 > 0)
+			res = 0x7fffffff;
+#endif
+		return res;
+	}
 )
 
 shil_compile
