@@ -289,8 +289,8 @@ void DYNACALL ta_thd_data32_i(void* data)
 {
 	if (ta_ctx == NULL)
 	{
-		INFO_LOG(PVR, "Warning: data sent to TA prior to ListInit. Implied");
-		ta_vtx_ListInit();
+		INFO_LOG(PVR, "Warning: data sent to TA prior to ListInit. Ignored");
+		return;
 	}
 
 	simd256_t* dst = (simd256_t*)ta_tad.thd_data;
