@@ -583,9 +583,15 @@ void rend_vblank()
 	if (!render_called && fb_dirty && FB_R_CTRL.fb_enable)
 	{
 		DEBUG_LOG(PVR, "Direct framebuffer write detected");
+		u32 saved_ctx_addr = PARAM_BASE;
+		bool restore_ctx = ta_ctx != NULL;
+		PARAM_BASE = 0xF00000;
 		SetCurrentTARC(CORE_CURRENT_CTX);
 		ta_ctx->rend.isRenderFramebuffer = true;
 		rend_start_render();
+		PARAM_BASE = saved_ctx_addr;
+		if (restore_ctx)
+			SetCurrentTARC(CORE_CURRENT_CTX);
 		fb_dirty = false;
 	}
 	render_called = false;
