@@ -296,3 +296,5 @@ struct TextureCacheData
 	bool NeedsUpdate();
 	bool Delete();
 };
+
+extern const u32 Zfunction[8];

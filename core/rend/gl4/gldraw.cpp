@@ -13,28 +13,6 @@ Takes vertex, textures and renders to the currently set up target
 
 */
 
-#define INVERT_DEPTH_FUNC
-const static u32 Zfunction[]=
-{
-	GL_NEVER,      //GL_NEVER,              //0 Never
-#ifndef INVERT_DEPTH_FUNC
-	GL_LESS,        //GL_LESS/*EQUAL*/,     //1 Less
-	GL_EQUAL,       //GL_EQUAL,             //2 Equal
-	GL_LEQUAL,      //GL_LEQUAL,            //3 Less Or Equal
-	GL_GREATER,     //GL_GREATER/*EQUAL*/,  //4 Greater
-	GL_NOTEQUAL,    //GL_NOTEQUAL,          //5 Not Equal
-	GL_GEQUAL,      //GL_GEQUAL,            //6 Greater Or Equal
-#else
-	GL_GREATER,                             //1 Less
-	GL_EQUAL,                               //2 Equal
-	GL_GEQUAL,                              //3 Less Or Equal
-	GL_LESS,                                //4 Greater
-	GL_NOTEQUAL,                            //5 Not Equal
-	GL_LEQUAL,                              //6 Greater Or Equal
-#endif
-	GL_ALWAYS,      //GL_ALWAYS,            //7 Always
-};
-
 static gl4PipelineShader* CurrentShader;
 extern u32 gcflip;
 static GLuint geom_fbo;
@@ -236,7 +214,7 @@ template <u32 Type, bool SortingEnabled>
 	//set Z mode, only if required
 	if (Type == ListType_Punch_Through || (pass == 0 && SortingEnabled))
 	{
-		glcache.DepthFunc(Zfunction[6]);	// Greater or equal
+		glcache.DepthFunc(GL_GEQUAL);
 	}
 	else if (Type == ListType_Opaque || (pass == 0 && !SortingEnabled))
 	{
@@ -344,51 +322,41 @@ static void DrawModVols(int first, int count)
 
 	glcache.UseProgram(gl4.modvol_shader.program);
 
+	glcache.Enable(GL_DEPTH_TEST);
 	glcache.DepthMask(GL_FALSE);
-	glcache.DepthFunc(Zfunction[4]);
+	glcache.DepthFunc(GL_GREATER);
 
-	if(false)
+	glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+
+	ModifierVolumeParam* params = &pvrrc.global_param_mvo.head()[first];
+
+	int mod_base = -1;
+
+	for (u32 cmv = 0; cmv < count; cmv++)
 	{
-		//simply draw the volumes -- for debugging
-		SetCull(0);
-		glDrawArrays(GL_TRIANGLES, first, count * 3);
-	}
-	else
-	{
-		//Full emulation
+		ModifierVolumeParam& param = params[cmv];
 
-		glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+		if (param.count == 0)
+			continue;
 
-		ModifierVolumeParam* params = &pvrrc.global_param_mvo.head()[first];
+		u32 mv_mode = param.isp.DepthMode;
 
-		int mod_base = -1;
+		if (mod_base == -1)
+			mod_base = param.first;
 
-		for (u32 cmv = 0; cmv < count; cmv++)
+		if (!param.isp.VolumeLast && mv_mode > 0)
+			SetMVS_Mode(Or, param.isp);		// OR'ing (open volume or quad)
+		else
+			SetMVS_Mode(Xor, param.isp);	// XOR'ing (closed volume)
+
+		glDrawArrays(GL_TRIANGLES, param.first * 3, param.count * 3);
+
+		if (mv_mode == 1 || mv_mode == 2)
 		{
-			ModifierVolumeParam& param = params[cmv];
-
-			if (param.count == 0)
-				continue;
-
-			u32 mv_mode = param.isp.DepthMode;
-
-			if (mod_base == -1)
-				mod_base = param.first;
-
-			if (!param.isp.VolumeLast && mv_mode > 0)
-				SetMVS_Mode(Or, param.isp);		// OR'ing (open volume or quad)
-			else
-				SetMVS_Mode(Xor, param.isp);	// XOR'ing (closed volume)
-
-			glDrawArrays(GL_TRIANGLES, param.first * 3, param.count * 3);
-
-			if (mv_mode == 1 || mv_mode == 2)
-			{
-				// Sum the area
-				SetMVS_Mode(mv_mode == 1 ? Inclusion : Exclusion, param.isp);
-				glDrawArrays(GL_TRIANGLES, mod_base * 3, (param.first + param.count - mod_base) * 3);
-				mod_base = -1;
-			}
+			// Sum the area
+			SetMVS_Mode(mv_mode == 1 ? Inclusion : Exclusion, param.isp);
+			glDrawArrays(GL_TRIANGLES, mod_base * 3, (param.first + param.count - mod_base) * 3);
+			mod_base = -1;
 		}
 	}
 
@@ -457,6 +425,7 @@ void gl4DrawStrips(GLuint output_fbo, int width, int height)
 		glGenSamplers(2, texSamplers);
 
 	glcache.DepthMask(GL_TRUE);
+	glClearDepthf(0.0);
 	glStencilMask(0xFF);
 	glClear(GL_STENCIL_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); glCheck();
 
@@ -553,6 +522,7 @@ void gl4DrawStrips(GLuint output_fbo, int width, int height)
 			if (render_pass == 0)
 			{
 				glcache.DepthMask(GL_TRUE);
+				glClearDepthf(0.0);
 				glClear(GL_DEPTH_BUFFER_BIT);
 			}
 			else

@@ -159,23 +159,23 @@ void main() \n\
 		highp float frontDepth = texture(DepthTex, gl_FragCoord.xy / textureSize(DepthTex, 0)).r; \n\
 		#if pp_DepthFunc == 0		// Never \n\
 			discard; \n\
-		#elif pp_DepthFunc == 1		// Greater \n\
-			if (gl_FragDepth <= frontDepth) \n\
+		#elif pp_DepthFunc == 1		// Less \n\
+			if (gl_FragDepth >= frontDepth) \n\
 				discard; \n\
 		#elif pp_DepthFunc == 2		// Equal \n\
 			if (gl_FragDepth != frontDepth) \n\
 				discard; \n\
-		#elif pp_DepthFunc == 3		// Greater or equal \n\
-			if (gl_FragDepth < frontDepth) \n\
+		#elif pp_DepthFunc == 3		// Less or equal \n\
+			if (gl_FragDepth > frontDepth) \n\
 				discard; \n\
-		#elif pp_DepthFunc == 4		// Less \n\
-			if (gl_FragDepth >= frontDepth) \n\
+		#elif pp_DepthFunc == 4		// Greater \n\
+			if (gl_FragDepth <= frontDepth) \n\
 				discard; \n\
 		#elif pp_DepthFunc == 5		// Not equal \n\
 			if (gl_FragDepth == frontDepth) \n\
 				discard; \n\
-		#elif pp_DepthFunc == 6		// Less or equal \n\
-			if (gl_FragDepth > frontDepth) \n\
+		#elif pp_DepthFunc == 6		// Greater or equal \n\
+			if (gl_FragDepth < frontDepth) \n\
 				discard; \n\
 		#endif \n\
 	#endif \n\
@@ -687,8 +687,8 @@ static bool RenderFrame()
 	{
 		scale_x=fb_scale_x;
 		scale_y=fb_scale_y;
-		if (SCALER_CTL.interlace == 0 && SCALER_CTL.vscalefactor >= 0x400)
-			scale_y *= (float)SCALER_CTL.vscalefactor / 0x400;
+		if (SCALER_CTL.interlace == 0 && SCALER_CTL.vscalefactor > 0x400)
+			scale_y *= roundf((float)SCALER_CTL.vscalefactor / 0x400);
 
 		//work out scaling parameters !
 		//Pixel doubling is on VO, so it does not affect any pixel operations
@@ -906,7 +906,7 @@ static bool RenderFrame()
 			float min_y = pvrrc.fb_Y_CLIP.min / scale_y;
 			if (!is_rtt)
 			{
-				if (SCALER_CTL.interlace && SCALER_CTL.vscalefactor >= 0x400)
+				if (SCALER_CTL.interlace && SCALER_CTL.vscalefactor > 0x400)
 				{
 					// Clipping is done after scaling/filtering so account for that if enabled
 					height *= (float)SCALER_CTL.vscalefactor / 0x400;

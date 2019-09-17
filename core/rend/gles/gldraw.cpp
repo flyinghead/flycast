@@ -7,30 +7,26 @@
 Drawing and related state management
 Takes vertex, textures and renders to the currently set up target
 
-
-
-
 */
 
 const static u32 CullMode[]= 
 {
-
 	GL_NONE, //0    No culling          No culling
 	GL_NONE, //1    Cull if Small       Cull if ( |det| < fpu_cull_val )
 
 	GL_FRONT, //2   Cull if Negative    Cull if ( |det| < 0 ) or ( |det| < fpu_cull_val )
 	GL_BACK,  //3   Cull if Positive    Cull if ( |det| > 0 ) or ( |det| < fpu_cull_val )
 };
-const static u32 Zfunction[]=
+const u32 Zfunction[] =
 {
-	GL_NEVER,      //GL_NEVER,              //0 Never
-	GL_LESS,        //GL_LESS/*EQUAL*/,     //1 Less
-	GL_EQUAL,       //GL_EQUAL,             //2 Equal
-	GL_LEQUAL,      //GL_LEQUAL,            //3 Less Or Equal
-	GL_GREATER,     //GL_GREATER/*EQUAL*/,  //4 Greater
-	GL_NOTEQUAL,    //GL_NOTEQUAL,          //5 Not Equal
-	GL_GEQUAL,      //GL_GEQUAL,            //6 Greater Or Equal
-	GL_ALWAYS,      //GL_ALWAYS,            //7 Always
+	GL_NEVER,       //0 Never
+	GL_LESS,        //1 Less
+	GL_EQUAL,       //2 Equal
+	GL_LEQUAL,      //3 Less Or Equal
+	GL_GREATER,     //4 Greater
+	GL_NOTEQUAL,    //5 Not Equal
+	GL_GEQUAL,      //6 Greater Or Equal
+	GL_ALWAYS,      //7 Always
 };
 
 /*
@@ -73,7 +69,6 @@ extern int screen_height;
 
 PipelineShader* CurrentShader;
 u32 gcflip;
-static GLuint g_previous_frame_tex;
 
 s32 SetTileClip(u32 val, GLint uniform)
 {
@@ -1003,53 +998,43 @@ void DrawModVols(int first, int count)
 	glcache.UseProgram(gl.modvol_shader.program);
 	glUniform1f(gl.modvol_shader.sp_ShaderColor, 1 - FPU_SHAD_SCALE.scale_factor / 256.f);
 
+	glcache.Enable(GL_DEPTH_TEST);
 	glcache.DepthMask(GL_FALSE);
 	glcache.DepthFunc(GL_GREATER);
 
-	if(0)
+	glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+
+	ModifierVolumeParam* params = &pvrrc.global_param_mvo.head()[first];
+
+	int mod_base = -1;
+
+	for (u32 cmv = 0; cmv < count; cmv++)
 	{
-		//simply draw the volumes -- for debugging
-		SetCull(0);
-		glDrawArrays(GL_TRIANGLES, first, count * 3);
-		SetupMainVBO();
-	}
-	else
-	{
-		//Full emulation
+		ModifierVolumeParam& param = params[cmv];
 
-		glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+		if (param.count == 0)
+			continue;
 
-		ModifierVolumeParam* params = &pvrrc.global_param_mvo.head()[first];
+		u32 mv_mode = param.isp.DepthMode;
 
-		int mod_base = -1;
+		if (mod_base == -1)
+			mod_base = param.first;
 
-		for (u32 cmv = 0; cmv < count; cmv++)
+		if (!param.isp.VolumeLast && mv_mode > 0)
+			SetMVS_Mode(Or, param.isp);		// OR'ing (open volume or quad)
+		else
+			SetMVS_Mode(Xor, param.isp);	// XOR'ing (closed volume)
+
+		glDrawArrays(GL_TRIANGLES, param.first * 3, param.count * 3);
+
+		if (mv_mode == 1 || mv_mode == 2)
 		{
-			ModifierVolumeParam& param = params[cmv];
-
-			if (param.count == 0)
-				continue;
-
-			u32 mv_mode = param.isp.DepthMode;
-
-			if (mod_base == -1)
-				mod_base = param.first;
-
-			if (!param.isp.VolumeLast && mv_mode > 0)
-				SetMVS_Mode(Or, param.isp);		// OR'ing (open volume or quad)
-			else
-				SetMVS_Mode(Xor, param.isp);	// XOR'ing (closed volume)
-
-			glDrawArrays(GL_TRIANGLES, param.first * 3, param.count * 3);
-
-			if (mv_mode == 1 || mv_mode == 2)
-			{
-				// Sum the area
-				SetMVS_Mode(mv_mode == 1 ? Inclusion : Exclusion, param.isp);
-				glDrawArrays(GL_TRIANGLES, mod_base * 3, (param.first + param.count - mod_base) * 3);
-				mod_base = -1;
-			}
+			// Sum the area
+			SetMVS_Mode(mv_mode == 1 ? Inclusion : Exclusion, param.isp);
+			glDrawArrays(GL_TRIANGLES, mod_base * 3, (param.first + param.count - mod_base) * 3);
+			mod_base = -1;
 		}
+
 		//disable culling
 		SetCull(0);
 		//enable color writes

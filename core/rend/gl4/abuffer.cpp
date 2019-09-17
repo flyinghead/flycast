@@ -46,7 +46,7 @@ int fillAndSortFragmentArray(ivec2 coords) \n\
 		Pixel jp = pixels[pixel_list[j]]; \n\
 #if DEPTH_SORTED == 1 \n\
 		while (j >= 0 \n\
-			   && (jp.depth < p.depth \n\
+			   && (jp.depth > p.depth \n\
 				   || (jp.depth == p.depth && getPolyNumber(jp) > getPolyNumber(p)))) \n\
 #else \n\
 		while (j >= 0 && getPolyNumber(jp) > getPolyNumber(p)) \n\
@@ -85,28 +85,28 @@ vec4 resolveAlphaBlend(ivec2 coords) { \n\
 			{ \n\
 			case 0:		// Never \n\
 				continue; \n\
-			case 1:		// Greater \n\
-				if (frag_depth <= depth) \n\
+			case 1:		// Less \n\
+				if (frag_depth >= depth) \n\
 					continue; \n\
 				break; \n\
 			case 2:		// Equal \n\
 				if (frag_depth != depth) \n\
 					continue; \n\
 				break; \n\
-			case 3:		// Greater or equal \n\
-				if (frag_depth < depth) \n\
+			case 3:		// Less or equal \n\
+				if (frag_depth > depth) \n\
 					continue; \n\
 				break; \n\
-			case 4:		// Less \n\
-				if (frag_depth >= depth) \n\
+			case 4:		// Greater \n\
+				if (frag_depth <= depth) \n\
 					continue; \n\
 				break; \n\
 			case 5:		// Not equal \n\
 				if (frag_depth == depth) \n\
 					continue; \n\
 				break; \n\
-			case 6:		// Less or equal \n\
-				if (frag_depth > depth) \n\
+			case 6:		// Greater or equal \n\
+				if (frag_depth < depth) \n\
 					continue; \n\
 				break; \n\
 			case 7:		// Always \n\
