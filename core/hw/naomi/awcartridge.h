@@ -28,7 +28,6 @@ public:
 	virtual std::string GetGameId() override;
 
 	void SetKey(u32 key) override;
-	void SetKeyData(u8 *key) override { SetKey(key[0] | (key[1] << 8) | (key[2] << 16) | (key[3] << 24)); }
 
 private:
 	virtual void device_reset();
@@ -52,7 +51,8 @@ private:
 
 	static const u8 permutation_table[4][16];
 	static const sbox_set sboxes_table[4];
-	static u16 decrypt(u16 cipherText, u32 address, const u32 key);
+	static const int xor_table[16];
+	static u16 decrypt(u16 cipherText, u32 address, const u8 key);
 	u16 decrypt16(u32 address) { return decrypt(((u16 *)RomPtr)[address % (RomSize / 2)], address, rombd_key); }
 
 	void set_key();
