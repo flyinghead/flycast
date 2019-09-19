@@ -4,9 +4,9 @@
 #include "types.h"
 #include "hw/flashrom/flashrom.h"
 
-bool reios_init(u8* rom, MemChip *flash);
+bool reios_init();
 
-void reios_reset();
+void reios_reset(u8* rom, MemChip *flash);
 
 void reios_term();
 

@@ -123,7 +123,6 @@ void plugins_Term()
 
 void plugins_Reset(bool hard)
 {
-	reios_reset();
 	libPvr_Reset(hard);
 	libGDR_Reset(hard);
 	libAICA_Reset(hard);
@@ -482,6 +481,7 @@ static void dc_init()
 	}
 
 	mem_Init();
+	reios_init();
 
 	init_done = true;
 }
@@ -520,22 +520,20 @@ void dc_start_game(const char *path)
 	LoadSettings(false);
 	
 	std::string data_path = get_readonly_data_path(DATA_PATH);
-	if ((settings.platform.system == DC_PLATFORM_DREAMCAST && settings.bios.UseReios)
-		|| !LoadRomFiles(data_path))
+	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
 	{
-		if (settings.platform.system == DC_PLATFORM_DREAMCAST)
+		if (settings.bios.UseReios || !LoadRomFiles(data_path))
 		{
 			if (!LoadHle(data_path))
 				throw ReicastException("Failed to initialize HLE BIOS");
 
 			NOTICE_LOG(BOOT, "Did not load BIOS, using reios");
 		}
-		else
-		{
-			throw ReicastException("Cannot find BIOS files in " + data_path);
-		}
 	}
-
+	else
+	{
+		LoadRomFiles(data_path);
+	}
 	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
 	{
 		mcfg_CreateDevices();

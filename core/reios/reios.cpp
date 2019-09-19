@@ -39,7 +39,6 @@
 #define SYSINFO_ID_ADDR 0x8C001010
 #define FONT_TABLE_ADDR 0xa0100020
 
-static u8* biosrom;
 static MemChip *flashrom;
 static u32 base_fad = 45150;
 static bool descrambl = false;
@@ -446,7 +445,7 @@ static void reios_setup_state(u32 boot_addr) {
 
 	*/
 
-	//Setup registers to immitate a normal boot
+	//Setup registers to imitate a normal boot
 	r[15] = 0x8d000000;
 
 	gbr = 0x8c000000;
@@ -552,7 +551,7 @@ static void reios_setup_naomi(u32 boot_addr) {
 
 	*/
 
-	//Setup registers to immitate a normal boot
+	//Setup registers to imitate a normal boot
 	r[0] = 0x0c021000;
 	r[1] = 0x0c01f820;
 	r[2] = 0xa0710004;
@@ -686,19 +685,9 @@ static u32 hook_addr(hook_fp* fn) {
 	}
 }
 
-bool reios_init(u8* rom, MemChip* flash) {
-
+bool reios_init()
+{
 	INFO_LOG(REIOS, "reios: Init");
-
-	biosrom = rom;
-	flashrom = flash;
-
-	memset(rom, 0x00, 2048 * 1024);
-	memset(GetMemPtr(0x8C000000, 0), 0, RAM_SIZE);
-
-	u16* rom16 = (u16*)rom;
-
-	rom16[0] = REIOS_OPCODE;
 
 	register_hook(0xA0000000, reios_boot);
 
@@ -709,6 +698,20 @@ bool reios_init(u8* rom, MemChip* flash) {
 	register_hook(0x8C001008, reios_sys_misc);
 
 	register_hook(dc_bios_entrypoint_gd2, reios_sys_gd2);
+
+	return true;
+}
+
+void reios_reset(u8* rom, MemChip* flash)
+{
+	flashrom = flash;
+
+	memset(rom, 0x00, BIOS_SIZE);
+	memset(GetMemPtr(0x8C000000, 0), 0, RAM_SIZE);
+
+	u16* rom16 = (u16*)rom;
+
+	rom16[0] = REIOS_OPCODE;
 
 	u8 *pFont = rom + (FONT_TABLE_ADDR % BIOS_SIZE);
 
@@ -734,11 +737,6 @@ bool reios_init(u8* rom, MemChip* flash) {
 		else
 			INFO_LOG(REIOS, "font.bin: loaded %zd bytes", size);
 	}
-
-	return true;
-}
-
-void reios_reset() {
 }
 
 void reios_term() {
