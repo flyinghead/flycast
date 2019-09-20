@@ -16,6 +16,7 @@
 #include "main.h"
 #include "rend/gui.h"
 #include "input/gamepad.h"
+#include "icon.h"
 
 #if FEAT_HAS_NIXPROF
 #include "profiler/profiler.h"
@@ -487,6 +488,13 @@ void x11_window_create()
 		x11Window = XCreateWindow(x11Display, RootWindow(x11Display, x11Screen), (ndcid%3)*640, (ndcid/3)*480, x11_width, x11_height,
 			0, depth, InputOutput, x11Visual->visual, ui32Mask, &sWA);
 
+		XSetWindowBackground(x11Display, x11Window, 0);
+
+		Atom net_wm_icon = XInternAtom(x11Display, "_NET_WM_ICON", False);
+		Atom cardinal = XInternAtom(x11Display, "CARDINAL", False);
+		XChangeProperty(x11Display, x11Window, net_wm_icon, cardinal, 32, PropModeReplace,
+				(const unsigned char*)reicast_icon, sizeof(reicast_icon) / sizeof(*reicast_icon));
+
 		// Capture the close window event
 		wmDeleteMessage = XInternAtom(x11Display, "WM_DELETE_WINDOW", False);
 		XSetWMProtocols(x11Display, x11Window, &wmDeleteMessage, 1);
@@ -563,10 +571,11 @@ void x11_window_set_text(const char* text)
 {
 	if (x11_win)
 	{
-		XChangeProperty((Display*)x11_disp, (Window)x11_win,
-			XInternAtom((Display*)x11_disp, "WM_NAME", False),     //WM_NAME,
-			XInternAtom((Display*)x11_disp, "UTF8_STRING", False), //UTF8_STRING,
-			8, PropModeReplace, (const unsigned char *)text, strlen(text));
+		XStoreName((Display*)x11_disp, (Window)x11_win, text);
+		XSetIconName((Display*)x11_disp, (Window)x11_win, text);
+
+		XClassHint hint = { (char *)"WM_CLASS", (char *)text };
+		XSetClassHint((Display*)x11_disp, (Window)x11_win, &hint);
 	}
 }
 
