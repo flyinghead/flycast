@@ -29,16 +29,16 @@ u32 ta_type_lut[256];
 #define TA_V64H 
 	
 //cache state vars
-u32 tileclip_val=0;
+static u32 tileclip_val = 0;
 
-u8 f32_su8_tbl[65536];
+static u8 f32_su8_tbl[65536];
 #define float_to_satu8(val) f32_su8_tbl[((u32&)val)>>16]
 
 /*
 	This uses just 1k of lookup, but does more calcs
 	The full 64k table will be much faster -- as only a small sub-part of it will be used anyway (the same 1k)
 */
-u8 float_to_satu8_2(float val)
+static u8 float_to_satu8_2(float val)
 {
 	s32 vl=(s32&)val>>16;
 	u32 m1=(vl-0x3b80)>>31;	//1 if smaller 0x3b80 or negative
@@ -56,45 +56,34 @@ static u8 float_to_satu8_math(float val)
 }
 
 //vdec state variables
-ModTriangle* lmr=0;
+static ModTriangle* lmr;
 
-PolyParam* CurrentPP;
-List<PolyParam>* CurrentPPlist;
+static PolyParam* CurrentPP;
+static List<PolyParam>* CurrentPPlist;
 
 //TA state vars	
-DECL_ALIGN(4) u8 FaceBaseColor[4];
-DECL_ALIGN(4) u8 FaceOffsColor[4];
-DECL_ALIGN(4) u8 FaceBaseColor1[4];
-DECL_ALIGN(4) u8 FaceOffsColor1[4];
-DECL_ALIGN(4) u32 SFaceBaseColor;
-DECL_ALIGN(4) u32 SFaceOffsColor;
-
-
-
-//splitter function lookup
-extern u32 ta_type_lut[256];
-
-void TA_ListCont();
-void TA_ListInit();
-void TA_SoftReset();
+DECL_ALIGN(4) static u8 FaceBaseColor[4];
+DECL_ALIGN(4) static u8 FaceOffsColor[4];
+DECL_ALIGN(4) static u8 FaceBaseColor1[4];
+DECL_ALIGN(4) static u8 FaceOffsColor1[4];
+DECL_ALIGN(4) static u32 SFaceBaseColor;
+DECL_ALIGN(4) static u32 SFaceOffsColor;
 
 //misc ones
-const u32 ListType_None=-1;
-
-
-const u32 SZ32=1;
-const u32 SZ64=2;
+static const u32 ListType_None = -1;
+static const u32 SZ32 = 1;
+static const u32 SZ64 = 2;
 
 #include "ta_structs.h"
 
 typedef Ta_Dma* DYNACALL TaListFP(Ta_Dma* data,Ta_Dma* data_end);
 typedef void TACALL TaPolyParamFP(void* ptr);
 
-TaListFP* TaCmd;
+static TaListFP* TaCmd;
 	
-u32 CurrentList;
-TaListFP* VerxexDataFP;
-bool ListIsFinished[5];
+static u32 CurrentList;
+static TaListFP* VerxexDataFP;
+static bool ListIsFinished[5];
 
 static f32 f16(u16 v)
 {
@@ -693,9 +682,10 @@ public:
 	void vdec_init()
 	{
 		VDECInit();
-		TaCmd=ta_main;
+		TaCmd = ta_main;
 		CurrentList = ListType_None;
-		ListIsFinished[0]=ListIsFinished[1]=ListIsFinished[2]=ListIsFinished[3]=ListIsFinished[4]=false;
+		ListIsFinished[0] = ListIsFinished[1] = ListIsFinished[2] = ListIsFinished[3] = ListIsFinished[4] = false;
+		tileclip_val = 0;
 	}
 		
 	__forceinline
