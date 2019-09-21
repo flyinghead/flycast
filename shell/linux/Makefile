@@ -109,10 +109,6 @@ ifneq (,$(findstring x86,$(platform)))
     CFLAGS += -m32 -D TARGET_LINUX_x86 -D TARGET_NO_AREC -fno-builtin-sqrtf
     CXXFLAGS += -fexceptions
 
-    ifneq (,$(findstring sse4_1,$(platform)))
-        HAS_SOFTREND := 1
-    endif
-
 # Generic 64 bit x86 (a.k.a. x64/AMD64/x86_64/Intel64/EM64T)
 else ifneq (,$(findstring x64,$(platform)))
     X64_REC := 1
@@ -121,10 +117,6 @@ else ifneq (,$(findstring x64,$(platform)))
     CFLAGS += -D TARGET_LINUX_x64 -D TARGET_NO_AREC -fno-builtin-sqrtf
     CXXFLAGS += -fexceptions
     LDFLAGS := -no-pie
-
-    ifneq (,$(findstring sse4_1,$(platform)))
-        HAS_SOFTREND := 1
-    endif
 
 # Generic 64 bit ARM (armv8) Linux
 else ifneq (,$(findstring arm64,$(platform)))

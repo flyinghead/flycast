@@ -47,7 +47,7 @@ struct PvrTexInfo
 	TexConvFP32 *VQ32;
 };
 
-PvrTexInfo format[8]=
+static const PvrTexInfo format[8] =
 {	// name     bpp GL format				   Planar		Twiddled	 VQ				Planar(32b)    Twiddled(32b)  VQ (32b)
 	{"1555", 	16,	GL_UNSIGNED_SHORT_5_5_5_1, tex1555_PL,	tex1555_TW,  tex1555_VQ,	tex1555_PL32,  tex1555_TW32,  tex1555_VQ32 },	//1555
 	{"565", 	16, GL_UNSIGNED_SHORT_5_6_5,   tex565_PL,	tex565_TW,   tex565_VQ, 	tex565_PL32,   tex565_TW32,   tex565_VQ32 },	//565
@@ -59,7 +59,7 @@ PvrTexInfo format[8]=
 	{"ns/1555", 0},																														// Not supported (1555)
 };
 
-const u32 MipPoint[8] =
+static const u32 MipPoint[8] =
 {
 	0x00006,//8
 	0x00016,//16
@@ -71,10 +71,10 @@ const u32 MipPoint[8] =
 	0x15556//1024
 };
 
-const GLuint PAL_TYPE[4]=
+static const GLuint PAL_TYPE[4]=
 {GL_UNSIGNED_SHORT_5_5_5_1,GL_UNSIGNED_SHORT_5_6_5,GL_UNSIGNED_SHORT_4_4_4_4, GL_UNSIGNED_BYTE};
 
-CustomTexture custom_texture;
+static CustomTexture custom_texture;
 
 static void dumpRtTexture(u32 name, u32 w, u32 h) {
 	char sname[256];
@@ -470,12 +470,10 @@ bool TextureCacheData::Delete()
 	return true;
 }
 
-
-#include <map>
-map<u64,TextureCacheData> TexCache;
+static map<u64,TextureCacheData> TexCache;
 typedef map<u64,TextureCacheData>::iterator TexCacheIter;
 
-TextureCacheData *getTextureCacheData(TSP tsp, TCW tcw);
+static TextureCacheData *getTextureCacheData(TSP tsp, TCW tcw);
 
 void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
 {
@@ -704,11 +702,11 @@ static float LastTexCacheStats;
 
 // Only use TexU and TexV from TSP in the cache key
 //     TexV : 7, TexU : 7
-const TSP TSPTextureCacheMask = { { 7, 7 } };
+static const TSP TSPTextureCacheMask = { { 7, 7 } };
 //     TexAddr : 0x1FFFFF, Reserved : 0, StrideSel : 0, ScanOrder : 1, PixelFmt : 7, VQ_Comp : 1, MipMapped : 1
-const TCW TCWTextureCacheMask = { { 0x1FFFFF, 0, 0, 1, 7, 1, 1 } };
+static const TCW TCWTextureCacheMask = { { 0x1FFFFF, 0, 0, 1, 7, 1, 1 } };
 
-TextureCacheData *getTextureCacheData(TSP tsp, TCW tcw) {
+static TextureCacheData *getTextureCacheData(TSP tsp, TCW tcw) {
 	u64 key = tsp.full & TSPTextureCacheMask.full;
 	if (tcw.PixelFmt == PixelPal4 || tcw.PixelFmt == PixelPal8)
 		// Paletted textures have a palette selection that must be part of the key

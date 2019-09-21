@@ -225,10 +225,6 @@ static NOINLINE void DYNACALL ta_handle_cmd(u32 trans)
 				ta_fsm_cl=dat->pcw.ListType;
 			//printf("List %d ended\n",ta_fsm_cl);
 
-			if (ta_fsm_cl==ListType_Translucent)
-			{
-				//ta_tad.early=os_GetSeconds();
-			}
 			asic_RaiseInterrupt( ListEndInterrupt[ta_fsm_cl]);
 			ta_fsm_cl=7;
 			trans=TAS_NS;
@@ -271,6 +267,7 @@ void ta_vtx_ListCont()
 	ta_tad.Continue();
 
 	ta_cur_state=TAS_NS;
+	ta_fsm_cl = 7;
 }
 void ta_vtx_ListInit()
 {
@@ -278,6 +275,7 @@ void ta_vtx_ListInit()
 	ta_tad.ClearPartial();
 
 	ta_cur_state=TAS_NS;
+	ta_fsm_cl = 7;
 }
 void ta_vtx_SoftReset()
 {

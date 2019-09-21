@@ -712,7 +712,6 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 	REICAST_US(i);			// SFaceBaseColor
 	REICAST_US(i);			// SFaceOffsColor
 
-	pal_needs_update = true;
 	REICAST_US(i); 			// palette_index
 	REICAST_US(dumbool); 	// KillTex
 	REICAST_SKIP(4 * 1024); // palette16_ram
@@ -720,6 +719,7 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 	REICAST_SKIP(2 * 8 * 4 * 1024); // detwiddle[][]
 
 	REICAST_USA(vram.data, vram.size);
+	pal_needs_update = true;
 	REICAST_USA(OnChipRAM.data,OnChipRAM_SIZE);
 
 	register_unserialize(CCN, data, total_size, V7_LIBRETRO) ;
@@ -1078,9 +1078,9 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 		REICAST_SKIP(4);
 		REICAST_SKIP(4);
 	}
-	pal_needs_update = true;
 
 	REICAST_USA(vram.data, vram.size);
+	pal_needs_update = true;
 
 	REICAST_USA(OnChipRAM.data,OnChipRAM_SIZE);
 

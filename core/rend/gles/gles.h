@@ -260,7 +260,7 @@ struct TextureCacheData
 	u32 w,h;        //width & height of the texture
 	u32 size;       //size, in bytes, in vram
 	
-	PvrTexInfo* tex;
+	const PvrTexInfo* tex;
 	TexConvFP*  texconv;
 	TexConvFP32*  texconv32;
 	

@@ -82,7 +82,7 @@ typedef void TACALL TaPolyParamFP(void* ptr);
 static TaListFP* TaCmd;
 	
 static u32 CurrentList;
-static TaListFP* VerxexDataFP;
+static TaListFP* VertexDataFP;
 static bool ListIsFinished[5];
 
 static f32 f16(u16 v)
@@ -363,7 +363,7 @@ public:
 					//printf("End list %X\n",CurrentList);
 					ListIsFinished[CurrentList]=true;
 					CurrentList=ListType_None;
-					VerxexDataFP=NullVertexData;
+					VertexDataFP = NullVertexData;
 					data+=SZ32;
 					TA_EOL;
 				}
@@ -403,7 +403,7 @@ public:
 					{
 						//accept mod data
 						StartModVol((TA_ModVolParam*)data);
-						VerxexDataFP=ta_mod_vol_data;
+						VertexDataFP = ta_mod_vol_data;
 						data+=SZ32;
 					}
 					else
@@ -414,7 +414,7 @@ public:
 						u32 pdid=(u8)(uid);
 						u32 ppid=(u8)(uid>>8);
 
-						VerxexDataFP=ta_poly_data_lut[pdid];
+						VertexDataFP = ta_poly_data_lut[pdid];
 							
 
 						if (data != data_end || psz==1)
@@ -447,7 +447,7 @@ public:
 					if (CurrentList==ListType_None)
 						ta_list_start(data->pcw.ListType);	//start a list ;)
 
-					VerxexDataFP=ta_sprite_data;
+					VertexDataFP = ta_sprite_data;
 					//printf("Sprite \n");
 					AppendSpriteParam((TA_SpriteParam*)data);
 					data+=SZ32;
@@ -459,9 +459,9 @@ public:
 				//log ("vtx");
 				{
 
-					//printf("VTX:0x%08X\n",VerxexDataFP);
-					//verify(VerxexDataFP!=NullVertexData);
-					data=VerxexDataFP(data,data_end);
+					//printf("VTX:0x%08X\n", VertexDataFP);
+					//verify(VertexDataFP != NullVertexData);
+					data = VertexDataFP(data, data_end);
 				}
 				break;
 
@@ -499,7 +499,7 @@ public:
 
 			ta_type_lut[i]=rv;
 		}
-		VerxexDataFP = NullVertexData;
+		VertexDataFP = NullVertexData;
 	}
 	/*
 	Volume,Col_Type,Texture,Offset,Gouraud,16bit_UV
@@ -686,6 +686,16 @@ public:
 		CurrentList = ListType_None;
 		ListIsFinished[0] = ListIsFinished[1] = ListIsFinished[2] = ListIsFinished[3] = ListIsFinished[4] = false;
 		tileclip_val = 0;
+		VertexDataFP = NullVertexData;
+		memset(FaceBaseColor, 0, sizeof(FaceBaseColor));
+		memset(FaceOffsColor, 0, sizeof(FaceOffsColor));
+		memset(FaceBaseColor1, 0, sizeof(FaceBaseColor1));
+		memset(FaceOffsColor1, 0, sizeof(FaceOffsColor1));
+		SFaceBaseColor = 0;
+		SFaceOffsColor = 0;
+		lmr = NULL;
+		CurrentPP = NULL;
+		CurrentPPlist = NULL;
 	}
 		
 	__forceinline
@@ -778,14 +788,20 @@ public:
 	#define poly_float_color(to,src) \
 		poly_float_color_(to,pp->src##A,pp->src##R,pp->src##G,pp->src##B)
 
-	//poly param handling
+	// Poly param handling
+
+	// Packed/Floating Color
 	__forceinline
 		static void TACALL AppendPolyParam0(void* vpp)
 	{
 		TA_PolyParam0* pp=(TA_PolyParam0*)vpp;
 
 		glob_param_bdc(pp);
+		memset(FaceBaseColor, 0xff, sizeof(FaceBaseColor));
+		memset(FaceOffsColor, 0xff, sizeof(FaceOffsColor));
 	}
+
+	// Intensity, no Offset Color
 	__forceinline
 		static void TACALL AppendPolyParam1(void* vpp)
 	{
@@ -793,7 +809,10 @@ public:
 
 		glob_param_bdc(pp);
 		poly_float_color(FaceBaseColor,FaceColor);
+		memset(FaceOffsColor, 0xff, sizeof(FaceOffsColor));
 	}
+
+	// Intensity, use Offset Color
 	__forceinline
 		static void TACALL AppendPolyParam2A(void* vpp)
 	{
@@ -801,6 +820,7 @@ public:
 
 		glob_param_bdc(pp);
 	}
+
 	__forceinline
 		static void TACALL AppendPolyParam2B(void* vpp)
 	{
@@ -809,18 +829,26 @@ public:
 		poly_float_color(FaceBaseColor,FaceColor);
 		poly_float_color(FaceOffsColor,FaceOffset);
 	}
+
+	// Packed Color, with Two Volumes
 	__forceinline
 		static void TACALL AppendPolyParam3(void* vpp)
 	{
 		TA_PolyParam3* pp=(TA_PolyParam3*)vpp;
 
 		glob_param_bdc(pp);
+		memset(FaceBaseColor, 0xff, sizeof(FaceBaseColor));
+		memset(FaceOffsColor, 0xff, sizeof(FaceOffsColor));
+		memset(FaceBaseColor1, 0xff, sizeof(FaceBaseColor1));
+		memset(FaceOffsColor1, 0xff, sizeof(FaceOffsColor1));
 
 		CurrentPP->tsp1.full = pp->tsp1.full;
 		CurrentPP->tcw1.full = pp->tcw1.full;
 		if (pp->pcw.Texture)
 			CurrentPP->texid1 = renderer->GetTexture(pp->tsp1, pp->tcw1);
 	}
+
+	// Intensity, with Two Volumes
 	__forceinline
 		static void TACALL AppendPolyParam4A(void* vpp)
 	{
@@ -833,6 +861,7 @@ public:
 		if (pp->pcw.Texture)
 			CurrentPP->texid1 = renderer->GetTexture(pp->tsp1, pp->tcw1);
 	}
+
 	__forceinline
 		static void TACALL AppendPolyParam4B(void* vpp)
 	{
@@ -840,6 +869,8 @@ public:
 
 		poly_float_color(FaceBaseColor, FaceColor0);
 		poly_float_color(FaceBaseColor1, FaceColor1);
+		memset(FaceOffsColor, 0xff, sizeof(FaceOffsColor));
+		memset(FaceOffsColor1, 0xff, sizeof(FaceOffsColor1));
 	}
 
 	//Poly Strip handling
