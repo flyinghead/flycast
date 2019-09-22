@@ -687,10 +687,10 @@ public:
 		ListIsFinished[0] = ListIsFinished[1] = ListIsFinished[2] = ListIsFinished[3] = ListIsFinished[4] = false;
 		tileclip_val = 0;
 		VertexDataFP = NullVertexData;
-		memset(FaceBaseColor, 0, sizeof(FaceBaseColor));
-		memset(FaceOffsColor, 0, sizeof(FaceOffsColor));
-		memset(FaceBaseColor1, 0, sizeof(FaceBaseColor1));
-		memset(FaceOffsColor1, 0, sizeof(FaceOffsColor1));
+		memset(FaceBaseColor, 0xff, sizeof(FaceBaseColor));
+		memset(FaceOffsColor, 0xff, sizeof(FaceOffsColor));
+		memset(FaceBaseColor1, 0xff, sizeof(FaceBaseColor1));
+		memset(FaceOffsColor1, 0xff, sizeof(FaceOffsColor1));
 		SFaceBaseColor = 0;
 		SFaceOffsColor = 0;
 		lmr = NULL;
@@ -797,8 +797,6 @@ public:
 		TA_PolyParam0* pp=(TA_PolyParam0*)vpp;
 
 		glob_param_bdc(pp);
-		memset(FaceBaseColor, 0xff, sizeof(FaceBaseColor));
-		memset(FaceOffsColor, 0xff, sizeof(FaceOffsColor));
 	}
 
 	// Intensity, no Offset Color
@@ -809,7 +807,6 @@ public:
 
 		glob_param_bdc(pp);
 		poly_float_color(FaceBaseColor,FaceColor);
-		memset(FaceOffsColor, 0xff, sizeof(FaceOffsColor));
 	}
 
 	// Intensity, use Offset Color
@@ -837,10 +834,6 @@ public:
 		TA_PolyParam3* pp=(TA_PolyParam3*)vpp;
 
 		glob_param_bdc(pp);
-		memset(FaceBaseColor, 0xff, sizeof(FaceBaseColor));
-		memset(FaceOffsColor, 0xff, sizeof(FaceOffsColor));
-		memset(FaceBaseColor1, 0xff, sizeof(FaceBaseColor1));
-		memset(FaceOffsColor1, 0xff, sizeof(FaceOffsColor1));
 
 		CurrentPP->tsp1.full = pp->tsp1.full;
 		CurrentPP->tcw1.full = pp->tcw1.full;
@@ -869,8 +862,6 @@ public:
 
 		poly_float_color(FaceBaseColor, FaceColor0);
 		poly_float_color(FaceBaseColor1, FaceColor1);
-		memset(FaceOffsColor, 0xff, sizeof(FaceOffsColor));
-		memset(FaceOffsColor1, 0xff, sizeof(FaceOffsColor1));
 	}
 
 	//Poly Strip handling
