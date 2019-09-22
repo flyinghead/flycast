@@ -150,14 +150,7 @@ struct rend_context
 		Overrun=false;
 		fZ_min= 1000000.0f;
 		fZ_max= 1.0f;
-		isRTT = false;
 		isRenderFramebuffer = false;
-		fb_X_CLIP.min = 0;
-		fb_X_CLIP.max = 639;
-		fb_Y_CLIP.min = 0;
-		fb_Y_CLIP.max = 479;
-		fog_clamp_min = 0;
-		fog_clamp_max = 0xffffffff;
 	}
 };
 
