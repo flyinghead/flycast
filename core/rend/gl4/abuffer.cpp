@@ -259,10 +259,10 @@ void main(void) \n\
 		if (getShadowEnable(pp)) \n\
 		{ \n\
 #if MV_MODE == MV_XOR \n\
-			if (gl_FragDepth <= pixel.depth) \n\
+			if (gl_FragDepth >= pixel.depth) \n\
 				atomicXor(pixels[idx].seq_num, SHADOW_STENCIL); \n\
 #elif MV_MODE == MV_OR \n\
-			if (gl_FragDepth <= pixel.depth) \n\
+			if (gl_FragDepth >= pixel.depth) \n\
 				atomicOr(pixels[idx].seq_num, SHADOW_STENCIL); \n\
 #elif MV_MODE == MV_INCLUSION \n\
 			uint prev_val = atomicAnd(pixels[idx].seq_num, ~(SHADOW_STENCIL)); \n\
