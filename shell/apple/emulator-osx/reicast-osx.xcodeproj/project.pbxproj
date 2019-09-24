@@ -257,6 +257,7 @@
 		AED73BAE22FC0E9600ECDB64 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = AED73BAD22FC0E9600ECDB64 /* README.md */; };
 		AED73DC42303E19200ECDB64 /* sdl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AED73DC02303E19100ECDB64 /* sdl.cpp */; };
 		AED73DC72303E57C00ECDB64 /* libSDL2.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AED73DC62303E57C00ECDB64 /* libSDL2.a */; };
+		AED73DCC233ACC9800ECDB64 /* cheats.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AED73DCB233ACC9800ECDB64 /* cheats.cpp */; };
 		AEE62768220D7B4400EC7E89 /* cue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AEE62767220D7B4300EC7E89 /* cue.cpp */; };
 		AEE6276B220D7B5500EC7E89 /* gui.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AEE6276A220D7B5500EC7E89 /* gui.cpp */; };
 		AEE6277A220D7B7E00EC7E89 /* imgui.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AEE6276E220D7B7E00EC7E89 /* imgui.cpp */; };
@@ -792,6 +793,8 @@
 		AED73DC22303E19100ECDB64 /* sdl_gamepad.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = sdl_gamepad.h; sourceTree = "<group>"; };
 		AED73DC32303E19100ECDB64 /* sdl_keyboard.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = sdl_keyboard.h; sourceTree = "<group>"; };
 		AED73DC62303E57C00ECDB64 /* libSDL2.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libSDL2.a; path = /usr/local/lib/libSDL2.a; sourceTree = "<group>"; };
+		AED73DCA233ACC9800ECDB64 /* cheats.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = cheats.h; path = ../../../core/cheats.h; sourceTree = "<group>"; };
+		AED73DCB233ACC9800ECDB64 /* cheats.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = cheats.cpp; path = ../../../core/cheats.cpp; sourceTree = "<group>"; };
 		AEE62767220D7B4300EC7E89 /* cue.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = cue.cpp; sourceTree = "<group>"; };
 		AEE62769220D7B5500EC7E89 /* gui.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = gui.h; sourceTree = "<group>"; };
 		AEE6276A220D7B5500EC7E89 /* gui.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = gui.cpp; sourceTree = "<group>"; };
@@ -1030,6 +1033,8 @@
 				AED73DBF2303E19100ECDB64 /* sdl */,
 				AED73BAD22FC0E9600ECDB64 /* README.md */,
 				84B7BD121B72720100F9733F /* build.h */,
+				AED73DCB233ACC9800ECDB64 /* cheats.cpp */,
+				AED73DCA233ACC9800ECDB64 /* cheats.h */,
 				84B7BE6E1B72720200F9733F /* nullDC.cpp */,
 				AE80EDB62157D4D500F7800F /* serialize.cpp */,
 				84B7BEA71B72720200F9733F /* stdclass.cpp */,
@@ -2411,6 +2416,7 @@
 				AEF256502294060400348550 /* ZipArchive.cpp in Sources */,
 				84B7BF4D1B72720200F9733F /* intc.cpp in Sources */,
 				84B7BEB01B72720200F9733F /* cl.cpp in Sources */,
+				AED73DCC233ACC9800ECDB64 /* cheats.cpp in Sources */,
 				84B7BF391B72720200F9733F /* drkPvr.cpp in Sources */,
 				84B7BF621B72720200F9733F /* context.cpp in Sources */,
 				AEFF7F72214D9D590068CE11 /* pico_protocol.c in Sources */,
