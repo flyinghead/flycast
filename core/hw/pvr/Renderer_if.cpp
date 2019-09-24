@@ -4,6 +4,7 @@
 #include "rend/TexCache.h"
 #include "rend/gui.h"
 #include "hw/mem/_vmem.h"
+#include "cheats.h"
 
 #include <zlib.h>
 
@@ -588,6 +589,7 @@ void rend_vblank()
 		PARAM_BASE = 0xF00000;
 		SetCurrentTARC(CORE_CURRENT_CTX);
 		ta_ctx->rend.isRenderFramebuffer = true;
+		ta_ctx->rend.isRTT = false;
 		rend_start_render();
 		PARAM_BASE = saved_ctx_addr;
 		if (restore_ctx)
@@ -596,6 +598,7 @@ void rend_vblank()
 	}
 	render_called = false;
 	check_framebuffer_write();
+	cheatManager.Apply();
 }
 
 void check_framebuffer_write()

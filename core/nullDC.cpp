@@ -25,6 +25,7 @@
 #include "input/gamepad_device.h"
 #include "hw/sh4/dyna/blockmanager.h"
 #include "log/LogManager.h"
+#include "cheats.h"
 
 void FlushCache();
 void LoadCustom();
@@ -40,6 +41,7 @@ static bool extra_depth_game;
 static bool disable_vmem32_game;
 static int forced_game_region = -1;
 static int forced_game_cable = -1;
+static int saved_screen_stretching = -1;
 
 cThread emu_thread(&dc_run, NULL);
 
@@ -207,7 +209,7 @@ void LoadSpecialSettings()
 		if (!strncmp("MK-51182", prod_id, 8))
 		{
 			INFO_LOG(BOOT, "Enabling Extra depth scaling for game %s", prod_id);
-			settings.rend.ExtraDepthScale = 10000;
+			settings.rend.ExtraDepthScale = 1000000;	// Mali needs 1M, 10K is enough for others
 			extra_depth_game = true;
 		}
 		// Re-Volt (US, EU)
@@ -560,6 +562,21 @@ void dc_start_game(const char *path)
 		else if (settings.platform.system == DC_PLATFORM_ATOMISWAVE)
 			mcfg_CreateAtomisWaveControllers();
 	}
+	if (cheatManager.Reset())
+	{
+		gui_display_notification("Widescreen cheat activated", 1000);
+		if (saved_screen_stretching == -1)
+			saved_screen_stretching = settings.rend.ScreenStretching;
+		settings.rend.ScreenStretching = 133;	// 4:3 -> 16:9
+	}
+	else
+	{
+		if (saved_screen_stretching != -1)
+		{
+			settings.rend.ScreenStretching = saved_screen_stretching;
+			saved_screen_stretching = -1;
+		}
+	}
 	game_started = true;
 	dc_resume();
 }
@@ -680,6 +697,7 @@ void InitSettings()
 	settings.rend.Rotate90			= false;
 	settings.rend.PerStripSorting	= false;
 	settings.rend.DelayFrameSwapping = false;
+	settings.rend.WidescreenGameHacks = false;
 
 	settings.pvr.ta_skip			= 0;
 	settings.pvr.rend				= 0;
@@ -774,6 +792,7 @@ void LoadSettings(bool game_specific)
 	settings.rend.Rotate90			= cfgLoadBool(config_section, "rend.Rotate90", settings.rend.Rotate90);
 	settings.rend.PerStripSorting	= cfgLoadBool(config_section, "rend.PerStripSorting", settings.rend.PerStripSorting);
 	settings.rend.DelayFrameSwapping = cfgLoadBool(config_section, "rend.DelayFrameSwapping", settings.rend.DelayFrameSwapping);
+	settings.rend.WidescreenGameHacks = cfgLoadBool(config_section, "rend.WidescreenGameHacks", settings.rend.WidescreenGameHacks);
 
 	settings.pvr.ta_skip			= cfgLoadInt(config_section, "ta.skip", settings.pvr.ta_skip);
 	settings.pvr.rend				= cfgLoadInt(config_section, "pvr.rend", settings.pvr.rend);
@@ -932,7 +951,10 @@ void SaveSettings()
 	cfgSaveBool("config", "rend.CustomTextures", settings.rend.CustomTextures);
 	cfgSaveBool("config", "rend.DumpTextures", settings.rend.DumpTextures);
 	cfgSaveInt("config", "rend.ScreenScaling", settings.rend.ScreenScaling);
-	cfgSaveInt("config", "rend.ScreenStretching", settings.rend.ScreenStretching);
+	if (saved_screen_stretching != -1)
+		cfgSaveInt("config", "rend.ScreenStretching", saved_screen_stretching);
+	else
+		cfgSaveInt("config", "rend.ScreenStretching", settings.rend.ScreenStretching);
 	cfgSaveBool("config", "rend.Fog", settings.rend.Fog);
 	cfgSaveBool("config", "rend.FloatVMUs", settings.rend.FloatVMUs);
 	cfgSaveBool("config", "rend.Rotate90", settings.rend.Rotate90);
@@ -940,6 +962,7 @@ void SaveSettings()
 	cfgSaveInt("config", "pvr.rend", settings.pvr.rend);
 	cfgSaveBool("config", "rend.PerStripSorting", settings.rend.PerStripSorting);
 	cfgSaveBool("config", "rend.DelayFrameSwapping", settings.rend.DelayFrameSwapping);
+	cfgSaveBool("config", "rend.WidescreenGameHacks", settings.rend.WidescreenGameHacks);
 
 	cfgSaveInt("config", "pvr.MaxThreads", settings.pvr.MaxThreads);
 	cfgSaveBool("config", "pvr.SynchronousRendering", settings.pvr.SynchronousRender);
