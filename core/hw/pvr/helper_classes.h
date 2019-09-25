@@ -46,6 +46,14 @@ struct List
 		return daty-n; 
 	}
 
+	T* PopLast()
+	{
+		daty--;
+		avail++;
+
+		return daty;
+	}
+
 	T* head() const { return daty-used(); }
 
 	void InitBytes(int maxbytes,bool* ovrn, const char *name)

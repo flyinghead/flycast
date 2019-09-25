@@ -691,8 +691,8 @@ public:
 		memset(FaceOffsColor, 0xff, sizeof(FaceOffsColor));
 		memset(FaceBaseColor1, 0xff, sizeof(FaceBaseColor1));
 		memset(FaceOffsColor1, 0xff, sizeof(FaceOffsColor1));
-		SFaceBaseColor = 0;
-		SFaceOffsColor = 0;
+		SFaceBaseColor = 0xffffffff;
+		SFaceOffsColor = 0xffffffff;
 		lmr = NULL;
 		CurrentPP = NULL;
 		CurrentPPlist = NULL;
@@ -732,6 +732,8 @@ public:
 	__forceinline
 		static void EndList(u32 ListType)
 	{
+		if (CurrentPP != NULL && CurrentPP->count == 0)
+			CurrentPPlist->PopLast();
 		CurrentPP = NULL;
 		CurrentPPlist = NULL;
 
@@ -745,6 +747,7 @@ public:
 	static void glob_param_bdc_(T* pp)
 	{
 		if (CurrentPP == NULL
+			|| CurrentPPlist == &vdrc.global_param_tr
 			|| CurrentPP->pcw.full != pp->pcw.full
 			|| CurrentPP->tcw.full != pp->tcw.full
 			|| CurrentPP->tsp.full != pp->tsp.full
@@ -870,25 +873,28 @@ public:
 	__forceinline
 		static void EndPolyStrip()
 	{
-		CurrentPP->count=vdrc.idx.used() - CurrentPP->first;
+		CurrentPP->count = vdrc.idx.used() - CurrentPP->first;
 
-		if (CurrentPPlist==&vdrc.global_param_tr)
+		if (CurrentPP->count > 0)
 		{
-			PolyParam* d_pp =CurrentPPlist->Append(); 
-			*d_pp=*CurrentPP;
-			CurrentPP=d_pp;
-			d_pp->first=vdrc.idx.used(); 
-			d_pp->count=0; 
-		}
-		else
-		{
-			int vbase=vdrc.verts.used();
+			if (CurrentPPlist == &vdrc.global_param_tr)
+			{
+				PolyParam* d_pp = CurrentPPlist->Append();
+				*d_pp = *CurrentPP;
+				CurrentPP = d_pp;
+				d_pp->first = vdrc.idx.used();
+				d_pp->count = 0;
+			}
+			else
+			{
+				int vbase = vdrc.verts.used();
 
-			*vdrc.idx.Append()=vbase-1;
-			*vdrc.idx.Append()=vbase;
+				*vdrc.idx.Append() = vbase - 1;
+				*vdrc.idx.Append() = vbase;
 
-			if (CurrentPP->count&1)
-				*vdrc.idx.Append()=vbase;
+				if (CurrentPP->count & 1)
+					*vdrc.idx.Append() = vbase;
+			}
 		}
 	}
 
@@ -1411,8 +1417,11 @@ public:
 			return;
 		if (list->used() > 0)
 		{
-			ModifierVolumeParam *p = &(list->head()[list->used() - 1]);
+			ModifierVolumeParam *p = list->LastPtr();
 			p->count = vdrc.modtrig.used() - p->first;
+			if (p->count == 0)
+				list->PopLast();
+
 		}
 	}
 
@@ -1494,6 +1503,7 @@ bool ta_parse_vdrc(TA_context* ctx)
 	verify( vd_ctx == 0);
 	vd_ctx = ctx;
 	vd_rc = vd_ctx->rend;
+	bool empty_context = true;
 	
 	ta_parse_cnt++;
 	if (ctx->rend.isRTT || 0 == (ta_parse_cnt %  ( settings.pvr.ta_skip + 1)))
@@ -1515,29 +1525,23 @@ bool ta_parse_vdrc(TA_context* ctx)
 			}
 			while(ta_data<=ta_data_end);
 
-			RenderPass *render_pass = vd_rc.render_passes.Append();
-			render_pass->op_count = vd_rc.global_param_op.used();
-			render_pass->mvo_count = vd_rc.global_param_mvo.used();
-			render_pass->pt_count = vd_rc.global_param_pt.used();
-			render_pass->tr_count = vd_rc.global_param_tr.used();
-			render_pass->mvo_tr_count = vd_rc.global_param_mvo_tr.used();
-			render_pass->autosort = UsingAutoSort(pass);
-			render_pass->z_clear = ClearZBeforePass(pass);
+			bool empty_pass = vd_rc.global_param_op.used() == (pass == 0 ? 1 : vd_rc.render_passes.LastPtr()->op_count)
+					&& vd_rc.global_param_pt.used() == (pass == 0 ? 0 : vd_rc.render_passes.LastPtr()->pt_count)
+					&& vd_rc.global_param_tr.used() == (pass == 0 ? 0 : vd_rc.render_passes.LastPtr()->tr_count);
+			empty_context = empty_context && empty_pass;
+
+			if (pass == 0 || !empty_pass)
+			{
+				RenderPass *render_pass = vd_rc.render_passes.Append();
+				render_pass->op_count = vd_rc.global_param_op.used();
+				render_pass->mvo_count = vd_rc.global_param_mvo.used();
+				render_pass->pt_count = vd_rc.global_param_pt.used();
+				render_pass->tr_count = vd_rc.global_param_tr.used();
+				render_pass->mvo_tr_count = vd_rc.global_param_mvo_tr.used();
+				render_pass->autosort = UsingAutoSort(pass);
+				render_pass->z_clear = ClearZBeforePass(pass);
+			}
 		}
-		bool empty_context = true;
-		
-		// Don't draw empty contexts.
-		// Apparently the background plane is only drawn if it at least one polygon is drawn.
-		for (PolyParam *pp = vd_rc.global_param_op.head() + 1;
-			 empty_context && pp < vd_rc.global_param_op.LastPtr(0); pp++)
-			if (pp->count > 2)
-				empty_context = false;
-		for (PolyParam *pp = vd_rc.global_param_pt.head(); empty_context && pp < vd_rc.global_param_pt.LastPtr(0); pp++)
-			if (pp->count > 2)
-				empty_context = false;
-		for (PolyParam *pp = vd_rc.global_param_tr.head(); empty_context && pp < vd_rc.global_param_tr.LastPtr(0); pp++)
-			if (pp->count > 2)
-				empty_context = false;
 		rv = !empty_context;
 	}
 	bool overrun = ctx->rend.Overrun;
