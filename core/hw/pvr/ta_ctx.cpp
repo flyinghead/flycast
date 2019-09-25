@@ -7,9 +7,6 @@
 extern u32 fskip;
 extern u32 FrameCount;
 
-int frameskip=0;
-bool FrameSkipping=false;		// global switch to enable/disable frameskip
-
 TA_context* ta_ctx;
 tad_context ta_tad;
 
@@ -103,39 +100,34 @@ void VDecEnd()
 	vd_ctx = 0;
 }
 
-cMutex mtx_rqueue;
+static cMutex mtx_rqueue;
 TA_context* rqueue;
 cResetEvent frame_finished;
 
-double last_frame = 0;
-u64 last_cycles = 0;
+static double last_frame1, last_frame2;
+static u64 last_cycles1, last_cycles2;
 
 bool QueueRender(TA_context* ctx)
 {
 	verify(ctx != 0);
 	
-	if (FrameSkipping && frameskip) {
- 		frameskip=1-frameskip;
-		tactx_Recycle(ctx);
-		fskip++;
-		return false;
- 	}
- 	
  	//Try to limit speed to a "sane" level
  	//Speed is also limited via audio, but audio
  	//is sometimes not accurate enough (android, vista+)
-	u32 cycle_span = (u32)(sh4_sched_now64() - last_cycles);
-	last_cycles = sh4_sched_now64();
- 	double time_span = os_GetSeconds() - last_frame;
- 	last_frame = os_GetSeconds();
+	u32 cycle_span = (u32)(sh4_sched_now64() - last_cycles2);
+	last_cycles2 = last_cycles1;
+	last_cycles1 = sh4_sched_now64();
+ 	double time_span = os_GetSeconds() - last_frame2;
+ 	last_frame2 = last_frame1;
+ 	last_frame1 = os_GetSeconds();
 
  	bool too_fast = (cycle_span / time_span) > (SH4_MAIN_CLOCK * 1.2);
 	
 	if (rqueue && too_fast && settings.pvr.SynchronousRender) {
 		//wait for a frame if
 		//  we have another one queue'd and
-		//  sh4 run at > 120% on the last slice
-		//  and SynchronousRendering is enabled
+		//  sh4 run at > 120% over the last two frames
+		//  and SynchronousRender is enabled
 		frame_finished.Wait();
 	}
 
