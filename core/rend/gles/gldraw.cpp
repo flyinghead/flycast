@@ -1034,33 +1034,28 @@ void DrawModVols(int first, int count)
 			glDrawArrays(GL_TRIANGLES, mod_base * 3, (param.first + param.count - mod_base) * 3);
 			mod_base = -1;
 		}
-
-		//disable culling
-		SetCull(0);
-		//enable color writes
-		glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
-
-		//black out any stencil with '1'
-		glcache.Enable(GL_BLEND);
-		glcache.BlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
-		
-		glcache.Enable(GL_STENCIL_TEST);
-		glcache.StencilFunc(GL_EQUAL,0x81,0x81); //only pixels that are Modvol enabled, and in area 1
-		
-		//clear the stencil result bit
-		glcache.StencilMask(0x3);    //write to lsb
-		glcache.StencilOp(GL_ZERO,GL_ZERO,GL_ZERO);
-
-		//don't do depth testing
-		glcache.Disable(GL_DEPTH_TEST);
-
-		SetupMainVBO();
-		glDrawArrays(GL_TRIANGLE_STRIP,0,4);
-
-		//Draw and blend
-		//glDrawArrays(GL_TRIANGLES,pvrrc.modtrig.used(),2);
-
 	}
+	//disable culling
+	SetCull(0);
+	//enable color writes
+	glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
+
+	//black out any stencil with '1'
+	glcache.Enable(GL_BLEND);
+	glcache.BlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+
+	glcache.Enable(GL_STENCIL_TEST);
+	glcache.StencilFunc(GL_EQUAL,0x81,0x81); //only pixels that are Modvol enabled, and in area 1
+
+	//clear the stencil result bit
+	glcache.StencilMask(0x3);    //write to lsb
+	glcache.StencilOp(GL_ZERO,GL_ZERO,GL_ZERO);
+
+	//don't do depth testing
+	glcache.Disable(GL_DEPTH_TEST);
+
+	SetupMainVBO();
+	glDrawArrays(GL_TRIANGLE_STRIP,0,4);
 
 	//restore states
 	glcache.Enable(GL_DEPTH_TEST);
@@ -1078,6 +1073,11 @@ void DrawStrips()
     for (int render_pass = 0; render_pass < pvrrc.render_passes.used(); render_pass++) {
         const RenderPass& current_pass = pvrrc.render_passes.head()[render_pass];
 
+        if (current_pass.skip)
+        {
+    		previous_pass = current_pass;
+    		continue;
+        }
         DEBUG_LOG(RENDERER, "Render pass %d OP %d PT %d TR %d", render_pass + 1,
         		current_pass.op_count - previous_pass.op_count,
 				current_pass.pt_count - previous_pass.pt_count,
