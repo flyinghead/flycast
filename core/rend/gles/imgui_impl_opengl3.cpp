@@ -168,6 +168,7 @@ void    ImGui_ImplOpenGL3_RenderDrawData(ImDrawData* draw_data, bool save_backgr
     glcache.Disable(GL_CULL_FACE);
     glcache.Disable(GL_DEPTH_TEST);
     glcache.Enable(GL_SCISSOR_TEST);
+    glcache.Disable(GL_STENCIL_TEST);
 #ifdef GL_POLYGON_MODE
     if (glPolygonMode != NULL)
     	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
