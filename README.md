@@ -1,6 +1,8 @@
 flycast
 ===========
-**flycast** is a multi-platform Sega Dreamcast emulator derived from [**reicast**](https://reicast.com/)
+**flycast** is a multi-platform Sega Dreamcast, Naomi and Atomiswave emulator derived from [**reicast**](https://reicast.com/)
+
+Join us on our [**Discord server**](https://discord.gg/X8YWP8w) for a chat. 
 
 Binaries
 ========

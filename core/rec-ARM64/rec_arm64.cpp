@@ -1448,7 +1448,7 @@ public:
 		Br(x0);
 
 		// void mainloop(void *context)
-		mainloop = GetCursorAddress<void (*)(void *)>();
+		mainloop = (void (*)(void *))CC_RW2RX(GetCursorAddress<uintptr_t>());
 
 		// Save registers
 		Stp(x19, x20, MemOperand(sp, -160, PreIndex));

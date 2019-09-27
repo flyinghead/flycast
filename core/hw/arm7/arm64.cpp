@@ -495,7 +495,7 @@ __asm__ (
 		"mov x26, x2						\n\t"	// lookup base
 
 		"ldr w27, [x28, #192]				\n\t"	// cycle count
-		"add w27, w27, w0					\n"		// add cycles for this timeslice
+		"add w27, w27, w0					\n\t"	// add cycles for this timeslice
 
 		".globl arm_dispatch				\n\t"
 		".hidden arm_dispatch				\n"
