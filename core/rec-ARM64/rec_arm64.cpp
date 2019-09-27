@@ -1885,37 +1885,51 @@ private:
 		void* ptr = _vmem_write_const(addr, isram, size > 4 ? 4 : size);
 
 		Register reg2;
-		if (op.rs2.is_imm())
+		if (size != 8)
 		{
-			Mov(w0, op.rs2._imm);
-			reg2 = w0;
+			if (op.rs2.is_imm())
+			{
+				Mov(w1, op.rs2._imm);
+				reg2 = w1;
+			}
+			else if (regalloc.IsAllocg(op.rs2))
+			{
+				reg2 = regalloc.MapRegister(op.rs2);
+			}
+			else if (regalloc.IsAllocf(op.rs2))
+			{
+				Fmov(w1, regalloc.MapVRegister(op.rs2));
+				reg2 = w1;
+			}
+			else
+				die("Invalid rs2 param");
 		}
-		else if (regalloc.IsAllocg(op.rs2))
-		{
-			reg2 = regalloc.MapRegister(op.rs2);
-		}
-		else if (regalloc.IsAllocf(op.rs2))
-		{
-			Fmov(w0, regalloc.MapVRegister(op.rs2));
-			reg2 = w0;
-		}
-		else
-			die("Invalid rs2 param");
 		if (isram)
 		{
-			Ldr(x1, reinterpret_cast<uintptr_t>(ptr));
+			Ldr(x0, reinterpret_cast<uintptr_t>(ptr));
 			switch (size)
 			{
 			case 1:
-				Strb(reg2, MemOperand(x1));
+				Strb(reg2, MemOperand(x0));
 				break;
 
 			case 2:
-				Strh(reg2, MemOperand(x1));
+				Strh(reg2, MemOperand(x0));
 				break;
 
 			case 4:
-				Str(reg2, MemOperand(x1));
+				Str(reg2, MemOperand(x0));
+				break;
+
+			case 8:
+#ifdef EXPLODE_SPANS
+				verify(op.rs2.count() == 2 && regalloc.IsAllocf(op.rs2, 0) && regalloc.IsAllocf(op.rs2, 1));
+				Str(regalloc.MapVRegister(op.rs2, 0),  MemOperand(x1));
+				Str(regalloc.MapVRegister(op.rs2, 1),  MemOperand(x1, 4));
+#else
+				shil_param_to_host_reg(op.rs2, x1);
+				Str(x1, MemOperand(x0));
+#endif
 				break;
 
 			default:
@@ -1926,26 +1940,40 @@ private:
 		else
 		{
 			// Not RAM
-			Mov(w1, reg2);
 			Mov(w0, addr);
-
-			switch(size)
+			if (size == 8)
 			{
-			case 1:
+				// Need to call the handler twice
+				shil_param_to_host_reg(op.rs2, x1);
 				GenCallRuntime((void (*)())ptr);
-				break;
 
-			case 2:
+				Mov(w0, addr + 4);
+				shil_param_to_host_reg(op.rs2, x1);
+				Lsr(x1, x1, 32);
 				GenCallRuntime((void (*)())ptr);
-				break;
+			}
+			else
+			{
+				Mov(w1, reg2);
 
-			case 4:
-				GenCallRuntime((void (*)())ptr);
-				break;
+				switch(size)
+				{
+				case 1:
+					GenCallRuntime((void (*)())ptr);
+					break;
 
-			case 8:
-				die("SZ_64F not supported");
-				break;
+				case 2:
+					GenCallRuntime((void (*)())ptr);
+					break;
+
+				case 4:
+					GenCallRuntime((void (*)())ptr);
+					break;
+
+				default:
+					die("Invalid size");
+					break;
+				}
 			}
 		}
 
