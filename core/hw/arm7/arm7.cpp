@@ -1691,7 +1691,11 @@ extern "C" void CompileCode()
 	void* rv=EMIT_GET_PTR();
 
 	//update the block table
-	EntryPoints[(armNextPC&ARAM_MASK)/4]=rv;
+	// Note that we mask with the max aica size (8 MB), which is
+	// also the size of the EntryPoints table. This way the dynarec
+	// main loop doesn't have to worry about the actual aica
+	// ram size. The aica ram always wraps to 8 MB anyway.
+	EntryPoints[(armNextPC & (ARAM_SIZE_MAX - 1)) / 4] = rv;
 
 	//setup local pc counter
 	u32 pc=armNextPC;
