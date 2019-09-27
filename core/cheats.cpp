@@ -45,7 +45,7 @@ const Cheat CheatManager::_widescreen_cheats[] =
 		{ "T6801M    ", nullptr,    { 0x042F3C, 0 }, { 0x4384BC09 } },		// Buggy Heat (JP)
 		{ "T46601D 05", nullptr,    { 0xBB3D14, 0 }, { 0x440A7C9A } },		// Cannon Spike (PAL)
 		{ "T1215N    ", nullptr,    { 0xBB3C74, 0 }, { 0x440A7C9A } },		// Cannon Spike (USA)
-//crash		{ "T44901D 50", nullptr,    { 0xB0109C, 0xB010CC, 0 }, { 0x43F00000, 0x3F400000, 0 } },	// Carrier (PAL)
+		{ "T44901D 50", nullptr,    { 0xB0109C, 0xB010CC, 0 }, { 0x43F00000, 0x3F400000 } },	// Carrier (PAL)
 		{ "T5701N    ", nullptr,    { 0xAFD93C, 0xAFD96C, 0 }, { 0x43F00000, 0x3F400000 } },	// Carrier (USA)
 		// Capcom vs. SNK Pro (JP)
 		// You can see the end of the backgrounds on each side. The HUD is shifted to the right.
@@ -55,6 +55,7 @@ const Cheat CheatManager::_widescreen_cheats[] =
 		// You can see the end of the backgrounds on each side.
 		{ "T1249M    ", nullptr,    { 0x39BFD8, 0x34E9E8, 0x34EFBC, 0 }, { 0x43700000, 0x3F400000, 0x3F400000 } },
 		{ "T44902D 50", nullptr,    { 0x1DBFF8, 0 }, { 0x43700000 } },		// Charge ‘n Blast (PAL)
+		{ "T4402M    ", nullptr,    { 0x1DA9E0, 0 }, { 0x43700000 } },		// Charge ‘n Blast (JP)
 		{ "MK-5104950", nullptr,    { 0x2D2D40, 0x2D2D70, 0 }, { 0x3F400000, 0xC2700000 } },	// ChuChu Rocket! (PAL)
 		{ "T44903D 50", nullptr,    { 0x315300, 0x315334, 0 }, { 0x43F00000, 0x3FAAAAAB } },	// Coaster Works (PAL)
 		// Confidential Mission (PAL) 022F0D58 43700000 - Only works on real Dreamcast
@@ -95,6 +96,7 @@ const Cheat CheatManager::_widescreen_cheats[] =
 		// Code 3 eliminates bars in cut-scenes.
 		{ "MK-5103350", nullptr,    { 0x275418, 0x040E68, 0x040D1C, 0x328C5C, 0 }, { 0x49D9A5DA, 0x3F100000, 0x3F100000, 0x00000280 } },
 		{ "T17705D 05", nullptr,    { 0x304870, 0 }, { 0x3F400000 } },		// Evolution - The World of Sacred Device (PAL)
+//		{ "T45005D 50", nullptr,    { 0x36C76C, 0x36C73C, 0 }, { 0x3F400000, 0x43A00000 } },	// Evolution 2 - Far Off Promise (PAL). Not working
 		{ "T1711N    ", nullptr,    { 0x36C76C, 0x36C73C, 0 }, { 0x3F400000, 0x43A00000 } },	// Evolution 2 - Far Off Promise (USA)
 		{ "T8118D  50", nullptr,    { 0x2C6B7C, 0 }, { 0x00004000 } },		// Ferrari F355 Challenge (PAL) vga mode only
 		{ "HDR-0100  ", nullptr,    { 0x3235D4, 0 }, { 0x00004000 } },		// Ferrari F355 Challenge (JP) vga mode only
@@ -137,7 +139,8 @@ const Cheat CheatManager::_widescreen_cheats[] =
 		{ "T1215M    ", nullptr,    { 0x2FE2C0, 0x28FB38, 0x290680, 0x2900DC, 0x290C24, 0x2911C8, 0x29176C, 0 },
 				{ 0x43700000, 0x3F400000, 0x3F400000, 0x3F400000, 0x3F400000, 0x3F400000, 0x3F400000 } },		// Marvel vs. Capcom 2 (JP)
 		{ "T41402N   ", nullptr,    { 0x551B80, 0 }, { 0x3F400000 } },		// Max Steel - Covert Missions (USA)
-		{ "MK-5102250", nullptr,    { 0x106B5C, 0x1111F4, 0 }, { 0x3F99999A, 0x3F900000 } },	// Metropolis Street Racer (v1.009) (PAL)
+		{ "MK-5102250", "V1.001",   { 0x107FDC, 0x11253C, 0 }, { 0x3F99999A, 0x3F900000 } },	// Metropolis Street Racer (v1.001) (PAL)
+		{ "MK-5102250", "V1.009",   { 0x106B5C, 0x1111F4, 0 }, { 0x3F99999A, 0x3F900000 } },	// Metropolis Street Racer (v1.009) (PAL)
 		{ "MK-51012  ", nullptr,    { 0x10A01C, 0x1146FC, 0 }, { 0x3F99999A, 0x3F900000 } },	// Metropolis Street Racer (USA)
 		{ "T0000M    ", nullptr,    { 0x1CAEAC, 0x1CAEDC, 0 }, { 0x43F00000, 0x3F400000 } },	// Millenium Racer Y2K Fighters
 		{ "T1221M    ", nullptr,    { 0x426B74, 0 }, { 0x43F00000 } },		// Moero! Justice Gauken (JP)
@@ -153,6 +156,7 @@ const Cheat CheatManager::_widescreen_cheats[] =
 //				{ 0xBFAAAAAB, 0xBFAAAAAB, 0xBFAAAAAB, 0xBFAAAAAB, 0x44558000 } },	// NBA 2K2
 		{ "T9504M    ", nullptr,    { 0xCDE848, 0xCDE844, 0 }, { 0x3F400000, 0x3FA00000 } },	// Nightmare Creatures II (USA)
 		{ "MK-5110250", nullptr,    { 0x87B5A4, 0 }, { 0x43700000 } },		// Outtrigger (PAL)
+		{ "HDR-0118  ", nullptr,    { 0x83E284, 0 }, { 0x43700000 } },		// Outtrigger (JP)
 		{ "T15103D 50", nullptr,    { 0x1EEE78, 0 }, { 0x3F400000 } },		// PenPen (PAL)
 		{ "T17001M   ", nullptr,    { 0x1C3828, 0 }, { 0x3F400000 } },		// PenPen TriIcelon (JP)
 		{ "MK-5110050", nullptr,    { 0x548E04, 0x0923C0, 0 }, { 0x43E80000, 0x3F966666 } },	// Phantasy Star Online (PAL) TODO
@@ -198,7 +202,8 @@ const Cheat CheatManager::_widescreen_cheats[] =
 		{ "HDR-0044  ", nullptr,    { 0x298A94, 0x298AC4, 0 }, { 0x43F00000, 0x3F400000 } },	// Roommania #203 (JP)
 		{ "MK-5109250", nullptr,    { 0x29E6C4, 0 }, { 0x3F400000 } },		// Samba De Amigo (PAL)
 		{ "T41301N   ", nullptr,    { 0x77A178, 0 }, { 0x3F400000 } },		// Seventh Cross Evolution (USA)
-		{ "T8104D  58", nullptr,    { 0x2C03F4, 0 }, { 0x3F400000 } },		// Shadow Man (PAL) not working?
+		{ "T8104D  58", nullptr,    { 0x2C03F8, 0 }, { 0x44558000 } },		// Shadow Man (PAL)
+		{ "T-8106N   ", nullptr,    { 0x2C03F4, 0 }, { 0x3F400000 } },		// Shadow Man (USA)
 		{ "MK-51048  ", nullptr,    { 0x4AA4DC, 0x2B4E30, 0 }, { 0x3F400000, 0x3F400000 } },	// Seaman (USA)
 		{ "MK-5105350", nullptr,    { 0x5D613C, 0 }, { 0x3F400000 } },		// Sega GT (PAL)
 		{ "MK-51096  ", nullptr,    { 0x495050, 0 }, { 0x43700000 } },		// Sega Marine Fishing (USA)
@@ -219,6 +224,7 @@ const Cheat CheatManager::_widescreen_cheats[] =
 		{ "T15104D 50", nullptr,    { 0x17EF68, 0 }, { 0x43F00010 } },		// Slave Zero (PAL) Widescreen, but a bit zoomed in
 		{ "MK-5101050", nullptr,    { 0x1A50EC, 0x1A511C, 0 }, { 0x43F00000, 0x3F400000 } },	// Snow Surfers (PAL)
 		{ "MK-5100050", nullptr,    { 0x88F528, 0x88F55C, 0 }, { 0x43F00000, 0x3FA66666 } },	// Sonic Adventure (PAL)
+		//{ "MK-51000  ", nullptr,    { 0x89389C, 0 }, { 0x3FAAAAAB } },		// Sonic Adventure v1.0 (USA) ???
 		{ "MK-51117  ", nullptr,    { 0x28DEF8, 0x28DF28, 0 }, { 0x43F00000, 0x3f400000 } },	// Sonic Adventure 2 (USA)
 		{ "HDR-0165  ", nullptr,    { 0x28DF28, 0x28DEF8, 0 }, { 0x3F400000, 0x43F00000 } },	// Sonic Adventure 2 (JP)
 		{ "MK-5106050", nullptr,    { 0x110B4C, 0 }, { 0x3F400000 } },		// Sonic Shuffle (PAL)
@@ -286,7 +292,10 @@ bool CheatManager::Reset()
 	for (int i = 0; _widescreen_cheats[i].game_id != nullptr; i++)
 	{
 		if (!strncmp(game_id.c_str(), _widescreen_cheats[i].game_id, game_id.length())
-				&& (_widescreen_cheats[i].area == nullptr || !strncmp(ip_meta.area_symbols, _widescreen_cheats[i].area, sizeof(ip_meta.area_symbols))))
+				&& (_widescreen_cheats[i].area_or_version == nullptr
+						|| !strncmp(ip_meta.area_symbols, _widescreen_cheats[i].area_or_version, sizeof(ip_meta.area_symbols))
+						|| !strncmp(ip_meta.product_version, _widescreen_cheats[i].area_or_version, sizeof(ip_meta.product_version))))
+
 		{
 			_widescreen_cheat = &_widescreen_cheats[i];
 			NOTICE_LOG(COMMON, "Applying widescreen hack to game %s", game_id.c_str());

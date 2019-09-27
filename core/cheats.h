@@ -24,7 +24,7 @@
 struct Cheat
 {
 	const char *game_id;
-	const char *area;
+	const char *area_or_version;
 	u32 addresses[16];
 	u32 values[16];
 };
