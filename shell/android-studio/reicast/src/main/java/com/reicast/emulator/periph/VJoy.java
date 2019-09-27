@@ -16,30 +16,47 @@ public class VJoy {
 	public static final int key_CONT_DPAD_RIGHT = 0x0080;
 	public static final int key_CONT_Y          = 0x0200;
 	public static final int key_CONT_X          = 0x0400;
+    public static final int key_CONT_FFORWARD   = 0x100000;
 
-	public static int VJoyCount = 13;
+    public static final int BTN_LTRIG = -1;
+    public static final int BTN_RTRIG = -2;
+    public static final int BTN_ANARING = -3;
+    public static final int BTN_ANAPOINT = -4;
+
+    public static final int ELEM_NONE = -1;
+    public static final int ELEM_DPAD = 0;
+    public static final int ELEM_BUTTONS = 1;
+    public static final int ELEM_START = 2;
+    public static final int ELEM_LTRIG = 3;
+    public static final int ELEM_RTRIG = 4;
+    public static final int ELEM_ANALOG = 5;
+    public static final int ELEM_FFORWARD = 6;
+
+	public static int VJoyCount = 14;
 
 	public static float[][] baseVJoy() {
 		return new float[][] {
-				new float[] { 24,		24+64,	64,64,	VJoy.key_CONT_DPAD_LEFT,				0},
-				new float[] { 24+64,	24,		64,64,	VJoy.key_CONT_DPAD_UP,					0},
-				new float[] { 24+128,	24+64,	64,64,	VJoy.key_CONT_DPAD_RIGHT,				0},
-				new float[] { 24+64,    24+128,	64,64,	VJoy.key_CONT_DPAD_DOWN,				0},
+				new float[] { 24,		24+64,	64,64,	key_CONT_DPAD_LEFT,		    		    0},
+				new float[] { 24+64,	24,		64,64,	key_CONT_DPAD_UP,					    0},
+				new float[] { 24+128,	24+64,	64,64,	key_CONT_DPAD_RIGHT,				    0},
+				new float[] { 24+64,    24+128,	64,64,	key_CONT_DPAD_DOWN,			    	    0},
 
-				new float[] { 440,		280+64,	64,64,	VJoy.key_CONT_X,						0},
-				new float[] { 440+64,   280,	64,64,	VJoy.key_CONT_Y,						0},
-				new float[] { 440+128,  280+64,	64,64,	VJoy.key_CONT_B,						0},
-				new float[] { 440+64,   280+128,64,64,	VJoy.key_CONT_A,						0},
+				new float[] { 440,		280+64,	64,64,	key_CONT_X,			    			    0},
+				new float[] { 440+64,   280,	64,64,	key_CONT_Y,			    			    0},
+				new float[] { 440+128,  280+64,	64,64,	key_CONT_B,			    			    0},
+				new float[] { 440+64,   280+128,64,64,	key_CONT_A,			    		    	0},
 
-				new float[] { 320-32,   360+32,	64,64,	VJoy.key_CONT_START,					0},
+				new float[] { 320-32,   360+32,	64,64,	key_CONT_START,			        		0},
 
-				new float[] { 440,		200,	90,64,	-1,										0},
-				new float[] { 542,		200,	90,64,	-2,										0},
+				new float[] { 440,		200,	90,64,	BTN_LTRIG,								0}, // LT
+				new float[] { 542,		200,	90,64,	BTN_RTRIG,								0}, // RT
 
-				new float[] { 0,		128+224,128,128,-3,										0},
-				new float[] { 96,		320,	32,32,	-4,										0},
+				new float[] { 0,		128+224,128,128,BTN_ANARING,							0}, // Analog ring
+				new float[] { 96,		320,	32,32,  BTN_ANAPOINT,							0}, // Analog point
+				
+				new float[] { 320-32,	12,		64,64,	key_CONT_FFORWARD,						0}, // Fast-forward
 
-				new float[] { 20,		288,	64,64,	key_CONT_DPAD_LEFT|key_CONT_DPAD_UP,	0},
+				new float[] { 20,		288,	64,64,	key_CONT_DPAD_LEFT|key_CONT_DPAD_UP,	0}, // DPad diagonals
 				new float[] { 20+128,	288,	64,64,	key_CONT_DPAD_RIGHT|key_CONT_DPAD_UP,	0},
 				new float[] { 20,		288+128,64,64,	key_CONT_DPAD_LEFT|key_CONT_DPAD_DOWN,	0},
 				new float[] { 20+128,	288+128,64,64,	key_CONT_DPAD_RIGHT|key_CONT_DPAD_DOWN,	0},
@@ -48,6 +65,7 @@ public class VJoy {
 
 	public static float[][] readCustomVjoyValues(Context context) {
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+
 		return new float[][] {
 				// x-shift, y-shift, sizing-factor
 				new float[] { prefs.getFloat("touch_x_shift_dpad", 0),
@@ -73,12 +91,17 @@ public class VJoy {
 				new float[] { prefs.getFloat("touch_x_shift_analog", 0),
 						prefs.getFloat("touch_y_shift_analog", 0),
 						prefs.getFloat("touch_scale_analog", 1)
-				} // Analog Stick
+				}, // Analog Stick
+				new float[] { prefs.getFloat("touch_x_shift_fforward", 0),
+						prefs.getFloat("touch_y_shift_fforward", 0),
+						prefs.getFloat("touch_scale_fforward", 1)
+				} // Fast-forward
 		};
 	}
 
 	public static float[][] getVjoy_d(float[][] vjoy_d_custom) {
 		return new float[][] {
+		        // LEFT, UP, RIGHT, DOWN
 				new float[] { 20+0*vjoy_d_custom[0][2]+vjoy_d_custom[0][0],		288+64*vjoy_d_custom[0][2]+vjoy_d_custom[0][1],
 						64*vjoy_d_custom[0][2],64*vjoy_d_custom[0][2],	key_CONT_DPAD_LEFT},
 				new float[] { 20+64*vjoy_d_custom[0][2]+vjoy_d_custom[0][0],	288+0*vjoy_d_custom[0][2]+vjoy_d_custom[0][1],
@@ -88,6 +111,7 @@ public class VJoy {
 				new float[] { 20+64*vjoy_d_custom[0][2]+vjoy_d_custom[0][0],	288+128*vjoy_d_custom[0][2]+vjoy_d_custom[0][1],
 						64*vjoy_d_custom[0][2],64*vjoy_d_custom[0][2],	key_CONT_DPAD_DOWN},
 
+                // X, Y, B, A
 				new float[] { 448+0*vjoy_d_custom[1][2]+vjoy_d_custom[1][0],	288+64*vjoy_d_custom[1][2]+vjoy_d_custom[1][1],
 						64*vjoy_d_custom[1][2],64*vjoy_d_custom[1][2],	key_CONT_X},
 				new float[] { 448+64*vjoy_d_custom[1][2]+vjoy_d_custom[1][0],	288+0*vjoy_d_custom[1][2]+vjoy_d_custom[1][1],
@@ -97,19 +121,27 @@ public class VJoy {
 				new float[] { 448+64*vjoy_d_custom[1][2]+vjoy_d_custom[1][0],	288+128*vjoy_d_custom[1][2]+vjoy_d_custom[1][1],
 						64*vjoy_d_custom[1][2],64*vjoy_d_custom[1][2],	key_CONT_A},
 
+                // START
 				new float[] { 320-32+vjoy_d_custom[2][0],						288+128+vjoy_d_custom[2][1],
 						64*vjoy_d_custom[2][2],64*vjoy_d_custom[2][2],	key_CONT_START},
 
+                // LT, RT
 				new float[] { 440+vjoy_d_custom[3][0],							200+vjoy_d_custom[3][1],
 						90*vjoy_d_custom[3][2],64*vjoy_d_custom[3][2],	-1},
 				new float[] { 542+vjoy_d_custom[4][0],							200+vjoy_d_custom[4][1],
 						90*vjoy_d_custom[4][2],64*vjoy_d_custom[4][2],	-2},
 
+                // Analog ring and point
 				new float[] { 16+vjoy_d_custom[5][0],							24+32+vjoy_d_custom[5][1],
 						128*vjoy_d_custom[5][2],128*vjoy_d_custom[5][2],-3},
 				new float[] { 96+vjoy_d_custom[5][0],							320+vjoy_d_custom[5][1],
 						32*vjoy_d_custom[5][2],32*vjoy_d_custom[5][2],	-4},
 
+                // Fast-forward
+				new float[] { 320-32+vjoy_d_custom[6][0],						12+vjoy_d_custom[6][1],
+						64*vjoy_d_custom[6][2],64*vjoy_d_custom[6][2],	-5},
+
+                // DPad diagonals
 				new float[] { 20+0*vjoy_d_custom[0][2]+vjoy_d_custom[0][0],		288+0*vjoy_d_custom[0][2]+vjoy_d_custom[0][1],
 						64*vjoy_d_custom[0][2],64*vjoy_d_custom[0][2],	key_CONT_DPAD_LEFT|key_CONT_DPAD_UP},
 				new float[] { 20+128*vjoy_d_custom[0][2]+vjoy_d_custom[0][0],	288+0*vjoy_d_custom[0][2]+vjoy_d_custom[0][1],
@@ -147,6 +179,10 @@ public class VJoy {
 		prefs.edit().putFloat("touch_x_shift_analog", vjoy_d_custom[5][0]).apply();
 		prefs.edit().putFloat("touch_y_shift_analog", vjoy_d_custom[5][1]).apply();
 		prefs.edit().putFloat("touch_scale_analog", vjoy_d_custom[5][2]).apply();
+
+		prefs.edit().putFloat("touch_x_shift_fforward", vjoy_d_custom[6][0]).apply();
+		prefs.edit().putFloat("touch_y_shift_fforward", vjoy_d_custom[6][1]).apply();
+		prefs.edit().putFloat("touch_scale_fforward", vjoy_d_custom[6][2]).apply();
 	}
 
 	public static void resetCustomVjoyValues(Context context) {
@@ -175,5 +211,9 @@ public class VJoy {
 		prefs.edit().remove("touch_x_shift_analog").apply();
 		prefs.edit().remove("touch_y_shift_analog").apply();
 		prefs.edit().remove("touch_scale_analog").apply();
+
+		prefs.edit().remove("touch_x_shift_fforward").apply();
+		prefs.edit().remove("touch_y_shift_fforward").apply();
+		prefs.edit().remove("touch_scale_fforward").apply();
 	}
 }

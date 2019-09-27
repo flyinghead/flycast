@@ -170,6 +170,7 @@ public:
 		set_button(EMU_BTN_TRIGGER_LEFT, KEY_F);
 		set_button(EMU_BTN_TRIGGER_RIGHT, KEY_V);
 		set_button(EMU_BTN_MENU, KEY_TAB);
+		set_button(EMU_BTN_FFORWARD, KEY_SPACE);
 
 		dirty = false;
 	}

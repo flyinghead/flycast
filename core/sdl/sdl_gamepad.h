@@ -172,6 +172,7 @@ public:
 		set_button(EMU_BTN_TRIGGER_LEFT, SDLK_f);
 		set_button(EMU_BTN_TRIGGER_RIGHT, SDLK_v);
 		set_button(EMU_BTN_MENU, SDLK_TAB);
+		set_button(EMU_BTN_FFORWARD, SDLK_SPACE);
 
 		dirty = false;
 	}

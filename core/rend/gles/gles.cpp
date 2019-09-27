@@ -1403,11 +1403,13 @@ void UpdateFogTexture(u8 *fog_table, GLenum texture_slot, GLint fog_image_format
 extern u16 kcode[4];
 extern u8 rt[4],lt[4];
 
+#define VJOY_VISIBLE 14
+
 #if defined(__ANDROID__)
-extern float vjoy_pos[14][8];
+extern float vjoy_pos[15][8];
 #else
 
-float vjoy_pos[14][8]=
+float vjoy_pos[15][8]=
 {
 	{24+0,24+64,64,64},     //LEFT
 	{24+64,24+0,64,64},     //UP
@@ -1421,29 +1423,27 @@ float vjoy_pos[14][8]=
 
 	{320-32,360+32,64,64},  //Start
 
-	{440,200,90,64},        //RT
-	{542,200,90,64},        //LT
+	{440,200,90,64},        //LT
+	{542,200,90,64},        //RT
 
 	{-24,128+224,128,128},  //ANALOG_RING
 	{96,320,64,64},         //ANALOG_POINT
-	{1}
+	{320-32,24,64,64},		// FFORWARD
+	{1}						// VJOY_VISIBLE
 };
 #endif // !__ANDROID__
 
 static List<Vertex> osd_vertices;
 static bool osd_vertices_overrun;
 
-static const float vjoy_sz[2][14] = {
-	{ 64,64,64,64, 64,64,64,64, 64, 90,90, 128, 64 },
-	{ 64,64,64,64, 64,64,64,64, 64, 64,64, 128, 64 },
+static const float vjoy_sz[2][15] = {
+	{ 64,64,64,64, 64,64,64,64, 64, 90,90, 128, 64, 64 },
+	{ 64,64,64,64, 64,64,64,64, 64, 64,64, 128, 64, 64 },
 };
 
 void HideOSD()
 {
-	vjoy_pos[13][0] = 0;
-	vjoy_pos[13][1] = 0;
-	vjoy_pos[13][2] = 0;
-	vjoy_pos[13][3] = 0;
+	vjoy_pos[VJOY_VISIBLE][0] = 0;
 }
 
 static void DrawButton(float* xy, u32 state)
@@ -1452,11 +1452,11 @@ static void DrawButton(float* xy, u32 state)
 
 	vtx.z = 1;
 
-	vtx.col[0]=vtx.col[1]=vtx.col[2]=(0x7F-0x40*state/255)*vjoy_pos[13][0];
+	vtx.col[0]=vtx.col[1]=vtx.col[2]=(0x7F-0x40*state/255)*vjoy_pos[VJOY_VISIBLE][0];
 
-	vtx.col[3]=0xA0*vjoy_pos[13][4];
+	vtx.col[3]=0xA0*vjoy_pos[VJOY_VISIBLE][4];
 
-	vjoy_pos[13][4]+=(vjoy_pos[13][0]-vjoy_pos[13][4])/2;
+	vjoy_pos[VJOY_VISIBLE][4]+=(vjoy_pos[VJOY_VISIBLE][0]-vjoy_pos[VJOY_VISIBLE][4])/2;
 
 
 
@@ -1500,6 +1500,8 @@ static void osd_gen_vertices()
 
 	DrawButton2(vjoy_pos[11],1);
 	DrawButton2(vjoy_pos[12],0);
+
+	DrawButton2(vjoy_pos[13], 0);
 }
 
 #define OSD_TEX_W 512
@@ -1517,7 +1519,7 @@ void OSD_DRAW(bool clear_screen)
 		float u=0;
 		float v=0;
 
-		for (int i=0;i<13;i++)
+		for (int i = 0; i < 14; i++)
 		{
 			//umin,vmin,umax,vmax
 			vjoy_pos[i][4]=(u+1)/OSD_TEX_W;

@@ -18,7 +18,7 @@ public class VirtualJoystickDelegate {
     private VibratorThread vibratorThread;
 
     private boolean editVjoyMode = false;
-    private int selectedVjoyElement = -1;
+    private int selectedVjoyElement = VJoy.ELEM_NONE;
     private ScaleGestureDetector scaleGestureDetector;
 
     private Handler handler = new Handler();
@@ -98,8 +98,8 @@ public class VirtualJoystickDelegate {
         float scl_dc = height / 480.0f;
         float tx = (width - 640.0f * scl_dc) / 2 / scl_dc;
 
-        float a_x = -tx+ 24*scl;
-        float a_y=- 24*scl;
+        float a_x = -tx + 24 * scl;
+        float a_y = -24 * scl;
 
         // Not sure how this can happen
         if (vjoy_d_custom == null)
@@ -109,6 +109,7 @@ public class VirtualJoystickDelegate {
 
         for (int i=0;i<vjoy.length;i++)
         {
+        	// FIXME this hack causes the slight "jump" when first moving a screen-centered button
             if (vjoy_d[i][0] == 288)
                 vjoy[i][0] = vjoy_d[i][0];
             else if (vjoy_d[i][0]-vjoy_d_custom[getElementIdFromButtonId(i)][0] < 320)
@@ -138,19 +139,21 @@ public class VirtualJoystickDelegate {
 
     private static int getElementIdFromButtonId(int buttonId) {
         if (buttonId <= 3)
-            return 0; // DPAD
+            return VJoy.ELEM_DPAD; // DPAD
         else if (buttonId <= 7)
-            return 1; // X, Y, B, A Buttons
+            return VJoy.ELEM_BUTTONS; // X, Y, B, A Buttons
         else if (buttonId == 8)
-            return 2; // Start
+            return VJoy.ELEM_START; // Start
         else if (buttonId == 9)
-            return 3; // Left Trigger
+            return VJoy.ELEM_LTRIG; // Left Trigger
         else if (buttonId == 10)
-            return 4; // Right Trigger
+            return VJoy.ELEM_RTRIG; // Right Trigger
         else if (buttonId <= 12)
-            return 5; // Analog
+            return VJoy.ELEM_ANALOG; // Analog
+        else if (buttonId == 13)
+            return VJoy.ELEM_FFORWARD; // Fast-forward
         else
-            return 0; // DPAD diagonials
+            return VJoy.ELEM_DPAD; // DPAD diagonals
     }
 
     private static int left_trigger = 0;
@@ -167,7 +170,8 @@ public class VirtualJoystickDelegate {
             return false;
         JNIdc.show_osd();
         this.handler.removeCallbacks(hideOsdRunnable);
-        this.handler.postDelayed(hideOsdRunnable, 10000);
+        if (!editVjoyMode)
+            this.handler.postDelayed(hideOsdRunnable, 10000);
 
         scaleGestureDetector.onTouchEvent(event);
 
@@ -175,13 +179,13 @@ public class VirtualJoystickDelegate {
         float scl = height / 480.0f;
         float tx = (width - 640.0f * scl) / 2;
 
-        int rv = 0xFFFF;
+        int rv = 0xFFFFFFFF;
 
         int aid = event.getActionMasked();
         int pid = event.getActionIndex();
 
         if (!JNIdc.guiIsOpen()) {
-            if (editVjoyMode && selectedVjoyElement != -1 && aid == MotionEvent.ACTION_MOVE && !scaleGestureDetector.isInProgress()) {
+            if (editVjoyMode && selectedVjoyElement != VJoy.ELEM_NONE && aid == MotionEvent.ACTION_MOVE && !scaleGestureDetector.isInProgress()) {
                 float x = (event.getX() - tx) / scl;
                 float y = (event.getY() - ty) / scl;
 
@@ -207,25 +211,14 @@ public class VirtualJoystickDelegate {
                 if (anal_id != event.getPointerId(i)) {
                     if (aid == MotionEvent.ACTION_POINTER_UP && pid == i)
                         continue;
-                    for (int j = 0; j < vjoy.length; j++) {
-                        if (x > vjoy[j][0] && x <= (vjoy[j][0] + vjoy[j][2])) {
-                            /*
-                                //Disable pressure sensitive R/L
-                                //Doesn't really work properly
-
-                                int pre=(int)(event.getPressure(i)*255);
-                                if (pre>20)
-                                {
-                                    pre-=20;
-                                    pre*=7;
-                                }
-                                if (pre>255) pre=255;
-                            */
-
-                            int pre = 255;
-
-                            if (y > vjoy[j][1] && y <= (vjoy[j][1] + vjoy[j][3])) {
-                                if (vjoy[j][4] >= -2) {
+                    for (int j = 0; j < vjoy.length; j++)
+                    {
+                        if (x > vjoy[j][0] && x <= (vjoy[j][0] + vjoy[j][2]))
+                        {
+                            if (y > vjoy[j][1] && y <= (vjoy[j][1] + vjoy[j][3]))
+                            {
+                                if (vjoy[j][4] >= VJoy.BTN_RTRIG) {
+                                    // Not for analog
                                     if (vjoy[j][5] == 0)
                                         if (!editVjoyMode) {
                                             vibratorThread.vibrate();
@@ -234,9 +227,9 @@ public class VirtualJoystickDelegate {
                                 }
 
 
-                                if (vjoy[j][4] == -3) {
+                                if (vjoy[j][4] == VJoy.BTN_ANARING) {
                                     if (editVjoyMode) {
-                                        selectedVjoyElement = 5; // Analog
+                                        selectedVjoyElement = VJoy.ELEM_ANALOG;
                                         resetEditMode();
                                     } else {
                                         vjoy[j + 1][0] = x - vjoy[j + 1][2] / 2;
@@ -245,21 +238,21 @@ public class VirtualJoystickDelegate {
                                         JNIdc.vjoy(j + 1, vjoy[j + 1][0], vjoy[j + 1][1], vjoy[j + 1][2], vjoy[j + 1][3]);
                                         anal_id = event.getPointerId(i);
                                     }
-                                } else if (vjoy[j][4] != -4) {
-                                    if (vjoy[j][4] == -1) {
+                                } else if (vjoy[j][4] != VJoy.BTN_ANAPOINT) {
+                                    if (vjoy[j][4] == VJoy.BTN_LTRIG) {
                                         if (editVjoyMode) {
-                                            selectedVjoyElement = 3; // Left Trigger
+                                            selectedVjoyElement = VJoy.ELEM_LTRIG;
                                             resetEditMode();
                                         } else {
-                                            left_trigger = pre;
+                                            left_trigger = 255;
                                             lt_id = event.getPointerId(i);
                                         }
-                                    } else if (vjoy[j][4] == -2) {
+                                    } else if (vjoy[j][4] == VJoy.BTN_RTRIG) {
                                         if (editVjoyMode) {
-                                            selectedVjoyElement = 4; // Right Trigger
+                                            selectedVjoyElement = VJoy.ELEM_RTRIG;
                                             resetEditMode();
                                         } else {
-                                            right_trigger = pre;
+                                            right_trigger = 255;
                                             rt_id = event.getPointerId(i);
                                         }
                                     } else {
@@ -308,7 +301,7 @@ public class VirtualJoystickDelegate {
                 selectedVjoyElement = -1;
                 reset_analog();
                 anal_id = -1;
-                rv = 0xFFFF;
+                rv = 0xFFFFFFFF;
                 right_trigger = 0;
                 left_trigger = 0;
                 lt_id = -1;
@@ -362,16 +355,11 @@ public class VirtualJoystickDelegate {
                 }
                 break;
         }
-        if (context.getResources().getString(R.string.flavor).equals("naomi"))  // FIXME
-        {
-            if (left_trigger != 0)
-                rv &= ~VJoy.key_CONT_C; // Service key/coin
-        }
         int joyx = get_anal(11, 0);
         int joyy = get_anal(11, 1);
         InputDeviceManager.getInstance().virtualGamepadEvent(rv, joyx, joyy, left_trigger, right_trigger);
         // Only register the mouse event if no virtual gamepad button is down
-        if ((!editVjoyMode && rv == 0xFFFF) || JNIdc.guiIsOpen())
+        if ((!editVjoyMode && rv == 0xFFFFFFFF) || JNIdc.guiIsOpen())
             InputDeviceManager.getInstance().mouseEvent(mouse_pos[0], mouse_pos[1], mouse_btns);
         return(true);
     }
@@ -379,6 +367,9 @@ public class VirtualJoystickDelegate {
     public void setEditVjoyMode(boolean editVjoyMode) {
         this.editVjoyMode = editVjoyMode;
         selectedVjoyElement = -1;
+        if (editVjoyMode)
+            this.handler.removeCallbacks(hideOsdRunnable);
+        resetEditMode();
     }
 
     private class OscOnScaleGestureListener extends

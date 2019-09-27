@@ -54,12 +54,22 @@ public final class NativeGLActivity extends BaseGLActivity {
         VJoy.resetCustomVjoyValues(getApplicationContext());
         ((NativeGLView)mView).readCustomVjoyValues();
         ((NativeGLView)mView).resetEditMode();
-        mView.requestLayout();
+        handler.post(new Runnable() {
+            @Override
+            public void run() {
+                mView.requestLayout();
+            }
+        });
     }
     // Called from native code
-    private void VJoyStopEditing(boolean canceled) {
-        if (canceled)
-            ((NativeGLView)mView).restoreCustomVjoyValues(vjoy_d_cached);
-        ((NativeGLView)mView).setEditVjoyMode(false);
+    private void VJoyStopEditing(final boolean canceled) {
+        handler.post(new Runnable() {
+            @Override
+            public void run() {
+                if (canceled)
+                    ((NativeGLView) mView).restoreCustomVjoyValues(vjoy_d_cached);
+                ((NativeGLView) mView).setEditVjoyMode(false);
+            }
+        });
     }
 }

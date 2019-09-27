@@ -145,7 +145,7 @@ static char gamedisk[256];
 u16 kcode[4] = { 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF };
 s8 joyx[4],joyy[4];
 u8 rt[4],lt[4];
-float vjoy_pos[14][8];
+float vjoy_pos[15][8];
 
 extern s32 mo_x_abs;
 extern s32 mo_y_abs;
@@ -453,7 +453,7 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_rendtermJava(JNIEnv *
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_vjoy(JNIEnv * env, jobject obj,int id,float x, float y, float w, float h)
 {
-    if(id<sizeof(vjoy_pos)/sizeof(vjoy_pos[0]))
+    if (id < ARRAY_SIZE(vjoy_pos))
     {
         vjoy_pos[id][0] = x;
         vjoy_pos[id][1] = y;

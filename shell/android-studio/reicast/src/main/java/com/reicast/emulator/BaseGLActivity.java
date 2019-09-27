@@ -43,7 +43,7 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
     protected SharedPreferences prefs;
     protected float[][] vjoy_d_cached;    // Used for VJoy editing
     private AudioBackend audioBackend;
-    private Handler handler = new Handler();
+    protected Handler handler = new Handler();
     public static byte[] syms;
     private boolean audioPermissionRequested = false;
     private boolean paused = true;
@@ -127,6 +127,7 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
         pathList.addAll(FileBrowser.getExternalMounts());
         Log.i("flycast", "External storage dirs: " + pathList);
         JNIdc.setExternalStorageDirectories(pathList.toArray());
+		FileBrowser.installButtons(prefs);
     }
 
     @Override

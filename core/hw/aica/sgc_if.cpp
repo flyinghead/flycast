@@ -39,6 +39,8 @@ using namespace std;
 #define clip_verify(x)
 #endif
 
+extern bool fast_forward_mode;
+
 //Sound generation, mixin, and channel regs emulation
 //x.15
 s32 volume_lut[16];
@@ -1479,7 +1481,8 @@ void AICA_Sample32()
 		pl=mixl;
 		pr=mixr;
 
-		if (!settings.aica.NoSound) WriteSample(mixr,mixl);
+		if (!fast_forward_mode && !settings.aica.NoSound)
+			WriteSample(mixr,mixl);
 	}
 }
 
@@ -1531,7 +1534,7 @@ void AICA_Sample()
 		}
 	}
 
-    if (settings.aica.NoSound)
+    if (fast_forward_mode || settings.aica.NoSound)
     {
         return;
     }

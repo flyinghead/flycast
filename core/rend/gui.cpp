@@ -431,10 +431,10 @@ static const char *maple_expansion_device_name(MapleDeviceType type)
 
 const char *maple_ports[] = { "None", "A", "B", "C", "D" };
 const DreamcastKey button_keys[] = { DC_BTN_START, DC_BTN_A, DC_BTN_B, DC_BTN_X, DC_BTN_Y, DC_DPAD_UP, DC_DPAD_DOWN, DC_DPAD_LEFT, DC_DPAD_RIGHT,
-		EMU_BTN_MENU, EMU_BTN_ESCAPE, EMU_BTN_TRIGGER_LEFT, EMU_BTN_TRIGGER_RIGHT,
+		EMU_BTN_MENU, EMU_BTN_ESCAPE, EMU_BTN_FFORWARD, EMU_BTN_TRIGGER_LEFT, EMU_BTN_TRIGGER_RIGHT,
 		DC_BTN_C, DC_BTN_D, DC_BTN_Z, DC_DPAD2_UP, DC_DPAD2_DOWN, DC_DPAD2_LEFT, DC_DPAD2_RIGHT };
 const char *button_names[] = { "Start", "A", "B", "X", "Y", "DPad Up", "DPad Down", "DPad Left", "DPad Right",
-		"Menu", "Exit", "Left Trigger", "Right Trigger",
+		"Menu", "Exit", "Fast-forward", "Left Trigger", "Right Trigger",
 		"C", "D", "Z", "Right Dpad Up", "Right DPad Down", "Right DPad Left", "Right DPad Right" };
 const DreamcastKey axis_keys[] = { DC_AXIS_X, DC_AXIS_Y, DC_AXIS_LT, DC_AXIS_RT, EMU_AXIS_DPAD1_X, EMU_AXIS_DPAD1_Y, EMU_AXIS_DPAD2_X, EMU_AXIS_DPAD2_Y };
 const char *axis_names[] = { "Stick X", "Stick Y", "Left Trigger", "Right Trigger", "DPad X", "DPad Y", "Right DPad X", "Right DPad Y" };
@@ -1587,6 +1587,7 @@ static float fps = -1;
 
 static std::string osd_message;
 static double osd_message_end;
+extern bool fast_forward_mode;
 
 void gui_display_notification(const char *msg, int duration)
 {
@@ -1606,12 +1607,12 @@ static std::string getFPSNotification()
 		}
 		if (fps >= 0.f && fps < 9999.f) {
 			char text[32];
-			snprintf(text, sizeof(text), "F:%.1f", fps);
+			snprintf(text, sizeof(text), "F:%.1f%s", fps, fast_forward_mode ? " >>" : "");
 
 			return std::string(text);
 		}
 	}
-	return std::string("");
+	return std::string(fast_forward_mode ? ">>" : "");
 }
 
 void gui_display_osd()

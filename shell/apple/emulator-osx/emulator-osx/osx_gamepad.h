@@ -25,6 +25,7 @@ public:
 		set_button(EMU_BTN_TRIGGER_LEFT, kVK_ANSI_F);
 		set_button(EMU_BTN_TRIGGER_RIGHT, kVK_ANSI_V);
 		set_button(EMU_BTN_MENU, kVK_Tab);
+		set_button(EMU_BTN_FFORWARD, kVK_Space);
 		
 		dirty = false;
 	}

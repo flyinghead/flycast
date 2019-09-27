@@ -88,7 +88,7 @@ class IdentityInputMapping : public InputMapping
 public:
 	IdentityInputMapping() {
 		name = "Default";
-		for (int i = 0; i < 16; i++)
+		for (int i = 0; i < 32; i++)
 			set_button((DreamcastKey)(1 << i), 1 << i);
 		set_axis(DC_AXIS_X, DC_AXIS_X, false);
 		set_axis(DC_AXIS_Y, DC_AXIS_Y, false);

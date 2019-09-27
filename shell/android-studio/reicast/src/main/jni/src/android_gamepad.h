@@ -148,11 +148,11 @@ public:
 		// No virtual gamepad when the GUI is open: touch events only
 		if (gui_is_open())
 		{
-			kcode = 0xffff;
+			kcode = 0xffffffff;
 			joyx = joyy = rt = lt = 0;
 		}
-		u16 changes = kcode ^ previous_kcode;
-		for (int i = 0; i < 16; i++)
+		u32 changes = kcode ^ previous_kcode;
+		for (int i = 0; i < 32; i++)
 			if (changes & (1 << i))
 				gamepad_btn_input(1 << i, (kcode & (1 << i)) == 0);
 		gamepad_axis_input(DC_AXIS_X, joyx);
@@ -189,7 +189,7 @@ protected:
 private:
 	int android_id;
 	static std::map<int, std::shared_ptr<AndroidGamepadDevice>> android_gamepads;
-	u16 previous_kcode = 0xffff;
+	u32 previous_kcode = 0xffffffff;
 };
 
 std::map<int, std::shared_ptr<AndroidGamepadDevice>> AndroidGamepadDevice::android_gamepads;

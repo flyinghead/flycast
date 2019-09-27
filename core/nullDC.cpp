@@ -32,6 +32,8 @@ void LoadCustom();
 void* dc_run(void*);
 void dc_resume();
 
+extern bool fast_forward_mode;
+
 settings_t settings;
 // Set if game has corresponding option by default, so that it's not saved in the config
 static bool rtt_to_buffer_game;
@@ -152,7 +154,7 @@ void LoadSpecialSettings()
 				|| !strncmp("T26702N", prod_id, 7)) // PBA Tour Bowling 2001
 		{
 			INFO_LOG(BOOT, "Enabling Full MMU and Extra depth scaling for Windows CE game");
-			settings.rend.ExtraDepthScale = 0.1;
+			settings.rend.ExtraDepthScale = 0.1; // taxi 2 needs 0.01 for FMV (amd, per-tri)
 			extra_depth_game = true;
 			settings.dreamcast.FullMMU = true;
 			settings.aica.NoBatch = true;
@@ -577,6 +579,7 @@ void dc_start_game(const char *path)
 			saved_screen_stretching = -1;
 		}
 	}
+	fast_forward_mode = false;
 	game_started = true;
 	dc_resume();
 }

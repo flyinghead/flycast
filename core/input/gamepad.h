@@ -42,6 +42,7 @@ enum DreamcastKey
 	EMU_BTN_TRIGGER_LEFT	= 1 << 17,
 	EMU_BTN_TRIGGER_RIGHT	= 1 << 18,
 	EMU_BTN_MENU			= 1 << 19,
+	EMU_BTN_FFORWARD		= 1 << 20,
 
 	// Real axes
 	DC_AXIS_LT		 = 0x10000,

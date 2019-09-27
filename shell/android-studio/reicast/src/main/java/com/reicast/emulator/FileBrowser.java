@@ -61,10 +61,10 @@ public class FileBrowser {
 		try {
 			File buttons = null;
 			// TODO button themes
-			String theme = prefs.getString(Config.pref_theme, null);
-			if (theme != null) {
-				buttons = new File(theme);
-			}
+			//String theme = prefs.getString(Config.pref_theme, null);
+			//if (theme != null) {
+			//	buttons = new File(theme);
+			//}
 			String home_directory = prefs.getString(Config.pref_home, Environment.getExternalStorageDirectory().getAbsolutePath());
 			File file = new File(home_directory, "data/buttons.png");
 			InputStream in = null;
