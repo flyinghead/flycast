@@ -329,6 +329,13 @@ enum huffman_error huffman_compute_tree_from_histo(struct huffman_decoder* decod
 	return huffman_assign_canonical_codes(decoder);
 }
 
+void free_huffman_decoder(struct huffman_decoder* decoder)
+{
+	free(decoder->lookup);
+	free(decoder->huffnode);
+	free(decoder);
+}
+
 /***************************************************************************
  *  INTERNAL FUNCTIONS
  ***************************************************************************

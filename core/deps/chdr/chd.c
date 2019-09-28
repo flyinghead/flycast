@@ -558,6 +558,7 @@ void lzma_codec_free(void* codec)
 	lzma_codec_data* lzma_codec = (lzma_codec_data*) codec;
 
 	/* free memory */
+	lzma_allocator_free(&lzma_codec->allocator);
 	LzmaDec_Free(&lzma_codec->decoder, (ISzAlloc*)&lzma_codec->allocator);
 }
 
@@ -603,7 +604,13 @@ chd_error cdlz_codec_init(void* codec, uint32_t hunkbytes)
 
 void cdlz_codec_free(void* codec)
 {
-	/* TODO */
+	if (codec != NULL)
+	{
+		cdlz_codec_data* cdlz = (cdlz_codec_data*) codec;
+		lzma_codec_free(&cdlz->base_decompressor);
+		zlib_codec_free(&cdlz->subcode_decompressor);
+		free(cdlz->buffer);
+	}
 }
 
 chd_error cdlz_codec_decompress(void *codec, const uint8_t *src, uint32_t complen, uint8_t *dest, uint32_t destlen)
@@ -663,7 +670,13 @@ chd_error cdzl_codec_init(void *codec, uint32_t hunkbytes)
 
 void cdzl_codec_free(void *codec)
 {
-	/* TODO */
+	if (codec != NULL)
+	{
+		cdzl_codec_data* cdzl = (cdzl_codec_data*) codec;
+		zlib_codec_free(&cdzl->base_decompressor);
+		zlib_codec_free(&cdzl->subcode_decompressor);
+		free(cdzl->buffer);
+	}
 }
 
 chd_error cdzl_codec_decompress(void *codec, const uint8_t *src, uint32_t complen, uint8_t *dest, uint32_t destlen)
@@ -765,6 +778,13 @@ void cdfl_codec_free(void *codec)
 {
 	cdfl_codec_data *cdfl = (cdfl_codec_data*)codec;
 	inflateEnd(&cdfl->inflater);
+	free(cdfl->buffer);
+	flac_decoder_free(&cdfl->decoder);
+	/* free our fast memory */
+	zlib_allocator alloc = cdfl->allocator;
+	for (int i = 0; i < MAX_ZLIB_ALLOCS; i++)
+		if (alloc.allocptr[i])
+			free(alloc.allocptr[i]);
 }
 
 chd_error cdfl_codec_decompress(void *codec, const uint8_t *src, uint32_t complen, uint8_t *dest, uint32_t destlen)
@@ -1238,6 +1258,9 @@ static chd_error decompress_v5_map(chd_file* chd, chd_header* header)
 		/* crc16 */
 		put_bigendian_uint16(&rawmap[10], crc);
 	}
+	free(compressed);
+	free(bitbuf);
+	free_huffman_decoder(decoder);
 
 	/* verify the final CRC */
 	if (crc16(&header->rawmap[0], header->hunkcount * 12) != mapcrc)
@@ -2355,8 +2378,10 @@ static chd_error zlib_codec_init(void *codec, uint32_t hunkbytes)
 		err = CHDERR_NONE;
 
 	/* handle an error */
+	/* Since zlib_codec_free doesn't free codec I see no reason to do it here
 	if (err != CHDERR_NONE)
 		free(data);
+	*/
 
 	return err;
 }
