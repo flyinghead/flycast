@@ -488,7 +488,6 @@ struct settings_t
 		u32 GlobalFocus;	//0 -> only hwnd , (1) -> Global
 		u32 CDDAMute;
 		bool DSPEnabled;
-		bool OldSyncronousDma;		// 1 -> sync dma (old behavior), 0 -> async dma (fixes some games, partial implementation)
 		bool NoBatch;
 		bool NoSound;
 	} aica;
