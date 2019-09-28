@@ -456,7 +456,11 @@ void GDCartridge::read_gdrom(Disc *gdrom, u32 sector, u8* dst)
 
 void GDCartridge::device_start()
 {
-	dimm_data = NULL;
+	if (dimm_data != NULL)
+	{
+		free(dimm_data);
+		dimm_data = NULL;
+	}
 	dimm_data_size = 0;
 
 	char name[128];

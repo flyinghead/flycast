@@ -21,6 +21,13 @@ public:
 	GDCartridge(u32 size) : NaomiCartridge(size)
 	{
 		gdrom_name = NULL;
+		dimm_data = NULL;
+		dimm_data_size = 0;
+		dimm_cur_address = 0;
+	}
+	~GDCartridge()
+	{
+		free(dimm_data);
 	}
 	virtual void Init() override
 	{
