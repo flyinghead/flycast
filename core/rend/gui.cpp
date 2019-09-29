@@ -1220,29 +1220,6 @@ static void gui_display_settings()
 		    	ImGui::Checkbox("Idle Skip", &settings.dynarec.idleskip);
 	            ImGui::SameLine();
 	            ShowHelpMarker("Skip wait loops. Recommended");
-				ImGui::PushItemWidth(ImGui::CalcTextSize("Largeenough").x);
-	            const char *preview = settings.dynarec.SmcCheckLevel == NoCheck ? "Faster" : settings.dynarec.SmcCheckLevel == FastCheck ? "Fast" : "Full";
-				if (ImGui::BeginCombo("SMC Checks", preview	, ImGuiComboFlags_None))
-				{
-					bool is_selected = settings.dynarec.SmcCheckLevel == NoCheck;
-					if (ImGui::Selectable("Faster", &is_selected))
-						settings.dynarec.SmcCheckLevel = NoCheck;
-					if (is_selected)
-						ImGui::SetItemDefaultFocus();
-					is_selected = settings.dynarec.SmcCheckLevel == FastCheck;
-					if (ImGui::Selectable("Fast", &is_selected))
-						settings.dynarec.SmcCheckLevel = FastCheck;
-					if (is_selected)
-						ImGui::SetItemDefaultFocus();
-					is_selected = settings.dynarec.SmcCheckLevel == FullCheck;
-					if (ImGui::Selectable("Full", &is_selected))
-						settings.dynarec.SmcCheckLevel = FullCheck;
-					if (is_selected)
-						ImGui::SetItemDefaultFocus();
-					ImGui::EndCombo();
-				}
-	            ImGui::SameLine();
-	            ShowHelpMarker("How to detect self-modifying code. Full check recommended");
 		    }
 		    if (ImGui::CollapsingHeader("Other", ImGuiTreeNodeFlags_DefaultOpen))
 		    {

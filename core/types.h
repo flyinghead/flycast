@@ -393,11 +393,6 @@ struct RegisterStruct
 	}
 };
 
-enum SmcCheckEnum {
-	FullCheck = 0,
-	FastCheck = 1,
-	NoCheck = 2
-};
 enum LimitFPSEnum {
 	LimitFPSDisabled = 0,
 	LimitFPSAuto = 1,
@@ -460,7 +455,6 @@ struct settings_t
 		bool safemode;
 		bool disable_nvmem;
 		bool disable_vmem32;
-		SmcCheckEnum SmcCheckLevel;
 	} dynarec;
 
 	struct

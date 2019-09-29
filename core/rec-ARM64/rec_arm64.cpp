@@ -376,16 +376,15 @@ public:
 		return *ret_reg;
 	}
 
-	void ngen_Compile(RuntimeBlockInfo* block, SmcCheckEnum smc_checks, bool reset, bool staging, bool optimise)
+	void ngen_Compile(RuntimeBlockInfo* block, bool force_checks, bool reset, bool staging, bool optimise)
 	{
 		//printf("REC-ARM64 compiling %08x\n", block->addr);
 #ifdef PROFILING
 		SaveFramePointer();
 #endif
 		this->block = block;
+		CheckBlock(force_checks, block);
 		
-		CheckBlock(smc_checks, block);
-
 		// run register allocator
 		regalloc.DoAlloc(block);
 
@@ -2032,11 +2031,12 @@ private:
 		verify (GetCursorAddress<Instruction *>() - start_instruction == code_size * kInstructionSize);
 	}
 
-	void CheckBlock(SmcCheckEnum smc_checks, RuntimeBlockInfo* block)
+	void CheckBlock(bool force_checks, RuntimeBlockInfo* block)
 	{
+		if (!mmu_enabled() && !force_checks)
+			return;
 
 		Label blockcheck_fail;
-		Label blockcheck_success;
 
 		if (mmu_enabled())
 		{
@@ -2045,33 +2045,12 @@ private:
 			Cmp(w10, w11);
 			B(ne, &blockcheck_fail);
 		}
-
-		switch (smc_checks) {
-			case NoCheck:
-				if (!mmu_enabled())
-					return;
-				B(&blockcheck_success);
-				break;
-
-			case FastCheck: {
-				u8* ptr = GetMemPtr(block->addr, 4);
-				if (ptr == NULL)
-					return;
-				Ldr(x9, reinterpret_cast<uintptr_t>(ptr));
-				Ldr(w10, MemOperand(x9));
-				Ldr(w11, *(u32*)ptr);
-				Cmp(w10, w11);
-				B(eq, &blockcheck_success);
-			}
-			break;
-
-			case FullCheck: {
-				s32 sz = block->sh4_code_size;
-
-				u8* ptr = GetMemPtr(block->addr, sz);
-				if (ptr == NULL)
-					return;
-
+		if (force_checks)
+		{
+			s32 sz = block->sh4_code_size;
+			u8* ptr = GetMemPtr(block->addr, sz);
+			if (ptr != NULL)
+			{
 				Ldr(x9, reinterpret_cast<uintptr_t>(ptr));
 
 				while (sz > 0)
@@ -2102,14 +2081,10 @@ private:
 					}
 					B(ne, &blockcheck_fail);
 				}
-				B(&blockcheck_success);
 			}
-			break;
-
-			default:
-				die("unhandled smc_checks");
 		}
-
+		Label blockcheck_success;
+		B(&blockcheck_success);
 		Bind(&blockcheck_fail);
 		Ldr(w0, block->addr);
 		TailCallRuntime(ngen_blockcheckfail);
@@ -2207,7 +2182,7 @@ private:
 
 static Arm64Assembler* compiler;
 
-void ngen_Compile(RuntimeBlockInfo* block, SmcCheckEnum smc_checks, bool reset, bool staging, bool optimise)
+void ngen_Compile(RuntimeBlockInfo* block, bool smc_checks, bool reset, bool staging, bool optimise)
 {
 	verify(emit_FreeSpace() >= 16 * 1024);
 

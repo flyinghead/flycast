@@ -227,52 +227,32 @@ void DYNACALL PrintBlock(u32 pc)
 u32 cvld;
 u32 rdmt[6];
 extern u32 memops_t,memops_l;
-extern int mips_counter;
 
-//TODO: Get back validating mode for this
-void CheckBlock(SmcCheckEnum smc_checks, RuntimeBlockInfo* block)
+void CheckBlock(bool smc_checks, RuntimeBlockInfo* block)
 {
-	switch (smc_checks) {
-		case NoCheck:
-			break;
+	if (!smc_checks)
+		return;
 
-		case FastCheck: {
-			void* ptr = (void*)GetMemPtr(block->addr, 4);
-			if (ptr)
-			{
-				x86e->Emit(op_cmp32, ptr, *(u32*)ptr);
-				x86e->Emit(op_jne, x86_ptr_imm(ngen_blockcheckfail));
-			}
+	s32 sz=block->sh4_code_size;
+	u32 sa=block->addr;
+	while(sz>0)
+	{
+		void* ptr=(void*)GetMemPtr(sa,4);
+		if (ptr)
+		{
+			if (sz==2)
+				x86e->Emit(op_cmp16,ptr,*(u16*)ptr);
+			else
+				x86e->Emit(op_cmp32,ptr,*(u32*)ptr);
+			x86e->Emit(op_jne,x86_ptr_imm(ngen_blockcheckfail));
 		}
-		break;
-
-		case FullCheck: {
-			s32 sz=block->sh4_code_size;
-			u32 sa=block->addr;
-			while(sz>0)
-			{
-				void* ptr=(void*)GetMemPtr(sa,4);
-				if (ptr)
-				{
-					if (sz==2)
-						x86e->Emit(op_cmp16,ptr,*(u16*)ptr);
-					else
-						x86e->Emit(op_cmp32,ptr,*(u32*)ptr);
-					x86e->Emit(op_jne,x86_ptr_imm(ngen_blockcheckfail));
-				}
-				sz-=4;
-				sa+=4;
-			}
-		}
-		break;
-
-		default:
-			die("unhandled smc_checks");
+		sz-=4;
+		sa+=4;
 	}
 }
 
 
-void ngen_Compile(RuntimeBlockInfo* block, SmcCheckEnum smc_checks, bool reset, bool staging,bool optimise)
+void ngen_Compile(RuntimeBlockInfo* block, bool smc_checks, bool reset, bool staging,bool optimise)
 {
 	//initialise stuff
 	DetectCpuFeatures();
@@ -290,10 +270,6 @@ void ngen_Compile(RuntimeBlockInfo* block, SmcCheckEnum smc_checks, bool reset, 
 
 	x86e->Emit(op_add32,&memops_t,block->memops);
 	x86e->Emit(op_add32,&memops_l,block->linkedmemops);
-
-#ifdef MIPS_COUNTER
-	x86e->Emit(op_add32, &mips_counter, block->oplist.size());
-#endif
 
 	//run register allocator
 	reg.DoAlloc(block,alloc_regs,xmm_alloc_regs);

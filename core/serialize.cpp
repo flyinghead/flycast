@@ -879,11 +879,7 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 	REICAST_US(NaomiDataRead);
 
 	REICAST_US(i); //LIBRETRO_S(cycle_counter);
-#if FEAT_SHREC == DYNAREC_CPP
-	REICAST_US(idxnxx);
-#else
-	REICAST_US(i);
-#endif
+	REICAST_US(i); // idxnxx
 
 	REICAST_SKIP(sizeof(state_t));	// state
 	REICAST_US(i);		// div_som_reg1

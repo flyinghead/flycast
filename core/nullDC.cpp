@@ -674,7 +674,6 @@ void InitSettings()
 	settings.dreamcast.FullMMU      = false;
 	settings.dreamcast.ForceWindowsCE = false;
 	settings.dreamcast.HideLegacyNaomiRoms = true;
-	settings.dynarec.SmcCheckLevel  = FullCheck;
 	settings.aica.DSPEnabled		= false;
 	settings.aica.LimitFPS			= LimitFPSEnabled;
 	settings.aica.NoBatch			= false;
@@ -754,7 +753,6 @@ void LoadSettings(bool game_specific)
 	settings.dynarec.unstable_opt	= cfgLoadBool(config_section, "Dynarec.unstable-opt", settings.dynarec.unstable_opt);
 	settings.dynarec.safemode		= cfgLoadBool(config_section, "Dynarec.safe-mode", settings.dynarec.safemode);
 	settings.dynarec.disable_vmem32 = cfgLoadBool(config_section, "Dynarec.DisableVmem32", settings.dynarec.disable_vmem32);
-	settings.dynarec.SmcCheckLevel  = (SmcCheckEnum)cfgLoadInt(config_section, "Dynarec.SmcCheckLevel", settings.dynarec.SmcCheckLevel);
 	//disable_nvmem can't be loaded, because nvmem init is before cfg load
 	settings.dreamcast.cable		= cfgLoadInt(config_section, "Dreamcast.Cable", settings.dreamcast.cable);
 	settings.dreamcast.region		= cfgLoadInt(config_section, "Dreamcast.Region", settings.dreamcast.region);
@@ -912,7 +910,6 @@ void SaveSettings()
 	cfgSaveBool("config", "Dynarec.unstable-opt", settings.dynarec.unstable_opt);
 	if (!safemode_game || !settings.dynarec.safemode)
 		cfgSaveBool("config", "Dynarec.safe-mode", settings.dynarec.safemode);
-	cfgSaveInt("config", "Dynarec.SmcCheckLevel", (int)settings.dynarec.SmcCheckLevel);
 	cfgSaveBool("config", "bios.UseReios", settings.bios.UseReios);
 
 //	if (!disable_vmem32_game || !settings.dynarec.disable_vmem32)

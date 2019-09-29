@@ -19,8 +19,6 @@
 #define SHIL_MODE 2
 #include "hw/sh4/dyna/shil_canonical.h"
 
-#define MIPS_COUNTER 0
-
 struct DynaRBI : RuntimeBlockInfo
 {
 	virtual u32 Relink() {
@@ -34,7 +32,6 @@ struct DynaRBI : RuntimeBlockInfo
 };
 
 int cycle_counter;
-extern int mips_counter;
 
 void ngen_mainloop(void* v_cntx)
 {
@@ -101,7 +98,7 @@ struct opcode_cc_aBaCbC {
 	struct opex2 : public opcodeExec  {
 		
 		u32 rs2;
-		u32* rs1;
+		const u32* rs1;
 		u32* rd;
 
 		void setup(const CC_pars_t& prms, void* fun) {
@@ -117,11 +114,39 @@ struct opcode_cc_aBaCbC {
 	};
 };
 
+struct opcode_cc_aCaBbC {
+	struct opex : public opcodeExec  {
+		void* fn;
+		const u32 *rs2;
+		u32 rs1;
+		u32* rd;
+
+		void execute()  {
+			*rd = ((u32(*)(u32, u32))fn)(rs1, *rs2);
+		}
+
+		void setup(const CC_pars_t& prms, void* fun) {
+			fn = fun;
+			rs2 = prms[0].prm->reg_ptr();
+			rs1 = prms[1].prm->imm_value();
+			rd = prms[2].prm->reg_ptr();
+			verify(prms.size() == 3);
+		}
+	};
+
+	template <typename T>
+	struct opex2 : public opex {
+		void execute()  {
+			*rd = ((u32(*)(u32, u32))&T::impl)(rs1, *rs2);
+		}
+	};
+};
+
 struct opcode_cc_aCaCbC {
 	struct opex : public opcodeExec {
 		void* fn;
-		u32* rs1;
-		u32* rs2;
+		const u32* rs1;
+		const u32* rs2;
 		u32* rd;
 		void execute()  {
 			*rd = ((u32(*)(u32, u32))fn)(*rs1, *rs2);
@@ -147,7 +172,7 @@ struct opcode_cc_aCaCbC {
 struct opcode_cc_aCbC {
 	struct opex : public opcodeExec {
 		void* fn;
-		u32* rs1;
+		const u32* rs1;
 		u32* rd;
 		void execute()  {
 			*rd = ((u32(*)(u32))fn)(*rs1);
@@ -172,7 +197,7 @@ struct opcode_cc_aCbC {
 struct opcode_cc_aC {
 	struct opex : public opcodeExec {
 		void* fn;
-		u32* rs1;
+		const u32* rs1;
 		void execute()  {
 			((void(*)(u32))fn)(*rs1);
 		}
@@ -192,12 +217,35 @@ struct opcode_cc_aC {
 	};
 };
 
+struct opcode_cc_aB {
+	struct opex : public opcodeExec {
+		void* fn;
+		u32 rs1;
+		void execute()  {
+			((void(*)(u32))fn)(rs1);
+		}
+
+		void setup(const CC_pars_t& prms, void* fun) {
+			fn = fun;
+			rs1 = prms[0].prm->imm_value();
+			verify(prms.size() == 1);
+		}
+	};
+
+	template <typename T>
+	struct opex2 : public opex {
+		void execute()  {
+			((void(*)(u32))&T::impl)(rs1);
+		}
+	};
+};
+
 struct opcode_cc_aCaCaCbC {
 	struct opex : public opcodeExec {
 		void* fn;
-		u32* rs1;
-		u32* rs2;
-		u32* rs3;
+		const u32* rs1;
+		const u32* rs2;
+		const u32* rs3;
 		u32* rd;
 		void execute()  {
 			*rd = ((u32(*)(u32, u32, u32))fn)(*rs1, *rs2, *rs3);
@@ -225,9 +273,9 @@ struct opcode_cc_aCaCaCcCdC {
 	//split this to two cases, u64 and u64L/u32H
 	struct opex : public opcodeExec {
 		void* fn;
-		u32* rs1;
-		u32* rs2;
-		u32* rs3;
+		const u32* rs1;
+		const u32* rs2;
+		const u32* rs3;
 		u32* rd;
 		u32* rd2;
 		void execute()  {
@@ -264,8 +312,8 @@ struct opcode_cc_aCaCaCcCdC {
 struct opcode_cc_aCaCcCdC {
 	struct opex : public opcodeExec {
 		void* fn;
-		u32* rs1;
-		u32* rs2;
+		const u32* rs1;
+		const u32* rs2;
 		u32* rd;
 		u32* rd2;
 		void execute()  {
@@ -295,12 +343,224 @@ struct opcode_cc_aCaCcCdC {
 	};
 };
 
+struct opcode_cc_aCaBcCdC {
+	struct opex : public opcodeExec {
+		void* fn;
+		u32 rs1;
+		const u32* rs2;
+		u32* rd;
+		u32* rd2;
+		void execute()  {
+			auto rv = ((u64(*)(u32, u32))fn)(rs1, *rs2);
+			*rd = (u32)rv;
+			*rd2 = rv >> 32;
+		}
+
+		void setup(const CC_pars_t& prms, void* fun) {
+			fn = fun;
+			rs2 = prms[0].prm->reg_ptr();
+			rs1 = prms[1].prm->imm_value();
+			rd = prms[2].prm->reg_ptr();
+			rd2 = prms[3].prm->reg_ptr();
+
+			verify(prms.size() == 4);
+		}
+	};
+
+	template <typename T>
+	struct opex2 : public opex {
+		void execute()  {
+			auto rv = ((u64(*)(u32, u32))&T::impl)(rs1, *rs2);
+			*rd = (u32)rv;
+			*rd2 = rv >> 32;
+		}
+	};
+};
+
+struct opcode_cc_aBaCcCdC {
+	struct opex : public opcodeExec {
+		void* fn;
+		const u32 *rs1;
+		u32 rs2;
+		u32* rd;
+		u32* rd2;
+		void execute()  {
+			auto rv = ((u64(*)(u32, u32))fn)(*rs1, rs2);
+			*rd = (u32)rv;
+			*rd2 = rv >> 32;
+		}
+
+		void setup(const CC_pars_t& prms, void* fun) {
+			fn = fun;
+			rs2 = prms[0].prm->imm_value();
+			rs1 = prms[1].prm->reg_ptr();
+			rd = prms[2].prm->reg_ptr();
+			rd2 = prms[3].prm->reg_ptr();
+
+			verify(prms.size() == 4);
+		}
+	};
+
+	template <typename T>
+	struct opex2 : public opex {
+		void execute()  {
+			auto rv = ((u64(*)(u32, u32))&T::impl)(*rs1, rs2);
+			*rd = (u32)rv;
+			*rd2 = rv >> 32;
+		}
+	};
+};
+
+struct opcode_cc_aBaCaCcCdC {
+	struct opex : public opcodeExec {
+		void* fn;
+		const u32* rs1;
+		const u32* rs2;
+		u32 rs3;
+		u32* rd;
+		u32* rd2;
+		void execute()  {
+			auto rv = ((u64(*)(u32, u32, u32))fn)(*rs1, *rs2, rs3);
+			*rd = (u32)rv;
+			*rd2 = rv >> 32;
+		}
+
+		void setup(const CC_pars_t& prms, void* fun) {
+			fn = fun;
+			rs3 = prms[0].prm->imm_value();
+			rs2 = prms[1].prm->reg_ptr();
+			rs1 = prms[2].prm->reg_ptr();
+			rd = prms[3].prm->reg_ptr();
+			rd2 = prms[4].prm->reg_ptr();
+
+			verify(prms.size() == 5);
+		}
+	};
+
+	template <typename T>
+	struct opex2 : public opex {
+		void execute()  {
+			auto rv = ((u64(*)(u32, u32, u32))&T::impl)(*rs1, *rs2, rs3);
+			*rd = (u32)rv;
+			*rd2 = rv >> 32;
+		}
+	};
+};
+
+struct opcode_cc_aCaBaCcCdC {
+	struct opex : public opcodeExec {
+		void* fn;
+		const u32* rs1;
+		u32 rs2;
+		const u32 *rs3;
+		u32* rd;
+		u32* rd2;
+		void execute()  {
+			auto rv = ((u64(*)(u32, u32, u32))fn)(*rs1, rs2, *rs3);
+			*rd = (u32)rv;
+			*rd2 = rv >> 32;
+		}
+
+		void setup(const CC_pars_t& prms, void* fun) {
+			fn = fun;
+			rs3 = prms[0].prm->reg_ptr();
+			rs2 = prms[1].prm->imm_value();
+			rs1 = prms[2].prm->reg_ptr();
+			rd = prms[3].prm->reg_ptr();
+			rd2 = prms[4].prm->reg_ptr();
+
+			verify(prms.size() == 5);
+		}
+	};
+
+	template <typename T>
+	struct opex2 : public opex {
+		void execute()  {
+			auto rv = ((u64(*)(u32, u32, u32))&T::impl)(*rs1, rs2, *rs3);
+			*rd = (u32)rv;
+			*rd2 = rv >> 32;
+		}
+	};
+};
+
+struct opcode_cc_aCaBaBcCdC {
+	struct opex : public opcodeExec {
+		void* fn;
+		u32 rs1;
+		u32 rs2;
+		const u32* rs3;
+		u32* rd;
+		u32* rd2;
+		void execute()  {
+			auto rv = ((u64(*)(u32, u32, u32))fn)(rs1, rs2, *rs3);
+			*rd = (u32)rv;
+			*rd2 = rv >> 32;
+		}
+
+		void setup(const CC_pars_t& prms, void* fun) {
+			fn = fun;
+			rs3 = prms[0].prm->reg_ptr();
+			rs2 = prms[1].prm->imm_value();
+			rs1 = prms[2].prm->imm_value();
+			rd = prms[3].prm->reg_ptr();
+			rd2 = prms[4].prm->reg_ptr();
+
+			verify(prms.size() == 5);
+		}
+	};
+
+	template <typename T>
+	struct opex2 : public opex {
+		void execute()  {
+			auto rv = ((u64(*)(u32, u32, u32))&T::impl)(rs1, rs2, *rs3);
+			*rd = (u32)rv;
+			*rd2 = rv >> 32;
+		}
+	};
+};
+
+struct opcode_cc_aBaBaBcCdC {
+	struct opex : public opcodeExec {
+		void* fn;
+		u32 rs1;
+		u32 rs2;
+		u32 rs3;
+		u32* rd;
+		u32* rd2;
+		void execute()  {
+			auto rv = ((u64(*)(u32, u32, u32))fn)(rs1, rs2, rs3);
+			*rd = (u32)rv;
+			*rd2 = rv >> 32;
+		}
+
+		void setup(const CC_pars_t& prms, void* fun) {
+			fn = fun;
+			rs3 = prms[0].prm->imm_value();
+			rs2 = prms[1].prm->imm_value();
+			rs1 = prms[2].prm->imm_value();
+			rd = prms[3].prm->reg_ptr();
+			rd2 = prms[4].prm->reg_ptr();
+
+			verify(prms.size() == 5);
+		}
+	};
+
+	template <typename T>
+	struct opex2 : public opex {
+		void execute()  {
+			auto rv = ((u64(*)(u32, u32, u32))&T::impl)(rs1, rs2, rs3);
+			*rd = (u32)rv;
+			*rd2 = rv >> 32;
+		}
+	};
+};
+
 struct opcode_cc_eDeDeDfD {
 	struct opex : public opcodeExec {
 		void* fn;
-		f32* rs1;
-		f32* rs2;
-		f32* rs3;
+		const f32* rs1;
+		const f32* rs2;
+		const f32* rs3;
 		f32* rd;
 		void execute()  {
 			*rd = ((f32(*)(f32, f32, f32))fn)(*rs1, *rs2, *rs3);
@@ -327,8 +587,8 @@ struct opcode_cc_eDeDeDfD {
 struct opcode_cc_eDeDfD {
 	struct opex : public opcodeExec {
 		void* fn;
-		f32* rs1;
-		f32* rs2;
+		const f32* rs1;
+		const f32* rs2;
 		f32* rd;
 		void execute()  {
 			*rd = ((f32(*)(f32, f32))fn)(*rs1, *rs2);
@@ -350,11 +610,37 @@ struct opcode_cc_eDeDfD {
 	};
 };
 
+struct opcode_cc_eBeDfD {
+	struct opex : public opcodeExec {
+		void* fn;
+		const f32* rs1;
+		f32 rs2;
+		f32* rd;
+		void execute()  {
+			*rd = ((f32(*)(f32, f32))fn)(*rs1, rs2);
+		}
+
+		void setup(const CC_pars_t& prms, void* fun) {
+			fn = fun;
+			rs2 = reinterpret_cast<f32&>(prms[0].prm->_imm);
+			rs1 = (f32*)prms[1].prm->reg_ptr();
+			rd = (f32*)prms[2].prm->reg_ptr();
+		}
+	};
+
+	template <typename T>
+	struct opex2 : public opex {
+		void execute()  {
+			*rd = ((f32(*)(f32, f32))&T::impl)(*rs1, rs2);
+		}
+	};
+};
+
 struct opcode_cc_eDeDbC {
 	struct opex : public opcodeExec {
 		void* fn;
-		f32* rs1;
-		f32* rs2;
+		const f32* rs1;
+		const f32* rs2;
 		u32* rd;
 		void execute()  {
 			*rd = ((u32(*)(f32, f32))fn)(*rs1, *rs2);
@@ -379,7 +665,7 @@ struct opcode_cc_eDeDbC {
 struct opcode_cc_eDbC {
 	struct opex : public opcodeExec {
 		void* fn;
-		f32* rs1;
+		const f32* rs1;
 		u32* rd;
 		void execute()  {
 			*rd = ((u32(*)(f32))fn)(*rs1);
@@ -403,7 +689,7 @@ struct opcode_cc_eDbC {
 struct opcode_cc_aCfD {
 	struct opex : public opcodeExec {
 		void* fn;
-		u32* rs1;
+		const u32* rs1;
 		f32* rd;
 		void execute()  {
 			*rd = ((f32(*)(u32))fn)(*rs1);
@@ -427,7 +713,7 @@ struct opcode_cc_aCfD {
 struct opcode_cc_eDfD {
 	struct opex : public opcodeExec {
 		void* fn;
-		f32* rs1;
+		const f32* rs1;
 		f32* rd;
 		void execute()  {
 			*rd = ((f32(*)(f32))fn)(*rs1);
@@ -451,7 +737,7 @@ struct opcode_cc_eDfD {
 struct opcode_cc_aCgE {
 	struct opex : public opcodeExec {
 		void* fn;
-		u32* rs1;
+		const u32* rs1;
 		f32* rd;
 		void execute()  {
 			((void(*)(f32*, u32))fn)(rd, *rs1);
@@ -475,11 +761,11 @@ struct opcode_cc_aCgE {
 struct opcode_cc_gJgHgH {
 	struct opex : public opcodeExec {
 		void* fn;
-		f32* rs2;
-		f32* rs1;
+		const f32* rs2;
+		const f32* rs1;
 		f32* rd;
 		void execute()  {
-			((void(*)(f32*, f32*, f32*))fn)(rd, rs1, rs2);
+			((void(*)(f32*, const f32*, const f32*))fn)(rd, rs1, rs2);
 		}
 
 		void setup(const CC_pars_t& prms, void* fun) {
@@ -493,7 +779,7 @@ struct opcode_cc_gJgHgH {
 	template <typename T>
 	struct opex2 : public opex {
 		void execute()  {
-			((void(*)(f32*, f32*, f32*))&T::impl)(rd, rs1, rs2);
+			((void(*)(f32*, const f32*, const f32*))&T::impl)(rd, rs1, rs2);
 		}
 	};
 };
@@ -501,11 +787,11 @@ struct opcode_cc_gJgHgH {
 struct opcode_cc_gHgHfD {
 	struct opex : public opcodeExec {
 		void* fn;
-		f32* rs2;
-		f32* rs1;
+		const f32* rs2;
+		const f32* rs1;
 		f32* rd;
 		void execute()  {
-			*rd = ((f32(*)(f32*, f32*))fn)(rs1, rs2);
+			*rd = ((f32(*)(const f32*, const f32*))fn)(rs1, rs2);
 		}
 
 		void setup(const CC_pars_t& prms, void* fun) {
@@ -519,7 +805,7 @@ struct opcode_cc_gHgHfD {
 	template <typename T>
 	struct opex2 : public opex {
 		void execute()  {
-			*rd = ((f32(*)(f32*, f32*))&T::impl)(rs1, rs2);
+			*rd = ((f32(*)(const f32*, const f32*))&T::impl)(rs1, rs2);
 		}
 	};
 };
@@ -550,12 +836,12 @@ struct opcode_cc_vV {
 struct opcode_cc_gJgJgJgJ {
 	struct opex : public opcodeExec {
 		void* fn;
-		u64* rs2;
-		u64* rs1;
+		const u64* rs2;
+		const u64* rs1;
 		u64* rd;
 		u64* rd2;
 		void execute()  {
-			((void(*)(u64*, u64*, u64*, u64*))fn)(rd, rd2, rs1, rs2);
+			((void(*)(u64*, u64*, const u64*, const u64*))fn)(rd, rd2, rs1, rs2);
 		}
 
 		void setup(const CC_pars_t& prms, void* fun) {
@@ -570,7 +856,7 @@ struct opcode_cc_gJgJgJgJ {
 	template <typename T>
 	struct opex2 : public opex {
 		void execute()  {
-			((void(*)(u64*, u64*, u64*, u64*))&T::impl)(rd, rd2, rs1, rs2);
+			((void(*)(u64*, u64*, const u64*, const u64*))&T::impl)(rd, rd2, rs1, rs2);
 		}
 	};
 };
@@ -596,14 +882,14 @@ struct opcode_ifb : public opcodeExec {
 };
 
 struct opcode_jdyn : public opcodeExec {
-	u32* src;
+	const u32* src;
 	void execute()  {
 		Sh4cntx.jdyn = *src;
 	}
 };
 
 struct opcode_jdyn_imm : public opcodeExec {
-	u32* src;
+	const u32* src;
 	u32 imm;
 	void execute()  {
 		Sh4cntx.jdyn = *src + imm;
@@ -611,7 +897,7 @@ struct opcode_jdyn_imm : public opcodeExec {
 };
 
 struct opcode_mov32 : public opcodeExec {
-	u32* src;
+	const u32* src;
 	u32* dst;
 	
 	void execute()  {
@@ -629,7 +915,7 @@ struct opcode_mov32_imm : public opcodeExec {
 };
 
 struct opcode_mov64 : public opcodeExec {
-	u64* src;
+	const u64* src;
 	u64* dst;
 
 	void execute()  {
@@ -642,7 +928,7 @@ struct opcode_mov64 : public opcodeExec {
 							  } while(0)
 template <int sz>
 struct opcode_readm : public opcodeExec {
-	u32* src;
+	const u32* src;
 	u32* dst;
 
 	void execute()  {
@@ -664,9 +950,9 @@ struct opcode_readm_imm : public opcodeExec {
 
 template <int sz>
 struct opcode_readm_offs : public opcodeExec {
-	u32* src;
+	const u32* src;
 	u32* dst;
-	u32* offs;
+	const u32* offs;
 
 	void execute()  {
 		auto a = *src + *offs;
@@ -676,7 +962,7 @@ struct opcode_readm_offs : public opcodeExec {
 
 template <int sz>
 struct opcode_readm_offs_imm : public opcodeExec {
-	u32* src;
+	const u32* src;
 	u32* dst;
 	u32 offs;
 
@@ -691,8 +977,8 @@ struct opcode_readm_offs_imm : public opcodeExec {
 							  } while(0)
 template <int sz>
 struct opcode_writem : public opcodeExec {
-	u32* src;
-	u32* src2;
+	const u32* src;
+	const u32* src2;
 
 	void execute()  {
 		auto a = *src;
@@ -703,7 +989,7 @@ struct opcode_writem : public opcodeExec {
 template <int sz>
 struct opcode_writem_imm : public opcodeExec {
 	u32 src;
-	u32* src2;
+	const u32* src2;
 
 	void execute()  {
 		auto a = src;
@@ -713,9 +999,9 @@ struct opcode_writem_imm : public opcodeExec {
 
 template <int sz>
 struct opcode_writem_offs : public opcodeExec {
-	u32* src;
-	u32* src2;
-	u32* offs;
+	const u32* src;
+	const u32* src2;
+	const u32* offs;
 
 	void execute()  {
 		auto a = *src + *offs;
@@ -725,8 +1011,8 @@ struct opcode_writem_offs : public opcodeExec {
 
 template <int sz>
 struct opcode_writem_offs_imm : public opcodeExec {
-	u32* src;
-	u32* src2;
+	const u32* src;
+	const u32* src2;
 	u32 offs;
 
 	void execute()  {
@@ -739,7 +1025,7 @@ template<int end_type>
 struct opcode_blockend : public opcodeExec {
 	int next_pc_value;
 	int branch_pc_value;
-	u32* jdyn;
+	const u32* jdyn;
 
 	opcodeExec* setup(RuntimeBlockInfo* block) {
 		next_pc_value = block->NextBlock;
@@ -803,7 +1089,7 @@ template <int sz>
 struct opcode_check_block : public opcodeExec {
 	RuntimeBlockInfo* block;
 	vector<u8> code;
-	void* ptr;
+	const void* ptr;
 
 	opcodeExec* setup(RuntimeBlockInfo* block) {
 		this->block = block;
@@ -858,23 +1144,30 @@ struct opcode_check_block : public opcodeExec {
 	#define DREP_512(x, phrase) for (int i=0; i<cnt; i++) ops[i]->execute();
 #endif
 
+class fnblock_base
+{
+public:
+	virtual ~fnblock_base() {}
+};
+
 template <int cnt>
-class fnblock {
+class fnblock : public fnblock_base {
 public:
 	opcodeExec* ops[cnt];
 	int cc;
 	void execute() {
 		cycle_counter -= cc;
 
-#if MIPS_COUNTER
-		mips_counter += cnt;
-#endif
-
 		DREP_512(0, phrase);
 	}
 
-	static void runner(void* fnb) {
+	static void runner(fnblock_base* fnb) {
 		((fnblock<cnt>*)fnb)->execute();
+	}
+	~fnblock()
+	{
+		for (int i = 0; i < cnt; i++)
+			delete ops[i];
 	}
 };
 
@@ -886,8 +1179,8 @@ class fnblock<0> {
 };
 
 struct fnrv {
-	void* fnb;
-	void(*runner)(void* fnb);
+	fnblock_base* fnb;
+	void (*runner)(fnblock_base* fnb);
 	opcodeExec** ptrs;
 };
 
@@ -970,6 +1263,7 @@ FAST_po(setpeq)
 FAST_po(mul_u16)
 FAST_po(mul_s16)
 FAST_po(mul_i32)
+FAST_po(xtrct)
 FAST_gis
 
 FAST_sig(aBaCbC)
@@ -996,7 +1290,30 @@ FAST_po(mul_s16)
 FAST_po(mul_i32)
 FAST_gis
 
+FAST_sig(aCaBbC)
+FAST_po(shld)
+FAST_po(shad)
+FAST_gis
+
+FAST_sig(aCaBcCdC)
+FAST_po(rocr)
+FAST_po(rocl)
+FAST_po(negc)
+FAST_gis
+
+FAST_sig(aBaCcCdC)
+FAST_po(mul_s64)
+FAST_po(mul_u64)
+FAST_gis
+
 FAST_sig(eDeDfD)
+FAST_po(fadd)
+FAST_po(fsub)
+FAST_po(fmul)
+FAST_po(fdiv)
+FAST_gis
+
+FAST_sig(eBeDfD)
 FAST_po(fadd)
 FAST_po(fsub)
 FAST_po(fmul)
@@ -1029,12 +1346,31 @@ FAST_po(div32u)
 FAST_po(div32s)
 FAST_po(rocr)
 FAST_po(rocl)
+FAST_po(negc)
 FAST_po(mul_u64)
 FAST_po(mul_s64)
 FAST_gis
 
 FAST_sig(aCaCaCcCdC)
 FAST_po(adc)
+FAST_po(sbc)
+FAST_gis
+
+FAST_sig(aCaBaBcCdC)
+FAST_po(adc)
+FAST_po(sbc)
+FAST_gis
+
+FAST_sig(aCaBaCcCdC)
+FAST_po(adc)
+FAST_po(sbc)
+FAST_gis
+
+FAST_sig(aBaCaCcCdC)
+FAST_po(sbc)
+FAST_gis
+
+FAST_sig(aBaBaBcCdC)
 FAST_po(sbc)
 FAST_gis
 
@@ -1069,6 +1405,11 @@ FAST_po(ftrv)
 FAST_gis
 
 FAST_sig(aC)
+FAST_po2(pref, f1)
+FAST_po2(pref, f2)
+FAST_gis
+
+FAST_sig(aB)
 FAST_po2(pref, f1)
 FAST_po2(pref, f2)
 FAST_gis
@@ -1110,21 +1451,30 @@ opcodeExec* createType(const CC_pars_t& prms, void* fun, shil_opcode* opcode) {
 map< string, foas> unmap = {
 	{ "aBaCbC", &createType_fast<opcode_cc_aBaCbC> },
 	{ "aCaCbC", &createType<opcode_cc_aCaCbC> },
+	{ "aCaBbC", &createType<opcode_cc_aCaBbC> },
 	{ "aCbC", &createType<opcode_cc_aCbC> },
 	{ "aC", &createType<opcode_cc_aC> },
+	{ "aB", &createType<opcode_cc_aB> },
 
 	{ "eDeDeDfD", &createType<opcode_cc_eDeDeDfD> },
 	{ "eDeDfD", &createType<opcode_cc_eDeDfD> },
 
 	{ "aCaCaCbC", &createType<opcode_cc_aCaCaCbC> },
 	{ "aCaCcCdC", &createType<opcode_cc_aCaCcCdC> },
+	{ "aCaBcCdC", &createType<opcode_cc_aCaBcCdC> },
+	{ "aBaCcCdC", &createType<opcode_cc_aBaCcCdC> },
 	{ "aCaCaCcCdC", &createType<opcode_cc_aCaCaCcCdC> },
+	{ "aCaBaCcCdC", &createType<opcode_cc_aCaBaCcCdC> },
+	{ "aBaCaCcCdC", &createType<opcode_cc_aBaCaCcCdC> },
+	{ "aCaBaBcCdC", &createType<opcode_cc_aCaBaBcCdC> },
+	{ "aBaBaBcCdC", &createType<opcode_cc_aBaBaBcCdC> },
 
 	{ "eDbC", &createType<opcode_cc_eDbC> },
 	{ "aCfD", &createType<opcode_cc_aCfD> },
 
 	{ "eDeDbC", &createType<opcode_cc_eDeDbC> },
 	{ "eDfD", &createType<opcode_cc_eDfD> },
+	{ "eBeDfD", &createType<opcode_cc_eBeDfD> },
 
 	{ "aCgE", &createType<opcode_cc_aCgE> },
 	{ "gJgHgH", &createType<opcode_cc_gJgHgH> },
@@ -1142,8 +1492,8 @@ string getCTN(foas f) {
 #define CODE_ENTRY_COUNT 16384
 
 struct {
-	void* fnb;
-	void(*runner)(void* fnb);
+	fnblock_base* fnb;
+	void(*runner)(fnblock_base* fnb);
 } dispatchb[CODE_ENTRY_COUNT];
 
 template<int n>
@@ -1189,14 +1539,19 @@ FNAFB fnnCtor_forreal(size_t n) {
 }
 
 class BlockCompiler {
-public:
+	const u32 *get_reg_or_imm(const shil_param& param)
+	{
+		return param.is_imm() ? &param._imm : param.reg_ptr();
+	}
 
 	size_t opcode_index;
 	opcodeExec** ptrsg;
-	void compile(RuntimeBlockInfo* block,  SmcCheckEnum smc_checks, bool reset, bool staging, bool optimise) {
-		
+
+public:
+	void compile(RuntimeBlockInfo* block, bool smc_checks, bool reset, bool staging, bool optimise)
+	{
 		//we need an extra one for the end opcode and optionally one more for block check
-		auto ptrs = fnnCtor_forreal(block->oplist.size() + 1 + (smc_checks != NoCheck ? 1 : 0))(block->guest_cycles);
+		auto ptrs = fnnCtor_forreal(block->oplist.size() + 1 + (smc_checks ? 1 : 0))(block->guest_cycles);
 
 		ptrsg = ptrs.ptrs;
 
@@ -1210,15 +1565,10 @@ public:
 		}
 
 		size_t i = 0;
-		if (smc_checks != NoCheck)
+		if (smc_checks)
 		{
-			verify (smc_checks == FastCheck || smc_checks == FullCheck)
 			opcodeExec* op;
 			int check_size = block->sh4_code_size;
-
-			if (smc_checks == FastCheck) {
-				check_size = 4;
-			}
 
 			switch (block->sh4_code_size)
 			{
@@ -1416,74 +1766,74 @@ public:
 					verify(op.rs3.is_null());
 					if (size == 1)
 					{
-						auto opc = new opcode_writem_imm<1>(); ptrs.ptrs[i] = opc; opc->src = op.rs1.imm_value(); opc->src2 = op.rs2.reg_ptr();
+						auto opc = new opcode_writem_imm<1>(); ptrs.ptrs[i] = opc; opc->src = op.rs1.imm_value(); opc->src2 = get_reg_or_imm(op.rs2);
 					}
 					else if (size == 2)
 					{
-						auto opc = new opcode_writem_imm<2>(); ptrs.ptrs[i] = opc; opc->src = op.rs1.imm_value(); opc->src2 = op.rs2.reg_ptr();
+						auto opc = new opcode_writem_imm<2>(); ptrs.ptrs[i] = opc; opc->src = op.rs1.imm_value(); opc->src2 = get_reg_or_imm(op.rs2);
 					}
 					else if (size == 4)
 					{
-						auto opc = new opcode_writem_imm<4>(); ptrs.ptrs[i] = opc; opc->src = op.rs1.imm_value(); opc->src2 = op.rs2.reg_ptr();
+						auto opc = new opcode_writem_imm<4>(); ptrs.ptrs[i] = opc; opc->src = op.rs1.imm_value(); opc->src2 = get_reg_or_imm(op.rs2);
 					}
 					else if (size == 8)
 					{
-						auto opc = new opcode_writem_imm<8>(); ptrs.ptrs[i] = opc; opc->src = op.rs1.imm_value(); opc->src2 = op.rs2.reg_ptr();
+						auto opc = new opcode_writem_imm<8>(); ptrs.ptrs[i] = opc; opc->src = op.rs1.imm_value(); opc->src2 = get_reg_or_imm(op.rs2);
 					}
 				}
 				else if (op.rs3.is_imm()) {
 					if (size == 1)
 					{
-						auto opc = new opcode_writem_offs_imm<1>(); ptrs.ptrs[i] = opc; opc->src = op.rs1.reg_ptr(); opc->offs = op.rs3.imm_value(); opc->src2 = op.rs2.reg_ptr();
+						auto opc = new opcode_writem_offs_imm<1>(); ptrs.ptrs[i] = opc; opc->src = op.rs1.reg_ptr(); opc->offs = op.rs3.imm_value(); opc->src2 = get_reg_or_imm(op.rs2);
 					}
 					else if (size == 2)
 					{
-						auto opc = new opcode_writem_offs_imm<2>(); ptrs.ptrs[i] = opc; opc->src = op.rs1.reg_ptr(); opc->offs = op.rs3.imm_value(); opc->src2 = op.rs2.reg_ptr();
+						auto opc = new opcode_writem_offs_imm<2>(); ptrs.ptrs[i] = opc; opc->src = op.rs1.reg_ptr(); opc->offs = op.rs3.imm_value(); opc->src2 = get_reg_or_imm(op.rs2);
 					}
 					else if (size == 4)
 					{
-						auto opc = new opcode_writem_offs_imm<4>(); ptrs.ptrs[i] = opc; opc->src = op.rs1.reg_ptr(); opc->offs = op.rs3.imm_value(); opc->src2 = op.rs2.reg_ptr();
+						auto opc = new opcode_writem_offs_imm<4>(); ptrs.ptrs[i] = opc; opc->src = op.rs1.reg_ptr(); opc->offs = op.rs3.imm_value(); opc->src2 = get_reg_or_imm(op.rs2);
 					}
 					else if (size == 8)
 					{
-						auto opc = new opcode_writem_offs_imm<8>(); ptrs.ptrs[i] = opc; opc->src = op.rs1.reg_ptr(); opc->offs = op.rs3.imm_value(); opc->src2 = op.rs2.reg_ptr();
+						auto opc = new opcode_writem_offs_imm<8>(); ptrs.ptrs[i] = opc; opc->src = op.rs1.reg_ptr(); opc->offs = op.rs3.imm_value(); opc->src2 = get_reg_or_imm(op.rs2);
 					}
 				}
 				else if (op.rs3.is_reg()) {
 					if (size == 1)
 					{
-						auto opc = new opcode_writem_offs<1>(); ptrs.ptrs[i] = opc; opc->src = op.rs1.reg_ptr(); opc->offs = op.rs3.reg_ptr(); opc->src2 = op.rs2.reg_ptr();
+						auto opc = new opcode_writem_offs<1>(); ptrs.ptrs[i] = opc; opc->src = op.rs1.reg_ptr(); opc->offs = op.rs3.reg_ptr(); opc->src2 = get_reg_or_imm(op.rs2);
 					}
 					else if (size == 2)
 					{
-						auto opc = new opcode_writem_offs<2>(); ptrs.ptrs[i] = opc; opc->src = op.rs1.reg_ptr(); opc->offs = op.rs3.reg_ptr(); opc->src2 = op.rs2.reg_ptr();
+						auto opc = new opcode_writem_offs<2>(); ptrs.ptrs[i] = opc; opc->src = op.rs1.reg_ptr(); opc->offs = op.rs3.reg_ptr(); opc->src2 = get_reg_or_imm(op.rs2);
 					}
 					else if (size == 4)
 					{
-						auto opc = new opcode_writem_offs<4>(); ptrs.ptrs[i] = opc; opc->src = op.rs1.reg_ptr(); opc->offs = op.rs3.reg_ptr(); opc->src2 = op.rs2.reg_ptr();
+						auto opc = new opcode_writem_offs<4>(); ptrs.ptrs[i] = opc; opc->src = op.rs1.reg_ptr(); opc->offs = op.rs3.reg_ptr(); opc->src2 = get_reg_or_imm(op.rs2);
 					}
 					else if (size == 8)
 					{
-						auto opc = new opcode_writem_offs<8>(); ptrs.ptrs[i] = opc; opc->src = op.rs1.reg_ptr(); opc->offs = op.rs3.reg_ptr(); opc->src2 = op.rs2.reg_ptr();
+						auto opc = new opcode_writem_offs<8>(); ptrs.ptrs[i] = opc; opc->src = op.rs1.reg_ptr(); opc->offs = op.rs3.reg_ptr(); opc->src2 = get_reg_or_imm(op.rs2);
 					}
 				}
 				else {
 					verify(op.rs3.is_null());
 					if (size == 1)
 					{
-						auto opc = new opcode_writem<1>(); ptrs.ptrs[i] = opc; opc->src = op.rs1.reg_ptr(); opc->src2 = op.rs2.reg_ptr();
+						auto opc = new opcode_writem<1>(); ptrs.ptrs[i] = opc; opc->src = op.rs1.reg_ptr(); opc->src2 = get_reg_or_imm(op.rs2);
 					}
 					else if (size == 2)
 					{
-						auto opc = new opcode_writem<2>(); ptrs.ptrs[i] = opc; opc->src = op.rs1.reg_ptr(); opc->src2 = op.rs2.reg_ptr();
+						auto opc = new opcode_writem<2>(); ptrs.ptrs[i] = opc; opc->src = op.rs1.reg_ptr(); opc->src2 = get_reg_or_imm(op.rs2);
 					}
 					else if (size == 4)
 					{
-						auto opc = new opcode_writem<4>(); ptrs.ptrs[i] = opc; opc->src = op.rs1.reg_ptr(); opc->src2 = op.rs2.reg_ptr();
+						auto opc = new opcode_writem<4>(); ptrs.ptrs[i] = opc; opc->src = op.rs1.reg_ptr(); opc->src2 = get_reg_or_imm(op.rs2);
 					}
 					else if (size == 8)
 					{
-						auto opc = new opcode_writem<8>(); ptrs.ptrs[i] = opc; opc->src = op.rs1.reg_ptr(); opc->src2 = op.rs2.reg_ptr();
+						auto opc = new opcode_writem<8>(); ptrs.ptrs[i] = opc; opc->src = op.rs1.reg_ptr(); opc->src2 = get_reg_or_imm(op.rs2);
 					}
 				}
 			}
@@ -1553,7 +1903,7 @@ public:
 			ptrsg[opcode_index] = unmap[nm](CC_pars, ccfn, op);
 		}
 		else {
-			INFO_LOG(DYNAREC, "IMPLEMENT CC_CALL CLASS: %s", nm.c_str());
+			ERROR_LOG(DYNAREC, "IMPLEMENT CC_CALL CLASS: %s", nm.c_str());
 			ptrsg[opcode_index] = new opcodeDie();
 		}
 	}
@@ -1562,7 +1912,7 @@ public:
 
 BlockCompiler* compiler;
 
-void ngen_Compile(RuntimeBlockInfo* block, SmcCheckEnum smc_checks, bool reset, bool staging, bool optimise)
+void ngen_Compile(RuntimeBlockInfo* block, bool smc_checks, bool reset, bool staging, bool optimise)
 {
 	verify(emit_FreeSpace() >= 16 * 1024);
 
@@ -1599,10 +1949,17 @@ void ngen_CC_Finish(shil_opcode* op)
 void ngen_ResetBlocks()
 {
 	idxnxx = 0;
-	int id = 0;
-	/*
-	while (dispatchb[id].fnb)
-		delete dispatchb[id].fnb;
+	/* FIXME issues when block check fails -> delete current block/op
+	for (int i = 0; i < CODE_ENTRY_COUNT && dispatchb[i].fnb != nullptr; i++)
+	{
+		delete dispatchb[i].fnb;
+		dispatchb[i].fnb = nullptr;
+	}
 	*/
+}
+
+void ngen_HandleException()
+{
+	die("rec-cpp exceptions not supported");
 }
 #endif

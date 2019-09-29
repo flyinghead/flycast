@@ -93,9 +93,6 @@ static void recSh4_Run()
 
 	if (settings.dynarec.unstable_opt)
 		NOTICE_LOG(DYNAREC, "Warning: Unstable optimizations is on");
-
-	if (settings.dynarec.SmcCheckLevel != FullCheck)
-		NOTICE_LOG(DYNAREC, "Warning: SMC check mode is %d", settings.dynarec.SmcCheckLevel);
 	
 	verify(rcb_noffs(&next_pc)==-184);
 	ngen_mainloop(sh4_dyna_rcb);
@@ -131,54 +128,6 @@ u32 emit_FreeSpace()
 		return (emit_ptr_limit - emit_ptr) * sizeof(u32);
 	else
 		return CODE_SIZE - LastAddr;
-}
-
-// pc must be a physical address
-static SmcCheckEnum DoCheck(u32 pc)
-{
-
-	switch (settings.dynarec.SmcCheckLevel) {
-
-		// Heuristic-elimintaed FastChecks
-		case NoCheck: {
-			if (IsOnRam(pc))
-			{
-				pc&=0xFFFFFF;
-				switch(pc)
-				{
-					//DOA2LE
-					case 0x3DAFC6:
-					case 0x3C83F8:
-
-					//Shenmue 2
-					case 0x348000:
-						
-					//Shenmue
-					case 0x41860e:
-					
-
-						return FastCheck;
-
-					default:
-						return NoCheck;
-				}
-			}
-			return NoCheck;
-		}
-		break;
-
-		// Fast Check everything
-		case FastCheck:
-			return FastCheck;
-
-		// Full Check everything
-		case FullCheck:
-			return FullCheck;
-
-		default:
-			die("Unhandled settings.dynarec.SmcCheckLevel");
-			return FullCheck;
-	}
 }
 
 void AnalyseBlock(RuntimeBlockInfo* blk);
@@ -300,11 +249,7 @@ DynarecCodeEntryPtr rdv_CompilePC(u32 blockcheck_failures)
 	}
 	bool do_opts = !rbi->temp_block;
 	rbi->staging_runs=do_opts?100:-100;
-	SmcCheckEnum block_check;
-	if (rbi->read_only)
-		block_check = NoCheck;
-	else
-		block_check = DoCheck(rbi->addr);
+	bool block_check = !rbi->read_only;
 	ngen_Compile(rbi, block_check, (pc & 0xFFFFFF) == 0x08300 || (pc & 0xFFFFFF) == 0x10000, false, do_opts);
 	verify(rbi->code!=0);
 
