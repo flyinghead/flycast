@@ -18,43 +18,31 @@
 #define BLOCK_MAX_SH_OPS_SOFT 500
 #define BLOCK_MAX_SH_OPS_HARD 511
 
-RuntimeBlockInfo* blk;
+static RuntimeBlockInfo* blk;
 
+static const char idle_hash[] =
+       //BIOS
+       ">:1:05:13B23363"
+       ">:1:04:2E23A33B"
+       ">:1:04:FB498832"
+       ">:1:0A:50A249F9"
 
-const char idle_hash[] = 
-	//BIOS
-	">:1:05:BD3BE51F:1E886EE6:6BDB3F70:7FB25EA3:DE0083A8"
-	">:1:04:CB0C9B99:5082FB07:50A46C46:4035B1F1:6A9F47DC"
-	">:1:04:26AEABE5:E9D01A08:C25DD887:EEAFF173:CE2BBA10"
-	">:1:0A:5785DC3D:68688650:C5E1AFB3:7F686AE5:89538042"
+       //SC
+       ">:1:0A:B4E90338"
+       ">:1:04:11578A16"
+       ">:1:04:C281CC52"
 
-	//SC
-	">:1:0A:5693F8B9:E5C0D65C:ABF59CAC:B05DF34C:4A359E4A"
-	">:1:04:BC1C1C9C:C17809D5:1EA4548E:8CD97AFE:E263253F"
-	">:1:04:DD9FDF9D:55306FAD:4B3FDAEF:1D58EE41:11301FF1"
+       //HH
+       ">:1:07:0757DC10"
+       ">:1:04:1476CC5E"
 
-	//HH
-	">:1:07:3778EBBC:29B99980:3E6CBA8E:4CA0C16A:AD952F27"
-	">:1:04:23F5F301:89CDFEC8:EBB8EB1A:57709C84:55EA4585"
+       //these look very suspicious, but I'm not sure about any of them
+       //cross testing w/ IKA makes them more suspects than not
+       ">:1:0D:8C2921FF"
+       ">:1:04:B806EEE4"
 
-	//these look very suspicious, but I'm not sure about any of them
-	//cross testing w/ IKA makes them more suspects than not
-	">:1:0D:DF0C1754:1E3DDC72:E845B7BF:AE1FC6D2:8644F261"
-	">:1:04:DB35BCA0:AB19570C:0E0E54D7:CCA83E6E:A8D17744"
-
-	//IKA
-
-	//Also on HH, dunno if IDLESKIP
-	//Looks like this one is
-	">:1:04:DB35BCA0:AB19570C:0E0E54D7:CCA83E6E:A8D17744"
-
-	//Similar to the hh 1:07 one, dunno if idleskip
-	//Looks like yhis one is
-	">:1:0D:DF0C1754:1E3DDC72:E845B7BF:AE1FC6D2:8644F261"
-
-	//also does the -1 load
-	//looks like this one is
-	">1:08:AF4AC687:08BA1CD0:18592E67:45174350:C9EADF11";
+       // Dead or Alive 2
+       ">:1:08:0A37187A";
 
 static inline shil_param mk_imm(u32 immv)
 {
@@ -71,7 +59,7 @@ static inline shil_param mk_regi(int reg)
 	return mk_reg((Sh4RegType)reg);
 }
 
-state_t state ;
+static state_t state;
 
 static void Emit(shilop op,shil_param rd=shil_param(),shil_param rs1=shil_param(),shil_param rs2=shil_param(),u32 flags=0,shil_param rs3=shil_param(),shil_param rd2=shil_param())
 {
@@ -147,21 +135,21 @@ static void dec_End(u32 dst,BlockEndType flags,bool delay)
 #define SR_STATUS_MASK 0x700083F2
 #define SR_T_MASK 1
 
-u32 dec_jump_simm8(u32 op)
+static u32 dec_jump_simm8(u32 op)
 {
 	return state.cpu.rpc + GetSImm8(op)*2 + 4;
 }
-u32 dec_jump_simm12(u32 op)
+static u32 dec_jump_simm12(u32 op)
 {
 	return state.cpu.rpc + GetSImm12(op)*2 + 4;
 }
-u32 dec_set_pr()
+static u32 dec_set_pr()
 {
 	u32 retaddr=state.cpu.rpc + 4;
 	Emit(shop_mov32,reg_pr,mk_imm(retaddr));
 	return retaddr;
 }
-void dec_write_sr(shil_param src)
+static void dec_write_sr(shil_param src)
 {
 	Emit(shop_and,mk_reg(reg_sr_status),src,mk_imm(SR_STATUS_MASK));
 	Emit(shop_and,mk_reg(reg_sr_T),src,mk_imm(SR_T_MASK));
@@ -354,7 +342,7 @@ sh4dec(i0100_nnnn_0010_0101)
 	*/
 }
 
-const Sh4RegType SREGS[] =
+static const Sh4RegType SREGS[] =
 {
 	reg_mach,
 	reg_macl,
@@ -375,7 +363,7 @@ const Sh4RegType SREGS[] =
 	reg_dbr,
 };
 
-const Sh4RegType CREGS[] =
+static const Sh4RegType CREGS[] =
 {
 	reg_sr,
 	reg_gbr,
@@ -577,9 +565,9 @@ static void dec_param(DecParam p,shil_param& r1,shil_param& r2, u32 op)
 #define DIV1_KEY 0x3004
 #define ROTCL_KEY 0x4024
 
-Sh4RegType div_som_reg1;
-Sh4RegType div_som_reg2;
-Sh4RegType div_som_reg3;
+static Sh4RegType div_som_reg1;
+static Sh4RegType div_som_reg2;
+static Sh4RegType div_som_reg3;
 
 static u32 MatchDiv32(u32 pc , Sh4RegType &reg1,Sh4RegType &reg2 , Sh4RegType &reg3)
 {
@@ -979,7 +967,7 @@ static bool dec_generic(u32 op)
 	return true;
 }
 
-void state_Setup(u32 rpc,fpscr_t fpu_cfg)
+static void state_Setup(u32 rpc,fpscr_t fpu_cfg)
 {
 	state.cpu.rpc=rpc;
 	state.cpu.is_delayslot=false;
@@ -1112,7 +1100,7 @@ _end:
 	case 0x8C0BA506:
 	case 0x8C0BA526:
 	case 0x8C224800:
-		INFO_LOG(DYNAREC, "HASH: %08X reloc %s",blk->addr,blk->hash(false,true));
+		INFO_LOG(DYNAREC, "HASH: %08X reloc %s", blk->addr, blk->hash());
 		break;
 	}
 #endif
@@ -1121,10 +1109,10 @@ _end:
 	if (settings.dynarec.idleskip)
 	{
 		//Experimental hash-id based idle skip
-		if (!mmu_enabled() && strstr(idle_hash,blk->hash(false,true)))	// FIXME Use xxhash instead of sha1
+		if (!mmu_enabled() && strstr(idle_hash, blk->hash()))
 		{
-			//printf("IDLESKIP: %08X reloc match %s\n",blk->addr,blk->hash(false,true));
-			blk->guest_cycles=max_cycles*100;
+			DEBUG_LOG(DYNAREC, "IDLESKIP: %08X reloc match %s", blk->addr, blk->hash());
+			blk->guest_cycles = max_cycles;
 		}
 		else
 		{

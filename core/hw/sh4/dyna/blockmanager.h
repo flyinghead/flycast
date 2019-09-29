@@ -19,7 +19,7 @@ struct RuntimeBlockInfo_Core
 struct RuntimeBlockInfo: RuntimeBlockInfo_Core
 {
 	bool Setup(u32 pc,fpscr_t fpu_cfg);
-	const char* hash(bool full=true, bool reloc=false);
+	const char* hash();
 
 	u32 vaddr;
 

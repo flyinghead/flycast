@@ -665,7 +665,7 @@ void print_blocks()
 			fprintf(f,"vaddr: %08X\n",blk->vaddr);
 			fprintf(f,"paddr: %08X\n",blk->addr);
 			fprintf(f,"hash: %s\n",blk->hash());
-			fprintf(f,"hash_rloc: %s\n",blk->hash(false,true));
+			fprintf(f,"hash_rloc: %s\n",blk->hash());
 			fprintf(f,"code: %p\n",blk->code);
 			fprintf(f,"runs: %d\n",blk->runs);
 			fprintf(f,"BlockType: %d\n",blk->BlockType);

@@ -20,6 +20,7 @@
 #include "blockmanager.h"
 #include "ngen.h"
 #include "decoder.h"
+#include "deps/xxhash/xxhash.h"
 
 #if FEAT_SHREC != DYNAREC_NONE
 
@@ -132,45 +133,33 @@ u32 emit_FreeSpace()
 
 void AnalyseBlock(RuntimeBlockInfo* blk);
 
-char block_hash[1024];
+static char block_hash[1024];
 
-#include "deps/crypto/sha1.h"
-
-const char* RuntimeBlockInfo::hash(bool full, bool relocable)
+const char* RuntimeBlockInfo::hash()
 {
-	sha1_ctx ctx;
-	sha1_init(&ctx);
+	XXH32_hash_t hash = 0;
 
 	u8* ptr = GetMemPtr(this->addr, this->sh4_code_size);
 
 	if (ptr)
 	{
-		if (relocable)
+		XXH32_state_t *state = XXH32_createState();
+		XXH32_reset(state, 7);
+		for (u32 i = 0; i < this->guest_opcodes; i++)
 		{
-			for (u32 i=0; i<this->guest_opcodes; i++)
-			{
-				u16 data=ptr[i];
-				//Do not count PC relative loads (relocated code)
-				if ((ptr[i]>>12)==0xD)
-					data=0xD000;
+			u16 data = ptr[i];
+			//Do not count PC relative loads (relocated code)
+			if ((ptr[i] >> 12) == 0xD)
+				data = 0xD000;
 
-				sha1_update(&ctx,2,(u8*)&data);
-			}
+			XXH32_update(state, &data, 2);
 		}
-		else
-		{
-			sha1_update(&ctx, this->sh4_code_size, ptr);
-		}
+		hash = XXH32_digest(state);
+		XXH32_freeState(state);
 	}
 
-	sha1_final(&ctx);
+	sprintf(block_hash, ">:1:%02X:%08X", this->guest_opcodes, hash);
 
-	if (full)
-		sprintf(block_hash,">:%d:%08X:%02X:%08X:%08X:%08X:%08X:%08X",relocable,this->addr,this->guest_opcodes,ctx.digest[0],ctx.digest[1],ctx.digest[2],ctx.digest[3],ctx.digest[4]);
-	else
-		sprintf(block_hash,">:%d:%02X:%08X:%08X:%08X:%08X:%08X",relocable,this->guest_opcodes,ctx.digest[0],ctx.digest[1],ctx.digest[2],ctx.digest[3],ctx.digest[4]);
-
-	//return ctx
 	return block_hash;
 }
 
