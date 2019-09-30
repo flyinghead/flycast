@@ -7,7 +7,7 @@ namespace emucfg {
 
 /* ConfigEntry */
 
-string ConfigEntry::get_string()
+const string& ConfigEntry::get_string() const
 {
 	return this->value;
 }
@@ -269,19 +269,17 @@ void ConfigFile::parse(FILE* file)
 
 void ConfigFile::save(FILE* file)
 {
-	for(std::map<string, ConfigSection>::iterator section_it = this->sections.begin();
-		  section_it != this->sections.end(); section_it++)
+	for (const auto& section_it : this->sections)
 	{
-		string section_name = section_it->first;
-		ConfigSection section = section_it->second;
+		const string& section_name = section_it.first;
+		const ConfigSection& section = section_it.second;
 
 		fprintf(file, "[%s]\n", section_name.c_str());
 
-		for(std::map<string, ConfigEntry>::iterator entry_it = section.entries.begin();
-			  entry_it != section.entries.end(); entry_it++)
+		for (const auto& entry_it : section.entries)
 		{
-			string entry_name = entry_it->first;
-			ConfigEntry entry = entry_it->second;
+			const string& entry_name = entry_it.first;
+			const ConfigEntry& entry = entry_it.second;
 			fprintf(file, "%s = %s\n", entry_name.c_str(), entry.get_string().c_str());
 		}
 

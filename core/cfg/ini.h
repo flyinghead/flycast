@@ -6,7 +6,7 @@ namespace emucfg {
 
 struct ConfigEntry {
 	std::string value;
-	std::string get_string();
+	const std::string& get_string() const;
 	int get_int();
 	bool get_bool();
 };
