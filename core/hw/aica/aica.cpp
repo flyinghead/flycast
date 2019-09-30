@@ -68,18 +68,14 @@ void UpdateSh4Ints()
 	u32 p_ints = MCIEB->full & MCIPD->full;
 	if (p_ints)
 	{
-		if ((SB_ISTEXT & SH4_IRQ_BIT )==0)
-		{
+		if ((SB_ISTEXT & SH4_IRQ_BIT) == 0)
 			//if no interrupt is already pending then raise one :)
 			asic_RaiseInterrupt(holly_SPU_IRQ);
-		}
 	}
 	else
 	{
-		if (SB_ISTEXT&SH4_IRQ_BIT)
-		{
+		if ((SB_ISTEXT & SH4_IRQ_BIT) != 0)
 			asic_CancelInterrupt(holly_SPU_IRQ);
-		}
 	}
 
 }

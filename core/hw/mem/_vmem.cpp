@@ -373,7 +373,9 @@ void _vmem_reset()
 	verify(_vmem_register_handler(0,0,0,0,0,0)==0);
 }
 
-void _vmem_term() {}
+void _vmem_term()
+{
+}
 
 u8* virt_ram_base;
 bool vmem_4gb_space;
@@ -395,7 +397,8 @@ static void* malloc_pages(size_t size) {
 
 // Resets the FPCB table (by either clearing it to the default val
 // or by flushing it and making it fault on access again.
-void _vmem_bm_reset() {
+void _vmem_bm_reset()
+{
 	// If we allocated it via vmem:
 	if (virt_ram_base)
 		vmem_platform_reset_mem(p_sh4rcb->fpcb, sizeof(p_sh4rcb->fpcb));
@@ -445,7 +448,8 @@ static void _vmem_set_p0_mappings()
 	vmem_platform_create_mappings(&mem_mappings[0], ARRAY_SIZE(mem_mappings));
 }
 
-bool _vmem_reserve() {
+bool _vmem_reserve()
+{
 	// TODO: Static assert?
 	verify((sizeof(Sh4RCB)%PAGE_SIZE)==0);
 

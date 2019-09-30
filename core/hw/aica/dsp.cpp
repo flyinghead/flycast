@@ -16,7 +16,7 @@
 	test game suite.
 
 
-	Initiall code by skmp, now part of the reicast project.
+	Initial code by skmp, now part of the reicast project.
 	See LICENSE & COPYRIGHT files further details
 */
 

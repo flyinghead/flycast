@@ -1214,9 +1214,11 @@ static void gui_display_settings()
 		    	ImGui::Checkbox("Safe Mode", &settings.dynarec.safemode);
 	            ImGui::SameLine();
 	            ShowHelpMarker("Do not optimize integer division. Recommended");
+#if HOST_CPU == CPU_ARM
 		    	ImGui::Checkbox("Unstable Optimizations", &settings.dynarec.unstable_opt);
 	            ImGui::SameLine();
 	            ShowHelpMarker("Enable unsafe optimizations. Will cause crash or environmental disaster");
+#endif
 		    	ImGui::Checkbox("Idle Skip", &settings.dynarec.idleskip);
 	            ImGui::SameLine();
 	            ShowHelpMarker("Skip wait loops. Recommended");
