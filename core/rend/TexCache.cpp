@@ -1,5 +1,3 @@
-#include <list>
-#include <functional>
 #ifndef TARGET_NO_OPENMP
 #include <omp.h>
 #endif
@@ -132,17 +130,17 @@ VArray2 vram;  // vram 32-64b
 //
 void vramlock_list_remove(vram_block* block)
 {
-	u32 base = block->start/PAGE_SIZE;
-	u32 end = block->end/PAGE_SIZE;
+	u32 base = block->start / PAGE_SIZE;
+	u32 end = block->end / PAGE_SIZE;
 
-	for (u32 i=base;i<=end;i++)
+	for (u32 i = base; i <= end; i++)
 	{
-		vector<vram_block*>* list=&VramLocks[i];
-		for (size_t j=0;j<list->size();j++)
+		vector<vram_block*>& list = VramLocks[i];
+		for (size_t j = 0; j < list.size(); j++)
 		{
-			if ((*list)[j]==block)
+			if (list[j] == block)
 			{
-				(*list)[j]=0;
+				list[j] = nullptr;
 			}
 		}
 	}
@@ -150,23 +148,31 @@ void vramlock_list_remove(vram_block* block)
  
 void vramlock_list_add(vram_block* block)
 {
-	u32 base = block->start/PAGE_SIZE;
-	u32 end = block->end/PAGE_SIZE;
+	u32 base = block->start / PAGE_SIZE;
+	u32 end = block->end / PAGE_SIZE;
 
 
-	for (u32 i=base;i<=end;i++)
+	for (u32 i = base; i <= end; i++)
 	{
-		vector<vram_block*>* list=&VramLocks[i];
-		for (u32 j=0;j<list->size();j++)
+		vector<vram_block*>& list = VramLocks[i];
+		// If the list is empty then we need to protect vram, otherwise it's already been done
+		if (list.empty())
 		{
-			if ((*list)[j]==0)
+			_vmem_protect_vram(i * PAGE_SIZE, PAGE_SIZE);
+		}
+		else
+		{
+			for (u32 j = 0; j < list.size(); j++)
 			{
-				(*list)[j]=block;
-				goto added_it;
+				if (list[j] == nullptr)
+				{
+					list[j] = block;
+					goto added_it;
+				}
 			}
 		}
 
-		list->push_back(block);
+		list.push_back(block);
 added_it:
 		i=i;
 	}
@@ -200,10 +206,10 @@ vram_block* libCore_vramlock_Lock(u32 start_offset64,u32 end_offset64,void* user
 
 	{
 		vramlist_lock.Lock();
-	
-		_vmem_protect_vram(block->start, block->len);
+
+		// This also protects vram if needed
 		vramlock_list_add(block);
-		
+
 		vramlist_lock.Unlock();
 	}
 
@@ -212,40 +218,37 @@ vram_block* libCore_vramlock_Lock(u32 start_offset64,u32 end_offset64,void* user
 
 bool VramLockedWriteOffset(size_t offset)
 {
-	if (offset<VRAM_SIZE)
-	{
-
-		size_t addr_hash = offset/PAGE_SIZE;
-		vector<vram_block*>* list=&VramLocks[addr_hash];
-		
-		{
-			vramlist_lock.Lock();
-
-			for (size_t i=0;i<list->size();i++)
-			{
-				if ((*list)[i])
-				{
-					libPvr_LockedBlockWrite((*list)[i],(u32)offset);
-				
-					if ((*list)[i])
-					{
-						ERROR_LOG(PVR, "Error : pvr is supposed to remove lock");
-						die("Invalid state");
-					}
-
-				}
-			}
-			list->clear();
-
-			_vmem_unprotect_vram((u32)(offset & ~PAGE_MASK), PAGE_SIZE);
-
-			vramlist_lock.Unlock();
-		}
-
-		return true;
-	}
-	else
+	if (offset >= VRAM_SIZE)
 		return false;
+
+	size_t addr_hash = offset / PAGE_SIZE;
+	vector<vram_block *>& list = VramLocks[addr_hash];
+
+	{
+		vramlist_lock.Lock();
+
+		for (size_t i = 0; i < list.size(); i++)
+		{
+			if (list[i] != nullptr)
+			{
+				libPvr_LockedBlockWrite(list[i], (u32)offset);
+
+				if (list[i] != nullptr)
+				{
+					ERROR_LOG(PVR, "Error : pvr is supposed to remove lock");
+					die("Invalid state");
+				}
+
+			}
+		}
+		list.clear();
+
+		_vmem_unprotect_vram((u32)(offset & ~PAGE_MASK), PAGE_SIZE);
+
+		vramlist_lock.Unlock();
+	}
+
+	return true;
 }
 
 bool VramLockedWrite(u8* address)
@@ -270,7 +273,6 @@ void libCore_vramlock_Unlock_block_wb(vram_block* block)
 	if (mmu_enabled())
 		vmem32_unprotect_vram(block->start, block->len);
 	vramlock_list_remove(block);
-	//more work needed
 	free(block);
 }
 
@@ -340,12 +342,18 @@ static void deposterizeV(u32* data, u32* out, int w, int h, int l, int u) {
 }
 
 #ifndef TARGET_NO_OPENMP
-void parallelize(const std::function<void(int,int)> &func, int start, int end, int width /* = 0 */)
+static inline int getThreadCount()
 {
 	int tcount = omp_get_num_procs() - 1;
 	if (tcount < 1)
 		tcount = 1;
-	tcount = min(tcount, (int)settings.pvr.MaxThreads);
+	return min(tcount, (int)settings.pvr.MaxThreads);
+}
+
+template<typename Func>
+void parallelize(Func func, int start, int end)
+{
+	int tcount = getThreadCount();
 #pragma omp parallel num_threads(tcount)
 	{
 		int num_threads = omp_get_num_threads();
@@ -360,22 +368,24 @@ void parallelize(const std::function<void(int,int)> &func, int start, int end, i
 void DePosterize(u32* source, u32* dest, int width, int height) {
 	u32 *tmpbuf = (u32 *)malloc(width * height * sizeof(u32));
 
-	parallelize(std::bind(&deposterizeH, source, tmpbuf, width, std::placeholders::_1, std::placeholders::_2), 0, height, width);
-	parallelize(std::bind(&deposterizeV, tmpbuf, dest, width, height, std::placeholders::_1, std::placeholders::_2), 0, height, width);
-	parallelize(std::bind(&deposterizeH, dest, tmpbuf, width, std::placeholders::_1, std::placeholders::_2), 0, height, width);
-	parallelize(std::bind(&deposterizeV, tmpbuf, dest, width, height, std::placeholders::_1, std::placeholders::_2), 0, height, width);
+	parallelize([source, tmpbuf, width](int start, int end) { deposterizeH(source, tmpbuf, width, start, end); }, 0, height);
+	parallelize([tmpbuf, dest, width, height](int start, int end) { deposterizeV(tmpbuf, dest, width, height, start, end); }, 0, height);
+	parallelize([dest, tmpbuf, width](int start, int end) { deposterizeH(dest, tmpbuf, width, start, end); }, 0, height);
+	parallelize([tmpbuf, dest, width, height](int start, int end) { deposterizeV(tmpbuf, dest, width, height, start, end); }, 0, height);
 
 	free(tmpbuf);
 }
 #endif
 
-struct xbrz::ScalerCfg xbrz_cfg;
+static struct xbrz::ScalerCfg xbrz_cfg;
 
-void UpscalexBRZ(int factor, u32* source, u32* dest, int width, int height, bool has_alpha) {
+void UpscalexBRZ(int factor, u32* source, u32* dest, int width, int height, bool has_alpha)
+{
 #ifndef TARGET_NO_OPENMP
-	parallelize(
-			std::bind(&xbrz::scale, factor, source, dest, width, height, has_alpha ? xbrz::ColorFormat::ARGB : xbrz::ColorFormat::RGB, xbrz_cfg,
-					std::placeholders::_1, std::placeholders::_2), 0, height, width);
+	parallelize([=](int start, int end) {
+		xbrz::scale(factor, source, dest, width, height, has_alpha ? xbrz::ColorFormat::ARGB : xbrz::ColorFormat::RGB,
+				xbrz_cfg, start, end);
+	}, 0, height);
 #else
 	xbrz::scale(factor, source, dest, width, height, has_alpha ? xbrz::ColorFormat::ARGB : xbrz::ColorFormat::RGB, xbrz_cfg);
 #endif
