@@ -82,8 +82,6 @@ struct RuntimeBlockInfo: RuntimeBlockInfo_Core
 void bm_WriteBlockMap(const string& file);
 
 
-DynarecCodeEntryPtr DYNACALL bm_GetCode(u32 addr);
-
 extern "C" {
 ATTR_USED DynarecCodeEntryPtr DYNACALL bm_GetCodeByVAddr(u32 addr);
 }

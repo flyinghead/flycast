@@ -27,13 +27,13 @@ typedef std::vector<RuntimeBlockInfoPtr> bm_List;
 typedef std::set<RuntimeBlockInfoPtr> bm_Set;
 typedef std::map<void*, RuntimeBlockInfoPtr> bm_Map;
 
-bm_Set all_temp_blocks;
-bm_List del_blocks;
+static bm_Set all_temp_blocks;
+static bm_List del_blocks;
 
 bool unprotected_pages[RAM_SIZE_MAX/PAGE_SIZE];
 static std::set<RuntimeBlockInfo*> blocks_per_page[RAM_SIZE_MAX/PAGE_SIZE];
 
-bm_Map blkmap;
+static bm_Map blkmap;
 // Stats
 u32 protected_blocks;
 u32 unprotected_blocks;
@@ -42,7 +42,7 @@ u32 unprotected_blocks;
 
 // addr must be a physical address
 // This returns an executable address
-DynarecCodeEntryPtr DYNACALL bm_GetCode(u32 addr)
+static DynarecCodeEntryPtr DYNACALL bm_GetCode(u32 addr)
 {
 	DynarecCodeEntryPtr rv = FPCA(addr);
 
@@ -141,7 +141,7 @@ RuntimeBlockInfoPtr bm_GetBlock(void* dynarec_code)
 	return iter->second;
 }
 
-void bm_CleanupDeletedBlocks()
+static void bm_CleanupDeletedBlocks()
 {
 	del_blocks.clear();
 }
@@ -292,7 +292,7 @@ void bm_ResetCache()
 	ngen_ResetBlocks();
 	_vmem_bm_reset();
 
-	for (auto it : blkmap)
+	for (const auto& it : blkmap)
 	{
 		RuntimeBlockInfoPtr block = it.second;
 		block->relink_data = 0;
@@ -333,7 +333,7 @@ void bm_ResetTempCache(bool full)
 {
 	if (!full)
 	{
-		for (auto& block : all_temp_blocks)
+		for (const auto& block : all_temp_blocks)
 		{
 			FPCA(block->addr) = ngen_FailedToFindBlock;
 			blkmap.erase((void*)block->code);
@@ -384,6 +384,16 @@ void bm_WriteBlockMap(const string& file)
 	}
 }
 
+void sh4_jitsym(FILE* out)
+{
+	for (const auto& it : blkmap)
+	{
+		const RuntimeBlockInfoPtr& block = it.second;
+		fprintf(out, "%p %d %08X\n", block->code, block->host_code_size, block->addr);
+	}
+}
+
+#if 0
 u32 GetLookup(RuntimeBlockInfo* elem)
 {
 	return elem->lookups;
@@ -404,15 +414,6 @@ bool UDgreater3 ( RuntimeBlockInfo* elem1, RuntimeBlockInfo* elem2 )
 	return elem1->runs*elem1->host_opcodes/elem1->guest_cycles > elem2->runs*elem2->host_opcodes/elem2->guest_cycles;
 }
 
-void sh4_jitsym(FILE* out)
-{
-	for (auto& it : blkmap)
-	{
-		RuntimeBlockInfoPtr& block = it.second;
-		fprintf(out, "%p %d %08X\n", block->code, block->host_code_size, block->addr);
-	}
-}
-#if 0
 void bm_PrintTopBlocks()
 {
 	double total_lups=0;
@@ -540,7 +541,7 @@ void RuntimeBlockInfo::Discard()
 		// Remove this block from the per-page block lists
 		for (u32 addr = this->addr & ~PAGE_MASK; addr < this->addr + this->sh4_code_size; addr += PAGE_SIZE)
 		{
-			set<RuntimeBlockInfo*>& block_list = blocks_per_page[(addr & RAM_MASK) / PAGE_SIZE];
+			auto& block_list = blocks_per_page[(addr & RAM_MASK) / PAGE_SIZE];
 			block_list.erase(this);
 		}
 	}
@@ -568,8 +569,10 @@ void RuntimeBlockInfo::SetProtectedFlags()
 	protected_blocks++;
 	for (u32 addr = this->addr & ~PAGE_MASK; addr < this->addr + sh4_code_size; addr += PAGE_SIZE)
 	{
-		blocks_per_page[(addr & RAM_MASK) / PAGE_SIZE].insert(this);
-		bm_LockPage(addr);
+		auto& block_list = blocks_per_page[(addr & RAM_MASK) / PAGE_SIZE];
+		if (block_list.empty())
+			bm_LockPage(addr);
+		block_list.insert(this);
 	}
 }
 

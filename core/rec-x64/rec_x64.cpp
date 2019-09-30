@@ -1901,8 +1901,6 @@ private:
 		void* ptr = (void*)GetMemPtr(sa, sz > 8 ? 8 : sz);
 		if (ptr)
 		{
-			mov(call_regs[0], block->addr);
-
 			while (sz > 0)
 			{
 				mov(rax, reinterpret_cast<uintptr_t>(ptr));
