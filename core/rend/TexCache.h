@@ -1,5 +1,7 @@
 #pragma once
+#include <atomic>
 #include "oslib/oslib.h"
+#include "hw/pvr/ta_structs.h"
 
 extern u8* vq_codebook;
 extern u32 palette_index;
@@ -620,5 +622,81 @@ template void texture_VQ<convBMP_TW<pp_565>, u16>(PixelBuffer<u16>* pb,u8* p_in,
 #define texPAL4_VQ32 texture_VQ<convPAL4_TW<pp_8888, u32>, u32>
 #define texPAL8_VQ32 texture_VQ<convPAL8_TW<pp_8888, u32>, u32>
 
+bool VramLockedWriteOffset(size_t offset);
 void DePosterize(u32* source, u32* dest, int width, int height);
 void UpscalexBRZ(int factor, u32* source, u32* dest, int width, int height, bool has_alpha);
+
+struct PvrTexInfo;
+template <class pixel_type> class PixelBuffer;
+typedef void TexConvFP(PixelBuffer<u16>* pb,u8* p_in,u32 Width,u32 Height);
+typedef void TexConvFP32(PixelBuffer<u32>* pb,u8* p_in,u32 Width,u32 Height);
+enum class TextureType { _565, _5551, _4444, _8888 };
+
+struct BaseTextureCacheData
+{
+	TSP tsp;        //dreamcast texture parameters
+	TCW tcw;
+
+	// Decoded/filtered texture format
+	TextureType tex_type;
+
+	u32 Lookups;
+
+	u32 sa;         //pixel data start address in vram (might be offset for mipmaps/etc)
+	u32 sa_tex;		//texture data start address in vram
+	u32 w,h;        //width & height of the texture
+	u32 size;       //size, in bytes, in vram
+
+	const PvrTexInfo* tex;
+	TexConvFP*  texconv;
+	TexConvFP32*  texconv32;
+
+	u32 dirty;
+	vram_block* lock_block;
+
+	u32 Updates;
+
+	u32 palette_index;
+	//used for palette updates
+	u32 palette_hash;			// Palette hash at time of last update
+	u32 vq_codebook;            // VQ quantizers table for compressed textures
+	u32 texture_hash;			// xxhash of texture data, used for custom textures
+	u32 old_texture_hash;		// legacy hash
+	u8* volatile custom_image_data;		// loaded custom image data
+	volatile u32 custom_width;
+	volatile u32 custom_height;
+	std::atomic_int custom_load_in_progress;
+
+	void PrintTextureName();
+	virtual std::string GetId() = 0;
+
+	bool IsPaletted()
+	{
+		return tcw.PixelFmt == PixelPal4 || tcw.PixelFmt == PixelPal8;
+	}
+
+	const char* GetPixelFormatName()
+	{
+		switch (tcw.PixelFmt)
+		{
+		case Pixel1555: return "1555";
+		case Pixel565: return "565";
+		case Pixel4444: return "4444";
+		case PixelYUV: return "yuv";
+		case PixelBumpMap: return "bumpmap";
+		case PixelPal4: return "pal4";
+		case PixelPal8: return "pal8";
+		default: return "unknown";
+		}
+	}
+
+	void Create();
+	void ComputeHash();
+	void Update();
+	virtual void UploadToGPU(int width, int height, u8 *temp_tex_buffer) = 0;
+	void CheckCustomTexture();
+	//true if : dirty or paletted texture and hashes don't match
+	bool NeedsUpdate();
+	virtual bool Delete();
+	virtual ~BaseTextureCacheData() {}
+};

@@ -27,11 +27,14 @@
 #include <png.h>
 #include "reios/reios.h"
 
+// TODO Move this out of gles.cpp
+u8* loadPNGData(const string& subpath, int &width, int &height);
+
 void CustomTexture::LoaderThread()
 {
 	while (initialized)
 	{
-		TextureCacheData *texture;
+		BaseTextureCacheData *texture;
 		
 		do {
 			texture = NULL;
@@ -142,7 +145,7 @@ u8* CustomTexture::LoadCustomTexture(u32 hash, int& width, int& height)
 	return image_data;
 }
 
-void CustomTexture::LoadCustomTextureAsync(TextureCacheData *texture_data)
+void CustomTexture::LoadCustomTextureAsync(BaseTextureCacheData *texture_data)
 {
 	if (!Init())
 		return;
@@ -154,7 +157,7 @@ void CustomTexture::LoadCustomTextureAsync(TextureCacheData *texture_data)
 	wakeup_thread.Set();
 }
 
-void CustomTexture::DumpTexture(u32 hash, int w, int h, GLuint textype, void *temp_tex_buffer)
+void CustomTexture::DumpTexture(u32 hash, int w, int h, TextureType textype, void *temp_tex_buffer)
 {
 	std::string base_dump_dir = get_writable_data_path(DATA_PATH "texdump/");
 	if (!file_exists(base_dump_dir))
@@ -185,7 +188,7 @@ void CustomTexture::DumpTexture(u32 hash, int w, int h, GLuint textype, void *te
 		u8 *dst = (u8 *)rows[h - y - 1];
 		switch (textype)
 		{
-		case GL_UNSIGNED_SHORT_4_4_4_4:
+		case TextureType::_4444:
 			for (int x = 0; x < w; x++)
 			{
 				*dst++ = ((*src >> 12) & 0xF) << 4;
@@ -195,7 +198,7 @@ void CustomTexture::DumpTexture(u32 hash, int w, int h, GLuint textype, void *te
 				src++;
 			}
 			break;
-		case GL_UNSIGNED_SHORT_5_6_5:
+		case TextureType::_565:
 			for (int x = 0; x < w; x++)
 			{
 				*dst++ = ((*src >> 11) & 0x1F) << 3;
@@ -205,7 +208,7 @@ void CustomTexture::DumpTexture(u32 hash, int w, int h, GLuint textype, void *te
 				src++;
 			}
 			break;
-		case GL_UNSIGNED_SHORT_5_5_5_1:
+		case TextureType::_5551:
 			for (int x = 0; x < w; x++)
 			{
 				*dst++ = ((*src >> 11) & 0x1F) << 3;
@@ -215,7 +218,7 @@ void CustomTexture::DumpTexture(u32 hash, int w, int h, GLuint textype, void *te
 				src++;
 			}
 			break;
-		case GL_UNSIGNED_BYTE:
+		case TextureType::_8888:
 			for (int x = 0; x < w; x++)
 			{
 				*(u32 *)dst = *(u32 *)src;
@@ -224,7 +227,7 @@ void CustomTexture::DumpTexture(u32 hash, int w, int h, GLuint textype, void *te
 			}
 			break;
 		default:
-			WARN_LOG(RENDERER, "dumpTexture: unsupported picture format %x", textype);
+			WARN_LOG(RENDERER, "dumpTexture: unsupported picture format %x", (u32)textype);
 			fclose(fp);
 			free(rows[0]);
 			free(rows);
