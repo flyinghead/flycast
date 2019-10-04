@@ -212,7 +212,7 @@ __forceinline
 
 	glcache.StencilFunc(GL_ALWAYS,stencil,stencil);
 
-	glcache.BindTexture(GL_TEXTURE_2D, gp->texid == -1 ? 0 : gp->texid);
+	glcache.BindTexture(GL_TEXTURE_2D, gp->texid == -1 ? 0 : (GLuint)gp->texid);
 
 	SetTextureRepeatMode(GL_TEXTURE_WRAP_S, gp->tsp.ClampU, gp->tsp.FlipU);
 	SetTextureRepeatMode(GL_TEXTURE_WRAP_T, gp->tsp.ClampV, gp->tsp.FlipV);

@@ -152,11 +152,6 @@ bool TextureCacheData::Delete()
 	return true;
 }
 
-static std::unordered_map<u64, TextureCacheData> TexCache;
-typedef std::unordered_map<u64, TextureCacheData>::iterator TexCacheIter;
-
-static TextureCacheData *getTextureCacheData(TSP tsp, TCW tcw);
-
 void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
 {
 	if (gl.rtt.fbo) glDeleteFramebuffers(1,&gl.rtt.fbo);
@@ -348,7 +343,7 @@ void ReadRTTBuffer() {
     	for (tsp.TexU = 0; tsp.TexU <= 7 && (8 << tsp.TexU) < w; tsp.TexU++);
     	for (tsp.TexV = 0; tsp.TexV <= 7 && (8 << tsp.TexV) < h; tsp.TexV++);
 
-    	TextureCacheData *texture_data = getTextureCacheData(tsp, tcw);
+    	TextureCacheData *texture_data = static_cast<TextureCacheData*>(getTextureCacheData(tsp, tcw, [](){ return (BaseTextureCacheData *)new TextureCacheData(); }));
     	if (texture_data->texID != 0)
     		glcache.DeleteTextures(1, &texture_data->texID);
     	else
@@ -369,49 +364,12 @@ static int TexCacheLookups;
 static int TexCacheHits;
 static float LastTexCacheStats;
 
-// Only use TexU and TexV from TSP in the cache key
-//     TexV : 7, TexU : 7
-static const TSP TSPTextureCacheMask = { { 7, 7 } };
-//     TexAddr : 0x1FFFFF, Reserved : 0, StrideSel : 0, ScanOrder : 1, PixelFmt : 7, VQ_Comp : 1, MipMapped : 1
-static const TCW TCWTextureCacheMask = { { 0x1FFFFF, 0, 0, 1, 7, 1, 1 } };
-
-static TextureCacheData *getTextureCacheData(TSP tsp, TCW tcw) {
-	u64 key = tsp.full & TSPTextureCacheMask.full;
-	if (tcw.PixelFmt == PixelPal4 || tcw.PixelFmt == PixelPal8)
-		// Paletted textures have a palette selection that must be part of the key
-		// We also add the palette type to the key to avoid thrashing the cache
-		// when the palette type is changed. If the palette type is changed back in the future,
-		// this texture will stil be available.
-		key |= ((u64)tcw.full << 32) | ((PAL_RAM_CTRL & 3) << 6);
-	else
-		key |= (u64)(tcw.full & TCWTextureCacheMask.full) << 32;
-
-	TexCacheIter tx = TexCache.find(key);
-
-	TextureCacheData* tf;
-	if (tx != TexCache.end())
-	{
-		tf = &tx->second;
-		// Needed if the texture is updated
-		tf->tcw.StrideSel = tcw.StrideSel;
-	}
-	else //create if not existing
-	{
-		tf=&TexCache[key];
-
-		tf->tsp = tsp;
-		tf->tcw = tcw;
-	}
-
-	return tf;
-}
-
-GLuint gl_GetTexture(TSP tsp, TCW tcw)
+u64 gl_GetTexture(TSP tsp, TCW tcw)
 {
 	TexCacheLookups++;
 
 	//lookup texture
-	TextureCacheData* tf = getTextureCacheData(tsp, tcw);
+	TextureCacheData* tf = static_cast<TextureCacheData*>(getTextureCacheData(tsp, tcw, [](){ return (BaseTextureCacheData *)new TextureCacheData(); }));
 
 	if (tf->texID == 0)
 	{
@@ -449,23 +407,10 @@ text_info raw_GetTexture(TSP tsp, TCW tcw)
 	text_info rv = { 0 };
 
 	//lookup texture
-	TextureCacheData* tf;
-	u64 key = ((u64)(tcw.full & TCWTextureCacheMask.full) << 32) | (tsp.full & TSPTextureCacheMask.full);
+	TextureCacheData* tf = static_cast<TextureCacheData*>(getTextureCacheData(tsp, tcw, [](){ return (BaseTextureCacheData *)new TextureCacheData(); }));
 
-	TexCacheIter tx = TexCache.find(key);
-
-	if (tx != TexCache.end())
-	{
-		tf = &tx->second;
-	}
-	else //create if not existing
-	{
-		tf = &TexCache[key];
-
-		tf->tsp = tsp;
-		tf->tcw = tcw;
+	if (tf->pData == nullptr)
 		tf->Create();
-	}
 
 	//update if needed
 	if (tf->NeedsUpdate())
@@ -484,40 +429,8 @@ text_info raw_GetTexture(TSP tsp, TCW tcw)
 	return rv;
 }
 
-void CollectCleanup() {
-	vector<u64> list;
-
-	u32 TargetFrame = max((u32)120,FrameCount) - 120;
-
-	for (const auto& pair : TexCache)
-	{
-		if (pair.second.dirty && pair.second.dirty < TargetFrame)
-			list.push_back(pair.first);
-
-		if (list.size() > 5)
-			break;
-	}
-
-	for (u64 id : list) {
-		if (TexCache[id].Delete())
-		{
-			//printf("Deleting %d\n", TexCache[list[i]].texID);
-			TexCache.erase(id);
-		}
-	}
-}
-
 void DoCleanup() {
 
-}
-void killtex()
-{
-	for (auto& pair : TexCache)
-		pair.second.Delete();
-
-	TexCache.clear();
-	KillTex = false;
-	INFO_LOG(RENDERER, "Texture cache cleared");
 }
 
 void rend_text_invl(vram_block* bl)

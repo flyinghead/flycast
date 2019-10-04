@@ -700,3 +700,6 @@ struct BaseTextureCacheData
 	virtual bool Delete();
 	virtual ~BaseTextureCacheData() {}
 };
+BaseTextureCacheData *getTextureCacheData(TSP tsp, TCW tcw, BaseTextureCacheData *(*factory)());
+void CollectCleanup();
+void killtex();

@@ -119,7 +119,8 @@ void setFragDepth(void) \n\
 struct PolyParam { \n\
 	int first; \n\
 	int count; \n\
-	int texid; \n\
+	int texid_low; \n\
+	int texid_high; \n\
 	int tsp; \n\
 	int tcw; \n\
 	int pcw; \n\
@@ -128,7 +129,8 @@ struct PolyParam { \n\
 	int tileclip; \n\
 	int tsp1; \n\
 	int tcw1; \n\
-	int texid1; \n\
+	int texid1_low; \n\
+	int texid1_high; \n\
 }; \n\
 layout (binding = 1, std430) readonly buffer TrPolyParamBuffer { \n\
 	PolyParam tr_poly_params[]; \n\

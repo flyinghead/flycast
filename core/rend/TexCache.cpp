@@ -1,3 +1,5 @@
+#include <memory>
+#include <unordered_map>
 #ifndef TARGET_NO_OPENMP
 #include <omp.h>
 #endif
@@ -726,4 +728,80 @@ void BaseTextureCacheData::CheckCustomTexture()
 		delete [] custom_image_data;
 		custom_image_data = NULL;
 	}
+}
+
+static std::unordered_map<u64, std::unique_ptr<BaseTextureCacheData>> TexCache;
+typedef std::unordered_map<u64, std::unique_ptr<BaseTextureCacheData>>::iterator TexCacheIter;
+
+// Only use TexU and TexV from TSP in the cache key
+//     TexV : 7, TexU : 7
+static const TSP TSPTextureCacheMask = { { 7, 7 } };
+//     TexAddr : 0x1FFFFF, Reserved : 0, StrideSel : 0, ScanOrder : 1, PixelFmt : 7, VQ_Comp : 1, MipMapped : 1
+static const TCW TCWTextureCacheMask = { { 0x1FFFFF, 0, 0, 1, 7, 1, 1 } };
+
+BaseTextureCacheData *getTextureCacheData(TSP tsp, TCW tcw, BaseTextureCacheData *(*factory)())
+{
+	u64 key = tsp.full & TSPTextureCacheMask.full;
+	if (tcw.PixelFmt == PixelPal4 || tcw.PixelFmt == PixelPal8)
+		// Paletted textures have a palette selection that must be part of the key
+		// We also add the palette type to the key to avoid thrashing the cache
+		// when the palette type is changed. If the palette type is changed back in the future,
+		// this texture will stil be available.
+		key |= ((u64)tcw.full << 32) | ((PAL_RAM_CTRL & 3) << 6);
+	else
+		key |= (u64)(tcw.full & TCWTextureCacheMask.full) << 32;
+
+	TexCacheIter tx = TexCache.find(key);
+
+	BaseTextureCacheData* tf;
+	if (tx != TexCache.end())
+	{
+		tf = tx->second.get();
+		// Needed if the texture is updated
+		tf->tcw.StrideSel = tcw.StrideSel;
+	}
+	else //create if not existing
+	{
+		tf = factory();
+		TexCache[key] = std::unique_ptr<BaseTextureCacheData>(tf);
+
+		tf->tsp = tsp;
+		tf->tcw = tcw;
+	}
+
+	return tf;
+}
+
+void CollectCleanup()
+{
+	vector<u64> list;
+
+	u32 TargetFrame = max((u32)120,FrameCount) - 120;
+
+	for (const auto& pair : TexCache)
+	{
+		if (pair.second->dirty && pair.second->dirty < TargetFrame)
+			list.push_back(pair.first);
+
+		if (list.size() > 5)
+			break;
+	}
+
+	for (u64 id : list) {
+		if (TexCache[id]->Delete())
+		{
+			//printf("Deleting %d\n", TexCache[list[i]].texID);
+			TexCache.erase(id);
+		}
+	}
+}
+
+void killtex()
+{
+	for (auto& pair : TexCache)
+		pair.second->Delete();
+
+	TexCache.clear();
+	KillTex = false;
+	INFO_LOG(RENDERER, "Texture cache cleared");
 }

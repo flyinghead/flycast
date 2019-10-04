@@ -1034,7 +1034,8 @@ struct gl4rend : Renderer
 		OSD_DRAW(clear_screen);
 	}
 
-	virtual u32 GetTexture(TSP tsp, TCW tcw) {
+	virtual u64 GetTexture(TSP tsp, TCW tcw) override
+	{
 		return gl_GetTexture(tsp, tcw);
 	}
 };

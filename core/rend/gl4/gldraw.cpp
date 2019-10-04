@@ -174,7 +174,7 @@ template <u32 Type, bool SortingEnabled>
 		for (int i = 0; i < 2; i++)
 		{
 			glActiveTexture(GL_TEXTURE0 + i);
-			GLuint texid = i == 0 ? gp->texid : gp->texid1;
+			GLuint texid = (GLuint)(i == 0 ? gp->texid : gp->texid1);
 
 			glBindTexture(GL_TEXTURE_2D, texid == -1 ? 0 : texid);
 

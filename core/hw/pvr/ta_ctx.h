@@ -30,7 +30,7 @@ struct PolyParam
 	u32 first;		//entry index , holds vertex/pos data
 	u32 count;
 
-	u32 texid;
+	u64 texid;
 
 	TSP tsp;
 	TCW tcw;
@@ -41,7 +41,7 @@ struct PolyParam
 	//float zMin,zMax;
 	TSP tsp1;
 	TCW tcw1;
-	u32 texid1;
+	u64 texid1;
 };
 
 struct ModifierVolumeParam

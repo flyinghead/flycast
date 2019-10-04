@@ -20,14 +20,6 @@ void rend_set_fb_scale(float x,float y);
 void rend_resize(int width, int height);
 void rend_text_invl(vram_block* bl);
 
-#ifdef GLuint
-GLuint
-#else
-u32
-#endif
-GetTexture(TSP tsp,TCW tcw);
-
-
 ///////
 extern TA_context* _pvrrc;
 
@@ -50,7 +42,7 @@ struct Renderer
 
 	virtual void DrawOSD(bool clear_screen) { }
 
-	virtual u32 GetTexture(TSP tsp, TCW tcw) { return 0; }
+	virtual u64 GetTexture(TSP tsp, TCW tcw) { return 0; }
 };
 
 extern Renderer* renderer;
@@ -64,6 +56,9 @@ Renderer* rend_GL4();
 #endif
 Renderer* rend_norend();
 Renderer* rend_softrend();
+#ifdef USE_VULKAN
+Renderer* rend_Vulkan();
+#endif
 
 extern u32 fb_watch_addr_start;
 extern u32 fb_watch_addr_end;

@@ -148,7 +148,7 @@ extern gl_ctx gl;
 extern GLuint fbTextureId;
 extern float fb_scale_x, fb_scale_y;
 
-GLuint gl_GetTexture(TSP tsp,TCW tcw);
+u64 gl_GetTexture(TSP tsp,TCW tcw);
 struct text_info {
 	u16* pdata;
 	u32 width;
@@ -166,8 +166,6 @@ void UpdateFogTexture(u8 *fog_table, GLenum texture_slot, GLint fog_image_format
 void findGLVersion();
 
 text_info raw_GetTexture(TSP tsp, TCW tcw);
-void killtex();
-void CollectCleanup();
 void DoCleanup();
 void SetCull(u32 CullMode);
 s32 SetTileClip(u32 val, GLint uniform);
