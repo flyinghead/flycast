@@ -9,22 +9,6 @@
       <Configuration>Fast</Configuration>
       <Platform>x64</Platform>
     </ProjectConfiguration>
-    <ProjectConfiguration Include="Naomi Debug|Win32">
-      <Configuration>Naomi Debug</Configuration>
-      <Platform>Win32</Platform>
-    </ProjectConfiguration>
-    <ProjectConfiguration Include="Naomi Debug|x64">
-      <Configuration>Naomi Debug</Configuration>
-      <Platform>x64</Platform>
-    </ProjectConfiguration>
-    <ProjectConfiguration Include="Naomi Release|Win32">
-      <Configuration>Naomi Release</Configuration>
-      <Platform>Win32</Platform>
-    </ProjectConfiguration>
-    <ProjectConfiguration Include="Naomi Release|x64">
-      <Configuration>Naomi Release</Configuration>
-      <Platform>x64</Platform>
-    </ProjectConfiguration>
     <ProjectConfiguration Include="Slow|Win32">
       <Configuration>Slow</Configuration>
       <Platform>Win32</Platform>
@@ -36,29 +20,22 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\core\archive\7zArchive.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Naomi Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Fast|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Slow|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Naomi Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Naomi Release|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Fast|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Slow|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Naomi Debug|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="..\core\archive\archive.cpp" />
     <ClCompile Include="..\core\archive\ZipArchive.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Naomi Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Fast|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Slow|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Naomi Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Naomi Release|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Fast|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Slow|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Naomi Debug|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="..\core\cfg\cl.cpp" />
     <ClCompile Include="..\core\cfg\cfg.cpp" />
     <ClCompile Include="..\core\cfg\ini.cpp" />
+    <ClCompile Include="..\core\cheats.cpp" />
     <ClCompile Include="..\core\deps\chdpsr\cdipsr.cpp" />
     <ClCompile Include="..\core\deps\chdr\bitstream.c" />
     <ClCompile Include="..\core\deps\chdr\cdrom.c" />
@@ -111,25 +88,6 @@
     <ClCompile Include="..\core\deps\libpng\pngwrite.c" />
     <ClCompile Include="..\core\deps\libpng\pngwtran.c" />
     <ClCompile Include="..\core\deps\libpng\pngwutil.c" />
-    <ClCompile Include="..\core\deps\libwebsocket\base64-decode.c" />
-    <ClCompile Include="..\core\deps\libwebsocket\client-handshake.c" />
-    <ClCompile Include="..\core\deps\libwebsocket\client-parser.c" />
-    <ClCompile Include="..\core\deps\libwebsocket\client.c" />
-    <ClCompile Include="..\core\deps\libwebsocket\context.c" />
-    <ClCompile Include="..\core\deps\libwebsocket\extension-deflate-frame.c" />
-    <ClCompile Include="..\core\deps\libwebsocket\extension-deflate-stream.c" />
-    <ClCompile Include="..\core\deps\libwebsocket\extension.c" />
-    <ClCompile Include="..\core\deps\libwebsocket\handshake.c" />
-    <ClCompile Include="..\core\deps\libwebsocket\libwebsockets.c" />
-    <ClCompile Include="..\core\deps\libwebsocket\lws-plat-unix.c" />
-    <ClCompile Include="..\core\deps\libwebsocket\lws-plat-win.c" />
-    <ClCompile Include="..\core\deps\libwebsocket\output.c" />
-    <ClCompile Include="..\core\deps\libwebsocket\parsers.c" />
-    <ClCompile Include="..\core\deps\libwebsocket\pollfd.c" />
-    <ClCompile Include="..\core\deps\libwebsocket\server-handshake.c" />
-    <ClCompile Include="..\core\deps\libwebsocket\server.c" />
-    <ClCompile Include="..\core\deps\libwebsocket\service.c" />
-    <ClCompile Include="..\core\deps\libwebsocket\sha-1.c" />
     <ClCompile Include="..\core\deps\lzma\Alloc.c" />
     <ClCompile Include="..\core\deps\lzma\Bra.c" />
     <ClCompile Include="..\core\deps\lzma\Bra86.c" />
@@ -176,6 +134,7 @@
     <ClCompile Include="..\core\hw\maple\maple_devs.cpp" />
     <ClCompile Include="..\core\hw\maple\maple_helper.cpp" />
     <ClCompile Include="..\core\hw\maple\maple_if.cpp" />
+    <ClCompile Include="..\core\hw\mem\vmem32.cpp" />
     <ClCompile Include="..\core\hw\mem\_vmem.cpp" />
     <ClCompile Include="..\core\hw\modem\modem.cpp" />
     <ClCompile Include="..\core\hw\modem\picoppp.cpp" />
@@ -199,6 +158,7 @@
     <ClCompile Include="..\core\hw\sh4\dyna\decoder.cpp" />
     <ClCompile Include="..\core\hw\sh4\dyna\driver.cpp" />
     <ClCompile Include="..\core\hw\sh4\dyna\shil.cpp" />
+    <ClCompile Include="..\core\hw\sh4\dyna\ssa.cpp" />
     <ClCompile Include="..\core\hw\sh4\interpr\sh4_fpu.cpp" />
     <ClCompile Include="..\core\hw\sh4\interpr\sh4_interpreter.cpp" />
     <ClCompile Include="..\core\hw\sh4\interpr\sh4_opcodes.cpp" />
@@ -206,6 +166,7 @@
     <ClCompile Include="..\core\hw\sh4\modules\ccn.cpp" />
     <ClCompile Include="..\core\hw\sh4\modules\cpg.cpp" />
     <ClCompile Include="..\core\hw\sh4\modules\dmac.cpp" />
+    <ClCompile Include="..\core\hw\sh4\modules\fastmmu.cpp" />
     <ClCompile Include="..\core\hw\sh4\modules\intc.cpp" />
     <ClCompile Include="..\core\hw\sh4\modules\mmu.cpp" />
     <ClCompile Include="..\core\hw\sh4\modules\rtc.cpp" />
@@ -231,72 +192,53 @@
     <ClCompile Include="..\core\input\mapping.cpp" />
     <ClCompile Include="..\core\linux\common.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Slow|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Naomi Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Slow|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Naomi Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Fast|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Naomi Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Fast|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Naomi Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="..\core\linux\context.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Fast|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Naomi Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Slow|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Naomi Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Fast|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Naomi Release|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Slow|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Naomi Debug|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="..\core\linux\nixprof.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Slow|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Naomi Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Slow|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Naomi Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Fast|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Naomi Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Fast|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Naomi Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="..\core\log\ConsoleListenerWin.cpp" />
+    <ClCompile Include="..\core\log\LogManager.cpp" />
     <ClCompile Include="..\core\nullDC.cpp" />
     <ClCompile Include="..\core\oslib\audiobackend_directsound.cpp" />
     <ClCompile Include="..\core\oslib\audiostream.cpp" />
     <ClCompile Include="..\core\profiler\profiler.cpp" />
     <ClCompile Include="..\core\rec-ARM\rec_arm.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Slow|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Naomi Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Slow|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Naomi Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Fast|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Naomi Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Fast|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Naomi Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="..\core\rec-cpp\rec_cpp.cpp">
       <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Fast|x64'">/bigobj %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Naomi Release|x64'">/bigobj %(AdditionalOptions)</AdditionalOptions>
       <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Slow|x64'">/bigobj %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Naomi Debug|x64'">/bigobj %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
-    <ClCompile Include="..\core\rec-x64\rec_x64.cpp" />
+    <ClCompile Include="..\core\rec-x64\rec_x64.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Fast|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Slow|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="..\core\rec-x86\rec_x86_driver.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Fast|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Naomi Release|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Slow|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Naomi Debug|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="..\core\rec-x86\rec_x86_il.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Fast|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Naomi Release|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Slow|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Naomi Debug|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="..\core\rec-x86\rec_x86_asm.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Fast|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Naomi Release|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Slow|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Naomi Debug|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="..\core\reios\descrambl.cpp" />
     <ClCompile Include="..\core\reios\gdrom_hle.cpp" />
@@ -319,7 +261,6 @@
     <ClCompile Include="..\core\rend\TexCache.cpp" />
     <ClCompile Include="..\core\serialize.cpp" />
     <ClCompile Include="..\core\stdclass.cpp" />
-    <ClCompile Include="..\core\webui\server.cpp" />
     <ClCompile Include="..\core\windows\winmain.cpp" />
     <ClCompile Include="..\core\windows\win_vmem.cpp" />
   </ItemGroup>
@@ -330,6 +271,7 @@
     <ClInclude Include="..\core\build.h" />
     <ClInclude Include="..\core\cfg\cfg.h" />
     <ClInclude Include="..\core\cfg\ini.h" />
+    <ClInclude Include="..\core\cheats.h" />
     <ClInclude Include="..\core\deps\chdpsr\cdipsr.h" />
     <ClInclude Include="..\core\deps\chdr\bitstream.h" />
     <ClInclude Include="..\core\deps\chdr\cdrom.h" />
@@ -371,12 +313,11 @@
     <ClInclude Include="..\core\deps\libpng\config.h" />
     <ClInclude Include="..\core\deps\libpng\png.h" />
     <ClInclude Include="..\core\deps\libpng\pngconf.h" />
+    <ClInclude Include="..\core\deps\libpng\pngdebug.h" />
+    <ClInclude Include="..\core\deps\libpng\pnginfo.h" />
+    <ClInclude Include="..\core\deps\libpng\pnglibconf.h" />
     <ClInclude Include="..\core\deps\libpng\pngpriv.h" />
-    <ClInclude Include="..\core\deps\libwebsocket\extension-deflate-frame.h" />
-    <ClInclude Include="..\core\deps\libwebsocket\extension-deflate-stream.h" />
-    <ClInclude Include="..\core\deps\libwebsocket\libwebsockets.h" />
-    <ClInclude Include="..\core\deps\libwebsocket\lws_config.h" />
-    <ClInclude Include="..\core\deps\libwebsocket\private-libwebsockets.h" />
+    <ClInclude Include="..\core\deps\libpng\pngstruct.h" />
     <ClInclude Include="..\core\deps\lzma\7zTypes.h" />
     <ClInclude Include="..\core\deps\lzma\Alloc.h" />
     <ClInclude Include="..\core\deps\lzma\Bra.h" />
@@ -391,6 +332,7 @@
     <ClInclude Include="..\core\deps\lzma\LzmaLib.h" />
     <ClInclude Include="..\core\deps\lzma\Precomp.h" />
     <ClInclude Include="..\core\deps\lzma\Sort.h" />
+    <ClInclude Include="..\core\deps\xxhash\xxhash.h" />
     <ClInclude Include="..\core\deps\zlib\crc32.h" />
     <ClInclude Include="..\core\deps\zlib\deflate.h" />
     <ClInclude Include="..\core\deps\zlib\inffast.h" />
@@ -431,6 +373,7 @@
     <ClInclude Include="..\core\hw\maple\maple_devs.h" />
     <ClInclude Include="..\core\hw\maple\maple_helper.h" />
     <ClInclude Include="..\core\hw\maple\maple_if.h" />
+    <ClInclude Include="..\core\hw\mem\vmem32.h" />
     <ClInclude Include="..\core\hw\mem\_vmem.h" />
     <ClInclude Include="..\core\hw\modem\modem.h" />
     <ClInclude Include="..\core\hw\modem\modem_regs.h" />
@@ -466,6 +409,8 @@
     <ClInclude Include="..\core\hw\sh4\dyna\regalloc.h" />
     <ClInclude Include="..\core\hw\sh4\dyna\shil.h" />
     <ClInclude Include="..\core\hw\sh4\dyna\shil_canonical.h" />
+    <ClInclude Include="..\core\hw\sh4\dyna\ssa.h" />
+    <ClInclude Include="..\core\hw\sh4\dyna\ssa_regalloc.h" />
     <ClInclude Include="..\core\hw\sh4\interpr\sh4_opcodes.h" />
     <ClInclude Include="..\core\hw\sh4\modules\ccn.h" />
     <ClInclude Include="..\core\hw\sh4\modules\dmac.h" />
@@ -494,28 +439,28 @@
     <ClInclude Include="..\core\input\mapping.h" />
     <ClInclude Include="..\core\linux\context.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Fast|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Naomi Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Slow|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Naomi Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Fast|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Naomi Release|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Slow|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Naomi Debug|x64'">true</ExcludedFromBuild>
     </ClInclude>
+    <ClInclude Include="..\core\log\BitSet.h" />
+    <ClInclude Include="..\core\log\ConsoleListener.h" />
+    <ClInclude Include="..\core\log\Log.h" />
+    <ClInclude Include="..\core\log\LogManager.h" />
+    <ClInclude Include="..\core\log\StringUtil.h" />
     <ClInclude Include="..\core\oslib\audiobackend_directsound.h" />
     <ClInclude Include="..\core\oslib\audiostream.h" />
     <ClInclude Include="..\core\oslib\oslib.h" />
     <ClInclude Include="..\core\profiler\profiler.h" />
+    <ClInclude Include="..\core\rec-x64\x64_regalloc.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Fast|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Slow|Win32'">true</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include="..\core\windows\win_keyboard.h" />
     <ClInclude Include="..\core\windows\xinput_gamepad.h" />
-    <MASM Include="..\core\rec-x64\msvc.asm">
-      <FileType>Document</FileType>
-    </MASM>
     <ClInclude Include="..\core\rec-x86\rec_x86_ngen.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Fast|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Naomi Release|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Slow|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Naomi Debug|x64'">true</ExcludedFromBuild>
     </ClInclude>
     <ClInclude Include="..\core\reios\descrambl.h" />
     <ClInclude Include="..\core\reios\gdrom_hle.h" />
@@ -533,37 +478,34 @@
     <ClInclude Include="..\core\rend\TexCache.h" />
     <ClInclude Include="..\core\stdclass.h" />
     <ClInclude Include="..\core\types.h" />
-    <ClInclude Include="..\core\webui\server.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\core\deps\zlib\Makefile" />
     <None Include="..\core\rec-ARM\ngen_arm.S">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Slow|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Naomi Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Slow|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Naomi Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Fast|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Naomi Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Fast|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Naomi Release|x64'">true</ExcludedFromBuild>
     </None>
     <None Include="..\core\rec-x86\rec_lin86_asm.S">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Slow|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Naomi Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Fast|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Naomi Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Fast|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Naomi Release|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Slow|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Naomi Debug|x64'">true</ExcludedFromBuild>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <MASM Include="..\core\rec-x64\msvc.asm">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Fast|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Slow|Win32'">true</ExcludedFromBuild>
+    </MASM>
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{58B14048-EACB-4780-8B1E-9C84C2C30A8E}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>reicast</RootNamespace>
     <ProjectName>reicast</ProjectName>
-    <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Fast|Win32'" Label="Configuration">
@@ -571,52 +513,26 @@
     <UseDebugLibraries>true</UseDebugLibraries>
     <CharacterSet>MultiByte</CharacterSet>
     <WholeProgramOptimization>true</WholeProgramOptimization>
-    <PlatformToolset>v141</PlatformToolset>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Naomi Release|Win32'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
-    <UseDebugLibraries>true</UseDebugLibraries>
-    <CharacterSet>MultiByte</CharacterSet>
-    <WholeProgramOptimization>true</WholeProgramOptimization>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Fast|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <CharacterSet>MultiByte</CharacterSet>
     <WholeProgramOptimization>true</WholeProgramOptimization>
-    <PlatformToolset>v141</PlatformToolset>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Naomi Release|x64'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
-    <UseDebugLibraries>true</UseDebugLibraries>
-    <CharacterSet>MultiByte</CharacterSet>
-    <WholeProgramOptimization>true</WholeProgramOptimization>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Slow|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <CharacterSet>MultiByte</CharacterSet>
-    <PlatformToolset>v141</PlatformToolset>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Naomi Debug|Win32'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
-    <UseDebugLibraries>true</UseDebugLibraries>
-    <CharacterSet>MultiByte</CharacterSet>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Slow|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <CharacterSet>MultiByte</CharacterSet>
-    <PlatformToolset>v141</PlatformToolset>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Naomi Debug|x64'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
-    <UseDebugLibraries>true</UseDebugLibraries>
-    <CharacterSet>MultiByte</CharacterSet>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -625,25 +541,13 @@
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Fast|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
-  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Naomi Release|Win32'" Label="PropertySheets">
-    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-  </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Fast|x64'" Label="PropertySheets">
-    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-  </ImportGroup>
-  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Naomi Release|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Slow|Win32'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
-  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Naomi Debug|Win32'" Label="PropertySheets">
-    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-  </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Slow|x64'" Label="PropertySheets">
-    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-  </ImportGroup>
-  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Naomi Debug|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
@@ -653,19 +557,7 @@
     <IntDir>$(Platform)\$(Configuration)\generated\objs\</IntDir>
     <TargetName>$(ProjectName)_$(Platform)_$(Configuration)</TargetName>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Naomi Release|Win32'">
-    <LinkIncremental>true</LinkIncremental>
-    <OutDir>$(SolutionDir)..\WorkDir\</OutDir>
-    <IntDir>$(Platform)\$(Configuration)\generated\objs\</IntDir>
-    <TargetName>$(ProjectName)_naomi_$(Platform)</TargetName>
-  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Fast|x64'">
-    <LinkIncremental>true</LinkIncremental>
-    <OutDir>$(SolutionDir)..\WorkDir\</OutDir>
-    <TargetName>$(ProjectName)_$(Platform)_$(Configuration)</TargetName>
-    <IntDir>$(Platform)\$(Configuration)\generated\objs\</IntDir>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Naomi Release|x64'">
     <LinkIncremental>true</LinkIncremental>
     <OutDir>$(SolutionDir)..\WorkDir\</OutDir>
     <TargetName>$(ProjectName)_$(Platform)_$(Configuration)</TargetName>
@@ -677,19 +569,7 @@
     <IntDir>$(Platform)\$(Configuration)\generated\objs\</IntDir>
     <TargetName>$(ProjectName)_$(Platform)_$(Configuration)</TargetName>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Naomi Debug|Win32'">
-    <LinkIncremental>true</LinkIncremental>
-    <OutDir>$(SolutionDir)..\WorkDir\</OutDir>
-    <IntDir>$(Platform)\$(Configuration)\generated\objs\</IntDir>
-    <TargetName>$(ProjectName)_naomi_$(Platform)_Debug</TargetName>
-  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Slow|x64'">
-    <LinkIncremental>true</LinkIncremental>
-    <OutDir>$(SolutionDir)..\WorkDir\</OutDir>
-    <TargetName>$(ProjectName)_$(Platform)_$(Configuration)</TargetName>
-    <IntDir>$(Platform)\$(Configuration)\generated\objs\</IntDir>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Naomi Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
     <OutDir>$(SolutionDir)..\WorkDir\</OutDir>
     <TargetName>$(ProjectName)_$(Platform)_$(Configuration)</TargetName>
@@ -701,47 +581,8 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Full</Optimization>
-      <PreprocessorDefinitions>WIN32;CHD5_FLAC;HAVE_CONFIG_H=1;CHD5_LZMA;_7ZIP_ST;NDEBUG;_CONSOLE;X86;RELEASE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\core\;$(ProjectDir)..\core\khronos;$(ProjectDir)..\core\rend\gles;$(ProjectDir)..\core\deps;$(ProjectDir)..\core\deps\dirent;$(ProjectDir)..\core\deps\flac\src\libflac\include;$(ProjectDir)..\core\deps\flac\include;$(ProjectDir)..\core\deps\libpng;$(ProjectDir)..\core\deps\zlib</AdditionalIncludeDirectories>
-      <AdditionalOptions>/MP %(AdditionalOptions)</AdditionalOptions>
-      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
-      <IntrinsicFunctions>true</IntrinsicFunctions>
-      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
-      <OmitFramePointers>true</OmitFramePointers>
-      <WholeProgramOptimization>true</WholeProgramOptimization>
-      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
-      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
-      <BufferSecurityCheck>false</BufferSecurityCheck>
-      <EnableEnhancedInstructionSet>StreamingSIMDExtensions</EnableEnhancedInstructionSet>
-      <FloatingPointModel>Fast</FloatingPointModel>
-      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-      <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <MinimalRebuild>false</MinimalRebuild>
-      <ObjectFileName>$(IntDir)/%(RelativeDir)/</ObjectFileName>
-      <OpenMPSupport>true</OpenMPSupport>
-    </ClCompile>
-    <Link>
-      <SubSystem>Windows</SubSystem>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)..\pvrframe</AdditionalLibraryDirectories>
-      <AdditionalDependencies>Dsound.lib;winmm.lib;wsock32.lib;comctl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-    </Link>
-    <PreBuildEvent>
-      <Command>for /f "delims=" %%i in ('git describe') do echo #define REICAST_VERSION "%%i" &gt;$(ProjectDir)\..\core\version.h
-for /f "delims=" %%i in ('git rev-parse --short HEAD') do echo #define GIT_HASH "%%i" &gt;&gt;$(ProjectDir)\..\core\version.h
-for /f "delims=" %%i in ('date /T') do echo #define BUILD_DATE "%%i" &gt;&gt;$(ProjectDir)\..\core\version.h
-</Command>
-      <Message>Create version.h</Message>
-    </PreBuildEvent>
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Naomi Release|Win32'">
-    <ClCompile>
-      <PrecompiledHeader>
-      </PrecompiledHeader>
-      <WarningLevel>Level3</WarningLevel>
-      <Optimization>Full</Optimization>
-      <PreprocessorDefinitions>WIN32;CHD5_FLAC;HAVE_CONFIG_H=1;CHD5_LZMA;_7ZIP_ST;NDEBUG;_CONSOLE;X86;RELEASE;TARGET_NAOMI;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\core\;$(ProjectDir)..\core\khronos;$(ProjectDir)..\core\rend\gles;$(ProjectDir)..\core\deps;$(ProjectDir)..\core\deps\dirent;$(ProjectDir)..\core\deps\flac\src\libflac\include;$(ProjectDir)..\core\deps\flac\include;$(ProjectDir)..\core\deps\libpng;$(ProjectDir)..\core\deps\zlib</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;PACKAGE_VERSION="1.3.2";FLAC__HAS_OGG=0;FLAC__NO_DLL;CHD5_FLAC;CHD5_LZMA;_7ZIP_ST;NDEBUG;_CONSOLE;X86;RELEASE;%(PreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\core\;$(ProjectDir)..\core\khronos;$(ProjectDir)..\core\rend\gles;$(ProjectDir)..\core\deps;$(ProjectDir)..\core\deps\dirent;$(ProjectDir)..\core\deps\flac\src\libflac\include;$(ProjectDir)..\core\deps\flac\include;$(ProjectDir)..\core\deps\libpng;$(ProjectDir)..\core\deps\xxhash;$(ProjectDir)..\core\deps\zlib</AdditionalIncludeDirectories>
       <AdditionalOptions>/MP %(AdditionalOptions)</AdditionalOptions>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -779,49 +620,8 @@ for /f "delims=" %%i in ('date /T') do echo #define BUILD_DATE "%%i" &gt;&gt;$(P
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Full</Optimization>
-      <PreprocessorDefinitions>WIN32;CHD5_FLAC;HAVE_CONFIG_H=1;CHD5_LZMA;_7ZIP_ST;NDEBUG;_CONSOLE;X86;RELEASE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\core\;$(ProjectDir)..\core\khronos;$(ProjectDir)..\core\rend\gles;$(ProjectDir)..\core\deps;$(ProjectDir)..\core\deps\dirent;$(ProjectDir)..\core\deps\flac\src\libflac\include;$(ProjectDir)..\core\deps\flac\include;$(ProjectDir)..\core\deps\libpng;$(ProjectDir)..\core\deps\zlib</AdditionalIncludeDirectories>
-      <AdditionalOptions>/MP %(AdditionalOptions)</AdditionalOptions>
-      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
-      <IntrinsicFunctions>true</IntrinsicFunctions>
-      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
-      <OmitFramePointers>true</OmitFramePointers>
-      <WholeProgramOptimization>true</WholeProgramOptimization>
-      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
-      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
-      <BufferSecurityCheck>false</BufferSecurityCheck>
-      <EnableEnhancedInstructionSet>StreamingSIMDExtensions</EnableEnhancedInstructionSet>
-      <FloatingPointModel>Fast</FloatingPointModel>
-      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-      <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <MinimalRebuild>false</MinimalRebuild>
-      <ObjectFileName>$(IntDir)/%(RelativeDir)/</ObjectFileName>
-      <UndefinePreprocessorDefinitions>
-      </UndefinePreprocessorDefinitions>
-      <OpenMPSupport>true</OpenMPSupport>
-    </ClCompile>
-    <Link>
-      <SubSystem>Windows</SubSystem>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)..\pvrframe</AdditionalLibraryDirectories>
-      <AdditionalDependencies>Dsound.lib;winmm.lib;wsock32.lib;comctl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-    </Link>
-    <PreBuildEvent>
-      <Command>for /f "delims=" %%i in ('git describe') do echo #define REICAST_VERSION "%%i" &gt;$(ProjectDir)\..\core\version.h
-for /f "delims=" %%i in ('git rev-parse --short HEAD') do echo #define GIT_HASH "%%i" &gt;&gt;$(ProjectDir)\..\core\version.h
-for /f "delims=" %%i in ('date /T') do echo #define BUILD_DATE "%%i" &gt;&gt;$(ProjectDir)\..\core\version.h
-</Command>
-      <Message>Create version.h</Message>
-    </PreBuildEvent>
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Naomi Release|x64'">
-    <ClCompile>
-      <PrecompiledHeader>
-      </PrecompiledHeader>
-      <WarningLevel>Level3</WarningLevel>
-      <Optimization>Full</Optimization>
-      <PreprocessorDefinitions>WIN32;CHD5_FLAC;HAVE_CONFIG_H=1;CHD5_LZMA;_7ZIP_ST;NDEBUG;_CONSOLE;X86;RELEASE;TARGET_NAOMI;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\core\;$(ProjectDir)..\core\khronos;$(ProjectDir)..\core\rend\gles;$(ProjectDir)..\core\deps;$(ProjectDir)..\core\deps\dirent;$(ProjectDir)..\core\deps\flac\src\libflac\include;$(ProjectDir)..\core\deps\flac\include;$(ProjectDir)..\core\deps\libpng;$(ProjectDir)..\core\deps\zlib</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;PACKAGE_VERSION="1.3.2";FLAC__HAS_OGG=0;FLAC__NO_DLL;CHD5_FLAC;CHD5_LZMA;_7ZIP_ST;NDEBUG;_CONSOLE;X86;RELEASE;%(PreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\core\;$(ProjectDir)..\core\khronos;$(ProjectDir)..\core\rend\gles;$(ProjectDir)..\core\deps;$(ProjectDir)..\core\deps\dirent;$(ProjectDir)..\core\deps\flac\src\libflac\include;$(ProjectDir)..\core\deps\flac\include;$(ProjectDir)..\core\deps\libpng;$(ProjectDir)..\core\deps\xxhash;$(ProjectDir)..\core\deps\zlib</AdditionalIncludeDirectories>
       <AdditionalOptions>/MP %(AdditionalOptions)</AdditionalOptions>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -861,36 +661,8 @@ for /f "delims=" %%i in ('date /T') do echo #define BUILD_DATE "%%i" &gt;&gt;$(P
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;CHD5_FLAC;HAVE_CONFIG_H=1;CHD5_LZMA;_7ZIP_ST;_DEBUG;_CONSOLE;X86;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\core\;$(ProjectDir)..\core\khronos;$(ProjectDir)..\core\rend\gles;$(ProjectDir)..\core\deps;$(ProjectDir)..\core\deps\dirent;$(ProjectDir)..\core\deps\flac\src\libflac\include;$(ProjectDir)..\core\deps\flac\include;$(ProjectDir)..\core\deps\libpng;$(ProjectDir)..\core\deps\zlib</AdditionalIncludeDirectories>
-      <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <MinimalRebuild>false</MinimalRebuild>
-      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
-      <ObjectFileName>$(IntDir)/%(RelativeDir)/</ObjectFileName>
-      <OpenMPSupport>true</OpenMPSupport>
-    </ClCompile>
-    <Link>
-      <SubSystem>Windows</SubSystem>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)..\pvrframe</AdditionalLibraryDirectories>
-      <AdditionalDependencies>Dsound.lib;winmm.lib;wsock32.lib;comctl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-    </Link>
-    <PreBuildEvent>
-      <Command>for /f "delims=" %%i in ('git describe') do echo #define REICAST_VERSION "%%i" &gt;$(ProjectDir)\..\core\version.h
-for /f "delims=" %%i in ('git rev-parse --short HEAD') do echo #define GIT_HASH "%%i" &gt;&gt;$(ProjectDir)\..\core\version.h
-for /f "delims=" %%i in ('date /T') do echo #define BUILD_DATE "%%i" &gt;&gt;$(ProjectDir)\..\core\version.h
-</Command>
-      <Message>Create version.h</Message>
-    </PreBuildEvent>
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Naomi Debug|Win32'">
-    <ClCompile>
-      <PrecompiledHeader>
-      </PrecompiledHeader>
-      <WarningLevel>Level3</WarningLevel>
-      <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;CHD5_FLAC;HAVE_CONFIG_H=1;CHD5_LZMA;_7ZIP_ST;_DEBUG;_CONSOLE;X86;TARGET_NAOMI;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\core\;$(ProjectDir)..\core\khronos;$(ProjectDir)..\core\rend\gles;$(ProjectDir)..\core\deps;$(ProjectDir)..\core\deps\dirent;$(ProjectDir)..\core\deps\flac\src\libflac\include;$(ProjectDir)..\core\deps\flac\include;$(ProjectDir)..\core\deps\libpng;$(ProjectDir)..\core\deps\zlib</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;PACKAGE_VERSION="1.3.2";FLAC__HAS_OGG=0;FLAC__NO_DLL;CHD5_FLAC;CHD5_LZMA;_7ZIP_ST;_DEBUG;_CONSOLE;X86;%(PreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\core\;$(ProjectDir)..\core\khronos;$(ProjectDir)..\core\rend\gles;$(ProjectDir)..\core\deps;$(ProjectDir)..\core\deps\dirent;$(ProjectDir)..\core\deps\flac\src\libflac\include;$(ProjectDir)..\core\deps\flac\include;$(ProjectDir)..\core\deps\libpng;$(ProjectDir)..\core\deps\xxhash;$(ProjectDir)..\core\deps\zlib</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
@@ -917,39 +689,8 @@ for /f "delims=" %%i in ('date /T') do echo #define BUILD_DATE "%%i" &gt;&gt;$(P
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;CHD5_FLAC;HAVE_CONFIG_H=1;CHD5_LZMA;_7ZIP_ST;_DEBUG;_CONSOLE;X86;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\core\;$(ProjectDir)..\core\khronos;$(ProjectDir)..\core\rend\gles;$(ProjectDir)..\core\deps;$(ProjectDir)..\core\deps\dirent;$(ProjectDir)..\core\deps\flac\src\libflac\include;$(ProjectDir)..\core\deps\flac\include;$(ProjectDir)..\core\deps\libpng;$(ProjectDir)..\core\deps\zlib</AdditionalIncludeDirectories>
-      <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <MinimalRebuild>false</MinimalRebuild>
-      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
-      <ObjectFileName>$(IntDir)/%(RelativeDir)/</ObjectFileName>
-      <UndefinePreprocessorDefinitions>
-      </UndefinePreprocessorDefinitions>
-      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
-      <OpenMPSupport>true</OpenMPSupport>
-    </ClCompile>
-    <Link>
-      <SubSystem>Windows</SubSystem>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)..\pvrframe</AdditionalLibraryDirectories>
-      <AdditionalDependencies>Dsound.lib;winmm.lib;wsock32.lib;comctl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-    </Link>
-    <PreBuildEvent>
-      <Command>for /f "delims=" %%i in ('git describe') do echo #define REICAST_VERSION "%%i" &gt;$(ProjectDir)\..\core\version.h
-for /f "delims=" %%i in ('git rev-parse --short HEAD') do echo #define GIT_HASH "%%i" &gt;&gt;$(ProjectDir)\..\core\version.h
-for /f "delims=" %%i in ('date /T') do echo #define BUILD_DATE "%%i" &gt;&gt;$(ProjectDir)\..\core\version.h
-</Command>
-      <Message>Create version.h</Message>
-    </PreBuildEvent>
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Naomi Debug|x64'">
-    <ClCompile>
-      <PrecompiledHeader>
-      </PrecompiledHeader>
-      <WarningLevel>Level3</WarningLevel>
-      <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;CHD5_FLAC;HAVE_CONFIG_H=1;CHD5_LZMA;_7ZIP_ST;_DEBUG;_CONSOLE;X86;TARGET_NAOMI;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\core\;$(ProjectDir)..\core\khronos;$(ProjectDir)..\core\rend\gles;$(ProjectDir)..\core\deps;$(ProjectDir)..\core\deps\dirent;$(ProjectDir)..\core\deps\flac\src\libflac\include;$(ProjectDir)..\core\deps\flac\include;$(ProjectDir)..\core\deps\libpng;$(ProjectDir)..\core\deps\zlib</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;PACKAGE_VERSION="1.3.2";FLAC__HAS_OGG=0;FLAC__NO_DLL;CHD5_FLAC;CHD5_LZMA;_7ZIP_ST;_DEBUG;_CONSOLE;X86;%(PreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\core\;$(ProjectDir)..\core\khronos;$(ProjectDir)..\core\rend\gles;$(ProjectDir)..\core\deps;$(ProjectDir)..\core\deps\dirent;$(ProjectDir)..\core\deps\flac\src\libflac\include;$(ProjectDir)..\core\deps\flac\include;$(ProjectDir)..\core\deps\libpng;$(ProjectDir)..\core\deps\xxhash;$(ProjectDir)..\core\deps\zlib</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
