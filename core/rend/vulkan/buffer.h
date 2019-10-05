@@ -78,8 +78,8 @@ struct BufferData
 				[&](vk::CommandBuffer const& commandBuffer) { commandBuffer.copyBuffer(*stagingBuffer.buffer, *this->buffer, vk::BufferCopy(0, 0, dataSize)); });
 	}
 
-	vk::UniqueBuffer        buffer;
 	vk::UniqueDeviceMemory  deviceMemory;
+	vk::UniqueBuffer        buffer;
 	vk::DeviceSize          m_size;
 
 #if !defined(NDEBUG)

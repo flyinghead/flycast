@@ -79,7 +79,6 @@ public:
 
 	bool Render() override
 	{
-		printf("VulkanRenderer::Render\n");
 		extern float fb_scale_x, fb_scale_y;
 		extern bool fog_needs_update;
 
@@ -203,7 +202,7 @@ public:
 		modVolUniforms.sp_ShaderColor = 1 - FPU_SHAD_SCALE.scale_factor / 256.f;
 
 		UploadUniforms(vtxUniforms, fragUniforms, modVolUniforms);
-		// TODO separate between per-frame and per-poly uniforms (only clip text and trilinear alpha are per-poly)
+
 		// TODO this upload should go in a cmd buffer?
 
 		GetContext()->BeginRenderPass();
@@ -228,7 +227,7 @@ public:
 		cmdBuffer.bindIndexBuffer(*indexBuffers[GetCurrentImage()]->buffer, 0, vk::IndexType::eUint32);
 
 		cmdBuffer.setViewport(0, vk::Viewport(0.0f, 0.0f, static_cast<float>(GetContext()->GetViewPort().width),
-				static_cast<float>(GetContext()->GetViewPort().width), 0.0f, 1.0f));
+				static_cast<float>(GetContext()->GetViewPort().width), 1.0f, 0.0f));
 		cmdBuffer.setScissor(0, vk::Rect2D(vk::Offset2D(0, 0), GetContext()->GetViewPort()));
 
 		RenderPass previous_pass = {};

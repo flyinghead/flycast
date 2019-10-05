@@ -275,6 +275,71 @@ void VulkanContext::InitDevice()
 		// This links entry points directly from the driver and isn't absolutely necessary
 		volkLoadDevice(static_cast<VkDevice>(*device));
 
+	    // Queues
+	    graphicsQueue = device->getQueue(graphicsQueueIndex, 0);
+	    presentQueue = device->getQueue(presentQueueIndex, 0);
+
+	    // Descriptor pool
+        vk::DescriptorPoolSize pool_sizes[] =
+        {
+            { vk::DescriptorType::eSampler, 1000 },
+            { vk::DescriptorType::eCombinedImageSampler, 1000 },
+            { vk::DescriptorType::eSampledImage, 1000 },
+            { vk::DescriptorType::eStorageImage, 1000 },
+            { vk::DescriptorType::eUniformTexelBuffer, 1000 },
+			{ vk::DescriptorType::eStorageTexelBuffer, 1000 },
+            { vk::DescriptorType::eUniformBuffer, 1000 },
+            { vk::DescriptorType::eStorageBuffer, 1000 },
+            { vk::DescriptorType::eUniformBufferDynamic, 1000 },
+            { vk::DescriptorType::eStorageBufferDynamic, 1000 },
+            { vk::DescriptorType::eInputAttachment, 1000 }
+        };
+	    descriptorPool = device->createDescriptorPoolUnique(vk::DescriptorPoolCreateInfo(vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet,
+	    		1000 * ARRAY_SIZE(pool_sizes), ARRAY_SIZE(pool_sizes), pool_sizes));
+
+
+	    std::string cachePath = get_writable_data_path(PipelineCacheFileName);
+	    FILE *f = fopen(cachePath.c_str(), "rb");
+	    if (f == nullptr)
+	    	pipelineCache = device->createPipelineCacheUnique(vk::PipelineCacheCreateInfo());
+	    else
+	    {
+	    	fseek(f, 0, SEEK_END);
+	    	size_t cacheSize = ftell(f);
+	    	fseek(f, 0, SEEK_SET);
+	    	u8 *cacheData = new u8[cacheSize];
+	    	fread(cacheData, 1, cacheSize, f);
+	    	fclose(f);
+	    	pipelineCache = device->createPipelineCacheUnique(vk::PipelineCacheCreateInfo(vk::PipelineCacheCreateFlags(), cacheSize, cacheData));
+	    	INFO_LOG(RENDERER, "Vulkan pipeline cache loaded from %s: %zd bytes", cachePath.c_str(), cacheSize);
+	    }
+
+		CreateSwapChain();
+	}
+	catch (const vk::SystemError& err)
+	{
+		ERROR_LOG(RENDERER, "Vulkan error: %s", err.what());
+	}
+	catch (...)
+	{
+		ERROR_LOG(RENDERER, "Unknown error");
+	}
+}
+
+void VulkanContext::CreateSwapChain()
+{
+	try
+	{
+		device->waitIdle();
+
+		framebuffers.clear();
+		drawFences.clear();
+		imageAcquiredSemaphores.clear();
+		renderCompleteSemaphores.clear();
+		commandBuffers.clear();
+		commandPools.clear();
+		imageViews.clear();
+
 		// get the supported VkFormats
 		std::vector<vk::SurfaceFormatKHR> formats = physicalDevice.getSurfaceFormatsKHR(surface);
 		assert(!formats.empty());
@@ -304,6 +369,7 @@ void VulkanContext::InitDevice()
 			// If the surface size is defined, the swap chain size must match
 			swapchainExtent = surfaceCapabilities.currentExtent;
 		}
+		SetWindowSize(swapchainExtent.width, swapchainExtent.height);
 
 		// The FIFO present mode is guaranteed by the spec to be supported
 		vk::PresentModeKHR swapchainPresentMode = vk::PresentModeKHR::eFifo;
@@ -333,6 +399,8 @@ void VulkanContext::InitDevice()
 		std::vector<vk::Image> swapChainImages = device->getSwapchainImagesKHR(*swapChain);
 
 		imageViews.reserve(swapChainImages.size());
+		commandPools.reserve(swapChainImages.size());
+		commandBuffers.reserve(swapChainImages.size());
 		vk::ComponentMapping componentMapping(vk::ComponentSwizzle::eR, vk::ComponentSwizzle::eG, vk::ComponentSwizzle::eB, vk::ComponentSwizzle::eA);
 		vk::ImageSubresourceRange subResourceRange(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1);
 		for (auto image : swapChainImages)
@@ -346,28 +414,6 @@ void VulkanContext::InitDevice()
 		    // allocate a CommandBuffer from the CommandPool
 		    commandBuffers.push_back(std::move(device->allocateCommandBuffersUnique(vk::CommandBufferAllocateInfo(*commandPools.back(), vk::CommandBufferLevel::ePrimary, 1)).front()));
 		}
-
-	    // Queues
-	    graphicsQueue = device->getQueue(graphicsQueueIndex, 0);
-	    presentQueue = device->getQueue(presentQueueIndex, 0);
-
-	    // Descriptor pool
-        vk::DescriptorPoolSize pool_sizes[] =
-        {
-            { vk::DescriptorType::eSampler, 1000 },
-            { vk::DescriptorType::eCombinedImageSampler, 1000 },
-            { vk::DescriptorType::eSampledImage, 1000 },
-            { vk::DescriptorType::eStorageImage, 1000 },
-            { vk::DescriptorType::eUniformTexelBuffer, 1000 },
-			{ vk::DescriptorType::eStorageTexelBuffer, 1000 },
-            { vk::DescriptorType::eUniformBuffer, 1000 },
-            { vk::DescriptorType::eStorageBuffer, 1000 },
-            { vk::DescriptorType::eUniformBufferDynamic, 1000 },
-            { vk::DescriptorType::eStorageBufferDynamic, 1000 },
-            { vk::DescriptorType::eInputAttachment, 1000 }
-        };
-	    descriptorPool = device->createDescriptorPoolUnique(vk::DescriptorPoolCreateInfo(vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet,
-	    		1000 * ARRAY_SIZE(pool_sizes), ARRAY_SIZE(pool_sizes), pool_sizes));
 
 	    // Render pass
 	    vk::Format depthFormat = vk::Format::eD16Unorm;
@@ -391,6 +437,9 @@ void VulkanContext::InitDevice()
 	    attachments[1] = *depthView;
 
 	    framebuffers.reserve(imageViews.size());
+	    drawFences.reserve(imageViews.size());
+	    renderCompleteSemaphores.reserve(imageViews.size());
+	    imageAcquiredSemaphores.reserve(imageViews.size());
 	    for (auto const& view : imageViews)
 	    {
 	    	attachments[0] = *view;
@@ -400,25 +449,9 @@ void VulkanContext::InitDevice()
 	    	imageAcquiredSemaphores.push_back(device->createSemaphoreUnique(vk::SemaphoreCreateInfo()));
 	    }
 
-	    std::string cachePath = get_writable_data_path(PipelineCacheFileName);
-	    FILE *f = fopen(cachePath.c_str(), "rb");
-	    if (f == nullptr)
-	    	pipelineCache = device->createPipelineCacheUnique(vk::PipelineCacheCreateInfo());
-	    else
-	    {
-	    	fseek(f, 0, SEEK_END);
-	    	size_t cacheSize = ftell(f);
-	    	fseek(f, 0, SEEK_SET);
-	    	u8 *cacheData = new u8[cacheSize];
-	    	fread(cacheData, 1, cacheSize, f);
-	    	fclose(f);
-	    	pipelineCache = device->createPipelineCacheUnique(vk::PipelineCacheCreateInfo(vk::PipelineCacheCreateFlags(), cacheSize, cacheData));
-	    	INFO_LOG(RENDERER, "Vulkan pipeline cache loaded from %s: %zd bytes", cachePath.c_str(), cacheSize);
-	    }
-
 	    InitImgui();
 
-	    INFO_LOG(RENDERER, "Vulkan context initialized: %d x %d, swap chain size %d", width, height, (int)imageViews.size());
+	    INFO_LOG(RENDERER, "Vulkan swap chain created: %d x %d, swap chain size %d", width, height, (int)imageViews.size());
 	}
 	catch (const vk::SystemError& err)
 	{
@@ -432,8 +465,8 @@ void VulkanContext::InitDevice()
 
 void VulkanContext::NewFrame()
 {
-	printf("VulkanContext::NewFrame\n");
-	// TODO check resize => rebuild swap chain
+	if (HasSurfaceDimensionChanged())
+		CreateSwapChain();
 	device->acquireNextImageKHR(*swapChain, UINT64_MAX, *imageAcquiredSemaphores[currentSemaphore], nullptr, &currentImage);
 	device->waitForFences(1, &(*drawFences[currentImage]), true, UINT64_MAX);
 	device->resetFences(1, &(*drawFences[currentImage]));
@@ -462,9 +495,13 @@ void VulkanContext::EndFrame()
 
 void VulkanContext::Present()
 {
-	printf("VulkanContext::Present\n");
-	presentQueue.presentKHR(vk::PresentInfoKHR(1, &(*renderCompleteSemaphores[currentSemaphore]), 1, &(*swapChain), &currentImage));
-	currentSemaphore = (currentSemaphore + 1) % imageViews.size();
+	try {
+		presentQueue.presentKHR(vk::PresentInfoKHR(1, &(*renderCompleteSemaphores[currentSemaphore]), 1, &(*swapChain), &currentImage));
+		currentSemaphore = (currentSemaphore + 1) % imageViews.size();
+	} catch (const vk::OutOfDateKHRError& e) {
+		// Sometimes happens when resizing the window
+		INFO_LOG(RENDERER, "vk::OutOfDateKHRError");
+	}
 }
 
 VulkanContext::~VulkanContext()

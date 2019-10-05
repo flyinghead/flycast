@@ -46,6 +46,7 @@ public:
 	~VulkanContext();
 	void InitInstance(const char** extensions, uint32_t extensions_count);
 	void InitDevice();
+	void CreateSwapChain();
 
 	VkInstance GetInstance() const { return static_cast<VkInstance>(instance.get()); }
 	u32 GetGraphicsQueueFamilyIndex() const { return graphicsQueueIndex; }
@@ -72,6 +73,30 @@ public:
 private:
 	void InitDepthBuffer();
 	void InitImgui();
+
+	bool HasSurfaceDimensionChanged()
+	{
+		vk::SurfaceCapabilitiesKHR surfaceCapabilities = physicalDevice.getSurfaceCapabilitiesKHR(surface);
+		VkExtent2D swapchainExtent;
+		if (surfaceCapabilities.currentExtent.width == std::numeric_limits<uint32_t>::max())
+		{
+			// If the surface size is undefined, the size is set to the size of the images requested.
+			swapchainExtent.width = std::min(std::max(width, surfaceCapabilities.minImageExtent.width), surfaceCapabilities.maxImageExtent.width);
+			swapchainExtent.height = std::min(std::max(height, surfaceCapabilities.minImageExtent.height), surfaceCapabilities.maxImageExtent.height);
+		}
+		else
+		{
+			// If the surface size is defined, the swap chain size must match
+			swapchainExtent = surfaceCapabilities.currentExtent;
+		}
+		if (width == swapchainExtent.width && height == swapchainExtent.height)
+			return false;
+
+		screen_width = width = swapchainExtent.width;
+		screen_height = height = swapchainExtent.height;
+
+		return true;
+	}
 
 	u32 width = 0;
 	u32 height = 0;

@@ -148,6 +148,7 @@ void Texture::UploadToGPU(int width, int height, u8 *data)
 	}
 	Init(width, height, format);
 	SetImage(VulkanContext::Instance()->GetCurrentCommandBuffer(), dataSize, data);
+	samplers.clear();
 }
 
 void Texture::Init(u32 width, u32 height, vk::Format format)

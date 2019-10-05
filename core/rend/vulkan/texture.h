@@ -35,7 +35,8 @@ struct Texture : BaseTextureCacheData
 	bool IsNew() const { return !image.get(); }
 	vk::DescriptorImageInfo GetDescriptorImageInfo(TSP tsp)
 	{
-		const auto& it = samplers.find(tsp.full & 0x7e000);
+		u32 samplerHash = tsp.full & 0x7e000;
+		const auto& it = samplers.find(samplerHash);
 		vk::Sampler sampler;
 		if (it != samplers.end())
 			sampler = it->second.get();
@@ -46,11 +47,13 @@ struct Texture : BaseTextureCacheData
 					: tsp.FlipU ? vk::SamplerAddressMode::eMirroredRepeat : vk::SamplerAddressMode::eRepeat;
 			vk::SamplerAddressMode vRepeat = tsp.ClampV ? vk::SamplerAddressMode::eClampToEdge
 					: tsp.FlipV ? vk::SamplerAddressMode::eMirroredRepeat : vk::SamplerAddressMode::eRepeat;
-			samplers[tsp.full & 0x7e000]
-				= device.createSamplerUnique(vk::SamplerCreateInfo(vk::SamplerCreateFlags(), filter, filter, vk::SamplerMipmapMode::eLinear,
-						uRepeat, vRepeat, vk::SamplerAddressMode::eClampToEdge, 0.0f, false,
-					16.0f, false, vk::CompareOp::eNever, 0.0f, 0.0f, vk::BorderColor::eFloatOpaqueBlack));
-			sampler = *samplers[tsp.full & 0x7e000];
+
+			sampler =
+				samplers.emplace(
+						std::make_pair(samplerHash, device.createSamplerUnique(vk::SamplerCreateInfo(vk::SamplerCreateFlags(), filter, filter,
+								vk::SamplerMipmapMode::eLinear, uRepeat, vRepeat, vk::SamplerAddressMode::eClampToEdge, 0.0f, false,
+								16.0f, false, vk::CompareOp::eNever, 0.0f, 0.0f, vk::BorderColor::eFloatOpaqueBlack)))).first->second.get();
+
 		}
 		return vk::DescriptorImageInfo(sampler, *imageView, vk::ImageLayout::eShaderReadOnlyOptimal);
 	}
@@ -67,9 +70,10 @@ private:
 	std::unique_ptr<BufferData> stagingBufferData;
 	std::map<u32, vk::UniqueSampler> samplers;
 
-	vk::UniqueImage image;
 	vk::UniqueDeviceMemory deviceMemory;
 	vk::UniqueImageView imageView;
+	vk::UniqueImage image;
+
 	vk::PhysicalDevice physicalDevice;
 	vk::Device device;
 };
