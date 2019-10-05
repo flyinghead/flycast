@@ -351,26 +351,17 @@ static const TBuiltInResource DefaultTBuiltInResource = {
     /* .MaxCullDistances = */ 8,
     /* .MaxCombinedClipAndCullDistances = */ 8,
     /* .MaxSamples = */ 4,
-    /* .maxMeshOutputVerticesNV = */ 256,
-    /* .maxMeshOutputPrimitivesNV = */ 512,
-    /* .maxMeshWorkGroupSizeX_NV = */ 32,
-    /* .maxMeshWorkGroupSizeY_NV = */ 1,
-    /* .maxMeshWorkGroupSizeZ_NV = */ 1,
-    /* .maxTaskWorkGroupSizeX_NV = */ 32,
-    /* .maxTaskWorkGroupSizeY_NV = */ 1,
-    /* .maxTaskWorkGroupSizeZ_NV = */ 1,
-    /* .maxMeshViewCountNV = */ 4,
 
     /* .limits = */ {
-        /* .nonInductiveForLoops = */ 1,
-        /* .whileLoops = */ 1,
-        /* .doWhileLoops = */ 1,
-        /* .generalUniformIndexing = */ 1,
-        /* .generalAttributeMatrixVectorIndexing = */ 1,
-        /* .generalVaryingIndexing = */ 1,
-        /* .generalSamplerIndexing = */ 1,
-        /* .generalVariableIndexing = */ 1,
-        /* .generalConstantMatrixVectorIndexing = */ 1,
+        /* .nonInductiveForLoops = */ true,
+        /* .whileLoops = */ true,
+        /* .doWhileLoops = */ true,
+        /* .generalUniformIndexing = */ true,
+        /* .generalAttributeMatrixVectorIndexing = */ true,
+        /* .generalVaryingIndexing = */ true,
+        /* .generalSamplerIndexing = */ true,
+        /* .generalVariableIndexing = */ true,
+        /* .generalConstantMatrixVectorIndexing = */ true,
     }};
 
 static EShLanguage translateShaderStage(vk::ShaderStageFlagBits stage)
@@ -383,6 +374,7 @@ static EShLanguage translateShaderStage(vk::ShaderStageFlagBits stage)
 	case vk::ShaderStageFlagBits::eGeometry:                return EShLangGeometry;
 	case vk::ShaderStageFlagBits::eFragment:                return EShLangFragment;
 	case vk::ShaderStageFlagBits::eCompute:                 return EShLangCompute;
+	/*
 	case vk::ShaderStageFlagBits::eRaygenNV:                return EShLangRayGenNV;
 	case vk::ShaderStageFlagBits::eAnyHitNV:                return EShLangAnyHitNV;
 	case vk::ShaderStageFlagBits::eClosestHitNV:            return EShLangClosestHitNV;
@@ -391,6 +383,7 @@ static EShLanguage translateShaderStage(vk::ShaderStageFlagBits stage)
 	case vk::ShaderStageFlagBits::eCallableNV:              return EShLangCallableNV;
 	case vk::ShaderStageFlagBits::eTaskNV:                  return EShLangTaskNV;
 	case vk::ShaderStageFlagBits::eMeshNV:                  return EShLangMeshNV;
+	 */
 	default:
 		die("Unknown shader stage");
 		return EShLangVertex;
