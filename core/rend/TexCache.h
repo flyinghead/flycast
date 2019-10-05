@@ -703,3 +703,5 @@ struct BaseTextureCacheData
 BaseTextureCacheData *getTextureCacheData(TSP tsp, TCW tcw, BaseTextureCacheData *(*factory)());
 void CollectCleanup();
 void killtex();
+
+void ReadFramebuffer(PixelBuffer<u32>& pb, int& width, int& height);

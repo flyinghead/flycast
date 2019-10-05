@@ -6,6 +6,7 @@
 
 #include "TexCache.h"
 #include "hw/pvr/pvr_regs.h"
+#include "hw/pvr/pvr_mem.h"
 #include "hw/pvr/Renderer_if.h"
 #include "hw/mem/_vmem.h"
 #include "hw/mem/vmem32.h"
@@ -805,4 +806,126 @@ void killtex()
 	TexCache.clear();
 	KillTex = false;
 	INFO_LOG(RENDERER, "Texture cache cleared");
+}
+
+void ReadFramebuffer(PixelBuffer<u32>& pb, int& width, int& height)
+{
+	width = (FB_R_SIZE.fb_x_size + 1) << 1;     // in 16-bit words
+	height = FB_R_SIZE.fb_y_size + 1;
+	int modulus = (FB_R_SIZE.fb_modulus - 1) << 1;
+
+	int bpp;
+	switch (FB_R_CTRL.fb_depth)
+	{
+		case fbde_0555:
+		case fbde_565:
+			bpp = 2;
+			break;
+		case fbde_888:
+			bpp = 3;
+			width = (width * 2) / 3;		// in pixels
+			modulus = (modulus * 2) / 3;	// in pixels
+			break;
+		case fbde_C888:
+			bpp = 4;
+			width /= 2;             // in pixels
+			modulus /= 2;           // in pixels
+			break;
+		default:
+			die("Invalid framebuffer format\n");
+			bpp = 4;
+			break;
+	}
+
+	u32 addr = SPG_CONTROL.interlace && !SPG_STATUS.fieldnum ? FB_R_SOF2 : FB_R_SOF1;
+
+	pb.init(width, height);
+	u8 *dst = (u8*)pb.data();
+
+	switch (FB_R_CTRL.fb_depth)
+	{
+		case fbde_0555:    // 555 RGB
+			for (int y = 0; y < height; y++)
+			{
+				for (int i = 0; i < width; i++)
+				{
+					u16 src = pvr_read_area1_16(addr);
+					*dst++ = (((src >> 10) & 0x1F) << 3) + FB_R_CTRL.fb_concat;
+					*dst++ = (((src >> 5) & 0x1F) << 3) + FB_R_CTRL.fb_concat;
+					*dst++ = (((src >> 0) & 0x1F) << 3) + FB_R_CTRL.fb_concat;
+					*dst++ = 0xFF;
+					addr += bpp;
+				}
+				addr += modulus * bpp;
+			}
+			break;
+
+		case fbde_565:    // 565 RGB
+			for (int y = 0; y < height; y++)
+			{
+				for (int i = 0; i < width; i++)
+				{
+					u16 src = pvr_read_area1_16(addr);
+					*dst++ = (((src >> 11) & 0x1F) << 3) + FB_R_CTRL.fb_concat;
+					*dst++ = (((src >> 5) & 0x3F) << 2) + (FB_R_CTRL.fb_concat >> 1);
+					*dst++ = (((src >> 0) & 0x1F) << 3) + FB_R_CTRL.fb_concat;
+					*dst++ = 0xFF;
+					addr += bpp;
+				}
+				addr += modulus * bpp;
+			}
+			break;
+		case fbde_888:		// 888 RGB
+			for (int y = 0; y < height; y++)
+			{
+				for (int i = 0; i < width; i += 4)
+				{
+					u32 src = pvr_read_area1_32(addr);
+					*dst++ = src >> 16;
+					*dst++ = src >> 8;
+					*dst++ = src;
+					*dst++ = 0xFF;
+					addr += 4;
+					if (i + 1 >= width)
+						break;
+					u32 src2 = pvr_read_area1_32(addr);
+					*dst++ = src2 >> 8;
+					*dst++ = src2;
+					*dst++ = src >> 24;
+					*dst++ = 0xFF;
+					addr += 4;
+					if (i + 2 >= width)
+						break;
+					u32 src3 = pvr_read_area1_32(addr);
+					*dst++ = src3;
+					*dst++ = src2 >> 24;
+					*dst++ = src2 >> 16;
+					*dst++ = 0xFF;
+					addr += 4;
+					if (i + 3 >= width)
+						break;
+					*dst++ = src3 >> 24;
+					*dst++ = src3 >> 16;
+					*dst++ = src3 >> 8;
+					*dst++ = 0xFF;
+				}
+				addr += modulus * bpp;
+			}
+			break;
+		case fbde_C888:     // 0888 RGB
+			for (int y = 0; y < height; y++)
+			{
+				for (int i = 0; i < width; i++)
+				{
+					u32 src = pvr_read_area1_32(addr);
+					*dst++ = src >> 16;
+					*dst++ = src >> 8;
+					*dst++ = src;
+					*dst++ = 0xFF;
+					addr += bpp;
+				}
+				addr += modulus * bpp;
+			}
+			break;
+	}
 }
