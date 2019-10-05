@@ -40,6 +40,19 @@ ifndef NO_REND
 	    RZDCY_MODULES += rend/gl4/
 	endif
     endif
+    ifdef USE_VULKAN
+    	RZDCY_MODULES += rend/vulkan/ deps/volk/ \
+    		deps/glslang/glslang/MachineIndependent/ \
+    		deps/glslang/glslang/MachineIndependent/preprocessor/ \
+    		deps/glslang/glslang/GenericCodeGen/ \
+    		deps/glslang/OGLCompilersDLL/ \
+    		deps/glslang/SPIRV/
+    	ifdef FOR_WINDOWS
+    		RZDCY_MODULES += deps/glslang/glslang/OSDependent/Windows/
+    	else
+    		RZDCY_MODULES += deps/glslang/glslang/OSDependent/Unix/
+    	endif
+    endif
 else
     RZDCY_MODULES += rend/norend/
 endif
@@ -101,8 +114,18 @@ RZDCY_CFLAGS :=
 	endif
 endif
 
+ifdef FOR_WINDOWS
+	RZDCY_CFLAGS += -DVK_USE_PLATFORM_WIN32_KHR
+else
+	ifdef FOR_ANDROID
+		RZDCY_CFLAGS += -DVK_USE_PLATFORM_ANDROID_KHR
+	else
+		RZDCY_CFLAGS += -DVK_USE_PLATFORM_XLIB_KHR
+	endif
+endif
+
 RZDCY_CFLAGS += -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/rend/gles -I$(RZDCY_SRC_DIR)/deps \
-		 -I$(RZDCY_SRC_DIR)/deps/vixl -I$(RZDCY_SRC_DIR)/khronos
+		 -I$(RZDCY_SRC_DIR)/deps/vixl -I$(RZDCY_SRC_DIR)/khronos -I$(RZDCY_SRC_DIR)/deps/glslang
 
 ifdef USE_MODEM
 	RZDCY_CFLAGS += -DENABLE_MODEM -I$(RZDCY_SRC_DIR)/deps/picotcp/include -I$(RZDCY_SRC_DIR)/deps/picotcp/modules

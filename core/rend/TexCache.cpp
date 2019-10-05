@@ -492,6 +492,7 @@ void BaseTextureCacheData::Create()
 	Updates=0;
 	dirty=FrameCount;
 	lock_block = nullptr;
+	custom_image_data = nullptr;
 
 	//decode info from tsp/tcw into the texture struct
 	tex=&format[tcw.PixelFmt == PixelReserved ? Pixel1555 : tcw.PixelFmt];	//texture format table entry
@@ -616,7 +617,6 @@ void BaseTextureCacheData::Update()
 	if (tcw.StrideSel && tcw.ScanOrder && (tex->PL || tex->PL32))
 		stride = std::max(w, (TEXT_CONTROL & 31) * 32);
 
-	PrintTextureName();
 	u32 original_h = h;
 	if (sa_tex > VRAM_SIZE || size == 0 || sa + size > VRAM_SIZE)
 	{
@@ -717,6 +717,7 @@ void BaseTextureCacheData::Update()
 		ComputeHash();
 		custom_texture.DumpTexture(texture_hash, upscaled_w, upscaled_h, tex_type, temp_tex_buffer);
 	}
+	PrintTextureName();
 }
 
 void BaseTextureCacheData::CheckCustomTexture()

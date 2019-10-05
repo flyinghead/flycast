@@ -24,7 +24,8 @@
 #include "types.h"
 #include "stdclass.h"
 #include "imgui/imgui.h"
-#include "gles/imgui_impl_opengl3.h"
+//#include "gles/imgui_impl_opengl3.h"
+#include "gui_util.h"
 
 extern bool settings_opening;
 
@@ -62,7 +63,7 @@ void gui_display_vjoy_commands(int screen_width, int screen_height, float scalin
     ImGui::End();
 
     ImGui::Render();
-    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData(), false);
+    ImGui_impl_RenderDrawData(ImGui::GetDrawData(), false);
 }
 
 #endif // __ANDROID__

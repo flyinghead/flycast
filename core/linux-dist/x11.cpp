@@ -1,6 +1,4 @@
 #if defined(SUPPORT_X11)
-#include <map>
-#include <memory>
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
 #include <X11/Xutil.h>
@@ -22,6 +20,10 @@
 #include "profiler/profiler.h"
 #endif
 #include "x11_keyboard.h"
+#ifdef USE_VULKAN
+#include "rend/vulkan/vulkan.h"
+static VulkanContext *vulkanContext;
+#endif
 
 #if defined(TARGET_PANDORA)
 	#define DEFAULT_FULLSCREEN    true
@@ -404,69 +406,68 @@ void x11_window_create()
 
 		int depth = CopyFromParent;
 
-		#if !defined(GLES)
-			// Get a matching FB config
-			static int visual_attribs[] =
-			{
-				GLX_X_RENDERABLE    , True,
-				GLX_DRAWABLE_TYPE   , GLX_WINDOW_BIT,
-				GLX_RENDER_TYPE     , GLX_RGBA_BIT,
-				GLX_X_VISUAL_TYPE   , GLX_TRUE_COLOR,
-				GLX_RED_SIZE        , 8,
-				GLX_GREEN_SIZE      , 8,
-				GLX_BLUE_SIZE       , 8,
-				GLX_ALPHA_SIZE      , 8,
-				GLX_DEPTH_SIZE      , 24,
-				GLX_STENCIL_SIZE    , 8,
-				GLX_DOUBLEBUFFER    , True,
-				//GLX_SAMPLE_BUFFERS  , 1,
-				//GLX_SAMPLES         , 4,
-				None
-			};
+#if !defined(GLES)
+		// Get a matching FB config
+		static int visual_attribs[] =
+		{
+			GLX_X_RENDERABLE    , True,
+			GLX_DRAWABLE_TYPE   , GLX_WINDOW_BIT,
+			GLX_RENDER_TYPE     , GLX_RGBA_BIT,
+			GLX_X_VISUAL_TYPE   , GLX_TRUE_COLOR,
+			GLX_RED_SIZE        , 8,
+			GLX_GREEN_SIZE      , 8,
+			GLX_BLUE_SIZE       , 8,
+			GLX_ALPHA_SIZE      , 8,
+			GLX_DEPTH_SIZE      , 24,
+			GLX_STENCIL_SIZE    , 8,
+			GLX_DOUBLEBUFFER    , True,
+			//GLX_SAMPLE_BUFFERS  , 1,
+			//GLX_SAMPLES         , 4,
+			None
+		};
 
-			int glx_major, glx_minor;
+		int glx_major, glx_minor;
 
-			// FBConfigs were added in GLX version 1.3.
-			if (!glXQueryVersion(x11Display, &glx_major, &glx_minor) ||
-					((glx_major == 1) && (glx_minor < 3)) || (glx_major < 1))
-			{
-				ERROR_LOG(RENDERER, "Invalid GLX version");
-				exit(1);
-			}
+		// FBConfigs were added in GLX version 1.3.
+		if (!glXQueryVersion(x11Display, &glx_major, &glx_minor) ||
+				((glx_major == 1) && (glx_minor < 3)) || (glx_major < 1))
+		{
+			ERROR_LOG(RENDERER, "Invalid GLX version");
+			exit(1);
+		}
 
-			int fbcount;
-			GLXFBConfig* fbc = glXChooseFBConfig(x11Display, x11Screen, visual_attribs, &fbcount);
-			if (!fbc)
-			{
-				ERROR_LOG(RENDERER, "Failed to retrieve a framebuffer config");
-				exit(1);
-			}
-			INFO_LOG(RENDERER, "Found %d matching FB configs.", fbcount);
+		int fbcount;
+		GLXFBConfig* fbc = glXChooseFBConfig(x11Display, x11Screen, visual_attribs, &fbcount);
+		if (!fbc)
+		{
+			ERROR_LOG(RENDERER, "Failed to retrieve a framebuffer config");
+			exit(1);
+		}
+		INFO_LOG(RENDERER, "Found %d matching FB configs.", fbcount);
 
-			GLXFBConfig bestFbc = fbc[0];
-			XFree(fbc);
+		GLXFBConfig bestFbc = fbc[0];
+		XFree(fbc);
 
-			// Get a visual
-			XVisualInfo *vi = glXGetVisualFromFBConfig(x11Display, bestFbc);
-			INFO_LOG(RENDERER, "Chosen visual ID = 0x%lx", vi->visualid);
+		// Get a visual
+		XVisualInfo *vi = glXGetVisualFromFBConfig(x11Display, bestFbc);
+		INFO_LOG(RENDERER, "Chosen visual ID = 0x%lx", vi->visualid);
 
 
-			depth = vi->depth;
-			x11Visual = vi;
+		depth = vi->depth;
+		x11Visual = vi;
 
-			x11Colormap = XCreateColormap(x11Display, RootWindow(x11Display, x11Screen), vi->visual, AllocNone);
-		#else
-			i32Depth = DefaultDepth(x11Display, x11Screen);
-			x11Visual = new XVisualInfo;
-			XMatchVisualInfo(x11Display, x11Screen, i32Depth, TrueColor, x11Visual);
-			if (!x11Visual)
-			{
-				ERROR_LOG(RENDERER, "Error: Unable to acquire visual");
-				return;
-			}
-			x11Colormap = XCreateColormap(x11Display, sRootWindow, x11Visual->visual, AllocNone);
-		#endif
-
+		x11Colormap = XCreateColormap(x11Display, RootWindow(x11Display, x11Screen), vi->visual, AllocNone);
+#else
+		i32Depth = DefaultDepth(x11Display, x11Screen);
+		x11Visual = new XVisualInfo;
+		XMatchVisualInfo(x11Display, x11Screen, i32Depth, TrueColor, x11Visual);
+		if (!x11Visual)
+		{
+			ERROR_LOG(RENDERER, "Error: Unable to acquire visual");
+			return;
+		}
+		x11Colormap = XCreateColormap(x11Display, sRootWindow, x11Visual->visual, AllocNone);
+#endif
 		sWA.colormap = x11Colormap;
 
 		// Add to these for handling other events
@@ -514,9 +515,11 @@ void x11_window_create()
 			XMapWindow(x11Display, x11Window);
 		}
 
-		#if !defined(GLES)
-			#define GLX_CONTEXT_MAJOR_VERSION_ARB       0x2091
-			#define GLX_CONTEXT_MINOR_VERSION_ARB       0x2092
+		if (settings.pvr.IsOpenGL())
+		{
+#if !defined(GLES)
+#define GLX_CONTEXT_MAJOR_VERSION_ARB       0x2091
+#define GLX_CONTEXT_MINOR_VERSION_ARB       0x2092
 			typedef GLXContext (*glXCreateContextAttribsARBProc)(Display*, GLXFBConfig, GLXContext, Bool, const int*);
 
 			glXCreateContextAttribsARBProc glXCreateContextAttribsARB = 0;
@@ -550,7 +553,22 @@ void x11_window_create()
 			XSetErrorHandler(old_handler);
 			XSync(x11Display, False);
 
-		#endif
+#endif
+		}
+#ifdef USE_VULKAN
+		else
+		{
+			vulkanContext = new VulkanContext();
+			const char * extensions[] = { VK_KHR_SURFACE_EXTENSION_NAME, VK_KHR_XLIB_SURFACE_EXTENSION_NAME };
+			vulkanContext->InitInstance(extensions, ARRAY_SIZE(extensions));
+			vulkanContext->SetWindowSize(x11_width, x11_height);
+			VkXlibSurfaceCreateInfoKHR createInfo = { VK_STRUCTURE_TYPE_XLIB_SURFACE_CREATE_INFO_KHR, nullptr, 0, x11Display, x11Window };
+			VkSurfaceKHR surface;
+			vkCreateXlibSurfaceKHR(vulkanContext->GetInstance(), &createInfo, nullptr, &surface);
+			vulkanContext->SetSurface(surface);
+			vulkanContext->InitDevice();
+		}
+#endif
 
 		XFlush(x11Display);
 
@@ -582,6 +600,11 @@ void x11_window_set_text(const char* text)
 void x11_window_destroy()
 {
 	destroy_empty_cursor();
+
+#ifdef USE_VULKAN
+	if (vulkanContext != nullptr)
+		delete vulkanContext;
+#endif
 
 	// close XWindow
 	if (x11_win)

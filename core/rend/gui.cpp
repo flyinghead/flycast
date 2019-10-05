@@ -123,7 +123,8 @@ void gui_init()
 #endif
 
     // Setup Platform/Renderer bindings
-    ImGui_ImplOpenGL3_Init();
+    if (settings.pvr.IsOpenGL())
+    	ImGui_ImplOpenGL3_Init();
 
     // Load Fonts
     // - If no fonts are loaded, dear imgui will use the default font. You can also load multiple fonts and use ImGui::PushFont()/PopFont() to select them.
@@ -150,7 +151,8 @@ void gui_init()
 
 void ImGui_Impl_NewFrame()
 {
-	ImGui_ImplOpenGL3_NewFrame();
+	if (settings.pvr.IsOpenGL())
+		ImGui_ImplOpenGL3_NewFrame();
 	ImGui::GetIO().DisplaySize.x = screen_width;
 	ImGui::GetIO().DisplaySize.y = screen_height;
 
@@ -257,7 +259,7 @@ void gui_dosmth(int width, int height)
 
     // Render dear imgui into screen
     ImGui::Render();
-    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+    ImGui_impl_RenderDrawData(ImGui::GetDrawData());
 }
 
 // Helper to display a little (?) mark which shows a tooltip when hovered.
@@ -308,7 +310,7 @@ static void gui_display_commands()
 
 	ImGui_Impl_NewFrame();
     ImGui::NewFrame();
-    if (!settings_opening)
+    if (!settings_opening && settings.pvr.IsOpenGL())
     	ImGui_ImplOpenGL3_DrawBackground();
 
     if (!settings.rend.FloatVMUs)
@@ -362,7 +364,7 @@ static void gui_display_commands()
 	ImGui::End();
 
     ImGui::Render();
-    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData(), settings_opening);
+    ImGui_impl_RenderDrawData(ImGui::GetDrawData(), settings_opening);
     settings_opening = false;
 }
 
@@ -642,7 +644,7 @@ static void gui_display_settings()
 	int dynarec_enabled = settings.dynarec.Enable;
 	u32 renderer = settings.pvr.rend;
 
-    if (!settings_opening)
+    if (!settings_opening && settings.pvr.IsOpenGL())
     	ImGui_ImplOpenGL3_DrawBackground();
 
 	ImGui::SetNextWindowPos(ImVec2(0, 0));
@@ -1321,7 +1323,7 @@ static void gui_display_settings()
     ImGui::PopStyleVar();
 
     ImGui::Render();
-    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData(), false);
+    ImGui_impl_RenderDrawData(ImGui::GetDrawData(), false);
 
    	if (renderer != settings.pvr.rend)
    		renderer_changed = true;
@@ -1414,7 +1416,7 @@ static void gui_display_demo()
 
 	ImGui::ShowDemoWindow();
 	ImGui::Render();
-    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData(), false);
+	ImGui_impl_RenderDrawData(ImGui::GetDrawData(), false);
 }
 
 static void gui_display_content()
@@ -1480,7 +1482,7 @@ static void gui_display_content()
 	error_popup();
 
 	ImGui::Render();
-    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData(), false);
+	ImGui_impl_RenderDrawData(ImGui::GetDrawData(), false);
 }
 
 void systemdir_selected_callback(bool cancelled, std::string selection)
@@ -1509,7 +1511,7 @@ void gui_display_onboarding()
 	select_directory_popup("Select System Directory", scaling, &systemdir_selected_callback);
 
 	ImGui::Render();
-    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData(), false);
+	ImGui_impl_RenderDrawData(ImGui::GetDrawData(), false);
 }
 
 void gui_display_ui()
@@ -1633,7 +1635,7 @@ void gui_display_osd()
 			display_vmus();
 
 		ImGui::Render();
-		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+		ImGui_impl_RenderDrawData(ImGui::GetDrawData());
 	}
 }
 
@@ -1646,7 +1648,8 @@ void gui_term()
 {
 	inited = false;
 	term_vmus();
-	ImGui_ImplOpenGL3_Shutdown();
+	if (settings.pvr.IsOpenGL())
+		ImGui_ImplOpenGL3_Shutdown();
 	ImGui::DestroyContext();
 }
 
@@ -1705,6 +1708,9 @@ static void display_vmus()
 {
 	if (!game_started)
 		return;
+	// TODO Vulkan
+	if (!settings.pvr.IsOpenGL())
+		return;
     ImGui::SetNextWindowBgAlpha(0);
     ImGui::SetNextWindowPos(ImVec2(0, 0));
     ImGui::SetNextWindowSize(ImVec2(screen_width, screen_height));
@@ -1753,6 +1759,9 @@ static void reset_vmus()
 
 static void term_vmus()
 {
+	// TODO Vulkan
+	if (!settings.pvr.IsOpenGL())
+		return;
 	for (int i = 0; i < ARRAY_SIZE(vmu_lcd_status); i++)
 	{
 		if (vmu_lcd_tex_ids[i] != (ImTextureID)0)

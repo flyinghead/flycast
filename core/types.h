@@ -521,10 +521,12 @@ struct settings_t
 	struct
 	{
 		u32 ta_skip;
-		u32 rend;
+		u32 rend;	// 0: GLES, GL3, 3: OIT/GL4.3, 4: Vulkan
 
 		u32 MaxThreads;
 		bool SynchronousRender;
+
+		bool IsOpenGL() { return rend == 0 || rend == 3; }
 	} pvr;
 
 	struct {

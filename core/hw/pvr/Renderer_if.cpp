@@ -368,6 +368,11 @@ static void rend_create_renderer()
 		fallback_renderer = rend_GLES2();
 		break;
 #endif
+#ifdef USE_VULKAN
+	case 4:
+		renderer = rend_Vulkan();
+		break;
+#endif
 	}
 #endif
 }

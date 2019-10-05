@@ -18,6 +18,31 @@
  */
 #include <string>
 
+#include "types.h"
+#include "imgui/imgui.h"
+#include "vulkan/imgui_impl_vulkan.h"
+#include "gles/imgui_impl_opengl3.h"
+#include "vulkan/vulkan.h"
+
 typedef void (*StringCallback)(bool cancelled, std::string selection);
 
 void select_directory_popup(const char *prompt, float scaling, StringCallback callback);
+
+static inline void ImGui_impl_RenderDrawData(ImDrawData *draw_data, bool save_background = false)
+{
+#ifdef USE_VULKAN
+	if (!settings.pvr.IsOpenGL())
+	{
+		VulkanContext *context = VulkanContext::Instance();
+		context->NewFrame();
+		context->BeginRenderPass();
+		// Record Imgui Draw Data and draw funcs into command buffer
+		ImGui_ImplVulkan_RenderDrawData(draw_data, context->GetCurrentCommandBuffer());
+		context->EndFrame();
+	}
+	else
+#endif
+	{
+		ImGui_ImplOpenGL3_RenderDrawData(draw_data, save_background);
+	}
+}

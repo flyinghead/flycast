@@ -13,6 +13,13 @@
 #include "sdl_gamepad.h"
 #include "sdl_keyboard.h"
 
+#ifdef USE_VULKAN
+#include <SDL2/SDL_vulkan.h>
+#include "rend/vulkan/vulkan.h"
+
+VulkanContext *vulkanContext;
+#endif
+
 static SDL_Window* window = NULL;
 static SDL_GLContext glcontext;
 
@@ -216,51 +223,95 @@ void sdl_window_create()
 	int window_width  = cfgLoadInt("x11","width", WINDOW_WIDTH);
 	int window_height = cfgLoadInt("x11","height", WINDOW_HEIGHT);
 
-	int flags = SDL_WINDOW_OPENGL;
-	#ifdef TARGET_PANDORA
+#ifdef USE_VULKAN
+	if (settings.pvr.IsOpenGL())
+#endif
+	{
+		int flags = SDL_WINDOW_OPENGL;
+#ifdef TARGET_PANDORA
 		flags |= SDL_FULLSCREEN;
-	#else
+#else
 		flags |= SDL_SWSURFACE | SDL_WINDOW_RESIZABLE;
-	#endif
+#endif
 
-	#ifdef GLES
+#ifdef GLES
 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
-	#else
+#else
 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
-	#endif
+#endif
 
-	SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
-	SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
-	SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
-	SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
-	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
-	SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
-	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+		SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
+		SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
+		SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
+		SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
+		SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
+		SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
+		SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
-	window = SDL_CreateWindow("Flycast", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,	window_width, window_height, flags);
-	if (!window)
-	{
-		die("error creating SDL window");
+		window = SDL_CreateWindow("Flycast", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,	window_width, window_height, flags);
+		if (!window)
+		{
+			die("error creating SDL window");
+		}
+
+		glcontext = SDL_GL_CreateContext(window);
+		if (!glcontext)
+		{
+			die("Error creating SDL GL context");
+		}
+		SDL_GL_MakeCurrent(window, NULL);
+
+		SDL_GL_GetDrawableSize(window, &screen_width, &screen_height);
+
+		float ddpi, hdpi, vdpi;
+		if (!SDL_GetDisplayDPI(SDL_GetWindowDisplayIndex(window), &ddpi, &hdpi, &vdpi))
+			screen_dpi = (int)roundf(max(hdpi, vdpi));
+
+		INFO_LOG(RENDERER, "Created SDL Window (%ix%i) and GL Context successfully", window_width, window_height);
 	}
-
-	glcontext = SDL_GL_CreateContext(window);
-	if (!glcontext)
+#ifdef USE_VULKAN
+	else
 	{
-		die("Error creating SDL GL context");
+		int flags = SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI;
+		window = SDL_CreateWindow("Flycast", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, window_width, window_height, flags);
+		if (!window)
+		{
+			die("error creating SDL window");
+		}
+
+	    // Setup Vulkan
+		vulkanContext = new VulkanContext();
+
+	    uint32_t extensions_count = 0;
+	    SDL_Vulkan_GetInstanceExtensions(window, &extensions_count, NULL);
+	    const char** extensions = new const char*[extensions_count];
+	    SDL_Vulkan_GetInstanceExtensions(window, &extensions_count, extensions);
+
+	    vulkanContext->InitInstance(extensions, extensions_count);
+
+	    delete[] extensions;
+
+	    // Create Window Surface
+	    VkSurfaceKHR surface;
+	    VkResult err;
+	    if (SDL_Vulkan_CreateSurface(window, vulkanContext->GetInstance(), &surface) == 0)
+	    {
+	        die("Failed to create Vulkan surface.");
+	    }
+	    vulkanContext->SetSurface(surface);
+
+	    // Initialize context
+	    int w, h;
+	    SDL_GetWindowSize(window, &w, &h);
+	    vulkanContext->SetWindowSize(w, h);
+
+	    vulkanContext->InitDevice();
 	}
-	SDL_GL_MakeCurrent(window, NULL);
-
-	SDL_GL_GetDrawableSize(window, &screen_width, &screen_height);
-
-	float ddpi, hdpi, vdpi;
-	if (!SDL_GetDisplayDPI(SDL_GetWindowDisplayIndex(window), &ddpi, &hdpi, &vdpi))
-		screen_dpi = (int)roundf(max(hdpi, vdpi));
-
-	INFO_LOG(RENDERER, "Created SDL Window (%ix%i) and GL Context successfully", window_width, window_height);
+#endif
 }
 
 bool gl_init(void* wind, void* disp)
@@ -283,7 +334,25 @@ void gl_swap()
 
 void gl_term()
 {
+	// FIXME This destroys the gl context and there's no way to recreate it (crash when switching renderer)
 	SDL_GL_DeleteContext(glcontext);
+}
+
+void sdl_window_destroy()
+{
+#ifdef USE_VULKAN
+	if (settings.pvr.IsOpenGL())
+#endif
+	{
+		SDL_GL_DeleteContext(glcontext);
+	}
+#ifdef USE_VULKAN
+	else
+	{
+		delete vulkanContext;
+	}
+#endif
+	SDL_DestroyWindow(window);
 }
 #endif
 

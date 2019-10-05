@@ -662,7 +662,7 @@ struct BaseTextureCacheData
 	u32 vq_codebook;            // VQ quantizers table for compressed textures
 	u32 texture_hash;			// xxhash of texture data, used for custom textures
 	u32 old_texture_hash;		// legacy hash
-	u8* volatile custom_image_data;		// loaded custom image data
+	u8* custom_image_data;		// loaded custom image data
 	volatile u32 custom_width;
 	volatile u32 custom_height;
 	std::atomic_int custom_load_in_progress;

@@ -7,8 +7,10 @@ USE_OSS := 1
 #USE_PULSEAUDIO := 1
 #USE_SDLAUDIO := 1
 #USE_LIBAO := 1
+ifndef USE_SDL
 USE_EVDEV := 1
 USE_UDEV := 1
+endif
 USE_MODEM := 1
 PLATFORM_EXT := elf
 
@@ -102,7 +104,9 @@ $(info Platform: $(platform))
 ifneq (,$(findstring x86,$(platform)))
     X86_REC := 1
     NOT_ARM := 1
+ifndef USE_SDL
     USE_X11 := 1
+endif
     MFLAGS += -m32
     ASFLAGS += --32
     LDFLAGS += -m32
@@ -113,7 +117,10 @@ ifneq (,$(findstring x86,$(platform)))
 else ifneq (,$(findstring x64,$(platform)))
     X64_REC := 1
     NOT_ARM := 1
+ifndef USE_SDL
     USE_X11 := 1
+endif
+	USE_VULKAN ?= 1
     CFLAGS += -D TARGET_LINUX_x64 -D TARGET_NO_AREC -fno-builtin-sqrtf
     CXXFLAGS += -fexceptions
     LDFLAGS := -no-pie
@@ -121,7 +128,9 @@ else ifneq (,$(findstring x64,$(platform)))
 # Generic 64 bit ARM (armv8) Linux
 else ifneq (,$(findstring arm64,$(platform)))
     NOT_ARM := 1
+ifndef USE_SDL
     USE_X11 := 1
+endif
     ARM64_REC := 1
     ISARM64 := 1
     CFLAGS += -D TARGET_LINUX_ARMv8 -D TARGET_NO_AREC -fno-builtin-sqrtf
@@ -366,6 +375,10 @@ endif
 
 ifdef HAS_SOFTREND
     CFLAGS += -msse4.1
+endif
+
+ifdef USE_VULKAN
+	CFLAGS += -D USE_VULKAN
 endif
 
 # these are also handled on core.mk, but ignored here

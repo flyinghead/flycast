@@ -385,6 +385,10 @@ int main(int argc, wchar* argv[])
 		x11_window_destroy();
 	#endif
 
+#if defined(USE_SDL)
+	sdl_window_destroy();
+#endif
+
 	return 0;
 }
 #endif
