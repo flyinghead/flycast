@@ -89,7 +89,7 @@ static const char FragmentShaderSource[] = R"(
 #define pp_FogCtrl %d
 #define pp_Gouraud %d
 #define pp_BumpMap %d
-#define FogClamping %d
+#define ColorClamping %d
 #define pp_TriLinear %d
 #define PI 3.1415926
 
@@ -105,17 +105,22 @@ layout (location = 0) out vec4 FragColor;
 
 layout (std140, set = 0, binding = 1) uniform buffer
 {
-	lowp float cp_AlphaTestValue;
-	lowp vec4 pp_ClipTest;
-	lowp vec3 sp_FOG_COL_RAM,sp_FOG_COL_VERT;
+	vec4 colorClampMin;
+	vec4 colorClampMax;
+	float cp_AlphaTestValue;
+	vec3 sp_FOG_COL_RAM;
+	vec3 sp_FOG_COL_VERT;
 	float sp_FOG_DENSITY;
-	lowp float trilinear_alpha;
-	lowp vec4 fog_clamp_min;
-	lowp vec4 fog_clamp_max;
 	float extra_depth_scale;
 } uniformBuffer;
 
-#if pp_Texture==1
+layout (push_constant) uniform pushBlock
+{
+	vec4 clipTest;
+	float trilinearAlpha;
+} pushConstants;
+
+#if pp_Texture == 1
 layout (set = 1, binding = 0) uniform sampler2D tex;
 #endif
 
@@ -138,10 +143,10 @@ lowp float fog_mode2(float w)
 }
 #endif
 
-vec4 fog_clamp(lowp vec4 col)
+vec4 colorClamp(lowp vec4 col)
 {
-#if FogClamping == 1
-	return clamp(col, uniformBuffer.fog_clamp_min, uniformBuffer.fog_clamp_max);
+#if ColorClamping == 1
+	return clamp(col, uniformBuffer.colorClampMin, uniformBuffer.colorClampMax);
 #else
 	return col;
 #endif
@@ -150,28 +155,28 @@ vec4 fog_clamp(lowp vec4 col)
 void main()
 {
 	// Clip outside the box
-	#if pp_ClipTestMode==1
-		if (gl_FragCoord.x < uniformBuffer.pp_ClipTest.x || gl_FragCoord.x > uniformBuffer.pp_ClipTest.z
-				|| gl_FragCoord.y < uniformBuffer.pp_ClipTest.y || gl_FragCoord.y > uniformBuffer.pp_ClipTest.w)
+	#if pp_ClipTestMode == 1
+		if (gl_FragCoord.x < pushConstants.clipTest.x || gl_FragCoord.x > pushConstants.clipTest.z
+				|| gl_FragCoord.y < pushConstants.clipTest.y || gl_FragCoord.y > pushConstants.clipTest.w)
 			discard;
 	#endif
 	// Clip inside the box
-	#if pp_ClipTestMode==-1
-		if (gl_FragCoord.x >= uniformBuffer.pp_ClipTest.x && gl_FragCoord.x <= uniformBuffer.pp_ClipTest.z
-				&& gl_FragCoord.y >= uniformBuffer.pp_ClipTest.y && gl_FragCoord.y <= uniformBuffer.pp_ClipTest.w)
+	#if pp_ClipTestMode == -1
+		if (gl_FragCoord.x >= pushConstants.clipTest.x && gl_FragCoord.x <= pushConstants.clipTest.z
+				&& gl_FragCoord.y >= pushConstants.clipTest.y && gl_FragCoord.y <= pushConstants.clipTest.w)
 			discard;
 	#endif
 	
-	lowp vec4 color=vtx_base;
-	#if pp_UseAlpha==0
-		color.a=1.0;
+	lowp vec4 color = vtx_base;
+	#if pp_UseAlpha == 0
+		color.a = 1.0;
 	#endif
-	#if pp_FogCtrl==3
-		color=vec4(uniformBuffer.sp_FOG_COL_RAM.rgb,fog_mode2(gl_FragCoord.w));
+	#if pp_FogCtrl == 3
+		color = vec4(uniformBuffer.sp_FOG_COL_RAM.rgb, fog_mode2(gl_FragCoord.w));
 	#endif
-	#if pp_Texture==1
+	#if pp_Texture == 1
 	{
-		lowp vec4 texcol=texture(tex, vtx_uv);
+		lowp vec4 texcol = texture(tex, vtx_uv);
 		
 		#if pp_BumpMap == 1
 			float s = PI / 2.0 * (texcol.a * 15.0 * 16.0 + texcol.r * 15.0) / 255.0;
@@ -179,8 +184,8 @@ void main()
 			texcol.a = clamp(vtx_offs.a + vtx_offs.r * sin(s) + vtx_offs.g * cos(s) * cos(r - 2.0 * PI * vtx_offs.b), 0.0, 1.0);
 			texcol.rgb = vec3(1.0, 1.0, 1.0);	
 		#else
-			#if pp_IgnoreTexA==1
-				texcol.a=1.0;	
+			#if pp_IgnoreTexA == 1
+				texcol.a = 1.0;
 			#endif
 			
 			#if cp_AlphaTest == 1
@@ -188,57 +193,57 @@ void main()
 					discard;
 			#endif 
 		#endif
-		#if pp_ShadInstr==0
+		#if pp_ShadInstr == 0
 		{
-			color=texcol;
+			color = texcol;
 		}
 		#endif
-		#if pp_ShadInstr==1
+		#if pp_ShadInstr == 1
 		{
-			color.rgb*=texcol.rgb;
-			color.a=texcol.a;
+			color.rgb *= texcol.rgb;
+			color.a = texcol.a;
 		}
 		#endif
-		#if pp_ShadInstr==2
+		#if pp_ShadInstr == 2
 		{
-			color.rgb=mix(color.rgb,texcol.rgb,texcol.a);
+			color.rgb = mix(color.rgb, texcol.rgb, texcol.a);
 		}
 		#endif
-		#if  pp_ShadInstr==3
+		#if  pp_ShadInstr == 3
 		{
-			color*=texcol;
+			color *= texcol;
 		}
 		#endif
 		
-		#if pp_Offset==1 && pp_BumpMap == 0
+		#if pp_Offset == 1 && pp_BumpMap == 0
 		{
-			color.rgb+=vtx_offs.rgb;
+			color.rgb += vtx_offs.rgb;
 		}
 		#endif
 	}
 	#endif
 	
-	color = fog_clamp(color);
+	color = colorClamp(color);
 	
 	#if pp_FogCtrl == 0
 	{
-		color.rgb=mix(color.rgb,uniformBuffer.sp_FOG_COL_RAM.rgb,fog_mode2(gl_FragCoord.w)); 
+		color.rgb = mix(color.rgb, uniformBuffer.sp_FOG_COL_RAM.rgb, fog_mode2(gl_FragCoord.w)); 
 	}
 	#endif
 	#if pp_FogCtrl == 1 && pp_Offset==1 && pp_BumpMap == 0
 	{
-		color.rgb=mix(color.rgb,uniformBuffer.sp_FOG_COL_VERT.rgb,vtx_offs.a);
+		color.rgb = mix(color.rgb, uniformBuffer.sp_FOG_COL_VERT.rgb, vtx_offs.a);
 	}
 	#endif
 	
 	#if pp_TriLinear == 1
-	color *= uniformBuffer.trilinear_alpha;
+	color *= pushConstants.trilinearAlpha;
 	#endif
 	
 	#if cp_AlphaTest == 1
-		color.a=1.0;
+		color.a = 1.0;
 	#endif 
-	//color.rgb=vec3(gl_FragCoord.w * uniformBuffer.sp_FOG_DENSITY / 128.0);
+	//color.rgb = vec3(gl_FragCoord.w * uniformBuffer.sp_FOG_DENSITY / 128.0);
 
 	float w = gl_FragCoord.w * 100000.0;
 	gl_FragDepth = log2(1.0 + w) / 34.0;

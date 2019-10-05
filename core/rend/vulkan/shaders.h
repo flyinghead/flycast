@@ -55,30 +55,30 @@ struct FragmentShaderParams
 	}
 };
 
-#define ALIGN DECL_ALIGN(16)
-
 struct VertexShaderUniforms
 {
-	ALIGN float scale[4];
-	ALIGN float extra_depth_scale;
+	float scale[4];
+	float extra_depth_scale;
 };
 
 struct FragmentShaderUniforms
 {
-	ALIGN float cp_AlphaTestValue;
-	ALIGN float pp_ClipTest[4];
-	ALIGN float sp_FOG_COL_RAM[3];
-	ALIGN float sp_FOG_COL_VERT[3];
-	ALIGN float sp_FOG_DENSITY;
-	ALIGN float trilinear_alpha;
-	ALIGN float fog_clamp_min[4];
-	ALIGN float fog_clamp_max[4];
-	ALIGN float extra_depth_scale;
+	float colorClampMin[4];
+	float colorClampMax[4];
+	float cp_AlphaTestValue;
+	float _pad0[3];
+	float sp_FOG_COL_RAM[3];
+	float _pad1;
+	float sp_FOG_COL_VERT[3];
+	float _pad2;
+	float sp_FOG_DENSITY;
+	float _pad3[3];
+	float extra_depth_scale;
 };
 
 struct ModVolShaderUniforms
 {
-	ALIGN float sp_ShaderColor;
+	float sp_ShaderColor;
 };
 
 class ShaderManager

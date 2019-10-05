@@ -61,6 +61,11 @@ public:
 
 	bool Process(TA_context* ctx) override
 	{
+		if (ctx->rend.isRenderFramebuffer)
+		{
+			// TODO		RenderFramebuffer();
+			return false;
+		}
 		GetContext()->NewFrame();
 		if (ProcessFrame(ctx))
 			return true;
@@ -74,7 +79,6 @@ public:
 
 	void DrawOSD(bool clear_screen) override
 	{
-// TODO		gui_display_osd();
 	}
 
 	bool Render() override
@@ -92,8 +96,8 @@ public:
 			dc_height = pvrrc.fb_Y_CLIP.max - pvrrc.fb_Y_CLIP.min + 1;
 		}
 
-		float scale_x = 1;
-		float scale_y = 1;
+		scale_x = 1;
+		scale_y = 1;
 
 		float scissoring_scale_x = 1;
 
@@ -153,7 +157,7 @@ public:
 				dc2s_scale_h = screen_height / 480.0f;
 				ds2s_offs_x =  (screen_width - dc2s_scale_h * 640.0f * screen_stretching) / 2;
 				vtxUniforms.scale[0] = 2.0f / (screen_width / dc2s_scale_h * scale_x) * screen_stretching;
-				vtxUniforms.scale[1] = 2.0f / dc_height;
+				vtxUniforms.scale[1] = 1.5f / dc_height;	// FIXME 1.5 WTF?
 				vtxUniforms.scale[2] = 1 - 2 * ds2s_offs_x / screen_width;
 				vtxUniforms.scale[3] = 1;
 			}
@@ -181,15 +185,15 @@ public:
 		s32 fog_den_exp=(s8)fog_density[0];
 		fragUniforms.sp_FOG_DENSITY = fog_den_mant * powf(2.0f, fog_den_exp);
 
-		fragUniforms.fog_clamp_min[0] = ((pvrrc.fog_clamp_min >> 16) & 0xFF) / 255.0f;
-		fragUniforms.fog_clamp_min[1] = ((pvrrc.fog_clamp_min >> 8) & 0xFF) / 255.0f;
-		fragUniforms.fog_clamp_min[2] = ((pvrrc.fog_clamp_min >> 0) & 0xFF) / 255.0f;
-		fragUniforms.fog_clamp_min[3] = ((pvrrc.fog_clamp_min >> 24) & 0xFF) / 255.0f;
+		fragUniforms.colorClampMin[0] = ((pvrrc.fog_clamp_min >> 16) & 0xFF) / 255.0f;
+		fragUniforms.colorClampMin[1] = ((pvrrc.fog_clamp_min >> 8) & 0xFF) / 255.0f;
+		fragUniforms.colorClampMin[2] = ((pvrrc.fog_clamp_min >> 0) & 0xFF) / 255.0f;
+		fragUniforms.colorClampMin[3] = ((pvrrc.fog_clamp_min >> 24) & 0xFF) / 255.0f;
 
-		fragUniforms.fog_clamp_max[0] = ((pvrrc.fog_clamp_max >> 16) & 0xFF) / 255.0f;
-		fragUniforms.fog_clamp_max[1] = ((pvrrc.fog_clamp_max >> 8) & 0xFF) / 255.0f;
-		fragUniforms.fog_clamp_max[2] = ((pvrrc.fog_clamp_max >> 0) & 0xFF) / 255.0f;
-		fragUniforms.fog_clamp_max[3] = ((pvrrc.fog_clamp_max >> 24) & 0xFF) / 255.0f;
+		fragUniforms.colorClampMax[0] = ((pvrrc.fog_clamp_max >> 16) & 0xFF) / 255.0f;
+		fragUniforms.colorClampMax[1] = ((pvrrc.fog_clamp_max >> 8) & 0xFF) / 255.0f;
+		fragUniforms.colorClampMax[2] = ((pvrrc.fog_clamp_max >> 0) & 0xFF) / 255.0f;
+		fragUniforms.colorClampMax[3] = ((pvrrc.fog_clamp_max >> 24) & 0xFF) / 255.0f;
 
 		if (fog_needs_update && settings.rend.Fog)
 		{
@@ -260,6 +264,8 @@ public:
 				DrawList(cmdBuffer, ListType_Translucent, false, pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);
 			previous_pass = current_pass;
 	    }
+	    if (!is_rtt)
+	    	gui_display_osd();
 
 		GetContext()->EndFrame();
 
@@ -293,11 +299,107 @@ private:
 	VulkanContext *GetContext() const { return VulkanContext::Instance(); }
 	int GetCurrentImage() const { return GetContext()->GetCurrentImageIndex(); }
 
+	// FIXME Code dup
+	s32 SetTileClip(u32 val, float *values)
+	{
+		if (!settings.rend.Clipping)
+			return 0;
+
+		u32 clipmode = val >> 28;
+		s32 clip_mode;
+		if (clipmode < 2)
+		{
+			clip_mode = 0;    //always passes
+		}
+		else if (clipmode & 1)
+			clip_mode = -1;   //render stuff outside the region
+		else
+			clip_mode = 1;    //render stuff inside the region
+
+		float csx = 0, csy = 0, cex = 0, cey = 0;
+
+
+		csx = (float)(val & 63);
+		cex = (float)((val >> 6) & 63);
+		csy = (float)((val >> 12) & 31);
+		cey = (float)((val >> 17) & 31);
+		csx = csx * 32;
+		cex = cex * 32 + 32;
+		csy = csy * 32;
+		cey = cey * 32 + 32;
+
+		if (csx <= 0 && csy <= 0 && cex >= 640 && cey >= 480)
+			return 0;
+
+		if (values != nullptr && clip_mode)
+		{
+			if (!pvrrc.isRTT)
+			{
+				csx /= scale_x;
+				csy /= scale_y;
+				cex /= scale_x;
+				cey /= scale_y;
+				float dc2s_scale_h;
+				float ds2s_offs_x;
+				float screen_stretching = settings.rend.ScreenStretching / 100.f;
+
+				if (settings.rend.Rotate90)
+				{
+					float t = cex;
+					cex = cey;
+					cey = 640 - csx;
+					csx = csy;
+					csy = 640 - t;
+					dc2s_scale_h = screen_height / 640.0f;
+					ds2s_offs_x =  (screen_width - dc2s_scale_h * 480.0 * screen_stretching) / 2;
+				}
+				else
+				{
+					dc2s_scale_h = screen_height / 480.0f;
+					ds2s_offs_x =  (screen_width - dc2s_scale_h * 640.0 * screen_stretching) / 2;
+				}
+				csx = csx * dc2s_scale_h * screen_stretching + ds2s_offs_x;
+				cex = cex * dc2s_scale_h * screen_stretching + ds2s_offs_x;
+				csy = csy * dc2s_scale_h;
+				cey = cey * dc2s_scale_h;
+			}
+			else if (!settings.rend.RenderToTextureBuffer)
+			{
+				csx *= settings.rend.RenderToTextureUpscale;
+				csy *= settings.rend.RenderToTextureUpscale;
+				cex *= settings.rend.RenderToTextureUpscale;
+				cey *= settings.rend.RenderToTextureUpscale;
+			}
+			values[0] = csx;
+			values[1] = csy;
+			values[2] = cex;
+			values[3] = cey;
+		}
+
+		return clip_mode;
+	}
+
+
 	void DrawList(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sortTriangles, const List<PolyParam>& polys, u32 first, u32 count)
 	{
 		for (u32 i = first; i < count; i++)
 		{
 			const PolyParam &pp = polys.head()[i];
+			float trilinearAlpha;
+			if (pp.pcw.Texture && pp.tsp.FilterMode > 1 && listType != ListType_Punch_Through)
+			{
+				trilinearAlpha = 0.25 * (pp.tsp.MipMapD & 0x3);
+				if (pp.tsp.FilterMode == 2)
+					// Trilinear pass A
+					trilinearAlpha = 1.0 - trilinearAlpha;
+			}
+			else
+				trilinearAlpha = 1.f;
+
+			std::array<float, 5> pushConstants = { 0, 0, 0, 0, trilinearAlpha };
+			SetTileClip(pp.tileclip, &pushConstants[0]);
+			cmdBuffer.pushConstants<float>(pipelineManager.GetDescriptorSets().GetPipelineLayout(), vk::ShaderStageFlagBits::eFragment, 0, pushConstants);
+
 			if (pp.pcw.Texture)
 				pipelineManager.GetDescriptorSets().SetTexture(pp.texid, pp.tsp);
 
@@ -360,28 +462,39 @@ private:
 		if (vertexBuffers.empty())
 		{
 			for (int i = 0; i < GetContext()->GetSwapChainSize(); i++)
-				vertexBuffers.push_back(std::unique_ptr<BufferData>(new BufferData(GetContext()->GetPhysicalDevice(), GetContext()->GetDevice().get(), vertexSize,
-						vk::BufferUsageFlagBits::eVertexBuffer)));
+				vertexBuffers.push_back(std::unique_ptr<BufferData>(new BufferData(GetContext()->GetPhysicalDevice(), GetContext()->GetDevice().get(),
+						std::max(512 * 1024u, vertexSize), vk::BufferUsageFlagBits::eVertexBuffer)));
 		}
 		else if (vertexBuffers[GetCurrentImage()]->m_size < vertexSize)
 		{
-			INFO_LOG(RENDERER, "Increasing vertex buffer size %d -> %d", (u32)vertexBuffers[GetCurrentImage()]->m_size, vertexSize);
-			vertexBuffers[GetCurrentImage()] = std::unique_ptr<BufferData>(new BufferData(GetContext()->GetPhysicalDevice(), GetContext()->GetDevice().get(), vertexSize,
+			u32 newSize = vertexBuffers[GetCurrentImage()]->m_size;
+			while (newSize < vertexSize)
+				newSize *= 2;
+			INFO_LOG(RENDERER, "Increasing vertex buffer size %d -> %d", (u32)vertexBuffers[GetCurrentImage()]->m_size, newSize);
+			vertexBuffers[GetCurrentImage()] = std::unique_ptr<BufferData>(new BufferData(GetContext()->GetPhysicalDevice(), GetContext()->GetDevice().get(), newSize,
 					vk::BufferUsageFlagBits::eVertexBuffer));
 		}
 		if (indexBuffers.empty())
 		{
 			for (int i = 0; i < GetContext()->GetSwapChainSize(); i++)
-				indexBuffers.push_back(std::unique_ptr<BufferData>(new BufferData(GetContext()->GetPhysicalDevice(), GetContext()->GetDevice().get(), indexSize,
+				indexBuffers.push_back(std::unique_ptr<BufferData>(new BufferData(GetContext()->GetPhysicalDevice(), GetContext()->GetDevice().get(),
+						std::max(64 * 1024u, indexSize),
 						vk::BufferUsageFlagBits::eIndexBuffer)));
 		}
 		else if (indexBuffers[GetCurrentImage()]->m_size < indexSize)
 		{
-			INFO_LOG(RENDERER, "Increasing index buffer size %d -> %d", (u32)indexBuffers[GetCurrentImage()]->m_size, indexSize);
-			indexBuffers[GetCurrentImage()] = std::unique_ptr<BufferData>(new BufferData(GetContext()->GetPhysicalDevice(), GetContext()->GetDevice().get(), indexSize,
+			u32 newSize = indexBuffers[GetCurrentImage()]->m_size;
+			while (newSize < indexSize)
+				newSize *= 2;
+			INFO_LOG(RENDERER, "Increasing index buffer size %d -> %d", (u32)indexBuffers[GetCurrentImage()]->m_size, newSize);
+			indexBuffers[GetCurrentImage()] = std::unique_ptr<BufferData>(new BufferData(GetContext()->GetPhysicalDevice(), GetContext()->GetDevice().get(), newSize,
 					vk::BufferUsageFlagBits::eIndexBuffer));
 		}
 	}
+
+	// temp stuff
+	float scale_x;
+	float scale_y;
 
 	// Uniforms
 	vk::UniqueBuffer vertexUniformBuffer;

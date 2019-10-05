@@ -35,18 +35,19 @@ public:
 		vk::DescriptorSetLayoutBinding perFrameBindings[] = {
 				{ 0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex },			// vertex uniforms
 				{ 1, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eFragment },		// fragment uniforms
+				{ 2, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment },// fog texture
 		};
 		vk::DescriptorSetLayoutBinding perPolyBindings[] = {
 				{ 0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment },// texture
-				{ 1, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment },// for fog
 		};
 		perFrameLayout = GetContext()->GetDevice()->createDescriptorSetLayoutUnique(
 				vk::DescriptorSetLayoutCreateInfo(vk::DescriptorSetLayoutCreateFlags(), ARRAY_SIZE(perFrameBindings), perFrameBindings));
 		perPolyLayout = GetContext()->GetDevice()->createDescriptorSetLayoutUnique(
 				vk::DescriptorSetLayoutCreateInfo(vk::DescriptorSetLayoutCreateFlags(), ARRAY_SIZE(perPolyBindings), perPolyBindings));
 		vk::DescriptorSetLayout layouts[] = { *perFrameLayout, *perPolyLayout };
+		vk::PushConstantRange pushConstant(vk::ShaderStageFlagBits::eFragment, 0, 20);
 		pipelineLayout = GetContext()->GetDevice()->createPipelineLayoutUnique(
-				vk::PipelineLayoutCreateInfo(vk::PipelineLayoutCreateFlags(), ARRAY_SIZE(layouts), layouts));
+				vk::PipelineLayoutCreateInfo(vk::PipelineLayoutCreateFlags(), ARRAY_SIZE(layouts), layouts, 1, &pushConstant));
 	}
 
 	void UpdateUniforms(const vk::Buffer& vertexUniformBuffer, const vk::Buffer& fragmentUniformBuffer)
@@ -170,7 +171,7 @@ private:
 	u32 hash(u32 listType, bool sortTriangles, const PolyParam *pp)
 	{
 		u32 hash = pp->pcw.Gouraud | (pp->pcw.Offset << 1) | (pp->pcw.Texture << 2) | (pp->pcw.Shadow << 3)
-			| (pp->pcw.User_Clip << 4);
+			| ((pp->tileclip >> 28) << 4);
 		hash |= ((listType >> 1) << 6);
 		hash |= (pp->tsp.ShadInstr << 8) | (pp->tsp.IgnoreTexA << 10) | (pp->tsp.UseAlpha << 11)
 			| (pp->tsp.ColorClamp << 12) | (pp->tsp.FogCtrl << 13) | (pp->tsp.SrcInstr << 15)

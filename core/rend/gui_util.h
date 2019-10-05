@@ -34,11 +34,16 @@ static inline void ImGui_impl_RenderDrawData(ImDrawData *draw_data, bool save_ba
 	if (!settings.pvr.IsOpenGL())
 	{
 		VulkanContext *context = VulkanContext::Instance();
-		context->NewFrame();
-		context->BeginRenderPass();
+		bool rendering = context->IsRendering();
+		if (!rendering)
+		{
+			context->NewFrame();
+			context->BeginRenderPass();
+		}
 		// Record Imgui Draw Data and draw funcs into command buffer
 		ImGui_ImplVulkan_RenderDrawData(draw_data, context->GetCurrentCommandBuffer());
-		context->EndFrame();
+		if (!rendering)
+			context->EndFrame();
 	}
 	else
 #endif

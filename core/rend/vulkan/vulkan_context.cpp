@@ -473,6 +473,8 @@ void VulkanContext::NewFrame()
 	device->resetCommandPool(*commandPools[currentImage], vk::CommandPoolResetFlagBits::eReleaseResources);
 	vk::CommandBuffer& commandBuffer = *commandBuffers[currentImage];
 	commandBuffer.begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));
+	verify(!rendering);
+	rendering = true;
 }
 
 void VulkanContext::BeginRenderPass()
@@ -491,6 +493,8 @@ void VulkanContext::EndFrame()
 	vk::PipelineStageFlags wait_stage = vk::PipelineStageFlagBits::eColorAttachmentOutput;
 	vk::SubmitInfo submitInfo(1, &(*imageAcquiredSemaphores[currentSemaphore]), &wait_stage, 1, &commandBuffer, 1, &(*renderCompleteSemaphores[currentSemaphore]));
 	graphicsQueue.submit(1, &submitInfo, *drawFences[currentImage]);
+	verify(rendering);
+	rendering = false;
 }
 
 void VulkanContext::Present()

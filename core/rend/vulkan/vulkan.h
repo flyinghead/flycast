@@ -67,6 +67,7 @@ public:
 	int GetSwapChainSize() const { return (int)imageViews.size(); }
 	int GetCurrentImageIndex() const { return currentImage; }
 	void WaitIdle() const { graphicsQueue.waitIdle(); }
+	bool IsRendering() const { return rendering; }
 
 	static VulkanContext *Instance() { return contextInstance; }
 
@@ -98,6 +99,7 @@ private:
 		return true;
 	}
 
+	bool rendering = false;
 	u32 width = 0;
 	u32 height = 0;
 	vk::UniqueInstance instance;

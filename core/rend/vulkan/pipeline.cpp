@@ -190,14 +190,25 @@ void PipelineManager::CreatePipeline(u32 listType, bool sortTriangles, const Pol
 	params.alphaTest = listType == ListType_Punch_Through;
 	params.bumpmap = pp.tcw.PixelFmt == PixelBumpMap;
 	params.clamping = pp.tsp.ColorClamp && (pvrrc.fog_clamp_min != 0 || pvrrc.fog_clamp_max != 0xffffffff);;
-	params.clipTest = pp.pcw.User_Clip - 1;	// TODO pass clip values as Push Constant
+	switch (pp.tileclip >> 28)
+	{
+	case 2:
+		params.clipTest = 1;	// render stuff inside the region
+		break;
+	case 3:
+		params.clipTest = -1;	// render stuff outside the region
+		break;
+	default:
+		params.clipTest = 0;	// always passes
+		break;
+	}
 	params.fog = 2;							// TODO fog texture -> pp.tsp.FogCtrl;
 	params.gouraud = pp.pcw.Gouraud;
 	params.ignoreTexAlpha = pp.tsp.IgnoreTexA;
 	params.offset = pp.pcw.Offset;
 	params.shaderInstr = pp.tsp.ShadInstr;
 	params.texture = pp.pcw.Texture;
-	params.trilinear = false;				// TODO
+	params.trilinear = pp.pcw.Texture && pp.tsp.FilterMode > 1 && listType != ListType_Punch_Through;
 	params.useAlpha = pp.tsp.UseAlpha;
 	vk::ShaderModule fragment_module = shaderManager.GetFragmentShader(params);
 
