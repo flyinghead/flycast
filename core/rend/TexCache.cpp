@@ -535,9 +535,8 @@ void BaseTextureCacheData::Create()
 			//Planar textures support stride selection, mostly used for non power of 2 textures (videos)
 			int stride = w;
 			if (tcw.StrideSel)
-			{
-				stride = std::max((TEXT_CONTROL & 31) * 32, w);
-			}
+				stride = (TEXT_CONTROL & 31) * 32;
+
 			//Call the format specific conversion code
 			texconv = tex->PL;
 			texconv32 = tex->PL32;
@@ -613,10 +612,10 @@ void BaseTextureCacheData::Update()
 	::vq_codebook = &vram[vq_codebook];    // might be used if VQ tex
 
 	//texture conversion work
-	u32 stride=w;
+	u32 stride = w;
 
 	if (tcw.StrideSel && tcw.ScanOrder && (tex->PL || tex->PL32))
-		stride = std::max(w, (TEXT_CONTROL & 31) * 32);
+		stride = (TEXT_CONTROL & 31) * 32;
 
 	u32 original_h = h;
 	if (sa_tex > VRAM_SIZE || size == 0 || sa + size > VRAM_SIZE)
