@@ -228,7 +228,7 @@ void ImGui_Impl_NewFrame()
 
 	if (KeyboardDevice::GetInstance() != NULL)
 	{
-		std:string input_text = KeyboardDevice::GetInstance()->get_character_input();
+		std::string input_text = KeyboardDevice::GetInstance()->get_character_input();
 		if (io.WantCaptureKeyboard)
 			io.AddInputCharactersUTF8(input_text.c_str());
 	}
@@ -1354,7 +1354,7 @@ static void add_game_directory(const std::string& path, std::vector<GameMedia>& 
 		struct dirent *entry = readdir(dir);
 		if (entry == NULL)
 			break;
-		std:string name(entry->d_name);
+		std::string name(entry->d_name);
 		if (name == "." || name == "..")
 			continue;
 		std::string child_path = path + "/" + name;
