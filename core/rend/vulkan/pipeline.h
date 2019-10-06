@@ -76,7 +76,7 @@ public:
 	{
 		int currentImage = GetContext()->GetCurrentImageIndex();
 		auto& inFlight = perPolyDescSetsInFlight[currentImage];
-		std::pair<u64, u32> index = std::make_pair(textureId, tsp.full & 0x7e000);
+		std::pair<u64, u32> index = std::make_pair(textureId, tsp.full & SamplerManager::TSP_Mask);
 		if (inFlight.find(index) != inFlight.end())
 			return;
 
@@ -88,7 +88,7 @@ public:
 					vk::DescriptorSetAllocateInfo(GetContext()->GetDescriptorPool(), layouts.size(), &layouts[0]));
 		}
 		Texture *texture = reinterpret_cast<Texture *>(textureId);
-		vk::DescriptorImageInfo imageInfo = texture->GetDescriptorImageInfo(tsp);
+		vk::DescriptorImageInfo imageInfo(samplerManager.GetSampler(tsp), texture->GetImageView(), vk::ImageLayout::eShaderReadOnlyOptimal);
 
 		std::vector<vk::WriteDescriptorSet> writeDescriptorSets;
 		writeDescriptorSets.push_back(vk::WriteDescriptorSet(*descSets.back(), 0, 0, 1, vk::DescriptorType::eCombinedImageSampler, &imageInfo, nullptr, nullptr));
@@ -119,7 +119,7 @@ public:
 	{
 		int currentImage = GetContext()->GetCurrentImageIndex();
 		cmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, *pipelineLayout, 1, 1,
-				&perPolyDescSetsInFlight[currentImage][std::make_pair(textureId, tsp.full & 0x7e000)].get(), 0, nullptr);
+				&perPolyDescSetsInFlight[currentImage][std::make_pair(textureId, tsp.full & SamplerManager::TSP_Mask)].get(), 0, nullptr);
 	}
 
 	void Reset()
@@ -141,6 +141,8 @@ private:
 	std::vector<vk::UniqueDescriptorSet> perFrameDescSets;
 	std::vector<std::vector<vk::UniqueDescriptorSet>> perPolyDescSets;
 	std::vector<std::map<std::pair<u64, u32>, vk::UniqueDescriptorSet>> perPolyDescSetsInFlight;
+
+	SamplerManager samplerManager;
 };
 
 class PipelineManager

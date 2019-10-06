@@ -148,7 +148,6 @@ void Texture::UploadToGPU(int width, int height, u8 *data)
 	}
 	Init(width, height, format);
 	SetImage(VulkanContext::Instance()->GetCurrentCommandBuffer(), dataSize, data);
-	samplers.clear();
 }
 
 void Texture::Init(u32 width, u32 height, vk::Format format)
@@ -159,14 +158,14 @@ void Texture::Init(u32 width, u32 height, vk::Format format)
 	vk::FormatProperties formatProperties = physicalDevice.getFormatProperties(format);
 
 	vk::FormatFeatureFlags formatFeatureFlags = vk::FormatFeatureFlagBits::eSampledImage;
-	needsStaging = (formatProperties.linearTilingFeatures & formatFeatureFlags) != formatFeatureFlags;
+	// Forcing staging since it fixes texture glitches
+	needsStaging = true; //(formatProperties.linearTilingFeatures & formatFeatureFlags) != formatFeatureFlags;
 	vk::ImageTiling imageTiling;
 	vk::ImageLayout initialLayout;
 	vk::MemoryPropertyFlags requirements;
 	vk::ImageUsageFlags usageFlags = vk::ImageUsageFlagBits::eSampled;
 	if (needsStaging)
 	{
-		printf("Texture::CreateSampler needsStaging\n");
 		verify((formatProperties.optimalTilingFeatures & formatFeatureFlags) == formatFeatureFlags);
 		stagingBufferData = std::unique_ptr<BufferData>(new BufferData(physicalDevice, device, extent.width * extent.height * 4, vk::BufferUsageFlagBits::eTransferSrc));
 		imageTiling = vk::ImageTiling::eOptimal;
@@ -197,8 +196,7 @@ void Texture::CreateImage(vk::ImageTiling tiling, vk::ImageUsageFlags usage, vk:
 
 	device.bindImageMemory(image.get(), deviceMemory.get(), 0);
 
-	vk::ComponentMapping componentMapping(vk::ComponentSwizzle::eR, vk::ComponentSwizzle::eG, vk::ComponentSwizzle::eB, vk::ComponentSwizzle::eA);
-	vk::ImageViewCreateInfo imageViewCreateInfo(vk::ImageViewCreateFlags(), image.get(), vk::ImageViewType::e2D, format, componentMapping,
+	vk::ImageViewCreateInfo imageViewCreateInfo(vk::ImageViewCreateFlags(), image.get(), vk::ImageViewType::e2D, format, vk::ComponentMapping(),
 			vk::ImageSubresourceRange(aspectMask, 0, 1, 0, 1));
 	imageView = device.createImageViewUnique(imageViewCreateInfo);
 }

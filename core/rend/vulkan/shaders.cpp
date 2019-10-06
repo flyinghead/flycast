@@ -36,7 +36,7 @@ static const char VertexShaderSource[] = R"(
 #define INTERPOLATION smooth
 #endif
 
-layout (std140, set = 0, binding = 0) uniform buffer
+layout (std140, set = 0, binding = 0) uniform VertexShaderUniforms
 {
 	vec4      scale;
 	float     extra_depth_scale;
@@ -95,7 +95,6 @@ static const char FragmentShaderSource[] = R"(
 
 layout (location = 0) out vec4 FragColor;
 #define gl_FragColor FragColor
-#define FOG_CHANNEL r
 
 #if pp_Gouraud == 0
 #define INTERPOLATION flat
@@ -103,13 +102,13 @@ layout (location = 0) out vec4 FragColor;
 #define INTERPOLATION smooth
 #endif
 
-layout (std140, set = 0, binding = 1) uniform buffer
+layout (std140, set = 0, binding = 1) uniform FragmentShaderUniforms
 {
 	vec4 colorClampMin;
 	vec4 colorClampMax;
+	vec4 sp_FOG_COL_RAM;
+	vec4 sp_FOG_COL_VERT;
 	float cp_AlphaTestValue;
-	vec3 sp_FOG_COL_RAM;
-	vec3 sp_FOG_COL_VERT;
 	float sp_FOG_DENSITY;
 	float extra_depth_scale;
 } uniformBuffer;
@@ -139,7 +138,7 @@ lowp float fog_mode2(float w)
 	float m = z * 16.0 / pow(2.0, exp) - 16.0;
 	lowp float idx = floor(m) + exp * 16.0 + 0.5;
 	vec4 fog_coef = texture(fog_table, vec2(idx / 128.0, 0.75 - (m - floor(m)) / 2.0));
-	return fog_coef.FOG_CHANNEL;
+	return fog_coef.r;
 }
 #endif
 

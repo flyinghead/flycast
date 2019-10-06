@@ -55,24 +55,22 @@ struct FragmentShaderParams
 	}
 };
 
+// std140 alignment required
 struct VertexShaderUniforms
 {
 	float scale[4];
 	float extra_depth_scale;
 };
 
+// std140 alignment required
 struct FragmentShaderUniforms
 {
 	float colorClampMin[4];
 	float colorClampMax[4];
+	float sp_FOG_COL_RAM[4];	// Only using 3 elements but easier for std140
+	float sp_FOG_COL_VERT[4];	// same comment
 	float cp_AlphaTestValue;
-	float _pad0[3];
-	float sp_FOG_COL_RAM[3];
-	float _pad1;
-	float sp_FOG_COL_VERT[3];
-	float _pad2;
 	float sp_FOG_DENSITY;
-	float _pad3[3];
 	float extra_depth_scale;
 };
 
