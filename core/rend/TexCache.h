@@ -1,6 +1,7 @@
 #pragma once
 #include <atomic>
 #include "oslib/oslib.h"
+#include "hw/pvr/pvr_regs.h"
 #include "hw/pvr/ta_structs.h"
 
 extern u8* vq_codebook;
@@ -630,7 +631,7 @@ struct PvrTexInfo;
 template <class pixel_type> class PixelBuffer;
 typedef void TexConvFP(PixelBuffer<u16>* pb,u8* p_in,u32 Width,u32 Height);
 typedef void TexConvFP32(PixelBuffer<u32>* pb,u8* p_in,u32 Width,u32 Height);
-enum class TextureType { _565, _5551, _4444, _8888 };
+enum class TextureType { _565, _5551, _4444, _8888, _8 };
 
 struct BaseTextureCacheData
 {
@@ -705,3 +706,13 @@ void CollectCleanup();
 void killtex();
 
 void ReadFramebuffer(PixelBuffer<u32>& pb, int& width, int& height);
+
+static inline void MakeFogTexture(u8 *tex_data)
+{
+	u8 *fog_table = (u8 *)FOG_TABLE;
+	for (int i = 0; i < 128; i++)
+	{
+		tex_data[i] = fog_table[i * 4];
+		tex_data[i + 128] = fog_table[i * 4 + 1];
+	}
+}

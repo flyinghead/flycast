@@ -195,19 +195,14 @@ public:
 		fragUniforms.colorClampMax[2] = ((pvrrc.fog_clamp_max >> 0) & 0xFF) / 255.0f;
 		fragUniforms.colorClampMax[3] = ((pvrrc.fog_clamp_max >> 24) & 0xFF) / 255.0f;
 
-		if (fog_needs_update && settings.rend.Fog)
-		{
-			fog_needs_update = false;
-			// TODO UpdateFogTexture((u8 *)FOG_TABLE, GL_TEXTURE1, gl.fog_image_format);
-		}
+		CheckFogTexture();
+
 		fragUniforms.cp_AlphaTestValue = (PT_ALPHA_REF & 0xFF) / 255.0f;
 
 		ModVolShaderUniforms modVolUniforms;
 		modVolUniforms.sp_ShaderColor = 1 - FPU_SHAD_SCALE.scale_factor / 256.f;
 
 		UploadUniforms(vtxUniforms, fragUniforms, modVolUniforms);
-
-		// TODO this upload should go in a cmd buffer?
 
 		GetContext()->BeginRenderPass();
 		vk::CommandBuffer cmdBuffer = GetContext()->GetCurrentCommandBuffer();
@@ -220,7 +215,7 @@ public:
 			indexBuffers[GetCurrentImage()]->upload(GetContext()->GetDevice().get(), pvrrc.idx.bytes(), pvrrc.idx.head());
 
 		// Update per-frame descriptor set and bind it
-		pipelineManager.GetDescriptorSets().UpdateUniforms(*vertexUniformBuffer, *fragmentUniformBuffer);
+		pipelineManager.GetDescriptorSets().UpdateUniforms(*vertexUniformBuffer, *fragmentUniformBuffer, fogTexture->GetImageView());
 		pipelineManager.GetDescriptorSets().BindPerFrameDescriptorSets(cmdBuffer);
 		// Reset per-poly descriptor set pool
 		pipelineManager.GetDescriptorSets().Reset();
@@ -379,7 +374,6 @@ private:
 		return clip_mode;
 	}
 
-
 	void DrawList(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sortTriangles, const List<PolyParam>& polys, u32 first, u32 count)
 	{
 		for (u32 i = first; i < count; i++)
@@ -492,9 +486,25 @@ private:
 		}
 	}
 
+	void CheckFogTexture()
+	{
+		if (!fogTexture)
+		{
+			fogTexture = std::unique_ptr<Texture>(new Texture(GetContext()->GetPhysicalDevice(), *GetContext()->GetDevice()));
+			fogTexture->tex_type = TextureType::_8;
+		}
+		if (!fog_needs_update || !settings.rend.Fog)
+			return;
+		fog_needs_update = false;
+		u8 texData[256];
+		MakeFogTexture(texData);
+		fogTexture->UploadToGPU(128, 2, texData);
+	}
+
 	// temp stuff
 	float scale_x;
 	float scale_y;
+	std::unique_ptr<Texture> fogTexture;
 
 	// Uniforms
 	vk::UniqueBuffer vertexUniformBuffer;

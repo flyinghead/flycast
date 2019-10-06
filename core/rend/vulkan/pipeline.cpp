@@ -202,7 +202,7 @@ void PipelineManager::CreatePipeline(u32 listType, bool sortTriangles, const Pol
 		params.clipTest = 0;	// always passes
 		break;
 	}
-	params.fog = 2;							// TODO fog texture -> pp.tsp.FogCtrl;
+	params.fog = settings.rend.Fog ? pp.tsp.FogCtrl : 2;
 	params.gouraud = pp.pcw.Gouraud;
 	params.ignoreTexAlpha = pp.tsp.IgnoreTexA;
 	params.offset = pp.pcw.Offset;

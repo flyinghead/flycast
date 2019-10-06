@@ -1387,11 +1387,8 @@ void UpdateFogTexture(u8 *fog_table, GLenum texture_slot, GLint fog_image_format
 		glcache.BindTexture(GL_TEXTURE_2D, fogTextureId);
 
 	u8 temp_tex_buffer[256];
-	for (int i = 0; i < 128; i++)
-	{
-		temp_tex_buffer[i] = fog_table[i * 4];
-		temp_tex_buffer[i + 128] = fog_table[i * 4 + 1];
-	}
+	MakeFogTexture(temp_tex_buffer);
+
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 	glTexImage2D(GL_TEXTURE_2D, 0, fog_image_format, 128, 2, 0, fog_image_format, GL_UNSIGNED_BYTE, temp_tex_buffer);
 	glCheck();

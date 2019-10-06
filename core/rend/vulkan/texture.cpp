@@ -145,6 +145,10 @@ void Texture::UploadToGPU(int width, int height, u8 *data)
 		format = vk::Format::eR8G8B8A8Unorm;
 		dataSize *= 2;
 		break;
+	case TextureType::_8:
+		format = vk::Format::eR8Unorm;
+		dataSize /= 2;
+		break;
 	}
 	Init(width, height, format);
 	SetImage(VulkanContext::Instance()->GetCurrentCommandPool(), dataSize, data);

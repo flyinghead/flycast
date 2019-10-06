@@ -129,20 +129,20 @@ layout (location = 1) INTERPOLATION in lowp vec4 vtx_offs;
 layout (location = 2)               in mediump vec2 vtx_uv;
 
 #if pp_FogCtrl != 2
-layout (set = 1, binding = 1) uniform sampler2D fog_table;
+layout (set = 0, binding = 2) uniform sampler2D fog_table;
 
-lowp float fog_mode2(float w)
+float fog_mode2(float w)
 {
 	float z = clamp(w * uniformBuffer.extra_depth_scale * uniformBuffer.sp_FOG_DENSITY, 1.0, 255.9999);
 	float exp = floor(log2(z));
 	float m = z * 16.0 / pow(2.0, exp) - 16.0;
-	lowp float idx = floor(m) + exp * 16.0 + 0.5;
+	float idx = floor(m) + exp * 16.0 + 0.5;
 	vec4 fog_coef = texture(fog_table, vec2(idx / 128.0, 0.75 - (m - floor(m)) / 2.0));
 	return fog_coef.r;
 }
 #endif
 
-vec4 colorClamp(lowp vec4 col)
+vec4 colorClamp(vec4 col)
 {
 #if ColorClamping == 1
 	return clamp(col, uniformBuffer.colorClampMin, uniformBuffer.colorClampMax);
@@ -166,7 +166,7 @@ void main()
 			discard;
 	#endif
 	
-	lowp vec4 color = vtx_base;
+	vec4 color = vtx_base;
 	#if pp_UseAlpha == 0
 		color.a = 1.0;
 	#endif
@@ -175,7 +175,7 @@ void main()
 	#endif
 	#if pp_Texture == 1
 	{
-		lowp vec4 texcol = texture(tex, vtx_uv);
+		vec4 texcol = texture(tex, vtx_uv);
 		
 		#if pp_BumpMap == 1
 			float s = PI / 2.0 * (texcol.a * 15.0 * 16.0 + texcol.r * 15.0) / 255.0;
@@ -260,7 +260,7 @@ out vec4 FragColor;
 
 layout (std140, binding = 1) uniform buffer
 {
-	lowp float sp_ShaderColor;
+	float sp_ShaderColor;
 } uniformBuffer;
 
 void main()

@@ -50,7 +50,7 @@ public:
 				vk::PipelineLayoutCreateInfo(vk::PipelineLayoutCreateFlags(), ARRAY_SIZE(layouts), layouts, 1, &pushConstant));
 	}
 
-	void UpdateUniforms(const vk::Buffer& vertexUniformBuffer, const vk::Buffer& fragmentUniformBuffer)
+	void UpdateUniforms(const vk::Buffer& vertexUniformBuffer, const vk::Buffer& fragmentUniformBuffer, vk::ImageView fogImageView)
 	{
 		while (perFrameDescSets.empty())
 		{
@@ -63,12 +63,24 @@ public:
 		while (perPolyDescSetsInFlight.size() < GetContext()->GetSwapChainSize())
 			perPolyDescSetsInFlight.push_back(std::map<std::pair<u64, u32>, vk::UniqueDescriptorSet>());
 		int currentImage = GetContext()->GetCurrentImageIndex();
+
 		std::vector<vk::DescriptorBufferInfo> bufferInfos;
 		bufferInfos.push_back(vk::DescriptorBufferInfo(vertexUniformBuffer, 0, VK_WHOLE_SIZE));
 		bufferInfos.push_back(vk::DescriptorBufferInfo(fragmentUniformBuffer, 0, VK_WHOLE_SIZE));
+
 		std::vector<vk::WriteDescriptorSet> writeDescriptorSets;
 		writeDescriptorSets.push_back(vk::WriteDescriptorSet(*perFrameDescSets[currentImage], 0, 0, 1, vk::DescriptorType::eUniformBuffer, nullptr, &bufferInfos[0], nullptr));
 		writeDescriptorSets.push_back(vk::WriteDescriptorSet(*perFrameDescSets[currentImage], 1, 0, 1, vk::DescriptorType::eUniformBuffer, nullptr, &bufferInfos[1], nullptr));
+		if (fogImageView)
+		{
+			TSP fogTsp = {};
+			fogTsp.FilterMode = 1;
+			fogTsp.ClampU = 1;
+			fogTsp.ClampV = 1;
+			vk::Sampler fogSampler = samplerManager.GetSampler(fogTsp);
+			vk::DescriptorImageInfo imageInfo(fogSampler, fogImageView, vk::ImageLayout::eShaderReadOnlyOptimal);
+			writeDescriptorSets.push_back(vk::WriteDescriptorSet(*perFrameDescSets[currentImage], 2, 0, 1, vk::DescriptorType::eCombinedImageSampler, &imageInfo, nullptr, nullptr));
+		}
 		GetContext()->GetDevice()->updateDescriptorSets(writeDescriptorSets, nullptr);
 	}
 
@@ -176,7 +188,7 @@ private:
 			| ((pp->tileclip >> 28) << 4);
 		hash |= ((listType >> 1) << 6);
 		hash |= (pp->tsp.ShadInstr << 8) | (pp->tsp.IgnoreTexA << 10) | (pp->tsp.UseAlpha << 11)
-			| (pp->tsp.ColorClamp << 12) | (pp->tsp.FogCtrl << 13) | (pp->tsp.SrcInstr << 15)
+			| (pp->tsp.ColorClamp << 12) | ((settings.rend.Fog ? pp->tsp.FogCtrl : 2) << 13) | (pp->tsp.SrcInstr << 15)
 			| (pp->tsp.DstInstr << 18);
 		hash |= (pp->isp.ZWriteDis << 21) | (pp->isp.CullMode << 22) | (pp->isp.DepthMode << 24);
 		hash |= (u32)sortTriangles << 27;
