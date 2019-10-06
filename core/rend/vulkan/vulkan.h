@@ -61,6 +61,7 @@ public:
 	vk::UniqueDevice& GetDevice() { return device; }
 	vk::PipelineCache GetPipelineCache() const { return *pipelineCache; }
 	vk::RenderPass GetRenderPass() const { return *renderPass; }
+	vk::CommandPool GetCurrentCommandPool() const { return *commandPools[currentImage]; }
 	vk::CommandBuffer GetCurrentCommandBuffer() const { return *commandBuffers[currentImage]; }
 	vk::DescriptorPool GetDescriptorPool() const { return *descriptorPool; }
 	vk::Extent2D GetViewPort() const { return { width, height }; }
@@ -68,6 +69,7 @@ public:
 	int GetCurrentImageIndex() const { return currentImage; }
 	void WaitIdle() const { graphicsQueue.waitIdle(); }
 	bool IsRendering() const { return rendering; }
+	vk::Queue GetGraphicsQueue() const { return graphicsQueue; }
 
 	static VulkanContext *Instance() { return contextInstance; }
 

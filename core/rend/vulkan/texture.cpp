@@ -147,7 +147,7 @@ void Texture::UploadToGPU(int width, int height, u8 *data)
 		break;
 	}
 	Init(width, height, format);
-	SetImage(VulkanContext::Instance()->GetCurrentCommandBuffer(), dataSize, data);
+	SetImage(VulkanContext::Instance()->GetCurrentCommandPool(), dataSize, data);
 }
 
 void Texture::Init(u32 width, u32 height, vk::Format format)
@@ -201,8 +201,12 @@ void Texture::CreateImage(vk::ImageTiling tiling, vk::ImageUsageFlags usage, vk:
 	imageView = device.createImageViewUnique(imageViewCreateInfo);
 }
 
-void Texture::SetImage(vk::CommandBuffer const& commandBuffer, u32 srcSize, void *srcData)
+void Texture::SetImage(const vk::CommandPool& commandPool, u32 srcSize, void *srcData)
 {
+	vk::UniqueCommandBuffer commandBuffer = std::move(device.allocateCommandBuffersUnique(
+			vk::CommandBufferAllocateInfo(commandPool, vk::CommandBufferLevel::ePrimary, 1)).front());
+	commandBuffer->begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));
+
 	vk::DeviceSize size = needsStaging
 			? device.getBufferMemoryRequirements(stagingBufferData->buffer.get()).size
 					: device.getImageMemoryRequirements(image.get()).size;
@@ -215,15 +219,25 @@ void Texture::SetImage(vk::CommandBuffer const& commandBuffer, u32 srcSize, void
 	if (needsStaging)
 	{
 		// Since we're going to blit to the texture image, set its layout to eTransferDstOptimal
-		setImageLayout(commandBuffer, image.get(), format, vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal);
+		setImageLayout(*commandBuffer, image.get(), format, vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal);
 		vk::BufferImageCopy copyRegion(0, extent.width, extent.height, vk::ImageSubresourceLayers(vk::ImageAspectFlagBits::eColor, 0, 0, 1), vk::Offset3D(0, 0, 0), vk::Extent3D(extent, 1));
-		commandBuffer.copyBufferToImage(stagingBufferData->buffer.get(), image.get(), vk::ImageLayout::eTransferDstOptimal, copyRegion);
+		commandBuffer->copyBufferToImage(stagingBufferData->buffer.get(), image.get(), vk::ImageLayout::eTransferDstOptimal, copyRegion);
 		// Set the layout for the texture image from eTransferDstOptimal to SHADER_READ_ONLY
-		setImageLayout(commandBuffer, image.get(), format, vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eShaderReadOnlyOptimal);
+		setImageLayout(*commandBuffer, image.get(), format, vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eShaderReadOnlyOptimal);
 	}
 	else
 	{
 		// If we can use the linear tiled image as a texture, just do it
-		setImageLayout(commandBuffer, image.get(), format, vk::ImageLayout::ePreinitialized, vk::ImageLayout::eShaderReadOnlyOptimal);
+		setImageLayout(*commandBuffer, image.get(), format, vk::ImageLayout::ePreinitialized, vk::ImageLayout::eShaderReadOnlyOptimal);
+	}
+	commandBuffer->end();
+	VulkanContext::Instance()->GetGraphicsQueue().submit(vk::SubmitInfo(0, nullptr, nullptr, 1, &(*commandBuffer)), nullptr);
+
+	// FIXME we need to wait for the command buffer to finish executing before freeing the staging and command buffers
+	VulkanContext::Instance()->GetGraphicsQueue().waitIdle();
+	if (needsStaging)
+	{
+		// Free staging buffer
+		stagingBufferData = nullptr;
 	}
 }

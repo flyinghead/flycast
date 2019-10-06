@@ -37,7 +37,7 @@ struct Texture : BaseTextureCacheData
 
 private:
 	void Init(u32 width, u32 height, vk::Format format);
-	void SetImage(vk::CommandBuffer const& commandBuffer, u32 size, void *data);
+	void SetImage(const vk::CommandPool& commandPool, u32 size, void *data);
 	void CreateImage(vk::ImageTiling tiling, vk::ImageUsageFlags usage, vk::ImageLayout initialLayout,
 			vk::MemoryPropertyFlags memoryProperties, vk::ImageAspectFlags aspectMask);
 

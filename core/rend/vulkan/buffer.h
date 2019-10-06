@@ -36,48 +36,6 @@ struct BufferData
 		device.unmapMemory(*this->deviceMemory);
 	}
 
-	template <typename DataType>
-	void upload(vk::Device const& device, DataType const& data) const
-	{
-		assert((m_propertyFlags & vk::MemoryPropertyFlagBits::eHostCoherent) && (m_propertyFlags & vk::MemoryPropertyFlagBits::eHostVisible));
-		assert(sizeof(DataType) <= m_size);
-
-		void* dataPtr = device.mapMemory(*this->deviceMemory, 0, sizeof(DataType));
-		memcpy(dataPtr, &data, sizeof(DataType));
-		device.unmapMemory(*this->deviceMemory);
-	}
-
-	template <typename DataType>
-	void upload(vk::Device const& device, std::vector<DataType> const& data, size_t stride = 0) const
-	{
-		assert(m_propertyFlags & vk::MemoryPropertyFlagBits::eHostVisible);
-
-		size_t elementSize = stride ? stride : sizeof(DataType);
-		assert(sizeof(DataType) <= elementSize);
-
-		copyToDevice(device, deviceMemory, data.data(), data.size(), elementSize);
-	}
-
-	template <typename DataType>
-	void upload(vk::PhysicalDevice const& physicalDevice, vk::Device const& device, vk::CommandPool const& commandPool, vk::Queue queue, std::vector<DataType> const& data,
-			size_t stride) const
-	{
-		assert(m_usage & vk::BufferUsageFlagBits::eTransferDst);
-		assert(m_propertyFlags & vk::MemoryPropertyFlagBits::eDeviceLocal);
-
-		size_t elementSize = stride ? stride : sizeof(DataType);
-		assert(sizeof(DataType) <= elementSize);
-
-		size_t dataSize = data.size() * elementSize;
-		assert(dataSize <= m_size);
-
-		BufferData stagingBuffer(physicalDevice, device, dataSize, vk::BufferUsageFlagBits::eTransferSrc);
-		copyToDevice(device, stagingBuffer.deviceMemory, data.data(), data.size(), elementSize);
-
-		oneTimeSubmit(device, commandPool, queue,
-				[&](vk::CommandBuffer const& commandBuffer) { commandBuffer.copyBuffer(*stagingBuffer.buffer, *this->buffer, vk::BufferCopy(0, 0, dataSize)); });
-	}
-
 	vk::UniqueDeviceMemory  deviceMemory;
 	vk::UniqueBuffer        buffer;
 	vk::DeviceSize          m_size;

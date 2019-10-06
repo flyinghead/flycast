@@ -282,20 +282,20 @@ void VulkanContext::InitDevice()
 	    // Descriptor pool
         vk::DescriptorPoolSize pool_sizes[] =
         {
-            { vk::DescriptorType::eSampler, 1000 },
+            { vk::DescriptorType::eSampler, 2 },
             { vk::DescriptorType::eCombinedImageSampler, 1000 },
-            { vk::DescriptorType::eSampledImage, 1000 },
-            { vk::DescriptorType::eStorageImage, 1000 },
-            { vk::DescriptorType::eUniformTexelBuffer, 1000 },
-			{ vk::DescriptorType::eStorageTexelBuffer, 1000 },
-            { vk::DescriptorType::eUniformBuffer, 1000 },
-            { vk::DescriptorType::eStorageBuffer, 1000 },
-            { vk::DescriptorType::eUniformBufferDynamic, 1000 },
-            { vk::DescriptorType::eStorageBufferDynamic, 1000 },
-            { vk::DescriptorType::eInputAttachment, 1000 }
+            { vk::DescriptorType::eSampledImage, 2 },
+            { vk::DescriptorType::eStorageImage, 2 },
+            { vk::DescriptorType::eUniformTexelBuffer, 2 },
+			{ vk::DescriptorType::eStorageTexelBuffer, 2 },
+            { vk::DescriptorType::eUniformBuffer, 4 },
+            { vk::DescriptorType::eStorageBuffer, 2 },
+            { vk::DescriptorType::eUniformBufferDynamic, 2 },
+            { vk::DescriptorType::eStorageBufferDynamic, 2 },
+            { vk::DescriptorType::eInputAttachment, 2 }
         };
 	    descriptorPool = device->createDescriptorPoolUnique(vk::DescriptorPoolCreateInfo(vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet,
-	    		1000 * ARRAY_SIZE(pool_sizes), ARRAY_SIZE(pool_sizes), pool_sizes));
+	    		10000, ARRAY_SIZE(pool_sizes), pool_sizes));
 
 
 	    std::string cachePath = get_writable_data_path(PipelineCacheFileName);
