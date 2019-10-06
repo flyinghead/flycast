@@ -58,29 +58,156 @@ static vk::BlendFactor getBlendFactor(u32 instr, bool src)
 	}
 }
 
-void PipelineManager::CreatePipeline(u32 listType, bool sortTriangles, const PolyParam& pp)
+void PipelineManager::CreateModVolPipeline(ModVolMode mode)
 {
 	// Vertex input state
-	const vk::VertexInputBindingDescription vertexBindingDescriptions[] =
+	vk::PipelineVertexInputStateCreateInfo pipelineVertexInputStateCreateInfo;
+	// Input assembly state
+	vk::PipelineInputAssemblyStateCreateInfo pipelineInputAssemblyStateCreateInfo;
+
+	if (mode == ModVolMode::Final)
 	{
-			{ 0, sizeof(Vertex) },
-	};
-	const vk::VertexInputAttributeDescription vertexInputAttributeDescriptions[] =
+		pipelineVertexInputStateCreateInfo = GetMainVertexInputStateCreateInfo();
+		pipelineInputAssemblyStateCreateInfo = vk::PipelineInputAssemblyStateCreateInfo(vk::PipelineInputAssemblyStateCreateFlags(),
+				vk::PrimitiveTopology::eTriangleStrip);
+	}
+	else
 	{
-			vk::VertexInputAttributeDescription(0, 0, vk::Format::eR32G32B32Sfloat, offsetof(Vertex, x)),	// pos
-			vk::VertexInputAttributeDescription(1, 0, vk::Format::eR8G8B8A8Uint, offsetof(Vertex, col)),	// base color
-			vk::VertexInputAttributeDescription(2, 0, vk::Format::eR8G8B8A8Uint, offsetof(Vertex, spc)),	// offset color
-			vk::VertexInputAttributeDescription(3, 0, vk::Format::eR32G32Sfloat, offsetof(Vertex, u)),		// tex coord
+		const vk::VertexInputBindingDescription vertexBindingDescriptions[] =
+		{
+				{ 0, sizeof(ModTriangle) },
+		};
+		const vk::VertexInputAttributeDescription vertexInputAttributeDescriptions[] =
+		{
+				vk::VertexInputAttributeDescription(0, 0, vk::Format::eR32G32B32Sfloat, offsetof(Vertex, x)),	// pos
+		};
+		pipelineVertexInputStateCreateInfo = vk::PipelineVertexInputStateCreateInfo(
+				vk::PipelineVertexInputStateCreateFlags(),
+				ARRAY_SIZE(vertexBindingDescriptions),
+				vertexBindingDescriptions,
+				ARRAY_SIZE(vertexInputAttributeDescriptions),
+				vertexInputAttributeDescriptions);
+		pipelineInputAssemblyStateCreateInfo = vk::PipelineInputAssemblyStateCreateInfo(vk::PipelineInputAssemblyStateCreateFlags(),
+				vk::PrimitiveTopology::eTriangleList);
+	}
+
+	// Viewport and scissor states
+	vk::PipelineViewportStateCreateInfo pipelineViewportStateCreateInfo(vk::PipelineViewportStateCreateFlags(), 1, nullptr, 1, nullptr);
+
+	// Rasterization and multisample states
+	vk::PipelineRasterizationStateCreateInfo pipelineRasterizationStateCreateInfo
+	(
+	  vk::PipelineRasterizationStateCreateFlags(),  // flags
+	  false,                                        // depthClampEnable
+	  mode != ModVolMode::Final,                    // rasterizerDiscardEnable
+	  vk::PolygonMode::eFill,                       // polygonMode
+	  vk::CullModeFlagBits::eNone,  		        // cullMode
+	  vk::FrontFace::eCounterClockwise,             // frontFace
+	  false,                                        // depthBiasEnable
+	  0.0f,                                         // depthBiasConstantFactor
+	  0.0f,                                         // depthBiasClamp
+	  0.0f,                                         // depthBiasSlopeFactor
+	  1.0f                                          // lineWidth
+	);
+	vk::PipelineMultisampleStateCreateInfo pipelineMultisampleStateCreateInfo;
+
+	// Depth and stencil
+	vk::StencilOpState stencilOpState;
+	switch (mode)
+	{
+	case ModVolMode::Xor:
+		stencilOpState = vk::StencilOpState(vk::StencilOp::eKeep, vk::StencilOp::eInvert, vk::StencilOp::eKeep, vk::CompareOp::eAlways, 0, 2, 2);
+		break;
+	case ModVolMode::Or:
+		stencilOpState = vk::StencilOpState(vk::StencilOp::eKeep, vk::StencilOp::eReplace, vk::StencilOp::eKeep, vk::CompareOp::eAlways, 2, 2, 2);
+		break;
+	case ModVolMode::Inclusion:
+		stencilOpState = vk::StencilOpState(vk::StencilOp::eZero, vk::StencilOp::eReplace, vk::StencilOp::eZero, vk::CompareOp::eLessOrEqual, 1, 3, 3);
+		break;
+	case ModVolMode::Exclusion:
+		stencilOpState = vk::StencilOpState(vk::StencilOp::eZero, vk::StencilOp::eKeep, vk::StencilOp::eZero, vk::CompareOp::eEqual, 1, 3, 3);
+		break;
+	case ModVolMode::Final:
+		stencilOpState = vk::StencilOpState(vk::StencilOp::eZero, vk::StencilOp::eZero, vk::StencilOp::eZero, vk::CompareOp::eEqual, 0x81, 3, 0x81);
+		break;
+	}
+	vk::PipelineDepthStencilStateCreateInfo pipelineDepthStencilStateCreateInfo
+	(
+	  vk::PipelineDepthStencilStateCreateFlags(), // flags
+	  mode == ModVolMode::Xor || mode == ModVolMode::Or, // depthTestEnable
+	  false,                                      // depthWriteEnable
+	  vk::CompareOp::eGreater,                    // depthCompareOp
+	  false,                                      // depthBoundTestEnable
+	  true,                                       // stencilTestEnable
+	  stencilOpState,                             // front
+	  vk::StencilOpState()                        // back
+	);
+
+	// Color flags and blending
+	vk::ColorComponentFlags colorComponentFlags(vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA);
+	vk::PipelineColorBlendAttachmentState pipelineColorBlendAttachmentState(
+		mode == ModVolMode::Final,          // blendEnable
+		vk::BlendFactor::eSrcAlpha,         // srcColorBlendFactor
+		vk::BlendFactor::eOneMinusSrcAlpha, // dstColorBlendFactor
+		vk::BlendOp::eAdd,                  // colorBlendOp
+		vk::BlendFactor::eSrcAlpha,         // srcAlphaBlendFactor
+		vk::BlendFactor::eOneMinusSrcAlpha, // dstAlphaBlendFactor
+		vk::BlendOp::eAdd,                  // alphaBlendOp
+		colorComponentFlags                 // colorWriteMask
+	);
+
+	vk::PipelineColorBlendStateCreateInfo pipelineColorBlendStateCreateInfo
+	(
+	  vk::PipelineColorBlendStateCreateFlags(),   // flags
+	  false,                                      // logicOpEnable
+	  vk::LogicOp::eNoOp,                         // logicOp
+	  1,                                          // attachmentCount
+	  &pipelineColorBlendAttachmentState,         // pAttachments
+	  { { (1.0f, 1.0f, 1.0f, 1.0f) } }            // blendConstants
+	);
+
+	vk::DynamicState dynamicStates[2] = { vk::DynamicState::eViewport, vk::DynamicState::eScissor };
+	vk::PipelineDynamicStateCreateInfo pipelineDynamicStateCreateInfo(vk::PipelineDynamicStateCreateFlags(), 2, dynamicStates);
+
+	vk::ShaderModule vertex_module = shaderManager.GetVertexShader(VertexShaderParams{ false, false });	// TODO rotate90
+	vk::ShaderModule fragment_module = shaderManager.GetModVolShader();
+
+	vk::PipelineShaderStageCreateInfo stages[] = {
+			{ vk::PipelineShaderStageCreateFlags(), vk::ShaderStageFlagBits::eVertex, vertex_module, "main" },
+			{ vk::PipelineShaderStageCreateFlags(), vk::ShaderStageFlagBits::eFragment, fragment_module, "main" },
 	};
-	vk::PipelineVertexInputStateCreateInfo pipelineVertexInputStateCreateInfo(
-			vk::PipelineVertexInputStateCreateFlags(),
-			ARRAY_SIZE(vertexBindingDescriptions),
-			vertexBindingDescriptions,
-			ARRAY_SIZE(vertexInputAttributeDescriptions),
-			vertexInputAttributeDescriptions);
+	vk::GraphicsPipelineCreateInfo graphicsPipelineCreateInfo
+	(
+	  vk::PipelineCreateFlags(),                  // flags
+	  2,                                          // stageCount
+	  stages,                                     // pStages
+	  &pipelineVertexInputStateCreateInfo,        // pVertexInputState
+	  &pipelineInputAssemblyStateCreateInfo,      // pInputAssemblyState
+	  nullptr,                                    // pTessellationState
+	  &pipelineViewportStateCreateInfo,           // pViewportState
+	  &pipelineRasterizationStateCreateInfo,      // pRasterizationState
+	  &pipelineMultisampleStateCreateInfo,        // pMultisampleState
+	  &pipelineDepthStencilStateCreateInfo,       // pDepthStencilState
+	  &pipelineColorBlendStateCreateInfo,         // pColorBlendState
+	  &pipelineDynamicStateCreateInfo,            // pDynamicState
+	  descriptorSets.GetPipelineLayout(),         // layout
+	  GetContext()->GetRenderPass()             // renderPass
+	);
+
+	if (modVolPipelines.empty())
+		modVolPipelines.reserve((size_t)ModVolMode::Final + 1);
+	modVolPipelines[(size_t)mode] =
+			GetContext()->GetDevice()->createGraphicsPipelineUnique(GetContext()->GetPipelineCache(),
+					graphicsPipelineCreateInfo);
+}
+
+void PipelineManager::CreatePipeline(u32 listType, bool sortTriangles, const PolyParam& pp)
+{
+	vk::PipelineVertexInputStateCreateInfo pipelineVertexInputStateCreateInfo = GetMainVertexInputStateCreateInfo();
 
 	// Input assembly state
-	vk::PipelineInputAssemblyStateCreateInfo pipelineInputAssemblyStateCreateInfo(vk::PipelineInputAssemblyStateCreateFlags(), vk::PrimitiveTopology::eTriangleStrip);
+	vk::PipelineInputAssemblyStateCreateInfo pipelineInputAssemblyStateCreateInfo(vk::PipelineInputAssemblyStateCreateFlags(),
+			sortTriangles && !settings.rend.PerStripSorting ? vk::PrimitiveTopology::eTriangleList : vk::PrimitiveTopology::eTriangleStrip);
 
 	// Viewport and scissor states
 	vk::PipelineViewportStateCreateInfo pipelineViewportStateCreateInfo(vk::PipelineViewportStateCreateFlags(), 1, nullptr, 1, nullptr);

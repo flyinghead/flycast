@@ -202,17 +202,14 @@ public:
 		ModVolShaderUniforms modVolUniforms;
 		modVolUniforms.sp_ShaderColor = 1 - FPU_SHAD_SCALE.scale_factor / 256.f;
 
+		SortTriangles();
+
 		UploadUniforms(vtxUniforms, fragUniforms, modVolUniforms);
 
 		GetContext()->BeginRenderPass();
 		vk::CommandBuffer cmdBuffer = GetContext()->GetCurrentCommandBuffer();
-
 		// Upload vertex and index buffers
-		CheckVertexIndexBuffers(pvrrc.verts.bytes(), pvrrc.idx.bytes());
-		if (pvrrc.verts.bytes() > 0)
-			vertexBuffers[GetCurrentImage()]->upload(GetContext()->GetDevice().get(), pvrrc.verts.bytes(), pvrrc.verts.head());
-		if (pvrrc.idx.bytes() > 0)
-			indexBuffers[GetCurrentImage()]->upload(GetContext()->GetDevice().get(), pvrrc.idx.bytes(), pvrrc.idx.head());
+		UploadMainBuffer();
 
 		// Update per-frame descriptor set and bind it
 		pipelineManager.GetDescriptorSets().UpdateUniforms(*vertexUniformBuffer, *fragmentUniformBuffer, fogTexture->GetImageView());
@@ -222,8 +219,8 @@ public:
 
 		// Bind vertex and index buffers
 		const vk::DeviceSize offsets[] = { 0 };
-		cmdBuffer.bindVertexBuffers(0, 1, &vertexBuffers[GetCurrentImage()]->buffer.get(), offsets);
-		cmdBuffer.bindIndexBuffer(*indexBuffers[GetCurrentImage()]->buffer, 0, vk::IndexType::eUint32);
+		cmdBuffer.bindVertexBuffers(0, 1, &mainBuffers[GetCurrentImage()]->buffer.get(), offsets);
+		cmdBuffer.bindIndexBuffer(*mainBuffers[GetCurrentImage()]->buffer, pvrrc.verts.bytes(), vk::IndexType::eUint32);
 
 		cmdBuffer.setViewport(0, vk::Viewport(0.0f, 0.0f, static_cast<float>(GetContext()->GetViewPort().width),
 				static_cast<float>(GetContext()->GetViewPort().width), 1.0f, 0.0f));
@@ -243,13 +240,11 @@ public:
 			DrawList(cmdBuffer, ListType_Punch_Through, false, pvrrc.global_param_pt, previous_pass.pt_count, current_pass.pt_count - previous_pass.pt_count);
 			if (current_pass.autosort)
             {
-// TODO
-//				if (!settings.rend.PerStripSorting)
-//				{
-//					//SortTriangles(previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);
-//					//DrawSorted(render_pass < pvrrc.render_passes.used() - 1);
-//				}
-//				else
+				if (!settings.rend.PerStripSorting)
+				{
+					DrawSorted(cmdBuffer, sortedPolys[render_pass]);
+				}
+				else
 				{
 					SortPParams(previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);
 					DrawList(cmdBuffer, ListType_Translucent, true, pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);
@@ -406,6 +401,63 @@ private:
 		}
 	}
 
+	void SortTriangles()
+	{
+		sortedPolys.resize(pvrrc.render_passes.used());
+		sortedIndexes.resize(pvrrc.render_passes.used());
+		sortedIndexCount = 0;
+		RenderPass previousPass = {};
+
+	    for (int render_pass = 0; render_pass < pvrrc.render_passes.used(); render_pass++)
+	    {
+	        const RenderPass& current_pass = pvrrc.render_passes.head()[render_pass];
+	        sortedIndexes[render_pass].clear();
+	        if (current_pass.autosort)
+	        {
+	        	GenSorted(previousPass.tr_count, current_pass.tr_count - previousPass.tr_count, sortedPolys[render_pass], sortedIndexes[render_pass]);
+	        	for (auto& poly : sortedPolys[render_pass])
+	        		poly.first += sortedIndexCount;
+	        	sortedIndexCount += sortedIndexes[render_pass].size();
+	        }
+	        else
+	        	sortedPolys[render_pass].clear();
+			previousPass = current_pass;
+	    }
+	}
+
+	// FIXME Code dup with DrawList()
+	void DrawSorted(const vk::CommandBuffer& cmdBuffer, const std::vector<SortTrigDrawParam>& polys)
+	{
+		for (const SortTrigDrawParam& param : polys)
+		{
+			float trilinearAlpha;
+			if (param.ppid->pcw.Texture && param.ppid->tsp.FilterMode > 1)
+			{
+				trilinearAlpha = 0.25 * (param.ppid->tsp.MipMapD & 0x3);
+				if (param.ppid->tsp.FilterMode == 2)
+					// Trilinear pass A
+					trilinearAlpha = 1.0 - trilinearAlpha;
+			}
+			else
+				trilinearAlpha = 1.f;
+
+			std::array<float, 5> pushConstants = { 0, 0, 0, 0, trilinearAlpha };
+			SetTileClip(param.ppid->tileclip, &pushConstants[0]);
+			cmdBuffer.pushConstants<float>(pipelineManager.GetDescriptorSets().GetPipelineLayout(), vk::ShaderStageFlagBits::eFragment, 0, pushConstants);
+
+			if (param.ppid->pcw.Texture)
+				pipelineManager.GetDescriptorSets().SetTexture(param.ppid->texid, param.ppid->tsp);
+
+			vk::Pipeline pipeline = pipelineManager.GetPipeline(ListType_Translucent, true, *param.ppid);
+			cmdBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline);
+			if (param.ppid->pcw.Texture)
+				pipelineManager.GetDescriptorSets().BindPerPolyDescriptorSets(cmdBuffer, param.ppid->texid, param.ppid->tsp);
+
+			cmdBuffer.drawIndexed(param.count, 1, pvrrc.idx.used() + param.first, 0, 0);
+
+		}
+	}
+
 	void InitUniforms()
 	{
 		vertexUniformBuffer = GetContext()->GetDevice()->createBufferUnique(vk::BufferCreateInfo(vk::BufferCreateFlags(),
@@ -451,39 +503,41 @@ private:
 		GetContext()->GetDevice()->unmapMemory(modVolUniformMemory.get());
 	}
 
-	void CheckVertexIndexBuffers(u32 vertexSize, u32 indexSize)
+	void UploadMainBuffer()
 	{
-		if (vertexBuffers.empty())
+		u32 totalSize = pvrrc.verts.bytes() + pvrrc.idx.bytes() + sortedIndexCount * sizeof(u32);
+		if (mainBuffers.empty())
 		{
 			for (int i = 0; i < GetContext()->GetSwapChainSize(); i++)
-				vertexBuffers.push_back(std::unique_ptr<BufferData>(new BufferData(GetContext()->GetPhysicalDevice(), GetContext()->GetDevice().get(),
-						std::max(512 * 1024u, vertexSize), vk::BufferUsageFlagBits::eVertexBuffer)));
+				mainBuffers.push_back(std::unique_ptr<BufferData>(new BufferData(GetContext()->GetPhysicalDevice(), GetContext()->GetDevice().get(),
+						std::max(512 * 1024u, totalSize), vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eIndexBuffer)));
 		}
-		else if (vertexBuffers[GetCurrentImage()]->m_size < vertexSize)
+		else if (mainBuffers[GetCurrentImage()]->m_size < totalSize)
 		{
-			u32 newSize = vertexBuffers[GetCurrentImage()]->m_size;
-			while (newSize < vertexSize)
+			u32 newSize = mainBuffers[GetCurrentImage()]->m_size;
+			while (newSize < totalSize)
 				newSize *= 2;
-			INFO_LOG(RENDERER, "Increasing vertex buffer size %d -> %d", (u32)vertexBuffers[GetCurrentImage()]->m_size, newSize);
-			vertexBuffers[GetCurrentImage()] = std::unique_ptr<BufferData>(new BufferData(GetContext()->GetPhysicalDevice(), GetContext()->GetDevice().get(), newSize,
-					vk::BufferUsageFlagBits::eVertexBuffer));
+			INFO_LOG(RENDERER, "Increasing main buffer size %d -> %d", (u32)mainBuffers[GetCurrentImage()]->m_size, newSize);
+			mainBuffers[GetCurrentImage()] = std::unique_ptr<BufferData>(new BufferData(GetContext()->GetPhysicalDevice(), GetContext()->GetDevice().get(), newSize,
+					vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eIndexBuffer));
 		}
-		if (indexBuffers.empty())
+
+		std::vector<const void *> chunks;
+		std::vector<u32> chunkSizes;
+
+		chunks.push_back(pvrrc.verts.head());
+		chunkSizes.push_back(pvrrc.verts.bytes());
+		chunks.push_back(pvrrc.idx.head());
+		chunkSizes.push_back(pvrrc.idx.bytes());
+		for (const std::vector<u32>& idx : sortedIndexes)
 		{
-			for (int i = 0; i < GetContext()->GetSwapChainSize(); i++)
-				indexBuffers.push_back(std::unique_ptr<BufferData>(new BufferData(GetContext()->GetPhysicalDevice(), GetContext()->GetDevice().get(),
-						std::max(64 * 1024u, indexSize),
-						vk::BufferUsageFlagBits::eIndexBuffer)));
+			if (!idx.empty())
+			{
+				chunks.push_back(&idx[0]);
+				chunkSizes.push_back(idx.size() * sizeof(u32));
+			}
 		}
-		else if (indexBuffers[GetCurrentImage()]->m_size < indexSize)
-		{
-			u32 newSize = indexBuffers[GetCurrentImage()]->m_size;
-			while (newSize < indexSize)
-				newSize *= 2;
-			INFO_LOG(RENDERER, "Increasing index buffer size %d -> %d", (u32)indexBuffers[GetCurrentImage()]->m_size, newSize);
-			indexBuffers[GetCurrentImage()] = std::unique_ptr<BufferData>(new BufferData(GetContext()->GetPhysicalDevice(), GetContext()->GetDevice().get(), newSize,
-					vk::BufferUsageFlagBits::eIndexBuffer));
-		}
+		mainBuffers[GetCurrentImage()]->upload(GetContext()->GetDevice().get(), chunks.size(), &chunkSizes[0], &chunks[0]);
 	}
 
 	void CheckFogTexture()
@@ -492,6 +546,7 @@ private:
 		{
 			fogTexture = std::unique_ptr<Texture>(new Texture(GetContext()->GetPhysicalDevice(), *GetContext()->GetDevice()));
 			fogTexture->tex_type = TextureType::_8;
+			fog_needs_update = true;
 		}
 		if (!fog_needs_update || !settings.rend.Fog)
 			return;
@@ -504,6 +559,10 @@ private:
 	// temp stuff
 	float scale_x;
 	float scale_y;
+	std::vector<std::vector<SortTrigDrawParam>> sortedPolys;
+	std::vector<std::vector<u32>> sortedIndexes;
+	u32 sortedIndexCount;
+
 	std::unique_ptr<Texture> fogTexture;
 
 	// Uniforms
@@ -518,8 +577,7 @@ private:
 	vk::DeviceSize modVolUniformsMemSize;
 
 	// Buffers
-	std::vector<std::unique_ptr<BufferData>> vertexBuffers;
-	std::vector<std::unique_ptr<BufferData>> indexBuffers;
+	std::vector<std::unique_ptr<BufferData>> mainBuffers;
 
 	ShaderManager shaderManager;
 	PipelineManager pipelineManager;

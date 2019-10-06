@@ -24,6 +24,8 @@
 #include "texture.h"
 #include "hw/pvr/ta_ctx.h"
 
+enum class ModVolMode { Xor, Or, Inclusion, Exclusion, Final };
+
 class DescriptorSets
 {
 public:
@@ -109,18 +111,7 @@ public:
 		inFlight[index] = std::move(descSets.back());
 		descSets.pop_back();
 	}
-/* TODO Should be part of per-frame descriptor set
-	void SetFogTexture(Texture & texture)
-	{
-		vk::DescriptorImageInfo imageInfo = texture.GetDescriptorImageInfo();
 
-		int currentImage = GetContext()->GetCurrentImageIndex();
-		std::vector<vk::WriteDescriptorSet> writeDescriptorSets;
-		writeDescriptorSets.push_back(vk::WriteDescriptorSet(*perPolyDescSets[currentImage], 1, 0, 1, vk::DescriptorType::eCombinedImageSampler, &imageInfo, nullptr, nullptr));
-
-		GetContext()->GetDevice()->updateDescriptorSets(writeDescriptorSets, nullptr);
-	}
-*/
 	void BindPerFrameDescriptorSets(vk::CommandBuffer cmdBuffer)
 	{
 		int currentImage = GetContext()->GetCurrentImageIndex();
@@ -181,8 +172,9 @@ public:
 
 private:
 	VulkanContext *GetContext() const { return VulkanContext::Instance(); }
+	void CreateModVolPipeline(ModVolMode mode);
 
-	u32 hash(u32 listType, bool sortTriangles, const PolyParam *pp)
+	u32 hash(u32 listType, bool sortTriangles, const PolyParam *pp) const
 	{
 		u32 hash = pp->pcw.Gouraud | (pp->pcw.Offset << 1) | (pp->pcw.Texture << 2) | (pp->pcw.Shadow << 3)
 			| ((pp->tileclip >> 28) << 4);
@@ -196,9 +188,33 @@ private:
 
 		return hash;
 	}
+
+	vk::PipelineVertexInputStateCreateInfo GetMainVertexInputStateCreateInfo() const
+	{
+		// Vertex input state
+		static const vk::VertexInputBindingDescription vertexBindingDescriptions[] =
+		{
+				{ 0, sizeof(Vertex) },
+		};
+		static const vk::VertexInputAttributeDescription vertexInputAttributeDescriptions[] =
+		{
+				vk::VertexInputAttributeDescription(0, 0, vk::Format::eR32G32B32Sfloat, offsetof(Vertex, x)),	// pos
+				vk::VertexInputAttributeDescription(1, 0, vk::Format::eR8G8B8A8Uint, offsetof(Vertex, col)),	// base color
+				vk::VertexInputAttributeDescription(2, 0, vk::Format::eR8G8B8A8Uint, offsetof(Vertex, spc)),	// offset color
+				vk::VertexInputAttributeDescription(3, 0, vk::Format::eR32G32Sfloat, offsetof(Vertex, u)),		// tex coord
+		};
+		return vk::PipelineVertexInputStateCreateInfo(
+				vk::PipelineVertexInputStateCreateFlags(),
+				ARRAY_SIZE(vertexBindingDescriptions),
+				vertexBindingDescriptions,
+				ARRAY_SIZE(vertexInputAttributeDescriptions),
+				vertexInputAttributeDescriptions);
+	}
+
 	void CreatePipeline(u32 listType, bool sortTriangles, const PolyParam& pp);
 
 	std::map<u32, vk::UniquePipeline> pipelines;
+	std::vector<vk::UniquePipeline> modVolPipelines;
 	ShaderManager shaderManager;
 	DescriptorSets descriptorSets;
 };
