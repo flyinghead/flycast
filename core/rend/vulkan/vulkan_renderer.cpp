@@ -19,6 +19,7 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #include <memory>
+#include <unordered_set>
 #include <math.h>
 #include "vulkan.h"
 #include "hw/pvr/Renderer_if.h"
@@ -55,6 +56,7 @@ public:
 		printf("VulkanRenderer::Term\n");
 		GetContext()->WaitIdle();
 		killtex();
+		inFlightCommandBuffers.clear();
 		glslang::FinalizeProcess();
 
 	}
@@ -66,7 +68,15 @@ public:
 			// TODO		RenderFramebuffer();
 			return false;
 		}
+		// FIXME We shouldn't wait for the next vk image if doing a RTT
+		if (ctx->rend.isRTT)
+			return false;
 		GetContext()->NewFrame();
+
+		if (inFlightCommandBuffers.size() != GetContext()->GetSwapChainSize())
+			inFlightCommandBuffers.resize(GetContext()->GetSwapChainSize());
+		inFlightCommandBuffers[GetCurrentImage()].clear();
+
 		if (ProcessFrame(ctx))
 			return true;
 
@@ -157,7 +167,7 @@ public:
 				dc2s_scale_h = screen_height / 480.0f;
 				ds2s_offs_x =  (screen_width - dc2s_scale_h * 640.0f * screen_stretching) / 2;
 				vtxUniforms.scale[0] = 2.0f / (screen_width / dc2s_scale_h * scale_x) * screen_stretching;
-				vtxUniforms.scale[1] = 1.5f / dc_height;	// FIXME 1.5 WTF?
+				vtxUniforms.scale[1] = 2.0f / dc_height;
 				vtxUniforms.scale[2] = 1 - 2 * ds2s_offs_x / screen_width;
 				vtxUniforms.scale[3] = 1;
 			}
@@ -219,8 +229,8 @@ public:
 		cmdBuffer.bindVertexBuffers(0, 1, &mainBuffers[GetCurrentImage()]->buffer.get(), offsets);
 		cmdBuffer.bindIndexBuffer(*mainBuffers[GetCurrentImage()]->buffer, pvrrc.verts.bytes() + pvrrc.modtrig.bytes(), vk::IndexType::eUint32);
 
-		cmdBuffer.setViewport(0, vk::Viewport(0.0f, 0.0f, static_cast<float>(GetContext()->GetViewPort().width),
-				static_cast<float>(GetContext()->GetViewPort().width), 1.0f, 0.0f));
+		cmdBuffer.setViewport(0, vk::Viewport(0.0f, 0.0f, (float)GetContext()->GetViewPort().width,
+				(float)GetContext()->GetViewPort().height, 1.0f, 0.0f));
 		cmdBuffer.setScissor(0, vk::Rect2D(vk::Offset2D(0, 0), GetContext()->GetViewPort()));
 
 		RenderPass previous_pass = {};
@@ -276,7 +286,16 @@ public:
 
 		//update if needed
 		if (tf->NeedsUpdate())
+		{
+			int previousImage = GetCurrentImage() - 1;
+			if (previousImage < 0)
+				previousImage = GetContext()->GetSwapChainSize() - 1;
+			inFlightCommandBuffers[GetCurrentImage()].emplace_back(std::move(GetContext()->GetDevice()->allocateCommandBuffersUnique(
+					vk::CommandBufferAllocateInfo(GetContext()->GetCurrentCommandPool(), vk::CommandBufferLevel::ePrimary, 1)).front()));
+			tf->SetCommandBuffer(*inFlightCommandBuffers[GetCurrentImage()].back());
 			tf->Update();
+			tf->SetCommandBuffer(nullptr);
+		}
 		else
 			tf->CheckCustomTexture();
 
@@ -592,19 +611,29 @@ private:
 		fog_needs_update = false;
 		u8 texData[256];
 		MakeFogTexture(texData);
+		inFlightCommandBuffers[GetCurrentImage()].emplace_back(std::move(GetContext()->GetDevice()->allocateCommandBuffersUnique(
+				vk::CommandBufferAllocateInfo(GetContext()->GetCurrentCommandPool(), vk::CommandBufferLevel::ePrimary, 1)).front()));
+		fogTexture->SetCommandBuffer(*inFlightCommandBuffers[GetCurrentImage()].back());
+
 		fogTexture->UploadToGPU(128, 2, texData);
+
+		fogTexture->SetCommandBuffer(nullptr);
 	}
 
 	// temp stuff
 	float scale_x;
 	float scale_y;
+
+	// Per-triangle sort results
 	std::vector<std::vector<SortTrigDrawParam>> sortedPolys;
 	std::vector<std::vector<u32>> sortedIndexes;
 	u32 sortedIndexCount;
 
 	std::unique_ptr<Texture> fogTexture;
+	std::vector<std::vector<vk::UniqueCommandBuffer>> inFlightCommandBuffers;
 
 	// Uniforms
+	// TODO put these in the main buffer
 	vk::UniqueBuffer vertexUniformBuffer;
 	vk::UniqueBuffer fragmentUniformBuffer;
 	vk::UniqueDeviceMemory vertexUniformMemory;

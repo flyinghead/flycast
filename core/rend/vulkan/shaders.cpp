@@ -498,12 +498,12 @@ vk::UniqueShaderModule ShaderManager::compileShader(const FragmentShaderParams& 
 	return createShaderModule(VulkanContext::Instance()->GetDevice(), vk::ShaderStageFlagBits::eFragment, buf);
 }
 
-vk::UniqueShaderModule ShaderManager::compileVertexModVolShader()
+vk::UniqueShaderModule ShaderManager::compileModVolVertexShader()
 {
 	return createShaderModule(VulkanContext::Instance()->GetDevice(), vk::ShaderStageFlagBits::eVertex, ModVolVertexShaderSource);
 }
 
-vk::UniqueShaderModule ShaderManager::compileModVolShader()
+vk::UniqueShaderModule ShaderManager::compileModVolFragmentShader()
 {
 	return createShaderModule(VulkanContext::Instance()->GetDevice(), vk::ShaderStageFlagBits::eFragment, ModVolFragmentShaderSource);
 }

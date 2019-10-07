@@ -34,10 +34,11 @@ struct Texture : BaseTextureCacheData
 	std::string GetId() override { char s[20]; sprintf(s, "%p", this); return s; }
 	bool IsNew() const { return !image.get(); }
 	vk::ImageView GetImageView() const { return *imageView; }
+	void SetCommandBuffer(vk::CommandBuffer commandBuffer) { this->commandBuffer = commandBuffer; }
 
 private:
 	void Init(u32 width, u32 height, vk::Format format);
-	void SetImage(const vk::CommandPool& commandPool, u32 size, void *data);
+	void SetImage(u32 size, void *data, bool isNew);
 	void CreateImage(vk::ImageTiling tiling, vk::ImageUsageFlags usage, vk::ImageLayout initialLayout,
 			vk::MemoryPropertyFlags memoryProperties, vk::ImageAspectFlags aspectMask);
 
@@ -45,6 +46,7 @@ private:
 	vk::Extent2D                extent;
 	bool                        needsStaging = false;
 	std::unique_ptr<BufferData> stagingBufferData;
+	vk::CommandBuffer commandBuffer;
 
 	vk::UniqueDeviceMemory deviceMemory;
 	vk::UniqueImageView imageView;

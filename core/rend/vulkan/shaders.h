@@ -86,13 +86,13 @@ public:
 	vk::ShaderModule GetModVolVertexShader()
 	{
 		if (!modVolVertexShader)
-			modVolVertexShader = compileVertexModVolShader();
+			modVolVertexShader = compileModVolVertexShader();
 		return *modVolVertexShader;
 	}
 	vk::ShaderModule GetModVolShader()
 	{
 		if (!modVolShader)
-			modVolShader = compileModVolShader();
+			modVolShader = compileModVolFragmentShader();
 		return *modVolShader;
 	}
 
@@ -108,8 +108,8 @@ private:
 	}
 	vk::UniqueShaderModule compileShader(const VertexShaderParams& params);
 	vk::UniqueShaderModule compileShader(const FragmentShaderParams& params);
-	vk::UniqueShaderModule compileVertexModVolShader();
-	vk::UniqueShaderModule compileModVolShader();
+	vk::UniqueShaderModule compileModVolVertexShader();
+	vk::UniqueShaderModule compileModVolFragmentShader();
 
 	std::map<u32, vk::UniqueShaderModule> vertexShaders;
 	std::map<u32, vk::UniqueShaderModule> fragmentShaders;
