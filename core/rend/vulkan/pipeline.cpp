@@ -67,19 +67,19 @@ void PipelineManager::CreateModVolPipeline(ModVolMode mode)
 
 	if (mode == ModVolMode::Final)
 	{
-		pipelineVertexInputStateCreateInfo = GetMainVertexInputStateCreateInfo();
+		pipelineVertexInputStateCreateInfo = GetMainVertexInputStateCreateInfo(false);
 		pipelineInputAssemblyStateCreateInfo = vk::PipelineInputAssemblyStateCreateInfo(vk::PipelineInputAssemblyStateCreateFlags(),
 				vk::PrimitiveTopology::eTriangleStrip);
 	}
 	else
 	{
-		const vk::VertexInputBindingDescription vertexBindingDescriptions[] =
+		static const vk::VertexInputBindingDescription vertexBindingDescriptions[] =
 		{
-				{ 0, sizeof(ModTriangle) },
+				{ 0, sizeof(float) * 3 },
 		};
-		const vk::VertexInputAttributeDescription vertexInputAttributeDescriptions[] =
+		static const vk::VertexInputAttributeDescription vertexInputAttributeDescriptions[] =
 		{
-				vk::VertexInputAttributeDescription(0, 0, vk::Format::eR32G32B32Sfloat, offsetof(Vertex, x)),	// pos
+				vk::VertexInputAttributeDescription(0, 0, vk::Format::eR32G32B32Sfloat, 0),	// pos
 		};
 		pipelineVertexInputStateCreateInfo = vk::PipelineVertexInputStateCreateInfo(
 				vk::PipelineVertexInputStateCreateFlags(),
@@ -99,7 +99,7 @@ void PipelineManager::CreateModVolPipeline(ModVolMode mode)
 	(
 	  vk::PipelineRasterizationStateCreateFlags(),  // flags
 	  false,                                        // depthClampEnable
-	  mode != ModVolMode::Final,                    // rasterizerDiscardEnable
+	  false,                                        // rasterizerDiscardEnable
 	  vk::PolygonMode::eFill,                       // polygonMode
 	  vk::CullModeFlagBits::eNone,  		        // cullMode
 	  vk::FrontFace::eCounterClockwise,             // frontFace
@@ -122,10 +122,10 @@ void PipelineManager::CreateModVolPipeline(ModVolMode mode)
 		stencilOpState = vk::StencilOpState(vk::StencilOp::eKeep, vk::StencilOp::eReplace, vk::StencilOp::eKeep, vk::CompareOp::eAlways, 2, 2, 2);
 		break;
 	case ModVolMode::Inclusion:
-		stencilOpState = vk::StencilOpState(vk::StencilOp::eZero, vk::StencilOp::eReplace, vk::StencilOp::eZero, vk::CompareOp::eLessOrEqual, 1, 3, 3);
+		stencilOpState = vk::StencilOpState(vk::StencilOp::eZero, vk::StencilOp::eReplace, vk::StencilOp::eZero, vk::CompareOp::eLessOrEqual, 3, 3, 1);
 		break;
 	case ModVolMode::Exclusion:
-		stencilOpState = vk::StencilOpState(vk::StencilOp::eZero, vk::StencilOp::eKeep, vk::StencilOp::eZero, vk::CompareOp::eEqual, 1, 3, 3);
+		stencilOpState = vk::StencilOpState(vk::StencilOp::eZero, vk::StencilOp::eKeep, vk::StencilOp::eZero, vk::CompareOp::eEqual, 3, 3, 1);
 		break;
 	case ModVolMode::Final:
 		stencilOpState = vk::StencilOpState(vk::StencilOp::eZero, vk::StencilOp::eZero, vk::StencilOp::eZero, vk::CompareOp::eEqual, 0x81, 3, 0x81);
@@ -140,11 +140,13 @@ void PipelineManager::CreateModVolPipeline(ModVolMode mode)
 	  false,                                      // depthBoundTestEnable
 	  true,                                       // stencilTestEnable
 	  stencilOpState,                             // front
-	  vk::StencilOpState()                        // back
+	  stencilOpState                              // back
 	);
 
 	// Color flags and blending
-	vk::ColorComponentFlags colorComponentFlags(vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA);
+	vk::ColorComponentFlags colorComponentFlags(
+			mode != ModVolMode::Final ? (vk::ColorComponentFlagBits)0
+					: vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA);
 	vk::PipelineColorBlendAttachmentState pipelineColorBlendAttachmentState(
 		mode == ModVolMode::Final,          // blendEnable
 		vk::BlendFactor::eSrcAlpha,         // srcColorBlendFactor
@@ -169,7 +171,7 @@ void PipelineManager::CreateModVolPipeline(ModVolMode mode)
 	vk::DynamicState dynamicStates[2] = { vk::DynamicState::eViewport, vk::DynamicState::eScissor };
 	vk::PipelineDynamicStateCreateInfo pipelineDynamicStateCreateInfo(vk::PipelineDynamicStateCreateFlags(), 2, dynamicStates);
 
-	vk::ShaderModule vertex_module = shaderManager.GetVertexShader(VertexShaderParams{ false, false });	// TODO rotate90
+	vk::ShaderModule vertex_module = shaderManager.GetModVolVertexShader();
 	vk::ShaderModule fragment_module = shaderManager.GetModVolShader();
 
 	vk::PipelineShaderStageCreateInfo stages[] = {
@@ -195,7 +197,7 @@ void PipelineManager::CreateModVolPipeline(ModVolMode mode)
 	);
 
 	if (modVolPipelines.empty())
-		modVolPipelines.reserve((size_t)ModVolMode::Final + 1);
+		modVolPipelines.resize((size_t)ModVolMode::Final + 1);
 	modVolPipelines[(size_t)mode] =
 			GetContext()->GetDevice()->createGraphicsPipelineUnique(GetContext()->GetPipelineCache(),
 					graphicsPipelineCreateInfo);
@@ -250,7 +252,7 @@ void PipelineManager::CreatePipeline(u32 listType, bool sortTriangles, const Pol
 			depthWriteEnable = !pp.isp.ZWriteDis;
 	}
 
-	vk::StencilOpState stencilOpStateSet(vk::StencilOp::eKeep, vk::StencilOp::eKeep, vk::StencilOp::eKeep, vk::CompareOp::eAlways, 0, 0x80, 0x80);
+	vk::StencilOpState stencilOpStateSet(vk::StencilOp::eKeep, vk::StencilOp::eReplace, vk::StencilOp::eKeep, vk::CompareOp::eAlways, 0, 0x80, 0x80);
 	vk::StencilOpState stencilOpStateNop(vk::StencilOp::eKeep, vk::StencilOp::eKeep, vk::StencilOp::eKeep, vk::CompareOp::eAlways);
 	vk::PipelineDepthStencilStateCreateInfo pipelineDepthStencilStateCreateInfo
 	(
@@ -260,8 +262,8 @@ void PipelineManager::CreatePipeline(u32 listType, bool sortTriangles, const Pol
 	  depthOp,                                    // depthCompareOp
 	  false,                                      // depthBoundTestEnable
 	  listType == ListType_Opaque || listType == ListType_Punch_Through, // stencilTestEnable
-	  pp.pcw.Shadow != 0 ? stencilOpStateSet : stencilOpStateNop, // front
-	  stencilOpStateNop                                           // back
+	  pp.pcw.Shadow != 0 ? stencilOpStateSet : stencilOpStateNop,  // front
+	  pp.pcw.Shadow != 0 ? stencilOpStateSet : stencilOpStateNop   // back
 	);
 
 	// Color flags and blending

@@ -74,7 +74,7 @@ public:
 	static VulkanContext *Instance() { return contextInstance; }
 
 private:
-	void InitDepthBuffer();
+	vk::Format InitDepthBuffer();
 	void InitImgui();
 
 	bool HasSurfaceDimensionChanged()

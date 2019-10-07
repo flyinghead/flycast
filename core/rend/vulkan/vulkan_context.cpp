@@ -144,23 +144,31 @@ void VulkanContext::InitInstance(const char** extensions, uint32_t extensions_co
 	}
 }
 
-void VulkanContext::InitDepthBuffer()
+vk::Format VulkanContext::InitDepthBuffer()
 {
-	const vk::Format depthFormat = vk::Format::eD16Unorm;
-	vk::FormatProperties formatProperties = physicalDevice.getFormatProperties(depthFormat);
-
+	const vk::Format depthFormats[] = { vk::Format::eD32SfloatS8Uint, vk::Format::eD24UnormS8Uint };
 	vk::ImageTiling tiling;
-	if (formatProperties.linearTilingFeatures & vk::FormatFeatureFlagBits::eDepthStencilAttachment)
+	vk::Format depthFormat = vk::Format::eUndefined;
+	for (int i = 0; i < ARRAY_SIZE(depthFormats); i++)
 	{
-		tiling = vk::ImageTiling::eLinear;
+		vk::FormatProperties formatProperties = physicalDevice.getFormatProperties(depthFormats[i]);
+
+		if (formatProperties.linearTilingFeatures & vk::FormatFeatureFlagBits::eDepthStencilAttachment)
+		{
+			tiling = vk::ImageTiling::eLinear;
+			depthFormat = depthFormats[i];
+			break;
+		}
+		else if (formatProperties.optimalTilingFeatures & vk::FormatFeatureFlagBits::eDepthStencilAttachment)
+		{
+			tiling = vk::ImageTiling::eOptimal;
+			depthFormat = depthFormats[i];
+			break;
+		}
 	}
-	else if (formatProperties.optimalTilingFeatures & vk::FormatFeatureFlagBits::eDepthStencilAttachment)
+	if (depthFormat == vk::Format::eUndefined)
 	{
-		tiling = vk::ImageTiling::eOptimal;
-	}
-	else
-	{
-		die("DepthStencilAttachment is not supported for D16Unorm depth format.");
+		die("No supported depth/stencil format found");
 	}
 
 	vk::ImageCreateInfo imageCreateInfo(vk::ImageCreateFlags(), vk::ImageType::e2D, depthFormat, vk::Extent3D(width, height, 1), 1, 1, vk::SampleCountFlagBits::e1, tiling, vk::ImageUsageFlagBits::eDepthStencilAttachment);
@@ -187,6 +195,8 @@ void VulkanContext::InitDepthBuffer()
 	vk::ComponentMapping componentMapping(vk::ComponentSwizzle::eR, vk::ComponentSwizzle::eG, vk::ComponentSwizzle::eB, vk::ComponentSwizzle::eA);
 	vk::ImageSubresourceRange subResourceRange(vk::ImageAspectFlagBits::eDepth, 0, 1, 0, 1);
 	depthView = device->createImageViewUnique(vk::ImageViewCreateInfo(vk::ImageViewCreateFlags(), *depthImage, vk::ImageViewType::e2D, depthFormat, componentMapping, subResourceRange));
+
+	return depthFormat;
 }
 
 void VulkanContext::InitImgui()
@@ -415,8 +425,9 @@ void VulkanContext::CreateSwapChain()
 		    commandBuffers.push_back(std::move(device->allocateCommandBuffersUnique(vk::CommandBufferAllocateInfo(*commandPools.back(), vk::CommandBufferLevel::ePrimary, 1)).front()));
 		}
 
+	    vk::Format depthFormat = InitDepthBuffer();
+
 	    // Render pass
-	    vk::Format depthFormat = vk::Format::eD16Unorm;
 	    vk::AttachmentDescription attachmentDescriptions[2];
 	    // FIXME we should use vk::AttachmentLoadOp::eLoad for loadOp to preserve previous framebuffer but it fails on the first render
 	    attachmentDescriptions[0] = vk::AttachmentDescription(vk::AttachmentDescriptionFlags(), colorFormat, vk::SampleCountFlagBits::e1, vk::AttachmentLoadOp::eClear,
@@ -429,8 +440,6 @@ void VulkanContext::CreateSwapChain()
 	    vk::SubpassDescription subpass(vk::SubpassDescriptionFlags(), vk::PipelineBindPoint::eGraphics, 0, nullptr, 1, &colorReference, nullptr, &depthReference);
 
 	    renderPass = device->createRenderPassUnique(vk::RenderPassCreateInfo(vk::RenderPassCreateFlags(), 2, attachmentDescriptions, 1, &subpass));
-
-	    InitDepthBuffer();
 
 	    // Framebuffers, fences, semaphores
 	    vk::ImageView attachments[2];

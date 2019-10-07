@@ -251,23 +251,53 @@ void main()
 }
 )";
 
-static const char ModVolShaderSource[] = R"(
+static const char ModVolVertexShaderSource[] = R"(
 #version 400
 #extension GL_ARB_separate_shader_objects : enable
 #extension GL_ARB_shading_language_420pack : enable
 
-out vec4 FragColor;
+layout (std140, set = 0, binding = 0) uniform VertexShaderUniforms
+{
+	vec4      scale;
+	float     extra_depth_scale;
+} uniformBuffer;
 
-layout (std140, binding = 1) uniform buffer
+layout (location = 0) in vec4         in_pos;
+
+void main()
+{
+	vec4 vpos = in_pos;
+	if (vpos.z < 0.0 || vpos.z > 3.4e37)
+	{
+		gl_Position = vec4(0.0, 0.0, 1.0, 1.0 / vpos.z);
+		return;
+	}
+
+	vpos.w = uniformBuffer.extra_depth_scale / vpos.z;
+	vpos.z = vpos.w;
+	vpos.xy = vpos.xy * uniformBuffer.scale.xy - uniformBuffer.scale.zw; 
+	vpos.xy *= vpos.w; 
+	gl_Position = vpos;
+}
+)";
+
+static const char ModVolFragmentShaderSource[] = R"(
+#version 400
+#extension GL_ARB_separate_shader_objects : enable
+#extension GL_ARB_shading_language_420pack : enable
+
+layout (location = 0) out vec4 FragColor;
+
+layout (push_constant) uniform pushBlock
 {
 	float sp_ShaderColor;
-} uniformBuffer;
+} pushConstants;
 
 void main()
 {
 	float w = gl_FragCoord.w * 100000.0;
 	gl_FragDepth = log2(1.0 + w) / 34.0;
-	FragColor = vec4(0.0, 0.0, 0.0, uniformBuffer.sp_ShaderColor);
+	FragColor = vec4(0.0, 0.0, 0.0, pushConstants.sp_ShaderColor);
 }
 )";
 
@@ -468,7 +498,12 @@ vk::UniqueShaderModule ShaderManager::compileShader(const FragmentShaderParams& 
 	return createShaderModule(VulkanContext::Instance()->GetDevice(), vk::ShaderStageFlagBits::eFragment, buf);
 }
 
+vk::UniqueShaderModule ShaderManager::compileVertexModVolShader()
+{
+	return createShaderModule(VulkanContext::Instance()->GetDevice(), vk::ShaderStageFlagBits::eVertex, ModVolVertexShaderSource);
+}
+
 vk::UniqueShaderModule ShaderManager::compileModVolShader()
 {
-	return createShaderModule(VulkanContext::Instance()->GetDevice(), vk::ShaderStageFlagBits::eFragment, ModVolShaderSource);
+	return createShaderModule(VulkanContext::Instance()->GetDevice(), vk::ShaderStageFlagBits::eFragment, ModVolFragmentShaderSource);
 }

@@ -74,11 +74,6 @@ struct FragmentShaderUniforms
 	float extra_depth_scale;
 };
 
-struct ModVolShaderUniforms
-{
-	float sp_ShaderColor;
-};
-
 class ShaderManager
 {
 public:
@@ -88,6 +83,12 @@ public:
 	}
 	vk::ShaderModule GetVertexShader(const VertexShaderParams& params) { return getShader(vertexShaders, params); }
 	vk::ShaderModule GetFragmentShader(const FragmentShaderParams& params) { return getShader(fragmentShaders, params); }
+	vk::ShaderModule GetModVolVertexShader()
+	{
+		if (!modVolVertexShader)
+			modVolVertexShader = compileVertexModVolShader();
+		return *modVolVertexShader;
+	}
 	vk::ShaderModule GetModVolShader()
 	{
 		if (!modVolShader)
@@ -107,9 +108,11 @@ private:
 	}
 	vk::UniqueShaderModule compileShader(const VertexShaderParams& params);
 	vk::UniqueShaderModule compileShader(const FragmentShaderParams& params);
+	vk::UniqueShaderModule compileVertexModVolShader();
 	vk::UniqueShaderModule compileModVolShader();
 
 	std::map<u32, vk::UniqueShaderModule> vertexShaders;
 	std::map<u32, vk::UniqueShaderModule> fragmentShaders;
+	vk::UniqueShaderModule modVolVertexShader;
 	vk::UniqueShaderModule modVolShader;
 };

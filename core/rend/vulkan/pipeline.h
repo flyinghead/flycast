@@ -54,7 +54,7 @@ public:
 
 	void UpdateUniforms(const vk::Buffer& vertexUniformBuffer, const vk::Buffer& fragmentUniformBuffer, vk::ImageView fogImageView)
 	{
-		while (perFrameDescSets.empty())
+		if (perFrameDescSets.empty())
 		{
 			std::vector<vk::DescriptorSetLayout> layouts(GetContext()->GetSwapChainSize(), *perFrameLayout);
 			perFrameDescSets = GetContext()->GetDevice()->allocateDescriptorSetsUnique(
@@ -170,6 +170,13 @@ public:
 		return *pipelines[pipehash];
 	}
 
+	vk::Pipeline GetModifierVolumePipeline(ModVolMode mode)
+	{
+		if (modVolPipelines.empty() || !modVolPipelines[(size_t)mode])
+			CreateModVolPipeline(mode);
+		return *modVolPipelines[(size_t)mode];
+	}
+
 private:
 	VulkanContext *GetContext() const { return VulkanContext::Instance(); }
 	void CreateModVolPipeline(ModVolMode mode);
@@ -189,7 +196,7 @@ private:
 		return hash;
 	}
 
-	vk::PipelineVertexInputStateCreateInfo GetMainVertexInputStateCreateInfo() const
+	vk::PipelineVertexInputStateCreateInfo GetMainVertexInputStateCreateInfo(bool full = true) const
 	{
 		// Vertex input state
 		static const vk::VertexInputBindingDescription vertexBindingDescriptions[] =
@@ -203,12 +210,16 @@ private:
 				vk::VertexInputAttributeDescription(2, 0, vk::Format::eR8G8B8A8Uint, offsetof(Vertex, spc)),	// offset color
 				vk::VertexInputAttributeDescription(3, 0, vk::Format::eR32G32Sfloat, offsetof(Vertex, u)),		// tex coord
 		};
+		static const vk::VertexInputAttributeDescription vertexInputLightAttributeDescriptions[] =
+		{
+				vk::VertexInputAttributeDescription(0, 0, vk::Format::eR32G32B32Sfloat, offsetof(Vertex, x)),	// pos
+		};
 		return vk::PipelineVertexInputStateCreateInfo(
 				vk::PipelineVertexInputStateCreateFlags(),
 				ARRAY_SIZE(vertexBindingDescriptions),
 				vertexBindingDescriptions,
-				ARRAY_SIZE(vertexInputAttributeDescriptions),
-				vertexInputAttributeDescriptions);
+				full ? ARRAY_SIZE(vertexInputAttributeDescriptions) : ARRAY_SIZE(vertexInputLightAttributeDescriptions),
+				full ? vertexInputAttributeDescriptions : vertexInputLightAttributeDescriptions);
 	}
 
 	void CreatePipeline(u32 listType, bool sortTriangles, const PolyParam& pp);

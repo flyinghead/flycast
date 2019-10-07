@@ -199,12 +199,9 @@ public:
 
 		fragUniforms.cp_AlphaTestValue = (PT_ALPHA_REF & 0xFF) / 255.0f;
 
-		ModVolShaderUniforms modVolUniforms;
-		modVolUniforms.sp_ShaderColor = 1 - FPU_SHAD_SCALE.scale_factor / 256.f;
-
 		SortTriangles();
 
-		UploadUniforms(vtxUniforms, fragUniforms, modVolUniforms);
+		UploadUniforms(vtxUniforms, fragUniforms);
 
 		GetContext()->BeginRenderPass();
 		vk::CommandBuffer cmdBuffer = GetContext()->GetCurrentCommandBuffer();
@@ -220,7 +217,7 @@ public:
 		// Bind vertex and index buffers
 		const vk::DeviceSize offsets[] = { 0 };
 		cmdBuffer.bindVertexBuffers(0, 1, &mainBuffers[GetCurrentImage()]->buffer.get(), offsets);
-		cmdBuffer.bindIndexBuffer(*mainBuffers[GetCurrentImage()]->buffer, pvrrc.verts.bytes(), vk::IndexType::eUint32);
+		cmdBuffer.bindIndexBuffer(*mainBuffers[GetCurrentImage()]->buffer, pvrrc.verts.bytes() + pvrrc.modtrig.bytes(), vk::IndexType::eUint32);
 
 		cmdBuffer.setViewport(0, vk::Viewport(0.0f, 0.0f, static_cast<float>(GetContext()->GetViewPort().width),
 				static_cast<float>(GetContext()->GetViewPort().width), 1.0f, 0.0f));
@@ -238,6 +235,7 @@ public:
 					current_pass.mvo_count - previous_pass.mvo_count);
 			DrawList(cmdBuffer, ListType_Opaque, false, pvrrc.global_param_op, previous_pass.op_count, current_pass.op_count - previous_pass.op_count);
 			DrawList(cmdBuffer, ListType_Punch_Through, false, pvrrc.global_param_pt, previous_pass.pt_count, current_pass.pt_count - previous_pass.pt_count);
+			DrawModVols(cmdBuffer, previous_pass.mvo_count, current_pass.mvo_count - previous_pass.mvo_count);
 			if (current_pass.autosort)
             {
 				if (!settings.rend.PerStripSorting)
@@ -458,6 +456,58 @@ private:
 		}
 	}
 
+	void DrawModVols(const vk::CommandBuffer& cmdBuffer, int first, int count)
+	{
+		if (count == 0 || pvrrc.modtrig.used() == 0)
+			return;
+
+		vk::DeviceSize offsets[] = { (vk::DeviceSize)pvrrc.verts.bytes() };
+		cmdBuffer.bindVertexBuffers(0, 1, &mainBuffers[GetCurrentImage()]->buffer.get(), offsets);
+
+		ModifierVolumeParam* params = &pvrrc.global_param_mvo.head()[first];
+
+		int mod_base = -1;
+		vk::Pipeline pipeline;
+
+		for (u32 cmv = 0; cmv < count; cmv++)
+		{
+			ModifierVolumeParam& param = params[cmv];
+
+			if (param.count == 0)
+				continue;
+
+			u32 mv_mode = param.isp.DepthMode;
+
+			if (mod_base == -1)
+				mod_base = param.first;
+
+			if (!param.isp.VolumeLast && mv_mode > 0)
+				pipeline = pipelineManager.GetModifierVolumePipeline(ModVolMode::Or);	// OR'ing (open volume or quad)
+			else
+				pipeline = pipelineManager.GetModifierVolumePipeline(ModVolMode::Xor);	// XOR'ing (closed volume)
+			cmdBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline);
+			cmdBuffer.draw(param.count * 3, 1, param.first * 3, 0);
+
+			if (mv_mode == 1 || mv_mode == 2)
+			{
+				// Sum the area
+				pipeline = pipelineManager.GetModifierVolumePipeline(mv_mode == 1 ? ModVolMode::Inclusion : ModVolMode::Exclusion);
+				cmdBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline);
+				cmdBuffer.draw((param.first + param.count - mod_base) * 3, 1, mod_base * 3, 0);
+				mod_base = -1;
+			}
+		}
+		offsets[0] = 0;
+		cmdBuffer.bindVertexBuffers(0, 1, &mainBuffers[GetCurrentImage()]->buffer.get(), offsets);
+
+		std::array<float, 5> pushConstants = { 1 - FPU_SHAD_SCALE.scale_factor / 256.f, 0, 0, 0, 0 };
+		cmdBuffer.pushConstants<float>(pipelineManager.GetDescriptorSets().GetPipelineLayout(), vk::ShaderStageFlagBits::eFragment, 0, pushConstants);
+
+		pipeline = pipelineManager.GetModifierVolumePipeline(ModVolMode::Final);
+		cmdBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline);
+		cmdBuffer.drawIndexed(4, 1, 0, 0, 0);
+	}
+
 	void InitUniforms()
 	{
 		vertexUniformBuffer = GetContext()->GetDevice()->createBufferUnique(vk::BufferCreateInfo(vk::BufferCreateFlags(),
@@ -477,18 +527,9 @@ private:
 				vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
 		fragmentUniformMemory = GetContext()->GetDevice()->allocateMemoryUnique(vk::MemoryAllocateInfo(fragmentUniformsMemSize, typeIndex));
 		GetContext()->GetDevice()->bindBufferMemory(fragmentUniformBuffer.get(), fragmentUniformMemory.get(), 0);
-
-		modVolUniformBuffer = GetContext()->GetDevice()->createBufferUnique(vk::BufferCreateInfo(vk::BufferCreateFlags(),
-				sizeof(ModVolShaderUniforms), vk::BufferUsageFlagBits::eUniformBuffer));
-		memRequirements = GetContext()->GetDevice()->getBufferMemoryRequirements(modVolUniformBuffer.get());
-		modVolUniformsMemSize = memRequirements.size;
-		typeIndex = findMemoryType(GetContext()->GetPhysicalDevice().getMemoryProperties(), memRequirements.memoryTypeBits,
-				vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
-		modVolUniformMemory = GetContext()->GetDevice()->allocateMemoryUnique(vk::MemoryAllocateInfo(modVolUniformsMemSize, typeIndex));
-		GetContext()->GetDevice()->bindBufferMemory(modVolUniformBuffer.get(), modVolUniformMemory.get(), 0);
 	}
 
-	void UploadUniforms(const VertexShaderUniforms& vertexUniforms, const FragmentShaderUniforms& fragmentUniforms, const ModVolShaderUniforms& modVolUniforms)
+	void UploadUniforms(const VertexShaderUniforms& vertexUniforms, const FragmentShaderUniforms& fragmentUniforms)
 	{
 		uint8_t* pData = static_cast<uint8_t*>(GetContext()->GetDevice()->mapMemory(vertexUniformMemory.get(), 0, vertexUniformMemSize));
 		memcpy(pData, &vertexUniforms, sizeof(vertexUniforms));
@@ -497,15 +538,11 @@ private:
 		pData = static_cast<uint8_t*>(GetContext()->GetDevice()->mapMemory(fragmentUniformMemory.get(), 0, fragmentUniformsMemSize));
 		memcpy(pData, &fragmentUniforms, sizeof(fragmentUniforms));
 		GetContext()->GetDevice()->unmapMemory(fragmentUniformMemory.get());
-
-		pData = static_cast<uint8_t*>(GetContext()->GetDevice()->mapMemory(modVolUniformMemory.get(), 0, modVolUniformsMemSize));
-		memcpy(pData, &modVolUniforms, sizeof(modVolUniforms));
-		GetContext()->GetDevice()->unmapMemory(modVolUniformMemory.get());
 	}
 
 	void UploadMainBuffer()
 	{
-		u32 totalSize = pvrrc.verts.bytes() + pvrrc.idx.bytes() + sortedIndexCount * sizeof(u32);
+		u32 totalSize = pvrrc.verts.bytes() + pvrrc.idx.bytes() + pvrrc.modtrig.bytes() + sortedIndexCount * sizeof(u32);
 		if (mainBuffers.empty())
 		{
 			for (int i = 0; i < GetContext()->GetSwapChainSize(); i++)
@@ -527,6 +564,8 @@ private:
 
 		chunks.push_back(pvrrc.verts.head());
 		chunkSizes.push_back(pvrrc.verts.bytes());
+		chunks.push_back(pvrrc.modtrig.head());
+		chunkSizes.push_back(pvrrc.modtrig.bytes());
 		chunks.push_back(pvrrc.idx.head());
 		chunkSizes.push_back(pvrrc.idx.bytes());
 		for (const std::vector<u32>& idx : sortedIndexes)
@@ -568,13 +607,10 @@ private:
 	// Uniforms
 	vk::UniqueBuffer vertexUniformBuffer;
 	vk::UniqueBuffer fragmentUniformBuffer;
-	vk::UniqueBuffer modVolUniformBuffer;
 	vk::UniqueDeviceMemory vertexUniformMemory;
 	vk::UniqueDeviceMemory fragmentUniformMemory;
-	vk::UniqueDeviceMemory modVolUniformMemory;
 	vk::DeviceSize vertexUniformMemSize;
 	vk::DeviceSize fragmentUniformsMemSize;
-	vk::DeviceSize modVolUniformsMemSize;
 
 	// Buffers
 	std::vector<std::unique_ptr<BufferData>> mainBuffers;
