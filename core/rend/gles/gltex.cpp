@@ -94,6 +94,9 @@ void TextureCacheData::UploadToGPU(int width, int height, u8 *temp_tex_buffer)
 		case TextureType::_8888:
 			gltype = GL_UNSIGNED_BYTE;
 			break;
+		default:
+			die("Unsupported texture type");
+			break;
 		}
 		glTexImage2D(GL_TEXTURE_2D, 0,comps, width, height, 0, comps, gltype, temp_tex_buffer);
 		if (tcw.MipMapped && settings.rend.UseMipmaps)
@@ -236,6 +239,13 @@ void ReadRTTBuffer() {
 	u32 w = pvrrc.fb_X_CLIP.max - pvrrc.fb_X_CLIP.min + 1;
 	u32 h = pvrrc.fb_Y_CLIP.max - pvrrc.fb_Y_CLIP.min + 1;
 
+	u32 stride = FB_W_LINESTRIDE.stride * 8;
+	if (stride == 0)
+		stride = w * 2;
+	else if (w * 2 > stride) {
+		// Happens for Virtua Tennis
+		w = stride / 2;
+	}
 	u32 size = w * h * 2;
 
 	const u8 fb_packmode = FB_W_CTRL.fb_packmode;
