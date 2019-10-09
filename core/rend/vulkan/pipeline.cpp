@@ -158,7 +158,15 @@ void PipelineManager::CreateModVolPipeline(ModVolMode mode)
 		colorComponentFlags                 // colorWriteMask
 	);
 
-	vk::PipelineColorBlendStateCreateInfo pipelineColorBlendStateCreateInfo;
+	vk::PipelineColorBlendStateCreateInfo pipelineColorBlendStateCreateInfo
+	(
+		vk::PipelineColorBlendStateCreateFlags(),   // flags
+		false,                                      // logicOpEnable
+		vk::LogicOp::eNoOp,                         // logicOp
+		1,                                          // attachmentCount
+		&pipelineColorBlendAttachmentState,         // pAttachments
+		{ { (1.0f, 1.0f, 1.0f, 1.0f) } }            // blendConstants
+	);
 
 	vk::DynamicState dynamicStates[2] = { vk::DynamicState::eViewport, vk::DynamicState::eScissor };
 	vk::PipelineDynamicStateCreateInfo pipelineDynamicStateCreateInfo(vk::PipelineDynamicStateCreateFlags(), 2, dynamicStates);
@@ -293,7 +301,15 @@ void PipelineManager::CreatePipeline(u32 listType, bool sortTriangles, const Pol
 		};
 	}
 
-	vk::PipelineColorBlendStateCreateInfo pipelineColorBlendStateCreateInfo;
+	vk::PipelineColorBlendStateCreateInfo pipelineColorBlendStateCreateInfo
+	(
+	  vk::PipelineColorBlendStateCreateFlags(),   // flags
+	  false,                                      // logicOpEnable
+	  vk::LogicOp::eNoOp,                         // logicOp
+	  1,                                          // attachmentCount
+	  &pipelineColorBlendAttachmentState,         // pAttachments
+	  { { (1.0f, 1.0f, 1.0f, 1.0f) } }            // blendConstants
+	);
 
 	vk::DynamicState dynamicStates[2] = { vk::DynamicState::eViewport, vk::DynamicState::eScissor };
 	vk::PipelineDynamicStateCreateInfo pipelineDynamicStateCreateInfo(vk::PipelineDynamicStateCreateFlags(), 2, dynamicStates);
