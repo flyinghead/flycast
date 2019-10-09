@@ -928,3 +928,51 @@ void ReadFramebuffer(PixelBuffer<u32>& pb, int& width, int& height)
 			break;
 	}
 }
+
+void WriteTextureToVRam(u32 width, u32 height, u8 *data, u16 *dst)
+{
+	u32 stride = FB_W_LINESTRIDE.stride * 8;
+	if (stride == 0)
+		stride = width * 2;
+	else if (width * 2 > stride) {
+    	// Happens for Virtua Tennis
+		width = stride / 2;
+    }
+
+	const u16 kval_bit = (FB_W_CTRL.fb_kval & 0x80) << 8;
+	const u8 fb_alpha_threshold = FB_W_CTRL.fb_alpha_threshold;
+
+	u8 *p = data;
+
+	for (u32 l = 0; l < height; l++) {
+		switch(FB_W_CTRL.fb_packmode)
+		{
+		case 0: //0x0   0555 KRGB 16 bit  (default)	Bit 15 is the value of fb_kval[7].
+			for (u32 c = 0; c < width; c++) {
+				*dst++ = (((p[0] >> 3) & 0x1F) << 10) | (((p[1] >> 3) & 0x1F) << 5) | ((p[2] >> 3) & 0x1F) | kval_bit;
+				p += 4;
+			}
+			break;
+		case 1: //0x1   565 RGB 16 bit
+			for (u32 c = 0; c < width; c++) {
+				*dst++ = (((p[0] >> 3) & 0x1F) << 11) | (((p[1] >> 2) & 0x3F) << 5) | ((p[2] >> 3) & 0x1F);
+				p += 4;
+			}
+			break;
+		case 2: //0x2   4444 ARGB 16 bit
+			for (u32 c = 0; c < width; c++) {
+				*dst++ = (((p[0] >> 4) & 0xF) << 8) | (((p[1] >> 4) & 0xF) << 4) | ((p[2] >> 4) & 0xF) | (((p[3] >> 4) & 0xF) << 12);
+				p += 4;
+			}
+			break;
+		case 3://0x3    1555 ARGB 16 bit    The alpha value is determined by comparison with the value of fb_alpha_threshold.
+			for (u32 c = 0; c < width; c++) {
+				*dst++ = (((p[0] >> 3) & 0x1F) << 10) | (((p[1] >> 3) & 0x1F) << 5) | ((p[2] >> 3) & 0x1F) | (p[3] > fb_alpha_threshold ? 0x8000 : 0);
+				p += 4;
+			}
+			break;
+		}
+		dst += (stride - width * 2) / 2;
+	}
+
+}

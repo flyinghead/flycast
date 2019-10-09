@@ -236,13 +236,6 @@ void ReadRTTBuffer() {
 	u32 w = pvrrc.fb_X_CLIP.max - pvrrc.fb_X_CLIP.min + 1;
 	u32 h = pvrrc.fb_Y_CLIP.max - pvrrc.fb_Y_CLIP.min + 1;
 
-	u32 stride = FB_W_LINESTRIDE.stride * 8;
-	if (stride == 0)
-		stride = w * 2;
-	else if (w * 2 > stride) {
-    	// Happens for Virtua Tennis
-    	w = stride / 2;
-    }
 	u32 size = w * h * 2;
 
 	const u8 fb_packmode = FB_W_CTRL.fb_packmode;
@@ -266,7 +259,8 @@ void ReadRTTBuffer() {
 		glGetIntegerv(GL_IMPLEMENTATION_COLOR_READ_FORMAT, &color_fmt);
 		glGetIntegerv(GL_IMPLEMENTATION_COLOR_READ_TYPE, &color_type);
 
-		if (fb_packmode == 1 && stride == w * 2 && color_fmt == GL_RGB && color_type == GL_UNSIGNED_SHORT_5_6_5) {
+		if (fb_packmode == 1 && stride == w * 2 && color_fmt == GL_RGB && color_type == GL_UNSIGNED_SHORT_5_6_5)
+		{
 			// Can be read directly into vram
 			glReadPixels(0, 0, w, h, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, dst);
 		}
@@ -281,36 +275,7 @@ void ReadRTTBuffer() {
 			u8 *p = (u8 *)tmp_buf.data();
 			glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, p);
 
-			for (u32 l = 0; l < h; l++) {
-				switch(fb_packmode)
-				{
-				case 0: //0x0   0555 KRGB 16 bit  (default)	Bit 15 is the value of fb_kval[7].
-					for (u32 c = 0; c < w; c++) {
-						*dst++ = (((p[0] >> 3) & 0x1F) << 10) | (((p[1] >> 3) & 0x1F) << 5) | ((p[2] >> 3) & 0x1F) | kval_bit;
-						p += 4;
-					}
-					break;
-				case 1: //0x1   565 RGB 16 bit
-					for (u32 c = 0; c < w; c++) {
-						*dst++ = (((p[0] >> 3) & 0x1F) << 11) | (((p[1] >> 2) & 0x3F) << 5) | ((p[2] >> 3) & 0x1F);
-						p += 4;
-					}
-					break;
-				case 2: //0x2   4444 ARGB 16 bit
-					for (u32 c = 0; c < w; c++) {
-						*dst++ = (((p[0] >> 4) & 0xF) << 8) | (((p[1] >> 4) & 0xF) << 4) | ((p[2] >> 4) & 0xF) | (((p[3] >> 4) & 0xF) << 12);
-						p += 4;
-					}
-					break;
-				case 3://0x3    1555 ARGB 16 bit    The alpha value is determined by comparison with the value of fb_alpha_threshold.
-					for (u32 c = 0; c < w; c++) {
-						*dst++ = (((p[0] >> 3) & 0x1F) << 10) | (((p[1] >> 3) & 0x1F) << 5) | ((p[2] >> 3) & 0x1F) | (p[3] > fb_alpha_threshold ? 0x8000 : 0);
-						p += 4;
-					}
-					break;
-				}
-				dst += (stride - w * 2) / 2;
-			}
+			WriteTextureToVRam(w, h, p, dst);
 		}
 	}
 	else
