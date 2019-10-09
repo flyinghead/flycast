@@ -308,6 +308,7 @@
 		AED73EC42348E49900ECDB64 /* texture.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AED73EB72348E49900ECDB64 /* texture.cpp */; };
 		AED73EC52348E49900ECDB64 /* vulkan_context.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AED73EBB2348E49900ECDB64 /* vulkan_context.cpp */; };
 		AED73EC62348E49900ECDB64 /* vulkan_renderer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AED73EBC2348E49900ECDB64 /* vulkan_renderer.cpp */; };
+		AED73ECA234E827400ECDB64 /* drawer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AED73EC9234E827400ECDB64 /* drawer.cpp */; };
 		AEE62768220D7B4400EC7E89 /* cue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AEE62767220D7B4300EC7E89 /* cue.cpp */; };
 		AEE6276B220D7B5500EC7E89 /* gui.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AEE6276A220D7B5500EC7E89 /* gui.cpp */; };
 		AEE6277A220D7B7E00EC7E89 /* imgui.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AEE6276E220D7B7E00EC7E89 /* imgui.cpp */; };
@@ -961,6 +962,9 @@
 		AED73EBB2348E49900ECDB64 /* vulkan_context.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = vulkan_context.cpp; sourceTree = "<group>"; };
 		AED73EBC2348E49900ECDB64 /* vulkan_renderer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = vulkan_renderer.cpp; sourceTree = "<group>"; };
 		AED73EBD2348E49900ECDB64 /* sorter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = sorter.h; sourceTree = "<group>"; };
+		AED73EC7234E827400ECDB64 /* drawer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = drawer.h; sourceTree = "<group>"; };
+		AED73EC8234E827400ECDB64 /* commandpool.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = commandpool.h; sourceTree = "<group>"; };
+		AED73EC9234E827400ECDB64 /* drawer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = drawer.cpp; sourceTree = "<group>"; };
 		AEE62767220D7B4300EC7E89 /* cue.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = cue.cpp; sourceTree = "<group>"; };
 		AEE62769220D7B5500EC7E89 /* gui.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = gui.h; sourceTree = "<group>"; };
 		AEE6276A220D7B5500EC7E89 /* gui.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = gui.cpp; sourceTree = "<group>"; };
@@ -2348,6 +2352,9 @@
 		AED73EAE2348E49900ECDB64 /* vulkan */ = {
 			isa = PBXGroup;
 			children = (
+				AED73EC8234E827400ECDB64 /* commandpool.h */,
+				AED73EC9234E827400ECDB64 /* drawer.cpp */,
+				AED73EC7234E827400ECDB64 /* drawer.h */,
 				AED73EAF2348E49900ECDB64 /* buffer.cpp */,
 				AED73EB02348E49900ECDB64 /* buffer.h */,
 				AED73EB12348E49900ECDB64 /* imgui_impl_vulkan.cpp */,
@@ -2682,6 +2689,7 @@
 				84B7BEEB1B72720200F9733F /* zip_error_get.c in Sources */,
 				AEF256522294060400348550 /* archive.cpp in Sources */,
 				84B7BEB31B72720200F9733F /* coreio.cpp in Sources */,
+				AED73ECA234E827400ECDB64 /* drawer.cpp in Sources */,
 				84B7BF281B72720200F9733F /* dsp.cpp in Sources */,
 				84B7BF3D1B72720200F9733F /* Renderer_if.cpp in Sources */,
 				AED73E6F2348E45000ECDB64 /* PpAtom.cpp in Sources */,
