@@ -44,20 +44,3 @@ static inline vk::UniqueDeviceMemory allocateMemory(vk::Device const& device, vk
 
 	return device.allocateMemoryUnique(vk::MemoryAllocateInfo(memoryRequirements.size, memoryTypeIndex));
 }
-
-template <typename Func>
-void oneTimeSubmit(vk::CommandBuffer const& commandBuffer, vk::Queue const& queue, Func const& func)
-{
-	commandBuffer.begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));
-	func(commandBuffer);
-	commandBuffer.end();
-	queue.submit(vk::SubmitInfo(0, nullptr, nullptr, 1, &commandBuffer), nullptr);
-	queue.waitIdle();
-}
-
-template <typename Func>
-void oneTimeSubmit(vk::Device const& device, vk::CommandPool const& commandPool, vk::Queue const& queue, Func const& func)
-{
-	vk::UniqueCommandBuffer commandBuffer = std::move(device.allocateCommandBuffersUnique(vk::CommandBufferAllocateInfo(commandPool, vk::CommandBufferLevel::ePrimary, 1)).front());
-	oneTimeSubmit(*commandBuffer, queue, func);
-}

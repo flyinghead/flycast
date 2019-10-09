@@ -171,8 +171,8 @@ void PipelineManager::CreateModVolPipeline(ModVolMode mode)
 	vk::DynamicState dynamicStates[2] = { vk::DynamicState::eViewport, vk::DynamicState::eScissor };
 	vk::PipelineDynamicStateCreateInfo pipelineDynamicStateCreateInfo(vk::PipelineDynamicStateCreateFlags(), 2, dynamicStates);
 
-	vk::ShaderModule vertex_module = shaderManager.GetModVolVertexShader();
-	vk::ShaderModule fragment_module = shaderManager.GetModVolShader();
+	vk::ShaderModule vertex_module = shaderManager->GetModVolVertexShader();
+	vk::ShaderModule fragment_module = shaderManager->GetModVolShader();
 
 	vk::PipelineShaderStageCreateInfo stages[] = {
 			{ vk::PipelineShaderStageCreateFlags(), vk::ShaderStageFlagBits::eVertex, vertex_module, "main" },
@@ -192,8 +192,8 @@ void PipelineManager::CreateModVolPipeline(ModVolMode mode)
 	  &pipelineDepthStencilStateCreateInfo,       // pDepthStencilState
 	  &pipelineColorBlendStateCreateInfo,         // pColorBlendState
 	  &pipelineDynamicStateCreateInfo,            // pDynamicState
-	  descriptorSets.GetPipelineLayout(),         // layout
-	  GetContext()->GetRenderPass()             // renderPass
+	  *pipelineLayout,                            // layout
+	  renderPass                                  // renderPass
 	);
 
 	if (modVolPipelines.empty())
@@ -314,7 +314,7 @@ void PipelineManager::CreatePipeline(u32 listType, bool sortTriangles, const Pol
 	vk::DynamicState dynamicStates[2] = { vk::DynamicState::eViewport, vk::DynamicState::eScissor };
 	vk::PipelineDynamicStateCreateInfo pipelineDynamicStateCreateInfo(vk::PipelineDynamicStateCreateFlags(), 2, dynamicStates);
 
-	vk::ShaderModule vertex_module = shaderManager.GetVertexShader(VertexShaderParams{ pp.pcw.Gouraud == 1, false });	// TODO rotate90
+	vk::ShaderModule vertex_module = shaderManager->GetVertexShader(VertexShaderParams{ pp.pcw.Gouraud == 1, false });	// TODO rotate90
 	FragmentShaderParams params = {};
 	params.alphaTest = listType == ListType_Punch_Through;
 	params.bumpmap = pp.tcw.PixelFmt == PixelBumpMap;
@@ -339,7 +339,7 @@ void PipelineManager::CreatePipeline(u32 listType, bool sortTriangles, const Pol
 	params.texture = pp.pcw.Texture;
 	params.trilinear = pp.pcw.Texture && pp.tsp.FilterMode > 1 && listType != ListType_Punch_Through;
 	params.useAlpha = pp.tsp.UseAlpha;
-	vk::ShaderModule fragment_module = shaderManager.GetFragmentShader(params);
+	vk::ShaderModule fragment_module = shaderManager->GetFragmentShader(params);
 
 	vk::PipelineShaderStageCreateInfo stages[] = {
 			{ vk::PipelineShaderStageCreateFlags(), vk::ShaderStageFlagBits::eVertex, vertex_module, "main" },
@@ -359,8 +359,8 @@ void PipelineManager::CreatePipeline(u32 listType, bool sortTriangles, const Pol
 	  &pipelineDepthStencilStateCreateInfo,       // pDepthStencilState
 	  &pipelineColorBlendStateCreateInfo,         // pColorBlendState
 	  &pipelineDynamicStateCreateInfo,            // pDynamicState
-	  descriptorSets.GetPipelineLayout(),         // layout
-	  GetContext()->GetRenderPass()             // renderPass
+	  *pipelineLayout,                            // layout
+	  renderPass                                  // renderPass
 	);
 
 	pipelines[hash(listType, sortTriangles, &pp)] = GetContext()->GetDevice()->createGraphicsPipelineUnique(GetContext()->GetPipelineCache(),

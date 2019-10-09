@@ -419,7 +419,7 @@ void VulkanContext::CreateSwapChain()
 			imageViews.push_back(device->createImageViewUnique(imageViewCreateInfo));
 
 			// create a UniqueCommandPool to allocate a CommandBuffer from
-			commandPools.push_back(device->createCommandPoolUnique(vk::CommandPoolCreateInfo(vk::CommandPoolCreateFlags(), graphicsQueueIndex)));
+			commandPools.push_back(device->createCommandPoolUnique(vk::CommandPoolCreateInfo(vk::CommandPoolCreateFlagBits::eTransient, graphicsQueueIndex)));
 
 		    // allocate a CommandBuffer from the CommandPool
 		    commandBuffers.push_back(std::move(device->allocateCommandBuffersUnique(vk::CommandBufferAllocateInfo(*commandPools.back(), vk::CommandBufferLevel::ePrimary, 1)).front()));
@@ -433,7 +433,7 @@ void VulkanContext::CreateSwapChain()
 	    attachmentDescriptions[0] = vk::AttachmentDescription(vk::AttachmentDescriptionFlags(), colorFormat, vk::SampleCountFlagBits::e1, vk::AttachmentLoadOp::eClear,
 	    	vk::AttachmentStoreOp::eStore, vk::AttachmentLoadOp::eDontCare, vk::AttachmentStoreOp::eDontCare, vk::ImageLayout::eUndefined, vk::ImageLayout::ePresentSrcKHR);
 	    attachmentDescriptions[1] = vk::AttachmentDescription(vk::AttachmentDescriptionFlags(), depthFormat, vk::SampleCountFlagBits::e1, vk::AttachmentLoadOp::eClear,
-	    	vk::AttachmentStoreOp::eDontCare, vk::AttachmentLoadOp::eDontCare, vk::AttachmentStoreOp::eDontCare, vk::ImageLayout::eUndefined, vk::ImageLayout::eDepthStencilAttachmentOptimal);
+	    	vk::AttachmentStoreOp::eDontCare, vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eDontCare, vk::ImageLayout::eUndefined, vk::ImageLayout::eDepthStencilAttachmentOptimal);
 
 	    vk::AttachmentReference colorReference(0, vk::ImageLayout::eColorAttachmentOptimal);
 	    vk::AttachmentReference depthReference(1, vk::ImageLayout::eDepthStencilAttachmentOptimal);
@@ -532,6 +532,21 @@ VulkanContext::~VulkanContext()
 			fclose(f);
 		}
 	}
+	swapChain.reset();
+	imageViews.clear();
+	framebuffers.clear();
+	renderPass.reset();
+	descriptorPool.reset();
+	depthView.reset();
+	depthMemory.reset();
+	depthImage.reset();
+	commandBuffers.clear();
+	commandPools.clear();
+	imageAcquiredSemaphores.clear();
+	renderCompleteSemaphores.clear();
+	drawFences.clear();
+	vkDestroySurfaceKHR((VkInstance)*instance, (VkSurfaceKHR)surface, nullptr);
+
 	verify(contextInstance == this);
 	contextInstance = nullptr;
 }

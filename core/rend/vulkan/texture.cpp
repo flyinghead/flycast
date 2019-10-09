@@ -21,7 +21,7 @@
 #include "texture.h"
 #include "utils.h"
 
-static void setImageLayout(vk::CommandBuffer const& commandBuffer, vk::Image image, vk::Format format, vk::ImageLayout oldImageLayout, vk::ImageLayout newImageLayout)
+void setImageLayout(vk::CommandBuffer const& commandBuffer, vk::Image image, vk::Format format, vk::ImageLayout oldImageLayout, vk::ImageLayout newImageLayout)
 {
 	vk::AccessFlags sourceAccessMask;
 	switch (oldImageLayout)
@@ -34,7 +34,10 @@ static void setImageLayout(vk::CommandBuffer const& commandBuffer, vk::Image ima
 		break;
 	case vk::ImageLayout::eGeneral:     // sourceAccessMask is empty
 	case vk::ImageLayout::eUndefined:
+//	case vk::ImageLayout::eShaderReadOnlyOptimal:
+		break;
 	case vk::ImageLayout::eShaderReadOnlyOptimal:
+		sourceAccessMask = vk::AccessFlagBits::eShaderRead;
 		break;
 	default:
 		verify(false);
@@ -190,7 +193,7 @@ void Texture::Init(u32 width, u32 height, vk::Format format)
 		initialLayout = vk::ImageLayout::ePreinitialized;
 		requirements = vk::MemoryPropertyFlagBits::eHostCoherent | vk::MemoryPropertyFlagBits::eHostVisible;
 	}
-	CreateImage(imageTiling, usageFlags | vk::ImageUsageFlagBits::eSampled, initialLayout, requirements,
+	CreateImage(imageTiling, usageFlags, initialLayout, requirements,
 			vk::ImageAspectFlagBits::eColor);
 }
 
@@ -247,4 +250,44 @@ void Texture::SetImage(u32 srcSize, void *srcData, bool isNew)
 	commandBuffer.end();
 
 	VulkanContext::Instance()->GetGraphicsQueue().submit(vk::SubmitInfo(0, nullptr, nullptr, 1, &commandBuffer), nullptr);
+}
+
+void FramebufferAttachment::Init(u32 width, u32 height, vk::Format format)
+{
+	this->format = format;
+	this->extent = vk::Extent2D { width, height };
+	bool depth = format == vk::Format::eD32SfloatS8Uint || format == vk::Format::eD24UnormS8Uint;
+
+	vk::ImageUsageFlags usage;
+	if (depth)
+	{
+		usage = vk::ImageUsageFlagBits::eDepthStencilAttachment;
+	}
+	else
+	{
+		usage = vk::ImageUsageFlagBits::eColorAttachment;
+		if (settings.rend.RenderToTextureBuffer)
+		{
+			usage |= vk::ImageUsageFlagBits::eTransferSrc;
+			stagingBufferData = std::unique_ptr<BufferData>(new BufferData(VulkanContext::Instance()->GetPhysicalDevice(), *VulkanContext::Instance()->GetDevice(),
+					width * height * 4, vk::BufferUsageFlagBits::eTransferSrc | vk::BufferUsageFlagBits::eTransferDst,
+					vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent));
+		}
+		else
+		{
+			usage |= vk::ImageUsageFlagBits::eSampled;
+		}
+	}
+	vk::ImageCreateInfo imageCreateInfo(vk::ImageCreateFlags(), vk::ImageType::e2D, format, vk::Extent3D(extent, 1), 1, 1, vk::SampleCountFlagBits::e1,
+			vk::ImageTiling::eOptimal, usage,
+			vk::SharingMode::eExclusive, 0, nullptr, vk::ImageLayout::eUndefined);
+	image = device.createImageUnique(imageCreateInfo);
+	vk::MemoryRequirements memReq = device.getImageMemoryRequirements(image.get());
+	u32 memoryTypeIndex = findMemoryType(physicalDevice.getMemoryProperties(), memReq.memoryTypeBits,
+			vk::MemoryPropertyFlagBits::eDeviceLocal);
+	deviceMemory = device.allocateMemoryUnique(vk::MemoryAllocateInfo(memReq.size, memoryTypeIndex));
+	device.bindImageMemory(image.get(), deviceMemory.get(), 0);
+	vk::ImageViewCreateInfo imageViewCreateInfo(vk::ImageViewCreateFlags(), image.get(), vk::ImageViewType::e2D,
+			format, vk::ComponentMapping(),	vk::ImageSubresourceRange(depth ? vk::ImageAspectFlagBits::eDepth : vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1));
+	imageView = device.createImageViewUnique(imageViewCreateInfo);
 }

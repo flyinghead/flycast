@@ -21,16 +21,6 @@
 #pragma once
 #include "types.h"
 
-//#if defined(_WIN32)
-//#   define VK_USE_PLATFORM_WIN32_KHR
-//#elif defined(__linux__) || defined(__unix__)
-//#   define VK_USE_PLATFORM_XLIB_KHR
-//#elif defined(__APPLE__)
-//#   define VK_USE_PLATFORM_MACOS_MVK
-//#else
-//#   error "Platform not supported"
-//#endif
-
 #include "volk/volk.h"
 #undef VK_NO_PROTOTYPES
 #include "vulkan/vulkan.hpp"
@@ -50,6 +40,7 @@ public:
 
 	VkInstance GetInstance() const { return static_cast<VkInstance>(instance.get()); }
 	u32 GetGraphicsQueueFamilyIndex() const { return graphicsQueueIndex; }
+	VkSurfaceKHR GetSurface() { return this->surface; }
 	void SetSurface(VkSurfaceKHR surface) { this->surface = vk::SurfaceKHR(surface); }
 	void SetWindowSize(u32 width, u32 height) { this->width = screen_width = width; this->height = screen_height = height; }
 	void NewFrame();
@@ -111,7 +102,7 @@ private:
 	u32 presentQueueIndex = 0;
 	vk::UniqueDevice device;
 
-	vk::SurfaceKHR surface;	// FIXME needs to be destroyed manually
+	vk::SurfaceKHR surface;
 
 	vk::UniqueSwapchainKHR swapChain;
 	std::vector<vk::UniqueImageView> imageViews;

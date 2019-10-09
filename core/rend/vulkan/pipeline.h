@@ -29,10 +29,107 @@ enum class ModVolMode { Xor, Or, Inclusion, Exclusion, Final };
 class DescriptorSets
 {
 public:
-	vk::PipelineLayout GetPipelineLayout() const { return *pipelineLayout; }
-
-	void Init()
+	void Init(SamplerManager* samplerManager, vk::PipelineLayout pipelineLayout, vk::DescriptorSetLayout perFrameLayout, vk::DescriptorSetLayout perPolyLayout)
 	{
+		this->samplerManager = samplerManager;
+		this->pipelineLayout = pipelineLayout;
+		this->perFrameLayout = perFrameLayout;
+		this->perPolyLayout = perPolyLayout;
+
+	}
+	void UpdateUniforms(vk::Buffer buffer, u32 vertexUniformOffset, vk::ImageView fogImageView)
+	{
+		if (!perFrameDescSet)
+		{
+			perFrameDescSet = std::move(GetContext()->GetDevice()->allocateDescriptorSetsUnique(
+					vk::DescriptorSetAllocateInfo(GetContext()->GetDescriptorPool(), 1, &perFrameLayout)).front());
+		}
+		std::vector<vk::DescriptorBufferInfo> bufferInfos;
+		bufferInfos.push_back(vk::DescriptorBufferInfo(buffer, vertexUniformOffset, sizeof(VertexShaderUniforms)));
+		bufferInfos.push_back(vk::DescriptorBufferInfo(buffer, vertexUniformOffset + sizeof(VertexShaderUniforms), sizeof(FragmentShaderUniforms)));
+
+		std::vector<vk::WriteDescriptorSet> writeDescriptorSets;
+		writeDescriptorSets.push_back(vk::WriteDescriptorSet(*perFrameDescSet, 0, 0, 1, vk::DescriptorType::eUniformBuffer, nullptr, &bufferInfos[0], nullptr));
+		writeDescriptorSets.push_back(vk::WriteDescriptorSet(*perFrameDescSet, 1, 0, 1, vk::DescriptorType::eUniformBuffer, nullptr, &bufferInfos[1], nullptr));
+		if (fogImageView)
+		{
+			TSP fogTsp = {};
+			fogTsp.FilterMode = 1;
+			fogTsp.ClampU = 1;
+			fogTsp.ClampV = 1;
+			vk::Sampler fogSampler = samplerManager->GetSampler(fogTsp);
+			vk::DescriptorImageInfo imageInfo(fogSampler, fogImageView, vk::ImageLayout::eShaderReadOnlyOptimal);
+			writeDescriptorSets.push_back(vk::WriteDescriptorSet(*perFrameDescSet, 2, 0, 1, vk::DescriptorType::eCombinedImageSampler, &imageInfo, nullptr, nullptr));
+		}
+		GetContext()->GetDevice()->updateDescriptorSets(writeDescriptorSets, nullptr);
+	}
+
+	void SetTexture(u64 textureId, TSP tsp)
+	{
+		auto& inFlight = perPolyDescSetsInFlight;
+		std::pair<u64, u32> index = std::make_pair(textureId, tsp.full & SamplerManager::TSP_Mask);
+		if (inFlight.find(index) != inFlight.end())
+			return;
+
+		if (perPolyDescSets.empty())
+		{
+			std::vector<vk::DescriptorSetLayout> layouts(10, perPolyLayout);
+			perPolyDescSets = GetContext()->GetDevice()->allocateDescriptorSetsUnique(
+					vk::DescriptorSetAllocateInfo(GetContext()->GetDescriptorPool(), layouts.size(), &layouts[0]));
+		}
+		Texture *texture = reinterpret_cast<Texture *>(textureId);
+		vk::DescriptorImageInfo imageInfo(samplerManager->GetSampler(tsp), texture->GetImageView(), vk::ImageLayout::eShaderReadOnlyOptimal);
+
+		std::vector<vk::WriteDescriptorSet> writeDescriptorSets;
+		writeDescriptorSets.push_back(vk::WriteDescriptorSet(*perPolyDescSets.back(), 0, 0, 1, vk::DescriptorType::eCombinedImageSampler, &imageInfo, nullptr, nullptr));
+
+		GetContext()->GetDevice()->updateDescriptorSets(writeDescriptorSets, nullptr);
+		inFlight[index] = std::move(perPolyDescSets.back());
+		perPolyDescSets.pop_back();
+	}
+
+	void BindPerFrameDescriptorSets(vk::CommandBuffer cmdBuffer)
+	{
+		cmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, 1, &perFrameDescSet.get(), 0, nullptr);
+	}
+
+	void BindPerPolyDescriptorSets(vk::CommandBuffer cmdBuffer, u64 textureId, TSP tsp)
+	{
+		cmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 1, 1,
+				&perPolyDescSetsInFlight[std::make_pair(textureId, tsp.full & SamplerManager::TSP_Mask)].get(), 0, nullptr);
+	}
+
+	void Reset()
+	{
+		for (auto& pair : perPolyDescSetsInFlight)
+			perPolyDescSets.emplace_back(std::move(pair.second));
+		perPolyDescSetsInFlight.clear();
+
+	}
+
+private:
+	VulkanContext *GetContext() const { return VulkanContext::Instance(); }
+
+	vk::DescriptorSetLayout perFrameLayout;
+	vk::DescriptorSetLayout perPolyLayout;
+	vk::PipelineLayout pipelineLayout;
+
+	vk::UniqueDescriptorSet perFrameDescSet;
+	std::vector<vk::UniqueDescriptorSet> perPolyDescSets;
+	std::map<std::pair<u64, u32>, vk::UniqueDescriptorSet> perPolyDescSetsInFlight;
+
+	SamplerManager* samplerManager;
+};
+
+class PipelineManager
+{
+public:
+	virtual ~PipelineManager() {}
+
+	virtual void Init(ShaderManager *shaderManager)
+	{
+		this->shaderManager = shaderManager;
+
 		// Descriptor set and pipeline layout
 		vk::DescriptorSetLayoutBinding perFrameBindings[] = {
 				{ 0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex },			// vertex uniforms
@@ -50,113 +147,9 @@ public:
 		vk::PushConstantRange pushConstant(vk::ShaderStageFlagBits::eFragment, 0, 20);
 		pipelineLayout = GetContext()->GetDevice()->createPipelineLayoutUnique(
 				vk::PipelineLayoutCreateInfo(vk::PipelineLayoutCreateFlags(), ARRAY_SIZE(layouts), layouts, 1, &pushConstant));
+
+		renderPass = VulkanContext::Instance()->GetRenderPass();
 	}
-
-	void UpdateUniforms(const vk::Buffer& vertexUniformBuffer, const vk::Buffer& fragmentUniformBuffer, vk::ImageView fogImageView)
-	{
-		if (perFrameDescSets.empty())
-		{
-			std::vector<vk::DescriptorSetLayout> layouts(GetContext()->GetSwapChainSize(), *perFrameLayout);
-			perFrameDescSets = GetContext()->GetDevice()->allocateDescriptorSetsUnique(
-					vk::DescriptorSetAllocateInfo(GetContext()->GetDescriptorPool(), layouts.size(), &layouts[0]));
-		}
-		while (perPolyDescSets.size() < GetContext()->GetSwapChainSize())
-			perPolyDescSets.push_back(std::vector<vk::UniqueDescriptorSet>());
-		while (perPolyDescSetsInFlight.size() < GetContext()->GetSwapChainSize())
-			perPolyDescSetsInFlight.push_back(std::map<std::pair<u64, u32>, vk::UniqueDescriptorSet>());
-		int currentImage = GetContext()->GetCurrentImageIndex();
-
-		std::vector<vk::DescriptorBufferInfo> bufferInfos;
-		bufferInfos.push_back(vk::DescriptorBufferInfo(vertexUniformBuffer, 0, VK_WHOLE_SIZE));
-		bufferInfos.push_back(vk::DescriptorBufferInfo(fragmentUniformBuffer, 0, VK_WHOLE_SIZE));
-
-		std::vector<vk::WriteDescriptorSet> writeDescriptorSets;
-		writeDescriptorSets.push_back(vk::WriteDescriptorSet(*perFrameDescSets[currentImage], 0, 0, 1, vk::DescriptorType::eUniformBuffer, nullptr, &bufferInfos[0], nullptr));
-		writeDescriptorSets.push_back(vk::WriteDescriptorSet(*perFrameDescSets[currentImage], 1, 0, 1, vk::DescriptorType::eUniformBuffer, nullptr, &bufferInfos[1], nullptr));
-		if (fogImageView)
-		{
-			TSP fogTsp = {};
-			fogTsp.FilterMode = 1;
-			fogTsp.ClampU = 1;
-			fogTsp.ClampV = 1;
-			vk::Sampler fogSampler = samplerManager.GetSampler(fogTsp);
-			vk::DescriptorImageInfo imageInfo(fogSampler, fogImageView, vk::ImageLayout::eShaderReadOnlyOptimal);
-			writeDescriptorSets.push_back(vk::WriteDescriptorSet(*perFrameDescSets[currentImage], 2, 0, 1, vk::DescriptorType::eCombinedImageSampler, &imageInfo, nullptr, nullptr));
-		}
-		GetContext()->GetDevice()->updateDescriptorSets(writeDescriptorSets, nullptr);
-	}
-
-	void SetTexture(u64 textureId, TSP tsp)
-	{
-		int currentImage = GetContext()->GetCurrentImageIndex();
-		auto& inFlight = perPolyDescSetsInFlight[currentImage];
-		std::pair<u64, u32> index = std::make_pair(textureId, tsp.full & SamplerManager::TSP_Mask);
-		if (inFlight.find(index) != inFlight.end())
-			return;
-
-		auto& descSets = perPolyDescSets[currentImage];
-		if (descSets.empty())
-		{
-			std::vector<vk::DescriptorSetLayout> layouts(10, *perPolyLayout);
-			descSets = GetContext()->GetDevice()->allocateDescriptorSetsUnique(
-					vk::DescriptorSetAllocateInfo(GetContext()->GetDescriptorPool(), layouts.size(), &layouts[0]));
-		}
-		Texture *texture = reinterpret_cast<Texture *>(textureId);
-		vk::DescriptorImageInfo imageInfo(samplerManager.GetSampler(tsp), texture->GetImageView(), vk::ImageLayout::eShaderReadOnlyOptimal);
-
-		std::vector<vk::WriteDescriptorSet> writeDescriptorSets;
-		writeDescriptorSets.push_back(vk::WriteDescriptorSet(*descSets.back(), 0, 0, 1, vk::DescriptorType::eCombinedImageSampler, &imageInfo, nullptr, nullptr));
-
-		GetContext()->GetDevice()->updateDescriptorSets(writeDescriptorSets, nullptr);
-		inFlight[index] = std::move(descSets.back());
-		descSets.pop_back();
-	}
-
-	void BindPerFrameDescriptorSets(vk::CommandBuffer cmdBuffer)
-	{
-		int currentImage = GetContext()->GetCurrentImageIndex();
-		cmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, *pipelineLayout, 0, 1, &perFrameDescSets[currentImage].get(), 0, nullptr);
-	}
-
-	void BindPerPolyDescriptorSets(vk::CommandBuffer cmdBuffer, u64 textureId, TSP tsp)
-	{
-		int currentImage = GetContext()->GetCurrentImageIndex();
-		cmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, *pipelineLayout, 1, 1,
-				&perPolyDescSetsInFlight[currentImage][std::make_pair(textureId, tsp.full & SamplerManager::TSP_Mask)].get(), 0, nullptr);
-	}
-
-	void Reset()
-	{
-		int currentImage = GetContext()->GetCurrentImageIndex();
-		for (auto& pair : perPolyDescSetsInFlight[currentImage])
-			perPolyDescSets[currentImage].emplace_back(std::move(pair.second));
-		perPolyDescSetsInFlight[currentImage].clear();
-
-	}
-
-private:
-	VulkanContext *GetContext() const { return VulkanContext::Instance(); }
-
-	vk::UniqueDescriptorSetLayout perFrameLayout;
-	vk::UniqueDescriptorSetLayout perPolyLayout;
-	vk::UniquePipelineLayout pipelineLayout;
-
-	std::vector<vk::UniqueDescriptorSet> perFrameDescSets;
-	std::vector<std::vector<vk::UniqueDescriptorSet>> perPolyDescSets;
-	std::vector<std::map<std::pair<u64, u32>, vk::UniqueDescriptorSet>> perPolyDescSetsInFlight;
-
-	SamplerManager samplerManager;
-};
-
-class PipelineManager
-{
-public:
-	void Init()
-	{
-		shaderManager.Init();
-		descriptorSets.Init();
-	}
-	DescriptorSets& GetDescriptorSets() { return descriptorSets; }
 
 	vk::Pipeline GetPipeline(u32 listType, bool sortTriangles, const PolyParam& pp)
 	{
@@ -176,9 +169,12 @@ public:
 			CreateModVolPipeline(mode);
 		return *modVolPipelines[(size_t)mode];
 	}
+	vk::PipelineLayout GetPipelineLayout() const { return *pipelineLayout; }
+	vk::DescriptorSetLayout GetPerFrameDSLayout() const { return *perFrameLayout; }
+	vk::DescriptorSetLayout GetPerPolyDSLayout() const { return *perPolyLayout; }
+	vk::RenderPass GetRenderPass() const { return renderPass; }
 
 private:
-	VulkanContext *GetContext() const { return VulkanContext::Instance(); }
 	void CreateModVolPipeline(ModVolMode mode);
 
 	u32 hash(u32 listType, bool sortTriangles, const PolyParam *pp) const
@@ -226,8 +222,58 @@ private:
 
 	std::map<u32, vk::UniquePipeline> pipelines;
 	std::vector<vk::UniquePipeline> modVolPipelines;
-	ShaderManager shaderManager;
-	DescriptorSets descriptorSets;
+	ShaderManager *shaderManager;
+
+	vk::UniquePipelineLayout pipelineLayout;
+	vk::UniqueDescriptorSetLayout perFrameLayout;
+	vk::UniqueDescriptorSetLayout perPolyLayout;
+
+protected:
+	VulkanContext *GetContext() const { return VulkanContext::Instance(); }
+
+	vk::RenderPass renderPass;
 };
 
+class RttPipelineManager : public PipelineManager
+{
+public:
+	void Init(ShaderManager *shaderManager) override
+	{
+		PipelineManager::Init(shaderManager);
 
+		// RTT render pass
+	    vk::AttachmentDescription attachmentDescriptions[] = {
+	    		vk::AttachmentDescription(vk::AttachmentDescriptionFlags(), vk::Format::eR8G8B8A8Unorm, vk::SampleCountFlagBits::e1,
+	    				vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eStore, vk::AttachmentLoadOp::eDontCare, vk::AttachmentStoreOp::eDontCare,
+//						vk::ImageLayout::eUndefined, settings.rend.RenderToTextureBuffer ? vk::ImageLayout::eTransferSrcOptimal : vk::ImageLayout::eColorAttachmentOptimal),
+						vk::ImageLayout::eColorAttachmentOptimal,
+							settings.rend.RenderToTextureBuffer ? vk::ImageLayout::eTransferSrcOptimal : vk::ImageLayout::eShaderReadOnlyOptimal),
+				vk::AttachmentDescription(vk::AttachmentDescriptionFlags(), vk::Format::eD32SfloatS8Uint, vk::SampleCountFlagBits::e1,
+						vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eDontCare, vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eDontCare,
+						vk::ImageLayout::eUndefined, vk::ImageLayout::eDepthStencilAttachmentOptimal),
+	    };
+	    vk::AttachmentReference colorReference(0, vk::ImageLayout::eColorAttachmentOptimal);
+	    vk::AttachmentReference depthReference(1, vk::ImageLayout::eDepthStencilAttachmentOptimal);
+	    vk::SubpassDescription subpass(vk::SubpassDescriptionFlags(), vk::PipelineBindPoint::eGraphics, 0, nullptr, 1, &colorReference, nullptr, &depthReference);
+	    vk::SubpassDependency dependencies[] {
+	    	vk::SubpassDependency(VK_SUBPASS_EXTERNAL, 0, vk::PipelineStageFlagBits::eFragmentShader, vk::PipelineStageFlagBits::eColorAttachmentOutput,
+	    			vk::AccessFlagBits::eShaderRead, vk::AccessFlagBits::eColorAttachmentWrite),
+			vk::SubpassDependency(0, VK_SUBPASS_EXTERNAL, vk::PipelineStageFlagBits::eColorAttachmentOutput, vk::PipelineStageFlagBits::eFragmentShader,
+					vk::AccessFlagBits::eColorAttachmentWrite, vk::AccessFlagBits::eShaderRead),
+	    };
+	    vk::SubpassDependency vramWriteDeps[] {
+			vk::SubpassDependency(0, VK_SUBPASS_EXTERNAL,
+					vk::PipelineStageFlagBits::eColorAttachmentOutput, vk::PipelineStageFlagBits::eTransfer | vk::PipelineStageFlagBits::eHost,
+					vk::AccessFlagBits::eColorAttachmentWrite, vk::AccessFlagBits::eTransferRead | vk::AccessFlagBits::eHostRead),
+	    };
+
+	    rttRenderPass = GetContext()->GetDevice()->createRenderPassUnique(vk::RenderPassCreateInfo(vk::RenderPassCreateFlags(), 2, attachmentDescriptions,
+	    		1, &subpass, ARRAY_SIZE(settings.rend.RenderToTextureBuffer ? vramWriteDeps : dependencies),
+				settings.rend.RenderToTextureBuffer ? vramWriteDeps : dependencies));
+	    renderPass = *rttRenderPass;
+	    printf("RttPipelineManager renderPass %p created\n", (VkRenderPass)renderPass);
+	}
+
+private:
+	vk::UniqueRenderPass rttRenderPass;
+};

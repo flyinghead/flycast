@@ -53,6 +53,16 @@ struct BufferData
 		device.unmapMemory(*this->deviceMemory);
 	}
 
+	void download(vk::Device const& device, u32 size, void *data, u32 offset = 0) const
+	{
+		verify((m_propertyFlags & vk::MemoryPropertyFlagBits::eHostCoherent) && (m_propertyFlags & vk::MemoryPropertyFlagBits::eHostVisible));
+		verify(offset + size <= m_size);
+
+		void* dataPtr = device.mapMemory(*this->deviceMemory, offset, size);
+		memcpy(data, dataPtr, size);
+		device.unmapMemory(*this->deviceMemory);
+	}
+
 	vk::UniqueDeviceMemory  deviceMemory;
 	vk::UniqueBuffer        buffer;
 	vk::DeviceSize          m_size;
