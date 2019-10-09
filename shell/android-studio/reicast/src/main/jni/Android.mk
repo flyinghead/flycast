@@ -33,6 +33,7 @@ ifeq ($(TARGET_ARCH_ABI),arm64-v8a)
 #  CPP_REC := 1
   ARM64_REC := 1
   ISARM64 := 1
+  USE_VULKAN = 1
 else
 #  CPP_REC :=
   ARM64_REC :=
@@ -60,7 +61,7 @@ include $(LOCAL_PATH)/../../../../../core/core.mk
 LOCAL_SRC_FILES := $(RZDCY_FILES)
 LOCAL_SRC_FILES += $(wildcard $(LOCAL_PATH)/jni/src/Android.cpp)
 LOCAL_SRC_FILES += $(wildcard $(LOCAL_PATH)/jni/src/utils.cpp)
-LOCAL_CFLAGS  := $(RZDCY_CFLAGS) -fPIC -fvisibility=hidden -ffunction-sections -fdata-sections
+LOCAL_CFLAGS  := $(RZDCY_CFLAGS) -fPIC -fvisibility=hidden -ffunction-sections -fdata-sections -DVK_USE_PLATFORM_ANDROID_KHR
 LOCAL_CXXFLAGS  := $(RZDCY_CXXFLAGS) -fPIC -fvisibility=hidden -fvisibility-inlines-hidden -ffunction-sections -fdata-sections -fexceptions
 LOCAL_CPPFLAGS  := $(RZDCY_CXXFLAGS) -fPIC -fvisibility=hidden -fvisibility-inlines-hidden -ffunction-sections -fdata-sections -fexceptions
 

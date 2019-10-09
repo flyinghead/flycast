@@ -40,7 +40,7 @@ public:
 
 	VkInstance GetInstance() const { return static_cast<VkInstance>(instance.get()); }
 	u32 GetGraphicsQueueFamilyIndex() const { return graphicsQueueIndex; }
-	VkSurfaceKHR GetSurface() { return this->surface; }
+	VkSurfaceKHR GetSurface() { return (VkSurfaceKHR)this->surface; }
 	void SetSurface(VkSurfaceKHR surface) { this->surface = vk::SurfaceKHR(surface); }
 	void SetWindowSize(u32 width, u32 height) { this->width = screen_width = width; this->height = screen_height = height; }
 	void NewFrame();
