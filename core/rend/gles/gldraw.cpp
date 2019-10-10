@@ -674,10 +674,10 @@ void DrawStrips()
 static void DrawQuad(GLuint texId, float x, float y, float w, float h, float u0, float v0, float u1, float v1)
 {
 	struct Vertex vertices[] = {
-		{ x,     y + h, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, u0, v1 },
-		{ x,     y,     1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, u0, v0 },
-		{ x + w, y + h, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, u1, v1 },
-		{ x + w, y,     1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, u1, v0 },
+		{ x,     y + h, 0.1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, u0, v1 },
+		{ x,     y,     0.1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, u0, v0 },
+		{ x + w, y + h, 0.1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, u1, v1 },
+		{ x + w, y,     0.1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, u1, v0 },
 	};
 	GLushort indices[] = { 0, 1, 2, 1, 3 };
 
@@ -702,7 +702,7 @@ static void DrawQuad(GLuint texId, float x, float y, float w, float h, float u0,
 	glDrawElements(GL_TRIANGLE_STRIP, 5, GL_UNSIGNED_SHORT, (void *)0);
 }
 
-void DrawFramebuffer(float w, float h)
+void DrawFramebuffer()
 {
 	DrawQuad(fbTextureId, 0, 0, 640.f, 480.f, 0, 0, 1, 1);
 	glcache.DeleteTextures(1, &fbTextureId);

@@ -1357,6 +1357,7 @@ bool gles_init()
 	if (gl.is_gles)
 		glHint(GL_GENERATE_MIPMAP_HINT, GL_FASTEST);
 #endif
+	glCheck();
 
 	if (settings.rend.TextureUpscale > 1)
 	{
@@ -1880,7 +1881,7 @@ bool RenderFrame()
 
 	ShaderUniforms.PT_ALPHA=(PT_ALPHA_REF&0xFF)/255.0f;
 
-	for (auto it : gl.shaders)
+	for (auto& it : gl.shaders)
 	{
 		glcache.UseProgram(it.second.program);
 		ShaderUniforms.Set(&it.second);
@@ -2050,7 +2051,7 @@ bool RenderFrame()
 	{
 		glcache.ClearColor(0.f, 0.f, 0.f, 0.f);
 		glClear(GL_COLOR_BUFFER_BIT);
-		DrawFramebuffer(dc_width, dc_height);
+		DrawFramebuffer();
 	}
 	#ifdef _WIN32
 		//Sleep(40); //to test MT stability
@@ -2093,7 +2094,7 @@ struct glesrend : Renderer
 		if (gl.gl_major >= 3)
 			glBindVertexArray(gl.vbo.vao);
 #endif
-		glBindBuffer(GL_ARRAY_BUFFER, gl.vbo.geometry); glCheck();
+		glBindBuffer(GL_ARRAY_BUFFER, gl.vbo.geometry);
 		glEnableVertexAttribArray(VERTEX_POS_ARRAY);
 		glVertexAttribPointer(VERTEX_POS_ARRAY, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex,x));
 
@@ -2104,6 +2105,7 @@ struct glesrend : Renderer
 		glVertexAttribPointer(VERTEX_UV_ARRAY, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex,u));
 
 		OSD_DRAW(clear_screen);
+		glCheck();
 	}
 
 	virtual u64 GetTexture(TSP tsp, TCW tcw) override
