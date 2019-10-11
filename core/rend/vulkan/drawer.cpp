@@ -141,8 +141,9 @@ void Drawer::DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sor
 		trilinearAlpha = 1.f;
 
 	std::array<float, 5> pushConstants = { 0, 0, 0, 0, trilinearAlpha };
-	SetTileClip(poly.tileclip, &pushConstants[0]);
-	cmdBuffer.pushConstants<float>(pipelineManager->GetPipelineLayout(), vk::ShaderStageFlagBits::eFragment, 0, pushConstants);
+	int tileClip = SetTileClip(poly.tileclip, &pushConstants[0]);
+	if (tileClip != 0 || trilinearAlpha != 1.f)
+		cmdBuffer.pushConstants<float>(pipelineManager->GetPipelineLayout(), vk::ShaderStageFlagBits::eFragment, 0, pushConstants);
 
 	if (poly.pcw.Texture)
 		GetCurrentDescSet().SetTexture(poly.texid, poly.tsp);
@@ -500,7 +501,6 @@ vk::CommandBuffer TextureDrawer::BeginRenderPass()
 			texture->Create();
 		if (texture->format != vk::Format::eR8G8B8A8Unorm)
 		{
-			//texture->Init(newWidth, newHeight, format);
 			texture->extent = vk::Extent2D(widthPow2, heightPow2);
 			texture->format = vk::Format::eR8G8B8A8Unorm;
 			texture->CreateImage(vk::ImageTiling::eOptimal, vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled,

@@ -270,8 +270,7 @@ void FramebufferAttachment::Init(u32 width, u32 height, vk::Format format)
 		{
 			usage |= vk::ImageUsageFlagBits::eTransferSrc;
 			stagingBufferData = std::unique_ptr<BufferData>(new BufferData(VulkanContext::Instance()->GetPhysicalDevice(), *VulkanContext::Instance()->GetDevice(),
-					width * height * 4, vk::BufferUsageFlagBits::eTransferSrc | vk::BufferUsageFlagBits::eTransferDst,
-					vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent));
+					width * height * 4, vk::BufferUsageFlagBits::eTransferSrc | vk::BufferUsageFlagBits::eTransferDst));
 		}
 		else
 		{

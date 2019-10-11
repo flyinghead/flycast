@@ -245,7 +245,6 @@ public:
 	    vk::AttachmentDescription attachmentDescriptions[] = {
 	    		vk::AttachmentDescription(vk::AttachmentDescriptionFlags(), vk::Format::eR8G8B8A8Unorm, vk::SampleCountFlagBits::e1,
 	    				vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eStore, vk::AttachmentLoadOp::eDontCare, vk::AttachmentStoreOp::eDontCare,
-//						vk::ImageLayout::eUndefined, settings.rend.RenderToTextureBuffer ? vk::ImageLayout::eTransferSrcOptimal : vk::ImageLayout::eColorAttachmentOptimal),
 						vk::ImageLayout::eColorAttachmentOptimal,
 							settings.rend.RenderToTextureBuffer ? vk::ImageLayout::eTransferSrcOptimal : vk::ImageLayout::eShaderReadOnlyOptimal),
 				vk::AttachmentDescription(vk::AttachmentDescriptionFlags(), vk::Format::eD32SfloatS8Uint, vk::SampleCountFlagBits::e1,

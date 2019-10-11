@@ -165,7 +165,7 @@ void PipelineManager::CreateModVolPipeline(ModVolMode mode)
 		vk::LogicOp::eNoOp,                         // logicOp
 		1,                                          // attachmentCount
 		&pipelineColorBlendAttachmentState,         // pAttachments
-		{ { (1.0f, 1.0f, 1.0f, 1.0f) } }            // blendConstants
+		{ { 1.0f, 1.0f, 1.0f, 1.0f } }              // blendConstants
 	);
 
 	vk::DynamicState dynamicStates[2] = { vk::DynamicState::eViewport, vk::DynamicState::eScissor };
@@ -235,7 +235,7 @@ void PipelineManager::CreatePipeline(u32 listType, bool sortTriangles, const Pol
 
 	// Depth and stencil
 	vk::CompareOp depthOp;
-	if (listType == ListType_Punch_Through || (listType == ListType_Translucent && sortTriangles))
+	if (listType == ListType_Punch_Through || sortTriangles)
 		depthOp = vk::CompareOp::eGreaterOrEqual;
 	else
 		depthOp = depthOps[pp.isp.DepthMode];
@@ -308,7 +308,7 @@ void PipelineManager::CreatePipeline(u32 listType, bool sortTriangles, const Pol
 	  vk::LogicOp::eNoOp,                         // logicOp
 	  1,                                          // attachmentCount
 	  &pipelineColorBlendAttachmentState,         // pAttachments
-	  { { (1.0f, 1.0f, 1.0f, 1.0f) } }            // blendConstants
+	  { { 1.0f, 1.0f, 1.0f, 1.0f } }              // blendConstants
 	);
 
 	vk::DynamicState dynamicStates[2] = { vk::DynamicState::eViewport, vk::DynamicState::eScissor };

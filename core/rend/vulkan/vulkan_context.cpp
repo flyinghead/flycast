@@ -383,6 +383,15 @@ void VulkanContext::CreateSwapChain()
 
 		// The FIFO present mode is guaranteed by the spec to be supported
 		vk::PresentModeKHR swapchainPresentMode = vk::PresentModeKHR::eFifo;
+		for (auto& presentMode : physicalDevice.getSurfacePresentModesKHR(surface))
+		{
+			if (presentMode == vk::PresentModeKHR::eMailbox)
+			{
+				INFO_LOG(RENDERER, "Using mailbox present mode");
+				swapchainPresentMode = vk::PresentModeKHR::eMailbox;
+				break;
+			}
+		}
 
 		vk::SurfaceTransformFlagBitsKHR preTransform = (surfaceCapabilities.supportedTransforms & vk::SurfaceTransformFlagBitsKHR::eIdentity) ? vk::SurfaceTransformFlagBitsKHR::eIdentity : surfaceCapabilities.currentTransform;
 
