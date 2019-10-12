@@ -29,9 +29,16 @@ void setImageLayout(vk::CommandBuffer const& commandBuffer, vk::Image image, vk:
 
 struct Texture : BaseTextureCacheData
 {
-	Texture(vk::PhysicalDevice physicalDevice, vk::Device device)
-		: physicalDevice(physicalDevice), device(device), format(vk::Format::eUndefined)
+	Texture(vk::PhysicalDevice physicalDevice, vk::Device device, VulkanAllocator *allocator = nullptr)
+		: physicalDevice(physicalDevice), device(device), format(vk::Format::eUndefined), allocator(allocator)
 		{}
+	~Texture() override
+	{
+		imageView.reset();
+		image.reset();
+		if (allocator)
+			allocator->Free(memoryOffset, memoryType, sharedDeviceMemory);
+	}
 	void UploadToGPU(int width, int height, u8 *data) override;
 	u64 GetIntId() { return (u64)reinterpret_cast<uintptr_t>(this); }
 	std::string GetId() override { char s[20]; sprintf(s, "%p", this); return s; }
@@ -57,6 +64,10 @@ private:
 
 	vk::PhysicalDevice physicalDevice;
 	vk::Device device;
+	VulkanAllocator *allocator;
+	vk::DeviceMemory sharedDeviceMemory;
+	u32 memoryType = 0;
+	vk::DeviceSize memoryOffset = 0;
 
 	friend class TextureDrawer;
 };

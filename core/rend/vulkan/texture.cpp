@@ -169,7 +169,6 @@ void Texture::Init(u32 width, u32 height, vk::Format format)
 {
 	this->extent = vk::Extent2D(width, height);
 	this->format = format;
-	vk::PhysicalDeviceMemoryProperties memoryProperties = physicalDevice.getMemoryProperties();
 	vk::FormatProperties formatProperties = physicalDevice.getFormatProperties(format);
 
 	vk::FormatFeatureFlags formatFeatureFlags = vk::FormatFeatureFlagBits::eSampledImage;
@@ -182,10 +181,14 @@ void Texture::Init(u32 width, u32 height, vk::Format format)
 	if (needsStaging)
 	{
 		verify((formatProperties.optimalTilingFeatures & formatFeatureFlags) == formatFeatureFlags);
-		stagingBufferData = std::unique_ptr<BufferData>(new BufferData(physicalDevice, device, extent.width * extent.height * 4, vk::BufferUsageFlagBits::eTransferSrc));
+		if (allocator)
+			stagingBufferData = std::unique_ptr<BufferData>(new BufferData(physicalDevice, device, extent.width * extent.height * 4, vk::BufferUsageFlagBits::eTransferSrc, allocator));
+		else
+			stagingBufferData = std::unique_ptr<BufferData>(new BufferData(physicalDevice, device, extent.width * extent.height * 4, vk::BufferUsageFlagBits::eTransferSrc));
 		imageTiling = vk::ImageTiling::eOptimal;
 		usageFlags |= vk::ImageUsageFlagBits::eTransferDst;
 		initialLayout = vk::ImageLayout::eUndefined;
+		requirements = vk::MemoryPropertyFlagBits::eDeviceLocal;
 	}
 	else
 	{
@@ -193,8 +196,7 @@ void Texture::Init(u32 width, u32 height, vk::Format format)
 		initialLayout = vk::ImageLayout::ePreinitialized;
 		requirements = vk::MemoryPropertyFlagBits::eHostCoherent | vk::MemoryPropertyFlagBits::eHostVisible;
 	}
-	CreateImage(imageTiling, usageFlags, initialLayout, requirements,
-			vk::ImageAspectFlagBits::eColor);
+	CreateImage(imageTiling, usageFlags, initialLayout, requirements, vk::ImageAspectFlagBits::eColor);
 }
 
 void Texture::CreateImage(vk::ImageTiling tiling, vk::ImageUsageFlags usage, vk::ImageLayout initialLayout,
@@ -206,10 +208,19 @@ void Texture::CreateImage(vk::ImageTiling tiling, vk::ImageUsageFlags usage, vk:
 	image = device.createImageUnique(imageCreateInfo);
 
 	vk::MemoryRequirements memReq = device.getImageMemoryRequirements(image.get());
-	u32 memoryTypeIndex = findMemoryType(physicalDevice.getMemoryProperties(), memReq.memoryTypeBits, memoryProperties);
-	deviceMemory = device.allocateMemoryUnique(vk::MemoryAllocateInfo(memReq.size, memoryTypeIndex));
+	memoryType = findMemoryType(physicalDevice.getMemoryProperties(), memReq.memoryTypeBits, memoryProperties);
+	if (allocator)
+	{
+		if (sharedDeviceMemory)
+			allocator->Free(memoryOffset, memoryType, sharedDeviceMemory);
+		memoryOffset = allocator->Allocate(memReq.size, memReq.alignment, memoryType, sharedDeviceMemory);
+	}
+	else
+	{
+		deviceMemory = device.allocateMemoryUnique(vk::MemoryAllocateInfo(memReq.size, memoryType));
+	}
 
-	device.bindImageMemory(image.get(), deviceMemory.get(), 0);
+	device.bindImageMemory(image.get(), allocator ? sharedDeviceMemory : *deviceMemory, memoryOffset);
 
 	vk::ImageViewCreateInfo imageViewCreateInfo(vk::ImageViewCreateFlags(), image.get(), vk::ImageViewType::e2D, format, vk::ComponentMapping(),
 			vk::ImageSubresourceRange(aspectMask, 0, 1, 0, 1));
@@ -227,13 +238,13 @@ void Texture::SetImage(u32 srcSize, void *srcData, bool isNew)
 			? device.getBufferMemoryRequirements(stagingBufferData->buffer.get()).size
 					: device.getImageMemoryRequirements(image.get()).size;
 	void* data = needsStaging
-			? device.mapMemory(stagingBufferData->deviceMemory.get(), 0, size)
-					: device.mapMemory(deviceMemory.get(), 0, size);
+			? stagingBufferData->MapMemory()
+					: device.mapMemory(allocator ? sharedDeviceMemory : *deviceMemory, memoryOffset, size);
 	memcpy(data, srcData, srcSize);
-	device.unmapMemory(needsStaging ? stagingBufferData->deviceMemory.get() : deviceMemory.get());
 
 	if (needsStaging)
 	{
+		stagingBufferData->UnmapMemory();
 		// Since we're going to blit to the texture image, set its layout to eTransferDstOptimal
 		setImageLayout(commandBuffer, image.get(), format, isNew ? vk::ImageLayout::eUndefined : vk::ImageLayout::eShaderReadOnlyOptimal,
 				vk::ImageLayout::eTransferDstOptimal);
@@ -244,6 +255,7 @@ void Texture::SetImage(u32 srcSize, void *srcData, bool isNew)
 	}
 	else
 	{
+		device.unmapMemory(allocator ? sharedDeviceMemory : *deviceMemory);
 		// If we can use the linear tiled image as a texture, just do it
 		setImageLayout(commandBuffer, image.get(), format, vk::ImageLayout::ePreinitialized, vk::ImageLayout::eShaderReadOnlyOptimal);
 	}

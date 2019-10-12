@@ -21,6 +21,7 @@
 #include <memory>
 #include "vulkan.h"
 #include "hw/pvr/Renderer_if.h"
+#include "allocator.h"
 #include "commandpool.h"
 #include "drawer.h"
 #include "shaders.h"
@@ -36,7 +37,8 @@ public:
 		shaderManager.Init();
 		texCommandPool.Init();
 
-		textureDrawer.Init(&samplerManager, &shaderManager);
+		texAllocator.SetChunkSize(16 * 1024 * 1024);
+		textureDrawer.Init(&samplerManager, &shaderManager, &texAllocator);
 		textureDrawer.SetCommandPool(&texCommandPool);
 		screenDrawer.Init(&samplerManager, &shaderManager);
 
@@ -45,6 +47,8 @@ public:
 
 	void Resize(int w, int h) override
 	{
+		texCommandPool.Init();
+		screenDrawer.Init(&samplerManager, &shaderManager);
 	}
 
 	void Term() override
@@ -52,15 +56,21 @@ public:
 		printf("VulkanRenderer::Term\n");
 		GetContext()->WaitIdle();
 		killtex();
+		fogTexture = nullptr;
 		texCommandPool.Term();
 		shaderManager.Term();
+	}
+
+	void RenderFramebuffer()
+	{
+		// TODO	
 	}
 
 	bool Process(TA_context* ctx) override
 	{
 		if (ctx->rend.isRenderFramebuffer)
 		{
-			// TODO		RenderFramebuffer();
+			RenderFramebuffer();
 			return false;
 		}
 
@@ -96,8 +106,8 @@ public:
 
 	virtual u64 GetTexture(TSP tsp, TCW tcw) override
 	{
-		Texture* tf = static_cast<Texture*>(getTextureCacheData(tsp, tcw, [](){
-			return (BaseTextureCacheData *)new Texture(VulkanContext::Instance()->GetPhysicalDevice(), *VulkanContext::Instance()->GetDevice());
+		Texture* tf = static_cast<Texture*>(getTextureCacheData(tsp, tcw, [this](){
+			return (BaseTextureCacheData *)new Texture(VulkanContext::Instance()->GetPhysicalDevice(), *VulkanContext::Instance()->GetDevice(), &this->texAllocator);
 		}));
 
 		if (tf->IsNew())
@@ -146,6 +156,7 @@ private:
 	ShaderManager shaderManager;
 	ScreenDrawer screenDrawer;
 	TextureDrawer textureDrawer;
+	VulkanAllocator texAllocator;
 };
 
 Renderer* rend_Vulkan()

@@ -479,7 +479,7 @@ bool BaseTextureCacheData::Delete()
 
 	if (lock_block)
 		libCore_vramlock_Unlock_block(lock_block);
-	lock_block=0;
+	lock_block = nullptr;
 
 	delete[] custom_image_data;
 
@@ -489,19 +489,20 @@ bool BaseTextureCacheData::Delete()
 void BaseTextureCacheData::Create()
 {
 	//Reset state info ..
-	Lookups=0;
-	Updates=0;
-	dirty=FrameCount;
+	Lookups = 0;
+	Updates = 0;
+	dirty = FrameCount;
 	lock_block = nullptr;
 	custom_image_data = nullptr;
+	custom_load_in_progress = 0;
 
 	//decode info from tsp/tcw into the texture struct
-	tex=&format[tcw.PixelFmt == PixelReserved ? Pixel1555 : tcw.PixelFmt];	//texture format table entry
+	tex = &format[tcw.PixelFmt == PixelReserved ? Pixel1555 : tcw.PixelFmt];	//texture format table entry
 
-	sa_tex = (tcw.TexAddr<<3) & VRAM_MASK;	//texture start address
-	sa = sa_tex;							//data texture start address (modified for MIPs, as needed)
-	w=8<<tsp.TexU;                   //tex width
-	h=8<<tsp.TexV;                   //tex height
+	sa_tex = (tcw.TexAddr << 3) & VRAM_MASK;	//texture start address
+	sa = sa_tex;								//data texture start address (modified for MIPs, as needed)
+	w = 8 << tsp.TexU;							//tex width
+	h = 8 << tsp.TexV;							//tex height
 
 	//PAL texture
 	if (tex->bpp == 4)
@@ -541,37 +542,37 @@ void BaseTextureCacheData::Create()
 			texconv = tex->PL;
 			texconv32 = tex->PL32;
 			//calculate the size, in bytes, for the locking
-			size=stride*h*tex->bpp/8;
+			size = stride * h * tex->bpp / 8;
 		}
 		else
 		{
 			// Quake 3 Arena uses one. Not sure if valid but no need to crash
-			//verify(w==h || !tcw.MipMapped); // are non square mipmaps supported ? i can't recall right now *WARN*
+			//verify(w == h || !tcw.MipMapped); // are non square mipmaps supported ? i can't recall right now *WARN*
 
 			if (tcw.VQ_Comp)
 			{
 				verify(tex->VQ != NULL || tex->VQ32 != NULL);
 				vq_codebook = sa;
 				if (tcw.MipMapped)
-					sa+=MipPoint[tsp.TexU];
+					sa += MipPoint[tsp.TexU];
 				texconv = tex->VQ;
 				texconv32 = tex->VQ32;
-				size=w*h/8;
+				size = w * h / 8;
 			}
 			else
 			{
 				verify(tex->TW != NULL || tex->TW32 != NULL);
 				if (tcw.MipMapped)
-					sa+=MipPoint[tsp.TexU]*tex->bpp/2;
+					sa += MipPoint[tsp.TexU] * tex->bpp / 2;
 				texconv = tex->TW;
 				texconv32 = tex->TW32;
-				size=w*h*tex->bpp/8;
+				size = w * h * tex->bpp / 8;
 			}
 		}
 		break;
 	default:
 		WARN_LOG(RENDERER, "Unhandled texture format %d", tcw.PixelFmt);
-		size=w*h*2;
+		size = w * h * 2;
 		texconv = NULL;
 		texconv32 = NULL;
 	}
@@ -731,47 +732,7 @@ void BaseTextureCacheData::CheckCustomTexture()
 	}
 }
 
-static std::unordered_map<u64, std::unique_ptr<BaseTextureCacheData>> TexCache;
-typedef std::unordered_map<u64, std::unique_ptr<BaseTextureCacheData>>::iterator TexCacheIter;
-
-// Only use TexU and TexV from TSP in the cache key
-//     TexV : 7, TexU : 7
-static const TSP TSPTextureCacheMask = { { 7, 7 } };
-//     TexAddr : 0x1FFFFF, Reserved : 0, StrideSel : 0, ScanOrder : 1, PixelFmt : 7, VQ_Comp : 1, MipMapped : 1
-static const TCW TCWTextureCacheMask = { { 0x1FFFFF, 0, 0, 1, 7, 1, 1 } };
-
-BaseTextureCacheData *getTextureCacheData(TSP tsp, TCW tcw, BaseTextureCacheData *(*factory)())
-{
-	u64 key = tsp.full & TSPTextureCacheMask.full;
-	if (tcw.PixelFmt == PixelPal4 || tcw.PixelFmt == PixelPal8)
-		// Paletted textures have a palette selection that must be part of the key
-		// We also add the palette type to the key to avoid thrashing the cache
-		// when the palette type is changed. If the palette type is changed back in the future,
-		// this texture will stil be available.
-		key |= ((u64)tcw.full << 32) | ((PAL_RAM_CTRL & 3) << 6);
-	else
-		key |= (u64)(tcw.full & TCWTextureCacheMask.full) << 32;
-
-	TexCacheIter tx = TexCache.find(key);
-
-	BaseTextureCacheData* tf;
-	if (tx != TexCache.end())
-	{
-		tf = tx->second.get();
-		// Needed if the texture is updated
-		tf->tcw.StrideSel = tcw.StrideSel;
-	}
-	else //create if not existing
-	{
-		tf = factory();
-		TexCache[key] = std::unique_ptr<BaseTextureCacheData>(tf);
-
-		tf->tsp = tsp;
-		tf->tcw = tcw;
-	}
-
-	return tf;
-}
+std::unordered_map<u64, std::unique_ptr<BaseTextureCacheData>> TexCache;
 
 void CollectCleanup()
 {
@@ -788,12 +749,10 @@ void CollectCleanup()
 			break;
 	}
 
-	for (u64 id : list) {
+	for (u64 id : list)
+	{
 		if (TexCache[id]->Delete())
-		{
-			//printf("Deleting %d\n", TexCache[list[i]].texID);
 			TexCache.erase(id);
-		}
 	}
 }
 
@@ -974,5 +933,13 @@ void WriteTextureToVRam(u32 width, u32 height, u8 *data, u16 *dst)
 		}
 		dst += (stride - width * 2) / 2;
 	}
+}
 
+void rend_text_invl(vram_block* bl)
+{
+	BaseTextureCacheData* tcd = (BaseTextureCacheData*)bl->userdata;
+	tcd->dirty = FrameCount;
+	tcd->lock_block = nullptr;
+
+	libCore_vramlock_Unlock_block_wb(bl);
 }

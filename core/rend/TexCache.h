@@ -1,5 +1,7 @@
 #pragma once
 #include <atomic>
+#include <memory>
+#include <unordered_map>
 #include "oslib/oslib.h"
 #include "hw/pvr/pvr_regs.h"
 #include "hw/pvr/ta_structs.h"
@@ -664,8 +666,8 @@ struct BaseTextureCacheData
 	u32 texture_hash;			// xxhash of texture data, used for custom textures
 	u32 old_texture_hash;		// legacy hash
 	u8* custom_image_data;		// loaded custom image data
-	volatile u32 custom_width;
-	volatile u32 custom_height;
+	u32 custom_width;
+	u32 custom_height;
 	std::atomic_int custom_load_in_progress;
 
 	void PrintTextureName();
@@ -701,9 +703,54 @@ struct BaseTextureCacheData
 	virtual bool Delete();
 	virtual ~BaseTextureCacheData() {}
 };
-BaseTextureCacheData *getTextureCacheData(TSP tsp, TCW tcw, BaseTextureCacheData *(*factory)());
+
+extern std::unordered_map<u64, std::unique_ptr<BaseTextureCacheData>> TexCache;
+typedef std::unordered_map<u64, std::unique_ptr<BaseTextureCacheData>>::iterator TexCacheIter;
+
+// Only use TexU and TexV from TSP in the cache key
+//     TexV : 7, TexU : 7
+const TSP TSPTextureCacheMask = { { 7, 7 } };
+//     TexAddr : 0x1FFFFF, Reserved : 0, StrideSel : 0, ScanOrder : 1, PixelFmt : 7, VQ_Comp : 1, MipMapped : 1
+const TCW TCWTextureCacheMask = { { 0x1FFFFF, 0, 0, 1, 7, 1, 1 } };
+
+template<typename Func>
+BaseTextureCacheData *getTextureCacheData(TSP tsp, TCW tcw, Func factory)
+{
+	u64 key = tsp.full & TSPTextureCacheMask.full;
+	if (tcw.PixelFmt == PixelPal4 || tcw.PixelFmt == PixelPal8)
+		// Paletted textures have a palette selection that must be part of the key
+		// We also add the palette type to the key to avoid thrashing the cache
+		// when the palette type is changed. If the palette type is changed back in the future,
+		// this texture will stil be available.
+		key |= ((u64)tcw.full << 32) | ((PAL_RAM_CTRL & 3) << 6);
+	else
+		key |= (u64)(tcw.full & TCWTextureCacheMask.full) << 32;
+
+	TexCacheIter it = TexCache.find(key);
+
+	BaseTextureCacheData* texture;
+	if (it != TexCache.end())
+	{
+		texture = it->second.get();
+		// Needed if the texture is updated
+		texture->tcw.StrideSel = tcw.StrideSel;
+	}
+	else //create if not existing
+	{
+		texture = factory();
+		TexCache[key] = std::unique_ptr<BaseTextureCacheData>(texture);
+
+		texture->tsp = tsp;
+		texture->tcw = tcw;
+	}
+	texture->Lookups++;
+
+	return texture;
+}
+
 void CollectCleanup();
 void killtex();
+void rend_text_invl(vram_block* bl);
 
 void ReadFramebuffer(PixelBuffer<u32>& pb, int& width, int& height);
 void WriteTextureToVRam(u32 width, u32 height, u8 *data, u16 *dst);

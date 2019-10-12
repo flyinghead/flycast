@@ -20,52 +20,72 @@
 */
 #pragma once
 #include "vulkan.h"
+#include "allocator.h"
 
 struct BufferData
 {
 	BufferData(vk::PhysicalDevice const& physicalDevice, vk::Device const& device, vk::DeviceSize size, vk::BufferUsageFlags usage,
+			Allocator *allocator = &SimpleAllocator::instance,
 			vk::MemoryPropertyFlags propertyFlags = vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
-
-	void upload(vk::Device const& device, u32 size, const void *data, u32 offset = 0) const
+	~BufferData()
 	{
-		verify((m_propertyFlags & vk::MemoryPropertyFlagBits::eHostCoherent) && (m_propertyFlags & vk::MemoryPropertyFlagBits::eHostVisible));
-		verify(offset + size <= m_size);
-
-		void* dataPtr = device.mapMemory(*this->deviceMemory, offset, size);
-		memcpy(dataPtr, data, size);
-		device.unmapMemory(*this->deviceMemory);
+		buffer.reset();
+		allocator->Free(offset, memoryType, sharedDeviceMemory);
 	}
 
-	void upload(vk::Device const& device, size_t count, u32 *sizes, const void **data, u32 offset = 0) const
+	void upload(vk::Device const& device, u32 size, const void *data, u32 bufOffset = 0) const
+	{
+		verify((m_propertyFlags & vk::MemoryPropertyFlagBits::eHostCoherent) && (m_propertyFlags & vk::MemoryPropertyFlagBits::eHostVisible));
+		verify(offset + bufOffset + size <= bufferSize);
+
+		void* dataPtr = device.mapMemory(sharedDeviceMemory, offset + bufOffset, size);
+		memcpy(dataPtr, data, size);
+		device.unmapMemory(sharedDeviceMemory);
+	}
+
+	void upload(vk::Device const& device, size_t count, u32 *sizes, const void **data, u32 bufOffset = 0) const
 	{
 		verify((m_propertyFlags & vk::MemoryPropertyFlagBits::eHostCoherent) && (m_propertyFlags & vk::MemoryPropertyFlagBits::eHostVisible));
 
 		u32 totalSize = 0;
 		for (int i = 0; i < count; i++)
 			totalSize += sizes[i];
-		verify(offset + totalSize <= m_size);
-		void* dataPtr = device.mapMemory(*this->deviceMemory, offset, totalSize);
+		verify(offset + bufOffset + totalSize <= bufferSize);
+		void* dataPtr = device.mapMemory(sharedDeviceMemory, offset + bufOffset, totalSize);
 		for (int i = 0; i < count; i++)
 		{
 			memcpy(dataPtr, data[i], sizes[i]);
 			dataPtr = (u8 *)dataPtr + sizes[i];
 		}
-		device.unmapMemory(*this->deviceMemory);
+		device.unmapMemory(sharedDeviceMemory);
 	}
 
-	void download(vk::Device const& device, u32 size, void *data, u32 offset = 0) const
+	void download(vk::Device const& device, u32 size, void *data, u32 bufOffset = 0) const
 	{
 		verify((m_propertyFlags & vk::MemoryPropertyFlagBits::eHostCoherent) && (m_propertyFlags & vk::MemoryPropertyFlagBits::eHostVisible));
-		verify(offset + size <= m_size);
+		verify(offset + bufOffset + size <= bufferSize);
 
-		void* dataPtr = device.mapMemory(*this->deviceMemory, offset, size);
+		void* dataPtr = device.mapMemory(sharedDeviceMemory, offset + bufOffset, size);
 		memcpy(data, dataPtr, size);
-		device.unmapMemory(*this->deviceMemory);
+		device.unmapMemory(sharedDeviceMemory);
 	}
 
-	vk::UniqueDeviceMemory  deviceMemory;
-	vk::UniqueBuffer        buffer;
-	vk::DeviceSize          m_size;
+	void *MapMemory()
+	{
+		return device.mapMemory(sharedDeviceMemory, offset, bufferSize);
+	}
+	void UnmapMemory()
+	{
+		device.unmapMemory(sharedDeviceMemory);
+	}
+
+	vk::UniqueBuffer buffer;
+	vk::DeviceSize bufferSize;
+	Allocator *allocator;
+	vk::DeviceSize offset;
+	u32 memoryType;
+	vk::DeviceMemory sharedDeviceMemory;
+	vk::Device device;
 
 #if !defined(NDEBUG)
 private:

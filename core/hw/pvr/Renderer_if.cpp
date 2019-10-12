@@ -450,8 +450,10 @@ void* rend_thread(void* p)
 
 bool pend_rend = false;
 
-void rend_resize(int width, int height) {
-	renderer->Resize(width, height);
+void rend_resize(int width, int height)
+{
+	if (renderer != nullptr)
+		renderer->Resize(width, height);
 }
 
 

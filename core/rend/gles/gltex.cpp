@@ -369,9 +369,6 @@ u64 gl_GetTexture(TSP tsp, TCW tcw)
 //		TexCacheHits = 0;
 //	}
 
-	//update state for opts/stuff
-	tf->Lookups++;
-
 	//return gl texture
 	return tf->texID;
 }
@@ -391,9 +388,6 @@ text_info raw_GetTexture(TSP tsp, TCW tcw)
 	if (tf->NeedsUpdate())
 		tf->Update();
 
-	//update state for opts/stuff
-	tf->Lookups++;
-
 	//return gl texture
 	rv.height = tf->h;
 	rv.width = tf->w;
@@ -406,15 +400,6 @@ text_info raw_GetTexture(TSP tsp, TCW tcw)
 
 void DoCleanup() {
 
-}
-
-void rend_text_invl(vram_block* bl)
-{
-	TextureCacheData* tcd = (TextureCacheData*)bl->userdata;
-	tcd->dirty=FrameCount;
-	tcd->lock_block=0;
-
-	libCore_vramlock_Unlock_block_wb(bl);
 }
 
 GLuint fbTextureId;

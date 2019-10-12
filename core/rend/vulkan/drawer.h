@@ -35,7 +35,7 @@ public:
 	bool Draw(const Texture *fogTexture);
 
 protected:
-	virtual void Init(SamplerManager *samplerManager, ShaderManager *shaderManager)
+	void Init(SamplerManager *samplerManager, ShaderManager *shaderManager)
 	{
 		this->samplerManager = samplerManager;
 		pipelineManager->Init(shaderManager);
@@ -72,16 +72,20 @@ private:
 class ScreenDrawer : public Drawer
 {
 public:
-	void Init(SamplerManager *samplerManager, ShaderManager *shaderManager) override
+	void Init(SamplerManager *samplerManager, ShaderManager *shaderManager)
 	{
-		pipelineManager = std::unique_ptr<PipelineManager>(new PipelineManager());
+		if (!pipelineManager)
+			pipelineManager = std::unique_ptr<PipelineManager>(new PipelineManager());
 		Drawer::Init(samplerManager, shaderManager);
 
-		while (descriptorSets.size() < GetContext()->GetSwapChainSize())
-		{
-			descriptorSets.push_back(DescriptorSets());
-			descriptorSets.back().Init(samplerManager, pipelineManager->GetPipelineLayout(), pipelineManager->GetPerFrameDSLayout(), pipelineManager->GetPerPolyDSLayout());
-		}
+		if (descriptorSets.size() > GetContext()->GetSwapChainSize())
+			descriptorSets.resize(GetContext()->GetSwapChainSize());
+		else
+			while (descriptorSets.size() < GetContext()->GetSwapChainSize())
+			{
+				descriptorSets.push_back(DescriptorSets());
+				descriptorSets.back().Init(samplerManager, pipelineManager->GetPipelineLayout(), pipelineManager->GetPerFrameDSLayout(), pipelineManager->GetPerPolyDSLayout());
+			}
 	}
 
 protected:
@@ -95,12 +99,12 @@ protected:
 						std::max(512 * 1024u, size),
 						vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eUniformBuffer)));
 		}
-		else if (mainBuffers[GetCurrentImage()]->m_size < size)
+		else if (mainBuffers[GetCurrentImage()]->bufferSize < size)
 		{
-			u32 newSize = mainBuffers[GetCurrentImage()]->m_size;
+			u32 newSize = mainBuffers[GetCurrentImage()]->bufferSize;
 			while (newSize < size)
 				newSize *= 2;
-			INFO_LOG(RENDERER, "Increasing main buffer size %d -> %d", (u32)mainBuffers[GetCurrentImage()]->m_size, newSize);
+			INFO_LOG(RENDERER, "Increasing main buffer size %d -> %d", (u32)mainBuffers[GetCurrentImage()]->bufferSize, newSize);
 			mainBuffers[GetCurrentImage()] = std::unique_ptr<BufferData>(new BufferData(GetContext()->GetPhysicalDevice(), GetContext()->GetDevice().get(), newSize,
 					vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eUniformBuffer));
 		}
@@ -131,13 +135,14 @@ private:
 class TextureDrawer : public Drawer
 {
 public:
-	void Init(SamplerManager *samplerManager, ShaderManager *shaderManager) override
+	void Init(SamplerManager *samplerManager, ShaderManager *shaderManager, VulkanAllocator *texAllocator)
 	{
 		pipelineManager = std::unique_ptr<RttPipelineManager>(new RttPipelineManager());
 		Drawer::Init(samplerManager, shaderManager);
 
 		descriptorSets.Init(samplerManager, pipelineManager->GetPipelineLayout(), pipelineManager->GetPerFrameDSLayout(), pipelineManager->GetPerPolyDSLayout());
 		fence = GetContext()->GetDevice()->createFenceUnique(vk::FenceCreateInfo());
+		this->texAllocator = texAllocator;
 	}
 	void SetCommandPool(CommandPool *commandPool) { this->commandPool = commandPool; }
 
@@ -148,12 +153,12 @@ protected:
 
 	virtual BufferData* GetMainBuffer(u32 size) override
 	{
-		if (!mainBuffer || mainBuffer->m_size < size)
+		if (!mainBuffer || mainBuffer->bufferSize < size)
 		{
-			u32 newSize = mainBuffer ? mainBuffer->m_size : 128 * 1024u;
+			u32 newSize = mainBuffer ? mainBuffer->bufferSize : 128 * 1024u;
 			while (newSize < size)
 				newSize *= 2;
-			INFO_LOG(RENDERER, "Increasing RTT main buffer size %d -> %d", !mainBuffer ? 0 : (u32)mainBuffer->m_size, newSize);
+			INFO_LOG(RENDERER, "Increasing RTT main buffer size %d -> %d", !mainBuffer ? 0 : (u32)mainBuffer->bufferSize, newSize);
 			mainBuffer = std::unique_ptr<BufferData>(new BufferData(GetContext()->GetPhysicalDevice(), *GetContext()->GetDevice(), newSize,
 					vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eUniformBuffer));
 		}
@@ -176,4 +181,5 @@ private:
 	DescriptorSets descriptorSets;
 	std::unique_ptr<BufferData> mainBuffer;
 	CommandPool *commandPool;
+	VulkanAllocator *texAllocator;
 };

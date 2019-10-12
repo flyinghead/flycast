@@ -494,8 +494,8 @@ vk::CommandBuffer TextureDrawer::BeginRenderPass()
 		for (tsp.TexU = 0; tsp.TexU <= 7 && (8 << tsp.TexU) < origWidth; tsp.TexU++);
 		for (tsp.TexV = 0; tsp.TexV <= 7 && (8 << tsp.TexV) < origHeight; tsp.TexV++);
 
-		texture = static_cast<Texture*>(getTextureCacheData(tsp, tcw, [](){
-			return (BaseTextureCacheData *)new Texture(VulkanContext::Instance()->GetPhysicalDevice(), *VulkanContext::Instance()->GetDevice());
+		texture = static_cast<Texture*>(getTextureCacheData(tsp, tcw, [this](){
+			return (BaseTextureCacheData *)new Texture(VulkanContext::Instance()->GetPhysicalDevice(), *VulkanContext::Instance()->GetDevice(), this->texAllocator);
 		}));
 		if (texture->IsNew())
 			texture->Create();
@@ -599,9 +599,6 @@ void TextureDrawer::EndRenderPass()
 		return;
 	}
 	//memset(&vram[fb_rtt.TexAddr << 3], '\0', size);
-
-	if (width > 1024 || height > 1024)
-		return;
 
 	texture->dirty = 0;
 	if (texture->lock_block == NULL)

@@ -130,23 +130,26 @@ public:
 	{
 		this->shaderManager = shaderManager;
 
-		// Descriptor set and pipeline layout
-		vk::DescriptorSetLayoutBinding perFrameBindings[] = {
-				{ 0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex },			// vertex uniforms
-				{ 1, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eFragment },		// fragment uniforms
-				{ 2, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment },// fog texture
-		};
-		vk::DescriptorSetLayoutBinding perPolyBindings[] = {
-				{ 0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment },// texture
-		};
-		perFrameLayout = GetContext()->GetDevice()->createDescriptorSetLayoutUnique(
-				vk::DescriptorSetLayoutCreateInfo(vk::DescriptorSetLayoutCreateFlags(), ARRAY_SIZE(perFrameBindings), perFrameBindings));
-		perPolyLayout = GetContext()->GetDevice()->createDescriptorSetLayoutUnique(
-				vk::DescriptorSetLayoutCreateInfo(vk::DescriptorSetLayoutCreateFlags(), ARRAY_SIZE(perPolyBindings), perPolyBindings));
-		vk::DescriptorSetLayout layouts[] = { *perFrameLayout, *perPolyLayout };
-		vk::PushConstantRange pushConstant(vk::ShaderStageFlagBits::eFragment, 0, 20);
-		pipelineLayout = GetContext()->GetDevice()->createPipelineLayoutUnique(
-				vk::PipelineLayoutCreateInfo(vk::PipelineLayoutCreateFlags(), ARRAY_SIZE(layouts), layouts, 1, &pushConstant));
+		if (!perFrameLayout)
+		{
+			// Descriptor set and pipeline layout
+			vk::DescriptorSetLayoutBinding perFrameBindings[] = {
+					{ 0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex },			// vertex uniforms
+					{ 1, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eFragment },		// fragment uniforms
+					{ 2, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment },// fog texture
+			};
+			vk::DescriptorSetLayoutBinding perPolyBindings[] = {
+					{ 0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment },// texture
+			};
+			perFrameLayout = GetContext()->GetDevice()->createDescriptorSetLayoutUnique(
+					vk::DescriptorSetLayoutCreateInfo(vk::DescriptorSetLayoutCreateFlags(), ARRAY_SIZE(perFrameBindings), perFrameBindings));
+			perPolyLayout = GetContext()->GetDevice()->createDescriptorSetLayoutUnique(
+					vk::DescriptorSetLayoutCreateInfo(vk::DescriptorSetLayoutCreateFlags(), ARRAY_SIZE(perPolyBindings), perPolyBindings));
+			vk::DescriptorSetLayout layouts[] = { *perFrameLayout, *perPolyLayout };
+			vk::PushConstantRange pushConstant(vk::ShaderStageFlagBits::eFragment, 0, 20);
+			pipelineLayout = GetContext()->GetDevice()->createPipelineLayoutUnique(
+					vk::PipelineLayoutCreateInfo(vk::PipelineLayoutCreateFlags(), ARRAY_SIZE(layouts), layouts, 1, &pushConstant));
+		}
 
 		renderPass = VulkanContext::Instance()->GetRenderPass();
 	}

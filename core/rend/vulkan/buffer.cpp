@@ -22,13 +22,15 @@
 #include "utils.h"
 
 BufferData::BufferData(vk::PhysicalDevice const& physicalDevice, vk::Device const& device, vk::DeviceSize size,
-		vk::BufferUsageFlags usage, vk::MemoryPropertyFlags propertyFlags)
-	: m_size(size)
+		vk::BufferUsageFlags usage, Allocator *allocator, vk::MemoryPropertyFlags propertyFlags)
+	: device(device), bufferSize(size), allocator(allocator)
 #if !defined(NDEBUG)
 					, m_usage(usage), m_propertyFlags(propertyFlags)
 #endif
 {
 	buffer = device.createBufferUnique(vk::BufferCreateInfo(vk::BufferCreateFlags(), size, usage));
-	deviceMemory = allocateMemory(device, physicalDevice.getMemoryProperties(), device.getBufferMemoryRequirements(buffer.get()), propertyFlags);
-	device.bindBufferMemory(buffer.get(), deviceMemory.get(), 0);
+	vk::MemoryRequirements memoryRequirements = device.getBufferMemoryRequirements(buffer.get());
+	memoryType = findMemoryType(physicalDevice.getMemoryProperties(), memoryRequirements.memoryTypeBits, propertyFlags);
+	offset = allocator->Allocate(memoryRequirements.size, memoryRequirements.alignment, memoryType, sharedDeviceMemory);
+	device.bindBufferMemory(buffer.get(), sharedDeviceMemory, offset);
 }
