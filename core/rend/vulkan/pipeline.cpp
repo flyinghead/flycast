@@ -318,19 +318,8 @@ void PipelineManager::CreatePipeline(u32 listType, bool sortTriangles, const Pol
 	FragmentShaderParams params = {};
 	params.alphaTest = listType == ListType_Punch_Through;
 	params.bumpmap = pp.tcw.PixelFmt == PixelBumpMap;
-	params.clamping = pp.tsp.ColorClamp && (pvrrc.fog_clamp_min != 0 || pvrrc.fog_clamp_max != 0xffffffff);;
-	switch (pp.tileclip >> 28)
-	{
-	case 2:
-		params.clipTest = 1;	// render stuff inside the region
-		break;
-	case 3:
-		params.clipTest = -1;	// render stuff outside the region
-		break;
-	default:
-		params.clipTest = 0;	// always passes
-		break;
-	}
+	params.clamping = pp.tsp.ColorClamp && (pvrrc.fog_clamp_min != 0 || pvrrc.fog_clamp_max != 0xffffffff);
+	params.insideClipTest = (pp.tileclip >> 28) == 3;
 	params.fog = settings.rend.Fog ? pp.tsp.FogCtrl : 2;
 	params.gouraud = pp.pcw.Gouraud;
 	params.ignoreTexAlpha = pp.tsp.IgnoreTexA;

@@ -28,11 +28,22 @@
 #include "shaders.h"
 #include "texture.h"
 
+enum class TileClipping {
+	Inside,		// render stuff outside the region
+	Off,
+	Outside		// render stuff inside the region
+};
+
 class Drawer
 {
 public:
+	Drawer() = default;
 	virtual ~Drawer() {}
 	bool Draw(const Texture *fogTexture);
+	Drawer(const Drawer& other) = delete;
+	Drawer(Drawer&& other) = default;
+	Drawer& operator=(const Drawer& other) = delete;
+	Drawer& operator=(Drawer&& other) = default;
 
 protected:
 	void Init(SamplerManager *samplerManager, ShaderManager *shaderManager)
@@ -48,25 +59,35 @@ protected:
 	VulkanContext *GetContext() const { return VulkanContext::Instance(); }
 
 	std::unique_ptr<PipelineManager> pipelineManager;
+	vk::Rect2D baseScissor;
+	// temp stuff
+	float scale_x = 1.f;
+	float scale_y = 1.f;
 
 private:
-	s32 SetTileClip(u32 val, float *values);
+	TileClipping SetTileClip(u32 val, vk::Rect2D& clipRect);
 	void SortTriangles();
 	void DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sortTriangles, const PolyParam& poly, u32 first, u32 count);
 	void DrawSorted(const vk::CommandBuffer& cmdBuffer, const std::vector<SortTrigDrawParam>& polys);
 	void DrawList(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sortTriangles, const List<PolyParam>& polys, u32 first, u32 count);
 	void DrawModVols(const vk::CommandBuffer& cmdBuffer, int first, int count);
 	void UploadMainBuffer(const VertexShaderUniforms& vertexUniforms, const FragmentShaderUniforms& fragmentUniforms, u32& vertexUniformsOffset);
+	void SetScissor(const vk::CommandBuffer& cmdBuffer, vk::Rect2D scissor)
+	{
+		if (scissor != currentScissor)
+		{
+			cmdBuffer.setScissor(0, scissor);
+			currentScissor = scissor;
+		}
+	}
 
-	// temp stuff
-	float scale_x;
-	float scale_y;
 	// Per-triangle sort results
 	std::vector<std::vector<SortTrigDrawParam>> sortedPolys;
 	std::vector<std::vector<u32>> sortedIndexes;
-	u32 sortedIndexCount;
+	u32 sortedIndexCount = 0;
 
-	SamplerManager *samplerManager;
+	SamplerManager *samplerManager = nullptr;
+	vk::Rect2D currentScissor;
 };
 
 class ScreenDrawer : public Drawer
@@ -87,6 +108,11 @@ public:
 				descriptorSets.back().Init(samplerManager, pipelineManager->GetPipelineLayout(), pipelineManager->GetPerFrameDSLayout(), pipelineManager->GetPerPolyDSLayout());
 			}
 	}
+	ScreenDrawer() = default;
+	ScreenDrawer(const ScreenDrawer& other) = delete;
+	ScreenDrawer(ScreenDrawer&& other) = default;
+	ScreenDrawer& operator=(const ScreenDrawer& other) = delete;
+	ScreenDrawer& operator=(ScreenDrawer&& other) = default;
 
 protected:
 	virtual DescriptorSets& GetCurrentDescSet() override { return descriptorSets[GetCurrentImage()]; }
@@ -111,14 +137,7 @@ protected:
 		return mainBuffers[GetCurrentImage()].get();
 	};
 
-	virtual vk::CommandBuffer BeginRenderPass() override
-	{
-		GetContext()->NewFrame();
-		GetContext()->BeginRenderPass();
-		vk::CommandBuffer commandBuffer = GetContext()->GetCurrentCommandBuffer();
-		commandBuffer.setViewport(0, vk::Viewport(0.0f, 0.0f, (float)screen_width, (float)screen_height, 1.0f, 0.0f));
-		return commandBuffer;
-	}
+	virtual vk::CommandBuffer BeginRenderPass() override;
 
 	virtual void EndRenderPass() override
 	{
@@ -145,6 +164,12 @@ public:
 		this->texAllocator = texAllocator;
 	}
 	void SetCommandPool(CommandPool *commandPool) { this->commandPool = commandPool; }
+
+	TextureDrawer() = default;
+	TextureDrawer(const TextureDrawer& other) = delete;
+	TextureDrawer(TextureDrawer&& other) = default;
+	TextureDrawer& operator=(const TextureDrawer& other) = delete;
+	TextureDrawer& operator=(TextureDrawer&& other) = default;
 
 protected:
 	virtual vk::CommandBuffer BeginRenderPass() override;
@@ -180,6 +205,6 @@ private:
 
 	DescriptorSets descriptorSets;
 	std::unique_ptr<BufferData> mainBuffer;
-	CommandPool *commandPool;
-	VulkanAllocator *texAllocator;
+	CommandPool *commandPool = nullptr;
+	VulkanAllocator *texAllocator = nullptr;
 };

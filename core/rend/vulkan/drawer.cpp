@@ -23,6 +23,8 @@
 #include "../gui.h"
 #include "hw/pvr/pvr_mem.h"
 
+extern float fb_scale_x, fb_scale_y;
+
 void Drawer::SortTriangles()
 {
 	sortedPolys.resize(pvrrc.render_passes.used());
@@ -48,21 +50,20 @@ void Drawer::SortTriangles()
 }
 
 // FIXME Code dup
-s32 Drawer::SetTileClip(u32 val, float *values)
+TileClipping Drawer::SetTileClip(u32 val, vk::Rect2D& clipRect)
 {
 	if (!settings.rend.Clipping)
-		return 0;
+		return TileClipping::Off;
 
 	u32 clipmode = val >> 28;
-	s32 clip_mode;
 	if (clipmode < 2)
-	{
-		clip_mode = 0;    //always passes
-	}
-	else if (clipmode & 1)
-		clip_mode = -1;   //render stuff outside the region
+		return TileClipping::Off;	//always passes
+
+	TileClipping tileClippingMode;
+	if (clipmode & 1)
+		tileClippingMode = TileClipping::Inside;   //render stuff outside the region
 	else
-		clip_mode = 1;    //render stuff inside the region
+		tileClippingMode = TileClipping::Outside;  //render stuff inside the region
 
 	float csx = 0, csy = 0, cex = 0, cey = 0;
 
@@ -77,9 +78,9 @@ s32 Drawer::SetTileClip(u32 val, float *values)
 	cey = cey * 32 + 32;
 
 	if (csx <= 0 && csy <= 0 && cex >= 640 && cey >= 480)
-		return 0;
+		return TileClipping::Off;
 
-	if (values != nullptr && clip_mode)
+	if (tileClippingMode != TileClipping::Off)
 	{
 		if (!pvrrc.isRTT)
 		{
@@ -118,18 +119,22 @@ s32 Drawer::SetTileClip(u32 val, float *values)
 			cex *= settings.rend.RenderToTextureUpscale;
 			cey *= settings.rend.RenderToTextureUpscale;
 		}
-		values[0] = csx;
-		values[1] = csy;
-		values[2] = cex;
-		values[3] = cey;
+		clipRect = vk::Rect2D(vk::Offset2D(std::max(0, (int)lroundf(csx)), std::max(0, (int)lroundf(csy))),
+				vk::Extent2D(std::max(0, (int)lroundf(cex - csx)), std::max(0, (int)lroundf(cey - csy))));
 	}
 
-	return clip_mode;
+	return tileClippingMode;
 }
 
 void Drawer::DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sortTriangles, const PolyParam& poly, u32 first, u32 count)
 {
-	float trilinearAlpha;
+	vk::Rect2D scissorRect;
+	TileClipping tileClip = SetTileClip(poly.tileclip, scissorRect);
+	if (tileClip == TileClipping::Off || tileClip == TileClipping::Inside)
+		scissorRect = baseScissor;
+	SetScissor(cmdBuffer, scissorRect);
+
+	float trilinearAlpha = 1.f;
 	if (poly.pcw.Texture && poly.tsp.FilterMode > 1 && listType != ListType_Punch_Through)
 	{
 		trilinearAlpha = 0.25 * (poly.tsp.MipMapD & 0x3);
@@ -137,12 +142,10 @@ void Drawer::DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sor
 			// Trilinear pass A
 			trilinearAlpha = 1.0 - trilinearAlpha;
 	}
-	else
-		trilinearAlpha = 1.f;
 
-	std::array<float, 5> pushConstants = { 0, 0, 0, 0, trilinearAlpha };
-	int tileClip = SetTileClip(poly.tileclip, &pushConstants[0]);
-	if (tileClip != 0 || trilinearAlpha != 1.f)
+	std::array<float, 5> pushConstants = { (float)scissorRect.offset.x, (float)scissorRect.offset.y,
+			(float)scissorRect.extent.width, (float)scissorRect.extent.height, trilinearAlpha };
+	if (tileClip == TileClipping::Inside || trilinearAlpha != 1.f)
 		cmdBuffer.pushConstants<float>(pipelineManager->GetPipelineLayout(), vk::ShaderStageFlagBits::eFragment, 0, pushConstants);
 
 	if (poly.pcw.Texture)
@@ -259,7 +262,6 @@ void Drawer::UploadMainBuffer(const VertexShaderUniforms& vertexUniforms, const 
 
 bool Drawer::Draw(const Texture *fogTexture)
 {
-	extern float fb_scale_x, fb_scale_y;
 	extern bool fog_needs_update;
 
 	bool is_rtt = pvrrc.isRTT;
@@ -275,8 +277,6 @@ bool Drawer::Draw(const Texture *fogTexture)
 	scale_x = 1;
 	scale_y = 1;
 
-	float scissoring_scale_x = 1;
-
 	if (!is_rtt && !pvrrc.isRenderFramebuffer)
 	{
 		scale_x = fb_scale_x;
@@ -286,18 +286,11 @@ bool Drawer::Draw(const Texture *fogTexture)
 
 		//work out scaling parameters !
 		//Pixel doubling is on VO, so it does not affect any pixel operations
-		//A second scaling is used here for scissoring
 		if (VO_CONTROL.pixel_double)
-		{
-			scissoring_scale_x = 0.5f;
 			scale_x *= 0.5f;
-		}
 
 		if (SCALER_CTL.hscale)
-		{
-            scissoring_scale_x /= 2;
-			scale_x*=2;
-		}
+			scale_x *= 2;
 	}
 
 	dc_width  *= scale_x;
@@ -374,6 +367,7 @@ bool Drawer::Draw(const Texture *fogTexture)
 	fragUniforms.cp_AlphaTestValue = (PT_ALPHA_REF & 0xFF) / 255.0f;
 
 	SortTriangles();
+	currentScissor = vk::Rect2D();
 
 	vk::CommandBuffer cmdBuffer = BeginRenderPass();
 
@@ -392,10 +386,6 @@ bool Drawer::Draw(const Texture *fogTexture)
 	const vk::Buffer buffer = GetMainBuffer(0)->buffer.get();
 	cmdBuffer.bindVertexBuffers(0, 1, &buffer, offsets);
 	cmdBuffer.bindIndexBuffer(buffer, pvrrc.verts.bytes() + pvrrc.modtrig.bytes(), vk::IndexType::eUint32);
-
-	// FIXME
-	if (!is_rtt)
-		cmdBuffer.setScissor(0, vk::Rect2D(vk::Offset2D(0, 0), GetContext()->GetViewPort()));
 
 	RenderPass previous_pass = {};
     for (int render_pass = 0; render_pass < pvrrc.render_passes.used(); render_pass++)
@@ -545,8 +535,8 @@ vk::CommandBuffer TextureDrawer::BeginRenderPass()
 	commandBuffer.beginRenderPass(vk::RenderPassBeginInfo(pipelineManager->GetRenderPass(),	*framebuffer,
 			vk::Rect2D( { 0, 0 }, { width, height }), 2, clear_colors), vk::SubpassContents::eInline);
 	commandBuffer.setViewport(0, vk::Viewport(0.0f, 0.0f, (float)upscaledWidth, (float)upscaledHeight, 1.0f, 0.0f));
-	// FIXME
-	commandBuffer.setScissor(0, vk::Rect2D(vk::Offset2D(0, 0), { upscaledWidth, upscaledHeight }));
+	baseScissor = vk::Rect2D(vk::Offset2D(0, 0), vk::Extent2D(upscaledWidth, upscaledHeight));
+	commandBuffer.setScissor(0, baseScissor);
 	currentCommandBuffer = commandBuffer;
 
 	return commandBuffer;
@@ -603,4 +593,68 @@ void TextureDrawer::EndRenderPass()
 	texture->dirty = 0;
 	if (texture->lock_block == NULL)
 		texture->lock_block = libCore_vramlock_Lock(texture->sa_tex, texture->sa + texture->size - 1, texture);
+}
+
+vk::CommandBuffer ScreenDrawer::BeginRenderPass()
+{
+	GetContext()->NewFrame();
+	GetContext()->BeginRenderPass();
+	vk::CommandBuffer commandBuffer = GetContext()->GetCurrentCommandBuffer();
+	commandBuffer.setViewport(0, vk::Viewport(0.0f, 0.0f, (float) ((screen_width)), (float) ((screen_height)), 1.0f, 0.0f));
+	bool wide_screen_on = settings.rend.WideScreen
+			&& pvrrc.fb_X_CLIP.min == 0
+			&& lroundf((pvrrc.fb_X_CLIP.max + 1) / fb_scale_x) == 640L
+			&& pvrrc.fb_Y_CLIP.min == 0
+			&& lroundf((pvrrc.fb_Y_CLIP.max + 1) / scale_y) == 480L;
+	if (!wide_screen_on)
+	{
+		float width = (pvrrc.fb_X_CLIP.max - pvrrc.fb_X_CLIP.min + 1) / fb_scale_x;
+		float height = (pvrrc.fb_Y_CLIP.max - pvrrc.fb_Y_CLIP.min + 1) / scale_y;
+		float min_x = pvrrc.fb_X_CLIP.min / fb_scale_x;
+		float min_y = pvrrc.fb_Y_CLIP.min / scale_y;
+		if (SCALER_CTL.interlace && SCALER_CTL.vscalefactor > 0x400)
+		{
+			// Clipping is done after scaling/filtering so account for that if enabled
+			height *= (float) SCALER_CTL.vscalefactor / 0x400;
+			min_y *= (float) SCALER_CTL.vscalefactor / 0x400;
+		}
+		if (settings.rend.Rotate90)
+		{
+			float t = width;
+			width = height;
+			height = t;
+			t = min_x;
+			min_x = min_y;
+			min_y = 640 - t - height;
+		}
+		const float screen_stretching = settings.rend.ScreenStretching / 100.f;
+		const float screen_scaling = settings.rend.ScreenScaling / 100.f;
+		float dc2s_scale_h, ds2s_offs_x;
+		if (settings.rend.Rotate90)
+		{
+			dc2s_scale_h = screen_height / 640.0f;
+			ds2s_offs_x = (screen_width - dc2s_scale_h * 480.0f * screen_stretching) / 2;
+		}
+		else
+		{
+			dc2s_scale_h = screen_height / 480.0f;
+			ds2s_offs_x = (screen_width	- dc2s_scale_h * 640.0f * screen_stretching) / 2;
+		}
+		// Add x offset for aspect ratio > 4/3
+		min_x = (min_x * dc2s_scale_h * screen_stretching + ds2s_offs_x) * screen_scaling;
+		min_y = min_y * dc2s_scale_h * screen_scaling;
+		width *= dc2s_scale_h * screen_stretching * screen_scaling;
+		height *= dc2s_scale_h * screen_scaling;
+
+		baseScissor = vk::Rect2D(
+				vk::Offset2D((u32)std::max(lroundf(min_x), 0L), (u32)std::max(lroundf(min_y), 0L)),
+				vk::Extent2D((u32)std::max(lroundf(width), 0L), (u32)std::max(lroundf(height), 0L)));
+	}
+	else
+	{
+		baseScissor = vk::Rect2D(vk::Offset2D(0, 0), vk::Extent2D(screen_width, screen_height));
+	}
+
+	commandBuffer.setScissor(0, baseScissor);
+	return commandBuffer;
 }

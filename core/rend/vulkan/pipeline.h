@@ -151,7 +151,12 @@ public:
 					vk::PipelineLayoutCreateInfo(vk::PipelineLayoutCreateFlags(), ARRAY_SIZE(layouts), layouts, 1, &pushConstant));
 		}
 
-		renderPass = VulkanContext::Instance()->GetRenderPass();
+		if (renderPass != VulkanContext::Instance()->GetRenderPass())
+		{
+			renderPass = VulkanContext::Instance()->GetRenderPass();
+			pipelines.clear();
+			modVolPipelines.clear();
+		}
 	}
 
 	vk::Pipeline GetPipeline(u32 listType, bool sortTriangles, const PolyParam& pp)
@@ -183,14 +188,14 @@ private:
 	u32 hash(u32 listType, bool sortTriangles, const PolyParam *pp) const
 	{
 		u32 hash = pp->pcw.Gouraud | (pp->pcw.Offset << 1) | (pp->pcw.Texture << 2) | (pp->pcw.Shadow << 3)
-			| ((pp->tileclip >> 28) << 4);
-		hash |= ((listType >> 1) << 6);
-		hash |= (pp->tsp.ShadInstr << 8) | (pp->tsp.IgnoreTexA << 10) | (pp->tsp.UseAlpha << 11)
-			| (pp->tsp.ColorClamp << 12) | ((settings.rend.Fog ? pp->tsp.FogCtrl : 2) << 13) | (pp->tsp.SrcInstr << 15)
-			| (pp->tsp.DstInstr << 18);
-		hash |= (pp->isp.ZWriteDis << 21) | (pp->isp.CullMode << 22) | (pp->isp.DepthMode << 24);
-		hash |= (u32)sortTriangles << 27;
-// TODO		hash |= (u32)rotate90 << 28;
+			| (((pp->tileclip >> 28) == 3) << 4);
+		hash |= ((listType >> 1) << 5);
+		hash |= (pp->tsp.ShadInstr << 7) | (pp->tsp.IgnoreTexA << 9) | (pp->tsp.UseAlpha << 10)
+			| (pp->tsp.ColorClamp << 11) | ((settings.rend.Fog ? pp->tsp.FogCtrl : 2) << 12) | (pp->tsp.SrcInstr << 14)
+			| (pp->tsp.DstInstr << 17);
+		hash |= (pp->isp.ZWriteDis << 20) | (pp->isp.CullMode << 21) | (pp->isp.DepthMode << 23);
+		hash |= (u32)sortTriangles << 26;
+// TODO		hash |= (u32)rotate90 << 27;
 
 		return hash;
 	}

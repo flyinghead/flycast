@@ -80,7 +80,7 @@ static const char FragmentShaderSource[] = R"(
 #extension GL_ARB_shading_language_420pack : enable
 
 #define cp_AlphaTest %d
-#define pp_ClipTestMode %d
+#define pp_ClipInside %d
 #define pp_UseAlpha %d
 #define pp_Texture %d
 #define pp_IgnoreTexA %d
@@ -153,14 +153,8 @@ vec4 colorClamp(vec4 col)
 
 void main()
 {
-	// Clip outside the box
-	#if pp_ClipTestMode == 1
-		if (gl_FragCoord.x < pushConstants.clipTest.x || gl_FragCoord.x > pushConstants.clipTest.z
-				|| gl_FragCoord.y < pushConstants.clipTest.y || gl_FragCoord.y > pushConstants.clipTest.w)
-			discard;
-	#endif
 	// Clip inside the box
-	#if pp_ClipTestMode == -1
+	#if pp_ClipInside == 1
 		if (gl_FragCoord.x >= pushConstants.clipTest.x && gl_FragCoord.x <= pushConstants.clipTest.z
 				&& gl_FragCoord.y >= pushConstants.clipTest.y && gl_FragCoord.y <= pushConstants.clipTest.w)
 			discard;
@@ -492,7 +486,7 @@ vk::UniqueShaderModule ShaderManager::compileShader(const FragmentShaderParams& 
 {
 	char buf[sizeof(FragmentShaderSource) * 2];
 
-	sprintf(buf, FragmentShaderSource, (int)params.alphaTest, params.clipTest, (int)params.useAlpha, (int)params.texture,
+	sprintf(buf, FragmentShaderSource, (int)params.alphaTest, (int)params.insideClipTest, (int)params.useAlpha, (int)params.texture,
 			(int)params.ignoreTexAlpha, params.shaderInstr, (int)params.offset, params.fog, (int)params.gouraud,
 			(int)params.bumpmap, (int)params.clamping, (int)params.trilinear);
 	return createShaderModule(VulkanContext::Instance()->GetDevice(), vk::ShaderStageFlagBits::eFragment, buf);
