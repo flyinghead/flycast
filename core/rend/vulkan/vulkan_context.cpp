@@ -22,6 +22,7 @@
 #include "imgui/imgui.h"
 #include "imgui_impl_vulkan.h"
 #include "../gui.h"
+#include "hw/pvr/Renderer_if.h"
 
 VulkanContext *VulkanContext::contextInstance;
 
@@ -89,7 +90,7 @@ static VkBool32 debugUtilsMessengerCallback(VkDebugUtilsMessageSeverityFlagBitsE
 static void CheckImGuiResult(VkResult err)
 {
 	if (err != VK_SUCCESS)
-		WARN_LOG(RENDERER, "ImGui Vulkan error %d\n", err);
+		WARN_LOG(RENDERER, "ImGui Vulkan error %d", err);
 }
 
 void VulkanContext::InitInstance(const char** extensions, uint32_t extensions_count)
@@ -98,7 +99,7 @@ void VulkanContext::InitInstance(const char** extensions, uint32_t extensions_co
 		return;
 	try
 	{
-		vk::ApplicationInfo applicationInfo("Flycast", 1, "Flycast", 1, VK_API_VERSION_1_1);
+		vk::ApplicationInfo applicationInfo("Flycast", 1, "Flycast", 1, VK_API_VERSION_1_0);
 		std::vector<const char *> vext;
 		for (int i = 0; i < extensions_count; i++)
 			vext.push_back(extensions[i]);
@@ -237,6 +238,12 @@ void VulkanContext::InitDevice()
 	try
 	{
 		std::vector<vk::QueueFamilyProperties> queueFamilyProperties = physicalDevice.getQueueFamilyProperties();
+#ifdef VK_DEBUG
+		std::for_each(queueFamilyProperties.begin(), queueFamilyProperties.end(),
+				[](vk::QueueFamilyProperties const& qfp) { INFO_LOG(RENDERER, "Queue Family: count %d flags %s minImgGranularity %d x %d x %d",
+						qfp.queueCount, vk::to_string(qfp.queueFlags).c_str(), qfp.minImageTransferGranularity.width, qfp.minImageTransferGranularity.height,
+						qfp.minImageTransferGranularity.depth); });
+#endif
 		// get the first index into queueFamiliyProperties which supports graphics
 		graphicsQueueIndex = (u32)std::distance(queueFamilyProperties.begin(),
 				std::find_if(queueFamilyProperties.begin(), queueFamilyProperties.end(),
@@ -261,6 +268,7 @@ void VulkanContext::InitDevice()
 			if (presentQueueIndex == queueFamilyProperties.size())
 			{
 				// there's nothing like a single family index that supports both graphics and present -> look for an other family index that supports present
+				DEBUG_LOG(RENDERER, "Using separate Graphics and Present queue families");
 				for (size_t i = 0; i < queueFamilyProperties.size(); i++)
 				{
 					if (physicalDevice.getSurfaceSupportKHR((u32)i, surface))
@@ -272,9 +280,11 @@ void VulkanContext::InitDevice()
 			}
 		}
 		if (graphicsQueueIndex == queueFamilyProperties.size() || presentQueueIndex == queueFamilyProperties.size())
-		{
 			die("Could not find a queue for graphics or present -> terminating");
-		}
+		if (graphicsQueueIndex == presentQueueIndex)
+			DEBUG_LOG(RENDERER, "Using Graphics+Present queue family");
+		else
+			DEBUG_LOG(RENDERER, "Using distinct Graphics and Present queue families");
 
 		// create a UniqueDevice
 		float queuePriority = 1.0f;
@@ -293,12 +303,12 @@ void VulkanContext::InitDevice()
         vk::DescriptorPoolSize pool_sizes[] =
         {
             { vk::DescriptorType::eSampler, 2 },
-            { vk::DescriptorType::eCombinedImageSampler, 1000 },
+            { vk::DescriptorType::eCombinedImageSampler, 2000 },
             { vk::DescriptorType::eSampledImage, 2 },
             { vk::DescriptorType::eStorageImage, 2 },
             { vk::DescriptorType::eUniformTexelBuffer, 2 },
 			{ vk::DescriptorType::eStorageTexelBuffer, 2 },
-            { vk::DescriptorType::eUniformBuffer, 4 },
+            { vk::DescriptorType::eUniformBuffer, 12 },
             { vk::DescriptorType::eStorageBuffer, 2 },
             { vk::DescriptorType::eUniformBufferDynamic, 2 },
             { vk::DescriptorType::eStorageBufferDynamic, 2 },
@@ -318,10 +328,11 @@ void VulkanContext::InitDevice()
 	    	size_t cacheSize = ftell(f);
 	    	fseek(f, 0, SEEK_SET);
 	    	u8 *cacheData = new u8[cacheSize];
-	    	fread(cacheData, 1, cacheSize, f);
+	    	if (fread(cacheData, 1, cacheSize, f) != cacheSize)
+	    		cacheSize = 0;
 	    	fclose(f);
-	    	pipelineCache = device->createPipelineCacheUnique(vk::PipelineCacheCreateInfo(vk::PipelineCacheCreateFlags(), cacheSize, cacheData));
-	    	INFO_LOG(RENDERER, "Vulkan pipeline cache loaded from %s: %zd bytes", cachePath.c_str(), cacheSize);
+    		pipelineCache = device->createPipelineCacheUnique(vk::PipelineCacheCreateInfo(vk::PipelineCacheCreateFlags(), cacheSize, cacheData));
+    		INFO_LOG(RENDERER, "Vulkan pipeline cache loaded from %s: %zd bytes", cachePath.c_str(), cacheSize);
 	    }
 
 		CreateSwapChain();
@@ -355,18 +366,23 @@ void VulkanContext::CreateSwapChain()
 		assert(!formats.empty());
 		vk::Format colorFormat = vk::Format::eUndefined;
 		for (const auto& f : formats)
+		{
+			DEBUG_LOG(RENDERER, "Supported surface format: %s", vk::to_string(f.format).c_str());
 			// Try to find an non-sRGB color format
 			if (f.format == vk::Format::eB8G8R8A8Unorm)
 			{
 				colorFormat = f.format;
 				break;
 			}
+		}
 		if (colorFormat == vk::Format::eUndefined)
 		{
 			colorFormat = (formats[0].format == vk::Format::eUndefined) ? vk::Format::eB8G8R8A8Unorm : formats[0].format;
 		}
 
 		vk::SurfaceCapabilitiesKHR surfaceCapabilities = physicalDevice.getSurfaceCapabilitiesKHR(surface);
+		DEBUG_LOG(RENDERER, "Surface capabilities: %d x %d, %s, image count: %d - %d", surfaceCapabilities.currentExtent.width, surfaceCapabilities.currentExtent.height,
+				vk::to_string(surfaceCapabilities.currentTransform).c_str(), surfaceCapabilities.minImageCount, surfaceCapabilities.maxImageCount);
 		VkExtent2D swapchainExtent;
 		if (surfaceCapabilities.currentExtent.width == std::numeric_limits<uint32_t>::max())
 		{
@@ -383,6 +399,8 @@ void VulkanContext::CreateSwapChain()
 
 		// The FIFO present mode is guaranteed by the spec to be supported
 		vk::PresentModeKHR swapchainPresentMode = vk::PresentModeKHR::eFifo;
+		// Use FIFO on mobile, prefer Mailbox on desktop
+#if HOST_CPU != CPU_ARM && HOST_CPU != CPU_ARM64 && !defined(__ANDROID__)
 		for (auto& presentMode : physicalDevice.getSurfacePresentModesKHR(surface))
 		{
 			if (presentMode == vk::PresentModeKHR::eMailbox)
@@ -392,6 +410,7 @@ void VulkanContext::CreateSwapChain()
 				break;
 			}
 		}
+#endif
 
 		vk::SurfaceTransformFlagBitsKHR preTransform = (surfaceCapabilities.supportedTransforms & vk::SurfaceTransformFlagBitsKHR::eIdentity) ? vk::SurfaceTransformFlagBitsKHR::eIdentity : surfaceCapabilities.currentTransform;
 
@@ -399,8 +418,10 @@ void VulkanContext::CreateSwapChain()
 				(surfaceCapabilities.supportedCompositeAlpha & vk::CompositeAlphaFlagBitsKHR::ePreMultiplied) ? vk::CompositeAlphaFlagBitsKHR::ePreMultiplied :
 				(surfaceCapabilities.supportedCompositeAlpha & vk::CompositeAlphaFlagBitsKHR::ePostMultiplied) ? vk::CompositeAlphaFlagBitsKHR::ePostMultiplied :
 				(surfaceCapabilities.supportedCompositeAlpha & vk::CompositeAlphaFlagBitsKHR::eInherit) ? vk::CompositeAlphaFlagBitsKHR::eInherit : vk::CompositeAlphaFlagBitsKHR::eOpaque;
-
-		vk::SwapchainCreateInfoKHR swapChainCreateInfo(vk::SwapchainCreateFlagsKHR(), surface, surfaceCapabilities.minImageCount, colorFormat, vk::ColorSpaceKHR::eSrgbNonlinear,
+		u32 imageCount = std::max(3u, surfaceCapabilities.minImageCount);
+		if (surfaceCapabilities.maxImageCount != 0)
+			imageCount = std::min(imageCount, surfaceCapabilities.maxImageCount);
+		vk::SwapchainCreateInfoKHR swapChainCreateInfo(vk::SwapchainCreateFlagsKHR(), surface, imageCount, colorFormat, vk::ColorSpaceKHR::eSrgbNonlinear,
 				swapchainExtent, 1, vk::ImageUsageFlagBits::eColorAttachment, vk::SharingMode::eExclusive, 0, nullptr, preTransform, compositeAlpha, swapchainPresentMode, true, nullptr);
 
 		u32 queueFamilyIndices[2] = { graphicsQueueIndex, presentQueueIndex };
@@ -484,7 +505,10 @@ void VulkanContext::CreateSwapChain()
 void VulkanContext::NewFrame()
 {
 	if (HasSurfaceDimensionChanged())
+	{
 		CreateSwapChain();
+		rend_resize(width, height);
+	}
 	device->acquireNextImageKHR(*swapChain, UINT64_MAX, *imageAcquiredSemaphores[currentSemaphore], nullptr, &currentImage);
 	device->waitForFences(1, &(*drawFences[currentImage]), true, UINT64_MAX);
 	device->resetFences(1, &(*drawFences[currentImage]));
@@ -537,7 +561,7 @@ VulkanContext::~VulkanContext()
 		FILE *f = fopen(cachePath.c_str(), "wb");
 		if (f != nullptr)
 		{
-			fwrite(&cacheData[0], 1, cacheData.size(), f);
+			(void)fwrite(&cacheData[0], 1, cacheData.size(), f);
 			fclose(f);
 		}
 	}
