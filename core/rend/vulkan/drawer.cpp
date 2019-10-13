@@ -532,7 +532,7 @@ vk::CommandBuffer TextureDrawer::BeginRenderPass()
 	width = widthPow2;
 	height = heightPow2;
 
-	setImageLayout(commandBuffer, colorImage, vk::Format::eR8G8B8A8Unorm, colorImageCurrentLayout, vk::ImageLayout::eColorAttachmentOptimal);
+	setImageLayout(commandBuffer, colorImage, vk::Format::eR8G8B8A8Unorm, 1, colorImageCurrentLayout, vk::ImageLayout::eColorAttachmentOptimal);
 
 	vk::ImageView imageViews[] = {
 		colorImageView,

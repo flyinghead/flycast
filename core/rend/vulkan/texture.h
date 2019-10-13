@@ -25,7 +25,7 @@
 #include "rend/TexCache.h"
 #include "hw/pvr/Renderer_if.h"
 
-void setImageLayout(vk::CommandBuffer const& commandBuffer, vk::Image image, vk::Format format, vk::ImageLayout oldImageLayout, vk::ImageLayout newImageLayout);
+void setImageLayout(vk::CommandBuffer const& commandBuffer, vk::Image image, vk::Format format, u32 mipmapLevels, vk::ImageLayout oldImageLayout, vk::ImageLayout newImageLayout);
 
 struct Texture : BaseTextureCacheData
 {
@@ -51,10 +51,12 @@ private:
 	void SetImage(u32 size, void *data, bool isNew);
 	void CreateImage(vk::ImageTiling tiling, vk::ImageUsageFlags usage, vk::ImageLayout initialLayout,
 			vk::MemoryPropertyFlags memoryProperties, vk::ImageAspectFlags aspectMask);
+	void GenerateMipmaps();
 
-	vk::Format                  format;
-	vk::Extent2D                extent;
-	bool                        needsStaging = false;
+	vk::Format format;
+	vk::Extent2D extent;
+	u32 mipmapLevels = 1;
+	bool needsStaging = false;
 	std::unique_ptr<BufferData> stagingBufferData;
 	vk::CommandBuffer commandBuffer;
 
