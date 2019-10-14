@@ -599,7 +599,7 @@ void BaseTextureCacheData::Update()
 	if (IsPaletted())
 	{
 		tex_type = PAL_TYPE[PAL_RAM_CTRL&3];
-		if (tex_type == TextureType::_8888)
+		if (tex_type != TextureType::_565)
 			has_alpha = true;
 
 		// Get the palette hash to check for future updates
