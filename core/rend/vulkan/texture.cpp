@@ -35,7 +35,6 @@ void setImageLayout(vk::CommandBuffer const& commandBuffer, vk::Image image, vk:
 		break;
 	case vk::ImageLayout::eGeneral:     // sourceAccessMask is empty
 	case vk::ImageLayout::eUndefined:
-//	case vk::ImageLayout::eShaderReadOnlyOptimal:
 		break;
 	case vk::ImageLayout::eShaderReadOnlyOptimal:
 		sourceAccessMask = vk::AccessFlagBits::eShaderRead;
@@ -287,7 +286,7 @@ void Texture::GenerateMipmaps()
 
 	for (int i = 1; i < mipmapLevels; i++)
 	{
-		// Transition previous mipmap level from dst optimal to src optimal
+		// Transition previous mipmap level from dst optimal/preinit to src optimal
 		barrier.subresourceRange.baseMipLevel = i - 1;
 		if (i == 1 && !needsStaging)
 		{

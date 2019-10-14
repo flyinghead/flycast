@@ -52,8 +52,8 @@ public:
 	vk::UniqueDevice& GetDevice() { return device; }
 	vk::PipelineCache GetPipelineCache() const { return *pipelineCache; }
 	vk::RenderPass GetRenderPass() const { return *renderPass; }
-	vk::CommandPool GetCurrentCommandPool() const { return *commandPools[currentImage]; }
-	vk::CommandBuffer GetCurrentCommandBuffer() const { return *commandBuffers[currentImage]; }
+	vk::CommandPool GetCurrentCommandPool() const { return *commandPools[GetCurrentImageIndex()]; }
+	vk::CommandBuffer GetCurrentCommandBuffer() const { return *commandBuffers[GetCurrentImageIndex()]; }
 	vk::DescriptorPool GetDescriptorPool() const { return *descriptorPool; }
 	vk::Extent2D GetViewPort() const { return { width, height }; }
 	int GetSwapChainSize() const { return (int)imageViews.size(); }
@@ -93,6 +93,7 @@ private:
 	}
 
 	bool rendering = false;
+	bool renderDone = false;
 	u32 width = 0;
 	u32 height = 0;
 	vk::UniqueInstance instance;

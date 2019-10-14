@@ -19,12 +19,14 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #include <memory>
+#include <math.h>
 #include "vulkan.h"
 #include "hw/pvr/Renderer_if.h"
 #include "allocator.h"
 #include "commandpool.h"
 #include "drawer.h"
 #include "shaders.h"
+#include "../gui.h"
 
 extern bool ProcessFrame(TA_context* ctx);
 
@@ -38,9 +40,14 @@ public:
 		texCommandPool.Init();
 
 		texAllocator.SetChunkSize(16 * 1024 * 1024);
-		textureDrawer.Init(&samplerManager, &shaderManager, &texAllocator);
-		textureDrawer.SetCommandPool(&texCommandPool);
+		while (textureDrawer.size() < 2)
+			textureDrawer.emplace_back();
+		textureDrawer[0].Init(&samplerManager, &shaderManager, &texAllocator);
+		textureDrawer[0].SetCommandPool(&texCommandPool);
+		textureDrawer[1].Init(&samplerManager, &shaderManager, &texAllocator);
+		textureDrawer[1].SetCommandPool(&texCommandPool);
 		screenDrawer.Init(&samplerManager, &shaderManager);
+		quadPipeline.Init(&shaderManager);
 
 		return true;
 	}
@@ -61,20 +68,72 @@ public:
 		shaderManager.Term();
 	}
 
-	void RenderFramebuffer()
+	bool RenderFramebuffer()
 	{
-		// TODO	
+		if (FB_R_SIZE.fb_x_size == 0 || FB_R_SIZE.fb_y_size == 0)
+			return false;
+
+		PixelBuffer<u32> pb;
+		int width;
+		int height;
+		ReadFramebuffer(pb, width, height);
+
+		if (framebufferTextures.size() != GetContext()->GetSwapChainSize())
+			framebufferTextures.resize(GetContext()->GetSwapChainSize());
+		std::unique_ptr<Texture>& curTexture = framebufferTextures[GetContext()->GetCurrentImageIndex()];
+		if (!curTexture)
+		{
+			curTexture = std::unique_ptr<Texture>(new Texture(GetContext()->GetPhysicalDevice(), *GetContext()->GetDevice(), &texAllocator));
+			curTexture->tex_type = TextureType::_8888;
+			curTexture->tcw.full = 0;
+			curTexture->tsp.full = 0;
+		}
+		curTexture->SetCommandBuffer(texCommandPool.Allocate());
+		curTexture->UploadToGPU(width, height, (u8*)pb.data());
+		curTexture->SetCommandBuffer(nullptr);
+		texCommandPool.EndFrame();
+
+		float screen_stretching = settings.rend.ScreenStretching / 100.f;
+		float dc2s_scale_h, ds2s_offs_x;
+		if (settings.rend.Rotate90)
+		{
+			dc2s_scale_h = screen_height / 640.0f;
+			ds2s_offs_x =  (screen_width - dc2s_scale_h * 480.0f * screen_stretching) / 2;
+		}
+		else
+		{
+			dc2s_scale_h = screen_height / 480.0f;
+			ds2s_offs_x =  (screen_width - dc2s_scale_h * 640.0f * screen_stretching) / 2;
+		}
+
+		vk::CommandBuffer cmdBuffer = screenDrawer.BeginRenderPass();
+
+		vk::Pipeline pipeline = quadPipeline.GetPipeline();
+		cmdBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline);
+
+		quadPipeline.SetTexture(curTexture.get());
+		quadPipeline.BindDescriptorSets(cmdBuffer);
+
+		// FIXME scaling, stretching...
+		vk::Viewport viewport(ds2s_offs_x, 0.f, screen_width - ds2s_offs_x * 2, (float)screen_height);
+		cmdBuffer.setViewport(0, 1, &viewport);
+		cmdBuffer.draw(3, 1, 0, 0);
+
+    	gui_display_osd();
+
+		screenDrawer.EndRenderPass();
+
+		return true;
 	}
 
 	bool Process(TA_context* ctx) override
 	{
+		texCommandPool.BeginFrame();
+
 		if (ctx->rend.isRenderFramebuffer)
 		{
-			RenderFramebuffer();
-			return false;
+			return RenderFramebuffer();
 		}
-
-		texCommandPool.BeginFrame();
 
 		bool result = ProcessFrame(ctx);
 
@@ -93,8 +152,15 @@ public:
 
 	bool Render() override
 	{
+		if (pvrrc.isRenderFramebuffer)
+			return true;
+
 		if (pvrrc.isRTT)
-			return textureDrawer.Draw(fogTexture.get());
+		{
+			textureDrawer[curTextureDrawer].Draw(fogTexture.get());
+			curTextureDrawer ^= 1;
+			return false;
+		}
 		else
 			return screenDrawer.Draw(fogTexture.get());
 	}
@@ -155,8 +221,11 @@ private:
 	SamplerManager samplerManager;
 	ShaderManager shaderManager;
 	ScreenDrawer screenDrawer;
-	TextureDrawer textureDrawer;
+	std::vector<TextureDrawer> textureDrawer;
+	int curTextureDrawer = 0;
 	VulkanAllocator texAllocator;
+	std::vector<std::unique_ptr<Texture>> framebufferTextures;
+	QuadPipeline quadPipeline;
 };
 
 Renderer* rend_Vulkan()

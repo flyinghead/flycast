@@ -44,6 +44,16 @@ public:
 	Drawer(Drawer&& other) = default;
 	Drawer& operator=(const Drawer& other) = delete;
 	Drawer& operator=(Drawer&& other) = default;
+	virtual vk::CommandBuffer BeginRenderPass() = 0;
+	virtual void EndRenderPass() = 0;
+	void SetScissor(const vk::CommandBuffer& cmdBuffer, vk::Rect2D scissor)
+	{
+		if (scissor != currentScissor)
+		{
+			cmdBuffer.setScissor(0, scissor);
+			currentScissor = scissor;
+		}
+	}
 
 protected:
 	void Init(SamplerManager *samplerManager, ShaderManager *shaderManager)
@@ -53,8 +63,6 @@ protected:
 	}
 	virtual DescriptorSets& GetCurrentDescSet() = 0;
 	virtual BufferData *GetMainBuffer(u32 size) = 0;
-	virtual vk::CommandBuffer BeginRenderPass() = 0;
-	virtual void EndRenderPass() = 0;
 
 	VulkanContext *GetContext() const { return VulkanContext::Instance(); }
 
@@ -62,6 +70,7 @@ protected:
 	vk::Rect2D baseScissor;
 	// temp stuff
 	float scale_x = 1.f;
+	float scissor_scale_x = 1.f;
 	float scale_y = 1.f;
 
 private:
@@ -72,14 +81,6 @@ private:
 	void DrawList(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sortTriangles, const List<PolyParam>& polys, u32 first, u32 count);
 	void DrawModVols(const vk::CommandBuffer& cmdBuffer, int first, int count);
 	void UploadMainBuffer(const VertexShaderUniforms& vertexUniforms, const FragmentShaderUniforms& fragmentUniforms, u32& vertexUniformsOffset);
-	void SetScissor(const vk::CommandBuffer& cmdBuffer, vk::Rect2D scissor)
-	{
-		if (scissor != currentScissor)
-		{
-			cmdBuffer.setScissor(0, scissor);
-			currentScissor = scissor;
-		}
-	}
 
 	// Per-triangle sort results
 	std::vector<std::vector<SortTrigDrawParam>> sortedPolys;
@@ -113,6 +114,11 @@ public:
 	ScreenDrawer(ScreenDrawer&& other) = default;
 	ScreenDrawer& operator=(const ScreenDrawer& other) = delete;
 	ScreenDrawer& operator=(ScreenDrawer&& other) = default;
+	virtual vk::CommandBuffer BeginRenderPass() override;
+	virtual void EndRenderPass() override
+	{
+		GetContext()->EndFrame();
+	}
 
 protected:
 	virtual DescriptorSets& GetCurrentDescSet() override { return descriptorSets[GetCurrentImage()]; }
@@ -136,13 +142,6 @@ protected:
 		}
 		return mainBuffers[GetCurrentImage()].get();
 	};
-
-	virtual vk::CommandBuffer BeginRenderPass() override;
-
-	virtual void EndRenderPass() override
-	{
-		GetContext()->EndFrame();
-	}
 
 private:
 	int GetCurrentImage() { return GetContext()->GetCurrentImageIndex(); }

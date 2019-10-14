@@ -275,19 +275,23 @@ bool Drawer::Draw(const Texture *fogTexture)
 	}
 
 	scale_x = 1;
+	scissor_scale_x = 1;
 	scale_y = 1;
 
 	if (!is_rtt && !pvrrc.isRenderFramebuffer)
 	{
 		scale_x = fb_scale_x;
+		scissor_scale_x = fb_scale_x;
 		scale_y = fb_scale_y;
 		if (SCALER_CTL.interlace == 0 && SCALER_CTL.vscalefactor > 0x400)
 			scale_y *= roundf((float)SCALER_CTL.vscalefactor / 0x400);
 
-		//work out scaling parameters !
 		//Pixel doubling is on VO, so it does not affect any pixel operations
 		if (VO_CONTROL.pixel_double)
+		{
+			scissor_scale_x *= 0.5f;
 			scale_x *= 0.5f;
+		}
 
 		if (SCALER_CTL.hscale)
 			scale_x *= 2;
@@ -306,7 +310,7 @@ bool Drawer::Draw(const Texture *fogTexture)
 	if (is_rtt)
 	{
 		vtxUniforms.scale[0] = 2.0f / dc_width;
-		vtxUniforms.scale[1] = 2.0f / dc_height;	// FIXME CT2 needs 480 here instead of dc_height=512
+		vtxUniforms.scale[1] = 2.0f / dc_height;
 		vtxUniforms.scale[2] = 1;
 		vtxUniforms.scale[3] = 1;
 	}
@@ -601,22 +605,38 @@ vk::CommandBuffer ScreenDrawer::BeginRenderPass()
 	GetContext()->BeginRenderPass();
 	vk::CommandBuffer commandBuffer = GetContext()->GetCurrentCommandBuffer();
 	commandBuffer.setViewport(0, vk::Viewport(0.0f, 0.0f, (float) ((screen_width)), (float) ((screen_height)), 1.0f, 0.0f));
-	bool wide_screen_on = settings.rend.WideScreen
+	bool wide_screen_on = settings.rend.WideScreen && !pvrrc.isRenderFramebuffer
 			&& pvrrc.fb_X_CLIP.min == 0
-			&& lroundf((pvrrc.fb_X_CLIP.max + 1) / fb_scale_x) == 640L
+			&& lroundf((pvrrc.fb_X_CLIP.max + 1) / scissor_scale_x) == 640L
 			&& pvrrc.fb_Y_CLIP.min == 0
 			&& lroundf((pvrrc.fb_Y_CLIP.max + 1) / scale_y) == 480L;
 	if (!wide_screen_on)
 	{
-		float width = (pvrrc.fb_X_CLIP.max - pvrrc.fb_X_CLIP.min + 1) / fb_scale_x;
-		float height = (pvrrc.fb_Y_CLIP.max - pvrrc.fb_Y_CLIP.min + 1) / scale_y;
-		float min_x = pvrrc.fb_X_CLIP.min / fb_scale_x;
-		float min_y = pvrrc.fb_Y_CLIP.min / scale_y;
-		if (SCALER_CTL.interlace && SCALER_CTL.vscalefactor > 0x400)
+		float width;
+		float height;
+		float min_x;
+		float min_y;
+
+		if (pvrrc.isRenderFramebuffer)
 		{
-			// Clipping is done after scaling/filtering so account for that if enabled
-			height *= (float) SCALER_CTL.vscalefactor / 0x400;
-			min_y *= (float) SCALER_CTL.vscalefactor / 0x400;
+			width = 640;
+			height = 480;
+			min_x = 0;
+			min_y = 0;
+		}
+		else
+		{
+			width = (pvrrc.fb_X_CLIP.max - pvrrc.fb_X_CLIP.min + 1) / scissor_scale_x;
+			height = (pvrrc.fb_Y_CLIP.max - pvrrc.fb_Y_CLIP.min + 1) / scale_y;
+			min_x = pvrrc.fb_X_CLIP.min / scissor_scale_x;
+			min_y = pvrrc.fb_Y_CLIP.min / scale_y;
+
+			if (SCALER_CTL.interlace && SCALER_CTL.vscalefactor > 0x400)
+			{
+				// Clipping is done after scaling/filtering so account for that if enabled
+				height *= (float) SCALER_CTL.vscalefactor / 0x400;
+				min_y *= (float) SCALER_CTL.vscalefactor / 0x400;
+			}
 		}
 		if (settings.rend.Rotate90)
 		{

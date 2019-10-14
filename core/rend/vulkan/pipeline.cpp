@@ -355,3 +355,63 @@ void PipelineManager::CreatePipeline(u32 listType, bool sortTriangles, const Pol
 	pipelines[hash(listType, sortTriangles, &pp)] = GetContext()->GetDevice()->createGraphicsPipelineUnique(GetContext()->GetPipelineCache(),
 			graphicsPipelineCreateInfo);
 }
+
+void QuadPipeline::CreatePipeline()
+{
+	vk::PipelineVertexInputStateCreateInfo pipelineVertexInputStateCreateInfo;
+
+	// Input assembly state
+	vk::PipelineInputAssemblyStateCreateInfo pipelineInputAssemblyStateCreateInfo(vk::PipelineInputAssemblyStateCreateFlags(), vk::PrimitiveTopology::eTriangleList);
+
+	// Viewport and scissor states
+	vk::PipelineViewportStateCreateInfo pipelineViewportStateCreateInfo(vk::PipelineViewportStateCreateFlags(), 1, nullptr, 1, nullptr);
+
+	// Rasterization and multisample states
+	vk::PipelineRasterizationStateCreateInfo pipelineRasterizationStateCreateInfo;
+	pipelineRasterizationStateCreateInfo.lineWidth = 1.0;
+	vk::PipelineMultisampleStateCreateInfo pipelineMultisampleStateCreateInfo;
+
+	// Depth and stencil
+	vk::PipelineDepthStencilStateCreateInfo pipelineDepthStencilStateCreateInfo;
+
+	// Color flags and blending
+	vk::PipelineColorBlendAttachmentState pipelineColorBlendAttachmentState;
+	pipelineColorBlendAttachmentState.colorWriteMask = vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG
+			| vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA;
+	vk::PipelineColorBlendStateCreateInfo pipelineColorBlendStateCreateInfo
+	(
+	  vk::PipelineColorBlendStateCreateFlags(),   // flags
+	  false,                                      // logicOpEnable
+	  vk::LogicOp::eNoOp,                         // logicOp
+	  1,                                          // attachmentCount
+	  &pipelineColorBlendAttachmentState,         // pAttachments
+	  { { 1.0f, 1.0f, 1.0f, 1.0f } }              // blendConstants
+	);
+
+	vk::DynamicState dynamicStates[2] = { vk::DynamicState::eViewport, vk::DynamicState::eScissor };
+	vk::PipelineDynamicStateCreateInfo pipelineDynamicStateCreateInfo(vk::PipelineDynamicStateCreateFlags(), 2, dynamicStates);
+
+	vk::PipelineShaderStageCreateInfo stages[] = {
+			{ vk::PipelineShaderStageCreateFlags(), vk::ShaderStageFlagBits::eVertex, shaderManager->GetQuadVertexShader(), "main" },
+			{ vk::PipelineShaderStageCreateFlags(), vk::ShaderStageFlagBits::eFragment, shaderManager->GetQuadFragmentShader(), "main" },
+	};
+	vk::GraphicsPipelineCreateInfo graphicsPipelineCreateInfo
+	(
+	  vk::PipelineCreateFlags(),                  // flags
+	  2,                                          // stageCount
+	  stages,                                     // pStages
+	  &pipelineVertexInputStateCreateInfo,        // pVertexInputState
+	  &pipelineInputAssemblyStateCreateInfo,      // pInputAssemblyState
+	  nullptr,                                    // pTessellationState
+	  &pipelineViewportStateCreateInfo,           // pViewportState
+	  &pipelineRasterizationStateCreateInfo,      // pRasterizationState
+	  &pipelineMultisampleStateCreateInfo,        // pMultisampleState
+	  &pipelineDepthStencilStateCreateInfo,       // pDepthStencilState
+	  &pipelineColorBlendStateCreateInfo,         // pColorBlendState
+	  &pipelineDynamicStateCreateInfo,            // pDynamicState
+	  *pipelineLayout,                            // layout
+	  renderPass                                  // renderPass
+	);
+
+	pipeline = GetContext()->GetDevice()->createGraphicsPipelineUnique(GetContext()->GetPipelineCache(), graphicsPipelineCreateInfo);
+}

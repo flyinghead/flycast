@@ -537,16 +537,21 @@ void VulkanContext::EndFrame()
 	graphicsQueue.submit(1, &submitInfo, *drawFences[currentImage]);
 	verify(rendering);
 	rendering = false;
+	renderDone = true;
 }
 
 void VulkanContext::Present()
 {
-	try {
-		presentQueue.presentKHR(vk::PresentInfoKHR(1, &(*renderCompleteSemaphores[currentSemaphore]), 1, &(*swapChain), &currentImage));
-		currentSemaphore = (currentSemaphore + 1) % imageViews.size();
-	} catch (const vk::OutOfDateKHRError& e) {
-		// Sometimes happens when resizing the window
-		INFO_LOG(RENDERER, "vk::OutOfDateKHRError");
+	if (renderDone)
+	{
+		try {
+			presentQueue.presentKHR(vk::PresentInfoKHR(1, &(*renderCompleteSemaphores[currentSemaphore]), 1, &(*swapChain), &currentImage));
+			currentSemaphore = (currentSemaphore + 1) % imageViews.size();
+		} catch (const vk::OutOfDateKHRError& e) {
+			// Sometimes happens when resizing the window
+			INFO_LOG(RENDERER, "vk::OutOfDateKHRError");
+		}
+		renderDone = false;
 	}
 }
 

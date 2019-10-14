@@ -295,6 +295,35 @@ void main()
 }
 )";
 
+static const char QuadVertexShaderSource[] = R"(
+#version 400 
+#extension GL_ARB_separate_shader_objects : enable
+#extension GL_ARB_shading_language_420pack : enable
+
+layout (location = 0) out vec2 outUV;
+
+void main() 
+{
+	outUV = vec2((gl_VertexIndex << 1) & 2, gl_VertexIndex & 2);
+	gl_Position = vec4(outUV * 2.0f - 1.0f, 0.0f, 1.0f);
+}
+)";
+
+static const char QuadFragmentShaderSource[] = R"(
+#version 400 
+#extension GL_ARB_separate_shader_objects : enable
+#extension GL_ARB_shading_language_420pack : enable
+
+layout (binding = 0) uniform sampler2D tex;
+layout (location = 0) in vec2 inUV;
+layout (location = 0) out vec4 FragColor;
+
+void main() 
+{
+	FragColor = texture(tex, inUV);
+}
+)";
+
 static const TBuiltInResource DefaultTBuiltInResource = {
     /* .MaxLights = */ 32,
     /* .MaxClipPlanes = */ 6,
@@ -500,4 +529,14 @@ vk::UniqueShaderModule ShaderManager::compileModVolVertexShader()
 vk::UniqueShaderModule ShaderManager::compileModVolFragmentShader()
 {
 	return createShaderModule(VulkanContext::Instance()->GetDevice(), vk::ShaderStageFlagBits::eFragment, ModVolFragmentShaderSource);
+}
+
+vk::UniqueShaderModule ShaderManager::compileQuadVertexShader()
+{
+	return createShaderModule(VulkanContext::Instance()->GetDevice(), vk::ShaderStageFlagBits::eVertex, QuadVertexShaderSource);
+}
+
+vk::UniqueShaderModule ShaderManager::compileQuadFragmentShader()
+{
+	return createShaderModule(VulkanContext::Instance()->GetDevice(), vk::ShaderStageFlagBits::eFragment, QuadFragmentShaderSource);
 }
