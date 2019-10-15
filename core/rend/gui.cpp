@@ -34,7 +34,9 @@
 #include "linux-dist/main.h"	// FIXME for kcode[]
 #include "gui_util.h"
 #include "gui_android.h"
-
+#ifdef USE_VULKAN
+#include "rend/vulkan/vulkan.h"
+#endif
 #include "version.h"
 #include "oslib/audiostream.h"
 
@@ -44,6 +46,7 @@ extern void dc_savestate();
 extern void dc_stop();
 extern void dc_reset(bool manual);
 extern void dc_resume();
+extern void dc_term();
 extern void dc_start_game(const char *path);
 extern void UpdateInputState(u32 port);
 extern bool game_started;
@@ -643,6 +646,7 @@ static void gui_display_settings()
 
 	int dynarec_enabled = settings.dynarec.Enable;
 	u32 renderer = settings.pvr.rend;
+	bool vulkan = renderer == 4;
 
     if (!settings_opening && settings.pvr.IsOpenGL())
     	ImGui_ImplOpenGL3_DrawBackground();
@@ -978,11 +982,13 @@ static void gui_display_settings()
 		    	switch (renderer)
 		    	{
 		    	case 0:
-		    		settings.pvr.rend = 0;
+		    		if (settings.pvr.rend == 3)
+		    			settings.pvr.rend = 0;
 		    		settings.rend.PerStripSorting = false;
 		    		break;
 		    	case 1:
-		    		settings.pvr.rend = 0;
+		    		if (settings.pvr.rend == 3)
+		    			settings.pvr.rend = 0;
 		    		settings.rend.PerStripSorting = true;
 		    		break;
 		    	case 2:
@@ -1022,6 +1028,9 @@ static void gui_display_settings()
 		    	ImGui::Checkbox("Delay Frame Swapping", &settings.rend.DelayFrameSwapping);
 	            ImGui::SameLine();
 	            ShowHelpMarker("Useful to avoid flashing screen or glitchy videos. Not recommended on slow platforms");
+		    	ImGui::Checkbox("Use Vulkan Renderer", &vulkan);
+	            ImGui::SameLine();
+	            ShowHelpMarker("Use Vulkan instead of Open GL/GLES. Experimental");
 		    	ImGui::SliderInt("Scaling", (int *)&settings.rend.ScreenScaling, 1, 100);
 	            ImGui::SameLine();
 	            ShowHelpMarker("Downscaling factor relative to native screen resolution. Higher is better");
@@ -1301,11 +1310,27 @@ static void gui_display_settings()
 #endif
 						);
 		    }
-		    if (ImGui::CollapsingHeader("Open GL", ImGuiTreeNodeFlags_DefaultOpen))
-		    {
-				ImGui::Text("Renderer: %s", (const char *)glGetString(GL_RENDERER));
-				ImGui::Text("Version: %s", (const char *)glGetString(GL_VERSION));
-		    }
+	    	if (settings.pvr.IsOpenGL())
+	    	{
+				if (ImGui::CollapsingHeader("Open GL", ImGuiTreeNodeFlags_DefaultOpen))
+				{
+		    		ImGui::Text("Renderer: %s", (const char *)glGetString(GL_RENDERER));
+		    		ImGui::Text("Version: %s", (const char *)glGetString(GL_VERSION));
+		    	}
+	    	}
+#ifdef USE_VULKAN
+	    	else if (settings.pvr.rend == 4)
+	    	{
+				if (ImGui::CollapsingHeader("Vulkan", ImGuiTreeNodeFlags_DefaultOpen))
+				{
+		    		std::string name = VulkanContext::Instance()->GetDriverName();
+		    		ImGui::Text("Driver Name: %s", name.c_str());
+		    		std::string version = VulkanContext::Instance()->GetDriverVersion();
+		    		ImGui::Text("Version: %s", version.c_str());
+				}
+	    	}
+#endif
+
 #ifdef __ANDROID__
 		    ImGui::Separator();
 		    if (ImGui::Button("Send Logs")) {
@@ -1325,6 +1350,12 @@ static void gui_display_settings()
     ImGui::Render();
     ImGui_impl_RenderDrawData(ImGui::GetDrawData(), false);
 
+    if (vulkan ^ (settings.pvr.rend == 4))
+    {
+    	settings.pvr.rend = vulkan ? 4 : 0;
+    	dc_term();
+    	exit(0);
+    }
    	if (renderer != settings.pvr.rend)
    		renderer_changed = true;
    	settings.dynarec.Enable = (bool)dynarec_enabled;
