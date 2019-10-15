@@ -133,14 +133,7 @@ bool VulkanContext::InitInstance(const char** extensions, uint32_t extensions_co
 #ifndef __ANDROID__
 		vext.push_back("VK_EXT_debug_utils");
 		extensions_count += 1;
-//		layer_names.push_back("VK_LAYER_GOOGLE_unique_objects");
 //		layer_names.push_back("VK_LAYER_LUNARG_api_dump");
-//		layer_names.push_back("VK_LAYER_LUNARG_core_validation");
-//		layer_names.push_back("VK_LAYER_LUNARG_image");
-//		layer_names.push_back("VK_LAYER_LUNARG_object_tracker");
-//		layer_names.push_back("VK_LAYER_LUNARG_parameter_validation");
-//		layer_names.push_back("VK_LAYER_LUNARG_swapchain");
-//		layer_names.push_back("VK_LAYER_GOOGLE_threading");
 		layer_names.push_back("VK_LAYER_LUNARG_standard_validation");
 #else
 		vext.push_back("VK_EXT_debug_report");	// NDK <= 19?
@@ -569,6 +562,37 @@ void VulkanContext::CreateSwapChain()
 	{
 		ERROR_LOG(RENDERER, "Unknown error");
 	}
+}
+
+bool VulkanContext::Init()
+{
+	std::vector<const char *> extensions;
+	extensions.push_back("VK_KHR_surface");
+#if defined(_WIN32)
+	extensions.push_back("VK_KHR_win32_surface");
+#elif defined(__MACH__)
+	extensions.push_back("VK_MVK_macos_surface");
+#elif defined(SUPPORT_X11)
+	extensions.push_back("VK_KHR_xlib_surface");
+#endif
+	if (!InitInstance(&extensions[0], extensions.size()))
+		return false;
+
+	VkSurfaceKHR surface = nullptr;
+#if defined(_WIN32)
+	VkWin32SurfaceCreateInfoKHR createInfo = {};
+	createInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
+	createInfo.hinstance = GetModuleHandle(NULL);
+	createInfo.hwnd = (HWND)libPvr_GetRenderTarget();
+	if (vkCreateWin32SurfaceKHR(*instance, &createInfo, nullptr, &surface) != VK_SUCCESS)
+	{
+		ERROR_LOG(RENDERER, "Windows surface creation failed");
+		return false;
+	}
+#endif
+
+	SetSurface(surface);
+	return InitDevice();
 }
 
 void VulkanContext::NewFrame()

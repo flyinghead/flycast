@@ -35,6 +35,7 @@ class VulkanContext
 public:
 	VulkanContext() { verify(contextInstance == nullptr); contextInstance = this; }
 	~VulkanContext();
+	bool Init();
 	bool InitInstance(const char** extensions, uint32_t extensions_count);
 	bool InitDevice();
 	void CreateSwapChain();

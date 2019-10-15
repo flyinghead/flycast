@@ -8,6 +8,9 @@
 #include "win_keyboard.h"
 #include "hw/sh4/dyna/blockmanager.h"
 #include "log/LogManager.h"
+#ifdef USE_VULKAN
+#include "rend/vulkan/vulkan.h"
+#endif
 
 #define _WIN32_WINNT 0x0500
 #include <windows.h>
@@ -720,10 +723,29 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 		#ifdef _WIN64
 			setup_seh();
 		#endif
+#ifdef USE_VULKAN
+		VulkanContext *vulkanContext = nullptr;
+		if (settings.pvr.rend == 4)
+		{
+			vulkanContext = new VulkanContext();
+			if (!vulkanContext->Init())
+			{
+				settings.pvr.rend = 0;
+				delete vulkanContext;
+				vulkanContext = nullptr;
+				ERROR_LOG(RENDERER, "Vulkan initialization failed. Falling back to Open GL");
+			}
+		}
+#endif
 
 		rend_thread(NULL);
 
 		dc_term();
+
+#ifdef USE_VULKAN
+		if (vulkanContext != nullptr)
+			delete vulkanContext;
+#endif
 	}
 #ifndef __GNUC__
 	__except( ExeptionHandler(GetExceptionInformation()) )

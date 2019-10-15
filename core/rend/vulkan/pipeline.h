@@ -278,7 +278,6 @@ public:
 	    		1, &subpass, settings.rend.RenderToTextureBuffer ? ARRAY_SIZE(vramWriteDeps) : ARRAY_SIZE(dependencies),
 				settings.rend.RenderToTextureBuffer ? vramWriteDeps : dependencies));
 	    renderPass = *rttRenderPass;
-	    printf("RttPipelineManager renderPass %p created\n", (VkRenderPass)renderPass);
 	}
 
 private:
