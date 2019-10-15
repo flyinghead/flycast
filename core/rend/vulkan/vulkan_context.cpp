@@ -578,7 +578,7 @@ bool VulkanContext::Init()
 	if (!InitInstance(&extensions[0], extensions.size()))
 		return false;
 
-	VkSurfaceKHR surface = nullptr;
+	VkSurfaceKHR surface = VK_NULL_HANDLE;
 #if defined(_WIN32)
 	VkWin32SurfaceCreateInfoKHR createInfo = {};
 	createInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
