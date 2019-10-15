@@ -28,6 +28,10 @@ VulkanContext *VulkanContext::contextInstance;
 
 static const char *PipelineCacheFileName = DATA_PATH "vulkan_pipeline.cache";
 
+#if HOST_CPU == CPU_ARM
+__attribute__((pcs("aapcs-vfp")))
+#endif
+#ifndef __ANDROID__
 static VkBool32 debugUtilsMessengerCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageTypes,
 									 VkDebugUtilsMessengerCallbackDataEXT const * pCallbackData, void * /*pUserData*/)
 {
@@ -86,6 +90,23 @@ static VkBool32 debugUtilsMessengerCallback(VkDebugUtilsMessageSeverityFlagBitsE
 	}
 	return VK_TRUE;
 }
+#else
+static VkBool32 debugReportCallback(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objectType, uint64_t object, size_t location, int32_t messageCode,
+		const char* pLayerPrefix, const char* pMessage, void* /*pUserData*/)
+{
+	std::string msg = pMessage;
+	if (flags & VK_DEBUG_REPORT_ERROR_BIT_EXT)
+		ERROR_LOG(RENDERER, "%s", msg.c_str());
+	else if (flags & VK_DEBUG_REPORT_WARNING_BIT_EXT)
+		WARN_LOG(RENDERER, "%s", msg.c_str());
+	else if (flags & (VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT | VK_DEBUG_REPORT_INFORMATION_BIT_EXT))
+		NOTICE_LOG(RENDERER, "%s", msg.c_str());
+	else
+		NOTICE_LOG(RENDERER, "(d) %s", msg.c_str());
+
+	return VK_FALSE;
+}
+#endif
 
 static void CheckImGuiResult(VkResult err)
 {
@@ -93,10 +114,13 @@ static void CheckImGuiResult(VkResult err)
 		WARN_LOG(RENDERER, "ImGui Vulkan error %d", err);
 }
 
-void VulkanContext::InitInstance(const char** extensions, uint32_t extensions_count)
+bool VulkanContext::InitInstance(const char** extensions, uint32_t extensions_count)
 {
 	if (volkInitialize() != VK_SUCCESS)
-		return;
+	{
+		ERROR_LOG(RENDERER, "Cannot load Vulkan libraries");
+		return false;
+	}
 	try
 	{
 		vk::ApplicationInfo applicationInfo("Flycast", 1, "Flycast", 1, VK_API_VERSION_1_0);
@@ -106,6 +130,7 @@ void VulkanContext::InitInstance(const char** extensions, uint32_t extensions_co
 
 		std::vector<const char *> layer_names;
 #ifdef VK_DEBUG
+#ifndef __ANDROID__
 		vext.push_back("VK_EXT_debug_utils");
 		extensions_count += 1;
 //		layer_names.push_back("VK_LAYER_GOOGLE_unique_objects");
@@ -117,6 +142,15 @@ void VulkanContext::InitInstance(const char** extensions, uint32_t extensions_co
 //		layer_names.push_back("VK_LAYER_LUNARG_swapchain");
 //		layer_names.push_back("VK_LAYER_GOOGLE_threading");
 		layer_names.push_back("VK_LAYER_LUNARG_standard_validation");
+#else
+		vext.push_back("VK_EXT_debug_report");	// NDK <= 19?
+		extensions_count += 1;
+		layer_names.push_back("VK_LAYER_GOOGLE_threading");
+		layer_names.push_back("VK_LAYER_LUNARG_parameter_validation");
+		layer_names.push_back("VK_LAYER_LUNARG_object_tracker");
+		layer_names.push_back("VK_LAYER_LUNARG_core_validation");
+		layer_names.push_back("VK_LAYER_GOOGLE_unique_objects");
+#endif
 #endif
 		extensions = &vext[0];
 		vk::InstanceCreateInfo instanceCreateInfo({}, &applicationInfo, layer_names.size(), &layer_names[0], extensions_count, extensions);
@@ -126,14 +160,42 @@ void VulkanContext::InitInstance(const char** extensions, uint32_t extensions_co
 		volkLoadInstance(static_cast<VkInstance>(*instance));
 
 #ifdef VK_DEBUG
+#ifndef __ANDROID__
 		vk::DebugUtilsMessageSeverityFlagsEXT severityFlags(vk::DebugUtilsMessageSeverityFlagBitsEXT::eInfo
 				| vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning | vk::DebugUtilsMessageSeverityFlagBitsEXT::eError);
 		vk::DebugUtilsMessageTypeFlagsEXT messageTypeFlags(vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral
 				| vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance | vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation);
-		debugUtilsMessenger = instance->createDebugUtilsMessengerEXTUnique(vk::DebugUtilsMessengerCreateInfoEXT({}, severityFlags, messageTypeFlags, &debugUtilsMessengerCallback));
+		debugUtilsMessenger = instance->createDebugUtilsMessengerEXTUnique(vk::DebugUtilsMessengerCreateInfoEXT({}, severityFlags, messageTypeFlags, debugUtilsMessengerCallback));
+#else
+		vk::DebugReportCallbackCreateInfoEXT createInfo(vk::DebugReportFlagBitsEXT::eDebug | vk::DebugReportFlagBitsEXT::eInformation
+				| vk::DebugReportFlagBitsEXT::ePerformanceWarning | vk::DebugReportFlagBitsEXT::eWarning
+				| vk::DebugReportFlagBitsEXT::eError, &::debugReportCallback);
+		debugReportCallback = instance->createDebugReportCallbackEXTUnique(createInfo);
+#endif
 #endif
 
 		physicalDevice = instance->enumeratePhysicalDevices().front();
+		vk::PhysicalDeviceProperties properties;
+		physicalDevice.getProperties(&properties);
+		uniformBufferAlignment = properties.limits.minUniformBufferOffsetAlignment;
+
+		vk::FormatProperties formatProperties = physicalDevice.getFormatProperties(vk::Format::eR5G5B5A1UnormPack16);
+		if (formatProperties.optimalTilingFeatures & vk::FormatFeatureFlagBits::eSampledImage)
+			optimalTilingSupported1555 = true;
+		else
+			NOTICE_LOG(RENDERER, "eR5G5B5A1UnormPack16 not supported for optimal tiling");
+		formatProperties = physicalDevice.getFormatProperties(vk::Format::eR5G6B5UnormPack16);
+		if (formatProperties.optimalTilingFeatures & vk::FormatFeatureFlagBits::eSampledImage)
+			optimalTilingSupported565 = true;
+		else
+			NOTICE_LOG(RENDERER, "eR5G6B5UnormPack16 not supported for optimal tiling");
+		formatProperties = physicalDevice.getFormatProperties(vk::Format::eR4G4B4A4UnormPack16);
+		if (formatProperties.optimalTilingFeatures & vk::FormatFeatureFlagBits::eSampledImage)
+			optimalTilingSupported4444 = true;
+		else
+			NOTICE_LOG(RENDERER, "eR4G4B4A4UnormPack16 not supported for optimal tiling");
+
+		return true;
 	}
 	catch (const vk::SystemError& err)
 	{
@@ -143,6 +205,7 @@ void VulkanContext::InitInstance(const char** extensions, uint32_t extensions_co
 	{
 		ERROR_LOG(RENDERER, "Unknown error");
 	}
+	return false;
 }
 
 vk::Format VulkanContext::InitDepthBuffer()
@@ -204,18 +267,18 @@ void VulkanContext::InitImgui()
 {
 	gui_init();
 	ImGui_ImplVulkan_InitInfo initInfo = {};
-	initInfo.Instance = *instance;
-	initInfo.PhysicalDevice = physicalDevice;
-	initInfo.Device = *device;
+	initInfo.Instance = (VkInstance)*instance;
+	initInfo.PhysicalDevice = (VkPhysicalDevice)physicalDevice;
+	initInfo.Device = (VkDevice)*device;
 	initInfo.QueueFamily = graphicsQueueIndex;
-	initInfo.Queue = graphicsQueue;
-	initInfo.PipelineCache = *pipelineCache;
-	initInfo.DescriptorPool = *descriptorPool;
+	initInfo.Queue = (VkQueue)graphicsQueue;
+	initInfo.PipelineCache = (VkPipelineCache)*pipelineCache;
+	initInfo.DescriptorPool = (VkDescriptorPool)*descriptorPool;
 #ifdef VK_DEBUG
 	initInfo.CheckVkResultFn = &CheckImGuiResult;
 #endif
 
-	if (!ImGui_ImplVulkan_Init(&initInfo, *renderPass))
+	if (!ImGui_ImplVulkan_Init(&initInfo, (VkRenderPass)*renderPass))
 	{
 		die("ImGui initialization failed");
 	}
@@ -224,7 +287,7 @@ void VulkanContext::InitImgui()
 	device->resetCommandPool(*commandPools.front(), vk::CommandPoolResetFlagBits::eReleaseResources);
 	vk::CommandBuffer& commandBuffer = *commandBuffers.front();
 	commandBuffer.begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));
-	ImGui_ImplVulkan_CreateFontsTexture(commandBuffer);
+	ImGui_ImplVulkan_CreateFontsTexture((VkCommandBuffer)commandBuffer);
 	commandBuffer.end();
 	vk::SubmitInfo submitInfo(0, nullptr, nullptr, 1, &commandBuffer);
 	graphicsQueue.submit(1, &submitInfo, *drawFences.front());
@@ -233,8 +296,10 @@ void VulkanContext::InitImgui()
 	ImGui_ImplVulkan_InvalidateFontUploadObjects();
 }
 
-void VulkanContext::InitDevice()
+bool VulkanContext::InitDevice()
 {
+	if (!instance)
+		return false;
 	try
 	{
 		std::vector<vk::QueueFamilyProperties> queueFamilyProperties = physicalDevice.getQueueFamilyProperties();
@@ -303,7 +368,7 @@ void VulkanContext::InitDevice()
         vk::DescriptorPoolSize pool_sizes[] =
         {
             { vk::DescriptorType::eSampler, 2 },
-            { vk::DescriptorType::eCombinedImageSampler, 2000 },
+            { vk::DescriptorType::eCombinedImageSampler, 4000 },
             { vk::DescriptorType::eSampledImage, 2 },
             { vk::DescriptorType::eStorageImage, 2 },
             { vk::DescriptorType::eUniformTexelBuffer, 2 },
@@ -336,6 +401,8 @@ void VulkanContext::InitDevice()
 	    }
 
 		CreateSwapChain();
+
+		return true;
 	}
 	catch (const vk::SystemError& err)
 	{
@@ -345,6 +412,7 @@ void VulkanContext::InitDevice()
 	{
 		ERROR_LOG(RENDERER, "Unknown error");
 	}
+	return false;
 }
 
 void VulkanContext::CreateSwapChain()
@@ -369,7 +437,7 @@ void VulkanContext::CreateSwapChain()
 		{
 			DEBUG_LOG(RENDERER, "Supported surface format: %s", vk::to_string(f.format).c_str());
 			// Try to find an non-sRGB color format
-			if (f.format == vk::Format::eB8G8R8A8Unorm)
+			if (f.format == vk::Format::eB8G8R8A8Unorm || f.format == vk::Format::eR8G8B8A8Unorm)
 			{
 				colorFormat = f.format;
 				break;
@@ -434,6 +502,7 @@ void VulkanContext::CreateSwapChain()
 			swapChainCreateInfo.pQueueFamilyIndices = queueFamilyIndices;
 		}
 
+		swapChain.reset();
 		swapChain = device->createSwapchainKHRUnique(swapChainCreateInfo);
 
 		std::vector<vk::Image> swapChainImages = device->getSwapchainImagesKHR(*swapChain);
@@ -557,19 +626,21 @@ void VulkanContext::Present()
 
 VulkanContext::~VulkanContext()
 {
-	printf("VulkanContext::~VulkanContext\n");
 	ImGui_ImplVulkan_Shutdown();
-	std::vector<u8> cacheData = device->getPipelineCacheData(*pipelineCache);
-	if (!cacheData.empty())
-	{
-		std::string cachePath = get_writable_data_path(PipelineCacheFileName);
-		FILE *f = fopen(cachePath.c_str(), "wb");
-		if (f != nullptr)
-		{
-			(void)fwrite(&cacheData[0], 1, cacheData.size(), f);
-			fclose(f);
-		}
-	}
+	if (device)
+    {
+        std::vector<u8> cacheData = device->getPipelineCacheData(*pipelineCache);
+        if (!cacheData.empty())
+        {
+            std::string cachePath = get_writable_data_path(PipelineCacheFileName);
+            FILE *f = fopen(cachePath.c_str(), "wb");
+            if (f != nullptr)
+            {
+                (void)fwrite(&cacheData[0], 1, cacheData.size(), f);
+                fclose(f);
+            }
+        }
+    }
 	swapChain.reset();
 	imageViews.clear();
 	framebuffers.clear();
@@ -583,7 +654,8 @@ VulkanContext::~VulkanContext()
 	imageAcquiredSemaphores.clear();
 	renderCompleteSemaphores.clear();
 	drawFences.clear();
-	vkDestroySurfaceKHR((VkInstance)*instance, (VkSurfaceKHR)surface, nullptr);
+	if (surface)
+    	vkDestroySurfaceKHR((VkInstance)*instance, (VkSurfaceKHR)surface, nullptr);
 
 	verify(contextInstance == this);
 	contextInstance = nullptr;

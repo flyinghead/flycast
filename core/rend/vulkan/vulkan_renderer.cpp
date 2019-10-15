@@ -35,10 +35,11 @@ class VulkanRenderer : public Renderer
 public:
 	bool Init() override
 	{
-		printf("VulkanRenderer::Init\n");
+		DEBUG_LOG(RENDERER, "VulkanRenderer::Init");
 		shaderManager.Init();
 		texCommandPool.Init();
 
+		// FIXME this might be called after initial init
 		texAllocator.SetChunkSize(16 * 1024 * 1024);
 		while (textureDrawer.size() < 2)
 			textureDrawer.emplace_back();
@@ -56,16 +57,18 @@ public:
 	{
 		texCommandPool.Init();
 		screenDrawer.Init(&samplerManager, &shaderManager);
+		quadPipeline.Init(&shaderManager);
 	}
 
 	void Term() override
 	{
-		printf("VulkanRenderer::Term\n");
+		DEBUG_LOG(RENDERER, "VulkanRenderer::Term");
 		GetContext()->WaitIdle();
 		killtex();
 		fogTexture = nullptr;
 		texCommandPool.Term();
 		shaderManager.Term();
+		framebufferTextures.clear();
 	}
 
 	bool RenderFramebuffer()

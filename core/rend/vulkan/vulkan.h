@@ -24,8 +24,9 @@
 #include "volk/volk.h"
 #undef VK_NO_PROTOTYPES
 #include "vulkan/vulkan.hpp"
+#include "rend/TexCache.h"
 
-#define VK_DEBUG
+//#define VK_DEBUG
 
 extern int screen_width, screen_height;
 
@@ -34,8 +35,8 @@ class VulkanContext
 public:
 	VulkanContext() { verify(contextInstance == nullptr); contextInstance = this; }
 	~VulkanContext();
-	void InitInstance(const char** extensions, uint32_t extensions_count);
-	void InitDevice();
+	bool InitInstance(const char** extensions, uint32_t extensions_count);
+	bool InitDevice();
 	void CreateSwapChain();
 
 	VkInstance GetInstance() const { return static_cast<VkInstance>(instance.get()); }
@@ -61,6 +62,23 @@ public:
 	void WaitIdle() const { graphicsQueue.waitIdle(); }
 	bool IsRendering() const { return rendering; }
 	vk::Queue GetGraphicsQueue() const { return graphicsQueue; }
+	vk::DeviceSize GetUniformBufferAlignment() const { return uniformBufferAlignment; }
+	bool IsFormatSupported(TextureType textureType)
+	{
+		switch (textureType)
+		{
+		case TextureType::_4444:
+			return optimalTilingSupported4444;
+		case TextureType::_565:
+			return optimalTilingSupported565;
+		case TextureType::_5551:
+			return optimalTilingSupported1555;
+		default:
+			return true;
+		}
+	}
+	std::string GetDriverName() const { vk::PhysicalDeviceProperties props; physicalDevice.getProperties(&props); return props.deviceName; }
+	std::string GetDriverVersion() const { vk::PhysicalDeviceProperties props; physicalDevice.getProperties(&props); return std::to_string(props.driverVersion); }
 
 	static VulkanContext *Instance() { return contextInstance; }
 
@@ -101,6 +119,10 @@ private:
 
 	u32 graphicsQueueIndex = 0;
 	u32 presentQueueIndex = 0;
+	vk::DeviceSize uniformBufferAlignment = 0;
+	bool optimalTilingSupported565 = false;
+	bool optimalTilingSupported1555 = false;
+	bool optimalTilingSupported4444 = false;
 	vk::UniqueDevice device;
 
 	vk::SurfaceKHR surface;
@@ -131,7 +153,11 @@ private:
 
 	vk::UniquePipelineCache pipelineCache;
 #ifdef VK_DEBUG
+#ifndef __ANDROID__
 	vk::UniqueDebugUtilsMessengerEXT debugUtilsMessenger;
+#else
+	vk::UniqueDebugReportCallbackEXT debugReportCallback;
+#endif
 #endif
 	static VulkanContext *contextInstance;
 };

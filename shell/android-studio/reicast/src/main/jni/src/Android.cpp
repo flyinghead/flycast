@@ -25,6 +25,7 @@
 #include "rend/gui.h"
 #include "cfg/cfg.h"
 #include "log/LogManager.h"
+#include "rend/vulkan/vulkan.h"
 
 JavaVM* g_jvm;
 
@@ -402,8 +403,64 @@ extern void egl_stealcntx();
 
 static void *render_thread_func(void *)
 {
+#ifdef USE_VULKAN
+    VulkanContext *vulkanContext = nullptr;
+    if (settings.pvr.rend == 4)
+    {
+        // Vulkan init
+        INFO_LOG(RENDERER, "Initializing Vulkan");
+        vulkanContext = new VulkanContext();
+        std::vector<const char*> extensions;
+        extensions.emplace_back("VK_KHR_surface");
+        extensions.emplace_back("VK_KHR_android_surface");
+        if (vulkanContext->InitInstance(&extensions[0], extensions.size()))
+        {
+            VkAndroidSurfaceCreateInfoKHR createInfo {
+               .sType = VK_STRUCTURE_TYPE_ANDROID_SURFACE_CREATE_INFO_KHR,
+               .pNext = nullptr,
+               .flags = 0,
+               .window = g_window
+            };
+            VkSurfaceKHR surface;
+            if (vkCreateAndroidSurfaceKHR(vulkanContext->GetInstance(), &createInfo, nullptr, &surface) != VK_SUCCESS)
+            {
+                ERROR_LOG(RENDERER, "Vulkan surface creation failed");
+                settings.pvr.rend = 0;
+
+            }
+            else
+            {
+                vulkanContext->SetSurface(surface);
+                if (!vulkanContext->InitDevice())
+                    settings.pvr.rend = 0;
+                else
+                    INFO_LOG(RENDERER, "Vulkan init done");
+            }
+        }
+        else
+        {
+            settings.pvr.rend = 0;
+        }
+    }
+    if (settings.pvr.rend != 4)
+    {
+    	// Clean up any aborted vulkan context in case it failed to initialize
+    	// and fall back to Open GL
+    	if (vulkanContext == nullptr)
+    	{
+    		delete vulkanContext;
+            vulkanContext = nullptr;
+    	}
+        INFO_LOG(RENDERER, "Initializing OpenGL");
+    }
+
+#endif
 	rend_thread(NULL);
 
+#ifdef USE_VULKAN
+    if (vulkanContext)
+        delete vulkanContext;
+#endif
 	ANativeWindow_release(g_window);
     g_window = NULL;
 

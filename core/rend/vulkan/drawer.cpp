@@ -181,9 +181,8 @@ void Drawer::DrawModVols(const vk::CommandBuffer& cmdBuffer, int first, int coun
 	if (count == 0 || pvrrc.modtrig.used() == 0)
 		return;
 
-	vk::DeviceSize offsets[] = { (vk::DeviceSize)pvrrc.verts.bytes() };
 	vk::Buffer buffer = GetMainBuffer(0)->buffer.get();
-	cmdBuffer.bindVertexBuffers(0, 1, &buffer, offsets);
+	cmdBuffer.bindVertexBuffers(0, 1, &buffer, &offsets.modVolOffset);
 
 	ModifierVolumeParam* params = &pvrrc.global_param_mvo.head()[first];
 
@@ -218,8 +217,8 @@ void Drawer::DrawModVols(const vk::CommandBuffer& cmdBuffer, int first, int coun
 			mod_base = -1;
 		}
 	}
-	offsets[0] = 0;
-	cmdBuffer.bindVertexBuffers(0, 1, &buffer, offsets);
+	const vk::DeviceSize offset = 0;
+	cmdBuffer.bindVertexBuffers(0, 1, &buffer, &offset);
 
 	std::array<float, 5> pushConstants = { 1 - FPU_SHAD_SCALE.scale_factor / 256.f, 0, 0, 0, 0 };
 	cmdBuffer.pushConstants<float>(pipelineManager->GetPipelineLayout(), vk::ShaderStageFlagBits::eFragment, 0, pushConstants);
@@ -229,20 +228,30 @@ void Drawer::DrawModVols(const vk::CommandBuffer& cmdBuffer, int first, int coun
 	cmdBuffer.drawIndexed(4, 1, 0, 0, 0);
 }
 
-void Drawer::UploadMainBuffer(const VertexShaderUniforms& vertexUniforms, const FragmentShaderUniforms& fragmentUniforms, u32& vertexUniformsOffset)
+void Drawer::UploadMainBuffer(const VertexShaderUniforms& vertexUniforms, const FragmentShaderUniforms& fragmentUniforms)
 {
-	vertexUniformsOffset = pvrrc.verts.bytes() + pvrrc.idx.bytes() + pvrrc.modtrig.bytes() + sortedIndexCount * sizeof(u32);
-	u32 totalSize = vertexUniformsOffset + sizeof(VertexShaderUniforms) + sizeof(FragmentShaderUniforms);
-
-	BufferData *buffer = GetMainBuffer(totalSize);
-
+	// TODO Put this logic in an allocator
 	std::vector<const void *> chunks;
 	std::vector<u32> chunkSizes;
 
+	// Vertex
 	chunks.push_back(pvrrc.verts.head());
 	chunkSizes.push_back(pvrrc.verts.bytes());
+
+	u32 padding = align(pvrrc.verts.bytes(), 4);
+	offsets.modVolOffset = pvrrc.verts.bytes() + padding;
+	chunks.push_back(nullptr);
+	chunkSizes.push_back(padding);
+
+	// Modifier Volumes
 	chunks.push_back(pvrrc.modtrig.head());
 	chunkSizes.push_back(pvrrc.modtrig.bytes());
+	padding = align(offsets.modVolOffset + pvrrc.modtrig.bytes(), 4);
+	offsets.indexOffset = offsets.modVolOffset + pvrrc.modtrig.bytes() + padding;
+	chunks.push_back(nullptr);
+	chunkSizes.push_back(padding);
+
+	// Index
 	chunks.push_back(pvrrc.idx.head());
 	chunkSizes.push_back(pvrrc.idx.bytes());
 	for (const std::vector<u32>& idx : sortedIndexes)
@@ -253,10 +262,25 @@ void Drawer::UploadMainBuffer(const VertexShaderUniforms& vertexUniforms, const 
 			chunkSizes.push_back(idx.size() * sizeof(u32));
 		}
 	}
+	// Uniform buffers
+	u32 indexSize = pvrrc.idx.bytes() + sortedIndexCount * sizeof(u32);
+	padding = align(offsets.indexOffset + indexSize, std::max(4, (int)GetContext()->GetUniformBufferAlignment()));
+	offsets.vertexUniformOffset = offsets.indexOffset + indexSize + padding;
+	chunks.push_back(nullptr);
+	chunkSizes.push_back(padding);
+
 	chunks.push_back(&vertexUniforms);
 	chunkSizes.push_back(sizeof(vertexUniforms));
+	padding = align(offsets.vertexUniformOffset + sizeof(VertexShaderUniforms), std::max(4, (int)GetContext()->GetUniformBufferAlignment()));
+	offsets.fragmentUniformOffset = offsets.vertexUniformOffset + sizeof(VertexShaderUniforms) + padding;
+	chunks.push_back(nullptr);
+	chunkSizes.push_back(padding);
+
 	chunks.push_back(&fragmentUniforms);
 	chunkSizes.push_back(sizeof(fragmentUniforms));
+	u32 totalSize = offsets.fragmentUniformOffset + sizeof(FragmentShaderUniforms);
+
+	BufferData *buffer = GetMainBuffer(totalSize);
 	buffer->upload(GetContext()->GetDevice().get(), chunks.size(), &chunkSizes[0], &chunks[0]);
 }
 
@@ -376,20 +400,19 @@ bool Drawer::Draw(const Texture *fogTexture)
 	vk::CommandBuffer cmdBuffer = BeginRenderPass();
 
 	// Upload vertex and index buffers
-	u32 vertexUniformsOffset;
-	UploadMainBuffer(vtxUniforms, fragUniforms, vertexUniformsOffset);
+	UploadMainBuffer(vtxUniforms, fragUniforms);
 
 	// Update per-frame descriptor set and bind it
-	GetCurrentDescSet().UpdateUniforms(GetMainBuffer(0)->buffer.get(), vertexUniformsOffset, fogTexture->GetImageView());
+	GetCurrentDescSet().UpdateUniforms(GetMainBuffer(0)->buffer.get(), offsets.vertexUniformOffset, offsets.fragmentUniformOffset, fogTexture->GetImageView());
 	GetCurrentDescSet().BindPerFrameDescriptorSets(cmdBuffer);
 	// Reset per-poly descriptor set pool
 	GetCurrentDescSet().Reset();
 
 	// Bind vertex and index buffers
-	const vk::DeviceSize offsets[] = { 0 };
+	const vk::DeviceSize zeroOffset[] = { 0 };
 	const vk::Buffer buffer = GetMainBuffer(0)->buffer.get();
-	cmdBuffer.bindVertexBuffers(0, 1, &buffer, offsets);
-	cmdBuffer.bindIndexBuffer(buffer, pvrrc.verts.bytes() + pvrrc.modtrig.bytes(), vk::IndexType::eUint32);
+	cmdBuffer.bindVertexBuffers(0, 1, &buffer, zeroOffset);
+	cmdBuffer.bindIndexBuffer(buffer, offsets.indexOffset, vk::IndexType::eUint32);
 
 	RenderPass previous_pass = {};
     for (int render_pass = 0; render_pass < pvrrc.render_passes.used(); render_pass++)

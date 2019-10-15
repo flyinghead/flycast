@@ -45,6 +45,7 @@ struct Texture : BaseTextureCacheData
 	bool IsNew() const { return !image.get(); }
 	vk::ImageView GetImageView() const { return *imageView; }
 	void SetCommandBuffer(vk::CommandBuffer commandBuffer) { this->commandBuffer = commandBuffer; }
+	virtual bool Force32BitTexture(TextureType type) override { return !VulkanContext::Instance()->IsFormatSupported(type); }
 
 private:
 	void Init(u32 width, u32 height, vk::Format format);

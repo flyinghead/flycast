@@ -54,7 +54,8 @@ struct BufferData
 		void* dataPtr = device.mapMemory(sharedDeviceMemory, offset + bufOffset, totalSize);
 		for (int i = 0; i < count; i++)
 		{
-			memcpy(dataPtr, data[i], sizes[i]);
+			if (data[i] != nullptr)
+				memcpy(dataPtr, data[i], sizes[i]);
 			dataPtr = (u8 *)dataPtr + sizes[i];
 		}
 		device.unmapMemory(sharedDeviceMemory);

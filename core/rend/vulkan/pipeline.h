@@ -37,7 +37,7 @@ public:
 		this->perPolyLayout = perPolyLayout;
 
 	}
-	void UpdateUniforms(vk::Buffer buffer, u32 vertexUniformOffset, vk::ImageView fogImageView)
+	void UpdateUniforms(vk::Buffer buffer, u32 vertexUniformOffset, u32 fragmentUniformOffset, vk::ImageView fogImageView)
 	{
 		if (!perFrameDescSet)
 		{
@@ -46,7 +46,7 @@ public:
 		}
 		std::vector<vk::DescriptorBufferInfo> bufferInfos;
 		bufferInfos.push_back(vk::DescriptorBufferInfo(buffer, vertexUniformOffset, sizeof(VertexShaderUniforms)));
-		bufferInfos.push_back(vk::DescriptorBufferInfo(buffer, vertexUniformOffset + sizeof(VertexShaderUniforms), sizeof(FragmentShaderUniforms)));
+		bufferInfos.push_back(vk::DescriptorBufferInfo(buffer, fragmentUniformOffset, sizeof(FragmentShaderUniforms)));
 
 		std::vector<vk::WriteDescriptorSet> writeDescriptorSets;
 		writeDescriptorSets.push_back(vk::WriteDescriptorSet(*perFrameDescSet, 0, 0, 1, vk::DescriptorType::eUniformBuffer, nullptr, &bufferInfos[0], nullptr));
@@ -275,7 +275,7 @@ public:
 	    };
 
 	    rttRenderPass = GetContext()->GetDevice()->createRenderPassUnique(vk::RenderPassCreateInfo(vk::RenderPassCreateFlags(), 2, attachmentDescriptions,
-	    		1, &subpass, ARRAY_SIZE(settings.rend.RenderToTextureBuffer ? vramWriteDeps : dependencies),
+	    		1, &subpass, settings.rend.RenderToTextureBuffer ? ARRAY_SIZE(vramWriteDeps) : ARRAY_SIZE(dependencies),
 				settings.rend.RenderToTextureBuffer ? vramWriteDeps : dependencies));
 	    renderPass = *rttRenderPass;
 	    printf("RttPipelineManager renderPass %p created\n", (VkRenderPass)renderPass);

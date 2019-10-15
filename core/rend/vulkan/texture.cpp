@@ -177,14 +177,13 @@ void Texture::Init(u32 width, u32 height, vk::Format format)
 
 	vk::FormatFeatureFlags formatFeatureFlags = vk::FormatFeatureFlagBits::eSampledImage;
 	// Forcing staging since it fixes texture glitches
-	needsStaging = true; //(formatProperties.linearTilingFeatures & formatFeatureFlags) != formatFeatureFlags;
+	needsStaging = (formatProperties.optimalTilingFeatures & formatFeatureFlags) == formatFeatureFlags;
 	vk::ImageTiling imageTiling;
 	vk::ImageLayout initialLayout;
 	vk::MemoryPropertyFlags requirements;
 	vk::ImageUsageFlags usageFlags = vk::ImageUsageFlagBits::eSampled;
 	if (needsStaging)
 	{
-		verify((formatProperties.optimalTilingFeatures & formatFeatureFlags) == formatFeatureFlags);
 		if (allocator)
 			stagingBufferData = std::unique_ptr<BufferData>(new BufferData(physicalDevice, device, extent.width * extent.height * 4, vk::BufferUsageFlagBits::eTransferSrc, allocator));
 		else
@@ -196,6 +195,7 @@ void Texture::Init(u32 width, u32 height, vk::Format format)
 	}
 	else
 	{
+		verify((formatProperties.linearTilingFeatures & formatFeatureFlags) == formatFeatureFlags);
 		imageTiling = vk::ImageTiling::eLinear;
 		initialLayout = vk::ImageLayout::ePreinitialized;
 		requirements = vk::MemoryPropertyFlagBits::eHostCoherent | vk::MemoryPropertyFlagBits::eHostVisible;

@@ -377,10 +377,6 @@ ifdef HAS_SOFTREND
     CFLAGS += -msse4.1
 endif
 
-ifdef USE_VULKAN
-	CFLAGS += -D USE_VULKAN
-endif
-
 # these are also handled on core.mk, but ignored here
 
 # GLES on x11?

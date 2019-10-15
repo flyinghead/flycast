@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include "oslib/oslib.h"
 #include "hw/pvr/pvr_regs.h"
+#undef ID
 #include "hw/pvr/ta_structs.h"
 
 extern u8* vq_codebook;
@@ -697,6 +698,7 @@ struct BaseTextureCacheData
 	void ComputeHash();
 	void Update();
 	virtual void UploadToGPU(int width, int height, u8 *temp_tex_buffer) = 0;
+	virtual bool Force32BitTexture(TextureType type) { return false; }
 	void CheckCustomTexture();
 	//true if : dirty or paletted texture and hashes don't match
 	bool NeedsUpdate();

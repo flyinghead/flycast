@@ -80,8 +80,18 @@ private:
 	void DrawSorted(const vk::CommandBuffer& cmdBuffer, const std::vector<SortTrigDrawParam>& polys);
 	void DrawList(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sortTriangles, const List<PolyParam>& polys, u32 first, u32 count);
 	void DrawModVols(const vk::CommandBuffer& cmdBuffer, int first, int count);
-	void UploadMainBuffer(const VertexShaderUniforms& vertexUniforms, const FragmentShaderUniforms& fragmentUniforms, u32& vertexUniformsOffset);
+	void UploadMainBuffer(const VertexShaderUniforms& vertexUniforms, const FragmentShaderUniforms& fragmentUniforms);
+	u32 align(vk::DeviceSize offset, u32 alignment)
+	{
+		return (u32)(alignment - (offset & (alignment - 1)));
+	}
 
+	struct {
+		vk::DeviceSize indexOffset = 0;
+		vk::DeviceSize modVolOffset = 0;
+		vk::DeviceSize vertexUniformOffset = 0;
+		vk::DeviceSize fragmentUniformOffset = 0;
+	} offsets;
 	// Per-triangle sort results
 	std::vector<std::vector<SortTrigDrawParam>> sortedPolys;
 	std::vector<std::vector<u32>> sortedIndexes;

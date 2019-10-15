@@ -651,7 +651,8 @@ void BaseTextureCacheData::Update()
 				* settings.rend.MaxFilteredTextureSize		// Don't process textures that are too big
 			|| tcw.PixelFmt == PixelYUV)					// Don't process YUV textures
 		&& (!IsPaletted() || tex_type != TextureType::_8888)
-		&& texconv != NULL)
+		&& texconv != NULL
+		&& !Force32BitTexture(tex_type))
 		need_32bit_buffer = false;
 	// TODO avoid upscaling/depost. textures that change too often
 
