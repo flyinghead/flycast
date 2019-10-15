@@ -245,6 +245,7 @@
 		AE649C3C218C555600EF4A81 /* cdrom.c in Sources */ = {isa = PBXBuildFile; fileRef = AE649C33218C555600EF4A81 /* cdrom.c */; };
 		AE649C3D218C555600EF4A81 /* chd.c in Sources */ = {isa = PBXBuildFile; fileRef = AE649C35218C555600EF4A81 /* chd.c */; };
 		AE649C3E218C555600EF4A81 /* huffman.c in Sources */ = {isa = PBXBuildFile; fileRef = AE649C38218C555600EF4A81 /* huffman.c */; };
+		AE7B904F23565B4200145C6A /* allocator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE7B904D23565B4100145C6A /* allocator.cpp */; };
 		AE80EDB72157D4D500F7800F /* serialize.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE80EDB62157D4D500F7800F /* serialize.cpp */; };
 		AE80EDBE2157D4E600F7800F /* naomi.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE80EDB92157D4E600F7800F /* naomi.cpp */; };
 		AE80EDBF2157D4E600F7800F /* naomi_cart.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE80EDBB2157D4E600F7800F /* naomi_cart.cpp */; };
@@ -822,6 +823,8 @@
 		AE649C37218C555600EF4A81 /* flac.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = flac.h; sourceTree = "<group>"; };
 		AE649C38218C555600EF4A81 /* huffman.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = huffman.c; sourceTree = "<group>"; };
 		AE649C39218C555600EF4A81 /* bitstream.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = bitstream.h; sourceTree = "<group>"; };
+		AE7B904D23565B4100145C6A /* allocator.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = allocator.cpp; sourceTree = "<group>"; };
+		AE7B904E23565B4200145C6A /* allocator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = allocator.h; sourceTree = "<group>"; };
 		AE80EDB62157D4D500F7800F /* serialize.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = serialize.cpp; path = ../../../core/serialize.cpp; sourceTree = "<group>"; };
 		AE80EDB92157D4E600F7800F /* naomi.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = naomi.cpp; sourceTree = "<group>"; };
 		AE80EDBA2157D4E600F7800F /* naomi.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = naomi.h; sourceTree = "<group>"; };
@@ -2352,6 +2355,8 @@
 		AED73EAE2348E49900ECDB64 /* vulkan */ = {
 			isa = PBXGroup;
 			children = (
+				AE7B904D23565B4100145C6A /* allocator.cpp */,
+				AE7B904E23565B4200145C6A /* allocator.h */,
 				AED73EC8234E827400ECDB64 /* commandpool.h */,
 				AED73EC9234E827400ECDB64 /* drawer.cpp */,
 				AED73EC7234E827400ECDB64 /* drawer.h */,
@@ -2899,6 +2904,7 @@
 				AE2A2D7A21D6851E004B308D /* 7zArcIn.c in Sources */,
 				84B7BF471B72720200F9733F /* sh4_interpreter.cpp in Sources */,
 				84967CC41B8F49EE005F1140 /* pngpread.c in Sources */,
+				AE7B904F23565B4200145C6A /* allocator.cpp in Sources */,
 				AED73E752348E45000ECDB64 /* RemoveTree.cpp in Sources */,
 				AE2A2D7921D6851E004B308D /* 7zStream.c in Sources */,
 				AED73E582348E45000ECDB64 /* Link.cpp in Sources */,
