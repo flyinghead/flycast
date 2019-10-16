@@ -80,6 +80,7 @@ public:
 	}
 	std::string GetDriverName() const { vk::PhysicalDeviceProperties props; physicalDevice.getProperties(&props); return props.deviceName; }
 	std::string GetDriverVersion() const { vk::PhysicalDeviceProperties props; physicalDevice.getProperties(&props); return std::to_string(props.driverVersion); }
+	vk::Format GetDepthFormat() const { return depthFormat; }
 
 	static VulkanContext *Instance() { return contextInstance; }
 
@@ -141,6 +142,7 @@ private:
 	vk::UniqueImage depthImage;
 	vk::UniqueImageView depthView;
 	vk::UniqueDeviceMemory depthMemory;
+	vk::Format depthFormat;
 
 	std::vector<vk::UniqueCommandPool> commandPools;
 	std::vector<vk::UniqueCommandBuffer> commandBuffers;

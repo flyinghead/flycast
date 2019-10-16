@@ -273,6 +273,7 @@ endif
     undefine FOR_LINUX
     NO_NIXPROF := 1
     FOR_WINDOWS := 1
+	USE_VULKAN ?= 1
 else
     $(error Unknown platform)
 endif

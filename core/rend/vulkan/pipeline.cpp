@@ -252,8 +252,12 @@ void PipelineManager::CreatePipeline(u32 listType, bool sortTriangles, const Pol
 			depthWriteEnable = !pp.isp.ZWriteDis;
 	}
 
-	vk::StencilOpState stencilOpStateSet(vk::StencilOp::eKeep, vk::StencilOp::eReplace, vk::StencilOp::eKeep, vk::CompareOp::eAlways, 0, 0x80, 0x80);
-	vk::StencilOpState stencilOpStateNop(vk::StencilOp::eKeep, vk::StencilOp::eKeep, vk::StencilOp::eKeep, vk::CompareOp::eAlways);
+	bool shadowed = (listType == ListType_Opaque || listType == ListType_Punch_Through) && pp.pcw.Shadow != 0;
+	vk::StencilOpState stencilOpState;
+	if (shadowed)
+		stencilOpState = vk::StencilOpState(vk::StencilOp::eKeep, vk::StencilOp::eReplace, vk::StencilOp::eKeep, vk::CompareOp::eAlways, 0, 0x80, 0x80);
+	else
+		stencilOpState = vk::StencilOpState(vk::StencilOp::eKeep, vk::StencilOp::eKeep, vk::StencilOp::eKeep, vk::CompareOp::eAlways);
 	vk::PipelineDepthStencilStateCreateInfo pipelineDepthStencilStateCreateInfo
 	(
 	  vk::PipelineDepthStencilStateCreateFlags(), // flags
@@ -261,9 +265,9 @@ void PipelineManager::CreatePipeline(u32 listType, bool sortTriangles, const Pol
 	  depthWriteEnable,                           // depthWriteEnable
 	  depthOp,                                    // depthCompareOp
 	  false,                                      // depthBoundTestEnable
-	  listType == ListType_Opaque || listType == ListType_Punch_Through, // stencilTestEnable
-	  pp.pcw.Shadow != 0 ? stencilOpStateSet : stencilOpStateNop,  // front
-	  pp.pcw.Shadow != 0 ? stencilOpStateSet : stencilOpStateNop   // back
+	  shadowed,                                   // stencilTestEnable
+	  stencilOpState,                             // front
+	  stencilOpState                              // back
 	);
 
 	// Color flags and blending

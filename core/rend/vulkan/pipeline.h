@@ -230,7 +230,6 @@ private:
 
 	std::map<u32, vk::UniquePipeline> pipelines;
 	std::vector<vk::UniquePipeline> modVolPipelines;
-	ShaderManager *shaderManager;
 
 	vk::UniquePipelineLayout pipelineLayout;
 	vk::UniqueDescriptorSetLayout perFrameLayout;
@@ -240,6 +239,7 @@ protected:
 	VulkanContext *GetContext() const { return VulkanContext::Instance(); }
 
 	vk::RenderPass renderPass;
+	ShaderManager *shaderManager;
 };
 
 class RttPipelineManager : public PipelineManager
@@ -250,12 +250,13 @@ public:
 		PipelineManager::Init(shaderManager);
 
 		// RTT render pass
+		renderToTextureBuffer = settings.rend.RenderToTextureBuffer;
 	    vk::AttachmentDescription attachmentDescriptions[] = {
 	    		vk::AttachmentDescription(vk::AttachmentDescriptionFlags(), vk::Format::eR8G8B8A8Unorm, vk::SampleCountFlagBits::e1,
 	    				vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eStore, vk::AttachmentLoadOp::eDontCare, vk::AttachmentStoreOp::eDontCare,
 						vk::ImageLayout::eColorAttachmentOptimal,
-							settings.rend.RenderToTextureBuffer ? vk::ImageLayout::eTransferSrcOptimal : vk::ImageLayout::eShaderReadOnlyOptimal),
-				vk::AttachmentDescription(vk::AttachmentDescriptionFlags(), vk::Format::eD32SfloatS8Uint, vk::SampleCountFlagBits::e1,
+						renderToTextureBuffer ? vk::ImageLayout::eTransferSrcOptimal : vk::ImageLayout::eShaderReadOnlyOptimal),
+				vk::AttachmentDescription(vk::AttachmentDescriptionFlags(), GetContext()->GetDepthFormat(), vk::SampleCountFlagBits::e1,
 						vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eDontCare, vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eDontCare,
 						vk::ImageLayout::eUndefined, vk::ImageLayout::eDepthStencilAttachmentOptimal),
 	    };
@@ -275,13 +276,18 @@ public:
 	    };
 
 	    rttRenderPass = GetContext()->GetDevice()->createRenderPassUnique(vk::RenderPassCreateInfo(vk::RenderPassCreateFlags(), 2, attachmentDescriptions,
-	    		1, &subpass, settings.rend.RenderToTextureBuffer ? ARRAY_SIZE(vramWriteDeps) : ARRAY_SIZE(dependencies),
-				settings.rend.RenderToTextureBuffer ? vramWriteDeps : dependencies));
+	    		1, &subpass, renderToTextureBuffer ? ARRAY_SIZE(vramWriteDeps) : ARRAY_SIZE(dependencies), renderToTextureBuffer ? vramWriteDeps : dependencies));
 	    renderPass = *rttRenderPass;
+	}
+	void CheckSettingsChange()
+	{
+		if (renderToTextureBuffer != settings.rend.RenderToTextureBuffer)
+			Init(shaderManager);
 	}
 
 private:
 	vk::UniqueRenderPass rttRenderPass;
+	bool renderToTextureBuffer;
 };
 
 class QuadPipeline

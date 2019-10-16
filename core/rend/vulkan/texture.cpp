@@ -118,7 +118,7 @@ void setImageLayout(vk::CommandBuffer const& commandBuffer, vk::Image image, vk:
 	if (newImageLayout == vk::ImageLayout::eDepthStencilAttachmentOptimal)
 	{
 		aspectMask = vk::ImageAspectFlagBits::eDepth;
-		if (format == vk::Format::eD32SfloatS8Uint || format == vk::Format::eD24UnormS8Uint)
+		if (format == vk::Format::eD32SfloatS8Uint || format == vk::Format::eD24UnormS8Uint || format == vk::Format::eD16UnormS8Uint)
 		{
 			aspectMask |= vk::ImageAspectFlagBits::eStencil;
 		}
@@ -332,7 +332,7 @@ void FramebufferAttachment::Init(u32 width, u32 height, vk::Format format)
 {
 	this->format = format;
 	this->extent = vk::Extent2D { width, height };
-	bool depth = format == vk::Format::eD32SfloatS8Uint || format == vk::Format::eD24UnormS8Uint;
+	bool depth = format == vk::Format::eD32SfloatS8Uint || format == vk::Format::eD24UnormS8Uint || format == vk::Format::eD16UnormS8Uint;
 
 	vk::ImageUsageFlags usage;
 	if (depth)

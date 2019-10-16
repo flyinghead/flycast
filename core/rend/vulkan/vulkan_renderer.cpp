@@ -224,7 +224,7 @@ private:
 	SamplerManager samplerManager;
 	ShaderManager shaderManager;
 	ScreenDrawer screenDrawer;
-	std::vector<TextureDrawer> textureDrawer;
+	std::vector<TextureDrawer> textureDrawer;	// FIXME should be a singleton
 	int curTextureDrawer = 0;
 	VulkanAllocator texAllocator;
 	std::vector<std::unique_ptr<Texture>> framebufferTextures;

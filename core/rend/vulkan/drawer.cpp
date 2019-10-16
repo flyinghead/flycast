@@ -143,10 +143,12 @@ void Drawer::DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sor
 			trilinearAlpha = 1.0 - trilinearAlpha;
 	}
 
-	std::array<float, 5> pushConstants = { (float)scissorRect.offset.x, (float)scissorRect.offset.y,
-			(float)scissorRect.extent.width, (float)scissorRect.extent.height, trilinearAlpha };
 	if (tileClip == TileClipping::Inside || trilinearAlpha != 1.f)
+	{
+		std::array<float, 5> pushConstants = { (float)scissorRect.offset.x, (float)scissorRect.offset.y,
+				(float)scissorRect.extent.width, (float)scissorRect.extent.height, trilinearAlpha };
 		cmdBuffer.pushConstants<float>(pipelineManager->GetPipelineLayout(), vk::ShaderStageFlagBits::eFragment, 0, pushConstants);
+	}
 
 	if (poly.pcw.Texture)
 		GetCurrentDescSet().SetTexture(poly.texid, poly.tsp);
@@ -475,6 +477,7 @@ vk::CommandBuffer TextureDrawer::BeginRenderPass()
 		heightPow2 *= settings.rend.RenderToTextureUpscale;
 	}
 
+	static_cast<RttPipelineManager*>(pipelineManager.get())->CheckSettingsChange();
 	VulkanContext *context = GetContext();
 	vk::Device device = *context->GetDevice();
 
@@ -485,7 +488,7 @@ vk::CommandBuffer TextureDrawer::BeginRenderPass()
 	{
 		if (!depthAttachment)
 			depthAttachment = std::unique_ptr<FramebufferAttachment>(new FramebufferAttachment(context->GetPhysicalDevice(), device));
-		depthAttachment->Init(widthPow2, heightPow2, vk::Format::eD32SfloatS8Uint);
+		depthAttachment->Init(widthPow2, heightPow2, GetContext()->GetDepthFormat());
 	}
 	vk::ImageView colorImageView;
 	vk::ImageLayout colorImageCurrentLayout;

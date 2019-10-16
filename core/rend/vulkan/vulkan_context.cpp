@@ -203,20 +203,14 @@ bool VulkanContext::InitInstance(const char** extensions, uint32_t extensions_co
 
 vk::Format VulkanContext::InitDepthBuffer()
 {
-	const vk::Format depthFormats[] = { vk::Format::eD32SfloatS8Uint, vk::Format::eD24UnormS8Uint };
+	const vk::Format depthFormats[] = { vk::Format::eD32SfloatS8Uint, vk::Format::eD24UnormS8Uint, vk::Format::eD16UnormS8Uint };
 	vk::ImageTiling tiling;
-	vk::Format depthFormat = vk::Format::eUndefined;
+	depthFormat = vk::Format::eUndefined;
 	for (int i = 0; i < ARRAY_SIZE(depthFormats); i++)
 	{
 		vk::FormatProperties formatProperties = physicalDevice.getFormatProperties(depthFormats[i]);
 
-		if (formatProperties.linearTilingFeatures & vk::FormatFeatureFlagBits::eDepthStencilAttachment)
-		{
-			tiling = vk::ImageTiling::eLinear;
-			depthFormat = depthFormats[i];
-			break;
-		}
-		else if (formatProperties.optimalTilingFeatures & vk::FormatFeatureFlagBits::eDepthStencilAttachment)
+		if (formatProperties.optimalTilingFeatures & vk::FormatFeatureFlagBits::eDepthStencilAttachment)
 		{
 			tiling = vk::ImageTiling::eOptimal;
 			depthFormat = depthFormats[i];
@@ -225,8 +219,22 @@ vk::Format VulkanContext::InitDepthBuffer()
 	}
 	if (depthFormat == vk::Format::eUndefined)
 	{
-		die("No supported depth/stencil format found");
+		// Try to find a linear format
+		for (int i = 0; i < ARRAY_SIZE(depthFormats); i++)
+		{
+			vk::FormatProperties formatProperties = physicalDevice.getFormatProperties(depthFormats[i]);
+
+			if (formatProperties.linearTilingFeatures & vk::FormatFeatureFlagBits::eDepthStencilAttachment)
+			{
+				tiling = vk::ImageTiling::eLinear;
+				depthFormat = depthFormats[i];
+				break;
+			}
+		}
+		if (depthFormat == vk::Format::eUndefined)
+			die("No supported depth/stencil format found");
 	}
+	NOTICE_LOG(RENDERER, "Using depth format %s tiling %s", vk::to_string(depthFormat).c_str(), vk::to_string(tiling).c_str());
 
 	vk::ImageCreateInfo imageCreateInfo(vk::ImageCreateFlags(), vk::ImageType::e2D, depthFormat, vk::Extent3D(width, height, 1), 1, 1, vk::SampleCountFlagBits::e1, tiling, vk::ImageUsageFlagBits::eDepthStencilAttachment);
 	depthImage = device->createImageUnique(imageCreateInfo);
