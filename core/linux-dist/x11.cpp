@@ -3,11 +3,6 @@
 #include <X11/Xatom.h>
 #include <X11/Xutil.h>
 
-#if !defined(GLES)
-	#include <GL/gl.h>
-	#include <GL/glx.h>
-#endif
-
 #include "types.h"
 #include "cfg/cfg.h"
 #include "x11.h"
@@ -15,15 +10,12 @@
 #include "rend/gui.h"
 #include "input/gamepad.h"
 #include "icon.h"
+#include "wsi/context.h"
 
 #if FEAT_HAS_NIXPROF
 #include "profiler/profiler.h"
 #endif
 #include "x11_keyboard.h"
-#ifdef USE_VULKAN
-#include "rend/vulkan/vulkan.h"
-static VulkanContext *vulkanContext;
-#endif
 
 #if defined(TARGET_PANDORA)
 	#define DEFAULT_FULLSCREEN    true
@@ -34,6 +26,8 @@ static VulkanContext *vulkanContext;
 #endif
 #define DEFAULT_WINDOW_HEIGHT   480
 
+static Window x11_win;
+Display *x11_disp;
 
 class MouseInputMapping : public InputMapping
 {
@@ -71,7 +65,7 @@ public:
 	}
 };
 
-int x11_keyboard_input = 0;
+static int x11_keyboard_input = 0;
 static std::shared_ptr<X11KeyboardDevice> x11_keyboard;
 static std::shared_ptr<X11KbGamepadDevice> kb_gamepad;
 static std::shared_ptr<X11MouseGamepadDevice> mouse_gamepad;
@@ -79,12 +73,8 @@ static std::shared_ptr<X11MouseGamepadDevice> mouse_gamepad;
 int x11_width;
 int x11_height;
 
-int ndcid = 0;
-void* x11_glc = NULL;
-bool x11_fullscreen = false;
-Atom wmDeleteMessage;
-
-void* x11_vis;
+static bool x11_fullscreen = false;
+static Atom wmDeleteMessage;
 
 extern bool dump_frame_switch;
 
@@ -97,30 +87,30 @@ enum
 	_NET_WM_STATE_TOGGLE =2
 };
 
-void x11_window_set_fullscreen(bool fullscreen)
+static void x11_window_set_fullscreen(bool fullscreen)
 {
 		XEvent xev;
 		xev.xclient.type         = ClientMessage;
-		xev.xclient.window       = (Window)x11_win;
-		xev.xclient.message_type = XInternAtom((Display*)x11_disp, "_NET_WM_STATE", False);
+		xev.xclient.window       = x11_win;
+		xev.xclient.message_type = XInternAtom(x11_disp, "_NET_WM_STATE", False);
 		xev.xclient.format = 32;
 		xev.xclient.data.l[0] = 2;    // _NET_WM_STATE_TOGGLE
-		xev.xclient.data.l[1] = XInternAtom((Display*)x11_disp, "_NET_WM_STATE_FULLSCREEN", True);
+		xev.xclient.data.l[1] = XInternAtom(x11_disp, "_NET_WM_STATE_FULLSCREEN", True);
 		xev.xclient.data.l[2] = 0;    // no second property to toggle
 		xev.xclient.data.l[3] = 1;
 		xev.xclient.data.l[4] = 0;
 
 		INFO_LOG(RENDERER, "x11: setting fullscreen to %d", fullscreen);
-		XSendEvent((Display*)x11_disp, DefaultRootWindow((Display*)x11_disp), False, SubstructureNotifyMask, &xev);
+		XSendEvent(x11_disp, DefaultRootWindow(x11_disp), False, SubstructureNotifyMask, &xev);
 }
 
 void event_x11_handle()
 {
 	XEvent event;
 
-	while(XPending((Display *)x11_disp))
+	while(XPending(x11_disp))
 	{
-		XNextEvent((Display *)x11_disp, &event);
+		XNextEvent(x11_disp, &event);
 
 		if (event.type == ClientMessage &&
 				event.xclient.data.l[0] == wmDeleteMessage)
@@ -147,18 +137,17 @@ static Cursor create_empty_cursor()
 {
 	if (empty_cursor == None)
 	{
-		Display *display = (Display*)x11_disp;
 		char data[] = { 0 };
 
 		XColor color;
 		color.red = color.green = color.blue = 0;
 
-		Pixmap pixmap = XCreateBitmapFromData(display, DefaultRootWindow(display),
+		Pixmap pixmap = XCreateBitmapFromData(x11_disp, DefaultRootWindow(x11_disp),
 				data, 1, 1);
 		if (pixmap)
 		{
-			empty_cursor = XCreatePixmapCursor(display, pixmap, pixmap, &color, &color, 0, 0);
-			XFreePixmap(display, pixmap);
+			empty_cursor = XCreatePixmapCursor(x11_disp, pixmap, pixmap, &color, &color, 0, 0);
+			XFreePixmap(x11_disp, pixmap);
 		}
 	}
 	return empty_cursor;
@@ -168,7 +157,7 @@ static void destroy_empty_cursor()
 {
 	if (empty_cursor != None)
 	{
-		XFreeCursor((Display*)x11_disp, empty_cursor);
+		XFreeCursor(x11_disp, empty_cursor);
 		empty_cursor = None;
 	}
 }
@@ -178,10 +167,8 @@ static void x11_capture_mouse()
 	x11_window_set_text("Flycast - mouse capture");
 	capturing_mouse = true;
 	Cursor cursor = create_empty_cursor();
-	Display *display = (Display*)x11_disp;
-	Window window = (Window)x11_win;
-	XDefineCursor(display, window, cursor);
-	XGrabPointer(display, window, False,
+	XDefineCursor(x11_disp, x11_win, cursor);
+	XGrabPointer(x11_disp, x11_win, False,
 			ButtonPressMask | ButtonReleaseMask | PointerMotionMask | FocusChangeMask,
 			GrabModeAsync, GrabModeAsync, None, None, CurrentTime);
 }
@@ -190,10 +177,8 @@ static void x11_uncapture_mouse()
 {
 	x11_window_set_text("Flycast");
 	capturing_mouse = false;
-	Display *display = (Display*)x11_disp;
-	Window window = (Window)x11_win;
-	XUndefineCursor(display, window);
-	XUngrabPointer(display, CurrentTime);
+	XUndefineCursor(x11_disp, x11_win);
+	XUngrabPointer(x11_disp, CurrentTime);
 }
 
 void input_x11_handle()
@@ -204,9 +189,7 @@ void input_x11_handle()
 	bool mouse_moved = false;
 	XEvent e;
 
-	Display *display = (Display*)x11_disp;
-
-	while (XCheckWindowEvent(display, (Window)x11_win,
+	while (XCheckWindowEvent(x11_disp, x11_win,
 			KeyPressMask | KeyReleaseMask | ButtonPressMask | ButtonReleaseMask
 			| PointerMotionMask | FocusChangeMask,
 			&e))
@@ -224,10 +207,10 @@ void input_x11_handle()
 				/* no break */
 			case KeyRelease:
 				{
-					if (e.type == KeyRelease && XEventsQueued(display, QueuedAfterReading))
+					if (e.type == KeyRelease && XEventsQueued(x11_disp, QueuedAfterReading))
 					{
 						XEvent nev;
-						XPeekEvent(display, &nev);
+						XPeekEvent(x11_disp, &nev);
 
 						if (nev.type == KeyPress && nev.xkey.time == e.xkey.time &&
 								nev.xkey.keycode == e.xkey.keycode)
@@ -345,9 +328,9 @@ void input_x11_handle()
 	{
 		prev_x = x11_width / 2;
 		prev_y = x11_height / 2;
-		XWarpPointer(display, None, (Window)x11_win, 0, 0, 0, 0,
+		XWarpPointer(x11_disp, None, x11_win, 0, 0, 0, 0,
 				prev_x, prev_y);
-		XSync(display, true);
+		XSync(x11_disp, true);
 	}
 }
 
@@ -364,116 +347,54 @@ void input_x11_init()
 		INFO_LOG(INPUT, "X11 Keyboard input disabled by config.");
 }
 
-static int x11_error_handler(Display *, XErrorEvent *)
-{
-	return 0;
-}
-
 void x11_window_create()
 {
 	if (cfgLoadInt("pvr", "nox11", 0) == 0)
 	{
 		XInitThreads();
-		// X11 variables
-		Window       x11Window = 0;
-		Display*     x11Display = 0;
-		long         x11Screen = 0;
-		XVisualInfo* x11Visual = 0;
-		Colormap     x11Colormap = 0;
-
-		/*
-		Step 0 - Create a NativeWindowType that we can use it for OpenGL ES output
-		*/
-		Window sRootWindow;
-		XSetWindowAttributes sWA;
-		unsigned int ui32Mask;
-		int i32Depth;
 
 		// Initializes the display and screen
-		x11Display = XOpenDisplay(NULL);
-		if (!x11Display && !(x11Display = XOpenDisplay(":0")))
+		x11_disp = XOpenDisplay(NULL);
+		if (x11_disp == nullptr && (x11_disp = XOpenDisplay(":0")) == nullptr)
 		{
 			ERROR_LOG(RENDERER, "Error: Unable to open X display");
 			return;
 		}
-		x11Screen = XDefaultScreen(x11Display);
-		float xdpi = (float)DisplayWidth(x11Display, x11Screen) / DisplayWidthMM(x11Display, x11Screen) * 25.4;
-		float ydpi = (float)DisplayHeight(x11Display, x11Screen) / DisplayHeightMM(x11Display, x11Screen) * 25.4;
+		int x11Screen = XDefaultScreen(x11_disp);
+		float xdpi = (float)DisplayWidth(x11_disp, x11Screen) / DisplayWidthMM(x11_disp, x11Screen) * 25.4;
+		float ydpi = (float)DisplayHeight(x11_disp, x11Screen) / DisplayHeightMM(x11_disp, x11Screen) * 25.4;
 		screen_dpi = max(xdpi, ydpi);
 
 		// Gets the window parameters
-		sRootWindow = RootWindow(x11Display, x11Screen);
+		Window sRootWindow = RootWindow(x11_disp, x11Screen);
 
 		int depth = CopyFromParent;
 
+		XVisualInfo* x11Visual = nullptr;
+		Colormap     x11Colormap = 0;
 #if !defined(GLES)
-		// Get a matching FB config
-		static int visual_attribs[] =
-		{
-			GLX_X_RENDERABLE    , True,
-			GLX_DRAWABLE_TYPE   , GLX_WINDOW_BIT,
-			GLX_RENDER_TYPE     , GLX_RGBA_BIT,
-			GLX_X_VISUAL_TYPE   , GLX_TRUE_COLOR,
-			GLX_RED_SIZE        , 8,
-			GLX_GREEN_SIZE      , 8,
-			GLX_BLUE_SIZE       , 8,
-			GLX_ALPHA_SIZE      , 8,
-			GLX_DEPTH_SIZE      , 24,
-			GLX_STENCIL_SIZE    , 8,
-			GLX_DOUBLEBUFFER    , True,
-			//GLX_SAMPLE_BUFFERS  , 1,
-			//GLX_SAMPLES         , 4,
-			None
-		};
 
-		int glx_major, glx_minor;
-
-		// FBConfigs were added in GLX version 1.3.
-		if (!glXQueryVersion(x11Display, &glx_major, &glx_minor) ||
-				((glx_major == 1) && (glx_minor < 3)) || (glx_major < 1))
-		{
-			ERROR_LOG(RENDERER, "Invalid GLX version");
+		if (!theGLContext.ChooseVisual(x11_disp, &x11Visual, &depth))
 			exit(1);
-		}
-
-		int fbcount;
-		GLXFBConfig* fbc = glXChooseFBConfig(x11Display, x11Screen, visual_attribs, &fbcount);
-		if (!fbc)
-		{
-			ERROR_LOG(RENDERER, "Failed to retrieve a framebuffer config");
-			exit(1);
-		}
-		INFO_LOG(RENDERER, "Found %d matching FB configs.", fbcount);
-
-		GLXFBConfig bestFbc = fbc[0];
-		XFree(fbc);
-
-		// Get a visual
-		XVisualInfo *vi = glXGetVisualFromFBConfig(x11Display, bestFbc);
-		INFO_LOG(RENDERER, "Chosen visual ID = 0x%lx", vi->visualid);
-
-
-		depth = vi->depth;
-		x11Visual = vi;
-
-		x11Colormap = XCreateColormap(x11Display, RootWindow(x11Display, x11Screen), vi->visual, AllocNone);
+		x11Colormap = XCreateColormap(x11_disp, RootWindow(x11_disp, x11Screen), x11Visual->visual, AllocNone);
 #else
-		i32Depth = DefaultDepth(x11Display, x11Screen);
+		int i32Depth = DefaultDepth(x11_disp, x11Screen);
 		x11Visual = new XVisualInfo;
-		XMatchVisualInfo(x11Display, x11Screen, i32Depth, TrueColor, x11Visual);
-		if (!x11Visual)
+		if (!XMatchVisualInfo(x11_disp, x11Screen, i32Depth, TrueColor, x11Visual))
 		{
 			ERROR_LOG(RENDERER, "Error: Unable to acquire visual");
+			delete x11Visual;
 			return;
 		}
-		x11Colormap = XCreateColormap(x11Display, sRootWindow, x11Visual->visual, AllocNone);
+		x11Colormap = XCreateColormap(x11_disp, sRootWindow, x11Visual->visual, AllocNone);
 #endif
+		XSetWindowAttributes sWA;
 		sWA.colormap = x11Colormap;
 
 		// Add to these for handling other events
 		sWA.event_mask = StructureNotifyMask | ExposureMask | ButtonPressMask | ButtonReleaseMask | KeyPressMask | KeyReleaseMask;
 		sWA.event_mask |= PointerMotionMask | FocusChangeMask;
-		ui32Mask = CWBackPixel | CWBorderPixel | CWEventMask | CWColormap;
+		unsigned long ui32Mask = CWBackPixel | CWBorderPixel | CWEventMask | CWColormap;
 
 		x11_width = cfgLoadInt("x11", "width", DEFAULT_WINDOW_WIDTH);
 		x11_height = cfgLoadInt("x11", "height", DEFAULT_WINDOW_HEIGHT);
@@ -481,101 +402,44 @@ void x11_window_create()
 
 		if (x11_width < 0 || x11_height < 0)
 		{
-			x11_width = XDisplayWidth(x11Display, x11Screen);
-			x11_height = XDisplayHeight(x11Display, x11Screen);
+			x11_width = XDisplayWidth(x11_disp, x11Screen);
+			x11_height = XDisplayHeight(x11_disp, x11Screen);
 		}
 
 		// Creates the X11 window
-		x11Window = XCreateWindow(x11Display, RootWindow(x11Display, x11Screen), (ndcid%3)*640, (ndcid/3)*480, x11_width, x11_height,
+		x11_win = XCreateWindow(x11_disp, RootWindow(x11_disp, x11Screen), 0, 0, x11_width, x11_height,
 			0, depth, InputOutput, x11Visual->visual, ui32Mask, &sWA);
 
-		XSetWindowBackground(x11Display, x11Window, 0);
+		XSetWindowBackground(x11_disp, x11_win, 0);
 
-		Atom net_wm_icon = XInternAtom(x11Display, "_NET_WM_ICON", False);
-		Atom cardinal = XInternAtom(x11Display, "CARDINAL", False);
-		XChangeProperty(x11Display, x11Window, net_wm_icon, cardinal, 32, PropModeReplace,
+		Atom net_wm_icon = XInternAtom(x11_disp, "_NET_WM_ICON", False);
+		Atom cardinal = XInternAtom(x11_disp, "CARDINAL", False);
+		XChangeProperty(x11_disp, x11_win, net_wm_icon, cardinal, 32, PropModeReplace,
 				(const unsigned char*)reicast_icon, sizeof(reicast_icon) / sizeof(*reicast_icon));
 
 		// Capture the close window event
-		wmDeleteMessage = XInternAtom(x11Display, "WM_DELETE_WINDOW", False);
-		XSetWMProtocols(x11Display, x11Window, &wmDeleteMessage, 1);
+		wmDeleteMessage = XInternAtom(x11_disp, "WM_DELETE_WINDOW", False);
+		XSetWMProtocols(x11_disp, x11_win, &wmDeleteMessage, 1);
 
-		if(x11_fullscreen)
+		if (x11_fullscreen)
 		{
+			Atom wmState = XInternAtom(x11_disp, "_NET_WM_STATE", False);
+			Atom wmFullscreen = XInternAtom(x11_disp, "_NET_WM_STATE_FULLSCREEN", False);
+			XChangeProperty(x11_disp, x11_win, wmState, XA_ATOM, 32, PropModeReplace, (unsigned char *)&wmFullscreen, 1);
 
-			// fullscreen
-			Atom wmState = XInternAtom(x11Display, "_NET_WM_STATE", False);
-			Atom wmFullscreen = XInternAtom(x11Display, "_NET_WM_STATE_FULLSCREEN", False);
-			XChangeProperty(x11Display, x11Window, wmState, XA_ATOM, 32, PropModeReplace, (unsigned char *)&wmFullscreen, 1);
-
-			XMapRaised(x11Display, x11Window);
+			XMapRaised(x11_disp, x11_win);
 		}
 		else
 		{
-			XMapWindow(x11Display, x11Window);
+			XMapWindow(x11_disp, x11_win);
 		}
-
-		if (settings.pvr.IsOpenGL())
-		{
-#if !defined(GLES)
-#define GLX_CONTEXT_MAJOR_VERSION_ARB       0x2091
-#define GLX_CONTEXT_MINOR_VERSION_ARB       0x2092
-			typedef GLXContext (*glXCreateContextAttribsARBProc)(Display*, GLXFBConfig, GLXContext, Bool, const int*);
-
-			glXCreateContextAttribsARBProc glXCreateContextAttribsARB = 0;
-			glXCreateContextAttribsARB = (glXCreateContextAttribsARBProc)glXGetProcAddressARB((const GLubyte*)"glXCreateContextAttribsARB");
-			verify(glXCreateContextAttribsARB != 0);
-			int context_attribs[] =
-			{
-				GLX_CONTEXT_MAJOR_VERSION_ARB, 4,
-				GLX_CONTEXT_MINOR_VERSION_ARB, 3,
-#ifndef RELEASE
-				GLX_CONTEXT_FLAGS_ARB, GLX_CONTEXT_DEBUG_BIT_ARB,
-#endif
-				GLX_CONTEXT_PROFILE_MASK_ARB, GLX_CONTEXT_CORE_PROFILE_BIT_ARB,
-				None
-			};
-			int (*old_handler)(Display *, XErrorEvent *) = XSetErrorHandler(&x11_error_handler);
-
-			x11_glc = glXCreateContextAttribsARB(x11Display, bestFbc, 0, True, context_attribs);
-			if (!x11_glc)
-			{
-				INFO_LOG(RENDERER, "Open GL 4.3 not supported");
-				// Try GL 3.0
-				context_attribs[1] = 3;
-				context_attribs[3] = 0;
-				x11_glc = glXCreateContextAttribsARB(x11Display, bestFbc, 0, True, context_attribs);
-				if (!x11_glc)
-				{
-					die("Open GL 3.0 not supported\n");
-				}
-			}
-			XSetErrorHandler(old_handler);
-			XSync(x11Display, False);
-
-#endif
-		}
+		theGLContext.SetDisplayAndWindow(x11_disp, x11_win);
 #ifdef USE_VULKAN
-		else
-		{
-			vulkanContext = new VulkanContext();
-			const char * extensions[] = { VK_KHR_SURFACE_EXTENSION_NAME, VK_KHR_XLIB_SURFACE_EXTENSION_NAME };
-			vulkanContext->InitInstance(extensions, ARRAY_SIZE(extensions));
-			vulkanContext->SetWindowSize(x11_width, x11_height);
-			VkXlibSurfaceCreateInfoKHR createInfo = { VK_STRUCTURE_TYPE_XLIB_SURFACE_CREATE_INFO_KHR, nullptr, 0, x11Display, x11Window };
-			VkSurfaceKHR surface;
-			vkCreateXlibSurfaceKHR(vulkanContext->GetInstance(), &createInfo, nullptr, &surface);
-			vulkanContext->SetSurface(surface);
-			vulkanContext->InitDevice();
-		}
+		theVulkanContext.SetWindow((void *)x11_win, (void *)x11_disp);
 #endif
+		SwitchRenderApi();
 
-		XFlush(x11Display);
-
-		//(EGLNativeDisplayType)x11Display;
-		x11_disp = (void*)x11Display;
-		x11_win = (void*)x11Window;
-		x11_vis = (void*)x11Visual->visual;
+		XFlush(x11_disp);
 
 		x11_window_set_text("Flycast");
 	}
@@ -589,22 +453,18 @@ void x11_window_set_text(const char* text)
 {
 	if (x11_win)
 	{
-		XStoreName((Display*)x11_disp, (Window)x11_win, text);
-		XSetIconName((Display*)x11_disp, (Window)x11_win, text);
+		XStoreName(x11_disp, x11_win, text);
+		XSetIconName(x11_disp, x11_win, text);
 
 		XClassHint hint = { (char *)"WM_CLASS", (char *)text };
-		XSetClassHint((Display*)x11_disp, (Window)x11_win, &hint);
+		XSetClassHint(x11_disp, x11_win, &hint);
 	}
 }
 
 void x11_window_destroy()
 {
 	destroy_empty_cursor();
-
-#ifdef USE_VULKAN
-	if (vulkanContext != nullptr)
-		delete vulkanContext;
-#endif
+	TermRenderApi();
 
 	// close XWindow
 	if (x11_win)
@@ -615,21 +475,13 @@ void x11_window_destroy()
 			cfgSaveInt("x11", "height", x11_height);
 		}
 		cfgSaveBool("x11", "fullscreen", x11_fullscreen);
-		XDestroyWindow((Display*)x11_disp, (Window)x11_win);
+		XDestroyWindow(x11_disp, x11_win);
 		x11_win = NULL;
 	}
 	if (x11_disp)
 	{
-#if !defined(GLES)
-		if (x11_glc)
-		{
-			glXMakeCurrent((Display*)x11_disp, None, NULL);
-			glXDestroyContext((Display*)x11_disp, (GLXContext)x11_glc);
-			x11_glc = NULL;
-		}
-#endif
-		XCloseDisplay((Display*)x11_disp);
-		x11_disp = NULL;
+		XCloseDisplay(x11_disp);
+		x11_disp = nullptr;
 	}
 }
 #endif

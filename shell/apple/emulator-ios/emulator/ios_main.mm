@@ -98,24 +98,3 @@ void UpdateInputState(u32 port) {
 void get_mic_data(u8* ) {
 
 }
-
-void* libPvr_GetRenderTarget() {
-    return 0;
-}
-
-void* libPvr_GetRenderSurface() {
-    return 0;
-
-}
-
-bool gl_init(void*, void*) {
-    return true;
-}
-
-void gl_term() {
-
-}
-
-void gl_swap() {
-
-}

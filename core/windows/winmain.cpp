@@ -8,9 +8,7 @@
 #include "win_keyboard.h"
 #include "hw/sh4/dyna/blockmanager.h"
 #include "log/LogManager.h"
-#ifdef USE_VULKAN
-#include "rend/vulkan/vulkan.h"
-#endif
+#include "wsi/context.h"
 
 #define _WIN32_WINNT 0x0500
 #include <windows.h>
@@ -369,7 +367,8 @@ LRESULT CALLBACK WndProc2(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	return DefWindowProc(hWnd, message, wParam, lParam);
 }
 
-void* window_win;
+static HWND hWnd;
+
 void os_CreateWindow()
 {
 	WNDCLASS sWC;
@@ -398,28 +397,19 @@ void os_CreateWindow()
 	SetRect(&sRect, 0, 0, screen_width, screen_height);
 	AdjustWindowRectEx(&sRect, WS_OVERLAPPEDWINDOW, false, 0);
 
-	HWND hWnd = CreateWindow( WINDOW_CLASS, VER_FULLNAME, WS_VISIBLE | WS_OVERLAPPEDWINDOW | (window_maximized ? WS_MAXIMIZE : 0),
+	hWnd = CreateWindow( WINDOW_CLASS, VER_FULLNAME, WS_VISIBLE | WS_OVERLAPPEDWINDOW | (window_maximized ? WS_MAXIMIZE : 0),
 		0, 0, sRect.right-sRect.left, sRect.bottom-sRect.top, NULL, NULL, sWC.hInstance, NULL);
-
-	window_win=hWnd;
 }
 
 void* libPvr_GetRenderTarget()
 {
-	return window_win;
+	return (void*)hWnd;
 }
-
-void* libPvr_GetRenderSurface()
-{
-	return GetDC((HWND)window_win);
-}
-
 
 void ToggleFullscreen()
 {
 	static RECT rSaved;
 	static bool fullscreen=false;
-	HWND hWnd = (HWND)window_win;
 
 	fullscreen = !fullscreen;
 
@@ -465,7 +455,7 @@ BOOL CtrlHandler( DWORD fdwCtrlType )
 		case CTRL_CLOSE_EVENT:
 		// Handle the CTRL-C signal.
 		case CTRL_C_EVENT:
-			SendMessageA((HWND)libPvr_GetRenderTarget(),WM_CLOSE,0,0); //FIXEM
+			SendMessageA(hWnd, WM_CLOSE, 0, 0); //FIXEM
 			return( TRUE );
 		default:
 			return FALSE;
@@ -475,9 +465,9 @@ BOOL CtrlHandler( DWORD fdwCtrlType )
 
 void os_SetWindowText(const char* text)
 {
-	if (GetWindowLong((HWND)libPvr_GetRenderTarget(),GWL_STYLE)&WS_BORDER)
+	if (GetWindowLong(hWnd, GWL_STYLE) & WS_BORDER)
 	{
-		SetWindowText((HWND)libPvr_GetRenderTarget(), text);
+		SetWindowText(hWnd, text);
 	}
 }
 
@@ -692,7 +682,6 @@ int main(int argc, char **argv)
 #pragma comment(linker, "/subsystem:windows")
 
 int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShowCmd)
-
 {
 	int argc = 0;
 	wchar* cmd_line = GetCommandLineA();
@@ -724,28 +713,15 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 			setup_seh();
 		#endif
 #ifdef USE_VULKAN
-		VulkanContext *vulkanContext = nullptr;
-		if (settings.pvr.rend == 4)
-		{
-			vulkanContext = new VulkanContext();
-			if (!vulkanContext->Init())
-			{
-				settings.pvr.rend = 0;
-				delete vulkanContext;
-				vulkanContext = nullptr;
-				ERROR_LOG(RENDERER, "Vulkan initialization failed. Falling back to Open GL");
-			}
-		}
+		theVulkanContext.SetWindow((void *)hWnd, (void *)GetDC((HWND)hWnd));
 #endif
+		theGLContext.SetWindow(hWnd);
+		theGLContext.SetDeviceContext(GetDC(hWnd));
+		SwitchRenderApi();
 
 		rend_thread(NULL);
 
 		dc_term();
-
-#ifdef USE_VULKAN
-		if (vulkanContext != nullptr)
-			delete vulkanContext;
-#endif
 	}
 #ifndef __GNUC__
 	__except( ExeptionHandler(GetExceptionInformation()) )
@@ -766,8 +742,8 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 
 
 
-LARGE_INTEGER qpf;
-double  qpfd;
+static LARGE_INTEGER qpf;
+static double  qpfd;
 //Helper functions
 double os_GetSeconds()
 {
@@ -803,4 +779,3 @@ void os_DoEvents()
 }
 
 int get_mic_data(u8* buffer) { return 0; }
-int push_vmu_screen(u8* buffer) { return 0; }

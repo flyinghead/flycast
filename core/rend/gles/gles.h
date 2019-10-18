@@ -3,38 +3,7 @@
 #include <atomic>
 #include "rend/rend.h"
 #include "rend/TexCache.h"
-
-#if (defined(GLES) && HOST_OS != OS_DARWIN && !defined(USE_SDL)) || defined(__ANDROID__)
-#define USE_EGL
-#include <EGL/egl.h>
-#include <EGL/eglext.h>
-#endif
-
-#ifdef GLES
-#if defined(TARGET_IPHONE) //apple-specific ogles2 headers
-//#include <APPLE/egl.h>
-#include <OpenGLES/ES2/gl.h>
-#include <OpenGLES/ES2/glext.h>
-#endif
-#include <GLES32/gl32.h>
-#include <GLES32/gl2ext.h>
-#ifndef GLES2
-#include "gl32funcs.h"
-#endif
-
-#ifndef GL_NV_draw_path
-//IMGTEC GLES emulation
-#pragma comment(lib,"libEGL.lib")
-#pragma comment(lib,"libGLESv2.lib")
-#else /* NV gles emulation*/
-#pragma comment(lib,"libGLES20.lib")
-#endif
-
-#elif HOST_OS == OS_DARWIN
-    #include <OpenGL/gl3.h>
-#else
-	#include <GL4/gl3w.h>
-#endif
+#include "wsi/gl_context.h"
 
 #define glCheck() do { if (unlikely(settings.validate.OpenGlChecks)) { verify(glGetError()==GL_NO_ERROR); } } while(0)
 #define eglCheck() false
@@ -77,17 +46,6 @@ struct PipelineShader
 
 struct gl_ctx
 {
-#ifdef USE_EGL
-	struct
-	{
-		EGLNativeWindowType native_wind;
-		EGLNativeDisplayType native_disp;
-		EGLDisplay display;
-		EGLSurface surface;
-		EGLContext context;
-	} setup;
-#endif
-
 	struct
 	{
 		GLuint program;
@@ -137,7 +95,6 @@ struct gl_ctx
 	bool is_gles;
 	GLuint fog_image_format;
 	GLenum index_type;
-	bool swap_buffer_not_preserved;
 	bool GL_OES_packed_depth_stencil_supported;
 	bool GL_OES_depth24_supported;
 
@@ -157,10 +114,8 @@ struct text_info {
 };
 enum ModifierVolumeMode { Xor, Or, Inclusion, Exclusion, ModeCount };
 
-bool gl_init(void* wind, void* disp);
 void gl_load_osd_resources();
 void gl_free_osd_resources();
-void gl_swap();
 bool ProcessFrame(TA_context* ctx);
 void UpdateFogTexture(u8 *fog_table, GLenum texture_slot, GLint fog_image_format);
 void findGLVersion();

@@ -34,16 +34,17 @@ class VulkanContext
 {
 public:
 	VulkanContext() { verify(contextInstance == nullptr); contextInstance = this; }
-	~VulkanContext();
+	~VulkanContext() { Term(); verify(contextInstance == this); contextInstance = nullptr; }
+
 	bool Init();
 	bool InitInstance(const char** extensions, uint32_t extensions_count);
 	bool InitDevice();
 	void CreateSwapChain();
+	void Term();
+	void SetWindow(void *window, void *display) { this->window = window; this->display = display; }
 
 	VkInstance GetInstance() const { return static_cast<VkInstance>(instance.get()); }
 	u32 GetGraphicsQueueFamilyIndex() const { return graphicsQueueIndex; }
-	VkSurfaceKHR GetSurface() { return (VkSurfaceKHR)this->surface; }
-	void SetSurface(VkSurfaceKHR surface) { this->surface = vk::SurfaceKHR(surface); }
 	void SetWindowSize(u32 width, u32 height) { this->width = screen_width = width; this->height = screen_height = height; }
 	void NewFrame();
 	void BeginRenderPass();
@@ -87,10 +88,17 @@ public:
 private:
 	vk::Format InitDepthBuffer();
 	void InitImgui();
+	vk::SurfaceKHR GetSurface() {
+#ifdef USE_SDL
+		return surface;
+#else
+		return *surface;
+#endif
+	}
 
 	bool HasSurfaceDimensionChanged()
 	{
-		vk::SurfaceCapabilitiesKHR surfaceCapabilities = physicalDevice.getSurfaceCapabilitiesKHR(surface);
+		vk::SurfaceCapabilitiesKHR surfaceCapabilities = physicalDevice.getSurfaceCapabilitiesKHR(GetSurface());
 		VkExtent2D swapchainExtent;
 		if (surfaceCapabilities.currentExtent.width == std::numeric_limits<uint32_t>::max())
 		{
@@ -112,6 +120,8 @@ private:
 		return true;
 	}
 
+	void *window = nullptr;
+	void *display = nullptr;
 	bool rendering = false;
 	bool renderDone = false;
 	u32 width = 0;
@@ -127,7 +137,11 @@ private:
 	bool optimalTilingSupported4444 = false;
 	vk::UniqueDevice device;
 
+#ifdef USE_SDL
 	vk::SurfaceKHR surface;
+#else
+	vk::UniqueSurfaceKHR surface;
+#endif
 
 	vk::UniqueSwapchainKHR swapChain;
 	std::vector<vk::UniqueImageView> imageViews;
@@ -142,7 +156,7 @@ private:
 	vk::UniqueImage depthImage;
 	vk::UniqueImageView depthView;
 	vk::UniqueDeviceMemory depthMemory;
-	vk::Format depthFormat;
+	vk::Format depthFormat = vk::Format::eUndefined;
 
 	std::vector<vk::UniqueCommandPool> commandPools;
 	std::vector<vk::UniqueCommandBuffer> commandBuffers;

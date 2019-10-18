@@ -5,6 +5,7 @@
 #include "rend/gui.h"
 #include "hw/mem/_vmem.h"
 #include "cheats.h"
+#include "wsi/context.h"
 
 #include <zlib.h>
 
@@ -80,9 +81,9 @@ u32 FrameCount=1;
 
 Renderer* renderer;
 static Renderer* fallback_renderer;
-volatile bool renderer_enabled = true;	// Signals the renderer thread to exit
-volatile bool renderer_changed = false;	// Signals the renderer thread to switch renderer
-volatile bool renderer_reinit_requested = false;	// Signals the renderer thread to reinit the renderer
+bool renderer_enabled = true;	// Signals the renderer thread to exit
+int renderer_changed = -1;	// Signals the renderer thread to switch renderer
+bool renderer_reinit_requested = false;	// Signals the renderer thread to reinit the renderer
 
 #if !defined(TARGET_NO_THREADS)
 cResetEvent rs, re;
@@ -276,10 +277,11 @@ bool rend_frame(TA_context* ctx, bool draw_osd) {
 
 bool rend_single_frame()
 {
-	if (renderer_changed)
+	if (renderer_changed != settings.pvr.rend)
 	{
-		renderer_changed = false;
 		rend_term_renderer();
+		settings.pvr.rend = renderer_changed;
+		SwitchRenderApi();
 		rend_create_renderer();
 		rend_init_renderer();
 	}
@@ -375,6 +377,7 @@ static void rend_create_renderer()
 #endif
 	}
 #endif
+	renderer_changed = settings.pvr.rend;
 }
 
 void rend_init_renderer()
@@ -428,15 +431,7 @@ void* rend_thread(void* p)
 				swap_pending = false;
 			}
 		}
-		if (renderer_changed)
-		{
-			renderer_changed = false;
-			renderer_reinit_requested = false;
-			rend_term_renderer();
-			rend_create_renderer();
-			rend_init_renderer();
-		}
-		else if (renderer_reinit_requested)
+		if (renderer_reinit_requested)
 		{
 			renderer_reinit_requested = false;
 			rend_init_renderer();

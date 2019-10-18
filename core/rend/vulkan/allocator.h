@@ -34,7 +34,7 @@ public:
 	{
 		verify(size >= SmallestBlockSize);
 		freeBlocks.push_back(std::make_pair(0, PowerOf2(size)));
-		INFO_LOG(RENDERER, "Allocated memory chunk of size %zd", PowerOf2(size));
+		INFO_LOG(RENDERER, "Allocated memory chunk of size %llu", (unsigned long long)PowerOf2(size));
 	}
 	Chunk(const Chunk& other) = delete;
 	Chunk(Chunk&& other) = default;
@@ -46,7 +46,7 @@ public:
 		verify(usedBlocks.empty());
 		verify(freeBlocks.size() <= 1);
 		if (!freeBlocks.empty())
-			INFO_LOG(RENDERER, "Freeing memory chunk of size %zd", freeBlocks.front().second);
+			INFO_LOG(RENDERER, "Freeing memory chunk of size %llu", (unsigned long long)freeBlocks.front().second);
 	}
 
 private:

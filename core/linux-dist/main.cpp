@@ -48,19 +48,6 @@
 #include "profiler/profiler.h"
 #endif
 
-void* x11_win = 0;
-void* x11_disp = 0;
-
-void* libPvr_GetRenderTarget()
-{
-	return x11_win;
-}
-
-void* libPvr_GetRenderSurface()
-{
-	return x11_disp;
-}
-
 u16 kcode[4] = {0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF};
 u8 rt[4] = {0, 0, 0, 0};
 u8 lt[4] = {0, 0, 0, 0};
@@ -155,8 +142,6 @@ void dc_term();
 void* rend_thread(void* p);
 
 #ifdef TARGET_PANDORA
-	void gl_term();
-
 	void clean_exit(int sig_num)
 	{
 		void* array[10];
@@ -169,12 +154,6 @@ void* rend_thread(void* p);
 			{
 				close(evdev_controllers[port]->fd);
 			}
-		}
-
-		// Close EGL context ???
-		if (sig_num!=0)
-		{
-			gl_term();
 		}
 
 		x11_window_destroy():

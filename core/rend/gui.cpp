@@ -645,7 +645,7 @@ static void gui_display_settings()
     ImGui::NewFrame();
 
 	int dynarec_enabled = settings.dynarec.Enable;
-	u32 renderer = settings.pvr.rend;
+	int renderer = settings.pvr.rend;
 	bool vulkan = renderer == 4;
 
     if (!settings_opening && settings.pvr.IsOpenGL())
@@ -957,7 +957,7 @@ static void gui_display_settings()
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
 			int renderer = settings.pvr.rend == 3 ? 2 : settings.rend.PerStripSorting ? 1 : 0;
 #if HOST_OS != OS_DARWIN
-			bool has_per_pixel = !gl.is_gles && gl.gl_major >= 4;
+			bool has_per_pixel = !gl.is_gles && gl.gl_major >= 4 && !vulkan;
 #else
 			bool has_per_pixel = false;
 #endif
@@ -1351,13 +1351,8 @@ static void gui_display_settings()
     ImGui_impl_RenderDrawData(ImGui::GetDrawData(), false);
 
     if (vulkan ^ (settings.pvr.rend == 4))
-    {
-    	settings.pvr.rend = vulkan ? 4 : 0;
-    	dc_term();
-    	exit(0);
-    }
-   	if (renderer != settings.pvr.rend)
-   		renderer_changed = true;
+    	renderer = settings.pvr.rend == 4 ? 0 : 4;
+	renderer_changed = renderer;
    	settings.dynarec.Enable = (bool)dynarec_enabled;
 }
 

@@ -43,7 +43,6 @@ s8 joyx[4],joyy[4];
 u8 rt[4],lt[4];
 
 int get_mic_data(u8* buffer) { return 0; }
-int push_vmu_screen(u8* buffer) { return 0; }
 
 void os_SetWindowText(const char * text) {
     puts(text);
@@ -71,21 +70,6 @@ void os_SetupInput()
 	GamepadDevice::Register(kb_gamepad);
 	mouse_gamepad = std::make_shared<OSXMouseGamepadDevice>(0);
 	GamepadDevice::Register(mouse_gamepad);
-}
-
-void* libPvr_GetRenderTarget() {
-    return 0;
-}
-
-void* libPvr_GetRenderSurface() {
-    return 0;
-}
-
-bool gl_init(void*, void*) {
-    return true;
-}
-
-void gl_term() {
 }
 
 void common_linux_setup();

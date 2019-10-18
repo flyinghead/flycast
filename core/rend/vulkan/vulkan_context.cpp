@@ -23,6 +23,10 @@
 #include "imgui_impl_vulkan.h"
 #include "../gui.h"
 #include "hw/pvr/Renderer_if.h"
+#ifdef USE_SDL
+#include <sdl/sdl.h>
+#include <SDL2/SDL_vulkan.h>
+#endif
 
 VulkanContext *VulkanContext::contextInstance;
 
@@ -318,13 +322,13 @@ bool VulkanContext::InitDevice()
 
 		// determine a queueFamilyIndex that supports present
 		// first check if the graphicsQueueFamilyIndex is good enough
-		presentQueueIndex = physicalDevice.getSurfaceSupportKHR(graphicsQueueIndex, surface) ? graphicsQueueIndex : queueFamilyProperties.size();
+		presentQueueIndex = physicalDevice.getSurfaceSupportKHR(graphicsQueueIndex, GetSurface()) ? graphicsQueueIndex : queueFamilyProperties.size();
 		if (presentQueueIndex == queueFamilyProperties.size())
 		{
 			// the graphicsQueueFamilyIndex doesn't support present -> look for an other family index that supports both graphics and present
 			for (size_t i = 0; i < queueFamilyProperties.size(); i++)
 			{
-				if ((queueFamilyProperties[i].queueFlags & vk::QueueFlagBits::eGraphics) && physicalDevice.getSurfaceSupportKHR((u32)i, surface))
+				if ((queueFamilyProperties[i].queueFlags & vk::QueueFlagBits::eGraphics) && physicalDevice.getSurfaceSupportKHR((u32)i, GetSurface()))
 				{
 					graphicsQueueIndex = (u32)i;
 					presentQueueIndex = (u32)i;
@@ -337,7 +341,7 @@ bool VulkanContext::InitDevice()
 				DEBUG_LOG(RENDERER, "Using separate Graphics and Present queue families");
 				for (size_t i = 0; i < queueFamilyProperties.size(); i++)
 				{
-					if (physicalDevice.getSurfaceSupportKHR((u32)i, surface))
+					if (physicalDevice.getSurfaceSupportKHR((u32)i, GetSurface()))
 					{
 						presentQueueIndex = (u32)i;
 						break;
@@ -352,11 +356,21 @@ bool VulkanContext::InitDevice()
 		else
 			DEBUG_LOG(RENDERER, "Using distinct Graphics and Present queue families");
 
+		// Enable VK_KHR_dedicated_allocation if available
+		std::vector<const char *> deviceExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
+		for (const auto& property : physicalDevice.enumerateDeviceExtensionProperties())
+		{
+			if (!strcmp(property.extensionName, VK_KHR_GET_MEMORY_REQUIREMENTS_2_EXTENSION_NAME))
+				deviceExtensions.push_back(VK_KHR_GET_MEMORY_REQUIREMENTS_2_EXTENSION_NAME);
+			else if (!strcmp(property.extensionName, VK_KHR_DEDICATED_ALLOCATION_EXTENSION_NAME))
+				deviceExtensions.push_back(VK_KHR_DEDICATED_ALLOCATION_EXTENSION_NAME);
+		}
+
 		// create a UniqueDevice
 		float queuePriority = 1.0f;
-		const char *dev_extensions[] = { "VK_KHR_swapchain" };
 		vk::DeviceQueueCreateInfo deviceQueueCreateInfo(vk::DeviceQueueCreateFlags(), graphicsQueueIndex, 1, &queuePriority);
-		device = physicalDevice.createDeviceUnique(vk::DeviceCreateInfo(vk::DeviceCreateFlags(), 1, &deviceQueueCreateInfo, 0, nullptr, 1, dev_extensions));
+		device = physicalDevice.createDeviceUnique(vk::DeviceCreateInfo(vk::DeviceCreateFlags(), 1, &deviceQueueCreateInfo,
+				0, nullptr, deviceExtensions.size(), &deviceExtensions[0]));
 
 		// This links entry points directly from the driver and isn't absolutely necessary
 		volkLoadDevice(static_cast<VkDevice>(*device));
@@ -431,7 +445,7 @@ void VulkanContext::CreateSwapChain()
 		imageViews.clear();
 
 		// get the supported VkFormats
-		std::vector<vk::SurfaceFormatKHR> formats = physicalDevice.getSurfaceFormatsKHR(surface);
+		std::vector<vk::SurfaceFormatKHR> formats = physicalDevice.getSurfaceFormatsKHR(GetSurface());
 		assert(!formats.empty());
 		vk::Format colorFormat = vk::Format::eUndefined;
 		for (const auto& f : formats)
@@ -449,7 +463,7 @@ void VulkanContext::CreateSwapChain()
 			colorFormat = (formats[0].format == vk::Format::eUndefined) ? vk::Format::eB8G8R8A8Unorm : formats[0].format;
 		}
 
-		vk::SurfaceCapabilitiesKHR surfaceCapabilities = physicalDevice.getSurfaceCapabilitiesKHR(surface);
+		vk::SurfaceCapabilitiesKHR surfaceCapabilities = physicalDevice.getSurfaceCapabilitiesKHR(GetSurface());
 		DEBUG_LOG(RENDERER, "Surface capabilities: %d x %d, %s, image count: %d - %d", surfaceCapabilities.currentExtent.width, surfaceCapabilities.currentExtent.height,
 				vk::to_string(surfaceCapabilities.currentTransform).c_str(), surfaceCapabilities.minImageCount, surfaceCapabilities.maxImageCount);
 		VkExtent2D swapchainExtent;
@@ -470,7 +484,7 @@ void VulkanContext::CreateSwapChain()
 		vk::PresentModeKHR swapchainPresentMode = vk::PresentModeKHR::eFifo;
 		// Use FIFO on mobile, prefer Mailbox on desktop
 #if HOST_CPU != CPU_ARM && HOST_CPU != CPU_ARM64 && !defined(__ANDROID__)
-		for (auto& presentMode : physicalDevice.getSurfacePresentModesKHR(surface))
+		for (auto& presentMode : physicalDevice.getSurfacePresentModesKHR(GetSurface()))
 		{
 			if (presentMode == vk::PresentModeKHR::eMailbox)
 			{
@@ -490,7 +504,7 @@ void VulkanContext::CreateSwapChain()
 		u32 imageCount = std::max(3u, surfaceCapabilities.minImageCount);
 		if (surfaceCapabilities.maxImageCount != 0)
 			imageCount = std::min(imageCount, surfaceCapabilities.maxImageCount);
-		vk::SwapchainCreateInfoKHR swapChainCreateInfo(vk::SwapchainCreateFlagsKHR(), surface, imageCount, colorFormat, vk::ColorSpaceKHR::eSrgbNonlinear,
+		vk::SwapchainCreateInfoKHR swapChainCreateInfo(vk::SwapchainCreateFlagsKHR(), GetSurface(), imageCount, colorFormat, vk::ColorSpaceKHR::eSrgbNonlinear,
 				swapchainExtent, 1, vk::ImageUsageFlagBits::eColorAttachment, vk::SharingMode::eExclusive, 0, nullptr, preTransform, compositeAlpha, swapchainPresentMode, true, nullptr);
 
 		u32 queueFamilyIndices[2] = { graphicsQueueIndex, presentQueueIndex };
@@ -575,31 +589,40 @@ void VulkanContext::CreateSwapChain()
 bool VulkanContext::Init()
 {
 	std::vector<const char *> extensions;
-	extensions.push_back("VK_KHR_surface");
+	extensions.push_back(VK_KHR_SURFACE_EXTENSION_NAME);
 #if defined(_WIN32)
-	extensions.push_back("VK_KHR_win32_surface");
+	extensions.push_back(VK_KHR_WIN32_SURFACE_EXTENSION_NAME);
 #elif defined(__MACH__)
-	extensions.push_back("VK_MVK_macos_surface");
+	extensions.push_back(VK_MVK_MACOS_SURFACE_EXTENSION_NAME);
 #elif defined(SUPPORT_X11)
-	extensions.push_back("VK_KHR_xlib_surface");
+	extensions.push_back(VK_KHR_XLIB_SURFACE_EXTENSION_NAME);
+#elif defined(__ANDROID__)
+	extensions.push_back(VK_KHR_ANDROID_SURFACE_EXTENSION_NAME);
+#elif defined(USE_SDL)
+	sdl_recreate_window(SDL_WINDOW_VULKAN);
+    uint32_t extensionsCount = 0;
+    SDL_Vulkan_GetInstanceExtensions((SDL_Window *)window, &extensionsCount, NULL);
+    extensions.resize(extensionsCount + 1);
+    SDL_Vulkan_GetInstanceExtensions((SDL_Window *)window, &extensionsCount, &extensions[1]);
 #endif
 	if (!InitInstance(&extensions[0], extensions.size()))
 		return false;
 
-	VkSurfaceKHR surface = VK_NULL_HANDLE;
 #if defined(_WIN32)
-	VkWin32SurfaceCreateInfoKHR createInfo = {};
-	createInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
-	createInfo.hinstance = GetModuleHandle(NULL);
-	createInfo.hwnd = (HWND)libPvr_GetRenderTarget();
-	if (vkCreateWin32SurfaceKHR(*instance, &createInfo, nullptr, &surface) != VK_SUCCESS)
-	{
-		ERROR_LOG(RENDERER, "Windows surface creation failed");
-		return false;
-	}
+	vk::Win32SurfaceCreateInfoKHR createInfo(vk::Win32SurfaceCreateFlagsKHR(), GetModuleHandle(NULL), (HWND)window);
+	surface = instance->createWin32SurfaceKHRUnique(createInfo);
+#elif defined(SUPPORT_X11)
+	vk::XlibSurfaceCreateInfoKHR createInfo(vk::XlibSurfaceCreateFlagsKHR(), (Display*)display, (Window)window);
+	surface = instance->createXlibSurfaceKHRUnique(createInfo);
+#elif defined(__ANDROID__)
+	vk::AndroidSurfaceCreateInfoKHR createInfo(vk::AndroidSurfaceCreateFlagsKHR(), (struct ANativeWindow*)window);
+	surface = instance->createAndroidSurfaceKHRUnique(createInfo);
+#elif defined(USE_SDL)
+    VkSurfaceKHR surface;
+    if (SDL_Vulkan_CreateSurface((SDL_Window *)window, *instance, (VkSurfaceKHR *)&this->surface) == 0)
+    	return false;
 #endif
 
-	SetSurface(surface);
 	return InitDevice();
 }
 
@@ -656,10 +679,10 @@ void VulkanContext::Present()
 	}
 }
 
-VulkanContext::~VulkanContext()
+void VulkanContext::Term()
 {
 	ImGui_ImplVulkan_Shutdown();
-	if (device)
+	if (device && pipelineCache)
     {
         std::vector<u8> cacheData = device->getPipelineCacheData(*pipelineCache);
         if (!cacheData.empty())
@@ -686,9 +709,17 @@ VulkanContext::~VulkanContext()
 	imageAcquiredSemaphores.clear();
 	renderCompleteSemaphores.clear();
 	drawFences.clear();
-	if (surface)
-    	vkDestroySurfaceKHR((VkInstance)*instance, (VkSurfaceKHR)surface, nullptr);
-
-	verify(contextInstance == this);
-	contextInstance = nullptr;
+#ifndef USE_SDL
+	surface.reset();
+#endif
+	pipelineCache.reset();
+	device.reset();
+#ifdef VK_DEBUG
+#ifndef __ANDROID__
+	debugUtilsMessenger.reset();
+#else
+	debugReportCallback.reset();
+#endif
+#endif
+	instance.reset();
 }

@@ -21,7 +21,6 @@
 #include "reios/gdrom_hle.h"
 #include <map>
 #include <set>
-#include "rend/gles/gles.h"
 #include "hw/sh4/dyna/blockmanager.h"
 #include "hw/sh4/dyna/ngen.h"
 #include "hw/naomi/naomi_cart.h"

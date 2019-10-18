@@ -25,7 +25,7 @@
 #include "rend/gui.h"
 #include "cfg/cfg.h"
 #include "log/LogManager.h"
-#include "rend/vulkan/vulkan.h"
+#include "wsi/context.h"
 
 JavaVM* g_jvm;
 
@@ -176,16 +176,6 @@ void os_CreateWindow()
 void UpdateInputState(u32 Port)
 {
     // @@@ Nothing here yet
-}
-
-void *libPvr_GetRenderTarget()
-{
-    return g_window;    // the surface to render to
-}
-
-void *libPvr_GetRenderSurface()
-{
-    return NULL;    // default display
 }
 
 void common_linux_setup();
@@ -404,63 +394,13 @@ extern void egl_stealcntx();
 static void *render_thread_func(void *)
 {
 #ifdef USE_VULKAN
-    VulkanContext *vulkanContext = nullptr;
-    if (settings.pvr.rend == 4)
-    {
-        // Vulkan init
-        INFO_LOG(RENDERER, "Initializing Vulkan");
-        vulkanContext = new VulkanContext();
-        std::vector<const char*> extensions;
-        extensions.emplace_back("VK_KHR_surface");
-        extensions.emplace_back("VK_KHR_android_surface");
-        if (vulkanContext->InitInstance(&extensions[0], extensions.size()))
-        {
-            VkAndroidSurfaceCreateInfoKHR createInfo {
-               .sType = VK_STRUCTURE_TYPE_ANDROID_SURFACE_CREATE_INFO_KHR,
-               .pNext = nullptr,
-               .flags = 0,
-               .window = g_window
-            };
-            VkSurfaceKHR surface;
-            if (vkCreateAndroidSurfaceKHR(vulkanContext->GetInstance(), &createInfo, nullptr, &surface) != VK_SUCCESS)
-            {
-                ERROR_LOG(RENDERER, "Vulkan surface creation failed");
-                settings.pvr.rend = 0;
-
-            }
-            else
-            {
-                vulkanContext->SetSurface(surface);
-                if (!vulkanContext->InitDevice())
-                    settings.pvr.rend = 0;
-                else
-                    INFO_LOG(RENDERER, "Vulkan init done");
-            }
-        }
-        else
-        {
-            settings.pvr.rend = 0;
-        }
-    }
-    if (settings.pvr.rend != 4)
-    {
-    	// Clean up any aborted vulkan context in case it failed to initialize
-    	// and fall back to Open GL
-    	if (vulkanContext == nullptr)
-    	{
-    		delete vulkanContext;
-            vulkanContext = nullptr;
-    	}
-        INFO_LOG(RENDERER, "Initializing OpenGL");
-    }
-
+	theVulkanContext.SetWindow((void *)g_window, nullptr);
 #endif
+	theGLContext.SetNativeWindow((EGLNativeWindowType)g_window);
+	SwitchRenderApi();
+
 	rend_thread(NULL);
 
-#ifdef USE_VULKAN
-    if (vulkanContext)
-        delete vulkanContext;
-#endif
 	ANativeWindow_release(g_window);
     g_window = NULL;
 
@@ -492,19 +432,19 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_rendinitJava(JNIEnv *
 {
     screen_width = width;
     screen_height = height;
-    egl_stealcntx();
+    // FIXME egl_stealcntx();
     rend_init_renderer();
 }
 
 JNIEXPORT jboolean JNICALL Java_com_reicast_emulator_emu_JNIdc_rendframeJava(JNIEnv *env,jobject obj)
 {
-    egl_stealcntx();
+    // FIXME egl_stealcntx();
     return (jboolean)rend_single_frame();
 }
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_rendtermJava(JNIEnv * env, jobject obj)
 {
-    egl_stealcntx();
+	// FIXME egl_stealcntx();
     rend_term_renderer();
 }
 

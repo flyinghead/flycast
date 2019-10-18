@@ -1,6 +1,7 @@
 #include <cmath>
 #include "gl4.h"
 #include "rend/gles/glcache.h"
+#include "wsi/gl_context.h"
 #include "rend/TexCache.h"
 #include "cfg/cfg.h"
 
@@ -482,8 +483,6 @@ bool gl4CompilePipelineShader(	gl4PipelineShader* s, bool rotate_90, const char 
 	return glIsProgram(s->program)==GL_TRUE;
 }
 
-void gl_term();
-
 void gl4_delete_shaders()
 {
 	for (auto it : gl4.shaders)
@@ -507,8 +506,6 @@ static void gles_term(void)
 	gl4_delete_shaders();
 	glDeleteVertexArrays(1, &gl4.vbo.main_vao);
 	glDeleteVertexArrays(1, &gl4.vbo.modvol_vao);
-
-	gl_term();
 }
 
 static void create_modvol_shader()
@@ -568,11 +565,6 @@ extern void gl4CreateTextures(int width, int height);
 
 static bool gles_init()
 {
-
-	if (!gl_init((void*)libPvr_GetRenderTarget(),
-		         (void*)libPvr_GetRenderSurface()))
-			return false;
-
 	int major = 0;
 	int minor = 0;
 	glGetIntegerv(GL_MAJOR_VERSION, &major);
@@ -598,7 +590,7 @@ static bool gles_init()
 	//clean up the buffer
 	glcache.ClearColor(0.f, 0.f, 0.f, 0.f);
 	glClear(GL_COLOR_BUFFER_BIT);
-	gl_swap();
+	theGLContext.Swap();
 
 	initABuffer();
 
@@ -845,7 +837,7 @@ static bool RenderFrame()
 	}
 	else
 	{
-		if (settings.rend.ScreenScaling != 100 || gl.swap_buffer_not_preserved)
+		if (settings.rend.ScreenScaling != 100 || !theGLContext.IsSwapBufferPreserved())
 		{
 			output_fbo = init_output_framebuffer(rendering_width, rendering_height);
 		}
@@ -971,7 +963,7 @@ static bool RenderFrame()
 
 	if (is_rtt)
 		ReadRTTBuffer();
-	else if (settings.rend.ScreenScaling != 100 || gl.swap_buffer_not_preserved)
+	else if (settings.rend.ScreenScaling != 100 || !theGLContext.IsSwapBufferPreserved())
 		gl4_render_output_framebuffer();
 
 	return !is_rtt;
@@ -981,14 +973,14 @@ void termABuffer();
 
 struct gl4rend : Renderer
 {
-	bool Init() { return gles_init(); }
-	void Resize(int w, int h)
+	bool Init() override { return gles_init(); }
+	void Resize(int w, int h) override
 	{
 		screen_width=w;
 		screen_height=h;
 		resize(lroundf(w * settings.rend.ScreenScaling / 100.f), lroundf(h * settings.rend.ScreenScaling / 100.f));
 	}
-	void Term()
+	void Term() override
 	{
 		termABuffer();
 		if (stencilTexId != 0)
@@ -1020,13 +1012,13 @@ struct gl4rend : Renderer
 		gles_term();
 	}
 
-	bool Process(TA_context* ctx) { return ProcessFrame(ctx); }
-	bool Render() { return RenderFrame(); }
-	bool RenderLastFrame() { return gl.swap_buffer_not_preserved ? gl4_render_output_framebuffer() : false; }
+	bool Process(TA_context* ctx) override { return ProcessFrame(ctx); }
+	bool Render() override { return RenderFrame(); }
+	bool RenderLastFrame() override { return !theGLContext.IsSwapBufferPreserved() ? gl4_render_output_framebuffer() : false; }
 
-	void Present() { gl_swap(); }
+	void Present() override { theGLContext.Swap(); }
 
-	void DrawOSD(bool clear_screen)
+	void DrawOSD(bool clear_screen) override
 	{
 		glBindVertexArray(gl4.vbo.main_vao);
 		glBindBuffer(GL_ARRAY_BUFFER, gl4.vbo.geometry); glCheck();
