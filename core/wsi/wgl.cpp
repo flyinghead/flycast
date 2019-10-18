@@ -25,7 +25,11 @@
 
 WGLGraphicsContext theGLContext;
 
-bool WGLContext::Init()
+PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormatARB;
+PFNWGLCREATECONTEXTATTRIBSARBPROC wglCreateContextAttribsARB;
+PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT;
+
+bool WGLGraphicsContext::Init()
 {
 	if (ourOpenGLRenderingContext != NULL)
 		// Already initialized
@@ -111,7 +115,7 @@ bool WGLContext::Init()
 	return rv;
 }
 
-void WGLContext::Swap()
+void WGLGraphicsContext::Swap()
 {
 #ifdef TEST_AUTOMATION
 	do_swap_automation();
@@ -119,7 +123,7 @@ void WGLContext::Swap()
 	wglSwapLayerBuffers(ourWindowHandleToDeviceContext, WGL_SWAP_MAIN_PLANE);
 }
 
-void WGLContext::Term()
+void WGLGraphicsContext::Term()
 {
 	if (ourOpenGLRenderingContext != NULL)
 	{
