@@ -19,7 +19,7 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #include "build.h"
-#if 1//defined(USE_SDL) && HOST_OS != OS_DARWIN
+#if defined(USE_SDL) && HOST_OS != OS_DARWIN
 #include "gl_context.h"
 #include "rend/gui.h"
 #include "sdl/sdl.h"
