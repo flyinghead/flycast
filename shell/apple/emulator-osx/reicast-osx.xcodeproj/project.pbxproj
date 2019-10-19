@@ -88,8 +88,6 @@
 		84B7BF1F1B72720200F9733F /* trees.c in Sources */ = {isa = PBXBuildFile; fileRef = 84B7BDB01B72720100F9733F /* trees.c */; };
 		84B7BF201B72720200F9733F /* uncompr.c in Sources */ = {isa = PBXBuildFile; fileRef = 84B7BDB21B72720100F9733F /* uncompr.c */; };
 		84B7BF211B72720200F9733F /* zutil.c in Sources */ = {isa = PBXBuildFile; fileRef = 84B7BDB61B72720100F9733F /* zutil.c */; };
-		84B7BF221B72720200F9733F /* emitter.vcxproj in Resources */ = {isa = PBXBuildFile; fileRef = 84B7BDB91B72720100F9733F /* emitter.vcxproj */; };
-		84B7BF231B72720200F9733F /* emitter.vcxproj.user in Resources */ = {isa = PBXBuildFile; fileRef = 84B7BDBA1B72720100F9733F /* emitter.vcxproj.user */; };
 		84B7BF241B72720200F9733F /* x86_emitter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 84B7BDC01B72720100F9733F /* x86_emitter.cpp */; };
 		84B7BF251B72720200F9733F /* aica.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 84B7BDC81B72720100F9733F /* aica.cpp */; };
 		84B7BF261B72720200F9733F /* aica_if.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 84B7BDCA1B72720100F9733F /* aica_if.cpp */; };
@@ -466,8 +464,6 @@
 		84B7BDB51B72720100F9733F /* zlib.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zlib.h; sourceTree = "<group>"; };
 		84B7BDB61B72720100F9733F /* zutil.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = zutil.c; sourceTree = "<group>"; };
 		84B7BDB71B72720100F9733F /* zutil.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zutil.h; sourceTree = "<group>"; };
-		84B7BDB91B72720100F9733F /* emitter.vcxproj */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = emitter.vcxproj; sourceTree = "<group>"; };
-		84B7BDBA1B72720100F9733F /* emitter.vcxproj.user */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = emitter.vcxproj.user; sourceTree = "<group>"; };
 		84B7BDBB1B72720100F9733F /* generated_class_names.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = generated_class_names.h; sourceTree = "<group>"; };
 		84B7BDBC1B72720100F9733F /* generated_class_names_string.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = generated_class_names_string.h; sourceTree = "<group>"; };
 		84B7BDBD1B72720100F9733F /* generated_descriptors.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = generated_descriptors.h; sourceTree = "<group>"; };
@@ -1379,8 +1375,6 @@
 		84B7BDB81B72720100F9733F /* emitter */ = {
 			isa = PBXGroup;
 			children = (
-				84B7BDB91B72720100F9733F /* emitter.vcxproj */,
-				84B7BDBA1B72720100F9733F /* emitter.vcxproj.user */,
 				84B7BDBB1B72720100F9733F /* generated_class_names.h */,
 				84B7BDBC1B72720100F9733F /* generated_class_names_string.h */,
 				84B7BDBD1B72720100F9733F /* generated_descriptors.h */,
@@ -2567,8 +2561,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				84B7BF221B72720200F9733F /* emitter.vcxproj in Resources */,
-				84B7BF231B72720200F9733F /* emitter.vcxproj.user in Resources */,
 				AE8C274221122E2500D4D8F4 /* License.txt in Resources */,
 				AED73BAE22FC0E9600ECDB64 /* README.md in Resources */,
 				84A388BB1B1CDD3E000166C0 /* Images.xcassets in Resources */,
