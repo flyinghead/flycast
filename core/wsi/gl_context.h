@@ -25,6 +25,22 @@ void do_swap_automation();
 // FIXME
 extern int screen_width, screen_height;
 
+class GLGraphicsContext
+{
+public:
+	int GetMajorVersion() const { return majorVersion; }
+	bool IsGLES() const { return isGLES; }
+
+protected:
+	void PostInit();
+	void PreTerm();
+	void findGLVersion();
+
+private:
+	int majorVersion = 0;
+	bool isGLES = false;
+};
+
 #if HOST_OS == OS_DARWIN
 
 #include "osx.h"

@@ -280,8 +280,7 @@ bool rend_single_frame()
 	if (renderer_changed != settings.pvr.rend)
 	{
 		rend_term_renderer();
-		settings.pvr.rend = renderer_changed;
-		SwitchRenderApi();
+		SwitchRenderApi(renderer_changed);
 		rend_create_renderer();
 		rend_init_renderer();
 	}
@@ -401,7 +400,6 @@ void rend_init_renderer()
 
 void rend_term_renderer()
 {
-	gui_term();
 	renderer->Term();
 	delete renderer;
 	renderer = NULL;

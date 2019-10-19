@@ -19,25 +19,31 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #include "context.h"
+#include "rend/gui.h"
 
 #ifdef USE_VULKAN
 VulkanContext theVulkanContext;
 #endif
 
-void SwitchRenderApi()
+void InitRenderApi()
 {
 #ifdef USE_VULKAN
 	if (settings.pvr.rend == 4)
 	{
-		theGLContext.Term();
 		if (theVulkanContext.Init())
 			return;
 		// Fall back to Open GL
 	}
-	theVulkanContext.Term();
 #endif
 	if (!theGLContext.Init())
 		exit(1);
+}
+
+void SwitchRenderApi(int newApi)
+{
+	TermRenderApi();
+	settings.pvr.rend = newApi;
+	InitRenderApi();
 }
 
 void TermRenderApi()

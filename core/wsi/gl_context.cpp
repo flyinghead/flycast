@@ -1,5 +1,5 @@
 /*
-    Created on: Oct 18, 2019
+    Created on: Oct 19, 2019
 
 	Copyright 2019 flyinghead
 
@@ -18,14 +18,29 @@
     You should have received a copy of the GNU General Public License
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
-#pragma once
 #include "gl_context.h"
-#ifdef USE_VULKAN
-#include "rend/vulkan/vulkan.h"
+#include "rend/gui.h"
 
-extern VulkanContext theVulkanContext;
-#endif
-void InitRenderApi();
-void SwitchRenderApi(int newApi);
-void TermRenderApi();
+void GLGraphicsContext::findGLVersion()
+{
+	while (true)
+		if (glGetError() == GL_NO_ERROR)
+			break;
+	glGetIntegerv(GL_MAJOR_VERSION, &majorVersion);
+	if (glGetError() == GL_INVALID_ENUM)
+		majorVersion = 2;
+	const char *version = (const char *)glGetString(GL_VERSION);
+	isGLES = !strncmp(version, "OpenGL ES", 9);
+	INFO_LOG(RENDERER, "OpenGL version: %s", version);
+}
 
+void GLGraphicsContext::PostInit()
+{
+	findGLVersion();
+	gui_init();
+}
+
+void GLGraphicsContext::PreTerm()
+{
+	gui_term();
+}

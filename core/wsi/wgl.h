@@ -18,8 +18,10 @@
     You should have received a copy of the GNU General Public License
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
+#pragma once
 #include <windows.h>
 #include <GL4/gl3w.h>
+#include "gl_context.h"
 
 #define WGL_DRAW_TO_WINDOW_ARB         0x2001
 #define WGL_ACCELERATION_ARB           0x2003
@@ -53,7 +55,7 @@ typedef HGLRC (WINAPI * PFNWGLCREATECONTEXTATTRIBSARBPROC) (HDC hDC, HGLRC hShar
 typedef BOOL (WINAPI * PFNWGLSWAPINTERVALEXTPROC) (int interval);
 
 
-class WGLGraphicsContext
+class WGLGraphicsContext : public GLGraphicsContext
 {
 public:
 	~WGLGraphicsContext() { Term(); }

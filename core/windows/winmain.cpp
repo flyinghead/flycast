@@ -717,7 +717,7 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 #endif
 		theGLContext.SetWindow(hWnd);
 		theGLContext.SetDeviceContext(GetDC(hWnd));
-		SwitchRenderApi();
+		InitRenderApi();
 
 		rend_thread(NULL);
 

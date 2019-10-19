@@ -18,17 +18,19 @@
     You should have received a copy of the GNU General Public License
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
+#pragma once
 #include <GLES32/gl32.h>
 #include <GLES32/gl2ext.h>
 #ifndef GLES2
 #include "gl32funcs.h"
 #endif
+#include "gl_context.h"
 
 #define USE_EGL
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
 
-class EGLGraphicsContext
+class EGLGraphicsContext : public GLGraphicsContext
 {
 public:
 	~EGLGraphicsContext() { Term(); }

@@ -545,8 +545,6 @@ static bool gl_create_resources()
 
 	gl_load_osd_resources();
 
-	gui_init();
-
 	// Create the buffer for Translucent poly params
 	glGenBuffers(1, &gl4.vbo.tr_poly_params);
 	// Bind it

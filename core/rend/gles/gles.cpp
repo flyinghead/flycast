@@ -1,5 +1,6 @@
 #include <cmath>
 #include "glcache.h"
+#include "gles.h"
 #include "rend/TexCache.h"
 #include "rend/gui.h"
 #include "wsi/gl_context.h"
@@ -500,18 +501,10 @@ static void gles_term()
 void findGLVersion()
 {
 	gl.index_type = GL_UNSIGNED_INT;
-
-	while (true)
-		if (glGetError() == GL_NO_ERROR)
-			break;
-	glGetIntegerv(GL_MAJOR_VERSION, &gl.gl_major);
-	if (glGetError() == GL_INVALID_ENUM)
-		gl.gl_major = 2;
-	const char *version = (const char *)glGetString(GL_VERSION);
-	INFO_LOG(RENDERER, "OpenGL version: %s", version);
-	if (!strncmp(version, "OpenGL ES", 9))
+	gl.gl_major = theGLContext.GetMajorVersion();
+	gl.is_gles = theGLContext.IsGLES();
+	if (gl.is_gles)
 	{
-		gl.is_gles = true;
 		if (gl.gl_major >= 3)
 		{
 			gl.gl_version = "GLES3";
@@ -534,7 +527,6 @@ void findGLVersion()
 	}
 	else
 	{
-		gl.is_gles = false;
     	if (gl.gl_major >= 3)
     	{
 			gl.gl_version = "GL3";
@@ -829,8 +821,6 @@ bool gl_create_resources()
 	create_modvol_shader();
 
 	gl_load_osd_resources();
-
-	gui_init();
 
 	return true;
 }

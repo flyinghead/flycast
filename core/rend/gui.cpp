@@ -34,9 +34,6 @@
 #include "linux-dist/main.h"	// FIXME for kcode[]
 #include "gui_util.h"
 #include "gui_android.h"
-#ifdef USE_VULKAN
-#include "rend/vulkan/vulkan.h"
-#endif
 #include "version.h"
 #include "oslib/audiostream.h"
 
@@ -957,7 +954,7 @@ static void gui_display_settings()
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
 			int renderer = settings.pvr.rend == 3 ? 2 : settings.rend.PerStripSorting ? 1 : 0;
 #if HOST_OS != OS_DARWIN
-			bool has_per_pixel = !gl.is_gles && gl.gl_major >= 4 && !vulkan;
+			bool has_per_pixel = !theGLContext.IsGLES() && theGLContext.GetMajorVersion() >= 4 && !vulkan;
 #else
 			bool has_per_pixel = false;
 #endif
@@ -1672,11 +1669,14 @@ void gui_open_onboarding()
 
 void gui_term()
 {
-	inited = false;
-	term_vmus();
-	if (settings.pvr.IsOpenGL())
-		ImGui_ImplOpenGL3_Shutdown();
-	ImGui::DestroyContext();
+	if (inited)
+	{
+		inited = false;
+		term_vmus();
+		if (settings.pvr.IsOpenGL())
+			ImGui_ImplOpenGL3_Shutdown();
+		ImGui::DestroyContext();
+	}
 }
 
 int msgboxf(const wchar* text, unsigned int type, ...) {

@@ -682,6 +682,7 @@ void VulkanContext::Present()
 void VulkanContext::Term()
 {
 	ImGui_ImplVulkan_Shutdown();
+	gui_term();
 	if (device && pipelineCache)
     {
         std::vector<u8> cacheData = device->getPipelineCacheData(*pipelineCache);

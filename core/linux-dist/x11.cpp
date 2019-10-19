@@ -437,7 +437,7 @@ void x11_window_create()
 #ifdef USE_VULKAN
 		theVulkanContext.SetWindow((void *)x11_win, (void *)x11_disp);
 #endif
-		SwitchRenderApi();
+		InitRenderApi();
 
 		XFlush(x11_disp);
 

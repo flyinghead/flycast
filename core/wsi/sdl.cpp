@@ -68,11 +68,13 @@ bool SDLGLGraphicsContext::Init()
 
 	SDL_GL_MakeCurrent(window, glcontext);
 
-#ifdef GLES
-	return true;
-#else
-	return gl3wInit() != -1 && gl3wIsSupported(3, 1);
+#ifndef GLES
+	if (gl3wInit() == -1 || !gl3wIsSupported(3, 1))
+		return false;
 #endif
+	PostInit();
+
+	return true;
 }
 
 void SDLGLGraphicsContext::Swap()
@@ -85,6 +87,7 @@ void SDLGLGraphicsContext::Swap()
 
 void SDLGLGraphicsContext::Term()
 {
+	PreTerm();
 	if (glcontext != nullptr)
 	{
 		SDL_GL_DeleteContext(glcontext);

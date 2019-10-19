@@ -107,7 +107,7 @@ void input_sdl_handle(u32 port)
 	if (port == 0)	// FIXME hack
 		SDLGamepadDevice::UpdateRumble();
 
-	#define SET_FLAG(field, mask, expr) field =((expr) ? (field & ~mask) : (field | mask))
+	#define SET_FLAG(field, mask, expr) (field) = ((expr) ? ((field) & ~(mask)) : ((field) | (mask)))
 	SDL_Event event;
 	while (SDL_PollEvent(&event))
 	{
@@ -238,7 +238,7 @@ void sdl_window_create()
 			die("error initializing SDL Joystick subsystem");
 		}
 	}
-	SwitchRenderApi();
+	InitRenderApi();
 }
 
 void sdl_window_destroy()

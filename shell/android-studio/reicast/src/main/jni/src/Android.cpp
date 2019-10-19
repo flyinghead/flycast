@@ -397,10 +397,11 @@ static void *render_thread_func(void *)
 	theVulkanContext.SetWindow((void *)g_window, nullptr);
 #endif
 	theGLContext.SetNativeWindow((EGLNativeWindowType)g_window);
-	SwitchRenderApi();
+	InitRenderApi();
 
 	rend_thread(NULL);
 
+	TermRenderApi();
 	ANativeWindow_release(g_window);
     g_window = NULL;
 

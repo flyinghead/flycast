@@ -248,7 +248,7 @@
 		AE7B904F23565B4200145C6A /* allocator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE7B904D23565B4100145C6A /* allocator.cpp */; };
 		AE7B907C235A53D800145C6A /* gl4funcs.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE7B906F235A53D800145C6A /* gl4funcs.cpp */; };
 		AE7B907D235A53D800145C6A /* osx.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE7B9071235A53D800145C6A /* osx.cpp */; };
-		AE7B907F235A53D800145C6A /* swicher.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE7B9075235A53D800145C6A /* swicher.cpp */; };
+		AE7B907F235A53D800145C6A /* switcher.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE7B9075235A53D800145C6A /* switcher.cpp */; };
 		AE80EDB72157D4D500F7800F /* serialize.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE80EDB62157D4D500F7800F /* serialize.cpp */; };
 		AE80EDBE2157D4E600F7800F /* naomi.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE80EDB92157D4E600F7800F /* naomi.cpp */; };
 		AE80EDBF2157D4E600F7800F /* naomi_cart.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE80EDBB2157D4E600F7800F /* naomi_cart.cpp */; };
@@ -257,6 +257,7 @@
 		AE8C274121122E2500D4D8F4 /* Changelog.txt in Resources */ = {isa = PBXBuildFile; fileRef = AE8C273B21122E2500D4D8F4 /* Changelog.txt */; };
 		AE8C274221122E2500D4D8F4 /* License.txt in Resources */ = {isa = PBXBuildFile; fileRef = AE8C273C21122E2500D4D8F4 /* License.txt */; };
 		AE8C274321122E2500D4D8F4 /* xbrz.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE8C273D21122E2500D4D8F4 /* xbrz.cpp */; };
+		AE90679B235B6F6400CE473C /* gl_context.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE90679A235B6F6400CE473C /* gl_context.cpp */; };
 		AED73BAE22FC0E9600ECDB64 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = AED73BAD22FC0E9600ECDB64 /* README.md */; };
 		AED73DC42303E19200ECDB64 /* sdl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AED73DC02303E19100ECDB64 /* sdl.cpp */; };
 		AED73DC72303E57C00ECDB64 /* libSDL2.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AED73DC62303E57C00ECDB64 /* libSDL2.a */; };
@@ -833,7 +834,7 @@
 		AE7B9070235A53D800145C6A /* gl_context.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = gl_context.h; sourceTree = "<group>"; };
 		AE7B9071235A53D800145C6A /* osx.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = osx.cpp; sourceTree = "<group>"; };
 		AE7B9072235A53D800145C6A /* osx.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = osx.h; sourceTree = "<group>"; };
-		AE7B9075235A53D800145C6A /* swicher.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = swicher.cpp; sourceTree = "<group>"; };
+		AE7B9075235A53D800145C6A /* switcher.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = switcher.cpp; sourceTree = "<group>"; };
 		AE80EDB62157D4D500F7800F /* serialize.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = serialize.cpp; path = ../../../core/serialize.cpp; sourceTree = "<group>"; };
 		AE80EDB92157D4E600F7800F /* naomi.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = naomi.cpp; sourceTree = "<group>"; };
 		AE80EDBA2157D4E600F7800F /* naomi.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = naomi.h; sourceTree = "<group>"; };
@@ -848,6 +849,7 @@
 		AE8C273E21122E2500D4D8F4 /* xbrz.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = xbrz.h; sourceTree = "<group>"; };
 		AE8C273F21122E2500D4D8F4 /* xbrz_config.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = xbrz_config.h; sourceTree = "<group>"; };
 		AE8C274021122E2500D4D8F4 /* xbrz_tools.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = xbrz_tools.h; sourceTree = "<group>"; };
+		AE90679A235B6F6400CE473C /* gl_context.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = gl_context.cpp; sourceTree = "<group>"; };
 		AED73BAD22FC0E9600ECDB64 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; name = README.md; path = ../../../core/README.md; sourceTree = "<group>"; };
 		AED73DC02303E19100ECDB64 /* sdl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = sdl.cpp; sourceTree = "<group>"; };
 		AED73DC12303E19100ECDB64 /* sdl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = sdl.h; sourceTree = "<group>"; };
@@ -2117,9 +2119,10 @@
 				AE7B906A235A53D800145C6A /* context.h */,
 				AE7B906F235A53D800145C6A /* gl4funcs.cpp */,
 				AE7B9070235A53D800145C6A /* gl_context.h */,
+				AE90679A235B6F6400CE473C /* gl_context.cpp */,
 				AE7B9071235A53D800145C6A /* osx.cpp */,
 				AE7B9072235A53D800145C6A /* osx.h */,
-				AE7B9075235A53D800145C6A /* swicher.cpp */,
+				AE7B9075235A53D800145C6A /* switcher.cpp */,
 			);
 			name = wsi;
 			path = ../../../core/wsi;
@@ -2720,7 +2723,7 @@
 				84B7BEB31B72720200F9733F /* coreio.cpp in Sources */,
 				AED73ECA234E827400ECDB64 /* drawer.cpp in Sources */,
 				84B7BF281B72720200F9733F /* dsp.cpp in Sources */,
-				AE7B907F235A53D800145C6A /* swicher.cpp in Sources */,
+				AE7B907F235A53D800145C6A /* switcher.cpp in Sources */,
 				84B7BF3D1B72720200F9733F /* Renderer_if.cpp in Sources */,
 				AED73E6F2348E45000ECDB64 /* PpAtom.cpp in Sources */,
 				84B7BF191B72720200F9733F /* deflate.c in Sources */,
@@ -2809,6 +2812,7 @@
 				84B7BEB91B72720200F9733F /* elf.cpp in Sources */,
 				84B7BF2B1B72720200F9733F /* arm_mem.cpp in Sources */,
 				84B7BF4F1B72720200F9733F /* rtc.cpp in Sources */,
+				AE90679B235B6F6400CE473C /* gl_context.cpp in Sources */,
 				AED73EC12348E49900ECDB64 /* imgui_impl_vulkan.cpp in Sources */,
 				AED73E612348E45000ECDB64 /* InfoSink.cpp in Sources */,
 				84B7BF361B72720200F9733F /* maple_helper.cpp in Sources */,

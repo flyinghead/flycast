@@ -112,6 +112,9 @@ bool WGLGraphicsContext::Init()
 	screen_width = r.right - r.left;
 	screen_height = r.bottom - r.top;
 
+	if (rv)
+		PostInit();
+
 	return rv;
 }
 
@@ -125,6 +128,7 @@ void WGLGraphicsContext::Swap()
 
 void WGLGraphicsContext::Term()
 {
+	PreTerm();
 	if (ourOpenGLRenderingContext != NULL)
 	{
 		wglDeleteContext(ourOpenGLRenderingContext);

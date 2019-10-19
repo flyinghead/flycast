@@ -18,18 +18,20 @@
     You should have received a copy of the GNU General Public License
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
+#pragma once
 #if defined(TARGET_IPHONE) //apple-specific ogles2 headers
 #include <OpenGLES/ES2/gl.h>
 #include <OpenGLES/ES2/glext.h>
 #else
 #include <OpenGL/gl3.h>
 #endif
+#include "gl_context.h"
 
-class OSXGraphicsContext
+class OSXGraphicsContext : public GLGraphicsContext
 {
 public:
-	bool Init() { return true; }
-	void Term() {}
+	bool Init() { PostInit(); return true; }
+	void Term() { PreTerm(); }
 	void Swap();
 	bool IsSwapBufferPreserved() const { return true; }
 };

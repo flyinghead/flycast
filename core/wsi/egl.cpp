@@ -193,12 +193,15 @@ bool EGLGraphicsContext::Init()
 	eglSwapInterval(display, 1);
 #endif
 
+	PostInit();
+
 	INFO_LOG(RENDERER, "EGL config: %p, %p, %p %dx%d", context, display, surface, w, h);
 	return true;
 }
 
 void EGLGraphicsContext::Term()
 {
+	PreTerm();
 	eglMakeCurrent(display, NULL, NULL, EGL_NO_CONTEXT);
 	if (context != EGL_NO_CONTEXT)
 		eglDestroyContext(display, context);

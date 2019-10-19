@@ -19,6 +19,7 @@
 #if defined(USE_SDL)
 #include "sdl/sdl.h"
 #endif
+#include "wsi/context.h"
 
 OSXKeyboardDevice keyboard(0);
 static std::shared_ptr<OSXKbGamepadDevice> kb_gamepad(0);
@@ -138,6 +139,7 @@ extern "C" void emu_gles_init(int width, int height) {
 	screen_width = width;
 	screen_height = height;
 
+	InitRenderApi();
 	rend_init_renderer();
 }
 

@@ -78,6 +78,6 @@ void dispmanx_window_create()
 
 	theGLContext.SetNativeWindow((EGLNativeWindowType)&native_window);
 	theGLContext.SetNativeDisplay((EGLNativeDisplayType)dispman_display);
-	SwitchRenderApi();
+	InitRenderApi();
 }
 #endif

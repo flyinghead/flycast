@@ -18,11 +18,13 @@
     You should have received a copy of the GNU General Public License
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
+#pragma once
 #include <SDL2/SDL.h>
 #include "types.h"
 #include <GL4/gl3w.h>
+#include "gl_context.h"
 
-class SDLGLGraphicsContext
+class SDLGLGraphicsContext : public GLGraphicsContext
 {
 public:
 	bool Init();

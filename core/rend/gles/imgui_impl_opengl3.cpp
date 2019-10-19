@@ -66,7 +66,7 @@
 #include "TargetConditionals.h"
 #endif
 
-#include "gles.h"
+#include "wsi/gl_context.h"
 #include "glcache.h"
 
 // OpenGL Data
@@ -87,7 +87,7 @@ bool    ImGui_ImplOpenGL3_Init(const char* glsl_version)
     // Store GLSL version string so we can refer to it later in case we recreate shaders. Note: GLSL version is NOT the same as GL version. Leave this to NULL if unsure.
     if (glsl_version == NULL)
     {
-    	if (gl.is_gles)
+    	if (theGLContext.IsGLES())
             glsl_version = "#version 100";		// OpenGL ES 2.0
     	else
 #if HOST_OS == OS_DARWIN
@@ -131,7 +131,7 @@ void    ImGui_ImplOpenGL3_RenderDrawData(ImDrawData* draw_data, bool save_backgr
     glActiveTexture(GL_TEXTURE0);
     bool clip_origin_lower_left = true;
 #ifdef GL_CLIP_ORIGIN
-    if (gl.gl_major >= 4 && glClipControl != NULL)
+    if (theGLContext.GetMajorVersion() >= 4 && glClipControl != NULL)
     {
 		GLenum last_clip_origin = 0; glGetIntegerv(GL_CLIP_ORIGIN, (GLint*)&last_clip_origin); // Support for GL 4.5's glClipControl(GL_UPPER_LEFT)
 		if (last_clip_origin == GL_UPPER_LEFT)
@@ -142,7 +142,7 @@ void    ImGui_ImplOpenGL3_RenderDrawData(ImDrawData* draw_data, bool save_backgr
     if (save_background)
     {
 #ifndef GLES2
-    	if (!gl.is_gles && glReadBuffer != NULL)
+    	if (!theGLContext.IsGLES() && glReadBuffer != NULL)
     		glReadBuffer(GL_FRONT);
 
 		// (Re-)create the background texture and reserve space for it
@@ -192,12 +192,12 @@ void    ImGui_ImplOpenGL3_RenderDrawData(ImDrawData* draw_data, bool save_backgr
     glUniform1i(g_AttribLocationTex, 0);
     glUniformMatrix4fv(g_AttribLocationProjMtx, 1, GL_FALSE, &ortho_projection[0][0]);
 #ifndef GLES2
-    if (gl.gl_major >= 3 && glBindSampler != NULL)
+    if (theGLContext.GetMajorVersion() >= 3 && glBindSampler != NULL)
     	glBindSampler(0, 0); // We use combined texture/sampler state. Applications using GL 3.3 may set that otherwise.
 #endif
     GLuint vao_handle = 0;
 #ifndef GLES2
-    if (gl.gl_major >= 3)
+    if (theGLContext.GetMajorVersion() >= 3)
     {
 		// Recreate the VAO every time
 		// (This is to easily allow multiple GL contexts. VAO are not shared among GL contexts, and we don't track creation/deletion of windows so we don't have an obvious key to use to cache them.)
@@ -272,7 +272,7 @@ bool ImGui_ImplOpenGL3_CreateFontsTexture()
     glcache.BindTexture(GL_TEXTURE_2D, g_FontTexture);
     glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    if (gl.gl_major >= 3)
+    if (theGLContext.GetMajorVersion() >= 3)
     	glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
 

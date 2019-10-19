@@ -76,7 +76,12 @@ bool XGLGraphicsContext::Init()
 
 	screen_width = 640;
 	screen_height = 480;
-	return gl3wInit() != -1 && gl3wIsSupported(3, 1);
+	if (gl3wInit() == -1 || !gl3wIsSupported(3, 1))
+		return false;
+
+	PostInit();
+
+	return true;
 }
 
 bool XGLGraphicsContext::ChooseVisual(Display* x11Display, XVisualInfo** visual, int* depth)
@@ -164,6 +169,7 @@ void XGLGraphicsContext::Swap()
 
 void XGLGraphicsContext::Term()
 {
+	PreTerm();
 	if (context)
 	{
 		glXMakeCurrent(display, None, NULL);
