@@ -235,6 +235,7 @@ void Texture::CreateImage(vk::ImageTiling tiling, vk::ImageUsageFlags usage, vk:
 
 void Texture::SetImage(u32 srcSize, void *srcData, bool isNew)
 {
+	verify((bool)commandBuffer);
 	commandBuffer.begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));
 
 	if (!isNew && !needsStaging)

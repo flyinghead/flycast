@@ -56,17 +56,17 @@ public:
 	}
 
 protected:
-	void Init(SamplerManager *samplerManager, ShaderManager *shaderManager)
+	void Init(SamplerManager *samplerManager, PipelineManager *pipelineManager)
 	{
+		this->pipelineManager = pipelineManager;
 		this->samplerManager = samplerManager;
-		pipelineManager->Init(shaderManager);
 	}
 	virtual DescriptorSets& GetCurrentDescSet() = 0;
 	virtual BufferData *GetMainBuffer(u32 size) = 0;
 
 	VulkanContext *GetContext() const { return VulkanContext::Instance(); }
 
-	std::unique_ptr<PipelineManager> pipelineManager;
+	PipelineManager *pipelineManager = nullptr;
 	vk::Rect2D baseScissor;
 	// temp stuff
 	float scale_x = 1.f;
@@ -106,9 +106,10 @@ class ScreenDrawer : public Drawer
 public:
 	void Init(SamplerManager *samplerManager, ShaderManager *shaderManager)
 	{
-		if (!pipelineManager)
-			pipelineManager = std::unique_ptr<PipelineManager>(new PipelineManager());
-		Drawer::Init(samplerManager, shaderManager);
+		if (!screenPipelineManager)
+			screenPipelineManager = std::unique_ptr<PipelineManager>(new PipelineManager());
+		screenPipelineManager->Init(shaderManager);
+		Drawer::Init(samplerManager, screenPipelineManager.get());
 
 		if (descriptorSets.size() > GetContext()->GetSwapChainSize())
 			descriptorSets.resize(GetContext()->GetSwapChainSize());
@@ -116,7 +117,7 @@ public:
 			while (descriptorSets.size() < GetContext()->GetSwapChainSize())
 			{
 				descriptorSets.push_back(DescriptorSets());
-				descriptorSets.back().Init(samplerManager, pipelineManager->GetPipelineLayout(), pipelineManager->GetPerFrameDSLayout(), pipelineManager->GetPerPolyDSLayout());
+				descriptorSets.back().Init(samplerManager, screenPipelineManager->GetPipelineLayout(), screenPipelineManager->GetPerFrameDSLayout(), screenPipelineManager->GetPerPolyDSLayout());
 			}
 	}
 	ScreenDrawer() = default;
@@ -158,19 +159,20 @@ private:
 
 	std::vector<DescriptorSets> descriptorSets;
 	std::vector<std::unique_ptr<BufferData>> mainBuffers;
+	std::unique_ptr<PipelineManager> screenPipelineManager;
 };
 
 class TextureDrawer : public Drawer
 {
 public:
-	void Init(SamplerManager *samplerManager, ShaderManager *shaderManager, VulkanAllocator *texAllocator)
+	void Init(SamplerManager *samplerManager, VulkanAllocator *texAllocator, RttPipelineManager *pipelineManager, TextureCache *textureCache)
 	{
-		pipelineManager = std::unique_ptr<RttPipelineManager>(new RttPipelineManager());
-		Drawer::Init(samplerManager, shaderManager);
+		Drawer::Init(samplerManager, pipelineManager);
 
 		descriptorSets.Init(samplerManager, pipelineManager->GetPipelineLayout(), pipelineManager->GetPerFrameDSLayout(), pipelineManager->GetPerPolyDSLayout());
 		fence = GetContext()->GetDevice()->createFenceUnique(vk::FenceCreateInfo());
 		this->texAllocator = texAllocator;
+		this->textureCache = textureCache;
 	}
 	void SetCommandPool(CommandPool *commandPool) { this->commandPool = commandPool; }
 
@@ -179,10 +181,10 @@ public:
 	TextureDrawer(TextureDrawer&& other) = default;
 	TextureDrawer& operator=(const TextureDrawer& other) = delete;
 	TextureDrawer& operator=(TextureDrawer&& other) = default;
+	virtual void EndRenderPass() override;
 
 protected:
 	virtual vk::CommandBuffer BeginRenderPass() override;
-	virtual void EndRenderPass() override;
 	DescriptorSets& GetCurrentDescSet() override { return descriptorSets; }
 
 	virtual BufferData* GetMainBuffer(u32 size) override
@@ -216,4 +218,5 @@ private:
 	std::unique_ptr<BufferData> mainBuffer;
 	CommandPool *commandPool = nullptr;
 	VulkanAllocator *texAllocator = nullptr;
+	TextureCache *textureCache = nullptr;
 };

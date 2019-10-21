@@ -304,7 +304,7 @@ public:
 			descSetLayout = GetContext()->GetDevice()->createDescriptorSetLayoutUnique(
 					vk::DescriptorSetLayoutCreateInfo(vk::DescriptorSetLayoutCreateFlags(), ARRAY_SIZE(bindings), bindings));
 			pipelineLayout = GetContext()->GetDevice()->createPipelineLayoutUnique(
-					vk::PipelineLayoutCreateInfo(vk::PipelineLayoutCreateFlags(), 1, &descSetLayout.get(), 0, nullptr));
+					vk::PipelineLayoutCreateInfo(vk::PipelineLayoutCreateFlags(), 1, &descSetLayout.get()));
 		}
 		if (!sampler)
 		{
@@ -360,5 +360,69 @@ private:
 	vk::UniquePipelineLayout pipelineLayout;
 	vk::UniqueDescriptorSetLayout descSetLayout;
 	ShaderManager *shaderManager;
-	SamplerManager *samplerManager;
+};
+
+class OSDPipeline
+{
+public:
+	void Init(ShaderManager *shaderManager, vk::ImageView imageView)
+	{
+		this->shaderManager = shaderManager;
+		if (!pipelineLayout)
+		{
+			vk::DescriptorSetLayoutBinding bindings[] = {
+					{ 0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment },// texture
+			};
+			descSetLayout = GetContext()->GetDevice()->createDescriptorSetLayoutUnique(
+					vk::DescriptorSetLayoutCreateInfo(vk::DescriptorSetLayoutCreateFlags(), ARRAY_SIZE(bindings), bindings));
+			pipelineLayout = GetContext()->GetDevice()->createPipelineLayoutUnique(
+					vk::PipelineLayoutCreateInfo(vk::PipelineLayoutCreateFlags(), 1, &descSetLayout.get()));
+		}
+		if (!sampler)
+		{
+			sampler = VulkanContext::Instance()->GetDevice()->createSamplerUnique(
+					vk::SamplerCreateInfo(vk::SamplerCreateFlags(), vk::Filter::eLinear, vk::Filter::eLinear,
+										vk::SamplerMipmapMode::eLinear, vk::SamplerAddressMode::eClampToEdge, vk::SamplerAddressMode::eClampToEdge,
+										vk::SamplerAddressMode::eClampToEdge, 0.0f, false, 16.0f, false,
+										vk::CompareOp::eNever, 0.0f, 0.0f, vk::BorderColor::eFloatOpaqueBlack));
+		}
+		if (GetContext()->GetRenderPass() != renderPass)
+		{
+			renderPass = GetContext()->GetRenderPass();
+			pipeline.reset();
+		}
+		if (!descriptorSet)
+		{
+			descriptorSet = std::move(GetContext()->GetDevice()->allocateDescriptorSetsUnique(
+					vk::DescriptorSetAllocateInfo(GetContext()->GetDescriptorPool(), 1, &descSetLayout.get())).front());
+		}
+		vk::DescriptorImageInfo imageInfo(*sampler, imageView, vk::ImageLayout::eShaderReadOnlyOptimal);
+		std::vector<vk::WriteDescriptorSet> writeDescriptorSets;
+		writeDescriptorSets.push_back(vk::WriteDescriptorSet(*descriptorSet, 0, 0, 1, vk::DescriptorType::eCombinedImageSampler, &imageInfo, nullptr, nullptr));
+		GetContext()->GetDevice()->updateDescriptorSets(writeDescriptorSets, nullptr);
+	}
+
+	vk::Pipeline GetPipeline()
+	{
+		if (!pipeline)
+			CreatePipeline();
+		return *pipeline;
+	}
+
+	void BindDescriptorSets(vk::CommandBuffer cmdBuffer) const
+	{
+		cmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, *pipelineLayout, 0, 1, &descriptorSet.get(), 0, nullptr);
+	}
+
+private:
+	VulkanContext *GetContext() const { return VulkanContext::Instance(); }
+	void CreatePipeline();
+
+	vk::RenderPass renderPass;
+	vk::UniquePipeline pipeline;
+	vk::UniqueSampler sampler;
+	vk::UniqueDescriptorSet descriptorSet;
+	vk::UniquePipelineLayout pipelineLayout;
+	vk::UniqueDescriptorSetLayout descSetLayout;
+	ShaderManager *shaderManager;
 };

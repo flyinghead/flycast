@@ -6,6 +6,7 @@
 #include "hw/pvr/pvr_regs.h"
 #undef ID
 #include "hw/pvr/ta_structs.h"
+#include "hw/pvr/Renderer_if.h"
 
 extern u8* vq_codebook;
 extern u32 palette_index;
@@ -706,52 +707,85 @@ struct BaseTextureCacheData
 	virtual ~BaseTextureCacheData() {}
 };
 
-extern std::unordered_map<u64, std::unique_ptr<BaseTextureCacheData>> TexCache;
-typedef std::unordered_map<u64, std::unique_ptr<BaseTextureCacheData>>::iterator TexCacheIter;
-
-// Only use TexU and TexV from TSP in the cache key
-//     TexV : 7, TexU : 7
-const TSP TSPTextureCacheMask = { { 7, 7 } };
-//     TexAddr : 0x1FFFFF, Reserved : 0, StrideSel : 0, ScanOrder : 1, PixelFmt : 7, VQ_Comp : 1, MipMapped : 1
-const TCW TCWTextureCacheMask = { { 0x1FFFFF, 0, 0, 1, 7, 1, 1 } };
-
-template<typename Func>
-BaseTextureCacheData *getTextureCacheData(TSP tsp, TCW tcw, Func factory)
+template<typename Texture>
+class BaseTextureCache
 {
-	u64 key = tsp.full & TSPTextureCacheMask.full;
-	if (tcw.PixelFmt == PixelPal4 || tcw.PixelFmt == PixelPal8)
-		// Paletted textures have a palette selection that must be part of the key
-		// We also add the palette type to the key to avoid thrashing the cache
-		// when the palette type is changed. If the palette type is changed back in the future,
-		// this texture will stil be available.
-		key |= ((u64)tcw.full << 32) | ((PAL_RAM_CTRL & 3) << 6);
-	else
-		key |= (u64)(tcw.full & TCWTextureCacheMask.full) << 32;
-
-	TexCacheIter it = TexCache.find(key);
-
-	BaseTextureCacheData* texture;
-	if (it != TexCache.end())
+	using TexCacheIter = typename std::unordered_map<u64, Texture>::iterator;
+public:
+	Texture *getTextureCacheData(TSP tsp, TCW tcw)
 	{
-		texture = it->second.get();
-		// Needed if the texture is updated
-		texture->tcw.StrideSel = tcw.StrideSel;
+		u64 key = tsp.full & TSPTextureCacheMask.full;
+		if (tcw.PixelFmt == PixelPal4 || tcw.PixelFmt == PixelPal8)
+			// Paletted textures have a palette selection that must be part of the key
+			// We also add the palette type to the key to avoid thrashing the cache
+			// when the palette type is changed. If the palette type is changed back in the future,
+			// this texture will stil be available.
+			key |= ((u64)tcw.full << 32) | ((PAL_RAM_CTRL & 3) << 6);
+		else
+			key |= (u64)(tcw.full & TCWTextureCacheMask.full) << 32;
+
+		TexCacheIter it = cache.find(key);
+
+		Texture* texture;
+		if (it != cache.end())
+		{
+			texture = &it->second;
+			// Needed if the texture is updated
+			texture->tcw.StrideSel = tcw.StrideSel;
+		}
+		else //create if not existing
+		{
+			texture = &cache[key];
+
+			texture->tsp = tsp;
+			texture->tcw = tcw;
+		}
+		texture->Lookups++;
+
+		return texture;
 	}
-	else //create if not existing
+
+	void CollectCleanup()
 	{
-		texture = factory();
-		TexCache[key] = std::unique_ptr<BaseTextureCacheData>(texture);
+		vector<u64> list;
 
-		texture->tsp = tsp;
-		texture->tcw = tcw;
+		u32 TargetFrame = max((u32)120, FrameCount) - 120;
+
+		for (const auto& pair : cache)
+		{
+			if (pair.second.dirty && pair.second.dirty < TargetFrame)
+				list.push_back(pair.first);
+
+			if (list.size() > 5)
+				break;
+		}
+
+		for (u64 id : list)
+		{
+			if (cache[id].Delete())
+				cache.erase(id);
+		}
 	}
-	texture->Lookups++;
 
-	return texture;
-}
+	void Clear()
+	{
+		for (auto& pair : cache)
+			pair.second.Delete();
 
-void CollectCleanup();
-void killtex();
+		cache.clear();
+		KillTex = false;
+		INFO_LOG(RENDERER, "Texture cache cleared");
+	}
+
+private:
+	std::unordered_map<u64, Texture> cache;
+	// Only use TexU and TexV from TSP in the cache key
+	//     TexV : 7, TexU : 7
+	const TSP TSPTextureCacheMask = { { 7, 7 } };
+	//     TexAddr : 0x1FFFFF, Reserved : 0, StrideSel : 0, ScanOrder : 1, PixelFmt : 7, VQ_Comp : 1, MipMapped : 1
+	const TCW TCWTextureCacheMask = { { 0x1FFFFF, 0, 0, 1, 7, 1, 1 } };
+};
+
 void rend_text_invl(vram_block* bl);
 
 void ReadFramebuffer(PixelBuffer<u32>& pb, int& width, int& height);
@@ -766,3 +800,4 @@ static inline void MakeFogTexture(u8 *tex_data)
 		tex_data[i + 128] = fog_table[i * 4 + 1];
 	}
 }
+u8* loadPNGData(const string& fname, int &width, int &height);

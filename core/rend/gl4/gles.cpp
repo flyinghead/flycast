@@ -1001,9 +1001,7 @@ struct gl4rend : Renderer
 			glcache.DeleteTextures(1, &depthSaveTexId);
 			depthSaveTexId = 0;
 		}
-		killtex();
-
-		CollectCleanup();
+		TexCache.Clear();
 
 		gl_free_osd_resources();
 		free_output_framebuffer();
@@ -1011,16 +1009,20 @@ struct gl4rend : Renderer
 	}
 
 	bool Process(TA_context* ctx) override { return ProcessFrame(ctx); }
-	bool Render() override { return RenderFrame(); }
+	bool Render() override
+	{
+		RenderFrame();
+		if (!pvrrc.isRTT)
+			DrawOSD(false);
+
+		return !pvrrc.isRTT;
+	}
 	bool RenderLastFrame() override { return !theGLContext.IsSwapBufferPreserved() ? gl4_render_output_framebuffer() : false; }
 
 	void Present() override { theGLContext.Swap(); }
 
 	void DrawOSD(bool clear_screen) override
 	{
-		glBindVertexArray(gl4.vbo.main_vao);
-		glBindBuffer(GL_ARRAY_BUFFER, gl4.vbo.geometry); glCheck();
-
 		OSD_DRAW(clear_screen);
 	}
 

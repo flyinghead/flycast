@@ -258,6 +258,7 @@
 		AE8C274221122E2500D4D8F4 /* License.txt in Resources */ = {isa = PBXBuildFile; fileRef = AE8C273C21122E2500D4D8F4 /* License.txt */; };
 		AE8C274321122E2500D4D8F4 /* xbrz.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE8C273D21122E2500D4D8F4 /* xbrz.cpp */; };
 		AE90679B235B6F6400CE473C /* gl_context.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE90679A235B6F6400CE473C /* gl_context.cpp */; };
+		AE90679D235DF80400CE473C /* osd.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE90679C235DF80400CE473C /* osd.cpp */; };
 		AED73BAE22FC0E9600ECDB64 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = AED73BAD22FC0E9600ECDB64 /* README.md */; };
 		AED73DC42303E19200ECDB64 /* sdl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AED73DC02303E19100ECDB64 /* sdl.cpp */; };
 		AED73DC72303E57C00ECDB64 /* libSDL2.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AED73DC62303E57C00ECDB64 /* libSDL2.a */; };
@@ -850,6 +851,7 @@
 		AE8C273F21122E2500D4D8F4 /* xbrz_config.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = xbrz_config.h; sourceTree = "<group>"; };
 		AE8C274021122E2500D4D8F4 /* xbrz_tools.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = xbrz_tools.h; sourceTree = "<group>"; };
 		AE90679A235B6F6400CE473C /* gl_context.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = gl_context.cpp; sourceTree = "<group>"; };
+		AE90679C235DF80400CE473C /* osd.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = osd.cpp; sourceTree = "<group>"; };
 		AED73BAD22FC0E9600ECDB64 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; name = README.md; path = ../../../core/README.md; sourceTree = "<group>"; };
 		AED73DC02303E19100ECDB64 /* sdl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = sdl.cpp; sourceTree = "<group>"; };
 		AED73DC12303E19100ECDB64 /* sdl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = sdl.h; sourceTree = "<group>"; };
@@ -1858,6 +1860,7 @@
 				AEE62769220D7B5500EC7E89 /* gui.h */,
 				AEE6279222247C0A00EC7E89 /* gui_util.cpp */,
 				AEE6279322247C0A00EC7E89 /* gui_util.h */,
+				AE90679C235DF80400CE473C /* osd.cpp */,
 				84B7BEA21B72720200F9733F /* rend.h */,
 				AED73EAD2348E49900ECDB64 /* sorter.cpp */,
 				AED73EBD2348E49900ECDB64 /* sorter.h */,
@@ -2826,6 +2829,7 @@
 				84B7BF201B72720200F9733F /* uncompr.c in Sources */,
 				AE649C2A218C553A00EF4A81 /* LzFind.c in Sources */,
 				84B7BF2A1B72720200F9733F /* arm7.cpp in Sources */,
+				AE90679D235DF80400CE473C /* osd.cpp in Sources */,
 				84B7BF0D1B72720200F9733F /* zip_source_zip.c in Sources */,
 				84B7BEF51B72720200F9733F /* zip_fopen.c in Sources */,
 				84B7BF551B72720200F9733F /* sh4_mem.cpp in Sources */,

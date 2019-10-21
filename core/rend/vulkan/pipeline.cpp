@@ -20,6 +20,7 @@
 */
 #include "pipeline.h"
 #include "hw/pvr/Renderer_if.h"
+#include "rend/osd.h"
 
 static const vk::CompareOp depthOps[] =
 {
@@ -379,9 +380,17 @@ void QuadPipeline::CreatePipeline()
 	vk::PipelineDepthStencilStateCreateInfo pipelineDepthStencilStateCreateInfo;
 
 	// Color flags and blending
-	vk::PipelineColorBlendAttachmentState pipelineColorBlendAttachmentState;
-	pipelineColorBlendAttachmentState.colorWriteMask = vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG
-			| vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA;
+	vk::PipelineColorBlendAttachmentState pipelineColorBlendAttachmentState(
+			true,								// blendEnable
+			vk::BlendFactor::eConstantAlpha,	// srcColorBlendFactor
+			vk::BlendFactor::eOneMinusConstantAlpha, // dstColorBlendFactor
+			vk::BlendOp::eAdd,					// colorBlendOp
+			vk::BlendFactor::eConstantAlpha,	// srcAlphaBlendFactor
+			vk::BlendFactor::eOneMinusConstantAlpha, // dstAlphaBlendFactor
+			vk::BlendOp::eAdd,					// alphaBlendOp
+			vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG
+						| vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA
+	);
 	vk::PipelineColorBlendStateCreateInfo pipelineColorBlendStateCreateInfo
 	(
 	  vk::PipelineColorBlendStateCreateFlags(),   // flags
@@ -392,8 +401,9 @@ void QuadPipeline::CreatePipeline()
 	  { { 1.0f, 1.0f, 1.0f, 1.0f } }              // blendConstants
 	);
 
-	vk::DynamicState dynamicStates[2] = { vk::DynamicState::eViewport, vk::DynamicState::eScissor };
-	vk::PipelineDynamicStateCreateInfo pipelineDynamicStateCreateInfo(vk::PipelineDynamicStateCreateFlags(), 2, dynamicStates);
+	vk::DynamicState dynamicStates[] = { vk::DynamicState::eViewport, vk::DynamicState::eScissor, vk::DynamicState::eBlendConstants };
+	vk::PipelineDynamicStateCreateInfo pipelineDynamicStateCreateInfo(vk::PipelineDynamicStateCreateFlags(), ARRAY_SIZE(dynamicStates),
+			dynamicStates);
 
 	vk::PipelineShaderStageCreateInfo stages[] = {
 			{ vk::PipelineShaderStageCreateFlags(), vk::ShaderStageFlagBits::eVertex, shaderManager->GetQuadVertexShader(), "main" },
@@ -405,6 +415,91 @@ void QuadPipeline::CreatePipeline()
 	  2,                                          // stageCount
 	  stages,                                     // pStages
 	  &pipelineVertexInputStateCreateInfo,        // pVertexInputState
+	  &pipelineInputAssemblyStateCreateInfo,      // pInputAssemblyState
+	  nullptr,                                    // pTessellationState
+	  &pipelineViewportStateCreateInfo,           // pViewportState
+	  &pipelineRasterizationStateCreateInfo,      // pRasterizationState
+	  &pipelineMultisampleStateCreateInfo,        // pMultisampleState
+	  &pipelineDepthStencilStateCreateInfo,       // pDepthStencilState
+	  &pipelineColorBlendStateCreateInfo,         // pColorBlendState
+	  &pipelineDynamicStateCreateInfo,            // pDynamicState
+	  *pipelineLayout,                            // layout
+	  renderPass                                  // renderPass
+	);
+
+	pipeline = GetContext()->GetDevice()->createGraphicsPipelineUnique(GetContext()->GetPipelineCache(), graphicsPipelineCreateInfo);
+}
+
+void OSDPipeline::CreatePipeline()
+{
+	// Vertex input state
+	static const vk::VertexInputBindingDescription vertexBindingDescriptions[] =
+	{
+		{ 0, sizeof(OSDVertex) },
+	};
+	static const vk::VertexInputAttributeDescription vertexInputAttributeDescriptions[] =
+	{
+			vk::VertexInputAttributeDescription(0, 0, vk::Format::eR32G32Sfloat, offsetof(OSDVertex, x)),	// pos
+			vk::VertexInputAttributeDescription(1, 0, vk::Format::eR8G8B8A8Uint, offsetof(OSDVertex, r)),	// color
+			vk::VertexInputAttributeDescription(2, 0, vk::Format::eR32G32Sfloat, offsetof(OSDVertex, u)),	// tex coord
+	};
+	vk::PipelineVertexInputStateCreateInfo vertexInputStateCreateInfo(
+				vk::PipelineVertexInputStateCreateFlags(),
+				ARRAY_SIZE(vertexBindingDescriptions),
+				vertexBindingDescriptions,
+				ARRAY_SIZE(vertexInputAttributeDescriptions),
+				vertexInputAttributeDescriptions);
+
+	// Input assembly state
+	vk::PipelineInputAssemblyStateCreateInfo pipelineInputAssemblyStateCreateInfo(vk::PipelineInputAssemblyStateCreateFlags(), vk::PrimitiveTopology::eTriangleStrip);
+
+	// Viewport and scissor states
+	vk::PipelineViewportStateCreateInfo pipelineViewportStateCreateInfo(vk::PipelineViewportStateCreateFlags(), 1, nullptr, 1, nullptr);
+
+	// Rasterization and multisample states
+	vk::PipelineRasterizationStateCreateInfo pipelineRasterizationStateCreateInfo;
+	pipelineRasterizationStateCreateInfo.lineWidth = 1.0;
+	vk::PipelineMultisampleStateCreateInfo pipelineMultisampleStateCreateInfo;
+
+	// Depth and stencil
+	vk::PipelineDepthStencilStateCreateInfo pipelineDepthStencilStateCreateInfo;
+
+	// Color flags and blending
+	vk::PipelineColorBlendAttachmentState pipelineColorBlendAttachmentState(
+			true,								// blendEnable
+			vk::BlendFactor::eSrcAlpha,			// srcColorBlendFactor
+			vk::BlendFactor::eOneMinusSrcAlpha, // dstColorBlendFactor
+			vk::BlendOp::eAdd,					// colorBlendOp
+			vk::BlendFactor::eSrcAlpha,			// srcAlphaBlendFactor
+			vk::BlendFactor::eOneMinusSrcAlpha, // dstAlphaBlendFactor
+			vk::BlendOp::eAdd,					// alphaBlendOp
+			vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG
+						| vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA
+	);
+	vk::PipelineColorBlendStateCreateInfo pipelineColorBlendStateCreateInfo
+	(
+	  vk::PipelineColorBlendStateCreateFlags(),   // flags
+	  false,                                      // logicOpEnable
+	  vk::LogicOp::eNoOp,                         // logicOp
+	  1,                                          // attachmentCount
+	  &pipelineColorBlendAttachmentState,         // pAttachments
+	  { { 1.0f, 1.0f, 1.0f, 1.0f } }              // blendConstants
+	);
+
+	vk::DynamicState dynamicStates[] = { vk::DynamicState::eViewport, vk::DynamicState::eScissor };
+	vk::PipelineDynamicStateCreateInfo pipelineDynamicStateCreateInfo(vk::PipelineDynamicStateCreateFlags(), ARRAY_SIZE(dynamicStates),
+			dynamicStates);
+
+	vk::PipelineShaderStageCreateInfo stages[] = {
+			{ vk::PipelineShaderStageCreateFlags(), vk::ShaderStageFlagBits::eVertex, shaderManager->GetOSDVertexShader(), "main" },
+			{ vk::PipelineShaderStageCreateFlags(), vk::ShaderStageFlagBits::eFragment, shaderManager->GetOSDFragmentShader(), "main" },
+	};
+	vk::GraphicsPipelineCreateInfo graphicsPipelineCreateInfo
+	(
+	  vk::PipelineCreateFlags(),                  // flags
+	  2,                                          // stageCount
+	  stages,                                     // pStages
+	  &vertexInputStateCreateInfo,			      // pVertexInputState
 	  &pipelineInputAssemblyStateCreateInfo,      // pInputAssemblyState
 	  nullptr,                                    // pTessellationState
 	  &pipelineViewportStateCreateInfo,           // pViewportState

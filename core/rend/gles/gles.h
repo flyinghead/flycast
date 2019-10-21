@@ -63,6 +63,9 @@ struct gl_ctx
 	{
 		GLuint program;
 		GLuint scale;
+		GLuint vao;
+		GLuint geometry;
+		GLuint osd_tex;
 	} OSD_SHADER;
 
 	struct
@@ -199,5 +202,10 @@ struct TextureCacheData : BaseTextureCacheData
 	virtual void UploadToGPU(int width, int height, u8 *temp_tex_buffer) override;
 	virtual bool Delete() override;
 };
+
+class TextureCache : public BaseTextureCache<TextureCacheData>
+{
+};
+extern TextureCache TexCache;
 
 extern const u32 Zfunction[8];

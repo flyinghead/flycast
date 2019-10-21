@@ -36,7 +36,7 @@ struct BufferData
 	void upload(vk::Device const& device, u32 size, const void *data, u32 bufOffset = 0) const
 	{
 		verify((m_propertyFlags & vk::MemoryPropertyFlagBits::eHostCoherent) && (m_propertyFlags & vk::MemoryPropertyFlagBits::eHostVisible));
-		verify(offset + bufOffset + size <= bufferSize);
+		verify(bufOffset + size <= bufferSize);
 
 		void* dataPtr = device.mapMemory(sharedDeviceMemory, offset + bufOffset, size);
 		memcpy(dataPtr, data, size);
@@ -50,7 +50,7 @@ struct BufferData
 		u32 totalSize = 0;
 		for (int i = 0; i < count; i++)
 			totalSize += sizes[i];
-		verify(offset + bufOffset + totalSize <= bufferSize);
+		verify(bufOffset + totalSize <= bufferSize);
 		void* dataPtr = device.mapMemory(sharedDeviceMemory, offset + bufOffset, totalSize);
 		for (int i = 0; i < count; i++)
 		{
@@ -64,7 +64,7 @@ struct BufferData
 	void download(vk::Device const& device, u32 size, void *data, u32 bufOffset = 0) const
 	{
 		verify((m_propertyFlags & vk::MemoryPropertyFlagBits::eHostCoherent) && (m_propertyFlags & vk::MemoryPropertyFlagBits::eHostVisible));
-		verify(offset + bufOffset + size <= bufferSize);
+		verify(bufOffset + size <= bufferSize);
 
 		void* dataPtr = device.mapMemory(sharedDeviceMemory, offset + bufOffset, size);
 		memcpy(data, dataPtr, size);

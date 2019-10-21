@@ -5,6 +5,7 @@
 #include "rend/gui.h"
 #include "wsi/gl_context.h"
 #include "cfg/cfg.h"
+#include "rend/osd.h"
 
 #ifdef GLES
 #ifndef GL_RED
@@ -381,13 +382,11 @@ out highp vec4 FragColor; \n\
  \n\
 in lowp vec4 vtx_base; \n\
 in mediump vec2 vtx_uv; \n\
-/* Vertex input*/ \n\
+ \n\
 uniform sampler2D tex; \n\
 void main() \n\
 { \n\
-	mediump vec2 uv=vtx_uv; \n\
-	uv.y=1.0-uv.y; \n\
-	gl_FragColor = vtx_base*texture(tex,uv.st); \n\
+	gl_FragColor = vtx_base * texture(tex, vtx_uv); \n\
 }";
 
 GLCache glcache;
@@ -746,7 +745,34 @@ bool CompilePipelineShader(	PipelineShader* s)
 	return glIsProgram(s->program)==GL_TRUE;
 }
 
-GLuint osd_tex;
+static void SetupOSDVBO()
+{
+#ifndef GLES2
+	if (gl.gl_major >= 3)
+	{
+		if (gl.OSD_SHADER.vao == 0)
+			glGenVertexArrays(1, &gl.OSD_SHADER.vao);
+		glBindVertexArray(gl.OSD_SHADER.vao);
+	}
+#endif
+	if (gl.OSD_SHADER.geometry == 0)
+		glGenBuffers(1, &gl.OSD_SHADER.geometry);
+	glBindBuffer(GL_ARRAY_BUFFER, gl.OSD_SHADER.geometry);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+	//setup vertex buffers attrib pointers
+	glEnableVertexAttribArray(VERTEX_POS_ARRAY);
+	glVertexAttribPointer(VERTEX_POS_ARRAY, 2, GL_FLOAT, GL_FALSE, sizeof(OSDVertex), (void*)offsetof(OSDVertex, x));
+
+	glEnableVertexAttribArray(VERTEX_COL_BASE_ARRAY);
+	glVertexAttribPointer(VERTEX_COL_BASE_ARRAY, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(OSDVertex), (void*)offsetof(OSDVertex, r));
+
+	glEnableVertexAttribArray(VERTEX_UV_ARRAY);
+	glVertexAttribPointer(VERTEX_UV_ARRAY, 2, GL_FLOAT, GL_FALSE, sizeof(OSDVertex), (void*)offsetof(OSDVertex, u));
+
+	glDisableVertexAttribArray(VERTEX_COL_OFFS_ARRAY);
+	glCheck();
+}
 
 void gl_load_osd_resources()
 {
@@ -762,19 +788,26 @@ void gl_load_osd_resources()
 
 #ifdef __ANDROID__
 	int w, h;
-	if (osd_tex == 0)
-		osd_tex = loadPNG(get_readonly_data_path(DATA_PATH "buttons.png"), w, h);
+	if (gl.OSD_SHADER.osd_tex == 0)
+		gl.OSD_SHADER.osd_tex = loadPNG(get_readonly_data_path(DATA_PATH "buttons.png"), w, h);
 #endif
+	SetupOSDVBO();
 }
 
 void gl_free_osd_resources()
 {
 	glcache.DeleteProgram(gl.OSD_SHADER.program);
 
-    if (osd_tex != 0) {
-        glcache.DeleteTextures(1, &osd_tex);
-        osd_tex = 0;
+    if (gl.OSD_SHADER.osd_tex != 0) {
+        glcache.DeleteTextures(1, &gl.OSD_SHADER.osd_tex);
+        gl.OSD_SHADER.osd_tex = 0;
     }
+	glDeleteBuffers(1, &gl.OSD_SHADER.geometry);
+	gl.OSD_SHADER.geometry = 0;
+#ifndef GLES2
+	glDeleteVertexArrays(1, &gl.OSD_SHADER.vao);
+	gl.OSD_SHADER.vao = 0;
+#endif
 }
 
 static void create_modvol_shader()
@@ -893,143 +926,23 @@ void UpdateFogTexture(u8 *fog_table, GLenum texture_slot, GLint fog_image_format
 	glActiveTexture(GL_TEXTURE0);
 }
 
-
-extern u16 kcode[4];
-extern u8 rt[4],lt[4];
-
-#define VJOY_VISIBLE 14
-
-#if defined(__ANDROID__)
-extern float vjoy_pos[15][8];
-#else
-
-float vjoy_pos[15][8]=
-{
-	{24+0,24+64,64,64},     //LEFT
-	{24+64,24+0,64,64},     //UP
-	{24+128,24+64,64,64},   //RIGHT
-	{24+64,24+128,64,64},   //DOWN
-
-	{440+0,280+64,64,64},   //X
-	{440+64,280+0,64,64},   //Y
-	{440+128,280+64,64,64}, //B
-	{440+64,280+128,64,64}, //A
-
-	{320-32,360+32,64,64},  //Start
-
-	{440,200,90,64},        //LT
-	{542,200,90,64},        //RT
-
-	{-24,128+224,128,128},  //ANALOG_RING
-	{96,320,64,64},         //ANALOG_POINT
-	{320-32,24,64,64},		// FFORWARD
-	{1}						// VJOY_VISIBLE
-};
-#endif // !__ANDROID__
-
-static List<Vertex> osd_vertices;
-static bool osd_vertices_overrun;
-
-static const float vjoy_sz[2][15] = {
-	{ 64,64,64,64, 64,64,64,64, 64, 90,90, 128, 64, 64 },
-	{ 64,64,64,64, 64,64,64,64, 64, 64,64, 128, 64, 64 },
-};
-
-void HideOSD()
-{
-	vjoy_pos[VJOY_VISIBLE][0] = 0;
-}
-
-static void DrawButton(float* xy, u32 state)
-{
-	Vertex vtx;
-
-	vtx.z = 1;
-
-	vtx.col[0]=vtx.col[1]=vtx.col[2]=(0x7F-0x40*state/255)*vjoy_pos[VJOY_VISIBLE][0];
-
-	vtx.col[3]=0xA0*vjoy_pos[VJOY_VISIBLE][4];
-
-	vjoy_pos[VJOY_VISIBLE][4]+=(vjoy_pos[VJOY_VISIBLE][0]-vjoy_pos[VJOY_VISIBLE][4])/2;
-
-
-
-	vtx.x = xy[0]; vtx.y = xy[1];
-	vtx.u=xy[4]; vtx.v=xy[5];
-	*osd_vertices.Append() = vtx;
-
-	vtx.x = xy[0] + xy[2]; vtx.y = xy[1];
-	vtx.u=xy[6]; vtx.v=xy[5];
-	*osd_vertices.Append() = vtx;
-
-	vtx.x = xy[0]; vtx.y = xy[1] + xy[3];
-	vtx.u=xy[4]; vtx.v=xy[7];
-	*osd_vertices.Append() = vtx;
-
-	vtx.x = xy[0] + xy[2]; vtx.y = xy[1] + xy[3];
-	vtx.u=xy[6]; vtx.v=xy[7];
-	*osd_vertices.Append() = vtx;
-}
-
-static void DrawButton2(float* xy, bool state) { DrawButton(xy,state?0:255); }
-
-static void osd_gen_vertices()
-{
-	osd_vertices.Init(ARRAY_SIZE(vjoy_pos) * 4, &osd_vertices_overrun, "OSD vertices");
-	DrawButton2(vjoy_pos[0],kcode[0] & DC_DPAD_LEFT);
-	DrawButton2(vjoy_pos[1],kcode[0] & DC_DPAD_UP);
-	DrawButton2(vjoy_pos[2],kcode[0] & DC_DPAD_RIGHT);
-	DrawButton2(vjoy_pos[3],kcode[0] & DC_DPAD_DOWN);
-
-	DrawButton2(vjoy_pos[4],kcode[0] & DC_BTN_X);
-	DrawButton2(vjoy_pos[5],kcode[0] & DC_BTN_Y);
-	DrawButton2(vjoy_pos[6],kcode[0] & DC_BTN_B);
-	DrawButton2(vjoy_pos[7],kcode[0] & DC_BTN_A);
-
-	DrawButton2(vjoy_pos[8],kcode[0] & DC_BTN_START);
-
-	DrawButton(vjoy_pos[9],lt[0]);
-
-	DrawButton(vjoy_pos[10],rt[0]);
-
-	DrawButton2(vjoy_pos[11],1);
-	DrawButton2(vjoy_pos[12],0);
-
-	DrawButton2(vjoy_pos[13], 0);
-}
-
-#define OSD_TEX_W 512
-#define OSD_TEX_H 256
-
 void OSD_DRAW(bool clear_screen)
 {
 #ifdef __ANDROID__
-	if (osd_tex == 0)
+	if (gl.OSD_SHADER.osd_tex == 0)
 		gl_load_osd_resources();
-	if (osd_tex != 0)
+	if (gl.OSD_SHADER.osd_tex != 0)
 	{
-		osd_gen_vertices();
+		const std::vector<OSDVertex>& osdVertices = GetOSDVertices();
 
-		float u=0;
-		float v=0;
+#ifndef GLES2
+		if (gl.gl_major >= 3)
+			glBindVertexArray(gl.OSD_SHADER.vao);
+		else
+#endif
+			SetupOSDVBO();
 
-		for (int i = 0; i < 14; i++)
-		{
-			//umin,vmin,umax,vmax
-			vjoy_pos[i][4]=(u+1)/OSD_TEX_W;
-			vjoy_pos[i][5]=(v+1)/OSD_TEX_H;
-
-			vjoy_pos[i][6]=((u+vjoy_sz[0][i]-1))/OSD_TEX_W;
-			vjoy_pos[i][7]=((v+vjoy_sz[1][i]-1))/OSD_TEX_H;
-
-			u+=vjoy_sz[0][i];
-			if (u>=OSD_TEX_W)
-			{
-				u-=OSD_TEX_W;
-				v+=vjoy_sz[1][i];
-			}
-			//v+=vjoy_pos[i][3];
-		}
+		glBindBuffer(GL_ARRAY_BUFFER, gl.OSD_SHADER.geometry);
 
 		verify(glIsProgram(gl.OSD_SHADER.program));
 		glcache.UseProgram(gl.OSD_SHADER.program);
@@ -1044,11 +957,11 @@ void OSD_DRAW(bool clear_screen)
 		glUniform4fv(gl.OSD_SHADER.scale, 1, scale);
 
 		glActiveTexture(GL_TEXTURE0);
-		glcache.BindTexture(GL_TEXTURE_2D, osd_tex);
+		glcache.BindTexture(GL_TEXTURE_2D, gl.OSD_SHADER.osd_tex);
 
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-		glBufferData(GL_ARRAY_BUFFER, osd_vertices.bytes(), osd_vertices.head(), GL_STREAM_DRAW); glCheck();
+		glBufferData(GL_ARRAY_BUFFER, osdVertices.size() * sizeof(OSDVertex), osdVertices.data(), GL_STREAM_DRAW); glCheck();
 
 		glcache.Enable(GL_BLEND);
 		glcache.Disable(GL_DEPTH_TEST);
@@ -1066,10 +979,12 @@ void OSD_DRAW(bool clear_screen)
 			glcache.ClearColor(0.7f, 0.7f, 0.7f, 1.f);
 			glClear(GL_COLOR_BUFFER_BIT);
 		}
-		int dfa = osd_vertices.used() / 4;
+		int dfa = osdVertices.size() / 4;
 
 		for (int i = 0; i < dfa; i++)
 			glDrawArrays(GL_TRIANGLE_STRIP, i * 4, 4);
+
+		glCheck();
 	}
 #endif
 	gui_display_osd();
@@ -1080,7 +995,7 @@ bool ProcessFrame(TA_context* ctx)
 	ctx->rend_inuse.Lock();
 
 	if (KillTex)
-		killtex();
+		TexCache.Clear();
 
 	if (ctx->rend.isRenderFramebuffer)
 	{
@@ -1092,7 +1007,7 @@ bool ProcessFrame(TA_context* ctx)
 		if (!ta_parse_vdrc(ctx))
 			return false;
 	}
-	CollectCleanup();
+	TexCache.CollectCleanup();
 
 	if (ctx->rend.Overrun)
 		WARN_LOG(PVR, "ERROR: TA context overrun");
@@ -1575,33 +1490,25 @@ struct glesrend : Renderer
 	void Resize(int w, int h) override { screen_width=w; screen_height=h; }
 	void Term() override
 	{
-		killtex();
+		TexCache.Clear();
 		gles_term();
 	}
 
 	bool Process(TA_context* ctx) override { return ProcessFrame(ctx); }
-	bool Render() override { return RenderFrame(); }
+	bool Render() override
+	{
+		RenderFrame();
+		if (!pvrrc.isRTT)
+			DrawOSD(false);
+
+		return !pvrrc.isRTT;
+	}
 	bool RenderLastFrame() override { return !theGLContext.IsSwapBufferPreserved() ? render_output_framebuffer() : false; }
 	void Present() override { theGLContext.Swap(); glViewport(0, 0, screen_width, screen_height); }
 
 	void DrawOSD(bool clear_screen) override
 	{
-#ifndef GLES2
-		if (gl.gl_major >= 3)
-			glBindVertexArray(gl.vbo.vao);
-#endif
-		glBindBuffer(GL_ARRAY_BUFFER, gl.vbo.geometry);
-		glEnableVertexAttribArray(VERTEX_POS_ARRAY);
-		glVertexAttribPointer(VERTEX_POS_ARRAY, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex,x));
-
-		glEnableVertexAttribArray(VERTEX_COL_BASE_ARRAY);
-		glVertexAttribPointer(VERTEX_COL_BASE_ARRAY, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Vertex), (void*)offsetof(Vertex,col));
-
-		glEnableVertexAttribArray(VERTEX_UV_ARRAY);
-		glVertexAttribPointer(VERTEX_UV_ARRAY, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex,u));
-
 		OSD_DRAW(clear_screen);
-		glCheck();
 	}
 
 	virtual u64 GetTexture(TSP tsp, TCW tcw) override
@@ -1610,150 +1517,6 @@ struct glesrend : Renderer
 	}
 };
 
-
-FILE* pngfile;
-
-void png_cstd_read(png_structp png_ptr, png_bytep data, png_size_t length)
-{
-	if (fread(data, 1, length, pngfile) != length)
-		png_error(png_ptr, "Truncated read error");
-}
-
-u8* loadPNGData(const string& fname, int &width, int &height)
-{
-	const char* filename=fname.c_str();
-	FILE* file = fopen(filename, "rb");
-	pngfile=file;
-
-	if (!file)
-	{
-		EMUERROR("Error opening %s\n", filename);
-		return NULL;
-	}
-
-	//header for testing if it is a png
-	png_byte header[8];
-
-	//read the header
-	if (fread(header, 1, 8, file) != 8)
-	{
-		fclose(file);
-		WARN_LOG(RENDERER, "Not a PNG file : %s", filename);
-		return NULL;
-	}
-
-	//test if png
-	int is_png = !png_sig_cmp(header, 0, 8);
-	if (!is_png)
-	{
-		fclose(file);
-		WARN_LOG(RENDERER, "Not a PNG file : %s", filename);
-		return NULL;
-	}
-
-	//create png struct
-	png_structp png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL,
-		NULL, NULL);
-	if (!png_ptr)
-	{
-		fclose(file);
-		WARN_LOG(RENDERER, "Unable to create PNG struct : %s", filename);
-		return (NULL);
-	}
-
-	//create png info struct
-	png_infop info_ptr = png_create_info_struct(png_ptr);
-	if (!info_ptr)
-	{
-		png_destroy_read_struct(&png_ptr, (png_infopp) NULL, (png_infopp) NULL);
-		WARN_LOG(RENDERER, "Unable to create PNG info : %s", filename);
-		fclose(file);
-		return (NULL);
-	}
-
-	//create png info struct
-	png_infop end_info = png_create_info_struct(png_ptr);
-	if (!end_info)
-	{
-		png_destroy_read_struct(&png_ptr, &info_ptr, (png_infopp) NULL);
-		WARN_LOG(RENDERER, "Unable to create PNG end info : %s", filename);
-		fclose(file);
-		return (NULL);
-	}
-
-	//png error stuff, not sure libpng man suggests this.
-	if (setjmp(png_jmpbuf(png_ptr)))
-	{
-		fclose(file);
-		WARN_LOG(RENDERER, "Error during setjmp : %s", filename);
-		png_destroy_read_struct(&png_ptr, &info_ptr, &end_info);
-		return (NULL);
-	}
-
-	//init png reading
-	//png_init_io(png_ptr, fp);
-	png_set_read_fn(png_ptr, NULL, png_cstd_read);
-
-	//let libpng know you already read the first 8 bytes
-	png_set_sig_bytes(png_ptr, 8);
-
-	// read all the info up to the image data
-	png_read_info(png_ptr, info_ptr);
-
-	//variables to pass to get info
-	int bit_depth, color_type;
-	png_uint_32 twidth, theight;
-
-	// get info about png
-	png_get_IHDR(png_ptr, info_ptr, &twidth, &theight, &bit_depth, &color_type,
-		NULL, NULL, NULL);
-
-	//update width and height based on png info
-	width = twidth;
-	height = theight;
-
-	// Update the png info struct.
-	png_read_update_info(png_ptr, info_ptr);
-
-	// Row size in bytes.
-	int rowbytes = png_get_rowbytes(png_ptr, info_ptr);
-
-	// Allocate the image_data as a big block, to be given to opengl
-	png_byte *image_data = new png_byte[rowbytes * height];
-	if (!image_data)
-	{
-		//clean up memory and close stuff
-		png_destroy_read_struct(&png_ptr, &info_ptr, &end_info);
-		WARN_LOG(RENDERER, "Unable to allocate image_data while loading %s", filename);
-		fclose(file);
-		return NULL;
-	}
-
-	//row_pointers is for pointing to image_data for reading the png with libpng
-	png_bytep *row_pointers = new png_bytep[height];
-	if (!row_pointers)
-	{
-		//clean up memory and close stuff
-		png_destroy_read_struct(&png_ptr, &info_ptr, &end_info);
-		delete[] image_data;
-		WARN_LOG(RENDERER, "Unable to allocate row_pointer while loading %s", filename);
-		fclose(file);
-		return NULL;
-	}
-
-	// set the individual row_pointers to point at the correct offsets of image_data
-	for (int i = 0; i < height; ++i)
-		row_pointers[height - 1 - i] = image_data + i * rowbytes;
-
-	//read the png into image_data through row_pointers
-	png_read_image(png_ptr, row_pointers);
-
-	png_destroy_read_struct(&png_ptr, &info_ptr, &end_info);
-	delete[] row_pointers;
-	fclose(file);
-
-	return image_data;
-}
 
 GLuint loadPNG(const string& fname, int &width, int &height)
 {

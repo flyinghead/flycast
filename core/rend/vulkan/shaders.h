@@ -111,6 +111,18 @@ public:
 			quadFragmentShader = compileQuadFragmentShader();
 		return *quadFragmentShader;
 	}
+	vk::ShaderModule GetOSDVertexShader()
+	{
+		if (!osdVertexShader)
+			osdVertexShader = compileOSDVertexShader();
+		return *osdVertexShader;
+	}
+	vk::ShaderModule GetOSDFragmentShader()
+	{
+		if (!osdFragmentShader)
+			osdFragmentShader = compileOSDFragmentShader();
+		return *osdFragmentShader;
+	}
 
 private:
 	template<typename T>
@@ -128,6 +140,8 @@ private:
 	vk::UniqueShaderModule compileModVolFragmentShader();
 	vk::UniqueShaderModule compileQuadVertexShader();
 	vk::UniqueShaderModule compileQuadFragmentShader();
+	vk::UniqueShaderModule compileOSDVertexShader();
+	vk::UniqueShaderModule compileOSDFragmentShader();
 
 	std::map<u32, vk::UniqueShaderModule> vertexShaders;
 	std::map<u32, vk::UniqueShaderModule> fragmentShaders;
@@ -135,4 +149,6 @@ private:
 	vk::UniqueShaderModule modVolShader;
 	vk::UniqueShaderModule quadVertexShader;
 	vk::UniqueShaderModule quadFragmentShader;
+	vk::UniqueShaderModule osdVertexShader;
+	vk::UniqueShaderModule osdFragmentShader;
 };

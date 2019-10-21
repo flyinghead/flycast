@@ -30,6 +30,7 @@ Compression
 #endif
 
 extern u32 decoded_colors[3][65536];
+TextureCache TexCache;
 
 static void dumpRtTexture(u32 name, u32 w, u32 h) {
 	char sname[256];
@@ -319,7 +320,7 @@ void ReadRTTBuffer() {
     	for (tsp.TexU = 0; tsp.TexU <= 7 && (8 << tsp.TexU) < w; tsp.TexU++);
     	for (tsp.TexV = 0; tsp.TexV <= 7 && (8 << tsp.TexV) < h; tsp.TexV++);
 
-    	TextureCacheData *texture_data = static_cast<TextureCacheData*>(getTextureCacheData(tsp, tcw, [](){ return (BaseTextureCacheData *)new TextureCacheData(); }));
+    	TextureCacheData *texture_data = TexCache.getTextureCacheData(tsp, tcw);
     	if (texture_data->texID != 0)
     		glcache.DeleteTextures(1, &texture_data->texID);
     	else
@@ -345,7 +346,7 @@ u64 gl_GetTexture(TSP tsp, TCW tcw)
 	TexCacheLookups++;
 
 	//lookup texture
-	TextureCacheData* tf = static_cast<TextureCacheData*>(getTextureCacheData(tsp, tcw, [](){ return (BaseTextureCacheData *)new TextureCacheData(); }));
+	TextureCacheData* tf = TexCache.getTextureCacheData(tsp, tcw);
 
 	if (tf->texID == 0)
 	{
@@ -380,7 +381,7 @@ text_info raw_GetTexture(TSP tsp, TCW tcw)
 	text_info rv = { 0 };
 
 	//lookup texture
-	TextureCacheData* tf = static_cast<TextureCacheData*>(getTextureCacheData(tsp, tcw, [](){ return (BaseTextureCacheData *)new TextureCacheData(); }));
+	TextureCacheData* tf = TexCache.getTextureCacheData(tsp, tcw);
 
 	if (tf->pData == nullptr)
 		tf->Create();

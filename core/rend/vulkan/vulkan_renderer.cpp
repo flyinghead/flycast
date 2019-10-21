@@ -26,7 +26,8 @@
 #include "commandpool.h"
 #include "drawer.h"
 #include "shaders.h"
-#include "../gui.h"
+#include "rend/gui.h"
+#include "rend/osd.h"
 
 extern bool ProcessFrame(TA_context* ctx);
 
@@ -41,14 +42,55 @@ public:
 
 		// FIXME this might be called after initial init
 		texAllocator.SetChunkSize(16 * 1024 * 1024);
-		while (textureDrawer.size() < 2)
-			textureDrawer.emplace_back();
-		textureDrawer[0].Init(&samplerManager, &shaderManager, &texAllocator);
-		textureDrawer[0].SetCommandPool(&texCommandPool);
-		textureDrawer[1].Init(&samplerManager, &shaderManager, &texAllocator);
-		textureDrawer[1].SetCommandPool(&texCommandPool);
+		rttPipelineManager.Init(&shaderManager);
+		if (textureDrawer.size() > GetContext()->GetSwapChainSize())
+			textureDrawer.resize(GetContext()->GetSwapChainSize());
+		else
+		{
+			while (textureDrawer.size() < GetContext()->GetSwapChainSize())
+				textureDrawer.emplace_back();
+		}
+		for (auto& drawer : textureDrawer)
+		{
+			drawer.Init(&samplerManager, &texAllocator, &rttPipelineManager, &textureCache);
+			drawer.SetCommandPool(&texCommandPool);
+		}
+
 		screenDrawer.Init(&samplerManager, &shaderManager);
 		quadPipeline.Init(&shaderManager);
+#ifdef __ANDROID__
+		if (!vjoyTexture)
+		{
+			int w, h;
+			u8 *image_data = loadPNGData(get_readonly_data_path(DATA_PATH "buttons.png"), w, h);
+			if (image_data == nullptr)
+			{
+				WARN_LOG(RENDERER, "Cannot load buttons.png image");
+			}
+			else
+			{
+				vjoyTexture = std::unique_ptr<Texture>(new Texture());
+				vjoyTexture->tex_type = TextureType::_8888;
+				vjoyTexture->tcw.full = 0;
+				vjoyTexture->tsp.full = 0;
+				vjoyTexture->SetAllocator(&texAllocator);
+				vjoyTexture->SetPhysicalDevice(GetContext()->GetPhysicalDevice());
+				vjoyTexture->SetDevice(*GetContext()->GetDevice());
+				vjoyTexture->SetCommandBuffer(texCommandPool.Allocate());
+				vjoyTexture->UploadToGPU(OSD_TEX_W, OSD_TEX_H, image_data);
+				vjoyTexture->SetCommandBuffer(nullptr);
+				delete [] image_data;
+				osdPipeline.Init(&shaderManager, vjoyTexture->GetImageView());
+			}
+		}
+		if (!osdBuffer)
+		{
+			osdBuffer = std::unique_ptr<BufferData>(new BufferData(GetContext()->GetPhysicalDevice(), GetContext()->GetDevice().get(),
+									sizeof(OSDVertex) * VJOY_VISIBLE * 4,
+									vk::BufferUsageFlagBits::eVertexBuffer, &texAllocator));
+		}
+#endif
+
 
 		return true;
 	}
@@ -58,13 +100,14 @@ public:
 		texCommandPool.Init();
 		screenDrawer.Init(&samplerManager, &shaderManager);
 		quadPipeline.Init(&shaderManager);
+		osdPipeline.Init(&shaderManager, vjoyTexture->GetImageView());
 	}
 
 	void Term() override
 	{
 		DEBUG_LOG(RENDERER, "VulkanRenderer::Term");
 		GetContext()->WaitIdle();
-		killtex();
+		textureCache.Clear();
 		fogTexture = nullptr;
 		texCommandPool.Term();
 		shaderManager.Term();
@@ -86,10 +129,13 @@ public:
 		std::unique_ptr<Texture>& curTexture = framebufferTextures[GetContext()->GetCurrentImageIndex()];
 		if (!curTexture)
 		{
-			curTexture = std::unique_ptr<Texture>(new Texture(GetContext()->GetPhysicalDevice(), *GetContext()->GetDevice(), &texAllocator));
+			curTexture = std::unique_ptr<Texture>(new Texture());
 			curTexture->tex_type = TextureType::_8888;
 			curTexture->tcw.full = 0;
 			curTexture->tsp.full = 0;
+			curTexture->SetAllocator(&texAllocator);
+			curTexture->SetPhysicalDevice(GetContext()->GetPhysicalDevice());
+			curTexture->SetDevice(*GetContext()->GetDevice());
 		}
 		curTexture->SetCommandBuffer(texCommandPool.Allocate());
 		curTexture->UploadToGPU(width, height, (u8*)pb.data());
@@ -117,6 +163,8 @@ public:
 		quadPipeline.SetTexture(curTexture.get());
 		quadPipeline.BindDescriptorSets(cmdBuffer);
 
+		float blendConstants[4] = { 1.0, 1.0, 1.0, 1.0 };
+		cmdBuffer.setBlendConstants(blendConstants);
 		// FIXME scaling, stretching...
 		vk::Viewport viewport(ds2s_offs_x, 0.f, screen_width - ds2s_offs_x * 2, (float)screen_height);
 		cmdBuffer.setViewport(0, 1, &viewport);
@@ -138,7 +186,19 @@ public:
 			return RenderFramebuffer();
 		}
 
-		bool result = ProcessFrame(ctx);
+		ctx->rend_inuse.Lock();
+
+		if (KillTex)
+			textureCache.Clear();
+
+		bool result = ta_parse_vdrc(ctx);
+
+		textureCache.CollectCleanup();
+
+		if (ctx->rend.Overrun)
+			WARN_LOG(PVR, "ERROR: TA context overrun");
+
+		result = result && !ctx->rend.Overrun;
 
 		if (result)
 			CheckFogTexture();
@@ -151,6 +211,51 @@ public:
 
 	void DrawOSD(bool clear_screen) override
 	{
+		if (!vjoyTexture)
+			return;
+		if (clear_screen)
+		{
+			GetContext()->NewFrame();
+			GetContext()->BeginRenderPass();
+		}
+		const float screen_stretching = settings.rend.ScreenStretching / 100.f;
+		float dc2s_scale_h, ds2s_offs_x;
+		if (settings.rend.Rotate90)
+		{
+			dc2s_scale_h = screen_height / 640.0f;
+			ds2s_offs_x =  (screen_width - dc2s_scale_h * 480.0f * screen_stretching) / 2;
+		}
+		else
+		{
+			dc2s_scale_h = screen_height / 480.0f;
+			ds2s_offs_x =  (screen_width - dc2s_scale_h * 640.0f * screen_stretching) / 2;
+		}
+		std::vector<OSDVertex> osdVertices = GetOSDVertices();
+		const float x1 = 2.0f / (screen_width / dc2s_scale_h /* FIXME * scale_x */) * screen_stretching;
+		const float y1 = 2.0f / 480 /* FIXME dc_height */;
+		const float x2 = 1 - 2 * ds2s_offs_x / screen_width;
+		const float y2 = 1;
+		for (OSDVertex& vtx : osdVertices)
+		{
+			vtx.x = vtx.x * x1 - x2;
+			vtx.y = vtx.y * y1 - y2;
+		}
+
+		const vk::CommandBuffer cmdBuffer = GetContext()->GetCurrentCommandBuffer();
+		cmdBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, osdPipeline.GetPipeline());
+
+		osdPipeline.BindDescriptorSets(cmdBuffer);
+		const vk::Viewport viewport(0, 0, (float)screen_width, (float)screen_height, 0, 1.f);
+		cmdBuffer.setViewport(0, 1, &viewport);
+		const vk::Rect2D scissor({ 0, 0 }, { (u32)screen_width, (u32)screen_height });
+		cmdBuffer.setScissor(0, 1, &scissor);
+		osdBuffer->upload(*GetContext()->GetDevice(), osdVertices.size() * sizeof(OSDVertex), osdVertices.data());
+		const vk::DeviceSize zero = 0;
+		cmdBuffer.bindVertexBuffers(0, 1, &osdBuffer->buffer.get(), &zero);
+		for (int i = 0; i < osdVertices.size(); i += 4)
+			cmdBuffer.draw(4, 1, i, 0);
+		if (clear_screen)
+			GetContext()->EndFrame();
 	}
 
 	bool Render() override
@@ -158,14 +263,18 @@ public:
 		if (pvrrc.isRenderFramebuffer)
 			return true;
 
+		Drawer *drawer;
 		if (pvrrc.isRTT)
-		{
-			textureDrawer[curTextureDrawer].Draw(fogTexture.get());
-			curTextureDrawer ^= 1;
-			return false;
-		}
+			drawer = &textureDrawer[GetContext()->GetCurrentImageIndex()];
 		else
-			return screenDrawer.Draw(fogTexture.get());
+			drawer = &screenDrawer;
+
+		drawer->Draw(fogTexture.get());
+		if (!pvrrc.isRTT)
+			DrawOSD(false);
+		drawer->EndRenderPass();
+
+		return !pvrrc.isRTT;
 	}
 
 	void Present() override
@@ -175,12 +284,15 @@ public:
 
 	virtual u64 GetTexture(TSP tsp, TCW tcw) override
 	{
-		Texture* tf = static_cast<Texture*>(getTextureCacheData(tsp, tcw, [this](){
-			return (BaseTextureCacheData *)new Texture(VulkanContext::Instance()->GetPhysicalDevice(), *VulkanContext::Instance()->GetDevice(), &this->texAllocator);
-		}));
+		Texture* tf = textureCache.getTextureCacheData(tsp, tcw);
 
 		if (tf->IsNew())
+		{
 			tf->Create();
+			tf->SetAllocator(&texAllocator);
+			tf->SetPhysicalDevice(GetContext()->GetPhysicalDevice());
+			tf->SetDevice(*GetContext()->GetDevice());
+		}
 
 		//update if needed
 		if (tf->NeedsUpdate())
@@ -202,7 +314,10 @@ private:
 	{
 		if (!fogTexture)
 		{
-			fogTexture = std::unique_ptr<Texture>(new Texture(GetContext()->GetPhysicalDevice(), *GetContext()->GetDevice()));
+			fogTexture = std::unique_ptr<Texture>(new Texture());
+			fogTexture->SetAllocator(&texAllocator);
+			fogTexture->SetPhysicalDevice(GetContext()->GetPhysicalDevice());
+			fogTexture->SetDevice(*GetContext()->GetDevice());
 			fogTexture->tex_type = TextureType::_8;
 			fog_needs_update = true;
 		}
@@ -224,11 +339,15 @@ private:
 	SamplerManager samplerManager;
 	ShaderManager shaderManager;
 	ScreenDrawer screenDrawer;
-	std::vector<TextureDrawer> textureDrawer;	// FIXME should be a singleton
-	int curTextureDrawer = 0;
+	RttPipelineManager rttPipelineManager;
+	std::vector<TextureDrawer> textureDrawer;
 	VulkanAllocator texAllocator;
 	std::vector<std::unique_ptr<Texture>> framebufferTextures;
 	QuadPipeline quadPipeline;
+	OSDPipeline osdPipeline;
+	std::unique_ptr<Texture> vjoyTexture;
+	std::unique_ptr<BufferData> osdBuffer;
+	TextureCache textureCache;
 };
 
 Renderer* rend_Vulkan()

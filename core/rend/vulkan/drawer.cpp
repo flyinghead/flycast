@@ -448,8 +448,6 @@ bool Drawer::Draw(const Texture *fogTexture)
     if (!is_rtt)
     	gui_display_osd();
 
-	EndRenderPass();
-
 	return !is_rtt;
 }
 
@@ -477,7 +475,7 @@ vk::CommandBuffer TextureDrawer::BeginRenderPass()
 		heightPow2 *= settings.rend.RenderToTextureUpscale;
 	}
 
-	static_cast<RttPipelineManager*>(pipelineManager.get())->CheckSettingsChange();
+	static_cast<RttPipelineManager*>(pipelineManager)->CheckSettingsChange();
 	VulkanContext *context = GetContext();
 	vk::Device device = *context->GetDevice();
 
@@ -514,11 +512,14 @@ vk::CommandBuffer TextureDrawer::BeginRenderPass()
 		for (tsp.TexU = 0; tsp.TexU <= 7 && (8 << tsp.TexU) < origWidth; tsp.TexU++);
 		for (tsp.TexV = 0; tsp.TexV <= 7 && (8 << tsp.TexV) < origHeight; tsp.TexV++);
 
-		texture = static_cast<Texture*>(getTextureCacheData(tsp, tcw, [this](){
-			return (BaseTextureCacheData *)new Texture(VulkanContext::Instance()->GetPhysicalDevice(), *VulkanContext::Instance()->GetDevice(), this->texAllocator);
-		}));
+		texture = textureCache->getTextureCacheData(tsp, tcw);
 		if (texture->IsNew())
+		{
 			texture->Create();
+			texture->SetAllocator(texAllocator);
+			texture->SetPhysicalDevice(GetContext()->GetPhysicalDevice());
+			texture->SetDevice(*GetContext()->GetDevice());
+		}
 		if (texture->format != vk::Format::eR8G8B8A8Unorm)
 		{
 			texture->extent = vk::Extent2D(widthPow2, heightPow2);

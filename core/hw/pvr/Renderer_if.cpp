@@ -102,7 +102,7 @@ TA_context* _pvrrc;
 void SetREP(TA_context* cntx);
 static void rend_create_renderer();
 
-void dump_frame(const char* file, TA_context* ctx, u8* vram, u8* vram_ref = NULL) {
+static void dump_frame(const char* file, TA_context* ctx, u8* vram, u8* vram_ref = NULL) {
 	FILE* fw = fopen(file, "wb");
 
 	//append to it
@@ -245,7 +245,8 @@ TA_context* read_frame(const char* file, u8* vram_ref = NULL) {
 
 bool dump_frame_switch = false;
 
-bool rend_frame(TA_context* ctx, bool draw_osd) {
+static bool rend_frame(TA_context* ctx)
+{
 	if (dump_frame_switch) {
 		char name[32];
 		sprintf(name, "dcframe-%d", FrameCount);
@@ -267,12 +268,7 @@ bool rend_frame(TA_context* ctx, bool draw_osd) {
 		re.Set();
 #endif
 
-	bool do_swp = proc && renderer->Render();
-
-	if (do_swp && draw_osd)
-		renderer->DrawOSD(false);
-
-	return do_swp;
+	return proc && renderer->Render();
 }
 
 bool rend_single_frame()
@@ -332,7 +328,7 @@ bool rend_single_frame()
 		_pvrrc = DequeueRender();
 	}
 	while (!_pvrrc);
-	bool do_swp = rend_frame(_pvrrc, true);
+	bool do_swp = rend_frame(_pvrrc);
 	swap_pending = settings.rend.DelayFrameSwapping && do_swp && !_pvrrc->rend.isRenderFramebuffer;
 
 #if !defined(TARGET_NO_THREADS)

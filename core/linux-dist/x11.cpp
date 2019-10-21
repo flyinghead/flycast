@@ -476,7 +476,7 @@ void x11_window_destroy()
 		}
 		cfgSaveBool("x11", "fullscreen", x11_fullscreen);
 		XDestroyWindow(x11_disp, x11_win);
-		x11_win = NULL;
+		x11_win = (Window)0;
 	}
 	if (x11_disp)
 	{

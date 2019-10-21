@@ -29,9 +29,6 @@ void setImageLayout(vk::CommandBuffer const& commandBuffer, vk::Image image, vk:
 
 struct Texture : BaseTextureCacheData
 {
-	Texture(vk::PhysicalDevice physicalDevice, vk::Device device, VulkanAllocator *allocator = nullptr)
-		: physicalDevice(physicalDevice), device(device), format(vk::Format::eUndefined), allocator(allocator)
-		{}
 	~Texture() override
 	{
 		imageView.reset();
@@ -47,6 +44,10 @@ struct Texture : BaseTextureCacheData
 	void SetCommandBuffer(vk::CommandBuffer commandBuffer) { this->commandBuffer = commandBuffer; }
 	virtual bool Force32BitTexture(TextureType type) override { return !VulkanContext::Instance()->IsFormatSupported(type); }
 
+	void SetAllocator(VulkanAllocator *allocator) { this->allocator = allocator; }
+	void SetPhysicalDevice(vk::PhysicalDevice physicalDevice) { this->physicalDevice = physicalDevice; }
+	void SetDevice(vk::Device device) { this->device = device; }
+
 private:
 	void Init(u32 width, u32 height, vk::Format format);
 	void SetImage(u32 size, void *data, bool isNew);
@@ -54,7 +55,7 @@ private:
 			vk::MemoryPropertyFlags memoryProperties, vk::ImageAspectFlags aspectMask);
 	void GenerateMipmaps();
 
-	vk::Format format;
+	vk::Format format = vk::Format::eUndefined;
 	vk::Extent2D extent;
 	u32 mipmapLevels = 1;
 	bool needsStaging = false;
@@ -67,7 +68,7 @@ private:
 
 	vk::PhysicalDevice physicalDevice;
 	vk::Device device;
-	VulkanAllocator *allocator;
+	VulkanAllocator *allocator = nullptr;
 	vk::DeviceMemory sharedDeviceMemory;
 	u32 memoryType = 0;
 	vk::DeviceSize memoryOffset = 0;
@@ -128,4 +129,8 @@ private:
 
 	vk::PhysicalDevice physicalDevice;
 	vk::Device device;
+};
+
+class TextureCache : public BaseTextureCache<Texture>
+{
 };
