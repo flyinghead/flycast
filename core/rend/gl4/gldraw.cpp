@@ -27,11 +27,6 @@ static gl4PipelineShader *gl4GetProgram(u32 cp_AlphaTest, s32 pp_ClipTestMode,
 							u32 pp_Texture, u32 pp_UseAlpha, u32 pp_IgnoreTexA, u32 pp_ShadInstr, u32 pp_Offset,
 							u32 pp_FogCtrl, bool pp_TwoVolumes, u32 pp_DepthFunc, bool pp_Gouraud, bool pp_BumpMap, bool fog_clamping, int pass)
 {
-	if (settings.rend.Rotate90 != gl4.rotate90)
-	{
-		gl4_delete_shaders();
-		gl4.rotate90 = settings.rend.Rotate90;
-	}
 	u32 rv=0;
 
 	rv |= (pp_ClipTestMode + 1);
@@ -66,7 +61,7 @@ static gl4PipelineShader *gl4GetProgram(u32 cp_AlphaTest, s32 pp_ClipTestMode,
 		shader->pp_BumpMap = pp_BumpMap;
 		shader->fog_clamping = fog_clamping;
 		shader->pass = pass;
-		gl4CompilePipelineShader(shader, settings.rend.Rotate90);
+		gl4CompilePipelineShader(shader);
 	}
 
 	return shader;
@@ -152,7 +147,8 @@ template <u32 Type, bool SortingEnabled>
 	gl4ShaderUniforms.tcw0 = gp->tcw;
 	gl4ShaderUniforms.tcw1 = gp->tcw1;
 
-	if (Type == ListType_Opaque || Type == ListType_Punch_Through)	// TODO Can PT have a >0 and <1 alpha?
+	// FIXME PT can use blending (NFL Blitz 2K1)
+	if (Type == ListType_Opaque || Type == ListType_Punch_Through)
 	{
 		gl4ShaderUniforms.tsp0.SrcInstr = 1;
 		gl4ShaderUniforms.tsp0.DstInstr = 0;

@@ -20,9 +20,9 @@
 #include "oslib/oslib.h"
 #include "rend/rend.h"
 #include "input/gamepad.h"
+#include <glm/gtx/transform.hpp>
 
-float fb_scale_x,fb_scale_y;
-float scale_x, scale_y;
+float fb_scale_x, fb_scale_y; // FIXME
 
 //Fragment and vertex shaders code
 const char* VertexShaderSource =
@@ -30,7 +30,6 @@ const char* VertexShaderSource =
 %s \n\
 #define TARGET_GL %s \n\
 #define pp_Gouraud %d \n\
-#define ROTATE_90 %d \n\
  \n\
 #define GLES2 0 \n\
 #define GLES3 1 \n\
@@ -61,7 +60,7 @@ const char* VertexShaderSource =
 /* Vertex constants*/  \n\
 uniform highp vec4      scale; \n\
 uniform highp vec4      depth_scale; \n\
-uniform highp float     extra_depth_scale; \n\
+uniform highp mat4 normal_matrix; \n\
 /* Vertex input */ \n\
 in highp vec4    in_pos; \n\
 in lowp vec4     in_base; \n\
@@ -73,9 +72,9 @@ INTERPOLATION out lowp vec4 vtx_offs; \n\
               out mediump vec2 vtx_uv; \n\
 void main() \n\
 { \n\
-	vtx_base=in_base; \n\
-	vtx_offs=in_offs; \n\
-	vtx_uv=in_uv; \n\
+	vtx_base = in_base; \n\
+	vtx_offs = in_offs; \n\
+	vtx_uv = in_uv; \n\
 	highp vec4 vpos = in_pos; \n\
 	if (vpos.z < 0.0 || vpos.z > 3.4e37) \n\
 	{ \n\
@@ -83,17 +82,14 @@ void main() \n\
 		return; \n\
 	} \n\
 	\n\
-	vpos.w = extra_depth_scale / vpos.z; \n\
+	vpos = normal_matrix * vpos; \n\
+	vpos.w = 1.0 / vpos.z; \n\
 #if TARGET_GL != GLES2 \n\
 	vpos.z = vpos.w; \n\
 #else \n\
-	vpos.z=depth_scale.x+depth_scale.y*vpos.w;  \n\
+	vpos.z = depth_scale.x + depth_scale.y * vpos.w;  \n\
 #endif \n\
-#if ROTATE_90 == 1 \n\
-	vpos.xy = vec2(vpos.y, -vpos.x);  \n\
-#endif \n\
-	vpos.xy=vpos.xy*scale.xy-scale.zw;  \n\
-	vpos.xy*=vpos.w;  \n\
+	vpos.xy *= vpos.w; \n\
 	gl_Position = vpos; \n\
 }";
 
@@ -396,6 +392,8 @@ int screen_width;
 int screen_height;
 GLuint fogTextureId;
 
+glm::mat4 ViewportMatrix;
+
 #ifdef TEST_AUTOMATION
 static void dump_screenshot(u8 *buffer, u32 width, u32 height)
 {
@@ -637,11 +635,6 @@ PipelineShader *GetProgram(u32 cp_AlphaTest, u32 pp_ClipTestMode,
 							u32 pp_Texture, u32 pp_UseAlpha, u32 pp_IgnoreTexA, u32 pp_ShadInstr, u32 pp_Offset,
 							u32 pp_FogCtrl, bool pp_Gouraud, bool pp_BumpMap, bool fog_clamping, bool trilinear)
 {
-	if (settings.rend.Rotate90 != gl.rotate90)
-	{
-		gl_delete_shaders();
-		gl.rotate90 = settings.rend.Rotate90;
-	}
 	u32 rv=0;
 
 	rv|=pp_ClipTestMode;
@@ -682,7 +675,7 @@ bool CompilePipelineShader(	PipelineShader* s)
 {
 	char vshader[8192];
 
-	sprintf(vshader, VertexShaderSource, gl.glsl_version_header, gl.gl_version, s->pp_Gouraud, settings.rend.Rotate90);
+	sprintf(vshader, VertexShaderSource, gl.glsl_version_header, gl.gl_version, s->pp_Gouraud);
 
 	char pshader[8192];
 
@@ -700,7 +693,6 @@ bool CompilePipelineShader(	PipelineShader* s)
 		glUniform1i(gu,0);
 
 	//get the uniform locations
-	s->scale	            = glGetUniformLocation(s->program, "scale");
 	s->depth_scale      = glGetUniformLocation(s->program, "depth_scale");
 	s->extra_depth_scale = glGetUniformLocation(s->program, "extra_depth_scale");
 
@@ -739,6 +731,7 @@ bool CompilePipelineShader(	PipelineShader* s)
 		s->fog_clamp_min = -1;
 		s->fog_clamp_max = -1;
 	}
+	s->normal_matrix = glGetUniformLocation(s->program, "normal_matrix");
 
 	ShaderUniforms.Set(s);
 
@@ -815,12 +808,12 @@ static void create_modvol_shader()
 	if (gl.modvol_shader.program != 0)
 		return;
 	char vshader[8192];
-	sprintf(vshader, VertexShaderSource, gl.glsl_version_header, gl.gl_version, 1, settings.rend.Rotate90);
+	sprintf(vshader, VertexShaderSource, gl.glsl_version_header, gl.gl_version, 1);
 	char fshader[8192];
 	sprintf(fshader, ModifierVolumeShader, gl.glsl_version_header, gl.gl_version);
 
-	gl.modvol_shader.program=gl_CompileAndLink(vshader, fshader);
-	gl.modvol_shader.scale          = glGetUniformLocation(gl.modvol_shader.program, "scale");
+	gl.modvol_shader.program = gl_CompileAndLink(vshader, fshader);
+	gl.modvol_shader.normal_matrix  = glGetUniformLocation(gl.modvol_shader.program, "normal_matrix");
 	gl.modvol_shader.sp_ShaderColor = glGetUniformLocation(gl.modvol_shader.program, "sp_ShaderColor");
 	gl.modvol_shader.depth_scale    = glGetUniformLocation(gl.modvol_shader.program, "depth_scale");
 	gl.modvol_shader.extra_depth_scale = glGetUniformLocation(gl.modvol_shader.program, "extra_depth_scale");
@@ -1033,240 +1026,236 @@ static void upload_vertex_indices()
 	glCheck();
 }
 
-bool RenderFrame()
+void GetFramebufferScaling(float& scale_x, float& scale_y, float& scissoring_scale_x, float& scissoring_scale_y)
 {
-	DoCleanup();
-	create_modvol_shader();
-
-	bool is_rtt=pvrrc.isRTT;
-
-	//if (FrameCount&7) return;
-
-	//Setup the matrix
-
-	//TODO: Make this dynamic
-	float vtx_min_fZ=0.f;	//pvrrc.fZ_min;
-	float vtx_max_fZ=pvrrc.fZ_max;
-
-	//sanitise the values, now with NaN detection (for omap)
-	//0x49800000 is 1024*1024. Using integer math to avoid issues w/ infs and nans
-	if ((s32&)vtx_max_fZ<0 || (u32&)vtx_max_fZ>0x49800000)
-		vtx_max_fZ=10*1024;
-
-
-	//add some extra range to avoid clipping border cases
-	vtx_min_fZ*=0.98f;
-	vtx_max_fZ*=1.001f;
-
-	//calculate a projection so that it matches the pvr x,y setup, and
-	//a) Z is linearly scaled between 0 ... 1
-	//b) W is passed though for proper perspective calculations
-
-	/*
-	PowerVR coords:
-	fx, fy (pixel coordinates)
-	fz=1/w
-
-	(as a note, fx=x*fz;fy=y*fz)
-
-	Clip space
-	-Wc .. Wc, xyz
-	x: left-right, y: bottom-top
-	NDC space
-	-1 .. 1, xyz
-	Window space:
-	translated NDC (viewport, glDepth)
-
-	Attributes:
-	//this needs to be cleared up, been some time since I wrote my rasteriser and i'm starting
-	//to forget/mixup stuff
-	vaX         -> VS output
-	iaX=vaX*W   -> value to be interpolated
-	iaX',W'     -> interpolated values
-	paX=iaX'/W' -> Per pixel interpolated value for attribute
-
-
-	Proper mappings:
-	Output from shader:
-	W=1/fz
-	x=fx*W -> maps to fx after perspective divide
-	y=fy*W ->         fy   -//-
-	z=-W for min, W for max. Needs to be linear.
-
-
-
-	umodified W, perfect mapping:
-	Z mapping:
-	pz=z/W
-	pz=z/(1/fz)
-	pz=z*fz
-	z=zt_s+zt_o
-	pz=(zt_s+zt_o)*fz
-	pz=zt_s*fz+zt_o*fz
-	zt_s=scale
-	zt_s=2/(max_fz-min_fz)
-	zt_o*fz=-min_fz-1
-	zt_o=(-min_fz-1)/fz == (-min_fz-1)*W
-
-
-	x=fx/(fx_range/2)-1		//0 to max -> -1 to 1
-	y=fy/(-fy_range/2)+1	//0 to max -> 1 to -1
-	z=-min_fz*W + (zt_s-1)  //0 to +inf -> -1 to 1
-
-	o=a*z+c
-	1=a*z_max+c
-	-1=a*z_min+c
-
-	c=-a*z_min-1
-	1=a*z_max-a*z_min-1
-	2=a*(z_max-z_min)
-	a=2/(z_max-z_min)
-	*/
-
-	//float B=2/(min_invW-max_invW);
-	//float A=-B*max_invW+vnear;
-
-	//these should be adjusted based on the current PVR scaling etc params
-	float dc_width=640;
-	float dc_height=480;
-
-	if (!is_rtt)
+	scale_x = 1;
+	scale_y = 1;
+	scissoring_scale_x = 1;
+	scissoring_scale_y = 1;
+	
+	if (!pvrrc.isRTT && !pvrrc.isRenderFramebuffer)
 	{
-		gcflip=0;
+		scale_x = fb_scale_x;
+		scale_y = fb_scale_y;
+		if (SCALER_CTL.vscalefactor >= 0x400)
+		{
+			// Interlace mode A (single framebuffer)
+			if (SCALER_CTL.interlace == 0)
+				scale_y *= (float)SCALER_CTL.vscalefactor / 0x400;
+			else
+				// Interlace mode B (alternating framebuffers)
+				scissoring_scale_y /= (float)SCALER_CTL.vscalefactor / 0x400;
+		}
+		
+		// VO pixel doubling is done after fb rendering/clipping
+		// so it should be used for scissoring as well
+		if (VO_CONTROL.pixel_double)
+			scale_x *= 0.5f;
+		
+		// the X Scaler halves the horizontal resolution but
+		// before clipping/scissoring
+		if (SCALER_CTL.hscale)
+		{
+			scissoring_scale_x /= 2.f;
+			scale_x *= 2.f;
+		}
 	}
-	else
-	{
-		gcflip=1;
+}
 
-		//For some reason this produces wrong results
-		//so for now its hacked based like on the d3d code
-		/*
-		u32 pvr_stride=(FB_W_LINESTRIDE.stride)*8;
-		*/
+void GetFramebufferSize(float& dc_width, float& dc_height)
+{
+	if (pvrrc.isRTT)
+	{
 		dc_width = pvrrc.fb_X_CLIP.max - pvrrc.fb_X_CLIP.min + 1;
 		dc_height = pvrrc.fb_Y_CLIP.max - pvrrc.fb_Y_CLIP.min + 1;
 	}
-
-	scale_x = 1;
-	scale_y = 1;
-
-	float scissoring_scale_x = 1;
-
-	if (!is_rtt && !pvrrc.isRenderFramebuffer)
+	else
 	{
-		scale_x=fb_scale_x;
-		scale_y=fb_scale_y;
-		if (SCALER_CTL.interlace == 0 && SCALER_CTL.vscalefactor > 0x400)
-			scale_y *= roundf((float)SCALER_CTL.vscalefactor / 0x400);
-
-		//work out scaling parameters !
-		//Pixel doubling is on VO, so it does not affect any pixel operations
-		//A second scaling is used here for scissoring
-		if (VO_CONTROL.pixel_double)
-		{
-			scissoring_scale_x = 0.5f;
-			scale_x *= 0.5f;
-		}
-
-		if (SCALER_CTL.hscale)
-		{
-            scissoring_scale_x /= 2;
-			scale_x*=2;
-		}
+		dc_width = 640;
+		dc_height = 480;
 	}
+}
 
-	dc_width  *= scale_x;
-	dc_height *= scale_y;
-
-	/*
-
-	float vnear=0;
-	float vfar =1;
-
-	float max_invW=1/vtx_min_fZ;
-	float min_invW=1/vtx_max_fZ;
-
-	float B=vfar/(min_invW-max_invW);
-	float A=-B*max_invW+vnear;
-
-
-	GLfloat dmatrix[16] =
-	{
-		(2.f/dc_width)  ,0                ,-(640/dc_width)              ,0  ,
-		0               ,-(2.f/dc_height) ,(480/dc_height)              ,0  ,
-		0               ,0                ,A                            ,B  ,
-		0               ,0                ,1                            ,0
-	};
-
-	glUniformMatrix4fv(gl.matrix, 1, GL_FALSE, dmatrix);
-
-	*/
-
-	/*
-		Handle Dc to screen scaling
-	*/
-	float screen_stretching = settings.rend.ScreenStretching / 100.f;
+void SetupMatrices(float dc_width, float dc_height,
+				   float scale_x, float scale_y, float scissoring_scale_x, float scissoring_scale_y,
+				   float &ds2s_offs_x, glm::mat4& normal_mat, glm::mat4& scissor_mat)
+{
 	float screen_scaling = settings.rend.ScreenScaling / 100.f;
-
-	float dc2s_scale_h;
-	float ds2s_offs_x;
-
-	if (is_rtt)
+	
+	if (pvrrc.isRTT)
 	{
-		ShaderUniforms.scale_coefs[0] = 2.0f / dc_width;
-		ShaderUniforms.scale_coefs[1] = 2.0f / dc_height;	// FIXME CT2 needs 480 here instead of dc_height=512
-		ShaderUniforms.scale_coefs[2] = 1;
-		ShaderUniforms.scale_coefs[3] = 1;
+		ShaderUniforms.normal_mat = glm::translate(glm::vec3(-1, -1, 0))
+			* glm::scale(glm::vec3(2.0f / dc_width, 2.0f / dc_height, 1.f));
+		scissor_mat = ShaderUniforms.normal_mat;
 	}
 	else
 	{
+		float startx = 0;
+		float starty = 0;
+		bool vga = FB_R_CTRL.vclk_div == 1;
+		switch (SPG_LOAD.hcount)
+		{
+			case 857: // NTSC, VGA
+				startx = VO_STARTX.HStart - (vga ? 0xa8 : 0xa4);
+				break;
+			case 863: // PAL
+				startx = VO_STARTX.HStart - 0xae;
+				break;
+			default:
+				INFO_LOG(PVR, "unknown video mode: hcount %d", SPG_LOAD.hcount);
+				break;
+		}
+		switch (SPG_LOAD.vcount)
+		{
+			case 524: // NTSC, VGA
+				starty = VO_STARTY.VStart_field1 - (vga ? 0x28 : 0x12);
+				break;
+			case 262: // NTSC 240p
+				starty = VO_STARTY.VStart_field1 - 0x11;
+				break;
+			case 624: // PAL
+				starty = VO_STARTY.VStart_field1 - 0x2d;
+				break;
+			case 312: // PAL 240p
+				starty = VO_STARTY.VStart_field1 - 0x2e;
+				break;
+			default:
+				INFO_LOG(PVR, "unknown video mode: vcount %d", SPG_LOAD.vcount);
+				break;
+		}
+		// some heuristic...
+		startx *= 0.8;
+		starty *= 1.1;
+		normal_mat = glm::translate(glm::vec3(startx, starty, 0));
+		scissor_mat = normal_mat;
+
+		float screen_stretching = settings.rend.ScreenStretching / 100.f;
+		float dc2s_scale_h;
+
 		if (settings.rend.Rotate90)
 		{
 			dc2s_scale_h = screen_height / 640.0f;
 			ds2s_offs_x =  (screen_width - dc2s_scale_h * 480.0f * screen_stretching) / 2;
-			ShaderUniforms.scale_coefs[0] = 2.0f / (screen_width / dc2s_scale_h * scale_x) * screen_stretching;
-			ShaderUniforms.scale_coefs[1] = -2.0f / dc_width;
-			ShaderUniforms.scale_coefs[2] = 1 - 2 * ds2s_offs_x / screen_width;
-			ShaderUniforms.scale_coefs[3] = 1;
+			float y_coef = 2.0f / (screen_width / dc2s_scale_h * scale_y) * screen_stretching;
+			float x_coef = -2.0f / dc_width;
+			glm::mat4 trans_rot = glm::rotate((float)M_PI_2, glm::vec3(0, 0, 1))
+				* glm::translate(glm::vec3(1, -1 + 2 * ds2s_offs_x / screen_width, 0));
+			normal_mat = trans_rot
+				* glm::scale(glm::vec3(x_coef, y_coef, 1.f))
+				* normal_mat;
+			scissor_mat = trans_rot
+				* glm::scale(glm::vec3(x_coef / scissoring_scale_x,
+								   y_coef/ scissoring_scale_y, 1.f))
+				* scissor_mat;	// FIXME scale_x not used, except in dc_width???
 		}
 		else
 		{
 			dc2s_scale_h = screen_height / 480.0f;
 			ds2s_offs_x =  (screen_width - dc2s_scale_h * 640.0f * screen_stretching) / 2;
-			ShaderUniforms.scale_coefs[0] = 2.0f / (screen_width / dc2s_scale_h * scale_x) * screen_stretching;
-			ShaderUniforms.scale_coefs[1] = -2.0f / dc_height;
-			ShaderUniforms.scale_coefs[2] = 1 - 2 * ds2s_offs_x / screen_width;
-			ShaderUniforms.scale_coefs[3] = -1;
+			float x_coef = 2.0f / (screen_width / dc2s_scale_h * scale_x) * screen_stretching;
+			float y_coef = -2.0f / dc_height;
+			normal_mat = glm::translate(glm::vec3(-1 + 2 * ds2s_offs_x / screen_width, 1, 0))
+				* glm::scale(glm::vec3(x_coef, y_coef, 1.f))
+				* normal_mat;
+			scissor_mat = glm::translate(glm::vec3(-1 + 2 * ds2s_offs_x / screen_width, 1, 0))
+				* glm::scale(glm::vec3(x_coef / scissoring_scale_x,
+								   y_coef / scissoring_scale_y, 1.f))
+				* scissor_mat;
 		}
-		//-1 -> too much to left
 	}
+	normal_mat = glm::scale(glm::vec3(1, 1, 1 / settings.rend.ExtraDepthScale))
+			* normal_mat;
 
-	ShaderUniforms.depth_coefs[0]=2/(vtx_max_fZ-vtx_min_fZ);
-	ShaderUniforms.depth_coefs[1]=-vtx_min_fZ-1;
-	ShaderUniforms.depth_coefs[2]=0;
-	ShaderUniforms.depth_coefs[3]=0;
+	glm::mat4 vp_trans = glm::translate(glm::vec3(1, 1, 0));
+	if (pvrrc.isRTT)
+	{
+		vp_trans = glm::scale(glm::vec3(dc_width / 2, dc_height / 2, 1.f))
+			* vp_trans;
+	}
+	else
+	{
+		vp_trans = glm::scale(glm::vec3(screen_width * screen_scaling / 2, screen_height * screen_scaling / 2, 1.f))
+			* vp_trans;
+	}
+	ViewportMatrix = vp_trans * normal_mat;
+	scissor_mat = vp_trans * scissor_mat;
+}
+
+bool RenderFrame()
+{
+	DoCleanup();
+	create_modvol_shader();
+
+	bool is_rtt = pvrrc.isRTT;
+
+	float vtx_min_fZ = 0.f;	//pvrrc.fZ_min;
+	float vtx_max_fZ = pvrrc.fZ_max;
+
+	//sanitise the values, now with NaN detection (for omap)
+	//0x49800000 is 1024*1024. Using integer math to avoid issues w/ infs and nans
+	if ((s32&)vtx_max_fZ < 0 || (u32&)vtx_max_fZ > 0x49800000)
+		vtx_max_fZ = 10 * 1024;
+
+	//add some extra range to avoid clipping border cases
+	vtx_min_fZ *= 0.98f;
+	vtx_max_fZ *= 1.001f;
+
+	//calculate a projection so that it matches the pvr x,y setup, and
+	//a) Z is linearly scaled between 0 ... 1
+	//b) W is passed though for proper perspective calculations
+
+	//these should be adjusted based on the current PVR scaling etc params
+	float dc_width;
+	float dc_height;
+	GetFramebufferSize(dc_width, dc_height);
+
+	if (!is_rtt)
+		gcflip = 0;
+	else
+		gcflip = 1;
+
+	float scale_x;
+	float scale_y;
+	float scissoring_scale_x;
+	float scissoring_scale_y;
+	GetFramebufferScaling(scale_x, scale_y, scissoring_scale_x, scissoring_scale_y);
+
+	dc_width  *= scale_x;
+	dc_height *= scale_y;
+
+	/*
+		Handle Dc to screen scaling
+	*/
+	float screen_scaling = settings.rend.ScreenScaling / 100.f;
+
+	float ds2s_offs_x;
+
+	glm::mat4 scissor_mat;
+	SetupMatrices(dc_width, dc_height, scale_x, scale_y, scissoring_scale_x, scissoring_scale_y, ds2s_offs_x, ShaderUniforms.normal_mat, scissor_mat);
+
+	ShaderUniforms.depth_coefs[0] = 2 / (vtx_max_fZ - vtx_min_fZ);
+	ShaderUniforms.depth_coefs[1] = -vtx_min_fZ - 1;
+	ShaderUniforms.depth_coefs[2] = 0;
+	ShaderUniforms.depth_coefs[3] = 0;
 
 	ShaderUniforms.extra_depth_scale = settings.rend.ExtraDepthScale;
 
-	//DEBUG_LOG(RENDERER, "scale: %f, %f, %f, %f", ShaderUniforms.scale_coefs[0], ShaderUniforms.scale_coefs[1], ShaderUniforms.scale_coefs[2], ShaderUniforms.scale_coefs[3]);
-
-
 	//VERT and RAM fog color constants
-	u8* fog_colvert_bgra=(u8*)&FOG_COL_VERT;
-	u8* fog_colram_bgra=(u8*)&FOG_COL_RAM;
-	ShaderUniforms.ps_FOG_COL_VERT[0]=fog_colvert_bgra[2]/255.0f;
-	ShaderUniforms.ps_FOG_COL_VERT[1]=fog_colvert_bgra[1]/255.0f;
-	ShaderUniforms.ps_FOG_COL_VERT[2]=fog_colvert_bgra[0]/255.0f;
+	u8* fog_colvert_bgra = (u8*)&FOG_COL_VERT;
+	u8* fog_colram_bgra = (u8*)&FOG_COL_RAM;
+	ShaderUniforms.ps_FOG_COL_VERT[0] = fog_colvert_bgra[2] / 255.0f;
+	ShaderUniforms.ps_FOG_COL_VERT[1] = fog_colvert_bgra[1] / 255.0f;
+	ShaderUniforms.ps_FOG_COL_VERT[2] = fog_colvert_bgra[0] / 255.0f;
 
-	ShaderUniforms.ps_FOG_COL_RAM[0]=fog_colram_bgra [2]/255.0f;
-	ShaderUniforms.ps_FOG_COL_RAM[1]=fog_colram_bgra [1]/255.0f;
-	ShaderUniforms.ps_FOG_COL_RAM[2]=fog_colram_bgra [0]/255.0f;
+	ShaderUniforms.ps_FOG_COL_RAM[0] = fog_colram_bgra[2] / 255.0f;
+	ShaderUniforms.ps_FOG_COL_RAM[1] = fog_colram_bgra[1] / 255.0f;
+	ShaderUniforms.ps_FOG_COL_RAM[2] = fog_colram_bgra[0] / 255.0f;
 
 	//Fog density constant
-	u8* fog_density=(u8*)&FOG_DENSITY;
-	float fog_den_mant=fog_density[1]/128.0f;  //bit 7 -> x. bit, so [6:0] -> fraction -> /128
-	s32 fog_den_exp=(s8)fog_density[0];
-	ShaderUniforms.fog_den_float=fog_den_mant*powf(2.0f,fog_den_exp);
+	u8* fog_density = (u8*)&FOG_DENSITY;
+	float fog_den_mant = fog_density[1] / 128.0f;  //bit 7 -> x. bit, so [6:0] -> fraction -> /128
+	s32 fog_den_exp = (s8)fog_density[0];
+	ShaderUniforms.fog_den_float = fog_den_mant * powf(2.0f, fog_den_exp);
 
 	ShaderUniforms.fog_clamp_min[0] = ((pvrrc.fog_clamp_min >> 16) & 0xFF) / 255.0f;
 	ShaderUniforms.fog_clamp_min[1] = ((pvrrc.fog_clamp_min >> 8) & 0xFF) / 255.0f;
@@ -1286,9 +1275,9 @@ bool RenderFrame()
 
 	glcache.UseProgram(gl.modvol_shader.program);
 
-	glUniform4fv( gl.modvol_shader.scale, 1, ShaderUniforms.scale_coefs);
 	glUniform4fv( gl.modvol_shader.depth_scale, 1, ShaderUniforms.depth_coefs);
 	glUniform1f(gl.modvol_shader.extra_depth_scale, ShaderUniforms.extra_depth_scale);
+	glUniformMatrix4fv(gl.modvol_shader.normal_matrix, 1, GL_FALSE, &ShaderUniforms.normal_mat[0][0]);
 
 	ShaderUniforms.PT_ALPHA=(PT_ALPHA_REF&0xFF)/255.0f;
 
@@ -1389,46 +1378,34 @@ bool RenderFrame()
 			glBufferData(GL_ARRAY_BUFFER,pvrrc.modtrig.bytes(),pvrrc.modtrig.head(),GL_STREAM_DRAW); glCheck();
 		}
 
-		//not all scaling affects pixel operations, scale to adjust for that
-		scale_x *= scissoring_scale_x;
-
-		#if 0
-			//handy to debug really stupid render-not-working issues ...
-			printf("SS: %dx%d\n", screen_width, screen_height);
-			printf("SCI: %d, %f\n", pvrrc.fb_X_CLIP.max, dc2s_scale_h);
-			printf("SCI: %f, %f, %f, %f\n", offs_x+pvrrc.fb_X_CLIP.min/scale_x,(pvrrc.fb_Y_CLIP.min/scale_y)*dc2s_scale_h,(pvrrc.fb_X_CLIP.max-pvrrc.fb_X_CLIP.min+1)/scale_x*dc2s_scale_h,(pvrrc.fb_Y_CLIP.max-pvrrc.fb_Y_CLIP.min+1)/scale_y*dc2s_scale_h);
-		#endif
-
 		if (!wide_screen_on)
 		{
-			float width = (pvrrc.fb_X_CLIP.max - pvrrc.fb_X_CLIP.min + 1) / scale_x;
-			float height = (pvrrc.fb_Y_CLIP.max - pvrrc.fb_Y_CLIP.min + 1) / scale_y;
-			float min_x = pvrrc.fb_X_CLIP.min / scale_x;
-			float min_y = pvrrc.fb_Y_CLIP.min / scale_y;
+			float width;
+			float height;
+			float min_x;
+			float min_y;
 			if (!is_rtt)
 			{
-				if (SCALER_CTL.interlace && SCALER_CTL.vscalefactor > 0x400)
-				{
-					// Clipping is done after scaling/filtering so account for that if enabled
-					height *= (float)SCALER_CTL.vscalefactor / 0x400;
-					min_y *= (float)SCALER_CTL.vscalefactor / 0x400;
-				}
-				if (settings.rend.Rotate90)
-				{
-					float t = width;
-					width = height;
-					height = t;
-					t = min_x;
-					min_x = min_y;
-					min_y = 640 - t - height;
-				}
-				// Add x offset for aspect ratio > 4/3
-				min_x = (min_x * dc2s_scale_h * screen_stretching + ds2s_offs_x) * screen_scaling;
-				// Invert y coordinates when rendering to screen
-				min_y = (screen_height - (min_y + height) * dc2s_scale_h) * screen_scaling;
-				width *= dc2s_scale_h * screen_stretching * screen_scaling;
-				height *= dc2s_scale_h * screen_scaling;
+				glm::vec4 clip_min(pvrrc.fb_X_CLIP.min, pvrrc.fb_Y_CLIP.min, 0, 1);
+				glm::vec4 clip_dim(pvrrc.fb_X_CLIP.max - pvrrc.fb_X_CLIP.min + 1,
+								   pvrrc.fb_Y_CLIP.max - pvrrc.fb_Y_CLIP.min + 1, 0, 0);
+				clip_min = scissor_mat * clip_min;
+				clip_dim = scissor_mat * clip_dim;
 
+				min_x = clip_min[0];
+				min_y = clip_min[1];
+				width = clip_dim[0];
+				height = clip_dim[1];
+				if (width < 0)
+				{
+					min_x += width;
+					width = -width;
+				}
+				if (height < 0)
+				{
+					min_y += height;
+					height = -height;
+				}
 				if (ds2s_offs_x > 0)
 				{
 					float scaled_offs_x = ds2s_offs_x * screen_scaling;
@@ -1437,24 +1414,27 @@ bool RenderFrame()
 					glcache.Enable(GL_SCISSOR_TEST);
 					glScissor(0, 0, (GLsizei)lroundf(scaled_offs_x), (GLsizei)lroundf(screen_height * screen_scaling));
 					glClear(GL_COLOR_BUFFER_BIT);
-					glScissor((GLint)lroundf(screen_width * screen_scaling - scaled_offs_x), 0, (GLsizei)lroundf(scaled_offs_x) + 1, (GLsizei)lroundf(screen_height * screen_scaling));
+					glScissor(screen_width * screen_scaling - scaled_offs_x, 0, (GLsizei)lroundf(scaled_offs_x + 1.f), (GLsizei)lroundf(screen_height * screen_scaling));
 					glClear(GL_COLOR_BUFFER_BIT);
 				}
 			}
-			else if (settings.rend.RenderToTextureUpscale > 1 && !settings.rend.RenderToTextureBuffer)
+			else
 			{
-				min_x *= settings.rend.RenderToTextureUpscale;
-				min_y *= settings.rend.RenderToTextureUpscale;
-				width *= settings.rend.RenderToTextureUpscale;
-				height *= settings.rend.RenderToTextureUpscale;
+				width = pvrrc.fb_X_CLIP.max - pvrrc.fb_X_CLIP.min + 1;
+				height = pvrrc.fb_Y_CLIP.max - pvrrc.fb_Y_CLIP.min + 1;
+				min_x = pvrrc.fb_X_CLIP.min;
+				min_y = pvrrc.fb_Y_CLIP.min;
+				if (settings.rend.RenderToTextureUpscale > 1 && !settings.rend.RenderToTextureBuffer)
+				{
+					min_x *= settings.rend.RenderToTextureUpscale;
+					min_y *= settings.rend.RenderToTextureUpscale;
+					width *= settings.rend.RenderToTextureUpscale;
+					height *= settings.rend.RenderToTextureUpscale;
+				}
 			}
-
 			glScissor((GLint)lroundf(min_x), (GLint)lroundf(min_y), (GLsizei)lroundf(width), (GLsizei)lroundf(height));
 			glcache.Enable(GL_SCISSOR_TEST);
 		}
-
-		//restore scale_x
-		scale_x /= scissoring_scale_x;
 
 		DrawStrips();
 	}
@@ -1478,10 +1458,10 @@ bool RenderFrame()
 	return !is_rtt;
 }
 
-void rend_set_fb_scale(float x,float y)
+void rend_set_fb_scale(float x, float y)
 {
-	fb_scale_x=x;
-	fb_scale_y=y;
+	fb_scale_x = x;
+	fb_scale_y = y;
 }
 
 struct glesrend : Renderer

@@ -138,7 +138,7 @@ void Regs_Reset(bool hard)
 	SPG_WIDTH.full      = 0x07F1933F;
 	VO_CONTROL.full     = 0x00000108;
 	VO_STARTX.full      = 0x0000009D;
-	VO_STARTY.full      = 0x00000015;
+	VO_STARTY.full      = 0x00150015;
 	SCALER_CTL.full     = 0x00000400;
 	FB_BURSTCTRL        = 0x00090639;
 	PT_ALPHA_REF        = 0x000000FF;

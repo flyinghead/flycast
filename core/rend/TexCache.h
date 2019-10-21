@@ -801,3 +801,5 @@ static inline void MakeFogTexture(u8 *tex_data)
 	}
 }
 u8* loadPNGData(const string& fname, int &width, int &height);
+
+#undef clamp
