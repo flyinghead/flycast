@@ -642,8 +642,8 @@ static void gui_display_settings()
     ImGui::NewFrame();
 
 	int dynarec_enabled = settings.dynarec.Enable;
-	int renderer = settings.pvr.rend;
-	bool vulkan = renderer == 4;
+	int pvr_rend = settings.pvr.rend;
+	bool vulkan = pvr_rend == 4;
 
     if (!settings_opening && settings.pvr.IsOpenGL())
     	ImGui_ImplOpenGL3_DrawBackground();
@@ -952,7 +952,6 @@ static void gui_display_settings()
 		if (ImGui::BeginTabItem("Video"))
 		{
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
-			int renderer = settings.pvr.rend == 3 ? 2 : settings.rend.PerStripSorting ? 1 : 0;
 #if HOST_OS != OS_DARWIN
 			bool has_per_pixel = !theGLContext.IsGLES() && theGLContext.GetMajorVersion() >= 4 && !vulkan;
 #else
@@ -960,6 +959,7 @@ static void gui_display_settings()
 #endif
 		    if (ImGui::CollapsingHeader("Transparent Sorting", ImGuiTreeNodeFlags_DefaultOpen))
 		    {
+		    	int renderer = pvr_rend == 3 ? 2 : settings.rend.PerStripSorting ? 1 : 0;
 		    	ImGui::Columns(has_per_pixel ? 3 : 2, "renderers", false);
 		    	ImGui::RadioButton("Per Triangle", &renderer, 0);
 	            ImGui::SameLine();
@@ -980,16 +980,16 @@ static void gui_display_settings()
 		    	{
 		    	case 0:
 		    		if (settings.pvr.rend == 3)
-		    			settings.pvr.rend = 0;
+		    			pvr_rend = 0;
 		    		settings.rend.PerStripSorting = false;
 		    		break;
 		    	case 1:
 		    		if (settings.pvr.rend == 3)
-		    			settings.pvr.rend = 0;
+		    			pvr_rend = 0;
 		    		settings.rend.PerStripSorting = true;
 		    		break;
 		    	case 2:
-		    		settings.pvr.rend = 3;
+		    		pvr_rend = 3;
 		    		break;
 		    	}
 		    }
@@ -1348,8 +1348,8 @@ static void gui_display_settings()
     ImGui_impl_RenderDrawData(ImGui::GetDrawData(), false);
 
     if (vulkan ^ (settings.pvr.rend == 4))
-    	renderer = settings.pvr.rend == 4 ? 0 : 4;
-	renderer_changed = renderer;
+    	pvr_rend = settings.pvr.rend == 4 ? 0 : 4;
+	renderer_changed = pvr_rend;
    	settings.dynarec.Enable = (bool)dynarec_enabled;
 }
 

@@ -22,275 +22,279 @@ GLuint pixel_buffer_size = 512 * 1024 * 1024;	// Initial size 512 MB
 
 #define MAX_PIXELS_PER_FRAGMENT "32"
 
-static const char *final_shader_source = SHADER_HEADER "\
-#define DEPTH_SORTED %d \n\
-#define MAX_PIXELS_PER_FRAGMENT " MAX_PIXELS_PER_FRAGMENT " \n\
- \n\
-layout(binding = 0) uniform sampler2D tex; \n\
-uniform highp float shade_scale_factor; \n\
- \n\
-out vec4 FragColor; \n\
- \n\
-uint pixel_list[MAX_PIXELS_PER_FRAGMENT]; \n\
- \n\
- \n\
-int fillAndSortFragmentArray(ivec2 coords) \n\
-{ \n\
-	// Load fragments into a local memory array for sorting \n\
-	uint idx = imageLoad(abufferPointerImg, coords).x; \n\
-	int count = 0; \n\
-	for (; idx != EOL && count < MAX_PIXELS_PER_FRAGMENT; count++) \n\
-	{ \n\
-		const Pixel p = pixels[idx]; \n\
-		int j = count - 1; \n\
-		Pixel jp = pixels[pixel_list[j]]; \n\
-#if DEPTH_SORTED == 1 \n\
-		while (j >= 0 \n\
-			   && (jp.depth > p.depth \n\
-				   || (jp.depth == p.depth && getPolyNumber(jp) > getPolyNumber(p)))) \n\
-#else \n\
-		while (j >= 0 && getPolyNumber(jp) > getPolyNumber(p)) \n\
-#endif \n\
-		{ \n\
-			pixel_list[j + 1] = pixel_list[j]; \n\
-			j--; \n\
-			jp = pixels[pixel_list[j]]; \n\
-		} \n\
-		pixel_list[j + 1] = idx; \n\
-		idx = p.next; \n\
-	} \n\
-	return count; \n\
-} \n\
- \n\
-// Blend fragments back-to-front \n\
-vec4 resolveAlphaBlend(ivec2 coords) { \n\
-	 \n\
-	// Copy and sort fragments into a local array \n\
-	int num_frag = fillAndSortFragmentArray(coords); \n\
-	 \n\
-	vec4 finalColor = texture(tex, gl_FragCoord.xy / textureSize(tex, 0)); \n\
-	vec4 secondaryBuffer = vec4(0.0); // Secondary accumulation buffer \n\
-	float depth = 1.0; \n\
-	 \n\
-	bool do_depth_test = false; \n\
-	for (int i = 0; i < num_frag; i++) \n\
-	{ \n\
-		const Pixel pixel = pixels[pixel_list[i]]; \n\
-		const PolyParam pp = tr_poly_params[getPolyNumber(pixel)]; \n\
-#if DEPTH_SORTED != 1 \n\
-		const float frag_depth = pixel.depth; \n\
-		if (do_depth_test) \n\
-		{ \n\
-			switch (getDepthFunc(pp)) \n\
-			{ \n\
-			case 0:		// Never \n\
-				continue; \n\
-			case 1:		// Less \n\
-				if (frag_depth >= depth) \n\
-					continue; \n\
-				break; \n\
-			case 2:		// Equal \n\
-				if (frag_depth != depth) \n\
-					continue; \n\
-				break; \n\
-			case 3:		// Less or equal \n\
-				if (frag_depth > depth) \n\
-					continue; \n\
-				break; \n\
-			case 4:		// Greater \n\
-				if (frag_depth <= depth) \n\
-					continue; \n\
-				break; \n\
-			case 5:		// Not equal \n\
-				if (frag_depth == depth) \n\
-					continue; \n\
-				break; \n\
-			case 6:		// Greater or equal \n\
-				if (frag_depth < depth) \n\
-					continue; \n\
-				break; \n\
-			case 7:		// Always \n\
-				break; \n\
-			} \n\
-		} \n\
-		 \n\
-		if (getDepthMask(pp)) \n\
-		{ \n\
-			depth = frag_depth; \n\
-			do_depth_test = true; \n\
-		} \n\
-#endif \n\
-		bool area1 = false; \n\
-		bool shadowed = false; \n\
-		if (isShadowed(pixel)) \n\
-		{ \n\
-			if (isTwoVolumes(pp)) \n\
-				area1 = true; \n\
-			else \n\
-				shadowed = true; \n\
-		} \n\
-		vec4 srcColor; \n\
-		if (getSrcSelect(pp, area1)) \n\
-			srcColor = secondaryBuffer; \n\
-		else \n\
-		{ \n\
-			srcColor = pixel.color; \n\
-			if (shadowed) \n\
-				srcColor.rgb *= shade_scale_factor; \n\
-		} \n\
-		vec4 dstColor = getDstSelect(pp, area1) ? secondaryBuffer : finalColor; \n\
-		vec4 srcCoef; \n\
-		vec4 dstCoef; \n\
-		 \n\
-		int srcBlend = getSrcBlendFunc(pp, area1); \n\
-		switch (srcBlend) \n\
-		{ \n\
-			case ZERO: \n\
-				srcCoef = vec4(0.0); \n\
-				break; \n\
-			case ONE: \n\
-				srcCoef = vec4(1.0); \n\
-				break; \n\
-			case OTHER_COLOR: \n\
-				srcCoef = finalColor; \n\
-				break; \n\
-			case INVERSE_OTHER_COLOR: \n\
-				srcCoef = vec4(1.0) - dstColor; \n\
-				break; \n\
-			case SRC_ALPHA: \n\
-				srcCoef = vec4(srcColor.a); \n\
-				break; \n\
-			case INVERSE_SRC_ALPHA: \n\
-				srcCoef = vec4(1.0 - srcColor.a); \n\
-				break; \n\
-			case DST_ALPHA: \n\
-				srcCoef = vec4(dstColor.a); \n\
-				break; \n\
-			case INVERSE_DST_ALPHA: \n\
-				srcCoef = vec4(1.0 - dstColor.a); \n\
-				break; \n\
-		} \n\
-		int dstBlend = getDstBlendFunc(pp, area1); \n\
-		switch (dstBlend) \n\
-		{ \n\
-			case ZERO: \n\
-				dstCoef = vec4(0.0); \n\
-				break; \n\
-			case ONE: \n\
-				dstCoef = vec4(1.0); \n\
-				break; \n\
-			case OTHER_COLOR: \n\
-				dstCoef = srcColor; \n\
-				break; \n\
-			case INVERSE_OTHER_COLOR: \n\
-				dstCoef = vec4(1.0) - srcColor; \n\
-				break; \n\
-			case SRC_ALPHA: \n\
-				dstCoef = vec4(srcColor.a); \n\
-				break; \n\
-			case INVERSE_SRC_ALPHA: \n\
-				dstCoef = vec4(1.0 - srcColor.a); \n\
-				break; \n\
-			case DST_ALPHA: \n\
-				dstCoef = vec4(dstColor.a); \n\
-				break; \n\
-			case INVERSE_DST_ALPHA: \n\
-				dstCoef = vec4(1.0 - dstColor.a); \n\
-				break; \n\
-		} \n\
-		const vec4 result = clamp(dstColor * dstCoef + srcColor * srcCoef, 0.0, 1.0); \n\
-		if (getDstSelect(pp, area1)) \n\
-			secondaryBuffer = result; \n\
-		else \n\
-			finalColor = result; \n\
-	} \n\
-	 \n\
-	return finalColor; \n\
-	 \n\
-} \n\
- \n\
-void main(void) \n\
-{ \n\
-	ivec2 coords = ivec2(gl_FragCoord.xy); \n\
-	// Compute and output final color for the frame buffer \n\
-	// Visualize the number of layers in use \n\
-	//FragColor = vec4(float(fillAndSortFragmentArray(coords)) / MAX_PIXELS_PER_FRAGMENT * 4, 0, 0, 1); \n\
-	FragColor = resolveAlphaBlend(coords); \n\
-} \n\
-";
+static const char *final_shader_source = SHADER_HEADER
+"#define MAX_PIXELS_PER_FRAGMENT " MAX_PIXELS_PER_FRAGMENT
+R"(
+#define DEPTH_SORTED %d
 
-static const char *clear_shader_source = SHADER_HEADER "\
- \n\
-void main(void) \n\
-{ \n\
-	ivec2 coords = ivec2(gl_FragCoord.xy); \n\
- \n\
-	// Reset pointers \n\
-	imageStore(abufferPointerImg, coords, uvec4(EOL)); \n\
- \n\
-	// Discard fragment so nothing is written to the framebuffer \n\
-	discard; \n\
-} \n\
-";
+layout(binding = 0) uniform sampler2D tex;
+uniform highp float shade_scale_factor;
 
-static const char *tr_modvol_shader_source = SHADER_HEADER "\
-#define MV_MODE %d \n\
-#define MAX_PIXELS_PER_FRAGMENT " MAX_PIXELS_PER_FRAGMENT " \n\
- \n\
-// Must match ModifierVolumeMode enum values \n\
-#define MV_XOR		 0 \n\
-#define MV_OR		 1 \n\
-#define MV_INCLUSION 2 \n\
-#define MV_EXCLUSION 3 \n\
- \n\
-void main(void) \n\
-{ \n\
-#if MV_MODE == MV_XOR || MV_MODE == MV_OR \n\
-	setFragDepth(); \n\
-#endif \n\
-	ivec2 coords = ivec2(gl_FragCoord.xy); \n\
-	 \n\
-	uint idx = imageLoad(abufferPointerImg, coords).x; \n\
-	int list_len = 0; \n\
-	while (idx != EOL && list_len < MAX_PIXELS_PER_FRAGMENT) \n\
-	{ \n\
-		const Pixel pixel = pixels[idx]; \n\
-		const PolyParam pp = tr_poly_params[getPolyNumber(pixel)]; \n\
-		if (getShadowEnable(pp)) \n\
-		{ \n\
-#if MV_MODE == MV_XOR \n\
-			if (gl_FragDepth >= pixel.depth) \n\
-				atomicXor(pixels[idx].seq_num, SHADOW_STENCIL); \n\
-#elif MV_MODE == MV_OR \n\
-			if (gl_FragDepth >= pixel.depth) \n\
-				atomicOr(pixels[idx].seq_num, SHADOW_STENCIL); \n\
-#elif MV_MODE == MV_INCLUSION \n\
-			uint prev_val = atomicAnd(pixels[idx].seq_num, ~(SHADOW_STENCIL)); \n\
-			if ((prev_val & (SHADOW_STENCIL|SHADOW_ACC)) == SHADOW_STENCIL) \n\
-				pixels[idx].seq_num = bitfieldInsert(pixel.seq_num, 1u, 31, 1); \n\
-#elif MV_MODE == MV_EXCLUSION \n\
-			uint prev_val = atomicAnd(pixels[idx].seq_num, ~(SHADOW_STENCIL|SHADOW_ACC)); \n\
-			if ((prev_val & (SHADOW_STENCIL|SHADOW_ACC)) == SHADOW_ACC) \n\
-				pixels[idx].seq_num = bitfieldInsert(pixel.seq_num, 1u, 31, 1); \n\
-#endif \n\
-		} \n\
-		idx = pixel.next; \n\
-		list_len++; \n\
-	} \n\
-	 \n\
-	discard; \n\
-} \n\
-";
+out vec4 FragColor;
+
+uint pixel_list[MAX_PIXELS_PER_FRAGMENT];
+
+
+int fillAndSortFragmentArray(ivec2 coords)
+{
+	// Load fragments into a local memory array for sorting
+	uint idx = imageLoad(abufferPointerImg, coords).x;
+	int count = 0;
+	for (; idx != EOL && count < MAX_PIXELS_PER_FRAGMENT; count++)
+	{
+		const Pixel p = pixels[idx];
+		int j = count - 1;
+		Pixel jp = pixels[pixel_list[j]];
+#if DEPTH_SORTED == 1
+		while (j >= 0
+			   && (jp.depth > p.depth
+				   || (jp.depth == p.depth && getPolyNumber(jp) > getPolyNumber(p))))
+#else
+		while (j >= 0 && getPolyNumber(jp) > getPolyNumber(p))
+#endif
+		{
+			pixel_list[j + 1] = pixel_list[j];
+			j--;
+			jp = pixels[pixel_list[j]];
+		}
+		pixel_list[j + 1] = idx;
+		idx = p.next;
+	}
+	return count;
+}
+
+// Blend fragments back-to-front
+vec4 resolveAlphaBlend(ivec2 coords) {
+	
+	// Copy and sort fragments into a local array
+	int num_frag = fillAndSortFragmentArray(coords);
+	
+	vec4 finalColor = texture(tex, gl_FragCoord.xy / textureSize(tex, 0));
+	vec4 secondaryBuffer = vec4(0.0); // Secondary accumulation buffer
+	float depth = 1.0;
+	
+	bool do_depth_test = false;
+	for (int i = 0; i < num_frag; i++)
+	{
+		const Pixel pixel = pixels[pixel_list[i]];
+		const PolyParam pp = tr_poly_params[getPolyNumber(pixel)];
+#if DEPTH_SORTED != 1
+		const float frag_depth = pixel.depth;
+		if (do_depth_test)
+		{
+			switch (getDepthFunc(pp))
+			{
+			case 0:		// Never
+				continue;
+			case 1:		// Less
+				if (frag_depth >= depth)
+					continue;
+				break;
+			case 2:		// Equal
+				if (frag_depth != depth)
+					continue;
+				break;
+			case 3:		// Less or equal
+				if (frag_depth > depth)
+					continue;
+				break;
+			case 4:		// Greater
+				if (frag_depth <= depth)
+					continue;
+				break;
+			case 5:		// Not equal
+				if (frag_depth == depth)
+					continue;
+				break;
+			case 6:		// Greater or equal
+				if (frag_depth < depth)
+					continue;
+				break;
+			case 7:		// Always
+				break;
+			}
+		}
+		
+		if (getDepthMask(pp))
+		{
+			depth = frag_depth;
+			do_depth_test = true;
+		}
+#endif
+		bool area1 = false;
+		bool shadowed = false;
+		if (isShadowed(pixel))
+		{
+			if (isTwoVolumes(pp))
+				area1 = true;
+			else
+				shadowed = true;
+		}
+		vec4 srcColor;
+		if (getSrcSelect(pp, area1))
+			srcColor = secondaryBuffer;
+		else
+		{
+			srcColor = pixel.color;
+			if (shadowed)
+				srcColor.rgb *= shade_scale_factor;
+		}
+		vec4 dstColor = getDstSelect(pp, area1) ? secondaryBuffer : finalColor;
+		vec4 srcCoef;
+		vec4 dstCoef;
+		
+		int srcBlend = getSrcBlendFunc(pp, area1);
+		switch (srcBlend)
+		{
+			case ZERO:
+				srcCoef = vec4(0.0);
+				break;
+			case ONE:
+				srcCoef = vec4(1.0);
+				break;
+			case OTHER_COLOR:
+				srcCoef = finalColor;
+				break;
+			case INVERSE_OTHER_COLOR:
+				srcCoef = vec4(1.0) - dstColor;
+				break;
+			case SRC_ALPHA:
+				srcCoef = vec4(srcColor.a);
+				break;
+			case INVERSE_SRC_ALPHA:
+				srcCoef = vec4(1.0 - srcColor.a);
+				break;
+			case DST_ALPHA:
+				srcCoef = vec4(dstColor.a);
+				break;
+			case INVERSE_DST_ALPHA:
+				srcCoef = vec4(1.0 - dstColor.a);
+				break;
+		}
+		int dstBlend = getDstBlendFunc(pp, area1);
+		switch (dstBlend)
+		{
+			case ZERO:
+				dstCoef = vec4(0.0);
+				break;
+			case ONE:
+				dstCoef = vec4(1.0);
+				break;
+			case OTHER_COLOR:
+				dstCoef = srcColor;
+				break;
+			case INVERSE_OTHER_COLOR:
+				dstCoef = vec4(1.0) - srcColor;
+				break;
+			case SRC_ALPHA:
+				dstCoef = vec4(srcColor.a);
+				break;
+			case INVERSE_SRC_ALPHA:
+				dstCoef = vec4(1.0 - srcColor.a);
+				break;
+			case DST_ALPHA:
+				dstCoef = vec4(dstColor.a);
+				break;
+			case INVERSE_DST_ALPHA:
+				dstCoef = vec4(1.0 - dstColor.a);
+				break;
+		}
+		const vec4 result = clamp(dstColor * dstCoef + srcColor * srcCoef, 0.0, 1.0);
+		if (getDstSelect(pp, area1))
+			secondaryBuffer = result;
+		else
+			finalColor = result;
+	}
+	
+	return finalColor;
+	
+}
+
+void main(void)
+{
+	ivec2 coords = ivec2(gl_FragCoord.xy);
+	// Compute and output final color for the frame buffer
+	// Visualize the number of layers in use
+	//FragColor = vec4(float(fillAndSortFragmentArray(coords)) / MAX_PIXELS_PER_FRAGMENT * 4, 0, 0, 1);
+	FragColor = resolveAlphaBlend(coords);
+}
+)";
+
+static const char *clear_shader_source = SHADER_HEADER
+R"(
+void main(void)
+{
+	ivec2 coords = ivec2(gl_FragCoord.xy);
+
+	// Reset pointers
+	imageStore(abufferPointerImg, coords, uvec4(EOL));
+
+	// Discard fragment so nothing is written to the framebuffer
+	discard;
+}
+)";
+
+static const char *tr_modvol_shader_source = SHADER_HEADER
+"#define MAX_PIXELS_PER_FRAGMENT " MAX_PIXELS_PER_FRAGMENT
+R"(
+#define MV_MODE %d
+
+// Must match ModifierVolumeMode enum values
+#define MV_XOR		 0
+#define MV_OR		 1
+#define MV_INCLUSION 2
+#define MV_EXCLUSION 3
+
+void main(void)
+{
+#if MV_MODE == MV_XOR || MV_MODE == MV_OR
+	setFragDepth();
+#endif
+	ivec2 coords = ivec2(gl_FragCoord.xy);
+	
+	uint idx = imageLoad(abufferPointerImg, coords).x;
+	int list_len = 0;
+	while (idx != EOL && list_len < MAX_PIXELS_PER_FRAGMENT)
+	{
+		const Pixel pixel = pixels[idx];
+		const PolyParam pp = tr_poly_params[getPolyNumber(pixel)];
+		if (getShadowEnable(pp))
+		{
+#if MV_MODE == MV_XOR
+			if (gl_FragDepth >= pixel.depth)
+				atomicXor(pixels[idx].seq_num, SHADOW_STENCIL);
+#elif MV_MODE == MV_OR
+			if (gl_FragDepth >= pixel.depth)
+				atomicOr(pixels[idx].seq_num, SHADOW_STENCIL);
+#elif MV_MODE == MV_INCLUSION
+			uint prev_val = atomicAnd(pixels[idx].seq_num, ~(SHADOW_STENCIL));
+			if ((prev_val & (SHADOW_STENCIL|SHADOW_ACC)) == SHADOW_STENCIL)
+				pixels[idx].seq_num = bitfieldInsert(pixel.seq_num, 1u, 31, 1);
+#elif MV_MODE == MV_EXCLUSION
+			uint prev_val = atomicAnd(pixels[idx].seq_num, ~(SHADOW_STENCIL|SHADOW_ACC));
+			if ((prev_val & (SHADOW_STENCIL|SHADOW_ACC)) == SHADOW_ACC)
+				pixels[idx].seq_num = bitfieldInsert(pixel.seq_num, 1u, 31, 1);
+#endif
+		}
+		idx = pixel.next;
+		list_len++;
+	}
+	
+	discard;
+}
+)";
 
 static const char* VertexShaderSource =
-"#version 430 \n"
-"\
-in highp vec3 in_pos; \n\
- \n\
-void main() \n\
-{ \n\
-	gl_Position = vec4(in_pos, 1.0); \n\
-}";
+R"(
+#version 430
+
+in highp vec3 in_pos;
+
+void main()
+{
+	gl_Position = vec4(in_pos, 1.0);
+}
+)";
 
 void initABuffer()
 {
