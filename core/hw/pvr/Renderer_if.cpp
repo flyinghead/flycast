@@ -329,7 +329,8 @@ bool rend_single_frame()
 	}
 	while (!_pvrrc);
 	bool do_swp = rend_frame(_pvrrc);
-	swap_pending = settings.rend.DelayFrameSwapping && do_swp && !_pvrrc->rend.isRenderFramebuffer;
+	swap_pending = settings.rend.DelayFrameSwapping && do_swp && !_pvrrc->rend.isRenderFramebuffer
+			&& settings.pvr.rend != 4;	// TODO Fix vulkan
 
 #if !defined(TARGET_NO_THREADS)
 	if (_pvrrc->rend.isRTT)

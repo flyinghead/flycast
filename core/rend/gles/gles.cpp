@@ -6,6 +6,7 @@
 #include "wsi/gl_context.h"
 #include "cfg/cfg.h"
 #include "rend/osd.h"
+#include "rend/transform_matrix.h"
 
 #ifdef GLES
 #ifndef GL_RED
@@ -20,7 +21,6 @@
 #include "oslib/oslib.h"
 #include "rend/rend.h"
 #include "input/gamepad.h"
-#include <glm/gtx/transform.hpp>
 
 float fb_scale_x, fb_scale_y; // FIXME
 
@@ -816,7 +816,6 @@ static void create_modvol_shader()
 	gl.modvol_shader.normal_matrix  = glGetUniformLocation(gl.modvol_shader.program, "normal_matrix");
 	gl.modvol_shader.sp_ShaderColor = glGetUniformLocation(gl.modvol_shader.program, "sp_ShaderColor");
 	gl.modvol_shader.depth_scale    = glGetUniformLocation(gl.modvol_shader.program, "depth_scale");
-	gl.modvol_shader.extra_depth_scale = glGetUniformLocation(gl.modvol_shader.program, "extra_depth_scale");
 }
 
 bool gl_create_resources()
@@ -1026,161 +1025,6 @@ static void upload_vertex_indices()
 	glCheck();
 }
 
-void GetFramebufferScaling(float& scale_x, float& scale_y, float& scissoring_scale_x, float& scissoring_scale_y)
-{
-	scale_x = 1;
-	scale_y = 1;
-	scissoring_scale_x = 1;
-	scissoring_scale_y = 1;
-	
-	if (!pvrrc.isRTT && !pvrrc.isRenderFramebuffer)
-	{
-		scale_x = fb_scale_x;
-		scale_y = fb_scale_y;
-		if (SCALER_CTL.vscalefactor >= 0x400)
-		{
-			// Interlace mode A (single framebuffer)
-			if (SCALER_CTL.interlace == 0)
-				scale_y *= (float)SCALER_CTL.vscalefactor / 0x400;
-			else
-				// Interlace mode B (alternating framebuffers)
-				scissoring_scale_y /= (float)SCALER_CTL.vscalefactor / 0x400;
-		}
-		
-		// VO pixel doubling is done after fb rendering/clipping
-		// so it should be used for scissoring as well
-		if (VO_CONTROL.pixel_double)
-			scale_x *= 0.5f;
-		
-		// the X Scaler halves the horizontal resolution but
-		// before clipping/scissoring
-		if (SCALER_CTL.hscale)
-		{
-			scissoring_scale_x /= 2.f;
-			scale_x *= 2.f;
-		}
-	}
-}
-
-void GetFramebufferSize(float& dc_width, float& dc_height)
-{
-	if (pvrrc.isRTT)
-	{
-		dc_width = pvrrc.fb_X_CLIP.max - pvrrc.fb_X_CLIP.min + 1;
-		dc_height = pvrrc.fb_Y_CLIP.max - pvrrc.fb_Y_CLIP.min + 1;
-	}
-	else
-	{
-		dc_width = 640;
-		dc_height = 480;
-	}
-}
-
-void SetupMatrices(float dc_width, float dc_height,
-				   float scale_x, float scale_y, float scissoring_scale_x, float scissoring_scale_y,
-				   float &ds2s_offs_x, glm::mat4& normal_mat, glm::mat4& scissor_mat)
-{
-	float screen_scaling = settings.rend.ScreenScaling / 100.f;
-	
-	if (pvrrc.isRTT)
-	{
-		ShaderUniforms.normal_mat = glm::translate(glm::vec3(-1, -1, 0))
-			* glm::scale(glm::vec3(2.0f / dc_width, 2.0f / dc_height, 1.f));
-		scissor_mat = ShaderUniforms.normal_mat;
-	}
-	else
-	{
-		float startx = 0;
-		float starty = 0;
-		bool vga = FB_R_CTRL.vclk_div == 1;
-		switch (SPG_LOAD.hcount)
-		{
-			case 857: // NTSC, VGA
-				startx = VO_STARTX.HStart - (vga ? 0xa8 : 0xa4);
-				break;
-			case 863: // PAL
-				startx = VO_STARTX.HStart - 0xae;
-				break;
-			default:
-				INFO_LOG(PVR, "unknown video mode: hcount %d", SPG_LOAD.hcount);
-				break;
-		}
-		switch (SPG_LOAD.vcount)
-		{
-			case 524: // NTSC, VGA
-				starty = VO_STARTY.VStart_field1 - (vga ? 0x28 : 0x12);
-				break;
-			case 262: // NTSC 240p
-				starty = VO_STARTY.VStart_field1 - 0x11;
-				break;
-			case 624: // PAL
-				starty = VO_STARTY.VStart_field1 - 0x2d;
-				break;
-			case 312: // PAL 240p
-				starty = VO_STARTY.VStart_field1 - 0x2e;
-				break;
-			default:
-				INFO_LOG(PVR, "unknown video mode: vcount %d", SPG_LOAD.vcount);
-				break;
-		}
-		// some heuristic...
-		startx *= 0.8;
-		starty *= 1.1;
-		normal_mat = glm::translate(glm::vec3(startx, starty, 0));
-		scissor_mat = normal_mat;
-
-		float screen_stretching = settings.rend.ScreenStretching / 100.f;
-		float dc2s_scale_h;
-
-		if (settings.rend.Rotate90)
-		{
-			dc2s_scale_h = screen_height / 640.0f;
-			ds2s_offs_x =  (screen_width - dc2s_scale_h * 480.0f * screen_stretching) / 2;
-			float y_coef = 2.0f / (screen_width / dc2s_scale_h * scale_y) * screen_stretching;
-			float x_coef = -2.0f / dc_width;
-			glm::mat4 trans_rot = glm::rotate((float)M_PI_2, glm::vec3(0, 0, 1))
-				* glm::translate(glm::vec3(1, -1 + 2 * ds2s_offs_x / screen_width, 0));
-			normal_mat = trans_rot
-				* glm::scale(glm::vec3(x_coef, y_coef, 1.f))
-				* normal_mat;
-			scissor_mat = trans_rot
-				* glm::scale(glm::vec3(x_coef / scissoring_scale_x,
-								   y_coef/ scissoring_scale_y, 1.f))
-				* scissor_mat;	// FIXME scale_x not used, except in dc_width???
-		}
-		else
-		{
-			dc2s_scale_h = screen_height / 480.0f;
-			ds2s_offs_x =  (screen_width - dc2s_scale_h * 640.0f * screen_stretching) / 2;
-			float x_coef = 2.0f / (screen_width / dc2s_scale_h * scale_x) * screen_stretching;
-			float y_coef = -2.0f / dc_height;
-			normal_mat = glm::translate(glm::vec3(-1 + 2 * ds2s_offs_x / screen_width, 1, 0))
-				* glm::scale(glm::vec3(x_coef, y_coef, 1.f))
-				* normal_mat;
-			scissor_mat = glm::translate(glm::vec3(-1 + 2 * ds2s_offs_x / screen_width, 1, 0))
-				* glm::scale(glm::vec3(x_coef / scissoring_scale_x,
-								   y_coef / scissoring_scale_y, 1.f))
-				* scissor_mat;
-		}
-	}
-	normal_mat = glm::scale(glm::vec3(1, 1, 1 / settings.rend.ExtraDepthScale))
-			* normal_mat;
-
-	glm::mat4 vp_trans = glm::translate(glm::vec3(1, 1, 0));
-	if (pvrrc.isRTT)
-	{
-		vp_trans = glm::scale(glm::vec3(dc_width / 2, dc_height / 2, 1.f))
-			* vp_trans;
-	}
-	else
-	{
-		vp_trans = glm::scale(glm::vec3(screen_width * screen_scaling / 2, screen_height * screen_scaling / 2, 1.f))
-			* vp_trans;
-	}
-	ViewportMatrix = vp_trans * normal_mat;
-	scissor_mat = vp_trans * scissor_mat;
-}
-
 bool RenderFrame()
 {
 	DoCleanup();
@@ -1200,38 +1044,15 @@ bool RenderFrame()
 	vtx_min_fZ *= 0.98f;
 	vtx_max_fZ *= 1.001f;
 
-	//calculate a projection so that it matches the pvr x,y setup, and
-	//a) Z is linearly scaled between 0 ... 1
-	//b) W is passed though for proper perspective calculations
-
-	//these should be adjusted based on the current PVR scaling etc params
-	float dc_width;
-	float dc_height;
-	GetFramebufferSize(dc_width, dc_height);
+	TransformMatrix<true> matrices(pvrrc);
+	ShaderUniforms.normal_mat = matrices.GetNormalMatrix();
+	const glm::mat4& scissor_mat = matrices.GetScissorMatrix();
+	ViewportMatrix = matrices.GetViewportMatrix();
 
 	if (!is_rtt)
 		gcflip = 0;
 	else
 		gcflip = 1;
-
-	float scale_x;
-	float scale_y;
-	float scissoring_scale_x;
-	float scissoring_scale_y;
-	GetFramebufferScaling(scale_x, scale_y, scissoring_scale_x, scissoring_scale_y);
-
-	dc_width  *= scale_x;
-	dc_height *= scale_y;
-
-	/*
-		Handle Dc to screen scaling
-	*/
-	float screen_scaling = settings.rend.ScreenScaling / 100.f;
-
-	float ds2s_offs_x;
-
-	glm::mat4 scissor_mat;
-	SetupMatrices(dc_width, dc_height, scale_x, scale_y, scissoring_scale_x, scissoring_scale_y, ds2s_offs_x, ShaderUniforms.normal_mat, scissor_mat);
 
 	ShaderUniforms.depth_coefs[0] = 2 / (vtx_max_fZ - vtx_min_fZ);
 	ShaderUniforms.depth_coefs[1] = -vtx_min_fZ - 1;
@@ -1276,7 +1097,6 @@ bool RenderFrame()
 	glcache.UseProgram(gl.modvol_shader.program);
 
 	glUniform4fv( gl.modvol_shader.depth_scale, 1, ShaderUniforms.depth_coefs);
-	glUniform1f(gl.modvol_shader.extra_depth_scale, ShaderUniforms.extra_depth_scale);
 	glUniformMatrix4fv(gl.modvol_shader.normal_matrix, 1, GL_FALSE, &ShaderUniforms.normal_mat[0][0]);
 
 	ShaderUniforms.PT_ALPHA=(PT_ALPHA_REF&0xFF)/255.0f;
@@ -1286,6 +1106,8 @@ bool RenderFrame()
 		glcache.UseProgram(it.second.program);
 		ShaderUniforms.Set(&it.second);
 	}
+
+	const float screen_scaling = settings.rend.ScreenScaling / 100.f;
 
 	//setup render target first
 	if (is_rtt)
@@ -1325,7 +1147,7 @@ bool RenderFrame()
 		}
 		DEBUG_LOG(RENDERER, "RTT packmode=%d stride=%d - %d,%d -> %d,%d", FB_W_CTRL.fb_packmode, FB_W_LINESTRIDE.stride * 8,
 				FB_X_CLIP.min, FB_Y_CLIP.min, FB_X_CLIP.max, FB_Y_CLIP.max);
-		BindRTT(FB_W_SOF1 & VRAM_MASK, dc_width, dc_height, channels, format);
+		BindRTT(FB_W_SOF1 & VRAM_MASK, FB_X_CLIP.max - FB_X_CLIP.min + 1, FB_Y_CLIP.max - FB_Y_CLIP.min + 1, channels, format);
 	}
 	else
 	{
@@ -1343,11 +1165,7 @@ bool RenderFrame()
 		}
 	}
 
-	bool wide_screen_on = !is_rtt && settings.rend.WideScreen
-			&& pvrrc.fb_X_CLIP.min == 0
-			&& lroundf((pvrrc.fb_X_CLIP.max + 1) / scale_x) == 640L
-			&& pvrrc.fb_Y_CLIP.min == 0
-			&& lroundf((pvrrc.fb_Y_CLIP.max + 1) / scale_y) == 480L;
+	bool wide_screen_on = !is_rtt && settings.rend.WideScreen && !matrices.IsClipped();
 
 	//Color is cleared by the background plane
 
@@ -1406,9 +1224,9 @@ bool RenderFrame()
 					min_y += height;
 					height = -height;
 				}
-				if (ds2s_offs_x > 0)
+				if (matrices.GetSidebarWidth() > 0)
 				{
-					float scaled_offs_x = ds2s_offs_x * screen_scaling;
+					float scaled_offs_x = matrices.GetSidebarWidth() * screen_scaling;
 
 					glcache.ClearColor(0.f, 0.f, 0.f, 0.f);
 					glcache.Enable(GL_SCISSOR_TEST);

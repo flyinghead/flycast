@@ -28,7 +28,6 @@ static const char VertexShaderSource[] = R"(
 #extension GL_ARB_shading_language_420pack : enable
 
 #define pp_Gouraud %d
-#define ROTATE_90 %d
 
 #if pp_Gouraud == 0
 #define INTERPOLATION flat
@@ -38,8 +37,7 @@ static const char VertexShaderSource[] = R"(
 
 layout (std140, set = 0, binding = 0) uniform VertexShaderUniforms
 {
-	vec4      scale;
-	float     extra_depth_scale;
+	mat4 normal_matrix;
 } uniformBuffer;
 
 layout (location = 0) in vec4         in_pos;
@@ -62,13 +60,9 @@ void main()
 		gl_Position = vec4(0.0, 0.0, 1.0, 1.0 / vpos.z);
 		return;
 	}
-
-	vpos.w = uniformBuffer.extra_depth_scale / vpos.z;
+	vpos = uniformBuffer.normal_matrix * vpos;
+	vpos.w = 1.0 / vpos.z;
 	vpos.z = vpos.w;
-#if ROTATE_90 == 1
-	vpos.xy = vec2(vpos.y, -vpos.x); 
-#endif
-	vpos.xy = vpos.xy * uniformBuffer.scale.xy - uniformBuffer.scale.zw; 
 	vpos.xy *= vpos.w; 
 	gl_Position = vpos;
 }
@@ -252,8 +246,7 @@ static const char ModVolVertexShaderSource[] = R"(
 
 layout (std140, set = 0, binding = 0) uniform VertexShaderUniforms
 {
-	vec4      scale;
-	float     extra_depth_scale;
+	mat4 normal_matrix;
 } uniformBuffer;
 
 layout (location = 0) in vec4         in_pos;
@@ -267,9 +260,9 @@ void main()
 		return;
 	}
 
-	vpos.w = uniformBuffer.extra_depth_scale / vpos.z;
+	vpos = uniformBuffer.normal_matrix * vpos;
+	vpos.w = 1.0 / vpos.z;
 	vpos.z = vpos.w;
-	vpos.xy = vpos.xy * uniformBuffer.scale.xy - uniformBuffer.scale.zw; 
 	vpos.xy *= vpos.w; 
 	gl_Position = vpos;
 }
@@ -542,7 +535,7 @@ vk::UniqueShaderModule ShaderManager::compileShader(const VertexShaderParams& pa
 {
 	char buf[sizeof(VertexShaderSource) * 2];
 
-	sprintf(buf, VertexShaderSource, (int)params.gouraud, (int)params.rotate90);
+	sprintf(buf, VertexShaderSource, (int)params.gouraud);
 	return createShaderModule(VulkanContext::Instance()->GetDevice(), vk::ShaderStageFlagBits::eVertex, buf);
 }
 

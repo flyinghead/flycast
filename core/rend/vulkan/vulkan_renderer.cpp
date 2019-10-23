@@ -142,17 +142,23 @@ public:
 		curTexture->SetCommandBuffer(nullptr);
 		texCommandPool.EndFrame();
 
-		float screen_stretching = settings.rend.ScreenStretching / 100.f;
-		float dc2s_scale_h, ds2s_offs_x;
-		if (settings.rend.Rotate90)
+		TransformMatrix<false> matrices(pvrrc);
+		glm::vec4 viewport_min = matrices.GetViewportMatrix() * glm::vec4(0, 0, 0, 1.f);
+		glm::vec4 viewport_dim = matrices.GetViewportMatrix() * glm::vec4(640.f, 480.f, 0, 0);
+
+		float min_x = viewport_min[0];
+		float min_y = viewport_min[1];
+		width = viewport_dim[0];
+		height = viewport_dim[1];
+		if (width < 0)
 		{
-			dc2s_scale_h = screen_height / 640.0f;
-			ds2s_offs_x =  (screen_width - dc2s_scale_h * 480.0f * screen_stretching) / 2;
+			min_x += width;
+			width = -width;
 		}
-		else
+		if (height < 0)
 		{
-			dc2s_scale_h = screen_height / 480.0f;
-			ds2s_offs_x =  (screen_width - dc2s_scale_h * 640.0f * screen_stretching) / 2;
+			min_y += height;
+			height = -height;
 		}
 
 		vk::CommandBuffer cmdBuffer = screenDrawer.BeginRenderPass();
@@ -165,9 +171,10 @@ public:
 
 		float blendConstants[4] = { 1.0, 1.0, 1.0, 1.0 };
 		cmdBuffer.setBlendConstants(blendConstants);
-		// FIXME scaling, stretching...
-		vk::Viewport viewport(ds2s_offs_x, 0.f, screen_width - ds2s_offs_x * 2, (float)screen_height);
+
+		vk::Viewport viewport(min_x, min_y, width, height);
 		cmdBuffer.setViewport(0, 1, &viewport);
+		cmdBuffer.setScissor(0, vk::Rect2D(vk::Offset2D(min_x, min_y), vk::Extent2D(width, height)));
 		cmdBuffer.draw(3, 1, 0, 0);
 
     	gui_display_osd();
@@ -211,6 +218,7 @@ public:
 
 	void DrawOSD(bool clear_screen) override
 	{
+		gui_display_osd();
 		if (!vjoyTexture)
 			return;
 		if (clear_screen)
@@ -218,22 +226,13 @@ public:
 			GetContext()->NewFrame();
 			GetContext()->BeginRenderPass();
 		}
-		const float screen_stretching = settings.rend.ScreenStretching / 100.f;
-		float dc2s_scale_h, ds2s_offs_x;
-		if (settings.rend.Rotate90)
-		{
-			dc2s_scale_h = screen_height / 640.0f;
-			ds2s_offs_x =  (screen_width - dc2s_scale_h * 480.0f * screen_stretching) / 2;
-		}
-		else
-		{
-			dc2s_scale_h = screen_height / 480.0f;
-			ds2s_offs_x =  (screen_width - dc2s_scale_h * 640.0f * screen_stretching) / 2;
-		}
+		const float dc2s_scale_h = screen_height / 480.0f;
+		const float sidebarWidth =  (screen_width - dc2s_scale_h * 640.0f) / 2;
+
 		std::vector<OSDVertex> osdVertices = GetOSDVertices();
-		const float x1 = 2.0f / (screen_width / dc2s_scale_h /* FIXME * scale_x */) * screen_stretching;
-		const float y1 = 2.0f / 480 /* FIXME dc_height */;
-		const float x2 = 1 - 2 * ds2s_offs_x / screen_width;
+		const float x1 = 2.0f / (screen_width / dc2s_scale_h);
+		const float y1 = 2.0f / 480;
+		const float x2 = 1 - 2 * sidebarWidth / screen_width;
 		const float y2 = 1;
 		for (OSDVertex& vtx : osdVertices)
 		{

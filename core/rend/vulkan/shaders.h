@@ -19,15 +19,15 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #pragma once
+#include <glm/glm.hpp>
 #include "vulkan.h"
 #include "SPIRV/GlslangToSpv.h"
 
 struct VertexShaderParams
 {
 	bool gouraud;
-	bool rotate90;
 
-	u32 hash() { return (((u32)gouraud) << 1) | rotate90; }
+	u32 hash() { return (u32)gouraud; }
 };
 
 // alpha test, clip test, use alpha, texture, ignore alpha, shader instr, offset, fog, gouraud, bump, clamp, trilinear
@@ -58,8 +58,7 @@ struct FragmentShaderParams
 // std140 alignment required
 struct VertexShaderUniforms
 {
-	float scale[4];
-	float extra_depth_scale;
+	glm::mat4 normal_matrix;
 };
 
 // std140 alignment required

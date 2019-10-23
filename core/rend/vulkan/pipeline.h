@@ -195,7 +195,6 @@ private:
 			| (pp->tsp.DstInstr << 17);
 		hash |= (pp->isp.ZWriteDis << 20) | (pp->isp.CullMode << 21) | (pp->isp.DepthMode << 23);
 		hash |= (u32)sortTriangles << 26;
-// TODO		hash |= (u32)rotate90 << 27;
 
 		return hash;
 	}

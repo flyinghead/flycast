@@ -20,10 +20,7 @@
 */
 #include <math.h>
 #include "drawer.h"
-#include "../gui.h"
 #include "hw/pvr/pvr_mem.h"
-
-extern float fb_scale_x, fb_scale_y;
 
 void Drawer::SortTriangles()
 {
@@ -84,33 +81,15 @@ TileClipping Drawer::SetTileClip(u32 val, vk::Rect2D& clipRect)
 	{
 		if (!pvrrc.isRTT)
 		{
-			csx /= scale_x;
-			csy /= scale_y;
-			cex /= scale_x;
-			cey /= scale_y;
-			float dc2s_scale_h;
-			float ds2s_offs_x;
-			float screen_stretching = settings.rend.ScreenStretching / 100.f;
+			glm::vec4 clip_start(csx, csy, 0, 1);
+			glm::vec4 clip_end(cex, cey, 0, 1);
+			clip_start = matrices.GetViewportMatrix() * clip_start;
+			clip_end = matrices.GetViewportMatrix() * clip_end;
 
-			if (settings.rend.Rotate90)
-			{
-				float t = cex;
-				cex = cey;
-				cey = 640 - csx;
-				csx = csy;
-				csy = 640 - t;
-				dc2s_scale_h = screen_height / 640.0f;
-				ds2s_offs_x =  (screen_width - dc2s_scale_h * 480.0 * screen_stretching) / 2;
-			}
-			else
-			{
-				dc2s_scale_h = screen_height / 480.0f;
-				ds2s_offs_x =  (screen_width - dc2s_scale_h * 640.0 * screen_stretching) / 2;
-			}
-			csx = csx * dc2s_scale_h * screen_stretching + ds2s_offs_x;
-			cex = cex * dc2s_scale_h * screen_stretching + ds2s_offs_x;
-			csy = csy * dc2s_scale_h;
-			cey = cey * dc2s_scale_h;
+			csx = clip_start[0];
+			csy = clip_start[1];
+			cey = clip_end[1];
+			cex = clip_end[0];
 		}
 		else if (!settings.rend.RenderToTextureBuffer)
 		{
@@ -290,79 +269,8 @@ bool Drawer::Draw(const Texture *fogTexture)
 {
 	extern bool fog_needs_update;
 
-	bool is_rtt = pvrrc.isRTT;
-	float dc_width = 640;
-	float dc_height = 480;
-
-	if (is_rtt)
-	{
-		dc_width = pvrrc.fb_X_CLIP.max - pvrrc.fb_X_CLIP.min + 1;
-		dc_height = pvrrc.fb_Y_CLIP.max - pvrrc.fb_Y_CLIP.min + 1;
-	}
-
-	scale_x = 1;
-	scissor_scale_x = 1;
-	scale_y = 1;
-
-	if (!is_rtt && !pvrrc.isRenderFramebuffer)
-	{
-		scale_x = fb_scale_x;
-		scissor_scale_x = fb_scale_x;
-		scale_y = fb_scale_y;
-		if (SCALER_CTL.interlace == 0 && SCALER_CTL.vscalefactor > 0x400)
-			scale_y *= roundf((float)SCALER_CTL.vscalefactor / 0x400);
-
-		//Pixel doubling is on VO, so it does not affect any pixel operations
-		if (VO_CONTROL.pixel_double)
-		{
-			scissor_scale_x *= 0.5f;
-			scale_x *= 0.5f;
-		}
-
-		if (SCALER_CTL.hscale)
-			scale_x *= 2;
-	}
-
-	dc_width  *= scale_x;
-	dc_height *= scale_y;
-
-	float screen_stretching = settings.rend.ScreenStretching / 100.f;
-	float screen_scaling = settings.rend.ScreenScaling / 100.f;
-
-	float dc2s_scale_h;
-	float ds2s_offs_x;
-
 	VertexShaderUniforms vtxUniforms;
-	if (is_rtt)
-	{
-		vtxUniforms.scale[0] = 2.0f / dc_width;
-		vtxUniforms.scale[1] = 2.0f / dc_height;
-		vtxUniforms.scale[2] = 1;
-		vtxUniforms.scale[3] = 1;
-	}
-	else
-	{
-		if (settings.rend.Rotate90)
-		{
-			dc2s_scale_h = screen_height / 640.0f;
-			ds2s_offs_x =  (screen_width - dc2s_scale_h * 480.0f * screen_stretching) / 2;
-			vtxUniforms.scale[0] = -2.0f / (screen_width / dc2s_scale_h * scale_x) * screen_stretching;
-			vtxUniforms.scale[1] = 2.0f / dc_width;
-			vtxUniforms.scale[2] = 1 - 2 * ds2s_offs_x / screen_width;
-			vtxUniforms.scale[3] = 1;
-		}
-		else
-		{
-			dc2s_scale_h = screen_height / 480.0f;
-			ds2s_offs_x =  (screen_width - dc2s_scale_h * 640.0f * screen_stretching) / 2;
-			vtxUniforms.scale[0] = 2.0f / (screen_width / dc2s_scale_h * scale_x) * screen_stretching;
-			vtxUniforms.scale[1] = 2.0f / dc_height;
-			vtxUniforms.scale[2] = 1 - 2 * ds2s_offs_x / screen_width;
-			vtxUniforms.scale[3] = 1;
-		}
-		//-1 -> too much to left
-	}
-	vtxUniforms.extra_depth_scale = settings.rend.ExtraDepthScale;
+	vtxUniforms.normal_matrix = matrices.GetNormalMatrix();
 
 	FragmentShaderUniforms fragUniforms;
 	fragUniforms.extra_depth_scale = settings.rend.ExtraDepthScale;
@@ -445,16 +353,16 @@ bool Drawer::Draw(const Texture *fogTexture)
 			DrawList(cmdBuffer, ListType_Translucent, false, pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);
 		previous_pass = current_pass;
     }
-    if (!is_rtt)
-    	gui_display_osd();
 
-	return !is_rtt;
+	return !pvrrc.isRTT;
 }
 
 vk::CommandBuffer TextureDrawer::BeginRenderPass()
 {
 	DEBUG_LOG(RENDERER, "RenderToTexture packmode=%d stride=%d - %d,%d -> %d,%d", FB_W_CTRL.fb_packmode, FB_W_LINESTRIDE.stride * 8,
 			FB_X_CLIP.min, FB_Y_CLIP.min, FB_X_CLIP.max, FB_Y_CLIP.max);
+	matrices.CalcMatrices(&pvrrc);
+
 	textureAddr = FB_W_SOF1 & VRAM_MASK;
 	u32 origWidth = pvrrc.fb_X_CLIP.max - pvrrc.fb_X_CLIP.min + 1;
 	u32 origHeight = pvrrc.fb_Y_CLIP.max - pvrrc.fb_Y_CLIP.min + 1;
@@ -631,12 +539,12 @@ vk::CommandBuffer ScreenDrawer::BeginRenderPass()
 	GetContext()->NewFrame();
 	GetContext()->BeginRenderPass();
 	vk::CommandBuffer commandBuffer = GetContext()->GetCurrentCommandBuffer();
-	commandBuffer.setViewport(0, vk::Viewport(0.0f, 0.0f, (float) ((screen_width)), (float) ((screen_height)), 1.0f, 0.0f));
-	bool wide_screen_on = settings.rend.WideScreen && !pvrrc.isRenderFramebuffer
-			&& pvrrc.fb_X_CLIP.min == 0
-			&& lroundf((pvrrc.fb_X_CLIP.max + 1) / scissor_scale_x) == 640L
-			&& pvrrc.fb_Y_CLIP.min == 0
-			&& lroundf((pvrrc.fb_Y_CLIP.max + 1) / scale_y) == 480L;
+	commandBuffer.setViewport(0, vk::Viewport(0.0f, 0.0f, (float)screen_width, (float)screen_height, 1.0f, 0.0f));
+
+	matrices.CalcMatrices(&pvrrc);
+
+	bool wide_screen_on = settings.rend.WideScreen && !pvrrc.isRenderFramebuffer && !matrices.IsClipped();
+
 	if (!wide_screen_on)
 	{
 		float width;
@@ -653,45 +561,27 @@ vk::CommandBuffer ScreenDrawer::BeginRenderPass()
 		}
 		else
 		{
-			width = (pvrrc.fb_X_CLIP.max - pvrrc.fb_X_CLIP.min + 1) / scissor_scale_x;
-			height = (pvrrc.fb_Y_CLIP.max - pvrrc.fb_Y_CLIP.min + 1) / scale_y;
-			min_x = pvrrc.fb_X_CLIP.min / scissor_scale_x;
-			min_y = pvrrc.fb_Y_CLIP.min / scale_y;
+			glm::vec4 clip_min(pvrrc.fb_X_CLIP.min, pvrrc.fb_Y_CLIP.min, 0, 1);
+			glm::vec4 clip_dim(pvrrc.fb_X_CLIP.max - pvrrc.fb_X_CLIP.min + 1,
+							   pvrrc.fb_Y_CLIP.max - pvrrc.fb_Y_CLIP.min + 1, 0, 0);
+			clip_min = matrices.GetScissorMatrix() * clip_min;
+			clip_dim = matrices.GetScissorMatrix() * clip_dim;
 
-			if (SCALER_CTL.interlace && SCALER_CTL.vscalefactor > 0x400)
+			min_x = clip_min[0];
+			min_y = clip_min[1];
+			width = clip_dim[0];
+			height = clip_dim[1];
+			if (width < 0)
 			{
-				// Clipping is done after scaling/filtering so account for that if enabled
-				height *= (float) SCALER_CTL.vscalefactor / 0x400;
-				min_y *= (float) SCALER_CTL.vscalefactor / 0x400;
+				min_x += width;
+				width = -width;
+			}
+			if (height < 0)
+			{
+				min_y += height;
+				height = -height;
 			}
 		}
-		if (settings.rend.Rotate90)
-		{
-			float t = width;
-			width = height;
-			height = t;
-			t = min_x;
-			min_x = min_y;
-			min_y = 640 - t - height;
-		}
-		const float screen_stretching = settings.rend.ScreenStretching / 100.f;
-		const float screen_scaling = settings.rend.ScreenScaling / 100.f;
-		float dc2s_scale_h, ds2s_offs_x;
-		if (settings.rend.Rotate90)
-		{
-			dc2s_scale_h = screen_height / 640.0f;
-			ds2s_offs_x = (screen_width - dc2s_scale_h * 480.0f * screen_stretching) / 2;
-		}
-		else
-		{
-			dc2s_scale_h = screen_height / 480.0f;
-			ds2s_offs_x = (screen_width	- dc2s_scale_h * 640.0f * screen_stretching) / 2;
-		}
-		// Add x offset for aspect ratio > 4/3
-		min_x = (min_x * dc2s_scale_h * screen_stretching + ds2s_offs_x) * screen_scaling;
-		min_y = min_y * dc2s_scale_h * screen_scaling;
-		width *= dc2s_scale_h * screen_stretching * screen_scaling;
-		height *= dc2s_scale_h * screen_scaling;
 
 		baseScissor = vk::Rect2D(
 				vk::Offset2D((u32)std::max(lroundf(min_x), 0L), (u32)std::max(lroundf(min_y), 0L)),

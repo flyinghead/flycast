@@ -319,7 +319,7 @@ void PipelineManager::CreatePipeline(u32 listType, bool sortTriangles, const Pol
 	vk::DynamicState dynamicStates[2] = { vk::DynamicState::eViewport, vk::DynamicState::eScissor };
 	vk::PipelineDynamicStateCreateInfo pipelineDynamicStateCreateInfo(vk::PipelineDynamicStateCreateFlags(), 2, dynamicStates);
 
-	vk::ShaderModule vertex_module = shaderManager->GetVertexShader(VertexShaderParams{ pp.pcw.Gouraud == 1, false });	// TODO rotate90
+	vk::ShaderModule vertex_module = shaderManager->GetVertexShader(VertexShaderParams{ pp.pcw.Gouraud == 1 });
 	FragmentShaderParams params = {};
 	params.alphaTest = listType == ListType_Punch_Through;
 	params.bumpmap = pp.tcw.PixelFmt == PixelBumpMap;

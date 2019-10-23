@@ -40,7 +40,6 @@ struct gl4_ctx
 	{
 		GLuint program;
 
-		GLuint extra_depth_scale;
 		GLuint normal_matrix;
 	} modvol_shader;
 

@@ -21,6 +21,7 @@
 #pragma once
 #include <memory>
 #include "rend/sorter.h"
+#include "rend/transform_matrix.h"
 #include "vulkan.h"
 #include "buffer.h"
 #include "commandpool.h"
@@ -68,10 +69,7 @@ protected:
 
 	PipelineManager *pipelineManager = nullptr;
 	vk::Rect2D baseScissor;
-	// temp stuff
-	float scale_x = 1.f;
-	float scissor_scale_x = 1.f;
-	float scale_y = 1.f;
+	TransformMatrix<false> matrices;
 
 private:
 	TileClipping SetTileClip(u32 val, vk::Rect2D& clipRect);
