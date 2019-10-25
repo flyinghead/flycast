@@ -29,8 +29,6 @@
 #include "rend/gui.h"
 #include "rend/osd.h"
 
-extern bool ProcessFrame(TA_context* ctx);
-
 class VulkanRenderer : public Renderer
 {
 public:

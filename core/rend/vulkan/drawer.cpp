@@ -109,12 +109,12 @@ void Drawer::DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sor
 {
 	vk::Rect2D scissorRect;
 	TileClipping tileClip = SetTileClip(poly.tileclip, scissorRect);
-	if (tileClip == TileClipping::Off || tileClip == TileClipping::Inside)
+	if (tileClip != TileClipping::Outside)
 		scissorRect = baseScissor;
 	SetScissor(cmdBuffer, scissorRect);
 
 	float trilinearAlpha = 1.f;
-	if (poly.pcw.Texture && poly.tsp.FilterMode > 1 && listType != ListType_Punch_Through)
+	if (poly.tsp.FilterMode > 1 && poly.pcw.Texture && listType != ListType_Punch_Through)
 	{
 		trilinearAlpha = 0.25 * (poly.tsp.MipMapD & 0x3);
 		if (poly.tsp.FilterMode == 2)
@@ -148,9 +148,9 @@ void Drawer::DrawSorted(const vk::CommandBuffer& cmdBuffer, const std::vector<So
 	}
 }
 
-void Drawer::DrawList(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sortTriangles, const List<PolyParam>& polys, u32 first, u32 count)
+void Drawer::DrawList(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sortTriangles, const List<PolyParam>& polys, u32 first, u32 last)
 {
-	for (u32 i = first; i < count; i++)
+	for (u32 i = first; i < last; i++)
 	{
 		const PolyParam &pp = polys.head()[i];
 		DrawPoly(cmdBuffer, listType, sortTriangles, pp, pp.first, pp.count);
@@ -329,13 +329,13 @@ bool Drawer::Draw(const Texture *fogTexture)
     {
         const RenderPass& current_pass = pvrrc.render_passes.head()[render_pass];
 
-        DEBUG_LOG(RENDERER, "Render pass %d OP %d PT %d TR %d MV %d", render_pass + 1,
+        DEBUG_LOG(RENDERER, "Render pass %d OP %d PT %d TR %d MV %d autosort %d", render_pass + 1,
         		current_pass.op_count - previous_pass.op_count,
 				current_pass.pt_count - previous_pass.pt_count,
 				current_pass.tr_count - previous_pass.tr_count,
-				current_pass.mvo_count - previous_pass.mvo_count);
-		DrawList(cmdBuffer, ListType_Opaque, false, pvrrc.global_param_op, previous_pass.op_count, current_pass.op_count - previous_pass.op_count);
-		DrawList(cmdBuffer, ListType_Punch_Through, false, pvrrc.global_param_pt, previous_pass.pt_count, current_pass.pt_count - previous_pass.pt_count);
+				current_pass.mvo_count - previous_pass.mvo_count, current_pass.autosort);
+		DrawList(cmdBuffer, ListType_Opaque, false, pvrrc.global_param_op, previous_pass.op_count, current_pass.op_count);
+		DrawList(cmdBuffer, ListType_Punch_Through, false, pvrrc.global_param_pt, previous_pass.pt_count, current_pass.pt_count);
 		DrawModVols(cmdBuffer, previous_pass.mvo_count, current_pass.mvo_count - previous_pass.mvo_count);
 		if (current_pass.autosort)
         {
@@ -346,11 +346,11 @@ bool Drawer::Draw(const Texture *fogTexture)
 			else
 			{
 				SortPParams(previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);
-				DrawList(cmdBuffer, ListType_Translucent, true, pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);
+				DrawList(cmdBuffer, ListType_Translucent, true, pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count);
 			}
         }
 		else
-			DrawList(cmdBuffer, ListType_Translucent, false, pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);
+			DrawList(cmdBuffer, ListType_Translucent, false, pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count);
 		previous_pass = current_pass;
     }
 
