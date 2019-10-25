@@ -2730,7 +2730,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.flyinghead.Flycast;
 				PRODUCT_NAME = "$(REI_APP_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "emulator-osx/emulator-osx-Bridging-Header.h";
-				SWIFT_VERSION = 3.0;
+				SWIFT_VERSION = 5.0;
 			};
 			name = Debug;
 		};
@@ -2772,7 +2772,7 @@
 				OTHER_LIBTOOLFLAGS = "";
 				PRODUCT_NAME = "$(REI_APP_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "emulator-osx/emulator-osx-Bridging-Header.h";
-				SWIFT_VERSION = 3.0;
+				SWIFT_VERSION = 5.0;
 			};
 			name = Release;
 		};
@@ -2911,7 +2911,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.flyinghead.Flycast;
 				PRODUCT_NAME = "$(REI_APP_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "emulator-osx/emulator-osx-Bridging-Header.h";
-				SWIFT_VERSION = 3.0;
+				SWIFT_VERSION = 5.0;
 			};
 			name = DebugNaomi;
 		};
@@ -3026,7 +3026,7 @@
 				OTHER_LIBTOOLFLAGS = "";
 				PRODUCT_NAME = "$(REI_APP_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "emulator-osx/emulator-osx-Bridging-Header.h";
-				SWIFT_VERSION = 3.0;
+				SWIFT_VERSION = 5.0;
 			};
 			name = ReleaseNaomi;
 		};
