@@ -37,9 +37,9 @@ public:
 		{
 			while (commandPools.size() < size)
 			{
-				commandPools.emplace_back(std::move(VulkanContext::Instance()->GetDevice()->createCommandPoolUnique(
+				commandPools.emplace_back(std::move(VulkanContext::Instance()->GetDevice().createCommandPoolUnique(
 						vk::CommandPoolCreateInfo(vk::CommandPoolCreateFlagBits::eTransient, VulkanContext::Instance()->GetGraphicsQueueFamilyIndex()))));
-				fences.emplace_back(std::move(VulkanContext::Instance()->GetDevice()->createFenceUnique(vk::FenceCreateInfo(vk::FenceCreateFlagBits::eSignaled))));
+				fences.emplace_back(std::move(VulkanContext::Instance()->GetDevice().createFenceUnique(vk::FenceCreateInfo(vk::FenceCreateFlagBits::eSignaled))));
 			}
 		}
 		if (freeBuffers.size() != size)
@@ -67,8 +67,8 @@ public:
 	void BeginFrame()
 	{
 		index = (index + 1) % VulkanContext::Instance()->GetSwapChainSize();
-		VulkanContext::Instance()->GetDevice()->waitForFences(1, &fences[index].get(), true, UINT64_MAX);
-		VulkanContext::Instance()->GetDevice()->resetFences(1, &fences[index].get());
+		VulkanContext::Instance()->GetDevice().waitForFences(1, &fences[index].get(), true, UINT64_MAX);
+		VulkanContext::Instance()->GetDevice().resetFences(1, &fences[index].get());
 		std::vector<vk::UniqueCommandBuffer>& inFlight = inFlightBuffers[index];
 		std::vector<vk::UniqueCommandBuffer>& freeBuf = freeBuffers[index];
 		while (!inFlight.empty())
@@ -76,7 +76,7 @@ public:
 			freeBuf.emplace_back(std::move(inFlight.back()));
 			inFlight.pop_back();
 		}
-		VulkanContext::Instance()->GetDevice()->resetCommandPool(*commandPools[index], vk::CommandPoolResetFlagBits::eReleaseResources);
+		VulkanContext::Instance()->GetDevice().resetCommandPool(*commandPools[index], vk::CommandPoolResetFlagBits::eReleaseResources);
 	}
 
 	vk::CommandBuffer Allocate()
@@ -84,7 +84,7 @@ public:
 		if (freeBuffers[index].empty())
 		{
 			inFlightBuffers[index].emplace_back(std::move(
-					VulkanContext::Instance()->GetDevice()->allocateCommandBuffersUnique(vk::CommandBufferAllocateInfo(*commandPools[index], vk::CommandBufferLevel::ePrimary, 1))
+					VulkanContext::Instance()->GetDevice().allocateCommandBuffersUnique(vk::CommandBufferAllocateInfo(*commandPools[index], vk::CommandBufferLevel::ePrimary, 1))
 					.front()));
 		}
 		else

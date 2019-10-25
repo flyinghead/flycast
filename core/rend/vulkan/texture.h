@@ -93,7 +93,7 @@ public:
 				: tsp.FlipV ? vk::SamplerAddressMode::eMirroredRepeat : vk::SamplerAddressMode::eRepeat;
 
 		return samplers.emplace(
-					std::make_pair(samplerHash, VulkanContext::Instance()->GetDevice()->createSamplerUnique(
+					std::make_pair(samplerHash, VulkanContext::Instance()->GetDevice().createSamplerUnique(
 						vk::SamplerCreateInfo(vk::SamplerCreateFlags(), filter, filter,
 							vk::SamplerMipmapMode::eLinear, uRepeat, vRepeat, vk::SamplerAddressMode::eClampToEdge, 0.0f, false,
 							16.0f, false, vk::CompareOp::eNever, 0.0f, 0.0f, vk::BorderColor::eFloatOpaqueBlack)))).first->second.get();

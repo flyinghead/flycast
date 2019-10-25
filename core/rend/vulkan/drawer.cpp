@@ -262,7 +262,7 @@ void Drawer::UploadMainBuffer(const VertexShaderUniforms& vertexUniforms, const 
 	u32 totalSize = offsets.fragmentUniformOffset + sizeof(FragmentShaderUniforms);
 
 	BufferData *buffer = GetMainBuffer(totalSize);
-	buffer->upload(GetContext()->GetDevice().get(), chunks.size(), &chunkSizes[0], &chunks[0]);
+	buffer->upload(GetContext()->GetDevice(), chunks.size(), &chunkSizes[0], &chunks[0]);
 }
 
 bool Drawer::Draw(const Texture *fogTexture)
@@ -385,7 +385,7 @@ vk::CommandBuffer TextureDrawer::BeginRenderPass()
 
 	static_cast<RttPipelineManager*>(pipelineManager)->CheckSettingsChange();
 	VulkanContext *context = GetContext();
-	vk::Device device = *context->GetDevice();
+	vk::Device device = context->GetDevice();
 
 	vk::CommandBuffer commandBuffer = commandPool->Allocate();
 	commandBuffer.begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));
@@ -426,7 +426,7 @@ vk::CommandBuffer TextureDrawer::BeginRenderPass()
 			texture->Create();
 			texture->SetAllocator(texAllocator);
 			texture->SetPhysicalDevice(GetContext()->GetPhysicalDevice());
-			texture->SetDevice(*GetContext()->GetDevice());
+			texture->SetDevice(device);
 		}
 		if (texture->format != vk::Format::eR8G8B8A8Unorm)
 		{
@@ -449,8 +449,8 @@ vk::CommandBuffer TextureDrawer::BeginRenderPass()
 		{
 			if (!colorAttachment)
 			{
-				colorAttachment = std::unique_ptr<FramebufferAttachment>(new FramebufferAttachment(VulkanContext::Instance()->GetPhysicalDevice(),
-						*VulkanContext::Instance()->GetDevice()));
+				colorAttachment = std::unique_ptr<FramebufferAttachment>(new FramebufferAttachment(context->GetPhysicalDevice(),
+						device));
 			}
 			colorAttachment->Init(widthPow2, heightPow2, vk::Format::eR8G8B8A8Unorm);
 		}
@@ -467,7 +467,7 @@ vk::CommandBuffer TextureDrawer::BeginRenderPass()
 		colorImageView,
 		*depthAttachment->GetImageView(),
 	};
-	framebuffer = context->GetDevice()->createFramebufferUnique(vk::FramebufferCreateInfo(vk::FramebufferCreateFlags(),
+	framebuffer = device.createFramebufferUnique(vk::FramebufferCreateInfo(vk::FramebufferCreateFlags(),
 			pipelineManager->GetRenderPass(), ARRAY_SIZE(imageViews), imageViews, widthPow2, heightPow2, 1));
 
 	const vk::ClearValue clear_colors[] = { vk::ClearColorValue(std::array<float, 4> { 0.f, 0.f, 0.f, 1.f }), vk::ClearDepthStencilValue { 0.f, 0 } };
@@ -515,14 +515,14 @@ void TextureDrawer::EndRenderPass()
 
 	if (settings.rend.RenderToTextureBuffer)
 	{
-		GetContext()->GetDevice()->waitForFences(1, &fence.get(), true, UINT64_MAX);
-		GetContext()->GetDevice()->resetFences(1, &fence.get());
+		GetContext()->GetDevice().waitForFences(1, &fence.get(), true, UINT64_MAX);
+		GetContext()->GetDevice().resetFences(1, &fence.get());
 
 		u16 *dst = (u16 *)&vram[textureAddr];
 
 		PixelBuffer<u32> tmpBuf;
 		tmpBuf.init(width, height);
-		colorAttachment->GetBufferData()->download(*GetContext()->GetDevice(), width * height * 4, tmpBuf.data());
+		colorAttachment->GetBufferData()->download(GetContext()->GetDevice(), width * height * 4, tmpBuf.data());
 		WriteTextureToVRam(width, height, (u8 *)tmpBuf.data(), dst);
 
 		return;

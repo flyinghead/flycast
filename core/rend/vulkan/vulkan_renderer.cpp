@@ -75,7 +75,7 @@ public:
 				vjoyTexture->tsp.full = 0;
 				vjoyTexture->SetAllocator(&texAllocator);
 				vjoyTexture->SetPhysicalDevice(GetContext()->GetPhysicalDevice());
-				vjoyTexture->SetDevice(*GetContext()->GetDevice());
+				vjoyTexture->SetDevice(GetContext()->GetDevice());
 				vjoyTexture->SetCommandBuffer(texCommandPool.Allocate());
 				vjoyTexture->UploadToGPU(OSD_TEX_W, OSD_TEX_H, image_data);
 				vjoyTexture->SetCommandBuffer(nullptr);
@@ -85,7 +85,7 @@ public:
 		}
 		if (!osdBuffer)
 		{
-			osdBuffer = std::unique_ptr<BufferData>(new BufferData(GetContext()->GetPhysicalDevice(), GetContext()->GetDevice().get(),
+			osdBuffer = std::unique_ptr<BufferData>(new BufferData(GetContext()->GetPhysicalDevice(), GetContext()->GetDevice(),
 									sizeof(OSDVertex) * VJOY_VISIBLE * 4,
 									vk::BufferUsageFlagBits::eVertexBuffer, &texAllocator));
 		}
@@ -135,7 +135,7 @@ public:
 			curTexture->tsp.full = 0;
 			curTexture->SetAllocator(&texAllocator);
 			curTexture->SetPhysicalDevice(GetContext()->GetPhysicalDevice());
-			curTexture->SetDevice(*GetContext()->GetDevice());
+			curTexture->SetDevice(GetContext()->GetDevice());
 		}
 		curTexture->SetCommandBuffer(texCommandPool.Allocate());
 		curTexture->UploadToGPU(width, height, (u8*)pb.data());
@@ -248,7 +248,7 @@ public:
 		cmdBuffer.setViewport(0, 1, &viewport);
 		const vk::Rect2D scissor({ 0, 0 }, { (u32)screen_width, (u32)screen_height });
 		cmdBuffer.setScissor(0, 1, &scissor);
-		osdBuffer->upload(*GetContext()->GetDevice(), osdVertices.size() * sizeof(OSDVertex), osdVertices.data());
+		osdBuffer->upload(GetContext()->GetDevice(), osdVertices.size() * sizeof(OSDVertex), osdVertices.data());
 		const vk::DeviceSize zero = 0;
 		cmdBuffer.bindVertexBuffers(0, 1, &osdBuffer->buffer.get(), &zero);
 		for (int i = 0; i < osdVertices.size(); i += 4)
@@ -290,7 +290,7 @@ public:
 			tf->Create();
 			tf->SetAllocator(&texAllocator);
 			tf->SetPhysicalDevice(GetContext()->GetPhysicalDevice());
-			tf->SetDevice(*GetContext()->GetDevice());
+			tf->SetDevice(GetContext()->GetDevice());
 		}
 
 		//update if needed
@@ -316,7 +316,7 @@ private:
 			fogTexture = std::unique_ptr<Texture>(new Texture());
 			fogTexture->SetAllocator(&texAllocator);
 			fogTexture->SetPhysicalDevice(GetContext()->GetPhysicalDevice());
-			fogTexture->SetDevice(*GetContext()->GetDevice());
+			fogTexture->SetDevice(GetContext()->GetDevice());
 			fogTexture->tex_type = TextureType::_8;
 			fog_needs_update = true;
 		}

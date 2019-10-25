@@ -136,7 +136,7 @@ protected:
 		if (mainBuffers.empty())
 		{
 			for (int i = 0; i < GetContext()->GetSwapChainSize(); i++)
-				mainBuffers.push_back(std::unique_ptr<BufferData>(new BufferData(GetContext()->GetPhysicalDevice(), GetContext()->GetDevice().get(),
+				mainBuffers.push_back(std::unique_ptr<BufferData>(new BufferData(GetContext()->GetPhysicalDevice(), GetContext()->GetDevice(),
 						std::max(512 * 1024u, size),
 						vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eUniformBuffer)));
 		}
@@ -146,7 +146,7 @@ protected:
 			while (newSize < size)
 				newSize *= 2;
 			INFO_LOG(RENDERER, "Increasing main buffer size %d -> %d", (u32)mainBuffers[GetCurrentImage()]->bufferSize, newSize);
-			mainBuffers[GetCurrentImage()] = std::unique_ptr<BufferData>(new BufferData(GetContext()->GetPhysicalDevice(), GetContext()->GetDevice().get(), newSize,
+			mainBuffers[GetCurrentImage()] = std::unique_ptr<BufferData>(new BufferData(GetContext()->GetPhysicalDevice(), GetContext()->GetDevice(), newSize,
 					vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eUniformBuffer));
 		}
 		return mainBuffers[GetCurrentImage()].get();
@@ -168,7 +168,7 @@ public:
 		Drawer::Init(samplerManager, pipelineManager);
 
 		descriptorSets.Init(samplerManager, pipelineManager->GetPipelineLayout(), pipelineManager->GetPerFrameDSLayout(), pipelineManager->GetPerPolyDSLayout());
-		fence = GetContext()->GetDevice()->createFenceUnique(vk::FenceCreateInfo());
+		fence = GetContext()->GetDevice().createFenceUnique(vk::FenceCreateInfo());
 		this->texAllocator = texAllocator;
 		this->textureCache = textureCache;
 	}
@@ -193,7 +193,7 @@ protected:
 			while (newSize < size)
 				newSize *= 2;
 			INFO_LOG(RENDERER, "Increasing RTT main buffer size %d -> %d", !mainBuffer ? 0 : (u32)mainBuffer->bufferSize, newSize);
-			mainBuffer = std::unique_ptr<BufferData>(new BufferData(GetContext()->GetPhysicalDevice(), *GetContext()->GetDevice(), newSize,
+			mainBuffer = std::unique_ptr<BufferData>(new BufferData(GetContext()->GetPhysicalDevice(), GetContext()->GetDevice(), newSize,
 					vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eUniformBuffer));
 		}
 		return mainBuffer.get();

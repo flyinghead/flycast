@@ -522,13 +522,13 @@ static bool GLSLtoSPV(const vk::ShaderStageFlagBits shaderType, std::string cons
       return true;
     }
 
-static vk::UniqueShaderModule createShaderModule(vk::UniqueDevice &device, vk::ShaderStageFlagBits shaderStage, std::string const& shaderText)
+static vk::UniqueShaderModule createShaderModule(vk::Device device, vk::ShaderStageFlagBits shaderStage, std::string const& shaderText)
 {
 	std::vector<unsigned int> shaderSPV;
 	bool ok = GLSLtoSPV(shaderStage, shaderText, shaderSPV);
 	verify(ok);
 
-	return device->createShaderModuleUnique(vk::ShaderModuleCreateInfo(vk::ShaderModuleCreateFlags(), shaderSPV.size() * sizeof(unsigned int), shaderSPV.data()));
+	return device.createShaderModuleUnique(vk::ShaderModuleCreateInfo(vk::ShaderModuleCreateFlags(), shaderSPV.size() * sizeof(unsigned int), shaderSPV.data()));
 }
 
 vk::UniqueShaderModule ShaderManager::compileShader(const VertexShaderParams& params)

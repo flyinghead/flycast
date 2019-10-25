@@ -52,7 +52,7 @@ public:
 	void Present();
 
 	vk::PhysicalDevice GetPhysicalDevice() const { return physicalDevice; }
-	vk::UniqueDevice& GetDevice() { return device; }
+	vk::Device GetDevice() { return *device; }
 	vk::PipelineCache GetPipelineCache() const { return *pipelineCache; }
 	vk::RenderPass GetRenderPass() const { return *renderPass; }
 	vk::CommandPool GetCurrentCommandPool() const { return *commandPools[GetCurrentImageIndex()]; }

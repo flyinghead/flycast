@@ -169,7 +169,7 @@ public:
 		const vk::DeviceSize newChunkSize = std::max(chunkSize, size);
 		chunks.emplace_back(newChunkSize);
 		Chunk& chunk = chunks.back();
-		chunk.deviceMemory = VulkanContext::Instance()->GetDevice()->allocateMemoryUnique(vk::MemoryAllocateInfo(newChunkSize, memoryType));
+		chunk.deviceMemory = VulkanContext::Instance()->GetDevice().allocateMemoryUnique(vk::MemoryAllocateInfo(newChunkSize, memoryType));
 		vk::DeviceSize offset = chunk.Allocate(size, alignment);
 		verify(offset != Chunk::OutOfMemory);
 
@@ -218,14 +218,14 @@ class SimpleAllocator : public Allocator
 public:
 	vk::DeviceSize Allocate(vk::DeviceSize size, vk::DeviceSize alignment, u32 memoryType, vk::DeviceMemory& deviceMemory) override
 	{
-		deviceMemory = VulkanContext::Instance()->GetDevice()->allocateMemory(vk::MemoryAllocateInfo(size, memoryType));
+		deviceMemory = VulkanContext::Instance()->GetDevice().allocateMemory(vk::MemoryAllocateInfo(size, memoryType));
 
 		return 0;
 	}
 
 	void Free(vk::DeviceSize offset, u32 memoryType, vk::DeviceMemory deviceMemory) override
 	{
-		VulkanContext::Instance()->GetDevice()->free(deviceMemory);
+		VulkanContext::Instance()->GetDevice().free(deviceMemory);
 	}
 
 	static SimpleAllocator instance;

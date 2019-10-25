@@ -346,7 +346,7 @@ void FramebufferAttachment::Init(u32 width, u32 height, vk::Format format)
 		if (settings.rend.RenderToTextureBuffer)
 		{
 			usage |= vk::ImageUsageFlagBits::eTransferSrc;
-			stagingBufferData = std::unique_ptr<BufferData>(new BufferData(VulkanContext::Instance()->GetPhysicalDevice(), *VulkanContext::Instance()->GetDevice(),
+			stagingBufferData = std::unique_ptr<BufferData>(new BufferData(VulkanContext::Instance()->GetPhysicalDevice(), VulkanContext::Instance()->GetDevice(),
 					width * height * 4, vk::BufferUsageFlagBits::eTransferSrc | vk::BufferUsageFlagBits::eTransferDst));
 		}
 		else

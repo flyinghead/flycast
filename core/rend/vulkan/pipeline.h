@@ -41,7 +41,7 @@ public:
 	{
 		if (!perFrameDescSet)
 		{
-			perFrameDescSet = std::move(GetContext()->GetDevice()->allocateDescriptorSetsUnique(
+			perFrameDescSet = std::move(GetContext()->GetDevice().allocateDescriptorSetsUnique(
 					vk::DescriptorSetAllocateInfo(GetContext()->GetDescriptorPool(), 1, &perFrameLayout)).front());
 		}
 		std::vector<vk::DescriptorBufferInfo> bufferInfos;
@@ -61,7 +61,7 @@ public:
 			vk::DescriptorImageInfo imageInfo(fogSampler, fogImageView, vk::ImageLayout::eShaderReadOnlyOptimal);
 			writeDescriptorSets.push_back(vk::WriteDescriptorSet(*perFrameDescSet, 2, 0, 1, vk::DescriptorType::eCombinedImageSampler, &imageInfo, nullptr, nullptr));
 		}
-		GetContext()->GetDevice()->updateDescriptorSets(writeDescriptorSets, nullptr);
+		GetContext()->GetDevice().updateDescriptorSets(writeDescriptorSets, nullptr);
 	}
 
 	void SetTexture(u64 textureId, TSP tsp)
@@ -74,7 +74,7 @@ public:
 		if (perPolyDescSets.empty())
 		{
 			std::vector<vk::DescriptorSetLayout> layouts(10, perPolyLayout);
-			perPolyDescSets = GetContext()->GetDevice()->allocateDescriptorSetsUnique(
+			perPolyDescSets = GetContext()->GetDevice().allocateDescriptorSetsUnique(
 					vk::DescriptorSetAllocateInfo(GetContext()->GetDescriptorPool(), layouts.size(), &layouts[0]));
 		}
 		Texture *texture = reinterpret_cast<Texture *>(textureId);
@@ -83,7 +83,7 @@ public:
 		std::vector<vk::WriteDescriptorSet> writeDescriptorSets;
 		writeDescriptorSets.push_back(vk::WriteDescriptorSet(*perPolyDescSets.back(), 0, 0, 1, vk::DescriptorType::eCombinedImageSampler, &imageInfo, nullptr, nullptr));
 
-		GetContext()->GetDevice()->updateDescriptorSets(writeDescriptorSets, nullptr);
+		GetContext()->GetDevice().updateDescriptorSets(writeDescriptorSets, nullptr);
 		inFlight[index] = std::move(perPolyDescSets.back());
 		perPolyDescSets.pop_back();
 	}
@@ -141,13 +141,13 @@ public:
 			vk::DescriptorSetLayoutBinding perPolyBindings[] = {
 					{ 0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment },// texture
 			};
-			perFrameLayout = GetContext()->GetDevice()->createDescriptorSetLayoutUnique(
+			perFrameLayout = GetContext()->GetDevice().createDescriptorSetLayoutUnique(
 					vk::DescriptorSetLayoutCreateInfo(vk::DescriptorSetLayoutCreateFlags(), ARRAY_SIZE(perFrameBindings), perFrameBindings));
-			perPolyLayout = GetContext()->GetDevice()->createDescriptorSetLayoutUnique(
+			perPolyLayout = GetContext()->GetDevice().createDescriptorSetLayoutUnique(
 					vk::DescriptorSetLayoutCreateInfo(vk::DescriptorSetLayoutCreateFlags(), ARRAY_SIZE(perPolyBindings), perPolyBindings));
 			vk::DescriptorSetLayout layouts[] = { *perFrameLayout, *perPolyLayout };
 			vk::PushConstantRange pushConstant(vk::ShaderStageFlagBits::eFragment, 0, 20);
-			pipelineLayout = GetContext()->GetDevice()->createPipelineLayoutUnique(
+			pipelineLayout = GetContext()->GetDevice().createPipelineLayoutUnique(
 					vk::PipelineLayoutCreateInfo(vk::PipelineLayoutCreateFlags(), ARRAY_SIZE(layouts), layouts, 1, &pushConstant));
 		}
 
@@ -274,7 +274,7 @@ public:
 					vk::AccessFlagBits::eColorAttachmentWrite, vk::AccessFlagBits::eTransferRead | vk::AccessFlagBits::eHostRead),
 	    };
 
-	    rttRenderPass = GetContext()->GetDevice()->createRenderPassUnique(vk::RenderPassCreateInfo(vk::RenderPassCreateFlags(), 2, attachmentDescriptions,
+	    rttRenderPass = GetContext()->GetDevice().createRenderPassUnique(vk::RenderPassCreateInfo(vk::RenderPassCreateFlags(), 2, attachmentDescriptions,
 	    		1, &subpass, renderToTextureBuffer ? ARRAY_SIZE(vramWriteDeps) : ARRAY_SIZE(dependencies), renderToTextureBuffer ? vramWriteDeps : dependencies));
 	    renderPass = *rttRenderPass;
 	}
@@ -300,14 +300,14 @@ public:
 			vk::DescriptorSetLayoutBinding bindings[] = {
 					{ 0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment },// texture
 			};
-			descSetLayout = GetContext()->GetDevice()->createDescriptorSetLayoutUnique(
+			descSetLayout = GetContext()->GetDevice().createDescriptorSetLayoutUnique(
 					vk::DescriptorSetLayoutCreateInfo(vk::DescriptorSetLayoutCreateFlags(), ARRAY_SIZE(bindings), bindings));
-			pipelineLayout = GetContext()->GetDevice()->createPipelineLayoutUnique(
+			pipelineLayout = GetContext()->GetDevice().createPipelineLayoutUnique(
 					vk::PipelineLayoutCreateInfo(vk::PipelineLayoutCreateFlags(), 1, &descSetLayout.get()));
 		}
 		if (!sampler)
 		{
-			sampler = VulkanContext::Instance()->GetDevice()->createSamplerUnique(
+			sampler = VulkanContext::Instance()->GetDevice().createSamplerUnique(
 					vk::SamplerCreateInfo(vk::SamplerCreateFlags(), vk::Filter::eLinear, vk::Filter::eLinear,
 										vk::SamplerMipmapMode::eLinear, vk::SamplerAddressMode::eClampToEdge, vk::SamplerAddressMode::eClampToEdge,
 										vk::SamplerAddressMode::eClampToEdge, 0.0f, false, 16.0f, false,
@@ -333,14 +333,14 @@ public:
 		vk::UniqueDescriptorSet& descriptorSet = descriptorSets[GetContext()->GetCurrentImageIndex()];
 		if (!descriptorSet)
 		{
-			descriptorSet = std::move(GetContext()->GetDevice()->allocateDescriptorSetsUnique(
+			descriptorSet = std::move(GetContext()->GetDevice().allocateDescriptorSetsUnique(
 					vk::DescriptorSetAllocateInfo(GetContext()->GetDescriptorPool(), 1, &descSetLayout.get())).front());
 		}
 		vk::DescriptorImageInfo imageInfo(*sampler, texture->GetImageView(), vk::ImageLayout::eShaderReadOnlyOptimal);
 		std::vector<vk::WriteDescriptorSet> writeDescriptorSets;
 		writeDescriptorSets.push_back(vk::WriteDescriptorSet(*descriptorSet, 0, 0, 1, vk::DescriptorType::eCombinedImageSampler, &imageInfo, nullptr, nullptr));
 
-		GetContext()->GetDevice()->updateDescriptorSets(writeDescriptorSets, nullptr);
+		GetContext()->GetDevice().updateDescriptorSets(writeDescriptorSets, nullptr);
 	}
 
 	void BindDescriptorSets(vk::CommandBuffer cmdBuffer)
@@ -372,14 +372,14 @@ public:
 			vk::DescriptorSetLayoutBinding bindings[] = {
 					{ 0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment },// texture
 			};
-			descSetLayout = GetContext()->GetDevice()->createDescriptorSetLayoutUnique(
+			descSetLayout = GetContext()->GetDevice().createDescriptorSetLayoutUnique(
 					vk::DescriptorSetLayoutCreateInfo(vk::DescriptorSetLayoutCreateFlags(), ARRAY_SIZE(bindings), bindings));
-			pipelineLayout = GetContext()->GetDevice()->createPipelineLayoutUnique(
+			pipelineLayout = GetContext()->GetDevice().createPipelineLayoutUnique(
 					vk::PipelineLayoutCreateInfo(vk::PipelineLayoutCreateFlags(), 1, &descSetLayout.get()));
 		}
 		if (!sampler)
 		{
-			sampler = VulkanContext::Instance()->GetDevice()->createSamplerUnique(
+			sampler = VulkanContext::Instance()->GetDevice().createSamplerUnique(
 					vk::SamplerCreateInfo(vk::SamplerCreateFlags(), vk::Filter::eLinear, vk::Filter::eLinear,
 										vk::SamplerMipmapMode::eLinear, vk::SamplerAddressMode::eClampToEdge, vk::SamplerAddressMode::eClampToEdge,
 										vk::SamplerAddressMode::eClampToEdge, 0.0f, false, 16.0f, false,
@@ -392,13 +392,13 @@ public:
 		}
 		if (!descriptorSet)
 		{
-			descriptorSet = std::move(GetContext()->GetDevice()->allocateDescriptorSetsUnique(
+			descriptorSet = std::move(GetContext()->GetDevice().allocateDescriptorSetsUnique(
 					vk::DescriptorSetAllocateInfo(GetContext()->GetDescriptorPool(), 1, &descSetLayout.get())).front());
 		}
 		vk::DescriptorImageInfo imageInfo(*sampler, imageView, vk::ImageLayout::eShaderReadOnlyOptimal);
 		std::vector<vk::WriteDescriptorSet> writeDescriptorSets;
 		writeDescriptorSets.push_back(vk::WriteDescriptorSet(*descriptorSet, 0, 0, 1, vk::DescriptorType::eCombinedImageSampler, &imageInfo, nullptr, nullptr));
-		GetContext()->GetDevice()->updateDescriptorSets(writeDescriptorSets, nullptr);
+		GetContext()->GetDevice().updateDescriptorSets(writeDescriptorSets, nullptr);
 	}
 
 	vk::Pipeline GetPipeline()

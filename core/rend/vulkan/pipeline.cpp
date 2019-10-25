@@ -200,7 +200,7 @@ void PipelineManager::CreateModVolPipeline(ModVolMode mode)
 	if (modVolPipelines.empty())
 		modVolPipelines.resize((size_t)ModVolMode::Final + 1);
 	modVolPipelines[(size_t)mode] =
-			GetContext()->GetDevice()->createGraphicsPipelineUnique(GetContext()->GetPipelineCache(),
+			GetContext()->GetDevice().createGraphicsPipelineUnique(GetContext()->GetPipelineCache(),
 					graphicsPipelineCreateInfo);
 }
 
@@ -357,7 +357,7 @@ void PipelineManager::CreatePipeline(u32 listType, bool sortTriangles, const Pol
 	  renderPass                                  // renderPass
 	);
 
-	pipelines[hash(listType, sortTriangles, &pp)] = GetContext()->GetDevice()->createGraphicsPipelineUnique(GetContext()->GetPipelineCache(),
+	pipelines[hash(listType, sortTriangles, &pp)] = GetContext()->GetDevice().createGraphicsPipelineUnique(GetContext()->GetPipelineCache(),
 			graphicsPipelineCreateInfo);
 }
 
@@ -427,7 +427,7 @@ void QuadPipeline::CreatePipeline()
 	  renderPass                                  // renderPass
 	);
 
-	pipeline = GetContext()->GetDevice()->createGraphicsPipelineUnique(GetContext()->GetPipelineCache(), graphicsPipelineCreateInfo);
+	pipeline = GetContext()->GetDevice().createGraphicsPipelineUnique(GetContext()->GetPipelineCache(), graphicsPipelineCreateInfo);
 }
 
 void OSDPipeline::CreatePipeline()
@@ -512,5 +512,5 @@ void OSDPipeline::CreatePipeline()
 	  renderPass                                  // renderPass
 	);
 
-	pipeline = GetContext()->GetDevice()->createGraphicsPipelineUnique(GetContext()->GetPipelineCache(), graphicsPipelineCreateInfo);
+	pipeline = GetContext()->GetDevice().createGraphicsPipelineUnique(GetContext()->GetPipelineCache(), graphicsPipelineCreateInfo);
 }
