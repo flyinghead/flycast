@@ -24,27 +24,27 @@ struct IndexTrig
 	f32 z;
 };
 
-float min3(float v0,float v1,float v2)
+static float min3(float v0, float v1, float v2)
 {
 	return min(min(v0,v1),v2);
 }
 
-float max3(float v0,float v1,float v2)
+static float max3(float v0, float v1, float v2)
 {
 	return max(max(v0,v1),v2);
 }
 
-float minZ(Vertex* v, u32* mod)
+static float minZ(const Vertex *v, const u32 *mod)
 {
 	return min(min(v[mod[0]].z,v[mod[1]].z),v[mod[2]].z);
 }
 
-bool operator<(const IndexTrig &left, const IndexTrig &right)
+static bool operator<(const IndexTrig& left, const IndexTrig& right)
 {
 	return left.z<right.z;
 }
 
-bool operator<(const PolyParam &left, const PolyParam &right)
+static bool operator<(const PolyParam& left, const PolyParam& right)
 {
 /* put any condition you want to sort on here */
 	return left.zvZ<right.zvZ;
@@ -90,7 +90,7 @@ void SortPParams(int first, int count)
 	std::stable_sort(pvrrc.global_param_tr.head() + first, pvrrc.global_param_tr.head() + first + count);
 }
 
-static Vertex* vtx_sort_base;
+const static Vertex *vtx_sort_base;
 
 #if 0
 /*
@@ -187,12 +187,13 @@ bool Intersect(const IndexTrig &left, const IndexTrig &right)
 #endif
 
 //are two poly params the same?
-bool PP_EQ(PolyParam* pp0, PolyParam* pp1)
+static bool PP_EQ(const PolyParam *pp0, const PolyParam *pp1)
 {
-	return (pp0->pcw.full&PCW_DRAW_MASK)==(pp1->pcw.full&PCW_DRAW_MASK) && pp0->isp.full==pp1->isp.full && pp0->tcw.full==pp1->tcw.full && pp0->tsp.full==pp1->tsp.full && pp0->tileclip==pp1->tileclip;
+	return (pp0->pcw.full & PCW_DRAW_MASK) == (pp1->pcw.full & PCW_DRAW_MASK) && pp0->isp.full == pp1->isp.full
+			&& pp0->tcw.full == pp1->tcw.full && pp0->tsp.full == pp1->tsp.full && pp0->tileclip == pp1->tileclip;
 }
 
-void fill_id(u32* d, Vertex* v0, Vertex* v1, Vertex* v2,  Vertex* vb)
+static void fill_id(u32 *d, const Vertex *v0, const Vertex *v1, const Vertex *v2,  const Vertex *vb)
 {
 	d[0]=v0-vb;
 	d[1]=v1-vb;
@@ -208,14 +209,14 @@ void GenSorted(int first, int count, vector<SortTrigDrawParam>& pidx_sort, vecto
 	if (pvrrc.verts.used() == 0 || count <= 1)
 		return;
 
-	Vertex* vtx_base=pvrrc.verts.head();
-	u32* idx_base = pvrrc.idx.head();
+	const Vertex *vtx_base = pvrrc.verts.head();
+	const u32 *idx_base = pvrrc.idx.head();
 
-	PolyParam* pp_base = &pvrrc.global_param_tr.head()[first];
-	PolyParam* pp = pp_base;
-	PolyParam* pp_end = pp + count;
+	const PolyParam *pp_base = &pvrrc.global_param_tr.head()[first];
+	const PolyParam *pp = pp_base;
+	const PolyParam *pp_end = pp + count;
 
-	Vertex* vtx_arr=vtx_base+idx_base[pp->first];
+	const Vertex *vtx_arr = vtx_base + idx_base[pp->first];
 	vtx_sort_base=vtx_base;
 
 	static u32 vtx_cnt;
@@ -245,14 +246,14 @@ void GenSorted(int first, int count, vector<SortTrigDrawParam>& pidx_sort, vecto
 
 		if (pp->count>2)
 		{
-			u32* idx = idx_base + pp->first;
+			const u32 *idx = idx_base + pp->first;
 
-			Vertex* vtx=vtx_base+idx[0];
-			Vertex* vtx_end=vtx_base + idx[pp->count-1]-1;
+			const Vertex *vtx = vtx_base + idx[0];
+			const Vertex *vtx_end = vtx_base + idx[pp->count - 1] - 1;
 			u32 flip=0;
 			while(vtx!=vtx_end)
 			{
-				Vertex* v0, * v1, * v2, * v3, * v4, * v5;
+				const Vertex *v0, *v1, *v2, *v3, *v4, *v5;
 
 				if (flip)
 				{
@@ -452,4 +453,3 @@ void GenSorted(int first, int count, vector<SortTrigDrawParam>& pidx_sort, vecto
 
 	if (tess_gen) DEBUG_LOG(RENDERER, "Generated %.2fK Triangles !", tess_gen / 1000.0);
 }
-

@@ -23,7 +23,7 @@ void SortPParams(int first, int count);
 
 struct SortTrigDrawParam
 {
-	PolyParam* ppid;
+	const PolyParam* ppid;
 	u32 first;
 	u32 count;
 };
