@@ -26,3 +26,4 @@ const char *cfgGetGameId();
 bool cfgHasGameSpecificConfig();
 void cfgMakeGameSpecificConfig();
 void cfgDeleteGameSpecificConfig();
+void cfgSetAutoSave(bool autoSave);
