@@ -88,7 +88,7 @@ public:
 
 	static std::shared_ptr<EvdevGamepadDevice> GetControllerForPort(int port)
 	{
-		for (auto& pair : evdev_gamepads)
+		for (const auto& pair : evdev_gamepads)
 			if (pair.second->maple_port() == port)
 				return pair.second;
 		return NULL;
@@ -104,7 +104,7 @@ public:
 
 	static void PollDevices()
 	{
-		for (auto& pair : evdev_gamepads)
+		for (const auto& pair : evdev_gamepads)
 			pair.second->read_input();
 	}
 

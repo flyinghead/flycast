@@ -566,7 +566,7 @@ private:
 		}
 
 		// Attempt to eliminate them
-		for (auto& alias : aliases)
+		for (const auto& alias : aliases)
 		{
 			if (writeback_values.count(alias.first) > 0)
 				continue;

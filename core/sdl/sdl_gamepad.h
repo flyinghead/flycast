@@ -188,7 +188,6 @@ public:
 		if (!find_mapping())
 			input_mapper = new KbInputMapping();
 	}
-	virtual ~SDLKbGamepadDevice() {}
 };
 
 class MouseInputMapping : public InputMapping
@@ -215,7 +214,6 @@ public:
 		if (!find_mapping())
 			input_mapper = new MouseInputMapping();
 	}
-	virtual ~SDLMouseGamepadDevice() {}
 	bool gamepad_btn_input(u32 code, bool pressed) override
 	{
 		if (gui_is_open())

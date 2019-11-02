@@ -197,8 +197,8 @@ private:
 	s16 last_left_thumb_y = 0;
 	s16 last_right_thumb_x = 0;
 	s16 last_right_thumb_y = 0;
-	double vib_stop_time;
-	float vib_inclination;
+	double vib_stop_time = 0;
+	float vib_inclination = 0;
 	static std::vector<std::shared_ptr<XInputGamepadDevice>> xinput_gamepads;
 };
 
@@ -238,7 +238,6 @@ public:
 		if (!find_mapping())
 			input_mapper = new KbInputMapping();
 	}
-	virtual ~WinKbGamepadDevice() {}
 };
 
 class MouseInputMapping : public InputMapping
@@ -265,7 +264,7 @@ public:
 		if (!find_mapping())
 			input_mapper = new MouseInputMapping();
 	}
-	virtual ~WinMouseGamepadDevice() {}
+
 	bool gamepad_btn_input(u32 code, bool pressed) override
 	{
 		if (gui_is_open())

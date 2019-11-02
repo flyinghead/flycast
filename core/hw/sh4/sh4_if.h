@@ -276,7 +276,7 @@ struct Sh4Context
 			sr_status_t old_sr;
 			fpscr_t old_fpscr;
 
-			volatile u32 CpuRunning;
+			u32 CpuRunning;
 
 			int sh4_sched_next;
 			u32 interrupt_pend;

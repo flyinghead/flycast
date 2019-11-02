@@ -139,7 +139,6 @@ public:
 		//E7 Right S3
 		//E8-FF Reserved
 	}
-	virtual ~SDLKeyboardDevice() {}
 	virtual const char* name() override { return "SDL Keyboard"; }
 
 protected:

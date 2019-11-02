@@ -268,7 +268,7 @@ static u32 vmem32_map_mmu(u32 address, bool write)
 			const vector<vram_lock>& blocks = vram_blocks[start / VRAM_PROT_SEGMENT];
 
 			vramlist_lock.Lock();
-			for (int i = blocks.size() - 1; i >= 0; i--)
+			for (int i = (int)blocks.size() - 1; i >= 0; i--)
 			{
 				if (blocks[i].start < end && blocks[i].end >= start)
 				{
@@ -344,7 +344,7 @@ bool vmem32_handle_signal(void *fault_addr, bool write, u32 exception_pc)
 	if (!vmem32_inited || (u8*)fault_addr < virt_ram_base || (u8*)fault_addr >= virt_ram_base + VMEM32_SIZE)
 		return false;
 	//vmem32_page_faults++;
-	u32 guest_addr = (u8*)fault_addr - virt_ram_base;
+	u32 guest_addr = (u32)((u8*)fault_addr - virt_ram_base);
 	u32 rv = vmem32_map_address(guest_addr, write);
 	DEBUG_LOG(VMEM, "vmem32_handle_signal handled signal %s @ %p -> %08x rv=%d", write ? "W" : "R", fault_addr, guest_addr, rv);
 	if (rv == MMU_ERROR_NONE)

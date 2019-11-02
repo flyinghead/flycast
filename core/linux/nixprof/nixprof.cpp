@@ -204,7 +204,7 @@ static void elf_syms(FILE* out,const char* libfile)
 	}
 }
 
-static volatile bool prof_run;
+static bool prof_run;
 
 // This is not used:
 static int str_ends_with(const char * str, const char * suffix)

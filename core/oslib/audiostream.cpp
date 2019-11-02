@@ -10,8 +10,8 @@ SoundFrame RingBuffer[SAMPLE_COUNT];
 const u32 RingBufferByteSize = sizeof(RingBuffer);
 const u32 RingBufferSampleCount = SAMPLE_COUNT;
 
-volatile u32 WritePtr;  //last WRITEN sample
-volatile u32 ReadPtr;   //next sample to read
+u32 WritePtr;  //last WRITEN sample
+u32 ReadPtr;   //next sample to read
 
 u32 gen_samples=0;
 
