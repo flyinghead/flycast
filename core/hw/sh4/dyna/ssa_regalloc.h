@@ -28,7 +28,7 @@
 
 #define ssa_printf(...) DEBUG_LOG(DYNAREC, __VA_ARGS__)
 
-template<typename nreg_t, typename nregf_t, bool explode_spans = true>
+template<typename nreg_t, typename nregf_t, bool _64bits = true>
 class RegAlloc
 {
 public:
@@ -52,6 +52,7 @@ public:
 
 	void OpBegin(shil_opcode* op, int opid)
 	{
+		// TODO dup code with NeedsWriteBack
 		opnum = opid;
 		if (op->op == shop_ifb)
 		{
@@ -79,17 +80,17 @@ public:
 				FlushReg((Sh4RegType)i, true);
 		}
 		// Flush regs used by vector ops
-		if (op->rs1.is_reg() && op->rs1.count() > 1)
+		if (IsVector(op->rs1))
 		{
 			for (int i = 0; i < op->rs1.count(); i++)
 				FlushReg((Sh4RegType)(op->rs1._reg + i), false);
 		}
-		if (op->rs2.is_reg() && op->rs2.count() > 1)
+		if (IsVector(op->rs2))
 		{
 			for (int i = 0; i < op->rs2.count(); i++)
 				FlushReg((Sh4RegType)(op->rs2._reg + i), false);
 		}
-		if (op->rs3.is_reg() && op->rs3.count() > 1)
+		if (IsVector(op->rs3))
 		{
 			for (int i = 0; i < op->rs3.count(); i++)
 				FlushReg((Sh4RegType)(op->rs3._reg + i), false);
@@ -101,7 +102,7 @@ public:
 			AllocSourceReg(op->rs3);
 			// Hard flush vector ops destination regs
 			// Note that this is incorrect if a reg is both src (scalar) and dest (vec). However such an op doesn't exist.
-			if (op->rd.is_reg() && op->rd.count() > 1)
+			if (IsVector(op->rd))
 			{
 				for (int i = 0; i < op->rd.count(); i++)
 				{
@@ -109,7 +110,7 @@ public:
 					FlushReg((Sh4RegType)(op->rd._reg + i), true);
 				}
 			}
-			if (op->rd2.is_reg() && op->rd2.count() > 1)
+			if (IsVector(op->rd2))
 			{
 				for (int i = 0; i < op->rd2.count(); i++)
 				{
@@ -171,41 +172,26 @@ public:
 
 	bool IsAllocAny(const shil_param& prm)
 	{
-		if (prm.is_reg())
-		{
-			bool rv = IsAllocAny(prm._reg);
-			if (prm.count() != 1)
-			{
-				for (u32 i = 1;i < prm.count(); i++)
-					verify(IsAllocAny((Sh4RegType)(prm._reg + i)) == rv);
-			}
-			return rv;
-		}
-		else
-		{
-			return false;
-		}
+		return IsAllocg(prm) || IsAllocf(prm);
 	}
 
 	bool IsAllocg(const shil_param& prm)
 	{
-		if (prm.is_reg())
+		if (prm.is_reg() && IsAllocg(prm._reg))
 		{
 			verify(prm.count() == 1);
-			return IsAllocg(prm._reg);
+			return true;
 		}
-		else
-		{
-			return false;
-		}
+		return false;
 	}
 
 	bool IsAllocf(const shil_param& prm)
 	{
 		if (prm.is_reg())
 		{
-			verify(prm.count() == 1);
-			return IsAllocf(prm._reg);
+			if (!_64bits && prm.is_r64f())
+				return false;
+			return IsAllocf(prm._reg, prm.count());
 		}
 		else
 		{
@@ -223,7 +209,10 @@ public:
 	nregf_t mapf(const shil_param& prm)
 	{
 		verify(IsAllocf(prm));
-		verify(prm.count() == 1);
+		if (_64bits)
+			verify(prm.count() <= 2);
+		else
+			verify(prm.count() == 1);
 		return mapf(prm._reg);
 	}
 
@@ -257,15 +246,18 @@ public:
 	virtual void Preload(u32 reg, nreg_t nreg) = 0;
 	virtual void Writeback(u32 reg, nreg_t nreg) = 0;
 
-	virtual void Preload_FPU(u32 reg, nregf_t nreg) = 0;
-	virtual void Writeback_FPU(u32 reg, nregf_t nreg) = 0;
+	virtual void Preload_FPU(u32 reg, nregf_t nreg, bool _64bit) = 0;
+	virtual void Writeback_FPU(u32 reg, nregf_t nreg, bool _64bit) = 0;
+	// merge reg1 (least significant 32 bits) and reg2 (most significant 32 bits) into reg1 (64-bit result)
+	virtual void Merge_FPU(nregf_t reg1, nregf_t reg2) { die("not implemented"); }
 
 private:
 	struct reg_alloc {
 		u32 host_reg;
-		u16 version;
+		u16 version[2];
 		bool write_back;
 		bool dirty;
+		bool _64bit;
 	};
 
 	bool IsFloat(Sh4RegType reg)
@@ -285,11 +277,15 @@ private:
 		return (nregf_t)reg_alloced[reg].host_reg;
 	}
 
-	bool IsAllocf(Sh4RegType reg)
+	bool IsAllocf(Sh4RegType reg, int size)
 	{
 		if (!IsFloat(reg))
 			return false;
-		return reg_alloced.find(reg) != reg_alloced.end();
+		auto it = reg_alloced.find(reg);
+		if (it == reg_alloced.end())
+			return false;
+		verify(it->second._64bit == (size == 2));
+		return true;
 	}
 
 	bool IsAllocg(Sh4RegType reg)
@@ -299,9 +295,14 @@ private:
 		return reg_alloced.find(reg) != reg_alloced.end();
 	}
 
-	bool IsAllocAny(Sh4RegType reg)
+	bool IsVector(const shil_param& param)
 	{
-		return IsAllocg(reg) || IsAllocf(reg);
+		return param.is_reg() && param.count() > (_64bits ? 2 : 1);
+	}
+
+	bool ContainsReg(const shil_param& param, Sh4RegType reg)
+	{
+		return param.is_reg() && reg >= param._reg && reg < (Sh4RegType)(param._reg + param.count());
 	}
 
 	void WriteBackReg(Sh4RegType reg_num, struct reg_alloc& reg_alloc)
@@ -310,9 +311,9 @@ private:
 		{
 			if (!fast_forwarding)
 			{
-				ssa_printf("WB %s.%d <- %cx", name_reg(reg_num).c_str(), reg_alloc.version, 'a' + reg_alloc.host_reg);
+				ssa_printf("WB %s.%d <- %cx", name_reg(reg_num).c_str(), reg_alloc.version[0], 'a' + reg_alloc.host_reg);
 				if (IsFloat(reg_num))
-					Writeback_FPU(reg_num, (nregf_t)reg_alloc.host_reg);
+					Writeback_FPU(reg_num, (nregf_t)reg_alloc.host_reg, reg_alloc._64bit);
 				else
 					Writeback(reg_num, (nreg_t)reg_alloc.host_reg);
 			}
@@ -320,12 +321,14 @@ private:
 			reg_alloc.dirty = false;
 		}
 	}
-
-	void FlushReg(Sh4RegType reg_num, bool hard)
+protected:
+	void FlushReg(Sh4RegType reg_num, bool hard, bool write_if_dirty = false)
 	{
 		auto reg = reg_alloced.find(reg_num);
 		if (reg != reg_alloced.end())
 		{
+			if (write_if_dirty && reg->second.dirty)
+				reg->second.write_back = true;
 			WriteBackReg(reg->first, reg->second);
 			if (hard)
 			{
@@ -339,6 +342,7 @@ private:
 		}
 	}
 
+private:
 	void FlushAllRegs(bool hard)
 	{
 		if (hard)
@@ -355,8 +359,11 @@ private:
 
 	void AllocSourceReg(const shil_param& param)
 	{
-		if (param.is_reg() && param.count() == 1)	// TODO EXPLODE_SPANS?
+		if (param.is_reg()
+				&& ((_64bits && param.count() <= 2)	|| (!_64bits && param.count() == 1)))
 		{
+			Handle64bitRegisters(param, true);
+
 			auto it = reg_alloced.find(param._reg);
 			if (it == reg_alloced.end())
 			{
@@ -381,16 +388,24 @@ private:
 					host_reg = host_fregs.back();
 					host_fregs.pop_back();
 				}
-				reg_alloced[param._reg] = { host_reg, param.version[0], false, false };
+				if (param.is_r64f())
+					reg_alloced[param._reg] = { host_reg, { param.version[0], param.version[1] }, false, false, true };
+				else
+					reg_alloced[param._reg] = { host_reg, { param.version[0] }, false, false, false };
 				if (!fast_forwarding)
 				{
 					ssa_printf("PL %s.%d -> %cx", name_reg(param._reg).c_str(), param.version[0], 'a' + host_reg);
 					if (IsFloat(param._reg))
-						Preload_FPU(param._reg, (nregf_t)host_reg);
+						Preload_FPU(param._reg, (nregf_t)host_reg, param.count() == 2);
 					else
 						Preload(param._reg, (nreg_t)host_reg);
 				}
 			}
+			else
+			{
+				verify(it->second._64bit == (param.count() == 2));
+			}
+			verify(param.count() == 1 || reg_alloced.find((Sh4RegType)(param._reg + 1)) == reg_alloced.end());
 		}
 	}
 
@@ -400,14 +415,29 @@ private:
 		{
 			shil_opcode* op = &block->oplist[i];
 			// if a subsequent op needs all or some regs flushed to mem
+			switch (op->op)
+			{
 			// TODO we could look at the ifb op to optimize what to flush
-			if (op->op == shop_ifb || (mmu_enabled() && (op->op == shop_readm || op->op == shop_writem || op->op == shop_pref)))
+			case shop_ifb:
 				return true;
-			if (op->op == shop_sync_sr && (/*reg == reg_sr_T ||*/ reg == reg_sr_status || reg == reg_old_sr_status || (reg >= reg_r0 && reg <= reg_r7)
-					|| (reg >= reg_r0_Bank && reg <= reg_r7_Bank)))
-				return true;
-			if (op->op == shop_sync_fpscr && (reg == reg_fpscr || reg == reg_old_fpscr || (reg >= reg_fr_0 && reg <= reg_xf_15)))
-				return true;
+			case shop_readm:
+			case shop_writem:
+			case shop_pref:
+				if (mmu_enabled())
+					return true;
+				break;
+			case shop_sync_sr:
+				if (/*reg == reg_sr_T ||*/ reg == reg_sr_status || reg == reg_old_sr_status || (reg >= reg_r0 && reg <= reg_r7)
+						|| (reg >= reg_r0_Bank && reg <= reg_r7_Bank))
+					return true;
+				break;
+			case shop_sync_fpscr:
+				if (reg == reg_fpscr || reg == reg_old_fpscr || (reg >= reg_fr_0 && reg <= reg_xf_15))
+					return true;
+				break;
+			default:
+				break;
+			}
 			// if reg is used by a subsequent vector op that doesn't use reg allocation
 			if (UsesReg(op, reg, version, true))
 				return true;
@@ -423,8 +453,11 @@ private:
 
 	void AllocDestReg(const shil_param& param)
 	{
-		if (param.is_reg() && param.count() == 1)	// TODO EXPLODE_SPANS?
+		if (param.is_reg()
+				&& ((_64bits && param.count() <= 2)	|| (!_64bits && param.count() == 1)))
 		{
+			Handle64bitRegisters(param, false);
+
 			auto it = reg_alloced.find(param._reg);
 			if (it == reg_alloced.end())
 			{
@@ -449,7 +482,21 @@ private:
 					host_reg = host_fregs.back();
 					host_fregs.pop_back();
 				}
-				reg_alloced[param._reg] = { host_reg, param.version[0], NeedsWriteBack(param._reg, param.version[0]), true };
+				if (param.is_r64f())
+					reg_alloced[param._reg] = {
+							host_reg,
+							{ param.version[0], param.version[1] },
+							NeedsWriteBack(param._reg, param.version[0])
+								|| NeedsWriteBack((Sh4RegType)(param._reg + 1), param.version[1]),
+							true,
+							true };
+				else
+					reg_alloced[param._reg] = {
+							host_reg,
+							{ param.version[0] },
+							NeedsWriteBack(param._reg, param.version[0]),
+							true,
+							false };
 				ssa_printf("   %s.%d -> %cx %s", name_reg(param._reg).c_str(), param.version[0], 'a' + host_reg, reg_alloced[param._reg].write_back ? "(wb)" : "");
 			}
 			else
@@ -458,9 +505,17 @@ private:
 				verify(!reg.write_back);
 				reg.write_back = NeedsWriteBack(param._reg, param.version[0]);
 				reg.dirty = true;
-				reg.version = param.version[0];
+				reg.version[0] = param.version[0];
+				verify(reg._64bit == param.is_r64f());
+				if (param.is_r64f())
+				{
+					reg.version[1] = param.version[1];
+					// TODO this is handled by Handle64BitsRegisters()
+					reg.write_back = reg.write_back || NeedsWriteBack((Sh4RegType)(param._reg + 1), param.version[1]);
+				}
 			}
 			verify(reg_alloced[param._reg].dirty);
+			verify(param.count() == 1 || reg_alloced.find((Sh4RegType)(param._reg + 1)) == reg_alloced.end());
 		}
 	}
 
@@ -495,7 +550,8 @@ private:
 			{
 				op = &block->oplist[i];
 				// Vector ops don't use reg alloc
-				if (UsesReg(op, reg.first, reg.second.version, false))
+				if (UsesReg(op, reg.first, reg.second.version[0], false)
+						|| (reg.second._64bit && UsesReg(op, (Sh4RegType)(reg.first + 1), reg.second.version[1], false)))
 				{
 					first_use = i;
 					break;
@@ -531,8 +587,9 @@ private:
 			// It's possible that the same host reg is allocated to a source operand
 			// and to the (future) dest operand. In this case we want to keep both mappings
 			// until the current op is done.
-			WriteBackReg(spilled_reg, reg_alloced[spilled_reg]);
-			u32 host_reg = reg_alloced[spilled_reg].host_reg;
+			reg_alloc& alloc = reg_alloced[spilled_reg];
+			WriteBackReg(spilled_reg, alloc);
+			u32 host_reg = alloc.host_reg;
 			if (IsFloat(spilled_reg))
 				host_fregs.push_front((nregf_t)host_reg);
 			else
@@ -541,24 +598,19 @@ private:
 		}
 	}
 
-	bool IsVectorOp(shil_opcode* op)
-	{
-		return op->rs1.count() > 1 || op->rs2.count() > 1 || op->rs3.count() > 1 || op->rd.count() > 1 || op->rd2.count() > 1;
-	}
-
 	bool UsesReg(shil_opcode* op, Sh4RegType reg, u32 version, bool vector)
 	{
-		if (op->rs1.is_reg() && reg >= op->rs1._reg && reg < (Sh4RegType)(op->rs1._reg + op->rs1.count())
+		if (ContainsReg(op->rs1, reg)
 				&& version == op->rs1.version[reg - op->rs1._reg]
-				&& vector == (op->rs1.count() > 1))
+				&& vector == IsVector(op->rs1))
 			return true;
-		if (op->rs2.is_reg() && reg >= op->rs2._reg && reg < (Sh4RegType)(op->rs2._reg + op->rs2.count())
+		if (ContainsReg(op->rs2, reg)
 				&& version == op->rs2.version[reg - op->rs2._reg]
-				&& vector == (op->rs2.count() > 1))
+				&& vector == IsVector(op->rs2))
 			return true;
-		if (op->rs3.is_reg() && reg >= op->rs3._reg && reg < (Sh4RegType)(op->rs3._reg + op->rs3.count())
+		if (ContainsReg(op->rs3, reg)
 				&& version == op->rs3.version[reg - op->rs3._reg]
-				&& vector == (op->rs3.count() > 1))
+				&& vector == IsVector(op->rs3))
 			return true;
 
 		return false;
@@ -566,14 +618,55 @@ private:
 
 	bool DefsReg(shil_opcode* op, Sh4RegType reg, bool vector)
 	{
-		if (op->rd.is_reg() && reg >= op->rd._reg && reg < (Sh4RegType)(op->rd._reg + op->rd.count())
-				&& vector == (op->rd.count() > 1))
+		if (ContainsReg(op->rd, reg) && vector == IsVector(op->rd))
 			return true;
-		if (op->rd2.is_reg() && reg >= op->rd2._reg && reg < (Sh4RegType)(op->rd2._reg + op->rd2.count())
-				&& vector == (op->rd2.count() > 1))
+		if (ContainsReg(op->rd2, reg) && vector == IsVector(op->rd2))
 			return true;
 		return false;
 	}
+
+	void Handle64bitRegisters(const shil_param& param, bool source)
+	{
+		if (!(_64bits && (param.is_r32f() || param.is_r64f())))
+			return;
+		auto it = reg_alloced.find(param._reg);
+		if (it != reg_alloced.end() && it->second._64bit != param.is_r64f())
+		{
+			if (param.is_r64f())
+			{
+				// Try to merge existing halves
+				auto it2 = reg_alloced.find((Sh4RegType)(param._reg + 1));
+				if (it2 != reg_alloced.end())
+				{
+					if (source)
+						it->second.dirty = it->second.dirty || it2->second.dirty;
+					else
+						it->second.dirty = false;
+					it->second._64bit = true;
+					nregf_t host_reg2 = (nregf_t)it2->second.host_reg;
+					reg_alloced.erase(it2);
+					Merge_FPU((nregf_t)it->second.host_reg, host_reg2);
+					return;
+				}
+			}
+			// Write back the 64-bit register even if used as destination because the other half needs to be saved
+			FlushReg(it->first, true, source || it->second._64bit);
+		}
+		if (param.is_r64f())
+		{
+			auto it2 = reg_alloced.find((Sh4RegType)(param._reg + 1));
+			if (it2 != reg_alloced.end())
+				FlushReg(it2->first, true, source);
+		}
+		else if (param._reg & 1)
+		{
+			auto it2 = reg_alloced.find((Sh4RegType)(param._reg - 1));
+			if (it2 != reg_alloced.end() && it2->second._64bit)
+				// Write back even when used as destination because the other half needs to be saved
+				FlushReg(it2->first, true, true);
+		}
+	}
+
 #if 0
 	// Currently unused. Doesn't seem to help much
 	bool DefsReg(int from, int to, Sh4RegType reg)

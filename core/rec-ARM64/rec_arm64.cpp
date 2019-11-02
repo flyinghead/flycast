@@ -22,13 +22,10 @@
 #if FEAT_SHREC == DYNAREC_JIT
 
 #include <unistd.h>
-#include <map>
 #include <setjmp.h>
 
 #include "deps/vixl/aarch64/macro-assembler-aarch64.h"
-using namespace vixl::aarch64;
 
-//#define EXPLODE_SPANS
 //#define NO_BLOCK_LINKING
 
 #include "hw/sh4/sh4_opcode_list.h"
@@ -41,6 +38,8 @@ using namespace vixl::aarch64;
 #include "hw/sh4/sh4_rom.h"
 #include "hw/mem/vmem32.h"
 #include "arm64_regalloc.h"
+
+using namespace vixl::aarch64;
 
 #undef do_sqw_nommu
 
@@ -483,13 +482,15 @@ public:
 				verify(op.rd.is_reg());
 				verify(op.rs1.is_reg() || op.rs1.is_imm());
 
-#ifdef EXPLODE_SPANS
-				Fmov(regalloc.MapVRegister(op.rd, 0), regalloc.MapVRegister(op.rs1, 0));
-				Fmov(regalloc.MapVRegister(op.rd, 1), regalloc.MapVRegister(op.rs1, 1));
-#else
-				shil_param_to_host_reg(op.rs1, x15);
-				host_reg_to_shil_param(op.rd, x15);
-#endif
+				if (op.rs1.is_reg() && regalloc.IsAllocf(op.rs1))
+				{
+					Fmov(regalloc.MapVRegister(op.rd), regalloc.MapVRegister(op.rs1));
+				}
+				else
+				{
+					shil_param_to_host_reg(op.rs1, x15);
+					host_reg_to_shil_param(op.rd, x15);
+				}
 				break;
 
 			case shop_readm:
@@ -935,7 +936,7 @@ public:
 
 			case shop_xtrct:
 				{
-					const Register rd = regalloc.MapRegister(op.rd);
+					const Register& rd = regalloc.MapRegister(op.rd);
 					Lsr(rd, regalloc.MapRegister(op.rs1), 16);
 					Lsl(w0, regalloc.MapRegister(op.rs2), 16);
 					Orr(rd, rd, w0);
@@ -990,14 +991,17 @@ public:
 				if (op.rs1.is_reg())
 					Add(x1, x1, Operand(regalloc.MapRegister(op.rs1), UXTH, 3));
 				else
+				{
+					// TODO get rid of this Add if rs1 is imm. Use MemOperand with offset when !imm
 					Add(x1, x1, Operand(op.rs1.imm_value() << 3));
-#ifdef EXPLODE_SPANS
-				Ldr(regalloc.MapVRegister(op.rd, 0), MemOperand(x1, 4, PostIndex));
-				Ldr(regalloc.MapVRegister(op.rd, 1), MemOperand(x1));
-#else
-				Ldr(x2, MemOperand(x1));
-				Str(x2, sh4_context_mem_operand(op.rd.reg_ptr()));
-#endif
+				}
+				if (regalloc.IsAllocf(op.rd))
+					Ldr(regalloc.MapVRegister(op.rd), MemOperand(x1));
+				else
+				{
+					Ldr(x2, MemOperand(x1));
+					Str(x2, sh4_context_mem_operand(op.rd.reg_ptr()));
+				}
 				break;
 
 			case shop_fipr:
@@ -1609,19 +1613,7 @@ private:
 		if (!optimise || !GenReadMemoryFast(op, opid))
 			GenReadMemorySlow(size);
 
-		if (size < 8)
-			host_reg_to_shil_param(op.rd, w0);
-		else
-		{
-#ifdef EXPLODE_SPANS
-			verify(op.rd.count() == 2 && regalloc.IsAllocf(op.rd, 0) && regalloc.IsAllocf(op.rd, 1));
-			Fmov(regalloc.MapVRegister(op.rd, 0), w0);
-			Lsr(x0, x0, 32);
-			Fmov(regalloc.MapVRegister(op.rd, 1), w0);
-#else
-			Str(x0, sh4_context_mem_operand(op.rd.reg_ptr()));
-#endif
-		}
+		host_reg_to_shil_param(op.rd, x0);
 	}
 
 	bool GenReadMemoryImmediate(const shil_opcode& op)
@@ -1633,7 +1625,8 @@ private:
 		u32 addr = op.rs1._imm;
 		if (mmu_enabled())
 		{
-			if ((addr >> 12) != (block->vaddr >> 12))
+			if ((addr >> 12) < (block->vaddr >> 12)
+					|| ((addr + size - 1) >> 12) > (block->vaddr + block->sh4_code_size - 1) >> 12)
 				// When full mmu is on, only consider addresses in the same 4k page
 				return false;
 			u32 paddr;
@@ -1647,8 +1640,10 @@ private:
 				rv = mmu_data_translation<MMU_TT_DREAD, u16>(addr, paddr);
 				break;
 			case 4:
-			case 8:
 				rv = mmu_data_translation<MMU_TT_DREAD, u32>(addr, paddr);
+				break;
+			case 8:
+				rv = mmu_data_translation<MMU_TT_DREAD, u64>(addr, paddr);
 				break;
 			default:
 				die("Invalid immediate size");
@@ -1659,7 +1654,7 @@ private:
 			addr = paddr;
 		}
 		bool isram = false;
-		void* ptr = _vmem_read_const(addr, isram, size > 4 ? 4 : size);
+		void* ptr = _vmem_read_const(addr, isram, size);
 
 		if (isram)
 		{
@@ -1681,6 +1676,10 @@ private:
 						Ldr(regalloc.MapVRegister(op.rd), MemOperand(x1));
 					else
 						Ldr(regalloc.MapRegister(op.rd), MemOperand(x1));
+					break;
+
+				case 8:
+					Ldr(regalloc.MapVRegister(op.rd), MemOperand(x1));
 					break;
 
 				default:
@@ -1829,17 +1828,8 @@ private:
 		if (size != 8)
 			shil_param_to_host_reg(op.rs2, *call_regs[1]);
 		else
-		{
-#ifdef EXPLODE_SPANS
-			verify(op.rs2.count() == 2 && regalloc.IsAllocf(op.rs2, 0) && regalloc.IsAllocf(op.rs2, 1));
-			Fmov(*call_regs[1], regalloc.MapVRegister(op.rs2, 1));
-			Lsl(*call_regs64[1], *call_regs64[1], 32);
-			Fmov(w2, regalloc.MapVRegister(op.rs2, 0));
-			Orr(*call_regs64[1], *call_regs64[1], x2);
-#else
 			shil_param_to_host_reg(op.rs2, *call_regs64[1]);
-#endif
-		}
+
 		if (optimise && GenWriteMemoryFast(op, opid))
 			return;
 
@@ -1855,7 +1845,8 @@ private:
 		u32 addr = op.rs1._imm;
 		if (mmu_enabled())
 		{
-			if ((addr >> 12) != (block->vaddr >> 12) && ((addr >> 12) != ((block->vaddr + block->guest_opcodes * 2 - 1) >> 12)))
+			if ((addr >> 12) < (block->vaddr >> 12)
+					|| ((addr + size - 1) >> 12) > (block->vaddr + block->sh4_code_size - 1) >> 12)
 				// When full mmu is on, only consider addresses in the same 4k page
 				return false;
 			u32 paddr;
@@ -1869,8 +1860,10 @@ private:
 				rv = mmu_data_translation<MMU_TT_DWRITE, u16>(addr, paddr);
 				break;
 			case 4:
-			case 8:
 				rv = mmu_data_translation<MMU_TT_DWRITE, u32>(addr, paddr);
+				break;
+			case 8:
+				rv = mmu_data_translation<MMU_TT_DWRITE, u64>(addr, paddr);
 				break;
 			default:
 				die("Invalid immediate size");
@@ -1881,28 +1874,34 @@ private:
 			addr = paddr;
 		}
 		bool isram = false;
-		void* ptr = _vmem_write_const(addr, isram, size > 4 ? 4 : size);
+		void* ptr = _vmem_write_const(addr, isram, size);
 
 		Register reg2;
-		if (size != 8)
+		if (op.rs2.is_imm())
 		{
-			if (op.rs2.is_imm())
+			Mov(w1, op.rs2._imm);
+			reg2 = w1;
+		}
+		else if (regalloc.IsAllocg(op.rs2))
+		{
+			reg2 = regalloc.MapRegister(op.rs2);
+		}
+		else if (regalloc.IsAllocf(op.rs2))
+		{
+			if (op.rs2.is_r64f())
 			{
-				Mov(w1, op.rs2._imm);
-				reg2 = w1;
+				Fmov(x1, VRegister::GetDRegFromCode(regalloc.MapVRegister(op.rs2).GetCode()));
+				reg2 = x1;
 			}
-			else if (regalloc.IsAllocg(op.rs2))
-			{
-				reg2 = regalloc.MapRegister(op.rs2);
-			}
-			else if (regalloc.IsAllocf(op.rs2))
+			else
 			{
 				Fmov(w1, regalloc.MapVRegister(op.rs2));
 				reg2 = w1;
 			}
-			else
-				die("Invalid rs2 param");
 		}
+		else
+			die("Invalid rs2 param");
+
 		if (isram)
 		{
 			Ldr(x0, reinterpret_cast<uintptr_t>(ptr));
@@ -1921,14 +1920,7 @@ private:
 				break;
 
 			case 8:
-#ifdef EXPLODE_SPANS
-				verify(op.rs2.count() == 2 && regalloc.IsAllocf(op.rs2, 0) && regalloc.IsAllocf(op.rs2, 1));
-				Str(regalloc.MapVRegister(op.rs2, 0),  MemOperand(x1));
-				Str(regalloc.MapVRegister(op.rs2, 1),  MemOperand(x1, 4));
-#else
-				shil_param_to_host_reg(op.rs2, x1);
-				Str(x1, MemOperand(x0));
-#endif
+				Str(reg2, MemOperand(x0));
 				break;
 
 			default:
@@ -2117,9 +2109,8 @@ private:
 		else if (param.is_reg())
 		{
 			if (param.is_r64f())
-				Ldr(reg, sh4_context_mem_operand(param.reg_ptr()));
-			else if (param.is_r32f())
 			{
+				verify(reg.Is64Bits());
 				if (regalloc.IsAllocf(param))
 					Fmov(reg, regalloc.MapVRegister(param));
 				else
@@ -2127,10 +2118,21 @@ private:
 			}
 			else
 			{
-				if (regalloc.IsAllocg(param))
-					Mov(reg, regalloc.MapRegister(param));
+				const Register& reg32 = reg.Is32Bits() ? (const Register&)reg : Register::GetWRegFromCode(reg.GetCode());
+				if (param.is_r32f())
+				{
+					if (regalloc.IsAllocf(param))
+						Fmov(reg32, regalloc.MapVRegister(param));
+					else
+						Ldr(reg32, sh4_context_mem_operand(param.reg_ptr()));
+				}
 				else
-					Ldr(reg, sh4_context_mem_operand(param.reg_ptr()));
+				{
+					if (regalloc.IsAllocg(param))
+						Mov(reg32, regalloc.MapRegister(param));
+					else
+						Ldr(reg32, sh4_context_mem_operand(param.reg_ptr()));
+				}
 			}
 		}
 		else
@@ -2141,23 +2143,46 @@ private:
 
 	void host_reg_to_shil_param(const shil_param& param, const CPURegister& reg)
 	{
-		if (reg.Is64Bits())
+		if (param.is_r64f())
 		{
-			Str((const Register&)reg, sh4_context_mem_operand(param.reg_ptr()));
+			verify(reg.Is64Bits());
+			if (regalloc.IsAllocf(param))
+			{
+				if (reg.IsVRegister())
+					Fmov(regalloc.MapVRegister(param), (const VRegister&)reg);
+				else
+					Fmov(regalloc.MapVRegister(param), (const Register&)reg);
+			}
+			else
+			{
+				Str((const Register&)reg, sh4_context_mem_operand(param.reg_ptr()));
+			}
 		}
 		else if (regalloc.IsAllocg(param))
 		{
 			if (reg.IsRegister())
-				Mov(regalloc.MapRegister(param), (const Register&)reg);
+			{
+				const Register& reg32 = reg.Is32Bits() ? (const Register&)reg : Register::GetWRegFromCode(reg.GetCode());
+				Mov(regalloc.MapRegister(param), reg32);
+			}
 			else
-				Fmov(regalloc.MapRegister(param), (const VRegister&)reg);
+			{
+				const VRegister& reg32 = reg.Is32Bits() ? (const VRegister&)reg : VRegister::GetSRegFromCode(reg.GetCode());
+				Fmov(regalloc.MapRegister(param), reg32);
+			}
 		}
 		else if (regalloc.IsAllocf(param))
 		{
 			if (reg.IsVRegister())
-				Fmov(regalloc.MapVRegister(param), (const VRegister&)reg);
+			{
+				const VRegister& reg32 = reg.Is32Bits() ? (const VRegister&)reg : VRegister::GetSRegFromCode(reg.GetCode());
+				Fmov(regalloc.MapVRegister(param), reg32);
+			}
 			else
-				Fmov(regalloc.MapVRegister(param), (const Register&)reg);
+			{
+				const Register& reg32 = reg.Is32Bits() ? (const Register&)reg : Register::GetWRegFromCode(reg.GetCode());
+				Fmov(regalloc.MapVRegister(param), reg32);
+			}
 		}
 		else
 		{
@@ -2334,13 +2359,17 @@ void Arm64RegAlloc::Writeback(u32 reg, eReg nreg)
 {
 	assembler->Str(Register(nreg, 32), assembler->sh4_context_mem_operand(GetRegPtr(reg)));
 }
-void Arm64RegAlloc::Preload_FPU(u32 reg, eFReg nreg)
+void Arm64RegAlloc::Preload_FPU(u32 reg, eFReg nreg, bool _64bit)
 {
-	assembler->Ldr(VRegister(nreg, 32), assembler->sh4_context_mem_operand(GetRegPtr(reg)));
+	assembler->Ldr(VRegister(nreg, _64bit ? 64 : 32), assembler->sh4_context_mem_operand(GetRegPtr(reg)));
 }
-void Arm64RegAlloc::Writeback_FPU(u32 reg, eFReg nreg)
+void Arm64RegAlloc::Writeback_FPU(u32 reg, eFReg nreg, bool _64bit)
 {
-	assembler->Str(VRegister(nreg, 32), assembler->sh4_context_mem_operand(GetRegPtr(reg)));
+	assembler->Str(VRegister(nreg, _64bit ? 64 : 32), assembler->sh4_context_mem_operand(GetRegPtr(reg)));
+}
+void Arm64RegAlloc::Merge_FPU(eFReg reg1, eFReg reg2)
+{
+	assembler->Sli(VRegister(reg1, 64), VRegister(reg2, 64), 32);
 }
 
 

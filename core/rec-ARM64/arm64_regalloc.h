@@ -16,15 +16,8 @@
     You should have received a copy of the GNU General Public License
     along with reicast.  If not, see <https://www.gnu.org/licenses/>.
  */
-
-#ifndef CORE_REC_ARM64_ARM64_REGALLOC_H_
-#define CORE_REC_ARM64_ARM64_REGALLOC_H_
-
-#ifdef OLD_REGALLOC
-#include "hw/sh4/dyna/regalloc.h"
-#else
+#pragma once
 #include "hw/sh4/dyna/ssa_regalloc.h"
-#endif
 #include "deps/vixl/aarch64/macro-assembler-aarch64.h"
 using namespace vixl::aarch64;
 
@@ -42,11 +35,7 @@ static eFReg alloc_fregs[] = { S8, S9, S10, S11, S12, S13, S14, S15, (eFReg)-1 }
 
 class Arm64Assembler;
 
-struct Arm64RegAlloc : RegAlloc<eReg, eFReg
-#ifndef EXPLODE_SPANS
-											, false
-#endif
-													>
+struct Arm64RegAlloc : RegAlloc<eReg, eFReg, true>
 {
 	Arm64RegAlloc(Arm64Assembler *assembler) : assembler(assembler) {}
 
@@ -57,8 +46,9 @@ struct Arm64RegAlloc : RegAlloc<eReg, eFReg
 
 	virtual void Preload(u32 reg, eReg nreg) override;
 	virtual void Writeback(u32 reg, eReg nreg) override;
-	virtual void Preload_FPU(u32 reg, eFReg nreg) override;
-	virtual void Writeback_FPU(u32 reg, eFReg nreg) override;
+	virtual void Preload_FPU(u32 reg, eFReg nreg, bool _64bit) override;
+	virtual void Writeback_FPU(u32 reg, eFReg nreg, bool _64bit) override;
+	virtual void Merge_FPU(eFReg reg1, eFReg reg2) override;
 
 	const Register& MapRegister(const shil_param& param)
 	{
@@ -70,21 +60,15 @@ struct Arm64RegAlloc : RegAlloc<eReg, eFReg
 
 	const VRegister& MapVRegister(const shil_param& param, u32 index = 0)
 	{
-#ifdef OLD_REGALLOC
-		eFReg ereg = mapfv(param, index);
-#else
-#ifdef EXPLODE_SPANS
-#error EXPLODE_SPANS not supported with ssa regalloc
-#endif
 		verify(index == 0);
 		eFReg ereg = mapf(param);
-#endif
 		if (ereg == (eFReg)-1)
 			die("VRegister not allocated");
-		return VRegister::GetSRegFromCode(ereg);
+		if (param.is_r64f())
+			return VRegister::GetDRegFromCode(ereg);
+		else
+			return VRegister::GetSRegFromCode(ereg);
 	}
 
 	Arm64Assembler *assembler;
 };
-
-#endif /* CORE_REC_ARM64_ARM64_REGALLOC_H_ */

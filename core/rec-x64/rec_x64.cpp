@@ -3,7 +3,6 @@
 #if FEAT_SHREC == DYNAREC_JIT && HOST_CPU == CPU_X64
 #include <setjmp.h>
 
-//#define EXPLODE_SPANS
 //#define PROFILING
 //#define CANONICAL_TEST
 
@@ -115,7 +114,7 @@ void ngen_mainloop(void* v_cntx)
 #endif
 			"pushq %rbx						\n\t"
 WIN32_ONLY( ".seh_pushreg %rbx				\n\t")
-#ifndef __MACH__	// rbp is pushed in the standard function prologue
+#if !defined(__MACH__) && !defined(NO_OMIT_FRAME_POINTER)	// rbp is pushed in the standard function prologue
 			"pushq %rbp                     \n\t"
 #endif
 #ifdef _WIN32
@@ -195,7 +194,7 @@ WIN32_ONLY( ".seh_pushreg %r14              \n\t")
 			"popq %rsi                      \n\t"
 			"popq %rdi                      \n\t"
 #endif
-#ifndef __MACH__
+#if !defined(__MACH__) && !defined(NO_OMIT_FRAME_POINTER)
 			"popq %rbp                      \n\t"
 #endif
 			"popq %rbx                      \n\t"
@@ -389,6 +388,7 @@ public:
 			shil_opcode& op  = block->oplist[current_opid];
 
 			regalloc.OpBegin(&op, current_opid);
+			flushXmmRegisters = false;
 
 			switch (op.op)
 			{
@@ -458,15 +458,20 @@ public:
 				verify(op.rd.is_r64());
 				verify(op.rs1.is_r64());
 
-#ifdef EXPLODE_SPANS
-				movss(regalloc.MapXRegister(op.rd, 0), regalloc.MapXRegister(op.rs1, 0));
-				movss(regalloc.MapXRegister(op.rd, 1), regalloc.MapXRegister(op.rs1, 1));
-#else
-				mov(rax, (uintptr_t)op.rs1.reg_ptr());
-				mov(rax, qword[rax]);
-				mov(rcx, (uintptr_t)op.rd.reg_ptr());
-				mov(qword[rcx], rax);
-#endif
+				if (regalloc.IsAllocf(op.rd))
+				{
+					const Xbyak::Xmm& destReg = regalloc.MapXRegister(op.rd);
+					const Xbyak::Xmm& srcReg = regalloc.MapXRegister(op.rs1);
+					if (destReg != srcReg)
+						movq(destReg, srcReg);
+				}
+				else
+				{
+					mov(rax, (uintptr_t)op.rs1.reg_ptr());
+					mov(rax, qword[rax]);
+					mov(rcx, (uintptr_t)op.rd.reg_ptr());
+					mov(qword[rcx], rax);
+				}
 			}
 			break;
 
@@ -490,24 +495,7 @@ public:
 					if (!optimise || !GenReadMemoryFast(op, block))
 						GenReadMemorySlow(op, block);
 
-					u32 size = op.flags & 0x7f;
-					if (size != 8)
-						host_reg_to_shil_param(op.rd, eax);
-					else {
-#ifdef EXPLODE_SPANS
-						if (op.rd.count() == 2 && regalloc.IsAllocf(op.rd, 0) && regalloc.IsAllocf(op.rd, 1))
-						{
-							movd(regalloc.MapXRegister(op.rd, 0), eax);
-							shr(rax, 32);
-							movd(regalloc.MapXRegister(op.rd, 1), eax);
-						}
-						else
-#endif
-						{
-							mov(rcx, (uintptr_t)op.rd.reg_ptr());
-							mov(qword[rcx], rax);
-						}
-					}
+					host_reg_to_shil_param(op.rd, rax);
 				}
 				break;
 
@@ -528,26 +516,8 @@ public:
 							add(call_regs[0], dword[rax]);
 						}
 					}
+					shil_param_to_host_reg(op.rs2, call_regs64[1]);
 
-					u32 size = op.flags & 0x7f;
-					if (size != 8)
-						shil_param_to_host_reg(op.rs2, call_regs[1]);
-					else {
-#ifdef EXPLODE_SPANS
-						if (op.rs2.count() == 2 && regalloc.IsAllocf(op.rs2, 0) && regalloc.IsAllocf(op.rs2, 1))
-						{
-							movd(call_regs[1], regalloc.MapXRegister(op.rs2, 1));
-							shl(call_regs64[1], 32);
-							movd(eax, regalloc.MapXRegister(op.rs2, 0));
-							or_(call_regs64[1], rax);
-						}
-						else
-#endif
-						{
-							mov(rax, (uintptr_t)op.rs2.reg_ptr());
-							mov(call_regs64[1], qword[rax]);
-						}
-					}
 					if (!optimise || !GenWriteMemoryFast(op, block))
 						GenWriteMemorySlow(op, block);
 				}
@@ -1077,14 +1047,14 @@ public:
 				else
 					movzx(rax, regalloc.MapRegister(op.rs1).cvt16());
 				mov(rcx, (uintptr_t)&sin_table);
-#ifdef EXPLODE_SPANS
-				movss(regalloc.MapXRegister(op.rd, 0), dword[rcx + rax * 8]);
-				movss(regalloc.MapXRegister(op.rd, 1), dword[rcx + (rax * 8) + 4]);
-#else
-				mov(rcx, qword[rcx + rax * 8]);
-				mov(rdx, (uintptr_t)op.rd.reg_ptr());
-				mov(qword[rdx], rcx);
-#endif
+				if (regalloc.IsAllocf(op.rd))
+					movq(regalloc.MapXRegister(op.rd), qword[rcx + rax * 8]);
+				else
+				{
+					mov(rcx, qword[rcx + rax * 8]);
+					mov(rdx, (uintptr_t)op.rd.reg_ptr());
+					mov(qword[rdx], rcx);
+				}
 				break;
 
 			case shop_fipr:
@@ -1217,6 +1187,8 @@ public:
 				break;
 			}
 			regalloc.OpEnd(&op);
+			if (flushXmmRegisters)
+				regalloc.FlushXmmRegisters(&op);
 		}
 		regalloc.Cleanup();
 		current_opid = -1;
@@ -1441,11 +1413,6 @@ public:
 		// store from xmm0
 		case CPT_f32rv:
 			host_reg_to_shil_param(prm, xmm0);
-#ifdef EXPLODE_SPANS
-			// The x86 dynarec saves to mem as well
-			//mov(rax, (uintptr_t)prm.reg_ptr());
-			//movd(dword[rax], xmm0);
-#endif
 			break;
 		}
 	}
@@ -1457,23 +1424,24 @@ public:
 
 		for (int i = CC_pars.size(); i-- > 0;)
 		{
-			verify(xmmused < 4 && regused < 4);
 			const shil_param& prm = *CC_pars[i].prm;
 			switch (CC_pars[i].type) {
 				//push the contents
 
 			case CPT_u32:
+				verify(regused < call_regs.size());
 				shil_param_to_host_reg(prm, call_regs[regused++]);
 				break;
 
 			case CPT_f32:
+				verify(xmmused < call_regsxmm.size());
 				shil_param_to_host_reg(prm, call_regsxmm[xmmused++]);
 				break;
 
 				//push the ptr itself
 			case CPT_ptr:
 				verify(prm.is_reg());
-
+				verify(regused < call_regs64.size());
 				mov(call_regs64[regused++], (size_t)prm.reg_ptr());
 
 				break;
@@ -1495,15 +1463,27 @@ public:
 		mov(rax, (size_t)GetRegPtr(reg));
 		mov(dword[rax], Xbyak::Reg32(nreg));
 	}
-	void RegPreload_FPU(u32 reg, s8 nreg)
+	void RegPreload_FPU(u32 reg, s8 nreg, bool _64bit)
 	{
 		mov(rax, (size_t)GetRegPtr(reg));
-		movss(Xbyak::Xmm(nreg), dword[rax]);
+		if (_64bit)
+			movq(Xbyak::Xmm(nreg), qword[rax]);
+		else
+			movss(Xbyak::Xmm(nreg), dword[rax]);
 	}
-	void RegWriteback_FPU(u32 reg, s8 nreg)
+	void RegWriteback_FPU(u32 reg, s8 nreg, bool _64bit)
 	{
 		mov(rax, (size_t)GetRegPtr(reg));
-		movss(dword[rax], Xbyak::Xmm(nreg));
+		if (_64bit)
+			movq(qword[rax], Xbyak::Xmm(nreg));
+		else
+			movss(dword[rax], Xbyak::Xmm(nreg));
+	}
+
+	void RegMerge_FPU(s8 reg1, s8 reg2)
+	{
+		psllq(Xbyak::Xmm(reg2), 32);
+		por(Xbyak::Xmm(reg1), Xbyak::Xmm(reg2));
 	}
 
 private:
@@ -1518,7 +1498,8 @@ private:
 		u32 addr = op.rs1._imm;
 		if (mmu_enabled())
 		{
-			if ((addr >> 12) != (block->vaddr >> 12))
+			if ((addr >> 12) < (block->vaddr >> 12)
+					|| ((addr + size - 1) >> 12) > (block->vaddr + block->sh4_code_size - 1) >> 12)
 				// When full mmu is on, only consider addresses in the same 4k page
 				return false;
 
@@ -1533,8 +1514,10 @@ private:
 				rv = mmu_data_translation<MMU_TT_DREAD, u16>(addr, paddr);
 				break;
 			case 4:
-			case 8:
 				rv = mmu_data_translation<MMU_TT_DREAD, u32>(addr, paddr);
+				break;
+			case 8:
+				rv = mmu_data_translation<MMU_TT_DREAD, u64>(addr, paddr);
 				break;
 			default:
 				die("Invalid immediate size");
@@ -1546,7 +1529,7 @@ private:
 			addr = paddr;
 		}
 		bool isram = false;
-		void* ptr = _vmem_read_const(addr, isram, size > 4 ? 4 : size);
+		void* ptr = _vmem_read_const(addr, isram, size);
 
 		if (isram)
 		{
@@ -1590,17 +1573,11 @@ private:
 				break;
 
 			case 8:
-				mov(rcx, qword[rax]);
-#ifdef EXPLODE_SPANS
-				if (op.rd.count() == 2 && regalloc.IsAllocf(op.rd, 0) && regalloc.IsAllocf(op.rd, 1))
-				{
-					movd(regalloc.MapXRegister(op.rd, 0), ecx);
-					shr(rcx, 32);
-					movd(regalloc.MapXRegister(op.rd, 1), ecx);
-				}
+				if (regalloc.IsAllocf(op.rd))
+					movq(regalloc.MapXRegister(op.rd), qword[rax]);
 				else
-#endif
 				{
+					mov(rcx, qword[rax]);
 					mov(rax, (uintptr_t)op.rd.reg_ptr());
 					mov(qword[rax], rcx);
 				}
@@ -1616,6 +1593,7 @@ private:
 			// Not RAM: the returned pointer is a memory handler
 			if (size == 8)
 			{
+				// FIXME the call to _vmem_read_const() would have asserted at this point
 				verify(!regalloc.IsAllocAny(op.rd));
 
 				// Need to call the handler twice
@@ -1668,7 +1646,8 @@ private:
 		u32 addr = op.rs1._imm;
 		if (mmu_enabled())
 		{
-			if ((addr >> 12) != (block->vaddr >> 12))
+			if ((addr >> 12) < (block->vaddr >> 12)
+					|| ((addr + size - 1) >> 12) > (block->vaddr + block->sh4_code_size - 1) >> 12)
 				// When full mmu is on, only consider addresses in the same 4k page
 				return false;
 
@@ -1683,8 +1662,10 @@ private:
 				rv = mmu_data_translation<MMU_TT_DWRITE, u16>(addr, paddr);
 				break;
 			case 4:
-			case 8:
 				rv = mmu_data_translation<MMU_TT_DWRITE, u32>(addr, paddr);
+				break;
+			case 8:
+				rv = mmu_data_translation<MMU_TT_DWRITE, u64>(addr, paddr);
 				break;
 			default:
 				die("Invalid immediate size");
@@ -1696,7 +1677,7 @@ private:
 			addr = paddr;
 		}
 		bool isram = false;
-		void* ptr = _vmem_write_const(addr, isram, size > 4 ? 4 : size);
+		void* ptr = _vmem_write_const(addr, isram, size);
 
 		if (isram)
 		{
@@ -1746,16 +1727,9 @@ private:
 				break;
 
 			case 8:
-#ifdef EXPLODE_SPANS
-				if (op.rs2.count() == 2 && regalloc.IsAllocf(op.rs2, 0) && regalloc.IsAllocf(op.rs2, 1))
-				{
-					movd(call_regs[1], regalloc.MapXRegister(op.rs2, 1));
-					shl(call_regs64[1], 32);
-					movd(eax, regalloc.MapXRegister(op.rs2, 0));
-					or_(call_regs64[1], rax);
-				}
+				if (regalloc.IsAllocf(op.rs2))
+					movq(qword[rax], regalloc.MapXRegister(op.rs2));
 				else
-#endif
 				{
 					mov(rcx, (uintptr_t)op.rs2.reg_ptr());
 					mov(rcx, qword[rcx]);
@@ -1852,15 +1826,15 @@ private:
 		switch (size)
 		{
 		case 1:
-			mov(byte[rax + call_regs64[0] + 0], call_regs[1].cvt8());
+			mov(byte[rax + call_regs64[0] + 0], call_regs64[1].cvt8());
 			break;
 
 		case 2:
-			mov(word[rax + call_regs64[0]], call_regs[1].cvt16());
+			mov(word[rax + call_regs64[0]], call_regs64[1].cvt16());
 			break;
 
 		case 4:
-			mov(dword[rax + call_regs64[0]], call_regs[1]);
+			mov(dword[rax + call_regs64[0]], call_regs64[1].cvt32());
 			break;
 
 		case 8:
@@ -1997,67 +1971,11 @@ private:
 	void GenCall(Ret(*function)(Params...), bool skip_floats = false)
 	{
 #ifndef _WIN32
-		bool xmm8_mapped = !skip_floats && current_opid != -1 && regalloc.IsMapped(xmm8, current_opid);
-		bool xmm9_mapped = !skip_floats && current_opid != -1 && regalloc.IsMapped(xmm9, current_opid);
-		bool xmm10_mapped = !skip_floats && current_opid != -1 && regalloc.IsMapped(xmm10, current_opid);
-		bool xmm11_mapped = !skip_floats && current_opid != -1 && regalloc.IsMapped(xmm11, current_opid);
-
-		// Need to save xmm registers as they are not preserved in linux/mach
-		int offset = 0;
-		if (xmm8_mapped || xmm9_mapped || xmm10_mapped || xmm11_mapped)
-		{
-			sub(rsp, 4 * (xmm8_mapped + xmm9_mapped + xmm10_mapped + xmm11_mapped));
-			if (xmm8_mapped)
-			{
-				movd(ptr[rsp + offset], xmm8);
-				offset += 4;
-			}
-			if (xmm9_mapped)
-			{
-				movd(ptr[rsp + offset], xmm9);
-				offset += 4;
-			}
-			if (xmm10_mapped)
-			{
-				movd(ptr[rsp + offset], xmm10);
-				offset += 4;
-			}
-			if (xmm11_mapped)
-			{
-				movd(ptr[rsp + offset], xmm11);
-				offset += 4;
-			}
-		}
+		if (!skip_floats)
+			flushXmmRegisters = true;
 #endif
 
 		call(CC_RX2RW(function));
-
-#ifndef _WIN32
-		if (xmm8_mapped || xmm9_mapped || xmm10_mapped || xmm11_mapped)
-		{
-			if (xmm11_mapped)
-			{
-				offset -= 4;
-				movd(xmm11, ptr[rsp + offset]);
-			}
-			if (xmm10_mapped)
-			{
-				offset -= 4;
-				movd(xmm10, ptr[rsp + offset]);
-			}
-			if (xmm9_mapped)
-			{
-				offset -= 4;
-				movd(xmm9, ptr[rsp + offset]);
-			}
-			if (xmm8_mapped)
-			{
-				offset -= 4;
-				movd(xmm8, ptr[rsp + offset]);
-			}
-			add(rsp, 4 * (xmm8_mapped + xmm9_mapped + xmm10_mapped + xmm11_mapped));
-		}
-#endif
 	}
 
 	// uses eax/rax
@@ -2092,6 +2010,14 @@ private:
 					mov((const Xbyak::Reg32 &)reg, dword[rax]);
 				}
 			}
+			else if (param.is_r64f() && regalloc.IsAllocf(param))
+			{
+				Xbyak::Xmm sreg = regalloc.MapXRegister(param);
+				if (!reg.isXMM())
+					movq((const Xbyak::Reg64 &)reg, sreg);
+				else if (reg != sreg)
+					movq((const Xbyak::Xmm &)reg, sreg);
+			}
 			else
 			{
 				if (regalloc.IsAllocg(param))
@@ -2105,10 +2031,20 @@ private:
 				else
 				{
 					mov(rax, (size_t)param.reg_ptr());
-					if (!reg.isXMM())
-						mov((const Xbyak::Reg32 &)reg, dword[rax]);
+					if (param.is_r64f())
+					{
+						if (!reg.isXMM())
+							mov((const Xbyak::Reg64 &)reg, qword[rax]);
+						else
+							movq((const Xbyak::Xmm &)reg, qword[rax]);
+					}
 					else
-						movss((const Xbyak::Xmm &)reg, dword[rax]);
+					{
+						if (!reg.isXMM())
+							mov((const Xbyak::Reg32 &)reg, dword[rax]);
+						else
+							movss((const Xbyak::Xmm &)reg, dword[rax]);
+					}
 				}
 			}
 		}
@@ -2118,7 +2054,7 @@ private:
 		}
 	}
 
-	// uses rax
+	// uses rax or rcx
 	void host_reg_to_shil_param(const shil_param& param, const Xbyak::Reg& reg)
 	{
 		if (regalloc.IsAllocg(param))
@@ -2133,17 +2069,38 @@ private:
 		{
 			Xbyak::Xmm sreg = regalloc.MapXRegister(param);
 			if (!reg.isXMM())
-				movd(sreg, (const Xbyak::Reg32 &)reg);
+			{
+				if (param.is_r64f())
+					movq(sreg, (const Xbyak::Reg64 &)reg);
+				else
+					movd(sreg, (const Xbyak::Reg32 &)reg);
+			}
 			else if (reg != sreg)
-				movss(sreg, (const Xbyak::Xmm &)reg);
+			{
+				if (param.is_r64f())
+					movq(sreg, (const Xbyak::Xmm &)reg);
+				else
+					movss(sreg, (const Xbyak::Xmm &)reg);
+			}
 		}
 		else
 		{
-			mov(rax, (size_t)param.reg_ptr());
-			if (!reg.isXMM())
-				mov(dword[rax], (const Xbyak::Reg32 &)reg);
+			const Xbyak::Reg& tmpReg = reg.getIdx() == rax.getIdx() ? rcx : rax;
+			mov(tmpReg, (size_t)param.reg_ptr());
+			if (param.is_r64f())
+			{
+				if (!reg.isXMM())
+					mov(qword[tmpReg], (const Xbyak::Reg64 &)reg);
+				else
+					movsd(qword[tmpReg], (const Xbyak::Xmm &)reg);
+			}
 			else
-				movss(dword[rax], (const Xbyak::Xmm &)reg);
+			{
+				if (!reg.isXMM())
+					mov(dword[tmpReg], (const Xbyak::Reg32 &)reg);
+				else
+					movss(dword[tmpReg], (const Xbyak::Xmm &)reg);
+			}
 		}
 	}
 
@@ -2161,6 +2118,7 @@ private:
 	X64RegAlloc regalloc;
 	Xbyak::util::Cpu cpu;
 	size_t current_opid;
+	bool flushXmmRegisters = false;
 	Xbyak::Label exit_block;
 	static const u32 read_mem_op_size;
 	static const u32 write_mem_op_size;
@@ -2180,13 +2138,17 @@ void X64RegAlloc::Writeback(u32 reg, Xbyak::Operand::Code nreg)
 {
 	compiler->RegWriteback(reg, nreg);
 }
-void X64RegAlloc::Preload_FPU(u32 reg, s8 nreg)
+void X64RegAlloc::Preload_FPU(u32 reg, s8 nreg, bool _64bit)
 {
-	compiler->RegPreload_FPU(reg, nreg);
+	compiler->RegPreload_FPU(reg, nreg, _64bit);
 }
-void X64RegAlloc::Writeback_FPU(u32 reg, s8 nreg)
+void X64RegAlloc::Writeback_FPU(u32 reg, s8 nreg, bool _64bit)
 {
-	compiler->RegWriteback_FPU(reg, nreg);
+	compiler->RegWriteback_FPU(reg, nreg, _64bit);
+}
+void X64RegAlloc::Merge_FPU(s8 reg1, s8 reg2)
+{
+	compiler->RegMerge_FPU(reg1, reg2);
 }
 
 static BlockCompiler* compiler;

@@ -234,12 +234,12 @@ eFSReg alloc_fpu[]={f16,f17,f18,f19,f20,f21,f22,f23,
 
 struct arm_reg_alloc: RegAlloc<eReg,eFSReg,false>
 {
-	virtual void Preload(u32 reg,eReg nreg)
+	virtual void Preload(u32 reg,eReg nreg) override
 	{
 		verify(reg!=reg_pc_dyn);
 		LoadSh4Reg_mem(nreg,reg);
 	}
-	virtual void Writeback(u32 reg,eReg nreg)
+	virtual void Writeback(u32 reg,eReg nreg) override
 	{
 		if (reg==reg_pc_dyn)
 			// reg_pc_dyn has been stored in r4 by the jdyn op implementation
@@ -249,13 +249,13 @@ struct arm_reg_alloc: RegAlloc<eReg,eFSReg,false>
 			StoreSh4Reg_mem(nreg,reg);
 	}
 
-	virtual void Preload_FPU(u32 reg,eFSReg nreg)
+	virtual void Preload_FPU(u32 reg, eFSReg nreg, bool _64bits) override
 	{
 		const s32 shRegOffs = (u8*)GetRegPtr(reg)-sh4_dyna_rcb ;
 
 		VLDR((nreg),r8,shRegOffs/4);
 	}
-	virtual void Writeback_FPU(u32 reg,eFSReg nreg)
+	virtual void Writeback_FPU(u32 reg, eFSReg nreg, bool _64bits) override
 	{
 		const s32 shRegOffs = (u8*)GetRegPtr(reg)-sh4_dyna_rcb ;
 
