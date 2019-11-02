@@ -3,6 +3,8 @@
 
 #include "types.h"
 
+extern u64 sh4_sched_ffb;
+
 /*
 	tag, as passed on sh4_sched_register
 	sch_cycles, the cycle duration that the callback requested (sh4_sched_request)
@@ -17,16 +19,20 @@ typedef int sh4_sched_callback(int tag, int sch_cycl, int jitter);
 int sh4_sched_register(int tag, sh4_sched_callback* ssc);
 
 /*
-	current time in SH4 cycles, referenced to boot.
-	Wraps every ~21 secs
+	Return current cycle count, in 32 bits (wraps after 21 dreamcast seconds)
 */
-u32 sh4_sched_now();
+static inline u32 sh4_sched_now()
+{
+	return sh4_sched_ffb - Sh4cntx.sh4_sched_next;
+}
 
 /*
-	current time, in SH4 cycles, referenced to boot.
-	Does not wrap, 64 bits.
+	Return current cycle count, in 64 bits (effectively never wraps)
 */
-u64 sh4_sched_now64();
+static inline u64 sh4_sched_now64()
+{
+	return sh4_sched_ffb - Sh4cntx.sh4_sched_next;
+}
 
 /*
 	Schedule a callback to be called sh4 *cycles* after the

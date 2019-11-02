@@ -33,6 +33,7 @@ void ubc_term();
 void tmu_init();
 void tmu_reset(bool hard);
 void tmu_term();
+u32 read_TMU_TCNTch(u32 ch);
 
 void ccn_init();
 void ccn_reset();

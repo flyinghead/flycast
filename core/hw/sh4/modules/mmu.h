@@ -62,7 +62,7 @@ u32 mmu_full_lookup(u32 va, const TLB_Entry **entry, u32& rv);
 #ifdef FAST_MMU
 static INLINE u32 mmu_instruction_translation(u32 va, u32& rv)
 {
-	if (va & 1)
+	if (unlikely(va & 1))
 		return MMU_ERROR_BADADDR;
 	if (fast_reg_lut[va >> 29] != 0)
 	{
@@ -100,7 +100,7 @@ void DoMMUException(u32 addr, u32 error_code, u32 access_type);
 	{
 		u32 addr;
 		u32 rv = mmu_data_translation<MMU_TT_DREAD, T>(adr, addr);
-		if (rv != MMU_ERROR_NONE)
+		if (unlikely(rv != MMU_ERROR_NONE))
 		{
 			DoMMUException(adr, rv, MMU_TT_DREAD);
 			*exception_occurred = 1;
@@ -118,7 +118,7 @@ void DoMMUException(u32 addr, u32 error_code, u32 access_type);
 	{
 		u32 addr;
 		u32 rv = mmu_data_translation<MMU_TT_DWRITE, T>(adr, addr);
-		if (rv != MMU_ERROR_NONE)
+		if (unlikely(rv != MMU_ERROR_NONE))
 		{
 			DoMMUException(adr, rv, MMU_TT_DWRITE);
 			return 1;

@@ -272,8 +272,8 @@ using namespace std;
 #define likely(x) x
 #define unlikely(x) x
 #else
-#define likely(x)       __builtin_expect((x),1)
-#define unlikely(x)       __builtin_expect((x),0)
+#define likely(x)   __builtin_expect(static_cast<bool>(x), 1)
+#define unlikely(x) __builtin_expect(static_cast<bool>(x), 0)
 #endif
 
 //basic includes
@@ -321,11 +321,11 @@ bool dc_unserialize(void **data, unsigned int *total_size);
 #endif
 
 #ifndef STRIP_TEXT
-#define verify(x) if((x)==false){ msgboxf("Verify Failed  : " #x "\n in %s -> %s : %d \n",MBX_ICONERROR,(__FUNCTION__),(__FILE__),__LINE__); dbgbreak;}
-#define die(reason) { msgboxf("Fatal error : %s\n in %s -> %s : %d \n",MBX_ICONERROR,(reason),(__FUNCTION__),(__FILE__),__LINE__); dbgbreak;}
+#define verify(x) do { if ((x) == false){ msgboxf("Verify Failed  : " #x "\n in %s -> %s : %d \n", MBX_ICONERROR, (__FUNCTION__), (__FILE__), __LINE__); dbgbreak;}} while (false)
+#define die(reason) do { msgboxf("Fatal error : %s\n in %s -> %s : %d \n", MBX_ICONERROR,(reason), (__FUNCTION__), (__FILE__), __LINE__); dbgbreak;} while (false)
 #else
-#define verify(x) if((x)==false) { dbgbreak; }
-#define die(reason) { dbgbreak; }
+#define verify(x) do { if ((x) == false) dbgbreak; } while (false)
+#define die(reason) do { dbgbreak; } while (false)
 #endif
 
 

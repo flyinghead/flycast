@@ -57,54 +57,52 @@ DynarecCodeEntryPtr DYNACALL bm_GetCodeByVAddr(u32 addr)
 	if (!mmu_enabled())
 #endif
 		return bm_GetCode(addr);
-#ifndef NO_MMU
-	else
-	{
-		if (addr & 1)
-		{
-			switch (addr)
-			{
-#ifdef USE_WINCE_HACK
-			case 0xfffffde7: // GetTickCount
-				// This should make this syscall faster
-				r[0] = sh4_sched_now64() * 1000 / SH4_MAIN_CLOCK;
-				next_pc = pr;
-				break;
 
-			case 0xfffffd05: // QueryPerformanceCounter(u64 *)
+#ifndef NO_MMU
+	if (unlikely(addr & 1))
+	{
+		switch (addr)
+		{
+#ifdef USE_WINCE_HACK
+		case 0xfffffde7: // GetTickCount
+			// This should make this syscall faster
+			r[0] = sh4_sched_now64() * 1000 / SH4_MAIN_CLOCK;
+			next_pc = pr;
+			break;
+
+		case 0xfffffd05: // QueryPerformanceCounter(u64 *)
+			{
+				u32 paddr;
+				if (mmu_data_translation<MMU_TT_DWRITE, u64>(r[4], paddr) == MMU_ERROR_NONE)
 				{
-					u32 paddr;
-					if (mmu_data_translation<MMU_TT_DWRITE, u64>(r[4], paddr) == MMU_ERROR_NONE)
-					{
-						_vmem_WriteMem64(paddr, sh4_sched_now64() >> 4);
-						r[0] = 1;
-						next_pc = pr;
-					}
-					else
-					{
-						Do_Exception(addr, 0xE0, 0x100);
-					}
+					_vmem_WriteMem64(paddr, sh4_sched_now64() >> 4);
+					r[0] = 1;
+					next_pc = pr;
 				}
-				break;
+				else
+				{
+					Do_Exception(addr, 0xE0, 0x100);
+				}
+			}
+			break;
 #endif
 
-			default:
-				Do_Exception(addr, 0xE0, 0x100);
-				break;
-			}
-			addr = next_pc;
+		default:
+			Do_Exception(addr, 0xE0, 0x100);
+			break;
 		}
-
-		u32 paddr;
-		u32 rv = mmu_instruction_translation(addr, paddr);
-		if (rv != MMU_ERROR_NONE)
-		{
-			DoMMUException(addr, rv, MMU_TT_IREAD);
-			mmu_instruction_translation(next_pc, paddr);
-		}
-
-		return bm_GetCode(paddr);
+		addr = next_pc;
 	}
+
+	u32 paddr;
+	u32 rv = mmu_instruction_translation(addr, paddr);
+	if (unlikely(rv != MMU_ERROR_NONE))
+	{
+		DoMMUException(addr, rv, MMU_TT_IREAD);
+		mmu_instruction_translation(next_pc, paddr);
+	}
+
+	return bm_GetCode(paddr);
 #endif
 }
 
@@ -115,7 +113,7 @@ RuntimeBlockInfoPtr DYNACALL bm_GetBlock(u32 addr)
 	DynarecCodeEntryPtr cde = bm_GetCode(addr);  // Returns RX ptr
 
 	if (cde == ngen_FailedToFindBlock)
-		return NULL;
+		return nullptr;
 	else
 		return bm_GetBlock((void*)cde);  // Returns RX pointer
 }
@@ -124,18 +122,18 @@ RuntimeBlockInfoPtr DYNACALL bm_GetBlock(u32 addr)
 RuntimeBlockInfoPtr bm_GetBlock(void* dynarec_code)
 {
 	if (blkmap.empty())
-		return NULL;
+		return nullptr;
 
 	void *dynarecrw = CC_RX2RW(dynarec_code);
 	// Returns a block who's code addr is bigger than dynarec_code (or end)
 	auto iter = blkmap.upper_bound(dynarecrw);
 	if (iter == blkmap.begin())
-		return NULL;
+		return nullptr;
 	iter--;  // Need to go back to find the potential candidate
 
 	// However it might be out of bounds, check for that
 	if ((u8*)iter->second->code + iter->second->host_code_size < (u8*)dynarec_code)
-		return NULL;
+		return nullptr;
 
 	verify(iter->second->contains_code((u8*)dynarecrw));
 	return iter->second;
@@ -151,7 +149,7 @@ RuntimeBlockInfoPtr bm_GetStaleBlock(void* dynarec_code)
 {
 	void *dynarecrw = CC_RX2RW(dynarec_code);
 	if (del_blocks.empty())
-		return NULL;
+		return nullptr;
 	// Start from the end to get the youngest one
 	auto it = del_blocks.end();
 	do
@@ -161,7 +159,7 @@ RuntimeBlockInfoPtr bm_GetStaleBlock(void* dynarec_code)
 			return *it;
 	} while (it != del_blocks.begin());
 
-	return NULL;
+	return nullptr;
 }
 
 void bm_AddBlock(RuntimeBlockInfo* blk)
@@ -587,8 +585,7 @@ void bm_RamWriteAccess(u32 addr)
 	unprotected_pages[addr / PAGE_SIZE] = true;
 	bm_UnlockPage(addr);
 	set<RuntimeBlockInfo*>& block_list = blocks_per_page[addr / PAGE_SIZE];
-	vector<RuntimeBlockInfo*> list_copy;
-	list_copy.insert(list_copy.begin(), block_list.begin(), block_list.end());
+	vector<RuntimeBlockInfo*> list_copy(block_list.begin(), block_list.end());
 	if (!list_copy.empty())
 		DEBUG_LOG(DYNAREC, "bm_RamWriteAccess write access to %08x pc %08x", addr, next_pc);
 	for (auto& block : list_copy)

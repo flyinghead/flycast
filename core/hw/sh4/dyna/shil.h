@@ -14,16 +14,12 @@ enum shil_param_type
 	FMT_F32,
 	FMT_F64,
 	
-	FMT_V2,
-	FMT_V3,
 	FMT_V4,
 	FMT_V8,
 	FMT_V16,
 
-	FMT_REG_BASE=FMT_I32,
-	FMT_VECTOR_BASE=FMT_V2,
-
-	FMT_MASK=0xFFFF,
+	FMT_REG_BASE = FMT_I32,
+	FMT_VECTOR_BASE = FMT_V4,
 };
 
 /*
@@ -123,11 +119,12 @@ struct shil_param
 
 	u32 imm_value() const { verify(is_imm()); return _imm; }
 
-	bool is_vector() const { return type>=FMT_VECTOR_BASE; }
+	bool is_vector() const { return type >= FMT_VECTOR_BASE; }
 
-	u32 count() const { return  type==FMT_F64?2:type==FMT_V2?2:
-								type==FMT_V3?3:type==FMT_V4?4:type==FMT_V8?8:
-								type==FMT_V16?16:1; }	//count of hardware regs
+	u32 count() const { return type == FMT_F64 ? 2
+								: type == FMT_V4 ? 4
+								: type == FMT_V8 ? 8
+								: type == FMT_V16 ? 16 : 1; }	//count of hardware regs
 
 	/*	
 		Imms:

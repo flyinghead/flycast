@@ -258,9 +258,10 @@ static void WriteBios(u32 addr,u32 data,u32 sz)
 
 //use unified size handler for registers
 //it really makes no sense to use different size handlers on em -> especially when we can use templates :p
-template<u32 sz, class T>
+template<typename T>
 T DYNACALL ReadMem_area0(u32 addr)
 {
+	const u32 sz = (u32)sizeof(T);
 	addr &= 0x01FFFFFF;//to get rid of non needed bits
 	const u32 base=(addr>>16);
 	//map 0x0000 to 0x01FF to Default handler
@@ -343,9 +344,10 @@ T DYNACALL ReadMem_area0(u32 addr)
 	return 0;
 }
 
-template<u32 sz, class T>
+template<class T>
 void  DYNACALL WriteMem_area0(u32 addr,T data)
 {
+	const u32 sz = (u32)sizeof(T);
 	addr &= 0x01FFFFFF;//to get rid of non needed bits
 
 	const u32 base=(addr>>16);
@@ -494,7 +496,7 @@ static _vmem_handler area0_handler;
 void map_area0_init()
 {
 
-	area0_handler = _vmem_register_handler_Template(ReadMem_area0,WriteMem_area0);
+	area0_handler = _vmem_register_handler_Template(ReadMem_area0, WriteMem_area0);
 }
 void map_area0(u32 base)
 {

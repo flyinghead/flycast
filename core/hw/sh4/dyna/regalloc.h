@@ -393,7 +393,7 @@ struct RegAlloc
 		}
 		else
 		{
-			verify(regs.type==FMT_V4 || regs.type==FMT_V2 || regs.type==FMT_F64);
+			verify(regs.type==FMT_V4 || regs.type==FMT_F64);
 
 			for (u32 i=0; i<regs.count(); i++)
 			{
