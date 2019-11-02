@@ -716,7 +716,7 @@ mem_op_type memop_type(shil_opcode* op)
 {
 
 	int Lsz=-1;
-	int sz=op->flags&0x7f;
+	int sz = op->size();
 
 	bool fp32=op->rs2.is_r32f() || op->rd.is_r32f();
 

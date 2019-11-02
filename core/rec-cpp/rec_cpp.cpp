@@ -1677,7 +1677,7 @@ public:
 
 			case shop_readm:
 			{
-				u32 size = op.flags & 0x7f;
+				u32 size = op.size();
 				if (op.rs1.is_imm()) {
 					verify(op.rs2.is_null() && op.rs3.is_null());
 
@@ -1760,7 +1760,7 @@ public:
 
 			case shop_writem:
 			{
-				u32 size = op.flags & 0x7f;
+				u32 size = op.size();
 				
 				if (op.rs1.is_imm()) {
 					verify(op.rs3.is_null());

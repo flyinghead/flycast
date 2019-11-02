@@ -142,9 +142,7 @@ struct shil_param
 struct shil_opcode
 {
 	shilop op;
-	u32 Flow;
 	u32 flags;
-	u32 flags2;
 
 	shil_param rd,rd2;
 	shil_param rs1,rs2,rs3;
@@ -154,6 +152,7 @@ struct shil_opcode
 	bool delay_slot;
 
 	string dissasm() const;
+	u32 size() const { return flags & 0x7f; }
 };
 
 const char* shil_opcode_name(int op);

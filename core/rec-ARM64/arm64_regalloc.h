@@ -49,6 +49,7 @@ struct Arm64RegAlloc : RegAlloc<eReg, eFReg, true>
 	virtual void Preload_FPU(u32 reg, eFReg nreg, bool _64bit) override;
 	virtual void Writeback_FPU(u32 reg, eFReg nreg, bool _64bit) override;
 	virtual void Merge_FPU(eFReg reg1, eFReg reg2) override;
+	virtual void Shift_FPU(eFReg reg) override;
 
 	const Register& MapRegister(const shil_param& param)
 	{

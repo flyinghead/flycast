@@ -1609,9 +1609,8 @@ private:
 		if (mmu_enabled())
 			Mov(*call_regs[2], block->vaddr + op.guest_offs - (op.delay_slot ? 2 : 0));	// pc
 
-		u32 size = op.flags & 0x7f;
 		if (!optimise || !GenReadMemoryFast(op, opid))
-			GenReadMemorySlow(size);
+			GenReadMemorySlow(op.size());
 
 		host_reg_to_shil_param(op.rd, x0);
 	}
@@ -1621,7 +1620,7 @@ private:
 		if (!op.rs1.is_imm())
 			return false;
 
-		u32 size = op.flags & 0x7f;
+		const u32 size = op.size();
 		u32 addr = op.rs1._imm;
 		if (mmu_enabled())
 		{
@@ -1791,8 +1790,7 @@ private:
 			Add(x1, *call_regs64[0], sizeof(Sh4Context), LeaveFlags);
 		}
 
-		u32 size = op.flags & 0x7f;
-		switch(size)
+		switch(op.size())
 		{
 		case 1:
 			Ldrsb(w0, MemOperand(x28, x1));
@@ -1824,8 +1822,7 @@ private:
 		if (mmu_enabled())
 			Mov(*call_regs[2], block->vaddr + op.guest_offs - (op.delay_slot ? 2 : 0));	// pc
 
-		u32 size = op.flags & 0x7f;
-		if (size != 8)
+		if (op.size() != 8)
 			shil_param_to_host_reg(op.rs2, *call_regs[1]);
 		else
 			shil_param_to_host_reg(op.rs2, *call_regs64[1]);
@@ -1833,7 +1830,7 @@ private:
 		if (optimise && GenWriteMemoryFast(op, opid))
 			return;
 
-		GenWriteMemorySlow(size);
+		GenWriteMemorySlow(op.size());
 	}
 
 	bool GenWriteMemoryImmediate(const shil_opcode& op)
@@ -1841,7 +1838,7 @@ private:
 		if (!op.rs1.is_imm())
 			return false;
 
-		u32 size = op.flags & 0x7f;
+		const u32 size = op.size();
 		u32 addr = op.rs1._imm;
 		if (mmu_enabled())
 		{
@@ -1992,8 +1989,7 @@ private:
 			Add(x7, *call_regs64[0], sizeof(Sh4Context), LeaveFlags);
 		}
 
-		u32 size = op.flags & 0x7f;
-		switch(size)
+		switch(op.size())
 		{
 		case 1:
 			Strb(w1, MemOperand(x28, x7));
@@ -2371,7 +2367,10 @@ void Arm64RegAlloc::Merge_FPU(eFReg reg1, eFReg reg2)
 {
 	assembler->Sli(VRegister(reg1, 64), VRegister(reg2, 64), 32);
 }
-
+void Arm64RegAlloc::Shift_FPU(eFReg reg)
+{
+	assembler->Urshr(VRegister(reg, 64), VRegister(reg, 64), 32);
+}
 
 extern "C" naked void do_sqw_nommu_area_3(u32 dst, u8* sqb)
 {

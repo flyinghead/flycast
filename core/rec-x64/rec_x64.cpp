@@ -1277,8 +1277,7 @@ public:
 		if (mmu_enabled())
 			mov(call_regs[1], block->vaddr + op.guest_offs - (op.delay_slot ? 1 : 0));	// pc
 
-		u32 size = op.flags & 0x7f;
-		switch (size) {
+		switch (op.size()) {
 		case 1:
 			if (!mmu_enabled())
 				GenCall(ReadMem8);
@@ -1328,8 +1327,7 @@ public:
 		if (mmu_enabled())
 			mov(call_regs[2], block->vaddr + op.guest_offs - (op.delay_slot ? 1 : 0));	// pc
 
-		u32 size = op.flags & 0x7f;
-		switch (size) {
+		switch (op.size()) {
 		case 1:
 			if (!mmu_enabled())
 				GenCall(WriteMem8);
@@ -1486,6 +1484,11 @@ public:
 		por(Xbyak::Xmm(reg1), Xbyak::Xmm(reg2));
 	}
 
+	void RegShift_FPU(s8 reg)
+	{
+		psrlq(Xbyak::Xmm(reg), 32);
+	}
+
 private:
 	typedef void (BlockCompiler::*X64BinaryOp)(const Xbyak::Operand&, const Xbyak::Operand&);
 	typedef void (BlockCompiler::*X64BinaryFOp)(const Xbyak::Xmm&, const Xbyak::Operand&);
@@ -1494,7 +1497,7 @@ private:
 	{
 		if (!op.rs1.is_imm())
 			return false;
-		u32 size = op.flags & 0x7f;
+		u32 size = op.size();
 		u32 addr = op.rs1._imm;
 		if (mmu_enabled())
 		{
@@ -1642,7 +1645,7 @@ private:
 	{
 		if (!op.rs1.is_imm())
 			return false;
-		u32 size = op.flags & 0x7f;
+		u32 size = op.size();
 		u32 addr = op.rs1._imm;
 		if (mmu_enabled())
 		{
@@ -1766,7 +1769,6 @@ private:
 
 		mov(rax, (uintptr_t)virt_ram_base);
 
-		u32 size = op.flags & 0x7f;
 		//verify(getCurr() - start_addr == 26);
 		if (mem_access_offset == 0)
 			mem_access_offset = getCurr() - start_addr;
@@ -1774,7 +1776,7 @@ private:
 			verify(getCurr() - start_addr == mem_access_offset);
 
 		block->memory_accesses[(void*)getCurr()] = (u32)current_opid;
-		switch (size)
+		switch (op.size())
 		{
 		case 1:
 			movsx(eax, byte[rax + call_regs64[0]]);
@@ -1815,7 +1817,6 @@ private:
 
 		mov(rax, (uintptr_t)virt_ram_base);
 
-		u32 size = op.flags & 0x7f;
 		//verify(getCurr() - start_addr == 26);
 		if (mem_access_offset == 0)
 			mem_access_offset = getCurr() - start_addr;
@@ -1823,7 +1824,7 @@ private:
 			verify(getCurr() - start_addr == mem_access_offset);
 
 		block->memory_accesses[(void*)getCurr()] = (u32)current_opid;
-		switch (size)
+		switch (op.size())
 		{
 		case 1:
 			mov(byte[rax + call_regs64[0] + 0], call_regs64[1].cvt8());
@@ -2150,7 +2151,10 @@ void X64RegAlloc::Merge_FPU(s8 reg1, s8 reg2)
 {
 	compiler->RegMerge_FPU(reg1, reg2);
 }
-
+void X64RegAlloc::Shift_FPU(s8 reg)
+{
+	compiler->RegShift_FPU(reg);
+}
 static BlockCompiler* compiler;
 
 void ngen_Compile(RuntimeBlockInfo* block, bool smc_checks, bool reset, bool staging, bool optimise)

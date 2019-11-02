@@ -223,7 +223,7 @@ private:
 					if (op.rs1.is_imm() && op.op == shop_readm  && block->read_only
 							&& (op.rs1._imm >> 12) >= (block->vaddr >> 12)
 							&& (op.rs1._imm >> 12) <= ((block->vaddr + block->sh4_code_size - 1) >> 12)
-							&& (op.flags & 0x7f) <= 4)
+							&& op.size() <= 4)
 					{
 						bool doit = false;
 						if (mmu_enabled())
@@ -240,7 +240,7 @@ private:
 						if (doit)
 						{
 							u32 v;
-							switch (op.flags & 0x7f)
+							switch (op.size())
 							{
 							case 1:
 								v = (s32)(::s8)ReadMem8(op.rs1._imm);

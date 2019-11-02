@@ -250,6 +250,8 @@ public:
 	virtual void Writeback_FPU(u32 reg, nregf_t nreg, bool _64bit) = 0;
 	// merge reg1 (least significant 32 bits) and reg2 (most significant 32 bits) into reg1 (64-bit result)
 	virtual void Merge_FPU(nregf_t reg1, nregf_t reg2) { die("not implemented"); }
+	// shift given 64-bit reg right by 32 bits
+	virtual void Shift_FPU(nregf_t reg) { die("not implemented"); }
 
 private:
 	struct reg_alloc {
@@ -650,7 +652,12 @@ private:
 				}
 			}
 			// Write back the 64-bit register even if used as destination because the other half needs to be saved
-			FlushReg(it->first, true, source || it->second._64bit);
+			FlushReg(it->first, param.is_r64f(), source || it->second._64bit);
+			if (!param.is_r64f())
+			{
+				// Reuse existing reg
+				it->second._64bit = false;
+			}
 		}
 		if (param.is_r64f())
 		{
@@ -662,8 +669,16 @@ private:
 		{
 			auto it2 = reg_alloced.find((Sh4RegType)(param._reg - 1));
 			if (it2 != reg_alloced.end() && it2->second._64bit)
+			{
 				// Write back even when used as destination because the other half needs to be saved
-				FlushReg(it2->first, true, true);
+				FlushReg(it2->first, false, true);
+				reg_alloc alloc = it2->second;
+				Shift_FPU((nregf_t)alloc.host_reg);
+				alloc._64bit = false;
+				alloc.version[0] = alloc.version[1];
+				reg_alloced.erase(it2);
+				reg_alloced[param._reg] = alloc;
+			}
 		}
 	}
 

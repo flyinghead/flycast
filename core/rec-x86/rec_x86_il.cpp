@@ -263,7 +263,7 @@ void ngen_opcode(RuntimeBlockInfo* block, shil_opcode* op,x86_block* x86e, bool 
 					verify(reg.IsAllocAny((Sh4RegType)(op->rd._reg + i)));
 				}
 
-				u32 size = op->flags & 0x7f;
+				u32 size = op->size();
 
 				if (op->rs1.is_imm())
 				{
@@ -449,7 +449,7 @@ void ngen_opcode(RuntimeBlockInfo* block, shil_opcode* op,x86_block* x86e, bool 
 
 		case shop_writem:
 			{
-				u32 size=op->flags&0x7f;
+				u32 size = op->size();
 				verify(reg.IsAllocg(op->rs1) || op->rs1.is_imm());
 				
 				verify(op->rs2.is_imm() || op->rs2.is_r32() || (op->rs2.count()==2 && reg.IsAllocf(op->rs2,0) && reg.IsAllocf(op->rs2,1)));

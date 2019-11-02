@@ -56,6 +56,7 @@ struct X64RegAlloc : RegAlloc<Xbyak::Operand::Code, s8, true>
 	virtual void Preload_FPU(u32 reg, s8 nreg, bool _64bit) override;
 	virtual void Writeback_FPU(u32 reg, s8 nreg, bool _64bit) override;
 	virtual void Merge_FPU(s8 reg1, s8 reg2) override;
+	virtual void Shift_FPU(s8 reg) override;
 
 	Xbyak::Reg32 MapRegister(const shil_param& param)
 	{
