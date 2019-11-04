@@ -720,6 +720,8 @@ struct maple_sega_vmu: maple_base
 						u32 Phase = ((SWAP32(bph))>>16)&0xff;
 						u32 write_adr=Block*512+Phase*(512/4);
 						u32 write_len=r_count();
+						if (write_adr + write_len > sizeof(flash_data))
+							return MDRE_TransmitAgain; //invalid params
 						rptr(&flash_data[write_adr],write_len);
 
 						if (file)
