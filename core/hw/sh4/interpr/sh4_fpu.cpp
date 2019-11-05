@@ -73,7 +73,7 @@ INLINE void Denorm32(float &value)
 
 
 #define CHECK_FPU_32(v) v = fixNaN(v)
-#define CHECK_FPU_64(v)
+#define CHECK_FPU_64(v) v = fixNaN64(v)
 
 
 //fadd <FREG_M>,<FREG_N>
@@ -116,7 +116,7 @@ sh4op(i1111_nnnn_mmmm_0001)
 
 		double drn=GetDR(n), drm=GetDR(m);
 		drn-=drm;
-		//dr[n] -= dr[m];
+		CHECK_FPU_64(drn);
 		SetDR(n,drn);
 	}
 }
@@ -137,7 +137,7 @@ sh4op(i1111_nnnn_mmmm_0010)
 
 		double drn=GetDR(n), drm=GetDR(m);
 		drn*=drm;
-		//dr[n] *= dr[m];
+		CHECK_FPU_64(drn);
 		SetDR(n,drn);
 	}
 }
@@ -160,6 +160,7 @@ sh4op(i1111_nnnn_mmmm_0011)
 
 		double drn=GetDR(n), drm=GetDR(m);
 		drn/=drm;
+		CHECK_FPU_64(drn);
 		SetDR(n,drn);
 	}
 }
@@ -506,14 +507,20 @@ sh4op(i1111_nnmm_1110_1101)
 	int m=(GetN(op)&0x3)<<2;
 	if(fpscr.PR ==0)
 	{
-		float idp;
-		idp=fr[n+0]*fr[m+0];
-		idp+=fr[n+1]*fr[m+1];
-		idp+=fr[n+2]*fr[m+2];
-		idp+=fr[n+3]*fr[m+3];
-
-		CHECK_FPU_32(idp);
-		fr[n+3]=idp;
+#if HOST_CPU == CPU_X86 || HOST_CPU == CPU_X64
+		double idp = (double)fr[n + 0] * fr[m + 0];
+		idp += (double)fr[n + 1] * fr[m + 1];
+		idp += (double)fr[n + 2] * fr[m + 2];
+		idp += (double)fr[n + 3] * fr[m + 3];
+		float rv = (float)idp;
+#else
+		float rv = fr[n + 0] * fr[m + 0];
+		rv += fr[n + 1] * fr[m + 1];
+		rv += fr[n + 2] * fr[m + 2];
+		rv += fr[n + 3] * fr[m + 3];
+#endif
+		CHECK_FPU_32(rv);
+		fr[n + 3] = rv;
 	}
 	else
 	{
@@ -598,7 +605,6 @@ sh4op(i1111_1011_1111_1101)
 //fschg
 sh4op(i1111_0011_1111_1101)
 {
-	//iNimp("fschg");
 	fpscr.SZ = 1 - fpscr.SZ;
 }
 
@@ -616,8 +622,9 @@ sh4op(i1111_nnnn_0110_1101)
 	{
 		//Operation _can_ be done on sh4
 		u32 n = GetN(op)>>1;
-
-		SetDR(n,sqrt(GetDR(n)));
+		f64 v = sqrt(GetDR(n));
+		CHECK_FPU_64(v);
+		SetDR(n, v);
 	}
 }
 
@@ -656,7 +663,6 @@ sh4op(i1111_nnnn_0011_1101)
 //fmac <FREG_0>,<FREG_M>,<FREG_N>
 sh4op(i1111_nnnn_mmmm_1110)
 {
-	//iNimp("fmac <FREG_0>,<FREG_M>,<FREG_N>");
 	if (fpscr.PR==0)
 	{
 		u32 n = GetN(op);
@@ -675,8 +681,6 @@ sh4op(i1111_nnnn_mmmm_1110)
 //ftrv xmtrx,<FV_N>
 sh4op(i1111_nn01_1111_1101)
 {
-	//iNimp("ftrv xmtrx,<FV_N>");
-
 	/*
 	XF[0] XF[4] XF[8] XF[12]    FR[n]      FR[n]
 	XF[1] XF[5] XF[9] XF[13]  *	FR[n+1] -> FR[n+1]

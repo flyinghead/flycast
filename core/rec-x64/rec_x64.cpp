@@ -1059,25 +1059,34 @@ public:
 
 			case shop_fipr:
 				{
-					mov(rax, (size_t)op.rs1.reg_ptr());
-					movaps(regalloc.MapXRegister(op.rd), dword[rax]);
-					mov(rax, (size_t)op.rs2.reg_ptr());
-					mulps(regalloc.MapXRegister(op.rd), dword[rax]);
+					// Using doubles for better precision
 					const Xbyak::Xmm &rd = regalloc.MapXRegister(op.rd);
-					// Only first-generation 64-bit CPUs lack SSE3 support
-					if (cpu.has(Xbyak::util::Cpu::tSSE3))
-					{
-						haddps(rd, rd);
-						haddps(rd, rd);
-					}
-					else
-					{
-						movhlps(xmm1, rd);
-						addps(rd, xmm1);
-						movaps(xmm1, rd);
-						shufps(xmm1, xmm1,1);
-						addss(rd, xmm1);
-					}
+					mov(rax, (size_t)op.rs1.reg_ptr());
+					mov(rcx, (size_t)op.rs2.reg_ptr());
+			        pxor(xmm1, xmm1);
+			        pxor(xmm0, xmm0);
+			        pxor(xmm2, xmm2);
+			        cvtss2sd(xmm1, dword[rax]);
+			        cvtss2sd(xmm0, dword[rcx]);
+			        mulsd(xmm0, xmm1);
+			        pxor(xmm1, xmm1);
+			        cvtss2sd(xmm2, dword[rax + 4]);
+			        cvtss2sd(xmm1, dword[rcx + 4]);
+			        mulsd(xmm1, xmm2);
+			        pxor(xmm2, xmm2);
+			        cvtss2sd(xmm2, dword[rax + 8]);
+			        addsd(xmm1, xmm0);
+			        pxor(xmm0, xmm0);
+			        cvtss2sd(xmm0, dword[rcx + 8]);
+			        mulsd(xmm0, xmm2);
+			        pxor(xmm2, xmm2);
+			        cvtss2sd(xmm2, dword[rax + 12]);
+			        addsd(xmm1, xmm0);
+			        pxor(xmm0, xmm0);
+			        cvtss2sd(xmm0, dword[rcx + 12]);
+			        mulsd(xmm0, xmm2);
+			        addsd(xmm0, xmm1);
+			        cvtsd2ss(rd, xmm0);
 				}
 				break;
 
