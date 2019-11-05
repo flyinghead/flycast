@@ -603,14 +603,14 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 
 	REICAST_USA(aica_reg,0x8000);
 
-	channel_unserialize(data, total_size, V7_LIBRETRO);
+	channel_unserialize(data, total_size, V8_LIBRETRO);
 
 	REICAST_USA(cdda_sector,CDDA_SIZE);
 	REICAST_US(cdda_index);
 	REICAST_SKIP(4 * 64);			// mxlr
 	REICAST_US(i);					// samples_gen
 
-	register_unserialize(sb_regs, data, total_size, V7_LIBRETRO) ;
+	register_unserialize(sb_regs, data, total_size, V8_LIBRETRO) ;
 	REICAST_US(SB_ISTNRM);
 	REICAST_US(SB_FFST_rc);
 	REICAST_US(SB_FFST);
@@ -721,16 +721,16 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 	pal_needs_update = true;
 	REICAST_USA(OnChipRAM.data,OnChipRAM_SIZE);
 
-	register_unserialize(CCN, data, total_size, V7_LIBRETRO) ;
-	register_unserialize(UBC, data, total_size, V7_LIBRETRO) ;
-	register_unserialize(BSC, data, total_size, V7_LIBRETRO) ;
-	register_unserialize(DMAC, data, total_size, V7_LIBRETRO) ;
-	register_unserialize(CPG, data, total_size, V7_LIBRETRO) ;
-	register_unserialize(RTC, data, total_size, V7_LIBRETRO) ;
-	register_unserialize(INTC, data, total_size, V7_LIBRETRO) ;
-	register_unserialize(TMU, data, total_size, V7_LIBRETRO) ;
-	register_unserialize(SCI, data, total_size, V7_LIBRETRO) ;
-	register_unserialize(SCIF, data, total_size, V7_LIBRETRO) ;
+	register_unserialize(CCN, data, total_size, V8_LIBRETRO) ;
+	register_unserialize(UBC, data, total_size, V8_LIBRETRO) ;
+	register_unserialize(BSC, data, total_size, V8_LIBRETRO) ;
+	register_unserialize(DMAC, data, total_size, V8_LIBRETRO) ;
+	register_unserialize(CPG, data, total_size, V8_LIBRETRO) ;
+	register_unserialize(RTC, data, total_size, V8_LIBRETRO) ;
+	register_unserialize(INTC, data, total_size, V8_LIBRETRO) ;
+	register_unserialize(TMU, data, total_size, V8_LIBRETRO) ;
+	register_unserialize(SCI, data, total_size, V8_LIBRETRO) ;
+	register_unserialize(SCIF, data, total_size, V8_LIBRETRO) ;
 
 	u16 dummyshort;
 	
@@ -881,7 +881,7 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 	REICAST_US(i); //LIBRETRO_S(cycle_counter);
 	REICAST_US(i); // idxnxx
 
-	REICAST_SKIP(sizeof(state_t));	// state
+	REICAST_SKIP(44);	// state
 	REICAST_US(i);		// div_som_reg1
 	REICAST_US(i);		// div_som_reg2
 	REICAST_US(i);		// div_som_reg3
@@ -921,7 +921,7 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 	*total_size = 0 ;
 
 	REICAST_US(version) ;
-	if (version == V7_LIBRETRO)
+	if (version == V8_LIBRETRO)
 		return dc_unserialize_libretro(data, total_size);
 	if (version != V4 && version < V5)
 	{

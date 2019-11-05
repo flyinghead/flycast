@@ -1,3 +1,7 @@
+//SPG emulation; Scanline/Raster beam registers & interrupts
+//Time to emulate that stuff correctly ;)
+//
+//
 #include "spg.h"
 #include "Renderer_if.h"
 #include "pvr_regs.h"
@@ -6,38 +10,31 @@
 #include "hw/sh4/sh4_sched.h"
 #include "input/gamepad_device.h"
 
-//SPG emulation; Scanline/Raster beam registers & interrupts
-//Time to emulate that stuff correctly ;)
-
-u32 in_vblank=0;
+u32 in_vblank;
 u32 clc_pvr_scanline;
-u32 pvr_numscanlines=512;
-u32 prv_cur_scanline=-1;
-u32 vblk_cnt=0;
+static u32 pvr_numscanlines = 512;
+static u32 prv_cur_scanline = -1;
+static u32 vblk_cnt;
 
 float last_fps=0;
 
 //54 mhz pixel clock :)
 #define PIXEL_CLOCK (54*1000*1000/2)
-u32 Line_Cycles=0;
-u32 Frame_Cycles=0;
+static u32 Line_Cycles;
+static u32 Frame_Cycles;
 int render_end_schid;
 int vblank_schid;
 
 void CalculateSync()
 {
-	u32 pixel_clock;
-	float scale_x=1,scale_y=1;
+	u32 pixel_clock = PIXEL_CLOCK / (FB_R_CTRL.vclk_div ? 1 : 2);
 
-	pixel_clock=PIXEL_CLOCK / (FB_R_CTRL.vclk_div?1:2);
-
-	//We need to calculate the pixel clock
-
-	u32 sync_cycles=(SPG_LOAD.hcount+1)*(SPG_LOAD.vcount+1);
 	pvr_numscanlines=SPG_LOAD.vcount+1;
 	
 	Line_Cycles=(u32)((u64)SH4_MAIN_CLOCK*(u64)(SPG_LOAD.hcount+1)/(u64)pixel_clock);
 	
+	float scale_x = 1;
+	float scale_y = 1;
 	if (SPG_CONTROL.interlace)
 	{
 		//this is a temp hack
@@ -59,19 +56,15 @@ void CalculateSync()
 
 	rend_set_fb_scale(scale_x,scale_y);
 	
-	//Frame_Cycles=(u64)DCclock*(u64)sync_cycles/(u64)pixel_clock;
-	
 	Frame_Cycles=pvr_numscanlines*Line_Cycles;
 	prv_cur_scanline=0;
 
 	sh4_sched_request(vblank_schid,Line_Cycles);
 }
 
-double speed_load_mspdf;
-
 int mips_counter;
 
-double full_rps;
+static double full_rps;
 
 static u32 lightgun_line = 0xffff;
 static u32 lightgun_hpos;
