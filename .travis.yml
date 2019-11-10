@@ -50,13 +50,13 @@ before_deploy:
 deploy:
   provider: s3
   access_key_id: AKIAJOZQS4H2PHQWYFCA
-  secret_access_key:
-    secure: $S3_SECRET_KEY
+  secret_access_key: $S3_SECRET_KEY
   bucket: flycast-builds
   local-dir: artifacts
   upload-dir: android
   acl: public_read
   skip_cleanup: true
+  region: us-east-2
   on:
     all_branches: true
 repo: flyinghead/flycast
