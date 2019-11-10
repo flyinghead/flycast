@@ -457,7 +457,7 @@ void set_platform(int platform)
 	_vmem_init_mappings();
 }
 
-static void dc_init()
+void dc_init()
 {
 	static bool init_done;
 

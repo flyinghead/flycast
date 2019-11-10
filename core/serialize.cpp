@@ -187,8 +187,6 @@ extern int rtc_schid;
 
 //./core/hw/sh4/modules/serial.o
 extern SCIF_SCFSR2_type SCIF_SCFSR2;
-extern u8 SCIF_SCFRDR2;
-extern SCIF_SCFDR2_type SCIF_SCFDR2;
 
 //./core/hw/sh4/modules/bsc.o
 extern BSC_PDTRA_type BSC_PDTRA;
@@ -502,8 +500,9 @@ bool dc_serialize(void **data, unsigned int *total_size)
 #endif
 
 	REICAST_S(SCIF_SCFSR2);
-	REICAST_S(SCIF_SCFRDR2);
-	REICAST_S(SCIF_SCFDR2);
+	bool dum_bool;
+	REICAST_S(dum_bool);// SCIF_SCFRDR2
+	REICAST_S(i);		// SCIF_SCFDR2
 
 	REICAST_S(BSC_PDTRA);
 
@@ -813,8 +812,9 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 #endif
 
 	REICAST_US(SCIF_SCFSR2);
-	REICAST_US(SCIF_SCFRDR2);
-	REICAST_US(SCIF_SCFDR2);
+	bool dum_bool;
+	REICAST_US(dum_bool);	// SCIF_SCFRDR2
+	REICAST_US(i);			// SCIF_SCFDR2
 
 	REICAST_US(BSC_PDTRA);
 
@@ -1174,8 +1174,9 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 #endif
 
 	REICAST_US(SCIF_SCFSR2);
-	REICAST_US(SCIF_SCFRDR2);
-	REICAST_US(SCIF_SCFDR2);
+	bool dum_bool;
+	REICAST_US(dum_bool);	// SCIF_SCFRDR2
+	REICAST_US(i);			// SCIF_SCFDR2
 
 	REICAST_US(BSC_PDTRA);
 

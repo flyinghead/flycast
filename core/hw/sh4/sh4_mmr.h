@@ -1307,7 +1307,7 @@ union SCIF_SCSCR2_type
 	};
 	u16 full;
 };
-#define SCIF_SCSCR2 SH4IO_REG_T(SCIF,SCSCR2,16)
+extern SCIF_SCSCR2_type SCIF_SCSCR2;
 
 //SCIF SCFTDR2 0xFFE8000C 0x1FE8000C 8 Undefined Undefined Held Held Pclk
 #define SCIF_SCFTDR2 SH4IO_REG(SCIF,SCFTDR2,8)
@@ -1387,7 +1387,6 @@ union SCIF_SCFDR2_type
 	};
 	u16 full;
 };
-extern SCIF_SCFDR2_type SCIF_SCFDR2;
 
 //SCIF SCSPTR2 0xFFE80020 0x1FE80020 16 0x0000 0x0000 Held Held Pclk
 union SCIF_SCSPTR2_type

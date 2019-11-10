@@ -70,7 +70,10 @@ ifdef USE_SDL
 endif
 
 ifdef FOR_LINUX
-    RZDCY_MODULES += linux-dist/ linux/
+	ifndef UNIT_TESTS
+    	RZDCY_MODULES += linux-dist/
+	endif
+    RZDCY_MODULES += linux/
 endif
 
 ifdef FOR_WINDOWS

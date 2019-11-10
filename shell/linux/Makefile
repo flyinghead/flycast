@@ -401,6 +401,10 @@ ifdef DEBUGFAST
     CFLAGS += -DDEBUGFAST
 endif
 
+ifdef UNIT_TESTS
+    CFLAGS += -DUNIT_TESTS
+endif
+
 EXECUTABLE_STRIPPED=nosym-reicast.$(PLATFORM_EXT)
 DC_PLATFORM=dreamcast
 EXECUTABLE=reicast.$(PLATFORM_EXT)
@@ -506,7 +510,27 @@ uninstall:
 	rm -f $(DESTDIR)$(ICON_DIR)/reicast.png
 
 clean:
-	rm -f $(OBJECTS) $(EXECUTABLE) $(EXECUTABLE_STRIPPED) .map $(VERSION_HEADER)
+	rm -f $(OBJECTS) $(EXECUTABLE) $(EXECUTABLE_STRIPPED) .map $(VERSION_HEADER) $(TEST_OBJ) alltests
+
+TEST_SRC_DIR:=$(LOCAL_PATH)/../../tests/src
+TEST_SRC:=$(wildcard $(TEST_SRC_DIR)/*.cpp) $(RZDCY_SRC_DIR)/deps/gtest/src/gtest_main.cc $(RZDCY_SRC_DIR)/deps/gtest/src/gtest-all.cc
+TEST_OBJ:=$(TEST_SRC:.cpp=.build_obj)
+TEST_OBJ:=$(TEST_OBJ:.cc=.build_obj)
+TEST_OBJ:=$(patsubst $(TEST_SRC_DIR)/%,$(BUILDDIR)/%,$(TEST_OBJ))
+TEST_OBJ:=$(patsubst $(RZDCY_SRC_DIR)/%,$(BUILDDIR)/%,$(TEST_OBJ))
+
+$(BUILDDIR)/%.build_obj : $(TEST_SRC_DIR)/%.cpp
+$(BUILDDIR)/%.build_obj: $(TEST_SRC_DIR)/%.cpp $(DEPDIR)/%.d
+	mkdir -p $(dir $@)
+	mkdir -p .dep-$(dir $@)
+	$(CXX) $(EXTRAFLAGS) $(INCS) $(DEPFLAGS) $(CFLAGS) $(MFLAGS) $(CXXFLAGS) $< -o $@
+	$(POSTCOMPILE)
+
+tests: alltests
+	./alltests
+
+alltests: $(TEST_OBJ) $(OBJECTS)
+	$(CXX) $(MFLAGS) $(EXTRAFLAGS) $(LDFLAGS) $(TEST_OBJ) $(OBJECTS) $(LIBS) -o $@
 
 .PRECIOUS = $(DEPDIR)/%.d
 $(DEPDIR)/%.d: ;

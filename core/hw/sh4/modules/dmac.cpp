@@ -122,8 +122,45 @@ void DMAC_Ch2St()
 	// If SB_C2DSTAT reg is in range from 0x13000000 to 0x13FFFFE0, set 1 in SB_LMMODE1 reg.
 	else if((dst >= 0x13000000) && (dst <= 0x13FFFFE0))
 	{
-		die(".\tPVR DList DMA LNMODE1\n\n");
-		src+=len;
+        //printf(">>\tDMAC: PVR DList Ch2 DMA SRC=%X DST=%X LEN=%X SB_LMMODE0 %d\n", src, dst, len, SB_LMMODE0);
+        SB_C2DSTAT += len;
+
+        if (SB_LMMODE1 == 0)
+        {
+            // 64-bit path
+            dst = (dst & 0xFFFFFF) | 0xa4000000;
+            u32 p_addr = src & RAM_MASK;
+            while (len)
+            {
+                if ((p_addr + len) > RAM_SIZE)
+                {
+                    u32 new_len = RAM_SIZE - p_addr;
+                    WriteMemBlock_nommu_dma(dst, src, new_len);
+                    len -= new_len;
+                    src += new_len;
+                    dst += new_len;
+                }
+                else
+                {
+                    WriteMemBlock_nommu_dma(dst, src, len);
+                    src += len;
+                    break;
+                }
+            }
+        }
+        else
+        {
+            // 32-bit path
+            dst = (dst & 0xFFFFFF) | 0xa5000000;
+            while (len > 0)
+            {
+                u32 v = ReadMem32_nommu(src);
+                pvr_write_area1_32(dst, v);
+                len -= 4;
+                src += 4;
+                dst += 4;
+            }
+        }
 	}
 	else 
 	{ 
@@ -146,41 +183,33 @@ void DMAC_Ch2St()
 	asic_RaiseInterrupt(holly_CH2_DMA);
 }
 
-//on demand data transfer
-//ch0/on demand data transfer request
-void dmac_ddt_ch0_ddt(u32 src,u32 dst,u32 count)
-{
-	
-}
-
-//ch2/direct data transfer request
-void dmac_ddt_ch2_direct(u32 dst,u32 count)
-{
-}
-
-//transfer 22kb chunks (or less) [704 x 32] (22528)
-void UpdateDMA()
-{
-	/*if (DMAC_DMAOR.AE==1 || DMAC_DMAOR.DME==0)
-		return;//DMA disabled
-
-	//DMAC _must_ be on DDT mode
-	verify(DMAC_DMAOR.DDT==1);
-
-	for (int ch=0;ch<4;ch++)
-	{
-		if (DMAC_CHCR[ch].DE==1 && DMAC_CHCR[ch].TE==0)
-		{
-			verify(DMAC_CHCR[ch].RS<0x8);
-			verify(DMAC_CHCR[ch].RS<0x4);
-		}
-	}*/
-}
+static const InterruptID dmac_itr[] = { sh4_DMAC_DMTE0, sh4_DMAC_DMTE1, sh4_DMAC_DMTE2, sh4_DMAC_DMTE3 };
 
 template<u32 ch>
 void WriteCHCR(u32 addr, u32 data)
 {
 	DMAC_CHCR(ch).full=data;
+
+	if (DMAC_CHCR(ch).TE == 0 && DMAC_CHCR(ch).DE && DMAC_DMAOR.DME)
+    {
+		if (DMAC_CHCR(ch).RS == 4)
+        {
+			u32 len = DMAC_DMATCR(ch) * 32;
+
+            DEBUG_LOG(SH4, "DMAC: Manual DMA ch:%d rs:%d src: %08X dst: %08X len: %08X SM: %d, DM: %d", ch, DMAC_CHCR(ch).RS, DMAC_SAR(ch), DMAC_DAR(ch), DMAC_DMATCR(ch), DMAC_CHCR(ch).SM, DMAC_CHCR(ch).DM);
+            for (int ofs = 0; ofs < len; ofs += 4)
+            {
+                u32 data = ReadMem32_nommu(DMAC_SAR(ch) + ofs);
+                WriteMem32_nommu(DMAC_DAR(ch) + ofs, data);
+            }
+
+            DMAC_CHCR(ch).TE = 1;
+        }
+
+        InterruptPend(dmac_itr[ch], DMAC_CHCR(ch).TE);
+        InterruptMask(dmac_itr[ch], DMAC_CHCR(ch).IE);
+    }
+
 	//printf("Write to CHCR%d = 0x%X\n",ch,data);
 }
 

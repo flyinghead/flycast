@@ -26,6 +26,7 @@
 
 #include <png.h>
 #include "reios/reios.h"
+#include "cfg/cfg.h"
 
 // TODO Move this out of gles.cpp
 u8* loadPNGData(const string& subpath, int &width, int &height);
@@ -81,7 +82,7 @@ void CustomTexture::LoaderThread()
 
 std::string CustomTexture::GetGameId()
 {
-   std::string game_id(ip_meta.product_number, sizeof(ip_meta.product_number));
+   std::string game_id(cfgGetGameId());
    const size_t str_end = game_id.find_last_not_of(' ');
    if (str_end == std::string::npos)
 	  return "";

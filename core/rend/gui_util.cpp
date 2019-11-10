@@ -152,7 +152,7 @@ void select_directory_popup(const char *prompt, float scaling, StringCallback ca
 						struct dirent *entry = readdir(dir);
 						if (entry == NULL)
 							break;
-						std:string name(entry->d_name);
+						std::string name(entry->d_name);
 						if (name == ".")
 							continue;
 						std::string child_path = path + "/" + name;
