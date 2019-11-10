@@ -106,13 +106,9 @@ private:
 
 	std::unique_ptr<QuadBuffer> quadBuffer;
 
-	vk::ImageView colorImageView;
-	vk::ImageView depthImageView;
-	vk::ImageView stencilImageView;
-
-	std::unique_ptr<FramebufferAttachment> colorAttachment;
+	std::unique_ptr<FramebufferAttachment> color1Attachment;
+	std::unique_ptr<FramebufferAttachment> color2Attachment;
 	std::unique_ptr<FramebufferAttachment> depthAttachment;
-	std::unique_ptr<FramebufferAttachment> depth2Attachment;
 
 	SamplerManager *samplerManager = nullptr;
 	vk::Rect2D currentScissor;

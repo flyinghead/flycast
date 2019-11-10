@@ -35,28 +35,22 @@ void OITPipelineManager::MakeRenderPass()
 			// OP+PT depth attachment
 			vk::AttachmentDescription(vk::AttachmentDescriptionFlags(), GetContext()->GetDepthFormat(), vk::SampleCountFlagBits::e1,
 					vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eStore, vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eStore,
-					vk::ImageLayout::eUndefined, vk::ImageLayout::eShaderReadOnlyOptimal),
-			// new depth attachment
-			vk::AttachmentDescription(vk::AttachmentDescriptionFlags(), GetContext()->GetDepthFormat(), vk::SampleCountFlagBits::e1,
-					vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eDontCare, vk::AttachmentLoadOp::eDontCare, vk::AttachmentStoreOp::eDontCare,
-					vk::ImageLayout::eUndefined, vk::ImageLayout::eDepthStencilAttachmentOptimal),
+					vk::ImageLayout::eUndefined, vk::ImageLayout::eDepthStencilReadOnlyOptimal),
     };
     vk::AttachmentReference swapChainReference(0, vk::ImageLayout::eColorAttachmentOptimal);
     vk::AttachmentReference colorReference(1, vk::ImageLayout::eColorAttachmentOptimal);
     vk::AttachmentReference depthReference(2, vk::ImageLayout::eDepthStencilAttachmentOptimal);
-    vk::AttachmentReference depth2Reference(3, vk::ImageLayout::eDepthStencilAttachmentOptimal);
 
-    vk::AttachmentReference depthInput(2, vk::ImageLayout::eShaderReadOnlyOptimal);	// eShaderReadOnlyOptimal really?
+    vk::AttachmentReference depthReadOnlyRef(2, vk::ImageLayout::eDepthStencilReadOnlyOptimal);
     vk::AttachmentReference colorInput(1, vk::ImageLayout::eShaderReadOnlyOptimal);
-    vk::AttachmentReference unused(VK_ATTACHMENT_UNUSED, vk::ImageLayout::eUndefined);
 
     vk::SubpassDescription subpasses[] = {
     	// Depth and modvol pass	FIXME subpass 0 shouldn't reference the color attachment
     	vk::SubpassDescription(vk::SubpassDescriptionFlags(), vk::PipelineBindPoint::eGraphics, 0, nullptr, 1, &colorReference, nullptr, &depthReference),
     	// Color pass
-    	vk::SubpassDescription(vk::SubpassDescriptionFlags(), vk::PipelineBindPoint::eGraphics, 1, &depthInput, 1, &colorReference, nullptr, &depth2Reference),
+    	vk::SubpassDescription(vk::SubpassDescriptionFlags(), vk::PipelineBindPoint::eGraphics, 1, &depthReadOnlyRef, 1, &colorReference, nullptr, &depthReadOnlyRef),
     	// Final pass
-    	vk::SubpassDescription(vk::SubpassDescriptionFlags(), vk::PipelineBindPoint::eGraphics, 1, &colorInput, 1, &swapChainReference, nullptr, &unused),
+    	vk::SubpassDescription(vk::SubpassDescriptionFlags(), vk::PipelineBindPoint::eGraphics, 1, &colorInput, 1, &swapChainReference, nullptr, nullptr),
     };
 
     vk::SubpassDependency dependencies[] = {
@@ -117,17 +111,19 @@ void OITPipelineManager::CreatePipeline(u32 listType, bool autosort, const PolyP
 
 	// Depth and stencil
 	vk::CompareOp depthOp;
-	if (listType == ListType_Punch_Through || autosort)
+	if (pass == 1)
+		depthOp = vk::CompareOp::eEqual;
+	else if (listType == ListType_Punch_Through || autosort)
 		depthOp = vk::CompareOp::eGreaterOrEqual;
 	else
 		depthOp = depthOps[pp.isp.DepthMode];
 	bool depthWriteEnable;
+	if (pass != 0)
+		depthWriteEnable = false;
 	// Z Write Disable seems to be ignored for punch-through.
 	// Fixes Worms World Party, Bust-a-Move 4 and Re-Volt
-	if (listType == ListType_Punch_Through)
+	else if (listType == ListType_Punch_Through)
 		depthWriteEnable = true;
-	else if (listType == ListType_Translucent)
-		depthWriteEnable = false;
 	else
 		depthWriteEnable = !pp.isp.ZWriteDis;
 

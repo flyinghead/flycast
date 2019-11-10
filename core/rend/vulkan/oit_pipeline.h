@@ -130,9 +130,9 @@ public:
 					vk::DescriptorSetAllocateInfo(GetContext()->GetDescriptorPool(), 1, &pass1Layout)).front());
 		}
 		std::vector<vk::WriteDescriptorSet> writeDescriptorSets;
-		vk::DescriptorImageInfo stencilImageInfo(vk::Sampler(), stencilImageView, vk::ImageLayout::eShaderReadOnlyOptimal);
+		vk::DescriptorImageInfo stencilImageInfo(vk::Sampler(), stencilImageView, vk::ImageLayout::eDepthStencilReadOnlyOptimal);
 		writeDescriptorSets.push_back(vk::WriteDescriptorSet(*pass1DescSet, 0, 0, 1, vk::DescriptorType::eInputAttachment, &stencilImageInfo, nullptr, nullptr));
-		vk::DescriptorImageInfo depthImageInfo(vk::Sampler(), depthImageView, vk::ImageLayout::eShaderReadOnlyOptimal);
+		vk::DescriptorImageInfo depthImageInfo(vk::Sampler(), depthImageView, vk::ImageLayout::eDepthStencilReadOnlyOptimal);
 		writeDescriptorSets.push_back(vk::WriteDescriptorSet(*pass1DescSet, 1, 0, 1, vk::DescriptorType::eInputAttachment, &depthImageInfo, nullptr, nullptr));
 
 		GetContext()->GetDevice().updateDescriptorSets(writeDescriptorSets, nullptr);

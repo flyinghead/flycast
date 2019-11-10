@@ -353,7 +353,7 @@ bool OITDrawer::Draw(const Texture *fogTexture)
 
 		// Color subpass
 		cmdBuffer.nextSubpass(vk::SubpassContents::eInline);
-		GetCurrentDescSet().UpdatePass1Uniforms(stencilImageView, depthImageView);
+		GetCurrentDescSet().UpdatePass1Uniforms(depthAttachment->GetStencilView(), depthAttachment->GetImageView());
 		GetCurrentDescSet().BindPass1DescriptorSets(cmdBuffer);
 
 		// OP + PT
@@ -365,7 +365,7 @@ bool OITDrawer::Draw(const Texture *fogTexture)
 
 		// Final subpass
 		cmdBuffer.nextSubpass(vk::SubpassContents::eInline);
-		GetCurrentDescSet().UpdatePass2Uniforms(colorImageView);
+		GetCurrentDescSet().UpdatePass2Uniforms(color1Attachment->GetImageView());
 		GetCurrentDescSet().BindPass2DescriptorSets(cmdBuffer);
 
 		// Tr modifier volumes
@@ -421,31 +421,27 @@ void OITDrawer::MakeBuffers(int width, int height)
 
 void OITDrawer::MakeAttachments(int width, int height)
 {
-	colorAttachment = std::unique_ptr<FramebufferAttachment>(new FramebufferAttachment(GetContext()->GetPhysicalDevice(),
+	color1Attachment = std::unique_ptr<FramebufferAttachment>(new FramebufferAttachment(GetContext()->GetPhysicalDevice(),
 			GetContext()->GetDevice(), allocator));
-	colorAttachment->Init(width, height, GetContext()->GetColorFormat(), vk::ImageUsageFlagBits::eInputAttachment);
-	colorImageView = colorAttachment->GetImageView();
+	color1Attachment->Init(width, height, GetContext()->GetColorFormat(), vk::ImageUsageFlagBits::eInputAttachment);
+
+	color2Attachment = std::unique_ptr<FramebufferAttachment>(new FramebufferAttachment(GetContext()->GetPhysicalDevice(),
+			GetContext()->GetDevice(), allocator));
+	color2Attachment->Init(width, height, GetContext()->GetColorFormat(), vk::ImageUsageFlagBits::eInputAttachment);
 
 	depthAttachment = std::unique_ptr<FramebufferAttachment>(new FramebufferAttachment(GetContext()->GetPhysicalDevice(),
 				GetContext()->GetDevice(), allocator));
 	depthAttachment->Init(width, height, GetContext()->GetDepthFormat(), vk::ImageUsageFlagBits::eInputAttachment);
-	depthImageView = depthAttachment->GetImageView();
-	stencilImageView = depthAttachment->GetStencilView();
 
-	depth2Attachment = std::unique_ptr<FramebufferAttachment>(new FramebufferAttachment(GetContext()->GetPhysicalDevice(),
-				GetContext()->GetDevice(), allocator));
-	depth2Attachment->Init(width, height, GetContext()->GetDepthFormat());
-	printf("color attachment %p depth %p depth2 %p\n", (VkImage)colorAttachment->GetImage(), (VkImage)depthAttachment->GetImage(),
-			(VkImage)depth2Attachment->GetImage());
+	printf("color attachment %p depth %p\n", (VkImage)color1Attachment->GetImage(), (VkImage)depthAttachment->GetImage());
 }
 
 void OITDrawer::MakeFramebuffers(int width, int height)
 {
 	vk::ImageView attachments[] = {
 			nullptr,	// swap chain image view, set later
-			colorImageView,
-			depthImageView,
-			depth2Attachment->GetImageView()
+			color1Attachment->GetImageView(),
+			depthAttachment->GetImageView(),
 	};
 	framebuffers.reserve(GetContext()->GetSwapChainSize());
 	for (int i = 0; i < GetContext()->GetSwapChainSize(); i++)
