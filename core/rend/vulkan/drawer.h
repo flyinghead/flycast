@@ -29,17 +29,11 @@
 #include "shaders.h"
 #include "texture.h"
 
-enum class TileClipping {
-	Inside,		// render stuff outside the region
-	Off,
-	Outside		// render stuff inside the region
-};
-
 class Drawer
 {
 public:
 	Drawer() = default;
-	virtual ~Drawer() {}
+	virtual ~Drawer() = default;
 	bool Draw(const Texture *fogTexture);
 	Drawer(const Drawer& other) = delete;
 	Drawer(Drawer&& other) = default;
@@ -163,7 +157,7 @@ private:
 class TextureDrawer : public Drawer
 {
 public:
-	void Init(SamplerManager *samplerManager, VulkanAllocator *texAllocator, RttPipelineManager *pipelineManager, TextureCache *textureCache)
+	void Init(SamplerManager *samplerManager, Allocator *allocator, RttPipelineManager *pipelineManager, TextureCache *textureCache)
 	{
 		Drawer::Init(samplerManager, pipelineManager);
 
@@ -194,7 +188,8 @@ protected:
 				newSize *= 2;
 			INFO_LOG(RENDERER, "Increasing RTT main buffer size %d -> %d", !mainBuffer ? 0 : (u32)mainBuffer->bufferSize, newSize);
 			mainBuffer = std::unique_ptr<BufferData>(new BufferData(GetContext()->GetPhysicalDevice(), GetContext()->GetDevice(), newSize,
-					vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eUniformBuffer));
+					vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eUniformBuffer,
+					texAllocator));
 		}
 		return mainBuffer.get();
 	}

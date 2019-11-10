@@ -18,6 +18,7 @@
     You should have received a copy of the GNU General Public License
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
+#pragma once
 #include <glm/glm.hpp>
 #include <glm/gtx/transform.hpp>
 #include "hw/pvr/ta_ctx.h"
@@ -83,6 +84,7 @@ public:
 
 			float startx = 0;
 			float starty = 0;
+
 			const bool vga = FB_R_CTRL.vclk_div == 1;
 			switch (SPG_LOAD.hcount)
 			{
@@ -117,6 +119,7 @@ public:
 			// some heuristic...
 			startx *= 0.8;
 			starty *= 1.1;
+
 			normalMatrix = glm::translate(glm::vec3(startx, starty, 0));
 			scissorMatrix = normalMatrix;
 

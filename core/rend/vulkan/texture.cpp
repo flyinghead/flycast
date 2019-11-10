@@ -224,6 +224,7 @@ void Texture::CreateImage(vk::ImageTiling tiling, vk::ImageUsageFlags usage, vk:
 	else
 	{
 		deviceMemory = device.allocateMemoryUnique(vk::MemoryAllocateInfo(memReq.size, memoryType));
+		memoryOffset = 0;
 	}
 
 	device.bindImageMemory(image.get(), allocator ? sharedDeviceMemory : *deviceMemory, memoryOffset);
@@ -329,7 +330,7 @@ void Texture::GenerateMipmaps()
 	commandBuffer.pipelineBarrier(vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eFragmentShader, {}, nullptr, nullptr, barrier);
 }
 
-void FramebufferAttachment::Init(u32 width, u32 height, vk::Format format)
+void FramebufferAttachment::Init(u32 width, u32 height, vk::Format format, vk::ImageUsageFlags additionalUsageFlags)
 {
 	this->format = format;
 	this->extent = vk::Extent2D { width, height };
@@ -342,28 +343,55 @@ void FramebufferAttachment::Init(u32 width, u32 height, vk::Format format)
 	}
 	else
 	{
-		usage = vk::ImageUsageFlagBits::eColorAttachment;
-		if (settings.rend.RenderToTextureBuffer)
+		if (!(additionalUsageFlags & vk::ImageUsageFlagBits::eStorage))
+			usage = vk::ImageUsageFlagBits::eColorAttachment;
+		if (!(additionalUsageFlags & (vk::ImageUsageFlagBits::eInputAttachment | vk::ImageUsageFlagBits::eStorage)))
 		{
-			usage |= vk::ImageUsageFlagBits::eTransferSrc;
-			stagingBufferData = std::unique_ptr<BufferData>(new BufferData(VulkanContext::Instance()->GetPhysicalDevice(), VulkanContext::Instance()->GetDevice(),
-					width * height * 4, vk::BufferUsageFlagBits::eTransferSrc | vk::BufferUsageFlagBits::eTransferDst));
-		}
-		else
-		{
-			usage |= vk::ImageUsageFlagBits::eSampled;
+			if (settings.rend.RenderToTextureBuffer) // FIXME incorrect for OIT
+			{
+				usage |= vk::ImageUsageFlagBits::eTransferSrc;
+				stagingBufferData = std::unique_ptr<BufferData>(new BufferData(VulkanContext::Instance()->GetPhysicalDevice(), VulkanContext::Instance()->GetDevice(),
+						width * height * 4, vk::BufferUsageFlagBits::eTransferSrc | vk::BufferUsageFlagBits::eTransferDst, allocator));
+			}
+			else
+			{
+				usage |= vk::ImageUsageFlagBits::eSampled;
+			}
 		}
 	}
+	usage |= additionalUsageFlags;
 	vk::ImageCreateInfo imageCreateInfo(vk::ImageCreateFlags(), vk::ImageType::e2D, format, vk::Extent3D(extent, 1), 1, 1, vk::SampleCountFlagBits::e1,
-			vk::ImageTiling::eOptimal, usage,
+			(additionalUsageFlags & vk::ImageUsageFlagBits::eStorage) ? vk::ImageTiling::eLinear : vk::ImageTiling::eOptimal,
+			usage,
 			vk::SharingMode::eExclusive, 0, nullptr, vk::ImageLayout::eUndefined);
 	image = device.createImageUnique(imageCreateInfo);
 	vk::MemoryRequirements memReq = device.getImageMemoryRequirements(image.get());
-	u32 memoryTypeIndex = findMemoryType(physicalDevice.getMemoryProperties(), memReq.memoryTypeBits,
-			vk::MemoryPropertyFlagBits::eDeviceLocal);
-	deviceMemory = device.allocateMemoryUnique(vk::MemoryAllocateInfo(memReq.size, memoryTypeIndex));
-	device.bindImageMemory(image.get(), deviceMemory.get(), 0);
+
+	if (allocator)
+	{
+		if (sharedDeviceMemory)
+			allocator->Free(memoryOffset, memoryType, sharedDeviceMemory);
+	}
+	memoryType = findMemoryType(physicalDevice.getMemoryProperties(), memReq.memoryTypeBits, vk::MemoryPropertyFlagBits::eDeviceLocal);
+	if (allocator)
+	{
+		memoryOffset = allocator->Allocate(memReq.size, memReq.alignment, memoryType, sharedDeviceMemory);
+	}
+	else
+	{
+		deviceMemory = device.allocateMemoryUnique(vk::MemoryAllocateInfo(memReq.size, memoryType));
+		memoryOffset = 0;
+	}
+	device.bindImageMemory(image.get(), allocator ? sharedDeviceMemory : *deviceMemory, memoryOffset);
+
 	vk::ImageViewCreateInfo imageViewCreateInfo(vk::ImageViewCreateFlags(), image.get(), vk::ImageViewType::e2D,
 			format, vk::ComponentMapping(),	vk::ImageSubresourceRange(depth ? vk::ImageAspectFlagBits::eDepth : vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1));
 	imageView = device.createImageViewUnique(imageViewCreateInfo);
+
+	if (depth && (additionalUsageFlags & vk::ImageUsageFlagBits::eInputAttachment))
+	{
+		// Also create an imageView for the stencil
+		imageViewCreateInfo.subresourceRange = vk::ImageSubresourceRange(vk::ImageAspectFlagBits::eStencil, 0, 1, 0, 1);
+		stencilView = device.createImageViewUnique(imageViewCreateInfo);
+	}
 }

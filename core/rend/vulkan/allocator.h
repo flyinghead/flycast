@@ -146,7 +146,7 @@ private:
 class Allocator
 {
 public:
-	virtual ~Allocator() {}
+	virtual ~Allocator() = default;
 	virtual vk::DeviceSize Allocate(vk::DeviceSize size, vk::DeviceSize alignment, u32 memoryType, vk::DeviceMemory& deviceMemory) = 0;
 	virtual void Free(vk::DeviceSize offset, u32 memoryType, vk::DeviceMemory deviceMemory) = 0;
 };

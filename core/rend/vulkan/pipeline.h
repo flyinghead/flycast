@@ -24,8 +24,6 @@
 #include "texture.h"
 #include "hw/pvr/ta_ctx.h"
 
-enum class ModVolMode { Xor, Or, Inclusion, Exclusion, Final };
-
 class DescriptorSets
 {
 public:
@@ -124,7 +122,7 @@ private:
 class PipelineManager
 {
 public:
-	virtual ~PipelineManager() {}
+	virtual ~PipelineManager() = default;
 
 	virtual void Init(ShaderManager *shaderManager)
 	{

@@ -33,7 +33,7 @@ struct BufferData
 		allocator->Free(offset, memoryType, sharedDeviceMemory);
 	}
 
-	void upload(vk::Device const& device, u32 size, const void *data, u32 bufOffset = 0) const
+	void upload(u32 size, const void *data, u32 bufOffset = 0) const
 	{
 		verify((m_propertyFlags & vk::MemoryPropertyFlagBits::eHostCoherent) && (m_propertyFlags & vk::MemoryPropertyFlagBits::eHostVisible));
 		verify(bufOffset + size <= bufferSize);
@@ -43,7 +43,7 @@ struct BufferData
 		device.unmapMemory(sharedDeviceMemory);
 	}
 
-	void upload(vk::Device const& device, size_t count, u32 *sizes, const void **data, u32 bufOffset = 0) const
+	void upload(size_t count, u32 *sizes, const void **data, u32 bufOffset = 0) const
 	{
 		verify((m_propertyFlags & vk::MemoryPropertyFlagBits::eHostCoherent) && (m_propertyFlags & vk::MemoryPropertyFlagBits::eHostVisible));
 

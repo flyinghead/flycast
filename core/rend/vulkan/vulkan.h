@@ -34,7 +34,7 @@ class VulkanContext
 {
 public:
 	VulkanContext() { verify(contextInstance == nullptr); contextInstance = this; }
-	~VulkanContext() { Term(); verify(contextInstance == this); contextInstance = nullptr; }
+	~VulkanContext() { verify(contextInstance == this); contextInstance = nullptr; }
 
 	bool Init();
 	bool InitInstance(const char** extensions, uint32_t extensions_count);
@@ -65,6 +65,7 @@ public:
 	bool IsRendering() const { return rendering; }
 	vk::Queue GetGraphicsQueue() const { return graphicsQueue; }
 	vk::DeviceSize GetUniformBufferAlignment() const { return uniformBufferAlignment; }
+	vk::DeviceSize GetStorageBufferAlignment() const { return storageBufferAlignment; }
 	bool IsFormatSupported(TextureType textureType)
 	{
 		switch (textureType)
@@ -81,8 +82,9 @@ public:
 	}
 	std::string GetDriverName() const { vk::PhysicalDeviceProperties props; physicalDevice.getProperties(&props); return props.deviceName; }
 	std::string GetDriverVersion() const { vk::PhysicalDeviceProperties props; physicalDevice.getProperties(&props); return std::to_string(props.driverVersion); }
+	vk::Format GetColorFormat() const { return colorFormat; }
 	vk::Format GetDepthFormat() const { return depthFormat; }
-
+	vk::ImageView GetSwapChainImageView(int i) const { return imageViews[i].get(); }
 	static VulkanContext *Instance() { return contextInstance; }
 
 private:
@@ -132,9 +134,11 @@ private:
 	u32 graphicsQueueIndex = 0;
 	u32 presentQueueIndex = 0;
 	vk::DeviceSize uniformBufferAlignment = 0;
+	vk::DeviceSize storageBufferAlignment = 0;
 	bool optimalTilingSupported565 = false;
 	bool optimalTilingSupported1555 = false;
 	bool optimalTilingSupported4444 = false;
+	bool fragmentStoresAndAtomics = false;
 	vk::UniqueDevice device;
 
 #ifdef USE_SDL
@@ -146,6 +150,7 @@ private:
 	vk::UniqueSwapchainKHR swapChain;
 	std::vector<vk::UniqueImageView> imageViews;
 	u32 currentImage = 0;
+	vk::Format colorFormat = vk::Format::eUndefined;
 
 	vk::Queue graphicsQueue;
 	vk::Queue presentQueue;

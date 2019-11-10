@@ -21,43 +21,7 @@
 #include "pipeline.h"
 #include "hw/pvr/Renderer_if.h"
 #include "rend/osd.h"
-
-static const vk::CompareOp depthOps[] =
-{
-	vk::CompareOp::eNever,          //0 Never
-	vk::CompareOp::eLess,           //1 Less
-	vk::CompareOp::eEqual,          //2 Equal
-	vk::CompareOp::eLessOrEqual,    //3 Less Or Equal
-	vk::CompareOp::eGreater,        //4 Greater
-	vk::CompareOp::eNotEqual,       //5 Not Equal
-	vk::CompareOp::eGreaterOrEqual, //6 Greater Or Equal
-	vk::CompareOp::eAlways,         //7 Always
-};
-
-static vk::BlendFactor getBlendFactor(u32 instr, bool src)
-{
-	switch (instr) {
-	case 0:	// zero
-		return vk::BlendFactor::eZero;
-	case 1: // one
-		return vk::BlendFactor::eOne;
-	case 2: // other color
-		return src ? vk::BlendFactor::eDstColor : vk::BlendFactor::eSrcColor;
-	case 3: // inverse other color
-		return src ? vk::BlendFactor::eOneMinusDstColor : vk::BlendFactor::eOneMinusSrcColor;
-	case 4: // src alpha
-		return vk::BlendFactor::eSrcAlpha;
-	case 5: // inverse src alpha
-		return vk::BlendFactor::eOneMinusSrcAlpha;
-	case 6: // dst alpha
-		return vk::BlendFactor::eDstAlpha;
-	case 7: // inverse dst alpha
-		return vk::BlendFactor::eOneMinusDstAlpha;
-	default:
-		die("Unsupported blend instruction");
-		return vk::BlendFactor::eZero;
-	}
-}
+#include "quad.h"
 
 void PipelineManager::CreateModVolPipeline(ModVolMode mode)
 {
@@ -363,10 +327,10 @@ void PipelineManager::CreatePipeline(u32 listType, bool sortTriangles, const Pol
 
 void QuadPipeline::CreatePipeline()
 {
-	vk::PipelineVertexInputStateCreateInfo pipelineVertexInputStateCreateInfo;
+	vk::PipelineVertexInputStateCreateInfo pipelineVertexInputStateCreateInfo = GetQuadInputStateCreateInfo(true);
 
 	// Input assembly state
-	vk::PipelineInputAssemblyStateCreateInfo pipelineInputAssemblyStateCreateInfo(vk::PipelineInputAssemblyStateCreateFlags(), vk::PrimitiveTopology::eTriangleList);
+	vk::PipelineInputAssemblyStateCreateInfo pipelineInputAssemblyStateCreateInfo(vk::PipelineInputAssemblyStateCreateFlags(), vk::PrimitiveTopology::eTriangleStrip);
 
 	// Viewport and scissor states
 	vk::PipelineViewportStateCreateInfo pipelineViewportStateCreateInfo(vk::PipelineViewportStateCreateFlags(), 1, nullptr, 1, nullptr);

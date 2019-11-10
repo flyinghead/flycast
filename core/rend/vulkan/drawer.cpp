@@ -62,13 +62,10 @@ TileClipping Drawer::SetTileClip(u32 val, vk::Rect2D& clipRect)
 	else
 		tileClippingMode = TileClipping::Outside;  //render stuff inside the region
 
-	float csx = 0, csy = 0, cex = 0, cey = 0;
-
-
-	csx = (float)(val & 63);
-	cex = (float)((val >> 6) & 63);
-	csy = (float)((val >> 12) & 31);
-	cey = (float)((val >> 17) & 31);
+	float csx = (float)(val & 63);
+	float cex = (float)((val >> 6) & 63);
+	float csy = (float)((val >> 12) & 31);
+	float cey = (float)((val >> 17) & 31);
 	csx = csx * 32;
 	cex = cex * 32 + 32;
 	csy = csy * 32;
@@ -77,30 +74,27 @@ TileClipping Drawer::SetTileClip(u32 val, vk::Rect2D& clipRect)
 	if (csx <= 0 && csy <= 0 && cex >= 640 && cey >= 480)
 		return TileClipping::Off;
 
-	if (tileClippingMode != TileClipping::Off)
+	if (!pvrrc.isRTT)
 	{
-		if (!pvrrc.isRTT)
-		{
-			glm::vec4 clip_start(csx, csy, 0, 1);
-			glm::vec4 clip_end(cex, cey, 0, 1);
-			clip_start = matrices.GetViewportMatrix() * clip_start;
-			clip_end = matrices.GetViewportMatrix() * clip_end;
+		glm::vec4 clip_start(csx, csy, 0, 1);
+		glm::vec4 clip_end(cex, cey, 0, 1);
+		clip_start = matrices.GetViewportMatrix() * clip_start;
+		clip_end = matrices.GetViewportMatrix() * clip_end;
 
-			csx = clip_start[0];
-			csy = clip_start[1];
-			cey = clip_end[1];
-			cex = clip_end[0];
-		}
-		else if (!settings.rend.RenderToTextureBuffer)
-		{
-			csx *= settings.rend.RenderToTextureUpscale;
-			csy *= settings.rend.RenderToTextureUpscale;
-			cex *= settings.rend.RenderToTextureUpscale;
-			cey *= settings.rend.RenderToTextureUpscale;
-		}
-		clipRect = vk::Rect2D(vk::Offset2D(std::max(0, (int)lroundf(csx)), std::max(0, (int)lroundf(csy))),
-				vk::Extent2D(std::max(0, (int)lroundf(cex - csx)), std::max(0, (int)lroundf(cey - csy))));
+		csx = clip_start[0];
+		csy = clip_start[1];
+		cey = clip_end[1];
+		cex = clip_end[0];
 	}
+	else if (!settings.rend.RenderToTextureBuffer)
+	{
+		csx *= settings.rend.RenderToTextureUpscale;
+		csy *= settings.rend.RenderToTextureUpscale;
+		cex *= settings.rend.RenderToTextureUpscale;
+		cey *= settings.rend.RenderToTextureUpscale;
+	}
+	clipRect = vk::Rect2D(vk::Offset2D(std::max(0, (int)lroundf(csx)), std::max(0, (int)lroundf(csy))),
+			vk::Extent2D(std::max(0, (int)lroundf(cex - csx)), std::max(0, (int)lroundf(cey - csy))));
 
 	return tileClippingMode;
 }
@@ -262,7 +256,7 @@ void Drawer::UploadMainBuffer(const VertexShaderUniforms& vertexUniforms, const 
 	u32 totalSize = offsets.fragmentUniformOffset + sizeof(FragmentShaderUniforms);
 
 	BufferData *buffer = GetMainBuffer(totalSize);
-	buffer->upload(GetContext()->GetDevice(), chunks.size(), &chunkSizes[0], &chunks[0]);
+	buffer->upload(chunks.size(), &chunkSizes[0], &chunks[0]);
 }
 
 bool Drawer::Draw(const Texture *fogTexture)
@@ -393,7 +387,7 @@ vk::CommandBuffer TextureDrawer::BeginRenderPass()
 	if (widthPow2 != this->width || heightPow2 != this->height || !depthAttachment)
 	{
 		if (!depthAttachment)
-			depthAttachment = std::unique_ptr<FramebufferAttachment>(new FramebufferAttachment(context->GetPhysicalDevice(), device));
+			depthAttachment = std::unique_ptr<FramebufferAttachment>(new FramebufferAttachment(context->GetPhysicalDevice(), device, texAllocator));
 		depthAttachment->Init(widthPow2, heightPow2, GetContext()->GetDepthFormat());
 	}
 	vk::ImageView colorImageView;
@@ -450,12 +444,12 @@ vk::CommandBuffer TextureDrawer::BeginRenderPass()
 			if (!colorAttachment)
 			{
 				colorAttachment = std::unique_ptr<FramebufferAttachment>(new FramebufferAttachment(context->GetPhysicalDevice(),
-						device));
+						device, texAllocator));
 			}
 			colorAttachment->Init(widthPow2, heightPow2, vk::Format::eR8G8B8A8Unorm);
 		}
-		colorImage = *colorAttachment->GetImage();
-		colorImageView = *colorAttachment->GetImageView();
+		colorImage = colorAttachment->GetImage();
+		colorImageView = colorAttachment->GetImageView();
 		colorImageCurrentLayout = vk::ImageLayout::eUndefined;
 	}
 	width = widthPow2;
@@ -465,7 +459,7 @@ vk::CommandBuffer TextureDrawer::BeginRenderPass()
 
 	vk::ImageView imageViews[] = {
 		colorImageView,
-		*depthAttachment->GetImageView(),
+		depthAttachment->GetImageView(),
 	};
 	framebuffer = device.createFramebufferUnique(vk::FramebufferCreateInfo(vk::FramebufferCreateFlags(),
 			pipelineManager->GetRenderPass(), ARRAY_SIZE(imageViews), imageViews, widthPow2, heightPow2, 1));
@@ -489,7 +483,7 @@ void TextureDrawer::EndRenderPass()
 	{
 		vk::BufferImageCopy copyRegion(0, width, height, vk::ImageSubresourceLayers(vk::ImageAspectFlagBits::eColor, 0, 0, 1), vk::Offset3D(0, 0, 0),
 				vk::Extent3D(vk::Extent2D(width, height), 1));
-		currentCommandBuffer.copyImageToBuffer(*colorAttachment->GetImage(), vk::ImageLayout::eTransferSrcOptimal,
+		currentCommandBuffer.copyImageToBuffer(colorAttachment->GetImage(), vk::ImageLayout::eTransferSrcOptimal,
 				*colorAttachment->GetBufferData()->buffer, copyRegion);
 
 		vk::BufferMemoryBarrier bufferMemoryBarrier(

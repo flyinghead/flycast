@@ -259,6 +259,8 @@
 		AE8C274321122E2500D4D8F4 /* xbrz.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE8C273D21122E2500D4D8F4 /* xbrz.cpp */; };
 		AE90679B235B6F6400CE473C /* gl_context.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE90679A235B6F6400CE473C /* gl_context.cpp */; };
 		AE90679D235DF80400CE473C /* osd.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE90679C235DF80400CE473C /* osd.cpp */; };
+		AEBD141E23780BE800D4AC5D /* compiler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AEBD141C23780BE800D4AC5D /* compiler.cpp */; };
+		AEBD142123780C0000D4AC5D /* quad.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AEBD141F23780C0000D4AC5D /* quad.cpp */; };
 		AED73BAE22FC0E9600ECDB64 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = AED73BAD22FC0E9600ECDB64 /* README.md */; };
 		AED73DC42303E19200ECDB64 /* sdl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AED73DC02303E19100ECDB64 /* sdl.cpp */; };
 		AED73DC72303E57C00ECDB64 /* libSDL2.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AED73DC62303E57C00ECDB64 /* libSDL2.a */; };
@@ -852,6 +854,10 @@
 		AE8C274021122E2500D4D8F4 /* xbrz_tools.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = xbrz_tools.h; sourceTree = "<group>"; };
 		AE90679A235B6F6400CE473C /* gl_context.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = gl_context.cpp; sourceTree = "<group>"; };
 		AE90679C235DF80400CE473C /* osd.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = osd.cpp; sourceTree = "<group>"; };
+		AEBD141C23780BE800D4AC5D /* compiler.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = compiler.cpp; sourceTree = "<group>"; };
+		AEBD141D23780BE800D4AC5D /* compiler.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = compiler.h; sourceTree = "<group>"; };
+		AEBD141F23780C0000D4AC5D /* quad.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = quad.cpp; sourceTree = "<group>"; };
+		AEBD142023780C0000D4AC5D /* quad.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = quad.h; sourceTree = "<group>"; };
 		AED73BAD22FC0E9600ECDB64 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; name = README.md; path = ../../../core/README.md; sourceTree = "<group>"; };
 		AED73DC02303E19100ECDB64 /* sdl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = sdl.cpp; sourceTree = "<group>"; };
 		AED73DC12303E19100ECDB64 /* sdl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = sdl.h; sourceTree = "<group>"; };
@@ -2388,6 +2394,8 @@
 				AE7B904D23565B4100145C6A /* allocator.cpp */,
 				AE7B904E23565B4200145C6A /* allocator.h */,
 				AED73EC8234E827400ECDB64 /* commandpool.h */,
+				AEBD141C23780BE800D4AC5D /* compiler.cpp */,
+				AEBD141D23780BE800D4AC5D /* compiler.h */,
 				AED73EC9234E827400ECDB64 /* drawer.cpp */,
 				AED73EC7234E827400ECDB64 /* drawer.h */,
 				AED73EAF2348E49900ECDB64 /* buffer.cpp */,
@@ -2396,6 +2404,8 @@
 				AED73EB22348E49900ECDB64 /* imgui_impl_vulkan.h */,
 				AED73EB32348E49900ECDB64 /* pipeline.cpp */,
 				AED73EB42348E49900ECDB64 /* pipeline.h */,
+				AEBD141F23780C0000D4AC5D /* quad.cpp */,
+				AEBD142023780C0000D4AC5D /* quad.h */,
 				AED73EB52348E49900ECDB64 /* shaders.cpp */,
 				AED73EB62348E49900ECDB64 /* shaders.h */,
 				AED73EB72348E49900ECDB64 /* texture.cpp */,
@@ -2881,6 +2891,7 @@
 				84B7BF6A1B72720200F9733F /* audiobackend_pulseaudio.cpp in Sources */,
 				AED73E8A2348E45000ECDB64 /* doc.cpp in Sources */,
 				84B7BF3F1B72720200F9733F /* ta.cpp in Sources */,
+				AEBD141E23780BE800D4AC5D /* compiler.cpp in Sources */,
 				AE2A24DA22AE7EB600DD3034 /* ssa.cpp in Sources */,
 				AED73DC42303E19200ECDB64 /* sdl.cpp in Sources */,
 				84B7BF751B72720200F9733F /* gdrom_hle.cpp in Sources */,
@@ -2940,6 +2951,7 @@
 				84B7BF471B72720200F9733F /* sh4_interpreter.cpp in Sources */,
 				84967CC41B8F49EE005F1140 /* pngpread.c in Sources */,
 				AE7B904F23565B4200145C6A /* allocator.cpp in Sources */,
+				AEBD142123780C0000D4AC5D /* quad.cpp in Sources */,
 				AED73E752348E45000ECDB64 /* RemoveTree.cpp in Sources */,
 				AE2A2D7921D6851E004B308D /* 7zStream.c in Sources */,
 				AED73E582348E45000ECDB64 /* Link.cpp in Sources */,

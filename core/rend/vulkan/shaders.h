@@ -76,14 +76,6 @@ struct FragmentShaderUniforms
 class ShaderManager
 {
 public:
-	void Init()
-	{
-		verify(glslang::InitializeProcess());
-	}
-	void Term()
-	{
-		glslang::FinalizeProcess();
-	}
 	vk::ShaderModule GetVertexShader(const VertexShaderParams& params) { return getShader(vertexShaders, params); }
 	vk::ShaderModule GetFragmentShader(const FragmentShaderParams& params) { return getShader(fragmentShaders, params); }
 	vk::ShaderModule GetModVolVertexShader()

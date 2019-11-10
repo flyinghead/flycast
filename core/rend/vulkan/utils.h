@@ -21,6 +21,51 @@
 #pragma once
 #include "vulkan.h"
 
+enum class ModVolMode { Xor, Or, Inclusion, Exclusion, Final };
+
+enum class TileClipping {
+	Inside,		// render stuff outside the region
+	Off,
+	Outside		// render stuff inside the region
+};
+
+static const vk::CompareOp depthOps[] =
+{
+	vk::CompareOp::eNever,          //0 Never
+	vk::CompareOp::eLess,           //1 Less
+	vk::CompareOp::eEqual,          //2 Equal
+	vk::CompareOp::eLessOrEqual,    //3 Less Or Equal
+	vk::CompareOp::eGreater,        //4 Greater
+	vk::CompareOp::eNotEqual,       //5 Not Equal
+	vk::CompareOp::eGreaterOrEqual, //6 Greater Or Equal
+	vk::CompareOp::eAlways,         //7 Always
+};
+
+static vk::BlendFactor getBlendFactor(u32 instr, bool src)
+{
+	switch (instr) {
+	case 0:	// zero
+		return vk::BlendFactor::eZero;
+	case 1: // one
+		return vk::BlendFactor::eOne;
+	case 2: // other color
+		return src ? vk::BlendFactor::eDstColor : vk::BlendFactor::eSrcColor;
+	case 3: // inverse other color
+		return src ? vk::BlendFactor::eOneMinusDstColor : vk::BlendFactor::eOneMinusSrcColor;
+	case 4: // src alpha
+		return vk::BlendFactor::eSrcAlpha;
+	case 5: // inverse src alpha
+		return vk::BlendFactor::eOneMinusSrcAlpha;
+	case 6: // dst alpha
+		return vk::BlendFactor::eDstAlpha;
+	case 7: // inverse dst alpha
+		return vk::BlendFactor::eOneMinusDstAlpha;
+	default:
+		die("Unsupported blend instruction");
+		return vk::BlendFactor::eZero;
+	}
+}
+
 static inline u32 findMemoryType(vk::PhysicalDeviceMemoryProperties const& memoryProperties, u32 typeBits, vk::MemoryPropertyFlags requirementsMask)
 {
 	u32 typeIndex = u32(~0);
@@ -35,13 +80,4 @@ static inline u32 findMemoryType(vk::PhysicalDeviceMemoryProperties const& memor
 	}
 	verify(typeIndex != ~0);
 	return typeIndex;
-}
-
-static inline vk::UniqueDeviceMemory allocateMemory(vk::Device const& device, vk::PhysicalDeviceMemoryProperties const& memoryProperties,
-		vk::MemoryRequirements const& memoryRequirements,
-		vk::MemoryPropertyFlags memoryPropertyFlags)
-{
-	u32 memoryTypeIndex = findMemoryType(memoryProperties, memoryRequirements.memoryTypeBits, memoryPropertyFlags);
-
-	return device.allocateMemoryUnique(vk::MemoryAllocateInfo(memoryRequirements.size, memoryTypeIndex));
 }

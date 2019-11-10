@@ -28,6 +28,7 @@
 #include "shaders.h"
 #include "rend/gui.h"
 #include "rend/osd.h"
+#include "quad.h"
 
 class VulkanRenderer : public Renderer
 {
@@ -35,7 +36,6 @@ public:
 	bool Init() override
 	{
 		DEBUG_LOG(RENDERER, "VulkanRenderer::Init");
-		shaderManager.Init();
 		texCommandPool.Init();
 
 		// FIXME this might be called after initial init
@@ -56,6 +56,8 @@ public:
 
 		screenDrawer.Init(&samplerManager, &shaderManager);
 		quadPipeline.Init(&shaderManager);
+		quadBuffer = std::unique_ptr<QuadBuffer>(new QuadBuffer(&texAllocator));
+
 #ifdef __ANDROID__
 		if (!vjoyTexture)
 		{
@@ -105,10 +107,10 @@ public:
 	{
 		DEBUG_LOG(RENDERER, "VulkanRenderer::Term");
 		GetContext()->WaitIdle();
+		quadBuffer = nullptr;
 		textureCache.Clear();
 		fogTexture = nullptr;
 		texCommandPool.Term();
-		shaderManager.Term();
 		framebufferTextures.clear();
 	}
 
@@ -158,6 +160,7 @@ public:
 			min_y += height;
 			height = -height;
 		}
+		quadBuffer->Update();
 
 		vk::CommandBuffer cmdBuffer = screenDrawer.BeginRenderPass();
 
@@ -172,8 +175,12 @@ public:
 
 		vk::Viewport viewport(min_x, min_y, width, height);
 		cmdBuffer.setViewport(0, 1, &viewport);
-		cmdBuffer.setScissor(0, vk::Rect2D(vk::Offset2D(min_x, min_y), vk::Extent2D(width, height)));
-		cmdBuffer.draw(3, 1, 0, 0);
+		cmdBuffer.setScissor(0, vk::Rect2D(
+				vk::Offset2D((u32)std::max(lroundf(min_x), 0L), (u32)std::max(lroundf(min_y), 0L)),
+				vk::Extent2D((u32)std::max(lroundf(width), 0L), (u32)std::max(lroundf(height), 0L))));
+		quadBuffer->Bind(cmdBuffer);
+		quadBuffer->Draw(cmdBuffer);
+//		cmdBuffer.draw(3, 1, 0, 0);
 
     	gui_display_osd();
 
@@ -246,7 +253,7 @@ public:
 		cmdBuffer.setViewport(0, 1, &viewport);
 		const vk::Rect2D scissor({ 0, 0 }, { (u32)screen_width, (u32)screen_height });
 		cmdBuffer.setScissor(0, 1, &scissor);
-		osdBuffer->upload(GetContext()->GetDevice(), osdVertices.size() * sizeof(OSDVertex), osdVertices.data());
+		osdBuffer->upload(osdVertices.size() * sizeof(OSDVertex), osdVertices.data());
 		const vk::DeviceSize zero = 0;
 		cmdBuffer.bindVertexBuffers(0, 1, &osdBuffer->buffer.get(), &zero);
 		for (int i = 0; i < osdVertices.size(); i += 4)
@@ -330,6 +337,7 @@ private:
 		fogTexture->SetCommandBuffer(nullptr);
 	}
 
+	std::unique_ptr<QuadBuffer> quadBuffer;
 	std::unique_ptr<Texture> fogTexture;
 	CommandPool texCommandPool;
 

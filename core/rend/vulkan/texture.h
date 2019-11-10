@@ -42,9 +42,9 @@ struct Texture : BaseTextureCacheData
 	bool IsNew() const { return !image.get(); }
 	vk::ImageView GetImageView() const { return *imageView; }
 	void SetCommandBuffer(vk::CommandBuffer commandBuffer) { this->commandBuffer = commandBuffer; }
-	virtual bool Force32BitTexture(TextureType type) override { return !VulkanContext::Instance()->IsFormatSupported(type); }
+	virtual bool Force32BitTexture(TextureType type) const override { return !VulkanContext::Instance()->IsFormatSupported(type); }
 
-	void SetAllocator(VulkanAllocator *allocator) { this->allocator = allocator; }
+	void SetAllocator(Allocator *allocator) { this->allocator = allocator; }
 	void SetPhysicalDevice(vk::PhysicalDevice physicalDevice) { this->physicalDevice = physicalDevice; }
 	void SetDevice(vk::Device device) { this->device = device; }
 
@@ -68,12 +68,13 @@ private:
 
 	vk::PhysicalDevice physicalDevice;
 	vk::Device device;
-	VulkanAllocator *allocator = nullptr;
+	Allocator *allocator = nullptr;
 	vk::DeviceMemory sharedDeviceMemory;
 	u32 memoryType = 0;
 	vk::DeviceSize memoryOffset = 0;
 
 	friend class TextureDrawer;
+	friend class OITTextureDrawer;
 };
 
 class SamplerManager
@@ -107,28 +108,37 @@ private:
 class FramebufferAttachment
 {
 public:
-	FramebufferAttachment(vk::PhysicalDevice physicalDevice, vk::Device device)
-		: physicalDevice(physicalDevice), device(device), format(vk::Format::eUndefined)
+	FramebufferAttachment(vk::PhysicalDevice physicalDevice, vk::Device device, Allocator *allocator = nullptr)
+		: physicalDevice(physicalDevice), device(device), format(vk::Format::eUndefined), allocator(allocator)
 		{}
-	void Init(u32 width, u32 height, vk::Format format);
+	~FramebufferAttachment() {
+		if (allocator != nullptr && sharedDeviceMemory)
+			allocator->Free(memoryOffset, memoryType, sharedDeviceMemory);
+	}
+	void Init(u32 width, u32 height, vk::Format format, vk::ImageUsageFlags = vk::ImageUsageFlags());
 	void Reset() { image.reset(); imageView.reset(); deviceMemory.reset(); }
 
-	vk::UniqueImageView& GetImageView() { return imageView; }
-	vk::UniqueImage& GetImage() { return image; }
-	vk::UniqueDeviceMemory& GetDeviceMemory() { return deviceMemory; }
+	vk::ImageView GetImageView() const { return *imageView; }
+	vk::Image GetImage() const { return *image; }
 	const BufferData* GetBufferData() const { return stagingBufferData.get(); }
+	vk::ImageView GetStencilView() const { return *stencilView; }
 
 private:
 	vk::Format format;
 	vk::Extent2D extent;
 
 	std::unique_ptr<BufferData> stagingBufferData;
+	vk::DeviceMemory sharedDeviceMemory;
+	vk::DeviceSize memoryOffset = 0;
+	u32 memoryType = 0;
 	vk::UniqueDeviceMemory deviceMemory;
 	vk::UniqueImageView imageView;
+	vk::UniqueImageView stencilView;
 	vk::UniqueImage image;
 
 	vk::PhysicalDevice physicalDevice;
 	vk::Device device;
+	Allocator *allocator;
 };
 
 class TextureCache : public BaseTextureCache<Texture>

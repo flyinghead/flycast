@@ -27,6 +27,7 @@
 #include <sdl/sdl.h>
 #include <SDL2/SDL_vulkan.h>
 #endif
+#include "compiler.h"
 
 VulkanContext *VulkanContext::contextInstance;
 
@@ -41,9 +42,11 @@ static VkBool32 debugUtilsMessengerCallback(VkDebugUtilsMessageSeverityFlagBitsE
 {
 	std::string msg = vk::to_string(static_cast<vk::DebugUtilsMessageSeverityFlagBitsEXT>(messageSeverity)) + ": "
 			+ vk::to_string(static_cast<vk::DebugUtilsMessageTypeFlagsEXT>(messageTypes)) + ": ";
-	msg += std::string("messageIDName=") + pCallbackData->pMessageIdName + " ";
+	if (pCallbackData->pMessageIdName)
+		msg += std::string("messageIDName=") + pCallbackData->pMessageIdName + " ";
 //	msg += std::string("messageIdNumber=") + pCallbackData->messageIdNumber + " ";
-	msg += pCallbackData->pMessage;
+	if (pCallbackData->pMessage)
+		msg += pCallbackData->pMessage;
 	/* TODO
 	if (0 < pCallbackData->queueLabelCount)
 	{
@@ -175,6 +178,7 @@ bool VulkanContext::InitInstance(const char** extensions, uint32_t extensions_co
 		vk::PhysicalDeviceProperties properties;
 		physicalDevice.getProperties(&properties);
 		uniformBufferAlignment = properties.limits.minUniformBufferOffsetAlignment;
+		storageBufferAlignment = properties.limits.minStorageBufferOffsetAlignment;
 
 		vk::FormatProperties formatProperties = physicalDevice.getFormatProperties(vk::Format::eR5G5B5A1UnormPack16);
 		if (formatProperties.optimalTilingFeatures & vk::FormatFeatureFlagBits::eSampledImage)
@@ -191,6 +195,11 @@ bool VulkanContext::InitInstance(const char** extensions, uint32_t extensions_co
 			optimalTilingSupported4444 = true;
 		else
 			NOTICE_LOG(RENDERER, "eR4G4B4A4UnormPack16 not supported for optimal tiling");
+		vk::PhysicalDeviceFeatures features;
+		physicalDevice.getFeatures(&features);
+		fragmentStoresAndAtomics = features.fragmentStoresAndAtomics;
+
+		ShaderCompiler::Init();
 
 		return true;
 	}
@@ -240,7 +249,8 @@ vk::Format VulkanContext::InitDepthBuffer()
 	}
 	NOTICE_LOG(RENDERER, "Using depth format %s tiling %s", vk::to_string(depthFormat).c_str(), vk::to_string(tiling).c_str());
 
-	vk::ImageCreateInfo imageCreateInfo(vk::ImageCreateFlags(), vk::ImageType::e2D, depthFormat, vk::Extent3D(width, height, 1), 1, 1, vk::SampleCountFlagBits::e1, tiling, vk::ImageUsageFlagBits::eDepthStencilAttachment);
+	vk::ImageCreateInfo imageCreateInfo(vk::ImageCreateFlags(), vk::ImageType::e2D, depthFormat, vk::Extent3D(width, height, 1), 1, 1,
+			vk::SampleCountFlagBits::e1, tiling, vk::ImageUsageFlagBits::eDepthStencilAttachment);
 	depthImage = device->createImageUnique(imageCreateInfo);
 
 	vk::PhysicalDeviceMemoryProperties memoryProperties = physicalDevice.getMemoryProperties();
@@ -369,8 +379,11 @@ bool VulkanContext::InitDevice()
 		// create a UniqueDevice
 		float queuePriority = 1.0f;
 		vk::DeviceQueueCreateInfo deviceQueueCreateInfo(vk::DeviceQueueCreateFlags(), graphicsQueueIndex, 1, &queuePriority);
+		vk::PhysicalDeviceFeatures features;
+		if (fragmentStoresAndAtomics)
+			features.fragmentStoresAndAtomics = true;
 		device = physicalDevice.createDeviceUnique(vk::DeviceCreateInfo(vk::DeviceCreateFlags(), 1, &deviceQueueCreateInfo,
-				0, nullptr, deviceExtensions.size(), &deviceExtensions[0]));
+				0, nullptr, deviceExtensions.size(), &deviceExtensions[0], &features));
 
 		// This links entry points directly from the driver and isn't absolutely necessary
 		volkLoadDevice(static_cast<VkDevice>(*device));
@@ -385,14 +398,14 @@ bool VulkanContext::InitDevice()
             { vk::DescriptorType::eSampler, 2 },
             { vk::DescriptorType::eCombinedImageSampler, 4000 },
             { vk::DescriptorType::eSampledImage, 2 },
-            { vk::DescriptorType::eStorageImage, 2 },
+            { vk::DescriptorType::eStorageImage, 12 },
             { vk::DescriptorType::eUniformTexelBuffer, 2 },
 			{ vk::DescriptorType::eStorageTexelBuffer, 2 },
-            { vk::DescriptorType::eUniformBuffer, 12 },
-            { vk::DescriptorType::eStorageBuffer, 2 },
+            { vk::DescriptorType::eUniformBuffer, 36 },
+            { vk::DescriptorType::eStorageBuffer, 36 },
             { vk::DescriptorType::eUniformBufferDynamic, 2 },
             { vk::DescriptorType::eStorageBufferDynamic, 2 },
-            { vk::DescriptorType::eInputAttachment, 2 }
+            { vk::DescriptorType::eInputAttachment, 36 }
         };
 	    descriptorPool = device->createDescriptorPoolUnique(vk::DescriptorPoolCreateInfo(vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet,
 	    		10000, ARRAY_SIZE(pool_sizes), pool_sizes));
@@ -447,7 +460,6 @@ void VulkanContext::CreateSwapChain()
 		// get the supported VkFormats
 		std::vector<vk::SurfaceFormatKHR> formats = physicalDevice.getSurfaceFormatsKHR(GetSurface());
 		assert(!formats.empty());
-		vk::Format colorFormat = vk::Format::eUndefined;
 		for (const auto& f : formats)
 		{
 			DEBUG_LOG(RENDERER, "Supported surface format: %s", vk::to_string(f.format).c_str());
@@ -637,7 +649,7 @@ void VulkanContext::NewFrame()
 	device->waitForFences(1, &(*drawFences[currentImage]), true, UINT64_MAX);
 	device->resetFences(1, &(*drawFences[currentImage]));
 	device->resetCommandPool(*commandPools[currentImage], vk::CommandPoolResetFlagBits::eReleaseResources);
-	vk::CommandBuffer& commandBuffer = *commandBuffers[currentImage];
+	vk::CommandBuffer commandBuffer = *commandBuffers[currentImage];
 	commandBuffer.begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));
 	verify(!rendering);
 	rendering = true;
@@ -646,14 +658,14 @@ void VulkanContext::NewFrame()
 void VulkanContext::BeginRenderPass()
 {
 	const vk::ClearValue clear_colors[] = { vk::ClearColorValue(std::array<float, 4>{0.f, 0.f, 0.f, 1.f}), vk::ClearDepthStencilValue{ 0.f, 0 } };
-	vk::CommandBuffer& commandBuffer = *commandBuffers[currentImage];
+	vk::CommandBuffer commandBuffer = *commandBuffers[currentImage];
 	commandBuffer.beginRenderPass(vk::RenderPassBeginInfo(*renderPass, *framebuffers[currentImage], vk::Rect2D({0, 0}, {width, height}), 2, clear_colors),
 			vk::SubpassContents::eInline);
 }
 
 void VulkanContext::EndFrame()
 {
-	vk::CommandBuffer& commandBuffer = *commandBuffers[currentImage];
+	vk::CommandBuffer commandBuffer = *commandBuffers[currentImage];
 	commandBuffer.endRenderPass();
 	commandBuffer.end();
 	vk::PipelineStageFlags wait_stage = vk::PipelineStageFlagBits::eColorAttachmentOutput;
@@ -697,6 +709,7 @@ void VulkanContext::Term()
             }
         }
     }
+	ShaderCompiler::Term();
 	swapChain.reset();
 	imageViews.clear();
 	framebuffers.clear();
