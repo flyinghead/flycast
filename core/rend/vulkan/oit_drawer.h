@@ -41,8 +41,8 @@ public:
 	OITDrawer& operator=(const OITDrawer& other) = delete;
 	OITDrawer& operator=(OITDrawer&& other) = default;
 
-	virtual vk::CommandBuffer BeginRenderPass() = 0;
-	virtual void EndRenderPass() = 0;
+	virtual vk::CommandBuffer NewFrame() = 0;
+	virtual void EndFrame() = 0;
 	void SetScissor(const vk::CommandBuffer& cmdBuffer, vk::Rect2D scissor)
 	{
 		if (scissor != currentScissor)
@@ -60,23 +60,22 @@ protected:
 		this->samplerManager = samplerManager;
 		if (!quadBuffer)
 			quadBuffer = std::unique_ptr<QuadBuffer>(new QuadBuffer(allocator));
-		vk::Extent2D viewport = GetContext()->GetViewPort();
-		MakeAttachments(viewport.width, viewport.height);
-		MakeFramebuffers(viewport.width, viewport.height);
-		MakeBuffers(viewport.width, viewport.height);
 	}
 	virtual OITDescriptorSets& GetCurrentDescSet() = 0;
 	virtual BufferData *GetMainBuffer(u32 size) = 0;
+	virtual vk::Framebuffer GetCurrentFramebuffer() const = 0;
+	void MakeBuffers(int width, int height);
+	virtual vk::Format GetColorFormat() const = 0;
 
 	VulkanContext *GetContext() const { return VulkanContext::Instance(); }
 
 	OITPipelineManager *pipelineManager = nullptr;
+	vk::Rect2D viewport;
 	vk::Rect2D baseScissor;
 	TransformMatrix<false> matrices;
 	Allocator *allocator = nullptr;
-	std::vector<vk::UniqueFramebuffer> framebuffers;
-	std::unique_ptr<FramebufferAttachment> abufferPointerAttachment;
-	bool abufferPointerTransitionNeeded = false;
+	std::array<std::unique_ptr<FramebufferAttachment>, 2> colorAttachments;
+	std::unique_ptr<FramebufferAttachment> depthAttachment;
 
 private:
 	TileClipping SetTileClip(u32 val, vk::Rect2D& clipRect);
@@ -92,9 +91,6 @@ private:
 	{
 		return (u32)(alignment - (offset & (alignment - 1)));
 	}
-	void MakeAttachments(int width, int height);
-	void MakeFramebuffers(int width, int height);
-	void MakeBuffers(int width, int height);
 
 	struct {
 		vk::DeviceSize indexOffset = 0;
@@ -106,16 +102,17 @@ private:
 
 	std::unique_ptr<QuadBuffer> quadBuffer;
 
-	std::unique_ptr<FramebufferAttachment> color1Attachment;
-	std::unique_ptr<FramebufferAttachment> color2Attachment;
-	std::unique_ptr<FramebufferAttachment> depthAttachment;
+	std::array<vk::UniqueFramebuffer, 2> tempFramebuffers;
 
 	SamplerManager *samplerManager = nullptr;
 	vk::Rect2D currentScissor;
 	std::unique_ptr<BufferData> pixelBuffer;
-protected: //FIXME
 	std::unique_ptr<BufferData> pixelCounter;
 	std::unique_ptr<BufferData> pixelCounterReset;
+	std::unique_ptr<FramebufferAttachment> abufferPointerAttachment;
+	bool abufferPointerTransitionNeeded = false;
+	int maxWidth = 0;
+	int maxHeight = 0;
 };
 
 class OITScreenDrawer : public OITDrawer
@@ -138,9 +135,10 @@ public:
 						screenPipelineManager->GetPipelineLayout(),
 						screenPipelineManager->GetPerFrameDSLayout(),
 						screenPipelineManager->GetPerPolyDSLayout(),
-						screenPipelineManager->GetPass1DSLayout(),
-						screenPipelineManager->GetPass2DSLayout());
+						screenPipelineManager->GetColorInputDSLayout());
 			}
+		vk::Extent2D viewport = GetContext()->GetViewPort();
+		MakeFramebuffers(viewport.width, viewport.height);
 	}
 	OITScreenDrawer() = default;
 	OITScreenDrawer(const OITScreenDrawer& other) = delete;
@@ -148,8 +146,8 @@ public:
 	OITScreenDrawer& operator=(const OITScreenDrawer& other) = delete;
 	OITScreenDrawer& operator=(OITScreenDrawer&& other) = default;
 
-	virtual vk::CommandBuffer BeginRenderPass() override;
-	virtual void EndRenderPass() override
+	virtual vk::CommandBuffer NewFrame() override;
+	virtual void EndFrame() override
 	{
 		GetContext()->EndFrame();
 	}
@@ -178,10 +176,14 @@ protected:
 		}
 		return mainBuffers[GetCurrentImage()].get();
 	};
+	virtual vk::Framebuffer GetCurrentFramebuffer() const override { return *framebuffers[GetCurrentImage()]; }
+	virtual vk::Format GetColorFormat() const { return GetContext()->GetColorFormat(); }
 
 private:
-	int GetCurrentImage() { return GetContext()->GetCurrentImageIndex(); }
+	int GetCurrentImage() const { return GetContext()->GetCurrentImageIndex(); }
+	void MakeFramebuffers(int width, int height);
 
+	std::vector<vk::UniqueFramebuffer> framebuffers;
 	std::vector<OITDescriptorSets> descriptorSets;
 	std::vector<std::unique_ptr<BufferData>> mainBuffers;
 	std::unique_ptr<OITPipelineManager> screenPipelineManager;
@@ -198,8 +200,7 @@ public:
 				pipelineManager->GetPipelineLayout(),
 				pipelineManager->GetPerFrameDSLayout(),
 				pipelineManager->GetPerPolyDSLayout(),
-				pipelineManager->GetPass1DSLayout(),
-				pipelineManager->GetPass2DSLayout());
+				pipelineManager->GetColorInputDSLayout());
 		fence = GetContext()->GetDevice().createFenceUnique(vk::FenceCreateInfo());
 		this->textureCache = textureCache;
 	}
@@ -210,10 +211,10 @@ public:
 	OITTextureDrawer(OITTextureDrawer&& other) = default;
 	OITTextureDrawer& operator=(const OITTextureDrawer& other) = delete;
 	OITTextureDrawer& operator=(OITTextureDrawer&& other) = default;
-	virtual void EndRenderPass() override;
+	virtual void EndFrame() override;
 
 protected:
-	virtual vk::CommandBuffer BeginRenderPass() override;
+	virtual vk::CommandBuffer NewFrame() override;
 	OITDescriptorSets& GetCurrentDescSet() override { return descriptorSets; }
 
 	virtual BufferData* GetMainBuffer(u32 size) override
@@ -230,10 +231,10 @@ protected:
 		}
 		return mainBuffer.get();
 	}
+	virtual vk::Framebuffer GetCurrentFramebuffer() const override { return *framebuffer; }
+	virtual vk::Format GetColorFormat() const { return vk::Format::eR8G8B8A8Unorm; }
 
 private:
-	u32 width = 0;
-	u32 height = 0;
 	u32 textureAddr = 0;
 
 	Texture *texture = nullptr;
@@ -241,7 +242,6 @@ private:
 	vk::CommandBuffer currentCommandBuffer;
 	vk::UniqueFramebuffer framebuffer;
 	std::unique_ptr<FramebufferAttachment> colorAttachment;
-	std::unique_ptr<FramebufferAttachment> depthAttachment;
 	vk::UniqueFence fence;
 
 	OITDescriptorSets descriptorSets;

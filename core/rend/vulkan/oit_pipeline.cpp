@@ -21,64 +21,6 @@
 #include "oit_pipeline.h"
 #include "quad.h"
 
-void OITPipelineManager::MakeRenderPass()
-{
-    vk::AttachmentDescription attachmentDescriptions[] = {
-    		// Swap chain image
-    		vk::AttachmentDescription(vk::AttachmentDescriptionFlags(), GetContext()->GetColorFormat(), vk::SampleCountFlagBits::e1,
-    				vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eStore, vk::AttachmentLoadOp::eDontCare, vk::AttachmentStoreOp::eDontCare,
-					vk::ImageLayout::eUndefined, vk::ImageLayout::ePresentSrcKHR),
-			// OP+PT color attachment
-			vk::AttachmentDescription(vk::AttachmentDescriptionFlags(), GetContext()->GetColorFormat(), vk::SampleCountFlagBits::e1,
-					vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eStore, vk::AttachmentLoadOp::eDontCare, vk::AttachmentStoreOp::eDontCare,
-					vk::ImageLayout::eUndefined, vk::ImageLayout::eShaderReadOnlyOptimal),
-			// OP+PT depth attachment
-			vk::AttachmentDescription(vk::AttachmentDescriptionFlags(), GetContext()->GetDepthFormat(), vk::SampleCountFlagBits::e1,
-					vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eStore, vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eStore,
-					vk::ImageLayout::eUndefined, vk::ImageLayout::eDepthStencilReadOnlyOptimal),
-    };
-    vk::AttachmentReference swapChainReference(0, vk::ImageLayout::eColorAttachmentOptimal);
-    vk::AttachmentReference colorReference(1, vk::ImageLayout::eColorAttachmentOptimal);
-    vk::AttachmentReference depthReference(2, vk::ImageLayout::eDepthStencilAttachmentOptimal);
-
-    vk::AttachmentReference depthReadOnlyRef(2, vk::ImageLayout::eDepthStencilReadOnlyOptimal);
-    vk::AttachmentReference colorInput(1, vk::ImageLayout::eShaderReadOnlyOptimal);
-
-    vk::SubpassDescription subpasses[] = {
-    	// Depth and modvol pass	FIXME subpass 0 shouldn't reference the color attachment
-    	vk::SubpassDescription(vk::SubpassDescriptionFlags(), vk::PipelineBindPoint::eGraphics, 0, nullptr, 1, &colorReference, nullptr, &depthReference),
-    	// Color pass
-    	vk::SubpassDescription(vk::SubpassDescriptionFlags(), vk::PipelineBindPoint::eGraphics, 1, &depthReadOnlyRef, 1, &colorReference, nullptr, &depthReadOnlyRef),
-    	// Final pass
-    	vk::SubpassDescription(vk::SubpassDescriptionFlags(), vk::PipelineBindPoint::eGraphics, 1, &colorInput, 1, &swapChainReference, nullptr, nullptr),
-    };
-
-    vk::SubpassDependency dependencies[] = {
-    	vk::SubpassDependency(VK_SUBPASS_EXTERNAL, 0, vk::PipelineStageFlagBits::eFragmentShader, vk::PipelineStageFlagBits::eEarlyFragmentTests,
-    			vk::AccessFlagBits::eInputAttachmentRead | vk::AccessFlagBits::eShaderRead,
-				vk::AccessFlagBits::eDepthStencilAttachmentRead | vk::AccessFlagBits::eDepthStencilAttachmentWrite,
-				vk::DependencyFlagBits::eByRegion),
-		vk::SubpassDependency(VK_SUBPASS_EXTERNAL, 1, vk::PipelineStageFlagBits::eFragmentShader, vk::PipelineStageFlagBits::eColorAttachmentOutput,
-				vk::AccessFlagBits::eInputAttachmentRead, vk::AccessFlagBits::eColorAttachmentWrite, vk::DependencyFlagBits::eByRegion),
-//    	vk::SubpassDependency(VK_SUBPASS_EXTERNAL, 0, vk::PipelineStageFlagBits::eBottomOfPipe, vk::PipelineStageFlagBits::eColorAttachmentOutput,
-//    			vk::AccessFlagBits::eMemoryRead, vk::AccessFlagBits::eColorAttachmentWrite | vk::AccessFlagBits::eColorAttachmentRead, vk::DependencyFlagBits::eByRegion),
-		vk::SubpassDependency(0, 1, vk::PipelineStageFlagBits::eLateFragmentTests, vk::PipelineStageFlagBits::eFragmentShader,
-				vk::AccessFlagBits::eDepthStencilAttachmentRead | vk::AccessFlagBits::eDepthStencilAttachmentWrite,
-				vk::AccessFlagBits::eInputAttachmentRead | vk::AccessFlagBits::eShaderRead, vk::DependencyFlagBits::eByRegion),
-		vk::SubpassDependency(1, 2, vk::PipelineStageFlagBits::eColorAttachmentOutput, vk::PipelineStageFlagBits::eFragmentShader,
-				vk::AccessFlagBits::eColorAttachmentWrite, vk::AccessFlagBits::eInputAttachmentRead, vk::DependencyFlagBits::eByRegion),
-		vk::SubpassDependency(2, 2, vk::PipelineStageFlagBits::eFragmentShader, vk::PipelineStageFlagBits::eFragmentShader,
-				vk::AccessFlagBits::eShaderRead, vk::AccessFlagBits::eShaderWrite, vk::DependencyFlagBits::eByRegion),
-		vk::SubpassDependency(2, VK_SUBPASS_EXTERNAL, vk::PipelineStageFlagBits::eColorAttachmentOutput, vk::PipelineStageFlagBits::eBottomOfPipe,
-				vk::AccessFlagBits::eColorAttachmentRead | vk::AccessFlagBits::eColorAttachmentWrite, vk::AccessFlagBits::eMemoryRead, vk::DependencyFlagBits::eByRegion),
-    };
-
-    renderPass = GetContext()->GetDevice().createRenderPassUnique(vk::RenderPassCreateInfo(vk::RenderPassCreateFlags(),
-    		ARRAY_SIZE(attachmentDescriptions), attachmentDescriptions,
-    		ARRAY_SIZE(subpasses), subpasses,
-			ARRAY_SIZE(dependencies), dependencies));
-}
-
 void OITPipelineManager::CreatePipeline(u32 listType, bool autosort, const PolyParam& pp, int pass)
 {
 	vk::PipelineVertexInputStateCreateInfo pipelineVertexInputStateCreateInfo = GetMainVertexInputStateCreateInfo();
@@ -231,8 +173,8 @@ void OITPipelineManager::CreatePipeline(u32 listType, bool autosort, const PolyP
 	  &pipelineColorBlendStateCreateInfo,         // pColorBlendState
 	  &pipelineDynamicStateCreateInfo,            // pDynamicState
 	  *pipelineLayout,                            // layout
-	  *renderPass,                                // renderPass
-	  pass == 0 ? 0 : 1                           // subpass
+	  renderPasses->GetRenderPass(true, true),    // renderPass
+	  pass == 0 ? (listType == ListType_Translucent ? 2 : 0) : 1 // subpass
 	);
 
 	pipelines[hash(listType, autosort, &pp, pass)] = GetContext()->GetDevice().createGraphicsPipelineUnique(GetContext()->GetPipelineCache(),
@@ -318,7 +260,7 @@ void OITPipelineManager::CreateFinalPipeline(bool autosort)
 	  &pipelineColorBlendStateCreateInfo,         // pColorBlendState
 	  &pipelineDynamicStateCreateInfo,            // pDynamicState
 	  *pipelineLayout,                            // layout
-	  *renderPass,                                // renderPass
+	  renderPasses->GetRenderPass(true, true),    // renderPass
 	  2                                           // subpass
 	);
 
@@ -397,7 +339,7 @@ void OITPipelineManager::CreateClearPipeline()
 	  &pipelineColorBlendStateCreateInfo,         // pColorBlendState
 	  &pipelineDynamicStateCreateInfo,            // pDynamicState
 	  *pipelineLayout,                            // layout
-	  *renderPass,                                // renderPass
+	  renderPasses->GetRenderPass(true, true),    // renderPass
 	  2                                           // subpass
 	);
 
@@ -525,7 +467,7 @@ void OITPipelineManager::CreateModVolPipeline(ModVolMode mode)
 	  &pipelineColorBlendStateCreateInfo,         // pColorBlendState
 	  &pipelineDynamicStateCreateInfo,            // pDynamicState
 	  *pipelineLayout,                            // layout
-	  *renderPass,                                // renderPass
+	  renderPasses->GetRenderPass(true, true),    // renderPass
 	  0                                           // subpass
 	);
 
@@ -620,7 +562,7 @@ void OITPipelineManager::CreateTrModVolPipeline(ModVolMode mode)
 	  &pipelineColorBlendStateCreateInfo,         // pColorBlendState
 	  &pipelineDynamicStateCreateInfo,            // pDynamicState
 	  *pipelineLayout,                            // layout
-	  *renderPass,                                // renderPass
+	  renderPasses->GetRenderPass(true, true),    // renderPass
       2                                           // subpass
 	);
 

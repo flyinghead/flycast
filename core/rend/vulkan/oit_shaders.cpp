@@ -293,12 +293,10 @@ layout (set = 1, binding = 1) uniform sampler2D tex1;
 #endif
 
 #if PASS == 1
-//layout (set = 2, binding = 0) uniform usampler2D shadow_stencil;
-layout (input_attachment_index = 0, set = 2, binding = 0) uniform usubpassInput shadow_stencil;
+layout (input_attachment_index = 0, set = 0, binding = 7) uniform usubpassInput shadow_stencil;
 #endif
 #if PASS == 3
-//layout (set = 2, binding = 1) uniform sampler2D DepthTex;
-layout (input_attachment_index = 0, set = 2, binding = 1) uniform subpassInput DepthTex;
+layout (input_attachment_index = 0, set = 0, binding = 8) uniform subpassInput DepthTex;
 #endif
 
 // Vertex input
@@ -606,7 +604,7 @@ static const char OITFinalShaderSource[] =
 R"(
 #define DEPTH_SORTED %d
 
-layout (input_attachment_index = 0, set = 3, binding = 0) uniform subpassInput tex;
+layout (input_attachment_index = 0, set = 2, binding = 0) uniform subpassInput tex;
 
 layout (location = 0) out vec4 FragColor;
 

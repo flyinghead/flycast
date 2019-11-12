@@ -261,8 +261,6 @@ void Drawer::UploadMainBuffer(const VertexShaderUniforms& vertexUniforms, const 
 
 bool Drawer::Draw(const Texture *fogTexture)
 {
-	extern bool fog_needs_update;
-
 	VertexShaderUniforms vtxUniforms;
 	vtxUniforms.normal_matrix = matrices.GetNormalMatrix();
 
@@ -387,7 +385,7 @@ vk::CommandBuffer TextureDrawer::BeginRenderPass()
 	if (widthPow2 != this->width || heightPow2 != this->height || !depthAttachment)
 	{
 		if (!depthAttachment)
-			depthAttachment = std::unique_ptr<FramebufferAttachment>(new FramebufferAttachment(context->GetPhysicalDevice(), device, texAllocator));
+			depthAttachment = std::unique_ptr<FramebufferAttachment>(new FramebufferAttachment(context->GetPhysicalDevice(), device, allocator));
 		depthAttachment->Init(widthPow2, heightPow2, GetContext()->GetDepthFormat());
 	}
 	vk::ImageView colorImageView;
@@ -418,7 +416,7 @@ vk::CommandBuffer TextureDrawer::BeginRenderPass()
 		if (texture->IsNew())
 		{
 			texture->Create();
-			texture->SetAllocator(texAllocator);
+			texture->SetAllocator(allocator);
 			texture->SetPhysicalDevice(GetContext()->GetPhysicalDevice());
 			texture->SetDevice(device);
 		}
@@ -444,7 +442,7 @@ vk::CommandBuffer TextureDrawer::BeginRenderPass()
 			if (!colorAttachment)
 			{
 				colorAttachment = std::unique_ptr<FramebufferAttachment>(new FramebufferAttachment(context->GetPhysicalDevice(),
-						device, texAllocator));
+						device, allocator));
 			}
 			colorAttachment->Init(widthPow2, heightPow2, vk::Format::eR8G8B8A8Unorm);
 		}
@@ -516,7 +514,7 @@ void TextureDrawer::EndRenderPass()
 
 		PixelBuffer<u32> tmpBuf;
 		tmpBuf.init(width, height);
-		colorAttachment->GetBufferData()->download(GetContext()->GetDevice(), width * height * 4, tmpBuf.data());
+		colorAttachment->GetBufferData()->download(width * height * 4, tmpBuf.data());
 		WriteTextureToVRam(width, height, (u8 *)tmpBuf.data(), dst);
 
 		return;

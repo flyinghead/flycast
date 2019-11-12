@@ -23,6 +23,7 @@
 #include <glm/glm.hpp>
 #include "vulkan.h"
 #include "oit_shaders.h"
+#include "oit_renderpass.h"
 #include "texture.h"
 #include "hw/pvr/ta_ctx.h"
 
@@ -69,19 +70,18 @@ public:
 	};
 
 	void Init(SamplerManager* samplerManager, vk::PipelineLayout pipelineLayout, vk::DescriptorSetLayout perFrameLayout,
-			vk::DescriptorSetLayout perPolyLayout, vk::DescriptorSetLayout pass1Layout, vk::DescriptorSetLayout pass2Layout)
+			vk::DescriptorSetLayout perPolyLayout, vk::DescriptorSetLayout colorInputLayout)
 	{
 		this->samplerManager = samplerManager;
 		this->pipelineLayout = pipelineLayout;
 		this->perFrameLayout = perFrameLayout;
 		this->perPolyLayout = perPolyLayout;
-		this->pass1Layout = pass1Layout;
-		this->pass2Layout = pass2Layout;
+		this->colorInputLayout = colorInputLayout;
 	}
 	// FIXME way too many params
 	void UpdateUniforms(vk::Buffer buffer, u32 vertexUniformOffset, u32 fragmentUniformOffset, vk::ImageView fogImageView,
 			vk::Buffer pixelBuffer, vk::DeviceSize pixelBufferSize, vk::Buffer pixelCounterBuffer, u32 polyParamsOffset,
-			u32 polyParamsSize, vk::ImageView pointerImageView)
+			u32 polyParamsSize, vk::ImageView pointerImageView, vk::ImageView stencilImageView, vk::ImageView depthImageView)
 	{
 		if (!perFrameDescSet)
 		{
@@ -118,36 +118,22 @@ public:
 			polyParamsBufferInfo = vk::DescriptorBufferInfo(buffer, polyParamsOffset, polyParamsSize);
 			writeDescriptorSets.push_back(vk::WriteDescriptorSet(*perFrameDescSet, 6, 0, 1, vk::DescriptorType::eStorageBuffer, nullptr, &polyParamsBufferInfo, nullptr));
 		}
-
-		GetContext()->GetDevice().updateDescriptorSets(writeDescriptorSets, nullptr);
-	}
-
-	void UpdatePass1Uniforms(vk::ImageView stencilImageView, vk::ImageView depthImageView)
-	{
-		if (!pass1DescSet)
-		{
-			pass1DescSet = std::move(GetContext()->GetDevice().allocateDescriptorSetsUnique(
-					vk::DescriptorSetAllocateInfo(GetContext()->GetDescriptorPool(), 1, &pass1Layout)).front());
-		}
-		std::vector<vk::WriteDescriptorSet> writeDescriptorSets;
 		vk::DescriptorImageInfo stencilImageInfo(vk::Sampler(), stencilImageView, vk::ImageLayout::eDepthStencilReadOnlyOptimal);
-		writeDescriptorSets.push_back(vk::WriteDescriptorSet(*pass1DescSet, 0, 0, 1, vk::DescriptorType::eInputAttachment, &stencilImageInfo, nullptr, nullptr));
+		writeDescriptorSets.push_back(vk::WriteDescriptorSet(*perFrameDescSet, 7, 0, 1, vk::DescriptorType::eInputAttachment, &stencilImageInfo, nullptr, nullptr));
 		vk::DescriptorImageInfo depthImageInfo(vk::Sampler(), depthImageView, vk::ImageLayout::eDepthStencilReadOnlyOptimal);
-		writeDescriptorSets.push_back(vk::WriteDescriptorSet(*pass1DescSet, 1, 0, 1, vk::DescriptorType::eInputAttachment, &depthImageInfo, nullptr, nullptr));
+		writeDescriptorSets.push_back(vk::WriteDescriptorSet(*perFrameDescSet, 8, 0, 1, vk::DescriptorType::eInputAttachment, &depthImageInfo, nullptr, nullptr));
 
 		GetContext()->GetDevice().updateDescriptorSets(writeDescriptorSets, nullptr);
 	}
 
-	void UpdatePass2Uniforms(vk::ImageView colorImageView)
+	void UpdateColorInputDescSet(int index, vk::ImageView colorImageView)
 	{
-		if (!pass2DescSet)
-		{
-			pass2DescSet = std::move(GetContext()->GetDevice().allocateDescriptorSetsUnique(
-					vk::DescriptorSetAllocateInfo(GetContext()->GetDescriptorPool(), 1, &pass2Layout)).front());
-		}
+		if (!colorInputDescSets[index])
+			colorInputDescSets[index] = std::move(GetContext()->GetDevice().allocateDescriptorSetsUnique(
+					vk::DescriptorSetAllocateInfo(GetContext()->GetDescriptorPool(), 1, &colorInputLayout)).front());
 		std::vector<vk::WriteDescriptorSet> writeDescriptorSets;
 		vk::DescriptorImageInfo colorImageInfo(vk::Sampler(), colorImageView, vk::ImageLayout::eShaderReadOnlyOptimal);
-		writeDescriptorSets.push_back(vk::WriteDescriptorSet(*pass2DescSet, 0, 0, 1, vk::DescriptorType::eInputAttachment, &colorImageInfo, nullptr, nullptr));
+		writeDescriptorSets.push_back(vk::WriteDescriptorSet(*colorInputDescSets[index], 0, 0, 1, vk::DescriptorType::eInputAttachment, &colorImageInfo, nullptr, nullptr));
 
 		GetContext()->GetDevice().updateDescriptorSets(writeDescriptorSets, nullptr);
 	}
@@ -188,14 +174,9 @@ public:
 		cmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, 1, &perFrameDescSet.get(), 0, nullptr);
 	}
 
-	void BindPass1DescriptorSets(vk::CommandBuffer cmdBuffer)
+	void BindColorInputDescSet(vk::CommandBuffer cmdBuffer, int index)
 	{
-		cmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 2, 1, &pass1DescSet.get(), 0, nullptr);
-	}
-
-	void BindPass2DescriptorSets(vk::CommandBuffer cmdBuffer)
-	{
-		cmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 3, 1, &pass2DescSet.get(), 0, nullptr);
+		cmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 2, 1, &colorInputDescSets[index].get(), 0, nullptr);
 	}
 
 	void BindPerPolyDescriptorSets(vk::CommandBuffer cmdBuffer, u64 textureId0, TSP tsp0, u64 textureId1, TSP tsp1)
@@ -218,13 +199,11 @@ private:
 
 	vk::DescriptorSetLayout perFrameLayout;
 	vk::DescriptorSetLayout perPolyLayout;
-	vk::DescriptorSetLayout pass1Layout;
-	vk::DescriptorSetLayout pass2Layout;
+	vk::DescriptorSetLayout colorInputLayout;
 	vk::PipelineLayout pipelineLayout;
 
 	vk::UniqueDescriptorSet perFrameDescSet;
-	vk::UniqueDescriptorSet pass1DescSet;
-	vk::UniqueDescriptorSet pass2DescSet;
+	std::array<vk::UniqueDescriptorSet, 2> colorInputDescSets;
 	std::vector<vk::UniqueDescriptorSet> perPolyDescSets;
 	std::map<std::tuple<u64, u32, u64, u32>, vk::UniqueDescriptorSet> perPolyDescSetsInFlight;
 
@@ -234,6 +213,7 @@ private:
 class OITPipelineManager
 {
 public:
+	OITPipelineManager() : renderPasses(&ownRenderPasses) {}
 	virtual ~OITPipelineManager() = default;
 
 	virtual void Init(OITShaderManager *shaderManager)
@@ -251,22 +231,17 @@ public:
 					{ 4, vk::DescriptorType::eStorageBuffer, 1, vk::ShaderStageFlagBits::eFragment },		// pixel counter
 					{ 5, vk::DescriptorType::eStorageImage, 1, vk::ShaderStageFlagBits::eFragment },		// a-buffer pointers
 					{ 6, vk::DescriptorType::eStorageBuffer, 1, vk::ShaderStageFlagBits::eFragment },		// Tr poly params
+					{ 7, vk::DescriptorType::eInputAttachment, 1, vk::ShaderStageFlagBits::eFragment },		// stencil input attachment
+					{ 8, vk::DescriptorType::eInputAttachment, 1, vk::ShaderStageFlagBits::eFragment },		// depth input attachment
 			};
 			perFrameLayout = GetContext()->GetDevice().createDescriptorSetLayoutUnique(
 					vk::DescriptorSetLayoutCreateInfo(vk::DescriptorSetLayoutCreateFlags(), ARRAY_SIZE(perFrameBindings), perFrameBindings));
 
-			vk::DescriptorSetLayoutBinding pass1Bindings[] = {
-					{ 0, vk::DescriptorType::eInputAttachment, 1, vk::ShaderStageFlagBits::eFragment },		// stencil input attachment
-					{ 1, vk::DescriptorType::eInputAttachment, 1, vk::ShaderStageFlagBits::eFragment },		// depth input attachment
-			};
-			pass1Layout = GetContext()->GetDevice().createDescriptorSetLayoutUnique(
-					vk::DescriptorSetLayoutCreateInfo(vk::DescriptorSetLayoutCreateFlags(), ARRAY_SIZE(pass1Bindings), pass1Bindings));
-
-			vk::DescriptorSetLayoutBinding pass2Bindings[] = {
+			vk::DescriptorSetLayoutBinding colorInputBindings[] = {
 					{ 0, vk::DescriptorType::eInputAttachment, 1, vk::ShaderStageFlagBits::eFragment },		// color input attachment
 			};
-			pass2Layout = GetContext()->GetDevice().createDescriptorSetLayoutUnique(
-					vk::DescriptorSetLayoutCreateInfo(vk::DescriptorSetLayoutCreateFlags(), ARRAY_SIZE(pass2Bindings), pass2Bindings));
+			colorInputLayout = GetContext()->GetDevice().createDescriptorSetLayoutUnique(
+					vk::DescriptorSetLayoutCreateInfo(vk::DescriptorSetLayoutCreateFlags(), ARRAY_SIZE(colorInputBindings), colorInputBindings));
 
 			vk::DescriptorSetLayoutBinding perPolyBindings[] = {
 					{ 0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment },// texture 0
@@ -276,12 +251,11 @@ public:
 					vk::DescriptorSetLayoutCreateInfo(vk::DescriptorSetLayoutCreateFlags(), ARRAY_SIZE(perPolyBindings), perPolyBindings));
 
 			vk::PushConstantRange pushConstant(vk::ShaderStageFlagBits::eFragment, 0, sizeof(OITDescriptorSets::PushConstants));
-			vk::DescriptorSetLayout layouts[] = { *perFrameLayout, *perPolyLayout, *pass1Layout, *pass2Layout };
+			vk::DescriptorSetLayout layouts[] = { *perFrameLayout, *perPolyLayout, *colorInputLayout };
 			pipelineLayout = GetContext()->GetDevice().createPipelineLayoutUnique(
 					vk::PipelineLayoutCreateInfo(vk::PipelineLayoutCreateFlags(), ARRAY_SIZE(layouts), layouts, 1, &pushConstant));
 		}
 
-		MakeRenderPass();
 		pipelines.clear();
 		modVolPipelines.clear();
 	}
@@ -326,13 +300,11 @@ public:
 	vk::PipelineLayout GetPipelineLayout() const { return *pipelineLayout; }
 	vk::DescriptorSetLayout GetPerFrameDSLayout() const { return *perFrameLayout; }
 	vk::DescriptorSetLayout GetPerPolyDSLayout() const { return *perPolyLayout; }
-	vk::DescriptorSetLayout GetPass1DSLayout() const { return *pass1Layout; }
-	vk::DescriptorSetLayout GetPass2DSLayout() const { return *pass2Layout; }
+	vk::DescriptorSetLayout GetColorInputDSLayout() const { return *colorInputLayout; }
 
-	vk::RenderPass GetRenderPass() const { return *renderPass; }
+	vk::RenderPass GetRenderPass(bool initial, bool last) { return renderPasses->GetRenderPass(initial, last); }
 
 private:
-	void MakeRenderPass();
 	void CreateModVolPipeline(ModVolMode mode);
 	void CreateTrModVolPipeline(ModVolMode mode);
 
@@ -400,26 +372,28 @@ private:
 
 	vk::UniquePipelineLayout pipelineLayout;
 	vk::UniqueDescriptorSetLayout perFrameLayout;
-	vk::UniqueDescriptorSetLayout pass1Layout;
-	vk::UniqueDescriptorSetLayout pass2Layout;
+	vk::UniqueDescriptorSetLayout colorInputLayout;
 	vk::UniqueDescriptorSetLayout perPolyLayout;
+	RenderPasses ownRenderPasses;
 
 protected:
 	VulkanContext *GetContext() const { return VulkanContext::Instance(); }
 
-	vk::UniqueRenderPass renderPass;
-	OITShaderManager *shaderManager;
+	RenderPasses *renderPasses;
+	OITShaderManager *shaderManager = nullptr;
 };
 
 class RttOITPipelineManager : public OITPipelineManager
 {
 public:
+	RttOITPipelineManager() { renderPasses = &rttRenderPasses; }
 	void Init(OITShaderManager *shaderManager) override
 	{
 		OITPipelineManager::Init(shaderManager);
 
-		// FIXME RTT render pass
 		renderToTextureBuffer = settings.rend.RenderToTextureBuffer;
+		rttRenderPasses.Reset();
+		/*
 	    vk::AttachmentDescription attachmentDescriptions[] = {
 	    		vk::AttachmentDescription(vk::AttachmentDescriptionFlags(), vk::Format::eR8G8B8A8Unorm, vk::SampleCountFlagBits::e1,
 	    				vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eStore, vk::AttachmentLoadOp::eDontCare, vk::AttachmentStoreOp::eDontCare,
@@ -443,16 +417,19 @@ public:
 					vk::PipelineStageFlagBits::eColorAttachmentOutput, vk::PipelineStageFlagBits::eTransfer | vk::PipelineStageFlagBits::eHost,
 					vk::AccessFlagBits::eColorAttachmentWrite, vk::AccessFlagBits::eTransferRead | vk::AccessFlagBits::eHostRead),
 	    };
-
 	    renderPass = GetContext()->GetDevice().createRenderPassUnique(vk::RenderPassCreateInfo(vk::RenderPassCreateFlags(), 2, attachmentDescriptions,
 	    		1, &subpass, renderToTextureBuffer ? ARRAY_SIZE(vramWriteDeps) : ARRAY_SIZE(dependencies), renderToTextureBuffer ? vramWriteDeps : dependencies));
+		 */
 	}
 	void CheckSettingsChange()
 	{
 		if (renderToTextureBuffer != settings.rend.RenderToTextureBuffer)
+		{
 			Init(shaderManager);
+		}
 	}
 
 private:
-	bool renderToTextureBuffer;
+	bool renderToTextureBuffer = false;
+	RttRenderPasses rttRenderPasses;
 };

@@ -163,7 +163,7 @@ public:
 
 		descriptorSets.Init(samplerManager, pipelineManager->GetPipelineLayout(), pipelineManager->GetPerFrameDSLayout(), pipelineManager->GetPerPolyDSLayout());
 		fence = GetContext()->GetDevice().createFenceUnique(vk::FenceCreateInfo());
-		this->texAllocator = texAllocator;
+		this->allocator = allocator;
 		this->textureCache = textureCache;
 	}
 	void SetCommandPool(CommandPool *commandPool) { this->commandPool = commandPool; }
@@ -189,7 +189,7 @@ protected:
 			INFO_LOG(RENDERER, "Increasing RTT main buffer size %d -> %d", !mainBuffer ? 0 : (u32)mainBuffer->bufferSize, newSize);
 			mainBuffer = std::unique_ptr<BufferData>(new BufferData(GetContext()->GetPhysicalDevice(), GetContext()->GetDevice(), newSize,
 					vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eUniformBuffer,
-					texAllocator));
+					allocator));
 		}
 		return mainBuffer.get();
 	}
@@ -210,6 +210,6 @@ private:
 	DescriptorSets descriptorSets;
 	std::unique_ptr<BufferData> mainBuffer;
 	CommandPool *commandPool = nullptr;
-	VulkanAllocator *texAllocator = nullptr;
+	Allocator *allocator = nullptr;
 	TextureCache *textureCache = nullptr;
 };

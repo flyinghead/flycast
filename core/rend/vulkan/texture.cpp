@@ -347,7 +347,7 @@ void FramebufferAttachment::Init(u32 width, u32 height, vk::Format format, vk::I
 			usage = vk::ImageUsageFlagBits::eColorAttachment;
 		if (!(additionalUsageFlags & (vk::ImageUsageFlagBits::eInputAttachment | vk::ImageUsageFlagBits::eStorage)))
 		{
-			if (settings.rend.RenderToTextureBuffer) // FIXME incorrect for OIT
+			if (settings.rend.RenderToTextureBuffer)
 			{
 				usage |= vk::ImageUsageFlagBits::eTransferSrc;
 				stagingBufferData = std::unique_ptr<BufferData>(new BufferData(VulkanContext::Instance()->GetPhysicalDevice(), VulkanContext::Instance()->GetDevice(),

@@ -41,18 +41,8 @@ public:
 		// FIXME this might be called after initial init
 		texAllocator.SetChunkSize(16 * 1024 * 1024);
 		rttPipelineManager.Init(&shaderManager);
-//TODO		if (textureDrawer.size() > GetContext()->GetSwapChainSize())
-//			textureDrawer.resize(GetContext()->GetSwapChainSize());
-//		else
-//		{
-//			while (textureDrawer.size() < GetContext()->GetSwapChainSize())
-//				textureDrawer.emplace_back();
-//		}
-//		for (auto& drawer : textureDrawer)
-//		{
-//			drawer.Init(&samplerManager, &texAllocator, &rttPipelineManager, &textureCache);
-//			drawer.SetCommandPool(&texCommandPool);
-//		}
+		textureDrawer.Init(&samplerManager, &texAllocator, &rttPipelineManager, &textureCache);
+		textureDrawer.SetCommandPool(&texCommandPool);
 
 		screenDrawer.Init(&samplerManager, &texAllocator, &shaderManager);
 		quadPipeline.Init(&normalShaderManager);
@@ -90,13 +80,13 @@ public:
 									vk::BufferUsageFlagBits::eVertexBuffer, &texAllocator));
 		}
 #endif
-//		InitOIT(&texAllocator);
 
 		return true;
 	}
 
 	void Resize(int w, int h) override
 	{
+		NOTICE_LOG(RENDERER, "OIT Resize %d x %d", w, h);
 		texCommandPool.Init();
 		screenDrawer.Init(&samplerManager, &texAllocator, &shaderManager);
 		quadPipeline.Init(&normalShaderManager);
@@ -162,7 +152,6 @@ public:
 		}
 		quadBuffer->Update();
 
-		//vk::CommandBuffer cmdBuffer = screenDrawer.BeginRenderPass();
 		GetContext()->NewFrame();
 		GetContext()->BeginRenderPass();
 		vk::CommandBuffer cmdBuffer = GetContext()->GetCurrentCommandBuffer();
@@ -181,7 +170,6 @@ public:
 		cmdBuffer.setScissor(0, vk::Rect2D(
 				vk::Offset2D((u32)std::max(lroundf(min_x), 0L), (u32)std::max(lroundf(min_y), 0L)),
 				vk::Extent2D((u32)std::max(lroundf(width), 0L), (u32)std::max(lroundf(height), 0L))));
-//		cmdBuffer.draw(3, 1, 0, 0);
 		quadBuffer->Bind(cmdBuffer);
 		quadBuffer->Draw(cmdBuffer);
 
@@ -194,8 +182,6 @@ public:
 
 	bool Process(TA_context* ctx) override
 	{
-// TODO
-if (ctx->rend.isRTT) return false;
 		texCommandPool.BeginFrame();
 
 		if (ctx->rend.isRenderFramebuffer)
@@ -274,14 +260,14 @@ if (ctx->rend.isRTT) return false;
 
 		OITDrawer *drawer;
 		if (pvrrc.isRTT)
-			drawer = &textureDrawer[GetContext()->GetCurrentImageIndex()];
+			drawer = &textureDrawer;
 		else
 			drawer = &screenDrawer;
 
 		drawer->Draw(fogTexture.get());
 //TODO		if (!pvrrc.isRTT)
 //			DrawOSD(false);
-		drawer->EndRenderPass();
+		drawer->EndFrame();
 
 		return !pvrrc.isRTT;
 	}
@@ -351,7 +337,7 @@ private:
 	ShaderManager normalShaderManager;
 	OITScreenDrawer screenDrawer;
 	RttOITPipelineManager rttPipelineManager;
-	std::vector<OITTextureDrawer> textureDrawer;
+	OITTextureDrawer textureDrawer;
 	VulkanAllocator texAllocator;
 	std::vector<std::unique_ptr<Texture>> framebufferTextures;
 	QuadPipeline quadPipeline;

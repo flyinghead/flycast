@@ -61,7 +61,7 @@ struct BufferData
 		device.unmapMemory(sharedDeviceMemory);
 	}
 
-	void download(vk::Device const& device, u32 size, void *data, u32 bufOffset = 0) const
+	void download(u32 size, void *data, u32 bufOffset = 0) const
 	{
 		verify((m_propertyFlags & vk::MemoryPropertyFlagBits::eHostCoherent) && (m_propertyFlags & vk::MemoryPropertyFlagBits::eHostVisible));
 		verify(bufOffset + size <= bufferSize);
