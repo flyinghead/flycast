@@ -128,13 +128,18 @@ static const TBuiltInResource DefaultTBuiltInResource = {
         /* .generalConstantMatrixVectorIndexing = */ true,
 }};
 
+int ShaderCompiler::initCount;
+
 void ShaderCompiler::Init()
 {
-	verify(glslang::InitializeProcess());
+	if (initCount++ == 0)
+		verify(glslang::InitializeProcess());
 }
 void ShaderCompiler::Term()
 {
-	glslang::FinalizeProcess();
+	if (--initCount == 0)
+		glslang::FinalizeProcess();
+	initCount = std::max(initCount, 0);
 }
 
 static EShLanguage translateShaderStage(vk::ShaderStageFlagBits stage)
