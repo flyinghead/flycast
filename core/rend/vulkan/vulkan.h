@@ -52,7 +52,7 @@ public:
 	void Present();
 
 	vk::PhysicalDevice GetPhysicalDevice() const { return physicalDevice; }
-	vk::Device GetDevice() { return *device; }
+	vk::Device GetDevice() const { return *device; }
 	vk::PipelineCache GetPipelineCache() const { return *pipelineCache; }
 	vk::RenderPass GetRenderPass() const { return *renderPass; }
 	vk::CommandPool GetCurrentCommandPool() const { return *commandPools[GetCurrentImageIndex()]; }
@@ -86,10 +86,12 @@ public:
 	vk::Format GetDepthFormat() const { return depthFormat; }
 	vk::ImageView GetSwapChainImageView(int i) const { return imageViews[i].get(); }
 	static VulkanContext *Instance() { return contextInstance; }
+	bool SupportsFragmentShaderStoresAndAtomics() const { return fragmentStoresAndAtomics; }
 
 private:
 	vk::Format InitDepthBuffer();
 	void InitImgui();
+	void DoSwapAutomation();
 	vk::SurfaceKHR GetSurface() {
 #ifdef USE_SDL
 		return surface;

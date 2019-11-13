@@ -399,46 +399,6 @@ GLuint fogTextureId;
 glm::mat4 ViewportMatrix;
 
 #ifdef TEST_AUTOMATION
-static void dump_screenshot(u8 *buffer, u32 width, u32 height)
-{
-	FILE *fp = fopen("screenshot.png", "wb");
-	if (fp == NULL)
-	{
-		ERROR_LOG(RENDERER, "Failed to open screenshot.png for writing\n");
-		return;
-	}
-
-	png_bytepp rows = (png_bytepp)malloc(height * sizeof(png_bytep));
-	for (int y = 0; y < height; y++)
-	{
-		rows[height - y - 1] = (png_bytep)buffer + y * width * 3;
-	}
-
-	png_structp png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
-	png_infop info_ptr = png_create_info_struct(png_ptr);
-
-	png_init_io(png_ptr, fp);
-
-
-	// write header
-	png_set_IHDR(png_ptr, info_ptr, width, height,
-			 8, PNG_COLOR_TYPE_RGB, PNG_INTERLACE_NONE,
-			 PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
-
-	png_write_info(png_ptr, info_ptr);
-
-
-	// write bytes
-	png_write_image(png_ptr, rows);
-
-	// end write
-	png_write_end(png_ptr, NULL);
-	fclose(fp);
-
-	free(rows);
-
-}
-
 void do_swap_automation()
 {
 	static FILE* video_file = fopen(cfgLoadStr("record", "rawvid","").c_str(), "wb");

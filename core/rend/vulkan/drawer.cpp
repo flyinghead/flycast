@@ -47,7 +47,7 @@ void Drawer::SortTriangles()
 }
 
 // FIXME Code dup
-TileClipping Drawer::SetTileClip(u32 val, vk::Rect2D& clipRect)
+TileClipping BaseDrawer::SetTileClip(u32 val, vk::Rect2D& clipRect)
 {
 	if (!settings.rend.Clipping)
 		return TileClipping::Off;
@@ -97,6 +97,58 @@ TileClipping Drawer::SetTileClip(u32 val, vk::Rect2D& clipRect)
 			vk::Extent2D(std::max(0, (int)lroundf(cex - csx)), std::max(0, (int)lroundf(cey - csy))));
 
 	return tileClippingMode;
+}
+
+void BaseDrawer::SetBaseScissor()
+{
+	bool wide_screen_on = settings.rend.WideScreen && !pvrrc.isRenderFramebuffer
+			&& !matrices.IsClipped();
+	if (!wide_screen_on)
+	{
+		if (pvrrc.isRenderFramebuffer)
+		{
+			baseScissor = vk::Rect2D(vk::Offset2D(0, 0),
+					vk::Extent2D(640, 480));
+		}
+		else
+		{
+			float width;
+			float height;
+			float min_x;
+			float min_y;
+			glm::vec4 clip_min(pvrrc.fb_X_CLIP.min, pvrrc.fb_Y_CLIP.min, 0, 1);
+			glm::vec4 clip_dim(pvrrc.fb_X_CLIP.max - pvrrc.fb_X_CLIP.min + 1,
+			pvrrc.fb_Y_CLIP.max - pvrrc.fb_Y_CLIP.min + 1, 0, 0);
+			clip_min = matrices.GetScissorMatrix() * clip_min;
+			clip_dim = matrices.GetScissorMatrix() * clip_dim;
+
+			min_x = clip_min[0];
+			min_y = clip_min[1];
+			width = clip_dim[0];
+			height = clip_dim[1];
+			if (width < 0)
+			{
+				min_x += width;
+				width = -width;
+			}
+			if (height < 0)
+			{
+				min_y += height;
+				height = -height;
+			}
+
+			baseScissor = vk::Rect2D(
+					vk::Offset2D((u32) std::max(lroundf(min_x), 0L),
+							(u32) std::max(lroundf(min_y), 0L)),
+					vk::Extent2D((u32) std::max(lroundf(width), 0L),
+							(u32) std::max(lroundf(height), 0L)));
+		}
+	}
+	else
+	{
+		baseScissor = vk::Rect2D(vk::Offset2D(0, 0),
+				vk::Extent2D(screen_width, screen_height));
+	}
 }
 
 void Drawer::DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sortTriangles, const PolyParam& poly, u32 first, u32 count)
@@ -264,37 +316,7 @@ bool Drawer::Draw(const Texture *fogTexture)
 	VertexShaderUniforms vtxUniforms;
 	vtxUniforms.normal_matrix = matrices.GetNormalMatrix();
 
-	FragmentShaderUniforms fragUniforms;
-	fragUniforms.extra_depth_scale = settings.rend.ExtraDepthScale;
-
-	//VERT and RAM fog color constants
-	u8* fog_colvert_bgra=(u8*)&FOG_COL_VERT;
-	u8* fog_colram_bgra=(u8*)&FOG_COL_RAM;
-	fragUniforms.sp_FOG_COL_VERT[0]=fog_colvert_bgra[2]/255.0f;
-	fragUniforms.sp_FOG_COL_VERT[1]=fog_colvert_bgra[1]/255.0f;
-	fragUniforms.sp_FOG_COL_VERT[2]=fog_colvert_bgra[0]/255.0f;
-
-	fragUniforms.sp_FOG_COL_RAM[0]=fog_colram_bgra [2]/255.0f;
-	fragUniforms.sp_FOG_COL_RAM[1]=fog_colram_bgra [1]/255.0f;
-	fragUniforms.sp_FOG_COL_RAM[2]=fog_colram_bgra [0]/255.0f;
-
-	//Fog density constant
-	u8* fog_density=(u8*)&FOG_DENSITY;
-	float fog_den_mant=fog_density[1]/128.0f;  //bit 7 -> x. bit, so [6:0] -> fraction -> /128
-	s32 fog_den_exp=(s8)fog_density[0];
-	fragUniforms.sp_FOG_DENSITY = fog_den_mant * powf(2.0f, fog_den_exp);
-
-	fragUniforms.colorClampMin[0] = ((pvrrc.fog_clamp_min >> 16) & 0xFF) / 255.0f;
-	fragUniforms.colorClampMin[1] = ((pvrrc.fog_clamp_min >> 8) & 0xFF) / 255.0f;
-	fragUniforms.colorClampMin[2] = ((pvrrc.fog_clamp_min >> 0) & 0xFF) / 255.0f;
-	fragUniforms.colorClampMin[3] = ((pvrrc.fog_clamp_min >> 24) & 0xFF) / 255.0f;
-
-	fragUniforms.colorClampMax[0] = ((pvrrc.fog_clamp_max >> 16) & 0xFF) / 255.0f;
-	fragUniforms.colorClampMax[1] = ((pvrrc.fog_clamp_max >> 8) & 0xFF) / 255.0f;
-	fragUniforms.colorClampMax[2] = ((pvrrc.fog_clamp_max >> 0) & 0xFF) / 255.0f;
-	fragUniforms.colorClampMax[3] = ((pvrrc.fog_clamp_max >> 24) & 0xFF) / 255.0f;
-
-	fragUniforms.cp_AlphaTestValue = (PT_ALPHA_REF & 0xFF) / 255.0f;
+	FragmentShaderUniforms fragUniforms = MakeFragmentUniforms<FragmentShaderUniforms>();
 
 	SortTriangles();
 	currentScissor = vk::Rect2D();
@@ -360,10 +382,10 @@ vk::CommandBuffer TextureDrawer::BeginRenderPass()
 	u32 origHeight = pvrrc.fb_Y_CLIP.max - pvrrc.fb_Y_CLIP.min + 1;
 	u32 upscaledWidth = origWidth;
 	u32 upscaledHeight = origHeight;
-	int heightPow2 = 2;
+	int heightPow2 = 8;
 	while (heightPow2 < upscaledHeight)
 		heightPow2 *= 2;
-	int widthPow2 = 2;
+	int widthPow2 = 8;
 	while (widthPow2 < upscaledWidth)
 		widthPow2 *= 2;
 
@@ -503,8 +525,6 @@ void TextureDrawer::EndRenderPass()
 	currentCommandBuffer = nullptr;
 	commandPool->EndFrame();
 
-
-
 	if (settings.rend.RenderToTextureBuffer)
 	{
 		GetContext()->GetDevice().waitForFences(1, &fence.get(), true, UINT64_MAX);
@@ -535,54 +555,7 @@ vk::CommandBuffer ScreenDrawer::BeginRenderPass()
 
 	matrices.CalcMatrices(&pvrrc);
 
-	bool wide_screen_on = settings.rend.WideScreen && !pvrrc.isRenderFramebuffer && !matrices.IsClipped();
-
-	if (!wide_screen_on)
-	{
-		float width;
-		float height;
-		float min_x;
-		float min_y;
-
-		if (pvrrc.isRenderFramebuffer)
-		{
-			width = 640;
-			height = 480;
-			min_x = 0;
-			min_y = 0;
-		}
-		else
-		{
-			glm::vec4 clip_min(pvrrc.fb_X_CLIP.min, pvrrc.fb_Y_CLIP.min, 0, 1);
-			glm::vec4 clip_dim(pvrrc.fb_X_CLIP.max - pvrrc.fb_X_CLIP.min + 1,
-							   pvrrc.fb_Y_CLIP.max - pvrrc.fb_Y_CLIP.min + 1, 0, 0);
-			clip_min = matrices.GetScissorMatrix() * clip_min;
-			clip_dim = matrices.GetScissorMatrix() * clip_dim;
-
-			min_x = clip_min[0];
-			min_y = clip_min[1];
-			width = clip_dim[0];
-			height = clip_dim[1];
-			if (width < 0)
-			{
-				min_x += width;
-				width = -width;
-			}
-			if (height < 0)
-			{
-				min_y += height;
-				height = -height;
-			}
-		}
-
-		baseScissor = vk::Rect2D(
-				vk::Offset2D((u32)std::max(lroundf(min_x), 0L), (u32)std::max(lroundf(min_y), 0L)),
-				vk::Extent2D((u32)std::max(lroundf(width), 0L), (u32)std::max(lroundf(height), 0L)));
-	}
-	else
-	{
-		baseScissor = vk::Rect2D(vk::Offset2D(0, 0), vk::Extent2D(screen_width, screen_height));
-	}
+	SetBaseScissor();
 
 	commandBuffer.setScissor(0, baseScissor);
 	return commandBuffer;

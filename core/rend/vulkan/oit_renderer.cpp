@@ -29,6 +29,7 @@
 #include "rend/gui.h"
 #include "rend/osd.h"
 #include "pipeline.h"
+#include "oit_buffer.h"
 
 class OITVulkanRenderer : public Renderer
 {
@@ -40,11 +41,13 @@ public:
 
 		// FIXME this might be called after initial init
 		texAllocator.SetChunkSize(16 * 1024 * 1024);
-		rttPipelineManager.Init(&shaderManager);
-		textureDrawer.Init(&samplerManager, &texAllocator, &rttPipelineManager, &textureCache);
+		oitBuffers.SetAllocator(&texAllocator);
+		oitBuffers.Init(0, 0);
+		rttPipelineManager.Init(&shaderManager, &oitBuffers);
+		textureDrawer.Init(&samplerManager, &texAllocator, &rttPipelineManager, &textureCache, &oitBuffers);
 		textureDrawer.SetCommandPool(&texCommandPool);
 
-		screenDrawer.Init(&samplerManager, &texAllocator, &shaderManager);
+		screenDrawer.Init(&samplerManager, &texAllocator, &shaderManager, &oitBuffers);
 		quadPipeline.Init(&normalShaderManager);
 		quadBuffer = std::unique_ptr<QuadBuffer>(new QuadBuffer(&texAllocator));
 
@@ -70,7 +73,7 @@ public:
 				vjoyTexture->UploadToGPU(OSD_TEX_W, OSD_TEX_H, image_data);
 				vjoyTexture->SetCommandBuffer(nullptr);
 				delete [] image_data;
-				osdPipeline.Init(&normalShaderManager, vjoyTexture->GetImageView());
+				osdPipeline.Init(&normalShaderManager, vjoyTexture->GetImageView(), screenDrawer.GetRenderPass(), 2);
 			}
 		}
 		if (!osdBuffer)
@@ -88,15 +91,21 @@ public:
 	{
 		NOTICE_LOG(RENDERER, "OIT Resize %d x %d", w, h);
 		texCommandPool.Init();
-		screenDrawer.Init(&samplerManager, &texAllocator, &shaderManager);
+		screenDrawer.Init(&samplerManager, &texAllocator, &shaderManager, &oitBuffers);
 		quadPipeline.Init(&normalShaderManager);
-		osdPipeline.Init(&normalShaderManager, vjoyTexture->GetImageView());
+#ifdef __ANDROID__
+		osdPipeline.Init(&normalShaderManager, vjoyTexture->GetImageView(), screenDrawer.GetRenderPass(), 2);
+#endif
 	}
 
 	void Term() override
 	{
 		DEBUG_LOG(RENDERER, "VulkanRenderer::Term");
 		GetContext()->WaitIdle();
+		screenDrawer.Term();
+		textureDrawer.Term();
+		oitBuffers.Term();
+		osdBuffer.reset();
 		quadBuffer = nullptr;
 		textureCache.Clear();
 		fogTexture = nullptr;
@@ -265,8 +274,8 @@ public:
 			drawer = &screenDrawer;
 
 		drawer->Draw(fogTexture.get());
-//TODO		if (!pvrrc.isRTT)
-//			DrawOSD(false);
+		if (!pvrrc.isRTT)
+			DrawOSD(false);
 		drawer->EndFrame();
 
 		return !pvrrc.isRTT;
@@ -328,6 +337,7 @@ private:
 		fogTexture->SetCommandBuffer(nullptr);
 	}
 
+	OITBuffers oitBuffers;
 	std::unique_ptr<QuadBuffer> quadBuffer;
 	std::unique_ptr<Texture> fogTexture;
 	CommandPool texCommandPool;

@@ -56,7 +56,8 @@ public:
 			fogTsp.ClampU = 1;
 			fogTsp.ClampV = 1;
 			vk::Sampler fogSampler = samplerManager->GetSampler(fogTsp);
-			vk::DescriptorImageInfo imageInfo(fogSampler, fogImageView, vk::ImageLayout::eShaderReadOnlyOptimal);
+			static vk::DescriptorImageInfo imageInfo;
+			imageInfo = { fogSampler, fogImageView, vk::ImageLayout::eShaderReadOnlyOptimal };
 			writeDescriptorSets.push_back(vk::WriteDescriptorSet(*perFrameDescSet, 2, 0, 1, vk::DescriptorType::eCombinedImageSampler, &imageInfo, nullptr, nullptr));
 		}
 		GetContext()->GetDevice().updateDescriptorSets(writeDescriptorSets, nullptr);
@@ -362,7 +363,7 @@ private:
 class OSDPipeline
 {
 public:
-	void Init(ShaderManager *shaderManager, vk::ImageView imageView)
+	void Init(ShaderManager *shaderManager, vk::ImageView imageView, vk::RenderPass renderPass, int subpass = 0)
 	{
 		this->shaderManager = shaderManager;
 		if (!pipelineLayout)
@@ -383,9 +384,10 @@ public:
 										vk::SamplerAddressMode::eClampToEdge, 0.0f, false, 16.0f, false,
 										vk::CompareOp::eNever, 0.0f, 0.0f, vk::BorderColor::eFloatOpaqueBlack));
 		}
-		if (GetContext()->GetRenderPass() != renderPass)
+		if (this->renderPass != renderPass || this->subpass != subpass)
 		{
-			renderPass = GetContext()->GetRenderPass();
+			this->renderPass = renderPass;
+			this->subpass = subpass;
 			pipeline.reset();
 		}
 		if (!descriptorSet)
@@ -416,6 +418,7 @@ private:
 	void CreatePipeline();
 
 	vk::RenderPass renderPass;
+	int subpass = 0;
 	vk::UniquePipeline pipeline;
 	vk::UniqueSampler sampler;
 	vk::UniqueDescriptorSet descriptorSet;

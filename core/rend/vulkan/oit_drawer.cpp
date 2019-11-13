@@ -22,61 +22,6 @@
 #include "oit_drawer.h"
 #include "hw/pvr/pvr_mem.h"
 
-const vk::DeviceSize PixelBufferSize = 512 * 1024 * 1024;
-
-// FIXME Code dup
-TileClipping OITDrawer::SetTileClip(u32 val, vk::Rect2D& clipRect)
-{
-	if (!settings.rend.Clipping)
-		return TileClipping::Off;
-
-	u32 clipmode = val >> 28;
-	if (clipmode < 2)
-		return TileClipping::Off;	//always passes
-
-	TileClipping tileClippingMode;
-	if (clipmode & 1)
-		tileClippingMode = TileClipping::Inside;   //render stuff outside the region
-	else
-		tileClippingMode = TileClipping::Outside;  //render stuff inside the region
-
-	float csx = (float)(val & 63);
-	float cex = (float)((val >> 6) & 63);
-	float csy = (float)((val >> 12) & 31);
-	float cey = (float)((val >> 17) & 31);
-	csx = csx * 32;
-	cex = cex * 32 + 32;
-	csy = csy * 32;
-	cey = cey * 32 + 32;
-
-	if (csx <= 0 && csy <= 0 && cex >= 640 && cey >= 480)
-		return TileClipping::Off;
-
-	if (!pvrrc.isRTT)
-	{
-		glm::vec4 clip_start(csx, csy, 0, 1);
-		glm::vec4 clip_end(cex, cey, 0, 1);
-		clip_start = matrices.GetViewportMatrix() * clip_start;
-		clip_end = matrices.GetViewportMatrix() * clip_end;
-
-		csx = clip_start[0];
-		csy = clip_start[1];
-		cey = clip_end[1];
-		cex = clip_end[0];
-	}
-	else if (!settings.rend.RenderToTextureBuffer)
-	{
-		csx *= settings.rend.RenderToTextureUpscale;
-		csy *= settings.rend.RenderToTextureUpscale;
-		cex *= settings.rend.RenderToTextureUpscale;
-		cey *= settings.rend.RenderToTextureUpscale;
-	}
-	clipRect = vk::Rect2D(vk::Offset2D(std::max(0, (int)lroundf(csx)), std::max(0, (int)lroundf(csy))),
-			vk::Extent2D(std::max(0, (int)lroundf(cex - csx)), std::max(0, (int)lroundf(cey - csy))));
-
-	return tileClippingMode;
-}
-
 void OITDrawer::DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool autosort, int pass,
 		const PolyParam& poly, u32 first, u32 count)
 {
@@ -280,52 +225,12 @@ bool OITDrawer::Draw(const Texture *fogTexture)
 	OITDescriptorSets::VertexShaderUniforms vtxUniforms;
 	vtxUniforms.normal_matrix = matrices.GetNormalMatrix();
 
-	OITDescriptorSets::FragmentShaderUniforms fragUniforms;
-	fragUniforms.extra_depth_scale = settings.rend.ExtraDepthScale;
-
-	//VERT and RAM fog color constants
-	u8* fog_colvert_bgra=(u8*)&FOG_COL_VERT;
-	u8* fog_colram_bgra=(u8*)&FOG_COL_RAM;
-	fragUniforms.sp_FOG_COL_VERT[0]=fog_colvert_bgra[2]/255.0f;
-	fragUniforms.sp_FOG_COL_VERT[1]=fog_colvert_bgra[1]/255.0f;
-	fragUniforms.sp_FOG_COL_VERT[2]=fog_colvert_bgra[0]/255.0f;
-
-	fragUniforms.sp_FOG_COL_RAM[0]=fog_colram_bgra [2]/255.0f;
-	fragUniforms.sp_FOG_COL_RAM[1]=fog_colram_bgra [1]/255.0f;
-	fragUniforms.sp_FOG_COL_RAM[2]=fog_colram_bgra [0]/255.0f;
-
-	//Fog density constant
-	u8* fog_density=(u8*)&FOG_DENSITY;
-	float fog_den_mant=fog_density[1]/128.0f;  //bit 7 -> x. bit, so [6:0] -> fraction -> /128
-	s32 fog_den_exp=(s8)fog_density[0];
-	fragUniforms.sp_FOG_DENSITY = fog_den_mant * powf(2.0f, fog_den_exp);
-
-	fragUniforms.colorClampMin[0] = ((pvrrc.fog_clamp_min >> 16) & 0xFF) / 255.0f;
-	fragUniforms.colorClampMin[1] = ((pvrrc.fog_clamp_min >> 8) & 0xFF) / 255.0f;
-	fragUniforms.colorClampMin[2] = ((pvrrc.fog_clamp_min >> 0) & 0xFF) / 255.0f;
-	fragUniforms.colorClampMin[3] = ((pvrrc.fog_clamp_min >> 24) & 0xFF) / 255.0f;
-
-	fragUniforms.colorClampMax[0] = ((pvrrc.fog_clamp_max >> 16) & 0xFF) / 255.0f;
-	fragUniforms.colorClampMax[1] = ((pvrrc.fog_clamp_max >> 8) & 0xFF) / 255.0f;
-	fragUniforms.colorClampMax[2] = ((pvrrc.fog_clamp_max >> 0) & 0xFF) / 255.0f;
-	fragUniforms.colorClampMax[3] = ((pvrrc.fog_clamp_max >> 24) & 0xFF) / 255.0f;
-
-	fragUniforms.cp_AlphaTestValue = (PT_ALPHA_REF & 0xFF) / 255.0f;
+	OITDescriptorSets::FragmentShaderUniforms fragUniforms = MakeFragmentUniforms<OITDescriptorSets::FragmentShaderUniforms>();
 	fragUniforms.shade_scale_factor = FPU_SHAD_SCALE.scale_factor / 256.f;
 
 	currentScissor = vk::Rect2D();
 
-	if (abufferPointerTransitionNeeded)
-	{
-		abufferPointerTransitionNeeded = false;
-
-		vk::ImageSubresourceRange imageSubresourceRange(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1);
-		vk::ImageMemoryBarrier imageMemoryBarrier(vk::AccessFlags(), vk::AccessFlagBits::eShaderRead | vk::AccessFlagBits::eShaderWrite,
-				vk::ImageLayout::eUndefined, vk::ImageLayout::eGeneral, VK_QUEUE_FAMILY_IGNORED, VK_QUEUE_FAMILY_IGNORED,
-				abufferPointerAttachment->GetImage(), imageSubresourceRange);
-		cmdBuffer.pipelineBarrier(vk::PipelineStageFlagBits::eTopOfPipe, vk::PipelineStageFlagBits::eFragmentShader, {}, nullptr, nullptr,
-				imageMemoryBarrier);
-	}
+	oitBuffers->OnNewFrame(cmdBuffer);
 
 	// Upload vertex and index buffers
 	UploadMainBuffer(vtxUniforms, fragUniforms);
@@ -335,12 +240,13 @@ bool OITDrawer::Draw(const Texture *fogTexture)
 	// Update per-frame descriptor set and bind it
 	const vk::Buffer mainBuffer = GetMainBuffer(0)->buffer.get();
 	GetCurrentDescSet().UpdateUniforms(mainBuffer, offsets.vertexUniformOffset, offsets.fragmentUniformOffset,
-			fogTexture->GetImageView(), pixelBuffer->buffer.get(), PixelBufferSize, pixelCounter->buffer.get(), offsets.polyParamsOffset,
-			pvrrc.global_param_tr.bytes(), abufferPointerAttachment->GetImageView(), depthAttachment->GetStencilView(),
+			fogTexture->GetImageView(), offsets.polyParamsOffset,
+			pvrrc.global_param_tr.bytes(), depthAttachment->GetStencilView(),
 			depthAttachment->GetImageView());
 	GetCurrentDescSet().BindPerFrameDescriptorSets(cmdBuffer);
 	GetCurrentDescSet().UpdateColorInputDescSet(0, colorAttachments[0]->GetImageView());
 	GetCurrentDescSet().UpdateColorInputDescSet(1, colorAttachments[1]->GetImageView());
+	oitBuffers->BindDescriptorSet(cmdBuffer, pipelineManager->GetPipelineLayout(), 3);
 
 	// Reset per-poly descriptor set pool
 	GetCurrentDescSet().Reset();
@@ -368,8 +274,7 @@ bool OITDrawer::Draw(const Texture *fogTexture)
 				current_pass.mvo_count - previous_pass.mvo_count, current_pass.autosort);
 
         // Reset the pixel counter
-    	vk::BufferCopy copy(0, 0, sizeof(int));
-    	cmdBuffer.copyBuffer(*pixelCounterReset->buffer, *pixelCounter->buffer, 1, &copy);
+    	oitBuffers->ResetPixelCounter(cmdBuffer);
 
     	const bool initialPass = render_pass == 0;
     	const bool finalPass = render_pass == pvrrc.render_passes.used() - 1;
@@ -430,16 +335,6 @@ bool OITDrawer::Draw(const Texture *fogTexture)
 			DrawList(cmdBuffer, ListType_Translucent, current_pass.autosort, 0, pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count);
 
 			cmdBuffer.endRenderPass();
-//			if (render_pass <= pvrrc.render_passes.used() - 2)
-//			{
-//				vk::ImageSubresourceRange imageSubresourceRange(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1);
-//				vk::ImageMemoryBarrier imageMemoryBarrier(vk::AccessFlagBits::eInputAttachmentRead, vk::AccessFlagBits::eColorAttachmentWrite,
-//						vk::ImageLayout::eShaderReadOnlyOptimal, vk::ImageLayout::eColorAttachmentOptimal,
-//						VK_QUEUE_FAMILY_IGNORED, VK_QUEUE_FAMILY_IGNORED, colorAttachments[(render_pass + 1) % 2]->GetImage(),
-//						imageSubresourceRange);
-//				cmdBuffer.pipelineBarrier(vk::PipelineStageFlagBits::eFragmentShader, vk::PipelineStageFlagBits::eColorAttachmentOutput,
-//						{}, nullptr, nullptr, imageMemoryBarrier);
-//			}
 		}
 
 		previous_pass = current_pass;
@@ -450,31 +345,12 @@ bool OITDrawer::Draw(const Texture *fogTexture)
 
 void OITDrawer::MakeBuffers(int width, int height)
 {
+	oitBuffers->Init(width, height);
+
 	if (width <= maxWidth && height <= maxHeight)
 		return;
 	maxWidth = std::max(maxWidth, width);
 	maxHeight = std::max(maxHeight, height);
-
-	if (!pixelBuffer)
-	{
-		pixelBuffer.reset();
-		pixelBuffer = std::unique_ptr<BufferData>(new BufferData(GetContext()->GetPhysicalDevice(), GetContext()->GetDevice(), PixelBufferSize,
-				vk::BufferUsageFlagBits::eStorageBuffer, &SimpleAllocator::instance, vk::MemoryPropertyFlagBits::eDeviceLocal));
-	}
-	if (!pixelCounter)
-	{
-		pixelCounter = std::unique_ptr<BufferData>(new BufferData(GetContext()->GetPhysicalDevice(), GetContext()->GetDevice(), 4,
-				vk::BufferUsageFlagBits::eStorageBuffer | vk::BufferUsageFlagBits::eTransferDst, allocator, vk::MemoryPropertyFlagBits::eDeviceLocal));
-		pixelCounterReset = std::unique_ptr<BufferData>(new BufferData(GetContext()->GetPhysicalDevice(), GetContext()->GetDevice(), 4,
-				vk::BufferUsageFlagBits::eTransferSrc, allocator));
-		const int zero = 0;
-		pixelCounterReset->upload(sizeof(zero), &zero);
-	}
-	abufferPointerAttachment.reset();
-	abufferPointerAttachment = std::unique_ptr<FramebufferAttachment>(
-			new FramebufferAttachment(GetContext()->GetPhysicalDevice(), GetContext()->GetDevice(), allocator));
-	abufferPointerAttachment->Init(width, height, vk::Format::eR32Uint, vk::ImageUsageFlagBits::eStorage);
-	abufferPointerTransitionNeeded = true;
 
 	for (auto& attachment : colorAttachments)
 	{
@@ -706,54 +582,7 @@ vk::CommandBuffer OITScreenDrawer::NewFrame()
 
 	matrices.CalcMatrices(&pvrrc);
 
-	bool wide_screen_on = settings.rend.WideScreen && !pvrrc.isRenderFramebuffer && !matrices.IsClipped();
-
-	if (!wide_screen_on)
-	{
-		float width;
-		float height;
-		float min_x;
-		float min_y;
-
-		if (pvrrc.isRenderFramebuffer)
-		{
-			width = 640;
-			height = 480;
-			min_x = 0;
-			min_y = 0;
-		}
-		else
-		{
-			glm::vec4 clip_min(pvrrc.fb_X_CLIP.min, pvrrc.fb_Y_CLIP.min, 0, 1);
-			glm::vec4 clip_dim(pvrrc.fb_X_CLIP.max - pvrrc.fb_X_CLIP.min + 1,
-							   pvrrc.fb_Y_CLIP.max - pvrrc.fb_Y_CLIP.min + 1, 0, 0);
-			clip_min = matrices.GetScissorMatrix() * clip_min;
-			clip_dim = matrices.GetScissorMatrix() * clip_dim;
-
-			min_x = clip_min[0];
-			min_y = clip_min[1];
-			width = clip_dim[0];
-			height = clip_dim[1];
-			if (width < 0)
-			{
-				min_x += width;
-				width = -width;
-			}
-			if (height < 0)
-			{
-				min_y += height;
-				height = -height;
-			}
-		}
-
-		baseScissor = vk::Rect2D(
-				vk::Offset2D((u32)std::max(lroundf(min_x), 0L), (u32)std::max(lroundf(min_y), 0L)),
-				vk::Extent2D((u32)std::max(lroundf(width), 0L), (u32)std::max(lroundf(height), 0L)));
-	}
-	else
-	{
-		baseScissor = vk::Rect2D(vk::Offset2D(0, 0), vk::Extent2D(screen_width, screen_height));
-	}
+	SetBaseScissor();
 
 	commandBuffer.setScissor(0, baseScissor);
 	commandBuffer.setViewport(0, vk::Viewport(viewport.offset.x, viewport.offset.y, viewport.extent.width, viewport.extent.height, 1.0f, 0.0f));

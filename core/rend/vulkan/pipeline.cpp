@@ -473,7 +473,8 @@ void OSDPipeline::CreatePipeline()
 	  &pipelineColorBlendStateCreateInfo,         // pColorBlendState
 	  &pipelineDynamicStateCreateInfo,            // pDynamicState
 	  *pipelineLayout,                            // layout
-	  renderPass                                  // renderPass
+	  renderPass,                                 // renderPass
+	  subpass
 	);
 
 	pipeline = GetContext()->GetDevice().createGraphicsPipelineUnique(GetContext()->GetPipelineCache(), graphicsPipelineCreateInfo);

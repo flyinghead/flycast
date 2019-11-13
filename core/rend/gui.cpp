@@ -643,11 +643,7 @@ static void gui_display_settings()
 
 	int dynarec_enabled = settings.dynarec.Enable;
 	int pvr_rend = settings.pvr.rend;
-	bool vulkan = pvr_rend == 4;
-
-    if (!settings_opening && settings.pvr.IsOpenGL())
-    	ImGui_ImplOpenGL3_DrawBackground();
-
+	bool vulkan = pvr_rend == 4 || pvr_rend == 5;
 	ImGui::SetNextWindowPos(ImVec2(0, 0));
 	ImGui::SetNextWindowSize(ImVec2(screen_width, screen_height));
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
@@ -953,13 +949,17 @@ static void gui_display_settings()
 		{
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
 #if HOST_OS != OS_DARWIN
-			bool has_per_pixel = !theGLContext.IsGLES() && theGLContext.GetMajorVersion() >= 4 && !vulkan;
+			bool has_per_pixel;
+			if (!vulkan)
+				has_per_pixel = !theGLContext.IsGLES() && theGLContext.GetMajorVersion() >= 4;
+			else
+				has_per_pixel = VulkanContext::Instance()->SupportsFragmentShaderStoresAndAtomics();
 #else
 			bool has_per_pixel = false;
 #endif
 		    if (ImGui::CollapsingHeader("Transparent Sorting", ImGuiTreeNodeFlags_DefaultOpen))
 		    {
-		    	int renderer = pvr_rend == 3 ? 2 : settings.rend.PerStripSorting ? 1 : 0;
+		    	int renderer = (pvr_rend == 3 || pvr_rend == 5) ? 2 : settings.rend.PerStripSorting ? 1 : 0;
 		    	ImGui::Columns(has_per_pixel ? 3 : 2, "renderers", false);
 		    	ImGui::RadioButton("Per Triangle", &renderer, 0);
 	            ImGui::SameLine();
@@ -979,17 +979,24 @@ static void gui_display_settings()
 		    	switch (renderer)
 		    	{
 		    	case 0:
-		    		if (settings.pvr.rend == 3)
-		    			pvr_rend = 0;
+		    		if (!vulkan)
+		    			pvr_rend = 0;					// regular Open GL
+		    		else
+		    			pvr_rend = 4;					// regular Vulkan
 		    		settings.rend.PerStripSorting = false;
 		    		break;
 		    	case 1:
-		    		if (settings.pvr.rend == 3)
+		    		if (!vulkan)
 		    			pvr_rend = 0;
+		    		else
+		    			pvr_rend = 4;
 		    		settings.rend.PerStripSorting = true;
 		    		break;
 		    	case 2:
-		    		pvr_rend = 3;
+		    		if (!vulkan)
+		    			pvr_rend = 3;
+		    		else
+		    			pvr_rend = 5;
 		    		break;
 		    	}
 		    }
@@ -1316,7 +1323,7 @@ static void gui_display_settings()
 		    	}
 	    	}
 #ifdef USE_VULKAN
-	    	else if (settings.pvr.rend == 4)
+	    	else if (settings.pvr.rend == 4 || settings.pvr.rend == 5)
 	    	{
 				if (ImGui::CollapsingHeader("Vulkan", ImGuiTreeNodeFlags_DefaultOpen))
 				{
@@ -1347,8 +1354,8 @@ static void gui_display_settings()
     ImGui::Render();
     ImGui_impl_RenderDrawData(ImGui::GetDrawData(), false);
 
-    if (vulkan ^ (settings.pvr.rend == 4))
-    	pvr_rend = settings.pvr.rend == 4 ? 0 : 4;
+    if (vulkan ^ (settings.pvr.rend == 4 || settings.pvr.rend == 5))
+    	pvr_rend = !vulkan ? 0 : settings.pvr.rend == 3 ? 5 : 4;
 	renderer_changed = pvr_rend;
    	settings.dynarec.Enable = (bool)dynarec_enabled;
 }
@@ -1517,6 +1524,8 @@ void systemdir_selected_callback(bool cancelled, std::string selection)
 		if (cfgOpen())
 		{
 			LoadSettings(false);
+			// Make sure the renderer type doesn't change mid-flight
+			settings.pvr.rend = 0;
 			gui_state = Main;
 			if (settings.dreamcast.ContentPath.empty())
 				settings.dreamcast.ContentPath.push_back(selection);

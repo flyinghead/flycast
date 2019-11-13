@@ -89,7 +89,7 @@ layout (std140, set = 0, binding = 1) uniform FragmentShaderUniforms
 	float shade_scale_factor;
 } uniformBuffer;
 
-layout(set = 0, binding = 5, r32ui) uniform coherent restrict uimage2D abufferPointerImg;
+layout(set = 3, binding = 2, r32ui) uniform coherent restrict uimage2D abufferPointerImg;
 struct Pixel {
 	vec4 color;
 	float depth;
@@ -97,10 +97,10 @@ struct Pixel {
 	uint next;
 };
 #define EOL 0xFFFFFFFFu
-layout (set = 0, binding = 3, std430) coherent restrict buffer PixelBuffer_ {
+layout (set = 3, binding = 0, std430) coherent restrict buffer PixelBuffer_ {
 	Pixel pixels[];
 } PixelBuffer;
-layout(set = 0, binding = 4) buffer PixelCounter_ {
+layout(set = 3, binding = 1) buffer PixelCounter_ {
 	uint buffer_index;
 } PixelCounter;
 
@@ -144,7 +144,7 @@ struct PolyParam {
 	int texid1_low;
 	int texid1_high;
 };
-layout (set = 0, binding = 6, std430) readonly buffer TrPolyParamBuffer {
+layout (set = 0, binding = 3, std430) readonly buffer TrPolyParamBuffer {
 	PolyParam tr_poly_params[];
 } TrPolyParam;
 
@@ -293,10 +293,10 @@ layout (set = 1, binding = 1) uniform sampler2D tex1;
 #endif
 
 #if PASS == 1
-layout (input_attachment_index = 0, set = 0, binding = 7) uniform usubpassInput shadow_stencil;
+layout (input_attachment_index = 0, set = 0, binding = 4) uniform usubpassInput shadow_stencil;
 #endif
 #if PASS == 3
-layout (input_attachment_index = 0, set = 0, binding = 8) uniform subpassInput DepthTex;
+layout (input_attachment_index = 0, set = 0, binding = 5) uniform subpassInput DepthTex;
 #endif
 
 // Vertex input

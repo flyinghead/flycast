@@ -28,6 +28,7 @@
 #include <SDL2/SDL_vulkan.h>
 #endif
 #include "compiler.h"
+#include "utils.h"
 
 VulkanContext *VulkanContext::contextInstance;
 
@@ -516,8 +517,13 @@ void VulkanContext::CreateSwapChain()
 		u32 imageCount = std::max(3u, surfaceCapabilities.minImageCount);
 		if (surfaceCapabilities.maxImageCount != 0)
 			imageCount = std::min(imageCount, surfaceCapabilities.maxImageCount);
+		vk::ImageUsageFlags usage = vk::ImageUsageFlagBits::eColorAttachment;
+#ifdef TEST_AUTOMATION
+		// for final screenshot
+		usage |= vk::ImageUsageFlagBits::eTransferSrc;
+#endif
 		vk::SwapchainCreateInfoKHR swapChainCreateInfo(vk::SwapchainCreateFlagsKHR(), GetSurface(), imageCount, colorFormat, vk::ColorSpaceKHR::eSrgbNonlinear,
-				swapchainExtent, 1, vk::ImageUsageFlagBits::eColorAttachment, vk::SharingMode::eExclusive, 0, nullptr, preTransform, compositeAlpha, swapchainPresentMode, true, nullptr);
+				swapchainExtent, 1, usage, vk::SharingMode::eExclusive, 0, nullptr, preTransform, compositeAlpha, swapchainPresentMode, true, nullptr);
 
 		u32 queueFamilyIndices[2] = { graphicsQueueIndex, presentQueueIndex };
 		if (graphicsQueueIndex != presentQueueIndex)
@@ -681,6 +687,7 @@ void VulkanContext::Present()
 	if (renderDone)
 	{
 		try {
+			DoSwapAutomation();
 			presentQueue.presentKHR(vk::PresentInfoKHR(1, &(*renderCompleteSemaphores[currentSemaphore]), 1, &(*swapChain), &currentImage));
 			currentSemaphore = (currentSemaphore + 1) % imageViews.size();
 		} catch (const vk::OutOfDateKHRError& e) {
@@ -736,4 +743,108 @@ void VulkanContext::Term()
 #endif
 #endif
 	instance.reset();
+}
+
+void VulkanContext::DoSwapAutomation()
+{
+#ifdef TEST_AUTOMATION
+	extern void dc_exit();
+	extern bool do_screenshot;
+
+	if (do_screenshot)
+	{
+		bool supportsBlit = true;
+		vk::FormatProperties properties;
+		physicalDevice.getFormatProperties(colorFormat, &properties);
+		if (!(properties.optimalTilingFeatures & vk::FormatFeatureFlagBits::eBlitSrc))
+			supportsBlit = false;
+		physicalDevice.getFormatProperties(vk::Format::eR8G8B8A8Unorm, &properties);
+		if (!(properties.linearTilingFeatures & vk::FormatFeatureFlagBits::eBlitDst))
+			supportsBlit = false;
+
+		{
+			vk::Image srcImage = device->getSwapchainImagesKHR(*swapChain)[currentImage];
+
+			vk::ImageCreateInfo imageCreateInfo(vk::ImageCreateFlags(), vk::ImageType::e2D, vk::Format::eR8G8B8A8Unorm,
+					vk::Extent3D(width, height, 1), 1, 1,
+					vk::SampleCountFlagBits::e1, vk::ImageTiling::eLinear, vk::ImageUsageFlagBits::eTransferDst,
+					vk::SharingMode::eExclusive, 0, nullptr, vk::ImageLayout::eUndefined);
+			vk::UniqueImage dstImage = device->createImageUnique(imageCreateInfo);
+
+			vk::MemoryRequirements memReq = device->getImageMemoryRequirements(*dstImage);
+			u32 memoryType = findMemoryType(physicalDevice.getMemoryProperties(), memReq.memoryTypeBits,
+					vk::MemoryPropertyFlagBits::eHostCoherent | vk::MemoryPropertyFlagBits::eHostVisible);
+			vk::UniqueDeviceMemory deviceMemory = device->allocateMemoryUnique(vk::MemoryAllocateInfo(memReq.size, memoryType));
+			device->bindImageMemory(dstImage.get(), *deviceMemory, 0);
+
+			vk::UniqueCommandBuffer cmdBuffer = std::move(device->allocateCommandBuffersUnique(
+					vk::CommandBufferAllocateInfo(*commandPools.back(), vk::CommandBufferLevel::ePrimary, 1)).front());
+			cmdBuffer->begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));
+
+			// Transition destination image to transfer destination layout
+			vk::ImageMemoryBarrier barrier(vk::AccessFlags(), vk::AccessFlagBits::eTransferWrite,
+					vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal,
+					VK_QUEUE_FAMILY_IGNORED, VK_QUEUE_FAMILY_IGNORED,
+					*dstImage, vk::ImageSubresourceRange(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1));
+			cmdBuffer->pipelineBarrier(vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eTransfer,
+					vk::DependencyFlags(), nullptr, nullptr, barrier);
+			// Transition swapchain image from present to transfer source layout
+			barrier = vk::ImageMemoryBarrier(vk::AccessFlagBits::eMemoryRead, vk::AccessFlagBits::eTransferRead,
+								vk::ImageLayout::ePresentSrcKHR, vk::ImageLayout::eTransferSrcOptimal,
+								VK_QUEUE_FAMILY_IGNORED, VK_QUEUE_FAMILY_IGNORED,
+								srcImage, vk::ImageSubresourceRange(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1));
+			cmdBuffer->pipelineBarrier(vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eTransfer,
+								vk::DependencyFlags(), nullptr, nullptr, barrier);
+
+			if (supportsBlit)
+			{
+				vk::Offset3D blitSize(width, height, 1);
+				vk::ImageBlit imageBlit(
+						vk::ImageSubresourceLayers(vk::ImageAspectFlagBits::eColor, 0, 0, 1), { vk::Offset3D(), blitSize },
+						vk::ImageSubresourceLayers(vk::ImageAspectFlagBits::eColor, 0, 0, 1), { vk::Offset3D(), blitSize });
+				cmdBuffer->blitImage(srcImage, vk::ImageLayout::eTransferSrcOptimal, *dstImage, vk::ImageLayout::eTransferDstOptimal,
+						imageBlit, vk::Filter::eNearest);
+			}
+			else
+			{
+				vk::ImageCopy imageCopy(vk::ImageSubresourceLayers(vk::ImageAspectFlagBits::eColor, 0, 0, 1), vk::Offset3D(),
+						vk::ImageSubresourceLayers(vk::ImageAspectFlagBits::eColor, 0, 0, 1), vk::Offset3D(), { width, height, 1 });
+				cmdBuffer->copyImage(srcImage, vk::ImageLayout::eTransferSrcOptimal, *dstImage, vk::ImageLayout::eTransferDstOptimal,
+										imageCopy);
+			}
+			// Transition destination image to general layout, which is the required layout for mapping the image memory later on
+			barrier = vk::ImageMemoryBarrier(vk::AccessFlagBits::eTransferWrite, vk::AccessFlagBits::eMemoryRead,
+											vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eGeneral,
+											VK_QUEUE_FAMILY_IGNORED, VK_QUEUE_FAMILY_IGNORED,
+											*dstImage, vk::ImageSubresourceRange(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1));
+			cmdBuffer->pipelineBarrier(vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eTransfer,
+					vk::DependencyFlags(), nullptr, nullptr, barrier);
+			// Transition back the swap chain image after the blit is done
+			barrier = vk::ImageMemoryBarrier(vk::AccessFlagBits::eTransferRead, vk::AccessFlagBits::eMemoryRead,
+											vk::ImageLayout::eTransferSrcOptimal, vk::ImageLayout::ePresentSrcKHR,
+											VK_QUEUE_FAMILY_IGNORED, VK_QUEUE_FAMILY_IGNORED,
+											srcImage, vk::ImageSubresourceRange(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1));
+			cmdBuffer->pipelineBarrier(vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eTransfer,
+					vk::DependencyFlags(), nullptr, nullptr, barrier);
+			cmdBuffer->end();
+			vk::PipelineStageFlags wait_stage = vk::PipelineStageFlagBits::eColorAttachmentOutput;
+			vk::SubmitInfo submitInfo(0, nullptr, nullptr, 1, &cmdBuffer.get(), 0, nullptr);
+			graphicsQueue.submit(1, &submitInfo, nullptr);
+			graphicsQueue.waitIdle();
+
+			vk::ImageSubresource subresource(vk::ImageAspectFlagBits::eColor, 0, 0);
+			vk::SubresourceLayout subresourceLayout;
+			device->getImageSubresourceLayout(*dstImage, &subresource, &subresourceLayout);
+
+			u8* img = (u8*)device->mapMemory(*deviceMemory, 0, VK_WHOLE_SIZE);
+			img += subresourceLayout.offset;
+
+			dump_screenshot(img, screen_width, screen_height, true, subresourceLayout.rowPitch, false);
+
+			device->unmapMemory(*deviceMemory);
+		}
+		dc_exit();
+		exit(0);
+	}
+#endif
 }

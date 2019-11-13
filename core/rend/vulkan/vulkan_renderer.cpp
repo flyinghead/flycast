@@ -80,7 +80,7 @@ public:
 				vjoyTexture->UploadToGPU(OSD_TEX_W, OSD_TEX_H, image_data);
 				vjoyTexture->SetCommandBuffer(nullptr);
 				delete [] image_data;
-				osdPipeline.Init(&shaderManager, vjoyTexture->GetImageView());
+				osdPipeline.Init(&shaderManager, vjoyTexture->GetImageView(), GetContext()->GetRenderPass());
 			}
 		}
 		if (!osdBuffer)
@@ -91,7 +91,6 @@ public:
 		}
 #endif
 
-
 		return true;
 	}
 
@@ -100,7 +99,9 @@ public:
 		texCommandPool.Init();
 		screenDrawer.Init(&samplerManager, &shaderManager);
 		quadPipeline.Init(&shaderManager);
-		osdPipeline.Init(&shaderManager, vjoyTexture->GetImageView());
+#ifdef __ANDROID__
+		osdPipeline.Init(&shaderManager, vjoyTexture->GetImageView(), GetContext()->GetRenderPass());
+#endif
 	}
 
 	void Term() override
@@ -180,7 +181,6 @@ public:
 				vk::Extent2D((u32)std::max(lroundf(width), 0L), (u32)std::max(lroundf(height), 0L))));
 		quadBuffer->Bind(cmdBuffer);
 		quadBuffer->Draw(cmdBuffer);
-//		cmdBuffer.draw(3, 1, 0, 0);
 
     	gui_display_osd();
 

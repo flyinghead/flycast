@@ -173,7 +173,10 @@ TA_context* read_frame(const char* file, u8* vram_ref = NULL) {
 	char id0[8] = { 0 };
 	u32 t = 0;
 
-	fread(id0, 1, 8, fw);
+	if (fread(id0, 1, 8, fw) != 8) {
+		fclose(fw);
+		return 0;
+	}
 
 	if (memcmp(id0, "TAFRAME", 7) != 0 || (id0[7] != '3' && id0[7] != '4')) {
 		fclose(fw);
@@ -193,35 +196,35 @@ TA_context* read_frame(const char* file, u8* vram_ref = NULL) {
 
 	ctx->tad.Clear();
 
-	fread(&ctx->rend.isRTT, 1, sizeof(ctx->rend.isRTT), fw);
-	fread(&t, 1, sizeof(bool), fw);	// Was autosort
-	fread(&ctx->rend.fb_X_CLIP.full, 1, sizeof(ctx->rend.fb_X_CLIP.full), fw);
-	fread(&ctx->rend.fb_Y_CLIP.full, 1, sizeof(ctx->rend.fb_Y_CLIP.full), fw);
+	verify(fread(&ctx->rend.isRTT, 1, sizeof(ctx->rend.isRTT), fw) == sizeof(ctx->rend.isRTT));
+	verify(fread(&t, 1, sizeof(bool), fw) == sizeof(bool));	// Was autosort
+	verify(fread(&ctx->rend.fb_X_CLIP.full, 1, sizeof(ctx->rend.fb_X_CLIP.full), fw) == sizeof(ctx->rend.fb_X_CLIP.full));
+	verify(fread(&ctx->rend.fb_Y_CLIP.full, 1, sizeof(ctx->rend.fb_Y_CLIP.full), fw) == sizeof(ctx->rend.fb_Y_CLIP.full));
 
-	fread(ctx->rend.global_param_op.Append(), 1, sizeofPolyParam, fw);
+	verify(fread(ctx->rend.global_param_op.Append(), 1, sizeofPolyParam, fw) == sizeofPolyParam);
 	Vertex *vtx = ctx->rend.verts.Append(4);
 	for (int i = 0; i < 4; i++)
-		fread(vtx + i, 1, sizeofVertex, fw);
+		verify(fread(vtx + i, 1, sizeofVertex, fw) == sizeofVertex);
 
-	fread(&t, 1, sizeof(t), fw);
+	verify(fread(&t, 1, sizeof(t), fw) == sizeof(t));
 	verify(t == VRAM_SIZE);
 
 	_vmem_unprotect_vram(0, VRAM_SIZE);
 
 	uLongf compressed_size;
 
-	fread(&compressed_size, 1, sizeof(compressed_size), fw);
+	verify(fread(&compressed_size, 1, sizeof(compressed_size), fw) == sizeof(compressed_size));
 
 	u8* gz_stream = (u8*)malloc(compressed_size);
-	fread(gz_stream, 1, compressed_size, fw);
+	verify(fread(gz_stream, 1, compressed_size, fw) == compressed_size);
 	uLongf tl = t;
 	verify(uncompress(vram.data, &tl, gz_stream, compressed_size) == Z_OK);
 	free(gz_stream);
 
-	fread(&t, 1, sizeof(t), fw);
-	fread(&compressed_size, 1, sizeof(compressed_size), fw);
+	verify(fread(&t, 1, sizeof(t), fw) == sizeof(t));
+	verify(fread(&compressed_size, 1, sizeof(compressed_size), fw) == sizeof(compressed_size));
 	gz_stream = (u8*)malloc(compressed_size);
-	fread(gz_stream, 1, compressed_size, fw);
+	verify(fread(gz_stream, 1, compressed_size, fw) == compressed_size);
 	tl = t;
 	verify(uncompress(ctx->tad.thd_data, &tl, gz_stream, compressed_size) == Z_OK);
 	free(gz_stream);
@@ -232,11 +235,11 @@ TA_context* read_frame(const char* file, u8* vram_ref = NULL) {
 		ctx->tad.render_pass_count = t;
 		for (int i = 0; i < t; i++) {
 			u32 offset;
-			fread(&offset, 1, sizeof(offset), fw);
+			verify(fread(&offset, 1, sizeof(offset), fw) == sizeof(offset));
 			ctx->tad.render_passes[i] = ctx->tad.thd_root + offset;
 		}
 	}
-	fread(pvr_regs, 1, sizeof(pvr_regs), fw);
+	verify(fread(pvr_regs, 1, sizeof(pvr_regs), fw) == sizeof(pvr_regs));
 
 	fclose(fw);
     
@@ -330,7 +333,7 @@ bool rend_single_frame()
 	while (!_pvrrc);
 	bool do_swp = rend_frame(_pvrrc);
 	swap_pending = settings.rend.DelayFrameSwapping && do_swp && !_pvrrc->rend.isRenderFramebuffer
-			&& settings.pvr.rend != 4;	// TODO Fix vulkan
+			&& settings.pvr.rend != 4 && settings.pvr.rend != 5;	// TODO Fix vulkan
 
 #if !defined(TARGET_NO_THREADS)
 	if (_pvrrc->rend.isRTT)
@@ -369,6 +372,9 @@ static void rend_create_renderer()
 #ifdef USE_VULKAN
 	case 4:
 		renderer = rend_Vulkan();
+		break;
+	case 5:
+		renderer = rend_OITVulkan();
 		break;
 #endif
 	}
@@ -486,7 +492,7 @@ void rend_start_render()
 				
 				verify(ch == FRAME_MD5);
 
-				fread(digest2, 1, 16, fCheckFrames);
+				verify(fread(digest2, 1, 16, fCheckFrames) == 16);
 
 				verify(memcmp(digest, digest2, 16) == 0);
 

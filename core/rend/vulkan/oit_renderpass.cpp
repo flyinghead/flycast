@@ -86,7 +86,6 @@ vk::UniqueRenderPass RenderPasses::MakeRenderPass(bool initial, bool last)
     		vk::AccessFlagBits::eShaderRead | vk::AccessFlagBits::eShaderWrite,
 			vk::AccessFlagBits::eShaderRead | vk::AccessFlagBits::eShaderWrite,
 			vk::DependencyFlagBits::eByRegion);
-    verify(dependencies.size() >= 7);
 
     return GetContext()->GetDevice().createRenderPassUnique(vk::RenderPassCreateInfo(vk::RenderPassCreateFlags(),
     		ARRAY_SIZE(attachmentDescriptions), attachmentDescriptions,

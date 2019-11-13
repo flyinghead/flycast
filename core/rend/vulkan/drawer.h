@@ -29,7 +29,72 @@
 #include "shaders.h"
 #include "texture.h"
 
-class Drawer
+class BaseDrawer
+{
+public:
+	void SetScissor(const vk::CommandBuffer& cmdBuffer, vk::Rect2D scissor)
+	{
+		if (scissor != currentScissor)
+		{
+			cmdBuffer.setScissor(0, scissor);
+			currentScissor = scissor;
+		}
+	}
+
+protected:
+	VulkanContext *GetContext() const { return VulkanContext::Instance(); }
+	TileClipping SetTileClip(u32 val, vk::Rect2D& clipRect);
+	void SetBaseScissor();
+
+	u32 align(vk::DeviceSize offset, u32 alignment)
+	{
+		return (u32)(alignment - (offset & (alignment - 1)));
+	}
+
+	template<typename T>
+	T MakeFragmentUniforms()
+	{
+		T fragUniforms;
+		fragUniforms.extra_depth_scale = settings.rend.ExtraDepthScale;
+
+		//VERT and RAM fog color constants
+		u8* fog_colvert_bgra=(u8*)&FOG_COL_VERT;
+		u8* fog_colram_bgra=(u8*)&FOG_COL_RAM;
+		fragUniforms.sp_FOG_COL_VERT[0]=fog_colvert_bgra[2]/255.0f;
+		fragUniforms.sp_FOG_COL_VERT[1]=fog_colvert_bgra[1]/255.0f;
+		fragUniforms.sp_FOG_COL_VERT[2]=fog_colvert_bgra[0]/255.0f;
+
+		fragUniforms.sp_FOG_COL_RAM[0]=fog_colram_bgra [2]/255.0f;
+		fragUniforms.sp_FOG_COL_RAM[1]=fog_colram_bgra [1]/255.0f;
+		fragUniforms.sp_FOG_COL_RAM[2]=fog_colram_bgra [0]/255.0f;
+
+		//Fog density constant
+		u8* fog_density=(u8*)&FOG_DENSITY;
+		float fog_den_mant=fog_density[1]/128.0f;  //bit 7 -> x. bit, so [6:0] -> fraction -> /128
+		s32 fog_den_exp=(s8)fog_density[0];
+		fragUniforms.sp_FOG_DENSITY = fog_den_mant * powf(2.0f, fog_den_exp);
+
+		fragUniforms.colorClampMin[0] = ((pvrrc.fog_clamp_min >> 16) & 0xFF) / 255.0f;
+		fragUniforms.colorClampMin[1] = ((pvrrc.fog_clamp_min >> 8) & 0xFF) / 255.0f;
+		fragUniforms.colorClampMin[2] = ((pvrrc.fog_clamp_min >> 0) & 0xFF) / 255.0f;
+		fragUniforms.colorClampMin[3] = ((pvrrc.fog_clamp_min >> 24) & 0xFF) / 255.0f;
+
+		fragUniforms.colorClampMax[0] = ((pvrrc.fog_clamp_max >> 16) & 0xFF) / 255.0f;
+		fragUniforms.colorClampMax[1] = ((pvrrc.fog_clamp_max >> 8) & 0xFF) / 255.0f;
+		fragUniforms.colorClampMax[2] = ((pvrrc.fog_clamp_max >> 0) & 0xFF) / 255.0f;
+		fragUniforms.colorClampMax[3] = ((pvrrc.fog_clamp_max >> 24) & 0xFF) / 255.0f;
+
+		fragUniforms.cp_AlphaTestValue = (PT_ALPHA_REF & 0xFF) / 255.0f;
+
+		return fragUniforms;
+	}
+
+	vk::Rect2D baseScissor;
+	vk::Rect2D currentScissor;
+	TransformMatrix<false> matrices;
+};
+
+class Drawer : public BaseDrawer
 {
 public:
 	Drawer() = default;
@@ -41,14 +106,6 @@ public:
 	Drawer& operator=(Drawer&& other) = default;
 	virtual vk::CommandBuffer BeginRenderPass() = 0;
 	virtual void EndRenderPass() = 0;
-	void SetScissor(const vk::CommandBuffer& cmdBuffer, vk::Rect2D scissor)
-	{
-		if (scissor != currentScissor)
-		{
-			cmdBuffer.setScissor(0, scissor);
-			currentScissor = scissor;
-		}
-	}
 
 protected:
 	void Init(SamplerManager *samplerManager, PipelineManager *pipelineManager)
@@ -59,24 +116,15 @@ protected:
 	virtual DescriptorSets& GetCurrentDescSet() = 0;
 	virtual BufferData *GetMainBuffer(u32 size) = 0;
 
-	VulkanContext *GetContext() const { return VulkanContext::Instance(); }
-
 	PipelineManager *pipelineManager = nullptr;
-	vk::Rect2D baseScissor;
-	TransformMatrix<false> matrices;
 
 private:
-	TileClipping SetTileClip(u32 val, vk::Rect2D& clipRect);
 	void SortTriangles();
 	void DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sortTriangles, const PolyParam& poly, u32 first, u32 count);
 	void DrawSorted(const vk::CommandBuffer& cmdBuffer, const std::vector<SortTrigDrawParam>& polys);
 	void DrawList(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sortTriangles, const List<PolyParam>& polys, u32 first, u32 count);
 	void DrawModVols(const vk::CommandBuffer& cmdBuffer, int first, int count);
 	void UploadMainBuffer(const VertexShaderUniforms& vertexUniforms, const FragmentShaderUniforms& fragmentUniforms);
-	u32 align(vk::DeviceSize offset, u32 alignment)
-	{
-		return (u32)(alignment - (offset & (alignment - 1)));
-	}
 
 	struct {
 		vk::DeviceSize indexOffset = 0;
@@ -90,7 +138,6 @@ private:
 	u32 sortedIndexCount = 0;
 
 	SamplerManager *samplerManager = nullptr;
-	vk::Rect2D currentScissor;
 };
 
 class ScreenDrawer : public Drawer

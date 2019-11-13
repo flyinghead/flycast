@@ -24,6 +24,7 @@
 #include "vulkan.h"
 #include "oit_shaders.h"
 #include "oit_renderpass.h"
+#include "oit_buffer.h"
 #include "texture.h"
 #include "hw/pvr/ta_ctx.h"
 
@@ -80,8 +81,7 @@ public:
 	}
 	// FIXME way too many params
 	void UpdateUniforms(vk::Buffer buffer, u32 vertexUniformOffset, u32 fragmentUniformOffset, vk::ImageView fogImageView,
-			vk::Buffer pixelBuffer, vk::DeviceSize pixelBufferSize, vk::Buffer pixelCounterBuffer, u32 polyParamsOffset,
-			u32 polyParamsSize, vk::ImageView pointerImageView, vk::ImageView stencilImageView, vk::ImageView depthImageView)
+			u32 polyParamsOffset, u32 polyParamsSize, vk::ImageView stencilImageView, vk::ImageView depthImageView)
 	{
 		if (!perFrameDescSet)
 		{
@@ -106,22 +106,16 @@ public:
 			imageInfo = { fogSampler, fogImageView, vk::ImageLayout::eShaderReadOnlyOptimal };
 			writeDescriptorSets.push_back(vk::WriteDescriptorSet(*perFrameDescSet, 2, 0, 1, vk::DescriptorType::eCombinedImageSampler, &imageInfo, nullptr, nullptr));
 		}
-		vk::DescriptorBufferInfo pixelBufferInfo(pixelBuffer, 0, pixelBufferSize);
-		writeDescriptorSets.push_back(vk::WriteDescriptorSet(*perFrameDescSet, 3, 0, 1, vk::DescriptorType::eStorageBuffer, nullptr, &pixelBufferInfo, nullptr));
-		vk::DescriptorBufferInfo pixelCounterBufferInfo(pixelCounterBuffer, 0, 4);
-		writeDescriptorSets.push_back(vk::WriteDescriptorSet(*perFrameDescSet, 4, 0, 1, vk::DescriptorType::eStorageBuffer, nullptr, &pixelCounterBufferInfo, nullptr));
-		vk::DescriptorImageInfo pointerImageInfo(vk::Sampler(), pointerImageView, vk::ImageLayout::eGeneral);
-		writeDescriptorSets.push_back(vk::WriteDescriptorSet(*perFrameDescSet, 5, 0, 1, vk::DescriptorType::eStorageImage, &pointerImageInfo, nullptr, nullptr));
 		if (polyParamsSize > 0)
 		{
 			static vk::DescriptorBufferInfo polyParamsBufferInfo;
 			polyParamsBufferInfo = vk::DescriptorBufferInfo(buffer, polyParamsOffset, polyParamsSize);
-			writeDescriptorSets.push_back(vk::WriteDescriptorSet(*perFrameDescSet, 6, 0, 1, vk::DescriptorType::eStorageBuffer, nullptr, &polyParamsBufferInfo, nullptr));
+			writeDescriptorSets.push_back(vk::WriteDescriptorSet(*perFrameDescSet, 3, 0, 1, vk::DescriptorType::eStorageBuffer, nullptr, &polyParamsBufferInfo, nullptr));
 		}
 		vk::DescriptorImageInfo stencilImageInfo(vk::Sampler(), stencilImageView, vk::ImageLayout::eDepthStencilReadOnlyOptimal);
-		writeDescriptorSets.push_back(vk::WriteDescriptorSet(*perFrameDescSet, 7, 0, 1, vk::DescriptorType::eInputAttachment, &stencilImageInfo, nullptr, nullptr));
+		writeDescriptorSets.push_back(vk::WriteDescriptorSet(*perFrameDescSet, 4, 0, 1, vk::DescriptorType::eInputAttachment, &stencilImageInfo, nullptr, nullptr));
 		vk::DescriptorImageInfo depthImageInfo(vk::Sampler(), depthImageView, vk::ImageLayout::eDepthStencilReadOnlyOptimal);
-		writeDescriptorSets.push_back(vk::WriteDescriptorSet(*perFrameDescSet, 8, 0, 1, vk::DescriptorType::eInputAttachment, &depthImageInfo, nullptr, nullptr));
+		writeDescriptorSets.push_back(vk::WriteDescriptorSet(*perFrameDescSet, 5, 0, 1, vk::DescriptorType::eInputAttachment, &depthImageInfo, nullptr, nullptr));
 
 		GetContext()->GetDevice().updateDescriptorSets(writeDescriptorSets, nullptr);
 	}
@@ -216,7 +210,7 @@ public:
 	OITPipelineManager() : renderPasses(&ownRenderPasses) {}
 	virtual ~OITPipelineManager() = default;
 
-	virtual void Init(OITShaderManager *shaderManager)
+	virtual void Init(OITShaderManager *shaderManager, OITBuffers *oitBuffers)
 	{
 		this->shaderManager = shaderManager;
 
@@ -227,12 +221,9 @@ public:
 					{ 0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex },			// vertex uniforms
 					{ 1, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eFragment },		// fragment uniforms
 					{ 2, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment },// fog texture
-					{ 3, vk::DescriptorType::eStorageBuffer, 1, vk::ShaderStageFlagBits::eFragment },		// pixel buffer
-					{ 4, vk::DescriptorType::eStorageBuffer, 1, vk::ShaderStageFlagBits::eFragment },		// pixel counter
-					{ 5, vk::DescriptorType::eStorageImage, 1, vk::ShaderStageFlagBits::eFragment },		// a-buffer pointers
-					{ 6, vk::DescriptorType::eStorageBuffer, 1, vk::ShaderStageFlagBits::eFragment },		// Tr poly params
-					{ 7, vk::DescriptorType::eInputAttachment, 1, vk::ShaderStageFlagBits::eFragment },		// stencil input attachment
-					{ 8, vk::DescriptorType::eInputAttachment, 1, vk::ShaderStageFlagBits::eFragment },		// depth input attachment
+					{ 3, vk::DescriptorType::eStorageBuffer, 1, vk::ShaderStageFlagBits::eFragment },		// Tr poly params
+					{ 4, vk::DescriptorType::eInputAttachment, 1, vk::ShaderStageFlagBits::eFragment },		// stencil input attachment
+					{ 5, vk::DescriptorType::eInputAttachment, 1, vk::ShaderStageFlagBits::eFragment },		// depth input attachment
 			};
 			perFrameLayout = GetContext()->GetDevice().createDescriptorSetLayoutUnique(
 					vk::DescriptorSetLayoutCreateInfo(vk::DescriptorSetLayoutCreateFlags(), ARRAY_SIZE(perFrameBindings), perFrameBindings));
@@ -251,7 +242,7 @@ public:
 					vk::DescriptorSetLayoutCreateInfo(vk::DescriptorSetLayoutCreateFlags(), ARRAY_SIZE(perPolyBindings), perPolyBindings));
 
 			vk::PushConstantRange pushConstant(vk::ShaderStageFlagBits::eFragment, 0, sizeof(OITDescriptorSets::PushConstants));
-			vk::DescriptorSetLayout layouts[] = { *perFrameLayout, *perPolyLayout, *colorInputLayout };
+			vk::DescriptorSetLayout layouts[] = { *perFrameLayout, *perPolyLayout, *colorInputLayout, oitBuffers->GetDescriptorSetLayout() };
 			pipelineLayout = GetContext()->GetDevice().createPipelineLayoutUnique(
 					vk::PipelineLayoutCreateInfo(vk::PipelineLayoutCreateFlags(), ARRAY_SIZE(layouts), layouts, 1, &pushConstant));
 		}
@@ -387,49 +378,24 @@ class RttOITPipelineManager : public OITPipelineManager
 {
 public:
 	RttOITPipelineManager() { renderPasses = &rttRenderPasses; }
-	void Init(OITShaderManager *shaderManager) override
+	void Init(OITShaderManager *shaderManager, OITBuffers *oitBuffers) override
 	{
-		OITPipelineManager::Init(shaderManager);
+		this->oitBuffers = oitBuffers;
+		OITPipelineManager::Init(shaderManager, oitBuffers);
 
 		renderToTextureBuffer = settings.rend.RenderToTextureBuffer;
 		rttRenderPasses.Reset();
-		/*
-	    vk::AttachmentDescription attachmentDescriptions[] = {
-	    		vk::AttachmentDescription(vk::AttachmentDescriptionFlags(), vk::Format::eR8G8B8A8Unorm, vk::SampleCountFlagBits::e1,
-	    				vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eStore, vk::AttachmentLoadOp::eDontCare, vk::AttachmentStoreOp::eDontCare,
-						vk::ImageLayout::eColorAttachmentOptimal,
-						renderToTextureBuffer ? vk::ImageLayout::eTransferSrcOptimal : vk::ImageLayout::eShaderReadOnlyOptimal),
-				vk::AttachmentDescription(vk::AttachmentDescriptionFlags(), GetContext()->GetDepthFormat(), vk::SampleCountFlagBits::e1,
-						vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eDontCare, vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eDontCare,
-						vk::ImageLayout::eUndefined, vk::ImageLayout::eDepthStencilAttachmentOptimal),
-	    };
-	    vk::AttachmentReference colorReference(0, vk::ImageLayout::eColorAttachmentOptimal);
-	    vk::AttachmentReference depthReference(1, vk::ImageLayout::eDepthStencilAttachmentOptimal);
-	    vk::SubpassDescription subpass(vk::SubpassDescriptionFlags(), vk::PipelineBindPoint::eGraphics, 0, nullptr, 1, &colorReference, nullptr, &depthReference);
-	    vk::SubpassDependency dependencies[] {
-	    	vk::SubpassDependency(VK_SUBPASS_EXTERNAL, 0, vk::PipelineStageFlagBits::eFragmentShader, vk::PipelineStageFlagBits::eColorAttachmentOutput,
-	    			vk::AccessFlagBits::eShaderRead, vk::AccessFlagBits::eColorAttachmentWrite),
-			vk::SubpassDependency(0, VK_SUBPASS_EXTERNAL, vk::PipelineStageFlagBits::eColorAttachmentOutput, vk::PipelineStageFlagBits::eFragmentShader,
-					vk::AccessFlagBits::eColorAttachmentWrite, vk::AccessFlagBits::eShaderRead),
-	    };
-	    vk::SubpassDependency vramWriteDeps[] {
-			vk::SubpassDependency(0, VK_SUBPASS_EXTERNAL,
-					vk::PipelineStageFlagBits::eColorAttachmentOutput, vk::PipelineStageFlagBits::eTransfer | vk::PipelineStageFlagBits::eHost,
-					vk::AccessFlagBits::eColorAttachmentWrite, vk::AccessFlagBits::eTransferRead | vk::AccessFlagBits::eHostRead),
-	    };
-	    renderPass = GetContext()->GetDevice().createRenderPassUnique(vk::RenderPassCreateInfo(vk::RenderPassCreateFlags(), 2, attachmentDescriptions,
-	    		1, &subpass, renderToTextureBuffer ? ARRAY_SIZE(vramWriteDeps) : ARRAY_SIZE(dependencies), renderToTextureBuffer ? vramWriteDeps : dependencies));
-		 */
 	}
 	void CheckSettingsChange()
 	{
 		if (renderToTextureBuffer != settings.rend.RenderToTextureBuffer)
 		{
-			Init(shaderManager);
+			Init(shaderManager, oitBuffers);
 		}
 	}
 
 private:
 	bool renderToTextureBuffer = false;
 	RttRenderPasses rttRenderPasses;
+	OITBuffers *oitBuffers = nullptr;
 };

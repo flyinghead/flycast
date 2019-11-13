@@ -28,7 +28,7 @@ VulkanContext theVulkanContext;
 void InitRenderApi()
 {
 #ifdef USE_VULKAN
-	if (settings.pvr.rend == 4)
+	if (settings.pvr.rend == 4 || settings.pvr.rend == 5)
 	{
 		if (theVulkanContext.Init())
 			return;
