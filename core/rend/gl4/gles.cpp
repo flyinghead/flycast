@@ -120,7 +120,6 @@ uniform int shading_instr[2];
 uniform int fog_control[2];
 #endif
 
-uniform highp float extra_depth_scale;
 /* Vertex input*/
 INTERPOLATION in lowp vec4 vtx_base;
 INTERPOLATION in lowp vec4 vtx_offs;
@@ -131,7 +130,7 @@ INTERPOLATION in lowp vec4 vtx_offs1;
 
 lowp float fog_mode2(highp float w)
 {
-	highp float z = clamp(w * extra_depth_scale * sp_FOG_DENSITY, 1.0, 255.9999);
+	highp float z = clamp(w * sp_FOG_DENSITY, 1.0, 255.9999);
 	highp float exp = floor(log2(z));
 	highp float m = z * 16.0 / pow(2.0, exp) - 16.0;
 	float idx = floor(m) + exp * 16.0 + 0.5;
@@ -421,8 +420,6 @@ bool gl4CompilePipelineShader(	gl4PipelineShader* s, const char *pixel_source /*
 		glUniform1i(gu, 1);
 
 	//get the uniform locations
-	s->extra_depth_scale = glGetUniformLocation(s->program, "extra_depth_scale");
-
 	s->pp_ClipTest      = glGetUniformLocation(s->program, "pp_ClipTest");
 
 	s->sp_FOG_DENSITY   = glGetUniformLocation(s->program, "sp_FOG_DENSITY");
@@ -670,8 +667,6 @@ static bool RenderFrame()
 	}
 	resize(rendering_width, rendering_height);
 	
-	gl4ShaderUniforms.extra_depth_scale = settings.rend.ExtraDepthScale;
-
 	//DEBUG_LOG(RENDERER, "scale: %f, %f, %f, %f", gl4ShaderUniforms.scale_coefs[0], gl4ShaderUniforms.scale_coefs[1], gl4ShaderUniforms.scale_coefs[2], gl4ShaderUniforms.scale_coefs[3]);
 
 	//VERT and RAM fog color constants
@@ -689,7 +684,7 @@ static bool RenderFrame()
 	u8* fog_density=(u8*)&FOG_DENSITY;
 	float fog_den_mant=fog_density[1]/128.0f;  //bit 7 -> x. bit, so [6:0] -> fraction -> /128
 	s32 fog_den_exp=(s8)fog_density[0];
-	gl4ShaderUniforms.fog_den_float=fog_den_mant*powf(2.0f,fog_den_exp);
+	gl4ShaderUniforms.fog_den_float = fog_den_mant * powf(2.0f,fog_den_exp) * settings.rend.ExtraDepthScale;
 
 	gl4ShaderUniforms.fog_clamp_min[0] = ((pvrrc.fog_clamp_min >> 16) & 0xFF) / 255.0f;
 	gl4ShaderUniforms.fog_clamp_min[1] = ((pvrrc.fog_clamp_min >> 8) & 0xFF) / 255.0f;

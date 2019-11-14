@@ -30,7 +30,6 @@ struct PipelineShader
 	GLuint program;
 
 	GLuint depth_scale;
-	GLuint extra_depth_scale;
 	GLuint pp_ClipTest,cp_AlphaTestValue;
 	GLuint sp_FOG_COL_RAM,sp_FOG_COL_VERT,sp_FOG_DENSITY;
 	GLuint trilinear_alpha;
@@ -101,6 +100,7 @@ struct gl_ctx
 	GLenum index_type;
 	bool GL_OES_packed_depth_stencil_supported;
 	bool GL_OES_depth24_supported;
+	bool highp_float_supported;
 
 	size_t get_index_size() { return index_type == GL_UNSIGNED_INT ? sizeof(u32) : sizeof(u16); }
 };
@@ -159,7 +159,6 @@ extern struct ShaderUniforms_t
 {
 	float PT_ALPHA;
 	float depth_coefs[4];
-	float extra_depth_scale;
 	float fog_den_float;
 	float ps_FOG_COL_RAM[3];
 	float ps_FOG_COL_VERT[3];
@@ -168,16 +167,13 @@ extern struct ShaderUniforms_t
 	float fog_clamp_max[4];
 	glm::mat4 normal_mat;
 
-	void Set(PipelineShader* s)
+	void Set(const PipelineShader* s)
 	{
 		if (s->cp_AlphaTestValue!=-1)
 			glUniform1f(s->cp_AlphaTestValue,PT_ALPHA);
 
 		if (s->depth_scale!=-1)
 			glUniform4fv( s->depth_scale, 1, depth_coefs);
-
-		if (s->extra_depth_scale != -1)
-			glUniform1f(s->extra_depth_scale, extra_depth_scale);
 
 		if (s->sp_FOG_DENSITY!=-1)
 			glUniform1f( s->sp_FOG_DENSITY,fog_den_float);

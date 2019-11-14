@@ -104,7 +104,6 @@ layout (std140, set = 0, binding = 1) uniform FragmentShaderUniforms
 	vec4 sp_FOG_COL_VERT;
 	float cp_AlphaTestValue;
 	float sp_FOG_DENSITY;
-	float extra_depth_scale;
 } uniformBuffer;
 
 layout (push_constant) uniform pushBlock
@@ -127,7 +126,7 @@ layout (set = 0, binding = 2) uniform sampler2D fog_table;
 
 float fog_mode2(float w)
 {
-	float z = clamp(w * uniformBuffer.extra_depth_scale * uniformBuffer.sp_FOG_DENSITY, 1.0, 255.9999);
+	float z = clamp(w * uniformBuffer.sp_FOG_DENSITY, 1.0, 255.9999);
 	float exp = floor(log2(z));
 	float m = z * 16.0 / pow(2.0, exp) - 16.0;
 	float idx = floor(m) + exp * 16.0 + 0.5;

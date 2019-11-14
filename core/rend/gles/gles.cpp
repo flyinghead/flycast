@@ -57,9 +57,10 @@ const char* VertexShaderSource = R"(
 #endif
 
 /* Vertex constants*/ 
-uniform highp vec4      scale;
 uniform highp vec4      depth_scale;
 uniform highp mat4 normal_matrix;
+uniform highp float sp_FOG_DENSITY;
+
 /* Vertex input */
 in highp vec4    in_pos;
 in lowp vec4     in_base;
@@ -69,6 +70,9 @@ in mediump vec2  in_uv;
 INTERPOLATION out lowp vec4 vtx_base;
 INTERPOLATION out lowp vec4 vtx_offs;
               out mediump vec2 vtx_uv;
+#if TARGET_GL == GLES2
+			  out highp float fog_depth;
+#endif
 void main()
 {
 	vtx_base = in_base;
@@ -86,7 +90,8 @@ void main()
 #if TARGET_GL != GLES2
 	vpos.z = vpos.w;
 #else
-	vpos.z = depth_scale.x + depth_scale.y * vpos.w; 
+	fog_depth = vpos.z * sp_FOG_DENSITY;
+	vpos.z = depth_scale.x + depth_scale.y * vpos.w;
 #endif
 	vpos.xy *= vpos.w;
 	gl_Position = vpos;
@@ -136,7 +141,6 @@ out highp vec4 FragColor;
 #define FOG_CHANNEL a
 #endif
 
-
 #if TARGET_GL == GL3 || TARGET_GL == GLES3
 #if pp_Gouraud == 0
 #define INTERPOLATION flat
@@ -157,18 +161,24 @@ uniform sampler2D tex,fog_table;
 uniform lowp float trilinear_alpha;
 uniform lowp vec4 fog_clamp_min;
 uniform lowp vec4 fog_clamp_max;
-uniform highp float extra_depth_scale;
 /* Vertex input*/
 INTERPOLATION in lowp vec4 vtx_base;
 INTERPOLATION in lowp vec4 vtx_offs;
 			  in mediump vec2 vtx_uv;
+#if TARGET_GL == GLES2
+			  in highp float fog_depth;
+#endif
 
 lowp float fog_mode2(highp float w)
 {
-	highp float z = clamp(w * extra_depth_scale * sp_FOG_DENSITY, 1.0, 255.9999);
-	highp float exp = floor(log2(z));
+#if TARGET_GL == GLES2
+	highp float z = clamp(fog_depth, 1.0, 255.9999);
+#else
+	highp float z = clamp(w * sp_FOG_DENSITY, 1.0, 255.9999);
+#endif
+	mediump float exp = floor(log2(z));
 	highp float m = z * 16.0 / pow(2.0, exp) - 16.0;
-	lowp float idx = floor(m) + exp * 16.0 + 0.5;
+	mediump float idx = floor(m) + exp * 16.0 + 0.5;
 	highp vec4 fog_coef = texture(fog_table, vec2(idx / 128.0, 0.75 - (m - floor(m)) / 2.0));
 	return fog_coef.FOG_CHANNEL;
 }
@@ -432,7 +442,7 @@ void do_swap_automation()
 
 static void gl_delete_shaders()
 {
-	for (auto it : gl.shaders)
+	for (const auto& it : gl.shaders)
 	{
 		if (it.second.program != 0)
 			glcache.DeleteProgram(it.second.program);
@@ -505,6 +515,10 @@ void findGLVersion()
 			gl.fog_image_format = GL_ALPHA;
 		}
 	}
+	GLint ranges[2];
+	GLint precision;
+	glGetShaderPrecisionFormat(GL_FRAGMENT_SHADER, GL_HIGH_FLOAT, ranges, &precision);
+	gl.highp_float_supported = (ranges[0] != 0 || ranges[1] != 0) && precision != 0;
 }
 
 struct ShaderUniforms_t ShaderUniforms;
@@ -639,14 +653,16 @@ bool CompilePipelineShader(	PipelineShader* s)
 {
 	char vshader[8192];
 
-	sprintf(vshader, VertexShaderSource, gl.glsl_version_header, gl.gl_version, s->pp_Gouraud);
+	int rc = sprintf(vshader, VertexShaderSource, gl.glsl_version_header, gl.gl_version, s->pp_Gouraud);
+	verify(rc + 1 <= sizeof(vshader));
 
 	char pshader[8192];
 
-	sprintf(pshader,PixelPipelineShader, gl.glsl_version_header, gl.gl_version,
+	rc = sprintf(pshader,PixelPipelineShader, gl.glsl_version_header, gl.gl_version,
                 s->cp_AlphaTest,s->pp_ClipTestMode,s->pp_UseAlpha,
                 s->pp_Texture,s->pp_IgnoreTexA,s->pp_ShadInstr,s->pp_Offset,s->pp_FogCtrl, s->pp_Gouraud, s->pp_BumpMap,
 				s->fog_clamping, s->trilinear);
+	verify(rc + 1 <= sizeof(pshader));
 
 	s->program=gl_CompileAndLink(vshader, pshader);
 
@@ -658,7 +674,6 @@ bool CompilePipelineShader(	PipelineShader* s)
 
 	//get the uniform locations
 	s->depth_scale      = glGetUniformLocation(s->program, "depth_scale");
-	s->extra_depth_scale = glGetUniformLocation(s->program, "extra_depth_scale");
 
 	s->pp_ClipTest      = glGetUniformLocation(s->program, "pp_ClipTest");
 
@@ -863,14 +878,14 @@ void UpdateFogTexture(u8 *fog_table, GLenum texture_slot, GLint fog_image_format
 	if (fogTextureId == 0)
 	{
 		fogTextureId = glcache.GenTexture();
-		glcache.BindTexture(GL_TEXTURE_2D, fogTextureId);
-		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glBindTexture(GL_TEXTURE_2D, fogTextureId);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	}
 	else
-		glcache.BindTexture(GL_TEXTURE_2D, fogTextureId);
+		glBindTexture(GL_TEXTURE_2D, fogTextureId);
 
 	u8 temp_tex_buffer[256];
 	MakeFogTexture(temp_tex_buffer);
@@ -1023,8 +1038,6 @@ bool RenderFrame()
 	ShaderUniforms.depth_coefs[2] = 0;
 	ShaderUniforms.depth_coefs[3] = 0;
 
-	ShaderUniforms.extra_depth_scale = settings.rend.ExtraDepthScale;
-
 	//VERT and RAM fog color constants
 	u8* fog_colvert_bgra = (u8*)&FOG_COL_VERT;
 	u8* fog_colram_bgra = (u8*)&FOG_COL_RAM;
@@ -1040,7 +1053,7 @@ bool RenderFrame()
 	u8* fog_density = (u8*)&FOG_DENSITY;
 	float fog_den_mant = fog_density[1] / 128.0f;  //bit 7 -> x. bit, so [6:0] -> fraction -> /128
 	s32 fog_den_exp = (s8)fog_density[0];
-	ShaderUniforms.fog_den_float = fog_den_mant * powf(2.0f, fog_den_exp);
+	ShaderUniforms.fog_den_float = fog_den_mant * powf(2.0f, fog_den_exp) * settings.rend.ExtraDepthScale;
 
 	ShaderUniforms.fog_clamp_min[0] = ((pvrrc.fog_clamp_min >> 16) & 0xFF) / 255.0f;
 	ShaderUniforms.fog_clamp_min[1] = ((pvrrc.fog_clamp_min >> 8) & 0xFF) / 255.0f;
@@ -1065,7 +1078,7 @@ bool RenderFrame()
 
 	ShaderUniforms.PT_ALPHA=(PT_ALPHA_REF&0xFF)/255.0f;
 
-	for (auto& it : gl.shaders)
+	for (const auto& it : gl.shaders)
 	{
 		glcache.UseProgram(it.second.program);
 		ShaderUniforms.Set(&it.second);

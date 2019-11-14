@@ -70,7 +70,6 @@ struct FragmentShaderUniforms
 	float sp_FOG_COL_VERT[4];	// same comment
 	float cp_AlphaTestValue;
 	float sp_FOG_DENSITY;
-	float extra_depth_scale;
 };
 
 class ShaderManager

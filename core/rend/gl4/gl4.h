@@ -8,7 +8,6 @@ struct gl4PipelineShader
 {
 	GLuint program;
 
-	GLuint extra_depth_scale;
 	GLuint pp_ClipTest,cp_AlphaTestValue;
 	GLuint sp_FOG_COL_RAM,sp_FOG_COL_VERT,sp_FOG_DENSITY;
 	GLuint shade_scale_factor;
@@ -225,7 +224,6 @@ void gl4SetupModvolVBO();
 extern struct gl4ShaderUniforms_t
 {
 	float PT_ALPHA;
-	float extra_depth_scale;
 	float fog_den_float;
 	float ps_FOG_COL_RAM[3];
 	float ps_FOG_COL_VERT[3];
@@ -249,9 +247,6 @@ extern struct gl4ShaderUniforms_t
 	{
 		if (s->cp_AlphaTestValue!=-1)
 			glUniform1f(s->cp_AlphaTestValue,PT_ALPHA);
-
-		if (s->extra_depth_scale != -1)
-			glUniform1f(s->extra_depth_scale, extra_depth_scale);
 
 		if (s->sp_FOG_DENSITY!=-1)
 			glUniform1f( s->sp_FOG_DENSITY,fog_den_float);
