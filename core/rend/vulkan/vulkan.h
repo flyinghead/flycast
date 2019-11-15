@@ -87,6 +87,7 @@ public:
 	vk::ImageView GetSwapChainImageView(int i) const { return imageViews[i].get(); }
 	static VulkanContext *Instance() { return contextInstance; }
 	bool SupportsFragmentShaderStoresAndAtomics() const { return fragmentStoresAndAtomics; }
+	bool SupportsSamplerAnisotropy() const { return samplerAnisotropy; }
 
 private:
 	vk::Format InitDepthBuffer();
@@ -141,6 +142,7 @@ private:
 	bool optimalTilingSupported1555 = false;
 	bool optimalTilingSupported4444 = false;
 	bool fragmentStoresAndAtomics = false;
+	bool samplerAnisotropy = false;
 	vk::UniqueDevice device;
 
 #ifdef USE_SDL

@@ -199,6 +199,7 @@ bool VulkanContext::InitInstance(const char** extensions, uint32_t extensions_co
 		vk::PhysicalDeviceFeatures features;
 		physicalDevice.getFeatures(&features);
 		fragmentStoresAndAtomics = features.fragmentStoresAndAtomics;
+		samplerAnisotropy = features.samplerAnisotropy;
 
 		ShaderCompiler::Init();
 
@@ -383,6 +384,8 @@ bool VulkanContext::InitDevice()
 		vk::PhysicalDeviceFeatures features;
 		if (fragmentStoresAndAtomics)
 			features.fragmentStoresAndAtomics = true;
+		if (samplerAnisotropy)
+			features.samplerAnisotropy = true;
 		device = physicalDevice.createDeviceUnique(vk::DeviceCreateInfo(vk::DeviceCreateFlags(), 1, &deviceQueueCreateInfo,
 				0, nullptr, deviceExtensions.size(), &deviceExtensions[0], &features));
 
