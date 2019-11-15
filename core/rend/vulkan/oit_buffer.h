@@ -63,12 +63,14 @@ public:
 			const int zero = 0;
 			pixelCounterReset->upload(sizeof(zero), &zero);
 		}
-		// FIXME We need to wait until this buffer is not used before deleting it
+		// We need to wait until this buffer is not used before deleting it
+		VulkanContext::Instance()->GetGraphicsQueue().waitIdle();
 		abufferPointerAttachment.reset();
 		abufferPointerAttachment = std::unique_ptr<FramebufferAttachment>(
 				new FramebufferAttachment(context->GetPhysicalDevice(), context->GetDevice(), allocator));
 		abufferPointerAttachment->Init(width, height, vk::Format::eR32Uint, vk::ImageUsageFlagBits::eStorage);
 		abufferPointerTransitionNeeded = true;
+		firstFrameAfterInit = true;
 
 		if (!descSet)
 			descSet = std::move(context->GetDevice().allocateDescriptorSetsUnique(
@@ -101,6 +103,10 @@ public:
 			commandBuffer.pipelineBarrier(vk::PipelineStageFlagBits::eTopOfPipe, vk::PipelineStageFlagBits::eFragmentShader, {}, nullptr, nullptr,
 					imageMemoryBarrier);
 		}
+		else
+		{
+			firstFrameAfterInit = false;
+		}
 	}
 
 	void ResetPixelCounter(vk::CommandBuffer commandBuffer)
@@ -119,6 +125,7 @@ public:
 
 	void SetAllocator(Allocator *allocator) { this->allocator = allocator; }
 	vk::DescriptorSetLayout GetDescriptorSetLayout() const { return *descSetLayout; }
+	bool isFirstFrameAfterInit() const { return firstFrameAfterInit; }
 
 private:
 	vk::UniqueDescriptorSet descSet;
@@ -129,6 +136,7 @@ private:
 	std::unique_ptr<BufferData> pixelCounterReset;
 	std::unique_ptr<FramebufferAttachment> abufferPointerAttachment;
 	bool abufferPointerTransitionNeeded = false;
+	bool firstFrameAfterInit = false;
 	int maxWidth = 0;
 	int maxHeight = 0;
 	Allocator *allocator;

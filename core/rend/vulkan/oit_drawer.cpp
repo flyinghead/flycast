@@ -303,25 +303,29 @@ bool OITDrawer::Draw(const Texture *fogTexture)
 		DrawList(cmdBuffer, ListType_Punch_Through, false, 1, pvrrc.global_param_pt, previous_pass.pt_count, current_pass.pt_count);
 
 		// TR
-		DrawList(cmdBuffer, ListType_Translucent, current_pass.autosort, 3, pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count);
+		if (!oitBuffers->isFirstFrameAfterInit())
+			DrawList(cmdBuffer, ListType_Translucent, current_pass.autosort, 3, pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count);
 
 		// Final subpass
 		cmdBuffer.nextSubpass(vk::SubpassContents::eInline);
 		GetCurrentDescSet().BindColorInputDescSet(cmdBuffer, (pvrrc.render_passes.used() - 1 - render_pass) % 2);
 
-		// Tr modifier volumes
-		DrawModifierVolumes<true>(cmdBuffer, previous_pass.mvo_tr_count, current_pass.mvo_tr_count - previous_pass.mvo_tr_count);
+		if (!oitBuffers->isFirstFrameAfterInit())
+		{
+			// Tr modifier volumes
+			DrawModifierVolumes<true>(cmdBuffer, previous_pass.mvo_tr_count, current_pass.mvo_tr_count - previous_pass.mvo_tr_count);
 
-		vk::Pipeline pipeline = pipelineManager->GetFinalPipeline(current_pass.autosort);
-		cmdBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline);
-		quadBuffer->Bind(cmdBuffer);
-		quadBuffer->Draw(cmdBuffer);
+			vk::Pipeline pipeline = pipelineManager->GetFinalPipeline(current_pass.autosort);
+			cmdBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline);
+			quadBuffer->Bind(cmdBuffer);
+			quadBuffer->Draw(cmdBuffer);
+		}
 
 		// Clear
 		vk::MemoryBarrier memoryBarrier(vk::AccessFlagBits::eShaderRead, vk::AccessFlagBits::eShaderWrite);
 		cmdBuffer.pipelineBarrier(vk::PipelineStageFlagBits::eFragmentShader, vk::PipelineStageFlagBits::eFragmentShader,
 				vk::DependencyFlagBits::eByRegion, 1, &memoryBarrier, 0, nullptr, 0, nullptr);
-		pipeline = pipelineManager->GetClearPipeline();
+		vk::Pipeline pipeline = pipelineManager->GetClearPipeline();
 		cmdBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline);
 		quadBuffer->Draw(cmdBuffer);
 
