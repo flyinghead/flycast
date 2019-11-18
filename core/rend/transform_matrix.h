@@ -139,7 +139,7 @@ public:
 					* glm::scale(glm::vec3(x_coef, y_coef, 1.f))
 					* normalMatrix;
 				scissorMatrix = trans_rot
-					* glm::scale(glm::vec3(x_coef / scale_x * scissoring_scale_x, y_coef / scale_y * scissoring_scale_y, 1.f))
+					* glm::scale(glm::vec3(x_coef * scissoring_scale_x, y_coef * scissoring_scale_y, 1.f))
 					* scissorMatrix;
 			}
 			else
@@ -152,7 +152,7 @@ public:
 					* glm::scale(glm::vec3(x_coef, y_coef, 1.f))
 					* normalMatrix;
 				scissorMatrix = glm::translate(glm::vec3(-1 + 2 * sidebarWidth / screen_width, invertY ? 1 : -1, 0))
-					* glm::scale(glm::vec3(x_coef / scale_x * scissoring_scale_x, y_coef / scale_y * scissoring_scale_y, 1.f))
+					* glm::scale(glm::vec3(x_coef * scissoring_scale_x, y_coef * scissoring_scale_y, 1.f))
 					* scissorMatrix;
 			}
 		}
@@ -183,8 +183,11 @@ private:
 
 		if (!renderingContext->isRTT && !renderingContext->isRenderFramebuffer)
 		{
-			scale_x = fb_scale_x;
-			scale_y = fb_scale_y;
+			if (!scissor)
+			{
+				scale_x = fb_scale_x;
+				scale_y = fb_scale_y;
+			}
 			if (SCALER_CTL.vscalefactor > 0x400)
 			{
 				// Interlace mode A (single framebuffer)
@@ -197,12 +200,12 @@ private:
 
 			// VO pixel doubling is done after fb rendering/clipping
 			// so it should be used for scissoring as well
-			if (VO_CONTROL.pixel_double)
+			if (VO_CONTROL.pixel_double && !scissor)
 				scale_x *= 0.5f;
 
 			// the X Scaler halves the horizontal resolution but
 			// before clipping/scissoring
-			if (SCALER_CTL.hscale && !scissor)
+			if (SCALER_CTL.hscale)
 				scale_x *= 2.f;
 		}
 	}
