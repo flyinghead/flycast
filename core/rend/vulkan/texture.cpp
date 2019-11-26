@@ -75,7 +75,7 @@ void setImageLayout(vk::CommandBuffer const& commandBuffer, vk::Image image, vk:
 		destinationAccessMask = vk::AccessFlagBits::eDepthStencilAttachmentRead | vk::AccessFlagBits::eDepthStencilAttachmentWrite;
 		break;
 	case vk::ImageLayout::eGeneral:   // empty destinationAccessMask
-	break;
+		break;
 	case vk::ImageLayout::eShaderReadOnlyOptimal:
 		destinationAccessMask = vk::AccessFlagBits::eShaderRead;
 		break;
@@ -175,28 +175,24 @@ void Texture::Init(u32 width, u32 height, vk::Format format)
 
 	vk::FormatProperties formatProperties = physicalDevice.getFormatProperties(format);
 
-	vk::FormatFeatureFlags formatFeatureFlags = vk::FormatFeatureFlagBits::eSampledImage;
-	// Forcing staging since it fixes texture glitches
-	needsStaging = (formatProperties.optimalTilingFeatures & formatFeatureFlags) == formatFeatureFlags;
-	vk::ImageTiling imageTiling;
+	vk::ImageTiling imageTiling = (formatProperties.optimalTilingFeatures & vk::FormatFeatureFlagBits::eSampledImage)
+			== vk::FormatFeatureFlagBits::eSampledImage
+			? vk::ImageTiling::eOptimal
+			: vk::ImageTiling::eLinear;
+	needsStaging = imageTiling != vk::ImageTiling::eLinear;
 	vk::ImageLayout initialLayout;
 	vk::MemoryPropertyFlags requirements;
 	vk::ImageUsageFlags usageFlags = vk::ImageUsageFlagBits::eSampled;
 	if (needsStaging)
 	{
-		if (allocator)
-			stagingBufferData = std::unique_ptr<BufferData>(new BufferData(physicalDevice, device, extent.width * extent.height * 4, vk::BufferUsageFlagBits::eTransferSrc, allocator));
-		else
-			stagingBufferData = std::unique_ptr<BufferData>(new BufferData(physicalDevice, device, extent.width * extent.height * 4, vk::BufferUsageFlagBits::eTransferSrc));
-		imageTiling = vk::ImageTiling::eOptimal;
+		stagingBufferData = std::unique_ptr<BufferData>(new BufferData(extent.width * extent.height * 4, vk::BufferUsageFlagBits::eTransferSrc));
 		usageFlags |= vk::ImageUsageFlagBits::eTransferDst;
 		initialLayout = vk::ImageLayout::eUndefined;
 		requirements = vk::MemoryPropertyFlagBits::eDeviceLocal;
 	}
 	else
 	{
-		verify((formatProperties.linearTilingFeatures & formatFeatureFlags) == formatFeatureFlags);
-		imageTiling = vk::ImageTiling::eLinear;
+		verify((formatProperties.linearTilingFeatures & vk::FormatFeatureFlagBits::eSampledImage) == vk::FormatFeatureFlagBits::eSampledImage);
 		initialLayout = vk::ImageLayout::ePreinitialized;
 		requirements = vk::MemoryPropertyFlagBits::eHostCoherent | vk::MemoryPropertyFlagBits::eHostVisible;
 	}
@@ -213,21 +209,10 @@ void Texture::CreateImage(vk::ImageTiling tiling, vk::ImageUsageFlags usage, vk:
 										vk::SharingMode::eExclusive, 0, nullptr, initialLayout);
 	image = device.createImageUnique(imageCreateInfo);
 
-	vk::MemoryRequirements memReq = device.getImageMemoryRequirements(image.get());
-	memoryType = findMemoryType(physicalDevice.getMemoryProperties(), memReq.memoryTypeBits, memoryProperties);
-	if (allocator)
-	{
-		if (sharedDeviceMemory)
-			allocator->Free(memoryOffset, memoryType, sharedDeviceMemory);
-		memoryOffset = allocator->Allocate(memReq.size, memReq.alignment, memoryType, sharedDeviceMemory);
-	}
-	else
-	{
-		deviceMemory = device.allocateMemoryUnique(vk::MemoryAllocateInfo(memReq.size, memoryType));
-		memoryOffset = 0;
-	}
-
-	device.bindImageMemory(image.get(), allocator ? sharedDeviceMemory : *deviceMemory, memoryOffset);
+	VmaAllocationCreateInfo allocCreateInfo = { VmaAllocationCreateFlags(), VmaMemoryUsage::VMA_MEMORY_USAGE_GPU_ONLY };
+	if (!needsStaging)
+		allocCreateInfo.flags = VmaAllocationCreateFlagBits::VMA_ALLOCATION_CREATE_MAPPED_BIT;
+	allocation = VulkanContext::Instance()->GetAllocator().AllocateForImage(*image, allocCreateInfo);
 
 	vk::ImageViewCreateInfo imageViewCreateInfo(vk::ImageViewCreateFlags(), image.get(), vk::ImageViewType::e2D, format, vk::ComponentMapping(),
 			vk::ImageSubresourceRange(aspectMask, 0, mipmapLevels, 0, 1));
@@ -239,15 +224,16 @@ void Texture::SetImage(u32 srcSize, void *srcData, bool isNew)
 	verify((bool)commandBuffer);
 	commandBuffer.begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));
 
-	if (!isNew && !needsStaging)
-		setImageLayout(commandBuffer, image.get(), format, mipmapLevels, vk::ImageLayout::eShaderReadOnlyOptimal, vk::ImageLayout::eGeneral);
+//	if (!isNew && !needsStaging)
+//		setImageLayout(commandBuffer, image.get(), format, mipmapLevels, vk::ImageLayout::eShaderReadOnlyOptimal, vk::ImageLayout::eUndefined);
 
-	vk::DeviceSize size = needsStaging
-			? device.getBufferMemoryRequirements(stagingBufferData->buffer.get()).size
-					: device.getImageMemoryRequirements(image.get()).size;
-	void* data = needsStaging
-			? stagingBufferData->MapMemory()
-					: device.mapMemory(allocator ? sharedDeviceMemory : *deviceMemory, memoryOffset, size);
+	void* data;
+	if (needsStaging)
+		data = stagingBufferData->MapMemory();
+	else
+		data = allocation.MapMemory();
+	verify(data != nullptr);
+
 	memcpy(data, srcData, srcSize);
 
 	if (needsStaging)
@@ -266,7 +252,6 @@ void Texture::SetImage(u32 srcSize, void *srcData, bool isNew)
 	}
 	else
 	{
-		device.unmapMemory(allocator ? sharedDeviceMemory : *deviceMemory);
 		if (mipmapLevels > 1)
 			GenerateMipmaps();
 		else
@@ -350,8 +335,8 @@ void FramebufferAttachment::Init(u32 width, u32 height, vk::Format format, vk::I
 			if (settings.rend.RenderToTextureBuffer)
 			{
 				usage |= vk::ImageUsageFlagBits::eTransferSrc;
-				stagingBufferData = std::unique_ptr<BufferData>(new BufferData(VulkanContext::Instance()->GetPhysicalDevice(), VulkanContext::Instance()->GetDevice(),
-						width * height * 4, vk::BufferUsageFlagBits::eTransferSrc | vk::BufferUsageFlagBits::eTransferDst, allocator));
+				stagingBufferData = std::unique_ptr<BufferData>(new BufferData(width * height * 4,
+						vk::BufferUsageFlagBits::eTransferSrc | vk::BufferUsageFlagBits::eTransferDst));
 			}
 			else
 			{
@@ -365,24 +350,9 @@ void FramebufferAttachment::Init(u32 width, u32 height, vk::Format format, vk::I
 			usage,
 			vk::SharingMode::eExclusive, 0, nullptr, vk::ImageLayout::eUndefined);
 	image = device.createImageUnique(imageCreateInfo);
-	vk::MemoryRequirements memReq = device.getImageMemoryRequirements(image.get());
 
-	if (allocator)
-	{
-		if (sharedDeviceMemory)
-			allocator->Free(memoryOffset, memoryType, sharedDeviceMemory);
-	}
-	memoryType = findMemoryType(physicalDevice.getMemoryProperties(), memReq.memoryTypeBits, vk::MemoryPropertyFlagBits::eDeviceLocal);
-	if (allocator)
-	{
-		memoryOffset = allocator->Allocate(memReq.size, memReq.alignment, memoryType, sharedDeviceMemory);
-	}
-	else
-	{
-		deviceMemory = device.allocateMemoryUnique(vk::MemoryAllocateInfo(memReq.size, memoryType));
-		memoryOffset = 0;
-	}
-	device.bindImageMemory(image.get(), allocator ? sharedDeviceMemory : *deviceMemory, memoryOffset);
+	VmaAllocationCreateInfo allocCreateInfo = { VmaAllocationCreateFlags(), VmaMemoryUsage::VMA_MEMORY_USAGE_GPU_ONLY };
+	allocation = VulkanContext::Instance()->GetAllocator().AllocateForImage(*image, allocCreateInfo);
 
 	vk::ImageViewCreateInfo imageViewCreateInfo(vk::ImageViewCreateFlags(), image.get(), vk::ImageViewType::e2D,
 			format, vk::ComponentMapping(),	vk::ImageSubresourceRange(depth ? vk::ImageAspectFlagBits::eDepth : vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1));

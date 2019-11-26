@@ -21,16 +21,14 @@
 #include "buffer.h"
 #include "utils.h"
 
-BufferData::BufferData(vk::PhysicalDevice const& physicalDevice, vk::Device const& device, vk::DeviceSize size,
-		vk::BufferUsageFlags usage, Allocator *allocator, vk::MemoryPropertyFlags propertyFlags)
-	: device(device), bufferSize(size), allocator(allocator)
+BufferData::BufferData(vk::DeviceSize size, vk::BufferUsageFlags usage, vk::MemoryPropertyFlags propertyFlags)
+	: bufferSize(size)
 #if !defined(NDEBUG)
 					, m_usage(usage), m_propertyFlags(propertyFlags)
 #endif
 {
-	buffer = device.createBufferUnique(vk::BufferCreateInfo(vk::BufferCreateFlags(), size, usage));
-	vk::MemoryRequirements memoryRequirements = device.getBufferMemoryRequirements(buffer.get());
-	memoryType = findMemoryType(physicalDevice.getMemoryProperties(), memoryRequirements.memoryTypeBits, propertyFlags);
-	offset = allocator->Allocate(memoryRequirements.size, memoryRequirements.alignment, memoryType, sharedDeviceMemory);
-	device.bindBufferMemory(buffer.get(), sharedDeviceMemory, offset);
+	VulkanContext *context = VulkanContext::Instance();
+	buffer = context->GetDevice().createBufferUnique(vk::BufferCreateInfo(vk::BufferCreateFlags(), size, usage));
+	VmaAllocationCreateInfo allocInfo = { VMA_ALLOCATION_CREATE_MAPPED_BIT, VmaMemoryUsage::VMA_MEMORY_USAGE_CPU_TO_GPU };
+	allocation = context->GetAllocator().AllocateForBuffer(*buffer, allocInfo);
 }

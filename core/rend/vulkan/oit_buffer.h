@@ -51,15 +51,14 @@ public:
 		if (!pixelBuffer)
 		{
 			pixelBuffer.reset();
-			pixelBuffer = std::unique_ptr<BufferData>(new BufferData(context->GetPhysicalDevice(), context->GetDevice(), PixelBufferSize,
-					vk::BufferUsageFlagBits::eStorageBuffer, &SimpleAllocator::instance, vk::MemoryPropertyFlagBits::eDeviceLocal));
+			pixelBuffer = std::unique_ptr<BufferData>(new BufferData(PixelBufferSize,
+					vk::BufferUsageFlagBits::eStorageBuffer, vk::MemoryPropertyFlagBits::eDeviceLocal));
 		}
 		if (!pixelCounter)
 		{
-			pixelCounter = std::unique_ptr<BufferData>(new BufferData(context->GetPhysicalDevice(), context->GetDevice(), 4,
-					vk::BufferUsageFlagBits::eStorageBuffer | vk::BufferUsageFlagBits::eTransferDst, allocator, vk::MemoryPropertyFlagBits::eDeviceLocal));
-			pixelCounterReset = std::unique_ptr<BufferData>(new BufferData(context->GetPhysicalDevice(), context->GetDevice(), 4,
-					vk::BufferUsageFlagBits::eTransferSrc, allocator));
+			pixelCounter = std::unique_ptr<BufferData>(new BufferData(4,
+					vk::BufferUsageFlagBits::eStorageBuffer | vk::BufferUsageFlagBits::eTransferDst, vk::MemoryPropertyFlagBits::eDeviceLocal));
+			pixelCounterReset = std::unique_ptr<BufferData>(new BufferData(4, vk::BufferUsageFlagBits::eTransferSrc));
 			const int zero = 0;
 			pixelCounterReset->upload(sizeof(zero), &zero);
 		}
@@ -67,7 +66,7 @@ public:
 		VulkanContext::Instance()->GetGraphicsQueue().waitIdle();
 		abufferPointerAttachment.reset();
 		abufferPointerAttachment = std::unique_ptr<FramebufferAttachment>(
-				new FramebufferAttachment(context->GetPhysicalDevice(), context->GetDevice(), allocator));
+				new FramebufferAttachment(context->GetPhysicalDevice(), context->GetDevice()));
 		abufferPointerAttachment->Init(width, height, vk::Format::eR32Uint, vk::ImageUsageFlagBits::eStorage);
 		abufferPointerTransitionNeeded = true;
 		firstFrameAfterInit = true;
@@ -123,7 +122,6 @@ public:
 		abufferPointerAttachment.reset();
 	}
 
-	void SetAllocator(Allocator *allocator) { this->allocator = allocator; }
 	vk::DescriptorSetLayout GetDescriptorSetLayout() const { return *descSetLayout; }
 	bool isFirstFrameAfterInit() const { return firstFrameAfterInit; }
 
@@ -139,5 +137,4 @@ private:
 	bool firstFrameAfterInit = false;
 	int maxWidth = 0;
 	int maxHeight = 0;
-	Allocator *allocator;
 };

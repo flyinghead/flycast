@@ -20,17 +20,14 @@
 */
 #pragma once
 #include "vulkan.h"
-#include "allocator.h"
 
 struct BufferData
 {
-	BufferData(vk::PhysicalDevice const& physicalDevice, vk::Device const& device, vk::DeviceSize size, vk::BufferUsageFlags usage,
-			Allocator *allocator = &SimpleAllocator::instance,
+	BufferData(vk::DeviceSize size, vk::BufferUsageFlags usage,
 			vk::MemoryPropertyFlags propertyFlags = vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
 	~BufferData()
 	{
 		buffer.reset();
-		allocator->Free(offset, memoryType, sharedDeviceMemory);
 	}
 
 	void upload(u32 size, const void *data, u32 bufOffset = 0) const
@@ -38,9 +35,8 @@ struct BufferData
 		verify((m_propertyFlags & vk::MemoryPropertyFlagBits::eHostCoherent) && (m_propertyFlags & vk::MemoryPropertyFlagBits::eHostVisible));
 		verify(bufOffset + size <= bufferSize);
 
-		void* dataPtr = device.mapMemory(sharedDeviceMemory, offset + bufOffset, size);
+		void* dataPtr = (u8 *)allocation.MapMemory() + bufOffset;
 		memcpy(dataPtr, data, size);
-		device.unmapMemory(sharedDeviceMemory);
 	}
 
 	void upload(size_t count, u32 *sizes, const void **data, u32 bufOffset = 0) const
@@ -51,14 +47,13 @@ struct BufferData
 		for (int i = 0; i < count; i++)
 			totalSize += sizes[i];
 		verify(bufOffset + totalSize <= bufferSize);
-		void* dataPtr = device.mapMemory(sharedDeviceMemory, offset + bufOffset, totalSize);
+		void* dataPtr = (u8 *)allocation.MapMemory() + bufOffset;
 		for (int i = 0; i < count; i++)
 		{
 			if (data[i] != nullptr)
 				memcpy(dataPtr, data[i], sizes[i]);
 			dataPtr = (u8 *)dataPtr + sizes[i];
 		}
-		device.unmapMemory(sharedDeviceMemory);
 	}
 
 	void download(u32 size, void *data, u32 bufOffset = 0) const
@@ -66,27 +61,21 @@ struct BufferData
 		verify((m_propertyFlags & vk::MemoryPropertyFlagBits::eHostCoherent) && (m_propertyFlags & vk::MemoryPropertyFlagBits::eHostVisible));
 		verify(bufOffset + size <= bufferSize);
 
-		void* dataPtr = device.mapMemory(sharedDeviceMemory, offset + bufOffset, size);
+		void* dataPtr = (u8 *)allocation.MapMemory() + bufOffset;
 		memcpy(data, dataPtr, size);
-		device.unmapMemory(sharedDeviceMemory);
 	}
 
 	void *MapMemory()
 	{
-		return device.mapMemory(sharedDeviceMemory, offset, bufferSize);
+		return allocation.MapMemory();
 	}
 	void UnmapMemory()
 	{
-		device.unmapMemory(sharedDeviceMemory);
 	}
 
 	vk::UniqueBuffer buffer;
 	vk::DeviceSize bufferSize;
-	Allocator *allocator;
-	vk::DeviceSize offset;
-	u32 memoryType;
-	vk::DeviceMemory sharedDeviceMemory;
-	vk::Device device;
+	Allocation allocation;
 
 #if !defined(NDEBUG)
 private:

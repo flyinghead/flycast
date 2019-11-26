@@ -176,8 +176,7 @@ protected:
 		if (mainBuffers.empty())
 		{
 			for (int i = 0; i < GetContext()->GetSwapChainSize(); i++)
-				mainBuffers.push_back(std::unique_ptr<BufferData>(new BufferData(GetContext()->GetPhysicalDevice(), GetContext()->GetDevice(),
-						std::max(512 * 1024u, size),
+				mainBuffers.push_back(std::unique_ptr<BufferData>(new BufferData(std::max(512 * 1024u, size),
 						vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eUniformBuffer)));
 		}
 		else if (mainBuffers[GetCurrentImage()]->bufferSize < size)
@@ -186,7 +185,7 @@ protected:
 			while (newSize < size)
 				newSize *= 2;
 			INFO_LOG(RENDERER, "Increasing main buffer size %d -> %d", (u32)mainBuffers[GetCurrentImage()]->bufferSize, newSize);
-			mainBuffers[GetCurrentImage()] = std::unique_ptr<BufferData>(new BufferData(GetContext()->GetPhysicalDevice(), GetContext()->GetDevice(), newSize,
+			mainBuffers[GetCurrentImage()] = std::unique_ptr<BufferData>(new BufferData(newSize,
 					vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eUniformBuffer));
 		}
 		return mainBuffers[GetCurrentImage()].get();
@@ -203,13 +202,12 @@ private:
 class TextureDrawer : public Drawer
 {
 public:
-	void Init(SamplerManager *samplerManager, Allocator *allocator, RttPipelineManager *pipelineManager, TextureCache *textureCache)
+	void Init(SamplerManager *samplerManager, RttPipelineManager *pipelineManager, TextureCache *textureCache)
 	{
 		Drawer::Init(samplerManager, pipelineManager);
 
 		descriptorSets.Init(samplerManager, pipelineManager->GetPipelineLayout(), pipelineManager->GetPerFrameDSLayout(), pipelineManager->GetPerPolyDSLayout());
 		fence = GetContext()->GetDevice().createFenceUnique(vk::FenceCreateInfo());
-		this->allocator = allocator;
 		this->textureCache = textureCache;
 	}
 	void SetCommandPool(CommandPool *commandPool) { this->commandPool = commandPool; }
@@ -233,9 +231,8 @@ protected:
 			while (newSize < size)
 				newSize *= 2;
 			INFO_LOG(RENDERER, "Increasing RTT main buffer size %d -> %d", !mainBuffer ? 0 : (u32)mainBuffer->bufferSize, newSize);
-			mainBuffer = std::unique_ptr<BufferData>(new BufferData(GetContext()->GetPhysicalDevice(), GetContext()->GetDevice(), newSize,
-					vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eUniformBuffer,
-					allocator));
+			mainBuffer = std::unique_ptr<BufferData>(new BufferData(newSize,
+					vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eUniformBuffer));
 		}
 		return mainBuffer.get();
 	}
@@ -256,6 +253,5 @@ private:
 	DescriptorSets descriptorSets;
 	std::unique_ptr<BufferData> mainBuffer;
 	CommandPool *commandPool = nullptr;
-	Allocator *allocator = nullptr;
 	TextureCache *textureCache = nullptr;
 };

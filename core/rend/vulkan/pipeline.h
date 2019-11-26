@@ -22,6 +22,7 @@
 #include "vulkan.h"
 #include "shaders.h"
 #include "texture.h"
+#include "utils.h"
 #include "hw/pvr/ta_ctx.h"
 
 class DescriptorSets

@@ -360,13 +360,13 @@ void OITDrawer::MakeBuffers(int width, int height)
 	{
 		attachment.reset();
 		attachment = std::unique_ptr<FramebufferAttachment>(
-				new FramebufferAttachment(GetContext()->GetPhysicalDevice(), GetContext()->GetDevice(), allocator));
+				new FramebufferAttachment(GetContext()->GetPhysicalDevice(), GetContext()->GetDevice()));
 		attachment->Init(maxWidth, maxHeight, GetColorFormat(), vk::ImageUsageFlagBits::eInputAttachment);
 	}
 
 	depthAttachment.reset();
 	depthAttachment = std::unique_ptr<FramebufferAttachment>(
-			new FramebufferAttachment(GetContext()->GetPhysicalDevice(), GetContext()->GetDevice(), allocator));
+			new FramebufferAttachment(GetContext()->GetPhysicalDevice(), GetContext()->GetDevice()));
 	depthAttachment->Init(maxWidth, maxHeight, GetContext()->GetDepthFormat(), vk::ImageUsageFlagBits::eInputAttachment);
 
 	vk::ImageView attachments[] = {
@@ -465,7 +465,6 @@ vk::CommandBuffer OITTextureDrawer::NewFrame()
 		if (texture->IsNew())
 		{
 			texture->Create();
-			texture->SetAllocator(allocator);
 			texture->SetPhysicalDevice(GetContext()->GetPhysicalDevice());
 			texture->SetDevice(device);
 		}
@@ -492,7 +491,7 @@ vk::CommandBuffer OITTextureDrawer::NewFrame()
 			if (!colorAttachment)
 			{
 				colorAttachment = std::unique_ptr<FramebufferAttachment>(
-						new FramebufferAttachment(context->GetPhysicalDevice(), device, allocator));
+						new FramebufferAttachment(context->GetPhysicalDevice(), device));
 			}
 			colorAttachment->Init(widthPow2, heightPow2, vk::Format::eR8G8B8A8Unorm);
 		}

@@ -33,8 +33,6 @@ struct Texture : BaseTextureCacheData
 	{
 		imageView.reset();
 		image.reset();
-		if (allocator)
-			allocator->Free(memoryOffset, memoryType, sharedDeviceMemory);
 	}
 	void UploadToGPU(int width, int height, u8 *data) override;
 	u64 GetIntId() { return (u64)reinterpret_cast<uintptr_t>(this); }
@@ -44,7 +42,6 @@ struct Texture : BaseTextureCacheData
 	void SetCommandBuffer(vk::CommandBuffer commandBuffer) { this->commandBuffer = commandBuffer; }
 	virtual bool Force32BitTexture(TextureType type) const override { return !VulkanContext::Instance()->IsFormatSupported(type); }
 
-	void SetAllocator(Allocator *allocator) { this->allocator = allocator; }
 	void SetPhysicalDevice(vk::PhysicalDevice physicalDevice) { this->physicalDevice = physicalDevice; }
 	void SetDevice(vk::Device device) { this->device = device; }
 
@@ -68,10 +65,7 @@ private:
 
 	vk::PhysicalDevice physicalDevice;
 	vk::Device device;
-	Allocator *allocator = nullptr;
-	vk::DeviceMemory sharedDeviceMemory;
-	u32 memoryType = 0;
-	vk::DeviceSize memoryOffset = 0;
+	Allocation allocation;
 
 	friend class TextureDrawer;
 	friend class OITTextureDrawer;
@@ -109,15 +103,11 @@ private:
 class FramebufferAttachment
 {
 public:
-	FramebufferAttachment(vk::PhysicalDevice physicalDevice, vk::Device device, Allocator *allocator = nullptr)
-		: physicalDevice(physicalDevice), device(device), format(vk::Format::eUndefined), allocator(allocator)
+	FramebufferAttachment(vk::PhysicalDevice physicalDevice, vk::Device device)
+		: physicalDevice(physicalDevice), device(device), format(vk::Format::eUndefined)
 		{}
-	~FramebufferAttachment() {
-		if (allocator != nullptr && sharedDeviceMemory)
-			allocator->Free(memoryOffset, memoryType, sharedDeviceMemory);
-	}
 	void Init(u32 width, u32 height, vk::Format format, vk::ImageUsageFlags = vk::ImageUsageFlags());
-	void Reset() { image.reset(); imageView.reset(); deviceMemory.reset(); }
+	void Reset() { image.reset(); imageView.reset(); }
 
 	vk::ImageView GetImageView() const { return *imageView; }
 	vk::Image GetImage() const { return *image; }
@@ -129,17 +119,13 @@ private:
 	vk::Extent2D extent;
 
 	std::unique_ptr<BufferData> stagingBufferData;
-	vk::DeviceMemory sharedDeviceMemory;
-	vk::DeviceSize memoryOffset = 0;
-	u32 memoryType = 0;
-	vk::UniqueDeviceMemory deviceMemory;
 	vk::UniqueImageView imageView;
 	vk::UniqueImageView stencilView;
 	vk::UniqueImage image;
 
 	vk::PhysicalDevice physicalDevice;
 	vk::Device device;
-	Allocator *allocator;
+	Allocation allocation;
 };
 
 class TextureCache : public BaseTextureCache<Texture>

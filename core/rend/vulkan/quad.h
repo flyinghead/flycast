@@ -33,10 +33,9 @@ vk::PipelineVertexInputStateCreateInfo GetQuadInputStateCreateInfo(bool uv);
 class QuadBuffer
 {
 public:
-	QuadBuffer(Allocator *allocator)
+	QuadBuffer()
 	{
-		buffer = std::unique_ptr<BufferData>(new BufferData(VulkanContext::Instance()->GetPhysicalDevice(),
-				VulkanContext::Instance()->GetDevice(), sizeof(QuadVertex) * 4, vk::BufferUsageFlagBits::eVertexBuffer, allocator));
+		buffer = std::unique_ptr<BufferData>(new BufferData(sizeof(QuadVertex) * 4, vk::BufferUsageFlagBits::eVertexBuffer));
 	}
 
 	void Bind(vk::CommandBuffer commandBuffer)

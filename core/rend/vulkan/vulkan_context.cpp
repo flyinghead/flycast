@@ -200,6 +200,7 @@ bool VulkanContext::InitInstance(const char** extensions, uint32_t extensions_co
 		physicalDevice.getFeatures(&features);
 		fragmentStoresAndAtomics = features.fragmentStoresAndAtomics;
 		samplerAnisotropy = features.samplerAnisotropy;
+		unifiedMemory = properties.deviceType == vk::PhysicalDeviceType::eIntegratedGpu;
 
 		ShaderCompiler::Init();
 
@@ -369,14 +370,23 @@ bool VulkanContext::InitDevice()
 			DEBUG_LOG(RENDERER, "Using distinct Graphics and Present queue families");
 
 		// Enable VK_KHR_dedicated_allocation if available
+		bool getMemReq2Supported = false;
+		dedicatedAllocationSupported = false;
 		std::vector<const char *> deviceExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
 		for (const auto& property : physicalDevice.enumerateDeviceExtensionProperties())
 		{
 			if (!strcmp(property.extensionName, VK_KHR_GET_MEMORY_REQUIREMENTS_2_EXTENSION_NAME))
+			{
 				deviceExtensions.push_back(VK_KHR_GET_MEMORY_REQUIREMENTS_2_EXTENSION_NAME);
+				getMemReq2Supported = true;
+			}
 			else if (!strcmp(property.extensionName, VK_KHR_DEDICATED_ALLOCATION_EXTENSION_NAME))
+			{
 				deviceExtensions.push_back(VK_KHR_DEDICATED_ALLOCATION_EXTENSION_NAME);
+				dedicatedAllocationSupported = true;
+			}
 		}
+		dedicatedAllocationSupported &= getMemReq2Supported;
 
 		// create a UniqueDevice
 		float queuePriority = 1.0f;
@@ -431,6 +441,7 @@ bool VulkanContext::InitDevice()
     		pipelineCache = device->createPipelineCacheUnique(vk::PipelineCacheCreateInfo(vk::PipelineCacheCreateFlags(), cacheSize, cacheData));
     		INFO_LOG(RENDERER, "Vulkan pipeline cache loaded from %s: %zd bytes", cachePath.c_str(), cacheSize);
 	    }
+	    allocator.Init(physicalDevice, *device);
 
 		CreateSwapChain();
 
@@ -733,6 +744,7 @@ void VulkanContext::Term()
 	imageAcquiredSemaphores.clear();
 	renderCompleteSemaphores.clear();
 	drawFences.clear();
+	allocator.Term();
 #ifndef USE_SDL
 	surface.reset();
 #endif

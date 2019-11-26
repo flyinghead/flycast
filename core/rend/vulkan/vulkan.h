@@ -25,6 +25,7 @@
 #undef VK_NO_PROTOTYPES
 #include "vulkan/vulkan.hpp"
 #include "rend/TexCache.h"
+#include "vmallocator.h"
 
 //#define VK_DEBUG
 
@@ -88,6 +89,9 @@ public:
 	static VulkanContext *Instance() { return contextInstance; }
 	bool SupportsFragmentShaderStoresAndAtomics() const { return fragmentStoresAndAtomics; }
 	bool SupportsSamplerAnisotropy() const { return samplerAnisotropy; }
+	bool SupportsDedicatedAllocation() const { return dedicatedAllocationSupported; }
+	const VMAllocator& GetAllocator() const { return allocator; }
+	bool IsUnifiedMemory() const { return unifiedMemory; }
 
 private:
 	vk::Format InitDepthBuffer();
@@ -125,6 +129,7 @@ private:
 		return true;
 	}
 
+	VMAllocator allocator;
 	void *window = nullptr;
 	void *display = nullptr;
 	bool rendering = false;
@@ -143,6 +148,8 @@ private:
 	bool optimalTilingSupported4444 = false;
 	bool fragmentStoresAndAtomics = false;
 	bool samplerAnisotropy = false;
+	bool dedicatedAllocationSupported = false;
+	bool unifiedMemory = false;
 	vk::UniqueDevice device;
 
 #ifdef USE_SDL

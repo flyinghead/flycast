@@ -22,7 +22,6 @@
 #include <math.h>
 #include "vulkan.h"
 #include "hw/pvr/Renderer_if.h"
-#include "allocator.h"
 #include "commandpool.h"
 #include "drawer.h"
 #include "shaders.h"
@@ -38,8 +37,6 @@ public:
 		DEBUG_LOG(RENDERER, "VulkanRenderer::Init");
 		texCommandPool.Init();
 
-		// FIXME this might be called after initial init
-		texAllocator.SetChunkSize(16 * 1024 * 1024);
 		rttPipelineManager.Init(&shaderManager);
 		if (textureDrawer.size() > GetContext()->GetSwapChainSize())
 			textureDrawer.resize(GetContext()->GetSwapChainSize());
@@ -50,13 +47,13 @@ public:
 		}
 		for (auto& drawer : textureDrawer)
 		{
-			drawer.Init(&samplerManager, &texAllocator, &rttPipelineManager, &textureCache);
+			drawer.Init(&samplerManager, &rttPipelineManager, &textureCache);
 			drawer.SetCommandPool(&texCommandPool);
 		}
 
 		screenDrawer.Init(&samplerManager, &shaderManager);
 		quadPipeline.Init(&shaderManager);
-		quadBuffer = std::unique_ptr<QuadBuffer>(new QuadBuffer(&texAllocator));
+		quadBuffer = std::unique_ptr<QuadBuffer>(new QuadBuffer());
 
 #ifdef __ANDROID__
 		if (!vjoyTexture)
@@ -73,7 +70,6 @@ public:
 				vjoyTexture->tex_type = TextureType::_8888;
 				vjoyTexture->tcw.full = 0;
 				vjoyTexture->tsp.full = 0;
-				vjoyTexture->SetAllocator(&texAllocator);
 				vjoyTexture->SetPhysicalDevice(GetContext()->GetPhysicalDevice());
 				vjoyTexture->SetDevice(GetContext()->GetDevice());
 				vjoyTexture->SetCommandBuffer(texCommandPool.Allocate());
@@ -85,9 +81,8 @@ public:
 		}
 		if (!osdBuffer)
 		{
-			osdBuffer = std::unique_ptr<BufferData>(new BufferData(GetContext()->GetPhysicalDevice(), GetContext()->GetDevice(),
-									sizeof(OSDVertex) * VJOY_VISIBLE * 4,
-									vk::BufferUsageFlagBits::eVertexBuffer, &texAllocator));
+			osdBuffer = std::unique_ptr<BufferData>(new BufferData(sizeof(OSDVertex) * VJOY_VISIBLE * 4,
+									vk::BufferUsageFlagBits::eVertexBuffer));
 		}
 #endif
 
@@ -134,7 +129,6 @@ public:
 			curTexture->tex_type = TextureType::_8888;
 			curTexture->tcw.full = 0;
 			curTexture->tsp.full = 0;
-			curTexture->SetAllocator(&texAllocator);
 			curTexture->SetPhysicalDevice(GetContext()->GetPhysicalDevice());
 			curTexture->SetDevice(GetContext()->GetDevice());
 		}
@@ -293,7 +287,6 @@ public:
 		if (tf->IsNew())
 		{
 			tf->Create();
-			tf->SetAllocator(&texAllocator);
 			tf->SetPhysicalDevice(GetContext()->GetPhysicalDevice());
 			tf->SetDevice(GetContext()->GetDevice());
 		}
@@ -319,7 +312,6 @@ private:
 		if (!fogTexture)
 		{
 			fogTexture = std::unique_ptr<Texture>(new Texture());
-			fogTexture->SetAllocator(&texAllocator);
 			fogTexture->SetPhysicalDevice(GetContext()->GetPhysicalDevice());
 			fogTexture->SetDevice(GetContext()->GetDevice());
 			fogTexture->tex_type = TextureType::_8;
@@ -346,7 +338,6 @@ private:
 	ScreenDrawer screenDrawer;
 	RttPipelineManager rttPipelineManager;
 	std::vector<TextureDrawer> textureDrawer;
-	VulkanAllocator texAllocator;
 	std::vector<std::unique_ptr<Texture>> framebufferTextures;
 	QuadPipeline quadPipeline;
 	OSDPipeline osdPipeline;

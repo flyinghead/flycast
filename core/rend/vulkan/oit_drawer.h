@@ -47,13 +47,12 @@ public:
 	virtual void EndFrame() = 0;
 
 protected:
-	void Init(SamplerManager *samplerManager, Allocator *allocator, OITPipelineManager *pipelineManager, OITBuffers *oitBuffers)
+	void Init(SamplerManager *samplerManager, OITPipelineManager *pipelineManager, OITBuffers *oitBuffers)
 	{
 		this->pipelineManager = pipelineManager;
-		this->allocator = allocator;
 		this->samplerManager = samplerManager;
 		if (!quadBuffer)
-			quadBuffer = std::unique_ptr<QuadBuffer>(new QuadBuffer(allocator));
+			quadBuffer = std::unique_ptr<QuadBuffer>(new QuadBuffer());
 		this->oitBuffers = oitBuffers;
 	}
 	void Term()
@@ -71,7 +70,6 @@ protected:
 
 	OITPipelineManager *pipelineManager = nullptr;
 	vk::Rect2D viewport;
-	Allocator *allocator = nullptr;
 	std::array<std::unique_ptr<FramebufferAttachment>, 2> colorAttachments;
 	std::unique_ptr<FramebufferAttachment> depthAttachment;
 
@@ -106,12 +104,12 @@ private:
 class OITScreenDrawer : public OITDrawer
 {
 public:
-	void Init(SamplerManager *samplerManager, Allocator *allocator, OITShaderManager *shaderManager, OITBuffers *oitBuffers)
+	void Init(SamplerManager *samplerManager, OITShaderManager *shaderManager, OITBuffers *oitBuffers)
 	{
 		if (!screenPipelineManager)
 			screenPipelineManager = std::unique_ptr<OITPipelineManager>(new OITPipelineManager());
 		screenPipelineManager->Init(shaderManager, oitBuffers);
-		OITDrawer::Init(samplerManager, allocator, screenPipelineManager.get(), oitBuffers);
+		OITDrawer::Init(samplerManager, screenPipelineManager.get(), oitBuffers);
 
 		if (descriptorSets.size() > GetContext()->GetSwapChainSize())
 			descriptorSets.resize(GetContext()->GetSwapChainSize());
@@ -156,8 +154,7 @@ protected:
 		if (mainBuffers.empty())
 		{
 			for (int i = 0; i < GetContext()->GetSwapChainSize(); i++)
-				mainBuffers.push_back(std::unique_ptr<BufferData>(new BufferData(GetContext()->GetPhysicalDevice(), GetContext()->GetDevice(),
-						std::max(512 * 1024u, size),
+				mainBuffers.push_back(std::unique_ptr<BufferData>(new BufferData(std::max(512 * 1024u, size),
 						vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eUniformBuffer
 						| vk::BufferUsageFlagBits::eStorageBuffer)));
 		}
@@ -167,7 +164,7 @@ protected:
 			while (newSize < size)
 				newSize *= 2;
 			INFO_LOG(RENDERER, "Increasing main buffer size %d -> %d", (u32)mainBuffers[GetCurrentImage()]->bufferSize, newSize);
-			mainBuffers[GetCurrentImage()] = std::unique_ptr<BufferData>(new BufferData(GetContext()->GetPhysicalDevice(), GetContext()->GetDevice(), newSize,
+			mainBuffers[GetCurrentImage()] = std::unique_ptr<BufferData>(new BufferData(newSize,
 					vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eUniformBuffer
 					| vk::BufferUsageFlagBits::eStorageBuffer));
 		}
@@ -189,10 +186,10 @@ private:
 class OITTextureDrawer : public OITDrawer
 {
 public:
-	void Init(SamplerManager *samplerManager, Allocator *allocator, RttOITPipelineManager *pipelineManager,
+	void Init(SamplerManager *samplerManager, RttOITPipelineManager *pipelineManager,
 			TextureCache *textureCache, OITBuffers *oitBuffers)
 	{
-		OITDrawer::Init(samplerManager, allocator, pipelineManager, oitBuffers);
+		OITDrawer::Init(samplerManager, pipelineManager, oitBuffers);
 
 		descriptorSets.Init(samplerManager,
 				pipelineManager->GetPipelineLayout(),
@@ -232,9 +229,9 @@ protected:
 			while (newSize < size)
 				newSize *= 2;
 			INFO_LOG(RENDERER, "Increasing RTT main buffer size %d -> %d", !mainBuffer ? 0 : (u32)mainBuffer->bufferSize, newSize);
-			mainBuffer = std::unique_ptr<BufferData>(new BufferData(GetContext()->GetPhysicalDevice(), GetContext()->GetDevice(), newSize,
+			mainBuffer = std::unique_ptr<BufferData>(new BufferData(newSize,
 					vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eUniformBuffer
-					| vk::BufferUsageFlagBits::eStorageBuffer, allocator));
+					| vk::BufferUsageFlagBits::eStorageBuffer));
 		}
 		return mainBuffer.get();
 	}

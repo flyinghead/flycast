@@ -407,7 +407,7 @@ vk::CommandBuffer TextureDrawer::BeginRenderPass()
 	if (widthPow2 != this->width || heightPow2 != this->height || !depthAttachment)
 	{
 		if (!depthAttachment)
-			depthAttachment = std::unique_ptr<FramebufferAttachment>(new FramebufferAttachment(context->GetPhysicalDevice(), device, allocator));
+			depthAttachment = std::unique_ptr<FramebufferAttachment>(new FramebufferAttachment(context->GetPhysicalDevice(), device));
 		depthAttachment->Init(widthPow2, heightPow2, GetContext()->GetDepthFormat());
 	}
 	vk::ImageView colorImageView;
@@ -438,7 +438,6 @@ vk::CommandBuffer TextureDrawer::BeginRenderPass()
 		if (texture->IsNew())
 		{
 			texture->Create();
-			texture->SetAllocator(allocator);
 			texture->SetPhysicalDevice(GetContext()->GetPhysicalDevice());
 			texture->SetDevice(device);
 		}
@@ -463,8 +462,7 @@ vk::CommandBuffer TextureDrawer::BeginRenderPass()
 		{
 			if (!colorAttachment)
 			{
-				colorAttachment = std::unique_ptr<FramebufferAttachment>(new FramebufferAttachment(context->GetPhysicalDevice(),
-						device, allocator));
+				colorAttachment = std::unique_ptr<FramebufferAttachment>(new FramebufferAttachment(context->GetPhysicalDevice(), device));
 			}
 			colorAttachment->Init(widthPow2, heightPow2, vk::Format::eR8G8B8A8Unorm);
 		}
