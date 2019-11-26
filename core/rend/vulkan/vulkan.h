@@ -40,6 +40,7 @@ public:
 	bool Init();
 	bool InitInstance(const char** extensions, uint32_t extensions_count);
 	bool InitDevice();
+	void InitImgui(vk::RenderPass renderPass, int subpass = 0);
 	void CreateSwapChain();
 	void Term();
 	void SetWindow(void *window, void *display) { this->window = window; this->display = display; }
@@ -95,7 +96,6 @@ public:
 
 private:
 	vk::Format InitDepthBuffer();
-	void InitImgui();
 	void DoSwapAutomation();
 	vk::SurfaceKHR GetSurface() {
 #ifdef USE_SDL

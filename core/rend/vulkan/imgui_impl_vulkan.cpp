@@ -41,6 +41,7 @@ static VkQueue                      g_Queue = VK_NULL_HANDLE;
 static VkPipelineCache              g_PipelineCache = VK_NULL_HANDLE;
 static VkDescriptorPool             g_DescriptorPool = VK_NULL_HANDLE;
 static VkRenderPass                 g_RenderPass = VK_NULL_HANDLE;
+static int                          g_RenderSubpass = 0;
 static void                         (*g_CheckVkResultFn)(VkResult err) = NULL;
 
 static VkDeviceSize                 g_BufferMemoryAlignment = 256;
@@ -527,6 +528,7 @@ bool ImGui_ImplVulkan_CreateDeviceObjects()
     }
 
     // Create Descriptor Set:
+    if (!g_DescriptorSet)
     {
         VkDescriptorSetAllocateInfo alloc_info = {};
         alloc_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -555,6 +557,13 @@ bool ImGui_ImplVulkan_CreateDeviceObjects()
         check_vk_result(err);
     }
 
+    if (g_Pipeline)
+    {
+    	// Avoid destroying the in-flight pipeline
+    	vkDeviceWaitIdle(g_Device);
+    	vkDestroyPipeline(g_Device, g_Pipeline, g_Allocator);
+    	g_Pipeline = VK_NULL_HANDLE;
+    }
     VkPipelineShaderStageCreateInfo stage[2] = {};
     stage[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
     stage[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
@@ -649,6 +658,7 @@ bool ImGui_ImplVulkan_CreateDeviceObjects()
     info.pDynamicState = &dynamic_state;
     info.layout = g_PipelineLayout;
     info.renderPass = g_RenderPass;
+    info.subpass = g_RenderSubpass;
     err = vkCreateGraphicsPipelines(g_Device, g_PipelineCache, 1, &info, g_Allocator, &g_Pipeline);
     check_vk_result(err);
 
@@ -694,8 +704,12 @@ void    ImGui_ImplVulkan_InvalidateDeviceObjects()
     if (g_Pipeline)             { vkDestroyPipeline(g_Device, g_Pipeline, g_Allocator); g_Pipeline = VK_NULL_HANDLE; }
 }
 
-bool    ImGui_ImplVulkan_Init(ImGui_ImplVulkan_InitInfo* info, VkRenderPass render_pass)
+bool    ImGui_ImplVulkan_Init(ImGui_ImplVulkan_InitInfo* info, VkRenderPass render_pass, int subpass)
 {
+    IM_ASSERT(render_pass != VK_NULL_HANDLE);
+	if (g_RenderPass == render_pass && g_RenderSubpass == subpass)
+		return true;
+
     ImGuiIO& io = ImGui::GetIO();
     io.BackendRendererName = "imgui_impl_vulkan";
 
@@ -704,7 +718,6 @@ bool    ImGui_ImplVulkan_Init(ImGui_ImplVulkan_InitInfo* info, VkRenderPass rend
     IM_ASSERT(info->Device != VK_NULL_HANDLE);
     IM_ASSERT(info->Queue != VK_NULL_HANDLE);
     IM_ASSERT(info->DescriptorPool != VK_NULL_HANDLE);
-    IM_ASSERT(render_pass != VK_NULL_HANDLE);
 
     g_Instance = info->Instance;
     g_PhysicalDevice = info->PhysicalDevice;
@@ -712,6 +725,7 @@ bool    ImGui_ImplVulkan_Init(ImGui_ImplVulkan_InitInfo* info, VkRenderPass rend
     g_QueueFamily = info->QueueFamily;
     g_Queue = info->Queue;
     g_RenderPass = render_pass;
+    g_RenderSubpass = subpass;
     g_PipelineCache = info->PipelineCache;
     g_DescriptorPool = info->DescriptorPool;
     g_Allocator = info->Allocator;

@@ -63,7 +63,7 @@ public:
 			pixelCounterReset->upload(sizeof(zero), &zero);
 		}
 		// We need to wait until this buffer is not used before deleting it
-		VulkanContext::Instance()->GetGraphicsQueue().waitIdle();
+		context->GetGraphicsQueue().waitIdle();
 		abufferPointerAttachment.reset();
 		abufferPointerAttachment = std::unique_ptr<FramebufferAttachment>(
 				new FramebufferAttachment(context->GetPhysicalDevice(), context->GetDevice()));

@@ -281,7 +281,7 @@ vk::Format VulkanContext::InitDepthBuffer()
 	return depthFormat;
 }
 
-void VulkanContext::InitImgui()
+void VulkanContext::InitImgui(vk::RenderPass renderPass, int subpass)
 {
 	gui_init();
 	ImGui_ImplVulkan_InitInfo initInfo = {};
@@ -296,22 +296,25 @@ void VulkanContext::InitImgui()
 	initInfo.CheckVkResultFn = &CheckImGuiResult;
 #endif
 
-	if (!ImGui_ImplVulkan_Init(&initInfo, (VkRenderPass)*renderPass))
+	if (!ImGui_ImplVulkan_Init(&initInfo, (VkRenderPass)renderPass, subpass))
 	{
 		die("ImGui initialization failed");
 	}
-    // Upload Fonts
-	device->resetFences(1, &(*drawFences.front()));
-	device->resetCommandPool(*commandPools.front(), vk::CommandPoolResetFlagBits::eReleaseResources);
-	vk::CommandBuffer& commandBuffer = *commandBuffers.front();
-	commandBuffer.begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));
-	ImGui_ImplVulkan_CreateFontsTexture((VkCommandBuffer)commandBuffer);
-	commandBuffer.end();
-	vk::SubmitInfo submitInfo(0, nullptr, nullptr, 1, &commandBuffer);
-	graphicsQueue.submit(1, &submitInfo, *drawFences.front());
+	if (ImGui::GetIO().Fonts->TexID == 0)
+	{
+		// Upload Fonts
+		device->resetFences(1, &(*drawFences.front()));
+		device->resetCommandPool(*commandPools.front(), vk::CommandPoolResetFlagBits::eReleaseResources);
+		vk::CommandBuffer& commandBuffer = *commandBuffers.front();
+		commandBuffer.begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));
+		ImGui_ImplVulkan_CreateFontsTexture((VkCommandBuffer)commandBuffer);
+		commandBuffer.end();
+		vk::SubmitInfo submitInfo(0, nullptr, nullptr, 1, &commandBuffer);
+		graphicsQueue.submit(1, &submitInfo, *drawFences.front());
 
-	device->waitIdle();
-	ImGui_ImplVulkan_InvalidateFontUploadObjects();
+		device->waitIdle();
+		ImGui_ImplVulkan_InvalidateFontUploadObjects();
+	}
 }
 
 bool VulkanContext::InitDevice()
@@ -604,7 +607,7 @@ void VulkanContext::CreateSwapChain()
 	    	imageAcquiredSemaphores.push_back(device->createSemaphoreUnique(vk::SemaphoreCreateInfo()));
 	    }
 
-	    InitImgui();
+	    InitImgui(*renderPass);
 
 	    INFO_LOG(RENDERER, "Vulkan swap chain created: %d x %d, swap chain size %d", width, height, (int)imageViews.size());
 	}
@@ -677,6 +680,7 @@ void VulkanContext::NewFrame()
 
 void VulkanContext::BeginRenderPass()
 {
+	InitImgui(*renderPass);
 	const vk::ClearValue clear_colors[] = { vk::ClearColorValue(std::array<float, 4>{0.f, 0.f, 0.f, 1.f}), vk::ClearDepthStencilValue{ 0.f, 0 } };
 	vk::CommandBuffer commandBuffer = *commandBuffers[currentImage];
 	commandBuffer.beginRenderPass(vk::RenderPassBeginInfo(*renderPass, *framebuffers[currentImage], vk::Rect2D({0, 0}, {width, height}), 2, clear_colors),

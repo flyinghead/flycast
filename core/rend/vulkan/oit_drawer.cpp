@@ -577,6 +577,7 @@ void OITTextureDrawer::EndFrame()
 vk::CommandBuffer OITScreenDrawer::NewFrame()
 {
 	GetContext()->NewFrame();
+	GetContext()->InitImgui(GetRenderPass(), 2);
 	vk::CommandBuffer commandBuffer = GetContext()->GetCurrentCommandBuffer();
 
 	viewport.offset.x = 0;
