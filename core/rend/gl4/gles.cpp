@@ -12,8 +12,7 @@
 
 //Fragment and vertex shaders code
 
-static const char* VertexShaderSource = R"(
-#version 140
+static const char* VertexShaderSource = R"(#version 140
 #define pp_Gouraud %d
 
 #if pp_Gouraud == 0

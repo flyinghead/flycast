@@ -25,8 +25,7 @@
 float fb_scale_x, fb_scale_y; // FIXME
 
 //Fragment and vertex shaders code
-const char* VertexShaderSource = R"(
-%s
+const char* VertexShaderSource = R"(%s
 #define TARGET_GL %s
 #define pp_Gouraud %d
 
@@ -99,8 +98,7 @@ void main()
 )";
 
 const char* PixelPipelineShader =
-R"(
-%s
+R"(%s
 #define TARGET_GL %s
 
 #define cp_AlphaTest %d
@@ -293,8 +291,7 @@ void main()
 )";
 
 const char* ModifierVolumeShader =
-R"(
-%s
+R"(%s
 #define TARGET_GL %s
 
 #define GLES2 0
@@ -325,8 +322,7 @@ void main()
 )";
 
 const char* OSD_VertexShader =
-R"(
-%s
+R"(%s
 #define TARGET_GL %s
 
 #define GLES2 0
@@ -367,8 +363,7 @@ void main()
 )";
 
 const char* OSD_Shader =
-R"(
-%s
+R"(%s
 #define TARGET_GL %s
 
 #define GLES2 0

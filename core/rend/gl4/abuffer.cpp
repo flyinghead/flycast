@@ -285,8 +285,7 @@ void main(void)
 )";
 
 static const char* VertexShaderSource =
-R"(
-#version 430
+R"(#version 430
 
 in highp vec3 in_pos;
 
