@@ -101,7 +101,7 @@ public:
 		VkResult rc = vmaAllocateMemoryForImage(allocator, (VkImage)image, &allocCreateInfo, &vmaAllocation, &allocInfo);
 		if (rc != VK_SUCCESS)
 			throwResultException((vk::Result)rc, "vmaAllocateMemoryForImage failed");
-		vmaBindImageMemory(allocator, vmaAllocation, image);
+		vmaBindImageMemory(allocator, vmaAllocation, (VkImage)image);
 
 		return Allocation(allocator, vmaAllocation, allocInfo);
 	}
@@ -113,7 +113,7 @@ public:
 		VkResult rc = vmaAllocateMemoryForBuffer(allocator, (VkBuffer)buffer, &allocCreateInfo, &vmaAllocation, &allocInfo);
 		if (rc != VK_SUCCESS)
 			throwResultException((vk::Result)rc, "vmaAllocateMemoryForBuffer failed");
-		vmaBindBufferMemory(allocator, vmaAllocation, buffer);
+		vmaBindBufferMemory(allocator, vmaAllocation, (VkBuffer)buffer);
 
 		return Allocation(allocator, vmaAllocation, allocInfo);
 	}
@@ -122,8 +122,8 @@ public:
 	{
 		VmaStats stats;
 		vmaCalculateStats(allocator, &stats);
-		NOTICE_LOG(RENDERER, "Vma stats: %d chunks, %d allocs, %zd bytes used, %zd free", stats.total.blockCount,
-				stats.total.allocationCount, stats.total.usedBytes, stats.total.unusedBytes);
+		NOTICE_LOG(RENDERER, "Vma stats: %d chunks, %d allocs, %llu bytes used, %llu free", stats.total.blockCount,
+				stats.total.allocationCount, (unsigned long long)stats.total.usedBytes, (unsigned long long)stats.total.unusedBytes);
 	}
 
 private:

@@ -245,7 +245,6 @@
 		AE649C3C218C555600EF4A81 /* cdrom.c in Sources */ = {isa = PBXBuildFile; fileRef = AE649C33218C555600EF4A81 /* cdrom.c */; };
 		AE649C3D218C555600EF4A81 /* chd.c in Sources */ = {isa = PBXBuildFile; fileRef = AE649C35218C555600EF4A81 /* chd.c */; };
 		AE649C3E218C555600EF4A81 /* huffman.c in Sources */ = {isa = PBXBuildFile; fileRef = AE649C38218C555600EF4A81 /* huffman.c */; };
-		AE7B904F23565B4200145C6A /* allocator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE7B904D23565B4100145C6A /* allocator.cpp */; };
 		AE7B907C235A53D800145C6A /* gl4funcs.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE7B906F235A53D800145C6A /* gl4funcs.cpp */; };
 		AE7B907D235A53D800145C6A /* osx.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE7B9071235A53D800145C6A /* osx.cpp */; };
 		AE7B907F235A53D800145C6A /* switcher.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE7B9075235A53D800145C6A /* switcher.cpp */; };
@@ -259,8 +258,6 @@
 		AE8C274321122E2500D4D8F4 /* xbrz.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE8C273D21122E2500D4D8F4 /* xbrz.cpp */; };
 		AE90679B235B6F6400CE473C /* gl_context.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE90679A235B6F6400CE473C /* gl_context.cpp */; };
 		AE90679D235DF80400CE473C /* osd.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE90679C235DF80400CE473C /* osd.cpp */; };
-		AEBD141E23780BE800D4AC5D /* compiler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AEBD141C23780BE800D4AC5D /* compiler.cpp */; };
-		AEBD142123780C0000D4AC5D /* quad.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AEBD141F23780C0000D4AC5D /* quad.cpp */; };
 		AED73BAE22FC0E9600ECDB64 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = AED73BAD22FC0E9600ECDB64 /* README.md */; };
 		AED73DC42303E19200ECDB64 /* sdl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AED73DC02303E19100ECDB64 /* sdl.cpp */; };
 		AED73DC72303E57C00ECDB64 /* libSDL2.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AED73DC62303E57C00ECDB64 /* libSDL2.a */; };
@@ -309,14 +306,6 @@
 		AED73E962348E46400ECDB64 /* volk.c in Sources */ = {isa = PBXBuildFile; fileRef = AED73E942348E46400ECDB64 /* volk.c */; };
 		AED73EBE2348E49900ECDB64 /* CustomTexture.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AED73EAB2348E49800ECDB64 /* CustomTexture.cpp */; };
 		AED73EBF2348E49900ECDB64 /* sorter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AED73EAD2348E49900ECDB64 /* sorter.cpp */; };
-		AED73EC02348E49900ECDB64 /* buffer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AED73EAF2348E49900ECDB64 /* buffer.cpp */; };
-		AED73EC12348E49900ECDB64 /* imgui_impl_vulkan.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AED73EB12348E49900ECDB64 /* imgui_impl_vulkan.cpp */; };
-		AED73EC22348E49900ECDB64 /* pipeline.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AED73EB32348E49900ECDB64 /* pipeline.cpp */; };
-		AED73EC32348E49900ECDB64 /* shaders.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AED73EB52348E49900ECDB64 /* shaders.cpp */; };
-		AED73EC42348E49900ECDB64 /* texture.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AED73EB72348E49900ECDB64 /* texture.cpp */; };
-		AED73EC52348E49900ECDB64 /* vulkan_context.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AED73EBB2348E49900ECDB64 /* vulkan_context.cpp */; };
-		AED73EC62348E49900ECDB64 /* vulkan_renderer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AED73EBC2348E49900ECDB64 /* vulkan_renderer.cpp */; };
-		AED73ECA234E827400ECDB64 /* drawer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AED73EC9234E827400ECDB64 /* drawer.cpp */; };
 		AEE62768220D7B4400EC7E89 /* cue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AEE62767220D7B4300EC7E89 /* cue.cpp */; };
 		AEE6276B220D7B5500EC7E89 /* gui.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AEE6276A220D7B5500EC7E89 /* gui.cpp */; };
 		AEE6277A220D7B7E00EC7E89 /* imgui.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AEE6276E220D7B7E00EC7E89 /* imgui.cpp */; };
@@ -830,8 +819,6 @@
 		AE649C37218C555600EF4A81 /* flac.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = flac.h; sourceTree = "<group>"; };
 		AE649C38218C555600EF4A81 /* huffman.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = huffman.c; sourceTree = "<group>"; };
 		AE649C39218C555600EF4A81 /* bitstream.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = bitstream.h; sourceTree = "<group>"; };
-		AE7B904D23565B4100145C6A /* allocator.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = allocator.cpp; sourceTree = "<group>"; };
-		AE7B904E23565B4200145C6A /* allocator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = allocator.h; sourceTree = "<group>"; };
 		AE7B906A235A53D800145C6A /* context.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = context.h; sourceTree = "<group>"; };
 		AE7B906F235A53D800145C6A /* gl4funcs.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = gl4funcs.cpp; sourceTree = "<group>"; };
 		AE7B9070235A53D800145C6A /* gl_context.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = gl_context.h; sourceTree = "<group>"; };
@@ -854,10 +841,6 @@
 		AE8C274021122E2500D4D8F4 /* xbrz_tools.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = xbrz_tools.h; sourceTree = "<group>"; };
 		AE90679A235B6F6400CE473C /* gl_context.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = gl_context.cpp; sourceTree = "<group>"; };
 		AE90679C235DF80400CE473C /* osd.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = osd.cpp; sourceTree = "<group>"; };
-		AEBD141C23780BE800D4AC5D /* compiler.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = compiler.cpp; sourceTree = "<group>"; };
-		AEBD141D23780BE800D4AC5D /* compiler.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = compiler.h; sourceTree = "<group>"; };
-		AEBD141F23780C0000D4AC5D /* quad.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = quad.cpp; sourceTree = "<group>"; };
-		AEBD142023780C0000D4AC5D /* quad.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = quad.h; sourceTree = "<group>"; };
 		AED73BAD22FC0E9600ECDB64 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; name = README.md; path = ../../../core/README.md; sourceTree = "<group>"; };
 		AED73DC02303E19100ECDB64 /* sdl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = sdl.cpp; sourceTree = "<group>"; };
 		AED73DC12303E19100ECDB64 /* sdl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = sdl.h; sourceTree = "<group>"; };
@@ -969,24 +952,7 @@
 		AED73EAB2348E49800ECDB64 /* CustomTexture.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CustomTexture.cpp; sourceTree = "<group>"; };
 		AED73EAC2348E49900ECDB64 /* CustomTexture.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CustomTexture.h; sourceTree = "<group>"; };
 		AED73EAD2348E49900ECDB64 /* sorter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = sorter.cpp; sourceTree = "<group>"; };
-		AED73EAF2348E49900ECDB64 /* buffer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = buffer.cpp; sourceTree = "<group>"; };
-		AED73EB02348E49900ECDB64 /* buffer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = buffer.h; sourceTree = "<group>"; };
-		AED73EB12348E49900ECDB64 /* imgui_impl_vulkan.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = imgui_impl_vulkan.cpp; sourceTree = "<group>"; };
-		AED73EB22348E49900ECDB64 /* imgui_impl_vulkan.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = imgui_impl_vulkan.h; sourceTree = "<group>"; };
-		AED73EB32348E49900ECDB64 /* pipeline.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = pipeline.cpp; sourceTree = "<group>"; };
-		AED73EB42348E49900ECDB64 /* pipeline.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pipeline.h; sourceTree = "<group>"; };
-		AED73EB52348E49900ECDB64 /* shaders.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = shaders.cpp; sourceTree = "<group>"; };
-		AED73EB62348E49900ECDB64 /* shaders.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = shaders.h; sourceTree = "<group>"; };
-		AED73EB72348E49900ECDB64 /* texture.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = texture.cpp; sourceTree = "<group>"; };
-		AED73EB82348E49900ECDB64 /* texture.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = texture.h; sourceTree = "<group>"; };
-		AED73EB92348E49900ECDB64 /* utils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = utils.h; sourceTree = "<group>"; };
-		AED73EBA2348E49900ECDB64 /* vulkan.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = vulkan.h; sourceTree = "<group>"; };
-		AED73EBB2348E49900ECDB64 /* vulkan_context.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = vulkan_context.cpp; sourceTree = "<group>"; };
-		AED73EBC2348E49900ECDB64 /* vulkan_renderer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = vulkan_renderer.cpp; sourceTree = "<group>"; };
 		AED73EBD2348E49900ECDB64 /* sorter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = sorter.h; sourceTree = "<group>"; };
-		AED73EC7234E827400ECDB64 /* drawer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = drawer.h; sourceTree = "<group>"; };
-		AED73EC8234E827400ECDB64 /* commandpool.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = commandpool.h; sourceTree = "<group>"; };
-		AED73EC9234E827400ECDB64 /* drawer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = drawer.cpp; sourceTree = "<group>"; };
 		AEE62767220D7B4300EC7E89 /* cue.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = cue.cpp; sourceTree = "<group>"; };
 		AEE62769220D7B5500EC7E89 /* gui.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = gui.h; sourceTree = "<group>"; };
 		AEE6276A220D7B5500EC7E89 /* gui.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = gui.cpp; sourceTree = "<group>"; };
@@ -1859,7 +1825,6 @@
 			isa = PBXGroup;
 			children = (
 				84B7BE9B1B72720200F9733F /* gles */,
-				AED73EAE2348E49900ECDB64 /* vulkan */,
 				AED73EAB2348E49800ECDB64 /* CustomTexture.cpp */,
 				AED73EAC2348E49900ECDB64 /* CustomTexture.h */,
 				AEE6276A220D7B5500EC7E89 /* gui.cpp */,
@@ -2388,36 +2353,6 @@
 			path = vulkan;
 			sourceTree = "<group>";
 		};
-		AED73EAE2348E49900ECDB64 /* vulkan */ = {
-			isa = PBXGroup;
-			children = (
-				AE7B904D23565B4100145C6A /* allocator.cpp */,
-				AE7B904E23565B4200145C6A /* allocator.h */,
-				AED73EC8234E827400ECDB64 /* commandpool.h */,
-				AEBD141C23780BE800D4AC5D /* compiler.cpp */,
-				AEBD141D23780BE800D4AC5D /* compiler.h */,
-				AED73EC9234E827400ECDB64 /* drawer.cpp */,
-				AED73EC7234E827400ECDB64 /* drawer.h */,
-				AED73EAF2348E49900ECDB64 /* buffer.cpp */,
-				AED73EB02348E49900ECDB64 /* buffer.h */,
-				AED73EB12348E49900ECDB64 /* imgui_impl_vulkan.cpp */,
-				AED73EB22348E49900ECDB64 /* imgui_impl_vulkan.h */,
-				AED73EB32348E49900ECDB64 /* pipeline.cpp */,
-				AED73EB42348E49900ECDB64 /* pipeline.h */,
-				AEBD141F23780C0000D4AC5D /* quad.cpp */,
-				AEBD142023780C0000D4AC5D /* quad.h */,
-				AED73EB52348E49900ECDB64 /* shaders.cpp */,
-				AED73EB62348E49900ECDB64 /* shaders.h */,
-				AED73EB72348E49900ECDB64 /* texture.cpp */,
-				AED73EB82348E49900ECDB64 /* texture.h */,
-				AED73EB92348E49900ECDB64 /* utils.h */,
-				AED73EBA2348E49900ECDB64 /* vulkan.h */,
-				AED73EBB2348E49900ECDB64 /* vulkan_context.cpp */,
-				AED73EBC2348E49900ECDB64 /* vulkan_renderer.cpp */,
-			);
-			path = vulkan;
-			sourceTree = "<group>";
-		};
 		AEE6276C220D7B7E00EC7E89 /* imgui */ = {
 			isa = PBXGroup;
 			children = (
@@ -2727,14 +2662,12 @@
 				84B7BF1E1B72720200F9733F /* Makefile in Sources */,
 				AE649BF6218C552500EF4A81 /* crc.c in Sources */,
 				84B7BF0F1B72720200F9733F /* zip_stat_index.c in Sources */,
-				AED73EC32348E49900ECDB64 /* shaders.cpp in Sources */,
 				AE80EDBF2157D4E600F7800F /* naomi_cart.cpp in Sources */,
 				AEFF7F5E214D9D590068CE11 /* pico_tcp.c in Sources */,
 				AE80EDBE2157D4E600F7800F /* naomi.cpp in Sources */,
 				84B7BEEB1B72720200F9733F /* zip_error_get.c in Sources */,
 				AEF256522294060400348550 /* archive.cpp in Sources */,
 				84B7BEB31B72720200F9733F /* coreio.cpp in Sources */,
-				AED73ECA234E827400ECDB64 /* drawer.cpp in Sources */,
 				84B7BF281B72720200F9733F /* dsp.cpp in Sources */,
 				AE7B907F235A53D800145C6A /* switcher.cpp in Sources */,
 				84B7BF3D1B72720200F9733F /* Renderer_if.cpp in Sources */,
@@ -2777,7 +2710,6 @@
 				AE2A2D5D21D68470004B308D /* m4cartridge.cpp in Sources */,
 				AED73E692348E45000ECDB64 /* parseConst.cpp in Sources */,
 				84967CC51B8F49EE005F1140 /* pngread.c in Sources */,
-				AED73EC62348E49900ECDB64 /* vulkan_renderer.cpp in Sources */,
 				84967CC71B8F49EE005F1140 /* pngrtran.c in Sources */,
 				84B7BEE81B72720200F9733F /* zip_err_str.c in Sources */,
 				AE2A2D5B21D68470004B308D /* m1cartridge.cpp in Sources */,
@@ -2826,7 +2758,6 @@
 				84B7BF2B1B72720200F9733F /* arm_mem.cpp in Sources */,
 				84B7BF4F1B72720200F9733F /* rtc.cpp in Sources */,
 				AE90679B235B6F6400CE473C /* gl_context.cpp in Sources */,
-				AED73EC12348E49900ECDB64 /* imgui_impl_vulkan.cpp in Sources */,
 				AED73E612348E45000ECDB64 /* InfoSink.cpp in Sources */,
 				84B7BF361B72720200F9733F /* maple_helper.cpp in Sources */,
 				84B7BF131B72720200F9733F /* zip_unchange_all.c in Sources */,
@@ -2891,7 +2822,6 @@
 				84B7BF6A1B72720200F9733F /* audiobackend_pulseaudio.cpp in Sources */,
 				AED73E8A2348E45000ECDB64 /* doc.cpp in Sources */,
 				84B7BF3F1B72720200F9733F /* ta.cpp in Sources */,
-				AEBD141E23780BE800D4AC5D /* compiler.cpp in Sources */,
 				AE2A24DA22AE7EB600DD3034 /* ssa.cpp in Sources */,
 				AED73DC42303E19200ECDB64 /* sdl.cpp in Sources */,
 				84B7BF751B72720200F9733F /* gdrom_hle.cpp in Sources */,
@@ -2950,8 +2880,6 @@
 				AE2A2D7A21D6851E004B308D /* 7zArcIn.c in Sources */,
 				84B7BF471B72720200F9733F /* sh4_interpreter.cpp in Sources */,
 				84967CC41B8F49EE005F1140 /* pngpread.c in Sources */,
-				AE7B904F23565B4200145C6A /* allocator.cpp in Sources */,
-				AEBD142123780C0000D4AC5D /* quad.cpp in Sources */,
 				AED73E752348E45000ECDB64 /* RemoveTree.cpp in Sources */,
 				AE2A2D7921D6851E004B308D /* 7zStream.c in Sources */,
 				AED73E582348E45000ECDB64 /* Link.cpp in Sources */,
@@ -2960,7 +2888,6 @@
 				84B7BF3E1B72720200F9733F /* spg.cpp in Sources */,
 				84B7BF251B72720200F9733F /* aica.cpp in Sources */,
 				84B7BF791B72720200F9733F /* gldraw.cpp in Sources */,
-				AED73EC52348E49900ECDB64 /* vulkan_context.cpp in Sources */,
 				84B7BF4E1B72720200F9733F /* mmu.cpp in Sources */,
 				AED73E852348E45000ECDB64 /* InitializeDll.cpp in Sources */,
 				AEF256512294060400348550 /* 7zArchive.cpp in Sources */,
@@ -2969,7 +2896,6 @@
 				84B7BEE91B72720200F9733F /* zip_error.c in Sources */,
 				84B7BF481B72720200F9733F /* sh4_opcodes.cpp in Sources */,
 				84B7BF141B72720200F9733F /* zip_unchange_archive.c in Sources */,
-				AED73EC02348E49900ECDB64 /* buffer.cpp in Sources */,
 				AE2A2D7E21D6851E004B308D /* Lzma2Dec.c in Sources */,
 				AE649BF7218C552500EF4A81 /* fixed.c in Sources */,
 				AEFF7F5B214D9D590068CE11 /* pico_socket_tcp.c in Sources */,
@@ -3002,7 +2928,6 @@
 				84B7BEFE1B72720200F9733F /* zip_memdup.c in Sources */,
 				84B7BEE71B72720200F9733F /* zip_entry_new.c in Sources */,
 				AE2A2D5C21D68470004B308D /* awcartridge.cpp in Sources */,
-				AED73EC22348E49900ECDB64 /* pipeline.cpp in Sources */,
 				84B7BF3A1B72720200F9733F /* pvr_mem.cpp in Sources */,
 				84B7BEB41B72720200F9733F /* md5.cpp in Sources */,
 				84B7BF661B72720200F9733F /* nullDC.cpp in Sources */,
@@ -3017,7 +2942,6 @@
 				84B7BF561B72720200F9733F /* sh4_mmr.cpp in Sources */,
 				84B7BF3C1B72720200F9733F /* pvr_sb_regs.cpp in Sources */,
 				AED73E702348E45000ECDB64 /* PpContext.cpp in Sources */,
-				AED73EC42348E49900ECDB64 /* texture.cpp in Sources */,
 				84B7BEEA1B72720200F9733F /* zip_error_clear.c in Sources */,
 				84B7BF051B72720200F9733F /* zip_set_archive_flag.c in Sources */,
 				84B7BF671B72720200F9733F /* audiobackend_alsa.cpp in Sources */,

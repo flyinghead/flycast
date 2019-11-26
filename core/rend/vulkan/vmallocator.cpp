@@ -21,22 +21,28 @@
 #define VMA_IMPLEMENTATION
 #include "vulkan.h"
 
+#if HOST_CPU == CPU_ARM
+__attribute__((pcs("aapcs-vfp")))
+#endif
 static void vmaAllocateDeviceMemoryCallback(
     VmaAllocator      allocator,
     uint32_t          memoryType,
     VkDeviceMemory    memory,
     VkDeviceSize      size)
 {
-	DEBUG_LOG(RENDERER, "VMAAllocator: %zd bytes allocated (type %d)", size, memoryType);
+	DEBUG_LOG(RENDERER, "VMAAllocator: %llu bytes allocated (type %d)", (unsigned long long)size, memoryType);
 }
 
+#if HOST_CPU == CPU_ARM
+__attribute__((pcs("aapcs-vfp")))
+#endif
 static void vmaFreeDeviceMemoryCallback(
     VmaAllocator      allocator,
     uint32_t          memoryType,
     VkDeviceMemory    memory,
     VkDeviceSize      size)
 {
-	DEBUG_LOG(RENDERER, "VMAAllocator: %zd bytes freed (type %d)", size, memoryType);
+	DEBUG_LOG(RENDERER, "VMAAllocator: %llu bytes freed (type %d)", (unsigned long long)size, memoryType);
 }
 
 static const VmaDeviceMemoryCallbacks memoryCallbacks = { vmaAllocateDeviceMemoryCallback, vmaFreeDeviceMemoryCallback };
