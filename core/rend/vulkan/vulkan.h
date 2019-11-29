@@ -25,4 +25,4 @@
 #undef VK_NO_PROTOTYPES
 #include "vulkan/vulkan.hpp"
 
-#define VK_DEBUG
+//#define VK_DEBUG
