@@ -52,6 +52,7 @@ public:
 		}
 
 		screenDrawer.Init(&samplerManager, &shaderManager);
+		screenDrawer.SetCommandPool(&texCommandPool);
 		quadPipeline.Init(&shaderManager);
 		quadBuffer = std::unique_ptr<QuadBuffer>(new QuadBuffer());
 
@@ -75,6 +76,7 @@ public:
 				vjoyTexture->SetCommandBuffer(texCommandPool.Allocate());
 				vjoyTexture->UploadToGPU(OSD_TEX_W, OSD_TEX_H, image_data);
 				vjoyTexture->SetCommandBuffer(nullptr);
+				texCommandPool.EndFrame();
 				delete [] image_data;
 				osdPipeline.Init(&shaderManager, vjoyTexture->GetImageView(), GetContext()->GetRenderPass());
 			}
@@ -137,48 +139,7 @@ public:
 		curTexture->SetCommandBuffer(nullptr);
 		texCommandPool.EndFrame();
 
-		TransformMatrix<false> matrices(pvrrc);
-		glm::vec4 viewport_min = matrices.GetViewportMatrix() * glm::vec4(0, 0, 0, 1.f);
-		glm::vec4 viewport_dim = matrices.GetViewportMatrix() * glm::vec4(640.f, 480.f, 0, 0);
-
-		float min_x = viewport_min[0];
-		float min_y = viewport_min[1];
-		width = viewport_dim[0];
-		height = viewport_dim[1];
-		if (width < 0)
-		{
-			min_x += width;
-			width = -width;
-		}
-		if (height < 0)
-		{
-			min_y += height;
-			height = -height;
-		}
-		quadBuffer->Update();
-
-		vk::CommandBuffer cmdBuffer = screenDrawer.BeginRenderPass();
-
-		vk::Pipeline pipeline = quadPipeline.GetPipeline();
-		cmdBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline);
-
-		quadPipeline.SetTexture(curTexture.get());
-		quadPipeline.BindDescriptorSets(cmdBuffer);
-
-		float blendConstants[4] = { 1.0, 1.0, 1.0, 1.0 };
-		cmdBuffer.setBlendConstants(blendConstants);
-
-		vk::Viewport viewport(min_x, min_y, width, height);
-		cmdBuffer.setViewport(0, 1, &viewport);
-		cmdBuffer.setScissor(0, vk::Rect2D(
-				vk::Offset2D((u32)std::max(lroundf(min_x), 0L), (u32)std::max(lroundf(min_y), 0L)),
-				vk::Extent2D((u32)std::max(lroundf(width), 0L), (u32)std::max(lroundf(height), 0L))));
-		quadBuffer->Bind(cmdBuffer);
-		quadBuffer->Draw(cmdBuffer);
-
-    	gui_display_osd();
-
-		screenDrawer.EndRenderPass();
+		GetContext()->PresentFrame(curTexture->GetImageView(), { 640, 480 });
 
 		return true;
 	}
@@ -209,12 +170,13 @@ public:
 		if (result)
 			CheckFogTexture();
 
-		if (!result || !ctx->rend.isRTT)
+		if (!result)
 			texCommandPool.EndFrame();
 
 		return result;
 	}
 
+	// FIXME This needs to go in its own class
 	void DrawOSD(bool clear_screen) override
 	{
 		gui_display_osd();
@@ -268,8 +230,7 @@ public:
 			drawer = &screenDrawer;
 
 		drawer->Draw(fogTexture.get());
-		if (!pvrrc.isRTT)
-			DrawOSD(false);
+
 		drawer->EndRenderPass();
 
 		return !pvrrc.isRTT;

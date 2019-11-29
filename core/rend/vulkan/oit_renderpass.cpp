@@ -27,13 +27,15 @@ vk::UniqueRenderPass RenderPasses::MakeRenderPass(bool initial, bool last)
     		GetAttachment0Description(initial, last),
 			// OP+PT color attachment
 			vk::AttachmentDescription(vk::AttachmentDescriptionFlags(), GetColorFormat(), vk::SampleCountFlagBits::e1,
-					initial ? vk::AttachmentLoadOp::eClear : vk::AttachmentLoadOp::eLoad, vk::AttachmentStoreOp::eStore,
+					initial ? vk::AttachmentLoadOp::eClear : vk::AttachmentLoadOp::eLoad,
+					last ? vk::AttachmentStoreOp::eDontCare : vk::AttachmentStoreOp::eStore,
 					vk::AttachmentLoadOp::eDontCare, vk::AttachmentStoreOp::eDontCare,
 					initial ? vk::ImageLayout::eUndefined : vk::ImageLayout::eShaderReadOnlyOptimal, vk::ImageLayout::eShaderReadOnlyOptimal),
 			// OP+PT depth attachment
 			vk::AttachmentDescription(vk::AttachmentDescriptionFlags(), GetContext()->GetDepthFormat(), vk::SampleCountFlagBits::e1,
-					initial ? vk::AttachmentLoadOp::eClear : vk::AttachmentLoadOp::eLoad, vk::AttachmentStoreOp::eStore,
-					vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eStore,
+					initial ? vk::AttachmentLoadOp::eClear : vk::AttachmentLoadOp::eLoad,
+					last ? vk::AttachmentStoreOp::eDontCare : vk::AttachmentStoreOp::eStore,
+					vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eDontCare,
 					initial ? vk::ImageLayout::eUndefined : vk::ImageLayout::eDepthStencilReadOnlyOptimal, vk::ImageLayout::eDepthStencilReadOnlyOptimal),
     };
     vk::AttachmentReference swapChainReference(0, vk::ImageLayout::eColorAttachmentOptimal);

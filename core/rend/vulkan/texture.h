@@ -20,7 +20,7 @@
 */
 #pragma once
 #include <memory>
-#include "vulkan.h"
+#include "vulkan_context.h"
 #include "buffer.h"
 #include "rend/TexCache.h"
 #include "hw/pvr/Renderer_if.h"
@@ -106,7 +106,7 @@ public:
 	FramebufferAttachment(vk::PhysicalDevice physicalDevice, vk::Device device)
 		: physicalDevice(physicalDevice), device(device), format(vk::Format::eUndefined)
 		{}
-	void Init(u32 width, u32 height, vk::Format format, vk::ImageUsageFlags = vk::ImageUsageFlags());
+	void Init(u32 width, u32 height, vk::Format format, vk::ImageUsageFlags usage);
 	void Reset() { image.reset(); imageView.reset(); }
 
 	vk::ImageView GetImageView() const { return *imageView; }

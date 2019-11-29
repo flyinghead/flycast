@@ -19,7 +19,7 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #pragma once
-#include "vulkan.h"
+#include "vulkan_context.h"
 
 class CommandPool
 {
@@ -58,10 +58,9 @@ public:
 
 	void EndFrame()
 	{
-		vk::CommandBuffer commandBuffer = Allocate();
-		commandBuffer.begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));
-		commandBuffer.end();
-		VulkanContext::Instance()->GetGraphicsQueue().submit(vk::SubmitInfo(0, nullptr, nullptr, 1, &commandBuffer), *fences[index]);
+		std::vector<vk::CommandBuffer> commandBuffers = GetInFlightCommandBuffers();
+		VulkanContext::Instance()->GetGraphicsQueue().submit(
+				vk::SubmitInfo(0, nullptr, nullptr, commandBuffers.size(), commandBuffers.data()), *fences[index]);
 	}
 
 	void BeginFrame()
@@ -95,7 +94,23 @@ public:
 		return *inFlightBuffers[index].back();
 	}
 
+	vk::Fence GetCurrentFence()
+	{
+		return *fences[index];
+	}
+
 private:
+	std::vector<vk::CommandBuffer> GetInFlightCommandBuffers() const
+	{
+		const auto& buffers = inFlightBuffers[index];
+		std::vector<vk::CommandBuffer> v;
+		v.reserve(buffers.size());
+		std::for_each(buffers.begin(), buffers.end(),
+				[&v](const vk::UniqueCommandBuffer& cmdBuf) { v.push_back(*cmdBuf); });
+
+		return v;
+	}
+
 	int index = 0;
 	std::vector<std::vector<vk::UniqueCommandBuffer>> freeBuffers;
 	std::vector<std::vector<vk::UniqueCommandBuffer>> inFlightBuffers;

@@ -18,7 +18,7 @@
     You should have received a copy of the GNU General Public License
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
-#include "vulkan.h"
+#include "vulkan_context.h"
 #include "imgui/imgui.h"
 #include "imgui_impl_vulkan.h"
 #include "../gui.h"
@@ -137,15 +137,14 @@ bool VulkanContext::InitInstance(const char** extensions, uint32_t extensions_co
 			vext.push_back(extensions[i]);
 
 		std::vector<const char *> layer_names;
+		//layer_names.push_back("VK_LAYER_ARM_AGA");
 #ifdef VK_DEBUG
 #ifndef __ANDROID__
 		vext.push_back("VK_EXT_debug_utils");
-		extensions_count += 1;
 //		layer_names.push_back("VK_LAYER_LUNARG_api_dump");
 		layer_names.push_back("VK_LAYER_LUNARG_standard_validation");
 #else
 		vext.push_back("VK_EXT_debug_report");	// NDK <= 19?
-		extensions_count += 1;
 		layer_names.push_back("VK_LAYER_GOOGLE_threading");
 		layer_names.push_back("VK_LAYER_LUNARG_parameter_validation");
 		layer_names.push_back("VK_LAYER_LUNARG_object_tracker");
@@ -153,8 +152,8 @@ bool VulkanContext::InitInstance(const char** extensions, uint32_t extensions_co
 		layer_names.push_back("VK_LAYER_GOOGLE_unique_objects");
 #endif
 #endif
-		extensions = &vext[0];
-		vk::InstanceCreateInfo instanceCreateInfo({}, &applicationInfo, layer_names.size(), &layer_names[0], extensions_count, extensions);
+		vk::InstanceCreateInfo instanceCreateInfo({}, &applicationInfo, layer_names.size(), layer_names.data(),
+				vext.size(), vext.data());
 		// create a UniqueInstance
 		instance = vk::createInstanceUnique(instanceCreateInfo);
 
@@ -217,7 +216,7 @@ bool VulkanContext::InitInstance(const char** extensions, uint32_t extensions_co
 	return false;
 }
 
-vk::Format VulkanContext::InitDepthBuffer()
+vk::Format VulkanContext::FindDepthFormat()
 {
 	const vk::Format depthFormats[] = { vk::Format::eD32SfloatS8Uint, vk::Format::eD24UnormS8Uint, vk::Format::eD16UnormS8Uint };
 	vk::ImageTiling tiling;
@@ -252,36 +251,10 @@ vk::Format VulkanContext::InitDepthBuffer()
 	}
 	NOTICE_LOG(RENDERER, "Using depth format %s tiling %s", vk::to_string(depthFormat).c_str(), vk::to_string(tiling).c_str());
 
-	vk::ImageCreateInfo imageCreateInfo(vk::ImageCreateFlags(), vk::ImageType::e2D, depthFormat, vk::Extent3D(width, height, 1), 1, 1,
-			vk::SampleCountFlagBits::e1, tiling, vk::ImageUsageFlagBits::eDepthStencilAttachment);
-	depthImage = device->createImageUnique(imageCreateInfo);
-
-	vk::PhysicalDeviceMemoryProperties memoryProperties = physicalDevice.getMemoryProperties();
-	vk::MemoryRequirements memoryRequirements = device->getImageMemoryRequirements(*depthImage);
-	uint32_t typeBits = memoryRequirements.memoryTypeBits;
-	uint32_t typeIndex = uint32_t(~0);
-	for (uint32_t i = 0; i < memoryProperties.memoryTypeCount; i++)
-	{
-		if ((typeBits & 1) && ((memoryProperties.memoryTypes[i].propertyFlags & vk::MemoryPropertyFlagBits::eDeviceLocal) == vk::MemoryPropertyFlagBits::eDeviceLocal))
-		{
-			typeIndex = i;
-			break;
-		}
-		typeBits >>= 1;
-	}
-	verify(typeIndex != ~0);
-	depthMemory = device->allocateMemoryUnique(vk::MemoryAllocateInfo(memoryRequirements.size, typeIndex));
-
-	device->bindImageMemory(*depthImage, *depthMemory, 0);
-
-	vk::ComponentMapping componentMapping(vk::ComponentSwizzle::eR, vk::ComponentSwizzle::eG, vk::ComponentSwizzle::eB, vk::ComponentSwizzle::eA);
-	vk::ImageSubresourceRange subResourceRange(vk::ImageAspectFlagBits::eDepth, 0, 1, 0, 1);
-	depthView = device->createImageViewUnique(vk::ImageViewCreateInfo(vk::ImageViewCreateFlags(), *depthImage, vk::ImageViewType::e2D, depthFormat, componentMapping, subResourceRange));
-
 	return depthFormat;
 }
 
-void VulkanContext::InitImgui(vk::RenderPass renderPass, int subpass)
+void VulkanContext::InitImgui()
 {
 	gui_init();
 	ImGui_ImplVulkan_InitInfo initInfo = {};
@@ -296,7 +269,7 @@ void VulkanContext::InitImgui(vk::RenderPass renderPass, int subpass)
 	initInfo.CheckVkResultFn = &CheckImGuiResult;
 #endif
 
-	if (!ImGui_ImplVulkan_Init(&initInfo, (VkRenderPass)renderPass, subpass))
+	if (!ImGui_ImplVulkan_Init(&initInfo, (VkRenderPass)*renderPass, 0))
 	{
 		die("ImGui initialization failed");
 	}
@@ -399,8 +372,9 @@ bool VulkanContext::InitDevice()
 			features.fragmentStoresAndAtomics = true;
 		if (samplerAnisotropy)
 			features.samplerAnisotropy = true;
+		const char *layers[] = { "VK_LAYER_ARM_AGA" };
 		device = physicalDevice.createDeviceUnique(vk::DeviceCreateInfo(vk::DeviceCreateFlags(), 1, &deviceQueueCreateInfo,
-				0, nullptr, deviceExtensions.size(), &deviceExtensions[0], &features));
+				0, layers, deviceExtensions.size(), &deviceExtensions[0], &features));
 
 		// This links entry points directly from the driver and isn't absolutely necessary
 		volkLoadDevice(static_cast<VkDevice>(*device));
@@ -445,6 +419,10 @@ bool VulkanContext::InitDevice()
     		INFO_LOG(RENDERER, "Vulkan pipeline cache loaded from %s: %zd bytes", cachePath.c_str(), cacheSize);
 	    }
 	    allocator.Init(physicalDevice, *device);
+
+	    quadBuffer = std::unique_ptr<QuadBuffer>(new QuadBuffer());
+	    shaderManager = std::unique_ptr<ShaderManager>(new ShaderManager());
+	    quadPipeline = std::unique_ptr<QuadPipeline>(new QuadPipeline());
 
 		CreateSwapChain();
 
@@ -574,25 +552,21 @@ void VulkanContext::CreateSwapChain()
 		    commandBuffers.push_back(std::move(device->allocateCommandBuffersUnique(vk::CommandBufferAllocateInfo(*commandPools.back(), vk::CommandBufferLevel::ePrimary, 1)).front()));
 		}
 
-	    vk::Format depthFormat = InitDepthBuffer();
+	    vk::Format depthFormat = FindDepthFormat();
 
 	    // Render pass
-	    vk::AttachmentDescription attachmentDescriptions[2];
-	    // FIXME we should use vk::AttachmentLoadOp::eLoad for loadOp to preserve previous framebuffer but it fails on the first render
-	    attachmentDescriptions[0] = vk::AttachmentDescription(vk::AttachmentDescriptionFlags(), colorFormat, vk::SampleCountFlagBits::e1, vk::AttachmentLoadOp::eClear,
-	    	vk::AttachmentStoreOp::eStore, vk::AttachmentLoadOp::eDontCare, vk::AttachmentStoreOp::eDontCare, vk::ImageLayout::eUndefined, vk::ImageLayout::ePresentSrcKHR);
-	    attachmentDescriptions[1] = vk::AttachmentDescription(vk::AttachmentDescriptionFlags(), depthFormat, vk::SampleCountFlagBits::e1, vk::AttachmentLoadOp::eClear,
-	    	vk::AttachmentStoreOp::eDontCare, vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eDontCare, vk::ImageLayout::eUndefined, vk::ImageLayout::eDepthStencilAttachmentOptimal);
+	    vk::AttachmentDescription attachmentDescription = vk::AttachmentDescription(vk::AttachmentDescriptionFlags(), colorFormat, vk::SampleCountFlagBits::e1,
+	    		vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eStore, vk::AttachmentLoadOp::eDontCare, vk::AttachmentStoreOp::eDontCare,
+				vk::ImageLayout::eUndefined, vk::ImageLayout::ePresentSrcKHR);
 
 	    vk::AttachmentReference colorReference(0, vk::ImageLayout::eColorAttachmentOptimal);
-	    vk::AttachmentReference depthReference(1, vk::ImageLayout::eDepthStencilAttachmentOptimal);
-	    vk::SubpassDescription subpass(vk::SubpassDescriptionFlags(), vk::PipelineBindPoint::eGraphics, 0, nullptr, 1, &colorReference, nullptr, &depthReference);
+	    vk::SubpassDescription subpass(vk::SubpassDescriptionFlags(), vk::PipelineBindPoint::eGraphics, 0, nullptr, 1, &colorReference,
+	    		nullptr, nullptr);
 
-	    renderPass = device->createRenderPassUnique(vk::RenderPassCreateInfo(vk::RenderPassCreateFlags(), 2, attachmentDescriptions, 1, &subpass));
+	    renderPass = device->createRenderPassUnique(vk::RenderPassCreateInfo(vk::RenderPassCreateFlags(),
+	    		1, &attachmentDescription,	1, &subpass));
 
 	    // Framebuffers, fences, semaphores
-	    vk::ImageView attachments[2];
-	    attachments[1] = *depthView;
 
 	    framebuffers.reserve(imageViews.size());
 	    drawFences.reserve(imageViews.size());
@@ -600,14 +574,17 @@ void VulkanContext::CreateSwapChain()
 	    imageAcquiredSemaphores.reserve(imageViews.size());
 	    for (auto const& view : imageViews)
 	    {
-	    	attachments[0] = *view;
-	    	framebuffers.push_back(device->createFramebufferUnique(vk::FramebufferCreateInfo(vk::FramebufferCreateFlags(), *renderPass, 2, attachments, width, height, 1)));
+	    	framebuffers.push_back(device->createFramebufferUnique(vk::FramebufferCreateInfo(vk::FramebufferCreateFlags(), *renderPass,
+	    			1, &view.get(), width, height, 1)));
 	    	drawFences.push_back(device->createFenceUnique(vk::FenceCreateInfo(vk::FenceCreateFlagBits::eSignaled)));
 	    	renderCompleteSemaphores.push_back(device->createSemaphoreUnique(vk::SemaphoreCreateInfo()));
 	    	imageAcquiredSemaphores.push_back(device->createSemaphoreUnique(vk::SemaphoreCreateInfo()));
 	    }
+	    quadPipeline->Init(shaderManager.get());
 
-	    InitImgui(*renderPass);
+	    InitImgui();
+
+	    currentImage = GetSwapChainSize() - 1;
 
 	    INFO_LOG(RENDERER, "Vulkan swap chain created: %d x %d, swap chain size %d", width, height, (int)imageViews.size());
 	}
@@ -680,7 +657,6 @@ void VulkanContext::NewFrame()
 
 void VulkanContext::BeginRenderPass()
 {
-	InitImgui(*renderPass);
 	const vk::ClearValue clear_colors[] = { vk::ClearColorValue(std::array<float, 4>{0.f, 0.f, 0.f, 1.f}), vk::ClearDepthStencilValue{ 0.f, 0 } };
 	vk::CommandBuffer commandBuffer = *commandBuffers[currentImage];
 	commandBuffer.beginRenderPass(vk::RenderPassBeginInfo(*renderPass, *framebuffers[currentImage], vk::Rect2D({0, 0}, {width, height}), 2, clear_colors),
@@ -716,6 +692,41 @@ void VulkanContext::Present()
 	}
 }
 
+extern Renderer *renderer;
+
+void VulkanContext::PresentFrame(vk::ImageView imageView, vk::Offset2D extent)
+{
+	NewFrame();
+	BeginRenderPass();
+
+	float marginWidth = ((float)extent.y / extent.x * width / height - 1.f) / 2.f;
+	QuadVertex vtx[] = {
+		{ { -1, -1, 0 }, { 0 - marginWidth, 0 } },
+		{ {  1, -1, 0 }, { 1 + marginWidth, 0 } },
+		{ { -1,  1, 0 }, { 0 - marginWidth, 1 } },
+		{ {  1,  1, 0 }, { 1 + marginWidth, 1 } },
+	};
+	quadBuffer->Update(vtx);
+
+	vk::CommandBuffer commandBuffer = GetCurrentCommandBuffer();
+	vk::Pipeline pipeline = quadPipeline->GetPipeline();
+	commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline);
+
+	quadPipeline->SetTexture(imageView);
+	quadPipeline->BindDescriptorSets(commandBuffer);
+
+	float blendConstants[4] = { 1.0, 1.0, 1.0, 1.0 };
+	commandBuffer.setBlendConstants(blendConstants);
+
+	vk::Viewport viewport(0, 0, width, height);
+	commandBuffer.setViewport(0, 1, &viewport);
+	commandBuffer.setScissor(0, vk::Rect2D(vk::Offset2D(0, 0), vk::Extent2D(width, height)));
+	quadBuffer->Bind(commandBuffer);
+	quadBuffer->Draw(commandBuffer);
+	renderer->DrawOSD(false);
+	EndFrame();
+}
+
 void VulkanContext::Term()
 {
 	ImGui_ImplVulkan_Shutdown();
@@ -739,10 +750,10 @@ void VulkanContext::Term()
 	imageViews.clear();
 	framebuffers.clear();
 	renderPass.reset();
+	quadBuffer.reset();
+	quadPipeline.reset();
+	shaderManager.reset();
 	descriptorPool.reset();
-	depthView.reset();
-	depthMemory.reset();
-	depthImage.reset();
 	commandBuffers.clear();
 	commandPools.clear();
 	imageAcquiredSemaphores.clear();

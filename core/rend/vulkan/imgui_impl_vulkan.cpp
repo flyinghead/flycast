@@ -702,6 +702,7 @@ void    ImGui_ImplVulkan_InvalidateDeviceObjects()
     if (g_DescriptorSetLayout)  { vkDestroyDescriptorSetLayout(g_Device, g_DescriptorSetLayout, g_Allocator); g_DescriptorSetLayout = VK_NULL_HANDLE; }
     if (g_PipelineLayout)       { vkDestroyPipelineLayout(g_Device, g_PipelineLayout, g_Allocator); g_PipelineLayout = VK_NULL_HANDLE; }
     if (g_Pipeline)             { vkDestroyPipeline(g_Device, g_Pipeline, g_Allocator); g_Pipeline = VK_NULL_HANDLE; }
+    g_DescriptorSet = VK_NULL_HANDLE;
 }
 
 bool    ImGui_ImplVulkan_Init(ImGui_ImplVulkan_InitInfo* info, VkRenderPass render_pass, int subpass)
@@ -739,6 +740,15 @@ bool    ImGui_ImplVulkan_Init(ImGui_ImplVulkan_InitInfo* info, VkRenderPass rend
 void ImGui_ImplVulkan_Shutdown()
 {
     ImGui_ImplVulkan_InvalidateDeviceObjects();
+    g_Instance = VK_NULL_HANDLE;
+    g_PhysicalDevice = VK_NULL_HANDLE;
+    g_Device = VK_NULL_HANDLE;
+    g_Queue = VK_NULL_HANDLE;
+    g_RenderPass = VK_NULL_HANDLE;
+    g_PipelineCache = VK_NULL_HANDLE;
+    g_DescriptorPool = VK_NULL_HANDLE;
+    g_Allocator = nullptr;
+    g_CheckVkResultFn = nullptr;
 }
 
 void ImGui_ImplVulkan_NewFrame()

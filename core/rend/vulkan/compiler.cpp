@@ -21,6 +21,7 @@
 #include <glm/glm.hpp>
 #include "compiler.h"
 #include "SPIRV/GlslangToSpv.h"
+#include "vulkan_context.h"
 
 static const TBuiltInResource DefaultTBuiltInResource = {
     /* .MaxLights = */ 32,

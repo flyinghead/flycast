@@ -20,6 +20,7 @@
 */
 #include "buffer.h"
 #include "utils.h"
+#include "vulkan_context.h"
 
 BufferData::BufferData(vk::DeviceSize size, vk::BufferUsageFlags usage, vk::MemoryPropertyFlags propertyFlags)
 	: bufferSize(size)

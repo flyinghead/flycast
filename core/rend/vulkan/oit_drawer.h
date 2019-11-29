@@ -45,6 +45,7 @@ public:
 
 	virtual vk::CommandBuffer NewFrame() = 0;
 	virtual void EndFrame() = 0;
+	void SetCommandPool(CommandPool *commandPool) { this->commandPool = commandPool; }
 
 protected:
 	void Init(SamplerManager *samplerManager, OITPipelineManager *pipelineManager, OITBuffers *oitBuffers)
@@ -64,7 +65,6 @@ protected:
 	}
 	virtual OITDescriptorSets& GetCurrentDescSet() = 0;
 	virtual BufferData *GetMainBuffer(u32 size) = 0;
-	virtual vk::Framebuffer GetCurrentFramebuffer() const = 0;
 	void MakeBuffers(int width, int height);
 	virtual vk::Format GetColorFormat() const = 0;
 
@@ -72,6 +72,9 @@ protected:
 	vk::Rect2D viewport;
 	std::array<std::unique_ptr<FramebufferAttachment>, 2> colorAttachments;
 	std::unique_ptr<FramebufferAttachment> depthAttachment;
+	CommandPool *commandPool = nullptr;
+	vk::CommandBuffer currentCommandBuffer;
+	vk::UniqueFramebuffer framebuffer;
 
 private:
 	void DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sortTriangles, int pass,
@@ -123,14 +126,13 @@ public:
 						screenPipelineManager->GetPerPolyDSLayout(),
 						screenPipelineManager->GetColorInputDSLayout());
 			}
-		vk::Extent2D viewport = GetContext()->GetViewPort();
-		MakeFramebuffers(viewport.width, viewport.height);
+		MakeFramebuffers();
 	}
 	void Term()
 	{
 		mainBuffers.clear();
 		screenPipelineManager.reset();
-		framebuffers.clear();
+		framebuffer.reset();
 		descriptorSets.clear();
 		OITDrawer::Term();
 	}
@@ -143,9 +145,13 @@ public:
 	virtual vk::CommandBuffer NewFrame() override;
 	virtual void EndFrame() override
 	{
-		GetContext()->EndFrame();
+		currentCommandBuffer.endRenderPass();
+		currentCommandBuffer.end();
+		currentCommandBuffer = nullptr;
+		commandPool->EndFrame();
+		GetContext()->PresentFrame(finalColorAttachment->GetImageView(),
+				vk::Offset2D(viewport.extent.width, viewport.extent.height));
 	}
-	vk::RenderPass GetRenderPass() { return screenPipelineManager->GetRenderPass(true, true); }
 
 protected:
 	virtual OITDescriptorSets& GetCurrentDescSet() override { return descriptorSets[GetCurrentImage()]; }
@@ -170,17 +176,17 @@ protected:
 		}
 		return mainBuffers[GetCurrentImage()].get();
 	};
-	virtual vk::Framebuffer GetCurrentFramebuffer() const override { return *framebuffers[GetCurrentImage()]; }
 	virtual vk::Format GetColorFormat() const override { return GetContext()->GetColorFormat(); }
 
 private:
 	int GetCurrentImage() const { return GetContext()->GetCurrentImageIndex(); }
-	void MakeFramebuffers(int width, int height);
+	void MakeFramebuffers();
 
-	std::vector<vk::UniqueFramebuffer> framebuffers;
+	std::unique_ptr<FramebufferAttachment> finalColorAttachment;
 	std::vector<OITDescriptorSets> descriptorSets;
 	std::vector<std::unique_ptr<BufferData>> mainBuffers;
 	std::unique_ptr<OITPipelineManager> screenPipelineManager;
+	int currentScreenScaling = 0;
 };
 
 class OITTextureDrawer : public OITDrawer
@@ -196,7 +202,6 @@ public:
 				pipelineManager->GetPerFrameDSLayout(),
 				pipelineManager->GetPerPolyDSLayout(),
 				pipelineManager->GetColorInputDSLayout());
-		fence = GetContext()->GetDevice().createFenceUnique(vk::FenceCreateInfo());
 		this->textureCache = textureCache;
 	}
 	void Term()
@@ -204,11 +209,8 @@ public:
 		mainBuffer.reset();
 		colorAttachment.reset();
 		framebuffer.reset();
-		fence.reset();
 		OITDrawer::Term();
 	}
-
-	void SetCommandPool(CommandPool *commandPool) { this->commandPool = commandPool; }
 
 	OITTextureDrawer() = default;
 	OITTextureDrawer(const OITTextureDrawer& other) = delete;
@@ -235,7 +237,6 @@ protected:
 		}
 		return mainBuffer.get();
 	}
-	virtual vk::Framebuffer GetCurrentFramebuffer() const override { return *framebuffer; }
 	virtual vk::Format GetColorFormat() const override { return vk::Format::eR8G8B8A8Unorm; }
 
 private:
@@ -243,13 +244,9 @@ private:
 
 	Texture *texture = nullptr;
 	vk::Image colorImage;
-	vk::CommandBuffer currentCommandBuffer;
-	vk::UniqueFramebuffer framebuffer;
 	std::unique_ptr<FramebufferAttachment> colorAttachment;
-	vk::UniqueFence fence;
 
 	OITDescriptorSets descriptorSets;
 	std::unique_ptr<BufferData> mainBuffer;
-	CommandPool *commandPool = nullptr;
 	TextureCache *textureCache = nullptr;
 };

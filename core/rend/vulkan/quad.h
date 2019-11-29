@@ -21,6 +21,7 @@
 #pragma once
 #include "vulkan.h"
 #include "buffer.h"
+#include "shaders.h"
 
 struct QuadVertex
 {
@@ -64,4 +65,32 @@ public:
 	}
 private:
 	std::unique_ptr<BufferData> buffer;
+};
+
+class QuadPipeline
+{
+public:
+	void Init(ShaderManager *shaderManager);
+
+	vk::Pipeline GetPipeline()
+	{
+		if (!pipeline)
+			CreatePipeline();
+		return *pipeline;
+	}
+
+	void SetTexture(vk::ImageView imageView);
+
+	void BindDescriptorSets(vk::CommandBuffer cmdBuffer);
+
+private:
+	void CreatePipeline();
+
+	vk::RenderPass renderPass;
+	vk::UniquePipeline pipeline;
+	vk::UniqueSampler sampler;
+	std::vector<vk::UniqueDescriptorSet> descriptorSets;
+	vk::UniquePipelineLayout pipelineLayout;
+	vk::UniqueDescriptorSetLayout descSetLayout;
+	ShaderManager *shaderManager;
 };

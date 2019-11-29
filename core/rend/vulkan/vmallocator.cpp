@@ -20,6 +20,8 @@
 */
 #define VMA_IMPLEMENTATION
 #include "vulkan.h"
+#include "vmallocator.h"
+#include "vulkan_context.h"
 
 #if HOST_CPU == CPU_ARM
 __attribute__((pcs("aapcs-vfp")))

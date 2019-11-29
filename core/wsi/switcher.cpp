@@ -33,6 +33,8 @@ void InitRenderApi()
 		if (theVulkanContext.Init())
 			return;
 		// Fall back to Open GL
+		WARN_LOG(RENDERER, "Vulkan init failed. Falling back to Open GL.");
+		settings.pvr.rend = 0;
 	}
 #endif
 	if (!theGLContext.Init())

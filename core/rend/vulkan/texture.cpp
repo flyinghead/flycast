@@ -259,8 +259,6 @@ void Texture::SetImage(u32 srcSize, void *srcData, bool isNew)
 			setImageLayout(commandBuffer, image.get(), format, mipmapLevels, vk::ImageLayout::ePreinitialized, vk::ImageLayout::eShaderReadOnlyOptimal);
 	}
 	commandBuffer.end();
-
-	VulkanContext::Instance()->GetGraphicsQueue().submit(vk::SubmitInfo(0, nullptr, nullptr, 1, &commandBuffer), nullptr);
 }
 
 void Texture::GenerateMipmaps()
@@ -315,38 +313,19 @@ void Texture::GenerateMipmaps()
 	commandBuffer.pipelineBarrier(vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eFragmentShader, {}, nullptr, nullptr, barrier);
 }
 
-void FramebufferAttachment::Init(u32 width, u32 height, vk::Format format, vk::ImageUsageFlags additionalUsageFlags)
+void FramebufferAttachment::Init(u32 width, u32 height, vk::Format format, vk::ImageUsageFlags usage)
 {
 	this->format = format;
 	this->extent = vk::Extent2D { width, height };
 	bool depth = format == vk::Format::eD32SfloatS8Uint || format == vk::Format::eD24UnormS8Uint || format == vk::Format::eD16UnormS8Uint;
 
-	vk::ImageUsageFlags usage;
-	if (depth)
+	if (usage & vk::ImageUsageFlagBits::eTransferSrc)
 	{
-		usage = vk::ImageUsageFlagBits::eDepthStencilAttachment;
+		stagingBufferData = std::unique_ptr<BufferData>(new BufferData(width * height * 4,
+				vk::BufferUsageFlagBits::eTransferSrc | vk::BufferUsageFlagBits::eTransferDst));
 	}
-	else
-	{
-		if (!(additionalUsageFlags & vk::ImageUsageFlagBits::eStorage))
-			usage = vk::ImageUsageFlagBits::eColorAttachment;
-		if (!(additionalUsageFlags & (vk::ImageUsageFlagBits::eInputAttachment | vk::ImageUsageFlagBits::eStorage)))
-		{
-			if (settings.rend.RenderToTextureBuffer)
-			{
-				usage |= vk::ImageUsageFlagBits::eTransferSrc;
-				stagingBufferData = std::unique_ptr<BufferData>(new BufferData(width * height * 4,
-						vk::BufferUsageFlagBits::eTransferSrc | vk::BufferUsageFlagBits::eTransferDst));
-			}
-			else
-			{
-				usage |= vk::ImageUsageFlagBits::eSampled;
-			}
-		}
-	}
-	usage |= additionalUsageFlags;
 	vk::ImageCreateInfo imageCreateInfo(vk::ImageCreateFlags(), vk::ImageType::e2D, format, vk::Extent3D(extent, 1), 1, 1, vk::SampleCountFlagBits::e1,
-			(additionalUsageFlags & vk::ImageUsageFlagBits::eStorage) ? vk::ImageTiling::eLinear : vk::ImageTiling::eOptimal,
+			(usage & vk::ImageUsageFlagBits::eStorage) ? vk::ImageTiling::eLinear : vk::ImageTiling::eOptimal,
 			usage,
 			vk::SharingMode::eExclusive, 0, nullptr, vk::ImageLayout::eUndefined);
 	image = device.createImageUnique(imageCreateInfo);
@@ -358,7 +337,7 @@ void FramebufferAttachment::Init(u32 width, u32 height, vk::Format format, vk::I
 			format, vk::ComponentMapping(),	vk::ImageSubresourceRange(depth ? vk::ImageAspectFlagBits::eDepth : vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1));
 	imageView = device.createImageViewUnique(imageViewCreateInfo);
 
-	if (depth && (additionalUsageFlags & vk::ImageUsageFlagBits::eInputAttachment))
+	if ((usage & vk::ImageUsageFlagBits::eDepthStencilAttachment) && (usage & vk::ImageUsageFlagBits::eInputAttachment))
 	{
 		// Also create an imageView for the stencil
 		imageViewCreateInfo.subresourceRange = vk::ImageSubresourceRange(vk::ImageAspectFlagBits::eStencil, 0, 1, 0, 1);

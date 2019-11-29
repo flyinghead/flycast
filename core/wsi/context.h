@@ -21,7 +21,7 @@
 #pragma once
 #include "gl_context.h"
 #ifdef USE_VULKAN
-#include "rend/vulkan/vulkan.h"
+#include "rend/vulkan/vulkan_context.h"
 
 extern VulkanContext theVulkanContext;
 #endif

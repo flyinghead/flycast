@@ -22,7 +22,7 @@
 #include "imgui/imgui.h"
 #include "vulkan/imgui_impl_vulkan.h"
 #include "gles/imgui_impl_opengl3.h"
-#include "vulkan/vulkan.h"
+#include "vulkan/vulkan_context.h"
 
 typedef void (*StringCallback)(bool cancelled, std::string selection);
 

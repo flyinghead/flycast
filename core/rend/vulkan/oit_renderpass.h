@@ -19,7 +19,7 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #pragma once
-#include "vulkan.h"
+#include "vulkan_context.h"
 
 class RenderPasses
 {
@@ -45,7 +45,7 @@ protected:
 	{
 		return vk::AttachmentDescription(vk::AttachmentDescriptionFlags(), GetContext()->GetColorFormat(), vk::SampleCountFlagBits::e1,
 				vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eStore, vk::AttachmentLoadOp::eDontCare, vk::AttachmentStoreOp::eDontCare,
-				vk::ImageLayout::eUndefined, last ? vk::ImageLayout::ePresentSrcKHR : vk::ImageLayout::eShaderReadOnlyOptimal);
+				vk::ImageLayout::eUndefined, vk::ImageLayout::eShaderReadOnlyOptimal);
 	}
 	virtual vk::Format GetColorFormat() const { return GetContext()->GetColorFormat(); }
 	virtual std::vector<vk::SubpassDependency> GetSubpassDependencies() const

@@ -44,7 +44,7 @@ public:
 		textureDrawer.SetCommandPool(&texCommandPool);
 
 		screenDrawer.Init(&samplerManager, &shaderManager, &oitBuffers);
-		quadPipeline.Init(&normalShaderManager);
+		screenDrawer.SetCommandPool(&texCommandPool);
 		quadBuffer = std::unique_ptr<QuadBuffer>(new QuadBuffer());
 
 #ifdef __ANDROID__
@@ -67,8 +67,9 @@ public:
 				vjoyTexture->SetCommandBuffer(texCommandPool.Allocate());
 				vjoyTexture->UploadToGPU(OSD_TEX_W, OSD_TEX_H, image_data);
 				vjoyTexture->SetCommandBuffer(nullptr);
+				texCommandPool.EndFrame();
 				delete [] image_data;
-				osdPipeline.Init(&normalShaderManager, vjoyTexture->GetImageView(), screenDrawer.GetRenderPass(), 2);
+				osdPipeline.Init(&normalShaderManager, vjoyTexture->GetImageView(), GetContext()->GetRenderPass());
 			}
 		}
 		if (!osdBuffer)
@@ -86,9 +87,8 @@ public:
 		NOTICE_LOG(RENDERER, "OIT Resize %d x %d", w, h);
 		texCommandPool.Init();
 		screenDrawer.Init(&samplerManager, &shaderManager, &oitBuffers);
-		quadPipeline.Init(&normalShaderManager);
 #ifdef __ANDROID__
-		osdPipeline.Init(&normalShaderManager, vjoyTexture->GetImageView(), screenDrawer.GetRenderPass(), 2);
+		osdPipeline.Init(&normalShaderManager, vjoyTexture->GetImageView(), GetContext()->GetRenderPass());
 #endif
 	}
 
@@ -134,50 +134,7 @@ public:
 		curTexture->SetCommandBuffer(nullptr);
 		texCommandPool.EndFrame();
 
-		TransformMatrix<false> matrices(pvrrc);
-		glm::vec4 viewport_min = matrices.GetViewportMatrix() * glm::vec4(0, 0, 0, 1.f);
-		glm::vec4 viewport_dim = matrices.GetViewportMatrix() * glm::vec4(640.f, 480.f, 0, 0);
-
-		float min_x = viewport_min[0];
-		float min_y = viewport_min[1];
-		width = viewport_dim[0];
-		height = viewport_dim[1];
-		if (width < 0)
-		{
-			min_x += width;
-			width = -width;
-		}
-		if (height < 0)
-		{
-			min_y += height;
-			height = -height;
-		}
-		quadBuffer->Update();
-
-		GetContext()->NewFrame();
-		GetContext()->BeginRenderPass();
-		vk::CommandBuffer cmdBuffer = GetContext()->GetCurrentCommandBuffer();
-
-		vk::Pipeline pipeline = quadPipeline.GetPipeline();
-		cmdBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline);
-
-		quadPipeline.SetTexture(curTexture.get());
-		quadPipeline.BindDescriptorSets(cmdBuffer);
-
-		float blendConstants[4] = { 1.0, 1.0, 1.0, 1.0 };
-		cmdBuffer.setBlendConstants(blendConstants);
-
-		vk::Viewport viewport(min_x, min_y, width, height);
-		cmdBuffer.setViewport(0, 1, &viewport);
-		cmdBuffer.setScissor(0, vk::Rect2D(
-				vk::Offset2D((u32)std::max(lroundf(min_x), 0L), (u32)std::max(lroundf(min_y), 0L)),
-				vk::Extent2D((u32)std::max(lroundf(width), 0L), (u32)std::max(lroundf(height), 0L))));
-		quadBuffer->Bind(cmdBuffer);
-		quadBuffer->Draw(cmdBuffer);
-
-    	gui_display_osd();
-
-    	GetContext()->EndFrame();
+		GetContext()->PresentFrame(curTexture->GetImageView(), { 640, 480 });
 
 		return true;
 	}
@@ -208,7 +165,7 @@ public:
 		if (result)
 			CheckFogTexture();
 
-		if (!result || !ctx->rend.isRTT)
+		if (!result)
 			texCommandPool.EndFrame();
 
 		return result;
@@ -267,8 +224,7 @@ public:
 			drawer = &screenDrawer;
 
 		drawer->Draw(fogTexture.get());
-		if (!pvrrc.isRTT)
-			DrawOSD(false);
+
 		drawer->EndFrame();
 
 		return !pvrrc.isRTT;
@@ -340,7 +296,6 @@ private:
 	RttOITPipelineManager rttPipelineManager;
 	OITTextureDrawer textureDrawer;
 	std::vector<std::unique_ptr<Texture>> framebufferTextures;
-	QuadPipeline quadPipeline;
 	OSDPipeline osdPipeline;
 	std::unique_ptr<Texture> vjoyTexture;
 	std::unique_ptr<BufferData> osdBuffer;
