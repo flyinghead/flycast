@@ -39,6 +39,7 @@ static inline void ImGui_impl_RenderDrawData(ImDrawData *draw_data, bool save_ba
 		{
 			context->NewFrame();
 			context->BeginRenderPass();
+			context->PresentLastFrame();
 		}
 		// Record Imgui Draw Data and draw funcs into command buffer
 		ImGui_ImplVulkan_RenderDrawData(draw_data, (VkCommandBuffer)context->GetCurrentCommandBuffer());

@@ -47,6 +47,7 @@ public:
 	void EndFrame();
 	void Present();
 	void PresentFrame(vk::ImageView imageView, vk::Offset2D extent);
+	void PresentLastFrame();
 
 	vk::PhysicalDevice GetPhysicalDevice() const { return physicalDevice; }
 	vk::Device GetDevice() const { return *device; }
@@ -91,6 +92,7 @@ private:
 	vk::Format FindDepthFormat();
 	void InitImgui();
 	void DoSwapAutomation();
+	void DrawFrame(vk::ImageView imageView, vk::Offset2D extent);
 	vk::SurfaceKHR GetSurface() {
 #ifdef USE_SDL
 		return surface;
@@ -180,6 +182,9 @@ private:
 	std::unique_ptr<QuadBuffer> quadBuffer;
 	std::unique_ptr<QuadPipeline> quadPipeline;
 	std::unique_ptr<ShaderManager> shaderManager;
+
+	vk::ImageView lastFrameView;
+	vk::Offset2D lastFrameExtent;
 
 #ifdef VK_DEBUG
 #ifndef __ANDROID__

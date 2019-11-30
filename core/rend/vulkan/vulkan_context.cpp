@@ -692,13 +692,8 @@ void VulkanContext::Present()
 	}
 }
 
-extern Renderer *renderer;
-
-void VulkanContext::PresentFrame(vk::ImageView imageView, vk::Offset2D extent)
+void VulkanContext::DrawFrame(vk::ImageView imageView, vk::Offset2D extent)
 {
-	NewFrame();
-	BeginRenderPass();
-
 	float marginWidth = ((float)extent.y / extent.x * width / height - 1.f) / 2.f;
 	QuadVertex vtx[] = {
 		{ { -1, -1, 0 }, { 0 - marginWidth, 0 } },
@@ -723,12 +718,32 @@ void VulkanContext::PresentFrame(vk::ImageView imageView, vk::Offset2D extent)
 	commandBuffer.setScissor(0, vk::Rect2D(vk::Offset2D(0, 0), vk::Extent2D(width, height)));
 	quadBuffer->Bind(commandBuffer);
 	quadBuffer->Draw(commandBuffer);
+}
+
+extern Renderer *renderer;
+
+void VulkanContext::PresentFrame(vk::ImageView imageView, vk::Offset2D extent)
+{
+	NewFrame();
+	BeginRenderPass();
+
+	DrawFrame(imageView, extent);
 	renderer->DrawOSD(false);
 	EndFrame();
+
+	lastFrameView = imageView;
+	lastFrameExtent = extent;
+}
+
+void VulkanContext::PresentLastFrame()
+{
+	if (lastFrameView)
+		DrawFrame(lastFrameView, lastFrameExtent);
 }
 
 void VulkanContext::Term()
 {
+	lastFrameView = nullptr;
 	ImGui_ImplVulkan_Shutdown();
 	gui_term();
 	if (device && pipelineCache)
