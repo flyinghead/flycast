@@ -560,34 +560,6 @@ void main()
 }
 )";
 
-// FIXME duplicate of non-oit
-static const char OITModVolVertexShaderSource[] = R"(
-#version 450
-
-layout (std140, set = 0, binding = 0) uniform VertexShaderUniforms
-{
-	mat4 normal_matrix;
-} uniformBuffer;
-
-layout (location = 0) in vec4 in_pos;
-
-void main()
-{
-	vec4 vpos = in_pos;
-	if (vpos.z < 0.0 || vpos.z > 3.4e37)
-	{
-		gl_Position = vec4(0.0, 0.0, 1.0, 1.0 / vpos.z);
-		return;
-	}
-
-	vpos = uniformBuffer.normal_matrix * vpos;
-	vpos.w = 1.0 / vpos.z;
-	vpos.z = vpos.w;
-	vpos.xy *= vpos.w; 
-	gl_Position = vpos;
-}
-)";
-
 static const char OITModifierVolumeShader[] = R"(
 
 void main()
@@ -864,6 +836,8 @@ void main()
 }
 )";
 
+extern const char ModVolVertexShaderSource[];
+
 vk::UniqueShaderModule OITShaderManager::compileShader(const VertexShaderParams& params)
 {
 	char buf[sizeof(OITVertexShaderSource) * 2];
@@ -903,7 +877,7 @@ vk::UniqueShaderModule OITShaderManager::compileClearShader()
 }
 vk::UniqueShaderModule OITShaderManager::compileModVolVertexShader()
 {
-	return ShaderCompiler::Compile(vk::ShaderStageFlagBits::eVertex, OITModVolVertexShaderSource);
+	return ShaderCompiler::Compile(vk::ShaderStageFlagBits::eVertex, ModVolVertexShaderSource);
 }
 vk::UniqueShaderModule OITShaderManager::compileModVolFragmentShader()
 {

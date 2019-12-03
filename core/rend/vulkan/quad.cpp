@@ -115,23 +115,21 @@ void QuadPipeline::CreatePipeline()
 	pipeline = GetContext()->GetDevice().createGraphicsPipelineUnique(GetContext()->GetPipelineCache(), graphicsPipelineCreateInfo);
 }
 
-void QuadPipeline::Init(ShaderManager *shaderManager) {
+void QuadPipeline::Init(ShaderManager *shaderManager, vk::RenderPass renderPass)
+{
 	this->shaderManager = shaderManager;
-	if (!pipelineLayout) {
-		vk::DescriptorSetLayoutBinding bindings[] = { { 0,
-				vk::DescriptorType::eCombinedImageSampler, 1,
-				vk::ShaderStageFlagBits::eFragment }, // texture
-				};
-		descSetLayout =
-				GetContext()->GetDevice().createDescriptorSetLayoutUnique(
-						vk::DescriptorSetLayoutCreateInfo(
-								vk::DescriptorSetLayoutCreateFlags(),
-								ARRAY_SIZE(bindings), bindings));
+	if (!pipelineLayout)
+	{
+		vk::DescriptorSetLayoutBinding bindings[] = {
+			{ 0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment }, // texture
+		};
+		descSetLayout = GetContext()->GetDevice().createDescriptorSetLayoutUnique(
+				vk::DescriptorSetLayoutCreateInfo(vk::DescriptorSetLayoutCreateFlags(), ARRAY_SIZE(bindings), bindings));
 		pipelineLayout = GetContext()->GetDevice().createPipelineLayoutUnique(
-				vk::PipelineLayoutCreateInfo(vk::PipelineLayoutCreateFlags(), 1,
-						&descSetLayout.get()));
+				vk::PipelineLayoutCreateInfo(vk::PipelineLayoutCreateFlags(), 1, &descSetLayout.get()));
 	}
-	if (!sampler) {
+	if (!sampler)
+	{
 		sampler = GetContext()->GetDevice().createSamplerUnique(
 				vk::SamplerCreateInfo(vk::SamplerCreateFlags(),
 						vk::Filter::eLinear, vk::Filter::eLinear,
@@ -142,32 +140,29 @@ void QuadPipeline::Init(ShaderManager *shaderManager) {
 						16.0f, false, vk::CompareOp::eNever, 0.0f, 0.0f,
 						vk::BorderColor::eFloatOpaqueBlack));
 	}
-	if (GetContext()->GetRenderPass() != renderPass) {
-		renderPass = GetContext()->GetRenderPass();
+	if (this->renderPass != renderPass)
+	{
+		this->renderPass = renderPass;
 		pipeline.reset();
 	}
 	descriptorSets.resize(GetContext()->GetSwapChainSize());
 }
 
-void QuadPipeline::SetTexture(vk::ImageView imageView) {
-	vk::UniqueDescriptorSet &descriptorSet =
-			descriptorSets[GetContext()->GetCurrentImageIndex()];
-	if (!descriptorSet) {
+void QuadPipeline::SetTexture(vk::ImageView imageView)
+{
+	vk::UniqueDescriptorSet &descriptorSet = descriptorSets[GetContext()->GetCurrentImageIndex()];
+	if (!descriptorSet)
+	{
 		descriptorSet = std::move(
 				GetContext()->GetDevice().allocateDescriptorSetsUnique(
-						vk::DescriptorSetAllocateInfo(
-								GetContext()->GetDescriptorPool(), 1,
-								&descSetLayout.get())).front());
+						vk::DescriptorSetAllocateInfo(GetContext()->GetDescriptorPool(), 1, &descSetLayout.get())).front());
 	}
-	vk::DescriptorImageInfo imageInfo(*sampler, imageView,
-			vk::ImageLayout::eShaderReadOnlyOptimal);
+	vk::DescriptorImageInfo imageInfo(*sampler, imageView, vk::ImageLayout::eShaderReadOnlyOptimal);
 	std::vector<vk::WriteDescriptorSet> writeDescriptorSets;
 	writeDescriptorSets.push_back(
-			vk::WriteDescriptorSet(*descriptorSet, 0, 0, 1,
-					vk::DescriptorType::eCombinedImageSampler, &imageInfo,
+			vk::WriteDescriptorSet(*descriptorSet, 0, 0, 1, vk::DescriptorType::eCombinedImageSampler, &imageInfo,
 					nullptr, nullptr));
-	GetContext()->GetDevice().updateDescriptorSets(writeDescriptorSets,
-			nullptr);
+	GetContext()->GetDevice().updateDescriptorSets(writeDescriptorSets, nullptr);
 }
 
 void QuadPipeline::BindDescriptorSets(vk::CommandBuffer cmdBuffer) {

@@ -1234,9 +1234,6 @@ bool RenderFrame()
 		glClear(GL_COLOR_BUFFER_BIT);
 		DrawFramebuffer();
 	}
-	#ifdef _WIN32
-		//Sleep(40); //to test MT stability
-	#endif
 
 	eglCheck();
 
@@ -1274,7 +1271,7 @@ struct glesrend : Renderer
 		return !pvrrc.isRTT;
 	}
 	bool RenderLastFrame() override { return !theGLContext.IsSwapBufferPreserved() ? render_output_framebuffer() : false; }
-	void Present() override { theGLContext.Swap(); glViewport(0, 0, screen_width, screen_height); }
+	void Present() override { theGLContext.Swap(); }
 
 	void DrawOSD(bool clear_screen) override
 	{

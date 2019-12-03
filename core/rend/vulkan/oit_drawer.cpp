@@ -90,7 +90,7 @@ void OITDrawer::DrawList(const vk::CommandBuffer& cmdBuffer, u32 listType, bool 
 template<bool Translucent>
 void OITDrawer::DrawModifierVolumes(const vk::CommandBuffer& cmdBuffer, int first, int count)
 {
-	if (count == 0 || pvrrc.modtrig.used() == 0)
+	if (count == 0 || pvrrc.modtrig.used() == 0 || !settings.rend.ModifierVolumes)
 		return;
 
 	vk::Buffer buffer = GetMainBuffer(0)->buffer.get();
@@ -501,8 +501,7 @@ vk::CommandBuffer OITTextureDrawer::NewFrame()
 		{
 			if (!colorAttachment)
 			{
-				colorAttachment = std::unique_ptr<FramebufferAttachment>(
-						new FramebufferAttachment(context->GetPhysicalDevice(), device));
+				colorAttachment = std::unique_ptr<FramebufferAttachment>(new FramebufferAttachment(context->GetPhysicalDevice(), device));
 			}
 			colorAttachment->Init(widthPow2, heightPow2, vk::Format::eR8G8B8A8Unorm,
 					vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eTransferSrc);

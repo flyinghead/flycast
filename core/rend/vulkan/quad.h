@@ -70,7 +70,7 @@ private:
 class QuadPipeline
 {
 public:
-	void Init(ShaderManager *shaderManager);
+	void Init(ShaderManager *shaderManager, vk::RenderPass renderPass);
 
 	vk::Pipeline GetPipeline()
 	{

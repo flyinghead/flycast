@@ -53,7 +53,7 @@ public:
 
 		screenDrawer.Init(&samplerManager, &shaderManager);
 		screenDrawer.SetCommandPool(&texCommandPool);
-		quadPipeline.Init(&shaderManager);
+		quadPipeline.Init(&shaderManager, screenDrawer.GetRenderPass());
 		quadBuffer = std::unique_ptr<QuadBuffer>(new QuadBuffer());
 
 #ifdef __ANDROID__
@@ -95,7 +95,7 @@ public:
 	{
 		texCommandPool.Init();
 		screenDrawer.Init(&samplerManager, &shaderManager);
-		quadPipeline.Init(&shaderManager);
+		quadPipeline.Init(&shaderManager, screenDrawer.GetRenderPass());
 #ifdef __ANDROID__
 		osdPipeline.Init(&shaderManager, vjoyTexture->GetImageView(), GetContext()->GetRenderPass());
 #endif

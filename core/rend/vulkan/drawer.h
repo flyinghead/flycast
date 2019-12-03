@@ -40,6 +40,7 @@ public:
 			currentScissor = scissor;
 		}
 	}
+	void SetCommandPool(CommandPool *commandPool) { this->commandPool = commandPool; }
 
 protected:
 	VulkanContext *GetContext() const { return VulkanContext::Instance(); }
@@ -91,21 +92,16 @@ protected:
 	vk::Rect2D baseScissor;
 	vk::Rect2D currentScissor;
 	TransformMatrix<false> matrices;
+	CommandPool *commandPool = nullptr;
 };
 
 class Drawer : public BaseDrawer
 {
 public:
-	Drawer() = default;
 	virtual ~Drawer() = default;
 	bool Draw(const Texture *fogTexture);
-	Drawer(const Drawer& other) = delete;
-	Drawer(Drawer&& other) = default;
-	Drawer& operator=(const Drawer& other) = delete;
-	Drawer& operator=(Drawer&& other) = default;
 	virtual vk::CommandBuffer BeginRenderPass() = 0;
 	virtual void EndRenderPass() = 0;
-	void SetCommandPool(CommandPool *commandPool) { this->commandPool = commandPool; }
 
 protected:
 	void Init(SamplerManager *samplerManager, PipelineManager *pipelineManager)
@@ -119,7 +115,6 @@ protected:
 	PipelineManager *pipelineManager = nullptr;
 	vk::CommandBuffer currentCommandBuffer;
 	SamplerManager *samplerManager = nullptr;
-	CommandPool *commandPool = nullptr;
 
 private:
 	void SortTriangles();
@@ -144,87 +139,12 @@ private:
 class ScreenDrawer : public Drawer
 {
 public:
-	void Init(SamplerManager *samplerManager, ShaderManager *shaderManager)
-	{
-		this->shaderManager = shaderManager;
-		currentScreenScaling = settings.rend.ScreenScaling;
-		viewport = GetContext()->GetViewPort();
-		viewport.width = lroundf(viewport.width * currentScreenScaling / 100.f);
-		viewport.height = lroundf(viewport.height * currentScreenScaling / 100.f);
-		depthAttachment = std::unique_ptr<FramebufferAttachment>(
-				new FramebufferAttachment(GetContext()->GetPhysicalDevice(), GetContext()->GetDevice()));
-		depthAttachment->Init(viewport.width, viewport.height, GetContext()->GetDepthFormat(), vk::ImageUsageFlagBits::eDepthStencilAttachment);
-		colorAttachment = std::unique_ptr<FramebufferAttachment>(
-				new FramebufferAttachment(GetContext()->GetPhysicalDevice(), GetContext()->GetDevice()));
-		colorAttachment->Init(viewport.width, viewport.height, GetContext()->GetColorFormat(),
-				vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled);
-
-		if (!renderPass)
-		{
-			vk::AttachmentDescription attachmentDescriptions[] = {
-					// Color attachment
-					vk::AttachmentDescription(vk::AttachmentDescriptionFlags(), GetContext()->GetColorFormat(), vk::SampleCountFlagBits::e1,
-							vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eStore,
-							vk::AttachmentLoadOp::eDontCare, vk::AttachmentStoreOp::eDontCare,
-							vk::ImageLayout::eUndefined, vk::ImageLayout::eShaderReadOnlyOptimal),
-					// Depth attachment
-					vk::AttachmentDescription(vk::AttachmentDescriptionFlags(), GetContext()->GetDepthFormat(), vk::SampleCountFlagBits::e1,
-							vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eDontCare,
-							vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eDontCare,
-							vk::ImageLayout::eUndefined, vk::ImageLayout::eDepthStencilAttachmentOptimal),
-			};
-			vk::AttachmentReference colorReference(0, vk::ImageLayout::eColorAttachmentOptimal);
-			vk::AttachmentReference depthReference(1, vk::ImageLayout::eDepthStencilAttachmentOptimal);
-
-			vk::SubpassDescription subpasses[] = {
-					vk::SubpassDescription(vk::SubpassDescriptionFlags(), vk::PipelineBindPoint::eGraphics,
-							0, nullptr,
-							1, &colorReference,
-							nullptr,
-							&depthReference),
-			};
-
-			std::vector<vk::SubpassDependency> dependencies;
-			dependencies.emplace_back(0, VK_SUBPASS_EXTERNAL, vk::PipelineStageFlagBits::eColorAttachmentOutput, vk::PipelineStageFlagBits::eFragmentShader,
-					vk::AccessFlagBits::eColorAttachmentWrite, vk::AccessFlagBits::eShaderRead, vk::DependencyFlagBits::eByRegion);
-
-			renderPass = GetContext()->GetDevice().createRenderPassUnique(vk::RenderPassCreateInfo(vk::RenderPassCreateFlags(),
-					ARRAY_SIZE(attachmentDescriptions), attachmentDescriptions,
-					ARRAY_SIZE(subpasses), subpasses,
-					dependencies.size(), dependencies.data()));
-		}
-		vk::ImageView attachments[] = {
-				colorAttachment->GetImageView(),
-				depthAttachment->GetImageView(),
-		};
-		vk::FramebufferCreateInfo createInfo(vk::FramebufferCreateFlags(), *renderPass,
-				ARRAY_SIZE(attachments), attachments, viewport.width, viewport.height, 1);
-		framebuffer = GetContext()->GetDevice().createFramebufferUnique(createInfo);
-
-		if (!screenPipelineManager)
-			screenPipelineManager = std::unique_ptr<PipelineManager>(new PipelineManager());
-		screenPipelineManager->Init(shaderManager, *renderPass);
-		Drawer::Init(samplerManager, screenPipelineManager.get());
-
-		if (descriptorSets.size() > GetContext()->GetSwapChainSize())
-			descriptorSets.resize(GetContext()->GetSwapChainSize());
-		else
-			while (descriptorSets.size() < GetContext()->GetSwapChainSize())
-			{
-				descriptorSets.push_back(DescriptorSets());
-				descriptorSets.back().Init(samplerManager, screenPipelineManager->GetPipelineLayout(), screenPipelineManager->GetPerFrameDSLayout(), screenPipelineManager->GetPerPolyDSLayout());
-			}
-	}
-
-	ScreenDrawer() = default;
-	ScreenDrawer(const ScreenDrawer& other) = delete;
-	ScreenDrawer(ScreenDrawer&& other) = default;
-	ScreenDrawer& operator=(const ScreenDrawer& other) = delete;
-	ScreenDrawer& operator=(ScreenDrawer&& other) = default;
-	virtual vk::CommandBuffer BeginRenderPass() override;
+	void Init(SamplerManager *samplerManager, ShaderManager *shaderManager);
 	virtual void EndRenderPass() override;
+	vk::RenderPass GetRenderPass() const { return *renderPass; }
 
 protected:
+	virtual vk::CommandBuffer BeginRenderPass() override;
 	virtual DescriptorSets& GetCurrentDescSet() override { return descriptorSets[GetCurrentImage()]; }
 	virtual BufferData* GetMainBuffer(u32 size) override
 	{
@@ -247,19 +167,20 @@ protected:
 	};
 
 private:
-	int GetCurrentImage() { return GetContext()->GetCurrentImageIndex(); }
+	int GetCurrentImage() { return imageIndex; }
 
 	std::vector<DescriptorSets> descriptorSets;
 	std::vector<std::unique_ptr<BufferData>> mainBuffers;
 	std::unique_ptr<PipelineManager> screenPipelineManager;
 
 	vk::UniqueRenderPass renderPass;
-	vk::UniqueFramebuffer framebuffer;
-	std::unique_ptr<FramebufferAttachment> colorAttachment;
+	std::vector<vk::UniqueFramebuffer> framebuffers;
+	std::vector<std::unique_ptr<FramebufferAttachment>> colorAttachments;
 	std::unique_ptr<FramebufferAttachment> depthAttachment;
 	vk::Extent2D viewport;
 	int currentScreenScaling = 0;
 	ShaderManager *shaderManager = nullptr;
+	int imageIndex = 0;
 };
 
 class TextureDrawer : public Drawer
@@ -273,11 +194,6 @@ public:
 		this->textureCache = textureCache;
 	}
 
-	TextureDrawer() = default;
-	TextureDrawer(const TextureDrawer& other) = delete;
-	TextureDrawer(TextureDrawer&& other) = default;
-	TextureDrawer& operator=(const TextureDrawer& other) = delete;
-	TextureDrawer& operator=(TextureDrawer&& other) = default;
 	virtual void EndRenderPass() override;
 
 protected:

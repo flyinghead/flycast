@@ -58,7 +58,7 @@ public:
 
 	void EndFrame()
 	{
-		std::vector<vk::CommandBuffer> commandBuffers = GetInFlightCommandBuffers();
+		std::vector<vk::CommandBuffer> commandBuffers = vk::uniqueToRaw(inFlightBuffers[index]);
 		VulkanContext::Instance()->GetGraphicsQueue().submit(
 				vk::SubmitInfo(0, nullptr, nullptr, commandBuffers.size(), commandBuffers.data()), *fences[index]);
 	}
@@ -70,11 +70,8 @@ public:
 		VulkanContext::Instance()->GetDevice().resetFences(1, &fences[index].get());
 		std::vector<vk::UniqueCommandBuffer>& inFlight = inFlightBuffers[index];
 		std::vector<vk::UniqueCommandBuffer>& freeBuf = freeBuffers[index];
-		while (!inFlight.empty())
-		{
-			freeBuf.emplace_back(std::move(inFlight.back()));
-			inFlight.pop_back();
-		}
+		std::move(inFlight.begin(), inFlight.end(), std::back_inserter(freeBuf));
+		inFlight.clear();
 		VulkanContext::Instance()->GetDevice().resetCommandPool(*commandPools[index], vk::CommandPoolResetFlagBits::eReleaseResources);
 	}
 
@@ -100,17 +97,6 @@ public:
 	}
 
 private:
-	std::vector<vk::CommandBuffer> GetInFlightCommandBuffers() const
-	{
-		const auto& buffers = inFlightBuffers[index];
-		std::vector<vk::CommandBuffer> v;
-		v.reserve(buffers.size());
-		std::for_each(buffers.begin(), buffers.end(),
-				[&v](const vk::UniqueCommandBuffer& cmdBuf) { v.push_back(*cmdBuf); });
-
-		return v;
-	}
-
 	int index = 0;
 	std::vector<std::vector<vk::UniqueCommandBuffer>> freeBuffers;
 	std::vector<std::vector<vk::UniqueCommandBuffer>> inFlightBuffers;

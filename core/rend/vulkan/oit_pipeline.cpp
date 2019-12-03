@@ -421,16 +421,7 @@ void OITPipelineManager::CreateModVolPipeline(ModVolMode mode)
 	);
 
 	// Color flags and blending
-	vk::PipelineColorBlendAttachmentState pipelineColorBlendAttachmentState(
-		false,                              // blendEnable
-		vk::BlendFactor::eZero,             // srcColorBlendFactor
-		vk::BlendFactor::eZero,             // dstColorBlendFactor
-		vk::BlendOp::eAdd,                  // colorBlendOp
-		vk::BlendFactor::eZero,             // srcAlphaBlendFactor
-		vk::BlendFactor::eZero,             // dstAlphaBlendFactor
-		vk::BlendOp::eAdd,                  // alphaBlendOp
-		vk::ColorComponentFlags()           // colorWriteMask
-	);
+	vk::PipelineColorBlendAttachmentState pipelineColorBlendAttachmentState;
 
 	vk::PipelineColorBlendStateCreateInfo pipelineColorBlendStateCreateInfo
 	(

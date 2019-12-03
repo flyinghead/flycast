@@ -35,17 +35,11 @@
 class OITDrawer : public BaseDrawer
 {
 public:
-	OITDrawer() = default;
 	virtual ~OITDrawer() = default;
 	bool Draw(const Texture *fogTexture);
-	OITDrawer(const OITDrawer& other) = delete;
-	OITDrawer(OITDrawer&& other) = default;
-	OITDrawer& operator=(const OITDrawer& other) = delete;
-	OITDrawer& operator=(OITDrawer&& other) = default;
 
 	virtual vk::CommandBuffer NewFrame() = 0;
 	virtual void EndFrame() = 0;
-	void SetCommandPool(CommandPool *commandPool) { this->commandPool = commandPool; }
 
 protected:
 	void Init(SamplerManager *samplerManager, OITPipelineManager *pipelineManager, OITBuffers *oitBuffers)
@@ -72,7 +66,6 @@ protected:
 	vk::Rect2D viewport;
 	std::array<std::unique_ptr<FramebufferAttachment>, 2> colorAttachments;
 	std::unique_ptr<FramebufferAttachment> depthAttachment;
-	CommandPool *commandPool = nullptr;
 	vk::CommandBuffer currentCommandBuffer;
 	vk::UniqueFramebuffer framebuffer;
 
@@ -136,11 +129,6 @@ public:
 		descriptorSets.clear();
 		OITDrawer::Term();
 	}
-	OITScreenDrawer() = default;
-	OITScreenDrawer(const OITScreenDrawer& other) = delete;
-	OITScreenDrawer(OITScreenDrawer&& other) = default;
-	OITScreenDrawer& operator=(const OITScreenDrawer& other) = delete;
-	OITScreenDrawer& operator=(OITScreenDrawer&& other) = default;
 
 	virtual vk::CommandBuffer NewFrame() override;
 	virtual void EndFrame() override
@@ -212,11 +200,6 @@ public:
 		OITDrawer::Term();
 	}
 
-	OITTextureDrawer() = default;
-	OITTextureDrawer(const OITTextureDrawer& other) = delete;
-	OITTextureDrawer(OITTextureDrawer&& other) = default;
-	OITTextureDrawer& operator=(const OITTextureDrawer& other) = delete;
-	OITTextureDrawer& operator=(OITTextureDrawer&& other) = default;
 	virtual void EndFrame() override;
 
 protected:
