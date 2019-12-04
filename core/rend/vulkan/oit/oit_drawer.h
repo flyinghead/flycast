@@ -61,13 +61,13 @@ protected:
 	virtual BufferData *GetMainBuffer(u32 size) = 0;
 	void MakeBuffers(int width, int height);
 	virtual vk::Format GetColorFormat() const = 0;
+	virtual vk::Framebuffer GetFinalFramebuffer() const = 0;
 
 	OITPipelineManager *pipelineManager = nullptr;
 	vk::Rect2D viewport;
 	std::array<std::unique_ptr<FramebufferAttachment>, 2> colorAttachments;
 	std::unique_ptr<FramebufferAttachment> depthAttachment;
 	vk::CommandBuffer currentCommandBuffer;
-	vk::UniqueFramebuffer framebuffer;
 
 private:
 	void DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sortTriangles, int pass,
@@ -125,7 +125,8 @@ public:
 	{
 		mainBuffers.clear();
 		screenPipelineManager.reset();
-		framebuffer.reset();
+		framebuffers.clear();
+		finalColorAttachments.clear();
 		descriptorSets.clear();
 		OITDrawer::Term();
 	}
@@ -137,12 +138,13 @@ public:
 		currentCommandBuffer.end();
 		currentCommandBuffer = nullptr;
 		commandPool->EndFrame();
-		GetContext()->PresentFrame(finalColorAttachment->GetImageView(),
+		GetContext()->PresentFrame(finalColorAttachments[GetCurrentImage()]->GetImageView(),
 				vk::Offset2D(viewport.extent.width, viewport.extent.height));
 	}
 
 protected:
 	virtual OITDescriptorSets& GetCurrentDescSet() override { return descriptorSets[GetCurrentImage()]; }
+	virtual vk::Framebuffer GetFinalFramebuffer() const override { return *framebuffers[GetCurrentImage()]; }
 	virtual BufferData* GetMainBuffer(u32 size) override
 	{
 		if (mainBuffers.empty())
@@ -167,14 +169,16 @@ protected:
 	virtual vk::Format GetColorFormat() const override { return GetContext()->GetColorFormat(); }
 
 private:
-	int GetCurrentImage() const { return GetContext()->GetCurrentImageIndex(); }
+	int GetCurrentImage() const { return imageIndex; }
 	void MakeFramebuffers();
 
-	std::unique_ptr<FramebufferAttachment> finalColorAttachment;
+	std::vector<std::unique_ptr<FramebufferAttachment>> finalColorAttachments;
+	std::vector<vk::UniqueFramebuffer> framebuffers;
 	std::vector<OITDescriptorSets> descriptorSets;
 	std::vector<std::unique_ptr<BufferData>> mainBuffers;
 	std::unique_ptr<OITPipelineManager> screenPipelineManager;
 	int currentScreenScaling = 0;
+	int imageIndex = 0;
 };
 
 class OITTextureDrawer : public OITDrawer
@@ -205,6 +209,7 @@ public:
 protected:
 	virtual vk::CommandBuffer NewFrame() override;
 	OITDescriptorSets& GetCurrentDescSet() override { return descriptorSets; }
+	virtual vk::Framebuffer GetFinalFramebuffer() const override { return *framebuffer; }
 
 	virtual BufferData* GetMainBuffer(u32 size) override
 	{
@@ -228,6 +233,7 @@ private:
 	Texture *texture = nullptr;
 	vk::Image colorImage;
 	std::unique_ptr<FramebufferAttachment> colorAttachment;
+	vk::UniqueFramebuffer framebuffer;
 
 	OITDescriptorSets descriptorSets;
 	std::unique_ptr<BufferData> mainBuffer;

@@ -210,6 +210,7 @@ void Drawer::DrawModVols(const vk::CommandBuffer& cmdBuffer, int first, int coun
 
 	vk::Buffer buffer = GetMainBuffer(0)->buffer.get();
 	cmdBuffer.bindVertexBuffers(0, 1, &buffer, &offsets.modVolOffset);
+	SetScissor(cmdBuffer, baseScissor);
 
 	ModifierVolumeParam* params = &pvrrc.global_param_mvo.head()[first];
 
@@ -408,7 +409,8 @@ vk::CommandBuffer TextureDrawer::BeginRenderPass()
 	{
 		if (!depthAttachment)
 			depthAttachment = std::unique_ptr<FramebufferAttachment>(new FramebufferAttachment(context->GetPhysicalDevice(), device));
-		depthAttachment->Init(widthPow2, heightPow2, GetContext()->GetDepthFormat(), vk::ImageUsageFlagBits::eDepthStencilAttachment);
+		depthAttachment->Init(widthPow2, heightPow2, GetContext()->GetDepthFormat(),
+				vk::ImageUsageFlagBits::eDepthStencilAttachment | vk::ImageUsageFlagBits::eTransientAttachment);
 	}
 	vk::ImageView colorImageView;
 	vk::ImageLayout colorImageCurrentLayout;
@@ -452,7 +454,6 @@ vk::CommandBuffer TextureDrawer::BeginRenderPass()
 		else
 		{
 			colorImageCurrentLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
-			setImageLayout(commandBuffer, *texture->image, vk::Format::eR8G8B8A8Unorm, 1, colorImageCurrentLayout, vk::ImageLayout::eColorAttachmentOptimal);
 		}
 		colorImage = *texture->image;
 		colorImageView = texture->GetImageView();
@@ -474,6 +475,8 @@ vk::CommandBuffer TextureDrawer::BeginRenderPass()
 	}
 	width = widthPow2;
 	height = heightPow2;
+
+	setImageLayout(commandBuffer, *texture->image, vk::Format::eR8G8B8A8Unorm, 1, colorImageCurrentLayout, vk::ImageLayout::eColorAttachmentOptimal);
 
 	vk::ImageView imageViews[] = {
 		colorImageView,
@@ -546,12 +549,23 @@ void ScreenDrawer::Init(SamplerManager *samplerManager, ShaderManager *shaderMan
 {
 	this->shaderManager = shaderManager;
 	currentScreenScaling = settings.rend.ScreenScaling;
-	viewport = GetContext()->GetViewPort();
+	vk::Extent2D viewport = GetContext()->GetViewPort();
 	viewport.width = lroundf(viewport.width * currentScreenScaling / 100.f);
 	viewport.height = lroundf(viewport.height * currentScreenScaling / 100.f);
-	depthAttachment = std::unique_ptr<FramebufferAttachment>(
-			new FramebufferAttachment(GetContext()->GetPhysicalDevice(), GetContext()->GetDevice()));
-	depthAttachment->Init(viewport.width, viewport.height, GetContext()->GetDepthFormat(), vk::ImageUsageFlagBits::eDepthStencilAttachment);
+	if (this->viewport != viewport)
+	{
+		framebuffers.clear();
+		colorAttachments.clear();
+		depthAttachment.reset();
+	}
+	this->viewport = viewport;
+	if (!depthAttachment)
+	{
+		depthAttachment = std::unique_ptr<FramebufferAttachment>(
+				new FramebufferAttachment(GetContext()->GetPhysicalDevice(), GetContext()->GetDevice()));
+		depthAttachment->Init(viewport.width, viewport.height, GetContext()->GetDepthFormat(),
+				vk::ImageUsageFlagBits::eDepthStencilAttachment | vk::ImageUsageFlagBits::eTransientAttachment);
+	}
 
 	if (!renderPass)
 	{
@@ -617,10 +631,10 @@ void ScreenDrawer::Init(SamplerManager *samplerManager, ShaderManager *shaderMan
 	screenPipelineManager->Init(shaderManager, *renderPass);
 	Drawer::Init(samplerManager, screenPipelineManager.get());
 
-	if (descriptorSets.size() > GetContext()->GetSwapChainSize())
-		descriptorSets.resize(GetContext()->GetSwapChainSize());
+	if (descriptorSets.size() > size)
+		descriptorSets.resize(size);
 	else
-		while (descriptorSets.size() < GetContext()->GetSwapChainSize())
+		while (descriptorSets.size() < size)
 		{
 			descriptorSets.push_back(DescriptorSets());
 			descriptorSets.back().Init(samplerManager, screenPipelineManager->GetPipelineLayout(), screenPipelineManager->GetPerFrameDSLayout(), screenPipelineManager->GetPerPolyDSLayout());

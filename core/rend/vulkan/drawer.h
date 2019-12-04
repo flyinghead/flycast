@@ -32,7 +32,7 @@
 class BaseDrawer
 {
 public:
-	void SetScissor(const vk::CommandBuffer& cmdBuffer, vk::Rect2D scissor)
+	void SetScissor(const vk::CommandBuffer& cmdBuffer, const vk::Rect2D& scissor)
 	{
 		if (scissor != currentScissor)
 		{

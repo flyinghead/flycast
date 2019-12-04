@@ -21,8 +21,7 @@
 #include "oit_shaders.h"
 #include "../compiler.h"
 
-static const char OITVertexShaderSource[] = R"(
-#version 450
+static const char OITVertexShaderSource[] = R"(#version 450
 
 #define pp_Gouraud %d
 
@@ -74,8 +73,7 @@ void main()
 }
 )";
 
-static const char OITShaderHeader[] = R"(
-#version 450
+static const char OITShaderHeader[] = R"(#version 450
 
 layout (std140, set = 0, binding = 1) uniform FragmentShaderUniforms
 {
@@ -825,8 +823,7 @@ void main()
 }
 )";
 
-static const char OITFinalVertexShaderSource[] = R"(
-#version 430
+static const char OITFinalVertexShaderSource[] = R"(#version 430
 
 layout (location = 0) in vec3 in_pos;
 

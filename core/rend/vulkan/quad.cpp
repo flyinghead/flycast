@@ -109,7 +109,7 @@ void QuadPipeline::CreatePipeline()
 	  &pipelineColorBlendStateCreateInfo,         // pColorBlendState
 	  &pipelineDynamicStateCreateInfo,            // pDynamicState
 	  *pipelineLayout,                            // layout
-	  VulkanContext::Instance()->GetRenderPass()  // renderPass
+	  renderPass                                  // renderPass
 	);
 
 	pipeline = GetContext()->GetDevice().createGraphicsPipelineUnique(GetContext()->GetPipelineCache(), graphicsPipelineCreateInfo);
@@ -155,7 +155,9 @@ void QuadPipeline::SetTexture(vk::ImageView imageView)
 	{
 		descriptorSet = std::move(
 				GetContext()->GetDevice().allocateDescriptorSetsUnique(
-						vk::DescriptorSetAllocateInfo(GetContext()->GetDescriptorPool(), 1, &descSetLayout.get())).front());
+						vk::DescriptorSetAllocateInfo(
+								GetContext()->GetDescriptorPool(), 1,
+								&descSetLayout.get())).front());
 	}
 	vk::DescriptorImageInfo imageInfo(*sampler, imageView, vk::ImageLayout::eShaderReadOnlyOptimal);
 	std::vector<vk::WriteDescriptorSet> writeDescriptorSets;
@@ -165,9 +167,8 @@ void QuadPipeline::SetTexture(vk::ImageView imageView)
 	GetContext()->GetDevice().updateDescriptorSets(writeDescriptorSets, nullptr);
 }
 
-void QuadPipeline::BindDescriptorSets(vk::CommandBuffer cmdBuffer) {
-	cmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics,
-			*pipelineLayout, 0, 1,
-			&descriptorSets[GetContext()->GetCurrentImageIndex()].get(), 0,
-			nullptr);
+void QuadPipeline::BindDescriptorSets(vk::CommandBuffer cmdBuffer)
+{
+	cmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, *pipelineLayout, 0, 1,
+			&descriptorSets[GetContext()->GetCurrentImageIndex()].get(), 0, nullptr);
 }

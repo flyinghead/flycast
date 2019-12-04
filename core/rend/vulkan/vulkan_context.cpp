@@ -181,17 +181,23 @@ bool VulkanContext::InitInstance(const char** extensions, uint32_t extensions_co
 		storageBufferAlignment = properties.limits.minStorageBufferOffsetAlignment;
 
 		vk::FormatProperties formatProperties = physicalDevice.getFormatProperties(vk::Format::eR5G5B5A1UnormPack16);
-		if (formatProperties.optimalTilingFeatures & vk::FormatFeatureFlagBits::eSampledImage)
+		if ((formatProperties.optimalTilingFeatures & vk::FormatFeatureFlagBits::eSampledImage)
+				&& (formatProperties.optimalTilingFeatures & vk::FormatFeatureFlagBits::eBlitDst)
+				&& (formatProperties.optimalTilingFeatures & vk::FormatFeatureFlagBits::eBlitSrc))
 			optimalTilingSupported1555 = true;
 		else
 			NOTICE_LOG(RENDERER, "eR5G5B5A1UnormPack16 not supported for optimal tiling");
 		formatProperties = physicalDevice.getFormatProperties(vk::Format::eR5G6B5UnormPack16);
-		if (formatProperties.optimalTilingFeatures & vk::FormatFeatureFlagBits::eSampledImage)
+		if ((formatProperties.optimalTilingFeatures & vk::FormatFeatureFlagBits::eSampledImage)
+				&& (formatProperties.optimalTilingFeatures & vk::FormatFeatureFlagBits::eBlitDst)
+				&& (formatProperties.optimalTilingFeatures & vk::FormatFeatureFlagBits::eBlitSrc))
 			optimalTilingSupported565 = true;
 		else
 			NOTICE_LOG(RENDERER, "eR5G6B5UnormPack16 not supported for optimal tiling");
 		formatProperties = physicalDevice.getFormatProperties(vk::Format::eR4G4B4A4UnormPack16);
-		if (formatProperties.optimalTilingFeatures & vk::FormatFeatureFlagBits::eSampledImage)
+		if ((formatProperties.optimalTilingFeatures & vk::FormatFeatureFlagBits::eSampledImage)
+				&& (formatProperties.optimalTilingFeatures & vk::FormatFeatureFlagBits::eBlitDst)
+				&& (formatProperties.optimalTilingFeatures & vk::FormatFeatureFlagBits::eBlitSrc))
 			optimalTilingSupported4444 = true;
 		else
 			NOTICE_LOG(RENDERER, "eR4G4B4A4UnormPack16 not supported for optimal tiling");
@@ -416,6 +422,7 @@ bool VulkanContext::InitDevice()
 	    		cacheSize = 0;
 	    	fclose(f);
     		pipelineCache = device->createPipelineCacheUnique(vk::PipelineCacheCreateInfo(vk::PipelineCacheCreateFlags(), cacheSize, cacheData));
+    		delete [] cacheData;
     		INFO_LOG(RENDERER, "Vulkan pipeline cache loaded from %s: %zd bytes", cachePath.c_str(), cacheSize);
 	    }
 	    allocator.Init(physicalDevice, *device);
