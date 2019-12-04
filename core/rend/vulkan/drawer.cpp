@@ -149,15 +149,17 @@ void BaseDrawer::SetBaseScissor()
 		baseScissor = vk::Rect2D(vk::Offset2D(0, 0),
 				vk::Extent2D(screen_width, screen_height));
 	}
+	currentScissor = { 0, 0, 0, 0 };
 }
 
 void Drawer::DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sortTriangles, const PolyParam& poly, u32 first, u32 count)
 {
 	vk::Rect2D scissorRect;
 	TileClipping tileClip = SetTileClip(poly.tileclip, scissorRect);
-	if (tileClip != TileClipping::Outside)
-		scissorRect = baseScissor;
-	SetScissor(cmdBuffer, scissorRect);
+	if (tileClip == TileClipping::Outside)
+		SetScissor(cmdBuffer, scissorRect);
+	else
+		SetScissor(cmdBuffer, baseScissor);
 
 	float trilinearAlpha = 1.f;
 	if (poly.tsp.FilterMode > 1 && poly.pcw.Texture && listType != ListType_Punch_Through)

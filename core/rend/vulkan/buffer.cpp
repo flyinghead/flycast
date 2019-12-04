@@ -23,10 +23,7 @@
 #include "vulkan_context.h"
 
 BufferData::BufferData(vk::DeviceSize size, vk::BufferUsageFlags usage, vk::MemoryPropertyFlags propertyFlags)
-	: bufferSize(size)
-#if !defined(NDEBUG)
-					, m_usage(usage), m_propertyFlags(propertyFlags)
-#endif
+	: bufferSize(size), m_usage(usage), m_propertyFlags(propertyFlags)
 {
 	VulkanContext *context = VulkanContext::Instance();
 	buffer = context->GetDevice().createBufferUnique(vk::BufferCreateInfo(vk::BufferCreateFlags(), size, usage));

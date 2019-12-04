@@ -27,9 +27,10 @@ void OITDrawer::DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool 
 {
 	vk::Rect2D scissorRect;
 	TileClipping tileClip = SetTileClip(poly.tileclip, scissorRect);
-	if (tileClip != TileClipping::Outside)
-		scissorRect = baseScissor;
-	SetScissor(cmdBuffer, scissorRect);
+	if (tileClip == TileClipping::Outside)
+		SetScissor(cmdBuffer, scissorRect);
+	else
+		SetScissor(cmdBuffer, baseScissor);
 
 	float trilinearAlpha = 1.f;
 	if (poly.tsp.FilterMode > 1 && poly.pcw.Texture && listType != ListType_Punch_Through)
@@ -95,6 +96,7 @@ void OITDrawer::DrawModifierVolumes(const vk::CommandBuffer& cmdBuffer, int firs
 
 	vk::Buffer buffer = GetMainBuffer(0)->buffer.get();
 	cmdBuffer.bindVertexBuffers(0, 1, &buffer, &offsets.modVolOffset);
+	SetScissor(cmdBuffer, baseScissor);
 
 	ModifierVolumeParam* params = Translucent ? &pvrrc.global_param_mvo_tr.head()[first] : &pvrrc.global_param_mvo.head()[first];
 
@@ -309,6 +311,7 @@ bool OITDrawer::Draw(const Texture *fogTexture)
 		// Final subpass
 		cmdBuffer.nextSubpass(vk::SubpassContents::eInline);
 		GetCurrentDescSet().BindColorInputDescSet(cmdBuffer, (pvrrc.render_passes.used() - 1 - render_pass) % 2);
+		SetScissor(cmdBuffer, baseScissor);
 
 		if (!oitBuffers->isFirstFrameAfterInit())
 		{

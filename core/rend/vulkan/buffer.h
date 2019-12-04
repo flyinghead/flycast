@@ -78,9 +78,7 @@ struct BufferData
 	vk::DeviceSize bufferSize;
 	Allocation allocation;
 
-#if !defined(NDEBUG)
 private:
 	vk::BufferUsageFlags    m_usage;
 	vk::MemoryPropertyFlags m_propertyFlags;
-#endif
 };
