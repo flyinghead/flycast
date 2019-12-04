@@ -19,7 +19,7 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #include "oit_pipeline.h"
-#include "quad.h"
+#include "../quad.h"
 
 void OITPipelineManager::CreatePipeline(u32 listType, bool autosort, const PolyParam& pp, int pass)
 {

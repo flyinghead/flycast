@@ -19,8 +19,8 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #pragma once
-#include "vulkan.h"
-#include "utils.h"
+#include "../vulkan.h"
+#include "../utils.h"
 
 class OITShaderManager
 {

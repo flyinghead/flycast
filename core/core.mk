@@ -41,7 +41,7 @@ ifndef NO_REND
 	endif
     endif
     ifdef USE_VULKAN
-    	RZDCY_MODULES += rend/vulkan/ deps/volk/ \
+    	RZDCY_MODULES += rend/vulkan/ rend/vulkan/oit/ deps/volk/ \
     		deps/glslang/glslang/MachineIndependent/ \
     		deps/glslang/glslang/MachineIndependent/preprocessor/ \
     		deps/glslang/glslang/GenericCodeGen/ \

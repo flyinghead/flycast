@@ -20,8 +20,8 @@
 */
 #pragma once
 #include <memory>
-#include "buffer.h"
-#include "texture.h"
+#include "../buffer.h"
+#include "../texture.h"
 
 const vk::DeviceSize PixelBufferSize = 512 * 1024 * 1024;
 

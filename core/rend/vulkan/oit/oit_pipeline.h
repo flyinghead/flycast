@@ -21,11 +21,11 @@
 #pragma once
 #include <tuple>
 #include <glm/glm.hpp>
-#include "vulkan.h"
+#include "../vulkan.h"
 #include "oit_shaders.h"
 #include "oit_renderpass.h"
 #include "oit_buffer.h"
-#include "texture.h"
+#include "../texture.h"
 #include "hw/pvr/ta_ctx.h"
 
 class OITDescriptorSets

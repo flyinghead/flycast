@@ -20,14 +20,14 @@
 */
 #include <memory>
 #include <math.h>
-#include "vulkan.h"
+#include "../vulkan.h"
 #include "hw/pvr/Renderer_if.h"
-#include "commandpool.h"
+#include "../commandpool.h"
 #include "oit_drawer.h"
 #include "oit_shaders.h"
 #include "rend/gui.h"
 #include "rend/osd.h"
-#include "pipeline.h"
+#include "../pipeline.h"
 #include "oit_buffer.h"
 
 class OITVulkanRenderer : public Renderer

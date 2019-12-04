@@ -19,7 +19,7 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #include "oit_shaders.h"
-#include "compiler.h"
+#include "../compiler.h"
 
 static const char OITVertexShaderSource[] = R"(
 #version 450

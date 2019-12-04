@@ -22,15 +22,15 @@
 #include <memory>
 #include "rend/sorter.h"
 #include "rend/transform_matrix.h"
-#include "vulkan.h"
-#include "buffer.h"
-#include "commandpool.h"
+#include "../vulkan.h"
+#include "../buffer.h"
+#include "../commandpool.h"
 #include "oit_pipeline.h"
 #include "oit_shaders.h"
-#include "texture.h"
-#include "quad.h"
+#include "../texture.h"
+#include "../quad.h"
 #include "oit_buffer.h"
-#include "drawer.h"
+#include "../drawer.h"
 
 class OITDrawer : public BaseDrawer
 {

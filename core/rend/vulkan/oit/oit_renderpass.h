@@ -19,7 +19,7 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #pragma once
-#include "vulkan_context.h"
+#include "../vulkan_context.h"
 
 class RenderPasses
 {
