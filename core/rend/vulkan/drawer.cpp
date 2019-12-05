@@ -232,16 +232,16 @@ void Drawer::DrawModVols(const vk::CommandBuffer& cmdBuffer, int first, int coun
 			mod_base = param.first;
 
 		if (!param.isp.VolumeLast && mv_mode > 0)
-			pipeline = pipelineManager->GetModifierVolumePipeline(ModVolMode::Or);	// OR'ing (open volume or quad)
+			pipeline = pipelineManager->GetModifierVolumePipeline(ModVolMode::Or, param.isp.CullMode);	// OR'ing (open volume or quad)
 		else
-			pipeline = pipelineManager->GetModifierVolumePipeline(ModVolMode::Xor);	// XOR'ing (closed volume)
+			pipeline = pipelineManager->GetModifierVolumePipeline(ModVolMode::Xor, param.isp.CullMode);	// XOR'ing (closed volume)
 		cmdBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline);
 		cmdBuffer.draw(param.count * 3, 1, param.first * 3, 0);
 
 		if (mv_mode == 1 || mv_mode == 2)
 		{
 			// Sum the area
-			pipeline = pipelineManager->GetModifierVolumePipeline(mv_mode == 1 ? ModVolMode::Inclusion : ModVolMode::Exclusion);
+			pipeline = pipelineManager->GetModifierVolumePipeline(mv_mode == 1 ? ModVolMode::Inclusion : ModVolMode::Exclusion, param.isp.CullMode);
 			cmdBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline);
 			cmdBuffer.draw((param.first + param.count - mod_base) * 3, 1, mod_base * 3, 0);
 			mod_base = -1;
@@ -253,7 +253,7 @@ void Drawer::DrawModVols(const vk::CommandBuffer& cmdBuffer, int first, int coun
 	std::array<float, 5> pushConstants = { 1 - FPU_SHAD_SCALE.scale_factor / 256.f, 0, 0, 0, 0 };
 	cmdBuffer.pushConstants<float>(pipelineManager->GetPipelineLayout(), vk::ShaderStageFlagBits::eFragment, 0, pushConstants);
 
-	pipeline = pipelineManager->GetModifierVolumePipeline(ModVolMode::Final);
+	pipeline = pipelineManager->GetModifierVolumePipeline(ModVolMode::Final, 0);
 	cmdBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline);
 	cmdBuffer.drawIndexed(4, 1, 0, 0, 0);
 }

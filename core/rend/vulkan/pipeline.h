@@ -172,11 +172,15 @@ public:
 		return *pipelines[pipehash];
 	}
 
-	vk::Pipeline GetModifierVolumePipeline(ModVolMode mode)
+	vk::Pipeline GetModifierVolumePipeline(ModVolMode mode, int cullMode)
 	{
-		if (modVolPipelines.empty() || !modVolPipelines[(size_t)mode])
-			CreateModVolPipeline(mode);
-		return *modVolPipelines[(size_t)mode];
+		u32 pipehash = hash(mode, cullMode);
+		const auto &pipeline = modVolPipelines.find(pipehash);
+		if (pipeline != modVolPipelines.end())
+			return pipeline->second.get();
+		CreateModVolPipeline(mode, cullMode);
+
+		return *modVolPipelines[pipehash];
 	}
 	vk::PipelineLayout GetPipelineLayout() const { return *pipelineLayout; }
 	vk::DescriptorSetLayout GetPerFrameDSLayout() const { return *perFrameLayout; }
@@ -184,7 +188,7 @@ public:
 	vk::RenderPass GetRenderPass() const { return renderPass; }
 
 private:
-	void CreateModVolPipeline(ModVolMode mode);
+	void CreateModVolPipeline(ModVolMode mode, int cullMode);
 
 	u32 hash(u32 listType, bool sortTriangles, const PolyParam *pp) const
 	{
@@ -198,6 +202,10 @@ private:
 		hash |= (u32)sortTriangles << 26;
 
 		return hash;
+	}
+	u32 hash(ModVolMode mode, int cullMode) const
+	{
+		return ((int)mode << 2) | cullMode;
 	}
 
 	vk::PipelineVertexInputStateCreateInfo GetMainVertexInputStateCreateInfo(bool full = true) const
@@ -229,7 +237,7 @@ private:
 	void CreatePipeline(u32 listType, bool sortTriangles, const PolyParam& pp);
 
 	std::map<u32, vk::UniquePipeline> pipelines;
-	std::vector<vk::UniquePipeline> modVolPipelines;
+	std::map<u32, vk::UniquePipeline> modVolPipelines;
 
 	vk::UniquePipelineLayout pipelineLayout;
 	vk::UniqueDescriptorSetLayout perFrameLayout;

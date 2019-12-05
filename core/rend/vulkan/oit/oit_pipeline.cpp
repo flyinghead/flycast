@@ -53,7 +53,7 @@ void OITPipelineManager::CreatePipeline(u32 listType, bool autosort, const PolyP
 
 	// Depth and stencil
 	vk::CompareOp depthOp;
-	if (pass == 1)
+	if (pass == 1 && !pp.isp.ZWriteDis)
 		depthOp = vk::CompareOp::eEqual;
 	else if (listType == ListType_Punch_Through || autosort)
 		depthOp = vk::CompareOp::eGreaterOrEqual;
@@ -69,12 +69,17 @@ void OITPipelineManager::CreatePipeline(u32 listType, bool autosort, const PolyP
 	else
 		depthWriteEnable = !pp.isp.ZWriteDis;
 
-	bool shadowed = pass == 0 && (listType == ListType_Opaque || listType == ListType_Punch_Through) && pp.pcw.Shadow != 0;
+	bool shadowed = pass == 0 && (listType == ListType_Opaque || listType == ListType_Punch_Through);
 	vk::StencilOpState stencilOpState;
 	if (shadowed)
-		stencilOpState = vk::StencilOpState(vk::StencilOp::eKeep, vk::StencilOp::eReplace, vk::StencilOp::eKeep, vk::CompareOp::eAlways, 0, 0x80, 0x80);
+	{
+		if (pp.pcw.Shadow != 0)
+			stencilOpState = vk::StencilOpState(vk::StencilOp::eKeep, vk::StencilOp::eReplace, vk::StencilOp::eKeep, vk::CompareOp::eAlways, 0, 0x80, 0x80);
+		else
+			stencilOpState = vk::StencilOpState(vk::StencilOp::eKeep, vk::StencilOp::eReplace, vk::StencilOp::eKeep, vk::CompareOp::eAlways, 0, 0x80, 0);
+	}
 	else
-		stencilOpState = vk::StencilOpState(vk::StencilOp::eKeep, vk::StencilOp::eKeep, vk::StencilOp::eKeep, vk::CompareOp::eAlways);
+		stencilOpState = vk::StencilOpState(vk::StencilOp::eKeep, vk::StencilOp::eKeep, vk::StencilOp::eKeep, vk::CompareOp::eNever);
 	vk::PipelineDepthStencilStateCreateInfo pipelineDepthStencilStateCreateInfo
 	(
 	  vk::PipelineDepthStencilStateCreateFlags(), // flags
@@ -346,7 +351,7 @@ void OITPipelineManager::CreateClearPipeline()
 	clearPipeline = GetContext()->GetDevice().createGraphicsPipelineUnique(GetContext()->GetPipelineCache(), graphicsPipelineCreateInfo);
 }
 
-void OITPipelineManager::CreateModVolPipeline(ModVolMode mode)
+void OITPipelineManager::CreateModVolPipeline(ModVolMode mode, int cullMode)
 {
 	verify(mode != ModVolMode::Final);
 
@@ -379,7 +384,9 @@ void OITPipelineManager::CreateModVolPipeline(ModVolMode mode)
 	  false,                                        // depthClampEnable
 	  false,                                        // rasterizerDiscardEnable
 	  vk::PolygonMode::eFill,                       // polygonMode
-	  vk::CullModeFlagBits::eNone,  		        // cullMode
+	  cullMode == 3 ? vk::CullModeFlagBits::eBack
+  			  : cullMode == 2 ? vk::CullModeFlagBits::eFront
+  			  : vk::CullModeFlagBits::eNone,        // cullMode
 	  vk::FrontFace::eCounterClockwise,             // frontFace
 	  false,                                        // depthBiasEnable
 	  0.0f,                                         // depthBiasConstantFactor
@@ -462,14 +469,12 @@ void OITPipelineManager::CreateModVolPipeline(ModVolMode mode)
 	  0                                           // subpass
 	);
 
-	if (modVolPipelines.empty())
-		modVolPipelines.resize((size_t)ModVolMode::Final);
-	modVolPipelines[(size_t)mode] =
+	modVolPipelines[hash(mode, cullMode)] =
 			GetContext()->GetDevice().createGraphicsPipelineUnique(GetContext()->GetPipelineCache(),
 					graphicsPipelineCreateInfo);
 }
 
-void OITPipelineManager::CreateTrModVolPipeline(ModVolMode mode)
+void OITPipelineManager::CreateTrModVolPipeline(ModVolMode mode, int cullMode)
 {
 	verify(mode != ModVolMode::Final);
 
@@ -502,7 +507,9 @@ void OITPipelineManager::CreateTrModVolPipeline(ModVolMode mode)
 	  false,                                        // depthClampEnable
 	  false,                                        // rasterizerDiscardEnable
 	  vk::PolygonMode::eFill,                       // polygonMode
-	  vk::CullModeFlagBits::eNone,  		        // cullMode
+	  cullMode == 3 ? vk::CullModeFlagBits::eBack
+  			  : cullMode == 2 ? vk::CullModeFlagBits::eFront
+  			  : vk::CullModeFlagBits::eNone,        // cullMode
 	  vk::FrontFace::eCounterClockwise,             // frontFace
 	  false,                                        // depthBiasEnable
 	  0.0f,                                         // depthBiasConstantFactor
@@ -557,9 +564,7 @@ void OITPipelineManager::CreateTrModVolPipeline(ModVolMode mode)
       2                                           // subpass
 	);
 
-	if (trModVolPipelines.empty())
-		trModVolPipelines.resize((size_t)ModVolMode::Final);
-	trModVolPipelines[(size_t)mode] =
+	trModVolPipelines[hash(mode, cullMode)] =
 			GetContext()->GetDevice().createGraphicsPipelineUnique(GetContext()->GetPipelineCache(),
 					graphicsPipelineCreateInfo);
 }

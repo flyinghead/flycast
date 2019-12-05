@@ -119,6 +119,7 @@ public:
 						screenPipelineManager->GetPerPolyDSLayout(),
 						screenPipelineManager->GetColorInputDSLayout());
 			}
+		currentScreenScaling = 0;
 		MakeFramebuffers();
 	}
 	void Term()

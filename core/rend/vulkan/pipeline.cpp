@@ -23,7 +23,7 @@
 #include "rend/osd.h"
 #include "quad.h"
 
-void PipelineManager::CreateModVolPipeline(ModVolMode mode)
+void PipelineManager::CreateModVolPipeline(ModVolMode mode, int cullMode)
 {
 	// Vertex input state
 	vk::PipelineVertexInputStateCreateInfo pipelineVertexInputStateCreateInfo;
@@ -66,7 +66,9 @@ void PipelineManager::CreateModVolPipeline(ModVolMode mode)
 	  false,                                        // depthClampEnable
 	  false,                                        // rasterizerDiscardEnable
 	  vk::PolygonMode::eFill,                       // polygonMode
-	  vk::CullModeFlagBits::eNone,  		        // cullMode
+	  cullMode == 3 ? vk::CullModeFlagBits::eBack
+			  : cullMode == 2 ? vk::CullModeFlagBits::eFront
+			  : vk::CullModeFlagBits::eNone,        // cullMode
 	  vk::FrontFace::eCounterClockwise,             // frontFace
 	  false,                                        // depthBiasEnable
 	  0.0f,                                         // depthBiasConstantFactor
@@ -161,9 +163,7 @@ void PipelineManager::CreateModVolPipeline(ModVolMode mode)
 	  renderPass                                  // renderPass
 	);
 
-	if (modVolPipelines.empty())
-		modVolPipelines.resize((size_t)ModVolMode::Final + 1);
-	modVolPipelines[(size_t)mode] =
+	modVolPipelines[hash(mode, cullMode)] =
 			GetContext()->GetDevice().createGraphicsPipelineUnique(GetContext()->GetPipelineCache(),
 					graphicsPipelineCreateInfo);
 }
@@ -217,12 +217,17 @@ void PipelineManager::CreatePipeline(u32 listType, bool sortTriangles, const Pol
 			depthWriteEnable = !pp.isp.ZWriteDis;
 	}
 
-	bool shadowed = (listType == ListType_Opaque || listType == ListType_Punch_Through) && pp.pcw.Shadow != 0;
+	bool shadowed = listType == ListType_Opaque || listType == ListType_Punch_Through;
 	vk::StencilOpState stencilOpState;
 	if (shadowed)
-		stencilOpState = vk::StencilOpState(vk::StencilOp::eKeep, vk::StencilOp::eReplace, vk::StencilOp::eKeep, vk::CompareOp::eAlways, 0, 0x80, 0x80);
+	{
+		if (pp.pcw.Shadow != 0)
+			stencilOpState = vk::StencilOpState(vk::StencilOp::eKeep, vk::StencilOp::eReplace, vk::StencilOp::eKeep, vk::CompareOp::eAlways, 0, 0x80, 0x80);
+		else
+			stencilOpState = vk::StencilOpState(vk::StencilOp::eKeep, vk::StencilOp::eReplace, vk::StencilOp::eKeep, vk::CompareOp::eAlways, 0, 0x80, 0);
+	}
 	else
-		stencilOpState = vk::StencilOpState(vk::StencilOp::eKeep, vk::StencilOp::eKeep, vk::StencilOp::eKeep, vk::CompareOp::eAlways);
+		stencilOpState = vk::StencilOpState(vk::StencilOp::eKeep, vk::StencilOp::eKeep, vk::StencilOp::eKeep, vk::CompareOp::eNever);
 	vk::PipelineDepthStencilStateCreateInfo pipelineDepthStencilStateCreateInfo
 	(
 	  vk::PipelineDepthStencilStateCreateFlags(), // flags

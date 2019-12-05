@@ -262,17 +262,25 @@ public:
 		return *pipelines[pipehash];
 	}
 
-	vk::Pipeline GetModifierVolumePipeline(ModVolMode mode)
+	vk::Pipeline GetModifierVolumePipeline(ModVolMode mode, int cullMode)
 	{
-		if (modVolPipelines.empty() || !modVolPipelines[(size_t)mode])
-			CreateModVolPipeline(mode);
-		return *modVolPipelines[(size_t)mode];
+		u32 pipehash = hash(mode, cullMode);
+		const auto &pipeline = modVolPipelines.find(pipehash);
+		if (pipeline != modVolPipelines.end())
+			return pipeline->second.get();
+		CreateModVolPipeline(mode, cullMode);
+
+		return *modVolPipelines[pipehash];
 	}
-	vk::Pipeline GetTrModifierVolumePipeline(ModVolMode mode)
+	vk::Pipeline GetTrModifierVolumePipeline(ModVolMode mode, int cullMode)
 	{
-		if (trModVolPipelines.empty() || !trModVolPipelines[(size_t)mode])
-			CreateTrModVolPipeline(mode);
-		return *trModVolPipelines[(size_t)mode];
+		u32 pipehash = hash(mode, cullMode);
+		const auto &pipeline = trModVolPipelines.find(pipehash);
+		if (pipeline != trModVolPipelines.end())
+			return pipeline->second.get();
+		CreateTrModVolPipeline(mode, cullMode);
+
+		return *trModVolPipelines[pipehash];
 	}
 	vk::Pipeline GetFinalPipeline(bool autosort)
 	{
@@ -295,8 +303,8 @@ public:
 	vk::RenderPass GetRenderPass(bool initial, bool last) { return renderPasses->GetRenderPass(initial, last); }
 
 private:
-	void CreateModVolPipeline(ModVolMode mode);
-	void CreateTrModVolPipeline(ModVolMode mode);
+	void CreateModVolPipeline(ModVolMode mode, int cullMode);
+	void CreateTrModVolPipeline(ModVolMode mode, int cullMode);
 
 	u32 hash(u32 listType, bool autosort, const PolyParam *pp, int pass) const
 	{
@@ -318,6 +326,10 @@ private:
 		hash |= (u32)pass << 26;
 
 		return hash;
+	}
+	u32 hash(ModVolMode mode, int cullMode) const
+	{
+		return ((int)mode << 2) | cullMode;
 	}
 
 	vk::PipelineVertexInputStateCreateInfo GetMainVertexInputStateCreateInfo(bool full = true) const
@@ -354,8 +366,8 @@ private:
 	void CreateClearPipeline();
 
 	std::map<u32, vk::UniquePipeline> pipelines;
-	std::vector<vk::UniquePipeline> modVolPipelines;
-	std::vector<vk::UniquePipeline> trModVolPipelines;
+	std::map<u32, vk::UniquePipeline> modVolPipelines;
+	std::map<u32, vk::UniquePipeline> trModVolPipelines;
 	vk::UniquePipeline finalAutosortPipeline;
 	vk::UniquePipeline finalNosortPipeline;
 	vk::UniquePipeline clearPipeline;

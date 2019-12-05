@@ -88,7 +88,7 @@ layout (std140, set = 0, binding = 1) uniform FragmentShaderUniforms
 
 layout(set = 3, binding = 2, r32ui) uniform coherent restrict uimage2D abufferPointerImg;
 struct Pixel {
-	vec4 color;
+	uint color;
 	float depth;
 	uint seq_num;
 	uint next;
@@ -126,26 +126,14 @@ void setFragDepth(void)
 	gl_FragDepth = log2(1.0 + w) / 34.0;
 }
 struct PolyParam {
-	int first;
-	int count;
-	int texid_low;
-	int texid_high;
-	int tsp;
-	int tcw;
-	int pcw;
-	int isp;
-	float zvZ;
-	int tileclip;
+	int tsp_isp_pcw;
 	int tsp1;
-	int tcw1;
-	int texid1_low;
-	int texid1_high;
 };
 layout (set = 0, binding = 3, std430) readonly buffer TrPolyParamBuffer {
 	PolyParam tr_poly_params[];
 } TrPolyParam;
 
-#define GET_TSP_FOR_AREA int tsp = area1 ? pp.tsp1 : pp.tsp;
+#define GET_TSP_FOR_AREA int tsp = area1 ? pp.tsp1 : pp.tsp_isp_pcw;
 
 int getSrcBlendFunc(const PolyParam pp, bool area1)
 {
@@ -197,17 +185,17 @@ int getShadingInstruction(const PolyParam pp, bool area1)
 
 int getDepthFunc(const PolyParam pp)
 {
-	return (pp.isp >> 29) & 7;
+	return (pp.tsp_isp_pcw >> 13) & 7;
 }
 
 bool getDepthMask(const PolyParam pp)
 {
-	return ((pp.isp >> 26) & 1) != 1;
+	return ((pp.tsp_isp_pcw >> 10) & 1) != 1;
 }
 
 bool getShadowEnable(const PolyParam pp)
 {
-	return ((pp.pcw >> 7) & 1) != 0;
+	return (pp.tsp_isp_pcw & 1) != 0;
 }
 
 uint getPolyNumber(const Pixel pixel)
@@ -225,7 +213,17 @@ bool isShadowed(const Pixel pixel)
 
 bool isTwoVolumes(const PolyParam pp)
 {
-	return pp.tsp1 != -1 || pp.tcw1 != -1;
+	return pp.tsp1 != -1;
+}
+
+uint packColors(vec4 v)
+{
+	return (uint(round(v.r * 255.0)) << 24) | (uint(round(v.g * 255.0)) << 16) | (uint(round(v.b * 255.0)) << 8) | uint(round(v.a * 255.0));
+}
+
+vec4 unpackColors(uint u)
+{
+	return vec4(float((u >> 24) & 255) / 255.0, float((u >> 16) & 255) / 255.0, float((u >> 8) & 255) / 255.0, float(u & 255) / 255.0);
 }
 )";
 
@@ -304,7 +302,7 @@ layout (location = 3) INTERPOLATION in lowp vec4 vtx_base1;			// new for OIT. On
 layout (location = 4) INTERPOLATION in lowp vec4 vtx_offs1;
 layout (location = 5)               in mediump vec2 vtx_uv1;
 
-#if pp_FogCtrl != 2
+#if pp_FogCtrl != 2 || pp_TwoVolumes == 1
 layout (set = 0, binding = 2) uniform sampler2D fog_table;
 
 float fog_mode2(float w)
@@ -331,7 +329,7 @@ vec4 colorClamp(vec4 col)
 void main()
 {
 	setFragDepth();
-	
+
 	#if PASS == 3
 		// Manual depth testing
 		highp float frontDepth = subpassLoad(DepthTex).r;
@@ -548,7 +546,7 @@ void main()
 		uint idx =  getNextPixelIndex();
 		
 		Pixel pixel;
-		pixel.color = color;
+		pixel.color = packColors(clamp(color, vec4(0.0), vec4(1.0)));
 		pixel.depth = gl_FragDepth;
 		pixel.seq_num = uint(pushConstants.pp_Number);
 		pixel.next = imageAtomicExchange(abufferPointerImg, coords, idx);
@@ -680,7 +678,7 @@ vec4 resolveAlphaBlend(ivec2 coords) {
 			srcColor = secondaryBuffer;
 		else
 		{
-			srcColor = pixel.color;
+			srcColor = unpackColors(pixel.color);
 			if (shadowed)
 				srcColor.rgb *= uniformBuffer.shade_scale_factor;
 		}

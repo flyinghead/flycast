@@ -121,17 +121,17 @@ void OITDrawer::DrawModifierVolumes(const vk::CommandBuffer& cmdBuffer, int firs
 		{
 			// OR'ing (open volume or quad)
 			if (Translucent)
-				pipeline = pipelineManager->GetTrModifierVolumePipeline(ModVolMode::Or);
+				pipeline = pipelineManager->GetTrModifierVolumePipeline(ModVolMode::Or, param.isp.CullMode);
 			else
-				pipeline = pipelineManager->GetModifierVolumePipeline(ModVolMode::Or);
+				pipeline = pipelineManager->GetModifierVolumePipeline(ModVolMode::Or, param.isp.CullMode);
 		}
 		else
 		{
 			// XOR'ing (closed volume)
 			if (Translucent)
-				pipeline = pipelineManager->GetTrModifierVolumePipeline(ModVolMode::Xor);
+				pipeline = pipelineManager->GetTrModifierVolumePipeline(ModVolMode::Xor, param.isp.CullMode);
 			else
-				pipeline = pipelineManager->GetModifierVolumePipeline(ModVolMode::Xor);
+				pipeline = pipelineManager->GetModifierVolumePipeline(ModVolMode::Xor, param.isp.CullMode);
 		}
 		cmdBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline);
 		cmdBuffer.draw(param.count * 3, 1, param.first * 3, 0);
@@ -144,10 +144,10 @@ void OITDrawer::DrawModifierVolumes(const vk::CommandBuffer& cmdBuffer, int firs
 				vk::MemoryBarrier barrier(vk::AccessFlagBits::eShaderWrite, vk::AccessFlagBits::eShaderRead);
 				cmdBuffer.pipelineBarrier(vk::PipelineStageFlagBits::eFragmentShader, vk::PipelineStageFlagBits::eFragmentShader,
 						vk::DependencyFlagBits::eByRegion, barrier, nullptr, nullptr);
-				pipeline = pipelineManager->GetTrModifierVolumePipeline(mv_mode == 1 ? ModVolMode::Inclusion : ModVolMode::Exclusion);
+				pipeline = pipelineManager->GetTrModifierVolumePipeline(mv_mode == 1 ? ModVolMode::Inclusion : ModVolMode::Exclusion, param.isp.CullMode);
 			}
 			else
-				pipeline = pipelineManager->GetModifierVolumePipeline(mv_mode == 1 ? ModVolMode::Inclusion : ModVolMode::Exclusion);
+				pipeline = pipelineManager->GetModifierVolumePipeline(mv_mode == 1 ? ModVolMode::Inclusion : ModVolMode::Exclusion, param.isp.CullMode);
 			cmdBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline);
 			cmdBuffer.draw((param.first + param.count - mod_base) * 3, 1, mod_base * 3, 0);
 
@@ -212,9 +212,16 @@ void OITDrawer::UploadMainBuffer(const OITDescriptorSets::VertexShaderUniforms& 
 	chunks.push_back(nullptr);
 	chunkSizes.push_back(padding);
 
-	chunks.push_back(pvrrc.global_param_tr.head());
-	chunkSizes.push_back(pvrrc.global_param_tr.bytes());
-	u32 totalSize = offsets.polyParamsOffset + pvrrc.global_param_tr.bytes();
+	std::vector<u32> trPolyParams(pvrrc.global_param_tr.used() * 2);
+	for (int i = 0; i < pvrrc.global_param_tr.used(); i++)
+	{
+		const PolyParam& pp = pvrrc.global_param_tr.head()[i];
+		trPolyParams[i * 2] = (pp.tsp.full & 0xffff00c0) | ((pp.isp.full >> 16) & 0xe400) | ((pp.pcw.full >> 7) & 1);
+		trPolyParams[i * 2 + 1] = pp.tsp1.full;
+	}
+	chunks.push_back(trPolyParams.data());
+	chunkSizes.push_back(trPolyParams.size() * 4);
+	u32 totalSize = offsets.polyParamsOffset + trPolyParams.size() * 4;
 
 	BufferData *buffer = GetMainBuffer(totalSize);
 	buffer->upload(chunks.size(), &chunkSizes[0], &chunks[0]);
@@ -269,11 +276,12 @@ bool OITDrawer::Draw(const Texture *fogTexture)
     {
         const RenderPass& current_pass = pvrrc.render_passes.head()[render_pass];
 
-        DEBUG_LOG(RENDERER, "Render pass %d OP %d PT %d TR %d MV %d autosort %d", render_pass + 1,
+        DEBUG_LOG(RENDERER, "Render pass %d OP %d PT %d TR %d MV %d TrMV %d autosort %d", render_pass + 1,
         		current_pass.op_count - previous_pass.op_count,
 				current_pass.pt_count - previous_pass.pt_count,
 				current_pass.tr_count - previous_pass.tr_count,
-				current_pass.mvo_count - previous_pass.mvo_count, current_pass.autosort);
+				current_pass.mvo_count - previous_pass.mvo_count,
+				current_pass.mvo_tr_count - previous_pass.mvo_tr_count, current_pass.autosort);
 
         // Reset the pixel counter
     	oitBuffers->ResetPixelCounter(cmdBuffer);
