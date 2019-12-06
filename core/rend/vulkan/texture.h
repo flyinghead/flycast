@@ -91,7 +91,8 @@ public:
 					std::make_pair(samplerHash, VulkanContext::Instance()->GetDevice().createSamplerUnique(
 						vk::SamplerCreateInfo(vk::SamplerCreateFlags(), filter, filter,
 							vk::SamplerMipmapMode::eNearest, uRepeat, vRepeat, vk::SamplerAddressMode::eClampToEdge, 0.0f,
-							VulkanContext::Instance()->SupportsSamplerAnisotropy(), 16.0f, false, vk::CompareOp::eNever,
+							VulkanContext::Instance()->SupportsSamplerAnisotropy() && filter == vk::Filter::eLinear, 4.0f,
+							false, vk::CompareOp::eNever,
 							0.0f, 256.0f, vk::BorderColor::eFloatOpaqueBlack)))).first->second.get();
 	}
 	static const u32 TSP_Mask = 0x7e000;
