@@ -67,6 +67,7 @@ public:
 			}
 			else
 			{
+                texCommandPool.BeginFrame();
 				vjoyTexture = std::unique_ptr<Texture>(new Texture());
 				vjoyTexture->tex_type = TextureType::_8888;
 				vjoyTexture->tcw.full = 0;
