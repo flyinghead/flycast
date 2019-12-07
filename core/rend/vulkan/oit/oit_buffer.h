@@ -51,7 +51,7 @@ public:
 		if (!pixelBuffer)
 		{
 			pixelBuffer.reset();
-			pixelBuffer = std::unique_ptr<BufferData>(new BufferData(PixelBufferSize,
+			pixelBuffer = std::unique_ptr<BufferData>(new BufferData(std::min(PixelBufferSize, context->GetMaxMemoryAllocationSize()),
 					vk::BufferUsageFlagBits::eStorageBuffer, vk::MemoryPropertyFlagBits::eDeviceLocal));
 		}
 		if (!pixelCounter)
@@ -75,7 +75,7 @@ public:
 			descSet = std::move(context->GetDevice().allocateDescriptorSetsUnique(
 					vk::DescriptorSetAllocateInfo(context->GetDescriptorPool(), 1, &descSetLayout.get())).front());
 		std::vector<vk::WriteDescriptorSet> writeDescriptorSets;
-		vk::DescriptorBufferInfo pixelBufferInfo(*pixelBuffer->buffer, 0, PixelBufferSize);
+		vk::DescriptorBufferInfo pixelBufferInfo(*pixelBuffer->buffer, 0, VK_WHOLE_SIZE);
 		writeDescriptorSets.push_back(vk::WriteDescriptorSet(*descSet, 0, 0, 1, vk::DescriptorType::eStorageBuffer, nullptr, &pixelBufferInfo, nullptr));
 		vk::DescriptorBufferInfo pixelCounterBufferInfo(*pixelCounter->buffer, 0, 4);
 		writeDescriptorSets.push_back(vk::WriteDescriptorSet(*descSet, 1, 0, 1, vk::DescriptorType::eStorageBuffer, nullptr, &pixelCounterBufferInfo, nullptr));

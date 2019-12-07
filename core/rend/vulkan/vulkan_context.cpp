@@ -141,13 +141,12 @@ bool VulkanContext::InitInstance(const char** extensions, uint32_t extensions_co
 #ifdef VK_DEBUG
 #ifndef __ANDROID__
 		vext.push_back("VK_EXT_debug_utils");
-//		layer_names.push_back("VK_LAYER_LUNARG_api_dump");
 		layer_names.push_back("VK_LAYER_LUNARG_standard_validation");
+//		layer_names.push_back("VK_LAYER_LUNARG_assistant_layer");
 #else
 		vext.push_back("VK_EXT_debug_report");	// NDK <= 19?
 		layer_names.push_back("VK_LAYER_GOOGLE_threading");
 		layer_names.push_back("VK_LAYER_LUNARG_parameter_validation");
-		layer_names.push_back("VK_LAYER_LUNARG_object_tracker");
 		layer_names.push_back("VK_LAYER_LUNARG_core_validation");
 		layer_names.push_back("VK_LAYER_GOOGLE_unique_objects");
 #endif
@@ -175,10 +174,16 @@ bool VulkanContext::InitInstance(const char** extensions, uint32_t extensions_co
 #endif
 
 		physicalDevice = instance->enumeratePhysicalDevices().front();
-		vk::PhysicalDeviceProperties properties;
-		physicalDevice.getProperties(&properties);
+
+		vk::PhysicalDeviceProperties2 properties2;
+		vk::PhysicalDeviceMaintenance3Properties properties3;
+		properties2.pNext = &properties3;
+		physicalDevice.getProperties2(&properties2);
+		const vk::PhysicalDeviceProperties& properties = properties2.properties;
 		uniformBufferAlignment = properties.limits.minUniformBufferOffsetAlignment;
 		storageBufferAlignment = properties.limits.minStorageBufferOffsetAlignment;
+		maxStorageBufferRange = properties.limits.maxStorageBufferRange;
+		maxMemoryAllocationSize = properties3.maxMemoryAllocationSize;
 
 		vk::FormatProperties formatProperties = physicalDevice.getFormatProperties(vk::Format::eR5G5B5A1UnormPack16);
 		if ((formatProperties.optimalTilingFeatures & vk::FormatFeatureFlagBits::eSampledImage)
@@ -507,6 +512,14 @@ void VulkanContext::CreateSwapChain()
 				swapchainPresentMode = vk::PresentModeKHR::eMailbox;
 				break;
 			}
+#ifdef TEST_AUTOMATION
+			if (presentMode == vk::PresentModeKHR::eImmediate)
+			{
+				INFO_LOG(RENDERER, "Using immediate present mode");
+				swapchainPresentMode = vk::PresentModeKHR::eImmediate;
+				break;
+			}
+#endif
 		}
 #endif
 

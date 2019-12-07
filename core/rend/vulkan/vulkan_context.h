@@ -77,8 +77,15 @@ public:
 			return true;
 		}
 	}
-	std::string GetDriverName() const { vk::PhysicalDeviceProperties props; physicalDevice.getProperties(&props); return props.deviceName; }
-	std::string GetDriverVersion() const { vk::PhysicalDeviceProperties props; physicalDevice.getProperties(&props); return std::to_string(props.driverVersion); }
+	std::string GetDriverName() const { vk::PhysicalDeviceProperties props; physicalDevice.getProperties(&props); return std::string(props.deviceName); }
+	std::string GetDriverVersion() const {
+		vk::PhysicalDeviceProperties props;
+		physicalDevice.getProperties(&props);
+
+		return std::to_string(VK_VERSION_MAJOR(props.driverVersion))
+			+ "." + std::to_string(VK_VERSION_MINOR(props.driverVersion))
+			+ "." + std::to_string(VK_VERSION_PATCH(props.driverVersion));
+	}
 	vk::Format GetColorFormat() const { return colorFormat; }
 	vk::Format GetDepthFormat() const { return depthFormat; }
 	static VulkanContext *Instance() { return contextInstance; }
@@ -87,6 +94,8 @@ public:
 	bool SupportsDedicatedAllocation() const { return dedicatedAllocationSupported; }
 	const VMAllocator& GetAllocator() const { return allocator; }
 	bool IsUnifiedMemory() const { return unifiedMemory; }
+	u32 GetMaxStorageBufferRange() const { return maxStorageBufferRange; }
+	vk::DeviceSize GetMaxMemoryAllocationSize() const { return maxMemoryAllocationSize; }
 
 private:
 	vk::Format FindDepthFormat();
@@ -139,6 +148,8 @@ private:
 	u32 presentQueueIndex = 0;
 	vk::DeviceSize uniformBufferAlignment = 0;
 	vk::DeviceSize storageBufferAlignment = 0;
+	u32 maxStorageBufferRange = 0;
+	vk::DeviceSize maxMemoryAllocationSize = 0;
 	bool optimalTilingSupported565 = false;
 	bool optimalTilingSupported1555 = false;
 	bool optimalTilingSupported4444 = false;
