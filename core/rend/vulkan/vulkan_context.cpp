@@ -131,7 +131,14 @@ bool VulkanContext::InitInstance(const char** extensions, uint32_t extensions_co
 	}
 	try
 	{
-		vk::ApplicationInfo applicationInfo("Flycast", 1, "Flycast", 1, VK_API_VERSION_1_0);
+		bool vulkan11 = false;
+		if (::vkEnumerateInstanceVersion != nullptr)
+		{
+			u32 apiVersion;
+			vk::enumerateInstanceVersion(&apiVersion);
+			vulkan11 = VK_VERSION_MINOR(apiVersion) == 1;
+		}
+		vk::ApplicationInfo applicationInfo("Flycast", 1, "Flycast", 1, vulkan11 ? VK_API_VERSION_1_1 : VK_API_VERSION_1_0);
 		std::vector<const char *> vext;
 		for (int i = 0; i < extensions_count; i++)
 			vext.push_back(extensions[i]);
@@ -142,7 +149,7 @@ bool VulkanContext::InitInstance(const char** extensions, uint32_t extensions_co
 #ifndef __ANDROID__
 		vext.push_back("VK_EXT_debug_utils");
 		layer_names.push_back("VK_LAYER_LUNARG_standard_validation");
-//		layer_names.push_back("VK_LAYER_LUNARG_assistant_layer");
+		layer_names.push_back("VK_LAYER_LUNARG_assistant_layer");
 #else
 		vext.push_back("VK_EXT_debug_report");	// NDK <= 19?
 		layer_names.push_back("VK_LAYER_GOOGLE_threading");
@@ -175,15 +182,28 @@ bool VulkanContext::InitInstance(const char** extensions, uint32_t extensions_co
 
 		physicalDevice = instance->enumeratePhysicalDevices().front();
 
-		vk::PhysicalDeviceProperties2 properties2;
-		vk::PhysicalDeviceMaintenance3Properties properties3;
-		properties2.pNext = &properties3;
-		physicalDevice.getProperties2(&properties2);
-		const vk::PhysicalDeviceProperties& properties = properties2.properties;
-		uniformBufferAlignment = properties.limits.minUniformBufferOffsetAlignment;
-		storageBufferAlignment = properties.limits.minStorageBufferOffsetAlignment;
-		maxStorageBufferRange = properties.limits.maxStorageBufferRange;
-		maxMemoryAllocationSize = properties3.maxMemoryAllocationSize;
+		const vk::PhysicalDeviceProperties *properties;
+		if (vulkan11)
+		{
+			static vk::PhysicalDeviceProperties2 properties2;
+			vk::PhysicalDeviceMaintenance3Properties properties3;
+			properties2.pNext = &properties3;
+			physicalDevice.getProperties2(&properties2);
+			properties = &properties2.properties;
+			maxMemoryAllocationSize = properties3.maxMemoryAllocationSize;
+		}
+		else
+		{
+			static vk::PhysicalDeviceProperties phyProperties;
+			physicalDevice.getProperties(&phyProperties);
+			maxMemoryAllocationSize = 0xFFFFFFFFu;
+			properties = &phyProperties;
+		}
+		uniformBufferAlignment = properties->limits.minUniformBufferOffsetAlignment;
+		storageBufferAlignment = properties->limits.minStorageBufferOffsetAlignment;
+		maxStorageBufferRange = properties->limits.maxStorageBufferRange;
+		unifiedMemory = properties->deviceType == vk::PhysicalDeviceType::eIntegratedGpu;
+		NOTICE_LOG(RENDERER, "Vulkan API %s Device %s", vulkan11 ? "1.1" : "1.0", properties->deviceName);
 
 		vk::FormatProperties formatProperties = physicalDevice.getFormatProperties(vk::Format::eR5G5B5A1UnormPack16);
 		if ((formatProperties.optimalTilingFeatures & vk::FormatFeatureFlagBits::eSampledImage)
@@ -210,7 +230,6 @@ bool VulkanContext::InitInstance(const char** extensions, uint32_t extensions_co
 		physicalDevice.getFeatures(&features);
 		fragmentStoresAndAtomics = features.fragmentStoresAndAtomics;
 		samplerAnisotropy = features.samplerAnisotropy;
-		unifiedMemory = properties.deviceType == vk::PhysicalDeviceType::eIntegratedGpu;
 
 		ShaderCompiler::Init();
 
@@ -904,6 +923,22 @@ void VulkanContext::DoSwapAutomation()
 			u8* img = (u8*)device->mapMemory(*deviceMemory, 0, VK_WHOLE_SIZE);
 			img += subresourceLayout.offset;
 
+			u8 *end = img + screen_width * screen_height * 4;
+			if (!supportsBlit && colorFormat == vk::Format::eB8G8R8A8Unorm)
+			{
+				for (u8 *p = img; p < end; p += 4)
+				{
+					u8 b = p[0];
+					p[0] = p[2];
+					p[2] = b;
+					p[3] = 0xff;
+				}
+			}
+			else
+			{
+				for (u8 *p = img; p < end; p += 4)
+					p[3] = 0xff;
+			}
 			dump_screenshot(img, screen_width, screen_height, true, subresourceLayout.rowPitch, false);
 
 			device->unmapMemory(*deviceMemory);
