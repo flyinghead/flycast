@@ -213,15 +213,21 @@ void OITDrawer::UploadMainBuffer(const OITDescriptorSets::VertexShaderUniforms& 
 	chunkSizes.push_back(padding);
 
 	std::vector<u32> trPolyParams(pvrrc.global_param_tr.used() * 2);
-	for (int i = 0; i < pvrrc.global_param_tr.used(); i++)
+	if (pvrrc.global_param_tr.used() == 0)
+		trPolyParams.push_back(0);	// makes the validation layers happy
+	else
 	{
-		const PolyParam& pp = pvrrc.global_param_tr.head()[i];
-		trPolyParams[i * 2] = (pp.tsp.full & 0xffff00c0) | ((pp.isp.full >> 16) & 0xe400) | ((pp.pcw.full >> 7) & 1);
-		trPolyParams[i * 2 + 1] = pp.tsp1.full;
+		for (int i = 0; i < pvrrc.global_param_tr.used(); i++)
+		{
+			const PolyParam& pp = pvrrc.global_param_tr.head()[i];
+			trPolyParams[i * 2] = (pp.tsp.full & 0xffff00c0) | ((pp.isp.full >> 16) & 0xe400) | ((pp.pcw.full >> 7) & 1);
+			trPolyParams[i * 2 + 1] = pp.tsp1.full;
+		}
 	}
+	offsets.polyParamsSize = trPolyParams.size() * 4;
 	chunks.push_back(trPolyParams.data());
-	chunkSizes.push_back(trPolyParams.size() * 4);
-	u32 totalSize = offsets.polyParamsOffset + trPolyParams.size() * 4;
+	chunkSizes.push_back(offsets.polyParamsSize);
+	u32 totalSize = offsets.polyParamsOffset + offsets.polyParamsSize;
 
 	BufferData *buffer = GetMainBuffer(totalSize);
 	buffer->upload(chunks.size(), &chunkSizes[0], &chunks[0]);
@@ -230,6 +236,13 @@ void OITDrawer::UploadMainBuffer(const OITDescriptorSets::VertexShaderUniforms& 
 bool OITDrawer::Draw(const Texture *fogTexture)
 {
 	vk::CommandBuffer cmdBuffer = NewFrame();
+
+	if (needDepthTransition)
+	{
+		needDepthTransition = false;
+		// Not convinced that this is really needed but it makes validation layers happy
+		setImageLayout(cmdBuffer, depthAttachment->GetImage(), GetContext()->GetDepthFormat(), 1, vk::ImageLayout::eUndefined, vk::ImageLayout::eDepthStencilReadOnlyOptimal);
+	}
 
 	OITDescriptorSets::VertexShaderUniforms vtxUniforms;
 	vtxUniforms.normal_matrix = matrices.GetNormalMatrix();
@@ -250,7 +263,7 @@ bool OITDrawer::Draw(const Texture *fogTexture)
 	const vk::Buffer mainBuffer = GetMainBuffer(0)->buffer.get();
 	GetCurrentDescSet().UpdateUniforms(mainBuffer, offsets.vertexUniformOffset, offsets.fragmentUniformOffset,
 			fogTexture->GetImageView(), offsets.polyParamsOffset,
-			pvrrc.global_param_tr.bytes(), depthAttachment->GetStencilView(),
+			offsets.polyParamsSize, depthAttachment->GetStencilView(),
 			depthAttachment->GetImageView());
 	GetCurrentDescSet().BindPerFrameDescriptorSets(cmdBuffer);
 	GetCurrentDescSet().UpdateColorInputDescSet(0, colorAttachments[0]->GetImageView());
@@ -381,6 +394,7 @@ void OITDrawer::MakeBuffers(int width, int height)
 			new FramebufferAttachment(GetContext()->GetPhysicalDevice(), GetContext()->GetDevice()));
 	depthAttachment->Init(maxWidth, maxHeight, GetContext()->GetDepthFormat(),
 			vk::ImageUsageFlagBits::eDepthStencilAttachment | vk::ImageUsageFlagBits::eInputAttachment);
+	needDepthTransition = true;
 
 	vk::ImageView attachments[] = {
 			colorAttachments[1]->GetImageView(),
@@ -493,7 +507,7 @@ vk::CommandBuffer OITTextureDrawer::NewFrame()
 			texture->SetPhysicalDevice(GetContext()->GetPhysicalDevice());
 			texture->SetDevice(device);
 		}
-		if (texture->format != vk::Format::eR8G8B8A8Unorm)
+		if (texture->format != vk::Format::eR8G8B8A8Unorm || texture->extent.width != widthPow2 || texture->extent.height != heightPow2)
 		{
 			texture->extent = vk::Extent2D(widthPow2, heightPow2);
 			texture->format = vk::Format::eR8G8B8A8Unorm;

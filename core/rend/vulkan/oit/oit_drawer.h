@@ -85,6 +85,7 @@ private:
 		vk::DeviceSize vertexUniformOffset = 0;
 		vk::DeviceSize fragmentUniformOffset = 0;
 		vk::DeviceSize polyParamsOffset = 0;
+		vk::DeviceSize polyParamsSize = 0;
 	} offsets;
 
 	std::unique_ptr<QuadBuffer> quadBuffer;
@@ -95,6 +96,7 @@ private:
 	OITBuffers *oitBuffers = nullptr;
 	int maxWidth = 0;
 	int maxHeight = 0;
+	bool needDepthTransition = false;
 };
 
 class OITScreenDrawer : public OITDrawer

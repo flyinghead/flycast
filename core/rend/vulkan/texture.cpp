@@ -85,6 +85,9 @@ void setImageLayout(vk::CommandBuffer const& commandBuffer, vk::Image image, vk:
 	case vk::ImageLayout::eTransferDstOptimal:
 		destinationAccessMask = vk::AccessFlagBits::eTransferWrite;
 		break;
+	case vk::ImageLayout::eDepthStencilReadOnlyOptimal:
+		destinationAccessMask = vk::AccessFlagBits::eDepthStencilAttachmentRead;
+		break;
 	default:
 		verify(false);
 		break;
@@ -109,13 +112,16 @@ void setImageLayout(vk::CommandBuffer const& commandBuffer, vk::Image image, vk:
 	case vk::ImageLayout::eTransferSrcOptimal:
 		destinationStage = vk::PipelineStageFlagBits::eTransfer;
 		break;
+	case vk::ImageLayout::eDepthStencilReadOnlyOptimal:
+		destinationStage = vk::PipelineStageFlagBits::eEarlyFragmentTests | vk::PipelineStageFlagBits::eLateFragmentTests;
+		break;
 	default:
 		verify(false);
 		break;
 	}
 
 	vk::ImageAspectFlags aspectMask;
-	if (newImageLayout == vk::ImageLayout::eDepthStencilAttachmentOptimal)
+	if (newImageLayout == vk::ImageLayout::eDepthStencilAttachmentOptimal || newImageLayout == vk::ImageLayout::eDepthStencilReadOnlyOptimal)
 	{
 		aspectMask = vk::ImageAspectFlagBits::eDepth;
 		if (format == vk::Format::eD32SfloatS8Uint || format == vk::Format::eD24UnormS8Uint || format == vk::Format::eD16UnormS8Uint)

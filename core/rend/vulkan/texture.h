@@ -114,6 +114,7 @@ public:
 	vk::Image GetImage() const { return *image; }
 	const BufferData* GetBufferData() const { return stagingBufferData.get(); }
 	vk::ImageView GetStencilView() const { return *stencilView; }
+	vk::Extent2D getExtent() const { return extent; }
 
 private:
 	vk::Format format;

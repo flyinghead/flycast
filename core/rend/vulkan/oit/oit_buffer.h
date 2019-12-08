@@ -50,7 +50,6 @@ public:
 
 		if (!pixelBuffer)
 		{
-			pixelBuffer.reset();
 			pixelBuffer = std::unique_ptr<BufferData>(new BufferData(std::min(PixelBufferSize, context->GetMaxMemoryAllocationSize()),
 					vk::BufferUsageFlagBits::eStorageBuffer, vk::MemoryPropertyFlagBits::eDeviceLocal));
 		}
@@ -63,7 +62,7 @@ public:
 			pixelCounterReset->upload(sizeof(zero), &zero);
 		}
 		// We need to wait until this buffer is not used before deleting it
-		context->GetGraphicsQueue().waitIdle();
+		context->WaitIdle();
 		abufferPointerAttachment.reset();
 		abufferPointerAttachment = std::unique_ptr<FramebufferAttachment>(
 				new FramebufferAttachment(context->GetPhysicalDevice(), context->GetDevice()));

@@ -37,9 +37,9 @@ public:
 		{
 			while (commandPools.size() < size)
 			{
-				commandPools.emplace_back(std::move(VulkanContext::Instance()->GetDevice().createCommandPoolUnique(
-						vk::CommandPoolCreateInfo(vk::CommandPoolCreateFlagBits::eTransient, VulkanContext::Instance()->GetGraphicsQueueFamilyIndex()))));
-				fences.emplace_back(std::move(VulkanContext::Instance()->GetDevice().createFenceUnique(vk::FenceCreateInfo(vk::FenceCreateFlagBits::eSignaled))));
+				commandPools.push_back(VulkanContext::Instance()->GetDevice().createCommandPoolUnique(
+						vk::CommandPoolCreateInfo(vk::CommandPoolCreateFlagBits::eTransient, VulkanContext::Instance()->GetGraphicsQueueFamilyIndex())));
+				fences.push_back(VulkanContext::Instance()->GetDevice().createFenceUnique(vk::FenceCreateInfo(vk::FenceCreateFlagBits::eSignaled)));
 			}
 		}
 		if (freeBuffers.size() != size)

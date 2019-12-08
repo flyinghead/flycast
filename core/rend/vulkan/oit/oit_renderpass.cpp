@@ -67,7 +67,8 @@ vk::UniqueRenderPass RenderPasses::MakeRenderPass(bool initial, bool last)
     };
 
     std::vector<vk::SubpassDependency> dependencies = GetSubpassDependencies();
-    dependencies.emplace_back(VK_SUBPASS_EXTERNAL, 0, vk::PipelineStageFlagBits::eFragmentShader, vk::PipelineStageFlagBits::eEarlyFragmentTests,
+    dependencies.emplace_back(VK_SUBPASS_EXTERNAL, 0, vk::PipelineStageFlagBits::eFragmentShader,
+    		vk::PipelineStageFlagBits::eEarlyFragmentTests | vk::PipelineStageFlagBits::eLateFragmentTests,
     		vk::AccessFlagBits::eInputAttachmentRead | vk::AccessFlagBits::eShaderRead,
 			vk::AccessFlagBits::eDepthStencilAttachmentRead | vk::AccessFlagBits::eDepthStencilAttachmentWrite,
 			vk::DependencyFlagBits::eByRegion);
@@ -80,7 +81,8 @@ vk::UniqueRenderPass RenderPasses::MakeRenderPass(bool initial, bool last)
     		vk::AccessFlagBits::eColorAttachmentWrite, vk::AccessFlagBits::eInputAttachmentRead, vk::DependencyFlagBits::eByRegion);
     // This dependency is only needed if the render pass isn't the last: it's needed for the depth-only Tr pass
     // Unfortunately we want all render passes to be compatible, and that means all attachments must be identical
-    dependencies.emplace_back(1, 2, vk::PipelineStageFlagBits::eFragmentShader, vk::PipelineStageFlagBits::eEarlyFragmentTests,
+    dependencies.emplace_back(1, 2, vk::PipelineStageFlagBits::eFragmentShader,
+    		vk::PipelineStageFlagBits::eEarlyFragmentTests | vk::PipelineStageFlagBits::eLateFragmentTests,
     		vk::AccessFlagBits::eInputAttachmentRead | vk::AccessFlagBits::eShaderRead,
 			vk::AccessFlagBits::eDepthStencilAttachmentRead | vk::AccessFlagBits::eDepthStencilAttachmentWrite,
 			vk::DependencyFlagBits::eByRegion);
