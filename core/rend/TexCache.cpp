@@ -1,3 +1,4 @@
+#include <algorithm>
 #ifndef TARGET_NO_OPENMP
 #include <omp.h>
 #endif
@@ -154,30 +155,17 @@ void vramlock_list_add(vram_block* block)
 	u32 base = block->start / PAGE_SIZE;
 	u32 end = block->end / PAGE_SIZE;
 
-
 	for (u32 i = base; i <= end; i++)
 	{
 		vector<vram_block*>& list = VramLocks[i];
 		// If the list is empty then we need to protect vram, otherwise it's already been done
-		if (list.empty())
-		{
+		if (list.empty() || std::all_of(list.begin(), list.end(), [](vram_block *block) { return block == nullptr; }))
 			_vmem_protect_vram(i * PAGE_SIZE, PAGE_SIZE);
-		}
+		auto it = std::find(list.begin(), list.end(), nullptr);
+		if (it != list.end())
+			*it = block;
 		else
-		{
-			for (u32 j = 0; j < list.size(); j++)
-			{
-				if (list[j] == nullptr)
-				{
-					list[j] = block;
-					goto added_it;
-				}
-			}
-		}
-
-		list.push_back(block);
-added_it:
-		i=i;
+			list.push_back(block);
 	}
 }
  
