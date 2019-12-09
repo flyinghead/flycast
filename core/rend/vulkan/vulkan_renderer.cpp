@@ -37,19 +37,8 @@ public:
 		DEBUG_LOG(RENDERER, "VulkanRenderer::Init");
 		texCommandPool.Init();
 
-		rttPipelineManager.Init(&shaderManager);
-		if (textureDrawer.size() > GetContext()->GetSwapChainSize())
-			textureDrawer.resize(GetContext()->GetSwapChainSize());
-		else
-		{
-			while (textureDrawer.size() < GetContext()->GetSwapChainSize())
-				textureDrawer.emplace_back();
-		}
-		for (auto& drawer : textureDrawer)
-		{
-			drawer.Init(&samplerManager, &rttPipelineManager, &textureCache);
-			drawer.SetCommandPool(&texCommandPool);
-		}
+		textureDrawer.Init(&samplerManager, &shaderManager, &textureCache);
+		textureDrawer.SetCommandPool(&texCommandPool);
 
 		screenDrawer.Init(&samplerManager, &shaderManager);
 		screenDrawer.SetCommandPool(&texCommandPool);
@@ -148,6 +137,7 @@ public:
 	bool Process(TA_context* ctx) override
 	{
 		texCommandPool.BeginFrame();
+		textureCache.SetCurrentIndex(texCommandPool.GetIndex());
 
 		if (ctx->rend.isRenderFramebuffer)
 		{
@@ -226,7 +216,7 @@ public:
 
 		Drawer *drawer;
 		if (pvrrc.isRTT)
-			drawer = &textureDrawer[GetContext()->GetCurrentImageIndex()];
+			drawer = &textureDrawer;
 		else
 			drawer = &screenDrawer;
 
@@ -256,6 +246,8 @@ public:
 		//update if needed
 		if (tf->NeedsUpdate())
 		{
+			textureCache.DestroyLater(tf);
+
 			tf->SetCommandBuffer(texCommandPool.Allocate());
 			tf->Update();
 			tf->SetCommandBuffer(nullptr);
@@ -298,8 +290,7 @@ private:
 	SamplerManager samplerManager;
 	ShaderManager shaderManager;
 	ScreenDrawer screenDrawer;
-	RttPipelineManager rttPipelineManager;
-	std::vector<TextureDrawer> textureDrawer;
+	TextureDrawer textureDrawer;
 	std::vector<std::unique_ptr<Texture>> framebufferTextures;
 	QuadPipeline quadPipeline;
 	OSDPipeline osdPipeline;

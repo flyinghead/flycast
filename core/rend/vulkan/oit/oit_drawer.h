@@ -49,6 +49,18 @@ protected:
 		if (!quadBuffer)
 			quadBuffer = std::unique_ptr<QuadBuffer>(new QuadBuffer());
 		this->oitBuffers = oitBuffers;
+		if (descriptorSets.size() > GetContext()->GetSwapChainSize())
+			descriptorSets.resize(GetContext()->GetSwapChainSize());
+		else
+			while (descriptorSets.size() < GetContext()->GetSwapChainSize())
+			{
+				descriptorSets.push_back(OITDescriptorSets());
+				descriptorSets.back().Init(samplerManager,
+						pipelineManager->GetPipelineLayout(),
+						pipelineManager->GetPerFrameDSLayout(),
+						pipelineManager->GetPerPolyDSLayout(),
+						pipelineManager->GetColorInputDSLayout());
+			}
 	}
 	void Term()
 	{
@@ -56,14 +68,42 @@ protected:
 		colorAttachments[0].reset();
 		colorAttachments[1].reset();
 		depthAttachment.reset();
+		mainBuffers.clear();
+		descriptorSets.clear();
 	}
-	virtual OITDescriptorSets& GetCurrentDescSet() = 0;
-	virtual BufferData *GetMainBuffer(u32 size) = 0;
+
+	int GetCurrentImage() const { return imageIndex; }
+
+	void NewImage() { imageIndex = (imageIndex + 1) % GetContext()->GetSwapChainSize(); }
+
+	OITDescriptorSets& GetCurrentDescSet() { return descriptorSets[GetCurrentImage()]; }
+
+	BufferData* GetMainBuffer(u32 size)
+	{
+		if (mainBuffers.empty())
+		{
+			for (int i = 0; i < GetContext()->GetSwapChainSize(); i++)
+				mainBuffers.push_back(std::unique_ptr<BufferData>(new BufferData(std::max(512 * 1024u, size),
+						vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eUniformBuffer
+						| vk::BufferUsageFlagBits::eStorageBuffer)));
+		}
+		else if (mainBuffers[GetCurrentImage()]->bufferSize < size)
+		{
+			u32 newSize = mainBuffers[GetCurrentImage()]->bufferSize;
+			while (newSize < size)
+				newSize *= 2;
+			INFO_LOG(RENDERER, "Increasing main buffer size %d -> %d", (u32)mainBuffers[GetCurrentImage()]->bufferSize, newSize);
+			mainBuffers[GetCurrentImage()] = std::unique_ptr<BufferData>(new BufferData(newSize,
+					vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eUniformBuffer
+					| vk::BufferUsageFlagBits::eStorageBuffer));
+		}
+		return mainBuffers[GetCurrentImage()].get();
+	};
+
 	void MakeBuffers(int width, int height);
 	virtual vk::Format GetColorFormat() const = 0;
 	virtual vk::Framebuffer GetFinalFramebuffer() const = 0;
 
-	OITPipelineManager *pipelineManager = nullptr;
 	vk::Rect2D viewport;
 	std::array<std::unique_ptr<FramebufferAttachment>, 2> colorAttachments;
 	std::unique_ptr<FramebufferAttachment> depthAttachment;
@@ -92,11 +132,15 @@ private:
 
 	std::array<vk::UniqueFramebuffer, 2> tempFramebuffers;
 
+	OITPipelineManager *pipelineManager = nullptr;
 	SamplerManager *samplerManager = nullptr;
 	OITBuffers *oitBuffers = nullptr;
 	int maxWidth = 0;
 	int maxHeight = 0;
 	bool needDepthTransition = false;
+	int imageIndex = 0;
+	std::vector<OITDescriptorSets> descriptorSets;
+	std::vector<std::unique_ptr<BufferData>> mainBuffers;
 };
 
 class OITScreenDrawer : public OITDrawer
@@ -109,28 +153,14 @@ public:
 		screenPipelineManager->Init(shaderManager, oitBuffers);
 		OITDrawer::Init(samplerManager, screenPipelineManager.get(), oitBuffers);
 
-		if (descriptorSets.size() > GetContext()->GetSwapChainSize())
-			descriptorSets.resize(GetContext()->GetSwapChainSize());
-		else
-			while (descriptorSets.size() < GetContext()->GetSwapChainSize())
-			{
-				descriptorSets.push_back(OITDescriptorSets());
-				descriptorSets.back().Init(samplerManager,
-						screenPipelineManager->GetPipelineLayout(),
-						screenPipelineManager->GetPerFrameDSLayout(),
-						screenPipelineManager->GetPerPolyDSLayout(),
-						screenPipelineManager->GetColorInputDSLayout());
-			}
 		currentScreenScaling = 0;
 		MakeFramebuffers();
 	}
 	void Term()
 	{
-		mainBuffers.clear();
 		screenPipelineManager.reset();
 		framebuffers.clear();
 		finalColorAttachments.clear();
-		descriptorSets.clear();
 		OITDrawer::Term();
 	}
 
@@ -146,64 +176,35 @@ public:
 	}
 
 protected:
-	virtual OITDescriptorSets& GetCurrentDescSet() override { return descriptorSets[GetCurrentImage()]; }
 	virtual vk::Framebuffer GetFinalFramebuffer() const override { return *framebuffers[GetCurrentImage()]; }
-	virtual BufferData* GetMainBuffer(u32 size) override
-	{
-		if (mainBuffers.empty())
-		{
-			for (int i = 0; i < GetContext()->GetSwapChainSize(); i++)
-				mainBuffers.push_back(std::unique_ptr<BufferData>(new BufferData(std::max(512 * 1024u, size),
-						vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eUniformBuffer
-						| vk::BufferUsageFlagBits::eStorageBuffer)));
-		}
-		else if (mainBuffers[GetCurrentImage()]->bufferSize < size)
-		{
-			u32 newSize = mainBuffers[GetCurrentImage()]->bufferSize;
-			while (newSize < size)
-				newSize *= 2;
-			INFO_LOG(RENDERER, "Increasing main buffer size %d -> %d", (u32)mainBuffers[GetCurrentImage()]->bufferSize, newSize);
-			mainBuffers[GetCurrentImage()] = std::unique_ptr<BufferData>(new BufferData(newSize,
-					vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eUniformBuffer
-					| vk::BufferUsageFlagBits::eStorageBuffer));
-		}
-		return mainBuffers[GetCurrentImage()].get();
-	};
 	virtual vk::Format GetColorFormat() const override { return GetContext()->GetColorFormat(); }
 
 private:
-	int GetCurrentImage() const { return imageIndex; }
 	void MakeFramebuffers();
 
 	std::vector<std::unique_ptr<FramebufferAttachment>> finalColorAttachments;
 	std::vector<vk::UniqueFramebuffer> framebuffers;
-	std::vector<OITDescriptorSets> descriptorSets;
-	std::vector<std::unique_ptr<BufferData>> mainBuffers;
 	std::unique_ptr<OITPipelineManager> screenPipelineManager;
 	int currentScreenScaling = 0;
-	int imageIndex = 0;
 };
 
 class OITTextureDrawer : public OITDrawer
 {
 public:
-	void Init(SamplerManager *samplerManager, RttOITPipelineManager *pipelineManager,
+	void Init(SamplerManager *samplerManager, OITShaderManager *shaderManager,
 			TextureCache *textureCache, OITBuffers *oitBuffers)
 	{
-		OITDrawer::Init(samplerManager, pipelineManager, oitBuffers);
+		if (!rttPipelineManager)
+			rttPipelineManager = std::unique_ptr<RttOITPipelineManager>(new RttOITPipelineManager());
+		rttPipelineManager->Init(shaderManager, oitBuffers);
+		OITDrawer::Init(samplerManager, rttPipelineManager.get(), oitBuffers);
 
-		descriptorSets.Init(samplerManager,
-				pipelineManager->GetPipelineLayout(),
-				pipelineManager->GetPerFrameDSLayout(),
-				pipelineManager->GetPerPolyDSLayout(),
-				pipelineManager->GetColorInputDSLayout());
 		this->textureCache = textureCache;
 	}
 	void Term()
 	{
-		mainBuffer.reset();
 		colorAttachment.reset();
-		framebuffer.reset();
+		framebuffers.clear();
 		OITDrawer::Term();
 	}
 
@@ -211,23 +212,7 @@ public:
 
 protected:
 	virtual vk::CommandBuffer NewFrame() override;
-	OITDescriptorSets& GetCurrentDescSet() override { return descriptorSets; }
-	virtual vk::Framebuffer GetFinalFramebuffer() const override { return *framebuffer; }
-
-	virtual BufferData* GetMainBuffer(u32 size) override
-	{
-		if (!mainBuffer || mainBuffer->bufferSize < size)
-		{
-			u32 newSize = mainBuffer ? mainBuffer->bufferSize : 128 * 1024u;
-			while (newSize < size)
-				newSize *= 2;
-			INFO_LOG(RENDERER, "Increasing RTT main buffer size %d -> %d", !mainBuffer ? 0 : (u32)mainBuffer->bufferSize, newSize);
-			mainBuffer = std::unique_ptr<BufferData>(new BufferData(newSize,
-					vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eUniformBuffer
-					| vk::BufferUsageFlagBits::eStorageBuffer));
-		}
-		return mainBuffer.get();
-	}
+	virtual vk::Framebuffer GetFinalFramebuffer() const override { return *framebuffers[GetCurrentImage()]; }
 	virtual vk::Format GetColorFormat() const override { return vk::Format::eR8G8B8A8Unorm; }
 
 private:
@@ -236,9 +221,8 @@ private:
 	Texture *texture = nullptr;
 	vk::Image colorImage;
 	std::unique_ptr<FramebufferAttachment> colorAttachment;
-	vk::UniqueFramebuffer framebuffer;
+	std::vector<vk::UniqueFramebuffer> framebuffers;
+	std::unique_ptr<RttOITPipelineManager> rttPipelineManager;
 
-	OITDescriptorSets descriptorSets;
-	std::unique_ptr<BufferData> mainBuffer;
 	TextureCache *textureCache = nullptr;
 };

@@ -79,7 +79,7 @@ public:
 					vk::DescriptorSetAllocateInfo(GetContext()->GetDescriptorPool(), layouts.size(), &layouts[0]));
 		}
 		Texture *texture = reinterpret_cast<Texture *>(textureId);
-		vk::DescriptorImageInfo imageInfo(samplerManager->GetSampler(tsp), texture->GetImageView(), vk::ImageLayout::eShaderReadOnlyOptimal);
+		vk::DescriptorImageInfo imageInfo(samplerManager->GetSampler(tsp), texture->GetReadOnlyImageView(), vk::ImageLayout::eShaderReadOnlyOptimal);
 
 		std::vector<vk::WriteDescriptorSet> writeDescriptorSets;
 		writeDescriptorSets.push_back(vk::WriteDescriptorSet(*perPolyDescSets.back(), 0, 0, 1, vk::DescriptorType::eCombinedImageSampler, &imageInfo, nullptr, nullptr));

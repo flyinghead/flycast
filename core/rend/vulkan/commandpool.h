@@ -96,6 +96,11 @@ public:
 		return *fences[index];
 	}
 
+	int GetIndex() const
+	{
+		return index;
+	}
+
 private:
 	int index = 0;
 	std::vector<std::vector<vk::UniqueCommandBuffer>> freeBuffers;

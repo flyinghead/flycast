@@ -20,6 +20,7 @@
 */
 #pragma once
 #include <memory>
+#include <unordered_set>
 #include "vulkan_context.h"
 #include "buffer.h"
 #include "rend/TexCache.h"
@@ -39,6 +40,7 @@ struct Texture : BaseTextureCacheData
 	std::string GetId() override { char s[20]; sprintf(s, "%p", this); return s; }
 	bool IsNew() const { return !image.get(); }
 	vk::ImageView GetImageView() const { return *imageView; }
+	vk::ImageView GetReadOnlyImageView() const { return readOnlyImageView ? readOnlyImageView : *imageView; }
 	void SetCommandBuffer(vk::CommandBuffer commandBuffer) { this->commandBuffer = commandBuffer; }
 	virtual bool Force32BitTexture(TextureType type) const override { return !VulkanContext::Instance()->IsFormatSupported(type); }
 
@@ -62,6 +64,7 @@ private:
 	vk::UniqueDeviceMemory deviceMemory;
 	vk::UniqueImageView imageView;
 	vk::UniqueImage image;
+	vk::ImageView readOnlyImageView;
 
 	vk::PhysicalDevice physicalDevice;
 	vk::Device device;
@@ -69,6 +72,7 @@ private:
 
 	friend class TextureDrawer;
 	friend class OITTextureDrawer;
+	friend class TextureCache;
 };
 
 class SamplerManager
@@ -132,4 +136,55 @@ private:
 
 class TextureCache : public BaseTextureCache<Texture>
 {
+public:
+	Texture *getTextureCacheData(TSP tsp, TCW tcw)
+	{
+		Texture *texture = BaseTextureCache<Texture>::getTextureCacheData(tsp, tcw);
+		inFlightTextures[currentIndex].insert(texture);
+		return texture;
+	}
+
+	void SetCurrentIndex(int index) {
+		if (currentIndex < inFlightTextures.size())
+			std::for_each(inFlightTextures[currentIndex].begin(), inFlightTextures[currentIndex].end(),
+				[](Texture *texture) { texture->readOnlyImageView = vk::ImageView(); });
+		currentIndex = index;
+		EmptyTrash(inFlightTextures);
+		EmptyTrash(trashedImageViews);
+		EmptyTrash(trashedImages);
+		EmptyTrash(trashedMem);
+		EmptyTrash(trashedBuffers);
+	}
+
+	bool IsInFlight(Texture *texture)
+	{
+		return std::any_of(inFlightTextures.begin(), inFlightTextures.end(),
+				[texture](const std::unordered_set<Texture *>& set) { return set.find(texture) != set.end(); });
+	}
+
+	void DestroyLater(Texture *texture)
+	{
+		if (!texture->image)
+			return;
+		trashedImages[currentIndex].push_back(std::move(texture->image));
+		trashedImageViews[currentIndex].push_back(std::move(texture->imageView));
+		trashedMem[currentIndex].push_back(std::move(texture->allocation));
+		trashedBuffers[currentIndex].push_back(std::move(texture->stagingBufferData));
+		texture->format = vk::Format::eUndefined;
+	}
+
+private:
+	template<typename T>
+	void EmptyTrash(T& v)
+	{
+		if (v.size() < currentIndex + 1)
+			v.resize(currentIndex + 1);
+		v[currentIndex].clear();
+	}
+	std::vector<std::unordered_set<Texture *>> inFlightTextures;
+	std::vector<std::vector<vk::UniqueImageView>> trashedImageViews;
+	std::vector<std::vector<vk::UniqueImage>> trashedImages;
+	std::vector<std::vector<Allocation>> trashedMem;
+	std::vector<std::vector<std::unique_ptr<BufferData>>> trashedBuffers;
+	int currentIndex = 0;
 };

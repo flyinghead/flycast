@@ -145,7 +145,7 @@ public:
 					vk::DescriptorSetAllocateInfo(GetContext()->GetDescriptorPool(), layouts.size(), &layouts[0]));
 		}
 		Texture *texture = reinterpret_cast<Texture *>(textureId0);
-		vk::DescriptorImageInfo imageInfo0(samplerManager->GetSampler(tsp0), texture->GetImageView(), vk::ImageLayout::eShaderReadOnlyOptimal);
+		vk::DescriptorImageInfo imageInfo0(samplerManager->GetSampler(tsp0), texture->GetReadOnlyImageView(), vk::ImageLayout::eShaderReadOnlyOptimal);
 
 		std::vector<vk::WriteDescriptorSet> writeDescriptorSets;
 		writeDescriptorSets.push_back(vk::WriteDescriptorSet(*perPolyDescSets.back(), 0, 0, 1, vk::DescriptorType::eCombinedImageSampler, &imageInfo0, nullptr, nullptr));
@@ -153,7 +153,7 @@ public:
 		if (textureId1 != -1)
 		{
 			Texture *texture1 = reinterpret_cast<Texture *>(textureId1);
-			vk::DescriptorImageInfo imageInfo1(samplerManager->GetSampler(tsp1), texture1->GetImageView(), vk::ImageLayout::eShaderReadOnlyOptimal);
+			vk::DescriptorImageInfo imageInfo1(samplerManager->GetSampler(tsp1), texture1->GetReadOnlyImageView(), vk::ImageLayout::eShaderReadOnlyOptimal);
 
 			writeDescriptorSets.push_back(vk::WriteDescriptorSet(*perPolyDescSets.back(), 1, 0, 1, vk::DescriptorType::eCombinedImageSampler, &imageInfo1, nullptr, nullptr));
 		}

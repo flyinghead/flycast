@@ -100,53 +100,34 @@ class Drawer : public BaseDrawer
 public:
 	virtual ~Drawer() = default;
 	bool Draw(const Texture *fogTexture);
-	virtual vk::CommandBuffer BeginRenderPass() = 0;
 	virtual void EndRenderPass() = 0;
 
 protected:
+	virtual vk::CommandBuffer BeginRenderPass() = 0;
+	void NewImage()
+	{
+		imageIndex = (imageIndex + 1) % GetContext()->GetSwapChainSize();
+	}
+
 	void Init(SamplerManager *samplerManager, PipelineManager *pipelineManager)
 	{
 		this->pipelineManager = pipelineManager;
 		this->samplerManager = samplerManager;
+
+		int size = GetContext()->GetSwapChainSize();
+		if (descriptorSets.size() > size)
+			descriptorSets.resize(size);
+		else
+			while (descriptorSets.size() < size)
+			{
+				descriptorSets.emplace_back();
+				descriptorSets.back().Init(samplerManager, pipelineManager->GetPipelineLayout(), pipelineManager->GetPerFrameDSLayout(), pipelineManager->GetPerPolyDSLayout());
+			}
 	}
-	virtual DescriptorSets& GetCurrentDescSet() = 0;
-	virtual BufferData *GetMainBuffer(u32 size) = 0;
+	int GetCurrentImage() const { return imageIndex; }
+	DescriptorSets& GetCurrentDescSet() { return descriptorSets[GetCurrentImage()]; }
 
-	PipelineManager *pipelineManager = nullptr;
-	vk::CommandBuffer currentCommandBuffer;
-	SamplerManager *samplerManager = nullptr;
-
-private:
-	void SortTriangles();
-	void DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sortTriangles, const PolyParam& poly, u32 first, u32 count);
-	void DrawSorted(const vk::CommandBuffer& cmdBuffer, const std::vector<SortTrigDrawParam>& polys);
-	void DrawList(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sortTriangles, const List<PolyParam>& polys, u32 first, u32 count);
-	void DrawModVols(const vk::CommandBuffer& cmdBuffer, int first, int count);
-	void UploadMainBuffer(const VertexShaderUniforms& vertexUniforms, const FragmentShaderUniforms& fragmentUniforms);
-
-	struct {
-		vk::DeviceSize indexOffset = 0;
-		vk::DeviceSize modVolOffset = 0;
-		vk::DeviceSize vertexUniformOffset = 0;
-		vk::DeviceSize fragmentUniformOffset = 0;
-	} offsets;
-	// Per-triangle sort results
-	std::vector<std::vector<SortTrigDrawParam>> sortedPolys;
-	std::vector<std::vector<u32>> sortedIndexes;
-	u32 sortedIndexCount = 0;
-};
-
-class ScreenDrawer : public Drawer
-{
-public:
-	void Init(SamplerManager *samplerManager, ShaderManager *shaderManager);
-	virtual void EndRenderPass() override;
-	vk::RenderPass GetRenderPass() const { return *renderPass; }
-
-protected:
-	virtual vk::CommandBuffer BeginRenderPass() override;
-	virtual DescriptorSets& GetCurrentDescSet() override { return descriptorSets[GetCurrentImage()]; }
-	virtual BufferData* GetMainBuffer(u32 size) override
+	BufferData* GetMainBuffer(u32 size)
 	{
 		if (mainBuffers.empty())
 		{
@@ -166,11 +147,45 @@ protected:
 		return mainBuffers[GetCurrentImage()].get();
 	};
 
-private:
-	int GetCurrentImage() { return imageIndex; }
+	vk::CommandBuffer currentCommandBuffer;
+	SamplerManager *samplerManager = nullptr;
 
+private:
+	void SortTriangles();
+	void DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sortTriangles, const PolyParam& poly, u32 first, u32 count);
+	void DrawSorted(const vk::CommandBuffer& cmdBuffer, const std::vector<SortTrigDrawParam>& polys);
+	void DrawList(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sortTriangles, const List<PolyParam>& polys, u32 first, u32 count);
+	void DrawModVols(const vk::CommandBuffer& cmdBuffer, int first, int count);
+	void UploadMainBuffer(const VertexShaderUniforms& vertexUniforms, const FragmentShaderUniforms& fragmentUniforms);
+
+	int imageIndex = 0;
+	struct {
+		vk::DeviceSize indexOffset = 0;
+		vk::DeviceSize modVolOffset = 0;
+		vk::DeviceSize vertexUniformOffset = 0;
+		vk::DeviceSize fragmentUniformOffset = 0;
+	} offsets;
 	std::vector<DescriptorSets> descriptorSets;
 	std::vector<std::unique_ptr<BufferData>> mainBuffers;
+	PipelineManager *pipelineManager = nullptr;
+
+	// Per-triangle sort results
+	std::vector<std::vector<SortTrigDrawParam>> sortedPolys;
+	std::vector<std::vector<u32>> sortedIndexes;
+	u32 sortedIndexCount = 0;
+};
+
+class ScreenDrawer : public Drawer
+{
+public:
+	void Init(SamplerManager *samplerManager, ShaderManager *shaderManager);
+	vk::RenderPass GetRenderPass() const { return *renderPass; }
+	virtual void EndRenderPass() override;
+
+protected:
+	virtual vk::CommandBuffer BeginRenderPass() override;
+
+private:
 	std::unique_ptr<PipelineManager> screenPipelineManager;
 
 	vk::UniqueRenderPass renderPass;
@@ -180,52 +195,26 @@ private:
 	vk::Extent2D viewport;
 	int currentScreenScaling = 0;
 	ShaderManager *shaderManager = nullptr;
-	int imageIndex = 0;
 };
 
 class TextureDrawer : public Drawer
 {
 public:
-	void Init(SamplerManager *samplerManager, RttPipelineManager *pipelineManager, TextureCache *textureCache)
-	{
-		Drawer::Init(samplerManager, pipelineManager);
-
-		descriptorSets.Init(samplerManager, pipelineManager->GetPipelineLayout(), pipelineManager->GetPerFrameDSLayout(), pipelineManager->GetPerPolyDSLayout());
-		this->textureCache = textureCache;
-	}
-
+	void Init(SamplerManager *samplerManager, ShaderManager *shaderManager, TextureCache *textureCache);
 	virtual void EndRenderPass() override;
 
 protected:
 	virtual vk::CommandBuffer BeginRenderPass() override;
-	DescriptorSets& GetCurrentDescSet() override { return descriptorSets; }
-
-	virtual BufferData* GetMainBuffer(u32 size) override
-	{
-		if (!mainBuffer || mainBuffer->bufferSize < size)
-		{
-			u32 newSize = mainBuffer ? mainBuffer->bufferSize : 128 * 1024u;
-			while (newSize < size)
-				newSize *= 2;
-			INFO_LOG(RENDERER, "Increasing RTT main buffer size %d -> %d", !mainBuffer ? 0 : (u32)mainBuffer->bufferSize, newSize);
-			mainBuffer = std::unique_ptr<BufferData>(new BufferData(newSize,
-					vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eUniformBuffer));
-		}
-		return mainBuffer.get();
-	}
 
 private:
 	u32 width = 0;
 	u32 height = 0;
 	u32 textureAddr = 0;
+	std::unique_ptr<RttPipelineManager> rttPipelineManager;
 
 	Texture *texture = nullptr;
-	vk::Image colorImage;
-	vk::UniqueFramebuffer framebuffer;
+	std::vector<vk::UniqueFramebuffer> framebuffers;
 	std::unique_ptr<FramebufferAttachment> colorAttachment;
 	std::unique_ptr<FramebufferAttachment> depthAttachment;
-
-	DescriptorSets descriptorSets;
-	std::unique_ptr<BufferData> mainBuffer;
 	TextureCache *textureCache = nullptr;
 };

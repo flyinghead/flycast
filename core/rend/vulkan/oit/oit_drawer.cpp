@@ -44,8 +44,12 @@ void OITDrawer::DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool 
 	bool twoVolumes = poly.tsp1.full != -1 || poly.tcw1.full != -1;
 
 	OITDescriptorSets::PushConstants pushConstants = {
-			{ (float)scissorRect.offset.x, (float)scissorRect.offset.y,
-					(float)scissorRect.extent.width, (float)scissorRect.extent.height },
+			{
+				(float)scissorRect.offset.x,
+				(float)scissorRect.offset.y,
+				(float)scissorRect.offset.x + (float)scissorRect.extent.width,
+				(float)scissorRect.offset.y + (float)scissorRect.extent.height
+			},
 			{ getBlendFactor(poly.tsp.SrcInstr, true), getBlendFactor(poly.tsp.DstInstr, false), 0, 0 },
 			trilinearAlpha,
 			(int)(&poly - (listType == ListType_Opaque ? pvrrc.global_param_op.head()
@@ -380,6 +384,7 @@ void OITDrawer::MakeBuffers(int width, int height)
 	maxWidth = std::max(maxWidth, width);
 	maxHeight = std::max(maxHeight, height);
 
+	GetContext()->WaitIdle();
 	for (auto& attachment : colorAttachments)
 	{
 		attachment.reset();
@@ -434,7 +439,7 @@ void OITScreenDrawer::MakeFramebuffers()
 				colorAttachments[0]->GetImageView(),
 				depthAttachment->GetImageView(),
 		};
-		vk::FramebufferCreateInfo createInfo(vk::FramebufferCreateFlags(), pipelineManager->GetRenderPass(true, true),
+		vk::FramebufferCreateInfo createInfo(vk::FramebufferCreateFlags(), screenPipelineManager->GetRenderPass(true, true),
 				ARRAY_SIZE(attachments), attachments, viewport.extent.width, viewport.extent.height, 1);
 		framebuffers.push_back(GetContext()->GetDevice().createFramebufferUnique(createInfo));
 	}
@@ -444,6 +449,7 @@ vk::CommandBuffer OITTextureDrawer::NewFrame()
 {
 	DEBUG_LOG(RENDERER, "RenderToTexture packmode=%d stride=%d - %d,%d -> %d,%d", FB_W_CTRL.fb_packmode, FB_W_LINESTRIDE.stride * 8,
 			FB_X_CLIP.min, FB_Y_CLIP.min, FB_X_CLIP.max, FB_Y_CLIP.max);
+	NewImage();
 
 	matrices.CalcMatrices(&pvrrc);
 
@@ -467,7 +473,7 @@ vk::CommandBuffer OITTextureDrawer::NewFrame()
 		heightPow2 *= settings.rend.RenderToTextureUpscale;
 	}
 
-	static_cast<RttOITPipelineManager*>(pipelineManager)->CheckSettingsChange();
+	rttPipelineManager->CheckSettingsChange();
 	VulkanContext *context = GetContext();
 	vk::Device device = context->GetDevice();
 
@@ -507,6 +513,11 @@ vk::CommandBuffer OITTextureDrawer::NewFrame()
 			texture->SetPhysicalDevice(GetContext()->GetPhysicalDevice());
 			texture->SetDevice(device);
 		}
+		else if (textureCache->IsInFlight(texture))
+		{
+			texture->readOnlyImageView = *texture->imageView;
+			textureCache->DestroyLater(texture);
+		}
 		if (texture->format != vk::Format::eR8G8B8A8Unorm || texture->extent.width != widthPow2 || texture->extent.height != heightPow2)
 		{
 			texture->extent = vk::Extent2D(widthPow2, heightPow2);
@@ -518,38 +529,42 @@ vk::CommandBuffer OITTextureDrawer::NewFrame()
 		else
 		{
 			colorImageCurrentLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
-			setImageLayout(commandBuffer, *texture->image, vk::Format::eR8G8B8A8Unorm, 1, colorImageCurrentLayout, vk::ImageLayout::eColorAttachmentOptimal);
 		}
 		colorImage = *texture->image;
 		colorImageView = texture->GetImageView();
 	}
 	else
 	{
-		if (widthPow2 != viewport.extent.width || heightPow2 != viewport.extent.height || !colorAttachment)
+		if (!colorAttachment || widthPow2 > colorAttachment->getExtent().width || heightPow2 > colorAttachment->getExtent().height)
 		{
 			if (!colorAttachment)
-			{
 				colorAttachment = std::unique_ptr<FramebufferAttachment>(new FramebufferAttachment(context->GetPhysicalDevice(), device));
-			}
+			else
+				GetContext()->WaitIdle();
 			colorAttachment->Init(widthPow2, heightPow2, vk::Format::eR8G8B8A8Unorm,
 					vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eTransferSrc);
+			colorImageCurrentLayout = vk::ImageLayout::eUndefined;
 		}
+		else
+			colorImageCurrentLayout = vk::ImageLayout::eTransferSrcOptimal;
 		colorImage = colorAttachment->GetImage();
 		colorImageView = colorAttachment->GetImageView();
-		colorImageCurrentLayout = vk::ImageLayout::eUndefined;
 	}
 	viewport.offset.x = 0;
 	viewport.offset.y = 0;
 	viewport.extent.width = widthPow2;
 	viewport.extent.height = heightPow2;
 
+	setImageLayout(commandBuffer, colorImage, vk::Format::eR8G8B8A8Unorm, 1, colorImageCurrentLayout, vk::ImageLayout::eColorAttachmentOptimal);
+
 	vk::ImageView imageViews[] = {
 		colorImageView,
 		colorAttachments[0]->GetImageView(),
 		depthAttachment->GetImageView(),
 	};
-	framebuffer = device.createFramebufferUnique(vk::FramebufferCreateInfo(vk::FramebufferCreateFlags(),
-			pipelineManager->GetRenderPass(true, true), ARRAY_SIZE(imageViews), imageViews, widthPow2, heightPow2, 1));
+	framebuffers.resize(GetContext()->GetSwapChainSize());
+	framebuffers[GetCurrentImage()] = device.createFramebufferUnique(vk::FramebufferCreateInfo(vk::FramebufferCreateFlags(),
+			rttPipelineManager->GetRenderPass(true, true), ARRAY_SIZE(imageViews), imageViews, widthPow2, heightPow2, 1));
 
 	commandBuffer.setViewport(0, vk::Viewport(0.0f, 0.0f, (float)upscaledWidth, (float)upscaledHeight, 1.0f, 0.0f));
 	baseScissor = vk::Rect2D(vk::Offset2D(0, 0), vk::Extent2D(upscaledWidth, upscaledHeight));
@@ -612,7 +627,7 @@ void OITTextureDrawer::EndFrame()
 vk::CommandBuffer OITScreenDrawer::NewFrame()
 {
 	MakeFramebuffers();
-	imageIndex = (imageIndex + 1) % GetContext()->GetSwapChainSize();
+	NewImage();
 	vk::CommandBuffer commandBuffer = commandPool->Allocate();
 	commandBuffer.begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));
 
