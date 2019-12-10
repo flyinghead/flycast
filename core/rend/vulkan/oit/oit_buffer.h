@@ -66,7 +66,7 @@ public:
 		abufferPointerAttachment.reset();
 		abufferPointerAttachment = std::unique_ptr<FramebufferAttachment>(
 				new FramebufferAttachment(context->GetPhysicalDevice(), context->GetDevice()));
-		abufferPointerAttachment->Init(width, height, vk::Format::eR32Uint, vk::ImageUsageFlagBits::eStorage);
+		abufferPointerAttachment->Init(maxWidth, maxHeight, vk::Format::eR32Uint, vk::ImageUsageFlagBits::eStorage);
 		abufferPointerTransitionNeeded = true;
 		firstFrameAfterInit = true;
 

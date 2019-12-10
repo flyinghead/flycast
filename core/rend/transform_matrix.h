@@ -84,7 +84,7 @@ public:
 
 			float startx = 0;
 			float starty = 0;
-
+#if 0
 			const bool vga = FB_R_CTRL.vclk_div == 1;
 			switch (SPG_LOAD.hcount)
 			{
@@ -119,7 +119,7 @@ public:
 			// some heuristic...
 			startx *= 0.8;
 			starty *= 1.1;
-
+#endif
 			normalMatrix = glm::translate(glm::vec3(startx, starty, 0));
 			scissorMatrix = normalMatrix;
 
