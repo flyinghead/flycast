@@ -223,14 +223,6 @@ pixelcvt_next(conv4444_PL,4,1)
 	//3,0
 	pb->prel(3,ARGB4444(p_in[3]));
 }
-pixelcvt_next(convBMP_PL,4,1)
-{
-	u16* p_in=(u16*)data;
-	pb->prel(0,ARGB4444(p_in[0]));
-	pb->prel(1,ARGB4444(p_in[1]));
-	pb->prel(2,ARGB4444(p_in[2]));
-	pb->prel(3,ARGB4444(p_in[3]));
-}
 pixelcvt_end;
 
 // 32-bit pixel buffer
@@ -348,14 +340,6 @@ pixelcvt_next(conv4444_TW,2,2)
 	//1,0
 	pb->prel(1,0,ARGB4444(p_in[2]));
 	//1,1
-	pb->prel(1,1,ARGB4444(p_in[3]));
-}
-pixelcvt_next(convBMP_TW,2,2)
-{
-	u16* p_in=(u16*)data;
-	pb->prel(0,0,ARGB4444(p_in[0]));
-	pb->prel(0,1,ARGB4444(p_in[1]));
-	pb->prel(1,0,ARGB4444(p_in[2]));
 	pb->prel(1,1,ARGB4444(p_in[3]));
 }
 pixelcvt_end;
@@ -562,14 +546,12 @@ template void texture_PL<conv565_PL<pp_565>, u16>(PixelBuffer<u16>* pb,u8* p_in,
 template void texture_PL<conv1555_PL<pp_565>, u16>(PixelBuffer<u16>* pb,u8* p_in,u32 Width,u32 Height);
 template void texture_PL<conv4444_PL<pp_565>, u16>(PixelBuffer<u16>* pb,u8* p_in,u32 Width,u32 Height);
 template void texture_PL<convYUV_PL<pp_8888>, u32>(PixelBuffer<u32>* pb,u8* p_in,u32 Width,u32 Height);
-template void texture_PL<convBMP_PL<pp_565>, u16>(PixelBuffer<u16>* pb,u8* p_in,u32 Width,u32 Height);
 
 //twiddled formats !
 template void texture_TW<conv565_TW<pp_565>, u16>(PixelBuffer<u16>* pb,u8* p_in,u32 Width,u32 Height);
 template void texture_TW<conv1555_TW<pp_565>, u16>(PixelBuffer<u16>* pb,u8* p_in,u32 Width,u32 Height);
 template void texture_TW<conv4444_TW<pp_565>, u16>(PixelBuffer<u16>* pb,u8* p_in,u32 Width,u32 Height);
 template void texture_TW<convYUV_TW<pp_8888>, u32>(PixelBuffer<u32>* pb,u8* p_in,u32 Width,u32 Height);
-template void texture_TW<convBMP_TW<pp_565>, u16>(PixelBuffer<u16>* pb,u8* p_in,u32 Width,u32 Height);
 
 template void texture_TW<convPAL4_TW<pp_565, u16>, u16>(PixelBuffer<u16>* pb,u8* p_in,u32 Width,u32 Height);
 template void texture_TW<convPAL8_TW<pp_565, u16>, u16>(PixelBuffer<u16>* pb,u8* p_in,u32 Width,u32 Height);
@@ -581,14 +563,13 @@ template void texture_VQ<conv565_TW<pp_565>, u16>(PixelBuffer<u16>* pb,u8* p_in,
 template void texture_VQ<conv1555_TW<pp_565>, u16>(PixelBuffer<u16>* pb,u8* p_in,u32 Width,u32 Height);
 template void texture_VQ<conv4444_TW<pp_565>, u16>(PixelBuffer<u16>* pb,u8* p_in,u32 Width,u32 Height);
 template void texture_VQ<convYUV_TW<pp_8888>, u32>(PixelBuffer<u32>* pb,u8* p_in,u32 Width,u32 Height);
-template void texture_VQ<convBMP_TW<pp_565>, u16>(PixelBuffer<u16>* pb,u8* p_in,u32 Width,u32 Height);
 
 //Planar
 #define tex565_PL texture_PL<conv565_PL<pp_565>, u16>
 #define tex1555_PL texture_PL<conv1555_PL<pp_565>, u16>
 #define tex4444_PL texture_PL<conv4444_PL<pp_565>, u16>
 #define texYUV422_PL texture_PL<convYUV_PL<pp_8888>, u32>
-#define texBMP_PL texture_PL<convBMP_PL<pp_565>, u16>
+#define texBMP_PL tex4444_PL
 
 #define tex565_PL32 texture_PL<conv565_PL32<pp_8888>, u32>
 #define tex1555_PL32 texture_PL<conv1555_PL32<pp_8888>, u32>
@@ -599,7 +580,7 @@ template void texture_VQ<convBMP_TW<pp_565>, u16>(PixelBuffer<u16>* pb,u8* p_in,
 #define tex1555_TW texture_TW<conv1555_TW<pp_565>, u16>
 #define tex4444_TW texture_TW<conv4444_TW<pp_565>, u16>
 #define texYUV422_TW texture_TW<convYUV_TW<pp_8888>, u32>
-#define texBMP_TW texture_TW<convBMP_TW<pp_565>, u16>
+#define texBMP_TW tex4444_TW
 #define texPAL4_TW texture_TW<convPAL4_TW<pp_565, u16>, u16>
 #define texPAL8_TW  texture_TW<convPAL8_TW<pp_565, u16>, u16>
 #define texPAL4_TW32 texture_TW<convPAL4_TW<pp_8888, u32>, u32>
@@ -614,7 +595,7 @@ template void texture_VQ<convBMP_TW<pp_565>, u16>(PixelBuffer<u16>* pb,u8* p_in,
 #define tex1555_VQ texture_VQ<conv1555_TW<pp_565>, u16>
 #define tex4444_VQ texture_VQ<conv4444_TW<pp_565>, u16>
 #define texYUV422_VQ texture_VQ<convYUV_TW<pp_8888>, u32>
-#define texBMP_VQ texture_VQ<convBMP_TW<pp_565>, u16>
+#define texBMP_VQ tex4444_VQ
 // According to the documentation, a texture cannot be compressed and use
 // a palette at the same time. However the hardware displays them
 // just fine.

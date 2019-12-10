@@ -403,7 +403,7 @@ static const PvrTexInfo format[8] =
 	{"565", 	16, TextureType::_565,         tex565_PL,	tex565_TW,   tex565_VQ, 	tex565_PL32,   tex565_TW32,   tex565_VQ32 },	//565
 	{"4444", 	16, TextureType::_4444,        tex4444_PL,	tex4444_TW,  tex4444_VQ, 	tex4444_PL32,  tex4444_TW32,  tex4444_VQ32 },	//4444
 	{"yuv", 	16, TextureType::_8888,        NULL, 		NULL, 		 NULL,			texYUV422_PL,  texYUV422_TW,  texYUV422_VQ },	//yuv
-	{"bumpmap", 16, TextureType::_4444,        texBMP_PL,	texBMP_TW,	 texBMP_VQ, 	NULL},											//bump map
+	{"bumpmap", 16, TextureType::_4444,        texBMP_PL,	texBMP_TW,	 texBMP_VQ, 	tex4444_PL32,  tex4444_TW32,  tex4444_VQ32 },   //bump map
 	{"pal4", 	4,	TextureType::_5551,		   0,			texPAL4_TW,  texPAL4_VQ, 	NULL, 		   texPAL4_TW32,  texPAL4_VQ32 },	//pal4
 	{"pal8", 	8,	TextureType::_5551,		   0,			texPAL8_TW,  texPAL8_VQ, 	NULL, 		   texPAL8_TW32,  texPAL8_VQ32 },	//pal8
 	{"ns/1555", 0},																														// Not supported (1555)
