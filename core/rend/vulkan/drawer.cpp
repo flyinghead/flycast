@@ -152,6 +152,33 @@ void BaseDrawer::SetBaseScissor()
 	currentScissor = { 0, 0, 0, 0 };
 }
 
+// Vulkan uses the color values of the first vertex for flat shaded triangle strips.
+// On Dreamcast the last vertex is the provoking one so we must copy it onto the first.
+void BaseDrawer::SetProvokingVertices()
+{
+	auto setProvokingVertex = [](const List<PolyParam>& list) {
+		for (int i = 0; i < list.used(); i++)
+		{
+			const PolyParam& pp = list.head()[i];
+			if (!pp.pcw.Gouraud && pp.count > 2)
+			{
+				for (int i = 0; i < pp.count - 2; i++)
+				{
+					Vertex *vertex = &pvrrc.verts.head()[pvrrc.idx.head()[pp.first + i]];
+					Vertex *lastVertex = &pvrrc.verts.head()[pvrrc.idx.head()[pp.first + i + 2]];
+					memcpy(vertex->col, lastVertex->col, 4);
+					memcpy(vertex->spc, lastVertex->spc, 4);
+					memcpy(vertex->col1, lastVertex->col1, 4);
+					memcpy(vertex->spc1, lastVertex->spc1, 4);
+				}
+			}
+		}
+	};
+	setProvokingVertex(pvrrc.global_param_op);
+	setProvokingVertex(pvrrc.global_param_pt);
+	setProvokingVertex(pvrrc.global_param_tr);
+}
+
 void Drawer::DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sortTriangles, const PolyParam& poly, u32 first, u32 count)
 {
 	vk::Rect2D scissorRect;
@@ -330,6 +357,8 @@ bool Drawer::Draw(const Texture *fogTexture)
 	currentScissor = vk::Rect2D();
 
 	vk::CommandBuffer cmdBuffer = BeginRenderPass();
+
+	SetProvokingVertices();
 
 	// Upload vertex and index buffers
 	UploadMainBuffer(vtxUniforms, fragUniforms);
@@ -530,10 +559,18 @@ void TextureDrawer::EndRenderPass()
 {
 	currentCommandBuffer.endRenderPass();
 
+	u32 clippedWidth = pvrrc.fb_X_CLIP.max - pvrrc.fb_X_CLIP.min + 1;
+	u32 clippedHeight = pvrrc.fb_Y_CLIP.max - pvrrc.fb_Y_CLIP.min + 1;
+
+	u32 stride = FB_W_LINESTRIDE.stride * 8;
+	if (clippedWidth * 2 > stride)
+		// Happens for Virtua Tennis
+		clippedWidth = stride / 2;
+
 	if (settings.rend.RenderToTextureBuffer)
 	{
-		vk::BufferImageCopy copyRegion(0, width, height, vk::ImageSubresourceLayers(vk::ImageAspectFlagBits::eColor, 0, 0, 1), vk::Offset3D(0, 0, 0),
-				vk::Extent3D(vk::Extent2D(width, height), 1));
+		vk::BufferImageCopy copyRegion(0, clippedWidth, clippedHeight, vk::ImageSubresourceLayers(vk::ImageAspectFlagBits::eColor, 0, 0, 1), vk::Offset3D(0, 0, 0),
+				vk::Extent3D(vk::Extent2D(clippedWidth, clippedHeight), 1));
 		currentCommandBuffer.copyImageToBuffer(colorAttachment->GetImage(), vk::ImageLayout::eTransferSrcOptimal,
 				*colorAttachment->GetBufferData()->buffer, copyRegion);
 
@@ -561,9 +598,9 @@ void TextureDrawer::EndRenderPass()
 		u16 *dst = (u16 *)&vram[textureAddr];
 
 		PixelBuffer<u32> tmpBuf;
-		tmpBuf.init(width, height);
-		colorAttachment->GetBufferData()->download(width * height * 4, tmpBuf.data());
-		WriteTextureToVRam(width, height, (u8 *)tmpBuf.data(), dst);
+		tmpBuf.init(clippedWidth, clippedHeight);
+		colorAttachment->GetBufferData()->download(clippedWidth * clippedHeight * 4, tmpBuf.data());
+		WriteTextureToVRam(clippedWidth, clippedHeight, (u8 *)tmpBuf.data(), dst);
 
 		return;
 	}

@@ -30,6 +30,9 @@ void setImageLayout(vk::CommandBuffer const& commandBuffer, vk::Image image, vk:
 	case vk::ImageLayout::eTransferDstOptimal:
 		sourceAccessMask = vk::AccessFlagBits::eTransferWrite;
 		break;
+	case vk::ImageLayout::eTransferSrcOptimal:
+		sourceAccessMask = vk::AccessFlagBits::eTransferRead;
+		break;
 	case vk::ImageLayout::ePreinitialized:
 		sourceAccessMask = vk::AccessFlagBits::eHostWrite;
 		break;
@@ -52,6 +55,7 @@ void setImageLayout(vk::CommandBuffer const& commandBuffer, vk::Image image, vk:
 		sourceStage = vk::PipelineStageFlagBits::eHost;
 		break;
 	case vk::ImageLayout::eTransferDstOptimal:
+	case vk::ImageLayout::eTransferSrcOptimal:
 		sourceStage = vk::PipelineStageFlagBits::eTransfer;
 		break;
 	case vk::ImageLayout::eUndefined:
@@ -176,7 +180,7 @@ void Texture::Init(u32 width, u32 height, vk::Format format)
 	this->extent = vk::Extent2D(width, height);
 	this->format = format;
 	mipmapLevels = 1;
-	if (tcw.MipMapped)
+	if (tcw.MipMapped && settings.rend.UseMipmaps)
 		mipmapLevels += floor(log2(std::max(width, height)));
 
 	vk::FormatProperties formatProperties = physicalDevice.getFormatProperties(format);

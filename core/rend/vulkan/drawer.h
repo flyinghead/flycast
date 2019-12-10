@@ -46,6 +46,7 @@ protected:
 	VulkanContext *GetContext() const { return VulkanContext::Instance(); }
 	TileClipping SetTileClip(u32 val, vk::Rect2D& clipRect);
 	void SetBaseScissor();
+	void SetProvokingVertices();
 
 	u32 align(vk::DeviceSize offset, u32 alignment)
 	{

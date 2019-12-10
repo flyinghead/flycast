@@ -258,6 +258,8 @@ bool OITDrawer::Draw(const Texture *fogTexture)
 
 	oitBuffers->OnNewFrame(cmdBuffer);
 
+	SetProvokingVertices();
+
 	// Upload vertex and index buffers
 	UploadMainBuffer(vtxUniforms, fragUniforms);
 
@@ -578,11 +580,19 @@ void OITTextureDrawer::EndFrame()
 {
 	currentCommandBuffer.endRenderPass();
 
+	u32 clippedWidth = pvrrc.fb_X_CLIP.max - pvrrc.fb_X_CLIP.min + 1;
+	u32 clippedHeight = pvrrc.fb_Y_CLIP.max - pvrrc.fb_Y_CLIP.min + 1;
+
+	u32 stride = FB_W_LINESTRIDE.stride * 8;
+	if (clippedWidth * 2 > stride)
+		// Happens for Virtua Tennis
+		clippedWidth = stride / 2;
+
 	if (settings.rend.RenderToTextureBuffer)
 	{
-		vk::BufferImageCopy copyRegion(0, viewport.extent.width, viewport.extent.height,
+		vk::BufferImageCopy copyRegion(0, clippedWidth, clippedHeight,
 				vk::ImageSubresourceLayers(vk::ImageAspectFlagBits::eColor, 0, 0, 1), vk::Offset3D(0, 0, 0),
-				vk::Extent3D(viewport.extent, 1));
+				vk::Extent3D(clippedWidth, clippedHeight, 1));
 		currentCommandBuffer.copyImageToBuffer(colorAttachment->GetImage(), vk::ImageLayout::eTransferSrcOptimal,
 				*colorAttachment->GetBufferData()->buffer, copyRegion);
 
@@ -611,9 +621,9 @@ void OITTextureDrawer::EndFrame()
 		u16 *dst = (u16 *)&vram[textureAddr];
 
 		PixelBuffer<u32> tmpBuf;
-		tmpBuf.init(viewport.extent.width, viewport.extent.height);
-		colorAttachment->GetBufferData()->download(viewport.extent.width * viewport.extent.height * 4, tmpBuf.data());
-		WriteTextureToVRam(viewport.extent.width, viewport.extent.height, (u8 *)tmpBuf.data(), dst);
+		tmpBuf.init(clippedWidth, clippedHeight);
+		colorAttachment->GetBufferData()->download(clippedWidth * clippedHeight * 4, tmpBuf.data());
+		WriteTextureToVRam(clippedWidth, clippedHeight, (u8 *)tmpBuf.data(), dst);
 
 		return;
 	}

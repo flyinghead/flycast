@@ -80,30 +80,6 @@ public:
 			compileTrModVolFragmentShader(mode);
 		return *trModVolShaders[(size_t)mode];
 	}
-//	vk::ShaderModule GetQuadVertexShader()
-//	{
-//		if (!quadVertexShader)
-//			quadVertexShader = compileQuadVertexShader();
-//		return *quadVertexShader;
-//	}
-//	vk::ShaderModule GetQuadFragmentShader()
-//	{
-//		if (!quadFragmentShader)
-//			quadFragmentShader = compileQuadFragmentShader();
-//		return *quadFragmentShader;
-//	}
-//	vk::ShaderModule GetOSDVertexShader()
-//	{
-//		if (!osdVertexShader)
-//			osdVertexShader = compileOSDVertexShader();
-//		return *osdVertexShader;
-//	}
-//	vk::ShaderModule GetOSDFragmentShader()
-//	{
-//		if (!osdFragmentShader)
-//			osdFragmentShader = compileOSDFragmentShader();
-//		return *osdFragmentShader;
-//	}
 
 	vk::ShaderModule GetFinalShader(bool autosort)
 	{
@@ -148,10 +124,6 @@ private:
 	vk::UniqueShaderModule compileModVolVertexShader();
 	vk::UniqueShaderModule compileModVolFragmentShader();
 	void compileTrModVolFragmentShader(ModVolMode mode);
-//	vk::UniqueShaderModule compileQuadVertexShader();
-//	vk::UniqueShaderModule compileQuadFragmentShader();
-//	vk::UniqueShaderModule compileOSDVertexShader();
-//	vk::UniqueShaderModule compileOSDFragmentShader();
 	vk::UniqueShaderModule compileFinalShader(bool autosort);
 	vk::UniqueShaderModule compileFinalVertexShader();
 	vk::UniqueShaderModule compileClearShader();
@@ -161,10 +133,6 @@ private:
 	vk::UniqueShaderModule modVolVertexShader;
 	vk::UniqueShaderModule modVolShader;
 	std::vector<vk::UniqueShaderModule> trModVolShaders;
-//	vk::UniqueShaderModule quadVertexShader;
-//	vk::UniqueShaderModule quadFragmentShader;
-//	vk::UniqueShaderModule osdVertexShader;
-//	vk::UniqueShaderModule osdFragmentShader;
 
 	vk::UniqueShaderModule finalVertexShader;
 	vk::UniqueShaderModule finalAutosortShader;
