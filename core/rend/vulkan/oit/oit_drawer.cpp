@@ -284,6 +284,10 @@ bool OITDrawer::Draw(const Texture *fogTexture)
 	cmdBuffer.bindVertexBuffers(0, 1, &mainBuffer, zeroOffset);
 	cmdBuffer.bindIndexBuffer(mainBuffer, offsets.indexOffset, vk::IndexType::eUint32);
 
+	// Make sure to push constants even if not used
+	OITDescriptorSets::PushConstants pushConstants = { };
+	cmdBuffer.pushConstants<OITDescriptorSets::PushConstants>(pipelineManager->GetPipelineLayout(), vk::ShaderStageFlagBits::eFragment, 0, pushConstants);
+
 	const std::array<vk::ClearValue, 3> clear_colors = {
 			vk::ClearColorValue(std::array<float, 4>{0.f, 0.f, 0.f, 1.f}),
 			vk::ClearColorValue(std::array<float, 4>{0.f, 0.f, 0.f, 1.f}),

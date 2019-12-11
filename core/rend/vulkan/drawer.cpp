@@ -375,6 +375,10 @@ bool Drawer::Draw(const Texture *fogTexture)
 	cmdBuffer.bindVertexBuffers(0, 1, &buffer, zeroOffset);
 	cmdBuffer.bindIndexBuffer(buffer, offsets.indexOffset, vk::IndexType::eUint32);
 
+	// Make sure to push constants even if not used
+	std::array<float, 5> pushConstants = { 0, 0, 0, 0, 0 };
+	cmdBuffer.pushConstants<float>(pipelineManager->GetPipelineLayout(), vk::ShaderStageFlagBits::eFragment, 0, pushConstants);
+
 	RenderPass previous_pass = {};
     for (int render_pass = 0; render_pass < pvrrc.render_passes.used(); render_pass++)
     {
