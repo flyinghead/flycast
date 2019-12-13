@@ -506,14 +506,21 @@ sh4op(i1111_nnmm_1110_1101)
 	int m=(GetN(op)&0x3)<<2;
 	if(fpscr.PR ==0)
 	{
-		float idp;
-		idp=fr[n+0]*fr[m+0];
-		idp+=fr[n+1]*fr[m+1];
-		idp+=fr[n+2]*fr[m+2];
-		idp+=fr[n+3]*fr[m+3];
+#if HOST_CPU == CPU_X86 || HOST_CPU == CPU_X64
+		double idp = (double)fr[n + 0] * fr[m + 0];
+		idp += (double)fr[n + 1] * fr[m + 1];
+		idp += (double)fr[n + 2] * fr[m + 2];
+		idp += (double)fr[n + 3] * fr[m + 3];
+		float rv = (float)idp;
+#else
+		float rv = fr[n + 0] * fr[m + 0];
+		rv += fr[n + 1] * fr[m + 1];
+		rv += fr[n + 2] * fr[m + 2];
+		rv += fr[n + 3] * fr[m + 3];
+#endif
 
-		CHECK_FPU_32(idp);
-		fr[n+3]=idp;
+		CHECK_FPU_32(rv);
+		fr[n + 3] = rv;
 	}
 	else
 	{

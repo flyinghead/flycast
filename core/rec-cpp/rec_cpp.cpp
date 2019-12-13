@@ -1568,8 +1568,6 @@ public:
 		if (smc_checks)
 		{
 			opcodeExec* op;
-			int check_size = block->sh4_code_size;
-
 			switch (block->sh4_code_size)
 			{
 			case 4:

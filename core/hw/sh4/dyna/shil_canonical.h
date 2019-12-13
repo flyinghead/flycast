@@ -914,18 +914,33 @@ shil_opc_end()
 
 //shop_fipr
 shil_opc(fipr)
+
+#if HOST_CPU == CPU_X86 || HOST_CPU == CPU_X64
 shil_canonical
 (
 f32,f1,(float* fn, float* fm),
-	float idp;
 
-	idp=fn[0]*fm[0];
+	// Using double for better precision on x86 (Sonic Adventure)
+	double idp = (double)fn[0] * fm[0];
+	idp += (double)fn[1] * fm[1];
+	idp += (double)fn[2] * fm[2];
+	idp += (double)fn[3] * fm[3];
+
+	return fixNaN((float)idp);
+)
+#else
+shil_canonical
+(
+f32,f1,(float* fn, float* fm),
+
+	float idp = fn[0] * fm[0];
 	idp+=fn[1]*fm[1];
 	idp+=fn[2]*fm[2];
 	idp+=fn[3]*fm[3];
 
 	return fixNaN(idp);
 )
+#endif
 
 shil_compile
 (

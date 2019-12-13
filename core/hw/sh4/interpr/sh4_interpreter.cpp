@@ -62,17 +62,13 @@ void Sh4_int_Run()
 void Sh4_int_Stop()
 {
 	if (sh4_int_bCpuRun)
-	{
 		sh4_int_bCpuRun=false;
-	}
 }
 
 void Sh4_int_Start()
 {
 	if (!sh4_int_bCpuRun)
-	{
 		sh4_int_bCpuRun=true;
-	}
 }
 
 void Sh4_int_Step()
@@ -92,13 +88,9 @@ void Sh4_int_Step()
 void Sh4_int_Skip()
 {
 	if (sh4_int_bCpuRun)
-	{
 		WARN_LOG(INTERPRETER, "Sh4 Is running, can't Skip");
-	}
 	else
-	{
-		next_pc+=2;
-	}
+		next_pc += 2;
 }
 
 void Sh4_int_Reset(bool hard)

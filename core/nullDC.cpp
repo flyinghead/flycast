@@ -796,7 +796,9 @@ void LoadSettings(bool game_specific)
 	settings.rend.WidescreenGameHacks = cfgLoadBool(config_section, "rend.WidescreenGameHacks", settings.rend.WidescreenGameHacks);
 
 	settings.pvr.ta_skip			= cfgLoadInt(config_section, "ta.skip", settings.pvr.ta_skip);
-	settings.pvr.rend				= cfgLoadInt(config_section, "pvr.rend", settings.pvr.rend);
+	if (!game_specific)
+		// crashes if switching gl <-> vulkan
+		settings.pvr.rend				= cfgLoadInt(config_section, "pvr.rend", settings.pvr.rend);
 
 	settings.pvr.MaxThreads		    = cfgLoadInt(config_section, "pvr.MaxThreads", settings.pvr.MaxThreads);
 	settings.pvr.SynchronousRender	= cfgLoadBool(config_section, "pvr.SynchronousRendering", settings.pvr.SynchronousRender);
