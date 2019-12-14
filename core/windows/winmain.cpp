@@ -368,28 +368,35 @@ LRESULT CALLBACK WndProc2(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 }
 
 static HWND hWnd;
+static bool windowClassRegistered;
+static int window_x, window_y;
 
 void os_CreateWindow()
 {
-	WNDCLASS sWC;
-	sWC.style = CS_HREDRAW | CS_VREDRAW;
-	sWC.lpfnWndProc = WndProc2;
-	sWC.cbClsExtra = 0;
-	sWC.cbWndExtra = 0;
-	sWC.hInstance = (HINSTANCE)GetModuleHandle(0);
-	sWC.hIcon = 0;
-	sWC.hCursor = LoadCursor(NULL, IDC_ARROW);
-	sWC.lpszMenuName = 0;
-	sWC.hbrBackground = (HBRUSH) GetStockObject(WHITE_BRUSH);
-	sWC.lpszClassName = WINDOW_CLASS;
-	screen_width = cfgLoadInt("windows", "width", DEFAULT_WINDOW_WIDTH);
-	screen_height = cfgLoadInt("windows", "height", DEFAULT_WINDOW_HEIGHT);
-	window_maximized = cfgLoadBool("windows", "maximized", false);
-
-	ATOM registerClass = RegisterClass(&sWC);
-	if (!registerClass)
+	if (hWnd != NULL)
+		return;
+	HINSTANCE hInstance = (HINSTANCE)GetModuleHandle(0);
+	if (!windowClassRegistered)
 	{
-		MessageBox(0, ("Failed to register the window class"), ("Error"), MB_OK | MB_ICONEXCLAMATION);
+		WNDCLASS sWC;
+		sWC.style = CS_HREDRAW | CS_VREDRAW;
+		sWC.lpfnWndProc = WndProc2;
+		sWC.cbClsExtra = 0;
+		sWC.cbWndExtra = 0;
+		sWC.hInstance = hInstance;
+		sWC.hIcon = 0;
+		sWC.hCursor = LoadCursor(NULL, IDC_ARROW);
+		sWC.lpszMenuName = 0;
+		sWC.hbrBackground = (HBRUSH) GetStockObject(WHITE_BRUSH);
+		sWC.lpszClassName = WINDOW_CLASS;
+		ATOM registerClass = RegisterClass(&sWC);
+		if (!registerClass)
+			MessageBox(0, "Failed to register the window class", "Error", MB_OK | MB_ICONEXCLAMATION);
+		else
+			windowClassRegistered = true;
+		screen_width = cfgLoadInt("windows", "width", DEFAULT_WINDOW_WIDTH);
+		screen_height = cfgLoadInt("windows", "height", DEFAULT_WINDOW_HEIGHT);
+		window_maximized = cfgLoadBool("windows", "maximized", false);
 	}
 
 	// Create the eglWindow
@@ -397,8 +404,28 @@ void os_CreateWindow()
 	SetRect(&sRect, 0, 0, screen_width, screen_height);
 	AdjustWindowRectEx(&sRect, WS_OVERLAPPEDWINDOW, false, 0);
 
-	hWnd = CreateWindow( WINDOW_CLASS, VER_FULLNAME, WS_VISIBLE | WS_OVERLAPPEDWINDOW | (window_maximized ? WS_MAXIMIZE : 0),
-		0, 0, sRect.right-sRect.left, sRect.bottom-sRect.top, NULL, NULL, sWC.hInstance, NULL);
+	hWnd = CreateWindow(WINDOW_CLASS, VER_FULLNAME, WS_VISIBLE | WS_OVERLAPPEDWINDOW | (window_maximized ? WS_MAXIMIZE : 0),
+			window_x, window_y, sRect.right - sRect.left, sRect.bottom - sRect.top, NULL, NULL, hInstance, NULL);
+#ifdef USE_VULKAN
+	theVulkanContext.SetWindow((void *)hWnd, (void *)GetDC((HWND)hWnd));
+#endif
+	theGLContext.SetWindow(hWnd);
+	theGLContext.SetDeviceContext(GetDC(hWnd));
+}
+
+void DestroyWindow()
+{
+	if (hWnd)
+	{
+		WINDOWPLACEMENT placement;
+		placement.length = sizeof(WINDOWPLACEMENT);
+		GetWindowPlacement(hWnd, &placement);
+		window_maximized = placement.showCmd == SW_SHOWMAXIMIZED;
+		window_x = placement.rcNormalPosition.left;
+		window_y = placement.rcNormalPosition.top;
+		DestroyWindow(hWnd);
+		hWnd = NULL;
+	}
 }
 
 void* libPvr_GetRenderTarget()
@@ -712,11 +739,6 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 		#ifdef _WIN64
 			setup_seh();
 		#endif
-#ifdef USE_VULKAN
-		theVulkanContext.SetWindow((void *)hWnd, (void *)GetDC((HWND)hWnd));
-#endif
-		theGLContext.SetWindow(hWnd);
-		theGLContext.SetDeviceContext(GetDC(hWnd));
 		InitRenderApi();
 
 		rend_thread(NULL);

@@ -36,50 +36,57 @@ public:
 	bool Init() override
 	{
 		DEBUG_LOG(RENDERER, "OITVulkanRenderer::Init");
-		texCommandPool.Init();
+		try {
+			texCommandPool.Init();
 
-		oitBuffers.Init(0, 0);
-		textureDrawer.Init(&samplerManager, &shaderManager, &textureCache, &oitBuffers);
-		textureDrawer.SetCommandPool(&texCommandPool);
+			oitBuffers.Init(0, 0);
+			textureDrawer.Init(&samplerManager, &shaderManager, &textureCache, &oitBuffers);
+			textureDrawer.SetCommandPool(&texCommandPool);
 
-		screenDrawer.Init(&samplerManager, &shaderManager, &oitBuffers);
-		screenDrawer.SetCommandPool(&texCommandPool);
-		quadBuffer = std::unique_ptr<QuadBuffer>(new QuadBuffer());
+			screenDrawer.Init(&samplerManager, &shaderManager, &oitBuffers);
+			screenDrawer.SetCommandPool(&texCommandPool);
+			quadBuffer = std::unique_ptr<QuadBuffer>(new QuadBuffer());
 
 #ifdef __ANDROID__
-		if (!vjoyTexture)
-		{
-			int w, h;
-			u8 *image_data = loadPNGData(get_readonly_data_path(DATA_PATH "buttons.png"), w, h);
-			if (image_data == nullptr)
+			if (!vjoyTexture)
 			{
-				WARN_LOG(RENDERER, "Cannot load buttons.png image");
+				int w, h;
+				u8 *image_data = loadPNGData(get_readonly_data_path(DATA_PATH "buttons.png"), w, h);
+				if (image_data == nullptr)
+				{
+					WARN_LOG(RENDERER, "Cannot load buttons.png image");
+				}
+				else
+				{
+					texCommandPool.BeginFrame();
+					vjoyTexture = std::unique_ptr<Texture>(new Texture());
+					vjoyTexture->tex_type = TextureType::_8888;
+					vjoyTexture->tcw.full = 0;
+					vjoyTexture->tsp.full = 0;
+					vjoyTexture->SetPhysicalDevice(GetContext()->GetPhysicalDevice());
+					vjoyTexture->SetDevice(GetContext()->GetDevice());
+					vjoyTexture->SetCommandBuffer(texCommandPool.Allocate());
+					vjoyTexture->UploadToGPU(OSD_TEX_W, OSD_TEX_H, image_data);
+					vjoyTexture->SetCommandBuffer(nullptr);
+					texCommandPool.EndFrame();
+					delete [] image_data;
+					osdPipeline.Init(&normalShaderManager, vjoyTexture->GetImageView(), GetContext()->GetRenderPass());
+				}
 			}
-			else
+			if (!osdBuffer)
 			{
-				texCommandPool.BeginFrame();
-				vjoyTexture = std::unique_ptr<Texture>(new Texture());
-				vjoyTexture->tex_type = TextureType::_8888;
-				vjoyTexture->tcw.full = 0;
-				vjoyTexture->tsp.full = 0;
-				vjoyTexture->SetPhysicalDevice(GetContext()->GetPhysicalDevice());
-				vjoyTexture->SetDevice(GetContext()->GetDevice());
-				vjoyTexture->SetCommandBuffer(texCommandPool.Allocate());
-				vjoyTexture->UploadToGPU(OSD_TEX_W, OSD_TEX_H, image_data);
-				vjoyTexture->SetCommandBuffer(nullptr);
-				texCommandPool.EndFrame();
-				delete [] image_data;
-				osdPipeline.Init(&normalShaderManager, vjoyTexture->GetImageView(), GetContext()->GetRenderPass());
+				osdBuffer = std::unique_ptr<BufferData>(new BufferData(sizeof(OSDVertex) * VJOY_VISIBLE * 4,
+										vk::BufferUsageFlagBits::eVertexBuffer));
 			}
-		}
-		if (!osdBuffer)
-		{
-			osdBuffer = std::unique_ptr<BufferData>(new BufferData(sizeof(OSDVertex) * VJOY_VISIBLE * 4,
-									vk::BufferUsageFlagBits::eVertexBuffer));
-		}
 #endif
 
-		return true;
+			return true;
+		}
+		catch (const vk::SystemError& err)
+		{
+			ERROR_LOG(RENDERER, "Vulkan error: %s", err.what());
+		}
+		return false;
 	}
 
 	void Resize(int w, int h) override

@@ -149,7 +149,7 @@ private:
 	vk::DeviceSize uniformBufferAlignment = 0;
 	vk::DeviceSize storageBufferAlignment = 0;
 	u32 maxStorageBufferRange = 0;
-	vk::DeviceSize maxMemoryAllocationSize = 0;
+	vk::DeviceSize maxMemoryAllocationSize = 0xFFFFFFFFu;
 	bool optimalTilingSupported565 = false;
 	bool optimalTilingSupported1555 = false;
 	bool optimalTilingSupported4444 = false;

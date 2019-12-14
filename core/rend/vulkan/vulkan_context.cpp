@@ -143,6 +143,15 @@ bool VulkanContext::InitInstance(const char** extensions, uint32_t extensions_co
 		for (int i = 0; i < extensions_count; i++)
 			vext.push_back(extensions[i]);
 
+		bool getProperties2KHRSupported = false;
+		for (const auto& property : vk::enumerateInstanceExtensionProperties())
+			if (!strcmp(property.extensionName, "VK_KHR_get_physical_device_properties2"))
+			{
+				getProperties2KHRSupported = true;
+				vext.push_back("VK_KHR_get_physical_device_properties2");
+				break;
+			}
+
 		std::vector<const char *> layer_names;
 		//layer_names.push_back("VK_LAYER_ARM_AGA");
 #ifdef VK_DEBUG
@@ -183,27 +192,32 @@ bool VulkanContext::InitInstance(const char** extensions, uint32_t extensions_co
 		physicalDevice = instance->enumeratePhysicalDevices().front();
 
 		const vk::PhysicalDeviceProperties *properties;
-		if (vulkan11)
+		if (vulkan11 || getProperties2KHRSupported)
 		{
 			static vk::PhysicalDeviceProperties2 properties2;
 			vk::PhysicalDeviceMaintenance3Properties properties3;
 			properties2.pNext = &properties3;
-			physicalDevice.getProperties2(&properties2);
+			if (vulkan11)
+				physicalDevice.getProperties2(&properties2);
+			else
+				physicalDevice.getProperties2KHR(&properties2);
 			properties = &properties2.properties;
 			maxMemoryAllocationSize = properties3.maxMemoryAllocationSize;
+			if (maxMemoryAllocationSize == 0)
+				// Happens on Windows 7 with NVidia 376.33, ok on 441.66
+				maxMemoryAllocationSize = 0xFFFFFFFFu;
 		}
 		else
 		{
 			static vk::PhysicalDeviceProperties phyProperties;
 			physicalDevice.getProperties(&phyProperties);
-			maxMemoryAllocationSize = 0xFFFFFFFFu;
 			properties = &phyProperties;
 		}
 		uniformBufferAlignment = properties->limits.minUniformBufferOffsetAlignment;
 		storageBufferAlignment = properties->limits.minStorageBufferOffsetAlignment;
 		maxStorageBufferRange = properties->limits.maxStorageBufferRange;
 		unifiedMemory = properties->deviceType == vk::PhysicalDeviceType::eIntegratedGpu;
-		NOTICE_LOG(RENDERER, "Vulkan API %s Device %s", vulkan11 ? "1.1" : "1.0", properties->deviceName);
+		NOTICE_LOG(RENDERER, "Vulkan API %s. Device %s", vulkan11 ? "1.1" : "1.0", properties->deviceName);
 
 		vk::FormatProperties formatProperties = physicalDevice.getFormatProperties(vk::Format::eR5G5B5A1UnormPack16);
 		if ((formatProperties.optimalTilingFeatures & vk::FormatFeatureFlagBits::eSampledImage)
@@ -642,6 +656,7 @@ bool VulkanContext::Init()
 	std::vector<const char *> extensions;
 	extensions.push_back(VK_KHR_SURFACE_EXTENSION_NAME);
 #if defined(_WIN32)
+	os_CreateWindow();
 	extensions.push_back(VK_KHR_WIN32_SURFACE_EXTENSION_NAME);
 #elif defined(__MACH__)
 	extensions.push_back(VK_MVK_MACOS_SURFACE_EXTENSION_NAME);
