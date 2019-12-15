@@ -221,8 +221,7 @@ const u8 GDCartridge::DES_ROTATE_TABLE[16] = {
 
 void GDCartridge::permutate(u32 &a, u32 &b, u32 m, int shift)
 {
-	u32 temp;
-	temp = ((a>>shift) ^ b) & m;
+	u32 temp = ((a>>shift) ^ b) & m;
 	a ^= temp<<shift;
 	b ^= temp;
 }
@@ -311,7 +310,8 @@ void GDCartridge::des_generate_subkeys(const u64 key, u32 *subkeys)
 	}
 }
 
-u64 GDCartridge::des_encrypt_decrypt(bool decrypt, u64 src, const u32 *des_subkeys)
+template<bool decrypt>
+u64 GDCartridge::des_encrypt_decrypt(u64 src, const u32 *des_subkeys)
 {
 	u32 r = (src & 0x00000000ffffffffULL) >> 0;
 	u32 l = (src & 0xffffffff00000000ULL) >> 32;
@@ -389,22 +389,6 @@ u64 GDCartridge::rev64(u64 src)
 	return ret;
 }
 
-u64 GDCartridge::read_to_qword(const u8 *region)
-{
-	u64 ret = 0;
-
-	for(int i=0;i<8;i++)
-		ret |= u64(region[i]) << (56-(8*i));
-
-	return ret;
-}
-
-void GDCartridge::write_from_qword(u8 *region, u64 qword)
-{
-	for(int i=0;i<8;i++)
-		region[i] = qword >> (56-(i*8));
-}
-
 void GDCartridge::find_file(const char *name, const u8 *dir_sector, u32 &file_start, u32 &file_size)
 {
 	file_start = 0;
@@ -449,9 +433,9 @@ void GDCartridge::find_file(const char *name, const u8 *dir_sector, u32 &file_st
 	}
 }
 
-void GDCartridge::read_gdrom(Disc *gdrom, u32 sector, u8* dst)
+void GDCartridge::read_gdrom(Disc *gdrom, u32 sector, u8* dst, u32 count)
 {
-	gdrom->ReadSectors(sector + 150, 1, dst, 2048);
+	gdrom->ReadSectors(sector + 150, count, dst, 2048);
 }
 
 void GDCartridge::device_start()
@@ -567,7 +551,8 @@ void GDCartridge::device_start()
 
 		if (file_start) {
 			u32 file_rounded_size = (file_size + 2047) & -2048;
-			for (dimm_data_size = 4096; dimm_data_size < file_rounded_size; dimm_data_size <<= 1);
+			for (dimm_data_size = 4096; dimm_data_size < file_rounded_size; dimm_data_size <<= 1)
+				;
 			dimm_data = (u8 *)malloc(dimm_data_size);
 			verify(dimm_data != NULL);
 			if (dimm_data_size != file_rounded_size)
@@ -575,17 +560,16 @@ void GDCartridge::device_start()
 
 			// read encrypted data into dimm_data
 			u32 sectors = file_rounded_size / 2048;
-			for (u32 sec = 0; sec != sectors; sec++)
-				read_gdrom(gdrom, file_start + sec, dimm_data + 2048 * sec);
+			read_gdrom(gdrom, file_start, dimm_data, sectors);
 
+			// decrypt loaded data
 			u32 des_subkeys[32];
 			des_generate_subkeys(rev64(key), des_subkeys);
 
 			for (int i = 0; i < file_rounded_size; i += 8)
-				write_from_qword(dimm_data + i, rev64(des_encrypt_decrypt(true, rev64(read_to_qword(dimm_data + i)), des_subkeys)));
+				*(u64 *)(dimm_data + i) = des_encrypt_decrypt<true>(*(u64 *)(dimm_data + i), des_subkeys);
 		}
 
-		// decrypt loaded data
 		delete gdrom;
 
 		if (!dimm_data)
