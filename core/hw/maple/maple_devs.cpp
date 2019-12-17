@@ -204,20 +204,36 @@ struct maple_sega_controller: maple_base
 		return kcode | 0xF901;		// mask off DPad2, C, D and Z;
 	}
 
-	virtual u32 get_analog_axis(int index, const PlainJoystickState &pjs) {
-		switch (index)
+	virtual u32 get_analog_axis(int index, const PlainJoystickState &pjs)
+	{
+		if (index == 2 || index == 3)
 		{
-		case 0:
-			return pjs.trigger[PJTI_R];		// Right trigger
-		case 1:
-			return pjs.trigger[PJTI_L];		// Left trigger
-		case 2:
-			return pjs.joy[PJAI_X1];		// Stick X
-		case 3:
-			return pjs.joy[PJAI_Y1];		// Stick Y
-		default:
-			return 0x80;					// unused
+			// Limit the magnitude of the analog axes to 128
+			int xaxis = pjs.joy[PJAI_X1] - 128;
+			int yaxis = pjs.joy[PJAI_Y1] - 128;
+			float mag = xaxis * xaxis + yaxis * yaxis;
+			if (mag > 128.f * 128.f)
+			{
+				mag = sqrtf(mag) / 128.f;
+				if (index == 2)
+					return (u32)lroundf(xaxis / mag) + 128;
+				else
+					return (u32)lroundf(yaxis / mag) + 128;
+			}
+			else
+			{
+				if (index == 2)
+					return pjs.joy[PJAI_X1];
+				else
+					return pjs.joy[PJAI_Y1];
+			}
 		}
+		else if (index == 0)
+			return pjs.trigger[PJTI_R];		// Right trigger
+		else if (index == 1)
+			return pjs.trigger[PJTI_L];		// Left trigger
+		else
+			return 0x80;					// unused
 	}
 
 	virtual MapleDeviceType get_device_type()
