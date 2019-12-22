@@ -3,6 +3,9 @@
 #include "oslib.h"
 #include <initguid.h>
 #include <dsound.h>
+#ifdef USE_SDL
+#include "sdl/sdl.h"
+#endif
 
 #define verifyc(x) verify(!FAILED(x))
 
@@ -18,7 +21,11 @@ static void directsound_init()
 {
 	verifyc(DirectSoundCreate8(NULL,&dsound,NULL));
 
-	verifyc(dsound->SetCooperativeLevel((HWND)libPvr_GetRenderTarget(),DSSCL_PRIORITY));
+#ifdef USE_SDL
+	verifyc(dsound->SetCooperativeLevel(sdl_get_native_hwnd(), DSSCL_PRIORITY));
+#else
+	verifyc(dsound->SetCooperativeLevel((HWND)libPvr_GetRenderTarget(), DSSCL_PRIORITY));
+#endif
 	IDirectSoundBuffer* buffer_;
 
 	WAVEFORMATEX wfx;

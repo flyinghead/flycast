@@ -4,6 +4,7 @@
 #include "cfg/cfg.h"
 #include "linux-dist/main.h"
 #include "sdl/sdl.h"
+#include <SDL2/SDL_syswm.h>
 #endif
 #include "hw/maple/maple_devs.h"
 #include "sdl_gamepad.h"
@@ -245,6 +246,14 @@ void sdl_window_destroy()
 {
 	TermRenderApi();
 	SDL_DestroyWindow(window);
+}
+
+HWND sdl_get_native_hwnd()
+{
+	SDL_SysWMinfo wmInfo;
+	SDL_VERSION(&wmInfo.version);
+	SDL_GetWindowWMInfo(window, &wmInfo);
+	return wmInfo.info.win.window;
 }
 #endif
 

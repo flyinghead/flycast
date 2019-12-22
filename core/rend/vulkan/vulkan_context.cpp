@@ -669,7 +669,13 @@ bool VulkanContext::Init()
 {
 	std::vector<const char *> extensions;
 	extensions.push_back(VK_KHR_SURFACE_EXTENSION_NAME);
-#if defined(_WIN32)
+#if defined(USE_SDL)
+	sdl_recreate_window(SDL_WINDOW_VULKAN);
+    uint32_t extensionsCount = 0;
+    SDL_Vulkan_GetInstanceExtensions((SDL_Window *)window, &extensionsCount, NULL);
+    extensions.resize(extensionsCount + 1);
+    SDL_Vulkan_GetInstanceExtensions((SDL_Window *)window, &extensionsCount, &extensions[1]);
+#elif defined(_WIN32)
 	os_CreateWindow();
 	extensions.push_back(VK_KHR_WIN32_SURFACE_EXTENSION_NAME);
 #elif defined(__MACH__)
@@ -678,17 +684,15 @@ bool VulkanContext::Init()
 	extensions.push_back(VK_KHR_XLIB_SURFACE_EXTENSION_NAME);
 #elif defined(__ANDROID__)
 	extensions.push_back(VK_KHR_ANDROID_SURFACE_EXTENSION_NAME);
-#elif defined(USE_SDL)
-	sdl_recreate_window(SDL_WINDOW_VULKAN);
-    uint32_t extensionsCount = 0;
-    SDL_Vulkan_GetInstanceExtensions((SDL_Window *)window, &extensionsCount, NULL);
-    extensions.resize(extensionsCount + 1);
-    SDL_Vulkan_GetInstanceExtensions((SDL_Window *)window, &extensionsCount, &extensions[1]);
 #endif
 	if (!InitInstance(&extensions[0], extensions.size()))
 		return false;
 
-#if defined(_WIN32)
+#if defined(USE_SDL)
+    VkSurfaceKHR surface;
+    if (SDL_Vulkan_CreateSurface((SDL_Window *)window, *instance, (VkSurfaceKHR *)&this->surface) == 0)
+    	return false;
+#elif defined(_WIN32)
 	vk::Win32SurfaceCreateInfoKHR createInfo(vk::Win32SurfaceCreateFlagsKHR(), GetModuleHandle(NULL), (HWND)window);
 	surface = instance->createWin32SurfaceKHRUnique(createInfo);
 #elif defined(SUPPORT_X11)
@@ -697,10 +701,6 @@ bool VulkanContext::Init()
 #elif defined(__ANDROID__)
 	vk::AndroidSurfaceCreateInfoKHR createInfo(vk::AndroidSurfaceCreateFlagsKHR(), (struct ANativeWindow*)window);
 	surface = instance->createAndroidSurfaceKHRUnique(createInfo);
-#elif defined(USE_SDL)
-    VkSurfaceKHR surface;
-    if (SDL_Vulkan_CreateSurface((SDL_Window *)window, *instance, (VkSurfaceKHR *)&this->surface) == 0)
-    	return false;
 #endif
 
 	return InitDevice();

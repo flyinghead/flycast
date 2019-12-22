@@ -9,6 +9,9 @@
 #include "hw/sh4/dyna/blockmanager.h"
 #include "log/LogManager.h"
 #include "wsi/context.h"
+#if defined(USE_SDL)
+#include "sdl/sdl.h"
+#endif
 
 #define _WIN32_WINNT 0x0500
 #include <windows.h>
@@ -122,11 +125,15 @@ static std::shared_ptr<WinMouseGamepadDevice> mouse_gamepad;
 
 void os_SetupInput()
 {
+#if defined(USE_SDL)
+	input_sdl_init();
+#else
 	XInputGamepadDevice::CreateDevices();
 	kb_gamepad = std::make_shared<WinKbGamepadDevice>(0);
 	GamepadDevice::Register(kb_gamepad);
 	mouse_gamepad = std::make_shared<WinMouseGamepadDevice>(0);
 	GamepadDevice::Register(mouse_gamepad);
+#endif
 }
 
 LONG ExeptionHandler(EXCEPTION_POINTERS *ExceptionInfo)
@@ -216,6 +223,9 @@ void ToggleFullscreen();
 
 void UpdateInputState(u32 port)
 {
+#if defined(USE_SDL)
+	input_sdl_handle(port);
+#else
 	/*
 		 Disabled for now. Need new EMU_BTN_ANA_LEFT/RIGHT/.. virtual controller keys
 
@@ -234,6 +244,7 @@ void UpdateInputState(u32 port)
 	std::shared_ptr<XInputGamepadDevice> gamepad = XInputGamepadDevice::GetXInputDevice(port);
 	if (gamepad != NULL)
 		gamepad->ReadInput();
+#endif
 }
 
 // Windows class name to register
@@ -373,6 +384,9 @@ static int window_x, window_y;
 
 void os_CreateWindow()
 {
+#if defined(USE_SDL)
+	sdl_window_create();
+#else
 	if (hWnd != NULL)
 		return;
 	HINSTANCE hInstance = (HINSTANCE)GetModuleHandle(0);
@@ -411,6 +425,8 @@ void os_CreateWindow()
 #endif
 	theGLContext.SetWindow(hWnd);
 	theGLContext.SetDeviceContext(GetDC(hWnd));
+	InitRenderApi();
+#endif	// !USE_SDL
 }
 
 void DestroyWindow()
@@ -492,10 +508,14 @@ BOOL CtrlHandler( DWORD fdwCtrlType )
 
 void os_SetWindowText(const char* text)
 {
+#if defined(USE_SDL)
+	sdl_window_set_text(text);
+#else
 	if (GetWindowLong(hWnd, GWL_STYLE) & WS_BORDER)
 	{
 		SetWindowText(hWnd, text);
 	}
+#endif
 }
 
 void ReserveBottomMemory()
@@ -739,7 +759,6 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 		#ifdef _WIN64
 			setup_seh();
 		#endif
-		InitRenderApi();
 
 		rend_thread(NULL);
 

@@ -43,6 +43,16 @@ endif
 # Can be overridden by using:
 #   make platform=x64
 ifeq (,$(platform))
+    UNAME = $(shell uname -a)
+	ifeq ($(UNAME),)
+		platform = win32
+	else ifneq ($(findstring MINGW,$(UNAME)),)
+		platform = win32
+	else ifneq ($(findstring win,$(UNAME)),)
+		platform = win32
+	endif
+endif
+ifeq (,$(platform))
     ARCH = $(shell uname -m)
     ifeq ($(ARCH), $(filter $(ARCH), i386 i686))
         platform = x86
@@ -302,8 +312,13 @@ MENUENTRY_DIR ?= ${PREFIX}/share/applications
 ICON_DIR ?= ${PREFIX}/share/pixmaps
 
 ifdef USE_SDL
-    CXXFLAGS += `sdl2-config --cflags` -D USE_SDL
-    LIBS += `sdl2-config --libs`
+	ifdef FOR_WINDOWS
+	    CXXFLAGS += -D USE_SDL
+	    LIBS += -lsdl2.dll
+	else
+	    CXXFLAGS += `sdl2-config --cflags` -D USE_SDL
+	    LIBS += `sdl2-config --libs`
+	endif
 endif
 
 ifdef PGO_MAKE
