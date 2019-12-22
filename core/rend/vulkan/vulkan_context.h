@@ -26,6 +26,12 @@
 
 extern int screen_width, screen_height;
 
+#define VENDOR_AMD 0x1022
+#define VENDOR_ARM 0x13B5
+#define VENDOR_INTEL 0x8086
+#define VENDOR_NVIDIA 0x10DE
+#define VENDOR_QUALCOMM 0x5143
+
 class VulkanContext
 {
 public:
@@ -96,6 +102,7 @@ public:
 	bool IsUnifiedMemory() const { return unifiedMemory; }
 	u32 GetMaxStorageBufferRange() const { return maxStorageBufferRange; }
 	vk::DeviceSize GetMaxMemoryAllocationSize() const { return maxMemoryAllocationSize; }
+	u32 GetVendorID() const { return vendorID; }
 
 private:
 	vk::Format FindDepthFormat();
@@ -157,6 +164,7 @@ private:
 	bool samplerAnisotropy = false;
 	bool dedicatedAllocationSupported = false;
 	bool unifiedMemory = false;
+	u32 vendorID = 0;
 	vk::UniqueDevice device;
 
 #ifdef USE_SDL

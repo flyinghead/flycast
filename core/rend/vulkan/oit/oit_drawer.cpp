@@ -347,7 +347,8 @@ bool OITDrawer::Draw(const Texture *fogTexture)
 		if (!oitBuffers->isFirstFrameAfterInit())
 		{
 			// Tr modifier volumes
-			DrawModifierVolumes<true>(cmdBuffer, previous_pass.mvo_tr_count, current_pass.mvo_tr_count - previous_pass.mvo_tr_count);
+			if (!GetContext()->GetVendorID() != VENDOR_QUALCOMM)	// Adreno bug
+				DrawModifierVolumes<true>(cmdBuffer, previous_pass.mvo_tr_count, current_pass.mvo_tr_count - previous_pass.mvo_tr_count);
 
 			vk::Pipeline pipeline = pipelineManager->GetFinalPipeline(current_pass.autosort);
 			cmdBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline);

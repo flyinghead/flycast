@@ -614,7 +614,7 @@ vec4 resolveAlphaBlend(ivec2 coords) {
 	
 	vec4 finalColor = subpassLoad(tex);
 	vec4 secondaryBuffer = vec4(0.0); // Secondary accumulation buffer
-	float depth = 1.0;
+	float depth = 0.0;
 	
 	bool do_depth_test = false;
 	for (int i = 0; i < num_frag; i++)

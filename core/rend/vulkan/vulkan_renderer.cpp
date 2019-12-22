@@ -96,6 +96,9 @@ public:
 		DEBUG_LOG(RENDERER, "VulkanRenderer::Term");
 		GetContext()->WaitIdle();
 		quadBuffer = nullptr;
+		quadPipeline.Term();
+		osdBuffer.reset();
+		vjoyTexture.reset();
 		textureCache.Clear();
 		fogTexture = nullptr;
 		texCommandPool.Term();

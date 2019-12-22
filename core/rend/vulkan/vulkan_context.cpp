@@ -189,7 +189,20 @@ bool VulkanContext::InitInstance(const char** extensions, uint32_t extensions_co
 #endif
 #endif
 
-		physicalDevice = instance->enumeratePhysicalDevices().front();
+		// Choose a discrete gpu if there's one, otherwise just pick the first one
+		const auto devices = instance->enumeratePhysicalDevices();
+		for (const auto& phyDev : devices)
+		{
+			vk::PhysicalDeviceProperties props;
+			phyDev.getProperties(&props);
+			if (props.deviceType == vk::PhysicalDeviceType::eDiscreteGpu)
+			{
+				physicalDevice = phyDev;
+				break;
+			}
+		}
+		if (!physicalDevice)
+			physicalDevice = instance->enumeratePhysicalDevices().front();
 
 		const vk::PhysicalDeviceProperties *properties;
 		if (vulkan11 || getProperties2KHRSupported)
@@ -217,6 +230,7 @@ bool VulkanContext::InitInstance(const char** extensions, uint32_t extensions_co
 		storageBufferAlignment = properties->limits.minStorageBufferOffsetAlignment;
 		maxStorageBufferRange = properties->limits.maxStorageBufferRange;
 		unifiedMemory = properties->deviceType == vk::PhysicalDeviceType::eIntegratedGpu;
+		vendorID = properties->vendorID;
 		NOTICE_LOG(RENDERER, "Vulkan API %s. Device %s", vulkan11 ? "1.1" : "1.0", properties->deviceName);
 
 		vk::FormatProperties formatProperties = physicalDevice.getFormatProperties(vk::Format::eR5G5B5A1UnormPack16);

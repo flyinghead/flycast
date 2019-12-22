@@ -60,7 +60,8 @@ void OITPipelineManager::CreatePipeline(u32 listType, bool autosort, const PolyP
 	else
 		depthOp = depthOps[pp.isp.DepthMode];
 	bool depthWriteEnable;
-	if (pass != 0)
+	// FIXME temporary Intel driver bug workaround
+	if (pass != 0 && (GetContext()->GetVendorID() != VENDOR_INTEL || pass != 1))
 		depthWriteEnable = false;
 	// Z Write Disable seems to be ignored for punch-through.
 	// Fixes Worms World Party, Bust-a-Move 4 and Re-Volt

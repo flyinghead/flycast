@@ -67,6 +67,8 @@ protected:
 		quadBuffer.reset();
 		colorAttachments[0].reset();
 		colorAttachments[1].reset();
+		tempFramebuffers[0].reset();
+		tempFramebuffers[1].reset();
 		depthAttachment.reset();
 		mainBuffers.clear();
 		descriptorSets.clear();
@@ -205,6 +207,7 @@ public:
 	{
 		colorAttachment.reset();
 		framebuffers.clear();
+		rttPipelineManager.reset();
 		OITDrawer::Term();
 	}
 

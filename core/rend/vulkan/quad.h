@@ -71,7 +71,13 @@ class QuadPipeline
 {
 public:
 	void Init(ShaderManager *shaderManager, vk::RenderPass renderPass);
-
+	void Term() {
+		pipeline.reset();
+		sampler.reset();
+		descriptorSets.clear();
+		pipelineLayout.reset();
+		descSetLayout.reset();
+	}
 	vk::Pipeline GetPipeline()
 	{
 		if (!pipeline)
@@ -80,7 +86,6 @@ public:
 	}
 
 	void SetTexture(vk::ImageView imageView);
-
 	void BindDescriptorSets(vk::CommandBuffer cmdBuffer);
 
 private:
