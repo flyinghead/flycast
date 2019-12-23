@@ -558,8 +558,8 @@ void lzma_codec_free(void* codec)
 	lzma_codec_data* lzma_codec = (lzma_codec_data*) codec;
 
 	/* free memory */
-	lzma_allocator_free(&lzma_codec->allocator);
 	LzmaDec_Free(&lzma_codec->decoder, (ISzAlloc*)&lzma_codec->allocator);
+	lzma_allocator_free(&lzma_codec->allocator);
 }
 
 /*-------------------------------------------------
