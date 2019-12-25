@@ -23,6 +23,7 @@
 #include "vmallocator.h"
 #include "quad.h"
 #include "rend/TexCache.h"
+#include "vmu.h"
 
 extern int screen_width, screen_height;
 
@@ -50,7 +51,7 @@ public:
 	void SetWindowSize(u32 width, u32 height) { this->width = screen_width = width; this->height = screen_height = height; }
 	void NewFrame();
 	void BeginRenderPass();
-	void EndFrame();
+	void EndFrame(const std::vector<vk::UniqueCommandBuffer> *cmdBuffers = nullptr);
 	void Present();
 	void PresentFrame(vk::ImageView imageView, vk::Offset2D extent);
 	void PresentLastFrame();
@@ -103,6 +104,8 @@ public:
 	u32 GetMaxStorageBufferRange() const { return maxStorageBufferRange; }
 	vk::DeviceSize GetMaxMemoryAllocationSize() const { return maxMemoryAllocationSize; }
 	u32 GetVendorID() const { return vendorID; }
+	const std::vector<vk::UniqueCommandBuffer> *PrepareVMUs();
+	void DrawVMUs(float scaling);
 
 private:
 	vk::Format FindDepthFormat();
@@ -198,12 +201,14 @@ private:
 
 	vk::UniquePipelineCache pipelineCache;
 
-	std::unique_ptr<QuadBuffer> quadBuffer;
 	std::unique_ptr<QuadPipeline> quadPipeline;
+	std::unique_ptr<QuadDrawer> quadDrawer;
 	std::unique_ptr<ShaderManager> shaderManager;
 
 	vk::ImageView lastFrameView;
 	vk::Offset2D lastFrameExtent;
+
+	std::unique_ptr<VulkanVMUs> vmus;
 
 #ifdef VK_DEBUG
 #ifndef __ANDROID__

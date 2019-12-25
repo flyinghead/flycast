@@ -29,6 +29,7 @@
 #endif
 #include "compiler.h"
 #include "utils.h"
+#include "texture.h"
 
 VulkanContext *VulkanContext::contextInstance;
 
@@ -479,9 +480,9 @@ bool VulkanContext::InitDevice()
 	    }
 	    allocator.Init(physicalDevice, *device);
 
-	    quadBuffer = std::unique_ptr<QuadBuffer>(new QuadBuffer());
 	    shaderManager = std::unique_ptr<ShaderManager>(new ShaderManager());
 	    quadPipeline = std::unique_ptr<QuadPipeline>(new QuadPipeline());
+	    quadDrawer = std::unique_ptr<QuadDrawer>(new QuadDrawer());
 
 		CreateSwapChain();
 
@@ -648,6 +649,8 @@ void VulkanContext::CreateSwapChain()
 	    	imageAcquiredSemaphores.push_back(device->createSemaphoreUnique(vk::SemaphoreCreateInfo()));
 	    }
 	    quadPipeline->Init(shaderManager.get(), *renderPass);
+	    quadDrawer->Init(quadPipeline.get());
+	    vmus->Init(quadPipeline.get());
 
 	    InitImgui();
 
@@ -702,6 +705,7 @@ bool VulkanContext::Init()
 	vk::AndroidSurfaceCreateInfoKHR createInfo(vk::AndroidSurfaceCreateFlagsKHR(), (struct ANativeWindow*)window);
 	surface = instance->createAndroidSurfaceKHRUnique(createInfo);
 #endif
+	vmus = std::unique_ptr<VulkanVMUs>(new VulkanVMUs());
 
 	return InitDevice();
 }
@@ -731,13 +735,18 @@ void VulkanContext::BeginRenderPass()
 			vk::SubpassContents::eInline);
 }
 
-void VulkanContext::EndFrame()
+void VulkanContext::EndFrame(const std::vector<vk::UniqueCommandBuffer> *cmdBuffers)
 {
 	vk::CommandBuffer commandBuffer = *commandBuffers[currentImage];
 	commandBuffer.endRenderPass();
 	commandBuffer.end();
 	vk::PipelineStageFlags wait_stage = vk::PipelineStageFlagBits::eColorAttachmentOutput;
-	vk::SubmitInfo submitInfo(1, &(*imageAcquiredSemaphores[currentSemaphore]), &wait_stage, 1, &commandBuffer, 1, &(*renderCompleteSemaphores[currentSemaphore]));
+	std::vector<vk::CommandBuffer> allCmdBuffers;
+	if (cmdBuffers != nullptr)
+		allCmdBuffers = vk::uniqueToRaw(*cmdBuffers);
+	allCmdBuffers.push_back(commandBuffer);
+	vk::SubmitInfo submitInfo(1, &(*imageAcquiredSemaphores[currentSemaphore]), &wait_stage, allCmdBuffers.size(),allCmdBuffers.data(),
+			1, &(*renderCompleteSemaphores[currentSemaphore]));
 	graphicsQueue.submit(1, &submitInfo, *drawFences[currentImage]);
 	verify(rendering);
 	rendering = false;
@@ -769,14 +778,9 @@ void VulkanContext::DrawFrame(vk::ImageView imageView, vk::Offset2D extent)
 		{ { -1,  1, 0 }, { 0 - marginWidth, 1 } },
 		{ {  1,  1, 0 }, { 1 + marginWidth, 1 } },
 	};
-	quadBuffer->Update(vtx);
 
 	vk::CommandBuffer commandBuffer = GetCurrentCommandBuffer();
-	vk::Pipeline pipeline = quadPipeline->GetPipeline();
-	commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline);
-
-	quadPipeline->SetTexture(imageView);
-	quadPipeline->BindDescriptorSets(commandBuffer);
+	quadPipeline->BindPipeline(commandBuffer);
 
 	float blendConstants[4] = { 1.0, 1.0, 1.0, 1.0 };
 	commandBuffer.setBlendConstants(blendConstants);
@@ -784,8 +788,17 @@ void VulkanContext::DrawFrame(vk::ImageView imageView, vk::Offset2D extent)
 	vk::Viewport viewport(0, 0, width, height);
 	commandBuffer.setViewport(0, 1, &viewport);
 	commandBuffer.setScissor(0, vk::Rect2D(vk::Offset2D(0, 0), vk::Extent2D(width, height)));
-	quadBuffer->Bind(commandBuffer);
-	quadBuffer->Draw(commandBuffer);
+	quadDrawer->Draw(commandBuffer, imageView, vtx);
+}
+
+const std::vector<vk::UniqueCommandBuffer> *VulkanContext::PrepareVMUs()
+{
+	return vmus->PrepareVMUs(*commandPools[GetCurrentImageIndex()]);
+}
+
+ void VulkanContext::DrawVMUs(float scaling)
+{
+	 vmus->DrawVMUs(vk::Extent2D(width, height), scaling);
 }
 
 extern Renderer *renderer;
@@ -793,11 +806,17 @@ extern Renderer *renderer;
 void VulkanContext::PresentFrame(vk::ImageView imageView, vk::Offset2D extent)
 {
 	NewFrame();
+	const std::vector<vk::UniqueCommandBuffer> *vmuCmdBuffers = nullptr;
+	if (settings.rend.FloatVMUs)
+		vmuCmdBuffers = PrepareVMUs();
+
 	BeginRenderPass();
 
 	DrawFrame(imageView, extent);
+	if (settings.rend.FloatVMUs)
+		DrawVMUs(gui_get_scaling());
 	renderer->DrawOSD(false);
-	EndFrame();
+	EndFrame(vmuCmdBuffers);
 
 	lastFrameView = imageView;
 	lastFrameExtent = extent;
@@ -828,12 +847,13 @@ void VulkanContext::Term()
             }
         }
     }
+	vmus.reset();
 	ShaderCompiler::Term();
 	swapChain.reset();
 	imageViews.clear();
 	framebuffers.clear();
 	renderPass.reset();
-	quadBuffer.reset();
+	quadDrawer.reset();
 	quadPipeline.reset();
 	shaderManager.reset();
 	descriptorPool.reset();

@@ -54,10 +54,10 @@ public:
 		if (vertices == nullptr)
 		{
 			static QuadVertex defaultVtx[] = {
-				{ { -1, -1, 0 }, { 0, 0 } },
-				{ {  1, -1, 0 }, { 1, 0 } },
-				{ { -1,  1, 0 }, { 0, 1 } },
-				{ {  1,  1, 0 }, { 1, 1 } },
+				{ { -1.f, -1.f, 0.f }, { 0.f, 0.f } },
+				{ {  1.f, -1.f, 0.f }, { 1.f, 0.f } },
+				{ { -1.f,  1.f, 0.f }, { 0.f, 1.f } },
+				{ {  1.f,  1.f, 0.f }, { 1.f, 1.f } },
 			};
 			vertices = defaultVtx;
 		};
@@ -73,29 +73,42 @@ public:
 	void Init(ShaderManager *shaderManager, vk::RenderPass renderPass);
 	void Term() {
 		pipeline.reset();
-		sampler.reset();
-		descriptorSets.clear();
+		linearSampler.reset();
+		nearestSampler.reset();
 		pipelineLayout.reset();
 		descSetLayout.reset();
 	}
+	void BindPipeline(vk::CommandBuffer commandBuffer) { commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, GetPipeline()); }
+	vk::DescriptorSetLayout GetDescSetLayout() const { return *descSetLayout; }
+	vk::PipelineLayout GetPipelineLayout() const { return *pipelineLayout; }
+	vk::Sampler GetLinearSampler() const { return *linearSampler; }
+	vk::Sampler GetNearestSampler() const { return *nearestSampler; }
+
+private:
 	vk::Pipeline GetPipeline()
 	{
 		if (!pipeline)
 			CreatePipeline();
 		return *pipeline;
 	}
-
-	void SetTexture(vk::ImageView imageView);
-	void BindDescriptorSets(vk::CommandBuffer cmdBuffer);
-
-private:
 	void CreatePipeline();
 
 	vk::RenderPass renderPass;
 	vk::UniquePipeline pipeline;
-	vk::UniqueSampler sampler;
-	std::vector<vk::UniqueDescriptorSet> descriptorSets;
+	vk::UniqueSampler linearSampler;
+	vk::UniqueSampler nearestSampler;
 	vk::UniquePipelineLayout pipelineLayout;
 	vk::UniqueDescriptorSetLayout descSetLayout;
 	ShaderManager *shaderManager;
+};
+
+class QuadDrawer
+{
+public:
+	void Init(QuadPipeline *pipeline);
+	void Draw(vk::CommandBuffer commandBuffer, vk::ImageView imageView, QuadVertex vertices[] = nullptr, bool nearestFilter = false);
+private:
+	QuadPipeline *pipeline = nullptr;
+	std::unique_ptr<QuadBuffer> buffer;
+	std::vector<vk::UniqueDescriptorSet> descriptorSets;
 };

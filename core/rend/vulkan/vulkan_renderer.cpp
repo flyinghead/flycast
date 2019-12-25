@@ -27,7 +27,6 @@
 #include "shaders.h"
 #include "rend/gui.h"
 #include "rend/osd.h"
-#include "quad.h"
 
 class VulkanRenderer : public Renderer
 {
@@ -42,8 +41,6 @@ public:
 
 		screenDrawer.Init(&samplerManager, &shaderManager);
 		screenDrawer.SetCommandPool(&texCommandPool);
-		quadPipeline.Init(&shaderManager, screenDrawer.GetRenderPass());
-		quadBuffer = std::unique_ptr<QuadBuffer>(new QuadBuffer());
 
 #ifdef __ANDROID__
 		if (!vjoyTexture)
@@ -85,7 +82,6 @@ public:
 	{
 		texCommandPool.Init();
 		screenDrawer.Init(&samplerManager, &shaderManager);
-		quadPipeline.Init(&shaderManager, screenDrawer.GetRenderPass());
 #ifdef __ANDROID__
 		osdPipeline.Init(&shaderManager, vjoyTexture->GetImageView(), GetContext()->GetRenderPass());
 #endif
@@ -95,8 +91,6 @@ public:
 	{
 		DEBUG_LOG(RENDERER, "VulkanRenderer::Term");
 		GetContext()->WaitIdle();
-		quadBuffer = nullptr;
-		quadPipeline.Term();
 		osdBuffer.reset();
 		vjoyTexture.reset();
 		textureCache.Clear();
@@ -286,7 +280,6 @@ private:
 		fogTexture->SetCommandBuffer(nullptr);
 	}
 
-	std::unique_ptr<QuadBuffer> quadBuffer;
 	std::unique_ptr<Texture> fogTexture;
 	CommandPool texCommandPool;
 
@@ -295,7 +288,6 @@ private:
 	ScreenDrawer screenDrawer;
 	TextureDrawer textureDrawer;
 	std::vector<std::unique_ptr<Texture>> framebufferTextures;
-	QuadPipeline quadPipeline;
 	OSDPipeline osdPipeline;
 	std::unique_ptr<Texture> vjoyTexture;
 	std::unique_ptr<BufferData> osdBuffer;

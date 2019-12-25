@@ -155,8 +155,7 @@ public:
 		if (this->renderPass != renderPass)
 		{
 			this->renderPass = renderPass;
-			pipelines.clear();
-			modVolPipelines.clear();
+			Reset();
 		}
 	}
 
@@ -182,6 +181,13 @@ public:
 
 		return *modVolPipelines[pipehash];
 	}
+
+	void Reset()
+	{
+		pipelines.clear();
+		modVolPipelines.clear();
+	}
+
 	vk::PipelineLayout GetPipelineLayout() const { return *pipelineLayout; }
 	vk::DescriptorSetLayout GetPerFrameDSLayout() const { return *perFrameLayout; }
 	vk::DescriptorSetLayout GetPerPolyDSLayout() const { return *perPolyLayout; }

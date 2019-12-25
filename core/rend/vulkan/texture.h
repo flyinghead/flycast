@@ -30,11 +30,6 @@ void setImageLayout(vk::CommandBuffer const& commandBuffer, vk::Image image, vk:
 
 struct Texture : BaseTextureCacheData
 {
-	~Texture() override
-	{
-		imageView.reset();
-		image.reset();
-	}
 	void UploadToGPU(int width, int height, u8 *data) override;
 	u64 GetIntId() { return (u64)reinterpret_cast<uintptr_t>(this); }
 	std::string GetId() override { char s[20]; sprintf(s, "%p", this); return s; }
@@ -61,14 +56,13 @@ private:
 	std::unique_ptr<BufferData> stagingBufferData;
 	vk::CommandBuffer commandBuffer;
 
-	vk::UniqueDeviceMemory deviceMemory;
-	vk::UniqueImageView imageView;
+	Allocation allocation;
 	vk::UniqueImage image;
+	vk::UniqueImageView imageView;
 	vk::ImageView readOnlyImageView;
 
 	vk::PhysicalDevice physicalDevice;
 	vk::Device device;
-	Allocation allocation;
 
 	friend class TextureDrawer;
 	friend class OITTextureDrawer;
@@ -125,13 +119,13 @@ private:
 	vk::Extent2D extent;
 
 	std::unique_ptr<BufferData> stagingBufferData;
+	Allocation allocation;
+	vk::UniqueImage image;
 	vk::UniqueImageView imageView;
 	vk::UniqueImageView stencilView;
-	vk::UniqueImage image;
 
 	vk::PhysicalDevice physicalDevice;
 	vk::Device device;
-	Allocation allocation;
 };
 
 class TextureCache : public BaseTextureCache<Texture>

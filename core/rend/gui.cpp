@@ -71,6 +71,11 @@ static void display_vmus();
 static void reset_vmus();
 static void term_vmus();
 
+float gui_get_scaling()
+{
+	return scaling;
+}
+
 void gui_init()
 {
 	if (inited)
@@ -237,9 +242,9 @@ void ImGui_Impl_NewFrame()
 }
 
 static double last_render;
-std::vector<float> render_times;
+std::vector<float> render_times(100);
 
-void gui_dosmth(int width, int height)
+void gui_rendertick()
 {
 	if (last_render == 0)
 	{
@@ -251,15 +256,11 @@ void gui_dosmth(int width, int height)
 	if (render_times.size() > 100)
 		render_times.erase(render_times.begin());
 	last_render = new_time;
+}
 
-	ImGui_Impl_NewFrame();
-    ImGui::NewFrame();
-
+void gui_plot_render_time(int width, int height)
+{
     ImGui::PlotLines("Render Times", &render_times[0], render_times.size(), 0, "", 0.0, 1.0 / 30.0, ImVec2(300, 50));
-
-    // Render dear imgui into screen
-    ImGui::Render();
-    ImGui_impl_RenderDrawData(ImGui::GetDrawData());
 }
 
 // Helper to display a little (?) mark which shows a tooltip when hovered.
@@ -1665,6 +1666,7 @@ void gui_display_osd()
 		}
 		if (settings.rend.FloatVMUs)
 			display_vmus();
+//		gui_plot_render_time(screen_width, screen_height);
 
 		ImGui::Render();
 		ImGui_impl_RenderDrawData(ImGui::GetDrawData());
@@ -1713,8 +1715,9 @@ void gui_refresh_files()
 #define VMU_WIDTH (70 * 48 * scaling / 32)
 #define VMU_HEIGHT (70 * scaling)
 #define VMU_PADDING (8 * scaling)
-static u32 vmu_lcd_data[8][48 * 32];
-static bool vmu_lcd_status[8];
+u32 vmu_lcd_data[8][48 * 32];
+bool vmu_lcd_status[8];
+bool vmu_lcd_changed[8];
 static ImTextureID vmu_lcd_tex_ids[8];
 
 void push_vmu_screen(int bus_id, int bus_port, u8* buffer)
@@ -1726,6 +1729,7 @@ void push_vmu_screen(int bus_id, int bus_port, u8* buffer)
 	for (int i = 0; i < ARRAY_SIZE(vmu_lcd_data[vmu_id]); i++, buffer++)
 		*p++ = *buffer != 0 ? 0xFFFFFFFFu : 0xFF000000u;
 	vmu_lcd_status[vmu_id] = true;
+	vmu_lcd_changed[vmu_id] = true;
 }
 
 static const int vmu_coords[8][2] = {
@@ -1743,7 +1747,6 @@ static void display_vmus()
 {
 	if (!game_started)
 		return;
-	// TODO Vulkan
 	if (!settings.pvr.IsOpenGL())
 		return;
     ImGui::SetNextWindowBgAlpha(0);
@@ -1794,7 +1797,6 @@ static void reset_vmus()
 
 static void term_vmus()
 {
-	// TODO Vulkan
 	if (!settings.pvr.IsOpenGL())
 		return;
 	for (int i = 0; i < ARRAY_SIZE(vmu_lcd_status); i++)

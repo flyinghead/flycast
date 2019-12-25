@@ -45,7 +45,6 @@ public:
 
 			screenDrawer.Init(&samplerManager, &shaderManager, &oitBuffers);
 			screenDrawer.SetCommandPool(&texCommandPool);
-			quadBuffer = std::unique_ptr<QuadBuffer>(new QuadBuffer());
 
 #ifdef __ANDROID__
 			if (!vjoyTexture)
@@ -107,7 +106,6 @@ public:
 		textureDrawer.Term();
 		oitBuffers.Term();
 		osdBuffer.reset();
-		quadBuffer = nullptr;
 		textureCache.Clear();
 		fogTexture = nullptr;
 		texCommandPool.Term();
@@ -295,7 +293,6 @@ private:
 	}
 
 	OITBuffers oitBuffers;
-	std::unique_ptr<QuadBuffer> quadBuffer;
 	std::unique_ptr<Texture> fogTexture;
 	CommandPool texCommandPool;
 
