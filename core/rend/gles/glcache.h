@@ -188,9 +188,18 @@ public:
 		_stencil_dpfail = 0xFFFFFFFFu;
 		_stencil_dppass = 0xFFFFFFFFu;
 		_stencil_mask = 0;
+		if (_texture_cache_size > 0)
+		{
+		   glDeleteTextures(_texture_cache_size, _texture_ids);
+		   _texture_cache_size = 0;
+		}
 	}
 
-	void DisableCache() { _disable_cache = true; }
+	void DisableCache()
+	{
+		_disable_cache = true;
+		Reset();
+	}
 	void EnableCache()
 	{
 	   _disable_cache = false;

@@ -25,7 +25,8 @@
 float fb_scale_x, fb_scale_y; // FIXME
 
 //Fragment and vertex shaders code
-const char* VertexShaderSource = R"(%s
+
+static const char* VertexShaderSource = R"(%s
 #define TARGET_GL %s
 #define pp_Gouraud %d
 
@@ -290,7 +291,7 @@ void main()
 }
 )";
 
-const char* ModifierVolumeShader =
+static const char* ModifierVolumeShader = 
 R"(%s
 #define TARGET_GL %s
 
@@ -873,14 +874,14 @@ void UpdateFogTexture(u8 *fog_table, GLenum texture_slot, GLint fog_image_format
 	if (fogTextureId == 0)
 	{
 		fogTextureId = glcache.GenTexture();
-		glBindTexture(GL_TEXTURE_2D, fogTextureId);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glcache.BindTexture(GL_TEXTURE_2D, fogTextureId);
+		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	}
 	else
-		glBindTexture(GL_TEXTURE_2D, fogTextureId);
+		glcache.BindTexture(GL_TEXTURE_2D, fogTextureId);
 
 	u8 temp_tex_buffer[256];
 	MakeFogTexture(temp_tex_buffer);

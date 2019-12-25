@@ -127,9 +127,7 @@ s32 SetTileClip(u32 val, GLint uniform)
 void SetCull(u32 CulliMode)
 {
 	if (CullMode[CulliMode]==GL_NONE)
-	{ 
 		glcache.Disable(GL_CULL_FACE);
-	}
 	else
 	{
 		glcache.Enable(GL_CULL_FACE);

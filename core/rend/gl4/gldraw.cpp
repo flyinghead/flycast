@@ -159,7 +159,7 @@ template <u32 Type, bool SortingEnabled>
 
 	SetTileClip(gp->tileclip, CurrentShader->pp_ClipTest);
 
-	//This bit control which pixels are affected
+	//This bit controls which pixels are affected
 	//by modvols
 	const u32 stencil=(gp->pcw.Shadow!=0)?0x80:0x0;
 
