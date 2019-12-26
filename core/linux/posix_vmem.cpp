@@ -64,7 +64,10 @@ bool mem_region_set_exec(void *start, size_t len)
 {
 	size_t inpage = (uintptr_t)start & PAGE_MASK;
 	if (mprotect((u8*)start - inpage, len + inpage, PROT_READ | PROT_WRITE | PROT_EXEC))
-		die("mprotect  failed...");
+	{
+		WARN_LOG(VMEM, "mem_region_set_exec: mprotect failed. errno %d", errno);
+		return false;
+	}
 	return true;
 }
 
