@@ -21,7 +21,7 @@
 #include "oit_pipeline.h"
 #include "../quad.h"
 
-void OITPipelineManager::CreatePipeline(u32 listType, bool autosort, const PolyParam& pp, int pass)
+void OITPipelineManager::CreatePipeline(u32 listType, bool autosort, const PolyParam& pp, Pass pass)
 {
 	vk::PipelineVertexInputStateCreateInfo pipelineVertexInputStateCreateInfo = GetMainVertexInputStateCreateInfo();
 
@@ -53,7 +53,7 @@ void OITPipelineManager::CreatePipeline(u32 listType, bool autosort, const PolyP
 
 	// Depth and stencil
 	vk::CompareOp depthOp;
-	if (pass == 1 && !pp.isp.ZWriteDis)
+	if (pass == Pass::Color && !pp.isp.ZWriteDis && listType != ListType_Translucent)
 		depthOp = vk::CompareOp::eEqual;
 	else if (listType == ListType_Punch_Through || autosort)
 		depthOp = vk::CompareOp::eGreaterOrEqual;
@@ -61,7 +61,7 @@ void OITPipelineManager::CreatePipeline(u32 listType, bool autosort, const PolyP
 		depthOp = depthOps[pp.isp.DepthMode];
 	bool depthWriteEnable;
 	// FIXME temporary Intel driver bug workaround
-	if (pass != 0 && (GetContext()->GetVendorID() != VENDOR_INTEL || pass != 1))
+	if (pass != Pass::Depth && !((!autosort || GetContext()->GetVendorID() == VENDOR_INTEL) && pass == Pass::Color))
 		depthWriteEnable = false;
 	// Z Write Disable seems to be ignored for punch-through.
 	// Fixes Worms World Party, Bust-a-Move 4 and Re-Volt
@@ -70,7 +70,7 @@ void OITPipelineManager::CreatePipeline(u32 listType, bool autosort, const PolyP
 	else
 		depthWriteEnable = !pp.isp.ZWriteDis;
 
-	bool shadowed = pass == 0 && (listType == ListType_Opaque || listType == ListType_Punch_Through);
+	bool shadowed = pass == Pass::Depth && (listType == ListType_Opaque || listType == ListType_Punch_Through);
 	vk::StencilOpState stencilOpState;
 	if (shadowed)
 	{
@@ -96,7 +96,7 @@ void OITPipelineManager::CreatePipeline(u32 listType, bool autosort, const PolyP
 	// Color flags and blending
 	vk::PipelineColorBlendAttachmentState pipelineColorBlendAttachmentState;
 	// Apparently punch-through polys support blending, or at least some combinations
-	if ((listType == ListType_Punch_Through || pass > 0) && pass != 3)
+	if (listType == ListType_Punch_Through || pass == Pass::Color)
 	{
 		vk::ColorComponentFlags colorComponentFlags(vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA);
 		u32 src = pp.tsp.SrcInstr;
@@ -156,7 +156,6 @@ void OITPipelineManager::CreatePipeline(u32 listType, bool autosort, const PolyP
 	//params.trilinear = pp.pcw.Texture && pp.tsp.FilterMode > 1 && listType != ListType_Punch_Through;
 	params.useAlpha = pp.tsp.UseAlpha;
 	params.pass = pass;
-	params.depthFunc = autosort ? 6 : pp.isp.DepthMode;
 	params.twoVolume = pp.tsp1.full != -1 || pp.tcw1.full != -1;
 	vk::ShaderModule fragment_module = shaderManager->GetFragmentShader(params);
 
@@ -180,14 +179,14 @@ void OITPipelineManager::CreatePipeline(u32 listType, bool autosort, const PolyP
 	  &pipelineDynamicStateCreateInfo,            // pDynamicState
 	  *pipelineLayout,                            // layout
 	  renderPasses->GetRenderPass(true, true),    // renderPass
-	  pass == 0 ? (listType == ListType_Translucent ? 2 : 0) : 1 // subpass
+	  pass == Pass::Depth ? (listType == ListType_Translucent ? 2 : 0) : 1 // subpass
 	);
 
 	pipelines[hash(listType, autosort, &pp, pass)] = GetContext()->GetDevice().createGraphicsPipelineUnique(GetContext()->GetPipelineCache(),
 			graphicsPipelineCreateInfo);
 }
 
-void OITPipelineManager::CreateFinalPipeline(bool autosort)
+void OITPipelineManager::CreateFinalPipeline()
 {
 	vk::PipelineVertexInputStateCreateInfo pipelineVertexInputStateCreateInfo = GetQuadInputStateCreateInfo(false);
 
@@ -245,7 +244,7 @@ void OITPipelineManager::CreateFinalPipeline(bool autosort)
 	vk::PipelineDynamicStateCreateInfo pipelineDynamicStateCreateInfo(vk::PipelineDynamicStateCreateFlags(), 2, dynamicStates);
 
 	vk::ShaderModule vertex_module = shaderManager->GetFinalVertexShader();
-	vk::ShaderModule fragment_module = shaderManager->GetFinalShader(autosort);
+	vk::ShaderModule fragment_module = shaderManager->GetFinalShader();
 
 	vk::PipelineShaderStageCreateInfo stages[] = {
 			{ vk::PipelineShaderStageCreateFlags(), vk::ShaderStageFlagBits::eVertex, vertex_module, "main" },
@@ -270,10 +269,7 @@ void OITPipelineManager::CreateFinalPipeline(bool autosort)
 	  2                                           // subpass
 	);
 
-	if (autosort)
-		finalAutosortPipeline = GetContext()->GetDevice().createGraphicsPipelineUnique(GetContext()->GetPipelineCache(), graphicsPipelineCreateInfo);
-	else
-		finalNosortPipeline = GetContext()->GetDevice().createGraphicsPipelineUnique(GetContext()->GetPipelineCache(), graphicsPipelineCreateInfo);
+	finalPipeline = GetContext()->GetDevice().createGraphicsPipelineUnique(GetContext()->GetPipelineCache(), graphicsPipelineCreateInfo);
 
 }
 

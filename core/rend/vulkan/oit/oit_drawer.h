@@ -112,9 +112,9 @@ protected:
 	vk::CommandBuffer currentCommandBuffer;
 
 private:
-	void DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sortTriangles, int pass,
+	void DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sortTriangles, Pass pass,
 			const PolyParam& poly, u32 first, u32 count);
-	void DrawList(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sortTriangles, int pass,
+	void DrawList(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sortTriangles, Pass pass,
 			const List<PolyParam>& polys, u32 first, u32 count);
 	template<bool Translucent>
 	void DrawModifierVolumes(const vk::CommandBuffer& cmdBuffer, int first, int count);

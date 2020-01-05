@@ -22,7 +22,7 @@
 #include "oit_drawer.h"
 #include "hw/pvr/pvr_mem.h"
 
-void OITDrawer::DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool autosort, int pass,
+void OITDrawer::DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool autosort, Pass pass,
 		const PolyParam& poly, u32 first, u32 count)
 {
 	vk::Rect2D scissorRect;
@@ -82,7 +82,7 @@ void OITDrawer::DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool 
 	cmdBuffer.drawIndexed(count, 1, first, 0, 0);
 }
 
-void OITDrawer::DrawList(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sortTriangles, int pass,
+void OITDrawer::DrawList(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sortTriangles, Pass pass,
 		const List<PolyParam>& polys, u32 first, u32 last)
 {
 	for (u32 i = first; i < last; i++)
@@ -323,8 +323,8 @@ bool OITDrawer::Draw(const Texture *fogTexture)
     			vk::SubpassContents::eInline);
 
         // Depth + stencil subpass
-		DrawList(cmdBuffer, ListType_Opaque, false, 0, pvrrc.global_param_op, previous_pass.op_count, current_pass.op_count);
-		DrawList(cmdBuffer, ListType_Punch_Through, false, 0, pvrrc.global_param_pt, previous_pass.pt_count, current_pass.pt_count);
+		DrawList(cmdBuffer, ListType_Opaque, false, Pass::Depth, pvrrc.global_param_op, previous_pass.op_count, current_pass.op_count);
+		DrawList(cmdBuffer, ListType_Punch_Through, false, Pass::Depth, pvrrc.global_param_pt, previous_pass.pt_count, current_pass.pt_count);
 
 		DrawModifierVolumes<false>(cmdBuffer, previous_pass.mvo_count, current_pass.mvo_count - previous_pass.mvo_count);
 
@@ -332,12 +332,17 @@ bool OITDrawer::Draw(const Texture *fogTexture)
 		cmdBuffer.nextSubpass(vk::SubpassContents::eInline);
 
 		// OP + PT
-		DrawList(cmdBuffer, ListType_Opaque, false, 1, pvrrc.global_param_op, previous_pass.op_count, current_pass.op_count);
-		DrawList(cmdBuffer, ListType_Punch_Through, false, 1, pvrrc.global_param_pt, previous_pass.pt_count, current_pass.pt_count);
+		DrawList(cmdBuffer, ListType_Opaque, false, Pass::Color, pvrrc.global_param_op, previous_pass.op_count, current_pass.op_count);
+		DrawList(cmdBuffer, ListType_Punch_Through, false, Pass::Color, pvrrc.global_param_pt, previous_pass.pt_count, current_pass.pt_count);
 
 		// TR
-		if (!oitBuffers->isFirstFrameAfterInit())
-			DrawList(cmdBuffer, ListType_Translucent, current_pass.autosort, 3, pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count);
+		if (current_pass.autosort)
+		{
+			if (!oitBuffers->isFirstFrameAfterInit())
+				DrawList(cmdBuffer, ListType_Translucent, true, Pass::OIT, pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count);
+		}
+		else
+			DrawList(cmdBuffer, ListType_Translucent, false, Pass::Color, pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count);
 
 		// Final subpass
 		cmdBuffer.nextSubpass(vk::SubpassContents::eInline);
@@ -350,7 +355,7 @@ bool OITDrawer::Draw(const Texture *fogTexture)
 			if (GetContext()->GetVendorID() != VENDOR_QUALCOMM)	// Adreno bug
 				DrawModifierVolumes<true>(cmdBuffer, previous_pass.mvo_tr_count, current_pass.mvo_tr_count - previous_pass.mvo_tr_count);
 
-			vk::Pipeline pipeline = pipelineManager->GetFinalPipeline(current_pass.autosort);
+			vk::Pipeline pipeline = pipelineManager->GetFinalPipeline();
 			cmdBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline);
 			quadBuffer->Bind(cmdBuffer);
 			quadBuffer->Draw(cmdBuffer);
@@ -371,7 +376,7 @@ bool OITDrawer::Draw(const Texture *fogTexture)
 	    	cmdBuffer.bindIndexBuffer(mainBuffer, offsets.indexOffset, vk::IndexType::eUint32);
 
 			// Tr depth-only pass
-			DrawList(cmdBuffer, ListType_Translucent, current_pass.autosort, 0, pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count);
+			DrawList(cmdBuffer, ListType_Translucent, current_pass.autosort, Pass::Depth, pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count);
 
 			cmdBuffer.endRenderPass();
 		}

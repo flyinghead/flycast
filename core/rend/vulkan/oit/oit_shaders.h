@@ -22,6 +22,8 @@
 #include "../vulkan.h"
 #include "../utils.h"
 
+enum class Pass { Depth, Color, OIT };
+
 class OITShaderManager
 {
 public:
@@ -47,8 +49,7 @@ public:
 		bool bumpmap;
 		bool clamping;
 		bool twoVolume;
-		int depthFunc;
-		int pass;
+		Pass pass;
 
 		u32 hash()
 		{
@@ -56,7 +57,7 @@ public:
 				| ((u32)texture << 3) | ((u32)ignoreTexAlpha << 4) | (shaderInstr << 5)
 				| ((u32)offset << 7) | ((u32)fog << 8) | ((u32)gouraud << 10)
 				| ((u32)bumpmap << 11) | ((u32)clamping << 12) | ((u32)twoVolume << 13)
-				| (depthFunc << 14) | (pass << 17);
+				| ((int)pass << 14);
 		}
 	};
 
@@ -81,20 +82,11 @@ public:
 		return *trModVolShaders[(size_t)mode];
 	}
 
-	vk::ShaderModule GetFinalShader(bool autosort)
+	vk::ShaderModule GetFinalShader()
 	{
-		if (autosort)
-		{
-			if (!finalAutosortShader)
-				finalAutosortShader = compileFinalShader(true);
-			return *finalAutosortShader;
-		}
-		else
-		{
-			if (!finalSortedShader)
-				finalSortedShader = compileFinalShader(false);
-			return *finalSortedShader;
-		}
+		if (!finalAutosortShader)
+			finalAutosortShader = compileFinalShader();
+		return *finalAutosortShader;
 	}
 	vk::ShaderModule GetFinalVertexShader()
 	{
@@ -124,7 +116,7 @@ private:
 	vk::UniqueShaderModule compileModVolVertexShader();
 	vk::UniqueShaderModule compileModVolFragmentShader();
 	void compileTrModVolFragmentShader(ModVolMode mode);
-	vk::UniqueShaderModule compileFinalShader(bool autosort);
+	vk::UniqueShaderModule compileFinalShader();
 	vk::UniqueShaderModule compileFinalVertexShader();
 	vk::UniqueShaderModule compileClearShader();
 

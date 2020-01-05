@@ -237,14 +237,17 @@ static const char OITFragmentShaderSource[] = R"(
 #define pp_Offset %d
 #define pp_FogCtrl %d
 #define pp_TwoVolumes %d
-#define pp_DepthFunc %d
 #define pp_Gouraud %d
 #define pp_BumpMap %d
 #define ColorClamping %d
 #define PASS %d
 #define PI 3.1415926
 
-#if PASS <= 1
+#define PASS_DEPTH 0
+#define PASS_COLOR 1
+#define PASS_OIT 2
+
+#if PASS == PASS_DEPTH || PASS == PASS_COLOR
 layout (location = 0) out vec4 FragColor;
 #define gl_FragColor FragColor
 #endif
@@ -287,10 +290,10 @@ layout (set = 1, binding = 1) uniform sampler2D tex1;
 #endif
 #endif
 
-#if PASS == 1
+#if PASS == PASS_COLOR
 layout (input_attachment_index = 0, set = 0, binding = 4) uniform usubpassInput shadow_stencil;
 #endif
-#if PASS == 3
+#if PASS == PASS_OIT
 layout (input_attachment_index = 0, set = 0, binding = 5) uniform subpassInput DepthTex;
 #endif
 
@@ -330,30 +333,11 @@ void main()
 {
 	setFragDepth();
 
-	#if PASS == 3
+	#if PASS == PASS_OIT
 		// Manual depth testing
 		highp float frontDepth = subpassLoad(DepthTex).r;
-		#if pp_DepthFunc == 0		// Never
+		if (gl_FragDepth < frontDepth)
 			discard;
-		#elif pp_DepthFunc == 1		// Less
-			if (gl_FragDepth >= frontDepth)
-				discard;
-		#elif pp_DepthFunc == 2		// Equal
-			if (gl_FragDepth != frontDepth)
-				discard;
-		#elif pp_DepthFunc == 3		// Less or equal
-			if (gl_FragDepth > frontDepth)
-				discard;
-		#elif pp_DepthFunc == 4		// Greater
-			if (gl_FragDepth <= frontDepth)
-				discard;
-		#elif pp_DepthFunc == 5		// Not equal
-			if (gl_FragDepth == frontDepth)
-				discard;
-		#elif pp_DepthFunc == 6		// Greater or equal
-			if (gl_FragDepth < frontDepth)
-				discard;
-		#endif
 	#endif
 
 	// Clip inside the box
@@ -374,7 +358,7 @@ void main()
 		bool cur_ignore_tex_alpha = pushConstants.ignore_tex_alpha0 != 0;
 		int cur_shading_instr = pushConstants.shading_instr0;
 		int cur_fog_control = pushConstants.fog_control0;
-		#if PASS == 1
+		#if PASS == PASS_COLOR
 			uvec4 stencil = subpassLoad(shadow_stencil);
 			if (stencil.r == 0x81u) {
 				color = vtx_base1;
@@ -456,7 +440,7 @@ void main()
 		#endif
 	}
 	#endif
-	#if PASS == 1 && pp_TwoVolumes == 0
+	#if PASS == PASS_COLOR && pp_TwoVolumes == 0
 		uvec4 stencil = subpassLoad(shadow_stencil);
 		if (stencil.r == 0x81u)
 			color.rgb *= uniformBuffer.shade_scale_factor;
@@ -485,9 +469,9 @@ void main()
 	
 	//color.rgb=vec3(gl_FragCoord.w * uniformBuffer.sp_FOG_DENSITY / 128.0);
 	
-	#if PASS == 1 
+	#if PASS == PASS_COLOR 
 		FragColor = color;
-	#elif PASS > 1
+	#elif PASS == PASS_OIT
 		// Discard as many pixels as possible
 		switch (cur_blend_mode.y) // DST
 		{
@@ -569,8 +553,6 @@ void main()
 static const char OITFinalShaderSource[] =
 "#define MAX_PIXELS_PER_FRAGMENT " MAX_PIXELS_PER_FRAGMENT
 R"(
-#define DEPTH_SORTED %d
-
 layout (input_attachment_index = 0, set = 2, binding = 0) uniform subpassInput tex;
 
 layout (location = 0) out vec4 FragColor;
@@ -588,13 +570,9 @@ int fillAndSortFragmentArray(ivec2 coords)
 		const Pixel p = PixelBuffer.pixels[idx];
 		int j = count - 1;
 		Pixel jp = PixelBuffer.pixels[pixel_list[j]];
-#if DEPTH_SORTED == 1
 		while (j >= 0
 			   && (jp.depth > p.depth
 				   || (jp.depth == p.depth && getPolyNumber(jp) > getPolyNumber(p))))
-#else
-		while (j >= 0 && getPolyNumber(jp) > getPolyNumber(p))
-#endif
 		{
 			pixel_list[j + 1] = pixel_list[j];
 			j--;
@@ -614,56 +592,11 @@ vec4 resolveAlphaBlend(ivec2 coords) {
 	
 	vec4 finalColor = subpassLoad(tex);
 	vec4 secondaryBuffer = vec4(0.0); // Secondary accumulation buffer
-	float depth = 0.0;
 	
-	bool do_depth_test = false;
 	for (int i = 0; i < num_frag; i++)
 	{
 		const Pixel pixel = PixelBuffer.pixels[pixel_list[i]];
 		const PolyParam pp = TrPolyParam.tr_poly_params[getPolyNumber(pixel)];
-#if DEPTH_SORTED != 1
-		const float frag_depth = pixel.depth;
-		if (do_depth_test)
-		{
-			switch (getDepthFunc(pp))
-			{
-			case 0:		// Never
-				continue;
-			case 1:		// Less
-				if (frag_depth >= depth)
-					continue;
-				break;
-			case 2:		// Equal
-				if (frag_depth != depth)
-					continue;
-				break;
-			case 3:		// Less or equal
-				if (frag_depth > depth)
-					continue;
-				break;
-			case 4:		// Greater
-				if (frag_depth <= depth)
-					continue;
-				break;
-			case 5:		// Not equal
-				if (frag_depth == depth)
-					continue;
-				break;
-			case 6:		// Greater or equal
-				if (frag_depth < depth)
-					continue;
-				break;
-			case 7:		// Always
-				break;
-			}
-		}
-		
-		if (getDepthMask(pp))
-		{
-			depth = frag_depth;
-			do_depth_test = true;
-		}
-#endif
 		bool area1 = false;
 		bool shadowed = false;
 		if (isShadowed(pixel))
@@ -848,17 +781,15 @@ vk::UniqueShaderModule OITShaderManager::compileShader(const FragmentShaderParam
 	strcpy(buf, OITShaderHeader);
 	sprintf(buf + strlen(buf), OITFragmentShaderSource, (int)params.alphaTest, (int)params.insideClipTest, (int)params.useAlpha,
 			(int)params.texture, (int)params.ignoreTexAlpha, params.shaderInstr, (int)params.offset, params.fog,
-			(int)params.twoVolume, params.depthFunc, (int)params.gouraud, (int)params.bumpmap, (int)params.clamping, params.pass);
+			(int)params.twoVolume, (int)params.gouraud, (int)params.bumpmap, (int)params.clamping, (int)params.pass);
 	return ShaderCompiler::Compile(vk::ShaderStageFlagBits::eFragment, buf);
 }
 
-vk::UniqueShaderModule OITShaderManager::compileFinalShader(bool autosort)
+vk::UniqueShaderModule OITShaderManager::compileFinalShader()
 {
-	char buf[(sizeof(OITShaderHeader) + sizeof(OITFinalShaderSource)) * 2];
-
-	strcpy(buf, OITShaderHeader);
-	sprintf(buf + strlen(buf), OITFinalShaderSource, (int)autosort);
-	return ShaderCompiler::Compile(vk::ShaderStageFlagBits::eFragment, buf);
+	std::string source = OITShaderHeader;
+	source += OITFinalShaderSource;
+	return ShaderCompiler::Compile(vk::ShaderStageFlagBits::eFragment, source);
 }
 vk::UniqueShaderModule OITShaderManager::compileFinalVertexShader()
 {

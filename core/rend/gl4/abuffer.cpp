@@ -64,9 +64,7 @@ vec4 resolveAlphaBlend(ivec2 coords) {
 	
 	vec4 finalColor = texture(tex, gl_FragCoord.xy / textureSize(tex, 0));
 	vec4 secondaryBuffer = vec4(0.0); // Secondary accumulation buffer
-	float depth = 0.0;
 	
-	bool do_depth_test = false;
 	for (int i = 0; i < num_frag; i++)
 	{
 		const Pixel pixel = pixels[pixel_list[i]];

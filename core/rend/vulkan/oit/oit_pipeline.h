@@ -250,7 +250,7 @@ public:
 		modVolPipelines.clear();
 	}
 
-	vk::Pipeline GetPipeline(u32 listType, bool autosort, const PolyParam& pp, int pass)
+	vk::Pipeline GetPipeline(u32 listType, bool autosort, const PolyParam& pp, Pass pass)
 	{
 		u32 pipehash = hash(listType, autosort, &pp, pass);
 		const auto &pipeline = pipelines.find(pipehash);
@@ -282,12 +282,11 @@ public:
 
 		return *trModVolPipelines[pipehash];
 	}
-	vk::Pipeline GetFinalPipeline(bool autosort)
+	vk::Pipeline GetFinalPipeline()
 	{
-		vk::UniquePipeline& pipeline = autosort ? finalAutosortPipeline : finalNosortPipeline;
-		if (!pipeline)
-			CreateFinalPipeline(autosort);
-		return *pipeline;
+		if (!finalPipeline)
+			CreateFinalPipeline();
+		return *finalPipeline;
 	}
 	vk::Pipeline GetClearPipeline()
 	{
@@ -306,7 +305,7 @@ private:
 	void CreateModVolPipeline(ModVolMode mode, int cullMode);
 	void CreateTrModVolPipeline(ModVolMode mode, int cullMode);
 
-	u32 hash(u32 listType, bool autosort, const PolyParam *pp, int pass) const
+	u32 hash(u32 listType, bool autosort, const PolyParam *pp, Pass pass) const
 	{
 		u32 hash = pp->pcw.Gouraud | (pp->pcw.Offset << 1) | (pp->pcw.Texture << 2) | (pp->pcw.Shadow << 3)
 			| (((pp->tileclip >> 28) == 3) << 4);
@@ -361,15 +360,14 @@ private:
 				full ? vertexInputAttributeDescriptions : vertexInputLightAttributeDescriptions);
 	}
 
-	void CreatePipeline(u32 listType, bool autosort, const PolyParam& pp, int pass);
-	void CreateFinalPipeline(bool autosort);
+	void CreatePipeline(u32 listType, bool autosort, const PolyParam& pp, Pass pass);
+	void CreateFinalPipeline();
 	void CreateClearPipeline();
 
 	std::map<u32, vk::UniquePipeline> pipelines;
 	std::map<u32, vk::UniquePipeline> modVolPipelines;
 	std::map<u32, vk::UniquePipeline> trModVolPipelines;
-	vk::UniquePipeline finalAutosortPipeline;
-	vk::UniquePipeline finalNosortPipeline;
+	vk::UniquePipeline finalPipeline;
 	vk::UniquePipeline clearPipeline;
 
 	vk::UniquePipelineLayout pipelineLayout;
