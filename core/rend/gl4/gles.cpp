@@ -73,14 +73,17 @@ R"(
 #define pp_Offset %d
 #define pp_FogCtrl %d
 #define pp_TwoVolumes %d
-#define pp_DepthFunc %d
 #define pp_Gouraud %d
 #define pp_BumpMap %d
 #define FogClamping %d
 #define PASS %d
 #define PI 3.1415926
 
-#if PASS <= 1
+#define PASS_DEPTH 0
+#define PASS_COLOR 1
+#define PASS_OIT 2
+
+#if PASS == PASS_DEPTH || PASS == PASS_COLOR
 out vec4 FragColor;
 #endif
 
@@ -150,30 +153,11 @@ void main()
 {
 	setFragDepth();
 	
-	#if PASS == 3
+	#if PASS == PASS_OIT
 		// Manual depth testing
 		highp float frontDepth = texture(DepthTex, gl_FragCoord.xy / textureSize(DepthTex, 0)).r;
-		#if pp_DepthFunc == 0		// Never
+		if (gl_FragDepth < frontDepth)
 			discard;
-		#elif pp_DepthFunc == 1		// Less
-			if (gl_FragDepth >= frontDepth)
-				discard;
-		#elif pp_DepthFunc == 2		// Equal
-			if (gl_FragDepth != frontDepth)
-				discard;
-		#elif pp_DepthFunc == 3		// Less or equal
-			if (gl_FragDepth > frontDepth)
-				discard;
-		#elif pp_DepthFunc == 4		// Greater
-			if (gl_FragDepth <= frontDepth)
-				discard;
-		#elif pp_DepthFunc == 5		// Not equal
-			if (gl_FragDepth == frontDepth)
-				discard;
-		#elif pp_DepthFunc == 6		// Greater or equal
-			if (gl_FragDepth < frontDepth)
-				discard;
-		#endif
 	#endif
 	
 	// Clip outside the box
@@ -200,7 +184,7 @@ void main()
 		bool cur_ignore_tex_alpha = ignore_tex_alpha[0];
 		int cur_shading_instr = shading_instr[0];
 		int cur_fog_control = fog_control[0];
-		#if PASS == 1
+		#if PASS == PASS_COLOR
 			uvec4 stencil = texture(shadow_stencil, gl_FragCoord.xy / textureSize(shadow_stencil, 0));
 			if (stencil.r == 0x81u) {
 				color = vtx_base1;
@@ -279,7 +263,7 @@ void main()
 		#endif
 	}
 	#endif
-	#if PASS == 1 && pp_TwoVolumes == 0
+	#if PASS == PASS_COLOR && pp_TwoVolumes == 0
 		uvec4 stencil = texture(shadow_stencil, gl_FragCoord.xy / textureSize(shadow_stencil, 0));
 		if (stencil.r == 0x81u)
 			color.rgb *= shade_scale_factor;
@@ -308,9 +292,9 @@ void main()
 	
 	//color.rgb=vec3(gl_FragCoord.w * sp_FOG_DENSITY / 128.0);
 	
-	#if PASS == 1 
+	#if PASS == PASS_COLOR 
 		FragColor = color;
-	#elif PASS > 1
+	#elif PASS == PASS_OIT
 		// Discard as many pixels as possible
 		switch (cur_blend_mode.y) // DST
 		{
@@ -405,7 +389,7 @@ bool gl4CompilePipelineShader(	gl4PipelineShader* s, const char *pixel_source /*
 
 	sprintf(pshader, pixel_source,
                 s->cp_AlphaTest,s->pp_ClipTestMode,s->pp_UseAlpha,
-                s->pp_Texture,s->pp_IgnoreTexA,s->pp_ShadInstr,s->pp_Offset,s->pp_FogCtrl, s->pp_TwoVolumes, s->pp_DepthFunc, s->pp_Gouraud, s->pp_BumpMap, s->fog_clamping, s->pass);
+                s->pp_Texture,s->pp_IgnoreTexA,s->pp_ShadInstr,s->pp_Offset,s->pp_FogCtrl, s->pp_TwoVolumes, s->pp_Gouraud, s->pp_BumpMap, s->fog_clamping, (int)s->pass);
 
 	s->program = gl_CompileAndLink(vshader, pshader);
 
@@ -465,7 +449,6 @@ bool gl4CompilePipelineShader(	gl4PipelineShader* s, const char *pixel_source /*
 		glUniform1i(gu, 3);		// GL_TEXTURE3
 
 	s->pp_Number = glGetUniformLocation(s->program, "pp_Number");
-	s->pp_DepthFunc = glGetUniformLocation(s->program, "pp_DepthFunc");
 
 	s->blend_mode = glGetUniformLocation(s->program, "blend_mode");
 	s->use_alpha = glGetUniformLocation(s->program, "use_alpha");
@@ -903,6 +886,21 @@ struct gl4rend : Renderer
 		{
 			glcache.DeleteTextures(1, &depthSaveTexId);
 			depthSaveTexId = 0;
+		}
+		if (geom_fbo != 0)
+		{
+			glDeleteFramebuffers(1, &geom_fbo);
+			geom_fbo = 0;
+		}
+		if (texSamplers[0] != 0)
+		{
+			glDeleteSamplers(2, texSamplers);
+			texSamplers[0] = texSamplers[1] = 0;
+		}
+		if (depth_fbo != 0)
+		{
+			glDeleteFramebuffers(1, &depth_fbo);
+			depth_fbo = 0;
 		}
 		TexCache.Clear();
 

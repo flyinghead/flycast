@@ -4,6 +4,8 @@
 
 void gl4DrawStrips(GLuint output_fbo, int width, int height);
 
+enum class Pass { Depth, Color, OIT };
+
 struct gl4PipelineShader
 {
 	GLuint program;
@@ -24,8 +26,7 @@ struct gl4PipelineShader
 	//
 	u32 cp_AlphaTest; s32 pp_ClipTestMode;
 	u32 pp_Texture, pp_UseAlpha, pp_IgnoreTexA, pp_ShadInstr, pp_Offset, pp_FogCtrl;
-	u32 pp_DepthFunc;
-	int pass;
+	Pass pass;
 	bool pp_TwoVolumes;
 	bool pp_Gouraud;
 	bool pp_BumpMap;
@@ -73,6 +74,9 @@ extern GLuint stencilTexId;
 extern GLuint depthTexId;
 extern GLuint opaqueTexId;
 extern GLuint depthSaveTexId;
+extern GLuint geom_fbo;
+extern GLuint texSamplers[2];
+extern GLuint depth_fbo;
 
 #define SHADER_HEADER "#version 430 \n\
 \n\

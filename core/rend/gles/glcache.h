@@ -9,10 +9,10 @@ public:
 	GLCache() { Reset(); }
 
 	void BindTexture(GLenum target,  GLuint texture) {
-      if (target == GL_TEXTURE_2D && !_disable_cache) {
-      	if (texture != _texture) {
-			glBindTexture(target, texture);
-			_texture = texture;
+		if (target == GL_TEXTURE_2D && !_disable_cache) {
+			if (texture != _texture) {
+				glBindTexture(target, texture);
+				_texture = texture;
 			}
 		}
 		else
@@ -20,7 +20,7 @@ public:
 	}
 
 	void BlendFunc(GLenum sfactor, GLenum dfactor) {
-      if (sfactor != _src_blend_factor || dfactor != _dst_blend_factor || _disable_cache) {
+		if (sfactor != _src_blend_factor || dfactor != _dst_blend_factor || _disable_cache) {
 			_src_blend_factor = sfactor;
 			_dst_blend_factor = dfactor;
 			glBlendFunc(sfactor, dfactor);
@@ -28,7 +28,7 @@ public:
 	}
 
 	void ClearColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha) {
-      if (red != _clear_r || green != _clear_g || blue != _clear_b || alpha != _clear_a || _disable_cache) {
+		if (red != _clear_r || green != _clear_g || blue != _clear_b || alpha != _clear_a || _disable_cache) {
 			_clear_r = red;
 			_clear_g = green;
 			_clear_b = blue;
@@ -38,7 +38,7 @@ public:
 	}
 
 	void CullFace(GLenum mode) {
-      if (mode != _cull_face || _disable_cache) {
+		if (mode != _cull_face || _disable_cache) {
 			_cull_face = mode;
 			glCullFace(mode);
 		}
@@ -46,8 +46,8 @@ public:
 
 	void DeleteTextures(GLsizei n, const GLuint *textures) {
 		for (int i = 0; i < n; i++)
-      {
-         _texture_params.erase(textures[i]);
+		{
+			_texture_params.erase(textures[i]);
 			if (textures[i] == _texture)
 				_texture = 0;
 		}
@@ -62,7 +62,7 @@ public:
 	}
 
 	void DepthMask(GLboolean flag) {
-      if (flag != _depth_mask || _disable_cache) {
+		if (flag != _depth_mask || _disable_cache) {
 			_depth_mask = flag;
 			glDepthMask(flag);
 		}
@@ -77,14 +77,14 @@ public:
 	}
 
 	void UseProgram(GLuint program) {
-      if (program != _program || _disable_cache) {
+		if (program != _program || _disable_cache) {
 			_program = program;
 			glUseProgram(program);
 		}
 	}
 
 	void StencilFunc(GLenum func, GLint ref, GLuint mask) {
-      if (_stencil_func != func || _stencil_ref != ref || _stencil_fmask != mask || _disable_cache) {
+		if (_stencil_func != func || _stencil_ref != ref || _stencil_fmask != mask || _disable_cache) {
 			_stencil_func = func;
 			_stencil_ref = ref;
 			_stencil_fmask = mask;
@@ -94,7 +94,7 @@ public:
 	}
 
 	void StencilOp(GLenum sfail, GLenum dpfail, GLenum dppass) {
-      if (_stencil_sfail != sfail ||_stencil_dpfail != dpfail || _stencil_dppass != dppass || _disable_cache) {
+		if (_stencil_sfail != sfail ||_stencil_dpfail != dpfail || _stencil_dppass != dppass || _disable_cache) {
 			_stencil_sfail = sfail;
 			_stencil_dpfail = dpfail;
 			_stencil_dppass = dppass;
@@ -104,7 +104,7 @@ public:
 	}
 
 	void StencilMask(GLuint mask) {
-      if (_stencil_mask != mask || _disable_cache) {
+		if (_stencil_mask != mask || _disable_cache) {
 			_stencil_mask = mask;
 			glStencilMask(mask);
 		}

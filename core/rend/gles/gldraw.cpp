@@ -33,15 +33,15 @@ const u32 Zfunction[] =
 /*
 0   Zero                  (0, 0, 0, 0)
 1   One                   (1, 1, 1, 1)
-2   Dither Color          (OR, OG, OB, OA) 
-3   Inverse Dither Color  (1-OR, 1-OG, 1-OB, 1-OA)
+2   Other Color           (OR, OG, OB, OA)
+3   Inverse Other Color   (1-OR, 1-OG, 1-OB, 1-OA)
 4   SRC Alpha             (SA, SA, SA, SA)
 5   Inverse SRC Alpha     (1-SA, 1-SA, 1-SA, 1-SA)
 6   DST Alpha             (DA, DA, DA, DA)
 7   Inverse DST Alpha     (1-DA, 1-DA, 1-DA, 1-DA)
 */
 
-const static u32 DstBlendGL[] =
+const u32 DstBlendGL[] =
 {
 	GL_ZERO,
 	GL_ONE,
@@ -53,7 +53,7 @@ const static u32 DstBlendGL[] =
 	GL_ONE_MINUS_DST_ALPHA
 };
 
-const static u32 SrcBlendGL[] =
+const u32 SrcBlendGL[] =
 {
 	GL_ZERO,
 	GL_ONE,
@@ -263,6 +263,12 @@ void DrawList(const List<PolyParam>& gply, int first, int count)
 	{
 		if (params->count>2) //this actually happens for some games. No idea why ..
 		{
+			if ((Type == ListType_Opaque || (Type == ListType_Translucent && !SortingEnabled)) && params->isp.DepthMode == 0)
+			{
+				// depthFunc = never
+				params++;
+				continue;
+			}
 			SetGPState<Type,SortingEnabled>(params);
 			glDrawElements(GL_TRIANGLE_STRIP, params->count, gl.index_type,
 					(GLvoid*)(gl.get_index_size() * params->first)); glCheck();

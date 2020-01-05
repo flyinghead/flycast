@@ -210,3 +210,4 @@ class TextureCache : public BaseTextureCache<TextureCacheData>
 extern TextureCache TexCache;
 
 extern const u32 Zfunction[8];
+extern const u32 SrcBlendGL[], DstBlendGL[];

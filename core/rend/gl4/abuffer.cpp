@@ -12,7 +12,6 @@ GLuint pixels_buffer;
 GLuint pixels_pointers;
 GLuint atomic_buffer;
 gl4PipelineShader g_abuffer_final_shader;
-gl4PipelineShader g_abuffer_final_nosort_shader;
 gl4PipelineShader g_abuffer_clear_shader;
 gl4PipelineShader g_abuffer_tr_modvol_shaders[ModeCount];
 static GLuint g_quadBuffer = 0;
@@ -25,8 +24,6 @@ GLuint pixel_buffer_size = 512 * 1024 * 1024;	// Initial size 512 MB
 static const char *final_shader_source = SHADER_HEADER
 "#define MAX_PIXELS_PER_FRAGMENT " MAX_PIXELS_PER_FRAGMENT
 R"(
-#define DEPTH_SORTED %d
-
 layout(binding = 0) uniform sampler2D tex;
 uniform highp float shade_scale_factor;
 
@@ -45,13 +42,9 @@ int fillAndSortFragmentArray(ivec2 coords)
 		const Pixel p = pixels[idx];
 		int j = count - 1;
 		Pixel jp = pixels[pixel_list[j]];
-#if DEPTH_SORTED == 1
 		while (j >= 0
 			   && (jp.depth > p.depth
 				   || (jp.depth == p.depth && getPolyNumber(jp) > getPolyNumber(p))))
-#else
-		while (j >= 0 && getPolyNumber(jp) > getPolyNumber(p))
-#endif
 		{
 			pixel_list[j + 1] = pixel_list[j];
 			j--;
@@ -78,49 +71,6 @@ vec4 resolveAlphaBlend(ivec2 coords) {
 	{
 		const Pixel pixel = pixels[pixel_list[i]];
 		const PolyParam pp = tr_poly_params[getPolyNumber(pixel)];
-#if DEPTH_SORTED != 1
-		const float frag_depth = pixel.depth;
-		if (do_depth_test)
-		{
-			switch (getDepthFunc(pp))
-			{
-			case 0:		// Never
-				continue;
-			case 1:		// Less
-				if (frag_depth >= depth)
-					continue;
-				break;
-			case 2:		// Equal
-				if (frag_depth != depth)
-					continue;
-				break;
-			case 3:		// Less or equal
-				if (frag_depth > depth)
-					continue;
-				break;
-			case 4:		// Greater
-				if (frag_depth <= depth)
-					continue;
-				break;
-			case 5:		// Not equal
-				if (frag_depth == depth)
-					continue;
-				break;
-			case 6:		// Greater or equal
-				if (frag_depth < depth)
-					continue;
-				break;
-			case 7:		// Always
-				break;
-			}
-		}
-		
-		if (getDepthMask(pp))
-		{
-			depth = frag_depth;
-			do_depth_test = true;
-		}
-#endif
 		bool area1 = false;
 		bool shadowed = false;
 		if (isShadowed(pixel))
@@ -342,17 +292,7 @@ void initABuffer()
 	}
 
 	if (g_abuffer_final_shader.program == 0)
-	{
-		char source[16384];
-		sprintf(source, final_shader_source, 1);
-		gl4CompilePipelineShader(&g_abuffer_final_shader, source, VertexShaderSource);
-	}
-	if (g_abuffer_final_nosort_shader.program == 0)
-	{
-		char source[16384];
-		sprintf(source, final_shader_source, 0);
-		gl4CompilePipelineShader(&g_abuffer_final_nosort_shader, source, VertexShaderSource);
-	}
+		gl4CompilePipelineShader(&g_abuffer_final_shader, final_shader_source, VertexShaderSource);
 	if (g_abuffer_clear_shader.program == 0)
 		gl4CompilePipelineShader(&g_abuffer_clear_shader, clear_shader_source, VertexShaderSource);
 	if (g_abuffer_tr_modvol_shaders[0].program == 0)
@@ -420,8 +360,6 @@ void termABuffer()
 	}
 	glcache.DeleteProgram(g_abuffer_final_shader.program);
 	g_abuffer_final_shader.program = 0;
-	glcache.DeleteProgram(g_abuffer_final_nosort_shader.program);
-	g_abuffer_final_nosort_shader.program = 0;
 	glcache.DeleteProgram(g_abuffer_clear_shader.program);
 	g_abuffer_clear_shader.program = 0;
 	for (int mode = 0; mode < ModeCount; mode++)
@@ -559,10 +497,10 @@ void checkOverflowAndReset()
  	glBufferSubData(GL_ATOMIC_COUNTER_BUFFER, 0 , sizeof(GLuint), &max_pixel_index);
 }
 
-void renderABuffer(bool sortFragments)
+void renderABuffer()
 {
 	// Render to output FBO
-	glcache.UseProgram(sortFragments ? g_abuffer_final_shader.program : g_abuffer_final_nosort_shader.program);
+	glcache.UseProgram(g_abuffer_final_shader.program);
 	gl4ShaderUniforms.Set(&g_abuffer_final_shader);
 
 	glcache.Disable(GL_DEPTH_TEST);
