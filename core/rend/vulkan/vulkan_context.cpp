@@ -144,15 +144,6 @@ bool VulkanContext::InitInstance(const char** extensions, uint32_t extensions_co
 		for (int i = 0; i < extensions_count; i++)
 			vext.push_back(extensions[i]);
 
-		bool getProperties2KHRSupported = false;
-		for (const auto& property : vk::enumerateInstanceExtensionProperties())
-			if (!strcmp(property.extensionName, "VK_KHR_get_physical_device_properties2"))
-			{
-				getProperties2KHRSupported = true;
-				vext.push_back("VK_KHR_get_physical_device_properties2");
-				break;
-			}
-
 		std::vector<const char *> layer_names;
 		//layer_names.push_back("VK_LAYER_ARM_AGA");
 #ifdef VK_DEBUG
@@ -191,6 +182,7 @@ bool VulkanContext::InitInstance(const char** extensions, uint32_t extensions_co
 #endif
 
 		// Choose a discrete gpu if there's one, otherwise just pick the first one
+		physicalDevice = nullptr;
 		const auto devices = instance->enumeratePhysicalDevices();
 		for (const auto& phyDev : devices)
 		{
@@ -206,15 +198,12 @@ bool VulkanContext::InitInstance(const char** extensions, uint32_t extensions_co
 			physicalDevice = instance->enumeratePhysicalDevices().front();
 
 		const vk::PhysicalDeviceProperties *properties;
-		if (vulkan11 || getProperties2KHRSupported)
+		if (vulkan11)
 		{
 			static vk::PhysicalDeviceProperties2 properties2;
 			vk::PhysicalDeviceMaintenance3Properties properties3;
 			properties2.pNext = &properties3;
-			if (vulkan11)
-				physicalDevice.getProperties2(&properties2);
-			else
-				physicalDevice.getProperties2KHR(&properties2);
+			physicalDevice.getProperties2(&properties2);
 			properties = &properties2.properties;
 			maxMemoryAllocationSize = properties3.maxMemoryAllocationSize;
 			if (maxMemoryAllocationSize == 0)
