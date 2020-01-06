@@ -655,7 +655,7 @@ extern "C" void DYNACALL
 		arm_mainloop(u32 cycl, void* regs, void* entrypoints);
 extern "C" void DYNACALL arm_compilecode();
 
-template <bool L, bool B>
+template <bool Load, bool Byte>
 u32 DYNACALL DoMemOp(u32 addr,u32 data)
 {
 	u32 rv=0;
@@ -665,16 +665,16 @@ u32 DYNACALL DoMemOp(u32 addr,u32 data)
 	data=virt_arm_reg(1);
 #endif
 
-	if (L)
+	if (Load)
 	{
-		if (B)
+		if (Byte)
 			rv=arm_ReadMem8(addr);
 		else
 			rv=arm_ReadMem32(addr);
 	}
 	else
 	{
-		if (B)
+		if (Byte)
 			arm_WriteMem8(addr,data);
 		else
 			arm_WriteMem32(addr,data);
@@ -727,18 +727,18 @@ void DYNACALL DoLDM(u32 addr, u32 mask)
 }
 #endif
 
-void* GetMemOp(bool L, bool B)
+void* GetMemOp(bool Load, bool Byte)
 {
-	if (L)
+	if (Load)
 	{
-		if (B)
+		if (Byte)
 			return (void*)(u32(DYNACALL*)(u32,u32))&DoMemOp<true,true>;
 		else
 			return (void*)(u32(DYNACALL*)(u32,u32))&DoMemOp<true,false>;
 	}
 	else
 	{
-		if (B)
+		if (Byte)
 			return (void*)(u32(DYNACALL*)(u32,u32))&DoMemOp<false,true>;
 		else
 			return (void*)(u32(DYNACALL*)(u32,u32))&DoMemOp<false,false>;
@@ -1191,12 +1191,14 @@ void VirtualizeOpcode(u32 opcd,u32 flag,u32 pc)
 		LoadFlags();
 	}
 
+	// Dynamic LSL/LSR/ASR/ROR adds +4 to pc due to delay
+	bool shiftByReg = !(opcd & (1 << 25)) && (opcd & (1 << 4));
 	if (flag & OP_HAS_RS_0)
-		LoadAndRename(opcd,0,true,pc+8);
+		LoadAndRename(opcd, 0, true, pc + (shiftByReg ? 12 : 8));
 	if (flag & OP_HAS_RS_8)
-		LoadAndRename(opcd,8,true,pc+8);
+		LoadAndRename(opcd, 8, true, pc + 8);
 	if (flag & OP_HAS_RS_16)
-		LoadAndRename(opcd,16,true,pc+8);
+		LoadAndRename(opcd, 16, true, pc + (shiftByReg ? 12 : 8));
 
 	if (flag & OP_HAS_RD_12)
 		LoadAndRename(opcd,12,flag&OP_HAS_RD_READ,pc+4);
@@ -1542,6 +1544,7 @@ void armv_intpr(u32 opcd)
 	//Call interpreter
 	MOV32(r0,opcd);
 	CALL((u32)arm_single_op);
+	SUB(r5, r5, r0, false);
 }
 
 void armv_end(void* codestart, u32 cycl)
@@ -1584,37 +1587,12 @@ void armv_MOV32(eReg regn, u32 imm)
 //CycleCount is pretty much fixed to (512*32) for now (might change to a diff constant, but will be constant)
 void arm_Run(u32 CycleCount)
 {
-	if (!Arm7Enabled)
-		return;
-
-	for (int i=0;i<32;i++)
+	for (int i = 0; i < 32; i++)
 	{
-		arm_mainloop(CycleCount/32, arm_Reg, EntryPoints);
+		if (Arm7Enabled)
+			arm_mainloop(CycleCount / 32, arm_Reg, EntryPoints);
 		libAICA_TimeStep();
 	}
-
-	/*
-	s32 clktks=reg[CYCL_CNT].I+CycleCount;
-
-	//While we have time to spend
-	do
-	{
-		//Check for interrupts
-		if (reg[INTR_PEND].I)
-		{
-			CPUFiq();
-		}
-
-		//lookup code at armNextPC, run a block & remove its cycles from the timeslice
-		clktks-=EntryPoints[(armNextPC & ARAM_MASK)/4]();
-		
-		#if HOST_CPU==CPU_X86
-			verify(armNextPC<=ARAM_MASK);
-		#endif
-	} while(clktks>0);
-
-	reg[CYCL_CNT].I=clktks;
-	*/
 }
 
 
@@ -1713,6 +1691,9 @@ extern "C" void CompileCode()
 	{
 		ops++;
 
+		// Each opcode takes at least 6 cycles
+		Cycles += 6;
+
 		//Read opcode ...
 		u32 opcd=CPUReadMemoryQuick(pc);
 
@@ -1773,6 +1754,7 @@ extern "C" void CompileCode()
 				void *ref = armv_start_conditional(cc);
 				StoreReg(r0,R15_ARM_NEXT,cc);
 				armv_end_conditional(ref);
+				Cycles += 3;
 			}
 			break;
 
@@ -1807,6 +1789,7 @@ extern "C" void CompileCode()
 
 					armv_imm_to_reg(R15_ARM_NEXT,pc+8+offs);
 				}
+				Cycles += 3;
 			}
 			break;
 
@@ -1820,18 +1803,19 @@ extern "C" void CompileCode()
 				
 				bool W=opcd&(1<<21);
 				bool I=opcd&(1<<25);
+				bool L = opcd & (1 << 20);
 				
 				u32 Rn=(opcd>>16)&15;
 				u32 Rd=(opcd>>12)&15;
 
-				bool DoWB=W || (!Pre && Rn!=Rd);	//Write back if: W, Post update w/ Rn!=Rd
+				bool DoWB = (W || !Pre) && Rn != Rd;	//Write back if pre- or post-indexed and Rn!=Rd
 				bool DoAdd=DoWB || Pre;
 
 				//Register not updated anyway
-				if (I==false && offs==0)
+				if (!I && offs == 0)
 				{
-					DoWB=false;
-					DoAdd=false;
+					DoWB = false;
+					DoAdd = false;
 				}
 
 				//verify(Rd!=15);
@@ -1846,7 +1830,7 @@ extern "C" void CompileCode()
 					{
 						eReg dst=Pre?r0:r9;
 
-						if (I==false && is_i8r4(offs))
+						if (!I && is_i8r4(offs))
 						{
 							if (U)
 								armv_add(dst, r0, offs);
@@ -1866,21 +1850,21 @@ extern "C" void CompileCode()
 				{
 					u32 addr=pc+8;
 
-					if (Pre && offs && I==false)
+					if (Pre && offs && !I)
 					{
 						addr+=U?offs:-offs;
 					}
 					
 					armv_MOV32(r0,addr);
 					
-					if (Pre && I==true)
+					if (Pre && I)
 					{
 						MemOperand2(r1,I,U,offs,opcd);
 						armv_add(r0, r0, r1);
 					}
 				}
 
-				if (CHK_BTS(1,20,0))
+				if (!L)
 				{
 					if (Rd==15)
 					{
@@ -1892,9 +1876,9 @@ extern "C" void CompileCode()
 					}
 				}
 				//Call handler
-				armv_call(GetMemOp(CHK_BTS(1,20,1),CHK_BTS(1,22,1)));
+				armv_call(GetMemOp(L, CHK_BTS(1,22,1)));
 
-				if (CHK_BTS(1,20,1))
+				if (L)
 				{
 					if (Rd==15)
 					{
@@ -1912,6 +1896,10 @@ extern "C" void CompileCode()
 				{
 					StoreReg(r9,Rn);
 				}
+				if (L)
+					Cycles += 4;
+				else
+					Cycles += 3;
 			}
 			break;
 
@@ -1946,6 +1934,7 @@ extern "C" void CompileCode()
 
 				if (op_flags & OP_SETS_PC)
 					armv_imm_to_reg(R15_ARM_NEXT,pc+4);
+				Cycles++;
 			}
 			break;
 		/*
@@ -1998,6 +1987,9 @@ extern "C" void CompileCode()
 			{
 				//interpreter fallback
 
+				// Let the interpreter count cycles
+				Cycles -= 6;
+
 				//arm_single_op needs PC+4 on r15
 				//TODO: only write it if needed -> Probably not worth the code, very few fallbacks now...
 				armv_imm_to_reg(15,pc+8);
@@ -2030,9 +2022,6 @@ extern "C" void CompileCode()
 		default:
 			die("can't happen\n");
 		}
-
-		//Lets say each opcode takes 9 cycles for now ..
-		Cycles+=9;
 
 #if HOST_CPU==CPU_X86
 		armv_imm_to_reg(15,0xF87641FF);
