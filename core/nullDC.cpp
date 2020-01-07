@@ -348,7 +348,9 @@ void LoadSpecialSettings()
 		}
 		else if (!strcmp("NINJA ASSAULT", naomi_game_id)
 					|| !strcmp(naomi_game_id, "Sports Shooting USA")	// AW
-					|| !strcmp(naomi_game_id, "SEGA CLAY CHALLENGE"))	// AW
+					|| !strcmp(naomi_game_id, "SEGA CLAY CHALLENGE")	// AW
+					|| !strcmp(naomi_game_id, "RANGER MISSION")			// AW
+					|| !strcmp(naomi_game_id, "EXTREME HUNTING"))		// AW
 		{
 			INFO_LOG(BOOT, "Enabling lightgun setup for game %s", naomi_game_id);
 			settings.input.JammaSetup = 5;
