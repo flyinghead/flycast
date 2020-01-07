@@ -299,7 +299,7 @@ bool dc_serialize(void **data, unsigned int *total_size)
 {
 	int i = 0;
 	int j = 0;
-	serialize_version_enum version = V7;
+	serialize_version_enum version = V8;
 
 	*total_size = 0 ;
 
@@ -320,14 +320,13 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	REICAST_S(armMode);
 	REICAST_S(Arm7Enabled);
 
-	REICAST_S(dsp);
+	REICAST_S(dsp);	// FIXME could save 32KB
 
 	for ( i = 0 ; i < 3 ; i++)
 	{
 		REICAST_S(timers[i].c_step);
 		REICAST_S(timers[i].m_step);
 	}
-
 
 	REICAST_SA(aica_ram.data,aica_ram.size) ;
 	REICAST_S(VREG);
@@ -361,7 +360,6 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	REICAST_S(set_mode_offset);
 	REICAST_S(read_params);
 	REICAST_S(packet_cmd);
-	REICAST_S(read_buff);
 	REICAST_S(pio_buff);
 	REICAST_S(set_mode_offset);
 	REICAST_S(ata_cmd);
@@ -447,7 +445,6 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	REICAST_S((*p_sh4rcb).cntx);
 
 	REICAST_S(sh4_sched_ffb);
-	REICAST_S(i);	// sh4_sched_intr
 
 	REICAST_S(sch_list[aica_schid].tag) ;
 	REICAST_S(sch_list[aica_schid].start) ;
@@ -484,10 +481,6 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	REICAST_S(sch_list[vblank_schid].start) ;
 	REICAST_S(sch_list[vblank_schid].end) ;
 
-	REICAST_S(i); // sch_list[time_sync].tag
-	REICAST_S(i); // sch_list[time_sync].start
-	REICAST_S(i); // sch_list[time_sync].end
-
 #ifdef ENABLE_MODEM
 	REICAST_S(sch_list[modem_sched].tag) ;
     REICAST_S(sch_list[modem_sched].start) ;
@@ -500,10 +493,6 @@ bool dc_serialize(void **data, unsigned int *total_size)
 #endif
 
 	REICAST_S(SCIF_SCFSR2);
-	bool dum_bool;
-	REICAST_S(dum_bool);// SCIF_SCFRDR2
-	REICAST_S(i);		// SCIF_SCFDR2
-
 	REICAST_S(BSC_PDTRA);
 
 	REICAST_SA(tmu_shift,3);
@@ -581,11 +570,6 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 	REICAST_US(armFiqEnable);
 	REICAST_US(armMode);
 	REICAST_US(Arm7Enabled);
-	REICAST_SKIP(256);	// cpuBitsSet
-	bool dummy;
-	REICAST_US(dummy);	// intState
-	REICAST_US(dummy);	// stopState
-	REICAST_US(dummy);	// holdState
 
 	REICAST_US(dsp);
 
@@ -602,14 +586,12 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 
 	REICAST_USA(aica_reg,0x8000);
 
-	channel_unserialize(data, total_size, V8_LIBRETRO);
+	channel_unserialize(data, total_size, V9_LIBRETRO);
 
 	REICAST_USA(cdda_sector,CDDA_SIZE);
 	REICAST_US(cdda_index);
-	REICAST_SKIP(4 * 64);			// mxlr
-	REICAST_US(i);					// samples_gen
 
-	register_unserialize(sb_regs, data, total_size, V8_LIBRETRO) ;
+	register_unserialize(sb_regs, data, total_size, V9_LIBRETRO) ;
 	REICAST_US(SB_ISTNRM);
 	REICAST_US(SB_FFST_rc);
 	REICAST_US(SB_FFST);
@@ -638,7 +620,7 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 	REICAST_US(set_mode_offset);
 	REICAST_US(read_params);
 	REICAST_US(packet_cmd);
-	REICAST_US(read_buff);
+	read_buff.cache_size = 0;
 	REICAST_US(pio_buff);
 	REICAST_US(set_mode_offset);
 	REICAST_US(ata_cmd);
@@ -658,12 +640,9 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 	REICAST_USA(EEPROM,0x100);
 	REICAST_US(EEPROM_loaded);
 
-	bool dumbool;
-
 	REICAST_US(maple_ddt_pending_reset);
 	mcfg_UnserializeDevices(data, total_size, false);
-	REICAST_US(i);			// FrameCount
-	REICAST_US(dumbool);	// pend_rend
+
 	pend_rend = false;
 
 	REICAST_USA(YUV_tempdata,512/4);
@@ -674,67 +653,32 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 	REICAST_US(YUV_x_size);
 	REICAST_US(YUV_y_size);
 
-	REICAST_US(dumbool);	// fog_needs_update
 	REICAST_USA(pvr_regs,pvr_RegSize);
 	fog_needs_update = true ;
 
 	REICAST_US(in_vblank);
 	REICAST_US(clc_pvr_scanline);
-	REICAST_US(i); 			// pvr_numscanlines
-	REICAST_US(i);			// prv_cur_scanline
-	REICAST_US(i);			// vblk_cnt
-	REICAST_US(i);			// Line_Cycles
-	REICAST_US(i);			// Frame_Cycles
-	REICAST_SKIP(8);		// speed_load_mspdf
-	REICAST_US(i);			// mips_counter
-	REICAST_SKIP(8);		// full_rps
 
-	REICAST_SKIP(4 * 256);	// ta_type_lut
-	REICAST_USA(ta_fsm,2049);
+	REICAST_US(ta_fsm[2048]);
 	REICAST_US(ta_fsm_cl);
-	REICAST_US(dumbool); 	// pal_needs_update
-	for (int i = 0; i < 4; i++) REICAST_US(j);	// _pal_rev_256
-	for (int i = 0; i < 64; i++) REICAST_US(j); // _pal_rev_16
-	for (int i = 0; i < 4; i++) REICAST_US(j);	// pal_rev_256
-	for (int i = 0; i < 64; i++) REICAST_US(j); // pal_rev_16
-	for ( i = 0 ; i < 3 ; i++ )
-	{
-		u32 buf[65536]; //u32 *ptr = decoded_colors[i] ;
-		REICAST_US(buf); //LIBRETRO_SA(ptr,65536);
-	}
-
-	REICAST_US(i);			// tileclip_val
-	REICAST_SKIP(65536);	// f32_su8_tbl
-	REICAST_SKIP(4);		// FaceBaseColor
-	REICAST_SKIP(4);		// FaceOffsColor
-	REICAST_US(i);			// SFaceBaseColor
-	REICAST_US(i);			// SFaceOffsColor
-
-	REICAST_US(i); 			// palette_index
-	REICAST_US(dumbool); 	// KillTex
-	REICAST_SKIP(4 * 1024); // palette16_ram
-	REICAST_SKIP(4 * 1024); // palette32_ram
-	REICAST_SKIP(2 * 8 * 4 * 1024); // detwiddle[][]
+	pal_needs_update = true;
 
 	REICAST_USA(vram.data, vram.size);
-	pal_needs_update = true;
+
 	REICAST_USA(OnChipRAM.data,OnChipRAM_SIZE);
 
-	register_unserialize(CCN, data, total_size, V8_LIBRETRO) ;
-	register_unserialize(UBC, data, total_size, V8_LIBRETRO) ;
-	register_unserialize(BSC, data, total_size, V8_LIBRETRO) ;
-	register_unserialize(DMAC, data, total_size, V8_LIBRETRO) ;
-	register_unserialize(CPG, data, total_size, V8_LIBRETRO) ;
-	register_unserialize(RTC, data, total_size, V8_LIBRETRO) ;
-	register_unserialize(INTC, data, total_size, V8_LIBRETRO) ;
-	register_unserialize(TMU, data, total_size, V8_LIBRETRO) ;
-	register_unserialize(SCI, data, total_size, V8_LIBRETRO) ;
-	register_unserialize(SCIF, data, total_size, V8_LIBRETRO) ;
+	register_unserialize(CCN, data, total_size, V9_LIBRETRO) ;
+	register_unserialize(UBC, data, total_size, V9_LIBRETRO) ;
+	register_unserialize(BSC, data, total_size, V9_LIBRETRO) ;
+	register_unserialize(DMAC, data, total_size, V9_LIBRETRO) ;
+	register_unserialize(CPG, data, total_size, V9_LIBRETRO) ;
+	register_unserialize(RTC, data, total_size, V9_LIBRETRO) ;
+	register_unserialize(INTC, data, total_size, V9_LIBRETRO) ;
+	register_unserialize(TMU, data, total_size, V9_LIBRETRO) ;
+	register_unserialize(SCI, data, total_size, V9_LIBRETRO) ;
+	register_unserialize(SCIF, data, total_size, V9_LIBRETRO) ;
 
-	u16 dummyshort;
-	
 	REICAST_USA(mem_b.data, mem_b.size);
-	REICAST_US(dummyshort);		// IRLPriority
 	REICAST_USA(InterruptEnvId,32);
 	REICAST_USA(InterruptBit,32);
 	REICAST_USA(InterruptLevelBit,16);
@@ -756,11 +700,7 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 
 	REICAST_US((*p_sh4rcb).cntx);
 
-	REICAST_US(i);			// old_rm
-	REICAST_US(i);			// old_dn
-
 	REICAST_US(sh4_sched_ffb);
-	REICAST_US(i);			// sh4_sched_intr
 
 	REICAST_US(sch_list[aica_schid].tag) ;
 	REICAST_US(sch_list[aica_schid].start) ;
@@ -797,9 +737,6 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 	REICAST_US(sch_list[vblank_schid].start) ;
 	REICAST_US(sch_list[vblank_schid].end) ;
 
-	REICAST_US(i); // sch_list[time_sync].tag
-	REICAST_US(i); // sch_list[time_sync].start
-	REICAST_US(i); // sch_list[time_sync].end
 #ifdef ENABLE_MODEM
 	REICAST_US(sch_list[modem_sched].tag) ;
     REICAST_US(sch_list[modem_sched].start) ;
@@ -812,10 +749,6 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 #endif
 
 	REICAST_US(SCIF_SCFSR2);
-	bool dum_bool;
-	REICAST_US(dum_bool);	// SCIF_SCFRDR2
-	REICAST_US(i);			// SCIF_SCFDR2
-
 	REICAST_US(BSC_PDTRA);
 
 	REICAST_USA(tmu_shift,3);
@@ -848,10 +781,6 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 	REICAST_US(i);	// ARAM_MASK
 	REICAST_US(i);	// VRAM_MASK
 
-
-
-	REICAST_US(i); // naomi_updates
-	REICAST_US(i); // BoardID
 	REICAST_US(GSerialBuffer);
 	REICAST_US(BSerialBuffer);
 	REICAST_US(GBufPos);
@@ -877,27 +806,6 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 	REICAST_US(reg_dimm_status);
 	REICAST_US(NaomiDataRead);
 
-	REICAST_US(i); //LIBRETRO_S(cycle_counter);
-	REICAST_US(i); // idxnxx
-
-	REICAST_SKIP(sizeof(state_t));	// state
-	REICAST_US(i);		// div_som_reg1
-	REICAST_US(i);		// div_som_reg2
-	REICAST_US(i);		// div_som_reg3
-
-	REICAST_US(i);		// LastAddr
-	REICAST_US(i);		// LastAddr_min
-	REICAST_SKIP(1024);	// block_hash
-
-	for (int i = 0; i < sh4_reg_count; i++)	// RegisterRead, RegisterWrite
-	{
-		REICAST_US(j);
-		REICAST_US(j);
-	}
-	REICAST_US(i); 		// fallback_blocks);
-	REICAST_US(i); 		// total_blocks);
-	REICAST_US(i); 		// REMOVED_OPS
-
 	REICAST_US(settings.dreamcast.broadcast);
 	REICAST_US(settings.dreamcast.cable);
 	REICAST_US(settings.dreamcast.region);
@@ -920,7 +828,7 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 	*total_size = 0 ;
 
 	REICAST_US(version) ;
-	if (version == V8_LIBRETRO)
+	if (version == V9_LIBRETRO)
 		return dc_unserialize_libretro(data, total_size);
 	if (version != V4 && version < V5)
 	{
@@ -1002,7 +910,10 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 	REICAST_US(set_mode_offset);
 	REICAST_US(read_params);
 	REICAST_US(packet_cmd);
-	REICAST_US(read_buff);
+	// read_buff
+	read_buff.cache_size = 0;
+	if (version < V8)
+		REICAST_SKIP(4 + 4 + 2352 * 8192);
 	REICAST_US(pio_buff);
 	REICAST_US(set_mode_offset);
 	REICAST_US(ata_cmd);
@@ -1121,7 +1032,8 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 	}
 
 	REICAST_US(sh4_sched_ffb);
-	REICAST_US(i);		// sh4_sched_intr
+	if (version < V8)
+		REICAST_US(i);		// sh4_sched_intr
 
 	REICAST_US(sch_list[aica_schid].tag) ;
 	REICAST_US(sch_list[aica_schid].start) ;
@@ -1158,9 +1070,12 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 	REICAST_US(sch_list[vblank_schid].start) ;
 	REICAST_US(sch_list[vblank_schid].end) ;
 
-	REICAST_US(i); // sch_list[time_sync].tag
-	REICAST_US(i); // sch_list[time_sync].start
-	REICAST_US(i); // sch_list[time_sync].end
+	if (version < V8)
+	{
+		REICAST_US(i); // sch_list[time_sync].tag
+		REICAST_US(i); // sch_list[time_sync].start
+		REICAST_US(i); // sch_list[time_sync].end
+	}
 
 #ifdef ENABLE_MODEM
 	REICAST_US(sch_list[modem_sched].tag) ;
@@ -1174,10 +1089,12 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 #endif
 
 	REICAST_US(SCIF_SCFSR2);
-	bool dum_bool;
-	REICAST_US(dum_bool);	// SCIF_SCFRDR2
-	REICAST_US(i);			// SCIF_SCFDR2
-
+	if (version < V8)
+	{
+		bool dum_bool;
+		REICAST_US(dum_bool);	// SCIF_SCFRDR2
+		REICAST_US(i);			// SCIF_SCFDR2
+	}
 	REICAST_US(BSC_PDTRA);
 
 	REICAST_USA(tmu_shift,3);
