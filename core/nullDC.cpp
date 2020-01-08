@@ -1014,6 +1014,13 @@ static string get_savestate_file_path()
 {
 	string state_file = cfgLoadStr("config", "image", "noname.chd");
 	size_t lastindex = state_file.find_last_of('/');
+#ifdef _WIN32
+	size_t lastindex2 = state_file.find_last_of('\\');
+	if (lastindex == std::string::npos)
+		lastindex = lastindex2;
+	else if (lastindex2 != std::string::npos)
+		lastindex = std::max(lastindex, lastindex2);
+#endif
 	if (lastindex != -1)
 		state_file = state_file.substr(lastindex + 1);
 	lastindex = state_file.find_last_of('.');
