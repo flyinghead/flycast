@@ -172,5 +172,10 @@ Disc* cue_parse(const wchar* file)
 
 	disc->FillGDSession();
 
+	// Get rid of the pregap for audio tracks
+	for (Track& t : disc->tracks)
+		if (t.CTRL == 0)
+			t.StartFAD += 150;
+
 	return disc;
 }
