@@ -668,7 +668,8 @@ bool VulkanContext::Init()
     extensions.resize(extensionsCount + 1);
     SDL_Vulkan_GetInstanceExtensions((SDL_Window *)window, &extensionsCount, &extensions[1]);
 #elif defined(_WIN32)
-	os_CreateWindow();
+    extern void CreateMainWindow();
+    CreateMainWindow();
 	extensions.push_back(VK_KHR_WIN32_SURFACE_EXTENSION_NAME);
 #elif defined(__MACH__)
 	extensions.push_back(VK_MVK_MACOS_SURFACE_EXTENSION_NAME);
@@ -865,6 +866,10 @@ void VulkanContext::Term()
 #endif
 #endif
 	instance.reset();
+#ifdef _WIN32
+	extern void DestroyMainWindow();
+	DestroyMainWindow();
+#endif
 }
 
 void VulkanContext::DoSwapAutomation()

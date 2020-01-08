@@ -23,7 +23,8 @@
 #include "oslib/oslib.h"
 
 #if defined(_WIN32) && !defined(USE_SDL)
-void DestroyWindow();
+void CreateMainWindow();
+void DestroyMainWindow();
 
 WGLGraphicsContext theGLContext;
 
@@ -37,7 +38,7 @@ bool WGLGraphicsContext::Init()
 		// Already initialized
 		return true;
 
-	os_CreateWindow();
+	CreateMainWindow();
 	PIXELFORMATDESCRIPTOR pfd =
 	{
 			sizeof(PIXELFORMATDESCRIPTOR),
@@ -137,7 +138,7 @@ void WGLGraphicsContext::Term()
 		wglMakeCurrent(ourWindowHandleToDeviceContext, NULL);
 		wglDeleteContext(ourOpenGLRenderingContext);
 		ourOpenGLRenderingContext = NULL;
-		DestroyWindow();
+		DestroyMainWindow();
 	}
 }
 
