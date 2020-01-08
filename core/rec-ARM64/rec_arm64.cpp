@@ -936,8 +936,19 @@ public:
 			case shop_xtrct:
 				{
 					const Register rd = regalloc.MapRegister(op.rd);
-					Lsr(rd, regalloc.MapRegister(op.rs1), 16);
-					Lsl(w0, regalloc.MapRegister(op.rs2), 16);
+					const Register rs1 = regalloc.MapRegister(op.rs1);
+					const Register rs2 = regalloc.MapRegister(op.rs2);
+					if (op.rs1._reg == op.rd._reg)
+					{
+						verify(op.rs2._reg != op.rd._reg);
+						Lsr(rd, rs1, 16);
+						Lsl(w0, rs2, 16);
+					}
+					else
+					{
+						Lsl(rd, rs2, 16);
+						Lsr(w0, rs1, 16);
+					}
 					Orr(rd, rd, w0);
 				}
 				break;
