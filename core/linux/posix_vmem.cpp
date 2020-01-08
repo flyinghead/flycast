@@ -64,7 +64,10 @@ bool mem_region_set_exec(void *start, size_t len)
 {
 	size_t inpage = (uintptr_t)start & PAGE_MASK;
 	if (mprotect((u8*)start - inpage, len + inpage, PROT_READ | PROT_WRITE | PROT_EXEC))
-		die("mprotect  failed...");
+	{
+		WARN_LOG(VMEM, "mem_region_set_exec: mprotect failed. errno %d", errno);
+		return false;
+	}
 	return true;
 }
 
@@ -141,6 +144,8 @@ static int allocate_shared_filemem(unsigned size) {
 
 int vmem_fd = -1;
 static int shmem_fd2 = -1;
+static void *reserved_base;
+static size_t reserved_size;
 
 // vmem_base_addr points to an address space of 512MB (or 4GB) that can be used for fast memory ops.
 // In negative offsets of the pointer (up to FPCB size, usually 65/129MB) the context and jump table
@@ -153,18 +158,17 @@ VMemType vmem_platform_init(void **vmem_base_addr, void **sh4rcb_addr) {
 		return MemTypeError;
 
 	// Now try to allocate a contiguous piece of memory.
-	void *first_ptr = NULL;
 	VMemType rv;
 #ifdef HOST_64BIT_CPU
-	size_t bigsize = 0x100000000L + sizeof(Sh4RCB) + 0x10000;	// 4GB + context size + 64K padding
-	first_ptr = mem_region_reserve(NULL, bigsize);
+	reserved_size = 0x100000000L + sizeof(Sh4RCB) + 0x10000;	// 4GB + context size + 64K padding
+	reserved_base = mem_region_reserve(NULL, reserved_size);
 	rv = MemType4GB;
 #endif
-	if (first_ptr == NULL)
+	if (reserved_base == NULL)
 	{
-		unsigned memsize = 512*1024*1024 + sizeof(Sh4RCB) + ARAM_SIZE_MAX + 0x10000;
-		first_ptr = mem_region_reserve(NULL, memsize);
-		if (!first_ptr) {
+		reserved_size = 512*1024*1024 + sizeof(Sh4RCB) + ARAM_SIZE_MAX + 0x10000;
+		reserved_base = mem_region_reserve(NULL, reserved_size);
+		if (!reserved_base) {
 			close(vmem_fd);
 			return MemTypeError;
 		}
@@ -172,7 +176,7 @@ VMemType vmem_platform_init(void **vmem_base_addr, void **sh4rcb_addr) {
 	}
 
 	// Align pointer to 64KB too, some Linaro bug (no idea but let's just be safe I guess).
-	uintptr_t ptrint = (uintptr_t)first_ptr;
+	uintptr_t ptrint = (uintptr_t)reserved_base;
 	ptrint = (ptrint + 0x10000 - 1) & (~0xffff);
 	*sh4rcb_addr = (void*)ptrint;
 	*vmem_base_addr = (void*)(ptrint + sizeof(Sh4RCB));
@@ -187,10 +191,8 @@ VMemType vmem_platform_init(void **vmem_base_addr, void **sh4rcb_addr) {
 
 // Just tries to wipe as much as possible in the relevant area.
 void vmem_platform_destroy() {
-	if (vmem_4gb_space)
-		mem_region_release(virt_ram_base, (size_t)0x100000000);
-	else
-		mem_region_release(virt_ram_base, 0x20000000);
+	if (reserved_base != NULL)
+		mem_region_release(reserved_base, reserved_size);
 }
 
 // Resets a chunk of memory by deleting its data and setting its protection back.

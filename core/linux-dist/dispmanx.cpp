@@ -1,6 +1,7 @@
 #if defined(SUPPORT_DISPMANX)
 #include "dispmanx.h"
 #include "main.h"
+#include "wsi/context.h"
 
 #include <bcm_host.h>
 #include <EGL/egl.h>
@@ -75,7 +76,8 @@ void dispmanx_window_create()
 	native_window.height = window_height;
 	vc_dispmanx_update_submit_sync( dispman_update );
 
-	x11_disp = (void*)dispman_display;
-	x11_win = (void*)&native_window;
+	theGLContext.SetNativeWindow((EGLNativeWindowType)&native_window);
+	theGLContext.SetNativeDisplay((EGLNativeDisplayType)dispman_display);
+	InitRenderApi();
 }
 #endif

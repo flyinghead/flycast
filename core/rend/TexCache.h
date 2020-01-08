@@ -1,5 +1,12 @@
 #pragma once
+#include <atomic>
+#include <memory>
+#include <unordered_map>
 #include "oslib/oslib.h"
+#include "hw/pvr/pvr_regs.h"
+#undef ID
+#include "hw/pvr/ta_structs.h"
+#include "hw/pvr/Renderer_if.h"
 
 extern u8* vq_codebook;
 extern u32 palette_index;
@@ -216,14 +223,6 @@ pixelcvt_next(conv4444_PL,4,1)
 	//3,0
 	pb->prel(3,ARGB4444(p_in[3]));
 }
-pixelcvt_next(convBMP_PL,4,1)
-{
-	u16* p_in=(u16*)data;
-	pb->prel(0,ARGB4444(p_in[0]));
-	pb->prel(1,ARGB4444(p_in[1]));
-	pb->prel(2,ARGB4444(p_in[2]));
-	pb->prel(3,ARGB4444(p_in[3]));
-}
 pixelcvt_end;
 
 // 32-bit pixel buffer
@@ -341,14 +340,6 @@ pixelcvt_next(conv4444_TW,2,2)
 	//1,0
 	pb->prel(1,0,ARGB4444(p_in[2]));
 	//1,1
-	pb->prel(1,1,ARGB4444(p_in[3]));
-}
-pixelcvt_next(convBMP_TW,2,2)
-{
-	u16* p_in=(u16*)data;
-	pb->prel(0,0,ARGB4444(p_in[0]));
-	pb->prel(0,1,ARGB4444(p_in[1]));
-	pb->prel(1,0,ARGB4444(p_in[2]));
 	pb->prel(1,1,ARGB4444(p_in[3]));
 }
 pixelcvt_end;
@@ -555,14 +546,12 @@ template void texture_PL<conv565_PL<pp_565>, u16>(PixelBuffer<u16>* pb,u8* p_in,
 template void texture_PL<conv1555_PL<pp_565>, u16>(PixelBuffer<u16>* pb,u8* p_in,u32 Width,u32 Height);
 template void texture_PL<conv4444_PL<pp_565>, u16>(PixelBuffer<u16>* pb,u8* p_in,u32 Width,u32 Height);
 template void texture_PL<convYUV_PL<pp_8888>, u32>(PixelBuffer<u32>* pb,u8* p_in,u32 Width,u32 Height);
-template void texture_PL<convBMP_PL<pp_565>, u16>(PixelBuffer<u16>* pb,u8* p_in,u32 Width,u32 Height);
 
 //twiddled formats !
 template void texture_TW<conv565_TW<pp_565>, u16>(PixelBuffer<u16>* pb,u8* p_in,u32 Width,u32 Height);
 template void texture_TW<conv1555_TW<pp_565>, u16>(PixelBuffer<u16>* pb,u8* p_in,u32 Width,u32 Height);
 template void texture_TW<conv4444_TW<pp_565>, u16>(PixelBuffer<u16>* pb,u8* p_in,u32 Width,u32 Height);
 template void texture_TW<convYUV_TW<pp_8888>, u32>(PixelBuffer<u32>* pb,u8* p_in,u32 Width,u32 Height);
-template void texture_TW<convBMP_TW<pp_565>, u16>(PixelBuffer<u16>* pb,u8* p_in,u32 Width,u32 Height);
 
 template void texture_TW<convPAL4_TW<pp_565, u16>, u16>(PixelBuffer<u16>* pb,u8* p_in,u32 Width,u32 Height);
 template void texture_TW<convPAL8_TW<pp_565, u16>, u16>(PixelBuffer<u16>* pb,u8* p_in,u32 Width,u32 Height);
@@ -574,14 +563,13 @@ template void texture_VQ<conv565_TW<pp_565>, u16>(PixelBuffer<u16>* pb,u8* p_in,
 template void texture_VQ<conv1555_TW<pp_565>, u16>(PixelBuffer<u16>* pb,u8* p_in,u32 Width,u32 Height);
 template void texture_VQ<conv4444_TW<pp_565>, u16>(PixelBuffer<u16>* pb,u8* p_in,u32 Width,u32 Height);
 template void texture_VQ<convYUV_TW<pp_8888>, u32>(PixelBuffer<u32>* pb,u8* p_in,u32 Width,u32 Height);
-template void texture_VQ<convBMP_TW<pp_565>, u16>(PixelBuffer<u16>* pb,u8* p_in,u32 Width,u32 Height);
 
 //Planar
 #define tex565_PL texture_PL<conv565_PL<pp_565>, u16>
 #define tex1555_PL texture_PL<conv1555_PL<pp_565>, u16>
 #define tex4444_PL texture_PL<conv4444_PL<pp_565>, u16>
 #define texYUV422_PL texture_PL<convYUV_PL<pp_8888>, u32>
-#define texBMP_PL texture_PL<convBMP_PL<pp_565>, u16>
+#define texBMP_PL tex4444_PL
 
 #define tex565_PL32 texture_PL<conv565_PL32<pp_8888>, u32>
 #define tex1555_PL32 texture_PL<conv1555_PL32<pp_8888>, u32>
@@ -592,7 +580,7 @@ template void texture_VQ<convBMP_TW<pp_565>, u16>(PixelBuffer<u16>* pb,u8* p_in,
 #define tex1555_TW texture_TW<conv1555_TW<pp_565>, u16>
 #define tex4444_TW texture_TW<conv4444_TW<pp_565>, u16>
 #define texYUV422_TW texture_TW<convYUV_TW<pp_8888>, u32>
-#define texBMP_TW texture_TW<convBMP_TW<pp_565>, u16>
+#define texBMP_TW tex4444_TW
 #define texPAL4_TW texture_TW<convPAL4_TW<pp_565, u16>, u16>
 #define texPAL8_TW  texture_TW<convPAL8_TW<pp_565, u16>, u16>
 #define texPAL4_TW32 texture_TW<convPAL4_TW<pp_8888, u32>, u32>
@@ -607,7 +595,7 @@ template void texture_VQ<convBMP_TW<pp_565>, u16>(PixelBuffer<u16>* pb,u8* p_in,
 #define tex1555_VQ texture_VQ<conv1555_TW<pp_565>, u16>
 #define tex4444_VQ texture_VQ<conv4444_TW<pp_565>, u16>
 #define texYUV422_VQ texture_VQ<convYUV_TW<pp_8888>, u32>
-#define texBMP_VQ texture_VQ<convBMP_TW<pp_565>, u16>
+#define texBMP_VQ tex4444_VQ
 // According to the documentation, a texture cannot be compressed and use
 // a palette at the same time. However the hardware displays them
 // just fine.
@@ -620,5 +608,180 @@ template void texture_VQ<convBMP_TW<pp_565>, u16>(PixelBuffer<u16>* pb,u8* p_in,
 #define texPAL4_VQ32 texture_VQ<convPAL4_TW<pp_8888, u32>, u32>
 #define texPAL8_VQ32 texture_VQ<convPAL8_TW<pp_8888, u32>, u32>
 
+bool VramLockedWriteOffset(size_t offset);
 void DePosterize(u32* source, u32* dest, int width, int height);
 void UpscalexBRZ(int factor, u32* source, u32* dest, int width, int height, bool has_alpha);
+
+struct PvrTexInfo;
+template <class pixel_type> class PixelBuffer;
+typedef void TexConvFP(PixelBuffer<u16>* pb,u8* p_in,u32 Width,u32 Height);
+typedef void TexConvFP32(PixelBuffer<u32>* pb,u8* p_in,u32 Width,u32 Height);
+enum class TextureType { _565, _5551, _4444, _8888, _8 };
+
+struct BaseTextureCacheData
+{
+	TSP tsp;        //dreamcast texture parameters
+	TCW tcw;
+
+	// Decoded/filtered texture format
+	TextureType tex_type;
+
+	u32 Lookups;
+
+	u32 sa;         //pixel data start address in vram (might be offset for mipmaps/etc)
+	u32 sa_tex;		//texture data start address in vram
+	u32 w,h;        //width & height of the texture
+	u32 size;       //size, in bytes, in vram
+
+	const PvrTexInfo* tex;
+	TexConvFP*  texconv;
+	TexConvFP32*  texconv32;
+
+	u32 dirty;
+	vram_block* lock_block;
+
+	u32 Updates;
+
+	u32 palette_index;
+	//used for palette updates
+	u32 palette_hash;			// Palette hash at time of last update
+	u32 vq_codebook;            // VQ quantizers table for compressed textures
+	u32 texture_hash;			// xxhash of texture data, used for custom textures
+	u32 old_texture_hash;		// legacy hash
+	u8* custom_image_data;		// loaded custom image data
+	u32 custom_width;
+	u32 custom_height;
+	std::atomic_int custom_load_in_progress;
+
+	void PrintTextureName();
+	virtual std::string GetId() = 0;
+
+	bool IsPaletted()
+	{
+		return tcw.PixelFmt == PixelPal4 || tcw.PixelFmt == PixelPal8;
+	}
+
+	const char* GetPixelFormatName()
+	{
+		switch (tcw.PixelFmt)
+		{
+		case Pixel1555: return "1555";
+		case Pixel565: return "565";
+		case Pixel4444: return "4444";
+		case PixelYUV: return "yuv";
+		case PixelBumpMap: return "bumpmap";
+		case PixelPal4: return "pal4";
+		case PixelPal8: return "pal8";
+		default: return "unknown";
+		}
+	}
+
+	void Create();
+	void ComputeHash();
+	void Update();
+	virtual void UploadToGPU(int width, int height, u8 *temp_tex_buffer) = 0;
+	virtual bool Force32BitTexture(TextureType type) const { return false; }
+	void CheckCustomTexture();
+	//true if : dirty or paletted texture and hashes don't match
+	bool NeedsUpdate();
+	virtual bool Delete();
+	virtual ~BaseTextureCacheData() {}
+};
+
+template<typename Texture>
+class BaseTextureCache
+{
+	using TexCacheIter = typename std::unordered_map<u64, Texture>::iterator;
+public:
+	Texture *getTextureCacheData(TSP tsp, TCW tcw)
+	{
+		u64 key = tsp.full & TSPTextureCacheMask.full;
+		if (tcw.PixelFmt == PixelPal4 || tcw.PixelFmt == PixelPal8)
+			// Paletted textures have a palette selection that must be part of the key
+			// We also add the palette type to the key to avoid thrashing the cache
+			// when the palette type is changed. If the palette type is changed back in the future,
+			// this texture will stil be available.
+			key |= ((u64)tcw.full << 32) | ((PAL_RAM_CTRL & 3) << 6);
+		else
+			key |= (u64)(tcw.full & TCWTextureCacheMask.full) << 32;
+
+		TexCacheIter it = cache.find(key);
+
+		Texture* texture;
+		if (it != cache.end())
+		{
+			texture = &it->second;
+			// Needed if the texture is updated
+			texture->tcw.StrideSel = tcw.StrideSel;
+		}
+		else //create if not existing
+		{
+			texture = &cache[key];
+
+			texture->tsp = tsp;
+			texture->tcw = tcw;
+		}
+		texture->Lookups++;
+
+		return texture;
+	}
+
+	void CollectCleanup()
+	{
+		vector<u64> list;
+
+		u32 TargetFrame = max((u32)120, FrameCount) - 120;
+
+		for (const auto& pair : cache)
+		{
+			if (pair.second.dirty && pair.second.dirty < TargetFrame)
+				list.push_back(pair.first);
+
+			if (list.size() > 5)
+				break;
+		}
+
+		for (u64 id : list)
+		{
+			if (cache[id].Delete())
+				cache.erase(id);
+		}
+	}
+
+	void Clear()
+	{
+		for (auto& pair : cache)
+			pair.second.Delete();
+
+		cache.clear();
+		KillTex = false;
+		INFO_LOG(RENDERER, "Texture cache cleared");
+	}
+
+private:
+	std::unordered_map<u64, Texture> cache;
+	// Only use TexU and TexV from TSP in the cache key
+	//     TexV : 7, TexU : 7
+	const TSP TSPTextureCacheMask = { { 7, 7 } };
+	//     TexAddr : 0x1FFFFF, Reserved : 0, StrideSel : 0, ScanOrder : 1, PixelFmt : 7, VQ_Comp : 1, MipMapped : 1
+	const TCW TCWTextureCacheMask = { { 0x1FFFFF, 0, 0, 1, 7, 1, 1 } };
+};
+
+void rend_text_invl(vram_block* bl);
+
+void ReadFramebuffer(PixelBuffer<u32>& pb, int& width, int& height);
+void WriteTextureToVRam(u32 width, u32 height, u8 *data, u16 *dst);
+
+static inline void MakeFogTexture(u8 *tex_data)
+{
+	u8 *fog_table = (u8 *)FOG_TABLE;
+	for (int i = 0; i < 128; i++)
+	{
+		tex_data[i] = fog_table[i * 4];
+		tex_data[i + 128] = fog_table[i * 4 + 1];
+	}
+}
+u8* loadPNGData(const string& fname, int &width, int &height);
+void dump_screenshot(u8 *buffer, u32 width, u32 height, bool alpha = false, u32 rowPitch = 0, bool invertY = true);
+
+#undef clamp

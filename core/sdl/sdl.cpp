@@ -4,17 +4,18 @@
 #include "cfg/cfg.h"
 #include "linux-dist/main.h"
 #include "sdl/sdl.h"
-#include "rend/gui.h"
-#ifndef GLES
-#include "khronos/GL3/gl3w.h"
-#endif
+#include <SDL2/SDL_syswm.h>
 #endif
 #include "hw/maple/maple_devs.h"
 #include "sdl_gamepad.h"
 #include "sdl_keyboard.h"
+#include "wsi/context.h"
+
+#ifdef USE_VULKAN
+#include <SDL2/SDL_vulkan.h>
+#endif
 
 static SDL_Window* window = NULL;
-static SDL_GLContext glcontext;
 
 #ifdef TARGET_PANDORA
 	#define WINDOW_WIDTH  800
@@ -35,8 +36,6 @@ extern s32 mo_y_abs;
 extern f32 mo_x_delta;
 extern f32 mo_y_delta;
 extern f32 mo_wheel_delta;
-
-extern int screen_width, screen_height;
 
 static void sdl_open_joystick(int index)
 {
@@ -109,7 +108,7 @@ void input_sdl_handle(u32 port)
 	if (port == 0)	// FIXME hack
 		SDLGamepadDevice::UpdateRumble();
 
-	#define SET_FLAG(field, mask, expr) field =((expr) ? (field & ~mask) : (field | mask))
+	#define SET_FLAG(field, mask, expr) (field) = ((expr) ? ((field) & ~(mask)) : ((field) | (mask)))
 	SDL_Event event;
 	while (SDL_PollEvent(&event))
 	{
@@ -203,87 +202,58 @@ void sdl_window_set_text(const char* text)
 }
 
 #if HOST_OS != OS_DARWIN
-void sdl_window_create()
+void sdl_recreate_window(u32 flags)
 {
-	if (SDL_WasInit(SDL_INIT_VIDEO) == 0)
+	int x = SDL_WINDOWPOS_UNDEFINED;
+	int y = SDL_WINDOWPOS_UNDEFINED;
+	int width  = cfgLoadInt("x11", "width", WINDOW_WIDTH);
+	int height = cfgLoadInt("x11", "height", WINDOW_HEIGHT);
+	if (window != nullptr)
 	{
-		if(SDL_InitSubSystem(SDL_INIT_VIDEO) != 0)
-		{
-			die("error initializing SDL Joystick subsystem");
-		}
+		SDL_GetWindowPosition(window, &x, &y);
+		SDL_GetWindowSize(window, &width, &height);
+		SDL_DestroyWindow(window);
 	}
-
-	int window_width  = cfgLoadInt("x11","width", WINDOW_WIDTH);
-	int window_height = cfgLoadInt("x11","height", WINDOW_HEIGHT);
-
-	int flags = SDL_WINDOW_OPENGL;
-	#ifdef TARGET_PANDORA
-		flags |= SDL_FULLSCREEN;
-	#else
-		flags |= SDL_SWSURFACE | SDL_WINDOW_RESIZABLE;
-	#endif
-
-	#ifdef GLES
-		SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
-		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
-		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
-	#else
-		SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
-		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
-		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
-	#endif
-
-	SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
-	SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
-	SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
-	SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
-	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
-	SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
-	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-
-	window = SDL_CreateWindow("Flycast", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,	window_width, window_height, flags);
+#ifdef TARGET_PANDORA
+	flags |= SDL_FULLSCREEN;
+#else
+	flags |= SDL_SWSURFACE | SDL_WINDOW_RESIZABLE;
+#endif
+	window = SDL_CreateWindow("Flycast", x, y, width, height, flags);
 	if (!window)
 	{
 		die("error creating SDL window");
 	}
+#ifdef USE_VULKAN
+	theVulkanContext.SetWindow(window, nullptr);
+#endif
+	theGLContext.SetWindow(window);
+}
 
-	glcontext = SDL_GL_CreateContext(window);
-	if (!glcontext)
+void sdl_window_create()
+{
+	if (SDL_WasInit(SDL_INIT_VIDEO) == 0)
 	{
-		die("Error creating SDL GL context");
+		if (SDL_InitSubSystem(SDL_INIT_VIDEO) != 0)
+		{
+			die("error initializing SDL Joystick subsystem");
+		}
 	}
-	SDL_GL_MakeCurrent(window, NULL);
-
-	SDL_GL_GetDrawableSize(window, &screen_width, &screen_height);
-
-	float ddpi, hdpi, vdpi;
-	if (!SDL_GetDisplayDPI(SDL_GetWindowDisplayIndex(window), &ddpi, &hdpi, &vdpi))
-		screen_dpi = (int)roundf(max(hdpi, vdpi));
-
-	INFO_LOG(RENDERER, "Created SDL Window (%ix%i) and GL Context successfully", window_width, window_height);
+	InitRenderApi();
 }
 
-bool gl_init(void* wind, void* disp)
+void sdl_window_destroy()
 {
-	SDL_GL_MakeCurrent(window, glcontext);
-	#ifdef GLES
-		return true;
-	#else
-		return gl3wInit() != -1 && gl3wIsSupported(3, 1);
-	#endif
+	TermRenderApi();
+	SDL_DestroyWindow(window);
 }
 
-void gl_swap()
+HWND sdl_get_native_hwnd()
 {
-	SDL_GL_SwapWindow(window);
-
-	/* Check if drawable has been resized */
-	SDL_GL_GetDrawableSize(window, &screen_width, &screen_height);
-}
-
-void gl_term()
-{
-	SDL_GL_DeleteContext(glcontext);
+	SDL_SysWMinfo wmInfo;
+	SDL_VERSION(&wmInfo.version);
+	SDL_GetWindowWMInfo(window, &wmInfo);
+	return wmInfo.info.win.window;
 }
 #endif
 

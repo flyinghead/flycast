@@ -5,6 +5,7 @@
 #include "rend/gui.h"
 #include "hw/mem/_vmem.h"
 #include "cheats.h"
+#include "wsi/context.h"
 
 #include <zlib.h>
 
@@ -80,9 +81,9 @@ u32 FrameCount=1;
 
 Renderer* renderer;
 static Renderer* fallback_renderer;
-volatile bool renderer_enabled = true;	// Signals the renderer thread to exit
-volatile bool renderer_changed = false;	// Signals the renderer thread to switch renderer
-volatile bool renderer_reinit_requested = false;	// Signals the renderer thread to reinit the renderer
+bool renderer_enabled = true;	// Signals the renderer thread to exit
+int renderer_changed = -1;	// Signals the renderer thread to switch renderer
+bool renderer_reinit_requested = false;	// Signals the renderer thread to reinit the renderer
 
 #if !defined(TARGET_NO_THREADS)
 cResetEvent rs, re;
@@ -101,7 +102,7 @@ TA_context* _pvrrc;
 void SetREP(TA_context* cntx);
 static void rend_create_renderer();
 
-void dump_frame(const char* file, TA_context* ctx, u8* vram, u8* vram_ref = NULL) {
+static void dump_frame(const char* file, TA_context* ctx, u8* vram, u8* vram_ref = NULL) {
 	FILE* fw = fopen(file, "wb");
 
 	//append to it
@@ -172,7 +173,10 @@ TA_context* read_frame(const char* file, u8* vram_ref = NULL) {
 	char id0[8] = { 0 };
 	u32 t = 0;
 
-	fread(id0, 1, 8, fw);
+	if (fread(id0, 1, 8, fw) != 8) {
+		fclose(fw);
+		return 0;
+	}
 
 	if (memcmp(id0, "TAFRAME", 7) != 0 || (id0[7] != '3' && id0[7] != '4')) {
 		fclose(fw);
@@ -192,35 +196,35 @@ TA_context* read_frame(const char* file, u8* vram_ref = NULL) {
 
 	ctx->tad.Clear();
 
-	fread(&ctx->rend.isRTT, 1, sizeof(ctx->rend.isRTT), fw);
-	fread(&t, 1, sizeof(bool), fw);	// Was autosort
-	fread(&ctx->rend.fb_X_CLIP.full, 1, sizeof(ctx->rend.fb_X_CLIP.full), fw);
-	fread(&ctx->rend.fb_Y_CLIP.full, 1, sizeof(ctx->rend.fb_Y_CLIP.full), fw);
+	verify(fread(&ctx->rend.isRTT, 1, sizeof(ctx->rend.isRTT), fw) == sizeof(ctx->rend.isRTT));
+	verify(fread(&t, 1, sizeof(bool), fw) == sizeof(bool));	// Was autosort
+	verify(fread(&ctx->rend.fb_X_CLIP.full, 1, sizeof(ctx->rend.fb_X_CLIP.full), fw) == sizeof(ctx->rend.fb_X_CLIP.full));
+	verify(fread(&ctx->rend.fb_Y_CLIP.full, 1, sizeof(ctx->rend.fb_Y_CLIP.full), fw) == sizeof(ctx->rend.fb_Y_CLIP.full));
 
-	fread(ctx->rend.global_param_op.Append(), 1, sizeofPolyParam, fw);
+	verify(fread(ctx->rend.global_param_op.Append(), 1, sizeofPolyParam, fw) == sizeofPolyParam);
 	Vertex *vtx = ctx->rend.verts.Append(4);
 	for (int i = 0; i < 4; i++)
-		fread(vtx + i, 1, sizeofVertex, fw);
+		verify(fread(vtx + i, 1, sizeofVertex, fw) == sizeofVertex);
 
-	fread(&t, 1, sizeof(t), fw);
+	verify(fread(&t, 1, sizeof(t), fw) == sizeof(t));
 	verify(t == VRAM_SIZE);
 
 	_vmem_unprotect_vram(0, VRAM_SIZE);
 
 	uLongf compressed_size;
 
-	fread(&compressed_size, 1, sizeof(compressed_size), fw);
+	verify(fread(&compressed_size, 1, sizeof(compressed_size), fw) == sizeof(compressed_size));
 
 	u8* gz_stream = (u8*)malloc(compressed_size);
-	fread(gz_stream, 1, compressed_size, fw);
+	verify(fread(gz_stream, 1, compressed_size, fw) == compressed_size);
 	uLongf tl = t;
 	verify(uncompress(vram.data, &tl, gz_stream, compressed_size) == Z_OK);
 	free(gz_stream);
 
-	fread(&t, 1, sizeof(t), fw);
-	fread(&compressed_size, 1, sizeof(compressed_size), fw);
+	verify(fread(&t, 1, sizeof(t), fw) == sizeof(t));
+	verify(fread(&compressed_size, 1, sizeof(compressed_size), fw) == sizeof(compressed_size));
 	gz_stream = (u8*)malloc(compressed_size);
-	fread(gz_stream, 1, compressed_size, fw);
+	verify(fread(gz_stream, 1, compressed_size, fw) == compressed_size);
 	tl = t;
 	verify(uncompress(ctx->tad.thd_data, &tl, gz_stream, compressed_size) == Z_OK);
 	free(gz_stream);
@@ -231,11 +235,11 @@ TA_context* read_frame(const char* file, u8* vram_ref = NULL) {
 		ctx->tad.render_pass_count = t;
 		for (int i = 0; i < t; i++) {
 			u32 offset;
-			fread(&offset, 1, sizeof(offset), fw);
+			verify(fread(&offset, 1, sizeof(offset), fw) == sizeof(offset));
 			ctx->tad.render_passes[i] = ctx->tad.thd_root + offset;
 		}
 	}
-	fread(pvr_regs, 1, sizeof(pvr_regs), fw);
+	verify(fread(pvr_regs, 1, sizeof(pvr_regs), fw) == sizeof(pvr_regs));
 
 	fclose(fw);
     
@@ -244,7 +248,8 @@ TA_context* read_frame(const char* file, u8* vram_ref = NULL) {
 
 bool dump_frame_switch = false;
 
-bool rend_frame(TA_context* ctx, bool draw_osd) {
+static bool rend_frame(TA_context* ctx)
+{
 	if (dump_frame_switch) {
 		char name[32];
 		sprintf(name, "dcframe-%d", FrameCount);
@@ -266,20 +271,15 @@ bool rend_frame(TA_context* ctx, bool draw_osd) {
 		re.Set();
 #endif
 
-	bool do_swp = proc && renderer->Render();
-
-	if (do_swp && draw_osd)
-		renderer->DrawOSD(false);
-
-	return do_swp;
+	return proc && renderer->Render();
 }
 
 bool rend_single_frame()
 {
-	if (renderer_changed)
+	if (renderer_changed != settings.pvr.rend)
 	{
-		renderer_changed = false;
 		rend_term_renderer();
+		SwitchRenderApi(renderer_changed);
 		rend_create_renderer();
 		rend_init_renderer();
 	}
@@ -331,8 +331,9 @@ bool rend_single_frame()
 		_pvrrc = DequeueRender();
 	}
 	while (!_pvrrc);
-	bool do_swp = rend_frame(_pvrrc, true);
-	swap_pending = settings.rend.DelayFrameSwapping && do_swp && !_pvrrc->rend.isRenderFramebuffer;
+	bool do_swp = rend_frame(_pvrrc);
+	swap_pending = settings.rend.DelayFrameSwapping && do_swp && !_pvrrc->rend.isRenderFramebuffer
+			&& settings.pvr.rend != 4 && settings.pvr.rend != 5;	// TODO Fix vulkan
 
 #if !defined(TARGET_NO_THREADS)
 	if (_pvrrc->rend.isRTT)
@@ -368,8 +369,17 @@ static void rend_create_renderer()
 		fallback_renderer = rend_GLES2();
 		break;
 #endif
+#ifdef USE_VULKAN
+	case 4:
+		renderer = rend_Vulkan();
+		break;
+	case 5:
+		renderer = rend_OITVulkan();
+		break;
+#endif
 	}
 #endif
+	renderer_changed = settings.pvr.rend;
 }
 
 void rend_init_renderer()
@@ -393,7 +403,6 @@ void rend_init_renderer()
 
 void rend_term_renderer()
 {
-	gui_term();
 	renderer->Term();
 	delete renderer;
 	renderer = NULL;
@@ -423,15 +432,7 @@ void* rend_thread(void* p)
 				swap_pending = false;
 			}
 		}
-		if (renderer_changed)
-		{
-			renderer_changed = false;
-			renderer_reinit_requested = false;
-			rend_term_renderer();
-			rend_create_renderer();
-			rend_init_renderer();
-		}
-		else if (renderer_reinit_requested)
+		if (renderer_reinit_requested)
 		{
 			renderer_reinit_requested = false;
 			rend_init_renderer();
@@ -445,8 +446,10 @@ void* rend_thread(void* p)
 
 bool pend_rend = false;
 
-void rend_resize(int width, int height) {
-	renderer->Resize(width, height);
+void rend_resize(int width, int height)
+{
+	if (renderer != nullptr)
+		renderer->Resize(width, height);
 }
 
 
@@ -489,7 +492,7 @@ void rend_start_render()
 				
 				verify(ch == FRAME_MD5);
 
-				fread(digest2, 1, 16, fCheckFrames);
+				verify(fread(digest2, 1, 16, fCheckFrames) == 16);
 
 				verify(memcmp(digest, digest2, 16) == 0);
 
@@ -588,6 +591,7 @@ void rend_vblank()
 		bool restore_ctx = ta_ctx != NULL;
 		PARAM_BASE = 0xF00000;
 		SetCurrentTARC(CORE_CURRENT_CTX);
+		ta_ctx->Reset();
 		ta_ctx->rend.isRenderFramebuffer = true;
 		ta_ctx->rend.isRTT = false;
 		rend_start_render();

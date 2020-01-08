@@ -123,8 +123,6 @@ static const s32 qtable[32] = {
 0x1C00,0x1D00,0x1E00,0x1F00
 };
 
-void AICA_Sample();
-
 //Remove the fractional part , with rounding ;) -- does not need an extra bit
 #define well(a,bits) (((a) + ((1<<(bits-1))))>>bits)
 //Remove the fractional part by chopping..
@@ -1627,20 +1625,20 @@ bool channel_unserialize(void **data, unsigned int *total_size, serialize_versio
 
 		REICAST_US(Chans[i].CA) ;
 		REICAST_US(Chans[i].step) ;
-		if (ver < V7)
+		if (ver < V7 && ver != V9_LIBRETRO)
 			REICAST_US(dum); // Chans[i].update_rate
 		Chans[i].UpdatePitch();
 		REICAST_US(Chans[i].s0) ;
 		REICAST_US(Chans[i].s1) ;
 		REICAST_US(Chans[i].loop.looped);
-		if (ver < V7)
+		if (ver < V7 && ver != V9_LIBRETRO)
 		{
 			REICAST_US(dum); // Chans[i].loop.LSA
 			REICAST_US(dum); // Chans[i].loop.LEA
 		}
 		Chans[i].UpdateLoop();
 		REICAST_US(Chans[i].adpcm.last_quant) ;
-		if (ver >= V7)
+		if (ver >= V7 || ver == V9_LIBRETRO)
 		{
 			REICAST_US(Chans[i].adpcm.loopstart_quant);
 			REICAST_US(Chans[i].adpcm.loopstart_prev_sample);
@@ -1653,21 +1651,21 @@ bool channel_unserialize(void **data, unsigned int *total_size, serialize_versio
 			Chans[i].adpcm.loopstart_prev_sample = 0;
 		}
 		REICAST_US(Chans[i].noise_state) ;
-		if (ver < V7)
+		if (ver < V7 && ver != V9_LIBRETRO)
 		{
 			REICAST_US(dum); // Chans[i].VolMix.DLAtt
 			REICAST_US(dum); // Chans[i].VolMix.DRAtt
 			REICAST_US(dum); // Chans[i].VolMix.DSPAtt
 		}
 		Chans[i].UpdateAtts();
-		if (ver < V7)
+		if (ver < V7 && ver != V9_LIBRETRO)
 			REICAST_US(dum); // Chans[i].VolMix.DSPOut
 		Chans[i].UpdateDSPMIX();
 
 		REICAST_US(Chans[i].AEG.val) ;
 		REICAST_US(Chans[i].AEG.state) ;
 		Chans[i].SetAegState(Chans[i].AEG.state);
-		if (ver < V7)
+		if (ver < V7 && ver != V9_LIBRETRO)
 		{
 			REICAST_US(dum); // Chans[i].AEG.AttackRate
 			REICAST_US(dum); // Chans[i].AEG.Decay1Rate
@@ -1678,7 +1676,7 @@ bool channel_unserialize(void **data, unsigned int *total_size, serialize_versio
 		Chans[i].UpdateAEG();
 		REICAST_US(Chans[i].FEG.value);
 		REICAST_US(Chans[i].FEG.state);
-		if (ver >= V7)
+		if (ver >= V7 || ver == V9_LIBRETRO)
 		{
 			REICAST_US(Chans[i].FEG.prev1);
 			REICAST_US(Chans[i].FEG.prev2);
@@ -1690,7 +1688,7 @@ bool channel_unserialize(void **data, unsigned int *total_size, serialize_versio
 		}
 		Chans[i].SetFegState(Chans[i].FEG.state);
 		Chans[i].UpdateFEG();
-		if (ver < V7)
+		if (ver < V7 && ver != V9_LIBRETRO)
 		{
 			u8 dumu8;
 			REICAST_US(dumu8);	// Chans[i].step_stream_lut1
@@ -1700,10 +1698,10 @@ bool channel_unserialize(void **data, unsigned int *total_size, serialize_versio
 		Chans[i].UpdateStreamStep();
 
 		REICAST_US(Chans[i].lfo.counter) ;
-		if (ver < V7)
+		if (ver < V7 && ver != V9_LIBRETRO)
 			REICAST_US(dum); 	// Chans[i].lfo.start_value
 		REICAST_US(Chans[i].lfo.state) ;
-		if (ver < V7)
+		if (ver < V7 && ver != V9_LIBRETRO)
 		{
 			u8 dumu8;
 			REICAST_US(dumu8);	// Chans[i].lfo.alfo
@@ -1715,7 +1713,7 @@ bool channel_unserialize(void **data, unsigned int *total_size, serialize_versio
 		}
 		Chans[i].UpdateLFO();
 		REICAST_US(Chans[i].enabled) ;
-		if (ver < V7)
+		if (ver < V7 && ver != V9_LIBRETRO)
 			REICAST_US(dum); // Chans[i].ChannelNumber
 	}
 

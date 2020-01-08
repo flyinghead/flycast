@@ -152,3 +152,12 @@ static INLINE f64 fixNaN64(f64 f)
 //	return (*(u64 *)&f & 0x7fffffffffffffffll) <= 0x7f80000000000000ll ? f : 0x7ff7ffffffffffffll;
 	return f;
 }
+
+// Reduces the precision of the argument f by a given number of bits
+// double have 53 bits of precision so the returned result will have a precision of 53 - bits
+template<int bits>
+static INLINE double reduce_precision(double f)
+{
+	double c = (double)((1 << bits) + 1) * f;
+	return c - (c - f);
+}

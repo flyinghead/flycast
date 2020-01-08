@@ -122,6 +122,7 @@ void armv_intpr(u32 opcd)
 	//Call interpreter
 	assembler->Mov(w0, opcd);
 	armv_call((void*)&arm_single_op);
+	assembler->Sub(w27, w27, w0);
 }
 
 void armv_end(void* codestart, u32 cycl)

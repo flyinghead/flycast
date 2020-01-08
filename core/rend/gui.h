@@ -17,6 +17,7 @@
     along with reicast.  If not, see <https://www.gnu.org/licenses/>.
  */
 #pragma once
+#include "types.h"
 
 void gui_init();
 void gui_open_settings();
@@ -28,6 +29,9 @@ void gui_term();
 void gui_refresh_files();
 
 extern int screen_dpi;
+extern u32 vmu_lcd_data[8][48 * 32];
+extern bool vmu_lcd_status[8];
+extern bool vmu_lcd_changed[8];
 
 typedef enum { Closed, Commands, Settings, ClosedNoResume, Main, Onboarding, VJoyEdit, VJoyEditCommands } GuiState;
 extern GuiState gui_state;
@@ -41,3 +45,4 @@ static inline bool gui_is_content_browser()
 {
 	return gui_state == Main;
 }
+float gui_get_scaling();

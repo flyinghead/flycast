@@ -145,6 +145,8 @@ union sr_status_t
 	u32 status;
 };
 
+#define STATUS_MASK 0x700083F2
+
 //Status register bitfield
 struct sr_t
 {
@@ -319,12 +321,12 @@ extern u8* sh4_dyna_rcb;
 
 INLINE u32 sh4_sr_GetFull()
 {
-	return (p_sh4rcb->cntx.sr.status & 0x700083F2) | p_sh4rcb->cntx.sr.T;
+	return (p_sh4rcb->cntx.sr.status & STATUS_MASK) | p_sh4rcb->cntx.sr.T;
 }
 
 INLINE void sh4_sr_SetFull(u32 value)
 {
-	p_sh4rcb->cntx.sr.status=value & 0x700083F2;
+	p_sh4rcb->cntx.sr.status=value & STATUS_MASK;
 	p_sh4rcb->cntx.sr.T=value&1;
 }
 

@@ -419,7 +419,7 @@ union TA_YUV_TEX_CTRL_type
 
 // Regs -- Start
 
-#define ID                PvrReg(ID_addr,u32)	         // R   Device ID
+#define ID_Reg            PvrReg(ID_addr,u32)	         // R   Device ID
 #define REVISION          PvrReg(REVISION_addr,u32)      // R   Revision number
 #define SOFTRESET         PvrReg(SOFTRESET_addr,u32)     // RW  CORE & TA software reset
 	

@@ -8,6 +8,10 @@
 #include "win_keyboard.h"
 #include "hw/sh4/dyna/blockmanager.h"
 #include "log/LogManager.h"
+#include "wsi/context.h"
+#if defined(USE_SDL)
+#include "sdl/sdl.h"
+#endif
 
 #define _WIN32_WINNT 0x0500
 #include <windows.h>
@@ -121,11 +125,15 @@ static std::shared_ptr<WinMouseGamepadDevice> mouse_gamepad;
 
 void os_SetupInput()
 {
+#if defined(USE_SDL)
+	input_sdl_init();
+#else
 	XInputGamepadDevice::CreateDevices();
 	kb_gamepad = std::make_shared<WinKbGamepadDevice>(0);
 	GamepadDevice::Register(kb_gamepad);
 	mouse_gamepad = std::make_shared<WinMouseGamepadDevice>(0);
 	GamepadDevice::Register(mouse_gamepad);
+#endif
 }
 
 LONG ExeptionHandler(EXCEPTION_POINTERS *ExceptionInfo)
@@ -215,6 +223,9 @@ void ToggleFullscreen();
 
 void UpdateInputState(u32 port)
 {
+#if defined(USE_SDL)
+	input_sdl_handle(port);
+#else
 	/*
 		 Disabled for now. Need new EMU_BTN_ANA_LEFT/RIGHT/.. virtual controller keys
 
@@ -233,6 +244,7 @@ void UpdateInputState(u32 port)
 	std::shared_ptr<XInputGamepadDevice> gamepad = XInputGamepadDevice::GetXInputDevice(port);
 	if (gamepad != NULL)
 		gamepad->ReadInput();
+#endif
 }
 
 // Windows class name to register
@@ -366,28 +378,36 @@ LRESULT CALLBACK WndProc2(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	return DefWindowProc(hWnd, message, wParam, lParam);
 }
 
-void* window_win;
-void os_CreateWindow()
-{
-	WNDCLASS sWC;
-	sWC.style = CS_HREDRAW | CS_VREDRAW;
-	sWC.lpfnWndProc = WndProc2;
-	sWC.cbClsExtra = 0;
-	sWC.cbWndExtra = 0;
-	sWC.hInstance = (HINSTANCE)GetModuleHandle(0);
-	sWC.hIcon = 0;
-	sWC.hCursor = LoadCursor(NULL, IDC_ARROW);
-	sWC.lpszMenuName = 0;
-	sWC.hbrBackground = (HBRUSH) GetStockObject(WHITE_BRUSH);
-	sWC.lpszClassName = WINDOW_CLASS;
-	screen_width = cfgLoadInt("windows", "width", DEFAULT_WINDOW_WIDTH);
-	screen_height = cfgLoadInt("windows", "height", DEFAULT_WINDOW_HEIGHT);
-	window_maximized = cfgLoadBool("windows", "maximized", false);
+static HWND hWnd;
+static bool windowClassRegistered;
+static int window_x, window_y;
 
-	ATOM registerClass = RegisterClass(&sWC);
-	if (!registerClass)
+void CreateMainWindow()
+{
+	if (hWnd != NULL)
+		return;
+	HINSTANCE hInstance = (HINSTANCE)GetModuleHandle(0);
+	if (!windowClassRegistered)
 	{
-		MessageBox(0, ("Failed to register the window class"), ("Error"), MB_OK | MB_ICONEXCLAMATION);
+		WNDCLASS sWC;
+		sWC.style = CS_HREDRAW | CS_VREDRAW;
+		sWC.lpfnWndProc = WndProc2;
+		sWC.cbClsExtra = 0;
+		sWC.cbWndExtra = 0;
+		sWC.hInstance = hInstance;
+		sWC.hIcon = 0;
+		sWC.hCursor = LoadCursor(NULL, IDC_ARROW);
+		sWC.lpszMenuName = 0;
+		sWC.hbrBackground = (HBRUSH) GetStockObject(WHITE_BRUSH);
+		sWC.lpszClassName = WINDOW_CLASS;
+		ATOM registerClass = RegisterClass(&sWC);
+		if (!registerClass)
+			MessageBox(0, "Failed to register the window class", "Error", MB_OK | MB_ICONEXCLAMATION);
+		else
+			windowClassRegistered = true;
+		screen_width = cfgLoadInt("windows", "width", DEFAULT_WINDOW_WIDTH);
+		screen_height = cfgLoadInt("windows", "height", DEFAULT_WINDOW_HEIGHT);
+		window_maximized = cfgLoadBool("windows", "maximized", false);
 	}
 
 	// Create the eglWindow
@@ -395,28 +415,49 @@ void os_CreateWindow()
 	SetRect(&sRect, 0, 0, screen_width, screen_height);
 	AdjustWindowRectEx(&sRect, WS_OVERLAPPEDWINDOW, false, 0);
 
-	HWND hWnd = CreateWindow( WINDOW_CLASS, VER_FULLNAME, WS_VISIBLE | WS_OVERLAPPEDWINDOW | (window_maximized ? WS_MAXIMIZE : 0),
-		0, 0, sRect.right-sRect.left, sRect.bottom-sRect.top, NULL, NULL, sWC.hInstance, NULL);
+	hWnd = CreateWindow(WINDOW_CLASS, VER_FULLNAME, WS_VISIBLE | WS_OVERLAPPEDWINDOW | (window_maximized ? WS_MAXIMIZE : 0),
+			window_x, window_y, sRect.right - sRect.left, sRect.bottom - sRect.top, NULL, NULL, hInstance, NULL);
+#ifdef USE_VULKAN
+	theVulkanContext.SetWindow((void *)hWnd, (void *)GetDC((HWND)hWnd));
+#endif
+	theGLContext.SetWindow(hWnd);
+	theGLContext.SetDeviceContext(GetDC(hWnd));
+}
 
-	window_win=hWnd;
+void os_CreateWindow()
+{
+#if defined(USE_SDL)
+	sdl_window_create();
+#else
+	CreateMainWindow();
+	InitRenderApi();
+#endif	// !USE_SDL
+}
+
+void DestroyMainWindow()
+{
+	if (hWnd)
+	{
+		WINDOWPLACEMENT placement;
+		placement.length = sizeof(WINDOWPLACEMENT);
+		GetWindowPlacement(hWnd, &placement);
+		window_maximized = placement.showCmd == SW_SHOWMAXIMIZED;
+		window_x = placement.rcNormalPosition.left;
+		window_y = placement.rcNormalPosition.top;
+		DestroyWindow(hWnd);
+		hWnd = NULL;
+	}
 }
 
 void* libPvr_GetRenderTarget()
 {
-	return window_win;
+	return (void*)hWnd;
 }
-
-void* libPvr_GetRenderSurface()
-{
-	return GetDC((HWND)window_win);
-}
-
 
 void ToggleFullscreen()
 {
 	static RECT rSaved;
 	static bool fullscreen=false;
-	HWND hWnd = (HWND)window_win;
 
 	fullscreen = !fullscreen;
 
@@ -462,7 +503,7 @@ BOOL CtrlHandler( DWORD fdwCtrlType )
 		case CTRL_CLOSE_EVENT:
 		// Handle the CTRL-C signal.
 		case CTRL_C_EVENT:
-			SendMessageA((HWND)libPvr_GetRenderTarget(),WM_CLOSE,0,0); //FIXEM
+			SendMessageA(hWnd, WM_CLOSE, 0, 0); //FIXEM
 			return( TRUE );
 		default:
 			return FALSE;
@@ -472,10 +513,14 @@ BOOL CtrlHandler( DWORD fdwCtrlType )
 
 void os_SetWindowText(const char* text)
 {
-	if (GetWindowLong((HWND)libPvr_GetRenderTarget(),GWL_STYLE)&WS_BORDER)
+#if defined(USE_SDL)
+	sdl_window_set_text(text);
+#else
+	if (GetWindowLong(hWnd, GWL_STYLE) & WS_BORDER)
 	{
-		SetWindowText((HWND)libPvr_GetRenderTarget(), text);
+		SetWindowText(hWnd, text);
 	}
+#endif
 }
 
 void ReserveBottomMemory()
@@ -689,7 +734,6 @@ int main(int argc, char **argv)
 #pragma comment(linker, "/subsystem:windows")
 
 int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShowCmd)
-
 {
 	int argc = 0;
 	wchar* cmd_line = GetCommandLineA();
@@ -744,8 +788,8 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 
 
 
-LARGE_INTEGER qpf;
-double  qpfd;
+static LARGE_INTEGER qpf;
+static double  qpfd;
 //Helper functions
 double os_GetSeconds()
 {
@@ -781,4 +825,3 @@ void os_DoEvents()
 }
 
 int get_mic_data(u8* buffer) { return 0; }
-int push_vmu_screen(u8* buffer) { return 0; }

@@ -9,10 +9,10 @@ GLuint gl4BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
 	gl.rtt.TexAddr=addy>>3;
 
 	// Find the smallest power of two texture that fits the viewport
-	int fbh2 = 2;
+	int fbh2 = 8;
 	while (fbh2 < fbh)
 		fbh2 *= 2;
-	int fbw2 = 2;
+	int fbw2 = 8;
 	while (fbw2 < fbw)
 		fbw2 *= 2;
 
@@ -23,8 +23,6 @@ GLuint gl4BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
 		fbw2 *= settings.rend.RenderToTextureUpscale;
 		fbh2 *= settings.rend.RenderToTextureUpscale;
 	}
-	// Get the currently bound frame buffer object. On most platforms this just gives 0.
-	//glGetIntegerv(GL_FRAMEBUFFER_BINDING, &m_i32OriginalFbo);
 
 	// Create a texture for rendering to
 	gl.rtt.tex = glcache.GenTexture();

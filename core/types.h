@@ -321,11 +321,11 @@ bool dc_unserialize(void **data, unsigned int *total_size);
 #endif
 
 #ifndef STRIP_TEXT
-#define verify(x) if((x)==false){ msgboxf("Verify Failed  : " #x "\n in %s -> %s : %d \n",MBX_ICONERROR,(__FUNCTION__),(__FILE__),__LINE__); dbgbreak;}
-#define die(reason) { msgboxf("Fatal error : %s\n in %s -> %s : %d \n",MBX_ICONERROR,(reason),(__FUNCTION__),(__FILE__),__LINE__); dbgbreak;}
+#define verify(x) do { if ((x) == false){ msgboxf("Verify Failed  : " #x "\n in %s -> %s : %d \n", MBX_ICONERROR, (__FUNCTION__), (__FILE__), __LINE__); dbgbreak;}} while (false)
+#define die(reason) do { msgboxf("Fatal error : %s\n in %s -> %s : %d \n", MBX_ICONERROR,(reason), (__FUNCTION__), (__FILE__), __LINE__); dbgbreak;} while (false)
 #else
-#define verify(x) if((x)==false) { dbgbreak; }
-#define die(reason) { dbgbreak; }
+#define verify(x) do { if ((x) == false) dbgbreak; } while (false)
+#define die(reason) do { dbgbreak; } while (false)
 #endif
 
 
@@ -521,10 +521,12 @@ struct settings_t
 	struct
 	{
 		u32 ta_skip;
-		u32 rend;
+		u32 rend;	// 0: GLES, GL3, 3: OIT/GL4.3, 4: Vulkan
 
 		u32 MaxThreads;
 		bool SynchronousRender;
+
+		bool IsOpenGL() { return rend == 0 || rend == 3; }
 	} pvr;
 
 	struct {
@@ -586,7 +588,6 @@ void libPvr_Term();
 void libPvr_LockedBlockWrite(vram_block* block,u32 addr);	//set to 0 if not used
 
 void* libPvr_GetRenderTarget();
-void* libPvr_GetRenderSurface();
 
 //AICA
 s32 libAICA_Init();
@@ -677,9 +678,12 @@ enum serialize_version_enum {
 	V4,
 	V5_LIBRETRO_UNSUPPORTED,
 	V6_LIBRETRO_UNSUPPORTED,
-	V7_LIBRETRO,
+	V7_LIBRETRO_UNSUPPORTED,
+	V8_LIBRETRO_UNSUPPORTED,
+	V9_LIBRETRO,
 
 	V5 = 800,
 	V6 = 801,
 	V7 = 802,
+	V8 = 803,
 } ;

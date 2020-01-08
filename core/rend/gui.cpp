@@ -34,7 +34,6 @@
 #include "linux-dist/main.h"	// FIXME for kcode[]
 #include "gui_util.h"
 #include "gui_android.h"
-
 #include "version.h"
 #include "oslib/audiostream.h"
 
@@ -44,6 +43,7 @@ extern void dc_savestate();
 extern void dc_stop();
 extern void dc_reset(bool manual);
 extern void dc_resume();
+extern void dc_term();
 extern void dc_start_game(const char *path);
 extern void UpdateInputState(u32 port);
 extern bool game_started;
@@ -70,6 +70,11 @@ static std::string error_msg;
 static void display_vmus();
 static void reset_vmus();
 static void term_vmus();
+
+float gui_get_scaling()
+{
+	return scaling;
+}
 
 void gui_init()
 {
@@ -123,7 +128,8 @@ void gui_init()
 #endif
 
     // Setup Platform/Renderer bindings
-    ImGui_ImplOpenGL3_Init();
+    if (settings.pvr.IsOpenGL())
+    	ImGui_ImplOpenGL3_Init();
 
     // Load Fonts
     // - If no fonts are loaded, dear imgui will use the default font. You can also load multiple fonts and use ImGui::PushFont()/PopFont() to select them.
@@ -150,7 +156,8 @@ void gui_init()
 
 void ImGui_Impl_NewFrame()
 {
-	ImGui_ImplOpenGL3_NewFrame();
+	if (settings.pvr.IsOpenGL())
+		ImGui_ImplOpenGL3_NewFrame();
 	ImGui::GetIO().DisplaySize.x = screen_width;
 	ImGui::GetIO().DisplaySize.y = screen_height;
 
@@ -235,9 +242,9 @@ void ImGui_Impl_NewFrame()
 }
 
 static double last_render;
-std::vector<float> render_times;
+std::vector<float> render_times(100);
 
-void gui_dosmth(int width, int height)
+void gui_rendertick()
 {
 	if (last_render == 0)
 	{
@@ -249,15 +256,11 @@ void gui_dosmth(int width, int height)
 	if (render_times.size() > 100)
 		render_times.erase(render_times.begin());
 	last_render = new_time;
+}
 
-	ImGui_Impl_NewFrame();
-    ImGui::NewFrame();
-
+void gui_plot_render_time(int width, int height)
+{
     ImGui::PlotLines("Render Times", &render_times[0], render_times.size(), 0, "", 0.0, 1.0 / 30.0, ImVec2(300, 50));
-
-    // Render dear imgui into screen
-    ImGui::Render();
-    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
 
 // Helper to display a little (?) mark which shows a tooltip when hovered.
@@ -308,7 +311,7 @@ static void gui_display_commands()
 
 	ImGui_Impl_NewFrame();
     ImGui::NewFrame();
-    if (!settings_opening)
+    if (!settings_opening && settings.pvr.IsOpenGL())
     	ImGui_ImplOpenGL3_DrawBackground();
 
     if (!settings.rend.FloatVMUs)
@@ -362,7 +365,7 @@ static void gui_display_commands()
 	ImGui::End();
 
     ImGui::Render();
-    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData(), settings_opening);
+    ImGui_impl_RenderDrawData(ImGui::GetDrawData(), settings_opening);
     settings_opening = false;
 }
 
@@ -640,11 +643,8 @@ static void gui_display_settings()
     ImGui::NewFrame();
 
 	int dynarec_enabled = settings.dynarec.Enable;
-	u32 renderer = settings.pvr.rend;
-
-    if (!settings_opening)
-    	ImGui_ImplOpenGL3_DrawBackground();
-
+	int pvr_rend = settings.pvr.rend;
+	bool vulkan = pvr_rend == 4 || pvr_rend == 5;
 	ImGui::SetNextWindowPos(ImVec2(0, 0));
 	ImGui::SetNextWindowSize(ImVec2(screen_width, screen_height));
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
@@ -949,14 +949,18 @@ static void gui_display_settings()
 		if (ImGui::BeginTabItem("Video"))
 		{
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
-			int renderer = settings.pvr.rend == 3 ? 2 : settings.rend.PerStripSorting ? 1 : 0;
 #if HOST_OS != OS_DARWIN
-			bool has_per_pixel = !gl.is_gles && gl.gl_major >= 4;
+			bool has_per_pixel;
+			if (!vulkan)
+				has_per_pixel = !theGLContext.IsGLES() && theGLContext.GetMajorVersion() >= 4;
+			else
+				has_per_pixel = VulkanContext::Instance()->SupportsFragmentShaderStoresAndAtomics();
 #else
 			bool has_per_pixel = false;
 #endif
 		    if (ImGui::CollapsingHeader("Transparent Sorting", ImGuiTreeNodeFlags_DefaultOpen))
 		    {
+		    	int renderer = (pvr_rend == 3 || pvr_rend == 5) ? 2 : settings.rend.PerStripSorting ? 1 : 0;
 		    	ImGui::Columns(has_per_pixel ? 3 : 2, "renderers", false);
 		    	ImGui::RadioButton("Per Triangle", &renderer, 0);
 	            ImGui::SameLine();
@@ -976,15 +980,24 @@ static void gui_display_settings()
 		    	switch (renderer)
 		    	{
 		    	case 0:
-		    		settings.pvr.rend = 0;
+		    		if (!vulkan)
+		    			pvr_rend = 0;					// regular Open GL
+		    		else
+		    			pvr_rend = 4;					// regular Vulkan
 		    		settings.rend.PerStripSorting = false;
 		    		break;
 		    	case 1:
-		    		settings.pvr.rend = 0;
+		    		if (!vulkan)
+		    			pvr_rend = 0;
+		    		else
+		    			pvr_rend = 4;
 		    		settings.rend.PerStripSorting = true;
 		    		break;
 		    	case 2:
-		    		settings.pvr.rend = 3;
+		    		if (!vulkan)
+		    			pvr_rend = 3;
+		    		else
+		    			pvr_rend = 5;
 		    		break;
 		    	}
 		    }
@@ -1020,6 +1033,9 @@ static void gui_display_settings()
 		    	ImGui::Checkbox("Delay Frame Swapping", &settings.rend.DelayFrameSwapping);
 	            ImGui::SameLine();
 	            ShowHelpMarker("Useful to avoid flashing screen or glitchy videos. Not recommended on slow platforms");
+		    	ImGui::Checkbox("Use Vulkan Renderer", &vulkan);
+	            ImGui::SameLine();
+	            ShowHelpMarker("Use Vulkan instead of Open GL/GLES. Experimental");
 		    	ImGui::SliderInt("Scaling", (int *)&settings.rend.ScreenScaling, 1, 100);
 	            ImGui::SameLine();
 	            ShowHelpMarker("Downscaling factor relative to native screen resolution. Higher is better");
@@ -1299,11 +1315,27 @@ static void gui_display_settings()
 #endif
 						);
 		    }
-		    if (ImGui::CollapsingHeader("Open GL", ImGuiTreeNodeFlags_DefaultOpen))
-		    {
-				ImGui::Text("Renderer: %s", (const char *)glGetString(GL_RENDERER));
-				ImGui::Text("Version: %s", (const char *)glGetString(GL_VERSION));
-		    }
+	    	if (settings.pvr.IsOpenGL())
+	    	{
+				if (ImGui::CollapsingHeader("Open GL", ImGuiTreeNodeFlags_DefaultOpen))
+				{
+		    		ImGui::Text("Renderer: %s", (const char *)glGetString(GL_RENDERER));
+		    		ImGui::Text("Version: %s", (const char *)glGetString(GL_VERSION));
+		    	}
+	    	}
+#ifdef USE_VULKAN
+	    	else if (settings.pvr.rend == 4 || settings.pvr.rend == 5)
+	    	{
+				if (ImGui::CollapsingHeader("Vulkan", ImGuiTreeNodeFlags_DefaultOpen))
+				{
+		    		std::string name = VulkanContext::Instance()->GetDriverName();
+		    		ImGui::Text("Driver Name: %s", name.c_str());
+		    		std::string version = VulkanContext::Instance()->GetDriverVersion();
+		    		ImGui::Text("Version: %s", version.c_str());
+				}
+	    	}
+#endif
+
 #ifdef __ANDROID__
 		    ImGui::Separator();
 		    if (ImGui::Button("Send Logs")) {
@@ -1321,10 +1353,11 @@ static void gui_display_settings()
     ImGui::PopStyleVar();
 
     ImGui::Render();
-    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData(), false);
+    ImGui_impl_RenderDrawData(ImGui::GetDrawData(), false);
 
-   	if (renderer != settings.pvr.rend)
-   		renderer_changed = true;
+    if (vulkan ^ (settings.pvr.rend == 4 || settings.pvr.rend == 5))
+    	pvr_rend = !vulkan ? 0 : settings.pvr.rend == 3 ? 5 : 4;
+	renderer_changed = pvr_rend;
    	settings.dynarec.Enable = (bool)dynarec_enabled;
 }
 
@@ -1414,7 +1447,7 @@ static void gui_display_demo()
 
 	ImGui::ShowDemoWindow();
 	ImGui::Render();
-    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData(), false);
+	ImGui_impl_RenderDrawData(ImGui::GetDrawData(), false);
 }
 
 static void gui_display_content()
@@ -1480,7 +1513,7 @@ static void gui_display_content()
 	error_popup();
 
 	ImGui::Render();
-    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData(), false);
+	ImGui_impl_RenderDrawData(ImGui::GetDrawData(), false);
 }
 
 void systemdir_selected_callback(bool cancelled, std::string selection)
@@ -1492,6 +1525,8 @@ void systemdir_selected_callback(bool cancelled, std::string selection)
 		if (cfgOpen())
 		{
 			LoadSettings(false);
+			// Make sure the renderer type doesn't change mid-flight
+			settings.pvr.rend = 0;
 			gui_state = Main;
 			if (settings.dreamcast.ContentPath.empty())
 				settings.dreamcast.ContentPath.push_back(selection);
@@ -1509,7 +1544,7 @@ void gui_display_onboarding()
 	select_directory_popup("Select System Directory", scaling, &systemdir_selected_callback);
 
 	ImGui::Render();
-    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData(), false);
+	ImGui_impl_RenderDrawData(ImGui::GetDrawData(), false);
 }
 
 void gui_display_ui()
@@ -1631,9 +1666,10 @@ void gui_display_osd()
 		}
 		if (settings.rend.FloatVMUs)
 			display_vmus();
+//		gui_plot_render_time(screen_width, screen_height);
 
 		ImGui::Render();
-		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+		ImGui_impl_RenderDrawData(ImGui::GetDrawData());
 	}
 }
 
@@ -1644,10 +1680,14 @@ void gui_open_onboarding()
 
 void gui_term()
 {
-	inited = false;
-	term_vmus();
-	ImGui_ImplOpenGL3_Shutdown();
-	ImGui::DestroyContext();
+	if (inited)
+	{
+		inited = false;
+		term_vmus();
+		if (settings.pvr.IsOpenGL())
+			ImGui_ImplOpenGL3_Shutdown();
+		ImGui::DestroyContext();
+	}
 }
 
 int msgboxf(const wchar* text, unsigned int type, ...) {
@@ -1675,8 +1715,9 @@ void gui_refresh_files()
 #define VMU_WIDTH (70 * 48 * scaling / 32)
 #define VMU_HEIGHT (70 * scaling)
 #define VMU_PADDING (8 * scaling)
-static u32 vmu_lcd_data[8][48 * 32];
-static bool vmu_lcd_status[8];
+u32 vmu_lcd_data[8][48 * 32];
+bool vmu_lcd_status[8];
+bool vmu_lcd_changed[8];
 static ImTextureID vmu_lcd_tex_ids[8];
 
 void push_vmu_screen(int bus_id, int bus_port, u8* buffer)
@@ -1688,6 +1729,7 @@ void push_vmu_screen(int bus_id, int bus_port, u8* buffer)
 	for (int i = 0; i < ARRAY_SIZE(vmu_lcd_data[vmu_id]); i++, buffer++)
 		*p++ = *buffer != 0 ? 0xFFFFFFFFu : 0xFF000000u;
 	vmu_lcd_status[vmu_id] = true;
+	vmu_lcd_changed[vmu_id] = true;
 }
 
 static const int vmu_coords[8][2] = {
@@ -1704,6 +1746,8 @@ static const int vmu_coords[8][2] = {
 static void display_vmus()
 {
 	if (!game_started)
+		return;
+	if (!settings.pvr.IsOpenGL())
 		return;
     ImGui::SetNextWindowBgAlpha(0);
     ImGui::SetNextWindowPos(ImVec2(0, 0));
@@ -1753,6 +1797,8 @@ static void reset_vmus()
 
 static void term_vmus()
 {
+	if (!settings.pvr.IsOpenGL())
+		return;
 	for (int i = 0; i < ARRAY_SIZE(vmu_lcd_status); i++)
 	{
 		if (vmu_lcd_tex_ids[i] != (ImTextureID)0)

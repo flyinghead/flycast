@@ -348,7 +348,9 @@ void LoadSpecialSettings()
 		}
 		else if (!strcmp("NINJA ASSAULT", naomi_game_id)
 					|| !strcmp(naomi_game_id, "Sports Shooting USA")	// AW
-					|| !strcmp(naomi_game_id, "SEGA CLAY CHALLENGE"))	// AW
+					|| !strcmp(naomi_game_id, "SEGA CLAY CHALLENGE")	// AW
+					|| !strcmp(naomi_game_id, "RANGER MISSION")			// AW
+					|| !strcmp(naomi_game_id, "EXTREME HUNTING"))		// AW
 		{
 			INFO_LOG(BOOT, "Enabling lightgun setup for game %s", naomi_game_id);
 			settings.input.JammaSetup = 5;
@@ -796,7 +798,9 @@ void LoadSettings(bool game_specific)
 	settings.rend.WidescreenGameHacks = cfgLoadBool(config_section, "rend.WidescreenGameHacks", settings.rend.WidescreenGameHacks);
 
 	settings.pvr.ta_skip			= cfgLoadInt(config_section, "ta.skip", settings.pvr.ta_skip);
-	settings.pvr.rend				= cfgLoadInt(config_section, "pvr.rend", settings.pvr.rend);
+	if (!game_specific)
+		// crashes if switching gl <-> vulkan
+		settings.pvr.rend				= cfgLoadInt(config_section, "pvr.rend", settings.pvr.rend);
 
 	settings.pvr.MaxThreads		    = cfgLoadInt(config_section, "pvr.MaxThreads", settings.pvr.MaxThreads);
 	settings.pvr.SynchronousRender	= cfgLoadBool(config_section, "pvr.SynchronousRendering", settings.pvr.SynchronousRender);
@@ -899,6 +903,7 @@ void LoadCustom()
 
 void SaveSettings()
 {
+	cfgSetAutoSave(false);
 	cfgSaveBool("config", "Dynarec.Enabled", settings.dynarec.Enable);
 	if (forced_game_cable == -1 || forced_game_cable != settings.dreamcast.cable)
 		cfgSaveInt("config", "Dreamcast.Cable", settings.dreamcast.cable);
@@ -922,21 +927,12 @@ void SaveSettings()
 
 	// Write backend specific settings
 	// std::map<std::string, std::map<std::string, std::string>>
-	for (std::map<std::string, std::map<std::string, std::string>>::iterator it = settings.audio.options.begin(); it != settings.audio.options.end(); ++it)
+	for (const auto& pair : settings.audio.options)
 	{
-
-		std::pair<std::string, std::map<std::string, std::string>> p = (std::pair<std::string, std::map<std::string, std::string>>)*it;
-		std::string section = p.first;
-		std::map<std::string, std::string> options = p.second;
-
-		for (std::map<std::string, std::string>::iterator it2 = options.begin(); it2 != options.end(); ++it2)
-		{
-			std::pair<std::string, std::string> p2 = (std::pair<std::string, std::string>)*it2;
-			std::string key = p2.first;
-			std::string val = p2.second;
-
-			cfgSaveStr(section.c_str(), key.c_str(), val.c_str());
-		}
+		const std::string& section = pair.first;
+		const auto& options = pair.second;
+		for (const auto& option : options)
+			cfgSaveStr(section.c_str(), option.first.c_str(), option.second.c_str());
 	}
 
 	cfgSaveBool("config", "rend.WideScreen", settings.rend.WideScreen);
@@ -997,6 +993,8 @@ void SaveSettings()
 	void SaveAndroidSettings();
 	SaveAndroidSettings();
 #endif
+
+	cfgSetAutoSave(true);
 }
 
 void dc_resume()

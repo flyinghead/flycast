@@ -18,15 +18,6 @@ void *rend_thread(void *);
 
 void rend_set_fb_scale(float x,float y);
 void rend_resize(int width, int height);
-void rend_text_invl(vram_block* bl);
-
-#ifdef GLuint
-GLuint
-#else
-u32
-#endif
-GetTexture(TSP tsp,TCW tcw);
-
 
 ///////
 extern TA_context* _pvrrc;
@@ -50,13 +41,13 @@ struct Renderer
 
 	virtual void DrawOSD(bool clear_screen) { }
 
-	virtual u32 GetTexture(TSP tsp, TCW tcw) { return 0; }
+	virtual u64 GetTexture(TSP tsp, TCW tcw) { return 0; }
 };
 
 extern Renderer* renderer;
-extern volatile bool renderer_enabled;	// Signals the renderer thread to exit
-extern volatile bool renderer_changed;	// Signals the renderer thread to switch renderer
-extern volatile bool renderer_reinit_requested;	// Signals the renderer thread to reinit the renderer
+extern bool renderer_enabled;	// Signals the renderer thread to exit
+extern int renderer_changed;	// Signals the renderer thread to switch renderer when different from settings.pvr.rend
+extern bool renderer_reinit_requested;	// Signals the renderer thread to reinit the renderer
 
 Renderer* rend_GLES2();
 #if !defined(GLES) && HOST_OS != OS_DARWIN
@@ -64,6 +55,10 @@ Renderer* rend_GL4();
 #endif
 Renderer* rend_norend();
 Renderer* rend_softrend();
+#ifdef USE_VULKAN
+Renderer* rend_Vulkan();
+Renderer* rend_OITVulkan();
+#endif
 
 extern u32 fb_watch_addr_start;
 extern u32 fb_watch_addr_end;

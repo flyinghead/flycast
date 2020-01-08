@@ -11,6 +11,7 @@
 
 static string cfgPath;
 static bool save_config = true;
+static bool autoSave = true;
 
 static emucfg::ConfigFile cfgdb;
 static string game_id;
@@ -44,10 +45,9 @@ void  cfgSaveStr(const wchar * Section, const wchar * Key, const wchar * String)
 	}
 	else
 		cfgdb.set(section, key, value);
-	if(save_config)
-	{
+
+	if (save_config && autoSave)
 		savecfgf();
-	}
 }
 //New config code
 
@@ -204,4 +204,11 @@ void cfgDeleteGameSpecificConfig()
 {
 	has_game_specific_config = false;
 	cfgdb.delete_section(game_id);
+}
+
+void cfgSetAutoSave(bool autoSave)
+{
+	::autoSave = autoSave;
+	if (autoSave)
+		savecfgf();
 }

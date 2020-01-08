@@ -290,6 +290,12 @@ void DYNACALL ta_thd_data32_i(void* data)
 		INFO_LOG(PVR, "Warning: data sent to TA prior to ListInit. Ignored");
 		return;
 	}
+	if (ta_tad.End() - ta_tad.thd_root >= TA_DATA_SIZE)
+	{
+		INFO_LOG(PVR, "Warning: TA data buffer overflow");
+		asic_RaiseInterrupt(holly_MATR_NOMEM);
+		return;
+	}
 
 	simd256_t* dst = (simd256_t*)ta_tad.thd_data;
 	simd256_t* src = (simd256_t*)data;

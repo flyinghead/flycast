@@ -31,8 +31,8 @@ class EmuGLView: NSOpenGLView, NSWindowDelegate {
     override func awakeFromNib() {
         let renderTimer = Timer.scheduledTimer(timeInterval: 0.001, target: self, selector: #selector(EmuGLView.timerTick), userInfo: nil, repeats: true)
         
-        RunLoop.current.add(renderTimer, forMode: RunLoopMode.defaultRunLoopMode)
-        RunLoop.current.add(renderTimer, forMode: RunLoopMode.eventTrackingRunLoopMode)
+		RunLoop.current.add(renderTimer, forMode: .default)
+		RunLoop.current.add(renderTimer, forMode: .eventTracking)
         
         let attrs:[NSOpenGLPixelFormatAttribute] =
         [
@@ -42,7 +42,7 @@ class EmuGLView: NSOpenGLView, NSWindowDelegate {
                 // Must specify the 3.2 Core Profile to use OpenGL 3.2
                 UInt32(NSOpenGLPFAOpenGLProfile),
                 UInt32(NSOpenGLProfileVersion3_2Core),
-                UInt32(NSOpenGLPFABackingStore), UInt32(true),
+				UInt32(NSOpenGLPFABackingStore), UInt32(truncating: true),
                 UInt32(0)
         ]
         
@@ -65,7 +65,7 @@ class EmuGLView: NSOpenGLView, NSWindowDelegate {
     }
     
    
-    func timerTick() {
+    @objc func timerTick() {
         if (emu_frame_pending())
         {
             self.needsDisplay = true
@@ -75,13 +75,13 @@ class EmuGLView: NSOpenGLView, NSWindowDelegate {
     override func keyDown(with e: NSEvent) {
 		if (!e.isARepeat)
 		{
-			emu_key_input(e.keyCode, true, UInt32(e.modifierFlags.rawValue & NSDeviceIndependentModifierFlagsMask.rawValue))
+			emu_key_input(e.keyCode, true, UInt32(e.modifierFlags.rawValue & NSEvent.ModifierFlags.deviceIndependentFlagsMask.rawValue))
 		}
 		emu_character_input(e.characters)
     }
     
     override func keyUp(with e: NSEvent) {
-        emu_key_input(e.keyCode, false, UInt32(e.modifierFlags.rawValue & NSDeviceIndependentModifierFlagsMask.rawValue))
+        emu_key_input(e.keyCode, false, UInt32(e.modifierFlags.rawValue & NSEvent.ModifierFlags.deviceIndependentFlagsMask.rawValue))
     }
 
 	private func setMousePos(_ event: NSEvent)

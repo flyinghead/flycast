@@ -11,7 +11,7 @@ RZDCY_MODULES	:=	cfg/ hw/arm7/ hw/aica/ hw/holly/ hw/ hw/gdrom/ hw/maple/ \
  hw/mem/ hw/pvr/ hw/sh4/ hw/sh4/interpr/ hw/sh4/modules/ plugins/ profiler/ oslib/ \
  hw/extdev/ hw/arm/ hw/naomi/ imgread/ ./ deps/coreio/ deps/zlib/ deps/chdr/ deps/crypto/ \
  deps/libelf/ deps/chdpsr/ arm_emitter/ rend/ reios/ deps/libpng/ deps/xbrz/ \
- deps/libzip/ deps/imgui/ archive/ input/ log/
+ deps/libzip/ deps/imgui/ archive/ input/ log/ wsi/
 
 ifndef NOT_ARM
     RZDCY_MODULES += rec-ARM/
@@ -39,6 +39,19 @@ ifndef NO_REND
 	ifndef USE_DISPMANX
 	    RZDCY_MODULES += rend/gl4/
 	endif
+    endif
+    ifdef USE_VULKAN
+    	RZDCY_MODULES += rend/vulkan/ rend/vulkan/oit/ deps/volk/ \
+    		deps/glslang/glslang/MachineIndependent/ \
+    		deps/glslang/glslang/MachineIndependent/preprocessor/ \
+    		deps/glslang/glslang/GenericCodeGen/ \
+    		deps/glslang/OGLCompilersDLL/ \
+    		deps/glslang/SPIRV/
+    	ifdef FOR_WINDOWS
+    		RZDCY_MODULES += deps/glslang/glslang/OSDependent/Windows/
+    	else
+    		RZDCY_MODULES += deps/glslang/glslang/OSDependent/Unix/
+    	endif
     endif
 else
     RZDCY_MODULES += rend/norend/
@@ -104,8 +117,21 @@ RZDCY_CFLAGS :=
 	endif
 endif
 
+ifdef USE_VULKAN
+	ifdef FOR_WINDOWS
+		RZDCY_CFLAGS += -DVK_USE_PLATFORM_WIN32_KHR
+	else
+		ifdef FOR_ANDROID
+			RZDCY_CFLAGS += -DVK_USE_PLATFORM_ANDROID_KHR
+		else
+			RZDCY_CFLAGS += -DVK_USE_PLATFORM_XLIB_KHR
+		endif
+	endif
+	RZDCY_CFLAGS += -D USE_VULKAN
+endif
+
 RZDCY_CFLAGS += -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/rend/gles -I$(RZDCY_SRC_DIR)/deps \
-		 -I$(RZDCY_SRC_DIR)/deps/vixl -I$(RZDCY_SRC_DIR)/khronos
+		 -I$(RZDCY_SRC_DIR)/deps/vixl -I$(RZDCY_SRC_DIR)/khronos -I$(RZDCY_SRC_DIR)/deps/glslang
 
 ifdef USE_MODEM
 	RZDCY_CFLAGS += -DENABLE_MODEM -I$(RZDCY_SRC_DIR)/deps/picotcp/include -I$(RZDCY_SRC_DIR)/deps/picotcp/modules

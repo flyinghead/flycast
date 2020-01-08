@@ -7,8 +7,10 @@ USE_OSS := 1
 #USE_PULSEAUDIO := 1
 #USE_SDLAUDIO := 1
 #USE_LIBAO := 1
+ifndef USE_SDL
 USE_EVDEV := 1
 USE_UDEV := 1
+endif
 USE_MODEM := 1
 PLATFORM_EXT := elf
 
@@ -40,6 +42,16 @@ endif
 # Platform auto-detection
 # Can be overridden by using:
 #   make platform=x64
+ifeq (,$(platform))
+    UNAME = $(shell uname -a)
+	ifeq ($(UNAME),)
+		platform = win32
+	else ifneq ($(findstring MINGW,$(UNAME)),)
+		platform = win32
+	else ifneq ($(findstring win,$(UNAME)),)
+		platform = win32
+	endif
+endif
 ifeq (,$(platform))
     ARCH = $(shell uname -m)
     ifeq ($(ARCH), $(filter $(ARCH), i386 i686))
@@ -102,7 +114,9 @@ $(info Platform: $(platform))
 ifneq (,$(findstring x86,$(platform)))
     X86_REC := 1
     NOT_ARM := 1
+ifndef USE_SDL
     USE_X11 := 1
+endif
     MFLAGS += -m32
     ASFLAGS += --32
     LDFLAGS += -m32
@@ -113,7 +127,10 @@ ifneq (,$(findstring x86,$(platform)))
 else ifneq (,$(findstring x64,$(platform)))
     X64_REC := 1
     NOT_ARM := 1
+ifndef USE_SDL
     USE_X11 := 1
+endif
+	USE_VULKAN ?= 1
     CFLAGS += -D TARGET_LINUX_x64 -D TARGET_NO_AREC -fno-builtin-sqrtf
     CXXFLAGS += -fexceptions
     LDFLAGS := -no-pie
@@ -121,7 +138,9 @@ else ifneq (,$(findstring x64,$(platform)))
 # Generic 64 bit ARM (armv8) Linux
 else ifneq (,$(findstring arm64,$(platform)))
     NOT_ARM := 1
+ifndef USE_SDL
     USE_X11 := 1
+endif
     ARM64_REC := 1
     ISARM64 := 1
     CFLAGS += -D TARGET_LINUX_ARMv8 -D TARGET_NO_AREC -fno-builtin-sqrtf
@@ -264,6 +283,7 @@ endif
     undefine FOR_LINUX
     NO_NIXPROF := 1
     FOR_WINDOWS := 1
+	USE_VULKAN ?= 1
 else
     $(error Unknown platform)
 endif
@@ -292,8 +312,13 @@ MENUENTRY_DIR ?= ${PREFIX}/share/applications
 ICON_DIR ?= ${PREFIX}/share/pixmaps
 
 ifdef USE_SDL
-    CXXFLAGS += `sdl2-config --cflags` -D USE_SDL
-    LIBS += `sdl2-config --libs`
+	ifdef FOR_WINDOWS
+	    CXXFLAGS += -D USE_SDL
+	    LIBS += -lsdl2.dll
+	else
+	    CXXFLAGS += `sdl2-config --cflags` -D USE_SDL
+	    LIBS += `sdl2-config --libs`
+	endif
 endif
 
 ifdef PGO_MAKE

@@ -1693,7 +1693,7 @@ void FillBGP(TA_context* ctx)
 	bgpp->pcw.UV_16bit=bgpp->isp.UV_16b;
 	bgpp->pcw.Gouraud=bgpp->isp.Gouraud;
 	bgpp->pcw.Offset=bgpp->isp.Offset;
-	bgpp->pcw.Texture=bgpp->isp.Texture;
+	bgpp->pcw.Texture = bgpp->isp.Texture = 0;
 	bgpp->pcw.Shadow = ISP_BACKGND_T.shadow;
 
 	float scale_x= (SCALER_CTL.hscale) ? 2.f:1.f;	//if AA hack the hacked pos value hacks

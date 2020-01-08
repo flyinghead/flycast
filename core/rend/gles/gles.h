@@ -2,38 +2,9 @@
 #include <unordered_map>
 #include <atomic>
 #include "rend/rend.h"
-
-#if (defined(GLES) && HOST_OS != OS_DARWIN && !defined(USE_SDL)) || defined(__ANDROID__)
-#define USE_EGL
-#include <EGL/egl.h>
-#include <EGL/eglext.h>
-#endif
-
-#ifdef GLES
-#if defined(TARGET_IPHONE) //apple-specific ogles2 headers
-//#include <APPLE/egl.h>
-#include <OpenGLES/ES2/gl.h>
-#include <OpenGLES/ES2/glext.h>
-#endif
-#include <GLES32/gl32.h>
-#include <GLES32/gl2ext.h>
-#ifndef GLES2
-#include "gl32funcs.h"
-#endif
-
-#ifndef GL_NV_draw_path
-//IMGTEC GLES emulation
-#pragma comment(lib,"libEGL.lib")
-#pragma comment(lib,"libGLESv2.lib")
-#else /* NV gles emulation*/
-#pragma comment(lib,"libGLES20.lib")
-#endif
-
-#elif HOST_OS == OS_DARWIN
-    #include <OpenGL/gl3.h>
-#else
-	#include <GL4/gl3w.h>
-#endif
+#include "rend/TexCache.h"
+#include "wsi/gl_context.h"
+#include <glm/glm.hpp>
 
 #define glCheck() do { if (unlikely(settings.validate.OpenGlChecks)) { verify(glGetError()==GL_NO_ERROR); } } while(0)
 #define eglCheck() false
@@ -49,8 +20,8 @@
 
 //vertex types
 extern u32 gcflip;
-extern float scale_x, scale_y;
 
+extern glm::mat4 ViewportMatrix;
 
 void DrawStrips();
 
@@ -58,12 +29,12 @@ struct PipelineShader
 {
 	GLuint program;
 
-	GLuint scale,depth_scale;
-	GLuint extra_depth_scale;
+	GLuint depth_scale;
 	GLuint pp_ClipTest,cp_AlphaTestValue;
 	GLuint sp_FOG_COL_RAM,sp_FOG_COL_VERT,sp_FOG_DENSITY;
 	GLuint trilinear_alpha;
 	GLuint fog_clamp_min, fog_clamp_max;
+	GLuint normal_matrix;
 
 	//
 	u32 cp_AlphaTest; s32 pp_ClipTestMode;
@@ -76,34 +47,25 @@ struct PipelineShader
 
 struct gl_ctx
 {
-#ifdef USE_EGL
-	struct
-	{
-		EGLNativeWindowType native_wind;
-		EGLNativeDisplayType native_disp;
-		EGLDisplay display;
-		EGLSurface surface;
-		EGLContext context;
-	} setup;
-#endif
-
 	struct
 	{
 		GLuint program;
 
-		GLuint scale,depth_scale;
-		GLuint extra_depth_scale;
+		GLuint depth_scale;
 		GLuint sp_ShaderColor;
+		GLuint normal_matrix;
 
 	} modvol_shader;
 
 	std::unordered_map<u32, PipelineShader> shaders;
-	bool rotate90;
 
 	struct
 	{
 		GLuint program;
 		GLuint scale;
+		GLuint vao;
+		GLuint geometry;
+		GLuint osd_tex;
 	} OSD_SHADER;
 
 	struct
@@ -136,18 +98,17 @@ struct gl_ctx
 	bool is_gles;
 	GLuint fog_image_format;
 	GLenum index_type;
-	bool swap_buffer_not_preserved;
 	bool GL_OES_packed_depth_stencil_supported;
 	bool GL_OES_depth24_supported;
+	bool highp_float_supported;
 
 	size_t get_index_size() { return index_type == GL_UNSIGNED_INT ? sizeof(u32) : sizeof(u16); }
 };
 
 extern gl_ctx gl;
 extern GLuint fbTextureId;
-extern float fb_scale_x, fb_scale_y;
 
-GLuint gl_GetTexture(TSP tsp,TCW tcw);
+u64 gl_GetTexture(TSP tsp,TCW tcw);
 struct text_info {
 	u16* pdata;
 	u32 width;
@@ -156,19 +117,19 @@ struct text_info {
 };
 enum ModifierVolumeMode { Xor, Or, Inclusion, Exclusion, ModeCount };
 
-bool gl_init(void* wind, void* disp);
 void gl_load_osd_resources();
 void gl_free_osd_resources();
-void gl_swap();
 bool ProcessFrame(TA_context* ctx);
 void UpdateFogTexture(u8 *fog_table, GLenum texture_slot, GLint fog_image_format);
 void findGLVersion();
+void GetFramebufferScaling(float& scale_x, float& scale_y, float& scissoring_scale_x, float& scissoring_scale_y);
+void GetFramebufferSize(float& dc_width, float& dc_height);
+void SetupMatrices(float dc_width, float dc_height,
+				   float scale_x, float scale_y, float scissoring_scale_x, float scissoring_scale_y,
+				   float &ds2s_offs_x, glm::mat4& normal_mat, glm::mat4& scissor_mat);
 
 text_info raw_GetTexture(TSP tsp, TCW tcw);
-void killtex();
-void CollectCleanup();
 void DoCleanup();
-void SortPParams(int first, int count);
 void SetCull(u32 CullMode);
 s32 SetTileClip(u32 val, GLint uniform);
 void SetMVS_Mode(ModifierVolumeMode mv_mode, ISP_Modvol ispc);
@@ -176,7 +137,7 @@ void SetMVS_Mode(ModifierVolumeMode mv_mode, ISP_Modvol ispc);
 void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt);
 void ReadRTTBuffer();
 void RenderFramebuffer();
-void DrawFramebuffer(float w, float h);
+void DrawFramebuffer();
 GLuint init_output_framebuffer(int width, int height);
 bool render_output_framebuffer();
 void free_output_framebuffer();
@@ -197,29 +158,22 @@ GLuint loadPNG(const string& subpath, int &width, int &height);
 extern struct ShaderUniforms_t
 {
 	float PT_ALPHA;
-	float scale_coefs[4];
 	float depth_coefs[4];
-	float extra_depth_scale;
 	float fog_den_float;
 	float ps_FOG_COL_RAM[3];
 	float ps_FOG_COL_VERT[3];
 	float trilinear_alpha;
 	float fog_clamp_min[4];
 	float fog_clamp_max[4];
+	glm::mat4 normal_mat;
 
-	void Set(PipelineShader* s)
+	void Set(const PipelineShader* s)
 	{
 		if (s->cp_AlphaTestValue!=-1)
 			glUniform1f(s->cp_AlphaTestValue,PT_ALPHA);
 
-		if (s->scale!=-1)
-			glUniform4fv( s->scale, 1, scale_coefs);
-
 		if (s->depth_scale!=-1)
 			glUniform4fv( s->depth_scale, 1, depth_coefs);
-
-		if (s->extra_depth_scale != -1)
-			glUniform1f(s->extra_depth_scale, extra_depth_scale);
 
 		if (s->sp_FOG_DENSITY!=-1)
 			glUniform1f( s->sp_FOG_DENSITY,fog_den_float);
@@ -234,67 +188,26 @@ extern struct ShaderUniforms_t
 			glUniform4fv(s->fog_clamp_min, 1, fog_clamp_min);
 		if (s->fog_clamp_max != -1)
 			glUniform4fv(s->fog_clamp_max, 1, fog_clamp_max);
+
+		if (s->normal_matrix != -1)
+			glUniformMatrix4fv(s->normal_matrix, 1, GL_FALSE, &normal_mat[0][0]);
 	}
 
 } ShaderUniforms;
 
-struct PvrTexInfo;
-template <class pixel_type> class PixelBuffer;
-typedef void TexConvFP(PixelBuffer<u16>* pb,u8* p_in,u32 Width,u32 Height);
-typedef void TexConvFP32(PixelBuffer<u32>* pb,u8* p_in,u32 Width,u32 Height);
-
-struct TextureCacheData
+struct TextureCacheData : BaseTextureCacheData
 {
-	TSP tsp;        //dreamcast texture parameters
-	TCW tcw;
-	
 	GLuint texID;   //gl texture
 	u16* pData;
-	int tex_type;
-	
-	u32 Lookups;
-	
-	//decoded texture info
-	u32 sa;         //pixel data start address in vram (might be offset for mipmaps/etc)
-	u32 sa_tex;		//texture data start address in vram
-	u32 w,h;        //width & height of the texture
-	u32 size;       //size, in bytes, in vram
-	
-	const PvrTexInfo* tex;
-	TexConvFP*  texconv;
-	TexConvFP32*  texconv32;
-	
-	u32 dirty;
-	vram_block* lock_block;
-	
-	u32 Updates;
-	
-	u32 palette_index;
-	//used for palette updates
-	u32 palette_hash;			// Palette hash at time of last update
-	u32 vq_codebook;            // VQ quantizers table for compressed textures
-	u32 texture_hash;			// xxhash of texture data, used for custom textures
-	u32 old_texture_hash;		// legacy hash
-	u8* volatile custom_image_data;		// loaded custom image data
-	volatile u32 custom_width;
-	volatile u32 custom_height;
-	std::atomic_int custom_load_in_progress;
-	
-	void PrintTextureName();
-	
-	bool IsPaletted()
-	{
-		return tcw.PixelFmt == PixelPal4 || tcw.PixelFmt == PixelPal8;
-	}
-	
-	void Create(bool isGL);
-	void ComputeHash();
-	void Update();
-	void UploadToGPU(GLuint textype, int width, int height, u8 *temp_tex_buffer);
-	void CheckCustomTexture();
-	//true if : dirty or paletted texture and hashes don't match
-	bool NeedsUpdate();
-	bool Delete();
+	virtual std::string GetId() override { return std::to_string(texID); }
+	virtual void UploadToGPU(int width, int height, u8 *temp_tex_buffer) override;
+	virtual bool Delete() override;
 };
 
+class TextureCache : public BaseTextureCache<TextureCacheData>
+{
+};
+extern TextureCache TexCache;
+
 extern const u32 Zfunction[8];
+extern const u32 SrcBlendGL[], DstBlendGL[];

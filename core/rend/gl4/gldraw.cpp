@@ -15,23 +15,18 @@ Takes vertex, textures and renders to the currently set up target
 
 static gl4PipelineShader* CurrentShader;
 extern u32 gcflip;
-static GLuint geom_fbo;
+GLuint geom_fbo;
 GLuint stencilTexId;
 GLuint opaqueTexId;
 GLuint depthTexId;
-static GLuint texSamplers[2];
-static GLuint depth_fbo;
+GLuint texSamplers[2];
+GLuint depth_fbo;
 GLuint depthSaveTexId;
 
 static gl4PipelineShader *gl4GetProgram(u32 cp_AlphaTest, s32 pp_ClipTestMode,
 							u32 pp_Texture, u32 pp_UseAlpha, u32 pp_IgnoreTexA, u32 pp_ShadInstr, u32 pp_Offset,
-							u32 pp_FogCtrl, bool pp_TwoVolumes, u32 pp_DepthFunc, bool pp_Gouraud, bool pp_BumpMap, bool fog_clamping, int pass)
+							u32 pp_FogCtrl, bool pp_TwoVolumes, bool pp_Gouraud, bool pp_BumpMap, bool fog_clamping, Pass pass)
 {
-	if (settings.rend.Rotate90 != gl4.rotate90)
-	{
-		gl4_delete_shaders();
-		gl4.rotate90 = settings.rend.Rotate90;
-	}
 	u32 rv=0;
 
 	rv |= (pp_ClipTestMode + 1);
@@ -43,11 +38,10 @@ static gl4PipelineShader *gl4GetProgram(u32 cp_AlphaTest, s32 pp_ClipTestMode,
 	rv<<=1; rv|=pp_Offset;
 	rv<<=2; rv|=pp_FogCtrl;
 	rv <<= 1; rv |= (int)pp_TwoVolumes;
-	rv <<= 3; rv |= pp_DepthFunc;
 	rv <<= 1; rv |= (int)pp_Gouraud;
 	rv <<= 1; rv |= pp_BumpMap;
 	rv <<= 1; rv |= fog_clamping;
-	rv <<= 2; rv |= pass;
+	rv <<= 2; rv |= (int)pass;
 
 	gl4PipelineShader *shader = &gl4.shaders[rv];
 	if (shader->program == 0)
@@ -61,12 +55,11 @@ static gl4PipelineShader *gl4GetProgram(u32 cp_AlphaTest, s32 pp_ClipTestMode,
 		shader->pp_Offset = pp_Offset;
 		shader->pp_FogCtrl = pp_FogCtrl;
 		shader->pp_TwoVolumes = pp_TwoVolumes;
-		shader->pp_DepthFunc = pp_DepthFunc;
 		shader->pp_Gouraud = pp_Gouraud;
 		shader->pp_BumpMap = pp_BumpMap;
 		shader->fog_clamping = fog_clamping;
 		shader->pass = pass;
-		gl4CompilePipelineShader(shader, settings.rend.Rotate90);
+		gl4CompilePipelineShader(shader);
 	}
 
 	return shader;
@@ -80,8 +73,8 @@ static void SetTextureRepeatMode(int index, GLuint dir, u32 clamp, u32 mirror)
 		glSamplerParameteri(texSamplers[index], dir, mirror ? GL_MIRRORED_REPEAT : GL_REPEAT);
 }
 
-template <u32 Type, bool SortingEnabled>
-	static void SetGPState(const PolyParam* gp, int pass)
+template <u32 Type, bool SortingEnabled, Pass pass>
+static void SetGPState(const PolyParam* gp)
 {
 	if (gp->pcw.Texture && gp->tsp.FilterMode > 1)
 	{
@@ -95,7 +88,7 @@ template <u32 Type, bool SortingEnabled>
 
 	s32 clipping = SetTileClip(gp->tileclip, -1);
 
-	if (pass == 0)
+	if (pass == Pass::Depth)
 	{
 		CurrentShader = gl4GetProgram(Type == ListType_Punch_Through ? 1 : 0,
 				clipping,
@@ -106,7 +99,6 @@ template <u32 Type, bool SortingEnabled>
 				0,
 				2,
 				false,	// TODO Can PT have two different textures for area 0 and 1 ??
-				0,
 				false,
 				false,
 				false,
@@ -120,15 +112,6 @@ template <u32 Type, bool SortingEnabled>
 
 		int fog_ctrl = settings.rend.Fog ? gp->tsp.FogCtrl : 2;
 
-		int depth_func = 0;
-		if (Type == ListType_Translucent)
-		{
-			if (SortingEnabled)
-				depth_func = 6;		// GEQUAL
-			else
-				depth_func = gp->isp.DepthMode;
-		}
-
 		CurrentShader = gl4GetProgram(Type == ListType_Punch_Through ? 1 : 0,
 				clipping,
 				gp->pcw.Texture,
@@ -138,43 +121,40 @@ template <u32 Type, bool SortingEnabled>
 				gp->pcw.Offset,
 				fog_ctrl,
 				two_volumes_mode,
-				depth_func,
 				gp->pcw.Gouraud,
 				gp->tcw.PixelFmt == PixelBumpMap,
 				color_clamp,
 				pass);
 	}
-
 	glcache.UseProgram(CurrentShader->program);
 
 	gl4ShaderUniforms.tsp0 = gp->tsp;
 	gl4ShaderUniforms.tsp1 = gp->tsp1;
 	gl4ShaderUniforms.tcw0 = gp->tcw;
 	gl4ShaderUniforms.tcw1 = gp->tcw1;
-
-	if (Type == ListType_Opaque || Type == ListType_Punch_Through)	// TODO Can PT have a >0 and <1 alpha?
-	{
-		gl4ShaderUniforms.tsp0.SrcInstr = 1;
-		gl4ShaderUniforms.tsp0.DstInstr = 0;
-		gl4ShaderUniforms.tsp1.SrcInstr = 1;
-		gl4ShaderUniforms.tsp1.DstInstr = 0;
-	}
 	gl4ShaderUniforms.Set(CurrentShader);
+
+	if (pass == Pass::Color && (Type == ListType_Translucent || Type == ListType_Punch_Through))
+	{
+		glcache.Enable(GL_BLEND);
+		glcache.BlendFunc(SrcBlendGL[gp->tsp.SrcInstr], DstBlendGL[gp->tsp.DstInstr]);
+	}
+	else
+		glcache.Disable(GL_BLEND);
 
 	SetTileClip(gp->tileclip, CurrentShader->pp_ClipTest);
 
-	//This bit control which pixels are affected
-	//by modvols
-	const u32 stencil=(gp->pcw.Shadow!=0)?0x80:0x0;
+	// This bit controls which pixels are affected by modvols
+	const u32 stencil = gp->pcw.Shadow != 0 ? 0x80 : 0x0;
 
-	glcache.StencilFunc(GL_ALWAYS,stencil,stencil);
+	glcache.StencilFunc(GL_ALWAYS, stencil, stencil);
 
 	if (CurrentShader->pp_Texture)
 	{
 		for (int i = 0; i < 2; i++)
 		{
 			glActiveTexture(GL_TEXTURE0 + i);
-			GLuint texid = i == 0 ? gp->texid : gp->texid1;
+			GLuint texid = (GLuint)(i == 0 ? gp->texid : gp->texid1);
 
 			glBindTexture(GL_TEXTURE_2D, texid == -1 ? 0 : texid);
 
@@ -212,17 +192,16 @@ template <u32 Type, bool SortingEnabled>
 	SetCull(gp->isp.CullMode ^ gcflip);
 
 	//set Z mode, only if required
-	if (Type == ListType_Punch_Through || (pass == 0 && SortingEnabled))
+	if (Type == ListType_Punch_Through || (pass == Pass::Depth && SortingEnabled))
 	{
 		glcache.DepthFunc(GL_GEQUAL);
 	}
-	else if (Type == ListType_Opaque || (pass == 0 && !SortingEnabled))
+	else if (Type == ListType_Opaque || (Type == ListType_Translucent && !SortingEnabled))
 	{
 		glcache.DepthFunc(Zfunction[gp->isp.DepthMode]);
 	}
 
-	// Depth buffer is updated in pass 0 (and also in pass 1 for OP PT)
-	if (pass < 2)
+	if (pass == Pass::Depth || pass == Pass::Color)
 	{
 		// Z Write Disable seems to be ignored for punch-through polys
 		// Fixes Worms World Party, Bust-a-Move 4 and Re-Volt
@@ -235,36 +214,32 @@ template <u32 Type, bool SortingEnabled>
 		glcache.DepthMask(GL_FALSE);
 }
 
-template <u32 Type, bool SortingEnabled, bool OnlyAlwaysDepth>
-static void DrawList(const List<PolyParam>& gply, int first, int count, int pass)
+template <u32 Type, bool SortingEnabled, Pass pass>
+static void DrawList(const List<PolyParam>& gply, int first, int count)
 {
 	PolyParam* params = &gply.head()[first];
 
-
-	if (count==0)
+	if (count == 0)
 		return;
-	//we want at least 1 PParam
 
-	while(count-->0)
+	while (count-- > 0)
 	{
-		if (params->count>2) //this actually happens for some games. No idea why ..
+		if (params->count > 2)
 		{
-			if (pass != 0)
+			if ((Type == ListType_Opaque || (Type == ListType_Translucent && !SortingEnabled)) && params->isp.DepthMode == 0)
 			{
-				// No need to draw this one
-				if (Type == ListType_Translucent && params->tsp.SrcInstr == 0 && params->tsp.DstInstr == 1)
-				{
-					params++;
-					continue;
-				}
+				// depthFunc = never
+				params++;
+				continue;
 			}
-			if (OnlyAlwaysDepth && (params->isp.DepthMode != 7 || params->isp.ZWriteDis))
+			if (pass == Pass::OIT && Type == ListType_Translucent && params->tsp.SrcInstr == 0 && params->tsp.DstInstr == 1)
 			{
+				// dst = dst
 				params++;
 				continue;
 			}
 			gl4ShaderUniforms.poly_number = params - gply.head();
-			SetGPState<Type,SortingEnabled>(params, pass);
+			SetGPState<Type, SortingEnabled, pass>(params);
 			glDrawElements(GL_TRIANGLE_STRIP, params->count, GL_UNSIGNED_INT, (GLvoid*)(sizeof(u32) * params->first)); glCheck();
 		}
 
@@ -320,6 +295,8 @@ static void DrawModVols(int first, int count)
 
 	glBindVertexArray(gl4.vbo.modvol_vao);
 
+	glcache.Disable(GL_BLEND);
+
 	glcache.UseProgram(gl4.modvol_shader.program);
 
 	glcache.Enable(GL_DEPTH_TEST);
@@ -366,7 +343,7 @@ static void DrawModVols(int first, int count)
 	glcache.DepthMask(GL_TRUE);
 }
 
-void renderABuffer(bool sortFragments);
+void renderABuffer();
 void DrawTranslucentModVols(int first, int count);
 void checkOverflowAndReset();
 
@@ -433,7 +410,6 @@ void gl4DrawStrips(GLuint output_fbo, int width, int height)
 
 	//We use sampler 0
 	glActiveTexture(GL_TEXTURE0);
-	glcache.Disable(GL_BLEND);
 	glProvokingVertex(GL_LAST_VERTEX_CONVENTION);
 
 	RenderPass previous_pass = {};
@@ -466,10 +442,11 @@ void gl4DrawStrips(GLuint output_fbo, int width, int height)
 			previous_pass = current_pass;
 			continue;
 		}
-        DEBUG_LOG(RENDERER, "Render pass %d OP %d PT %d TR %d", render_pass + 1,
+        DEBUG_LOG(RENDERER, "Render pass %d OP %d PT %d TR %d autosort %d", render_pass + 1,
         		current_pass.op_count - previous_pass.op_count,
 				current_pass.pt_count - previous_pass.pt_count,
-				current_pass.tr_count - previous_pass.tr_count);
+				current_pass.tr_count - previous_pass.tr_count,
+				current_pass.autosort);
 
 		glBindVertexArray(gl4.vbo.main_vao);
 
@@ -509,8 +486,8 @@ void gl4DrawStrips(GLuint output_fbo, int width, int height)
 			glcache.Enable(GL_STENCIL_TEST);
 			glcache.StencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
 
-			DrawList<ListType_Opaque, false, false>(pvrrc.global_param_op, previous_pass.op_count, current_pass.op_count - previous_pass.op_count, 0);
-			DrawList<ListType_Punch_Through, false, false>(pvrrc.global_param_pt, previous_pass.pt_count, current_pass.pt_count - previous_pass.pt_count, 0);
+			DrawList<ListType_Opaque, false, Pass::Depth>(pvrrc.global_param_op, previous_pass.op_count, current_pass.op_count - previous_pass.op_count);
+			DrawList<ListType_Punch_Through, false, Pass::Depth>(pvrrc.global_param_pt, previous_pass.pt_count, current_pass.pt_count - previous_pass.pt_count);
 
 			// Modifier volumes
 			if (settings.rend.ModifierVolumes)
@@ -546,10 +523,10 @@ void gl4DrawStrips(GLuint output_fbo, int width, int height)
 			glCheck();
 
 			//Opaque
-			DrawList<ListType_Opaque, false, false>(pvrrc.global_param_op, previous_pass.op_count, current_pass.op_count - previous_pass.op_count, 1);
+			DrawList<ListType_Opaque, false, Pass::Color>(pvrrc.global_param_op, previous_pass.op_count, current_pass.op_count - previous_pass.op_count);
 
 			//Alpha tested
-			DrawList<ListType_Punch_Through, false, false>(pvrrc.global_param_pt, previous_pass.pt_count, current_pass.pt_count - previous_pass.pt_count, 1);
+			DrawList<ListType_Punch_Through, false, Pass::Color>(pvrrc.global_param_pt, previous_pass.pt_count, current_pass.pt_count - previous_pass.pt_count);
 
 			// Unbind stencil
 			glActiveTexture(GL_TEXTURE3);
@@ -559,65 +536,53 @@ void gl4DrawStrips(GLuint output_fbo, int width, int height)
 
 		if (!skip_tr)
 		{
-
-			if (!current_pass.autosort)
-			{
-				// This pass is for HeadHunter but possibly others as well.
-				// The map/radar HUD is drawn is a second pass without autosort.
-				// The first poly drawn uses Always depth func to punch a hole in the depth buffer
-				// and the subsequent polys draw on top of it with Greater depth func.
-				// That doesn't work with this renderer because the depth test for transparent polys
-				// only use the opaque/pt depth, so the first poly is correctly drawn but subsequent polys are discarded.
-				// To work around this problem, we do a depth only pass with the transparent polys
-				// that use the Always depth func.
-				glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-				glcache.Enable(GL_DEPTH_TEST);
-				glcache.DepthMask(GL_TRUE);
-				DrawList<ListType_Translucent, false, true>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count, 0);
-			}
 			//
 			// PASS 3: Render TR to a-buffers
 			//
-			glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-			glcache.Disable(GL_DEPTH_TEST);
-
-			// Although the depth test is disabled and thus writes to the depth buffer are also disabled,
-			// AMD cards have serious issues when the depth/stencil texture is still bound to the framebuffer
-			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, 0, 0);
-			glActiveTexture(GL_TEXTURE2);
-			glBindTexture(GL_TEXTURE_2D, depthTexId);
-			glActiveTexture(GL_TEXTURE0);
-
-			//Alpha blended
 			if (current_pass.autosort)
-				DrawList<ListType_Translucent, true, false>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count, 3); // 3 because pass 2 is no more
+			{
+				glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+				glcache.Disable(GL_DEPTH_TEST);
+
+				// Although the depth test is disabled and thus writes to the depth buffer are also disabled,
+				// AMD cards have serious issues when the depth/stencil texture is still bound to the framebuffer
+				glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, 0, 0);
+				glActiveTexture(GL_TEXTURE2);
+				glBindTexture(GL_TEXTURE_2D, depthTexId);
+				glActiveTexture(GL_TEXTURE0);
+				DrawList<ListType_Translucent, true, Pass::OIT>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);
+
+				// Translucent modifier volumes
+				if (settings.rend.ModifierVolumes)
+					DrawTranslucentModVols(previous_pass.mvo_tr_count, current_pass.mvo_tr_count - previous_pass.mvo_tr_count);
+
+				// Rebind the depth/stencil texture to the framebuffer
+				glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, stencilTexId, 0);
+
+				if (render_pass < render_pass_count - 1)
+				{
+					//
+					// PASS 3b: Geometry pass with TR to update the depth for the next TA render pass
+					//
+					// Unbind depth texture
+					glActiveTexture(GL_TEXTURE2);
+					glBindTexture(GL_TEXTURE_2D, 0);
+					glActiveTexture(GL_TEXTURE0);
+
+					glcache.Enable(GL_DEPTH_TEST);
+					DrawList<ListType_Translucent, true, Pass::Depth>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);
+				}
+			}
 			else
-				DrawList<ListType_Translucent, false, false>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count, 3); // 3 because pass 2 is no more
+			{
+				glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+				glcache.Enable(GL_DEPTH_TEST);
+				DrawList<ListType_Translucent, false, Pass::Color>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);
+			}
 			glCheck();
-
-			// Translucent modifier volumes
-			if (settings.rend.ModifierVolumes)
-				DrawTranslucentModVols(previous_pass.mvo_tr_count, current_pass.mvo_tr_count - previous_pass.mvo_tr_count);
-
-			// Rebind the depth/stencil texture to the framebuffer
-			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, stencilTexId, 0);
 
 			if (render_pass < render_pass_count - 1)
 			{
-				//
-				// PASS 3b: Geometry pass with TR to update the depth for the next TA render pass
-				//
-				// Unbind depth texture
-				glActiveTexture(GL_TEXTURE2);
-				glBindTexture(GL_TEXTURE_2D, 0);
-				glActiveTexture(GL_TEXTURE0);
-
-				glcache.Enable(GL_DEPTH_TEST);
-				if (current_pass.autosort)
-					DrawList<ListType_Translucent, true, false>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count, 0);
-				else
-					DrawList<ListType_Translucent, false, false>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count, 0);
-
 				//
 				// PASS 3c: Render a-buffer to temporary texture
 				//
@@ -629,7 +594,7 @@ void gl4DrawStrips(GLuint output_fbo, int width, int height)
 				glBindSampler(0, 0);
 				glBindTexture(GL_TEXTURE_2D, opaqueTexId);
 
-				renderABuffer(current_pass.autosort);
+				renderABuffer();
 
 				glcache.DeleteTextures(1, &opaqueTexId);
 				opaqueTexId = texId;
@@ -657,7 +622,7 @@ void gl4DrawStrips(GLuint output_fbo, int width, int height)
 	glActiveTexture(GL_TEXTURE0);
 	glBindSampler(0, 0);
 	glBindTexture(GL_TEXTURE_2D, opaqueTexId);
-	renderABuffer(previous_pass.autosort);
+	renderABuffer();
 }
 
 static void gl4_draw_quad_texture(GLuint texture, float w, float h)
@@ -679,11 +644,10 @@ static void gl4_draw_quad_texture(GLuint texture, float w, float h)
 				0,
 				2,
 				false,
-				0,
 				false,
 				false,
 				false,
-				1);
+				Pass::Color);
 	glcache.UseProgram(CurrentShader->program);
 	gl4ShaderUniforms.Set(CurrentShader);
 

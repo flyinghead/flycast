@@ -4,12 +4,12 @@
 
 void gl4DrawStrips(GLuint output_fbo, int width, int height);
 
+enum class Pass { Depth, Color, OIT };
+
 struct gl4PipelineShader
 {
 	GLuint program;
 
-	GLuint scale;
-	GLuint extra_depth_scale;
 	GLuint pp_ClipTest,cp_AlphaTestValue;
 	GLuint sp_FOG_COL_RAM,sp_FOG_COL_VERT,sp_FOG_DENSITY;
 	GLuint shade_scale_factor;
@@ -21,12 +21,12 @@ struct gl4PipelineShader
 	GLuint fog_control;
 	GLuint trilinear_alpha;
 	GLuint fog_clamp_min, fog_clamp_max;
+	GLuint normal_matrix;
 
 	//
 	u32 cp_AlphaTest; s32 pp_ClipTestMode;
 	u32 pp_Texture, pp_UseAlpha, pp_IgnoreTexA, pp_ShadInstr, pp_Offset, pp_FogCtrl;
-	u32 pp_DepthFunc;
-	int pass;
+	Pass pass;
 	bool pp_TwoVolumes;
 	bool pp_Gouraud;
 	bool pp_BumpMap;
@@ -40,12 +40,10 @@ struct gl4_ctx
 	{
 		GLuint program;
 
-		GLuint scale;
-		GLuint extra_depth_scale;
+		GLuint normal_matrix;
 	} modvol_shader;
 
 	std::unordered_map<u32, gl4PipelineShader> shaders;
-	bool rotate90;
 
 	struct
 	{
@@ -69,13 +67,16 @@ bool gl4_render_output_framebuffer();
 void abufferDrawQuad();
 
 extern const char *gl4PixelPipelineShader;
-bool gl4CompilePipelineShader(gl4PipelineShader* s, bool rotate_90, const char *pixel_source = gl4PixelPipelineShader, const char *vertex_source = NULL);
+bool gl4CompilePipelineShader(gl4PipelineShader* s, const char *pixel_source = gl4PixelPipelineShader, const char *vertex_source = NULL);
 void gl4_delete_shaders();
 
 extern GLuint stencilTexId;
 extern GLuint depthTexId;
 extern GLuint opaqueTexId;
 extern GLuint depthSaveTexId;
+extern GLuint geom_fbo;
+extern GLuint texSamplers[2];
+extern GLuint depth_fbo;
 
 #define SHADER_HEADER "#version 430 \n\
 \n\
@@ -119,7 +120,8 @@ void setFragDepth(void) \n\
 struct PolyParam { \n\
 	int first; \n\
 	int count; \n\
-	int texid; \n\
+	int texid_low; \n\
+	int texid_high; \n\
 	int tsp; \n\
 	int tcw; \n\
 	int pcw; \n\
@@ -128,7 +130,8 @@ struct PolyParam { \n\
 	int tileclip; \n\
 	int tsp1; \n\
 	int tcw1; \n\
-	int texid1; \n\
+	int texid1_low; \n\
+	int texid1_high; \n\
 }; \n\
 layout (binding = 1, std430) readonly buffer TrPolyParamBuffer { \n\
 	PolyParam tr_poly_params[]; \n\
@@ -225,8 +228,6 @@ void gl4SetupModvolVBO();
 extern struct gl4ShaderUniforms_t
 {
 	float PT_ALPHA;
-	float scale_coefs[4];
-	float extra_depth_scale;
 	float fog_den_float;
 	float ps_FOG_COL_RAM[3];
 	float ps_FOG_COL_VERT[3];
@@ -238,6 +239,7 @@ extern struct gl4ShaderUniforms_t
 	TCW tcw1;
 	float fog_clamp_min[4];
 	float fog_clamp_max[4];
+	glm::mat4 normal_mat;
 
 	void setUniformArray(GLuint location, int v0, int v1)
 	{
@@ -249,12 +251,6 @@ extern struct gl4ShaderUniforms_t
 	{
 		if (s->cp_AlphaTestValue!=-1)
 			glUniform1f(s->cp_AlphaTestValue,PT_ALPHA);
-
-		if (s->scale!=-1)
-			glUniform4fv( s->scale, 1, scale_coefs);
-
-		if (s->extra_depth_scale != -1)
-			glUniform1f(s->extra_depth_scale, extra_depth_scale);
 
 		if (s->sp_FOG_DENSITY!=-1)
 			glUniform1f( s->sp_FOG_DENSITY,fog_den_float);
@@ -295,6 +291,9 @@ extern struct gl4ShaderUniforms_t
 			glUniform4fv(s->fog_clamp_min, 1, fog_clamp_min);
 		if (s->fog_clamp_max != -1)
 			glUniform4fv(s->fog_clamp_max, 1, fog_clamp_max);
+
+		if (s->normal_matrix != -1)
+			glUniformMatrix4fv(s->normal_matrix, 1, GL_FALSE, &normal_mat[0][0]);
 	}
 
 } gl4ShaderUniforms;
