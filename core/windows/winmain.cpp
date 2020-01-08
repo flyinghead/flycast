@@ -382,11 +382,8 @@ static HWND hWnd;
 static bool windowClassRegistered;
 static int window_x, window_y;
 
-void os_CreateWindow()
+void CreateMainWindow()
 {
-#if defined(USE_SDL)
-	sdl_window_create();
-#else
 	if (hWnd != NULL)
 		return;
 	HINSTANCE hInstance = (HINSTANCE)GetModuleHandle(0);
@@ -425,11 +422,19 @@ void os_CreateWindow()
 #endif
 	theGLContext.SetWindow(hWnd);
 	theGLContext.SetDeviceContext(GetDC(hWnd));
+}
+
+void os_CreateWindow()
+{
+#if defined(USE_SDL)
+	sdl_window_create();
+#else
+	CreateMainWindow();
 	InitRenderApi();
 #endif	// !USE_SDL
 }
 
-void DestroyWindow()
+void DestroyMainWindow()
 {
 	if (hWnd)
 	{
