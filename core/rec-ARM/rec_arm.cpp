@@ -1860,8 +1860,19 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 		case shop_xtrct:
 			{
 				eReg rd = reg.mapg(op->rd);
-				LSR(rd, reg.mapg(op->rs1), 16);
-				LSL(r0, reg.mapg(op->rs2), 16);
+				eReg rs1 = reg.mapg(op->rs1);
+				eReg rs2 = reg.mapg(op->rs2);
+				if (rd == rs1)
+				{
+					verify(rd != rs2);
+					LSR(rd, rs1, 16);
+					LSL(r0, rs2, 16);
+				}
+				else
+				{
+					LSL(rd, rs2, 16);
+					LSR(r0, rs1, 16);
+				}
 				ORR(rd, rd, r0);
 			}
 			break;
