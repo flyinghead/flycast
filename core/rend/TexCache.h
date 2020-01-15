@@ -12,13 +12,13 @@ extern u8* vq_codebook;
 extern u32 palette_index;
 extern u32 palette16_ram[1024];
 extern u32 palette32_ram[1024];
-extern bool pal_needs_update,fog_needs_update,KillTex;
+extern bool pal_needs_update,fog_needs_update;
 extern u32 pal_hash_256[4];
 extern u32 pal_hash_16[64];
+extern bool KillTex;
 
 extern u32 detwiddle[2][8][1024];
 
-//Pixel buffer class (realy helpfull ;) )
 template<class pixel_type>
 class PixelBuffer
 {
@@ -26,7 +26,7 @@ class PixelBuffer
 	pixel_type* p_current_line;
 	pixel_type* p_current_pixel;
 
-	u32 pixels_per_line;
+	u32 pixels_per_line = 0;
 
 public:
 	PixelBuffer()
@@ -111,11 +111,20 @@ void palette_update();
 
 // Unpack to 32-bit word
 
-#define ARGB1555_32( word )    ( ((word & 0x8000) ? 0xFF000000 : 0) | (((word>>10) & 0x1F)<<3)  | (((word>>5) & 0x1F)<<11)  | (((word>>0) & 0x1F)<<19) )
+#define ARGB1555_32( word )    ( ((word & 0x8000) ? 0xFF000000 : 0) | \
+								(((word >> 10) & 0x1F) << 3) | (((word >> 12) & 0x7) << 0) | \
+								(((word >> 5) & 0x1F) << 11) | (((word >> 7) & 0x7) << 8) | \
+								(((word >> 0) & 0x1F) << 19) | (((word >> 2) & 0x7) << 16) )
 
-#define ARGB565_32( word )     ( (((word>>11)&0x1F)<<3) | (((word>>5)&0x3F)<<10) | (((word>>0)&0x1F)<<19) | 0xFF000000 )
+#define ARGB565_32( word )     ( (((word >> 11) & 0x1F) << 3) | (((word >> 13) & 0x7) << 0) | \
+								(((word >> 5) & 0x3F) << 10) | (((word >> 9) & 0x3) << 8) | \
+								(((word >> 0) & 0x1F) << 19) | (((word >> 2) & 0x7) << 16) | \
+								0xFF000000 )
 
-#define ARGB4444_32( word ) ( (((word>>12)&0xF)<<28) | (((word>>8)&0xF)<<4) | (((word>>4)&0xF)<<12) | (((word>>0)&0xF)<<20) )
+#define ARGB4444_32( word ) ( (((word >> 12) & 0xF) << 28) | (((word >> 12) & 0xF) << 24) | \
+								(((word >> 8) & 0xF) << 4) | (((word >> 8) & 0xF) << 0) | \
+								(((word >> 4) & 0xF) << 12) | (((word >> 4) & 0xF) << 8) | \
+								(((word >> 0) & 0xF) << 20) | (((word >> 0) & 0xF) << 16) )
 
 #define ARGB8888_32( word ) ( ((word >> 0) & 0xFF000000) | (((word >> 16) & 0xFF) << 0) | (((word >> 8) & 0xFF) << 8) | ((word & 0xFF) << 16) )
 
