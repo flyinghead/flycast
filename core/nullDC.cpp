@@ -201,7 +201,9 @@ void LoadSpecialSettings()
 				// Ducati World - Racing Challenge (NTSC)
 				|| !strncmp("T-8113N", prod_id, 7)
 				// Ducati World (PAL)
-				|| !strncmp("T-8121D-50", prod_id, 10))
+				|| !strncmp("T-8121D-50", prod_id, 10)
+				// Aqua GT
+				|| !strncmp("T40509D 50", prod_id, 10))
 		{
 			INFO_LOG(BOOT, "Enabling Dynarec safe mode for game %s", prod_id);
 			settings.dynarec.safemode = 1;
@@ -354,6 +356,11 @@ void LoadSpecialSettings()
 		{
 			INFO_LOG(BOOT, "Enabling lightgun setup for game %s", naomi_game_id);
 			settings.input.JammaSetup = 5;
+		}
+		else if (!strcmp("MAZAN", naomi_game_id))
+		{
+			INFO_LOG(BOOT, "Enabling specific JVS setup for game %s", naomi_game_id);
+			settings.input.JammaSetup = 6;
 		}
 		else if (!strcmp(" BIOHAZARD  GUN SURVIVOR2", naomi_game_id))
 		{

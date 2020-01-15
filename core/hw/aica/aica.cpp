@@ -83,7 +83,7 @@ void UpdateSh4Ints()
 
 AicaTimer timers[3];
 //Mainloop
-void libAICA_Update(u32 Samples)
+void libAICA_Update(u32 samples)
 {
 	AICA_Sample32();
 }
