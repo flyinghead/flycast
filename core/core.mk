@@ -1,4 +1,5 @@
 #LOCAL_PATH:=
+RZDCY_FILES :=
 
 #MFLAGS	:= -marm -march=armv7-a -mtune=cortex-a8 -mfpu=vfpv3-d16 -mfloat-abi=softfp
 #ASFLAGS	:= -march=armv7-a -mfpu=vfp-d16 -mfloat-abi=softfp
@@ -48,9 +49,9 @@ ifndef NO_REND
     		deps/glslang/OGLCompilersDLL/ \
     		deps/glslang/SPIRV/
     	ifdef FOR_WINDOWS
-    		RZDCY_MODULES += deps/glslang/glslang/OSDependent/Windows/
+    		RZDCY_FILES += $(RZDCY_SRC_DIR)/deps/glslang/glslang/OSDependent/Windows/ossource.cpp
     	else
-    		RZDCY_MODULES += deps/glslang/glslang/OSDependent/Unix/
+    		RZDCY_FILES += $(RZDCY_SRC_DIR)/deps/glslang/glslang/OSDependent/Unix/ossource.cpp
     	endif
     endif
 else
@@ -172,7 +173,7 @@ RZDCY_CFLAGS +=  -DXXH_INLINE_ALL -I$(RZDCY_SRC_DIR)/deps/xxhash
 
 RZDCY_CXXFLAGS := $(RZDCY_CFLAGS) -fno-exceptions -fno-rtti -std=gnu++11
 
-RZDCY_FILES := $(foreach dir,$(addprefix $(RZDCY_SRC_DIR)/,$(RZDCY_MODULES)),$(wildcard $(dir)*.cpp))
+RZDCY_FILES += $(foreach dir,$(addprefix $(RZDCY_SRC_DIR)/,$(RZDCY_MODULES)),$(wildcard $(dir)*.cpp))
 RZDCY_FILES += $(foreach dir,$(addprefix $(RZDCY_SRC_DIR)/,$(RZDCY_MODULES)),$(wildcard $(dir)*.cc))
 RZDCY_FILES += $(foreach dir,$(addprefix $(RZDCY_SRC_DIR)/,$(RZDCY_MODULES)),$(wildcard $(dir)*.c))
 RZDCY_FILES += $(foreach dir,$(addprefix $(RZDCY_SRC_DIR)/,$(RZDCY_MODULES)),$(wildcard $(dir)*.S))

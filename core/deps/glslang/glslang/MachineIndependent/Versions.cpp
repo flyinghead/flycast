@@ -172,8 +172,10 @@ void TParseVersions::initializeExtensionBehavior()
     extensionBehavior[E_GL_ARB_tessellation_shader]          = EBhDisable;
     extensionBehavior[E_GL_ARB_enhanced_layouts]             = EBhDisable;
     extensionBehavior[E_GL_ARB_texture_cube_map_array]       = EBhDisable;
+    extensionBehavior[E_GL_ARB_texture_multisample]          = EBhDisable;
     extensionBehavior[E_GL_ARB_shader_texture_lod]           = EBhDisable;
     extensionBehavior[E_GL_ARB_explicit_attrib_location]     = EBhDisable;
+    extensionBehavior[E_GL_ARB_explicit_uniform_location]    = EBhDisable;
     extensionBehavior[E_GL_ARB_shader_image_load_store]      = EBhDisable;
     extensionBehavior[E_GL_ARB_shader_atomic_counters]       = EBhDisable;
     extensionBehavior[E_GL_ARB_shader_draw_parameters]       = EBhDisable;
@@ -191,6 +193,8 @@ void TParseVersions::initializeExtensionBehavior()
     extensionBehavior[E_GL_ARB_shader_viewport_layer_array]  = EBhDisable;
     extensionBehavior[E_GL_ARB_fragment_shader_interlock]    = EBhDisable;
     extensionBehavior[E_GL_ARB_shader_clock]                 = EBhDisable;
+    extensionBehavior[E_GL_ARB_uniform_buffer_object]        = EBhDisable;
+    extensionBehavior[E_GL_ARB_sample_shading]               = EBhDisable;
 
     extensionBehavior[E_GL_KHR_shader_subgroup_basic]            = EBhDisable;
     extensionBehavior[E_GL_KHR_shader_subgroup_vote]             = EBhDisable;
@@ -214,6 +218,7 @@ void TParseVersions::initializeExtensionBehavior()
     extensionBehavior[E_GL_EXT_fragment_invocation_density]             = EBhDisable;
     extensionBehavior[E_GL_EXT_buffer_reference]                        = EBhDisable;
     extensionBehavior[E_GL_EXT_buffer_reference2]                       = EBhDisable;
+    extensionBehavior[E_GL_EXT_buffer_reference_uvec2]                  = EBhDisable;
     extensionBehavior[E_GL_EXT_demote_to_helper_invocation]             = EBhDisable;
 
     extensionBehavior[E_GL_EXT_shader_16bit_storage]                    = EBhDisable;
@@ -233,6 +238,8 @@ void TParseVersions::initializeExtensionBehavior()
     extensionBehavior[E_GL_AMD_shader_image_load_store_lod]          = EBhDisable;
     extensionBehavior[E_GL_AMD_shader_fragment_mask]                 = EBhDisable;
     extensionBehavior[E_GL_AMD_gpu_shader_half_float_fetch]          = EBhDisable;
+
+    extensionBehavior[E_GL_INTEL_shader_integer_functions2]          = EBhDisable;
 
     extensionBehavior[E_GL_NV_sample_mask_override_coverage]         = EBhDisable;
     extensionBehavior[E_SPV_NV_geometry_shader_passthrough]          = EBhDisable;
@@ -300,6 +307,12 @@ void TParseVersions::initializeExtensionBehavior()
     extensionBehavior[E_GL_EXT_shader_explicit_arithmetic_types_float16] = EBhDisable;
     extensionBehavior[E_GL_EXT_shader_explicit_arithmetic_types_float32] = EBhDisable;
     extensionBehavior[E_GL_EXT_shader_explicit_arithmetic_types_float64] = EBhDisable;
+
+    // subgroup extended types
+    extensionBehavior[E_GL_EXT_shader_subgroup_extended_types_int8]    = EBhDisable;
+    extensionBehavior[E_GL_EXT_shader_subgroup_extended_types_int16]   = EBhDisable;
+    extensionBehavior[E_GL_EXT_shader_subgroup_extended_types_int64]   = EBhDisable;
+    extensionBehavior[E_GL_EXT_shader_subgroup_extended_types_float16] = EBhDisable;
 }
 #endif // GLSLANG_WEB
 
@@ -369,8 +382,10 @@ void TParseVersions::getPreamble(std::string& preamble)
             "#define GL_ARB_tessellation_shader 1\n"
             "#define GL_ARB_enhanced_layouts 1\n"
             "#define GL_ARB_texture_cube_map_array 1\n"
+            "#define GL_ARB_texture_multisample 1\n"
             "#define GL_ARB_shader_texture_lod 1\n"
             "#define GL_ARB_explicit_attrib_location 1\n"
+            "#define GL_ARB_explicit_uniform_location 1\n"
             "#define GL_ARB_shader_image_load_store 1\n"
             "#define GL_ARB_shader_atomic_counters 1\n"
             "#define GL_ARB_shader_draw_parameters 1\n"
@@ -383,9 +398,11 @@ void TParseVersions::getPreamble(std::string& preamble)
             "#define GL_ARB_sparse_texture2 1\n"
             "#define GL_ARB_sparse_texture_clamp 1\n"
             "#define GL_ARB_shader_stencil_export 1\n"
+            "#define GL_ARB_sample_shading 1\n"
 //            "#define GL_ARB_cull_distance 1\n"    // present for 4.5, but need extension control over block members
             "#define GL_ARB_post_depth_coverage 1\n"
             "#define GL_ARB_fragment_shader_interlock 1\n"
+            "#define GL_ARB_uniform_buffer_object 1\n"
             "#define GL_EXT_shader_non_constant_global_initializers 1\n"
             "#define GL_EXT_shader_image_load_formatted 1\n"
             "#define GL_EXT_post_depth_coverage 1\n"
@@ -398,6 +415,7 @@ void TParseVersions::getPreamble(std::string& preamble)
             "#define GL_EXT_fragment_invocation_density 1\n"
             "#define GL_EXT_buffer_reference 1\n"
             "#define GL_EXT_buffer_reference2 1\n"
+            "#define GL_EXT_buffer_reference_uvec2 1\n"
             "#define GL_EXT_demote_to_helper_invocation 1\n"
 
             // GL_KHR_shader_subgroup
@@ -424,6 +442,8 @@ void TParseVersions::getPreamble(std::string& preamble)
             "#define GL_AMD_shader_fragment_mask 1\n"
             "#define GL_AMD_gpu_shader_half_float_fetch 1\n"
 
+            "#define GL_INTEL_shader_integer_functions2 1\n"
+
             "#define GL_NV_sample_mask_override_coverage 1\n"
             "#define GL_NV_geometry_shader_passthrough 1\n"
             "#define GL_NV_viewport_array2 1\n"
@@ -447,6 +467,11 @@ void TParseVersions::getPreamble(std::string& preamble)
             "#define GL_EXT_shader_explicit_arithmetic_types_float16 1\n"
             "#define GL_EXT_shader_explicit_arithmetic_types_float32 1\n"
             "#define GL_EXT_shader_explicit_arithmetic_types_float64 1\n"
+
+            "#define GL_EXT_shader_subgroup_extended_types_int8 1\n"
+            "#define GL_EXT_shader_subgroup_extended_types_int16 1\n"
+            "#define GL_EXT_shader_subgroup_extended_types_int64 1\n"
+            "#define GL_EXT_shader_subgroup_extended_types_float16 1\n"
             ;
 
         if (version >= 150) {
@@ -512,11 +537,11 @@ const char* StageName(EShLanguage stage)
     switch(stage) {
     case EShLangVertex:         return "vertex";
     case EShLangFragment:       return "fragment";
+    case EShLangCompute:        return "compute";
 #ifndef GLSLANG_WEB
     case EShLangTessControl:    return "tessellation control";
     case EShLangTessEvaluation: return "tessellation evaluation";
     case EShLangGeometry:       return "geometry";
-    case EShLangCompute:        return "compute";
     case EShLangRayGenNV:       return "ray-generation";
     case EShLangIntersectNV:    return "intersection";
     case EShLangAnyHitNV:       return "any-hit";
@@ -822,10 +847,20 @@ void TParseVersions::updateExtensionBehavior(int line, const char* extension, co
         updateExtensionBehavior(line, "GL_KHR_shader_subgroup_basic", behaviorString);
     else if (strcmp(extension, "GL_NV_shader_subgroup_partitioned") == 0)
         updateExtensionBehavior(line, "GL_KHR_shader_subgroup_basic", behaviorString);
-    else if (strcmp(extension, "GL_EXT_buffer_reference2") == 0)
+    else if (strcmp(extension, "GL_EXT_buffer_reference2") == 0 ||
+             strcmp(extension, "GL_EXT_buffer_reference_uvec2") == 0)
         updateExtensionBehavior(line, "GL_EXT_buffer_reference", behaviorString);
     else if (strcmp(extension, "GL_NV_integer_cooperative_matrix") == 0)
         updateExtensionBehavior(line, "GL_NV_cooperative_matrix", behaviorString);
+    // subgroup extended types to explicit types
+    else if (strcmp(extension, "GL_EXT_shader_subgroup_extended_types_int8") == 0)
+        updateExtensionBehavior(line, "GL_EXT_shader_explicit_arithmetic_types_int8", behaviorString);
+    else if (strcmp(extension, "GL_EXT_shader_subgroup_extended_types_int16") == 0)
+        updateExtensionBehavior(line, "GL_EXT_shader_explicit_arithmetic_types_int16", behaviorString);
+    else if (strcmp(extension, "GL_EXT_shader_subgroup_extended_types_int64") == 0)
+        updateExtensionBehavior(line, "GL_EXT_shader_explicit_arithmetic_types_int64", behaviorString);
+    else if (strcmp(extension, "GL_EXT_shader_subgroup_extended_types_float16") == 0)
+        updateExtensionBehavior(line, "GL_EXT_shader_explicit_arithmetic_types_float16", behaviorString);
 }
 
 void TParseVersions::updateExtensionBehavior(const char* extension, TExtensionBehavior behavior)
