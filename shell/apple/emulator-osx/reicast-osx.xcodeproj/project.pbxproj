@@ -3149,6 +3149,7 @@
 					../../../core/deps/xxhash,
 					../../../core/deps/zlib,
 					../../../core/deps/glslang,
+					../../../core/deps/glm,
 					/usr/local/include,
 				);
 				INFOPLIST_FILE = "emulator-osx/Info.plist";
@@ -3196,6 +3197,7 @@
 					../../../core/deps/xxhash,
 					../../../core/deps/zlib,
 					../../../core/deps/glslang,
+					../../../core/deps/glm,
 					/usr/local/include,
 				);
 				INFOPLIST_FILE = "emulator-osx/Info.plist";
@@ -3341,6 +3343,7 @@
 					../../../core/deps/xxhash,
 					../../../core/deps/zlib,
 					../../../core/deps/glslang,
+					../../../core/deps/glm,
 					/usr/local/include,
 				);
 				INFOPLIST_FILE = "emulator-osx/Info.plist";
@@ -3461,6 +3464,7 @@
 					../../../core/deps/xxhash,
 					../../../core/deps/zlib,
 					../../../core/deps/glslang,
+					../../../core/deps/glm,
 					/usr/local/include,
 				);
 				INFOPLIST_FILE = "emulator-osx/Info.plist";
