@@ -203,7 +203,27 @@ void LoadSpecialSettings()
 				// Ducati World (PAL)
 				|| !strncmp("T-8121D-50", prod_id, 10)
 				// Aqua GT
-				|| !strncmp("T40509D 50", prod_id, 10))
+				|| !strncmp("T40509D 50", prod_id, 10)
+				// Rayman 2 (NTSC)
+				|| !strncmp("17707N", prod_id, 6)
+				// Rayman 2 (PAL)
+				|| !strncmp("17707D", prod_id, 6)
+				// Elysion
+				|| !strncmp("T20116M", prod_id, 7)
+				// Silent Scope (NTSC)
+				|| !strncmp("T9507N", prod_id, 6)
+				// Silent Scope (PAL)
+				|| !strncmp("T9505D", prod_id, 6)
+				// Power Stone (US)
+				|| !strncmp("T1201N", prod_id, 6)
+				// Power Stone (JP)
+				|| !strncmp("T1201M", prod_id, 6)
+				// Power Stone (PAL)
+				|| !strncmp("T36801D 50", prod_id, 10)
+				// Metropolis Street Racer (NTSC)
+				|| !strncmp("MK-51012", prod_id, 10)
+				// Metropolis Street Racer (PAL)
+				|| !strncmp("MK-5102250", prod_id, 10))
 		{
 			INFO_LOG(BOOT, "Enabling Dynarec safe mode for game %s", prod_id);
 			settings.dynarec.safemode = 1;
@@ -309,7 +329,8 @@ void LoadSpecialSettings()
 	{
 		NOTICE_LOG(BOOT, "Game ID is [%s]", naomi_game_id);
 
-		if (!strcmp("METAL SLUG 6", naomi_game_id) || !strcmp("WAVE RUNNER GP", naomi_game_id))
+		if (!strcmp("METAL SLUG 6", naomi_game_id) || !strcmp("WAVE RUNNER GP", naomi_game_id)
+				|| !strcmp("STREET FIGHTER ZERO3 UPPER", naomi_game_id))
 		{
 			INFO_LOG(BOOT, "Enabling Dynarec safe mode for game %s", naomi_game_id);
 			settings.dynarec.safemode = 1;
