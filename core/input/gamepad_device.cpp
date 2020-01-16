@@ -134,7 +134,7 @@ bool GamepadDevice::gamepad_axis_input(u32 code, int value)
 	if (input_mapper->get_axis_inverted(code))
 		v = (get_axis_min_value(code) + get_axis_range(code) - value) * 255 / get_axis_range(code) - 128;
 	else
-		v = (value - get_axis_min_value(code)) * 255 / get_axis_range(code) - 128; //-128 ... + 127 range
+		v = (value - get_axis_min_value(code)) * 255 / get_axis_range(code) - 128; //-128 ... +127 range
 	if (_input_detected != NULL && !_detecting_button 
 			&& os_GetSeconds() >= _detection_start_time && (v >= 64 || v <= -64))
 	{

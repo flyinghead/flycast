@@ -23,8 +23,8 @@ struct gl4PipelineShader
 	GLuint fog_clamp_min, fog_clamp_max;
 	GLuint normal_matrix;
 
-	//
-	u32 cp_AlphaTest; s32 pp_ClipTestMode;
+	u32 cp_AlphaTest;
+	s32 pp_ClipTestMode;
 	u32 pp_Texture, pp_UseAlpha, pp_IgnoreTexA, pp_ShadInstr, pp_Offset, pp_FogCtrl;
 	Pass pass;
 	bool pp_TwoVolumes;

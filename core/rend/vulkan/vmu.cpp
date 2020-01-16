@@ -39,13 +39,9 @@ const std::vector<vk::UniqueCommandBuffer>* VulkanVMUs::PrepareVMUs(vk::CommandP
 			texture.reset();
 			continue;
 		}
-		bool update = vmu_lcd_changed[i];
 		if (!texture)
-		{
 			texture = std::unique_ptr<Texture>(new Texture());
-			update = true;
-		}
-		if (!update)
+		else if (!vmu_lcd_changed[i])
 			continue;
 
 		texture->tex_type = TextureType::_8888;
