@@ -738,6 +738,7 @@ void InitSettings()
 	settings.pvr.SynchronousRender	= true;
 
 	settings.debug.SerialConsole	= false;
+	settings.debug.SerialPTY        = false;
 
 	settings.bios.UseReios		    = false;
 	settings.reios.ElfFile		    = "";
@@ -834,6 +835,7 @@ void LoadSettings(bool game_specific)
 	settings.pvr.SynchronousRender	= cfgLoadBool(config_section, "pvr.SynchronousRendering", settings.pvr.SynchronousRender);
 
 	settings.debug.SerialConsole	= cfgLoadBool(config_section, "Debug.SerialConsoleEnabled", settings.debug.SerialConsole);
+	settings.debug.SerialPTY		= cfgLoadBool(config_section, "Debug.SerialPTY", settings.debug.SerialPTY);
 
 	settings.bios.UseReios		    = cfgLoadBool(config_section, "bios.UseReios", settings.bios.UseReios);
 	settings.reios.ElfFile		    = cfgLoadStr(game_specific ? cfgGetGameId() : "reios", "ElfFile", settings.reios.ElfFile.c_str());
@@ -992,6 +994,7 @@ void SaveSettings()
 	cfgSaveBool("config", "pvr.SynchronousRendering", settings.pvr.SynchronousRender);
 
 	cfgSaveBool("config", "Debug.SerialConsoleEnabled", settings.debug.SerialConsole);
+	cfgSaveBool("config", "Debug.SerialPTY", settings.debug.SerialPTY);
 	cfgSaveInt("input", "MouseSensitivity", settings.input.MouseSensitivity);
 	cfgSaveInt("input", "VirtualGamepadVibration", settings.input.VirtualGamepadVibration);
 	for (int i = 0; i < MAPLE_PORTS; i++)

@@ -320,13 +320,8 @@ bool dc_unserialize(void **data, unsigned int *total_size);
 #define stricmp strcasecmp
 #endif
 
-#ifndef STRIP_TEXT
 #define verify(x) do { if ((x) == false){ msgboxf("Verify Failed  : " #x "\n in %s -> %s : %d \n", MBX_ICONERROR, (__FUNCTION__), (__FILE__), __LINE__); dbgbreak;}} while (false)
 #define die(reason) do { msgboxf("Fatal error : %s\n in %s -> %s : %d \n", MBX_ICONERROR,(reason), (__FUNCTION__), (__FILE__), __LINE__); dbgbreak;} while (false)
-#else
-#define verify(x) do { if ((x) == false) dbgbreak; } while (false)
-#define die(reason) do { dbgbreak; } while (false)
-#endif
 
 
 //will be removed sometime soon
@@ -346,16 +341,10 @@ typedef void RegWriteAddrFP(u32 addr, u32 data);
 */
 enum RegStructFlags
 {
-	//Basic :
-	REG_ACCESS_8=1,
-	REG_ACCESS_16=2,
-	REG_ACCESS_32=4,
-
 	REG_RF=8,
 	REG_WF=16,
 	REG_RO=32,
 	REG_WO=64,
-	REG_CONST=128,
 	REG_NO_ACCESS=REG_RO|REG_WO,
 };
 
@@ -531,6 +520,7 @@ struct settings_t
 
 	struct {
 		bool SerialConsole;
+		bool SerialPTY;
 	} debug;
 
 	struct {

@@ -2,9 +2,17 @@
 	Dreamcast serial port.
 	This is missing most of the functionality, but works for KOS (And thats all that uses it)
 */
+#include <stdlib.h>
+#ifndef _WIN32
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/ioctl.h>
+#endif
 #include "types.h"
 #include "hw/sh4/sh4_mmr.h"
 #include "hw/sh4/sh4_interrupts.h"
+
+static int tty = 1;	// stdout by default
 
 SCIF_SCFSR2_type SCIF_SCFSR2;
 SCIF_SCSCR2_type SCIF_SCSCR2;
@@ -55,7 +63,7 @@ static void Serial_UpdateInterrupts()
 static void SerialWrite(u32 addr, u32 data)
 {
 	if (settings.debug.SerialConsole)
-		putc(data, stdout);
+		write(tty, &data, 1);
 
 	SCIF_SCFSR2.TDFE = 1;
 	SCIF_SCFSR2.TEND = 1;
@@ -66,11 +74,14 @@ static void SerialWrite(u32 addr, u32 data)
 //SCIF_SCFSR2 read
 static u32 ReadSerialStatus(u32 addr)
 {
-	if (false /*PendingSerialData()*/)
+#if HOST_OS == OS_LINUX || HOST_OS == OS_DARWIN
+	int count = 0;
+	if (settings.debug.SerialConsole && ioctl(tty, FIONREAD, &count) == 0 && count > 0)
 	{
 		return SCIF_SCFSR2.full | 2;
 	}
 	else
+#endif
 	{
 		return SCIF_SCFSR2.full | 0;
 	}
@@ -97,8 +108,9 @@ static u32 Read_SCFDR2(u32 addr)
 //SCIF_SCFRDR2
 static u32 ReadSerialData(u32 addr)
 {
-	s32 rd=0;//ReadSerial();
-	return (u8)rd ;
+	u8 data = 0;
+	read(tty, &data, 1);
+	return data;
 }
 
 //SCSCR2
@@ -150,6 +162,21 @@ void serial_init()
 
 	//SCIF SCLSR2 0xFFE80024 0x1FE80024 16 0x0000 0x0000 Held Held Pclk
 	sh4_rio_reg(SCIF,SCIF_SCLSR2_addr,RIO_DATA,16);
+
+#if HOST_OS == OS_LINUX || HOST_OS == OS_DARWIN
+	if (settings.debug.SerialConsole && settings.debug.SerialPTY)
+	{
+		tty = open("/dev/ptmx", O_RDWR | O_NDELAY | O_NOCTTY | O_NONBLOCK);
+		if (tty < 0)
+			ERROR_LOG(BOOT, "Cannot open /dev/ptmx: errno %d", errno);
+		else
+		{
+			grantpt(tty);
+			unlockpt(tty);
+			NOTICE_LOG(BOOT, "Pseudoterminal is at %s", ptsname(tty));
+		}
+	}
+#endif
 }
 void serial_reset()
 {
@@ -176,5 +203,10 @@ void serial_reset()
 
 void serial_term()
 {
+	if (tty > 2)
+	{
+		close(tty);
+		tty = 1;
+	}
 }
 
