@@ -341,6 +341,8 @@ typedef void RegWriteAddrFP(u32 addr, u32 data);
 */
 enum RegStructFlags
 {
+	REG_ACCESS_32=4,
+
 	REG_RF=8,
 	REG_WF=16,
 	REG_RO=32,
