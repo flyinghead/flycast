@@ -3,10 +3,13 @@
 	This is missing most of the functionality, but works for KOS (And thats all that uses it)
 */
 #include <stdlib.h>
+#include <fcntl.h>
+#include <errno.h>
 #ifndef _WIN32
 #include <unistd.h>
-#include <fcntl.h>
 #include <sys/ioctl.h>
+#else
+#include <windows.h>
 #endif
 #include "types.h"
 #include "hw/sh4/sh4_mmr.h"
