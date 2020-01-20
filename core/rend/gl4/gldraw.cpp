@@ -442,7 +442,7 @@ void gl4DrawStrips(GLuint output_fbo, int width, int height)
 			previous_pass = current_pass;
 			continue;
 		}
-        DEBUG_LOG(RENDERER, "Render pass %d OP %d PT %d TR %d autosort %d", render_pass + 1,
+        DEBUG_LOG(RENDERER, "Render pass %d/%d OP %d PT %d TR %d autosort %d", render_pass + 1, render_pass_count,
         		current_pass.op_count - previous_pass.op_count,
 				current_pass.pt_count - previous_pass.pt_count,
 				current_pass.tr_count - previous_pass.tr_count,
@@ -578,6 +578,7 @@ void gl4DrawStrips(GLuint output_fbo, int width, int height)
 				glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 				glcache.Enable(GL_DEPTH_TEST);
 				DrawList<ListType_Translucent, false, Pass::Color>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);
+				glcache.Disable(GL_BLEND);
 			}
 			glCheck();
 
