@@ -33,7 +33,7 @@ void OITDrawer::DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool 
 		SetScissor(cmdBuffer, baseScissor);
 
 	float trilinearAlpha = 1.f;
-	if (poly.tsp.FilterMode > 1 && poly.pcw.Texture && listType != ListType_Punch_Through)
+	if (poly.tsp.FilterMode > 1 && poly.pcw.Texture && listType != ListType_Punch_Through && poly.tcw.MipMapped == 1)
 	{
 		trilinearAlpha = 0.25 * (poly.tsp.MipMapD & 0x3);
 		if (poly.tsp.FilterMode == 2)

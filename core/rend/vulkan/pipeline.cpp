@@ -301,7 +301,7 @@ void PipelineManager::CreatePipeline(u32 listType, bool sortTriangles, const Pol
 	params.offset = pp.pcw.Offset;
 	params.shaderInstr = pp.tsp.ShadInstr;
 	params.texture = pp.pcw.Texture;
-	params.trilinear = pp.pcw.Texture && pp.tsp.FilterMode > 1 && listType != ListType_Punch_Through;
+	params.trilinear = pp.pcw.Texture && pp.tsp.FilterMode > 1 && listType != ListType_Punch_Through && pp.tcw.MipMapped == 1;
 	params.useAlpha = pp.tsp.UseAlpha;
 	vk::ShaderModule fragment_module = shaderManager->GetFragmentShader(params);
 

@@ -76,7 +76,8 @@ static void SetTextureRepeatMode(int index, GLuint dir, u32 clamp, u32 mirror)
 template <u32 Type, bool SortingEnabled, Pass pass>
 static void SetGPState(const PolyParam* gp)
 {
-	if (gp->pcw.Texture && gp->tsp.FilterMode > 1)
+	// Trilinear filtering. Ignore if texture isn't mipmapped (shenmue snowflakes)
+	if (gp->pcw.Texture && gp->tsp.FilterMode > 1 && Type != ListType_Punch_Through && gp->tcw.MipMapped == 1)
 	{
 		gl4ShaderUniforms.trilinear_alpha = 0.25 * (gp->tsp.MipMapD & 0x3);
 		if (gp->tsp.FilterMode == 2)
