@@ -21,7 +21,7 @@ before_build:
       
 build_script:
   - cmd: >-
-      if "%CONFIGURATION%"=="fast" (mingw32-make platform=win32)
+      if "%CONFIGURATION%"=="fast" (mingw32-make -j2 platform=win32)
 
 after_build:
   - cmd: >-      
