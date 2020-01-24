@@ -240,7 +240,6 @@ extern u32 reg_dimm_offsetl;
 extern u32 reg_dimm_parameterl;
 extern u32 reg_dimm_parameterh;
 extern u32 reg_dimm_status;
-extern bool NaomiDataRead;
 
 bool rc_serialize(void *src, unsigned int src_size, void **dest, unsigned int *total_size)
 {
@@ -538,7 +537,7 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	REICAST_S(reg_dimm_parameterl);
 	REICAST_S(reg_dimm_parameterh);
 	REICAST_S(reg_dimm_status);
-	REICAST_S(NaomiDataRead);
+	REICAST_SKIP(1); // NaomiDataRead
 
 	REICAST_S(settings.dreamcast.broadcast);
 	REICAST_S(settings.dreamcast.cable);
@@ -804,7 +803,7 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 	REICAST_US(reg_dimm_parameterl);
 	REICAST_US(reg_dimm_parameterh);
 	REICAST_US(reg_dimm_status);
-	REICAST_US(NaomiDataRead);
+	REICAST_SKIP(1); // NaomiDataRead
 
 	REICAST_US(settings.dreamcast.broadcast);
 	REICAST_US(settings.dreamcast.cable);
@@ -1145,7 +1144,7 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 	REICAST_US(reg_dimm_parameterl);
 	REICAST_US(reg_dimm_parameterh);
 	REICAST_US(reg_dimm_status);
-	REICAST_US(NaomiDataRead);
+	REICAST_SKIP(1); // NaomiDataRead
 
 	if (version < V5)
 	{

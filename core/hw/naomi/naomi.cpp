@@ -14,8 +14,6 @@
 #include "naomi_cart.h"
 #include "naomi_regs.h"
 
-u32 naomi_updates;
-
 //#define NAOMI_COMM
 
 static const u32 BoardID=0x980055AA;
@@ -372,7 +370,6 @@ u32 reg_dimm_parameterl;
 u32 reg_dimm_parameterh;
 u32 reg_dimm_status = 0x11;
 
-bool NaomiDataRead = false;
 static bool aw_ram_test_skipped = false;
 
 void naomi_process(u32 command, u32 offsetl, u32 parameterl, u32 parameterh)
@@ -428,7 +425,6 @@ void Naomi_DmaStart(u32 addr, u32 data)
 		return;
 	}
 	
-	NaomiDataRead = true;
 	SB_GDST|=data&1;
 
 	if (SB_GDST==1)
@@ -544,7 +540,6 @@ void naomi_reg_Reset(bool hard)
 	SB_GDST = 0;
 	SB_GDEN = 0;
 
-	NaomiDataRead = false;
 	aw_ram_test_skipped = false;
 	GSerialBuffer = 0;
 	BSerialBuffer = 0;

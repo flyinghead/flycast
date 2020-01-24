@@ -703,7 +703,7 @@ u32 NaomiCartridge::ReadMem(u32 address, u32 size)
 	{
 	case 0x3c:	// 5f703c: DIMM COMMAND
 		DEBUG_LOG(NAOMI, "DIMM COMMAND read<%d>", size);
-		return reg_dimm_command | (NaomiDataRead ? 0 : -1); //pretend the board isn't there for the bios
+		return 0xffff; //reg_dimm_command
 	case 0x40:	// 5f7040: DIMM OFFSETL
 		DEBUG_LOG(NAOMI, "DIMM OFFSETL read<%d>", size);
 		return reg_dimm_offsetl;
@@ -789,11 +789,11 @@ u32 NaomiCartridge::ReadMem(u32 address, u32 size)
 
 	case NAOMI_COMM2_STATUS0_addr & 255:
 		DEBUG_LOG(NAOMI, "NAOMI_COMM2_STATUS0 read");
-		return comm_offset_status0;
+		return comm_status0;
 
 	case NAOMI_COMM2_STATUS1_addr & 255:
 		DEBUG_LOG(NAOMI, "NAOMI_COMM2_STATUS1 read");
-		return comm_offset_status1;
+		return comm_status1;
 
 	default:
 		break;
@@ -836,7 +836,6 @@ void NaomiCartridge::WriteMem(u32 address, u32 data, u32 size)
 		if (data&0x100)
 		{
 			asic_CancelInterrupt(holly_EXP_PCI);
-			naomi_updates=100;
 		}
 		else if ((data&1)==0)
 		{
@@ -936,13 +935,13 @@ void NaomiCartridge::WriteMem(u32 address, u32 data, u32 size)
 		return;
 
 	case NAOMI_COMM2_STATUS0_addr & 255:
-		comm_offset_status0 = (u16)data;
-		DEBUG_LOG(NAOMI, "NAOMI_COMM2_STATUS0 set to %x", comm_offset_status0);
+		comm_status0 = (u16)data;
+		DEBUG_LOG(NAOMI, "NAOMI_COMM2_STATUS0 set to %x", comm_status0);
 		return;
 
 	case NAOMI_COMM2_STATUS1_addr & 255:
-		comm_offset_status1 = (u16)data;
-		DEBUG_LOG(NAOMI, "NAOMI_COMM2_STATUS1 set to %x", comm_offset_status1);
+		comm_status1 = (u16)data;
+		DEBUG_LOG(NAOMI, "NAOMI_COMM2_STATUS1 set to %x", comm_status1);
 		return;
 
 	default: break;
