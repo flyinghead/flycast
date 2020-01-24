@@ -80,6 +80,30 @@ ArchiveFile* SzArchive::OpenFile(const char* name)
 	return NULL;
 }
 
+ArchiveFile* SzArchive::OpenFileByCrc(u32 crc)
+{
+	if (crc == 0)
+		return NULL;
+	for (int i = 0; i < szarchive.NumFiles; i++)
+	{
+		unsigned isDir = SzArEx_IsDir(&szarchive, i);
+		if (isDir)
+			continue;
+
+		if (crc != szarchive.CRCs.Vals[i])
+			continue;
+
+		size_t offset = 0;
+		size_t out_size_processed = 0;
+		SRes res = SzArEx_Extract(&szarchive, &lookStream.vt, i, &block_idx, &out_buffer, &out_buffer_size, &offset, &out_size_processed, &g_Alloc, &g_Alloc);
+		if (res != SZ_OK)
+			return NULL;
+
+		return new SzArchiveFile(out_buffer, offset, (u32)out_size_processed);
+	}
+	return NULL;
+}
+
 SzArchive::~SzArchive()
 {
 	if (lookStream.buf != NULL)

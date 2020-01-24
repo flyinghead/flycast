@@ -18,9 +18,7 @@
     You should have received a copy of the GNU General Public License
     along with reicast.  If not, see <https://www.gnu.org/licenses/>.
  */
-
-#ifndef CORE_ARCHIVE_7ZARCHIVE_H_
-#define CORE_ARCHIVE_7ZARCHIVE_H_
+#pragma once
 
 #include "archive.h"
 #include "deps/lzma/7z.h"
@@ -36,6 +34,7 @@ public:
 	virtual ~SzArchive();
 
 	virtual ArchiveFile* OpenFile(const char* name) override;
+	virtual ArchiveFile *OpenFileByCrc(u32 crc) override;
 
 private:
 	virtual bool Open(const char* path) override;
@@ -65,5 +64,3 @@ private:
 	u32 offset;
 	u32 length;
 };
-
-#endif /* CORE_ARCHIVE_7ZARCHIVE_H_ */

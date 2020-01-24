@@ -40,6 +40,15 @@ ArchiveFile* ZipArchive::OpenFile(const char* name)
 	return new ZipArchiveFile(zip_file);
 }
 
+ArchiveFile* ZipArchive::OpenFileByCrc(u32 crc)
+{
+	zip_file *zip_file = zip_fopen_by_crc(zip, crc, 0);
+	if (zip_file == NULL)
+		return NULL;
+
+	return new ZipArchiveFile(zip_file);
+}
+
 u32 ZipArchiveFile::Read(void* buffer, u32 length)
 {
 	return zip_fread(zip_file, buffer, length);

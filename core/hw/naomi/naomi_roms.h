@@ -66,6 +66,7 @@ struct BIOS_t
 		const char* filename;
 		u32 offset;
 		u32 length;
+		u32 crc;
 		BlobType blob_type;
 		u32 src_offset;		// For copy
 	} blobs[MAX_GAME_FILES];
@@ -228,6 +229,7 @@ struct Game
 		const char* filename;
 		u32 offset;
 		u32 length;
+		u32 crc;
 		BlobType blob_type;
 		u32 src_offset;		// For copy
 	} blobs[MAX_GAME_FILES];
@@ -249,26 +251,26 @@ Games[] =
         ROT0,
         {
             { "epr-23377.ic11",  0x0000000, 0x0400000 },
-            { "mpr-23357.ic17s", 0x1000000, 0x0800000, InterleavedWord },
-            { "mpr-23358.ic18",  0x1000002, 0x0800000, InterleavedWord },
-            { "mpr-23359.ic19s", 0x2000000, 0x0800000, InterleavedWord },
-            { "mpr-23360.ic20",  0x2000002, 0x0800000, InterleavedWord },
-            { "mpr-23361.ic21s", 0x3000000, 0x0800000, InterleavedWord },
-            { "mpr-23362.ic22",  0x3000002, 0x0800000, InterleavedWord },
-            { "mpr-23363.ic23s", 0x4000000, 0x0800000, InterleavedWord },
-            { "mpr-23364.ic24",  0x4000002, 0x0800000, InterleavedWord },
-            { "mpr-23365.ic25s", 0x5000000, 0x0800000, InterleavedWord },
-            { "mpr-23366.ic26",  0x5000002, 0x0800000, InterleavedWord },
-            { "mpr-23367.ic27s", 0x6000000, 0x0800000, InterleavedWord },
-            { "mpr-23368.ic28",  0x6000002, 0x0800000, InterleavedWord },
-            { "mpr-23369.ic29",  0x7000000, 0x0800000, InterleavedWord },
-            { "mpr-23370.ic30s", 0x7000002, 0x0800000, InterleavedWord },
-            { "mpr-23371.ic31",  0x8000000, 0x0800000, InterleavedWord },
-            { "mpr-23372.ic32s", 0x8000002, 0x0800000, InterleavedWord },
-            { "mpr-23373.ic33",  0x9000000, 0x0800000, InterleavedWord },
-            { "mpr-23374.ic34s", 0x9000002, 0x0800000, InterleavedWord },
-            { "mpr-23375.ic35",  0xa000000, 0x0800000, InterleavedWord },
-            { "mpr-23376.ic36s", 0xa000002, 0x0800000, InterleavedWord },
+            { "mpr-23357.ic17s", 0x1000000, 0x0800000,  0x0000000, InterleavedWord },
+            { "mpr-23358.ic18",  0x1000002, 0x0800000,  0x0000000, InterleavedWord },
+            { "mpr-23359.ic19s", 0x2000000, 0x0800000,  0x0000000, InterleavedWord },
+            { "mpr-23360.ic20",  0x2000002, 0x0800000,  0x0000000, InterleavedWord },
+            { "mpr-23361.ic21s", 0x3000000, 0x0800000,  0x0000000, InterleavedWord },
+            { "mpr-23362.ic22",  0x3000002, 0x0800000,  0x0000000, InterleavedWord },
+            { "mpr-23363.ic23s", 0x4000000, 0x0800000,  0x0000000, InterleavedWord },
+            { "mpr-23364.ic24",  0x4000002, 0x0800000,  0x0000000, InterleavedWord },
+            { "mpr-23365.ic25s", 0x5000000, 0x0800000,  0x0000000, InterleavedWord },
+            { "mpr-23366.ic26",  0x5000002, 0x0800000,  0x0000000, InterleavedWord },
+            { "mpr-23367.ic27s", 0x6000000, 0x0800000,  0x0000000, InterleavedWord },
+            { "mpr-23368.ic28",  0x6000002, 0x0800000,  0x0000000, InterleavedWord },
+            { "mpr-23369.ic29",  0x7000000, 0x0800000,  0x0000000, InterleavedWord },
+            { "mpr-23370.ic30s", 0x7000002, 0x0800000,  0x0000000, InterleavedWord },
+            { "mpr-23371.ic31",  0x8000000, 0x0800000,  0x0000000, InterleavedWord },
+            { "mpr-23372.ic32s", 0x8000002, 0x0800000,  0x0000000, InterleavedWord },
+            { "mpr-23373.ic33",  0x9000000, 0x0800000,  0x0000000, InterleavedWord },
+            { "mpr-23374.ic34s", 0x9000002, 0x0800000,  0x0000000, InterleavedWord },
+            { "mpr-23375.ic35",  0xa000000, 0x0800000,  0x0000000, InterleavedWord },
+            { "mpr-23376.ic36s", 0xa000002, 0x0800000,  0x0000000, InterleavedWord },
             { NULL, 0, 0 },
         }
     },
@@ -284,23 +286,23 @@ Games[] =
         ROT0,
         {
             { "epr-24212.ic11",   0x0000000, 0x400000 },
-            { "opr-24213a.ic17s", 0x1000000, 0x800000, InterleavedWord },
-            { "opr-24214a.ic18",  0x1000002, 0x800000, InterleavedWord },
-            { "opr-24215a.ic19s", 0x2000000, 0x800000, InterleavedWord },
-            { "opr-24216a.ic20",  0x2000002, 0x800000, InterleavedWord },
-            { "opr-24224a.ic21s", 0x3000000, 0x800000, InterleavedWord },
-            { "opr-24225a.ic22",  0x3000002, 0x800000, InterleavedWord },
-            { "opr-24226a.ic23s", 0x4000000, 0x800000, InterleavedWord },
-            { "opr-24227a.ic24",  0x4000002, 0x800000, InterleavedWord },
-            { "opr-24228a.ic25s", 0x5000000, 0x800000, InterleavedWord },
-            { "opr-24229a.ic26",  0x5000002, 0x800000, InterleavedWord },
-            { "opr-24230a.ic27s", 0x6000000, 0x800000, InterleavedWord },
-            { "opr-24231a.ic28",  0x6000002, 0x800000, InterleavedWord },
-            { "opr-24232a.ic29",  0x7000000, 0x800000, InterleavedWord },
-            { "opr-24233a.ic30s", 0x7000002, 0x800000, InterleavedWord },
-            { "opr-24234a.ic31",  0x8000000, 0x800000, InterleavedWord },
-            { "opr-24235a.ic32s", 0x8000002, 0x800000, InterleavedWord },
-            { "copy",             0x400000, 0xc00000, Copy, 0x1000000 },
+            { "opr-24213a.ic17s", 0x1000000, 0x800000,  0x0000000, InterleavedWord },
+            { "opr-24214a.ic18",  0x1000002, 0x800000,  0x0000000, InterleavedWord },
+            { "opr-24215a.ic19s", 0x2000000, 0x800000,  0x0000000, InterleavedWord },
+            { "opr-24216a.ic20",  0x2000002, 0x800000,  0x0000000, InterleavedWord },
+            { "opr-24224a.ic21s", 0x3000000, 0x800000,  0x0000000, InterleavedWord },
+            { "opr-24225a.ic22",  0x3000002, 0x800000,  0x0000000, InterleavedWord },
+            { "opr-24226a.ic23s", 0x4000000, 0x800000,  0x0000000, InterleavedWord },
+            { "opr-24227a.ic24",  0x4000002, 0x800000,  0x0000000, InterleavedWord },
+            { "opr-24228a.ic25s", 0x5000000, 0x800000,  0x0000000, InterleavedWord },
+            { "opr-24229a.ic26",  0x5000002, 0x800000,  0x0000000, InterleavedWord },
+            { "opr-24230a.ic27s", 0x6000000, 0x800000,  0x0000000, InterleavedWord },
+            { "opr-24231a.ic28",  0x6000002, 0x800000,  0x0000000, InterleavedWord },
+            { "opr-24232a.ic29",  0x7000000, 0x800000,  0x0000000, InterleavedWord },
+            { "opr-24233a.ic30s", 0x7000002, 0x800000,  0x0000000, InterleavedWord },
+            { "opr-24234a.ic31",  0x8000000, 0x800000,  0x0000000, InterleavedWord },
+            { "opr-24235a.ic32s", 0x8000002, 0x800000,  0x0000000, InterleavedWord },
+            { "copy",             0x400000, 0xc00000,  0x0000000, Copy, 0x1000000 },
             
             //ROM_REGION(0x200, "some_eeprom", 0)
             //ROM_LOAD( "25lc040.ic13s", 0, 0x200, CRC(1576366a) SHA1(3e8bf3dbc8a248a6863242b78d5c6e53a869e951) )
@@ -342,9 +344,9 @@ Games[] =
             { "mpr-23083.ic31",  0x7800000, 0x0400000 },
             
             // 32 bit area starts here
-            { "mpr-23083.ic31",  0x8000000, 0x0400000, InterleavedWord },
-            { "mpr-23084.ic32s", 0x8000002, 0x0400000, InterleavedWord },
-            { "copy",            0x0400000, 0x0400000, Copy, 0x1200000 },
+            { "mpr-23083.ic31",  0x8000000, 0x0400000,  0x0000000, InterleavedWord },
+            { "mpr-23084.ic32s", 0x8000002, 0x0400000,  0x0000000, InterleavedWord },
+            { "copy",            0x0400000, 0x0400000,  0x0000000, Copy, 0x1200000 },
             
             //ROM_REGION(0x200, "some_eeprom", 0)
             //ROM_LOAD( "25lc040.ic13s", 0x000000, 0x200, CRC(dc449637) SHA1(6cab09f61be1498271a36bff6a114a4eeeb00e1a) )
@@ -366,13 +368,13 @@ Games[] =
         ROT0,
         {
             { "epr-24217.ic11",  0x0000000, 0x0400000 },
-            { "mpr-24218.ic17s", 0x1000000, 0x0800000, InterleavedWord },
-            { "mpr-24219.ic18",  0x1000002, 0x0800000, InterleavedWord },
-            { "mpr-24220.ic19s", 0x2000000, 0x0800000, InterleavedWord },
-            { "mpr-24221.ic20",  0x2000002, 0x0800000, InterleavedWord },
-            { "mpr-24222.ic21s", 0x3000000, 0x0800000, InterleavedWord },
-            { "mpr-24223.ic22",  0x3000002, 0x0800000, InterleavedWord },
-            { "copy",            0x400000,  0xc00000,  Copy, 0x1000000 },
+            { "mpr-24218.ic17s", 0x1000000, 0x0800000,  0x0000000, InterleavedWord },
+            { "mpr-24219.ic18",  0x1000002, 0x0800000,  0x0000000, InterleavedWord },
+            { "mpr-24220.ic19s", 0x2000000, 0x0800000,  0x0000000, InterleavedWord },
+            { "mpr-24221.ic20",  0x2000002, 0x0800000,  0x0000000, InterleavedWord },
+            { "mpr-24222.ic21s", 0x3000000, 0x0800000,  0x0000000, InterleavedWord },
+            { "mpr-24223.ic22",  0x3000002, 0x0800000,  0x0000000, InterleavedWord },
+            { "copy",            0x400000,  0xc00000,  0x0000000,  Copy, 0x1000000 },
             
             //ROM_REGION(0x200, "some_eeprom", 0)
             //{ "25lc040.ic13s", 0, 0x200, CRC(9adb86c2) SHA1(682d06b2004809c3c7ff2f4f9bc0bde0e51885c0) )
@@ -400,22 +402,22 @@ Games[] =
         ROT0,
         {
             { "epr-23227.ic11",  0x0000000, 0x0400000 },
-            { "mpr-23211.ic17s", 0x1000000, 0x0800000, InterleavedWord },
-            { "mpr-23212.ic18",  0x1000002, 0x0800000, InterleavedWord },
-            { "mpr-23213.ic19s", 0x2000000, 0x0800000, InterleavedWord },
-            { "mpr-23214.ic20",  0x2000002, 0x0800000, InterleavedWord },
-            { "mpr-23215.ic21s", 0x3000000, 0x0800000, InterleavedWord },
-            { "mpr-23216.ic22",  0x3000002, 0x0800000, InterleavedWord },
-            { "mpr-23217.ic23s", 0x4000000, 0x0800000, InterleavedWord },
-            { "mpr-23218.ic24",  0x4000002, 0x0800000, InterleavedWord },
-            { "mpr-23219.ic25s", 0x5000000, 0x0800000, InterleavedWord },
-            { "mpr-23220.ic26",  0x5000002, 0x0800000, InterleavedWord },
-            { "mpr-23221.ic27s", 0x6000000, 0x0800000, InterleavedWord },
-            { "mpr-23222.ic28",  0x6000002, 0x0800000, InterleavedWord },
-            { "mpr-23223.ic29",  0x7000000, 0x0800000, InterleavedWord },
-            { "mpr-23224.ic30s", 0x7000002, 0x0800000, InterleavedWord },
-            { "mpr-23225.ic31",  0x8000000, 0x0800000, InterleavedWord },
-            { "mpr-23226.ic32s", 0x8000002, 0x0800000, InterleavedWord },
+            { "mpr-23211.ic17s", 0x1000000, 0x0800000,  0x0000000, InterleavedWord },
+            { "mpr-23212.ic18",  0x1000002, 0x0800000,  0x0000000, InterleavedWord },
+            { "mpr-23213.ic19s", 0x2000000, 0x0800000,  0x0000000, InterleavedWord },
+            { "mpr-23214.ic20",  0x2000002, 0x0800000,  0x0000000, InterleavedWord },
+            { "mpr-23215.ic21s", 0x3000000, 0x0800000,  0x0000000, InterleavedWord },
+            { "mpr-23216.ic22",  0x3000002, 0x0800000,  0x0000000, InterleavedWord },
+            { "mpr-23217.ic23s", 0x4000000, 0x0800000,  0x0000000, InterleavedWord },
+            { "mpr-23218.ic24",  0x4000002, 0x0800000,  0x0000000, InterleavedWord },
+            { "mpr-23219.ic25s", 0x5000000, 0x0800000,  0x0000000, InterleavedWord },
+            { "mpr-23220.ic26",  0x5000002, 0x0800000,  0x0000000, InterleavedWord },
+            { "mpr-23221.ic27s", 0x6000000, 0x0800000,  0x0000000, InterleavedWord },
+            { "mpr-23222.ic28",  0x6000002, 0x0800000,  0x0000000, InterleavedWord },
+            { "mpr-23223.ic29",  0x7000000, 0x0800000,  0x0000000, InterleavedWord },
+            { "mpr-23224.ic30s", 0x7000002, 0x0800000,  0x0000000, InterleavedWord },
+            { "mpr-23225.ic31",  0x8000000, 0x0800000,  0x0000000, InterleavedWord },
+            { "mpr-23226.ic32s", 0x8000002, 0x0800000,  0x0000000, InterleavedWord },
             { NULL, 0, 0 },
         }
     },
@@ -431,11 +433,11 @@ Games[] =
         ROT0,
         {   
             { "epr-23844.ic11",  0x0000000, 0x400000 },
-            { "mtp-23840.ic17s", 0x1000000, 0x800000, InterleavedWord },
-            { "mtp-23841.ic18",  0x1000002, 0x800000, InterleavedWord },
-            { "mtp-23842.ic19s", 0x2000000, 0x800000, InterleavedWord },
-            { "mtp-23843.ic20",  0x2000002, 0x800000, InterleavedWord },
-            { "copy",            0x400000, 0xc00000, Copy, 0x1000000 },
+            { "mtp-23840.ic17s", 0x1000000, 0x800000,  0x0000000, InterleavedWord },
+            { "mtp-23841.ic18",  0x1000002, 0x800000,  0x0000000, InterleavedWord },
+            { "mtp-23842.ic19s", 0x2000000, 0x800000,  0x0000000, InterleavedWord },
+            { "mtp-23843.ic20",  0x2000002, 0x800000,  0x0000000, InterleavedWord },
+            { "copy",            0x400000, 0xc00000,  0x0000000, Copy, 0x1000000 },
             { NULL, 0, 0 },
         }
     },
@@ -451,11 +453,11 @@ Games[] =
         ROT0,
         {   
             { "epr-24065a.ic11", 0x0000000, 0x0400000 },
-            { "opr-24060.ic17s", 0x1000000, 0x0800000, InterleavedWord },
-            { "opr-24061.ic18",  0x1000002, 0x0800000, InterleavedWord },
-            { "opr-24062.ic19s", 0x2000000, 0x0800000, InterleavedWord },
-            { "opr-24063.ic20",  0x2000002, 0x0800000, InterleavedWord },
-            { "copy",            0x400000, 0xc00000, Copy, 0x1000000 },
+            { "opr-24060.ic17s", 0x1000000, 0x0800000,  0x0000000, InterleavedWord },
+            { "opr-24061.ic18",  0x1000002, 0x0800000,  0x0000000, InterleavedWord },
+            { "opr-24062.ic19s", 0x2000000, 0x0800000,  0x0000000, InterleavedWord },
+            { "opr-24063.ic20",  0x2000002, 0x0800000,  0x0000000, InterleavedWord },
+            { "copy",            0x400000, 0xc00000,  0x0000000, Copy, 0x1000000 },
             
             //ROM_REGION(0x200, "some_eeprom", 0)
             //ROM_LOAD( "25lc040.ic13s", 0, 0x200, CRC(d11312d3) SHA1(c444012954f58a9af283ab8439f31cb89de9c14d) )
@@ -475,11 +477,11 @@ Games[] =
         ROT0,
         {
             { "epr-24148.ic11",  0x0000000, 0x400000 },
-            { "opr-24174.ic17s", 0x1000000, 0x800000, InterleavedWord },
-            { "opr-24175.ic18",  0x1000002, 0x800000, InterleavedWord },
-            { "opr-24176.ic19s", 0x2000000, 0x800000, InterleavedWord },
-            { "opr-24177.ic20",  0x2000002, 0x800000, InterleavedWord },
-            { "copy",            0x400000, 0xc00000, Copy, 0x1000000 },
+            { "opr-24174.ic17s", 0x1000000, 0x800000,  0x0000000, InterleavedWord },
+            { "opr-24175.ic18",  0x1000002, 0x800000,  0x0000000, InterleavedWord },
+            { "opr-24176.ic19s", 0x2000000, 0x800000,  0x0000000, InterleavedWord },
+            { "opr-24177.ic20",  0x2000002, 0x800000,  0x0000000, InterleavedWord },
+            { "copy",            0x400000, 0xc00000,  0x0000000, Copy, 0x1000000 },
             { NULL, 0, 0 },
         }
     },
@@ -517,13 +519,13 @@ Games[] =
         {
             { "epr-23071.ic11",  0x0000000, 0x0200000 },
             { "epr-23071.ic11",  0x0200000, 0x0200000 }, // reload
-            { "mpr-23063.ic17s", 0x1000000, 0x0800000, InterleavedWord },
-            { "mpr-23064.ic18",  0x1000002, 0x0800000, InterleavedWord },
-            { "mpr-23065.ic19s", 0x2000000, 0x0800000, InterleavedWord },
-            { "mpr-23066.ic20",  0x2000002, 0x0800000, InterleavedWord },
-            { "mpr-23067.ic21s", 0x3000000, 0x0800000, InterleavedWord },
-            { "mpr-23068.ic22",  0x3000002, 0x0800000, InterleavedWord },
-            { "copy",            0x400000 , 0xc00000,  Copy, 0x1000000 },
+            { "mpr-23063.ic17s", 0x1000000, 0x0800000,  0x0000000, InterleavedWord },
+            { "mpr-23064.ic18",  0x1000002, 0x0800000,  0x0000000, InterleavedWord },
+            { "mpr-23065.ic19s", 0x2000000, 0x0800000,  0x0000000, InterleavedWord },
+            { "mpr-23066.ic20",  0x2000002, 0x0800000,  0x0000000, InterleavedWord },
+            { "mpr-23067.ic21s", 0x3000000, 0x0800000,  0x0000000, InterleavedWord },
+            { "mpr-23068.ic22",  0x3000002, 0x0800000,  0x0000000, InterleavedWord },
+            { "copy",            0x400000 , 0xc00000,  0x0000000,  Copy, 0x1000000 },
             
             //ROM_REGION(0x200, "some_eeprom", 0)
             //ROM_LOAD( "25lc040.ic13s", 0, 0x200, CRC(6291605c) SHA1(44f757da4814b08108d1a4f431c9a39c38acecb2) )
@@ -543,25 +545,25 @@ Games[] =
         ROT0,
         {
             { "epr-22327a.ic11", 0x0000000, 0x400000 },
-            { "mpr-22307.ic17s", 0x1000000, 0x800000, InterleavedWord },
-            { "mpr-22308.ic18",  0x1000002, 0x800000, InterleavedWord },
-            { "mpr-22309.ic19s", 0x2000000, 0x800000, InterleavedWord },
-            { "mpr-22310.ic20",  0x2000002, 0x800000, InterleavedWord },
-            { "mpr-22311.ic21s", 0x3000000, 0x800000, InterleavedWord },
-            { "mpr-22312.ic22",  0x3000002, 0x800000, InterleavedWord },
-            { "mpr-22313.ic23s", 0x4000000, 0x800000, InterleavedWord },
-            { "mpr-22314.ic24",  0x4000002, 0x800000, InterleavedWord },
-            { "mpr-22315.ic25s", 0x5000000, 0x800000, InterleavedWord },
-            { "mpr-22316.ic26",  0x5000002, 0x800000, InterleavedWord },
-            { "mpr-22317.ic27s", 0x6000000, 0x800000, InterleavedWord },
-            { "mpr-22318.ic28",  0x6000002, 0x800000, InterleavedWord },
-            { "mpr-22319.ic29",  0x7000000, 0x800000, InterleavedWord },
-            { "mpr-22320.ic30s", 0x7000002, 0x800000, InterleavedWord },
-            { "mpr-22321.ic31",  0x8000000, 0x800000, InterleavedWord },
-            { "mpr-22322.ic32s", 0x8000002, 0x800000, InterleavedWord },
-            { "mpr-22323.ic33",  0x9000000, 0x800000, InterleavedWord },
-            { "mpr-22324.ic34s", 0x9000002, 0x800000, InterleavedWord },
-            { "copy",			 0x0400000, 0xc00000, Copy, 0x1000000 }, // changed
+            { "mpr-22307.ic17s", 0x1000000, 0x800000,  0x0000000, InterleavedWord },
+            { "mpr-22308.ic18",  0x1000002, 0x800000,  0x0000000, InterleavedWord },
+            { "mpr-22309.ic19s", 0x2000000, 0x800000,  0x0000000, InterleavedWord },
+            { "mpr-22310.ic20",  0x2000002, 0x800000,  0x0000000, InterleavedWord },
+            { "mpr-22311.ic21s", 0x3000000, 0x800000,  0x0000000, InterleavedWord },
+            { "mpr-22312.ic22",  0x3000002, 0x800000,  0x0000000, InterleavedWord },
+            { "mpr-22313.ic23s", 0x4000000, 0x800000,  0x0000000, InterleavedWord },
+            { "mpr-22314.ic24",  0x4000002, 0x800000,  0x0000000, InterleavedWord },
+            { "mpr-22315.ic25s", 0x5000000, 0x800000,  0x0000000, InterleavedWord },
+            { "mpr-22316.ic26",  0x5000002, 0x800000,  0x0000000, InterleavedWord },
+            { "mpr-22317.ic27s", 0x6000000, 0x800000,  0x0000000, InterleavedWord },
+            { "mpr-22318.ic28",  0x6000002, 0x800000,  0x0000000, InterleavedWord },
+            { "mpr-22319.ic29",  0x7000000, 0x800000,  0x0000000, InterleavedWord },
+            { "mpr-22320.ic30s", 0x7000002, 0x800000,  0x0000000, InterleavedWord },
+            { "mpr-22321.ic31",  0x8000000, 0x800000,  0x0000000, InterleavedWord },
+            { "mpr-22322.ic32s", 0x8000002, 0x800000,  0x0000000, InterleavedWord },
+            { "mpr-22323.ic33",  0x9000000, 0x800000,  0x0000000, InterleavedWord },
+            { "mpr-22324.ic34s", 0x9000002, 0x800000,  0x0000000, InterleavedWord },
+            { "copy",			 0x0400000, 0xc00000,  0x0000000, Copy, 0x1000000 }, // changed
             { NULL, 0, 0 },
         },
         NULL,
@@ -579,12 +581,12 @@ Games[] =
         ROT0,
         {
             { "epr-23964.ic11",  0x0000000, 0x400000 },
-            { "opr-23965.ic17s", 0x1000000, 0x800000, InterleavedWord },
-            { "opr-23966.ic18",  0x1000002, 0x800000, InterleavedWord },
-            { "opr-23967.ic19s", 0x2000000, 0x800000, InterleavedWord },
-            { "opr-23968.ic20",  0x2000002, 0x800000, InterleavedWord },
-            { "opr-23969.ic21s", 0x3000000, 0x800000, InterleavedWord },
-            { "opr-23970.ic22",  0x3000002, 0x800000, InterleavedWord },
+            { "opr-23965.ic17s", 0x1000000, 0x800000,  0x0000000, InterleavedWord },
+            { "opr-23966.ic18",  0x1000002, 0x800000,  0x0000000, InterleavedWord },
+            { "opr-23967.ic19s", 0x2000000, 0x800000,  0x0000000, InterleavedWord },
+            { "opr-23968.ic20",  0x2000002, 0x800000,  0x0000000, InterleavedWord },
+            { "opr-23969.ic21s", 0x3000000, 0x800000,  0x0000000, InterleavedWord },
+            { "opr-23970.ic22",  0x3000002, 0x800000,  0x0000000, InterleavedWord },
             { NULL, 0, 0 },
         }
     },
@@ -600,13 +602,13 @@ Games[] =
         ROT0,
         {
             { "epr-24217-1002.ic11", 0x0000000, 0x0400000 },
-            { "mpr-24218.ic17s",     0x1000000, 0x0800000, InterleavedWord },
-            { "mpr-24219.ic18",      0x1000002, 0x0800000, InterleavedWord },
-            { "mpr-24220.ic19s",     0x2000000, 0x0800000, InterleavedWord },
-            { "mpr-24221.ic20",      0x2000002, 0x0800000, InterleavedWord },
-            { "mpr-24222.ic21s",     0x3000000, 0x0800000, InterleavedWord },
-            { "mpr-24223.ic22",      0x3000002, 0x0800000, InterleavedWord },
-            { "copy",                0x400000,  0xc00000,  Copy, 0x1000000 },
+            { "mpr-24218.ic17s",     0x1000000, 0x0800000,  0x0000000, InterleavedWord },
+            { "mpr-24219.ic18",      0x1000002, 0x0800000,  0x0000000, InterleavedWord },
+            { "mpr-24220.ic19s",     0x2000000, 0x0800000,  0x0000000, InterleavedWord },
+            { "mpr-24221.ic20",      0x2000002, 0x0800000,  0x0000000, InterleavedWord },
+            { "mpr-24222.ic21s",     0x3000000, 0x0800000,  0x0000000, InterleavedWord },
+            { "mpr-24223.ic22",      0x3000002, 0x0800000,  0x0000000, InterleavedWord },
+            { "copy",                0x400000,  0xc00000,  0x0000000,  Copy, 0x1000000 },
             
             //ROM_REGION(0x200, "some_eeprom", 0)
             //{ "25lc040.ic13s", 0, 0x200, CRC(9adb86c2) SHA1(682d06b2004809c3c7ff2f4f9bc0bde0e51885c0) )
@@ -2252,15 +2254,15 @@ Games[] =
         REGION_JAPAN,
         ROT0,
 		{
-            { "epr-24286.ic22", 0x0000000, 0x0400000 },
-            { "mpr-24276.ic1",  0x0800000, 0x1000000 },
-            { "mpr-24277.ic2",  0x1800000, 0x1000000 },
-            { "mpr-24278.ic3",  0x2800000, 0x1000000 },
-            { "mpr-24279.ic4",  0x3800000, 0x1000000 },
-            { "mpr-24280.ic5",  0x4800000, 0x1000000 },
-            { "mpr-24281.ic6",  0x5800000, 0x1000000 },
-            { "mpr-24282.ic7",  0x6800000, 0x1000000 },
-			{ NULL, 0, 0 },
+			{ "epr-24286.ic22", 0x0000000, 0x0400000, 0x00000000 },
+	        { "mpr-24276.ic1",  0x0800000, 0x1000000, 0x00000000 },
+	        { "mpr-24277.ic2",  0x1800000, 0x1000000, 0x00000000 },
+	        { "mpr-24278.ic3",  0x2800000, 0x1000000, 0x00000000 },
+	        { "mpr-24279.ic4",  0x3800000, 0x1000000, 0x00000000 },
+	        { "mpr-24280.ic5",  0x4800000, 0x1000000, 0x00000000 },
+	        { "mpr-24281.ic6",  0x5800000, 0x1000000, 0x00000000 },
+	        { "mpr-24282.ic7",  0x6800000, 0x1000000, 0x00000000 },
+	        { NULL, 0, 0 },
 		}
 	},
     // Mushiking The King Of Beetle (MUSHIUSA '04 1ST, Prototype)
@@ -2274,21 +2276,13 @@ Games[] =
         REGION_AUSTRALIA,
         ROT0,
         {
-            { "rom1.ic1s",    0x0800000, 0x800000 },
-            { "rom2.ic2s",    0x1000000, 0x800000 },
-            { "rom3.ic3s",    0x1800000, 0x800000 },
-            { "rom4.ic4s",    0x2000000, 0x800000 },
-            { "rom5.ic5s",    0x2800000, 0x800000 },
-            { "rom6.ic6s",    0x3000000, 0x800000 },
-            { "rom7.ic7s",    0x3800000, 0x800000 },        
-            // not used, contain random garbage
-            // ROM_LOAD( "rom8.ic8s",    0x4000000, 0x800000, CRC(a1d1339e) SHA1(2f5dd8472c3b983bce7d14e076c8cb7b6bd535ff) )
-            // ROM_LOAD( "rom9.ic9s",    0x4800000, 0x800000, CRC(a1d1339e) SHA1(2f5dd8472c3b983bce7d14e076c8cb7b6bd535ff) )
-            // ROM_LOAD( "rom10.ic10s",  0x5000000, 0x800000, CRC(a1d1339e) SHA1(2f5dd8472c3b983bce7d14e076c8cb7b6bd535ff) )
-            // ROM_LOAD( "rom11.ic11s",  0x5800000, 0x800000, CRC(a1d1339e) SHA1(2f5dd8472c3b983bce7d14e076c8cb7b6bd535ff) )
-            
-            //ROM_REGION(0x84, "some_eeprom", 0)
-            //ROM_LOAD("sflash.ic37", 0x000000, 0x000084, CRC(88f1db52) SHA1(5ebfa6c45abf2fa6f560832f366ed03ca91709a5) )
+            { "rom1.ic1s", 0x0800000, 0x800000, 0x9cdc8dcb },
+            { "rom2.ic2s", 0x1000000, 0x800000, 0x7b637bb6 },
+            { "rom3.ic3s", 0x1800000, 0x800000, 0x6c6ddfbf },
+            { "rom4.ic4s", 0x2000000, 0x800000, 0xa427002d },
+            { "rom5.ic5s", 0x2800000, 0x800000, 0x7076a50e },
+            { "rom6.ic6s", 0x3000000, 0x800000, 0xd7143066 },
+            { "rom7.ic7s", 0x3800000, 0x800000, 0x98839bab },
             { NULL, 0, 0 },
         }
     },
@@ -2303,21 +2297,21 @@ Games[] =
         REGION_AUSTRALIA,
         ROT0,
 		{
-			{ "epr-23062a.ic22", 0x0000000, 0x0400000 },
-			{ "mpr-23048.ic1",   0x0800000, 0x0800000 },
-			{ "mpr-23049.ic2",   0x1000000, 0x0800000 },
-			{ "mpr-23050.ic3",   0x1800000, 0x0800000 },
-			{ "mpr-23051.ic4",   0x2000000, 0x0800000 },
-			{ "mpr-23052.ic5",   0x2800000, 0x0800000 },
-			{ "mpr-23053.ic6",   0x3000000, 0x0800000 },
-			{ "mpr-23054.ic7",   0x3800000, 0x0800000 },
-			{ "mpr-23055.ic8",   0x4000000, 0x0800000 },
-			{ "mpr-23056.ic9",   0x4800000, 0x0800000 },
-			{ "mpr-23057.ic10",  0x5000000, 0x0800000 },
-			{ "mpr-23058.ic11",  0x5800000, 0x0800000 },
-			{ "mpr-23059.ic12s", 0x6000000, 0x0800000 },
-			{ "mpr-23060.ic13s", 0x6800000, 0x0800000 },
-			{ "mpr-23061.ic14s", 0x7000000, 0x0800000 },
+			{ "epr-23062a.ic22", 0x0000000, 0x0400000, 0x96038276 },
+	        { "mpr-23048.ic1",   0x0800000, 0x0800000, 0x93d7a63a },
+	        { "mpr-23049.ic2",   0x1000000, 0x0800000, 0x003dcce0 },
+	        { "mpr-23050.ic3",   0x1800000, 0x0800000, 0x1d6b88a7 },
+	        { "mpr-23051.ic4",   0x2000000, 0x0800000, 0x01226aaa },
+	        { "mpr-23052.ic5",   0x2800000, 0x0800000, 0x74bee120 },
+	        { "mpr-23053.ic6",   0x3000000, 0x0800000, 0xd92d4401 },
+	        { "mpr-23054.ic7",   0x3800000, 0x0800000, 0x78ba02e8 },
+	        { "mpr-23055.ic8",   0x4000000, 0x0800000, 0x84319604 },
+	        { "mpr-23056.ic9",   0x4800000, 0x0800000, 0xd7386034 },
+	        { "mpr-23057.ic10",  0x5000000, 0x0800000, 0xa3f087db },
+	        { "mpr-23058.ic11",  0x5800000, 0x0800000, 0x61a6cc5d },
+	        { "mpr-23059.ic12s", 0x6000000, 0x0800000, 0x64808024 },
+	        { "mpr-23060.ic13s", 0x6800000, 0x0800000, 0x67519942 },
+	        { "mpr-23061.ic14s", 0x7000000, 0x0800000, 0xfb1844c4 },
 
 			//ROM_REGION(0x84, "some_eeprom", 0)
 			//ROM_LOAD("sflash.ic37", 0x000000, 0x000084, CRC(37a66f3c) SHA1(df6cd2cdc2813caa5da4dc9f171998485bcbdc44))
@@ -4015,7 +4009,7 @@ Games[] =
             { "ic8.bin", 0x0000000, 0x4000000 },
             { "ic9.bin", 0x4000000, 0x4000000 },
             // IC10 and IC11 Populated, Empty
-            { "317-05130-jpn.ic3", 0, 0x800, Key },
+            { "317-05130-jpn.ic3", 0, 0x800,  0x0000000, Key },
             { NULL, 0, 0 },
         }
     },
@@ -4034,7 +4028,7 @@ Games[] =
             { "fpr-24383.ic9",  0x4000000, 0x4000000 },
             { "fpr-24384.ic10", 0x8000000, 0x4000000 },
             { "fpr-24385.ic11", 0xc000000, 0x4000000 },
-            { "317-0495-com.ic3", 0, 0x800, Key },
+            { "317-0495-com.ic3", 0, 0x800,  0x0000000, Key },
             { NULL, 0, 0 },
         }
     },
@@ -4053,7 +4047,7 @@ Games[] =
             { "fpr-24383.ic9",  0x4000000, 0x4000000 },
             { "fpr-24384.ic10", 0x8000000, 0x4000000 },
             { "fpr-24385.ic11", 0xc000000, 0x4000000 },
-			{ "317-0495-com.ic3", 0, 0x800, Key },
+			{ "317-0495-com.ic3", 0, 0x800,  0x0000000, Key },
             
             { NULL, 0, 0 },
         }
@@ -4072,7 +4066,7 @@ Games[] =
             { "fpr-24437.ic8",  0x0000000, 0x4000000 },
             { "fpr-24438.ic9",  0x4000000, 0x4000000 },
             { "fpr-24439.ic10", 0x8000000, 0x4000000 },
-            { "317-5131-jpn.ic3", 0, 0x800, Key },
+            { "317-5131-jpn.ic3", 0, 0x800,  0x0000000, Key },
             { NULL, 0, 0 },
         }
     },
@@ -4098,7 +4092,7 @@ Games[] =
             
             //ROM_REGION( 0x800, "pic_readout", 0 )
             //ROM_LOAD( "317-0461-com.ic3", 0, 0x800, BAD_DUMP CRC(c9282cdd) SHA1(23933e489d763515428e2714cc6e7676df1d5323) )
-            { "317-0461-com.ic3", 0, 0x800, Key },
+            { "317-0461-com.ic3", 0, 0x800,  0x0000000, Key },
             
             { NULL, 0, 0 },
         }
@@ -4117,7 +4111,7 @@ Games[] =
             { "ic8.bin",  0x0000000, 0x4000000 },
             { "ic9.bin",  0x4000000, 0x4000000 },
             { "ic10.bin", 0x8000000, 0x4000000 },
-            { "317-5132-jpn.ic3", 0, 0x800, Key },
+            { "317-5132-jpn.ic3", 0, 0x800,  0x0000000, Key },
             { NULL, 0, 0 },
         }
     },
@@ -4139,7 +4133,7 @@ Games[] =
             { "ic11.bin",      0x0c000000, 0x4000000 },
             { "ic12.bin",      0x10000000, 0x4000000 },
             { "ic13.bin",      0x14000000, 0x4000000 },
-            { "317-5133-jpn.ic3", 0, 0x800, Key }, // pic_readout
+            { "317-5133-jpn.ic3", 0, 0x800,  0x0000000, Key }, // pic_readout
             { NULL, 0, 0 },
         }
     },
@@ -4160,7 +4154,7 @@ Games[] =
             { "ic11.bin",      0x0c000000, 0x4000000 },
             { "ic12.bin",      0x10000000, 0x4000000 },
             { "ic13.bin",      0x14000000, 0x4000000 },
-            { "317-5133-jpn.ic3", 0, 0x800, Key }, // pic_readout
+            { "317-5133-jpn.ic3", 0, 0x800,  0x0000000, Key }, // pic_readout
             { NULL, 0, 0 },
         }
     },
@@ -4177,7 +4171,7 @@ Games[] =
         {
             { "fpr-24333.ic8", 0x0000000, 0x4000000 },
             { "fpr-24334.ic9", 0x4000000, 0x4000000 },
-            { "317-0437-com.ic3", 0, 0x800, Key },
+            { "317-0437-com.ic3", 0, 0x800,  0x0000000, Key },
             { NULL, 0, 0 },
         }
     },
@@ -4198,7 +4192,7 @@ Games[] =
             
             //ROM_REGION( 0x800, "pic_readout", 0 )
             //ROM_LOAD( "317-0437-com.ic3", 0, 0x800, CRC(3b6fcee8) SHA1(65fbdd3b8c61a4b5ccb6389b25483a7ecdc0794d) )
-            { "317-0437-com.ic3", 0, 0x800, Key },
+            { "317-0437-com.ic3", 0, 0x800,  0x0000000, Key },
             
             { NULL, 0, 0 },
         }
@@ -4220,7 +4214,7 @@ Games[] =
             
             //ROM_REGION( 0x800, "pic_readout", 0 )
             //ROM_LOAD( "317-0437-com.ic3", 0, 0x800, CRC(3b6fcee8) SHA1(65fbdd3b8c61a4b5ccb6389b25483a7ecdc0794d) )
-            { "317-0437-com.ic3", 0, 0x800, Key },
+            { "317-0437-com.ic3", 0, 0x800,  0x0000000, Key },
             
             { NULL, 0, 0 },
         }
@@ -4247,7 +4241,7 @@ Games[] =
             
             //ROM_REGION( 0x800, "pic_readout", 0 )
             //ROM_LOAD( "317-0461-com.ic3", 0, 0x800, BAD_DUMP CRC(c9282cdd) SHA1(23933e489d763515428e2714cc6e7676df1d5323) )
-            { "317-0461-com.ic3", 0, 0x800, Key },
+            { "317-0461-com.ic3", 0, 0x800,  0x0000000, Key },
             
             { NULL, 0, 0 },
         }
@@ -4265,7 +4259,7 @@ Games[] =
         {
             { "ic8.bin", 0x0000000, 0x4000000 },
             { "ic9.bin", 0x4000000, 0x4000000 },
-            { "317-5138-jpn.ic3", 0, 0x800, Key },
+            { "317-5138-jpn.ic3", 0, 0x800,  0x0000000, Key },
             { NULL, 0, 0 },
         }
     },
@@ -4284,7 +4278,7 @@ Games[] =
             { "fpr-24424.ic9",  0x04000000, 0x4000000 },
             { "fpr-24425.ic10", 0x08000000, 0x4000000 },
             { "fpr-24426.ic11", 0x0c000000, 0x4000000 },
-            { "317-0503-jpn.ic3", 0, 0x800, Key },
+            { "317-0503-jpn.ic3", 0, 0x800,  0x0000000, Key },
             { NULL, 0, 0 },
         }
     },
@@ -4303,7 +4297,7 @@ Games[] =
             { "fpr-24414.ic9",  0x4000000, 0x4000000 },
             { "fpr-24415.ic10", 0x8000000, 0x4000000 },
             { "fpr-24416.ic11", 0xc000000, 0x4000000 },
-            { "317-5129-jpn.ic3", 0, 0x800, Key },
+            { "317-5129-jpn.ic3", 0, 0x800,  0x0000000, Key },
             { NULL, 0, 0 },
         }
     },
@@ -4323,7 +4317,7 @@ Games[] =
             
             //ROM_REGION( 0x800, "pic_readout", 0 )
             //ROM_LOAD( "317-0435-jpn.ic3", 0, 0x800, BAD_DUMP CRC(b553d900) SHA1(ed1c3c2053f2c0e98cb5c4d99f93143a66c29e5c) )
-            { "317-0435-jpn.ic3", 0, 0x800, Key },
+            { "317-0435-jpn.ic3", 0, 0x800,  0x0000000, Key },
             { NULL, 0, 0 },
         }
     },
@@ -4373,7 +4367,7 @@ Games[] =
         ROT0,
 		{
 			{ "317-5097-jpn.pic", 0, 0x4000 },
-			{ "bdrdown-default-eeprom.bin", 0, 0x80, Eeprom },
+			{ "bdrdown-default-eeprom.bin", 0, 0x80,  0x0000000, Eeprom },
 			{ NULL, 0, 0 },
 		},
 		"gdl-0023a",
@@ -4390,7 +4384,7 @@ Games[] =
         ROT0,
 		{
 			{ "317-5102-com.pic", 0, 0x4000 },
-			{ "cfield-default-eeprom.bin", 0, 0x80, Eeprom },
+			{ "cfield-default-eeprom.bin", 0, 0x80,  0x0000000, Eeprom },
 			{ NULL, 0, 0 },
 		},
 		"gdl-0025",
@@ -4670,7 +4664,7 @@ Games[] =
         ROT0,
 		{
 			{ "317-5069-com.pic", 0, 0x4000 },
-			{ "gundmgd-default-eeprom.bin", 0, 0x80, Eeprom },
+			{ "gundmgd-default-eeprom.bin", 0, 0x80,  0x0000000, Eeprom },
 			{ NULL, 0, 0 },
 		},
 		"gdl-0001",
@@ -4687,7 +4681,7 @@ Games[] =
         ROT0,
 		{
 			{ "317-5079-com.pic", 0, 0x4000 },
-			{ "gundmxgd-default-eeprom.bin", 0, 0x80, Eeprom },
+			{ "gundmxgd-default-eeprom.bin", 0, 0x80,  0x0000000, Eeprom },
 			{ NULL, 0, 0 },
 		},
 		"gdl-0006",
@@ -4736,7 +4730,7 @@ Games[] =
         ROT270,
 		{
 			{ "317-5125-com.pic", 0, 0x4000 },
-			{ "karous-default-eeprom.bin", 0, 0x80, Eeprom },
+			{ "karous-default-eeprom.bin", 0, 0x80,  0x0000000, Eeprom },
 			{ NULL, 0, 0 },
 		},
 		"gdl-0040",
@@ -4753,7 +4747,7 @@ Games[] =
         ROT0,
 		{
 			{ "317-0323-com.pic", 0, 0x4000 },
-			{ "keyboard-default-eeprom.bin", 0, 0x80, Eeprom },
+			{ "keyboard-default-eeprom.bin", 0, 0x80,  0x0000000, Eeprom },
 			{ NULL, 0, 0 },
 		},
 		"gds-0017",
@@ -4898,7 +4892,7 @@ Games[] =
         ROT0,
 		{
 			{ "317-5084-jpn.pic", 0, 0x4000 },
-			{ "moeru-default-eeprom.bin", 0, 0x80, Eeprom },
+			{ "moeru-default-eeprom.bin", 0, 0x80,  0x0000000, Eeprom },
 			{ NULL, 0, 0 },
 		},
 		"gdl-0013",
@@ -4947,7 +4941,7 @@ Games[] =
         ROT270,
 		{
 			{ "317-5100-jpn.pic", 0, 0x4000 },
-			{ "psyvar2-default-eeprom.bin", 0, 0x80, Eeprom },
+			{ "psyvar2-default-eeprom.bin", 0, 0x80,  0x0000000, Eeprom },
 			{ NULL, 0, 0 },
 		},
 		"gdl-0024",
@@ -4964,7 +4958,7 @@ Games[] =
         ROT0,
 		{
 			{ "317-0375-com.pic", 0, 0x4000 },
-			{ "puyofev-default-eeprom.bin", 0, 0x80, Eeprom },
+			{ "puyofev-default-eeprom.bin", 0, 0x80,  0x0000000, Eeprom },
 			{ NULL, 0, 0 },
 		},
 		"gds-0034",
@@ -4981,7 +4975,7 @@ Games[] =
         ROT0,
 		{
 			{ "317-0375-com.pic", 0, 0x4000 },
-			{ "puyofev-default-eeprom.bin", 0, 0x80, Eeprom },
+			{ "puyofev-default-eeprom.bin", 0, 0x80,  0x0000000, Eeprom },
 			{ NULL, 0, 0 },
 		},
 		"gds-0031",
@@ -4998,7 +4992,7 @@ Games[] =
         ROT270,
 		{
 			{ "317-5090-jpn.pic", 0, 0x4000 },
-			{ "quizqgd-default-eeprom.bin", 0, 0x80, Eeprom },
+			{ "quizqgd-default-eeprom.bin", 0, 0x80,  0x0000000, Eeprom },
 			{ NULL, 0, 0 },
 		},
 		"gdl-0017",
@@ -5015,7 +5009,7 @@ Games[] =
         ROT270,
 		{
 			{ "317-5110-jpn.pic", 0, 0x4000 },
-			{ "radirgy-default-eeprom.bin", 0, 0x80, Eeprom },
+			{ "radirgy-default-eeprom.bin", 0, 0x80,  0x0000000, Eeprom },
 			{ NULL, 0, 0 },
 		},
 		"gdl-0032a",
@@ -5032,7 +5026,7 @@ Games[] =
         ROT270,
 		{
 			{ "317-5110-jpn.pic", 0, 0x4000 },
-			{ "radirgy-default-eeprom.bin", 0, 0x80, Eeprom },
+			{ "radirgy-default-eeprom.bin", 0, 0x80,  0x0000000, Eeprom },
 			{ NULL, 0, 0 },
 		},
 		"gdl-0032",
@@ -5049,7 +5043,7 @@ Games[] =
         ROT0,
 		{
 			{ "317-5107-jpn.pic", 0, 0x4000 },
-			{ "senko-default-eeprom.bin", 0, 0x80, Eeprom },
+			{ "senko-default-eeprom.bin", 0, 0x80,  0x0000000, Eeprom },
 			{ NULL, 0, 0 },
 		},
 		"gdl-0030a",
@@ -5066,7 +5060,7 @@ Games[] =
         ROT0,
 		{
 			{ "317-5107-jpn.pic", 0, 0x4000 },
-			{ "senkoo-default-eeprom.bin", 0, 0x80, Eeprom },
+			{ "senkoo-default-eeprom.bin", 0, 0x80,  0x0000000, Eeprom },
 			{ NULL, 0, 0 },
 		},
 		"gdl-0030",
@@ -5099,7 +5093,7 @@ Games[] =
         ROT0,
 		{
 			{ "317-5072-com.pic", 0, 0x4000 },
-			{ "sfz3ugd-default-eeprom.bin", 0, 0x80, Eeprom },
+			{ "sfz3ugd-default-eeprom.bin", 0, 0x80,  0x0000000, Eeprom },
 			{ NULL, 0, 0 },
 		},
 		"gdl-0002",
@@ -5164,7 +5158,7 @@ Games[] =
         ROT270,
 		{
 			{ "317-5095-jpn.pic", 0, 0x4000 },
-			{ "shikgam2-default-eeprom.bin", 0, 0x80, Eeprom },
+			{ "shikgam2-default-eeprom.bin", 0, 0x80,  0x0000000, Eeprom },
 			{ NULL, 0, 0 },
 		},
 		"gdl-0021",
@@ -5229,7 +5223,7 @@ Games[] =
         ROT0,
 		{
 			{ "317-5108-jpn.pic", 0, 0x4000 },
-			{ "ss2005-default-eeprom.bin", 0, 0x80, Eeprom },
+			{ "ss2005-default-eeprom.bin", 0, 0x80,  0x0000000, Eeprom },
 			{ NULL, 0, 0 },
 		},
 		"gdl-0031a",
@@ -5246,7 +5240,7 @@ Games[] =
         ROT0,
 		{
 			{ "317-5108-jpn.pic", 0, 0x4000 },
-			{ "ss2005-default-eeprom.bin", 0, 0x80, Eeprom },
+			{ "ss2005-default-eeprom.bin", 0, 0x80,  0x0000000, Eeprom },
 			{ NULL, 0, 0 },
 		},
 		"gdl-0031",
@@ -5295,7 +5289,7 @@ Games[] =
         ROT0,
 		{
 			{ "317-5093-jpn.pic", 0, 0x4000 },
-			{ "tetkiwam-default-eeprom.bin", 0, 0x80, Eeprom },
+			{ "tetkiwam-default-eeprom.bin", 0, 0x80,  0x0000000, Eeprom },
 			{ NULL, 0, 0 },
 		},
 		"gdl-0020",
@@ -5312,7 +5306,7 @@ Games[] =
         ROT270,
 		{
 			{ "317-5121-jpn.pic", 0, 0x4000 },
-			{ "trgheart-default-eeprom.bin", 0, 0x80, Eeprom },
+			{ "trgheart-default-eeprom.bin", 0, 0x80,  0x0000000, Eeprom },
 			{ NULL, 0, 0 },
 		},
 		"gdl-0036a",
@@ -5329,7 +5323,7 @@ Games[] =
         ROT270,
 		{
 			{ "317-5121-jpn.pic", 0, 0x4000 },
-			{ "trgheart-default-eeprom.bin", 0, 0x80, Eeprom },
+			{ "trgheart-default-eeprom.bin", 0, 0x80,  0x0000000, Eeprom },
 			{ NULL, 0, 0 },
 		},
 		"gdl-0036",
@@ -5346,7 +5340,7 @@ Games[] =
         ROT270,
 		{
 			{ "317-5103-jpn.pic", 0, 0x4000 },
-			{ "trizeal-default-eeprom.bin", 0, 0x80, Eeprom },
+			{ "trizeal-default-eeprom.bin", 0, 0x80,  0x0000000, Eeprom },
 			{ NULL, 0, 0 },
 		},
 		"gdl-0026",
@@ -5363,7 +5357,7 @@ Games[] =
         ROT270,
 		{
 			{ "317-5117-jpn.pic", 0, 0x4000 },
-			{ "undefeat-default-eeprom.bin", 0, 0x80, Eeprom },
+			{ "undefeat-default-eeprom.bin", 0, 0x80,  0x0000000, Eeprom },
 			{ NULL, 0, 0 },
 		},
 		"gdl-0035",
@@ -5380,7 +5374,7 @@ Games[] =
         ROT0,
 		{
 			{ "317-5096-jpn.pic", 0, 0x4000 },
-			{ "usagiym-default-eeprom.bin", 0, 0x80, Eeprom },
+			{ "usagiym-default-eeprom.bin", 0, 0x80,  0x0000000, Eeprom },
 			{ NULL, 0, 0 },
 		},
 		"gdl-0022",

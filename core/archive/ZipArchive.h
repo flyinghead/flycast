@@ -18,9 +18,8 @@
     You should have received a copy of the GNU General Public License
     along with reicast.  If not, see <https://www.gnu.org/licenses/>.
  */
+#pragma once
 
-#ifndef CORE_ARCHIVE_ZIPARCHIVE_H_
-#define CORE_ARCHIVE_ZIPARCHIVE_H_
 #include "archive.h"
 #include "deps/libzip/zip.h"
 
@@ -31,6 +30,7 @@ public:
 	virtual ~ZipArchive();
 
 	virtual ArchiveFile* OpenFile(const char* name) override;
+	virtual ArchiveFile* OpenFileByCrc(u32 crc) override;
 
 private:
 	virtual bool Open(const char* path) override;
@@ -48,5 +48,3 @@ public:
 private:
 	struct zip_file *zip_file;
 };
-
-#endif /* CORE_ARCHIVE_ZIPARCHIVE_H_ */

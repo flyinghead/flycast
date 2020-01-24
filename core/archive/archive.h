@@ -18,8 +18,7 @@
     You should have received a copy of the GNU General Public License
     along with reicast.  If not, see <https://www.gnu.org/licenses/>.
  */
-#ifndef CORE_ARCHIVE_ARCHIVE_H_
-#define CORE_ARCHIVE_ARCHIVE_H_
+#pragma once
 
 #include "types.h"
 
@@ -35,6 +34,7 @@ class Archive
 public:
 	virtual ~Archive() {}
 	virtual ArchiveFile *OpenFile(const char *name) = 0;
+	virtual ArchiveFile *OpenFileByCrc(u32 crc) = 0;
 
 	friend Archive *OpenArchive(const char *path);
 
@@ -43,5 +43,3 @@ private:
 };
 
 Archive *OpenArchive(const char *path);
-
-#endif
