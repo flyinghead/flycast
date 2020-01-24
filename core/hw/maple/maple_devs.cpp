@@ -778,55 +778,6 @@ struct maple_sega_vmu: maple_base
 						}
 						config->SetImage(lcd_data_decoded);
 						push_vmu_screen(bus_id, bus_port, lcd_data_decoded);
-#if 0
-						// Update LCD window
-						if (!dev->lcd.visible)
-						{
-							dev->lcd.visible=true;
-							ShowWindow(dev->lcd.handle,SHOW_OPENNOACTIVATE);
-						}
-
-
-							InvalidateRect(dev->lcd.handle,NULL,FALSE);
-						}
-
-						// Logitech G series stuff start
-	#ifdef _HAS_LGLCD_
-						{
-							lgLcdBitmap160x43x1 bmp;
-							bmp.hdr.Format = LGLCD_BMP_FORMAT_160x43x1;
-
-							const u8 white=0x00;
-							const u8 black=0xFF;
-
-							//make it all black...
-							memset(bmp.pixels,black,sizeof(bmp.pixels));
-
-							//decode from the VMU
-							for(int y=0;y<32;++y)
-							{
-								u8 *dst=bmp.pixels+5816+((-y)*(48+112)); //ugly way to make things look right :p
-								u8 *src=dev->lcd.data+6*y+5;
-								for(int x=0;x<48/8;++x)
-								{
-									u8 val=*src;
-									for(int m=0;m<8;++m)
-									{
-										if(val&(1<<(m)))
-											*dst++=black;
-										else
-											*dst++=white;
-									}
-									--src;
-								}
-							}
-
-							//Set the damned bits
-							res = lgLcdUpdateBitmap(openContext.device, &bmp.hdr, LGLCD_ASYNC_UPDATE(LGLCD_PRIORITY_NORMAL));
-						}
-	#endif
-						//Logitech G series stuff end
-#endif
 						return  MDRS_DeviceReply;//just ko
 					}
 					break;
@@ -1533,6 +1484,7 @@ public:
 		this->parent = parent;
 		this->first_player = first_player;
 	}
+	virtual ~jvs_io_board() = default;
 
 	u32 handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_out);
 	bool maple_serialize(void **data, unsigned int *total_size);
@@ -1542,6 +1494,8 @@ public:
 
 protected:
 	virtual const char *get_id() = 0;
+	virtual u16 get_analog_value(int axis);
+
 	u32 player_count = 0;
 	u32 digital_in_count = 0;
 	u32 coin_input_count = 0;
@@ -1549,9 +1503,10 @@ protected:
 	u32 encoder_count = 0;
 	u32 light_gun_count = 0;
 	u32 output_count = 0;
+	bool init_in_progress = false;
 
 private:
-	u8 node_id = 0;
+	u8 node_id;
 	maple_naomi_jamma *parent;
 	u8 first_player;
 };
@@ -1679,6 +1634,15 @@ public:
 	}
 protected:
 	virtual const char *get_id() override { return "namco ltd.;FCB;Ver1.0;JPN,Touch Panel & Multipurpose"; }
+
+	virtual u16 get_analog_value(int axis) override {
+		if (init_in_progress)
+			return 0;
+		if (mo_x_abs < 0 || mo_x_abs > 639 || mo_y_abs < 0 || mo_y_abs > 479)
+			return 0;
+		else
+			return 0x8000;
+	}
 };
 
 // Gun Survivor
@@ -2035,7 +1999,8 @@ struct maple_naomi_jamma : maple_sega_controller
 				memcpy(EEPROM + address, dma_buffer_in + 4, size);
 
 #ifdef SAVE_EEPROM
-				string eeprom_file = get_game_save_prefix() + ".eeprom";
+				string nvmemSuffix = cfgLoadStr("net", "nvmem", "");
+				string eeprom_file = get_game_save_prefix() + nvmemSuffix + ".eeprom";
 				FILE* f = fopen(eeprom_file.c_str(), "wb");
 				if (f)
 				{
@@ -2062,7 +2027,8 @@ struct maple_naomi_jamma : maple_sega_controller
 				if (!EEPROM_loaded)
 				{
 					EEPROM_loaded = true;
-					string eeprom_file = get_game_save_prefix() + ".eeprom";
+					string nvmemSuffix = cfgLoadStr("net", "nvmem", "");
+					string eeprom_file = get_game_save_prefix() + nvmemSuffix + ".eeprom";
 					FILE* f = fopen(eeprom_file.c_str(), "rb");
 					if (f)
 					{
@@ -2324,6 +2290,23 @@ struct maple_naomi_jamma : maple_sega_controller
 	}
 };
 
+u16 jvs_io_board::get_analog_value(int axis)
+{
+	switch (axis)
+	{
+	case 0:
+		return (joyx[first_player] + 128) << 8;
+	case 1:
+		return (joyy[first_player] + 128) << 8;
+	// TODO right analog stick
+//	case 2:
+//		return (joyrx[first_player] + 128) << 8;
+//	case 3:
+//		return (joyry[first_player] + 128) << 8;
+	}
+	return 0x8000;
+}
+
 #define JVS_OUT(b) buffer_out[length++] = b
 #define JVS_STATUS1() JVS_OUT(1)
 
@@ -2431,6 +2414,27 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 	case 0x15:	// Master board ID
 		JVS_STATUS1();
 		JVS_STATUS1();
+		break;
+
+	case 0x70:
+		LOGJVS("JVS 0x70: %02x %02x %02x %02x", buffer_in[1], buffer_in[2], buffer_in[3], buffer_in[4]);
+		init_in_progress = true;
+		JVS_STATUS1();
+		JVS_STATUS1();
+		if (buffer_in[2] == 3)
+		{
+			JVS_OUT(0x10);
+			for (int i = 0; i < 16; i++)
+				JVS_OUT(0x7f);
+			if (buffer_in[4] == 0x10 || buffer_in[4] == 0x11)
+				init_in_progress = false;
+		}
+		else
+		{
+			JVS_OUT(2);
+			JVS_OUT(3);
+			JVS_OUT(1);
+		}
 		break;
 
 	default:
@@ -2558,23 +2562,7 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 							}
 							else
 							{
-								switch (full_axis_count) {
-								case 0:
-									axis_value = (joyx[first_player] + 128) << 8;
-									break;
-								case 1:
-									axis_value = (joyy[first_player] + 128) << 8;
-									break;
-								// TODO right analog stick
-//								case 2:
-//									axis_value = (joyrx[first_player] + 128) << 8;
-//									break;
-//								case 3:
-//									axis_value = (joyry[first_player] + 128) << 8;
-//									break;
-								default:
-									axis_value = 128;
-								}
+								axis_value = get_analog_value(full_axis_count);
 								full_axis_count++;
 							}
 							LOGJVS("%d:%4x ", axis, axis_value);
