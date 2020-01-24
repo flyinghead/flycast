@@ -252,6 +252,8 @@
 		AE80EDBE2157D4E600F7800F /* naomi.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE80EDB92157D4E600F7800F /* naomi.cpp */; };
 		AE80EDBF2157D4E600F7800F /* naomi_cart.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE80EDBB2157D4E600F7800F /* naomi_cart.cpp */; };
 		AE80EDC521594ACE00F7800F /* dns.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE80EDC421594ACE00F7800F /* dns.cpp */; };
+		AE84D26E23DBB05100E1C7DE /* zip_crc_locate.c in Sources */ = {isa = PBXBuildFile; fileRef = AE84D26C23DBB05100E1C7DE /* zip_crc_locate.c */; };
+		AE84D26F23DBB05100E1C7DE /* zip_fopen_by_crc.c in Sources */ = {isa = PBXBuildFile; fileRef = AE84D26D23DBB05100E1C7DE /* zip_fopen_by_crc.c */; };
 		AE8C27342111A31100D4D8F4 /* dsp_interp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE8C27332111A31100D4D8F4 /* dsp_interp.cpp */; };
 		AE8C274121122E2500D4D8F4 /* Changelog.txt in Resources */ = {isa = PBXBuildFile; fileRef = AE8C273B21122E2500D4D8F4 /* Changelog.txt */; };
 		AE8C274221122E2500D4D8F4 /* License.txt in Resources */ = {isa = PBXBuildFile; fileRef = AE8C273C21122E2500D4D8F4 /* License.txt */; };
@@ -832,6 +834,8 @@
 		AE80EDBC2157D4E600F7800F /* naomi_cart.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = naomi_cart.h; sourceTree = "<group>"; };
 		AE80EDBD2157D4E600F7800F /* naomi_regs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = naomi_regs.h; sourceTree = "<group>"; };
 		AE80EDC421594ACE00F7800F /* dns.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = dns.cpp; sourceTree = "<group>"; };
+		AE84D26C23DBB05100E1C7DE /* zip_crc_locate.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = zip_crc_locate.c; sourceTree = "<group>"; };
+		AE84D26D23DBB05100E1C7DE /* zip_fopen_by_crc.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = zip_fopen_by_crc.c; sourceTree = "<group>"; };
 		AE8C27332111A31100D4D8F4 /* dsp_interp.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = dsp_interp.cpp; sourceTree = "<group>"; };
 		AE8C273B21122E2500D4D8F4 /* Changelog.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = Changelog.txt; sourceTree = "<group>"; };
 		AE8C273C21122E2500D4D8F4 /* License.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = License.txt; sourceTree = "<group>"; };
@@ -1336,6 +1340,8 @@
 		84B7BD661B72720100F9733F /* libzip */ = {
 			isa = PBXGroup;
 			children = (
+				AE84D26C23DBB05100E1C7DE /* zip_crc_locate.c */,
+				AE84D26D23DBB05100E1C7DE /* zip_fopen_by_crc.c */,
 				84B7BD671B72720100F9733F /* config.h */,
 				84B7BD681B72720100F9733F /* mkstemp.c */,
 				84B7BD691B72720100F9733F /* zip.h */,
@@ -2828,6 +2834,7 @@
 				84B7BF751B72720200F9733F /* gdrom_hle.cpp in Sources */,
 				84B7BEFF1B72720200F9733F /* zip_name_locate.c in Sources */,
 				AED73E662348E45000ECDB64 /* iomapper.cpp in Sources */,
+				AE84D26E23DBB05100E1C7DE /* zip_crc_locate.c in Sources */,
 				AE649BFD218C552500EF4A81 /* lpc_intrin_avx2.c in Sources */,
 				AE649BF8218C552500EF4A81 /* fixed_intrin_sse2.c in Sources */,
 				84B7BEB61B72720200F9733F /* sha256.cpp in Sources */,
@@ -2964,6 +2971,7 @@
 				84B7BF091B72720200F9733F /* zip_source_file.c in Sources */,
 				AEFF7F74214D9D590068CE11 /* pico_socket_multicast.c in Sources */,
 				AED73E6B2348E45000ECDB64 /* ParseHelper.cpp in Sources */,
+				AE84D26F23DBB05100E1C7DE /* zip_fopen_by_crc.c in Sources */,
 				84B7BF151B72720200F9733F /* zip_unchange_data.c in Sources */,
 				AEFF7F71214D9D590068CE11 /* pico_md5.c in Sources */,
 				84B7BEF11B72720200F9733F /* zip_file_error_get.c in Sources */,
