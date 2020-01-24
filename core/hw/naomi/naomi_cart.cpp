@@ -97,8 +97,16 @@ static bool naomi_LoadBios(const char *filename, Archive *child_archive, Archive
 		else
 		{
 			std::unique_ptr<ArchiveFile> file;
+			// Find by CRC
 			if (child_archive != NULL)
-			   file.reset(child_archive->OpenFile(bios->blobs[romid].filename));
+				file.reset(child_archive->OpenFileByCrc(bios->blobs[romid].crc));
+			if (!file && parent_archive != NULL)
+				file.reset(parent_archive->OpenFileByCrc(bios->blobs[romid].crc));
+			if (!file && bios_archive != NULL)
+				file.reset(bios_archive->OpenFileByCrc(bios->blobs[romid].crc));
+			// Fallback to find by filename
+			if (!file && child_archive != NULL)
+				file.reset(child_archive->OpenFile(bios->blobs[romid].filename));
 			if (!file && parent_archive != NULL)
 				file.reset(parent_archive->OpenFile(bios->blobs[romid].filename));
 			if (!file && bios_archive != NULL)
@@ -269,9 +277,15 @@ static void naomi_cart_LoadZip(const char *filename)
 			else
 			{
 				std::unique_ptr<ArchiveFile> file;
+				// Find by CRC
 				if (archive != NULL)
+					file.reset(archive->OpenFileByCrc(game->blobs[romid].crc));
+				if (!file && parent_archive != NULL)
+					file.reset(parent_archive->OpenFileByCrc(game->blobs[romid].crc));
+				// Fallback to find by filename
+				if (!file && archive != NULL)
 					file.reset(archive->OpenFile(game->blobs[romid].filename));
-				if (file == NULL && parent_archive != NULL)
+				if (!file && parent_archive != NULL)
 					file.reset(parent_archive->OpenFile(game->blobs[romid].filename));
 				if (!file) {
 					WARN_LOG(NAOMI, "%s: Cannot open %s", filename, game->blobs[romid].filename);
