@@ -5,6 +5,7 @@
 #include "hw/aica/aica.h"
 #include "hw/aica/sgc_if.h"
 #include "hw/arm7/arm7.h"
+#include "hw/holly/sb.h"
 #include "hw/holly/sb_mem.h"
 #include "hw/flashrom/flashrom.h"
 #include "hw/mem/_vmem.h"
@@ -69,7 +70,6 @@ extern s16 cdda_sector[CDDA_SIZE];
 extern u32 cdda_index;
 
 //./core/hw/holly/sb.o
-extern Array<RegisterStruct> sb_regs;
 extern u32 SB_ISTNRM;
 extern u32 SB_FFST_rc;
 extern u32 SB_FFST;
@@ -151,17 +151,7 @@ extern bool pal_needs_update;
 extern VArray2 vram;
 
 //./core/hw/sh4/sh4_mmr.o
-extern Array<u8> OnChipRAM;
-extern Array<RegisterStruct> CCN;  //CCN  : 14 registers
-extern Array<RegisterStruct> UBC;   //UBC  : 9 registers
-extern Array<RegisterStruct> BSC;  //BSC  : 18 registers
-extern Array<RegisterStruct> DMAC; //DMAC : 17 registers
-extern Array<RegisterStruct> CPG;   //CPG  : 5 registers
-extern Array<RegisterStruct> RTC;  //RTC  : 16 registers
-extern Array<RegisterStruct> INTC;  //INTC : 4 registers
-extern Array<RegisterStruct> TMU;  //TMU  : 12 registers
-extern Array<RegisterStruct> SCI;   //SCI  : 8 registers
-extern Array<RegisterStruct> SCIF; //SCIF : 10 registers
+extern std::array<u8, OnChipRAM_SIZE> OnChipRAM;
 
 //./core/hw/sh4/sh4_mem.o
 extern VArray2 mem_b;
@@ -241,7 +231,7 @@ extern u32 reg_dimm_parameterl;
 extern u32 reg_dimm_parameterh;
 extern u32 reg_dimm_status;
 
-bool rc_serialize(void *src, unsigned int src_size, void **dest, unsigned int *total_size)
+bool rc_serialize(const void *src, unsigned int src_size, void **dest, unsigned int *total_size)
 {
 	if ( *dest != NULL )
 	{
@@ -265,33 +255,30 @@ bool rc_unserialize(void *src, unsigned int src_size, void **dest, unsigned int 
 	return true ;
 }
 
-bool register_serialize(Array<RegisterStruct>& regs,void **data, unsigned int *total_size )
+template<typename T>
+bool register_serialize(const T& regs,void **data, unsigned int *total_size )
 {
-	int i = 0 ;
+	for (const auto& reg : regs)
+		REICAST_S(reg.data32);
 
-	for ( i = 0 ; i < regs.Size ; i++ )
-	{
-		REICAST_S(regs.data[i].data32) ;
-	}
-
-	return true ;
+	return true;
 }
 
-bool register_unserialize(Array<RegisterStruct>& regs,void **data, unsigned int *total_size, serialize_version_enum version)
+template<typename T>
+bool register_unserialize(T& regs,void **data, unsigned int *total_size, serialize_version_enum version)
 {
-	int i = 0 ;
-	u32 dummy = 0 ;
+	u32 dummy = 0;
 
-	for ( i = 0 ; i < regs.Size ; i++ )
+	for (auto& reg : regs)
 	{
 		if (version < V5)
 			REICAST_US(dummy); // regs.data[i].flags
-		if ( ! (regs.data[i].flags & REG_RF) )
-			REICAST_US(regs.data[i].data32) ;
+		if (!(reg.flags & REG_RF))
+			REICAST_US(reg.data32);
 		else
-			REICAST_US(dummy) ;
+			REICAST_US(dummy);
 	}
-	return true ;
+	return true;
 }
 
 bool dc_serialize(void **data, unsigned int *total_size)
@@ -403,7 +390,7 @@ bool dc_serialize(void **data, unsigned int *total_size)
 
 	REICAST_SA(vram.data, vram.size);
 
-	REICAST_SA(OnChipRAM.data,OnChipRAM_SIZE);
+	REICAST_SA(OnChipRAM.data(), OnChipRAM_SIZE);
 
 	register_serialize(CCN, data, total_size) ;
 	register_serialize(UBC, data, total_size) ;
@@ -664,7 +651,7 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 
 	REICAST_USA(vram.data, vram.size);
 
-	REICAST_USA(OnChipRAM.data,OnChipRAM_SIZE);
+	REICAST_USA(OnChipRAM.data(), OnChipRAM_SIZE);
 
 	register_unserialize(CCN, data, total_size, V9_LIBRETRO) ;
 	register_unserialize(UBC, data, total_size, V9_LIBRETRO) ;
@@ -987,7 +974,7 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 	REICAST_USA(vram.data, vram.size);
 	pal_needs_update = true;
 
-	REICAST_USA(OnChipRAM.data,OnChipRAM_SIZE);
+	REICAST_USA(OnChipRAM.data(), OnChipRAM_SIZE);
 
 	register_unserialize(CCN, data, total_size, version) ;
 	register_unserialize(UBC, data, total_size, version) ;

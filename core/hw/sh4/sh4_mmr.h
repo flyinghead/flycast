@@ -1,4 +1,5 @@
 #pragma once
+#include <array>
 #include "types.h"
 #include "../sh4/sh4_if.h"
 
@@ -12,16 +13,16 @@ void map_p4();
 
 #define sq_both ((u8*)sh4rcb.sq_buffer)
 
-extern Array<RegisterStruct> CCN;  //CCN  : 14 registers
-extern Array<RegisterStruct> UBC;  //UBC  : 9 registers
-extern Array<RegisterStruct> BSC;  //BSC  : 18 registers
-extern Array<RegisterStruct> DMAC; //DMAC : 17 registers
-extern Array<RegisterStruct> CPG;  //CPG  : 5 registers
-extern Array<RegisterStruct> RTC;  //RTC  : 16 registers
-extern Array<RegisterStruct> INTC; //INTC : 4 registers
-extern Array<RegisterStruct> TMU;  //TMU  : 12 registers
-extern Array<RegisterStruct> SCI;  //SCI  : 8 registers
-extern Array<RegisterStruct> SCIF; //SCIF : 10 registers
+extern std::array<RegisterStruct, 18> CCN;
+extern std::array<RegisterStruct, 9> UBC;
+extern std::array<RegisterStruct, 19> BSC;
+extern std::array<RegisterStruct, 17> DMAC;
+extern std::array<RegisterStruct, 5> CPG;
+extern std::array<RegisterStruct, 16> RTC;
+extern std::array<RegisterStruct, 5> INTC;
+extern std::array<RegisterStruct, 12> TMU;
+extern std::array<RegisterStruct, 8> SCI;
+extern std::array<RegisterStruct, 10> SCIF;
 
 /*
 //Region P4
@@ -38,7 +39,8 @@ void sh4_mmr_init();
 void sh4_mmr_reset(bool hard);
 void sh4_mmr_term();
 
-void sh4_rio_reg(Array<RegisterStruct>& arr, u32 addr, RegIO flags, u32 sz, RegReadAddrFP* rp=0, RegWriteAddrFP* wp=0);
+template<typename T>
+void sh4_rio_reg(T& arr, u32 addr, RegIO flags, u32 sz, RegReadAddrFP* rp=0, RegWriteAddrFP* wp=0);
 
 #define A7_REG_HASH(addr) ((addr>>16)&0x1FFF)
 

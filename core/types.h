@@ -302,7 +302,7 @@ using namespace std;
 void os_DebugBreak();
 #define dbgbreak os_DebugBreak()
 
-bool rc_serialize(void *src, unsigned int src_size, void **dest, unsigned int *total_size) ;
+bool rc_serialize(const void *src, unsigned int src_size, void **dest, unsigned int *total_size) ;
 bool rc_unserialize(void *src, unsigned int src_size, void **dest, unsigned int *total_size);
 bool dc_serialize(void **data, unsigned int *total_size);
 bool dc_unserialize(void **data, unsigned int *total_size);
@@ -341,8 +341,6 @@ typedef void RegWriteAddrFP(u32 addr, u32 data);
 */
 enum RegStructFlags
 {
-	REG_ACCESS_32=4,
-
 	REG_RF=8,
 	REG_WF=16,
 	REG_RO=32,

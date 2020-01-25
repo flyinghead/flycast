@@ -1,6 +1,7 @@
 /*
 	Sh4 internal register routing (P4 & 'area 7')
 */
+#include <array>
 #include "types.h"
 #include "sh4_mmr.h"
 
@@ -11,45 +12,44 @@
 
 //64bytes of sq // now on context ~
 
-Array<u8> OnChipRAM;
+std::array<u8, OnChipRAM_SIZE> OnChipRAM;
 
 //All registers are 4 byte aligned
 
-Array<RegisterStruct> CCN(18,true);  //CCN  : 16 registers
-Array<RegisterStruct> UBC(9,true);   //UBC  : 9 registers
-Array<RegisterStruct> BSC(19,true);  //BSC  : 18 registers
-Array<RegisterStruct> DMAC(17,true); //DMAC : 17 registers
-Array<RegisterStruct> CPG(5,true);   //CPG  : 5 registers
-Array<RegisterStruct> RTC(16,true);  //RTC  : 16 registers
-Array<RegisterStruct> INTC(5,true);  //INTC : 5 registers
-Array<RegisterStruct> TMU(12,true);  //TMU  : 12 registers
-Array<RegisterStruct> SCI(8,true);   //SCI  : 8 registers
-Array<RegisterStruct> SCIF(10,true); //SCIF : 10 registers
+std::array<RegisterStruct, 18> CCN;
+std::array<RegisterStruct, 9> UBC;
+std::array<RegisterStruct, 19> BSC;
+std::array<RegisterStruct, 17> DMAC;
+std::array<RegisterStruct, 5> CPG;
+std::array<RegisterStruct, 16> RTC;
+std::array<RegisterStruct, 5> INTC;
+std::array<RegisterStruct, 12> TMU;
+std::array<RegisterStruct, 8> SCI;
+std::array<RegisterStruct, 10> SCIF;
 
-Array<RegisterStruct> * const AllRegisters[] = { &CCN, &UBC, &BSC, &DMAC, &CPG, &RTC, &INTC, &TMU, &SCI, &SCIF };
-
-u32 sh4io_read_noacc(u32 addr) 
+static u32 sh4io_read_noacc(u32 addr)
 { 
 	INFO_LOG(SH4, "sh4io: Invalid read access @@ %08X", addr);
 	return 0; 
 } 
-void sh4io_write_noacc(u32 addr, u32 data) 
+static void sh4io_write_noacc(u32 addr, u32 data)
 { 
 	INFO_LOG(SH4, "sh4io: Invalid write access @@ %08X %08X", addr, data);
 	//verify(false); 
 }
-void sh4io_write_const(u32 addr, u32 data) 
+static void sh4io_write_const(u32 addr, u32 data)
 { 
 	INFO_LOG(SH4, "sh4io: Const write ignored @@ %08X <- %08X", addr, data);
 }
 
-void sh4_rio_reg(Array<RegisterStruct>& arr, u32 addr, RegIO flags, u32 sz, RegReadAddrFP* rf, RegWriteAddrFP* wf)
+template<class T>
+void sh4_rio_reg(T& arr, u32 addr, RegIO flags, u32 sz, RegReadAddrFP* rf, RegWriteAddrFP* wf)
 {
 	u32 idx=(addr&255)/4;
 
-	verify(idx<arr.Size);
+	verify(idx < arr.size());
 
-	arr[idx].flags = flags | REG_ACCESS_32;
+	arr[idx].flags = flags;
 
 	if (flags == RIO_NO_ACCESS)
 	{
@@ -71,9 +71,18 @@ void sh4_rio_reg(Array<RegisterStruct>& arr, u32 addr, RegIO flags, u32 sz, RegR
 			arr[idx].writeFunctionAddr=wf==0?&sh4io_write_noacc:wf;
 	}
 }
+template void sh4_rio_reg(std::array<RegisterStruct, 5>& arr, u32 addr, RegIO flags, u32 sz, RegReadAddrFP* rf, RegWriteAddrFP* wf);
+template void sh4_rio_reg(std::array<RegisterStruct, 8>& arr, u32 addr, RegIO flags, u32 sz, RegReadAddrFP* rf, RegWriteAddrFP* wf);
+template void sh4_rio_reg(std::array<RegisterStruct, 9>& arr, u32 addr, RegIO flags, u32 sz, RegReadAddrFP* rf, RegWriteAddrFP* wf);
+template void sh4_rio_reg(std::array<RegisterStruct, 10>& arr, u32 addr, RegIO flags, u32 sz, RegReadAddrFP* rf, RegWriteAddrFP* wf);
+template void sh4_rio_reg(std::array<RegisterStruct, 12>& arr, u32 addr, RegIO flags, u32 sz, RegReadAddrFP* rf, RegWriteAddrFP* wf);
+template void sh4_rio_reg(std::array<RegisterStruct, 16>& arr, u32 addr, RegIO flags, u32 sz, RegReadAddrFP* rf, RegWriteAddrFP* wf);
+template void sh4_rio_reg(std::array<RegisterStruct, 17>& arr, u32 addr, RegIO flags, u32 sz, RegReadAddrFP* rf, RegWriteAddrFP* wf);
+template void sh4_rio_reg(std::array<RegisterStruct, 18>& arr, u32 addr, RegIO flags, u32 sz, RegReadAddrFP* rf, RegWriteAddrFP* wf);
+template void sh4_rio_reg(std::array<RegisterStruct, 19>& arr, u32 addr, RegIO flags, u32 sz, RegReadAddrFP* rf, RegWriteAddrFP* wf);
 
-template<u32 sz>
-u32 sh4_rio_read(Array<RegisterStruct>& sb_regs, u32 addr)
+template<u32 sz, class T>
+u32 sh4_rio_read(T& regs, u32 addr)
 {	
 	u32 offset = addr&255;
 #ifdef TRACE
@@ -86,21 +95,21 @@ u32 sh4_rio_read(Array<RegisterStruct>& sb_regs, u32 addr)
 	offset>>=2;
 
 #ifdef TRACE
-	if (sb_regs[offset].flags & sz)
+	if (regs[offset].flags & sz)
 	{
 #endif
-		if (!(sb_regs[offset].flags & REG_RF) )
+		if (!(regs[offset].flags & REG_RF) )
 		{
 			if (sz==4)
-				return  sb_regs[offset].data32;
+				return  regs[offset].data32;
 			else if (sz==2)
-				return  sb_regs[offset].data16;
+				return  regs[offset].data16;
 			else 
-				return  sb_regs[offset].data8;
+				return  regs[offset].data8;
 		}
 		else
 		{
-			return sb_regs[offset].readFunctionAddr(addr);
+			return regs[offset].readFunctionAddr(addr);
 		}
 #ifdef TRACE
 	}
@@ -112,8 +121,8 @@ u32 sh4_rio_read(Array<RegisterStruct>& sb_regs, u32 addr)
 	return 0;
 }
 
-template<u32 sz>
-void sh4_rio_write(Array<RegisterStruct>& sb_regs, u32 addr, u32 data)
+template<u32 sz, class T>
+void sh4_rio_write(T& regs, u32 addr, u32 data)
 {
 	u32 offset = addr&255;
 #ifdef TRACE
@@ -124,23 +133,23 @@ void sh4_rio_write(Array<RegisterStruct>& sb_regs, u32 addr, u32 data)
 #endif
 offset>>=2;
 #ifdef TRACE
-	if (sb_regs[offset].flags & sz)
+	if (regs[offset].flags & sz)
 	{
 #endif
-		if (!(sb_regs[offset].flags & REG_WF) )
+		if (!(regs[offset].flags & REG_WF) )
 		{
 			if (sz==4)
-				sb_regs[offset].data32=data;
+				regs[offset].data32=data;
 			else if (sz==2)
-				sb_regs[offset].data16=(u16)data;
+				regs[offset].data16=(u16)data;
 			else
-				sb_regs[offset].data8=(u8)data;
+				regs[offset].data8=(u8)data;
 			return;
 		}
 		else
 		{
 			//printf("RSW: %08X\n",addr);
-			sb_regs[offset].writeFunctionAddr(addr,data);
+			regs[offset].writeFunctionAddr(addr,data);
 			return;
 		}
 #ifdef TRACE
@@ -794,25 +803,30 @@ void DYNACALL WriteMem_area7_OCR_T(u32 addr,T data)
 	}
 }
 
+template <class T>
+static void init_regs(T& regs)
+{
+	for (auto& reg : regs)
+	{
+		reg.flags = RIO_NO_ACCESS;
+		reg.readFunctionAddr = &sh4io_read_noacc;
+		reg.writeFunctionAddr = &sh4io_write_noacc;
+	}
+}
 
 //Init/Res/Term
 void sh4_mmr_init()
 {
-	OnChipRAM.Resize(OnChipRAM_SIZE,false);
-
-	for (u32 i=0;i<30;i++)
-	{
-		if (i<CCN.Size)  sh4_rio_reg(CCN,CCN_BASE_addr+i*4,RIO_NO_ACCESS,32);   //(16,true);    //CCN  : 14 registers
-		if (i<UBC.Size)  sh4_rio_reg(UBC,UBC_BASE_addr+i*4,RIO_NO_ACCESS,32);   //(9,true);     //UBC  : 9 registers
-		if (i<BSC.Size)  sh4_rio_reg(BSC,BSC_BASE_addr+i*4,RIO_NO_ACCESS,32);   //(19,true);    //BSC  : 18 registers
-		if (i<DMAC.Size) sh4_rio_reg(DMAC,DMAC_BASE_addr+i*4,RIO_NO_ACCESS,32); //(17,true);    //DMAC : 17 registers
-		if (i<CPG.Size)  sh4_rio_reg(CPG,CPG_BASE_addr+i*4,RIO_NO_ACCESS,32);   //(5,true);     //CPG  : 5 registers
-		if (i<RTC.Size)  sh4_rio_reg(RTC,RTC_BASE_addr+i*4,RIO_NO_ACCESS,32);   //(16,true);    //RTC  : 16 registers
-		if (i<INTC.Size) sh4_rio_reg(INTC,INTC_BASE_addr+i*4,RIO_NO_ACCESS,32); //(4,true);     //INTC : 4 registers
-		if (i<TMU.Size)  sh4_rio_reg(TMU,TMU_BASE_addr+i*4,RIO_NO_ACCESS,32);   //(12,true);    //TMU  : 12 registers
-		if (i<SCI.Size)  sh4_rio_reg(SCI,SCI_BASE_addr+i*4,RIO_NO_ACCESS,32);   //(8,true);     //SCI  : 8 registers
-		if (i<SCIF.Size) sh4_rio_reg(SCIF,SCIF_BASE_addr+i*4,RIO_NO_ACCESS,32); //(10,true);    //SCIF : 10 registers
-	}
+	init_regs(CCN);
+	init_regs(UBC);
+	init_regs(BSC);
+	init_regs(DMAC);
+	init_regs(CPG);
+	init_regs(RTC);
+	init_regs(INTC);
+	init_regs(TMU);
+	init_regs(SCI);
+	init_regs(SCIF);
 
 	//initialise Register structs
 	bsc_init();
@@ -830,11 +844,28 @@ void sh4_mmr_reset(bool hard)
 {
 	if (hard)
 	{
-		for (int i = 0; i < ARRAY_SIZE(AllRegisters); i++)
-			for (int j = 0; j < AllRegisters[i]->Size; j++)
-				(*AllRegisters[i])[j].reset();
+		for (auto& reg : CCN)
+			reg.reset();
+		for (auto& reg : UBC)
+			reg.reset();
+		for (auto& reg : BSC)
+			reg.reset();
+		for (auto& reg : DMAC)
+			reg.reset();
+		for (auto& reg : CPG)
+			reg.reset();
+		for (auto& reg : RTC)
+			reg.reset();
+		for (auto& reg : INTC)
+			reg.reset();
+		for (auto& reg : TMU)
+			reg.reset();
+		for (auto& reg : SCI)
+			reg.reset();
+		for (auto& reg : SCIF)
+			reg.reset();
 	}
-	OnChipRAM.Zero();
+	OnChipRAM = {};
 	//Reset register values
 	bsc_reset(hard);
 	ccn_reset();
@@ -859,7 +890,6 @@ void sh4_mmr_term()
 	cpg_term();
 	ccn_term();
 	bsc_term();
-	OnChipRAM.Free();
 }
 //Mem map :)
 

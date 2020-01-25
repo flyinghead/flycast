@@ -16,7 +16,7 @@
 
 extern void dc_request_reset();
 
-Array<RegisterStruct> sb_regs(0x540);
+std::array<RegisterStruct, 0x540> sb_regs;
 
 //(addr>= 0x005F6800) && (addr<=0x005F7CFF) -> 0x1500 bytes -> 0x540 possible registers , 125 actually exist only
 // System Control Reg.   //0x100 bytes
@@ -127,9 +127,9 @@ void sb_rio_register(u32 reg_addr, RegIO flags, RegReadAddrFP* rf, RegWriteAddrF
 {
 	u32 idx=(reg_addr-SB_BASE)/4;
 
-	verify(idx<sb_regs.Size);
+	verify(idx < sb_regs.size());
 
-	sb_regs[idx].flags = flags | REG_ACCESS_32;
+	sb_regs[idx].flags = flags;
 
 	if (flags == RIO_NO_ACCESS)
 	{
@@ -180,12 +180,8 @@ void SB_SFRES_write32(u32 addr, u32 data)
 }
 void sb_Init()
 {
-	sb_regs.Zero();
-
-	for (u32 i=0;i<sb_regs.Size;i++)
-	{
-		sb_rio_register(SB_BASE+i*4,RIO_NO_ACCESS);
-	}
+	for (u32 i = 0; i < sb_regs.size(); i++)
+		sb_rio_register(SB_BASE + i * 4, RIO_NO_ACCESS);
 
 	//0x005F6800    SB_C2DSTAT  RW  ch2-DMA destination address
 	sb_rio_register(SB_C2DSTAT_addr,RIO_DATA);
@@ -612,8 +608,8 @@ void sb_Reset(bool hard)
 {
 	if (hard)
 	{
-		for (u32 i = 0; i < sb_regs.Size; i++)
-			sb_regs[i].reset();
+		for (auto& reg : sb_regs)
+			reg.reset();
 	}
 	SB_ISTNRM = 0;
 	SB_FFST_rc = 0;
