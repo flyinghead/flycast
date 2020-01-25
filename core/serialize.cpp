@@ -25,7 +25,7 @@
 #include "hw/sh4/dyna/ngen.h"
 #include "hw/naomi/naomi_cart.h"
 
-#define REICAST_SKIP(size) do { *(u8**)data += (size); *total_size += (size); } while (false)
+#define REICAST_SKIP(size) do { if (*data) *(u8**)data += (size); *total_size += (size); } while (false)
 
 extern "C" void DYNACALL TAWriteSQ(u32 address,u8* sqb);
 
