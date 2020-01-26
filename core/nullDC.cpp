@@ -388,6 +388,16 @@ void LoadSpecialSettings()
 			INFO_LOG(BOOT, "Enabling specific JVS setup for game %s", naomi_game_id);
 			settings.input.JammaSetup = 7;
 		}
+		else if (!strcmp("WORLD KICKS", naomi_game_id))
+		{
+			INFO_LOG(BOOT, "Enabling specific JVS setup for game %s", naomi_game_id);
+			settings.input.JammaSetup = 10;
+		}
+		else if (!strcmp("WORLD KICKS PCB", naomi_game_id))
+		{
+			INFO_LOG(BOOT, "Enabling specific JVS setup for game %s", naomi_game_id);
+			settings.input.JammaSetup = 11;
+		}
 		if (!strcmp("COSMIC SMASH IN JAPAN", naomi_game_id))
 		{
 			INFO_LOG(BOOT, "Enabling translucent depth multipass for game %s", naomi_game_id);

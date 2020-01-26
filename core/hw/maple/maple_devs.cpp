@@ -16,8 +16,6 @@
 
 #define LOGJVS(...) DEBUG_LOG(JVS, __VA_ARGS__)
 
-#define SAVE_EEPROM 1
-
 const char* maple_sega_controller_name = "Dreamcast Controller";
 const char* maple_sega_vmu_name = "Visual Memory";
 const char* maple_sega_kbd_name = "Emulated Dreamcast Keyboard";
@@ -1494,7 +1492,19 @@ public:
 
 protected:
 	virtual const char *get_id() = 0;
-	virtual u16 get_analog_value(int axis);
+	virtual u16 read_analog_axis(int player_num, int player_axis);
+	virtual u32 read_digital_in(int player_num) {
+		if (player_num >= ARRAY_SIZE(kcode))
+			return 0;
+		u32 buttons = 0;
+		u32 keycode = ~kcode[player_num];
+		for (int i = 0; i < 16; i++)
+		{
+			if ((keycode & (1 << i)) != 0)
+				buttons |= naomi_button_mapping[i];
+		}
+		return buttons;
+	}
 
 	u32 player_count = 0;
 	u32 digital_in_count = 0;
@@ -1635,7 +1645,7 @@ public:
 protected:
 	virtual const char *get_id() override { return "namco ltd.;FCB;Ver1.0;JPN,Touch Panel & Multipurpose"; }
 
-	virtual u16 get_analog_value(int axis) override {
+	virtual u16 read_analog_axis(int player_num, int player_axis) override {
 		if (init_in_progress)
 			return 0;
 		if (mo_x_abs < 0 || mo_x_abs > 639 || mo_y_abs < 0 || mo_y_abs > 479)
@@ -1661,6 +1671,125 @@ public:
 	}
 protected:
 	virtual const char *get_id() override { return "namco ltd.;FCA-1;Ver1.01;JPN,Multipurpose + Rotary Encoder"; }
+};
+
+// World Kicks
+class jvs_namco_v226 : public jvs_io_board
+{
+public:
+	jvs_namco_v226(u8 node_id, maple_naomi_jamma *parent, int first_player = 0)
+		: jvs_io_board(node_id, parent, first_player)
+	{
+		player_count = 1;
+		digital_in_count = 16;
+		coin_input_count = 1;
+		analog_count = 12;
+		output_count = 6;
+	}
+protected:
+	virtual const char *get_id() override { return "SEGA ENTERPRISES,LTD.;I/O BD JVS;837-13551 ;Ver1.00;98/10"; }
+
+	virtual u32 read_digital_in(int player_num) override {
+		u32 keycode1 = jvs_io_board::read_digital_in(0);
+		u32 keycode2 = jvs_io_board::read_digital_in(1);
+		u32 keycode3 = jvs_io_board::read_digital_in(2);
+		u32 keycode4 = jvs_io_board::read_digital_in(3);
+				// main button
+		return ((keycode1 & NAOMI_BTN0_KEY) << 6)		// start
+				| ((keycode2 & NAOMI_BTN0_KEY) << 2)	// left
+				| ((keycode3 & NAOMI_BTN0_KEY) << 1)	// right
+				| ((keycode4 & NAOMI_BTN0_KEY) >> 1)	// btn1
+				// soft kick
+//				| ((~keycode1 & NAOMI_BTN1_KEY) >> 1)	// btn2
+//				| ((~keycode2 & NAOMI_BTN1_KEY) >> 3)	// btn4
+//				| ((~keycode3 & NAOMI_BTN1_KEY) >> 5)	// btn6
+//				| ((~keycode4 & NAOMI_BTN1_KEY) >> 7)	// test?
+//				// hard kick
+//				| ((~keycode1 & NAOMI_BTN2_KEY) >> 1)	// btn3
+//				| ((~keycode2 & NAOMI_BTN2_KEY) >> 3)	// btn5
+//				| ((~keycode3 & NAOMI_BTN2_KEY) >> 5)	// btn7
+//				| ((~keycode4 & NAOMI_BTN2_KEY) >> 7)	// coin?
+				// enter
+				| ((keycode1 & NAOMI_BTN3_KEY) << 3)	// btn0
+				// service menu
+				| (keycode1 & (NAOMI_TEST_KEY | NAOMI_SERVICE_KEY | NAOMI_UP_KEY | NAOMI_DOWN_KEY));
+	}
+
+	virtual u16 read_analog_axis(int player_num, int player_axis) override {
+		switch (player_axis)
+		{
+		case 0:
+			return std::min(0xff, 0x80 - joyx[0]) << 8;
+		case 1:
+			return std::min(0xff, 0x80 - joyy[0]) << 8;
+		case 2:
+			return std::min(0xff, 0x80 - joyx[1]) << 8;
+		case 3:
+			return std::min(0xff, 0x80 - joyy[1]) << 8;
+		case 4:
+			return std::min(0xff, 0x80 - joyx[2]) << 8;
+		case 5:
+			return std::min(0xff, 0x80 - joyy[2]) << 8;
+		case 6:
+			return std::min(0xff, 0x80 - joyx[3]) << 8;
+		case 7:
+			return std::min(0xff, 0x80 - joyy[3]) << 8;
+		case 8:
+			return (rt[0] * 0x38 / 0xFF + 0xC7) << 8;
+		case 9:
+			return (rt[1] * 0x38 / 0xFF + 0xC7) << 8;
+		case 10:
+			return (rt[2] * 0x38 / 0xFF + 0xC7) << 8;
+		case 11:
+			return (rt[3] * 0x38 / 0xFF + 0xC7) << 8;
+		default:
+			return 0x8000;
+		}
+	}
+};
+
+// World Kicks PCB
+class jvs_namco_v226_pcb : public jvs_io_board
+{
+public:
+	jvs_namco_v226_pcb(u8 node_id, maple_naomi_jamma *parent, int first_player = 0)
+		: jvs_io_board(node_id, parent, first_player)
+	{
+		player_count = 2;
+		digital_in_count = 16;
+		coin_input_count = 1;
+		analog_count = 12;
+		output_count = 6;
+	}
+protected:
+	virtual const char *get_id() override { return "SEGA ENTERPRISES,LTD.;I/O BD JVS;837-13551 ;Ver1.00;98/10"; }
+
+	virtual u32 read_digital_in(int player_num) override {
+		u32 keycode = jvs_io_board::read_digital_in(player_num);
+		u8 trigger = rt[player_num] >> 2;
+				// Ball button
+		return ((trigger & 0x20) << 3) | ((trigger & 0x10) << 5) | ((trigger & 0x08) << 7)
+				| ((trigger & 0x04) << 9) | ((trigger & 0x02) << 11) | ((trigger & 0x01) << 13)
+				// other buttons
+				| (keycode & (NAOMI_SERVICE_KEY | NAOMI_TEST_KEY | NAOMI_START_KEY))
+				| ((keycode & NAOMI_BTN0_KEY) >> 4);		// remap button4 to button0 (change button)
+	}
+
+	virtual u16 read_analog_axis(int player_num, int player_axis) override {
+		switch (player_axis)
+		{
+		case 0:
+			return (joyx[0] + 128) << 8;
+		case 1:
+			return std::min(0xff, 0x80 - joyy[0]) << 8;
+		case 4:
+			return (joyx[1] + 128) << 8;
+		case 5:
+			return std::min(0xff, 0x80 - joyy[1]) << 8;
+		default:
+			return 0x8000;
+		}
+	}
 };
 
 struct maple_naomi_jamma : maple_sega_controller
@@ -1710,6 +1839,12 @@ struct maple_naomi_jamma : maple_sega_controller
 			break;
 		case 9: // Touch de Uno
 			io_boards.push_back(new jvs_837_13844_touch(1, this));
+			break;
+		case 10: // World Kicks
+			io_boards.push_back(new jvs_namco_v226(1, this));
+			break;
+		case 11: // World Kicks PCB
+			io_boards.push_back(new jvs_namco_v226_pcb(1, this));
 			break;
 		}
 	}
@@ -1998,7 +2133,6 @@ struct maple_naomi_jamma : maple_sega_controller
 				//printState(Command,buffer_in,buffer_in_len);
 				memcpy(EEPROM + address, dma_buffer_in + 4, size);
 
-#ifdef SAVE_EEPROM
 				string nvmemSuffix = cfgLoadStr("net", "nvmem", "");
 				string eeprom_file = get_game_save_prefix() + nvmemSuffix + ".eeprom";
 				FILE* f = fopen(eeprom_file.c_str(), "wb");
@@ -2010,7 +2144,7 @@ struct maple_naomi_jamma : maple_sega_controller
 				}
 				else
 					WARN_LOG(MAPLE, "EEPROM SAVE FAILED to %s", eeprom_file.c_str());
-#endif
+
 				w8(MDRS_JVSReply);
 				w8(0x00);
 				w8(0x20);
@@ -2023,7 +2157,6 @@ struct maple_naomi_jamma : maple_sega_controller
 
 			case 0x3:	//EEPROM read
 			{
-#ifdef SAVE_EEPROM
 				if (!EEPROM_loaded)
 				{
 					EEPROM_loaded = true;
@@ -2044,7 +2177,6 @@ struct maple_naomi_jamma : maple_sega_controller
 					else
 						DEBUG_LOG(MAPLE, "EEPROM file not found at %s and no default found", eeprom_file.c_str());
 				}
-#endif
 				//printf("EEprom READ\n");
 				int address = dma_buffer_in[1];
 				//printState(Command,buffer_in,buffer_in_len);
@@ -2290,19 +2422,19 @@ struct maple_naomi_jamma : maple_sega_controller
 	}
 };
 
-u16 jvs_io_board::get_analog_value(int axis)
+u16 jvs_io_board::read_analog_axis(int player_num, int player_axis)
 {
-	switch (axis)
+	switch (player_axis)
 	{
 	case 0:
-		return (joyx[first_player] + 128) << 8;
+		return (joyx[player_num] + 128) << 8;
 	case 1:
-		return (joyy[first_player] + 128) << 8;
+		return (joyy[player_num] + 128) << 8;
 	// TODO right analog stick
 //	case 2:
-//		return (joyrx[first_player] + 128) << 8;
+//		return (joyrx[player_num] + 128) << 8;
 //	case 3:
-//		return (joyry[first_player] + 128) << 8;
+//		return (joyry[player_num] + 128) << 8;
 	}
 	return 0x8000;
 }
@@ -2335,13 +2467,11 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 		break;
 
 	case 0x10:	// Read ID data
-		{
-			JVS_STATUS1();	// status
-			JVS_STATUS1();	// report
-			for (const char *p = get_id(); *p != 0; )
-				JVS_OUT(*p++);
-			JVS_OUT(0);
-		}
+		JVS_STATUS1();	// status
+		JVS_STATUS1();	// report
+		for (const char *p = get_id(); *p != 0; )
+			JVS_OUT(*p++);
+		JVS_OUT(0);
 		break;
 
 	case 0x11:	// Get command format version
@@ -2453,24 +2583,12 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 					{
 						JVS_STATUS1();	// report byte
 
-						u32 keycode = ~kcode[0];
-						u32 keycode2 = ~kcode[1];
-						u16 buttons[4] = { 0 };
-						for (int player = 0; player < buffer_in[cmdi + 1] && first_player + player < ARRAY_SIZE(kcode); player++)
-						{
-							u32 keycode = ~kcode[first_player + player];
-							for (int i = 0; i < 16; i++)
-							{
-								if ((keycode & (1 << i)) != 0)
-									buttons[player] |= naomi_button_mapping[i];
-							}
-						}
-
 						LOGJVS("btns ");
-						JVS_OUT((buttons[0] & NAOMI_TEST_KEY) ? 0x80 : 0x00); // test, tilt1, tilt2, tilt3, unused, unused, unused, unused
 						for (int player = 0; player < buffer_in[cmdi + 1]; player++)
 						{
-							u16 cur_btns = first_player + player < ARRAY_SIZE(buttons) ? buttons[first_player + player] : 0;
+							u16 cur_btns = read_digital_in(first_player + player);
+							if (player == 0)
+								JVS_OUT((cur_btns & NAOMI_TEST_KEY) ? 0x80 : 0x00); // test, tilt1, tilt2, tilt3, unused, unused, unused, unused
 							LOGJVS("P%d %02x ", player + 1 + first_player, cur_btns >> 8);
 							JVS_OUT(cur_btns >> 8);
 							if (buffer_in[cmdi + 2] == 2)
@@ -2562,7 +2680,7 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 							}
 							else
 							{
-								axis_value = get_analog_value(full_axis_count);
+								axis_value = read_analog_axis(first_player, full_axis_count);
 								full_axis_count++;
 							}
 							LOGJVS("%d:%4x ", axis, axis_value);
