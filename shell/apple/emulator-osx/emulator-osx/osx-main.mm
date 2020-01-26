@@ -133,9 +133,26 @@ extern "C" void emu_gles_init(int width, int height) {
 	// Calculate screen DPI
 	NSScreen *screen = [NSScreen mainScreen];
 	NSDictionary *description = [screen deviceDescription];
-	NSSize displayPixelSize = [[description objectForKey:NSDeviceSize] sizeValue];
-	CGSize displayPhysicalSize = CGDisplayScreenSize([[description objectForKey:@"NSScreenNumber"] unsignedIntValue]);
-	screen_dpi = (int)(displayPixelSize.width / displayPhysicalSize.width) * 25.4f;
+    CGDirectDisplayID displayID = [[description objectForKey:@"NSScreenNumber"] unsignedIntValue];
+	CGSize displayPhysicalSize = CGDisplayScreenSize(displayID);
+    
+    //Neither CGDisplayScreenSize(description's NSScreenNumber) nor [NSScreen backingScaleFactor] can calculate the correct dpi in macOS. E.g. backingScaleFactor is always 2 in all display modes for rMBP 16"
+    NSSize displayNativeSize;
+    CFArrayRef allDisplayModes = CGDisplayCopyAllDisplayModes(displayID, NULL);
+    CFIndex n = CFArrayGetCount(allDisplayModes);
+    for(int i = 0; i < n; ++i)
+    {
+        CGDisplayModeRef m = (CGDisplayModeRef)CFArrayGetValueAtIndex(allDisplayModes, i);
+        if(CGDisplayModeGetIOFlags(m) & kDisplayModeNativeFlag)
+        {
+            displayNativeSize.width = CGDisplayModeGetPixelWidth(m);
+            displayNativeSize.height = CGDisplayModeGetPixelHeight(m);
+            break;
+        }
+    }
+    CFRelease(allDisplayModes);
+    
+	screen_dpi = (int)(displayNativeSize.width / displayPhysicalSize.width * 25.4f);
 	screen_width = width;
 	screen_height = height;
 

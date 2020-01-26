@@ -22,7 +22,8 @@ class EmuGLView: NSOpenGLView, NSWindowDelegate {
 
         openGLContext!.makeCurrentContext()
         
-        if (emu_single_frame(Int32(dirtyRect.width), Int32(dirtyRect.height)) != 0)
+        let rect = convertToBacking(dirtyRect)
+        if (emu_single_frame(Int32(rect.width), Int32(rect.height)) != 0)
         {
             openGLContext!.flushBuffer()
         }
