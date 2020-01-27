@@ -45,9 +45,9 @@ InputDescriptors _18wheelr_inputs = {
 			{ 0 },
 	  },
 	  {
-			{ "HANDLE", Full },
-			{ "ACCEL", Half },
-			{ "BRAKE", Half },
+			{ "HANDLE", Full, 0 },
+			{ "ACCEL", Half, 4 },
+			{ "BRAKE", Half, 5 },
 			{ NULL },
 	  },
 };
@@ -63,19 +63,39 @@ InputDescriptors alienfnt_inputs = {
 			{ 0 },
 	  },
 	  {
-			{ "WHEEL", Full },
-			{ "RIGHT PEDAL", Half },
-			{ "LEFT PEDAL", Half },
+			{ "WHEEL", Full, 0 },
+			{ "RIGHT PEDAL", Half, 4 },
+			{ "LEFT PEDAL", Half, 5 },
+			{ NULL },
+	  },
+};
+
+InputDescriptors alpilot_inputs = {
+	  {
+			{ NAOMI_BTN0_KEY, "LANDING GEAR SW" },
+			{ NAOMI_BTN1_KEY, "VIEW CHANGE" },
+			{ NAOMI_BTN2_KEY, "FLAP SWITCH" },
+			NAO_START_DESC
+			NAO_BASE_BTN_DESC
+			{ 0 },
+	  },
+	  {
+			{ "ELEVATOR", Full, 0 },
+			{ "AILERON", Full, 1 },
+			{ "", Full, 2 },
+			{ "RUDDER PEDAL", Full, 3 },
+			{ "THRUST LEVER L", Half, 4 },
+			{ "THRUST LEVER R", Half, 5 },
 			{ NULL },
 	  },
 };
 
 InputDescriptors capsnk_inputs = {
 	  {
-			{ NAOMI_BTN0_KEY, "SHOT1" },
-			{ NAOMI_BTN1_KEY, "SHOT2" },
-			{ NAOMI_BTN3_KEY, "SHOT4" },
-			{ NAOMI_BTN4_KEY, "SHOT5" },
+			{ NAOMI_BTN0_KEY, "LIGHT PUNCH" },
+			{ NAOMI_BTN1_KEY, "STRONG PUNCH" },
+			{ NAOMI_BTN3_KEY, "LIGHT KICK" },
+			{ NAOMI_BTN4_KEY, "STRONG KICK" },
 			{ NAOMI_UP_KEY, "UP" },
 			{ NAOMI_DOWN_KEY, "DOWN" },
 			{ NAOMI_LEFT_KEY, "LEFT" },
@@ -98,9 +118,9 @@ InputDescriptors crzytaxi_inputs = {
 			{ 0 },
 	  },
 	  {
-			{ "HANDLE", Full },
-			{ "ACCEL", Half },
-			{ "BRAKE", Half },
+			{ "HANDLE", Full, 0 },
+			{ "ACCEL", Half, 4 },
+			{ "BRAKE", Half, 5 },
 			{ NULL },
 	  },
 };
@@ -136,6 +156,20 @@ InputDescriptors trigger_inputs = {
 	  },
 };
 
+InputDescriptors deathcox_inputs = {
+	  {
+			{ NAOMI_BTN0_KEY, "TRIGGER" },
+			NAO_START_DESC
+			NAO_BASE_BTN_DESC
+			{ 0 },
+	  },
+	  {
+			{ "GUN-X", Full, 0 },
+			{ "GUN-Y", Full, 1 },
+			{ NULL },
+	  },
+};
+
 InputDescriptors gunsur2_inputs = {
 	  {
 			{ NAOMI_BTN0_KEY, "GUN BUTTON" },
@@ -147,9 +181,9 @@ InputDescriptors gunsur2_inputs = {
 			{ 0 },
 	  },
 	  {
-			{ "ROLL", Full },
-			{ "PITCH", Full },
-			{ "YAW", Full },
+			{ "ROLL", Full, 0 },
+			{ "PITCH", Full, 1 },
+			{ "YAW", Full, 2 },
 			{ NULL },
 	  },
 };
@@ -163,21 +197,21 @@ InputDescriptors jambo_inputs = {
 			{ 0 },
 	  },
 	  {
-			{ "HANDLE", Full },
-			{ "ACCEL", Half },
-			{ "BRAKE", Half },
+			{ "HANDLE", Full, 0 },
+			{ "ACCEL", Half, 4 },
+			{ "BRAKE", Half, 5 },
 			{ NULL },
 	  },
 };
 
 InputDescriptors mvsc2_inputs = {
 	  {
-			{ NAOMI_BTN0_KEY, "SHOT1" },
-			{ NAOMI_BTN1_KEY, "SHOT2" },
-			{ NAOMI_BTN2_KEY, "SHOT3" },
-			{ NAOMI_BTN3_KEY, "SHOT4" },
-			{ NAOMI_BTN4_KEY, "SHOT5" },
-			{ NAOMI_BTN5_KEY, "SHOT6" },
+			{ NAOMI_BTN0_KEY, "LIGHT PUNCH" },
+			{ NAOMI_BTN1_KEY, "STRONG PUNCH" },
+			{ NAOMI_BTN2_KEY, "ASSIST A" },
+			{ NAOMI_BTN3_KEY, "LIGHT KICK" },
+			{ NAOMI_BTN4_KEY, "STRONG KICK" },
+			{ NAOMI_BTN5_KEY, "ASSIST B" },
 			{ NAOMI_UP_KEY, "UP" },
 			{ NAOMI_DOWN_KEY, "DOWN" },
 			{ NAOMI_LEFT_KEY, "LEFT" },
@@ -251,6 +285,40 @@ InputDescriptors vtenis2c_inputs = {
 	  },
 };
 
+InputDescriptors monkeyba_inputs = {
+	  {
+			NAO_START_DESC
+			NAO_BASE_BTN_DESC
+			{ 0 },
+	  },
+	  {
+			{ "STICK V", Full, 1 },
+			{ "STICK H", Full, 0 },
+			{ NULL },
+	  },
+};
+
+InputDescriptors cvs2_inputs = {
+	  {
+			{ NAOMI_BTN0_KEY, "LIGHT PUNCH" },
+			{ NAOMI_BTN1_KEY, "MEDIUM PUNCH" },
+			{ NAOMI_BTN2_KEY, "STRONG PUNCH" },
+			{ NAOMI_BTN3_KEY, "LIGHT KICK" },
+			{ NAOMI_BTN4_KEY, "MEDIUM KICK" },
+			{ NAOMI_BTN5_KEY, "STRONG KICK" },
+			{ NAOMI_UP_KEY, "UP" },
+			{ NAOMI_DOWN_KEY, "DOWN" },
+			{ NAOMI_LEFT_KEY, "LEFT" },
+			{ NAOMI_RIGHT_KEY, "RIGHT" },
+			NAO_START_DESC
+			NAO_BASE_BTN_DESC
+			{ 0 },
+	  },
+	  {
+			{ NULL },
+	  },
+};
+
 //
 // AtomisWave games
 //
@@ -270,12 +338,47 @@ InputDescriptors ftspeed_inputs = {
 			{ 0 },
 	  },
 	  {
-			{ "STEERING WHEEL", Full },
-			{ "GAS PEDAL", Half },
-			{ "BRAKE PEDAL", Half },
+			{ "STEERING WHEEL", Full, 0 },
+			{ "GAS PEDAL", Half, 1 },
+			{ "BRAKE PEDAL", Half, 2 },
 			{ NULL },
 	  },
 };
+
+InputDescriptors kofnw_inputs = {
+	  {
+			{ AWAVE_BTN0_KEY, "LIGHT PUNCH" },
+			{ AWAVE_BTN1_KEY, "STRONG PUNCH" },
+			{ AWAVE_BTN2_KEY, "HEAT MODE" },
+			{ AWAVE_BTN3_KEY, "LIGHT KICK" },
+			{ AWAVE_BTN4_KEY, "STRONG KICK" },
+			{ AWAVE_UP_KEY, "UP" },
+			{ AWAVE_DOWN_KEY, "DOWN" },
+			{ AWAVE_LEFT_KEY, "LEFT" },
+			{ AWAVE_RIGHT_KEY, "RIGHT" },
+			AW_START_DESC
+			AW_BASE_BTN_DESC
+			{ 0 },
+	  }
+};
+
+InputDescriptors kofxi_inputs = {
+	  {
+			{ AWAVE_BTN0_KEY, "LIGHT PUNCH" },
+			{ AWAVE_BTN1_KEY, "STRONG PUNCH" },
+			{ AWAVE_BTN2_KEY, "SPECIAL ATTACK" },
+			{ AWAVE_BTN3_KEY, "LIGHT KICK" },
+			{ AWAVE_BTN4_KEY, "STRONG KICK" },
+			{ AWAVE_UP_KEY, "UP" },
+			{ AWAVE_DOWN_KEY, "DOWN" },
+			{ AWAVE_LEFT_KEY, "LEFT" },
+			{ AWAVE_RIGHT_KEY, "RIGHT" },
+			AW_START_DESC
+			AW_BASE_BTN_DESC
+			{ 0 },
+	  }
+};
+
 InputDescriptors maxspeed_inputs = {
 	  {
 			{ AWAVE_UP_KEY, "HIGH SHIFT" },
@@ -285,11 +388,56 @@ InputDescriptors maxspeed_inputs = {
 			{ 0 },
 	  },
 	  {
-			{ "STEERING", Full },
-			{ "ACCELERATOR", Half },
-			{ "BRAKE", Half },
+			{ "STEERING", Full, 0 },
+			{ "ACCELERATOR", Half, 1 },
+			{ "BRAKE", Half, 2 },
 			{ NULL },
 	  },
 };
 
+InputDescriptors ngbc_inputs = {
+	  {
+			{ AWAVE_BTN0_KEY, "LIGHT PUNCH" },
+			{ AWAVE_BTN1_KEY, "STRONG PUNCH" },
+			{ AWAVE_BTN2_KEY, "SWAP CHARACTERS" },
+			{ AWAVE_BTN3_KEY, "LIGHT KICK" },
+			{ AWAVE_BTN4_KEY, "STRONG KICK" },
+			{ AWAVE_UP_KEY, "UP" },
+			{ AWAVE_DOWN_KEY, "DOWN" },
+			{ AWAVE_LEFT_KEY, "LEFT" },
+			{ AWAVE_RIGHT_KEY, "RIGHT" },
+			AW_START_DESC
+			AW_BASE_BTN_DESC
+			{ 0 },
+	  }
+};
+
+InputDescriptors samsptk_inputs = {
+	  {
+			{ AWAVE_BTN0_KEY, "LIGHT SLASH" },
+			{ AWAVE_BTN1_KEY, "MEDIUM SLASH" },
+			{ AWAVE_BTN2_KEY, "STRONG SLASH" },
+			{ AWAVE_BTN3_KEY, "KICK" },
+			{ AWAVE_BTN4_KEY, "SPECIAL EVASION" },
+			{ AWAVE_UP_KEY, "UP" },
+			{ AWAVE_DOWN_KEY, "DOWN" },
+			{ AWAVE_LEFT_KEY, "LEFT" },
+			{ AWAVE_RIGHT_KEY, "RIGHT" },
+			AW_START_DESC
+			AW_BASE_BTN_DESC
+			{ 0 },
+	  }
+};
+
+InputDescriptors blockpong_inputs = {
+	  {
+			AW_START_DESC
+			AW_BASE_BTN_DESC
+			{ 0 },
+	  },
+	  {
+			{ "ANALOG X", Full, 0, true },
+			{ NULL },
+	  },
+};
 #endif /* CORE_HW_NAOMI_NAOMI_ROMS_INPUT_H_ */

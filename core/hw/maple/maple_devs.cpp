@@ -207,24 +207,13 @@ struct maple_sega_controller: maple_base
 		if (index == 2 || index == 3)
 		{
 			// Limit the magnitude of the analog axes to 128
-			int xaxis = pjs.joy[PJAI_X1] - 128;
-			int yaxis = pjs.joy[PJAI_Y1] - 128;
-			float mag = xaxis * xaxis + yaxis * yaxis;
-			if (mag > 128.f * 128.f)
-			{
-				mag = sqrtf(mag) / 128.f;
-				if (index == 2)
-					return (u32)lroundf(xaxis / mag) + 128;
-				else
-					return (u32)lroundf(yaxis / mag) + 128;
-			}
+			s8 xaxis = pjs.joy[PJAI_X1] - 128;
+			s8 yaxis = pjs.joy[PJAI_Y1] - 128;
+			limit_joystick_magnitude<128>(xaxis, yaxis);
+			if (index == 2)
+				return xaxis + 128;
 			else
-			{
-				if (index == 2)
-					return pjs.joy[PJAI_X1];
-				else
-					return pjs.joy[PJAI_Y1];
-			}
+				return yaxis + 128;
 		}
 		else if (index == 0)
 			return pjs.trigger[PJTI_R];		// Right trigger
@@ -311,7 +300,7 @@ struct maple_sega_controller: maple_base
 				//1
 				w8(get_analog_axis(3, pjs));
 
-				//not used
+				//not used on dreamcast
 				//1
 				w8(get_analog_axis(4, pjs));
 				//1
@@ -343,19 +332,13 @@ struct maple_atomiswave_controller: maple_sega_controller
 	}
 
 	virtual u32 get_analog_axis(int index, const PlainJoystickState &pjs) override {
-		switch (index)
-		{
-		case 2:
-			return pjs.joy[PJAI_X1];
-		case 3:
-			return pjs.joy[PJAI_Y1];
-		case 4:
-			return pjs.joy[PJAI_X2];
-		case 5:
-			return pjs.joy[PJAI_Y2];
-		default:
+		if (index < 2 || index > 5)
 			return 0x80;
-		}
+		index -= 2;
+		if (NaomiGameInputs != NULL && NaomiGameInputs->axes[index].name != NULL && NaomiGameInputs->axes[index].inverted)
+			return pjs.joy[index] == 0 ? 0xff : 0x100 - pjs.joy[index];
+		else
+			return pjs.joy[index];
 	}
 };
 
@@ -377,8 +360,7 @@ struct maple_sega_twinstick: maple_sega_controller
 		return kcode | 0x0101;
 	}
 
-	virtual MapleDeviceType get_device_type() override
-	{
+	virtual MapleDeviceType get_device_type() override {
 		return MDT_TwinStick;
 	}
 
@@ -386,8 +368,7 @@ struct maple_sega_twinstick: maple_sega_controller
 		return 0x80;
 	}
 
-	virtual const char *get_device_name() override
-	{
+	virtual const char *get_device_name() override {
 		return maple_sega_twinstick_name;
 	}
 };
@@ -411,8 +392,7 @@ struct maple_ascii_stick: maple_sega_controller
 		return kcode | 0xF800;
 	}
 
-	virtual MapleDeviceType get_device_type() override
-	{
+	virtual MapleDeviceType get_device_type() override {
 		return MDT_AsciiStick;
 	}
 
@@ -420,8 +400,7 @@ struct maple_ascii_stick: maple_sega_controller
 		return 0x80;
 	}
 
-	virtual const char *get_device_name() override
-	{
+	virtual const char *get_device_name() override {
 		return maple_ascii_stick_name;
 	}
 };
@@ -1714,38 +1693,53 @@ protected:
 				// service menu
 				| (keycode1 & (NAOMI_TEST_KEY | NAOMI_SERVICE_KEY | NAOMI_UP_KEY | NAOMI_DOWN_KEY));
 	}
+	u16 read_joystick_x(int joy_num)
+	{
+		s8 axis_x = joyx[joy_num];
+		axis_y = joyy[joy_num];
+		limit_joystick_magnitude<64>(axis_x, axis_y);
+		return std::min(0xff, 0x80 - axis_x) << 8;
+	}
+
+	u16 read_joystick_y(int joy_num)
+	{
+		return std::min(0xff, 0x80 - axis_y) << 8;
+	}
 
 	virtual u16 read_analog_axis(int player_num, int player_axis) override {
 		switch (player_axis)
 		{
 		case 0:
-			return std::min(0xff, 0x80 - joyx[0]) << 8;
+			return read_joystick_x(0);
 		case 1:
-			return std::min(0xff, 0x80 - joyy[0]) << 8;
+			return read_joystick_y(0);
 		case 2:
-			return std::min(0xff, 0x80 - joyx[1]) << 8;
+			return read_joystick_x(1);
 		case 3:
-			return std::min(0xff, 0x80 - joyy[1]) << 8;
+			return read_joystick_y(1);
 		case 4:
-			return std::min(0xff, 0x80 - joyx[2]) << 8;
+			return read_joystick_x(2);
 		case 5:
-			return std::min(0xff, 0x80 - joyy[2]) << 8;
+			return read_joystick_y(2);
 		case 6:
-			return std::min(0xff, 0x80 - joyx[3]) << 8;
+			return read_joystick_x(3);
 		case 7:
-			return std::min(0xff, 0x80 - joyy[3]) << 8;
+			return read_joystick_y(3);
 		case 8:
-			return (rt[0] * 0x38 / 0xFF + 0xC7) << 8;
+			return rt[0] << 8;
 		case 9:
-			return (rt[1] * 0x38 / 0xFF + 0xC7) << 8;
+			return rt[1] << 8;
 		case 10:
-			return (rt[2] * 0x38 / 0xFF + 0xC7) << 8;
+			return rt[2] << 8;
 		case 11:
-			return (rt[3] * 0x38 / 0xFF + 0xC7) << 8;
+			return rt[3] << 8;
 		default:
 			return 0x8000;
 		}
 	}
+
+private:
+	s8 axis_y = 0;
 };
 
 // World Kicks PCB
@@ -1775,21 +1769,37 @@ protected:
 				| ((keycode & NAOMI_BTN0_KEY) >> 4);		// remap button4 to button0 (change button)
 	}
 
+	u16 read_joystick_x(int joy_num)
+	{
+		s8 axis_x = joyx[joy_num];
+		axis_y = joyy[joy_num];
+		limit_joystick_magnitude<48>(axis_x, axis_y);
+		return (axis_x + 128) << 8;
+	}
+
+	u16 read_joystick_y(int joy_num)
+	{
+		return std::min(0xff, 0x80 - axis_y) << 8;
+	}
+
 	virtual u16 read_analog_axis(int player_num, int player_axis) override {
 		switch (player_axis)
 		{
 		case 0:
-			return (joyx[0] + 128) << 8;
+			return read_joystick_x(0);
 		case 1:
-			return std::min(0xff, 0x80 - joyy[0]) << 8;
+			return read_joystick_y(0);
 		case 4:
-			return (joyx[1] + 128) << 8;
+			return read_joystick_x(1);
 		case 5:
-			return std::min(0xff, 0x80 - joyy[1]) << 8;
+			return read_joystick_y(1);
 		default:
 			return 0x8000;
 		}
 	}
+
+private:
+	s8 axis_y = 0;
 };
 
 struct maple_naomi_jamma : maple_sega_controller

@@ -892,7 +892,9 @@ Games[] =
             //ROM_LOAD( "airlinepdx.sf",  0x000000, 0x000084, CRC(404b2add) SHA1(540c8474806775646ace111a2993397b1419fee3) )
             
             { NULL, 0, 0 },
-        }
+        },
+        NULL,
+        &alpilot_inputs,
     },
     // Airline Pilots (Japan, Rev A)
     {
@@ -918,7 +920,9 @@ Games[] =
             { "mpr-21737.ic10",  0x5000000, 0x800000 },
             { "mpr-21738.ic11",  0x5800000, 0x800000 },
             { NULL, 0, 0 },
-        }
+        },
+        NULL,
+        &alpilot_inputs,
     },
     // Alien Front (Rev T)
 	{
@@ -5562,7 +5566,9 @@ Games[] =
             // U14-U17 not populated 
             
             { NULL, 0, 0 },
-        }
+        },
+		NULL,
+		&blockpong_inputs,
     },
     // Sega Clay Challenge
     {

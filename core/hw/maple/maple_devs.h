@@ -1,4 +1,5 @@
 #pragma once
+#include <math.h>
 #include "types.h"
 
 enum MapleDeviceType
@@ -119,3 +120,15 @@ int get_mic_data(u8* buffer); //implemented in Android.cpp
 #endif
 void push_vmu_screen(int bus_id, int bus_port, u8* buffer);
 #define MAPLE_PORTS 4
+
+template<int Magnitude>
+void limit_joystick_magnitude(s8& joyx, s8& joyy)
+{
+	float mag = joyx * joyx + joyy * joyy;
+	if (mag > (float)Magnitude * Magnitude)
+	{
+		mag = sqrtf(mag) / (float)Magnitude;
+		joyx = (s8)lroundf(joyx / mag);
+		joyy = (s8)lroundf(joyy / mag);
+	}
+}
