@@ -9,7 +9,7 @@
 #include <unistd.h>
 #include <sys/ioctl.h>
 #else
-#include <windows.h>
+#include <io.h>
 #endif
 #include "types.h"
 #include "hw/sh4/sh4_mmr.h"
