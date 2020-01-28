@@ -23,10 +23,7 @@
 #include "vmallocator.h"
 #include "vulkan_context.h"
 
-#if HOST_CPU == CPU_ARM
-__attribute__((pcs("aapcs-vfp")))
-#endif
-static void vmaAllocateDeviceMemoryCallback(
+VKAPI_ATTR static void VKAPI_CALL vmaAllocateDeviceMemoryCallback(
     VmaAllocator      allocator,
     uint32_t          memoryType,
     VkDeviceMemory    memory,
@@ -35,10 +32,7 @@ static void vmaAllocateDeviceMemoryCallback(
 	DEBUG_LOG(RENDERER, "VMAAllocator: %llu bytes allocated (type %d)", (unsigned long long)size, memoryType);
 }
 
-#if HOST_CPU == CPU_ARM
-__attribute__((pcs("aapcs-vfp")))
-#endif
-static void vmaFreeDeviceMemoryCallback(
+VKAPI_ATTR static void VKAPI_CALL vmaFreeDeviceMemoryCallback(
     VmaAllocator      allocator,
     uint32_t          memoryType,
     VkDeviceMemory    memory,

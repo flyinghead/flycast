@@ -35,11 +35,8 @@ VulkanContext *VulkanContext::contextInstance;
 
 static const char *PipelineCacheFileName = DATA_PATH "vulkan_pipeline.cache";
 
-#if HOST_CPU == CPU_ARM
-__attribute__((pcs("aapcs-vfp")))
-#endif
 #ifndef __ANDROID__
-static VkBool32 debugUtilsMessengerCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageTypes,
+VKAPI_ATTR static VkBool32 VKAPI_CALL debugUtilsMessengerCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageTypes,
 									 VkDebugUtilsMessengerCallbackDataEXT const * pCallbackData, void * /*pUserData*/)
 {
 	std::string msg = vk::to_string(static_cast<vk::DebugUtilsMessageSeverityFlagBitsEXT>(messageSeverity)) + ": "
