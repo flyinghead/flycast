@@ -1036,9 +1036,53 @@ static void gui_display_settings()
 		    	ImGui::Checkbox("Use Vulkan Renderer", &vulkan);
 	            ImGui::SameLine();
 	            ShowHelpMarker("Use Vulkan instead of Open GL/GLES. Experimental");
-		    	ImGui::SliderInt("Scaling", (int *)&settings.rend.ScreenScaling, 1, 100);
-	            ImGui::SameLine();
-	            ShowHelpMarker("Downscaling factor relative to native screen resolution. Higher is better");
+		    	
+                const map<int, const char*> scalings { { 10, "0.1"}, { 20, "0.2" }, { 30, "0.3" }, { 40, "0.4" }, { 50, "0.5" }, { 60, "0.6"  }, { 70, "0.7" }, { 80, "0.8" }, { 90, "0.9" }, { 100, "1.0 (Native)" }, { 200, "2.0 (2x SSAA)" }, { 300, "3.0 (3x SSAA)" }, { 400, "4.0 (4x SSAA)" }, { 600, "6.0 (6x SSAA)" }, { 800, "8.0 (8x SSAA)" }
+                };
+                
+                if ( scalings.count(settings.rend.ScreenScaling == 0) )
+                    settings.rend.ScreenScaling = 100;
+                auto scalings_it = scalings.find(settings.rend.ScreenScaling);
+
+                ImGuiStyle& scaling_style = ImGui::GetStyle();
+                float scaling_spacing = scaling_style.ItemInnerSpacing.x;
+                ImGui::PushItemWidth(ImGui::CalcItemWidth() - scaling_spacing * 2.0f - ImGui::GetFrameHeight() * 2.0f);
+                if (ImGui::BeginCombo("##Scaling", scalings.at(settings.rend.ScreenScaling), ImGuiComboFlags_NoArrowButton))
+                {
+                    for(auto& kv: scalings) {
+                        bool is_selected = (kv.first == settings.rend.ScreenScaling);
+                        if (ImGui::Selectable(kv.second, is_selected))
+                        {
+                            settings.rend.ScreenScaling = kv.first;
+                        }
+                        if (is_selected)
+                            ImGui::SetItemDefaultFocus();
+                    }
+                    ImGui::EndCombo();
+                }
+                ImGui::PopItemWidth();
+                ImGui::SameLine(0, scaling_spacing);
+                
+                if (ImGui::ArrowButton("##Decrease Scaling", ImGuiDir_Left))
+                {
+                    if ( scalings_it != scalings.begin() ){
+                        settings.rend.ScreenScaling = (--scalings_it)->first;
+                    }
+                    
+                }
+                ImGui::SameLine(0, scaling_spacing);
+                if (ImGui::ArrowButton("##Increase Scaling", ImGuiDir_Right))
+                {
+                    if ( scalings_it != (--scalings.end()) ){
+                        settings.rend.ScreenScaling = (++scalings_it)->first;
+                    }
+                }
+                ImGui::SameLine(0, scaling_style.ItemInnerSpacing.x);
+                
+                ImGui::Text("Scaling (SSAA)");
+                ImGui::SameLine();
+                ShowHelpMarker("Downscaling/Upscaling factor relative to native screen resolution. Higher is better but more demanding");
+
 		    	ImGui::SliderInt("Horizontal Stretching", (int *)&settings.rend.ScreenStretching, 100, 150);
 	            ImGui::SameLine();
 	            ShowHelpMarker("Stretch the screen horizontally");
