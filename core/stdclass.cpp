@@ -112,7 +112,7 @@ string get_readonly_data_path(const string& filename)
 
 string get_game_save_prefix()
 {
-	string save_file = cfgLoadStr("config", "image", "");
+	string save_file = settings.imgread.ImagePath;
 	size_t lastindex = save_file.find_last_of('/');
 #ifdef _WIN32
 	size_t lastindex2 = save_file.find_last_of("\\");
@@ -125,7 +125,7 @@ string get_game_save_prefix()
 
 string get_game_basename()
 {
-	string game_dir = cfgLoadStr("config", "image", "");
+	string game_dir = settings.imgread.ImagePath;
 	size_t lastindex = game_dir.find_last_of('.');
 	if (lastindex != -1)
 		game_dir = game_dir.substr(0, lastindex);
@@ -134,7 +134,7 @@ string get_game_basename()
 
 string get_game_dir()
 {
-	string game_dir = cfgLoadStr("config", "image", "");
+	string game_dir = settings.imgread.ImagePath;
 	size_t lastindex = game_dir.find_last_of('/');
 #ifdef _WIN32
 	size_t lastindex2 = game_dir.find_last_of("\\");

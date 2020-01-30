@@ -29,12 +29,15 @@ void libGDR_GetToc(u32* toc,u32 area)
 
 u32 libGDR_GetTrackNumber(u32 sector, u32& elapsed)
 {
-	for (int i = 0; i < disc->tracks.size(); i++)
-		if (disc->tracks[i].StartFAD <= sector && (sector <= disc->tracks[i].EndFAD || disc->tracks[i].EndFAD == 0))
-		{
-			elapsed = sector - disc->tracks[i].StartFAD;
-			return i + 1;
-		}
+	if (disc != NULL)
+	{
+		for (int i = 0; i < disc->tracks.size(); i++)
+			if (disc->tracks[i].StartFAD <= sector && (sector <= disc->tracks[i].EndFAD || disc->tracks[i].EndFAD == 0))
+			{
+				elapsed = sector - disc->tracks[i].StartFAD;
+				return i + 1;
+			}
+	}
 	elapsed = 0;
 	return 0xAA;
 }

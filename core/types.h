@@ -503,8 +503,7 @@ struct settings_t
 	struct
 	{
 		bool PatchRegion;
-		bool LoadDefaultImage;
-		char DefaultImage[512];
+		char ImagePath[512];
 	} imgread;
 
 	struct

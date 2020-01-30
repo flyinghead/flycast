@@ -27,12 +27,8 @@ u8 q_subchannel[96];
 
 static void PatchRegion_0(u8* sector, int size)
 {
-#ifndef NOT_REICAST
-	if (settings.imgread.PatchRegion==0)
+	if (!settings.imgread.PatchRegion)
 		return;
-#else
-	return;
-#endif
 
 	u8* usersect=sector;
 
@@ -48,12 +44,8 @@ static void PatchRegion_0(u8* sector, int size)
 
 static void PatchRegion_6(u8* sector, int size)
 {
-#ifndef NOT_REICAST
-	if (settings.imgread.PatchRegion==0)
+	if (!settings.imgread.PatchRegion)
 		return;
-#else
-	return;
-#endif
 
 	u8* usersect=sector;
 
@@ -156,38 +148,14 @@ bool InitDrive_(wchar* fn)
 		INFO_LOG(GDROM, "gdrom: Failed to open image \"%s\"", fn);
 		NullDriveDiscType = NoDisk; //no disc :)
 	}
-#ifndef NOT_REICAST
 	libCore_gdrom_disc_change();
-#endif
 
 	return disc != NULL;
 }
 
-#ifndef NOT_REICAST
 bool InitDrive(u32 fileflags)
 {
-	if (settings.imgread.LoadDefaultImage)
-	{
-		INFO_LOG(GDROM, "Loading default image \"%s\"", settings.imgread.DefaultImage);
-		if (!InitDrive_(settings.imgread.DefaultImage))
-		{
-			msgboxf("Default image \"%s\" failed to load",MBX_ICONERROR,settings.imgread.DefaultImage);
-			return false;
-		}
-		else
-			return true;
-	}
-
-	// FIXME: Data loss if buffer is too small
-	wchar fn[512];
-	fn[0] = '\0';
-
-#ifdef BUILD_DREAMCAST
-	int gfrv=GetFile(fn,0,fileflags);
-#else
-	int gfrv=0;
-#endif
-	if (gfrv == 0)
+	if (settings.imgread.ImagePath[0] == '\0')
 	{
 		NullDriveDiscType=NoDisk;
 		gd_setdisc();
@@ -196,12 +164,8 @@ bool InitDrive(u32 fileflags)
 		sns_key=0x6;
 		return true;
 	}
-	else if (gfrv == -1)
-	{
-		return false;
-	}
 
-	if (!InitDrive_(fn))
+	if (!InitDrive_(settings.imgread.ImagePath))
 	{
 		//msgboxf("Selected image failed to load",MBX_ICONERROR);
 		NullDriveDiscType = NoDisk;
@@ -209,12 +173,18 @@ bool InitDrive(u32 fileflags)
 		sns_asc = 0x29;
 		sns_ascq = 0x00;
 		sns_key = 0x6;
-		return true;
 	}
-	else
-	{
-		return true;
-	}
+	return true;
+}
+
+void DiscOpenLid()
+{
+	TermDrive();
+	NullDriveDiscType = Open;
+	gd_setdisc();
+	sns_asc = 0x29;
+	sns_ascq = 0x00;
+	sns_key = 0x6;
 }
 
 bool DiscSwap(u32 fileflags)
@@ -223,40 +193,15 @@ bool DiscSwap(u32 fileflags)
 	sns_asc = 0x28;
 	sns_ascq = 0x00;
 	sns_key = 0x6;
-	if (settings.imgread.LoadDefaultImage)
-	{
-		INFO_LOG(GDROM, "Loading default image \"%s\"", settings.imgread.DefaultImage);
-		if (!InitDrive_(settings.imgread.DefaultImage))
-		{
-			msgboxf("Default image \"%s\" failed to load",MBX_ICONERROR,settings.imgread.DefaultImage);
-			return false;
-		}
-		else
-			return true;
-	}
 
-	// FIXME: Data loss if buffer is too small
-	wchar fn[512];
-	fn[0] = '\0';
-
-
-#ifdef BUILD_DREAMCAST
-	int gfrv=GetFile(fn,0,fileflags);
-#else
-	int gfrv=0;
-#endif
-	if (gfrv == 0)
+	if (settings.imgread.ImagePath[0] == '\0')
 	{
 		NullDriveDiscType = Open;
 		gd_setdisc();
 		return true;
 	}
-	else if (gfrv == -1)
-	{
-		return false;
-	}
 
-	if (!InitDrive_(fn))
+	if (!InitDrive_(settings.imgread.ImagePath))
 	{
 		//msgboxf("Selected image failed to load",MBX_ICONERROR);
 		NullDriveDiscType = Open;
@@ -265,7 +210,6 @@ bool DiscSwap(u32 fileflags)
 
 	return true;
 }
-#endif
 
 void TermDrive()
 {

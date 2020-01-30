@@ -36,7 +36,7 @@
 #include "gui_android.h"
 #include "version.h"
 #include "oslib/audiostream.h"
-
+#include "imgread/common.h"
 
 extern void dc_loadstate();
 extern void dc_savestate();
@@ -300,7 +300,7 @@ static void gui_start_game(const std::string& path)
 		error_msg = ex.reason;
 		gui_state = Main;
 		game_started = false;
-		cfgSetVirtual("config", "image", "");
+		settings.imgread.ImagePath[0] = '\0';
 		cfgSetVirtual("reios", "ElfFile", "");
 	}
 }
@@ -348,10 +348,18 @@ static void gui_display_commands()
 	}
 
 	ImGui::NextColumn();
-	if (ImGui::Button("Restart", ImVec2(150 * scaling, 50 * scaling)))
+	const char *disk_label = libGDR_GetDiscType() == Open ? "Insert Disk" : "Eject Disk";
+	if (ImGui::Button(disk_label, ImVec2(150 * scaling, 50 * scaling)))
 	{
-		gui_state = ClosedNoResume;
-		gui_start_game(cfgLoadStr("config", "image", ""));
+		if (libGDR_GetDiscType() == Open)
+		{
+			gui_state = SelectDisk;
+		}
+		else
+		{
+			DiscOpenLid();
+			gui_state = Closed;
+		}
 	}
 	ImGui::NextColumn();
 	if (ImGui::Button("Exit", ImVec2(150 * scaling, 50 * scaling)))
@@ -359,7 +367,7 @@ static void gui_display_commands()
 		// Exit to main menu
 		gui_state = Main;
 		game_started = false;
-		cfgSetVirtual("config", "image", "");
+		settings.imgread.ImagePath[0] = '\0';
 	}
 
 	ImGui::End();
@@ -1471,10 +1479,12 @@ static void gui_display_content()
         ImGui::SameLine(0, 32 * scaling);
     	filter.Draw("Filter");
     }
-
-    ImGui::SameLine(ImGui::GetContentRegionAvailWidth() - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f /*+ ImGui::GetStyle().ItemSpacing.x*/);
-    if (ImGui::Button("Settings"))//, ImVec2(0, 30 * scaling)))
-    	gui_state = Settings;
+    if (gui_state != SelectDisk)
+    {
+		ImGui::SameLine(ImGui::GetContentRegionAvailWidth() - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f /*+ ImGui::GetStyle().ItemSpacing.x*/);
+		if (ImGui::Button("Settings"))//, ImVec2(0, 30 * scaling)))
+			gui_state = Settings;
+    }
     ImGui::PopStyleVar();
 
     fetch_game_list();
@@ -1488,22 +1498,44 @@ static void gui_display_content()
 		if (ImGui::Selectable("Dreamcast BIOS"))
 		{
 			gui_state = ClosedNoResume;
-			cfgSetVirtual("config", "image", "");
+			settings.imgread.ImagePath[0] = '\0';
 			gui_start_game("");
 		}
 		ImGui::PopID();
 
-        for (auto& game : game_list)
+        for (const auto& game : game_list)
+        {
+        	if (gui_state == SelectDisk)
+        	{
+    			std::string::size_type dotpos = game.name.find_last_of('.');
+    			if (dotpos == std::string::npos || dotpos == game.name.size() - 1)
+    				continue;
+    			std::string extension = game.name.substr(dotpos);
+    			if (stricmp(extension.c_str(), ".gdi") && stricmp(extension.c_str(), ".chd")
+    					&& stricmp(extension.c_str(), ".cdi") && stricmp(extension.c_str(), ".cue"))
+    				// Only dreamcast disks
+    				continue;
+        	}
         	if (filter.PassFilter(game.name.c_str()))
         	{
     			ImGui::PushID(game.path.c_str());
 				if (ImGui::Selectable(game.name.c_str()))
 				{
-					gui_state = ClosedNoResume;
-					gui_start_game(game.path);
+					if (gui_state == SelectDisk)
+					{
+						strcpy(settings.imgread.ImagePath, game.path.c_str());
+						DiscSwap(0);
+						gui_state = Closed;
+					}
+					else
+					{
+						gui_start_game(game.path);
+						gui_state = ClosedNoResume;
+					}
 				}
 				ImGui::PopID();
         	}
+        }
         ImGui::PopStyleVar();
     }
 	ImGui::EndChild();
@@ -1560,7 +1592,7 @@ void gui_display_ui()
 	case Main:
 		//gui_display_demo();
 		{
-			std::string game_file = cfgLoadStr("config", "image", "");
+			std::string game_file = settings.imgread.ImagePath;
 			if (!game_file.empty())
 			{
 				gui_state = ClosedNoResume;
@@ -1586,6 +1618,9 @@ void gui_display_ui()
 #ifdef __ANDROID__
 		gui_display_vjoy_commands(screen_width, screen_height, scaling);
 #endif
+		break;
+	case SelectDisk:
+		gui_display_content();
 		break;
 	}
 

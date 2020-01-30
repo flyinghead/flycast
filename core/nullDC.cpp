@@ -344,10 +344,13 @@ void LoadSpecialSettings()
 		}
 		if (!strcmp("DYNAMIC GOLF", naomi_game_id)
 				|| !strcmp("SHOOTOUT POOL", naomi_game_id)
+				|| !strcmp("SHOOTOUT POOL MEDAL", naomi_game_id)
 				|| !strcmp("OUTTRIGGER     JAPAN", naomi_game_id)
 				|| !strcmp("CRACKIN'DJ  ver JAPAN", naomi_game_id)
 				|| !strcmp("CRACKIN'DJ PART2  ver JAPAN", naomi_game_id)
-				|| !strcmp("KICK '4' CASH", naomi_game_id))
+				|| !strcmp("KICK '4' CASH", naomi_game_id)
+				|| !strcmp("DRIVE", naomi_game_id)			// Waiwai drive
+				|| !strcmp("BASS FISHING SIMULATOR VER.A", naomi_game_id))
 		{
 			INFO_LOG(BOOT, "Enabling JVS rotary encoders for game %s", naomi_game_id);
 			settings.input.JammaSetup = 2;
@@ -552,7 +555,9 @@ static int get_game_platform(const char *path)
 void dc_start_game(const char *path)
 {
 	if (path != NULL)
-		cfgSetVirtual("config", "image", path);
+		strcpy(settings.imgread.ImagePath, path);
+	else
+		settings.imgread.ImagePath[0] = 0;
 
 	dc_init();
 
@@ -1053,7 +1058,7 @@ static void cleanup_serialize(void *data)
 
 static string get_savestate_file_path()
 {
-	string state_file = cfgLoadStr("config", "image", "noname.chd");
+	string state_file = settings.imgread.ImagePath;
 	size_t lastindex = state_file.find_last_of('/');
 #ifdef _WIN32
 	size_t lastindex2 = state_file.find_last_of('\\');

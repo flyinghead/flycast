@@ -252,12 +252,11 @@ extern GD_HardwareInfo_t GD_HardwareInfo;
 #define GD_OPEN    0x06 // Tray is open
 #define GD_NODISC  0x07 // No disc
 #define GD_RETRY   0x08 // Read retry in progress (option)
-#define GD_ERROR   0x09 // Reading of disc TOC failed (state does not allow access) 
+#define GD_ERROR   0x09 // Reading of disc TOC failed (state does not allow access)
 
 //Response strings
-extern u16 reply_a1[];
-extern u16 reply_71[];
-
+extern const u16 reply_a1[];
+extern const u16 reply_71[];
 
 #define GD_IMPEDHI0_Read  0x005F7000 // (R) These are all 
 #define GD_IMPEDHI4_Read  0x005F7004 // (R) RData bus high imped

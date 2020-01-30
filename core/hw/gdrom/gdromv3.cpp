@@ -97,7 +97,7 @@ void libCore_CDDA_Sector(s16* sector)
 		memset(sector,0,2352);
 	}
 }
-void gd_spi_pio_end(u8* buffer,u32 len,gd_states next_state=gds_pio_end);
+void gd_spi_pio_end(const u8* buffer, u32 len, gd_states next_state = gds_pio_end);
 void gd_process_spi_cmd();
 void gd_process_ata_cmd();
 
@@ -333,7 +333,7 @@ void libCore_gdrom_disc_change()
 }
 
 //This handles the work of setting up the pio regs/state :)
-void gd_spi_pio_end(u8* buffer, u32 len, gd_states next_state)
+void gd_spi_pio_end(const u8* buffer, u32 len, gd_states next_state)
 {
 	verify(len<0xFFFF);
 	pio_buff.index=0;
@@ -412,7 +412,7 @@ void gd_process_ata_cmd()
 
 	case ATA_IDENTIFY_DEV:
 		printf_ata("ATA_IDENTIFY_DEV");
-		gd_spi_pio_end((u8*)&reply_a1[packet_cmd.data_8[2]>>1],packet_cmd.data_8[4]);
+		gd_spi_pio_end((const u8*)&reply_a1[packet_cmd.data_8[2] >> 1], packet_cmd.data_8[4]);
 		break;
 
 	case ATA_SET_FEATURES:
@@ -505,6 +505,9 @@ void gd_process_spi_cmd()
 		printf_spicmd("SPI_TEST_UNIT");
 
 		GDStatus.CHECK=SecNumber.Status==GD_BUSY; // Drive is ready ;)
+//		sns_key=0;
+//		sns_asc=0;
+//		sns_ascq=0;
 
 		gd_set_state(gds_procpacketdone);
 		break;
@@ -526,11 +529,8 @@ void gd_process_spi_cmd()
 			else if(readcmd.head ||readcmd.subh || readcmd.other || (!readcmd.data)) // assert
 				WARN_LOG(GDROM, "GDROM: *FIXME* ADD MORE CD READ SETTINGS %d %d %d %d 0x%01X",readcmd.head,readcmd.subh,readcmd.other,readcmd.data,readcmd.expdtype);
 
-			u32 start_sector = GetFAD(&readcmd.b[2],readcmd.prmtype);
-			u32 sector_count = (readcmd.b[8]<<16) | (readcmd.b[9]<<8) | (readcmd.b[10]);
-
-			read_params.start_sector=start_sector;
-			read_params.remaining_sectors=sector_count;
+			read_params.start_sector = GetFAD(&readcmd.b[2], readcmd.prmtype);
+			read_params.remaining_sectors = (readcmd.b[8] << 16) | (readcmd.b[9] << 8) | (readcmd.b[10]);
 			read_params.sector_type = sector_type;//yeah i know , not really many types supported...
 
 			printf_spicmd("SPI_CD_READ - Sector=%d Size=%d/%d DMA=%d",read_params.start_sector,read_params.remaining_sectors,read_params.sector_type,Features.CDRead.DMA);
@@ -579,9 +579,9 @@ void gd_process_spi_cmd()
 		{
 			printf_spicmd("SPI : unknown ? [0x71]");
 			//printf("SPI : unknown ? [0x71]\n");
-			extern u32 reply_71_sz;
+			extern const u32 reply_71_sz;
 
-			gd_spi_pio_end((u8*)&reply_71[0],reply_71_sz);//uCount
+			gd_spi_pio_end((const u8*)&reply_71[0], reply_71_sz);//uCount
 
 
 			if (libGDR_GetDiscType()==GdRom || libGDR_GetDiscType()==CdRom_XA)
@@ -703,7 +703,7 @@ void gd_process_spi_cmd()
 			}
 			else
 			{
-				die("SPI_CD_SEEK  : not known parameter..");
+				die("SPI_CD_PLAY  : not known parameter..");
 			}
 			cdda.repeats=packet_cmd.data_8[6]&0xF;
 			DEBUG_LOG(GDROM, "cdda.StartAddr=%d",cdda.StartAddr.FAD);
@@ -799,7 +799,7 @@ u32 ReadMem_gdrom(u32 Addr, u32 sz)
 		return GDStatus.full | (1<<4);
 
 	case GD_ALTSTAT_Read:
-		printf_rm("GDROM: Read From AltStatus (v=%X)",GDStatus.full);
+//		printf_rm("GDROM: Read From AltStatus (v=%X)",GDStatus.full);
 		return GDStatus.full | (1<<4);
 
 	case GD_BYCTLLO	:
@@ -854,7 +854,7 @@ u32 ReadMem_gdrom(u32 Addr, u32 sz)
 		return IntReason.full;
 
 	case GD_SECTNUM:
-		printf_rm("GDROM: Read from SecNumber Register (v=%X)", SecNumber.full);
+//		printf_rm("GDROM: Read from SecNumber Register (v=%X)", SecNumber.full);
 		return SecNumber.full;
 
 	default:
@@ -967,9 +967,7 @@ static int getGDROMTicks()
 int GDRomschd(int i, int c, int j)
 {
 	if(!(SB_GDST&1) || !(SB_GDEN &1) || (read_buff.cache_size==0 && read_params.remaining_sectors==0))
-	{
 		return 0;
-	}
 
 	//SB_GDST=0;
 
@@ -987,10 +985,8 @@ int GDRomschd(int i, int c, int j)
 
 	//if we don't have any more sectors to read
 	if (read_params.remaining_sectors == 0)
-	{
 		//make sure we don't underrun the cache :)
 		len = min(len, read_buff.cache_size);
-	}
 
 	len = min(len, (u32)10240);
 	// do we need to do this for GDROM DMA?
@@ -1020,9 +1016,7 @@ int GDRomschd(int i, int c, int j)
 
 			//transfer up to len bytes
 			if (buff_size>len)
-			{
 				buff_size=len;
-			}
 			WriteMemBlock_nommu_ptr(src,(u32*)&read_buff.cache[read_buff.cache_index], buff_size);
 			read_buff.cache_index+=buff_size;
 			read_buff.cache_size-=buff_size;

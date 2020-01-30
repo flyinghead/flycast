@@ -15,6 +15,7 @@
 #include "hw/gdrom/gdromv3.h"
 #include "hw/holly/holly_intc.h"
 #include "reios.h"
+#include "imgread/common.h"
 
 #ifdef _MSC_VER
 #undef min
@@ -147,6 +148,25 @@ static void GDCC_HLE_GETSCD() {
 
 	DEBUG_LOG(REIOS, "GDROM: GETSCD format %x size %x dest %08x", format, size, dest);
 
+	if (libGDR_GetDiscType() == Open || libGDR_GetDiscType() == NoDisk)
+	{
+		gd_hle_state.status = BIOS_ERROR;
+		gd_hle_state.result[0] = 2;	// ?
+		return;
+	}
+	if (sns_asc != 0)
+	{
+		// Helps D2 detect the disk change
+		gd_hle_state.status = BIOS_ERROR;
+		gd_hle_state.result[0] = sns_key;
+		gd_hle_state.result[1] = sns_asc;
+		gd_hle_state.result[1] = 0x18;		// ?
+		gd_hle_state.result[1] = sns_ascq;	// ?
+		sns_key = 0;
+		sns_asc = 0;
+		sns_ascq = 0;
+		return;
+	}
 	if (cdda.playing)
 		gd_hle_state.cur_sector = cdda.CurrAddr.FAD;
 	u8 scd[100];
@@ -632,27 +652,43 @@ void gdrom_hle_op()
 			break;
 
 		case GDROM_CHECK_DRIVE:
-			// Checks the general condition of the drive.
-			//
-			// Args:
-			//	r4 = pointer to two 32 bit integers, to receive the drive status. The first is the current drive status, the second is the type of disc inserted (if any).
-			//	0 	Drive is busy
-			//	1 	Drive is paused
-			//	2 	Drive is in standby
-			//	3 	Drive is playing
-			//	4 	Drive is seeking
-			//	5 	Drive is scanning
-			//	6 	Drive lid is open
-			//	7 	Lid is closed, but there is no disc
-			//
-			// Returns: zero if successful, nonzero if failure
-			WriteMem32(r[4] + 0, (gd_hle_state.status == BIOS_DATA_AVAIL || SecNumber.Status == GD_PLAY) ? 3 : 1);
-			if (memcmp(ip_meta.disk_type, "GD-ROM", sizeof(ip_meta.disk_type)) == 0)
-				WriteMem32(r[4] + 4, GdRom);
-			else
-				WriteMem32(r[4] + 4, libGDR_GetDiscType());
-			debugf("GDROM: HLE GDROM_CHECK_DRIVE r4:%X -> %x %x", r[4], ReadMem32(r[4]), ReadMem32(r[4] + 4));
-			r[0] = 0;
+			{
+				// Checks the general condition of the drive.
+				//
+				// Args:
+				//	r4 = pointer to two 32 bit integers, to receive the drive status. The first is the current drive status, the second is the type of disc inserted (if any).
+				//	0 	Drive is busy
+				//	1 	Drive is paused
+				//	2 	Drive is in standby
+				//	3 	Drive is playing
+				//	4 	Drive is seeking
+				//	5 	Drive is scanning
+				//	6 	Drive lid is open
+				//	7 	Lid is closed, but there is no disc
+				//
+				// Returns: zero if successful, nonzero if failure
+				u32 discType = libGDR_GetDiscType();
+				switch (discType)
+				{
+				case Open:
+					WriteMem32(r[4], 6);
+					WriteMem32(r[4] + 4, 0);
+					break;
+				case NoDisk:
+					WriteMem32(r[4], 7);
+					WriteMem32(r[4] + 4, 0);
+					break;
+				default:
+					WriteMem32(r[4], (gd_hle_state.status == BIOS_DATA_AVAIL || SecNumber.Status == GD_PLAY) ? 3 : 1);
+					if (memcmp(ip_meta.disk_type, "GD-ROM", sizeof(ip_meta.disk_type)) == 0)
+						WriteMem32(r[4] + 4, GdRom);
+					else
+						WriteMem32(r[4] + 4, discType);
+					break;
+				}
+				debugf("GDROM: HLE GDROM_CHECK_DRIVE r4:%X -> %x %x", r[4], ReadMem32(r[4]), ReadMem32(r[4] + 4));
+				r[0] = 0;
+			}
 			break;
 
 		case GDROM_ABORT_COMMAND:

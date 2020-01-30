@@ -185,7 +185,7 @@ bool GamepadDevice::gamepad_axis_input(u32 code, int value)
 			return false;
 		// Radial dead zone
 		// FIXME compute both axes at the same time
-		if ((float)(v * v + *other_axis * *other_axis) < _dead_zone * _dead_zone * 128.f * 128.f * 2.f)
+		if ((float)(v * v + *other_axis * *other_axis) < _dead_zone * _dead_zone * 128.f * 128.f)
 		{
 			*this_axis = 0;
 			*other_axis = 0;
@@ -309,7 +309,7 @@ static FILE *get_record_input(bool write)
 		return NULL;
 	if (!write && !cfgLoadBool("record", "replay_input", false))
 		return NULL;
-	string game_dir = cfgLoadStr("config", "image", "");
+	string game_dir = settings.imgread.ImagePath;
 	size_t slash = game_dir.find_last_of("/");
 	size_t dot = game_dir.find_last_of(".");
 	string input_file = "scripts/" + game_dir.substr(slash + 1, dot - slash) + "input";

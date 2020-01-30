@@ -111,7 +111,7 @@ int showhelp(wchar** arg,int cl)
 
 bool ParseCommandLine(int argc,wchar* argv[])
 {
-	cfgSetVirtual("config", "image", "");
+	settings.imgread.ImagePath[0] = '\0';
 	int cl=argc-2;
 	wchar** arg=argv+1;
 	while(cl>=0)
@@ -136,7 +136,7 @@ bool ParseCommandLine(int argc,wchar* argv[])
 					|| stricmp(extension, ".gdi") == 0 || stricmp(extension, ".cue") == 0))
 			{
 				INFO_LOG(COMMON, "Using '%s' as cd image", *arg);
-				cfgSetVirtual("config", "image", *arg);
+				strcpy(settings.imgread.ImagePath, *arg);
 			}
 			else if (extension && stricmp(extension, ".elf") == 0)
 			{
@@ -147,7 +147,7 @@ bool ParseCommandLine(int argc,wchar* argv[])
 			else
 			{
 				INFO_LOG(COMMON, "Using '%s' as rom", *arg);
-				cfgSetVirtual("config", "image", *arg);
+				strcpy(settings.imgread.ImagePath, *arg);
 			}
 		}
 		arg++;
