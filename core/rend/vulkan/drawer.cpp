@@ -146,8 +146,9 @@ void BaseDrawer::SetBaseScissor()
 	}
 	else
 	{
-		baseScissor = vk::Rect2D(vk::Offset2D(0, 0),
-				vk::Extent2D(screen_width, screen_height));
+		glm::vec4 clip_dim(screen_width, screen_height, 0, 0);
+		clip_dim = matrices.GetScissorMatrix() * clip_dim;
+		baseScissor = vk::Rect2D(vk::Offset2D(0, 0), vk::Extent2D(lroundf(clip_dim[0]), lroundf(clip_dim[1])));
 	}
 	currentScissor = { 0, 0, 0, 0 };
 }
