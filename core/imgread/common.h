@@ -83,9 +83,9 @@ enum SubcodeFormat
 
 bool ConvertSector(u8* in_buff , u8* out_buff , int from , int to,int sector);
 
-bool InitDrive(u32 fileflags=0);
+bool InitDrive();
 void TermDrive();
-bool DiscSwap(u32 fileflags=0);
+bool DiscSwap();
 void DiscOpenLid();
 extern signed int sns_asc;
 extern signed int sns_ascq;

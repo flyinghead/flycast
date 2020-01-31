@@ -153,28 +153,9 @@ bool InitDrive_(wchar* fn)
 	return disc != NULL;
 }
 
-bool InitDrive(u32 fileflags)
+bool InitDrive()
 {
-	if (settings.imgread.ImagePath[0] == '\0')
-	{
-		NullDriveDiscType=NoDisk;
-		gd_setdisc();
-		sns_asc=0x29;
-		sns_ascq=0x00;
-		sns_key=0x6;
-		return true;
-	}
-
-	if (!InitDrive_(settings.imgread.ImagePath))
-	{
-		//msgboxf("Selected image failed to load",MBX_ICONERROR);
-		NullDriveDiscType = NoDisk;
-		gd_setdisc();
-		sns_asc = 0x29;
-		sns_ascq = 0x00;
-		sns_key = 0x6;
-	}
-	return true;
+	return DiscSwap();
 }
 
 void DiscOpenLid()
@@ -187,7 +168,7 @@ void DiscOpenLid()
 	sns_key = 0x6;
 }
 
-bool DiscSwap(u32 fileflags)
+bool DiscSwap()
 {
 	// These Additional Sense Codes mean "The lid was closed"
 	sns_asc = 0x28;
@@ -196,19 +177,18 @@ bool DiscSwap(u32 fileflags)
 
 	if (settings.imgread.ImagePath[0] == '\0')
 	{
-		NullDriveDiscType = Open;
+		NullDriveDiscType = NoDisk;
 		gd_setdisc();
 		return true;
 	}
 
-	if (!InitDrive_(settings.imgread.ImagePath))
-	{
-		//msgboxf("Selected image failed to load",MBX_ICONERROR);
-		NullDriveDiscType = Open;
-		gd_setdisc();
-	}
+	if (InitDrive_(settings.imgread.ImagePath))
+		return true;
 
-	return true;
+	NullDriveDiscType = NoDisk;
+	gd_setdisc();
+
+	return false;
 }
 
 void TermDrive()

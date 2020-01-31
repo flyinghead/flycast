@@ -152,6 +152,9 @@ static void GDCC_HLE_GETSCD() {
 	{
 		gd_hle_state.status = BIOS_ERROR;
 		gd_hle_state.result[0] = 2;	// ?
+		gd_hle_state.result[1] = 0;
+		gd_hle_state.result[2] = 0;
+		gd_hle_state.result[3] = 0;
 		return;
 	}
 	if (sns_asc != 0)
@@ -160,8 +163,8 @@ static void GDCC_HLE_GETSCD() {
 		gd_hle_state.status = BIOS_ERROR;
 		gd_hle_state.result[0] = sns_key;
 		gd_hle_state.result[1] = sns_asc;
-		gd_hle_state.result[1] = 0x18;		// ?
-		gd_hle_state.result[1] = sns_ascq;	// ?
+		gd_hle_state.result[2] = 0x18;		// ?
+		gd_hle_state.result[3] = sns_ascq;	// ?
 		sns_key = 0;
 		sns_asc = 0;
 		sns_ascq = 0;

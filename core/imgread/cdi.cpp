@@ -176,35 +176,3 @@ Disc* cdi_parse(const wchar* file)
 	return rv;
 }
 
-#if 0
-	SPfcToc* pstToc;
-	HMODULE pfctoc_mod=NULL;
-	pfctoc_mod=LoadLibrary("plugins\\pfctoc.dll");
-	if (pfctoc_mod==NULL)
-		pfctoc_mod=LoadLibrary("pfctoc.dll");
-	if(pfctoc_mod==NULL)
-		return false;
-
-	PfcFreeTocFP* PfcFreeToc;
-	PfcGetTocFP*  PfcGetToc;
-
-	PfcFreeToc=(PfcFreeTocFP*)GetProcAddress(pfctoc_mod,"PfcFreeToc");
-	PfcGetToc=(PfcGetTocFP*)GetProcAddress(pfctoc_mod,"PfcGetToc");
-	verify(PfcFreeToc!=NULL && PfcGetToc!=NULL);
-
-	DWORD dwSize;//
-	DWORD dwErr = PfcGetToc(file, pstToc, dwSize);
-	if (dwErr == PFCTOC_OK) 
-	{
-		rv= new CDIDisc(pstToc,file);
-	}
-
-	if (pstToc)
-		PfcFreeToc(pstToc);
-	if (pfctoc_mod)
-		FreeLibrary(pfctoc_mod);
-	pstToc=0;
-	pfctoc_mod=0;
-
-	return rv;
-#endif
