@@ -13,18 +13,18 @@ namespace ARM
 
 
 
-	inline static snat Literal(unat FnAddr)
+	inline static ptrdiff_t Literal(unat FnAddr)
 	{
 		u8* pc_addr = (u8*)EMIT_GET_PTR();
-		return (snat)((snat)FnAddr - ((snat)pc_addr+8));
-		//return -(snat)((pc_addr+8)-(snat)FnAddr);
+		return (ptrdiff_t)((ptrdiff_t)FnAddr - ((ptrdiff_t)pc_addr+8));
+		//return -(ptrdiff_t)((pc_addr+8)-(ptrdiff_t)FnAddr);
 	}
 
 	EAPI CALL(unat FnAddr, ConditionCode CC=AL)
 	{
         bool isThumb = FnAddr & 1;
         FnAddr &= ~1;
-		snat lit = Literal(FnAddr);
+        ptrdiff_t lit = Literal(FnAddr);
 
 		if(0==lit) {
 			printf("Error, Compiler caught NULL literal, CALL(%08zX)\n", FnAddr);
@@ -57,7 +57,7 @@ namespace ARM
         FnAddr &= ~1;
         
         verify(!isThumb);
-		snat lit = Literal(FnAddr);
+        ptrdiff_t lit = Literal(FnAddr);
 
 		/*if(0==lit) {
 			printf("Error, Compiler caught NULL literal, JUMP(%08X)\n", FnAddr);

@@ -89,7 +89,6 @@ typedef double f64;
 #define X64
 #endif
 
-typedef ptrdiff_t snat;
 typedef size_t unat;
 
 #ifdef X64
