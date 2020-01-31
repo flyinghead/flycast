@@ -8,17 +8,22 @@
 
 Disc* cdi_parse(const wchar* file)
 {
+	// Only try to open .cdi files
+	size_t len = strlen(file);
+	if (len > 4 && stricmp( &file[len - 4], ".cdi"))
+		return nullptr;
+
 	core_file* fsource=core_fopen(file);
 
 	if (!fsource)
-		return 0;
+		return nullptr;
 
 	image_s image = { 0 };
 	track_s track = { 0 };
 	if (!CDI_init(fsource, &image, file))
 	{
 		core_fclose(fsource);
-		return NULL;
+		return nullptr;
 	}
 
 	CDI_get_sessions(fsource,&image);

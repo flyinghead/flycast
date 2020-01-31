@@ -152,8 +152,13 @@ static bool reios_locate_bootfile(const char* bootfile)
 
 ip_meta_t ip_meta;
 
-void reios_disk_id() {
-
+void reios_disk_id()
+{
+	if (libGDR_GetDiscType() == Open || libGDR_GetDiscType() == NoDisk)
+	{
+		memset(&ip_meta, 0, sizeof(ip_meta));
+		return;
+	}
 	reios_pre_init();
 
 	u8 buf[2048];
