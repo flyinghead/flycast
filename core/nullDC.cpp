@@ -554,10 +554,18 @@ static int get_game_platform(const char *path)
 
 void dc_start_game(const char *path)
 {
+	bool forced_bios_file = false;
+
 	if (path != NULL)
+	{
 		strcpy(settings.imgread.ImagePath, path);
+	}
 	else
-		settings.imgread.ImagePath[0] = 0;
+	{
+		// Booting the BIOS requires a BIOS file
+		forced_bios_file = true;
+		settings.imgread.ImagePath[0] = '\0';
+	}
 
 	dc_init();
 
@@ -571,8 +579,11 @@ void dc_start_game(const char *path)
 	std::string data_path = get_readonly_data_path(DATA_PATH);
 	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
 	{
-		if (settings.bios.UseReios || !LoadRomFiles(data_path))
+		if ((settings.bios.UseReios && !forced_bios_file) || !LoadRomFiles(data_path))
 		{
+			if (forced_bios_file)
+				throw ReicastException("No BIOS file found");
+
 			if (!LoadHle(data_path))
 				throw ReicastException("Failed to initialize HLE BIOS");
 
@@ -597,6 +608,15 @@ void dc_start_game(const char *path)
 		{
 			if (DiscSwap())
 				LoadCustom();
+			else
+			{
+				// Content load failed. Boot the BIOS
+				settings.imgread.ImagePath[0] = '\0';
+				forced_bios_file = true;
+				if (!LoadRomFiles(data_path))
+					throw ReicastException("No BIOS file found");
+				InitDrive();
+			}
 		}
 		FixUpFlash();
 	}
