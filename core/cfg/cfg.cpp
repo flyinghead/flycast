@@ -30,7 +30,7 @@ void savecfgf()
 		fclose(cfgfile);
 	}
 }
-void  cfgSaveStr(const wchar * Section, const wchar * Key, const wchar * String)
+void  cfgSaveStr(const char * Section, const char * Key, const char * String)
 {
 	const std::string section(Section);
 	const std::string key(Key);
@@ -116,7 +116,7 @@ bool cfgOpen()
 //0 : not found
 //1 : found section , key was 0
 //2 : found section & key
-s32  cfgExists(const wchar * Section, const wchar * Key)
+s32  cfgExists(const char * Section, const char * Key)
 {
 	if(cfgdb.has_entry(string(Section), string(Key)))
 	{
@@ -128,14 +128,14 @@ s32  cfgExists(const wchar * Section, const wchar * Key)
 	}
 }
 
-void  cfgLoadStr(const wchar * Section, const wchar * Key, wchar * Return,const wchar* Default)
+void  cfgLoadStr(const char * Section, const char * Key, char * Return,const char* Default)
 {
 	string value = cfgdb.get(Section, Key, Default);
 	// FIXME: Buffer overflow possible
 	strcpy(Return, value.c_str());
 }
 
-string  cfgLoadStr(const wchar * Section, const wchar * Key, const wchar* Default)
+string  cfgLoadStr(const char * Section, const char * Key, const char* Default)
 {
 	std::string v = cfgdb.get(string(Section), string(Key), string(Default));
 	if (cfgHasGameSpecificConfig())
@@ -145,14 +145,14 @@ string  cfgLoadStr(const wchar * Section, const wchar * Key, const wchar* Defaul
 }
 
 //These are helpers , mainly :)
-void  cfgSaveInt(const wchar * Section, const wchar * Key, s32 Int)
+void  cfgSaveInt(const char * Section, const char * Key, s32 Int)
 {
 	char str[32];
 	sprintf(str, "%d", Int);
 	cfgSaveStr(Section, Key, str);
 }
 
-s32 cfgLoadInt(const wchar * Section, const wchar * Key,s32 Default)
+s32 cfgLoadInt(const char * Section, const char * Key,s32 Default)
 {
 	s32 v = cfgdb.get_int(string(Section), string(Key), Default);
 	if (cfgHasGameSpecificConfig())
@@ -161,12 +161,12 @@ s32 cfgLoadInt(const wchar * Section, const wchar * Key,s32 Default)
     return v;
 }
 
-void  cfgSaveBool(const wchar * Section, const wchar * Key, bool BoolValue)
+void  cfgSaveBool(const char * Section, const char * Key, bool BoolValue)
 {
 	cfgSaveStr(Section, Key, BoolValue ? "yes" : "no");
 }
 
-bool  cfgLoadBool(const wchar * Section, const wchar * Key,bool Default)
+bool  cfgLoadBool(const char * Section, const char * Key,bool Default)
 {
 	bool v = cfgdb.get_bool(string(Section), string(Key), Default);
 	if (cfgHasGameSpecificConfig())
@@ -175,7 +175,7 @@ bool  cfgLoadBool(const wchar * Section, const wchar * Key,bool Default)
     return v;
 }
 
-void cfgSetVirtual(const wchar * Section, const wchar * Key, const wchar * String)
+void cfgSetVirtual(const char * Section, const char * Key, const char * String)
 {
 	cfgdb.set(string(Section), string(Key), string(String), true);
 }

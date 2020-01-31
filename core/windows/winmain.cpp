@@ -736,8 +736,8 @@ int main(int argc, char **argv)
 int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShowCmd)
 {
 	int argc = 0;
-	wchar* cmd_line = GetCommandLineA();
-	wchar** argv = CommandLineToArgvA(cmd_line, &argc);
+	char* cmd_line = GetCommandLineA();
+	char** argv = CommandLineToArgvA(cmd_line, &argc);
 
 #endif
 	LogManager::Init();

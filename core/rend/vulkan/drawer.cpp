@@ -234,7 +234,8 @@ void Drawer::DrawList(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sor
 	for (u32 i = first; i < last; i++)
 	{
 		const PolyParam &pp = polys.head()[i];
-		DrawPoly(cmdBuffer, listType, sortTriangles, pp, pp.first, pp.count);
+		if (pp.count > 2)
+			DrawPoly(cmdBuffer, listType, sortTriangles, pp, pp.first, pp.count);
 	}
 }
 

@@ -95,9 +95,6 @@ typedef size_t unat;
 typedef u64 unat;
 #endif
 
-typedef char wchar;
-
-
 #ifndef CDECL
 #define CDECL __cdecl
 #endif
@@ -240,7 +237,7 @@ void libCore_CDDA_Sector(s16* sector);
 #include <cstdio>
 
 #if HOST_OS == OS_DARWIN
-int darw_printf(const wchar* Text,...);
+int darw_printf(const char* Text,...);
 #define printf darw_printf
 #define puts(X) printf("%s\n", X)
 #endif

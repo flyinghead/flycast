@@ -53,8 +53,6 @@ u8 rt[4] = {0, 0, 0, 0};
 u8 lt[4] = {0, 0, 0, 0};
 s8 joyx[4], joyy[4];
 
-void emit_WriteCodeCache();
-
 #if defined(USE_JOYSTICK)
 	/* legacy joystick input */
 	static int joystick_fd = -1; // Joystick file descriptor
@@ -306,7 +304,7 @@ std::vector<string> find_system_data_dirs()
 	return dirs;
 }
 
-int main(int argc, wchar* argv[])
+int main(int argc, char* argv[])
 {
 	LogManager::Init();
 	#ifdef TARGET_PANDORA

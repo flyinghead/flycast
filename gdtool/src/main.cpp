@@ -9,7 +9,7 @@
 
 #include "crypto/sha256.h"
 
-int msgboxf(const wchar* text,unsigned int type,...) {
+int msgboxf(const char* text,unsigned int type,...) {
 	return MBX_OK;
 }
 

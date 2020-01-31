@@ -1,17 +1,17 @@
 #include "common.h"
 
-Disc* chd_parse(const wchar* file);
-Disc* gdi_parse(const wchar* file);
-Disc* cdi_parse(const wchar* file);
-Disc* cue_parse(const wchar* file);
+Disc* chd_parse(const char* file);
+Disc* gdi_parse(const char* file);
+Disc* cdi_parse(const char* file);
+Disc* cue_parse(const char* file);
 #ifdef _WIN32
-Disc* ioctl_parse(const wchar* file);
+Disc* ioctl_parse(const char* file);
 #endif
 
 u32 NullDriveDiscType;
 Disc* disc;
 
-Disc*(*drivers[])(const wchar* path)=
+Disc*(*drivers[])(const char* path)=
 {
 	chd_parse,
 	gdi_parse,
@@ -112,7 +112,7 @@ bool ConvertSector(u8* in_buff , u8* out_buff , int from , int to,int sector)
 	return true;
 }
 
-Disc* OpenDisc(const wchar* fn)
+Disc* OpenDisc(const char* fn)
 {
 	Disc* rv = NULL;
 
@@ -120,7 +120,7 @@ Disc* OpenDisc(const wchar* fn)
 		rv = drivers[i](fn);
 
 		if (rv && cdi_parse == drivers[i]) {
-			const wchar warn_str[] = "Warning: CDI Image Loaded! Many CDI images are known to be defective, GDI, CUE or CHD format is preferred. "
+			const char warn_str[] = "Warning: CDI Image Loaded! Many CDI images are known to be defective, GDI, CUE or CHD format is preferred. "
 					"Please only file bug reports when using images known to be good (GDI, CUE or CHD).";
 			WARN_LOG(GDROM, "%s", warn_str);
 
@@ -131,7 +131,7 @@ Disc* OpenDisc(const wchar* fn)
 	return rv;
 }
 
-bool InitDrive_(wchar* fn)
+bool InitDrive_(char* fn)
 {
 	TermDrive();
 

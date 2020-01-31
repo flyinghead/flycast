@@ -23,11 +23,11 @@
 #include <unistd.h>
 #include "hw/maple/maple_cfg.h"
 
-int darw_printf(const wchar* text,...)
+int darw_printf(const char* text,...)
 {
     va_list args;
 
-    wchar temp[2048];
+    char temp[2048];
     va_start(args, text);
     vsnprintf(temp, sizeof(temp), text, args);
     va_end(args);
@@ -39,14 +39,14 @@ int darw_printf(const wchar* text,...)
 
 
 void common_linux_setup();
-int dc_init(int argc,wchar* argv[]);
+int dc_init(int argc, char* argv[]);
 void dc_run();
 
 u16 kcode[4];
 s8 joyx[4],joyy[4];
 u8 rt[4],lt[4];
 
-extern "C" int reicast_main(int argc, wchar* argv[])
+extern "C" int reicast_main(int argc, char* argv[])
 {
     //if (argc==2)
     //ndcid=atoi(argv[1]);

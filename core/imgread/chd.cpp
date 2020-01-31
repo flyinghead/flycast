@@ -20,7 +20,7 @@ struct CHDDisc : Disc
 		hunk_mem=0;
 	}
 
-	bool TryOpen(const wchar* file);
+	bool TryOpen(const char* file);
 
 	~CHDDisc()
 	{
@@ -79,7 +79,7 @@ struct CHDTrack : TrackFile
 	}
 };
 
-bool CHDDisc::TryOpen(const wchar* file)
+bool CHDDisc::TryOpen(const char* file)
 {
 	chd_error err=chd_open(file,CHD_OPEN_READ,0,&chd);
 
@@ -180,7 +180,7 @@ bool CHDDisc::TryOpen(const wchar* file)
 }
 
 
-Disc* chd_parse(const wchar* file)
+Disc* chd_parse(const char* file)
 {
 	// Only try to open .chd files
 	size_t len = strlen(file);

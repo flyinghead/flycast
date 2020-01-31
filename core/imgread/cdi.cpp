@@ -6,7 +6,7 @@
 
 #include "deps/chdpsr/cdipsr.h"
 
-Disc* cdi_parse(const wchar* file)
+Disc* cdi_parse(const char* file)
 {
 	// Only try to open .cdi files
 	size_t len = strlen(file);

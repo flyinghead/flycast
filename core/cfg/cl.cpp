@@ -11,7 +11,7 @@
 
 #include "cfg/cfg.h"
 
-wchar* trim_ws(wchar* str)
+char* trim_ws(char* str)
 {
 	if (str==0 || strlen(str)==0)
 		return 0;
@@ -42,7 +42,7 @@ wchar* trim_ws(wchar* str)
 	return str;
 }
 
-int setconfig(wchar** arg,int cl)
+int setconfig(char** arg,int cl)
 {
 	int rv=0;
 	for(;;)
@@ -52,13 +52,13 @@ int setconfig(wchar** arg,int cl)
 			WARN_LOG(COMMON, "-config : invalid number of parameters, format is section:key=value");
 			return rv;
 		}
-		wchar* sep=strstr(arg[1],":");
+		char* sep=strstr(arg[1],":");
 		if (sep==0)
 		{
 			WARN_LOG(COMMON, "-config : invalid parameter %s, format is section:key=value", arg[1]);
 			return rv;
 		}
-		wchar* value=strstr(sep+1,"=");
+		char* value=strstr(sep+1,"=");
 		if (value==0)
 		{
 			WARN_LOG(COMMON, "-config : invalid parameter %s, format is section:key=value", arg[1]);
@@ -68,8 +68,8 @@ int setconfig(wchar** arg,int cl)
 		*sep++=0;
 		*value++=0;
 
-		wchar* sect=trim_ws(arg[1]);
-		wchar* key=trim_ws(sep);
+		char* sect=trim_ws(arg[1]);
+		char* key=trim_ws(sep);
 		value=trim_ws(value);
 
 		if (sect==0 || key==0)
@@ -78,7 +78,7 @@ int setconfig(wchar** arg,int cl)
 			return rv;
 		}
 
-		const wchar* constval = value;
+		const char* constval = value;
 		if (constval==0)
 			constval="";
 		INFO_LOG(COMMON, "Virtual cfg %s:%s=%s", sect, key, value);
@@ -99,7 +99,7 @@ int setconfig(wchar** arg,int cl)
 	return rv;
 }
 
-int showhelp(wchar** arg,int cl)
+int showhelp(char** arg,int cl)
 {
 	NOTICE_LOG(COMMON, "Available commands:");
 
@@ -109,11 +109,11 @@ int showhelp(wchar** arg,int cl)
 	return 0;
 }
 
-bool ParseCommandLine(int argc,wchar* argv[])
+bool ParseCommandLine(int argc,char* argv[])
 {
 	settings.imgread.ImagePath[0] = '\0';
 	int cl=argc-2;
-	wchar** arg=argv+1;
+	char** arg=argv+1;
 	while(cl>=0)
 	{
 		if (stricmp(*arg,"-help")==0 || stricmp(*arg,"--help")==0)

@@ -97,7 +97,7 @@ void GetDriveSector(u8 * buff,u32 StartSector,u32 SectorCount,u32 secsz);
 
 void GetDriveSessionInfo(u8* to,u8 session);
 int GetFile(char *szFileName, char *szParse=0,u32 flags=0);
-int msgboxf(wchar* text,unsigned int type,...);
+int msgboxf(char* text,unsigned int type,...);
 void printtoc(TocInfo* toc,SessionInfo* ses);
 extern u8 q_subchannel[96];
 
@@ -263,7 +263,7 @@ struct Disc
 
 extern Disc* disc;
 
-Disc* OpenDisc(const wchar* fn);
+Disc* OpenDisc(const char* fn);
 
 struct RawTrackFile : TrackFile
 {

@@ -45,7 +45,7 @@ static u32 getSectorSize(const string& type) {
 			return 0;
 }
 
-Disc* cue_parse(const wchar* file)
+Disc* cue_parse(const char* file)
 {
 	// Only try to open .cue files
 	size_t len = strlen(file);

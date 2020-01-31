@@ -201,7 +201,7 @@ struct PhysicalDrive:Disc
 		use_scsi=false;
 	}
 
-	bool Build(wchar* path)
+	bool Build(char* path)
 	{
 		drive = CreateFile( path, GENERIC_READ|GENERIC_WRITE,FILE_SHARE_READ|FILE_SHARE_WRITE,NULL, OPEN_EXISTING, 0, NULL);
 
@@ -363,13 +363,13 @@ void PhysicalTrack::Read(u32 FAD,u8* dst,SectorFormat* sector_type,u8* subcode,S
 }
 
 
-Disc* ioctl_parse(const wchar* file)
+Disc* ioctl_parse(const char* file)
 {
 	
 	if (strlen(file)==3 && GetDriveType(file)==DRIVE_CDROM)
 	{
 		printf("Opening device %s ...",file);
-		wchar fn[]={ '\\', '\\', '.', '\\', file[0],':', '\0' };
+		char fn[]={ '\\', '\\', '.', '\\', file[0],':', '\0' };
 		PhysicalDrive* rv = new PhysicalDrive();	
 
 		if (rv->Build(fn))

@@ -1771,10 +1771,10 @@ void gui_term()
 	}
 }
 
-int msgboxf(const wchar* text, unsigned int type, ...) {
+int msgboxf(const char* text, unsigned int type, ...) {
     va_list args;
 
-    wchar temp[2048];
+    char temp[2048];
     va_start(args, type);
     vsnprintf(temp, sizeof(temp), text, args);
     va_end(args);

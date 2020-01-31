@@ -1,7 +1,7 @@
 #include "ini.h"
 #include <sstream>
 
-wchar* trim_ws(wchar* str);
+char* trim_ws(char* str);
 
 namespace emucfg {
 
