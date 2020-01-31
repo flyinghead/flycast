@@ -249,20 +249,6 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_setExternalStorageDir
     gui_refresh_files();
 }
 
-JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_bootdisk(JNIEnv *env,jobject obj, jstring disk) {
-    if (disk != NULL) {
-        settings.imgread.LoadDefaultImage = true;
-        const char *P = env->GetStringUTFChars(disk, 0);
-        if (!P) settings.imgread.DefaultImage[0] = '\0';
-        else {
-        	INFO_LOG(BOOT, "Boot Disk URI: '%s'", P);
-            strncpy(settings.imgread.DefaultImage,(strlen(P)>=7)&&!memcmp(
-                    P,"file://",7)? P+7:P,sizeof(settings.imgread.DefaultImage));
-            settings.imgread.DefaultImage[sizeof(settings.imgread.DefaultImage) - 1] = '\0';
-        }
-    }
-}
-
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_setGameUri(JNIEnv *env,jobject obj,jstring fileName)
 {
     if (fileName != NULL)
@@ -275,27 +261,6 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_setGameUri(JNIEnv *en
         env->ReleaseStringUTFChars(fileName, file_path);
 
         cfgSetVirtual("config", "image", file_path);
-    }
-}
-
-JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_diskSwap(JNIEnv *env,jobject obj,jstring disk)
-{
-    if (settings.imgread.LoadDefaultImage) {
-        strncpy(settings.imgread.DefaultImage, gamedisk, sizeof(settings.imgread.DefaultImage));
-        settings.imgread.DefaultImage[sizeof(settings.imgread.DefaultImage) - 1] = '\0';
-        DiscSwap();
-    } else if (disk != NULL) {
-        settings.imgread.LoadDefaultImage = true;
-        const char *P = env->GetStringUTFChars(disk, 0);
-        if (!P) settings.imgread.DefaultImage[0] = '\0';
-        else {
-        	INFO_LOG(GDROM, "Swap Disk URI: '%s'", P);
-            strncpy(settings.imgread.DefaultImage,(strlen(P)>=7)&&!memcmp(
-                    P,"file://",7)? P+7:P,sizeof(settings.imgread.DefaultImage));
-            settings.imgread.DefaultImage[sizeof(settings.imgread.DefaultImage) - 1] = '\0';
-            env->ReleaseStringUTFChars(disk, P);
-        }
-        DiscSwap();
     }
 }
 
