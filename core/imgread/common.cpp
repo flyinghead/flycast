@@ -155,7 +155,13 @@ bool InitDrive_(char* fn)
 
 bool InitDrive()
 {
-	return DiscSwap();
+	bool rc = DiscSwap();
+	// not needed at startup and confuses some games
+	sns_asc = 0;
+	sns_ascq = 0;
+	sns_key = 0;
+
+	return rc;
 }
 
 void DiscOpenLid()

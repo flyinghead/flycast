@@ -606,7 +606,7 @@ void dc_start_game(const char *path)
 		}
 		else
 		{
-			if (DiscSwap())
+			if (InitDrive())
 				LoadCustom();
 			else
 			{
