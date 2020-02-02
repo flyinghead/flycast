@@ -286,14 +286,17 @@ static void GD_HLE_Command(u32 cc)
 		DEBUG_LOG(REIOS, "GDROM: CMD INIT");
 		gd_hle_state.multi_callback = 0;
 		gd_hle_state.multi_read_count = 0;
+		cdda.playing = false;
 		break;
 
 	case GDCC_PIOREAD:
 		GDROM_HLE_ReadPIO();
 		SecNumber.Status = GD_STANDBY;
+		cdda.playing = false;
 		break;
 
 	case GDCC_DMAREAD:
+		cdda.playing = false;
 		if (gd_hle_state.xfer_end_time == 0)
 			GDROM_HLE_ReadDMA();
 		if (gd_hle_state.xfer_end_time > 0)

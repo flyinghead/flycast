@@ -432,7 +432,7 @@ void gd_process_ata_cmd()
 		break;
 
 	default:
-		die("Unknown ATA command...");
+		ERROR_LOG(GDROM, "Unknown ATA command %x", ata_cmd.command);
 		break;
 	};
 }
@@ -505,9 +505,7 @@ void gd_process_spi_cmd()
 		printf_spicmd("SPI_TEST_UNIT");
 
 		GDStatus.CHECK=SecNumber.Status==GD_BUSY; // Drive is ready ;)
-//		sns_key=0;
-//		sns_asc=0;
-//		sns_ascq=0;
+		cdda.playing = false;
 
 		gd_set_state(gds_procpacketdone);
 		break;
@@ -523,6 +521,7 @@ void gd_process_spi_cmd()
 		{
 #define readcmd packet_cmd.GDReadBlock
 
+			cdda.playing = false;
 			u32 sector_type=2048;
 			if (readcmd.head ==1 && readcmd.subh==1 && readcmd.data==1 && readcmd.expdtype==3 && readcmd.other==0)
 				sector_type=2340;
