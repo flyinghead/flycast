@@ -324,6 +324,23 @@ void LoadSpecialSettings()
 			settings.dreamcast.cable = 3;
 			forced_game_cable = settings.dreamcast.cable;
 		}
+		if (settings.dreamcast.cable == 2 &&
+				(!strncmp("T40602N", prod_id, 7)	// Centipede
+				|| !strncmp("T9710N", prod_id, 6)	// Gauntlet Legends (US)
+				|| !strncmp("MK-51152", prod_id, 8) // World Series Baseball 2K2
+				|| !strncmp("T-9701N", prod_id, 7)	// Mortal Kombat Gold (US)
+				|| !strncmp("T1203N", prod_id, 6)	// Street Fighter Alpha 3 (US)
+				|| !strncmp("T1203M", prod_id, 6)	// Street Fighter Zero 3 (JP)
+				|| !strncmp("T13002N", prod_id, 7)	// Vigilante 8 (US)
+				|| !strncmp("T13003N", prod_id, 7)	// Toy Story 2 (US)
+				|| !strncmp("T1209N", prod_id, 6)	// Gigawing (US)
+				|| !strncmp("T1208M", prod_id, 6)	// Gigawing (JP)
+				|| !strncmp("T1235M", prod_id, 6)))	// Vampire Chronicle for Matching Service
+		{
+			NOTICE_LOG(BOOT, "Game doesn't support RGB. Using TV Composite instead");
+			settings.dreamcast.cable = 3;
+			forced_game_cable = settings.dreamcast.cable;
+		}
 	}
 	else if (settings.platform.system == DC_PLATFORM_NAOMI || settings.platform.system == DC_PLATFORM_ATOMISWAVE)
 	{
