@@ -19,7 +19,7 @@ InterruptInfo* SCIRE;
 
 //Interrupts
 //arm side
-u32 GetL(u32 which)
+static u32 GetL(u32 which)
 {
 	if (which > 7)
 		which = 7; //higher bits share bit 7
@@ -38,7 +38,8 @@ u32 GetL(u32 which)
 
 	return rv;
 }
-void update_arm_interrupts()
+
+static void update_arm_interrupts()
 {
 	u32 p_ints=SCIEB->full & SCIPD->full;
 
@@ -63,7 +64,7 @@ void update_arm_interrupts()
 }
 
 //sh4 side
-void UpdateSh4Ints()
+static void UpdateSh4Ints()
 {
 	u32 p_ints = MCIEB->full & MCIPD->full;
 	if (p_ints)

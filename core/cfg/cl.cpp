@@ -142,7 +142,7 @@ bool ParseCommandLine(int argc,char* argv[])
 			{
 				INFO_LOG(COMMON, "Using '%s' as reios elf file", *arg);
 				cfgSetVirtual("config", "bios.UseReios", "yes");
-				cfgSetVirtual("reios", "ElfFile", *arg);
+				strcpy(settings.imgread.ImagePath, *arg);
 			}
 			else
 			{

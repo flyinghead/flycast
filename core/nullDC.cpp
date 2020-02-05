@@ -558,12 +558,12 @@ static int get_game_platform(const char *path)
 		// Dreamcast BIOS
 		return DC_PLATFORM_DREAMCAST;
 
-	const char *dot = strrchr(path, '.');
-	if (dot == NULL)
+	std::string extension = get_file_extension(path);
+	if (extension == "")
 		return DC_PLATFORM_DREAMCAST;	// unknown
-	if (!stricmp(dot, ".zip") || !stricmp(dot, ".7z"))
+	if (extension == "zip" || extension == "7z")
 		return naomi_cart_GetPlatform(path);
-	if (!stricmp(dot, ".bin") || !stricmp(dot, ".dat") || !stricmp(dot, ".lst"))
+	if (extension == "bin" || extension == "dat" || extension == "lst")
 		return DC_PLATFORM_NAOMI;
 
 	return DC_PLATFORM_DREAMCAST;
@@ -623,16 +623,20 @@ void dc_start_game(const char *path)
 		}
 		else
 		{
-			if (InitDrive())
-				LoadCustom();
-			else
+			std::string extension = get_file_extension(settings.imgread.ImagePath);
+			if (extension != "elf")
 			{
-				// Content load failed. Boot the BIOS
-				settings.imgread.ImagePath[0] = '\0';
-				forced_bios_file = true;
-				if (!LoadRomFiles(data_path))
-					throw ReicastException("No BIOS file found");
-				InitDrive();
+				if (InitDrive())
+					LoadCustom();
+				else
+				{
+					// Content load failed. Boot the BIOS
+					settings.imgread.ImagePath[0] = '\0';
+					forced_bios_file = true;
+					if (!LoadRomFiles(data_path))
+						throw ReicastException("No BIOS file found");
+					InitDrive();
+				}
 			}
 		}
 		FixUpFlash();
@@ -793,7 +797,6 @@ void InitSettings()
 	settings.debug.SerialPTY        = false;
 
 	settings.bios.UseReios		    = false;
-	settings.reios.ElfFile		    = "";
 
 	settings.validate.OpenGlChecks  = false;
 
@@ -890,7 +893,6 @@ void LoadSettings(bool game_specific)
 	settings.debug.SerialPTY		= cfgLoadBool(config_section, "Debug.SerialPTY", settings.debug.SerialPTY);
 
 	settings.bios.UseReios		    = cfgLoadBool(config_section, "bios.UseReios", settings.bios.UseReios);
-	settings.reios.ElfFile		    = cfgLoadStr(game_specific ? cfgGetGameId() : "reios", "ElfFile", settings.reios.ElfFile.c_str());
 
 	settings.validate.OpenGlChecks  = cfgLoadBool(game_specific ? cfgGetGameId() : "validate", "OpenGlChecks", settings.validate.OpenGlChecks);
 

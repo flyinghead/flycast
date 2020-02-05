@@ -1,4 +1,6 @@
 #pragma once
+#include <algorithm>
+#include <cctype>
 #include "types.h"
 
 void os_SetWindowText(const char* text);
@@ -24,7 +26,14 @@ u32 static INLINE bitscanrev(u32 v)
 #endif
 }
 
-//FIX ME
-#define __assume(x)
-
 void os_DebugBreak();
+
+static inline std::string get_file_extension(const std::string& s)
+{
+	size_t dot = s.find_last_of('.');
+	if (dot >= s.length())
+		return "";
+	std::string ext = s.substr(dot + 1, s.length() - dot - 1);
+	std::transform(ext.begin(), ext.end(), ext.begin(), [](unsigned char c){ return std::tolower(c); });
+	return ext;
+}

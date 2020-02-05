@@ -21,6 +21,7 @@
 #include "hw/naomi/naomi_cart.h"
 #include "iso9660.h"
 #include "font.h"
+#include "hw/aica/aica.h"
 
 #include <map>
 
@@ -296,7 +297,7 @@ static void reios_sys_flashrom() {
 				u32 offset = r[4];
 				u32 dest = r[5];
 				u32 size = r[6];
-
+// FIXME after loading a hle savestate in a !hle env, flashrom is null (changing CT options -> crash)
 				debugf("reios_sys_flashrom: FLASHROM_READ offs %x dest %08x size %x", offset, dest, size);
 				for (u32 i = 0; i < size; i++)
 					WriteMem8(dest++, flashrom->Read8(offset + i));
@@ -401,7 +402,14 @@ static void setup_syscall(u32 hook_addr, u32 syscall_addr) {
 	debugf(" - address %08X: data %04X [%04X]", hook_addr, ReadMem16(hook_addr), REIOS_OPCODE);
 }
 
-static void reios_setup_state(u32 boot_addr) {
+static void reios_setup_state(u32 boot_addr)
+{
+	// Set up AICA interrupt masks
+	libAICA_WriteReg(SCIEB_addr, 0x48, 2);
+	libAICA_WriteReg(SCILV0_addr, 0x18, 1);
+	libAICA_WriteReg(SCILV1_addr, 0x50, 1);
+	libAICA_WriteReg(SCILV2_addr, 0x08, 1);
+
 	/*
 	Post Boot registers from actual bios boot
 	r
@@ -614,9 +622,11 @@ static void reios_boot()
 	//Infinite loop for arm !
 	WriteMem32(0x80800000, 0xEAFFFFFE);
 
-	if (!settings.reios.ElfFile.empty()) {
-		if (!reios_loadElf(settings.reios.ElfFile)) {
-			msgboxf("Failed to open %s", MBX_ICONERROR, settings.reios.ElfFile.c_str());
+	std::string extension = get_file_extension(settings.imgread.ImagePath);
+	if (extension == "elf")
+	{
+		if (!reios_loadElf(settings.imgread.ImagePath)) {
+			msgboxf("Failed to open %s", MBX_ICONERROR, settings.imgread.ImagePath);
 		}
 		reios_setup_state(0x8C010000);
 	}

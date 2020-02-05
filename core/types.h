@@ -403,10 +403,6 @@ struct settings_t
 		bool UseReios;
 	} bios;
 
-	struct {
-		string ElfFile;
-	} reios;
-
 	struct
 	{
 		bool UseMipmaps;

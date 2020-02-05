@@ -301,7 +301,6 @@ static void gui_start_game(const std::string& path)
 		gui_state = Main;
 		game_started = false;
 		settings.imgread.ImagePath[0] = '\0';
-		cfgSetVirtual("reios", "ElfFile", "");
 	}
 }
 
