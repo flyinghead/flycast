@@ -50,7 +50,7 @@ void OITDrawer::DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool 
 				(float)scissorRect.offset.x + (float)scissorRect.extent.width,
 				(float)scissorRect.offset.y + (float)scissorRect.extent.height
 			},
-			{ getBlendFactor(poly.tsp.SrcInstr, true), getBlendFactor(poly.tsp.DstInstr, false), 0, 0 },
+			{ poly.tsp.SrcInstr, poly.tsp.DstInstr, 0, 0 },
 			trilinearAlpha,
 			(int)(&poly - (listType == ListType_Opaque ? pvrrc.global_param_op.head()
 					: listType == ListType_Punch_Through ? pvrrc.global_param_pt.head()
@@ -58,7 +58,7 @@ void OITDrawer::DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool 
 	};
 	if (twoVolumes)
 	{
-		pushConstants.blend_mode1 = { getBlendFactor(poly.tsp1.SrcInstr, true), getBlendFactor(poly.tsp1.DstInstr, false), 0, 0 };
+		pushConstants.blend_mode1 = { poly.tsp1.SrcInstr, poly.tsp1.DstInstr, 0, 0 };
 		pushConstants.shading_instr0 = poly.tsp.ShadInstr;
 		pushConstants.shading_instr1 = poly.tsp1.ShadInstr;
 		pushConstants.fog_control0 = poly.tsp.FogCtrl;
