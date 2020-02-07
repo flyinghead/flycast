@@ -17,7 +17,7 @@ extern u32 pal_hash_256[4];
 extern u32 pal_hash_16[64];
 extern bool KillTex;
 
-extern u32 detwiddle[1024];
+extern u32 detwiddle[2][10][1024];
 
 template<class pixel_type>
 class PixelBuffer
@@ -167,6 +167,8 @@ __forceinline u32 YUV422(s32 Y,s32 Yu,s32 Yv)
 
 	return PixelPacker::packRGB(clamp(0,255,R),clamp(0,255,G),clamp(0,255,B));
 }
+
+#define twop(x,y,bcx,bcy) (detwiddle[0][bcy][x]+detwiddle[1][bcx][y])
 
 //pixel packers !
 struct pp_565
@@ -517,23 +519,24 @@ void texture_PL(PixelBuffer<pixel_type>* pb,u8* p_in,u32 Width,u32 Height)
 	}
 }
 
-static inline u32 get_tw_texel_position(u32 x, u32 y)
-{
-    return detwiddle[y]  |  detwiddle[x] << 1;
-}
-
 template<class PixelConvertor, class pixel_type>
 void texture_TW(PixelBuffer<pixel_type>* pb,u8* p_in,u32 Width,u32 Height)
 {
 	pb->amove(0,0);
 
-	const u32 divider = PixelConvertor::xpp * PixelConvertor::ypp;
+	const u32 divider=PixelConvertor::xpp*PixelConvertor::ypp;
 
-	for (u32 y = 0; y < Height; y += PixelConvertor::ypp)
+	unsigned long bcx_,bcy_;
+	bcx_=bitscanrev(Width);
+	bcy_=bitscanrev(Height);
+	const u32 bcx=bcx_-1;
+	const u32 bcy=bcy_-1;
+
+	for (u32 y=0;y<Height;y+=PixelConvertor::ypp)
 	{
-		for (u32 x = 0; x < Width; x += PixelConvertor::xpp)
+		for (u32 x=0;x<Width;x+=PixelConvertor::xpp)
 		{
-			u8* p = &p_in[get_tw_texel_position(x, y) / divider * 8];
+			u8* p = &p_in[(twop(x,y,bcx,bcy)/divider)<<3];
 			PixelConvertor::Convert(pb,p);
 
 			pb->rmovex(PixelConvertor::xpp);
@@ -548,14 +551,18 @@ void texture_VQ(PixelBuffer<pixel_type>* pb,u8* p_in,u32 Width,u32 Height)
 	p_in+=256*4*2;
 	pb->amove(0,0);
 
-	Height /= PixelConvertor::ypp;
-	Width /= PixelConvertor::xpp;
+	const u32 divider=PixelConvertor::xpp*PixelConvertor::ypp;
+	unsigned long bcx_,bcy_;
+	bcx_=bitscanrev(Width);
+	bcy_=bitscanrev(Height);
+	const u32 bcx=bcx_-1;
+	const u32 bcy=bcy_-1;
 
-	for (u32 y = 0; y < Height; y++)
+	for (u32 y=0;y<Height;y+=PixelConvertor::ypp)
 	{
-		for (u32 x = 0; x < Width; x++)
+		for (u32 x=0;x<Width;x+=PixelConvertor::xpp)
 		{
-			u8 p = p_in[get_tw_texel_position(x, y)];
+			u8 p = p_in[twop(x,y,bcx,bcy)/divider];
 			PixelConvertor::Convert(pb,&vq_codebook[p*8]);
 
 			pb->rmovex(PixelConvertor::xpp);
