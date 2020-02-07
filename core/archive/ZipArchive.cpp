@@ -40,6 +40,29 @@ ArchiveFile* ZipArchive::OpenFile(const char* name)
 	return new ZipArchiveFile(zip_file);
 }
 
+struct zip_file *zip_fopen_by_crc(struct zip *za, int crc, int flags)
+{
+    int i, n;
+    struct zip_stat stat;
+
+    if (crc == 0) {
+        return NULL;
+    }
+
+    n = zip_get_num_files(za);
+    for (i = 0; i < n; i++) {
+        if (zip_stat_index(za, i, flags, &stat) < -1) {
+            return NULL;
+        }
+
+        if (stat.crc == crc) {
+            return zip_fopen_index(za, i, flags);
+        }
+    }
+
+    return NULL;
+}
+
 ArchiveFile* ZipArchive::OpenFileByCrc(u32 crc)
 {
 	zip_file *zip_file = zip_fopen_by_crc(zip, crc, 0);

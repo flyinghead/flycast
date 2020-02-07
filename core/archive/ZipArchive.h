@@ -21,7 +21,7 @@
 #pragma once
 
 #include "archive.h"
-#include "deps/libzip/zip.h"
+#include <zip.h>
 
 class ZipArchive : public Archive
 {
