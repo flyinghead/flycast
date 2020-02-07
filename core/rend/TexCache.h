@@ -17,7 +17,7 @@ extern u32 pal_hash_256[4];
 extern u32 pal_hash_16[64];
 extern bool KillTex;
 
-extern u32 detwiddle[2][10][1024];
+extern u32 detwiddle[2][11][1024];
 
 template<class pixel_type>
 class PixelBuffer
@@ -522,22 +522,19 @@ void texture_PL(PixelBuffer<pixel_type>* pb,u8* p_in,u32 Width,u32 Height)
 template<class PixelConvertor, class pixel_type>
 void texture_TW(PixelBuffer<pixel_type>* pb,u8* p_in,u32 Width,u32 Height)
 {
-	pb->amove(0,0);
+	pb->amove(0, 0);
 
-	const u32 divider=PixelConvertor::xpp*PixelConvertor::ypp;
+	const u32 divider = PixelConvertor::xpp * PixelConvertor::ypp;
 
-	unsigned long bcx_,bcy_;
-	bcx_=bitscanrev(Width);
-	bcy_=bitscanrev(Height);
-	const u32 bcx=bcx_-1;
-	const u32 bcy=bcy_-1;
+	const u32 bcx = bitscanrev(Width);
+	const u32 bcy = bitscanrev(Height);
 
-	for (u32 y=0;y<Height;y+=PixelConvertor::ypp)
+	for (u32 y = 0; y < Height; y += PixelConvertor::ypp)
 	{
-		for (u32 x=0;x<Width;x+=PixelConvertor::xpp)
+		for (u32 x = 0; x < Width; x += PixelConvertor::xpp)
 		{
-			u8* p = &p_in[(twop(x,y,bcx,bcy)/divider)<<3];
-			PixelConvertor::Convert(pb,p);
+			u8* p = &p_in[(twop(x, y, bcx, bcy) / divider) << 3];
+			PixelConvertor::Convert(pb, p);
 
 			pb->rmovex(PixelConvertor::xpp);
 		}
@@ -548,22 +545,19 @@ void texture_TW(PixelBuffer<pixel_type>* pb,u8* p_in,u32 Width,u32 Height)
 template<class PixelConvertor, class pixel_type>
 void texture_VQ(PixelBuffer<pixel_type>* pb,u8* p_in,u32 Width,u32 Height)
 {
-	p_in+=256*4*2;
-	pb->amove(0,0);
+	p_in += 256 * 4 * 2;	// Skip VQ codebook
+	pb->amove(0, 0);
 
-	const u32 divider=PixelConvertor::xpp*PixelConvertor::ypp;
-	unsigned long bcx_,bcy_;
-	bcx_=bitscanrev(Width);
-	bcy_=bitscanrev(Height);
-	const u32 bcx=bcx_-1;
-	const u32 bcy=bcy_-1;
+	const u32 divider = PixelConvertor::xpp * PixelConvertor::ypp;
+	const u32 bcx = bitscanrev(Width);
+	const u32 bcy = bitscanrev(Height);
 
-	for (u32 y=0;y<Height;y+=PixelConvertor::ypp)
+	for (u32 y = 0; y < Height; y += PixelConvertor::ypp)
 	{
-		for (u32 x=0;x<Width;x+=PixelConvertor::xpp)
+		for (u32 x = 0; x < Width; x += PixelConvertor::xpp)
 		{
-			u8 p = p_in[twop(x,y,bcx,bcy)/divider];
-			PixelConvertor::Convert(pb,&vq_codebook[p*8]);
+			u8 p = p_in[twop(x, y, bcx, bcy) / divider];
+			PixelConvertor::Convert(pb, &vq_codebook[p * 8]);
 
 			pb->rmovex(PixelConvertor::xpp);
 		}

@@ -23,7 +23,7 @@ u32 palette32_ram[1024];
 u32 pal_hash_256[4];
 u32 pal_hash_16[64];
 
-u32 detwiddle[2][10][1024];
+u32 detwiddle[2][11][1024];
 //input : address in the yyyyyxxxxx format
 //output : address in the xyxyxyxy format
 //U : x resolution , V : y resolution
@@ -64,10 +64,10 @@ static u32 twiddle_slow(u32 x,u32 y,u32 x_sz,u32 y_sz)
 
 static void BuildTwiddleTables()
 {
-	for (u32 s = 0; s < 10; s++)
+	for (u32 s = 0; s < 11; s++)
 	{
 		u32 x_sz = 1024;
-		u32 y_sz = 2 << s;
+		u32 y_sz = 1 << s;
 		for (u32 i = 0; i < x_sz; i++)
 		{
 			detwiddle[0][s][i] = twiddle_slow(i, 0, x_sz, y_sz);
