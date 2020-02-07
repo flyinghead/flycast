@@ -469,6 +469,7 @@ void findGLVersion()
 {
 	gl.index_type = GL_UNSIGNED_INT;
 	gl.gl_major = theGLContext.GetMajorVersion();
+	gl.gl_minor = theGLContext.GetMinorVersion();
 	gl.is_gles = theGLContext.IsGLES();
 	if (gl.is_gles)
 	{

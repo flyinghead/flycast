@@ -118,6 +118,9 @@ public :
 		pthread_mutex_unlock(&mutx);
 #endif
 	}
+	// std::BasicLockable so we can use std::lock_guard
+	void lock() { Lock(); }
+	void unlock() { Unlock(); }
 };
 
 #if !defined(TARGET_IPHONE)

@@ -17,32 +17,46 @@ extern u32 pal_hash_256[4];
 extern u32 pal_hash_16[64];
 extern bool KillTex;
 
-extern u32 detwiddle[2][8][1024];
+extern u32 detwiddle[1024];
 
 template<class pixel_type>
 class PixelBuffer
 {
-	pixel_type* p_buffer_start;
-	pixel_type* p_current_line;
-	pixel_type* p_current_pixel;
+	pixel_type* p_buffer_start = nullptr;
+	pixel_type* p_current_mipmap = nullptr;
+	pixel_type* p_current_line = nullptr;
+	pixel_type* p_current_pixel = nullptr;
 
 	u32 pixels_per_line = 0;
 
 public:
-	PixelBuffer()
-	{
-		p_buffer_start = p_current_line = p_current_pixel = NULL;
-	}
-
 	~PixelBuffer()
 	{
 		deinit();
 	}
 
+	void init(u32 width, u32 height, bool mipmapped)
+	{
+		deinit();
+		size_t size = width * height * sizeof(pixel_type);
+		if (mipmapped)
+		{
+			do
+			{
+				width /= 2;
+				height /= 2;
+				size += width * height * sizeof(pixel_type);
+			}
+			while (width != 0 && height != 0);
+		}
+		p_buffer_start = p_current_line = p_current_pixel = p_current_mipmap = (pixel_type *)malloc(size);
+		this->pixels_per_line = 1;
+	}
+
 	void init(u32 width, u32 height)
 	{
 		deinit();
-		p_buffer_start = p_current_line = p_current_pixel = (pixel_type *)malloc(width * height * sizeof(pixel_type));
+		p_buffer_start = p_current_line = p_current_pixel = p_current_mipmap = (pixel_type *)malloc(width * height * sizeof(pixel_type));
 		this->pixels_per_line = width;
 	}
 
@@ -51,47 +65,56 @@ public:
 		if (p_buffer_start != NULL)
 		{
 			free(p_buffer_start);
-			p_buffer_start = p_current_line = p_current_pixel = NULL;
+			p_buffer_start = p_current_mipmap = p_current_line = p_current_pixel = NULL;
 		}
 	}
 
 	void steal_data(PixelBuffer &buffer)
 	{
 		deinit();
-		p_buffer_start = p_current_line = p_current_pixel = buffer.p_buffer_start;
+		p_buffer_start = p_current_mipmap = p_current_line = p_current_pixel = buffer.p_buffer_start;
 		pixels_per_line = buffer.pixels_per_line;
-		buffer.p_buffer_start = buffer.p_current_line = buffer.p_current_pixel = NULL;
+		buffer.p_buffer_start = p_current_mipmap = buffer.p_current_line = buffer.p_current_pixel = NULL;
+	}
+
+	void set_mipmap(int level)
+	{
+		size_t offset = 0;
+		for (int i = 0; i < level; i++)
+			offset += (1 << (2 * i));
+		p_current_mipmap = p_current_line = p_current_pixel = p_buffer_start + offset;
+		pixels_per_line = 1 << level;
 	}
 
 	__forceinline pixel_type *data(u32 x = 0, u32 y = 0)
 	{
-		return p_buffer_start + pixels_per_line * y + x;
+		return p_current_mipmap + pixels_per_line * y + x;
 	}
 
-	__forceinline void prel(u32 x,pixel_type value)
+	__forceinline void prel(u32 x, pixel_type value)
 	{
-		p_current_pixel[x]=value;
+		p_current_pixel[x] = value;
 	}
 
-	__forceinline void prel(u32 x,u32 y,pixel_type value)
+	__forceinline void prel(u32 x, u32 y, pixel_type value)
 	{
-		p_current_pixel[y*pixels_per_line+x]=value;
+		p_current_pixel[y * pixels_per_line + x] = value;
 	}
 
 	__forceinline void rmovex(u32 value)
 	{
-		p_current_pixel+=value;
+		p_current_pixel += value;
 	}
 	__forceinline void rmovey(u32 value)
 	{
-		p_current_line+=pixels_per_line*value;
-		p_current_pixel=p_current_line;
+		p_current_line += pixels_per_line * value;
+		p_current_pixel = p_current_line;
 	}
-	__forceinline void amove(u32 x_m,u32 y_m)
+	__forceinline void amove(u32 x_m, u32 y_m)
 	{
 		//p_current_pixel=p_buffer_start;
-		p_current_line=p_buffer_start+pixels_per_line*y_m;
-		p_current_pixel=p_current_line + x_m;
+		p_current_line = p_current_mipmap + pixels_per_line * y_m;
+		p_current_pixel = p_current_line + x_m;
 	}
 };
 
@@ -144,8 +167,6 @@ __forceinline u32 YUV422(s32 Y,s32 Yu,s32 Yv)
 
 	return PixelPacker::packRGB(clamp(0,255,R),clamp(0,255,G),clamp(0,255,B));
 }
-
-#define twop(x,y,bcx,bcy) (detwiddle[0][bcy][x]+detwiddle[1][bcx][y])
 
 //pixel packers !
 struct pp_565
@@ -496,24 +517,23 @@ void texture_PL(PixelBuffer<pixel_type>* pb,u8* p_in,u32 Width,u32 Height)
 	}
 }
 
+static inline u32 get_tw_texel_position(u32 x, u32 y)
+{
+    return detwiddle[y]  |  detwiddle[x] << 1;
+}
+
 template<class PixelConvertor, class pixel_type>
 void texture_TW(PixelBuffer<pixel_type>* pb,u8* p_in,u32 Width,u32 Height)
 {
 	pb->amove(0,0);
 
-	const u32 divider=PixelConvertor::xpp*PixelConvertor::ypp;
+	const u32 divider = PixelConvertor::xpp * PixelConvertor::ypp;
 
-	unsigned long bcx_,bcy_;
-	bcx_=bitscanrev(Width);
-	bcy_=bitscanrev(Height);
-	const u32 bcx=bcx_-3;
-	const u32 bcy=bcy_-3;
-
-	for (u32 y=0;y<Height;y+=PixelConvertor::ypp)
+	for (u32 y = 0; y < Height; y += PixelConvertor::ypp)
 	{
-		for (u32 x=0;x<Width;x+=PixelConvertor::xpp)
+		for (u32 x = 0; x < Width; x += PixelConvertor::xpp)
 		{
-			u8* p = &p_in[(twop(x,y,bcx,bcy)/divider)<<3];
+			u8* p = &p_in[get_tw_texel_position(x, y) / divider * 8];
 			PixelConvertor::Convert(pb,p);
 
 			pb->rmovex(PixelConvertor::xpp);
@@ -528,18 +548,14 @@ void texture_VQ(PixelBuffer<pixel_type>* pb,u8* p_in,u32 Width,u32 Height)
 	p_in+=256*4*2;
 	pb->amove(0,0);
 
-	const u32 divider=PixelConvertor::xpp*PixelConvertor::ypp;
-	unsigned long bcx_,bcy_;
-	bcx_=bitscanrev(Width);
-	bcy_=bitscanrev(Height);
-	const u32 bcx=bcx_-3;
-	const u32 bcy=bcy_-3;
+	Height /= PixelConvertor::ypp;
+	Width /= PixelConvertor::xpp;
 
-	for (u32 y=0;y<Height;y+=PixelConvertor::ypp)
+	for (u32 y = 0; y < Height; y++)
 	{
-		for (u32 x=0;x<Width;x+=PixelConvertor::xpp)
+		for (u32 x = 0; x < Width; x++)
 		{
-			u8 p = p_in[twop(x,y,bcx,bcy)/divider];
+			u8 p = p_in[get_tw_texel_position(x, y)];
 			PixelConvertor::Convert(pb,&vq_codebook[p*8]);
 
 			pb->rmovex(PixelConvertor::xpp);
@@ -670,6 +686,11 @@ struct BaseTextureCacheData
 		return tcw.PixelFmt == PixelPal4 || tcw.PixelFmt == PixelPal8;
 	}
 
+	bool IsMipmapped()
+	{
+		return tcw.MipMapped != 0 && tcw.ScanOrder == 0;
+	}
+
 	const char* GetPixelFormatName()
 	{
 		switch (tcw.PixelFmt)
@@ -688,7 +709,7 @@ struct BaseTextureCacheData
 	void Create();
 	void ComputeHash();
 	void Update();
-	virtual void UploadToGPU(int width, int height, u8 *temp_tex_buffer) = 0;
+	virtual void UploadToGPU(int width, int height, u8 *temp_tex_buffer, bool mipmapped) = 0;
 	virtual bool Force32BitTexture(TextureType type) const { return false; }
 	void CheckCustomTexture();
 	//true if : dirty or paletted texture and hashes don't match

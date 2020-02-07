@@ -29,6 +29,7 @@ class GLGraphicsContext
 {
 public:
 	int GetMajorVersion() const { return majorVersion; }
+	int GetMinorVersion() const { return minorVersion; }
 	bool IsGLES() const { return isGLES; }
 
 protected:
@@ -38,6 +39,7 @@ protected:
 
 private:
 	int majorVersion = 0;
+	int minorVersion = 0;
 	bool isGLES = false;
 };
 

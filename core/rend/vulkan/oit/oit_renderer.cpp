@@ -65,7 +65,7 @@ public:
 					vjoyTexture->SetPhysicalDevice(GetContext()->GetPhysicalDevice());
 					vjoyTexture->SetDevice(GetContext()->GetDevice());
 					vjoyTexture->SetCommandBuffer(texCommandPool.Allocate());
-					vjoyTexture->UploadToGPU(OSD_TEX_W, OSD_TEX_H, image_data);
+					vjoyTexture->UploadToGPU(OSD_TEX_W, OSD_TEX_H, image_data, false);
 					vjoyTexture->SetCommandBuffer(nullptr);
 					texCommandPool.EndFrame();
 					delete [] image_data;
@@ -135,7 +135,7 @@ public:
 			curTexture->SetDevice(GetContext()->GetDevice());
 		}
 		curTexture->SetCommandBuffer(texCommandPool.Allocate());
-		curTexture->UploadToGPU(width, height, (u8*)pb.data());
+		curTexture->UploadToGPU(width, height, (u8*)pb.data(), false);
 		curTexture->SetCommandBuffer(nullptr);
 		texCommandPool.EndFrame();
 
@@ -287,7 +287,7 @@ private:
 		MakeFogTexture(texData);
 		fogTexture->SetCommandBuffer(texCommandPool.Allocate());
 
-		fogTexture->UploadToGPU(128, 2, texData);
+		fogTexture->UploadToGPU(128, 2, texData, false);
 
 		fogTexture->SetCommandBuffer(nullptr);
 	}

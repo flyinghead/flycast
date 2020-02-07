@@ -30,7 +30,7 @@ void setImageLayout(vk::CommandBuffer const& commandBuffer, vk::Image image, vk:
 
 struct Texture : BaseTextureCacheData
 {
-	void UploadToGPU(int width, int height, u8 *data) override;
+	void UploadToGPU(int width, int height, u8 *data, bool mipmapped) override;
 	u64 GetIntId() { return (u64)reinterpret_cast<uintptr_t>(this); }
 	std::string GetId() override { char s[20]; sprintf(s, "%p", this); return s; }
 	bool IsNew() const { return !image.get(); }
@@ -43,11 +43,10 @@ struct Texture : BaseTextureCacheData
 	void SetDevice(vk::Device device) { this->device = device; }
 
 private:
-	void Init(u32 width, u32 height, vk::Format format);
+	void Init(u32 width, u32 height, vk::Format format ,u32 dataSize);
 	void SetImage(u32 size, void *data, bool isNew);
 	void CreateImage(vk::ImageTiling tiling, vk::ImageUsageFlags usage, vk::ImageLayout initialLayout,
 			vk::MemoryPropertyFlags memoryProperties, vk::ImageAspectFlags aspectMask);
-	void GenerateMipmaps();
 
 	vk::Format format = vk::Format::eUndefined;
 	vk::Extent2D extent;

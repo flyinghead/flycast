@@ -29,6 +29,10 @@ void GLGraphicsContext::findGLVersion()
 	glGetIntegerv(GL_MAJOR_VERSION, &majorVersion);
 	if (glGetError() == GL_INVALID_ENUM)
 		majorVersion = 2;
+	else
+	{
+		glGetIntegerv(GL_MINOR_VERSION, &minorVersion);
+	}
 	const char *version = (const char *)glGetString(GL_VERSION);
 	isGLES = !strncmp(version, "OpenGL ES", 9);
 	INFO_LOG(RENDERER, "OpenGL version: %s", version);

@@ -95,6 +95,7 @@ struct gl_ctx
 	const char *gl_version;
 	const char *glsl_version_header;
 	int gl_major;
+	int gl_minor;
 	bool is_gles;
 	GLuint fog_image_format;
 	GLenum index_type;
@@ -200,7 +201,7 @@ struct TextureCacheData : BaseTextureCacheData
 	GLuint texID;   //gl texture
 	u16* pData;
 	virtual std::string GetId() override { return std::to_string(texID); }
-	virtual void UploadToGPU(int width, int height, u8 *temp_tex_buffer) override;
+	virtual void UploadToGPU(int width, int height, u8 *temp_tex_buffer, bool mipmapped) override;
 	virtual bool Delete() override;
 };
 

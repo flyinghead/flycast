@@ -73,7 +73,7 @@ static void dumpRtTexture(u32 name, u32 w, u32 h) {
 	free(rows);
 }
 
-void TextureCacheData::UploadToGPU(int width, int height, u8 *temp_tex_buffer)
+void TextureCacheData::UploadToGPU(int width, int height, u8 *temp_tex_buffer, bool mipmapped)
 {
 	if (texID != 0)
 	{
@@ -100,9 +100,66 @@ void TextureCacheData::UploadToGPU(int width, int height, u8 *temp_tex_buffer)
 			die("Unsupported texture type");
 			break;
 		}
-		glTexImage2D(GL_TEXTURE_2D, 0,comps, width, height, 0, comps, gltype, temp_tex_buffer);
-		if (tcw.MipMapped && settings.rend.UseMipmaps)
-			glGenerateMipmap(GL_TEXTURE_2D);
+		if (mipmapped)
+		{
+			int mipmapLevels = 0;
+			int dim = width;
+			while (dim != 0)
+			{
+				mipmapLevels++;
+				dim >>= 1;
+			}
+#ifndef GLES2
+			// Open GL 4.2 or GLES 3.0 min
+			if (gl.gl_major > 4 || (gl.gl_major == 4 && gl.gl_minor >= 2)
+					|| (gl.is_gles && gl.gl_major >= 3))
+			{
+				GLuint internalFormat;
+				switch (tex_type)
+				{
+				case TextureType::_5551:
+					internalFormat = GL_RGB5_A1;
+					break;
+				case TextureType::_565:
+					internalFormat = GL_RGB565;
+					break;
+				case TextureType::_4444:
+					internalFormat = GL_RGBA4;
+					break;
+				case TextureType::_8888:
+					internalFormat = GL_RGBA8;
+					break;
+				}
+				if (Updates == 1)
+				{
+					glTexStorage2D(GL_TEXTURE_2D, mipmapLevels, internalFormat, width, height);
+					glCheck();
+				}
+				for (int i = 0; i < mipmapLevels; i++)
+				{
+					glTexSubImage2D(GL_TEXTURE_2D, mipmapLevels - i - 1, 0, 0, 1 << i, 1 << i, comps, gltype, temp_tex_buffer);
+					temp_tex_buffer += (1 << (2 * i)) * (tex_type == TextureType::_8888 ? 4 : 2);
+				}
+			}
+			else
+#endif
+			{
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, mipmapLevels - 1);
+				for (int i = 0; i < mipmapLevels; i++)
+				{
+					glTexImage2D(GL_TEXTURE_2D, mipmapLevels - i - 1, comps, 1 << i, 1 << i, 0, comps, gltype, temp_tex_buffer);
+					temp_tex_buffer += (1 << (2 * i)) * (tex_type == TextureType::_8888 ? 4 : 2);
+				}
+			}
+		}
+		else
+		{
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
+			glTexImage2D(GL_TEXTURE_2D, 0,comps, width, height, 0, comps, gltype, temp_tex_buffer);
+		}
+		glCheck();
 	}
 	else {
 		#if FEAT_HAS_SOFTREND

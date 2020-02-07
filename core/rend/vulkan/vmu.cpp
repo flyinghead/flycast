@@ -51,7 +51,7 @@ const std::vector<vk::UniqueCommandBuffer>* VulkanVMUs::PrepareVMUs(vk::CommandP
 				VulkanContext::Instance()->GetDevice().allocateCommandBuffersUnique(vk::CommandBufferAllocateInfo(commandPool, vk::CommandBufferLevel::ePrimary, 1))
 				.front()));
 		texture->SetCommandBuffer(*commandBuffers[context->GetCurrentImageIndex()].back());
-		texture->UploadToGPU(48, 32, (u8*)vmu_lcd_data[i]);
+		texture->UploadToGPU(48, 32, (u8*)vmu_lcd_data[i], false);
 		texture->SetCommandBuffer(nullptr);
 		vmu_lcd_changed[i] = false;
 	}

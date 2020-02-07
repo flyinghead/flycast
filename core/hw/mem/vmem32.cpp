@@ -19,6 +19,7 @@
     along with reicast.  If not, see <https://www.gnu.org/licenses/>.
  */
 #include <unordered_set>
+#include <mutex>
 #include "build.h"
 #include "vmem32.h"
 #include "_vmem.h"
@@ -267,20 +268,20 @@ static u32 vmem32_map_mmu(u32 address, bool write)
 			u32 end = start + page_size;
 			const vector<vram_lock>& blocks = vram_blocks[start / VRAM_PROT_SEGMENT];
 
-			vramlist_lock.Lock();
-			for (int i = blocks.size() - 1; i >= 0; i--)
 			{
-				if (blocks[i].start < end && blocks[i].end >= start)
+				std::lock_guard<cMutex> lock(vramlist_lock);
+				for (int i = blocks.size() - 1; i >= 0; i--)
 				{
-					u32 prot_start = max(start, blocks[i].start);
-					u32 prot_size = min(end, blocks[i].end + 1) - prot_start;
-					prot_size += prot_start % PAGE_SIZE;
-					prot_start &= ~PAGE_MASK;
-					vmem32_protect_buffer(vpn + (prot_start & (page_size - 1)), prot_size);
+					if (blocks[i].start < end && blocks[i].end >= start)
+					{
+						u32 prot_start = max(start, blocks[i].start);
+						u32 prot_size = min(end, blocks[i].end + 1) - prot_start;
+						prot_size += prot_start % PAGE_SIZE;
+						prot_start &= ~PAGE_MASK;
+						vmem32_protect_buffer(vpn + (prot_start & (page_size - 1)), prot_size);
+					}
 				}
 			}
-			vramlist_lock.Unlock();
-
 		}
 		else if (offset >= MAP_RAM_START_OFFSET && offset < MAP_RAM_START_OFFSET + RAM_SIZE)
 		{

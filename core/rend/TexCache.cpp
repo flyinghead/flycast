@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <mutex>
 #ifndef TARGET_NO_OPENMP
 #include <omp.h>
 #endif
@@ -22,60 +23,23 @@ u32 palette32_ram[1024];
 u32 pal_hash_256[4];
 u32 pal_hash_16[64];
 
-u32 detwiddle[2][8][1024];
-//input : address in the yyyyyxxxxx format
-//output : address in the xyxyxyxy format
-//U : x resolution , V : y resolution
-//twiddle works on 64b words
+u32 detwiddle[1024];
 
-
-static u32 twiddle_slow(u32 x,u32 y,u32 x_sz,u32 y_sz)
+void BuildTwiddleTable()
 {
-	u32 rv=0;//low 2 bits are directly passed  -> needs some misc stuff to work.However
-			 //Pvr internally maps the 64b banks "as if" they were twiddled :p
-
-	u32 sh=0;
-	x_sz>>=1;
-	y_sz>>=1;
-	while(x_sz!=0 || y_sz!=0)
-	{
-		if (y_sz)
-		{
-			u32 temp=y&1;
-			rv|=temp<<sh;
-
-			y_sz>>=1;
-			y>>=1;
-			sh++;
-		}
-		if (x_sz)
-		{
-			u32 temp=x&1;
-			rv|=temp<<sh;
-
-			x_sz>>=1;
-			x>>=1;
-			sh++;
-		}
-	}	
-	return rv;
+    for (u32 j = 0; j < ARRAY_SIZE(detwiddle); j++)
+    {
+        u32 detwiddled = 0;
+        for (int i = 0; i < 10; i++)
+        {
+            u32 shift = 1 << i;
+            detwiddled |= ((j & shift) << i);
+        }
+    	detwiddle[j] = detwiddled;
+    }
 }
 
-static void BuildTwiddleTables()
-{
-	for (u32 s=0;s<8;s++)
-	{
-		u32 x_sz=1024;
-		u32 y_sz=8<<s;
-		for (u32 i=0;i<x_sz;i++)
-		{
-			detwiddle[0][s][i]=twiddle_slow(i,0,x_sz,y_sz);
-			detwiddle[1][s][i]=twiddle_slow(0,i,y_sz,x_sz);
-		}
-	}
-}
-
-static OnLoad btt(&BuildTwiddleTables);
+static OnLoad btt(&BuildTwiddleTable);
 
 void palette_update()
 {
@@ -196,12 +160,10 @@ vram_block* libCore_vramlock_Lock(u32 start_offset64,u32 end_offset64,void* user
 	block->type=64;
 
 	{
-		vramlist_lock.Lock();
+		std::lock_guard<cMutex> lock(vramlist_lock);
 
 		// This also protects vram if needed
 		vramlock_list_add(block);
-
-		vramlist_lock.Unlock();
 	}
 
 	return block;
@@ -216,7 +178,7 @@ bool VramLockedWriteOffset(size_t offset)
 	vector<vram_block *>& list = VramLocks[addr_hash];
 
 	{
-		vramlist_lock.Lock();
+		std::lock_guard<cMutex> lock(vramlist_lock);
 
 		for (size_t i = 0; i < list.size(); i++)
 		{
@@ -235,8 +197,6 @@ bool VramLockedWriteOffset(size_t offset)
 		list.clear();
 
 		_vmem_unprotect_vram((u32)(offset & ~PAGE_MASK), PAGE_SIZE);
-
-		vramlist_lock.Unlock();
 	}
 
 	return true;
@@ -254,9 +214,8 @@ bool VramLockedWrite(u8* address)
 //also frees the handle
 void libCore_vramlock_Unlock_block(vram_block* block)
 {
-	vramlist_lock.Lock();
+	std::lock_guard<cMutex> lock(vramlist_lock);
 	libCore_vramlock_Unlock_block_wb(block);
-	vramlist_lock.Unlock();
 }
 
 void libCore_vramlock_Unlock_block_wb(vram_block* block)
@@ -409,8 +368,11 @@ static const PvrTexInfo format[8] =
 	{"ns/1555", 0},																														// Not supported (1555)
 };
 
-static const u32 MipPoint[8] =
+static const u32 VQMipPoint[11] =
 {
+	0x00000,//1
+	0x00001,//2
+	0x00002,//4
 	0x00006,//8
 	0x00016,//16
 	0x00056,//32
@@ -419,6 +381,20 @@ static const u32 MipPoint[8] =
 	0x01556,//256
 	0x05556,//512
 	0x15556//1024
+};
+static const u32 OtherMipPoint[11] =
+{
+	0x00003,//1
+	0x00004,//2
+	0x00008,//4
+	0x00018,//8
+	0x00058,//16
+	0x00158,//32
+	0x00558,//64
+	0x01558,//128
+	0x05558,//256
+	0x15558,//512
+	0x55558//1024
 };
 
 static const TextureType PAL_TYPE[4] = {
@@ -496,71 +472,50 @@ void BaseTextureCacheData::Create()
 	else if (tex->bpp == 8)
 		palette_index = (tcw.PalSelect >> 4) << 8;
 
-	//VQ table (if VQ tex)
-	if (tcw.VQ_Comp)
-		vq_codebook = sa;
-
-	//Convert a pvr texture into OpenGL
-	switch (tcw.PixelFmt)
+	if (tcw.ScanOrder && (tex->PL || tex->PL32))
 	{
+		//Texture is stored 'planar' in memory, no deswizzle is needed
+		//verify(tcw.VQ_Comp==0);
+		if (tcw.VQ_Comp != 0)
+			WARN_LOG(RENDERER, "Warning: planar texture with VQ set (invalid)");
 
-	case Pixel1555: 	//0     1555 value: 1 bit; RGB values: 5 bits each
-	case PixelReserved: //7     Reserved        Regarded as 1555
-	case Pixel565: 		//1     565      R value: 5 bits; G value: 6 bits; B value: 5 bits
-	case Pixel4444: 	//2     4444 value: 4 bits; RGB values: 4 bits each
-	case PixelYUV:		//3     YUV422 32 bits per 2 pixels; YUYV values: 8 bits each
-	case PixelBumpMap:	//4		Bump Map 	16 bits/pixel; S value: 8 bits; R value: 8 bits
-	case PixelPal4:		//5     4 BPP Palette   Palette texture with 4 bits/pixel
-	case PixelPal8:		//6     8 BPP Palette   Palette texture with 8 bits/pixel
-		if (tcw.ScanOrder && (tex->PL || tex->PL32))
+		//Planar textures support stride selection, mostly used for non power of 2 textures (videos)
+		int stride = w;
+		if (tcw.StrideSel)
+			stride = (TEXT_CONTROL & 31) * 32;
+
+		//Call the format specific conversion code
+		texconv = tex->PL;
+		texconv32 = tex->PL32;
+		//calculate the size, in bytes, for the locking
+		size = stride * h * tex->bpp / 8;
+	}
+	else
+	{
+		// Quake 3 Arena uses one
+		if (tcw.MipMapped)
+			// Mipmapped texture must be square and TexV is ignored
+			h = w;
+
+		if (tcw.VQ_Comp)
 		{
-			//Texture is stored 'planar' in memory, no deswizzle is needed
-			//verify(tcw.VQ_Comp==0);
-			if (tcw.VQ_Comp != 0)
-				WARN_LOG(RENDERER, "Warning: planar texture with VQ set (invalid)");
-
-			//Planar textures support stride selection, mostly used for non power of 2 textures (videos)
-			int stride = w;
-			if (tcw.StrideSel)
-				stride = (TEXT_CONTROL & 31) * 32;
-
-			//Call the format specific conversion code
-			texconv = tex->PL;
-			texconv32 = tex->PL32;
-			//calculate the size, in bytes, for the locking
-			size = stride * h * tex->bpp / 8;
+			verify(tex->VQ != NULL || tex->VQ32 != NULL);
+			vq_codebook = sa;
+			if (tcw.MipMapped)
+				sa += VQMipPoint[tsp.TexU + 3];
+			texconv = tex->VQ;
+			texconv32 = tex->VQ32;
+			size = w * h / 8;
 		}
 		else
 		{
-			// Quake 3 Arena uses one. Not sure if valid but no need to crash
-			//verify(w == h || !tcw.MipMapped); // are non square mipmaps supported ? i can't recall right now *WARN*
-
-			if (tcw.VQ_Comp)
-			{
-				verify(tex->VQ != NULL || tex->VQ32 != NULL);
-				vq_codebook = sa;
-				if (tcw.MipMapped)
-					sa += MipPoint[tsp.TexU];
-				texconv = tex->VQ;
-				texconv32 = tex->VQ32;
-				size = w * h / 8;
-			}
-			else
-			{
-				verify(tex->TW != NULL || tex->TW32 != NULL);
-				if (tcw.MipMapped)
-					sa += MipPoint[tsp.TexU] * tex->bpp / 2;
-				texconv = tex->TW;
-				texconv32 = tex->TW32;
-				size = w * h * tex->bpp / 8;
-			}
+			verify(tex->TW != NULL || tex->TW32 != NULL);
+			if (tcw.MipMapped)
+				sa += OtherMipPoint[tsp.TexU + 3] * tex->bpp / 8;
+			texconv = tex->TW;
+			texconv32 = tex->TW32;
+			size = w * h * tex->bpp / 8;
 		}
-		break;
-	default:
-		WARN_LOG(RENDERER, "Unhandled texture format %d", tcw.PixelFmt);
-		size = w * h * 2;
-		texconv = NULL;
-		texconv32 = NULL;
 	}
 }
 
@@ -631,58 +586,119 @@ void BaseTextureCacheData::Update()
 	PixelBuffer<u32> pb32;
 
 	// Figure out if we really need to use a 32-bit pixel buffer
+	bool textureUpscaling = settings.rend.TextureUpscale > 1
+			// Don't process textures that are too big
+			&& w * h <= settings.rend.MaxFilteredTextureSize * settings.rend.MaxFilteredTextureSize
+			// Don't process YUV textures
+			&& tcw.PixelFmt != PixelYUV;
 	bool need_32bit_buffer = true;
-	if ((settings.rend.TextureUpscale <= 1
-			|| w * h > settings.rend.MaxFilteredTextureSize
-				* settings.rend.MaxFilteredTextureSize		// Don't process textures that are too big
-			|| tcw.PixelFmt == PixelYUV)					// Don't process YUV textures
+	if (!textureUpscaling
 		&& (!IsPaletted() || tex_type != TextureType::_8888)
 		&& texconv != NULL
 		&& !Force32BitTexture(tex_type))
 		need_32bit_buffer = false;
 	// TODO avoid upscaling/depost. textures that change too often
 
+	bool mipmapped = IsMipmapped() && settings.rend.UseMipmaps;
+
 	if (texconv32 != NULL && need_32bit_buffer)
 	{
+		if (textureUpscaling)
+			// don't use mipmaps if upscaling
+			mipmapped = false;
 		// Force the texture type since that's the only 32-bit one we know
 		tex_type = TextureType::_8888;
 
-		pb32.init(w, h);
-
-		texconv32(&pb32, (u8*)&vram[sa], stride, h);
+		if (mipmapped)
+		{
+			pb32.init(w, h, true);
+			for (int i = 0; i <= tsp.TexU + 3; i++)
+			{
+				pb32.set_mipmap(i);
+				u32 vram_addr;
+				if (tcw.VQ_Comp)
+				{
+					vram_addr = sa_tex + VQMipPoint[i];
+					if (i == 0)
+					{
+						PixelBuffer<u32> pb0;
+						pb0.init(2, 2 ,false);
+						texconv32(&pb0, (u8*)&vram[vram_addr], 2, 2);
+						*pb32.data() = *pb0.data(1, 1);
+						continue;
+					}
+				}
+				else
+					vram_addr = sa_tex + OtherMipPoint[i] * tex->bpp / 8;
+				texconv32(&pb32, (u8*)&vram[vram_addr], 1 << i, 1 << i);
+			}
+			pb32.set_mipmap(0);
+		}
+		else
+		{
+			pb32.init(w, h);
+			texconv32(&pb32, (u8*)&vram[sa], stride, h);
 
 #ifdef DEPOSTERIZE
-		{
-			// Deposterization
-			PixelBuffer<u32> tmp_buf;
-			tmp_buf.init(w, h);
+			{
+				// Deposterization
+				PixelBuffer<u32> tmp_buf;
+				tmp_buf.init(w, h);
 
-			DePosterize(pb32.data(), tmp_buf.data(), w, h);
-			pb32.steal_data(tmp_buf);
-		}
+				DePosterize(pb32.data(), tmp_buf.data(), w, h);
+				pb32.steal_data(tmp_buf);
+			}
 #endif
 
-		// xBRZ scaling
-		if (settings.rend.TextureUpscale > 1)
-		{
-			PixelBuffer<u32> tmp_buf;
-			tmp_buf.init(w * settings.rend.TextureUpscale, h * settings.rend.TextureUpscale);
+			// xBRZ scaling
+			if (textureUpscaling)
+			{
+				PixelBuffer<u32> tmp_buf;
+				tmp_buf.init(w * settings.rend.TextureUpscale, h * settings.rend.TextureUpscale);
 
-			if (tcw.PixelFmt == Pixel1555 || tcw.PixelFmt == Pixel4444)
-				// Alpha channel formats. Palettes with alpha are already handled
-				has_alpha = true;
-			UpscalexBRZ(settings.rend.TextureUpscale, pb32.data(), tmp_buf.data(), w, h, has_alpha);
-			pb32.steal_data(tmp_buf);
-			upscaled_w *= settings.rend.TextureUpscale;
-			upscaled_h *= settings.rend.TextureUpscale;
+				if (tcw.PixelFmt == Pixel1555 || tcw.PixelFmt == Pixel4444)
+					// Alpha channel formats. Palettes with alpha are already handled
+					has_alpha = true;
+				UpscalexBRZ(settings.rend.TextureUpscale, pb32.data(), tmp_buf.data(), w, h, has_alpha);
+				pb32.steal_data(tmp_buf);
+				upscaled_w *= settings.rend.TextureUpscale;
+				upscaled_h *= settings.rend.TextureUpscale;
+			}
 		}
 		temp_tex_buffer = pb32.data();
 	}
 	else if (texconv != NULL)
 	{
-		pb16.init(w, h);
-
-		texconv(&pb16,(u8*)&vram[sa],stride,h);
+		if (mipmapped)
+		{
+			pb16.init(w, h, true);
+			for (int i = 0; i <= tsp.TexU + 3; i++)
+			{
+				pb16.set_mipmap(i);
+				u32 vram_addr;
+				if (tcw.VQ_Comp)
+				{
+					vram_addr = sa_tex + VQMipPoint[i];
+					if (i == 0)
+					{
+						PixelBuffer<u16> pb0;
+						pb0.init(2, 2 ,false);
+						texconv(&pb0, (u8*)&vram[vram_addr], 2, 2);
+						*pb16.data() = *pb0.data(1, 1);
+						continue;
+					}
+				}
+				else
+					vram_addr = sa_tex + OtherMipPoint[i] * tex->bpp / 8;
+				texconv(&pb16, (u8*)&vram[vram_addr], 1 << i, 1 << i);
+			}
+			pb16.set_mipmap(0);
+		}
+		else
+		{
+			pb16.init(w, h);
+			texconv(&pb16,(u8*)&vram[sa],stride,h);
+		}
 		temp_tex_buffer = pb16.data();
 	}
 	else
@@ -692,6 +708,7 @@ void BaseTextureCacheData::Update()
 		pb16.init(w, h);
 		memset(pb16.data(), 0x80, w * h * 2);
 		temp_tex_buffer = pb16.data();
+		mipmapped = false;
 	}
 	// Restore the original texture height if it was constrained to VRAM limits above
 	h = original_h;
@@ -699,7 +716,7 @@ void BaseTextureCacheData::Update()
 	//lock the texture to detect changes in it
 	lock_block = libCore_vramlock_Lock(sa_tex,sa+size-1,this);
 
-	UploadToGPU(upscaled_w, upscaled_h, (u8*)temp_tex_buffer);
+	UploadToGPU(upscaled_w, upscaled_h, (u8*)temp_tex_buffer, mipmapped);
 	if (settings.rend.DumpTextures)
 	{
 		ComputeHash();
@@ -713,7 +730,7 @@ void BaseTextureCacheData::CheckCustomTexture()
 	if (custom_load_in_progress == 0 && custom_image_data != NULL)
 	{
 		tex_type = TextureType::_8888;
-		UploadToGPU(custom_width, custom_height, custom_image_data);
+		UploadToGPU(custom_width, custom_height, custom_image_data, false);
 		delete [] custom_image_data;
 		custom_image_data = NULL;
 	}

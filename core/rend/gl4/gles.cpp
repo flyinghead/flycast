@@ -501,8 +501,6 @@ static bool gl_create_resources()
 		// Assume the resources have already been created
 		return true;
 
-	findGLVersion();
-
 	//create vao
 	glGenVertexArrays(1, &gl4.vbo.main_vao);
 	glGenVertexArrays(1, &gl4.vbo.modvol_vao);
@@ -538,11 +536,8 @@ extern void gl4CreateTextures(int width, int height);
 
 static bool gles_init()
 {
-	int major = 0;
-	int minor = 0;
-	glGetIntegerv(GL_MAJOR_VERSION, &major);
-	glGetIntegerv(GL_MINOR_VERSION, &minor);
-	if (major < 4 || (major == 4 && minor < 3))
+	findGLVersion();
+	if (gl.gl_major < 4 || (gl.gl_major == 4 && gl.gl_minor < 3))
 	{
 		WARN_LOG(RENDERER, "Warning: OpenGL version doesn't support per-pixel sorting.");
 		return false;
