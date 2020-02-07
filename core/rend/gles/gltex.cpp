@@ -109,7 +109,7 @@ void TextureCacheData::UploadToGPU(int width, int height, u8 *temp_tex_buffer, b
 				mipmapLevels++;
 				dim >>= 1;
 			}
-#ifndef GLES2
+#if !defined(GLES2) && HOST_OS != OS_DARWIN
 			// Open GL 4.2 or GLES 3.0 min
 			if (gl.gl_major > 4 || (gl.gl_major == 4 && gl.gl_minor >= 2)
 					|| (gl.is_gles && gl.gl_major >= 3))
