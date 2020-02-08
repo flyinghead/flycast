@@ -582,7 +582,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Full</Optimization>
       <PreprocessorDefinitions>WIN32;PACKAGE_VERSION="1.3.2";FLAC__HAS_OGG=0;FLAC__NO_DLL;CHD5_FLAC;CHD5_LZMA;_7ZIP_ST;NDEBUG;_CONSOLE;X86;RELEASE;%(PreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\core\;$(ProjectDir)..\core\khronos;$(ProjectDir)..\core\rend\gles;$(ProjectDir)..\core\deps;$(ProjectDir)..\core\deps\dirent;$(ProjectDir)..\core\deps\flac\src\libflac\include;$(ProjectDir)..\core\deps\flac\include;$(ProjectDir)..\core\deps\libpng;$(ProjectDir)..\core\deps\xxhash;$(ProjectDir)..\core\deps\zlib</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\core\;$(ProjectDir)..\core\khronos;$(ProjectDir)..\core\rend\gles;$(ProjectDir)..\core\deps;$(ProjectDir)..\core\deps\dirent;$(ProjectDir)..\core\deps\flac\src\libflac\include;$(ProjectDir)..\core\deps\flac\include;$(ProjectDir)..\core\deps\libpng;$(ProjectDir)..\core\deps\libzip;$(ProjectDir)..\core\deps\xxhash;$(ProjectDir)..\core\deps\zlib</AdditionalIncludeDirectories>
       <AdditionalOptions>/MP %(AdditionalOptions)</AdditionalOptions>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -621,7 +621,7 @@ for /f "delims=" %%i in ('date /T') do echo #define BUILD_DATE "%%i" &gt;&gt;$(P
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Full</Optimization>
       <PreprocessorDefinitions>WIN32;PACKAGE_VERSION="1.3.2";FLAC__HAS_OGG=0;FLAC__NO_DLL;CHD5_FLAC;CHD5_LZMA;_7ZIP_ST;NDEBUG;_CONSOLE;X86;RELEASE;%(PreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\core\;$(ProjectDir)..\core\khronos;$(ProjectDir)..\core\rend\gles;$(ProjectDir)..\core\deps;$(ProjectDir)..\core\deps\dirent;$(ProjectDir)..\core\deps\flac\src\libflac\include;$(ProjectDir)..\core\deps\flac\include;$(ProjectDir)..\core\deps\libpng;$(ProjectDir)..\core\deps\xxhash;$(ProjectDir)..\core\deps\zlib</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\core\;$(ProjectDir)..\core\khronos;$(ProjectDir)..\core\rend\gles;$(ProjectDir)..\core\deps;$(ProjectDir)..\core\deps\dirent;$(ProjectDir)..\core\deps\flac\src\libflac\include;$(ProjectDir)..\core\deps\flac\include;$(ProjectDir)..\core\deps\libpng;$(ProjectDir)..\core\deps\libzip;$(ProjectDir)..\core\deps\xxhash;$(ProjectDir)..\core\deps\zlib</AdditionalIncludeDirectories>
       <AdditionalOptions>/MP %(AdditionalOptions)</AdditionalOptions>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -662,7 +662,7 @@ for /f "delims=" %%i in ('date /T') do echo #define BUILD_DATE "%%i" &gt;&gt;$(P
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;PACKAGE_VERSION="1.3.2";FLAC__HAS_OGG=0;FLAC__NO_DLL;CHD5_FLAC;CHD5_LZMA;_7ZIP_ST;_DEBUG;_CONSOLE;X86;%(PreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\core\;$(ProjectDir)..\core\khronos;$(ProjectDir)..\core\rend\gles;$(ProjectDir)..\core\deps;$(ProjectDir)..\core\deps\dirent;$(ProjectDir)..\core\deps\flac\src\libflac\include;$(ProjectDir)..\core\deps\flac\include;$(ProjectDir)..\core\deps\libpng;$(ProjectDir)..\core\deps\xxhash;$(ProjectDir)..\core\deps\zlib</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\core\;$(ProjectDir)..\core\khronos;$(ProjectDir)..\core\rend\gles;$(ProjectDir)..\core\deps;$(ProjectDir)..\core\deps\dirent;$(ProjectDir)..\core\deps\flac\src\libflac\include;$(ProjectDir)..\core\deps\flac\include;$(ProjectDir)..\core\deps\libpng;$(ProjectDir)..\core\deps\libzip;$(ProjectDir)..\core\deps\xxhash;$(ProjectDir)..\core\deps\zlib</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
@@ -690,7 +690,7 @@ for /f "delims=" %%i in ('date /T') do echo #define BUILD_DATE "%%i" &gt;&gt;$(P
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;PACKAGE_VERSION="1.3.2";FLAC__HAS_OGG=0;FLAC__NO_DLL;CHD5_FLAC;CHD5_LZMA;_7ZIP_ST;_DEBUG;_CONSOLE;X86;%(PreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\core\;$(ProjectDir)..\core\khronos;$(ProjectDir)..\core\rend\gles;$(ProjectDir)..\core\deps;$(ProjectDir)..\core\deps\dirent;$(ProjectDir)..\core\deps\flac\src\libflac\include;$(ProjectDir)..\core\deps\flac\include;$(ProjectDir)..\core\deps\libpng;$(ProjectDir)..\core\deps\xxhash;$(ProjectDir)..\core\deps\zlib</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\core\;$(ProjectDir)..\core\khronos;$(ProjectDir)..\core\rend\gles;$(ProjectDir)..\core\deps;$(ProjectDir)..\core\deps\dirent;$(ProjectDir)..\core\deps\flac\src\libflac\include;$(ProjectDir)..\core\deps\flac\include;$(ProjectDir)..\core\deps\libpng;$(ProjectDir)..\core\deps\libzip;$(ProjectDir)..\core\deps\xxhash;$(ProjectDir)..\core\deps\zlib</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
