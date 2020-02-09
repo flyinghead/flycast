@@ -561,8 +561,8 @@ void BaseTextureCacheData::ComputeHash()
 	texture_hash = XXH32(&vram[sa], size, 7);
 	if (IsPaletted())
 		texture_hash ^= palette_hash;
-	old_texture_hash = texture_hash;
-	texture_hash ^= tcw.full;
+	old_texture_hash = texture_hash ^ tcw.full;
+	texture_hash ^= tcw.full & 0xFC000000;	// everything but texaddr, reserved and stride
 }
 
 void BaseTextureCacheData::Update()
@@ -758,6 +758,7 @@ void BaseTextureCacheData::Update()
 	{
 		ComputeHash();
 		custom_texture.DumpTexture(texture_hash, upscaled_w, upscaled_h, tex_type, temp_tex_buffer);
+		NOTICE_LOG(RENDERER, "Dumped texture %x.png. Old hash %x", texture_hash, old_texture_hash);
 	}
 	PrintTextureName();
 }
