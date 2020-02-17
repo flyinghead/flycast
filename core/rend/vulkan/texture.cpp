@@ -180,18 +180,18 @@ void Texture::UploadToGPU(int width, int height, u8 *data, bool mipmapped)
 	}
 	bool isNew = true;
 	if (width != extent.width || height != extent.height || format != this->format)
-		Init(width, height, format, dataSize);
+		Init(width, height, format, dataSize, mipmapped);
 	else
 		isNew = false;
 	SetImage(dataSize, data, isNew);
 }
 
-void Texture::Init(u32 width, u32 height, vk::Format format, u32 dataSize)
+void Texture::Init(u32 width, u32 height, vk::Format format, u32 dataSize, bool mipmapped)
 {
 	this->extent = vk::Extent2D(width, height);
 	this->format = format;
 	mipmapLevels = 1;
-	if (IsMipmapped() && settings.rend.UseMipmaps)
+	if (mipmapped)
 		mipmapLevels += floor(log2(std::max(width, height)));
 
 	vk::FormatProperties formatProperties = physicalDevice.getFormatProperties(format);

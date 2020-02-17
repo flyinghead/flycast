@@ -43,7 +43,7 @@ struct Texture : BaseTextureCacheData
 	void SetDevice(vk::Device device) { this->device = device; }
 
 private:
-	void Init(u32 width, u32 height, vk::Format format ,u32 dataSize);
+	void Init(u32 width, u32 height, vk::Format format ,u32 dataSize, bool mipmapped);
 	void SetImage(u32 size, void *data, bool isNew);
 	void CreateImage(vk::ImageTiling tiling, vk::ImageUsageFlags usage, vk::ImageLayout initialLayout,
 			vk::MemoryPropertyFlags memoryProperties, vk::ImageAspectFlags aspectMask);
