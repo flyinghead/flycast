@@ -223,7 +223,9 @@ void LoadSpecialSettings()
 				// Metropolis Street Racer (NTSC)
 				|| !strncmp("MK-51012", prod_id, 10)
 				// Metropolis Street Racer (PAL)
-				|| !strncmp("MK-5102250", prod_id, 10))
+				|| !strncmp("MK-5102250", prod_id, 10)
+				// Donald Duck Goin' Quackers
+				|| !strncmp("T17714D50", prod_id, 9))
 		{
 			INFO_LOG(BOOT, "Enabling Dynarec safe mode for game %s", prod_id);
 			settings.dynarec.safemode = 1;
