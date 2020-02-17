@@ -74,7 +74,7 @@ public:
 		deinit();
 		p_buffer_start = p_current_mipmap = p_current_line = p_current_pixel = buffer.p_buffer_start;
 		pixels_per_line = buffer.pixels_per_line;
-		buffer.p_buffer_start = p_current_mipmap = buffer.p_current_line = buffer.p_current_pixel = NULL;
+		buffer.p_buffer_start = buffer.p_current_mipmap = buffer.p_current_line = buffer.p_current_pixel = NULL;
 	}
 
 	void set_mipmap(int level)
