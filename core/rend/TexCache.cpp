@@ -765,7 +765,7 @@ void BaseTextureCacheData::Update()
 
 void BaseTextureCacheData::CheckCustomTexture()
 {
-	if (custom_load_in_progress == 0 && custom_image_data != NULL)
+	if (IsCustomTextureAvailable())
 	{
 		tex_type = TextureType::_8888;
 		UploadToGPU(custom_width, custom_height, custom_image_data, false);
@@ -968,7 +968,7 @@ u8* loadPNGData(const string& fname, int &width, int &height)
 
 	if (!file)
 	{
-		EMUERROR("Error opening %s\n", filename);
+		EMUERROR("Error opening %s", filename);
 		return NULL;
 	}
 
@@ -1102,7 +1102,7 @@ void dump_screenshot(u8 *buffer, u32 width, u32 height, bool alpha, u32 rowPitch
 	FILE *fp = fopen("screenshot.png", "wb");
 	if (fp == NULL)
 	{
-		ERROR_LOG(RENDERER, "Failed to open screenshot.png for writing\n");
+		ERROR_LOG(RENDERER, "Failed to open screenshot.png for writing");
 		return;
 	}
 

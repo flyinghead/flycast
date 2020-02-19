@@ -707,6 +707,11 @@ struct BaseTextureCacheData
 		}
 	}
 
+	bool IsCustomTextureAvailable()
+	{
+		return custom_load_in_progress == 0 && custom_image_data != NULL;
+	}
+
 	void Create();
 	void ComputeHash();
 	void Update();

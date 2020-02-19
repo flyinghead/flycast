@@ -256,13 +256,16 @@ public:
 		if (tf->NeedsUpdate())
 		{
 			textureCache.DestroyLater(tf);
-
 			tf->SetCommandBuffer(texCommandPool.Allocate());
 			tf->Update();
-			tf->SetCommandBuffer(nullptr);
 		}
-		else
+		else if (tf->IsCustomTextureAvailable())
+		{
+			textureCache.DestroyLater(tf);
+			tf->SetCommandBuffer(texCommandPool.Allocate());
 			tf->CheckCustomTexture();
+		}
+		tf->SetCommandBuffer(nullptr);
 
 		return tf->GetIntId();
 	}
