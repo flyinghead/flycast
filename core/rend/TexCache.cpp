@@ -561,7 +561,7 @@ void BaseTextureCacheData::ComputeHash()
 	texture_hash = XXH32(&vram[sa], size, 7);
 	if (IsPaletted())
 		texture_hash ^= palette_hash;
-	old_texture_hash = texture_hash ^ tcw.full;
+	old_texture_hash = texture_hash;
 	texture_hash ^= tcw.full & 0xFC000000;	// everything but texaddr, reserved and stride
 }
 
