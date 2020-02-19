@@ -76,7 +76,7 @@ u32 csc_sidx=1;
 
 x86_reg alloc_regs[]={EBX,EBP,ESI,EDI,NO_REG};
 x86_reg xmm_alloc_regs[]={XMM7,XMM6,XMM5,XMM4,NO_REG};
-f32 DECL_ALIGN(16) thaw_regs[4];
+alignas(16) f32 thaw_regs[4];
 
 
 void x86_reg_alloc::Preload(u32 reg,x86_reg nreg)

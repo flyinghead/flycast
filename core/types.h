@@ -2,13 +2,10 @@
 
 #include "build.h"
 
-#ifdef _MSC_VER
-#define DECL_ALIGN(x) __declspec(align(x))
-#else
+#ifndef _MSC_VER
 #ifndef __forceinline
 #define __forceinline inline
 #endif
-#define DECL_ALIGN(x) __attribute__((aligned(x)))
 #ifndef _WIN32
 #define __debugbreak
 #endif
