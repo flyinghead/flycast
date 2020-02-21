@@ -636,7 +636,7 @@ void BaseTextureCacheData::Update()
 		need_32bit_buffer = false;
 	// TODO avoid upscaling/depost. textures that change too often
 
-	bool mipmapped = IsMipmapped() && settings.rend.UseMipmaps;
+	bool mipmapped = IsMipmapped() && settings.rend.UseMipmaps && !settings.rend.DumpTextures;
 
 	if (texconv32 != NULL && need_32bit_buffer)
 	{
