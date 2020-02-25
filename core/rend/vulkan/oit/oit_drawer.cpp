@@ -52,9 +52,7 @@ void OITDrawer::DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool 
 			},
 			{ poly.tsp.SrcInstr, poly.tsp.DstInstr, 0, 0 },
 			trilinearAlpha,
-			(int)(&poly - (listType == ListType_Opaque ? pvrrc.global_param_op.head()
-					: listType == ListType_Punch_Through ? pvrrc.global_param_pt.head()
-					: pvrrc.global_param_tr.head())),
+			listType == ListType_Translucent ? (int)(&poly - pvrrc.global_param_tr.head()) : 0,
 	};
 	if (twoVolumes)
 	{
@@ -85,12 +83,10 @@ void OITDrawer::DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool 
 void OITDrawer::DrawList(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sortTriangles, Pass pass,
 		const List<PolyParam>& polys, u32 first, u32 last)
 {
-	for (u32 i = first; i < last; i++)
-	{
-		const PolyParam &pp = polys.head()[i];
-		if (pp.count > 2)
-			DrawPoly(cmdBuffer, listType, sortTriangles, pass, pp, pp.first, pp.count);
-	}
+	const PolyParam *pp_end = polys.head() + last;
+	for (const PolyParam *pp = polys.head() + first; pp != pp_end; pp++)
+		if (pp->count > 2)
+			DrawPoly(cmdBuffer, listType, sortTriangles, pass, *pp, pp->first, pp->count);
 }
 
 template<bool Translucent>
@@ -222,11 +218,12 @@ void OITDrawer::UploadMainBuffer(const OITDescriptorSets::VertexShaderUniforms& 
 		trPolyParams.push_back(0);	// makes the validation layers happy
 	else
 	{
-		for (int i = 0; i < pvrrc.global_param_tr.used(); i++)
+		const PolyParam *pp_end = pvrrc.global_param_tr.LastPtr(0);
+		const PolyParam *pp = pvrrc.global_param_tr.head();
+		for (int i = 0; pp != pp_end; i += 2, pp++)
 		{
-			const PolyParam& pp = pvrrc.global_param_tr.head()[i];
-			trPolyParams[i * 2] = (pp.tsp.full & 0xffff00c0) | ((pp.isp.full >> 16) & 0xe400) | ((pp.pcw.full >> 7) & 1);
-			trPolyParams[i * 2 + 1] = pp.tsp1.full;
+			trPolyParams[i] = (pp->tsp.full & 0xffff00c0) | ((pp->isp.full >> 16) & 0xe400) | ((pp->pcw.full >> 7) & 1);
+			trPolyParams[i + 1] = pp->tsp1.full;
 		}
 	}
 	offsets.polyParamsSize = trPolyParams.size() * 4;

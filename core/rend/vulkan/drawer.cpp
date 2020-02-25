@@ -158,15 +158,17 @@ void BaseDrawer::SetBaseScissor()
 void BaseDrawer::SetProvokingVertices()
 {
 	auto setProvokingVertex = [](const List<PolyParam>& list) {
-		for (int i = 0; i < list.used(); i++)
+        u32 *idx_base = pvrrc.idx.head();
+        Vertex *vtx_base = pvrrc.verts.head();
+		const PolyParam *pp_end = list.LastPtr(0);
+		for (const PolyParam *pp = list.head(); pp != pp_end; pp++)
 		{
-			const PolyParam& pp = list.head()[i];
-			if (!pp.pcw.Gouraud && pp.count > 2)
+			if (!pp->pcw.Gouraud && pp->count > 2)
 			{
-				for (int i = 0; i < pp.count - 2; i++)
+				for (int i = 0; i < pp->count - 2; i++)
 				{
-					Vertex *vertex = &pvrrc.verts.head()[pvrrc.idx.head()[pp.first + i]];
-					Vertex *lastVertex = &pvrrc.verts.head()[pvrrc.idx.head()[pp.first + i + 2]];
+					Vertex *vertex = &vtx_base[idx_base[pp->first + i]];
+					Vertex *lastVertex = &vtx_base[idx_base[pp->first + i + 2]];
 					memcpy(vertex->col, lastVertex->col, 4);
 					memcpy(vertex->spc, lastVertex->spc, 4);
 					memcpy(vertex->col1, lastVertex->col1, 4);
@@ -224,19 +226,15 @@ void Drawer::DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sor
 void Drawer::DrawSorted(const vk::CommandBuffer& cmdBuffer, const std::vector<SortTrigDrawParam>& polys)
 {
 	for (const SortTrigDrawParam& param : polys)
-	{
 		DrawPoly(cmdBuffer, ListType_Translucent, true, *param.ppid, pvrrc.idx.used() + param.first, param.count);
-	}
 }
 
 void Drawer::DrawList(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sortTriangles, const List<PolyParam>& polys, u32 first, u32 last)
 {
-	for (u32 i = first; i < last; i++)
-	{
-		const PolyParam &pp = polys.head()[i];
-		if (pp.count > 2)
-			DrawPoly(cmdBuffer, listType, sortTriangles, pp, pp.first, pp.count);
-	}
+	const PolyParam *pp_end = polys.head() + last;
+	for (const PolyParam *pp = polys.head() + first; pp != pp_end; pp++)
+		if (pp->count > 2)
+			DrawPoly(cmdBuffer, listType, sortTriangles, *pp, pp->first, pp->count);
 }
 
 void Drawer::DrawModVols(const vk::CommandBuffer& cmdBuffer, int first, int count)

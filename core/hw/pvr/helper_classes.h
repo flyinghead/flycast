@@ -41,7 +41,7 @@ struct List
 	}
 
 	__forceinline 
-	T* LastPtr(int n=1) 
+	T* LastPtr(int n=1) const
 	{ 
 		return daty-n; 
 	}
