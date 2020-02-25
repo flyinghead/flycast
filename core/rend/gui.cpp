@@ -1135,28 +1135,9 @@ static void gui_display_settings()
 			ImGui::Checkbox("Enable DSP", &settings.aica.DSPEnabled);
             ImGui::SameLine();
             ShowHelpMarker("Enable the Dreamcast Digital Sound Processor. Only recommended on fast and arm64 platforms");
-			const char *preview = settings.aica.LimitFPS == LimitFPSDisabled ? "Disabled" : settings.aica.LimitFPS == LimitFPSAuto ? "Automatic" : "Enabled";
-			if (ImGui::BeginCombo("Limit Emulator Speed", preview, ImGuiComboFlags_None))
-			{
-				bool is_selected = settings.aica.LimitFPS == LimitFPSDisabled;
-				if (ImGui::Selectable("Disabled", &is_selected))
-					settings.aica.LimitFPS = LimitFPSDisabled;
-				if (is_selected)
-					ImGui::SetItemDefaultFocus();
-				is_selected = settings.aica.LimitFPS == LimitFPSAuto;
-				if (ImGui::Selectable("Automatic", &is_selected))
-					settings.aica.LimitFPS = LimitFPSAuto;
-				if (is_selected)
-					ImGui::SetItemDefaultFocus();
-				is_selected = settings.aica.LimitFPS == LimitFPSEnabled;
-				if (ImGui::Selectable("Enabled", &is_selected))
-					settings.aica.LimitFPS = LimitFPSEnabled;
-				if (is_selected)
-					ImGui::SetItemDefaultFocus();
-				ImGui::EndCombo();
-			}
-			ImGui::SameLine();
-			ShowHelpMarker("Whether to limit the emulator speed using the audio output. Enabled recommended");
+            ImGui::Checkbox("Limit Emulator Speed", &settings.aica.LimitFPS);
+            ImGui::SameLine();
+			ShowHelpMarker("Whether to limit the emulator speed using the audio output. Recommended");
 
 			audiobackend_t* backend = NULL;;
 			std::string backend_name = settings.audio.backend;

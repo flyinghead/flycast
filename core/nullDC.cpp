@@ -763,7 +763,7 @@ void InitSettings()
 	settings.dreamcast.ForceWindowsCE = false;
 	settings.dreamcast.HideLegacyNaomiRoms = true;
 	settings.aica.DSPEnabled		= false;
-	settings.aica.LimitFPS			= LimitFPSEnabled;
+	settings.aica.LimitFPS			= true;
 	settings.aica.NoBatch			= false;
     settings.aica.NoSound			= false;
 	settings.audio.backend 			= "auto";
@@ -850,7 +850,8 @@ void LoadSettings(bool game_specific)
 	settings.dreamcast.ForceWindowsCE = cfgLoadBool(config_section, "Dreamcast.ForceWindowsCE", settings.dreamcast.ForceWindowsCE);
 	if (settings.dreamcast.ForceWindowsCE)
 		settings.aica.NoBatch = true;
-	settings.aica.LimitFPS			= (LimitFPSEnum)cfgLoadInt(config_section, "aica.LimitFPS", (int)settings.aica.LimitFPS);
+	settings.aica.LimitFPS			= cfgLoadBool(config_section, "aica.LimitFPS", settings.aica.LimitFPS)
+			|| cfgLoadInt(config_section, "aica.LimitFPS", 0) == 2;
 	settings.aica.DSPEnabled		= cfgLoadBool(config_section, "aica.DSPEnabled", settings.aica.DSPEnabled);
     settings.aica.NoSound			= cfgLoadBool(config_section, "aica.NoSound", settings.aica.NoSound);
     settings.audio.backend			= cfgLoadStr(audio_section, "backend", settings.audio.backend.c_str());
@@ -1006,7 +1007,7 @@ void SaveSettings()
 //	if (!disable_vmem32_game || !settings.dynarec.disable_vmem32)
 //		cfgSaveBool("config", "Dynarec.DisableVmem32", settings.dynarec.disable_vmem32);
 	cfgSaveInt("config", "Dreamcast.Language", settings.dreamcast.language);
-	cfgSaveInt("config", "aica.LimitFPS", (int)settings.aica.LimitFPS);
+	cfgSaveBool("config", "aica.LimitFPS", settings.aica.LimitFPS);
 	cfgSaveBool("config", "aica.DSPEnabled", settings.aica.DSPEnabled);
 	cfgSaveBool("config", "aica.NoSound", settings.aica.NoSound);
 	cfgSaveStr("audio", "backend", settings.audio.backend.c_str());

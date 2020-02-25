@@ -140,7 +140,6 @@ u32 asRingFreeCount()
 	return RingBufferSampleCount-asRingUsedCount();
 }
 
-extern double mspdf;
 void WriteSample(s16 r, s16 l)
 {
 	const u32 ptr=(WritePtr+1)%RingBufferSampleCount;
@@ -148,13 +147,8 @@ void WriteSample(s16 r, s16 l)
 	RingBuffer[ptr].l=l;
 	WritePtr=ptr;
 
-	if (WritePtr==(SAMPLE_COUNT-1))
-	{
-		bool do_wait = settings.aica.LimitFPS == LimitFPSEnabled
-				|| (settings.aica.LimitFPS == LimitFPSAuto && mspdf <= 11);
-
-		PushAudio(RingBuffer,SAMPLE_COUNT, do_wait);
-	}
+	if (WritePtr == SAMPLE_COUNT - 1)
+		PushAudio(RingBuffer,SAMPLE_COUNT, settings.aica.LimitFPS);
 }
 
 static bool backends_sorted = false;
