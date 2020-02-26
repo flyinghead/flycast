@@ -131,7 +131,7 @@ ifndef USE_SDL
     USE_X11 := 1
 endif
 	USE_VULKAN ?= 1
-    CFLAGS += -D TARGET_LINUX_x64 -D TARGET_NO_AREC -fno-builtin-sqrtf
+    CFLAGS += -D TARGET_LINUX_x64 -fno-builtin-sqrtf
     CXXFLAGS += -fexceptions
     LDFLAGS := -no-pie
 
@@ -143,7 +143,7 @@ ifndef USE_SDL
 endif
     ARM64_REC := 1
     ISARM64 := 1
-    CFLAGS += -D TARGET_LINUX_ARMv8 -D TARGET_NO_AREC -fno-builtin-sqrtf
+    CFLAGS += -D TARGET_LINUX_ARMv8 -fno-builtin-sqrtf
     CXXFLAGS += -fexceptions
 
 # Generic 32 bit ARMhf (a.k.a. ARMv7h)
@@ -262,7 +262,7 @@ else ifneq (,$(findstring vero4k,$(platform)))
 # Windows
 else ifneq (,$(findstring win32,$(platform)))
     NOT_ARM := 1
-    CFLAGS += -fno-builtin-sqrtf -funroll-loops -DHAVE_FSEEKO -D TARGET_NO_AREC
+    CFLAGS += -fno-builtin-sqrtf -funroll-loops -DHAVE_FSEEKO
     LDFLAGS += -static-libgcc -static-libstdc++ -Wl,-subsystem,windows
     LIBS := -lopengl32 -lwinmm -lgdi32 -lwsock32 -ldsound -lcomctl32 -lcomdlg32 -lxinput -liphlpapi -Wl,-Bstatic -lgomp
     PLATFORM_EXT := exe
@@ -271,7 +271,7 @@ else ifneq (,$(findstring win32,$(platform)))
 ifeq ($(WITH_DYNAREC), x86)
     X86_REC := 1
     LDFLAGS += -m32
-    CFLAGS += -m32
+    CFLAGS += -m32 -D TARGET_NO_AREC
 else
     X64_REC := 1
 endif

@@ -25,13 +25,10 @@ DECL_ALIGN(4096) dsp_t dsp;
 //float format is ?
 u16 DYNACALL PACK(s32 val)
 {
-	u32 temp;
-	int sign,exponent,k;
-
-	sign = (val >> 23) & 0x1;
-	temp = (val ^ (val << 1)) & 0xFFFFFF;
-	exponent = 0;
-	for (k=0; k<12; k++)
+	int sign = (val >> 23) & 0x1;
+	u32 temp = (val ^ (val << 1)) & 0xFFFFFF;
+	int exponent = 0;
+	for (int k = 0; k < 12; k++)
 	{
 		if (temp & 0x800000)
 			break;
@@ -51,13 +48,10 @@ u16 DYNACALL PACK(s32 val)
 
 s32 DYNACALL UNPACK(u16 val)
 {
-	int sign,exponent,mantissa;
-	s32 uval;
-
-	sign = (val >> 15) & 0x1;
-	exponent = (val >> 11) & 0xF;
-	mantissa = val & 0x7FF;
-	uval = mantissa << 11;
+	int sign = (val >> 15) & 0x1;
+	int exponent = (val >> 11) & 0xF;
+	int mantissa = val & 0x7FF;
+	s32 uval = mantissa << 11;
 	uval |= sign << 22;		// take the sign in bit 22
 	if (exponent > 11)
 		exponent = 11;		// cap exponent to 11 for denormals

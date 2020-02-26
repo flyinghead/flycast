@@ -164,9 +164,6 @@ public:
 					//B = 0 - B;
 					Neg(B, B);
 			}
-			else
-				//B = 0;
-				Mov(B, 0);
 
 			// X
 			const Register* X_alias = &X;
@@ -176,12 +173,17 @@ public:
 			else
 			{
 				//X = DSP->TEMP[(TRA + DSP->regs.MDEC_CT) & 0x7F];
-				if (op.TRA)
-					Add(w1, MDEC_CT, op.TRA);
+				if (!op.ZERO && !op.BSEL)
+					X_alias = &B;
 				else
-					Mov(w1, MDEC_CT);
-				Bfc(w1, 7, 25);
-				Ldr(X, dsp_operand(DSP->TEMP, x1));
+				{
+					if (op.TRA)
+						Add(w1, MDEC_CT, op.TRA);
+					else
+						Mov(w1, MDEC_CT);
+					Bfc(w1, 7, 25);
+					Ldr(X, dsp_operand(DSP->TEMP, x1));
+				}
 			}
 
 			// Y
@@ -213,8 +215,8 @@ public:
 				// There's a 1-step delay at the output of the X*Y + B adder. So we use the ACC value from the previous step.
 				if (op.SHIFT == 0)
 				{
-					// SHIFTED = clamp(ACC, -0x80000, 0x7FFFF)
-					Mov(w0, 0x80000);
+					// SHIFTED = clamp(ACC, -0x800000, 0x7FFFFF)
+					Mov(w0, 0x800000);
 					Neg(w1, w0);
 					Cmp(ACC, w1);
 					Csel(SHIFTED, w1, ACC, lt);
@@ -226,8 +228,8 @@ public:
 				{
 					//SHIFTED = ACC << 1;	// x2 scale
 					Lsl(SHIFTED, ACC, 1);
-					// SHIFTED = clamp(SHIFTED, -0x80000, 0x7FFFF)
-					Mov(w0, 0x80000);
+					// SHIFTED = clamp(SHIFTED, -0x800000, 0x7FFFFF)
+					Mov(w0, 0x800000);
 					Neg(w1, w0);
 					Cmp(SHIFTED, w1);
 					Csel(SHIFTED, w1, SHIFTED, lt);
