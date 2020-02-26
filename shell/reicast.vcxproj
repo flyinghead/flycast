@@ -257,7 +257,6 @@
     <ClCompile Include="..\core\rend\gles\imgui_impl_opengl3.cpp" />
     <ClCompile Include="..\core\rend\gui.cpp" />
     <ClCompile Include="..\core\rend\gui_util.cpp" />
-    <ClCompile Include="..\core\rend\soft\softrend.cpp" />
     <ClCompile Include="..\core\rend\TexCache.cpp" />
     <ClCompile Include="..\core\serialize.cpp" />
     <ClCompile Include="..\core\stdclass.cpp" />

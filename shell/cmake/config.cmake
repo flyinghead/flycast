@@ -319,11 +319,6 @@ set(CMAKE_CXX_FLAGS " ${_CXX_FLAGS}") # ${CMAKE_CXX_FLAGS}
 #define FEAT_HAS_COREIO_HTTP 0
 #endif
 
-#if defined(TARGET_SOFTREND)    # need -fopenmp
-	#define FEAT_HAS_SOFTREND 1
-#endif
-
-
 if (TARGET_NSW) # -DCMAKE_TOOLCHAIN_FILE=./cmake/devkitA64.cmake -DTARGET_NSW=ON
   set(HOST_OS ${OS_NSW_HOS}) 
 
@@ -332,7 +327,7 @@ if (TARGET_NSW) # -DCMAKE_TOOLCHAIN_FILE=./cmake/devkitA64.cmake -DTARGET_NSW=ON
 
   add_definitions(-D__SWITCH__ -DGLES -DMESA_EGL_NO_X11_HEADERS)
   add_definitions(-DTARGET_NO_THREADS -DTARGET_NO_EXCEPTIONS -DTARGET_NO_NIXPROF)
-  add_definitions(-DTARGET_NO_COREIO_HTTP -UTARGET_SOFTREND)
+  add_definitions(-DTARGET_NO_COREIO_HTTP)
   add_definitions(-D_GLIBCXX_USE_C99_MATH_TR1 -D_LDBL_EQ_DBL)
 
 endif()
@@ -344,7 +339,7 @@ if (TARGET_PS4) # -DCMAKE_TOOLCHAIN_FILE=./cmake/{ps4sdk,clang_scei}.cmake -DTAR
 
   add_definitions(-DPS4 -DTARGET_PS4 -DTARGET_BSD -D__ORBIS__ -DGLES -DMESA_EGL_NO_X11_HEADERS)  ## last needed for __unix__ on eglplatform.h
   add_definitions(-DTARGET_NO_THREADS -DTARGET_NO_EXCEPTIONS -DTARGET_NO_NIXPROF)
-  add_definitions(-DTARGET_NO_COREIO_HTTP -UTARGET_SOFTREND)
+  add_definitions(-DTARGET_NO_COREIO_HTTP)
 
 
   message("*******FIXME******** LARGE PAGES !!")

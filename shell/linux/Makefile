@@ -389,10 +389,6 @@ ifdef USE_LIBAO
 	LIBS += `pkg-config --libs ao`
 endif
 
-ifdef HAS_SOFTREND
-    CFLAGS += -msse4.1
-endif
-
 # these are also handled on core.mk, but ignored here
 
 # GLES on x11?
@@ -401,11 +397,6 @@ ifdef USE_GLES
     LIBS += -lEGL -lGLESv2
 else ifdef FOR_LINUX
     LIBS += -ldl -lGL #for desktop gl
-endif
-
-#softrend?
-ifdef HAS_SOFTREND
-    CXXFLAGS += -DTARGET_SOFTREND
 endif
 
 ifdef TEST_AUTOMATION

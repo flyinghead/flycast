@@ -333,9 +333,6 @@
     <ClCompile Include="..\core\rec-cpp\rec_cpp.cpp">
       <Filter>rec-cpp</Filter>
     </ClCompile>
-    <ClCompile Include="..\core\rend\soft\softrend.cpp">
-      <Filter>rend\soft</Filter>
-    </ClCompile>
     <ClCompile Include="..\core\hw\naomi\naomi.cpp">
       <Filter>hw\naomi</Filter>
     </ClCompile>

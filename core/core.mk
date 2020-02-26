@@ -148,11 +148,6 @@ ifdef USE_GLES
   RZDCY_CFLAGS += -DGLES -fPIC
 endif
 
-ifdef HAS_SOFTREND
-	RZDCY_CFLAGS += -DTARGET_SOFTREND
-	RZDCY_MODULES += rend/soft/
-endif
-
 ifdef CHD5_FLAC
 	RZDCY_CFLAGS += -DCHD5_FLAC -I$(RZDCY_SRC_DIR)/deps/flac/src/libFLAC/include/ -I$(RZDCY_SRC_DIR)/deps/flac/include
 	RZDCY_CFLAGS += -DHAVE_CONFIG_H

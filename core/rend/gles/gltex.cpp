@@ -25,10 +25,6 @@ Compression
 	look into it, but afaik PVRC is not realtime doable
 */
 
-#if FEAT_HAS_SOFTREND
-	#include <xmmintrin.h>
-#endif
-
 extern u32 decoded_colors[3][65536];
 TextureCache TexCache;
 
@@ -75,122 +71,89 @@ static void dumpRtTexture(u32 name, u32 w, u32 h) {
 
 void TextureCacheData::UploadToGPU(int width, int height, u8 *temp_tex_buffer, bool mipmapped)
 {
-	if (texID != 0)
+	//upload to OpenGL !
+	glcache.BindTexture(GL_TEXTURE_2D, texID);
+	GLuint comps = GL_RGBA;
+	GLuint gltype;
+	switch (tex_type)
 	{
-		//upload to OpenGL !
-		glcache.BindTexture(GL_TEXTURE_2D, texID);
-		GLuint comps = GL_RGBA;
-		GLuint gltype;
-		switch (tex_type)
+	case TextureType::_5551:
+		gltype = GL_UNSIGNED_SHORT_5_5_5_1;
+		break;
+	case TextureType::_565:
+		gltype = GL_UNSIGNED_SHORT_5_6_5;
+		comps = GL_RGB;
+		break;
+	case TextureType::_4444:
+		gltype = GL_UNSIGNED_SHORT_4_4_4_4;
+		break;
+	case TextureType::_8888:
+		gltype = GL_UNSIGNED_BYTE;
+		break;
+	default:
+		die("Unsupported texture type");
+		break;
+	}
+	if (mipmapped)
+	{
+		int mipmapLevels = 0;
+		int dim = width;
+		while (dim != 0)
 		{
-		case TextureType::_5551:
-			gltype = GL_UNSIGNED_SHORT_5_5_5_1;
-			break;
-		case TextureType::_565:
-			gltype = GL_UNSIGNED_SHORT_5_6_5;
-			comps = GL_RGB;
-			break;
-		case TextureType::_4444:
-			gltype = GL_UNSIGNED_SHORT_4_4_4_4;
-			break;
-		case TextureType::_8888:
-			gltype = GL_UNSIGNED_BYTE;
-			break;
-		default:
-			die("Unsupported texture type");
-			break;
+			mipmapLevels++;
+			dim >>= 1;
 		}
-		if (mipmapped)
-		{
-			int mipmapLevels = 0;
-			int dim = width;
-			while (dim != 0)
-			{
-				mipmapLevels++;
-				dim >>= 1;
-			}
 #if !defined(GLES2) && HOST_OS != OS_DARWIN
-			// Open GL 4.2 or GLES 3.0 min
-			if (gl.gl_major > 4 || (gl.gl_major == 4 && gl.gl_minor >= 2)
-					|| (gl.is_gles && gl.gl_major >= 3))
+		// Open GL 4.2 or GLES 3.0 min
+		if (gl.gl_major > 4 || (gl.gl_major == 4 && gl.gl_minor >= 2)
+				|| (gl.is_gles && gl.gl_major >= 3))
+		{
+			GLuint internalFormat;
+			switch (tex_type)
 			{
-				GLuint internalFormat;
-				switch (tex_type)
-				{
-				case TextureType::_5551:
-					internalFormat = GL_RGB5_A1;
-					break;
-				case TextureType::_565:
-					internalFormat = GL_RGB565;
-					break;
-				case TextureType::_4444:
-					internalFormat = GL_RGBA4;
-					break;
-				case TextureType::_8888:
-					internalFormat = GL_RGBA8;
-					break;
-				}
-				if (Updates == 1)
-				{
-					glTexStorage2D(GL_TEXTURE_2D, mipmapLevels, internalFormat, width, height);
-					glCheck();
-				}
-				for (int i = 0; i < mipmapLevels; i++)
-				{
-					glTexSubImage2D(GL_TEXTURE_2D, mipmapLevels - i - 1, 0, 0, 1 << i, 1 << i, comps, gltype, temp_tex_buffer);
-					temp_tex_buffer += (1 << (2 * i)) * (tex_type == TextureType::_8888 ? 4 : 2);
-				}
+			case TextureType::_5551:
+				internalFormat = GL_RGB5_A1;
+				break;
+			case TextureType::_565:
+				internalFormat = GL_RGB565;
+				break;
+			case TextureType::_4444:
+				internalFormat = GL_RGBA4;
+				break;
+			case TextureType::_8888:
+				internalFormat = GL_RGBA8;
+				break;
 			}
-			else
-#endif
+			if (Updates == 1)
 			{
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, mipmapLevels - 1);
-				for (int i = 0; i < mipmapLevels; i++)
-				{
-					glTexImage2D(GL_TEXTURE_2D, mipmapLevels - i - 1, comps, 1 << i, 1 << i, 0, comps, gltype, temp_tex_buffer);
-					temp_tex_buffer += (1 << (2 * i)) * (tex_type == TextureType::_8888 ? 4 : 2);
-				}
+				glTexStorage2D(GL_TEXTURE_2D, mipmapLevels, internalFormat, width, height);
+				glCheck();
+			}
+			for (int i = 0; i < mipmapLevels; i++)
+			{
+				glTexSubImage2D(GL_TEXTURE_2D, mipmapLevels - i - 1, 0, 0, 1 << i, 1 << i, comps, gltype, temp_tex_buffer);
+				temp_tex_buffer += (1 << (2 * i)) * (tex_type == TextureType::_8888 ? 4 : 2);
 			}
 		}
 		else
+#endif
 		{
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
-			glTexImage2D(GL_TEXTURE_2D, 0,comps, width, height, 0, comps, gltype, temp_tex_buffer);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, mipmapLevels - 1);
+			for (int i = 0; i < mipmapLevels; i++)
+			{
+				glTexImage2D(GL_TEXTURE_2D, mipmapLevels - i - 1, comps, 1 << i, 1 << i, 0, comps, gltype, temp_tex_buffer);
+				temp_tex_buffer += (1 << (2 * i)) * (tex_type == TextureType::_8888 ? 4 : 2);
+			}
 		}
-		glCheck();
 	}
-	else {
-		#if FEAT_HAS_SOFTREND
-			/*
-			if (tex_type == TextureType::_565)
-				tex_type = 0;
-			else if (tex_type == TextureType::_5551)
-				tex_type = 1;
-			else if (tex_type == TextureType::_4444)
-				tex_type = 2;
-			*/
-			u16 *tex_data = (u16 *)temp_tex_buffer;
-			if (pData) {
-				_mm_free(pData);
-			}
-
-			pData = (u16*)_mm_malloc(w * h * 16, 16);
-			for (int y = 0; y < h; y++) {
-				for (int x = 0; x < w; x++) {
-					u32* data = (u32*)&pData[(x + y*w) * 8];
-
-					data[0] = decoded_colors[tex_type][tex_data[(x + 1) % w + (y + 1) % h * w]];
-					data[1] = decoded_colors[tex_type][tex_data[(x + 0) % w + (y + 1) % h * w]];
-					data[2] = decoded_colors[tex_type][tex_data[(x + 1) % w + (y + 0) % h * w]];
-					data[3] = decoded_colors[tex_type][tex_data[(x + 0) % w + (y + 0) % h * w]];
-				}
-			}
-		#else
-			die("Soft rend disabled, invalid code path");
-		#endif
+	else
+	{
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
+		glTexImage2D(GL_TEXTURE_2D, 0,comps, width, height, 0, comps, gltype, temp_tex_buffer);
 	}
+	glCheck();
 }
 	
 bool TextureCacheData::Delete()
@@ -198,19 +161,9 @@ bool TextureCacheData::Delete()
 	if (!BaseTextureCacheData::Delete())
 		return false;
 
-	if (pData) {
-		#if FEAT_HAS_SOFTREND
-			_mm_free(pData);
-			pData = 0;
-		#else
-			die("softrend disabled, invalid codepath");
-		#endif
-	}
-
-	if (texID) {
+	if (texID)
 		glcache.DeleteTextures(1, &texID);
-	}
-	
+
 	return true;
 }
 
@@ -437,33 +390,8 @@ u64 gl_GetTexture(TSP tsp, TCW tcw)
 	return tf->texID;
 }
 
-
-text_info raw_GetTexture(TSP tsp, TCW tcw)
+void DoCleanup()
 {
-	text_info rv = { 0 };
-
-	//lookup texture
-	TextureCacheData* tf = TexCache.getTextureCacheData(tsp, tcw);
-
-	if (tf->pData == nullptr)
-		tf->Create();
-
-	//update if needed
-	if (tf->NeedsUpdate())
-		tf->Update();
-
-	//return gl texture
-	rv.height = tf->h;
-	rv.width = tf->w;
-	rv.pdata = tf->pData;
-	rv.textype = (u32)tf->tex_type;
-	
-	
-	return rv;
-}
-
-void DoCleanup() {
-
 }
 
 GLuint fbTextureId;
