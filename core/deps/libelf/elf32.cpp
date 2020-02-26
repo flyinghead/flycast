@@ -117,7 +117,7 @@ struct Elf32_Phdr *
 elf32_getProgramSegmentTable(struct Elf32_Header *elfFile)
 {
 	struct Elf32_Header *fileHdr = elfFile;
-	return (struct Elf32_Phdr *) (fileHdr->e_phoff + (long) elfFile);
+	return (struct Elf32_Phdr *) (fileHdr->e_phoff + (size_t) elfFile);
 }
 
 /* Returns the number of program segments in this elf file. */

@@ -44,7 +44,7 @@ static int open_libgl(void)
 	if (!libgl)
 		return GL3W_ERROR_LIBRARY_OPEN;
 
-	*(void **)(&wgl_get_proc_address) = GetProcAddress(libgl, "wglGetProcAddress");
+	*(void **)(&wgl_get_proc_address) = (void *)GetProcAddress(libgl, "wglGetProcAddress");
 	return GL3W_OK;
 }
 
