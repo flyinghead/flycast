@@ -25,11 +25,12 @@
 #include "deps/xbyak/xbyak_util.h"
 #include "dsp.h"
 #include "hw/aica/aica_if.h"
+#include "hw/mem/_vmem.h"
 
 #define CC_RW2RX(ptr) (ptr)
 #define CC_RX2RW(ptr) (ptr)
 
-static u8 CodeBuffer[32 * 1024]
+DECL_ALIGN(4096) static u8 CodeBuffer[32 * 1024]
 #if defined(_WIN32)
 	;
 #elif HOST_OS == OS_LINUX
@@ -440,7 +441,6 @@ void dsp_recompile()
 			break;
 		}
 	}
-	//DSPAssembler assembler(&dsp.DynCode[0], sizeof(dsp.DynCode));
 	DSPAssembler assembler(CodeBuffer, sizeof(CodeBuffer));
 	assembler.Compile(&dsp);
 }
@@ -453,12 +453,9 @@ void dsp_init()
 	dsp.regs.MDEC_CT = 1;
 	dsp.dyndirty = true;
 
-	//if (!mem_region_set_exec(dsp.DynCode, sizeof(dsp.DynCode)))
-	if (!mem_region_set_exec(CodeBuffer, sizeof(CodeBuffer)))
-	{
-		perror("Couldn’t mprotect DSP code");
+	void *p;
+	if (!vmem_platform_prepare_jit_block(CodeBuffer, sizeof(CodeBuffer), &p))
 		die("mprotect failed in x64 dsp");
-	}
 }
 
 void dsp_step()
@@ -469,7 +466,6 @@ void dsp_step()
 		dsp_recompile();
 	}
 
-	//((void (*)())&dsp.DynCode)();
 	((void (*)())CodeBuffer)();
 }
 

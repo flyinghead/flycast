@@ -248,6 +248,7 @@
 		AE7B907C235A53D800145C6A /* gl4funcs.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE7B906F235A53D800145C6A /* gl4funcs.cpp */; };
 		AE7B907D235A53D800145C6A /* osx.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE7B9071235A53D800145C6A /* osx.cpp */; };
 		AE7B907F235A53D800145C6A /* switcher.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE7B9075235A53D800145C6A /* switcher.cpp */; };
+		AE7BCB522406EDB0007285F8 /* dsp_x64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE7BCB512406EDB0007285F8 /* dsp_x64.cpp */; };
 		AE80EDB72157D4D500F7800F /* serialize.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE80EDB62157D4D500F7800F /* serialize.cpp */; };
 		AE80EDBE2157D4E600F7800F /* naomi.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE80EDB92157D4E600F7800F /* naomi.cpp */; };
 		AE80EDBF2157D4E600F7800F /* naomi_cart.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE80EDBB2157D4E600F7800F /* naomi_cart.cpp */; };
@@ -825,6 +826,7 @@
 		AE7B9071235A53D800145C6A /* osx.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = osx.cpp; sourceTree = "<group>"; };
 		AE7B9072235A53D800145C6A /* osx.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = osx.h; sourceTree = "<group>"; };
 		AE7B9075235A53D800145C6A /* switcher.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = switcher.cpp; sourceTree = "<group>"; };
+		AE7BCB512406EDB0007285F8 /* dsp_x64.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = dsp_x64.cpp; sourceTree = "<group>"; };
 		AE80EDB62157D4D500F7800F /* serialize.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = serialize.cpp; path = ../../../core/serialize.cpp; sourceTree = "<group>"; };
 		AE80EDB92157D4E600F7800F /* naomi.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = naomi.cpp; sourceTree = "<group>"; };
 		AE80EDBA2157D4E600F7800F /* naomi.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = naomi.h; sourceTree = "<group>"; };
@@ -1479,6 +1481,7 @@
 				84B7BDCE1B72720100F9733F /* dsp.cpp */,
 				84B7BDCF1B72720100F9733F /* dsp.h */,
 				AE8C27332111A31100D4D8F4 /* dsp_interp.cpp */,
+				AE7BCB512406EDB0007285F8 /* dsp_x64.cpp */,
 				84B7BDD01B72720100F9733F /* sgc_if.cpp */,
 				84B7BDD11B72720100F9733F /* sgc_if.h */,
 			);
@@ -2952,6 +2955,7 @@
 				84B7BF5F1B72720200F9733F /* ioctl.cpp in Sources */,
 				84B7BEE31B72720200F9733F /* zip_close.c in Sources */,
 				84B7BF101B72720200F9733F /* zip_stat_init.c in Sources */,
+				AE7BCB522406EDB0007285F8 /* dsp_x64.cpp in Sources */,
 				AE649BF4218C552500EF4A81 /* bitreader.c in Sources */,
 				84B7BF491B72720200F9733F /* bsc.cpp in Sources */,
 				AE649BFB218C552500EF4A81 /* format.c in Sources */,
@@ -3088,7 +3092,6 @@
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					TARGET_NO_NIXPROF,
 					TARGET_NO_COREIO_HTTP,
-					TARGET_NO_AREC,
 					XBYAK_NO_OP_NAMES,
 					TARGET_NO_OPENMP,
 					ENABLE_MODEM,
@@ -3280,7 +3283,6 @@
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					TARGET_NO_NIXPROF,
 					TARGET_NO_COREIO_HTTP,
-					TARGET_NO_AREC,
 					XBYAK_NO_OP_NAMES,
 					TARGET_NO_OPENMP,
 					ENABLE_MODEM,
@@ -3407,7 +3409,6 @@
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					TARGET_NO_NIXPROF,
 					TARGET_NO_COREIO_HTTP,
-					TARGET_NO_AREC,
 					XBYAK_NO_OP_NAMES,
 					TARGET_NO_OPENMP,
 					ENABLE_MODEM,
