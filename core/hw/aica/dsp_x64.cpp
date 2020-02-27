@@ -40,6 +40,7 @@ DECL_ALIGN(4096) static u8 CodeBuffer[32 * 1024]
 #else
 	#error CodeBuffer code section unknown
 #endif
+static u8 *pCodeBuffer;
 
 class DSPAssembler : public Xbyak::CodeGenerator
 {
@@ -441,7 +442,7 @@ void dsp_recompile()
 			break;
 		}
 	}
-	DSPAssembler assembler(CodeBuffer, sizeof(CodeBuffer));
+	DSPAssembler assembler(pCodeBuffer, sizeof(CodeBuffer));
 	assembler.Compile(&dsp);
 }
 
@@ -453,8 +454,7 @@ void dsp_init()
 	dsp.regs.MDEC_CT = 1;
 	dsp.dyndirty = true;
 
-	void *p;
-	if (!vmem_platform_prepare_jit_block(CodeBuffer, sizeof(CodeBuffer), &p))
+	if (!vmem_platform_prepare_jit_block(CodeBuffer, sizeof(CodeBuffer), (void**)&pCodeBuffer))
 		die("mprotect failed in x64 dsp");
 }
 
@@ -466,7 +466,7 @@ void dsp_step()
 		dsp_recompile();
 	}
 
-	((void (*)())CodeBuffer)();
+	((void (*)())pCodeBuffer)();
 }
 
 void dsp_writenmem(u32 addr)
