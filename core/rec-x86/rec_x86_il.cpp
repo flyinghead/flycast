@@ -928,7 +928,7 @@ void ngen_opcode(RuntimeBlockInfo* block, shil_opcode* op,x86_block* x86e, bool 
 				verify(reg.IsAllocf(op->rs1));
 				verify(reg.IsAllocf(op->rd));
 
-				static DECL_ALIGN(16) u32 AND_ABS_MASK[4] = { 0x7FFFFFFF, 0x7FFFFFFF, 0x7FFFFFFF, 0x7FFFFFFF };
+				alignas(16) static u32 AND_ABS_MASK[4] = { 0x7FFFFFFF, 0x7FFFFFFF, 0x7FFFFFFF, 0x7FFFFFFF };
 
 				if (op->rd._reg != op->rs1._reg)
 					x86e->Emit(op_movss, reg.mapf(op->rd), reg.mapf(op->rs1));
@@ -941,7 +941,7 @@ void ngen_opcode(RuntimeBlockInfo* block, shil_opcode* op,x86_block* x86e, bool 
 				verify(reg.IsAllocf(op->rs1));
 				verify(reg.IsAllocf(op->rd));
 
-				static DECL_ALIGN(16) u32 XOR_NEG_MASK[4] = { 0x80000000, 0x80000000, 0x80000000, 0x80000000 };
+				alignas(16) static u32 XOR_NEG_MASK[4] = { 0x80000000, 0x80000000, 0x80000000, 0x80000000 };
 
 				if (op->rd._reg != op->rs1._reg)
 					x86e->Emit(op_movss, reg.mapf(op->rd), reg.mapf(op->rs1));

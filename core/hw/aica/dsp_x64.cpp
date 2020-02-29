@@ -30,7 +30,7 @@
 #define CC_RW2RX(ptr) (ptr)
 #define CC_RX2RW(ptr) (ptr)
 
-DECL_ALIGN(4096) static u8 CodeBuffer[32 * 1024]
+alignas(4096) static u8 CodeBuffer[32 * 1024]
 #if defined(_WIN32)
 	;
 #elif HOST_OS == OS_LINUX

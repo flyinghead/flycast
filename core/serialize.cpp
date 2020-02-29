@@ -38,14 +38,14 @@ extern u32 e68k_reg_L;
 extern u32 e68k_reg_M;
 
 //./core/hw/arm7/arm7.cpp
-extern DECL_ALIGN(8) reg_pair arm_Reg[RN_ARM_REG_COUNT];
+alignas(8) extern reg_pair arm_Reg[RN_ARM_REG_COUNT];
 extern bool armIrqEnable;
 extern bool armFiqEnable;
 extern int armMode;
 extern bool Arm7Enabled;
 
 //./core/hw/aica/dsp.o
-extern DECL_ALIGN(4096) dsp_t dsp;
+alignas(4096) extern dsp_t dsp;
 
 extern AicaTimer timers[3];
 
@@ -157,9 +157,9 @@ extern std::array<u8, OnChipRAM_SIZE> OnChipRAM;
 extern VArray2 mem_b;
 
 //./core/hw/sh4/sh4_interrupts.o
-extern DECL_ALIGN(64) u16 InterruptEnvId[32];
-extern DECL_ALIGN(64) u32 InterruptBit[32];
-extern DECL_ALIGN(64) u32 InterruptLevelBit[16];
+alignas(64) extern u16 InterruptEnvId[32];
+alignas(64) extern u32 InterruptBit[32];
+alignas(64) extern u32 InterruptLevelBit[16];
 extern u32 interrupt_vpend; // Vector of pending interrupts
 extern u32 interrupt_vmask; // Vector of masked interrupts             (-1 inhibits all interrupts)
 extern u32 decoded_srimask; // Vector of interrupts allowed by SR.IMSK (-1 inhibits all interrupts)

@@ -30,7 +30,7 @@
 //bool arm_FiqPending; -- not used , i use the input directly :)
 //bool arm_IrqPending;
 
-DECL_ALIGN(8) reg_pair arm_Reg[RN_ARM_REG_COUNT];
+alignas(8) reg_pair arm_Reg[RN_ARM_REG_COUNT];
 
 void CPUSwap(u32 *a, u32 *b)
 {

@@ -20,7 +20,7 @@
 	See LICENSE & COPYRIGHT files further details
 */
 
-DECL_ALIGN(4096) dsp_t dsp;
+alignas(4096) dsp_t dsp;
 
 //float format is ?
 u16 DYNACALL PACK(s32 val)
