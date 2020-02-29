@@ -6,8 +6,10 @@ void arm_Reset();
 void arm_Run(u32 samples);
 void arm_SetEnabled(bool enabled);
 
-enum
+enum Arm7Reg
 {
+	RN_LR		 = 14,
+	RN_PC		 = 15,
 	RN_CPSR      = 16,
 	RN_SPSR      = 17,
 
@@ -37,6 +39,7 @@ enum
 	R15_ARM_NEXT = 46,
 	INTR_PEND    = 47,
 	CYCL_CNT     = 48,
+	RN_SCRATCH   = 49,
 
 	RN_ARM_REG_COUNT,
 };

@@ -40,7 +40,6 @@
 		84B7BF2A1B72720200F9733F /* arm7.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 84B7BDD41B72720100F9733F /* arm7.cpp */; };
 		84B7BF2B1B72720200F9733F /* arm_mem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 84B7BDD61B72720100F9733F /* arm_mem.cpp */; };
 		84B7BF2C1B72720200F9733F /* vbaARM.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 84B7BDD91B72720100F9733F /* vbaARM.cpp */; };
-		84B7BF2D1B72720200F9733F /* virt_arm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 84B7BDDA1B72720100F9733F /* virt_arm.cpp */; };
 		84B7BF2E1B72720200F9733F /* gdrom_response.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 84B7BDE01B72720100F9733F /* gdrom_response.cpp */; };
 		84B7BF2F1B72720200F9733F /* gdromv3.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 84B7BDE11B72720100F9733F /* gdromv3.cpp */; };
 		84B7BF301B72720200F9733F /* holly_intc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 84B7BDE41B72720100F9733F /* holly_intc.cpp */; };
@@ -182,6 +181,8 @@
 		AE7BCB62243DDD92007285F8 /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AE7BCB61243DDD92007285F8 /* Carbon.framework */; };
 		AE7BCB6B244608B6007285F8 /* naomi_network.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE7BCB69244608B5007285F8 /* naomi_network.cpp */; };
 		AE7BCB6E24460910007285F8 /* naomi_m3comm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE7BCB6C24460910007285F8 /* naomi_m3comm.cpp */; };
+		AE7BCB582415515B007285F8 /* arm7_rec_x64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE7BCB562415515B007285F8 /* arm7_rec_x64.cpp */; };
+		AE7BCB592415515B007285F8 /* arm7_rec.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE7BCB572415515B007285F8 /* arm7_rec.cpp */; };
 		AE80EDB72157D4D500F7800F /* serialize.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE80EDB62157D4D500F7800F /* serialize.cpp */; };
 		AE80EDBE2157D4E600F7800F /* naomi.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE80EDB92157D4E600F7800F /* naomi.cpp */; };
 		AE80EDBF2157D4E600F7800F /* naomi_cart.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE80EDBB2157D4E600F7800F /* naomi_cart.cpp */; };
@@ -456,8 +457,6 @@
 		84B7BDD61B72720100F9733F /* arm_mem.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = arm_mem.cpp; sourceTree = "<group>"; };
 		84B7BDD71B72720100F9733F /* arm_mem.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = arm_mem.h; sourceTree = "<group>"; };
 		84B7BDD91B72720100F9733F /* vbaARM.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = vbaARM.cpp; sourceTree = "<group>"; };
-		84B7BDDA1B72720100F9733F /* virt_arm.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = virt_arm.cpp; sourceTree = "<group>"; };
-		84B7BDDB1B72720100F9733F /* virt_arm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = virt_arm.h; sourceTree = "<group>"; };
 		84B7BDDD1B72720100F9733F /* flashrom.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = flashrom.h; sourceTree = "<group>"; };
 		84B7BDDF1B72720100F9733F /* gdrom_if.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = gdrom_if.h; sourceTree = "<group>"; };
 		84B7BDE01B72720100F9733F /* gdrom_response.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = gdrom_response.cpp; sourceTree = "<group>"; };
@@ -762,6 +761,9 @@
 		AE7BCB6A244608B6007285F8 /* naomi_network.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = naomi_network.h; sourceTree = "<group>"; };
 		AE7BCB6C24460910007285F8 /* naomi_m3comm.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = naomi_m3comm.cpp; sourceTree = "<group>"; };
 		AE7BCB6D24460910007285F8 /* naomi_m3comm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = naomi_m3comm.h; sourceTree = "<group>"; };
+		AE7BCB552415515B007285F8 /* arm7_rec.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = arm7_rec.h; sourceTree = "<group>"; };
+		AE7BCB562415515B007285F8 /* arm7_rec_x64.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = arm7_rec_x64.cpp; sourceTree = "<group>"; };
+		AE7BCB572415515B007285F8 /* arm7_rec.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = arm7_rec.cpp; sourceTree = "<group>"; };
 		AE80EDB62157D4D500F7800F /* serialize.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = serialize.cpp; path = ../../../core/serialize.cpp; sourceTree = "<group>"; };
 		AE80EDB92157D4E600F7800F /* naomi.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = naomi.cpp; sourceTree = "<group>"; };
 		AE80EDBA2157D4E600F7800F /* naomi.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = naomi.h; sourceTree = "<group>"; };
@@ -1535,14 +1537,15 @@
 		84B7BDD21B72720100F9733F /* arm7 */ = {
 			isa = PBXGroup;
 			children = (
+				AE7BCB562415515B007285F8 /* arm7_rec_x64.cpp */,
+				AE7BCB572415515B007285F8 /* arm7_rec.cpp */,
+				AE7BCB552415515B007285F8 /* arm7_rec.h */,
 				84B7BDD31B72720100F9733F /* arm-new.h */,
 				84B7BDD41B72720100F9733F /* arm7.cpp */,
 				84B7BDD51B72720100F9733F /* arm7.h */,
 				84B7BDD61B72720100F9733F /* arm_mem.cpp */,
 				84B7BDD71B72720100F9733F /* arm_mem.h */,
 				84B7BDD91B72720100F9733F /* vbaARM.cpp */,
-				84B7BDDA1B72720100F9733F /* virt_arm.cpp */,
-				84B7BDDB1B72720100F9733F /* virt_arm.h */,
 			);
 			path = arm7;
 			sourceTree = "<group>";
@@ -2803,6 +2806,7 @@
 				AEE6278722131BB500EC7E89 /* gamepad_device.cpp in Sources */,
 				AE82C68625B64AE200C79BC2 /* zip_set_archive_comment.c in Sources */,
 				84B7BF171B72720200F9733F /* compress.c in Sources */,
+				AE7BCB592415515B007285F8 /* arm7_rec.cpp in Sources */,
 				AE649C3C218C555600EF4A81 /* cdrom.c in Sources */,
 				AE649BF3218C552500EF4A81 /* bitmath.c in Sources */,
 				AE649C30218C553A00EF4A81 /* Sort.c in Sources */,
@@ -2980,7 +2984,6 @@
 				AE649BF4218C552500EF4A81 /* bitreader.c in Sources */,
 				84B7BF491B72720200F9733F /* bsc.cpp in Sources */,
 				AE649BFB218C552500EF4A81 /* format.c in Sources */,
-				84B7BF2D1B72720200F9733F /* virt_arm.cpp in Sources */,
 				AE43537222C9420C005E19CE /* ConsoleListenerDroid.cpp in Sources */,
 				84A388B91B1CDD3E000166C0 /* AppDelegate.swift in Sources */,
 				AEFF7F75214D9D590068CE11 /* pico_stack.c in Sources */,
@@ -2990,6 +2993,7 @@
 				AE649BFC218C552500EF4A81 /* lpc.c in Sources */,
 				AEF9986B2598900A0038E0B8 /* upnpcommands.c in Sources */,
 				AEF998622598900A0038E0B8 /* connecthostport.c in Sources */,
+				AE7BCB582415515B007285F8 /* arm7_rec_x64.cpp in Sources */,
 				AEFF7F54214D9D590068CE11 /* pico_dns_client.c in Sources */,
 				AEF998752598900A0038E0B8 /* minissdpc.c in Sources */,
 				AEFF7F57214D9D590068CE11 /* pico_fragments.c in Sources */,

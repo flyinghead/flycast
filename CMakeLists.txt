@@ -477,15 +477,17 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/hw/aica/dsp_x86.cpp
         core/hw/aica/sgc_if.cpp
         core/hw/aica/sgc_if.h
-        core/hw/arm7/arm64.cpp
         core/hw/arm7/arm7.cpp
         core/hw/arm7/arm7.h
         core/hw/arm7/arm_mem.cpp
         core/hw/arm7/arm_mem.h
+        core/hw/arm7/arm7_rec_arm32.cpp
+        core/hw/arm7/arm7_rec_arm64.cpp
+        core/hw/arm7/arm7_rec_x64.cpp
+        core/hw/arm7/arm7_rec.cpp
+        core/hw/arm7/arm7_rec.h
         core/hw/arm7/arm-new.h
         core/hw/arm7/vbaARM.cpp
-        core/hw/arm7/virt_arm.cpp
-        core/hw/arm7/virt_arm.h
         core/hw/bba/bba.h
         core/hw/bba/bba.cpp
         core/hw/bba/rtl8139c.h

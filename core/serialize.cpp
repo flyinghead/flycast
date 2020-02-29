@@ -266,7 +266,7 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	REICAST_S(e68k_reg_L) ;
 	REICAST_S(e68k_reg_M) ;
 
-	REICAST_SA(arm_Reg,RN_ARM_REG_COUNT);
+	REICAST_SA(arm_Reg,RN_ARM_REG_COUNT - 1);	// Too lazy to create a new version and the scratch register is not used between blocks anyway
 	REICAST_S(armIrqEnable);
 	REICAST_S(armFiqEnable);
 	REICAST_S(armMode);
@@ -498,7 +498,7 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 	REICAST_US(e68k_reg_L) ;
 	REICAST_US(e68k_reg_M) ;
 
-	REICAST_USA(arm_Reg,RN_ARM_REG_COUNT);
+	REICAST_USA(arm_Reg,RN_ARM_REG_COUNT - 1);
 	REICAST_US(armIrqEnable);
 	REICAST_US(armFiqEnable);
 	REICAST_US(armMode);
@@ -772,7 +772,7 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 	REICAST_US(e68k_reg_L) ;
 	REICAST_US(e68k_reg_M) ;
 
-	REICAST_USA(arm_Reg,RN_ARM_REG_COUNT);
+	REICAST_USA(arm_Reg,RN_ARM_REG_COUNT - 1);
 	REICAST_US(armIrqEnable);
 	REICAST_US(armFiqEnable);
 	REICAST_US(armMode);

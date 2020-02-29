@@ -37,7 +37,7 @@
 #include "rend/mainui.h"
 #include "archive/rzip.h"
 
-void FlushCache();
+void arm7rec_flush();
 static void LoadCustom();
 
 extern bool fast_forward_mode;
@@ -1256,7 +1256,7 @@ void dc_loadstate()
 
 	custom_texture.Terminate();
 #if FEAT_AREC == DYNAREC_JIT
-    FlushCache();
+	arm7rec_flush();
 #endif
 #ifndef NO_MMU
     mmu_flush_table();

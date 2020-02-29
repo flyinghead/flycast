@@ -218,11 +218,8 @@ XEntryPoints: .word CSYM(EntryPoints)
 HIDDEN(arm_mainloop)
 CSYM(arm_mainloop): @(cntx,lookup_base,cycles)
 
-#if defined(__APPLE__)
-push {r4,r5,r8,r11,lr}
-#else
-push {r4,r5,r8,r9,lr}
-#endif
+	push {r4, r5, r6, r7, r8, r9, r10, r11, lr}
+	sub sp, #4				@ 8-byte stack alignment
 
 	#ifdef TARGET_IPHONE
 	ldr r8,Xarm_Reg			@load cntx
@@ -255,11 +252,8 @@ arm_dofiq:
 HIDDEN(arm_exit)
 CSYM(arm_exit):
 	str r5,[r8,#192]		@if timeslice is over, save remaining cycles
-#if defined(__APPLE__)
-	pop {r4,r5,r8,r11,pc}
-#else
-	pop {r4,r5,r8,r9,pc}
-#endif
+	add sp, #4
+	pop {r4, r5, r6, r7, r8, r9, r10, r11, pc}
 
 @@@@@@
 @matrix mul

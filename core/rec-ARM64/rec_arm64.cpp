@@ -40,6 +40,7 @@ using namespace vixl::aarch64;
 #include "hw/sh4/sh4_rom.h"
 #include "hw/mem/vmem32.h"
 #include "arm64_regalloc.h"
+#include "hw/mem/_vmem.h"
 
 #undef do_sqw_nommu
 
@@ -49,7 +50,7 @@ extern "C" void ngen_LinkBlock_cond_Branch_stub();
 extern "C" void ngen_LinkBlock_cond_Next_stub();
 extern "C" void ngen_FailedToFindBlock_mmu();
 extern "C" void ngen_FailedToFindBlock_nommu();
-extern void vmem_platform_flush_cache(void *icache_start, void *icache_end, void *dcache_start, void *dcache_end);
+
 static void generate_mainloop();
 
 u32 mem_writes, mem_reads;
