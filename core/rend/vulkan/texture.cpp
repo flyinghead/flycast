@@ -143,7 +143,7 @@ void setImageLayout(vk::CommandBuffer const& commandBuffer, vk::Image image, vk:
 	commandBuffer.pipelineBarrier(sourceStage, destinationStage, {}, nullptr, nullptr, imageMemoryBarrier);
 }
 
-void Texture::UploadToGPU(int width, int height, u8 *data, bool mipmapped)
+void Texture::UploadToGPU(int width, int height, u8 *data, bool mipmapped, bool mipmapsIncluded)
 {
 	vk::Format format;
 	u32 dataSize = width * height * 2;
@@ -167,7 +167,7 @@ void Texture::UploadToGPU(int width, int height, u8 *data, bool mipmapped)
 		dataSize /= 2;
 		break;
 	}
-	if (mipmapped)
+	if (mipmapsIncluded)
 	{
 		int w = width / 2;
 		u32 size = dataSize / 4;
@@ -180,13 +180,13 @@ void Texture::UploadToGPU(int width, int height, u8 *data, bool mipmapped)
 	}
 	bool isNew = true;
 	if (width != extent.width || height != extent.height || format != this->format)
-		Init(width, height, format, dataSize, mipmapped);
+		Init(width, height, format, dataSize, mipmapped, mipmapsIncluded);
 	else
 		isNew = false;
-	SetImage(dataSize, data, isNew);
+	SetImage(dataSize, data, isNew, mipmapped && !mipmapsIncluded);
 }
 
-void Texture::Init(u32 width, u32 height, vk::Format format, u32 dataSize, bool mipmapped)
+void Texture::Init(u32 width, u32 height, vk::Format format, u32 dataSize, bool mipmapped, bool mipmapsIncluded)
 {
 	this->extent = vk::Extent2D(width, height);
 	this->format = format;
@@ -217,6 +217,8 @@ void Texture::Init(u32 width, u32 height, vk::Format format, u32 dataSize, bool 
 		initialLayout = vk::ImageLayout::ePreinitialized;
 		requirements = vk::MemoryPropertyFlagBits::eHostCoherent | vk::MemoryPropertyFlagBits::eHostVisible;
 	}
+	if (mipmapped && !mipmapsIncluded)
+		usageFlags |= vk::ImageUsageFlagBits::eTransferSrc | vk::ImageUsageFlagBits::eTransferDst;
 	CreateImage(imageTiling, usageFlags, initialLayout, requirements, vk::ImageAspectFlagBits::eColor);
 }
 
@@ -238,7 +240,7 @@ void Texture::CreateImage(vk::ImageTiling tiling, vk::ImageUsageFlags usage, vk:
 	imageView = device.createImageViewUnique(imageViewCreateInfo);
 }
 
-void Texture::SetImage(u32 srcSize, void *srcData, bool isNew)
+void Texture::SetImage(u32 srcSize, void *srcData, bool isNew, bool genMipmaps)
 {
 	verify((bool)commandBuffer);
 	commandBuffer.begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));
@@ -261,7 +263,8 @@ void Texture::SetImage(u32 srcSize, void *srcData, bool isNew)
 		// Since we're going to blit to the texture image, set its layout to eTransferDstOptimal
 		setImageLayout(commandBuffer, image.get(), format, mipmapLevels, isNew ? vk::ImageLayout::eUndefined : vk::ImageLayout::eShaderReadOnlyOptimal,
 				vk::ImageLayout::eTransferDstOptimal);
-		if (mipmapLevels > 1)
+
+		if (mipmapLevels > 1 && !genMipmaps)
 		{
 			vk::DeviceSize bufferOffset = 0;
 			for (int i = 0; i < mipmapLevels; i++)
@@ -277,16 +280,73 @@ void Texture::SetImage(u32 srcSize, void *srcData, bool isNew)
 			vk::BufferImageCopy copyRegion(0, extent.width, extent.height, vk::ImageSubresourceLayers(vk::ImageAspectFlagBits::eColor, 0, 0, 1),
 					vk::Offset3D(0, 0, 0), vk::Extent3D(extent, 1));
 			commandBuffer.copyBufferToImage(stagingBufferData->buffer.get(), image.get(), vk::ImageLayout::eTransferDstOptimal, copyRegion);
+			if (mipmapLevels > 1)
+				GenerateMipmaps();
 		}
 		// Set the layout for the texture image from eTransferDstOptimal to SHADER_READ_ONLY
 		setImageLayout(commandBuffer, image.get(), format, mipmapLevels, vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eShaderReadOnlyOptimal);
 	}
 	else
 	{
-		// If we can use the linear tiled image as a texture, just do it
-		setImageLayout(commandBuffer, image.get(), format, mipmapLevels, vk::ImageLayout::ePreinitialized, vk::ImageLayout::eShaderReadOnlyOptimal);
+		if (mipmapLevels > 1)
+			GenerateMipmaps();
+		else
+			// If we can use the linear tiled image as a texture, just do it
+			setImageLayout(commandBuffer, image.get(), format, mipmapLevels, vk::ImageLayout::ePreinitialized, vk::ImageLayout::eShaderReadOnlyOptimal);
 	}
 	commandBuffer.end();
+}
+
+void Texture::GenerateMipmaps()
+{
+	u32 mipWidth = extent.width;
+	u32 mipHeight = extent.height;
+	vk::ImageMemoryBarrier barrier(vk::AccessFlagBits::eTransferWrite, vk::AccessFlagBits::eTransferRead,
+			vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eTransferSrcOptimal, VK_QUEUE_FAMILY_IGNORED, VK_QUEUE_FAMILY_IGNORED,
+			*image, vk::ImageSubresourceRange(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1));
+
+	for (int i = 1; i < mipmapLevels; i++)
+	{
+		// Transition previous mipmap level from dst optimal/preinit to src optimal
+		barrier.subresourceRange.baseMipLevel = i - 1;
+		if (i == 1 && !needsStaging)
+		{
+			barrier.oldLayout = vk::ImageLayout::ePreinitialized;
+			barrier.srcAccessMask = vk::AccessFlagBits::eHostWrite;
+		}
+		else
+		{
+			barrier.oldLayout = vk::ImageLayout::eTransferDstOptimal;
+			barrier.srcAccessMask = vk::AccessFlagBits::eTransferWrite;
+		}
+		barrier.newLayout = vk::ImageLayout::eTransferSrcOptimal;
+		barrier.dstAccessMask = vk::AccessFlagBits::eTransferRead;
+		commandBuffer.pipelineBarrier(vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eTransfer, {}, nullptr, nullptr, barrier);
+
+		// Blit previous mipmap level on current
+		vk::ImageBlit blit(vk::ImageSubresourceLayers(vk::ImageAspectFlagBits::eColor, i - 1, 0, 1),
+				 { { vk::Offset3D(0, 0, 0), vk::Offset3D(mipWidth, mipHeight, 1) } },
+				 vk::ImageSubresourceLayers(vk::ImageAspectFlagBits::eColor, i, 0, 1),
+				 { { vk::Offset3D(0, 0, 0), vk::Offset3D(std::max(mipWidth / 2, 1u), std::max(mipHeight / 2, 1u), 1) } });
+		commandBuffer.blitImage(*image, vk::ImageLayout::eTransferSrcOptimal, *image, vk::ImageLayout::eTransferDstOptimal, 1, &blit, vk::Filter::eLinear);
+
+		// Transition previous mipmap level from src optimal to shader read-only optimal
+		barrier.oldLayout = vk::ImageLayout::eTransferSrcOptimal;
+		barrier.newLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
+		barrier.srcAccessMask = vk::AccessFlagBits::eTransferRead;
+		barrier.dstAccessMask = vk::AccessFlagBits::eShaderRead;
+		commandBuffer.pipelineBarrier(vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eFragmentShader, {}, nullptr, nullptr, barrier);
+
+		mipWidth = std::max(mipWidth / 2, 1u);
+		mipHeight = std::max(mipHeight / 2, 1u);
+	}
+	// Transition last mipmap level from dst optimal to shader read-only optimal
+	barrier.subresourceRange.baseMipLevel = mipmapLevels - 1;
+	barrier.oldLayout = vk::ImageLayout::eTransferDstOptimal;
+	barrier.newLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
+	barrier.srcAccessMask = vk::AccessFlagBits::eTransferWrite;
+	barrier.dstAccessMask = vk::AccessFlagBits::eShaderRead;
+	commandBuffer.pipelineBarrier(vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eFragmentShader, {}, nullptr, nullptr, barrier);
 }
 
 void FramebufferAttachment::Init(u32 width, u32 height, vk::Format format, vk::ImageUsageFlags usage)

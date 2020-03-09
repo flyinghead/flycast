@@ -69,7 +69,7 @@ static void dumpRtTexture(u32 name, u32 w, u32 h) {
 	free(rows);
 }
 
-void TextureCacheData::UploadToGPU(int width, int height, u8 *temp_tex_buffer, bool mipmapped)
+void TextureCacheData::UploadToGPU(int width, int height, u8 *temp_tex_buffer, bool mipmapped, bool mipmapsIncluded)
 {
 	//upload to OpenGL !
 	glcache.BindTexture(GL_TEXTURE_2D, texID);
@@ -94,7 +94,7 @@ void TextureCacheData::UploadToGPU(int width, int height, u8 *temp_tex_buffer, b
 		die("Unsupported texture type");
 		break;
 	}
-	if (mipmapped)
+	if (mipmapsIncluded)
 	{
 		int mipmapLevels = 0;
 		int dim = width;
@@ -149,9 +149,9 @@ void TextureCacheData::UploadToGPU(int width, int height, u8 *temp_tex_buffer, b
 	}
 	else
 	{
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
 		glTexImage2D(GL_TEXTURE_2D, 0,comps, width, height, 0, comps, gltype, temp_tex_buffer);
+		if (mipmapped)
+			glGenerateMipmap(GL_TEXTURE_2D);
 	}
 	glCheck();
 }

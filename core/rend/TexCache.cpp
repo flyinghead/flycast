@@ -636,7 +636,7 @@ void BaseTextureCacheData::Update()
 		need_32bit_buffer = false;
 	// TODO avoid upscaling/depost. textures that change too often
 
-	bool mipmapped = IsMipmapped() && settings.rend.UseMipmaps && !settings.rend.DumpTextures;
+	bool mipmapped = IsMipmapped() && !settings.rend.DumpTextures;
 
 	if (texconv32 != NULL && need_32bit_buffer)
 	{
@@ -753,7 +753,7 @@ void BaseTextureCacheData::Update()
 	//lock the texture to detect changes in it
 	lock_block = libCore_vramlock_Lock(sa_tex,sa+size-1,this);
 
-	UploadToGPU(upscaled_w, upscaled_h, (u8*)temp_tex_buffer, mipmapped);
+	UploadToGPU(upscaled_w, upscaled_h, (u8*)temp_tex_buffer, mipmapped, mipmapped);
 	if (settings.rend.DumpTextures)
 	{
 		ComputeHash();
@@ -768,7 +768,7 @@ void BaseTextureCacheData::CheckCustomTexture()
 	if (IsCustomTextureAvailable())
 	{
 		tex_type = TextureType::_8888;
-		UploadToGPU(custom_width, custom_height, custom_image_data, false);
+		UploadToGPU(custom_width, custom_height, custom_image_data, IsMipmapped(), false);
 		delete [] custom_image_data;
 		custom_image_data = NULL;
 	}
