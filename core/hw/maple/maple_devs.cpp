@@ -1858,6 +1858,13 @@ struct maple_naomi_jamma : maple_sega_controller
 			io_boards.push_back(new jvs_namco_v226_pcb(1, this));
 			break;
 		}
+		if (settings.input.JammaSetup != 6)
+			for (int bus = 0; bus < MAPLE_PORTS; ++bus)
+				if ((MapleDeviceType)settings.input.maple_devices[bus] == MDT_LightGun)
+				{
+					io_boards.back()->lightgun_as_analog = true;
+					break;
+				}
 	}
 	virtual ~maple_naomi_jamma()
 	{
