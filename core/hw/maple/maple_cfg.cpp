@@ -47,7 +47,7 @@ u32 awave_button_mapping[] = {
 		AWAVE_BTN3_KEY,		// DC_BTN_Y
 		AWAVE_BTN2_KEY,		// DC_BTN_X
 		AWAVE_COIN_KEY,		// DC_BTN_D
-		// DC_DPAD2_UP
+		AWAVE_BTN4_KEY,		// DC_DPAD2_UP
 		// DC_DPAD2_DOWN
 		// DC_DPAD2_LEFT
 		// DC_DPAD2_RIGHT

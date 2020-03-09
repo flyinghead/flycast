@@ -446,6 +446,9 @@ const DreamcastKey button_keys[] = { DC_BTN_START, DC_BTN_A, DC_BTN_B, DC_BTN_X,
 const char *button_names[] = { "Start", "A", "B", "X", "Y", "DPad Up", "DPad Down", "DPad Left", "DPad Right",
 		"Menu", "Exit", "Fast-forward", "Left Trigger", "Right Trigger",
 		"C", "D", "Z", "Right Dpad Up", "Right DPad Down", "Right DPad Left", "Right DPad Right" };
+const char *arcade_button_names[] = { "Start", "Button 1", "Button 2", "Button 3", "Button 4", "Up", "Down", "Left", "Right",
+		"Menu", "Exit", "Fast-forward", "N/A", "N/A",
+		"Service", "Coin", "Test", "Button 5", "Button 6", "Button 7", "Button 8" };
 const DreamcastKey axis_keys[] = { DC_AXIS_X, DC_AXIS_Y, DC_AXIS_LT, DC_AXIS_RT, EMU_AXIS_DPAD1_X, EMU_AXIS_DPAD1_Y, EMU_AXIS_DPAD2_X, EMU_AXIS_DPAD2_Y };
 const char *axis_names[] = { "Stick X", "Stick Y", "Left Trigger", "Right Trigger", "DPad X", "DPad Y", "Right DPad X", "Right DPad Y" };
 
@@ -468,6 +471,7 @@ static MapleDeviceType maple_expansion_device_type_from_index(int idx)
 static std::shared_ptr<GamepadDevice> mapped_device;
 static u32 mapped_code;
 static double map_start_time;
+static bool arcade_button_mode;
 
 static void input_detected(u32 code)
 {
@@ -481,7 +485,9 @@ static void detect_input_popup(int index, bool analog)
 	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, padding);
 	if (ImGui::BeginPopupModal(analog ? "Map Axis" : "Map Button", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
 	{
-		ImGui::Text("Waiting for %s '%s'...", analog ? "axis" : "button", analog ? axis_names[index] : button_names[index]);
+		ImGui::Text("Waiting for %s '%s'...", analog ? "axis" : "button",
+				analog ? axis_names[index]
+						: arcade_button_mode ? arcade_button_names[index] : button_names[index]);
 		double now = os_GetSeconds();
 		ImGui::Text("Time out in %d s", (int)(5 - (now - map_start_time)));
 		if (mapped_code != -1)
@@ -535,6 +541,9 @@ static void controller_mapping_popup(std::shared_ptr<GamepadDevice> gamepad)
 			gamepad->save_mapping();
 		}
 		ImGui::SetItemDefaultFocus();
+		ImGui::SameLine(ImGui::GetContentRegionAvailWidth() - ImGui::CalcTextSize("Arcade button names").x
+				- ImGui::GetStyle().FramePadding.x * 3.0f - ImGui::GetStyle().ItemSpacing.x);
+		ImGui::Checkbox("Arcade button names", &arcade_button_mode);
 
 		char key_id[32];
 		ImGui::BeginGroup();
@@ -548,7 +557,7 @@ static void controller_mapping_popup(std::shared_ptr<GamepadDevice> gamepad)
 		{
 			sprintf(key_id, "key_id%d", j);
 			ImGui::PushID(key_id);
-			ImGui::Text("%s", button_names[j]);
+			ImGui::Text("%s", arcade_button_mode ? arcade_button_names[j] : button_names[j]);
 			ImGui::NextColumn();
 			u32 code = input_mapping->get_button_code(button_keys[j]);
 			if (code != -1)
