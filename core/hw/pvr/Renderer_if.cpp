@@ -9,73 +9,6 @@
 
 #include <zlib.h>
 
-#include "deps/crypto/md5.h"
-
-#if FEAT_HAS_NIXPROF
-#include "profiler/profiler.h"
-#endif
-
-#define FRAME_MD5 0x1
-FILE* fLogFrames;
-FILE* fCheckFrames;
-
-/*
-
-	rendv3 ideas
-	- multiple backends
-	  - ESish
-	    - OpenGL ES2.0
-	    - OpenGL ES3.0
-	    - OpenGL 3.1
-	  - OpenGL 4.x
-	  - Direct3D 10+ ?
-	- correct memory ordering model
-	- resource pools
-	- threaded ta
-	- threaded rendering
-	- rtts
-	- framebuffers
-	- overlays
-
-
-	PHASES
-	- TA submition (memops, dma)
-
-	- TA parsing (defered, rend thread)
-
-	- CORE render (in-order, defered, rend thread)
-
-
-	submition is done in-order
-	- Partial handling of TA values
-	- Gotchas with TA contexts
-
-	parsing is done on demand and out-of-order, and might be skipped
-	- output is only consumed by renderer
-
-	render is queued on RENDER_START, and won't stall the emulation or might be skipped
-	- VRAM integrity is an issue with out-of-order or delayed rendering.
-	- selective vram snapshots require ta parsing to complete in order with REND_START / REND_END
-
-
-	Complications
-	- For some apis (gles2, maybe gl31) texture allocation needs to happen on the gpu thread
-	- multiple versions of different time snapshots of the same texture are required
-	- ta parsing vs frameskip logic
-
-
-	Texture versioning and staging
-	 A memory copy of the texture can be used to temporary store the texture before upload to vram
-	 This can be moved to another thread
-	 If the api supports async resource creation, we don't need the extra copy
-	 Texcache lookups need to be versioned
-
-
-	rendv2x hacks
-	- Only a single pending render. Any renders while still pending are dropped (before parsing)
-	- wait and block for parse/texcache. Render is async
-*/
-
 u32 VertexCount=0;
 u32 FrameCount=1;
 
@@ -90,8 +23,6 @@ cResetEvent rs, re;
 #endif
 static bool swap_pending;
 static bool do_swap;
-
-int max_idx,max_mvo,max_op,max_pt,max_tr,max_vtx,max_modt, ovrn;
 
 static bool render_called = false;
 u32 fb_watch_addr_start;
@@ -131,7 +62,7 @@ static void dump_frame(const char* file, TA_context* ctx, u8* vram, u8* vram_ref
 	if (vram_ref) {
 		src_vram = (u8*)malloc(VRAM_SIZE);
 
-		for (int i = 0; i < VRAM_SIZE; i++) {
+		for (u32 i = 0; i < VRAM_SIZE; i++) {
 			src_vram[i] = vram[i] ^ vram_ref[i];
 		}
 	}
@@ -155,7 +86,7 @@ static void dump_frame(const char* file, TA_context* ctx, u8* vram, u8* vram_ref
 	free(compressed);
 
 	fwrite(&ctx->tad.render_pass_count, 1, sizeof(u32), fw);
-	for (int i = 0; i < ctx->tad.render_pass_count; i++) {
+	for (u32 i = 0; i < ctx->tad.render_pass_count; i++) {
 		u32 offset = ctx->tad.render_passes[i] - ctx->tad.thd_root;
 		fwrite(&offset, 1, sizeof(offset), fw);
 	}
@@ -182,8 +113,8 @@ TA_context* read_frame(const char* file, u8* vram_ref = NULL) {
 		fclose(fw);
 		return 0;
 	}
-	int sizeofPolyParam = sizeof(PolyParam);
-	int sizeofVertex = sizeof(Vertex);
+	u32 sizeofPolyParam = sizeof(PolyParam);
+	u32 sizeofVertex = sizeof(Vertex);
 	if (id0[7] == '3')
 	{
 		sizeofPolyParam -= 12;
@@ -233,7 +164,7 @@ TA_context* read_frame(const char* file, u8* vram_ref = NULL) {
 
 	if (fread(&t, 1, sizeof(t), fw) > 0) {
 		ctx->tad.render_pass_count = t;
-		for (int i = 0; i < t; i++) {
+		for (u32 i = 0; i < t; i++) {
 			u32 offset;
 			verify(fread(&offset, 1, sizeof(offset), fw) == sizeof(offset));
 			ctx->tad.render_passes[i] = ctx->tad.thd_root + offset;
@@ -276,7 +207,7 @@ static bool rend_frame(TA_context* ctx)
 
 bool rend_single_frame()
 {
-	if (renderer_changed != settings.pvr.rend)
+	if ((u32)renderer_changed != settings.pvr.rend)
 	{
 		rend_term_renderer();
 		SwitchRenderApi(renderer_changed);
@@ -465,90 +396,28 @@ void rend_start_render()
 	{
 		bool is_rtt=(FB_W_SOF1& 0x1000000)!=0 && !ctx->rend.isRenderFramebuffer;
 		
-		if (fLogFrames || fCheckFrames) {
-			MD5Context md5;
-			u8 digest[16];
+		//tactx_Recycle(ctx); ctx = read_frame("frames/dcframe-SoA-intro-tr-autosort");
+		//printf("REP: %.2f ms\n",render_end_pending_cycles/200000.0);
+		if (!ctx->rend.isRenderFramebuffer)
+			FillBGP(ctx);
 
-			MD5Init(&md5);
-			MD5Update(&md5, ctx->tad.thd_root, ctx->tad.End() - ctx->tad.thd_root);
-			MD5Final(digest, &md5);
+		ctx->rend.isRTT=is_rtt;
 
-			if (fLogFrames) {
-				fputc(FRAME_MD5, fLogFrames);
-				fwrite(digest, 1, 16, fLogFrames);
-				fflush(fLogFrames);
-			}
+		ctx->rend.fb_X_CLIP=FB_X_CLIP;
+		ctx->rend.fb_Y_CLIP=FB_Y_CLIP;
 
-			if (fCheckFrames) {
-				u8 digest2[16];
-				int ch = fgetc(fCheckFrames);
+		ctx->rend.fog_clamp_min = FOG_CLAMP_MIN;
+		ctx->rend.fog_clamp_max = FOG_CLAMP_MAX;
 
-				if (ch == EOF) {
-					INFO_LOG(PVR, "Testing: TA Hash log matches, exiting");
-					exit(1);
-				}
-				
-				verify(ch == FRAME_MD5);
-
-				verify(fread(digest2, 1, 16, fCheckFrames) == 16);
-
-				verify(memcmp(digest, digest2, 16) == 0);
-
-				
-			}
-
-			/*
-			u8* dig = digest;
-			printf("FRAME: %02X-%02X-%02X-%02X-%02X-%02X-%02X-%02X-%02X-%02X-%02X-%02X-%02X-%02X-%02X-%02X\n",
-				digest[0], digest[1], digest[2], digest[3], digest[4], digest[5], digest[6], digest[7],
-				digest[8], digest[9], digest[10], digest[11], digest[12], digest[13], digest[14], digest[15]
-				);
-			*/
-		}
-
-		if (!ctx->rend.Overrun)
+		if (QueueRender(ctx))
 		{
-			//tactx_Recycle(ctx); ctx = read_frame("frames/dcframe-SoA-intro-tr-autosort");
-			//printf("REP: %.2f ms\n",render_end_pending_cycles/200000.0);
-			if (!ctx->rend.isRenderFramebuffer)
-				FillBGP(ctx);
-			
-			ctx->rend.isRTT=is_rtt;
-
-			ctx->rend.fb_X_CLIP=FB_X_CLIP;
-			ctx->rend.fb_Y_CLIP=FB_Y_CLIP;
-			
-			ctx->rend.fog_clamp_min = FOG_CLAMP_MIN;
-			ctx->rend.fog_clamp_max = FOG_CLAMP_MAX;
-			
-			max_idx=max(max_idx,ctx->rend.idx.used());
-			max_vtx=max(max_vtx,ctx->rend.verts.used());
-			max_op=max(max_op,ctx->rend.global_param_op.used());
-			max_pt=max(max_pt,ctx->rend.global_param_pt.used());
-			max_tr=max(max_tr,ctx->rend.global_param_tr.used());
-			
-			max_mvo=max(max_mvo,ctx->rend.global_param_mvo.used());
-			max_modt=max(max_modt,ctx->rend.modtrig.used());
-
-#if defined(_WIN32) && 0
-			printf("max: idx: %d, vtx: %d, op: %d, pt: %d, tr: %d, mvo: %d, modt: %d, ov: %d\n", max_idx, max_vtx, max_op, max_pt, max_tr, max_mvo, max_modt, ovrn);
-#endif
-			if (QueueRender(ctx))
-			{
-				palette_update();
+			palette_update();
 #if !defined(TARGET_NO_THREADS)
-				rs.Set();
+			rs.Set();
 #else
-				rend_single_frame();
+			rend_single_frame();
 #endif
-				pend_rend = true;
-			}
-		}
-		else
-		{
-			ovrn++;
-			INFO_LOG(PVR, "WARNING: Rendering context is overrun (%d), aborting frame", ovrn);
-			tactx_Recycle(ctx);
+			pend_rend = true;
 		}
 	}
 }

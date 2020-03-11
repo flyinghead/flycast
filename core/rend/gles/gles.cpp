@@ -977,10 +977,7 @@ bool ProcessFrame(TA_context* ctx)
 	}
 	TexCache.CollectCleanup();
 
-	if (ctx->rend.Overrun)
-		WARN_LOG(PVR, "ERROR: TA context overrun");
-
-	return !ctx->rend.Overrun;
+	return true;
 }
 
 static void upload_vertex_indices()

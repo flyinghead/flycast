@@ -11,7 +11,7 @@
 #include "Renderer_if.h"
 
 u32 ta_type_lut[256];
-
+extern int screen_height;
 
 #define TACALL DYNACALL
 #ifdef RELEASE
@@ -368,22 +368,18 @@ public:
 					TA_EOL;
 				}
 				break;
+
 				//32B
 			case ParamType_User_Tile_Clip:
-				{
-
-					SetTileClip(data->data_32[3]&63,data->data_32[4]&31,data->data_32[5]&63,data->data_32[6]&31);
-					data+=SZ32;
-				}
+				SetTileClip(data->data_32[3] & 63, data->data_32[4] & 31, data->data_32[5] & 63, data->data_32[6] & 31);
+				data += SZ32;
 				break;
+
 				//32B
 			case ParamType_Object_List_Set:
-				{
-					INFO_LOG(PVR, "Unsupported list type: ParamType_Object_List_Set");	// NAOMI Virtual on Oratorio Tangram
-
-					// *cough* ignore it :p
-					data+=SZ32;
-				}
+				INFO_LOG(PVR, "Unsupported list type: ParamType_Object_List_Set");	// NAOMI Virtual on Oratorio Tangram
+				// *cough* ignore it :p
+				data += SZ32;
 				break;
 
 				//Global Parameter
@@ -691,8 +687,8 @@ public:
 		memset(FaceOffsColor, 0xff, sizeof(FaceOffsColor));
 		memset(FaceBaseColor1, 0xff, sizeof(FaceBaseColor1));
 		memset(FaceOffsColor1, 0xff, sizeof(FaceOffsColor1));
-		SFaceBaseColor = 0xffffffff;
-		SFaceOffsColor = 0xffffffff;
+		SFaceBaseColor = 0;
+		SFaceOffsColor = 0;
 		lmr = NULL;
 		CurrentPP = NULL;
 		CurrentPPlist = NULL;
@@ -1268,11 +1264,6 @@ public:
 		//cv[indx].base_int=1;\
 		//cv[indx].offset_int=1;
 
-	#define append_sprite_yz(indx,set,st2) \
-		cv[indx].y=sv->y##set; \
-		cv[indx].z=sv->z##st2; \
-		update_fz(sv->z##st2);
-
 	#define sprite_uv(indx,u_name,v_name) \
 		cv[indx].u = f16(sv->u_name);\
 		cv[indx].v = f16(sv->v_name);
@@ -1494,6 +1485,49 @@ FifoSplitter<0> TAFifo0;
 
 int ta_parse_cnt = 0;
 
+static void fix_texture_bleeding(const List<PolyParam> *list)
+{
+	for (const PolyParam *pp = list->head(); pp <= list->LastPtr(); pp++)
+	{
+		if (!pp->pcw.Texture || pp->count < 3)
+			continue;
+		// Find polygons that are facing the camera (constant z)
+		// and only use 0 and 1 for U and V (some tolerance around 1 for SA2)
+		// then apply a half-pixel correction on U and V.
+		const u32 first = vd_rc.idx.head()[pp->first];
+		const u32 last = vd_rc.idx.head()[pp->first + pp->count - 1];
+		bool need_fixing = true;
+		float z;
+		for (u32 idx = first; idx <= last && need_fixing; idx++)
+		{
+			Vertex& vtx = vd_rc.verts.head()[idx];
+
+			if (vtx.u != 0.f && (vtx.u <= 0.995f || vtx.u > 1.f))
+				need_fixing = false;
+			else if (vtx.v != 0.f && (vtx.v <= 0.995f || vtx.v > 1.f))
+				need_fixing = false;
+			else if (idx == first)
+				z = vtx.z;
+			else if (z != vtx.z)
+				need_fixing = false;
+		}
+		if (!need_fixing)
+			continue;
+		u32 tex_width = 8 << pp->tsp.TexU;
+		u32 tex_height = 8 << pp->tsp.TexV;
+		for (u32 idx = first; idx <= last; idx++)
+		{
+			Vertex& vtx = vd_rc.verts.head()[idx];
+			if (vtx.u > 0.995f)
+				vtx.u = 1.f;
+			vtx.u = (0.5f + vtx.u * (tex_width - 1)) / tex_width;
+			if (vtx.v > 0.995f)
+				vtx.v = 1.f;
+			vtx.v = (0.5f + vtx.v * (tex_height - 1)) / tex_height;
+		}
+	}
+}
+
 /*
 	Also: gotta stage textures here
 */
@@ -1525,6 +1559,9 @@ bool ta_parse_vdrc(TA_context* ctx)
 			}
 			while(ta_data<=ta_data_end);
 
+			if (ctx->rend.Overrun)
+				break;
+
 			bool empty_pass = vd_rc.global_param_op.used() == (pass == 0 ? 1 : vd_rc.render_passes.LastPtr()->op_count)
 					&& vd_rc.global_param_pt.used() == (pass == 0 ? 0 : vd_rc.render_passes.LastPtr()->pt_count)
 					&& vd_rc.global_param_tr.used() == (pass == 0 ? 0 : vd_rc.render_passes.LastPtr()->tr_count);
@@ -1541,10 +1578,18 @@ bool ta_parse_vdrc(TA_context* ctx)
 				render_pass->autosort = UsingAutoSort(pass);
 				render_pass->z_clear = ClearZBeforePass(pass);
 			}
+			if (screen_height > 480)
+			{
+				fix_texture_bleeding(&vd_rc.global_param_op);
+				fix_texture_bleeding(&vd_rc.global_param_pt);
+				fix_texture_bleeding(&vd_rc.global_param_tr);
+			}
 		}
 		rv = !empty_context;
 	}
 	bool overrun = ctx->rend.Overrun;
+	if (overrun)
+		WARN_LOG(PVR, "ERROR: TA context overrun");
 
 	vd_ctx->rend = vd_rc;
 	vd_ctx = 0;
@@ -1552,7 +1597,7 @@ bool ta_parse_vdrc(TA_context* ctx)
 
 	ctx->rend.Overrun = overrun;
 
-	return rv;
+	return rv && !overrun;
 }
 
 

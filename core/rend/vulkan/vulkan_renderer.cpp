@@ -150,15 +150,9 @@ public:
 
 		textureCache.CollectCleanup();
 
-		if (ctx->rend.Overrun)
-			WARN_LOG(PVR, "ERROR: TA context overrun");
-
-		result = result && !ctx->rend.Overrun;
-
 		if (result)
 			CheckFogTexture();
-
-		if (!result)
+		else
 			texCommandPool.EndFrame();
 
 		return result;

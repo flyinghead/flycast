@@ -277,17 +277,8 @@ void spg_Reset(bool hard)
 
 void SetREP(TA_context* cntx)
 {
-	if (cntx && !cntx->rend.Overrun)
-	{
-		VertexCount+= cntx->rend.verts.used();
-		int render_end_pending_cycles= cntx->rend.verts.used()*60;
-		//if (render_end_pending_cycles<500000)
-		render_end_pending_cycles+=500000*3;
-
-		sh4_sched_request(render_end_schid,render_end_pending_cycles);
-	}
+	if (cntx)
+		sh4_sched_request(render_end_schid, 500000 * 3);
 	else
-	{
 		sh4_sched_request(render_end_schid, 4096);
-	}
 }
