@@ -48,7 +48,7 @@ bool GamepadDevice::gamepad_btn_input(u32 code, bool pressed)
 		_input_detected(code);
 		_input_detected = NULL;
 	}
-	if (input_mapper == NULL || _maple_port < 0 || _maple_port >= ARRAY_SIZE(kcode))
+	if (!input_mapper || _maple_port < 0 || _maple_port >= ARRAY_SIZE(kcode))
 		return false;
 	DreamcastKey key = input_mapper->get_button_id(code);
 	if (key == EMU_BTN_NONE)
@@ -141,7 +141,7 @@ bool GamepadDevice::gamepad_axis_input(u32 code, int value)
 		_input_detected(code);
 		_input_detected = NULL;
 	}
-	if (input_mapper == NULL || _maple_port < 0 || _maple_port >= ARRAY_SIZE(kcode))
+	if (!input_mapper || _maple_port < 0 || _maple_port >= ARRAY_SIZE(kcode))
 		return false;
 	DreamcastKey key = input_mapper->get_axis_id(code);
 
@@ -247,7 +247,7 @@ bool GamepadDevice::find_mapping(const char *custom_mapping /* = NULL */)
 		mapping_file = make_mapping_filename();
 
 	input_mapper = InputMapping::LoadMapping(mapping_file.c_str());
-	return input_mapper != NULL;
+	return !!input_mapper;
 }
 
 int GamepadDevice::GetGamepadCount()
@@ -272,9 +272,10 @@ std::shared_ptr<GamepadDevice> GamepadDevice::GetGamepad(int index)
 
 void GamepadDevice::save_mapping()
 {
-	if (input_mapper == NULL)
+	if (!input_mapper)
 		return;
-	input_mapper->save(make_mapping_filename().c_str());
+	std::string filename = make_mapping_filename();
+	InputMapping::SaveMapping(filename.c_str(), input_mapper);
 }
 
 void UpdateVibration(u32 port, float power, float inclination, u32 duration_ms)

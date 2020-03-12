@@ -48,12 +48,12 @@ public:
 	virtual void keyboard_input(Keycode keycode, bool pressed, int modifier_keys = 0);
 
 protected:
-	KeyboardDeviceTemplate(int maple_port) : KeyboardDevice(maple_port), _kb_used(0), _modifier_keys(0) {}
+	KeyboardDeviceTemplate(int maple_port) : KeyboardDevice(maple_port), _modifier_keys(0), _kb_used(0) {}
 	virtual u8 convert_keycode(Keycode keycode) = 0;
 
 private:
 	int _modifier_keys;
-	int _kb_used;
+	u32 _kb_used;
 };
 
 extern u8 kb_key[6];		// normal keys pressed
@@ -84,7 +84,7 @@ void KeyboardDeviceTemplate<Keycode>::keyboard_input(Keycode keycode, bool press
 			if (_kb_used < ARRAY_SIZE(kb_key))
 			{
 				bool found = false;
-				for (int i = 0; !found && i < _kb_used; i++)
+				for (u32 i = 0; !found && i < _kb_used; i++)
 				{
 					if (kb_key[i] == dc_keycode)
 						found = true;
@@ -95,12 +95,12 @@ void KeyboardDeviceTemplate<Keycode>::keyboard_input(Keycode keycode, bool press
 		}
 		else
 		{
-			for (int i = 0; i < _kb_used; i++)
+			for (u32 i = 0; i < _kb_used; i++)
 			{
 				if (kb_key[i] == dc_keycode)
 				{
 					_kb_used--;
-					for (int j = i; j < ARRAY_SIZE(kb_key) - 1; j++)
+					for (u32 j = i; j < ARRAY_SIZE(kb_key) - 1; j++)
 						kb_key[j] = kb_key[j + 1];
 					kb_key[ARRAY_SIZE(kb_key) - 1] = 0;
 					break;

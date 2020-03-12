@@ -70,7 +70,7 @@ axis_list[] =
 	{ EMU_AXIS_DPAD2_Y, "compat", "axis_dpad2_y", "compat", "axis_dpad2_y_inverted" }
 };
 
-std::map<std::string, InputMapping *> InputMapping::loaded_mappings;
+std::map<std::string, std::shared_ptr<InputMapping>> InputMapping::loaded_mappings;
 
 void InputMapping::set_button(DreamcastKey id, u32 code)
 {
@@ -154,7 +154,7 @@ u32 InputMapping::get_axis_code(DreamcastKey key)
 	return -1;
 }
 
-InputMapping *InputMapping::LoadMapping(const char *name)
+std::shared_ptr<InputMapping> InputMapping::LoadMapping(const char *name)
 {
 	auto it = loaded_mappings.find(name);
 	if (it != loaded_mappings.end())
@@ -164,7 +164,7 @@ InputMapping *InputMapping::LoadMapping(const char *name)
 	FILE *fp = fopen(path.c_str(), "r");
 	if (fp == NULL)
 		return NULL;
-	InputMapping *mapping = new InputMapping();
+	std::shared_ptr<InputMapping> mapping = std::make_shared<InputMapping>();
 	mapping->load(fp);
 	fclose(fp);
 	loaded_mappings[name] = mapping;
@@ -174,7 +174,6 @@ InputMapping *InputMapping::LoadMapping(const char *name)
 
 bool InputMapping::save(const char *name)
 {
-	loaded_mappings[name] = this;
 	if (!dirty)
 		return true;
 
@@ -216,4 +215,10 @@ bool InputMapping::save(const char *name)
 	fclose(fp);
 
 	return true;
+}
+
+void InputMapping::SaveMapping(const char *name, std::shared_ptr<InputMapping> mapping)
+{
+	mapping->save(name);
+	InputMapping::loaded_mappings[name] = mapping;
 }

@@ -39,7 +39,7 @@ public:
 		_name = "Keyboard";
 		_unique_id = "osx_keyboard";
 		if (!find_mapping())
-			input_mapper = new KbInputMapping();
+			input_mapper = std::make_shared<KbInputMapping>();
 	}
 };
 
@@ -65,7 +65,7 @@ public:
 		_name = "Mouse";
 		_unique_id = "osx_mouse";
 		if (!find_mapping())
-			input_mapper = new MouseInputMapping();
+			input_mapper = std::make_shared<MouseInputMapping>();
 	}
 	bool gamepad_btn_input(u32 code, bool pressed) override
 	{

@@ -1,3 +1,4 @@
+#include <memory>
 #include "types.h"
 #include "maple_if.h"
 #include "maple_helper.h"
@@ -1807,7 +1808,7 @@ struct maple_naomi_jamma : maple_sega_controller
 {
 	const u8 ALL_NODES = 0xff;
 
-	std::vector<jvs_io_board *> io_boards;
+	std::vector<std::unique_ptr<jvs_io_board>> io_boards;
 	bool crazy_mode = false;
 
 	u8 jvs_repeat_request[32][256];
@@ -1819,43 +1820,43 @@ struct maple_naomi_jamma : maple_sega_controller
 		switch (settings.input.JammaSetup)
 		{
 		case 0:
-			io_boards.push_back(new jvs_837_13551(1, this));
+			io_boards.emplace_back(new jvs_837_13551(1, this));
 			break;
 		case 1:
-			io_boards.push_back(new jvs_837_13551_4P(1, this));
+			io_boards.emplace_back(new jvs_837_13551_4P(1, this));
 			break;
 		case 2:
-			io_boards.push_back(new jvs_837_13938(1, this));
-			io_boards.push_back(new jvs_837_13551(2, this));
+			io_boards.emplace_back(new jvs_837_13938(1, this));
+			io_boards.emplace_back(new jvs_837_13551(2, this));
 			break;
 		case 3: // Sega Marine Fishing
-			io_boards.push_back(new jvs_837_13844(1, this));
+			io_boards.emplace_back(new jvs_837_13844(1, this));
 			break;
 		case 4:
-			io_boards.push_back(new jvs_837_13551(1, this));
-			io_boards.push_back(new jvs_837_13551(2, this, 2));
+			io_boards.emplace_back(new jvs_837_13551(1, this));
+			io_boards.emplace_back(new jvs_837_13551(2, this, 2));
 			break;
 		case 5: // Ninja Assault
-			io_boards.push_back(new jvs_namco_jyu(1, this));
+			io_boards.emplace_back(new jvs_namco_jyu(1, this));
 			break;
 		case 6:	// Mazan
-			io_boards.push_back(new jvs_namco_fcb(1, this));
-			io_boards.push_back(new jvs_namco_fcb(2, this));
+			io_boards.emplace_back(new jvs_namco_fcb(1, this));
+			io_boards.emplace_back(new jvs_namco_fcb(2, this));
 			break;
 		case 7:	// Gun Survivor
-			io_boards.push_back(new jvs_namco_fca(1, this));
+			io_boards.emplace_back(new jvs_namco_fca(1, this));
 			break;
 		case 8: // Dog Walking
-			io_boards.push_back(new jvs_837_13844_encoders(1, this));
+			io_boards.emplace_back(new jvs_837_13844_encoders(1, this));
 			break;
 		case 9: // Touch de Uno
-			io_boards.push_back(new jvs_837_13844_touch(1, this));
+			io_boards.emplace_back(new jvs_837_13844_touch(1, this));
 			break;
 		case 10: // World Kicks
-			io_boards.push_back(new jvs_namco_v226(1, this));
+			io_boards.emplace_back(new jvs_namco_v226(1, this));
 			break;
 		case 11: // World Kicks PCB
-			io_boards.push_back(new jvs_namco_v226_pcb(1, this));
+			io_boards.emplace_back(new jvs_namco_v226_pcb(1, this));
 			break;
 		}
 		if (settings.input.JammaSetup != 6)

@@ -51,10 +51,10 @@ public:
 			if (find_mapping(mapping_file))
 			{
 				INFO_LOG(INPUT, "using default mapping '%s'", input_mapper->name.c_str());
-				input_mapper = new InputMapping(*input_mapper);
+				input_mapper = std::make_shared<InputMapping>(*input_mapper);
 			}
 			else
-				input_mapper = new IdentityInputMapping();
+				input_mapper = std::make_shared<IdentityInputMapping>();
 			input_mapper->name = _name + " mapping";
 			save_mapping();
 		}

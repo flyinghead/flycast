@@ -62,12 +62,12 @@ public:
 		{
 			if (_name == "Microsoft X-Box 360 pad")
 			{
-				input_mapper = new Xbox360InputMapping();
+				input_mapper = std::make_shared<Xbox360InputMapping>();
 				INFO_LOG(INPUT, "using Xbox 360 mapping");
 			}
 			else
 			{
-				input_mapper = new DefaultInputMapping();
+				input_mapper = std::make_shared<DefaultInputMapping>();
 				INFO_LOG(INPUT, "using default mapping");
 			}
 			save_mapping();
@@ -186,7 +186,7 @@ public:
 		_name = "Keyboard";
 		_unique_id = "sdl_keyboard";
 		if (!find_mapping())
-			input_mapper = new KbInputMapping();
+			input_mapper = std::make_shared<KbInputMapping>();
 	}
 	virtual ~SDLKbGamepadDevice() {}
 };
@@ -213,7 +213,7 @@ public:
 		_name = "Mouse";
 		_unique_id = "sdl_mouse";
 		if (!find_mapping())
-			input_mapper = new MouseInputMapping();
+			input_mapper = std::make_shared<MouseInputMapping>();
 	}
 	virtual ~SDLMouseGamepadDevice() {}
 	bool gamepad_btn_input(u32 code, bool pressed) override

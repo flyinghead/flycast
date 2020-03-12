@@ -68,7 +68,7 @@ void dispmanx_window_create()
 	dispman_element = vc_dispmanx_element_add(dispman_update, dispman_display,
 			0 /*layer*/, &dst_rect, 0 /*src*/,
 			&src_rect, DISPMANX_PROTECTION_NONE,
-			&dispman_alpha /*alpha*/, 0 /*clamp*/, 0 /*transform*/);
+			&dispman_alpha /*alpha*/, 0 /*clamp*/, (DISPMANX_TRANSFORM_T)0 /*transform*/);
 
 	static EGL_DISPMANX_WINDOW_T native_window;
 	native_window.element = dispman_element;

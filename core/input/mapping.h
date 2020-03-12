@@ -18,6 +18,7 @@
  */
 #pragma once
 #include <map>
+#include <memory>
 #include <cstdio>
 #include "types.h"
 #include "gamepad.h"
@@ -70,7 +71,8 @@ public:
 
 	bool is_dirty() { return dirty; }
 
-	static InputMapping *LoadMapping(const char *name);
+	static std::shared_ptr<InputMapping> LoadMapping(const char *name);
+	static void SaveMapping(const char *name, std::shared_ptr<InputMapping> mapping);
 
 protected:
 	bool dirty = false;
@@ -80,7 +82,7 @@ private:
 	std::map<u32, DreamcastKey> axes;
 	std::map<u32, bool> axes_inverted;
 
-	static std::map<std::string, InputMapping *> loaded_mappings;
+	static std::map<std::string, std::shared_ptr<InputMapping>> loaded_mappings;
 };
 
 class IdentityInputMapping : public InputMapping

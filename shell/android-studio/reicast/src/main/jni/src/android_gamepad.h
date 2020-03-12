@@ -95,7 +95,7 @@ public:
 		INFO_LOG(INPUT, "Android: Opened joystick %d on port %d: '%s' descriptor '%s'", id, maple_port, _name.c_str(), _unique_id.c_str());
 		if (id == VIRTUAL_GAMEPAD_ID)
 		{
-			input_mapper = new IdentityInputMapping();
+			input_mapper = std::make_shared<IdentityInputMapping>();
 			axis_min_values[DC_AXIS_X] = -128;
 			axis_ranges[DC_AXIS_X] = 255;
 			axis_min_values[DC_AXIS_Y] = -128;
@@ -108,9 +108,9 @@ public:
 		else if (!find_mapping())
 		{
 			if (_name == "SHIELD Remote")
-				input_mapper = new ShieldRemoteInputMapping();
+				input_mapper = std::make_shared<ShieldRemoteInputMapping>();
 			else
-				input_mapper = new DefaultInputMapping();
+				input_mapper = std::make_shared<DefaultInputMapping>();
 			save_mapping();
 			INFO_LOG(INPUT, "using default mapping");
 		}
@@ -216,7 +216,7 @@ public:
 		_name = "Mouse";
 		_unique_id = "android_mouse";
 		if (!find_mapping())
-			input_mapper = new MouseInputMapping();
+			input_mapper = std::make_shared<MouseInputMapping>();
 	}
 
 	bool gamepad_btn_input(u32 code, bool pressed) override

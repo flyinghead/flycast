@@ -42,9 +42,9 @@ public:
 	{
 		_input_detected = NULL;
 	}
-	InputMapping *get_input_mapping() { return input_mapper; }
+	std::shared_ptr<InputMapping> get_input_mapping() { return input_mapper; }
 	void save_mapping();
-	bool remappable() { return _remappable && input_mapper != NULL; }
+	bool remappable() { return _remappable && input_mapper; }
 	virtual bool is_virtual_gamepad() { return false; }
 
 	virtual void rumble(float power, float inclination, u32 duration_ms) {}
@@ -61,7 +61,7 @@ public:
 
 protected:
 	GamepadDevice(int maple_port, const char *api_name, bool remappable = true)
-		: _api_name(api_name), _maple_port(maple_port), input_mapper(NULL), _input_detected(NULL), _remappable(remappable)
+		: _api_name(api_name), _maple_port(maple_port), _input_detected(nullptr), _remappable(remappable)
 	{
 	}
 	bool find_mapping(const char *custom_mapping = NULL);
@@ -70,7 +70,7 @@ protected:
 
 	std::string _name;
 	std::string _unique_id = "";
-	InputMapping *input_mapper;
+	std::shared_ptr<InputMapping> input_mapper;
 	std::map<u32, int> axis_min_values;
 	std::map<u32, unsigned int> axis_ranges;
 	bool _rumble_enabled = true;
@@ -83,7 +83,7 @@ private:
 	std::string _api_name;
 	int _maple_port;
 	bool _detecting_button = false;
-	double _detection_start_time;
+	double _detection_start_time = 0.0;
 	input_detected_cb _input_detected;
 	bool _remappable;
 	float _dead_zone = 0.1f;

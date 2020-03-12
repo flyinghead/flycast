@@ -51,7 +51,7 @@ public:
 		_name = "Mouse";
 		_unique_id = "x11_mouse";
 		if (!find_mapping())
-			input_mapper = new MouseInputMapping();
+			input_mapper = std::make_shared<MouseInputMapping>();
 	}
 	bool gamepad_btn_input(u32 code, bool pressed) override
 	{
@@ -113,7 +113,7 @@ void event_x11_handle()
 		XNextEvent(x11_disp, &event);
 
 		if (event.type == ClientMessage &&
-				event.xclient.data.l[0] == wmDeleteMessage)
+				(unsigned long)event.xclient.data.l[0] == wmDeleteMessage)
 			dc_exit();
 		else if (event.type == ConfigureNotify)
 		{
@@ -365,9 +365,6 @@ void x11_window_create()
 		float ydpi = (float)DisplayHeight(x11_disp, x11Screen) / DisplayHeightMM(x11_disp, x11Screen) * 25.4;
 		screen_dpi = max(xdpi, ydpi);
 
-		// Gets the window parameters
-		Window sRootWindow = RootWindow(x11_disp, x11Screen);
-
 		int depth = CopyFromParent;
 
 		XVisualInfo* x11Visual = nullptr;
@@ -386,6 +383,8 @@ void x11_window_create()
 			delete x11Visual;
 			return;
 		}
+		// Gets the window parameters
+		Window sRootWindow = RootWindow(x11_disp, x11Screen);
 		x11Colormap = XCreateColormap(x11_disp, sRootWindow, x11Visual->visual, AllocNone);
 #endif
 		XSetWindowAttributes sWA;
@@ -409,6 +408,11 @@ void x11_window_create()
 		// Creates the X11 window
 		x11_win = XCreateWindow(x11_disp, RootWindow(x11_disp, x11Screen), 0, 0, x11_width, x11_height,
 			0, depth, InputOutput, x11Visual->visual, ui32Mask, &sWA);
+#if !defined(GLES)
+		XFree(x11Visual);
+#else
+		delete x11Visual;
+#endif
 
 		XSetWindowBackground(x11_disp, x11_win, 0);
 

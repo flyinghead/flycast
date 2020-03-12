@@ -235,9 +235,16 @@ void ImGui_Impl_NewFrame()
 
 	if (KeyboardDevice::GetInstance() != NULL)
 	{
-		std::string input_text = KeyboardDevice::GetInstance()->get_character_input();
+		const std::string input_text = KeyboardDevice::GetInstance()->get_character_input();
 		if (io.WantCaptureKeyboard)
-			io.AddInputCharactersUTF8(input_text.c_str());
+		{
+			for (const u8 b : input_text)
+				// Cheap ISO Latin-1 to UTF-8 conversion
+			    if (b < 0x80)
+			    	io.AddInputCharacter(b);
+			    else
+			    	io.AddInputCharacter((0xc2 + (b > 0xbf)) | ((b & 0x3f) + 0x80) << 8);
+		}
 	}
 }
 
@@ -490,16 +497,16 @@ static void detect_input_popup(int index, bool analog)
 						: arcade_button_mode ? arcade_button_names[index] : button_names[index]);
 		double now = os_GetSeconds();
 		ImGui::Text("Time out in %d s", (int)(5 - (now - map_start_time)));
-		if (mapped_code != -1)
+		if (mapped_code != (u32)-1)
 		{
-			InputMapping *input_mapping = mapped_device->get_input_mapping();
+			std::shared_ptr<InputMapping> input_mapping = mapped_device->get_input_mapping();
 			if (input_mapping != NULL)
 			{
 				if (analog)
 				{
 					u32 previous_mapping = input_mapping->get_axis_code(axis_keys[index]);
 					bool inverted = false;
-					if (previous_mapping != -1)
+					if (previous_mapping != (u32)-1)
 						inverted = input_mapping->get_axis_inverted(previous_mapping);
 					// FIXME Allow inverted to be set
 					input_mapping->set_axis(axis_keys[index], mapped_code, inverted);
@@ -534,7 +541,7 @@ static void controller_mapping_popup(std::shared_ptr<GamepadDevice> gamepad)
 				- (col0_width + ImGui::GetStyle().ItemSpacing.x)
 				- (ImGui::CalcTextSize("Map").x + ImGui::GetStyle().FramePadding.x * 2.0f + ImGui::GetStyle().ItemSpacing.x);
 
-		InputMapping *input_mapping = gamepad->get_input_mapping();
+		std::shared_ptr<InputMapping> input_mapping = gamepad->get_input_mapping();
 		if (input_mapping == NULL || ImGui::Button("Done", ImVec2(100 * scaling, 30 * scaling)))
 		{
 			ImGui::CloseCurrentPopup();
@@ -553,14 +560,14 @@ static void controller_mapping_popup(std::shared_ptr<GamepadDevice> gamepad)
 		ImGui::Columns(3, "bindings", false);
 		ImGui::SetColumnWidth(0, col0_width);
 		ImGui::SetColumnWidth(1, col1_width);
-		for (int j = 0; j < ARRAY_SIZE(button_keys); j++)
+		for (u32 j = 0; j < ARRAY_SIZE(button_keys); j++)
 		{
 			sprintf(key_id, "key_id%d", j);
 			ImGui::PushID(key_id);
 			ImGui::Text("%s", arcade_button_mode ? arcade_button_names[j] : button_names[j]);
 			ImGui::NextColumn();
 			u32 code = input_mapping->get_button_code(button_keys[j]);
-			if (code != -1)
+			if (code != (u32)-1)
 				ImGui::Text("%d", code);
 			ImGui::NextColumn();
 			if (ImGui::Button("Map"))
@@ -587,14 +594,14 @@ static void controller_mapping_popup(std::shared_ptr<GamepadDevice> gamepad)
 		ImGui::SetColumnWidth(0, col0_width);
 		ImGui::SetColumnWidth(1, col1_width);
 
-		for (int j = 0; j < ARRAY_SIZE(axis_keys); j++)
+		for (u32 j = 0; j < ARRAY_SIZE(axis_keys); j++)
 		{
 			sprintf(key_id, "axis_id%d", j);
 			ImGui::PushID(key_id);
 			ImGui::Text("%s", axis_names[j]);
 			ImGui::NextColumn();
 			u32 code = input_mapping->get_axis_code(axis_keys[j]);
-			if (code != -1)
+			if (code != (u32)-1)
 				ImGui::Text("%d", code);
 			ImGui::NextColumn();
 			if (ImGui::Button("Map"))
@@ -718,7 +725,7 @@ static void gui_display_settings()
 			{
 				for (int i = 0; i < IM_ARRAYSIZE(languages); i++)
 				{
-					bool is_selected = settings.dreamcast.language == i;
+					bool is_selected = (int)settings.dreamcast.language == i;
 					if (ImGui::Selectable(languages[i], &is_selected))
 						settings.dreamcast.language = i;
 	                if (is_selected)
@@ -734,7 +741,7 @@ static void gui_display_settings()
 			{
 				for (int i = 0; i < IM_ARRAYSIZE(broadcast); i++)
 				{
-					bool is_selected = settings.dreamcast.broadcast == i;
+					bool is_selected = (int)settings.dreamcast.broadcast == i;
 					if (ImGui::Selectable(broadcast[i], &is_selected))
 						settings.dreamcast.broadcast = i;
 	                if (is_selected)
@@ -750,7 +757,7 @@ static void gui_display_settings()
 			{
 				for (int i = 0; i < IM_ARRAYSIZE(region); i++)
 				{
-					bool is_selected = settings.dreamcast.region == i;
+					bool is_selected = (int)settings.dreamcast.region == i;
 					if (ImGui::Selectable(region[i], &is_selected))
 						settings.dreamcast.region = i;
 	                if (is_selected)
@@ -766,7 +773,7 @@ static void gui_display_settings()
 			{
 				for (int i = 0; i < IM_ARRAYSIZE(cable); i++)
 				{
-					bool is_selected = i == 0 ? settings.dreamcast.cable <= 1 : settings.dreamcast.cable - 1 == i;
+					bool is_selected = i == 0 ? (int)settings.dreamcast.cable <= 1 : (int)settings.dreamcast.cable - 1 == i;
 					if (ImGui::Selectable(cable[i], &is_selected))
 						settings.dreamcast.cable = i == 0 ? 0 : i + 1;
 	                if (is_selected)
@@ -777,7 +784,6 @@ static void gui_display_settings()
             ImGui::SameLine();
             ShowHelpMarker("Video connection type");
 
-            static int current_item;
             std::vector<const char *> paths;
             for (auto& path : settings.dreamcast.ContentPath)
             	paths.push_back(path.c_str());
@@ -790,7 +796,7 @@ static void gui_display_settings()
             if (ImGui::ListBoxHeader("Content Location", size))
             {
             	int to_delete = -1;
-                for (int i = 0; i < settings.dreamcast.ContentPath.size(); i++)
+                for (u32 i = 0; i < settings.dreamcast.ContentPath.size(); i++)
                 {
                 	ImGui::PushID(settings.dreamcast.ContentPath[i].c_str());
                     ImGui::AlignTextToFramePadding();
@@ -801,10 +807,10 @@ static void gui_display_settings()
                 	ImGui::PopID();
                 }
                 ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(24 * scaling, 3 * scaling));
-            	if (ImGui::Button("Add"))
-            		ImGui::OpenPopup("Select Directory");
-        		select_directory_popup("Select Directory", scaling, &directory_selected_callback);
-        		ImGui::PopStyleVar();
+                if (ImGui::Button("Add"))
+                	ImGui::OpenPopup("Select Directory");
+                select_directory_popup("Select Directory", scaling, &directory_selected_callback);
+                ImGui::PopStyleVar();
 
         		ImGui::ListBoxFooter();
             	if (to_delete >= 0)
@@ -1170,7 +1176,7 @@ static void gui_display_settings()
 				if (ImGui::Selectable("none - No audio driver", &is_selected))
 					settings.audio.backend = "none";
 
-				for (int i = 0; i < GetAudioBackendCount(); i++)
+				for (u32 i = 0; i < GetAudioBackendCount(); i++)
 				{
 					backend = GetAudioBackend(i);
 					is_selected = (settings.audio.backend == backend->slug);
@@ -1399,8 +1405,8 @@ static void gui_display_settings()
     ImGui_impl_RenderDrawData(ImGui::GetDrawData(), false);
 
     if (vulkan ^ (settings.pvr.rend == 4 || settings.pvr.rend == 5))
-    	pvr_rend = !vulkan ? 0 : settings.pvr.rend == 3 ? 5 : 4;
-	renderer_changed = pvr_rend;
+        pvr_rend = !vulkan ? 0 : settings.pvr.rend == 3 ? 5 : 4;
+    renderer_changed = pvr_rend;
    	settings.dynarec.Enable = (bool)dynarec_enabled;
 }
 
@@ -1793,10 +1799,10 @@ static ImTextureID vmu_lcd_tex_ids[8];
 void push_vmu_screen(int bus_id, int bus_port, u8* buffer)
 {
 	int vmu_id = bus_id * 2 + bus_port;
-	if (vmu_id < 0 || vmu_id >= ARRAY_SIZE(vmu_lcd_data))
+	if (vmu_id < 0 || vmu_id >= (int)ARRAY_SIZE(vmu_lcd_data))
 		return;
 	u32 *p = &vmu_lcd_data[vmu_id][0];
-	for (int i = 0; i < ARRAY_SIZE(vmu_lcd_data[vmu_id]); i++, buffer++)
+	for (int i = 0; i < (int)ARRAY_SIZE(vmu_lcd_data[vmu_id]); i++, buffer++)
 		*p++ = *buffer != 0 ? 0xFFFFFFFFu : 0xFF000000u;
 	vmu_lcd_status[vmu_id] = true;
 	vmu_lcd_changed[vmu_id] = true;
@@ -1861,7 +1867,7 @@ static void display_vmus()
 
 static void reset_vmus()
 {
-	for (int i = 0; i < ARRAY_SIZE(vmu_lcd_status); i++)
+	for (u32 i = 0; i < ARRAY_SIZE(vmu_lcd_status); i++)
 		vmu_lcd_status[i] = false;
 }
 
@@ -1869,7 +1875,7 @@ static void term_vmus()
 {
 	if (!settings.pvr.IsOpenGL())
 		return;
-	for (int i = 0; i < ARRAY_SIZE(vmu_lcd_status); i++)
+	for (u32 i = 0; i < ARRAY_SIZE(vmu_lcd_status); i++)
 	{
 		if (vmu_lcd_tex_ids[i] != (ImTextureID)0)
 		{

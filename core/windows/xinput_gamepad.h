@@ -49,7 +49,7 @@ public:
 
 		if (XInputGetState(_xinput_port, &state) == 0)
 		{
-			if (input_mapper == NULL)
+			if (!input_mapper)
 				Open();
 			u32 xbutton = state.Gamepad.wButtons;
 			u32 changes = xbutton ^ last_buttons_state;
@@ -90,11 +90,11 @@ public:
 				last_right_thumb_y = state.Gamepad.sThumbRY;
 			}
 		}
-		else if (input_mapper != NULL)
+		else if (input_mapper)
 		{
 			INFO_LOG(INPUT, "xinput: Controller '%s' on port %d disconnected", _name.c_str(), _xinput_port);
 			GamepadDevice::Unregister(xinput_gamepads[_xinput_port]);
-			input_mapper = NULL;
+			input_mapper.reset();
 			last_buttons_state = 0;
 			last_left_trigger = 0;
 			last_right_trigger = 0;
@@ -137,7 +137,7 @@ public:
 		INFO_LOG(INPUT, "xinput: Opened controller '%s' on port %d", _name.c_str(), _xinput_port);
 		if (!find_mapping())
 		{
-			input_mapper = new XInputMapping();
+			input_mapper = std::make_shared<XInputMapping>();
 			input_mapper->name = _name + " mapping";
 			save_mapping();
 			INFO_LOG(INPUT, "using default mapping");
@@ -236,7 +236,7 @@ public:
 		_name = "Keyboard";
 		_unique_id = "win_keyboard";
 		if (!find_mapping())
-			input_mapper = new KbInputMapping();
+			input_mapper = std::make_shared<KbInputMapping>();
 	}
 	virtual ~WinKbGamepadDevice() {}
 };
@@ -263,7 +263,7 @@ public:
 		_name = "Mouse";
 		_unique_id = "win_mouse";
 		if (!find_mapping())
-			input_mapper = new MouseInputMapping();
+			input_mapper = std::make_shared<MouseInputMapping>();
 	}
 	virtual ~WinMouseGamepadDevice() {}
 	bool gamepad_btn_input(u32 code, bool pressed) override

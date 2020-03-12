@@ -184,6 +184,6 @@ public:
 		_name = "Keyboard";
 		_unique_id = "x11_keyboard";
 		if (!find_mapping())
-			input_mapper = new KbInputMapping();
+			input_mapper = std::make_shared<KbInputMapping>();
 	}
 };
