@@ -34,17 +34,17 @@ public:
 	u8* LoadCustomTexture(u32 hash, int& width, int& height);
 	void LoadCustomTextureAsync(BaseTextureCacheData *texture_data);
 	void DumpTexture(u32 hash, int w, int h, TextureType textype, void *temp_tex_buffer);
+	void Terminate();
 
 private:
 	bool Init();
-	void Terminate();
 	void LoaderThread();
 	std::string GetGameId();
 	
 	static void *loader_thread_func(void *param) { ((CustomTexture *)param)->LoaderThread(); return NULL; }
 	
-	bool initialized;
-	bool custom_textures_available;
+	bool initialized = false;
+	bool custom_textures_available = false;
 	std::string textures_path;
 	std::set<u32> unknown_hashes;
 #ifndef TARGET_NO_THREADS
@@ -54,3 +54,5 @@ private:
 	std::vector<BaseTextureCacheData *> work_queue;
 	cMutex work_queue_mutex;
 };
+
+extern CustomTexture custom_texture;

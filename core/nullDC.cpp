@@ -26,6 +26,7 @@
 #include "hw/sh4/dyna/blockmanager.h"
 #include "log/LogManager.h"
 #include "cheats.h"
+#include "rend/CustomTexture.h"
 
 void FlushCache();
 void LoadCustom();
@@ -919,12 +920,6 @@ void LoadSettings(bool game_specific)
 	settings.dispmanx.Keep_Aspect	= cfgLoadBool(game_specific ? cfgGetGameId() : "dispmanx", "maintain_aspect", settings.dispmanx.Keep_Aspect);
 #endif
 
-#if (HOST_OS != OS_LINUX || defined(__ANDROID__) || defined(TARGET_PANDORA))
-	settings.aica.BufferSize=2048;
-#else
-	settings.aica.BufferSize=1024;
-#endif
-
 #if USE_OMX
 	settings.omx.Audio_Latency	= cfgLoadInt(game_specific ? cfgGetGameId() : "omx", "audio_latency", settings.omx.Audio_Latency);
 	settings.omx.Audio_HDMI		= cfgLoadBool(game_specific ? cfgGetGameId() : "omx", "audio_hdmi", settings.omx.Audio_HDMI);
@@ -1218,6 +1213,7 @@ void dc_loadstate()
 
 	data_ptr = data ;
 
+	custom_texture.Terminate();
 #if FEAT_AREC == DYNAREC_JIT
     FlushCache();
 #endif
