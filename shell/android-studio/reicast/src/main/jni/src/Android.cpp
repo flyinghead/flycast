@@ -105,9 +105,8 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_getControllers(JNIEnv
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_setupMic(JNIEnv *env,jobject obj,jobject sip)  __attribute__((visibility("default")));
 
-SETTINGS_ACCESSORS(Nosound, aica.NoSound, jboolean)
-SETTINGS_ACCESSORS(Widescreen, rend.WideScreen, jboolean)
 SETTINGS_ACCESSORS(VirtualGamepadVibration, input.VirtualGamepadVibration, jint);
+SETTINGS_ACCESSORS(AicaBufferSize, aica.BufferSize, jint);
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_screenDpi(JNIEnv *env,jobject obj, jint screenDpi)  __attribute__((visibility("default")));
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_guiOpenSettings(JNIEnv *env,jobject obj)  __attribute__((visibility("default")));
@@ -273,6 +272,8 @@ extern bool game_started;
 #define SAMPLE_COUNT 512
 jshortArray jsamples;
 jmethodID writeBufferMid;
+jmethodID audioInitMid;
+jmethodID audioTermMid;
 static jobject g_audioBackend;
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_setupMic(JNIEnv *env,jobject obj,jobject sip)
@@ -466,7 +467,7 @@ JNIEXPORT jboolean JNICALL Java_com_reicast_emulator_emu_JNIdc_guiIsContentBrows
 }
 
 // Audio Stuff
-u32 androidaudio_push(void* frame, u32 amt, bool wait)
+u32 androidaudio_push(const void* frame, u32 amt, bool wait)
 {
     verify(amt==SAMPLE_COUNT);
     //yeah, do some audio piping magic here !
@@ -476,12 +477,12 @@ u32 androidaudio_push(void* frame, u32 amt, bool wait)
 
 void androidaudio_init()
 {
-    // Nothing to do here...
+	jvm_attacher.getEnv()->CallVoidMethod(g_audioBackend, audioInitMid);
 }
 
 void androidaudio_term()
 {
-    // Move along, there is nothing to see here!
+	jvm_attacher.getEnv()->CallVoidMethod(g_audioBackend, audioTermMid);
 }
 
 audiobackend_t audiobackend_android = {
@@ -510,6 +511,8 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_AudioBackend_setInstance(JN
     else {
         g_audioBackend = env->NewGlobalRef(instance);
         writeBufferMid = env->GetMethodID(env->GetObjectClass(g_audioBackend), "writeBuffer", "([SZ)I");
+        audioInitMid = env->GetMethodID(env->GetObjectClass(g_audioBackend), "init", "()V");
+        audioTermMid = env->GetMethodID(env->GetObjectClass(g_audioBackend), "term", "()V");
         if (jsamples == NULL) {
             jsamples = env->NewShortArray(SAMPLE_COUNT * 2);
             jsamples = (jshortArray) env->NewGlobalRef(jsamples);

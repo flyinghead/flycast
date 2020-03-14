@@ -31,9 +31,8 @@ public final class JNIdc
 	public static native void getControllers(int[] controllers, int[][] peripherals);
 
 	public static native void setupMic(SipEmulator sip);
-	public static native boolean getNosound();
-	public static native boolean getWidescreen();
 	public static native int getVirtualGamepadVibration();
+	public static native int getAicaBufferSize();
 
 	public static native void screenDpi(int screenDpi);
 	public static native void guiOpenSettings();

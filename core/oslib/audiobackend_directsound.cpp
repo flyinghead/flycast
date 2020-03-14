@@ -12,10 +12,10 @@
 void* SoundThread(void* param);
 #define V2_BUFFERSZ (16*1024)
 
-IDirectSound8* dsound;
-IDirectSoundBuffer8* buffer;
+static IDirectSound8* dsound;
+static IDirectSoundBuffer8* buffer;
 
-u32 ds_ring_size;
+static u32 ds_ring_size;
 
 static void directsound_init()
 {
@@ -84,7 +84,7 @@ static void directsound_init()
 }
 
 
-DWORD wc=0;
+static DWORD wc=0;
 
 
 static int directsound_getfreesz()
@@ -108,7 +108,7 @@ static int directsound_getusedSamples()
 	return (ds_ring_size-directsound_getfreesz())/4;
 }
 
-static u32 directsound_push_nw(void* frame, u32 samplesb)
+static u32 directsound_push_nw(const void* frame, u32 samplesb)
 {
 	DWORD pc,wch;
 
@@ -131,7 +131,7 @@ static u32 directsound_push_nw(void* frame, u32 samplesb)
 		void* ptr1,* ptr2;
 		DWORD ptr1sz,ptr2sz;
 
-		u8* data=(u8*)frame;
+		const u8* data=(const u8*)frame;
 
 		buffer->Lock(wc,bytes,&ptr1,&ptr1sz,&ptr2,&ptr2sz,0);
 		memcpy(ptr1,data,ptr1sz);
@@ -149,32 +149,8 @@ static u32 directsound_push_nw(void* frame, u32 samplesb)
 	//ds_ring_size
 }
 
-static u32 directsound_push(void* frame, u32 samples, bool wait)
+static u32 directsound_push(const void* frame, u32 samples, bool wait)
 {
-
-	u16* f=(u16*)frame;
-	/*
-	bool w=false;
-
-	for (u32 i = 0; i < samples*2; i++)
-	{
-		if (f[i])
-		{
-			w = true;
-			break;
-		}
-	}
-
-	wait &= w;
-	*/
-	int ffs=1;
-
-	/*
-	while (directsound_IsAudioBufferedLots() && wait)
-		if (ffs == 0)
-			ffs = printf("AUD WAIT %d\n", directsound_getusedSamples());
-	*/
-
 	while (!directsound_push_nw(frame, samples) && wait)
 		//DEBUG_LOG(AUDIO, "FAILED waiting on audio FAILED %d", directsound_getusedSamples())
 		;
@@ -190,7 +166,7 @@ static void directsound_term()
 	dsound->Release();
 }
 
-audiobackend_t audiobackend_directsound = {
+static audiobackend_t audiobackend_directsound = {
     "directsound", // Slug
     "Microsoft DirectSound", // Name
     &directsound_init,

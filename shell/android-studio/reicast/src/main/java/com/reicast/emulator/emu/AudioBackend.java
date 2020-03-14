@@ -6,8 +6,6 @@ import android.media.AudioTrack;
 import android.os.Build;
 import android.util.Log;
 
-import com.reicast.emulator.Emulator;
-
 import static android.media.AudioTrack.STATE_INITIALIZED;
 
 public final class AudioBackend {
@@ -16,51 +14,50 @@ public final class AudioBackend {
     private AudioTrack audioTrack;
     private long writePosition;
     private long size;	//size in frames
-    private static AudioBackend instance;
 
     public AudioBackend() {
         setInstance(this);
-        instance = this;
-        enableSound(!Emulator.nosound);
     }
 
-    public static AudioBackend getInstance() {
-        return instance;
-    }
     public void release() {
         setInstance(null);
-        instance = null;
     }
 
-    public void enableSound(boolean enable) {
-        if (enable && audioTrack == null) {
-            int min = AudioTrack.getMinBufferSize(44100, AudioFormat.CHANNEL_OUT_STEREO, AudioFormat.ENCODING_PCM_16BIT);
+    // Called by native code
+    private void init()
+    {
+        int bufferSize = JNIdc.getAicaBufferSize() * 4;
+        int min = AudioTrack.getMinBufferSize(44100, AudioFormat.CHANNEL_OUT_STEREO, AudioFormat.ENCODING_PCM_16BIT);
+        if (bufferSize < min)
+            bufferSize = min;
 
-            if (2048 > min)
-                min = 2048;
-
-            audioTrack = new AudioTrack(
-                    AudioManager.STREAM_MUSIC,
-                    44100,
-                    AudioFormat.CHANNEL_OUT_STEREO,
-                    AudioFormat.ENCODING_PCM_16BIT,
-                    min,
-                    AudioTrack.MODE_STREAM
-            );
-            if (audioTrack.getState() != STATE_INITIALIZED) {
-                audioTrack = null;
-                release();
-                Log.e("reicast", "Error initializing AudioTrack. Disabling sound");
-            }
-            else {
-                size = min / 4;
-                writePosition = 0;
-
-                Log.i("audcfg", "Audio streaming: buffer size " + min + " samples / " + min / 44100.0 + " ms");
-                audioTrack.play();
-            }
+        audioTrack = new AudioTrack(
+                AudioManager.STREAM_MUSIC,
+                44100,
+                AudioFormat.CHANNEL_OUT_STEREO,
+                AudioFormat.ENCODING_PCM_16BIT,
+                bufferSize,
+                AudioTrack.MODE_STREAM
+        );
+        if (audioTrack.getState() != STATE_INITIALIZED) {
+            audioTrack = null;
+            release();
+            Log.e("reicast", "Error initializing AudioTrack. Disabling sound");
         }
-        else if (!enable && audioTrack != null) {
+        else {
+            size = bufferSize / 4;
+            writePosition = 0;
+
+            Log.i("audcfg", "Audio streaming: buffer size " + size + " samples / " + size / 44100.0 + " ms");
+            audioTrack.play();
+        }
+
+    }
+
+    // Called by native code
+    private void term()
+    {
+        if (audioTrack != null) {
             audioTrack.pause();
             audioTrack.flush();
             audioTrack.release();

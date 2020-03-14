@@ -21,10 +21,10 @@ static void libao_init()
 		aodevice = ao_open_live(ao_driver_id("null"), &aoformat, NULL);
 }
 
-static u32 libao_push(void* frame, u32 samples, bool wait)
+static u32 libao_push(const void* frame, u32 samples, bool wait)
 {
 	if (aodevice)
-		ao_play(aodevice, (char*)frame, samples * 4);
+		ao_play(aodevice, (const char*)frame, samples * 4);
 
 	return 1;
 }
@@ -38,7 +38,7 @@ static void libao_term()
 	}
 }
 
-audiobackend_t audiobackend_libao = {
+static audiobackend_t audiobackend_libao = {
 		"libao", // Slug
 		"libao", // Name
 		&libao_init,

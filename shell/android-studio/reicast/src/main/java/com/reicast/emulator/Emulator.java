@@ -19,7 +19,6 @@ public class Emulator extends Application {
     public static final int MDT_Microphone = 2;
     public static final int MDT_None = 8;
 
-    public static boolean nosound = false;
     public static int vibrationDuration = 20;
 
     public static int maple_devices[] = {
@@ -40,7 +39,6 @@ public class Emulator extends Application {
      *
      */
     public void getConfigurationPrefs() {
-        Emulator.nosound = JNIdc.getNosound();
         Emulator.vibrationDuration = JNIdc.getVirtualGamepadVibration();
         JNIdc.getControllers(maple_devices, maple_expansion_devices);
     }
@@ -53,13 +51,11 @@ public class Emulator extends Application {
     {
         Log.i("flycast", "SaveAndroidSettings: saving preferences");
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        Emulator.nosound = JNIdc.getNosound();
         Emulator.vibrationDuration = JNIdc.getVirtualGamepadVibration();
         JNIdc.getControllers(maple_devices, maple_expansion_devices);
 
         prefs.edit()
                 .putString(Config.pref_home, homeDirectory).apply();
-        AudioBackend.getInstance().enableSound(!Emulator.nosound);
 
         FileBrowser.installButtons(prefs);
         if (micPluggedIn() && currentActivity instanceof BaseGLActivity) {

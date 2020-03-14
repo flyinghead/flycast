@@ -1,15 +1,5 @@
 #pragma once
 #include "types.h"
-#include <tuple>
-
-//Get used size in the ring buffer
-u32 asRingUsedCount();
-//Get free size in the ring buffer
-u32 asRingFreeCount();
-//Read 'Count' samples from the ring buffer.Returns true if successful.
-//If sz==0 then a whole buffer is read
-bool asRingRead(u8* dst,u32 count=0);
-void UpdateBuff(u8* pos);
 
 typedef std::vector<std::string> (*audio_option_callback_t)();
 enum audio_option_type
@@ -35,7 +25,7 @@ typedef struct {
 typedef audio_option_t* (*audio_options_func_t)(int* option_count);
 
 typedef void (*audio_backend_init_func_t)();
-typedef u32 (*audio_backend_push_func_t)(void*, u32, bool);
+typedef u32 (*audio_backend_push_func_t)(const void*, u32, bool);
 typedef void (*audio_backend_term_func_t)();
 typedef struct {
     string slug;
@@ -47,10 +37,8 @@ typedef struct {
 } audiobackend_t;
 extern bool RegisterAudioBackend(audiobackend_t* backend);
 extern void InitAudio();
-extern u32 PushAudio(void* frame, u32 amt, bool wait);
 extern void TermAudio();
 
 u32 GetAudioBackendCount();
-void SortAudioBackends();
 audiobackend_t* GetAudioBackend(int num);
 audiobackend_t* GetAudioBackend(const std::string& slug);

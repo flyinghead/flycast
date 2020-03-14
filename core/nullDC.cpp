@@ -819,10 +819,10 @@ void InitSettings()
 	settings.dispmanx.Keep_Aspect = true;
 #endif
 
-#if (HOST_OS != OS_LINUX || defined(__ANDROID__) || defined(TARGET_PANDORA))
-	settings.aica.BufferSize = 2048;
+#if HOST_OS != OS_LINUX || defined(__ANDROID__) || defined(TARGET_PANDORA)
+	settings.aica.BufferSize = 5644;	// 128 ms
 #else
-	settings.aica.BufferSize = 1024;
+	settings.aica.BufferSize = 2822;	// 64 ms
 #endif
 
 #if USE_OMX
@@ -855,6 +855,8 @@ void LoadSettings(bool game_specific)
 			|| cfgLoadInt(config_section, "aica.LimitFPS", 0) == 2;
 	settings.aica.DSPEnabled		= cfgLoadBool(config_section, "aica.DSPEnabled", settings.aica.DSPEnabled);
     settings.aica.NoSound			= cfgLoadBool(config_section, "aica.NoSound", settings.aica.NoSound);
+    settings.aica.BufferSize        = cfgLoadInt(config_section, "aica.BufferSize", settings.aica.BufferSize);
+    settings.aica.BufferSize = std::max(512u, settings.aica.BufferSize);
     settings.audio.backend			= cfgLoadStr(audio_section, "backend", settings.audio.backend.c_str());
 	settings.rend.UseMipmaps		= cfgLoadBool(config_section, "rend.UseMipmaps", settings.rend.UseMipmaps);
 	settings.rend.WideScreen		= cfgLoadBool(config_section, "rend.WideScreen", settings.rend.WideScreen);
@@ -971,7 +973,6 @@ void LoadCustom()
 	else if (settings.platform.system == DC_PLATFORM_NAOMI || settings.platform.system == DC_PLATFORM_ATOMISWAVE)
 	{
 		reios_id = naomi_game_id;
-		char *reios_software_name = naomi_game_id;
 	}
 
 	// Default per-game settings
@@ -1005,6 +1006,7 @@ void SaveSettings()
 	cfgSaveBool("config", "aica.LimitFPS", settings.aica.LimitFPS);
 	cfgSaveBool("config", "aica.DSPEnabled", settings.aica.DSPEnabled);
 	cfgSaveBool("config", "aica.NoSound", settings.aica.NoSound);
+	cfgSaveInt("config", "aica.BufferSize", settings.aica.BufferSize);
 	cfgSaveStr("audio", "backend", settings.audio.backend.c_str());
 
 	// Write backend specific settings

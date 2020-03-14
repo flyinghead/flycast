@@ -12,8 +12,6 @@ static snd_pcm_uframes_t period_size;
 static void alsa_init()
 {
 	snd_pcm_hw_params_t *params;
-	unsigned int val;
-	int dir=-1;
 
 	string device = cfgLoadStr("alsa", "device", "");
 
@@ -105,39 +103,33 @@ static void alsa_init()
 		return;
 	}
 
-	/* 44100 bits/second sampling rate (CD quality) */
-	val = 44100;
-	rc=snd_pcm_hw_params_set_rate_near(handle, params, &val, &dir);
+	// 44100 samples/second
+	rc = snd_pcm_hw_params_set_rate(handle, params, 44100, 0);
 	if (rc < 0)
 	{
 		WARN_LOG(AUDIO, "ALSA: Error:snd_pcm_hw_params_set_rate_near %s", snd_strerror(rc));
 		return;
 	}
 
-	/* Set period size to settings.aica.BufferSize frames. */
-	period_size = settings.aica.BufferSize;
-	rc=snd_pcm_hw_params_set_period_size_near(handle, params, &period_size, &dir);
+	// Sample buffer size
+	buffer_size = settings.aica.BufferSize;
+	rc = snd_pcm_hw_params_set_buffer_size_near(handle, params, &buffer_size);
 	if (rc < 0)
 	{
 		WARN_LOG(AUDIO, "ALSA: Error:snd_pcm_hw_params_set_buffer_size_near %s", snd_strerror(rc));
 		return;
 	}
-	else
-	{
-		INFO_LOG(AUDIO, "ALSA: period size set to %ld", period_size);
-	}
+	INFO_LOG(AUDIO, "ALSA: buffer size set to %ld", buffer_size);
 
-	buffer_size = (44100 * 100 /* settings.omx.Audio_Latency */ / 1000 / period_size + 1) * period_size;
-	rc=snd_pcm_hw_params_set_buffer_size_near(handle, params, &buffer_size);
+	// Period size (512)
+	period_size = 512;
+	rc = snd_pcm_hw_params_set_period_size_near(handle, params, &period_size, nullptr);
 	if (rc < 0)
 	{
-		WARN_LOG(AUDIO, "ALSA: Error:snd_pcm_hw_params_set_buffer_size_near %s", snd_strerror(rc));
+		WARN_LOG(AUDIO, "ALSA: Error:snd_pcm_hw_params_set_periods_near %s", snd_strerror(rc));
 		return;
 	}
-	else
-	{
-		INFO_LOG(AUDIO, "ALSA: buffer size set to %ld", buffer_size);
-	}
+	INFO_LOG(AUDIO, "ALSA: period size set to %zd", (size_t)period_size);
 
 	/* Write the parameters to the driver */
 	rc = snd_pcm_hw_params(handle, params);
@@ -148,7 +140,7 @@ static void alsa_init()
 	}
 }
 
-static u32 alsa_push(void* frame, u32 samples, bool wait)
+static u32 alsa_push(const void* frame, u32 samples, bool wait)
 {
 	if (wait != pcm_blocking) {
 		snd_pcm_nonblock(handle, wait ? 0 : 1);
@@ -161,7 +153,7 @@ static u32 alsa_push(void* frame, u32 samples, bool wait)
 		/* EPIPE means underrun */
 		snd_pcm_prepare(handle);
 		// Write some silence then our samples
-		const size_t silence_size = period_size * 4;
+		const size_t silence_size = buffer_size - period_size;
 		void *silence = alloca(silence_size * 4);
 		memset(silence, 0, silence_size * 4);
 		snd_pcm_writei(handle, silence, silence_size);
@@ -172,11 +164,11 @@ static u32 alsa_push(void* frame, u32 samples, bool wait)
 
 static void alsa_term()
 {
-	snd_pcm_drain(handle);
+	snd_pcm_drop(handle);
 	snd_pcm_close(handle);
 }
 
-std::vector<std::string> alsa_get_devicelist()
+static std::vector<std::string> alsa_get_devicelist()
 {
 	std::vector<std::string> result;
 

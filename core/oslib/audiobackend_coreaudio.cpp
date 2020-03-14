@@ -20,7 +20,7 @@
 //#include <CoreAudio/CoreAudio.h>
 #include <AudioUnit/AudioUnit.h>
 
-AudioUnit audioUnit;
+static AudioUnit audioUnit;
 
 // ~ 93 ms
 #define BUFSIZE (4 * 1024 * 4)
@@ -117,7 +117,7 @@ static void coreaudio_init()
     bufferEmpty.Set();
 }
 
-static u32 coreaudio_push(void* frame, u32 samples, bool wait)
+static u32 coreaudio_push(const void* frame, u32 samples, bool wait)
 {
     int byte_size = samples * 4;
     while (true)
@@ -154,7 +154,7 @@ static void coreaudio_term()
     bufferEmpty.Set();
 }
 
-audiobackend_t audiobackend_coreaudio = {
+static audiobackend_t audiobackend_coreaudio = {
     "coreaudio", // Slug
     "Core Audio", // Name
     &coreaudio_init,

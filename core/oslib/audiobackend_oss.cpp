@@ -30,7 +30,7 @@ static void oss_init()
 	}
 }
 
-static u32 oss_push(void* frame, u32 samples, bool wait)
+static u32 oss_push(const void* frame, u32 samples, bool wait)
 {
 	write(oss_audio_fd, frame, samples*4);
 	return 1;
@@ -43,7 +43,7 @@ static void oss_term() {
 	}
 }
 
-audiobackend_t audiobackend_oss = {
+static audiobackend_t audiobackend_oss = {
 		"oss", // Slug
 		"Open Sound System", // Name
 		&oss_init,

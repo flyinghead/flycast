@@ -18,7 +18,7 @@ static u32 buffer_length;
 static pthread_mutex_t audio_lock;
 static pthread_cond_t omx_state_cond;
 
-OMX_ERRORTYPE EventHandler(
+static OMX_ERRORTYPE EventHandler(
 		OMX_IN OMX_HANDLETYPE hComponent,
 		OMX_IN OMX_PTR pAppData,
 		OMX_IN OMX_EVENTTYPE eEvent,
@@ -36,7 +36,7 @@ OMX_ERRORTYPE EventHandler(
 	return OMX_ErrorNone;
 }
 
-OMX_ERRORTYPE EmptyBufferDone(
+static OMX_ERRORTYPE EmptyBufferDone(
 		OMX_IN OMX_HANDLETYPE hComponent,
 		OMX_IN OMX_PTR pAppData,
 		OMX_IN OMX_BUFFERHEADERTYPE* pBuffer)
@@ -44,7 +44,7 @@ OMX_ERRORTYPE EmptyBufferDone(
 	return OMX_ErrorNone;
 }
 
-OMX_ERRORTYPE FillBufferDone(
+static OMX_ERRORTYPE FillBufferDone(
 		OMX_OUT OMX_HANDLETYPE hComponent,
 		OMX_OUT OMX_PTR pAppData,
 		OMX_OUT OMX_BUFFERHEADERTYPE* pBuffer)
@@ -52,7 +52,7 @@ OMX_ERRORTYPE FillBufferDone(
 	return OMX_ErrorNone;
 }
 
-void omx_wait_for_state(OMX_STATETYPE state)
+static void omx_wait_for_state(OMX_STATETYPE state)
 {
 	pthread_mutex_lock(&audio_lock);
 	while(omx_state != state)
@@ -246,7 +246,7 @@ static void omx_init()
 	INFO_LOG(AUDIO, "OMX: audio output to '%s'", ar_dest.sName);
 }
 
-static u32 omx_push(void* frame, u32 samples, bool wait)
+static u32 omx_push(const void* frame, u32 samples, bool wait)
 {
 	if(audio_buffers == NULL)
 		return 1;
@@ -308,7 +308,7 @@ static void omx_term()
 	}
 }
 
-audiobackend_t audiobackend_omx = {
+static audiobackend_t audiobackend_omx = {
     "omx", // Slug
     "OpenMAX IL", // Name
     &omx_init,

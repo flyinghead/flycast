@@ -248,27 +248,20 @@ void ImGui_Impl_NewFrame()
 	}
 }
 
-static double last_render;
-std::vector<float> render_times(100);
-
-void gui_rendertick()
-{
-	if (last_render == 0)
-	{
-		last_render = os_GetSeconds();
-		return;
-	}
-	double new_time = os_GetSeconds();
-	render_times.push_back((float)(new_time - last_render));
-	if (render_times.size() > 100)
-		render_times.erase(render_times.begin());
-	last_render = new_time;
-}
+#if 0
+TimeSeries renderTimes;
+TimeSeries vblankTimes;
 
 void gui_plot_render_time(int width, int height)
 {
-    ImGui::PlotLines("Render Times", &render_times[0], render_times.size(), 0, "", 0.0, 1.0 / 30.0, ImVec2(300, 50));
+	std::vector<float> v = renderTimes.data();
+	ImGui::PlotLines("Render Times", v.data(), v.size(), 0, "", 0.0, 1.0 / 30.0, ImVec2(300, 50));
+	ImGui::Text("StdDev: %.1f%%", renderTimes.stddev() * 100.f / 0.01666666667f);
+	v = vblankTimes.data();
+	ImGui::PlotLines("VBlank", v.data(), v.size(), 0, "", 0.0, 1.0 / 30.0, ImVec2(300, 50));
+	ImGui::Text("StdDev: %.1f%%", vblankTimes.stddev() * 100.f / 0.01666666667f);
 }
+#endif
 
 // Helper to display a little (?) mark which shows a tooltip when hovered.
 static void ShowHelpMarker(const char* desc)
@@ -1153,17 +1146,21 @@ static void gui_display_settings()
             ImGui::Checkbox("Limit Emulator Speed", &settings.aica.LimitFPS);
             ImGui::SameLine();
 			ShowHelpMarker("Whether to limit the emulator speed using the audio output. Recommended");
+			int latency = (int)roundf(settings.aica.BufferSize * 1000.f / 44100.f);
+	    	ImGui::SliderInt("Latency", &latency, 12, 512, "%d ms");
+	    	settings.aica.BufferSize = (int)roundf(latency * 44100.f / 1000.f);
+            ImGui::SameLine();
+            ShowHelpMarker("Sets the maximum audio latency. Not supported by all audio drivers.");
 
-			audiobackend_t* backend = NULL;;
+
+			audiobackend_t* backend = nullptr;
 			std::string backend_name = settings.audio.backend;
-			if (backend_name != "auto" && backend_name != "none")
+			if (backend_name != "auto")
 			{
 				backend = GetAudioBackend(settings.audio.backend);
 				if (backend != NULL)
 					backend_name = backend->slug;
 			}
-
-			SortAudioBackends();
 
 			audiobackend_t* current_backend = backend;
 			if (ImGui::BeginCombo("Audio Driver", backend_name.c_str(), ImGuiComboFlags_None))
@@ -1171,10 +1168,6 @@ static void gui_display_settings()
 				bool is_selected = (settings.audio.backend == "auto");
 				if (ImGui::Selectable("auto - Automatic driver selection", &is_selected))
 					settings.audio.backend = "auto";
-
-				is_selected = (settings.audio.backend == "none");
-				if (ImGui::Selectable("none - No audio driver", &is_selected))
-					settings.audio.backend = "none";
 
 				for (u32 i = 0; i < GetAudioBackendCount(); i++)
 				{

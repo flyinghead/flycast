@@ -46,7 +46,7 @@ static void sdl2_audiocb(void* userdata, Uint8* stream, int len) {
 		uint32_t *outbuf = (uint32_t*)stream;
 		const float ra = 1.0f / 17;
 		Sample *sbuf = (Sample*)&audiobuf.sample_buffer[0];  // [-1] stores the previous iteration last sample output
-		for (int i = 0; i < islen/16; i++) {
+		for (u32 i = 0; i < islen/16; i++) {
 			*outbuf++ = sbuf[i*16+ 0].l;   // First sample stays at the same location.
 			for (int k = 1; k < 17; k++) {
 				Sample r;
@@ -86,11 +86,14 @@ static void sdl2_audio_init() {
 		needs_resampling = true;
 		wav_spec.freq = 48000;
 		audiodev = SDL_OpenAudioDevice(NULL, 0, &wav_spec, &out_spec, 0);
-		verify(audiodev);
+		if (!audiodev)
+			ERROR_LOG(AUDIO, "SDL2: SDL_OpenAudioDevice failed");
+		else
+			INFO_LOG(AUDIO, "SDL2: Using resampling to 48 KHz");
 	}
 }
 
-static u32 sdl2_audio_push(void* frame, u32 samples, bool wait) {
+static u32 sdl2_audio_push(const void* frame, u32 samples, bool wait) {
 	// Unpause the device shall it be paused.
 	if (SDL_GetAudioDeviceStatus(audiodev) != SDL_AUDIO_PLAYING)
 		SDL_PauseAudioDevice(audiodev, 0);
@@ -117,12 +120,17 @@ static u32 sdl2_audio_push(void* frame, u32 samples, bool wait) {
 }
 
 static void sdl2_audio_term() {
-    // Stop audio playback.
-	SDL_PauseAudioDevice(audiodev, 1);
-	read_wait.Set();
+	if (audiodev)
+	{
+		// Stop audio playback.
+		SDL_PauseAudioDevice(audiodev, 1);
+		read_wait.Set();
+		SDL_CloseAudioDevice(audiodev);
+		audiodev = SDL_AudioDeviceID();
+	}
 }
 
-audiobackend_t audiobackend_sdl2audio = {
+static audiobackend_t audiobackend_sdl2audio = {
 		"sdl2", // Slug
 		"Simple DirectMedia Layer 2 Audio", // Name
 		&sdl2_audio_init,
