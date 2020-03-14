@@ -152,7 +152,7 @@ s16 pl=0,pr=0;
 
 DSP_OUT_VOL_REG* dsp_out_vol;
 
-#pragma pack (1)
+#pragma pack(push, 1)
 //All regs are 16b , aligned to 32b (upper bits 0?)
 struct ChannelCommonData
 {
@@ -294,7 +294,7 @@ struct ChannelCommonData
 
 	u32 pad_20:16;
 };
-
+#pragma pack(pop)
 
 
 enum _EG_state
