@@ -24,7 +24,7 @@ static void libao_init()
 static u32 libao_push(const void* frame, u32 samples, bool wait)
 {
 	if (aodevice)
-		ao_play(aodevice, (const char*)frame, samples * 4);
+		ao_play(aodevice, (char*)frame, samples * 4);
 
 	return 1;
 }
