@@ -54,6 +54,8 @@
 #endif
 #define _CRT_SECURE_NO_DEPRECATE
 
+#define NOMINMAX
+
 //Do not complain when i use enum::member
 #pragma warning( disable : 4482)
 

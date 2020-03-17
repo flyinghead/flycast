@@ -17,10 +17,7 @@
 #include "reios.h"
 #include "imgread/common.h"
 
-#ifdef _MSC_VER
-#undef min
 #include <algorithm>
-#endif
 
 #define SWAP32(a) ((((a) & 0xff) << 24)  | (((a) & 0xff00) << 8) | (((a) >> 8) & 0xff00) | (((a) >> 24) & 0xff))
 

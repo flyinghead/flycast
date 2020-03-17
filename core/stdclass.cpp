@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <cstring>
 #include <vector>
 #include <sys/types.h>
