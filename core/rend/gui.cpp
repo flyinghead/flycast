@@ -1482,16 +1482,6 @@ static void fetch_game_list()
 	game_list_done = true;
 }
 
-static void gui_display_demo()
-{
-	ImGui_Impl_NewFrame();
-    ImGui::NewFrame();
-
-	ImGui::ShowDemoWindow();
-	ImGui::Render();
-	ImGui_impl_RenderDrawData(ImGui::GetDrawData(), false);
-}
-
 static void gui_display_content()
 {
 	ImGui_Impl_NewFrame();
@@ -1624,7 +1614,6 @@ void gui_display_ui()
 		gui_display_commands();
 		break;
 	case Main:
-		//gui_display_demo();
 		{
 			std::string game_file = settings.imgread.ImagePath;
 			if (!game_file.empty())
