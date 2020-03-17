@@ -130,12 +130,14 @@ bool VulkanContext::InitInstance(const char** extensions, uint32_t extensions_co
 	try
 	{
 		bool vulkan11 = false;
+#ifndef __ANDROID__
 		if (::vkEnumerateInstanceVersion != nullptr)
 		{
 			u32 apiVersion;
-			vk::enumerateInstanceVersion(&apiVersion);
-			vulkan11 = VK_VERSION_MINOR(apiVersion) == 1;
+			if (vk::enumerateInstanceVersion(&apiVersion) == vk::Result::eSuccess)
+				vulkan11 = VK_VERSION_MINOR(apiVersion) == 1;
 		}
+#endif
 		vk::ApplicationInfo applicationInfo("Flycast", 1, "Flycast", 1, vulkan11 ? VK_API_VERSION_1_1 : VK_API_VERSION_1_0);
 		std::vector<const char *> vext;
 		for (int i = 0; i < extensions_count; i++)
