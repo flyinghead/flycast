@@ -31,6 +31,7 @@ install:
 - sudo apt-get -qq update
 - touch ~/.android/repositories.cfg
 - echo y | sdkmanager 'ndk-bundle'
+- echo y | sdkmanager 'ndk;21.0.6113669'
 - export NDK=ANDROID_NDK=ANDROID_NDK_HOME=$ANDROID_HOME/ndk-bundle
 - export PATH=${PATH}:$ANDROID_HOME/tools
 - export PATH=${PATH}:$ANDROID_HOME/platform-tools
