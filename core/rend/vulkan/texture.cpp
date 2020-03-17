@@ -145,7 +145,7 @@ void setImageLayout(vk::CommandBuffer const& commandBuffer, vk::Image image, vk:
 
 void Texture::UploadToGPU(int width, int height, u8 *data, bool mipmapped, bool mipmapsIncluded)
 {
-	vk::Format format;
+	vk::Format format = vk::Format::eUndefined;
 	u32 dataSize = width * height * 2;
 	switch (tex_type)
 	{
@@ -173,13 +173,13 @@ void Texture::UploadToGPU(int width, int height, u8 *data, bool mipmapped, bool 
 		u32 size = dataSize / 4;
 		while (w)
 		{
-			dataSize += size;
+			dataSize += ((size + 3) >> 2) << 2;		// offset must be a multiple of 4
 			size /= 4;
 			w /= 2;
 		}
 	}
 	bool isNew = true;
-	if (width != extent.width || height != extent.height || format != this->format)
+	if (width != (int)extent.width || height != (int)extent.height || format != this->format)
 		Init(width, height, format, dataSize, mipmapped, mipmapsIncluded);
 	else
 		isNew = false;
@@ -255,7 +255,21 @@ void Texture::SetImage(u32 srcSize, void *srcData, bool isNew, bool genMipmaps)
 		data = allocation.MapMemory();
 	verify(data != nullptr);
 
-	memcpy(data, srcData, srcSize);
+	if (mipmapLevels > 1 && !genMipmaps && tex_type != TextureType::_8888)
+	{
+		// Each mipmap level must start at a 4-byte boundary
+		u8 *src = (u8 *)srcData;
+		u8 *dst = (u8 *)data;
+		for (u32 i = 0; i < mipmapLevels; i++)
+		{
+			const u32 size = (1 << (2 * i)) * 2;
+			memcpy(dst, src, size);
+			dst += ((size + 3) >> 2) << 2;
+			src += size;
+		}
+	}
+	else
+		memcpy(data, srcData, srcSize);
 
 	if (needsStaging)
 	{
@@ -267,12 +281,13 @@ void Texture::SetImage(u32 srcSize, void *srcData, bool isNew, bool genMipmaps)
 		if (mipmapLevels > 1 && !genMipmaps)
 		{
 			vk::DeviceSize bufferOffset = 0;
-			for (int i = 0; i < mipmapLevels; i++)
+			for (u32 i = 0; i < mipmapLevels; i++)
 			{
 				vk::BufferImageCopy copyRegion(bufferOffset, 1 << i, 1 << i, vk::ImageSubresourceLayers(vk::ImageAspectFlagBits::eColor, mipmapLevels - i - 1, 0, 1),
 						vk::Offset3D(0, 0, 0), vk::Extent3D(1 << i, 1 << i, 1));
 				commandBuffer.copyBufferToImage(stagingBufferData->buffer.get(), image.get(), vk::ImageLayout::eTransferDstOptimal, copyRegion);
-				bufferOffset += (1 << (2 * i)) * (tex_type == TextureType::_8888 ? 4 : 2);
+				const u32 size = (1 << (2 * i)) * (tex_type == TextureType::_8888 ? 4 : 2);
+				bufferOffset += ((size + 3) >> 2) << 2;
 			}
 		}
 		else
@@ -305,7 +320,7 @@ void Texture::GenerateMipmaps()
 			vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eTransferSrcOptimal, VK_QUEUE_FAMILY_IGNORED, VK_QUEUE_FAMILY_IGNORED,
 			*image, vk::ImageSubresourceRange(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1));
 
-	for (int i = 1; i < mipmapLevels; i++)
+	for (u32 i = 1; i < mipmapLevels; i++)
 	{
 		// Transition previous mipmap level from dst optimal/preinit to src optimal
 		barrier.subresourceRange.baseMipLevel = i - 1;
