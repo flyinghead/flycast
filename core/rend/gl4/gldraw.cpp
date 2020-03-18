@@ -179,9 +179,11 @@ static void SetGPState(const PolyParam* gp)
 				{
 					//bilinear filtering
 					//PowerVR supports also trilinear via two passes, but we ignore that for now
-					glSamplerParameteri(texSamplers[i], GL_TEXTURE_MIN_FILTER,
-							(tcw.MipMapped != 0 && tcw.ScanOrder == 0 && settings.rend.UseMipmaps) ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR);
+					bool mipmapped = gp->tcw.MipMapped != 0 && gp->tcw.ScanOrder == 0 && settings.rend.UseMipmaps;
+					glSamplerParameteri(texSamplers[i], GL_TEXTURE_MIN_FILTER, mipmapped ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR);
 					glSamplerParameteri(texSamplers[i], GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+					if (mipmapped)
+						glSamplerParameterf(texSamplers[i], GL_TEXTURE_LOD_BIAS, D_Adjust_LoD_Bias[tsp.MipMapD]);
 				}
 			}
 		}

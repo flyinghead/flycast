@@ -201,9 +201,13 @@ __forceinline
 	{
 		//bilinear filtering
 		//PowerVR supports also trilinear via two passes, but we ignore that for now
-		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
-				(gp->tcw.MipMapped != 0 && gp->tcw.ScanOrder == 0 && settings.rend.UseMipmaps) ? GL_NEAREST_MIPMAP_LINEAR : GL_LINEAR);
+		bool mipmapped = gp->tcw.MipMapped != 0 && gp->tcw.ScanOrder == 0 && settings.rend.UseMipmaps;
+		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, mipmapped ? GL_LINEAR_MIPMAP_NEAREST : GL_LINEAR);
 		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+#ifdef GL_TEXTURE_LOD_BIAS
+		if (!gl.is_gles && gl.gl_major >= 3 && mipmapped)
+			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_LOD_BIAS, D_Adjust_LoD_Bias[gp->tsp.MipMapD]);
+#endif
 	}
 
 	// Apparently punch-through polys support blending, or at least some combinations

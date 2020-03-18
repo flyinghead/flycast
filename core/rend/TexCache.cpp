@@ -23,6 +23,11 @@ u32 palette32_ram[1024];
 u32 pal_hash_256[4];
 u32 pal_hash_16[64];
 
+// Rough approximation of LoD bias from D adjust param, only used to increase LoD
+const std::array<f32, 16> D_Adjust_LoD_Bias = {
+		0.f, -4.f, -2.f, -1.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f
+};
+
 u32 detwiddle[2][11][1024];
 //input : address in the yyyyyxxxxx format
 //output : address in the xyxyxyxy format
@@ -242,7 +247,7 @@ bool VramLockedWriteOffset(size_t offset)
 bool VramLockedWrite(u8* address)
 {
 	u32 offset = _vmem_get_vram_offset(address);
-	if (offset == -1)
+	if (offset == (u32)-1)
 		return false;
 	return VramLockedWriteOffset(offset);
 }
