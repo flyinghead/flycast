@@ -2,6 +2,7 @@
 #include <atomic>
 #include <memory>
 #include <unordered_map>
+#include <array>
 #include "oslib/oslib.h"
 #include "hw/pvr/pvr_regs.h"
 #undef ID
