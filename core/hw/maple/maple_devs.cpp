@@ -2686,16 +2686,23 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 							u16 axis_value;
 							if (NaomiGameInputs != NULL
 									&& axis < ARRAY_SIZE(NaomiGameInputs->axes)
-									&& NaomiGameInputs->axes[axis].name != NULL
-									&& NaomiGameInputs->axes[axis].type == Half)
+									&& NaomiGameInputs->axes[axis].name != NULL)
 							{
-								if (half_axis_count == 0)
-									axis_value = rt[first_player] << 8;
-								else if (half_axis_count == 1)
-									axis_value = lt[first_player] << 8;
+								if (NaomiGameInputs->axes[axis].type == Half)
+								{
+									if (half_axis_count == 0)
+										axis_value = rt[first_player] << 8;
+									else if (half_axis_count == 1)
+										axis_value = lt[first_player] << 8;
+									else
+										axis_value = 0;
+									half_axis_count++;
+								}
 								else
-									axis_value = 0;
-								half_axis_count++;
+								{
+									axis_value =  read_analog_axis(first_player, NaomiGameInputs->axes[axis].axis);
+									full_axis_count++;
+								}
 							}
 							else
 							{

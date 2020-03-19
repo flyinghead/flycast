@@ -4932,6 +4932,7 @@ Games[] =
 			{ NULL, 0, 0 },
 		},
 		"gds-0008",
+        &monkeyba_inputs,
 	},
 	// Psyvariar 2 - The Will To Fabricate (Japan) (GDL-0024)
 	{
