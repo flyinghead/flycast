@@ -74,7 +74,7 @@ void libCore_CDDA_Sector(s16* sector)
 	{
 		libGDR_ReadSector((u8*)sector,cdda.CurrAddr.FAD,1,2352);
 		cdda.CurrAddr.FAD++;
-		if (cdda.CurrAddr.FAD==cdda.EndAddr.FAD)
+		if (cdda.CurrAddr.FAD >= cdda.EndAddr.FAD)
 		{
 			if (cdda.repeats==0)
 			{
@@ -723,7 +723,12 @@ void gd_process_spi_cmd()
 			}
 			else if (param_type==7)
 			{
-				//Resume from previous pos :)
+				// Resume from previous pos unless we're at the end
+				if (cdda.CurrAddr.FAD > cdda.EndAddr.FAD)
+				{
+					cdda.playing = false;
+					SecNumber.Status = GD_STANDBY;
+				}
 			}
 			else
 			{
