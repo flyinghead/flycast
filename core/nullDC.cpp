@@ -222,7 +222,7 @@ void LoadSpecialSettings()
 				// Power Stone (PAL)
 				|| !strncmp("T36801D 50", prod_id, 10)
 				// Metropolis Street Racer (NTSC)
-				|| !strncmp("MK-51012", prod_id, 10)
+				|| !strncmp("MK-51012", prod_id, 8)
 				// Metropolis Street Racer (PAL)
 				|| !strncmp("MK-5102250", prod_id, 10)
 				// Donald Duck Goin' Quackers
@@ -349,8 +349,10 @@ void LoadSpecialSettings()
 	{
 		NOTICE_LOG(BOOT, "Game ID is [%s]", naomi_game_id);
 
-		if (!strcmp("METAL SLUG 6", naomi_game_id) || !strcmp("WAVE RUNNER GP", naomi_game_id)
-				|| !strcmp("STREET FIGHTER ZERO3 UPPER", naomi_game_id))
+		if (!strcmp("METAL SLUG 6", naomi_game_id)
+				|| !strcmp("WAVE RUNNER GP", naomi_game_id)
+				|| !strcmp("STREET FIGHTER ZERO3 UPPER", naomi_game_id)
+				|| !strcmp("ALIEN FRONT", naomi_game_id))
 		{
 			INFO_LOG(BOOT, "Enabling Dynarec safe mode for game %s", naomi_game_id);
 			settings.dynarec.safemode = 1;

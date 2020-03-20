@@ -25,9 +25,9 @@ CHD5_FLAC := 1
 
 MFLAGS :=
 ASFLAGS :=
-LDFLAGS :=
-INCS :=
-LIBS :=
+LDFLAGS ?=
+INCS ?=
+LIBS ?=
 CFLAGS :=
 CXXFLAGS :=
 
@@ -172,8 +172,8 @@ else ifneq (,$(findstring rpi,$(platform)))
         MFLAGS += -mcpu=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard
         ASFLAGS += -mcpu=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard
     else ifneq (,$(findstring rpi3,$(platform)))
-        MFLAGS += -march=armv8-a+crc -mtune=cortex-a53 -mfpu=neon-fp-armv8 -mfloat-abi=hard
-        ASFLAGS += -march=armv8-a+crc -mtune=cortex-a53 -mfpu=neon-fp-armv8 -mfloat-abi=hard
+        MFLAGS += -march=armv8-a+crc -mtune=cortex-a53 -mfpu=neon-fp-armv8 -mfloat-abi=hard -marm
+        ASFLAGS += -march=armv8-a+crc -mtune=cortex-a53 -mfpu=neon-fp-armv8 -mfloat-abi=hard -marm
     endif
     ifneq (,$(findstring mesa,$(platform)))
         USE_SDL := 1
@@ -301,7 +301,11 @@ CXXFLAGS += $(RZDCY_CFLAGS) -fno-rtti -fno-operator-names -D_GLIBCXX_USE_CXX11_A
 
 INCS += -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/deps -I$(RZDCY_SRC_DIR)/khronos
 
-LIBS += -lm -lpthread
+ifdef FOR_WINDOWS
+	LIBS += -lm -static -lpthread
+else
+	LIBS += -lm -lpthread
+endif
 ifdef FOR_LINUX
 LIBS += -lrt
 endif
@@ -411,13 +415,18 @@ ifdef UNIT_TESTS
     CFLAGS += -DUNIT_TESTS
 endif
 
+ifdef ASAN
+	CFLAGS += -fsanitize=address -static-libasan
+	LDFLAGS += -fsanitize=address -static-libasan
+endif 
+
 EXECUTABLE_STRIPPED=nosym-reicast.$(PLATFORM_EXT)
 DC_PLATFORM=dreamcast
 EXECUTABLE=reicast.$(PLATFORM_EXT)
 EXECUTABLE_NAME=reicast
 
 ifndef NOT_ARM
-    AS=${CC_PREFIX}gcc
+    AS=$(CC)
     ASFLAGS += $(CFLAGS)
 endif
 
