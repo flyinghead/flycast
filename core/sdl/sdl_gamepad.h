@@ -17,6 +17,8 @@ public:
 
 		set_axis(DC_AXIS_X, 0, false);
 		set_axis(DC_AXIS_Y, 1, false);
+		set_axis(DC_AXIS_X2, 2, false);
+		set_axis(DC_AXIS_Y2, 3, false);
 		dirty = false;
 	}
 };

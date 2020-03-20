@@ -6,11 +6,11 @@
 #include "types.h"
 #include "cfg/cfg.h"
 #include "x11.h"
-#include "main.h"
 #include "rend/gui.h"
 #include "input/gamepad.h"
 #include "icon.h"
 #include "wsi/context.h"
+#include "hw/maple/maple_devs.h"
 
 #if FEAT_HAS_NIXPROF
 #include "profiler/profiler.h"
@@ -122,13 +122,6 @@ void event_x11_handle()
 		}
 	}
 }
-
-extern u32 mo_buttons;
-extern f32 mo_x_delta;
-extern f32 mo_y_delta;
-extern f32 mo_wheel_delta;
-extern s32 mo_x_abs;
-extern s32 mo_y_abs;
 
 static bool capturing_mouse;
 static Cursor empty_cursor = None;

@@ -17,9 +17,7 @@
 #include "osd.h"
 #include "types.h"
 #include "input/gamepad.h"
-
-extern u16 kcode[4];
-extern u8 rt[4], lt[4];
+#include "input/gamepad_device.h"
 
 #if defined(__ANDROID__)
 extern float vjoy_pos[15][8];

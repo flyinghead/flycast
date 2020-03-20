@@ -181,9 +181,9 @@ InputDescriptors gunsur2_inputs = {
 			{ 0 },
 	  },
 	  {
-			{ "ROLL", Full, 0 },
 			{ "PITCH", Full, 1 },
-			{ "YAW", Full, 2 },
+			{ "ROLL", Full, 2, true },
+			{ "YAW", Full, 0 },
 			{ NULL },
 	  },
 };

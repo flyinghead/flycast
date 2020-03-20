@@ -142,14 +142,7 @@ extern int screen_width,screen_height;
 
 static char gamedisk[256];
 
-u16 kcode[4] = { 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF };
-s8 joyx[4],joyy[4];
-u8 rt[4],lt[4];
 float vjoy_pos[15][8];
-
-extern s32 mo_x_abs;
-extern s32 mo_y_abs;
-extern u32 mo_buttons;
 
 extern bool print_stats;
 

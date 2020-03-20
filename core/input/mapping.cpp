@@ -64,6 +64,8 @@ axis_list[] =
 	{ DC_AXIS_Y, "dreamcast", "axis_y", "compat", "axis_y_inverted" },
 	{ DC_AXIS_LT,  "dreamcast", "axis_trigger_left",  "compat", "axis_trigger_left_inverted" },
 	{ DC_AXIS_RT, "dreamcast", "axis_trigger_right", "compat", "axis_trigger_right_inverted" },
+	{ DC_AXIS_X2, "dreamcast", "axis_right_x", "compat", "axis_right_x_inverted" },
+	{ DC_AXIS_Y2, "dreamcast", "axis_right_y", "compat", "axis_right_y_inverted" },
 	{ EMU_AXIS_DPAD1_X, "compat", "axis_dpad1_x", "compat", "axis_dpad1_x_inverted" },
 	{ EMU_AXIS_DPAD1_Y, "compat", "axis_dpad1_y", "compat", "axis_dpad1_y_inverted" },
 	{ EMU_AXIS_DPAD2_X, "compat", "axis_dpad2_x", "compat", "axis_dpad2_x_inverted" },
@@ -79,7 +81,7 @@ void InputMapping::set_button(DreamcastKey id, u32 code)
 		while (true)
 		{
 			u32 code = get_button_code(id);
-			if (code == -1)
+			if (code == (u32)-1)
 				break;
 			buttons[code] = EMU_BTN_NONE;
 		}
@@ -95,7 +97,7 @@ void InputMapping::set_axis(DreamcastKey id, u32 code, bool is_inverted)
 		while (true)
 		{
 			u32 code = get_axis_code(id);
-			if (code == -1)
+			if (code == (u32)-1)
 				break;
 			axes[code] = EMU_AXIS_NONE;
 		}
@@ -114,7 +116,7 @@ void InputMapping::load(FILE* fp)
 
 	this->name = mf.get("emulator", "mapping_name", "<Unknown>");
 
-	for (int i = 0; i < ARRAY_SIZE(button_list); i++)
+	for (u32 i = 0; i < ARRAY_SIZE(button_list); i++)
 	{
 		int button_code = mf.get_int(button_list[i].section, button_list[i].option, -1);
 		if (button_code >= 0)
@@ -123,7 +125,7 @@ void InputMapping::load(FILE* fp)
 		}
 	}
 
-	for (int i = 0; i < ARRAY_SIZE(axis_list); i++)
+	for (u32 i = 0; i < ARRAY_SIZE(axis_list); i++)
 	{
 		int axis_code = mf.get_int(axis_list[i].section, axis_list[i].option, -1);
 		if (axis_code >= 0)
@@ -190,7 +192,7 @@ bool InputMapping::save(const char *name)
 
 	mf.set("emulator", "mapping_name", this->name);
 
-	for (int i = 0; i < ARRAY_SIZE(button_list); i++)
+	for (u32 i = 0; i < ARRAY_SIZE(button_list); i++)
 	{
 		for (auto& it : buttons)
 		{
@@ -199,7 +201,7 @@ bool InputMapping::save(const char *name)
 		}
 	}
 
-	for (int i = 0; i < ARRAY_SIZE(axis_list); i++)
+	for (u32 i = 0; i < ARRAY_SIZE(axis_list); i++)
 	{
 		for (auto& it : axes)
 		{

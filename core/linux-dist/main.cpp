@@ -48,11 +48,6 @@
 #include "profiler/profiler.h"
 #endif
 
-u16 kcode[4] = {0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF};
-u8 rt[4] = {0, 0, 0, 0};
-u8 lt[4] = {0, 0, 0, 0};
-s8 joyx[4], joyy[4];
-
 #if defined(USE_JOYSTICK)
 	/* legacy joystick input */
 	static int joystick_fd = -1; // Joystick file descriptor

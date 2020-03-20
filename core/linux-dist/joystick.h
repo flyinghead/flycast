@@ -1,5 +1,4 @@
 #include "types.h"
-#include "main.h"
 
 #pragma once
 #define JOYSTICK_DEVICE_STRING "/dev/input/js%d"

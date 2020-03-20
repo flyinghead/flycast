@@ -42,10 +42,6 @@ void common_linux_setup();
 int dc_init(int argc, char* argv[]);
 void dc_run();
 
-u16 kcode[4];
-s8 joyx[4],joyy[4];
-u8 rt[4],lt[4];
-
 extern "C" int reicast_main(int argc, char* argv[])
 {
     //if (argc==2)

@@ -9,6 +9,7 @@
 #include "hw/naomi/naomi_cart.h"
 #include "hw/pvr/spg.h"
 #include "input/gamepad.h"
+#include "input/gamepad_device.h"
 #include <cmath>
 #include <ctime>
 
@@ -509,7 +510,7 @@ struct maple_sega_vmu: maple_base
 		}
 
 		u8 sum = 0;
-		for (int i = 0; i < sizeof(flash_data); i++)
+		for (u32 i = 0; i < sizeof(flash_data); i++)
 			sum |= flash_data[i];
 
 		if (sum == 0) {
@@ -735,7 +736,7 @@ struct maple_sega_vmu: maple_base
 
 					case MFID_2_LCD:
 					{
-						u32 wat=r32();
+						r32();
 						rptr(lcd_data,192);
 
 						u8 white=0xff,black=0x00;
@@ -1421,9 +1422,6 @@ struct atomiswave_lightgun : maple_lightgun
 	}
 };
 
-extern u16 kcode[4];
-extern s8 joyx[4],joyy[4];
-extern u8 rt[4], lt[4];
 char EEPROM[0x100];
 bool EEPROM_loaded = false;
 
@@ -1473,9 +1471,9 @@ public:
 
 protected:
 	virtual const char *get_id() = 0;
-	virtual u16 read_analog_axis(int player_num, int player_axis);
+	virtual u16 read_analog_axis(int player_num, int player_axis, bool inverted);
 	virtual u32 read_digital_in(int player_num) {
-		if (player_num >= ARRAY_SIZE(kcode))
+		if (player_num >= (int)ARRAY_SIZE(kcode))
 			return 0;
 		u32 buttons = 0;
 		u32 keycode = ~kcode[player_num];
@@ -1626,7 +1624,7 @@ public:
 protected:
 	virtual const char *get_id() override { return "namco ltd.;FCB;Ver1.0;JPN,Touch Panel & Multipurpose"; }
 
-	virtual u16 read_analog_axis(int player_num, int player_axis) override {
+	virtual u16 read_analog_axis(int player_num, int player_axis, bool inverted) override {
 		if (init_in_progress)
 			return 0;
 		if (mo_x_abs < 0 || mo_x_abs > 639 || mo_y_abs < 0 || mo_y_abs > 479)
@@ -1708,7 +1706,7 @@ protected:
 		return std::min(0xff, 0x80 - axis_y) << 8;
 	}
 
-	virtual u16 read_analog_axis(int player_num, int player_axis) override {
+	virtual u16 read_analog_axis(int player_num, int player_axis, bool inverted) override {
 		switch (player_axis)
 		{
 		case 0:
@@ -1784,7 +1782,7 @@ protected:
 		return std::min(0xff, 0x80 - axis_y) << 8;
 	}
 
-	virtual u16 read_analog_axis(int player_num, int player_axis) override {
+	virtual u16 read_analog_axis(int player_num, int player_axis, bool inverted) override {
 		switch (player_axis)
 		{
 		case 0:
@@ -1923,7 +1921,7 @@ struct maple_naomi_jamma : maple_sega_controller
 		}
 		if (node_id == ALL_NODES)
 		{
-			for (int i = 0; i < io_boards.size(); i++)
+			for (u32 i = 0; i < io_boards.size(); i++)
 				send_jvs_message(i + 1, channel, length, temp_buffer);
 		}
 		else if (node_id >= 1 && node_id <= 32)
@@ -2110,7 +2108,7 @@ struct maple_naomi_jamma : maple_sega_controller
 
 					u32 cmd_count = dma_buffer_in[6];
 					u32 idx = 7;
-					for (int i = 0; i < cmd_count; i++)
+					for (u32 i = 0; i < cmd_count; i++)
 					{
 						node_id = dma_buffer_in[idx];
 						len = dma_buffer_in[idx + 1];
@@ -2420,7 +2418,7 @@ struct maple_naomi_jamma : maple_sega_controller
 		REICAST_S(jvs_receive_buffer);
 		size_t board_count = io_boards.size();
 		REICAST_S(board_count);
-		for (int i = 0; i < io_boards.size(); i++)
+		for (u32 i = 0; i < io_boards.size(); i++)
 			io_boards[i]->maple_serialize(data, total_size);
 
 		return true ;
@@ -2434,28 +2432,34 @@ struct maple_naomi_jamma : maple_sega_controller
 		REICAST_US(jvs_receive_buffer);
 		size_t board_count;
 		REICAST_US(board_count);
-		for (int i = 0; i < board_count; i++)
+		for (u32 i = 0; i < board_count; i++)
 			io_boards[i]->maple_unserialize(data, total_size);
 
 		return true ;
 	}
 };
 
-u16 jvs_io_board::read_analog_axis(int player_num, int player_axis)
+u16 jvs_io_board::read_analog_axis(int player_num, int player_axis, bool inverted)
 {
+	u16 v;
 	switch (player_axis)
 	{
 	case 0:
-		return (joyx[player_num] + 128) << 8;
+		v = (joyx[player_num] + 128) << 8;
+		break;
 	case 1:
-		return (joyy[player_num] + 128) << 8;
-	// TODO right analog stick
-//	case 2:
-//		return (joyrx[player_num] + 128) << 8;
-//	case 3:
-//		return (joyry[player_num] + 128) << 8;
+		v = (joyy[player_num] + 128) << 8;
+		break;
+	case 2:
+		v = (joyrx[player_num] + 128) << 8;
+		break;
+	case 3:
+		v = (joyry[player_num] + 128) << 8;
+		break;
+	default:
+		return 0x8000;
 	}
-	return 0x8000;
+	return inverted ? 0xffff - v : v;
 }
 
 #define JVS_OUT(b) buffer_out[length++] = b
@@ -2594,7 +2598,7 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 			parent->config->GetInput(&pjs);
 
 			JVS_STATUS1();	// status
-			for (int cmdi = 0; cmdi < length_in; )
+			for (u32 cmdi = 0; cmdi < length_in; )
 			{
 				switch (buffer_in[cmdi])
 				{
@@ -2658,7 +2662,7 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 				case 0x22:	// Read analog inputs
 					{
 						JVS_STATUS1();	// report byte
-						int axis = 0;
+						u32 axis = 0;
 
 						LOGJVS("ana ");
 						if (lightgun_as_analog)
@@ -2688,7 +2692,8 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 									&& axis < ARRAY_SIZE(NaomiGameInputs->axes)
 									&& NaomiGameInputs->axes[axis].name != NULL)
 							{
-								if (NaomiGameInputs->axes[axis].type == Half)
+								const AxisDescriptor& axisDesc = NaomiGameInputs->axes[axis];
+								if (axisDesc.type == Half)
 								{
 									if (half_axis_count == 0)
 										axis_value = rt[first_player] << 8;
@@ -2700,13 +2705,13 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 								}
 								else
 								{
-									axis_value =  read_analog_axis(first_player, NaomiGameInputs->axes[axis].axis);
+									axis_value =  read_analog_axis(first_player, axisDesc.axis, axisDesc.inverted);
 									full_axis_count++;
 								}
 							}
 							else
 							{
-								axis_value = read_analog_axis(first_player, full_axis_count);
+								axis_value = read_analog_axis(first_player, full_axis_count, false);
 								full_axis_count++;
 							}
 							LOGJVS("%d:%4x ", axis, axis_value);
@@ -2780,7 +2785,7 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 					break;
 
 				case 0x30:	// substract coin
-					if (buffer_in[cmdi + 1] > 0 && first_player + buffer_in[cmdi + 1] - 1 < ARRAY_SIZE(coin_count))
+					if (buffer_in[cmdi + 1] > 0 && first_player + buffer_in[cmdi + 1] - 1 < (int)ARRAY_SIZE(coin_count))
 						coin_count[first_player + buffer_in[cmdi + 1] - 1] -= (buffer_in[cmdi + 2] << 8) + buffer_in[cmdi + 3];
 					JVS_STATUS1();	// report byte
 					cmdi += 4;

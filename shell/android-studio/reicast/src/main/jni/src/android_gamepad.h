@@ -62,6 +62,8 @@ public:
 		set_axis(DC_AXIS_Y, AXIS_Y, false);
 		set_axis(DC_AXIS_LT, AXIS_LTRIGGER, false);
 		set_axis(DC_AXIS_RT, AXIS_RTRIGGER, false);
+		set_axis(DC_AXIS_X2, AXIS_RX, false);
+		set_axis(DC_AXIS_Y2, AXIS_RY, false);
 
 		dirty = false;
 	}

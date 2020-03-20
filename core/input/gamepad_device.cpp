@@ -27,9 +27,14 @@
 
 extern void dc_exit();
 
-extern u16 kcode[4];
-extern u8 rt[4], lt[4];
-extern s8 joyx[4], joyy[4];
+// Gamepads
+u16 kcode[4] = { 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF };
+s8 joyx[4];
+s8 joyy[4];
+s8 joyrx[4];
+s8 joyry[4];
+u8 rt[4];
+u8 lt[4];
 
 std::vector<std::shared_ptr<GamepadDevice>> GamepadDevice::_gamepads;
 std::mutex GamepadDevice::_gamepads_mutex;
@@ -48,7 +53,7 @@ bool GamepadDevice::gamepad_btn_input(u32 code, bool pressed)
 		_input_detected(code);
 		_input_detected = NULL;
 	}
-	if (!input_mapper || _maple_port < 0 || _maple_port >= ARRAY_SIZE(kcode))
+	if (!input_mapper || _maple_port < 0 || _maple_port >= (int)ARRAY_SIZE(kcode))
 		return false;
 	DreamcastKey key = input_mapper->get_button_id(code);
 	if (key == EMU_BTN_NONE)
@@ -141,7 +146,7 @@ bool GamepadDevice::gamepad_axis_input(u32 code, int value)
 		_input_detected(code);
 		_input_detected = NULL;
 	}
-	if (!input_mapper || _maple_port < 0 || _maple_port >= ARRAY_SIZE(kcode))
+	if (!input_mapper || _maple_port < 0 || _maple_port >= (int)ARRAY_SIZE(kcode))
 		return false;
 	DreamcastKey key = input_mapper->get_axis_id(code);
 
@@ -171,18 +176,31 @@ bool GamepadDevice::gamepad_axis_input(u32 code, int value)
 		//printf("AXIS %d Mapped to %d -> %d\n", key, value, v);
 		s8 *this_axis;
 		s8 *other_axis;
-		if (key == DC_AXIS_X)
+		switch (key)
 		{
+		case DC_AXIS_X:
 			this_axis = &joyx[_maple_port];
 			other_axis = &joyy[_maple_port];
-		}
-		else if (key == DC_AXIS_Y)
-		{
+			break;
+
+		case DC_AXIS_Y:
 			this_axis = &joyy[_maple_port];
 			other_axis = &joyx[_maple_port];
-		}
-		else
+			break;
+
+		case DC_AXIS_X2:
+			this_axis = &joyrx[_maple_port];
+			other_axis = &joyry[_maple_port];
+			break;
+
+		case DC_AXIS_Y2:
+			this_axis = &joyry[_maple_port];
+			other_axis = &joyrx[_maple_port];
+			break;
+
+		default:
 			return false;
+		}
 		// Radial dead zone
 		// FIXME compute both axes at the same time
 		if ((float)(v * v + *other_axis * *other_axis) < _dead_zone * _dead_zone * 128.f * 128.f)
@@ -262,7 +280,7 @@ std::shared_ptr<GamepadDevice> GamepadDevice::GetGamepad(int index)
 {
 	_gamepads_mutex.lock();
 	std::shared_ptr<GamepadDevice> dev;
-	if (index >= 0 && index < _gamepads.size())
+	if (index >= 0 && index < (int)_gamepads.size())
 		dev = _gamepads[index];
 	else
 		dev = NULL;
@@ -284,7 +302,7 @@ void UpdateVibration(u32 port, float power, float inclination, u32 duration_ms)
 	for ( ; i >= 0; i--)
 	{
 		std::shared_ptr<GamepadDevice> gamepad = GamepadDevice::GetGamepad(i);
-		if (gamepad != NULL && gamepad->maple_port() == port && gamepad->is_rumble_enabled())
+		if (gamepad != NULL && gamepad->maple_port() == (int)port && gamepad->is_rumble_enabled())
 			gamepad->rumble(power, inclination, duration_ms);
 	}
 }

@@ -39,10 +39,6 @@ int darw_printf(const char* text, ...)
     return 0;
 }
 
-u16 kcode[4] = { 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF };
-s8 joyx[4],joyy[4];
-u8 rt[4],lt[4];
-
 int get_mic_data(u8* buffer) { return 0; }
 
 void os_SetWindowText(const char * text) {

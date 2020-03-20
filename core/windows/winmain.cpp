@@ -12,6 +12,7 @@
 #if defined(USE_SDL)
 #include "sdl/sdl.h"
 #endif
+#include "hw/maple/maple_devs.h"
 
 #define _WIN32_WINNT 0x0500
 #include <windows.h>
@@ -203,20 +204,7 @@ void SetupPath()
 	set_user_data_dir(fn);
 }
 
-// Gamepads
-u16 kcode[4] = { 0xffff, 0xffff, 0xffff, 0xffff };
-s8 joyx[4],joyy[4];
-u8 rt[4],lt[4];
-// Mouse
-extern s32 mo_x_abs;
-extern s32 mo_y_abs;
-extern u32 mo_buttons;
-extern f32 mo_x_delta;
-extern f32 mo_y_delta;
-extern f32 mo_wheel_delta;
-// Keyboard
 static Win32KeyboardDevice keyboard(0);
-
 
 void ToggleFullscreen();
 

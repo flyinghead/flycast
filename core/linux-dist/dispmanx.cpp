@@ -1,6 +1,6 @@
 #if defined(SUPPORT_DISPMANX)
 #include "dispmanx.h"
-#include "main.h"
+#include "types.h"
 #include "wsi/context.h"
 
 #include <bcm_host.h>

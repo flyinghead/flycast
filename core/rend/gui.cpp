@@ -25,13 +25,13 @@
 #include "oslib/oslib.h"
 #include "cfg/cfg.h"
 #include "hw/maple/maple_if.h"
+#include "hw/maple/maple_devs.h"
 #include "imgui/imgui.h"
 #include "gles/imgui_impl_opengl3.h"
 #include "imgui/roboto_medium.h"
 #include "gles/gles.h"
 #include "input/gamepad_device.h"
 #include "input/keyboard_device.h"
-#include "linux-dist/main.h"	// FIXME for kcode[]
 #include "gui_util.h"
 #include "gui_android.h"
 #include "version.h"
@@ -51,12 +51,6 @@ extern bool game_started;
 extern int screen_width, screen_height;
 extern u8 kb_shift; 		// shift keys pressed (bitmask)
 extern u8 kb_key[6];		// normal keys pressed
-extern s32 mo_x_abs;
-extern s32 mo_y_abs;
-extern u32 mo_buttons;
-extern f32 mo_x_delta;
-extern f32 mo_y_delta;
-extern f32 mo_wheel_delta;
 
 int screen_dpi = 96;
 
@@ -449,8 +443,8 @@ const char *button_names[] = { "Start", "A", "B", "X", "Y", "DPad Up", "DPad Dow
 const char *arcade_button_names[] = { "Start", "Button 1", "Button 2", "Button 3", "Button 4", "Up", "Down", "Left", "Right",
 		"Menu", "Exit", "Fast-forward", "N/A", "N/A",
 		"Service", "Coin", "Test", "Button 5", "Button 6", "Button 7", "Button 8" };
-const DreamcastKey axis_keys[] = { DC_AXIS_X, DC_AXIS_Y, DC_AXIS_LT, DC_AXIS_RT, EMU_AXIS_DPAD1_X, EMU_AXIS_DPAD1_Y, EMU_AXIS_DPAD2_X, EMU_AXIS_DPAD2_Y };
-const char *axis_names[] = { "Stick X", "Stick Y", "Left Trigger", "Right Trigger", "DPad X", "DPad Y", "Right DPad X", "Right DPad Y" };
+const DreamcastKey axis_keys[] = { DC_AXIS_X, DC_AXIS_Y, DC_AXIS_LT, DC_AXIS_RT, DC_AXIS_X2, DC_AXIS_Y2, EMU_AXIS_DPAD1_X, EMU_AXIS_DPAD1_Y, EMU_AXIS_DPAD2_X, EMU_AXIS_DPAD2_Y };
+const char *axis_names[] = { "Left Stick X", "Left Stick Y", "Left Trigger", "Right Trigger", "Right Stick X", "Right Stick Y", "DPad X", "DPad Y", "Right DPad X", "Right DPad Y" };
 
 static MapleDeviceType maple_expansion_device_type_from_index(int idx)
 {

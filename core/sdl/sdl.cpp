@@ -2,7 +2,6 @@
 #if defined(USE_SDL)
 #include "types.h"
 #include "cfg/cfg.h"
-#include "linux-dist/main.h"
 #include "sdl/sdl.h"
 #include <SDL2/SDL_syswm.h>
 #endif
@@ -29,13 +28,6 @@ static std::shared_ptr<SDLKbGamepadDevice> sdl_kb_gamepad;
 static SDLKeyboardDevice* sdl_keyboard = NULL;
 
 extern void dc_exit();
-
-extern u32 mo_buttons;
-extern s32 mo_x_abs;
-extern s32 mo_y_abs;
-extern f32 mo_x_delta;
-extern f32 mo_y_delta;
-extern f32 mo_wheel_delta;
 
 static void sdl_open_joystick(int index)
 {
@@ -248,6 +240,7 @@ void sdl_window_destroy()
 	SDL_DestroyWindow(window);
 }
 
+#ifdef _WIN32
 HWND sdl_get_native_hwnd()
 {
 	SDL_SysWMinfo wmInfo;
@@ -256,4 +249,6 @@ HWND sdl_get_native_hwnd()
 	return wmInfo.info.win.window;
 }
 #endif
+
+#endif // HOST_OS != OS_DARWIN
 

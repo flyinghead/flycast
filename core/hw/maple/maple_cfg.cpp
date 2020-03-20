@@ -5,6 +5,7 @@
 #include "maple_cfg.h"
 #include "cfg/cfg.h"
 #include "hw/naomi/naomi_cart.h"
+#include "input/gamepad_device.h"
 
 #define HAS_VMU
 /*
@@ -24,10 +25,6 @@ Plugins:
 */
 void UpdateInputState(u32 port);
 void UpdateVibration(u32 port, float power, float inclination, u32 duration_ms);
-
-extern u16 kcode[4];
-extern s8 joyx[4],joyy[4];
-extern u8 rt[4],lt[4];
 
 u8 GetBtFromSgn(s8 val)
 {
