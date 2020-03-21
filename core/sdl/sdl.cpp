@@ -228,7 +228,7 @@ void sdl_window_create()
 	{
 		if (SDL_InitSubSystem(SDL_INIT_VIDEO) != 0)
 		{
-			die("error initializing SDL Joystick subsystem");
+			die("error initializing SDL Video subsystem");
 		}
 	}
 	InitRenderApi();

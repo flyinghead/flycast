@@ -442,7 +442,7 @@ OBJECTS:=$(patsubst $(RZDCY_SRC_DIR)/%,$(BUILDDIR)/%,$(OBJECTS))
 
 ifdef FOR_WINDOWS
 OBJECTS+=$(BUILDDIR)/reicastres.build_obj
-$(BUILDDIR)/reicastres.build_obj: $(LOCAL_PATH)/../windows/reicast.rc $(LOCAL_PATH)/../windows/reicast.ico $(RZDCY_SRC_DIR)/version.h
+$(BUILDDIR)/reicastres.build_obj: $(LOCAL_PATH)/../windows/reicast.rc $(LOCAL_PATH)/../windows/flycast.ico $(RZDCY_SRC_DIR)/version.h
 	$(WINDRES) $< $@
 endif
 
@@ -508,7 +508,7 @@ install: $(EXECUTABLE)
 	install -m644 man/reicast.1 $(DESTDIR)$(MAN_DIR)
 	install -m644 man/reicast-joyconfig.1 $(DESTDIR)$(MAN_DIR)
 	install -m644 reicast.desktop $(DESTDIR)$(MENUENTRY_DIR)
-	install -m644 reicast.png $(DESTDIR)$(ICON_DIR)
+	install -m644 flycast.png $(DESTDIR)$(ICON_DIR)
 
 uninstall:
 	rm -f $(DESTDIR)$(PREFIX)/bin/$(EXECUTABLE_NAME)
@@ -522,7 +522,7 @@ uninstall:
 	rm -f $(DESTDIR)$(MAN_DIR)/reicast.1
 	rm -f $(DESTDIR)$(MAN_DIR)/reicast-joyconfig.1
 	rm -f $(DESTDIR)$(MENUENTRY_DIR)/reicast.desktop
-	rm -f $(DESTDIR)$(ICON_DIR)/reicast.png
+	rm -f $(DESTDIR)$(ICON_DIR)/flycast.png
 
 clean:
 	rm -f $(OBJECTS) $(EXECUTABLE) $(EXECUTABLE_STRIPPED) .map $(VERSION_HEADER) $(TEST_OBJ) alltests

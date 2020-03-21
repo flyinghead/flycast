@@ -5,7 +5,7 @@ description: |
   Reicast is a Sega Dreamcast emulator. It is designed to run Dreamcast games
   and homebrew in x86, x64 and aarch64 based platforms.
 grade: stable
-icon: shell/linux/reicast.png
+icon: shell/linux/flycast.png
 confinement: strict
 # architectures: all
 

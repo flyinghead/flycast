@@ -1557,8 +1557,8 @@ static void gui_display_content()
 					}
 					else
 					{
-						gui_start_game(game.path);
 						gui_state = ClosedNoResume;
+						gui_start_game(game.path);
 					}
 				}
 				ImGui::PopID();
