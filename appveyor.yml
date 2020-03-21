@@ -9,6 +9,8 @@ platform:
 
 before_build:
   - cmd: >-
+      C:\msys64\usr\bin\bash -lc "pacman --noconfirm -S mingw-w64-x86_64-SDL2" 2> $null
+      
       set BUILD_PATH=shell\linux
       
       set EXTRA_PATH=C:\mingw-w64\x86_64-7.2.0-posix-seh-rt_v5-rev1\mingw64\bin\
