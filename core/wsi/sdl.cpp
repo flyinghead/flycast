@@ -51,10 +51,21 @@ bool SDLGLGraphicsContext::Init()
 	glcontext = SDL_GL_CreateContext(window);
 	if (!glcontext)
 	{
-		ERROR_LOG(RENDERER, "Error creating SDL GL context");
-		SDL_DestroyWindow(window);
-		window = nullptr;
-		return false;
+#ifndef GLES
+		SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, 0);
+		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
+		glcontext = SDL_GL_CreateContext(window);
+		if (!glcontext)
+		{
+#endif
+			ERROR_LOG(RENDERER, "Error creating SDL GL context");
+			SDL_DestroyWindow(window);
+			window = nullptr;
+			return false;
+#ifndef GLES
+		}
+#endif
 	}
 	SDL_GL_MakeCurrent(window, NULL);
 
@@ -69,8 +80,11 @@ bool SDLGLGraphicsContext::Init()
 	SDL_GL_MakeCurrent(window, glcontext);
 
 #ifndef GLES
-	if (gl3wInit() == -1 || !gl3wIsSupported(3, 1))
+	if (gl3wInit() == -1 || !gl3wIsSupported(3, 0))
+	{
+		ERROR_LOG(RENDERER, "gl3wInit failed or GL 3.0 not supported");
 		return false;
+	}
 #endif
 	PostInit();
 

@@ -268,6 +268,7 @@ else ifneq (,$(findstring win32,$(platform)))
     PLATFORM_EXT := exe
     CC = gcc
     CXX = g++
+    USE_SDL = 1
 ifeq ($(WITH_DYNAREC), x86)
     X86_REC := 1
     LDFLAGS += -m32

@@ -370,6 +370,7 @@ static HWND hWnd;
 static bool windowClassRegistered;
 static int window_x, window_y;
 
+#if !defined(USE_SDL)
 void CreateMainWindow()
 {
 	if (hWnd != NULL)
@@ -411,6 +412,7 @@ void CreateMainWindow()
 	theGLContext.SetWindow(hWnd);
 	theGLContext.SetDeviceContext(GetDC(hWnd));
 }
+#endif
 
 void os_CreateWindow()
 {
