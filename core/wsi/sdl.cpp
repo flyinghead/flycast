@@ -20,6 +20,7 @@
 */
 #include "build.h"
 #if defined(USE_SDL) && HOST_OS != OS_DARWIN
+#include <math.h>
 #include "gl_context.h"
 #include "rend/gui.h"
 #include "sdl/sdl.h"

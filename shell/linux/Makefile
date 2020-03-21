@@ -319,7 +319,8 @@ ICON_DIR ?= ${PREFIX}/share/pixmaps
 ifdef USE_SDL
 	ifdef FOR_WINDOWS
 	    CXXFLAGS += -D USE_SDL
-	    LIBS += -lsdl2.dll
+	    LIBS += -L$(RZDCY_SRC_DIR)/deps/SDL2-2.0.12/x86_64-w64-mingw32/lib -lsdl2 -ldinput8  -ldxguid -ldxerr8
+	    LIBS += -luser32 -lgdi32 -lwinmm -limm32 -lole32 -loleaut32 -lshell32 -lsetupapi -lversion -luuid
 	else
 	    CXXFLAGS += `sdl2-config --cflags` -D USE_SDL
 	    LIBS += `sdl2-config --libs`
