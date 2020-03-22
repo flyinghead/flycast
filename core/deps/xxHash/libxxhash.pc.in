@@ -1,0 +1,14 @@
+#   xxHash - Extremely fast hash algorithm
+#   BSD 2-Clause License (https://www.opensource.org/licenses/bsd-license.php)
+
+prefix=@PREFIX@
+exec_prefix=${prefix}
+includedir=${prefix}/include
+libdir=${exec_prefix}/lib
+
+Name: xxhash
+Description: extremely fast hash algorithm
+URL: https://www.xxhash.com/
+Version: @VERSION@
+Libs: -L${libdir} -lxxhash
+Cflags: -I${includedir}
