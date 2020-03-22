@@ -51,7 +51,7 @@ protected:
 	bool RomPioAutoIncrement;
 	u32 DmaOffset;
 	u32 DmaCount;
-	u32 key;
+	u32 key = 0;
 	// Naomi 840-0001E communication board
 	u16 comm_ctrl = 0xC000;
 	u16 comm_offset = 0;
@@ -117,7 +117,7 @@ struct AxisDescriptor
    const char *name;
    AxisType type;
    u32 axis;
-   bool inverted;	// Only implemented for Atomiswave
+   bool inverted;
 };
 
 struct InputDescriptors

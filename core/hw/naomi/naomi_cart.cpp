@@ -350,6 +350,8 @@ static void naomi_cart_LoadZip(const char *filename)
 				}
 			}
 		}
+		if (naomi_default_eeprom == NULL && game->eeprom_dump != NULL)
+			naomi_default_eeprom = game->eeprom_dump;
 
 		CurrentCartridge->Init();
 
