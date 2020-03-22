@@ -7,8 +7,8 @@
 //#define PROFILING
 //#define CANONICAL_TEST
 
-#include "deps/xbyak/xbyak.h"
-#include "deps/xbyak/xbyak_util.h"
+#include <xbyak/xbyak.h>
+#include <xbyak/xbyak_util.h>
 
 #include "types.h"
 #include "hw/sh4/sh4_opcode_list.h"

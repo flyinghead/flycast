@@ -1,0 +1,12 @@
+sudo: true
+dist: bionic
+language: cpp
+compiler:
+  - gcc
+  - clang
+addons:
+  apt:
+    packages:
+      - nasm yasm g++-multilib tcsh
+script:
+  - make test
