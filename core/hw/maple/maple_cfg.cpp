@@ -135,7 +135,13 @@ void mcfg_CreateNAOMIJamma()
 	mcfg_DestroyDevices();
 	mcfg_Create(MDT_NaomiJamma, 0, 5);
 	if (settings.input.JammaSetup == JVS::Keyboard)
-		mcfg_Create(MDT_Keyboard, 2, 5);
+		mcfg_Create(MDT_Keyboard, 1, 5);
+	else
+	{
+		// Connect VMU B1
+		mcfg_Create(MDT_SegaController, 1, 5);
+		mcfg_Create(MDT_SegaVMU, 1, 0);
+	}
 }
 
 void mcfg_CreateAtomisWaveControllers()
@@ -166,7 +172,7 @@ void mcfg_CreateAtomisWaveControllers()
 		mcfg_Create(MDT_LightGun, 2, 5, 0);
 		mcfg_Create(MDT_LightGun, 3, 5, 1);
 	}
-	else if (settings.input.JammaSetup == JVS::SegaMarineFishing)
+	else if (settings.input.JammaSetup == JVS::SegaMarineFishing || settings.input.JammaSetup == JVS::RotaryEncoders)
 	{
 		// Sega Bass Fishing Challenge  needs a mouse (track-ball) on port 2
 		mcfg_Create(MDT_Mouse, 2, 5, 0);

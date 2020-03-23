@@ -390,7 +390,8 @@ enum class JVS {
 	TouchDeUno,
 	WorldKicks,
 	WorldKicksPCB,
-	Keyboard
+	Keyboard,
+	OutTrigger
 };
 
 struct settings_t

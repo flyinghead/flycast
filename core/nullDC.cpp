@@ -367,12 +367,10 @@ void LoadSpecialSettings()
 		if (!strcmp("DYNAMIC GOLF", naomi_game_id)
 				|| !strcmp("SHOOTOUT POOL", naomi_game_id)
 				|| !strcmp("SHOOTOUT POOL MEDAL", naomi_game_id)
-				|| !strcmp("OUTTRIGGER     JAPAN", naomi_game_id)
 				|| !strcmp("CRACKIN'DJ  ver JAPAN", naomi_game_id)
 				|| !strcmp("CRACKIN'DJ PART2  ver JAPAN", naomi_game_id)
 				|| !strcmp("KICK '4' CASH", naomi_game_id)
-				|| !strcmp("DRIVE", naomi_game_id)			// Waiwai drive
-				|| !strcmp("BASS FISHING SIMULATOR VER.A", naomi_game_id))
+				|| !strcmp("DRIVE", naomi_game_id))			// Waiwai drive
 		{
 			INFO_LOG(BOOT, "Enabling JVS rotary encoders for game %s", naomi_game_id);
 			settings.input.JammaSetup = JVS::RotaryEncoders;
@@ -429,6 +427,12 @@ void LoadSpecialSettings()
 			INFO_LOG(BOOT, "Enabling keyboard for game %s", naomi_game_id);
 			settings.input.JammaSetup = JVS::Keyboard;
 		}
+		else if (!strcmp("OUTTRIGGER     JAPAN", naomi_game_id))
+		{
+			INFO_LOG(BOOT, "Enabling JVS rotary encoders for game %s", naomi_game_id);
+			settings.input.JammaSetup = JVS::OutTrigger;
+		}
+
 		if (!strcmp("COSMIC SMASH IN JAPAN", naomi_game_id))
 		{
 			INFO_LOG(BOOT, "Enabling translucent depth multipass for game %s", naomi_game_id);

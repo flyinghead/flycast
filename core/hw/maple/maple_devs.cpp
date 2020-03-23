@@ -1518,6 +1518,16 @@ protected:
 
 };
 
+class jvs_837_13551_noanalog : public jvs_837_13551
+{
+public:
+	jvs_837_13551_noanalog(u8 node_id, maple_naomi_jamma *parent, int first_player = 0)
+		: jvs_837_13551(node_id, parent, first_player)
+	{
+		analog_count = 0;
+	}
+};
+
 // Same in 4-player mode
 class jvs_837_13551_4P : public jvs_837_13551
 {
@@ -1827,6 +1837,10 @@ struct maple_naomi_jamma : maple_sega_controller
 		case JVS::RotaryEncoders:
 			io_boards.emplace_back(new jvs_837_13938(1, this));
 			io_boards.emplace_back(new jvs_837_13551(2, this));
+			break;
+		case JVS::OutTrigger:
+			io_boards.emplace_back(new jvs_837_13938(1, this));
+			io_boards.emplace_back(new jvs_837_13551_noanalog(2, this));
 			break;
 		case JVS::SegaMarineFishing:
 			io_boards.emplace_back(new jvs_837_13844(1, this));
