@@ -26,6 +26,10 @@ static SDL_Window* window = NULL;
 static std::shared_ptr<SDLMouseGamepadDevice> sdl_mouse_gamepad;
 static std::shared_ptr<SDLKbGamepadDevice> sdl_kb_gamepad;
 static SDLKeyboardDevice* sdl_keyboard = NULL;
+static bool window_fullscreen;
+static bool window_maximized;
+static int window_width = WINDOW_WIDTH;
+static int window_height = WINDOW_HEIGHT;
 
 extern void dc_exit();
 
@@ -107,14 +111,23 @@ void input_sdl_handle(u32 port)
 		switch (event.type)
 		{
 #if HOST_OS != OS_DARWIN
-		case SDL_QUIT:
+			case SDL_QUIT:
 				dc_exit();
 				break;
 
 			case SDL_KEYDOWN:
 			case SDL_KEYUP:
-				sdl_kb_gamepad->gamepad_btn_input(event.key.keysym.sym, event.type == SDL_KEYDOWN);
+				if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_RETURN && (event.key.keysym.mod & KMOD_LALT))
 				{
+					if (window_fullscreen)
+						SDL_SetWindowFullscreen(window, 0);
+					else
+						SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN_DESKTOP);
+					window_fullscreen = !window_fullscreen;
+				}
+				else
+				{
+					sdl_kb_gamepad->gamepad_btn_input(event.key.keysym.sym, event.type == SDL_KEYDOWN);
 					int modifier_keys = 0;
 					if (event.key.keysym.mod & (KMOD_LSHIFT | KMOD_RSHIFT))
 						SET_FLAG(modifier_keys, (0x02 | 0x20), event.type == SDL_KEYUP);
@@ -141,6 +154,45 @@ void input_sdl_handle(u32 port)
 					std::shared_ptr<SDLGamepadDevice> device = SDLGamepadDevice::GetSDLGamepad((SDL_JoystickID)event.jaxis.which);
 					if (device != NULL)
 						device->gamepad_axis_input(event.jaxis.axis, event.jaxis.value);
+				}
+				break;
+			case SDL_JOYHATMOTION:
+				{
+					std::shared_ptr<SDLGamepadDevice> device = SDLGamepadDevice::GetSDLGamepad((SDL_JoystickID)event.jhat.which);
+					if (device != NULL)
+					{
+						u32 hatid = (event.jhat.hat + 1) << 8;
+						if (event.jhat.value & SDL_HAT_UP)
+						{
+							device->gamepad_btn_input(hatid + 0, true);
+							device->gamepad_btn_input(hatid + 1, false);
+						}
+						else if (event.jhat.value & SDL_HAT_DOWN)
+						{
+							device->gamepad_btn_input(hatid + 0, false);
+							device->gamepad_btn_input(hatid + 1, true);
+						}
+						else
+						{
+							device->gamepad_btn_input(hatid + 0, false);
+							device->gamepad_btn_input(hatid + 1, false);
+						}
+						if (event.jhat.value & SDL_HAT_LEFT)
+						{
+							device->gamepad_btn_input(hatid + 2, true);
+							device->gamepad_btn_input(hatid + 3, false);
+						}
+						else if (event.jhat.value & SDL_HAT_RIGHT)
+						{
+							device->gamepad_btn_input(hatid + 2, false);
+							device->gamepad_btn_input(hatid + 3, true);
+						}
+						else
+						{
+							device->gamepad_btn_input(hatid + 2, false);
+							device->gamepad_btn_input(hatid + 3, false);
+						}
+					}
 				}
 				break;
 
@@ -194,28 +246,42 @@ void sdl_window_set_text(const char* text)
 }
 
 #if HOST_OS != OS_DARWIN
+static void get_window_state()
+{
+	u32 flags = SDL_GetWindowFlags(window);
+	window_fullscreen = flags & SDL_WINDOW_FULLSCREEN_DESKTOP;
+	window_maximized = flags & SDL_WINDOW_MAXIMIZED;
+	if (!window_fullscreen && !window_maximized)
+		SDL_GetWindowSize(window, &window_width, &window_height);
+}
+
 void sdl_recreate_window(u32 flags)
 {
 	int x = SDL_WINDOWPOS_UNDEFINED;
 	int y = SDL_WINDOWPOS_UNDEFINED;
-	int width  = cfgLoadInt("x11", "width", WINDOW_WIDTH);
-	int height = cfgLoadInt("x11", "height", WINDOW_HEIGHT);
+	window_width  = cfgLoadInt("window", "width", window_width);
+	window_height = cfgLoadInt("window", "height", window_height);
+	window_fullscreen = cfgLoadBool("window", "fullscreen", window_fullscreen);
+	window_maximized = cfgLoadBool("window", "maximized", window_maximized);
 	if (window != nullptr)
 	{
 		SDL_GetWindowPosition(window, &x, &y);
-		SDL_GetWindowSize(window, &width, &height);
+		get_window_state();
 		SDL_DestroyWindow(window);
 	}
 #ifdef TARGET_PANDORA
 	flags |= SDL_FULLSCREEN;
 #else
 	flags |= SDL_SWSURFACE | SDL_WINDOW_RESIZABLE;
+	if (window_fullscreen)
+		flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
+	else if (window_maximized)
+		flags |= SDL_WINDOW_MAXIMIZED;
 #endif
-	window = SDL_CreateWindow("Flycast", x, y, width, height, flags);
+	window = SDL_CreateWindow("Flycast", x, y, window_width, window_height, flags);
 	if (!window)
-	{
 		die("error creating SDL window");
-	}
+
 #ifdef USE_VULKAN
 	theVulkanContext.SetWindow(window, nullptr);
 #endif
@@ -236,6 +302,11 @@ void sdl_window_create()
 
 void sdl_window_destroy()
 {
+	get_window_state();
+	cfgSaveInt("window", "width", window_width);
+	cfgSaveInt("window", "height", window_height);
+	cfgSaveBool("window", "maximized", window_maximized);
+	cfgSaveBool("window", "fullscreen", window_fullscreen);
 	TermRenderApi();
 	SDL_DestroyWindow(window);
 }

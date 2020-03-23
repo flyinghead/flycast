@@ -370,6 +370,7 @@ static HWND hWnd;
 static bool windowClassRegistered;
 static int window_x, window_y;
 
+#if !defined(USE_SDL)
 void CreateMainWindow()
 {
 	if (hWnd != NULL)
@@ -393,9 +394,9 @@ void CreateMainWindow()
 			MessageBox(0, "Failed to register the window class", "Error", MB_OK | MB_ICONEXCLAMATION);
 		else
 			windowClassRegistered = true;
-		screen_width = cfgLoadInt("windows", "width", DEFAULT_WINDOW_WIDTH);
-		screen_height = cfgLoadInt("windows", "height", DEFAULT_WINDOW_HEIGHT);
-		window_maximized = cfgLoadBool("windows", "maximized", false);
+		screen_width = cfgLoadInt("window", "width", DEFAULT_WINDOW_WIDTH);
+		screen_height = cfgLoadInt("window", "height", DEFAULT_WINDOW_HEIGHT);
+		window_maximized = cfgLoadBool("window", "maximized", false);
 	}
 
 	// Create the eglWindow
@@ -411,6 +412,7 @@ void CreateMainWindow()
 	theGLContext.SetWindow(hWnd);
 	theGLContext.SetDeviceContext(GetDC(hWnd));
 }
+#endif
 
 void os_CreateWindow()
 {
@@ -764,12 +766,16 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 	}
 #endif
 	SetUnhandledExceptionFilter(0);
-	cfgSaveBool("windows", "maximized", window_maximized);
+#ifdef USE_SDL
+	sdl_window_destroy();
+#else
+	cfgSaveBool("window", "maximized", window_maximized);
 	if (!window_maximized && screen_width != 0 && screen_width != 0)
 	{
-		cfgSaveInt("windows", "width", screen_width);
-		cfgSaveInt("windows", "height", screen_height);
+		cfgSaveInt("window", "width", screen_width);
+		cfgSaveInt("window", "height", screen_height);
 	}
+#endif
 
 	return 0;
 }

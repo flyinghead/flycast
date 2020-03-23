@@ -117,6 +117,12 @@ RZDCY_CFLAGS :=
 	endif
 endif
 
+ifdef FOR_WINDOWS
+    ifdef USE_SDL
+        RZDCY_CFLAGS += -I$(RZDCY_SRC_DIR)/deps/SDL2-2.0.12/x86_64-w64-mingw32/include
+    endif
+endif
+
 ifdef USE_VULKAN
 	ifdef FOR_WINDOWS
 		RZDCY_CFLAGS += -DVK_USE_PLATFORM_WIN32_KHR
