@@ -377,6 +377,22 @@ struct RegisterStruct
 	}
 };
 
+enum class JVS {
+	Default,
+	FourPlayers,
+	RotaryEncoders,
+	SegaMarineFishing,
+	DualIOBoards4P,
+	LightGun,
+	Mazan,
+	GunSurvivor,
+	DogWalking,
+	TouchDeUno,
+	WorldKicks,
+	WorldKicksPCB,
+	Keyboard
+};
+
 struct settings_t
 {
 	struct {
@@ -513,8 +529,7 @@ struct settings_t
 
 	struct {
 		u32 MouseSensitivity;
-		u32 JammaSetup;			// 0: standard, 1: 4-players, 2: rotary encoders, 3: Sega Marine Fishing,
-								// 4: dual I/O boards (4P), 5: Namco JYU board (Ninja Assault)
+		JVS JammaSetup;
 		int maple_devices[4];
 		int maple_expansion_devices[4][2];
 		int VirtualGamepadVibration;
@@ -595,12 +610,12 @@ u32  libExtDevice_ReadMem_A0_006(u32 addr,u32 size);
 void libExtDevice_WriteMem_A0_006(u32 addr,u32 data,u32 size);
 
 //Area 0 , 0x01000000- 0x01FFFFFF	[Ext. Device]
-static u32 libExtDevice_ReadMem_A0_010(u32 addr,u32 size) { return 0; }
-static void libExtDevice_WriteMem_A0_010(u32 addr,u32 data,u32 size) { }
+static inline u32 libExtDevice_ReadMem_A0_010(u32 addr,u32 size) { return 0; }
+static inline void libExtDevice_WriteMem_A0_010(u32 addr,u32 data,u32 size) { }
 
 //Area 5
-static u32 libExtDevice_ReadMem_A5(u32 addr,u32 size){ return 0; }
-static void libExtDevice_WriteMem_A5(u32 addr,u32 data,u32 size) { }
+static inline u32 libExtDevice_ReadMem_A5(u32 addr,u32 size){ return 0; }
+static inline void libExtDevice_WriteMem_A5(u32 addr,u32 data,u32 size) { }
 
 //ARM
 s32 libARM_Init();

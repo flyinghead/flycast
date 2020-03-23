@@ -375,24 +375,24 @@ void LoadSpecialSettings()
 				|| !strcmp("BASS FISHING SIMULATOR VER.A", naomi_game_id))
 		{
 			INFO_LOG(BOOT, "Enabling JVS rotary encoders for game %s", naomi_game_id);
-			settings.input.JammaSetup = 2;
+			settings.input.JammaSetup = JVS::RotaryEncoders;
 		}
 		else if (!strcmp("POWER STONE 2 JAPAN", naomi_game_id)		// Naomi
 				|| !strcmp("GUILTY GEAR isuka", naomi_game_id))		// AW
 		{
 			INFO_LOG(BOOT, "Enabling 4-player setup for game %s", naomi_game_id);
-			settings.input.JammaSetup = 1;
+			settings.input.JammaSetup = JVS::FourPlayers;
 		}
 		else if (!strcmp("SEGA MARINE FISHING JAPAN", naomi_game_id)
 					|| !strcmp(naomi_game_id, "BASS FISHING SIMULATOR VER.A"))	// AW
 		{
 			INFO_LOG(BOOT, "Enabling specific JVS setup for game %s", naomi_game_id);
-			settings.input.JammaSetup = 3;
+			settings.input.JammaSetup = JVS::SegaMarineFishing;
 		}
 		else if (!strcmp("RINGOUT 4X4 JAPAN", naomi_game_id))
 		{
 			INFO_LOG(BOOT, "Enabling specific JVS setup for game %s", naomi_game_id);
-			settings.input.JammaSetup = 4;
+			settings.input.JammaSetup = JVS::DualIOBoards4P;
 		}
 		else if (!strcmp("NINJA ASSAULT", naomi_game_id)
 					|| !strcmp(naomi_game_id, "Sports Shooting USA")	// AW
@@ -401,27 +401,33 @@ void LoadSpecialSettings()
 					|| !strcmp(naomi_game_id, "EXTREME HUNTING"))		// AW
 		{
 			INFO_LOG(BOOT, "Enabling lightgun setup for game %s", naomi_game_id);
-			settings.input.JammaSetup = 5;
+			settings.input.JammaSetup = JVS::LightGun;
 		}
 		else if (!strcmp("MAZAN", naomi_game_id))
 		{
 			INFO_LOG(BOOT, "Enabling specific JVS setup for game %s", naomi_game_id);
-			settings.input.JammaSetup = 6;
+			settings.input.JammaSetup = JVS::Mazan;
 		}
 		else if (!strcmp(" BIOHAZARD  GUN SURVIVOR2", naomi_game_id))
 		{
 			INFO_LOG(BOOT, "Enabling specific JVS setup for game %s", naomi_game_id);
-			settings.input.JammaSetup = 7;
+			settings.input.JammaSetup = JVS::GunSurvivor;
 		}
 		else if (!strcmp("WORLD KICKS", naomi_game_id))
 		{
 			INFO_LOG(BOOT, "Enabling specific JVS setup for game %s", naomi_game_id);
-			settings.input.JammaSetup = 10;
+			settings.input.JammaSetup = JVS::WorldKicks;
 		}
 		else if (!strcmp("WORLD KICKS PCB", naomi_game_id))
 		{
 			INFO_LOG(BOOT, "Enabling specific JVS setup for game %s", naomi_game_id);
-			settings.input.JammaSetup = 11;
+			settings.input.JammaSetup = JVS::WorldKicksPCB;
+		}
+		else if (!strcmp("THE TYPING OF THE DEAD", naomi_game_id)
+				|| !strcmp(" LUPIN THE THIRD  -THE TYPING-", naomi_game_id))
+		{
+			INFO_LOG(BOOT, "Enabling keyboard for game %s", naomi_game_id);
+			settings.input.JammaSetup = JVS::Keyboard;
 		}
 		if (!strcmp("COSMIC SMASH IN JAPAN", naomi_game_id))
 		{
@@ -806,7 +812,7 @@ void InitSettings()
 	settings.validate.OpenGlChecks  = false;
 
 	settings.input.MouseSensitivity = 100;
-	settings.input.JammaSetup = 0;
+	settings.input.JammaSetup = JVS::Default;
 	settings.input.VirtualGamepadVibration = 20;
 	for (int i = 0; i < MAPLE_PORTS; i++)
 	{
@@ -905,7 +911,7 @@ void LoadSettings(bool game_specific)
 	settings.validate.OpenGlChecks  = cfgLoadBool(game_specific ? cfgGetGameId() : "validate", "OpenGlChecks", settings.validate.OpenGlChecks);
 
 	settings.input.MouseSensitivity = cfgLoadInt(input_section, "MouseSensitivity", settings.input.MouseSensitivity);
-	settings.input.JammaSetup = cfgLoadInt(input_section, "JammaSetup", settings.input.JammaSetup);
+	settings.input.JammaSetup = (JVS)cfgLoadInt(input_section, "JammaSetup", (int)settings.input.JammaSetup);
 	settings.input.VirtualGamepadVibration = cfgLoadInt(input_section, "VirtualGamepadVibration", settings.input.VirtualGamepadVibration);
 	for (int i = 0; i < MAPLE_PORTS; i++)
 	{
