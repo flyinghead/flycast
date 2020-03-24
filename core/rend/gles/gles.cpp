@@ -756,9 +756,18 @@ void gl_load_osd_resources()
 	glUniform1i(glGetUniformLocation(gl.OSD_SHADER.program, "tex"), 0);		//bind osd texture to slot 0
 
 #ifdef __ANDROID__
-	int w, h;
 	if (gl.OSD_SHADER.osd_tex == 0)
-		gl.OSD_SHADER.osd_tex = loadPNG(get_readonly_data_path(DATA_PATH "buttons.png"), w, h);
+	{
+		int width, height;
+		u8 *image_data = loadOSDButtons(width, height);
+		//Now generate the OpenGL texture object
+		gl.OSD_SHADER.osd_tex = glcache.GenTexture();
+		glcache.BindTexture(GL_TEXTURE_2D, gl.OSD_SHADER.osd_tex);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, (GLvoid *)image_data);
+		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+
+		delete[] image_data;
+	}
 #endif
 	SetupOSDVBO();
 }
@@ -820,8 +829,6 @@ bool gl_create_resources()
 	glGenBuffers(1, &gl.vbo.idxs2);
 
 	create_modvol_shader();
-
-	gl_load_osd_resources();
 
 	return true;
 }
@@ -1282,25 +1289,5 @@ struct glesrend : Renderer
 		return gl_GetTexture(tsp, tcw);
 	}
 };
-
-
-GLuint loadPNG(const string& fname, int &width, int &height)
-{
-	png_byte *image_data = loadPNGData(fname, width, height);
-	if (image_data == NULL)
-		return TEXTURE_LOAD_ERROR;
-
-	//Now generate the OpenGL texture object
-	GLuint texture = glcache.GenTexture();
-	glcache.BindTexture(GL_TEXTURE_2D, texture);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA,
-		GL_UNSIGNED_BYTE, (GLvoid*) image_data);
-	glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-
-	delete[] image_data;
-
-	return texture;
-}
-
 
 Renderer* rend_GLES2() { return new glesrend(); }

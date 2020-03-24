@@ -516,8 +516,6 @@ static bool gl_create_resources()
 
 	create_modvol_shader();
 
-	gl_load_osd_resources();
-
 	// Create the buffer for Translucent poly params
 	glGenBuffers(1, &gl4.vbo.tr_poly_params);
 	// Bind it

@@ -18,6 +18,7 @@
 #include "types.h"
 #include "input/gamepad.h"
 #include "input/gamepad_device.h"
+#include "TexCache.h"
 
 #if defined(__ANDROID__)
 extern float vjoy_pos[15][8];
@@ -53,6 +54,7 @@ static const float vjoy_sz[2][15] = {
 };
 
 static std::vector<OSDVertex> osdVertices;
+std::vector<u8> DefaultOSDButtons;
 
 void HideOSD()
 {
@@ -142,3 +144,14 @@ static void setVjoyUV()
 
 static OnLoad setVjoyUVOnLoad(&setVjoyUV);
 
+u8 *loadOSDButtons(int &width, int &height)
+{
+	u8 *image_data = loadPNGData(get_readonly_data_path(DATA_PATH "buttons.png"), width, height);
+	if (image_data == nullptr)
+	{
+		if (DefaultOSDButtons.empty())
+			die("No default OSD buttons");
+		image_data = loadPNGData(DefaultOSDButtons, width, height);
+	}
+	return image_data;
+}

@@ -8,7 +8,6 @@ import android.support.v7.app.AppCompatDelegate;
 import android.util.Log;
 
 import com.reicast.emulator.config.Config;
-import com.reicast.emulator.emu.AudioBackend;
 import com.reicast.emulator.emu.JNIdc;
 
 public class Emulator extends Application {
@@ -57,7 +56,6 @@ public class Emulator extends Application {
         prefs.edit()
                 .putString(Config.pref_home, homeDirectory).apply();
 
-        FileBrowser.installButtons(prefs);
         if (micPluggedIn() && currentActivity instanceof BaseGLActivity) {
             ((BaseGLActivity)currentActivity).requestRecordAudioPermission();
         }

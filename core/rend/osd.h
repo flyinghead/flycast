@@ -29,3 +29,6 @@ struct OSDVertex
 };
 
 const std::vector<OSDVertex>& GetOSDVertices();
+
+extern std::vector<u8> DefaultOSDButtons;
+u8 *loadOSDButtons(int &width, int &height);

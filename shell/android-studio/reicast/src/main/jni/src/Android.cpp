@@ -23,6 +23,7 @@
 #include "oslib/audiostream.h"
 #include "imgread/common.h"
 #include "rend/gui.h"
+#include "rend/osd.h"
 #include "cfg/cfg.h"
 #include "log/LogManager.h"
 #include "wsi/context.h"
@@ -112,6 +113,7 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_screenDpi(JNIEnv *env
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_guiOpenSettings(JNIEnv *env,jobject obj)  __attribute__((visibility("default")));
 JNIEXPORT jboolean JNICALL Java_com_reicast_emulator_emu_JNIdc_guiIsOpen(JNIEnv *env,jobject obj)  __attribute__((visibility("default")));
 JNIEXPORT jboolean JNICALL Java_com_reicast_emulator_emu_JNIdc_guiIsContentBrowser(JNIEnv *env,jobject obj)  __attribute__((visibility("default")));
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_setButtons(JNIEnv *env, jobject obj, jbyteArray data) __attribute__((visibility("default")));
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_periph_InputDeviceManager_init(JNIEnv *env, jobject obj) __attribute__((visibility("default")));
 JNIEXPORT void JNICALL Java_com_reicast_emulator_periph_InputDeviceManager_joystickAdded(JNIEnv *env, jobject obj, jint id, jstring name, jint maple_port, jstring junique_id)  __attribute__((visibility("default")));
@@ -655,4 +657,14 @@ void android_send_logs()
     JNIEnv *env = jvm_attacher.getEnv();
     jmethodID generateErrorLogMID = env->GetMethodID(env->GetObjectClass(g_activity), "generateErrorLog", "()V");
     env->CallVoidMethod(g_activity, generateErrorLogMID);
+}
+
+JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_setButtons(JNIEnv *env, jobject obj, jbyteArray data)
+{
+    u32 len = env->GetArrayLength(data);
+    DefaultOSDButtons.resize(len);
+    jboolean isCopy;
+    jbyte* b = env->GetByteArrayElements(data, &isCopy);
+    memcpy(DefaultOSDButtons.data(), b, len);
+    env->ReleaseByteArrayElements(data, b, JNI_ABORT);
 }

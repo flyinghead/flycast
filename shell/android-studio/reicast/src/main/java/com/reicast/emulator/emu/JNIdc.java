@@ -1,6 +1,5 @@
 package com.reicast.emulator.emu;
 
-import android.util.Log;
 import android.view.Surface;
 
 import com.reicast.emulator.Emulator;
@@ -43,4 +42,6 @@ public final class JNIdc
 		JNIdc.vjoy(14, 1, 0, 0, 0);
 	}
 	public static native void hideOsd();
+
+	public static native void setButtons(byte data[]);
 }

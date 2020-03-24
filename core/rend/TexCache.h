@@ -819,6 +819,7 @@ static inline void MakeFogTexture(u8 *tex_data)
 	}
 }
 u8* loadPNGData(const string& fname, int &width, int &height);
+u8* loadPNGData(const std::vector<u8>& data, int &width, int &height);
 void dump_screenshot(u8 *buffer, u32 width, u32 height, bool alpha = false, u32 rowPitch = 0, bool invertY = true);
 
 extern const std::array<f32, 16> D_Adjust_LoD_Bias;

@@ -14,6 +14,7 @@
 #include <xxhash.h>
 #include "CustomTexture.h"
 #include <png.h>
+#include <pngstruct.h>
 
 u8* vq_codebook;
 u32 palette_index;
@@ -955,54 +956,22 @@ void rend_text_invl(vram_block* bl)
 	libCore_vramlock_Unlock_block_wb(bl);
 }
 
-static FILE* pngfile;
-
-void png_cstd_read(png_structp png_ptr, png_bytep data, png_size_t length)
+static u8* loadPNGData(const u8 *header, png_voidp io_ptr, png_rw_ptr read_func, int &width, int &height)
 {
-	if (fread(data, 1, length, pngfile) != length)
-		png_error(png_ptr, "Truncated read error");
-}
-
-u8* loadPNGData(const string& fname, int &width, int &height)
-{
-	const char* filename=fname.c_str();
-	FILE* file = fopen(filename, "rb");
-	pngfile=file;
-
-	if (!file)
-	{
-		EMUERROR("Error opening %s", filename);
-		return NULL;
-	}
-
-	//header for testing if it is a png
-	png_byte header[8];
-
-	//read the header
-	if (fread(header, 1, 8, file) != 8)
-	{
-		fclose(file);
-		WARN_LOG(RENDERER, "Not a PNG file : %s", filename);
-		return NULL;
-	}
-
 	//test if png
 	int is_png = !png_sig_cmp(header, 0, 8);
 	if (!is_png)
 	{
-		fclose(file);
-		WARN_LOG(RENDERER, "Not a PNG file : %s", filename);
+		WARN_LOG(RENDERER, "Passed data isn't a PNG file");
 		return NULL;
 	}
 
 	//create png struct
-	png_structp png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL,
-		NULL, NULL);
+	png_structp png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
 	if (!png_ptr)
 	{
-		fclose(file);
-		WARN_LOG(RENDERER, "Unable to create PNG struct : %s", filename);
-		return (NULL);
+		WARN_LOG(RENDERER, "Unable to create PNG struct");
+		return NULL;
 	}
 
 	//create png info struct
@@ -1010,9 +979,8 @@ u8* loadPNGData(const string& fname, int &width, int &height)
 	if (!info_ptr)
 	{
 		png_destroy_read_struct(&png_ptr, (png_infopp) NULL, (png_infopp) NULL);
-		WARN_LOG(RENDERER, "Unable to create PNG info : %s", filename);
-		fclose(file);
-		return (NULL);
+		WARN_LOG(RENDERER, "Unable to create PNG info");
+		return NULL;
 	}
 
 	//create png info struct
@@ -1020,23 +988,21 @@ u8* loadPNGData(const string& fname, int &width, int &height)
 	if (!end_info)
 	{
 		png_destroy_read_struct(&png_ptr, &info_ptr, (png_infopp) NULL);
-		WARN_LOG(RENDERER, "Unable to create PNG end info : %s", filename);
-		fclose(file);
-		return (NULL);
+		WARN_LOG(RENDERER, "Unable to create PNG end info");
+		return NULL;
 	}
 
 	//png error stuff, not sure libpng man suggests this.
 	if (setjmp(png_jmpbuf(png_ptr)))
 	{
-		fclose(file);
-		WARN_LOG(RENDERER, "Error during setjmp : %s", filename);
+		WARN_LOG(RENDERER, "Error during setjmp");
 		png_destroy_read_struct(&png_ptr, &info_ptr, &end_info);
-		return (NULL);
+		return NULL;
 	}
 
 	//init png reading
 	//png_init_io(png_ptr, fp);
-	png_set_read_fn(png_ptr, NULL, png_cstd_read);
+	png_set_read_fn(png_ptr, io_ptr, read_func);
 
 	//let libpng know you already read the first 8 bytes
 	png_set_sig_bytes(png_ptr, 8);
@@ -1068,8 +1034,7 @@ u8* loadPNGData(const string& fname, int &width, int &height)
 	{
 		//clean up memory and close stuff
 		png_destroy_read_struct(&png_ptr, &info_ptr, &end_info);
-		WARN_LOG(RENDERER, "Unable to allocate image_data while loading %s", filename);
-		fclose(file);
+		WARN_LOG(RENDERER, "Unable to allocate image_data");
 		return NULL;
 	}
 
@@ -1080,8 +1045,7 @@ u8* loadPNGData(const string& fname, int &width, int &height)
 		//clean up memory and close stuff
 		png_destroy_read_struct(&png_ptr, &info_ptr, &end_info);
 		delete[] image_data;
-		WARN_LOG(RENDERER, "Unable to allocate row_pointer while loading %s", filename);
-		fclose(file);
+		WARN_LOG(RENDERER, "Unable to allocate row_pointer");
 		return NULL;
 	}
 
@@ -1094,9 +1058,56 @@ u8* loadPNGData(const string& fname, int &width, int &height)
 
 	png_destroy_read_struct(&png_ptr, &info_ptr, &end_info);
 	delete[] row_pointers;
-	fclose(file);
 
 	return image_data;
+}
+
+static size_t png_offset;
+
+static void png_read_vector(png_structp png_ptr, png_bytep data, png_size_t length)
+{
+	const std::vector<u8> *v = (const std::vector<u8> *)png_ptr->io_ptr;
+	memcpy(data, v->data() + png_offset, length);
+	png_offset += length;
+}
+
+u8* loadPNGData(const std::vector<u8>& data, int &width, int &height)
+{
+	png_offset = 8;
+	return loadPNGData(data.data(), (void *)&data, png_read_vector, width, height);
+}
+
+static void png_cstd_read(png_structp png_ptr, png_bytep data, png_size_t length)
+{
+	if (fread(data, 1, length, (FILE *)png_ptr->io_ptr) != length)
+		png_error(png_ptr, "Truncated read error");
+}
+
+u8* loadPNGData(const string& fname, int &width, int &height)
+{
+	const char* filename=fname.c_str();
+	FILE* file = fopen(filename, "rb");
+
+	if (!file)
+	{
+		EMUERROR("Error opening %s", filename);
+		return NULL;
+	}
+
+	//header for testing if it is a png
+	png_byte header[8];
+
+	//read the header
+	if (fread(header, 1, 8, file) != 8)
+	{
+		fclose(file);
+		WARN_LOG(RENDERER, "Not a PNG file : %s", filename);
+		return NULL;
+	}
+	u8 *data = loadPNGData(header, file, png_cstd_read, width, height);
+	fclose(file);
+
+	return data;
 }
 
 #ifdef TEST_AUTOMATION

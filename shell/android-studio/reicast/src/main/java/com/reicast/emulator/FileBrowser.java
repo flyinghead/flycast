@@ -1,19 +1,8 @@
 package com.reicast.emulator;
 
-import android.content.SharedPreferences;
-import android.os.Environment;
-
-import com.reicast.emulator.config.Config;
-
 import org.apache.commons.lang3.StringUtils;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.HashSet;
 
 public class FileBrowser {
@@ -55,41 +44,5 @@ public class FileBrowser {
 			e.printStackTrace();
 		}
 		return out;
-	}
-
-	public static void installButtons(SharedPreferences prefs) {
-		try {
-			File buttons = null;
-			// TODO button themes
-			//String theme = prefs.getString(Config.pref_theme, null);
-			//if (theme != null) {
-			//	buttons = new File(theme);
-			//}
-			String home_directory = prefs.getString(Config.pref_home, Environment.getExternalStorageDirectory().getAbsolutePath());
-			File file = new File(home_directory, "data/buttons.png");
-			InputStream in = null;
-			if (buttons != null && buttons.exists()) {
-				in = new FileInputStream(buttons);
-			} else if (!file.exists() || file.length() == 0) {
-				in = Emulator.getAppContext().getAssets().open("buttons.png");
-			}
-			if (in != null) {
-				OutputStream out = new FileOutputStream(file);
-
-				// Transfer bytes from in to out
-				byte[] buf = new byte[4096];
-				int len;
-				while ((len = in.read(buf)) != -1) {
-					out.write(buf, 0, len);
-				}
-				in.close();
-				out.flush();
-				out.close();
-			}
-		} catch (FileNotFoundException fnf) {
-			fnf.printStackTrace();
-		} catch (IOException ioe) {
-			ioe.printStackTrace();
-		}
 	}
 }

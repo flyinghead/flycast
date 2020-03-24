@@ -123,6 +123,9 @@ void TextureCacheData::UploadToGPU(int width, int height, u8 *temp_tex_buffer, b
 			case TextureType::_8888:
 				internalFormat = GL_RGBA8;
 				break;
+			default:
+			    die("Unsupported texture format");
+			    break;
 			}
 			if (Updates == 1)
 			{

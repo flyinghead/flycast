@@ -50,27 +50,20 @@ public:
 			if (!vjoyTexture)
 			{
 				int w, h;
-				u8 *image_data = loadPNGData(get_readonly_data_path(DATA_PATH "buttons.png"), w, h);
-				if (image_data == nullptr)
-				{
-					WARN_LOG(RENDERER, "Cannot load buttons.png image");
-				}
-				else
-				{
-					texCommandPool.BeginFrame();
-					vjoyTexture = std::unique_ptr<Texture>(new Texture());
-					vjoyTexture->tex_type = TextureType::_8888;
-					vjoyTexture->tcw.full = 0;
-					vjoyTexture->tsp.full = 0;
-					vjoyTexture->SetPhysicalDevice(GetContext()->GetPhysicalDevice());
-					vjoyTexture->SetDevice(GetContext()->GetDevice());
-					vjoyTexture->SetCommandBuffer(texCommandPool.Allocate());
-					vjoyTexture->UploadToGPU(OSD_TEX_W, OSD_TEX_H, image_data, false);
-					vjoyTexture->SetCommandBuffer(nullptr);
-					texCommandPool.EndFrame();
-					delete [] image_data;
-					osdPipeline.Init(&normalShaderManager, vjoyTexture->GetImageView(), GetContext()->GetRenderPass());
-				}
+				u8 *image_data = loadOSDButtons(w, h);
+				texCommandPool.BeginFrame();
+				vjoyTexture = std::unique_ptr<Texture>(new Texture());
+				vjoyTexture->tex_type = TextureType::_8888;
+				vjoyTexture->tcw.full = 0;
+				vjoyTexture->tsp.full = 0;
+				vjoyTexture->SetPhysicalDevice(GetContext()->GetPhysicalDevice());
+				vjoyTexture->SetDevice(GetContext()->GetDevice());
+				vjoyTexture->SetCommandBuffer(texCommandPool.Allocate());
+				vjoyTexture->UploadToGPU(OSD_TEX_W, OSD_TEX_H, image_data, false);
+				vjoyTexture->SetCommandBuffer(nullptr);
+				texCommandPool.EndFrame();
+				delete [] image_data;
+				osdPipeline.Init(&normalShaderManager, vjoyTexture->GetImageView(), GetContext()->GetRenderPass());
 			}
 			if (!osdBuffer)
 			{
