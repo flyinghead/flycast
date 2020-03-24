@@ -141,6 +141,9 @@ void mcfg_CreateNAOMIJamma()
 		// Connect VMU B1
 		mcfg_Create(MDT_SegaController, 1, 5);
 		mcfg_Create(MDT_SegaVMU, 1, 0);
+		// Connect VMU C1
+		mcfg_Create(MDT_SegaController, 2, 5);
+		mcfg_Create(MDT_SegaVMU, 2, 0);
 	}
 }
 
