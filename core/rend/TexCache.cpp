@@ -14,7 +14,6 @@
 #include <xxhash.h>
 #include "CustomTexture.h"
 #include <png.h>
-#include <pngstruct.h>
 
 u8* vq_codebook;
 u32 palette_index;
@@ -1066,7 +1065,7 @@ static size_t png_offset;
 
 static void png_read_vector(png_structp png_ptr, png_bytep data, png_size_t length)
 {
-	const std::vector<u8> *v = (const std::vector<u8> *)png_ptr->io_ptr;
+	const std::vector<u8> *v = (const std::vector<u8> *)png_get_io_ptr(png_ptr);
 	memcpy(data, v->data() + png_offset, length);
 	png_offset += length;
 }
@@ -1079,7 +1078,7 @@ u8* loadPNGData(const std::vector<u8>& data, int &width, int &height)
 
 static void png_cstd_read(png_structp png_ptr, png_bytep data, png_size_t length)
 {
-	if (fread(data, 1, length, (FILE *)png_ptr->io_ptr) != length)
+	if (fread(data, 1, length, (FILE *)png_get_io_ptr(png_ptr)) != length)
 		png_error(png_ptr, "Truncated read error");
 }
 

@@ -16,7 +16,6 @@
 #define GL_MAJOR_VERSION                  0x821B
 #endif
 #endif
-#include <png.h>
 
 #include "oslib/oslib.h"
 #include "rend/rend.h"
