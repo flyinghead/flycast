@@ -1,5 +1,5 @@
 #include "types.h"
-#include "deps/libzip/zip.h"
+#include <zip.h>
 
 zip* APKArchive;
 void setAPK (const char* apkPath) {
