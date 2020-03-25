@@ -33,7 +33,7 @@
 						 { NAOMI_SERVICE_KEY, "SERVICE" },
 #define NAO_START_DESC { NAOMI_START_KEY, "START" },
 
-InputDescriptors _18wheelr_inputs = {
+static InputDescriptors _18wheelr_inputs = {
 	  {
 			{ NAOMI_BTN0_KEY, "HORN" },
 			{ NAOMI_DOWN_KEY, "VIEW" },
@@ -52,7 +52,7 @@ InputDescriptors _18wheelr_inputs = {
 	  },
 };
 
-InputDescriptors alienfnt_inputs = {
+static InputDescriptors alienfnt_inputs = {
 	  {
 			{ NAOMI_BTN0_KEY, "LEFT SHOT" },
 			{ NAOMI_BTN1_KEY, "ROTATION R" },
@@ -70,7 +70,7 @@ InputDescriptors alienfnt_inputs = {
 	  },
 };
 
-InputDescriptors alpilot_inputs = {
+static InputDescriptors alpilot_inputs = {
 	  {
 			{ NAOMI_BTN0_KEY, "LANDING GEAR SW" },
 			{ NAOMI_BTN1_KEY, "VIEW CHANGE" },
@@ -90,7 +90,7 @@ InputDescriptors alpilot_inputs = {
 	  },
 };
 
-InputDescriptors capsnk_inputs = {
+static InputDescriptors capsnk_inputs = {
 	  {
 			{ NAOMI_BTN0_KEY, "LIGHT PUNCH" },
 			{ NAOMI_BTN1_KEY, "STRONG PUNCH" },
@@ -109,7 +109,7 @@ InputDescriptors capsnk_inputs = {
 	  },
 };
 
-InputDescriptors crzytaxi_inputs = {
+static InputDescriptors crzytaxi_inputs = {
 	  {
 			{ NAOMI_UP_KEY, "DRIVE GEAR" },
 			{ NAOMI_DOWN_KEY, "REVERSE GEAR" },
@@ -125,7 +125,7 @@ InputDescriptors crzytaxi_inputs = {
 	  },
 };
 
-InputDescriptors cspike_inputs = {
+static InputDescriptors cspike_inputs = {
 	  {
 			{ NAOMI_BTN0_KEY, "SHOT1" },
 			{ NAOMI_BTN1_KEY, "SHOT2" },
@@ -144,7 +144,7 @@ InputDescriptors cspike_inputs = {
 	  },
 };
 
-InputDescriptors trigger_inputs = {
+static InputDescriptors trigger_inputs = {
 	  {
 			{ NAOMI_BTN0_KEY, "TRIGGER" },
 			NAO_START_DESC
@@ -156,7 +156,7 @@ InputDescriptors trigger_inputs = {
 	  },
 };
 
-InputDescriptors deathcox_inputs = {
+static InputDescriptors deathcox_inputs = {
 	  {
 			{ NAOMI_BTN0_KEY, "TRIGGER" },
 			NAO_START_DESC
@@ -170,7 +170,7 @@ InputDescriptors deathcox_inputs = {
 	  },
 };
 
-InputDescriptors gunsur2_inputs = {
+static InputDescriptors gunsur2_inputs = {
 	  {
 			{ NAOMI_BTN0_KEY, "GUN BUTTON" },
 			{ NAOMI_BTN1_KEY, "TRIGGER" },
@@ -188,7 +188,7 @@ InputDescriptors gunsur2_inputs = {
 	  },
 };
 
-InputDescriptors jambo_inputs = {
+static InputDescriptors jambo_inputs = {
 	  {
 			{ NAOMI_UP_KEY, "LEVER UP", NAOMI_DOWN_KEY },	// This button uses P2 inputs for P1
 			{ NAOMI_DOWN_KEY, "LEVER DOWN", NAOMI_UP_KEY },	// This button uses P2 inputs for P1
@@ -204,7 +204,7 @@ InputDescriptors jambo_inputs = {
 	  },
 };
 
-InputDescriptors mvsc2_inputs = {
+static InputDescriptors mvsc2_inputs = {
 	  {
 			{ NAOMI_BTN0_KEY, "LIGHT PUNCH" },
 			{ NAOMI_BTN1_KEY, "STRONG PUNCH" },
@@ -225,7 +225,7 @@ InputDescriptors mvsc2_inputs = {
 	  },
 };
 
-InputDescriptors sfz3ugd_inputs = {
+static InputDescriptors sfz3ugd_inputs = {
 	  {
 			{ NAOMI_BTN0_KEY, "LIGHT PUNCH" },
 			{ NAOMI_BTN1_KEY, "MEDIUM PUNCH" },
@@ -246,7 +246,7 @@ InputDescriptors sfz3ugd_inputs = {
 	  },
 };
 
-InputDescriptors ninjaslt_inputs = {
+static InputDescriptors ninjaslt_inputs = {
 	  {
 			{ NAOMI_BTN0_KEY, "ENTER" },
 			{ NAOMI_BTN2_KEY, "START 1P" },
@@ -263,7 +263,7 @@ InputDescriptors ninjaslt_inputs = {
 	  },
 };
 
-InputDescriptors vonot_inputs = {
+static InputDescriptors vonot_inputs = {
 	  {
 			{ NAOMI_UP_KEY, "L UP" },
 			{ NAOMI_DOWN_KEY, "L DOWN" },
@@ -289,7 +289,7 @@ InputDescriptors vonot_inputs = {
 	  },
 };
 
-InputDescriptors vtenis2c_inputs = {
+static InputDescriptors vtenis2c_inputs = {
 	  {
 			{ NAOMI_BTN0_KEY, "SHOT1" },
 			{ NAOMI_BTN1_KEY, "SHOT2" },
@@ -306,7 +306,7 @@ InputDescriptors vtenis2c_inputs = {
 	  },
 };
 
-InputDescriptors monkeyba_inputs = {
+static InputDescriptors monkeyba_inputs = {
 	  {
 			NAO_START_DESC
 			NAO_BASE_BTN_DESC
@@ -319,7 +319,7 @@ InputDescriptors monkeyba_inputs = {
 	  },
 };
 
-InputDescriptors cvs2_inputs = {
+static InputDescriptors cvs2_inputs = {
 	  {
 			{ NAOMI_BTN0_KEY, "LIGHT PUNCH" },
 			{ NAOMI_BTN1_KEY, "MEDIUM PUNCH" },
@@ -349,7 +349,7 @@ InputDescriptors cvs2_inputs = {
 						 { AWAVE_SERVICE_KEY, "SERVICE" },
 #define AW_START_DESC { AWAVE_START_KEY, "START" },
 
-InputDescriptors ftspeed_inputs = {
+static InputDescriptors ftspeed_inputs = {
 	  {
 			{ AWAVE_BTN0_KEY, "BOOST" },
 			{ AWAVE_UP_KEY, "HIGH GEAR" },
@@ -366,7 +366,7 @@ InputDescriptors ftspeed_inputs = {
 	  },
 };
 
-InputDescriptors kofnw_inputs = {
+static InputDescriptors kofnw_inputs = {
 	  {
 			{ AWAVE_BTN0_KEY, "LIGHT PUNCH" },
 			{ AWAVE_BTN1_KEY, "STRONG PUNCH" },
@@ -383,7 +383,7 @@ InputDescriptors kofnw_inputs = {
 	  }
 };
 
-InputDescriptors kofxi_inputs = {
+static InputDescriptors kofxi_inputs = {
 	  {
 			{ AWAVE_BTN0_KEY, "LIGHT PUNCH" },
 			{ AWAVE_BTN1_KEY, "STRONG PUNCH" },
@@ -400,7 +400,7 @@ InputDescriptors kofxi_inputs = {
 	  }
 };
 
-InputDescriptors maxspeed_inputs = {
+static InputDescriptors maxspeed_inputs = {
 	  {
 			{ AWAVE_UP_KEY, "HIGH SHIFT" },
 			{ AWAVE_DOWN_KEY, "LOW SHIFT" },
@@ -416,7 +416,7 @@ InputDescriptors maxspeed_inputs = {
 	  },
 };
 
-InputDescriptors ngbc_inputs = {
+static InputDescriptors ngbc_inputs = {
 	  {
 			{ AWAVE_BTN0_KEY, "LIGHT PUNCH" },
 			{ AWAVE_BTN1_KEY, "STRONG PUNCH" },
@@ -433,7 +433,7 @@ InputDescriptors ngbc_inputs = {
 	  }
 };
 
-InputDescriptors samsptk_inputs = {
+static InputDescriptors samsptk_inputs = {
 	  {
 			{ AWAVE_BTN0_KEY, "LIGHT SLASH" },
 			{ AWAVE_BTN1_KEY, "MEDIUM SLASH" },
@@ -450,7 +450,7 @@ InputDescriptors samsptk_inputs = {
 	  }
 };
 
-InputDescriptors blockpong_inputs = {
+static InputDescriptors blockpong_inputs = {
 	  {
 			AW_START_DESC
 			AW_BASE_BTN_DESC

@@ -26,6 +26,8 @@
 #include "cfg/cfg.h"
 #include "hw/maple/maple_if.h"
 #include "hw/maple/maple_devs.h"
+#include "hw/naomi/naomi_cart.h"
+#include "hw/naomi/naomi_roms.h"
 #include "imgui/imgui.h"
 #include "gles/imgui_impl_opengl3.h"
 #include "imgui/roboto_medium.h"
@@ -1486,6 +1488,22 @@ static void gui_display_demo()
 	ImGui_impl_RenderDrawData(ImGui::GetDrawData(), false);
 }
 
+static std::string get_game_description(std::string name)
+{
+    size_t dot = name.find_last_of(".");
+    if (dot != std::string::npos && dot != name.size() - 1)
+        name = name.substr(0, dot);
+
+	int gameid = 0;
+	for (; Games[gameid].name != NULL; gameid++)
+		if (!stricmp(Games[gameid].name, name.c_str()))
+			break;
+	if (Games[gameid].name == NULL)
+		return std::string();
+
+	return std::string(Games[gameid].description);
+}
+
 static void gui_display_content()
 {
 	ImGui_Impl_NewFrame();
@@ -1544,10 +1562,16 @@ static void gui_display_content()
     				// Only dreamcast disks
     				continue;
         	}
-        	if (filter.PassFilter(game.name.c_str()))
+            std::string description,selection;
+            description = get_game_description(game.name);
+            if (description.empty())
+                selection = game.name;
+            else
+                selection = game.name + " (" + description + ")";
+	        if (filter.PassFilter(selection.c_str()))
         	{
     			ImGui::PushID(game.path.c_str());
-				if (ImGui::Selectable(game.name.c_str()))
+				if (ImGui::Selectable(selection.c_str()))
 				{
 					if (gui_state == SelectDisk)
 					{
