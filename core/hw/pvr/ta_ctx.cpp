@@ -122,18 +122,17 @@ bool QueueRender(TA_context* ctx)
  	last_frame1 = os_GetSeconds();
 
  	bool too_fast = (cycle_span / time_span) > (SH4_MAIN_CLOCK * 1.2);
-	
-	if (rqueue && too_fast && settings.pvr.SynchronousRender) {
+
+ 	// Vulkan: rtt frames seem to be discarded often
+	if (rqueue && (too_fast || ctx->rend.isRTT) && settings.pvr.SynchronousRender)
 		//wait for a frame if
 		//  we have another one queue'd and
 		//  sh4 run at > 120% over the last two frames
 		//  and SynchronousRender is enabled
 		frame_finished.Wait();
-	}
 
 	if (rqueue)
 	{
-		// FIXME if the discarded render is a RTT we'll have a texture missing. But waiting for the current frame to finish kills performance...
 		tactx_Recycle(ctx);
 		fskip++;
 		return false;
