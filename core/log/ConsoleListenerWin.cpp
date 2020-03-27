@@ -1,7 +1,7 @@
 // Copyright 2015 Dolphin Emulator Project
 // Licensed under GPLv2+
 // Refer to the license.txt file included.
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(LOG_TO_PTY)
 
 #include <windows.h>
 

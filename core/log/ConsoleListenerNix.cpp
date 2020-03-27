@@ -1,7 +1,7 @@
 // Copyright 2015 Dolphin Emulator Project
 // Licensed under GPLv2+
 // Refer to the license.txt file included.
-#if !defined(_WIN32) && !defined(__ANDROID__)
+#if (!defined(_WIN32) && !defined(__ANDROID__)) || defined(LOG_TO_PTY)
 #include <cstdio>
 #include <cstring>
 
@@ -14,7 +14,11 @@
 
 ConsoleListener::ConsoleListener()
 {
+#ifdef LOG_TO_PTY
+  m_use_color = 1;
+#else
   m_use_color = !!isatty(fileno(stderr));
+#endif
 }
 
 ConsoleListener::~ConsoleListener()

@@ -730,6 +730,10 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 	char** argv = CommandLineToArgvA(cmd_line, &argc);
 
 #endif
+
+#if defined(_WIN32) && defined(LOG_TO_PTY)
+    setbuf(stderr,NULL);
+#endif
 	LogManager::Init();
 
 	ReserveBottomMemory();
@@ -791,7 +795,8 @@ double os_GetSeconds()
 	LARGE_INTEGER time_now;
 
 	QueryPerformanceCounter(&time_now);
-	return time_now.QuadPart*qpfd;
+	static LARGE_INTEGER time_now_base = time_now;
+	return (time_now.QuadPart - time_now_base.QuadPart)*qpfd;
 }
 
 void os_DebugBreak()
