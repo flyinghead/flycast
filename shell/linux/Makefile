@@ -422,6 +422,11 @@ ifdef ASAN
 	LDFLAGS += -fsanitize=address -static-libasan
 endif 
 
+ifdef LOG_TO_PTY
+    CFLAGS += -D LOG_TO_PTY
+endif
+
+
 EXECUTABLE_STRIPPED=nosym-reicast.$(PLATFORM_EXT)
 DC_PLATFORM=dreamcast
 EXECUTABLE=reicast.$(PLATFORM_EXT)

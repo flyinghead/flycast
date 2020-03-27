@@ -1,7 +1,8 @@
 // Copyright 2015 Dolphin Emulator Project
 // Licensed under GPLv2+
 // Refer to the license.txt file included.
-#ifdef __ANDROID__
+#if defined(__ANDROID__) && !defined(LOG_TO_PTY)
+
 
 #include <android/log.h>
 
