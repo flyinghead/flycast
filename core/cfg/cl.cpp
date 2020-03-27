@@ -99,13 +99,16 @@ int setconfig(char** arg,int cl)
 	return rv;
 }
 
-int showhelp(char** arg,int cl)
+static int showhelp()
 {
-	NOTICE_LOG(COMMON, "Available commands:");
+	printf("Usage: flycast [OPTION]... [CONTENT]\n\n");
+	printf("Options:\n");
+	printf("-config	section:key=value     add a virtual config value;\n");
+	printf("                              virtual config values won't be saved to the .cfg file\n");
+	printf("                              unless a different value is written to them\n");
+	printf("-help                         display this help\n");
 
-	NOTICE_LOG(COMMON, "-config	section:key=value [, ..]: add a virtual config value\n Virtual config values won't be saved to the .cfg file\n unless a different value is written to em\nNote :\n You can specify many settings in the xx:yy=zz , gg:hh=jj , ...\n format.The spaces between the values and ',' are needed.");
-	NOTICE_LOG(COMMON, "-help: show help info");
-
+	exit(0);
 	return 0;
 }
 
@@ -118,8 +121,7 @@ bool ParseCommandLine(int argc,char* argv[])
 	{
 		if (stricmp(*arg,"-help")==0 || stricmp(*arg,"--help")==0)
 		{
-			showhelp(arg,cl);
-			return true;
+			showhelp();
 		}
 		else if (stricmp(*arg,"-config")==0 || stricmp(*arg,"--config")==0)
 		{
