@@ -41,7 +41,7 @@ struct List
 	}
 
 	__forceinline 
-	T* LastPtr(int n=1) const
+	T* LastPtr(int n = 1) const
 	{ 
 		return daty-n; 
 	}
@@ -88,4 +88,7 @@ struct List
 		Clear();
 		free(daty);
 	}
+
+	T* begin() const { return head(); }
+	T* end() const { return LastPtr(0); }
 };

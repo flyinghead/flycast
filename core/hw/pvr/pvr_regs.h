@@ -1,5 +1,5 @@
 #pragma once
-#include "drkPvr.h"
+#include "types.h"
 
 #define pvr_RegSize (0x8000)
 #define pvr_RegMask (pvr_RegSize-1)

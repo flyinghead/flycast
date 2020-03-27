@@ -1,5 +1,4 @@
 #pragma once
-#include "drkPvr.h"
 #include "ta_ctx.h"
 
 extern u32 VertexCount;

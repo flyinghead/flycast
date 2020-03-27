@@ -552,7 +552,6 @@
 		84B7BDF61B72720100F9733F /* _vmem.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = _vmem.h; sourceTree = "<group>"; };
 		84B7BDF81B72720100F9733F /* config.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = config.h; sourceTree = "<group>"; };
 		84B7BDF91B72720100F9733F /* drkPvr.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = drkPvr.cpp; sourceTree = "<group>"; };
-		84B7BDFA1B72720100F9733F /* drkPvr.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = drkPvr.h; sourceTree = "<group>"; };
 		84B7BDFB1B72720100F9733F /* helper_classes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = helper_classes.h; sourceTree = "<group>"; };
 		84B7BDFC1B72720100F9733F /* pvr_mem.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = pvr_mem.cpp; sourceTree = "<group>"; };
 		84B7BDFD1B72720100F9733F /* pvr_mem.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pvr_mem.h; sourceTree = "<group>"; };
@@ -1566,7 +1565,6 @@
 			children = (
 				84B7BDF81B72720100F9733F /* config.h */,
 				84B7BDF91B72720100F9733F /* drkPvr.cpp */,
-				84B7BDFA1B72720100F9733F /* drkPvr.h */,
 				84B7BDFB1B72720100F9733F /* helper_classes.h */,
 				84B7BDFC1B72720100F9733F /* pvr_mem.cpp */,
 				84B7BDFD1B72720100F9733F /* pvr_mem.h */,

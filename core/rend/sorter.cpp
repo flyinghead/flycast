@@ -24,6 +24,7 @@ struct IndexTrig
 	f32 z;
 };
 
+#if 0
 static float min3(float v0, float v1, float v2)
 {
 	return min(min(v0,v1),v2);
@@ -33,6 +34,7 @@ static float max3(float v0, float v1, float v2)
 {
 	return max(max(v0,v1),v2);
 }
+#endif
 
 static float minZ(const Vertex *v, const u32 *mod)
 {
@@ -194,10 +196,10 @@ static bool PP_EQ(const PolyParam *pp0, const PolyParam *pp1)
 }
 
 static void fill_id(u32 *d, const Vertex *v0, const Vertex *v1, const Vertex *v2,  const Vertex *vb)
-{
-	d[0]=v0-vb;
-	d[1]=v1-vb;
-	d[2]=v2-vb;
+{	
+	d[0] = (u32)(v0 - vb);
+	d[1] = (u32)(v1 - vb);
+	d[2] = (u32)(v2 - vb);
 }
 
 void GenSorted(int first, int count, vector<SortTrigDrawParam>& pidx_sort, vector<u32>& vidx_sort)
@@ -216,12 +218,11 @@ void GenSorted(int first, int count, vector<SortTrigDrawParam>& pidx_sort, vecto
 	const PolyParam *pp = pp_base;
 	const PolyParam *pp_end = pp + count;
 
-	const Vertex *vtx_arr = vtx_base + idx_base[pp->first];
 	vtx_sort_base=vtx_base;
 
 	static u32 vtx_cnt;
 
-	int vtx_count=idx_base[pp_end[-1].first+pp_end[-1].count-1]-idx_base[pp->first];
+	int vtx_count = pvrrc.verts.used() - idx_base[pp->first];
 	if (vtx_count>vtx_cnt)
 		vtx_cnt=vtx_count;
 
@@ -242,32 +243,29 @@ void GenSorted(int first, int count, vector<SortTrigDrawParam>& pidx_sort, vecto
 
 	while(pp!=pp_end)
 	{
-		u32 ppid=(pp-pp_base);
+		u32 ppid = (u32)(pp - pp_base);
 
 		if (pp->count>2)
 		{
 			const u32 *idx = idx_base + pp->first;
+			u32 flip = 0;
 
-			const Vertex *vtx = vtx_base + idx[0];
-			const Vertex *vtx_end = vtx_base + idx[pp->count - 1] - 1;
-			u32 flip=0;
-			while(vtx!=vtx_end)
+			for (int i = 0; i < pp->count - 2; i++)
 			{
-				const Vertex *v0, *v1, *v2, *v3, *v4, *v5;
-
+				const Vertex *v0, *v1;
 				if (flip)
 				{
-					v0=&vtx[1];
-					v1=&vtx[0];
-					v2=&vtx[2];
+					v0 = vtx_base + idx[i + 1];
+					v1 = vtx_base + idx[i];
 				}
 				else
 				{
-					v0=&vtx[0];
-					v1=&vtx[1];
-					v2=&vtx[2];
+					v0 = vtx_base + idx[i];
+					v1 = vtx_base + idx[i + 1];
 				}
+				const Vertex *v2 = vtx_base + idx[i + 2];
 #if 0
+				const Vertex *v3, *v4, *v5;
 				if (settings.pvr.subdivide_transp)
 				{
 					u32 tess_x=(max3(v0->x,v1->x,v2->x)-min3(v0->x,v1->x,v2->x))/32;
@@ -350,8 +348,6 @@ void GenSorted(int first, int count, vector<SortTrigDrawParam>& pidx_sort, vecto
 				}
 
 				flip ^= 1;
-
-				vtx++;
 			}
 		}
 		pp++;

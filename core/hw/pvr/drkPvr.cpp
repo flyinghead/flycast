@@ -9,8 +9,6 @@
 	Renderer
 */
 
-#include "drkPvr.h"
-
 #include "spg.h"
 #include "pvr_regs.h"
 #include "Renderer_if.h"

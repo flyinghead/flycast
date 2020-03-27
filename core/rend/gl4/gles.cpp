@@ -47,14 +47,8 @@ void main()
 	vtx_base1 = in_base1;
 	vtx_offs1 = in_offs1;
 	vtx_uv1 = in_uv1;
-	vec4 vpos = in_pos;
-	if (vpos.z < 0.0 || vpos.z > 3.4e37)
-	{
-		gl_Position = vec4(0.0, 0.0, 1.0, 1.0 / vpos.z);
-		return;
-	}
+	vec4 vpos = normal_matrix * in_pos;
 	
-	vpos = normal_matrix * vpos;
 	vpos.w = 1.0 / vpos.z;
 	vpos.z = vpos.w;
 	vpos.xy *= vpos.w; 

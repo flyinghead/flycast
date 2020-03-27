@@ -7,47 +7,45 @@
 #include "input/gamepad_device.h"
 
 //SPG emulation; Scanline/Raster beam registers & interrupts
-//Time to emulate that stuff correctly ;)
 
-u32 in_vblank=0;
+u32 in_vblank;
 u32 clc_pvr_scanline;
-u32 pvr_numscanlines=512;
-u32 prv_cur_scanline=-1;
-u32 vblk_cnt=0;
+static u32 pvr_numscanlines = 512;
+static u32 prv_cur_scanline = -1;
+static u32 vblk_cnt;
 
-float last_fps=0;
+static float last_fps;
 
-//54 mhz pixel clock :)
+//54 mhz pixel clock
 #define PIXEL_CLOCK (54*1000*1000/2)
-u32 Line_Cycles=0;
-u32 Frame_Cycles=0;
+static u32 Line_Cycles;
+static u32 Frame_Cycles;
 int render_end_schid;
 int vblank_schid;
 
 void CalculateSync()
 {
-	u32 pixel_clock;
-	float scale_x=1,scale_y=1;
+	u32 pixel_clock = PIXEL_CLOCK / (FB_R_CTRL.vclk_div ? 1 : 2);
 
-	pixel_clock=PIXEL_CLOCK / (FB_R_CTRL.vclk_div?1:2);
+	// We need to calculate the pixel clock
 
-	//We need to calculate the pixel clock
-
-	u32 sync_cycles=(SPG_LOAD.hcount+1)*(SPG_LOAD.vcount+1);
-	pvr_numscanlines=SPG_LOAD.vcount+1;
+	pvr_numscanlines = SPG_LOAD.vcount + 1;
 	
-	Line_Cycles=(u32)((u64)SH4_MAIN_CLOCK*(u64)(SPG_LOAD.hcount+1)/(u64)pixel_clock);
+	Line_Cycles = (u32)((u64)SH4_MAIN_CLOCK * (u64)(SPG_LOAD.hcount + 1) / (u64)pixel_clock);
 	
+	float scale_x = 1.f;
+	float scale_y = 1.f;
+
 	if (SPG_CONTROL.interlace)
 	{
 		//this is a temp hack
-		Line_Cycles/=2;
-		u32 interl_mode=VO_CONTROL.field_mode;
-		
+		Line_Cycles /= 2;
+
+		//u32 interl_mode=VO_CONTROL.field_mode;
 		//if (interl_mode==2)//3 will be funny =P
 		//  scale_y=0.5f;//single interlace
 		//else
-			scale_y=1;
+			scale_y = 1.f;
 	}
 	else
 	{
@@ -57,28 +55,19 @@ void CalculateSync()
 			scale_y = 0.5f;//non interlaced modes have half resolution
 	}
 
-	rend_set_fb_scale(scale_x,scale_y);
+	rend_set_fb_scale(scale_x, scale_y);
 	
-	//Frame_Cycles=(u64)DCclock*(u64)sync_cycles/(u64)pixel_clock;
-	
-	Frame_Cycles=pvr_numscanlines*Line_Cycles;
-	prv_cur_scanline=0;
+	Frame_Cycles = pvr_numscanlines * Line_Cycles;
+	prv_cur_scanline = 0;
 
-	sh4_sched_request(vblank_schid,Line_Cycles);
+	sh4_sched_request(vblank_schid, Line_Cycles);
 }
-
-double speed_load_mspdf;
-
-int mips_counter;
-
-double full_rps;
 
 static u32 lightgun_line = 0xffff;
 static u32 lightgun_hpos;
 
-double mspdf;
+u32 fskip;
 
-u32 fskip=0;
 //called from sh4 context , should update pvr/ta state and everything else
 int spg_line_sched(int tag, int cycl, int jit)
 {
@@ -180,16 +169,15 @@ int spg_line_sched(int tag, int cycl, int jit)
 				}
 
 				double frames_done=spd_cpu/2;
-				mspdf=1/frames_done*1000;
+				double mspdf=1/frames_done*1000;
 
-				full_rps=(spd_fps+fskip/ts);
+				double full_rps = spd_fps + fskip / ts;
 
-				INFO_LOG(COMMON, "%s/%c - %4.2f - %4.2f - V: %4.2f (%.2f, %s%s%4.2f) R: %4.2f+%4.2f VTX: %4.2f%c, MIPS: %.2f",
+				INFO_LOG(COMMON, "%s/%c - %4.2f - %4.2f - V: %4.2f (%.2f, %s%s%4.2f) R: %4.2f+%4.2f VTX: %4.2f%c",
 					VER_SHORTNAME,'n',mspdf,spd_cpu*100/200,spd_vbs,
 					spd_vbs/full_rps,mode,res,fullvbs,
 					spd_fps,fskip/ts
-					, mv, mv_c, mips_counter/ 1024.0 / 1024.0);
-					mips_counter = 0;
+					, mv, mv_c);
 				
 				fskip=0;
 				last_fps=os_GetSeconds();
@@ -225,15 +213,12 @@ int spg_line_sched(int tag, int cycl, int jit)
 	if (min_scanline<SPG_VBLANK.vbend)
 		min_active=min(min_active,SPG_VBLANK.vbend);
 
-	if (min_scanline<pvr_numscanlines)
-		min_active=min(min_active,pvr_numscanlines);
-
 	if (lightgun_line != 0xffff && min_scanline < lightgun_line)
 		min_active = min(min_active, lightgun_line);
 
 	min_active=max(min_active,min_scanline);
 
-	return (min_active-prv_cur_scanline)*Line_Cycles;
+	return (min_active - prv_cur_scanline) * Line_Cycles;
 }
 
 void read_lightgun_position(int x, int y)

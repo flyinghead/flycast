@@ -389,7 +389,6 @@
     <ClInclude Include="..\core\hw\naomi\naomi_roms.h" />
     <ClInclude Include="..\core\hw\naomi\naomi_roms_input.h" />
     <ClInclude Include="..\core\hw\pvr\config.h" />
-    <ClInclude Include="..\core\hw\pvr\drkPvr.h" />
     <ClInclude Include="..\core\hw\pvr\helper_classes.h" />
     <ClInclude Include="..\core\hw\pvr\pvr_mem.h" />
     <ClInclude Include="..\core\hw\pvr\pvr_regs.h" />

@@ -813,9 +813,6 @@
     <ClInclude Include="..\core\hw\pvr\config.h">
       <Filter>hw\pvr</Filter>
     </ClInclude>
-    <ClInclude Include="..\core\hw\pvr\drkPvr.h">
-      <Filter>hw\pvr</Filter>
-    </ClInclude>
     <ClInclude Include="..\core\hw\pvr\helper_classes.h">
       <Filter>hw\pvr</Filter>
     </ClInclude>
