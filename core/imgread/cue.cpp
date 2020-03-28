@@ -80,6 +80,7 @@ Disc* cue_parse(const char* file)
 	string track_filename;
 	u32 track_number = -1;
 	string track_type;
+	u32 session_number = 0;
 
 	while (!cuesheet.eof())
 	{
@@ -89,15 +90,38 @@ Disc* cue_parse(const char* file)
 		if (token == "REM")
 		{
 			cuesheet >> token;
-			if (token == "HIGH-DENSITY")
+			if (token == "SESSION")
 			{
-				current_fad = 45000 + 150;
+				// Multi-session
+				u32 cur_session;
+				cuesheet >> cur_session;
+				if (cur_session == 0)
+					WARN_LOG(GDROM, "CUE parse error: invalid session number %s", token.c_str());
+				else if (cur_session != session_number)
+				{
+					session_number = cur_session;
+					if (session_number == 2)
+						// session 1 lead-out: 01:30:00, session 2 lead-in: 01:00:00, pregap: 00:02:00
+						current_fad += 11400;
+
+					Session ses;
+					ses.FirstTrack = disc->tracks.size() + 1;
+					ses.StartFAD = current_fad;
+					disc->sessions.push_back(ses);
+					DEBUG_LOG(GDROM, "session[%zd]: 1st track: %d FAD:%d", disc->sessions.size(), ses.FirstTrack, ses.StartFAD);
+				}
 			}
-			else if (token != "SINGLE-DENSITY")
-				WARN_LOG(GDROM, "CUE parse error: unrecognized REM token %s. Expected SINGLE-DENSITY or HIGH-DENSITY", token.c_str());
-			cuesheet >> token;
-			if (token != "AREA")
-				WARN_LOG(GDROM, "CUE parse error: unrecognized REM token %s. Expected AREA", token.c_str());
+			else
+			{
+				// GD-Rom
+				if (token == "HIGH-DENSITY")
+					current_fad = 45000 + 150;
+				else if (token != "SINGLE-DENSITY")
+					WARN_LOG(GDROM, "CUE parse error: unrecognized REM token %s. Expected SINGLE-DENSITY, HIGH-DENSITY or SESSION", token.c_str());
+				cuesheet >> token;
+				if (token != "AREA")
+					WARN_LOG(GDROM, "CUE parse error: unrecognized REM token %s. Expected AREA", token.c_str());
+			}
 		}
 		else if (token == "FILE")
 		{
@@ -141,7 +165,6 @@ Disc* cue_parse(const char* file)
 				Track t;
 				t.ADDR = 0;
 				t.StartFAD = current_fad;
-				t.EndFAD = 0;
 				t.CTRL = (track_type == "AUDIO" || track_type == "CDG") ? 0 : 4;
 				string path = basepath + normalize_path_separator(track_filename);
 				core_file* track_file = core_fopen(path.c_str());
@@ -161,10 +184,9 @@ Disc* cue_parse(const char* file)
 				if (core_fsize(track_file) % sector_size != 0)
 					WARN_LOG(GDROM, "Warning: Size of track %s is not multiple of sector size %d", track_filename.c_str(), sector_size);
 				current_fad = t.StartFAD + (u32)core_fsize(track_file) / sector_size;
+				t.EndFAD = current_fad - 1;
+				DEBUG_LOG(GDROM, "file[%zd] \"%s\": session %d type %s FAD:%d -> %d", disc->tracks.size() + 1, track_filename.c_str(), session_number, track_type.c_str(), t.StartFAD, t.EndFAD);
 				
-				//printf("file[%lu] \"%s\": StartFAD:%d, sector_size:%d file_size:%d\n", disc->tracks.size(),
-				//		track_filename.c_str(), t.StartFAD, sector_size, (u32)core_fsize(track_file));
-
 				t.file = new RawTrackFile(track_file, 0, t.StartFAD, sector_size);
 				disc->tracks.push_back(t);
 				
@@ -173,7 +195,6 @@ Disc* cue_parse(const char* file)
 				track_filename.clear();
 			}
 		}
-
 	}
 	if (disc->tracks.empty())
 	{
@@ -182,7 +203,15 @@ Disc* cue_parse(const char* file)
 		return nullptr;
 	}
 
-	disc->FillGDSession();
+	if (session_number == 0)
+		disc->FillGDSession();
+	else
+	{
+		disc->type = CdRom_XA;
+		disc->LeadOut.ADDR = 0;
+		disc->LeadOut.CTRL = 0;
+		disc->EndFAD = disc->LeadOut.StartFAD = current_fad;
+	}
 
 	// Get rid of the pregap for audio tracks
 	for (Track& t : disc->tracks)
