@@ -180,8 +180,7 @@ void YUV_data(u32* data , u32 count)
 //read
 u8 DYNACALL pvr_read_area1_8(u32 addr)
 {
-	INFO_LOG(MEMORY, "%08x: 8-bit VRAM reads are not possible", addr);
-	return 0;
+	return vram[pvr_map32(addr)];
 }
 
 u16 DYNACALL pvr_read_area1_16(u32 addr)

@@ -774,7 +774,7 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 	sdl_window_destroy();
 #else
 	cfgSaveBool("window", "maximized", window_maximized);
-	if (!window_maximized && screen_width != 0 && screen_width != 0)
+	if (!window_maximized && screen_width != 0 && screen_height != 0)
 	{
 		cfgSaveInt("window", "width", screen_width);
 		cfgSaveInt("window", "height", screen_height);

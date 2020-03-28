@@ -836,7 +836,7 @@ void ReadFramebuffer(PixelBuffer<u32>& pb, int& width, int& height)
 				{
 					u16 src = pvr_read_area1_16(addr);
 					*dst++ = (((src >> 11) & 0x1F) << 3) + FB_R_CTRL.fb_concat;
-					*dst++ = (((src >> 5) & 0x3F) << 2) + (FB_R_CTRL.fb_concat >> 1);
+					*dst++ = (((src >> 5) & 0x3F) << 2) + (FB_R_CTRL.fb_concat & 3);
 					*dst++ = (((src >> 0) & 0x1F) << 3) + FB_R_CTRL.fb_concat;
 					*dst++ = 0xFF;
 					addr += bpp;

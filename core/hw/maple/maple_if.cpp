@@ -217,7 +217,7 @@ static void maple_DoDma()
 	}
 
 	//printf("Maple XFER size %d bytes - %.2f ms\n",xfer_count,xfer_count*100.0f/(2*1024*1024/8));
-	sh4_sched_request(maple_schid,xfer_count*(SH4_MAIN_CLOCK/(2*1024*1024/8)));
+	sh4_sched_request(maple_schid, std::min((u64)xfer_count * (SH4_MAIN_CLOCK / (2 * 1024 * 1024 / 8)), (u64)SH4_MAIN_CLOCK));
 }
 
 int maple_schd(int tag, int c, int j)
