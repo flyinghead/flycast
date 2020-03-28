@@ -767,7 +767,11 @@ void gl_load_osd_resources()
 
 void gl_free_osd_resources()
 {
-	glcache.DeleteProgram(gl.OSD_SHADER.program);
+	if (gl.OSD_SHADER.program != 0)
+	{
+		glcache.DeleteProgram(gl.OSD_SHADER.program);
+		gl.OSD_SHADER.program = 0;
+	}
 
     if (gl.OSD_SHADER.osd_tex != 0) {
         glcache.DeleteTextures(1, &gl.OSD_SHADER.osd_tex);

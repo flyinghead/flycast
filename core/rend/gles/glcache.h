@@ -151,6 +151,8 @@ public:
 
 	void DeleteProgram(GLuint program)
 	{
+		if (program == 0)
+			return;
 		GLsizei shader_count;
 		GLuint shaders[2];
 		glGetAttachedShaders(program, ARRAY_SIZE(shaders), &shader_count, shaders);
