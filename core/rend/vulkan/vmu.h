@@ -19,9 +19,11 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #pragma once
+#include "quad.h"
+
 #include <array>
 #include <memory>
-#include "quad.h"
+#include <vector>
 
 class Texture;
 

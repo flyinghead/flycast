@@ -19,7 +19,6 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #pragma once
-#include <memory>
 #include "rend/sorter.h"
 #include "rend/transform_matrix.h"
 #include "vulkan.h"
@@ -28,6 +27,9 @@
 #include "pipeline.h"
 #include "shaders.h"
 #include "texture.h"
+
+#include <memory>
+#include <vector>
 
 class BaseDrawer
 {

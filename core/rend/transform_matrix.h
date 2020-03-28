@@ -19,9 +19,10 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #pragma once
+#include "hw/pvr/ta_ctx.h"
+
 #include <glm/glm.hpp>
 #include <glm/gtx/transform.hpp>
-#include "hw/pvr/ta_ctx.h"
 
 extern float fb_scale_x, fb_scale_y;
 extern int screen_width, screen_height;

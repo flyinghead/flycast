@@ -1,19 +1,19 @@
-#include <algorithm>
-#include <mutex>
-#ifndef TARGET_NO_OPENMP
-#include <omp.h>
-#endif
-
 #include "TexCache.h"
-#include "hw/pvr/pvr_regs.h"
+#include "CustomTexture.h"
+#include "deps/xbrz/xbrz.h"
 #include "hw/pvr/pvr_mem.h"
 #include "hw/mem/_vmem.h"
 #include "hw/mem/vmem32.h"
 #include "hw/sh4/modules/mmu.h"
-#include "deps/xbrz/xbrz.h"
-#include <xxhash.h>
-#include "CustomTexture.h"
+
+#include <algorithm>
+#include <mutex>
 #include <png.h>
+#include <xxhash.h>
+
+#ifndef TARGET_NO_OPENMP
+#include <omp.h>
+#endif
 
 u8* vq_codebook;
 u32 palette_index;

@@ -4,7 +4,6 @@
  *  Created on: May 26, 2018
  *      Author: raph
  */
-#include <cmath>
 #include "gl4.h"
 #include "rend/gles/glcache.h"
 

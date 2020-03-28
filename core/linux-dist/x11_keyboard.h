@@ -1,6 +1,6 @@
 #pragma once
-#include "input/keyboard_device.h"
 #include "input/gamepad_device.h"
+#include "input/keyboard_device.h"
 #include "x11.h"
 
 class X11KeyboardDevice : public KeyboardDeviceTemplate<int>

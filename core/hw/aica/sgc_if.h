@@ -1,5 +1,5 @@
 #pragma once
-#include "aica.h"
+#include "types.h"
 
 void AICA_Sample();
 void AICA_Sample32();

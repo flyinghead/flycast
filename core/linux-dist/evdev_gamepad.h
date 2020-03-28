@@ -1,6 +1,10 @@
-#include "../input/gamepad_device.h"
-#include "oslib/oslib.h"
 #include "evdev.h"
+#include "input/gamepad_device.h"
+#include "oslib/oslib.h"
+
+#include <fcntl.h>
+#include <linux/input.h>
+#include <unistd.h>
 
 class EvdevGamepadDevice : public GamepadDevice
 {

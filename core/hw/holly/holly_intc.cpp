@@ -1,9 +1,7 @@
-#include "types.h"
 #include "holly_intc.h"
-
-#include "hw/sh4/sh4_interrupts.h"
-#include "hw/holly/sb.h"
+#include "sb.h"
 #include "hw/maple/maple_if.h"
+#include "hw/sh4/sh4_interrupts.h"
 
 /*
 	ASIC Interrupt controller

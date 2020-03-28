@@ -19,9 +19,11 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #pragma once
-#include <glm/glm.hpp>
 #include "vulkan.h"
 #include "SPIRV/GlslangToSpv.h"
+
+#include <glm/glm.hpp>
+#include <map>
 
 struct VertexShaderParams
 {

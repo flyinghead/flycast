@@ -3,7 +3,6 @@
 
 #include "types.h"
 #include "hw/sh4/sh4_mmr.h"
-#include "types.h"
 #include "ccn.h"
 #include "../sh4_core.h"
 #include "hw/pvr/pvr_mem.h"

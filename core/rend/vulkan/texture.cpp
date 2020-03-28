@@ -18,9 +18,11 @@
     You should have received a copy of the GNU General Public License
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
-#include <math.h>
 #include "texture.h"
 #include "utils.h"
+
+#include <algorithm>
+#include <memory>
 
 void setImageLayout(vk::CommandBuffer const& commandBuffer, vk::Image image, vk::Format format, u32 mipmapLevels, vk::ImageLayout oldImageLayout, vk::ImageLayout newImageLayout)
 {

@@ -3,14 +3,12 @@
 	DMA hacks are here
 */
 
-#include "types.h"
+#include "pvr_sb_regs.h"
+#include "ta.h"
 #include "hw/holly/holly_intc.h"
 #include "hw/holly/sb.h"
 #include "hw/sh4/modules/dmac.h"
 #include "hw/sh4/sh4_mem.h"
-#include "pvr_sb_regs.h"
-#include "hw/sh4/sh4_mmr.h"
-#include "ta.h"
 
 void RegWrite_SB_C2DST(u32 addr, u32 data)
 {

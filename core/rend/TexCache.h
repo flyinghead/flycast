@@ -1,13 +1,11 @@
 #pragma once
+#include "oslib/oslib.h"
+#include "hw/pvr/Renderer_if.h"
+
+#include <array>
 #include <atomic>
 #include <memory>
 #include <unordered_map>
-#include <array>
-#include "oslib/oslib.h"
-#include "hw/pvr/pvr_regs.h"
-#undef ID
-#include "hw/pvr/ta_structs.h"
-#include "hw/pvr/Renderer_if.h"
 
 extern u8* vq_codebook;
 extern u32 palette_index;

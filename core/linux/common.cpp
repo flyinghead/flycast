@@ -1,5 +1,4 @@
 #include "types.h"
-#include "cfg/cfg.h"
 
 #if HOST_OS==OS_LINUX || HOST_OS == OS_DARWIN
 #if HOST_OS == OS_DARWIN
@@ -7,13 +6,7 @@
 	#define __USE_GNU 1
 	#include <TargetConditionals.h>
 #endif
-#include <poll.h>
-#include <termios.h>
-#include <fcntl.h>
-#include <semaphore.h>
-#include <cstdarg>
 #include <csignal>
-#include <sys/param.h>
 #include <sys/time.h>
 #if defined(__linux__) && !defined(__ANDROID__)
   #include <sys/personality.h>
@@ -133,8 +126,6 @@ void install_fault_handler(void)
 // No exceptions/nvmem dummy handlers.
 void install_fault_handler(void) {}
 #endif // !defined(TARGET_NO_EXCEPTIONS)
-
-#include <errno.h>
 
 double os_GetSeconds()
 {

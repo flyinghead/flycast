@@ -1,6 +1,4 @@
-#include "ta.h"
 #include "ta_ctx.h"
-
 #include "hw/sh4/sh4_sched.h"
 #include "oslib/oslib.h"
 

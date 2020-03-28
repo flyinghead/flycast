@@ -4,18 +4,15 @@
 
 	Routing is mostly handled here, as well as flash/SRAM emulation
 */
-#include "types.h"
-#include "hw/sh4/sh4_mem.h"
-
 #include "sb_mem.h"
 #include "sb.h"
-#include "hw/pvr/pvr_mem.h"
-#include "hw/gdrom/gdrom_if.h"
 #include "hw/aica/aica_if.h"
-#include "hw/naomi/naomi.h"
-#include "hw/modem/modem.h"
-
 #include "hw/flashrom/flashrom.h"
+#include "hw/gdrom/gdrom_if.h"
+#include "hw/modem/modem.h"
+#include "hw/naomi/naomi.h"
+#include "hw/pvr/pvr_mem.h"
+#include "hw/sh4/sh4_mem.h"
 #include "reios/reios.h"
 
 MemChip *sys_rom;

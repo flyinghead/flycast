@@ -1,6 +1,6 @@
 #pragma once
-#include <map>
 #include "wsi/gl_context.h"
+#include <map>
 
 #define TEXTURE_ID_CACHE_SIZE 32
 

@@ -1,17 +1,11 @@
 #include "types.h"
-#include "cfg/cfg.h"
 
 #if HOST_OS==OS_LINUX
-#include <poll.h>
-#include <termios.h>
-#include <fcntl.h>
-#include <semaphore.h>
-#include <cstdarg>
-#include <csignal>
-#include <sys/param.h>
-#include <sys/time.h>
 #include "hw/sh4/dyna/blockmanager.h"
 #include "log/LogManager.h"
+
+#include <cstdarg>
+#include <csignal>
 #include <unistd.h>
 
 #if defined(SUPPORT_DISPMANX)
@@ -35,6 +29,7 @@
 #endif
 
 #if defined(USE_JOYSTICK)
+    #include "cfg/cfg.h"
 	#include "joystick.h"
 #endif
 
@@ -149,7 +144,7 @@ void* rend_thread(void* p);
 			}
 		}
 
-		x11_window_destroy():
+		x11_window_destroy();
 
 		// finish cleaning
 		if (sig_num!=0)

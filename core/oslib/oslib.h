@@ -1,7 +1,8 @@
 #pragma once
+#include "types.h"
+
 #include <algorithm>
 #include <cctype>
-#include "types.h"
 
 void os_SetWindowText(const char* text);
 double os_GetSeconds();

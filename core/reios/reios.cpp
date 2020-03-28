@@ -22,6 +22,7 @@
 #include "iso9660.h"
 #include "font.h"
 #include "hw/aica/aica.h"
+#include "oslib/oslib.h"
 
 #include <map>
 

@@ -576,7 +576,6 @@
 		9C7A3A5F18C806E00070BB5F /* gd_driver.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = gd_driver.h; sourceTree = "<group>"; };
 		9C7A3A6018C806E00070BB5F /* gdi.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = gdi.cpp; sourceTree = "<group>"; };
 		9C7A3A6118C806E00070BB5F /* ImgReader.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ImgReader.cpp; sourceTree = "<group>"; };
-		9C7A3A6218C806E00070BB5F /* ImgReader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ImgReader.h; sourceTree = "<group>"; };
 		9C7A3A6318C806E00070BB5F /* ioctl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ioctl.cpp; sourceTree = "<group>"; };
 		9C7A3A6418C806E00070BB5F /* SCSIDEFS.H */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = SCSIDEFS.H; sourceTree = "<group>"; };
 		9C7A3A6718C806E00070BB5F /* egl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = egl.h; sourceTree = "<group>"; };
@@ -597,7 +596,6 @@
 		9C7A3A8F18C806E00070BB5F /* gles.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = gles.cpp; sourceTree = "<group>"; };
 		9C7A3A9018C806E00070BB5F /* gles.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = gles.h; sourceTree = "<group>"; };
 		9C7A3A9118C806E00070BB5F /* gltex.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = gltex.cpp; sourceTree = "<group>"; };
-		9C7A3A9418C806E00070BB5F /* rend.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = rend.h; sourceTree = "<group>"; };
 		9C7A3A9518C806E00070BB5F /* TexCache.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = TexCache.cpp; sourceTree = "<group>"; };
 		9C7A3A9618C806E00070BB5F /* TexCache.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TexCache.h; sourceTree = "<group>"; };
 		9C7A3A9918C806E00070BB5F /* stdclass.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = stdclass.cpp; sourceTree = "<group>"; };
@@ -1308,7 +1306,6 @@
 				9C7A3A5F18C806E00070BB5F /* gd_driver.h */,
 				9C7A3A6018C806E00070BB5F /* gdi.cpp */,
 				9C7A3A6118C806E00070BB5F /* ImgReader.cpp */,
-				9C7A3A6218C806E00070BB5F /* ImgReader.h */,
 				9C7A3A6318C806E00070BB5F /* ioctl.cpp */,
 				9C7A3A6418C806E00070BB5F /* SCSIDEFS.H */,
 			);
@@ -1386,7 +1383,6 @@
 			isa = PBXGroup;
 			children = (
 				9C7A3A8D18C806E00070BB5F /* gles */,
-				9C7A3A9418C806E00070BB5F /* rend.h */,
 				9C7A3A9518C806E00070BB5F /* TexCache.cpp */,
 				9C7A3A9618C806E00070BB5F /* TexCache.h */,
 			);

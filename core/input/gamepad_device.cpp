@@ -16,12 +16,14 @@
     You should have received a copy of the GNU General Public License
     along with reicast.  If not, see <https://www.gnu.org/licenses/>.
  */
+
+#include "gamepad_device.h"
+#include "cfg/cfg.h"
+#include "oslib/oslib.h"
+#include "rend/gui.h"
+
 #include <algorithm>
 #include <climits>
-#include "gamepad_device.h"
-#include "rend/gui.h"
-#include "oslib/oslib.h"
-#include "cfg/cfg.h"
 
 #define MAPLE_PORT_CFG_PREFIX "maple_"
 

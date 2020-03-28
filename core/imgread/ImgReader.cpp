@@ -1,7 +1,6 @@
 // nullGDR.cpp : Defines the entry point for the DLL application.
 //
 
-#include "ImgReader.h"
 //Get a copy of the operators for structs ... ugly , but works :)
 #include "common.h"
 

@@ -17,9 +17,8 @@
     along with reicast.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <sstream>
-#include "types.h"
 #include "common.h"
+#include <sstream>
 
 extern string OS_dirname(string file);
 extern string normalize_path_separator(string path);

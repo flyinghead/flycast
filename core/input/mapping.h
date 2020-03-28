@@ -17,11 +17,12 @@
     along with reicast.  If not, see <https://www.gnu.org/licenses/>.
  */
 #pragma once
-#include <map>
-#include <memory>
-#include <cstdio>
+
 #include "types.h"
 #include "gamepad.h"
+
+#include <map>
+#include <memory>
 
 class InputMapping
 {

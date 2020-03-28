@@ -1,5 +1,5 @@
+#pragma once
 #include "types.h"
-
 
 void virt_arm_reset();
 void virt_arm_init();

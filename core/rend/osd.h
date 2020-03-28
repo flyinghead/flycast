@@ -14,8 +14,10 @@
 	 You should have received a copy of the GNU General Public License
 	 along with reicast.  If not, see <https://www.gnu.org/licenses/>.
  */
-#include <vector>
+#pragma once
+
 #include "types.h"
+#include <vector>
 
 #define VJOY_VISIBLE 14
 #define OSD_TEX_W 512

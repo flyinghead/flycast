@@ -1,13 +1,5 @@
-#include <cmath>
 #include "gl4.h"
 #include "rend/gles/glcache.h"
-#include "wsi/gl_context.h"
-#include "rend/TexCache.h"
-#include "cfg/cfg.h"
-
-#include "oslib/oslib.h"
-#include "rend/rend.h"
-#include "rend/gui.h"
 #include "rend/transform_matrix.h"
 
 //Fragment and vertex shaders code

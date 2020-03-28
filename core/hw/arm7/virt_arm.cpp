@@ -1,6 +1,8 @@
-#include "virt_arm.h"
+#include "build.h"
 
 #if HOST_CPU==CPU_X86 && FEAT_AREC != DYNAREC_NONE
+
+#include "virt_arm.h"
 
 namespace VARM
 {

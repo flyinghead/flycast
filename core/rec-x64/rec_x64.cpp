@@ -21,7 +21,6 @@
 #include "hw/sh4/sh4_mem.h"
 #include "hw/sh4/sh4_rom.h"
 #include "hw/mem/vmem32.h"
-#include "emitter/x86_emitter.h"
 #include "profiler/profiler.h"
 #include "oslib/oslib.h"
 #include "x64_regalloc.h"

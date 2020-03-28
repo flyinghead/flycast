@@ -1,9 +1,6 @@
-#include "types.h"
-#include "maple_if.h"
-#include "maple_helper.h"
-#include "maple_devs.h"
 #include "maple_cfg.h"
-#include "cfg/cfg.h"
+#include "maple_helper.h"
+#include "maple_if.h"
 #include "hw/naomi/naomi_cart.h"
 #include "input/gamepad_device.h"
 

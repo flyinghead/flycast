@@ -3,16 +3,14 @@
 	This doesn't implement any functionality, only routing
 */
 
-#include "types.h"
 #include "sb.h"
-#include "hw/holly/holly_intc.h"
-#include "hw/pvr/pvr_sb_regs.h"
+#include "holly_intc.h"
+#include "hw/aica/aica_if.h"
 #include "hw/gdrom/gdrom_if.h"
 #include "hw/maple/maple_if.h"
-#include "hw/aica/aica_if.h"
 #include "hw/modem/modem.h"
-
 #include "hw/naomi/naomi.h"
+#include "hw/pvr/pvr_sb_regs.h"
 
 extern void dc_request_reset();
 

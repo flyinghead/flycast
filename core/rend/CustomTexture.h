@@ -18,9 +18,12 @@
  */
 #pragma once
 
-#include <string>
-#include <set>
 #include "TexCache.h"
+#include "stdclass.h"
+
+#include <set>
+#include <string>
+#include <vector>
 
 class CustomTexture {
 public:

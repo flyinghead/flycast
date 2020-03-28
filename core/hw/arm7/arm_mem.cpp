@@ -1,7 +1,4 @@
 #include "arm_mem.h"
-#include "arm7.h"
-#include "types.h"
-#include "hw/aica/aica_if.h"
 
 #define REG_L (0x2D00)
 #define REG_M (0x2D04)

@@ -5,10 +5,9 @@
 */
 
 #include "aica_if.h"
-#include "hw/sh4/sh4_mem.h"
 #include "hw/holly/sb.h"
-#include "types.h"
 #include "hw/holly/holly_intc.h"
+#include "hw/sh4/sh4_mem.h"
 #include "hw/sh4/sh4_sched.h"
 
 #include <ctime>

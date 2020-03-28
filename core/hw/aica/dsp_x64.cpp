@@ -23,7 +23,8 @@
 
 #include <xbyak/xbyak.h>
 #include "dsp.h"
-#include "hw/aica/aica_if.h"
+#include "aica.h"
+#include "aica_if.h"
 #include "hw/mem/_vmem.h"
 
 #define CC_RW2RX(ptr) (ptr)

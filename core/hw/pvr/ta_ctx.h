@@ -1,5 +1,6 @@
 #pragma once
-#include "ta.h"
+#include "types.h"
+#include "ta_structs.h"
 #include "pvr_regs.h"
 #include "helper_classes.h"
 

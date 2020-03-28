@@ -19,7 +19,6 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #pragma once
-#include <memory>
 #include "rend/sorter.h"
 #include "rend/transform_matrix.h"
 #include "../vulkan.h"
@@ -31,6 +30,10 @@
 #include "../quad.h"
 #include "oit_buffer.h"
 #include "../drawer.h"
+
+#include <array>
+#include <memory>
+#include <vector>
 
 class OITDrawer : public BaseDrawer
 {

@@ -1,7 +1,6 @@
 #include "common.h"
-#include <ctype.h>
-#include <sstream>
 #include <algorithm>
+#include <sstream>
 
 // On windows, transform / to \\
 

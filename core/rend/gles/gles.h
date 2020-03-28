@@ -1,9 +1,10 @@
 #pragma once
-#include <unordered_map>
-#include <atomic>
-#include "rend/rend.h"
+#include "hw/pvr/ta_structs.h"
+#include "hw/pvr/ta_ctx.h"
 #include "rend/TexCache.h"
 #include "wsi/gl_context.h"
+
+#include <unordered_map>
 #include <glm/glm.hpp>
 
 #define glCheck() do { if (unlikely(settings.validate.OpenGlChecks)) { verify(glGetError()==GL_NO_ERROR); } } while(0)

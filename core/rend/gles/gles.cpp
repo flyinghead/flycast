@@ -1,12 +1,14 @@
-#include <cmath>
 #include "glcache.h"
 #include "gles.h"
-#include "rend/TexCache.h"
-#include "rend/gui.h"
-#include "wsi/gl_context.h"
 #include "cfg/cfg.h"
+#include "hw/pvr/ta.h"
+#include "rend/gui.h"
 #include "rend/osd.h"
+#include "rend/TexCache.h"
 #include "rend/transform_matrix.h"
+#include "wsi/gl_context.h"
+
+#include <cmath>
 
 #ifdef GLES
 #ifndef GL_RED
@@ -16,10 +18,6 @@
 #define GL_MAJOR_VERSION                  0x821B
 #endif
 #endif
-
-#include "oslib/oslib.h"
-#include "rend/rend.h"
-#include "input/gamepad.h"
 
 float fb_scale_x, fb_scale_y; // FIXME
 

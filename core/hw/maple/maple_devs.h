@@ -1,6 +1,6 @@
 #pragma once
-#include <math.h>
 #include "types.h"
+#include <cmath>
 
 enum MapleDeviceType
 {

@@ -1,10 +1,9 @@
 #include "spg.h"
 #include "Renderer_if.h"
-#include "pvr_regs.h"
 #include "hw/holly/holly_intc.h"
-#include "oslib/oslib.h"
 #include "hw/sh4/sh4_sched.h"
 #include "input/gamepad_device.h"
+#include "oslib/oslib.h"
 
 //SPG emulation; Scanline/Raster beam registers & interrupts
 

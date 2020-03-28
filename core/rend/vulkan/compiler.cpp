@@ -18,7 +18,6 @@
     You should have received a copy of the GNU General Public License
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
-#include <glm/glm.hpp>
 #include "compiler.h"
 #include "SPIRV/GlslangToSpv.h"
 #include "vulkan_context.h"

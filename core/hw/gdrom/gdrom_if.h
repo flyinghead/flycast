@@ -5,7 +5,6 @@
 //there were at least 4 gdrom implementations, ZGDROM, HLE, gdromv1 (never worked), gdromv2 (first release)
 //i removed the #defines to select them as they are now redundant, so this just becomes a part of
 //the code's history :)
-#include "gdromv3.h"
 
 void gdrom_reg_Init();
 void gdrom_reg_Term();

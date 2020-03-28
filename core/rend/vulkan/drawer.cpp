@@ -18,7 +18,6 @@
     You should have received a copy of the GNU General Public License
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
-#include <math.h>
 #include "drawer.h"
 #include "hw/pvr/pvr_mem.h"
 

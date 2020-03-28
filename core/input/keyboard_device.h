@@ -19,7 +19,8 @@
 
 #pragma once
 #include "types.h"
-#include "mapping.h"
+
+#include <memory>
 
 class KeyboardDevice
 {

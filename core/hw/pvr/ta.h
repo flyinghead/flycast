@@ -1,5 +1,6 @@
 #pragma once
-#include "ta_structs.h"
+#include "types.h"
+#include "ta_ctx.h"
 
 struct TA_context;
 
