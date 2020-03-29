@@ -276,11 +276,6 @@ using namespace std;
 
 #include "log/Log.h"
 
-#define EMUERROR(...) INFO_LOG(COMMON, __VA_ARGS__)
-#define EMUERROR2 EMUERROR
-#define EMUERROR3 EMUERROR
-#define EMUERROR4 EMUERROR
-
 #ifndef NO_MMU
 #define _X_x_X_MMU_VER_STR "/mmu"
 #else

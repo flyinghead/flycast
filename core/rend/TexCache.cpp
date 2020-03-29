@@ -1089,7 +1089,7 @@ u8* loadPNGData(const string& fname, int &width, int &height)
 
 	if (!file)
 	{
-		EMUERROR("Error opening %s", filename);
+		INFO_LOG(COMMON, "Error opening %s", filename);
 		return NULL;
 	}
 

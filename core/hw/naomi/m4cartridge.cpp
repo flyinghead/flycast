@@ -49,7 +49,7 @@ void M4Cartridge::device_start()
 {
 	if (m4id == 0)
 	{
-		EMUERROR("Warning: M4 ID not provided\n");
+		INFO_LOG(COMMON, "Warning: M4 ID not provided\n");
 		m4id = 0x5504;
 	}
 
