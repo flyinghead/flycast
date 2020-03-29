@@ -1,5 +1,6 @@
 #pragma once
 #include "types.h"
+#include "stdclass.h"
 
 //main system mem
 extern VArray2 mem_b;

@@ -1,5 +1,6 @@
 #pragma once
 #include "types.h"
+#include "stdclass.h"
 
 enum Sh4RegType
 {
@@ -245,6 +246,7 @@ struct sh4_if
 	StartFP* Start;
 };
 
+extern sh4_if sh4_cpu;
 
 struct Sh4Context
 {

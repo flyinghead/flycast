@@ -26,6 +26,7 @@
 		#include <netdb.h>
 		#include <unistd.h>
 	#else
+		#include <windows.h>
 		#pragma comment (lib, "wsock32.lib")
 	#endif
 #endif

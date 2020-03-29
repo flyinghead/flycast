@@ -3,7 +3,7 @@
 */
 
 #include "types.h"
-#include "../sh4_sched.h"
+#include "hw/sh4/sh4_sched.h"
 #include "hw/sh4/sh4_interrupts.h"
 #include "hw/sh4/sh4_mmr.h"
 

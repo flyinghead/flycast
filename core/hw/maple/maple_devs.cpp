@@ -5,6 +5,7 @@
 #include "hw/naomi/naomi_cart.h"
 #include "hw/pvr/spg.h"
 #include "input/gamepad_device.h"
+#include "stdclass.h"
 
 #include <algorithm>
 #include <cstdlib>

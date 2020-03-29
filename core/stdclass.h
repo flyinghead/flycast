@@ -1,9 +1,6 @@
 #pragma once
 #include "types.h"
 
-#include <cstring>
-#include <string>
-
 #ifndef _WIN32
 #include <pthread.h>
 #else
@@ -174,9 +171,3 @@ public:
 		return data[i];
     }
 };
-
-int msgboxf(const char* text,unsigned int type,...);
-
-#define MBX_OK                       0
-#define MBX_ICONEXCLAMATION          0
-#define MBX_ICONERROR                0

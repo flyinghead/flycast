@@ -1,14 +1,14 @@
 //gah , ccn emulation
 //CCN: Cache and TLB controller
 
-#include "types.h"
-#include "hw/sh4/sh4_mmr.h"
 #include "ccn.h"
-#include "../sh4_core.h"
-#include "hw/pvr/pvr_mem.h"
+#include "mmu.h"
 #include "hw/mem/_vmem.h"
 #include "hw/mem/vmem32.h"
-#include "mmu.h"
+#include "hw/pvr/pvr_mem.h"
+#include "hw/sh4/sh4_if.h"
+#include "hw/sh4/sh4_mmr.h"
+#include "hw/sh4/sh4_core.h"
 
 //Types
 

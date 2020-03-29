@@ -19,6 +19,7 @@
 #if defined(USE_SDL)
 #include "sdl/sdl.h"
 #endif
+#include "stdclass.h"
 #include "wsi/context.h"
 
 OSXKeyboardDevice keyboard(0);

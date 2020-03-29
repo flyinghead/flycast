@@ -15,6 +15,7 @@
 #include "hw/naomi/naomi_cart.h"
 #include "reios/reios.h"
 #include "hw/sh4/sh4_sched.h"
+#include "hw/sh4/sh4_if.h"
 #include "hw/pvr/Renderer_if.h"
 #include "hw/pvr/spg.h"
 #include "hw/aica/dsp.h"

@@ -18,6 +18,7 @@
  */
 #include "mapping.h"
 #include "cfg/ini.h"
+#include "stdclass.h"
 
 static struct
 {

@@ -1,5 +1,6 @@
 #pragma once
 #include "types.h"
+#include "stdclass.h"
 
 extern u32 VREG;
 extern VArray2 aica_ram;

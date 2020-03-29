@@ -68,6 +68,7 @@
 
 #include <cstdint>
 #include <cstddef>
+#include <cstring>
 
 //basic types
 typedef int8_t  s8;
@@ -271,9 +272,6 @@ using namespace std;
 #define unlikely(x)       __builtin_expect((x),0)
 #endif
 
-//basic includes
-#include "stdclass.h"
-
 #include "log/Log.h"
 
 #ifndef NO_MMU
@@ -309,6 +307,12 @@ bool dc_unserialize(void **data, unsigned int *total_size);
 #else
 #define stricmp strcasecmp
 #endif
+
+int msgboxf(const char* text, unsigned int type, ...);
+
+#define MBX_OK                       0
+#define MBX_ICONEXCLAMATION          0
+#define MBX_ICONERROR                0
 
 #define verify(x) do { if ((x) == false){ msgboxf("Verify Failed  : " #x "\n in %s -> %s : %d \n", MBX_ICONERROR, (__FUNCTION__), (__FILE__), __LINE__); dbgbreak;}} while (false)
 #define die(reason) do { msgboxf("Fatal error : %s\n in %s -> %s : %d \n", MBX_ICONERROR,(reason), (__FUNCTION__), (__FILE__), __LINE__); dbgbreak;} while (false)
@@ -554,11 +558,7 @@ inline bool is_u8(u32 v) { return (u8)v==(s32)v; }
 inline bool is_s16(u32 v) { return (s16)v==(s32)v; }
 inline bool is_u16(u32 v) { return (u16)v==(u32)v; }
 
-#include "hw/sh4/sh4_if.h"
-
 //more to come
-
-extern sh4_if				  sh4_cpu;
 
 //sh4 thread
 s32 plugins_Init();

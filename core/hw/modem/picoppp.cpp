@@ -21,6 +21,8 @@
 
 #if !defined(_MSC_VER) && !defined(TARGET_NO_THREADS)
 
+#include "stdclass.h"
+
 #ifdef __MINGW32__
 #define _POSIX_SOURCE
 #endif

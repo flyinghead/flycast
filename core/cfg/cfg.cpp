@@ -5,9 +5,12 @@
 */
 
 #define _CRT_SECURE_NO_DEPRECATE (1)
-#include <cerrno>
+
 #include "cfg.h"
 #include "ini.h"
+#include "stdclass.h"
+
+#include <cerrno>
 
 static string cfgPath;
 static bool save_config = true;

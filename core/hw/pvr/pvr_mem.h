@@ -1,5 +1,6 @@
 #pragma once
 #include "types.h"
+#include "stdclass.h"
 
 f32 vrf(u32 addr);
 u32 vri(u32 addr);

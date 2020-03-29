@@ -3,9 +3,11 @@
 */
 #pragma once
 
-#include <memory>
 #include "types.h"
 #include "decoder.h"
+#include "stdclass.h"
+
+#include <memory>
 
 typedef void (*DynarecCodeEntryPtr)();
 typedef std::shared_ptr<RuntimeBlockInfo> RuntimeBlockInfoPtr;

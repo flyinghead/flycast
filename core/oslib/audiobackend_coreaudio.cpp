@@ -15,6 +15,8 @@
 #include "audiostream.h"
 
 #if HOST_OS == OS_DARWIN
+#include "stdclass.h"
+
 #include <atomic>
 
 //#include <CoreAudio/CoreAudio.h>

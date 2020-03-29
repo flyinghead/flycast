@@ -11,6 +11,7 @@
 #include <unistd.h>
 
 #include "hw/mem/_vmem.h"
+#include "hw/sh4/sh4_if.h"
 #include "stdclass.h"
 
 #ifndef MAP_NOSYNC

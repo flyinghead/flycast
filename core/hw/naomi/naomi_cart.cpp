@@ -22,7 +22,6 @@
 #include <memory>
 #include "naomi_cart.h"
 #include "naomi_regs.h"
-#include "cfg/cfg.h"
 #include "naomi.h"
 #include "decrypt.h"
 #include "naomi_roms.h"
@@ -33,6 +32,7 @@
 #include "awcartridge.h"
 #include "gdcartridge.h"
 #include "archive/archive.h"
+#include "stdclass.h"
 
 Cartridge *CurrentCartridge;
 bool bios_loaded = false;
