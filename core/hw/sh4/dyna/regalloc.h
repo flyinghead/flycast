@@ -48,7 +48,7 @@ struct RegAlloc
 
 		bool aliased;
 
-		vector<RegAccess> accesses;
+		std::vector<RegAccess> accesses;
 
 		RegSpan(const shil_param& prm,int pos, AccessMode mode)
 		{
@@ -196,7 +196,7 @@ struct RegAlloc
 	};
 
 
-	vector<RegSpan*> all_spans;
+	std::vector<RegSpan*> all_spans;
 	u32 spills;
 
 	u32 current_opid;
@@ -385,7 +385,7 @@ struct RegAlloc
 		return is_fpr && (op->rd.count()>=2 || op->rd2.count()>=2 || op->rs1.count()>=2 ||  op->rs2.count()>=2 || op->rs3.count()>=2 );
 	}
 
-	void InsertRegs(set<shil_param>& l, const shil_param& regs)
+	void InsertRegs(std::set<shil_param>& l, const shil_param& regs)
 	{
 		if (!explode_spans || (regs.count()==1 || regs.count()>2))
 		{
@@ -546,8 +546,8 @@ struct RegAlloc
 						}
 					}
 				}
-				set<shil_param> reg_wt;
-				set<shil_param> reg_rd;
+				std::set<shil_param> reg_wt;
+				std::set<shil_param> reg_rd;
 
 				//insert regs into sets ..
 				InsertRegs(reg_wt,op->rd);
@@ -560,7 +560,7 @@ struct RegAlloc
 
 				InsertRegs(reg_rd,op->rs3);
 
-				set<shil_param>::iterator iter=reg_wt.begin();
+				std::set<shil_param>::iterator iter=reg_wt.begin();
 				while( iter != reg_wt.end() ) 
 				{
 					if (reg_rd.count(*iter))
@@ -687,8 +687,8 @@ struct RegAlloc
 		}
 
 		// create register lists
-		deque<nreg_t> regs;
-		deque<nregf_t> regsf;
+		std::deque<nreg_t> regs;
+		std::deque<nregf_t> regsf;
 
 		const nreg_t* nregs=nregs_avail;
 

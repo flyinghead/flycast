@@ -246,7 +246,6 @@ int darw_printf(const char* Text,...);
 #include <vector>
 #include <string>
 #include <map>
-using namespace std;
 
 //used for asm-olny functions
 #ifdef _M_IX86

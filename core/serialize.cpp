@@ -159,7 +159,7 @@ extern Sh4RCB* p_sh4rcb;
 
 //./core/hw/sh4/sh4_sched.o
 extern u64 sh4_sched_ffb;
-extern vector<sched_list> sch_list;
+extern std::vector<sched_list> sch_list;
 
 //./core/hw/sh4/interpr/sh4_interpreter.o
 extern int aica_schid;

@@ -158,7 +158,7 @@ void *M4Cartridge::GetDmaPtr(u32 &limit)
 		int fpr_num = m4id & 0x7f;
 
 		if (((rom_cur_address >> 26) & 0x07) < fpr_num) {
-			limit = min(limit, (u32)2);
+			limit = std::min(limit, (u32)2);
 			return &cfidata[rom_cur_address & 0xffff];
 		}
 	}
@@ -176,7 +176,7 @@ void *M4Cartridge::GetDmaPtr(u32 &limit)
 	}
 	if (encryption)
 	{
-		limit = min(limit, (u32)sizeof(buffer));
+		limit = std::min(limit, (u32)sizeof(buffer));
 		return buffer;
 
 	}
@@ -184,7 +184,7 @@ void *M4Cartridge::GetDmaPtr(u32 &limit)
 	{
 		if ((DmaOffset & 0x1ffffffe) < RomSize)
 		{
-			limit = min(limit, RomSize - (DmaOffset & 0x1ffffffe));
+			limit = std::min(limit, RomSize - (DmaOffset & 0x1ffffffe));
 			return RomPtr + (DmaOffset & 0x1ffffffe);
 		}
 		else

@@ -28,9 +28,9 @@ void AnalyseBlock(RuntimeBlockInfo* blk)
 	optim.Optimize();
 }
 
-string name_reg(Sh4RegType reg)
+std::string name_reg(Sh4RegType reg)
 {
-	stringstream ss;
+	std::stringstream ss;
 
 	if (reg >= reg_fr_0 && reg <= reg_xf_15)
 		ss << "f" << (reg - reg_fr_0);
@@ -90,9 +90,9 @@ string name_reg(Sh4RegType reg)
 	return ss.str();
 }
 
-static string dissasm_param(const shil_param& prm, bool comma)
+static std::string dissasm_param(const shil_param& prm, bool comma)
 {
-	stringstream ss;
+	std::stringstream ss;
 
 	if (!prm.is_null() && comma)
 			ss << ", ";
@@ -102,7 +102,7 @@ static string dissasm_param(const shil_param& prm, bool comma)
 		if (prm.is_imm_s8())
 			ss  << (s32)prm._imm ;
 		else
-			ss << "0x" << hex << prm._imm;
+			ss << "0x" << std::hex << prm._imm;
 	}
 	else if (prm.is_reg())
 	{
@@ -118,9 +118,9 @@ static string dissasm_param(const shil_param& prm, bool comma)
 	return ss.str();
 }
 
-string shil_opcode::dissasm() const
+std::string shil_opcode::dissasm() const
 {
-	stringstream ss;
+	std::stringstream ss;
 	ss << shilop_str[op] << " " << dissasm_param(rd,false) << dissasm_param(rd2,true) << " <- " << dissasm_param(rs1,false) << dissasm_param(rs2,true) << dissasm_param(rs3,true);
 	return ss.str();
 }

@@ -81,7 +81,7 @@ u8* GetMemPtr(u32 Addr,u32 size);
 
 bool IsOnRam(u32 addr);
 
-bool LoadRomFiles(const string& root);
-void SaveRomFiles(const string& root);
-bool LoadHle(const string& root);
+bool LoadRomFiles(const std::string& root);
+void SaveRomFiles(const std::string& root);
+bool LoadHle(const std::string& root);
 void FixUpFlash();

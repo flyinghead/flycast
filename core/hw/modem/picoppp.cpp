@@ -65,10 +65,10 @@ struct pico_ip4 public_ip;
 struct pico_ip4 afo_ip;
 
 // src socket -> socket fd
-static map<struct pico_socket *, sock_t> tcp_sockets;
-static map<struct pico_socket *, sock_t> tcp_connecting_sockets;
+static std::map<struct pico_socket *, sock_t> tcp_sockets;
+static std::map<struct pico_socket *, sock_t> tcp_connecting_sockets;
 // src port -> socket fd
-static map<uint16_t, sock_t> udp_sockets;
+static std::map<uint16_t, sock_t> udp_sockets;
 
 static const uint16_t games_udp_ports[] = {
 		7980,	// Alien Front Online
@@ -102,7 +102,7 @@ static const uint16_t games_tcp_ports[] = {
 		17219,	// Worms World Party
 };
 // listening port -> socket fd
-static map<uint16_t, sock_t> tcp_listening_sockets;
+static std::map<uint16_t, sock_t> tcp_listening_sockets;
 
 static void read_native_sockets();
 void get_host_by_name(const char *name, struct pico_ip4 dnsaddr);
@@ -450,7 +450,7 @@ static void read_native_sockets()
 	for (auto it = tcp_connecting_sockets.begin(); it != tcp_connecting_sockets.end(); it++)
 	{
 		FD_SET(it->second, &write_fds);
-		max_fd = max(max_fd, (int)it->second);
+		max_fd = std::max(max_fd, (int)it->second);
 	}
 	struct timeval tv;
 	tv.tv_sec = 0;
@@ -715,7 +715,7 @@ static void *pico_thread_func(void *)
     pico_string_to_ipv4("192.168.167.1", &ipaddr.addr);
     pico_ppp_set_ip(ppp, ipaddr);
 
-    string dns_ip = cfgLoadStr("network", "DNS", "46.101.91.123");		// Dreamcast Live DNS
+    std::string dns_ip = cfgLoadStr("network", "DNS", "46.101.91.123");		// Dreamcast Live DNS
     pico_string_to_ipv4(dns_ip.c_str(), &dnsaddr.addr);
     pico_ppp_set_dns1(ppp, dnsaddr);
 

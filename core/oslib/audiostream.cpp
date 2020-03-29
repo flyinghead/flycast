@@ -111,7 +111,7 @@ void InitAudio()
 
 	SortAudioBackends();
 
-	string audiobackend_slug = settings.audio.backend;
+	std::string audiobackend_slug = settings.audio.backend;
 	audiobackend_current = GetAudioBackend(audiobackend_slug);
 	if (audiobackend_current == nullptr) {
 		INFO_LOG(AUDIO, "WARNING: Running without audio!");

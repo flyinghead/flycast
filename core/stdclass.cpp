@@ -21,37 +21,37 @@
 	#include <unistd.h>
 #endif
 
-string user_config_dir;
-string user_data_dir;
-std::vector<string> system_config_dirs;
-std::vector<string> system_data_dirs;
+std::string user_config_dir;
+std::string user_data_dir;
+std::vector<std::string> system_config_dirs;
+std::vector<std::string> system_data_dirs;
 
-bool file_exists(const string& filename)
+bool file_exists(const std::string& filename)
 {
 	return (access(filename.c_str(), R_OK) == 0);
 }
 
-void set_user_config_dir(const string& dir)
+void set_user_config_dir(const std::string& dir)
 {
 	user_config_dir = dir;
 }
 
-void set_user_data_dir(const string& dir)
+void set_user_data_dir(const std::string& dir)
 {
 	user_data_dir = dir;
 }
 
-void add_system_config_dir(const string& dir)
+void add_system_config_dir(const std::string& dir)
 {
 	system_config_dirs.push_back(dir);
 }
 
-void add_system_data_dir(const string& dir)
+void add_system_data_dir(const std::string& dir)
 {
 	system_data_dirs.push_back(dir);
 }
 
-string get_writable_config_path(const string& filename)
+std::string get_writable_config_path(const std::string& filename)
 {
 	/* Only stuff in the user_config_dir is supposed to be writable,
 	 * so we always return that.
@@ -59,15 +59,15 @@ string get_writable_config_path(const string& filename)
 	return (user_config_dir + filename);
 }
 
-string get_readonly_config_path(const string& filename)
+std::string get_readonly_config_path(const std::string& filename)
 {
-	string user_filepath = get_writable_config_path(filename);
+	std::string user_filepath = get_writable_config_path(filename);
 	if(file_exists(user_filepath))
 	{
 		return user_filepath;
 	}
 
-	string filepath;
+	std::string filepath;
 	for (unsigned int i = 0; i < system_config_dirs.size(); i++) {
 		filepath = system_config_dirs[i] + filename;
 		if (file_exists(filepath))
@@ -80,7 +80,7 @@ string get_readonly_config_path(const string& filename)
 	return user_filepath;
 }
 
-string get_writable_data_path(const string& filename)
+std::string get_writable_data_path(const std::string& filename)
 {
 	/* Only stuff in the user_data_dir is supposed to be writable,
 	 * so we always return that.
@@ -88,15 +88,15 @@ string get_writable_data_path(const string& filename)
 	return (user_data_dir + filename);
 }
 
-string get_readonly_data_path(const string& filename)
+std::string get_readonly_data_path(const std::string& filename)
 {
-	string user_filepath = get_writable_data_path(filename);
+	std::string user_filepath = get_writable_data_path(filename);
 	if(file_exists(user_filepath))
 	{
 		return user_filepath;
 	}
 
-	string filepath;
+	std::string filepath;
 	for (unsigned int i = 0; i < system_data_dirs.size(); i++) {
 		filepath = system_data_dirs[i] + filename;
 		if (file_exists(filepath))
@@ -109,42 +109,42 @@ string get_readonly_data_path(const string& filename)
 	return user_filepath;
 }
 
-string get_game_save_prefix()
+std::string get_game_save_prefix()
 {
-	string save_file = settings.imgread.ImagePath;
+	std::string save_file = settings.imgread.ImagePath;
 	size_t lastindex = save_file.find_last_of('/');
 #ifdef _WIN32
 	size_t lastindex2 = save_file.find_last_of("\\");
-	lastindex = max(lastindex, lastindex2);
+	lastindex = std::max(lastindex, lastindex2);
 #endif
 	if (lastindex != -1)
 		save_file = save_file.substr(lastindex + 1);
 	return get_writable_data_path(DATA_PATH) + save_file;
 }
 
-string get_game_basename()
+std::string get_game_basename()
 {
-	string game_dir = settings.imgread.ImagePath;
+	std::string game_dir = settings.imgread.ImagePath;
 	size_t lastindex = game_dir.find_last_of('.');
 	if (lastindex != -1)
 		game_dir = game_dir.substr(0, lastindex);
 	return game_dir;
 }
 
-string get_game_dir()
+std::string get_game_dir()
 {
-	string game_dir = settings.imgread.ImagePath;
+	std::string game_dir = settings.imgread.ImagePath;
 	size_t lastindex = game_dir.find_last_of('/');
 #ifdef _WIN32
 	size_t lastindex2 = game_dir.find_last_of("\\");
-	lastindex = max(lastindex, lastindex2);
+	lastindex = std::max(lastindex, lastindex2);
 #endif
 	if (lastindex != -1)
 		game_dir = game_dir.substr(0, lastindex + 1);
 	return game_dir;
 }
 
-bool make_directory(const string& path)
+bool make_directory(const std::string& path)
 {
 #if COMPILER_VC_OR_CLANG_WIN32
 #define mkdir _mkdir
@@ -243,7 +243,7 @@ void cResetEvent::Set()//Signal
 {
 	pthread_mutex_lock( &mutx );
 	state=true;
-    pthread_cond_signal( &cond);
+	pthread_cond_signal( &cond);
 	pthread_mutex_unlock( &mutx );
 }
 void cResetEvent::Reset()//reset

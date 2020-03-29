@@ -126,30 +126,30 @@ public :
 #endif
 
 //Set the path !
-void set_user_config_dir(const string& dir);
-void set_user_data_dir(const string& dir);
-void add_system_config_dir(const string& dir);
-void add_system_data_dir(const string& dir);
+void set_user_config_dir(const std::string& dir);
+void set_user_data_dir(const std::string& dir);
+void add_system_config_dir(const std::string& dir);
+void add_system_data_dir(const std::string& dir);
 
 //subpath format: /data/fsca-table.bit
-string get_writable_config_path(const string& filename);
-string get_writable_data_path(const string& filename);
-string get_readonly_config_path(const string& filename);
-string get_readonly_data_path(const string& filename);
-bool file_exists(const string& filename);
-bool make_directory(const string& path);
+std::string get_writable_config_path(const std::string& filename);
+std::string get_writable_data_path(const std::string& filename);
+std::string get_readonly_config_path(const std::string& filename);
+std::string get_readonly_data_path(const std::string& filename);
+bool file_exists(const std::string& filename);
+bool make_directory(const std::string& path);
 
-string get_game_save_prefix();
-string get_game_basename();
-string get_game_dir();
+std::string get_game_save_prefix();
+std::string get_game_basename();
+std::string get_game_dir();
 
-bool mem_region_lock(void *start, size_t len);
-bool mem_region_unlock(void *start, size_t len);
-bool mem_region_set_exec(void *start, size_t len);
-void *mem_region_reserve(void *start, size_t len);
-bool mem_region_release(void *start, size_t len);
-void *mem_region_map_file(void *file_handle, void *dest, size_t len, size_t offset, bool readwrite);
-bool mem_region_unmap_file(void *start, size_t len);
+bool mem_region_lock(void *start, std::size_t len);
+bool mem_region_unlock(void *start, std::size_t len);
+bool mem_region_set_exec(void *start, std::size_t len);
+void *mem_region_reserve(void *start, std::size_t len);
+bool mem_region_release(void *start, std::size_t len);
+void *mem_region_map_file(void *file_handle, void *dest, std::size_t len, std::size_t offset, bool readwrite);
+bool mem_region_unmap_file(void *start, std::size_t len);
 
 class VArray2 {
 public:
@@ -157,7 +157,7 @@ public:
 	unsigned size;
 
 	void Zero() {
-		memset(data, 0, size);
+		std::memset(data, 0, size);
 	}
 
 	INLINE u8& operator [](unsigned i) {

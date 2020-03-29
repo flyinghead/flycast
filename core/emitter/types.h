@@ -41,7 +41,6 @@ typedef u64 unat;
 #include <stdio.h>
 
 #include <vector>
-using namespace std;
 
 #ifndef dbgbreak
 #define dbgbreak __asm {int 3}

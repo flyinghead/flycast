@@ -201,21 +201,21 @@ int spg_line_sched(int tag, int cycl, int jit)
 	u32 min_active=pvr_numscanlines;
 
 	if (min_scanline<SPG_VBLANK_INT.vblank_in_interrupt_line_number)
-		min_active=min(min_active,SPG_VBLANK_INT.vblank_in_interrupt_line_number);
+		min_active = std::min(min_active,SPG_VBLANK_INT.vblank_in_interrupt_line_number);
 
 	if (min_scanline<SPG_VBLANK_INT.vblank_out_interrupt_line_number)
-		min_active=min(min_active,SPG_VBLANK_INT.vblank_out_interrupt_line_number);
+		min_active = std::min(min_active,SPG_VBLANK_INT.vblank_out_interrupt_line_number);
 
 	if (min_scanline<SPG_VBLANK.vstart)
-		min_active=min(min_active,SPG_VBLANK.vstart);
+		min_active = std::min(min_active,SPG_VBLANK.vstart);
 
 	if (min_scanline<SPG_VBLANK.vbend)
-		min_active=min(min_active,SPG_VBLANK.vbend);
+		min_active = std::min(min_active,SPG_VBLANK.vbend);
 
 	if (lightgun_line != 0xffff && min_scanline < lightgun_line)
-		min_active = min(min_active, lightgun_line);
+		min_active = std::min(min_active, lightgun_line);
 
-	min_active=max(min_active,min_scanline);
+	min_active = std::max(min_active,min_scanline);
 
 	return (min_active - prv_cur_scanline) * Line_Cycles;
 }
@@ -229,7 +229,7 @@ void read_lightgun_position(int x, int y)
 	{
 		lightgun_line = y / (SPG_CONTROL.interlace ? 2 : 1) + SPG_VBLANK_INT.vblank_out_interrupt_line_number;
 		lightgun_hpos = x * (SPG_HBLANK.hstart - SPG_HBLANK.hbend) / 640 + SPG_HBLANK.hbend * 2;	// Ok but why *2 ????
-		lightgun_hpos = min((u32)0x3FF, lightgun_hpos);
+		lightgun_hpos = std::min((u32)0x3FF, lightgun_hpos);
 	}
 }
 

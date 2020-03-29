@@ -437,7 +437,7 @@ struct ArmDPOP
 	u32 flags;
 };
 
-vector<ArmDPOP> ops;
+std::vector<ArmDPOP> ops;
 
 enum OpFlags
 {

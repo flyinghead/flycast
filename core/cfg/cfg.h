@@ -12,7 +12,7 @@ bool cfgOpen();
 s32   cfgLoadInt(const char * lpSection, const char * lpKey,s32 Default);
 void  cfgSaveInt(const char * lpSection, const char * lpKey, s32 Int);
 void  cfgLoadStr(const char * lpSection, const char * lpKey, char * lpReturn,const char* lpDefault);
-string  cfgLoadStr(const char * Section, const char * Key, const char* Default);
+std::string  cfgLoadStr(const char * Section, const char * Key, const char* Default);
 void  cfgSaveStr(const char * lpSection, const char * lpKey, const char * lpString);
 void  cfgSaveBool(const char * Section, const char * Key, bool BoolValue);
 bool  cfgLoadBool(const char * Section, const char * Key,bool Default);

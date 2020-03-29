@@ -4,7 +4,7 @@
 
 // On windows, transform / to \\
 
-string normalize_path_separator(string path)
+std::string normalize_path_separator(std::string path)
 {
 #ifdef _WIN32
 	std::replace(path.begin(), path.end(), '/', '\\');
@@ -15,7 +15,7 @@ string normalize_path_separator(string path)
 
 // given file/name.ext or file\name.ext returns file/ or file\, depending on the platform
 // given name.ext returns ./ or .\, depending on the platform
-string OS_dirname(string file)
+std::string OS_dirname(std::string file)
 {
 	file = normalize_path_separator(file);
 	#ifdef _WIN32
@@ -26,9 +26,9 @@ string OS_dirname(string file)
 
 	size_t last_slash = file.find_last_of(sep);
 
-	if (last_slash == string::npos)
+	if (last_slash == std::string::npos)
 	{
-		string local_dir = ".";
+		std::string local_dir = ".";
 		local_dir += sep;
 		return local_dir;
 	}
@@ -79,7 +79,7 @@ Disc* load_gdi(const char* file)
 	core_fread(t, gdi_data, gdi_len);
 	core_fclose(t);
 
-	istringstream gdi(gdi_data);
+	std::istringstream gdi(gdi_data);
 
 	u32 iso_tc = 0;
 	gdi >> iso_tc;
@@ -89,15 +89,15 @@ Disc* load_gdi(const char* file)
 		return nullptr;
 	}
 	INFO_LOG(GDROM, "GDI : %d tracks", iso_tc);
-	
-	string basepath = OS_dirname(file);
+
+	std::string basepath = OS_dirname(file);
 
 	Disc* disc = new Disc();
 	u32 TRACK=0,FADS=0,CTRL=0,SSIZE=0;
 	s32 OFFSET=0;
 	for (u32 i=0;i<iso_tc;i++)
 	{
-		string track_filename;
+		std::string track_filename;
 
 		//TRACK FADS CTRL SSIZE file OFFSET
 		gdi >> TRACK;
@@ -141,7 +141,7 @@ Disc* load_gdi(const char* file)
 
 		if (SSIZE!=0)
 		{
-			string path = basepath + normalize_path_separator(track_filename);
+			std::string path = basepath + normalize_path_separator(track_filename);
 			t.file = new RawTrackFile(core_fopen(path.c_str()),OFFSET,t.StartFAD,SSIZE);	
 		}
 		disc->tracks.push_back(t);

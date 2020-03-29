@@ -25,7 +25,7 @@
 #include <sstream>
 
 // TODO Move this out of gles.cpp
-u8* loadPNGData(const string& subpath, int &width, int &height);
+u8* loadPNGData(const std::string& subpath, int &width, int &height);
 CustomTexture custom_texture;
 
 void CustomTexture::LoaderThread()

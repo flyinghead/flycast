@@ -28,7 +28,6 @@
 #include <algorithm>
 #include <cmath>
 
-using namespace std;
 #undef FAR
 
 //#define CLIP_WARN
@@ -499,15 +498,15 @@ struct ChannelEx
 			else
 			{
 				ofsatt = lfo.alfo + (AEG.GetValue() >> 2);
-				ofsatt = min(ofsatt, (u32)255); // make sure it never gets more 255 -- it can happen with some alfo/aeg combinations
+				ofsatt = std::min(ofsatt, (u32)255); // make sure it never gets more 255 -- it can happen with some alfo/aeg combinations
 			}
 			u32 const max_att = ((16 << 4) - 1) - ofsatt;
 			
 			s32* logtable = ofsatt + tl_lut;
 
-			u32 dl = min(VolMix.DLAtt, max_att);
-			u32 dr = min(VolMix.DRAtt, max_att);
-			u32 ds = min(VolMix.DSPAtt, max_att);
+			u32 dl = std::min(VolMix.DLAtt, max_att);
+			u32 dr = std::min(VolMix.DRAtt, max_att);
+			u32 ds = std::min(VolMix.DSPAtt, max_att);
 
 			oLeft = FPMul(sample, logtable[dl], 15);
 			oRight = FPMul(sample, logtable[dr], 15);

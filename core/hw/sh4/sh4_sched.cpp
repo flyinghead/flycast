@@ -24,7 +24,7 @@
 u64 sh4_sched_ffb;
 
 
-vector<sched_list> sch_list;	// using list as external inside a macro confuses clang and msc
+std::vector<sched_list> sch_list;	// using list as external inside a macro confuses clang and msc
 
 int sh4_sched_next_id=-1;
 
@@ -133,7 +133,7 @@ static void handle_cb(int id)
 	int re_sch=sch_list[id].cb(sch_list[id].tag,remain,jitter);
 
 	if (re_sch > 0)
-		sh4_sched_request(id, max(0, re_sch - jitter));
+		sh4_sched_request(id, std::max(0, re_sch - jitter));
 }
 
 void sh4_sched_tick(int cycles)

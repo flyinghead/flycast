@@ -108,7 +108,7 @@ extern "C" void emu_gles_init(int width, int height) {
     char *home = getenv("HOME");
     if (home != NULL)
     {
-        string config_dir = string(home) + "/.reicast";
+        std::string config_dir = std::string(home) + "/.reicast";
         mkdir(config_dir.c_str(), 0755); // create the directory if missing
         set_user_config_dir(config_dir);
         set_user_data_dir(config_dir);
@@ -123,7 +123,7 @@ extern "C" void emu_gles_init(int width, int height) {
     CFURLRef resourcesURL = CFBundleCopyResourcesDirectoryURL(mainBundle);
     char path[PATH_MAX];
     if (CFURLGetFileSystemRepresentation(resourcesURL, TRUE, (UInt8 *)path, PATH_MAX))
-        add_system_data_dir(string(path));
+        add_system_data_dir(std::string(path));
     CFRelease(resourcesURL);
     CFRelease(mainBundle);
 

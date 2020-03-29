@@ -476,7 +476,7 @@ struct maple_sega_vmu: maple_base
 		memset(lcd_data, 0, sizeof(lcd_data));
 		char tempy[512];
 		sprintf(tempy, "/vmu_save_%s.bin", logical_port);
-		string apath = get_writable_data_path(tempy);
+		std::string apath = get_writable_data_path(tempy);
 
 		file = fopen(apath.c_str(), "rb+");
 		if (!file)
@@ -1123,18 +1123,18 @@ struct maple_sega_purupuru : maple_base
 					INC = 0;
 				bool CNT = VIBSET & 1;
 
-				float power = min((POW_POS + POW_NEG) / 7.0, 1.0);
+				float power = std::min((POW_POS + POW_NEG) / 7.0, 1.0);
 
 				u32 duration_ms;
 				if (FREQ > 0 && (!CNT || INC))
-					duration_ms = min((int)(1000 * (INC ? abs(INC) * max(POW_POS, POW_NEG) : 1) / FREQ), (int)AST_ms);
+					duration_ms = std::min((int)(1000 * (INC ? abs(INC) * std::max(POW_POS, POW_NEG) : 1) / FREQ), (int)AST_ms);
 				else
 					duration_ms = AST_ms;
 				float inclination;
 				if (INC == 0 || power == 0)
 					inclination = 0.0;
 				else
-					inclination = FREQ / (1000.0 * INC * max(POW_POS, POW_NEG));
+					inclination = FREQ / (1000.0 * INC * std::max(POW_POS, POW_NEG));
 				config->SetVibration(power, inclination, duration_ms);
 			}
 
@@ -2161,8 +2161,8 @@ struct maple_naomi_jamma : maple_sega_controller
 				//printState(Command,buffer_in,buffer_in_len);
 				memcpy(EEPROM + address, dma_buffer_in + 4, size);
 
-				string nvmemSuffix = cfgLoadStr("net", "nvmem", "");
-				string eeprom_file = get_game_save_prefix() + nvmemSuffix + ".eeprom";
+				std::string nvmemSuffix = cfgLoadStr("net", "nvmem", "");
+				std::string eeprom_file = get_game_save_prefix() + nvmemSuffix + ".eeprom";
 				FILE* f = fopen(eeprom_file.c_str(), "wb");
 				if (f)
 				{
@@ -2188,8 +2188,8 @@ struct maple_naomi_jamma : maple_sega_controller
 				if (!EEPROM_loaded)
 				{
 					EEPROM_loaded = true;
-					string nvmemSuffix = cfgLoadStr("net", "nvmem", "");
-					string eeprom_file = get_game_save_prefix() + nvmemSuffix + ".eeprom";
+					std::string nvmemSuffix = cfgLoadStr("net", "nvmem", "");
+					std::string eeprom_file = get_game_save_prefix() + nvmemSuffix + ".eeprom";
 					FILE* f = fopen(eeprom_file.c_str(), "rb");
 					if (f)
 					{

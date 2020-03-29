@@ -74,7 +74,7 @@ bool SDLGLGraphicsContext::Init()
 
 	float ddpi, hdpi, vdpi;
 	if (!SDL_GetDisplayDPI(SDL_GetWindowDisplayIndex(window), &ddpi, &hdpi, &vdpi))
-		screen_dpi = (int)roundf(max(hdpi, vdpi));
+		screen_dpi = (int)roundf(std::max(hdpi, vdpi));
 
 	INFO_LOG(RENDERER, "Created SDL Window and GL Context successfully");
 

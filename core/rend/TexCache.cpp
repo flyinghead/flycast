@@ -130,10 +130,7 @@ void palette_update()
 		pal_hash_256[i] = XXH32(&palette32_ram[i << 8], 256 * 4, 7);
 }
 
-
-using namespace std;
-
-vector<vram_block*> VramLocks[VRAM_SIZE_MAX / PAGE_SIZE];
+std::vector<vram_block*> VramLocks[VRAM_SIZE_MAX / PAGE_SIZE];
 VArray2 vram;  // vram 32-64b
 
 //List functions
@@ -145,7 +142,7 @@ void vramlock_list_remove(vram_block* block)
 
 	for (u32 i = base; i <= end; i++)
 	{
-		vector<vram_block*>& list = VramLocks[i];
+		std::vector<vram_block*>& list = VramLocks[i];
 		for (size_t j = 0; j < list.size(); j++)
 		{
 			if (list[j] == block)
@@ -163,7 +160,7 @@ void vramlock_list_add(vram_block* block)
 
 	for (u32 i = base; i <= end; i++)
 	{
-		vector<vram_block*>& list = VramLocks[i];
+		std::vector<vram_block*>& list = VramLocks[i];
 		// If the list is empty then we need to protect vram, otherwise it's already been done
 		if (list.empty() || std::all_of(list.begin(), list.end(), [](vram_block *block) { return block == nullptr; }))
 			_vmem_protect_vram(i * PAGE_SIZE, PAGE_SIZE);
@@ -217,7 +214,7 @@ bool VramLockedWriteOffset(size_t offset)
 		return false;
 
 	size_t addr_hash = offset / PAGE_SIZE;
-	vector<vram_block *>& list = VramLocks[addr_hash];
+	std::vector<vram_block *>& list = VramLocks[addr_hash];
 
 	{
 		std::lock_guard<cMutex> lock(vramlist_lock);
@@ -339,7 +336,7 @@ static inline int getThreadCount()
 	int tcount = omp_get_num_procs() - 1;
 	if (tcount < 1)
 		tcount = 1;
-	return min(tcount, (int)settings.pvr.MaxThreads);
+	return std::min(tcount, (int)settings.pvr.MaxThreads);
 }
 
 template<typename Func>
@@ -1082,7 +1079,7 @@ static void png_cstd_read(png_structp png_ptr, png_bytep data, png_size_t length
 		png_error(png_ptr, "Truncated read error");
 }
 
-u8* loadPNGData(const string& fname, int &width, int &height)
+u8* loadPNGData(const std::string& fname, int &width, int &height)
 {
 	const char* filename=fname.c_str();
 	FILE* file = fopen(filename, "rb");

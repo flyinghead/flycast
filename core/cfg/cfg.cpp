@@ -12,12 +12,12 @@
 
 #include <cerrno>
 
-static string cfgPath;
+static std::string cfgPath;
 static bool save_config = true;
 static bool autoSave = true;
 
 static emucfg::ConfigFile cfgdb;
-static string game_id;
+static std::string game_id;
 static bool has_game_specific_config = false;
 
 void savecfgf()
@@ -84,7 +84,7 @@ bool cfgOpen()
 		return false;
 
 	const char* filename = "/emu.cfg";
-	string config_path_read = get_readonly_config_path(filename);
+	std::string config_path_read = get_readonly_config_path(filename);
 	cfgPath = get_writable_config_path(filename);
 
 	FILE* cfgfile = fopen(config_path_read.c_str(),"r");
@@ -121,28 +121,28 @@ bool cfgOpen()
 //2 : found section & key
 s32  cfgExists(const char * Section, const char * Key)
 {
-	if(cfgdb.has_entry(string(Section), string(Key)))
+	if(cfgdb.has_entry(std::string(Section), std::string(Key)))
 	{
 		return 2;
 	}
 	else
 	{
-		return (cfgdb.has_section(string(Section)) ? 1 : 0);
+		return (cfgdb.has_section(std::string(Section)) ? 1 : 0);
 	}
 }
 
 void  cfgLoadStr(const char * Section, const char * Key, char * Return,const char* Default)
 {
-	string value = cfgdb.get(Section, Key, Default);
+	std::string value = cfgdb.get(Section, Key, Default);
 	// FIXME: Buffer overflow possible
 	strcpy(Return, value.c_str());
 }
 
-string  cfgLoadStr(const char * Section, const char * Key, const char* Default)
+std::string  cfgLoadStr(const char * Section, const char * Key, const char* Default)
 {
-	std::string v = cfgdb.get(string(Section), string(Key), string(Default));
+	std::string v = cfgdb.get(std::string(Section), std::string(Key), std::string(Default));
 	if (cfgHasGameSpecificConfig())
-		v = cfgdb.get(game_id, string(Key), v);
+		v = cfgdb.get(game_id, std::string(Key), v);
 
 	return v;
 }
@@ -157,9 +157,9 @@ void  cfgSaveInt(const char * Section, const char * Key, s32 Int)
 
 s32 cfgLoadInt(const char * Section, const char * Key,s32 Default)
 {
-	s32 v = cfgdb.get_int(string(Section), string(Key), Default);
+	s32 v = cfgdb.get_int(std::string(Section), std::string(Key), Default);
 	if (cfgHasGameSpecificConfig())
-		v = cfgdb.get_int(game_id, string(Key), v);
+		v = cfgdb.get_int(game_id, std::string(Key), v);
 
     return v;
 }
@@ -171,16 +171,16 @@ void  cfgSaveBool(const char * Section, const char * Key, bool BoolValue)
 
 bool  cfgLoadBool(const char * Section, const char * Key,bool Default)
 {
-	bool v = cfgdb.get_bool(string(Section), string(Key), Default);
+	bool v = cfgdb.get_bool(std::string(Section), std::string(Key), Default);
 	if (cfgHasGameSpecificConfig())
-		v = cfgdb.get_bool(game_id, string(Key), v);
+		v = cfgdb.get_bool(game_id, std::string(Key), v);
 
     return v;
 }
 
 void cfgSetVirtual(const char * Section, const char * Key, const char * String)
 {
-	cfgdb.set(string(Section), string(Key), string(String), true);
+	cfgdb.set(std::string(Section), std::string(Key), std::string(String), true);
 }
 
 void cfgSetGameId(const char *id)

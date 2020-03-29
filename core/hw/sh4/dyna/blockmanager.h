@@ -54,7 +54,7 @@ struct RuntimeBlockInfo: RuntimeBlockInfo_Core
 	BlockEndType BlockType;
 	bool has_jcond;
 
-	vector<shil_opcode> oplist;
+	std::vector<shil_opcode> oplist;
 
 	bool contains_code(u8* ptr)
 	{
@@ -67,7 +67,7 @@ struct RuntimeBlockInfo: RuntimeBlockInfo_Core
 	virtual void Relocate(void* dst)=0;
 	
 	//predecessors references
-	vector<RuntimeBlockInfoPtr> pre_refs;
+	std::vector<RuntimeBlockInfoPtr> pre_refs;
 
 	void AddRef(RuntimeBlockInfoPtr other);
 	void RemRef(RuntimeBlockInfoPtr other);
@@ -82,7 +82,7 @@ struct RuntimeBlockInfo: RuntimeBlockInfo_Core
 	bool read_only;
 };
 
-void bm_WriteBlockMap(const string& file);
+void bm_WriteBlockMap(const std::string& file);
 
 
 extern "C" {

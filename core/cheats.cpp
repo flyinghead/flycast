@@ -288,7 +288,7 @@ bool CheatManager::Reset()
 	_widescreen_cheat = nullptr;
 	if (settings.platform.system != DC_PLATFORM_DREAMCAST || !settings.rend.WidescreenGameHacks)
 		return false;
-	string game_id(ip_meta.product_number, sizeof(ip_meta.product_number));
+	std::string game_id(ip_meta.product_number, sizeof(ip_meta.product_number));
 	for (int i = 0; _widescreen_cheats[i].game_id != nullptr; i++)
 	{
 		if (!strncmp(game_id.c_str(), _widescreen_cheats[i].game_id, game_id.length())

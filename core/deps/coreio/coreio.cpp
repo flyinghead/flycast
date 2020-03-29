@@ -32,13 +32,13 @@
 #endif
 
 #if FEAT_HAS_COREIO_HTTP
-string url_encode(const string &value) {
-	ostringstream escaped;
+std::string url_encode(const std::string &value) {
+	std::ostringstream escaped;
 	escaped.fill('0');
-	escaped << hex;
+	escaped << std::hex;
 
-	for (string::const_iterator i = value.begin(), n = value.end(); i != n; ++i) {
-		string::value_type c = (*i);
+	for (std::string::const_iterator i = value.begin(), n = value.end(); i != n; ++i) {
+		std::string::value_type c = (*i);
 
 		// Keep alphanumeric and other accepted characters intact
 		if (isalnum(c) || c == '-' || c == '_' || c == '.' || c == '~' || c  == '/' || c =='%' ) {
@@ -47,15 +47,15 @@ string url_encode(const string &value) {
 		}
 
 		// Any other characters are percent-encoded
-		escaped << '%' << setw(2) << int((unsigned char)c);
+		escaped << '%' << std::setw(2) << int((unsigned char)c);
 	}
 
 	return escaped.str();
 }
 
-size_t HTTP_GET(string host, int port,string path, size_t offs, size_t len, void* pdata){
-    string request;
-    string response;
+size_t HTTP_GET(std::string host, int port, std::string path, size_t offs, size_t len, void* pdata){
+    std::string request;
+    std::string response;
 
     struct sockaddr_in serveraddr;
     int sock;
@@ -63,20 +63,20 @@ size_t HTTP_GET(string host, int port,string path, size_t offs, size_t len, void
     std::stringstream request2;
 
 	if (len) {
-		request2 << "GET " << path << " HTTP/1.1"<<endl;
-		request2 << "User-Agent: reicastdc" << endl;
-		//request2 << "" << endl;
-		request2 << "Host: " << host << endl;
-		request2 << "Accept: */*" << endl;
-		request2 << "Range: bytes=" << offs << "-" << (offs + len-1) << endl;
-		request2 << endl;
+		request2 << "GET " << path << " HTTP/1.1" << std::endl;
+		request2 << "User-Agent: reicastdc" << std::endl;
+		//request2 << "" << std::endl;
+		request2 << "Host: " << host << std::endl;
+		request2 << "Accept: */*" << std::endl;
+		request2 << "Range: bytes=" << offs << "-" << (offs + len-1) << std::endl;
+		request2 << std::endl;
 	}
 	else {
-		request2 << "HEAD " << path << " HTTP/1.1"<<endl;
-		request2 << "User-Agent: reicastdc" << endl;
-		//request2 << "" << endl;
-		request2 << "Host: " << host << endl;
-		request2 << endl;
+		request2 << "HEAD " << path << " HTTP/1.1" << std::endl;
+		request2 << "User-Agent: reicastdc" << std::endl;
+		//request2 << "" << std::endl;
+		request2 << "Host: " << host << std::endl;
+		request2 << std::endl;
 	}
 
 	request = request2.str();
@@ -131,7 +131,7 @@ size_t HTTP_GET(string host, int port,string path, size_t offs, size_t len, void
 	size_t rv = 0;
 
 	for (;;) {
-		stringstream ss;
+		std::stringstream ss;
 		for (;;) {
 			char t;
 			if (recv(sock, &t, 1, 0) <= 0)
@@ -142,11 +142,11 @@ size_t HTTP_GET(string host, int port,string path, size_t offs, size_t len, void
 				continue;
 			}
 
-			string ln = ss.str();
+			std::string ln = ss.str();
 
 			if (ln.size() == 1)
 				goto _data;
-			string CL = "Content-Length:";
+			std::string CL = "Content-Length:";
 
 			if (ln.substr(0, CL.size()) == CL) {
 				sscanf(ln.substr(CL.size(), ln.npos).c_str(),"%zd", &content_length);
@@ -195,16 +195,16 @@ _data:
 
 struct CORE_FILE {
 	FILE* f;
-	string path;
+	std::string path;
 	size_t seek_ptr;
 
-	string host;
+	std::string host;
 	int port;
 };
 
 core_file* core_fopen(const char* filename)
 {
-	string p = filename;
+	std::string p = filename;
 
 	CORE_FILE* rv = new CORE_FILE();
 	rv->f = 0;
@@ -219,7 +219,7 @@ core_file* core_fopen(const char* filename)
 		rv->port = 80;
 		size_t pos = rv->host.find_first_of(":");
 		if (pos != rv->host.npos) {
-			string port = rv->host.substr(pos, rv->host.npos );
+			std::string port = rv->host.substr(pos, rv->host.npos );
 			rv->host = rv->host.substr(0, rv->host.find_first_of(":"));
 			sscanf(port.c_str(),"%d",&rv->port);
 		}

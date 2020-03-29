@@ -162,7 +162,7 @@ void FixUpFlash()
 	}
 }
 
-static bool nvmem_load(const string& root)
+static bool nvmem_load(const std::string& root)
 {
 	bool rc;
 	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
@@ -178,7 +178,7 @@ static bool nvmem_load(const string& root)
 	return true;
 }
 
-bool LoadRomFiles(const string& root)
+bool LoadRomFiles(const std::string& root)
 {
 	if (settings.platform.system != DC_PLATFORM_ATOMISWAVE)
 	{
@@ -201,7 +201,7 @@ bool LoadRomFiles(const string& root)
 	return true;
 }
 
-void SaveRomFiles(const string& root)
+void SaveRomFiles(const std::string& root)
 {
 	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
 		sys_nvmem->Save(root, getRomPrefix(), "nvmem.bin", "nvmem");
@@ -211,7 +211,7 @@ void SaveRomFiles(const string& root)
 		sys_rom->Save(get_game_save_prefix() + ".nvmem2");
 }
 
-bool LoadHle(const string& root)
+bool LoadHle(const std::string& root)
 {
 	if (!nvmem_load(root))
 		WARN_LOG(FLASHROM, "No nvmem loaded\n");

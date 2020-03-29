@@ -78,8 +78,8 @@ void x86_block::Init(dyna_reallocFP* ral,dyna_finalizeFP* alf)
 	x86_size=0;
 	do_realloc=true;
 }
-#define patches (*(vector<code_patch>*) _patches)
-#define labels (*(vector<x86_Label*>*) _labels)
+#define patches (*(std::vector<code_patch>*) _patches)
+#define labels (*(std::vector<x86_Label*>*) _labels)
 
 //Generates code.if user_data is non zero , user_data_size bytes are allocated after the executable code
 //and user_data is set to the first byte of em.Allways 16 byte aligned
@@ -104,7 +104,7 @@ void* x86_block::Generate()
 struct x86_block_externs_i : x86_block_externs
 {
 	struct extern_entry { u8* dst;u32 offs:28;u32 size:4; };
-	vector<extern_entry> externs;
+	std::vector<extern_entry> externs;
 
 	void Apply(u8* base)
 	{
@@ -236,8 +236,8 @@ void x86_block::ApplyPatches(u8* base)
 }
 x86_block::x86_block()
 {
-	_patches=new vector<code_patch>;
-	_labels=new vector<x86_Label*>;
+	_patches = new std::vector<code_patch>;
+	_labels = new std::vector<x86_Label*>;
 	opcode_count=0;
 }
 x86_block::~x86_block()

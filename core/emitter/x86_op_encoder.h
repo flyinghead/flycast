@@ -233,7 +233,7 @@ void encode_rex(x86_block* block,encoded_type* mrm,u32 mrm_reg,u32 ofe=0)
 	}
 }
 #endif
-#define block_patches (*(vector<code_patch>*) block->_patches)
+#define block_patches (*(std::vector<code_patch>*) block->_patches)
 
 //Encoding function (partially) specialised by templates to gain speed :)
 template < enc_param enc_1,enc_imm enc_2,u32 sz,x86_operand_size enc_op_size>

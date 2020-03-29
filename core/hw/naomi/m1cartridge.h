@@ -26,7 +26,7 @@ public:
 	{
 		if (encryption)
 		{
-			size = min(size, (u32)sizeof(buffer));
+			size = std::min(size, (u32)sizeof(buffer));
 			return buffer;
 		}
 		else

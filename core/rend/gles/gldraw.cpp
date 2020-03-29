@@ -282,11 +282,11 @@ void DrawList(const List<PolyParam>& gply, int first, int count)
 	}
 }
 
-static vector<SortTrigDrawParam> pidx_sort;
+static std::vector<SortTrigDrawParam> pidx_sort;
 
 static void SortTriangles(int first, int count)
 {
-	vector<u32> vidx_sort;
+	std::vector<u32> vidx_sort;
 	GenSorted(first, count, pidx_sort, vidx_sort);
 
 	//Upload to GPU if needed

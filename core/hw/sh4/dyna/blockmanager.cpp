@@ -366,7 +366,7 @@ void bm_Term()
 	bm_Reset();
 }
 
-void bm_WriteBlockMap(const string& file)
+void bm_WriteBlockMap(const std::string& file)
 {
 	FILE* f=fopen(file.c_str(),"wb");
 	if (f)
@@ -586,8 +586,8 @@ void bm_RamWriteAccess(u32 addr)
 	}
 	unprotected_pages[addr / PAGE_SIZE] = true;
 	bm_UnlockPage(addr);
-	set<RuntimeBlockInfo*>& block_list = blocks_per_page[addr / PAGE_SIZE];
-	vector<RuntimeBlockInfo*> list_copy;
+	std::set<RuntimeBlockInfo*>& block_list = blocks_per_page[addr / PAGE_SIZE];
+	std::vector<RuntimeBlockInfo*> list_copy;
 	list_copy.insert(list_copy.begin(), block_list.begin(), block_list.end());
 	if (!list_copy.empty())
 		DEBUG_LOG(DYNAREC, "bm_RamWriteAccess write access to %08x pc %08x", addr, next_pc);
@@ -713,7 +713,7 @@ void print_blocks()
 #endif
 				}
 
-				string s=op->dissasm();
+				std::string s = op->dissasm();
 				fprintf(f,"//il:%d:%d: %s\n",op->guest_offs,op->host_offs,s.c_str());
 			}
 			

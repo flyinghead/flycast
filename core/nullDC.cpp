@@ -891,7 +891,7 @@ void LoadSettings(bool game_specific)
 	settings.rend.CustomTextures    = cfgLoadBool(config_section, "rend.CustomTextures", settings.rend.CustomTextures);
 	settings.rend.DumpTextures      = cfgLoadBool(config_section, "rend.DumpTextures", settings.rend.DumpTextures);
 	settings.rend.ScreenScaling     = cfgLoadInt(config_section, "rend.ScreenScaling", settings.rend.ScreenScaling);
-	settings.rend.ScreenScaling = min(max(1, settings.rend.ScreenScaling), 800);
+	settings.rend.ScreenScaling = std::min(std::max(1, settings.rend.ScreenScaling), 800);
 	settings.rend.ScreenStretching  = cfgLoadInt(config_section, "rend.ScreenStretching", settings.rend.ScreenStretching);
 	settings.rend.Fog				= cfgLoadBool(config_section, "rend.Fog", settings.rend.Fog);
 	settings.rend.FloatVMUs			= cfgLoadBool(config_section, "rend.FloatVMUs", settings.rend.FloatVMUs);
@@ -960,9 +960,9 @@ void LoadSettings(bool game_specific)
 	}
 /*
 	//make sure values are valid
-	settings.dreamcast.cable		= min(max(settings.dreamcast.cable,    0),3);
-	settings.dreamcast.region		= min(max(settings.dreamcast.region,   0),3);
-	settings.dreamcast.broadcast	= min(max(settings.dreamcast.broadcast,0),4);
+	settings.dreamcast.cable		= std::min(std::max(settings.dreamcast.cable,    0),3);
+	settings.dreamcast.region		= std::min(std::max(settings.dreamcast.region,   0),3);
+	settings.dreamcast.broadcast	= std::min(std::max(settings.dreamcast.broadcast,0),4);
 */
 }
 
@@ -1108,9 +1108,9 @@ static void cleanup_serialize(void *data)
 	dc_resume();
 }
 
-static string get_savestate_file_path()
+static std::string get_savestate_file_path()
 {
-	string state_file = settings.imgread.ImagePath;
+	std::string state_file = settings.imgread.ImagePath;
 	size_t lastindex = state_file.find_last_of('/');
 #ifdef _WIN32
 	size_t lastindex2 = state_file.find_last_of('\\');
@@ -1130,7 +1130,7 @@ static string get_savestate_file_path()
 
 void dc_savestate()
 {
-	string filename;
+	std::string filename;
 	unsigned int total_size = 0 ;
 	void *data = NULL ;
 	void *data_ptr = NULL ;
@@ -1186,7 +1186,7 @@ void dc_savestate()
 
 void dc_loadstate()
 {
-	string filename;
+    std::string filename;
 	unsigned int total_size = 0 ;
 	void *data = NULL ;
 	void *data_ptr = NULL ;

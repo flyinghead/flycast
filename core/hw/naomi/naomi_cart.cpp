@@ -389,9 +389,9 @@ void naomi_cart_LoadRom(const char* file)
 	strncpy(t, file, sizeof(t));
 	t[sizeof(t) - 1] = '\0';
 
-	vector<string> files;
-	vector<u32> fstart;
-	vector<u32> fsize;
+	std::vector<std::string> files;
+	std::vector<u32> fstart;
+	std::vector<u32> fsize;
 	u32 setsize = 0;
 	bool raw_bin_file = false;
 
@@ -461,7 +461,7 @@ void naomi_cart_LoadRom(const char* file)
 				fstart.push_back(addr);
 				fsize.push_back(sz);
 				setsize += sz;
-				RomSize = max(RomSize, (addr + sz));
+				RomSize = std::max(RomSize, (addr + sz));
 			}
 			else if (line[0] != 0 && line[0] != '\n' && line[0] != '\r')
 				WARN_LOG(NAOMI, "Warning: invalid line in .lst file: %s", line);
@@ -704,7 +704,7 @@ void* NaomiCartridge::GetDmaPtr(u32& size)
 		size = 0;
 		return NULL;
 	}
-	size = min(size, RomSize - (DmaOffset & 0x1fffffff));
+	size = std::min(size, RomSize - (DmaOffset & 0x1fffffff));
 	return GetPtr(DmaOffset, size);
 }
 
@@ -1013,7 +1013,7 @@ void* M2Cartridge::GetDmaPtr(u32& size)
 
 	// 4MB mode
 	u32 offset4mb = (DmaOffset & 0x103fffff) | ((DmaOffset & 0x07c00000) << 1);
-	size = min(min(size, 0x400000 - (offset4mb & 0x3FFFFF)), RomSize - offset4mb);
+	size = std::min(std::min(size, 0x400000 - (offset4mb & 0x3FFFFF)), RomSize - offset4mb);
 
 	return GetPtr(offset4mb, size);
 }

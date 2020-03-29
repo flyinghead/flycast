@@ -230,78 +230,77 @@ static void* profiler_main(void *ptr)
 
 	sprintf(line, "/%d.reprof", tick_count);
 
-		string logfile=get_writable_data_path(line);
+	std::string logfile = get_writable_data_path(line);
+	
+	printf("Profiler thread logging to -> %s\n", logfile.c_str());
 
+	prof_out = fopen(logfile.c_str(), "wb");
+	if (!prof_out)
+	{
+		printf("Failed to open profiler file\n");
+		return 0;
+	}
 
-		printf("Profiler thread logging to -> %s\n", logfile.c_str());
+	std::set<std::string> libs;
 
-		prof_out = fopen(logfile.c_str(), "wb");
-		if (!prof_out)
+	prof_head(prof_out, "vaddr", "");
+	FILE* maps = fopen("/proc/self/maps", "r");
+	while (!feof(maps))
+	{
+		fgets(line, 512, maps);
+		fputs(line, prof_out);
+
+		if (strstr(line, ".so"))
 		{
-			printf("Failed to open profiler file\n");
-			return 0;
+			char file[512];
+			file[0] = 0;
+			sscanf(line, "%*x-%*x %*s %*x %*x:%*x %*d %s\n", file);
+			if (strlen(file))
+				libs.insert(file);
 		}
+	}
 
-		set<string> libs;
+	//Write map file
+	prof_head(prof_out, ".map", "");
+	fwrite(syms_ptr, 1, syms_len, prof_out);
 
-		prof_head(prof_out, "vaddr", "");
-		FILE* maps = fopen("/proc/self/maps", "r");
-		while (!feof(maps))
+	//write exports from .so's
+	for (std::set<std::string>::iterator it = libs.begin(); it != libs.end(); it++)
+	{
+		elf_syms(prof_out, it->c_str());
+	}
+
+	//Write shrec syms file !
+	prof_head(prof_out, "jitsym", "SH4");
+
+	#if FEAT_SHREC != DYNAREC_NONE
+	sh4_jitsym(prof_out);
+	#endif
+
+	//Write arm7rec syms file ! -> to do
+	//prof_head(prof_out,"jitsym","ARM7");
+
+	prof_head(prof_out, "samples", prof_wait);
+
+	do
+	{
+		tick_count++;
+		// printf("Sending SIGPROF %08X %08X\n",thread[0],thread[1]);
+		for (int i = 0; i < 2; i++) pthread_kill(thread[i], SIGPROF);
+		// printf("Sent SIGPROF\n");
+		usleep(prof_wait);
+		// fwrite(&prof_address[0],1,sizeof(prof_address[0])*2,prof_out);
+		fprintf(prof_out, "%p %p\n", prof_address[0], prof_address[1]);
+
+		if (!(tick_count % 10000))
 		{
-			fgets(line, 512, maps);
-			fputs(line, prof_out);
-
-			if (strstr(line, ".so"))
-			{
-				char file[512];
-				file[0] = 0;
-				sscanf(line, "%*x-%*x %*s %*x %*x:%*x %*d %s\n", file);
-				if (strlen(file))
-					libs.insert(file);
-			}
+			printf("Profiler: %d ticks, flushing ..\n", tick_count);
+			fflush(prof_out);
 		}
+	} while (prof_run);
 
-		//Write map file
-		prof_head(prof_out, ".map", "");
-		fwrite(syms_ptr, 1, syms_len, prof_out);
-
-		//write exports from .so's
-		for (set<string>::iterator it = libs.begin(); it != libs.end(); it++)
-		{
-			elf_syms(prof_out, it->c_str());
-		}
-
-		//Write shrec syms file !
-		prof_head(prof_out, "jitsym", "SH4");
-		
-		#if FEAT_SHREC != DYNAREC_NONE
-		sh4_jitsym(prof_out);
-		#endif
-
-		//Write arm7rec syms file ! -> to do
-		//prof_head(prof_out,"jitsym","ARM7");
-
-		prof_head(prof_out, "samples", prof_wait);
-
-		do
-		{
-			tick_count++;
-			// printf("Sending SIGPROF %08X %08X\n",thread[0],thread[1]);
-			for (int i = 0; i < 2; i++) pthread_kill(thread[i], SIGPROF);
-			// printf("Sent SIGPROF\n");
-			usleep(prof_wait);
-			// fwrite(&prof_address[0],1,sizeof(prof_address[0])*2,prof_out);
-			fprintf(prof_out, "%p %p\n", prof_address[0], prof_address[1]);
-
-			if (!(tick_count % 10000))
-			{
-				printf("Profiler: %d ticks, flushing ..\n", tick_count);
-				fflush(prof_out);
-			}
-		} while (prof_run);
-
-		fclose(maps);
-		fclose(prof_out);
+	fclose(maps);
+	fclose(prof_out);
     
     return 0;
 }
