@@ -21,8 +21,7 @@
 
 #if HOST_CPU == CPU_X64 && FEAT_DSPREC != DYNAREC_NONE
 
-#include "deps/xbyak/xbyak.h"
-#include "deps/xbyak/xbyak_util.h"
+#include <xbyak/xbyak.h>
 #include "dsp.h"
 #include "hw/aica/aica_if.h"
 #include "hw/mem/_vmem.h"

@@ -3036,7 +3036,6 @@
 					TARGET_NO_NIXPROF,
 					TARGET_NO_COREIO_HTTP,
 					TARGET_NO_AREC,
-					XBYAK_NO_OP_NAMES,
 					TARGET_NO_OPENMP,
 					ENABLE_MODEM,
 					CHD5_LZMA,
@@ -3090,7 +3089,6 @@
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					TARGET_NO_NIXPROF,
 					TARGET_NO_COREIO_HTTP,
-					XBYAK_NO_OP_NAMES,
 					TARGET_NO_OPENMP,
 					ENABLE_MODEM,
 					CHD5_LZMA,
@@ -3146,9 +3144,11 @@
 					../../../core/deps/flac/src/libFLAC/include,
 					../../../core/deps/libpng,
 					../../../core/deps/libzip,
-					../../../core/deps/xxhash,
+					../../../core/deps/xxHash,
 					../../../core/deps/zlib,
 					../../../core/deps/glslang,
+					../../../core/deps/glm,
+					../../../core/deps/xbyak,
 					/usr/local/include,
 				);
 				INFOPLIST_FILE = "emulator-osx/Info.plist";
@@ -3193,9 +3193,11 @@
 					../../../core/deps/flac/src/libFLAC/include,
 					../../../core/deps/libpng,
 					../../../core/deps/libzip,
-					../../../core/deps/xxhash,
+					../../../core/deps/xxHash,
 					../../../core/deps/zlib,
 					../../../core/deps/glslang,
+					../../../core/deps/glm,
+					../../../core/deps/xbyak,
 					/usr/local/include,
 				);
 				INFOPLIST_FILE = "emulator-osx/Info.plist";
@@ -3281,7 +3283,6 @@
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					TARGET_NO_NIXPROF,
 					TARGET_NO_COREIO_HTTP,
-					XBYAK_NO_OP_NAMES,
 					TARGET_NO_OPENMP,
 					ENABLE_MODEM,
 					CHD5_LZMA,
@@ -3338,9 +3339,11 @@
 					../../../core/deps/flac/src/libFLAC/include,
 					../../../core/deps/libpng,
 					../../../core/deps/libzip,
-					../../../core/deps/xxhash,
+					../../../core/deps/xxHash,
 					../../../core/deps/zlib,
 					../../../core/deps/glslang,
+					../../../core/deps/glm,
+					../../../core/deps/xbyak,
 					/usr/local/include,
 				);
 				INFOPLIST_FILE = "emulator-osx/Info.plist";
@@ -3407,7 +3410,6 @@
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					TARGET_NO_NIXPROF,
 					TARGET_NO_COREIO_HTTP,
-					XBYAK_NO_OP_NAMES,
 					TARGET_NO_OPENMP,
 					ENABLE_MODEM,
 					CHD5_LZMA,
@@ -3458,9 +3460,11 @@
 					../../../core/deps/flac/src/libFLAC/include,
 					../../../core/deps/libpng,
 					../../../core/deps/libzip,
-					../../../core/deps/xxhash,
+					../../../core/deps/xxHash,
 					../../../core/deps/zlib,
 					../../../core/deps/glslang,
+					../../../core/deps/glm,
+					../../../core/deps/xbyak,
 					/usr/local/include,
 				);
 				INFOPLIST_FILE = "emulator-osx/Info.plist";

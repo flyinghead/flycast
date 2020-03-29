@@ -392,7 +392,7 @@ void blendPixel(const Kernel_3x3& ker,
 #define h get_h<rotDeg>(ker)
 #define i get_i<rotDeg>(ker)
 
-#ifndef NDEBUG
+#if defined _MSC_VER && !defined NDEBUG
     if (breakIntoDebugger)
         __debugbreak(); //__asm int 3;
 #endif

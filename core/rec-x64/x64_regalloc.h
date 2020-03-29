@@ -22,7 +22,7 @@
 
 //#define OLD_REGALLOC
 
-#include "deps/xbyak/xbyak.h"
+#include <xbyak/xbyak.h>
 #ifdef OLD_REGALLOC
 #include "hw/sh4/dyna/regalloc.h"
 #else

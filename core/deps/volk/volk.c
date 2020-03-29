@@ -1,4 +1,5 @@
 /* This file is part of volk library; see volk.h for version/license details */
+/* clang-format off */
 #include "volk.h"
 
 #ifdef _WIN32
@@ -22,6 +23,9 @@ extern "C" {
 __declspec(dllimport) HMODULE __stdcall LoadLibraryA(LPCSTR);
 __declspec(dllimport) FARPROC __stdcall GetProcAddress(HMODULE, LPCSTR);
 #endif
+
+static VkInstance loadedInstance = VK_NULL_HANDLE;
+static VkDevice loadedDevice = VK_NULL_HANDLE;
 
 static void volkGenLoadLoader(void* context, PFN_vkVoidFunction (*load)(void*, const char*));
 static void volkGenLoadInstance(void* context, PFN_vkVoidFunction (*load)(void*, const char*));
@@ -58,9 +62,9 @@ VkResult volkInitialize(void)
 
 	vkGetInstanceProcAddr = (PFN_vkGetInstanceProcAddr)dlsym(module, "vkGetInstanceProcAddr");
 #else
-	void* module = dlopen("libvulkan.so", RTLD_NOW | RTLD_LOCAL);
+	void* module = dlopen("libvulkan.so.1", RTLD_NOW | RTLD_LOCAL);
 	if (!module)
-		module = dlopen("libvulkan.so.1", RTLD_NOW | RTLD_LOCAL);
+		module = dlopen("libvulkan.so", RTLD_NOW | RTLD_LOCAL);
 	if (!module)
 		return VK_ERROR_INITIALIZATION_FAILED;
 
@@ -95,13 +99,31 @@ uint32_t volkGetInstanceVersion(void)
 
 void volkLoadInstance(VkInstance instance)
 {
+	loadedInstance = instance;
 	volkGenLoadInstance(instance, vkGetInstanceProcAddrStub);
 	volkGenLoadDevice(instance, vkGetInstanceProcAddrStub);
 }
 
+void volkLoadInstanceOnly(VkInstance instance)
+{
+    loadedInstance = instance;
+    volkGenLoadInstance(instance, vkGetInstanceProcAddrStub);
+}
+
+VkInstance volkGetLoadedInstance()
+{
+	return loadedInstance;
+}
+
 void volkLoadDevice(VkDevice device)
 {
+	loadedDevice = device;
 	volkGenLoadDevice(device, vkGetDeviceProcAddrStub);
+}
+
+VkDevice volkGetLoadedDevice()
+{
+	return loadedDevice;
 }
 
 void volkLoadDeviceTable(struct VolkDeviceTable* table, VkDevice device)
@@ -197,6 +219,9 @@ static void volkGenLoadInstance(void* context, PFN_vkVoidFunction (*load)(void*,
 #if defined(VK_EXT_sample_locations)
 	vkGetPhysicalDeviceMultisamplePropertiesEXT = (PFN_vkGetPhysicalDeviceMultisamplePropertiesEXT)load(context, "vkGetPhysicalDeviceMultisamplePropertiesEXT");
 #endif /* defined(VK_EXT_sample_locations) */
+#if defined(VK_EXT_tooling_info)
+	vkGetPhysicalDeviceToolPropertiesEXT = (PFN_vkGetPhysicalDeviceToolPropertiesEXT)load(context, "vkGetPhysicalDeviceToolPropertiesEXT");
+#endif /* defined(VK_EXT_tooling_info) */
 #if defined(VK_FUCHSIA_imagepipe_surface)
 	vkCreateImagePipeSurfaceFUCHSIA = (PFN_vkCreateImagePipeSurfaceFUCHSIA)load(context, "vkCreateImagePipeSurfaceFUCHSIA");
 #endif /* defined(VK_FUCHSIA_imagepipe_surface) */
@@ -246,6 +271,10 @@ static void volkGenLoadInstance(void* context, PFN_vkVoidFunction (*load)(void*,
 	vkGetPhysicalDeviceSurfaceCapabilities2KHR = (PFN_vkGetPhysicalDeviceSurfaceCapabilities2KHR)load(context, "vkGetPhysicalDeviceSurfaceCapabilities2KHR");
 	vkGetPhysicalDeviceSurfaceFormats2KHR = (PFN_vkGetPhysicalDeviceSurfaceFormats2KHR)load(context, "vkGetPhysicalDeviceSurfaceFormats2KHR");
 #endif /* defined(VK_KHR_get_surface_capabilities2) */
+#if defined(VK_KHR_performance_query)
+	vkEnumeratePhysicalDeviceQueueFamilyPerformanceQueryCountersKHR = (PFN_vkEnumeratePhysicalDeviceQueueFamilyPerformanceQueryCountersKHR)load(context, "vkEnumeratePhysicalDeviceQueueFamilyPerformanceQueryCountersKHR");
+	vkGetPhysicalDeviceQueueFamilyPerformanceQueryPassesKHR = (PFN_vkGetPhysicalDeviceQueueFamilyPerformanceQueryPassesKHR)load(context, "vkGetPhysicalDeviceQueueFamilyPerformanceQueryPassesKHR");
+#endif /* defined(VK_KHR_performance_query) */
 #if defined(VK_KHR_surface)
 	vkDestroySurfaceKHR = (PFN_vkDestroySurfaceKHR)load(context, "vkDestroySurfaceKHR");
 	vkGetPhysicalDeviceSurfaceCapabilitiesKHR = (PFN_vkGetPhysicalDeviceSurfaceCapabilitiesKHR)load(context, "vkGetPhysicalDeviceSurfaceCapabilitiesKHR");
@@ -439,6 +468,21 @@ static void volkGenLoadDevice(void* context, PFN_vkVoidFunction (*load)(void*, c
 	vkTrimCommandPool = (PFN_vkTrimCommandPool)load(context, "vkTrimCommandPool");
 	vkUpdateDescriptorSetWithTemplate = (PFN_vkUpdateDescriptorSetWithTemplate)load(context, "vkUpdateDescriptorSetWithTemplate");
 #endif /* defined(VK_VERSION_1_1) */
+#if defined(VK_VERSION_1_2)
+	vkCmdBeginRenderPass2 = (PFN_vkCmdBeginRenderPass2)load(context, "vkCmdBeginRenderPass2");
+	vkCmdDrawIndexedIndirectCount = (PFN_vkCmdDrawIndexedIndirectCount)load(context, "vkCmdDrawIndexedIndirectCount");
+	vkCmdDrawIndirectCount = (PFN_vkCmdDrawIndirectCount)load(context, "vkCmdDrawIndirectCount");
+	vkCmdEndRenderPass2 = (PFN_vkCmdEndRenderPass2)load(context, "vkCmdEndRenderPass2");
+	vkCmdNextSubpass2 = (PFN_vkCmdNextSubpass2)load(context, "vkCmdNextSubpass2");
+	vkCreateRenderPass2 = (PFN_vkCreateRenderPass2)load(context, "vkCreateRenderPass2");
+	vkGetBufferDeviceAddress = (PFN_vkGetBufferDeviceAddress)load(context, "vkGetBufferDeviceAddress");
+	vkGetBufferOpaqueCaptureAddress = (PFN_vkGetBufferOpaqueCaptureAddress)load(context, "vkGetBufferOpaqueCaptureAddress");
+	vkGetDeviceMemoryOpaqueCaptureAddress = (PFN_vkGetDeviceMemoryOpaqueCaptureAddress)load(context, "vkGetDeviceMemoryOpaqueCaptureAddress");
+	vkGetSemaphoreCounterValue = (PFN_vkGetSemaphoreCounterValue)load(context, "vkGetSemaphoreCounterValue");
+	vkResetQueryPool = (PFN_vkResetQueryPool)load(context, "vkResetQueryPool");
+	vkSignalSemaphore = (PFN_vkSignalSemaphore)load(context, "vkSignalSemaphore");
+	vkWaitSemaphores = (PFN_vkWaitSemaphores)load(context, "vkWaitSemaphores");
+#endif /* defined(VK_VERSION_1_2) */
 #if defined(VK_AMD_buffer_marker)
 	vkCmdWriteBufferMarkerAMD = (PFN_vkCmdWriteBufferMarkerAMD)load(context, "vkCmdWriteBufferMarkerAMD");
 #endif /* defined(VK_AMD_buffer_marker) */
@@ -537,6 +581,11 @@ static void volkGenLoadDevice(void* context, PFN_vkVoidFunction (*load)(void*, c
 	vkBindBufferMemory2KHR = (PFN_vkBindBufferMemory2KHR)load(context, "vkBindBufferMemory2KHR");
 	vkBindImageMemory2KHR = (PFN_vkBindImageMemory2KHR)load(context, "vkBindImageMemory2KHR");
 #endif /* defined(VK_KHR_bind_memory2) */
+#if defined(VK_KHR_buffer_device_address)
+	vkGetBufferDeviceAddressKHR = (PFN_vkGetBufferDeviceAddressKHR)load(context, "vkGetBufferDeviceAddressKHR");
+	vkGetBufferOpaqueCaptureAddressKHR = (PFN_vkGetBufferOpaqueCaptureAddressKHR)load(context, "vkGetBufferOpaqueCaptureAddressKHR");
+	vkGetDeviceMemoryOpaqueCaptureAddressKHR = (PFN_vkGetDeviceMemoryOpaqueCaptureAddressKHR)load(context, "vkGetDeviceMemoryOpaqueCaptureAddressKHR");
+#endif /* defined(VK_KHR_buffer_device_address) */
 #if defined(VK_KHR_create_renderpass2)
 	vkCmdBeginRenderPass2KHR = (PFN_vkCmdBeginRenderPass2KHR)load(context, "vkCmdBeginRenderPass2KHR");
 	vkCmdEndRenderPass2KHR = (PFN_vkCmdEndRenderPass2KHR)load(context, "vkCmdEndRenderPass2KHR");
@@ -595,6 +644,10 @@ static void volkGenLoadDevice(void* context, PFN_vkVoidFunction (*load)(void*, c
 #if defined(VK_KHR_maintenance3)
 	vkGetDescriptorSetLayoutSupportKHR = (PFN_vkGetDescriptorSetLayoutSupportKHR)load(context, "vkGetDescriptorSetLayoutSupportKHR");
 #endif /* defined(VK_KHR_maintenance3) */
+#if defined(VK_KHR_performance_query)
+	vkAcquireProfilingLockKHR = (PFN_vkAcquireProfilingLockKHR)load(context, "vkAcquireProfilingLockKHR");
+	vkReleaseProfilingLockKHR = (PFN_vkReleaseProfilingLockKHR)load(context, "vkReleaseProfilingLockKHR");
+#endif /* defined(VK_KHR_performance_query) */
 #if defined(VK_KHR_pipeline_executable_properties)
 	vkGetPipelineExecutableInternalRepresentationsKHR = (PFN_vkGetPipelineExecutableInternalRepresentationsKHR)load(context, "vkGetPipelineExecutableInternalRepresentationsKHR");
 	vkGetPipelineExecutablePropertiesKHR = (PFN_vkGetPipelineExecutablePropertiesKHR)load(context, "vkGetPipelineExecutablePropertiesKHR");
@@ -617,6 +670,11 @@ static void volkGenLoadDevice(void* context, PFN_vkVoidFunction (*load)(void*, c
 	vkGetSwapchainImagesKHR = (PFN_vkGetSwapchainImagesKHR)load(context, "vkGetSwapchainImagesKHR");
 	vkQueuePresentKHR = (PFN_vkQueuePresentKHR)load(context, "vkQueuePresentKHR");
 #endif /* defined(VK_KHR_swapchain) */
+#if defined(VK_KHR_timeline_semaphore)
+	vkGetSemaphoreCounterValueKHR = (PFN_vkGetSemaphoreCounterValueKHR)load(context, "vkGetSemaphoreCounterValueKHR");
+	vkSignalSemaphoreKHR = (PFN_vkSignalSemaphoreKHR)load(context, "vkSignalSemaphoreKHR");
+	vkWaitSemaphoresKHR = (PFN_vkWaitSemaphoresKHR)load(context, "vkWaitSemaphoresKHR");
+#endif /* defined(VK_KHR_timeline_semaphore) */
 #if defined(VK_NVX_device_generated_commands)
 	vkCmdProcessCommandsNVX = (PFN_vkCmdProcessCommandsNVX)load(context, "vkCmdProcessCommandsNVX");
 	vkCmdReserveSpaceForCommandsNVX = (PFN_vkCmdReserveSpaceForCommandsNVX)load(context, "vkCmdReserveSpaceForCommandsNVX");
@@ -826,6 +884,21 @@ static void volkGenLoadDeviceTable(struct VolkDeviceTable* table, void* context,
 	table->vkTrimCommandPool = (PFN_vkTrimCommandPool)load(context, "vkTrimCommandPool");
 	table->vkUpdateDescriptorSetWithTemplate = (PFN_vkUpdateDescriptorSetWithTemplate)load(context, "vkUpdateDescriptorSetWithTemplate");
 #endif /* defined(VK_VERSION_1_1) */
+#if defined(VK_VERSION_1_2)
+	table->vkCmdBeginRenderPass2 = (PFN_vkCmdBeginRenderPass2)load(context, "vkCmdBeginRenderPass2");
+	table->vkCmdDrawIndexedIndirectCount = (PFN_vkCmdDrawIndexedIndirectCount)load(context, "vkCmdDrawIndexedIndirectCount");
+	table->vkCmdDrawIndirectCount = (PFN_vkCmdDrawIndirectCount)load(context, "vkCmdDrawIndirectCount");
+	table->vkCmdEndRenderPass2 = (PFN_vkCmdEndRenderPass2)load(context, "vkCmdEndRenderPass2");
+	table->vkCmdNextSubpass2 = (PFN_vkCmdNextSubpass2)load(context, "vkCmdNextSubpass2");
+	table->vkCreateRenderPass2 = (PFN_vkCreateRenderPass2)load(context, "vkCreateRenderPass2");
+	table->vkGetBufferDeviceAddress = (PFN_vkGetBufferDeviceAddress)load(context, "vkGetBufferDeviceAddress");
+	table->vkGetBufferOpaqueCaptureAddress = (PFN_vkGetBufferOpaqueCaptureAddress)load(context, "vkGetBufferOpaqueCaptureAddress");
+	table->vkGetDeviceMemoryOpaqueCaptureAddress = (PFN_vkGetDeviceMemoryOpaqueCaptureAddress)load(context, "vkGetDeviceMemoryOpaqueCaptureAddress");
+	table->vkGetSemaphoreCounterValue = (PFN_vkGetSemaphoreCounterValue)load(context, "vkGetSemaphoreCounterValue");
+	table->vkResetQueryPool = (PFN_vkResetQueryPool)load(context, "vkResetQueryPool");
+	table->vkSignalSemaphore = (PFN_vkSignalSemaphore)load(context, "vkSignalSemaphore");
+	table->vkWaitSemaphores = (PFN_vkWaitSemaphores)load(context, "vkWaitSemaphores");
+#endif /* defined(VK_VERSION_1_2) */
 #if defined(VK_AMD_buffer_marker)
 	table->vkCmdWriteBufferMarkerAMD = (PFN_vkCmdWriteBufferMarkerAMD)load(context, "vkCmdWriteBufferMarkerAMD");
 #endif /* defined(VK_AMD_buffer_marker) */
@@ -924,6 +997,11 @@ static void volkGenLoadDeviceTable(struct VolkDeviceTable* table, void* context,
 	table->vkBindBufferMemory2KHR = (PFN_vkBindBufferMemory2KHR)load(context, "vkBindBufferMemory2KHR");
 	table->vkBindImageMemory2KHR = (PFN_vkBindImageMemory2KHR)load(context, "vkBindImageMemory2KHR");
 #endif /* defined(VK_KHR_bind_memory2) */
+#if defined(VK_KHR_buffer_device_address)
+	table->vkGetBufferDeviceAddressKHR = (PFN_vkGetBufferDeviceAddressKHR)load(context, "vkGetBufferDeviceAddressKHR");
+	table->vkGetBufferOpaqueCaptureAddressKHR = (PFN_vkGetBufferOpaqueCaptureAddressKHR)load(context, "vkGetBufferOpaqueCaptureAddressKHR");
+	table->vkGetDeviceMemoryOpaqueCaptureAddressKHR = (PFN_vkGetDeviceMemoryOpaqueCaptureAddressKHR)load(context, "vkGetDeviceMemoryOpaqueCaptureAddressKHR");
+#endif /* defined(VK_KHR_buffer_device_address) */
 #if defined(VK_KHR_create_renderpass2)
 	table->vkCmdBeginRenderPass2KHR = (PFN_vkCmdBeginRenderPass2KHR)load(context, "vkCmdBeginRenderPass2KHR");
 	table->vkCmdEndRenderPass2KHR = (PFN_vkCmdEndRenderPass2KHR)load(context, "vkCmdEndRenderPass2KHR");
@@ -982,6 +1060,10 @@ static void volkGenLoadDeviceTable(struct VolkDeviceTable* table, void* context,
 #if defined(VK_KHR_maintenance3)
 	table->vkGetDescriptorSetLayoutSupportKHR = (PFN_vkGetDescriptorSetLayoutSupportKHR)load(context, "vkGetDescriptorSetLayoutSupportKHR");
 #endif /* defined(VK_KHR_maintenance3) */
+#if defined(VK_KHR_performance_query)
+	table->vkAcquireProfilingLockKHR = (PFN_vkAcquireProfilingLockKHR)load(context, "vkAcquireProfilingLockKHR");
+	table->vkReleaseProfilingLockKHR = (PFN_vkReleaseProfilingLockKHR)load(context, "vkReleaseProfilingLockKHR");
+#endif /* defined(VK_KHR_performance_query) */
 #if defined(VK_KHR_pipeline_executable_properties)
 	table->vkGetPipelineExecutableInternalRepresentationsKHR = (PFN_vkGetPipelineExecutableInternalRepresentationsKHR)load(context, "vkGetPipelineExecutableInternalRepresentationsKHR");
 	table->vkGetPipelineExecutablePropertiesKHR = (PFN_vkGetPipelineExecutablePropertiesKHR)load(context, "vkGetPipelineExecutablePropertiesKHR");
@@ -1004,6 +1086,11 @@ static void volkGenLoadDeviceTable(struct VolkDeviceTable* table, void* context,
 	table->vkGetSwapchainImagesKHR = (PFN_vkGetSwapchainImagesKHR)load(context, "vkGetSwapchainImagesKHR");
 	table->vkQueuePresentKHR = (PFN_vkQueuePresentKHR)load(context, "vkQueuePresentKHR");
 #endif /* defined(VK_KHR_swapchain) */
+#if defined(VK_KHR_timeline_semaphore)
+	table->vkGetSemaphoreCounterValueKHR = (PFN_vkGetSemaphoreCounterValueKHR)load(context, "vkGetSemaphoreCounterValueKHR");
+	table->vkSignalSemaphoreKHR = (PFN_vkSignalSemaphoreKHR)load(context, "vkSignalSemaphoreKHR");
+	table->vkWaitSemaphoresKHR = (PFN_vkWaitSemaphoresKHR)load(context, "vkWaitSemaphoresKHR");
+#endif /* defined(VK_KHR_timeline_semaphore) */
 #if defined(VK_NVX_device_generated_commands)
 	table->vkCmdProcessCommandsNVX = (PFN_vkCmdProcessCommandsNVX)load(context, "vkCmdProcessCommandsNVX");
 	table->vkCmdReserveSpaceForCommandsNVX = (PFN_vkCmdReserveSpaceForCommandsNVX)load(context, "vkCmdReserveSpaceForCommandsNVX");
@@ -1244,6 +1331,21 @@ PFN_vkGetPhysicalDeviceSparseImageFormatProperties2 vkGetPhysicalDeviceSparseIma
 PFN_vkTrimCommandPool vkTrimCommandPool;
 PFN_vkUpdateDescriptorSetWithTemplate vkUpdateDescriptorSetWithTemplate;
 #endif /* defined(VK_VERSION_1_1) */
+#if defined(VK_VERSION_1_2)
+PFN_vkCmdBeginRenderPass2 vkCmdBeginRenderPass2;
+PFN_vkCmdDrawIndexedIndirectCount vkCmdDrawIndexedIndirectCount;
+PFN_vkCmdDrawIndirectCount vkCmdDrawIndirectCount;
+PFN_vkCmdEndRenderPass2 vkCmdEndRenderPass2;
+PFN_vkCmdNextSubpass2 vkCmdNextSubpass2;
+PFN_vkCreateRenderPass2 vkCreateRenderPass2;
+PFN_vkGetBufferDeviceAddress vkGetBufferDeviceAddress;
+PFN_vkGetBufferOpaqueCaptureAddress vkGetBufferOpaqueCaptureAddress;
+PFN_vkGetDeviceMemoryOpaqueCaptureAddress vkGetDeviceMemoryOpaqueCaptureAddress;
+PFN_vkGetSemaphoreCounterValue vkGetSemaphoreCounterValue;
+PFN_vkResetQueryPool vkResetQueryPool;
+PFN_vkSignalSemaphore vkSignalSemaphore;
+PFN_vkWaitSemaphores vkWaitSemaphores;
+#endif /* defined(VK_VERSION_1_2) */
 #if defined(VK_AMD_buffer_marker)
 PFN_vkCmdWriteBufferMarkerAMD vkCmdWriteBufferMarkerAMD;
 #endif /* defined(VK_AMD_buffer_marker) */
@@ -1346,6 +1448,9 @@ PFN_vkCreateMetalSurfaceEXT vkCreateMetalSurfaceEXT;
 PFN_vkCmdSetSampleLocationsEXT vkCmdSetSampleLocationsEXT;
 PFN_vkGetPhysicalDeviceMultisamplePropertiesEXT vkGetPhysicalDeviceMultisamplePropertiesEXT;
 #endif /* defined(VK_EXT_sample_locations) */
+#if defined(VK_EXT_tooling_info)
+PFN_vkGetPhysicalDeviceToolPropertiesEXT vkGetPhysicalDeviceToolPropertiesEXT;
+#endif /* defined(VK_EXT_tooling_info) */
 #if defined(VK_EXT_transform_feedback)
 PFN_vkCmdBeginQueryIndexedEXT vkCmdBeginQueryIndexedEXT;
 PFN_vkCmdBeginTransformFeedbackEXT vkCmdBeginTransformFeedbackEXT;
@@ -1388,6 +1493,11 @@ PFN_vkCreateAndroidSurfaceKHR vkCreateAndroidSurfaceKHR;
 PFN_vkBindBufferMemory2KHR vkBindBufferMemory2KHR;
 PFN_vkBindImageMemory2KHR vkBindImageMemory2KHR;
 #endif /* defined(VK_KHR_bind_memory2) */
+#if defined(VK_KHR_buffer_device_address)
+PFN_vkGetBufferDeviceAddressKHR vkGetBufferDeviceAddressKHR;
+PFN_vkGetBufferOpaqueCaptureAddressKHR vkGetBufferOpaqueCaptureAddressKHR;
+PFN_vkGetDeviceMemoryOpaqueCaptureAddressKHR vkGetDeviceMemoryOpaqueCaptureAddressKHR;
+#endif /* defined(VK_KHR_buffer_device_address) */
 #if defined(VK_KHR_create_renderpass2)
 PFN_vkCmdBeginRenderPass2KHR vkCmdBeginRenderPass2KHR;
 PFN_vkCmdEndRenderPass2KHR vkCmdEndRenderPass2KHR;
@@ -1486,6 +1596,12 @@ PFN_vkTrimCommandPoolKHR vkTrimCommandPoolKHR;
 #if defined(VK_KHR_maintenance3)
 PFN_vkGetDescriptorSetLayoutSupportKHR vkGetDescriptorSetLayoutSupportKHR;
 #endif /* defined(VK_KHR_maintenance3) */
+#if defined(VK_KHR_performance_query)
+PFN_vkAcquireProfilingLockKHR vkAcquireProfilingLockKHR;
+PFN_vkEnumeratePhysicalDeviceQueueFamilyPerformanceQueryCountersKHR vkEnumeratePhysicalDeviceQueueFamilyPerformanceQueryCountersKHR;
+PFN_vkGetPhysicalDeviceQueueFamilyPerformanceQueryPassesKHR vkGetPhysicalDeviceQueueFamilyPerformanceQueryPassesKHR;
+PFN_vkReleaseProfilingLockKHR vkReleaseProfilingLockKHR;
+#endif /* defined(VK_KHR_performance_query) */
 #if defined(VK_KHR_pipeline_executable_properties)
 PFN_vkGetPipelineExecutableInternalRepresentationsKHR vkGetPipelineExecutableInternalRepresentationsKHR;
 PFN_vkGetPipelineExecutablePropertiesKHR vkGetPipelineExecutablePropertiesKHR;
@@ -1515,6 +1631,11 @@ PFN_vkDestroySwapchainKHR vkDestroySwapchainKHR;
 PFN_vkGetSwapchainImagesKHR vkGetSwapchainImagesKHR;
 PFN_vkQueuePresentKHR vkQueuePresentKHR;
 #endif /* defined(VK_KHR_swapchain) */
+#if defined(VK_KHR_timeline_semaphore)
+PFN_vkGetSemaphoreCounterValueKHR vkGetSemaphoreCounterValueKHR;
+PFN_vkSignalSemaphoreKHR vkSignalSemaphoreKHR;
+PFN_vkWaitSemaphoresKHR vkWaitSemaphoresKHR;
+#endif /* defined(VK_KHR_timeline_semaphore) */
 #if defined(VK_KHR_wayland_surface)
 PFN_vkCreateWaylandSurfaceKHR vkCreateWaylandSurfaceKHR;
 PFN_vkGetPhysicalDeviceWaylandPresentationSupportKHR vkGetPhysicalDeviceWaylandPresentationSupportKHR;
@@ -1623,3 +1744,4 @@ PFN_vkAcquireNextImage2KHR vkAcquireNextImage2KHR;
 #ifdef __cplusplus
 }
 #endif
+/* clang-format on */

@@ -1,7 +1,6 @@
 #include "types.h"
 #include <unordered_set>
 
-#include "deps/xxhash/xxhash.h"
 #include "../sh4_interpreter.h"
 #include "../sh4_opcode_list.h"
 #include "../sh4_core.h"
@@ -21,6 +20,8 @@
 #include "blockmanager.h"
 #include "ngen.h"
 #include "decoder.h"
+
+#include <xxhash.h>
 
 #if FEAT_SHREC != DYNAREC_NONE
 
