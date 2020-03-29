@@ -54,7 +54,7 @@ __attribute__((format(printf, 5, 6)))
 #endif
 ;
 
-#if !defined(RELEASE) || defined(DEBUGFAST)
+#if !defined(NDEBUG) || defined(DEBUGFAST)
 #define MAX_LOGLEVEL LogTypes::LOG_LEVELS::LDEBUG
 #else
 #ifndef MAX_LOGLEVEL

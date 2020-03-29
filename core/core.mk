@@ -83,7 +83,7 @@ endif
 ifdef FOR_PANDORA
 RZDCY_CFLAGS	:= \
 	$(CFLAGS) -c -O3 \
-	-DRELEASE -DPANDORA\
+	-DNDEBUG -DPANDORA\
 	-march=armv7-a -mtune=cortex-a8 -mfpu=neon -mfloat-abi=softfp \
 	-frename-registers -fsingle-precision-constant -ffast-math \
 	-ftree-vectorize -fomit-frame-pointer
@@ -93,7 +93,7 @@ else
 	ifdef FOR_ANDROID
 RZDCY_CFLAGS	:= \
 		$(CFLAGS) -c -O3 \
-		-D_ANDROID -DRELEASE \
+		-D_ANDROID -DNDEBUG \
 		-frename-registers -fsingle-precision-constant -ffast-math \
 		-ftree-vectorize -fomit-frame-pointer
 

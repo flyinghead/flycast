@@ -16,7 +16,7 @@
    #define TIME_PRESCALE
    #define PICO_SUPPORT_THREADING
  */
-#if defined(RELEASE) && !defined(DEBUGFAST)
+#if defined(NDEBUG) && !defined(DEBUGFAST)
 #define dbg(...)
 #else
 #define dbg printf

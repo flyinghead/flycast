@@ -52,7 +52,7 @@ void VMAllocator::Init(vk::PhysicalDevice physicalDevice, vk::Device device)
 
 	allocatorInfo.physicalDevice = (VkPhysicalDevice)physicalDevice;
 	allocatorInfo.device = (VkDevice)device;
-#if !defined(RELEASE) || defined(DEBUGFAST)
+#if !defined(NDEBUG) || defined(DEBUGFAST)
 	allocatorInfo.pDeviceMemoryCallbacks = &memoryCallbacks;
 #endif
 	VkResult rc = vmaCreateAllocator(&allocatorInfo, &allocator);

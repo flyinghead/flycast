@@ -42,10 +42,6 @@ else()
   set(arch "${CMAKE_SYSTEM_PROCESSOR}")
 endif()
 
-if("${CMAKE_BUILD_TYPE}" STREQUAL Release)
-  add_definitions(-DRELEASE)
-endif()
-
 add_definitions(-DUSES_HOMEDIR)
 add_definitions(-DTARGET_NO_AREC)
 
