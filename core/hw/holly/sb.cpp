@@ -114,11 +114,14 @@ offset>>=2;
 
 }
 
-u32 sbio_read_noacc(u32 addr) { verify(false); return 0; }
-void sbio_write_noacc(u32 addr, u32 data) { verify(false); }
-void sbio_write_const(u32 addr, u32 data) { verify(false); }
+u32 sbio_read_noacc(u32 addr) { INFO_LOG(HOLLY, "ERROR: forbidden read on register; offset=%x", addr - SB_BASE); return 0; }
+void sbio_write_noacc(u32 addr, u32 data) { INFO_LOG(HOLLY, "ERROR: forbidden write on register; offset=%x, data=%x", addr - SB_BASE, data); }
+void sbio_write_const(u32 addr, u32 data) { INFO_LOG(HOLLY, "ERROR: forbidden write on const register; offset=%x, data=%x", addr - SB_BASE, data);  }
 
-void sb_write_zero(u32 addr, u32 data) { verify(data==0); }
+void sb_write_zero(u32 addr, u32 data) {
+	if (data != 0)
+		INFO_LOG(HOLLY, "ERROR: non-zero write on register; offset=%x, data=%x", addr - SB_BASE, data);
+}
 void sb_write_gdrom_unlock(u32 addr, u32 data) { verify(data==0 || data==0x001fffff || data==0x42fe || data == 0xa677
 		 	 	 	 	 	 	 	 	 	 	 	 	 || data == 0x3ff); } /* CS writes 0x42fe, AtomisWave 0xa677, Naomi Dev BIOS 0x3ff */
 
