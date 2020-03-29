@@ -19,12 +19,17 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #pragma once
-#include <memory>
-#include <unordered_set>
 #include "vulkan_context.h"
 #include "buffer.h"
 #include "rend/TexCache.h"
 #include "hw/pvr/Renderer_if.h"
+
+#include <algorithm>
+#include <memory>
+#include <map>
+#include <string>
+#include <unordered_set>
+#include <vector>
 
 void setImageLayout(vk::CommandBuffer const& commandBuffer, vk::Image image, vk::Format format, u32 mipmapLevels, vk::ImageLayout oldImageLayout, vk::ImageLayout newImageLayout);
 

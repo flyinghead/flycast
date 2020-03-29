@@ -11,7 +11,6 @@
 
 #include "spg.h"
 #include "pvr_regs.h"
-#include "Renderer_if.h"
 #include "rend/TexCache.h"
 
 void libPvr_LockedBlockWrite (vram_block* block,u32 addr)

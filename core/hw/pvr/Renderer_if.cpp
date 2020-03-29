@@ -1,10 +1,10 @@
 #include "Renderer_if.h"
-#include "ta.h"
-#include "hw/pvr/pvr_mem.h"
-#include "rend/TexCache.h"
-#include "rend/gui.h"
-#include "hw/mem/_vmem.h"
 #include "cheats.h"
+#include "hw/mem/_vmem.h"
+#include "hw/pvr/pvr_mem.h"
+#include "oslib/oslib.h"
+#include "rend/gui.h"
+#include "rend/TexCache.h"
 #include "wsi/context.h"
 
 #include <zlib.h>

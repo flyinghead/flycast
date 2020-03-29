@@ -1,8 +1,8 @@
-#include <climits>
-#include <memory>
-#include "cfg/cfg.h"
-#include "oslib.h"
 #include "audiostream.h"
+#include "cfg/cfg.h"
+
+#include <algorithm>
+#include <memory>
 
 struct SoundFrame { s16 l;s16 r; };
 constexpr u32 SAMPLE_COUNT =  512;

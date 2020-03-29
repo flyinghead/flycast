@@ -1,7 +1,4 @@
 #include "dsp.h"
-#include "aica_mem.h"
-#include "hw/aica/aica_if.h"
-#include "oslib/oslib.h"
 
 /*
 	DSP rec_v1
@@ -99,6 +96,10 @@ void DecodeInst(u32 *IPtr,_INST *i)
 }
 
 #if HOST_CPU == CPU_X86 && FEAT_DSPREC == DYNAREC_JIT
+#include "aica.h"
+#include "aica_mem.h"
+#include "aica_if.h"
+#include "oslib/oslib.h"
 #include "emitter/x86_emitter.h"
 
 const bool SUPPORT_NOFL=false;

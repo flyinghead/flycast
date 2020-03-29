@@ -1,29 +1,19 @@
 // serialize.cpp : save states
-#if 1
 #include "types.h"
 #include "hw/aica/dsp.h"
 #include "hw/aica/aica.h"
 #include "hw/aica/sgc_if.h"
 #include "hw/arm7/arm7.h"
 #include "hw/holly/sb.h"
-#include "hw/holly/sb_mem.h"
 #include "hw/flashrom/flashrom.h"
-#include "hw/mem/_vmem.h"
 #include "hw/gdrom/gdromv3.h"
 #include "hw/maple/maple_cfg.h"
 #include "hw/pvr/Renderer_if.h"
-#include "hw/pvr/ta_structs.h"
-#include "hw/sh4/sh4_interrupts.h"
 #include "hw/sh4/sh4_sched.h"
 #include "hw/sh4/sh4_mmr.h"
 #include "hw/sh4/modules/mmu.h"
-#include "imgread/common.h"
-#include "reios/reios.h"
 #include "reios/gdrom_hle.h"
-#include <map>
-#include <set>
 #include "hw/sh4/dyna/blockmanager.h"
-#include "hw/sh4/dyna/ngen.h"
 #include "hw/naomi/naomi_cart.h"
 
 #define REICAST_SKIP(size) do { if (*data) *(u8**)data += (size); *total_size += (size); } while (false)
@@ -1169,4 +1159,3 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 
 	return true ;
 }
-#endif

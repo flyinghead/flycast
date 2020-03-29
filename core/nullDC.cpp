@@ -9,7 +9,6 @@
 #include "stdclass.h"
 #include "cfg/cfg.h"
 
-#include "types.h"
 #include "hw/maple/maple_cfg.h"
 #include "hw/sh4/sh4_mem.h"
 
@@ -27,6 +26,7 @@
 #include "log/LogManager.h"
 #include "cheats.h"
 #include "rend/CustomTexture.h"
+#include "hw/maple/maple_devs.h"
 
 void FlushCache();
 void LoadCustom();

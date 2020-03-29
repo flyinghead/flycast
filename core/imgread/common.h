@@ -1,5 +1,5 @@
 #pragma once
-#include "gd_driver.h"
+#include "types.h"
 #include <vector>
 using namespace std;
 

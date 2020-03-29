@@ -1,10 +1,11 @@
 /*
 	In case you wonder, the extern "C" stuff are for the assembly code on beagleboard/pandora
 */
+#pragma once
+
 #include <memory>
 #include "types.h"
 #include "decoder.h"
-#pragma once
 
 typedef void (*DynarecCodeEntryPtr)();
 typedef std::shared_ptr<RuntimeBlockInfo> RuntimeBlockInfoPtr;

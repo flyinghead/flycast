@@ -1,6 +1,5 @@
 #include "arm7.h"
 #include "arm_mem.h"
-#include "virt_arm.h"
 
 #define arm_printf(...) DEBUG_LOG(AICA_ARM, __VA_ARGS__)
 
@@ -359,6 +358,8 @@ void update_armintc()
 //
 // ARM7 Recompiler
 //
+
+#include "virt_arm.h"
 
 #if HOST_OS == OS_DARWIN
 #include <sys/mman.h>

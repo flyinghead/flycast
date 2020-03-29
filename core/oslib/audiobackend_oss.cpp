@@ -1,9 +1,9 @@
 #include "audiostream.h"
 #ifdef USE_OSS
+#include <fcntl.h>
 #include <sys/ioctl.h>
-#include <sys/fcntl.h>
-#include <unistd.h>
 #include <sys/soundcard.h>
+#include <unistd.h>
 
 static int oss_audio_fd = -1;
 

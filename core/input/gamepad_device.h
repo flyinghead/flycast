@@ -18,10 +18,13 @@
  */
 
 #pragma once
-#include <memory>
-#include <mutex>
 #include "types.h"
 #include "mapping.h"
+
+#include <map>
+#include <memory>
+#include <mutex>
+#include <vector>
 
 class GamepadDevice
 {

@@ -17,16 +17,12 @@
 	 along with reicast.  If not, see <https://www.gnu.org/licenses/>.
  */
 #include "CustomTexture.h"
+#include "cfg/cfg.h"
 
 #include <algorithm>
-#include <sstream>
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <dirent.h>
-
 #include <png.h>
-#include "reios/reios.h"
-#include "cfg/cfg.h"
+#include <sstream>
 
 // TODO Move this out of gles.cpp
 u8* loadPNGData(const string& subpath, int &width, int &height);

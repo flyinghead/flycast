@@ -1,5 +1,5 @@
 #pragma once
-#include "aica.h"
+#include "types.h"
 
 struct dsp_t
 {

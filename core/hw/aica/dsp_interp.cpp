@@ -4,11 +4,14 @@
 // Copyright (c) 2007-2009 R. Belmont and Richard Bannister, and others.
 // All rights reserved.
 //
-#include "dsp.h"
-#include "aica_if.h"
-#include "aica_mem.h"
+
+#include "build.h"
 
 #if FEAT_DSPREC != DYNAREC_JIT
+
+#include "dsp.h"
+#include "aica.h"
+#include "aica_if.h"
 
 #ifdef NDEBUG
 #undef verify

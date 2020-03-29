@@ -18,15 +18,16 @@
     You should have received a copy of the GNU General Public License
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
-#include <memory>
-#include <math.h>
 #include "vulkan.h"
 #include "hw/pvr/Renderer_if.h"
+#include "hw/pvr/ta.h"
 #include "commandpool.h"
 #include "drawer.h"
 #include "shaders.h"
 #include "rend/gui.h"
 #include "rend/osd.h"
+
+#include <memory>
 
 class VulkanRenderer : public Renderer
 {

@@ -1,4 +1,5 @@
 #pragma once
+#include "types.h"
 #include "ta_ctx.h"
 
 extern u32 VertexCount;

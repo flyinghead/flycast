@@ -1,6 +1,5 @@
 #pragma once
 #include "types.h"
-#include "maple_devs.h"
 
 enum PlainJoystickButtonId
 {

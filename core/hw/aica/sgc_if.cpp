@@ -19,11 +19,15 @@
  */
 
 #include "sgc_if.h"
-#include "dsp.h"
+#include "aica.h"
+#include "aica_if.h"
 #include "aica_mem.h"
-#include "hw/aica/aica_if.h"
-#include <cmath>
+#include "dsp.h"
+#include "oslib/oslib.h"
+
 #include <algorithm>
+#include <cmath>
+
 using namespace std;
 #undef FAR
 

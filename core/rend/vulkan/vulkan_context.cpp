@@ -22,13 +22,11 @@
 #include "imgui/imgui.h"
 #include "imgui_impl_vulkan.h"
 #include "../gui.h"
-#include "hw/pvr/Renderer_if.h"
 #ifdef USE_SDL
 #include <sdl/sdl.h>
 #include <SDL2/SDL_vulkan.h>
 #endif
 #include "compiler.h"
-#include "utils.h"
 #include "texture.h"
 
 VulkanContext *VulkanContext::contextInstance;

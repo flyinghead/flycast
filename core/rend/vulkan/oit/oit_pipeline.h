@@ -19,14 +19,14 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #pragma once
-#include <tuple>
-#include <glm/glm.hpp>
 #include "../vulkan.h"
 #include "oit_shaders.h"
 #include "oit_renderpass.h"
 #include "oit_buffer.h"
 #include "../texture.h"
-#include "hw/pvr/ta_ctx.h"
+
+#include <glm/glm.hpp>
+#include <tuple>
 
 class OITDescriptorSets
 {

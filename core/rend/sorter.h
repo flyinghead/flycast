@@ -18,6 +18,8 @@
 #include "types.h"
 #include "hw/pvr/Renderer_if.h"
 
+#include <vector>
+
 //Sort based on min-z of each strip
 void SortPParams(int first, int count);
 

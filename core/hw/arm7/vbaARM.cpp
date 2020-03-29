@@ -1,7 +1,6 @@
 // nullAICA.cpp : Defines the entry point for the DLL application.
 //
 
-#include "types.h"
 #include "arm7.h"
 
 //called when plugin is used by emu (you should do first time init here)

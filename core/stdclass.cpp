@@ -1,18 +1,18 @@
-#include <algorithm>
-#include <cstring>
-#include <vector>
-#include <sys/types.h>
-#include <sys/stat.h>
 #include "types.h"
-#include "cfg/cfg.h"
 #include "stdclass.h"
+
+#include <cstring>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <vector>
+
 #if HOST_OS == OS_DARWIN
 #include <mach/clock.h>
 #include <mach/mach.h>
 #endif
 
-
 #if COMPILER_VC_OR_CLANG_WIN32
+	#include <algorithm>
 	#include <io.h>
 	#include <direct.h>
 	#define access _access
@@ -20,8 +20,6 @@
 #else
 	#include <unistd.h>
 #endif
-
-#include "hw/mem/_vmem.h"
 
 string user_config_dir;
 string user_data_dir;

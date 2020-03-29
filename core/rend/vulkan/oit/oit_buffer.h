@@ -19,9 +19,10 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #pragma once
-#include <memory>
 #include "../buffer.h"
 #include "../texture.h"
+
+#include <memory>
 
 const vk::DeviceSize PixelBufferSize = 512 * 1024 * 1024;
 

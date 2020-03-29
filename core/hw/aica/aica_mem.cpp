@@ -1,7 +1,8 @@
 #include "aica_mem.h"
+#include "aica.h"
+#include "aica_if.h"
 #include "dsp.h"
 #include "sgc_if.h"
-#include "aica_if.h"
 
 u8 aica_reg[0x8000];
 

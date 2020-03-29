@@ -1,6 +1,7 @@
+#include "audiostream.h"
+
 #include <chrono>
 #include <thread>
-#include "audiostream.h"
 
 using the_clock = std::chrono::high_resolution_clock;
 

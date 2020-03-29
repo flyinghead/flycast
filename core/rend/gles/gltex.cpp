@@ -1,10 +1,10 @@
-#include <algorithm>
 #include "glcache.h"
 #include "gles.h"
-#include "rend/TexCache.h"
 #include "hw/pvr/pvr_mem.h"
-#include "hw/mem/_vmem.h"
+#include "rend/TexCache.h"
 
+#include <cstdio>
+#include <cstdlib>
 #include <png.h>
 
 /*

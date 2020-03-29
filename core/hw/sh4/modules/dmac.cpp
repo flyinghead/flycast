@@ -12,7 +12,6 @@
 #include "dmac.h"
 #include "hw/sh4/sh4_interrupts.h"
 #include "hw/holly/holly_intc.h"
-#include "types.h"
 
 /*
 u32 DMAC_SAR[4];

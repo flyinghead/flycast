@@ -1,18 +1,13 @@
-#include <memory>
-#include "types.h"
-#include "maple_if.h"
-#include "maple_helper.h"
 #include "maple_devs.h"
 #include "maple_cfg.h"
+#include "maple_helper.h"
 #include "cfg/cfg.h"
-#include "hw/naomi/naomi.h"
 #include "hw/naomi/naomi_cart.h"
 #include "hw/pvr/spg.h"
-#include "input/gamepad.h"
 #include "input/gamepad_device.h"
-#include <cmath>
-#include <ctime>
 
+#include <algorithm>
+#include <cstdlib>
 #include <zlib.h>
 #include <xxhash.h>
 

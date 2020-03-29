@@ -3,10 +3,8 @@
 */
 
 #pragma once
-#include <array>
 #include "types.h"
-
-
+#include <array>
 
 u32 sb_ReadMem(u32 addr,u32 sz);
 void sb_WriteMem(u32 addr,u32 data,u32 sz);

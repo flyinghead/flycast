@@ -1,5 +1,5 @@
 #pragma once
-#include "aica.h"
+#include "types.h"
 
 u32 libAICA_ReadReg(u32 addr,u32 size);
 void libAICA_WriteReg(u32 addr,u32 data,u32 size);

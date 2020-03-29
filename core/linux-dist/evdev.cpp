@@ -1,13 +1,14 @@
 #if defined(USE_EVDEV)
+#include "evdev.h"
+#include "evdev_gamepad.h"
 
-#include <unistd.h>
 #include <fcntl.h>
 #include <linux/input.h>
+#include <unistd.h>
+
 #ifdef USE_UDEV
 #include <libudev.h>
 #endif
-#include "evdev.h"
-#include "evdev_gamepad.h"
 
 #define EVDEV_DEVICE_STRING "/dev/input/event%d"
 

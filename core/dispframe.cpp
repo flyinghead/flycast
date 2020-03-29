@@ -1,7 +1,7 @@
-#include <csignal>
 #include "cfg/cfg.h"
 #include "rend/TexCache.h"
-#include "rend/rend.h"
+
+#include <csignal>
 
 extern cResetEvent rs;
 extern cResetEvent frame_finished;

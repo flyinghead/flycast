@@ -6,6 +6,7 @@
 */
 #include "pvr_mem.h"
 #include "Renderer_if.h"
+#include "ta.h"
 #include "hw/holly/sb.h"
 #include "hw/holly/holly_intc.h"
 

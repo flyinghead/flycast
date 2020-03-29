@@ -18,9 +18,10 @@
     You should have received a copy of the GNU General Public License
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
-#include <math.h>
 #include "oit_drawer.h"
 #include "hw/pvr/pvr_mem.h"
+
+#include <algorithm>
 
 void OITDrawer::DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool autosort, Pass pass,
 		const PolyParam& poly, u32 first, u32 count)

@@ -18,20 +18,18 @@
     You should have received a copy of the GNU General Public License
     along with reicast.  If not, see <https://www.gnu.org/licenses/>.
  */
-#include <unordered_set>
-#include <mutex>
-#include "build.h"
 #include "vmem32.h"
 #include "_vmem.h"
+#include "hw/sh4/dyna/ngen.h"
+#include "hw/sh4/modules/mmu.h"
+
+#include <unordered_set>
+#include <mutex>
 
 #ifdef _WIN32
 #include <windows.h>
 #else
 #include <sys/mman.h>
-#include <sys/stat.h>        /* For mode constants */
-#include <fcntl.h>           /* For O_* constants */
-#include <unistd.h>
-#include <cerrno>
 #ifdef __ANDROID__
 #include <linux/ashmem.h>
 #endif
@@ -40,10 +38,6 @@
 #ifndef MAP_NOSYNC
 #define MAP_NOSYNC       0
 #endif
-
-#include "types.h"
-#include "hw/sh4/dyna/ngen.h"
-#include "hw/sh4/modules/mmu.h"
 
 extern bool VramLockedWriteOffset(size_t offset);
 extern cMutex vramlist_lock;

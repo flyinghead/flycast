@@ -4,11 +4,12 @@
 
 	Parsing of the TA stream and generation of vertex data !
 */
-#include <cmath>
 #include "ta.h"
 #include "ta_ctx.h"
 #include "pvr_mem.h"
 #include "Renderer_if.h"
+
+#include <cmath>
 
 u32 ta_type_lut[256];
 extern int screen_height;

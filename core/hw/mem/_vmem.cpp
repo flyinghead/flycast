@@ -1,8 +1,8 @@
 #include "_vmem.h"
 #include "vmem32.h"
 #include "hw/aica/aica_if.h"
-#include "hw/sh4/dyna/blockmanager.h"
 #include "hw/pvr/pvr_mem.h"
+#include "hw/sh4/dyna/blockmanager.h"
 #include "hw/sh4/sh4_mem.h"
 
 #define HANDLER_MAX 0x1F

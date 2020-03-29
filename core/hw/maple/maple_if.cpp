@@ -1,18 +1,10 @@
-#include "types.h"
-#include <cstring>
-
 #include "maple_if.h"
 #include "maple_cfg.h"
-
-#include "cfg/cfg.h"
-
-#include "hw/sh4/sh4_interrupts.h"
-#include "hw/sh4/sh4_sched.h"
+#include "maple_helper.h"
+#include "hw/holly/holly_intc.h"
 #include "hw/holly/sb.h"
 #include "hw/sh4/sh4_mem.h"
-#include "types.h"
-#include "hw/holly/holly_intc.h"
-#include "hw/maple/maple_helper.h"
+#include "hw/sh4/sh4_sched.h"
 
 enum MaplePattern
 {
