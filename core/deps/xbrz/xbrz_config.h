@@ -16,8 +16,6 @@
 #ifndef XBRZ_CONFIG_HEADER_284578425345
 #define XBRZ_CONFIG_HEADER_284578425345
 
-#define NDEBUG
-
 //do NOT include any headers here! used by xBRZ_dll!!!
 
 namespace xbrz

@@ -10,7 +10,7 @@
 
 #if FEAT_DSPREC != DYNAREC_JIT
 
-#ifdef RELEASE
+#ifdef NDEBUG
 #undef verify
 #define verify(...)
 #endif

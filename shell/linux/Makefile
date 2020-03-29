@@ -294,7 +294,7 @@ include $(RZDCY_SRC_DIR)/core.mk
 
 LDFLAGS += -g -Wl,-Map,$(notdir $@).map,--gc-sections -Wl,-O3 -Wl,--sort-common -fopenmp
 
-CFLAGS += $(RZDCY_CFLAGS) -g -O3 -D RELEASE -c -D USES_HOMEDIR -fopenmp #-D NO_REND
+CFLAGS += $(RZDCY_CFLAGS) -g -O3 -D NDEBUG -c -D USES_HOMEDIR -fopenmp #-D NO_REND
 CFLAGS += -frename-registers -fno-strict-aliasing
 CFLAGS += -ffast-math -ftree-vectorize  -Wno-unused-result
 

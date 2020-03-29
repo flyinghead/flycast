@@ -3097,7 +3097,7 @@
 					_7ZIP_ST,
 					CHD5_FLAC,
 					"HAVE_CONFIG_H=1",
-					RELEASE,
+					NDEBUG,
 					"USE_SDL=1",
 					XXH_INLINE_ALL,
 					VK_USE_PLATFORM_MACOS_MVK,
@@ -3414,7 +3414,7 @@
 					_7ZIP_ST,
 					CHD5_FLAC,
 					"HAVE_CONFIG_H=1",
-					RELEASE,
+					NDEBUG,
 					XXH_INLINE_ALL,
 					"${CFLAGS}",
 				);

@@ -14,7 +14,7 @@ u32 ta_type_lut[256];
 extern int screen_height;
 
 #define TACALL DYNACALL
-#ifdef RELEASE
+#ifdef NDEBUG
 #undef verify
 #define verify(x)
 #endif

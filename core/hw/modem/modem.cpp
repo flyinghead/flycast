@@ -124,7 +124,7 @@ static void DSPTestEnd();
 static u64 last_dial_time;
 static u64 connected_time;
 
-#ifndef RELEASE
+#ifndef NDEBUG
 static double last_comm_stats;
 static int sent_bytes;
 static int recvd_bytes;
@@ -134,7 +134,7 @@ static FILE *sent_fp;
 
 static int modem_sched_func(int tag, int cycles, int jitter)
 {
-#ifndef RELEASE
+#ifndef NDEBUG
 	if (os_GetSeconds() - last_comm_stats >= 2)
 	{
 		if (last_comm_stats != 0)
@@ -272,7 +272,7 @@ static int modem_sched_func(int tag, int cycles, int jitter)
 			break;
 
 		case CONNECTED:
-#ifndef RELEASE
+#ifndef NDEBUG
 			static bool mem_dumped;
 			if (!mem_dumped)
 			{
@@ -290,7 +290,7 @@ static int modem_sched_func(int tag, int cycles, int jitter)
 				if (c >= 0 && sh4_sched_now64() - connected_time >= SH4_MAIN_CLOCK / 4)
 				{
 					//LOG("pppd received %02x", c);
-#ifndef RELEASE
+#ifndef NDEBUG
 					recvd_bytes++;
 #endif
 					modem_regs.reg00 = c & 0xFF;
@@ -460,7 +460,7 @@ static u8 download_crc;
 
 static void ModemNormalWrite(u32 reg, u32 data)
 {
-#ifndef RELEASE
+#ifndef NDEBUG
 	if (recv_fp == NULL)
 	{
 		recv_fp = fopen("ppp_recv.dump", "w");
@@ -512,7 +512,7 @@ static void ModemNormalWrite(u32 reg, u32 data)
 		else if (connect_state == CONNECTED && modem_regs.reg08.RTS)
 		{
 			//LOG("ModemNormalWrite : TBUFFER = %X", data);
-#ifndef RELEASE
+#ifndef NDEBUG
 			sent_bytes++;
 			if (sent_fp)
 				fputc(data, sent_fp);
@@ -676,7 +676,7 @@ u32 ModemReadMem_A0_006(u32 addr, u32 size)
 					modem_regs.reg1e.RDBF = 0;
 					SET_STATUS_BIT(0x0c, modem_regs.reg0c.RXFNE, 0);
 					SET_STATUS_BIT(0x01, modem_regs.reg01.RXHF, 0);
-#ifndef RELEASE
+#ifndef NDEBUG
 					if (connect_state == CONNECTED && recv_fp)
 						fputc(data, recv_fp);
 #endif
