@@ -110,10 +110,10 @@ private:
 		{
 			if (define)
 			{
-				for (int i = 0; i < param.count(); i++)
+				for (u32 i = 0; i < param.count(); i++)
 					reg_versions[param._reg + i]++;
 			}
-			for (int i = 0; i < param.count(); i++)
+			for (u32 i = 0; i < param.count(); i++)
 				param.version[i] = reg_versions[param._reg + i];
 		}
 	}
@@ -362,7 +362,7 @@ private:
 			if (op.rd.is_reg())
 			{
 				bool unused_rd = true;
-				for (int i = 0; i < op.rd.count(); i++)
+				for (u32 i = 0; i < op.rd.count(); i++)
 				{
 					if (last_versions[op.rd._reg + i] == -1)
 					{
@@ -384,7 +384,7 @@ private:
 			if (op.rd2.is_reg())
 			{
 				bool unused_rd = true;
-				for (int i = 0; i < op.rd2.count(); i++)
+				for (u32 i = 0; i < op.rd2.count(); i++)
 				{
 					if (last_versions[op.rd2._reg + i] == -1)
 					{
@@ -413,17 +413,17 @@ private:
 			{
 				if (op.rs1.is_reg())
 				{
-					for (int i = 0; i < op.rs1.count(); i++)
+					for (u32 i = 0; i < op.rs1.count(); i++)
 						uses.insert(RegValue(op.rs1, i));
 				}
 				if (op.rs2.is_reg())
 				{
-					for (int i = 0; i < op.rs2.count(); i++)
+					for (u32 i = 0; i < op.rs2.count(); i++)
 						uses.insert(RegValue(op.rs2, i));
 				}
 				if (op.rs3.is_reg())
 				{
-					for (int i = 0; i < op.rs3.count(); i++)
+					for (u32 i = 0; i < op.rs3.count(); i++)
 						uses.insert(RegValue(op.rs3, i));
 				}
 			}
@@ -432,7 +432,7 @@ private:
 
 	void SimplifyExpressionPass()
 	{
-		for (int opnum = 0; opnum < block->oplist.size(); opnum++)
+		for (size_t opnum = 0; opnum < block->oplist.size(); opnum++)
 		{
 			shil_opcode& op = block->oplist[opnum];
 			if (op.rs2.is_imm())
@@ -575,7 +575,7 @@ private:
 			size_t defnum = -1;
 			size_t usenum = -1;
 			size_t aliasdef = -1;
-			for (int opnum = 0; opnum < block->oplist.size(); opnum++)
+			for (size_t opnum = 0; opnum < block->oplist.size(); opnum++)
 			{
 				shil_opcode* op = &block->oplist[opnum];
 				// find def
@@ -630,7 +630,7 @@ private:
 			if (aliasdef != -1 && usenum != -1 && aliasdef < usenum)
 				continue;
 
-			for (int opnum = defnum + 1; opnum <= usenum && usenum != -1; opnum++)
+			for (size_t opnum = defnum + 1; opnum <= usenum && usenum != -1; opnum++)
 			{
 				shil_opcode* op = &block->oplist[opnum];
 				ReplaceByAlias(op->rs1, alias.first, alias.second);
@@ -647,7 +647,7 @@ private:
 	{
 		// This pass creates holes in reg versions and should be run last
 		// The versioning pass must be re-run if needed
-		for (int opnum = 0; opnum < block->oplist.size(); opnum++)
+		for (size_t opnum = 0; opnum < block->oplist.size(); opnum++)
 		{
 			shil_opcode& op = block->oplist[opnum];
 			if (op.op == shop_mov32 && op.rs1.is_reg() && op.rd._reg == op.rs1._reg)

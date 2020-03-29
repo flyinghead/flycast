@@ -301,7 +301,7 @@ static void SortTriangles(int first, int count)
 			if (short_vidx.daty != NULL)
 				short_vidx.Free();
 			short_vidx.Init(vidx_sort.size(), &overrun, NULL);
-			for (int i = 0; i < vidx_sort.size(); i++)
+			for (size_t i = 0; i < vidx_sort.size(); i++)
 				*(short_vidx.Append()) = vidx_sort[i];
 			glBufferData(GL_ELEMENT_ARRAY_BUFFER, short_vidx.bytes(), short_vidx.head(), GL_STREAM_DRAW);
 		}
@@ -547,7 +547,7 @@ void DrawModVols(int first, int count)
 
 	int mod_base = -1;
 
-	for (u32 cmv = 0; cmv < count; cmv++)
+	for (int cmv = 0; cmv < count; cmv++)
 	{
 		ModifierVolumeParam& param = params[cmv];
 

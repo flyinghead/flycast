@@ -63,7 +63,7 @@ public:
 	vk::CommandBuffer GetCurrentCommandBuffer() const { return *commandBuffers[GetCurrentImageIndex()]; }
 	vk::DescriptorPool GetDescriptorPool() const { return *descriptorPool; }
 	vk::Extent2D GetViewPort() const { return { width, height }; }
-	int GetSwapChainSize() const { return (int)imageViews.size(); }
+	size_t GetSwapChainSize() const { return imageViews.size(); }
 	int GetCurrentImageIndex() const { return currentImage; }
 	void WaitIdle() const { graphicsQueue.waitIdle(); }
 	bool IsRendering() const { return rendering; }

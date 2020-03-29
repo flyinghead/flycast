@@ -644,8 +644,9 @@ typedef void TexConvFP(PixelBuffer<u16>* pb,u8* p_in,u32 Width,u32 Height);
 typedef void TexConvFP32(PixelBuffer<u32>* pb,u8* p_in,u32 Width,u32 Height);
 enum class TextureType { _565, _5551, _4444, _8888, _8 };
 
-struct BaseTextureCacheData
+class BaseTextureCacheData
 {
+public:
 	TSP tsp;        //dreamcast texture parameters
 	TCW tcw;
 

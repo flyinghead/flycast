@@ -164,7 +164,7 @@ void BaseDrawer::SetProvokingVertices()
 		{
 			if (!pp->pcw.Gouraud && pp->count > 2)
 			{
-				for (int i = 0; i < pp->count - 2; i++)
+				for (u32 i = 0; i < pp->count - 2; i++)
 				{
 					Vertex *vertex = &vtx_base[idx_base[pp->first + i]];
 					Vertex *lastVertex = &vtx_base[idx_base[pp->first + i + 2]];
@@ -250,7 +250,7 @@ void Drawer::DrawModVols(const vk::CommandBuffer& cmdBuffer, int first, int coun
 	int mod_base = -1;
 	vk::Pipeline pipeline;
 
-	for (u32 cmv = 0; cmv < count; cmv++)
+	for (int cmv = 0; cmv < count; cmv++)
 	{
 		ModifierVolumeParam& param = params[cmv];
 

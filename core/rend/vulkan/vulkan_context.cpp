@@ -138,7 +138,7 @@ bool VulkanContext::InitInstance(const char** extensions, uint32_t extensions_co
 #endif
 		vk::ApplicationInfo applicationInfo("Flycast", 1, "Flycast", 1, vulkan11 ? VK_API_VERSION_1_1 : VK_API_VERSION_1_0);
 		std::vector<const char *> vext;
-		for (int i = 0; i < extensions_count; i++)
+		for (uint32_t i = 0; i < extensions_count; i++)
 			vext.push_back(extensions[i]);
 
 		std::vector<const char *> layer_names;
@@ -266,7 +266,7 @@ vk::Format VulkanContext::FindDepthFormat()
 	const vk::Format depthFormats[] = { vk::Format::eD32SfloatS8Uint, vk::Format::eD24UnormS8Uint, vk::Format::eD16UnormS8Uint };
 	vk::ImageTiling tiling;
 	depthFormat = vk::Format::eUndefined;
-	for (int i = 0; i < ARRAY_SIZE(depthFormats); i++)
+	for (size_t i = 0; i < ARRAY_SIZE(depthFormats); i++)
 	{
 		vk::FormatProperties formatProperties = physicalDevice.getFormatProperties(depthFormats[i]);
 
@@ -280,7 +280,7 @@ vk::Format VulkanContext::FindDepthFormat()
 	if (depthFormat == vk::Format::eUndefined)
 	{
 		// Try to find a linear format
-		for (int i = 0; i < ARRAY_SIZE(depthFormats); i++)
+		for (size_t i = 0; i < ARRAY_SIZE(depthFormats); i++)
 		{
 			vk::FormatProperties formatProperties = physicalDevice.getFormatProperties(depthFormats[i]);
 

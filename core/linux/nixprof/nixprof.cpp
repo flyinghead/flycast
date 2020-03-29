@@ -130,7 +130,7 @@ static void elf_syms(FILE* out,const char* libfile)
 
 		if (elf_checkFile(data)>=0)
 		{
-			int scnt=elf_getNumSections(data);
+			unsigned scnt = elf_getNumSections(data);
 
 			for (int si=0;si<scnt;si++)
 			{

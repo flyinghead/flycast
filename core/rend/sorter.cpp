@@ -250,7 +250,7 @@ void GenSorted(int first, int count, std::vector<SortTrigDrawParam>& pidx_sort, 
 			const u32 *idx = idx_base + pp->first;
 			u32 flip = 0;
 
-			for (int i = 0; i < pp->count - 2; i++)
+			for (u32 i = 0; i < pp->count - 2; i++)
 			{
 				const Vertex *v0, *v1;
 				if (flip)

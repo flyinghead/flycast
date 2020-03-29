@@ -60,7 +60,9 @@ static bool inited = false;
 static float scaling = 1;
 GuiState gui_state = Main;
 static bool settings_opening;
+#ifdef __ANDROID__
 static bool touch_up;
+#endif
 static std::string error_msg;
 
 static void display_vmus();
@@ -1490,7 +1492,7 @@ static void gui_display_demo()
 
 static std::string get_game_description(std::string name)
 {
-    size_t dot = name.find_last_of(".");
+    size_t dot = name.find_last_of('.');
     if (dot != std::string::npos && dot != name.size() - 1)
         name = name.substr(0, dot);
 

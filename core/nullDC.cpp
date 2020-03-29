@@ -53,43 +53,6 @@ cThread emu_thread(&dc_run, NULL);
 #include <windows.h>
 #endif
 
-/**
- * cpu_features_get_time_usec:
- *
- * Gets time in microseconds.
- *
- * Returns: time in microseconds.
- **/
-int64_t get_time_usec(void)
-{
-#ifdef _WIN32
-   static LARGE_INTEGER freq;
-   LARGE_INTEGER count;
-
-   /* Frequency is guaranteed to not change. */
-   if (!freq.QuadPart && !QueryPerformanceFrequency(&freq))
-      return 0;
-
-   if (!QueryPerformanceCounter(&count))
-      return 0;
-   return count.QuadPart * 1000000 / freq.QuadPart;
-#elif defined(_POSIX_MONOTONIC_CLOCK) || defined(__QNX__) || defined(__ANDROID__) || defined(__MACH__) || HOST_OS==OS_LINUX
-   struct timespec tv = {0};
-   if (clock_gettime(CLOCK_MONOTONIC, &tv) < 0)
-      return 0;
-   return tv.tv_sec * INT64_C(1000000) + (tv.tv_nsec + 500) / 1000;
-#elif defined(EMSCRIPTEN)
-   return emscripten_get_now() * 1000;
-#elif defined(__mips__) || defined(DJGPP)
-   struct timeval tv;
-   gettimeofday(&tv,NULL);
-   return (1000000 * tv.tv_sec + tv.tv_usec);
-#else
-#error "Your platform does not have a timer function implemented in cpu_features_get_time_usec(). Cannot continue."
-#endif
-}
-
-
 int GetFile(char *szFileName, char *szParse /* = 0 */, u32 flags /* = 0 */)
 {
 	cfgLoadStr("config", "image", szFileName, "");
@@ -1119,10 +1082,10 @@ static std::string get_savestate_file_path()
 	else if (lastindex2 != std::string::npos)
 		lastindex = std::max(lastindex, lastindex2);
 #endif
-	if (lastindex != -1)
+	if (lastindex != std::string::npos)
 		state_file = state_file.substr(lastindex + 1);
 	lastindex = state_file.find_last_of('.');
-	if (lastindex != -1)
+	if (lastindex != std::string::npos)
 		state_file = state_file.substr(0, lastindex);
 	state_file = state_file + ".state";
 	return get_writable_data_path(DATA_PATH) + state_file;

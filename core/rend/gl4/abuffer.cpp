@@ -422,7 +422,7 @@ void DrawTranslucentModVols(int first, int count)
 
 	int mod_base = -1;
 
-	for (u32 cmv = 0; cmv < count; cmv++)
+	for (int cmv = 0; cmv < count; cmv++)
 	{
 		ModifierVolumeParam& param = params[cmv];
 

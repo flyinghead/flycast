@@ -309,7 +309,7 @@ void CheatManager::Apply()
 {
 	if (_widescreen_cheat != nullptr)
 	{
-		for (int i = 0; i < ARRAY_SIZE(_widescreen_cheat->addresses) && _widescreen_cheat->addresses[i] != 0; i++)
+		for (size_t i = 0; i < ARRAY_SIZE(_widescreen_cheat->addresses) && _widescreen_cheat->addresses[i] != 0; i++)
 		{
 			verify(_widescreen_cheat->addresses[i] < RAM_SIZE);
 			WriteMem32_nommu(0x8C000000 + _widescreen_cheat->addresses[i], _widescreen_cheat->values[i]);

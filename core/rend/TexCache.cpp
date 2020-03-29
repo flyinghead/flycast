@@ -649,7 +649,7 @@ void BaseTextureCacheData::Update()
 		if (mipmapped)
 		{
 			pb32.init(w, h, true);
-			for (int i = 0; i <= tsp.TexU + 3; i++)
+			for (u32 i = 0; i <= tsp.TexU + 3; i++)
 			{
 				pb32.set_mipmap(i);
 				u32 vram_addr;
@@ -709,7 +709,7 @@ void BaseTextureCacheData::Update()
 		if (mipmapped)
 		{
 			pb16.init(w, h, true);
-			for (int i = 0; i <= tsp.TexU + 3; i++)
+			for (u32 i = 0; i <= tsp.TexU + 3; i++)
 			{
 				pb16.set_mipmap(i);
 				u32 vram_addr;

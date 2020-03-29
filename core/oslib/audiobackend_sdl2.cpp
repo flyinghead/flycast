@@ -135,7 +135,8 @@ static audiobackend_t audiobackend_sdl2audio = {
 		"Simple DirectMedia Layer 2 Audio", // Name
 		&sdl2_audio_init,
 		&sdl2_audio_push,
-		&sdl2_audio_term
+		&sdl2_audio_term,
+		NULL
 };
 
 static bool sdl2audiobe = RegisterAudioBackend(&audiobackend_sdl2audio);

@@ -35,7 +35,7 @@ u64 sh4_sched_now64();
 	Passing a value of 0 disables the callback.
 	If called multiple times, only the last call is in effect
 */
-void sh4_sched_request(int id, int cycles);
+void sh4_sched_request(size_t id, int cycles);
 
 /*
 	Tick for *cycles*

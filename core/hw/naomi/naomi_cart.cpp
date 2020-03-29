@@ -492,7 +492,7 @@ void naomi_cart_LoadRom(const char* file)
 
 	if (RomCacheMap)
 	{
-		for (int i = 0; i < RomCacheMapCount; i++)
+		for (u32 i = 0; i < RomCacheMapCount; i++)
 			if (RomCacheMap[i] != INVALID_FD)
 				CloseFile(RomCacheMap[i]);
 		RomCacheMapCount = 0;
@@ -613,7 +613,7 @@ void naomi_cart_Close()
 	}
 	if (RomCacheMap != NULL)
 	{
-		for (int i = 0; i < RomCacheMapCount; i++)
+		for (u32 i = 0; i < RomCacheMapCount; i++)
 			if (RomCacheMap[i] != INVALID_FD)
 				CloseFile(RomCacheMap[i]);
 		RomCacheMapCount = 0;

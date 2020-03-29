@@ -567,7 +567,7 @@ void GDCartridge::device_start()
 			u32 des_subkeys[32];
 			des_generate_subkeys(rev64(key), des_subkeys);
 
-			for (int i = 0; i < file_rounded_size; i += 8)
+			for (u32 i = 0; i < file_rounded_size; i += 8)
 				*(u64 *)(dimm_data + i) = des_encrypt_decrypt<true>(*(u64 *)(dimm_data + i), des_subkeys);
 		}
 

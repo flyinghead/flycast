@@ -105,7 +105,7 @@ void OITDrawer::DrawModifierVolumes(const vk::CommandBuffer& cmdBuffer, int firs
 	int mod_base = -1;
 	vk::Pipeline pipeline;
 
-	for (u32 cmv = 0; cmv < count; cmv++)
+	for (int cmv = 0; cmv < count; cmv++)
 	{
 		ModifierVolumeParam& param = params[cmv];
 
@@ -513,7 +513,7 @@ vk::CommandBuffer OITTextureDrawer::NewFrame()
 			break;
 		}
 
-		TSP tsp = { 0 };
+		TSP tsp = {};
 		for (tsp.TexU = 0; tsp.TexU <= 7 && (8 << tsp.TexU) < origWidth; tsp.TexU++);
 		for (tsp.TexV = 0; tsp.TexV <= 7 && (8 << tsp.TexV) < origHeight; tsp.TexV++);
 

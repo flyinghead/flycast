@@ -33,8 +33,9 @@
 
 void setImageLayout(vk::CommandBuffer const& commandBuffer, vk::Image image, vk::Format format, u32 mipmapLevels, vk::ImageLayout oldImageLayout, vk::ImageLayout newImageLayout);
 
-struct Texture : BaseTextureCacheData
+class Texture : public BaseTextureCacheData
 {
+public:
 	void UploadToGPU(int width, int height, u8 *data, bool mipmapped, bool mipmapsIncluded = false) override;
 	u64 GetIntId() { return (u64)reinterpret_cast<uintptr_t>(this); }
 	std::string GetId() override { char s[20]; sprintf(s, "%p", this); return s; }

@@ -64,7 +64,7 @@ struct CHDTrack : TrackFile
 
 		if (swap_bytes)
 		{
-			for (int i = 0; i < fmt; i += 2)
+			for (u32 i = 0; i < fmt; i += 2)
 			{
 				u8 b = dst[i];
 				dst[i] = dst[i + 1];

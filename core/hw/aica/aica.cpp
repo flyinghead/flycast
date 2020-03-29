@@ -204,7 +204,7 @@ void libAICA_Reset(bool hard)
 	if (hard)
 		init_mem();
 	sgc_Init();
-	for (int i = 0; i < 3; i++)
+	for (u32 i = 0; i < 3; i++)
 		timers[i].Init(aica_reg, i);
 	aica_Reset(hard);
 }

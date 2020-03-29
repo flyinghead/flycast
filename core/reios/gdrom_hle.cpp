@@ -177,7 +177,7 @@ static void GDCC_HLE_GETSCD() {
 		memcpy(GetMemPtr(dest, size), scd, size);
 	else
 	{
-		for (int i = 0; i < size; i++)
+		for (u32 i = 0; i < size; i++)
 			WriteMem8(dest++, scd[i]);
 	}
 

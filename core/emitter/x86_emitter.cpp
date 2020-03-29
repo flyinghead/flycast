@@ -1,7 +1,9 @@
 //Emitting code ;)
+#ifdef _MSC_VER
 #pragma warning(disable:4127)
 #pragma warning(disable:4244)
 #pragma warning(disable:4245)
+#endif
 
 #include "types.h"
 #include "x86_emitter.h"
@@ -25,11 +27,15 @@ x86_ptr x86_ptr::create(void* ptr)
 }*/
 x86_ptr x86_ptr::create(unat ptr)
 {
+#ifdef _MSC_VER
 #pragma warning(disable:4312)
+#endif
 	x86_ptr rv(0);
 	rv.ptr_int=ptr;
 	return rv;
-#pragma warning(default:4312) 
+#ifdef _MSC_VER
+#pragma warning(default:4312)
+#endif
 }
 /*
 x86_ptr_imm x86_ptr_imm::create(void* ptr)
@@ -39,11 +45,15 @@ x86_ptr_imm x86_ptr_imm::create(void* ptr)
 }*/
 x86_ptr_imm x86_ptr_imm::create(unat ptr)
 {
-#pragma warning(disable:4312) 
+#ifdef _MSC_VER
+#pragma warning(disable:4312)
+#endif
 	x86_ptr_imm rv(0);
 	rv.ptr_int=ptr;
 	return rv;
-#pragma warning(default:4312) 
+#ifdef _MSC_VER
+#pragma warning(default:4312)
+#endif
 }
 //x86_block
 //init things
