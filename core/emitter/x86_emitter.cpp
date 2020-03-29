@@ -3,7 +3,7 @@
 #pragma warning(disable:4244)
 #pragma warning(disable:4245)
 
-#include "../types.h"
+#include "types.h"
 #include "x86_emitter.h"
 bool IsS8(u32 value)
 {
