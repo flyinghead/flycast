@@ -3,10 +3,10 @@ format_version: '7'
 default_step_lib_source: https://github.com/bitrise-io/bitrise-steplib.git
 project_type: macos
 trigger_map:
-- push_branch: "*"
-  workflow: deploy
 - pull_request_source_branch: "*"
   workflow: buildonly
+- push_branch: "*"
+  workflow: deploy
 workflows:
   deploy:
     envs:
