@@ -6,7 +6,7 @@ trigger_map:
 - push_branch: "*"
   workflow: deploy
 - pull_request_source_branch: "*"
-  workflow: deploy
+  workflow: buildonly
 workflows:
   deploy:
     envs:
@@ -20,7 +20,6 @@ workflows:
         title: Install SDL2
         inputs:
         - packages: "sdl2"
-    - git-clone@4.0.14: {}
     - cache-pull@2.0.1: {}
     - script@1.1.5:
         inputs:
@@ -45,6 +44,36 @@ workflows:
         - bucket_name: flycast-builds
         - path_in_bucket: osx/$GIT_BUILD
         - file_path: "$BITRISE_EXPORTED_FILE_PATH"
+    - cache-push@2.1.1: {}
+  buildonly:
+    envs:
+    - opts:
+        is_expand: false
+      BITRISE_SCHEME: reicast-osx
+    steps:
+    - activate-ssh-key@4.0.3:	
+        run_if: '{{getenv "SSH_RSA_PRIVATE_KEY" | ne ""}}'
+    - brew-install:
+        title: Install SDL2
+        inputs:
+        - packages: "sdl2"
+    - cache-pull@2.0.1: {}
+    - script@1.1.5:
+        inputs:
+        - content: |
+            #!/bin/bash
+            export GIT_HASH=`git log --pretty=format:'%h' -n 1`
+            envman add --key GIT_HASH --value $GIT_HASH
+            envman add --key GIT_BUILD --value `git describe --all --always | sed 's/remotes\/origin/heads/'`-$GIT_HASH
+    - certificate-and-profile-installer@1.10.1: {}
+    - recreate-user-schemes@1.0.2:
+        inputs:
+        - project_path: "$BITRISE_PROJECT_PATH"
+    - xcode-archive-mac@1.6.2:
+        inputs:
+        - project_path: "$BITRISE_PROJECT_PATH"
+        - scheme: "$BITRISE_SCHEME"
+        - export_method: "$BITRISE_EXPORT_METHOD"
     - cache-push@2.1.1: {}
 app:
   envs:
