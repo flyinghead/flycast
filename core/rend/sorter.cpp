@@ -208,7 +208,7 @@ void GenSorted(int first, int count, vector<SortTrigDrawParam>& pidx_sort, vecto
 
 	pidx_sort.clear();
 
-	if (pvrrc.verts.used() == 0 || count <= 1)
+	if (pvrrc.verts.used() == 0)
 		return;
 
 	const Vertex *vtx_base = pvrrc.verts.head();
