@@ -77,7 +77,7 @@ bool TryDecodeTARC()
 		vd_ctx->rend.proc_start = vd_ctx->rend.proc_end + 32;
 		vd_ctx->rend.proc_end = vd_ctx->tad.thd_data;
 			
-		vd_ctx->rend_inuse.Lock();
+		vd_ctx->rend_inuse.lock();
 		vd_rc = vd_ctx->rend;
 
 		//signal the vdec thread
@@ -93,12 +93,12 @@ void VDecEnd()
 
 	vd_ctx->rend = vd_rc;
 
-	vd_ctx->rend_inuse.Unlock();
+	vd_ctx->rend_inuse.unlock();
 
 	vd_ctx = 0;
 }
 
-static cMutex mtx_rqueue;
+static std::mutex mtx_rqueue;
 TA_context* rqueue;
 cResetEvent frame_finished;
 
@@ -137,10 +137,10 @@ bool QueueRender(TA_context* ctx)
 	}
 
 	frame_finished.Reset();
-	mtx_rqueue.Lock();
+	mtx_rqueue.lock();
 	TA_context* old = rqueue;
 	rqueue=ctx;
-	mtx_rqueue.Unlock();
+	mtx_rqueue.unlock();
 
 	verify(!old);
 
@@ -149,9 +149,9 @@ bool QueueRender(TA_context* ctx)
 
 TA_context* DequeueRender()
 {
-	mtx_rqueue.Lock();
+	mtx_rqueue.lock();
 	TA_context* rv = rqueue;
-	mtx_rqueue.Unlock();
+	mtx_rqueue.unlock();
 
 	if (rv)
 		FrameCount++;
@@ -160,9 +160,9 @@ TA_context* DequeueRender()
 }
 
 bool rend_framePending() {
-	mtx_rqueue.Lock();
+	mtx_rqueue.lock();
 	TA_context* rv = rqueue;
-	mtx_rqueue.Unlock();
+	mtx_rqueue.unlock();
 
 	return rv != 0;
 }
@@ -172,16 +172,16 @@ void FinishRender(TA_context* ctx)
 	if (ctx != NULL)
 	{
 		verify(rqueue == ctx);
-		mtx_rqueue.Lock();
+		mtx_rqueue.lock();
 		rqueue = NULL;
-		mtx_rqueue.Unlock();
+		mtx_rqueue.unlock();
 
 		tactx_Recycle(ctx);
 	}
 	frame_finished.Set();
 }
 
-static cMutex mtx_pool;
+static std::mutex mtx_pool;
 
 static std::vector<TA_context*> ctx_pool;
 static std::vector<TA_context*> ctx_list;
@@ -190,13 +190,13 @@ TA_context* tactx_Alloc()
 {
 	TA_context* rv = 0;
 
-	mtx_pool.Lock();
+	mtx_pool.lock();
 	if (ctx_pool.size())
 	{
 		rv = ctx_pool[ctx_pool.size()-1];
 		ctx_pool.pop_back();
 	}
-	mtx_pool.Unlock();
+	mtx_pool.unlock();
 	
 	if (!rv)
 	{
@@ -209,7 +209,7 @@ TA_context* tactx_Alloc()
 
 void tactx_Recycle(TA_context* poped_ctx)
 {
-	mtx_pool.Lock();
+	mtx_pool.lock();
 	{
 		if (ctx_pool.size()>2)
 		{
@@ -222,7 +222,7 @@ void tactx_Recycle(TA_context* poped_ctx)
 			ctx_pool.push_back(poped_ctx);
 		}
 	}
-	mtx_pool.Unlock();
+	mtx_pool.unlock();
 }
 
 TA_context* tactx_Find(u32 addr, bool allocnew)
@@ -274,7 +274,7 @@ void tactx_Term()
 		delete ctx_list[i];
 	}
 	ctx_list.clear();
-	mtx_pool.Lock();
+	mtx_pool.lock();
 	{
 		for (size_t i = 0; i < ctx_pool.size(); i++)
 		{
@@ -283,5 +283,5 @@ void tactx_Term()
 		}
 	}
 	ctx_pool.clear();
-	mtx_pool.Unlock();
+	mtx_pool.unlock();
 }

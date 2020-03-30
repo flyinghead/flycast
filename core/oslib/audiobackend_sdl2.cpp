@@ -5,10 +5,12 @@
 #include "audiostream.h"
 #include "stdclass.h"
 
+#include <mutex>
+
 static SDL_AudioDeviceID audiodev;
 static bool needs_resampling;
 static cResetEvent read_wait;
-static cMutex stream_mutex;
+static std::mutex stream_mutex;
 static struct {
 	uint32_t prevs;
 	uint32_t sample_buffer[2048];
@@ -23,7 +25,7 @@ static float InterpolateCatmull4pt3oX(float x0, float x1, float x2, float x3, fl
 }
 
 static void sdl2_audiocb(void* userdata, Uint8* stream, int len) {
-	stream_mutex.Lock();
+	stream_mutex.lock();
 	// Wait until there's enough samples to feed the kraken
 	unsigned oslen = len / sizeof(uint32_t);
 	unsigned islen = needs_resampling ? oslen * 16 / 17 : oslen;
@@ -32,7 +34,7 @@ static void sdl2_audiocb(void* userdata, Uint8* stream, int len) {
 	if (sample_count < minlen) {
 		// No data, just output a bit of silence for the underrun
 		memset(stream, 0, len);
-        stream_mutex.Unlock();
+        stream_mutex.unlock();
 		read_wait.Set();
 		return;
 	}
@@ -63,7 +65,7 @@ static void sdl2_audiocb(void* userdata, Uint8* stream, int len) {
 	memmove(&audiobuf.sample_buffer[0], &audiobuf.sample_buffer[islen], (sample_count-islen)*sizeof(uint32_t));
 	sample_count -= islen;
 
-	stream_mutex.Unlock();
+	stream_mutex.unlock();
 	read_wait.Set();
 }
 
@@ -99,13 +101,13 @@ static u32 sdl2_audio_push(const void* frame, u32 samples, bool wait) {
 		SDL_PauseAudioDevice(audiodev, 0);
 
 	// If wait, then wait for the buffer to be smaller than a certain size.
-	stream_mutex.Lock();
+	stream_mutex.lock();
 	if (wait) {
 		while (sample_count + samples > sizeof(audiobuf.sample_buffer)/sizeof(audiobuf.sample_buffer[0])) {
-			stream_mutex.Unlock();
+			stream_mutex.unlock();
 			read_wait.Wait();
 			read_wait.Reset();
-			stream_mutex.Lock();
+			stream_mutex.lock();
 		}
 	}
 
@@ -114,7 +116,7 @@ static u32 sdl2_audio_push(const void* frame, u32 samples, bool wait) {
 	unsigned tocopy = samples < free_samples ? samples : free_samples;
 	memcpy(&audiobuf.sample_buffer[sample_count], frame, tocopy * sizeof(uint32_t));
 	sample_count += tocopy;
-	stream_mutex.Unlock();
+	stream_mutex.unlock();
 
 	return 1;
 }

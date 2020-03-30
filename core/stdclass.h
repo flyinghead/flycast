@@ -63,62 +63,6 @@ public :
 	void Wait();	//Wait for signal , then reset[if auto]
 };
 
-class cMutex
-{
-private:
-#ifdef _WIN32
-	CRITICAL_SECTION cs;
-#else
-	pthread_mutex_t mutx;
-#endif
-
-public :
-	bool state;
-	cMutex()
-	{
-#ifdef _WIN32
-		InitializeCriticalSection(&cs);
-#else
-		pthread_mutex_init ( &mutx, NULL);
-#endif
-	}
-	~cMutex()
-	{
-#ifdef _WIN32
-		DeleteCriticalSection(&cs);
-#else
-		pthread_mutex_destroy(&mutx);
-#endif
-	}
-	void Lock()
-	{
-#ifdef _WIN32
-		EnterCriticalSection(&cs);
-#else
-		pthread_mutex_lock(&mutx);
-#endif
-	}
-	bool TryLock()
-	{
-#ifdef _WIN32
-		return TryEnterCriticalSection(&cs);
-#else
-		return pthread_mutex_trylock(&mutx)==0;
-#endif
-	}
-	void Unlock()
-	{
-#ifdef _WIN32
-		LeaveCriticalSection(&cs);
-#else
-		pthread_mutex_unlock(&mutx);
-#endif
-	}
-	// std::BasicLockable so we can use std::lock_guard
-	void lock() { Lock(); }
-	void unlock() { Unlock(); }
-};
-
 #if !defined(TARGET_IPHONE)
 #define DATA_PATH "/data/"
 #else

@@ -40,7 +40,7 @@
 #endif
 
 extern bool VramLockedWriteOffset(size_t offset);
-extern cMutex vramlist_lock;
+extern std::mutex vramlist_lock;
 
 #ifdef _WIN32
 extern HANDLE mem_handle;
@@ -263,7 +263,7 @@ static u32 vmem32_map_mmu(u32 address, bool write)
 			const std::vector<vram_lock>& blocks = vram_blocks[start / VRAM_PROT_SEGMENT];
 
 			{
-				std::lock_guard<cMutex> lock(vramlist_lock);
+				std::lock_guard<std::mutex> lock(vramlist_lock);
 				for (int i = blocks.size() - 1; i >= 0; i--)
 				{
 					if (blocks[i].start < end && blocks[i].end >= start)

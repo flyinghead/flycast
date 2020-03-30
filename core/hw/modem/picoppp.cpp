@@ -27,9 +27,6 @@
 #define _POSIX_SOURCE
 #endif
 
-#include <queue>
-#include <map>
-
 extern "C" {
 #include <pico_stack.h>
 #include <pico_dev_ppp.h>
@@ -45,6 +42,10 @@ extern "C" {
 #include "cfg/cfg.h"
 #include "picoppp.h"
 
+#include <map>
+#include <mutex>
+#include <queue>
+
 #define RESOLVER1_OPENDNS_COM "208.67.222.222"
 #define AFO_ORIG_IP 0x83f2fb3f		// 63.251.242.131 in network order
 #define IGP_ORIG_IP 0xef2bd2cc		// 204.210.43.239 in network order
@@ -54,8 +55,8 @@ static struct pico_device *ppp;
 static std::queue<u8> in_buffer;
 static std::queue<u8> out_buffer;
 
-static cMutex in_buffer_lock;
-static cMutex out_buffer_lock;
+static std::mutex in_buffer_lock;
+static std::mutex out_buffer_lock;
 
 struct pico_ip4 dcaddr;
 struct pico_ip4 dnsaddr;
@@ -113,14 +114,14 @@ static int modem_read(struct pico_device *dev, void *data, int len)
 	u8 *p = (u8 *)data;
 
 	int count = 0;
-	out_buffer_lock.Lock();
+	out_buffer_lock.lock();
 	while (!out_buffer.empty() && count < len)
 	{
 		*p++ = out_buffer.front();
 		out_buffer.pop();
 		count++;
 	}
-	out_buffer_lock.Unlock();
+	out_buffer_lock.unlock();
 
     return count;
 }
@@ -129,37 +130,37 @@ static int modem_write(struct pico_device *dev, const void *data, int len)
 {
 	u8 *p = (u8 *)data;
 
-	in_buffer_lock.Lock();
+	in_buffer_lock.lock();
 	while (len > 0)
 	{
 		in_buffer.push(*p++);
 		len--;
 	}
-	in_buffer_lock.Unlock();
+	in_buffer_lock.unlock();
 
     return len;
 }
 
 void write_pico(u8 b)
 {
-	out_buffer_lock.Lock();
+	out_buffer_lock.lock();
 	out_buffer.push(b);
-	out_buffer_lock.Unlock();
+	out_buffer_lock.unlock();
 }
 
 int read_pico()
 {
-	in_buffer_lock.Lock();
+	in_buffer_lock.lock();
 	if (in_buffer.empty())
 	{
-		in_buffer_lock.Unlock();
+		in_buffer_lock.unlock();
 		return -1;
 	}
 	else
 	{
 		u32 b = in_buffer.front();
 		in_buffer.pop();
-		in_buffer_lock.Unlock();
+		in_buffer_lock.unlock();
 		return b;
 	}
 }
@@ -493,9 +494,9 @@ static void read_native_sockets()
 	struct pico_msginfo msginfo;
 
 	// If modem buffer is full, wait
-	in_buffer_lock.Lock();
+	in_buffer_lock.lock();
 	size_t in_buffer_size = in_buffer.size();
-	in_buffer_lock.Unlock();
+	in_buffer_lock.unlock();
 	if (in_buffer_size >= 256)
 		return;
 

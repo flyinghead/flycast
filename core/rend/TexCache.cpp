@@ -172,7 +172,7 @@ void vramlock_list_add(vram_block* block)
 	}
 }
  
-cMutex vramlist_lock;
+std::mutex vramlist_lock;
 
 vram_block* libCore_vramlock_Lock(u32 start_offset64,u32 end_offset64,void* userdata)
 {
@@ -199,7 +199,7 @@ vram_block* libCore_vramlock_Lock(u32 start_offset64,u32 end_offset64,void* user
 	block->type=64;
 
 	{
-		std::lock_guard<cMutex> lock(vramlist_lock);
+		std::lock_guard<std::mutex> lock(vramlist_lock);
 
 		// This also protects vram if needed
 		vramlock_list_add(block);
@@ -217,7 +217,7 @@ bool VramLockedWriteOffset(size_t offset)
 	std::vector<vram_block *>& list = VramLocks[addr_hash];
 
 	{
-		std::lock_guard<cMutex> lock(vramlist_lock);
+		std::lock_guard<std::mutex> lock(vramlist_lock);
 
 		for (size_t i = 0; i < list.size(); i++)
 		{
@@ -253,7 +253,7 @@ bool VramLockedWrite(u8* address)
 //also frees the handle
 void libCore_vramlock_Unlock_block(vram_block* block)
 {
-	std::lock_guard<cMutex> lock(vramlist_lock);
+	std::lock_guard<std::mutex> lock(vramlist_lock);
 	libCore_vramlock_Unlock_block_wb(block);
 }
 

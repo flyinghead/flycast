@@ -5,6 +5,8 @@
 #include "helper_classes.h"
 #include "stdclass.h"
 
+#include <mutex>
+
 // helper for 32 byte aligned memory allocation
 void* OS_aligned_malloc(size_t align, size_t size);
 
@@ -165,8 +167,8 @@ struct TA_context
 	u32 Address;
 	u32 LastUsed;
 
-	cMutex thd_inuse;
-	cMutex rend_inuse;
+	std::mutex thd_inuse;
+	std::mutex rend_inuse;
 
 	tad_context tad;
 	rend_context rend;
@@ -219,10 +221,10 @@ struct TA_context
 	{
 		verify(tad.End() - tad.thd_root <= TA_DATA_SIZE);
 		tad.Clear();
-		rend_inuse.Lock();
+		rend_inuse.lock();
 		rend.Clear();
 		rend.proc_end = rend.proc_start = tad.thd_root;
-		rend_inuse.Unlock();
+		rend_inuse.unlock();
 	}
 
 	void Free()

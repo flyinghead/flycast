@@ -55,7 +55,7 @@ private:
 #endif
 	cResetEvent wakeup_thread;
 	std::vector<BaseTextureCacheData *> work_queue;
-	cMutex work_queue_mutex;
+	std::mutex work_queue_mutex;
 };
 
 extern CustomTexture custom_texture;
