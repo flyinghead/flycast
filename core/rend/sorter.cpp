@@ -208,7 +208,7 @@ void GenSorted(int first, int count, std::vector<SortTrigDrawParam>& pidx_sort, 
 
 	pidx_sort.clear();
 
-	if (pvrrc.verts.used() == 0)
+	if (pvrrc.verts.used() == 0 || count == 0)
 		return;
 
 	const Vertex *vtx_base = pvrrc.verts.head();
@@ -431,8 +431,8 @@ void GenSorted(int first, int count, std::vector<SortTrigDrawParam>& pidx_sort, 
 
 			if (idx!=-1)
 			{
-				SortTrigDrawParam* last=&pidx_sort[pidx_sort.size()-1];
-				last->count=stdp.first-last->first;
+				SortTrigDrawParam& last = pidx_sort.back();
+				last.count = stdp.first - last.first;
 			}
 
 			pidx_sort.push_back(stdp);
@@ -440,8 +440,11 @@ void GenSorted(int first, int count, std::vector<SortTrigDrawParam>& pidx_sort, 
 		}
 	}
 
-	SortTrigDrawParam* stdp=&pidx_sort[pidx_sort.size()-1];
-	stdp->count=aused*3-stdp->first;
+	if (!pidx_sort.empty())
+	{
+		SortTrigDrawParam& last = pidx_sort.back();
+		last.count = aused * 3 - last.first;
+	}
 
 #if PRINT_SORT_STATS
 	printf("Reassembled into %d from %d\n",pidx_sort.size(),pp_end-pp_base);
