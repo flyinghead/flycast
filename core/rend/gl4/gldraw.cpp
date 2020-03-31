@@ -311,7 +311,7 @@ static void DrawModVols(int first, int count)
 
 	int mod_base = -1;
 
-	for (u32 cmv = 0; cmv < count; cmv++)
+	for (int cmv = 0; cmv < count; cmv++)
 	{
 		ModifierVolumeParam& param = params[cmv];
 
@@ -424,17 +424,17 @@ void gl4DrawStrips(GLuint output_fbo, int width, int height)
         // Check if we can skip this pass, in part or completely, in case nothing is drawn (Cosmic Smash)
 		bool skip_op_pt = true;
 		bool skip_tr = true;
-		for (int j = previous_pass.op_count; skip_op_pt && j < current_pass.op_count; j++)
+		for (u32 j = previous_pass.op_count; skip_op_pt && j < current_pass.op_count; j++)
 		{
 			if (pvrrc.global_param_op.head()[j].count > 2)
 				skip_op_pt = false;
 		}
-		for (int j = previous_pass.pt_count; skip_op_pt && j < current_pass.pt_count; j++)
+		for (u32 j = previous_pass.pt_count; skip_op_pt && j < current_pass.pt_count; j++)
 		{
 			if (pvrrc.global_param_pt.head()[j].count > 2)
 				skip_op_pt = false;
 		}
-		for (int j = previous_pass.tr_count; skip_tr && j < current_pass.tr_count; j++)
+		for (u32 j = previous_pass.tr_count; skip_tr && j < current_pass.tr_count; j++)
 		{
 			if (pvrrc.global_param_tr.head()[j].count > 2)
 				skip_tr = false;

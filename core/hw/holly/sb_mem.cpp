@@ -162,7 +162,7 @@ void FixUpFlash()
 	}
 }
 
-static bool nvmem_load(const string& root)
+static bool nvmem_load(const std::string& root)
 {
 	bool rc;
 	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
@@ -178,7 +178,7 @@ static bool nvmem_load(const string& root)
 	return true;
 }
 
-bool LoadRomFiles(const string& root)
+bool LoadRomFiles(const std::string& root)
 {
 	if (settings.platform.system != DC_PLATFORM_ATOMISWAVE)
 	{
@@ -201,7 +201,7 @@ bool LoadRomFiles(const string& root)
 	return true;
 }
 
-void SaveRomFiles(const string& root)
+void SaveRomFiles(const std::string& root)
 {
 	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
 		sys_nvmem->Save(root, getRomPrefix(), "nvmem.bin", "nvmem");
@@ -211,7 +211,7 @@ void SaveRomFiles(const string& root)
 		sys_rom->Save(get_game_save_prefix() + ".nvmem2");
 }
 
-bool LoadHle(const string& root)
+bool LoadHle(const std::string& root)
 {
 	if (!nvmem_load(root))
 		WARN_LOG(FLASHROM, "No nvmem loaded\n");
@@ -328,7 +328,7 @@ T DYNACALL ReadMem_area0(u32 addr)
 	//map 0x0060 to 0x006F
 	else if ((base >=0x0060) && (base <=0x006F) && (addr>= 0x00600800) && (addr<= 0x006FFFFF)) //	:G2 (Reserved)
 	{
-		EMUERROR2("Read from area0_32 not implemented [G2 (Reserved)], addr=%x",addr);
+		INFO_LOG(COMMON, "Read from area0_32 not implemented [G2 (Reserved)], addr=%x", addr);
 		return 0;
 	}
 	//map 0x0070 to 0x0070
@@ -379,7 +379,7 @@ void  DYNACALL WriteMem_area0(u32 addr,T data)
 	{
 		if (addr <= 0x005F67FF)		// Unassigned
 		{
-			EMUERROR4("Write to area0_32 not implemented [Unassigned], addr=%x,data=%x,size=%d",addr,data,sz);
+			INFO_LOG(COMMON, "Write to area0_32 not implemented [Unassigned], addr=%x,data=%x,size=%d", addr, data, sz);
 		}
 		else if (addr >= 0x005F7000 && addr <= 0x005F70FF) // GD-ROM
 		{
@@ -398,7 +398,7 @@ void  DYNACALL WriteMem_area0(u32 addr,T data)
 			pvr_WriteReg(addr,data);
 		}
 		else
-			EMUERROR4("Write to area0_32 not implemented [Unassigned], addr=%x,data=%x,size=%d",addr,data,sz);
+			INFO_LOG(COMMON, "Write to area0_32 not implemented [Unassigned], addr=%x,data=%x,size=%d", addr, data, sz);
 	}
 	//map 0x0060 to 0x0060
 	else if ((base ==0x0060) /*&& (addr>= 0x00600000)*/ && (addr<= 0x006007FF)) // MODEM
@@ -413,7 +413,7 @@ void  DYNACALL WriteMem_area0(u32 addr,T data)
 	//map 0x0060 to 0x006F
 	else if ((base >=0x0060) && (base <=0x006F) && (addr>= 0x00600800) && (addr<= 0x006FFFFF)) // G2 (Reserved)
 	{
-		EMUERROR4("Write to area0_32 not implemented [G2 (Reserved)], addr=%x,data=%x,size=%d",addr,data,sz);
+		INFO_LOG(COMMON, "Write to area0_32 not implemented [G2 (Reserved)], addr=%x,data=%x,size=%d", addr, data, sz);
 	}
 	//map 0x0070 to 0x0070
 	else if ((base >=0x0070) && (base <=0x0070) /*&& (addr>= 0x00700000)*/ && (addr<=0x00707FFF)) // AICA- Sound Cntr. Reg.
@@ -436,7 +436,7 @@ void  DYNACALL WriteMem_area0(u32 addr,T data)
 		libExtDevice_WriteMem_A0_010(addr,data,sz);
 	}
 	else
-		EMUERROR4("Write to area0_32 not implemented [Unassigned], addr=%x,data=%x,size=%d",addr,data,sz);
+		INFO_LOG(COMMON, "Write to area0_32 not implemented [Unassigned], addr=%x,data=%x,size=%d", addr, data, sz);
 }
 
 //Init/Res/Term

@@ -504,7 +504,6 @@
 		84B7BDBC1B72720100F9733F /* generated_class_names_string.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = generated_class_names_string.h; sourceTree = "<group>"; };
 		84B7BDBD1B72720100F9733F /* generated_descriptors.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = generated_descriptors.h; sourceTree = "<group>"; };
 		84B7BDBE1B72720100F9733F /* generated_indexes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = generated_indexes.h; sourceTree = "<group>"; };
-		84B7BDBF1B72720100F9733F /* types.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = types.h; sourceTree = "<group>"; };
 		84B7BDC01B72720100F9733F /* x86_emitter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = x86_emitter.cpp; sourceTree = "<group>"; };
 		84B7BDC11B72720100F9733F /* x86_emitter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = x86_emitter.h; sourceTree = "<group>"; };
 		84B7BDC21B72720100F9733F /* x86_matcher.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = x86_matcher.h; sourceTree = "<group>"; };
@@ -1435,7 +1434,6 @@
 				84B7BDBC1B72720100F9733F /* generated_class_names_string.h */,
 				84B7BDBD1B72720100F9733F /* generated_descriptors.h */,
 				84B7BDBE1B72720100F9733F /* generated_indexes.h */,
-				84B7BDBF1B72720100F9733F /* types.h */,
 				84B7BDC01B72720100F9733F /* x86_emitter.cpp */,
 				84B7BDC11B72720100F9733F /* x86_emitter.h */,
 				84B7BDC21B72720100F9733F /* x86_matcher.h */,

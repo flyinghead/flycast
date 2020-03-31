@@ -159,7 +159,7 @@ extern Sh4RCB* p_sh4rcb;
 
 //./core/hw/sh4/sh4_sched.o
 extern u64 sh4_sched_ffb;
-extern vector<sched_list> sch_list;
+extern std::vector<sched_list> sch_list;
 
 //./core/hw/sh4/interpr/sh4_interpreter.o
 extern int aica_schid;
@@ -274,7 +274,7 @@ bool register_unserialize(T& regs,void **data, unsigned int *total_size, seriali
 bool dc_serialize(void **data, unsigned int *total_size)
 {
 	int i = 0;
-	int j = 0;
+
 	serialize_version_enum version = V8;
 
 	*total_size = 0 ;
@@ -533,7 +533,6 @@ bool dc_serialize(void **data, unsigned int *total_size)
 static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 {
 	int i = 0;
-	int j = 0;
 
 	REICAST_US(aica_interr) ;
 	REICAST_US(aica_reg_L) ;
@@ -798,7 +797,7 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 bool dc_unserialize(void **data, unsigned int *total_size)
 {
 	int i = 0;
-	int j = 0;
+
 	serialize_version_enum version = V1 ;
 
 	*total_size = 0 ;

@@ -284,8 +284,8 @@ extern "C" void ngen_FailedToFindBlock_();
 
 #include <map>
 
-map<shilop,ConditionCode> ccmap;
-map<shilop,ConditionCode> ccnmap;
+std::map<shilop,ConditionCode> ccmap;
+std::map<shilop,ConditionCode> ccnmap;
 
 u32 DynaRBI::Relink()
 {
@@ -571,7 +571,7 @@ struct CC_PS
 	CanonicalParamType type;
 	shil_param* par;
 };
-vector<CC_PS> CC_pars;
+std::vector<CC_PS> CC_pars;
 void ngen_CC_Start(shil_opcode* op) 
 { 
 	CC_pars.clear();
@@ -1075,7 +1075,7 @@ bool ngen_readm_immediate(RuntimeBlockInfo* block, shil_opcode* op, bool staging
 
 	mem_op_type optp = memop_type(op);
 	bool isram = false;
-	void* ptr = _vmem_read_const(op->rs1._imm, isram, max(4u, memop_bytes(optp)));
+	void* ptr = _vmem_read_const(op->rs1._imm, isram, std::max(4u, memop_bytes(optp)));
 	eReg rd = (optp != SZ_32F && optp != SZ_64F) ? reg.mapg(op->rd) : r0;
 
 	if (isram)
@@ -1147,7 +1147,7 @@ bool ngen_writemem_immediate(RuntimeBlockInfo* block, shil_opcode* op, bool stag
 
 	mem_op_type optp = memop_type(op);
 	bool isram = false;
-	void* ptr = _vmem_write_const(op->rs1._imm, isram, max(4u, memop_bytes(optp)));
+	void* ptr = _vmem_write_const(op->rs1._imm, isram, std::max(4u, memop_bytes(optp)));
 
 	eReg rs2 = r1;
 	eFSReg rs2f = f0;

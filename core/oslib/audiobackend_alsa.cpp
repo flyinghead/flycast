@@ -13,7 +13,7 @@ static void alsa_init()
 {
 	snd_pcm_hw_params_t *params;
 
-	string device = cfgLoadStr("alsa", "device", "");
+	std::string device = cfgLoadStr("alsa", "device", "");
 
 	int rc = -1;
 	if (device.empty() || device == "auto")

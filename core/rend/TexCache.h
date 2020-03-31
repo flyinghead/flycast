@@ -2,6 +2,7 @@
 #include "oslib/oslib.h"
 #include "hw/pvr/Renderer_if.h"
 
+#include <algorithm>
 #include <array>
 #include <atomic>
 #include <memory>
@@ -119,7 +120,7 @@ public:
 
 void palette_update();
 
-#define clamp(minv,maxv,x) min(maxv,max(minv,x))
+#define clamp(minv, maxv, x) (x < minv ? minv : x > maxv ? maxv : x)
 
 // Unpack to 16-bit word
 
@@ -643,8 +644,9 @@ typedef void TexConvFP(PixelBuffer<u16>* pb,u8* p_in,u32 Width,u32 Height);
 typedef void TexConvFP32(PixelBuffer<u32>* pb,u8* p_in,u32 Width,u32 Height);
 enum class TextureType { _565, _5551, _4444, _8888, _8 };
 
-struct BaseTextureCacheData
+class BaseTextureCacheData
 {
+public:
 	TSP tsp;        //dreamcast texture parameters
 	TCW tcw;
 
@@ -763,9 +765,9 @@ public:
 
 	void CollectCleanup()
 	{
-		vector<u64> list;
+		std::vector<u64> list;
 
-		u32 TargetFrame = max((u32)120, FrameCount) - 120;
+		u32 TargetFrame = std::max((u32)120, FrameCount) - 120;
 
 		for (const auto& pair : cache)
 		{
@@ -816,7 +818,7 @@ static inline void MakeFogTexture(u8 *tex_data)
 		tex_data[i + 128] = fog_table[i * 4 + 1];
 	}
 }
-u8* loadPNGData(const string& fname, int &width, int &height);
+u8* loadPNGData(const std::string& fname, int &width, int &height);
 u8* loadPNGData(const std::vector<u8>& data, int &width, int &height);
 void dump_screenshot(u8 *buffer, u32 width, u32 height, bool alpha = false, u32 rowPitch = 0, bool invertY = true);
 

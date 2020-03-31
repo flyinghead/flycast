@@ -57,7 +57,7 @@ void load_chunk(u8* &src, unsigned char *ptr, unsigned long sz)
 		int x = (my_rand() * i) >> 16;
 
 		/* Swap */
-		swap(idx[i], idx[x]);
+		std::swap(idx[i], idx[x]);
 
 		/*
 			int tmp = idx[i];

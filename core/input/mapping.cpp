@@ -18,12 +18,13 @@
  */
 #include "mapping.h"
 #include "cfg/ini.h"
+#include "stdclass.h"
 
 static struct
 {
 	DreamcastKey id;
-	string section;
-	string option;
+	std::string section;
+	std::string option;
 }
 button_list[] =
 {
@@ -53,10 +54,10 @@ button_list[] =
 static struct
 {
 	DreamcastKey id;
-	string section;
-	string option;
-	string section_inverted;
-	string option_inverted;
+	std::string section;
+	std::string option;
+	std::string section_inverted;
+	std::string option_inverted;
 }
 axis_list[] =
 {

@@ -45,7 +45,7 @@ struct MemChip
 		die("Method not supported");
 	}
 
-	bool Load(const string& file)
+	bool Load(const std::string& file)
 	{
 		FILE* f=fopen(file.c_str(),"rb");
 		if (f)
@@ -65,7 +65,7 @@ struct MemChip
 		return Load(this->load_filename);
 	}
 
-	void Save(const string& file)
+	void Save(const std::string& file)
 	{
 		FILE* f=fopen(file.c_str(),"wb");
 		if (f)
@@ -75,7 +75,7 @@ struct MemChip
 		}
 	}
 
-	bool Load(const string& root,const string& prefix,const string& names_ro,const string& title)
+	bool Load(const std::string& root, const std::string& prefix, const std::string& names_ro, const std::string& title)
 	{
 		char base[512];
 		char temp[512];
@@ -114,7 +114,7 @@ struct MemChip
 
 		return false;
 	}
-	void Save(const string& root,const string& prefix,const string& name_ro,const string& title)
+	void Save(const std::string& root, const std::string& prefix, const std::string& name_ro, const std::string& title)
 	{
 		char path[512];
 
@@ -493,11 +493,11 @@ struct DCFlashChip : MemChip
 		bool valid = true;
 		char sysinfo[16];
 
-		for (int i = 0; i < sizeof(sysinfo); i++)
+		for (size_t i = 0; i < sizeof(sysinfo); i++)
 			sysinfo[i] = Read8(0x1a000 + i);
 		valid = valid && memcmp(&sysinfo[5], "Dreamcast  ", 11) == 0;
 
-		for (int i = 0; i < sizeof(sysinfo); i++)
+		for (size_t i = 0; i < sizeof(sysinfo); i++)
 			sysinfo[i] = Read8(0x1a0a0 + i);
 		valid = valid && memcmp(&sysinfo[5], "Dreamcast  ", 11) == 0;
 

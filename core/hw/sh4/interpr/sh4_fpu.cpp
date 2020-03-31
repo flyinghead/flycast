@@ -637,7 +637,7 @@ sh4op(i1111_nnnn_0011_1101)
 	if (fpscr.PR == 0)
 	{
 		u32 n = GetN(op);
-		fpul = (u32)(s32)min(fr[n], 2147483520.0f);     // IEEE 754: 0x4effffff
+		fpul = (u32)(s32)std::min(fr[n], 2147483520.0f);     // IEEE 754: 0x4effffff
 
 		// Intel CPUs convert out of range float numbers to 0x80000000. Manually set the correct sign
 		if (fpul == 0x80000000)

@@ -30,7 +30,7 @@ u32 libGDR_GetTrackNumber(u32 sector, u32& elapsed)
 {
 	if (disc != NULL)
 	{
-		for (int i = 0; i < disc->tracks.size(); i++)
+		for (size_t i = 0; i < disc->tracks.size(); i++)
 			if (disc->tracks[i].StartFAD <= sector && (sector <= disc->tracks[i].EndFAD || disc->tracks[i].EndFAD == 0))
 			{
 				elapsed = sector - disc->tracks[i].StartFAD;

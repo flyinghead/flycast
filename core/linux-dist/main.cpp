@@ -158,15 +158,15 @@ void* rend_thread(void* p);
 	}
 #endif
 
-string find_user_config_dir()
+std::string find_user_config_dir()
 {
 	#ifdef USES_HOMEDIR
 		struct stat info;
-		string home = "";
+		std::string home = "";
 		if(getenv("HOME") != NULL)
 		{
 			// Support for the legacy config dir at "$HOME/.reicast"
-			string legacy_home = (string)getenv("HOME") + "/.reicast";
+			std::string legacy_home = (std::string)getenv("HOME") + "/.reicast";
 			if((stat(legacy_home.c_str(), &info) == 0) && (info.st_mode & S_IFDIR))
 			{
 				// "$HOME/.reicast" already exists, let's use it!
@@ -177,12 +177,12 @@ string find_user_config_dir()
 			 * Consult the XDG Base Directory Specification for details:
 			 *   http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html#variables
 			 */
-			home = (string)getenv("HOME") + "/.config/reicast";
+			home = (std::string)getenv("HOME") + "/.config/reicast";
 		}
 		if(getenv("XDG_CONFIG_HOME") != NULL)
 		{
 			// If XDG_CONFIG_HOME is set explicitly, we'll use that instead of $HOME/.config
-			home = (string)getenv("XDG_CONFIG_HOME") + "/reicast";
+			home = (std::string)getenv("XDG_CONFIG_HOME") + "/reicast";
 		}
 
 		if(!home.empty())
@@ -200,15 +200,15 @@ string find_user_config_dir()
 	return ".";
 }
 
-string find_user_data_dir()
+std::string find_user_data_dir()
 {
 	#ifdef USES_HOMEDIR
 		struct stat info;
-		string data = "";
+		std::string data = "";
 		if(getenv("HOME") != NULL)
 		{
 			// Support for the legacy config dir at "$HOME/.reicast"
-			string legacy_data = (string)getenv("HOME") + "/.reicast";
+			std::string legacy_data = (std::string)getenv("HOME") + "/.reicast";
 			if((stat(legacy_data.c_str(), &info) == 0) && (info.st_mode & S_IFDIR))
 			{
 				// "$HOME/.reicast" already exists, let's use it!
@@ -219,12 +219,12 @@ string find_user_data_dir()
 			 * Consult the XDG Base Directory Specification for details:
 			 *   http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html#variables
 			 */
-			data = (string)getenv("HOME") + "/.local/share/reicast";
+			data = (std::string)getenv("HOME") + "/.local/share/reicast";
 		}
 		if(getenv("XDG_DATA_HOME") != NULL)
 		{
 			// If XDG_DATA_HOME is set explicitly, we'll use that instead of $HOME/.config
-			data = (string)getenv("XDG_DATA_HOME") + "/reicast";
+			data = (std::string)getenv("XDG_DATA_HOME") + "/reicast";
 		}
 
 		if(!data.empty())
@@ -242,15 +242,15 @@ string find_user_data_dir()
 	return ".";
 }
 
-std::vector<string> find_system_config_dirs()
+std::vector<std::string> find_system_config_dirs()
 {
-	std::vector<string> dirs;
+	std::vector<std::string> dirs;
 	if (getenv("XDG_CONFIG_DIRS") != NULL)
 	{
-		string s = (string)getenv("XDG_CONFIG_DIRS");
+		std::string s = (std::string)getenv("XDG_CONFIG_DIRS");
 
-		string::size_type pos = 0;
-		string::size_type n = s.find(':', pos);
+		std::string::size_type pos = 0;
+		std::string::size_type n = s.find(':', pos);
 		while(n != std::string::npos)
 		{
 			dirs.push_back(s.substr(pos, n-pos) + "/reicast");
@@ -268,15 +268,15 @@ std::vector<string> find_system_config_dirs()
 	return dirs;
 }
 
-std::vector<string> find_system_data_dirs()
+std::vector<std::string> find_system_data_dirs()
 {
-	std::vector<string> dirs;
+	std::vector<std::string> dirs;
 	if (getenv("XDG_DATA_DIRS") != NULL)
 	{
-		string s = (string)getenv("XDG_DATA_DIRS");
+		std::string s = (std::string)getenv("XDG_DATA_DIRS");
 
-		string::size_type pos = 0;
-		string::size_type n = s.find(':', pos);
+		std::string::size_type pos = 0;
+		std::string::size_type n = s.find(':', pos);
 		while(n != std::string::npos)
 		{
 			dirs.push_back(s.substr(pos, n-pos) + "/reicast");
@@ -305,7 +305,7 @@ int main(int argc, char* argv[])
 	/* Set directories */
 	set_user_config_dir(find_user_config_dir());
 	set_user_data_dir(find_user_data_dir());
-	std::vector<string> dirs;
+	std::vector<std::string> dirs;
 	dirs = find_system_config_dirs();
 	for (std::size_t i = 0; i < dirs.size(); i++)
 	{

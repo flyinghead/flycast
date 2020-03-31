@@ -233,7 +233,7 @@ void encode_rex(x86_block* block,encoded_type* mrm,u32 mrm_reg,u32 ofe=0)
 	}
 }
 #endif
-#define block_patches (*(vector<code_patch>*) block->_patches)
+#define block_patches (*(std::vector<code_patch>*) block->_patches)
 
 //Encoding function (partially) specialised by templates to gain speed :)
 template < enc_param enc_1,enc_imm enc_2,u32 sz,x86_operand_size enc_op_size>
@@ -252,7 +252,7 @@ void x86_encode_opcode_tmpl(x86_block* block, const x86_opcode* op, encoded_type
 	#ifdef X64
 		encode_rex(block,0,0,p1->reg);
 	#endif
-		for (int i=0;i<(sz-1);i++)
+		for (u32 i = 0; i < (sz - 1); i++)
 			block->write8(op->b_data[i]);
 		{
 		u32 rv=(p1->reg-EAX)&7;
@@ -264,7 +264,7 @@ void x86_encode_opcode_tmpl(x86_block* block, const x86_opcode* op, encoded_type
 		#ifdef X64
 		encode_rex(block,p2,p1->reg);
 		#endif
-		for (int i=0;i<(sz);i++)
+		for (u32 i = 0; i < (sz); i++)
 			block->write8(op->b_data[i]);
 		encode_modrm(block,p2,p1->reg);
 		break;
@@ -273,7 +273,7 @@ void x86_encode_opcode_tmpl(x86_block* block, const x86_opcode* op, encoded_type
 		#ifdef X64
 		encode_rex(block,p1,p2->reg);
 		#endif
-		for (int i=0;i<(sz);i++)
+		for (u32 i = 0; i < (sz); i++)
 			block->write8(op->b_data[i]);
 		encode_modrm(block,p1,p2->reg);
 		break;
@@ -290,14 +290,14 @@ void x86_encode_opcode_tmpl(x86_block* block, const x86_opcode* op, encoded_type
 #ifdef X64
 		encode_rex(block,p1,0);
 #endif
-		for (int i=0;i<(sz);i++)
+		for (u32 i = 0; i < (sz); i++)
 			block->write8(op->b_data[i]);
 		encode_modrm(block,p1,enc_1-enc_param_slash_0);
 		break;
 
 		//diroffset
 	case enc_param_memdir:
-		for (int i=0;i<(sz);i++)
+		for (u32 i = 0; i < (sz); i++)
 			block->write8(op->b_data[i]);
 		
 		code_patch cp;
@@ -314,7 +314,7 @@ void x86_encode_opcode_tmpl(x86_block* block, const x86_opcode* op, encoded_type
 
 		//reloffset
 	case enc_param_memrel_8:
-		for (int i=0;i<(sz);i++)
+		for (u32 i = 0; i < (sz); i++)
 			block->write8(op->b_data[i]);
 
 		cp.dest=p1->ptr;
@@ -327,7 +327,7 @@ void x86_encode_opcode_tmpl(x86_block* block, const x86_opcode* op, encoded_type
 		block->write8(0x12);
 		break;
 	case enc_param_memrel_16:
-		for (int i=0;i<(sz);i++)
+		for (u32 i = 0; i < (sz); i++)
 			block->write8(op->b_data[i]);
 		
 		cp.dest=p1->ptr;
@@ -340,7 +340,7 @@ void x86_encode_opcode_tmpl(x86_block* block, const x86_opcode* op, encoded_type
 		block->write16(0x1234);
 		break;
 	case enc_param_memrel_32:
-		for (int i=0;i<(sz);i++)
+		for (u32 i = 0; i < (sz); i++)
 			block->write8(op->b_data[i]);
 
 		cp.dest=p1->ptr;
@@ -354,7 +354,7 @@ void x86_encode_opcode_tmpl(x86_block* block, const x86_opcode* op, encoded_type
 		break;
 
 	default:
-		for (int i=0;i<(sz);i++)
+		for (u32 i = 0; i < (sz); i++)
 			block->write8(op->b_data[i]);
 		break;
 	}

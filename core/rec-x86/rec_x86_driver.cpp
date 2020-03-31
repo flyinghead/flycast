@@ -322,8 +322,8 @@ void ngen_Compile(RuntimeBlockInfo* block, bool smc_checks, bool reset, bool sta
 		
 		if (prof.enable)
 		{
-			set<int> reg_wt;
-			set<int> reg_rd;
+			std::set<int> reg_wt;
+			std::set<int> reg_rd;
 
 			for (int z=0;op->rd.is_reg() && z<op->rd.count();z++)
 				reg_wt.insert(op->rd._reg+z);
@@ -340,7 +340,7 @@ void ngen_Compile(RuntimeBlockInfo* block, bool smc_checks, bool reset, bool sta
 			for (int z=0;op->rs3.is_reg() && z<op->rs3.count();z++)
 				reg_rd.insert(op->rs3._reg+z);
 
-			set<int>::iterator iter=reg_wt.begin();
+			std::set<int>::iterator iter=reg_wt.begin();
 			while( iter != reg_wt.end() ) 
 			{
 				if (reg_rd.count(*iter))

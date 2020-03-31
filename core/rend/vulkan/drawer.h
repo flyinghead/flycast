@@ -122,7 +122,7 @@ protected:
 		this->pipelineManager = pipelineManager;
 		this->samplerManager = samplerManager;
 
-		int size = GetContext()->GetSwapChainSize();
+		size_t size = GetContext()->GetSwapChainSize();
 		if (descriptorSets.size() > size)
 			descriptorSets.resize(size);
 		else
@@ -139,7 +139,7 @@ protected:
 	{
 		if (mainBuffers.empty())
 		{
-			for (int i = 0; i < GetContext()->GetSwapChainSize(); i++)
+			for (size_t i = 0; i < GetContext()->GetSwapChainSize(); i++)
 				mainBuffers.push_back(std::unique_ptr<BufferData>(new BufferData(std::max(512 * 1024u, size),
 						vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eUniformBuffer)));
 		}

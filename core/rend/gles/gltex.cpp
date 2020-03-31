@@ -38,7 +38,7 @@ static void dumpRtTexture(u32 name, u32 w, u32 h) {
 	glPixelStorei(GL_PACK_ALIGNMENT, 1);
 
 	png_bytepp rows = (png_bytepp)malloc(h * sizeof(png_bytep));
-	for (int y = 0; y < h; y++) {
+	for (u32 y = 0; y < h; y++) {
 		rows[y] = (png_bytep)malloc(w * 4);	// 32-bit per pixel
 		glReadPixels(0, y, w, 1, GL_RGBA, GL_UNSIGNED_BYTE, rows[y]);
 	}
@@ -64,7 +64,7 @@ static void dumpRtTexture(u32 name, u32 w, u32 h) {
     png_write_end(png_ptr, NULL);
     fclose(fp);
 
-	for (int y = 0; y < h; y++)
+	for (u32 y = 0; y < h; y++)
 		free(rows[y]);
 	free(rows);
 }
@@ -352,7 +352,7 @@ void ReadRTTBuffer() {
 
 static int TexCacheLookups;
 static int TexCacheHits;
-static float LastTexCacheStats;
+//static float LastTexCacheStats;
 
 u64 gl_GetTexture(TSP tsp, TCW tcw)
 {

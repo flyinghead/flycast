@@ -156,9 +156,9 @@ struct shil_opcode
 	u16 guest_offs;
 	bool delay_slot;
 
-	string dissasm() const;
+    std::string dissasm() const;
 };
 
 const char* shil_opcode_name(int op);
 
-string name_reg(Sh4RegType reg);
+std::string name_reg(Sh4RegType reg);

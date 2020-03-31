@@ -262,7 +262,7 @@ void initABuffer()
 		// get the max buffer size
 		GLint64 size;
 		glGetInteger64v(GL_MAX_SHADER_STORAGE_BLOCK_SIZE, &size);
-		pixel_buffer_size = (GLuint)min((GLint64)pixel_buffer_size, size);
+		pixel_buffer_size = (GLuint)std::min((GLint64)pixel_buffer_size, size);
 
 		// Create the buffer
 		glGenBuffers(1, &pixels_buffer);
@@ -422,7 +422,7 @@ void DrawTranslucentModVols(int first, int count)
 
 	int mod_base = -1;
 
-	for (u32 cmv = 0; cmv < count; cmv++)
+	for (int cmv = 0; cmv < count; cmv++)
 	{
 		ModifierVolumeParam& param = params[cmv];
 

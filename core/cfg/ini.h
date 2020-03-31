@@ -36,7 +36,7 @@ struct ConfigFile {
 		void save(FILE* fd);
 
 		/* getting values */
-		string get(const std::string& section_name, const std::string& entry_name, const std::string& default_value = "");
+		std::string get(const std::string& section_name, const std::string& entry_name, const std::string& default_value = "");
 		int get_int(const std::string& section_name, const std::string& entry_name, int default_value = 0);
 		bool get_bool(const std::string& section_name, const std::string& entry_name, bool default_value = false);
 		/* setting values */

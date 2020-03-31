@@ -130,10 +130,7 @@ void palette_update()
 		pal_hash_256[i] = XXH32(&palette32_ram[i << 8], 256 * 4, 7);
 }
 
-
-using namespace std;
-
-vector<vram_block*> VramLocks[VRAM_SIZE_MAX / PAGE_SIZE];
+std::vector<vram_block*> VramLocks[VRAM_SIZE_MAX / PAGE_SIZE];
 VArray2 vram;  // vram 32-64b
 
 //List functions
@@ -145,7 +142,7 @@ void vramlock_list_remove(vram_block* block)
 
 	for (u32 i = base; i <= end; i++)
 	{
-		vector<vram_block*>& list = VramLocks[i];
+		std::vector<vram_block*>& list = VramLocks[i];
 		for (size_t j = 0; j < list.size(); j++)
 		{
 			if (list[j] == block)
@@ -163,7 +160,7 @@ void vramlock_list_add(vram_block* block)
 
 	for (u32 i = base; i <= end; i++)
 	{
-		vector<vram_block*>& list = VramLocks[i];
+		std::vector<vram_block*>& list = VramLocks[i];
 		// If the list is empty then we need to protect vram, otherwise it's already been done
 		if (list.empty() || std::all_of(list.begin(), list.end(), [](vram_block *block) { return block == nullptr; }))
 			_vmem_protect_vram(i * PAGE_SIZE, PAGE_SIZE);
@@ -175,7 +172,7 @@ void vramlock_list_add(vram_block* block)
 	}
 }
  
-cMutex vramlist_lock;
+std::mutex vramlist_lock;
 
 vram_block* libCore_vramlock_Lock(u32 start_offset64,u32 end_offset64,void* userdata)
 {
@@ -202,7 +199,7 @@ vram_block* libCore_vramlock_Lock(u32 start_offset64,u32 end_offset64,void* user
 	block->type=64;
 
 	{
-		std::lock_guard<cMutex> lock(vramlist_lock);
+		std::lock_guard<std::mutex> lock(vramlist_lock);
 
 		// This also protects vram if needed
 		vramlock_list_add(block);
@@ -217,10 +214,10 @@ bool VramLockedWriteOffset(size_t offset)
 		return false;
 
 	size_t addr_hash = offset / PAGE_SIZE;
-	vector<vram_block *>& list = VramLocks[addr_hash];
+	std::vector<vram_block *>& list = VramLocks[addr_hash];
 
 	{
-		std::lock_guard<cMutex> lock(vramlist_lock);
+		std::lock_guard<std::mutex> lock(vramlist_lock);
 
 		for (size_t i = 0; i < list.size(); i++)
 		{
@@ -256,7 +253,7 @@ bool VramLockedWrite(u8* address)
 //also frees the handle
 void libCore_vramlock_Unlock_block(vram_block* block)
 {
-	std::lock_guard<cMutex> lock(vramlist_lock);
+	std::lock_guard<std::mutex> lock(vramlist_lock);
 	libCore_vramlock_Unlock_block_wb(block);
 }
 
@@ -339,7 +336,7 @@ static inline int getThreadCount()
 	int tcount = omp_get_num_procs() - 1;
 	if (tcount < 1)
 		tcount = 1;
-	return min(tcount, (int)settings.pvr.MaxThreads);
+	return std::min(tcount, (int)settings.pvr.MaxThreads);
 }
 
 template<typename Func>
@@ -652,7 +649,7 @@ void BaseTextureCacheData::Update()
 		if (mipmapped)
 		{
 			pb32.init(w, h, true);
-			for (int i = 0; i <= tsp.TexU + 3; i++)
+			for (u32 i = 0; i <= tsp.TexU + 3; i++)
 			{
 				pb32.set_mipmap(i);
 				u32 vram_addr;
@@ -712,7 +709,7 @@ void BaseTextureCacheData::Update()
 		if (mipmapped)
 		{
 			pb16.init(w, h, true);
-			for (int i = 0; i <= tsp.TexU + 3; i++)
+			for (u32 i = 0; i <= tsp.TexU + 3; i++)
 			{
 				pb16.set_mipmap(i);
 				u32 vram_addr;
@@ -1082,14 +1079,14 @@ static void png_cstd_read(png_structp png_ptr, png_bytep data, png_size_t length
 		png_error(png_ptr, "Truncated read error");
 }
 
-u8* loadPNGData(const string& fname, int &width, int &height)
+u8* loadPNGData(const std::string& fname, int &width, int &height)
 {
 	const char* filename=fname.c_str();
 	FILE* file = fopen(filename, "rb");
 
 	if (!file)
 	{
-		EMUERROR("Error opening %s", filename);
+		INFO_LOG(COMMON, "Error opening %s", filename);
 		return NULL;
 	}
 

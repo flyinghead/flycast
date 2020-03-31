@@ -21,12 +21,11 @@
 
 #if !defined(_MSC_VER) && !defined(TARGET_NO_THREADS)
 
+#include "stdclass.h"
+
 #ifdef __MINGW32__
 #define _POSIX_SOURCE
 #endif
-
-#include <queue>
-#include <map>
 
 extern "C" {
 #include <pico_stack.h>
@@ -43,6 +42,10 @@ extern "C" {
 #include "cfg/cfg.h"
 #include "picoppp.h"
 
+#include <map>
+#include <mutex>
+#include <queue>
+
 #define RESOLVER1_OPENDNS_COM "208.67.222.222"
 #define AFO_ORIG_IP 0x83f2fb3f		// 63.251.242.131 in network order
 #define IGP_ORIG_IP 0xef2bd2cc		// 204.210.43.239 in network order
@@ -52,8 +55,8 @@ static struct pico_device *ppp;
 static std::queue<u8> in_buffer;
 static std::queue<u8> out_buffer;
 
-static cMutex in_buffer_lock;
-static cMutex out_buffer_lock;
+static std::mutex in_buffer_lock;
+static std::mutex out_buffer_lock;
 
 struct pico_ip4 dcaddr;
 struct pico_ip4 dnsaddr;
@@ -63,10 +66,10 @@ struct pico_ip4 public_ip;
 struct pico_ip4 afo_ip;
 
 // src socket -> socket fd
-static map<struct pico_socket *, sock_t> tcp_sockets;
-static map<struct pico_socket *, sock_t> tcp_connecting_sockets;
+static std::map<struct pico_socket *, sock_t> tcp_sockets;
+static std::map<struct pico_socket *, sock_t> tcp_connecting_sockets;
 // src port -> socket fd
-static map<uint16_t, sock_t> udp_sockets;
+static std::map<uint16_t, sock_t> udp_sockets;
 
 static const uint16_t games_udp_ports[] = {
 		7980,	// Alien Front Online
@@ -100,7 +103,7 @@ static const uint16_t games_tcp_ports[] = {
 		17219,	// Worms World Party
 };
 // listening port -> socket fd
-static map<uint16_t, sock_t> tcp_listening_sockets;
+static std::map<uint16_t, sock_t> tcp_listening_sockets;
 
 static void read_native_sockets();
 void get_host_by_name(const char *name, struct pico_ip4 dnsaddr);
@@ -111,14 +114,14 @@ static int modem_read(struct pico_device *dev, void *data, int len)
 	u8 *p = (u8 *)data;
 
 	int count = 0;
-	out_buffer_lock.Lock();
+	out_buffer_lock.lock();
 	while (!out_buffer.empty() && count < len)
 	{
 		*p++ = out_buffer.front();
 		out_buffer.pop();
 		count++;
 	}
-	out_buffer_lock.Unlock();
+	out_buffer_lock.unlock();
 
     return count;
 }
@@ -127,37 +130,37 @@ static int modem_write(struct pico_device *dev, const void *data, int len)
 {
 	u8 *p = (u8 *)data;
 
-	in_buffer_lock.Lock();
+	in_buffer_lock.lock();
 	while (len > 0)
 	{
 		in_buffer.push(*p++);
 		len--;
 	}
-	in_buffer_lock.Unlock();
+	in_buffer_lock.unlock();
 
     return len;
 }
 
 void write_pico(u8 b)
 {
-	out_buffer_lock.Lock();
+	out_buffer_lock.lock();
 	out_buffer.push(b);
-	out_buffer_lock.Unlock();
+	out_buffer_lock.unlock();
 }
 
 int read_pico()
 {
-	in_buffer_lock.Lock();
+	in_buffer_lock.lock();
 	if (in_buffer.empty())
 	{
-		in_buffer_lock.Unlock();
+		in_buffer_lock.unlock();
 		return -1;
 	}
 	else
 	{
 		u32 b = in_buffer.front();
 		in_buffer.pop();
-		in_buffer_lock.Unlock();
+		in_buffer_lock.unlock();
 		return b;
 	}
 }
@@ -448,7 +451,7 @@ static void read_native_sockets()
 	for (auto it = tcp_connecting_sockets.begin(); it != tcp_connecting_sockets.end(); it++)
 	{
 		FD_SET(it->second, &write_fds);
-		max_fd = max(max_fd, (int)it->second);
+		max_fd = std::max(max_fd, (int)it->second);
 	}
 	struct timeval tv;
 	tv.tv_sec = 0;
@@ -491,9 +494,9 @@ static void read_native_sockets()
 	struct pico_msginfo msginfo;
 
 	// If modem buffer is full, wait
-	in_buffer_lock.Lock();
+	in_buffer_lock.lock();
 	size_t in_buffer_size = in_buffer.size();
-	in_buffer_lock.Unlock();
+	in_buffer_lock.unlock();
 	if (in_buffer_size >= 256)
 		return;
 
@@ -713,7 +716,7 @@ static void *pico_thread_func(void *)
     pico_string_to_ipv4("192.168.167.1", &ipaddr.addr);
     pico_ppp_set_ip(ppp, ipaddr);
 
-    string dns_ip = cfgLoadStr("network", "DNS", "46.101.91.123");		// Dreamcast Live DNS
+    std::string dns_ip = cfgLoadStr("network", "DNS", "46.101.91.123");		// Dreamcast Live DNS
     pico_string_to_ipv4(dns_ip.c_str(), &dnsaddr.addr);
     pico_ppp_set_dns1(ppp, dnsaddr);
 

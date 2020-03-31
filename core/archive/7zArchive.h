@@ -54,7 +54,7 @@ public:
 	SzArchiveFile(u8 *data, u32 offset, u32 length) : data(data), offset(offset), length(length) {}
 	virtual u32 Read(void *buffer, u32 length) override
 	{
-		length = min(length, this->length);
+		length = std::min(length, this->length);
 		memcpy(buffer, data + offset, length);
 		return length;
 	}

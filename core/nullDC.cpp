@@ -15,6 +15,7 @@
 #include "hw/naomi/naomi_cart.h"
 #include "reios/reios.h"
 #include "hw/sh4/sh4_sched.h"
+#include "hw/sh4/sh4_if.h"
 #include "hw/pvr/Renderer_if.h"
 #include "hw/pvr/spg.h"
 #include "hw/aica/dsp.h"
@@ -51,43 +52,6 @@ cThread emu_thread(&dc_run, NULL);
 #ifdef _WIN32
 #include <windows.h>
 #endif
-
-/**
- * cpu_features_get_time_usec:
- *
- * Gets time in microseconds.
- *
- * Returns: time in microseconds.
- **/
-int64_t get_time_usec(void)
-{
-#ifdef _WIN32
-   static LARGE_INTEGER freq;
-   LARGE_INTEGER count;
-
-   /* Frequency is guaranteed to not change. */
-   if (!freq.QuadPart && !QueryPerformanceFrequency(&freq))
-      return 0;
-
-   if (!QueryPerformanceCounter(&count))
-      return 0;
-   return count.QuadPart * 1000000 / freq.QuadPart;
-#elif defined(_POSIX_MONOTONIC_CLOCK) || defined(__QNX__) || defined(__ANDROID__) || defined(__MACH__) || HOST_OS==OS_LINUX
-   struct timespec tv = {0};
-   if (clock_gettime(CLOCK_MONOTONIC, &tv) < 0)
-      return 0;
-   return tv.tv_sec * INT64_C(1000000) + (tv.tv_nsec + 500) / 1000;
-#elif defined(EMSCRIPTEN)
-   return emscripten_get_now() * 1000;
-#elif defined(__mips__) || defined(DJGPP)
-   struct timeval tv;
-   gettimeofday(&tv,NULL);
-   return (1000000 * tv.tv_sec + tv.tv_usec);
-#else
-#error "Your platform does not have a timer function implemented in cpu_features_get_time_usec(). Cannot continue."
-#endif
-}
-
 
 int GetFile(char *szFileName, char *szParse /* = 0 */, u32 flags /* = 0 */)
 {
@@ -890,7 +854,7 @@ void LoadSettings(bool game_specific)
 	settings.rend.CustomTextures    = cfgLoadBool(config_section, "rend.CustomTextures", settings.rend.CustomTextures);
 	settings.rend.DumpTextures      = cfgLoadBool(config_section, "rend.DumpTextures", settings.rend.DumpTextures);
 	settings.rend.ScreenScaling     = cfgLoadInt(config_section, "rend.ScreenScaling", settings.rend.ScreenScaling);
-	settings.rend.ScreenScaling = min(max(1, settings.rend.ScreenScaling), 800);
+	settings.rend.ScreenScaling = std::min(std::max(1, settings.rend.ScreenScaling), 800);
 	settings.rend.ScreenStretching  = cfgLoadInt(config_section, "rend.ScreenStretching", settings.rend.ScreenStretching);
 	settings.rend.Fog				= cfgLoadBool(config_section, "rend.Fog", settings.rend.Fog);
 	settings.rend.FloatVMUs			= cfgLoadBool(config_section, "rend.FloatVMUs", settings.rend.FloatVMUs);
@@ -959,9 +923,9 @@ void LoadSettings(bool game_specific)
 	}
 /*
 	//make sure values are valid
-	settings.dreamcast.cable		= min(max(settings.dreamcast.cable,    0),3);
-	settings.dreamcast.region		= min(max(settings.dreamcast.region,   0),3);
-	settings.dreamcast.broadcast	= min(max(settings.dreamcast.broadcast,0),4);
+	settings.dreamcast.cable		= std::min(std::max(settings.dreamcast.cable,    0),3);
+	settings.dreamcast.region		= std::min(std::max(settings.dreamcast.region,   0),3);
+	settings.dreamcast.broadcast	= std::min(std::max(settings.dreamcast.broadcast,0),4);
 */
 }
 
@@ -1107,9 +1071,9 @@ static void cleanup_serialize(void *data)
 	dc_resume();
 }
 
-static string get_savestate_file_path()
+static std::string get_savestate_file_path()
 {
-	string state_file = settings.imgread.ImagePath;
+	std::string state_file = settings.imgread.ImagePath;
 	size_t lastindex = state_file.find_last_of('/');
 #ifdef _WIN32
 	size_t lastindex2 = state_file.find_last_of('\\');
@@ -1118,10 +1082,10 @@ static string get_savestate_file_path()
 	else if (lastindex2 != std::string::npos)
 		lastindex = std::max(lastindex, lastindex2);
 #endif
-	if (lastindex != -1)
+	if (lastindex != std::string::npos)
 		state_file = state_file.substr(lastindex + 1);
 	lastindex = state_file.find_last_of('.');
-	if (lastindex != -1)
+	if (lastindex != std::string::npos)
 		state_file = state_file.substr(0, lastindex);
 	state_file = state_file + ".state";
 	return get_writable_data_path(DATA_PATH) + state_file;
@@ -1129,7 +1093,7 @@ static string get_savestate_file_path()
 
 void dc_savestate()
 {
-	string filename;
+	std::string filename;
 	unsigned int total_size = 0 ;
 	void *data = NULL ;
 	void *data_ptr = NULL ;
@@ -1185,7 +1149,7 @@ void dc_savestate()
 
 void dc_loadstate()
 {
-	string filename;
+    std::string filename;
 	unsigned int total_size = 0 ;
 	void *data = NULL ;
 	void *data_ptr = NULL ;

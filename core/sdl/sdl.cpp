@@ -312,6 +312,8 @@ void sdl_window_destroy()
 }
 
 #ifdef _WIN32
+#include <windows.h>
+
 HWND sdl_get_native_hwnd()
 {
 	SDL_SysWMinfo wmInfo;

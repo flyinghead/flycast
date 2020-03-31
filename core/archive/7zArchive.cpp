@@ -55,14 +55,14 @@ bool SzArchive::Open(const char* path)
 ArchiveFile* SzArchive::OpenFile(const char* name)
 {
 	u16 fname[512];
-	for (int i = 0; i < szarchive.NumFiles; i++)
+	for (UInt32 i = 0; i < szarchive.NumFiles; i++)
 	{
 		if (SzArEx_IsDir(&szarchive, i))
 			continue;
 
-		int len = SzArEx_GetFileNameUtf16(&szarchive, i, fname);
+		size_t len = SzArEx_GetFileNameUtf16(&szarchive, i, fname);
 		char szname[512];
-		int j = 0;
+		size_t j = 0;
 		for (; j < len && j < sizeof(szname) - 1; j++)
 			szname[j] = fname[j];
 		szname[j] = 0;
@@ -84,7 +84,7 @@ ArchiveFile* SzArchive::OpenFileByCrc(u32 crc)
 {
 	if (crc == 0)
 		return NULL;
-	for (int i = 0; i < szarchive.NumFiles; i++)
+	for (UInt32 i = 0; i < szarchive.NumFiles; i++)
 	{
 		unsigned isDir = SzArEx_IsDir(&szarchive, i);
 		if (isDir)

@@ -98,7 +98,7 @@ static bool reios_locate_bootfile(const char* bootfile)
 	int bootfile_len = strlen(bootfile);
 	while (bootfile_len > 0 && isspace(bootfile[bootfile_len - 1]))
 		bootfile_len--;
-	for (int i = 0; i < data_len; )
+	for (u32 i = 0; i < data_len; )
 	{
 		iso9660_dir_t *dir = (iso9660_dir_t *)&temp[i];
 		if (dir->length == 0)

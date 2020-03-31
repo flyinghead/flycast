@@ -11,6 +11,7 @@
 #include <unistd.h>
 
 #include "hw/mem/_vmem.h"
+#include "hw/sh4/sh4_if.h"
 #include "stdclass.h"
 
 #ifndef MAP_NOSYNC
@@ -120,7 +121,7 @@ static int allocate_shared_filemem(unsigned size) {
 
 		// if shmem does not work (or using OSX) fallback to a regular file on disk
 		if (fd < 0) {
-			string path = get_writable_data_path("/dcnzorz_mem");
+			std::string path = get_writable_data_path("/dcnzorz_mem");
 			fd = open(path.c_str(), O_CREAT|O_RDWR|O_TRUNC, S_IRWXU|S_IRWXG|S_IRWXO);
 			unlink(path.c_str());
 		}

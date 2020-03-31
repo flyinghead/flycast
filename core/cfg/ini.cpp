@@ -7,7 +7,7 @@ namespace emucfg {
 
 /* ConfigEntry */
 
-const string& ConfigEntry::get_string() const
+const std::string& ConfigEntry::get_string() const
 {
 	return this->value;
 }
@@ -132,7 +132,7 @@ ConfigEntry* ConfigFile::get_entry(const std::string& section_name, const std::s
 
 }
 
-string ConfigFile::get(const std::string& section_name, const std::string& entry_name, const std::string& default_value)
+std::string ConfigFile::get(const std::string& section_name, const std::string& entry_name, const std::string& default_value)
 {
 	ConfigEntry* entry = this->get_entry(section_name, entry_name);
 	if (entry == NULL)
@@ -190,7 +190,7 @@ void ConfigFile::set_int(const std::string& section_name, const std::string& ent
 
 void ConfigFile::set_bool(const std::string& section_name, const std::string& entry_name, bool value, bool is_virtual)
 {
-	string str_value = (value ? "yes" : "no");
+	std::string str_value = (value ? "yes" : "no");
 	this->set(section_name, entry_name, str_value, is_virtual);
 }
 
@@ -261,7 +261,7 @@ void ConfigFile::parse(FILE* file)
 			}
 			else
 			{
-				this->set(string(current_section), string(name), string(value));
+				this->set(std::string(current_section), std::string(name), std::string(value));
 			}
 		}
 	}
@@ -271,14 +271,14 @@ void ConfigFile::save(FILE* file)
 {
 	for (const auto& section_it : this->sections)
 	{
-		const string& section_name = section_it.first;
+		const std::string& section_name = section_it.first;
 		const ConfigSection& section = section_it.second;
 
 		fprintf(file, "[%s]\n", section_name.c_str());
 
 		for (const auto& entry_it : section.entries)
 		{
-			const string& entry_name = entry_it.first;
+			const std::string& entry_name = entry_it.first;
 			const ConfigEntry& entry = entry_it.second;
 			fprintf(file, "%s = %s\n", entry_name.c_str(), entry.get_string().c_str());
 		}

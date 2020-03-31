@@ -1,7 +1,6 @@
 #pragma once
 #include "types.h"
 #include <vector>
-using namespace std;
 
 #include "deps/coreio/coreio.h"
 
@@ -145,9 +144,9 @@ struct Track
 
 struct Disc
 {
-	wstring path;
-	vector<Session> sessions;	//info for sessions
-	vector<Track> tracks;		//info for tracks
+	std::wstring path;
+	std::vector<Session> sessions;	//info for sessions
+	std::vector<Track> tracks;		//info for tracks
 	Track LeadOut;				//info for lead out track (can't read from here)
 	u32 EndFAD;					//Last valid disc sector
 	DiscType type;
@@ -240,7 +239,7 @@ struct Disc
 		EndFAD=549300;
 	}
 
-	void Dump(const string& path)
+	void Dump(const std::string& path)
 	{
 		for (u32 i=0;i<tracks.size();i++)
 		{

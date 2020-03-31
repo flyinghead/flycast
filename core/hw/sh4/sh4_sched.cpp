@@ -24,11 +24,11 @@
 u64 sh4_sched_ffb;
 
 
-vector<sched_list> sch_list;	// using list as external inside a macro confuses clang and msc
+std::vector<sched_list> sch_list;	// using list as external inside a macro confuses clang and msc
 
 int sh4_sched_next_id=-1;
 
-u32 sh4_sched_remaining(int id, u32 reference)
+u32 sh4_sched_remaining(size_t id, u32 reference)
 {
 	if (sch_list[id].end != -1)
 		return sch_list[id].end - reference;
@@ -36,7 +36,7 @@ u32 sh4_sched_remaining(int id, u32 reference)
 		return -1;
 }
 
-u32 sh4_sched_remaining(int id)
+u32 sh4_sched_remaining(size_t id)
 {
 	return sh4_sched_remaining(id, sh4_sched_now());
 }
@@ -90,7 +90,7 @@ u64 sh4_sched_now64()
 {
 	return sh4_sched_ffb-Sh4cntx.sh4_sched_next;
 }
-void sh4_sched_request(int id, int cycles)
+void sh4_sched_request(size_t id, int cycles)
 {
 	verify(cycles== -1 || (cycles >= 0 && cycles <= SH4_MAIN_CLOCK));
 
@@ -111,7 +111,7 @@ void sh4_sched_request(int id, int cycles)
 }
 
 /* Returns how much time has passed for this callback */
-static int sh4_sched_elapsed(int id)
+static int sh4_sched_elapsed(size_t id)
 {
 	if (sch_list[id].end!=-1)
 	{
@@ -123,7 +123,7 @@ static int sh4_sched_elapsed(int id)
 		return -1;
 }
 
-static void handle_cb(int id)
+static void handle_cb(size_t id)
 {
 	int remain=sch_list[id].end-sch_list[id].start;
 	int elapsd=sh4_sched_elapsed(id);
@@ -133,7 +133,7 @@ static void handle_cb(int id)
 	int re_sch=sch_list[id].cb(sch_list[id].tag,remain,jitter);
 
 	if (re_sch > 0)
-		sh4_sched_request(id, max(0, re_sch - jitter));
+		sh4_sched_request(id, std::max(0, re_sch - jitter));
 }
 
 void sh4_sched_tick(int cycles)
@@ -148,9 +148,9 @@ void sh4_sched_tick(int cycles)
 		u32 fztime=sh4_sched_now()-cycles;
 		if (sh4_sched_next_id!=-1)
 		{
-			for (int i=0;i<sch_list.size();i++)
+			for (size_t i = 0; i < sch_list.size(); i++)
 			{
-				int remaining = sh4_sched_remaining(i, fztime);
+				u32 remaining = sh4_sched_remaining(i, fztime);
 				verify(remaining >= 0 || remaining == -1);
 				if (remaining >= 0 && remaining <= (u32)cycles)
 					handle_cb(i);

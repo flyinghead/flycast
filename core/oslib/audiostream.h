@@ -28,8 +28,8 @@ typedef void (*audio_backend_init_func_t)();
 typedef u32 (*audio_backend_push_func_t)(const void*, u32, bool);
 typedef void (*audio_backend_term_func_t)();
 typedef struct {
-    string slug;
-    string name;
+    std::string slug;
+    std::string name;
     audio_backend_init_func_t init;
     audio_backend_push_func_t push;
     audio_backend_term_func_t term;

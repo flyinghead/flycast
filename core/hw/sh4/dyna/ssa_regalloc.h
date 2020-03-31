@@ -81,17 +81,17 @@ public:
 		// Flush regs used by vector ops
 		if (op->rs1.is_reg() && op->rs1.count() > 1)
 		{
-			for (int i = 0; i < op->rs1.count(); i++)
+			for (u32 i = 0; i < op->rs1.count(); i++)
 				FlushReg((Sh4RegType)(op->rs1._reg + i), false);
 		}
 		if (op->rs2.is_reg() && op->rs2.count() > 1)
 		{
-			for (int i = 0; i < op->rs2.count(); i++)
+			for (u32 i = 0; i < op->rs2.count(); i++)
 				FlushReg((Sh4RegType)(op->rs2._reg + i), false);
 		}
 		if (op->rs3.is_reg() && op->rs3.count() > 1)
 		{
-			for (int i = 0; i < op->rs3.count(); i++)
+			for (u32 i = 0; i < op->rs3.count(); i++)
 				FlushReg((Sh4RegType)(op->rs3._reg + i), false);
 		}
 		if (op->op != shop_ifb)
@@ -103,7 +103,7 @@ public:
 			// Note that this is incorrect if a reg is both src (scalar) and dest (vec). However such an op doesn't exist.
 			if (op->rd.is_reg() && op->rd.count() > 1)
 			{
-				for (int i = 0; i < op->rd.count(); i++)
+				for (u32 i = 0; i < op->rd.count(); i++)
 				{
 					verify(reg_alloced.count((Sh4RegType)(op->rd._reg + i)) == 0 || !reg_alloced[(Sh4RegType)(op->rd._reg + i)].write_back);
 					FlushReg((Sh4RegType)(op->rd._reg + i), true);
@@ -111,7 +111,7 @@ public:
 			}
 			if (op->rd2.is_reg() && op->rd2.count() > 1)
 			{
-				for (int i = 0; i < op->rd2.count(); i++)
+				for (u32 i = 0; i < op->rd2.count(); i++)
 				{
 					verify(reg_alloced.count((Sh4RegType)(op->rd2._reg + i)) == 0 || !reg_alloced[(Sh4RegType)(op->rd2._reg + i)].write_back);
 					FlushReg((Sh4RegType)(op->rd2._reg + i), true);
@@ -396,7 +396,7 @@ private:
 
 	bool NeedsWriteBack(Sh4RegType reg, u32 version)
 	{
-		for (int i = opnum + 1; i < block->oplist.size(); i++)
+		for (size_t i = opnum + 1; i < block->oplist.size(); i++)
 		{
 			shil_opcode* op = &block->oplist[i];
 			// if a subsequent op needs all or some regs flushed to mem
@@ -491,7 +491,7 @@ private:
 
 			// Find the first use, but ignore vec ops
 			int first_use = -1;
-			for (int i = opnum + (source ? 0 : 1); i < block->oplist.size(); i++)
+			for (size_t i = opnum + (source ? 0 : 1); i < block->oplist.size(); i++)
 			{
 				op = &block->oplist[i];
 				// Vector ops don't use reg alloc
@@ -627,9 +627,9 @@ private:
 #endif
 
 	RuntimeBlockInfo* block = NULL;
-	deque<nreg_t> host_gregs;
-	deque<nregf_t> host_fregs;
-	vector<Sh4RegType> pending_flushes;
+	std::deque<nreg_t> host_gregs;
+	std::deque<nregf_t> host_fregs;
+	std::vector<Sh4RegType> pending_flushes;
 	std::map<Sh4RegType, reg_alloc> reg_alloced;
 	int opnum = 0;
 

@@ -25,7 +25,7 @@
 #include <sstream>
 
 // TODO Move this out of gles.cpp
-u8* loadPNGData(const string& subpath, int &width, int &height);
+u8* loadPNGData(const std::string& subpath, int &width, int &height);
 CustomTexture custom_texture;
 
 void CustomTexture::LoaderThread()
@@ -37,13 +37,13 @@ void CustomTexture::LoaderThread()
 		do {
 			texture = NULL;
 
-			work_queue_mutex.Lock();
+			work_queue_mutex.lock();
 			if (!work_queue.empty())
 			{
 				texture = work_queue.back();
 				work_queue.pop_back();
 			}
-			work_queue_mutex.Unlock();
+			work_queue_mutex.unlock();
 			
 			if (texture != NULL)
 			{
@@ -119,9 +119,9 @@ void CustomTexture::Terminate()
 	if (initialized)
 	{
 		initialized = false;
-		work_queue_mutex.Lock();
+		work_queue_mutex.lock();
 		work_queue.clear();
-		work_queue_mutex.Unlock();
+		work_queue_mutex.unlock();
 		wakeup_thread.Set();
 #ifndef TARGET_NO_THREADS
 		loader_thread.WaitToEnd();
@@ -149,9 +149,9 @@ void CustomTexture::LoadCustomTextureAsync(BaseTextureCacheData *texture_data)
 		return;
 
 	texture_data->custom_load_in_progress++;
-	work_queue_mutex.Lock();
+	work_queue_mutex.lock();
 	work_queue.insert(work_queue.begin(), texture_data);
-	work_queue_mutex.Unlock();
+	work_queue_mutex.unlock();
 	wakeup_thread.Set();
 }
 

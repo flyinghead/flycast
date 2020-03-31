@@ -135,7 +135,7 @@ public:
 			return RenderFramebuffer();
 		}
 
-		ctx->rend_inuse.Lock();
+		ctx->rend_inuse.lock();
 
 		if (KillTex)
 			textureCache.Clear();
@@ -188,7 +188,7 @@ public:
 		osdBuffer->upload(osdVertices.size() * sizeof(OSDVertex), osdVertices.data());
 		const vk::DeviceSize zero = 0;
 		cmdBuffer.bindVertexBuffers(0, 1, &osdBuffer->buffer.get(), &zero);
-		for (int i = 0; i < osdVertices.size(); i += 4)
+		for (size_t i = 0; i < osdVertices.size(); i += 4)
 			cmdBuffer.draw(4, 1, i, 0);
 		if (clear_screen)
 			GetContext()->EndFrame();

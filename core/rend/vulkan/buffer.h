@@ -45,11 +45,11 @@ struct BufferData
 		verify((m_propertyFlags & vk::MemoryPropertyFlagBits::eHostCoherent) && (m_propertyFlags & vk::MemoryPropertyFlagBits::eHostVisible));
 
 		u32 totalSize = 0;
-		for (int i = 0; i < count; i++)
+		for (size_t i = 0; i < count; i++)
 			totalSize += sizes[i];
 		verify(bufOffset + totalSize <= bufferSize);
 		void* dataPtr = (u8 *)allocation.MapMemory() + bufOffset;
-		for (int i = 0; i < count; i++)
+		for (size_t i = 0; i < count; i++)
 		{
 			if (data[i] != nullptr)
 				memcpy(dataPtr, data[i], sizes[i]);

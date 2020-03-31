@@ -194,8 +194,9 @@ extern struct ShaderUniforms_t
 
 } ShaderUniforms;
 
-struct TextureCacheData : BaseTextureCacheData
+class TextureCacheData : public BaseTextureCacheData
 {
+public:
 	GLuint texID;   //gl texture
 	virtual std::string GetId() override { return std::to_string(texID); }
 	virtual void UploadToGPU(int width, int height, u8 *temp_tex_buffer, bool mipmapped, bool mipmapsIncluded = false) override;

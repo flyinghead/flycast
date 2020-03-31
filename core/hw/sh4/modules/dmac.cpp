@@ -196,7 +196,7 @@ void WriteCHCR(u32 addr, u32 data)
 			u32 len = DMAC_DMATCR(ch) * 32;
 
             DEBUG_LOG(SH4, "DMAC: Manual DMA ch:%d rs:%d src: %08X dst: %08X len: %08X SM: %d, DM: %d", ch, DMAC_CHCR(ch).RS, DMAC_SAR(ch), DMAC_DAR(ch), DMAC_DMATCR(ch), DMAC_CHCR(ch).SM, DMAC_CHCR(ch).DM);
-            for (int ofs = 0; ofs < len; ofs += 4)
+            for (u32 ofs = 0; ofs < len; ofs += 4)
             {
                 u32 data = ReadMem32_nommu(DMAC_SAR(ch) + ofs);
                 WriteMem32_nommu(DMAC_DAR(ch) + ofs, data);

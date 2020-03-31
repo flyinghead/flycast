@@ -4,6 +4,7 @@
 #include <windowsx.h>
 
 #include "hw/mem/_vmem.h"
+#include "hw/sh4/sh4_if.h"
 
 // Implementation of the vmem related function for Windows platforms.
 // For now this probably does some assumptions on the CPU/platform.

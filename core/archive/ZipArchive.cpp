@@ -40,7 +40,7 @@ ArchiveFile* ZipArchive::OpenFile(const char* name)
 	return new ZipArchiveFile(zip_file);
 }
 
-struct zip_file *zip_fopen_by_crc(struct zip *za, int crc, int flags)
+struct zip_file *zip_fopen_by_crc(struct zip *za, u32 crc, int flags)
 {
     int i, n;
     struct zip_stat stat;

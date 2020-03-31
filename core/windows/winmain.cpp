@@ -198,7 +198,7 @@ void SetupPath()
 {
 	char fname[512];
 	GetModuleFileName(0,fname,512);
-	string fn=string(fname);
+	std::string fn = std::string(fname);
 	fn=fn.substr(0,fn.find_last_of('\\'));
 	set_user_config_dir(fn);
 	set_user_data_dir(fn);

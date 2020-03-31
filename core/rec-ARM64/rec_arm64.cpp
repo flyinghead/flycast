@@ -2181,7 +2181,7 @@ private:
 		CanonicalParamType type;
 		shil_param* prm;
 	};
-	vector<CC_PS> CC_pars;
+	std::vector<CC_PS> CC_pars;
 	std::vector<const WRegister*> call_regs;
 	std::vector<const XRegister*> call_regs64;
 	std::vector<const VRegister*> call_fregs;

@@ -2159,16 +2159,16 @@ private:
 		}
 	}
 
-	vector<Xbyak::Reg32> call_regs;
-	vector<Xbyak::Reg64> call_regs64;
-	vector<Xbyak::Xmm> call_regsxmm;
+	std::vector<Xbyak::Reg32> call_regs;
+	std::vector<Xbyak::Reg64> call_regs64;
+	std::vector<Xbyak::Xmm> call_regsxmm;
 
 	struct CC_PS
 	{
 		CanonicalParamType type;
 		const shil_param* prm;
 	};
-	vector<CC_PS> CC_pars;
+	std::vector<CC_PS> CC_pars;
 
 	X64RegAlloc regalloc;
 	Xbyak::util::Cpu cpu;
