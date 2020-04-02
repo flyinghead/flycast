@@ -386,7 +386,8 @@ void LoadSpecialSettings()
 			settings.input.JammaSetup = JVS::WorldKicksPCB;
 		}
 		else if (!strcmp("THE TYPING OF THE DEAD", naomi_game_id)
-				|| !strcmp(" LUPIN THE THIRD  -THE TYPING-", naomi_game_id))
+				|| !strcmp(" LUPIN THE THIRD  -THE TYPING-", naomi_game_id)
+				|| !strcmp("------La Keyboardxyu------", naomi_game_id))
 		{
 			INFO_LOG(BOOT, "Enabling keyboard for game %s", naomi_game_id);
 			settings.input.JammaSetup = JVS::Keyboard;

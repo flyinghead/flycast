@@ -167,7 +167,8 @@ void cThread::Start() {
 	ResumeThread(hThread);
 }
 void cThread::WaitToEnd() {
-	WaitForSingleObject(hThread,INFINITE);
+	if (GetCurrentThreadId() != GetThreadId(hThread))
+		WaitForSingleObject(hThread, INFINITE);
 	CloseHandle(hThread);
 	hThread = NULL;
 }
