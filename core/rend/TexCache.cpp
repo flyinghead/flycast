@@ -8,6 +8,7 @@
 
 #include <algorithm>
 #include <mutex>
+#include <thread>
 #include <png.h>
 #include <xxhash.h>
 
@@ -370,14 +371,20 @@ static struct xbrz::ScalerCfg xbrz_cfg;
 
 void UpscalexBRZ(int factor, u32* source, u32* dest, int width, int height, bool has_alpha)
 {
-#ifndef TARGET_NO_OPENMP
-	parallelize([=](int start, int end) {
-		xbrz::scale(factor, source, dest, width, height, has_alpha ? xbrz::ColorFormat::ARGB : xbrz::ColorFormat::RGB,
-				xbrz_cfg, start, end);
-	}, 0, height);
-#else
-	xbrz::scale(factor, source, dest, width, height, has_alpha ? xbrz::ColorFormat::ARGB : xbrz::ColorFormat::RGB, xbrz_cfg);
-#endif
+	std::vector<std::thread> xbrz_threads;
+
+	const u32 max_dedicated_threads = std::min(std::thread::hardware_concurrency(), settings.pvr.MaxThreads);
+	const u32 rows_per_thread = ((height - 1) / max_dedicated_threads) + 1;
+
+	for (u32 y = 0; y < height; y += rows_per_thread) {
+		xbrz_threads.emplace_back(xbrz::scale, factor, source, dest, width, height,
+								  has_alpha ? xbrz::ColorFormat::ARGB : xbrz::ColorFormat::RGB, xbrz_cfg, y,
+								  std::min(y + rows_per_thread, (u32) height));
+	}
+
+	for (auto &xbrz_thread : xbrz_threads) {
+		xbrz_thread.join();
+	}
 }
 
 struct PvrTexInfo
