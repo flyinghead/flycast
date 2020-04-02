@@ -1,6 +1,9 @@
 #pragma once
 #include "types.h"
 
+#include <condition_variable>
+#include <mutex>
+
 #ifndef _WIN32
 #include <pthread.h>
 #else
@@ -40,19 +43,12 @@ public :
 };
 #endif
 
-
-//Wait Events
-typedef void* EVENTHANDLE;
 class cResetEvent
 {
 private:
-#ifdef _WIN32
-	EVENTHANDLE hEvent;
-#else
-	pthread_mutex_t mutx;
-	pthread_cond_t cond;
+	std::mutex mutx;
+	std::condition_variable cond;
 	bool state;
-#endif
 
 public :
 	cResetEvent();
