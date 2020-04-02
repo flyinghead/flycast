@@ -18,6 +18,7 @@
 #include "StringUtil.h"
 #include "cfg/cfg.h"
 #include "oslib/oslib.h"
+#include "stdclass.h"
 
 constexpr size_t MAX_MSGLEN = 1024;
 
@@ -114,7 +115,6 @@ LogManager::LogManager()
 	m_log[LogTypes::SAVESTATE] = {"SAVESTATE", "Save States"};
 	m_log[LogTypes::SH4] = {"SH4", "SH4 Modules"};
 
-	RegisterListener(LogListener::FILE_LISTENER, new FileLogListener("flycast.log"));
 	RegisterListener(LogListener::CONSOLE_LISTENER, new ConsoleListener());
 
 	// Set up log listeners
@@ -127,7 +127,16 @@ LogManager::LogManager()
 		verbosity = MAX_LOGLEVEL;
 
 	SetLogLevel(static_cast<LogTypes::LOG_LEVELS>(verbosity));
-	EnableListener(LogListener::FILE_LISTENER, cfgLoadBool("log", "LogToFile", false));
+	if (cfgLoadBool("log", "LogToFile", false))
+	{
+#ifdef __ANDROID__
+		std::string logPath = get_writable_data_path("/flycast.log");
+#else
+		std::string logPath = "flycast.log";
+#endif
+		RegisterListener(LogListener::FILE_LISTENER, new FileLogListener(logPath));
+		EnableListener(LogListener::FILE_LISTENER, true);
+	}
 	EnableListener(LogListener::CONSOLE_LISTENER, cfgLoadBool("log", "LogToConsole", true));
 	//  EnableListener(LogListener::LOG_WINDOW_LISTENER, Config::Get(LOGGER_WRITE_TO_WINDOW));
 

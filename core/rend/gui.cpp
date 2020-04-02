@@ -39,6 +39,7 @@
 #include "version.h"
 #include "oslib/audiostream.h"
 #include "imgread/common.h"
+#include "log/LogManager.h"
 
 extern void dc_loadstate();
 extern void dc_savestate();
@@ -1295,6 +1296,18 @@ static void gui_display_settings()
 				ImGui::Checkbox("Dump Textures", &settings.rend.DumpTextures);
 	            ImGui::SameLine();
 	            ShowHelpMarker("Dump all textures into data/texdump/<game id>");
+
+	            bool logToFile = cfgLoadBool("log", "LogToFile", false);
+	            bool newLogToFile = logToFile;
+				ImGui::Checkbox("Log to File", &newLogToFile);
+				if (logToFile != newLogToFile)
+				{
+					cfgSaveBool("log", "LogToFile", newLogToFile);
+					LogManager::Shutdown();
+					LogManager::Init();
+				}
+	            ImGui::SameLine();
+	            ShowHelpMarker("Log debug information to flycast.log");
 		    }
 			ImGui::PopStyleVar();
 			ImGui::EndTabItem();
