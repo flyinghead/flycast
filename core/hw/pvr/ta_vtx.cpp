@@ -35,6 +35,7 @@ static u32 tileclip_val = 0;
 static u8 f32_su8_tbl[65536];
 #define float_to_satu8(val) f32_su8_tbl[((u32&)val)>>16]
 
+#ifndef NDEBUG
 /*
 	This uses just 1k of lookup, but does more calcs
 	The full 64k table will be much faster -- as only a small sub-part of it will be used anyway (the same 1k)
@@ -49,6 +50,7 @@ static u8 float_to_satu8_2(float val)
 	
 	return f32_su8_tbl[0x3b80+vo] | (~m2>>24);
 }
+#endif
 
 #define saturate01(x) (((s32&)x)<0?0:(s32&)x>0x3f800000?1:x)
 static u8 float_to_satu8_math(float val)
@@ -856,8 +858,6 @@ public:
 	}
 
 	//Poly Strip handling
-	//We unite Strips together by duplicating the [last,first].On odd sized strips
-	//a second [first] vert is needed to make sure Culling works fine :)
 	__forceinline
 		static void EndPolyStrip()
 	{
@@ -1239,8 +1239,6 @@ public:
 	#define append_sprite(indx) \
 		vert_packed_color_(cv[indx].col,SFaceBaseColor)\
 		vert_packed_color_(cv[indx].spc,SFaceOffsColor)
-		//cv[indx].base_int=1;\
-		//cv[indx].offset_int=1;
 
 	#define sprite_uv(indx,u_name,v_name) \
 		cv[indx].u = f16(sv->u_name);\
@@ -1285,7 +1283,7 @@ public:
 			AB_x=B.x-A.x,AB_y=B.y-A.y,AB_z=B.z-A.z,
 			AP_x=P.x-A.x,AP_y=P.y-A.y;
 
-		float P_y=P.y,P_x=P.x,P_z=P.z,A_x=A.x,A_y=A.y,A_z=A.z;
+		float P_y = P.y, P_x = P.x, A_x = A.x, A_y = A.y, A_z = A.z;
 
 		float AB_v=B.v-A.v,AB_u=B.u-A.u,
 			AC_v=C.v-A.v,AC_u=C.u-A.u;
@@ -1477,7 +1475,7 @@ static void make_index(const List<PolyParam> *polys, int first, int end, bool me
 			first_index = ctx->idx.used();
 		}
 		int last_good_vtx = -1;
-		for (int i = 0; i < poly->count; i++)
+		for (u32 i = 0; i < poly->count; i++)
 		{
 			const Vertex& vtx = vertices[poly->first + i];
 			if (is_vertex_inf(vtx))
@@ -1541,7 +1539,7 @@ static void fix_texture_bleeding(const List<PolyParam> *list)
 		const u32 first = idx_base[pp->first];
 		const u32 last = idx_base[pp->first + pp->count - 1];
 		bool need_fixing = true;
-		float z;
+		float z = 0.f;
 		for (u32 idx = first; idx <= last && need_fixing; idx++)
 		{
 			Vertex& vtx = vtx_base[idx];
@@ -1578,18 +1576,25 @@ bool ta_parse_vdrc(TA_context* ctx)
 	verify(vd_ctx == 0);
 	vd_ctx = ctx;
 	vd_rc = vd_ctx->rend;
-	bool empty_context = true;
 	
 	ta_parse_cnt++;
 	if (ctx->rend.isRTT || 0 == (ta_parse_cnt %  ( settings.pvr.ta_skip + 1)))
 	{
 		TAFifo0.vdec_init();
 		
+		bool empty_context = true;
 		int op_poly_count = 0;
 		int pt_poly_count = 0;
 		int tr_poly_count = 0;
 
-		for (int pass = 0; pass <= ctx->tad.render_pass_count; pass++)
+		PolyParam *bgpp = vd_rc.global_param_op.head();
+		if (bgpp->pcw.Texture)
+		{
+			bgpp->texid = renderer->GetTexture(bgpp->tsp, bgpp->tcw);
+			empty_context = false;
+		}
+
+		for (u32 pass = 0; pass <= ctx->tad.render_pass_count; pass++)
 		{
 			ctx->MarkRend(pass);
 			vd_rc.proc_start = ctx->rend.proc_start;
@@ -1607,9 +1612,9 @@ bool ta_parse_vdrc(TA_context* ctx)
 			if (ctx->rend.Overrun)
 				break;
 
-			bool empty_pass = vd_rc.global_param_op.used() == (pass == 0 ? 1 : vd_rc.render_passes.LastPtr()->op_count)
-					&& vd_rc.global_param_pt.used() == (pass == 0 ? 0 : vd_rc.render_passes.LastPtr()->pt_count)
-					&& vd_rc.global_param_tr.used() == (pass == 0 ? 0 : vd_rc.render_passes.LastPtr()->tr_count);
+			bool empty_pass = vd_rc.global_param_op.used() == (pass == 0 ? 1 : (int)vd_rc.render_passes.LastPtr()->op_count)
+					&& vd_rc.global_param_pt.used() == (pass == 0 ? 0 : (int)vd_rc.render_passes.LastPtr()->pt_count)
+					&& vd_rc.global_param_tr.used() == (pass == 0 ? 0 : (int)vd_rc.render_passes.LastPtr()->tr_count);
 			empty_context = empty_context && empty_pass;
 
 			if (pass == 0 || !empty_pass)
@@ -1663,12 +1668,7 @@ static void decode_pvr_vertex(u32 base,u32 ptr,Vertex* cv)
 	//TSP
 	//TCW
 	ISP_TSP isp;
-	TSP tsp;
-	TCW tcw;
-
 	isp.full=vri(base);
-	tsp.full=vri(base+4);
-	tcw.full=vri(base+8);
 
 	//XYZ
 	//UV
@@ -1727,6 +1727,7 @@ void vtxdec_init()
 		f32_su8_tbl[i]=float_to_satu8_math((f32&)fr);
 	}
 
+#ifndef NDEBUG
 	for (u32 i=0;i<65536;i++)
 	{
 		u32 fr=i<<16;
@@ -1734,8 +1735,8 @@ void vtxdec_init()
 
 		verify(float_to_satu8_math(ff)==float_to_satu8_2(ff));
 		verify(float_to_satu8_math(ff)==float_to_satu8(ff));
-
 	}
+#endif
 }
 
 
@@ -1792,7 +1793,7 @@ void FillBGP(TA_context* ctx)
 	bgpp->pcw.UV_16bit=bgpp->isp.UV_16b;
 	bgpp->pcw.Gouraud=bgpp->isp.Gouraud;
 	bgpp->pcw.Offset=bgpp->isp.Offset;
-	bgpp->pcw.Texture = bgpp->isp.Texture = 0;
+	bgpp->pcw.Texture = bgpp->isp.Texture;
 	bgpp->pcw.Shadow = ISP_BACKGND_T.shadow;
 
 	float scale_x= (SCALER_CTL.hscale) ? 2.f:1.f;	//if AA hack the hacked pos value hacks
@@ -1802,25 +1803,43 @@ void FillBGP(TA_context* ctx)
 		vertex_ptr+=strip_vs;
 	}
 
-	float ZV=0;
 	f32 bg_depth = ISP_BACKGND_D.f;
 	reinterpret_cast<u32&>(bg_depth) &= 0xFFFFFFF0;	// ISP_BACKGND_D has only 28 bits
 
-	cv[0].x=-2000;
-	cv[0].y=-2000;
-	cv[0].z=bg_depth;
+	f32 min_u = std::min(cv[0].u, std::min(cv[1].u, cv[2].u));
+	f32 max_u = std::max(cv[0].u, std::max(cv[1].u, cv[2].u));
+	if (max_u == 0.f)
+		max_u = 1.f;
+	const f32 diff_u = (max_u - min_u) * 0.4f;
+	max_u += diff_u;
+	min_u -= diff_u;
+	const f32 min_v = std::min(cv[0].v, std::min(cv[1].v, cv[2].v));
+	f32 max_v = std::max(cv[0].v, std::max(cv[1].v, cv[2].v));
+	if (max_v == 0.f)
+		max_v = 1.f;
+	cv[0].x = -256.f * scale_x;
+	cv[0].y = 0.f;
+	cv[0].z = bg_depth;
+	cv[0].u = min_u;
+	cv[0].v = min_v;
 
-	cv[1].x=640*scale_x + 2000;
-	cv[1].y=0;
-	cv[1].z=bg_depth;
+	cv[1].x = 896.f * scale_x;
+	cv[1].y = 0.f;
+	cv[1].z = bg_depth;
+	cv[1].u = max_u;
+	cv[1].v = min_v;
 
-	cv[2].x=-2000;
-	cv[2].y=480+2000;
-	cv[2].z=bg_depth;
+	cv[2].x = -256.f * scale_x;
+	cv[2].y = 480.f;
+	cv[2].z = bg_depth;
+	cv[2].u = min_u;
+	cv[2].v = max_v;
 
-	cv[3]=cv[2];
-	cv[3].x=640*scale_x+2000;
-	cv[3].y=480+2000;
+	cv[3] = cv[2];
+	cv[3].x = 896.f * scale_x;
+	cv[3].y = 480.f;
+	cv[3].u = max_u;
+	cv[3].v = max_v;
 }
 
 static RegionArrayTile getRegionTile(int pass_number)
