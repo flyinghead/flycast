@@ -330,10 +330,10 @@ static FILE *get_record_input(bool write)
 		return NULL;
 	if (!write && !cfgLoadBool("record", "replay_input", false))
 		return NULL;
-	string game_dir = settings.imgread.ImagePath;
+	std::string game_dir = settings.imgread.ImagePath;
 	size_t slash = game_dir.find_last_of("/");
 	size_t dot = game_dir.find_last_of(".");
-	string input_file = "scripts/" + game_dir.substr(slash + 1, dot - slash) + "input";
+	std::string input_file = "scripts/" + game_dir.substr(slash + 1, dot - slash) + "input";
 	return fopen(input_file.c_str(), write ? "w" : "r");
 }
 #endif

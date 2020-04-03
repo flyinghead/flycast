@@ -234,7 +234,8 @@ void LoadSpecialSettings()
 			|| !strncmp("T40209N", prod_id, 7)
 			// StarLancer (EU) (for online support)
 			|| !strncmp("T17723D 05", prod_id, 10)
-			)
+			// Heroes of might and magic III
+			|| !strncmp("T0000M", prod_id, 6))
 		{
 			INFO_LOG(BOOT, "Disabling 32-bit virtual memory for game %s", prod_id);
 			settings.dynarec.disable_vmem32 = true;

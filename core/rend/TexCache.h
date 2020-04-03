@@ -120,7 +120,7 @@ public:
 
 void palette_update();
 
-#define clamp(minv, maxv, x) (x < minv ? minv : x > maxv ? maxv : x)
+#define clamp(minv, maxv, x) ((x) < (minv) ? (minv) : (x) > (maxv) ? (maxv) : (x))
 
 // Unpack to 16-bit word
 

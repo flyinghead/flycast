@@ -526,7 +526,7 @@ void _vmem_init_mappings()
 				{0x08000000, 0x0C000000,                               0,         0, false},  // Area 2
 				{0x0C000000, 0x10000000,            MAP_RAM_START_OFFSET,  RAM_SIZE,  true},  // Area 3 (main RAM + 3 mirrors)
 				{0x10000000, 0x20000000,                               0,         0, false},  // Area 4-7 (unused)
-				// This is outside of the 512MB addr space
+				// This is outside of the 512MB addr space. We map 8MB in all cases to help some games read past the end of aica ram
 				{0x20000000, 0x20800000,           MAP_ARAM_START_OFFSET, ARAM_SIZE,  true},  // writable aica ram
 			};
 			vmem_platform_create_mappings(&mem_mappings[0], ARRAY_SIZE(mem_mappings));
@@ -608,6 +608,7 @@ void _vmem_release() {
 	if (virt_ram_base)
 		vmem_platform_destroy();
 	else {
+		_vmem_unprotect_vram(0, VRAM_SIZE);
 		freedefptr(p_sh4rcb);
 		freedefptr(vram.data);
 		freedefptr(aica_ram.data);
@@ -633,100 +634,125 @@ void _vmem_enable_mmu(bool enable)
 void _vmem_protect_vram(u32 addr, u32 size)
 {
 	addr &= VRAM_MASK;
-	if (!mmu_enabled() || !_nvmem_4gb_space())
+	if (_nvmem_enabled())
 	{
-		mem_region_lock(virt_ram_base + 0x04000000 + addr, size);	// P0
-		//mem_region_lock(virt_ram_base + 0x06000000 + addr, size);	// P0 - mirror
-		if (VRAM_SIZE == 0x800000)
+		if (!mmu_enabled() || !_nvmem_4gb_space())
 		{
-			// wraps when only 8MB VRAM
-			mem_region_lock(virt_ram_base + 0x04000000 + addr + VRAM_SIZE, size);	// P0 wrap
-			//mem_region_lock(virt_ram_base + 0x06000000 + addr + VRAM_SIZE, size);	// P0 mirror wrap
+			mem_region_lock(virt_ram_base + 0x04000000 + addr, size);	// P0
+			//mem_region_lock(virt_ram_base + 0x06000000 + addr, size);	// P0 - mirror
+			if (VRAM_SIZE == 0x800000)
+			{
+				// wraps when only 8MB VRAM
+				mem_region_lock(virt_ram_base + 0x04000000 + addr + VRAM_SIZE, size);	// P0 wrap
+				//mem_region_lock(virt_ram_base + 0x06000000 + addr + VRAM_SIZE, size);	// P0 mirror wrap
+			}
+		}
+		if (_nvmem_4gb_space())
+		{
+			mem_region_lock(virt_ram_base + 0x84000000 + addr, size);	// P1
+			//mem_region_lock(virt_ram_base + 0x86000000 + addr, size);	// P1 - mirror
+			mem_region_lock(virt_ram_base + 0xA4000000 + addr, size);	// P2
+			//mem_region_lock(virt_ram_base + 0xA6000000 + addr, size);	// P2 - mirror
+			// We should also lock P3 and its mirrors, but it doesn't seem to be used...
+			//mem_region_lock(virt_ram_base + 0xC4000000 + addr, size);	// P3
+			//mem_region_lock(virt_ram_base + 0xC6000000 + addr, size);	// P3 - mirror
+			if (VRAM_SIZE == 0x800000)
+			{
+				mem_region_lock(virt_ram_base + 0x84000000 + addr + VRAM_SIZE, size);	// P1 wrap
+				//mem_region_lock(virt_ram_base + 0x86000000 + addr + VRAM_SIZE, size);	// P1 - mirror wrap
+				mem_region_lock(virt_ram_base + 0xA4000000 + addr + VRAM_SIZE, size);	// P2 wrap
+				//mem_region_lock(virt_ram_base + 0xA6000000 + addr + VRAM_SIZE, size);	// P2 - mirror wrap
+				//mem_region_lock(virt_ram_base + 0xC4000000 + addr + VRAM_SIZE, size);	// P3 wrap
+				//mem_region_lock(virt_ram_base + 0xC6000000 + addr + VRAM_SIZE, size);	// P3 - mirror wrap
+			}
+			vmem32_protect_vram(addr, size);
 		}
 	}
-	if (_nvmem_4gb_space())
+	else
 	{
-		mem_region_lock(virt_ram_base + 0x84000000 + addr, size);	// P1
-		//mem_region_lock(virt_ram_base + 0x86000000 + addr, size);	// P1 - mirror
-		mem_region_lock(virt_ram_base + 0xA4000000 + addr, size);	// P2
-		//mem_region_lock(virt_ram_base + 0xA6000000 + addr, size);	// P2 - mirror
-		// We should also lock P3 and its mirrors, but it doesn't seem to be used...
-		//mem_region_lock(virt_ram_base + 0xC4000000 + addr, size);	// P3
-		//mem_region_lock(virt_ram_base + 0xC6000000 + addr, size);	// P3 - mirror
-		if (VRAM_SIZE == 0x800000)
-		{
-			mem_region_lock(virt_ram_base + 0x84000000 + addr + VRAM_SIZE, size);	// P1 wrap
-			//mem_region_lock(virt_ram_base + 0x86000000 + addr + VRAM_SIZE, size);	// P1 - mirror wrap
-			mem_region_lock(virt_ram_base + 0xA4000000 + addr + VRAM_SIZE, size);	// P2 wrap
-			//mem_region_lock(virt_ram_base + 0xA6000000 + addr + VRAM_SIZE, size);	// P2 - mirror wrap
-			//mem_region_lock(virt_ram_base + 0xC4000000 + addr + VRAM_SIZE, size);	// P3 wrap
-			//mem_region_lock(virt_ram_base + 0xC6000000 + addr + VRAM_SIZE, size);	// P3 - mirror wrap
-		}
-		vmem32_protect_vram(addr, size);
+		mem_region_lock(&vram[addr], size);
 	}
 }
 
 void _vmem_unprotect_vram(u32 addr, u32 size)
 {
 	addr &= VRAM_MASK;
-	if (!mmu_enabled() || !_nvmem_4gb_space())
+	if (_nvmem_enabled())
 	{
-		mem_region_unlock(virt_ram_base + 0x04000000 + addr, size);		// P0
-		//mem_region_unlock(virt_ram_base + 0x06000000 + addr, size);	// P0 - mirror
-		if (VRAM_SIZE == 0x800000)
+		if (!mmu_enabled() || !_nvmem_4gb_space())
 		{
-			// wraps when only 8MB VRAM
-			mem_region_unlock(virt_ram_base + 0x04000000 + addr + VRAM_SIZE, size);		// P0 wrap
-			//mem_region_unlock(virt_ram_base + 0x06000000 + addr + VRAM_SIZE, size);	// P0 mirror wrap
+			mem_region_unlock(virt_ram_base + 0x04000000 + addr, size);		// P0
+			//mem_region_unlock(virt_ram_base + 0x06000000 + addr, size);	// P0 - mirror
+			if (VRAM_SIZE == 0x800000)
+			{
+				// wraps when only 8MB VRAM
+				mem_region_unlock(virt_ram_base + 0x04000000 + addr + VRAM_SIZE, size);		// P0 wrap
+				//mem_region_unlock(virt_ram_base + 0x06000000 + addr + VRAM_SIZE, size);	// P0 mirror wrap
+			}
+		}
+		if (_nvmem_4gb_space())
+		{
+			mem_region_unlock(virt_ram_base + 0x84000000 + addr, size);		// P1
+			//mem_region_unlock(virt_ram_base + 0x86000000 + addr, size);		// P1 - mirror
+			mem_region_unlock(virt_ram_base + 0xA4000000 + addr, size);		// P2
+			//mem_region_unlock(virt_ram_base + 0xA6000000 + addr, size);		// P2 - mirror
+			// We should also lock P3 and its mirrors, but it doesn't seem to be used...
+			//mem_region_unlock(virt_ram_base + 0xC4000000 + addr, size);	// P3
+			//mem_region_unlock(virt_ram_base + 0xC6000000 + addr, size);	// P3 - mirror
+			if (VRAM_SIZE == 0x800000)
+			{
+				mem_region_unlock(virt_ram_base + 0x84000000 + addr + VRAM_SIZE, size);		// P1 wrap
+				//mem_region_unlock(virt_ram_base + 0x86000000 + addr + VRAM_SIZE, size);		// P1 - mirror wrap
+				mem_region_unlock(virt_ram_base + 0xA4000000 + addr + VRAM_SIZE, size);		// P2 wrap
+				//mem_region_unlock(virt_ram_base + 0xA6000000 + addr + VRAM_SIZE, size);		// P2 - mirror wrap
+				//mem_region_unlock(virt_ram_base + 0xC4000000 + addr + VRAM_SIZE, size);	// P3 wrap
+				//mem_region_unlock(virt_ram_base + 0xC6000000 + addr + VRAM_SIZE, size);	// P3 - mirror wrap
+			}
 		}
 	}
-	if (_nvmem_4gb_space())
+	else
 	{
-		mem_region_unlock(virt_ram_base + 0x84000000 + addr, size);		// P1
-		//mem_region_unlock(virt_ram_base + 0x86000000 + addr, size);		// P1 - mirror
-		mem_region_unlock(virt_ram_base + 0xA4000000 + addr, size);		// P2
-		//mem_region_unlock(virt_ram_base + 0xA6000000 + addr, size);		// P2 - mirror
-		// We should also lock P3 and its mirrors, but it doesn't seem to be used...
-		//mem_region_unlock(virt_ram_base + 0xC4000000 + addr, size);	// P3
-		//mem_region_unlock(virt_ram_base + 0xC6000000 + addr, size);	// P3 - mirror
-		if (VRAM_SIZE == 0x800000)
-		{
-			mem_region_unlock(virt_ram_base + 0x84000000 + addr + VRAM_SIZE, size);		// P1 wrap
-			//mem_region_unlock(virt_ram_base + 0x86000000 + addr + VRAM_SIZE, size);		// P1 - mirror wrap
-			mem_region_unlock(virt_ram_base + 0xA4000000 + addr + VRAM_SIZE, size);		// P2 wrap
-			//mem_region_unlock(virt_ram_base + 0xA6000000 + addr + VRAM_SIZE, size);		// P2 - mirror wrap
-			//mem_region_unlock(virt_ram_base + 0xC4000000 + addr + VRAM_SIZE, size);	// P3 wrap
-			//mem_region_unlock(virt_ram_base + 0xC6000000 + addr + VRAM_SIZE, size);	// P3 - mirror wrap
-		}
+		mem_region_unlock(&vram[addr], size);
 	}
 }
 
 u32 _vmem_get_vram_offset(void *addr)
 {
-	ptrdiff_t offset = (u8*)addr - virt_ram_base;
-	if (_nvmem_4gb_space())
+	if (_nvmem_enabled())
 	{
-		if (mmu_enabled())
+		ptrdiff_t offset = (u8*)addr - virt_ram_base;
+		if (_nvmem_4gb_space())
 		{
-			// Only kernel mirrors
-			if (offset < 0x80000000 || offset >= 0xE0000000)
-				return -1;
+			if (mmu_enabled())
+			{
+				// Only kernel mirrors
+				if (offset < 0x80000000 || offset >= 0xE0000000)
+					return -1;
+			}
+			else
+			{
+				if (offset < 0 || offset >= 0xE0000000)
+					return -1;
+			}
+			offset &= 0x1FFFFFFF;
 		}
 		else
 		{
-			if (offset < 0 || offset >= 0xE0000000)
+			if (offset < 0 || offset >= 0x20000000)
 				return -1;
 		}
-		offset &= 0x1FFFFFFF;
+		if ((offset >> 24) != 4)
+			return -1;
+		verify((((u8*)addr - virt_ram_base) >> 29) == 0 || (((u8*)addr - virt_ram_base) >> 29) == 4  || (((u8*)addr - virt_ram_base) >> 29) == 5);	// others areas aren't mapped atm
+
+		return offset & VRAM_MASK;
 	}
 	else
 	{
-		if (offset < 0 || offset >= 0x20000000)
+		ptrdiff_t offset = (u8*)addr - &vram[0];
+		if (offset < 0 || offset >= VRAM_SIZE)
 			return -1;
-	}
-	if ((offset >> 24) != 4)
-		return -1;
-	verify((((u8*)addr - virt_ram_base) >> 29) == 0 || (((u8*)addr - virt_ram_base) >> 29) == 4  || (((u8*)addr - virt_ram_base) >> 29) == 5);	// others areas aren't mapped atm
 
-	return offset & VRAM_MASK;
+		return (u32)offset;
+	}
 }

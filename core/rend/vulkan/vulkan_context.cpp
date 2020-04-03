@@ -28,6 +28,7 @@
 #endif
 #include "compiler.h"
 #include "texture.h"
+#include "utils.h"
 
 VulkanContext *VulkanContext::contextInstance;
 
@@ -128,14 +129,12 @@ bool VulkanContext::InitInstance(const char** extensions, uint32_t extensions_co
 	try
 	{
 		bool vulkan11 = false;
-#ifndef __ANDROID__
 		if (::vkEnumerateInstanceVersion != nullptr)
 		{
 			u32 apiVersion;
 			if (vk::enumerateInstanceVersion(&apiVersion) == vk::Result::eSuccess)
 				vulkan11 = VK_VERSION_MINOR(apiVersion) == 1;
 		}
-#endif
 		vk::ApplicationInfo applicationInfo("Flycast", 1, "Flycast", 1, vulkan11 ? VK_API_VERSION_1_1 : VK_API_VERSION_1_0);
 		std::vector<const char *> vext;
 		for (uint32_t i = 0; i < extensions_count; i++)
@@ -195,7 +194,7 @@ bool VulkanContext::InitInstance(const char** extensions, uint32_t extensions_co
 			physicalDevice = instance->enumeratePhysicalDevices().front();
 
 		const vk::PhysicalDeviceProperties *properties;
-		if (vulkan11)
+		if (vulkan11 && ::vkGetPhysicalDeviceProperties2 != nullptr)
 		{
 			static vk::PhysicalDeviceProperties2 properties2;
 			vk::PhysicalDeviceMaintenance3Properties properties3;
@@ -606,7 +605,7 @@ void VulkanContext::CreateSwapChain()
 		    commandBuffers.push_back(std::move(device->allocateCommandBuffersUnique(vk::CommandBufferAllocateInfo(*commandPools.back(), vk::CommandBufferLevel::ePrimary, 1)).front()));
 		}
 
-	    vk::Format depthFormat = FindDepthFormat();
+	    FindDepthFormat();
 
 	    // Render pass
 	    vk::AttachmentDescription attachmentDescription = vk::AttachmentDescription(vk::AttachmentDescriptionFlags(), colorFormat, vk::SampleCountFlagBits::e1,
