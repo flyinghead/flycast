@@ -635,7 +635,6 @@ template void texture_VQ<convYUV_TW<pp_8888>, u32>(PixelBuffer<u32>* pb,u8* p_in
 #define texPAL8_VQ32 texture_VQ<convPAL8_TW<pp_8888, u32>, u32>
 
 bool VramLockedWriteOffset(size_t offset);
-void DePosterize(u32* source, u32* dest, int width, int height);
 void UpscalexBRZ(int factor, u32* source, u32* dest, int width, int height, bool has_alpha);
 
 struct PvrTexInfo;

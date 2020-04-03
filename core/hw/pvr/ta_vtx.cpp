@@ -9,6 +9,7 @@
 #include "pvr_mem.h"
 #include "Renderer_if.h"
 
+#include <algorithm>
 #include <cmath>
 
 u32 ta_type_lut[256];

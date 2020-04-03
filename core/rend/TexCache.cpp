@@ -265,71 +265,6 @@ void libCore_vramlock_Unlock_block_wb(vram_block* block)
 	free(block);
 }
 
-//
-// deposterization: smoothes posterized gradients from low-color-depth (e.g. 444, 565, compressed) sources
-// Shamelessly stolen from ppsspp
-// Copyright (c) 2012- PPSSPP Project.
-//
-#define BLOCK_SIZE 32
-
-static void deposterizeH(u32* data, u32* out, int w, int l, int u) {
-	static const int T = 8;
-	for (int y = l; y < u; ++y) {
-		for (int x = 0; x < w; ++x) {
-			int inpos = y*w + x;
-			u32 center = data[inpos];
-			if (x == 0 || x == w - 1) {
-				out[y*w + x] = center;
-				continue;
-			}
-			u32 left = data[inpos - 1];
-			u32 right = data[inpos + 1];
-			out[y*w + x] = 0;
-			for (int c = 0; c < 4; ++c) {
-				u8 lc = ((left >> c * 8) & 0xFF);
-				u8 cc = ((center >> c * 8) & 0xFF);
-				u8 rc = ((right >> c * 8) & 0xFF);
-				if ((lc != rc) && ((lc == cc && abs((int)((int)rc) - cc) <= T) || (rc == cc && abs((int)((int)lc) - cc) <= T))) {
-					// blend this component
-					out[y*w + x] |= ((rc + lc) / 2) << (c * 8);
-				} else {
-					// no change for this component
-					out[y*w + x] |= cc << (c * 8);
-				}
-			}
-		}
-	}
-}
-static void deposterizeV(u32* data, u32* out, int w, int h, int l, int u) {
-	static const int T = 8;
-	for (int xb = 0; xb < w / BLOCK_SIZE + 1; ++xb) {
-		for (int y = l; y < u; ++y) {
-			for (int x = xb*BLOCK_SIZE; x < (xb + 1)*BLOCK_SIZE && x < w; ++x) {
-				u32 center = data[y    * w + x];
-				if (y == 0 || y == h - 1) {
-					out[y*w + x] = center;
-					continue;
-				}
-				u32 upper = data[(y - 1) * w + x];
-				u32 lower = data[(y + 1) * w + x];
-				out[y*w + x] = 0;
-				for (int c = 0; c < 4; ++c) {
-					u8 uc = ((upper >> c * 8) & 0xFF);
-					u8 cc = ((center >> c * 8) & 0xFF);
-					u8 lc = ((lower >> c * 8) & 0xFF);
-					if ((uc != lc) && ((uc == cc && abs((int)((int)lc) - cc) <= T) || (lc == cc && abs((int)((int)uc) - cc) <= T))) {
-						// blend this component
-						out[y*w + x] |= ((lc + uc) / 2) << (c * 8);
-					} else {
-						// no change for this component
-						out[y*w + x] |= cc << (c * 8);
-					}
-				}
-			}
-		}
-	}
-}
-
 #ifndef TARGET_NO_OPENMP
 static inline int getThreadCount()
 {
@@ -352,17 +287,6 @@ void parallelize(Func func, int start, int end)
 				num_threads == thread + 1 ? end
 						: (start + chunk * (thread + 1)));
 	}
-}
-
-void DePosterize(u32* source, u32* dest, int width, int height) {
-	u32 *tmpbuf = (u32 *)malloc(width * height * sizeof(u32));
-
-	parallelize([source, tmpbuf, width](int start, int end) { deposterizeH(source, tmpbuf, width, start, end); }, 0, height);
-	parallelize([tmpbuf, dest, width, height](int start, int end) { deposterizeV(tmpbuf, dest, width, height, start, end); }, 0, height);
-	parallelize([dest, tmpbuf, width](int start, int end) { deposterizeH(dest, tmpbuf, width, start, end); }, 0, height);
-	parallelize([tmpbuf, dest, width, height](int start, int end) { deposterizeV(tmpbuf, dest, width, height, start, end); }, 0, height);
-
-	free(tmpbuf);
 }
 #endif
 
@@ -675,17 +599,6 @@ void BaseTextureCacheData::Update()
 		{
 			pb32.init(w, h);
 			texconv32(&pb32, (u8*)&vram[sa], stride, h);
-
-#ifdef DEPOSTERIZE
-			{
-				// Deposterization
-				PixelBuffer<u32> tmp_buf;
-				tmp_buf.init(w, h);
-
-				DePosterize(pb32.data(), tmp_buf.data(), w, h);
-				pb32.steal_data(tmp_buf);
-			}
-#endif
 
 			// xBRZ scaling
 			if (textureUpscaling)
