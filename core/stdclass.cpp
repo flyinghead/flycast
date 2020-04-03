@@ -1,6 +1,7 @@
 #include "types.h"
 #include "stdclass.h"
 
+#include <chrono>
 #include <cstring>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -190,113 +191,53 @@ void cThread::WaitToEnd() {
 
 #endif
 
+cResetEvent::cResetEvent() : state(false)
+{
 
-#ifdef _WIN32
-cResetEvent::cResetEvent() {
-		hEvent = CreateEvent(
-		NULL,             // default security attributes
-		FALSE,            // auto-reset event?
-		FALSE,            // initial state is State
-		NULL			  // unnamed object
-		);
 }
+
 cResetEvent::~cResetEvent()
 {
-	//Destroy the event object ?
-	 CloseHandle(hEvent);
+
 }
+
 void cResetEvent::Set()//Signal
 {
-	#if defined(DEBUG_THREADS)
-		Sleep(rand() % 10);
-	#endif
-	SetEvent(hEvent);
-}
-void cResetEvent::Reset()//reset
-{
-	#if defined(DEBUG_THREADS)
-		Sleep(rand() % 10);
-	#endif
-	ResetEvent(hEvent);
-}
-bool cResetEvent::Wait(u32 msec)//Wait for signal , then reset
-{
-	#if defined(DEBUG_THREADS)
-		Sleep(rand() % 10);
-	#endif
-	return WaitForSingleObject(hEvent,msec) == WAIT_OBJECT_0;
-}
-void cResetEvent::Wait()//Wait for signal , then reset
-{
-	#if defined(DEBUG_THREADS)
-		Sleep(rand() % 10);
-	#endif
-	WaitForSingleObject(hEvent,(u32)-1);
-}
-#else
-cResetEvent::cResetEvent() {
-	pthread_mutex_init(&mutx, NULL);
-	pthread_cond_init(&cond, NULL);
-}
-cResetEvent::~cResetEvent() {
-}
-void cResetEvent::Set()//Signal
-{
-	pthread_mutex_lock( &mutx );
-	state=true;
-	pthread_cond_signal( &cond);
-	pthread_mutex_unlock( &mutx );
-}
-void cResetEvent::Reset()//reset
-{
-	pthread_mutex_lock( &mutx );
-	state=false;
-	pthread_mutex_unlock( &mutx );
-}
-bool cResetEvent::Wait(u32 msec)//Wait for signal , then reset
-{
-	pthread_mutex_lock( &mutx );
-	if (!state)
-	{
-		struct timespec ts;
-#if HOST_OS == OS_DARWIN
-		// OSX doesn't have clock_gettime.
-		clock_serv_t cclock;
-		mach_timespec_t mts;
+    std::lock_guard<std::mutex> lock(mutx);
 
-		host_get_clock_service(mach_host_self(), CALENDAR_CLOCK, &cclock);
-		clock_get_time(cclock, &mts);
-		mach_port_deallocate(mach_task_self(), cclock);
-		ts.tv_sec = mts.tv_sec;
-		ts.tv_nsec = mts.tv_nsec;
-#else
-		clock_gettime(CLOCK_REALTIME, &ts);
-#endif
-		ts.tv_sec += msec / 1000;
-		ts.tv_nsec += (msec % 1000) * 1000000;
-		while (ts.tv_nsec > 1000000000)
-		{
-			ts.tv_nsec -= 1000000000;
-			ts.tv_sec++;
-		}
-		pthread_cond_timedwait( &cond, &mutx, &ts );
-	}
-	bool rc = state;
-	state=false;
-	pthread_mutex_unlock( &mutx );
-
-	return rc;
+    state = true;
+    cond.notify_one();
 }
-void cResetEvent::Wait()//Wait for signal , then reset
+
+void cResetEvent::Reset()
 {
-	pthread_mutex_lock( &mutx );
-	if (!state)
-	{
-		pthread_cond_wait( &cond, &mutx );
-	}
-	state=false;
-	pthread_mutex_unlock( &mutx );
+    std::lock_guard<std::mutex> lock(mutx);
+
+    state = false;
 }
-#endif
 
+bool cResetEvent::Wait(u32 msec)
+{
+    bool rc = true;
 
+    std::unique_lock<std::mutex> lock(mutx);
+
+    if (!state) {
+        rc = (cond.wait_for(lock, std::chrono::milliseconds(msec)) == std::cv_status::no_timeout);
+    }
+
+    state = false;
+
+    return rc;
+}
+
+void cResetEvent::Wait()
+{
+    std::unique_lock<std::mutex> lock(mutx);
+
+    if (!state) {
+        cond.wait(lock);
+    }
+
+    state = false;
+}
