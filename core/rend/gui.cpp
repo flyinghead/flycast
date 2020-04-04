@@ -441,10 +441,12 @@ static const char *maple_expansion_device_name(MapleDeviceType type)
 const char *maple_ports[] = { "None", "A", "B", "C", "D" };
 const DreamcastKey button_keys[] = { DC_BTN_START, DC_BTN_A, DC_BTN_B, DC_BTN_X, DC_BTN_Y, DC_DPAD_UP, DC_DPAD_DOWN, DC_DPAD_LEFT, DC_DPAD_RIGHT,
 		EMU_BTN_MENU, EMU_BTN_ESCAPE, EMU_BTN_FFORWARD, EMU_BTN_TRIGGER_LEFT, EMU_BTN_TRIGGER_RIGHT,
-		DC_BTN_C, DC_BTN_D, DC_BTN_Z, DC_DPAD2_UP, DC_DPAD2_DOWN, DC_DPAD2_LEFT, DC_DPAD2_RIGHT };
+		DC_BTN_C, DC_BTN_D, DC_BTN_Z, DC_DPAD2_UP, DC_DPAD2_DOWN, DC_DPAD2_LEFT, DC_DPAD2_RIGHT,
+		EMU_BTN_ANA_UP, EMU_BTN_ANA_DOWN, EMU_BTN_ANA_LEFT, EMU_BTN_ANA_RIGHT };
 const char *button_names[] = { "Start", "A", "B", "X", "Y", "DPad Up", "DPad Down", "DPad Left", "DPad Right",
 		"Menu", "Exit", "Fast-forward", "Left Trigger", "Right Trigger",
-		"C", "D", "Z", "Right Dpad Up", "Right DPad Down", "Right DPad Left", "Right DPad Right" };
+		"C", "D", "Z", "Right Dpad Up", "Right DPad Down", "Right DPad Left", "Right DPad Right",
+		"Left Stick Up", "Left Stick Down", "Left Stick Left", "Left Stick Right" };
 const char *arcade_button_names[] = { "Start", "Button 1", "Button 2", "Button 3", "Button 4", "Up", "Down", "Left", "Right",
 		"Menu", "Exit", "Fast-forward", "N/A", "N/A",
 		"Service", "Coin", "Test", "Button 5", "Button 6", "Button 7", "Button 8" };
@@ -1414,11 +1416,6 @@ static void gui_display_settings()
    	settings.dynarec.Enable = (bool)dynarec_enabled;
 }
 
-#ifdef __ANDROID__
-static std::string current_library_path("/storage/emulated/0/Download");
-#else
-static std::string current_library_path("/home/raph/RetroPie/roms/dreamcast/");
-#endif
 struct GameMedia {
 	std::string name;
 	std::string path;

@@ -48,7 +48,11 @@ button_list[] =
 	{ EMU_BTN_MENU, "emulator", "btn_menu" },
 	{ EMU_BTN_FFORWARD, "emulator", "btn_fforward" },
 	{ EMU_BTN_TRIGGER_LEFT, "compat", "btn_trigger_left" },
-	{ EMU_BTN_TRIGGER_RIGHT, "compat", "btn_trigger_right" }
+	{ EMU_BTN_TRIGGER_RIGHT, "compat", "btn_trigger_right" },
+	{ EMU_BTN_ANA_UP, "compat", "btn_analog_up" },
+	{ EMU_BTN_ANA_DOWN, "compat", "btn_analog_down" },
+	{ EMU_BTN_ANA_LEFT, "compat", "btn_analog_left" },
+	{ EMU_BTN_ANA_RIGHT, "compat", "btn_analog_right" },
 };
 
 static struct
