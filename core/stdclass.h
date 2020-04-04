@@ -5,12 +5,7 @@
 #include <mutex>
 #include <algorithm>
 #include <cctype>
-
-#ifndef _WIN32
-#include <pthread.h>
-#else
-#include <windows.h>
-#endif
+#include <thread>
 
 #ifdef __ANDROID__
 #include <sys/mman.h>
@@ -21,29 +16,22 @@
 #define PAGE_MASK (PAGE_SIZE-1)
 #endif
 
-//Threads
-
-#if !defined(HOST_NO_THREADS)
-typedef  void* ThreadEntryFP(void* param);
-
-class cThread {
+class cThread
+{
 private:
+	typedef void* ThreadEntryFP(void* param);
 	ThreadEntryFP* entry;
 	void* param;
-public :
-	#ifdef _WIN32
-	HANDLE hThread;
-	#else
-	pthread_t *hThread;
-	#endif
+
+public:
+	std::thread thread;
 
 	cThread(ThreadEntryFP* function, void* param)
-		:entry(function), param(param), hThread(NULL) {}
+		:entry(function), param(param) {}
 	~cThread() { WaitToEnd(); }
 	void Start();
 	void WaitToEnd();
 };
-#endif
 
 class cResetEvent
 {

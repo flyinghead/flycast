@@ -158,38 +158,18 @@ bool make_directory(const std::string& path)
 #endif
 }
 
-// Thread & related platform dependant code
-#if !defined(HOST_NO_THREADS)
+void cThread::Start()
+{
+	verify(!thread.joinable());
+	thread = std::thread(entry, param);
+}
 
-#ifdef _WIN32
-void cThread::Start() {
-	verify(hThread == NULL);
-	hThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)entry, param, 0, NULL);
-	ResumeThread(hThread);
-}
-void cThread::WaitToEnd() {
-	if (GetCurrentThreadId() != GetThreadId(hThread))
-		WaitForSingleObject(hThread, INFINITE);
-	CloseHandle(hThread);
-	hThread = NULL;
-}
-#else
-void cThread::Start() {
-	verify(hThread == NULL);
-	hThread = new pthread_t;
-	if (pthread_create( hThread, NULL, entry, param))
-		die("Thread creation failed");
-}
-void cThread::WaitToEnd() {
-	if (hThread) {
-		pthread_join(*hThread,0);
-		delete hThread;
-		hThread = NULL;
+void cThread::WaitToEnd()
+{
+	if (thread.joinable()) {
+		thread.join();
 	}
 }
-#endif
-
-#endif
 
 cResetEvent::cResetEvent() : state(false)
 {

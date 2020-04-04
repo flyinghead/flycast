@@ -38,6 +38,7 @@ Cartridge *CurrentCartridge;
 bool bios_loaded = false;
 
 #ifdef _WIN32
+	#include <windows.h>
 	typedef HANDLE fd_t;
 	#define INVALID_FD INVALID_HANDLE_VALUE
 #else
