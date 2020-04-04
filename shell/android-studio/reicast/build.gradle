@@ -1,9 +1,8 @@
 apply plugin: 'com.android.application'
-apply plugin: 'com.github.triplet.play'
 
 def getBuildId = { ->
     def build_id = System.getenv("TRAVIS_JOB_ID") ?: "8"
-    return Integer.parseInt( build_id )
+    return Integer.parseInt(build_id)
 }
 
 def getVersionHash = { ->
@@ -25,20 +24,21 @@ def getVersionName = { ->
 }
 
 android {
-    compileSdkVersion 26
-    buildToolsVersion "27.0.3"
+    compileSdkVersion 28
+    buildToolsVersion '28.0.3'
+    ndkVersion '21.0.6113669'
 
     defaultConfig {
         applicationId "com.flycast.emulator"
         minSdkVersion 16
-        targetSdkVersion 26
+        targetSdkVersion 28
         versionCode getBuildId()
         versionName getVersionName()
         vectorDrawables.useSupportLibrary = true
 
         ndk {
             moduleName "dc"
-                abiFilters 'armeabi-v7a', 'arm64-v8a'//, 'x86'
+            abiFilters 'armeabi-v7a', 'arm64-v8a'
         }
     }
 
@@ -86,16 +86,10 @@ android {
     lintOptions {
         abortOnError false
     }
-    
-	//packagingOptions{
-	//    doNotStrip "*/armeabi/*.so"
-	//    doNotStrip "*/armeabi-v7a/*.so"
-	//    doNotStrip "*/arm64-v8a/*.so"
-	//}
 }
 
 afterEvaluate {
-    android.applicationVariants.all {  v ->
+    android.applicationVariants.all { v ->
         if (v.buildType.name == "release") {
             def hashtag = getVersionHash()
             v.outputs[0].outputFileName = "flycast-android-" + hashtag + ".apk"
@@ -103,21 +97,15 @@ afterEvaluate {
     }
 }
 
-play {
-    track = 'beta'
-    serviceAccountEmail = 'reicast-beta-cd@api-7801059239587459896-777757.iam.gserviceaccount.com'
-    pk12File = file('../reicast-beta-cd.p12')
-}
-
 dependencies {
-    implementation 'com.android.support:support-v4:25.4.0'
-    implementation 'com.android.support:appcompat-v7:25.4.0'
-    implementation 'com.android.support:design:25.4.0'
-    implementation 'com.android.support.constraint:constraint-layout:1.1.2'
+    implementation 'com.android.support:support-v4:28.0.0'
+    implementation 'com.android.support:appcompat-v7:28.0.0'
+    implementation 'com.android.support:design:28.0.0'
+    implementation 'com.android.support.constraint:constraint-layout:1.1.3'
     implementation 'org.bouncycastle:bcprov-jdk16:1.46'
     implementation 'commons-io:commons-io:2.6'
-    implementation 'org.apache.commons:commons-lang3:3.7'
-    implementation ('com.googlecode.json-simple:json-simple:1.1.1') {
+    implementation 'org.apache.commons:commons-lang3:3.10'
+    implementation('com.googlecode.json-simple:json-simple:1.1.1') {
         exclude module: 'junit'
     }
     implementation fileTree(include: ['*.jar'], dir: 'libs')
