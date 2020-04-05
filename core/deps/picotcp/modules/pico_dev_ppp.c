@@ -2253,6 +2253,7 @@ void pico_ppp_destroy(struct pico_device *ppp)
     /* Perform custom cleanup here before calling 'pico_device_destroy'
      * or register a custom cleanup function during initialization
      * by setting 'ppp->dev.destroy'. */
+	pico_timer_cancel(((struct pico_device_ppp *)ppp)->timer);
 
     pico_device_destroy(ppp);
 }
@@ -2317,8 +2318,8 @@ static void pico_ppp_tick(pico_time t, void *arg)
         ppp_dbg("(Re)connecting...\n");
         evaluate_lcp_state(ppp, PPP_LCP_EVENT_OPEN);
     }
-
-    if (!pico_timer_add(1000, pico_ppp_tick, arg)) {
+    ppp->timer = pico_timer_add(1000, pico_ppp_tick, arg);
+	if (!ppp->timer) {
         ppp_dbg("PPP: Failed to start tick timer\n");
         /* TODO No more PPP ticks now */
     }
