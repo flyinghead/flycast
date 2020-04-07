@@ -23,13 +23,16 @@
 #include <dirent.h>
 #include <png.h>
 #include <sstream>
+#include <sys/stat.h>
+#define STB_IMAGE_IMPLEMENTATION
+#define STBI_ONLY_JPEG
+#include <stb_image.h>
 
-// TODO Move this out of gles.cpp
-u8* loadPNGData(const std::string& subpath, int &width, int &height);
 CustomTexture custom_texture;
 
 void CustomTexture::LoaderThread()
 {
+	LoadMap();
 	while (initialized)
 	{
 		BaseTextureCacheData *texture;
@@ -94,7 +97,6 @@ bool CustomTexture::Init()
 	if (!initialized)
 	{
 		initialized = true;
-#ifndef TARGET_NO_THREADS
 		std::string game_id = GetGameId();
 		if (game_id.length() > 0)
 		{
@@ -109,7 +111,6 @@ bool CustomTexture::Init()
 				loader_thread.Start();
 			}
 		}
-#endif
 	}
 	return custom_textures_available;
 }
@@ -123,24 +124,22 @@ void CustomTexture::Terminate()
 		work_queue.clear();
 		work_queue_mutex.unlock();
 		wakeup_thread.Set();
-#ifndef TARGET_NO_THREADS
 		loader_thread.WaitToEnd();
-#endif
+		texture_map.clear();
 	}
 }
 
 u8* CustomTexture::LoadCustomTexture(u32 hash, int& width, int& height)
 {
-	if (unknown_hashes.find(hash) != unknown_hashes.end())
-		return NULL;
-	std::stringstream path;
-	path << textures_path << std::hex << hash << ".png";
-
-	u8 *image_data = loadPNGData(path.str(), width, height);
-	if (image_data == NULL)
-		unknown_hashes.insert(hash);
-
-	return image_data;
+	auto it = texture_map.find(hash);
+	if (it == texture_map.end())
+		return nullptr;
+	char c = it->second[it->second.length() - 2];
+	if (c == 'n' || c == 'N')
+		return loadPNGData(it->second.c_str(), width, height);
+	stbi_set_flip_vertically_on_load(1);
+	int n;
+	return stbi_load(it->second.c_str(), &width, &height, &n, 4);
 }
 
 void CustomTexture::LoadCustomTextureAsync(BaseTextureCacheData *texture_data)
@@ -257,4 +256,49 @@ void CustomTexture::DumpTexture(u32 hash, int w, int h, TextureType textype, voi
 	for (int y = 0; y < h; y++)
 		free(rows[y]);
 	free(rows);
+}
+
+void CustomTexture::LoadMap()
+{
+	texture_map.clear();
+	DIR *dir = opendir(textures_path.c_str());
+	if (dir == nullptr)
+		return;
+	while (true)
+	{
+		struct dirent *entry = readdir(dir);
+		if (entry == nullptr)
+			break;
+		std::string name(entry->d_name);
+		if (name == "." || name == "..")
+			continue;
+		std::string child_path = textures_path + "/" + name;
+#ifndef _WIN32
+		if (entry->d_type == DT_DIR)
+			continue;
+		if (entry->d_type == DT_UNKNOWN || entry->d_type == DT_LNK)
+#endif
+		{
+			struct stat st;
+			if (stat(child_path.c_str(), &st) != 0)
+				continue;
+			if (S_ISDIR(st.st_mode))
+				continue;
+		}
+		std::string extension = get_file_extension(name);
+		if (extension != "jpg" && extension != "jpeg" && extension != "png")
+			continue;
+		std::string::size_type dotpos = name.find_last_of('.');
+		std::string basename = name.substr(0, dotpos);
+		char *endptr;
+		u32 hash = strtol(basename.c_str(), &endptr, 16);
+		if (endptr - basename.c_str() < (ptrdiff_t)basename.length())
+		{
+			INFO_LOG(RENDERER, "Invalid hash %s", basename.c_str());
+			continue;
+		}
+		texture_map[hash] = child_path;
+	}
+	closedir(dir);
+	custom_textures_available = !texture_map.empty();
 }

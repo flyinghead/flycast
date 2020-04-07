@@ -27,12 +27,7 @@
 
 class CustomTexture {
 public:
-	CustomTexture()
-		:
-#ifndef TARGET_NO_THREADS
-		loader_thread(loader_thread_func, this)
-#endif
-		{}
+	CustomTexture() : loader_thread(loader_thread_func, this) {}
 	~CustomTexture() { Terminate(); }
 	u8* LoadCustomTexture(u32 hash, int& width, int& height);
 	void LoadCustomTextureAsync(BaseTextureCacheData *texture_data);
@@ -43,19 +38,18 @@ private:
 	bool Init();
 	void LoaderThread();
 	std::string GetGameId();
+	void LoadMap();
 	
 	static void *loader_thread_func(void *param) { ((CustomTexture *)param)->LoaderThread(); return NULL; }
 	
 	bool initialized = false;
 	bool custom_textures_available = false;
 	std::string textures_path;
-	std::set<u32> unknown_hashes;
-#ifndef TARGET_NO_THREADS
 	cThread loader_thread;
-#endif
 	cResetEvent wakeup_thread;
 	std::vector<BaseTextureCacheData *> work_queue;
 	std::mutex work_queue_mutex;
+	std::map<u32, std::string> texture_map;
 };
 
 extern CustomTexture custom_texture;

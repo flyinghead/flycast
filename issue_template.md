@@ -1,9 +1,11 @@
 **Please Note: This form is the minimum required information for submitting bugs.**  
 **Removing this form may lead to your issue being closed until it is completed.**
 
-| Platform | Branch | Hash | CIDL |
-| ------ | ------ | ---- | ---- |
-| Installed OS and version (ie. Android 8.0) | Branch (or Google Play) | Hashtag (skip if unknown) | Downloaded from build site? |
+Platform / OS / Hardware: 
+
+Github hash: 
+
+Hardware: 
 
 **_Description of the Issue_**
 
@@ -28,5 +30,3 @@ You may leave this field blank if you have none.
 **_Screenshots_**
 
 (Replace this line with any issue screenshots)
-
-- [ ] Place an X in the box to confirm you have filled in this form
