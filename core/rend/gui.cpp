@@ -449,9 +449,14 @@ const char *button_names[] = { "Start", "A", "B", "X", "Y", "DPad Up", "DPad Dow
 		"Left Stick Up", "Left Stick Down", "Left Stick Left", "Left Stick Right" };
 const char *arcade_button_names[] = { "Start", "Button 1", "Button 2", "Button 3", "Button 4", "Up", "Down", "Left", "Right",
 		"Menu", "Exit", "Fast-forward", "N/A", "N/A",
-		"Service", "Coin", "Test", "Button 5", "Button 6", "Button 7", "Button 8" };
-const DreamcastKey axis_keys[] = { DC_AXIS_X, DC_AXIS_Y, DC_AXIS_LT, DC_AXIS_RT, DC_AXIS_X2, DC_AXIS_Y2, EMU_AXIS_DPAD1_X, EMU_AXIS_DPAD1_Y, EMU_AXIS_DPAD2_X, EMU_AXIS_DPAD2_Y };
-const char *axis_names[] = { "Left Stick X", "Left Stick Y", "Left Trigger", "Right Trigger", "Right Stick X", "Right Stick Y", "DPad X", "DPad Y", "Right DPad X", "Right DPad Y" };
+		"Service", "Coin", "Test", "Button 5", "Button 6", "Button 7", "Button 8", "N/A", "N/A", "N/A", "N/A" };
+const DreamcastKey axis_keys[] = { DC_AXIS_X, DC_AXIS_Y, DC_AXIS_LT, DC_AXIS_RT, DC_AXIS_X2, DC_AXIS_Y2, EMU_AXIS_DPAD1_X, EMU_AXIS_DPAD1_Y, EMU_AXIS_DPAD2_X, EMU_AXIS_DPAD2_Y,
+        EMU_AXIS_BTN_START, EMU_AXIS_BTN_A, EMU_AXIS_BTN_B, EMU_AXIS_BTN_X, EMU_AXIS_BTN_Y, EMU_AXIS_DPAD_UP, EMU_AXIS_DPAD_DOWN, EMU_AXIS_DPAD_LEFT, EMU_AXIS_DPAD_RIGHT,
+        EMU_AXIS_BTN_C, EMU_AXIS_BTN_D, EMU_AXIS_BTN_Z, EMU_AXIS_DPAD2_UP, EMU_AXIS_DPAD2_DOWN, EMU_AXIS_DPAD2_LEFT, EMU_AXIS_DPAD2_RIGHT};
+const char *axis_names[] = { "Left Stick X", "Left Stick Y", "Left Trigger", "Right Trigger", "Right Stick X", "Right Stick Y", "DPad X", "DPad Y", "Right DPad X", "Right DPad Y",
+        "Start", "A", "B", "X", "Y", "DPad Up", "DPad Down", "DPad Left", "DPad Right", "C", "D", "Z", "Right DPad Up", "Right DPad Down", "Right DPad Left", "Right DPad Right"};
+const char *arcade_axis_names[] = { "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "Start", "Button 1", "Button 2", "Button 3", "Button 4", "Up", "Down", "Left", "Right",
+		"Service", "Coin", "Test", "Button 5", "Button 6", "Button 7", "Button 8"};
 
 static MapleDeviceType maple_expansion_device_type_from_index(int idx)
 {
@@ -487,7 +492,7 @@ static void detect_input_popup(int index, bool analog)
 	if (ImGui::BeginPopupModal(analog ? "Map Axis" : "Map Button", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
 	{
 		ImGui::Text("Waiting for %s '%s'...", analog ? "axis" : "button",
-				analog ? axis_names[index]
+				analog ? arcade_button_mode ? arcade_axis_names[index] : axis_names[index]
 						: arcade_button_mode ? arcade_button_names[index] : button_names[index]);
 		double now = os_GetSeconds();
 		ImGui::Text("Time out in %d s", (int)(5 - (now - map_start_time)));
@@ -592,7 +597,7 @@ static void controller_mapping_popup(std::shared_ptr<GamepadDevice> gamepad)
 		{
 			sprintf(key_id, "axis_id%d", j);
 			ImGui::PushID(key_id);
-			ImGui::Text("%s", axis_names[j]);
+			ImGui::Text("%s", arcade_button_mode ? arcade_axis_names[j] : axis_names[j]);
 			ImGui::NextColumn();
 			u32 code = input_mapping->get_axis_code(axis_keys[j]);
 			if (code != (u32)-1)
