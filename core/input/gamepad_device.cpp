@@ -225,6 +225,13 @@ bool GamepadDevice::gamepad_axis_input(u32 code, int value)
 		else
 			*this_axis = (s8)v;
 	}
+	else if (((int)key >> 16) == 4) // Map triggers to digital buttons
+	{
+		if (v <= -64)
+			kcode[_maple_port] |=  (key & ~0x40000); // button released
+		else if (v >= 64)
+			kcode[_maple_port] &= ~(key & ~0x40000); // button pressed
+	}
 	else
 		return false;
 

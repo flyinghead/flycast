@@ -74,7 +74,23 @@ axis_list[] =
 	{ EMU_AXIS_DPAD1_X, "compat", "axis_dpad1_x", "compat", "axis_dpad1_x_inverted" },
 	{ EMU_AXIS_DPAD1_Y, "compat", "axis_dpad1_y", "compat", "axis_dpad1_y_inverted" },
 	{ EMU_AXIS_DPAD2_X, "compat", "axis_dpad2_x", "compat", "axis_dpad2_x_inverted" },
-	{ EMU_AXIS_DPAD2_Y, "compat", "axis_dpad2_y", "compat", "axis_dpad2_y_inverted" }
+	{ EMU_AXIS_DPAD2_Y, "compat", "axis_dpad2_y", "compat", "axis_dpad2_y_inverted" },
+	{ EMU_AXIS_BTN_A, "compat", "axis_btn_a", "compat", "axis_btn_a_inverted" },
+	{ EMU_AXIS_BTN_B, "compat", "axis_btn_b", "compat", "axis_btn_b_inverted" },
+	{ EMU_AXIS_BTN_C, "compat", "axis_btn_c", "compat", "axis_btn_c_inverted" },
+	{ EMU_AXIS_BTN_D, "compat", "axis_btn_d", "compat", "axis_btn_d_inverted" },
+	{ EMU_AXIS_BTN_X, "compat", "axis_btn_x", "compat", "axis_btn_x_inverted" },
+	{ EMU_AXIS_BTN_Y, "compat", "axis_btn_y", "compat", "axis_btn_y_inverted" },
+	{ EMU_AXIS_BTN_Z, "compat", "axis_btn_z", "compat", "axis_btn_z_inverted" },
+	{ EMU_AXIS_BTN_START, "compat", "axis_btn_start", "compat", "axis_btn_start_inverted" },
+	{ EMU_AXIS_DPAD_LEFT, "compat", "axis_dpad1_left", "compat", "axis_dpad1_left_inverted" },
+	{ EMU_AXIS_DPAD_RIGHT, "compat", "axis_dpad1_right", "compat", "axis_dpad1_right_inverted" },
+	{ EMU_AXIS_DPAD_UP, "compat", "axis_dpad1_up", "compat", "axis_dpad1_up_inverted" },
+	{ EMU_AXIS_DPAD_DOWN, "compat", "axis_dpad1_down", "compat", "axis_dpad1_down_inverted" },
+	{ EMU_AXIS_DPAD2_LEFT, "compat", "axis_dpad2_left", "compat", "axis_dpad2_left_inverted" },
+	{ EMU_AXIS_DPAD2_RIGHT, "compat", "axis_dpad2_right", "compat", "axis_dpad2_right_inverted" },
+	{ EMU_AXIS_DPAD2_UP, "compat", "axis_dpad2_up", "compat", "axis_dpad2_up_inverted" },
+	{ EMU_AXIS_DPAD2_DOWN, "compat", "axis_dpad2_down", "compat", "axis_dpad2_down_inverted" }
 };
 
 std::map<std::string, std::shared_ptr<InputMapping>> InputMapping::loaded_mappings;
