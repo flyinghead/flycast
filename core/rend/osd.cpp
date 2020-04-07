@@ -20,6 +20,8 @@
 #include "input/gamepad_device.h"
 #include "TexCache.h"
 
+#include <stb_image.h>
+
 #if defined(__ANDROID__)
 extern float vjoy_pos[15][8];
 #else
@@ -146,12 +148,14 @@ static OnLoad setVjoyUVOnLoad(&setVjoyUV);
 
 u8 *loadOSDButtons(int &width, int &height)
 {
-	u8 *image_data = loadPNGData(get_readonly_data_path(DATA_PATH "buttons.png"), width, height);
+	int n;
+	stbi_set_flip_vertically_on_load(1);
+	u8 *image_data = stbi_load(get_readonly_data_path(DATA_PATH "buttons.png").c_str(), &width, &height, &n, STBI_rgb_alpha);
 	if (image_data == nullptr)
 	{
 		if (DefaultOSDButtons.empty())
 			die("No default OSD buttons");
-		image_data = loadPNGData(DefaultOSDButtons, width, height);
+		image_data = stbi_load_from_memory(DefaultOSDButtons.data(), DefaultOSDButtons.size(), &width, &height, &n, STBI_rgb_alpha);
 	}
 	return image_data;
 }
