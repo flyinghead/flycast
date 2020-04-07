@@ -169,7 +169,7 @@ ifdef CHD5_LZMA
 endif
 
 RZDCY_CFLAGS += -I$(RZDCY_SRC_DIR)/deps/libpng -I$(RZDCY_SRC_DIR)/deps/libzip -I$(RZDCY_SRC_DIR)/deps/zlib
-RZDCY_CFLAGS +=  -DXXH_INLINE_ALL -I$(RZDCY_SRC_DIR)/deps/xxHash
+RZDCY_CFLAGS += -DXXH_INLINE_ALL -I$(RZDCY_SRC_DIR)/deps/xxHash -I$(RZDCY_SRC_DIR)/deps/stb
 
 RZDCY_CXXFLAGS := $(RZDCY_CFLAGS) -fno-exceptions -fno-rtti -std=gnu++11
 
