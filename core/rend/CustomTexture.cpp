@@ -26,6 +26,7 @@
 #include <sys/stat.h>
 #define STB_IMAGE_IMPLEMENTATION
 #define STBI_ONLY_JPEG
+#define STBI_ONLY_PNG
 #include <stb_image.h>
 
 CustomTexture custom_texture;
@@ -134,12 +135,10 @@ u8* CustomTexture::LoadCustomTexture(u32 hash, int& width, int& height)
 	auto it = texture_map.find(hash);
 	if (it == texture_map.end())
 		return nullptr;
-	char c = it->second[it->second.length() - 2];
-	if (c == 'n' || c == 'N')
-		return loadPNGData(it->second.c_str(), width, height);
-	stbi_set_flip_vertically_on_load(1);
+
 	int n;
-	return stbi_load(it->second.c_str(), &width, &height, &n, 4);
+	stbi_set_flip_vertically_on_load(1);
+	return stbi_load(it->second.c_str(), &width, &height, &n, STBI_rgb_alpha);
 }
 
 void CustomTexture::LoadCustomTextureAsync(BaseTextureCacheData *texture_data)
