@@ -272,7 +272,7 @@ void CustomTexture::LoadMap()
 		std::string name(entry->d_name);
 		if (name == "." || name == "..")
 			continue;
-		std::string child_path = textures_path + "/" + name;
+		std::string child_path = textures_path + name;
 #ifndef _WIN32
 		if (entry->d_type == DT_DIR)
 			continue;
@@ -291,7 +291,7 @@ void CustomTexture::LoadMap()
 		std::string::size_type dotpos = name.find_last_of('.');
 		std::string basename = name.substr(0, dotpos);
 		char *endptr;
-		u32 hash = strtol(basename.c_str(), &endptr, 16);
+		u32 hash = (u32)strtoll(basename.c_str(), &endptr, 16);
 		if (endptr - basename.c_str() < (ptrdiff_t)basename.length())
 		{
 			INFO_LOG(RENDERER, "Invalid hash %s", basename.c_str());
