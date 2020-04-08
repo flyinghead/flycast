@@ -234,51 +234,6 @@
     <ClCompile Include="..\core\deps\chdpsr\cdipsr.cpp">
       <Filter>deps\chdpsr</Filter>
     </ClCompile>
-    <ClCompile Include="..\core\deps\libpng\png.c">
-      <Filter>deps\libpng</Filter>
-    </ClCompile>
-    <ClCompile Include="..\core\deps\libpng\pngerror.c">
-      <Filter>deps\libpng</Filter>
-    </ClCompile>
-    <ClCompile Include="..\core\deps\libpng\pngget.c">
-      <Filter>deps\libpng</Filter>
-    </ClCompile>
-    <ClCompile Include="..\core\deps\libpng\pngmem.c">
-      <Filter>deps\libpng</Filter>
-    </ClCompile>
-    <ClCompile Include="..\core\deps\libpng\pngpread.c">
-      <Filter>deps\libpng</Filter>
-    </ClCompile>
-    <ClCompile Include="..\core\deps\libpng\pngread.c">
-      <Filter>deps\libpng</Filter>
-    </ClCompile>
-    <ClCompile Include="..\core\deps\libpng\pngrio.c">
-      <Filter>deps\libpng</Filter>
-    </ClCompile>
-    <ClCompile Include="..\core\deps\libpng\pngrtran.c">
-      <Filter>deps\libpng</Filter>
-    </ClCompile>
-    <ClCompile Include="..\core\deps\libpng\pngrutil.c">
-      <Filter>deps\libpng</Filter>
-    </ClCompile>
-    <ClCompile Include="..\core\deps\libpng\pngset.c">
-      <Filter>deps\libpng</Filter>
-    </ClCompile>
-    <ClCompile Include="..\core\deps\libpng\pngtrans.c">
-      <Filter>deps\libpng</Filter>
-    </ClCompile>
-    <ClCompile Include="..\core\deps\libpng\pngwio.c">
-      <Filter>deps\libpng</Filter>
-    </ClCompile>
-    <ClCompile Include="..\core\deps\libpng\pngwrite.c">
-      <Filter>deps\libpng</Filter>
-    </ClCompile>
-    <ClCompile Include="..\core\deps\libpng\pngwtran.c">
-      <Filter>deps\libpng</Filter>
-    </ClCompile>
-    <ClCompile Include="..\core\deps\libpng\pngwutil.c">
-      <Filter>deps\libpng</Filter>
-    </ClCompile>
     <ClCompile Include="..\core\rend\gles\gldraw.cpp">
       <Filter>rend\gles</Filter>
     </ClCompile>
@@ -667,9 +622,6 @@
     <Filter Include="deps\chdpsr">
       <UniqueIdentifier>{fe073008-ffba-43c1-9192-daec4b48148e}</UniqueIdentifier>
     </Filter>
-    <Filter Include="deps\libpng">
-      <UniqueIdentifier>{fa363b78-585a-476a-9afc-628b0f6650cf}</UniqueIdentifier>
-    </Filter>
     <Filter Include="rend">
       <UniqueIdentifier>{3f5c03ee-36db-4818-b0d2-4eec9c084f75}</UniqueIdentifier>
     </Filter>
@@ -1014,18 +966,6 @@
     <ClInclude Include="..\core\deps\chdpsr\cdipsr.h">
       <Filter>deps\chdpsr</Filter>
     </ClInclude>
-    <ClInclude Include="..\core\deps\libpng\config.h">
-      <Filter>deps\libpng</Filter>
-    </ClInclude>
-    <ClInclude Include="..\core\deps\libpng\png.h">
-      <Filter>deps\libpng</Filter>
-    </ClInclude>
-    <ClInclude Include="..\core\deps\libpng\pngconf.h">
-      <Filter>deps\libpng</Filter>
-    </ClInclude>
-    <ClInclude Include="..\core\deps\libpng\pngpriv.h">
-      <Filter>deps\libpng</Filter>
-    </ClInclude>
     <ClInclude Include="..\core\rend\gles\gles.h">
       <Filter>rend\gles</Filter>
     </ClInclude>
@@ -1304,18 +1244,6 @@
     </ClInclude>
     <ClInclude Include="..\core\windows\xinput_gamepad.h">
       <Filter>windows</Filter>
-    </ClInclude>
-    <ClInclude Include="..\core\deps\libpng\pngdebug.h">
-      <Filter>deps\libpng</Filter>
-    </ClInclude>
-    <ClInclude Include="..\core\deps\libpng\pnginfo.h">
-      <Filter>deps\libpng</Filter>
-    </ClInclude>
-    <ClInclude Include="..\core\deps\libpng\pnglibconf.h">
-      <Filter>deps\libpng</Filter>
-    </ClInclude>
-    <ClInclude Include="..\core\deps\libpng\pngstruct.h">
-      <Filter>deps\libpng</Filter>
     </ClInclude>
     <ClInclude Include="..\core\deps\xxhash\xxhash.h">
       <Filter>deps\xxhash</Filter>

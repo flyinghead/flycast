@@ -417,10 +417,12 @@ void do_swap_automation()
 		int bytesz = screen_width * screen_height * 3;
 		u8* img = new u8[bytesz];
 		
+		glPixelStorei(GL_PACK_ALIGNMENT, 1);
 		glReadPixels(0, 0, screen_width, screen_height, GL_RGB, GL_UNSIGNED_BYTE, img);
 		dump_screenshot(img, screen_width, screen_height);
 		delete[] img;
 		dc_exit();
+		theGLContext.Term();
 		exit(0);
 	}
 }

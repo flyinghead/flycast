@@ -73,21 +73,6 @@
     <ClCompile Include="..\core\deps\libelf\elf.cpp" />
     <ClCompile Include="..\core\deps\libelf\elf32.cpp" />
     <ClCompile Include="..\core\deps\libelf\elf64.cpp" />
-    <ClCompile Include="..\core\deps\libpng\png.c" />
-    <ClCompile Include="..\core\deps\libpng\pngerror.c" />
-    <ClCompile Include="..\core\deps\libpng\pngget.c" />
-    <ClCompile Include="..\core\deps\libpng\pngmem.c" />
-    <ClCompile Include="..\core\deps\libpng\pngpread.c" />
-    <ClCompile Include="..\core\deps\libpng\pngread.c" />
-    <ClCompile Include="..\core\deps\libpng\pngrio.c" />
-    <ClCompile Include="..\core\deps\libpng\pngrtran.c" />
-    <ClCompile Include="..\core\deps\libpng\pngrutil.c" />
-    <ClCompile Include="..\core\deps\libpng\pngset.c" />
-    <ClCompile Include="..\core\deps\libpng\pngtrans.c" />
-    <ClCompile Include="..\core\deps\libpng\pngwio.c" />
-    <ClCompile Include="..\core\deps\libpng\pngwrite.c" />
-    <ClCompile Include="..\core\deps\libpng\pngwtran.c" />
-    <ClCompile Include="..\core\deps\libpng\pngwutil.c" />
     <ClCompile Include="..\core\deps\lzma\Alloc.c" />
     <ClCompile Include="..\core\deps\lzma\Bra.c" />
     <ClCompile Include="..\core\deps\lzma\Bra86.c" />
@@ -309,14 +294,6 @@
     <ClInclude Include="..\core\deps\libelf\elf.h" />
     <ClInclude Include="..\core\deps\libelf\elf32.h" />
     <ClInclude Include="..\core\deps\libelf\elf64.h" />
-    <ClInclude Include="..\core\deps\libpng\config.h" />
-    <ClInclude Include="..\core\deps\libpng\png.h" />
-    <ClInclude Include="..\core\deps\libpng\pngconf.h" />
-    <ClInclude Include="..\core\deps\libpng\pngdebug.h" />
-    <ClInclude Include="..\core\deps\libpng\pnginfo.h" />
-    <ClInclude Include="..\core\deps\libpng\pnglibconf.h" />
-    <ClInclude Include="..\core\deps\libpng\pngpriv.h" />
-    <ClInclude Include="..\core\deps\libpng\pngstruct.h" />
     <ClInclude Include="..\core\deps\lzma\7zTypes.h" />
     <ClInclude Include="..\core\deps\lzma\Alloc.h" />
     <ClInclude Include="..\core\deps\lzma\Bra.h" />
@@ -580,7 +557,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Full</Optimization>
       <PreprocessorDefinitions>WIN32;PACKAGE_VERSION="1.3.2";FLAC__HAS_OGG=0;FLAC__NO_DLL;CHD5_FLAC;CHD5_LZMA;_7ZIP_ST;NDEBUG;_CONSOLE;X86;RELEASE;%(PreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\core\;$(ProjectDir)..\core\khronos;$(ProjectDir)..\core\rend\gles;$(ProjectDir)..\core\deps;$(ProjectDir)..\core\deps\dirent;$(ProjectDir)..\core\deps\flac\src\libflac\include;$(ProjectDir)..\core\deps\flac\include;$(ProjectDir)..\core\deps\libpng;$(ProjectDir)..\core\deps\libzip;$(ProjectDir)..\core\deps\xxhash;$(ProjectDir)..\core\deps\zlib</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\core\;$(ProjectDir)..\core\khronos;$(ProjectDir)..\core\rend\gles;$(ProjectDir)..\core\deps;$(ProjectDir)..\core\deps\dirent;$(ProjectDir)..\core\deps\flac\src\libflac\include;$(ProjectDir)..\core\deps\flac\include;$(ProjectDir)..\core\deps\stb;$(ProjectDir)..\core\deps\libzip;$(ProjectDir)..\core\deps\xxhash;$(ProjectDir)..\core\deps\zlib</AdditionalIncludeDirectories>
       <AdditionalOptions>/MP %(AdditionalOptions)</AdditionalOptions>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -619,7 +596,7 @@ for /f "delims=" %%i in ('date /T') do echo #define BUILD_DATE "%%i" &gt;&gt;$(P
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Full</Optimization>
       <PreprocessorDefinitions>WIN32;PACKAGE_VERSION="1.3.2";FLAC__HAS_OGG=0;FLAC__NO_DLL;CHD5_FLAC;CHD5_LZMA;_7ZIP_ST;NDEBUG;_CONSOLE;X86;RELEASE;%(PreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\core\;$(ProjectDir)..\core\khronos;$(ProjectDir)..\core\rend\gles;$(ProjectDir)..\core\deps;$(ProjectDir)..\core\deps\dirent;$(ProjectDir)..\core\deps\flac\src\libflac\include;$(ProjectDir)..\core\deps\flac\include;$(ProjectDir)..\core\deps\libpng;$(ProjectDir)..\core\deps\libzip;$(ProjectDir)..\core\deps\xxhash;$(ProjectDir)..\core\deps\zlib</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\core\;$(ProjectDir)..\core\khronos;$(ProjectDir)..\core\rend\gles;$(ProjectDir)..\core\deps;$(ProjectDir)..\core\deps\dirent;$(ProjectDir)..\core\deps\flac\src\libflac\include;$(ProjectDir)..\core\deps\flac\include;$(ProjectDir)..\core\deps\stb;$(ProjectDir)..\core\deps\libzip;$(ProjectDir)..\core\deps\xxhash;$(ProjectDir)..\core\deps\zlib</AdditionalIncludeDirectories>
       <AdditionalOptions>/MP %(AdditionalOptions)</AdditionalOptions>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -660,7 +637,7 @@ for /f "delims=" %%i in ('date /T') do echo #define BUILD_DATE "%%i" &gt;&gt;$(P
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;PACKAGE_VERSION="1.3.2";FLAC__HAS_OGG=0;FLAC__NO_DLL;CHD5_FLAC;CHD5_LZMA;_7ZIP_ST;_DEBUG;_CONSOLE;X86;%(PreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\core\;$(ProjectDir)..\core\khronos;$(ProjectDir)..\core\rend\gles;$(ProjectDir)..\core\deps;$(ProjectDir)..\core\deps\dirent;$(ProjectDir)..\core\deps\flac\src\libflac\include;$(ProjectDir)..\core\deps\flac\include;$(ProjectDir)..\core\deps\libpng;$(ProjectDir)..\core\deps\libzip;$(ProjectDir)..\core\deps\xxhash;$(ProjectDir)..\core\deps\zlib</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\core\;$(ProjectDir)..\core\khronos;$(ProjectDir)..\core\rend\gles;$(ProjectDir)..\core\deps;$(ProjectDir)..\core\deps\dirent;$(ProjectDir)..\core\deps\flac\src\libflac\include;$(ProjectDir)..\core\deps\flac\include;$(ProjectDir)..\core\deps\stb;$(ProjectDir)..\core\deps\libzip;$(ProjectDir)..\core\deps\xxhash;$(ProjectDir)..\core\deps\zlib</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
@@ -688,7 +665,7 @@ for /f "delims=" %%i in ('date /T') do echo #define BUILD_DATE "%%i" &gt;&gt;$(P
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;PACKAGE_VERSION="1.3.2";FLAC__HAS_OGG=0;FLAC__NO_DLL;CHD5_FLAC;CHD5_LZMA;_7ZIP_ST;_DEBUG;_CONSOLE;X86;%(PreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\core\;$(ProjectDir)..\core\khronos;$(ProjectDir)..\core\rend\gles;$(ProjectDir)..\core\deps;$(ProjectDir)..\core\deps\dirent;$(ProjectDir)..\core\deps\flac\src\libflac\include;$(ProjectDir)..\core\deps\flac\include;$(ProjectDir)..\core\deps\libpng;$(ProjectDir)..\core\deps\libzip;$(ProjectDir)..\core\deps\xxhash;$(ProjectDir)..\core\deps\zlib</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\core\;$(ProjectDir)..\core\khronos;$(ProjectDir)..\core\rend\gles;$(ProjectDir)..\core\deps;$(ProjectDir)..\core\deps\dirent;$(ProjectDir)..\core\deps\flac\src\libflac\include;$(ProjectDir)..\core\deps\flac\include;$(ProjectDir)..\core\deps\stb;$(ProjectDir)..\core\deps\libzip;$(ProjectDir)..\core\deps\xxhash;$(ProjectDir)..\core\deps\zlib</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>

@@ -8,21 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		8491687F1B782B2D00F3F2B4 /* ini.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8491687D1B782B2D00F3F2B4 /* ini.cpp */; };
-		84967CC01B8F49EE005F1140 /* png.c in Sources */ = {isa = PBXBuildFile; fileRef = 84967CA71B8F49EE005F1140 /* png.c */; };
-		84967CC11B8F49EE005F1140 /* pngerror.c in Sources */ = {isa = PBXBuildFile; fileRef = 84967CAB1B8F49EE005F1140 /* pngerror.c */; };
-		84967CC21B8F49EE005F1140 /* pngget.c in Sources */ = {isa = PBXBuildFile; fileRef = 84967CAC1B8F49EE005F1140 /* pngget.c */; };
-		84967CC31B8F49EE005F1140 /* pngmem.c in Sources */ = {isa = PBXBuildFile; fileRef = 84967CAF1B8F49EE005F1140 /* pngmem.c */; };
-		84967CC41B8F49EE005F1140 /* pngpread.c in Sources */ = {isa = PBXBuildFile; fileRef = 84967CB01B8F49EE005F1140 /* pngpread.c */; };
-		84967CC51B8F49EE005F1140 /* pngread.c in Sources */ = {isa = PBXBuildFile; fileRef = 84967CB21B8F49EE005F1140 /* pngread.c */; };
-		84967CC61B8F49EE005F1140 /* pngrio.c in Sources */ = {isa = PBXBuildFile; fileRef = 84967CB31B8F49EE005F1140 /* pngrio.c */; };
-		84967CC71B8F49EE005F1140 /* pngrtran.c in Sources */ = {isa = PBXBuildFile; fileRef = 84967CB41B8F49EE005F1140 /* pngrtran.c */; };
-		84967CC81B8F49EE005F1140 /* pngrutil.c in Sources */ = {isa = PBXBuildFile; fileRef = 84967CB51B8F49EE005F1140 /* pngrutil.c */; };
-		84967CC91B8F49EE005F1140 /* pngset.c in Sources */ = {isa = PBXBuildFile; fileRef = 84967CB61B8F49EE005F1140 /* pngset.c */; };
-		84967CCA1B8F49EE005F1140 /* pngtrans.c in Sources */ = {isa = PBXBuildFile; fileRef = 84967CB81B8F49EE005F1140 /* pngtrans.c */; };
-		84967CCB1B8F49EE005F1140 /* pngwio.c in Sources */ = {isa = PBXBuildFile; fileRef = 84967CB91B8F49EE005F1140 /* pngwio.c */; };
-		84967CCC1B8F49EE005F1140 /* pngwrite.c in Sources */ = {isa = PBXBuildFile; fileRef = 84967CBA1B8F49EE005F1140 /* pngwrite.c */; };
-		84967CCD1B8F49EE005F1140 /* pngwtran.c in Sources */ = {isa = PBXBuildFile; fileRef = 84967CBB1B8F49EE005F1140 /* pngwtran.c */; };
-		84967CCE1B8F49EE005F1140 /* pngwutil.c in Sources */ = {isa = PBXBuildFile; fileRef = 84967CBC1B8F49EE005F1140 /* pngwutil.c */; };
 		84A388B91B1CDD3E000166C0 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84A388B81B1CDD3E000166C0 /* AppDelegate.swift */; };
 		84A388BB1B1CDD3E000166C0 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 84A388BA1B1CDD3E000166C0 /* Images.xcassets */; };
 		84A388BE1B1CDD3E000166C0 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 84A388BC1B1CDD3E000166C0 /* MainMenu.xib */; };
@@ -249,6 +234,10 @@
 		AE7B907D235A53D800145C6A /* osx.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE7B9071235A53D800145C6A /* osx.cpp */; };
 		AE7B907F235A53D800145C6A /* switcher.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE7B9075235A53D800145C6A /* switcher.cpp */; };
 		AE7BCB522406EDB0007285F8 /* dsp_x64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE7BCB512406EDB0007285F8 /* dsp_x64.cpp */; };
+		AE7BCB5C243DDCAE007285F8 /* ForceFeedback.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AE7BCB5B243DDCAE007285F8 /* ForceFeedback.framework */; };
+		AE7BCB5E243DDCD1007285F8 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AE7BCB5D243DDCD1007285F8 /* AudioToolbox.framework */; };
+		AE7BCB60243DDD49007285F8 /* libiconv.2.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = AE7BCB5F243DDD3A007285F8 /* libiconv.2.tbd */; };
+		AE7BCB62243DDD92007285F8 /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AE7BCB61243DDD92007285F8 /* Carbon.framework */; };
 		AE80EDB72157D4D500F7800F /* serialize.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE80EDB62157D4D500F7800F /* serialize.cpp */; };
 		AE80EDBE2157D4E600F7800F /* naomi.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE80EDB92157D4E600F7800F /* naomi.cpp */; };
 		AE80EDBF2157D4E600F7800F /* naomi_cart.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE80EDBB2157D4E600F7800F /* naomi_cart.cpp */; };
@@ -261,7 +250,6 @@
 		AE90679D235DF80400CE473C /* osd.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE90679C235DF80400CE473C /* osd.cpp */; };
 		AED73BAE22FC0E9600ECDB64 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = AED73BAD22FC0E9600ECDB64 /* README.md */; };
 		AED73DC42303E19200ECDB64 /* sdl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AED73DC02303E19100ECDB64 /* sdl.cpp */; };
-		AED73DC72303E57C00ECDB64 /* libSDL2.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AED73DC62303E57C00ECDB64 /* libSDL2.a */; };
 		AED73DCC233ACC9800ECDB64 /* cheats.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AED73DCB233ACC9800ECDB64 /* cheats.cpp */; };
 		AED73E572348E45000ECDB64 /* CodeGen.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AED73DD82348E45000ECDB64 /* CodeGen.cpp */; };
 		AED73E582348E45000ECDB64 /* Link.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AED73DD92348E45000ECDB64 /* Link.cpp */; };
@@ -364,29 +352,6 @@
 /* Begin PBXFileReference section */
 		8491687D1B782B2D00F3F2B4 /* ini.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ini.cpp; sourceTree = "<group>"; };
 		8491687E1B782B2D00F3F2B4 /* ini.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ini.h; sourceTree = "<group>"; };
-		84967CA51B8F49EE005F1140 /* config.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = config.h; sourceTree = "<group>"; };
-		84967CA71B8F49EE005F1140 /* png.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = png.c; sourceTree = "<group>"; };
-		84967CA81B8F49EE005F1140 /* png.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = png.h; sourceTree = "<group>"; };
-		84967CA91B8F49EE005F1140 /* pngconf.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pngconf.h; sourceTree = "<group>"; };
-		84967CAA1B8F49EE005F1140 /* pngdebug.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pngdebug.h; sourceTree = "<group>"; };
-		84967CAB1B8F49EE005F1140 /* pngerror.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pngerror.c; sourceTree = "<group>"; };
-		84967CAC1B8F49EE005F1140 /* pngget.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pngget.c; sourceTree = "<group>"; };
-		84967CAD1B8F49EE005F1140 /* pnginfo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pnginfo.h; sourceTree = "<group>"; };
-		84967CAE1B8F49EE005F1140 /* pnglibconf.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pnglibconf.h; sourceTree = "<group>"; };
-		84967CAF1B8F49EE005F1140 /* pngmem.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pngmem.c; sourceTree = "<group>"; };
-		84967CB01B8F49EE005F1140 /* pngpread.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pngpread.c; sourceTree = "<group>"; };
-		84967CB11B8F49EE005F1140 /* pngpriv.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pngpriv.h; sourceTree = "<group>"; };
-		84967CB21B8F49EE005F1140 /* pngread.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pngread.c; sourceTree = "<group>"; };
-		84967CB31B8F49EE005F1140 /* pngrio.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pngrio.c; sourceTree = "<group>"; };
-		84967CB41B8F49EE005F1140 /* pngrtran.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pngrtran.c; sourceTree = "<group>"; };
-		84967CB51B8F49EE005F1140 /* pngrutil.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pngrutil.c; sourceTree = "<group>"; };
-		84967CB61B8F49EE005F1140 /* pngset.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pngset.c; sourceTree = "<group>"; };
-		84967CB71B8F49EE005F1140 /* pngstruct.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pngstruct.h; sourceTree = "<group>"; };
-		84967CB81B8F49EE005F1140 /* pngtrans.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pngtrans.c; sourceTree = "<group>"; };
-		84967CB91B8F49EE005F1140 /* pngwio.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pngwio.c; sourceTree = "<group>"; };
-		84967CBA1B8F49EE005F1140 /* pngwrite.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pngwrite.c; sourceTree = "<group>"; };
-		84967CBB1B8F49EE005F1140 /* pngwtran.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pngwtran.c; sourceTree = "<group>"; };
-		84967CBC1B8F49EE005F1140 /* pngwutil.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pngwutil.c; sourceTree = "<group>"; };
 		84A388B31B1CDD3E000166C0 /* Flycast.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Flycast.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		84A388B71B1CDD3E000166C0 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		84A388B81B1CDD3E000166C0 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
@@ -823,6 +788,10 @@
 		AE7B9072235A53D800145C6A /* osx.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = osx.h; sourceTree = "<group>"; };
 		AE7B9075235A53D800145C6A /* switcher.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = switcher.cpp; sourceTree = "<group>"; };
 		AE7BCB512406EDB0007285F8 /* dsp_x64.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = dsp_x64.cpp; sourceTree = "<group>"; };
+		AE7BCB5B243DDCAE007285F8 /* ForceFeedback.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ForceFeedback.framework; path = System/Library/Frameworks/ForceFeedback.framework; sourceTree = SDKROOT; };
+		AE7BCB5D243DDCD1007285F8 /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
+		AE7BCB5F243DDD3A007285F8 /* libiconv.2.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libiconv.2.tbd; path = usr/lib/libiconv.2.tbd; sourceTree = SDKROOT; };
+		AE7BCB61243DDD92007285F8 /* Carbon.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Carbon.framework; path = System/Library/Frameworks/Carbon.framework; sourceTree = SDKROOT; };
 		AE80EDB62157D4D500F7800F /* serialize.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = serialize.cpp; path = ../../../core/serialize.cpp; sourceTree = "<group>"; };
 		AE80EDB92157D4E600F7800F /* naomi.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = naomi.cpp; sourceTree = "<group>"; };
 		AE80EDBA2157D4E600F7800F /* naomi.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = naomi.h; sourceTree = "<group>"; };
@@ -844,7 +813,6 @@
 		AED73DC12303E19100ECDB64 /* sdl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = sdl.h; sourceTree = "<group>"; };
 		AED73DC22303E19100ECDB64 /* sdl_gamepad.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = sdl_gamepad.h; sourceTree = "<group>"; };
 		AED73DC32303E19100ECDB64 /* sdl_keyboard.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = sdl_keyboard.h; sourceTree = "<group>"; };
-		AED73DC62303E57C00ECDB64 /* libSDL2.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libSDL2.a; path = /usr/local/lib/libSDL2.a; sourceTree = "<group>"; };
 		AED73DCA233ACC9800ECDB64 /* cheats.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = cheats.h; path = ../../../core/cheats.h; sourceTree = "<group>"; };
 		AED73DCB233ACC9800ECDB64 /* cheats.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = cheats.cpp; path = ../../../core/cheats.cpp; sourceTree = "<group>"; };
 		AED73DD82348E45000ECDB64 /* CodeGen.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CodeGen.cpp; sourceTree = "<group>"; };
@@ -1085,8 +1053,11 @@
 			buildActionMask = 2147483647;
 			files = (
 				EBDF37531BB969F8001191B5 /* AudioUnit.framework in Frameworks */,
+				AE7BCB62243DDD92007285F8 /* Carbon.framework in Frameworks */,
 				EBDF37511BB969EE001191B5 /* CoreAudio.framework in Frameworks */,
-				AED73DC72303E57C00ECDB64 /* libSDL2.a in Frameworks */,
+				AE7BCB5C243DDCAE007285F8 /* ForceFeedback.framework in Frameworks */,
+				AE7BCB5E243DDCD1007285F8 /* AudioToolbox.framework in Frameworks */,
+				AE7BCB60243DDD49007285F8 /* libiconv.2.tbd in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1225,7 +1196,6 @@
 				AED73DCD2348E44F00ECDB64 /* glslang */,
 				AEE6276C220D7B7E00EC7E89 /* imgui */,
 				84B7BD2D1B72720100F9733F /* libelf */,
-				84B7BD351B72720100F9733F /* libpng */,
 				84B7BD661B72720100F9733F /* libzip */,
 				AE649C08218C553A00EF4A81 /* lzma */,
 				AEFF7ECE214D9D580068CE11 /* picotcp */,
@@ -1299,36 +1269,6 @@
 				84B7BD341B72720100F9733F /* elf64.h */,
 			);
 			path = libelf;
-			sourceTree = "<group>";
-		};
-		84B7BD351B72720100F9733F /* libpng */ = {
-			isa = PBXGroup;
-			children = (
-				84967CA51B8F49EE005F1140 /* config.h */,
-				84967CA71B8F49EE005F1140 /* png.c */,
-				84967CA81B8F49EE005F1140 /* png.h */,
-				84967CA91B8F49EE005F1140 /* pngconf.h */,
-				84967CAA1B8F49EE005F1140 /* pngdebug.h */,
-				84967CAB1B8F49EE005F1140 /* pngerror.c */,
-				84967CAC1B8F49EE005F1140 /* pngget.c */,
-				84967CAD1B8F49EE005F1140 /* pnginfo.h */,
-				84967CAE1B8F49EE005F1140 /* pnglibconf.h */,
-				84967CAF1B8F49EE005F1140 /* pngmem.c */,
-				84967CB01B8F49EE005F1140 /* pngpread.c */,
-				84967CB11B8F49EE005F1140 /* pngpriv.h */,
-				84967CB21B8F49EE005F1140 /* pngread.c */,
-				84967CB31B8F49EE005F1140 /* pngrio.c */,
-				84967CB41B8F49EE005F1140 /* pngrtran.c */,
-				84967CB51B8F49EE005F1140 /* pngrutil.c */,
-				84967CB61B8F49EE005F1140 /* pngset.c */,
-				84967CB71B8F49EE005F1140 /* pngstruct.h */,
-				84967CB81B8F49EE005F1140 /* pngtrans.c */,
-				84967CB91B8F49EE005F1140 /* pngwio.c */,
-				84967CBA1B8F49EE005F1140 /* pngwrite.c */,
-				84967CBB1B8F49EE005F1140 /* pngwtran.c */,
-				84967CBC1B8F49EE005F1140 /* pngwutil.c */,
-			);
-			path = libpng;
 			sourceTree = "<group>";
 		};
 		84B7BD661B72720100F9733F /* libzip */ = {
@@ -2150,7 +2090,10 @@
 		AED73DC52303E57C00ECDB64 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				AED73DC62303E57C00ECDB64 /* libSDL2.a */,
+				AE7BCB61243DDD92007285F8 /* Carbon.framework */,
+				AE7BCB5F243DDD3A007285F8 /* libiconv.2.tbd */,
+				AE7BCB5D243DDCD1007285F8 /* AudioToolbox.framework */,
+				AE7BCB5B243DDCAE007285F8 /* ForceFeedback.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -2640,7 +2583,6 @@
 			files = (
 				AE649C01218C552500EF4A81 /* md5.c in Sources */,
 				AEF25642227C441F00348550 /* vmem32.cpp in Sources */,
-				84967CC61B8F49EE005F1140 /* pngrio.c in Sources */,
 				84B7BF741B72720200F9733F /* descrambl.cpp in Sources */,
 				AE649BF9218C552500EF4A81 /* fixed_intrin_ssse3.c in Sources */,
 				84B7BF5D1B72720200F9733F /* gdi.cpp in Sources */,
@@ -2651,7 +2593,6 @@
 				84B7BF0B1B72720200F9733F /* zip_source_free.c in Sources */,
 				AEFF7F5C214D9D590068CE11 /* pico_socket_udp.c in Sources */,
 				AE649C00218C552500EF4A81 /* lpc_intrin_sse41.c in Sources */,
-				84967CCC1B8F49EE005F1140 /* pngwrite.c in Sources */,
 				84B7BF7A1B72720200F9733F /* gles.cpp in Sources */,
 				84B7BEFC1B72720200F9733F /* zip_get_name.c in Sources */,
 				84B7BEFA1B72720200F9733F /* zip_get_archive_flag.c in Sources */,
@@ -2683,17 +2624,14 @@
 				EBDF374F1BB96581001191B5 /* audiobackend_coreaudio.cpp in Sources */,
 				AE7B907D235A53D800145C6A /* osx.cpp in Sources */,
 				AED73E712348E45000ECDB64 /* PpScanner.cpp in Sources */,
-				84967CC31B8F49EE005F1140 /* pngmem.c in Sources */,
 				84B7BF581B72720200F9733F /* sh4_rom.cpp in Sources */,
 				84B7BF441B72720200F9733F /* driver.cpp in Sources */,
 				AE2A2D7D21D6851E004B308D /* 7zCrcOpt.c in Sources */,
 				AED73E6D2348E45000ECDB64 /* PoolAlloc.cpp in Sources */,
 				84B7BEEF1B72720200F9733F /* zip_fclose.c in Sources */,
-				84967CC11B8F49EE005F1140 /* pngerror.c in Sources */,
 				84B7BF451B72720200F9733F /* shil.cpp in Sources */,
 				84B7BF031B72720200F9733F /* zip_replace.c in Sources */,
 				84B7BF021B72720200F9733F /* zip_rename.c in Sources */,
-				84967CCB1B8F49EE005F1140 /* pngwio.c in Sources */,
 				AEE6279622247C2B00EC7E89 /* keyboard_device.cpp in Sources */,
 				AEFF7F6F214D9D590068CE11 /* pico_device.c in Sources */,
 				AEFF7F4D214D9D590068CE11 /* pico_arp.c in Sources */,
@@ -2705,8 +2643,6 @@
 				AE649BF5218C552500EF4A81 /* cpu.c in Sources */,
 				AE2A2D5D21D68470004B308D /* m4cartridge.cpp in Sources */,
 				AED73E692348E45000ECDB64 /* parseConst.cpp in Sources */,
-				84967CC51B8F49EE005F1140 /* pngread.c in Sources */,
-				84967CC71B8F49EE005F1140 /* pngrtran.c in Sources */,
 				84B7BEE81B72720200F9733F /* zip_err_str.c in Sources */,
 				AE2A2D5B21D68470004B308D /* m1cartridge.cpp in Sources */,
 				AE649C06218C552500EF4A81 /* window.c in Sources */,
@@ -2736,7 +2672,6 @@
 				AE8C27342111A31100D4D8F4 /* dsp_interp.cpp in Sources */,
 				84B7BF421B72720200F9733F /* blockmanager.cpp in Sources */,
 				84B7BEE21B72720200F9733F /* zip_add_dir.c in Sources */,
-				84967CC91B8F49EE005F1140 /* pngset.c in Sources */,
 				84B7BEE61B72720200F9733F /* zip_entry_free.c in Sources */,
 				AED73E8F2348E45000ECDB64 /* SpvPostProcess.cpp in Sources */,
 				84B7BF511B72720200F9733F /* tmu.cpp in Sources */,
@@ -2783,7 +2718,6 @@
 				AED73E892348E45000ECDB64 /* disassemble.cpp in Sources */,
 				AE649C03218C552500EF4A81 /* metadata_iterators.c in Sources */,
 				84B7BF2F1B72720200F9733F /* gdromv3.cpp in Sources */,
-				84967CC01B8F49EE005F1140 /* png.c in Sources */,
 				84B7BF591B72720200F9733F /* sh4_sched.cpp in Sources */,
 				AE7B907C235A53D800145C6A /* gl4funcs.cpp in Sources */,
 				AE649C28218C553A00EF4A81 /* CpuArch.c in Sources */,
@@ -2802,12 +2736,10 @@
 				AE649C3D218C555600EF4A81 /* chd.c in Sources */,
 				AED73E762348E45000ECDB64 /* Scan.cpp in Sources */,
 				AE649C25218C553A00EF4A81 /* Bra.c in Sources */,
-				84967CCD1B8F49EE005F1140 /* pngwtran.c in Sources */,
 				AED73E962348E46400ECDB64 /* volk.c in Sources */,
 				84B7BF401B72720200F9733F /* ta_ctx.cpp in Sources */,
 				84B7BF011B72720200F9733F /* zip_open.c in Sources */,
 				AE2A2D5A21D68470004B308D /* gdcartridge.cpp in Sources */,
-				84967CCA1B8F49EE005F1140 /* pngtrans.c in Sources */,
 				AEF256502294060400348550 /* ZipArchive.cpp in Sources */,
 				84B7BF4D1B72720200F9733F /* intc.cpp in Sources */,
 				84B7BEB01B72720200F9733F /* cl.cpp in Sources */,
@@ -2875,7 +2807,6 @@
 				AE649BFE218C552500EF4A81 /* lpc_intrin_sse.c in Sources */,
 				AE2A2D7A21D6851E004B308D /* 7zArcIn.c in Sources */,
 				84B7BF471B72720200F9733F /* sh4_interpreter.cpp in Sources */,
-				84967CC41B8F49EE005F1140 /* pngpread.c in Sources */,
 				AED73E752348E45000ECDB64 /* RemoveTree.cpp in Sources */,
 				AE2A2D7921D6851E004B308D /* 7zStream.c in Sources */,
 				AED73E582348E45000ECDB64 /* Link.cpp in Sources */,
@@ -2887,7 +2818,6 @@
 				84B7BF4E1B72720200F9733F /* mmu.cpp in Sources */,
 				AED73E852348E45000ECDB64 /* InitializeDll.cpp in Sources */,
 				AEF256512294060400348550 /* 7zArchive.cpp in Sources */,
-				84967CCE1B8F49EE005F1140 /* pngwutil.c in Sources */,
 				84B7BEBA1B72720200F9733F /* elf32.cpp in Sources */,
 				84B7BEE91B72720200F9733F /* zip_error.c in Sources */,
 				84B7BF481B72720200F9733F /* sh4_opcodes.cpp in Sources */,
@@ -2910,7 +2840,6 @@
 				84B7BEE11B72720200F9733F /* zip_add.c in Sources */,
 				84B7BF4C1B72720200F9733F /* dmac.cpp in Sources */,
 				84B7BEFD1B72720200F9733F /* zip_get_num_files.c in Sources */,
-				84967CC81B8F49EE005F1140 /* pngrutil.c in Sources */,
 				AE2A2D5E21D68470004B308D /* decrypt.cpp in Sources */,
 				AED73E722348E45000ECDB64 /* PpTokens.cpp in Sources */,
 				AEFF7F56214D9D590068CE11 /* pico_ethernet.c in Sources */,
@@ -2919,7 +2848,6 @@
 				84B7BF771B72720200F9733F /* reios_elf.cpp in Sources */,
 				AED73E8E2348E45000ECDB64 /* SpvBuilder.cpp in Sources */,
 				84B7BF5C1B72720200F9733F /* common.cpp in Sources */,
-				84967CC21B8F49EE005F1140 /* pngget.c in Sources */,
 				84B7BF681B72720200F9733F /* audiobackend_directsound.cpp in Sources */,
 				84B7BEFE1B72720200F9733F /* zip_memdup.c in Sources */,
 				84B7BEE71B72720200F9733F /* zip_entry_new.c in Sources */,
@@ -3148,10 +3076,7 @@
 				);
 				INFOPLIST_FILE = "emulator-osx/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
-				OTHER_LDFLAGS = (
-					"-L",
-					/usr/local/lib,
-				);
+				OTHER_LDFLAGS = /usr/local/lib/libSDL2.a;
 				OTHER_LIBTOOLFLAGS = "";
 				PRODUCT_BUNDLE_IDENTIFIER = com.flyinghead.Flycast;
 				PRODUCT_NAME = "$(REI_APP_NAME)";
@@ -3198,10 +3123,7 @@
 				);
 				INFOPLIST_FILE = "emulator-osx/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
-				OTHER_LDFLAGS = (
-					"-L",
-					/usr/local/lib,
-				);
+				OTHER_LDFLAGS = /usr/local/lib/libSDL2.a;
 				OTHER_LIBTOOLFLAGS = "";
 				PRODUCT_NAME = "$(REI_APP_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -3252,251 +3174,6 @@
 			};
 			name = Release;
 		};
-		AE2A23432294179900DD3034 /* DebugNaomi */ = {
-			isa = XCBuildConfiguration;
-			baseConfigurationReference = AE2A234922941A0500DD3034 /* NaomiConfig.xcconfig */;
-			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
-				CLANG_CXX_LIBRARY = "libc++";
-				CLANG_ENABLE_MODULES = YES;
-				CLANG_ENABLE_OBJC_ARC = YES;
-				CLANG_WARN_BOOL_CONVERSION = YES;
-				CLANG_WARN_CONSTANT_CONVERSION = YES;
-				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
-				CLANG_WARN_EMPTY_BODY = YES;
-				CLANG_WARN_ENUM_CONVERSION = YES;
-				CLANG_WARN_INT_CONVERSION = YES;
-				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
-				CLANG_WARN_UNREACHABLE_CODE = YES;
-				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				CODE_SIGN_IDENTITY = "-";
-				COPY_PHASE_STRIP = NO;
-				ENABLE_STRICT_OBJC_MSGSEND = YES;
-				GCC_C_LANGUAGE_STANDARD = gnu99;
-				GCC_DYNAMIC_NO_PIC = NO;
-				GCC_OPTIMIZATION_LEVEL = 0;
-				GCC_PREPROCESSOR_DEFINITIONS = (
-					TARGET_NO_NIXPROF,
-					TARGET_NO_COREIO_HTTP,
-					TARGET_NO_OPENMP,
-					ENABLE_MODEM,
-					CHD5_LZMA,
-					_7ZIP_ST,
-					CHD5_FLAC,
-					"HAVE_CONFIG_H=1",
-					XXH_INLINE_ALL,
-					"${CFLAGS}",
-				);
-				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
-				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
-				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
-				GCC_WARN_UNDECLARED_SELECTOR = YES;
-				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
-				GCC_WARN_UNUSED_FUNCTION = YES;
-				GCC_WARN_UNUSED_VARIABLE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 10.9;
-				MTL_ENABLE_DEBUG_INFO = YES;
-				ONLY_ACTIVE_ARCH = YES;
-				SDKROOT = macosx;
-				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
-				SWIFT_VERSION = 5.0;
-			};
-			name = DebugNaomi;
-		};
-		AE2A23442294179900DD3034 /* DebugNaomi */ = {
-			isa = XCBuildConfiguration;
-			baseConfigurationReference = AE2A234922941A0500DD3034 /* NaomiConfig.xcconfig */;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				COMBINE_HIDPI_IMAGES = YES;
-				DEVELOPMENT_TEAM = "";
-				ENABLE_HARDENED_RUNTIME = NO;
-				GCC_PREPROCESSOR_DEFINITIONS = (
-					"DEBUG=1",
-					"$(inherited)",
-				);
-				"GCC_PREPROCESSOR_DEFINITIONS[arch=i386]" = (
-					TARGET_OSX,
-					"$(inherited)",
-				);
-				"GCC_PREPROCESSOR_DEFINITIONS[arch=x86_64]" = (
-					TARGET_OSX_X64,
-					"$(inherited)",
-				);
-				HEADER_SEARCH_PATHS = (
-					"$(inherited)",
-					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
-					../../../core/deps,
-					../../../core,
-					../../../core/khronos,
-					"../../../core/deps/picotcp/**",
-					../../../core/deps/flac/include,
-					../../../core/deps/flac/src/libFLAC/include,
-					../../../core/deps/libpng,
-					../../../core/deps/libzip,
-					../../../core/deps/xxHash,
-					../../../core/deps/zlib,
-					../../../core/deps/glslang,
-					../../../core/deps/glm,
-					../../../core/deps/xbyak,
-					../../../core/deps/stb,
-					/usr/local/include,
-				);
-				INFOPLIST_FILE = "emulator-osx/Info.plist";
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
-				OTHER_LDFLAGS = (
-					"-L",
-					/usr/local/lib,
-				);
-				OTHER_LIBTOOLFLAGS = "";
-				PRODUCT_BUNDLE_IDENTIFIER = com.flyinghead.Flycast;
-				PRODUCT_NAME = "$(REI_APP_NAME)";
-				SWIFT_OBJC_BRIDGING_HEADER = "emulator-osx/emulator-osx-Bridging-Header.h";
-				SWIFT_VERSION = 5.0;
-			};
-			name = DebugNaomi;
-		};
-		AE2A23452294179900DD3034 /* DebugNaomi */ = {
-			isa = XCBuildConfiguration;
-			baseConfigurationReference = AE2A234922941A0500DD3034 /* NaomiConfig.xcconfig */;
-			buildSettings = {
-				BUNDLE_LOADER = "$(TEST_HOST)";
-				COMBINE_HIDPI_IMAGES = YES;
-				DEVELOPMENT_TEAM = "";
-				FRAMEWORK_SEARCH_PATHS = (
-					"$(DEVELOPER_FRAMEWORKS_DIR)",
-					"$(inherited)",
-				);
-				GCC_PREPROCESSOR_DEFINITIONS = (
-					"DEBUG=1",
-					"$(inherited)",
-				);
-				INFOPLIST_FILE = "emulator-osxTests/Info.plist";
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
-				PRODUCT_NAME = "reicast-osxTests";
-				SWIFT_VERSION = 5.0;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/reicast-osx.app/Contents/MacOS/reicast-osx";
-			};
-			name = DebugNaomi;
-		};
-		AE2A2346229417A400DD3034 /* ReleaseNaomi */ = {
-			isa = XCBuildConfiguration;
-			baseConfigurationReference = AE2A234922941A0500DD3034 /* NaomiConfig.xcconfig */;
-			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
-				CLANG_CXX_LIBRARY = "libc++";
-				CLANG_ENABLE_MODULES = YES;
-				CLANG_ENABLE_OBJC_ARC = YES;
-				CLANG_WARN_BOOL_CONVERSION = YES;
-				CLANG_WARN_CONSTANT_CONVERSION = YES;
-				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
-				CLANG_WARN_EMPTY_BODY = YES;
-				CLANG_WARN_ENUM_CONVERSION = YES;
-				CLANG_WARN_INT_CONVERSION = YES;
-				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
-				CLANG_WARN_UNREACHABLE_CODE = YES;
-				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				CODE_SIGN_IDENTITY = "-";
-				COPY_PHASE_STRIP = YES;
-				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				ENABLE_NS_ASSERTIONS = NO;
-				ENABLE_STRICT_OBJC_MSGSEND = YES;
-				GCC_C_LANGUAGE_STANDARD = gnu99;
-				GCC_PREPROCESSOR_DEFINITIONS = (
-					TARGET_NO_NIXPROF,
-					TARGET_NO_COREIO_HTTP,
-					TARGET_NO_OPENMP,
-					ENABLE_MODEM,
-					CHD5_LZMA,
-					_7ZIP_ST,
-					CHD5_FLAC,
-					"HAVE_CONFIG_H=1",
-					NDEBUG,
-					XXH_INLINE_ALL,
-					"${CFLAGS}",
-				);
-				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
-				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
-				GCC_WARN_UNDECLARED_SELECTOR = YES;
-				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
-				GCC_WARN_UNUSED_FUNCTION = YES;
-				GCC_WARN_UNUSED_VARIABLE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 10.9;
-				MTL_ENABLE_DEBUG_INFO = NO;
-				SDKROOT = macosx;
-				SWIFT_VERSION = 5.0;
-			};
-			name = ReleaseNaomi;
-		};
-		AE2A2347229417A400DD3034 /* ReleaseNaomi */ = {
-			isa = XCBuildConfiguration;
-			baseConfigurationReference = AE2A234922941A0500DD3034 /* NaomiConfig.xcconfig */;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				COMBINE_HIDPI_IMAGES = YES;
-				ENABLE_HARDENED_RUNTIME = NO;
-				GCC_PREPROCESSOR_DEFINITIONS = "$(inherited)";
-				"GCC_PREPROCESSOR_DEFINITIONS[arch=i386]" = (
-					TARGET_OSX,
-					"$(inherited)",
-				);
-				"GCC_PREPROCESSOR_DEFINITIONS[arch=x86_64]" = (
-					TARGET_OSX_X64,
-					"$(inherited)",
-				);
-				HEADER_SEARCH_PATHS = (
-					"$(inherited)",
-					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
-					../../../core/deps,
-					../../../core,
-					../../../core/khronos,
-					"../../../core/deps/picotcp/**",
-					../../../core/deps/flac/include,
-					../../../core/deps/flac/src/libFLAC/include,
-					../../../core/deps/libpng,
-					../../../core/deps/libzip,
-					../../../core/deps/xxHash,
-					../../../core/deps/zlib,
-					../../../core/deps/glslang,
-					../../../core/deps/glm,
-					../../../core/deps/xbyak,
-					../../../core/deps/stb,
-					/usr/local/include,
-				);
-				INFOPLIST_FILE = "emulator-osx/Info.plist";
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
-				OTHER_LDFLAGS = (
-					"-L",
-					/usr/local/lib,
-				);
-				OTHER_LIBTOOLFLAGS = "";
-				PRODUCT_NAME = "$(REI_APP_NAME)";
-				SWIFT_OBJC_BRIDGING_HEADER = "emulator-osx/emulator-osx-Bridging-Header.h";
-				SWIFT_VERSION = 5.0;
-			};
-			name = ReleaseNaomi;
-		};
-		AE2A2348229417A400DD3034 /* ReleaseNaomi */ = {
-			isa = XCBuildConfiguration;
-			baseConfigurationReference = AE2A234922941A0500DD3034 /* NaomiConfig.xcconfig */;
-			buildSettings = {
-				BUNDLE_LOADER = "$(TEST_HOST)";
-				COMBINE_HIDPI_IMAGES = YES;
-				DEVELOPMENT_TEAM = "";
-				FRAMEWORK_SEARCH_PATHS = (
-					"$(DEVELOPER_FRAMEWORKS_DIR)",
-					"$(inherited)",
-				);
-				INFOPLIST_FILE = "emulator-osxTests/Info.plist";
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
-				PRODUCT_NAME = "reicast-osxTests";
-				SWIFT_VERSION = 5.0;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/reicast-osx.app/Contents/MacOS/reicast-osx";
-			};
-			name = ReleaseNaomi;
-		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -3504,9 +3181,7 @@
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				84A388CB1B1CDD3F000166C0 /* Debug */,
-				AE2A23432294179900DD3034 /* DebugNaomi */,
 				84A388CC1B1CDD3F000166C0 /* Release */,
-				AE2A2346229417A400DD3034 /* ReleaseNaomi */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
@@ -3515,9 +3190,7 @@
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				84A388CE1B1CDD3F000166C0 /* Debug */,
-				AE2A23442294179900DD3034 /* DebugNaomi */,
 				84A388CF1B1CDD3F000166C0 /* Release */,
-				AE2A2347229417A400DD3034 /* ReleaseNaomi */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
@@ -3526,9 +3199,7 @@
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				84A388D11B1CDD3F000166C0 /* Debug */,
-				AE2A23452294179900DD3034 /* DebugNaomi */,
 				84A388D21B1CDD3F000166C0 /* Release */,
-				AE2A2348229417A400DD3034 /* ReleaseNaomi */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

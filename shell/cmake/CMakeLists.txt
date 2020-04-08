@@ -77,7 +77,7 @@ endif()
 include_directories(${base}/deps)
 include_directories(${base}/core)
 include_directories(${base}/core/khronos/)
-include_directories(${base}/core/deps/libpng)
+include_directories(${base}/core/deps/stb)
 
 add_directory(core/cfg/)
 add_directory(core/hw/aica)
@@ -104,7 +104,7 @@ add_directory(core/deps/chdr)
 add_directory(core/deps/coreio)
 add_directory(core/deps/crypto)
 add_directory(core/deps/chdpsr)
-add_directory(core/deps/libpng)
+add_directory(core/deps/stb)
 # add_directory(core/khronos/GL3)
 
 # Core stuff:

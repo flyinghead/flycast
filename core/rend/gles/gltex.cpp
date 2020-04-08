@@ -5,69 +5,8 @@
 
 #include <cstdio>
 #include <cstdlib>
-#include <png.h>
 
-/*
-Textures
-
-Textures are converted to native OpenGL textures
-The mapping is done with tcw:tsp -> GL texture. That includes stuff like
-filtering/ texture repeat
-
-To save space native formats are used for 1555/565/4444 (only bit shuffling is done)
-YUV is converted to 8888
-PALs are decoded to their unpaletted format (5551/565/4444/8888 depending on palette type)
-
-Mipmaps
-	not supported for now
-
-Compression
-	look into it, but afaik PVRC is not realtime doable
-*/
-
-extern u32 decoded_colors[3][65536];
 TextureCache TexCache;
-
-static void dumpRtTexture(u32 name, u32 w, u32 h) {
-	char sname[256];
-	sprintf(sname, "texdump/%x-%d.png", name, FrameCount);
-	FILE *fp = fopen(sname, "wb");
-    if (fp == NULL)
-    	return;
-
-	glPixelStorei(GL_PACK_ALIGNMENT, 1);
-
-	png_bytepp rows = (png_bytepp)malloc(h * sizeof(png_bytep));
-	for (u32 y = 0; y < h; y++) {
-		rows[y] = (png_bytep)malloc(w * 4);	// 32-bit per pixel
-		glReadPixels(0, y, w, 1, GL_RGBA, GL_UNSIGNED_BYTE, rows[y]);
-	}
-
-    png_structp png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
-    png_infop info_ptr = png_create_info_struct(png_ptr);
-
-    png_init_io(png_ptr, fp);
-
-
-    /* write header */
-    png_set_IHDR(png_ptr, info_ptr, w, h,
-                         8, PNG_COLOR_TYPE_RGBA, PNG_INTERLACE_NONE,
-                         PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
-
-    png_write_info(png_ptr, info_ptr);
-
-
-            /* write bytes */
-    png_write_image(png_ptr, rows);
-
-    /* end write */
-    png_write_end(png_ptr, NULL);
-    fclose(fp);
-
-	for (u32 y = 0; y < h; y++)
-		free(rows[y]);
-	free(rows);
-}
 
 void TextureCacheData::UploadToGPU(int width, int height, u8 *temp_tex_buffer, bool mipmapped, bool mipmapsIncluded)
 {
@@ -92,6 +31,7 @@ void TextureCacheData::UploadToGPU(int width, int height, u8 *temp_tex_buffer, b
 		break;
 	default:
 		die("Unsupported texture type");
+		gltype = 0;
 		break;
 	}
 	if (mipmapsIncluded)
@@ -125,6 +65,7 @@ void TextureCacheData::UploadToGPU(int width, int height, u8 *temp_tex_buffer, b
 				break;
 			default:
 			    die("Unsupported texture format");
+			    internalFormat = 0;
 			    break;
 			}
 			if (Updates == 1)
@@ -179,10 +120,10 @@ void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
 	gl.rtt.TexAddr=addy>>3;
 
 	// Find the smallest power of two texture that fits the viewport
-	int fbh2 = 2;
+	u32 fbh2 = 2;
 	while (fbh2 < fbh)
 		fbh2 *= 2;
-	int fbw2 = 2;
+	u32 fbw2 = 2;
 	while (fbw2 < fbw)
 		fbw2 *= 2;
 
@@ -294,9 +235,6 @@ void ReadRTTBuffer() {
 			PixelBuffer<u32> tmp_buf;
 			tmp_buf.init(w, h);
 
-			const u16 kval_bit = (FB_W_CTRL.fb_kval & 0x80) << 8;
-			const u8 fb_alpha_threshold = FB_W_CTRL.fb_alpha_threshold;
-
 			u8 *p = (u8 *)tmp_buf.data();
 			glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, p);
 
@@ -330,8 +268,8 @@ void ReadRTTBuffer() {
     		break;
     	}
     	TSP tsp = { 0 };
-    	for (tsp.TexU = 0; tsp.TexU <= 7 && (8 << tsp.TexU) < w; tsp.TexU++);
-    	for (tsp.TexV = 0; tsp.TexV <= 7 && (8 << tsp.TexV) < h; tsp.TexV++);
+    	for (tsp.TexU = 0; tsp.TexU <= 7 && (8u << tsp.TexU) < w; tsp.TexU++);
+    	for (tsp.TexV = 0; tsp.TexV <= 7 && (8u << tsp.TexV) < h; tsp.TexV++);
 
     	TextureCacheData *texture_data = TexCache.getTextureCacheData(tsp, tcw);
     	if (texture_data->texID != 0)

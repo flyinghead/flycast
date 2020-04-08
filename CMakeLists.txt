@@ -124,7 +124,6 @@ file(GLOB chdr_SRCS  ${d_deps}/chdr/*.c)
 file(GLOB lzma_SRCS  ${d_deps}/lzma/*.c)
 file(GLOB lz_SRCS    ${d_deps}/zlib/*.c)
 file(GLOB lzip_SRCS  ${d_deps}/libzip/*.c)
-file(GLOB lpng_SRCS  ${d_deps}/libpng/*.c)
 file(GLOB lelf_SRCS  ${d_deps}/libelf/el*.cpp)
 file(GLOB crypt_SRCS ${d_deps}/crypto/*.cpp)
 file(GLOB imgui_SRCS ${d_deps}/imgui/*.cpp)
@@ -136,7 +135,6 @@ set(pico_SRCS ${picoModS} ${picoStkS})
 
 set(deps_SRCS
   ${lz_SRCS}
-  ${lpng_SRCS}
   ${lelf_SRCS}
   ${chdr_SRCS}
   ${crypt_SRCS}

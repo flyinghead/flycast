@@ -937,7 +937,6 @@
 				9C7A395918C806DE0070BB5F /* chdr */,
 				9C7A395D18C806DE0070BB5F /* crypto */,
 				9C7A396218C806DE0070BB5F /* libelf */,
-				9C7A396A18C806DE0070BB5F /* libpng */,
 				9C7A397E18C806DF0070BB5F /* libzip */,
 				AE8C274421122F0E00D4D8F4 /* xbrz */,
 			);
@@ -986,37 +985,6 @@
 				9C7A396918C806DE0070BB5F /* elf64.h */,
 			);
 			path = libelf;
-			sourceTree = "<group>";
-		};
-		9C7A396A18C806DE0070BB5F /* libpng */ = {
-			isa = PBXGroup;
-			children = (
-				84967C731B8F492C005F1140 /* arm */,
-				84967C771B8F492C005F1140 /* config.h */,
-				84967C791B8F492C005F1140 /* png.c */,
-				84967C7A1B8F492C005F1140 /* png.h */,
-				84967C7B1B8F492C005F1140 /* pngconf.h */,
-				84967C7C1B8F492C005F1140 /* pngdebug.h */,
-				84967C7D1B8F492C005F1140 /* pngerror.c */,
-				84967C7E1B8F492C005F1140 /* pngget.c */,
-				84967C7F1B8F492C005F1140 /* pnginfo.h */,
-				84967C801B8F492C005F1140 /* pnglibconf.h */,
-				84967C811B8F492C005F1140 /* pngmem.c */,
-				84967C821B8F492C005F1140 /* pngpread.c */,
-				84967C831B8F492C005F1140 /* pngpriv.h */,
-				84967C841B8F492C005F1140 /* pngread.c */,
-				84967C851B8F492C005F1140 /* pngrio.c */,
-				84967C861B8F492C005F1140 /* pngrtran.c */,
-				84967C871B8F492C005F1140 /* pngrutil.c */,
-				84967C881B8F492C005F1140 /* pngset.c */,
-				84967C891B8F492C005F1140 /* pngstruct.h */,
-				84967C8A1B8F492C005F1140 /* pngtrans.c */,
-				84967C8B1B8F492C005F1140 /* pngwio.c */,
-				84967C8C1B8F492C005F1140 /* pngwrite.c */,
-				84967C8D1B8F492C005F1140 /* pngwtran.c */,
-				84967C8E1B8F492C005F1140 /* pngwutil.c */,
-			);
-			path = libpng;
 			sourceTree = "<group>";
 		};
 		9C7A397E18C806DF0070BB5F /* libzip */ = {

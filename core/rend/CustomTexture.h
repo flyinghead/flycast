@@ -21,9 +21,9 @@
 #include "TexCache.h"
 #include "stdclass.h"
 
-#include <set>
 #include <string>
 #include <vector>
+#include <map>
 
 class CustomTexture {
 public:

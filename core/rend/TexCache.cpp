@@ -572,7 +572,7 @@ void BaseTextureCacheData::Update()
 		if (mipmapped)
 		{
 			pb32.init(w, h, true);
-			for (u32 i = 0; i <= tsp.TexU + 3; i++)
+			for (u32 i = 0; i <= tsp.TexU + 3u; i++)
 			{
 				pb32.set_mipmap(i);
 				u32 vram_addr;
@@ -621,7 +621,7 @@ void BaseTextureCacheData::Update()
 		if (mipmapped)
 		{
 			pb16.init(w, h, true);
-			for (u32 i = 0; i <= tsp.TexU + 3; i++)
+			for (u32 i = 0; i <= tsp.TexU + 3u; i++)
 			{
 				pb16.set_mipmap(i);
 				u32 vram_addr;
@@ -865,46 +865,12 @@ void rend_text_invl(vram_block* bl)
 }
 
 #ifdef TEST_AUTOMATION
-#include <png.h>
+#include <stb_image_write.h>
 
 void dump_screenshot(u8 *buffer, u32 width, u32 height, bool alpha, u32 rowPitch, bool invertY)
 {
-	FILE *fp = fopen("screenshot.png", "wb");
-	if (fp == NULL)
-	{
-		ERROR_LOG(RENDERER, "Failed to open screenshot.png for writing");
-		return;
-	}
-
-	png_bytepp rows = (png_bytepp)malloc(height * sizeof(png_bytep));
-	for (int y = 0; y < height; y++)
-	{
-		rows[invertY ? (height - y - 1) : y] = (png_bytep)buffer + y * (rowPitch ? rowPitch : width * (alpha ? 4 : 3));
-	}
-
-	png_structp png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
-	png_infop info_ptr = png_create_info_struct(png_ptr);
-
-	png_init_io(png_ptr, fp);
-
-
-	// write header
-	png_set_IHDR(png_ptr, info_ptr, width, height,
-			 8, alpha ? PNG_COLOR_TYPE_RGBA : PNG_COLOR_TYPE_RGB, PNG_INTERLACE_NONE,
-			 PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
-
-	png_write_info(png_ptr, info_ptr);
-
-
-	// write bytes
-	png_write_image(png_ptr, rows);
-
-	// end write
-	png_write_end(png_ptr, NULL);
-	fclose(fp);
-
-	free(rows);
-
+	stbi_flip_vertically_on_write((int)invertY);
+	stbi_write_png("screenshot.png", width, height, alpha ? 4 : 3, buffer, rowPitch);
 }
 #endif
 

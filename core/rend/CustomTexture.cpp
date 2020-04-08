@@ -21,13 +21,14 @@
 
 #include <algorithm>
 #include <dirent.h>
-#include <png.h>
 #include <sstream>
 #include <sys/stat.h>
 #define STB_IMAGE_IMPLEMENTATION
 #define STBI_ONLY_JPEG
 #define STBI_ONLY_PNG
 #include <stb_image.h>
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include <stb_image_write.h>
 
 CustomTexture custom_texture;
 
@@ -153,7 +154,7 @@ void CustomTexture::LoadCustomTextureAsync(BaseTextureCacheData *texture_data)
 	wakeup_thread.Set();
 }
 
-void CustomTexture::DumpTexture(u32 hash, int w, int h, TextureType textype, void *temp_tex_buffer)
+void CustomTexture::DumpTexture(u32 hash, int w, int h, TextureType textype, void *src_buffer)
 {
 	std::string base_dump_dir = get_writable_data_path(DATA_PATH "texdump/");
 	if (!file_exists(base_dump_dir))
@@ -168,20 +169,13 @@ void CustomTexture::DumpTexture(u32 hash, int w, int h, TextureType textype, voi
 
 	std::stringstream path;
 	path << base_dump_dir << std::hex << hash << ".png";
-	FILE *fp = fopen(path.str().c_str(), "wb");
-	if (fp == NULL)
-	{
-		WARN_LOG(RENDERER, "Failed to open %s for writing", path.str().c_str());
-		return;
-	}
 
-	u16 *src = (u16 *)temp_tex_buffer;
+	u16 *src = (u16 *)src_buffer;
+	u8 *dst_buffer = (u8 *)malloc(w * h * 4);	// 32-bit per pixel
+	u8 *dst = dst_buffer;
 
-	png_bytepp rows = (png_bytepp)malloc(h * sizeof(png_bytep));
 	for (int y = 0; y < h; y++)
 	{
-		rows[h - y - 1] = (png_bytep)malloc(w * 4);	// 32-bit per pixel
-		u8 *dst = (u8 *)rows[h - y - 1];
 		switch (textype)
 		{
 		case TextureType::_4444:
@@ -224,37 +218,15 @@ void CustomTexture::DumpTexture(u32 hash, int w, int h, TextureType textype, voi
 			break;
 		default:
 			WARN_LOG(RENDERER, "dumpTexture: unsupported picture format %x", (u32)textype);
-			fclose(fp);
-			free(rows[0]);
-			free(rows);
+			free(dst_buffer);
 			return;
 		}
 	}
 
-	png_structp png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
-	png_infop info_ptr = png_create_info_struct(png_ptr);
+	stbi_flip_vertically_on_write(1);
+	stbi_write_png(path.str().c_str(), w, h, STBI_rgb_alpha, dst_buffer, 0);
 
-	png_init_io(png_ptr, fp);
-
-
-	// write header
-	png_set_IHDR(png_ptr, info_ptr, w, h,
-			 8, PNG_COLOR_TYPE_RGBA, PNG_INTERLACE_NONE,
-			 PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
-
-	png_write_info(png_ptr, info_ptr);
-
-
-	// write bytes
-	png_write_image(png_ptr, rows);
-
-	// end write
-	png_write_end(png_ptr, NULL);
-	fclose(fp);
-
-	for (int y = 0; y < h; y++)
-		free(rows[y]);
-	free(rows);
+	free(dst_buffer);
 }
 
 void CustomTexture::LoadMap()

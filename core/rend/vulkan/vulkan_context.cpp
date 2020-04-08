@@ -983,6 +983,7 @@ void VulkanContext::DoSwapAutomation()
 			device->unmapMemory(*deviceMemory);
 		}
 		dc_exit();
+		Term();
 		exit(0);
 	}
 #endif
