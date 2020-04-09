@@ -16,18 +16,12 @@
     You should have received a copy of the GNU General Public License
     along with reicast.  If not, see <https://www.gnu.org/licenses/>.
  */
-#include <algorithm>
-#include <cmath>
-#include <dirent.h>
-#include <sys/stat.h>
 
 #include "gui.h"
-#include "oslib/oslib.h"
 #include "cfg/cfg.h"
 #include "hw/maple/maple_if.h"
 #include "hw/maple/maple_devs.h"
 #include "hw/naomi/naomi_cart.h"
-#include "hw/naomi/naomi_roms.h"
 #include "imgui/imgui.h"
 #include "gles/imgui_impl_opengl3.h"
 #include "imgui/roboto_medium.h"
@@ -36,6 +30,7 @@
 #include "input/keyboard_device.h"
 #include "gui_util.h"
 #include "gui_android.h"
+#include "game_scanner.h"
 #include "version.h"
 #include "oslib/audiostream.h"
 #include "imgread/common.h"
@@ -44,9 +39,7 @@
 extern void dc_loadstate();
 extern void dc_savestate();
 extern void dc_stop();
-extern void dc_reset(bool manual);
 extern void dc_resume();
-extern void dc_term();
 extern void dc_start_game(const char *path);
 extern void UpdateInputState(u32 port);
 extern bool game_started;
@@ -69,6 +62,8 @@ static std::string error_msg;
 static void display_vmus();
 static void reset_vmus();
 static void term_vmus();
+
+GameScanner scanner;
 
 float gui_get_scaling()
 {
@@ -248,6 +243,7 @@ void ImGui_Impl_NewFrame()
 }
 
 #if 0
+#include "oslib/timeseries.h"
 TimeSeries renderTimes;
 TimeSeries vblankTimes;
 
@@ -292,6 +288,7 @@ void gui_open_settings()
 
 static void gui_start_game(const std::string& path)
 {
+	scanner.stop();
 	try {
 		dc_start_game(path.empty() ? NULL : path.c_str());
 	} catch (ReicastException& ex) {
@@ -646,14 +643,12 @@ static void error_popup()
 	}
 }
 
-static bool game_list_done;		// Set to false to refresh the game list
-
 void directory_selected_callback(bool cancelled, std::string selection)
 {
 	if (!cancelled)
 	{
 		settings.dreamcast.ContentPath.push_back(selection);
-		game_list_done = false;
+		scanner.refresh();
 	}
 }
 
@@ -815,7 +810,7 @@ static void gui_display_settings()
             	if (to_delete >= 0)
             	{
             		settings.dreamcast.ContentPath.erase(settings.dreamcast.ContentPath.begin() + to_delete);
-        			game_list_done = false;
+        			scanner.refresh();
             	}
             }
             ImGui::SameLine();
@@ -833,9 +828,9 @@ static void gui_display_settings()
                 ImGui::ListBoxFooter();
             }
             ImGui::SameLine();
-            ShowHelpMarker("The directory where reicast saves configuration files and VMUs. BIOS files should be in the data subdirectory");
+            ShowHelpMarker("The directory where reicast saves configuration files and VMUs. BIOS files should be in a subfolder named \"data\"");
 	    	if (ImGui::Checkbox("Hide Legacy Naomi Roms", &settings.dreamcast.HideLegacyNaomiRoms))
-	    		game_list_done = false;
+	    		scanner.refresh();
             ImGui::SameLine();
             ShowHelpMarker("Hide .bin, .dat and .lst files from the content browser");
 
@@ -1126,7 +1121,7 @@ static void gui_display_settings()
 		    {
 		    	ImGui::SliderInt("Texture Upscaling", (int *)&settings.rend.TextureUpscale, 1, 8);
 	            ImGui::SameLine();
-	            ShowHelpMarker("Upscale textures with the xBRZ algorithm. Only on fast platforms and for certain games");
+	            ShowHelpMarker("Upscale textures with the xBRZ algorithm. Only on fast platforms and for certain 2D games");
 		    	ImGui::SliderInt("Upscaled Texture Max Size", (int *)&settings.rend.MaxFilteredTextureSize, 8, 1024);
 	            ImGui::SameLine();
 	            ShowHelpMarker("Textures larger than this dimension squared will not be upscaled");
@@ -1148,7 +1143,7 @@ static void gui_display_settings()
             ShowHelpMarker("Disable the emulator sound output");
 			ImGui::Checkbox("Enable DSP", &settings.aica.DSPEnabled);
             ImGui::SameLine();
-            ShowHelpMarker("Enable the Dreamcast Digital Sound Processor. Only recommended on fast and arm64 platforms");
+            ShowHelpMarker("Enable the Dreamcast Digital Sound Processor. Only recommended on fast platforms");
             ImGui::Checkbox("Limit Emulator Speed", &settings.aica.LimitFPS);
             ImGui::SameLine();
 			ShowHelpMarker("Whether to limit the emulator speed using the audio output. Recommended");
@@ -1291,10 +1286,10 @@ static void gui_display_settings()
 		    {
 				ImGui::Checkbox("HLE BIOS", &settings.bios.UseReios);
 	            ImGui::SameLine();
-	            ShowHelpMarker("Use high-level BIOS emulation if BIOS files are not found");
+	            ShowHelpMarker("Force high-level BIOS emulation");
 				ImGui::Checkbox("Force Windows CE", &settings.dreamcast.ForceWindowsCE);
 	            ImGui::SameLine();
-	            ShowHelpMarker("Enable full MMU emulation and other Windows CE settings");
+	            ShowHelpMarker("Enable full MMU emulation and other Windows CE settings. Do not enable unless necessary");
 #ifndef __ANDROID
 				ImGui::Checkbox("Serial Console", &settings.debug.SerialConsole);
 	            ImGui::SameLine();
@@ -1421,79 +1416,6 @@ static void gui_display_settings()
    	settings.dynarec.Enable = (bool)dynarec_enabled;
 }
 
-struct GameMedia {
-	std::string name;
-	std::string path;
-};
-
-static bool operator<(const GameMedia &left, const GameMedia &right)
-{
-	return left.name < right.name;
-}
-
-static void add_game_directory(const std::string& path, std::vector<GameMedia>& game_list)
-{
-	//printf("Exploring %s\n", path.c_str());
-	DIR *dir = opendir(path.c_str());
-	if (dir == NULL)
-		return;
-	while (true)
-	{
-		struct dirent *entry = readdir(dir);
-		if (entry == NULL)
-			break;
-		std::string name(entry->d_name);
-		if (name == "." || name == "..")
-			continue;
-		std::string child_path = path + "/" + name;
-		bool is_dir = false;
-#ifndef _WIN32
-		if (entry->d_type == DT_DIR)
-			is_dir = true;
-		if (entry->d_type == DT_UNKNOWN || entry->d_type == DT_LNK)
-#endif
-		{
-			struct stat st;
-			if (stat(child_path.c_str(), &st) != 0)
-				continue;
-			if (S_ISDIR(st.st_mode))
-				is_dir = true;
-		}
-		if (is_dir)
-		{
-			add_game_directory(child_path, game_list);
-		}
-		else
-		{
-			std::string::size_type dotpos = name.find_last_of('.');
-			if (dotpos == std::string::npos || dotpos == name.size() - 1)
-				continue;
-			std::string extension = name.substr(dotpos);
-			if (stricmp(extension.c_str(), ".zip") && stricmp(extension.c_str(), ".7z")
-					&& (settings.dreamcast.HideLegacyNaomiRoms
-							|| (stricmp(extension.c_str(), ".bin") && stricmp(extension.c_str(), ".lst")
-									&& stricmp(extension.c_str(), ".dat")))
-					&& stricmp(extension.c_str(), ".cdi") && stricmp(extension.c_str(), ".gdi")
-					&& stricmp(extension.c_str(), ".chd")  && stricmp(extension.c_str(), ".cue"))
-				continue;
-			game_list.push_back({ name, child_path });
-		}
-	}
-	closedir(dir);
-}
-
-static std::vector<GameMedia> game_list;
-
-static void fetch_game_list()
-{
-	if (game_list_done)
-		return;
-	game_list.clear();
-	for (auto& path : settings.dreamcast.ContentPath)
-		add_game_directory(path, game_list);
-	std::stable_sort(game_list.begin(), game_list.end());
-	game_list_done = true;
-}
 
 static void gui_display_demo()
 {
@@ -1503,22 +1425,6 @@ static void gui_display_demo()
 	ImGui::ShowDemoWindow();
 	ImGui::Render();
 	ImGui_impl_RenderDrawData(ImGui::GetDrawData(), false);
-}
-
-static std::string get_game_description(std::string name)
-{
-    size_t dot = name.find_last_of('.');
-    if (dot != std::string::npos && dot != name.size() - 1)
-        name = name.substr(0, dot);
-
-	int gameid = 0;
-	for (; Games[gameid].name != NULL; gameid++)
-		if (!stricmp(Games[gameid].name, name.c_str()))
-			break;
-	if (Games[gameid].name == NULL)
-		return std::string();
-
-	return std::string(Games[gameid].description);
 }
 
 static void gui_display_content()
@@ -1550,7 +1456,7 @@ static void gui_display_content()
     }
     ImGui::PopStyleVar();
 
-    fetch_game_list();
+    scanner.fetch_game_list();
 
 	// Only if Filter and Settings aren't focused... ImGui::SetNextWindowFocus();
 	ImGui::BeginChild(ImGui::GetID("library"), ImVec2(0, 0), true);
@@ -1566,45 +1472,42 @@ static void gui_display_content()
 		}
 		ImGui::PopID();
 
-        for (const auto& game : game_list)
-        {
-        	if (gui_state == SelectDisk)
-        	{
-    			std::string::size_type dotpos = game.name.find_last_of('.');
-    			if (dotpos == std::string::npos || dotpos == game.name.size() - 1)
-    				continue;
-    			std::string extension = game.name.substr(dotpos);
-    			if (stricmp(extension.c_str(), ".gdi") && stricmp(extension.c_str(), ".chd")
-    					&& stricmp(extension.c_str(), ".cdi") && stricmp(extension.c_str(), ".cue"))
-    				// Only dreamcast disks
-    				continue;
-        	}
-            std::string description,selection;
-            description = get_game_description(game.name);
-            if (description.empty())
-                selection = game.name;
-            else
-                selection = game.name + " (" + description + ")";
-	        if (filter.PassFilter(selection.c_str()))
-        	{
-    			ImGui::PushID(game.path.c_str());
-				if (ImGui::Selectable(selection.c_str()))
+		{
+			scanner.get_mutex().lock();
+			for (const auto& game : scanner.get_game_list())
+			{
+				if (gui_state == SelectDisk)
 				{
-					if (gui_state == SelectDisk)
-					{
-						strcpy(settings.imgread.ImagePath, game.path.c_str());
-						DiscSwap();
-						gui_state = Closed;
-					}
-					else
-					{
-						gui_state = ClosedNoResume;
-						gui_start_game(game.path);
-					}
+					std::string extension = get_file_extension(game.path);
+					if (extension != "gdi" && extension != "chd"
+							&& extension != "cdi" && extension != "cue")
+						// Only dreamcast disks
+						continue;
 				}
-				ImGui::PopID();
-        	}
-        }
+				if (filter.PassFilter(game.name.c_str()))
+				{
+					ImGui::PushID(game.path.c_str());
+					if (ImGui::Selectable(game.name.c_str()))
+					{
+						if (gui_state == SelectDisk)
+						{
+							strcpy(settings.imgread.ImagePath, game.path.c_str());
+							DiscSwap();
+							gui_state = Closed;
+						}
+						else
+						{
+							scanner.get_mutex().unlock();
+							gui_state = ClosedNoResume;
+							gui_start_game(game.path);
+							scanner.get_mutex().lock();
+						}
+					}
+					ImGui::PopID();
+				}
+			}
+			scanner.get_mutex().unlock();
+		}
         ImGui::PopStyleVar();
     }
 	ImGui::EndChild();
@@ -1812,7 +1715,7 @@ extern bool subfolders_read;
 
 void gui_refresh_files()
 {
-	game_list_done = false;
+	scanner.refresh();
 	subfolders_read = false;
 }
 

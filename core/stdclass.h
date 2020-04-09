@@ -3,6 +3,8 @@
 
 #include <condition_variable>
 #include <mutex>
+#include <algorithm>
+#include <cctype>
 
 #ifndef _WIN32
 #include <pthread.h>
@@ -111,3 +113,26 @@ public:
 		return data[i];
     }
 };
+
+static inline void string_tolower(std::string& s)
+{
+	std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c){ return std::tolower(c); });
+}
+
+static inline std::string get_file_extension(const std::string& s)
+{
+	size_t dot = s.find_last_of('.');
+	if (dot == std::string::npos)
+		return "";
+	std::string ext = s.substr(dot + 1, s.length() - dot - 1);
+	string_tolower(ext);
+	return ext;
+}
+
+static inline std::string get_file_basename(const std::string& s)
+{
+	size_t dot = s.find_last_of('.');
+	if (dot == std::string::npos)
+		return s;
+	return s.substr(0, dot);
+}
