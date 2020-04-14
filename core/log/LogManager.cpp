@@ -106,6 +106,7 @@ LogManager::LogManager()
 	m_log[LogTypes::MAPLE] = {"MAPLE", "Maple Bus and Peripherals"};
 	m_log[LogTypes::INTERPRETER] = {"INTERPRETER", "SH4 Interpreter"};
 	m_log[LogTypes::MEMORY] = {"MEMORY", "Memory Management"};
+	m_log[LogTypes::NETWORK] = {"NETWORK", "Naomi Network"};
 	m_log[LogTypes::VMEM] = {"VMEM", "Virtual Memory Management"};
 	m_log[LogTypes::MODEM] = {"MODEM", "Modem and Network"};
 	m_log[LogTypes::NAOMI] = {"NAOMI", "Naomi"};
