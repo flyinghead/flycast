@@ -57,6 +57,8 @@ void input_sdl_init()
 {
 	if (SDL_WasInit(SDL_INIT_JOYSTICK) == 0)
 	{
+		// We want joystick events even if we loose focus
+		SDL_SetHint(SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS, "1");
 		if (SDL_InitSubSystem(SDL_INIT_JOYSTICK) < 0)
 		{
 			die("SDL: error initializing Joystick subsystem");

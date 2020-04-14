@@ -1,12 +1,31 @@
-#ifndef _NET_PLATFORM_H
-#define _NET_PLATFORM_H
+/*
+	Created on: Apr 13, 2020
 
+	Copyright 2020 flyinghead
+
+	This file is part of flycast.
+
+    flycast is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 2 of the License, or
+    (at your option) any later version.
+
+    flycast is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with flycast.  If not, see <https://www.gnu.org/licenses/>.
+ */
+#pragma once
 #ifndef _WIN32
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netinet/ip.h>
 #include <netinet/tcp.h>
+#include <arpa/inet.h>
 #include <netdb.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -34,5 +53,35 @@ typedef SOCKET sock_t;
 #define perror(s) do { INFO_LOG(MODEM, "%s: Winsock error: %d\n", (s) != NULL ? (s) : "", WSAGetLastError()); } while (false)
 #endif
 
-
+static inline void set_non_blocking(sock_t fd)
+{
+#ifndef _WIN32
+	fcntl(fd, F_SETFL, O_NONBLOCK);
+#else
+	u_long optl = 1;
+	ioctlsocket(fd, FIONBIO, &optl);
 #endif
+}
+
+static inline void set_tcp_nodelay(sock_t fd)
+{
+	int optval = 1;
+	socklen_t optlen = sizeof(optval);
+#if defined(_WIN32)
+	struct protoent *tcp_proto = getprotobyname("TCP");
+	setsockopt(fd, tcp_proto->p_proto, TCP_NODELAY, (const char *)&optval, optlen);
+#elif !defined(__APPLE__) && !defined(__FreeBSD__) && !defined(__NetBSD__)
+	setsockopt(fd, SOL_TCP, TCP_NODELAY, (const void *)&optval, optlen);
+#else
+	struct protoent *tcp_proto = getprotobyname("TCP");
+	setsockopt(fd, tcp_proto->p_proto, TCP_NODELAY, &optval, optlen);
+#endif
+}
+
+static inline bool set_recv_timeout(sock_t fd, int delayms)
+{
+    struct timeval tv;
+    tv.tv_sec = delayms / 1000;
+    tv.tv_usec = (delayms % 1000) * 1000;
+    return setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)) == 0;
+}
