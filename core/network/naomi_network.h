@@ -29,6 +29,13 @@
 class NaomiNetwork
 {
 public:
+	NaomiNetwork() {
+#ifdef _WIN32
+		server_ip.S_un.S_addr = INADDR_NONE;
+#else
+		server_ip.s_addr = INADDR_NONE;
+#endif
+	}
 	~NaomiNetwork() { terminate(); }
 	bool init();
 	bool startNetwork();
@@ -47,10 +54,10 @@ private:
 	bool createBeaconSocket();
 	void processBeacon();
 	bool findServer();
-	int createAndBind(int protocol);
+	sock_t createAndBind(int protocol);
 	bool isMaster() const { return slot_id == 0; }
 
-	struct in_addr server_ip{ INADDR_NONE };
+	struct in_addr server_ip;
 	std::string server_name;
 	// server stuff
 	sock_t server_sock = INVALID_SOCKET;
