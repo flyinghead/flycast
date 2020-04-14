@@ -238,6 +238,8 @@
 		AE7BCB5E243DDCD1007285F8 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AE7BCB5D243DDCD1007285F8 /* AudioToolbox.framework */; };
 		AE7BCB60243DDD49007285F8 /* libiconv.2.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = AE7BCB5F243DDD3A007285F8 /* libiconv.2.tbd */; };
 		AE7BCB62243DDD92007285F8 /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AE7BCB61243DDD92007285F8 /* Carbon.framework */; };
+		AE7BCB6B244608B6007285F8 /* naomi_network.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE7BCB69244608B5007285F8 /* naomi_network.cpp */; };
+		AE7BCB6E24460910007285F8 /* naomi_m3comm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE7BCB6C24460910007285F8 /* naomi_m3comm.cpp */; };
 		AE80EDB72157D4D500F7800F /* serialize.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE80EDB62157D4D500F7800F /* serialize.cpp */; };
 		AE80EDBE2157D4E600F7800F /* naomi.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE80EDB92157D4E600F7800F /* naomi.cpp */; };
 		AE80EDBF2157D4E600F7800F /* naomi_cart.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE80EDBB2157D4E600F7800F /* naomi_cart.cpp */; };
@@ -792,6 +794,11 @@
 		AE7BCB5D243DDCD1007285F8 /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
 		AE7BCB5F243DDD3A007285F8 /* libiconv.2.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libiconv.2.tbd; path = usr/lib/libiconv.2.tbd; sourceTree = SDKROOT; };
 		AE7BCB61243DDD92007285F8 /* Carbon.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Carbon.framework; path = System/Library/Frameworks/Carbon.framework; sourceTree = SDKROOT; };
+		AE7BCB68244608B5007285F8 /* net_platform.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = net_platform.h; sourceTree = "<group>"; };
+		AE7BCB69244608B5007285F8 /* naomi_network.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = naomi_network.cpp; sourceTree = "<group>"; };
+		AE7BCB6A244608B6007285F8 /* naomi_network.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = naomi_network.h; sourceTree = "<group>"; };
+		AE7BCB6C24460910007285F8 /* naomi_m3comm.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = naomi_m3comm.cpp; sourceTree = "<group>"; };
+		AE7BCB6D24460910007285F8 /* naomi_m3comm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = naomi_m3comm.h; sourceTree = "<group>"; };
 		AE80EDB62157D4D500F7800F /* serialize.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = serialize.cpp; path = ../../../core/serialize.cpp; sourceTree = "<group>"; };
 		AE80EDB92157D4E600F7800F /* naomi.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = naomi.cpp; sourceTree = "<group>"; };
 		AE80EDBA2157D4E600F7800F /* naomi.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = naomi.h; sourceTree = "<group>"; };
@@ -1151,6 +1158,7 @@
 				84B7BE4D1B72720100F9733F /* khronos */,
 				84B7BE641B72720100F9733F /* linux */,
 				AE43536822C9420C005E19CE /* log */,
+				AE7BCB6724460875007285F8 /* network */,
 				84B7BE6F1B72720200F9733F /* oslib */,
 				84B7BE7C1B72720200F9733F /* profiler */,
 				AE1E29392095FB1600FC6BA2 /* rec-cpp */,
@@ -2037,6 +2045,17 @@
 			path = ../../../core/wsi;
 			sourceTree = "<group>";
 		};
+		AE7BCB6724460875007285F8 /* network */ = {
+			isa = PBXGroup;
+			children = (
+				AE7BCB69244608B5007285F8 /* naomi_network.cpp */,
+				AE7BCB6A244608B6007285F8 /* naomi_network.h */,
+				AE7BCB68244608B5007285F8 /* net_platform.h */,
+			);
+			name = network;
+			path = ../../../core/network;
+			sourceTree = "<group>";
+		};
 		AE80EDB82157D4E600F7800F /* naomi */ = {
 			isa = PBXGroup;
 			children = (
@@ -2051,6 +2070,8 @@
 				AE2A2D5021D6846F004B308D /* m1cartridge.h */,
 				AE2A2D5621D68470004B308D /* m4cartridge.cpp */,
 				AE2A2D5421D68470004B308D /* m4cartridge.h */,
+				AE7BCB6C24460910007285F8 /* naomi_m3comm.cpp */,
+				AE7BCB6D24460910007285F8 /* naomi_m3comm.h */,
 				AE2A2D5821D68470004B308D /* naomi_roms_input.h */,
 				AE2A2D5521D68470004B308D /* naomi_roms.h */,
 				AE80EDB92157D4E600F7800F /* naomi.cpp */,
@@ -2747,6 +2768,7 @@
 				84B7BF391B72720200F9733F /* drkPvr.cpp in Sources */,
 				84B7BF621B72720200F9733F /* context.cpp in Sources */,
 				AEFF7F72214D9D590068CE11 /* pico_protocol.c in Sources */,
+				AE7BCB6E24460910007285F8 /* naomi_m3comm.cpp in Sources */,
 				84B7BF6A1B72720200F9733F /* audiobackend_pulseaudio.cpp in Sources */,
 				AED73E8A2348E45000ECDB64 /* doc.cpp in Sources */,
 				84B7BF3F1B72720200F9733F /* ta.cpp in Sources */,
@@ -2754,6 +2776,7 @@
 				AED73DC42303E19200ECDB64 /* sdl.cpp in Sources */,
 				84B7BF751B72720200F9733F /* gdrom_hle.cpp in Sources */,
 				84B7BEFF1B72720200F9733F /* zip_name_locate.c in Sources */,
+				AE7BCB6B244608B6007285F8 /* naomi_network.cpp in Sources */,
 				AED73E662348E45000ECDB64 /* iomapper.cpp in Sources */,
 				AE649BFD218C552500EF4A81 /* lpc_intrin_avx2.c in Sources */,
 				AE649BF8218C552500EF4A81 /* fixed_intrin_sse2.c in Sources */,

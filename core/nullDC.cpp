@@ -790,6 +790,9 @@ void InitSettings()
 		settings.input.maple_expansion_devices[i][0] = i == 0 ? MDT_SegaVMU : MDT_None;
 		settings.input.maple_expansion_devices[i][1] = i == 0 ? MDT_SegaVMU : MDT_None;
 	}
+	settings.network.ActAsServer = false;
+	settings.network.dns = "46.101.91.123";		// Dreamcast Live DNS
+	settings.network.server = "";
 
 #if SUPPORT_DISPMANX
 	settings.dispmanx.Width		= 640;
@@ -893,6 +896,9 @@ void LoadSettings(bool game_specific)
 		sprintf(device_name, "device%d.2", i + 1);
 		settings.input.maple_expansion_devices[i][1] = (MapleDeviceType)cfgLoadInt(input_section, device_name, settings.input.maple_expansion_devices[i][1]);
 	}
+	settings.network.ActAsServer = cfgLoadBool("network", "ActAsServer", settings.network.ActAsServer);
+	settings.network.dns = cfgLoadStr("network", "DNS", settings.network.dns.c_str());
+	settings.network.server = cfgLoadStr("network", "server", settings.network.server.c_str());
 
 #if SUPPORT_DISPMANX
 	settings.dispmanx.Width		= cfgLoadInt(game_specific ? cfgGetGameId() : "dispmanx", "width", settings.dispmanx.Width);
@@ -1049,6 +1055,9 @@ void SaveSettings()
 	}
 	cfgSaveStr("config", "Dreamcast.ContentPath", paths.c_str());
 	cfgSaveBool("config", "Dreamcast.HideLegacyNaomiRoms", settings.dreamcast.HideLegacyNaomiRoms);
+	cfgSaveBool("network", "ActAsServer", settings.network.ActAsServer);
+	cfgSaveStr("network", "DNS", settings.network.dns.c_str());
+	cfgSaveStr("network", "server", settings.network.server.c_str());
 
 	GamepadDevice::SaveMaplePorts();
 

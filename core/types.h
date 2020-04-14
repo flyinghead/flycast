@@ -533,6 +533,12 @@ struct settings_t
 		int maple_expansion_devices[4][2];
 		int VirtualGamepadVibration;
 	} input;
+
+	struct {
+		bool ActAsServer;
+		std::string dns;
+		std::string server;
+	} network;
 };
 
 extern settings_t settings;

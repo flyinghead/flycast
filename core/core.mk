@@ -12,7 +12,7 @@ RZDCY_MODULES	:=	cfg/ hw/arm7/ hw/aica/ hw/holly/ hw/ hw/gdrom/ hw/maple/ \
  hw/mem/ hw/pvr/ hw/sh4/ hw/sh4/interpr/ hw/sh4/modules/ plugins/ profiler/ oslib/ \
  hw/extdev/ hw/arm/ hw/naomi/ imgread/ ./ deps/coreio/ deps/zlib/ deps/chdr/ deps/crypto/ \
  deps/libelf/ deps/chdpsr/ arm_emitter/ rend/ reios/ deps/xbrz/ \
- deps/libzip/ deps/imgui/ archive/ input/ log/ wsi/
+ deps/libzip/ deps/imgui/ archive/ input/ log/ wsi/ network/
 
 ifndef NOT_ARM
     RZDCY_MODULES += rec-ARM/

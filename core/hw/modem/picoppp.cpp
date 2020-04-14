@@ -36,7 +36,7 @@ extern "C" {
 #include <pico_tcp.h>
 }
 
-#include "net_platform.h"
+#include "network/net_platform.h"
 
 #include "types.h"
 #include "cfg/cfg.h"
@@ -163,31 +163,6 @@ int read_pico()
 		in_buffer_lock.unlock();
 		return b;
 	}
-}
-
-void set_non_blocking(sock_t fd)
-{
-#ifndef _WIN32
-					fcntl(fd, F_SETFL, O_NONBLOCK);
-#else
-					u_long optl = 1;
-					ioctlsocket(fd, FIONBIO, &optl);
-#endif
-}
-
-void set_tcp_nodelay(sock_t fd)
-{
-	int optval = 1;
-	socklen_t optlen = sizeof(optval);
-#if defined(_WIN32)
-	struct protoent *tcp_proto = getprotobyname("TCP");
-	setsockopt(fd, tcp_proto->p_proto, TCP_NODELAY, (const char *)&optval, optlen);
-#elif !defined(__APPLE__) && !defined(__FreeBSD__) && !defined(__NetBSD__)
-	setsockopt(fd, SOL_TCP, TCP_NODELAY, (const void *)&optval, optlen);
-#else
-	struct protoent *tcp_proto = getprotobyname("TCP");
-	setsockopt(fd, tcp_proto->p_proto, TCP_NODELAY, &optval, optlen);
-#endif
 }
 
 static void read_from_dc_socket(pico_socket *pico_sock, sock_t nat_sock)
@@ -716,8 +691,7 @@ static void *pico_thread_func(void *)
     pico_string_to_ipv4("192.168.167.1", &ipaddr.addr);
     pico_ppp_set_ip(ppp, ipaddr);
 
-    std::string dns_ip = cfgLoadStr("network", "DNS", "46.101.91.123");		// Dreamcast Live DNS
-    pico_string_to_ipv4(dns_ip.c_str(), &dnsaddr.addr);
+    pico_string_to_ipv4(settings.network.dns.c_str(), &dnsaddr.addr);
     pico_ppp_set_dns1(ppp, dnsaddr);
 
     pico_udp_socket = pico_socket_open(PICO_PROTO_IPV4, PICO_PROTO_UDP, &udp_callback);

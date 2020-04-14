@@ -39,6 +39,7 @@
 extern void dc_loadstate();
 extern void dc_savestate();
 extern void dc_stop();
+extern void dc_reset(bool hard);
 extern void dc_resume();
 extern void dc_start_game(const char *path);
 extern void UpdateInputState(u32 port);
@@ -363,6 +364,7 @@ static void gui_display_commands()
 		gui_state = Main;
 		game_started = false;
 		settings.imgread.ImagePath[0] = '\0';
+		dc_reset(true);
 	}
 
 	ImGui::End();
@@ -1281,6 +1283,18 @@ static void gui_display_settings()
 		    	ImGui::Checkbox("Idle Skip", &settings.dynarec.idleskip);
 	            ImGui::SameLine();
 	            ShowHelpMarker("Skip wait loops. Recommended");
+		    }
+		    if (ImGui::CollapsingHeader("Network", ImGuiTreeNodeFlags_DefaultOpen))
+		    {
+		    	ImGui::Checkbox("Act as Server", &settings.network.ActAsServer);
+	            ImGui::SameLine();
+	            ShowHelpMarker("Create a local server for Naomi network games");
+	            char server_name[256];
+	            strcpy(server_name, settings.network.server.c_str());
+		    	ImGui::InputText("Server", server_name, sizeof(server_name), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
+	            ImGui::SameLine();
+	            ShowHelpMarker("The server to connect to. Leave blank to find a server automatically");
+		    	settings.network.server = server_name;
 		    }
 		    if (ImGui::CollapsingHeader("Other", ImGuiTreeNodeFlags_DefaultOpen))
 		    {

@@ -25,7 +25,7 @@
 #include <cstdio>
 #include <cerrno>
 
-#include "net_platform.h"
+#include "network/net_platform.h"
 
 extern "C" {
 #include <pico_stack.h>
@@ -44,6 +44,7 @@ static int qname_len;
 
 void get_host_by_name(const char *host, struct pico_ip4 dnsaddr)
 {
+	DEBUG_LOG(MODEM, "get_host_by_name: %s", host);
     if (!VALID(sock_fd))
     {
     	sock_fd = socket(AF_INET , SOCK_DGRAM , IPPROTO_UDP);
