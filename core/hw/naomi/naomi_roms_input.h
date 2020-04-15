@@ -363,6 +363,22 @@ static InputDescriptors tokyobus_inputs = {
 	  },
 };
 
+static InputDescriptors wrungp_inputs = {
+	  {
+			{ NAOMI_UP_KEY, "VIEW" },
+			NAO_START_DESC
+			NAO_BASE_BTN_DESC
+			{ 0 },
+	  },
+	  {
+			{ "HANDLE BAR", Full, 0 },
+			{ "THROTTLE LEVER", Half, 1, true },
+			{ "ROLL", Full, 2 },
+			{ "PITCH", Full, 3 },
+			{ NULL },
+	  },
+};
+
 //
 // AtomisWave games
 //

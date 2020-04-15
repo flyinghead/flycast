@@ -314,10 +314,10 @@ bool NaomiNetwork::startNetwork()
 				u8 buf[2];
 				if (::recv(client_sock, (char *)buf, 2, 0) < 2)
 				{
-					ERROR_LOG(NETWORK, "Connection failed: errno=%d", get_last_error());
+					ERROR_LOG(NETWORK, "recv failed: errno=%d", get_last_error());
 					closesocket(client_sock);
-					client_sock = -1;
-					gui_display_notification("Connection failed", 10000);
+					client_sock = INVALID_SOCKET;
+					gui_display_notification("Server failed to start", 10000);
 
 					return false;
 				}
@@ -343,10 +343,26 @@ void NaomiNetwork::pipeSlaves()
 	char buf[16384];
 	for (auto it = slaves.begin(); it != slaves.end() - 1; it++)
 	{
+		if (*it == INVALID_SOCKET || *(it + 1) == INVALID_SOCKET)
+			// TODO keep link on
+			continue;
 		ssize_t l = ::recv(*it, buf, sizeof(buf), 0);
-		if (l > 0)
-			::send(*(it + 1), buf, l, 0);
-		// TODO handle errors
+		if (l <= 0)
+		{
+			if (get_last_error() == L_EAGAIN || get_last_error() == L_EWOULDBLOCK)
+				continue;
+			WARN_LOG(NETWORK, "pipeSlaves: receive failed. errno=%d", get_last_error());
+			closesocket(*it);
+			*it = INVALID_SOCKET;
+			continue;
+		}
+		ssize_t l2 = ::send(*(it + 1), buf, l, 0);
+		if (l2 != l)
+		{
+			WARN_LOG(NETWORK, "pipeSlaves: send failed. errno=%d", get_last_error());
+			closesocket(*(it + 1));
+			*(it + 1) = INVALID_SOCKET;
+		}
 	}
 }
 
@@ -369,10 +385,12 @@ bool NaomiNetwork::receive(u8 *data, u32 size)
 			WARN_LOG(NETWORK, "receiveNetwork: read failed. errno=%d", get_last_error());
 			if (isMaster())
 			{
-				slaves.back() = -1;
+				slaves.back() = INVALID_SOCKET;
 				closesocket(sockfd);
 				got_token = false;
 			}
+			else
+				shutdown();
 		}
 		return false;
 	}
@@ -389,10 +407,12 @@ bool NaomiNetwork::receive(u8 *data, u32 size)
 				WARN_LOG(NETWORK, "receiveNetwork: read failed. errno=%d", get_last_error());
 				if (isMaster())
 				{
-					slaves.back() = -1;
+					slaves.back() = INVALID_SOCKET;
 					closesocket(sockfd);
 					got_token = false;
 				}
+				else
+					shutdown();
 				return false;
 			}
 		}
@@ -418,16 +438,18 @@ void NaomiNetwork::send(u8 *data, u32 size)
 		return;
 
 	u16 pktnum = packet_number + 1;
-	if (::send(sockfd, (const char *)&pktnum, sizeof(pktnum), 0) < 2)
+	if (::send(sockfd, (const char *)&pktnum, sizeof(pktnum), 0) < sizeof(pktnum))
 	{
-		if (errno != L_EAGAIN && errno != L_EWOULDBLOCK)
+		if (get_last_error() != L_EAGAIN && get_last_error() != L_EWOULDBLOCK)
 		{
 			WARN_LOG(NETWORK, "send failed. errno=%d", get_last_error());
 			if (isMaster())
 			{
-				slaves.front() = -1;
+				slaves.front() = INVALID_SOCKET;
 				closesocket(sockfd);
 			}
+			else
+				shutdown();
 		}
 		return;
 	}
@@ -436,9 +458,11 @@ void NaomiNetwork::send(u8 *data, u32 size)
 		WARN_LOG(NETWORK, "send failed. errno=%d", get_last_error());
 		if (isMaster())
 		{
-			slaves.front() = -1;
+			slaves.front() = INVALID_SOCKET;
 			closesocket(sockfd);
 		}
+		else
+			shutdown();
 	}
 	else
 	{
@@ -453,14 +477,17 @@ void NaomiNetwork::shutdown()
 	network_stopping = true;
 	{
 		std::lock_guard<std::mutex> lock(mutex);
-		for (auto& clientSock : slaves)
+		for (auto& sock : slaves)
 		{
-			closesocket(clientSock);
-			clientSock = -1;
+			closesocket(sock);
+			sock = INVALID_SOCKET;
 		}
 	}
 	if (client_sock != INVALID_SOCKET)
+	{
 		closesocket(client_sock);
+		client_sock = INVALID_SOCKET;
+	}
 }
 
 void NaomiNetwork::terminate()

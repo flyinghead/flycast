@@ -3939,7 +3939,9 @@ Games[] =
             { "mpr-23723.ic5",  0x4800000, 0x1000000 },
             { "mpr-23724.ic6",  0x5800000, 0x1000000 },
             { NULL, 0, 0 },
-        }
+        },
+		NULL,
+		&wrungp_inputs,
     },
     // Wave Runner GP (USA, Rev A)
     {
@@ -3967,7 +3969,9 @@ Games[] =
             //ROM_LOAD( "epr-19250.ic8", 0x000000, 0x010000, CRC(542d3836) SHA1(128cb0bfaf05791d219437653002f6bb948a4ad5) )
             
             { NULL, 0, 0 },
-        }
+        },
+		NULL,
+		&wrungp_inputs,
     },
     // World Kicks (WK2 Ver. A)
     {

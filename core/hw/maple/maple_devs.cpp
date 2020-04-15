@@ -2712,6 +2712,8 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 										axis_value = lt[first_player] << 8;
 									else
 										axis_value = 0;
+									if (axisDesc.inverted)
+										axis_value = 0xff00u - axis_value;
 									half_axis_count++;
 								}
 								else
