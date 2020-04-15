@@ -283,6 +283,10 @@ static int modem_sched_func(int tag, int cycles, int jitter)
 #endif
 			if (connected_time == 0)
 				connected_time = sh4_sched_now64();
+
+			callback_cycles = SH4_MAIN_CLOCK / 1000000 * 238;	// 238 us
+			modem_regs.reg1e.TDBE = 1;
+
 			if (!modem_regs.reg1e.RDBF)
 			{
 				int c = read_pppd();
@@ -298,10 +302,11 @@ static int modem_sched_func(int tag, int cycles, int jitter)
 					if (modem_regs.reg04.FIFOEN)
 						SET_STATUS_BIT(0x0c, modem_regs.reg0c.RXFNE, 1);
 					SET_STATUS_BIT(0x01, modem_regs.reg01.RXHF, 1);
+
+					// Set small value to receive following data quickly.
+					callback_cycles = SH4_MAIN_CLOCK / 1000000 * 62;	// 62 us
 				}
 			}
-			modem_regs.reg1e.TDBE = 1;
-			callback_cycles = SH4_MAIN_CLOCK / 1000000 * 238;	// 238 us
 
 			break;
 
