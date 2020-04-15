@@ -465,10 +465,8 @@ struct settings_t
 
 	struct
 	{
-		u32 HW_mixing;		//(0) -> SW , 1 -> HW , 2 -> Auto
 		u32 BufferSize;		//In samples ,*4 for bytes (1024)
 		bool LimitFPS;
-		u32 GlobalFocus;	//0 -> only hwnd , (1) -> Global
 		u32 CDDAMute;
 		bool DSPEnabled;
 		bool NoBatch;

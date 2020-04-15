@@ -47,32 +47,10 @@ static void directsound_init()
 
 	memset(&desc, 0, sizeof(DSBUFFERDESC));
 	desc.dwSize = sizeof(DSBUFFERDESC);
-	desc.dwFlags = DSBCAPS_GETCURRENTPOSITION2 | DSBCAPS_CTRLPOSITIONNOTIFY;// _CTRLPAN | DSBCAPS_CTRLVOLUME | DSBCAPS_CTRLFREQUENCY;
+	desc.dwFlags = DSBCAPS_GETCURRENTPOSITION2 | DSBCAPS_CTRLPOSITIONNOTIFY | DSBCAPS_GLOBALFOCUS;
 
 	desc.dwBufferBytes = ds_ring_size;
 	desc.lpwfxFormat = &wfx;
-
-
-
-	if (settings.aica.HW_mixing==0)
-	{
-		desc.dwFlags |=DSBCAPS_LOCSOFTWARE;
-	}
-	else if (settings.aica.HW_mixing==1)
-	{
-		desc.dwFlags |=DSBCAPS_LOCHARDWARE;
-	}
-	else if (settings.aica.HW_mixing==2)
-	{
-		//auto
-	}
-	else
-	{
-		die("settings.HW_mixing: Invalid value");
-	}
-
-	if (settings.aica.GlobalFocus)
-		desc.dwFlags|=DSBCAPS_GLOBALFOCUS;
 
 	verifyc(dsound->CreateSoundBuffer(&desc,&buffer_,0));
 	verifyc(buffer_->QueryInterface(IID_IDirectSoundBuffer8,(void**)&buffer));
