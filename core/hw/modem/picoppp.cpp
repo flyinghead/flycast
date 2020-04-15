@@ -478,6 +478,9 @@ static void read_native_sockets()
 	// Read UDP sockets
 	for (auto it = udp_sockets.begin(); it != udp_sockets.end(); it++)
 	{
+		if (!VALID(it->second))
+			continue;
+
 		addr_len = sizeof(src_addr);
 		memset(&src_addr, 0, addr_len);
 		r = recvfrom(it->second, buf, sizeof(buf), 0, (struct sockaddr *)&src_addr, &addr_len);
@@ -735,6 +738,10 @@ static void *pico_thread_func(void *)
 		if (::bind(sockfd, (struct sockaddr *)&saddr, saddr_len) < 0)
 		{
 			perror("bind");
+			closesocket(sockfd);
+			auto it = udp_sockets.find(port);
+			if (it != udp_sockets.end())
+				it->second = INVALID_SOCKET;
 			continue;
 		}
     }
