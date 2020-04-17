@@ -389,7 +389,8 @@ enum class JVS {
 	WorldKicks,
 	WorldKicksPCB,
 	Keyboard,
-	OutTrigger
+	OutTrigger,
+	LightGunAsAnalog,
 };
 
 struct settings_t

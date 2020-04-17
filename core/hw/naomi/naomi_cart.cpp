@@ -56,6 +56,7 @@ u32		RomCacheMapCount;
 char naomi_game_id[33];
 InputDescriptors *NaomiGameInputs;
 u8 *naomi_default_eeprom;
+bool naomi_rotate_screen;
 
 extern MemChip *sys_rom;
 
@@ -355,10 +356,13 @@ static void naomi_cart_LoadZip(const char *filename)
 		}
 		if (naomi_default_eeprom == NULL && game->eeprom_dump != NULL)
 			naomi_default_eeprom = game->eeprom_dump;
+		naomi_rotate_screen = game->rotation_flag == ROT270;
 
 		CurrentCartridge->Init();
 
 		strcpy(naomi_game_id, CurrentCartridge->GetGameId().c_str());
+		if (naomi_game_id[0] == '\0')
+			strcpy(naomi_game_id, game->name);
 		NOTICE_LOG(NAOMI, "NAOMI GAME ID [%s]", naomi_game_id);
 
 	} catch (ReicastException& ex) {

@@ -1848,6 +1848,11 @@ struct maple_naomi_jamma : maple_sega_controller
 		case JVS::LightGun:
 			io_boards.emplace_back(new jvs_namco_jyu(1, this));
 			break;
+		case JVS::LightGunAsAnalog:
+			// Regular board sending lightgun coords as axis 0/1
+			io_boards.emplace_back(new jvs_837_13551(1, this));
+			io_boards.back()->lightgun_as_analog = true;
+			break;
 		case JVS::Mazan:
 			io_boards.emplace_back(new jvs_namco_fcb(1, this));
 			io_boards.emplace_back(new jvs_namco_fcb(2, this));
@@ -1868,13 +1873,6 @@ struct maple_naomi_jamma : maple_sega_controller
 			io_boards.emplace_back(new jvs_namco_v226_pcb(1, this));
 			break;
 		}
-		if (settings.input.JammaSetup != JVS::Mazan)
-			for (int bus = 0; bus < MAPLE_PORTS; ++bus)
-				if ((MapleDeviceType)settings.input.maple_devices[bus] == MDT_LightGun)
-				{
-					io_boards.back()->lightgun_as_analog = true;
-					break;
-				}
 	}
 	virtual ~maple_naomi_jamma()
 	{
@@ -2678,7 +2676,6 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 						LOGJVS("ana ");
 						if (lightgun_as_analog)
 						{
-							// Death Crimson / Confidential Mission
 							u16 x = mo_x_abs * 0xFFFF / 639;
 							u16 y = mo_y_abs * 0xFFFF / 479;
 							if (mo_x_abs < 0 || mo_x_abs > 639 || mo_y_abs < 0 || mo_y_abs > 479)

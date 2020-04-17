@@ -97,6 +97,7 @@ int naomi_cart_GetPlatform(const char *path);
 
 extern char naomi_game_id[];
 extern u8 *naomi_default_eeprom;
+extern bool naomi_rotate_screen;
 
 extern Cartridge *CurrentCartridge;
 

@@ -751,7 +751,7 @@ static bool RenderFrame()
 		glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(struct PolyParam) * pvrrc.global_param_tr.used(), pvrrc.global_param_tr.head(), GL_STATIC_DRAW);
 		glCheck();
 
-		if (is_rtt || !settings.rend.WideScreen || matrices.IsClipped())
+		if (is_rtt || !settings.rend.WideScreen || matrices.IsClipped() || settings.rend.Rotate90)
 		{
 			float width;
 			float height;

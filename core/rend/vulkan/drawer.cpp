@@ -101,7 +101,7 @@ TileClipping BaseDrawer::SetTileClip(u32 val, vk::Rect2D& clipRect)
 void BaseDrawer::SetBaseScissor()
 {
 	bool wide_screen_on = settings.rend.WideScreen && !pvrrc.isRenderFramebuffer
-			&& !matrices.IsClipped();
+			&& !matrices.IsClipped() && !settings.rend.Rotate90;
 	if (!wide_screen_on)
 	{
 		if (pvrrc.isRenderFramebuffer)

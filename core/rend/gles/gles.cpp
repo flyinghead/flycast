@@ -1140,7 +1140,7 @@ bool RenderFrame()
 		}
 	}
 
-	bool wide_screen_on = !is_rtt && settings.rend.WideScreen && !matrices.IsClipped();
+	bool wide_screen_on = !is_rtt && settings.rend.WideScreen && !matrices.IsClipped() && !settings.rend.Rotate90;
 
 	//Color is cleared by the background plane
 

@@ -398,13 +398,21 @@ void LoadSpecialSettings()
 			INFO_LOG(BOOT, "Enabling JVS rotary encoders for game %s", naomi_game_id);
 			settings.input.JammaSetup = JVS::OutTrigger;
 		}
-
-		if (!strcmp("COSMIC SMASH IN JAPAN", naomi_game_id))
+		else if (!strcmp("COSMIC SMASH IN JAPAN", naomi_game_id))
 		{
 			INFO_LOG(BOOT, "Enabling translucent depth multipass for game %s", naomi_game_id);
 			settings.rend.TranslucentPolygonDepthMask = true;
 			tr_poly_depth_mask_game = true;
 		}
+		else if (!strcmp(naomi_game_id, "THE MAZE OF THE KINGS")
+				|| !strcmp(naomi_game_id, " CONFIDENTIAL MISSION ---------")
+				|| !strcmp(naomi_game_id, "DEATH CRIMSON OX")
+				|| !strncmp(naomi_game_id, "hotd2", 5))	// House of the Dead 2
+		{
+			INFO_LOG(BOOT, "Enabling lightgun as analog setup for game %s", naomi_game_id);
+			settings.input.JammaSetup = JVS::LightGunAsAnalog;
+		}
+		settings.rend.Rotate90 = naomi_rotate_screen;
 	}
 }
 
@@ -800,7 +808,7 @@ void InitSettings()
 	settings.dispmanx.Keep_Aspect = true;
 #endif
 
-#if HOST_OS != OS_LINUX || defined(__ANDROID__) || defined(TARGET_PANDORA)
+#if defined(__ANDROID__) || defined(TARGET_PANDORA)
 	settings.aica.BufferSize = 5644;	// 128 ms
 #else
 	settings.aica.BufferSize = 2822;	// 64 ms
@@ -1021,7 +1029,8 @@ void SaveSettings()
 		cfgSaveInt("config", "rend.ScreenStretching", settings.rend.ScreenStretching);
 	cfgSaveBool("config", "rend.Fog", settings.rend.Fog);
 	cfgSaveBool("config", "rend.FloatVMUs", settings.rend.FloatVMUs);
-	cfgSaveBool("config", "rend.Rotate90", settings.rend.Rotate90);
+	if (!naomi_rotate_screen || !settings.rend.Rotate90)
+		cfgSaveBool("config", "rend.Rotate90", settings.rend.Rotate90);
 	cfgSaveInt("config", "ta.skip", settings.pvr.ta_skip);
 	cfgSaveInt("config", "pvr.rend", settings.pvr.rend);
 	cfgSaveBool("config", "rend.PerStripSorting", settings.rend.PerStripSorting);
