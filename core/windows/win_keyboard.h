@@ -1,6 +1,8 @@
 #pragma once
 #include "input/keyboard_device.h"
 
+#include <windows.h>
+
 // Used to differentiate between main enter key and num keypad one
 #define VK_NUMPAD_RETURN 0x0E
 

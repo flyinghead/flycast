@@ -373,7 +373,7 @@ static cThread render_thread(render_thread_func, NULL);
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_rendinitNative(JNIEnv * env, jobject obj, jobject surface, jint width, jint height)
 {
-	if (render_thread.hThread != NULL)
+	if (render_thread.thread.joinable())
 	{
 		if (surface == NULL)
 		{
