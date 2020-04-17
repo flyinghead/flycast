@@ -46,7 +46,6 @@ public:
 	void terminate();	// thread-safe
 	int slotCount() const { return slot_count; }
 	int slotId() const { return slot_id; }
-	u16 packetNumber() const { return packet_number; }
 	bool hasToken() const { return got_token; }
 
 private:
@@ -69,7 +68,6 @@ private:
 	int slot_count = 0;
 	int slot_id = 0;
 	bool got_token = false;
-	u16 packet_number = 0;
 	std::atomic<bool> network_stopping{ false };
 	std::mutex mutex;
 

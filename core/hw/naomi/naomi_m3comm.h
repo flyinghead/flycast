@@ -50,6 +50,7 @@ private:
 	u16 comm_status1 = 0;
 	u8 m68k_ram[128 * 1024];
 	u8 comm_ram[128 * 1024];
+	u16 packet_number = 0;
 
 	int slot_count = 0;
 	int slot_id = 0;

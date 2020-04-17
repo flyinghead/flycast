@@ -201,7 +201,6 @@ bool NaomiNetwork::startNetwork()
 
 	slot_id = 0;
 	slot_count = 0;
-	packet_number = 0;
 	slaves.clear();
 	got_token = false;
 
@@ -376,30 +375,10 @@ bool NaomiNetwork::receive(u8 *data, u32 size)
 	if (sockfd == INVALID_SOCKET)
 		return false;
 
-	u16 pktnum;
-	ssize_t l = ::recv(sockfd, (char *)&pktnum, sizeof(pktnum), 0);
-	if (l <= 0)
-	{
-		if (get_last_error() != L_EAGAIN && get_last_error() != L_EWOULDBLOCK)
-		{
-			WARN_LOG(NETWORK, "receiveNetwork: read failed. errno=%d", get_last_error());
-			if (isMaster())
-			{
-				slaves.back() = INVALID_SOCKET;
-				closesocket(sockfd);
-				got_token = false;
-			}
-			else
-				shutdown();
-		}
-		return false;
-	}
-	packet_number = pktnum;
-
 	ssize_t received = 0;
-	while (received != size && !network_stopping)
+	while (received != size)
 	{
-		l = ::recv(sockfd, (char*)(data + received), size - received, 0);
+		ssize_t l = ::recv(sockfd, (char*)(data + received), size - received, 0);
 		if (l <= 0)
 		{
 			if (get_last_error() != L_EAGAIN && get_last_error() != L_EWOULDBLOCK)
@@ -415,9 +394,13 @@ bool NaomiNetwork::receive(u8 *data, u32 size)
 					shutdown();
 				return false;
 			}
+			else if (received == 0)
+				return false;
 		}
 		else
 			received += l;
+		if (network_stopping)
+			return false;
 	}
 	DEBUG_LOG(NETWORK, "[%d] Received %d bytes", slot_id, size);
 	got_token = true;
@@ -437,8 +420,7 @@ void NaomiNetwork::send(u8 *data, u32 size)
 	if (sockfd == INVALID_SOCKET)
 		return;
 
-	u16 pktnum = packet_number + 1;
-	if (::send(sockfd, (const char *)&pktnum, sizeof(pktnum), 0) < sizeof(pktnum))
+	if (::send(sockfd, (const char *)data, size, 0) < size)
 	{
 		if (get_last_error() != L_EAGAIN && get_last_error() != L_EWOULDBLOCK)
 		{
@@ -453,22 +435,10 @@ void NaomiNetwork::send(u8 *data, u32 size)
 		}
 		return;
 	}
-	if (::send(sockfd, (const char *)data, size, 0) < size)
-	{
-		WARN_LOG(NETWORK, "send failed. errno=%d", get_last_error());
-		if (isMaster())
-		{
-			slaves.front() = INVALID_SOCKET;
-			closesocket(sockfd);
-		}
-		else
-			shutdown();
-	}
 	else
 	{
 		DEBUG_LOG(NETWORK, "[%d] Sent %d bytes", slot_id, size);
 		got_token = false;
-		packet_number = pktnum;
 	}
 }
 

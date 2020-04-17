@@ -39,6 +39,7 @@ void NaomiM3Comm::closeNetwork()
 
 void NaomiM3Comm::connectNetwork()
 {
+	packet_number = 0;
 	if (network.startNetwork())
 	{
 		slot_count = network.slotCount();
@@ -62,7 +63,8 @@ void NaomiM3Comm::receiveNetwork()
 
 	if (network.receive(buf, packet_size))
 	{
-		*(u16*)&comm_ram[6] = swap16(network.packetNumber());
+		packet_number += slot_count - 1;
+		*(u16*)&comm_ram[6] = swap16(packet_number);
 		std::unique_lock<std::mutex> lock(mem_mutex);
 		memcpy(&comm_ram[0x100 + slot_size], buf, packet_size);
 	}
@@ -75,7 +77,8 @@ void NaomiM3Comm::sendNetwork()
 		const u32 packet_size = swap16(*(u16*)&m68k_ram[0x204]) * slot_count;
 		std::unique_lock<std::mutex> lock(mem_mutex);
 		network.send(&comm_ram[0x100], packet_size);
-		*(u16*)&comm_ram[6] = swap16(network.packetNumber());
+		packet_number++;
+		*(u16*)&comm_ram[6] = swap16(packet_number);
 	}
 }
 
