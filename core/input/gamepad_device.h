@@ -43,7 +43,7 @@ public:
 	void detect_axis_input(input_detected_cb axis_moved);
 	void cancel_detect_input()
 	{
-		_input_detected = NULL;
+		_input_detected = nullptr;
 	}
 	std::shared_ptr<InputMapping> get_input_mapping() { return input_mapper; }
 	void save_mapping();
@@ -67,7 +67,7 @@ protected:
 		: _api_name(api_name), _maple_port(maple_port), _input_detected(nullptr), _remappable(remappable)
 	{
 	}
-	bool find_mapping(const char *custom_mapping = NULL);
+	bool find_mapping(const char *custom_mapping = nullptr);
 
 	virtual void load_axis_min_max(u32 axis) {}
 
@@ -81,7 +81,7 @@ protected:
 private:
 	int get_axis_min_value(u32 axis);
 	unsigned int get_axis_range(u32 axis);
-	std::string make_mapping_filename();
+	std::string make_mapping_filename(bool instance = false);
 
 	std::string _api_name;
 	int _maple_port;

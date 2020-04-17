@@ -49,11 +49,11 @@ static FILE *record_input;
 
 bool GamepadDevice::gamepad_btn_input(u32 code, bool pressed)
 {
-	if (_input_detected != NULL && _detecting_button 
+	if (_input_detected != nullptr && _detecting_button
 			&& os_GetSeconds() >= _detection_start_time && pressed)
 	{
 		_input_detected(code);
-		_input_detected = NULL;
+		_input_detected = nullptr;
 	}
 	if (!input_mapper || _maple_port < 0 || _maple_port >= (int)ARRAY_SIZE(kcode))
 		return false;
@@ -260,9 +260,11 @@ unsigned int GamepadDevice::get_axis_range(u32 axis) {
 	return it->second;
 }
 
-std::string GamepadDevice::make_mapping_filename()
+std::string GamepadDevice::make_mapping_filename(bool instance)
 {
 	std::string mapping_file = api_name() + "_" + name();
+	if (instance)
+		mapping_file += "-" + _unique_id;
 	std::replace(mapping_file.begin(), mapping_file.end(), '/', '-');
 	std::replace(mapping_file.begin(), mapping_file.end(), '\\', '-');
 	std::replace(mapping_file.begin(), mapping_file.end(), ':', '-');
@@ -277,15 +279,20 @@ std::string GamepadDevice::make_mapping_filename()
 	return mapping_file;
 }
 
-bool GamepadDevice::find_mapping(const char *custom_mapping /* = NULL */)
+bool GamepadDevice::find_mapping(const char *custom_mapping /* = nullptr */)
 {
 	std::string mapping_file;
-	if (custom_mapping != NULL)
+	if (custom_mapping != nullptr)
 		mapping_file = custom_mapping;
 	else
-		mapping_file = make_mapping_filename();
+		mapping_file = make_mapping_filename(true);
 
 	input_mapper = InputMapping::LoadMapping(mapping_file.c_str());
+	if (!input_mapper && custom_mapping == nullptr)
+	{
+		mapping_file = make_mapping_filename(false);
+		input_mapper = InputMapping::LoadMapping(mapping_file.c_str());
+	}
 	return !!input_mapper;
 }
 

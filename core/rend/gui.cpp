@@ -438,24 +438,42 @@ static const char *maple_expansion_device_name(MapleDeviceType type)
 }
 
 const char *maple_ports[] = { "None", "A", "B", "C", "D" };
-const DreamcastKey button_keys[] = { DC_BTN_START, DC_BTN_A, DC_BTN_B, DC_BTN_X, DC_BTN_Y, DC_DPAD_UP, DC_DPAD_DOWN, DC_DPAD_LEFT, DC_DPAD_RIGHT,
+const DreamcastKey button_keys[] = {
+		DC_BTN_START, DC_BTN_A, DC_BTN_B, DC_BTN_X, DC_BTN_Y, DC_DPAD_UP, DC_DPAD_DOWN, DC_DPAD_LEFT, DC_DPAD_RIGHT,
 		EMU_BTN_MENU, EMU_BTN_ESCAPE, EMU_BTN_FFORWARD, EMU_BTN_TRIGGER_LEFT, EMU_BTN_TRIGGER_RIGHT,
 		DC_BTN_C, DC_BTN_D, DC_BTN_Z, DC_DPAD2_UP, DC_DPAD2_DOWN, DC_DPAD2_LEFT, DC_DPAD2_RIGHT,
-		EMU_BTN_ANA_UP, EMU_BTN_ANA_DOWN, EMU_BTN_ANA_LEFT, EMU_BTN_ANA_RIGHT };
-const char *button_names[] = { "Start", "A", "B", "X", "Y", "DPad Up", "DPad Down", "DPad Left", "DPad Right",
+		EMU_BTN_ANA_UP, EMU_BTN_ANA_DOWN, EMU_BTN_ANA_LEFT, EMU_BTN_ANA_RIGHT
+};
+const char *button_names[] = {
+		"Start", "A", "B", "X", "Y", "DPad Up", "DPad Down", "DPad Left", "DPad Right",
 		"Menu", "Exit", "Fast-forward", "Left Trigger", "Right Trigger",
 		"C", "D", "Z", "Right Dpad Up", "Right DPad Down", "Right DPad Left", "Right DPad Right",
-		"Left Stick Up", "Left Stick Down", "Left Stick Left", "Left Stick Right" };
-const char *arcade_button_names[] = { "Start", "Button 1", "Button 2", "Button 3", "Button 4", "Up", "Down", "Left", "Right",
+		"Left Stick Up", "Left Stick Down", "Left Stick Left", "Left Stick Right"
+};
+const char *arcade_button_names[] = {
+		"Start", "Button 1", "Button 2", "Button 3", "Button 4", "Up", "Down", "Left", "Right",
 		"Menu", "Exit", "Fast-forward", "N/A", "N/A",
-		"Service", "Coin", "Test", "Button 5", "Button 6", "Button 7", "Button 8", "N/A", "N/A", "N/A", "N/A" };
-const DreamcastKey axis_keys[] = { DC_AXIS_X, DC_AXIS_Y, DC_AXIS_LT, DC_AXIS_RT, DC_AXIS_X2, DC_AXIS_Y2, EMU_AXIS_DPAD1_X, EMU_AXIS_DPAD1_Y, EMU_AXIS_DPAD2_X, EMU_AXIS_DPAD2_Y,
-        EMU_AXIS_BTN_START, EMU_AXIS_BTN_A, EMU_AXIS_BTN_B, EMU_AXIS_BTN_X, EMU_AXIS_BTN_Y, EMU_AXIS_DPAD_UP, EMU_AXIS_DPAD_DOWN, EMU_AXIS_DPAD_LEFT, EMU_AXIS_DPAD_RIGHT,
-        EMU_AXIS_BTN_C, EMU_AXIS_BTN_D, EMU_AXIS_BTN_Z, EMU_AXIS_DPAD2_UP, EMU_AXIS_DPAD2_DOWN, EMU_AXIS_DPAD2_LEFT, EMU_AXIS_DPAD2_RIGHT};
-const char *axis_names[] = { "Left Stick X", "Left Stick Y", "Left Trigger", "Right Trigger", "Right Stick X", "Right Stick Y", "DPad X", "DPad Y", "Right DPad X", "Right DPad Y",
-        "Start", "A", "B", "X", "Y", "DPad Up", "DPad Down", "DPad Left", "DPad Right", "C", "D", "Z", "Right DPad Up", "Right DPad Down", "Right DPad Left", "Right DPad Right"};
-const char *arcade_axis_names[] = { "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "Start", "Button 1", "Button 2", "Button 3", "Button 4", "Up", "Down", "Left", "Right",
-		"Service", "Coin", "Test", "Button 5", "Button 6", "Button 7", "Button 8"};
+		"Service", "Coin", "Test", "Button 5", "Button 6", "Button 7", "Button 8", "N/A", "N/A", "N/A", "N/A"
+};
+const DreamcastKey axis_keys[] = {
+		DC_AXIS_X, DC_AXIS_Y, DC_AXIS_LT, DC_AXIS_RT, DC_AXIS_X2, DC_AXIS_Y2, EMU_AXIS_DPAD1_X, EMU_AXIS_DPAD1_Y,
+		EMU_AXIS_DPAD2_X, EMU_AXIS_DPAD2_Y, EMU_AXIS_BTN_START, EMU_AXIS_BTN_A, EMU_AXIS_BTN_B, EMU_AXIS_BTN_X, EMU_AXIS_BTN_Y,
+		EMU_AXIS_BTN_C, EMU_AXIS_BTN_D, EMU_AXIS_BTN_Z, EMU_AXIS_DPAD2_UP, EMU_AXIS_DPAD2_DOWN, EMU_AXIS_DPAD2_LEFT, EMU_AXIS_DPAD2_RIGHT
+};
+const char *axis_names[] = {
+		"Left Stick X", "Left Stick Y", "Left Trigger", "Right Trigger", "Right Stick X", "Right Stick Y", "DPad X", "DPad Y",
+		"Right DPad X", "Right DPad Y", "Start", "A", "B", "X", "Y",
+		"C", "D", "Z", "N/A", "N/A", "N/A", "N/A"
+};
+const char *arcade_axis_names[] = {
+		"Left Stick X", "Left Stick Y", "Left Trigger", "Right Trigger", "Right Stick X", "Right Stick Y", "DPad X", "DPad Y",
+		"Right DPad X", "Right DPad Y", "Start", "Button 1", "Button 2", "Button 3", "Button 4",
+		"Service", "Coin", "Test", "Button 5", "Button 6", "Button 7", "Button 8"
+};
+static_assert(ARRAY_SIZE(button_keys) == ARRAY_SIZE(button_names), "invalid size");
+static_assert(ARRAY_SIZE(button_keys) == ARRAY_SIZE(arcade_button_names), "invalid size");
+static_assert(ARRAY_SIZE(axis_keys) == ARRAY_SIZE(axis_names), "invalid size");
+static_assert(ARRAY_SIZE(axis_keys) == ARRAY_SIZE(arcade_axis_names), "invalid size");
 
 static MapleDeviceType maple_expansion_device_type_from_index(int idx)
 {
