@@ -209,7 +209,7 @@ public:
 				//Y = (Y_REG >> 4) & 0x0FFF;
 				mov(Y, Y_REG);
 				sar(Y, 4);
-				and_(Y, 0x0fff);	// FIXME is this right?
+				and_(Y, 0x0fff);
 			}
 
 			if (op.YRL)
@@ -346,8 +346,8 @@ public:
 
 			if (op.EWT)
 			{
-				//DSPData->EFREG[op.EWA] = SHIFTED >> 4;
-				sar(edx, 4);	// SHIFTED
+				//DSPData->EFREG[op.EWA] = SHIFTED >> 8;
+				sar(edx, 8);	// SHIFTED
 				mov(dword[rbp + dspdata_operand(DSPData->EFREG, op.EWA)], edx);
 			}
 		}

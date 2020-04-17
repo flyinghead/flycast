@@ -272,7 +272,7 @@ void AICADSP_Step(struct dsp_t *DSP)
 		if (EWT)
 		{
 			u32 EWA = (IPtr[2] >> 8) & 0x0F;
-			DSPData->EFREG[EWA] = SHIFTED >> 4;
+			DSPData->EFREG[EWA] = SHIFTED >> 8;
 		}
 
 	}

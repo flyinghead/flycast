@@ -204,7 +204,7 @@ public:
 				Asr(Y, Y_REG, 11);
 			else if (op.YSEL == 3)
 				//Y = (Y_REG >> 4) & 0x0FFF;
-				Sbfx(Y, Y_REG, 4, 12);
+				Ubfx(Y, Y_REG, 4, 12);
 
 			if (op.YRL)
 				//Y_REG = INPUTS;
@@ -324,9 +324,9 @@ public:
 
 			if (op.EWT)
 			{
-				//DSPData->EFREG[op.EWA] = SHIFTED >> 4;
+				//DSPData->EFREG[op.EWA] = SHIFTED >> 8;
 				MemOperand mem_operand = dspdata_operand(DSPData->EFREG, op.EWA);
-				Asr(w1, SHIFTED, 4);
+				Asr(w1, SHIFTED, 8);
 				Str(w1, mem_operand);
 			}
 #if 0
