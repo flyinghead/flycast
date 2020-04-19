@@ -73,3 +73,5 @@ private:
 
 	static const uint16_t SERVER_PORT = 37391;
 };
+
+void SetNaomiNetworkConfig(int node);

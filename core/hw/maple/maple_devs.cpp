@@ -1418,8 +1418,32 @@ struct atomiswave_lightgun : maple_lightgun
 	}
 };
 
-char EEPROM[0x100];
+u8 EEPROM[0x100];
 bool EEPROM_loaded = false;
+
+void load_naomi_eeprom()
+{
+	if (!EEPROM_loaded)
+	{
+		EEPROM_loaded = true;
+		std::string nvmemSuffix = cfgLoadStr("net", "nvmem", "");
+		std::string eeprom_file = get_game_save_prefix() + nvmemSuffix + ".eeprom";
+		FILE* f = fopen(eeprom_file.c_str(), "rb");
+		if (f)
+		{
+			fread(EEPROM, 1, 0x80, f);
+			fclose(f);
+			DEBUG_LOG(MAPLE, "Loaded EEPROM from %s", eeprom_file.c_str());
+		}
+		else if (naomi_default_eeprom != NULL)
+		{
+			DEBUG_LOG(MAPLE, "Using default EEPROM file");
+			memcpy(EEPROM, naomi_default_eeprom, 0x80);
+		}
+		else
+			DEBUG_LOG(MAPLE, "EEPROM file not found at %s and no default found", eeprom_file.c_str());
+	}
+}
 
 u32 naomi_button_mapping[] = {
 		NAOMI_SERVICE_KEY,	// DC_BTN_C
@@ -2153,6 +2177,7 @@ struct maple_naomi_jamma : maple_sega_controller
 
 			case 0x0B:	//EEPROM write
 			{
+				load_naomi_eeprom();
 				int address = dma_buffer_in[1];
 				int size = dma_buffer_in[2];
 				DEBUG_LOG(MAPLE, "EEprom write %08X %08X\n", address, size);
@@ -2183,26 +2208,7 @@ struct maple_naomi_jamma : maple_sega_controller
 
 			case 0x3:	//EEPROM read
 			{
-				if (!EEPROM_loaded)
-				{
-					EEPROM_loaded = true;
-					std::string nvmemSuffix = cfgLoadStr("net", "nvmem", "");
-					std::string eeprom_file = get_game_save_prefix() + nvmemSuffix + ".eeprom";
-					FILE* f = fopen(eeprom_file.c_str(), "rb");
-					if (f)
-					{
-						fread(EEPROM, 1, 0x80, f);
-						fclose(f);
-						DEBUG_LOG(MAPLE, "Loaded EEPROM from %s", eeprom_file.c_str());
-					}
-					else if (naomi_default_eeprom != NULL)
-					{
-						DEBUG_LOG(MAPLE, "Using default EEPROM file");
-						memcpy(EEPROM, naomi_default_eeprom, 0x80);
-					}
-					else
-						DEBUG_LOG(MAPLE, "EEPROM file not found at %s and no default found", eeprom_file.c_str());
-				}
+				load_naomi_eeprom();
 				//printf("EEprom READ\n");
 				int address = dma_buffer_in[1];
 				//printState(Command,buffer_in,buffer_in_len);

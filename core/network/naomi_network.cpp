@@ -24,6 +24,8 @@
 #include <chrono>
 #include <thread>
 #include "rend/gui.h"
+#include "hw/naomi/naomi_cart.h"
+#include "hw/naomi/naomi_flashrom.h"
 
 sock_t NaomiNetwork::createAndBind(int protocol)
 {
@@ -55,6 +57,8 @@ sock_t NaomiNetwork::createAndBind(int protocol)
 
 bool NaomiNetwork::init()
 {
+	if (!settings.network.Enable)
+		return false;
 #ifdef _WIN32
 	WSADATA wsaData;
 	if (WSAStartup(MAKEWORD(2, 0), &wsaData) != 0)
@@ -472,5 +476,72 @@ void NaomiNetwork::terminate()
 	{
 		closesocket(server_sock);
 		server_sock = INVALID_SOCKET;
+	}
+}
+
+// Sets the game network config using MIE eeprom or bbsram:
+// Node -1 disables network
+// Node 0 is master, nodes 1+ are slave
+void SetNaomiNetworkConfig(int node)
+{
+	if (!strcmp("ALIEN FRONT", naomi_game_id))
+	{
+		// no way to disable the network
+		write_naomi_eeprom(0x3f, node == 0 ? 0 : 1);
+	}
+	else if (!strcmp("MOBILE SUIT GUNDAM JAPAN", naomi_game_id) // gundmct
+			|| !strcmp("MOBILE SUIT GUNDAM DELUXE JAPAN", naomi_game_id)) // gundmxgd
+	{
+		write_naomi_eeprom(0x38, node == -1 ? 2
+				: node == 0 ? 0 : 1);
+	}
+	else if (!strcmp(" BIOHAZARD  GUN SURVIVOR2", naomi_game_id))
+	{
+		// FIXME need default flash
+		write_naomi_flash(0x21c, node == 0 ? 0 : 1);	// CPU ID - 1
+		write_naomi_flash(0x22a, node == -1 ? 0 : 1);	// comm link on
+	}
+	else if (!strcmp("HEAVY METAL JAPAN", naomi_game_id))
+	{
+		write_naomi_eeprom(0x31, node == -1 ? 0 : node == 0 ? 1 : 2);
+	}
+	else if (!strcmp("OUTTRIGGER     JAPAN", naomi_game_id))
+	{
+		// FIXME need default flash
+		write_naomi_flash(0x21a, node == -1 ? 0 : 1);	// network on
+		write_naomi_flash(0x21b, node);					// node id
+	}
+	else if (!strcmp("SLASHOUT JAPAN VERSION", naomi_game_id))
+	{
+		write_naomi_eeprom(0x30, node == -1 ? 0
+				: node == 0 ? 1 : 2);
+	}
+	else if (!strcmp("SPAWN JAPAN", naomi_game_id))
+	{
+		write_naomi_eeprom(0x44, node == -1 ? 0 : 1);	// network on
+		write_naomi_eeprom(0x30, node <= 0 ? 1 : 2);	// node id
+	}
+	else if (!strcmp("SPIKERS BATTLE JAPAN VERSION", naomi_game_id))
+	{
+		write_naomi_eeprom(0x30, node == -1 ? 0
+				: node == 0 ? 1 : 2);
+	}
+	else if (!strcmp("VIRTUAL-ON ORATORIO TANGRAM", naomi_game_id))
+	{
+		write_naomi_eeprom(0x45, node == -1 ? 3
+				: node == 0 ? 0 : 1);
+		write_naomi_eeprom(0x47, node == 0 ? 0 : 1);
+	}
+	else if (!strcmp("WAVE RUNNER GP", naomi_game_id))
+	{
+		write_naomi_eeprom(0x33, node);
+		write_naomi_eeprom(0x35, node == -1 ? 2
+				: node == 0 ? 0 : 1);
+	}
+	else if (!strcmp("WORLD KICKS", naomi_game_id))
+	{
+		// FIXME need default flash
+		write_naomi_flash(0x224, node == -1 ? 0 : 1);	// network on
+		write_naomi_flash(0x220, node == 0 ? 0 : 1);	// node id
 	}
 }

@@ -3291,7 +3291,10 @@ Games[] =
             { "mpr-23339.ic16s",0x8000000, 0x0800000 },
             { "mpr-23340.ic17s",0x8800000, 0x0800000 },
             { NULL, 0, 0 },
-        }
+        },
+		NULL,
+		NULL,
+		slashout_eeprom_dump
     },
     // Sega Marine Fishing
     {
@@ -3828,7 +3831,8 @@ Games[] =
             { NULL, 0, 0 },
         },
         NULL,
-        &vonot_inputs
+        &vonot_inputs,
+		vonot_eeprom_dump
     },
     // Virtua Striker 2 Ver. 2000 (JPN, USA, EXP, KOR, AUS) (Rev C)
     {
@@ -3942,6 +3946,7 @@ Games[] =
         },
 		NULL,
 		&wrungp_inputs,
+		wrungp_eeprom_dump
     },
     // Wave Runner GP (USA, Rev A)
     {
@@ -3972,6 +3977,7 @@ Games[] =
         },
 		NULL,
 		&wrungp_inputs,
+		wrungp_eeprom_dump
     },
     // World Kicks (WK2 Ver. A)
     {
@@ -4938,10 +4944,12 @@ Games[] =
         ROT0,
         {
             { "317-5069-com.pic", 0, 0x4000 },
-            { "gundmgd-default-eeprom.bin", 0, 0x80,  0x0000000, Eeprom },
+            //{ "gundmgd-default-eeprom.bin", 0, 0x80,  0x0000000, Eeprom },
             { NULL, 0, 0 },
         },
         "gdl-0001",
+		NULL,
+		gundmct_eeprom_dump
     },
     // Mobile Suit Gundam: Federation Vs. Zeon DX (USA, Japan) (GDL-0006)
     {
@@ -4956,10 +4964,12 @@ Games[] =
         ROT0,
         {
             { "317-5079-com.pic", 0, 0x4000 },
-            { "gundmxgd-default-eeprom.bin", 0, 0x80,  0x0000000, Eeprom },
+            //{ "gundmxgd-default-eeprom.bin", 0, 0x80,  0x0000000, Eeprom },
             { NULL, 0, 0 },
         },
         "gdl-0006",
+		NULL,
+		gundmxgd_eeprom_dump
     },
     // Ikaruga (GDL-0010)
     {
@@ -5485,6 +5495,8 @@ Games[] =
             { NULL, 0, 0 },
         },
         "gds-0004",
+		NULL,
+		slashout_eeprom_dump
     },
     // Spikers Battle (GDS-0005)
     {
@@ -5502,6 +5514,8 @@ Games[] =
             { NULL, 0, 0 },
         },
         "gds-0005",
+		NULL,
+		spkrbtl_eeprom_dump
     },
     // Sports Jam (GDS-0003)
     {

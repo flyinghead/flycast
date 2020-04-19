@@ -250,6 +250,7 @@
 		AE8C274321122E2500D4D8F4 /* xbrz.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE8C273D21122E2500D4D8F4 /* xbrz.cpp */; };
 		AE90679B235B6F6400CE473C /* gl_context.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE90679A235B6F6400CE473C /* gl_context.cpp */; };
 		AE90679D235DF80400CE473C /* osd.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE90679C235DF80400CE473C /* osd.cpp */; };
+		AEA94931244CDF50001134C7 /* naomi_flashrom.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AEA9492F244CDF50001134C7 /* naomi_flashrom.cpp */; };
 		AED73BAE22FC0E9600ECDB64 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = AED73BAD22FC0E9600ECDB64 /* README.md */; };
 		AED73DC42303E19200ECDB64 /* sdl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AED73DC02303E19100ECDB64 /* sdl.cpp */; };
 		AED73DCC233ACC9800ECDB64 /* cheats.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AED73DCB233ACC9800ECDB64 /* cheats.cpp */; };
@@ -815,6 +816,8 @@
 		AE8C274021122E2500D4D8F4 /* xbrz_tools.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = xbrz_tools.h; sourceTree = "<group>"; };
 		AE90679A235B6F6400CE473C /* gl_context.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = gl_context.cpp; sourceTree = "<group>"; };
 		AE90679C235DF80400CE473C /* osd.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = osd.cpp; sourceTree = "<group>"; };
+		AEA9492F244CDF50001134C7 /* naomi_flashrom.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = naomi_flashrom.cpp; sourceTree = "<group>"; };
+		AEA94930244CDF50001134C7 /* naomi_roms_eeprom.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = naomi_roms_eeprom.h; sourceTree = "<group>"; };
 		AED73BAD22FC0E9600ECDB64 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; name = README.md; path = ../../../core/README.md; sourceTree = "<group>"; };
 		AED73DC02303E19100ECDB64 /* sdl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = sdl.cpp; sourceTree = "<group>"; };
 		AED73DC12303E19100ECDB64 /* sdl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = sdl.h; sourceTree = "<group>"; };
@@ -2070,8 +2073,10 @@
 				AE2A2D5021D6846F004B308D /* m1cartridge.h */,
 				AE2A2D5621D68470004B308D /* m4cartridge.cpp */,
 				AE2A2D5421D68470004B308D /* m4cartridge.h */,
+				AEA9492F244CDF50001134C7 /* naomi_flashrom.cpp */,
 				AE7BCB6C24460910007285F8 /* naomi_m3comm.cpp */,
 				AE7BCB6D24460910007285F8 /* naomi_m3comm.h */,
+				AEA94930244CDF50001134C7 /* naomi_roms_eeprom.h */,
 				AE2A2D5821D68470004B308D /* naomi_roms_input.h */,
 				AE2A2D5521D68470004B308D /* naomi_roms.h */,
 				AE80EDB92157D4E600F7800F /* naomi.cpp */,
@@ -2754,6 +2759,7 @@
 				8491687F1B782B2D00F3F2B4 /* ini.cpp in Sources */,
 				84B7BF341B72720200F9733F /* maple_cfg.cpp in Sources */,
 				AE649C2D218C553A00EF4A81 /* LzmaDec.c in Sources */,
+				AEA94931244CDF50001134C7 /* naomi_flashrom.cpp in Sources */,
 				AE649C3D218C555600EF4A81 /* chd.c in Sources */,
 				AED73E762348E45000ECDB64 /* Scan.cpp in Sources */,
 				AE649C25218C553A00EF4A81 /* Bra.c in Sources */,
@@ -2990,7 +2996,7 @@
 					"USE_SDL=1",
 					XXH_INLINE_ALL,
 					VK_USE_PLATFORM_MACOS_MVK,
-					Z_HAVE_UNISTD_H
+					Z_HAVE_UNISTD_H,
 				);
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
@@ -3045,7 +3051,7 @@
 					"USE_SDL=1",
 					XXH_INLINE_ALL,
 					VK_USE_PLATFORM_MACOS_MVK,
-					Z_HAVE_UNISTD_H
+					Z_HAVE_UNISTD_H,
 				);
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;

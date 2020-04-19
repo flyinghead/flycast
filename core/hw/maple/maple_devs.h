@@ -133,6 +133,9 @@ void limit_joystick_magnitude(s8& joyx, s8& joyy)
 	}
 }
 
+extern u8 EEPROM[0x100];
+void load_naomi_eeprom();
+
 // Mouse position and buttons
 extern u32 mo_buttons;
 extern s32 mo_x_abs;

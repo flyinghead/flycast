@@ -1304,15 +1304,21 @@ static void gui_display_settings()
 		    }
 		    if (ImGui::CollapsingHeader("Network", ImGuiTreeNodeFlags_DefaultOpen))
 		    {
-		    	ImGui::Checkbox("Act as Server", &settings.network.ActAsServer);
-	            ImGui::SameLine();
-	            ShowHelpMarker("Create a local server for Naomi network games");
-	            char server_name[256];
-	            strcpy(server_name, settings.network.server.c_str());
-		    	ImGui::InputText("Server", server_name, sizeof(server_name), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
-	            ImGui::SameLine();
-	            ShowHelpMarker("The server to connect to. Leave blank to find a server automatically");
-		    	settings.network.server = server_name;
+		    	ImGui::Checkbox("Enable", &settings.network.Enable);
+				ImGui::SameLine();
+				ShowHelpMarker("Enable networking for supported Naomi games");
+		    	if (settings.network.Enable)
+		    	{
+					ImGui::Checkbox("Act as Server", &settings.network.ActAsServer);
+					ImGui::SameLine();
+					ShowHelpMarker("Create a local server for Naomi network games");
+					char server_name[256];
+					strcpy(server_name, settings.network.server.c_str());
+					ImGui::InputText("Server", server_name, sizeof(server_name), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
+					ImGui::SameLine();
+					ShowHelpMarker("The server to connect to. Leave blank to find a server automatically");
+					settings.network.server = server_name;
+		    	}
 		    }
 		    if (ImGui::CollapsingHeader("Other", ImGuiTreeNodeFlags_DefaultOpen))
 		    {

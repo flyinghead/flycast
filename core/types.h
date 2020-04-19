@@ -534,6 +534,7 @@ struct settings_t
 	} input;
 
 	struct {
+		bool Enable;
 		bool ActAsServer;
 		std::string dns;
 		std::string server;

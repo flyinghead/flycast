@@ -28,6 +28,7 @@
 #include "cheats.h"
 #include "rend/CustomTexture.h"
 #include "hw/maple/maple_devs.h"
+#include "network/naomi_network.h"
 
 void FlushCache();
 void LoadCustom();
@@ -635,7 +636,11 @@ void dc_start_game(const char *path)
 		naomi_cart_LoadRom(path);
 		LoadCustom();
 		if (settings.platform.system == DC_PLATFORM_NAOMI)
+		{
 			mcfg_CreateNAOMIJamma();
+			SetNaomiNetworkConfig(settings.network.Enable ? settings.network.ActAsServer ? 0 : 1	// FIXME more than 2 nodes
+					: -1);
+		}
 		else if (settings.platform.system == DC_PLATFORM_ATOMISWAVE)
 			mcfg_CreateAtomisWaveControllers();
 	}
@@ -798,6 +803,7 @@ void InitSettings()
 		settings.input.maple_expansion_devices[i][0] = i == 0 ? MDT_SegaVMU : MDT_None;
 		settings.input.maple_expansion_devices[i][1] = i == 0 ? MDT_SegaVMU : MDT_None;
 	}
+	settings.network.Enable = false;
 	settings.network.ActAsServer = false;
 	settings.network.dns = "46.101.91.123";		// Dreamcast Live DNS
 	settings.network.server = "";
@@ -904,6 +910,7 @@ void LoadSettings(bool game_specific)
 		sprintf(device_name, "device%d.2", i + 1);
 		settings.input.maple_expansion_devices[i][1] = (MapleDeviceType)cfgLoadInt(input_section, device_name, settings.input.maple_expansion_devices[i][1]);
 	}
+	settings.network.Enable = cfgLoadBool("network", "Enable", settings.network.Enable);
 	settings.network.ActAsServer = cfgLoadBool("network", "ActAsServer", settings.network.ActAsServer);
 	settings.network.dns = cfgLoadStr("network", "DNS", settings.network.dns.c_str());
 	settings.network.server = cfgLoadStr("network", "server", settings.network.server.c_str());
@@ -1064,6 +1071,7 @@ void SaveSettings()
 	}
 	cfgSaveStr("config", "Dreamcast.ContentPath", paths.c_str());
 	cfgSaveBool("config", "Dreamcast.HideLegacyNaomiRoms", settings.dreamcast.HideLegacyNaomiRoms);
+	cfgSaveBool("network", "Enable", settings.network.Enable);
 	cfgSaveBool("network", "ActAsServer", settings.network.ActAsServer);
 	cfgSaveStr("network", "DNS", settings.network.dns.c_str());
 	cfgSaveStr("network", "server", settings.network.server.c_str());

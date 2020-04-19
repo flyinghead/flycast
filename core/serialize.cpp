@@ -98,7 +98,7 @@ extern GD_StatusT GDStatus;
 extern ByteCount_t ByteCount ;
 
 //./core/hw/maple/maple_devs.o
-extern char EEPROM[0x100];
+extern u8 EEPROM[0x100];
 extern bool EEPROM_loaded;
 
 //./core/hw/maple/maple_if.o
