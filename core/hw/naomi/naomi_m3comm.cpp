@@ -59,14 +59,14 @@ void NaomiM3Comm::receiveNetwork()
 	const u32 slot_size = swap16(*(u16*)&m68k_ram[0x204]);
 	const u32 packet_size = slot_size * slot_count;
 
-	u8 buf[packet_size];
+	std::unique_ptr<u8[]> buf(new u8[packet_size]);
 
-	if (network.receive(buf, packet_size))
+	if (network.receive(buf.get(), packet_size))
 	{
 		packet_number += slot_count - 1;
 		*(u16*)&comm_ram[6] = swap16(packet_number);
 		std::unique_lock<std::mutex> lock(mem_mutex);
-		memcpy(&comm_ram[0x100 + slot_size], buf, packet_size);
+		memcpy(&comm_ram[0x100 + slot_size], buf.get(), packet_size);
 	}
 }
 
