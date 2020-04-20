@@ -181,7 +181,7 @@ struct read_buff_t
 {
 	u32 cache_index;
 	u32 cache_size;
-	u8 cache[2352 * 8192];	//up to 8192 sectors
+	u8 cache[2352 * 32];
 } ;
 
 //pio buffer
