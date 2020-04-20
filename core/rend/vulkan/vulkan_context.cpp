@@ -29,6 +29,7 @@
 #include "compiler.h"
 #include "texture.h"
 #include "utils.h"
+#include "emulator.h"
 
 VulkanContext *VulkanContext::contextInstance;
 
@@ -871,7 +872,6 @@ void VulkanContext::Term()
 void VulkanContext::DoSwapAutomation()
 {
 #ifdef TEST_AUTOMATION
-	extern void dc_exit();
 	extern bool do_screenshot;
 
 	if (do_screenshot)

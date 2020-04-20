@@ -12,6 +12,8 @@
 
 #include "gdcartridge.h"
 #include "stdclass.h"
+#include "emulator.h"
+#include "rend/gui.h"
 
 /*
 
@@ -567,8 +569,21 @@ void GDCartridge::device_start()
 			u32 des_subkeys[32];
 			des_generate_subkeys(rev64(key), des_subkeys);
 
+			u32 progress = ~0;
 			for (u32 i = 0; i < file_rounded_size; i += 8)
+			{
+				const u32 new_progress = (u32)(((u64)i + 8) * 100 / file_rounded_size);
+				if (progress != new_progress)
+				{
+					if (loading_canceled)
+						break;
+					progress = new_progress;
+					char status_str[16];
+					sprintf(status_str, "Decrypting %d%%", progress);
+					gui_display_notification(status_str, 2000);
+				}
 				*(u64 *)(dimm_data + i) = des_encrypt_decrypt<true>(*(u64 *)(dimm_data + i), des_subkeys);
+			}
 		}
 
 		delete gdrom;

@@ -1,8 +1,12 @@
 // nullDC.cpp : Makes magic cookies
 //
+#include <atomic>
+#include <future>
+#include <thread>
 
 //initialse Emu
 #include "types.h"
+#include "emulator.h"
 #include "oslib/oslib.h"
 #include "oslib/audiostream.h"
 #include "hw/mem/_vmem.h"
@@ -31,9 +35,7 @@
 #include "network/naomi_network.h"
 
 void FlushCache();
-void LoadCustom();
-void* dc_run(void*);
-void dc_resume();
+static void LoadCustom();
 
 extern bool fast_forward_mode;
 
@@ -50,19 +52,14 @@ static int saved_screen_stretching = -1;
 
 cThread emu_thread(&dc_run, NULL);
 
+static std::future<void> loading_done;
+std::atomic<bool> loading_canceled;
+
 #ifdef _WIN32
 #include <windows.h>
 #endif
 
-int GetFile(char *szFileName, char *szParse /* = 0 */, u32 flags /* = 0 */)
-{
-	cfgLoadStr("config", "image", szFileName, "");
-
-	return szFileName[0] != '\0' ? 1 : 0;
-}
-
-
-s32 plugins_Init()
+static s32 plugins_Init()
 {
 
 	if (s32 rv = libPvr_Init())
@@ -82,7 +79,7 @@ s32 plugins_Init()
 	return 0;
 }
 
-void plugins_Term()
+static void plugins_Term()
 {
 	//term all plugins
 	libARM_Term();
@@ -91,7 +88,7 @@ void plugins_Term()
 	libPvr_Term();
 }
 
-void plugins_Reset(bool hard)
+static void plugins_Reset(bool hard)
 {
 	libPvr_Reset(hard);
 	libGDR_Reset(hard);
@@ -100,7 +97,7 @@ void plugins_Reset(bool hard)
 	//libExtDevice_Reset(Manual);
 }
 
-void LoadSpecialSettings()
+static void LoadSpecialSettings()
 {
 	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
 	{
@@ -466,7 +463,7 @@ int reicast_init(int argc, char* argv[])
 	return 0;
 }
 
-void set_platform(int platform)
+static void set_platform(int platform)
 {
 	if (VRAM_SIZE != 0)
 		_vmem_unprotect_vram(0, VRAM_SIZE);
@@ -559,8 +556,9 @@ static int get_game_platform(const char *path)
 	return DC_PLATFORM_DREAMCAST;
 }
 
-void dc_start_game(const char *path)
+static void dc_start_game(const char *path)
 {
+	DEBUG_LOG(BOOT, "Loading game %s", path == nullptr ? "(nil)" : path);
 	bool forced_bios_file = false;
 
 	if (path != NULL)
@@ -634,6 +632,8 @@ void dc_start_game(const char *path)
 	else if (settings.platform.system == DC_PLATFORM_NAOMI || settings.platform.system == DC_PLATFORM_ATOMISWAVE)
 	{
 		naomi_cart_LoadRom(path);
+		if (loading_canceled)
+			return;
 		LoadCustom();
 		if (settings.platform.system == DC_PLATFORM_NAOMI)
 		{
@@ -660,8 +660,6 @@ void dc_start_game(const char *path)
 		}
 	}
 	fast_forward_mode = false;
-	game_started = true;
-	dc_resume();
 }
 
 bool dc_is_running()
@@ -708,6 +706,7 @@ void* dc_run(void*)
 
 void dc_term()
 {
+	dc_cancel_load();
 	sh4_cpu.Term();
 	if (settings.platform.system != DC_PLATFORM_DREAMCAST)
 		naomi_cart_Close();
@@ -952,7 +951,7 @@ void LoadSettings(bool game_specific)
 */
 }
 
-void LoadCustom()
+static void LoadCustom()
 {
 	char *reios_id;
 	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
@@ -1088,7 +1087,9 @@ void SaveSettings()
 
 void dc_resume()
 {
-	emu_thread.Start();
+	game_started = true;
+	if (!emu_thread.thread.joinable())
+		emu_thread.Start();
 }
 
 static void cleanup_serialize(void *data)
@@ -1247,4 +1248,36 @@ void dc_loadstate()
 
     cleanup_serialize(data) ;
     INFO_LOG(SAVESTATE, "Loaded state from %s size %d", filename.c_str(), total_size) ;
+}
+
+void dc_load_game(const char *path)
+{
+	loading_canceled = false;
+
+	loading_done = std::async(std::launch::async, [path] {
+		dc_start_game(path);
+	});
+}
+
+bool dc_is_load_done()
+{
+	if (!loading_done.valid())
+		return true;
+	if (loading_done.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready)
+		return true;
+	return false;
+}
+
+void dc_cancel_load()
+{
+	if (loading_done.valid())
+	{
+		loading_canceled = true;
+		loading_done.get();
+	}
+}
+
+void dc_get_load_status()
+{
+	loading_done.get();
 }

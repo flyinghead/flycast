@@ -9,6 +9,9 @@
 #import <AppKit/AppKit.h>
 #include <OpenGL/gl3.h>
 #include <sys/stat.h>
+#include <mach/task.h>
+#include <mach/mach_init.h>
+#include <mach/mach_port.h>
 
 #include "types.h"
 #include "hw/maple/maple_cfg.h"
@@ -21,6 +24,7 @@
 #endif
 #include "stdclass.h"
 #include "wsi/context.h"
+#include "emulator.h"
 
 OSXKeyboardDevice keyboard(0);
 static std::shared_ptr<OSXKbGamepadDevice> kb_gamepad(0);
@@ -56,6 +60,18 @@ void UpdateInputState(u32 port) {
 }
 
 void os_CreateWindow() {
+#if 0
+    int ret = task_set_exception_ports(
+                                       mach_task_self(),
+                                       EXC_MASK_BAD_ACCESS,
+                                       MACH_PORT_NULL,
+                                       EXCEPTION_DEFAULT,
+                                       0);
+    
+    if (ret != KERN_SUCCESS) {
+        printf("task_set_exception_ports: %s\n", mach_error_string(ret));
+    }
+#endif
 }
 
 void os_SetupInput()
@@ -71,9 +87,6 @@ void os_SetupInput()
 }
 
 void common_linux_setup();
-int reicast_init(int argc, char* argv[]);
-void dc_exit();
-void dc_resume();
 void rend_init_renderer();
 
 extern "C" void emu_dc_exit()

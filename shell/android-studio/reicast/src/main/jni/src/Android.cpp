@@ -27,6 +27,7 @@
 #include "cfg/cfg.h"
 #include "log/LogManager.h"
 #include "wsi/context.h"
+#include "emulator.h"
 
 JavaVM* g_jvm;
 
@@ -132,11 +133,6 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_screenDpi(JNIEnv *env
 {
     screen_dpi = screenDpi;
 }
-
-int reicast_init(int argc, char* argv[]);
-void dc_resume();
-void dc_stop();
-void dc_term();
 
 bool egl_makecurrent();
 

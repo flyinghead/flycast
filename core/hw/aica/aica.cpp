@@ -179,8 +179,8 @@ s32 libAICA_Init()
 	init_mem();
 	aica_Init();
 
-	verify(sizeof(*CommonData)==0x508);
-	verify(sizeof(*DSPData)==0x15C8);
+	static_assert(sizeof(*CommonData) == 0x508, "Invalid CommonData size");
+	static_assert(sizeof(*DSPData) == 0x15C8, "Invalid DSPData size");
 
 	CommonData=(CommonData_struct*)&aica_reg[0x2800];
 	DSPData=(DSPData_struct*)&aica_reg[0x3000];

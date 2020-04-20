@@ -11,8 +11,7 @@
 #include "hw/modem/modem.h"
 #include "hw/naomi/naomi.h"
 #include "hw/pvr/pvr_sb_regs.h"
-
-extern void dc_request_reset();
+#include "emulator.h"
 
 std::array<RegisterStruct, 0x540> sb_regs;
 

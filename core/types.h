@@ -313,8 +313,8 @@ int msgboxf(const char* text, unsigned int type, ...);
 #define MBX_ICONEXCLAMATION          0
 #define MBX_ICONERROR                0
 
-#define verify(x) do { if ((x) == false){ msgboxf("Verify Failed  : " #x "\n in %s -> %s : %d \n", MBX_ICONERROR, (__FUNCTION__), (__FILE__), __LINE__); dbgbreak;}} while (false)
-#define die(reason) do { msgboxf("Fatal error : %s\n in %s -> %s : %d \n", MBX_ICONERROR,(reason), (__FUNCTION__), (__FILE__), __LINE__); dbgbreak;} while (false)
+#define verify(x) do { if ((x) == false){ msgboxf("Verify Failed  : " #x "\n in %s -> %s : %d", MBX_ICONERROR, (__FUNCTION__), (__FILE__), __LINE__); dbgbreak;}} while (false)
+#define die(reason) do { msgboxf("Fatal error : %s\n in %s -> %s : %d", MBX_ICONERROR,(reason), (__FUNCTION__), (__FILE__), __LINE__); dbgbreak;} while (false)
 
 
 //will be removed sometime soon
@@ -553,22 +553,10 @@ extern settings_t settings;
 #define FLASH_SIZE settings.platform.flash_size
 #define BBSRAM_SIZE settings.platform.bbsram_size
 
-void InitSettings();
-void LoadSettings(bool game_specific);
-void SaveSettings();
-u32 GetRTC_now();
-
 inline bool is_s8(u32 v) { return (s8)v==(s32)v; }
 inline bool is_u8(u32 v) { return (u8)v==(s32)v; }
 inline bool is_s16(u32 v) { return (s16)v==(s32)v; }
 inline bool is_u16(u32 v) { return (u16)v==(u32)v; }
-
-//more to come
-
-//sh4 thread
-s32 plugins_Init();
-void plugins_Term();
-void plugins_Reset(bool Manual);
 
 //PVR
 s32 libPvr_Init();

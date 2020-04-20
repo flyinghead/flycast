@@ -3,6 +3,7 @@
 #if HOST_OS==OS_LINUX
 #include "hw/sh4/dyna/blockmanager.h"
 #include "log/LogManager.h"
+#include "emulator.h"
 
 #include <cstdarg>
 #include <csignal>
@@ -125,8 +126,6 @@ void os_CreateWindow()
 }
 
 void common_linux_setup();
-int reicast_init(int argc, char* argv[]);
-void dc_term();
 void* rend_thread(void* p);
 
 #ifdef TARGET_PANDORA

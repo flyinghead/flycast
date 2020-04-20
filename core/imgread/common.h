@@ -3,6 +3,8 @@
 #include <vector>
 
 #include "deps/coreio/coreio.h"
+#include "emulator.h"
+#include "rend/gui.h"
 
 extern u32 NullDriveDiscType;
 struct TocTrackInfo
@@ -95,7 +97,6 @@ void GetDriveToc(u32* to,DiskArea area);
 void GetDriveSector(u8 * buff,u32 StartSector,u32 SectorCount,u32 secsz);
 
 void GetDriveSessionInfo(u8* to,u8 session);
-int GetFile(char *szFileName, char *szParse=0,u32 flags=0);
 int msgboxf(char* text,unsigned int type,...);
 void printtoc(TocInfo* toc,SessionInfo* ses);
 extern u8 q_subchannel[96];
@@ -170,8 +171,23 @@ struct Disc
 		SectorFormat secfmt;
 		SubcodeFormat subfmt;
 
-		while(count)
+		u32 progress = ~0;
+		for (u32 i = 1; i <= count; i++)
 		{
+			if (count >= 100)
+			{
+				if (loading_canceled)
+					break;
+				// Progress report when loading naomi gd-rom games
+				const u32 new_progress = i * 100 / count;
+				if (progress != new_progress)
+				{
+					progress = new_progress;
+					char status_str[16];
+					sprintf(status_str, "%d%%", progress);
+					gui_display_notification(status_str, 2000);
+				}
+			}
 			if (ReadSector(FAD,temp,&secfmt,q_subchannel,&subfmt))
 			{
 				//TODO: Proper sector conversions
@@ -207,7 +223,6 @@ struct Disc
 			}
 			dst+=fmt;
 			FAD++;
-			count--;
 		}
 	}
 	virtual ~Disc() 

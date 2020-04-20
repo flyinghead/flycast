@@ -35,13 +35,8 @@
 #include "oslib/audiostream.h"
 #include "imgread/common.h"
 #include "log/LogManager.h"
+#include "emulator.h"
 
-extern void dc_loadstate();
-extern void dc_savestate();
-extern void dc_stop();
-extern void dc_reset(bool hard);
-extern void dc_resume();
-extern void dc_start_game(const char *path);
 extern void UpdateInputState(u32 port);
 extern bool game_started;
 
@@ -59,6 +54,8 @@ static bool settings_opening;
 static bool touch_up;
 #endif
 static std::string error_msg;
+static std::string osd_message;
+static double osd_message_end;
 
 static void display_vmus();
 static void reset_vmus();
@@ -290,15 +287,11 @@ void gui_open_settings()
 static void gui_start_game(const std::string& path)
 {
 	scanner.stop();
-	try {
-		dc_start_game(path.empty() ? NULL : path.c_str());
-	} catch (ReicastException& ex) {
-		ERROR_LOG(BOOT, "%s", ex.reason.c_str());
-		error_msg = ex.reason;
-		gui_state = Main;
-		game_started = false;
-		settings.imgread.ImagePath[0] = '\0';
-	}
+	gui_state = Loading;
+	static std::string path_copy;
+	path_copy = path;	// path may be a local var
+
+	dc_load_game(path.empty() ? NULL : path_copy.c_str());
 }
 
 static void gui_display_commands()
@@ -317,18 +310,18 @@ static void gui_display_commands()
     ImGui::SetNextWindowPos(ImVec2(screen_width / 2.f, screen_height / 2.f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
     ImGui::SetNextWindowSize(ImVec2(330 * scaling, 0));
 
-    ImGui::Begin("Flycast", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize);
+    ImGui::Begin("##commands", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize);
 
 	ImGui::Columns(2, "buttons", false);
 	if (ImGui::Button("Load State", ImVec2(150 * scaling, 50 * scaling)))
 	{
-		gui_state = ClosedNoResume;
+		gui_state = Closed;
 		dc_loadstate();
 	}
 	ImGui::NextColumn();
 	if (ImGui::Button("Save State", ImVec2(150 * scaling, 50 * scaling)))
 	{
-		gui_state = ClosedNoResume;
+		gui_state = Closed;
 		dc_savestate();
 	}
 
@@ -643,6 +636,7 @@ static void error_popup()
 {
 	if (!error_msg.empty())
 	{
+		ImGui::OpenPopup("Error");
 		if (ImGui::BeginPopupModal("Error", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
 		{
 			ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + 400.f * scaling);
@@ -659,7 +653,6 @@ static void error_popup()
 			ImGui::PopStyleVar();
 			ImGui::EndPopup();
 		}
-		ImGui::OpenPopup("Error");
 	}
 }
 
@@ -1504,7 +1497,7 @@ static void gui_display_content()
 		ImGui::PushID("bios");
 		if (ImGui::Selectable("Dreamcast BIOS"))
 		{
-			gui_state = ClosedNoResume;
+			gui_state = Closed;
 			settings.imgread.ImagePath[0] = '\0';
 			gui_start_game("");
 		}
@@ -1536,7 +1529,7 @@ static void gui_display_content()
 						else
 						{
 							scanner.get_mutex().unlock();
-							gui_state = ClosedNoResume;
+							gui_state = Closed;
 							gui_start_game(game.path);
 							scanner.get_mutex().lock();
 						}
@@ -1589,6 +1582,67 @@ void gui_display_onboarding()
 	ImGui_impl_RenderDrawData(ImGui::GetDrawData(), false);
 }
 
+void gui_display_loadscreen()
+{
+	ImGui_Impl_NewFrame();
+    ImGui::NewFrame();
+
+	ImGui::SetNextWindowPos(ImVec2(screen_width / 2, screen_height / 2), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+	ImGui::SetNextWindowSize(ImVec2(330 * scaling, 180 * scaling));
+
+    ImGui::Begin("##loading", NULL, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize);
+
+    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(20 * scaling, 10 * scaling));
+    ImGui::AlignTextToFramePadding();
+    ImGui::SetCursorPosX(20.f * scaling);
+	if (dc_is_load_done())
+	{
+		try {
+			dc_get_load_status();
+			gui_state = Closed;
+			ImGui::Text("STARTING...");
+		} catch (ReicastException& ex) {
+			ERROR_LOG(BOOT, "%s", ex.reason.c_str());
+			error_msg = ex.reason;
+#ifdef TEST_AUTOMATION
+			die("Game load failed");
+#endif
+			gui_state = Main;
+			settings.imgread.ImagePath[0] = '\0';
+		}
+	}
+	else
+	{
+		ImGui::Text("LOADING... ");
+		double now = os_GetSeconds();
+		if (!osd_message.empty())
+		{
+			if (now >= osd_message_end)
+				osd_message.clear();
+			else
+			{
+				ImGui::SameLine();
+				ImGui::Text("%s", osd_message.c_str());
+			}
+		}
+		float currentwidth = ImGui::GetContentRegionAvailWidth();
+		ImGui::SetCursorPosX((currentwidth - 100.f * scaling) / 2.f + ImGui::GetStyle().WindowPadding.x);
+		ImGui::SetCursorPosY(126.f * scaling);
+		if (ImGui::Button("Cancel", ImVec2(100.f * scaling, 0.f)))
+		{
+			dc_cancel_load();
+			gui_state = Main;
+			settings.imgread.ImagePath[0] = '\0';
+		}
+	}
+	ImGui::PopStyleVar();
+
+    ImGui::End();
+
+    ImGui::Render();
+	ImGui_impl_RenderDrawData(ImGui::GetDrawData(), false);
+}
+
 void gui_display_ui()
 {
 	switch (gui_state)
@@ -1604,20 +1658,12 @@ void gui_display_ui()
 		{
 			std::string game_file = settings.imgread.ImagePath;
 			if (!game_file.empty())
-			{
-				gui_state = ClosedNoResume;
 				gui_start_game(game_file);
-#ifdef TEST_AUTOMATION
-				if (gui_state == Main)
-					die("Game load failed");
-#endif
-			}
 			else
 				gui_display_content();
 		}
 		break;
 	case Closed:
-	case ClosedNoResume:
 		break;
 	case Onboarding:
 		gui_display_onboarding();
@@ -1632,20 +1678,19 @@ void gui_display_ui()
 	case SelectDisk:
 		gui_display_content();
 		break;
+	case Loading:
+		gui_display_loadscreen();
+		break;
 	}
 
 	if (gui_state == Closed)
 		dc_resume();
-	else if (gui_state == ClosedNoResume)
-		gui_state = Closed;
 }
 
 static float LastFPSTime;
 static int lastFrameCount = 0;
 static float fps = -1;
 
-static std::string osd_message;
-static double osd_message_end;
 extern bool fast_forward_mode;
 
 void gui_display_notification(const char *msg, int duration)

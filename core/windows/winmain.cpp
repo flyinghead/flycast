@@ -13,6 +13,7 @@
 #include "sdl/sdl.h"
 #endif
 #include "hw/maple/maple_devs.h"
+#include "emulator.h"
 
 #define _WIN32_WINNT 0x0500
 #include <windows.h>
@@ -114,8 +115,6 @@ PCHAR*
 	(*_argc) = argc;
 	return argv;
 }
-
-void dc_exit(void);
 
 bool VramLockedWrite(u8* address);
 bool ngen_Rewrite(unat& addr,unat retadr,unat acc);
@@ -748,9 +747,7 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 	__try
 #endif
 	{
-		int reicast_init(int argc, char* argv[]);
 		void *rend_thread(void *);
-		void dc_term();
 
 		if (reicast_init(argc, argv) != 0)
 			die("Reicast initialization failed");

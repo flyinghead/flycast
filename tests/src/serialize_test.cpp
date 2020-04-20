@@ -3,9 +3,7 @@
 #include "hw/mem/_vmem.h"
 #include "hw/maple/maple_cfg.h"
 #include "hw/maple/maple_devs.h"
-
-void dc_init();
-void dc_reset(bool hard);
+#include "emulator.h"
 
 class SerializeTest : public ::testing::Test {
 protected:

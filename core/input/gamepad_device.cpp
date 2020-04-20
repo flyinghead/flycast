@@ -21,13 +21,12 @@
 #include "cfg/cfg.h"
 #include "oslib/oslib.h"
 #include "rend/gui.h"
+#include "emulator.h"
 
 #include <algorithm>
 #include <climits>
 
 #define MAPLE_PORT_CFG_PREFIX "maple_"
-
-extern void dc_exit();
 
 // Gamepads
 u16 kcode[4] = { 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF };

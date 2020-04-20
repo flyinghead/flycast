@@ -33,7 +33,7 @@ extern u32 vmu_lcd_data[8][48 * 32];
 extern bool vmu_lcd_status[8];
 extern bool vmu_lcd_changed[8];
 
-typedef enum { Closed, Commands, Settings, ClosedNoResume, Main, Onboarding, VJoyEdit, VJoyEditCommands, SelectDisk } GuiState;
+typedef enum { Closed, Commands, Settings, Main, Onboarding, VJoyEdit, VJoyEditCommands, SelectDisk, Loading } GuiState;
 extern GuiState gui_state;
 void ImGui_Impl_NewFrame();
 

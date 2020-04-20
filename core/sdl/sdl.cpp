@@ -9,6 +9,7 @@
 #include "sdl_gamepad.h"
 #include "sdl_keyboard.h"
 #include "wsi/context.h"
+#include "emulator.h"
 
 #ifdef USE_VULKAN
 #include <SDL2/SDL_vulkan.h>
@@ -30,8 +31,6 @@ static bool window_fullscreen;
 static bool window_maximized;
 static int window_width = WINDOW_WIDTH;
 static int window_height = WINDOW_HEIGHT;
-
-extern void dc_exit();
 
 static void sdl_open_joystick(int index)
 {

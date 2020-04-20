@@ -11,6 +11,7 @@
 #include "icon.h"
 #include "wsi/context.h"
 #include "hw/maple/maple_devs.h"
+#include "emulator.h"
 
 #if FEAT_HAS_NIXPROF
 #include "profiler/profiler.h"
@@ -77,8 +78,6 @@ static bool x11_fullscreen = false;
 static Atom wmDeleteMessage;
 
 extern bool dump_frame_switch;
-
-void dc_exit();
 
 enum
 {

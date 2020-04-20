@@ -7,6 +7,7 @@
 #include "rend/TexCache.h"
 #include "rend/transform_matrix.h"
 #include "wsi/gl_context.h"
+#include "emulator.h"
 
 #include <cmath>
 
@@ -413,7 +414,6 @@ void do_swap_automation()
 
 	if (do_screenshot)
 	{
-		extern void dc_exit();
 		int bytesz = screen_width * screen_height * 3;
 		u8* img = new u8[bytesz];
 		

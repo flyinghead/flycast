@@ -33,6 +33,8 @@
 #include "gdcartridge.h"
 #include "archive/archive.h"
 #include "stdclass.h"
+#include "emulator.h"
+#include "rend/gui.h"
 
 Cartridge *CurrentCartridge;
 bool bios_loaded = false;
@@ -267,8 +269,14 @@ static void naomi_cart_LoadZip(const char *filename)
 		CurrentCartridge->SetKey(game->key);
 		NaomiGameInputs = game->inputs;
 
-		for (int romid = 0; game->blobs[romid].filename != NULL; romid++)
+		for (int romid = 0; game->blobs[romid].filename != NULL && !loading_canceled; romid++)
 		{
+			if (game->cart_type != GD)
+			{
+				std::string progress = "ROM " + std::to_string(romid + 1);
+				gui_display_notification(progress.c_str(), 1000);
+			}
+
 			u32 len = game->blobs[romid].length;
 
 			if (game->blobs[romid].blob_type == Copy)
@@ -354,6 +362,8 @@ static void naomi_cart_LoadZip(const char *filename)
 				}
 			}
 		}
+		if (loading_canceled)
+			return;
 		if (naomi_default_eeprom == NULL && game->eeprom_dump != NULL)
 			naomi_default_eeprom = game->eeprom_dump;
 		naomi_rotate_screen = game->rotation_flag == ROT270;
