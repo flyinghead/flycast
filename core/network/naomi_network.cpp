@@ -27,6 +27,10 @@
 #include "hw/naomi/naomi_cart.h"
 #include "hw/naomi/naomi_flashrom.h"
 
+#ifdef _MSC_VER
+typedef int ssize_t;
+#endif
+
 sock_t NaomiNetwork::createAndBind(int protocol)
 {
 	sock_t sock = socket(AF_INET, protocol == IPPROTO_TCP ? SOCK_STREAM : SOCK_DGRAM, protocol);
