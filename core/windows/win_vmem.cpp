@@ -1,10 +1,7 @@
-
-#define _WIN32_WINNT 0x0500
-#include <windows.h>
-#include <windowsx.h>
-
 #include "hw/mem/_vmem.h"
 #include "hw/sh4/sh4_if.h"
+
+#include <windows.h>
 
 // Implementation of the vmem related function for Windows platforms.
 // For now this probably does some assumptions on the CPU/platform.

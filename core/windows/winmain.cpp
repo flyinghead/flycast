@@ -15,12 +15,8 @@
 #include "hw/maple/maple_devs.h"
 #include "emulator.h"
 
-#define _WIN32_WINNT 0x0500
 #include <windows.h>
 #include <windowsx.h>
-
-#include <xinput.h>
-#pragma comment(lib, "XInput9_1_0.lib")
 
 PCHAR*
 	CommandLineToArgvA(

@@ -153,12 +153,6 @@
 #define CPU_ARM64    0x20000008
 #define CPU_MIPS64   0x20000009
 
-//BUILD_COMPILER
-#define COMPILER_VC    0x30000001
-#define COMPILER_GCC   0x30000002
-#define COMPILER_CLANG 0x30000003
-#define COMPILER_INTEL 0x30000004
-
 //FEAT_SHREC, FEAT_AREC, FEAT_DSPREC
 #define DYNAREC_NONE	0x40000001
 #define DYNAREC_JIT		0x40000002
@@ -175,12 +169,6 @@
 	#else
 		#define TARGET_WIN64
 	#endif
-#endif
-
-#ifdef __GNUC__ 
-	#define BUILD_COMPILER COMPILER_GCC
-#else
-	#define BUILD_COMPILER COMPILER_VC
 #endif
 
 //Targets
@@ -300,8 +288,6 @@
 
 
 // Compiler Related
-
-#define COMPILER_VC_OR_CLANG_WIN32 ((BUILD_COMPILER == COMPILER_VC) || (BUILD_COMPILER == COMPILER_CLANG) && HOST_OS == OS_WINDOWS)
 
 #ifndef _MSC_VER
 #define ATTR_USED   __attribute__((used))

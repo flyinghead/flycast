@@ -4,8 +4,6 @@
 	Works surprisingly well considering how old it is ...
 */
 
-#define _CRT_SECURE_NO_DEPRECATE (1)
-
 #include "cfg.h"
 #include "ini.h"
 #include "stdclass.h"

@@ -12,12 +12,15 @@
 #include <mach/mach.h>
 #endif
 
-#if COMPILER_VC_OR_CLANG_WIN32
+#ifdef _WIN32
 	#include <algorithm>
 	#include <io.h>
 	#include <direct.h>
 	#define access _access
-	#define R_OK   4
+	#ifndef R_OK
+		#define R_OK   4
+	#endif
+	#define mkdir(dir, mode) _mkdir(dir)
 #else
 	#include <unistd.h>
 #endif
@@ -147,15 +150,7 @@ std::string get_game_dir()
 
 bool make_directory(const std::string& path)
 {
-#if COMPILER_VC_OR_CLANG_WIN32
-#define mkdir _mkdir
-#endif
-
-#ifdef _WIN32
-	return mkdir(path.c_str()) == 0;
-#else
 	return mkdir(path.c_str(), 0755) == 0;
-#endif
 }
 
 void cThread::Start()
