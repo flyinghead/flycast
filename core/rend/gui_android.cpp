@@ -24,10 +24,7 @@
 #include "types.h"
 #include "stdclass.h"
 #include "imgui/imgui.h"
-//#include "gles/imgui_impl_opengl3.h"
 #include "gui_util.h"
-
-extern bool settings_opening;
 
 void vjoy_reset_editing();
 void vjoy_stop_editing(bool canceled);

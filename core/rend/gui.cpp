@@ -17,6 +17,7 @@
     along with reicast.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <mutex>
 #include "gui.h"
 #include "cfg/cfg.h"
 #include "hw/maple/maple_if.h"
@@ -36,6 +37,7 @@
 #include "imgread/common.h"
 #include "log/LogManager.h"
 #include "emulator.h"
+#include "network/naomi_network.h"
 
 extern void UpdateInputState(u32 port);
 extern bool game_started;
@@ -56,6 +58,7 @@ static bool touch_up;
 static std::string error_msg;
 static std::string osd_message;
 static double osd_message_end;
+static std::mutex osd_message_mutex;
 
 static void display_vmus();
 static void reset_vmus();
@@ -207,7 +210,6 @@ void ImGui_Impl_NewFrame()
 	io.NavInputs[ImGuiNavInput_Activate] = (kcode[0] & DC_BTN_A) == 0;
 	io.NavInputs[ImGuiNavInput_Cancel] = (kcode[0] & DC_BTN_B) == 0;
 	io.NavInputs[ImGuiNavInput_Input] = (kcode[0] & DC_BTN_X) == 0;
-	//io.NavInputs[ImGuiNavInput_Menu] = (kcode[0] & DC_BTN_Y) == 0;
 	io.NavInputs[ImGuiNavInput_DpadLeft] = (kcode[0] & DC_DPAD_LEFT) == 0;
 	io.NavInputs[ImGuiNavInput_DpadRight] = (kcode[0] & DC_DPAD_RIGHT) == 0;
 	io.NavInputs[ImGuiNavInput_DpadUp] = (kcode[0] & DC_DPAD_UP) == 0;
@@ -281,6 +283,16 @@ void gui_open_settings()
 	else if (gui_state == VJoyEdit)
 	{
 		gui_state = VJoyEditCommands;
+	}
+	else if (gui_state == Loading)
+	{
+		dc_cancel_load();
+		gui_state = Main;
+	}
+	else if (gui_state == Commands)
+	{
+		gui_state = Closed;
+		dc_resume();
 	}
 }
 
@@ -1447,6 +1459,20 @@ static void gui_display_settings()
    	settings.dynarec.Enable = (bool)dynarec_enabled;
 }
 
+void gui_display_notification(const char *msg, int duration)
+{
+	std::lock_guard<std::mutex> lock(osd_message_mutex);
+	osd_message = msg;
+	osd_message_end = os_GetSeconds() + (double)duration / 1000.0;
+}
+
+static std::string get_notification()
+{
+	std::lock_guard<std::mutex> lock(osd_message_mutex);
+	if (!osd_message.empty() && os_GetSeconds() >= osd_message_end)
+		osd_message.clear();
+	return osd_message;
+}
 
 static void gui_display_demo()
 {
@@ -1498,7 +1524,6 @@ static void gui_display_content()
 		if (ImGui::Selectable("Dreamcast BIOS"))
 		{
 			gui_state = Closed;
-			settings.imgread.ImagePath[0] = '\0';
 			gui_start_game("");
 		}
 		ImGui::PopID();
@@ -1551,7 +1576,7 @@ static void gui_display_content()
 	ImGui_impl_RenderDrawData(ImGui::GetDrawData(), false);
 }
 
-void systemdir_selected_callback(bool cancelled, std::string selection)
+static void systemdir_selected_callback(bool cancelled, std::string selection)
 {
 	if (!cancelled)
 	{
@@ -1570,7 +1595,7 @@ void systemdir_selected_callback(bool cancelled, std::string selection)
 	}
 }
 
-void gui_display_onboarding()
+static void gui_display_onboarding()
 {
 	ImGui_Impl_NewFrame();
     ImGui::NewFrame();
@@ -1582,7 +1607,71 @@ void gui_display_onboarding()
 	ImGui_impl_RenderDrawData(ImGui::GetDrawData(), false);
 }
 
-void gui_display_loadscreen()
+static std::future<bool> networkStatus;
+
+static void start_network()
+{
+	networkStatus = naomiNetwork.startNetworkAsync();
+	gui_state = NetworkStart;
+}
+
+static void gui_network_start()
+{
+	ImGui_Impl_NewFrame();
+	ImGui::NewFrame();
+
+	ImGui::SetNextWindowPos(ImVec2(screen_width / 2, screen_height / 2), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+	ImGui::SetNextWindowSize(ImVec2(330 * scaling, 180 * scaling));
+
+	ImGui::Begin("##network", NULL, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize);
+
+	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(20 * scaling, 10 * scaling));
+	ImGui::AlignTextToFramePadding();
+	ImGui::SetCursorPosX(20.f * scaling);
+
+	if (networkStatus.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready)
+	{
+		if (networkStatus.get())
+		{
+			gui_state = Closed;
+			ImGui::Text("STARTING...");
+		}
+		else
+		{
+			gui_state = Main;
+			settings.imgread.ImagePath[0] = '\0';
+		}
+	}
+	else
+	{
+		ImGui::Text("STARTING NETWORK...");
+		if (settings.network.ActAsServer)
+			ImGui::Text("Press Start to start the game now.");
+	}
+	ImGui::Text("%s", get_notification().c_str());
+
+	float currentwidth = ImGui::GetContentRegionAvailWidth();
+	ImGui::SetCursorPosX((currentwidth - 100.f * scaling) / 2.f + ImGui::GetStyle().WindowPadding.x);
+	ImGui::SetCursorPosY(126.f * scaling);
+	if (ImGui::Button("Cancel", ImVec2(100.f * scaling, 0.f)))
+	{
+		naomiNetwork.terminate();
+		networkStatus.get();
+		gui_state = Main;
+		settings.imgread.ImagePath[0] = '\0';
+	}
+	ImGui::PopStyleVar();
+
+	ImGui::End();
+
+	ImGui::Render();
+	ImGui_impl_RenderDrawData(ImGui::GetDrawData(), false);
+
+	if ((kcode[0] & DC_BTN_START) == 0)
+		naomiNetwork.startNow();
+}
+
+static void gui_display_loadscreen()
 {
 	ImGui_Impl_NewFrame();
     ImGui::NewFrame();
@@ -1599,9 +1688,16 @@ void gui_display_loadscreen()
 	{
 		try {
 			dc_get_load_status();
-			gui_state = Closed;
-			ImGui::Text("STARTING...");
-		} catch (ReicastException& ex) {
+			if (NaomiNetworkSupported())
+			{
+				start_network();
+			}
+			else
+			{
+				gui_state = Closed;
+				ImGui::Text("STARTING...");
+			}
+		} catch (const ReicastException& ex) {
 			ERROR_LOG(BOOT, "%s", ex.reason.c_str());
 			error_msg = ex.reason;
 #ifdef TEST_AUTOMATION
@@ -1614,17 +1710,9 @@ void gui_display_loadscreen()
 	else
 	{
 		ImGui::Text("LOADING... ");
-		double now = os_GetSeconds();
-		if (!osd_message.empty())
-		{
-			if (now >= osd_message_end)
-				osd_message.clear();
-			else
-			{
-				ImGui::SameLine();
-				ImGui::Text("%s", osd_message.c_str());
-			}
-		}
+		ImGui::SameLine();
+		ImGui::Text("%s", get_notification().c_str());
+
 		float currentwidth = ImGui::GetContentRegionAvailWidth();
 		ImGui::SetCursorPosX((currentwidth - 100.f * scaling) / 2.f + ImGui::GetStyle().WindowPadding.x);
 		ImGui::SetCursorPosY(126.f * scaling);
@@ -1632,7 +1720,6 @@ void gui_display_loadscreen()
 		{
 			dc_cancel_load();
 			gui_state = Main;
-			settings.imgread.ImagePath[0] = '\0';
 		}
 	}
 	ImGui::PopStyleVar();
@@ -1681,6 +1768,12 @@ void gui_display_ui()
 	case Loading:
 		gui_display_loadscreen();
 		break;
+	case NetworkStart:
+		gui_network_start();
+		break;
+	default:
+		die("Unknown UI state");
+		break;
 	}
 
 	if (gui_state == Closed)
@@ -1692,12 +1785,6 @@ static int lastFrameCount = 0;
 static float fps = -1;
 
 extern bool fast_forward_mode;
-
-void gui_display_notification(const char *msg, int duration)
-{
-	osd_message = msg;
-	osd_message_end = os_GetSeconds() + (double)duration / 1000.0;
-}
 
 static std::string getFPSNotification()
 {
@@ -1723,19 +1810,9 @@ void gui_display_osd()
 {
 	if (gui_state == VJoyEdit)
 		return;
-	double now = os_GetSeconds();
-	if (!osd_message.empty())
-	{
-		if (now >= osd_message_end)
-			osd_message.clear();
-	}
-	std::string message;
-	if (osd_message.empty())
-	{
+	std::string message = get_notification();
+	if (message.empty())
 		message = getFPSNotification();
-	}
-	else
-		message = osd_message;
 
 	if (!message.empty() || settings.rend.FloatVMUs)
 	{

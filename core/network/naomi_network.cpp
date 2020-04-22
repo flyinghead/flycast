@@ -21,6 +21,7 @@
 #include "naomi_network.h"
 
 #include "types.h"
+#include <array>
 #include <chrono>
 #include <thread>
 #include "rend/gui.h"
@@ -31,13 +32,15 @@
 typedef int ssize_t;
 #endif
 
+NaomiNetwork naomiNetwork;
+
 sock_t NaomiNetwork::createAndBind(int protocol)
 {
 	sock_t sock = socket(AF_INET, protocol == IPPROTO_TCP ? SOCK_STREAM : SOCK_DGRAM, protocol);
-	if (sock == INVALID_SOCKET)
+	if (!VALID(sock))
 	{
 		ERROR_LOG(NETWORK, "Cannot create server socket");
-		return INVALID_SOCKET;
+		return sock;
 	}
 	int option = 1;
 	setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (const char *)&option, sizeof(option));
@@ -50,8 +53,7 @@ sock_t NaomiNetwork::createAndBind(int protocol)
 	if (::bind(sock, (struct sockaddr *)&serveraddr, sizeof(serveraddr)) < 0)
 	{
 		ERROR_LOG(NETWORK, "NaomiServer: bind() failed. errno=%d", get_last_error());
-		closesocket(sock);
-		sock = INVALID_SOCKET;
+		closeSocket(sock);
 	}
 	else
 		set_non_blocking(sock);
@@ -79,18 +81,17 @@ bool NaomiNetwork::init()
 
 bool NaomiNetwork::createServerSocket()
 {
-	if (server_sock != INVALID_SOCKET)
+	if (VALID(server_sock))
 		return true;
 
 	server_sock = createAndBind(IPPROTO_TCP);
-	if (server_sock == INVALID_SOCKET)
+	if (!VALID(server_sock))
 		return false;
 
 	if (listen(server_sock, 5) < 0)
 	{
 		ERROR_LOG(NETWORK, "NaomiServer: listen() failed. errno=%d", get_last_error());
-		closesocket(server_sock);
-		server_sock = INVALID_SOCKET;
+		closeSocket(server_sock);
 		return false;
 	}
 	return true;
@@ -98,10 +99,10 @@ bool NaomiNetwork::createServerSocket()
 
 bool NaomiNetwork::createBeaconSocket()
 {
-	if (beacon_sock == INVALID_SOCKET)
+	if (!VALID(beacon_sock))
 		beacon_sock = createAndBind(IPPROTO_UDP);
 
-    return beacon_sock != INVALID_SOCKET;
+    return VALID(beacon_sock);
 }
 
 void NaomiNetwork::processBeacon()
@@ -132,7 +133,7 @@ bool NaomiNetwork::findServer()
 {
     // Automatically find the adhoc server on the local network using broadcast
 	sock_t sockfd = socket(AF_INET, SOCK_DGRAM, 0);
-    if (sockfd == INVALID_SOCKET)
+    if (!VALID(sockfd))
     {
         ERROR_LOG(NETWORK, "Datagram socket creation error. errno=%d", get_last_error());
         return false;
@@ -147,8 +148,8 @@ bool NaomiNetwork::findServer()
         return false;
     }
 
-    // Set a 1 sec timeout on recv call
-    if (!set_recv_timeout(sockfd, 1000))
+    // Set a 500ms timeout on recv call
+    if (!set_recv_timeout(sockfd, 500))
     {
         ERROR_LOG(NETWORK, "setsockopt(SO_RCVTIMEO) failed. errno=%d", get_last_error());
         closesocket(sockfd);
@@ -203,7 +204,6 @@ bool NaomiNetwork::findServer()
 
 bool NaomiNetwork::startNetwork()
 {
-	network_stopping = false;
 	if (!init())
 		return false;
 
@@ -213,7 +213,7 @@ bool NaomiNetwork::startNetwork()
 	got_token = false;
 
 	using namespace std::chrono;
-	const auto timeout = seconds(10);
+	const auto timeout = seconds(20);
 
 	if (settings.network.ActAsServer)
 	{
@@ -224,9 +224,9 @@ bool NaomiNetwork::startNetwork()
 		{
 			if (network_stopping)
 			{
-				for (auto clientSock : slaves)
-					if (clientSock != INVALID_SOCKET)
-						closesocket(clientSock);
+				for (auto& slave : slaves)
+					if (VALID(slave.socket))
+						closeSocket(slave.socket);
 				return false;
 			}
 			std::string notif = slaves.empty() ? "Waiting for players..."
@@ -239,7 +239,7 @@ bool NaomiNetwork::startNetwork()
 			socklen_t addr_len = sizeof(src_addr);
 			memset(&src_addr, 0, addr_len);
 			sock_t clientSock = accept(server_sock, (struct sockaddr *)&src_addr, &addr_len);
-			if (clientSock == INVALID_SOCKET)
+			if (!VALID(clientSock))
 			{
 				if (get_last_error() != L_EAGAIN && get_last_error() != L_EWOULDBLOCK)
 					perror("accept");
@@ -247,11 +247,58 @@ bool NaomiNetwork::startNetwork()
 			else
 			{
 				NOTICE_LOG(NETWORK, "Slave connection accepted");
+				set_non_blocking(clientSock);
+				set_tcp_nodelay(clientSock);
 				std::lock_guard<std::mutex> lock(mutex);
-				slaves.push_back(clientSock);
-				if (slaves.size() == 3)
-					break;
+				slaves.emplace_back(clientSock);
 			}
+			const auto now = steady_clock::now();
+			u32 waiting_slaves = 0;
+			for (auto& slave : slaves)
+			{
+				if (slave.state == ClientState::Waiting)
+					waiting_slaves++;
+				else if (slave.state == ClientState::Connected)
+				{
+					u8 buffer[8];
+					ssize_t l = ::recv(slave.socket, buffer, sizeof(buffer), 0);
+					if (l < (int)sizeof(buffer) && get_last_error() != EAGAIN && get_last_error() != EWOULDBLOCK)
+					{
+						// error
+						INFO_LOG(NETWORK, "Slave socket recv error. errno=%d", get_last_error());
+						closeSocket(slave.socket);
+					}
+					else if (l == -1 && now - slave.state_time > milliseconds(100))
+					{
+						// timeout
+						INFO_LOG(NETWORK, "Slave socket Connected timeout");
+						closeSocket(slave.socket);
+					}
+					else if (l == (int)sizeof(buffer))
+					{
+						if (memcmp(buffer, naomi_game_id, sizeof(buffer)))
+						{
+							// wrong game
+							WARN_LOG(NETWORK, "Wrong game id received: %.8s", buffer);
+							closeSocket(slave.socket);
+						}
+						else
+						{
+							slave.set_state(ClientState::Waiting);
+							waiting_slaves++;
+						}
+					}
+				}
+			}
+			{
+				std::lock_guard<std::mutex> lock(mutex);
+				slaves.erase(std::remove_if(slaves.begin(),
+				                              slaves.end(),
+				                              [](const Slave& slave){ return !VALID(slave.socket); }),
+							slaves.end());
+			}
+			if (waiting_slaves == 3 || (start_now && !slaves.empty() && waiting_slaves == slaves.size()))
+				break;
 			std::this_thread::sleep_for(milliseconds(100));
 		}
 		slot_id = 0;
@@ -259,22 +306,27 @@ bool NaomiNetwork::startNetwork()
 		u8 buf[2] = { (u8)slot_count, 0 };
 		int slot_num = 1;
 		{
-			for (int socket : slaves)
+			for (auto& slave : slaves)
 			{
 				buf[1] = { (u8)slot_num };
 				slot_num++;
-				::send(socket, (const char *)buf, 2, 0);
-				set_non_blocking(socket);
-				set_tcp_nodelay(socket);
+				::send(slave.socket, (const char *)buf, 2, 0);
+				slave.set_state(ClientState::Starting);
 			}
 		}
 		NOTICE_LOG(NETWORK, "Master starting: %zd slaves", slaves.size());
-		if (slot_count > 1)
+		if (!slaves.empty())
+		{
 			gui_display_notification("Starting game", 2000);
-		else
-			gui_display_notification("No player connected", 8000);
+			SetNaomiNetworkConfig(0);
 
-		return !slaves.empty();
+			return true;
+		}
+		else
+		{
+			gui_display_notification("No player connected", 8000);
+			return false;
+		}
 	}
 	else
 	{
@@ -296,8 +348,7 @@ bool NaomiNetwork::startNetwork()
 		gui_display_notification("Connecting to server", 10000);
 		steady_clock::time_point start_time = steady_clock::now();
 
-		while (client_sock == INVALID_SOCKET && !network_stopping
-				&& steady_clock::now() - start_time < timeout)
+		while (!network_stopping && steady_clock::now() - start_time < timeout)
 		{
 			if (server_ip.s_addr == INADDR_NONE && !findServer())
 				continue;
@@ -310,20 +361,20 @@ bool NaomiNetwork::startNetwork()
 			if (::connect(client_sock, (struct sockaddr *)&src_addr, sizeof(src_addr)) < 0)
 			{
 				ERROR_LOG(NETWORK, "Socket connect failed");
-				closesocket(client_sock);
-				client_sock = INVALID_SOCKET;
+				closeSocket(client_sock);
 				std::this_thread::sleep_for(std::chrono::milliseconds(100));
 			}
 			else
 			{
 				gui_display_notification("Waiting for server to start", 10000);
+				set_tcp_nodelay(client_sock);
+				::send(client_sock, naomi_game_id, 8, 0);
 				set_recv_timeout(client_sock, (int)std::chrono::milliseconds(timeout * 2).count());
 				u8 buf[2];
 				if (::recv(client_sock, (char *)buf, 2, 0) < 2)
 				{
 					ERROR_LOG(NETWORK, "recv failed: errno=%d", get_last_error());
-					closesocket(client_sock);
-					client_sock = INVALID_SOCKET;
+					closeSocket(client_sock);
 					gui_display_notification("Server failed to start", 10000);
 
 					return false;
@@ -331,14 +382,118 @@ bool NaomiNetwork::startNetwork()
 				slot_count = buf[0];
 				slot_id = buf[1];
 				got_token = slot_id == 1;
-				set_tcp_nodelay(client_sock);
 				set_non_blocking(client_sock);
 				std::string notif = "Connected as slot " + std::to_string(slot_id);
 				gui_display_notification(notif.c_str(), 2000);
+				SetNaomiNetworkConfig(slot_id);
+
 
 				return true;
 			}
 		}
+		return false;
+	}
+}
+
+bool NaomiNetwork::syncNetwork()
+{
+	using namespace std::chrono;
+	const auto timeout = seconds(10);
+
+	if (settings.network.ActAsServer)
+	{
+		steady_clock::time_point start_time = steady_clock::now();
+
+		bool all_slaves_ready = false;
+		while (steady_clock::now() - start_time < timeout && !all_slaves_ready)
+		{
+			all_slaves_ready = true;
+			for (auto& slave : slaves)
+				if (slave.state != ClientState::Ready)
+				{
+					u8 buf[4];
+					ssize_t l = ::recv(slave.socket, buf, sizeof(buf), 0);
+					if (l < 4 && get_last_error() != EAGAIN && get_last_error() != EWOULDBLOCK)
+					{
+						INFO_LOG(NETWORK, "Socket recv failed. errno=%d", get_last_error());
+						closeSocket(slave.socket);
+						return false;
+					}
+					if (l == 4)
+					{
+						if (memcmp(buf, "REDY", 4))
+						{
+							INFO_LOG(NETWORK, "Synchronization failed");
+							closeSocket(slave.socket);
+							return false;
+						}
+						slave.set_state(ClientState::Ready);
+					}
+					else
+						all_slaves_ready = false;
+				}
+			if (network_stopping)
+				return false;
+		}
+		std::this_thread::sleep_for(std::chrono::milliseconds(100));
+		for (auto& slave : slaves)
+		{
+			ssize_t l = ::send(slave.socket, "GO!!", 4, 0);
+			if (l < 4)
+			{
+				INFO_LOG(NETWORK, "Socket send failed. errno=%d", get_last_error());
+				closeSocket(slave.socket);
+				return false;
+			}
+			slave.set_state(ClientState::Online);
+		}
+		gui_display_notification("Network started", 5000);
+
+		return true;
+	}
+	else
+	{
+		// Tell master we're ready
+		ssize_t l = ::send(client_sock, "REDY", 4 ,0);
+		if (l < 4)
+		{
+			WARN_LOG(NETWORK, "Socket send failed. errno=%d", get_last_error());
+			closeSocket(client_sock);
+			return false;
+		}
+		steady_clock::time_point start_time = steady_clock::now();
+
+		while (steady_clock::now() - start_time < timeout)
+		{
+			// Wait for the go
+			u8 buf[4];
+			l = ::recv(client_sock, buf, sizeof(buf), 0);
+			if (l < 4 && get_last_error() != EAGAIN && get_last_error() != EWOULDBLOCK)
+			{
+				INFO_LOG(NETWORK, "Socket recv failed. errno=%d", get_last_error());
+				closeSocket(client_sock);
+				return false;
+			}
+			else if (l == 4)
+			{
+				if (memcmp(buf, "GO!!", 4))
+				{
+					INFO_LOG(NETWORK, "Synchronization failed");
+					closeSocket(client_sock);
+					return false;
+				}
+				gui_display_notification("Network started", 5000);
+				return true;
+			}
+			if (network_stopping)
+			{
+				closeSocket(client_sock);
+				return false;
+			}
+			std::this_thread::sleep_for(std::chrono::milliseconds(20));
+		}
+		INFO_LOG(NETWORK, "Socket recv timeout");
+		closeSocket(client_sock);
 		return false;
 	}
 }
@@ -350,25 +505,23 @@ void NaomiNetwork::pipeSlaves()
 	char buf[16384];
 	for (auto it = slaves.begin(); it != slaves.end() - 1; it++)
 	{
-		if (*it == INVALID_SOCKET || *(it + 1) == INVALID_SOCKET)
+		if (!VALID(it->socket) || !VALID((it + 1)->socket))
 			// TODO keep link on
 			continue;
-		ssize_t l = ::recv(*it, buf, sizeof(buf), 0);
+		ssize_t l = ::recv(it->socket, buf, sizeof(buf), 0);
 		if (l <= 0)
 		{
 			if (get_last_error() == L_EAGAIN || get_last_error() == L_EWOULDBLOCK)
 				continue;
 			WARN_LOG(NETWORK, "pipeSlaves: receive failed. errno=%d", get_last_error());
-			closesocket(*it);
-			*it = INVALID_SOCKET;
+			closeSocket(it->socket);
 			continue;
 		}
-		ssize_t l2 = ::send(*(it + 1), buf, l, 0);
+		ssize_t l2 = ::send((it + 1)->socket, buf, l, 0);
 		if (l2 != l)
 		{
 			WARN_LOG(NETWORK, "pipeSlaves: send failed. errno=%d", get_last_error());
-			closesocket(*(it + 1));
-			*(it + 1) = INVALID_SOCKET;
+			closeSocket((it + 1)->socket);
 		}
 	}
 }
@@ -377,10 +530,10 @@ bool NaomiNetwork::receive(u8 *data, u32 size)
 {
 	sock_t sockfd = INVALID_SOCKET;
 	if (isMaster())
-		sockfd = slaves.empty() ? INVALID_SOCKET : slaves.back();
+		sockfd = slaves.empty() ? INVALID_SOCKET : slaves.back().socket;
 	else
 		sockfd = client_sock;
-	if (sockfd == INVALID_SOCKET)
+	if (!VALID(sockfd))
 		return false;
 
 	ssize_t received = 0;
@@ -394,8 +547,7 @@ bool NaomiNetwork::receive(u8 *data, u32 size)
 				WARN_LOG(NETWORK, "receiveNetwork: read failed. errno=%d", get_last_error());
 				if (isMaster())
 				{
-					slaves.back() = INVALID_SOCKET;
-					closesocket(sockfd);
+					closeSocket(slaves.back().socket);
 					got_token = false;
 				}
 				else
@@ -422,10 +574,10 @@ void NaomiNetwork::send(u8 *data, u32 size)
 
 	sock_t sockfd;
 	if (isMaster())
-		sockfd = slaves.empty() ? INVALID_SOCKET : slaves.front();
+		sockfd = slaves.empty() ? INVALID_SOCKET : slaves.front().socket;
 	else
 		sockfd = client_sock;
-	if (sockfd == INVALID_SOCKET)
+	if (!VALID(sockfd))
 		return;
 
 	if (::send(sockfd, (const char *)data, size, 0) < size)
@@ -434,10 +586,7 @@ void NaomiNetwork::send(u8 *data, u32 size)
 		{
 			WARN_LOG(NETWORK, "send failed. errno=%d", get_last_error());
 			if (isMaster())
-			{
-				slaves.front() = INVALID_SOCKET;
-				closesocket(sockfd);
-			}
+				closeSocket(slaves.front().socket);
 			else
 				shutdown();
 		}
@@ -455,32 +604,29 @@ void NaomiNetwork::shutdown()
 	network_stopping = true;
 	{
 		std::lock_guard<std::mutex> lock(mutex);
-		for (auto& sock : slaves)
-		{
-			closesocket(sock);
-			sock = INVALID_SOCKET;
-		}
+		for (auto& slave : slaves)
+			closeSocket(slave.socket);
 	}
-	if (client_sock != INVALID_SOCKET)
-	{
-		closesocket(client_sock);
-		client_sock = INVALID_SOCKET;
-	}
+	if (VALID(client_sock))
+		closeSocket(client_sock);
 }
 
 void NaomiNetwork::terminate()
 {
 	shutdown();
-	if (beacon_sock != INVALID_SOCKET)
-	{
-		closesocket(beacon_sock);
-		beacon_sock = INVALID_SOCKET;
-	}
-	if (server_sock != INVALID_SOCKET)
-	{
-		closesocket(server_sock);
-		server_sock = INVALID_SOCKET;
-	}
+	if (VALID(beacon_sock))
+		closeSocket(beacon_sock);
+	if (VALID(server_sock))
+		closeSocket(server_sock);
+}
+
+std::future<bool> NaomiNetwork::startNetworkAsync()
+{
+	network_stopping = false;
+	start_now = false;
+	return std::async(std::launch::async, [this] {
+		return startNetwork();
+	});
 }
 
 // Sets the game network config using MIE eeprom or bbsram:
@@ -548,4 +694,20 @@ void SetNaomiNetworkConfig(int node)
 		write_naomi_flash(0x224, node == -1 ? 0 : 1);	// network on
 		write_naomi_flash(0x220, node == 0 ? 0 : 1);	// node id
 	}
+}
+
+bool NaomiNetworkSupported()
+{
+	static const std::array<const char *, 12> games = {
+		"ALIEN FRONT", "MOBILE SUIT GUNDAM JAPAN", "MOBILE SUIT GUNDAM DELUXE JAPAN", " BIOHAZARD  GUN SURVIVOR2",
+		"HEAVY METAL JAPAN", "OUTTRIGGER     JAPAN", "SLASHOUT JAPAN VERSION", "SPAWN JAPAN",
+		"SPIKERS BATTLE JAPAN VERSION", "VIRTUAL-ON ORATORIO TANGRAM", "WAVE RUNNER GP", "WORLD KICKS"
+	};
+	if (!settings.network.Enable)
+		return false;
+	for (auto game : games)
+		if (!strcmp(game, naomi_game_id))
+			return true;
+
+	return false;
 }

@@ -22,6 +22,7 @@
 #include "naomi_regs.h"
 #include "hw/holly/sb.h"
 #include "hw/sh4/sh4_mem.h"
+#include "network/naomi_network.h"
 #include <chrono>
 
 static inline u16 swap16(u16 w)
@@ -32,7 +33,7 @@ static inline u16 swap16(u16 w)
 void NaomiM3Comm::closeNetwork()
 {
 	network_stopping = true;
-	network.shutdown();
+	naomiNetwork.shutdown();
 	if (thread && thread->joinable())
 		thread->join();
 }
@@ -40,17 +41,17 @@ void NaomiM3Comm::closeNetwork()
 void NaomiM3Comm::connectNetwork()
 {
 	packet_number = 0;
-	if (network.startNetwork())
+	if (naomiNetwork.syncNetwork())
 	{
-		slot_count = network.slotCount();
-		slot_id = network.slotId();
+		slot_count = naomiNetwork.slotCount();
+		slot_id = naomiNetwork.slotId();
 		connectedState(true);
 	}
 	else
 	{
 		connectedState(false);
 		network_stopping = true;
-		network.shutdown();
+		naomiNetwork.shutdown();
 	}
 }
 
@@ -61,7 +62,7 @@ void NaomiM3Comm::receiveNetwork()
 
 	std::unique_ptr<u8[]> buf(new u8[packet_size]);
 
-	if (network.receive(buf.get(), packet_size))
+	if (naomiNetwork.receive(buf.get(), packet_size))
 	{
 		packet_number += slot_count - 1;
 		*(u16*)&comm_ram[6] = swap16(packet_number);
@@ -72,11 +73,11 @@ void NaomiM3Comm::receiveNetwork()
 
 void NaomiM3Comm::sendNetwork()
 {
-	if (network.hasToken())
+	if (naomiNetwork.hasToken())
 	{
 		const u32 packet_size = swap16(*(u16*)&m68k_ram[0x204]) * slot_count;
 		std::unique_lock<std::mutex> lock(mem_mutex);
-		network.send(&comm_ram[0x100], packet_size);
+		naomiNetwork.send(&comm_ram[0x100], packet_size);
 		packet_number++;
 		*(u16*)&comm_ram[6] = swap16(packet_number);
 	}
@@ -85,7 +86,7 @@ void NaomiM3Comm::sendNetwork()
 NaomiM3Comm::~NaomiM3Comm()
 {
 	closeNetwork();
-	network.terminate();
+	naomiNetwork.terminate();
 }
 
 u32 NaomiM3Comm::ReadMem(u32 address, u32 size)
@@ -194,11 +195,11 @@ void NaomiM3Comm::WriteMem(u32 address, u32 data, u32 size)
 		if (data & (1 << 5))
 		{
 			DEBUG_LOG(NAOMI, "NAOMI_COMM2_CTRL m68k reset");
-			closeNetwork();
 			memset(&comm_ram[0], 0, 32);
 			comm_status0 = 0; // varies...
 			comm_status1 = 0;
-			startThread();
+			if (!thread || !thread->joinable())
+				startThread();
 		}
 		comm_ctrl = (u16)(data & ~(1 << 5));
 		//DEBUG_LOG(NAOMI, "NAOMI_COMM2_CTRL set to %x", comm_ctrl);
@@ -280,10 +281,10 @@ void NaomiM3Comm::startThread()
 
 		while (!network_stopping)
 		{
-			network.pipeSlaves();
+			naomiNetwork.pipeSlaves();
 			receiveNetwork();
 
-			if (slot_id == 0 && network.hasToken())
+			if (slot_id == 0 && naomiNetwork.hasToken())
 			{
 				const auto target_duration = std::chrono::milliseconds(10);
 				auto duration = the_clock::now() - token_time;

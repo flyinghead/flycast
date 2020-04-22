@@ -24,7 +24,6 @@
 #include <memory>
 #include <mutex>
 #include <thread>
-#include "network/naomi_network.h"
 
 class NaomiM3Comm
 {
@@ -57,5 +56,4 @@ private:
 	std::atomic<bool> network_stopping{ false };
 	std::unique_ptr<std::thread> thread;
 	std::mutex mem_mutex;
-	NaomiNetwork network;
 };

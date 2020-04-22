@@ -638,8 +638,7 @@ static void dc_start_game(const char *path)
 		if (settings.platform.system == DC_PLATFORM_NAOMI)
 		{
 			mcfg_CreateNAOMIJamma();
-			SetNaomiNetworkConfig(settings.network.Enable ? settings.network.ActAsServer ? 0 : 1	// FIXME more than 2 nodes
-					: -1);
+			SetNaomiNetworkConfig(-1);
 		}
 		else if (settings.platform.system == DC_PLATFORM_ATOMISWAVE)
 			mcfg_CreateAtomisWaveControllers();
@@ -1096,8 +1095,6 @@ static void cleanup_serialize(void *data)
 {
 	if ( data != NULL )
 		free(data) ;
-
-	dc_resume();
 }
 
 static std::string get_savestate_file_path()
@@ -1275,6 +1272,7 @@ void dc_cancel_load()
 		loading_canceled = true;
 		loading_done.get();
 	}
+	settings.imgread.ImagePath[0] = '\0';
 }
 
 void dc_get_load_status()
