@@ -260,7 +260,7 @@ bool NaomiNetwork::startNetwork()
 					waiting_slaves++;
 				else if (slave.state == ClientState::Connected)
 				{
-					u8 buffer[8];
+					char buffer[8];
 					ssize_t l = ::recv(slave.socket, buffer, sizeof(buffer), 0);
 					if (l < (int)sizeof(buffer) && get_last_error() != EAGAIN && get_last_error() != EWOULDBLOCK)
 					{
@@ -411,7 +411,7 @@ bool NaomiNetwork::syncNetwork()
 			for (auto& slave : slaves)
 				if (slave.state != ClientState::Ready)
 				{
-					u8 buf[4];
+					char buf[4];
 					ssize_t l = ::recv(slave.socket, buf, sizeof(buf), 0);
 					if (l < 4 && get_last_error() != EAGAIN && get_last_error() != EWOULDBLOCK)
 					{
@@ -466,7 +466,7 @@ bool NaomiNetwork::syncNetwork()
 		while (steady_clock::now() - start_time < timeout)
 		{
 			// Wait for the go
-			u8 buf[4];
+			char buf[4];
 			l = ::recv(client_sock, buf, sizeof(buf), 0);
 			if (l < 4 && get_last_error() != EAGAIN && get_last_error() != EWOULDBLOCK)
 			{
