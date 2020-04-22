@@ -37,7 +37,10 @@ bool mem_region_set_exec(void *start, size_t len)
 
 void *mem_region_reserve(void *start, size_t len)
 {
-	return VirtualAlloc(start, len, MEM_RESERVE, PAGE_NOACCESS);
+	DWORD type = MEM_RESERVE;
+	if (start == nullptr)
+		type |= MEM_TOP_DOWN;
+	return VirtualAlloc(start, len, type, PAGE_NOACCESS);
 }
 
 bool mem_region_release(void *start, size_t len)
@@ -172,7 +175,7 @@ static void* vmem_platform_prepare_jit_block_template(void *code_area, unsigned 
 	uintptr_t base_addr = reinterpret_cast<uintptr_t>(&vmem_platform_init) & ~0xFFFFF;
 
 	// Probably safe to assume reicast code is <200MB (today seems to be <16MB on every platform I've seen).
-	for (unsigned i = 0; i < 1800*1024*1024; i += 8*1024*1024) {  // Some arbitrary step size.
+	for (unsigned i = 0; i < 1800*1024*1024; i += 1024 * 1024) {  // Some arbitrary step size.
 		uintptr_t try_addr_above = base_addr + i;
 		uintptr_t try_addr_below = base_addr - i;
 
