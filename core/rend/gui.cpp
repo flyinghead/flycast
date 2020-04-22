@@ -26,6 +26,7 @@
 #include "imgui/imgui.h"
 #include "gles/imgui_impl_opengl3.h"
 #include "imgui/roboto_medium.h"
+#include "network/naomi_network.h"
 #include "gles/gles.h"
 #include "input/gamepad_device.h"
 #include "input/keyboard_device.h"
@@ -37,7 +38,6 @@
 #include "imgread/common.h"
 #include "log/LogManager.h"
 #include "emulator.h"
-#include "network/naomi_network.h"
 
 extern void UpdateInputState(u32 port);
 extern bool game_started;
