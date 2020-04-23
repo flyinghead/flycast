@@ -55,10 +55,6 @@ cThread emu_thread(&dc_run, NULL);
 static std::future<void> loading_done;
 std::atomic<bool> loading_canceled;
 
-#ifdef _WIN32
-#include <windows.h>
-#endif
-
 static s32 plugins_Init()
 {
 

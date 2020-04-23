@@ -24,48 +24,6 @@
 	#define DYNACALL
 #endif
 
-#ifdef _MSC_VER
-#ifdef _CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES
-#undef _CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES
-#endif
-
-#define _CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES 1
-
-#ifdef _CRT_SECURE_NO_DEPRECATE
-#undef _CRT_SECURE_NO_DEPRECATE
-#endif
-
-#define _CRT_SECURE_NO_DEPRECATE
-//unnamed struncts/unions
-#pragma warning( disable : 4201)
-
-//unused parameters
-#pragma warning( disable : 4100)
-
-//SHUT UP M$ COMPILER !@#!@$#
-#ifdef _CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES
-#undef _CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES
-#endif
-
-#define _CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES 1
-
-#ifdef _CRT_SECURE_NO_DEPRECATE
-#undef _CRT_SECURE_NO_DEPRECATE
-#endif
-#define _CRT_SECURE_NO_DEPRECATE
-
-#define NOMINMAX
-
-//Do not complain when i use enum::member
-#pragma warning( disable : 4482)
-
-//unnamed struncts/unions
-#pragma warning( disable : 4201)
-
-//unused parameters
-#pragma warning( disable : 4100)
-#endif
-
 #include <cstdint>
 #include <cstddef>
 #include <cstring>
@@ -300,10 +258,7 @@ bool dc_unserialize(void **data, unsigned int *total_size);
 #define REICAST_SA(v_arr,num) rc_serialize((v_arr), sizeof((v_arr)[0])*(num), data, total_size)
 #define REICAST_USA(v_arr,num) rc_unserialize((v_arr), sizeof((v_arr)[0])*(num), data, total_size)
 
-
-#if COMPILER_VC_OR_CLANG_WIN32
-#pragma warning( disable : 4127 4996 /*4244*/)
-#else
+#ifndef _MSC_VER
 #define stricmp strcasecmp
 #endif
 
