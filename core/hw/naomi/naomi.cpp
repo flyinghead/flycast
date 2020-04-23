@@ -14,6 +14,7 @@
 #include "naomi_cart.h"
 #include "naomi_regs.h"
 #include "naomi_m3comm.h"
+#include "network/naomi_network.h"
 
 //#define NAOMI_COMM
 
@@ -539,6 +540,7 @@ void naomi_reg_Term()
 	}
 #endif
 	m3comm.closeNetwork();
+	naomiNetwork.terminate();
 }
 
 void naomi_reg_Reset(bool hard)
@@ -571,6 +573,7 @@ void naomi_reg_Reset(bool hard)
 	reg_dimm_parameterh = 0;
 	reg_dimm_status = 0x11;
 	m3comm.closeNetwork();
+	naomiNetwork.terminate();
 }
 
 static u8 aw_maple_devs;

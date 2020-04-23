@@ -83,12 +83,6 @@ void NaomiM3Comm::sendNetwork()
 	}
 }
 
-NaomiM3Comm::~NaomiM3Comm()
-{
-	closeNetwork();
-	naomiNetwork.terminate();
-}
-
 u32 NaomiM3Comm::ReadMem(u32 address, u32 size)
 {
 	switch (address & 255)

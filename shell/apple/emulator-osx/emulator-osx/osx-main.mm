@@ -25,6 +25,7 @@
 #include "stdclass.h"
 #include "wsi/context.h"
 #include "emulator.h"
+#include "hw/pvr/Renderer_if.h"
 
 OSXKeyboardDevice keyboard(0);
 static std::shared_ptr<OSXKbGamepadDevice> kb_gamepad(0);
@@ -94,6 +95,11 @@ extern "C" void emu_dc_exit()
     dc_exit();
 }
 
+extern "C" void emu_dc_term()
+{
+	dc_term();
+}
+
 extern "C" void emu_dc_resume()
 {
 	dc_resume();
@@ -106,6 +112,11 @@ bool rend_framePending();
 extern "C" bool emu_frame_pending()
 {
 	return rend_framePending() || gui_is_open();
+}
+
+extern "C" bool emu_renderer_enabled()
+{
+	return renderer_enabled;
 }
 
 extern "C" int emu_single_frame(int w, int h) {

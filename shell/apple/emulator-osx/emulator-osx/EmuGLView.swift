@@ -67,8 +67,10 @@ class EmuGLView: NSOpenGLView, NSWindowDelegate {
     
    
     @objc func timerTick() {
-        if (emu_frame_pending())
-        {
+		if (!emu_renderer_enabled()) {
+			NSApplication.shared.terminate(self)
+		}
+        else if (emu_frame_pending()) {
             self.needsDisplay = true
         }
     }
@@ -153,9 +155,5 @@ class EmuGLView: NSOpenGLView, NSWindowDelegate {
         super.viewDidMoveToWindow()
         self.window!.delegate = self
 		self.window!.acceptsMouseMovedEvents = true
-    }
-    
-    func windowWillClose(_ notification: Notification) {
-        emu_dc_exit()
     }
 }

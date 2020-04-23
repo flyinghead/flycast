@@ -129,6 +129,13 @@ bool ParseCommandLine(int argc,char* argv[])
 			cl-=as;
 			arg+=as;
 		}
+#ifdef __MACH__
+		else if (!strncmp(*arg, "-NSDocumentRevisions", 20))
+		{
+			arg++;
+			cl--;
+		}
+#endif
 		else
 		{
 			char* extension = strrchr(*arg, '.');

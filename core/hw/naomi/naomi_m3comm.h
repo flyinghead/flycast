@@ -28,7 +28,6 @@
 class NaomiM3Comm
 {
 public:
-	~NaomiM3Comm();
 	u32 ReadMem(u32 address, u32 size);
 	void WriteMem(u32 address, u32 data, u32 size);
 	bool DmaStart(u32 addr, u32 data);
