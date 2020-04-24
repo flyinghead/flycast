@@ -24,6 +24,8 @@
 #include "deps/lzma/7z.h"
 #include "deps/lzma/7zFile.h"
 
+#include <algorithm>
+
 class SzArchive : public Archive
 {
 public:
