@@ -87,7 +87,7 @@ static bool naomi_LoadBios(const char *filename, Archive *child_archive, Archive
 			region = bios->blobs[romid].region;
 		else
 		{
-			if (bios->blobs[romid].region != region)
+			if (bios->blobs[romid].region != (u32)region)
 				continue;
 		}
 		found_region = true;
@@ -369,6 +369,8 @@ static void naomi_cart_LoadZip(const char *filename)
 		naomi_rotate_screen = game->rotation_flag == ROT270;
 
 		CurrentCartridge->Init();
+		if (loading_canceled)
+			return;
 
 		strcpy(naomi_game_id, CurrentCartridge->GetGameId().c_str());
 		if (naomi_game_id[0] == '\0')

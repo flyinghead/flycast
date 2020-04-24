@@ -174,7 +174,7 @@ struct Disc
 		u32 progress = ~0;
 		for (u32 i = 1; i <= count; i++)
 		{
-			if (count >= 100)
+			if (count >= 1000)
 			{
 				if (loading_canceled)
 					break;
