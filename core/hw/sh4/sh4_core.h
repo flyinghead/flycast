@@ -94,11 +94,6 @@ static INLINE void SetXD(u32 n,f64 val)
 	xf[(n<<1) | 1]=t.sgl[0];
 	xf[(n<<1) | 0]=t.sgl[1];
 }
-//needs to be removed
-u32* Sh4_int_GetRegisterPtr(Sh4RegType reg);
-//needs to be made portable
-void SetFloatStatusReg();
-
 
 bool Do_Interrupt(u32 intEvn);
 bool Do_Exception(u32 epc, u32 expEvn, u32 CallVect);
@@ -155,9 +150,10 @@ static INLINE f64 fixNaN64(f64 f)
 
 // Reduces the precision of the argument f by a given number of bits
 // double have 53 bits of precision so the returned result will have a precision of 53 - bits
+// Note: with -ffast-math c -(c - f) is simplified to ... f, which makes this function a nop
 template<int bits>
 static INLINE double reduce_precision(double f)
 {
-	double c = (double)((1 << bits) + 1) * f;
+	double c = (double)((1ull << bits) + 1) * f;
 	return c - (c - f);
 }

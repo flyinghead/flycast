@@ -61,7 +61,7 @@ bool UpdateSR()
 u32 old_rm=0xFF;
 u32 old_dn=0xFF;
 
-void SetFloatStatusReg()
+static void SetFloatStatusReg()
 {
 	if ((old_rm!=fpscr.RM) || (old_dn!=fpscr.DN))
 	{
@@ -150,7 +150,7 @@ void UpdateFPSCR()
 }
 
 
-u32* Sh4_int_GetRegisterPtr(Sh4RegType reg)
+static u32* Sh4_int_GetRegisterPtr(Sh4RegType reg)
 {
 	if ((reg>=reg_r0) && (reg<=reg_r15))
 	{
@@ -246,19 +246,6 @@ u32* Sh4_int_GetRegisterPtr(Sh4RegType reg)
 			break;
 		}
 	}
-}
-
-u32 sh4context_offset_u32(u32 sh4_reg)
-{
-	void* addr=Sh4_int_GetRegisterPtr((Sh4RegType)sh4_reg);
-	u32 offs=(u8*)addr-(u8*)&Sh4cntx;
-	verify(offs<sizeof(Sh4cntx));
-
-	return offs;
-}
-u32 sh4context_offset_regtype(Sh4RegType sh4_reg)
-{
-	return sh4context_offset_u32(sh4_reg);
 }
 
 u32* GetRegPtr(u32 reg)

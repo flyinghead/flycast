@@ -296,8 +296,8 @@ void bm_ResetCache()
 	{
 		RuntimeBlockInfoPtr block = it.second;
 		block->relink_data = 0;
-		block->pNextBlock = 0;
-		block->pBranchBlock = 0;
+		block->pNextBlock = NULL;
+		block->pBranchBlock = NULL;
 		// needed for the transition to full mmu. Could perhaps limit it to the current block.
 		block->Relink();
 		// Avoid circular references
@@ -312,7 +312,6 @@ void bm_ResetCache()
 	for (auto& block_list : blocks_per_page)
 		block_list.clear();
 
-	// FIXME Grandia II doesn't like it. intermittent reset when pressing start (except if disabling SSA?? TBC)
 	memset(unprotected_pages, 0, sizeof(unprotected_pages));
 
 #ifdef DYNA_OPROF
@@ -516,7 +515,7 @@ void RuntimeBlockInfo::AddRef(RuntimeBlockInfoPtr other)
 }
 
 void RuntimeBlockInfo::RemRef(RuntimeBlockInfoPtr other)
-{ 
+{
 	bm_List::iterator it = std::find(pre_refs.begin(), pre_refs.end(), other);
 	if (it != pre_refs.end())
 		pre_refs.erase(it);

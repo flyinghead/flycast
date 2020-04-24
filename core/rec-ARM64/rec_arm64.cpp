@@ -71,7 +71,7 @@ static jmp_buf jmp_env;
 static u32 cycle_counter;
 
 static void (*mainloop)(void *context);
-static void (*arm64_intc_sched)();
+static int (*arm64_intc_sched)();
 static void (*arm64_no_update)();
 
 #ifdef PROFILING
@@ -114,8 +114,7 @@ __asm__
 		".hidden ngen_LinkBlock_Shared_stub	\n\t"
 		".globl ngen_LinkBlock_Shared_stub	\n\t"
 	"ngen_LinkBlock_Shared_stub:			\n\t"
-		"mov x0, lr							\n\t"
-		"sub x0, x0, #4						\n\t"	// go before the call
+		"sub x0, lr, #4						\n\t"	// go before the call
 		"bl rdv_LinkBlock					\n\t"   // returns an RX addr
 		"br x0								\n"
 
@@ -403,6 +402,12 @@ public:
 		Label cycles_remaining;
 		B(&cycles_remaining, pl);
 		GenCall(*arm64_intc_sched);
+		Label cpu_running;
+		Cbnz(w0, &cpu_running);
+		Mov(w29, block->vaddr);
+		Str(w29, sh4_context_mem_operand(&next_pc));
+		GenBranch(*arm64_no_update);
+		Bind(&cpu_running);
 		Bind(&cycles_remaining);
 
 #ifdef PROFILING
@@ -1430,8 +1435,8 @@ public:
 		Label intc_sched;
 		Label end_mainloop;
 
-		// void intc_sched()
-		arm64_intc_sched = GetCursorAddress<void (*)()>();
+		// int intc_sched()
+		arm64_intc_sched = GetCursorAddress<int (*)()>();
 		B(&intc_sched);
 
 		// void no_update()
@@ -1518,6 +1523,7 @@ public:
 		GenCallRuntime(UpdateSystem);
 		Mov(lr, x29);
 		Cbnz(w0, &do_interrupts);
+		Ldr(w0, MemOperand(x28, offsetof(Sh4Context, CpuRunning)));
 		Ret();
 
 		Bind(&do_interrupts);
