@@ -262,7 +262,7 @@ bool NaomiNetwork::startNetwork()
 				{
 					char buffer[8];
 					ssize_t l = ::recv(slave.socket, buffer, sizeof(buffer), 0);
-					if (l < (int)sizeof(buffer) && get_last_error() != EAGAIN && get_last_error() != EWOULDBLOCK)
+					if (l < (int)sizeof(buffer) && get_last_error() != L_EAGAIN && get_last_error() != L_EWOULDBLOCK)
 					{
 						// error
 						INFO_LOG(NETWORK, "Slave socket recv error. errno=%d", get_last_error());
@@ -413,7 +413,7 @@ bool NaomiNetwork::syncNetwork()
 				{
 					char buf[4];
 					ssize_t l = ::recv(slave.socket, buf, sizeof(buf), 0);
-					if (l < 4 && get_last_error() != EAGAIN && get_last_error() != EWOULDBLOCK)
+					if (l < 4 && get_last_error() != L_EAGAIN && get_last_error() != L_EWOULDBLOCK)
 					{
 						INFO_LOG(NETWORK, "Socket recv failed. errno=%d", get_last_error());
 						closeSocket(slave.socket);
@@ -468,7 +468,7 @@ bool NaomiNetwork::syncNetwork()
 			// Wait for the go
 			char buf[4];
 			l = ::recv(client_sock, buf, sizeof(buf), 0);
-			if (l < 4 && get_last_error() != EAGAIN && get_last_error() != EWOULDBLOCK)
+			if (l < 4 && get_last_error() != L_EAGAIN && get_last_error() != L_EWOULDBLOCK)
 			{
 				INFO_LOG(NETWORK, "Socket recv failed. errno=%d", get_last_error());
 				closeSocket(client_sock);
