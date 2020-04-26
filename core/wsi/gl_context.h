@@ -43,7 +43,7 @@ private:
 	bool isGLES = false;
 };
 
-#if HOST_OS == OS_DARWIN
+#if defined(__APPLE__)
 
 #include "osx.h"
 

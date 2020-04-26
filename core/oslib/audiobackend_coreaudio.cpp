@@ -14,7 +14,7 @@
 
 #include "audiostream.h"
 
-#if HOST_OS == OS_DARWIN
+#if defined(__APPLE__)
 #include "stdclass.h"
 
 #include <atomic>

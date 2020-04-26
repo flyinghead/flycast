@@ -668,7 +668,7 @@ bool VulkanContext::Init()
     extern void CreateMainWindow();
     CreateMainWindow();
 	extensions.push_back(VK_KHR_WIN32_SURFACE_EXTENSION_NAME);
-#elif defined(__MACH__)
+#elif defined(__APPLE__)
 	extensions.push_back(VK_MVK_MACOS_SURFACE_EXTENSION_NAME);
 #elif defined(SUPPORT_X11)
 	extensions.push_back(VK_KHR_XLIB_SURFACE_EXTENSION_NAME);

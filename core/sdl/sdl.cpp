@@ -66,7 +66,7 @@ void input_sdl_init()
 	if (SDL_WasInit(SDL_INIT_HAPTIC) == 0)
 		SDL_InitSubSystem(SDL_INIT_HAPTIC);
 
-#if HOST_OS != OS_DARWIN
+#if !defined(__APPLE__)
 	SDL_SetRelativeMouseMode(SDL_FALSE);
 
 	sdl_keyboard = new SDLKeyboardDevice(0);
@@ -111,7 +111,7 @@ void input_sdl_handle(u32 port)
 	{
 		switch (event.type)
 		{
-#if HOST_OS != OS_DARWIN
+#if !defined(__APPLE__)
 			case SDL_QUIT:
 				dc_exit();
 				break;
@@ -197,7 +197,7 @@ void input_sdl_handle(u32 port)
 				}
 				break;
 
-#if HOST_OS != OS_DARWIN
+#if !defined(__APPLE__)
 			case SDL_MOUSEMOTION:
 				set_mouse_position(event.motion.x, event.motion.y);
 				SET_FLAG(mo_buttons, 1 << 2, event.motion.state & SDL_BUTTON_LMASK);
@@ -246,7 +246,7 @@ void sdl_window_set_text(const char* text)
 	}
 }
 
-#if HOST_OS != OS_DARWIN
+#if !defined(__APPLE__)
 static void get_window_state()
 {
 	u32 flags = SDL_GetWindowFlags(window);
@@ -324,5 +324,5 @@ HWND sdl_get_native_hwnd()
 }
 #endif
 
-#endif // HOST_OS != OS_DARWIN
+#endif // !defined(__APPLE__)
 

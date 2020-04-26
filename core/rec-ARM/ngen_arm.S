@@ -9,7 +9,7 @@
 .equ BM_BLOCKLIST_MASK, 65532 @FFFC
 .equ CPU_RATIO, 5
 
-#if HOST_OS == OS_DARWIN
+#if defined(__APPLE__)
 #define CSYM(n) _##n
 #define HIDDEN(n)
 #else
@@ -138,7 +138,7 @@ CSYM(ngen_mainloop):
 push { r4-r12,lr }
 
 
-#if HOST_OS == OS_DARWIN
+#if defined(__APPLE__)
 	mov r11, #SH4_TIMESLICE @ load cycle counter
 #else
 	mov r9, #SH4_TIMESLICE @ load cycle counter
@@ -154,7 +154,7 @@ push { r4-r12,lr }
 	.global CSYM(intc_sched)
 	HIDDEN(intc_sched)
 CSYM(intc_sched):        @ next_pc _MUST_ be on ram
-#if HOST_OS == OS_DARWIN
+#if defined(__APPLE__)
     add r11,r11,#SH4_TIMESLICE
 #else
     add r9,r9,#SH4_TIMESLICE
@@ -219,7 +219,7 @@ XEntryPoints: .word CSYM(EntryPoints)
 HIDDEN(arm_mainloop)
 CSYM(arm_mainloop): @(cntx,lookup_base,cycles)
 
-#if HOST_OS == OS_DARWIN
+#if defined(__APPLE__)
 push {r4,r5,r8,r11,lr}
 #else
 push {r4,r5,r8,r9,lr}
@@ -256,7 +256,7 @@ arm_dofiq:
 HIDDEN(arm_exit)
 CSYM(arm_exit):
 	str r5,[r8,#192]		@if timeslice is over, save remaining cycles
-#if HOST_OS == OS_DARWIN
+#if defined(__APPLE__)
 	pop {r4,r5,r8,r11,pc}
 #else
 	pop {r4,r5,r8,r9,pc}

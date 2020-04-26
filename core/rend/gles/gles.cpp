@@ -491,7 +491,7 @@ void findGLVersion()
     	if (gl.gl_major >= 3)
     	{
 			gl.gl_version = "GL3";
-#if HOST_OS == OS_DARWIN
+#if defined(__APPLE__)
 			gl.glsl_version_header = "#version 150";
 #else
 			gl.glsl_version_header = "#version 130";
@@ -1132,7 +1132,7 @@ bool RenderFrame()
 		}
 		else
 		{
-#if HOST_OS != OS_DARWIN
+#if !defined(__APPLE__)
 			//Fix this in a proper way
 			glBindFramebuffer(GL_FRAMEBUFFER,0);
 #endif

@@ -70,7 +70,7 @@ static __attribute((used)) void end_slice()
 }
 #endif
 
-#ifdef __MACH__
+#if defined(__APPLE__)
 #define _U "_"
 #else
 #define _U
@@ -114,7 +114,7 @@ void ngen_mainloop(void* v_cntx)
 #endif
 			"pushq %rbx						\n\t"
 WIN32_ONLY( ".seh_pushreg %rbx				\n\t")
-#ifndef __MACH__	// rbp is pushed in the standard function prologue
+#if !defined(__APPLE__)	// rbp is pushed in the standard function prologue
 			"pushq %rbp                     \n\t"
 #endif
 #ifdef _WIN32
@@ -194,7 +194,7 @@ WIN32_ONLY( ".seh_pushreg %r14              \n\t")
 			"popq %rsi                      \n\t"
 			"popq %rdi                      \n\t"
 #endif
-#ifndef __MACH__
+#if !defined(__APPLE__)
 			"popq %rbp                      \n\t"
 #endif
 			"popq %rbx                      \n\t"

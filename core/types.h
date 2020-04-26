@@ -194,7 +194,7 @@ void libCore_CDDA_Sector(s16* sector);
 #include <cstdlib>
 #include <cstdio>
 
-#if HOST_OS == OS_DARWIN
+#if defined(__APPLE__)
 int darw_printf(const char* Text,...);
 #define printf darw_printf
 #define puts(X) printf("%s\n", X)

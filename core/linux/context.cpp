@@ -3,7 +3,7 @@
 #if defined(__ANDROID__)
 	#include <asm/sigcontext.h>
 #else
-	#if HOST_OS == OS_DARWIN
+	#if defined(__APPLE__)
 		#define _XOPEN_SOURCE 1
 		#define __USE_GNU 1
 	#endif
@@ -43,7 +43,7 @@ void context_segfault(rei_host_context_t* reictx, void* segfault_ctx, bool to_se
 		for (int i = 0; i < 15; i++)
 			bicopy(reictx->r[i], r[i], to_segfault);
 
-	#elif HOST_OS == OS_DARWIN
+	#elif defined(__APPLE__)
 		bicopy(reictx->pc, MCTX(->__ss.__pc), to_segfault);
 
 		for (int i = 0; i < 15; i++)
@@ -65,7 +65,7 @@ void context_segfault(rei_host_context_t* reictx, void* segfault_ctx, bool to_se
 		bicopy(reictx->esp, MCTX(.gregs[REG_ESP]), to_segfault);
 		bicopy(reictx->eax, MCTX(.gregs[REG_EAX]), to_segfault);
 		bicopy(reictx->ecx, MCTX(.gregs[REG_ECX]), to_segfault);
-	#elif HOST_OS == OS_DARWIN
+	#elif defined(__APPLE__)
 		bicopy(reictx->pc, MCTX(->__ss.__eip), to_segfault);
 		bicopy(reictx->esp, MCTX(->__ss.__esp), to_segfault);
 		bicopy(reictx->eax, MCTX(->__ss.__eax), to_segfault);
@@ -80,7 +80,7 @@ void context_segfault(rei_host_context_t* reictx, void* segfault_ctx, bool to_se
 		bicopy(reictx->pc, MCTX(.__gregs[_REG_RIP]), to_segfault);
 	#elif HOST_OS == OS_LINUX
 		bicopy(reictx->pc, MCTX(.gregs[REG_RIP]), to_segfault);
-    #elif HOST_OS == OS_DARWIN
+    #elif defined(__APPLE__)
         bicopy(reictx->pc, MCTX(->__ss.__rip), to_segfault);
     #else
 	    #error HOST_OS

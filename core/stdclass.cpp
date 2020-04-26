@@ -7,11 +7,6 @@
 #include <sys/types.h>
 #include <vector>
 
-#if HOST_OS == OS_DARWIN
-#include <mach/clock.h>
-#include <mach/mach.h>
-#endif
-
 #ifdef _WIN32
 	#include <algorithm>
 	#include <io.h>

@@ -35,7 +35,7 @@ alignas(4096) static u8 CodeBuffer[32 * 1024]
 	;
 #elif HOST_OS == OS_LINUX
 	__attribute__((section(".text")));
-#elif HOST_OS == OS_DARWIN
+#elif defined(__APPLE__)
 	__attribute__((section("__TEXT,.text")));
 #else
 	#error CodeBuffer code section unknown

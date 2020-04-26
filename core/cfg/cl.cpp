@@ -129,7 +129,7 @@ bool ParseCommandLine(int argc,char* argv[])
 			cl-=as;
 			arg+=as;
 		}
-#ifdef __MACH__
+#if defined(__APPLE__)
 		else if (!strncmp(*arg, "-NSDocumentRevisions", 20))
 		{
 			arg++;

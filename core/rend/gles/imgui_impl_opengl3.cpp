@@ -90,7 +90,7 @@ bool    ImGui_ImplOpenGL3_Init(const char* glsl_version)
     	if (theGLContext.IsGLES())
             glsl_version = "#version 100";		// OpenGL ES 2.0
     	else
-#if HOST_OS == OS_DARWIN
+#if defined(__APPLE__)
     		glsl_version = "#version 140";		// OpenGL 3.1
 #else
     		glsl_version = "#version 130";		// OpenGL 3.0
