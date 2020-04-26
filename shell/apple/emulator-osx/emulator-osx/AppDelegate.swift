@@ -18,6 +18,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 		if let name = Bundle.main.infoDictionary?["CFBundleDisplayName"] as? String {
 			window.title = name
 		}
+        NSApplication.shared.mainMenu?.item(at: 1)?.submenu?.insertItem(
+            NSMenuItem(title: "New Instance", action: #selector(newInstance(_:)), keyEquivalent: "n"), at: 0
+        )
     }
 
     func applicationWillTerminate(_ aNotification: Notification) {
@@ -26,6 +29,16 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
         return true
+    }
+    
+    func applicationDockMenu(_ sender: NSApplication) -> NSMenu? {
+        let dockMenu = NSMenu()
+        dockMenu.addItem(withTitle: "New Instance", action: #selector(newInstance(_:)), keyEquivalent: "n")
+        return dockMenu
+    }
+    
+    @objc func newInstance(_ sender: NSMenuItem) {
+        Process.launchedProcess(launchPath: "/usr/bin/open", arguments: ["-n", Bundle.main.bundlePath])
     }
 }
 

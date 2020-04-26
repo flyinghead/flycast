@@ -133,6 +133,11 @@ extern "C" void emu_gles_init(int width, int height) {
     if (home != NULL)
     {
         std::string config_dir = std::string(home) + "/.reicast";
+        int instanceNumber = (int)[[NSRunningApplication runningApplicationsWithBundleIdentifier:@"com.reicast.Flycast"] count];
+        if (instanceNumber > 1){
+            config_dir += "/" + std::to_string(instanceNumber);
+            [[NSApp dockTile] setBadgeLabel:@(instanceNumber).stringValue];
+        }
         mkdir(config_dir.c_str(), 0755); // create the directory if missing
         set_user_config_dir(config_dir);
         set_user_data_dir(config_dir);
