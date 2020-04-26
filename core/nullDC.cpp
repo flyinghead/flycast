@@ -323,6 +323,13 @@ static void LoadSpecialSettings()
 			settings.rend.ExtraDepthScale = 1e26;
 			extra_depth_game = true;
 		}
+		if (!strcmp("COSMIC SMASH IN JAPAN", naomi_game_id))
+		{
+			INFO_LOG(BOOT, "Enabling translucent depth multipass for game %s", naomi_game_id);
+			settings.rend.TranslucentPolygonDepthMask = true;
+			tr_poly_depth_mask_game = true;
+		}
+		// Input configuration
 		if (!strcmp("DYNAMIC GOLF", naomi_game_id)
 				|| !strcmp("SHOOTOUT POOL", naomi_game_id)
 				|| !strcmp("SHOOTOUT POOL MEDAL", naomi_game_id)
@@ -392,12 +399,6 @@ static void LoadSpecialSettings()
 			INFO_LOG(BOOT, "Enabling JVS rotary encoders for game %s", naomi_game_id);
 			settings.input.JammaSetup = JVS::OutTrigger;
 		}
-		else if (!strcmp("COSMIC SMASH IN JAPAN", naomi_game_id))
-		{
-			INFO_LOG(BOOT, "Enabling translucent depth multipass for game %s", naomi_game_id);
-			settings.rend.TranslucentPolygonDepthMask = true;
-			tr_poly_depth_mask_game = true;
-		}
 		else if (!strcmp(naomi_game_id, "THE MAZE OF THE KINGS")
 				|| !strcmp(naomi_game_id, " CONFIDENTIAL MISSION ---------")
 				|| !strcmp(naomi_game_id, "DEATH CRIMSON OX")
@@ -405,6 +406,21 @@ static void LoadSpecialSettings()
 		{
 			INFO_LOG(BOOT, "Enabling lightgun as analog setup for game %s", naomi_game_id);
 			settings.input.JammaSetup = JVS::LightGunAsAnalog;
+		}
+		else if (!strcmp("WAVE RUNNER GP", naomi_game_id))
+		{
+			INFO_LOG(BOOT, "Enabling specific JVS setup for game %s", naomi_game_id);
+			settings.input.JammaSetup = JVS::WaveRunnerGP;
+		}
+		else if (!strcmp("INU NO OSANPO", naomi_game_id))	// Dog Walking
+		{
+			INFO_LOG(BOOT, "Enabling specific JVS setup for game %s", naomi_game_id);
+			settings.input.JammaSetup = JVS::DogWalking;
+		}
+		else if (!strcmp(" TOUCH DE UNOH -------------", naomi_game_id))
+		{
+			INFO_LOG(BOOT, "Enabling specific JVS setup for game %s", naomi_game_id);
+			settings.input.JammaSetup = JVS::TouchDeUno;
 		}
 		settings.rend.Rotate90 = naomi_rotate_screen;
 	}

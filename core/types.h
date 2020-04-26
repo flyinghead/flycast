@@ -346,6 +346,7 @@ enum class JVS {
 	Keyboard,
 	OutTrigger,
 	LightGunAsAnalog,
+	WaveRunnerGP,
 };
 
 struct settings_t

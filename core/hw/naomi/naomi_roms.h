@@ -2202,7 +2202,7 @@ Games[] =
         0x294bc3e3,
         NULL,
         M2,
-        REGION_AUSTRALIA,
+        REGION_JAPAN,
         ROT0,
         {
             { "epr-22294a.ic22", 0x0000000, 0x400000 },
@@ -3322,7 +3322,9 @@ Games[] =
             { "mpr-22218.ic11",  0x5800000, 0x0800000 },
             { "mpr-22219.ic12s", 0x6000000, 0x0800000 },
             { NULL, 0, 0 },
-        }
+        },
+		NULL,
+		&marine_fishing_inputs,
     },
     // Spawn In the Demon's Hand (JPN, USA, EUR, ASI, AUS) (Rev B)
     {
@@ -3465,7 +3467,7 @@ Games[] =
         0x28028ea5,
         NULL,
         M2,
-        REGION_AUSTRALIA,
+        REGION_JAPAN,
         ROT0,
         {
             //ROM_REGION16_BE( 0x80, "main_eeprom", 0 )

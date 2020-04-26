@@ -379,6 +379,23 @@ static InputDescriptors wrungp_inputs = {
 	  },
 };
 
+static InputDescriptors marine_fishing_inputs = {
+	  {
+			{ NAOMI_START_KEY, "CAST" },
+			{ NAOMI_UP_KEY, "LURE" },
+			NAO_BASE_BTN_DESC
+			{ 0 },
+	  },
+	  {
+			{ "ROD Y", Full, 1 },
+			{ "ROD X", Full, 0 },
+			{ "STICK X", Full, 2 },
+			{ "STICK Y", Full, 3 },
+			{ "REEL SPEED", Half, 0 },
+			{ NULL },
+	  },
+};
+
 //
 // AtomisWave games
 //
