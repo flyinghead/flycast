@@ -53,6 +53,7 @@ bool GamepadDevice::gamepad_btn_input(u32 code, bool pressed)
 	{
 		_input_detected(code);
 		_input_detected = nullptr;
+		return true;
 	}
 	if (!input_mapper || _maple_port < 0 || _maple_port >= (int)ARRAY_SIZE(kcode))
 		return false;
@@ -158,6 +159,7 @@ bool GamepadDevice::gamepad_axis_input(u32 code, int value)
 	{
 		_input_detected(code);
 		_input_detected = NULL;
+		return true;
 	}
 	if (!input_mapper || _maple_port < 0 || _maple_port >= (int)ARRAY_SIZE(kcode))
 		return false;
