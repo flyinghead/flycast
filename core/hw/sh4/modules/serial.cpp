@@ -77,7 +77,7 @@ static void SerialWrite(u32 addr, u32 data)
 //SCIF_SCFSR2 read
 static u32 ReadSerialStatus(u32 addr)
 {
-#if HOST_OS == OS_LINUX || HOST_OS == OS_DARWIN
+#if HOST_OS == OS_LINUX || defined(__APPLE__)
 	int count = 0;
 	if (settings.debug.SerialConsole && ioctl(tty, FIONREAD, &count) == 0 && count > 0)
 	{
@@ -166,7 +166,7 @@ void serial_init()
 	//SCIF SCLSR2 0xFFE80024 0x1FE80024 16 0x0000 0x0000 Held Held Pclk
 	sh4_rio_reg(SCIF,SCIF_SCLSR2_addr,RIO_DATA,16);
 
-#if HOST_OS == OS_LINUX || HOST_OS == OS_DARWIN
+#if HOST_OS == OS_LINUX || defined(__APPLE__)
 	if (settings.debug.SerialConsole && settings.debug.SerialPTY)
 	{
 		tty = open("/dev/ptmx", O_RDWR | O_NDELAY | O_NOCTTY | O_NONBLOCK);

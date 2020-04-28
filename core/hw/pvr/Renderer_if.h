@@ -50,7 +50,7 @@ extern int renderer_changed;	// Signals the renderer thread to switch renderer w
 extern bool renderer_reinit_requested;	// Signals the renderer thread to reinit the renderer
 
 Renderer* rend_GLES2();
-#if !defined(GLES) && HOST_OS != OS_DARWIN
+#if !defined(GLES) && !defined(__APPLE__)
 Renderer* rend_GL4();
 #endif
 Renderer* rend_norend();

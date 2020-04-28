@@ -18,8 +18,7 @@
     You should have received a copy of the GNU General Public License
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
-#include "build.h"
-#if defined(USE_SDL) && HOST_OS != OS_DARWIN
+#if defined(USE_SDL) && !defined(__APPLE__)
 #include <math.h>
 #include "gl_context.h"
 #include "rend/gui.h"

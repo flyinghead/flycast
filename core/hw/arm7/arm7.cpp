@@ -361,7 +361,7 @@ void update_armintc()
 
 #include "virt_arm.h"
 
-#if HOST_OS == OS_DARWIN
+#if defined(__APPLE__)
 #include <sys/mman.h>
 #endif
 
@@ -606,7 +606,7 @@ u8 ARM7_TCB[ICacheSize+4096];
 
 u8 ARM7_TCB[ICacheSize+4096] __attribute__((section(".text")));
 
-#elif HOST_OS==OS_DARWIN
+#elif defined(__APPLE__)
 u8 ARM7_TCB[ICacheSize+4096] __attribute__((section("__TEXT, .text")));
 #else
 #error ARM7_TCB ALLOC
@@ -1507,7 +1507,7 @@ void  armEmit32(u32 emit32)
 	icPtr+=4;
 }
 
-#if HOST_OS==OS_DARWIN
+#if defined(__APPLE__)
 #include <libkern/OSCacheControl.h>
 extern "C" void armFlushICache(void *code, void *pEnd) {
     sys_dcache_flush(code, (u8*)pEnd - (u8*)code + 1);

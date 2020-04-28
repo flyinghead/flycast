@@ -1,7 +1,7 @@
 #pragma once
 #include "types.h"
 #include "x86_op_classes.h"
-#if HOST_OS == OS_DARWIN
+#if defined(__APPLE__)
 	#include <TargetConditionals.h>
 #endif
 

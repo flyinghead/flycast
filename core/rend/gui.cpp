@@ -990,7 +990,7 @@ static void gui_display_settings()
 		if (ImGui::BeginTabItem("Video"))
 		{
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
-#if HOST_OS != OS_DARWIN
+#if !defined(__APPLE__)
 			bool has_per_pixel = false;
 			if (!vulkan)
 				has_per_pixel = !theGLContext.IsGLES() && theGLContext.GetMajorVersion() >= 4;
@@ -1400,7 +1400,7 @@ static void gui_display_settings()
 					"Android"
 #elif HOST_OS == OS_LINUX
 					"Linux"
-#elif HOST_OS == OS_DARWIN
+#elif defined(__APPLE__)
 #ifdef TARGET_IPHONE
 		    		"iOS"
 #else

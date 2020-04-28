@@ -114,7 +114,7 @@ static int allocate_shared_filemem(unsigned size) {
 	// Use Android's specific shmem stuff.
 	fd = ashmem_create_region(0, size);
 	#else
-		#if HOST_OS != OS_DARWIN
+		#if !defined(__APPLE__)
 		fd = shm_open("/dcnzorz_mem", O_CREAT | O_EXCL | O_RDWR, S_IREAD | S_IWRITE);
 		shm_unlink("/dcnzorz_mem");
 		#endif
@@ -289,7 +289,7 @@ static void Arm64_CacheFlush(void* start, void* end) {
 	if (start == end)
 		return;
 
-#if HOST_OS == OS_DARWIN
+#if defined(__APPLE__)
 	// Header file says this is equivalent to: sys_icache_invalidate(start, end - start);
 	sys_cache_control(kCacheFunctionPrepareForExecution, start, end - start);
 #else

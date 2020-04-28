@@ -21,7 +21,7 @@
 #include "types.h"
 
 #ifndef GLES
-#if HOST_OS != OS_DARWIN
+#if !defined(__APPLE__)
 #undef ARRAY_SIZE	// macros are evil
 #include <GL4/gl3w.c>
 #endif

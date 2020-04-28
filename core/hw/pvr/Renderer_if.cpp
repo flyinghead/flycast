@@ -289,7 +289,7 @@ static void rend_create_renderer()
 	case 0:
 		renderer = rend_GLES2();
 		break;
-#if !defined(GLES) && HOST_OS != OS_DARWIN
+#if !defined(GLES) && !defined(__APPLE__)
 	case 3:
 		renderer = rend_GL4();
 		fallback_renderer = rend_GLES2();
