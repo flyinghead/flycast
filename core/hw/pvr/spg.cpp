@@ -262,7 +262,7 @@ void spg_Reset(bool hard)
 void SetREP(TA_context* cntx)
 {
 	if (cntx)
-		sh4_sched_request(render_end_schid, 500000 * 3);
+		sh4_sched_request(render_end_schid, 500000 * 6);
 	else
 		sh4_sched_request(render_end_schid, 4096);
 }
