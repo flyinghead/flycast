@@ -108,14 +108,23 @@ std::string get_readonly_data_path(const std::string& filename)
 	return user_filepath;
 }
 
+static size_t get_last_slash_pos(const std::string& path)
+{
+	size_t lastindex = path.find_last_of('/');
+#ifdef _WIN32
+	size_t lastindex2 = path.find_last_of('\\');
+	if (lastindex == std::string::npos)
+		lastindex = lastindex2;
+	else if (lastindex2 != std::string::npos)
+		lastindex = std::max(lastindex, lastindex2);
+#endif
+	return lastindex;
+}
+
 std::string get_game_save_prefix()
 {
 	std::string save_file = settings.imgread.ImagePath;
-	size_t lastindex = save_file.find_last_of('/');
-#ifdef _WIN32
-	size_t lastindex2 = save_file.find_last_of('\\');
-	lastindex = std::max(lastindex, lastindex2);
-#endif
+	size_t lastindex = get_last_slash_pos(save_file);
 	if (lastindex != std::string::npos)
 		save_file = save_file.substr(lastindex + 1);
 	return get_writable_data_path(DATA_PATH) + save_file;
@@ -133,13 +142,11 @@ std::string get_game_basename()
 std::string get_game_dir()
 {
 	std::string game_dir = settings.imgread.ImagePath;
-	size_t lastindex = game_dir.find_last_of('/');
-#ifdef _WIN32
-	size_t lastindex2 = game_dir.find_last_of('\\');
-	lastindex = std::max(lastindex, lastindex2);
-#endif
+	size_t lastindex = get_last_slash_pos(game_dir);
 	if (lastindex != std::string::npos)
 		game_dir = game_dir.substr(0, lastindex + 1);
+	else
+		game_dir = "./";
 	return game_dir;
 }
 
