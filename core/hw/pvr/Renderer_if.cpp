@@ -6,6 +6,7 @@
 #include "rend/gui.h"
 #include "rend/TexCache.h"
 #include "wsi/context.h"
+#include "gdxsv.h"
 
 #include <zlib.h>
 
@@ -470,6 +471,7 @@ void rend_vblank()
 	render_called = false;
 	check_framebuffer_write();
 	cheatManager.Apply();
+	gdxsv.Update();
 }
 
 void check_framebuffer_write()

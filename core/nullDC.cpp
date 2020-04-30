@@ -33,6 +33,7 @@
 #include "rend/CustomTexture.h"
 #include "hw/maple/maple_devs.h"
 #include "network/naomi_network.h"
+#include "gdxsv.h"
 
 void FlushCache();
 static void LoadCustom();
@@ -670,6 +671,7 @@ static void dc_start_game(const char *path)
 			saved_screen_stretching = -1;
 		}
 	}
+	gdxsv.Reset();
 	fast_forward_mode = false;
 }
 
