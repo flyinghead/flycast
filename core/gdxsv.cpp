@@ -21,7 +21,7 @@ void Gdxsv::Reset()
 	enabled = 1;
 
 	server = cfgLoadStr("gdxsv", "server", "zdxsv.net");
-	maxlag = cfgLoadInt("gdxsv", "maxlag", 5); // Note: This should be not configurable. This is for development.
+	maxlag = cfgLoadInt("gdxsv", "maxlag", 8); // Note: This should be not configurable. This is for development.
 	loginkey = cfgLoadStr("gdxsv", "loginkey", "");
 
 	if (loginkey.empty())
@@ -36,14 +36,13 @@ void Gdxsv::Reset()
 	if (disk_num == "1")
 	{
 		disk = 1;
-		NOTICE_LOG(COMMON, "DISK1 IS NOT SUPPORTED");
 	}
 	if (disk_num == "2")
 	{
 		disk = 2;
 	}
 
-	INFO_LOG(COMMON, "gdxsv disk:%d server:%s loginkey:%s", disk, server.c_str(), loginkey.c_str());
+	NOTICE_LOG(COMMON, "gdxsv disk:%d server:%s loginkey:%s maxlag:%d", disk, server.c_str(), loginkey.c_str(), maxlag);
 }
 
 void Gdxsv::Update()
