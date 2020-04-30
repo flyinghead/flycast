@@ -46,6 +46,15 @@ extern "C" {
 #include <mutex>
 #include <queue>
 
+#ifdef MODEM_DEBUG
+ppp_dumper ppp_read_dump("ppp_read");
+ppp_dumper ppp_write_dump("ppp_write");
+ppp_dumper modem_read_dump("modem_read");
+ppp_dumper modem_write_dump("modem_write");
+safe_timer modem_write_pico_read_timer("from last modem_write to pico_read");
+#endif
+
+
 #define RESOLVER1_OPENDNS_COM "208.67.222.222"
 #define AFO_ORIG_IP 0x83f2fb3f		// 63.251.242.131 in network order
 #define IGP_ORIG_IP 0xef2bd2cc		// 204.210.43.239 in network order
@@ -117,6 +126,9 @@ static int modem_read(struct pico_device *dev, void *data, int len)
 	out_buffer_lock.lock();
 	while (!out_buffer.empty() && count < len)
 	{
+#ifdef MODEM_DEBUG
+		modem_read_dump.push(out_buffer.front());
+#endif
 		*p++ = out_buffer.front();
 		out_buffer.pop();
 		count++;
@@ -133,10 +145,16 @@ static int modem_write(struct pico_device *dev, const void *data, int len)
 	in_buffer_lock.lock();
 	while (len > 0)
 	{
+#ifdef MODEM_DEBUG
+		modem_write_dump.push(*p);
+#endif
 		in_buffer.push(*p++);
 		len--;
 	}
 	in_buffer_lock.unlock();
+#ifdef MODEM_DEBUG
+	modem_write_pico_read_timer.start();
+#endif
 
     return len;
 }
