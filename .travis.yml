@@ -22,7 +22,7 @@ install:
 script:
   - cd shell/android-studio
   - chmod +x gradlew
-  - ./gradlew assembleDreamcastDebug --configure-on-demand --console=plain
+  - ./gradlew assembleDreamcastDebug --console=plain --parallel
 
 before_deploy:
   - cd ../../
