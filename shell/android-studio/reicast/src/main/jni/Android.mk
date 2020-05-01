@@ -75,8 +75,12 @@ ifdef CHD5_FLAC
 endif
 
 LOCAL_CFLAGS += -DGLES3
-LOCAL_CPPFLAGS += -std=c++11 -fopenmp -static-openmp
-LOCAL_LDFLAGS  += -fopenmp -static-openmp
+LOCAL_CPPFLAGS += -std=c++11 -fopenmp
+LOCAL_LDFLAGS  += -fopenmp
+
+ifeq ($(call ndk-major-at-least,21),true)
+  LOCAL_LDFLAGS += -static-openmp
+endif
 
 ifeq ($(TARGET_ARCH_ABI),x86)
   LOCAL_CFLAGS+= -DTARGET_NO_AREC -DTARGET_NO_OPENMP
