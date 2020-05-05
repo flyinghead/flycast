@@ -1,0 +1,48 @@
+name: C/C++ CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    name: ${{ matrix.config.name }}
+    runs-on: ${{ matrix.config.os }}
+
+    strategy:
+      matrix:
+        config:
+          - {name: i686-pc-windows-msvc, os: windows-latest, cmakeArgs: -G "Visual Studio 16 2019" -A Win32}
+          - {name: x86_64-apple-darwin, os: macos-latest, setup: brew install flac libao libzip libomp libpng pulseaudio sdl2 zlib, cmakeArgs: -G "Xcode"}
+          - {name: x86_64-pc-linux-gnu, os: ubuntu-latest, setup: sudo apt-get update && sudo apt-get -y install libao-dev libasound2-dev libevdev-dev libflac-dev libgl1-mesa-dev libpulse-dev libsdl2-dev libudev-dev libzip-dev}
+          - {name: x86_64-pc-windows-msvc, os: windows-latest, cmakeArgs: -G "Visual Studio 16 2019" -A x64}
+          - {name: x86_64-w64-mingw32, os: windows-latest, cmakeArgs: -G "MinGW Makefiles"}
+
+    steps:
+      - name: Set up build environment
+        run: ${{ matrix.config.setup }}
+
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - run: git fetch origin +refs/tags/*:refs/tags/*
+
+      - name: Unit Tests
+        run: |
+          mkdir -p build/tests
+          cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE=tests -DENABLE_CTEST=ON ${{ matrix.config.cmakeArgs }}
+          cmake --build build --config Release --parallel 2
+          ./build/tests/flycast
+        if: matrix.config.name == 'x86_64-pc-linux-gnu'
+
+      - name: Create artifact directory
+        run: mkdir -p build/artifact
+
+      - name: CMake
+        run: |
+          cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE=artifact ${{ matrix.config.cmakeArgs }}
+          cmake --build build --config Release --parallel 2
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: flycast-${{ matrix.config.name }}
+          path: build/artifact
