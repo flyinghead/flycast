@@ -161,55 +161,24 @@
 
 //automatic
 
-#ifndef CMAKE_BUILD
-
-#if defined(_WIN32) && !defined(TARGET_WIN86) && !defined(TARGET_WIN64)
-	#if !defined(_M_AMD64) && !defined(__x86_64__)
-		#define TARGET_WIN86
-	#else
-		#define TARGET_WIN64
-	#endif
+#if defined(__x86_64__) || defined(_M_X64)
+	#define HOST_CPU CPU_X64
+#elif defined(__i386__) || defined(_M_IX86)
+	#define HOST_CPU CPU_X86
+#elif defined(__arm__) || defined (_M_ARM)
+	#define HOST_CPU CPU_ARM
+#elif defined(__aarch64__) || defined(_M_ARM64)
+	#define HOST_CPU CPU_ARM64
+#elif defined(__mips__)
+	#define HOST_CPU CPU_MIPS
+#else
+	#define HOST_CPU CPU_GENERIC
 #endif
 
-//Targets
-#if defined(TARGET_WIN86)
-	#define HOST_OS OS_WINDOWS
-	#define HOST_CPU CPU_X86
-#elif defined(TARGET_WIN64)
-	#define HOST_OS OS_WINDOWS
-	#define HOST_CPU CPU_X64
-#elif defined(TARGET_PANDORA)
+#if defined(__APPLE__)
+	#define HOST_OS OS_DARWIN
+#elif defined(__unix__)
 	#define HOST_OS OS_LINUX
-	#define HOST_CPU CPU_ARM
-#elif defined(TARGET_LINUX_ARMELv7)
-	#define HOST_OS OS_LINUX
-	#define HOST_CPU CPU_ARM
-#elif defined(TARGET_LINUX_ARMv8)
-	#define HOST_OS OS_LINUX
-	#define HOST_CPU CPU_ARM64
-#elif defined(TARGET_LINUX_x86)
-	#define HOST_OS OS_LINUX
-	#define HOST_CPU CPU_X86
-#elif defined(TARGET_LINUX_x64)
-	#define HOST_OS OS_LINUX
-	#define HOST_CPU CPU_X64
-#elif defined(TARGET_LINUX_MIPS)
-	#define HOST_OS OS_LINUX
-	#define HOST_CPU CPU_MIPS
-#elif defined(TARGET_GCW0)
-	#define HOST_OS OS_LINUX
-	#define HOST_CPU CPU_MIPS
-#elif defined(TARGET_IPHONE)
-    #define HOST_OS OS_DARWIN
-    #define HOST_CPU CPU_ARM
-#elif defined(TARGET_OSX)
-    #define HOST_OS OS_DARWIN
-    #define HOST_CPU CPU_X86
-#elif defined(TARGET_OSX_X64)
-    #define HOST_OS OS_DARWIN
-    #define HOST_CPU CPU_X64
-#else
-	#error Invalid Target: TARGET_* not defined
 #endif
 
 #if defined(TARGET_NO_REC)
@@ -230,9 +199,6 @@
 #define FEAT_DSPREC DYNAREC_NONE
 #endif
 
-#endif	// !CMAKE_BUILD
-
-
 #if defined(TARGET_NO_NIXPROF)
 #define FEAT_HAS_NIXPROF 0
 #endif
@@ -244,7 +210,11 @@
 //defaults
 
 #ifndef FEAT_SHREC
-	#define FEAT_SHREC DYNAREC_JIT
+	#if HOST_CPU == CPU_MIPS
+		#define FEAT_SHREC DYNAREC_NONE
+	#else
+		#define FEAT_SHREC DYNAREC_JIT
+	#endif
 #endif
 
 #ifndef FEAT_AREC
