@@ -90,7 +90,7 @@ LOCAL_CPP_FEATURES :=
 # LOCAL_SHARED_LIBRARIES:= libcutils libutils
 LOCAL_PRELINK_MODULE  := false
 
-LOCAL_MODULE	:= dc
+LOCAL_MODULE	:= flycast
 LOCAL_DISABLE_FORMAT_STRING_CHECKS=true
 LOCAL_ASFLAGS := -fPIC -fvisibility=hidden
 LOCAL_LDLIBS	:= -llog -lEGL -lz -landroid
