@@ -163,9 +163,8 @@ void cThread::Start()
 
 void cThread::WaitToEnd()
 {
-	if (thread.joinable()) {
+	if (thread.joinable() && thread.get_id() != std::this_thread::get_id())
 		thread.join();
-	}
 }
 
 cResetEvent::cResetEvent() : state(false)

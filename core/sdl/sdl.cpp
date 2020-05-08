@@ -118,7 +118,7 @@ void input_sdl_handle(u32 port)
 
 			case SDL_KEYDOWN:
 			case SDL_KEYUP:
-				if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_RETURN && (event.key.keysym.mod & KMOD_LALT))
+				if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_RETURN && (event.key.keysym.mod & KMOD_ALT))
 				{
 					if (window_fullscreen)
 						SDL_SetWindowFullscreen(window, 0);

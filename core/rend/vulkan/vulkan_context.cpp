@@ -680,7 +680,7 @@ bool VulkanContext::Init()
 
 #if defined(USE_SDL)
     VkSurfaceKHR surface;
-    if (SDL_Vulkan_CreateSurface((SDL_Window *)window, *instance, (VkSurfaceKHR *)&this->surface) == 0)
+    if (SDL_Vulkan_CreateSurface((SDL_Window *)window, (VkInstance)*instance, (VkSurfaceKHR *)&this->surface) == 0)
     	return false;
 #elif defined(_WIN32)
 	vk::Win32SurfaceCreateInfoKHR createInfo(vk::Win32SurfaceCreateFlagsKHR(), GetModuleHandle(NULL), (HWND)window);

@@ -21,7 +21,15 @@
 #pragma once
 #include <SDL2/SDL.h>
 #include "types.h"
+#ifndef GLES
 #include <GL4/gl3w.h>
+#else
+#include <GLES32/gl32.h>
+#include <GLES32/gl2ext.h>
+#ifndef GLES2
+#include "gl32funcs.h"
+#endif
+#endif
 #include "gl_context.h"
 
 class SDLGLGraphicsContext : public GLGraphicsContext

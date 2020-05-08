@@ -79,7 +79,9 @@ bool SDLGLGraphicsContext::Init()
 
 	SDL_GL_MakeCurrent(window, glcontext);
 
-#ifndef GLES
+#ifdef GLES
+	load_gles_symbols();
+#else
 	if (gl3wInit() == -1 || !gl3wIsSupported(3, 0))
 	{
 		ERROR_LOG(RENDERER, "gl3wInit failed or GL 3.0 not supported");
