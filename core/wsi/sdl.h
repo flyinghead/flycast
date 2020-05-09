@@ -28,6 +28,8 @@
 #include <GLES32/gl2ext.h>
 #ifndef GLES2
 #include "gl32funcs.h"
+#else
+extern "C" void load_gles_symbols();
 #endif
 #endif
 #include "gl_context.h"
