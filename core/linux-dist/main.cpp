@@ -21,9 +21,7 @@
 	#include "sdl/sdl.h"
 #endif
 
-#if defined(USES_HOMEDIR)
-	#include <sys/stat.h>
-#endif
+#include <sys/stat.h>
 
 #if defined(USE_EVDEV)
 	#include "evdev.h"
@@ -159,41 +157,39 @@ void* rend_thread(void* p);
 
 std::string find_user_config_dir()
 {
-	#ifdef USES_HOMEDIR
-		struct stat info;
-		std::string home = "";
-		if(getenv("HOME") != NULL)
+	struct stat info;
+	std::string home = "";
+	if(getenv("HOME") != NULL)
+	{
+		// Support for the legacy config dir at "$HOME/.reicast"
+		std::string legacy_home = (std::string)getenv("HOME") + "/.reicast";
+		if((stat(legacy_home.c_str(), &info) == 0) && (info.st_mode & S_IFDIR))
 		{
-			// Support for the legacy config dir at "$HOME/.reicast"
-			std::string legacy_home = (std::string)getenv("HOME") + "/.reicast";
-			if((stat(legacy_home.c_str(), &info) == 0) && (info.st_mode & S_IFDIR))
-			{
-				// "$HOME/.reicast" already exists, let's use it!
-				return legacy_home;
-			}
-
-			/* If $XDG_CONFIG_HOME is not set, we're supposed to use "$HOME/.config" instead.
-			 * Consult the XDG Base Directory Specification for details:
-			 *   http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html#variables
-			 */
-			home = (std::string)getenv("HOME") + "/.config/reicast";
-		}
-		if(getenv("XDG_CONFIG_HOME") != NULL)
-		{
-			// If XDG_CONFIG_HOME is set explicitly, we'll use that instead of $HOME/.config
-			home = (std::string)getenv("XDG_CONFIG_HOME") + "/reicast";
+			// "$HOME/.reicast" already exists, let's use it!
+			return legacy_home;
 		}
 
-		if(!home.empty())
+		/* If $XDG_CONFIG_HOME is not set, we're supposed to use "$HOME/.config" instead.
+		 * Consult the XDG Base Directory Specification for details:
+		 *   http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html#variables
+		 */
+		home = (std::string)getenv("HOME") + "/.config/reicast";
+	}
+	if(getenv("XDG_CONFIG_HOME") != NULL)
+	{
+		// If XDG_CONFIG_HOME is set explicitly, we'll use that instead of $HOME/.config
+		home = (std::string)getenv("XDG_CONFIG_HOME") + "/reicast";
+	}
+
+	if(!home.empty())
+	{
+		if((stat(home.c_str(), &info) != 0) || !(info.st_mode & S_IFDIR))
 		{
-			if((stat(home.c_str(), &info) != 0) || !(info.st_mode & S_IFDIR))
-			{
-				// If the directory doesn't exist yet, create it!
-				mkdir(home.c_str(), 0755);
-			}
-			return home;
+			// If the directory doesn't exist yet, create it!
+			mkdir(home.c_str(), 0755);
 		}
-	#endif
+		return home;
+	}
 
 	// Unable to detect config dir, use the current folder
 	return ".";
@@ -201,41 +197,39 @@ std::string find_user_config_dir()
 
 std::string find_user_data_dir()
 {
-	#ifdef USES_HOMEDIR
-		struct stat info;
-		std::string data = "";
-		if(getenv("HOME") != NULL)
+	struct stat info;
+	std::string data = "";
+	if(getenv("HOME") != NULL)
+	{
+		// Support for the legacy config dir at "$HOME/.reicast"
+		std::string legacy_data = (std::string)getenv("HOME") + "/.reicast";
+		if((stat(legacy_data.c_str(), &info) == 0) && (info.st_mode & S_IFDIR))
 		{
-			// Support for the legacy config dir at "$HOME/.reicast"
-			std::string legacy_data = (std::string)getenv("HOME") + "/.reicast";
-			if((stat(legacy_data.c_str(), &info) == 0) && (info.st_mode & S_IFDIR))
-			{
-				// "$HOME/.reicast" already exists, let's use it!
-				return legacy_data;
-			}
-
-			/* If $XDG_DATA_HOME is not set, we're supposed to use "$HOME/.local/share" instead.
-			 * Consult the XDG Base Directory Specification for details:
-			 *   http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html#variables
-			 */
-			data = (std::string)getenv("HOME") + "/.local/share/reicast";
-		}
-		if(getenv("XDG_DATA_HOME") != NULL)
-		{
-			// If XDG_DATA_HOME is set explicitly, we'll use that instead of $HOME/.config
-			data = (std::string)getenv("XDG_DATA_HOME") + "/reicast";
+			// "$HOME/.reicast" already exists, let's use it!
+			return legacy_data;
 		}
 
-		if(!data.empty())
+		/* If $XDG_DATA_HOME is not set, we're supposed to use "$HOME/.local/share" instead.
+		 * Consult the XDG Base Directory Specification for details:
+		 *   http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html#variables
+		 */
+		data = (std::string)getenv("HOME") + "/.local/share/reicast";
+	}
+	if(getenv("XDG_DATA_HOME") != NULL)
+	{
+		// If XDG_DATA_HOME is set explicitly, we'll use that instead of $HOME/.config
+		data = (std::string)getenv("XDG_DATA_HOME") + "/reicast";
+	}
+
+	if(!data.empty())
+	{
+		if((stat(data.c_str(), &info) != 0) || !(info.st_mode & S_IFDIR))
 		{
-			if((stat(data.c_str(), &info) != 0) || !(info.st_mode & S_IFDIR))
-			{
-				// If the directory doesn't exist yet, create it!
-				mkdir(data.c_str(), 0755);
-			}
-			return data;
+			// If the directory doesn't exist yet, create it!
+			mkdir(data.c_str(), 0755);
 		}
-	#endif
+		return data;
+	}
 
 	// Unable to detect config dir, use the current folder
 	return ".";

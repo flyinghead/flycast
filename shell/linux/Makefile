@@ -154,7 +154,7 @@ else ifneq (,$(findstring armv7h,$(platform)))
         MFLAGS += -mfpu=neon
         ASFLAGS += -mfpu=neon
     endif
-    CFLAGS += -D TARGET_BEAGLE -D TARGET_LINUX_ARMELv7 -DARM_HARDFP -fsingle-precision-constant
+    CFLAGS += -DARM_HARDFP -fsingle-precision-constant
     USE_GLES := 1
 
 # LinCPP
@@ -167,7 +167,7 @@ else ifneq (,$(findstring lincpp,$(platform)))
 
 # Raspberry Pi 2
 else ifneq (,$(findstring rpi,$(platform)))
-    CFLAGS += -D TARGET_BEAGLE -D TARGET_LINUX_ARMELv7 -DARM_HARDFP -fsingle-precision-constant
+    CFLAGS += -DARM_HARDFP -fsingle-precision-constant
     ifneq (,$(findstring rpi2,$(platform)))
         MFLAGS += -mcpu=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard
         ASFLAGS += -mcpu=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard
@@ -193,7 +193,7 @@ else ifneq (,$(findstring beagle,$(platform)))
     CC_PREFIX ?= arm-none-linux-gnueabi-
     MFLAGS += -marm -march=armv7-a -mtune=cortex-a9 -mfpu=neon -mfloat-abi=softfp -funroll-loops
     ASFLAGS := -march=armv7-a -mfpu=neon -mfloat-abi=softfp
-    CFLAGS += -D TARGET_BEAGLE -fsingle-precision-constant
+    CFLAGS += -fsingle-precision-constant
     USE_GLES := 1
 
 # Pandora
@@ -211,12 +211,16 @@ else ifneq (,$(findstring pandora,$(platform)))
 else ifneq (,$(findstring odroid,$(platform)))
     MFLAGS += -marm -mfpu=neon -mfloat-abi=hard -funroll-loops
     ASFLAGS += -mfpu=neon -mfloat-abi=hard
-    CFLAGS += -D TARGET_BEAGLE -D TARGET_LINUX_ARMELv7 -DARM_HARDFP -fsingle-precision-constant
+    CFLAGS += -DARM_HARDFP -fsingle-precision-constant
     USE_GLES := 1
+    USE_SDL := 1
+    undefine USE_X11
+    undefine USE_EVDEV
+    undefine USE_VULKAN
 
     # ODROID-XU3, -XU3 Lite & -XU4
     ifneq (,$(findstring odroidxu3,$(platform)))
-        MFLAGS += -march=armv7ve -mtune=cortex-a15.cortex-a7
+        MFLAGS += -march=armv7ve -mcpu=cortex-a15 -mtune=cortex-a15.cortex-a7 -mfpu=neon-vfpv4 -mvectorize-with-neon-quad
         ASFLAGS += -march=armv7ve
 		CFLAGS += -DGLES3
     # Other ODROIDs
@@ -253,7 +257,7 @@ else ifneq (,$(findstring vero4k,$(platform)))
         MFLAGS += -mfpu=neon
         ASFLAGS += -mfpu=neon
     endif
-    CFLAGS += -D TARGET_BEAGLE -D TARGET_LINUX_ARMELv7 -DARM_HARDFP -fsingle-precision-constant
+    CFLAGS += -DARM_HARDFP -fsingle-precision-constant
     INCS += -I/opt/vero3/include/
     LIBS += -L/opt/vero3/lib/ -lEGL -lGLESv2
     USE_GLES := 1
@@ -294,7 +298,7 @@ include $(RZDCY_SRC_DIR)/core.mk
 
 LDFLAGS += -g -Wl,-Map,$(notdir $@).map,--gc-sections -Wl,-O3 -Wl,--sort-common -fopenmp
 
-CFLAGS += $(RZDCY_CFLAGS) -g -O3 -D NDEBUG -c -D USES_HOMEDIR -fopenmp #-D NO_REND
+CFLAGS += $(RZDCY_CFLAGS) -g -O3 -D NDEBUG -c -fopenmp #-D NO_REND
 CFLAGS += -frename-registers -fno-strict-aliasing
 CFLAGS += -ffast-math -ftree-vectorize  -Wno-unused-result
 

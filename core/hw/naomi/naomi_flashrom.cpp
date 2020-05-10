@@ -120,5 +120,5 @@ void write_naomi_eeprom(u32 offset, u8 value)
 		*(u16 *)&EEPROM[40] = crc;
 	}
 	else
-		die("Invalid offset");
+		WARN_LOG(NAOMI, "EEPROM record doesn't exist or is too short");
 }

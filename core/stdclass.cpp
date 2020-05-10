@@ -163,9 +163,8 @@ void cThread::Start()
 
 void cThread::WaitToEnd()
 {
-	if (thread.joinable()) {
+	if (thread.joinable() && thread.get_id() != std::this_thread::get_id())
 		thread.join();
-	}
 }
 
 cResetEvent::cResetEvent() : state(false)
@@ -195,14 +194,12 @@ void cResetEvent::Reset()
 
 bool cResetEvent::Wait(u32 msec)
 {
-    bool rc = true;
+	std::unique_lock<std::mutex> lock(mutx);
 
-    std::unique_lock<std::mutex> lock(mutx);
+	if (!state)
+		cond.wait_for(lock, std::chrono::milliseconds(msec));
 
-    if (!state) {
-        rc = (cond.wait_for(lock, std::chrono::milliseconds(msec)) == std::cv_status::no_timeout);
-    }
-
+	bool rc = state;
     state = false;
 
     return rc;

@@ -72,7 +72,7 @@ void CacheFlush(void* code, void* pEnd)
 void CacheFlush(void* code, void* pEnd)
 {
 #if !defined(__ANDROID__) && !defined(__APPLE__)
-	__clear_cache((void*)code, pEnd);
+	__builtin___clear_cache((char *)code, pEnd);
 #else
 	void* start=code;
 	size_t size=(u8*)pEnd-(u8*)start+4;

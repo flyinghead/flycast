@@ -37,8 +37,6 @@
 #endif
 #endif
 
-extern "C" void load_gles_symbols();
-
 EGLGraphicsContext theGLContext;
 
 bool EGLGraphicsContext::MakeCurrent()

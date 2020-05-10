@@ -55,21 +55,12 @@ shell/linux/dispframe.elf
 generated
 .vs
 
-# Android General
-bin/
-gen/
-obj/
-build/*
-*.so
-local.properties
-ant.properties
-
 # Android Studio
-.gradle
 *.iml
-.externalNativeBuild
-gradle.properties
-shell/android-studio/reicast/src/main/assets/build
+shell/android-studio/.gradle/
+shell/android-studio/reicast/.cxx/
+shell/android-studio/reicast/build/
+shell/android-studio/reicast/local.properties
 
 # JetBrains IDES
 .idea/

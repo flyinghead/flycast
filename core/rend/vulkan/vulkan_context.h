@@ -19,6 +19,8 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #pragma once
+#ifdef USE_VULKAN
+
 #include "vulkan.h"
 #include "vmallocator.h"
 #include "quad.h"
@@ -219,3 +221,5 @@ private:
 #endif
 	static VulkanContext *contextInstance;
 };
+
+#endif // USE_VULKAN
