@@ -45,6 +45,5 @@ deploy:
   draft: false
   prerelease: false
   on:
-    branch: gdxsv-dev2
     APPVEYOR_REPO_TAG: true
 
