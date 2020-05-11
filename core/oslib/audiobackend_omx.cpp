@@ -223,9 +223,9 @@ static void omx_init()
 			WARN_LOG(AUDIO, "OMX: failed to empty buffer[%u]. Error 0x%X", i, error);
 	}
 
-	char* output_device = "local";
+	const char* output_device = "local";
 	if(settings.omx.Audio_HDMI)
-		output_device = (char*)"hdmi";
+		output_device = (const char*)"hdmi";
 
 	// Set audio destination
 	OMX_CONFIG_BRCMAUDIODESTINATIONTYPE ar_dest;
@@ -255,7 +255,7 @@ static u32 omx_push(const void* frame, u32 samples, bool wait)
 
 	while(data_size > 0)
 	{
-		size_t copy_size = std::min(buffer_size, data_size);
+		size_t copy_size = std::min(buffer_size - buffer_length, data_size);
 
 		// Don't have more than maximum audio latency
 		u32 latency = omx_get_latency();
@@ -265,11 +265,12 @@ static u32 omx_push(const void* frame, u32 samples, bool wait)
 		}
 		else if(latency == 0)
 		{
-			WARN_LOG(AUDIO, "OMX: underrun occurred");
+			INFO_LOG(AUDIO, "OMX: underrun occurred");
 		}
 
 		memcpy(audio_buffers[audio_buffer_idx]->pBuffer + buffer_length, frame, copy_size);
 		buffer_length += copy_size;
+		frame = (char *)frame + copy_size;
 
 		// Flush buffer and swap
 		if(buffer_length >= buffer_size)
@@ -279,7 +280,7 @@ static u32 omx_push(const void* frame, u32 samples, bool wait)
 
 			OMX_ERRORTYPE error = OMX_EmptyThisBuffer(omx_handle, audio_buffers[audio_buffer_idx]);
 			if(error != OMX_ErrorNone)
-				WARN_LOG(AUDIO, "OMX: failed to empty buffer[%u]. Error 0x%X", audio_buffer_idx, error);
+				INFO_LOG(AUDIO, "OMX: failed to empty buffer[%u]. Error 0x%X", audio_buffer_idx, error);
 
 			audio_buffer_idx = (audio_buffer_idx + 1) % buffer_count;
 			buffer_length = 0;

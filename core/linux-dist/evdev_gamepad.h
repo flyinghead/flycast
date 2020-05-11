@@ -6,6 +6,33 @@
 #include <linux/input.h>
 #include <unistd.h>
 
+class DefaultEvdevInputMapping : public InputMapping
+{
+public:
+	DefaultEvdevInputMapping() {
+		name = "Default";
+		set_button(DC_BTN_START, BTN_START);
+		set_button(DC_BTN_A, BTN_SOUTH);
+		set_button(DC_BTN_B, BTN_EAST);
+		set_button(DC_BTN_X, BTN_WEST);
+		set_button(DC_BTN_Y, BTN_NORTH);
+		set_button(DC_BTN_C, BTN_C);
+		set_button(DC_BTN_Z, BTN_Z);
+		set_button(DC_DPAD_UP, BTN_DPAD_UP);
+		set_button(DC_DPAD_DOWN, BTN_DPAD_DOWN);
+		set_button(DC_DPAD_LEFT, BTN_DPAD_LEFT);
+		set_button(DC_DPAD_RIGHT, BTN_DPAD_RIGHT);
+		set_button(EMU_BTN_MENU, BTN_SELECT);
+
+		set_axis(DC_AXIS_X, ABS_X, false);
+		set_axis(DC_AXIS_Y, ABS_Y, false);
+		set_axis(DC_AXIS_LT, ABS_Z, false);
+		set_axis(DC_AXIS_RT, ABS_RZ, false);
+		set_axis(DC_AXIS_X2, ABS_RX, false);
+		set_axis(DC_AXIS_Y2, ABS_RY, false);
+	}
+};
+
 class EvdevGamepadDevice : public GamepadDevice
 {
 public:
@@ -58,7 +85,7 @@ public:
 				input_mapper = std::make_shared<InputMapping>(*input_mapper);
 			}
 			else
-				input_mapper = std::make_shared<IdentityInputMapping>();
+				input_mapper = std::make_shared<DefaultEvdevInputMapping>();
 			input_mapper->name = _name + " mapping";
 			save_mapping();
 		}
