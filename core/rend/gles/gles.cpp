@@ -95,7 +95,7 @@ R"(%s
 #define TARGET_GL %s
 
 #define cp_AlphaTest %d
-#define pp_ClipTestMode %d
+#define pp_ClipInside %d
 #define pp_UseAlpha %d
 #define pp_Texture %d
 #define pp_IgnoreTexA %d
@@ -185,14 +185,8 @@ highp vec4 fog_clamp(lowp vec4 col)
 
 void main()
 {
-	// Clip outside the box
-	#if pp_ClipTestMode==1
-		if (gl_FragCoord.x < pp_ClipTest.x || gl_FragCoord.x > pp_ClipTest.z
-				|| gl_FragCoord.y < pp_ClipTest.y || gl_FragCoord.y > pp_ClipTest.w)
-			discard;
-	#endif
 	// Clip inside the box
-	#if pp_ClipTestMode==-1
+	#if pp_ClipInside == 1
 		if (gl_FragCoord.x >= pp_ClipTest.x && gl_FragCoord.x <= pp_ClipTest.z
 				&& gl_FragCoord.y >= pp_ClipTest.y && gl_FragCoord.y <= pp_ClipTest.w)
 			discard;
@@ -599,13 +593,13 @@ GLuint gl_CompileAndLink(const char* VertexShader, const char* FragmentShader)
 	return program;
 }
 
-PipelineShader *GetProgram(u32 cp_AlphaTest, u32 pp_ClipTestMode,
-							u32 pp_Texture, u32 pp_UseAlpha, u32 pp_IgnoreTexA, u32 pp_ShadInstr, u32 pp_Offset,
-							u32 pp_FogCtrl, bool pp_Gouraud, bool pp_BumpMap, bool fog_clamping, bool trilinear)
+PipelineShader *GetProgram(bool cp_AlphaTest, bool pp_InsideClipping,
+		bool pp_Texture, bool pp_UseAlpha, bool pp_IgnoreTexA, u32 pp_ShadInstr, bool pp_Offset,
+		u32 pp_FogCtrl, bool pp_Gouraud, bool pp_BumpMap, bool fog_clamping, bool trilinear)
 {
 	u32 rv=0;
 
-	rv|=pp_ClipTestMode;
+	rv |= pp_InsideClipping;
 	rv<<=1; rv|=cp_AlphaTest;
 	rv<<=1; rv|=pp_Texture;
 	rv<<=1; rv|=pp_UseAlpha;
@@ -622,7 +616,7 @@ PipelineShader *GetProgram(u32 cp_AlphaTest, u32 pp_ClipTestMode,
 	if (shader->program == 0)
 	{
 		shader->cp_AlphaTest = cp_AlphaTest;
-		shader->pp_ClipTestMode = pp_ClipTestMode-1;
+		shader->pp_InsideClipping = pp_InsideClipping;
 		shader->pp_Texture = pp_Texture;
 		shader->pp_UseAlpha = pp_UseAlpha;
 		shader->pp_IgnoreTexA = pp_IgnoreTexA;
@@ -644,21 +638,21 @@ bool CompilePipelineShader(	PipelineShader* s)
 	char vshader[8192];
 
 	int rc = sprintf(vshader, VertexShaderSource, gl.glsl_version_header, gl.gl_version, s->pp_Gouraud);
-	verify(rc + 1 <= sizeof(vshader));
+	verify(rc + 1 <= (int)sizeof(vshader));
 
 	char pshader[8192];
 
 	rc = sprintf(pshader,PixelPipelineShader, gl.glsl_version_header, gl.gl_version,
-                s->cp_AlphaTest,s->pp_ClipTestMode,s->pp_UseAlpha,
+                s->cp_AlphaTest,s->pp_InsideClipping,s->pp_UseAlpha,
                 s->pp_Texture,s->pp_IgnoreTexA,s->pp_ShadInstr,s->pp_Offset,s->pp_FogCtrl, s->pp_Gouraud, s->pp_BumpMap,
 				s->fog_clamping, s->trilinear);
-	verify(rc + 1 <= sizeof(pshader));
+	verify(rc + 1 <= (int)sizeof(pshader));
 
 	s->program=gl_CompileAndLink(vshader, pshader);
 
 
 	//setup texture 0 as the input for the shader
-	GLuint gu=glGetUniformLocation(s->program, "tex");
+	GLint gu = glGetUniformLocation(s->program, "tex");
 	if (s->pp_Texture==1)
 		glUniform1i(gu,0);
 
@@ -1118,7 +1112,7 @@ bool RenderFrame()
 
 		case 7: //7     invalid
 			die("7 is not valid");
-			break;
+			return false;
 		}
 		DEBUG_LOG(RENDERER, "RTT packmode=%d stride=%d - %d,%d -> %d,%d", FB_W_CTRL.fb_packmode, FB_W_LINESTRIDE.stride * 8,
 				FB_X_CLIP.min, FB_Y_CLIP.min, FB_X_CLIP.max, FB_Y_CLIP.max);
@@ -1205,9 +1199,9 @@ bool RenderFrame()
 
 					glcache.ClearColor(0.f, 0.f, 0.f, 0.f);
 					glcache.Enable(GL_SCISSOR_TEST);
-					glScissor(0, 0, (GLsizei)lroundf(scaled_offs_x), (GLsizei)lroundf(screen_height * screen_scaling));
+					glcache.Scissor(0, 0, (GLsizei)lroundf(scaled_offs_x), (GLsizei)lroundf(screen_height * screen_scaling));
 					glClear(GL_COLOR_BUFFER_BIT);
-					glScissor(screen_width * screen_scaling - scaled_offs_x, 0, (GLsizei)lroundf(scaled_offs_x + 1.f), (GLsizei)lroundf(screen_height * screen_scaling));
+					glcache.Scissor(screen_width * screen_scaling - scaled_offs_x, 0, (GLsizei)lroundf(scaled_offs_x + 1.f), (GLsizei)lroundf(screen_height * screen_scaling));
 					glClear(GL_COLOR_BUFFER_BIT);
 				}
 			}
@@ -1225,8 +1219,17 @@ bool RenderFrame()
 					height *= settings.rend.RenderToTextureUpscale;
 				}
 			}
-			glScissor((GLint)lroundf(min_x), (GLint)lroundf(min_y), (GLsizei)lroundf(width), (GLsizei)lroundf(height));
+			ShaderUniforms.base_clipping.enabled = true;
+			ShaderUniforms.base_clipping.x = (int)lroundf(min_x);
+			ShaderUniforms.base_clipping.y = (int)lroundf(min_y);
+			ShaderUniforms.base_clipping.width = (int)lroundf(width);
+			ShaderUniforms.base_clipping.height = (int)lroundf(height);
+			glcache.Scissor(ShaderUniforms.base_clipping.x, ShaderUniforms.base_clipping.y, ShaderUniforms.base_clipping.width, ShaderUniforms.base_clipping.height);
 			glcache.Enable(GL_SCISSOR_TEST);
+		}
+		else
+		{
+			ShaderUniforms.base_clipping.enabled = false;
 		}
 
 		DrawStrips();
@@ -1237,8 +1240,6 @@ bool RenderFrame()
 		glClear(GL_COLOR_BUFFER_BIT);
 		DrawFramebuffer();
 	}
-
-	eglCheck();
 
 	if (is_rtt)
 		ReadRTTBuffer();

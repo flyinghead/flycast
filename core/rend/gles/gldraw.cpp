@@ -1,6 +1,7 @@
 #include "glcache.h"
 #include "gles.h"
 #include "rend/sorter.h"
+#include "rend/tileclip.h"
 
 /*
 
@@ -70,59 +71,6 @@ extern int screen_height;
 PipelineShader* CurrentShader;
 u32 gcflip;
 
-s32 SetTileClip(u32 val, GLint uniform)
-{
-	if (!settings.rend.Clipping)
-		return 0;
-
-	u32 clipmode = val >> 28;
-	s32 clip_mode;
-	if (clipmode < 2)
-		clip_mode = 0;    //always passes
-	else if (clipmode & 1)
-		clip_mode = -1;   //render stuff outside the region
-	else
-		clip_mode = 1;    //render stuff inside the region
-
-	float csx = val & 63;
-	float cex = (val >> 6) & 63;
-	float csy = (val >> 12) & 31;
-	float cey = (val >> 17) & 31;
-	csx = csx * 32;
-	cex = cex * 32 + 32;
-	csy = csy * 32;
-	cey = cey * 32 + 32;
-
-	if (csx <= 0 && csy <= 0 && cex >= 640 && cey >= 480)
-		return 0;
-
-	if (uniform >= 0 && clip_mode)
-	{
-		if (!pvrrc.isRTT)
-		{
-			glm::vec4 clip_start(csx, csy, 0, 1);
-			glm::vec4 clip_end(cex, cey, 0, 1);
-			clip_start = ViewportMatrix * clip_start;
-			clip_end = ViewportMatrix * clip_end;
-
-			csx = clip_start[0];
-			csy = clip_start[1];
-			cey = clip_end[1];
-			cex = clip_end[0];
-		}
-		else if (!settings.rend.RenderToTextureBuffer)
-		{
-			csx *= settings.rend.RenderToTextureUpscale;
-			csy *= settings.rend.RenderToTextureUpscale;
-			cex *= settings.rend.RenderToTextureUpscale;
-			cey *= settings.rend.RenderToTextureUpscale;
-		}
-		glUniform4f(uniform, std::min(csx, cex), std::min(csy, cey), std::max(csx, cex), std::max(csy, cey));
-	}
-
-	return clip_mode;
-}
-
 void SetCull(u32 CulliMode)
 {
 	if (CullMode[CulliMode]==GL_NONE)
@@ -142,6 +90,17 @@ static void SetTextureRepeatMode(GLuint dir, u32 clamp, u32 mirror)
 		glcache.TexParameteri(GL_TEXTURE_2D, dir, mirror ? GL_MIRRORED_REPEAT : GL_REPEAT);
 }
 
+static void SetBaseClipping()
+{
+	if (ShaderUniforms.base_clipping.enabled)
+	{
+		glcache.Enable(GL_SCISSOR_TEST);
+		glcache.Scissor(ShaderUniforms.base_clipping.x, ShaderUniforms.base_clipping.y, ShaderUniforms.base_clipping.width, ShaderUniforms.base_clipping.height);
+	}
+	else
+		glcache.Disable(GL_SCISSOR_TEST);
+}
+
 template <u32 Type, bool SortingEnabled>
 __forceinline
 	void SetGPState(const PolyParam* gp,u32 cflip=0)
@@ -159,8 +118,11 @@ __forceinline
 	bool color_clamp = gp->tsp.ColorClamp && (pvrrc.fog_clamp_min != 0 || pvrrc.fog_clamp_max != 0xffffffff);
 	int fog_ctrl = settings.rend.Fog ? gp->tsp.FogCtrl : 2;
 
+	int clip_rect[4] = {};
+	TileClipping clipmode = GetTileClip(gp->tileclip, ViewportMatrix, clip_rect);
+
 	CurrentShader = GetProgram(Type == ListType_Punch_Through ? 1 : 0,
-								  SetTileClip(gp->tileclip, -1) + 1,
+								  clipmode == TileClipping::Inside,
 								  gp->pcw.Texture,
 								  gp->tsp.UseAlpha,
 								  gp->tsp.IgnoreTexA,
@@ -176,7 +138,15 @@ __forceinline
 	if (CurrentShader->trilinear_alpha != -1)
 		glUniform1f(CurrentShader->trilinear_alpha, ShaderUniforms.trilinear_alpha);
 
-	SetTileClip(gp->tileclip, CurrentShader->pp_ClipTest);
+	if (clipmode == TileClipping::Inside)
+		glUniform4f(CurrentShader->pp_ClipTest, clip_rect[0], clip_rect[1], clip_rect[0] + clip_rect[2], clip_rect[1] + clip_rect[3]);
+	if (clipmode == TileClipping::Outside)
+	{
+		glcache.Enable(GL_SCISSOR_TEST);
+		glcache.Scissor(clip_rect[0], clip_rect[1], clip_rect[2], clip_rect[3]);
+	}
+	else
+		SetBaseClipping();
 
 	//This bit control which pixels are affected
 	//by modvols
@@ -184,7 +154,7 @@ __forceinline
 
 	glcache.StencilFunc(GL_ALWAYS,stencil,stencil);
 
-	glcache.BindTexture(GL_TEXTURE_2D, gp->texid == -1 ? 0 : (GLuint)gp->texid);
+	glcache.BindTexture(GL_TEXTURE_2D, gp->texid == (u64)-1 ? 0 : (GLuint)gp->texid);
 
 	SetTextureRepeatMode(GL_TEXTURE_WRAP_S, gp->tsp.ClampU, gp->tsp.FlipU);
 	SetTextureRepeatMode(GL_TEXTURE_WRAP_T, gp->tsp.ClampV, gp->tsp.FlipV);
@@ -533,6 +503,7 @@ void DrawModVols(int first, int count)
 	SetupModvolVBO();
 
 	glcache.Disable(GL_BLEND);
+	SetBaseClipping();
 
 	glcache.UseProgram(gl.modvol_shader.program);
 	glUniform1f(gl.modvol_shader.sp_ShaderColor, 1 - FPU_SHAD_SCALE.scale_factor / 256.f);
@@ -672,7 +643,7 @@ static void DrawQuad(GLuint texId, float x, float y, float w, float h, float u0,
 
 	ShaderUniforms.trilinear_alpha = 1.0;
 
-	PipelineShader *shader = GetProgram(0, 1, 1, 0, 1, 0, 0, 2, false, false, false, false);
+	PipelineShader *shader = GetProgram(0, false, 1, 0, 1, 0, 0, 2, false, false, false, false);
 	glcache.UseProgram(shader->program);
 
 	glActiveTexture(GL_TEXTURE0);

@@ -51,7 +51,7 @@ void main()
 const char* gl4PixelPipelineShader = SHADER_HEADER
 R"(
 #define cp_AlphaTest %d
-#define pp_ClipTestMode %d
+#define pp_ClipInside %d
 #define pp_UseAlpha %d
 #define pp_Texture %d
 #define pp_IgnoreTexA %d
@@ -146,14 +146,8 @@ void main()
 			discard;
 	#endif
 	
-	// Clip outside the box
-	#if pp_ClipTestMode==1
-		if (gl_FragCoord.x < pp_ClipTest.x || gl_FragCoord.x > pp_ClipTest.z
-				|| gl_FragCoord.y < pp_ClipTest.y || gl_FragCoord.y > pp_ClipTest.w)
-			discard;
-	#endif
 	// Clip inside the box
-	#if pp_ClipTestMode==-1
+	#if pp_ClipInside == 1
 		if (gl_FragCoord.x >= pp_ClipTest.x && gl_FragCoord.x <= pp_ClipTest.z
 				&& gl_FragCoord.y >= pp_ClipTest.y && gl_FragCoord.y <= pp_ClipTest.w)
 			discard;
@@ -374,8 +368,9 @@ bool gl4CompilePipelineShader(	gl4PipelineShader* s, const char *pixel_source /*
 	char pshader[16384];
 
 	sprintf(pshader, pixel_source,
-                s->cp_AlphaTest,s->pp_ClipTestMode,s->pp_UseAlpha,
-                s->pp_Texture,s->pp_IgnoreTexA,s->pp_ShadInstr,s->pp_Offset,s->pp_FogCtrl, s->pp_TwoVolumes, s->pp_Gouraud, s->pp_BumpMap, s->fog_clamping, (int)s->pass);
+                s->cp_AlphaTest, s->pp_InsideClipping, s->pp_UseAlpha,
+                s->pp_Texture, s->pp_IgnoreTexA, s->pp_ShadInstr, s->pp_Offset, s->pp_FogCtrl,
+				s->pp_TwoVolumes, s->pp_Gouraud, s->pp_BumpMap, s->fog_clamping, (int)s->pass);
 
 	s->program = gl_CompileAndLink(vshader, pshader);
 
@@ -705,7 +700,7 @@ static bool RenderFrame()
 
 		case 7: //7     invalid
 			die("7 is not valid");
-			break;
+			return false;
 		}
 		DEBUG_LOG(RENDERER, "RTT packmode=%d stride=%d - %d,%d -> %d,%d", FB_W_CTRL.fb_packmode, FB_W_LINESTRIDE.stride * 8,
 				FB_X_CLIP.min, FB_Y_CLIP.min, FB_X_CLIP.max, FB_Y_CLIP.max);
@@ -785,9 +780,9 @@ static bool RenderFrame()
 
 					glcache.ClearColor(0.f, 0.f, 0.f, 0.f);
 					glcache.Enable(GL_SCISSOR_TEST);
-					glScissor(0, 0, (GLsizei)lroundf(scaled_offs_x), rendering_height);
+					glcache.Scissor(0, 0, (GLsizei)lroundf(scaled_offs_x), rendering_height);
 					glClear(GL_COLOR_BUFFER_BIT);
-					glScissor((GLint)lroundf(screen_width * screen_scaling - scaled_offs_x), 0, (GLsizei)lroundf(scaled_offs_x) + 1, rendering_height);
+					glcache.Scissor((GLint)lroundf(screen_width * screen_scaling - scaled_offs_x), 0, (GLsizei)lroundf(scaled_offs_x) + 1, rendering_height);
 					glClear(GL_COLOR_BUFFER_BIT);
 				}
 			}
@@ -805,8 +800,18 @@ static bool RenderFrame()
 					height *= settings.rend.RenderToTextureUpscale;
 				}
 			}
-			glScissor((GLint)lroundf(min_x), (GLint)lroundf(min_y), (GLsizei)lroundf(width), (GLsizei)lroundf(height));
+			gl4ShaderUniforms.base_clipping.enabled = true;
+			gl4ShaderUniforms.base_clipping.x = (int)lroundf(min_x);
+			gl4ShaderUniforms.base_clipping.y = (int)lroundf(min_y);
+			gl4ShaderUniforms.base_clipping.width = (int)lroundf(width);
+			gl4ShaderUniforms.base_clipping.height = (int)lroundf(height);
+			glcache.Scissor(gl4ShaderUniforms.base_clipping.x, gl4ShaderUniforms.base_clipping.y,
+					gl4ShaderUniforms.base_clipping.width, gl4ShaderUniforms.base_clipping.height);
 			glcache.Enable(GL_SCISSOR_TEST);
+		}
+		else
+		{
+			gl4ShaderUniforms.base_clipping.enabled = false;
 		}
 
 		gl4DrawStrips(output_fbo, rendering_width, rendering_height);
@@ -821,8 +826,6 @@ static bool RenderFrame()
 
 		gl4DrawFramebuffer(640.f, 480.f);
 	}
-
-	eglCheck();
 
 	if (is_rtt)
 		ReadRTTBuffer();

@@ -1,5 +1,6 @@
 #include "gl4.h"
 #include "rend/gles/glcache.h"
+#include "rend/tileclip.h"
 
 /*
 
@@ -21,22 +22,22 @@ GLuint texSamplers[2];
 GLuint depth_fbo;
 GLuint depthSaveTexId;
 
-static gl4PipelineShader *gl4GetProgram(u32 cp_AlphaTest, s32 pp_ClipTestMode,
-							u32 pp_Texture, u32 pp_UseAlpha, u32 pp_IgnoreTexA, u32 pp_ShadInstr, u32 pp_Offset,
+static gl4PipelineShader *gl4GetProgram(bool cp_AlphaTest, bool pp_InsideClipping,
+							bool pp_Texture, bool pp_UseAlpha, bool pp_IgnoreTexA, u32 pp_ShadInstr, bool pp_Offset,
 							u32 pp_FogCtrl, bool pp_TwoVolumes, bool pp_Gouraud, bool pp_BumpMap, bool fog_clamping, Pass pass)
 {
 	u32 rv=0;
 
-	rv |= (pp_ClipTestMode + 1);
-	rv<<=1; rv|=cp_AlphaTest;
-	rv<<=1; rv|=pp_Texture;
-	rv<<=1; rv|=pp_UseAlpha;
-	rv<<=1; rv|=pp_IgnoreTexA;
-	rv<<=2; rv|=pp_ShadInstr;
-	rv<<=1; rv|=pp_Offset;
-	rv<<=2; rv|=pp_FogCtrl;
-	rv <<= 1; rv |= (int)pp_TwoVolumes;
-	rv <<= 1; rv |= (int)pp_Gouraud;
+	rv |= pp_InsideClipping;
+	rv <<= 1; rv |= cp_AlphaTest;
+	rv <<= 1; rv |= pp_Texture;
+	rv <<= 1; rv |= pp_UseAlpha;
+	rv <<= 1; rv |= pp_IgnoreTexA;
+	rv <<= 2; rv |= pp_ShadInstr;
+	rv <<= 1; rv |= pp_Offset;
+	rv <<= 2; rv |= pp_FogCtrl;
+	rv <<= 1; rv |= pp_TwoVolumes;
+	rv <<= 1; rv |= pp_Gouraud;
 	rv <<= 1; rv |= pp_BumpMap;
 	rv <<= 1; rv |= fog_clamping;
 	rv <<= 2; rv |= (int)pass;
@@ -45,7 +46,7 @@ static gl4PipelineShader *gl4GetProgram(u32 cp_AlphaTest, s32 pp_ClipTestMode,
 	if (shader->program == 0)
 	{
 		shader->cp_AlphaTest = cp_AlphaTest;
-		shader->pp_ClipTestMode = pp_ClipTestMode;
+		shader->pp_InsideClipping = pp_InsideClipping;
 		shader->pp_Texture = pp_Texture;
 		shader->pp_UseAlpha = pp_UseAlpha;
 		shader->pp_IgnoreTexA = pp_IgnoreTexA;
@@ -71,6 +72,17 @@ static void SetTextureRepeatMode(int index, GLuint dir, u32 clamp, u32 mirror)
 		glSamplerParameteri(texSamplers[index], dir, mirror ? GL_MIRRORED_REPEAT : GL_REPEAT);
 }
 
+static void SetBaseClipping()
+{
+	if (gl4ShaderUniforms.base_clipping.enabled)
+	{
+		glcache.Enable(GL_SCISSOR_TEST);
+		glcache.Scissor(gl4ShaderUniforms.base_clipping.x, gl4ShaderUniforms.base_clipping.y, gl4ShaderUniforms.base_clipping.width, gl4ShaderUniforms.base_clipping.height);
+	}
+	else
+		glcache.Disable(GL_SCISSOR_TEST);
+}
+
 template <u32 Type, bool SortingEnabled, Pass pass>
 static void SetGPState(const PolyParam* gp)
 {
@@ -85,12 +97,13 @@ static void SetGPState(const PolyParam* gp)
 	else
 		gl4ShaderUniforms.trilinear_alpha = 1.0;
 
-	s32 clipping = SetTileClip(gp->tileclip, -1);
+	int clip_rect[4] = {};
+	TileClipping clipmode = GetTileClip(gp->tileclip, ViewportMatrix, clip_rect);
 
 	if (pass == Pass::Depth)
 	{
 		CurrentShader = gl4GetProgram(Type == ListType_Punch_Through ? 1 : 0,
-				clipping,
+				clipmode == TileClipping::Inside,
 				Type == ListType_Punch_Through ? gp->pcw.Texture : 0,
 				1,
 				gp->tsp.IgnoreTexA,
@@ -106,13 +119,13 @@ static void SetGPState(const PolyParam* gp)
 	else
 	{
 		// Two volumes mode only supported for OP and PT
-		bool two_volumes_mode = (gp->tsp1.full != -1) && Type != ListType_Translucent;
+		bool two_volumes_mode = (gp->tsp1.full != (u32)-1) && Type != ListType_Translucent;
 		bool color_clamp = gp->tsp.ColorClamp && (pvrrc.fog_clamp_min != 0 || pvrrc.fog_clamp_max != 0xffffffff);
 
 		int fog_ctrl = settings.rend.Fog ? gp->tsp.FogCtrl : 2;
 
 		CurrentShader = gl4GetProgram(Type == ListType_Punch_Through ? 1 : 0,
-				clipping,
+				clipmode == TileClipping::Inside,
 				gp->pcw.Texture,
 				gp->tsp.UseAlpha,
 				gp->tsp.IgnoreTexA,
@@ -141,7 +154,15 @@ static void SetGPState(const PolyParam* gp)
 	else
 		glcache.Disable(GL_BLEND);
 
-	SetTileClip(gp->tileclip, CurrentShader->pp_ClipTest);
+	if (clipmode == TileClipping::Inside)
+		glUniform4f(CurrentShader->pp_ClipTest, clip_rect[0], clip_rect[1], clip_rect[0] + clip_rect[2], clip_rect[1] + clip_rect[3]);
+	if (clipmode == TileClipping::Outside)
+	{
+		glcache.Enable(GL_SCISSOR_TEST);
+		glcache.Scissor(clip_rect[0], clip_rect[1], clip_rect[2], clip_rect[3]);
+	}
+	else
+		SetBaseClipping();
 
 	// This bit controls which pixels are affected by modvols
 	const u32 stencil = gp->pcw.Shadow != 0 ? 0x80 : 0x0;
@@ -155,12 +176,11 @@ static void SetGPState(const PolyParam* gp)
 			glActiveTexture(GL_TEXTURE0 + i);
 			GLuint texid = (GLuint)(i == 0 ? gp->texid : gp->texid1);
 
-			glBindTexture(GL_TEXTURE_2D, texid == -1 ? 0 : texid);
+			glBindTexture(GL_TEXTURE_2D, texid == (GLuint)-1 ? 0 : texid);
 
-			if (texid != -1)
+			if (texid != (GLuint)-1)
 			{
 				TSP tsp = i == 0 ? gp->tsp : gp->tsp1;
-				TCW tcw = i == 0 ? gp->tcw : gp->tcw1;
 
 				glBindSampler(i, texSamplers[i]);
 				SetTextureRepeatMode(i, GL_TEXTURE_WRAP_S, tsp.ClampU, tsp.FlipU);
@@ -298,6 +318,7 @@ static void DrawModVols(int first, int count)
 	glBindVertexArray(gl4.vbo.modvol_vao);
 
 	glcache.Disable(GL_BLEND);
+	SetBaseClipping();
 
 	glcache.UseProgram(gl4.modvol_shader.program);
 
@@ -639,7 +660,7 @@ static void gl4_draw_quad_texture(GLuint texture, float w, float h)
 	gl4ShaderUniforms.trilinear_alpha = 1.0;
 
 	CurrentShader = gl4GetProgram(0,
-				0,
+				false,
 				1,
 				0,
 				1,

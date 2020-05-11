@@ -10,22 +10,30 @@ struct gl4PipelineShader
 {
 	GLuint program;
 
-	GLuint pp_ClipTest,cp_AlphaTestValue;
-	GLuint sp_FOG_COL_RAM,sp_FOG_COL_VERT,sp_FOG_DENSITY;
-	GLuint shade_scale_factor;
-	GLuint pp_Number;
-	GLuint blend_mode;
-	GLuint use_alpha;
-	GLuint ignore_tex_alpha;
-	GLuint shading_instr;
-	GLuint fog_control;
-	GLuint trilinear_alpha;
-	GLuint fog_clamp_min, fog_clamp_max;
-	GLuint normal_matrix;
+	GLint pp_ClipTest;
+	GLint cp_AlphaTestValue;
+	GLint sp_FOG_COL_RAM;
+	GLint sp_FOG_COL_VERT;
+	GLint sp_FOG_DENSITY;
+	GLint shade_scale_factor;
+	GLint pp_Number;
+	GLint blend_mode;
+	GLint use_alpha;
+	GLint ignore_tex_alpha;
+	GLint shading_instr;
+	GLint fog_control;
+	GLint trilinear_alpha;
+	GLint fog_clamp_min, fog_clamp_max;
+	GLint normal_matrix;
 
-	u32 cp_AlphaTest;
-	s32 pp_ClipTestMode;
-	u32 pp_Texture, pp_UseAlpha, pp_IgnoreTexA, pp_ShadInstr, pp_Offset, pp_FogCtrl;
+	bool cp_AlphaTest;
+	bool pp_InsideClipping;
+	bool pp_Texture;
+	bool pp_UseAlpha;
+	bool pp_IgnoreTexA;
+	u32 pp_ShadInstr;
+	bool pp_Offset;
+	u32 pp_FogCtrl;
 	Pass pass;
 	bool pp_TwoVolumes;
 	bool pp_Gouraud;
@@ -240,8 +248,15 @@ extern struct gl4ShaderUniforms_t
 	float fog_clamp_min[4];
 	float fog_clamp_max[4];
 	glm::mat4 normal_mat;
+	struct {
+		bool enabled;
+		int x;
+		int y;
+		int width;
+		int height;
+	} base_clipping;
 
-	void setUniformArray(GLuint location, int v0, int v1)
+	void setUniformArray(GLint location, int v0, int v1)
 	{
 		int array[] = { v0, v1 };
 		glUniform1iv(location, 2, array);
