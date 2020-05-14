@@ -30,6 +30,7 @@ after_build:
       mkdir artifacts
       
       move %EXE_PATH% artifacts\flycast-win_%PLATFORM%-%CONFIGURATION%-%APPVEYOR_REPO_COMMIT%.exe
+      
       move ..\..\LICENSE artifacts\LICENSE
 
 artifacts:
