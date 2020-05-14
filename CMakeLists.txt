@@ -706,6 +706,8 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/cheats.h
         core/dispframe.cpp
         core/emulator.h
+        core/gdxsv.cpp
+        core/gdxsv.h
         core/serialize.cpp
         core/stdclass.cpp
         core/stdclass.h
