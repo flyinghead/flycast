@@ -40,7 +40,7 @@ deploy:
   description: 'DC emulator flycast for gdxsv'
   provider: GitHub
   auth_token:
-    secure: ENCRYPTED_GITHUB_ACCESS_TOKEN
+    secure: e8oocRdRnpl9yIxtLBVA7dE6MZO4YOWmfb9IaBj1J7wWkOMRjPcmW+gnJwe3PbZN
   artifact: artifacts\flycast-win_%PLATFORM%-%CONFIGURATION%-%APPVEYOR_REPO_COMMIT%.exe
   draft: false
   prerelease: false
