@@ -36,14 +36,15 @@ artifacts:
     name: flycast-win_$(PLATFORM)-$(CONFIGURATION)-$(APPVEYOR_REPO_COMMIT)
 
 deploy:
-  release: flycast-gdxsv-v$(appveyor_build_version)
+  release: $(APPVEYOR_REPO_TAG_NAME)
   description: 'DC emulator flycast for gdxsv'
   provider: GitHub
   auth_token:
     secure: e8oocRdRnpl9yIxtLBVA7dE6MZO4YOWmfb9IaBj1J7wWkOMRjPcmW+gnJwe3PbZN
-  artifact: artifacts\flycast-win_%PLATFORM%-%CONFIGURATION%-%APPVEYOR_REPO_COMMIT%.exe
+  artifact: %BUILD_PATH%\artifacts\flycast-win_%PLATFORM%-%CONFIGURATION%-%APPVEYOR_REPO_COMMIT%.exe
   draft: false
   prerelease: false
   on:
+    branch: gdxsv-dev2
     APPVEYOR_REPO_TAG: true
 
