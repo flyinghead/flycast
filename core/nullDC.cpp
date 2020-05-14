@@ -941,7 +941,7 @@ void LoadSettings(bool game_specific)
 	if (!game_specific)
 	{
 		settings.dreamcast.ContentPath.clear();
-		std::string paths = cfgLoadStr(config_section, "Dreamcast.ContentPath", "");
+		std::string paths = cfgLoadStr(config_section, "Dreamcast.ContentPath", "./");
 		std::string::size_type start = 0;
 		while (true)
 		{

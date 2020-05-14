@@ -10,8 +10,11 @@
 
 void Gdxsv::Reset()
 {
-	NOTICE_LOG(COMMON, "Gdxsv::Reset()");
-	auto game_id = std::string(ip_meta.product_number, sizeof(ip_meta.product_number));
+    if (settings.dreamcast.ContentPath.empty()) {
+        settings.dreamcast.ContentPath.push_back("./");
+    }
+
+    auto game_id = std::string(ip_meta.product_number, sizeof(ip_meta.product_number));
 	if (game_id != "T13306M   ")
 	{
 		enabled = 0;
@@ -20,17 +23,26 @@ void Gdxsv::Reset()
 
 	enabled = 1;
 
-	server = cfgLoadStr("gdxsv", "server", "zdxsv.net");
+    server = cfgLoadStr("gdxsv", "server", "zdxsv.net");
 	maxlag = cfgLoadInt("gdxsv", "maxlag", 8); // Note: This should be not configurable. This is for development.
 	loginkey = cfgLoadStr("gdxsv", "loginkey", "");
+    bool overwriteconf = cfgLoadBool("gdxsv", "overwriteconf", true);
 
 	if (loginkey.empty())
 	{
 		loginkey = GenerateLoginKey();
 	}
 
-	cfgSaveStr("gdxsv", "server", server.c_str());
+    if (overwriteconf) {
+        NOTICE_LOG(COMMON, "Overwrite configs for gdxsv");
+
+        settings.aica.BufferSize = 529;
+        settings.pvr.SynchronousRender = false;
+    }
+
+    cfgSaveStr("gdxsv", "server", server.c_str());
 	cfgSaveStr("gdxsv", "loginkey", loginkey.c_str());
+    cfgSaveBool("gdxsv", "overwritedconf", overwriteconf);
 
 	std::string disk_num(ip_meta.disk_num, 1);
 	if (disk_num == "1")
