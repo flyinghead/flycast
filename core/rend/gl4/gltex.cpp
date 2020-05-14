@@ -9,10 +9,10 @@ GLuint gl4BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
 	gl.rtt.TexAddr=addy>>3;
 
 	// Find the smallest power of two texture that fits the viewport
-	int fbh2 = 8;
+	u32 fbh2 = 8;
 	while (fbh2 < fbh)
 		fbh2 *= 2;
-	int fbw2 = 8;
+	u32 fbw2 = 8;
 	while (fbw2 < fbw)
 		fbw2 *= 2;
 

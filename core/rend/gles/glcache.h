@@ -110,6 +110,18 @@ public:
 		}
 	}
 
+	void Scissor(GLint x, GLint y, GLsizei width, GLsizei height)
+	{
+		if (x != _scissor.x || y != _scissor.y || width != _scissor.width || height != _scissor.height || _disable_cache)
+		{
+			_scissor.x = x;
+			_scissor.y = y;
+			_scissor.width = width;
+			_scissor.height = height;
+			glScissor(x, y, width, height);
+		}
+	}
+
 	void TexParameteri(GLenum target,  GLenum pname,  GLint param)
 	{
 		if (target == GL_TEXTURE_2D && !_disable_cache)
@@ -117,22 +129,22 @@ public:
 			TextureParameters &cur_params = _texture_params[_texture];
 			switch (pname) {
 			case GL_TEXTURE_MIN_FILTER:
-				if (cur_params._min_filter == param)
+				if (cur_params._min_filter == (GLenum)param)
 					return;
 				cur_params._min_filter = param;
 				break;
 			case GL_TEXTURE_MAG_FILTER:
-				if (cur_params._mag_filter == param)
+				if (cur_params._mag_filter == (GLenum)param)
 					return;
 				cur_params._mag_filter = param;
 				break;
 			case GL_TEXTURE_WRAP_S:
-				if (cur_params._wrap_s == param)
+				if (cur_params._wrap_s == (GLenum)param)
 					return;
 				cur_params._wrap_s = param;
 				break;
 			case GL_TEXTURE_WRAP_T:
-				if (cur_params._wrap_t == param)
+				if (cur_params._wrap_t == (GLenum)param)
 					return;
 				cur_params._wrap_t = param;
 				break;
@@ -190,6 +202,10 @@ public:
 		_stencil_dpfail = 0xFFFFFFFFu;
 		_stencil_dppass = 0xFFFFFFFFu;
 		_stencil_mask = 0;
+		_scissor.x = -1;
+		_scissor.y = -1;
+		_scissor.width = -1;
+		_scissor.height = -1;
 		if (_texture_cache_size > 0)
 		{
 		   glDeleteTextures(_texture_cache_size, _texture_ids);
@@ -274,6 +290,12 @@ private:
 	GLenum _stencil_dpfail;
 	GLenum _stencil_dppass;
 	GLuint _stencil_mask;
+	struct {
+		GLint x;
+		GLint y;
+		GLsizei width;
+		GLsizei height;
+	} _scissor;
 	GLuint _texture_ids[TEXTURE_ID_CACHE_SIZE];
 	GLuint _texture_cache_size;
 	std::map<GLuint, TextureParameters> _texture_params;

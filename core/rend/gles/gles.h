@@ -8,7 +8,6 @@
 #include <glm/glm.hpp>
 
 #define glCheck() do { if (unlikely(settings.validate.OpenGlChecks)) { verify(glGetError()==GL_NO_ERROR); } } while(0)
-#define eglCheck() false
 
 #define VERTEX_POS_ARRAY 0
 #define VERTEX_COL_BASE_ARRAY 1
@@ -30,17 +29,27 @@ struct PipelineShader
 {
 	GLuint program;
 
-	GLuint depth_scale;
-	GLuint pp_ClipTest,cp_AlphaTestValue;
-	GLuint sp_FOG_COL_RAM,sp_FOG_COL_VERT,sp_FOG_DENSITY;
-	GLuint trilinear_alpha;
-	GLuint fog_clamp_min, fog_clamp_max;
-	GLuint normal_matrix;
+	GLint depth_scale;
+	GLint pp_ClipTest;
+	GLint cp_AlphaTestValue;
+	GLint sp_FOG_COL_RAM;
+	GLint sp_FOG_COL_VERT;
+	GLint sp_FOG_DENSITY;
+	GLint trilinear_alpha;
+	GLint fog_clamp_min, fog_clamp_max;
+	GLint normal_matrix;
 
 	//
-	u32 cp_AlphaTest; s32 pp_ClipTestMode;
-	u32 pp_Texture, pp_UseAlpha, pp_IgnoreTexA, pp_ShadInstr, pp_Offset, pp_FogCtrl;
-	bool pp_Gouraud, pp_BumpMap;
+	bool cp_AlphaTest;
+	bool pp_InsideClipping;
+	bool pp_Texture;
+	bool pp_UseAlpha;
+	bool pp_IgnoreTexA;
+	u32 pp_ShadInstr;
+	bool pp_Offset;
+	u32 pp_FogCtrl;
+	bool pp_Gouraud;
+	bool pp_BumpMap;
 	bool fog_clamping;
 	bool trilinear;
 };
@@ -52,9 +61,9 @@ struct gl_ctx
 	{
 		GLuint program;
 
-		GLuint depth_scale;
-		GLuint sp_ShaderColor;
-		GLuint normal_matrix;
+		GLint depth_scale;
+		GLint sp_ShaderColor;
+		GLint normal_matrix;
 
 	} modvol_shader;
 
@@ -63,7 +72,7 @@ struct gl_ctx
 	struct
 	{
 		GLuint program;
-		GLuint scale;
+		GLint scale;
 		GLuint vao;
 		GLuint geometry;
 		GLuint osd_tex;
@@ -146,9 +155,9 @@ void free_output_framebuffer();
 
 void HideOSD();
 void OSD_DRAW(bool clear_screen);
-PipelineShader *GetProgram(u32 cp_AlphaTest, u32 pp_ClipTestMode,
-							u32 pp_Texture, u32 pp_UseAlpha, u32 pp_IgnoreTexA, u32 pp_ShadInstr, u32 pp_Offset,
-							u32 pp_FogCtrl, bool pp_Gouraud, bool pp_BumpMap, bool fog_clamping, bool trilinear);
+PipelineShader *GetProgram(bool cp_AlphaTest, bool pp_InsideClipping,
+		bool pp_Texture, bool pp_UseAlpha, bool pp_IgnoreTexA, u32 pp_ShadInstr, bool pp_Offset,
+		u32 pp_FogCtrl, bool pp_Gouraud, bool pp_BumpMap, bool fog_clamping, bool trilinear);
 
 GLuint gl_CompileShader(const char* shader, GLuint type);
 GLuint gl_CompileAndLink(const char* VertexShader, const char* FragmentShader);
@@ -165,6 +174,13 @@ extern struct ShaderUniforms_t
 	float fog_clamp_min[4];
 	float fog_clamp_max[4];
 	glm::mat4 normal_mat;
+	struct {
+		bool enabled;
+		int x;
+		int y;
+		int width;
+		int height;
+	} base_clipping;
 
 	void Set(const PipelineShader* s)
 	{

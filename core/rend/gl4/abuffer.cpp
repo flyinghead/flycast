@@ -431,7 +431,7 @@ void DrawTranslucentModVols(int first, int count)
 
 		u32 mv_mode = param.isp.DepthMode;
 
-		verify(param.first >= 0 && param.first + param.count <= pvrrc.modtrig.used());
+		verify(param.first >= 0 && param.first + param.count <= (u32)pvrrc.modtrig.used());
 
 		if (mod_base == -1)
 			mod_base = param.first;

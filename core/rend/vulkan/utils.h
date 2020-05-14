@@ -23,12 +23,6 @@
 
 enum class ModVolMode { Xor, Or, Inclusion, Exclusion, Final };
 
-enum class TileClipping {
-	Inside,		// render stuff outside the region
-	Off,
-	Outside		// render stuff inside the region
-};
-
 static const vk::CompareOp depthOps[] =
 {
 	vk::CompareOp::eNever,          //0 Never
@@ -41,7 +35,7 @@ static const vk::CompareOp depthOps[] =
 	vk::CompareOp::eAlways,         //7 Always
 };
 
-static vk::BlendFactor getBlendFactor(u32 instr, bool src)
+static inline vk::BlendFactor getBlendFactor(u32 instr, bool src)
 {
 	switch (instr) {
 	case 0:	// zero
@@ -78,6 +72,6 @@ static inline u32 findMemoryType(vk::PhysicalDeviceMemoryProperties const& memor
 		}
 		typeBits >>= 1;
 	}
-	verify(typeIndex != ~0);
+	verify(typeIndex != u32(~0));
 	return typeIndex;
 }

@@ -42,7 +42,7 @@ void OITDrawer::DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool 
 			trilinearAlpha = 1.0 - trilinearAlpha;
 	}
 
-	bool twoVolumes = poly.tsp1.full != -1 || poly.tcw1.full != -1;
+	bool twoVolumes = poly.tsp1.full != (u32)-1 || poly.tcw1.full != (u32)-1;
 
 	OITDescriptorSets::PushConstants pushConstants = {
 			{
@@ -114,7 +114,7 @@ void OITDrawer::DrawModifierVolumes(const vk::CommandBuffer& cmdBuffer, int firs
 
 		u32 mv_mode = param.isp.DepthMode;
 
-		verify(param.first >= 0 && param.first + param.count <= pvrrc.modtrig.used());
+		verify(param.first >= 0 && param.first + param.count <= (u32)pvrrc.modtrig.used());
 
 		if (mod_base == -1)
 			mod_base = param.first;
@@ -469,10 +469,10 @@ vk::CommandBuffer OITTextureDrawer::NewFrame()
 	u32 origHeight = pvrrc.fb_Y_CLIP.max - pvrrc.fb_Y_CLIP.min + 1;
 	u32 upscaledWidth = origWidth;
 	u32 upscaledHeight = origHeight;
-	int heightPow2 = 8;
+	u32 heightPow2 = 8;
 	while (heightPow2 < upscaledHeight)
 		heightPow2 *= 2;
-	int widthPow2 = 8;
+	u32 widthPow2 = 8;
 	while (widthPow2 < upscaledWidth)
 		widthPow2 *= 2;
 
@@ -514,8 +514,8 @@ vk::CommandBuffer OITTextureDrawer::NewFrame()
 		}
 
 		TSP tsp = {};
-		for (tsp.TexU = 0; tsp.TexU <= 7 && (8 << tsp.TexU) < origWidth; tsp.TexU++);
-		for (tsp.TexV = 0; tsp.TexV <= 7 && (8 << tsp.TexV) < origHeight; tsp.TexV++);
+		for (tsp.TexU = 0; tsp.TexU <= 7 && (8u << tsp.TexU) < origWidth; tsp.TexU++);
+		for (tsp.TexV = 0; tsp.TexV <= 7 && (8u << tsp.TexV) < origHeight; tsp.TexV++);
 
 		texture = textureCache->getTextureCacheData(tsp, tcw);
 		if (texture->IsNew())

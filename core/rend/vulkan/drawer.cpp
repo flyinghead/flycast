@@ -45,57 +45,16 @@ void Drawer::SortTriangles()
 	}
 }
 
-// FIXME Code dup
 TileClipping BaseDrawer::SetTileClip(u32 val, vk::Rect2D& clipRect)
 {
-	if (!settings.rend.Clipping)
-		return TileClipping::Off;
+	int rect[4] = {};
+	TileClipping clipmode = ::GetTileClip(val, matrices.GetViewportMatrix(), rect);
+	clipRect.offset.x = rect[0];
+	clipRect.offset.y = rect[1];
+	clipRect.extent.width = rect[2];
+	clipRect.extent.height = rect[3];
 
-	u32 clipmode = val >> 28;
-	if (clipmode < 2)
-		return TileClipping::Off;	//always passes
-
-	TileClipping tileClippingMode;
-	if (clipmode & 1)
-		tileClippingMode = TileClipping::Inside;   //render stuff outside the region
-	else
-		tileClippingMode = TileClipping::Outside;  //render stuff inside the region
-
-	float csx = (float)(val & 63);
-	float cex = (float)((val >> 6) & 63);
-	float csy = (float)((val >> 12) & 31);
-	float cey = (float)((val >> 17) & 31);
-	csx = csx * 32;
-	cex = cex * 32 + 32;
-	csy = csy * 32;
-	cey = cey * 32 + 32;
-
-	if (csx <= 0 && csy <= 0 && cex >= 640 && cey >= 480)
-		return TileClipping::Off;
-
-	if (!pvrrc.isRTT)
-	{
-		glm::vec4 clip_start(csx, csy, 0, 1);
-		glm::vec4 clip_end(cex, cey, 0, 1);
-		clip_start = matrices.GetViewportMatrix() * clip_start;
-		clip_end = matrices.GetViewportMatrix() * clip_end;
-
-		csx = clip_start[0];
-		csy = clip_start[1];
-		cey = clip_end[1];
-		cex = clip_end[0];
-	}
-	else if (!settings.rend.RenderToTextureBuffer)
-	{
-		csx *= settings.rend.RenderToTextureUpscale;
-		csy *= settings.rend.RenderToTextureUpscale;
-		cex *= settings.rend.RenderToTextureUpscale;
-		cey *= settings.rend.RenderToTextureUpscale;
-	}
-	clipRect = vk::Rect2D(vk::Offset2D(std::max(0, (int)lroundf(csx)), std::max(0, (int)lroundf(csy))),
-			vk::Extent2D(std::max(0, (int)lroundf(cex - csx)), std::max(0, (int)lroundf(cey - csy))));
-
-	return tileClippingMode;
+	return clipmode;
 }
 
 void BaseDrawer::SetBaseScissor()
@@ -432,10 +391,10 @@ vk::CommandBuffer TextureDrawer::BeginRenderPass()
 	u32 origHeight = pvrrc.fb_Y_CLIP.max - pvrrc.fb_Y_CLIP.min + 1;
 	u32 upscaledWidth = origWidth;
 	u32 upscaledHeight = origHeight;
-	int heightPow2 = 8;
+	u32 heightPow2 = 8;
 	while (heightPow2 < upscaledHeight)
 		heightPow2 *= 2;
-	int widthPow2 = 8;
+	u32 widthPow2 = 8;
 	while (widthPow2 < upscaledWidth)
 		widthPow2 *= 2;
 
@@ -486,8 +445,8 @@ vk::CommandBuffer TextureDrawer::BeginRenderPass()
 		}
 
 		TSP tsp = { 0 };
-		for (tsp.TexU = 0; tsp.TexU <= 7 && (8 << tsp.TexU) < origWidth; tsp.TexU++);
-		for (tsp.TexV = 0; tsp.TexV <= 7 && (8 << tsp.TexV) < origHeight; tsp.TexV++);
+		for (tsp.TexU = 0; tsp.TexU <= 7 && (8u << tsp.TexU) < origWidth; tsp.TexU++);
+		for (tsp.TexV = 0; tsp.TexV <= 7 && (8u << tsp.TexV) < origHeight; tsp.TexV++);
 
 		texture = textureCache->getTextureCacheData(tsp, tcw);
 		if (texture->IsNew())
