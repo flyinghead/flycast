@@ -30,6 +30,7 @@ after_build:
       mkdir artifacts
       
       move %EXE_PATH% artifacts\flycast-win_%PLATFORM%-%CONFIGURATION%-%APPVEYOR_REPO_COMMIT%.exe
+      move ..\..\LICENSE artifacts\LICENSE
 
 artifacts:
   - path: artifacts
@@ -41,10 +42,9 @@ deploy:
   provider: GitHub
   auth_token:
     secure: e8oocRdRnpl9yIxtLBVA7dE6MZO4YOWmfb9IaBj1J7wWkOMRjPcmW+gnJwe3PbZN
-  artifact: %BUILD_PATH%\artifacts\flycast-win_%PLATFORM%-%CONFIGURATION%-%APPVEYOR_REPO_COMMIT%.exe
+  artifact: flycast-win_$(PLATFORM)-$(CONFIGURATION)-$(APPVEYOR_REPO_COMMIT)
   draft: false
   prerelease: false
   on:
     branch: gdxsv-dev2
     APPVEYOR_REPO_TAG: true
-
