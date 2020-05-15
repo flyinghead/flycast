@@ -22,6 +22,7 @@
  */
 #include "cheats.h"
 #include "hw/sh4/sh4_mem.h"
+#include "hw/naomi/naomi_cart.h"
 #include "reios/reios.h"
 
 const Cheat CheatManager::_widescreen_cheats[] =
@@ -281,28 +282,57 @@ const Cheat CheatManager::_widescreen_cheats[] =
 
 		{ nullptr },
 };
+const Cheat CheatManager::_naomi_widescreen_cheats[] =
+{
+		{ "KNIGHTS OF VALOUR  THE 7 SPIRITS", nullptr, { 0x475B70, 0x475B40, 0 }, { 0x3F400000, 0x43F00000 } },
+		{ "Dolphin Blue", nullptr, { 0x3F2E2C, 0x3F2190, 0x3F2E6C, 0x3F215C, 0 },
+				{ 0x43B90000, 0x3FAA9FBE, 0x43B90000, 0x43F00000 } },
+		{ "METAL SLUG 6", nullptr, { 0xE93478, 0xE9347C, 0 }, { 0x3F400000, 0x3F8872B0 } },
+		{ "TOY FIGHTER", nullptr, { 0x133E58, 0 }, { 0x43700000 } },
+
+		{ nullptr },
+};
 CheatManager cheatManager;
 
 bool CheatManager::Reset()
 {
 	_widescreen_cheat = nullptr;
-	if (settings.platform.system != DC_PLATFORM_DREAMCAST || !settings.rend.WidescreenGameHacks)
+	if (!settings.rend.WidescreenGameHacks)
 		return false;
-	std::string game_id(ip_meta.product_number, sizeof(ip_meta.product_number));
-	for (int i = 0; _widescreen_cheats[i].game_id != nullptr; i++)
+	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
 	{
-		if (!strncmp(game_id.c_str(), _widescreen_cheats[i].game_id, game_id.length())
-				&& (_widescreen_cheats[i].area_or_version == nullptr
-						|| !strncmp(ip_meta.area_symbols, _widescreen_cheats[i].area_or_version, sizeof(ip_meta.area_symbols))
-						|| !strncmp(ip_meta.product_version, _widescreen_cheats[i].area_or_version, sizeof(ip_meta.product_version))))
-
+		std::string game_id(ip_meta.product_number, sizeof(ip_meta.product_number));
+		for (int i = 0; _widescreen_cheats[i].game_id != nullptr; i++)
 		{
-			_widescreen_cheat = &_widescreen_cheats[i];
-			NOTICE_LOG(COMMON, "Applying widescreen hack to game %s", game_id.c_str());
-			return true;
+			if (!strncmp(game_id.c_str(), _widescreen_cheats[i].game_id, game_id.length())
+					&& (_widescreen_cheats[i].area_or_version == nullptr
+							|| !strncmp(ip_meta.area_symbols, _widescreen_cheats[i].area_or_version, sizeof(ip_meta.area_symbols))
+							|| !strncmp(ip_meta.product_version, _widescreen_cheats[i].area_or_version, sizeof(ip_meta.product_version))))
+			{
+				_widescreen_cheat = &_widescreen_cheats[i];
+				NOTICE_LOG(COMMON, "Applying widescreen hack to game %s", game_id.c_str());
+				break;
+			}
 		}
 	}
-	return false;
+	else
+	{
+		for (int i = 0; _naomi_widescreen_cheats[i].game_id != nullptr; i++)
+		{
+			if (!strcmp(naomi_game_id, _naomi_widescreen_cheats[i].game_id))
+			{
+				_widescreen_cheat = &_naomi_widescreen_cheats[i];
+				NOTICE_LOG(COMMON, "Applying widescreen hack to game %s", naomi_game_id);
+				break;
+			}
+		}
+	}
+	if (_widescreen_cheat == nullptr)
+		return false;
+	for (size_t i = 0; i < ARRAY_SIZE(_widescreen_cheat->addresses) && _widescreen_cheat->addresses[i] != 0; i++)
+		verify(_widescreen_cheat->addresses[i] < RAM_SIZE);
+
+	return true;
 }
 
 void CheatManager::Apply()
@@ -310,9 +340,6 @@ void CheatManager::Apply()
 	if (_widescreen_cheat != nullptr)
 	{
 		for (size_t i = 0; i < ARRAY_SIZE(_widescreen_cheat->addresses) && _widescreen_cheat->addresses[i] != 0; i++)
-		{
-			verify(_widescreen_cheat->addresses[i] < RAM_SIZE);
 			WriteMem32_nommu(0x8C000000 + _widescreen_cheat->addresses[i], _widescreen_cheat->values[i]);
-		}
 	}
 }

@@ -37,6 +37,7 @@ public:
 	void Apply();
 private:
 	static const Cheat _widescreen_cheats[];
+	static const Cheat _naomi_widescreen_cheats[];
 	const Cheat *_widescreen_cheat;
 };
 
