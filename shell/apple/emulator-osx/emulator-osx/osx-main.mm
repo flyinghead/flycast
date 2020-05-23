@@ -97,6 +97,8 @@ extern "C" void emu_dc_exit()
 
 extern "C" void emu_dc_term()
 {
+	if (dc_is_running())
+		dc_exit();
 	dc_term();
 }
 
