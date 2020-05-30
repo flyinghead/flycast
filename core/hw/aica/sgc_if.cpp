@@ -510,11 +510,10 @@ struct ChannelEx
 
 			oLeft = FPMul(sample, logtable[dl], 15);
 			oRight = FPMul(sample, logtable[dr], 15);
-			oDsp = FPMul(sample, logtable[ds], 15);
+			oDsp = FPMul(sample, logtable[ds], 11);	// 20 bits
 
 			clip_verify(((s16)oLeft)==oLeft);
 			clip_verify(((s16)oRight)==oRight);
-			clip_verify(((s16)oDsp)==oDsp);
 			clip_verify(sample*oLeft>=0);
 			clip_verify(sample*oRight>=0);
 			clip_verify(sample*oDsp>=0);
@@ -1331,7 +1330,7 @@ void ReadCommonReg(u32 reg,bool byte)
 			u32 chan=CommonData->MSLC;
 			
 			CommonData->LP=Chans[chan].loop.looped;
-			verify(CommonData->AFSET==0);
+			verify(CommonData->AFSEL == 0);
 		
 			CommonData->EG=Chans[chan].AEG.GetValue(); //AEG is only 10 bits, FEG is 13 bits
 			CommonData->SGC=Chans[chan].AEG.state;

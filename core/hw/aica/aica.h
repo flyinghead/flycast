@@ -50,7 +50,7 @@ struct CommonData_struct
 	//+C
 	u32 MOBUF:8;
 	u32 MSLC:6;
-	u32 AFSET:1;
+	u32 AFSEL:1;
 	u32 padC_0:1;
 
 	u32 :16;
