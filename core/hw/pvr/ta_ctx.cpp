@@ -119,7 +119,7 @@ bool QueueRender(TA_context* ctx)
  	last_frame2 = last_frame1;
  	last_frame1 = os_GetSeconds();
 
- 	bool too_fast = (cycle_span / time_span) > (SH4_MAIN_CLOCK * 1.2);
+ 	bool too_fast = (cycle_span / time_span) > SH4_MAIN_CLOCK;
 
  	// Vulkan: rtt frames seem to be discarded often
 	if (rqueue && (too_fast || ctx->rend.isRTT) && settings.pvr.SynchronousRender)

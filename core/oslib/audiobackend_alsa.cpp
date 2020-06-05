@@ -121,8 +121,8 @@ static void alsa_init()
 	}
 	INFO_LOG(AUDIO, "ALSA: buffer size set to %ld", buffer_size);
 
-	// Period size (512)
-	period_size = 512;
+	// Period size (1024)
+	period_size = 1024;
 	rc = snd_pcm_hw_params_set_period_size_near(handle, params, &period_size, nullptr);
 	if (rc < 0)
 	{

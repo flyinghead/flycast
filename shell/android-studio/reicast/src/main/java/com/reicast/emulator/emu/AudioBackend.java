@@ -26,7 +26,7 @@ public final class AudioBackend {
     // Called by native code
     private void init()
     {
-        int bufferSize = JNIdc.getAicaBufferSize() * 4;
+        int bufferSize = 2048;
         int min = AudioTrack.getMinBufferSize(44100, AudioFormat.CHANNEL_OUT_STEREO, AudioFormat.ENCODING_PCM_16BIT);
         if (bufferSize < min)
             bufferSize = min;
