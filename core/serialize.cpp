@@ -571,19 +571,31 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 	REICAST_US(SB_FFST_rc);
 	REICAST_US(SB_FFST);
 
-	REICAST_US(i); //LIBRETRO_S(sys_nvmem_sram.size);
-	verify(i == 0);
-	REICAST_US(i); //LIBRETRO_S(sys_nvmem_sram.mask);
-	//LIBRETRO_SA(sys_nvmem_sram.data,sys_nvmem_sram.size);
-
-	REICAST_US(sys_nvmem->size);
-	REICAST_US(sys_nvmem->mask);
-	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
-		REICAST_US(static_cast<DCFlashChip*>(sys_nvmem)->state);
+	if (settings.platform.system == DC_PLATFORM_NAOMI)
+	{
+		REICAST_US(sys_nvmem->size); // Naomi
+		REICAST_US(sys_nvmem->mask);
+		REICAST_USA(sys_nvmem->data, sys_nvmem->size);
+	}
 	else
-		// FIXME
-		die("Naomi/Atomiswave libretro savestates are not supported");
-	REICAST_USA(sys_nvmem->data, sys_nvmem->size);
+	{
+		REICAST_US(i);
+		REICAST_US(i);
+	}
+
+	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
+	{
+		REICAST_US(sys_nvmem->size);
+		REICAST_US(sys_nvmem->mask);
+		REICAST_US(static_cast<DCFlashChip*>(sys_nvmem)->state);
+		REICAST_USA(sys_nvmem->data, sys_nvmem->size);
+	}
+	else
+	{
+		REICAST_US(i);
+		REICAST_US(i);
+		REICAST_US(i);
+	}
 
 	REICAST_US(GD_HardwareInfo);
 

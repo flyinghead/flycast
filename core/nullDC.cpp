@@ -22,6 +22,7 @@
 #include "hw/sh4/sh4_if.h"
 #include "hw/pvr/Renderer_if.h"
 #include "hw/pvr/spg.h"
+#include "hw/aica/aica_if.h"
 #include "hw/aica/dsp.h"
 #include "imgread/common.h"
 #include "rend/gui.h"
@@ -155,41 +156,6 @@ static void LoadSpecialSettings()
 			settings.rend.TranslucentPolygonDepthMask = 1;
 			tr_poly_depth_mask_game = true;
 		}
-		// Demolition Racer
-		if (!strncmp("T15112N", prod_id, 7)
-				// Ducati World - Racing Challenge (NTSC)
-				|| !strncmp("T-8113N", prod_id, 7)
-				// Ducati World (PAL)
-				|| !strncmp("T-8121D-50", prod_id, 10)
-				// Aqua GT
-				|| !strncmp("T40509D 50", prod_id, 10)
-				// Rayman 2 (NTSC)
-				|| !strncmp("17707N", prod_id, 6)
-				// Rayman 2 (PAL)
-				|| !strncmp("17707D", prod_id, 6)
-				// Elysion
-				|| !strncmp("T20116M", prod_id, 7)
-				// Silent Scope (NTSC)
-				|| !strncmp("T9507N", prod_id, 6)
-				// Silent Scope (PAL)
-				|| !strncmp("T9505D", prod_id, 6)
-				// Power Stone (US)
-				|| !strncmp("T1201N", prod_id, 6)
-				// Power Stone (JP)
-				|| !strncmp("T1201M", prod_id, 6)
-				// Power Stone (PAL)
-				|| !strncmp("T36801D 50", prod_id, 10)
-				// Metropolis Street Racer (NTSC)
-				|| !strncmp("MK-51012", prod_id, 8)
-				// Metropolis Street Racer (PAL)
-				|| !strncmp("MK-5102250", prod_id, 10)
-				// Donald Duck Goin' Quackers
-				|| !strncmp("T17714D50", prod_id, 9))
-		{
-			INFO_LOG(BOOT, "Enabling Dynarec safe mode for game %s", prod_id);
-			settings.dynarec.safemode = 1;
-			safemode_game = true;
-		}
 		// NHL 2K2
 		if (!strncmp("MK-51182", prod_id, 8))
 		{
@@ -307,16 +273,6 @@ static void LoadSpecialSettings()
 	else if (settings.platform.system == DC_PLATFORM_NAOMI || settings.platform.system == DC_PLATFORM_ATOMISWAVE)
 	{
 		NOTICE_LOG(BOOT, "Game ID is [%s]", naomi_game_id);
-
-		if (!strcmp("METAL SLUG 6", naomi_game_id)
-				|| !strcmp("WAVE RUNNER GP", naomi_game_id)
-				|| !strcmp("STREET FIGHTER ZERO3 UPPER", naomi_game_id)
-				|| !strcmp("ALIEN FRONT", naomi_game_id))
-		{
-			INFO_LOG(BOOT, "Enabling Dynarec safe mode for game %s", naomi_game_id);
-			settings.dynarec.safemode = 1;
-			safemode_game = true;
-		}
 		if (!strcmp("SAMURAI SPIRITS 6", naomi_game_id))
 		{
 			INFO_LOG(BOOT, "Enabling Extra depth scaling for game %s", naomi_game_id);
@@ -417,7 +373,8 @@ static void LoadSpecialSettings()
 			INFO_LOG(BOOT, "Enabling specific JVS setup for game %s", naomi_game_id);
 			settings.input.JammaSetup = JVS::DogWalking;
 		}
-		else if (!strcmp(" TOUCH DE UNOH -------------", naomi_game_id))
+		else if (!strcmp(" TOUCH DE UNOH -------------", naomi_game_id)
+				|| !strcmp("POKASUKA GHOST (JAPANESE)", naomi_game_id))
 		{
 			INFO_LOG(BOOT, "Enabling specific JVS setup for game %s", naomi_game_id);
 			settings.input.JammaSetup = JVS::TouchDeUno;
@@ -819,12 +776,12 @@ void InitSettings()
 	settings.network.server = "";
 
 #if SUPPORT_DISPMANX
-	settings.dispmanx.Width		= 640;
-	settings.dispmanx.Height	= 480;
+	settings.dispmanx.Width		= 0;
+	settings.dispmanx.Height	= 0;
 	settings.dispmanx.Keep_Aspect = true;
 #endif
 
-#if defined(__ANDROID__) || defined(TARGET_PANDORA)
+#if HOST_CPU == CPU_ARM
 	settings.aica.BufferSize = 5644;	// 128 ms
 #else
 	settings.aica.BufferSize = 2822;	// 64 ms

@@ -239,6 +239,9 @@ static u32* Sh4_int_GetRegisterPtr(Sh4RegType reg)
 		case reg_pc_dyn:
 			return &Sh4cntx.jdyn;
 
+		case reg_temp:
+			return &Sh4cntx.temp_reg;
+
 		default:
 			ERROR_LOG(SH4, "Unknown register ID %d", reg);
 			die("Invalid reg");

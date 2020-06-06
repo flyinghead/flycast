@@ -609,28 +609,36 @@ shil_opc_end()
 shil_opc(div32s)
 shil_canonical
 (
-u64,f1,(u32 r1, u32 r2, s32 r3),
+u64,f1,(u32 r1, s32 r2, s32 r3),
 	s64 dividend = ((s64)r3 << 32) | r1;
 	bool negative;
-	if (dividend < 0)
+	if ((r3 ^ r2) & 0x80000000)
 	{
 		// 1's complement -> 2's complement
-		dividend++;
+		if (dividend < 0)
+			dividend++;
 		negative = true;
 	}
 	else
-	{
 		negative = false;
-	}
-	s32 quo = dividend / r2;
-	s32 rem = dividend % r2;
+
+	s32 quo = (s32)(dividend / r2);
+	s32 rem = dividend - quo * r2;
 	// 2's complement -> 1's complement
 	if (negative)
 	{
-		if (quo <= 0)
-			quo--;
-		if (rem <= 0)
+		if (rem < 0 || (rem == 0 && r2 > 0))
 			rem--;
+		quo--;
+	}
+	else
+	{
+		// edge case
+		if (rem == 0 && dividend < 0 && !(quo & 1))
+		{
+			quo--;
+			rem += r2;
+		}
 	}
 
 	u64 rv;
@@ -655,19 +663,17 @@ shil_opc(div32p2)
 shil_canonical
 (
 u32,f1,(s32 a,s32 b,u32 T),
-	a += b * (((T >> 31) ^ ~T) & 1) * (2 * (T & 1) - 1);
-	// This is equivalent to this:
-	// (the sign of the quotient is stored in bit 31 of T)
-	//	if (quo >= 0)
-	//	{
-	//		if (!T)
-	//			rem -= divisor;
-	//	}
-	//	else
-	//	{
-	//		if (T)
-	//			rem += divisor;
-	//	}
+	// the sign of the quotient is stored in bit 31 of T
+	if (!(T & 0x80000000))
+	{
+		if (!(T & 1))
+			a -= b;
+	}
+	else
+	{
+		if (T & 1)
+			a += b;
+	}
 
 	return a;
 )

@@ -907,10 +907,14 @@ static bool dec_generic(u32 op)
 				{
 					verify(!state.cpu.is_delayslot);
 					//div32s
+					Emit(shop_xor, mk_reg(reg_sr_T), mk_reg(div_som_reg3), mk_reg(div_som_reg2));	// get quotient sign
+					Emit(shop_and, mk_reg(reg_sr_T), mk_reg(reg_sr_T), mk_imm(1 << 31));			// isolate sign bit
+
 					Emit(shop_div32s, mk_reg(div_som_reg1), mk_reg(div_som_reg1), mk_reg(div_som_reg2), 0, mk_reg(div_som_reg3), mk_reg(div_som_reg3));
-					
-					Emit(shop_and, mk_reg(reg_sr_T), mk_reg(div_som_reg1), mk_imm((1 << 31) | 1));	// set lsb and sign of quotient in T
+
+					Emit(shop_and, mk_reg(reg_temp), mk_reg(div_som_reg1), mk_imm(1));				// set quotient lsb in temp reg
 					Emit(shop_sar, mk_reg(div_som_reg1), mk_reg(div_som_reg1), mk_imm(1));			// shift quotient right
+					Emit(shop_or, mk_reg(reg_sr_T), mk_reg(reg_sr_T), mk_reg(reg_temp));			// store quotient lsb in T
 
 					Emit(shop_div32p2, mk_reg(div_som_reg3), mk_reg(div_som_reg3), mk_reg(div_som_reg2), 0, mk_reg(reg_sr_T));
 					
@@ -922,29 +926,22 @@ static bool dec_generic(u32 op)
 				}
 				else
 				{
-					//sr.Q=r[n]>>31;
-					//sr.M=r[m]>>31;
-					//sr.T=sr.M^sr.Q;
-
-					//This is nasty because there isn't a temp reg ..
-					//VERY NASTY
-
 					//Clear Q & M
-					Emit(shop_and,mk_reg(reg_sr_status),mk_reg(reg_sr_status),mk_imm(~((1<<8)|(1<<9))));
+					Emit(shop_and, mk_reg(reg_sr_status), mk_reg(reg_sr_status), mk_imm(~((1 << 8) | (1 << 9))));
 
 					//sr.Q=r[n]>>31;
-					Emit(shop_sar,mk_reg(reg_sr_T),rs1,mk_imm(31));
-					Emit(shop_and,mk_reg(reg_sr_T),mk_reg(reg_sr_T),mk_imm(1<<8));
-					Emit(shop_or,mk_reg(reg_sr_status),mk_reg(reg_sr_status),mk_reg(reg_sr_T));
+					Emit(shop_sar, mk_reg(reg_sr_T),rs1,mk_imm(31));
+					Emit(shop_and, mk_reg(reg_sr_T), mk_reg(reg_sr_T), mk_imm(1 << 8));
+					Emit(shop_or, mk_reg(reg_sr_status), mk_reg(reg_sr_status), mk_reg(reg_sr_T));
 
 					//sr.M=r[m]>>31;
-					Emit(shop_sar,mk_reg(reg_sr_T),rs2,mk_imm(31));
-					Emit(shop_and,mk_reg(reg_sr_T),mk_reg(reg_sr_T),mk_imm(1<<9));
-					Emit(shop_or,mk_reg(reg_sr_status),mk_reg(reg_sr_status),mk_reg(reg_sr_T));
+					Emit(shop_sar, mk_reg(reg_sr_T), rs2, mk_imm(31));
+					Emit(shop_and, mk_reg(reg_sr_T), mk_reg(reg_sr_T), mk_imm(1 << 9));
+					Emit(shop_or, mk_reg(reg_sr_status), mk_reg(reg_sr_status), mk_reg(reg_sr_T));
 
 					//sr.T=sr.M^sr.Q;
-					Emit(shop_xor,mk_reg(reg_sr_T),rs1,rs2);
-					Emit(shop_shr,mk_reg(reg_sr_T),mk_reg(reg_sr_T),mk_imm(31));
+					Emit(shop_xor, mk_reg(reg_sr_T), rs1, rs2);
+					Emit(shop_shr, mk_reg(reg_sr_T), mk_reg(reg_sr_T), mk_imm(31));
 				}
 			}
 		}
