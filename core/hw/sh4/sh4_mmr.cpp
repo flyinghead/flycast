@@ -868,7 +868,7 @@ void sh4_mmr_reset(bool hard)
 	OnChipRAM = {};
 	//Reset register values
 	bsc_reset(hard);
-	ccn_reset();
+	ccn_reset(hard);
 	cpg_reset();
 	dmac_reset();
 	intc_reset();

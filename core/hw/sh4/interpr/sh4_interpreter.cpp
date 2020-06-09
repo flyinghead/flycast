@@ -7,14 +7,15 @@
 #include "../sh4_interpreter.h"
 #include "../sh4_opcode_list.h"
 #include "../sh4_core.h"
-#include "hw/aica/aica_if.h"
 #include "../sh4_interrupts.h"
 #include "hw/sh4/sh4_mem.h"
-#include "profiler/profiler.h"
-#include "../dyna/blockmanager.h"
 #include "../sh4_sched.h"
+#include "hw/holly/sb.h"
+#include "../sh4_cache.h"
 
 #define CPU_RATIO      (8)
+
+sh4_icache icache;
 
 static s32 l;
 
@@ -24,6 +25,14 @@ static void ExecuteOpcode(u16 op)
 		RaiseFPUDisableException();
 	OpPtr[op](op);
 	l -= CPU_RATIO;
+}
+
+static u16 ReadNexOp()
+{
+	u32 addr = next_pc;
+	next_pc += 2;
+
+	return icache.ReadMem(addr);
 }
 
 void Sh4_int_Run()
@@ -39,9 +48,7 @@ void Sh4_int_Run()
 #endif
 			do
 			{
-				u32 addr = next_pc;
-				next_pc += 2;
-				u32 op = IReadMem16(addr);
+				u32 op = ReadNexOp();
 
 				ExecuteOpcode(op);
 			} while (l > 0);
@@ -79,8 +86,7 @@ void Sh4_int_Step()
 	}
 	else
 	{
-		u32 op=ReadMem16(next_pc);
-		next_pc+=2;
+		u32 op = ReadNexOp();
 		ExecuteOpcode(op);
 	}
 }
@@ -118,6 +124,7 @@ void Sh4_int_Reset(bool hard)
 		fpscr.full = 0x0004001;
 		old_fpscr=fpscr;
 		UpdateFPSCR();
+		icache.Reset(hard);
 
 		//Any more registers have default value ?
 		INFO_LOG(INTERPRETER, "Sh4 Reset");
@@ -135,9 +142,7 @@ void ExecuteDelayslot()
 #if !defined(NO_MMU)
 	try {
 #endif
-		u32 addr = next_pc;
-		next_pc += 2;
-		u32 op = IReadMem16(addr);
+		u32 op = ReadNexOp();
 
 		if (op != 0)	// Looney Tunes: Space Race hack
 			ExecuteOpcode(op);
@@ -163,40 +168,6 @@ void ExecuteDelayslot_RTE()
 		ERROR_LOG(INTERPRETER, "Exception in RTE delay slot");
 	}
 #endif
-}
-
-//General update
-
-//3584 Cycles
-#define AICA_SAMPLE_GCM 441
-#define AICA_SAMPLE_CYCLES (SH4_MAIN_CLOCK/(44100/AICA_SAMPLE_GCM)*32)
-
-int aica_schid = -1;
-int rtc_schid = -1;
-
-//14336 Cycles
-
-const int AICA_TICK=145124;
-
-static int AicaUpdate(int tag, int c, int j)
-{
-	UpdateArm(512*32);
-	UpdateAica(1*32);
-
-	return AICA_TICK;
-}
-
-static int DreamcastSecond(int tag, int c, int j)
-{
-	RealTimeClock++;
-
-	prof_periodical();
-
-#if FEAT_SHREC != DYNAREC_NONE
-	bm_Periodical_1s();
-#endif
-
-	return SH4_MAIN_CLOCK;
 }
 
 // every SH4_TIMESLICE cycles
@@ -240,16 +211,8 @@ void Get_Sh4Interpreter(sh4_if* rv)
 
 void Sh4_int_Init()
 {
-	verify(sizeof(Sh4cntx)==448);
+	static_assert(sizeof(Sh4cntx) == 448, "Invalid Sh4Cntx size");
 
-	if (aica_schid == -1)
-	{
-		aica_schid=sh4_sched_register(0,&AicaUpdate);
-		sh4_sched_request(aica_schid,AICA_TICK);
-
-		rtc_schid=sh4_sched_register(0,&DreamcastSecond);
-		sh4_sched_request(rtc_schid,SH4_MAIN_CLOCK);
-	}
 	memset(&p_sh4rcb->cntx, 0, sizeof(p_sh4rcb->cntx));
 }
 

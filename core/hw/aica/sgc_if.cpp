@@ -1368,11 +1368,6 @@ u32 cdda_index=CDDA_SIZE<<1;
 //no DSP for now in this version
 void AICA_Sample32()
 {
-	if (settings.aica.NoBatch || settings.aica.DSPEnabled)
-	{
-		return;
-	}
-
 	SampleType mxlr[64];
 	memset(mxlr,0,sizeof(mxlr));
 

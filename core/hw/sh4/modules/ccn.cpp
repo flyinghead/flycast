@@ -9,6 +9,7 @@
 #include "hw/sh4/sh4_if.h"
 #include "hw/sh4/sh4_mmr.h"
 #include "hw/sh4/sh4_core.h"
+#include "hw/sh4/sh4_cache.h"
 
 //Types
 
@@ -84,6 +85,7 @@ void CCN_CCR_write(u32 addr, u32 value)
 	if (temp.ICI) {
 		DEBUG_LOG(SH4, "Sh4: i-cache invalidation %08X", curr_pc);
 		//Shikigami No Shiro II uses ICI frequently
+		icache.Invalidate();
 	}
 
 	temp.ICI=0;
@@ -155,10 +157,10 @@ void ccn_init()
 
 }
 
-void ccn_reset()
+void ccn_reset(bool hard)
 {
 	CCN_TRA            = 0x0;
-	CCN_EXPEVT         = 0x0;
+	CCN_EXPEVT         = hard ? 0 : 0x20;
 	CCN_MMUCR.reg_data = 0x0;
 	CCN_CCR.reg_data   = 0x0;
 }

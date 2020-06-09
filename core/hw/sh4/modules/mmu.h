@@ -46,6 +46,7 @@ void ITLB_Sync(u32 entry);
 bool mmu_match(u32 va, CCN_PTEH_type Address, CCN_PTEL_type Data);
 void mmu_set_state();
 void mmu_flush_table();
+void mmu_raise_exception(u32 mmu_error, u32 address, u32 am);
 
 static INLINE bool mmu_enabled()
 {

@@ -8,7 +8,50 @@
 #define SHIL_MODE 2
 #include "hw/sh4/dyna/shil_canonical.h"
 
-void div32s_slow(u32& r1, u32 r2, u32& r3)
+static void div1(u32& r1, u32 r2)
+{
+	const u8 old_q = sr.Q;
+	sr.Q = (u8)((0x80000000 & r1) != 0);
+
+	r1 <<= 1;
+	r1 |= sr.T;
+
+	const u32 old_rn = r1;
+
+	if (old_q == 0)
+	{
+		if (sr.M == 0)
+		{
+			r1 -= r2;
+			bool tmp1 = r1 > old_rn;
+			sr.Q = sr.Q ^ tmp1;
+		}
+		else
+		{
+			r1 += r2;
+			bool tmp1 = r1 < old_rn;
+			sr.Q = !sr.Q ^ tmp1;
+		}
+	}
+	else
+	{
+		if (sr.M == 0)
+		{
+			r1 += r2;
+			bool tmp1 = r1 < old_rn;
+			sr.Q = sr.Q ^ tmp1;
+		}
+		else
+		{
+			r1 -= r2;
+			bool tmp1 = r1 > old_rn;
+			sr.Q = !sr.Q ^ tmp1;
+		}
+	}
+	sr.T = (sr.Q == sr.M);
+}
+
+static void div32s_slow(u32& r1, u32 r2, u32& r3)
 {
 	sr.Q = r3 >> 31;
 	sr.M = r2 >> 31;
@@ -19,23 +62,11 @@ void div32s_slow(u32& r1, u32 r2, u32& r3)
 		r1 = (u32)rv;
 		sr.T = rv >> 32;
 
-		// DIV1
-		unsigned char old_q = sr.Q;
-		sr.Q = (u8)((0x80000000 & r3) !=0);
-
-		r3 <<= 1;
-		r3 |= (unsigned long)sr.T;
-
-		u32 tmp0 = r3;
-
-		r3 += (2 * (old_q ^ sr.M) - 1) * r2;
-		sr.Q ^= old_q ^ (sr.M ? r3 > tmp0 : r3 >= tmp0);
-
-		sr.T = (sr.Q == sr.M);
+		div1(r3, r2);
 	}
 }
 
-void div32s_fast(u32& r1, u32 r2, u32& r3)
+static void div32s_fast(u32& r1, u32 r2, u32& r3)
 {
 	sr.T = (r3 ^ r2) & 0x80000000;
 	u64 rv = shil_opcl_div32s::f1::impl(r1, r2, r3);
@@ -47,7 +78,7 @@ void div32s_fast(u32& r1, u32 r2, u32& r3)
 	sr.T &= 1;
 }
 
-void div32u_fast(u32& r1, u32 r2, u32& r3)
+static void div32u_fast(u32& r1, u32 r2, u32& r3)
 {
 	u64 rv = shil_opcl_div32u::f1::impl(r1, r2, r3);
 	r1 = (u32)rv;
@@ -57,7 +88,7 @@ void div32u_fast(u32& r1, u32 r2, u32& r3)
 	r3 = shil_opcl_div32p2::f1::impl(r3, r2, sr.T);
 }
 
-void div32u_slow(u32& r1, u32 r2, u32& r3)
+static void div32u_slow(u32& r1, u32 r2, u32& r3)
 {
 	sr.Q = 0;
 	sr.M = 0;
@@ -69,19 +100,7 @@ void div32u_slow(u32& r1, u32 r2, u32& r3)
 		r1 = (u32)rv;
 		sr.T = rv >> 32;
 
-		// DIV1
-		unsigned char old_q = sr.Q;
-		sr.Q = (u8)((0x80000000 & r3) !=0);
-
-		r3 <<= 1;
-		r3 |= (unsigned long)sr.T;
-
-		u32 tmp0 = r3;
-
-		r3 += (2 * (old_q ^ sr.M) - 1) * r2;
-		sr.Q ^= old_q ^ (sr.M ? r3 > tmp0 : r3 >= tmp0);
-
-		sr.T = (sr.Q == sr.M);
+		div1(r3, r2);
 	}
 }
 

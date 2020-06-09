@@ -523,17 +523,6 @@ void libPvr_LockedBlockWrite(vram_block* block,u32 addr);	//set to 0 if not used
 
 void* libPvr_GetRenderTarget();
 
-//AICA
-s32 libAICA_Init();
-void libAICA_Reset(bool hard);
-void libAICA_Term();
-
-u32  libAICA_ReadReg(u32 addr,u32 size);
-void libAICA_WriteReg(u32 addr,u32 data,u32 size);
-
-void libAICA_Update(u32 cycles);				//called every ~1800 cycles, set to 0 if not used
-
-
 //GDR
 s32 libGDR_Init();
 void libGDR_Reset(bool hard);
@@ -564,12 +553,8 @@ static inline void libExtDevice_WriteMem_A5(u32 addr,u32 data,u32 size) { }
 
 //ARM
 s32 libARM_Init();
-void libARM_Reset(bool M);
+void libARM_Reset(bool hard);
 void libARM_Term();
-
-void libARM_SetResetState(u32 State);
-void libARM_Update(u32 cycles);
-
 
 #define 	ReadMemArrRet(arr,addr,sz)				\
 			{if (sz==1)								\
@@ -620,4 +605,5 @@ enum serialize_version_enum {
 	V6 = 801,
 	V7 = 802,
 	V8 = 803,
+	V9 = 804,
 } ;

@@ -4,8 +4,10 @@
 #include "sgc_if.h"
 #include "hw/holly/holly_intc.h"
 #include "hw/holly/sb.h"
+#include "hw/sh4/sh4_sched.h"
+#include "hw/arm7/arm7.h"
 
-#define SH4_IRQ_BIT (1<<(holly_SPU_IRQ&255))
+#define SH4_IRQ_BIT (1 << (holly_SPU_IRQ & 31))
 
 CommonData_struct* CommonData;
 DSPData_struct* DSPData;
@@ -77,16 +79,22 @@ static void UpdateSh4Ints()
 		if ((SB_ISTEXT & SH4_IRQ_BIT) != 0)
 			asic_CancelInterrupt(holly_SPU_IRQ);
 	}
-
 }
-
 
 AicaTimer timers[3];
-//Mainloop
-void libAICA_Update(u32 samples)
+int aica_schid = -1;
+const int AICA_TICK = 145125;	// 44.1 KHz / 32
+
+static int AicaUpdate(int tag, int c, int j)
 {
-	AICA_Sample32();
+	arm_Run(32);
+	if (!settings.aica.NoBatch && !settings.aica.DSPEnabled)
+		AICA_Sample32();
+
+	return AICA_TICK;
 }
+
+//Mainloop
 
 void libAICA_TimeStep()
 {
@@ -195,6 +203,11 @@ s32 libAICA_Init()
 	MCIRE=(InterruptInfo*)&aica_reg[0x28B4+8];
 
 	sgc_Init();
+	if (aica_schid == -1)
+	{
+		aica_schid = sh4_sched_register(0, &AicaUpdate);
+		sh4_sched_request(aica_schid, AICA_TICK);
+	}
 
 	return 0;
 }
@@ -202,8 +215,10 @@ s32 libAICA_Init()
 void libAICA_Reset(bool hard)
 {
 	if (hard)
+	{
 		init_mem();
-	sgc_Init();
+		sgc_Init();
+	}
 	for (u32 i = 0; i < 3; i++)
 		timers[i].Init(aica_reg, i);
 	aica_Reset(hard);

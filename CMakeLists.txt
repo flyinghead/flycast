@@ -9,6 +9,8 @@ endif()
 option(ENABLE_CTEST "Enables unit tests" OFF)
 option(ENABLE_OPROFILE "Enable OProfile" OFF)
 option(TEST_AUTOMATION "Enable test automation" OFF)
+option(ENABLE_LOG "Enable full logging" OFF)
+option(ASAN "Enable address sanitizer" OFF)
 
 project(flycast)
 
@@ -52,6 +54,12 @@ endif()
 
 target_compile_features(${PROJECT_NAME} PRIVATE c_std_11 cxx_std_11)
 set_target_properties(${PROJECT_NAME} PROPERTIES CXX_EXTENSIONS OFF)
+if(NOT MSVC)
+    target_compile_options(${PROJECT_NAME} PRIVATE
+        $<$<COMPILE_LANGUAGE:CXX>:-fno-rtti>
+        -fno-strict-aliasing
+        -ffast-math)
+endif()
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE
         $<$<BOOL:APPLE>:GL_SILENCE_DEPRECATION>
@@ -60,6 +68,7 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
         $<$<BOOL:MSVC>:_USE_MATH_DEFINES>
         $<$<BOOL:MSVC>:NOMINMAX>
         $<$<BOOL:${TEST_AUTOMATION}>:TEST_AUTOMATION>
+        $<$<BOOL:${ENABLE_LOG}>:DEBUGFAST>
         ENABLE_MODEM)
 
 target_include_directories(${PROJECT_NAME} PRIVATE core core/deps core/deps/stb core/deps/xbyak core/khronos)
@@ -183,6 +192,12 @@ if(UNIX AND NOT APPLE AND NOT ANDROID)
 
     find_package(Threads REQUIRED)
     target_link_libraries(${PROJECT_NAME} PRIVATE Threads::Threads)
+    if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_SYSTEM_PROCESSOR MATCHES "amd64.*|x86_64.*|AMD64.*")
+        set_target_properties(${PROJECT_NAME} PROPERTIES POSITION_INDEPENDENT_CODE False)
+        if(${CMAKE_VERSION} VERSION_LESS "3.14.0")
+            set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -no-pie")
+        endif()
+    endif()
 
     if(NOT SDL2_FOUND)
         find_package(X11 REQUIRED)
@@ -194,6 +209,11 @@ if(UNIX AND NOT APPLE AND NOT ANDROID)
     endif()
 
     target_link_libraries(${PROJECT_NAME} PRIVATE ${CMAKE_DL_LIBS} rt)
+endif()
+
+if(ASAN)
+    target_compile_options(${PROJECT_NAME} PRIVATE -fsanitize=address -static-libasan)
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=address -static-libasan")
 endif()
 
 target_sources(${PROJECT_NAME} PRIVATE
@@ -566,6 +586,7 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/hw/sh4/modules/tmu.cpp
         core/hw/sh4/modules/ubc.cpp
         core/hw/sh4/modules/wince.h
+        core/hw/sh4/sh4_cache.h
         core/hw/sh4/sh4_core.h
         core/hw/sh4/sh4_core_regs.cpp
         core/hw/sh4/sh4_if.h
@@ -732,6 +753,7 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/rend/osd.h
         core/rend/sorter.cpp
         core/rend/sorter.h
+        core/rend/tileclip.h
         core/rend/TexCache.cpp
         core/rend/TexCache.h)
 
@@ -872,6 +894,7 @@ if(BUILD_TESTING)
             core/deps/gtest/src/gtest_main.cc)
 
     target_sources(${PROJECT_NAME} PRIVATE
+            tests/src/div32_test.cpp
             tests/src/test_stubs.cpp
             tests/src/serialize_test.cpp)
 endif()

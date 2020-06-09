@@ -15,6 +15,7 @@
 #include "reios/gdrom_hle.h"
 #include "hw/sh4/dyna/blockmanager.h"
 #include "hw/naomi/naomi_cart.h"
+#include "hw/sh4/sh4_cache.h"
 
 #define REICAST_SKIP(size) do { if (*data) *(u8**)data += (size); *total_size += (size); } while (false)
 
@@ -45,6 +46,7 @@ extern u32 VREG;//video reg =P
 extern u32 ARMRST;//arm reset reg
 extern u32 rtc_EN;
 extern int dma_sched_id;
+extern u32 RealTimeClock;
 
 //./core/hw/aica/aica_mem.o
 extern u8 aica_reg[0x8000];
@@ -275,7 +277,7 @@ bool dc_serialize(void **data, unsigned int *total_size)
 {
 	int i = 0;
 
-	serialize_version_enum version = V8;
+	serialize_version_enum version = V9;
 
 	*total_size = 0 ;
 
@@ -308,6 +310,7 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	REICAST_S(VREG);
 	REICAST_S(ARMRST);
 	REICAST_S(rtc_EN);
+	REICAST_S(RealTimeClock);
 
 	REICAST_SA(aica_reg,0x8000);
 
@@ -392,6 +395,7 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	register_serialize(TMU, data, total_size) ;
 	register_serialize(SCI, data, total_size) ;
 	register_serialize(SCIF, data, total_size) ;
+	icache.Serialize(data, total_size);
 
 	REICAST_SA(mem_b.data, mem_b.size);
 
@@ -664,6 +668,7 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 	register_unserialize(TMU, data, total_size, V9_LIBRETRO) ;
 	register_unserialize(SCI, data, total_size, V9_LIBRETRO) ;
 	register_unserialize(SCIF, data, total_size, V9_LIBRETRO) ;
+	icache.Reset(true);
 
 	REICAST_USA(mem_b.data, mem_b.size);
 	REICAST_USA(InterruptEnvId,32);
@@ -852,6 +857,8 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 	REICAST_US(VREG);
 	REICAST_US(ARMRST);
 	REICAST_US(rtc_EN);
+	if (version >= V9)
+		REICAST_US(RealTimeClock);
 
 	REICAST_USA(aica_reg,0x8000);
 
@@ -987,6 +994,10 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 	register_unserialize(TMU, data, total_size, version) ;
 	register_unserialize(SCI, data, total_size, version) ;
 	register_unserialize(SCIF, data, total_size, version) ;
+	if (version >= V9)
+		icache.Unserialize(data, total_size);
+	else
+		icache.Reset(true);
 
 	REICAST_USA(mem_b.data, mem_b.size);
 

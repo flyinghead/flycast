@@ -5,10 +5,14 @@
 */
 
 #include "aica_if.h"
+#include "aica_mem.h"
 #include "hw/holly/sb.h"
 #include "hw/holly/holly_intc.h"
 #include "hw/sh4/sh4_mem.h"
 #include "hw/sh4/sh4_sched.h"
+#include "profiler/profiler.h"
+#include "hw/sh4/dyna/blockmanager.h"
+#include "hw/arm7/arm7.h"
 
 #include <ctime>
 
@@ -18,6 +22,7 @@ u32 ARMRST;//arm reset reg
 u32 rtc_EN=0;
 int dma_sched_id;
 u32 RealTimeClock;
+int rtc_schid = -1;
 
 u32 GetRTC_now()
 {
@@ -107,11 +112,12 @@ u32 ReadMem_aica_reg(u32 addr,u32 sz)
 	}
 }
 
-void ArmSetRST()
+static void ArmSetRST()
 {
-	ARMRST&=1;
-	libARM_SetResetState(ARMRST);
+	ARMRST &= 1;
+	arm_SetEnabled(ARMRST == 0);
 }
+
 void WriteMem_aica_reg(u32 addr,u32 data,u32 sz)
 {
 	addr&=0x7FFF;
@@ -121,12 +127,12 @@ void WriteMem_aica_reg(u32 addr,u32 data,u32 sz)
 		if (addr==0x2C01)
 		{
 			VREG=data;
-			INFO_LOG(AICA, "VREG = %02X", VREG);
+			INFO_LOG(AICA_ARM, "VREG = %02X", VREG);
 		}
 		else if (addr==0x2C00)
 		{
 			ARMRST=data;
-			INFO_LOG(AICA, "ARMRST = %02X", ARMRST);
+			INFO_LOG(AICA_ARM, "ARMRST = %02X", ARMRST);
 			ArmSetRST();
 		}
 		else
@@ -140,7 +146,7 @@ void WriteMem_aica_reg(u32 addr,u32 data,u32 sz)
 		{
 			VREG=(data>>8)&0xFF;
 			ARMRST=data&0xFF;
-			INFO_LOG(AICA, "VREG = %02X ARMRST %02X", VREG, ARMRST);
+			INFO_LOG(AICA_ARM, "VREG = %02X ARMRST %02X", VREG, ARMRST);
 			ArmSetRST();
 		}
 		else
@@ -149,15 +155,35 @@ void WriteMem_aica_reg(u32 addr,u32 data,u32 sz)
 		}
 	}
 }
+
+static int DreamcastSecond(int tag, int c, int j)
+{
+	RealTimeClock++;
+
+	prof_periodical();
+
+#if FEAT_SHREC != DYNAREC_NONE
+	bm_Periodical_1s();
+#endif
+
+	return SH4_MAIN_CLOCK;
+}
+
 //Init/res/term
 void aica_Init()
 {
 	RealTimeClock = GetRTC_now();
+	if (rtc_schid == -1)
+	{
+		rtc_schid = sh4_sched_register(0, &DreamcastSecond);
+		sh4_sched_request(rtc_schid, SH4_MAIN_CLOCK);
+	}
 }
 
 void aica_Reset(bool hard)
 {
-	aica_Init();
+	if (hard)
+		aica_Init();
 	VREG = 0;
 	ARMRST = 0;
 }
@@ -167,7 +193,7 @@ void aica_Term()
 
 }
 
-int dma_end_sched(int tag, int cycl, int jitt)
+static int dma_end_sched(int tag, int cycl, int jitt)
 {
 	u32 len=SB_ADLEN & 0x7FFFFFFF;
 
@@ -189,7 +215,7 @@ int dma_end_sched(int tag, int cycl, int jitt)
 	return 0;
 }
 
-void Write_SB_ADST(u32 addr, u32 data)
+static void Write_SB_ADST(u32 addr, u32 data)
 {
 	//0x005F7800	SB_ADSTAG	RW	AICA:G2-DMA G2 start address 
 	//0x005F7804	SB_ADSTAR	RW	AICA:G2-DMA system memory start address 
@@ -214,7 +240,10 @@ void Write_SB_ADST(u32 addr, u32 data)
 				u32 tmp=src;
 				src=dst;
 				dst=tmp;
+				DEBUG_LOG(AICA, "AICA-DMA : SB_ADDIR==1 DMA Read to 0x%X from 0x%X %d bytes", dst, src, len);
 			}
+			else
+				DEBUG_LOG(AICA, "AICA-DMA : SB_ADDIR==0:DMA Write to 0x%X from 0x%X %d bytes", dst, src, len);
 
 			WriteMemBlock_nommu_dma(dst,src,len);
 
@@ -231,7 +260,7 @@ void Write_SB_ADST(u32 addr, u32 data)
 	}
 }
 
-void Write_SB_E1ST(u32 addr, u32 data)
+static void Write_SB_E1ST(u32 addr, u32 data)
 {
 	//0x005F7800	SB_ADSTAG	RW	AICA:G2-DMA G2 start address 
 	//0x005F7804	SB_ADSTAR	RW	AICA:G2-DMA system memory start address 
@@ -285,7 +314,7 @@ void Write_SB_E1ST(u32 addr, u32 data)
 	}
 }
 
-void Write_SB_E2ST(u32 addr, u32 data)
+static void Write_SB_E2ST(u32 addr, u32 data)
 {
 	if ((data & 1) && (SB_E2EN & 1))
 	{
@@ -321,7 +350,7 @@ void Write_SB_E2ST(u32 addr, u32 data)
 }
 
 
-void Write_SB_DDST(u32 addr, u32 data)
+static void Write_SB_DDST(u32 addr, u32 data)
 {
 	if ((data & 1) && (SB_DDEN & 1))
 	{
