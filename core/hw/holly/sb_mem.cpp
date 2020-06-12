@@ -260,9 +260,10 @@ static void WriteBios(u32 addr,u32 data,u32 sz)
 
 //use unified size handler for registers
 //it really makes no sense to use different size handlers on em -> especially when we can use templates :p
-template<u32 sz, class T>
+template<class T>
 T DYNACALL ReadMem_area0(u32 addr)
 {
+	constexpr u32 sz = (u32)sizeof(T);
 	addr &= 0x01FFFFFF;//to get rid of non needed bits
 	const u32 base=(addr>>16);
 	//map 0x0000 to 0x01FF to Default handler
@@ -327,7 +328,7 @@ T DYNACALL ReadMem_area0(u32 addr)
 	//map 0x0070 to 0x0070
 	else if ((base ==0x0070) /*&& (addr>= 0x00700000)*/ && (addr<=0x00707FFF)) //	:AICA- Sound Cntr. Reg.
 	{
-		return (T) ReadMem_aica_reg(addr,sz);//libAICA_ReadReg(addr,sz);
+		return (T)ReadMem_aica_reg(addr, sz);
 	}
 	//map 0x0071 to 0x0071
 	else if ((base ==0x0071) /*&& (addr>= 0x00710000)*/ && (addr<= 0x0071000B)) //	:AICA- RTC Cntr. Reg.
@@ -340,17 +341,24 @@ T DYNACALL ReadMem_area0(u32 addr)
 		ReadMemArrRet(aica_ram.data,addr&ARAM_MASK,sz);
 	}
 	//map 0x0100 to 0x01FF
-	else if ((base >=0x0100) && (base <=0x01FF) /*&& (addr>= 0x01000000) && (addr<= 0x01FFFFFF)*/) //	:Ext. Device
+	else if (base >= 0x0100 && base <= 0x01FF) // G2 Ext. Device #1
 	{
-		return (T)libExtDevice_ReadMem_A0_010(addr,sz);
+		if (settings.platform.system == DC_PLATFORM_NAOMI)
+			return (T)libExtDevice_ReadMem_A0_010(addr, sz);
+		else
+		{
+			INFO_LOG(MEMORY, "Read from BBA not implemented, addr=%x", addr);
+			return 0;
+		}
 	}
 	INFO_LOG(MEMORY, "Read from area0<%d> not implemented [Unassigned], addr=%x", sz, addr);
 	return 0;
 }
 
-template<u32 sz, class T>
+template<class T>
 void  DYNACALL WriteMem_area0(u32 addr,T data)
 {
+	constexpr u32 sz = (u32)sizeof(T);
 	addr &= 0x01FFFFFF;//to get rid of non needed bits
 
 	const u32 base=(addr>>16);
@@ -424,9 +432,12 @@ void  DYNACALL WriteMem_area0(u32 addr,T data)
 		WriteMemArr(aica_ram.data, addr & ARAM_MASK, data, sz);
 	}
 	//map 0x0100 to 0x01FF
-	else if ((base >=0x0100) && (base <=0x01FF) /*&& (addr>= 0x01000000) && (addr<= 0x01FFFFFF)*/) // Ext. Device
+	else if (base >= 0x0100 && base <= 0x01FF) // G2 Ext. Device #1
 	{
-		libExtDevice_WriteMem_A0_010(addr,data,sz);
+		if (settings.platform.system == DC_PLATFORM_NAOMI)
+			libExtDevice_WriteMem_A0_010(addr, data, sz);
+		else
+			INFO_LOG(COMMON, "Write to BBA not implemented, addr=%x, data=%x, size=%d", addr, data, sz);
 	}
 	else
 		INFO_LOG(COMMON, "Write to area0_32 not implemented [Unassigned], addr=%x,data=%x,size=%d", addr, data, sz);

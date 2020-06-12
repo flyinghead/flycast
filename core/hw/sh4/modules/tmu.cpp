@@ -135,8 +135,6 @@ void turn_on_off_ch(u32 ch, bool on)
 	tmu_mask[ch]=on?0xFFFFFFFF:0x00000000;
 	tmu_mask64[ch] = on ? 0xFFFFFFFFFFFFFFFF : 0x0000000000000000;
 	write_TMU_TCNTch(ch,TCNT);
-
-	sched_chan_tick(ch);
 }
 
 //Update internal counter registers
@@ -187,7 +185,6 @@ void UpdateTMUCounts(u32 reg)
 	}
 	tmu_shift[reg]+=2;
 	write_TMU_TCNTch(reg,TCNT);
-	sched_chan_tick(reg);
 }
 
 //Write to status registers
@@ -227,10 +224,6 @@ int sched_tmu_cb(int ch, int sch_cycl, int jitter)
 		
 		s64 tcnt64 = (s64)read_TMU_TCNTch64(ch);
 
-		u32 tcor = TMU_TCOR(ch);
-
-		u32 cycles = tcor << tmu_shift[ch];
-
 		//64 bit maths to differentiate big values from overflows
 		if (tcnt64 <= jitter) {
 			//raise interrupt, timer counted down
@@ -240,6 +233,7 @@ int sched_tmu_cb(int ch, int sch_cycl, int jitter)
 			//printf("Interrupt for %d, %d cycles\n", ch, sch_cycl);
 
 			//schedule next trigger by writing the TCNT register
+			u32 tcor = TMU_TCOR(ch);
 			write_TMU_TCNTch(ch, tcor + tcnt);
 		}
 		else {

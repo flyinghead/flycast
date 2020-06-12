@@ -84,17 +84,17 @@ static void map_area4(u32 base)
 
 //AREA 5	--	Ext. Device
 //Read Ext.Device
-template <u32 sz,class T>
+template <class T>
 T DYNACALL ReadMem_extdev_T(u32 addr)
 {
-	return (T)libExtDevice_ReadMem_A5(addr,sz);
+	return (T)libExtDevice_ReadMem_A5(addr, sizeof(T));
 }
 
 //Write Ext.Device
-template <u32 sz,class T>
+template <class T>
 void DYNACALL WriteMem_extdev_T(u32 addr,T data)
 {
-	libExtDevice_WriteMem_A5(addr,data,sz);
+	libExtDevice_WriteMem_A5(addr, data, sizeof(T));
 }
 
 _vmem_handler area5_handler;

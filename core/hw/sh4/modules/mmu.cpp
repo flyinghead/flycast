@@ -205,10 +205,8 @@ void mmu_raise_exception(u32 mmu_error, u32 address, u32 am)
 			RaiseException(0xC0, 0x100);
 		else if (am == MMU_TT_DREAD)		//READPROT - Data TLB Protection Violation Exception
 			RaiseException(0xA0, 0x100);
-		else
-		{
-			verify(false);
-		}
+		else								//READPROT - Instr TLB Protection Violation Exception
+			RaiseException(0xA0, 0x100);
 		return;
 
 		//Mem is write protected , firstwrite
@@ -499,14 +497,14 @@ u32 mmu_data_translation(u32 va, u32& rv)
 
 	if (sr.MD == 1 && ((va & 0xFC000000) == 0x7C000000))
 	{
+		// 7C000000 to 7FFFFFFF in P0 not translated in supervisor mode
 		rv = va;
 		return MMU_ERROR_NONE;
 	}
 
-	// Not called if CCN_MMUCR.AT == 0
-	//if ((CCN_MMUCR.AT == 0) || (fast_reg_lut[va >> 29] != 0))
 	if (fast_reg_lut[va >> 29] != 0)
 	{
+		// P1, P2 and P4 aren't translated
 		rv = va;
 		return MMU_ERROR_NONE;
 	}
@@ -665,7 +663,6 @@ void mmu_set_state()
 		WriteMem32 = &mmu_WriteMem<u32>;
 		WriteMem64 = &mmu_WriteMem<u64>;
 		_vmem_enable_mmu(true);
-		mmu_flush_table();
 	}
 	else
 	{
@@ -708,6 +705,7 @@ void MMU_reset()
 	memset(UTLB, 0, sizeof(UTLB));
 	memset(ITLB, 0, sizeof(ITLB));
 	mmu_set_state();
+	mmu_flush_table();
 }
 
 void MMU_term()

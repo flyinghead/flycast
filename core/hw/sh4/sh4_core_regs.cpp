@@ -33,31 +33,28 @@ static INLINE void ChangeFP()
 	}
 }
 
-//called when sr is changed and we must check for reg banks etc.. , returns true if interrupts got
+//called when sr is changed and we must check for reg banks etc.
+//returns true if interrupt pending
 bool UpdateSR()
 {
 	if (sr.MD)
 	{
-		if (old_sr.RB !=sr.RB)
+		if (old_sr.RB != sr.RB)
 			ChangeGPR();//bank change
 	}
 	else
 	{
-		if (sr.RB)
-		{
-			WARN_LOG(SH4, "UpdateSR MD=0;RB=1 , this must not happen");
-			sr.RB =0;//error - must always be 0
-		}
 		if (old_sr.RB)
 			ChangeGPR();//switch
 	}
 
-	old_sr.status=sr.status;
+	old_sr.status = sr.status;
+	old_sr.RB &= sr.MD;
 
 	return SRdecode();
 }
 
-//make x86 and sh4 float status registers match ;)
+//make host and sh4 float status registers match ;)
 u32 old_rm=0xFF;
 u32 old_dn=0xFF;
 
@@ -132,7 +129,7 @@ static void SetFloatStatusReg()
                 : "r"(off_mask), "r"(on_mask)
             );
     #else
-        printf("SetFloatStatusReg: Unsupported platform\n");
+	#error "SetFloatStatusReg: Unsupported platform"
     #endif
 #endif
 

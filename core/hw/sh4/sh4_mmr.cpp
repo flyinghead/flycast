@@ -9,6 +9,7 @@
 #include "modules/mmu.h"
 #include "modules/ccn.h"
 #include "modules/modules.h"
+#include "sh4_cache.h"
 
 //64bytes of sq // now on context ~
 
@@ -164,9 +165,10 @@ offset>>=2;
 
 //Region P4
 //Read P4
-template <u32 sz,class T>
+template <class T>
 T DYNACALL ReadMem_P4(u32 addr)
 {
+	constexpr size_t sz = sizeof(T);
 	switch((addr>>24)&0xFF)
 	{
 
@@ -178,10 +180,18 @@ T DYNACALL ReadMem_P4(u32 addr)
 		return 0;
 
 	case 0xF0:
-		return 0;
+		DEBUG_LOG(SH4, "IC Address read %08x", addr);
+		if (sz == 4)
+			return icache.ReadAddressArray(addr);
+		else
+			return 0;
 
 	case 0xF1:
-		return 0;
+		DEBUG_LOG(SH4, "IC Data read %08x", addr);
+		if (sz == 4)
+			return icache.ReadDataArray(addr);
+		else
+			return 0;
 
 	case 0xF2:
 		{
@@ -196,17 +206,18 @@ T DYNACALL ReadMem_P4(u32 addr)
 		}
 
 	case 0xF4:
-		{
-			//int W,Set,A;
-			//W=(addr>>14)&1;
-			//A=(addr>>3)&1;
-			//Set=(addr>>5)&0xFF;
-			//printf("Unhandled p4 read [Operand cache address array] %d:%d,%d  0x%x\n",Set,W,A,addr);
+		DEBUG_LOG(SH4, "OC Address read %08x", addr);
+		if (sz == 4)
+			return ocache.ReadAddressArray(addr);
+		else
 			return 0;
-		}
 
 	case 0xF5:
-		return 0;
+		DEBUG_LOG(SH4, "OC Data read %08x", addr);
+		if (sz == 4)
+			return ocache.ReadDataArray(addr);
+		else
+			return 0;
 
 	case 0xF6:
 		{
@@ -237,15 +248,10 @@ T DYNACALL ReadMem_P4(u32 addr)
 }
 
 //Write P4
-template <u32 sz,class T>
+template <class T>
 void DYNACALL WriteMem_P4(u32 addr,T data)
 {
-	/*if (((addr>>26)&0x7)==7)
-	{
-	WriteMem_area7(addr,data,sz);
-	return;
-	}*/
-
+	constexpr size_t sz = sizeof(T);
 	switch((addr>>24)&0xFF)
 	{
 
@@ -257,9 +263,15 @@ void DYNACALL WriteMem_P4(u32 addr,T data)
 		break;
 
 	case 0xF0:
+		DEBUG_LOG(SH4, "IC Address write %08x = %x", addr, data);
+		if (sz == 4)
+			icache.WriteAddressArray(addr, data);
 		return;
 
 	case 0xF1:
+		DEBUG_LOG(SH4, "IC Data write %08x = %x", addr, data);
+		if (sz == 4)
+			icache.WriteDataArray(addr, data);
 		return;
 
 	case 0xF2:
@@ -288,17 +300,15 @@ void DYNACALL WriteMem_P4(u32 addr,T data)
 		}
 
 	case 0xF4:
-		{
-			//int W,Set,A;
-			//W=(addr>>14)&1;
-			//A=(addr>>3)&1;
-			//Set=(addr>>5)&0xFF;
-			//printf("Unhandled p4 Write [Operand cache address array] %d:%d,%d  0x%x = %x\n",Set,W,A,addr,data);
-			return;
-		}
+		DEBUG_LOG(SH4, "OC Address write %08x = %x", addr, data);
+		if (sz == 4)
+			ocache.WriteAddressArray(addr, data);
+		return;
 
 	case 0xF5:
-		//printf("Unhandled p4 Write [Operand cache data array] 0x%x = %x\n",addr,data);
+		DEBUG_LOG(SH4, "OC Data write %08x = %x", addr, data);
+		if (sz == 4)
+			ocache.WriteDataArray(addr, data);
 		return;
 
 	case 0xF6:
@@ -380,10 +390,10 @@ void DYNACALL WriteMem_P4(u32 addr,T data)
 //***********
 //TODO : replace w/ mem mapped array
 //Read SQ
-template <u32 sz,class T>
+template <class T>
 T DYNACALL ReadMem_sq(u32 addr)
 {
-	if (sz!=4)
+	if (sizeof(T) != 4)
 	{
 		INFO_LOG(SH4, "Store Queue Error - only 4 byte read are possible[x%X]", addr);
 		return 0xDE;
@@ -396,10 +406,10 @@ T DYNACALL ReadMem_sq(u32 addr)
 
 
 //Write SQ
-template <u32 sz,class T>
+template <class T>
 void DYNACALL WriteMem_sq(u32 addr,T data)
 {
-	if (sz!=4)
+	if (sizeof(T) != 4)
 		INFO_LOG(SH4, "Store Queue Error - only 4 byte writes are possible[x%X=0x%X]", addr, data);
 
 	u32 united_offset=addr & 0x3C;
@@ -415,9 +425,10 @@ void DYNACALL WriteMem_sq(u32 addr,T data)
 #define OUT_OF_RANGE(reg) INFO_LOG(SH4, "Out of range on register %s index %x", reg, addr)
 
 //Read Area7
-template <u32 sz,class T>
+template <class T>
 T DYNACALL ReadMem_area7(u32 addr)
 {
+	constexpr size_t sz = sizeof(T);
 	/*
 	if (likely(addr==0xffd80024))
 	{
@@ -435,9 +446,7 @@ T DYNACALL ReadMem_area7(u32 addr)
 	{
 		return DMAC_CHCR(2).full;
 	}
-	//else if (addr==)
 
-	//printf("%08X\n",addr);
 	addr&=0x1FFFFFFF;
 	u32 map_base=addr>>16;
 	switch (map_base & 0x1FFF)
@@ -588,15 +597,15 @@ T DYNACALL ReadMem_area7(u32 addr)
 		break;
 	}
 
-
 	INFO_LOG(SH4, "Unknown Read from Area7 - addr=%x", addr);
 	return 0;
 }
 
 //Write Area7
-template <u32 sz,class T>
+template <class T>
 void DYNACALL WriteMem_area7(u32 addr,T data)
 {
+	constexpr size_t sz = sizeof(T);
 	if (likely(addr==0xFF000038))
 	{
 		CCN_QACR_write<0>(addr,data);
@@ -607,8 +616,6 @@ void DYNACALL WriteMem_area7(u32 addr,T data)
 		CCN_QACR_write<1>(addr,data);
 		return;
 	}	
-
-	//printf("%08X\n",addr);
 
 	addr&=0x1FFFFFFF;
 	u32 map_base=addr>>16;
@@ -756,50 +763,50 @@ void DYNACALL WriteMem_area7(u32 addr,T data)
 //On Chip Ram
 //***********
 //Read OCR
-template <u32 sz,class T>
+template <class T>
 T DYNACALL ReadMem_area7_OCR_T(u32 addr)
 {
 	if (CCN_CCR.ORA)
 	{
-		if (sz==1)
+		if (sizeof(T) == 1)
 			return (T)OnChipRAM[addr&OnChipRAM_MASK];
-		else if (sz==2)
+		else if (sizeof(T) == 2)
 			return (T)*(u16*)&OnChipRAM[addr&OnChipRAM_MASK];
-		else if (sz==4)
+		else if (sizeof(T) == 4)
 			return (T)*(u32*)&OnChipRAM[addr&OnChipRAM_MASK];
 		else
 		{
-			ERROR_LOG(SH4, "ReadMem_area7_OCR_T: template SZ is wrong = %d", sz);
+			ERROR_LOG(SH4, "ReadMem_area7_OCR_T: template SZ is wrong = %zd", sizeof(T));
 			return 0xDE;
 		}
 	}
 	else
 	{
-		INFO_LOG(SH4, "On Chip Ram Read, but OCR is disabled");
+		INFO_LOG(SH4, "On Chip Ram Read, but OCR is disabled. addr %x", addr);
 		return 0xDE;
 	}
 }
 
 //Write OCR
-template <u32 sz,class T>
+template <class T>
 void DYNACALL WriteMem_area7_OCR_T(u32 addr,T data)
 {
 	if (CCN_CCR.ORA)
 	{
-		if (sz==1)
+		if (sizeof(T) == 1)
 			OnChipRAM[addr&OnChipRAM_MASK]=(u8)data;
-		else if (sz==2)
+		else if (sizeof(T) == 2)
 			*(u16*)&OnChipRAM[addr&OnChipRAM_MASK]=(u16)data;
-		else if (sz==4)
+		else if (sizeof(T) == 4)
 			*(u32*)&OnChipRAM[addr&OnChipRAM_MASK]=data;
 		else
 		{
-			ERROR_LOG(SH4, "WriteMem_area7_OCR_T: template SZ is wrong = %d", sz);
+			ERROR_LOG(SH4, "WriteMem_area7_OCR_T: template SZ is wrong = %zd", sizeof(T));
 		}
 	}
 	else
 	{
-		INFO_LOG(SH4, "On Chip Ram Write, but OCR is disabled");
+		INFO_LOG(SH4, "On Chip Ram Write, but OCR is disabled. addr %x", addr);
 	}
 }
 

@@ -16,6 +16,7 @@
 #define CPU_RATIO      (8)
 
 sh4_icache icache;
+sh4_ocache ocache;
 
 static s32 l;
 

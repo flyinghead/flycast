@@ -6,6 +6,7 @@
 #include "sh4_opcodes.h"
 #include "../sh4_core.h"
 #include "../sh4_rom.h"
+#include "../sh4_cache.h"
 
 #include "hw/sh4/sh4_mem.h"
 
@@ -25,6 +26,17 @@
 void iNimp(const char*str);
 
 #define IS_DENORMAL(f) (((*(f))&0x7f800000) == 0)
+
+#ifdef STRICT_MODE
+#define ReadMem8(addr) (ocache.ReadMem<u8>(addr))
+#define ReadMem16(addr) (ocache.ReadMem<u16>(addr))
+#define ReadMem32(addr) (ocache.ReadMem<u32>(addr))
+#define ReadMem64(addr) (ocache.ReadMem<u64>(addr))
+#define WriteMem8(addr, data) (ocache.WriteMem<u8>(addr, data))
+#define WriteMem16(addr, data) (ocache.WriteMem<u16>(addr, data))
+#define WriteMem32(addr, data) (ocache.WriteMem<u32>(addr, data))
+#define WriteMem64(addr, data) (ocache.WriteMem<u64>(addr, data))
+#endif
 
 #define ReadMemU64(to,addr) to=ReadMem64(addr)
 #define ReadMemU32(to,addr) to=ReadMem32(addr)
@@ -73,7 +85,7 @@ INLINE void Denorm32(float &value)
 
 
 #define CHECK_FPU_32(v) v = fixNaN(v)
-#define CHECK_FPU_64(v)
+#define CHECK_FPU_64(v) v = fixNaN64(v)
 
 
 //fadd <FREG_M>,<FREG_N>
@@ -626,7 +638,7 @@ sh4op(i1111_nnnn_0110_1101)
 		//Operation _can_ be done on sh4
 		u32 n = GetN(op)>>1;
 
-		SetDR(n,sqrt(GetDR(n)));
+		SetDR(n, fixNaN64(sqrt(GetDR(n))));
 	}
 }
 

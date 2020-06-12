@@ -81,15 +81,19 @@ void CCN_CCR_write(u32 addr, u32 value)
 	CCN_CCR_type temp;
 	temp.reg_data=value;
 
-
 	if (temp.ICI) {
 		DEBUG_LOG(SH4, "Sh4: i-cache invalidation %08X", curr_pc);
 		//Shikigami No Shiro II uses ICI frequently
-		icache.Invalidate();
+		if (!settings.dynarec.Enable)
+			icache.Invalidate();
+		temp.ICI = 0;
 	}
-
-	temp.ICI=0;
-	temp.OCI=0;
+	if (temp.OCI) {
+		DEBUG_LOG(SH4, "Sh4: o-cache invalidation %08X", curr_pc);
+		if (!settings.dynarec.Enable)
+			ocache.Invalidate();
+		temp.OCI = 0;
+	}
 
 	CCN_CCR=temp;
 }
