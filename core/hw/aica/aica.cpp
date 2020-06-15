@@ -101,7 +101,8 @@ void libAICA_TimeStep()
 	for (int i=0;i<3;i++)
 		timers[i].StepTimer(1);
 
-	SCIPD->SAMPLE_DONE=1;
+	SCIPD->SAMPLE_DONE = 1;
+	MCIPD->SAMPLE_DONE = 1;
 
 	if (settings.aica.NoBatch || settings.aica.DSPEnabled)
 		AICA_Sample();
@@ -109,6 +110,57 @@ void libAICA_TimeStep()
 	//Make sure sh4/arm interrupt system is up to date :)
 	update_arm_interrupts();
 	UpdateSh4Ints();	
+}
+
+static void AicaInternalDMA()
+{
+	if (!CommonData->DEXE)
+		return;
+
+	// Start dma
+	DEBUG_LOG(AICA, "AICA internal DMA: DGATE %d DDIR %d DLG %x", CommonData->DGATE, CommonData->DDIR, CommonData->DLG);
+	if (CommonData->DGATE)
+	{
+		// Clear memory/registers
+		if (CommonData->DDIR)
+		{
+			// to wave mem
+			u32 addr = ((CommonData->DMEA_hi << 16) | (CommonData->DMEA_lo << 2)) & ARAM_MASK;
+			u32 len = std::min(CommonData->DLG, ARAM_SIZE - addr);
+			memset(&aica_ram.data[addr], 0, len * 4);
+		}
+		else
+		{
+			// to regs
+			u32 addr = CommonData->DRGA << 2;
+			for (u32 i = 0; i < CommonData->DLG; i++, addr += 4)
+				WriteMem_aica_reg(addr, 0, 4);
+		}
+	}
+	else
+	{
+		// Data xfer
+		u32 waddr = ((CommonData->DMEA_hi << 16) | (CommonData->DMEA_lo << 2)) & ARAM_MASK;
+		u32 raddr = CommonData->DRGA << 2;
+		u32 len = std::min(CommonData->DLG, ARAM_SIZE - waddr);
+		if (CommonData->DDIR)
+		{
+			// reg to wave mem
+			for (u32 i = 0; i < len; i++, waddr += 4, raddr += 4)
+				*(u32*)&aica_ram[waddr] = ReadMem_aica_reg(raddr, 4);
+		}
+		else
+		{
+			// wave mem to regs
+			for (u32 i = 0; i < len; i++, waddr += 4, raddr += 4)
+				WriteMem_aica_reg(raddr, *(u32*)&aica_ram[waddr], 4);
+		}
+	}
+	CommonData->DEXE = 0;
+	MCIPD->DMA_END = 1;
+	UpdateSh4Ints();
+	SCIPD->DMA_END = 1;
+	update_arm_interrupts();
 }
 
 //Memory i/o
@@ -168,6 +220,12 @@ void WriteAicaReg(u32 reg,u32 data)
 	case TIMER_C:
 		WriteMemArr(aica_reg,reg,data,sz);
 		timers[2].RegisterWrite();
+		break;
+
+	// DEXE, DDIR, DLG
+	case 0x288C:
+		WriteMemArr(aica_reg, reg, data, sz);
+		AicaInternalDMA();
 		break;
 
 	default:

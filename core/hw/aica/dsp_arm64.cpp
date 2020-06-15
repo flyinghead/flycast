@@ -115,7 +115,6 @@ public:
 
 			if (op.XSEL || op.YRL || (op.ADRL && op.SHIFT != 3))
 			{
-				verify(op.IRA < 0x38);
 				if (op.IRA <= 0x1f)
 					//INPUTS = DSP->MEMS[op.IRA];
 					Ldr(INPUTS, dsp_operand(DSP->MEMS, op.IRA));
