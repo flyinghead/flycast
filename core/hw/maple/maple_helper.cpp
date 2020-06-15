@@ -8,7 +8,7 @@ u32 maple_GetPort(u32 addr)
 		if ((1<<i)&addr)
 			return i;
 	}
-	return 0;
+	return 5;
 }
 u32 maple_GetAttachedDevices(u32 bus)
 {

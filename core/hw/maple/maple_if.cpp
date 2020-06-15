@@ -66,12 +66,14 @@ void maple_vblank()
 	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
 		maple_handle_reconnect();
 }
-void maple_SB_MSHTCL_Write(u32 addr, u32 data)
+
+static void maple_SB_MSHTCL_Write(u32 addr, u32 data)
 {
 	if (data&1)
 		maple_ddt_pending_reset=false;
 }
-void maple_SB_MDST_Write(u32 addr, u32 data)
+
+static void maple_SB_MDST_Write(u32 addr, u32 data)
 {
 	if (data & 0x1)
 	{
@@ -83,7 +85,7 @@ void maple_SB_MDST_Write(u32 addr, u32 data)
 	}
 }
 
-void maple_SB_MDEN_Write(u32 addr, u32 data)
+static void maple_SB_MDEN_Write(u32 addr, u32 data)
 {
 	SB_MDEN=data&1;
 
@@ -93,6 +95,26 @@ void maple_SB_MDEN_Write(u32 addr, u32 data)
 	}
 }
 
+static bool check_mdapro(u32 addr)
+{
+	u32 bottom = std::max(0x0C000000u, ((((SB_MDAPRO >> 8) & 0x7f) << 20) | 0x08000000));
+	u32 top = std::min(0x0FFFFFE0u, (((SB_MDAPRO & 0x7f) << 20) | 0x080fffff));
+	if (((addr >> 29) & 7) == 7
+			|| (addr & 0x0fffffff) < bottom
+			|| (addr & 0x0fffffff) > top)
+	{
+		INFO_LOG(MAPLE, "MAPLE ERROR : Invalid address: %08x. SB_MDAPRO: %x %x", addr, (SB_MDAPRO >> 8) & 0x7f, SB_MDAPRO & 0x7f);
+		return false;
+	}
+	return true;
+}
+
+static void maple_SB_MDSTAR_Write(u32 addr, u32 data)
+{
+	SB_MDSTAR = data;
+	if (!check_mdapro(data))
+		asic_RaiseInterrupt(holly_MAPLE_ILLADDR);
+}
 
 bool IsOnSh4Ram(u32 addr)
 {
@@ -114,6 +136,15 @@ static void maple_DoDma()
 
 	DEBUG_LOG(MAPLE, "Maple: DoMapleDma SB_MDSTAR=%x", SB_MDSTAR);
 	u32 addr = SB_MDSTAR;
+#ifdef STRICT_MODE
+	if (!check_mdapro(addr))
+	{
+		asic_RaiseInterrupt(holly_MAPLE_ILLADDR);
+		SB_MDST = 0;
+		return;
+	}
+#endif
+	const bool swap_msb = (SB_MMSEL == 0);
 	u32 xfer_count=0;
 	bool last = false;
 	while (last != true)
@@ -132,14 +163,22 @@ static void maple_DoDma()
 		{
 		case MP_Start:
 		{
+#ifdef STRICT_MODE
+			if (!check_mdapro(header_2) || !check_mdapro(addr + 8 + plen * sizeof(u32) - 1))
+			{
+				asic_RaiseInterrupt(holly_MAPLE_OVERRUN);
+				SB_MDST = 0;
+				return;
+			}
+#else
 			if (!IsOnSh4Ram(header_2))
 			{
 				INFO_LOG(MAPLE, "MAPLE ERROR : DESTINATION NOT ON SH4 RAM 0x%X", header_2);
 				header_2&=0xFFFFFF;
 				header_2|=(3<<26);
 			}
+#endif
 			u32* p_out=(u32*)GetMemPtr(header_2,4);
-			u32 outlen=0;
 
 			u32* p_data =(u32*) GetMemPtr(addr + 8,(plen)*sizeof(u32));
 			if (p_data == NULL)
@@ -148,30 +187,55 @@ static void maple_DoDma()
 				SB_MDST=0;
 				return;
 			}
-			
+			const u32 frame_header = swap_msb ? SWAP32(p_data[0]) : p_data[0];
+
 			//Command code 
-			u32 command=p_data[0] &0xFF;
+			u32 command = frame_header & 0xFF;
 			//Recipient address 
-			u32 reci=(p_data[0] >> 8) & 0xFF;//0-5;
+			u32 reci = (frame_header >> 8) & 0xFF;//0-5;
+			//Sender address 
+			//u32 send = (frame_header >> 16) & 0xFF;
+			//Number of additional words in frame 
+			u32 inlen = (frame_header >> 24) & 0xFF;
+
 			u32 port=maple_GetPort(reci);
 			u32 bus=maple_GetBusId(reci);
-			//Sender address 
-			u32 send=(p_data[0] >> 16) & 0xFF;
-			//Number of additional words in frame 
-			u32 inlen=(p_data[0]>>24) & 0xFF;
-			u32 resp=0;
-			inlen*=4;
 
 			if (MapleDevices[bus][5] && MapleDevices[bus][port])
 			{
-				u32 outlen = MapleDevices[bus][port]->RawDma(&p_data[0], inlen + 4, &p_out[0]);
+				if (swap_msb)
+				{
+					static u32 maple_in_buf[1024 / 4];
+					static u32 maple_out_buf[1024 / 4];
+					maple_in_buf[0] = frame_header;
+					for (u32 i = 1; i < inlen; i++)
+						maple_in_buf[i] = SWAP32(p_data[i]);
+					p_data = maple_in_buf;
+					p_out = maple_out_buf;
+				}
+				u32 outlen = MapleDevices[bus][port]->RawDma(&p_data[0], inlen * 4 + 4, &p_out[0]);
 				xfer_count += outlen;
+#ifdef STRICT_MODE
+				if (!check_mdapro(header_2 + outlen - 1))
+				{
+					// TODO: This isn't correct (with SB_MMSEL=1) since the interrupt
+					// should be raised before the memory is written to
+					asic_RaiseInterrupt(holly_MAPLE_OVERRUN);
+					SB_MDST = 0;
+					return;
+				}
+#endif
+				if (swap_msb)
+				{
+					u32 *final_out = (u32 *)GetMemPtr(header_2, outlen);
+					for (u32 i = 0; i < outlen / 4; i++)
+						final_out[i] = SWAP32(p_out[i]);
+				}
 			}
 			else
 			{
 				if (port != 5 && command != 1)
-					INFO_LOG(MAPLE, "MAPLE: Unknown device bus %d port %d cmd %d", bus, port, command);
-				outlen=4;
+					INFO_LOG(MAPLE, "MAPLE: Unknown device bus %d port %d cmd %d reci %d", bus, port, command, reci);
 				p_out[0]=0xFFFFFFFF;
 			}
 
@@ -234,6 +298,9 @@ void maple_Init()
 	sb_rio_register(SB_MDST_addr,RIO_WF,0,&maple_SB_MDST_Write);
 	sb_rio_register(SB_MDEN_addr,RIO_WF,0,&maple_SB_MDEN_Write);
 	sb_rio_register(SB_MSHTCL_addr,RIO_WF,0,&maple_SB_MSHTCL_Write);
+#ifdef STRICT_MODE
+	sb_rio_register(SB_MDSTAR_addr, RIO_WF, 0, &maple_SB_MDSTAR_Write);
+#endif
 
 	maple_schid=sh4_sched_register(0,&maple_schd);
 }

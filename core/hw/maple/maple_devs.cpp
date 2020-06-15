@@ -87,8 +87,6 @@ enum MapleDeviceRV
 	MDRS_JVSReply		 = 0x87, // JVS I/O
 };
 
-#define SWAP32(a) ((((a) & 0xff) << 24)  | (((a) & 0xff00) << 8) | (((a) >> 8) & 0xff00) | (((a) >> 24) & 0xff))
-
 //fill in the info
 void maple_device::Setup(u32 prt)
 {
@@ -242,6 +240,7 @@ struct maple_sega_controller: maple_base
 		switch (cmd)
 		{
 		case MDC_DeviceRequest:
+		case MDC_AllStatusReq:
 			//caps
 			//4
 			w32(MFID_0_Input);
@@ -270,7 +269,7 @@ struct maple_sega_controller: maple_base
 			//2
 			w16(0x01F4);	// 50 mA
 
-			return MDRS_DeviceStatus;
+			return cmd == MDC_DeviceRequest ? MDRS_DeviceStatus : MDRS_DeviceStatusAll;
 
 			//controller condition
 		case MDCF_GetCondition:
@@ -307,8 +306,14 @@ struct maple_sega_controller: maple_base
 
 			return MDRS_DataTransfer;
 
+		case MDC_DeviceReset:
+			return MDRS_DeviceReply;
+
+		case MDC_DeviceKill:
+			return MDRS_DeviceReply;
+
 		default:
-			//printf("maple_sega_controller UNKOWN MAPLE COMMAND %d\n",cmd);
+			INFO_LOG(MAPLE, "maple_sega_controller: Unknown maple command %d", cmd);
 			return MDRE_UnknownCmd;
 		}
 	}
@@ -542,6 +547,7 @@ struct maple_sega_vmu: maple_base
 		switch (cmd)
 		{
 		case MDC_DeviceRequest:
+		case MDC_AllStatusReq:
 			//caps
 			//4
 			w32(MFID_1_Storage | MFID_2_LCD | MFID_3_Clock);
@@ -567,7 +573,7 @@ struct maple_sega_vmu: maple_base
 			//2
 			w16(0x0082);	// 13 mA
 
-			return MDRS_DeviceStatus;
+			return cmd == MDC_DeviceRequest ? MDRS_DeviceStatus : MDRS_DeviceStatusAll;
 
 			//in[0] is function used
 			//out[0] is function used
@@ -829,6 +835,11 @@ struct maple_sega_vmu: maple_base
 				}
 			}
 
+		case MDC_DeviceReset:
+			return MDRS_DeviceReply;
+
+		case MDC_DeviceKill:
+			return MDRS_DeviceReply;
 
 		default:
 			DEBUG_LOG(MAPLE, "Unknown MAPLE COMMAND %d", cmd);
@@ -870,6 +881,7 @@ struct maple_microphone: maple_base
 		switch (cmd)
 		{
 		case MDC_DeviceRequest:
+		case MDC_AllStatusReq:
 			DEBUG_LOG(MAPLE, "maple_microphone::dma MDC_DeviceRequest");
 			//this was copied from the controller case with just the id and name replaced!
 
@@ -901,7 +913,7 @@ struct maple_microphone: maple_base
 			//2
 			w16(0x01F4);	// 50 mA
 
-			return MDRS_DeviceStatus;
+			return cmd == MDC_DeviceRequest ? MDRS_DeviceStatus : MDRS_DeviceStatusAll;
 
 		case MDCF_GetCondition:
 			{
@@ -1026,6 +1038,9 @@ struct maple_microphone: maple_base
 			}
 		}
 
+		case MDC_DeviceKill:
+			return MDRS_DeviceReply;
+
 		default:
 			INFO_LOG(MAPLE, "maple_microphone::dma UNHANDLED MAPLE COMMAND %d", cmd);
 			return MDRE_UnknownCmd;
@@ -1063,6 +1078,7 @@ struct maple_sega_purupuru : maple_base
 		switch (cmd)
 		{
 		case MDC_DeviceRequest:
+		case MDC_AllStatusReq:
 			//caps
 			//4
 			w32(MFID_8_Vibration);
@@ -1091,7 +1107,7 @@ struct maple_sega_purupuru : maple_base
 			//2
 			w16(0x0640);	// 160 mA
 
-			return MDRS_DeviceStatus;
+			return cmd == MDC_DeviceRequest ? MDRS_DeviceStatus : MDRS_DeviceStatusAll;
 
 			//get last vibration
 		case MDCF_GetCondition:
@@ -1161,6 +1177,12 @@ struct maple_sega_purupuru : maple_base
 
 			return MDRS_DeviceReply;
 
+		case MDC_DeviceReset:
+			return MDRS_DeviceReply;
+
+		case MDC_DeviceKill:
+			return MDRS_DeviceReply;
+
 		default:
 			INFO_LOG(MAPLE, "UNKOWN MAPLE COMMAND %d", cmd);
 			return MDRE_UnknownCmd;
@@ -1184,6 +1206,7 @@ struct maple_keyboard : maple_base
 		switch (cmd)
 		{
 		case MDC_DeviceRequest:
+		case MDC_AllStatusReq:
 			//caps
 			//4
 			w32(MFID_6_Keyboard);
@@ -1215,7 +1238,7 @@ struct maple_keyboard : maple_base
 			// Maximum current consumption (2)
 			w16(0x01F5);	// 50.1 mA
 
-			return MDRS_DeviceStatus;
+			return cmd == MDC_DeviceRequest ? MDRS_DeviceStatus : MDRS_DeviceStatusAll;
 
 		case MDCF_GetCondition:
 			w32(MFID_6_Keyboard);
@@ -1231,6 +1254,12 @@ struct maple_keyboard : maple_base
 			}
 
 			return MDRS_DataTransfer;
+
+		case MDC_DeviceReset:
+			return MDRS_DeviceReply;
+
+		case MDC_DeviceKill:
+			return MDRS_DeviceReply;
 
 		default:
 			INFO_LOG(MAPLE, "Keyboard: unknown MAPLE COMMAND %d", cmd);
@@ -1278,6 +1307,7 @@ struct maple_mouse : maple_base
 		switch (cmd)
 		{
 		case MDC_DeviceRequest:
+		case MDC_AllStatusReq:
 			//caps
 			//4
 			w32(MFID_9_Mouse);
@@ -1309,7 +1339,7 @@ struct maple_mouse : maple_base
 			// Maximum current consumption (2)
 			w16(0x0120);	// 28.8 mA
 
-			return MDRS_DeviceStatus;
+			return cmd == MDC_DeviceRequest ? MDRS_DeviceStatus : MDRS_DeviceStatusAll;
 
 		case MDCF_GetCondition:
 			w32(MFID_9_Mouse);
@@ -1339,6 +1369,12 @@ struct maple_mouse : maple_base
 
 			return MDRS_DataTransfer;
 
+		case MDC_DeviceReset:
+			return MDRS_DeviceReply;
+
+		case MDC_DeviceKill:
+			return MDRS_DeviceReply;
+
 		default:
 			INFO_LOG(MAPLE, "Mouse: unknown MAPLE COMMAND %d", cmd);
 			return MDRE_UnknownCmd;
@@ -1362,6 +1398,7 @@ struct maple_lightgun : maple_base
 		switch (cmd)
 		{
 		case MDC_DeviceRequest:
+		case MDC_AllStatusReq:
 			//caps
 			//4
 			w32(MFID_7_LightGun | MFID_0_Input);
@@ -1393,7 +1430,7 @@ struct maple_lightgun : maple_base
 			// Maximum current consumption (2)
 			w16(0x0120);	// 28.8 mA
 
-			return MDRS_DeviceStatus;
+			return cmd == MDC_DeviceRequest ? MDRS_DeviceStatus : MDRS_DeviceStatusAll;
 
 		case MDCF_GetCondition:
 		{
@@ -1416,8 +1453,13 @@ struct maple_lightgun : maple_base
 			//4
 			w32(0x80808080);
 		}
-
 		return MDRS_DataTransfer;
+
+		case MDC_DeviceReset:
+			return MDRS_DeviceReply;
+
+		case MDC_DeviceKill:
+			return MDRS_DeviceReply;
 
 		default:
 			INFO_LOG(MAPLE, "Light gun: unknown MAPLE COMMAND %d", cmd);
@@ -2519,15 +2561,21 @@ struct maple_naomi_jamma : maple_sega_controller
 			w8(0x00);
 			w8(0x20);
 			w8(0x00);
+			break;
 
+		case MDC_AllStatusReq:
+			w8(MDRS_DeviceStatusAll);
+			w8(0x00);
+			w8(0x20);
+			w8(0x00);
 			break;
 
 		case MDC_DeviceReset:
+		case MDC_DeviceKill:
 			w8(MDRS_DeviceReply);
 			w8(0x00);
 			w8(0x20);
 			w8(0x00);
-
 			break;
 
 		case MDCF_GetCondition:

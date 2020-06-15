@@ -109,22 +109,22 @@ enum HollyInterruptID
 		//bit 0 = RENDER : ISP out of Cache(Buffer over flow)
 		//bit 1 = RENDER : Hazard Processing of Strip Buffer
 		holly_PRIM_NOMEM = holly_err | 0x02,	//bit 2 = TA : ISP/TSP Parameter Overflow
-		holly_MATR_NOMEM = holly_err | 0x03		//bit 3 = TA : Object List Pointer Overflow
+		holly_MATR_NOMEM = holly_err | 0x03,	//bit 3 = TA : Object List Pointer Overflow
 		//bit 4 = TA : Illegal Parameter
 		//bit 5 = TA : FIFO Overflow
 		//bit 6 = PVRIF : Illegal Address set
 		//bit 7 = PVRIF : DMA over run
-		//bit 8 = MAPLE : Illegal Address set
-		//bit 9 = MAPLE : DMA over run
-		//bit 10 = MAPLE : Write FIFO over flow
-		//bit 11 = MAPLE : Illegal command
+		holly_MAPLE_ILLADDR = holly_err | 0x08,  //bit 8 = MAPLE : Illegal Address set
+		holly_MAPLE_OVERRUN = holly_err | 0x09,  //bit 9 = MAPLE : DMA over run
+		holly_MAPLE_FIFO = holly_err | 0x0a,     //bit 10 = MAPLE : Write FIFO overflow
+		holly_MAPLE_ILLCMD = holly_err | 0x0b,   //bit 11 = MAPLE : Illegal command
 		//bit 12 = G1 : Illegal Address set
 		//bit 13 = G1 : GD-DMA over run
 		//bit 14 = G1 : ROM/FLASH access at GD-DMA
-		//bit 15 = G2 : AICA-DMA Illegal Address set
-		//bit 16 = G2 : Ext-DMA1 Illegal Address set
-		//bit 17 = G2 : Ext-DMA2 Illegal Address set
-		//bit 18 = G2 : Dev-DMA Illegal Address set
+		holly_AICA_ILLADDR = holly_err | 0x0f,   //bit 15 = G2 : AICA-DMA Illegal Address set
+		holly_EXT1_ILLADDR = holly_err | 0x10,   //bit 16 = G2 : Ext-DMA1 Illegal Address set
+		holly_EXT2_ILLADDR = holly_err | 0x11,   //bit 17 = G2 : Ext-DMA2 Illegal Address set
+		holly_DEV_ILLADDR = holly_err | 0x12,    //bit 18 = G2 : Dev-DMA Illegal Address set
 		//bit 19 = G2 : AICA-DMA over run
 		//bit 20 = G2 : Ext-DMA1 over run
 		//bit 21 = G2 : Ext-DMA2 over run
