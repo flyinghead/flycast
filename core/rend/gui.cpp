@@ -1298,7 +1298,7 @@ static void gui_display_settings()
 		    {
 		    	ImGui::Checkbox("Safe Mode", &settings.dynarec.safemode);
 	            ImGui::SameLine();
-	            ShowHelpMarker("Do not optimize integer division. Recommended");
+	            ShowHelpMarker("Do not optimize integer division. Not recommended");
 #if HOST_CPU == CPU_ARM
 		    	ImGui::Checkbox("Unstable Optimizations", &settings.dynarec.unstable_opt);
 	            ImGui::SameLine();

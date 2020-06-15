@@ -712,7 +712,7 @@ void InitSettings()
 	settings.dynarec.Enable			= true;
 	settings.dynarec.idleskip		= true;
 	settings.dynarec.unstable_opt	= false;
-	settings.dynarec.safemode		= true;
+	settings.dynarec.safemode		= false;
 	settings.dynarec.disable_vmem32	= false;
 	settings.dreamcast.cable		= 3;	// TV composite
 	settings.dreamcast.region		= 3;	// default

@@ -74,9 +74,6 @@ static void recSh4_Run()
 	sh4_dyna_rcb=(u8*)&Sh4cntx + sizeof(Sh4cntx);
 	INFO_LOG(DYNAREC, "cntx // fpcb offset: %td // pc offset: %td // pc %08X", (u8*)&sh4rcb.fpcb - sh4_dyna_rcb, (u8*)&sh4rcb.cntx.pc - sh4_dyna_rcb, sh4rcb.cntx.pc);
 
-	if (!settings.dynarec.safemode)
-		NOTICE_LOG(DYNAREC, "Warning: Dynarec safe mode is off");
-
 	if (settings.dynarec.unstable_opt)
 		NOTICE_LOG(DYNAREC, "Warning: Unstable optimizations is on");
 	

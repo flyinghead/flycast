@@ -103,8 +103,6 @@ extern "C" f32 fipr_asm(float* fn, float* fm);
 #include "decoder.h"
 #include "../sh4_rom.h"
 
-
-
 #define BIN_OP_I_BASE(code,type,rtype) \
 shil_canonical \
 ( \
@@ -611,35 +609,18 @@ shil_canonical
 (
 u64,f1,(u32 r1, s32 r2, s32 r3),
 	s64 dividend = ((s64)r3 << 32) | r1;
-	bool negative;
-	if ((r3 ^ r2) & 0x80000000)
-	{
-		// 1's complement -> 2's complement
-		if (dividend < 0)
-			dividend++;
-		negative = true;
-	}
-	else
-		negative = false;
+	// 1's complement -> 2's complement
+	if (dividend < 0)
+		dividend++;
 
 	s32 quo = (s32)(dividend / r2);
 	s32 rem = dividend - quo * r2;
+	u32 negative = (r3 ^ r2) & 0x80000000;
 	// 2's complement -> 1's complement
 	if (negative)
-	{
-		if (rem < 0 || (rem == 0 && r2 > 0))
-			rem--;
 		quo--;
-	}
-	else
-	{
-		// edge case
-		if (rem == 0 && dividend < 0 && !(quo & 1))
-		{
-			quo--;
-			rem += r2;
-		}
-	}
+	else if (r3 < 0)
+		rem--;
 
 	u64 rv;
 	((u32*)&rv)[0]=quo;
@@ -671,6 +652,9 @@ u32,f1,(s32 a,s32 b,u32 T),
 	}
 	else
 	{
+		// 2's complement -> 1's complement
+		if (b > 0)
+			a--;
 		if (T & 1)
 			a += b;
 	}
