@@ -277,7 +277,7 @@ bool dc_serialize(void **data, unsigned int *total_size)
 {
 	int i = 0;
 
-	serialize_version_enum version = V9;
+	serialize_version_enum version = V10;
 
 	*total_size = 0 ;
 
@@ -396,6 +396,7 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	register_serialize(SCI, data, total_size) ;
 	register_serialize(SCIF, data, total_size) ;
 	icache.Serialize(data, total_size);
+	ocache.Serialize(data, total_size);
 
 	REICAST_SA(mem_b.data, mem_b.size);
 
@@ -616,6 +617,7 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 	REICAST_US(set_mode_offset);
 	REICAST_US(ata_cmd);
 	REICAST_US(cdda);
+	cdda.status = (bool)cdda.status ? cdda_t::Playing : cdda_t::NoInfo;
 	REICAST_US(gd_state);
 	REICAST_US(gd_disk_type);
 	REICAST_US(data_write_mode);
@@ -669,6 +671,7 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 	register_unserialize(SCI, data, total_size, V9_LIBRETRO) ;
 	register_unserialize(SCIF, data, total_size, V9_LIBRETRO) ;
 	icache.Reset(true);
+	ocache.Reset(true);
 
 	REICAST_USA(mem_b.data, mem_b.size);
 	REICAST_USA(InterruptEnvId,32);
@@ -912,6 +915,8 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 	REICAST_US(set_mode_offset);
 	REICAST_US(ata_cmd);
 	REICAST_US(cdda);
+	if (version < V10)
+		cdda.status = (bool)cdda.status ? cdda_t::Playing : cdda_t::NoInfo;
 	REICAST_US(gd_state);
 	REICAST_US(gd_disk_type);
 	REICAST_US(data_write_mode);
@@ -998,6 +1003,10 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 		icache.Unserialize(data, total_size);
 	else
 		icache.Reset(true);
+	if (version >= V10)
+		ocache.Unserialize(data, total_size);
+	else
+		ocache.Reset(true);
 
 	REICAST_USA(mem_b.data, mem_b.size);
 

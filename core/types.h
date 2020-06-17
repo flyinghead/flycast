@@ -606,4 +606,5 @@ enum serialize_version_enum {
 	V7 = 802,
 	V8 = 803,
 	V9 = 804,
+	V10 = 805,
 } ;

@@ -200,7 +200,7 @@ struct ata_cmd_t
 
 struct cdda_t
 {
-	bool playing;
+	enum { NoInfo, Playing, Paused, Terminated } status;
 	u32 repeats;
 	union
 	{

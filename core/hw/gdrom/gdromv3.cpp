@@ -18,7 +18,6 @@ signed int sns_asc=0;
 signed int sns_ascq=0;
 signed int sns_key=0;
 
-
 u32 set_mode_offset;
 read_params_t read_params ;
 packet_cmd_t packet_cmd ;
@@ -63,7 +62,7 @@ GD_HardwareInfo_t GD_HardwareInfo;
 void libCore_CDDA_Sector(s16* sector)
 {
 	//silence ! :p
-	if (cdda.playing)
+	if (cdda.status == cdda_t::Playing)
 	{
 		libGDR_ReadSector((u8*)sector,cdda.CurrAddr.FAD,1,2352);
 		cdda.CurrAddr.FAD++;
@@ -72,8 +71,8 @@ void libCore_CDDA_Sector(s16* sector)
 			if (cdda.repeats==0)
 			{
 				//stop
-				cdda.playing=false;
-				SecNumber.Status=GD_STANDBY;
+				cdda.status = cdda_t::Terminated;
+				SecNumber.Status = GD_PAUSE;
 			}
 			else
 			{
@@ -98,13 +97,9 @@ static void FillReadBuffer()
 {
 	read_buff.cache_index=0;
 	u32 count = read_params.remaining_sectors;
-	u32 hint=0;
 
 	if (count > 32)
-	{
-		hint = std::max(count - 32, (u32)32);
 		count = 32;
-	}
 
 	read_buff.cache_size=count*read_params.sector_type;
 
@@ -250,7 +245,8 @@ void gd_set_state(gd_states state)
 
 void gd_setdisc()
 {
-	cdda.playing = false;
+	cdda.status = cdda_t::NoInfo;
+
 	DiscType newd = (DiscType)libGDR_GetDiscType();
 	
 	switch(newd)
@@ -264,7 +260,7 @@ void gd_setdisc()
 	case Open:
 		SecNumber.Status = GD_OPEN;
 		//GDStatus.BSY=0;
-		//GDStatus.DRDY=1;
+		GDStatus.DRDY=1;
 		break;
 
 	case Busy:
@@ -293,23 +289,20 @@ void gd_setdisc()
 
 	SecNumber.DiscFormat=gd_disk_type>>4;
 }
+
 void gd_reset()
 {
 	//Reset the drive
 	gd_setdisc();
 	gd_set_state(gds_waitcmd);
 }
-u32 GetFAD(u8* data, bool msf)
+
+static u32 GetFAD(u8* data, bool msf)
 {
-	if(msf)
-	{
-		INFO_LOG(GDROM, "GDROM: MSF FORMAT");
-		return ((data[0]*60*75) + (data[1]*75) + (data[2]));
-	}
+	if (msf)
+		return data[0] * 60 * 75 + data[1] * 75 + data[2];
 	else
-	{
-		return (data[0]<<16) | (data[1]<<8) | (data[2]);
-	}
+		return (data[0] << 16) | (data[1] << 8) | data[2];
 }
 
 //disk changes etc
@@ -322,7 +315,7 @@ void libCore_gdrom_disc_change()
 	memset(&read_buff, 0, sizeof(read_buff));
 	pio_buff = { gds_waitcmd, 0 };
 	ata_cmd = { 0 };
-	cdda = { 0 };
+	cdda = { cdda_t::NoInfo, 0 };
 }
 
 //This handles the work of setting up the pio regs/state :)
@@ -358,7 +351,9 @@ void gd_process_ata_cmd()
 	//Any ATA command clears these bits, unless aborted/error :p
 	Error.ABRT=0;
 	
-	if (sns_key==0x0 || sns_key==0xB)
+	if (sns_key == 0x0 			// No sense
+			|| sns_key == 0xB	// Aborted
+			|| sns_key == 6) 	// Unit attention
 		GDStatus.CHECK=0;
 	else
 		GDStatus.CHECK=1;
@@ -373,14 +368,11 @@ void gd_process_ata_cmd()
 			Clearing "busy" in the status register 
 			Asserting the INTRQ signal
 		*/
-
-		//this is all very hacky, I don't know if the abort is correct actually
-		//the above comment is from a wrong place in the docs ...
 		
-		Error.ABRT=1;
-		Error.Sense=sns_key;
-		GDStatus.BSY=0;
-		GDStatus.CHECK=1;
+		Error.ABRT = 1;
+		Error.Sense = sns_key;
+		GDStatus.BSY = 0;
+		GDStatus.CHECK = 1;
 
 		asic_RaiseInterrupt(holly_GDROM_CMD);
 		gd_set_state(gds_waitcmd);
@@ -389,13 +381,27 @@ void gd_process_ata_cmd()
 	case ATA_SOFT_RESET:
 		{
 			printf_ata("ATA_SOFT_RESET");
-			//DRV -> preserved -> wtf is it anyway ?
 			gd_reset();
+			GDStatus.full = 0;
+			Error.full = 1;
+			sns_key = 0;
+			SecNumber.Status = GD_PAUSE;
+			IntReason.full = 1;
+			// DC Checker expects these values
+			ByteCount.low = 0x14;
+			ByteCount.hi = 0xEB;
 		}
 		break;
 
 	case ATA_EXEC_DIAG:
-		printf_ata("ATA_EXEC_DIAG -- not implemented");
+		printf_ata("ATA_EXEC_DIAG");
+		Error.full = 1;	// No error
+		sns_key = 0;
+		GDStatus.BSY = 0;
+		GDStatus.CHECK = 1;
+
+		asic_RaiseInterrupt(holly_GDROM_CMD);
+		gd_set_state(gds_waitcmd);
 		break;
 
 	case ATA_SPI_PACKET:
@@ -404,8 +410,9 @@ void gd_process_ata_cmd()
 		break;
 
 	case ATA_IDENTIFY_DEV:
-		printf_ata("ATA_IDENTIFY_DEV");
-		gd_spi_pio_end((const u8*)&reply_a1[packet_cmd.data_8[2] >> 1], packet_cmd.data_8[4]);
+		printf_ata("ATA_IDENTIFY_DEV: offset %d len %d", packet_cmd.data_8[2], packet_cmd.data_8[4]);
+		GDStatus.BSY = 0;
+		gd_spi_pio_end((const u8*)&reply_a1[0], 0x50);
 		break;
 
 	case ATA_SET_FEATURES:
@@ -419,8 +426,8 @@ void gd_process_ata_cmd()
 		//DRDY is set on state change
 		GDStatus.DSC=0;
 		GDStatus.DF=0;
-		GDStatus.CHECK=0;
-		asic_RaiseInterrupt(holly_GDROM_CMD);  //???
+		GDStatus.DRQ = 0;
+		asic_RaiseInterrupt(holly_GDROM_CMD);
 		gd_set_state(gds_waitcmd);
 		break;
 
@@ -434,9 +441,6 @@ void gd_process_ata_cmd()
         SecNumber.full = 1;
         ByteCount.low = 0x14;
         ByteCount.hi = 0xeb;
-
-        // where did this come from?
-        //GDStatus.DRQ = 0;
 
         // ABORT command
         Error.full = 0x4;
@@ -458,46 +462,90 @@ void gd_process_ata_cmd()
 u32 gd_get_subcode(u32 format, u32 fad, u8 *subc_info)
 {
 	subc_info[0] = 0;
-	subc_info[1] = 0x15;	// no audio status info
-	if (format == 0)
+	switch (cdda.status)
 	{
+	case cdda_t::NoInfo:
+	default:
+		subc_info[1] = 0x15;	// No audio status info
+		break;
+	case cdda_t::Playing:
+		subc_info[1] = 0x11;	// Audio playback in progress
+		break;
+	case cdda_t::Paused:
+		subc_info[1] = 0x12;	// Audio playback paused
+		break;
+	case cdda_t::Terminated:
+		subc_info[1] = 0x13;	// Audio playback ended normally
+		break;
+	}
+
+	switch (format)
+	{
+	case 0:	// Raw subcode
 		subc_info[2] = 0;
 		subc_info[3] = 100;
 		libGDR_ReadSubChannel(subc_info + 4, 0, 100 - 4);
-	}
-	else
-	{
-		u32 elapsed;
-		u32 tracknum = libGDR_GetTrackNumber(fad, elapsed);
+		break;
 
-		//2 DATA Length MSB (0 = 0h)
-		subc_info[2] = 0;
-		//3 DATA Length LSB (14 = Eh)
-		subc_info[3] = 0xE;
-		//4 Control ADR
-		subc_info[4] = (SecNumber.DiscFormat == 0 ? 0 : 0x40) | 1; // Control = 4 for data track
-		//5-13	DATA-Q
-		u8* data_q = &subc_info[5 - 1];
-		//-When ADR = 1
-		//1 TNO - track number
-		data_q[1] = tracknum;
-		//2 X - index within track
-		data_q[2] = 1;
-		//3-5   Elapsed FAD within track
-		data_q[3] = elapsed >> 16;
-		data_q[4] = elapsed >> 8;
-		data_q[5] = elapsed;
-		//6 ZERO
-		data_q[6] = 0;
-		//7-9 FAD
-		data_q[7] = fad >> 16;
-		data_q[8] = fad >> 8;
-		data_q[9] = fad;
-		DEBUG_LOG(GDROM, "gd_get_subcode: %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x",
-				 subc_info[0], subc_info[1], subc_info[2], subc_info[3],
-				 subc_info[4], subc_info[5], subc_info[6], subc_info[7],
-				 subc_info[8], subc_info[9], subc_info[10], subc_info[11],
-				 subc_info[12], subc_info[13]);
+	case 1:	// Q data only
+	default:
+		{
+			u32 elapsed;
+			u32 tracknum = libGDR_GetTrackNumber(fad, elapsed);
+
+			//2 DATA Length MSB (0 = 0h)
+			subc_info[2] = 0;
+			//3 DATA Length LSB (14 = Eh)
+			subc_info[3] = 0xE;
+			//4 Control ADR
+			subc_info[4] = (SecNumber.DiscFormat == 0 ? 0 : 0x40) | 1; // Control = 4 for data track
+			//5-13	DATA-Q
+			u8* data_q = &subc_info[5 - 1];
+			//-When ADR = 1
+			//1 TNO - track number
+			data_q[1] = tracknum;
+			//2 X - index within track
+			data_q[2] = 1;
+			//3-5   Elapsed FAD within track
+			data_q[3] = elapsed >> 16;
+			data_q[4] = elapsed >> 8;
+			data_q[5] = elapsed;
+			//6 ZERO
+			data_q[6] = 0;
+			//7-9 FAD
+			data_q[7] = fad >> 16;
+			data_q[8] = fad >> 8;
+			data_q[9] = fad;
+			DEBUG_LOG(GDROM, "gd_get_subcode: %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x",
+					 subc_info[0], subc_info[1], subc_info[2], subc_info[3],
+					 subc_info[4], subc_info[5], subc_info[6], subc_info[7],
+					 subc_info[8], subc_info[9], subc_info[10], subc_info[11],
+					 subc_info[12], subc_info[13]);
+		}
+		break;
+
+	case 2:	// Media catalog number (UPC/bar code)
+		{
+			//2 DATA Length MSB (0 = 0h)
+			subc_info[2] = 0;
+			//3 DATA Length LSB (24 = 18h)
+			subc_info[3] = 0x18;
+			//4 Format Code
+			subc_info[4] = 2;
+			//5-7 reserved
+			subc_info[5] = 0;
+			subc_info[6] = 0;
+			subc_info[7] = 0;
+			//8 MCVal (bit 7)
+			subc_info[8] = 0;	// not valid
+			//9-21 Media catalog number
+			memcpy(&subc_info[9], "0000000000000", 13);
+			//22-23 reserved
+			subc_info[22] = 0;
+			subc_info[23] = 0;
+			DEBUG_LOG(GDROM, "gd_get_subcode: format 2 (Media catalog number). audio %x", subc_info[1]);
+		}
+		break;
 	}
 	return subc_info[3];
 }
@@ -512,7 +560,9 @@ void gd_process_spi_cmd()
 		packet_cmd.data_8[0], packet_cmd.data_8[1], packet_cmd.data_8[2], packet_cmd.data_8[3], packet_cmd.data_8[4], packet_cmd.data_8[5],
 		packet_cmd.data_8[6], packet_cmd.data_8[7], packet_cmd.data_8[8], packet_cmd.data_8[9], packet_cmd.data_8[10], packet_cmd.data_8[11] );
 
-	if (sns_key==0x0 || sns_key==0xB)
+	if (sns_key == 0x0 			// No sense
+			|| sns_key == 0xB	// Aborted
+			|| sns_key == 6) 	// Unit attention
 		GDStatus.CHECK=0;
 	else
 		GDStatus.CHECK=1;
@@ -523,23 +573,30 @@ void gd_process_spi_cmd()
 		printf_spicmd("SPI_TEST_UNIT");
 
 		GDStatus.CHECK=SecNumber.Status==GD_BUSY; // Drive is ready ;)
-		cdda.playing = false;
 
 		gd_set_state(gds_procpacketdone);
 		break;
 
 	case SPI_REQ_MODE:
-		printf_spicmd("SPI_REQ_MODE");
+		GD_HardwareInfo.speed = 0;	// doesn't seem to be settable, or perhaps not for GD-Roms
+		GD_HardwareInfo._res0[0] = 0;
+		GD_HardwareInfo._res0[1] = 0;
+		GD_HardwareInfo._res1 = 0;
+		GD_HardwareInfo._res2[0] = 0;
+		GD_HardwareInfo._res2[1] = 0;
+		GD_HardwareInfo.read_flags &= 0x39;
+		printf_spicmd("SPI_REQ_MODE cd-rom speed %d flags %x retry %x", GD_HardwareInfo.speed, GD_HardwareInfo.read_flags, GD_HardwareInfo.read_retry);
 		gd_spi_pio_end((u8*)&GD_HardwareInfo + packet_cmd.data_8[2], packet_cmd.data_8[4]);
 		break;
 
 		/////////////////////////////////////////////////
 		// *FIXME* CHECK FOR DMA, Diff Settings !?!@$#!@%
 	case SPI_CD_READ:
+	case SPI_CD_READ2:
 		{
 #define readcmd packet_cmd.GDReadBlock
 
-			cdda.playing = false;
+			cdda.status = cdda_t::NoInfo;
 			u32 sector_type=2048;
 			if (readcmd.head ==1 && readcmd.subh==1 && readcmd.data==1 && readcmd.expdtype==3 && readcmd.other==0)
 				sector_type=2340;
@@ -547,7 +604,10 @@ void gd_process_spi_cmd()
 				WARN_LOG(GDROM, "GDROM: *FIXME* ADD MORE CD READ SETTINGS %d %d %d %d 0x%01X",readcmd.head,readcmd.subh,readcmd.other,readcmd.data,readcmd.expdtype);
 
 			read_params.start_sector = GetFAD(&readcmd.b[2], readcmd.prmtype);
-			read_params.remaining_sectors = (readcmd.b[8] << 16) | (readcmd.b[9] << 8) | (readcmd.b[10]);
+			if (packet_cmd.data_8[0] == SPI_CD_READ)
+				read_params.remaining_sectors = (readcmd.b[8] << 16) | (readcmd.b[9] << 8) | (readcmd.b[10]);
+			else
+				read_params.remaining_sectors = (readcmd.b[6] << 8) | readcmd.b[7];
 			read_params.sector_type = sector_type;//yeah i know , not really many types supported...
 
 			printf_spicmd("SPI_CD_READ - Sector=%d Size=%d/%d DMA=%d",read_params.start_sector,read_params.remaining_sectors,read_params.sector_type,Features.CDRead.DMA);
@@ -611,24 +671,18 @@ void gd_process_spi_cmd()
 		{
 			printf_spicmd("SPI_SET_MODE");
 			u32 Offset = packet_cmd.data_8[2];
-			u32 Count = packet_cmd.data_8[4];
-			verify((Offset+Count)<11);	//cant set write olny things :P
+			u32 Count = std::min((u32)packet_cmd.data_8[4], 10 - Offset);	// limit to writable area
 			set_mode_offset=Offset;
 			gd_spi_pio_read_end(Count,gds_process_set_mode);
 		}
 
 		break;
-
-	case SPI_CD_READ2:
-		printf_spicmd("SPI_CD_READ2 Unhandled");
-
-		gd_set_state(gds_procpacketdone);
-		break;
-
 		
 	case SPI_REQ_STAT:
 		{
 			printf_spicmd("SPI_REQ_STAT");
+			u32 elapsed;
+			u32 tracknum = libGDR_GetTrackNumber(cdda.CurrAddr.FAD, elapsed);
 			u8 stat[10];
 
 			//0  0   0   0   0   STATUS
@@ -636,11 +690,11 @@ void gd_process_spi_cmd()
 			//1 Disc Format Repeat Count
 			stat[1]=(u8)(SecNumber.DiscFormat<<4) | (cdda.repeats);
 			//2 Address Control
-			stat[2]=0x4;
+			stat[2] = (SecNumber.DiscFormat == 0 ? 0 : 0x40) | 1; // Control = 4 for data track
 			//3 TNO
-			stat[3]=2;
+			stat[3] = tracknum;
 			//4 X
-			stat[4]=0;
+			stat[4] = 1;
 			//5 FAD
 			stat[5]=cdda.CurrAddr.B0;
 			//6 FAD
@@ -659,31 +713,34 @@ void gd_process_spi_cmd()
 		break;
 
 	case SPI_REQ_ERROR:
-		printf_spicmd("SPI_REQ_ERROR");
-		
-		u8 resp[10];
-		resp[0]=0xF0;
-		resp[1]=0;
-		resp[2]=sns_key;//sense
-		resp[3]=0;
-		resp[4]=resp[5]=resp[6]=resp[7]=0; //Command Specific Information
-		resp[8]=sns_asc;//Additional Sense Code
-		resp[9]=sns_ascq;//Additional Sense Code Qualifier
+		{
+			printf_spicmd("SPI_REQ_ERROR");
+			u8 resp[10];
+			resp[0]=0xF0;
+			resp[1]=0;
+			resp[2]=sns_key;//sense
+			resp[3]=0;
+			resp[4]=resp[5]=resp[6]=resp[7]=0; //Command Specific Information
+			resp[8]=sns_asc;//Additional Sense Code
+			resp[9]=sns_ascq;//Additional Sense Code Qualifier
 
-		gd_spi_pio_end(resp,packet_cmd.data_8[4]);
-		sns_key=0;
-		sns_asc=0;
-		sns_ascq=0;
-		//GDStatus.CHECK=0;
+			gd_spi_pio_end(resp,packet_cmd.data_8[4]);
+			sns_key = 0;
+			sns_asc = 0;
+			sns_ascq = 0;
+			GDStatus.CHECK = 0;
+		}
 		break;
 
 	case SPI_REQ_SES:
-		printf_spicmd("SPI_REQ_SES");
+		{
+			printf_spicmd("SPI_REQ_SES");
 
-		u8 ses_inf[6];
-		libGDR_GetSessionInfo(ses_inf,packet_cmd.data_8[2]);
-		ses_inf[0]=SecNumber.Status;
-		gd_spi_pio_end((u8*)&ses_inf[0],packet_cmd.data_8[4]);
+			u8 ses_inf[6];
+			libGDR_GetSessionInfo(ses_inf,packet_cmd.data_8[2]);
+			ses_inf[0]=SecNumber.Status;
+			gd_spi_pio_end((u8*)&ses_inf[0],packet_cmd.data_8[4]);
+		}
 		break;
 
 	case SPI_CD_OPEN:
@@ -694,45 +751,50 @@ void gd_process_spi_cmd()
 
 	case SPI_CD_PLAY:
 		{
-			printf_spicmd("SPI_CD_PLAY");
-			//cdda.CurrAddr.FAD=60000;
+			const u32 param_type = packet_cmd.data_8[1] & 7;
+			printf_spicmd("SPI_CD_PLAY param_type=%d", param_type);
 
-			cdda.playing=true;
-			SecNumber.Status=GD_PLAY;
+			if (param_type == 1 || param_type == 2)
+			{
+				cdda.status = cdda_t::Playing;
+				SecNumber.Status = GD_PLAY;
 
-			u32 param_type=packet_cmd.data_8[1]&0x7;
-			DEBUG_LOG(GDROM, "param_type=%d", param_type);
-			if (param_type==1)
-			{
-				cdda.StartAddr.FAD=cdda.CurrAddr.FAD=GetFAD(&packet_cmd.data_8[2],0);
-				cdda.EndAddr.FAD=GetFAD(&packet_cmd.data_8[8],0);
-				GDStatus.DSC=1;	//we did the seek xD lol
-			}
-			else if (param_type==2)
-			{
-				cdda.StartAddr.FAD=cdda.CurrAddr.FAD=GetFAD(&packet_cmd.data_8[2],1);
-				cdda.EndAddr.FAD=GetFAD(&packet_cmd.data_8[8],1);
-				GDStatus.DSC=1;	//we did the seek xD lol
-			}
-			else if (param_type==7)
-			{
-				// Resume from previous pos unless we're at the end
-				if (cdda.CurrAddr.FAD > cdda.EndAddr.FAD)
+				bool min_sec_frame = param_type == 2;
+				cdda.StartAddr.FAD = cdda.CurrAddr.FAD = GetFAD(&packet_cmd.data_8[2], min_sec_frame);
+				cdda.EndAddr.FAD = GetFAD(&packet_cmd.data_8[8], min_sec_frame);
+				if (cdda.EndAddr.FAD == 0)
 				{
-					cdda.playing = false;
-					SecNumber.Status = GD_STANDBY;
+					// Get the last sector of the disk
+					u8 ses_inf[6] = {};
+					libGDR_GetSessionInfo(ses_inf, 0);
+
+					cdda.EndAddr.FAD = ses_inf[3] << 16 | ses_inf[4] << 8 | ses_inf[5];
+				}
+				cdda.repeats = packet_cmd.data_8[6] & 0xF;
+				GDStatus.DSC = 1;
+			}
+			else if (param_type == 7)
+			{
+				if (cdda.status == cdda_t::Paused)
+				{
+					// Resume from previous pos unless we're at the end
+					if (cdda.CurrAddr.FAD > cdda.EndAddr.FAD)
+					{
+						cdda.status = cdda_t::Terminated;
+						SecNumber.Status = GD_STANDBY;
+					}
+					else
+					{
+						cdda.status = cdda_t::Playing;
+						SecNumber.Status = GD_PLAY;
+					}
 				}
 			}
 			else
-			{
-				die("SPI_CD_PLAY  : not known parameter..");
-			}
-			cdda.repeats=packet_cmd.data_8[6]&0xF;
-			DEBUG_LOG(GDROM, "cdda.StartAddr=%d",cdda.StartAddr.FAD);
-			DEBUG_LOG(GDROM, "cdda.EndAddr=%d",cdda.EndAddr.FAD);
-			DEBUG_LOG(GDROM, "cdda.repeats=%d",cdda.repeats);
-			DEBUG_LOG(GDROM, "cdda.playing=%d",cdda.playing);
-			DEBUG_LOG(GDROM, "cdda.CurrAddr=%d",cdda.CurrAddr.FAD);
+				die("SPI_CD_PLAY: unknown parameter");
+
+			DEBUG_LOG(GDROM, "CDDA StartAddr=%d EndAddr=%d repeats=%d status=%d CurrAddr=%d",cdda.StartAddr.FAD,
+					cdda.EndAddr.FAD, cdda.repeats, cdda.status, cdda.CurrAddr.FAD);
 
 			gd_set_state(gds_procpacketdone);
 		}
@@ -740,45 +802,48 @@ void gd_process_spi_cmd()
 
 	case SPI_CD_SEEK:
 		{
-			printf_spicmd("SPI_CD_SEEK");
+			const u32 param_type = packet_cmd.data_8[1] & 7;
+			printf_spicmd("SPI_CD_SEEK param_type=%d", param_type);
 
-			SecNumber.Status=GD_PAUSE;
-			cdda.playing=false;
+			SecNumber.Status = GD_PAUSE;
+			if (cdda.status == cdda_t::Playing)
+				cdda.status = cdda_t::Paused;
 
-			u32 param_type=packet_cmd.data_8[1]&0x7;
-			DEBUG_LOG(GDROM, "param_type=%d",param_type);
-			if (param_type==1)
+			if (param_type == 1 || param_type == 2)
 			{
-				cdda.StartAddr.FAD=cdda.CurrAddr.FAD=GetFAD(&packet_cmd.data_8[2],0);
-				GDStatus.DSC=1;	//we did the seek xD lol
+				bool min_sec_frame = param_type == 2;
+				cdda.StartAddr.FAD = cdda.CurrAddr.FAD = GetFAD(&packet_cmd.data_8[2], min_sec_frame);
+#ifdef STRICT_MODE
+				SecNumber.Status = GD_SEEK;
+				GDStatus.DSC = 0;
+				sh4_sched_request(gdrom_schid, SH4_MAIN_CLOCK / 50);	// 20 ms
+#else
+				GDStatus.DSC = 1;
+#endif
 			}
-			else if (param_type==2)
-			{
-				cdda.StartAddr.FAD=cdda.CurrAddr.FAD=GetFAD(&packet_cmd.data_8[2],1);
-				GDStatus.DSC=1;	//we did the seek xD lol
-			}
-			else if (param_type==3)
+			else if (param_type == 3)
 			{
 				//stop audio , goto home
-				SecNumber.Status=GD_STANDBY;
-				cdda.StartAddr.FAD=cdda.CurrAddr.FAD=150;
-				GDStatus.DSC=1;	//we did the seek xD lol
+				cdda.StartAddr.FAD = cdda.CurrAddr.FAD = 150;
+				cdda.status = cdda_t::NoInfo;
+#ifdef STRICT_MODE
+				SecNumber.Status = GD_BUSY;
+				GDStatus.DSC = 0;
+				sh4_sched_request(gdrom_schid, SH4_MAIN_CLOCK / 50);	// 20 ms
+#else
+				SecNumber.Status = GD_STANDBY;
+				GDStatus.DSC = 1;
+#endif
 			}
-			else if (param_type==4)
+			else if (param_type == 4)
 			{
 				//pause audio -- nothing more
 			}
 			else
-			{
 				die("SPI_CD_SEEK  : not known parameter..");
-			}
 
-			DEBUG_LOG(GDROM, "cdda.StartAddr=%d",cdda.StartAddr.FAD);
-			DEBUG_LOG(GDROM, "cdda.EndAddr=%d",cdda.EndAddr.FAD);
-			DEBUG_LOG(GDROM, "cdda.repeats=%d",cdda.repeats);
-			DEBUG_LOG(GDROM, "cdda.playing=%d",cdda.playing);
-			DEBUG_LOG(GDROM, "cdda.CurrAddr=%d",cdda.CurrAddr.FAD);
-
+			DEBUG_LOG(GDROM, "CDDA StartAddr=%d EndAddr=%d repeats=%d status=%d CurrAddr=%d",cdda.StartAddr.FAD,
+					cdda.EndAddr.FAD, cdda.repeats, cdda.status, cdda.CurrAddr.FAD);
 
 			gd_set_state(gds_procpacketdone);
 		}
@@ -795,16 +860,20 @@ void gd_process_spi_cmd()
 		{
 			printf_spicmd("SPI_GET_SCD");
 
-			u32 format = packet_cmd.data_8[1] & 0xF;
+			const u32 format = packet_cmd.data_8[1] & 0xF;
+			const u32 alloc_len = (packet_cmd.data_8[3] << 8) | packet_cmd.data_8[4];
 			u8 subc_info[100];
 			u32 size = gd_get_subcode(format, read_params.start_sector - 1, subc_info);
-			gd_spi_pio_end(subc_info, size);
+			gd_spi_pio_end(subc_info, std::min(size, alloc_len));
 		}
 		break;
 
 	default:
 		INFO_LOG(GDROM, "GDROM: Unhandled Sega SPI frame: %X", packet_cmd.data_8[0]);
-
+		GDStatus.CHECK = 1;
+		sns_key = 5;	// Illegal request
+		sns_asc = 0x20;	// Unsupported command was received
+		sns_ascq = 0;
 		gd_set_state(gds_procpacketdone);
 		break;
 	}
@@ -818,11 +887,11 @@ u32 ReadMem_gdrom(u32 Addr, u32 sz)
 	case GD_STATUS_Read :
 		asic_CancelInterrupt(holly_GDROM_CMD);	//Clear INTRQ signal
 		printf_rm("GDROM: STATUS [cancel int](v=%X)",GDStatus.full);
-		return GDStatus.full | (1<<4);
+		return GDStatus.full;
 
 	case GD_ALTSTAT_Read:
-//		printf_rm("GDROM: Read From AltStatus (v=%X)",GDStatus.full);
-		return GDStatus.full | (1<<4);
+		//printf_rm("GDROM: AltStatus (v=%X)",GDStatus.full);
+		return GDStatus.full;
 
 	case GD_BYCTLLO	:
 		printf_rm("GDROM: Read From GD_BYCTLLO");
@@ -991,10 +1060,18 @@ static int getGDROMTicks()
 //is this needed ?
 int GDRomschd(int i, int c, int j)
 {
+	if (SecNumber.Status == GD_SEEK)
+	{
+		SecNumber.Status = GD_PAUSE;
+		GDStatus.DSC = 1;
+	}
+	else if (SecNumber.Status == GD_BUSY)
+	{
+		SecNumber.Status = GD_STANDBY;
+		GDStatus.DSC = 1;
+	}
 	if(!(SB_GDST&1) || !(SB_GDEN &1) || (read_buff.cache_size==0 && read_params.remaining_sectors==0))
 		return 0;
-
-	//SB_GDST=0;
 
 	//TODO : Fix dmaor
 	u32 dmaor = DMAC_DMAOR.full;
