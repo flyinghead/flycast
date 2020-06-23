@@ -35,12 +35,13 @@ static void maple_handle_reconnect();
 //misses delay , and stop/start implementation
 //ddt/etc are just hacked for wince to work
 //now with proper maple delayed DMA maybe its time to look into it ?
-bool maple_ddt_pending_reset=false;
+bool maple_ddt_pending_reset;
+
 void maple_vblank()
 {
-	if (SB_MDEN &1)
+	if (SB_MDEN & 1)
 	{
-		if (SB_MDTSEL&1)
+		if (SB_MDTSEL & 1)
 		{
 			if (maple_ddt_pending_reset)
 			{
@@ -51,16 +52,14 @@ void maple_vblank()
 				DEBUG_LOG(MAPLE, "DDT vblank");
 				SB_MDST = 1;
 				maple_DoDma();
-				SB_MDST = 0;
-				if ((SB_MSYS>>12)&1)
-				{
-					maple_ddt_pending_reset=true;
-				}
+				// if trigger reset is manual, mark it as pending
+				if ((SB_MSYS >> 12) & 1)
+					maple_ddt_pending_reset = true;
 			}
 		}
 		else
 		{
-			maple_ddt_pending_reset=false;
+			maple_ddt_pending_reset = false;
 		}
 	}
 	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
@@ -97,8 +96,14 @@ static void maple_SB_MDEN_Write(u32 addr, u32 data)
 
 static bool check_mdapro(u32 addr)
 {
-	u32 bottom = std::max(0x0C000000u, ((((SB_MDAPRO >> 8) & 0x7f) << 20) | 0x08000000));
-	u32 top = std::min(0x0FFFFFE0u, (((SB_MDAPRO & 0x7f) << 20) | 0x080fffff));
+	u32 bottom = 0x0C000000;
+	u32 top = 0x0FFFFFE0;
+	if ((SB_MDAPRO >> 16) == 0x6155)
+	{
+		bottom = std::max(bottom, ((((SB_MDAPRO >> 8) & 0x7f) << 20) | 0x08000000));
+		top = std::min(top, (((SB_MDAPRO & 0x7f) << 20) | 0x080fffff));
+	}
+
 	if (((addr >> 29) & 7) == 7
 			|| (addr & 0x0fffffff) < bottom
 			|| (addr & 0x0fffffff) > top)
@@ -276,7 +281,7 @@ static void maple_DoDma()
 	sh4_sched_request(maple_schid, std::min((u64)xfer_count * (SH4_MAIN_CLOCK / (2 * 1024 * 1024 / 8)), (u64)SH4_MAIN_CLOCK));
 }
 
-int maple_schd(int tag, int c, int j)
+static int maple_schd(int tag, int c, int j)
 {
 	if (SB_MDEN&1)
 	{
