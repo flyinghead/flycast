@@ -1221,16 +1221,10 @@ struct maple_keyboard : maple_base
 			//1	direction
 			w8(0);
 			// Product name (30)
-			for (u32 i = 0; i < 30; i++)
-			{
-				w8((u8)maple_sega_kbd_name[i]);
-			}
+			wstr(maple_sega_kbd_name, 30);
 
 			// License (60)
-			for (u32 i = 0; i < 60; i++)
-			{
-				w8((u8)maple_sega_brand[i]);
-			}
+			wstr(maple_sega_brand, 60);
 
 			// Low-consumption standby current (2)
 			w16(0x01AE);	// 43 mA
@@ -1322,16 +1316,10 @@ struct maple_mouse : maple_base
 			//1	direction
 			w8(0);
 			// Product name (30)
-			for (u32 i = 0; i < 30; i++)
-			{
-				w8((u8)maple_sega_mouse_name[i]);
-			}
+			wstr(maple_sega_mouse_name, 30);
 
 			// License (60)
-			for (u32 i = 0; i < 60; i++)
-			{
-				w8((u8)maple_sega_brand[i]);
-			}
+			wstr(maple_sega_brand, 60);
 
 			// Low-consumption standby current (2)
 			w16(0x0069);	// 10.5 mA
@@ -1409,20 +1397,14 @@ struct maple_lightgun : maple_base
 			w32(0xFE000000);	// Controller
 			w32(0);
 			//1	area code
-			w8(0x01);		// FF: Worldwide, 01: North America
+			w8(1);				// FF: Worldwide, 01: North America
 			//1	direction
 			w8(0);
 			// Product name (30)
-			for (u32 i = 0; i < 30; i++)
-			{
-				w8((u8)maple_sega_lightgun_name[i]);
-			}
+			wstr(maple_sega_lightgun_name, 30);
 
 			// License (60)
-			for (u32 i = 0; i < 60; i++)
-			{
-				w8((u8)maple_sega_brand[i]);
-			}
+			wstr(maple_sega_brand, 60);
 
 			// Low-consumption standby current (2)
 			w16(0x0069);	// 10.5 mA
