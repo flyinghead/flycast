@@ -59,6 +59,9 @@ static INLINE bool mmu_enabled()
 
 template<bool internal = false>
 u32 mmu_full_lookup(u32 va, const TLB_Entry **entry, u32& rv);
+u32 mmu_instruction_lookup(u32 va, const TLB_Entry **entry, u32& rv);
+template<u32 translation_type>
+u32 mmu_full_SQ(u32 va, u32& rv);
 
 #ifdef FAST_MMU
 static INLINE u32 mmu_instruction_translation(u32 va, u32& rv)

@@ -32,14 +32,6 @@
 #define iWarn cpu_iWarn
 
 //Read Mem macros
-#ifdef STRICT_MODE
-#define ReadMem8(addr) (ocache.ReadMem<u8>(addr))
-#define ReadMem16(addr) (ocache.ReadMem<u16>(addr))
-#define ReadMem32(addr) (ocache.ReadMem<u32>(addr))
-#define WriteMem8(addr, data) (ocache.WriteMem<u8>(addr, data))
-#define WriteMem16(addr, data) (ocache.WriteMem<u16>(addr, data))
-#define WriteMem32(addr, data) (ocache.WriteMem<u32>(addr, data))
-#endif
 
 #define ReadMemU32(to,addr) to=ReadMem32(addr)
 #define ReadMemS32(to,addr) to=(s32)ReadMem32(addr)

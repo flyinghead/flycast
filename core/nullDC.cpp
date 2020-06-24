@@ -1055,6 +1055,7 @@ void SaveSettings()
 
 void dc_resume()
 {
+	SetMemoryHandlers();
 	game_started = true;
 	if (!emu_thread.thread.joinable())
 		emu_thread.Start();

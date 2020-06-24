@@ -33,7 +33,7 @@ static u16 ReadNexOp()
 	u32 addr = next_pc;
 	next_pc += 2;
 
-	return icache.ReadMem(addr);
+	return IReadMem16(addr);
 }
 
 void Sh4_int_Run()
@@ -126,6 +126,7 @@ void Sh4_int_Reset(bool hard)
 		old_fpscr=fpscr;
 		UpdateFPSCR();
 		icache.Reset(hard);
+		ocache.Reset(hard);
 
 		//Any more registers have default value ?
 		INFO_LOG(INTERPRETER, "Sh4 Reset");

@@ -19,6 +19,10 @@ extern VArray2 mem_b;
 #define WriteMem16 _vmem_WriteMem16
 #define WriteMem32 _vmem_WriteMem32
 #define WriteMem64 _vmem_WriteMem64
+#ifdef STRICT_MODE
+#error Strict mode requires the MMU
+#endif
+
 #else
 
 #ifdef _MSC_VER
@@ -85,3 +89,4 @@ bool LoadRomFiles(const std::string& root);
 void SaveRomFiles(const std::string& root);
 bool LoadHle(const std::string& root);
 void FixUpFlash();
+void SetMemoryHandlers();

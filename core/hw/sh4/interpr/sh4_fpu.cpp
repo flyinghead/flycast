@@ -2,14 +2,10 @@
 #include <cmath>
 #include <cfloat>
 
-
 #include "sh4_opcodes.h"
 #include "../sh4_core.h"
 #include "../sh4_rom.h"
-#include "../sh4_cache.h"
-
 #include "hw/sh4/sh4_mem.h"
-
 
 #define sh4op(str) void DYNACALL str (u32 op)
 #define GetN(str)     ((str>>8) & 0xf)
@@ -26,17 +22,6 @@
 void iNimp(const char*str);
 
 #define IS_DENORMAL(f) (((*(f))&0x7f800000) == 0)
-
-#ifdef STRICT_MODE
-#define ReadMem8(addr) (ocache.ReadMem<u8>(addr))
-#define ReadMem16(addr) (ocache.ReadMem<u16>(addr))
-#define ReadMem32(addr) (ocache.ReadMem<u32>(addr))
-#define ReadMem64(addr) (ocache.ReadMem<u64>(addr))
-#define WriteMem8(addr, data) (ocache.WriteMem<u8>(addr, data))
-#define WriteMem16(addr, data) (ocache.WriteMem<u16>(addr, data))
-#define WriteMem32(addr, data) (ocache.WriteMem<u32>(addr, data))
-#define WriteMem64(addr, data) (ocache.WriteMem<u64>(addr, data))
-#endif
 
 #define ReadMemU64(to,addr) to=ReadMem64(addr)
 #define ReadMemU32(to,addr) to=ReadMem32(addr)
