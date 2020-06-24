@@ -23,7 +23,7 @@ struct MemChip
 	}
 	virtual ~MemChip() { delete[] data; }
 
-	u8 Read8(u32 addr)
+	virtual u8 Read8(u32 addr)
 	{
 		return data[addr & mask];
 	}
@@ -262,7 +262,8 @@ struct DCFlashChip : MemChip
 		FS_ByteProgram,
 		FS_EraseAMD1,
 		FS_EraseAMD2,
-		FS_EraseAMD3
+		FS_EraseAMD3,
+		FS_SelectMode,
 	};
 
 	FlashState state;
@@ -310,7 +311,8 @@ struct DCFlashChip : MemChip
 				state = FS_ReadAMDID2;
 			else
 			{
-				WARN_LOG(FLASHROM, "FlashRom: ReadAMDID1 unexpected write @ %x: %x", addr, val);
+				if (val != 0xf0)
+					WARN_LOG(FLASHROM, "FlashRom: ReadAMDID1 unexpected write @ %x: %x", addr, val);
 				state = FS_Normal;
 			}
 			break;
@@ -328,14 +330,17 @@ struct DCFlashChip : MemChip
 				state = FS_ByteProgram;
 			else if ((addr & 0xfff) == 0xaaa && (val & 0xff) == 0xa0)
 				state = FS_ByteProgram;
+			else if ((addr & 0xffff) == 0x5555 && (val & 0xff) == 0x90)
+				state = FS_SelectMode;
 			else
 			{
-				WARN_LOG(FLASHROM, "FlashRom: ReadAMDID2 unexpected write @ %x: %x", addr, val);
+				if (val != 0xf0)
+					WARN_LOG(FLASHROM, "FlashRom: ReadAMDID2 unexpected write @ %x: %x", addr, val);
 				state = FS_Normal;
 			}
 			break;
 		case FS_ByteProgram:
-			if (addr >= write_protect_size)
+			if ((addr & 0x1e000) != 0x1a000 && addr >= write_protect_size)
 				data[addr] &= val;
 			state = FS_Normal;
 			break;
@@ -347,7 +352,9 @@ struct DCFlashChip : MemChip
 				state = FS_EraseAMD2;
 			else
 			{
-				WARN_LOG(FLASHROM, "FlashRom: EraseAMD1 unexpected write @ %x: %x", addr, val);
+				if (val != 0xf0)
+					WARN_LOG(FLASHROM, "FlashRom: EraseAMD1 unexpected write @ %x: %x", addr, val);
+				state = FS_Normal;
 			}
 			break;
 
@@ -360,7 +367,9 @@ struct DCFlashChip : MemChip
 				state = FS_EraseAMD3;
 			else
 			{
-				WARN_LOG(FLASHROM, "FlashRom: EraseAMD2 unexpected write @ %x: %x", addr, val);
+				if (val != 0xf0)
+					WARN_LOG(FLASHROM, "FlashRom: EraseAMD2 unexpected write @ %x: %x", addr, val);
+				state = FS_Normal;
 			}
 			break;
 
@@ -371,36 +380,82 @@ struct DCFlashChip : MemChip
 				// chip erase
 				INFO_LOG(FLASHROM, "Erasing Chip!");
 				u8 save[0x2000];
-				if (settings.platform.system == DC_PLATFORM_ATOMISWAVE)
-					// this area is write-protected on AW
-					memcpy(save, data + 0x1a000, 0x2000);
+				// this area is write-protected
+				memcpy(save, data + 0x1a000, 0x2000);
 				memset(data + write_protect_size, 0xff, size - write_protect_size);
-				if (settings.platform.system == DC_PLATFORM_ATOMISWAVE)
-					memcpy(data + 0x1a000, save, 0x2000);
-				state = FS_Normal;
+				memcpy(data + 0x1a000, save, 0x2000);
 			}
 			else if ((val & 0xff) == 0x30)
 			{
 				// sector erase
 				if (addr >= write_protect_size)
 				{
-					u8 save[0x2000];
-					if (settings.platform.system == DC_PLATFORM_ATOMISWAVE)
-						// this area is write-protected on AW
-						memcpy(save, data + 0x1a000, 0x2000);
-					INFO_LOG(FLASHROM, "Erase Sector %08X! (%08X)", addr, addr & ~0x3FFF);
-					memset(&data[addr&(~0x3FFF)],0xFF,0x4000);
-					if (settings.platform.system == DC_PLATFORM_ATOMISWAVE)
-						memcpy(data + 0x1a000, save, 0x2000);
+					void *start;
+					u32 len;
+					switch (addr & ~0x1FFF)
+					{
+					case 0x00000:	// SA0
+						start = &data[0];
+						len = 0x10000;
+						break;
+					case 0x10000:	// SA1
+						start = &data[0x10000];
+						len = 0x8000;
+						break;
+					case 0x18000:	// SA2
+						start = &data[0x18000];
+						len = 0x2000;
+						break;
+					case 0x1a000:	// SA3
+						start = nullptr;
+						len = 0;
+						break;
+					case 0x1c000:	// SA4
+						start = &data[0x1c000];
+						len = 0x4000;
+						break;
+					default:
+						start = nullptr;
+						len = 0;
+						break;
+					}
+					INFO_LOG(FLASHROM, "Erase Sector %08X!", addr);
+					if (start != nullptr)
+						memset(start, 0xFF, len);
 				}
-				state = FS_Normal;
 			}
-			else
-			{
+			else if (val != 0xf0)
 				WARN_LOG(FLASHROM, "FlashRom: EraseAMD3 unexpected write @ %x: %x", addr, val);
-			}
+			state = FS_Normal;
+			break;
+		default:
+			WARN_LOG(FLASHROM, "FlashRom: invalid state. write @ %x: %x", addr, val);
+			state = FS_Normal;
 			break;
 		}
+	}
+
+	u8 Read8(u32 addr) override
+	{
+		if (state == FS_SelectMode)
+		{
+			state = FS_Normal;
+			switch (addr & 0x43)
+			{
+			case 0:	// manufacturer's code
+				return 4;		// or 0x20 or 1
+			case 1:	// device code
+				return 0xb0;	// or 0x40 or 0x3e
+			case 2:	// sector protection verification
+				// sector protection
+				DEBUG_LOG(FLASHROM, "Sector protection address %x", addr);
+				return (addr & 0x1e000) == 0x1a000;
+			default:
+				WARN_LOG(FLASHROM, "SelectMode unknown address %x", addr);
+				return 0;
+			}
+		}
+		return MemChip::Read8(addr);
 	}
 
 	int WriteBlock(u32 part_id, u32 block_id, const void *data)
