@@ -125,10 +125,10 @@ enum HollyInterruptID
 		holly_EXT1_ILLADDR = holly_err | 0x10,   //bit 16 = G2 : Ext-DMA1 Illegal Address set
 		holly_EXT2_ILLADDR = holly_err | 0x11,   //bit 17 = G2 : Ext-DMA2 Illegal Address set
 		holly_DEV_ILLADDR = holly_err | 0x12,    //bit 18 = G2 : Dev-DMA Illegal Address set
-		//bit 19 = G2 : AICA-DMA over run
-		//bit 20 = G2 : Ext-DMA1 over run
-		//bit 21 = G2 : Ext-DMA2 over run
-		//bit 22 = G2 : Dev-DMA over run
+		holly_AICA_OVERRUN = holly_err | 0x13,   //bit 19 = G2 : AICA-DMA over run
+		holly_EXT1_OVERRUN = holly_err | 0x14,   //bit 20 = G2 : Ext-DMA1 over run
+		holly_EXT2_OVERRUN = holly_err | 0x15,   //bit 21 = G2 : Ext-DMA2 over run
+		holly_DEV_OVERRUN = holly_err | 0x16,    //bit 22 = G2 : Dev-DMA over run
 		//bit 23 = G2 : AICA-DMA Time out
 		//bit 24 = G2 : Ext-DMA1 Time out
 		//bit 25 = G2 : Ext-DMA2 Time out

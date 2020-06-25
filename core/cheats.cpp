@@ -2,7 +2,7 @@
     Created on: Sep 23, 2019
 
 	Credits for cheats: Esppiral, S4pph4rad, yzb37859365, Shenmue_Trilogy, Radaron, Virgin KLM, Joel, Zorlon,
-		ELOTROLADO.NET, SEGARETRO.ORG
+		ELOTROLADO.NET, SEGARETRO.ORG, Sakuragi @ emutalk.net
 	Copyright 2019 flyinghead
 
 	This file is part of reicast.
@@ -156,6 +156,7 @@ const Cheat CheatManager::_widescreen_cheats[] =
 //crash		{ "MK-51178  ", nullptr,    { 0x23AF00, 0x23B160, 0x144D40, 0x2105B4, 0x705B40, 0 },
 //				{ 0xBFAAAAAB, 0xBFAAAAAB, 0xBFAAAAAB, 0xBFAAAAAB, 0x44558000 } },	// NBA 2K2
 		{ "T9504M    ", nullptr,    { 0xCDE848, 0xCDE844, 0 }, { 0x3F400000, 0x3FA00000 } },	// Nightmare Creatures II (USA)
+		{ "T-9502D-50", nullptr,    { 0xBDE9B0, 0xBDE9C4, 0 }, { 0x3F400000, 0x3FA00000 } },	// Nightmare Creatures II (PAL)
 		{ "MK-5110250", nullptr,    { 0x87B5A4, 0 }, { 0x43700000 } },		// Outtrigger (PAL)
 		{ "HDR-0118  ", nullptr,    { 0x83E284, 0 }, { 0x43700000 } },		// Outtrigger (JP)
 		{ "T15103D 50", nullptr,    { 0x1EEE78, 0 }, { 0x3F400000 } },		// PenPen (PAL)
@@ -181,6 +182,7 @@ const Cheat CheatManager::_widescreen_cheats[] =
 		{ "xxxxxxxxxx", nullptr,    { 0x4FF25C, 0x4FF28C, 0 }, { 0x43F00000, 0x3F400000 } },	// Record of Lodoss War (De) (PAL)
 		{ "T7012D  09", nullptr,    { 0x50499C, 0x5049CC, 0 }, { 0x43F00000, 0x3F400000 } },	// Record of Lodoss War (Fr) (PAL)
 		{ "MK-5102151", nullptr,    { 0x3511A0, 0 }, { 0x3FC58577 } },		// Red Dog (PAL)
+		{ "HDR-0074  ", nullptr,    { 0x1FF60C, 0x1FF610, 0x1FF5DC, 0 }, { 0x3F400000, 0x3F800000, 0x43DC0000 } },	//Rent a Hero n°1
 		// Resident Evil: Code Veronica (De) (PAL)
 		// Code 1-4 removes the black bars on top and bottom in FMV
 		{ "xxxxxxxxxx", nullptr,    { 0x32A380, 0x383E18, 0x383E38, 0x383E58, 0x383E78, 0 },
@@ -241,6 +243,7 @@ const Cheat CheatManager::_widescreen_cheats[] =
 				{ 0x3F400000, 0x42900000, 0x42900000, 0x43CE0000, 0x43CE0000 } },
 //		{ "T7014D  50", nullptr,    { 0xE2B234, 0 }, { 0x3F800000 } },		// Super Runabout (PAL) doesn't work?
 		{ "T17721D 50", nullptr,    { 0x45CED4, 0 }, { 0x3F400000 } },		// Surf Rocket Racers (PAL) alt: 021EBF40 3F400000
+		{ "T17703D 50", nullptr,    { 0xCD8950, 0 }, { 0x3F111111 } },		// Suzuki Alstare Extreme Racing
 		{ "T36807D 05", nullptr,    { 0x140F74, 0x140FA4, 0 }, { 0x43FA0000, 0x3F400000 } },	// Sword of Bersek (PAL)
 		{ "T-36805N  ", nullptr,    { 0x13F1C4, 0x13F194, 0 }, { 0x3F400000, 0x43F00000 } },	// Sword of Bersek (USA)
 		{ "MK-51186  ", nullptr,    { 0x4A19B0, 0 }, { 0x43700000 } },		// Tennis 2K2 (USA)
