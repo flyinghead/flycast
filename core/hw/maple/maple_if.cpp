@@ -96,17 +96,11 @@ static void maple_SB_MDEN_Write(u32 addr, u32 data)
 
 static bool check_mdapro(u32 addr)
 {
-	u32 bottom = 0x0C000000;
-	u32 top = 0x0FFFFFE0;
-	if ((SB_MDAPRO >> 16) == 0x6155)
-	{
-		bottom = std::max(bottom, ((((SB_MDAPRO >> 8) & 0x7f) << 20) | 0x08000000));
-		top = std::min(top, (((SB_MDAPRO & 0x7f) << 20) | 0x080fffff));
-	}
+	u32 area = (addr >> 26) & 7;
+	u32 bottom = ((((SB_MDAPRO >> 8) & 0x7f) << 20) | 0x08000000);
+	u32 top = (((SB_MDAPRO & 0x7f) << 20) | 0x080fffe0);
 
-	if (((addr >> 29) & 7) == 7
-			|| (addr & 0x0fffffff) < bottom
-			|| (addr & 0x0fffffff) > top)
+	if (area != 3 || addr < bottom || addr > top)
 	{
 		INFO_LOG(MAPLE, "MAPLE ERROR : Invalid address: %08x. SB_MDAPRO: %x %x", addr, (SB_MDAPRO >> 8) & 0x7f, SB_MDAPRO & 0x7f);
 		return false;
@@ -116,8 +110,8 @@ static bool check_mdapro(u32 addr)
 
 static void maple_SB_MDSTAR_Write(u32 addr, u32 data)
 {
-	SB_MDSTAR = data;
-	if (!check_mdapro(data))
+	SB_MDSTAR = data & 0x1fffffe0;
+	if (!check_mdapro(SB_MDSTAR))
 		asic_RaiseInterrupt(holly_MAPLE_ILLADDR);
 }
 
@@ -297,14 +291,21 @@ static int maple_schd(int tag, int c, int j)
 	return 0;
 }
 
+void maple_SB_MDAPRO_Write(u32 addr, u32 data)
+{
+	if ((data >> 16) == 0x6155)
+		SB_MDAPRO = data & 0x00007f7f;
+}
+
 //Init registers :)
 void maple_Init()
 {
 	sb_rio_register(SB_MDST_addr,RIO_WF,0,&maple_SB_MDST_Write);
 	sb_rio_register(SB_MDEN_addr,RIO_WF,0,&maple_SB_MDEN_Write);
 	sb_rio_register(SB_MSHTCL_addr,RIO_WF,0,&maple_SB_MSHTCL_Write);
+	sb_rio_register(SB_MDAPRO_addr, RIO_WO_FUNC, nullptr, &maple_SB_MDAPRO_Write);
 #ifdef STRICT_MODE
-	sb_rio_register(SB_MDSTAR_addr, RIO_WF, 0, &maple_SB_MDSTAR_Write);
+	sb_rio_register(SB_MDSTAR_addr, RIO_WF, nullptr, &maple_SB_MDSTAR_Write);
 #endif
 
 	maple_schid=sh4_sched_register(0,&maple_schd);
