@@ -129,7 +129,7 @@ void palette_update()
 		pal_hash_256[i] = XXH32(&PALETTE_RAM[i << 8], 256 * 4, 7);
 }
 
-std::vector<vram_block*> VramLocks[VRAM_SIZE_MAX / PAGE_SIZE];
+static std::vector<vram_block*> VramLocks[VRAM_SIZE_MAX / PAGE_SIZE];
 VArray2 vram;  // vram 32-64b
 
 //List functions
@@ -142,12 +142,10 @@ void vramlock_list_remove(vram_block* block)
 	for (u32 i = base; i <= end; i++)
 	{
 		std::vector<vram_block*>& list = VramLocks[i];
-		for (size_t j = 0; j < list.size(); j++)
+		for (auto& lock : list)
 		{
-			if (list[j] == block)
-			{
-				list[j] = nullptr;
-			}
+			if (lock == block)
+				lock = nullptr;
 		}
 	}
 }
@@ -218,18 +216,17 @@ bool VramLockedWriteOffset(size_t offset)
 	{
 		std::lock_guard<std::mutex> lock(vramlist_lock);
 
-		for (size_t i = 0; i < list.size(); i++)
+		for (auto& lock : list)
 		{
-			if (list[i] != nullptr)
+			if (lock != nullptr)
 			{
-				libPvr_LockedBlockWrite(list[i], (u32)offset);
+				libPvr_LockedBlockWrite(lock, (u32)offset);
 
-				if (list[i] != nullptr)
+				if (lock != nullptr)
 				{
 					ERROR_LOG(PVR, "Error : pvr is supposed to remove lock");
 					die("Invalid state");
 				}
-
 			}
 		}
 		list.clear();
@@ -250,18 +247,18 @@ bool VramLockedWrite(u8* address)
 
 //unlocks mem
 //also frees the handle
-void libCore_vramlock_Unlock_block(vram_block* block)
-{
-	std::lock_guard<std::mutex> lock(vramlist_lock);
-	libCore_vramlock_Unlock_block_wb(block);
-}
-
-void libCore_vramlock_Unlock_block_wb(vram_block* block)
+static void libCore_vramlock_Unlock_block_wb(vram_block* block)
 {
 	if (mmu_enabled())
 		vmem32_unprotect_vram(block->start, block->len);
 	vramlock_list_remove(block);
 	free(block);
+}
+
+void libCore_vramlock_Unlock_block(vram_block* block)
+{
+	std::lock_guard<std::mutex> lock(vramlist_lock);
+	libCore_vramlock_Unlock_block_wb(block);
 }
 
 #ifndef TARGET_NO_OPENMP
@@ -400,8 +397,12 @@ bool BaseTextureCacheData::Delete()
 		return false;
 
 	if (lock_block)
-		libCore_vramlock_Unlock_block(lock_block);
-	lock_block = nullptr;
+	{
+		std::lock_guard<std::mutex> lock(vramlist_lock);
+		if (lock_block)
+			libCore_vramlock_Unlock_block_wb(lock_block);
+		lock_block = nullptr;
+	}
 
 	delete[] custom_image_data;
 
@@ -440,9 +441,11 @@ void BaseTextureCacheData::Create()
 			WARN_LOG(RENDERER, "Warning: planar texture with VQ set (invalid)");
 
 		//Planar textures support stride selection, mostly used for non power of 2 textures (videos)
-		int stride = w;
+		int stride = 0;
 		if (tcw.StrideSel)
 			stride = (TEXT_CONTROL & 31) * 32;
+		if (stride == 0)
+			stride = w;
 
 		//Call the format specific conversion code
 		texconv = tex->PL;
@@ -590,7 +593,11 @@ void BaseTextureCacheData::Update()
 				}
 				else
 					vram_addr = sa_tex + OtherMipPoint[i] * tex->bpp / 8;
-				texconv32(&pb32, (u8*)&vram[vram_addr], 1 << i, 1 << i);
+				if (tcw.PixelFmt == PixelYUV && i == 0)
+					// Special case for YUV at 1x1 LoD
+					format[Pixel565].TW32(&pb32, &vram[vram_addr], 1, 1);
+				else
+					texconv32(&pb32, &vram[vram_addr], 1 << i, 1 << i);
 			}
 			pb32.set_mipmap(0);
 		}
@@ -663,7 +670,8 @@ void BaseTextureCacheData::Update()
 	h = original_h;
 
 	//lock the texture to detect changes in it
-	lock_block = libCore_vramlock_Lock(sa_tex,sa+size-1,this);
+	if (lock_block == nullptr)
+		lock_block = libCore_vramlock_Lock(sa_tex,sa+size-1,this);
 
 	UploadToGPU(upscaled_w, upscaled_h, (u8*)temp_tex_buffer, mipmapped, mipmapped);
 	if (settings.rend.DumpTextures)

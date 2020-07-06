@@ -390,7 +390,7 @@ void *AWCartridge::GetDmaPtr(u32 &limit)
 {
 	limit = std::min(std::min(limit, (u32)32), dma_limit - dma_offset);
 	u32 offset = dma_offset / 2;
-	for (int i = 0; i < limit / 2; i++)
+	for (u32 i = 0; i < limit / 2; i++)
 		decrypted_buf[i] = decrypt16(offset + i);
 
 //	printf("AWCART Decrypted data @ %08x:\n", dma_offset);
@@ -423,3 +423,28 @@ std::string AWCartridge::GetGameId()
 	return game_id;
 }
 
+void AWCartridge::Serialize(void **data, unsigned int *total_size)
+{
+	REICAST_S(mpr_offset);
+	REICAST_S(mpr_bank);
+	REICAST_S(epr_offset);
+	REICAST_S(mpr_file_offset);
+	REICAST_S(mpr_record_index);
+	REICAST_S(mpr_first_file_index);
+	REICAST_S(dma_offset);
+	REICAST_S(dma_limit);
+	Cartridge::Serialize(data, total_size);
+}
+
+void AWCartridge::Unserialize(void **data, unsigned int *total_size)
+{
+	REICAST_US(mpr_offset);
+	REICAST_US(mpr_bank);
+	REICAST_US(epr_offset);
+	REICAST_US(mpr_file_offset);
+	REICAST_US(mpr_record_index);
+	REICAST_US(mpr_first_file_index);
+	REICAST_US(dma_offset);
+	REICAST_US(dma_limit);
+	Cartridge::Unserialize(data, total_size);
+}

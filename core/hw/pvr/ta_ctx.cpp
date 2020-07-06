@@ -241,10 +241,7 @@ TA_context* tactx_Find(u32 addr, bool allocnew)
 
 		return rv;
 	}
-	else
-	{
-		return 0;
-	}
+	return 0;
 }
 
 TA_context* tactx_Pop(u32 addr)
@@ -284,4 +281,32 @@ void tactx_Term()
 	}
 	ctx_pool.clear();
 	mtx_pool.unlock();
+}
+
+const u32 NULL_CONTEXT = ~0u;
+
+void SerializeTAContext(void **data, unsigned int *total_size)
+{
+	if (ta_ctx == nullptr)
+	{
+		REICAST_S(NULL_CONTEXT);
+		return;
+	}
+	REICAST_S(ta_ctx->Address);
+	const u32 taSize = ta_tad.thd_data - ta_tad.thd_root;
+	REICAST_S(taSize);
+	REICAST_SA(ta_tad.thd_root, taSize);
+}
+
+void UnserializeTAContext(void **data, unsigned int *total_size)
+{
+	u32 address;
+	REICAST_US(address);
+	if (address == NULL_CONTEXT)
+		return;
+	SetCurrentTARC(address);
+	u32 size;
+	REICAST_US(size);
+	REICAST_USA(ta_tad.thd_root, size);
+	ta_tad.thd_data = ta_tad.thd_root + size;
 }

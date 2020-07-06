@@ -155,7 +155,6 @@ struct vram_block
 //******************************************************
 
 void libCore_vramlock_Unlock_block  (vram_block* block);
-void libCore_vramlock_Unlock_block_wb  (vram_block* block);
 vram_block* libCore_vramlock_Lock(u32 start_offset,u32 end_offset,void* userdata);
 
 
@@ -595,11 +594,8 @@ enum serialize_version_enum {
 	V2,
 	V3,
 	V4,
-	V5_LIBRETRO_UNSUPPORTED,
-	V6_LIBRETRO_UNSUPPORTED,
-	V7_LIBRETRO_UNSUPPORTED,
-	V8_LIBRETRO_UNSUPPORTED,
-	V9_LIBRETRO,
+	V11_LIBRETRO = 10,
+	VCUR_LIBRETRO = V11_LIBRETRO,
 
 	V5 = 800,
 	V6 = 801,
@@ -607,4 +603,5 @@ enum serialize_version_enum {
 	V8 = 803,
 	V9 = 804,
 	V10 = 805,
+	V11 = 806,
 } ;

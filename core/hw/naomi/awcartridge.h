@@ -28,6 +28,8 @@ public:
 	virtual std::string GetGameId() override;
 
 	void SetKey(u32 key) override;
+	virtual void Serialize(void **data, unsigned int *total_size) override;
+	virtual void Unserialize(void **data, unsigned int *total_size) override;
 
 private:
 	virtual void device_reset();

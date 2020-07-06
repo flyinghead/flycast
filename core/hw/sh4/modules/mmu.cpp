@@ -5,6 +5,7 @@
 
 TLB_Entry UTLB[64];
 TLB_Entry ITLB[4];
+u32 ITLB_LRU_USE[64];
 
 //SQ fast remap , mainly hackish , assumes 1MB pages
 //max 64MB can be remapped on SQ
@@ -117,7 +118,6 @@ const u32 ITLB_LRU_AND[4] =
 	0x3E,//x1x1x0
 	0x3F,//xx1x11
 };
-u32 ITLB_LRU_USE[64];
 
 #ifndef FAST_MMU
 //sync mem mapping to mmu , suspend compiled blocks if needed.entry is a UTLB entry # , -1 is for full sync
