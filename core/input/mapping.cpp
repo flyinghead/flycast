@@ -136,7 +136,12 @@ void InputMapping::load(FILE* fp)
 	mf.parse(fp);
 
 	this->name = mf.get("emulator", "mapping_name", "<Unknown>");
-	this->dead_zone = mf.get_float("emulator", "dead_zone", 0.0f);
+
+	int dz = mf.get_int("emulator", "dead_zone", 10);
+	dz = std::min(dz, 100);
+	dz = std::max(dz, 0);
+
+	this->dead_zone = ((float) dz) / 100;
 
 	for (u32 i = 0; i < ARRAY_SIZE(button_list); i++)
 	{
@@ -213,7 +218,7 @@ bool InputMapping::save(const char *name)
 	ConfigFile mf;
 
 	mf.set("emulator", "mapping_name", this->name);
-	mf.set_float("emulator", "dead_zone", this->dead_zone);
+	mf.set_int("emulator", "dead_zone", this->dead_zone * 100);
 
 	for (u32 i = 0; i < ARRAY_SIZE(button_list); i++)
 	{
