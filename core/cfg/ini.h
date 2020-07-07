@@ -8,6 +8,7 @@ struct ConfigEntry {
 	std::string value;
 	const std::string& get_string() const;
 	int get_int();
+	float get_float();
 	bool get_bool();
 };
 
@@ -38,10 +39,12 @@ struct ConfigFile {
 		/* getting values */
 		std::string get(const std::string& section_name, const std::string& entry_name, const std::string& default_value = "");
 		int get_int(const std::string& section_name, const std::string& entry_name, int default_value = 0);
+		float get_float(const std::string& section_name, const std::string& entry_name, float default_value = 0.0f);
 		bool get_bool(const std::string& section_name, const std::string& entry_name, bool default_value = false);
 		/* setting values */
 		void set(const std::string& section_name, const std::string& entry_name, const std::string& value, bool is_virtual = false);
 		void set_int(const std::string& section_name, const std::string& entry_name, int value, bool is_virtual = false);
+		void set_float(const std::string& section_name, const std::string& entry_name, float value, bool is_virtual = false);
 		void set_bool(const std::string& section_name, const std::string& entry_name, bool value, bool is_virtual = false);
 
 		void delete_section(const std::string& section_name);
