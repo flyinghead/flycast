@@ -861,6 +861,7 @@ bool gl_create_resources();
 
 //setup
 
+#ifndef __APPLE__
 static void gl_DebugOutput(GLenum source,
         GLenum type,
         GLuint id,
@@ -886,6 +887,7 @@ static void gl_DebugOutput(GLenum source,
 		break;
 	}
 }
+#endif
 
 bool gles_init()
 {
