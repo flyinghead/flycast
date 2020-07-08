@@ -30,12 +30,14 @@ public:
 	InputMapping() {}
 	InputMapping(const InputMapping& other) {
 		name = other.name;
+		dead_zone = other.dead_zone;
 	    buttons = other.buttons;
 	    axes = other.axes;
 	    axes_inverted = other.axes_inverted;
 	}
 
 	std::string name;
+	float dead_zone;
 
 	DreamcastKey get_button_id(u32 code)
 	{
@@ -91,6 +93,8 @@ class IdentityInputMapping : public InputMapping
 public:
 	IdentityInputMapping() {
 		name = "Default";
+		dead_zone = 0.1f;
+		
 		for (int i = 0; i < 32; i++)
 			set_button((DreamcastKey)(1 << i), 1 << i);
 		set_axis(DC_AXIS_X, DC_AXIS_X, false);

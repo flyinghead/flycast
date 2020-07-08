@@ -67,7 +67,7 @@ axis_list[] =
 {
 	{ DC_AXIS_X, "dreamcast", "axis_x", "compat", "axis_x_inverted" },
 	{ DC_AXIS_Y, "dreamcast", "axis_y", "compat", "axis_y_inverted" },
-	{ DC_AXIS_LT,  "dreamcast", "axis_trigger_left",  "compat", "axis_trigger_left_inverted" },
+	{ DC_AXIS_LT, "dreamcast", "axis_trigger_left",  "compat", "axis_trigger_left_inverted" },
 	{ DC_AXIS_RT, "dreamcast", "axis_trigger_right", "compat", "axis_trigger_right_inverted" },
 	{ DC_AXIS_X2, "dreamcast", "axis_right_x", "compat", "axis_right_x_inverted" },
 	{ DC_AXIS_Y2, "dreamcast", "axis_right_y", "compat", "axis_right_y_inverted" },
@@ -136,6 +136,12 @@ void InputMapping::load(FILE* fp)
 	mf.parse(fp);
 
 	this->name = mf.get("emulator", "mapping_name", "<Unknown>");
+
+	int dz = mf.get_int("emulator", "dead_zone", 10);
+	dz = std::min(dz, 100);
+	dz = std::max(dz, 0);
+
+	this->dead_zone = ((float) dz) / 100;
 
 	for (u32 i = 0; i < ARRAY_SIZE(button_list); i++)
 	{
@@ -212,6 +218,7 @@ bool InputMapping::save(const char *name)
 	ConfigFile mf;
 
 	mf.set("emulator", "mapping_name", this->name);
+	mf.set_int("emulator", "dead_zone", this->dead_zone * 100);
 
 	for (u32 i = 0; i < ARRAY_SIZE(button_list); i++)
 	{
