@@ -73,6 +73,7 @@ static const char FragmentShaderSource[] = R"(#version 450
 #define pp_BumpMap %d
 #define ColorClamping %d
 #define pp_TriLinear %d
+#define pp_Palette %d
 #define PI 3.1415926
 
 layout (location = 0) out vec4 FragColor;
@@ -98,10 +99,14 @@ layout (push_constant) uniform pushBlock
 {
 	vec4 clipTest;
 	float trilinearAlpha;
+	float palette_index;
 } pushConstants;
 
 #if pp_Texture == 1
 layout (set = 1, binding = 0) uniform sampler2D tex;
+#endif
+#if pp_Palette == 1
+layout (set = 0, binding = 3) uniform sampler2D palette;
 #endif
 
 // Vertex input
@@ -132,6 +137,16 @@ vec4 colorClamp(vec4 col)
 #endif
 }
 
+#if pp_Palette == 1
+
+vec4 palettePixel(sampler2D tex, vec2 coords)
+{
+	vec4 c = vec4(texture(tex, coords).r * 255.0 / 1023.0 + pushConstants.palette_index, 0.5, 0.0, 0.0);
+	return texture(palette, c.xy);
+}
+
+#endif
+
 void main()
 {
 	// Clip inside the box
@@ -150,7 +165,11 @@ void main()
 	#endif
 	#if pp_Texture == 1
 	{
-		vec4 texcol = texture(tex, vtx_uv);
+		#if pp_Palette == 0
+			vec4 texcol = texture(tex, vtx_uv);
+		#else
+			vec4 texcol = palettePixel(tex, vtx_uv);
+		#endif
 		
 		#if pp_BumpMap == 1
 			float s = PI / 2.0 * (texcol.a * 15.0 * 16.0 + texcol.r * 15.0) / 255.0;
@@ -338,7 +357,7 @@ vk::UniqueShaderModule ShaderManager::compileShader(const FragmentShaderParams& 
 
 	sprintf(buf, FragmentShaderSource, (int)params.alphaTest, (int)params.insideClipTest, (int)params.useAlpha, (int)params.texture,
 			(int)params.ignoreTexAlpha, params.shaderInstr, (int)params.offset, params.fog, (int)params.gouraud,
-			(int)params.bumpmap, (int)params.clamping, (int)params.trilinear);
+			(int)params.bumpmap, (int)params.clamping, (int)params.trilinear, (int)params.palette);
 	return ShaderCompiler::Compile(vk::ShaderStageFlagBits::eFragment, buf);
 }
 

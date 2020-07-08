@@ -25,6 +25,7 @@ struct gl4PipelineShader
 	GLint trilinear_alpha;
 	GLint fog_clamp_min, fog_clamp_max;
 	GLint normal_matrix;
+	GLint palette_index;
 
 	bool cp_AlphaTest;
 	bool pp_InsideClipping;
@@ -39,6 +40,7 @@ struct gl4PipelineShader
 	bool pp_Gouraud;
 	bool pp_BumpMap;
 	bool fog_clamping;
+	bool palette;
 };
 
 
@@ -90,8 +92,8 @@ extern GLuint depth_fbo;
 \n\
 layout(r32ui, binding = 4) uniform coherent restrict uimage2D abufferPointerImg; \n\
 struct Pixel { \n\
-	highp vec4 color; \n\
-	highp float depth; \n\
+	vec4 color; \n\
+	float depth; \n\
 	uint seq_num; \n\
 	uint next; \n\
 }; \n\
@@ -122,7 +124,7 @@ uint getNextPixelIndex() \n\
 \n\
 void setFragDepth(void) \n\
 { \n\
-	highp float w = 100000.0 * gl_FragCoord.w; \n\
+	float w = 100000.0 * gl_FragCoord.w; \n\
 	gl_FragDepth = log2(1.0 + w) / 34.0; \n\
 } \n\
 struct PolyParam { \n\
@@ -255,6 +257,7 @@ extern struct gl4ShaderUniforms_t
 		int width;
 		int height;
 	} base_clipping;
+	float palette_index;
 
 	void setUniformArray(GLint location, int v0, int v1)
 	{
@@ -309,6 +312,9 @@ extern struct gl4ShaderUniforms_t
 
 		if (s->normal_matrix != -1)
 			glUniformMatrix4fv(s->normal_matrix, 1, GL_FALSE, &normal_mat[0][0]);
+
+		if (s->palette_index != -1)
+			glUniform1f(s->palette_index, palette_index);
 	}
 
 } gl4ShaderUniforms;

@@ -12,8 +12,9 @@ void TextureCacheData::UploadToGPU(int width, int height, u8 *temp_tex_buffer, b
 {
 	//upload to OpenGL !
 	glcache.BindTexture(GL_TEXTURE_2D, texID);
-	GLuint comps = GL_RGBA;
+	GLuint comps = tex_type == TextureType::_8 ? gl.single_channel_format : GL_RGBA;
 	GLuint gltype;
+	u32 bytes_per_pixel = 2;
 	switch (tex_type)
 	{
 	case TextureType::_5551:
@@ -27,6 +28,11 @@ void TextureCacheData::UploadToGPU(int width, int height, u8 *temp_tex_buffer, b
 		gltype = GL_UNSIGNED_SHORT_4_4_4_4;
 		break;
 	case TextureType::_8888:
+		bytes_per_pixel = 4;
+		gltype = GL_UNSIGNED_BYTE;
+		break;
+	case TextureType::_8:
+		bytes_per_pixel = 1;
 		gltype = GL_UNSIGNED_BYTE;
 		break;
 	default:
@@ -63,10 +69,13 @@ void TextureCacheData::UploadToGPU(int width, int height, u8 *temp_tex_buffer, b
 			case TextureType::_8888:
 				internalFormat = GL_RGBA8;
 				break;
+			case TextureType::_8:
+				internalFormat = comps;
+				break;
 			default:
-			    die("Unsupported texture format");
-			    internalFormat = 0;
-			    break;
+				die("Unsupported texture format");
+				internalFormat = 0;
+				break;
 			}
 			if (Updates == 1)
 			{
@@ -76,7 +85,7 @@ void TextureCacheData::UploadToGPU(int width, int height, u8 *temp_tex_buffer, b
 			for (int i = 0; i < mipmapLevels; i++)
 			{
 				glTexSubImage2D(GL_TEXTURE_2D, mipmapLevels - i - 1, 0, 0, 1 << i, 1 << i, comps, gltype, temp_tex_buffer);
-				temp_tex_buffer += (1 << (2 * i)) * (tex_type == TextureType::_8888 ? 4 : 2);
+				temp_tex_buffer += (1 << (2 * i)) * bytes_per_pixel;
 			}
 		}
 		else
@@ -87,7 +96,7 @@ void TextureCacheData::UploadToGPU(int width, int height, u8 *temp_tex_buffer, b
 			for (int i = 0; i < mipmapLevels; i++)
 			{
 				glTexImage2D(GL_TEXTURE_2D, mipmapLevels - i - 1, comps, 1 << i, 1 << i, 0, comps, gltype, temp_tex_buffer);
-				temp_tex_buffer += (1 << (2 * i)) * (tex_type == TextureType::_8888 ? 4 : 2);
+				temp_tex_buffer += (1 << (2 * i)) * bytes_per_pixel;
 			}
 		}
 	}

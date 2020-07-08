@@ -145,7 +145,10 @@ public:
 		textureCache.CollectCleanup();
 
 		if (result)
+		{
 			CheckFogTexture();
+			CheckPaletteTexture();
+		}
 		else
 			texCommandPool.EndFrame();
 
@@ -205,7 +208,7 @@ public:
 		else
 			drawer = &screenDrawer;
 
-		drawer->Draw(fogTexture.get());
+		drawer->Draw(fogTexture.get(), paletteTexture.get());
 
 		drawer->EndRenderPass();
 
@@ -270,8 +273,29 @@ private:
 
 		fogTexture->SetCommandBuffer(nullptr);
 	}
+	void CheckPaletteTexture()
+	{
+		if (!paletteTexture)
+		{
+			paletteTexture = std::unique_ptr<Texture>(new Texture());
+			paletteTexture->SetPhysicalDevice(GetContext()->GetPhysicalDevice());
+			paletteTexture->SetDevice(GetContext()->GetDevice());
+			paletteTexture->tex_type = TextureType::_8888;
+			palette_updated = true;
+		}
+		if (!palette_updated)
+			return;
+		palette_updated = false;
+
+		paletteTexture->SetCommandBuffer(texCommandPool.Allocate());
+
+		paletteTexture->UploadToGPU(1024, 1, (u8 *)palette32_ram, false);
+
+		paletteTexture->SetCommandBuffer(nullptr);
+	}
 
 	std::unique_ptr<Texture> fogTexture;
+	std::unique_ptr<Texture> paletteTexture;
 	CommandPool texCommandPool;
 
 	SamplerManager samplerManager;

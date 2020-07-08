@@ -55,7 +55,8 @@ public:
 		glm::ivec4 blend_mode0;	// Only using 2 elements but easier for std140
 		float trilinearAlpha;
 		int pp_Number;
-		int _pad[2];
+		float palette_index;
+		int _pad;
 
 		// two volume mode
 		glm::ivec4 blend_mode1;	// Only using 2 elements but easier for std140
@@ -80,7 +81,8 @@ public:
 	}
 	// FIXME way too many params
 	void UpdateUniforms(vk::Buffer buffer, u32 vertexUniformOffset, u32 fragmentUniformOffset, vk::ImageView fogImageView,
-			u32 polyParamsOffset, u32 polyParamsSize, vk::ImageView stencilImageView, vk::ImageView depthImageView)
+			u32 polyParamsOffset, u32 polyParamsSize, vk::ImageView stencilImageView, vk::ImageView depthImageView,
+			vk::ImageView paletteImageView)
 	{
 		if (!perFrameDescSet)
 		{
@@ -104,6 +106,17 @@ public:
 			static vk::DescriptorImageInfo imageInfo;
 			imageInfo = { fogSampler, fogImageView, vk::ImageLayout::eShaderReadOnlyOptimal };
 			writeDescriptorSets.push_back(vk::WriteDescriptorSet(*perFrameDescSet, 2, 0, 1, vk::DescriptorType::eCombinedImageSampler, &imageInfo, nullptr, nullptr));
+		}
+		if (paletteImageView)
+		{
+			TSP palTsp = {};
+			palTsp.FilterMode = 0;
+			palTsp.ClampU = 1;
+			palTsp.ClampV = 1;
+			vk::Sampler palSampler = samplerManager->GetSampler(palTsp);
+			static vk::DescriptorImageInfo imageInfo;
+			imageInfo = { palSampler, paletteImageView, vk::ImageLayout::eShaderReadOnlyOptimal };
+			writeDescriptorSets.push_back(vk::WriteDescriptorSet(*perFrameDescSet, 6, 0, 1, vk::DescriptorType::eCombinedImageSampler, &imageInfo, nullptr, nullptr));
 		}
 		if (polyParamsSize > 0)
 		{
@@ -150,7 +163,7 @@ public:
 		std::vector<vk::WriteDescriptorSet> writeDescriptorSets;
 		writeDescriptorSets.push_back(vk::WriteDescriptorSet(*perPolyDescSets.back(), 0, 0, 1, vk::DescriptorType::eCombinedImageSampler, &imageInfo0, nullptr, nullptr));
 
-		if (textureId1 != -1)
+		if (textureId1 != (u64)-1)
 		{
 			Texture *texture1 = reinterpret_cast<Texture *>(textureId1);
 			vk::DescriptorImageInfo imageInfo1(samplerManager->GetSampler(tsp1), texture1->GetReadOnlyImageView(), vk::ImageLayout::eShaderReadOnlyOptimal);
@@ -223,6 +236,7 @@ public:
 					{ 3, vk::DescriptorType::eStorageBuffer, 1, vk::ShaderStageFlagBits::eFragment },		// Tr poly params
 					{ 4, vk::DescriptorType::eInputAttachment, 1, vk::ShaderStageFlagBits::eFragment },		// stencil input attachment
 					{ 5, vk::DescriptorType::eInputAttachment, 1, vk::ShaderStageFlagBits::eFragment },		// depth input attachment
+					{ 6, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment },// palette texture
 			};
 			perFrameLayout = GetContext()->GetDevice().createDescriptorSetLayoutUnique(
 					vk::DescriptorSetLayoutCreateInfo(vk::DescriptorSetLayoutCreateFlags(), ARRAY_SIZE(perFrameBindings), perFrameBindings));
@@ -310,7 +324,7 @@ private:
 		u32 hash = pp->pcw.Gouraud | (pp->pcw.Offset << 1) | (pp->pcw.Texture << 2) | (pp->pcw.Shadow << 3)
 			| (((pp->tileclip >> 28) == 3) << 4);
 		hash |= ((listType >> 1) << 5);
-		if (pp->tcw1.full != -1 || pp->tsp1.full != -1)
+		if (pp->tcw1.full != (u32)-1 || pp->tsp1.full != (u32)-1)
 		{
 			// Two-volume mode
 			hash |= (1 << 31) | (pp->tsp.ColorClamp << 11);
@@ -322,7 +336,7 @@ private:
 				| (pp->tsp.SrcInstr << 14) | (pp->tsp.DstInstr << 17);
 		}
 		hash |= (pp->isp.ZWriteDis << 20) | (pp->isp.CullMode << 21) | ((autosort ? 6 : pp->isp.DepthMode) << 23);
-		hash |= (u32)pass << 26;
+		hash |= ((u32)BaseTextureCacheData::IsGpuHandledPaletted(pp->tsp, pp->tcw) << 26) | ((u32)pass << 27);
 
 		return hash;
 	}

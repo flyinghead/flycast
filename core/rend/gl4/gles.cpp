@@ -14,23 +14,23 @@ static const char* VertexShaderSource = R"(#version 140
 #endif
 
 /* Vertex constants*/ 
-uniform highp vec4      scale;
-uniform highp mat4 normal_matrix;
+uniform vec4 scale;
+uniform mat4 normal_matrix;
 /* Vertex input */
-in highp vec4    in_pos;
-in lowp vec4     in_base;
-in lowp vec4     in_offs;
-in mediump vec2  in_uv;
-in lowp vec4     in_base1;
-in lowp vec4     in_offs1;
-in mediump vec2  in_uv1;
+in vec4 in_pos;
+in vec4 in_base;
+in vec4 in_offs;
+in vec2 in_uv;
+in vec4 in_base1;
+in vec4 in_offs1;
+in vec2 in_uv1;
 /* output */
-INTERPOLATION out lowp vec4 vtx_base;
-INTERPOLATION out lowp vec4 vtx_offs;
-			  out mediump vec2 vtx_uv;
-INTERPOLATION out lowp vec4 vtx_base1;
-INTERPOLATION out lowp vec4 vtx_offs1;
-			  out mediump vec2 vtx_uv1;
+INTERPOLATION out vec4 vtx_base;
+INTERPOLATION out vec4 vtx_offs;
+			  out vec2 vtx_uv;
+INTERPOLATION out vec4 vtx_base1;
+INTERPOLATION out vec4 vtx_offs1;
+			  out vec2 vtx_uv1;
 void main()
 {
 	vtx_base = in_base;
@@ -62,6 +62,7 @@ R"(
 #define pp_Gouraud %d
 #define pp_BumpMap %d
 #define FogClamping %d
+#define pp_Palette %d
 #define PASS %d
 #define PI 3.1415926
 
@@ -86,19 +87,21 @@ out vec4 FragColor;
 #endif
 
 /* Shader program params*/
-uniform lowp float cp_AlphaTestValue;
-uniform lowp vec4 pp_ClipTest;
-uniform lowp vec3 sp_FOG_COL_RAM,sp_FOG_COL_VERT;
-uniform highp float sp_FOG_DENSITY;
-uniform highp float shade_scale_factor;
+uniform float cp_AlphaTestValue;
+uniform vec4 pp_ClipTest;
+uniform vec3 sp_FOG_COL_RAM,sp_FOG_COL_VERT;
+uniform float sp_FOG_DENSITY;
+uniform float shade_scale_factor;
 uniform sampler2D tex0, tex1;
 layout(binding = 5) uniform sampler2D fog_table;
 uniform int pp_Number;
 uniform usampler2D shadow_stencil;
 uniform sampler2D DepthTex;
-uniform lowp float trilinear_alpha;
-uniform lowp vec4 fog_clamp_min;
-uniform lowp vec4 fog_clamp_max;
+uniform float trilinear_alpha;
+uniform vec4 fog_clamp_min;
+uniform vec4 fog_clamp_max;
+uniform sampler2D palette;
+uniform float palette_index;
 
 uniform ivec2 blend_mode[2];
 #if pp_TwoVolumes == 1
@@ -109,24 +112,24 @@ uniform int fog_control[2];
 #endif
 
 /* Vertex input*/
-INTERPOLATION in lowp vec4 vtx_base;
-INTERPOLATION in lowp vec4 vtx_offs;
-			  in mediump vec2 vtx_uv;
-INTERPOLATION in lowp vec4 vtx_base1;
-INTERPOLATION in lowp vec4 vtx_offs1;
-			  in mediump vec2 vtx_uv1;
+INTERPOLATION in vec4 vtx_base;
+INTERPOLATION in vec4 vtx_offs;
+			  in vec2 vtx_uv;
+INTERPOLATION in vec4 vtx_base1;
+INTERPOLATION in vec4 vtx_offs1;
+			  in vec2 vtx_uv1;
 
-lowp float fog_mode2(highp float w)
+float fog_mode2(float w)
 {
-	highp float z = clamp(w * sp_FOG_DENSITY, 1.0, 255.9999);
-	highp float exp = floor(log2(z));
-	highp float m = z * 16.0 / pow(2.0, exp) - 16.0;
+	float z = clamp(w * sp_FOG_DENSITY, 1.0, 255.9999);
+	float exp = floor(log2(z));
+	float m = z * 16.0 / pow(2.0, exp) - 16.0;
 	float idx = floor(m) + exp * 16.0 + 0.5;
 	vec4 fog_coef = texture(fog_table, vec2(idx / 128.0, 0.75 - (m - floor(m)) / 2.0));
 	return fog_coef.r;
 }
 
-highp vec4 fog_clamp(highp vec4 col)
+vec4 fog_clamp(vec4 col)
 {
 #if FogClamping == 1
 	return clamp(col, fog_clamp_min, fog_clamp_max);
@@ -135,13 +138,23 @@ highp vec4 fog_clamp(highp vec4 col)
 #endif
 }
 
+#if pp_Palette == 1
+
+vec4 palettePixel(sampler2D tex, vec2 coords)
+{
+	vec4 c = vec4(texture(tex, coords).r * 255.0 / 1023.0 + palette_index, 0.5, 0.0, 0.0);
+	return texture(palette, c.xy);
+}
+
+#endif
+
 void main()
 {
 	setFragDepth();
 	
 	#if PASS == PASS_OIT
 		// Manual depth testing
-		highp float frontDepth = texture(DepthTex, gl_FragCoord.xy / textureSize(DepthTex, 0)).r;
+		float frontDepth = texture(DepthTex, gl_FragCoord.xy / textureSize(DepthTex, 0)).r;
 		if (gl_FragDepth < frontDepth)
 			discard;
 	#endif
@@ -153,9 +166,9 @@ void main()
 			discard;
 	#endif
 	
-	highp vec4 color = vtx_base;
-	lowp vec4 offset = vtx_offs;
-	mediump vec2 uv = vtx_uv;
+	vec4 color = vtx_base;
+	vec4 offset = vtx_offs;
+	vec2 uv = vtx_uv;
 	bool area1 = false;
 	ivec2 cur_blend_mode = blend_mode[0];
 	
@@ -190,14 +203,22 @@ void main()
 	#endif
 	#if pp_Texture==1
 	{
-		highp vec4 texcol;
-		if (area1)
-			texcol = texture(tex1, uv);
-		else
-			texcol = texture(tex0, uv);
+		vec4 texcol;
+		#if pp_Palette == 0
+			if (area1)
+				texcol = texture(tex1, uv);
+			else
+				texcol = texture(tex0, uv);
+		#else
+			if (area1)
+				texcol = palettePixel(tex1, uv);
+			else
+				texcol = palettePixel(tex0, uv);
+		#endif
+
 		#if pp_BumpMap == 1
-			highp float s = PI / 2.0 * (texcol.a * 15.0 * 16.0 + texcol.r * 15.0) / 255.0;
-			highp float r = 2.0 * PI * (texcol.g * 15.0 * 16.0 + texcol.b * 15.0) / 255.0;
+			float s = PI / 2.0 * (texcol.a * 15.0 * 16.0 + texcol.r * 15.0) / 255.0;
+			float r = 2.0 * PI * (texcol.g * 15.0 * 16.0 + texcol.b * 15.0) / 255.0;
 			texcol.a = clamp(vtx_offs.a + vtx_offs.r * sin(s) + vtx_offs.g * cos(s) * cos(r - 2.0 * PI * vtx_offs.b), 0.0, 1.0);
 			texcol.rgb = vec3(1.0, 1.0, 1.0);	
 		#else
@@ -370,7 +391,8 @@ bool gl4CompilePipelineShader(	gl4PipelineShader* s, const char *pixel_source /*
 	sprintf(pshader, pixel_source,
                 s->cp_AlphaTest, s->pp_InsideClipping, s->pp_UseAlpha,
                 s->pp_Texture, s->pp_IgnoreTexA, s->pp_ShadInstr, s->pp_Offset, s->pp_FogCtrl,
-				s->pp_TwoVolumes, s->pp_Gouraud, s->pp_BumpMap, s->fog_clamping, (int)s->pass);
+				s->pp_TwoVolumes, s->pp_Gouraud, s->pp_BumpMap, s->fog_clamping, s->palette,
+				(int)s->pass);
 
 	s->program = gl_CompileAndLink(vshader, pshader);
 
@@ -436,6 +458,11 @@ bool gl4CompilePipelineShader(	gl4PipelineShader* s, const char *pixel_source /*
 	s->ignore_tex_alpha = glGetUniformLocation(s->program, "ignore_tex_alpha");
 	s->shading_instr = glGetUniformLocation(s->program, "shading_instr");
 	s->fog_control = glGetUniformLocation(s->program, "fog_control");
+
+	gu = glGetUniformLocation(s->program, "palette");
+	if (gu != -1)
+		glUniform1i(gu, 6);		// GL_TEXTURE6
+	s->palette_index = glGetUniformLocation(s->program, "palette_index");
 
 	return glIsProgram(s->program)==GL_TRUE;
 }
@@ -656,6 +683,11 @@ static bool RenderFrame()
 	{
 		fog_needs_update = false;
 		UpdateFogTexture((u8 *)FOG_TABLE, GL_TEXTURE5, GL_RED);
+	}
+	if (palette_updated)
+	{
+		UpdatePaletteTexture(GL_TEXTURE6);
+		palette_updated = false;
 	}
 
 	glcache.UseProgram(gl4.modvol_shader.program);

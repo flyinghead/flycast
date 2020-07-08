@@ -16,6 +16,7 @@ extern bool pal_needs_update,fog_needs_update;
 extern u32 pal_hash_256[4];
 extern u32 pal_hash_16[64];
 extern bool KillTex;
+extern bool palette_updated;
 
 extern u32 detwiddle[2][11][1024];
 
@@ -151,47 +152,22 @@ void palette_update();
 
 #define ARGB8888_32( word ) ( ((word >> 0) & 0xFF000000) | (((word >> 16) & 0xFF) << 0) | (((word >> 8) & 0xFF) << 8) | ((word & 0xFF) << 16) )
 
-template<class PixelPacker>
-__forceinline u32 YUV422(s32 Y,s32 Yu,s32 Yv)
+inline static u32 YUV422(s32 Y,s32 Yu,s32 Yv)
 {
 	Yu-=128;
 	Yv-=128;
 
-	//s32 B = (76283*(Y - 16) + 132252*(Yu - 128))>>16;
-	//s32 G = (76283*(Y - 16) - 53281 *(Yv - 128) - 25624*(Yu - 128))>>16;
-	//s32 R = (76283*(Y - 16) + 104595*(Yv - 128))>>16;
-	
 	s32 R = Y + Yv*11/8;            // Y + (Yv-128) * (11/8) ?
 	s32 G = Y - (Yu*11 + Yv*22)/32; // Y - (Yu-128) * (11/8) * 0.25 - (Yv-128) * (11/8) * 0.5 ?
 	s32 B = Y + Yu*110/64;          // Y + (Yu-128) * (11/8) * 1.25 ?
 
-	return PixelPacker::packRGB(clamp(0,255,R),clamp(0,255,G),clamp(0,255,B));
+	return clamp(0, 255, R) | (clamp(0, 255, G) << 8) | (clamp(0, 255, B) << 16) | 0xFF000000;
 }
 
 #define twop(x,y,bcx,bcy) (detwiddle[0][bcy][x]+detwiddle[1][bcx][y])
 
-//pixel packers !
-struct pp_565
-{
-	__forceinline static u32 packRGB(u8 R,u8 G,u8 B)
-	{
-		R>>=3;
-		G>>=2;
-		B>>=3;
-		return (R<<11) | (G<<5) | (B<<0);
-	}
-};
-
-struct pp_8888
-{
-	__forceinline static u32 packRGB(u8 R,u8 G,u8 B)
-	{
-		return (R << 0) | (G << 8) | (B << 16) | 0xFF000000;
-	}
-};
-
 //pixel convertors !
-#define pixelcvt_start_base(name,x,y,type) template<class PixelPacker> \
+#define pixelcvt_start_base(name,x,y,type) \
 		struct name \
 		{ \
 			static const u32 xpp=x;\
@@ -202,7 +178,7 @@ struct pp_8888
 #define pixelcvt_start(name,x,y) pixelcvt_start_base(name, x, y, u16)
 #define pixelcvt32_start(name,x,y) pixelcvt_start_base(name, x, y, u32)
 
-#define pixelcvt_size_start(name, x, y) template<class PixelPacker, class pixel_size> \
+#define pixelcvt_size_start(name, x, y) template<class pixel_size> \
 struct name \
 { \
 	static const u32 xpp=x;\
@@ -312,9 +288,9 @@ pixelcvt32_start(convYUV_PL,4,1)
 	s32 Yv = (p_in[0]>>16) &255; //p_in[2]
 
 	//0,0
-	pb->prel(0,YUV422<PixelPacker>(Y0,Yu,Yv));
+	pb->prel(0,YUV422(Y0,Yu,Yv));
 	//1,0
-	pb->prel(1,YUV422<PixelPacker>(Y1,Yu,Yv));
+	pb->prel(1,YUV422(Y1,Yu,Yv));
 
 	//next 4 bytes
 	p_in+=1;
@@ -325,9 +301,9 @@ pixelcvt32_start(convYUV_PL,4,1)
 	Yv = (p_in[0]>>16) &255; //p_in[2]
 
 	//0,0
-	pb->prel(2,YUV422<PixelPacker>(Y0,Yu,Yv));
+	pb->prel(2,YUV422(Y0,Yu,Yv));
 	//1,0
-	pb->prel(3,YUV422<PixelPacker>(Y1,Yu,Yv));
+	pb->prel(3,YUV422(Y1,Yu,Yv));
 }
 pixelcvt_end;
 
@@ -432,9 +408,9 @@ pixelcvt32_start(convYUV_TW,2,2)
 	s32 Yv = (p_in[2]>>0) &255; //p_in[2]
 
 	//0,0
-	pb->prel(0,0,YUV422<PixelPacker>(Y0,Yu,Yv));
+	pb->prel(0,0,YUV422(Y0,Yu,Yv));
 	//1,0
-	pb->prel(1,0,YUV422<PixelPacker>(Y1,Yu,Yv));
+	pb->prel(1,0,YUV422(Y1,Yu,Yv));
 
 	//next 4 bytes
 	//p_in+=2;
@@ -445,9 +421,9 @@ pixelcvt32_start(convYUV_TW,2,2)
 	Yv = (p_in[3]>>0) &255; //p_in[2]
 
 	//0,1
-	pb->prel(0,1,YUV422<PixelPacker>(Y0,Yu,Yv));
+	pb->prel(0,1,YUV422(Y0,Yu,Yv));
 	//1,1
-	pb->prel(1,1,YUV422<PixelPacker>(Y1,Yu,Yv));
+	pb->prel(1,1,YUV422(Y1,Yu,Yv));
 }
 pixelcvt_end;
 
@@ -479,6 +455,33 @@ pixelcvt_size_start(convPAL4_TW,4,4)
 }
 pixelcvt_end;
 
+// Palette 4bpp -> 8bpp
+pixelcvt_size_start(convPAL4PT_TW, 4, 4)
+{
+	u8* p_in = (u8 *)data;
+
+	pb->prel(0, 0, p_in[0] & 0xF);
+	pb->prel(0, 1, (p_in[0] >> 4) & 0xF); p_in++;
+	pb->prel(1, 0, p_in[0] & 0xF);
+	pb->prel(1, 1, (p_in[0] >> 4) & 0xF); p_in++;
+
+	pb->prel(0, 2, p_in[0] & 0xF);
+	pb->prel(0, 3, (p_in[0] >> 4) & 0xF); p_in++;
+	pb->prel(1, 2, p_in[0] & 0xF);
+	pb->prel(1, 3, (p_in[0] >> 4) & 0xF); p_in++;
+
+	pb->prel(2, 0, p_in[0] & 0xF);
+	pb->prel(2, 1, (p_in[0] >> 4) & 0xF); p_in++;
+	pb->prel(3, 0, p_in[0] & 0xF);
+	pb->prel(3, 1, (p_in[0] >> 4) & 0xF); p_in++;
+
+	pb->prel(2, 2, p_in[0] & 0xF);
+	pb->prel(2, 3, (p_in[0] >> 4) & 0xF); p_in++;
+	pb->prel(3, 2, p_in[0] & 0xF);
+	pb->prel(3, 3, (p_in[0] >> 4) & 0xF); p_in++;
+}
+pixelcvt_end;
+
 pixelcvt_size_start(convPAL8_TW,2,4)
 {
 	u8* p_in=(u8*)data;
@@ -495,6 +498,24 @@ pixelcvt_size_start(convPAL8_TW,2,4)
 	pb->prel(1,3,pal[p_in[0]]);p_in++;
 }
 pixelcvt_end;
+
+// Palette 8bpp -> 8bpp (untwiddle only)
+pixelcvt_size_start(convPAL8PT_TW, 2, 4)
+{
+	u8* p_in = (u8 *)data;
+
+	pb->prel(0, 0, p_in[0]); p_in++;
+	pb->prel(0, 1, p_in[0]); p_in++;
+	pb->prel(1, 0, p_in[0]); p_in++;
+	pb->prel(1, 1, p_in[0]); p_in++;
+
+	pb->prel(0, 2, p_in[0]); p_in++;
+	pb->prel(0, 3, p_in[0]); p_in++;
+	pb->prel(1, 2, p_in[0]); p_in++;
+	pb->prel(1, 3, p_in[0]); p_in++;
+}
+pixelcvt_end;
+
 
 //handler functions
 template<class PixelConvertor, class pixel_type>
@@ -565,74 +586,51 @@ void texture_VQ(PixelBuffer<pixel_type>* pb,u8* p_in,u32 Width,u32 Height)
 	}
 }
 
-//We ask the compiler to generate the templates here
-//;)
-//planar formats !
-template void texture_PL<conv565_PL<pp_565>, u16>(PixelBuffer<u16>* pb,u8* p_in,u32 Width,u32 Height);
-template void texture_PL<conv1555_PL<pp_565>, u16>(PixelBuffer<u16>* pb,u8* p_in,u32 Width,u32 Height);
-template void texture_PL<conv4444_PL<pp_565>, u16>(PixelBuffer<u16>* pb,u8* p_in,u32 Width,u32 Height);
-template void texture_PL<convYUV_PL<pp_8888>, u32>(PixelBuffer<u32>* pb,u8* p_in,u32 Width,u32 Height);
-
-//twiddled formats !
-template void texture_TW<conv565_TW<pp_565>, u16>(PixelBuffer<u16>* pb,u8* p_in,u32 Width,u32 Height);
-template void texture_TW<conv1555_TW<pp_565>, u16>(PixelBuffer<u16>* pb,u8* p_in,u32 Width,u32 Height);
-template void texture_TW<conv4444_TW<pp_565>, u16>(PixelBuffer<u16>* pb,u8* p_in,u32 Width,u32 Height);
-template void texture_TW<convYUV_TW<pp_8888>, u32>(PixelBuffer<u32>* pb,u8* p_in,u32 Width,u32 Height);
-
-template void texture_TW<convPAL4_TW<pp_565, u16>, u16>(PixelBuffer<u16>* pb,u8* p_in,u32 Width,u32 Height);
-template void texture_TW<convPAL8_TW<pp_565, u16>, u16>(PixelBuffer<u16>* pb,u8* p_in,u32 Width,u32 Height);
-template void texture_TW<convPAL4_TW<pp_8888, u32>, u32>(PixelBuffer<u32>* pb,u8* p_in,u32 Width,u32 Height);
-template void texture_TW<convPAL8_TW<pp_8888, u32>, u32>(PixelBuffer<u32>* pb,u8* p_in,u32 Width,u32 Height);
-
-//VQ formats !
-template void texture_VQ<conv565_TW<pp_565>, u16>(PixelBuffer<u16>* pb,u8* p_in,u32 Width,u32 Height);
-template void texture_VQ<conv1555_TW<pp_565>, u16>(PixelBuffer<u16>* pb,u8* p_in,u32 Width,u32 Height);
-template void texture_VQ<conv4444_TW<pp_565>, u16>(PixelBuffer<u16>* pb,u8* p_in,u32 Width,u32 Height);
-template void texture_VQ<convYUV_TW<pp_8888>, u32>(PixelBuffer<u32>* pb,u8* p_in,u32 Width,u32 Height);
-
 //Planar
-#define tex565_PL texture_PL<conv565_PL<pp_565>, u16>
-#define tex1555_PL texture_PL<conv1555_PL<pp_565>, u16>
-#define tex4444_PL texture_PL<conv4444_PL<pp_565>, u16>
-#define texYUV422_PL texture_PL<convYUV_PL<pp_8888>, u32>
+#define tex565_PL texture_PL<conv565_PL, u16>
+#define tex1555_PL texture_PL<conv1555_PL, u16>
+#define tex4444_PL texture_PL<conv4444_PL, u16>
+#define texYUV422_PL texture_PL<convYUV_PL, u32>
 #define texBMP_PL tex4444_PL
 
-#define tex565_PL32 texture_PL<conv565_PL32<pp_8888>, u32>
-#define tex1555_PL32 texture_PL<conv1555_PL32<pp_8888>, u32>
-#define tex4444_PL32 texture_PL<conv4444_PL32<pp_8888>, u32>
+#define tex565_PL32 texture_PL<conv565_PL32, u32>
+#define tex1555_PL32 texture_PL<conv1555_PL32, u32>
+#define tex4444_PL32 texture_PL<conv4444_PL32, u32>
 
 //Twiddle
-#define tex565_TW texture_TW<conv565_TW<pp_565>, u16>
-#define tex1555_TW texture_TW<conv1555_TW<pp_565>, u16>
-#define tex4444_TW texture_TW<conv4444_TW<pp_565>, u16>
-#define texYUV422_TW texture_TW<convYUV_TW<pp_8888>, u32>
+#define tex565_TW texture_TW<conv565_TW, u16>
+#define tex1555_TW texture_TW<conv1555_TW, u16>
+#define tex4444_TW texture_TW<conv4444_TW, u16>
+#define texYUV422_TW texture_TW<convYUV_TW, u32>
 #define texBMP_TW tex4444_TW
-#define texPAL4_TW texture_TW<convPAL4_TW<pp_565, u16>, u16>
-#define texPAL8_TW  texture_TW<convPAL8_TW<pp_565, u16>, u16>
-#define texPAL4_TW32 texture_TW<convPAL4_TW<pp_8888, u32>, u32>
-#define texPAL8_TW32  texture_TW<convPAL8_TW<pp_8888, u32>, u32>
+#define texPAL4_TW texture_TW<convPAL4_TW<u16>, u16>
+#define texPAL8_TW texture_TW<convPAL8_TW<u16>, u16>
+#define texPAL4_TW32 texture_TW<convPAL4_TW<u32>, u32>
+#define texPAL8_TW32  texture_TW<convPAL8_TW<u32>, u32>
+#define texPAL4PT_TW texture_TW<convPAL4PT_TW<u8>, u8>
+#define texPAL8PT_TW texture_TW<convPAL8PT_TW<u8>, u8>
 
-#define tex565_TW32 texture_TW<conv565_TW32<pp_8888>, u32>
-#define tex1555_TW32 texture_TW<conv1555_TW32<pp_8888>, u32>
-#define tex4444_TW32 texture_TW<conv4444_TW32<pp_8888>, u32>
+#define tex565_TW32 texture_TW<conv565_TW32, u32>
+#define tex1555_TW32 texture_TW<conv1555_TW32, u32>
+#define tex4444_TW32 texture_TW<conv4444_TW32, u32>
 
 //VQ
-#define tex565_VQ texture_VQ<conv565_TW<pp_565>, u16>
-#define tex1555_VQ texture_VQ<conv1555_TW<pp_565>, u16>
-#define tex4444_VQ texture_VQ<conv4444_TW<pp_565>, u16>
-#define texYUV422_VQ texture_VQ<convYUV_TW<pp_8888>, u32>
+#define tex565_VQ texture_VQ<conv565_TW, u16>
+#define tex1555_VQ texture_VQ<conv1555_TW, u16>
+#define tex4444_VQ texture_VQ<conv4444_TW, u16>
+#define texYUV422_VQ texture_VQ<convYUV_TW, u32>
 #define texBMP_VQ tex4444_VQ
 // According to the documentation, a texture cannot be compressed and use
 // a palette at the same time. However the hardware displays them
 // just fine.
-#define texPAL4_VQ texture_VQ<convPAL4_TW<pp_565, u16>, u16>
-#define texPAL8_VQ texture_VQ<convPAL8_TW<pp_565, u16>, u16>
+#define texPAL4_VQ texture_VQ<convPAL4_TW<u16>, u16>
+#define texPAL8_VQ texture_VQ<convPAL8_TW<u16>, u16>
 
-#define tex565_VQ32 texture_VQ<conv565_TW32<pp_8888>, u32>
-#define tex1555_VQ32 texture_VQ<conv1555_TW32<pp_8888>, u32>
-#define tex4444_VQ32 texture_VQ<conv4444_TW32<pp_8888>, u32>
-#define texPAL4_VQ32 texture_VQ<convPAL4_TW<pp_8888, u32>, u32>
-#define texPAL8_VQ32 texture_VQ<convPAL8_TW<pp_8888, u32>, u32>
+#define tex565_VQ32 texture_VQ<conv565_TW32, u32>
+#define tex1555_VQ32 texture_VQ<conv1555_TW32, u32>
+#define tex4444_VQ32 texture_VQ<conv4444_TW32, u32>
+#define texPAL4_VQ32 texture_VQ<convPAL4_TW<u32>, u32>
+#define texPAL8_VQ32 texture_VQ<convPAL8_TW<u32>, u32>
 
 bool VramLockedWriteOffset(size_t offset);
 void UpscalexBRZ(int factor, u32* source, u32* dest, int width, int height, bool has_alpha);
@@ -640,6 +638,7 @@ void UpscalexBRZ(int factor, u32* source, u32* dest, int width, int height, bool
 struct PvrTexInfo;
 template <class pixel_type> class PixelBuffer;
 typedef void TexConvFP(PixelBuffer<u16>* pb,u8* p_in,u32 Width,u32 Height);
+typedef void TexConvFP8(PixelBuffer<u8>* pb, u8* p_in, u32 Width, u32 Height);
 typedef void TexConvFP32(PixelBuffer<u32>* pb,u8* p_in,u32 Width,u32 Height);
 enum class TextureType { _565, _5551, _4444, _8888, _8 };
 
@@ -660,8 +659,9 @@ public:
 	u32 size;       //size, in bytes, in vram
 
 	const PvrTexInfo* tex;
-	TexConvFP*  texconv;
-	TexConvFP32*  texconv32;
+	TexConvFP *texconv;
+	TexConvFP32 *texconv32;
+	TexConvFP8 *texconv8;
 
 	u32 dirty;
 	vram_block* lock_block;
@@ -722,6 +722,18 @@ public:
 	bool NeedsUpdate();
 	virtual bool Delete();
 	virtual ~BaseTextureCacheData() {}
+	static bool IsGpuHandledPaletted(TSP tsp, TCW tcw)
+	{
+		// Some palette textures are handled on the GPU
+		// This is currently limited to textures using nearest filtering and not mipmapped.
+		// Enabling texture upscaling or dumping also disables this mode.
+		return (tcw.PixelFmt == PixelPal4 || tcw.PixelFmt == PixelPal8)
+				&& settings.rend.TextureUpscale == 1
+				&& !settings.rend.DumpTextures
+				&& tsp.FilterMode == 0
+				&& !tcw.MipMapped
+				&& !tcw.VQ_Comp;
+	}
 };
 
 template<typename Texture>
@@ -732,12 +744,13 @@ public:
 	Texture *getTextureCacheData(TSP tsp, TCW tcw)
 	{
 		u64 key = tsp.full & TSPTextureCacheMask.full;
-		if (tcw.PixelFmt == PixelPal4 || tcw.PixelFmt == PixelPal8)
+		if ((tcw.PixelFmt == PixelPal4 || tcw.PixelFmt == PixelPal8)
+				&& !BaseTextureCacheData::IsGpuHandledPaletted(tsp, tcw))
 			// Paletted textures have a palette selection that must be part of the key
 			// We also add the palette type to the key to avoid thrashing the cache
 			// when the palette type is changed. If the palette type is changed back in the future,
 			// this texture will stil be available.
-			key |= ((u64)tcw.full << 32) | ((PAL_RAM_CTRL & 3) << 6);
+			key |= ((u64)tcw.full << 32) | ((PAL_RAM_CTRL & 3) << 6) | ((tsp.FilterMode != 0) << 8);
 		else
 			key |= (u64)(tcw.full & TCWTextureCacheMask.full) << 32;
 
@@ -817,6 +830,7 @@ static inline void MakeFogTexture(u8 *tex_data)
 		tex_data[i + 128] = fog_table[i * 4 + 1];
 	}
 }
+
 void dump_screenshot(u8 *buffer, u32 width, u32 height, bool alpha = false, u32 rowPitch = 0, bool invertY = true);
 
 extern const std::array<f32, 16> D_Adjust_LoD_Bias;

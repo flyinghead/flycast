@@ -120,6 +120,7 @@ __forceinline
 
 	int clip_rect[4] = {};
 	TileClipping clipmode = GetTileClip(gp->tileclip, ViewportMatrix, clip_rect);
+	bool palette = BaseTextureCacheData::IsGpuHandledPaletted(gp->tsp, gp->tcw);
 
 	CurrentShader = GetProgram(Type == ListType_Punch_Through ? 1 : 0,
 								  clipmode == TileClipping::Inside,
@@ -132,11 +133,20 @@ __forceinline
 								  gp->pcw.Gouraud,
 								  gp->tcw.PixelFmt == PixelBumpMap,
 								  color_clamp,
-								  ShaderUniforms.trilinear_alpha != 1.f);
+								  ShaderUniforms.trilinear_alpha != 1.f,
+								  palette);
 	
 	glcache.UseProgram(CurrentShader->program);
 	if (CurrentShader->trilinear_alpha != -1)
 		glUniform1f(CurrentShader->trilinear_alpha, ShaderUniforms.trilinear_alpha);
+	if (palette)
+	{
+		if (gp->tcw.PixelFmt == PixelPal4)
+			ShaderUniforms.palette_index = float(gp->tcw.PalSelect << 4) / 1023.f;
+		else
+			ShaderUniforms.palette_index = float((gp->tcw.PalSelect >> 4) << 8) / 1023.f;
+		glUniform1f(CurrentShader->palette_index, ShaderUniforms.palette_index);
+	}
 
 	if (clipmode == TileClipping::Inside)
 		glUniform4f(CurrentShader->pp_ClipTest, clip_rect[0], clip_rect[1], clip_rect[0] + clip_rect[2], clip_rect[1] + clip_rect[3]);
@@ -160,7 +170,7 @@ __forceinline
 	SetTextureRepeatMode(GL_TEXTURE_WRAP_T, gp->tsp.ClampV, gp->tsp.FlipV);
 
 	//set texture filter mode
-	if (gp->tsp.FilterMode == 0)
+	if (gp->tsp.FilterMode == 0 || palette)
 	{
 		//disable filtering, mipmaps
 		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -643,7 +653,7 @@ static void DrawQuad(GLuint texId, float x, float y, float w, float h, float u0,
 
 	ShaderUniforms.trilinear_alpha = 1.0;
 
-	PipelineShader *shader = GetProgram(0, false, 1, 0, 1, 0, 0, 2, false, false, false, false);
+	PipelineShader *shader = GetProgram(0, false, 1, 0, 1, 0, 0, 2, false, false, false, false, false);
 	glcache.UseProgram(shader->program);
 
 	glActiveTexture(GL_TEXTURE0);
