@@ -388,7 +388,7 @@ void BaseTextureCacheData::PrintTextureName()
 
 //true if : dirty or paletted texture and hashes don't match
 bool BaseTextureCacheData::NeedsUpdate() {
-	bool rc = dirty;
+	bool rc = dirty != 0;
 	if (tex_type != TextureType::_8)
 	{
 		if (tcw.PixelFmt == PixelPal4 && palette_hash != pal_hash_16[tcw.PalSelect])
@@ -421,7 +421,6 @@ bool BaseTextureCacheData::Delete()
 void BaseTextureCacheData::Create()
 {
 	//Reset state info ..
-	Lookups = 0;
 	Updates = 0;
 	dirty = FrameCount;
 	lock_block = nullptr;

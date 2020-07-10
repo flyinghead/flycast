@@ -540,12 +540,15 @@ vk::CommandBuffer OITTextureDrawer::NewFrame()
 			texture->readOnlyImageView = *texture->imageView;
 			textureCache->DestroyLater(texture);
 		}
+		textureCache->SetInFlight(texture);
+
 		if (texture->format != vk::Format::eR8G8B8A8Unorm || texture->extent.width != widthPow2 || texture->extent.height != heightPow2)
 		{
 			texture->extent = vk::Extent2D(widthPow2, heightPow2);
 			texture->format = vk::Format::eR8G8B8A8Unorm;
+			texture->needsStaging = true;
 			texture->CreateImage(vk::ImageTiling::eOptimal, vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled,
-					vk::ImageLayout::eUndefined, vk::MemoryPropertyFlags(), vk::ImageAspectFlagBits::eColor);
+					vk::ImageLayout::eUndefined, vk::ImageAspectFlagBits::eColor);
 			colorImageCurrentLayout = vk::ImageLayout::eUndefined;
 		}
 		else

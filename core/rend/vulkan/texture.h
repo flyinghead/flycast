@@ -52,7 +52,7 @@ private:
 	void Init(u32 width, u32 height, vk::Format format ,u32 dataSize, bool mipmapped, bool mipmapsIncluded);
 	void SetImage(u32 size, void *data, bool isNew, bool genMipmaps);
 	void CreateImage(vk::ImageTiling tiling, vk::ImageUsageFlags usage, vk::ImageLayout initialLayout,
-			vk::MemoryPropertyFlags memoryProperties, vk::ImageAspectFlags aspectMask);
+			vk::ImageAspectFlags aspectMask);
 	void GenerateMipmaps();
 
 	vk::Format format = vk::Format::eUndefined;
@@ -137,13 +137,6 @@ private:
 class TextureCache : public BaseTextureCache<Texture>
 {
 public:
-	Texture *getTextureCacheData(TSP tsp, TCW tcw)
-	{
-		Texture *texture = BaseTextureCache<Texture>::getTextureCacheData(tsp, tcw);
-		inFlightTextures[currentIndex].insert(texture);
-		return texture;
-	}
-
 	void SetCurrentIndex(int index) {
 		if (currentIndex < inFlightTextures.size())
 			std::for_each(inFlightTextures[currentIndex].begin(), inFlightTextures[currentIndex].end(),
@@ -158,8 +151,15 @@ public:
 
 	bool IsInFlight(Texture *texture)
 	{
-		return std::any_of(inFlightTextures.begin(), inFlightTextures.end(),
-				[texture](const std::unordered_set<Texture *>& set) { return set.find(texture) != set.end(); });
+		for (u32 i = 0; i < inFlightTextures.size(); i++)
+			if (i != currentIndex && inFlightTextures[i].find(texture) != inFlightTextures[i].end())
+				return true;
+		return false;
+	}
+
+	void SetInFlight(Texture *texture)
+	{
+		inFlightTextures[currentIndex].insert(texture);
 	}
 
 	void DestroyLater(Texture *texture)

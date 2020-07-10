@@ -651,8 +651,6 @@ public:
 	// Decoded/filtered texture format
 	TextureType tex_type;
 
-	u32 Lookups;
-
 	u32 sa;         //pixel data start address in vram (might be offset for mipmaps/etc)
 	u32 sa_tex;		//texture data start address in vram
 	u32 w,h;        //width & height of the texture
@@ -770,7 +768,6 @@ public:
 			texture->tsp = tsp;
 			texture->tcw = tcw;
 		}
-		texture->Lookups++;
 
 		return texture;
 	}
