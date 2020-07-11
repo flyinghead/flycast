@@ -566,7 +566,7 @@ void VulkanContext::CreateSwapChain()
 				(surfaceCapabilities.supportedCompositeAlpha & vk::CompositeAlphaFlagBitsKHR::ePreMultiplied) ? vk::CompositeAlphaFlagBitsKHR::ePreMultiplied :
 				(surfaceCapabilities.supportedCompositeAlpha & vk::CompositeAlphaFlagBitsKHR::ePostMultiplied) ? vk::CompositeAlphaFlagBitsKHR::ePostMultiplied :
 				(surfaceCapabilities.supportedCompositeAlpha & vk::CompositeAlphaFlagBitsKHR::eInherit) ? vk::CompositeAlphaFlagBitsKHR::eInherit : vk::CompositeAlphaFlagBitsKHR::eOpaque;
-		u32 imageCount = std::max(2u, surfaceCapabilities.minImageCount);
+		u32 imageCount = std::max(3u, surfaceCapabilities.minImageCount);
 		if (surfaceCapabilities.maxImageCount != 0)
 			imageCount = std::min(imageCount, surfaceCapabilities.maxImageCount);
 		vk::ImageUsageFlags usage = vk::ImageUsageFlagBits::eColorAttachment;
@@ -821,6 +821,8 @@ void VulkanContext::PresentLastFrame()
 void VulkanContext::Term()
 {
 	lastFrameView = nullptr;
+	if (!device)
+		return;
 	device->waitIdle();
 	ImGui_ImplVulkan_Shutdown();
 	gui_term();

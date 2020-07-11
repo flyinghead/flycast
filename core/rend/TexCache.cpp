@@ -459,11 +459,9 @@ void BaseTextureCacheData::Create()
 		}
 
 		//Planar textures support stride selection, mostly used for non power of 2 textures (videos)
-		int stride = 0;
+		int stride = w;
 		if (tcw.StrideSel)
 			stride = (TEXT_CONTROL & 31) * 32;
-		if (stride == 0)
-			stride = w;
 
 		//Call the format specific conversion code
 		texconv = tex->PL;
@@ -551,7 +549,7 @@ void BaseTextureCacheData::Update()
 	u32 original_h = h;
 	if (sa_tex > VRAM_SIZE || size == 0 || sa + size > VRAM_SIZE)
 	{
-		if (sa + size > VRAM_SIZE)
+		if (sa < VRAM_SIZE && sa + size > VRAM_SIZE && tcw.ScanOrder && stride > 0)
 		{
 			// Shenmue Space Harrier mini-arcade loads a texture that goes beyond the end of VRAM
 			// but only uses the top portion of it
@@ -578,7 +576,7 @@ void BaseTextureCacheData::Update()
 	// Figure out if we really need to use a 32-bit pixel buffer
 	bool textureUpscaling = settings.rend.TextureUpscale > 1
 			// Don't process textures that are too big
-			&& w * h <= settings.rend.MaxFilteredTextureSize * settings.rend.MaxFilteredTextureSize
+			&& (int)(w * h) <= settings.rend.MaxFilteredTextureSize * settings.rend.MaxFilteredTextureSize
 			// Don't process YUV textures
 			&& tcw.PixelFmt != PixelYUV;
 	bool need_32bit_buffer = true;
