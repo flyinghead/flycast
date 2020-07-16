@@ -16,6 +16,7 @@
     You should have received a copy of the GNU General Public License
     along with reicast.  If not, see <https://www.gnu.org/licenses/>.
  */
+#include <cmath>
 #include "mapping.h"
 #include "cfg/ini.h"
 #include "stdclass.h"
@@ -141,7 +142,7 @@ void InputMapping::load(FILE* fp)
 	dz = std::min(dz, 100);
 	dz = std::max(dz, 0);
 
-	this->dead_zone = ((float) dz) / 100;
+	this->dead_zone = (float)dz / 100.f;
 
 	for (u32 i = 0; i < ARRAY_SIZE(button_list); i++)
 	{
@@ -218,7 +219,7 @@ bool InputMapping::save(const char *name)
 	ConfigFile mf;
 
 	mf.set("emulator", "mapping_name", this->name);
-	mf.set_int("emulator", "dead_zone", this->dead_zone * 100);
+	mf.set_int("emulator", "dead_zone", (int)std::round(this->dead_zone * 100.f));
 
 	for (u32 i = 0; i < ARRAY_SIZE(button_list); i++)
 	{
