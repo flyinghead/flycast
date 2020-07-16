@@ -358,7 +358,8 @@ static void LoadSpecialSettings()
 		else if (!strcmp(naomi_game_id, "THE MAZE OF THE KINGS")
 				|| !strcmp(naomi_game_id, " CONFIDENTIAL MISSION ---------")
 				|| !strcmp(naomi_game_id, "DEATH CRIMSON OX")
-				|| !strncmp(naomi_game_id, "hotd2", 5))	// House of the Dead 2
+				|| !strncmp(naomi_game_id, "hotd2", 5)	// House of the Dead 2
+				|| !strcmp(naomi_game_id, "LUPIN THE THIRD  -THE SHOOTING-"))
 		{
 			INFO_LOG(BOOT, "Enabling lightgun as analog setup for game %s", naomi_game_id);
 			settings.input.JammaSetup = JVS::LightGunAsAnalog;
