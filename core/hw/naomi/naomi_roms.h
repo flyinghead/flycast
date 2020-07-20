@@ -1728,7 +1728,9 @@ Games[] =
             //ROM_LOAD( "epr-21867.bin", 0x000000, 0x010000, CRC(4f93a2a0) SHA1(875907e7fcfc44850e2c60c12268ac61c742f217) )
             
             { NULL, 0, 0 },
-        }
+        },
+		NULL,
+		&f355_inputs
     },
     // Ferrari F355 Challenge (twin)
     {
@@ -1742,28 +1744,28 @@ Games[] =
         REGION_AUSTRALIA,
         ROT0,
         {
-            { "epr-22848.ic22",  0x0000000, 0x400000 },
-            { "mpr-22827.ic1",   0x0800000, 0x800000 },
-            { "mpr-22828.ic2",   0x1000000, 0x800000 },
-            { "mpr-22829.ic3",   0x1800000, 0x800000 },
-            { "mpr-22830.ic4",   0x2000000, 0x800000 },
-            { "mpr-22831.ic5",   0x2800000, 0x800000 },
-            { "mpr-22832.ic6",   0x3000000, 0x800000 },
-            { "mpr-22833.ic7",   0x3800000, 0x800000 },
-            { "mpr-22834.ic8",   0x4000000, 0x800000 },
-            { "mpr-22835.ic9",   0x4800000, 0x800000 },
-            { "mpr-22836.ic10",  0x5000000, 0x800000 },
-            { "mpr-22837.ic11",  0x5800000, 0x800000 },
-            { "mpr-22838.ic12s", 0x6000000, 0x800000 },
-            { "mpr-22839.ic13s", 0x6800000, 0x800000 },
-            { "mpr-22840.ic14s", 0x7000000, 0x800000 },
-            { "mpr-22841.ic15s", 0x7800000, 0x800000 },
-            { "mpr-22842.ic16s", 0x8000000, 0x800000 },
-            { "mpr-22843.ic17s", 0x8800000, 0x800000 },
-            { "mpr-22844.ic18s", 0x9000000, 0x800000 },
-            { "mpr-22845.ic19s", 0x9800000, 0x800000 },
-            { "mpr-22846.ic20s", 0xa000000, 0x800000 },
-            { "mpr-22847.ic21s", 0xa800000, 0x800000 },
+            { "epr-22848.ic22",  0x0000000, 0x400000, 0xa29edec2 },
+            { "mpr-22827.ic1",   0x0800000, 0x800000, 0xeeb1b975 },
+            { "mpr-22828.ic2",   0x1000000, 0x800000, 0x691d246a },
+            { "mpr-22829.ic3",   0x1800000, 0x800000, 0x00719c9c },
+            { "mpr-22830.ic4",   0x2000000, 0x800000, 0xbfeb0e95 },
+            { "mpr-22831.ic5",   0x2800000, 0x800000, 0x697e60a8 },
+            { "mpr-22832.ic6",   0x3000000, 0x800000, 0x78e146a0 },
+            { "mpr-22833.ic7",   0x3800000, 0x800000, 0xcbd847ea },
+            { "mpr-22834.ic8",   0x4000000, 0x800000, 0x3bfc6571 },
+            { "mpr-22835.ic9",   0x4800000, 0x800000, 0xc0a14f8e },
+            { "mpr-22836.ic10",  0x5000000, 0x800000, 0xee68d756 },
+            { "mpr-22837.ic11",  0x5800000, 0x800000, 0x3b53f0c9 },
+            { "mpr-22838.ic12s", 0x6000000, 0x800000, 0xc17a2228 },
+            { "mpr-22839.ic13s", 0x6800000, 0x800000, 0x31ab7352 },
+            { "mpr-22840.ic14s", 0x7000000, 0x800000, 0xaf4c757b },
+            { "mpr-22841.ic15s", 0x7800000, 0x800000, 0x7adceb6b },
+            { "mpr-22842.ic16s", 0x8000000, 0x800000, 0x1ce2ec11 },
+            { "mpr-22843.ic17s", 0x8800000, 0x800000, 0x1c659384 },
+            { "mpr-22844.ic18s", 0x9000000, 0x800000, 0x361ea725 },
+            { "mpr-22845.ic19s", 0x9800000, 0x800000, 0x3327aed1 },
+            { "mpr-22846.ic20s", 0xa000000, 0x800000, 0xd4148f39 },
+            { "mpr-22847.ic21s", 0xa800000, 0x800000, 0x955ad42e },
             { NULL, 0, 0 },
         }
     },
@@ -1779,28 +1781,28 @@ Games[] =
         REGION_AUSTRALIA,
         ROT0,
         {
-            { "epr-22848p.ic22", 0x0000000, 0x400000 },
-            { "rom1.ic1s",       0x0800000, 0x800000 },
-            { "rom2.ic2s",       0x1000000, 0x800000 },
-            { "rom3.ic3s",       0x1800000, 0x800000 },
-            { "rom4.ic4s",       0x2000000, 0x800000 },
-            { "rom5.ic5s",       0x2800000, 0x800000 },
-            { "rom6.ic6s",       0x3000000, 0x800000 },
-            { "rom7.ic7s",       0x3800000, 0x800000 },
-            { "rom8.ic8s",       0x4000000, 0x800000 },
-            { "rom9.ic9s",       0x4800000, 0x800000 },
-            { "rom10.ic10s",     0x5000000, 0x800000 },
-            { "rom11.ic11s",     0x5800000, 0x800000 },
-            { "rom12.ic12s",     0x6000000, 0x800000 },
-            { "rom13.ic13s",     0x6800000, 0x800000 },
-            { "rom14.ic14s",     0x7000000, 0x800000 },
-            { "rom15.ic15s",     0x7800000, 0x800000 },
-            { "rom16.ic16s",     0x8000000, 0x800000 },
-            { "rom17.ic17s",     0x8800000, 0x800000 },
-            { "rom18.ic18s",     0x9000000, 0x800000 },
-            { "rom19.ic19s",     0x9800000, 0x800000 },
-            { "rom20.ic20s",     0xa000000, 0x800000 },
-            { "rom21.ic21s",     0xa800000, 0x800000 },
+            { "epr-22848p.ic22", 0x0000000, 0x400000, 0x2c43b053 },
+            { "rom1.ic1s",       0x0800000, 0x800000, 0xeeb1b975 },
+            { "rom2.ic2s",       0x1000000, 0x800000, 0x691d246a },
+            { "rom3.ic3s",       0x1800000, 0x800000, 0x00719c9c },
+            { "rom4.ic4s",       0x2000000, 0x800000, 0xbfeb0e95 },
+            { "rom5.ic5s",       0x2800000, 0x800000, 0x697e60a8 },
+            { "rom6.ic6s",       0x3000000, 0x800000, 0x78e146a0 },
+            { "rom7.ic7s",       0x3800000, 0x800000, 0xcbd847ea },
+            { "rom8.ic8s",       0x4000000, 0x800000, 0x3bfc6571 },
+            { "rom9.ic9s",       0x4800000, 0x800000, 0xc0a14f8e },
+            { "rom10.ic10s",     0x5000000, 0x800000, 0xee68d756 },
+            { "rom11.ic11s",     0x5800000, 0x800000, 0x3b53f0c9 },
+            { "rom12.ic12s",     0x6000000, 0x800000, 0xc17a2228 },
+            { "rom13.ic13s",     0x6800000, 0x800000, 0x31ab7352 },
+            { "rom14.ic14s",     0x7000000, 0x800000, 0xaf4c757b },
+            { "rom15.ic15s",     0x7800000, 0x800000, 0x7adceb6b },
+            { "rom16.ic16s",     0x8000000, 0x800000, 0x1ce2ec11 },
+            { "rom17.ic17s",     0x8800000, 0x800000, 0x1c659384 },
+            { "rom18.ic18s",     0x9000000, 0x800000, 0x361ea725 },
+            { "rom19.ic19s",     0x9800000, 0x800000, 0x3327aed1 },
+            { "rom20.ic20s",     0xa000000, 0x800000, 0xd4148f39 },
+            { "rom21.ic21s",     0xa800000, 0x800000, 0x955ad42e },
             { NULL, 0, 0 },
         }
     },
@@ -4190,7 +4192,9 @@ Games[] =
             { "mpr-21725.ic18s", 0x9000000, 0x0800000 },
             { "mpr-21726.ic19s", 0x9800000, 0x0800000 },
             { NULL, 0, 0 },
-        }
+        },
+		NULL,
+		&zombie_inputs
     },
     // Zombie Revenge
     {
@@ -4226,7 +4230,9 @@ Games[] =
             { "mpr-21725.ic18s",0x9000000, 0x0800000 },
             { "mpr-21726.ic19s",0x9800000, 0x0800000 },
             { NULL, 0, 0 },
-        }
+        },
+		NULL,
+		&zombie_inputs
     },
     // Naomi M4 Roms
     // Akatsuki Blitzkampf Ausf. Achse (Japan)
@@ -4473,7 +4479,7 @@ Games[] =
     // Pokasuka Ghost *** BAD DUMP ***
     {
         "pokasuka",
-        NULL,
+		"manicpnc",
         "Pokasuka Ghost! (Japan)",
         0x14000000,
         0x5505,
@@ -4482,18 +4488,18 @@ Games[] =
         REGION_JAPAN,
         ROT0,
         {
-            { "fpr-24365.ic8",  0x00000000, 0x4000000 },
-            { "fpr-24366.ic9",  0x04000000, 0x4000000 },
-            { "fpr-24367.ic10", 0x08000000, 0x4000000 },
-            { "fpr-24368.ic11", 0x0c000000, 0x4000000 },
-            { "fpr-24369.ic12", 0x10000000, 0x4000000 },
+            { "fpr-24365.ic8",  0x00000000, 0x4000000, 0x11489cda },
+            { "fpr-24366.ic9",  0x04000000, 0x4000000, 0x7429714a },
+            { "fpr-24367.ic10", 0x08000000, 0x4000000, 0xdee87bab },
+            { "fpr-24368.ic11", 0x0c000000, 0x4000000, 0x124f55e2 },
+            { "fpr-24369.ic12", 0x10000000, 0x4000000, 0x35b544ab },
             
             //ROM_REGION( 0x200000, "ioboard", 0) // touch screen I/O board, program disassembles as little-endian SH-4
             //ROM_LOAD( "fpr24351.ic14", 0x000000, 0x200000, CRC(4d1b7b89) SHA1(965b8c6b5a2e7b3f1b1e2eac19c86000c3b66754) )
             
             //ROM_REGION( 0x800, "pic_readout", 0 )
             //ROM_LOAD( "317-0461-com.ic3", 0, 0x800, BAD_DUMP CRC(c9282cdd) SHA1(23933e489d763515428e2714cc6e7676df1d5323) )
-            { "317-0461-com.ic3", 0, 0x800,  0x0000000, Key },
+            { "317-0461-com.ic3", 0, 0x800,  0xc9282cdd, Key },
             
             { NULL, 0, 0 },
         }
@@ -5286,6 +5292,45 @@ Games[] =
         },
         "gds-0031",
     },
+	// Puyo Puyo Fever (Prototype)
+	{
+		"puyofevp",
+		"puyofev",
+		"Puyo Puyo Fever (Prototype)",
+		0x0c000000,
+		0xff9d4d3c,
+		"naomi",
+		M1,
+		REGION_JAPAN,
+		ROT0,
+		{
+				{ "ic17s.bin", 0x01000000, 0x800000, 0xf51ce63b, InterleavedWord },
+				{ "ic18s.bin", 0x01000002, 0x800000, 0x7109decc, InterleavedWord },
+				{ "ic19s.bin", 0x02000000, 0x800000, 0xa58efa9c, InterleavedWord },
+				{ "ic20s.bin", 0x02000002, 0x800000, 0x6dee24b2, InterleavedWord },
+				{ "ic21s.bin", 0x03000000, 0x800000, 0x9a0564c2, InterleavedWord },
+				{ "ic22s.bin", 0x03000002, 0x800000, 0xdf692133, InterleavedWord },
+				{ "ic23s.bin", 0x04000000, 0x800000, 0x61c98256, InterleavedWord },
+				{ "ic24s.bin", 0x04000002, 0x800000, 0xc7e8ec24, InterleavedWord },
+				{ "ic25s.bin", 0x05000000, 0x800000, 0x2cb47ef5, InterleavedWord },
+				{ "ic26s.bin", 0x05000002, 0x800000, 0xf5b477d5, InterleavedWord },
+				{ "ic27s.bin", 0x06000000, 0x800000, 0x22c07470, InterleavedWord },
+				{ "ic28s.bin", 0x06000002, 0x800000, 0x018233e0, InterleavedWord },
+				{ "ic29s.bin", 0x07000000, 0x800000, 0x96101b95, InterleavedWord },
+				{ "ic30s.bin", 0x07000002, 0x800000, 0x16dff39b, InterleavedWord },
+				{ "ic31s.bin", 0x08000000, 0x800000, 0x510c03dd, InterleavedWord },
+				{ "ic32s.bin", 0x08000002, 0x800000, 0xb184e263, InterleavedWord },
+				{ "ic33s.bin", 0x09000000, 0x800000, 0xbe2a164b, InterleavedWord },
+				{ "ic34s.bin", 0x09000002, 0x800000, 0x01e0a163, InterleavedWord },
+				{ "ic35s.bin", 0x0a000000, 0x800000, 0xae0c1caa, InterleavedWord },
+				{ "ic36s.bin", 0x0a000002, 0x800000, 0x6de8d5c7, InterleavedWord },
+				{ "ic37s.bin", 0x0b000000, 0x800000, 0xfc89454c, InterleavedWord },
+				{ "ic38s.bin", 0x0b000002, 0x800000, 0x86954476, InterleavedWord },
+	            { "copy",      0x00400000, 0xc00000, 0x0000000, Copy, 0x1000000 },
+
+				{ NULL, 0, 0, 0x00000000 },
+		},
+	},
     // Quiz Keitai Q mode (GDL-0017)
     {
         "quizqgd",

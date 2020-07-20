@@ -2637,7 +2637,7 @@ u16 jvs_io_board::read_analog_axis(int player_num, int player_axis, bool inverte
 	default:
 		return 0x8000;
 	}
-	return inverted ? 0xffff - v : v;
+	return inverted ? 0xff00 - v : v;
 }
 
 #define JVS_OUT(b) buffer_out[length++] = b
