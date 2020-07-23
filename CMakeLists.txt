@@ -49,7 +49,11 @@ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/core/version.h.in" "${CMAKE_CURRENT_
 if(ANDROID)
     add_library(${PROJECT_NAME} SHARED core/nullDC.cpp)
 else()
-    add_executable(${PROJECT_NAME} MACOSX_BUNDLE WIN32 core/nullDC.cpp)
+	if(MSVC)
+	    add_executable(${PROJECT_NAME} WIN32 core/nullDC.cpp)
+	else()
+	    add_executable(${PROJECT_NAME} MACOSX_BUNDLE core/nullDC.cpp)
+	endif()
 endif()
 
 target_compile_features(${PROJECT_NAME} PRIVATE c_std_11 cxx_std_11)
@@ -115,11 +119,19 @@ if(MINGW)
 elseif(MSVC)
     set(SDL2_FOUND TRUE)
     add_library(SDL2::SDL2 SHARED IMPORTED)
-    set_target_properties(SDL2::SDL2 PROPERTIES
-            INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_SOURCE_DIR}/core/deps/SDL2-2.0.12/include"
-            IMPORTED_LINK_INTERFACE_LANGUAGES "C"
-            IMPORTED_LOCATION "${CMAKE_CURRENT_SOURCE_DIR}/core/deps/SDL2-2.0.12/MSVC/lib/x64/SDL2.dll"
-			IMPORTED_IMPLIB "${CMAKE_CURRENT_SOURCE_DIR}/core/deps/SDL2-2.0.12/MSVC/lib/x64/SDL2.lib")
+	if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+		set_target_properties(SDL2::SDL2 PROPERTIES
+				INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_SOURCE_DIR}/core/deps/SDL2-2.0.12/include"
+				IMPORTED_LINK_INTERFACE_LANGUAGES "C"
+				IMPORTED_LOCATION "${CMAKE_CURRENT_SOURCE_DIR}/core/deps/SDL2-2.0.12/MSVC/lib/x64/SDL2.dll"
+				IMPORTED_IMPLIB "${CMAKE_CURRENT_SOURCE_DIR}/core/deps/SDL2-2.0.12/MSVC/lib/x64/SDL2.lib")
+	else()
+		set_target_properties(SDL2::SDL2 PROPERTIES
+				INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_SOURCE_DIR}/core/deps/SDL2-2.0.12/include"
+				IMPORTED_LINK_INTERFACE_LANGUAGES "C"
+				IMPORTED_LOCATION "${CMAKE_CURRENT_SOURCE_DIR}/core/deps/SDL2-2.0.12/MSVC/lib/x86/SDL2.dll"
+				IMPORTED_IMPLIB "${CMAKE_CURRENT_SOURCE_DIR}/core/deps/SDL2-2.0.12/MSVC/lib/x86/SDL2.lib")
+	endif()
 else()
     find_package(SDL2 QUIET)
 endif()
