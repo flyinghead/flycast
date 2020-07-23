@@ -6,23 +6,39 @@ PC = 135266120
 
 EXTERN bm_GetCodeByVAddr: PROC
 EXTERN UpdateSystem_INTC: PROC
+EXTERN setjmp: PROC
 EXTERN cycle_counter: dword
 EXTERN p_sh4rcb: qword
+EXTERN jmp_env: qword
 
 PUBLIC ngen_mainloop
-ngen_mainloop PROC
+ngen_mainloop PROC FRAME
 
 	push rbx
+	.pushreg rbx
 	push rbp
+	.pushreg rbp
 	push rdi
+	.pushreg rdi
 	push rsi
+	.pushreg rsi
 	push r12
+	.pushreg r12
 	push r13
+	.pushreg r13
 	push r14
+	.pushreg r14
 	push r15
+	.pushreg r15
 	sub rsp, 40                 ; 32-byte shadow space + 8 for stack 16-byte alignment
+	.allocstack 40
+	.endprolog
 
 	mov dword ptr [cycle_counter], SH4_TIMESLICE
+
+	lea rcx, qword ptr[jmp_env]
+	xor rdx, rdx
+	call setjmp
 
 run_loop:
 	mov rax, qword ptr [p_sh4rcb]

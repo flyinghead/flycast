@@ -120,7 +120,7 @@ endif
 
 ifdef FOR_WINDOWS
     ifdef USE_SDL
-        RZDCY_CFLAGS += -I$(RZDCY_SRC_DIR)/deps/SDL2-2.0.12/x86_64-w64-mingw32/include
+        RZDCY_CFLAGS += -I$(RZDCY_SRC_DIR)/deps/SDL2-2.0.12/include
     endif
 endif
 

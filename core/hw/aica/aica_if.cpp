@@ -423,10 +423,10 @@ void Write_SB_G2APRO(u32 addr, u32 data)
 		SB_G2APRO = data & 0x00007f7f;
 }
 
-const char AICA_TAG[] = "G2-AICA DMA";
-const char EXT1_TAG[] = "G2-EXT1 DMA";
-const char EXT2_TAG[] = "G2-EXT2 DMA";
-const char DDEV_TAG[] = "G2-DDev DMA";
+extern const char AICA_TAG[] = "G2-AICA DMA";
+extern const char EXT1_TAG[] = "G2-EXT1 DMA";
+extern const char EXT2_TAG[] = "G2-EXT2 DMA";
+extern const char DDEV_TAG[] = "G2-DDev DMA";
 
 void aica_sb_Init()
 {

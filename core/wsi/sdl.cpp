@@ -20,6 +20,7 @@
 */
 #if defined(USE_SDL) && !defined(__APPLE__)
 #include <math.h>
+#include <algorithm>
 #include "gl_context.h"
 #include "rend/gui.h"
 #include "sdl/sdl.h"

@@ -49,7 +49,7 @@ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/core/version.h.in" "${CMAKE_CURRENT_
 if(ANDROID)
     add_library(${PROJECT_NAME} SHARED core/nullDC.cpp)
 else()
-    add_executable(${PROJECT_NAME} MACOSX_BUNDLE core/nullDC.cpp)
+    add_executable(${PROJECT_NAME} MACOSX_BUNDLE WIN32 core/nullDC.cpp)
 endif()
 
 target_compile_features(${PROJECT_NAME} PRIVATE c_std_11 cxx_std_11)
@@ -59,6 +59,8 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
         $<$<COMPILE_LANGUAGE:CXX>:-fno-rtti>
         -fno-strict-aliasing
         -ffast-math)
+elseif(MSVC)
+	target_compile_options(${PROJECT_NAME} PRIVATE /GR- /GS-)
 endif()
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE
@@ -106,10 +108,18 @@ if(MINGW)
     set(SDL2_FOUND TRUE)
     add_library(SDL2::SDL2-static STATIC IMPORTED)
     set_target_properties(SDL2::SDL2-static PROPERTIES
-            INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_SOURCE_DIR}/core/deps/SDL2-2.0.12/x86_64-w64-mingw32/include"
+            INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_SOURCE_DIR}/core/deps/SDL2-2.0.12/include"
             IMPORTED_LINK_INTERFACE_LANGUAGES "C"
             IMPORTED_LOCATION "${CMAKE_CURRENT_SOURCE_DIR}/core/deps/SDL2-2.0.12/x86_64-w64-mingw32/lib/libSDL2.a"
             INTERFACE_LINK_LIBRARIES "-L${CMAKE_CURRENT_SOURCE_DIR}/core/deps/SDL2-2.0.12/x86_64-w64-mingw32/lib -lmingw32 -lSDL2main -lSDL2 -mwindows  -Wl,--no-undefined -Wl,--dynamicbase -Wl,--nxcompat -Wl,--high-entropy-va -lm -ldinput8 -ldxguid -ldxerr8 -luser32 -lgdi32 -lwinmm -limm32 -lole32 -loleaut32 -lshell32 -lsetupapi -lversion -luuid -static-libgcc")
+elseif(MSVC)
+    set(SDL2_FOUND TRUE)
+    add_library(SDL2::SDL2 SHARED IMPORTED)
+    set_target_properties(SDL2::SDL2 PROPERTIES
+            INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_SOURCE_DIR}/core/deps/SDL2-2.0.12/include"
+            IMPORTED_LINK_INTERFACE_LANGUAGES "C"
+            IMPORTED_LOCATION "${CMAKE_CURRENT_SOURCE_DIR}/core/deps/SDL2-2.0.12/MSVC/lib/x64/SDL2.dll"
+			IMPORTED_IMPLIB "${CMAKE_CURRENT_SOURCE_DIR}/core/deps/SDL2-2.0.12/MSVC/lib/x64/SDL2.lib")
 else()
     find_package(SDL2 QUIET)
 endif()
