@@ -155,7 +155,7 @@ uniform lowp float trilinear_alpha;
 uniform lowp vec4 fog_clamp_min;
 uniform lowp vec4 fog_clamp_max;
 uniform sampler2D palette;
-uniform mediump float palette_index;
+uniform mediump int palette_index;
 
 /* Vertex input*/
 INTERPOLATION in lowp vec4 vtx_base;
@@ -192,8 +192,8 @@ highp vec4 fog_clamp(lowp vec4 col)
 
 lowp vec4 palettePixel(highp vec2 coords)
 {
-	highp vec4 c = vec4(texture(tex, coords).FOG_CHANNEL * 255.0 / 1023.0 + palette_index, 0.5, 0.0, 0.0);
-	return texture(palette, c.xy);
+	highp vec2 c = vec2((texture(tex, coords).FOG_CHANNEL * 255.0 + float(palette_index)) / 1023.0, 0.5);
+	return texture(palette, c);
 }
 
 #endif

@@ -142,10 +142,10 @@ __forceinline
 	if (palette)
 	{
 		if (gp->tcw.PixelFmt == PixelPal4)
-			ShaderUniforms.palette_index = float(gp->tcw.PalSelect << 4) / 1023.f;
+			ShaderUniforms.palette_index = gp->tcw.PalSelect << 4;
 		else
-			ShaderUniforms.palette_index = float((gp->tcw.PalSelect >> 4) << 8) / 1023.f;
-		glUniform1f(CurrentShader->palette_index, ShaderUniforms.palette_index);
+			ShaderUniforms.palette_index = (gp->tcw.PalSelect >> 4) << 8;
+		glUniform1i(CurrentShader->palette_index, ShaderUniforms.palette_index);
 	}
 
 	if (clipmode == TileClipping::Inside)
