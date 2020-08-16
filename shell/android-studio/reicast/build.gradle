@@ -35,8 +35,14 @@ android {
         versionName getVersionName()
         vectorDrawables.useSupportLibrary = true
 
+        externalNativeBuild {
+            cmake {
+                arguments '-DANDROID_ARM_MODE=arm'
+            }
+        }
+
         ndk {
-            moduleName "dc"
+            moduleName 'flycast'
             abiFilters 'armeabi-v7a', 'arm64-v8a'
         }
     }
@@ -72,13 +78,14 @@ android {
     flavorDimensions "systemtype"
     productFlavors {
         dreamcast {
-            externalNativeBuild { ndkBuild { arguments ("-j" + Runtime.runtime.availableProcessors()) } }
+
         }
     }
 
     externalNativeBuild {
-        ndkBuild {
-            path 'src/main/jni/Android.mk'
+        cmake {
+            version '3.10.2+'
+            path '../../../CMakeLists.txt'
         }
     }
 

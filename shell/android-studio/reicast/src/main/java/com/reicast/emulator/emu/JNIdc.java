@@ -7,7 +7,7 @@ import com.reicast.emulator.periph.SipEmulator;
 
 public final class JNIdc
 {
-	static { System.loadLibrary("dc"); }
+	static { System.loadLibrary("flycast"); }
 
 	public static native String initEnvironment(Emulator emulator, String homeDirectory);
 	public static native void setExternalStorageDirectories(Object[] pathList);

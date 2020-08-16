@@ -9,7 +9,7 @@ import android.util.Log;
 import static android.media.AudioTrack.STATE_INITIALIZED;
 
 public final class AudioBackend {
-    static { System.loadLibrary("dc"); }
+    static { System.loadLibrary("flycast"); }
 
     private AudioTrack audioTrack;
     private long writePosition;
