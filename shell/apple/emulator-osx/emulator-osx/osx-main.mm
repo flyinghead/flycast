@@ -61,7 +61,7 @@ void UpdateInputState(u32 port) {
 }
 
 void os_CreateWindow() {
-#if 0
+#ifdef DEBUG
     int ret = task_set_exception_ports(
                                        mach_task_self(),
                                        EXC_MASK_BAD_ACCESS,
