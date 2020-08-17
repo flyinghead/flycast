@@ -561,8 +561,7 @@ void gd_process_spi_cmd()
 		packet_cmd.data_8[6], packet_cmd.data_8[7], packet_cmd.data_8[8], packet_cmd.data_8[9], packet_cmd.data_8[10], packet_cmd.data_8[11] );
 
 	if (sns_key == 0x0 			// No sense
-			|| sns_key == 0xB	// Aborted
-			|| sns_key == 6) 	// Unit attention
+			|| sns_key == 0xB)	// Aborted
 		GDStatus.CHECK=0;
 	else
 		GDStatus.CHECK=1;
