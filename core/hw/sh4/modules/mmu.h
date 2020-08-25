@@ -46,6 +46,7 @@ void ITLB_Sync(u32 entry);
 bool mmu_match(u32 va, CCN_PTEH_type Address, CCN_PTEL_type Data);
 void mmu_set_state();
 void mmu_flush_table();
+void mmu_raise_exception(u32 mmu_error, u32 address, u32 am);
 
 static INLINE bool mmu_enabled()
 {
@@ -58,6 +59,9 @@ static INLINE bool mmu_enabled()
 
 template<bool internal = false>
 u32 mmu_full_lookup(u32 va, const TLB_Entry **entry, u32& rv);
+u32 mmu_instruction_lookup(u32 va, const TLB_Entry **entry, u32& rv);
+template<u32 translation_type>
+u32 mmu_full_SQ(u32 va, u32& rv);
 
 #ifdef FAST_MMU
 static INLINE u32 mmu_instruction_translation(u32 va, u32& rv)

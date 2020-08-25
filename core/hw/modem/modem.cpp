@@ -167,7 +167,7 @@ static int modem_sched_func(int tag, int cycles, int jitter)
 		switch (connect_state)
 		{
 		case DIALING:
-			if (last_dial_time != 0 && sh4_sched_now64() - last_dial_time >= SH4_MAIN_CLOCK + jitter)
+			if (last_dial_time != 0 && sh4_sched_now64() - last_dial_time >= (u64)(SH4_MAIN_CLOCK + jitter))
 			{
 				LOG("Switching to RINGING state");
 				connect_state = RINGING;
@@ -435,20 +435,23 @@ static void ControllerTestStart()
 
 static void modem_reset(u32 v)
 {
-	if (v==0)
+	if (v == 0)
 	{
-		memset(&modem_regs,0,sizeof(modem_regs));
-		state=MS_RESET;
+		memset(&modem_regs, 0, sizeof(modem_regs));
+		state = MS_RESET;
 		LOG("Modem reset start ...");
 	}
 	else
 	{
-		stop_pppd();
-		memset(&modem_regs,0,sizeof(modem_regs));
-		state=MS_RESETING;
-		modem_regs.ptr[0x20]=1;
-		ControllerTestStart();
-		INFO_LOG(MODEM, "MODEM Reset");
+		if (state == MS_RESET)
+		{
+			stop_pppd();
+			memset(&modem_regs, 0, sizeof(modem_regs));
+			state = MS_RESETING;
+			ControllerTestStart();
+			INFO_LOG(MODEM, "MODEM Reset");
+		}
+		modem_regs.ptr[0x20] = v;
 	}
 }
 
@@ -656,21 +659,17 @@ static void ModemNormalWrite(u32 reg, u32 data)
 
 u32 ModemReadMem_A0_006(u32 addr, u32 size)
 {
-	u32 reg=addr&0x7FF;
-	verify((reg&3)==0);
-	reg>>=2;
+	u32 reg = (addr & 0x7FF) >> 2;
 
-	if (reg<0x100)
+	if (reg < 0x100)
+		return MODEM_ID[reg & 1];
+
+	reg -= 0x100;
+	if (reg < 0x21)
 	{
-		verify(reg<=1);
-		return MODEM_ID[reg];
-	}
-	else
-	{
-		reg-=0x100;
-		if (reg<0x21)
+		switch (state)
 		{
-			if (state==MS_NORMAL)
+		case MS_NORMAL:
 			{
 				// Dial tone is detected if TONEA, TONEB and TONEC are set
 				//if (reg==0xF)
@@ -705,73 +704,56 @@ u32 ModemReadMem_A0_006(u32 addr, u32 size)
 
 				return data;
 			}
-			else if (state==MS_ST_CONTROLER || state==MS_ST_DSP)
+
+		case MS_ST_CONTROLER:
+		case MS_ST_DSP:
+			if (reg==0x10)
 			{
-				if (reg==0x10)
-				{
-					modem_regs.reg1e.TDBE=0;
-					return 0;
-				}
-				else
-				{
-					return modem_regs.ptr[reg];
-				}
-			}
-			else if (state==MS_RESETING)
-			{
-				return 0; //still reset
+				modem_regs.reg1e.TDBE=0;
+				return 0;
 			}
 			else
 			{
-				//LOG("Read (reset) reg %03x == %x", reg, modem_regs.ptr[reg]);
-				return 0;
+				return modem_regs.ptr[reg];
 			}
-		}
-		else
-		{
-			LOG("modem reg %03X read -- wtf is it ?",reg);
+
+		case MS_RESETING:
+			return 0; //still reset
+
+		default:
+			//LOG("Read (reset) reg %03x == %x", reg, modem_regs.ptr[reg]);
 			return 0;
 		}
 	}
+
+	LOG("modem reg %03X read -- wtf is it ?",reg);
+	return 0;
 }
 
 void ModemWriteMem_A0_006(u32 addr, u32 data, u32 size)
 {
-	u32 reg=addr&0x7FF;
-	verify((reg&3)==0);
-	reg>>=2;
-
-
-
-	if (reg<0x100)
+	u32 reg = (addr & 0x7FF) >> 2;
+	if (reg < 0x100)
 	{
-		verify(reg<=1);
 		LOG("modem reg %03X write -- MODEM ID?!",reg);
+		return;
 	}
-	else
+
+	reg -= 0x100;
+	if (reg < 0x20)
 	{
-		reg-=0x100;
-		if (reg<0x20)
-		{
-			if (state==MS_NORMAL)
-			{
-				ModemNormalWrite(reg,data);
-			}
-			else
-			{
-				LOG("modem reg %03X write %X -- undef state?",reg,data);
-			}
-			return;
-		}
-		else if (reg==0x20)
-		{
-			//Hard reset
-			modem_reset(data);
-		}
+		if (state == MS_NORMAL)
+			ModemNormalWrite(reg,data);
 		else
-		{
-			LOG("modem reg %03X write %X -- wtf is it?",reg,data);
-			return;
-		}
+			LOG("modem reg %03X write %X -- undef state?", reg, data);
+		return;
 	}
+	if (reg == 0x20)
+	{
+		//Hard reset
+		modem_reset(data);
+		return;
+	}
+
+	LOG("modem reg %03X write %X -- wtf is it?",reg,data);
 }

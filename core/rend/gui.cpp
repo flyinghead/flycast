@@ -1172,12 +1172,13 @@ static void gui_display_settings()
             ImGui::Checkbox("Limit Emulator Speed", &settings.aica.LimitFPS);
             ImGui::SameLine();
 			ShowHelpMarker("Whether to limit the emulator speed using the audio output. Recommended");
+#if !defined(__ANDROID__) && !defined(__APPLE__) && !defined(_WIN32)
 			int latency = (int)roundf(settings.aica.BufferSize * 1000.f / 44100.f);
 	    	ImGui::SliderInt("Latency", &latency, 12, 512, "%d ms");
 	    	settings.aica.BufferSize = (int)roundf(latency * 44100.f / 1000.f);
             ImGui::SameLine();
             ShowHelpMarker("Sets the maximum audio latency. Not supported by all audio drivers.");
-
+#endif
 
 			audiobackend_t* backend = nullptr;
 			std::string backend_name = settings.audio.backend;
@@ -1297,7 +1298,7 @@ static void gui_display_settings()
 		    {
 		    	ImGui::Checkbox("Safe Mode", &settings.dynarec.safemode);
 	            ImGui::SameLine();
-	            ShowHelpMarker("Do not optimize integer division. Recommended");
+	            ShowHelpMarker("Do not optimize integer division. Not recommended");
 #if HOST_CPU == CPU_ARM
 		    	ImGui::Checkbox("Unstable Optimizations", &settings.dynarec.unstable_opt);
 	            ImGui::SameLine();

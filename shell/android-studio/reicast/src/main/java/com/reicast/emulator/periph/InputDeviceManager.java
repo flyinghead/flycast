@@ -10,7 +10,7 @@ import com.reicast.emulator.Emulator;
 public final class InputDeviceManager implements InputManager.InputDeviceListener {
     public static final int VIRTUAL_GAMEPAD_ID = 0x12345678;
 
-    static { System.loadLibrary("dc"); }
+    static { System.loadLibrary("flycast"); }
     private static final InputDeviceManager INSTANCE = new InputDeviceManager();
     private InputManager inputManager;
     private int maple_port = 0;

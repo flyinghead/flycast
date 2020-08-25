@@ -313,7 +313,8 @@ int main(int argc, char* argv[])
 	INFO_LOG(BOOT, "Data dir is:   %s", get_writable_data_path("/").c_str());
 
 	#if defined(USE_SDL)
-		if (SDL_Init(0) != 0)
+		// init video now: on rpi3 it installs a sigsegv handler(?)
+		if (SDL_Init(SDL_INIT_VIDEO) != 0)
 		{
 			die("SDL: Initialization failed!");
 		}

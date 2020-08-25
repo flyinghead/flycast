@@ -1635,24 +1635,6 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 			break;
 		}
 
-		case shop_div32p2:
-		{
-			eReg remainder = reg.mapg(op->rs1);
-			eReg divisor = reg.mapg(op->rs2);
-			eReg T = reg.mapg(op->rs3);
-
-			LSR(r0, T, 31);
-			EOR(r0, r0, T);
-			NOT(r0, r0);
-			SBFX(r0, r0, 0, 1);
-			AND(r0, r0, divisor);
-			TST(T, 1);
-			NEG(r1, r0, EQ);
-			MOV(r1, r0, NE);
-			ADD(reg.mapg(op->rd), remainder, r1);
-		}
-		break;
-
 		case shop_test:
 		case shop_seteq:
 		case shop_setge:

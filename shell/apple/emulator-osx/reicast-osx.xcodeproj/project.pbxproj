@@ -313,6 +313,7 @@
 		AEF256502294060400348550 /* ZipArchive.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AEF2564A2294060300348550 /* ZipArchive.cpp */; };
 		AEF256512294060400348550 /* 7zArchive.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AEF2564C2294060300348550 /* 7zArchive.cpp */; };
 		AEF256522294060400348550 /* archive.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AEF2564E2294060300348550 /* archive.cpp */; };
+		AEF77FDB24AA76BA00171080 /* audiobackend_null.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AEF77FDA24AA76B900171080 /* audiobackend_null.cpp */; };
 		AEFF7ECC214AEC810068CE11 /* modem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AEFF7EC7214AEC800068CE11 /* modem.cpp */; };
 		AEFF7F4D214D9D590068CE11 /* pico_arp.c in Sources */ = {isa = PBXBuildFile; fileRef = AEFF7EFA214D9D590068CE11 /* pico_arp.c */; };
 		AEFF7F4E214D9D590068CE11 /* pico_dev_ppp.c in Sources */ = {isa = PBXBuildFile; fileRef = AEFF7EFE214D9D590068CE11 /* pico_dev_ppp.c */; };
@@ -962,6 +963,7 @@
 		AEF2564D2294060300348550 /* ZipArchive.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ZipArchive.h; sourceTree = "<group>"; };
 		AEF2564E2294060300348550 /* archive.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = archive.cpp; sourceTree = "<group>"; };
 		AEF2564F2294060400348550 /* 7zArchive.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = 7zArchive.h; sourceTree = "<group>"; };
+		AEF77FDA24AA76B900171080 /* audiobackend_null.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = audiobackend_null.cpp; sourceTree = "<group>"; };
 		AEFF7EC7214AEC800068CE11 /* modem.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = modem.cpp; sourceTree = "<group>"; };
 		AEFF7EC8214AEC800068CE11 /* modem.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = modem.h; sourceTree = "<group>"; };
 		AEFF7EC9214AEC800068CE11 /* modem_regs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = modem_regs.h; sourceTree = "<group>"; };
@@ -1724,6 +1726,7 @@
 				84B7BE741B72720200F9733F /* audiobackend_directsound.h */,
 				84B7BE751B72720200F9733F /* audiobackend_oss.cpp */,
 				84B7BE761B72720200F9733F /* audiobackend_oss.h */,
+				AEF77FDA24AA76B900171080 /* audiobackend_null.cpp */,
 				84B7BE771B72720200F9733F /* audiobackend_pulseaudio.cpp */,
 				84B7BE781B72720200F9733F /* audiobackend_pulseaudio.h */,
 				84B7BE791B72720200F9733F /* audiostream.cpp */,
@@ -2657,6 +2660,7 @@
 				AED73EBE2348E49900ECDB64 /* CustomTexture.cpp in Sources */,
 				AE2A2D7C21D6851E004B308D /* 7zBuf.c in Sources */,
 				84B7BEB11B72720200F9733F /* cdipsr.cpp in Sources */,
+				AEF77FDB24AA76BA00171080 /* audiobackend_null.cpp in Sources */,
 				AED73E642348E45000ECDB64 /* intermOut.cpp in Sources */,
 				AE649BF5218C552500EF4A81 /* cpu.c in Sources */,
 				AE2A2D5D21D68470004B308D /* m4cartridge.cpp in Sources */,
@@ -2978,7 +2982,6 @@
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					TARGET_NO_NIXPROF,
 					TARGET_NO_COREIO_HTTP,
-					TARGET_NO_AREC,
 					TARGET_NO_OPENMP,
 					ENABLE_MODEM,
 					CHD5_LZMA,

@@ -61,7 +61,7 @@ void UpdateInputState(u32 port) {
 }
 
 void os_CreateWindow() {
-#if 0
+#ifdef DEBUG
     int ret = task_set_exception_ports(
                                        mach_task_self(),
                                        EXC_MASK_BAD_ACCESS,
@@ -97,6 +97,8 @@ extern "C" void emu_dc_exit()
 
 extern "C" void emu_dc_term()
 {
+	if (dc_is_running())
+		dc_exit();
 	dc_term();
 }
 

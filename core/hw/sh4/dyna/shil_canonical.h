@@ -103,8 +103,6 @@ extern "C" f32 fipr_asm(float* fn, float* fm);
 #include "decoder.h"
 #include "../sh4_rom.h"
 
-
-
 #define BIN_OP_I_BASE(code,type,rtype) \
 shil_canonical \
 ( \
@@ -609,29 +607,20 @@ shil_opc_end()
 shil_opc(div32s)
 shil_canonical
 (
-u64,f1,(u32 r1, u32 r2, s32 r3),
+u64,f1,(u32 r1, s32 r2, s32 r3),
 	s64 dividend = ((s64)r3 << 32) | r1;
-	bool negative;
+	// 1's complement -> 2's complement
 	if (dividend < 0)
-	{
-		// 1's complement -> 2's complement
 		dividend++;
-		negative = true;
-	}
-	else
-	{
-		negative = false;
-	}
-	s32 quo = dividend / r2;
-	s32 rem = dividend % r2;
+
+	s32 quo = (s32)(dividend / r2);
+	s32 rem = dividend - quo * r2;
+	u32 negative = (r3 ^ r2) & 0x80000000;
 	// 2's complement -> 1's complement
 	if (negative)
-	{
-		if (quo <= 0)
-			quo--;
-		if (rem <= 0)
-			rem--;
-	}
+		quo--;
+	else if (r3 < 0)
+		rem--;
 
 	u64 rv;
 	((u32*)&rv)[0]=quo;
@@ -655,19 +644,20 @@ shil_opc(div32p2)
 shil_canonical
 (
 u32,f1,(s32 a,s32 b,u32 T),
-	a += b * (((T >> 31) ^ ~T) & 1) * (2 * (T & 1) - 1);
-	// This is equivalent to this:
-	// (the sign of the quotient is stored in bit 31 of T)
-	//	if (quo >= 0)
-	//	{
-	//		if (!T)
-	//			rem -= divisor;
-	//	}
-	//	else
-	//	{
-	//		if (T)
-	//			rem += divisor;
-	//	}
+	// the sign of the quotient is stored in bit 31 of T
+	if (!(T & 0x80000000))
+	{
+		if (!(T & 1))
+			a -= b;
+	}
+	else
+	{
+		// 2's complement -> 1's complement
+		if (b > 0)
+			a--;
+		if (T & 1)
+			a += b;
+	}
 
 	return a;
 )

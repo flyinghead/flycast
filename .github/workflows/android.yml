@@ -1,0 +1,33 @@
+name: Android CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Set up build environment
+        run: echo "y" | sudo ${ANDROID_HOME}/tools/bin/sdkmanager --install "ndk;20.0.5594570"
+
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - run: git fetch origin +refs/tags/*:refs/tags/*
+
+      - uses: actions/cache@v1
+        with:
+          path: ~/.gradle/caches
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Gradle
+        working-directory: shell/android-studio
+        run: ./gradlew assembleDreamcastDebug --parallel
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: reicast-dreamcast-debug.apk
+          path: shell/android-studio/reicast/build/outputs/apk/dreamcast/debug/reicast-dreamcast-debug.apk

@@ -47,13 +47,15 @@ struct FragmentShaderParams
 	bool bumpmap;
 	bool clamping;
 	bool trilinear;
+	bool palette;
 
 	u32 hash()
 	{
 		return ((u32)alphaTest) | ((u32)insideClipTest << 1) | ((u32)useAlpha << 2)
 			| ((u32)texture << 3) | ((u32)ignoreTexAlpha << 4) | (shaderInstr << 5)
 			| ((u32)offset << 7) | ((u32)fog << 8) | ((u32)gouraud << 10)
-			| ((u32)bumpmap << 11) | ((u32)clamping << 12) | ((u32)trilinear << 13);
+			| ((u32)bumpmap << 11) | ((u32)clamping << 12) | ((u32)trilinear << 13)
+			| ((u32)palette << 14);
 	}
 };
 

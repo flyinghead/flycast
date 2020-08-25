@@ -759,7 +759,7 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 #ifndef __GNUC__
 	__except( ExeptionHandler(GetExceptionInformation()) )
 	{
-	    ERROR_LOG(COMMON, "Unhandled exception - Emulation thread halted...");
+	    ERROR_LOG(COMMON, "Unhandled exception - UI thread halted...");
 	}
 #endif
 	SetUnhandledExceptionFilter(0);

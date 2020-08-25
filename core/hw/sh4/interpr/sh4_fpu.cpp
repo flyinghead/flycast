@@ -2,13 +2,10 @@
 #include <cmath>
 #include <cfloat>
 
-
 #include "sh4_opcodes.h"
 #include "../sh4_core.h"
 #include "../sh4_rom.h"
-
 #include "hw/sh4/sh4_mem.h"
-
 
 #define sh4op(str) void DYNACALL str (u32 op)
 #define GetN(str)     ((str>>8) & 0xf)
@@ -73,7 +70,7 @@ INLINE void Denorm32(float &value)
 
 
 #define CHECK_FPU_32(v) v = fixNaN(v)
-#define CHECK_FPU_64(v)
+#define CHECK_FPU_64(v) v = fixNaN64(v)
 
 
 //fadd <FREG_M>,<FREG_N>
@@ -626,7 +623,7 @@ sh4op(i1111_nnnn_0110_1101)
 		//Operation _can_ be done on sh4
 		u32 n = GetN(op)>>1;
 
-		SetDR(n,sqrt(GetDR(n)));
+		SetDR(n, fixNaN64(sqrt(GetDR(n))));
 	}
 }
 

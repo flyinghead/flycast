@@ -24,7 +24,8 @@ GLuint depthSaveTexId;
 
 static gl4PipelineShader *gl4GetProgram(bool cp_AlphaTest, bool pp_InsideClipping,
 							bool pp_Texture, bool pp_UseAlpha, bool pp_IgnoreTexA, u32 pp_ShadInstr, bool pp_Offset,
-							u32 pp_FogCtrl, bool pp_TwoVolumes, bool pp_Gouraud, bool pp_BumpMap, bool fog_clamping, Pass pass)
+							u32 pp_FogCtrl, bool pp_TwoVolumes, bool pp_Gouraud, bool pp_BumpMap, bool fog_clamping,
+							bool palette, Pass pass)
 {
 	u32 rv=0;
 
@@ -40,6 +41,7 @@ static gl4PipelineShader *gl4GetProgram(bool cp_AlphaTest, bool pp_InsideClippin
 	rv <<= 1; rv |= pp_Gouraud;
 	rv <<= 1; rv |= pp_BumpMap;
 	rv <<= 1; rv |= fog_clamping;
+	rv <<= 1; rv |= palette;
 	rv <<= 2; rv |= (int)pass;
 
 	gl4PipelineShader *shader = &gl4.shaders[rv];
@@ -57,6 +59,7 @@ static gl4PipelineShader *gl4GetProgram(bool cp_AlphaTest, bool pp_InsideClippin
 		shader->pp_Gouraud = pp_Gouraud;
 		shader->pp_BumpMap = pp_BumpMap;
 		shader->fog_clamping = fog_clamping;
+		shader->palette = palette;
 		shader->pass = pass;
 		gl4CompilePipelineShader(shader);
 	}
@@ -99,6 +102,7 @@ static void SetGPState(const PolyParam* gp)
 
 	int clip_rect[4] = {};
 	TileClipping clipmode = GetTileClip(gp->tileclip, ViewportMatrix, clip_rect);
+	bool palette = false;
 
 	if (pass == Pass::Depth)
 	{
@@ -114,6 +118,7 @@ static void SetGPState(const PolyParam* gp)
 				false,
 				false,
 				false,
+				false,
 				pass);
 	}
 	else
@@ -123,6 +128,7 @@ static void SetGPState(const PolyParam* gp)
 		bool color_clamp = gp->tsp.ColorClamp && (pvrrc.fog_clamp_min != 0 || pvrrc.fog_clamp_max != 0xffffffff);
 
 		int fog_ctrl = settings.rend.Fog ? gp->tsp.FogCtrl : 2;
+		palette = BaseTextureCacheData::IsGpuHandledPaletted(gp->tsp, gp->tcw);
 
 		CurrentShader = gl4GetProgram(Type == ListType_Punch_Through ? 1 : 0,
 				clipmode == TileClipping::Inside,
@@ -136,9 +142,18 @@ static void SetGPState(const PolyParam* gp)
 				gp->pcw.Gouraud,
 				gp->tcw.PixelFmt == PixelBumpMap,
 				color_clamp,
+				palette,
 				pass);
 	}
 	glcache.UseProgram(CurrentShader->program);
+
+	if (palette)
+	{
+		if (gp->tcw.PixelFmt == PixelPal4)
+			gl4ShaderUniforms.palette_index = float(gp->tcw.PalSelect << 4) / 1023.f;
+		else
+			gl4ShaderUniforms.palette_index = float((gp->tcw.PalSelect >> 4) << 8) / 1023.f;
+	}
 
 	gl4ShaderUniforms.tsp0 = gp->tsp;
 	gl4ShaderUniforms.tsp1 = gp->tsp1;
@@ -667,6 +682,7 @@ static void gl4_draw_quad_texture(GLuint texture, float w, float h)
 				0,
 				0,
 				2,
+				false,
 				false,
 				false,
 				false,

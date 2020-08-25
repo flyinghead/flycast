@@ -38,6 +38,7 @@ struct PipelineShader
 	GLint trilinear_alpha;
 	GLint fog_clamp_min, fog_clamp_max;
 	GLint normal_matrix;
+	GLint palette_index;
 
 	//
 	bool cp_AlphaTest;
@@ -52,6 +53,7 @@ struct PipelineShader
 	bool pp_BumpMap;
 	bool fog_clamping;
 	bool trilinear;
+	bool palette;
 };
 
 
@@ -107,7 +109,7 @@ struct gl_ctx
 	int gl_major;
 	int gl_minor;
 	bool is_gles;
-	GLuint fog_image_format;
+	GLuint single_channel_format;
 	GLenum index_type;
 	bool GL_OES_packed_depth_stencil_supported;
 	bool GL_OES_depth24_supported;
@@ -132,6 +134,7 @@ void gl_load_osd_resources();
 void gl_free_osd_resources();
 bool ProcessFrame(TA_context* ctx);
 void UpdateFogTexture(u8 *fog_table, GLenum texture_slot, GLint fog_image_format);
+void UpdatePaletteTexture(GLenum texture_slot);
 void findGLVersion();
 void GetFramebufferScaling(float& scale_x, float& scale_y, float& scissoring_scale_x, float& scissoring_scale_y);
 void GetFramebufferSize(float& dc_width, float& dc_height);
@@ -157,7 +160,8 @@ void HideOSD();
 void OSD_DRAW(bool clear_screen);
 PipelineShader *GetProgram(bool cp_AlphaTest, bool pp_InsideClipping,
 		bool pp_Texture, bool pp_UseAlpha, bool pp_IgnoreTexA, u32 pp_ShadInstr, bool pp_Offset,
-		u32 pp_FogCtrl, bool pp_Gouraud, bool pp_BumpMap, bool fog_clamping, bool trilinear);
+		u32 pp_FogCtrl, bool pp_Gouraud, bool pp_BumpMap, bool fog_clamping, bool trilinear,
+		bool palette);
 
 GLuint gl_CompileShader(const char* shader, GLuint type);
 GLuint gl_CompileAndLink(const char* VertexShader, const char* FragmentShader);
@@ -181,6 +185,7 @@ extern struct ShaderUniforms_t
 		int width;
 		int height;
 	} base_clipping;
+	int palette_index;
 
 	void Set(const PipelineShader* s)
 	{
@@ -206,6 +211,9 @@ extern struct ShaderUniforms_t
 
 		if (s->normal_matrix != -1)
 			glUniformMatrix4fv(s->normal_matrix, 1, GL_FALSE, &normal_mat[0][0]);
+
+		if (s->palette_index != -1)
+			glUniform1i(s->palette_index, palette_index);
 	}
 
 } ShaderUniforms;

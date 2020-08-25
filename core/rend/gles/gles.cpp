@@ -106,6 +106,8 @@ R"(%s
 #define pp_BumpMap %d
 #define FogClamping %d
 #define pp_TriLinear %d
+#define pp_Palette %d
+
 #define PI 3.1415926
 
 #define GLES2 0
@@ -152,6 +154,9 @@ uniform sampler2D tex,fog_table;
 uniform lowp float trilinear_alpha;
 uniform lowp vec4 fog_clamp_min;
 uniform lowp vec4 fog_clamp_max;
+uniform sampler2D palette;
+uniform mediump int palette_index;
+
 /* Vertex input*/
 INTERPOLATION in lowp vec4 vtx_base;
 INTERPOLATION in lowp vec4 vtx_offs;
@@ -183,6 +188,16 @@ highp vec4 fog_clamp(lowp vec4 col)
 #endif
 }
 
+#if pp_Palette == 1
+
+lowp vec4 palettePixel(highp vec2 coords)
+{
+	highp vec2 c = vec2((texture(tex, coords).FOG_CHANNEL * 255.0 + float(palette_index)) / 1023.0, 0.5);
+	return texture(palette, c);
+}
+
+#endif
+
 void main()
 {
 	// Clip inside the box
@@ -201,7 +216,11 @@ void main()
 	#endif
 	#if pp_Texture==1
 	{
-		lowp vec4 texcol=texture(tex, vtx_uv);
+		#if pp_Palette == 0
+			lowp vec4 texcol = texture(tex, vtx_uv);
+		#else
+			lowp vec4 texcol = palettePixel(vtx_uv);
+		#endif
 		
 		#if pp_BumpMap == 1
 			highp float s = PI / 2.0 * (texcol.a * 15.0 * 16.0 + texcol.r * 15.0) / 255.0;
@@ -387,6 +406,7 @@ gl_ctx gl;
 int screen_width;
 int screen_height;
 GLuint fogTextureId;
+GLuint paletteTextureId;
 
 glm::mat4 ViewportMatrix;
 
@@ -446,6 +466,8 @@ static void gles_term()
 	fbTextureId = 0;
 	glcache.DeleteTextures(1, &fogTextureId);
 	fogTextureId = 0;
+	glcache.DeleteTextures(1, &paletteTextureId);
+	paletteTextureId = 0;
 	gl_free_osd_resources();
 	free_output_framebuffer();
 
@@ -471,7 +493,7 @@ void findGLVersion()
 			gl.glsl_version_header = "";
 			gl.index_type = GL_UNSIGNED_SHORT;
 		}
-		gl.fog_image_format = GL_ALPHA;
+		gl.single_channel_format = GL_ALPHA;
 		const char *extensions = (const char *)glGetString(GL_EXTENSIONS);
 		if (strstr(extensions, "GL_OES_packed_depth_stencil") != NULL)
 			gl.GL_OES_packed_depth_stencil_supported = true;
@@ -490,13 +512,13 @@ void findGLVersion()
 #else
 			gl.glsl_version_header = "#version 130";
 #endif
-			gl.fog_image_format = GL_RED;
+			gl.single_channel_format = GL_RED;
 		}
 		else
 		{
 			gl.gl_version = "GL2";
 			gl.glsl_version_header = "#version 120";
-			gl.fog_image_format = GL_ALPHA;
+			gl.single_channel_format = GL_ALPHA;
 		}
 	}
 	GLint ranges[2];
@@ -595,7 +617,8 @@ GLuint gl_CompileAndLink(const char* VertexShader, const char* FragmentShader)
 
 PipelineShader *GetProgram(bool cp_AlphaTest, bool pp_InsideClipping,
 		bool pp_Texture, bool pp_UseAlpha, bool pp_IgnoreTexA, u32 pp_ShadInstr, bool pp_Offset,
-		u32 pp_FogCtrl, bool pp_Gouraud, bool pp_BumpMap, bool fog_clamping, bool trilinear)
+		u32 pp_FogCtrl, bool pp_Gouraud, bool pp_BumpMap, bool fog_clamping, bool trilinear,
+		bool palette)
 {
 	u32 rv=0;
 
@@ -611,6 +634,7 @@ PipelineShader *GetProgram(bool cp_AlphaTest, bool pp_InsideClipping,
 	rv<<=1; rv|=pp_BumpMap;
 	rv<<=1; rv|=fog_clamping;
 	rv<<=1; rv|=trilinear;
+	rv<<=1; rv|=palette;
 
 	PipelineShader *shader = &gl.shaders[rv];
 	if (shader->program == 0)
@@ -627,6 +651,7 @@ PipelineShader *GetProgram(bool cp_AlphaTest, bool pp_InsideClipping,
 		shader->pp_BumpMap = pp_BumpMap;
 		shader->fog_clamping = fog_clamping;
 		shader->trilinear = trilinear;
+		shader->palette = palette;
 		CompilePipelineShader(shader);
 	}
 
@@ -645,7 +670,7 @@ bool CompilePipelineShader(	PipelineShader* s)
 	rc = sprintf(pshader,PixelPipelineShader, gl.glsl_version_header, gl.gl_version,
                 s->cp_AlphaTest,s->pp_InsideClipping,s->pp_UseAlpha,
                 s->pp_Texture,s->pp_IgnoreTexA,s->pp_ShadInstr,s->pp_Offset,s->pp_FogCtrl, s->pp_Gouraud, s->pp_BumpMap,
-				s->fog_clamping, s->trilinear);
+				s->fog_clamping, s->trilinear, s->palette);
 	verify(rc + 1 <= (int)sizeof(pshader));
 
 	s->program=gl_CompileAndLink(vshader, pshader);
@@ -682,6 +707,12 @@ bool CompilePipelineShader(	PipelineShader* s)
 	gu = glGetUniformLocation(s->program, "fog_table");
 	if (gu != -1)
 		glUniform1i(gu, 1);
+	// And texture 2 as palette
+	gu = glGetUniformLocation(s->program, "palette");
+	if (gu != -1)
+		glUniform1i(gu, 2);
+	s->palette_index = glGetUniformLocation(s->program, "palette_index");
+
 	s->trilinear_alpha = glGetUniformLocation(s->program, "trilinear_alpha");
 	
 	if (s->fog_clamping)
@@ -830,6 +861,33 @@ bool gl_create_resources();
 
 //setup
 
+#ifndef __APPLE__
+static void gl_DebugOutput(GLenum source,
+        GLenum type,
+        GLuint id,
+        GLenum severity,
+        GLsizei length,
+        const GLchar *message,
+        const void *userParam)
+{
+	if (id == 131185)
+		return;
+	switch (severity)
+	{
+	default:
+	case GL_DEBUG_SEVERITY_NOTIFICATION:
+	case GL_DEBUG_SEVERITY_LOW:
+		DEBUG_LOG(RENDERER, "opengl:[%d] %s", id, message);
+		break;
+	case GL_DEBUG_SEVERITY_MEDIUM:
+		INFO_LOG(RENDERER, "opengl:[%d] %s", id, message);
+		break;
+	case GL_DEBUG_SEVERITY_HIGH:
+		WARN_LOG(RENDERER, "opengl:[%d] %s", id, message);
+		break;
+	}
+}
+#endif
 
 bool gles_init()
 {
@@ -838,10 +896,16 @@ bool gles_init()
 	if (!gl_create_resources())
 		return false;
 
-	//    glEnable(GL_DEBUG_OUTPUT);
-	//    glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
-	//    glDebugMessageCallback(gl_DebugOutput, NULL);
-	//    glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
+#if 0
+	glEnable(GL_DEBUG_OUTPUT);
+	glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+#ifdef GLES
+	glDebugMessageCallback((RGLGENGLDEBUGPROC)gl_DebugOutput, NULL);
+#else
+    glDebugMessageCallback(gl_DebugOutput, NULL);
+#endif
+	glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
+#endif
 
 	//clean up the buffer
 	glcache.ClearColor(0.f, 0.f, 0.f, 0.f);
@@ -887,6 +951,28 @@ void UpdateFogTexture(u8 *fog_table, GLenum texture_slot, GLint fog_image_format
 
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 	glTexImage2D(GL_TEXTURE_2D, 0, fog_image_format, 128, 2, 0, fog_image_format, GL_UNSIGNED_BYTE, temp_tex_buffer);
+	glCheck();
+
+	glActiveTexture(GL_TEXTURE0);
+}
+
+void UpdatePaletteTexture(GLenum texture_slot)
+{
+	glActiveTexture(texture_slot);
+	if (paletteTextureId == 0)
+	{
+		paletteTextureId = glcache.GenTexture();
+		glcache.BindTexture(GL_TEXTURE_2D, paletteTextureId);
+		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	}
+	else
+		glcache.BindTexture(GL_TEXTURE_2D, paletteTextureId);
+
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1024, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, palette32_ram);
 	glCheck();
 
 	glActiveTexture(GL_TEXTURE0);
@@ -1060,12 +1146,18 @@ bool RenderFrame()
 	if (fog_needs_update && settings.rend.Fog)
 	{
 		fog_needs_update = false;
-		UpdateFogTexture((u8 *)FOG_TABLE, GL_TEXTURE1, gl.fog_image_format);
+		UpdateFogTexture((u8 *)FOG_TABLE, GL_TEXTURE1, gl.single_channel_format);
+	}
+	if (palette_updated)
+	{
+		UpdatePaletteTexture(GL_TEXTURE2);
+		palette_updated = false;
 	}
 
 	glcache.UseProgram(gl.modvol_shader.program);
 
-	glUniform4fv( gl.modvol_shader.depth_scale, 1, ShaderUniforms.depth_coefs);
+	if (gl.modvol_shader.depth_scale != -1)
+		glUniform4fv(gl.modvol_shader.depth_scale, 1, ShaderUniforms.depth_coefs);
 	glUniformMatrix4fv(gl.modvol_shader.normal_matrix, 1, GL_FALSE, &ShaderUniforms.normal_mat[0][0]);
 
 	ShaderUniforms.PT_ALPHA=(PT_ALPHA_REF&0xFF)/255.0f;

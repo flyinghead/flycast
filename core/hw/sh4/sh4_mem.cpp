@@ -12,11 +12,24 @@
 #include "hw/sh4/sh4_core.h"
 #include "hw/mem/_vmem.h"
 #include "modules/mmu.h"
-
-
+#include "sh4_cache.h"
 
 //main system mem
 VArray2 mem_b;
+
+#ifndef NO_MMU
+// Memory handlers
+ReadMem8Func ReadMem8;
+ReadMem16Func ReadMem16;
+ReadMem16Func IReadMem16;
+ReadMem32Func ReadMem32;
+ReadMem64Func ReadMem64;
+
+WriteMem8Func WriteMem8;
+WriteMem16Func WriteMem16;
+WriteMem32Func WriteMem32;
+WriteMem64Func WriteMem64;
+#endif
 
 //MEM MAPPINNGG
 
@@ -84,17 +97,17 @@ static void map_area4(u32 base)
 
 //AREA 5	--	Ext. Device
 //Read Ext.Device
-template <u32 sz,class T>
+template <class T>
 T DYNACALL ReadMem_extdev_T(u32 addr)
 {
-	return (T)libExtDevice_ReadMem_A5(addr,sz);
+	return (T)libExtDevice_ReadMem_A5(addr, sizeof(T));
 }
 
 //Write Ext.Device
-template <u32 sz,class T>
+template <class T>
 void DYNACALL WriteMem_extdev_T(u32 addr,T data)
 {
-	libExtDevice_WriteMem_A5(addr,data,sz);
+	libExtDevice_WriteMem_A5(addr, data, sizeof(T));
 }
 
 _vmem_handler area5_handler;
@@ -331,4 +344,64 @@ bool IsOnRam(u32 addr)
 	}
 
 	return false;
+}
+
+static bool interpreterRunning = false;
+
+void SetMemoryHandlers()
+{
+#ifndef NO_MMU
+#ifdef STRICT_MODE
+	if (settings.dynarec.Enable && interpreterRunning)
+	{
+		// Flush caches when interp -> dynarec
+		ocache.WriteBackAll();
+		icache.Invalidate();
+	}
+
+	if (!settings.dynarec.Enable)
+	{
+		interpreterRunning = true;
+		IReadMem16 = &IReadCachedMem;
+		ReadMem8 = &ReadCachedMem<u8>;
+		ReadMem16 = &ReadCachedMem<u16>;
+		ReadMem32 = &ReadCachedMem<u32>;
+		ReadMem64 = &ReadCachedMem<u64>;
+
+		WriteMem8 = &WriteCachedMem<u8>;
+		WriteMem16 = &WriteCachedMem<u16>;
+		WriteMem32 = &WriteCachedMem<u32>;
+		WriteMem64 = &WriteCachedMem<u64>;
+
+		return;
+	}
+	interpreterRunning = false;
+#endif
+	if (CCN_MMUCR.AT == 1 && settings.dreamcast.FullMMU)
+	{
+		IReadMem16 = &mmu_IReadMem16;
+		ReadMem8 = &mmu_ReadMem<u8>;
+		ReadMem16 = &mmu_ReadMem<u16>;
+		ReadMem32 = &mmu_ReadMem<u32>;
+		ReadMem64 = &mmu_ReadMem<u64>;
+
+		WriteMem8 = &mmu_WriteMem<u8>;
+		WriteMem16 = &mmu_WriteMem<u16>;
+		WriteMem32 = &mmu_WriteMem<u32>;
+		WriteMem64 = &mmu_WriteMem<u64>;
+	}
+	else
+	{
+		ReadMem8 = &_vmem_ReadMem8;
+		ReadMem16 = &_vmem_ReadMem16;
+		IReadMem16 = &_vmem_ReadMem16;
+		ReadMem32 = &_vmem_ReadMem32;
+		ReadMem64 = &_vmem_ReadMem64;
+
+		WriteMem8 = &_vmem_WriteMem8;
+		WriteMem16 = &_vmem_WriteMem16;
+		WriteMem32 = &_vmem_WriteMem32;
+		WriteMem64 = &_vmem_WriteMem64;
+	}
+#endif
 }

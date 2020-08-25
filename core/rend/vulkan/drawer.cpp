@@ -157,15 +157,25 @@ void Drawer::DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sor
 			// Trilinear pass A
 			trilinearAlpha = 1.0 - trilinearAlpha;
 	}
-
-	if (tileClip == TileClipping::Inside || trilinearAlpha != 1.f)
+	bool palette = BaseTextureCacheData::IsGpuHandledPaletted(poly.tsp, poly.tcw);
+	float palette_index = 0.f;
+	if (palette)
 	{
-		std::array<float, 5> pushConstants = {
+		if (poly.tcw.PixelFmt == PixelPal4)
+			palette_index = float(poly.tcw.PalSelect << 4) / 1023.f;
+		else
+			palette_index = float((poly.tcw.PalSelect >> 4) << 8) / 1023.f;
+	}
+
+	if (tileClip == TileClipping::Inside || trilinearAlpha != 1.f || palette)
+	{
+		std::array<float, 6> pushConstants = {
 				(float)scissorRect.offset.x,
 				(float)scissorRect.offset.y,
 				(float)scissorRect.offset.x + (float)scissorRect.extent.width,
 				(float)scissorRect.offset.y + (float)scissorRect.extent.height,
-				trilinearAlpha
+				trilinearAlpha,
+				palette_index
 		};
 		cmdBuffer.pushConstants<float>(pipelineManager->GetPipelineLayout(), vk::ShaderStageFlagBits::eFragment, 0, pushConstants);
 	}
@@ -304,7 +314,7 @@ void Drawer::UploadMainBuffer(const VertexShaderUniforms& vertexUniforms, const 
 	buffer->upload(chunks.size(), &chunkSizes[0], &chunks[0]);
 }
 
-bool Drawer::Draw(const Texture *fogTexture)
+bool Drawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 {
 	VertexShaderUniforms vtxUniforms;
 	vtxUniforms.normal_matrix = matrices.GetNormalMatrix();
@@ -322,7 +332,8 @@ bool Drawer::Draw(const Texture *fogTexture)
 	UploadMainBuffer(vtxUniforms, fragUniforms);
 
 	// Update per-frame descriptor set and bind it
-	GetCurrentDescSet().UpdateUniforms(GetMainBuffer(0)->buffer.get(), offsets.vertexUniformOffset, offsets.fragmentUniformOffset, fogTexture->GetImageView());
+	GetCurrentDescSet().UpdateUniforms(GetMainBuffer(0)->buffer.get(), offsets.vertexUniformOffset, offsets.fragmentUniformOffset,
+			fogTexture->GetImageView(), paletteTexture->GetImageView());
 	GetCurrentDescSet().BindPerFrameDescriptorSets(cmdBuffer);
 	// Reset per-poly descriptor set pool
 	GetCurrentDescSet().Reset();
@@ -460,13 +471,15 @@ vk::CommandBuffer TextureDrawer::BeginRenderPass()
 			texture->readOnlyImageView = *texture->imageView;
 			textureCache->DestroyLater(texture);
 		}
+		textureCache->SetInFlight(texture);
 
 		if (texture->format != vk::Format::eR8G8B8A8Unorm || texture->extent.width != widthPow2 || texture->extent.height != heightPow2)
 		{
 			texture->extent = vk::Extent2D(widthPow2, heightPow2);
 			texture->format = vk::Format::eR8G8B8A8Unorm;
+			texture->needsStaging = true;
 			texture->CreateImage(vk::ImageTiling::eOptimal, vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled,
-					vk::ImageLayout::eUndefined, vk::MemoryPropertyFlags(), vk::ImageAspectFlagBits::eColor);
+					vk::ImageLayout::eUndefined, vk::ImageAspectFlagBits::eColor);
 			colorImageCurrentLayout = vk::ImageLayout::eUndefined;
 		}
 		else

@@ -144,6 +144,8 @@ Disc* load_gdi(const char* file)
 			std::string path = basepath + normalize_path_separator(track_filename);
 			t.file = new RawTrackFile(core_fopen(path.c_str()),OFFSET,t.StartFAD,SSIZE);	
 		}
+		if (!disc->tracks.empty())
+			disc->tracks.back().EndFAD = t.StartFAD - 1;
 		disc->tracks.push_back(t);
 	}
 

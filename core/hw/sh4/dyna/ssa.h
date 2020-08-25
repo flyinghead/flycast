@@ -87,7 +87,7 @@ private:
 			: std::pair<Sh4RegType, u32>((Sh4RegType)(param._reg + index), param.version[index])
 		{
 			verify(param.is_reg());
-			verify(index >= 0 && index < param.count());
+			verify(index >= 0 && index < (int)param.count());
 		}
 		RegValue(Sh4RegType reg, u32 version)
 			: std::pair<Sh4RegType, u32>(reg, version) { }
@@ -159,7 +159,7 @@ private:
 
 	void ConstPropPass()
 	{
-		for (opnum = 0; opnum < block->oplist.size(); opnum++)
+		for (opnum = 0; opnum < (int)block->oplist.size(); opnum++)
 		{
 			shil_opcode& op = block->oplist[opnum];
 
@@ -228,12 +228,22 @@ private:
 						bool doit = false;
 						if (mmu_enabled())
 						{
-							// Only for user space addresses
-							if ((op.rs1._imm & 0x80000000) == 0)
-								doit = true;
-							else
-								// And kernel RAM addresses
-								doit = IsOnRam(op.rs1._imm);
+#ifndef FAST_MMU
+							// It is possible to get a tlb miss on data if the page is only in the itlb table
+							// It won't happen with the fast mmu implementation though.
+							u32 paddr;
+							u32 rv = mmu_data_translation<MMU_TT_DREAD, u8>(op.rs1._imm, paddr);
+							doit = rv == MMU_ERROR_NONE;
+#else
+							doit = true;
+#endif
+							if (doit)
+							{
+								// Only for user space addresses
+								if ((op.rs1._imm & 0x80000000) != 0)
+									// And kernel RAM addresses
+									doit = IsOnRam(op.rs1._imm);
+							}
 						}
 						else
 							doit = IsOnRam(op.rs1._imm);
@@ -253,6 +263,7 @@ private:
 								break;
 							default:
 								die("invalid size");
+								v = 0;
 								break;
 							}
 							ReplaceByMov32(op, v);
@@ -364,7 +375,7 @@ private:
 				bool unused_rd = true;
 				for (u32 i = 0; i < op.rd.count(); i++)
 				{
-					if (last_versions[op.rd._reg + i] == -1)
+					if (last_versions[op.rd._reg + i] == (u32)-1)
 					{
 						last_versions[op.rd._reg + i] = op.rd.version[i];
 						unused_rd = false;
@@ -386,7 +397,7 @@ private:
 				bool unused_rd = true;
 				for (u32 i = 0; i < op.rd2.count(); i++)
 				{
-					if (last_versions[op.rd2._reg + i] == -1)
+					if (last_versions[op.rd2._reg + i] == (u32)-1)
 					{
 						last_versions[op.rd2._reg + i] = op.rd2.version[i];
 						unused_rd = false;
@@ -585,9 +596,9 @@ private:
 					defnum = opnum;
 
 				// find alias redef
-				if (DefinesHigherVersion(op->rd, alias.second) && aliasdef == -1)
+				if (DefinesHigherVersion(op->rd, alias.second) && aliasdef == (size_t)-1)
 					aliasdef = opnum;
-				else if (DefinesHigherVersion(op->rd2, alias.second) && aliasdef == -1)
+				else if (DefinesHigherVersion(op->rd2, alias.second) && aliasdef == (size_t)-1)
 					aliasdef = opnum;
 
 				// find last use
@@ -625,12 +636,12 @@ private:
 					}
 				}
 			}
-			verify(defnum != -1);
+			verify(defnum != (size_t)-1);
 			// If the alias is redefined before any use we can't use it
-			if (aliasdef != -1 && usenum != -1 && aliasdef < usenum)
+			if (aliasdef != (size_t)-1 && usenum != (size_t)-1 && aliasdef < usenum)
 				continue;
 
-			for (size_t opnum = defnum + 1; opnum <= usenum && usenum != -1; opnum++)
+			for (size_t opnum = defnum + 1; opnum <= usenum && usenum != (size_t)-1; opnum++)
 			{
 				shil_opcode* op = &block->oplist[opnum];
 				ReplaceByAlias(op->rs1, alias.first, alias.second);

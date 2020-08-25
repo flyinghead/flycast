@@ -44,6 +44,16 @@ void OITDrawer::DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool 
 
 	bool twoVolumes = poly.tsp1.full != (u32)-1 || poly.tcw1.full != (u32)-1;
 
+	bool palette = BaseTextureCacheData::IsGpuHandledPaletted(poly.tsp, poly.tcw);
+	float palette_index = 0.f;
+	if (palette)
+	{
+		if (poly.tcw.PixelFmt == PixelPal4)
+			palette_index = float(poly.tcw.PalSelect << 4) / 1023.f;
+		else
+			palette_index = float((poly.tcw.PalSelect >> 4) << 8) / 1023.f;
+	}
+
 	OITDescriptorSets::PushConstants pushConstants = {
 			{
 				(float)scissorRect.offset.x,
@@ -54,6 +64,7 @@ void OITDrawer::DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool 
 			{ poly.tsp.SrcInstr, poly.tsp.DstInstr, 0, 0 },
 			trilinearAlpha,
 			listType == ListType_Translucent ? (int)(&poly - pvrrc.global_param_tr.head()) : 0,
+			palette_index,
 	};
 	if (twoVolumes)
 	{
@@ -236,7 +247,7 @@ void OITDrawer::UploadMainBuffer(const OITDescriptorSets::VertexShaderUniforms& 
 	buffer->upload(chunks.size(), &chunkSizes[0], &chunks[0]);
 }
 
-bool OITDrawer::Draw(const Texture *fogTexture)
+bool OITDrawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 {
 	vk::CommandBuffer cmdBuffer = NewFrame();
 
@@ -269,7 +280,7 @@ bool OITDrawer::Draw(const Texture *fogTexture)
 	GetCurrentDescSet().UpdateUniforms(mainBuffer, offsets.vertexUniformOffset, offsets.fragmentUniformOffset,
 			fogTexture->GetImageView(), offsets.polyParamsOffset,
 			offsets.polyParamsSize, depthAttachment->GetStencilView(),
-			depthAttachment->GetImageView());
+			depthAttachment->GetImageView(), paletteTexture->GetImageView());
 	GetCurrentDescSet().BindPerFrameDescriptorSets(cmdBuffer);
 	GetCurrentDescSet().UpdateColorInputDescSet(0, colorAttachments[0]->GetImageView());
 	GetCurrentDescSet().UpdateColorInputDescSet(1, colorAttachments[1]->GetImageView());
@@ -529,12 +540,15 @@ vk::CommandBuffer OITTextureDrawer::NewFrame()
 			texture->readOnlyImageView = *texture->imageView;
 			textureCache->DestroyLater(texture);
 		}
+		textureCache->SetInFlight(texture);
+
 		if (texture->format != vk::Format::eR8G8B8A8Unorm || texture->extent.width != widthPow2 || texture->extent.height != heightPow2)
 		{
 			texture->extent = vk::Extent2D(widthPow2, heightPow2);
 			texture->format = vk::Format::eR8G8B8A8Unorm;
+			texture->needsStaging = true;
 			texture->CreateImage(vk::ImageTiling::eOptimal, vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled,
-					vk::ImageLayout::eUndefined, vk::MemoryPropertyFlags(), vk::ImageAspectFlagBits::eColor);
+					vk::ImageLayout::eUndefined, vk::ImageAspectFlagBits::eColor);
 			colorImageCurrentLayout = vk::ImageLayout::eUndefined;
 		}
 		else

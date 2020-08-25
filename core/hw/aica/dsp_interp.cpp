@@ -115,7 +115,6 @@ void AICADSP_Step(struct dsp_t *DSP)
 #endif
 
 		// INPUTS RW
-		verify(IRA < 0x38);
 		if (IRA <= 0x1f)
 			INPUTS = DSP->MEMS[IRA];
 		else if (IRA <= 0x2F)

@@ -16,13 +16,9 @@
 #include "../modules/ccn.h"
 #include "../sh4_interrupts.h"
 #include "hw/gdrom/gdrom_if.h"
+#include "../sh4_cache.h"
 
 #include "hw/sh4/sh4_opcode.h"
-
-void dofoo(sh4_opcode op)
-{
-	r[op.n()]=gbr;
-}
 
 #define GetN(str) ((str>>8) & 0xf)
 #define GetM(str) ((str>>4) & 0xf)
@@ -165,7 +161,6 @@ sh4op(i0000_nnnn_mmmm_1100)
 	u32 n = GetN(op);
 	u32 m = GetM(op);
 	ReadMemBOS8(r[n],r[0],r[m]);
-	//r[n]= (u32)(s8)ReadMem8(r[0]+r[m]);
 }
 
 
@@ -175,7 +170,6 @@ sh4op(i0000_nnnn_mmmm_1101)
 	u32 n = GetN(op);
 	u32 m = GetM(op);
 	ReadMemBOS16(r[n],r[0],r[m]);
-	//r[n] = (u32)(s16)ReadMem16(r[0] + r[m]);
 }
 
 
@@ -195,7 +189,6 @@ sh4op(i0000_nnnn_mmmm_0100)
 	u32 m = GetM(op);
 
 	WriteMemBOU8(r[0],r[n], r[m]);
-	//WriteMem8(r[0] + r[n], (u8)r[m]);
 }
 
 
@@ -641,7 +634,6 @@ sh4op(i0110_nnnn_mmmm_0001)
 {
 	u32 n = GetN(op);
 	u32 m = GetM(op);
-	//r[n] = (u32)(s32)(s16)ReadMem16(r[m]);
 	ReadMemS16(r[n] ,r[m]);
 }
 
@@ -670,7 +662,6 @@ sh4op(i0110_nnnn_mmmm_0100)
 {
 	u32 n = GetN(op);
 	u32 m = GetM(op);
-	//r[n] = (u32)(s32)(s8)ReadMem8(r[m]);
 	ReadMemS8(r[n],r[m]);
 	if (n != m)
 		r[m] += 1;
@@ -682,7 +673,6 @@ sh4op(i0110_nnnn_mmmm_0101)
 {
 	u32 n = GetN(op);
 	u32 m = GetM(op);
-	//r[n] = (u32)(s16)(u16)ReadMem16(r[m]);
 	ReadMemS16(r[n],r[m]);
 	if (n != m)
 		r[m] += 2;
@@ -726,7 +716,6 @@ sh4op(i1000_0100_mmmm_iiii)
 {
 	u32 disp = GetImm4(op);
 	u32 m = GetM(op);
-	//r[0] = (u32)(s8)ReadMem8(r[m] + disp);
 	ReadMemBOS8(r[0] ,r[m] , disp);
 }
 
@@ -736,7 +725,6 @@ sh4op(i1000_0101_mmmm_iiii)
 {
 	u32 disp = GetImm4(op);
 	u32 m = GetM(op);
-	//r[0] = (u32)(s16)ReadMem16(r[m] + (disp << 1));
 	ReadMemBOS16(r[0],r[m] , (disp << 1));
 }
 
@@ -748,7 +736,6 @@ sh4op(i1001_nnnn_iiii_iiii)
 {
 	u32 n = GetN(op);
 	u32 disp = (GetImm8(op));
-	//r[n]=(u32)(s32)(s16)ReadMem16((disp<<1) + pc + 4);
 	ReadMemS16(r[n],(disp<<1) + next_pc + 2);
 }
 
@@ -785,7 +772,6 @@ sh4op(i1100_0010_iiii_iiii)
 sh4op(i1100_0100_iiii_iiii)
 {
 	u32 disp = GetImm8(op);
-	//r[0] = (u32)(s8)ReadMem8(gbr+disp);
 	ReadMemBOS8(r[0],gbr,disp);
 }
 
@@ -794,7 +780,6 @@ sh4op(i1100_0100_iiii_iiii)
 sh4op(i1100_0101_iiii_iiii)
 {
 	u32 disp = GetImm8(op);
-	//r[0] = (u32)(s16)ReadMem16(gbr+(disp<<1) );
 	ReadMemBOS16(r[0],gbr,(disp<<1));
 }
 
@@ -811,7 +796,6 @@ sh4op(i1100_0110_iiii_iiii)
 // mova @(<disp>,PC),R0
 sh4op(i1100_0111_iiii_iiii)
 {
-	//u32 disp = (() << 2) + ((pc + 4) & 0xFFFFFFFC);
 	r[0] = ((next_pc+2)&0xFFFFFFFC)+(GetImm8(op)<<2);
 }
 
@@ -843,6 +827,7 @@ sh4op(i0000_nnnn_1100_0011)
 	u32 n = GetN(op);
 	WriteMemU32(r[n],r[0]);//at r[n],r[0]
 	//iWarn(op, "movca.l R0, @<REG_N>");
+	// TODO ocache
 }
 
 //clrmac
@@ -1185,22 +1170,22 @@ sh4op(i0000_0000_0011_1000)
 //ocbi @<REG_N>
 sh4op(i0000_nnnn_1001_0011)
 {
-	u32 n = GetN(op);
-	//printf("ocbi @0x%08X \n",r[n]);
+	//printf("OCBI @R%d (0x%08x)\n", GetN(op), r[GetN(op)]);
+	ocache.WriteBack(r[GetN(op)], false, true);
 }
 
 //ocbp @<REG_N>
 sh4op(i0000_nnnn_1010_0011)
 {
-	u32 n = GetN(op);
-	//printf("ocbp @0x%08X \n",r[n]);
+	//printf("OCBP @R%d (%08x)\n", GetN(op), r[GetN(op)]);
+	ocache.WriteBack(r[GetN(op)], true, true);
 }
 
 //ocbwb @<REG_N>
 sh4op(i0000_nnnn_1011_0011)
 {
-	u32 n = GetN(op);
-	//printf("ocbwb @0x%08X \n",r[n]);
+	//printf("OCBWB @R%d (0x%08x)\n", GetN(op) ,r[GetN(op)]);
+	ocache.WriteBack(r[GetN(op)], true, false);
 }
 
 //pref @<REG_N>
@@ -1277,6 +1262,11 @@ sh4op(i0000_nnnn_1000_0011)
 			do_sqw<true>(Dest);
 		else
 			do_sqw<false>(Dest);
+	}
+	else
+	{
+		//printf("PREF @R%d (0x%08x)\n", n, Dest);
+		ocache.Prefetch(Dest);
 	}
 }
 
@@ -1550,86 +1540,59 @@ sh4op(i0000_0000_0001_1001)
 }
 //div0s <REG_M>,<REG_N>
 sh4op(i0010_nnnn_mmmm_0111)
-{//ToDo : Check This [26/4/05]
+{
 	u32 n = GetN(op);
 	u32 m = GetM(op);
 
-	//new implementation
-	sr.Q=r[n]>>31;
-	sr.M=r[m]>>31;
-	sr.T=sr.M^sr.Q;
-	return;
-	/*
-	if ((r[n] & 0x80000000)!=0)
-	sr.Q = 1;
-	else
-	sr.Q = 0;
-
-	if ((r[m] & 0x80000000)!=0)
-		sr.M = 1;
-	else
-		sr.M = 0;
-
-	if (sr.Q == sr.M)
-		sr.T = 0;
-	else
-		sr.T = 1;
-		*/
+	sr.Q = r[n] >> 31;
+	sr.M = r[m] >> 31;
+	sr.T = sr.M ^ sr.Q;
 }
 
 //div1 <REG_M>,<REG_N>
 sh4op(i0011_nnnn_mmmm_0100)
 {
-	u32 n=GetN(op);
-	u32 m=GetM(op);
+	u32 n = GetN(op);
+	u32 m = GetM(op);
 
-	u32 tmp0, tmp2;
-	unsigned char old_q, tmp1;
-
-	old_q = sr.Q;
-	sr.Q = (u8)((0x80000000 & r[n]) !=0);
+	const u8 old_q = sr.Q;
+	sr.Q = (u8)((0x80000000 & r[n]) != 0);
 
 	r[n] <<= 1;
-	r[n] |= (unsigned long)sr.T;
+	r[n] |= sr.T;
 
-	tmp0 = r[n];	// this need only be done once here ..
-	// Old implementation
-//	tmp2 = r[m];
-//
-//	if( 0 == old_q )
-//	{
-//		if( 0 == sr.M )
-//		{
-//			r[n] -= tmp2;
-//			tmp1	= (r[n]>tmp0);
-//			sr.Q	= (sr.Q==0) ? tmp1 : (u8)(tmp1==0) ;
-//		}
-//		else
-//		{
-//			r[n] += tmp2;
-//			tmp1	=(r[n]<tmp0);
-//			sr.Q	= (sr.Q==0) ? (u8)(tmp1==0) : tmp1 ;
-//		}
-//	}
-//	else
-//	{
-//		if( 0 == sr.M )
-//		{
-//			r[n] += tmp2;
-//			tmp1	=(r[n]<tmp0);
-//			sr.Q	= (sr.Q==0) ? tmp1 : (u8)(tmp1==0) ;
-//		}
-//		else
-//		{
-//			r[n] -= tmp2;
-//			tmp1	=(r[n]>tmp0);
-//			sr.Q	= (sr.Q==0) ? (u8)(tmp1==0) : tmp1 ;
-//		}
-//	}
+	const u32 old_rn = r[n];
 
-	r[n] += (2 * (old_q ^ sr.M) - 1) * r[m];
-	sr.Q ^= old_q ^ (sr.M ? r[n] > tmp0 : r[n] >= tmp0);
-
+	if (old_q == 0)
+	{
+		if (sr.M == 0)
+		{
+			r[n] -= r[m];
+			bool tmp1 = r[n] > old_rn;
+			sr.Q = sr.Q ^ tmp1;
+		}
+		else
+		{
+			r[n] += r[m];
+			bool tmp1 = r[n] < old_rn;
+			sr.Q = !sr.Q ^ tmp1;
+		}
+	}
+	else
+	{
+		if (sr.M == 0)
+		{
+			r[n] += r[m];
+			bool tmp1 = r[n] < old_rn;
+			sr.Q = sr.Q ^ tmp1;
+		}
+		else
+		{
+			r[n] -= r[m];
+			bool tmp1 = r[n] > old_rn;
+			sr.Q = !sr.Q ^ tmp1;
+		}
+	}
 	sr.T = (sr.Q == sr.M);
 }
 

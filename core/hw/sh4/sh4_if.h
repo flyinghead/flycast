@@ -88,6 +88,7 @@ enum Sh4RegType
 	reg_fpscr,
 	
 	reg_pc_dyn,        //Write only, for dynarec only (dynamic block exit address)
+	reg_temp,
 
 	sh4_reg_count,
 
@@ -286,6 +287,7 @@ struct Sh4Context
 			u32 interrupt_pend;
 
 			u32 exception_pc;
+			u32 temp_reg;
 		};
 		u64 raw[64-8];
 	};

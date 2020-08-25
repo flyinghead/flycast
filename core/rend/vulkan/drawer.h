@@ -103,7 +103,7 @@ class Drawer : public BaseDrawer
 {
 public:
 	virtual ~Drawer() = default;
-	bool Draw(const Texture *fogTexture);
+	bool Draw(const Texture *fogTexture, const Texture *paletteTexture);
 	virtual void EndRenderPass() = 0;
 
 protected:

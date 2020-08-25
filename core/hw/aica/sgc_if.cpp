@@ -46,7 +46,7 @@ extern bool fast_forward_mode;
 
 //Sound generation, mixin, and channel regs emulation
 //x.15
-s32 volume_lut[16];
+static s32 volume_lut[16];
 //255 -> mute
 //Converts Send levels to TL-compatible values (DISDL, etc)
 static const u32 SendLevel[16] =
@@ -54,7 +54,7 @@ static const u32 SendLevel[16] =
 	255, 14 << 3, 13 << 3, 12 << 3, 11 << 3, 10 << 3, 9 << 3, 8 << 3,
 	7 << 3, 6 << 3, 5 << 3, 4 << 3, 3 << 3, 2 << 3, 1 << 3, 0 << 3
 };
-s32 tl_lut[256 + 768];	//xx.15 format. >=255 is muted
+static s32 tl_lut[256 + 768];	//xx.15 format. >=255 is muted
 
 //in ms :)
 static const double AEG_Attack_Time[64] =
@@ -91,9 +91,9 @@ static int PLFO_Scales[8][256];
 #define AEG_ATTACK_SHIFT 16
 
 //Steps per sample
-u32 AEG_ATT_SPS[64];
-u32 AEG_DSR_SPS[64];
-u32 FEG_SPS[64];
+static u32 AEG_ATT_SPS[64];
+static u32 AEG_DSR_SPS[64];
+static u32 FEG_SPS[64];
 
 static const char* stream_names[]=
 {
@@ -126,14 +126,12 @@ static const s32 qtable[32] = {
 0x1C00,0x1D00,0x1E00,0x1F00
 };
 
-//Remove the fractional part , with rounding ;) -- does not need an extra bit
-#define well(a,bits) (((a) + ((1<<(bits-1))))>>bits)
 //Remove the fractional part by chopping..
-#define FPChop(a,bits) ((a)>>bits)
+#define FPChop(a, bits) ((a) >> (bits))
 
 #define FPs FPChop
 //Fixed point mul w/ rounding :)
-#define FPMul(a,b,bits) (FPs(a*b,bits))
+#define FPMul(a, b, bits) FPs((a) * (b), bits)
 
 #define VOLPAN(value,vol,pan,outl,outr) \
 {\
@@ -151,7 +149,6 @@ static const s32 qtable[32] = {
 		(outr)+=temp;\
 	}\
 }
-s16 pl=0,pr=0;
 
 DSP_OUT_VOL_REG* dsp_out_vol;
 
@@ -317,13 +314,12 @@ enum _EG_state
 
 struct ChannelEx;
 
-//make these DYNACALL ? they were fastcall before ..
-void (* STREAM_STEP_LUT[5][2][2])(ChannelEx* ch);
-void (* STREAM_INITAL_STEP_LUT[5])(ChannelEx* ch);
-void (* AEG_STEP_LUT[4])(ChannelEx* ch);
-void (* FEG_STEP_LUT[4])(ChannelEx* ch);
-void (* ALFOWS_CALC[4])(ChannelEx* ch);
-void (* PLFOWS_CALC[4])(ChannelEx* ch);
+static void (* STREAM_STEP_LUT[5][2][2])(ChannelEx* ch);
+static void (* STREAM_INITAL_STEP_LUT[5])(ChannelEx* ch);
+static void (* AEG_STEP_LUT[4])(ChannelEx* ch);
+static void (* FEG_STEP_LUT[4])(ChannelEx* ch);
+static void (* ALFOWS_CALC[4])(ChannelEx* ch);
+static void (* PLFOWS_CALC[4])(ChannelEx* ch);
 
 struct ChannelEx
 {
@@ -510,11 +506,10 @@ struct ChannelEx
 
 			oLeft = FPMul(sample, logtable[dl], 15);
 			oRight = FPMul(sample, logtable[dr], 15);
-			oDsp = FPMul(sample, logtable[ds], 15);
+			oDsp = FPMul(sample, logtable[ds], 11);	// 20 bits
 
 			clip_verify(((s16)oLeft)==oLeft);
 			clip_verify(((s16)oRight)==oRight);
-			clip_verify(((s16)oDsp)==oDsp);
 			clip_verify(sample*oLeft>=0);
 			clip_verify(sample*oRight>=0);
 			clip_verify(sample*oDsp>=0);
@@ -533,7 +528,10 @@ struct ChannelEx
 
 		Step(oLeft, oRight, oDsp);
 
-		*VolMix.DSPOut+=oDsp;
+		*VolMix.DSPOut += oDsp;
+		if (oLeft + oRight == 0 && !settings.aica.DSPEnabled)
+			oLeft = oRight = oDsp >> 4;
+
 		mixl+=oLeft;
 		mixr+=oRight;
 	}
@@ -541,10 +539,9 @@ struct ChannelEx
 	__forceinline static void StepAll(SampleType& mixl, SampleType& mixr)
 	{
 		for (int i = 0; i < 64; i++)
-		{
 			Chans[i].Step(mixl, mixr);
-		}
 	}
+
 	void SetAegState(_EG_state newstate)
 	{
 		StepAEG=AEG_STEP_LUT[newstate];
@@ -567,54 +564,46 @@ struct ChannelEx
 
 	void KEY_ON()
 	{
-		if (AEG.state==EG_Release)
-		{
-			//if it was off then turn it on !
-			enable();
+		if (AEG.state != EG_Release)
+			return;
 
-			// reset AEG
-			SetAegState(EG_Attack);
-			AEG.SetValue(0x280);	// start value taken from HT
+		//if it was off then turn it on !
+		enable();
 
-			//reset FEG
-			SetFegState(EG_Attack);
-			//set values and crap
+		// reset AEG
+		SetAegState(EG_Attack);
+		AEG.SetValue(0x280);	// start value taken from HT
+
+		//reset FEG
+		SetFegState(EG_Attack);
+		//set values and crap
 
 
-			//Reset sampling state
-			CA=0;
-			step.full=0;
+		//Reset sampling state
+		CA=0;
+		step.full=0;
 
-			loop.looped=false;
-			
-			adpcm.Reset(this);
+		loop.looped=false;
 
-			StepStreamInitial(this);
-			key_printf("[%d] KEY_ON %s @ %f Hz, loop %d - AEG AR %d DC1R %d DC2V %d DC2R %d RR %d - KRS %d OCT %d FNS %d - PFLOS %d PFLOWS %d",
-					ChannelNumber, stream_names[ccd->PCMS], (44100.0 * update_rate) / 1024, ccd->LPCTL,
-					ccd->AR, ccd->D1R, ccd->DL << 5, ccd->D2R, ccd->RR,
-					ccd->KRS, ccd->OCT, ccd->FNS >> 9,
-					ccd->PLFOS, ccd->PLFOWS);
-		}
-		else
-		{
-			//ignore ?
-		}
+		adpcm.Reset(this);
+
+		StepStreamInitial(this);
+		key_printf("[%d] KEY_ON %s @ %f Hz, loop %d - AEG AR %d DC1R %d DC2V %d DC2R %d RR %d - KRS %d OCT %d FNS %d - PFLOS %d PFLOWS %d",
+				ChannelNumber, stream_names[ccd->PCMS], (44100.0 * update_rate) / 1024, ccd->LPCTL,
+				ccd->AR, ccd->D1R, ccd->DL << 5, ccd->D2R, ccd->RR,
+				ccd->KRS, ccd->OCT, ccd->FNS >> 9,
+				ccd->PLFOS, ccd->PLFOWS);
 	}
+
 	void KEY_OFF()
 	{
-		if (AEG.state!=EG_Release)
-		{
-			key_printf("[%d] KEY_OFF -> Release", ChannelNumber);
-			SetAegState(EG_Release);
-			SetFegState(EG_Release);
-			//switch to release state
-		}
-		else
-		{
-			//ignore ?
-		}
+		if (AEG.state == EG_Release)
+			return;
+		key_printf("[%d] KEY_OFF -> Release", ChannelNumber);
+		SetAegState(EG_Release);
+		SetFegState(EG_Release);
 	}
+
 	//PCMS,SSCTL,LPCTL,LPSLNK
 	void UpdateStreamStep()
 	{
@@ -907,19 +896,13 @@ __forceinline void StepDecodeSample(ChannelEx* ch,u32 CA)
 		break;
 
 	case 0:
-		{
-			//s16* ptr=(s16*)&aica_ram[(addr&~1)+(CA<<1)];
-			s0 = sptr16[CA];
-			s1 = sptr16[next_addr];
-		}
+		s0 = sptr16[CA];
+		s1 = sptr16[next_addr];
 		break;
 
 	case 1:
-		{
-			//s8* ptr=(s8*)&aica_ram[addr+(CA)];
-			s0 = sptr8[CA] << 8;
-			s1 = sptr8[next_addr] << 8;
-		}
+		s0 = sptr8[CA] << 8;
+		s1 = sptr8[next_addr] << 8;
 		break;
 
 	case 2:
@@ -1008,11 +991,16 @@ void StreamStep(ChannelEx* ch)
 		if (ca_t >= ch->loop.LEA)
 		{
 			ch->loop.looped = 1;
-			CA = ch->loop.LSA;
 			if (LPCTL == 0)
+			{
+				CA = 0;
 				ch->disable();
+			}
 			else
+			{
+				CA = ch->loop.LSA;
 				key_printf("[%d]LPCTL : Looping LSA %x LEA %x", ch->ChannelNumber, ch->loop.LSA, ch->loop.LEA);
+			}
 		}
 
 		ch->CA=CA;
@@ -1168,13 +1156,10 @@ void FegStep(ChannelEx* ch)
 			delta = maxd;
 		ch->FEG.value -= delta;
 	}
-	else
+	else if (ch->FEG.state < EG_Decay2)
 	{
-		if (ch->FEG.state < EG_Decay2)
-		{
-			feg_printf("[%d]FEG_step : Switching to next state: %d Freq %x", ch->ChannelNumber, (int)ch->FEG.state + 1, target >> EG_STEP_BITS);
-			ch->SetFegState((_EG_state)((int)ch->FEG.state + 1));
-		}
+		feg_printf("[%d]FEG_step : Switching to next state: %d Freq %x", ch->ChannelNumber, (int)ch->FEG.state + 1, target >> EG_STEP_BITS);
+		ch->SetFegState((_EG_state)((int)ch->FEG.state + 1));
 	}
 }
 
@@ -1275,9 +1260,7 @@ void sgc_Init()
 	}
 
 	for (int i = 0; i < 256; i++)
-	{
 		tl_lut[i]=(s32)((1<<15)/pow(2.0,i/16.0));
-	}
 
 	//tl entries 256 to 1023 are 0
 	for (int i=256;i<1024;i++)
@@ -1298,9 +1281,7 @@ void sgc_Init()
 	{
 		float limit = PLFOS_Scale[s];
 		for (int i = -128; i < 128; i++)
-		{
 			PLFO_Scales[s][i + 128] = (u32)((1 << 10) * powf(2.0f, limit * i / 128.0f / 1200.0f));
-		}
 	}
 
 	dsp_init();
@@ -1322,18 +1303,21 @@ void ReadCommonReg(u32 reg,bool byte)
 	{
 	case 0x2808:
 	case 0x2809:
-		CommonData->MIEMP=1;
-		CommonData->MOEMP=1;
+		CommonData->MIEMP = 1;
+		CommonData->MOEMP = 1;
+		CommonData->MIOVF = 0;
+		CommonData->MIFUL = 0;
+		CommonData->MOFUL = 0;
 		break;
-	case 0x2810: //LP & misc
-	case 0x2811: //LP & misc
+	case 0x2810: // EG, SGC, LP
+	case 0x2811:
 		{
 			u32 chan=CommonData->MSLC;
 			
 			CommonData->LP=Chans[chan].loop.looped;
-			verify(CommonData->AFSET==0);
-		
-			CommonData->EG=Chans[chan].AEG.GetValue(); //AEG is only 10 bits, FEG is 13 bits
+			verify(CommonData->AFSEL == 0);
+			s32 aeg = Chans[chan].AEG.GetValue();
+			CommonData->EG = aeg << 3 | (aeg & 1 ? 7 : 0); //AEG is only 10 bits, FEG is 13 bits
 			CommonData->SGC=Chans[chan].AEG.state;
 
 			if (! (byte && reg==0x2810))
@@ -1344,7 +1328,7 @@ void ReadCommonReg(u32 reg,bool byte)
 	case 0x2815: //CA
 		{
 			u32 chan=CommonData->MSLC;
-			CommonData->CA = Chans[chan].CA /*& (~1023)*/; //mmnn??
+			CommonData->CA = Chans[chan].CA;
 			//printf("[%d] CA read %d\n",chan,Chans[chan].CA);
 		}
 		break;
@@ -1369,11 +1353,6 @@ u32 cdda_index=CDDA_SIZE<<1;
 //no DSP for now in this version
 void AICA_Sample32()
 {
-	if (settings.aica.NoBatch || settings.aica.DSPEnabled)
-	{
-		return;
-	}
-
 	SampleType mxlr[64];
 	memset(mxlr,0,sizeof(mxlr));
 
@@ -1391,10 +1370,8 @@ void AICA_Sample32()
 
 			sg++;
 
-			if (0==(oLeft+oRight))
-			{
-				oLeft=oRight=oDsp;
-			}
+			if (oLeft + oRight == 0)
+				oLeft = oRight = oDsp;
 
 			mxlr[i*2+0] += oLeft;
 			mxlr[i*2+1] += oRight;
@@ -1477,9 +1454,6 @@ void AICA_Sample32()
 		clip16(mixl);
 		clip16(mixr);
 
-		pl=mixl;
-		pr=mixr;
-
 		if (!fast_forward_mode && !settings.aica.NoSound)
 			WriteSample(mixr,mixl);
 	}
@@ -1528,15 +1502,11 @@ void AICA_Sample()
 		dsp_step();
 
 		for (int i=0;i<16;i++)
-		{
 			VOLPAN(*(s16*)&DSPData->EFREG[i], dsp_out_vol[i].EFSDL, dsp_out_vol[i].EFPAN, mixl, mixr);
-		}
 	}
 
-    if (fast_forward_mode || settings.aica.NoSound)
-    {
-        return;
-    }
+	if (fast_forward_mode || settings.aica.NoSound)
+		return;
 
 	//Mono !
 	if (CommonData->Mono)
@@ -1572,9 +1542,6 @@ void AICA_Sample()
 
 	clip16(mixl);
 	clip16(mixr);
-
-	pl=mixl;
-	pr=mixr;
 
 	WriteSample(mixr,mixl);
 }
@@ -1620,6 +1587,7 @@ bool channel_unserialize(void **data, unsigned int *total_size, serialize_versio
 	int i = 0 ;
 	int addr = 0 ;
 	u32 dum;
+	bool old_format = ver < V7 && ver != VCUR_LIBRETRO;
 
 	for ( i = 0 ; i < 64 ; i++)
 	{
@@ -1628,20 +1596,20 @@ bool channel_unserialize(void **data, unsigned int *total_size, serialize_versio
 
 		REICAST_US(Chans[i].CA) ;
 		REICAST_US(Chans[i].step) ;
-		if (ver < V7 && ver != V9_LIBRETRO)
+		if (old_format)
 			REICAST_US(dum); // Chans[i].update_rate
 		Chans[i].UpdatePitch();
 		REICAST_US(Chans[i].s0) ;
 		REICAST_US(Chans[i].s1) ;
 		REICAST_US(Chans[i].loop.looped);
-		if (ver < V7 && ver != V9_LIBRETRO)
+		if (old_format)
 		{
 			REICAST_US(dum); // Chans[i].loop.LSA
 			REICAST_US(dum); // Chans[i].loop.LEA
 		}
 		Chans[i].UpdateLoop();
 		REICAST_US(Chans[i].adpcm.last_quant) ;
-		if (ver >= V7 || ver == V9_LIBRETRO)
+		if (!old_format)
 		{
 			REICAST_US(Chans[i].adpcm.loopstart_quant);
 			REICAST_US(Chans[i].adpcm.loopstart_prev_sample);
@@ -1654,21 +1622,21 @@ bool channel_unserialize(void **data, unsigned int *total_size, serialize_versio
 			Chans[i].adpcm.loopstart_prev_sample = 0;
 		}
 		REICAST_US(Chans[i].noise_state) ;
-		if (ver < V7 && ver != V9_LIBRETRO)
+		if (old_format)
 		{
 			REICAST_US(dum); // Chans[i].VolMix.DLAtt
 			REICAST_US(dum); // Chans[i].VolMix.DRAtt
 			REICAST_US(dum); // Chans[i].VolMix.DSPAtt
 		}
 		Chans[i].UpdateAtts();
-		if (ver < V7 && ver != V9_LIBRETRO)
+		if (old_format)
 			REICAST_US(dum); // Chans[i].VolMix.DSPOut
 		Chans[i].UpdateDSPMIX();
 
 		REICAST_US(Chans[i].AEG.val) ;
 		REICAST_US(Chans[i].AEG.state) ;
 		Chans[i].SetAegState(Chans[i].AEG.state);
-		if (ver < V7 && ver != V9_LIBRETRO)
+		if (old_format)
 		{
 			REICAST_US(dum); // Chans[i].AEG.AttackRate
 			REICAST_US(dum); // Chans[i].AEG.Decay1Rate
@@ -1679,7 +1647,7 @@ bool channel_unserialize(void **data, unsigned int *total_size, serialize_versio
 		Chans[i].UpdateAEG();
 		REICAST_US(Chans[i].FEG.value);
 		REICAST_US(Chans[i].FEG.state);
-		if (ver >= V7 || ver == V9_LIBRETRO)
+		if (!old_format)
 		{
 			REICAST_US(Chans[i].FEG.prev1);
 			REICAST_US(Chans[i].FEG.prev2);
@@ -1691,7 +1659,7 @@ bool channel_unserialize(void **data, unsigned int *total_size, serialize_versio
 		}
 		Chans[i].SetFegState(Chans[i].FEG.state);
 		Chans[i].UpdateFEG();
-		if (ver < V7 && ver != V9_LIBRETRO)
+		if (old_format)
 		{
 			u8 dumu8;
 			REICAST_US(dumu8);	// Chans[i].step_stream_lut1
@@ -1701,10 +1669,10 @@ bool channel_unserialize(void **data, unsigned int *total_size, serialize_versio
 		Chans[i].UpdateStreamStep();
 
 		REICAST_US(Chans[i].lfo.counter) ;
-		if (ver < V7 && ver != V9_LIBRETRO)
+		if (old_format)
 			REICAST_US(dum); 	// Chans[i].lfo.start_value
 		REICAST_US(Chans[i].lfo.state) ;
-		if (ver < V7 && ver != V9_LIBRETRO)
+		if (old_format)
 		{
 			u8 dumu8;
 			REICAST_US(dumu8);	// Chans[i].lfo.alfo
@@ -1716,7 +1684,7 @@ bool channel_unserialize(void **data, unsigned int *total_size, serialize_versio
 		}
 		Chans[i].UpdateLFO();
 		REICAST_US(Chans[i].enabled) ;
-		if (ver < V7 && ver != V9_LIBRETRO)
+		if (old_format)
 			REICAST_US(dum); // Chans[i].ChannelNumber
 	}
 

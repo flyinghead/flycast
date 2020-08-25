@@ -2,10 +2,10 @@
 #include "hw/sh4/sh4_if.h"
 #include "hw/sh4/sh4_interrupts.h"
 #include "hw/sh4/sh4_core.h"
-#include "types.h"
 
 TLB_Entry UTLB[64];
 TLB_Entry ITLB[4];
+u32 ITLB_LRU_USE[64];
 
 //SQ fast remap , mainly hackish , assumes 1MB pages
 //max 64MB can be remapped on SQ
@@ -87,17 +87,6 @@ u32 unresolved_unicode_string;
 
 #define printf_mmu(...) DEBUG_LOG(SH4, __VA_ARGS__)
 
-ReadMem8Func ReadMem8;
-ReadMem16Func ReadMem16;
-ReadMem16Func IReadMem16;
-ReadMem32Func ReadMem32;
-ReadMem64Func ReadMem64;
-
-WriteMem8Func WriteMem8;
-WriteMem16Func WriteMem16;
-WriteMem32Func WriteMem32;
-WriteMem64Func WriteMem64;
-
 extern const u32 mmu_mask[4] =
 {
 	((0xFFFFFFFF) >> 10) << 10,	//1 kb page
@@ -129,7 +118,6 @@ const u32 ITLB_LRU_AND[4] =
 	0x3E,//x1x1x0
 	0x3F,//xx1x11
 };
-u32 ITLB_LRU_USE[64];
 
 #ifndef FAST_MMU
 //sync mem mapping to mmu , suspend compiled blocks if needed.entry is a UTLB entry # , -1 is for full sync
@@ -205,10 +193,8 @@ void mmu_raise_exception(u32 mmu_error, u32 address, u32 am)
 			RaiseException(0xC0, 0x100);
 		else if (am == MMU_TT_DREAD)		//READPROT - Data TLB Protection Violation Exception
 			RaiseException(0xA0, 0x100);
-		else
-		{
-			verify(false);
-		}
+		else								//READPROT - Instr TLB Protection Violation Exception
+			RaiseException(0xA0, 0x100);
 		return;
 
 		//Mem is write protected , firstwrite
@@ -471,6 +457,7 @@ u32 mmu_full_SQ(u32 va, u32& rv)
 	return MMU_ERROR_NONE;
 }
 template u32 mmu_full_SQ<MMU_TT_DREAD>(u32 va, u32& rv);
+template u32 mmu_full_SQ<MMU_TT_DWRITE>(u32 va, u32& rv);
 
 template<u32 translation_type, typename T>
 u32 mmu_data_translation(u32 va, u32& rv)
@@ -499,14 +486,14 @@ u32 mmu_data_translation(u32 va, u32& rv)
 
 	if (sr.MD == 1 && ((va & 0xFC000000) == 0x7C000000))
 	{
+		// 7C000000 to 7FFFFFFF in P0 not translated in supervisor mode
 		rv = va;
 		return MMU_ERROR_NONE;
 	}
 
-	// Not called if CCN_MMUCR.AT == 0
-	//if ((CCN_MMUCR.AT == 0) || (fast_reg_lut[va >> 29] != 0))
 	if (fast_reg_lut[va >> 29] != 0)
 	{
+		// P1, P2 and P4 aren't translated
 		rv = va;
 		return MMU_ERROR_NONE;
 	}
@@ -579,6 +566,24 @@ u32 mmu_instruction_translation(u32 va, u32& rv)
 		return MMU_ERROR_NONE;
 	}
 
+	const TLB_Entry *entry;
+	u32 lookup = mmu_instruction_lookup(va, &entry, rv);
+	if (lookup != MMU_ERROR_NONE)
+		return lookup;
+
+	u32 md = entry->Data.PR >> 1;
+
+	//0X  & User mode-> protection violation
+	//Priv mode protection
+	if (md == 0 && sr.MD == 0)
+		return MMU_ERROR_PROTECTED;
+
+	return MMU_ERROR_NONE;
+}
+#endif
+
+u32 mmu_instruction_lookup(u32 va, const TLB_Entry** tlb_entry_ret, u32& rv)
+{
 	bool mmach = false;
 retry_ITLB_Match:
 	u32 entry = 4;
@@ -636,51 +641,22 @@ retry_ITLB_Match:
 
 	CCN_MMUCR.LRUI &= ITLB_LRU_AND[entry];
 	CCN_MMUCR.LRUI |= ITLB_LRU_OR[entry];
+	*tlb_entry_ret = &ITLB[entry];
 
-	u32 md = ITLB[entry].Data.PR >> 1;
-
-	//0X  & User mode-> protection violation
-	//Priv mode protection
-	if ((md == 0) && sr.MD == 0)
-	{
-		return MMU_ERROR_PROTECTED;
-	}
 	return MMU_ERROR_NONE;
 }
-#endif
 
 void mmu_set_state()
 {
 	if (CCN_MMUCR.AT == 1 && settings.dreamcast.FullMMU)
 	{
 		NOTICE_LOG(SH4, "Enabling Full MMU support");
-		IReadMem16 = &mmu_IReadMem16;
-		ReadMem8 = &mmu_ReadMem<u8>;
-		ReadMem16 = &mmu_ReadMem<u16>;
-		ReadMem32 = &mmu_ReadMem<u32>;
-		ReadMem64 = &mmu_ReadMem<u64>;
-
-		WriteMem8 = &mmu_WriteMem<u8>;
-		WriteMem16 = &mmu_WriteMem<u16>;
-		WriteMem32 = &mmu_WriteMem<u32>;
-		WriteMem64 = &mmu_WriteMem<u64>;
 		_vmem_enable_mmu(true);
-		mmu_flush_table();
 	}
 	else
-	{
-		ReadMem8 = &_vmem_ReadMem8;
-		ReadMem16 = &_vmem_ReadMem16;
-		IReadMem16 = &_vmem_ReadMem16;
-		ReadMem32 = &_vmem_ReadMem32;
-		ReadMem64 = &_vmem_ReadMem64;
-
-		WriteMem8 = &_vmem_WriteMem8;
-		WriteMem16 = &_vmem_WriteMem16;
-		WriteMem32 = &_vmem_WriteMem32;
-		WriteMem64 = &_vmem_WriteMem64;
 		_vmem_enable_mmu(false);
-	}
+
+	SetMemoryHandlers();
 }
 
 void MMU_init()
@@ -708,6 +684,7 @@ void MMU_reset()
 	memset(UTLB, 0, sizeof(UTLB));
 	memset(ITLB, 0, sizeof(ITLB));
 	mmu_set_state();
+	mmu_flush_table();
 }
 
 void MMU_term()
@@ -738,6 +715,10 @@ T DYNACALL mmu_ReadMem(u32 adr)
 		mmu_raise_exception(rv, adr, MMU_TT_DREAD);
 	return _vmem_readt<T, T>(addr);
 }
+template u8 mmu_ReadMem(u32 adr);
+template u16 mmu_ReadMem(u32 adr);
+template u32 mmu_ReadMem(u32 adr);
+template u64 mmu_ReadMem(u32 adr);
 
 u16 DYNACALL mmu_IReadMem16(u32 vaddr)
 {
@@ -757,6 +738,10 @@ void DYNACALL mmu_WriteMem(u32 adr, T data)
 		mmu_raise_exception(rv, adr, MMU_TT_DWRITE);
 	_vmem_writet<T>(addr, data);
 }
+template void mmu_WriteMem(u32 adr, u8 data);
+template void mmu_WriteMem(u32 adr, u16 data);
+template void mmu_WriteMem(u32 adr, u32 data);
+template void mmu_WriteMem(u32 adr, u64 data);
 
 bool mmu_TranslateSQW(u32 adr, u32* out)
 {

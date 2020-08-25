@@ -218,7 +218,7 @@ bool GamepadDevice::gamepad_axis_input(u32 code, int value)
 		}
 		// Radial dead zone
 		// FIXME compute both axes at the same time
-		if ((float)(v * v + *other_axis * *other_axis) < _dead_zone * _dead_zone * 128.f * 128.f)
+		if ((float)(v * v + *other_axis * *other_axis) < input_mapper->dead_zone * input_mapper->dead_zone * 128.f * 128.f)
 		{
 			*this_axis = 0;
 			*other_axis = 0;

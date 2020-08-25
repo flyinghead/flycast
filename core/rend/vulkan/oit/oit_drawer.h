@@ -39,7 +39,7 @@ class OITDrawer : public BaseDrawer
 {
 public:
 	virtual ~OITDrawer() = default;
-	bool Draw(const Texture *fogTexture);
+	bool Draw(const Texture *fogTexture, const Texture *paletteTexture);
 
 	virtual vk::CommandBuffer NewFrame() = 0;
 	virtual void EndFrame() = 0;

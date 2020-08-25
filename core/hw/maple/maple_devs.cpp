@@ -87,8 +87,6 @@ enum MapleDeviceRV
 	MDRS_JVSReply		 = 0x87, // JVS I/O
 };
 
-#define SWAP32(a) ((((a) & 0xff) << 24)  | (((a) & 0xff00) << 8) | (((a) >> 8) & 0xff00) | (((a) >> 24) & 0xff))
-
 //fill in the info
 void maple_device::Setup(u32 prt)
 {
@@ -242,6 +240,7 @@ struct maple_sega_controller: maple_base
 		switch (cmd)
 		{
 		case MDC_DeviceRequest:
+		case MDC_AllStatusReq:
 			//caps
 			//4
 			w32(MFID_0_Input);
@@ -270,7 +269,7 @@ struct maple_sega_controller: maple_base
 			//2
 			w16(0x01F4);	// 50 mA
 
-			return MDRS_DeviceStatus;
+			return cmd == MDC_DeviceRequest ? MDRS_DeviceStatus : MDRS_DeviceStatusAll;
 
 			//controller condition
 		case MDCF_GetCondition:
@@ -307,8 +306,14 @@ struct maple_sega_controller: maple_base
 
 			return MDRS_DataTransfer;
 
+		case MDC_DeviceReset:
+			return MDRS_DeviceReply;
+
+		case MDC_DeviceKill:
+			return MDRS_DeviceReply;
+
 		default:
-			//printf("maple_sega_controller UNKOWN MAPLE COMMAND %d\n",cmd);
+			INFO_LOG(MAPLE, "maple_sega_controller: Unknown maple command %d", cmd);
 			return MDRE_UnknownCmd;
 		}
 	}
@@ -542,34 +547,33 @@ struct maple_sega_vmu: maple_base
 		switch (cmd)
 		{
 		case MDC_DeviceRequest:
-			{
-				//caps
-				//4
-				w32(MFID_1_Storage | MFID_2_LCD | MFID_3_Clock);
+		case MDC_AllStatusReq:
+			//caps
+			//4
+			w32(MFID_1_Storage | MFID_2_LCD | MFID_3_Clock);
 
-				//struct data
-				//3*4
-				w32( 0x403f7e7e); // for clock
-				w32( 0x00100500); // for LCD
-				w32( 0x00410f00); // for storage
-				//1  area code
-				w8(0xFF);
-				//1  direction
-				w8(0);
-				//30
-				wstr(maple_sega_vmu_name,30);
+			//struct data
+			//3*4
+			w32( 0x403f7e7e); // for clock
+			w32( 0x00100500); // for LCD
+			w32( 0x00410f00); // for storage
+			//1  area code
+			w8(0xFF);
+			//1  direction
+			w8(0);
+			//30
+			wstr(maple_sega_vmu_name,30);
 
-				//60
-				wstr(maple_sega_brand,60);
+			//60
+			wstr(maple_sega_brand,60);
 
-				//2
-				w16(0x007c);	// 12.4 mA
+			//2
+			w16(0x007c);	// 12.4 mA
 
-				//2
-				w16(0x0082);	// 13 mA
+			//2
+			w16(0x0082);	// 13 mA
 
-				return MDRS_DeviceStatus;
-			}
+			return cmd == MDC_DeviceRequest ? MDRS_DeviceStatus : MDRS_DeviceStatusAll;
 
 			//in[0] is function used
 			//out[0] is function used
@@ -579,15 +583,43 @@ struct maple_sega_vmu: maple_base
 				switch(function)
 				{
 				case MFID_1_Storage:
-					{
-						w32(MFID_1_Storage);
+					DEBUG_LOG(MAPLE, "VMU %s GetMediaInfo storage", logical_port);
+					w32(MFID_1_Storage);
 
+					if (*(u16*)&flash_data[0xFF * 512 + 0x40] != 0xFF)
+					{
+						// Unformatted state: return predetermined media information
+						//total_size;
+						w16(0xff);
+						//partition_number;
+						w16(0);
+						//system_area_block;
+						w16(0xFF);
+						//fat_area_block;
+						w16(0xfe);
+						//number_fat_areas_block;
+						w16(1);
+						//file_info_block;
+						w16(0xfd);
+						//number_info_blocks;
+						w16(0xd);
+						//volume_icon;
+						w8(0);
+						//reserved1;
+						w8(0);
+						//save_area_block;
+						w16(0xc8);
+						//number_of_save_blocks;
+						w16(0x1f);
+						//reserverd0 (something for execution files?)
+						w32(0);
+					}
+					else
+					{
 						// Get data from the vmu system area (block 0xFF)
 						wptr(flash_data + 0xFF * 512 + 0x40, 24);
-
-						return MDRS_DataTransfer;//data transfer
 					}
-					break;
+					return MDRS_DataTransfer;//data transfer
 
 				case MFID_2_LCD:
 					{
@@ -599,6 +631,7 @@ struct maple_sega_vmu: maple_base
 						}
 						else
 						{
+							DEBUG_LOG(MAPLE, "VMU %s GetMediaInfo LCD", logical_port);
 							w32(MFID_2_LCD);
 
 							w8(47);             //X dots -1
@@ -609,7 +642,6 @@ struct maple_sega_vmu: maple_base
 							return MDRS_DataTransfer;
 						}
 					}
-					break;
 
 				default:
 					INFO_LOG(MAPLE, "VMU: MDCF_GetMediaInfo -> Bad function used |%08X|, returning -2", function);
@@ -636,62 +668,57 @@ struct maple_sega_vmu: maple_base
 							DEBUG_LOG(MAPLE, "BLOCK READ ERROR");
 							Block&=255;
 						}
+						else
+							DEBUG_LOG(MAPLE, "VMU %s block read: Block %d addr %x len %d", logical_port, Block, Block*512, 512);
 						wptr(flash_data+Block*512,512);
-
-						return MDRS_DataTransfer;//data transfer
 					}
-					break;
+					return MDRS_DataTransfer;//data transfer
 
 				case MFID_2_LCD:
-					{
-						w32(MFID_2_LCD);
-						w32(r32()); // mnn ?
-						wptr(flash_data,192);
+					DEBUG_LOG(MAPLE, "VMU %s read LCD", logical_port);
+					w32(MFID_2_LCD);
+					w32(r32()); // mnn ?
+					wptr(flash_data,192);
 
-						return MDRS_DataTransfer;//data transfer
-					}
-					break;
+					return MDRS_DataTransfer;//data transfer
 
 				case MFID_3_Clock:
+					if (r32()!=0)
 					{
-						if (r32()!=0)
-						{
-							INFO_LOG(MAPLE, "VMU: Block read: MFID_3_Clock : invalid params");
-							return MDRE_TransmitAgain; //invalid params
-						}
-						else
-						{
-							w32(MFID_3_Clock);
-
-							time_t now;
-							time(&now);
-							tm* timenow=localtime(&now);
-
-							u8* timebuf=dma_buffer_out;
-
-							w8((timenow->tm_year+1900)%256);
-							w8((timenow->tm_year+1900)/256);
-
-							w8(timenow->tm_mon+1);
-							w8(timenow->tm_mday);
-
-							w8(timenow->tm_hour);
-							w8(timenow->tm_min);
-							w8(timenow->tm_sec);
-							w8(0);
-
-							DEBUG_LOG(MAPLE, "VMU: CLOCK Read-> datetime is %04d/%02d/%02d ~ %02d:%02d:%02d!",
-									timebuf[0] + timebuf[1] * 256,
-									timebuf[2],
-									timebuf[3],
-									timebuf[4],
-									timebuf[5],
-									timebuf[6]);
-
-							return MDRS_DataTransfer;//transfer reply ...
-						}
+						INFO_LOG(MAPLE, "VMU: Block read: MFID_3_Clock : invalid params");
+						return MDRE_TransmitAgain; //invalid params
 					}
-					break;
+					else
+					{
+						w32(MFID_3_Clock);
+
+						time_t now;
+						time(&now);
+						tm* timenow=localtime(&now);
+
+						u8* timebuf=dma_buffer_out;
+
+						w8((timenow->tm_year+1900)%256);
+						w8((timenow->tm_year+1900)/256);
+
+						w8(timenow->tm_mon+1);
+						w8(timenow->tm_mday);
+
+						w8(timenow->tm_hour);
+						w8(timenow->tm_min);
+						w8(timenow->tm_sec);
+						w8(0);
+
+						DEBUG_LOG(MAPLE, "VMU: CLOCK Read-> datetime is %04d/%02d/%02d ~ %02d:%02d:%02d!",
+								timebuf[0] + timebuf[1] * 256,
+								timebuf[2],
+								timebuf[3],
+								timebuf[4],
+								timebuf[5],
+								timebuf[6]);
+
+						return MDRS_DataTransfer;//transfer reply ...
+					}
 
 				default:
 					INFO_LOG(MAPLE, "VMU: cmd MDCF_BlockRead -> Bad function |%08X| used, returning -2", function);
@@ -711,8 +738,12 @@ struct maple_sega_vmu: maple_base
 						u32 Phase = ((SWAP32(bph))>>16)&0xff;
 						u32 write_adr=Block*512+Phase*(512/4);
 						u32 write_len=r_count();
+						DEBUG_LOG(MAPLE, "VMU %s block write: Block %d Phase %d addr %x len %d", logical_port, Block, Phase, write_adr, write_len);
 						if (write_adr + write_len > sizeof(flash_data))
+						{
+							INFO_LOG(MAPLE, "Failed to write VMU %s: overflow", logical_port);
 							return MDRE_TransmitAgain; //invalid params
+						}
 						rptr(&flash_data[write_adr],write_len);
 
 						if (file)
@@ -727,11 +758,10 @@ struct maple_sega_vmu: maple_base
 						}
 						return MDRS_DeviceReply;//just ko
 					}
-					break;
-
 
 					case MFID_2_LCD:
 					{
+						DEBUG_LOG(MAPLE, "VMU %s LCD write", logical_port);
 						r32();
 						rptr(lcd_data,192);
 
@@ -755,12 +785,13 @@ struct maple_sega_vmu: maple_base
 						push_vmu_screen(bus_id, bus_port, lcd_data_decoded);
 						return  MDRS_DeviceReply;//just ko
 					}
-					break;
 
 					case MFID_3_Clock:
-					{
 						if (r32()!=0 || r_count()!=8)
+						{
+							INFO_LOG(MAPLE, "VMU %s clock write invalid params: rcount %d", logical_port, r_count());
 							return MDRE_TransmitAgain;	//invalid params ...
+						}
 						else
 						{
 							u8 timebuf[8];
@@ -769,14 +800,10 @@ struct maple_sega_vmu: maple_base
 									timebuf[0]+timebuf[1]*256,timebuf[2],timebuf[3],timebuf[4],timebuf[5],timebuf[6]);
 							return  MDRS_DeviceReply;//ok !
 						}
-					}
-					break;
 
 					default:
-					{
 						INFO_LOG(MAPLE, "VMU: command MDCF_BlockWrite -> Bad function used, returning MDRE_UnknownFunction");
 						return  MDRE_UnknownFunction;//bad function
-					}
 				}
 			}
 			break;
@@ -808,6 +835,11 @@ struct maple_sega_vmu: maple_base
 				}
 			}
 
+		case MDC_DeviceReset:
+			return MDRS_DeviceReply;
+
+		case MDC_DeviceKill:
+			return MDRS_DeviceReply;
 
 		default:
 			DEBUG_LOG(MAPLE, "Unknown MAPLE COMMAND %d", cmd);
@@ -849,6 +881,7 @@ struct maple_microphone: maple_base
 		switch (cmd)
 		{
 		case MDC_DeviceRequest:
+		case MDC_AllStatusReq:
 			DEBUG_LOG(MAPLE, "maple_microphone::dma MDC_DeviceRequest");
 			//this was copied from the controller case with just the id and name replaced!
 
@@ -880,7 +913,7 @@ struct maple_microphone: maple_base
 			//2
 			w16(0x01F4);	// 50 mA
 
-			return MDRS_DeviceStatus;
+			return cmd == MDC_DeviceRequest ? MDRS_DeviceStatus : MDRS_DeviceStatusAll;
 
 		case MDCF_GetCondition:
 			{
@@ -1005,6 +1038,9 @@ struct maple_microphone: maple_base
 			}
 		}
 
+		case MDC_DeviceKill:
+			return MDRS_DeviceReply;
+
 		default:
 			INFO_LOG(MAPLE, "maple_microphone::dma UNHANDLED MAPLE COMMAND %d", cmd);
 			return MDRE_UnknownCmd;
@@ -1042,6 +1078,7 @@ struct maple_sega_purupuru : maple_base
 		switch (cmd)
 		{
 		case MDC_DeviceRequest:
+		case MDC_AllStatusReq:
 			//caps
 			//4
 			w32(MFID_8_Vibration);
@@ -1070,7 +1107,7 @@ struct maple_sega_purupuru : maple_base
 			//2
 			w16(0x0640);	// 160 mA
 
-			return MDRS_DeviceStatus;
+			return cmd == MDC_DeviceRequest ? MDRS_DeviceStatus : MDRS_DeviceStatusAll;
 
 			//get last vibration
 		case MDCF_GetCondition:
@@ -1140,6 +1177,12 @@ struct maple_sega_purupuru : maple_base
 
 			return MDRS_DeviceReply;
 
+		case MDC_DeviceReset:
+			return MDRS_DeviceReply;
+
+		case MDC_DeviceKill:
+			return MDRS_DeviceReply;
+
 		default:
 			INFO_LOG(MAPLE, "UNKOWN MAPLE COMMAND %d", cmd);
 			return MDRE_UnknownCmd;
@@ -1163,6 +1206,7 @@ struct maple_keyboard : maple_base
 		switch (cmd)
 		{
 		case MDC_DeviceRequest:
+		case MDC_AllStatusReq:
 			//caps
 			//4
 			w32(MFID_6_Keyboard);
@@ -1177,16 +1221,10 @@ struct maple_keyboard : maple_base
 			//1	direction
 			w8(0);
 			// Product name (30)
-			for (u32 i = 0; i < 30; i++)
-			{
-				w8((u8)maple_sega_kbd_name[i]);
-			}
+			wstr(maple_sega_kbd_name, 30);
 
 			// License (60)
-			for (u32 i = 0; i < 60; i++)
-			{
-				w8((u8)maple_sega_brand[i]);
-			}
+			wstr(maple_sega_brand, 60);
 
 			// Low-consumption standby current (2)
 			w16(0x01AE);	// 43 mA
@@ -1194,7 +1232,7 @@ struct maple_keyboard : maple_base
 			// Maximum current consumption (2)
 			w16(0x01F5);	// 50.1 mA
 
-			return MDRS_DeviceStatus;
+			return cmd == MDC_DeviceRequest ? MDRS_DeviceStatus : MDRS_DeviceStatusAll;
 
 		case MDCF_GetCondition:
 			w32(MFID_6_Keyboard);
@@ -1210,6 +1248,12 @@ struct maple_keyboard : maple_base
 			}
 
 			return MDRS_DataTransfer;
+
+		case MDC_DeviceReset:
+			return MDRS_DeviceReply;
+
+		case MDC_DeviceKill:
+			return MDRS_DeviceReply;
 
 		default:
 			INFO_LOG(MAPLE, "Keyboard: unknown MAPLE COMMAND %d", cmd);
@@ -1257,6 +1301,7 @@ struct maple_mouse : maple_base
 		switch (cmd)
 		{
 		case MDC_DeviceRequest:
+		case MDC_AllStatusReq:
 			//caps
 			//4
 			w32(MFID_9_Mouse);
@@ -1271,16 +1316,10 @@ struct maple_mouse : maple_base
 			//1	direction
 			w8(0);
 			// Product name (30)
-			for (u32 i = 0; i < 30; i++)
-			{
-				w8((u8)maple_sega_mouse_name[i]);
-			}
+			wstr(maple_sega_mouse_name, 30);
 
 			// License (60)
-			for (u32 i = 0; i < 60; i++)
-			{
-				w8((u8)maple_sega_brand[i]);
-			}
+			wstr(maple_sega_brand, 60);
 
 			// Low-consumption standby current (2)
 			w16(0x0069);	// 10.5 mA
@@ -1288,7 +1327,7 @@ struct maple_mouse : maple_base
 			// Maximum current consumption (2)
 			w16(0x0120);	// 28.8 mA
 
-			return MDRS_DeviceStatus;
+			return cmd == MDC_DeviceRequest ? MDRS_DeviceStatus : MDRS_DeviceStatusAll;
 
 		case MDCF_GetCondition:
 			w32(MFID_9_Mouse);
@@ -1318,6 +1357,12 @@ struct maple_mouse : maple_base
 
 			return MDRS_DataTransfer;
 
+		case MDC_DeviceReset:
+			return MDRS_DeviceReply;
+
+		case MDC_DeviceKill:
+			return MDRS_DeviceReply;
+
 		default:
 			INFO_LOG(MAPLE, "Mouse: unknown MAPLE COMMAND %d", cmd);
 			return MDRE_UnknownCmd;
@@ -1341,6 +1386,7 @@ struct maple_lightgun : maple_base
 		switch (cmd)
 		{
 		case MDC_DeviceRequest:
+		case MDC_AllStatusReq:
 			//caps
 			//4
 			w32(MFID_7_LightGun | MFID_0_Input);
@@ -1351,20 +1397,14 @@ struct maple_lightgun : maple_base
 			w32(0xFE000000);	// Controller
 			w32(0);
 			//1	area code
-			w8(0x01);		// FF: Worldwide, 01: North America
+			w8(1);				// FF: Worldwide, 01: North America
 			//1	direction
 			w8(0);
 			// Product name (30)
-			for (u32 i = 0; i < 30; i++)
-			{
-				w8((u8)maple_sega_lightgun_name[i]);
-			}
+			wstr(maple_sega_lightgun_name, 30);
 
 			// License (60)
-			for (u32 i = 0; i < 60; i++)
-			{
-				w8((u8)maple_sega_brand[i]);
-			}
+			wstr(maple_sega_brand, 60);
 
 			// Low-consumption standby current (2)
 			w16(0x0069);	// 10.5 mA
@@ -1372,7 +1412,7 @@ struct maple_lightgun : maple_base
 			// Maximum current consumption (2)
 			w16(0x0120);	// 28.8 mA
 
-			return MDRS_DeviceStatus;
+			return cmd == MDC_DeviceRequest ? MDRS_DeviceStatus : MDRS_DeviceStatusAll;
 
 		case MDCF_GetCondition:
 		{
@@ -1395,8 +1435,13 @@ struct maple_lightgun : maple_base
 			//4
 			w32(0x80808080);
 		}
-
 		return MDRS_DataTransfer;
+
+		case MDC_DeviceReset:
+			return MDRS_DeviceReply;
+
+		case MDC_DeviceKill:
+			return MDRS_DeviceReply;
 
 		default:
 			INFO_LOG(MAPLE, "Light gun: unknown MAPLE COMMAND %d", cmd);
@@ -1445,7 +1490,7 @@ void load_naomi_eeprom()
 	}
 }
 
-u32 naomi_button_mapping[] = {
+static u32 naomi_button_mapping[] = {
 		NAOMI_SERVICE_KEY,	// DC_BTN_C
 		NAOMI_BTN1_KEY,		// DC_BTN_B
 		NAOMI_BTN0_KEY,		// DC_BTN_A
@@ -1464,6 +1509,7 @@ u32 naomi_button_mapping[] = {
 		NAOMI_BTN7_KEY,		// DC_DPAD2_RIGHT
 		NAOMI_BTN8_KEY,
 };
+
 /*
  * Sega JVS I/O board
 */
@@ -1480,6 +1526,7 @@ public:
 		this->node_id = node_id;
 		this->parent = parent;
 		this->first_player = first_player;
+		init_p2_mapping();
 	}
 	virtual ~jvs_io_board() = default;
 
@@ -1496,6 +1543,16 @@ protected:
 		if (player_num >= (int)ARRAY_SIZE(kcode))
 			return 0;
 		u32 buttons = 0;
+		if (player_num > 0 && !p2_mappings.empty())
+		{
+			// Check for P1 buttons mapped to P2 inputs
+			u32 keycode = ~kcode[player_num - 1];
+			for (const auto& pair : p2_mappings)
+				if ((keycode & pair.first) != 0)
+					buttons |= pair.second;
+
+			return buttons;
+		}
 		u32 keycode = ~kcode[player_num];
 		for (int i = 0; i < 16; i++)
 		{
@@ -1516,9 +1573,29 @@ protected:
 	bool init_in_progress = false;
 
 private:
+	void init_p2_mapping()
+	{
+		if (NaomiGameInputs == nullptr)
+			return;
+		for (int i = 0; NaomiGameInputs->buttons[i].name != nullptr; i++)
+		{
+			const ButtonDescriptor& button = NaomiGameInputs->buttons[i];
+			if (button.p2_mask == 0)
+				continue;
+			for (int i = 0; i < 16; i++)
+			{
+				if (naomi_button_mapping[i] == button.mask)
+				{
+					p2_mappings.push_back(std::make_pair(1 << i, button.p2_mask));
+					break;
+				}
+			}
+		}
+	}
 	u8 node_id;
 	maple_naomi_jamma *parent;
 	u8 first_player;
+	std::vector<std::pair<u32, u32>> p2_mappings;
 };
 
 // Most common JVS board
@@ -2466,15 +2543,21 @@ struct maple_naomi_jamma : maple_sega_controller
 			w8(0x00);
 			w8(0x20);
 			w8(0x00);
+			break;
 
+		case MDC_AllStatusReq:
+			w8(MDRS_DeviceStatusAll);
+			w8(0x00);
+			w8(0x20);
+			w8(0x00);
 			break;
 
 		case MDC_DeviceReset:
+		case MDC_DeviceKill:
 			w8(MDRS_DeviceReply);
 			w8(0x00);
 			w8(0x20);
 			w8(0x00);
-
 			break;
 
 		case MDCF_GetCondition:
@@ -2554,7 +2637,7 @@ u16 jvs_io_board::read_analog_axis(int player_num, int player_axis, bool inverte
 	default:
 		return 0x8000;
 	}
-	return inverted ? 0xffff - v : v;
+	return inverted ? 0xff00 - v : v;
 }
 
 #define JVS_OUT(b) buffer_out[length++] = b

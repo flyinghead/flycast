@@ -13,10 +13,8 @@
 #define CPUWriteHalfWord arm_WriteMem16
 #define CPUWriteByte arm_WriteMem8
 
-
 #define reg arm_Reg
 #define armNextPC reg[R15_ARM_NEXT].I
-
 
 #define CPUUpdateTicksAccesint(a) 1
 #define CPUUpdateTicksAccessSeq32(a) 1
@@ -24,10 +22,7 @@
 #define CPUUpdateTicksAccess32(a) 1
 #define CPUUpdateTicksAccess16(a) 1
 
-
-
-//bool arm_FiqPending; -- not used , i use the input directly :)
-//bool arm_IrqPending;
+#define ARM_CYCLES_PER_SAMPLE 256
 
 alignas(8) reg_pair arm_Reg[RN_ARM_REG_COUNT];
 
@@ -82,10 +77,11 @@ void arm_Run_(u32 CycleCount)
 	}
 }
 
-void arm_Run(u32 CycleCount) {
-	for (int i=0;i<32;i++)
+void arm_Run(u32 samples)
+{
+	for (u32 i = 0; i < samples; i++)
 	{
-		arm_Run_(CycleCount/32);
+		arm_Run_(ARM_CYCLES_PER_SAMPLE);
 		libAICA_TimeStep();
 	}
 }
@@ -1585,13 +1581,12 @@ void armv_MOV32(eReg regn, u32 imm)
 #endif	// HOST_CPU == CPU_ARM
 
 //Run a timeslice for ARMREC
-//CycleCount is pretty much fixed to (512*32) for now (might change to a diff constant, but will be constant)
-void arm_Run(u32 CycleCount)
+void arm_Run(u32 samples)
 {
-	for (int i = 0; i < 32; i++)
+	for (int i = 0; i < samples; i++)
 	{
 		if (Arm7Enabled)
-			arm_mainloop(CycleCount / 32, arm_Reg, EntryPoints);
+			arm_mainloop(ARM_CYCLES_PER_SAMPLE, arm_Reg, EntryPoints);
 		libAICA_TimeStep();
 	}
 }

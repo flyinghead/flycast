@@ -94,7 +94,9 @@ static __attribute((used)) void end_slice()
 #error RAM_SIZE_MAX unknown
 #endif
 
-jmp_buf jmp_env;
+extern "C" {
+	jmp_buf jmp_env;
+}
 
 #ifndef _MSC_VER
 

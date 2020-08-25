@@ -9,6 +9,8 @@ endif()
 option(ENABLE_CTEST "Enables unit tests" OFF)
 option(ENABLE_OPROFILE "Enable OProfile" OFF)
 option(TEST_AUTOMATION "Enable test automation" OFF)
+option(ENABLE_LOG "Enable full logging" OFF)
+option(ASAN "Enable address sanitizer" OFF)
 
 project(flycast)
 
@@ -47,11 +49,23 @@ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/core/version.h.in" "${CMAKE_CURRENT_
 if(ANDROID)
     add_library(${PROJECT_NAME} SHARED core/nullDC.cpp)
 else()
-    add_executable(${PROJECT_NAME} MACOSX_BUNDLE core/nullDC.cpp)
+	if(MSVC)
+	    add_executable(${PROJECT_NAME} WIN32 core/nullDC.cpp)
+	else()
+	    add_executable(${PROJECT_NAME} MACOSX_BUNDLE core/nullDC.cpp)
+	endif()
 endif()
 
 target_compile_features(${PROJECT_NAME} PRIVATE c_std_11 cxx_std_11)
 set_target_properties(${PROJECT_NAME} PROPERTIES CXX_EXTENSIONS OFF)
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    target_compile_options(${PROJECT_NAME} PRIVATE
+        $<$<COMPILE_LANGUAGE:CXX>:-fno-rtti>
+        -fno-strict-aliasing
+        -ffast-math)
+elseif(MSVC)
+	target_compile_options(${PROJECT_NAME} PRIVATE /GR- /GS-)
+endif()
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE
         $<$<BOOL:APPLE>:GL_SILENCE_DEPRECATION>
@@ -60,6 +74,7 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
         $<$<BOOL:MSVC>:_USE_MATH_DEFINES>
         $<$<BOOL:MSVC>:NOMINMAX>
         $<$<BOOL:${TEST_AUTOMATION}>:TEST_AUTOMATION>
+        $<$<BOOL:${ENABLE_LOG}>:DEBUGFAST>
         ENABLE_MODEM)
 
 target_include_directories(${PROJECT_NAME} PRIVATE core core/deps core/deps/stb core/deps/xbyak core/khronos)
@@ -97,10 +112,26 @@ if(MINGW)
     set(SDL2_FOUND TRUE)
     add_library(SDL2::SDL2-static STATIC IMPORTED)
     set_target_properties(SDL2::SDL2-static PROPERTIES
-            INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_SOURCE_DIR}/core/deps/SDL2-2.0.12/x86_64-w64-mingw32/include"
+            INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_SOURCE_DIR}/core/deps/SDL2-2.0.12/include"
             IMPORTED_LINK_INTERFACE_LANGUAGES "C"
             IMPORTED_LOCATION "${CMAKE_CURRENT_SOURCE_DIR}/core/deps/SDL2-2.0.12/x86_64-w64-mingw32/lib/libSDL2.a"
             INTERFACE_LINK_LIBRARIES "-L${CMAKE_CURRENT_SOURCE_DIR}/core/deps/SDL2-2.0.12/x86_64-w64-mingw32/lib -lmingw32 -lSDL2main -lSDL2 -mwindows  -Wl,--no-undefined -Wl,--dynamicbase -Wl,--nxcompat -Wl,--high-entropy-va -lm -ldinput8 -ldxguid -ldxerr8 -luser32 -lgdi32 -lwinmm -limm32 -lole32 -loleaut32 -lshell32 -lsetupapi -lversion -luuid -static-libgcc")
+elseif(MSVC)
+    set(SDL2_FOUND TRUE)
+    add_library(SDL2::SDL2 SHARED IMPORTED)
+	if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+		set_target_properties(SDL2::SDL2 PROPERTIES
+				INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_SOURCE_DIR}/core/deps/SDL2-2.0.12/include"
+				IMPORTED_LINK_INTERFACE_LANGUAGES "C"
+				IMPORTED_LOCATION "${CMAKE_CURRENT_SOURCE_DIR}/core/deps/SDL2-2.0.12/MSVC/lib/x64/SDL2.dll"
+				IMPORTED_IMPLIB "${CMAKE_CURRENT_SOURCE_DIR}/core/deps/SDL2-2.0.12/MSVC/lib/x64/SDL2.lib")
+	else()
+		set_target_properties(SDL2::SDL2 PROPERTIES
+				INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_SOURCE_DIR}/core/deps/SDL2-2.0.12/include"
+				IMPORTED_LINK_INTERFACE_LANGUAGES "C"
+				IMPORTED_LOCATION "${CMAKE_CURRENT_SOURCE_DIR}/core/deps/SDL2-2.0.12/MSVC/lib/x86/SDL2.dll"
+				IMPORTED_IMPLIB "${CMAKE_CURRENT_SOURCE_DIR}/core/deps/SDL2-2.0.12/MSVC/lib/x86/SDL2.lib")
+	endif()
 else()
     find_package(SDL2 QUIET)
 endif()
@@ -183,6 +214,12 @@ if(UNIX AND NOT APPLE AND NOT ANDROID)
 
     find_package(Threads REQUIRED)
     target_link_libraries(${PROJECT_NAME} PRIVATE Threads::Threads)
+    if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_SYSTEM_PROCESSOR MATCHES "amd64.*|x86_64.*|AMD64.*")
+        set_target_properties(${PROJECT_NAME} PROPERTIES POSITION_INDEPENDENT_CODE False)
+        if(${CMAKE_VERSION} VERSION_LESS "3.14.0")
+            set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -no-pie")
+        endif()
+    endif()
 
     if(NOT SDL2_FOUND)
         find_package(X11 REQUIRED)
@@ -194,6 +231,11 @@ if(UNIX AND NOT APPLE AND NOT ANDROID)
     endif()
 
     target_link_libraries(${PROJECT_NAME} PRIVATE ${CMAKE_DL_LIBS} rt)
+endif()
+
+if(ASAN)
+    target_compile_options(${PROJECT_NAME} PRIVATE -fsanitize=address -static-libasan)
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=address -static-libasan")
 endif()
 
 target_sources(${PROJECT_NAME} PRIVATE
@@ -566,6 +608,7 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/hw/sh4/modules/tmu.cpp
         core/hw/sh4/modules/ubc.cpp
         core/hw/sh4/modules/wince.h
+        core/hw/sh4/sh4_cache.h
         core/hw/sh4/sh4_core.h
         core/hw/sh4/sh4_core_regs.cpp
         core/hw/sh4/sh4_if.h
@@ -734,6 +777,7 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/rend/osd.h
         core/rend/sorter.cpp
         core/rend/sorter.h
+        core/rend/tileclip.h
         core/rend/TexCache.cpp
         core/rend/TexCache.h)
 
@@ -874,6 +918,7 @@ if(BUILD_TESTING)
             core/deps/gtest/src/gtest_main.cc)
 
     target_sources(${PROJECT_NAME} PRIVATE
+            tests/src/div32_test.cpp
             tests/src/test_stubs.cpp
             tests/src/serialize_test.cpp)
 endif()

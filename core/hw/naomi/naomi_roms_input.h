@@ -396,6 +396,55 @@ static InputDescriptors marine_fishing_inputs = {
 	  },
 };
 
+static InputDescriptors f355_inputs = {
+	  {
+			{ NAOMI_BTN0_KEY, "ASSIST SC" },
+			{ NAOMI_BTN1_KEY, "ASSIST TC" },
+			{ NAOMI_BTN2_KEY, "ASSIST ABS" },
+			{ NAOMI_BTN3_KEY, "ASSIST IBS", NAOMI_BTN1_KEY },
+			{ NAOMI_BTN4_KEY, "WING SHIFT L", NAOMI_DOWN_KEY },
+			{ NAOMI_BTN5_KEY, "WING SHIFT R", NAOMI_UP_KEY },
+
+			// Manual gearshift (Deluxe only)
+			//    L   R
+			//  U 1 3 5
+			//
+			//  D 2 4 6
+			{ NAOMI_UP_KEY, "SPEED SHIFT UP" },
+			{ NAOMI_DOWN_KEY, "SPEED SHIFT DOWN" },
+			{ NAOMI_LEFT_KEY, "SPEED SHIFT LEFT" },
+			{ NAOMI_RIGHT_KEY, "SPEED SHIFT RIGHT" },
+
+			NAO_START_DESC
+			NAO_BASE_BTN_DESC
+			{ 0 },
+	  },
+	  {
+			{ "ACCEL", Half, 0 },
+			{ "BRAKE", Half, 1 },
+			{ "CLUTCH", Full, 2 },	// Deluxe only
+			{ "unused", Full, 4 },
+			{ "HANDLE", Full, 0 },
+			{ NULL },
+	  },
+};
+
+static InputDescriptors zombie_inputs = {
+	  {
+			{ NAOMI_BTN0_KEY, "BTN0" },
+			{ NAOMI_BTN1_KEY, "BTN1" },
+			{ NAOMI_BTN2_KEY, "BTN2" },
+			NAO_START_DESC
+			NAO_BASE_BTN_DESC
+			{ 0 },
+	  },
+	  {
+			{ "UP - DOWN", Full, 1, true },
+			{ "LEFT - RIGHT", Full, 0, true },
+			{ NULL },
+	  },
+};
+
 //
 // AtomisWave games
 //

@@ -211,20 +211,24 @@ void GenSorted(int first, int count, std::vector<SortTrigDrawParam>& pidx_sort, 
 	if (pvrrc.verts.used() == 0 || count == 0)
 		return;
 
-	const Vertex *vtx_base = pvrrc.verts.head();
-	const u32 *idx_base = pvrrc.idx.head();
+	const Vertex * const vtx_base = pvrrc.verts.head();
+	const u32 * const idx_base = pvrrc.idx.head();
 
-	const PolyParam *pp_base = &pvrrc.global_param_tr.head()[first];
+	const PolyParam * const pp_base = &pvrrc.global_param_tr.head()[first];
 	const PolyParam *pp = pp_base;
-	const PolyParam *pp_end = pp + count;
+	const PolyParam * const pp_end = pp + count;
+	while (pp->count == 0 && pp < pp_end)
+		pp++;
+	if (pp == pp_end)
+		return;
 
 	vtx_sort_base=vtx_base;
 
 	static u32 vtx_cnt;
 
 	int vtx_count = pvrrc.verts.used() - idx_base[pp->first];
-	if (vtx_count>vtx_cnt)
-		vtx_cnt=vtx_count;
+	if ((u32)vtx_count > vtx_cnt)
+		vtx_cnt = vtx_count;
 
 #if PRINT_SORT_STATS
 	printf("TVTX: %d || %d\n",vtx_cnt,vtx_count);

@@ -156,7 +156,8 @@ void OITPipelineManager::CreatePipeline(u32 listType, bool autosort, const PolyP
 	//params.trilinear = pp.pcw.Texture && pp.tsp.FilterMode > 1 && listType != ListType_Punch_Through;
 	params.useAlpha = pp.tsp.UseAlpha;
 	params.pass = pass;
-	params.twoVolume = pp.tsp1.full != -1 || pp.tcw1.full != -1;
+	params.twoVolume = pp.tsp1.full != (u32)-1 || pp.tcw1.full != (u32)-1;
+	params.palette = BaseTextureCacheData::IsGpuHandledPaletted(pp.tsp, pp.tcw);
 	vk::ShaderModule fragment_module = shaderManager->GetFragmentShader(params);
 
 	vk::PipelineShaderStageCreateInfo stages[] = {

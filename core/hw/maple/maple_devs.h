@@ -143,3 +143,5 @@ extern s32 mo_y_abs;
 extern f32 mo_x_delta;
 extern f32 mo_y_delta;
 extern f32 mo_wheel_delta;
+
+#define SWAP32(a) ((((a) & 0xff) << 24)  | (((a) & 0xff00) << 8) | (((a) >> 8) & 0xff00) | (((a) >> 24) & 0xff))
