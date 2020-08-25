@@ -1035,7 +1035,9 @@ public:
 					{
 						movss(rd, rs1);
 					}
-					if (cpu.has(Xbyak::util::Cpu::tFMA))
+					// GDXSV: disable FMA optimization. this causes out sync.
+					// if (cpu.has(Xbyak::util::Cpu::tFMA))
+					if (0)
 						vfmadd231ss(rd, rs2, rs3);
 					else
 					{
