@@ -244,8 +244,8 @@ int rend_end_sch(int tag, int cycl, int jitt)
 
 bool spg_Init()
 {
-	render_end_schid=sh4_sched_register(0,&rend_end_sch);
-	vblank_schid=sh4_sched_register(0,&spg_line_sched);
+	render_end_schid=sh4_sched_register(0,"rend_end_sch", &rend_end_sch);
+	vblank_schid=sh4_sched_register(0,"spg_line_sched", &spg_line_sched);
 
 	return true;
 }

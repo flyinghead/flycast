@@ -308,7 +308,7 @@ void maple_Init()
 	sb_rio_register(SB_MDSTAR_addr, RIO_WF, nullptr, &maple_SB_MDSTAR_Write);
 #endif
 
-	maple_schid=sh4_sched_register(0,&maple_schd);
+	maple_schid=sh4_sched_register(0,"maple_schd",&maple_schd);
 }
 
 void maple_Reset(bool hard)

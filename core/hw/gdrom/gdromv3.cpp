@@ -1197,7 +1197,7 @@ void GDROM_DmaEnable(u32 addr, u32 data)
 //Init/Term/Res
 void gdrom_reg_Init()
 {
-	gdrom_schid = sh4_sched_register(0, &GDRomschd);
+	gdrom_schid = sh4_sched_register(0, "GDRomschd", &GDRomschd);
 }
 
 void gdrom_reg_Term()

@@ -331,7 +331,7 @@ static int modem_sched_func(int tag, int cycles, int jitter)
 
 void ModemInit()
 {
-	modem_sched = sh4_sched_register(0, &modem_sched_func);
+	modem_sched = sh4_sched_register(0, "modem_sched_func", &modem_sched_func);
 }
 
 void ModemTerm()

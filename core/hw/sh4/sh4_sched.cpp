@@ -5,7 +5,6 @@
 #include "sh4_sched.h"
 #include "oslib/oslib.h"
 
-
 //sh4 scheduler
 
 /*
@@ -25,6 +24,7 @@ u64 sh4_sched_ffb;
 
 
 std::vector<sched_list> sch_list;	// using list as external inside a macro confuses clang and msc
+std::vector<std::string> sch_name;
 
 int sh4_sched_next_id=-1;
 
@@ -66,12 +66,11 @@ void sh4_sched_ffts()
 	sh4_sched_ffb+=Sh4cntx.sh4_sched_next;
 }
 
-int sh4_sched_register(int tag, sh4_sched_callback* ssc)
+int sh4_sched_register(int tag, const char* name, sh4_sched_callback* ssc)
 {
 	sched_list t={ssc,tag,-1,-1};
-
-	sch_list.push_back(t);
-
+    sch_list.push_back(t);
+    sch_name.emplace_back(name);
 	return sch_list.size()-1;
 }
 
@@ -130,9 +129,16 @@ static void handle_cb(size_t id)
 	int jitter=elapsd-remain;
 
 	sch_list[id].end=-1;
-	int re_sch=sch_list[id].cb(sch_list[id].tag,remain,jitter);
 
-	if (re_sch > 0)
+    auto start_time = std::chrono::high_resolution_clock::now();
+    int re_sch=sch_list[id].cb(sch_list[id].tag,remain,jitter);
+    auto end_time = std::chrono::high_resolution_clock::now();
+    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count();
+    if (5 <= ms) {
+        WARN_LOG(SH4, "[schedtime][%s][%dms]", sch_name[id].c_str(), ms);
+    }
+
+    if (re_sch > 0)
 		sh4_sched_request(id, std::max(0, re_sch - jitter));
 }
 
