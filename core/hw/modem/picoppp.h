@@ -25,7 +25,7 @@ void stop_pico();
 void write_pico(u8 b);
 int read_pico();
 
-#define MODEM_DEBUG
+// #define MODEM_DEBUG
 
 #ifdef MODEM_DEBUG
 #include <sstream>
@@ -97,7 +97,9 @@ public:
                     {
                         sprintf(&data[0] + i * 2, "%02x", int(buf[tcp_h + tcp_header_size + i]));
                     }
-                    INFO_LOG(MODEM, "[pppdumper][%s][%ldms]data:%s", name.c_str(), ms, data.begin());
+                    if (2 <= ms) {
+                        WARN_LOG(MODEM, "[pppdumper][%s][%ldms]data:%s", name.c_str(), ms, data.begin());
+                    }
                 }
             }
         }
@@ -108,7 +110,9 @@ public:
             {
                 data << std::hex << std::setfill('0') << std::setw(2) << int(buf[i]);
             }
-            INFO_LOG(MODEM, "[pppdumper][%s][%dms] Unknown data:%s", name.c_str(), ms, data.str().c_str());
+            if (2 <= ms) {
+                WARN_LOG(MODEM, "[pppdumper][%s][%dms] Unknown data:%s", name.c_str(), ms, data.str().c_str());
+            }
         }
         buf.clear();
     }

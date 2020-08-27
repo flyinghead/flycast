@@ -7,7 +7,7 @@ set PATH=%EXTRA_PATH%;%PATH%
 if not exist %BUILD_PATH% (mkdir %BUILD_PATH%)
 cd %BUILD_PATH%
 
-mingw32-make -j8 platform=win32
+mingw32-make -j8 platform=win32 %*
 
 mkdir artifacts
 move reicast.exe artifacts\flycast.exe

@@ -31,6 +31,13 @@ LIBS ?=
 CFLAGS :=
 CXXFLAGS :=
 
+ifeq (1,$(modem_debug))
+    CFLAGS += -DMODEM_DEBUG
+endif
+ifeq (1,$(schdtime))
+    CFLAGS += -DSCHDTIME_DEBUG
+endif
+
 ifneq (, $(filter $(shell uname -s), FreeBSD OpenBSD NetBSD DragonFly))
     CFLAGS += -DTARGET_BSD
     undefine USE_UDEV
