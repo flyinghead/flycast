@@ -38,7 +38,6 @@ void AICADSP_Step(struct dsp_t *DSP)
 	s32 FRC_REG = 0;	//13 bit
 	s32 Y_REG = 0;		//24 bit
 	u32 ADRS_REG = 0;	//13 bit
-	int step;
 
 	memset(DSPData->EFREG, 0, sizeof(DSPData->EFREG));
 
@@ -52,7 +51,7 @@ void AICADSP_Step(struct dsp_t *DSP)
 		f = fopen("dsp.txt", "wt");
 #endif
 
-	for (step = 0; step < 128; ++step)
+	for (int step = 0; step < 128; ++step)
 	{
 		u32 *IPtr = DSPData->MPRO + step * 4;
 
@@ -60,38 +59,29 @@ void AICADSP_Step(struct dsp_t *DSP)
 		{
 			// Empty instruction shortcut
 			X = DSP->TEMP[DSP->regs.MDEC_CT & 0x7F];
-			X <<= 8;
-			X >>= 8;
 			Y = FRC_REG;
-			Y <<= 19;
-			Y >>= 19;
 
-			s64 v = ((s64)X * (s64)Y) >> 10;
-			v <<= 6;	// 26 bits only
-			v >>= 6;
-			ACC = v + X;
-			ACC <<= 6;	// 26 bits only
-			ACC >>= 6;
+			ACC = (((s64)X * (s64)Y) >> 12) + X;
 
 			continue;
 		}
 
 		u32 TRA = (IPtr[0] >> 9) & 0x7F;
-		u32 TWT = (IPtr[0] >> 8) & 0x01;
+		bool TWT = IPtr[0] & 0x100;
 
-		u32 XSEL = (IPtr[1] >> 15) & 0x01;
-		u32 YSEL = (IPtr[1] >> 13) & 0x03;
+		bool XSEL = IPtr[1] & 0x8000;
+		u32 YSEL = (IPtr[1] >> 13) & 3;
 		u32 IRA = (IPtr[1] >> 7) & 0x3F;
-		u32 IWT = (IPtr[1] >> 6) & 0x01;
+		bool IWT = IPtr[1] & 0x40;
 
-		u32 EWT = (IPtr[2] >> 12) & 0x01;
-		u32 ADRL = (IPtr[2] >> 7) & 0x01;
-		u32 FRCL = (IPtr[2] >> 6) & 0x01;
-		u32 SHIFT = (IPtr[2] >> 4) & 0x03;
-		u32 YRL = (IPtr[2] >> 3) & 0x01;
-		u32 NEGB = (IPtr[2] >> 2) & 0x01;
-		u32 ZERO = (IPtr[2] >> 1) & 0x01;
-		u32 BSEL = (IPtr[2] >> 0) & 0x01;
+		bool EWT = IPtr[2] & 0x1000;
+		bool ADRL = IPtr[2] & 0x80;
+		bool FRCL = IPtr[2] & 0x40;
+		u32 SHIFT = (IPtr[2] >> 4) & 3;
+		bool YRL = IPtr[2] & 8;
+		bool NEGB = IPtr[2] & 4;
+		bool ZERO = IPtr[2] & 2;
+		bool BSEL = IPtr[2] & 1;
 
 		u32 COEF = step;
 
@@ -128,9 +118,6 @@ void AICADSP_Step(struct dsp_t *DSP)
 		{
 			u32 IWA = (IPtr[1] >> 1) & 0x1F;
 			DSP->MEMS[IWA] = MEMVAL[step & 3];	// MEMVAL was selected in previous MRD
-			// "When read and write are specified simultaneously in the same step for INPUTS, TEMP, etc., write is executed after read."
-			//if (IRA == IWA)
-			//		INPUTS = MEMVAL[step & 3];
 		}
 
 		// Operand sel
@@ -170,30 +157,13 @@ void AICADSP_Step(struct dsp_t *DSP)
 
 		// Shifter
 		// There's a 1-step delay at the output of the X*Y + B adder. So we use the ACC value from the previous step.
-		if (SHIFT == 0)
-		{
+		if (SHIFT == 0 || SHIFT == 3)
 			SHIFTED = ACC;
-			if (SHIFTED > 0x007FFFFF)
-				SHIFTED = 0x007FFFFF;
-			if (SHIFTED < (-0x00800000))
-				SHIFTED = -0x00800000;
-		}
-		else if (SHIFT == 1)
-		{
+		else
 			SHIFTED = ACC << 1;		// x2 scale
-			if (SHIFTED > 0x007FFFFF)
-				SHIFTED = 0x007FFFFF;
-			if (SHIFTED < (-0x00800000))
-				SHIFTED = -0x00800000;
-		}
-		else if (SHIFT == 2)
-		{
-			SHIFTED = ACC << 1;		// x2 scale
-		}
-		else if (SHIFT == 3)
-		{
-			SHIFTED = ACC;
-		}
+
+		if (SHIFT < 2)
+			SHIFTED = std::min(std::max(SHIFTED, -0x00800000), 0x007FFFFF);
 
 		// ACCUM
 		ACC = (((s64)X * (s64)Y) >> 12) + B;
@@ -214,18 +184,18 @@ void AICADSP_Step(struct dsp_t *DSP)
 
 		if (step & 1)
 		{
-			u32 MWT = (IPtr[2] >> 14) & 0x01;
-			u32 MRD = (IPtr[2] >> 13) & 0x01;
+			bool MWT = IPtr[2] & 0x4000;
+			bool MRD = IPtr[2] & 0x2000;
 
 			if (MRD || MWT)
 			{
-				u32 TABLE = (IPtr[2] >> 15) & 0x01;
+				bool TABLE = IPtr[2] & 0x8000;
 
-				u32 NOFL = (IPtr[3] >> 15) & 1;		//????
-				verify(!NOFL);
-				u32 MASA = (IPtr[3] >> 9) & 0x3f;	//???
-				u32 ADREB = (IPtr[3] >> 8) & 0x1;
-				u32 NXADR = (IPtr[3] >> 7) & 0x1;
+				//bool NOFL = IPtr[3] & 0x8000;
+				//verify(!NOFL);
+				u32 MASA = (IPtr[3] >> 9) & 0x3f;
+				bool ADREB = IPtr[3] & 0x100;
+				bool NXADR = IPtr[3] & 0x80;
 
 				u32 ADDR = DSPData->MADRS[MASA];
 				if (ADREB)

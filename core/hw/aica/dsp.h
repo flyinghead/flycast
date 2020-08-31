@@ -94,33 +94,33 @@ void dsp_writenmem(u32 addr);
 
 struct _INST
 {
-	unsigned int TRA;
-	unsigned int TWT;
-	unsigned int TWA;
+	u8 TRA;
+	bool TWT;
+	u8 TWA;
 
-	unsigned int XSEL;
-	unsigned int YSEL;
-	unsigned int IRA;
-	unsigned int IWT;
-	unsigned int IWA;
+	bool XSEL;
+	u8 YSEL;
+	u8 IRA;
+	bool IWT;
+	u8 IWA;
 
-	unsigned int EWT;
-	unsigned int EWA;
-	unsigned int ADRL;
-	unsigned int FRCL;
-	unsigned int SHIFT;
-	unsigned int YRL;
-	unsigned int NEGB;
-	unsigned int ZERO;
-	unsigned int BSEL;
+	bool EWT;
+	u8 EWA;
+	bool ADRL;
+	bool FRCL;
+	u8 SHIFT;
+	bool YRL;
+	bool NEGB;
+	bool ZERO;
+	bool BSEL;
 
-	unsigned int NOFL;  //MRQ set
-	unsigned int TABLE; //MRQ set
-	unsigned int MWT;   //MRQ set
-	unsigned int MRD;   //MRQ set
-	unsigned int MASA;  //MRQ set
-	unsigned int ADREB; //MRQ set
-	unsigned int NXADR; //MRQ set
+	bool NOFL;  //MRQ set
+	bool TABLE; //MRQ set
+	bool MWT;   //MRQ set
+	bool MRD;   //MRQ set
+	u8 MASA;    //MRQ set
+	bool ADREB; //MRQ set
+	bool NXADR; //MRQ set
 };
 
 void DecodeInst(u32 *IPtr,_INST *i);

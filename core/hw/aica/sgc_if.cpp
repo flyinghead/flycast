@@ -472,6 +472,7 @@ struct ChannelEx
 			{
 				u32 fv = FEG.GetValue();
 				s32 f = (((fv & 0xFF) | 0x100) << 4) >> ((fv >> 8) ^ 0x1F);
+				f = std::max(1, f);
 				sample = f * sample + (0x2000 - f + FEG.q) * FEG.prev1 - FEG.q * FEG.prev2;
 				sample >>= 13;
 				clip16(sample);
@@ -510,9 +511,10 @@ struct ChannelEx
 
 			clip_verify(((s16)oLeft)==oLeft);
 			clip_verify(((s16)oRight)==oRight);
+			clip_verify((oDsp << 12) >> 12 == oDsp);
 			clip_verify(sample*oLeft>=0);
 			clip_verify(sample*oRight>=0);
-			clip_verify(sample*oDsp>=0);
+			clip_verify((s64)sample*oDsp>=0);
 
 			StepAEG(this);
 			StepFEG(this);
@@ -733,7 +735,7 @@ struct ChannelEx
 		VolMix.DSPAtt = total_level + SendLevel[ccd->IMXL];
 	}
 
-	//Q,FLV0,FLV1,FLV2,FLV3,FLV4,FAR,FD1R,FD2R,FRR
+	//Q,FLV0,FLV1,FLV2,FLV3,FLV4,FAR,FD1R,FD2R,FRR, LPOFF
 	void UpdateFEG()
 	{
 		FEG.active = ccd->LPOFF == 0
@@ -821,7 +823,7 @@ struct ChannelEx
 			UpdateAtts();
 			break;
 
-		case 0x28://Q
+		case 0x28://Q, LPOFF
 		case 0x29://TL
 			if (size == 2 || offset == 0x28)
 				UpdateFEG();
@@ -1534,10 +1536,8 @@ void AICA_Sample()
 	//Sample is ready ! clip/saturate and store :}
 
 #ifdef CLIP_WARN
-	if (((s16)mixl) != mixl)
-		printf("Clipped mixl %d\n",mixl);
-	if (((s16)mixr) != mixr)
-		printf("Clipped mixr %d\n",mixr);
+	if (((s16)mixl) != mixl || ((s16)mixr) != mixr)
+		printf("Clipped mixl %d mixr %d\n", mixl, mixr);
 #endif
 
 	clip16(mixl);
