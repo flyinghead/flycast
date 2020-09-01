@@ -138,11 +138,10 @@ bool egl_makecurrent();
 
 extern int screen_width,screen_height;
 
-static char gamedisk[256];
-
 float vjoy_pos[15][8];
 
 extern bool print_stats;
+extern bool game_started;
 
 //stuff for saving prefs
 jobject g_emulator;
@@ -245,19 +244,23 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_setGameUri(JNIEnv *en
     {
         // Get filename string from Java
         const char* file_path = env->GetStringUTFChars(fileName, 0);
-        INFO_LOG(BOOT, "Game Disk URI: '%s'", file_path);
-        strncpy(gamedisk, strlen(file_path) >= 7 && !memcmp(file_path, "file://", 7) ? file_path + 7 : file_path, sizeof(gamedisk));
-        gamedisk[sizeof(gamedisk) - 1] = '\0';
+        NOTICE_LOG(BOOT, "Game Disk URI: '%s'", file_path);
+        strncpy(settings.imgread.ImagePath, strlen(file_path) >= 7 && !memcmp(file_path, "file://", 7) ? file_path + 7 : file_path, sizeof(settings.imgread.ImagePath));
+        settings.imgread.ImagePath[sizeof(settings.imgread.ImagePath) - 1] = '\0';
         env->ReleaseStringUTFChars(fileName, file_path);
-
-        cfgSetVirtual("config", "image", file_path);
+        // TODO game paused/settings/...
+        if (game_started) {
+            dc_stop();
+            gui_state = Main;
+            game_started = false;
+       		dc_reset(true);
+        }
     }
 }
 
 //stuff for microphone
 jobject sipemu;
 jmethodID getmicdata;
-extern bool game_started;
 
 //stuff for audio
 #define SAMPLE_COUNT 512

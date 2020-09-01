@@ -48,8 +48,10 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
     protected Handler handler = new Handler();
     public static byte[] syms;
     private boolean audioPermissionRequested = false;
+    private boolean storagePermissionGranted = false;
     private boolean paused = true;
     private boolean resumedCalled = false;
+    private String pendingIntentUrl;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -90,7 +92,7 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
 
         setStorageDirectories();
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !storagePermissionGranted) {
             ActivityCompat.requestPermissions(this,
                     new String[]{
                             Manifest.permission.READ_EXTERNAL_STORAGE,
@@ -117,7 +119,10 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
                             + gameUri.getAuthority() + "/external_files", "/storage"));
                 }
                 if (gameUri != null)
-                    JNIdc.setGameUri(gameUri.toString());
+                    if (storagePermissionGranted)
+                        JNIdc.setGameUri(gameUri.toString());
+                    else
+                        pendingIntentUrl = gameUri.toString();
             }
         }
     }
@@ -292,7 +297,13 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
             JNIdc.setupMic(sip);
         }
         else if (requestCode == STORAGE_PERM_REQUEST) {
+            storagePermissionGranted = true;
             setStorageDirectories();
+            if (pendingIntentUrl != null) {
+                JNIdc.setGameUri(pendingIntentUrl);
+                pendingIntentUrl = null;
+            }
+
             //setup mic
             if (Emulator.micPluggedIn())
                 requestRecordAudioPermission();
