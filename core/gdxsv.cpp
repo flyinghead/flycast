@@ -46,6 +46,14 @@ namespace {
 namespace {
     char dump_buf[4096];
 }
+
+void dump_memory_file() {
+    auto name = get_writable_data_path("gdxsv-dump.bin");
+    auto fp = fopen(name.c_str(), "wb");
+    fwrite(mem_b.data, sizeof(u8), mem_b.size, fp);
+    fclose(fp);
+}
+
 void dump_memory(const char *prefix, u32 addr, size_t size) {
     for (int i = 0; i < size; ++i) {
         sprintf(reinterpret_cast<char *>(dump_buf + i * 2), "%02x", ReadMem8_nommu(addr + i));
@@ -67,7 +75,6 @@ void Gdxsv::Reset() {
     }
 
     enabled = 1;
-
     server = cfgLoadStr("gdxsv", "server", "zdxsv.net");
     maxlag = cfgLoadInt("gdxsv", "maxlag", 8); // Note: This should be not configurable. This is for development.
     loginkey = cfgLoadStr("gdxsv", "loginkey", "");
@@ -96,18 +103,6 @@ void Gdxsv::Reset() {
         disk = 2;
         WritePatchDisk2();
     }
-    if (disk == 2) {
-        // WriteMem8_nommu(0x0c024cae, 9);
-        // WriteMem8_nommu(0x0c024caf, 9);
-        // WriteMem8_nommu(0x0c024cb0, 9);
-        // WriteMem8_nommu(0x0c024cb1, 9);
-        // WriteMem8_nommu(0x0c024cb2, 9);
-        // WriteMem8_nommu(0x0c024cb3, 9);
-        // WriteMem8_nommu(0x0c024cbc, 9);
-        // WriteMem8_nommu(0x0c024cbd, 0);
-        dump_memory("HOGE", 0x8c024cae + 0x00010000, 8);
-    }
-
     NOTICE_LOG(COMMON, "gdxsv disk:%d server:%s loginkey:%s maxlag:%d", disk, server.c_str(), loginkey.c_str(), maxlag);
 }
 
@@ -116,135 +111,23 @@ void Gdxsv::Update() {
         return;
     }
 
-    int f1 = ReadMem8_nommu(symbols["w:initialized"]) == 0;
-    if (f1) {
-        NOTICE_LOG(COMMON, "Rewrite patch %d", f1);
+    if (ReadMem8_nommu(symbols["initialized"]) == 0) {
+        NOTICE_LOG(COMMON, "Rewrite patch");
         if (disk == 2) {
             WritePatchDisk2();
         }
     }
 
-    if (ReadMem32_nommu(symbols["r:print_buf_pos"])) {
-        int n = ReadMem32_nommu(symbols["r:print_buf_pos"]);
+    if (ReadMem32_nommu(symbols["print_buf_pos"])) {
+        int n = ReadMem32_nommu(symbols["print_buf_pos"]);
         n = std::min(n, (int) sizeof(dump_buf));
         for (int i = 0; i < n; i++) {
-            dump_buf[i] = ReadMem8_nommu(symbols["r:print_buf"] + i);
+            dump_buf[i] = ReadMem8_nommu(symbols["print_buf"] + i);
         }
         dump_buf[n] = 0;
-        WriteMem32_nommu(symbols["r:print_buf_pos"], 0);
+        WriteMem32_nommu(symbols["print_buf_pos"], 0);
         NOTICE_LOG(COMMON, "%s", dump_buf);
     }
-
-    /*
-    dump_memory("r:initialized", symbols["r:initialized"], 4);
-    dump_memory("w:initialized", symbols["w:initialized"], 4);
-    dump_memory("w:gdx_main", symbols["w:gdx_main"], 64);
-    dump_memory("r:gdx_main", symbols["r:gdx_main"], 64);
-     */
-
-    const u32 offset1 = 0x00000000 + 0x00010000;
-    const u32 offset2 = 0x80000000 + 0x00010000;
-
-    /*
-    int cnt = 0;
-    for (long long i = 0x8C4f0000; i < 0x8C4f0000 + 1000000; i++) {
-        if (ReadMem8_nommu(i) == 0) {
-            cnt++;
-        } else {
-            cnt = 0;
-        }
-        if (8192 <= cnt) {
-            NOTICE_LOG(COMMON, "EMPTY AREA %08x-%08x", i-cnt+1, i);
-            break;
-        }
-    }
-    */
-    if (disk == 2) {
-        /*
-        dump_memory("0x8c024cae-1",0x8c024cae + offset1, 8);
-        dump_memory("0x8c024cae-2",0x8c024cae + offset2, 8);
-
-        iriteMem8_nommu(offset2 + 0x0c024cae, 0x09);
-        WriteMem8_nommu(offset2 + 0x0c024caf, 0x00);
-        WriteMem8_nommu(offset2 + 0x0c024cb0, 0x09);
-        WriteMem8_nommu(offset2 + 0x0c024cb1, 0x00);
-        WriteMem8_nommu(offset2 + 0x0c024cb2, 0x09);
-        WriteMem8_nommu(offset2 + 0x0c024cb3, 0x00);
-         */
-        /*
-        WriteMem8_nommu(0x0c024cae, 9);
-        WriteMem8_nommu(0x0c024caf, 9);
-        WriteMem8_nommu(0x0c024cb0, 9);
-        WriteMem8_nommu(0x0c024cb1, 9);
-        WriteMem8_nommu(0x0c024cb2, 9);
-        WriteMem8_nommu(0x0c024cb3, 9);
-
-        WriteMem8_nommu(0x0c024cbc, 9);
-        WriteMem8_nommu(0x0c024cbd, 0);
-         */
-    }
-    // dump_memory("0x0c01d7a8", 0x0c01d7a8, 4);
-    // dump_memory("0x0c036678-0", 0x0c036678, 4);
-    // dump_memory("0x0c036678-1", 0x0c036678 + offset1, 4);
-    // dump_memory("0x0c036678-2", 0x0c036678 + offset2, 4);
-
-#ifdef MODEM_DEBUG_NO
-    ppp_read_dump.last_data_mtx.lock();
-    const auto label_0x0C3AB512 = 0x0C3AB512 - 0x0C000000;
-    const auto label_0x0C3AB93C = 0x0C3AB93C - 0x0C000000;
-    const auto label_0x0C394524 = 0x0C394524 - 0x0C000000;
-    const auto label_0x0C394524_1472 = 0x0C394524 + 0x1472 - 0x0C000000;
-    const auto label_0x0C3AB984 = 0x0C3AB984 - 0x0C000000; // InetBuf
-    // const auto label_0x0C3AB938 = 0x0C3AB938 - 0x0C000000;
-    // const auto label_0x0C3AB538 = 0x0C3AB538 - 0x0C000000;
-
-    if (0 < ppp_read_dump.last_data_len) {
-        /*
-        memcpy(gdxsv_memory, mem_b.data, std::min((unsigned int)sizeof(gdxsv_memory), mem_b.size));
-        unsigned char* pos = gdxsv_memory;
-        for (int i = 1;; i++) {
-            pos = std::search(pos, gdxsv_memory + sizeof(gdxsv_memory),
-                              ppp_read_dump.last_data, ppp_read_dump.last_data + ppp_read_dump.last_data_len);
-            if (pos == gdxsv_memory + sizeof(gdxsv_memory)) {
-                break;
-            }
-            NOTICE_LOG(COMMON, "found (%d): addr %08x index %08x", i, pos, pos - (uint64_t) gdxsv_memory);
-            pos++;
-        }
-
-        static char data[128] = {0};
-        for (int i = 0; i < 127; ++i) {
-            sprintf(reinterpret_cast<char *>(&data[0] + i * 2), "%02x", int(gdxsv_memory[label_0x0C394524_1472 + i]));
-        }
-        NOTICE_LOG(COMMON, "label_0x0C394524_1472 %s", data);
-         */
-
-        static char data[0x200 * 2] = {0};
-        /*
-        for (int i = 0; i < 4; ++i) {
-            sprintf(reinterpret_cast<char *>(&data[0] + i * 2), "%02x", int(mem_b.data[label_0x0C3AB538 + i]));
-        }
-        NOTICE_LOG(COMMON, "readbuf_size:%s", data);
-         */
-
-        dump_memory("netbuf", &mem_b.data[label_0x0C3AB984], 0x200);
-
-        for (int i = 0; i < 0x200; ++i) {
-            sprintf(reinterpret_cast<char *>(&data[0] + i * 2), "%02x", int(virt_ram_base[0x0C3AB538 + i]));
-        }
-        NOTICE_LOG(COMMON, "recvbuf:%s", data);
-
-        int bufsize = ReadMem32_nommu(0x0c2fa9ac);
-        NOTICE_LOG(COMMON, "bufsize:%d", bufsize);
-        for (int i = 0; i < std::min(bufsize, 0x200); ++i) {
-            sprintf(reinterpret_cast<char *>(&data[0] + i * 2), "%02x", int(virt_ram_base[0x0c2fa9b0 + i]));
-        }
-        NOTICE_LOG(COMMON, "buf    :%s", data);
-
-        ppp_read_dump.last_data_len = 0;
-    }
-    ppp_read_dump.last_data_mtx.unlock();
-#endif
 
     if (disk == 1) {
         const u32 offset = 0x8C000000 + 0x00010000;
@@ -312,9 +195,9 @@ void Gdxsv::Update() {
         recv_data_lock.lock();
         if (!recv_data.empty()) {
             gdx_queue q;
-            q.head = ReadMem16_nommu(symbols["r:gdx_rxq"]);
-            q.tail = ReadMem16_nommu(symbols["r:gdx_rxq"] + 2);
-            u32 buf_addr = symbols["r:gdx_rxq"] + 4;
+            q.head = ReadMem16_nommu(symbols["gdx_rxq"]);
+            q.tail = ReadMem16_nommu(symbols["gdx_rxq"] + 2);
+            u32 buf_addr = symbols["gdx_rxq"] + 4;
 
             int count = 0;
             while (gdx_queue_size(&q) + 1 < GDX_QUEUE_SIZE && !recv_data.empty()) {
@@ -328,7 +211,7 @@ void Gdxsv::Update() {
             dump_buf[count * 2] = 0;
             NOTICE_LOG(COMMON, "flycast queue write : %s", dump_buf);
             NOTICE_LOG(COMMON, "flycast queue size:%d head:%d tail:%d", gdx_queue_size(&q), q.head, q.tail);
-            WriteMem16_nommu(symbols["r:gdx_rxq"] + 2, q.tail);
+            WriteMem16_nommu(symbols["gdx_rxq"] + 2, q.tail);
         }
         recv_data_lock.unlock();
     }
@@ -371,7 +254,7 @@ void Gdxsv::OnPPPRecv(u8 c) {
                     recv_data_lock.lock();
                     if (is_mcs_first_data) {
                         recv_data.clear();
-                        WriteMem32_nommu(symbols["r:gdx_rxq"], 0); // BAD
+                        WriteMem32_nommu(symbols["gdx_rxq"], 0); // BAD
                         NOTICE_LOG(COMMON, "Clear recv_data");
                         next_seq_no = seq;
                     }

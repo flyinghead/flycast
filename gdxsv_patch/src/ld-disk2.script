@@ -1,0 +1,16 @@
+SECTIONS
+{
+    . = 0x0C4E0200;
+    gdx.data ALIGN(16) : {
+        *(gdx.data*)
+    }
+    . = 0x0C4F0000;
+    gdx.func ALIGN(16) : {
+        *(gdx.func*)
+        *(.rodata*)
+    }
+    . = 0x0C034C5C;
+    gdx.main : {
+        *(gdx.main*)
+    }
+}
