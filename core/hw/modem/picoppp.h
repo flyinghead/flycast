@@ -86,18 +86,16 @@ public:
                 const int n = (ip_h + ip_size) - (tcp_h + tcp_header_size);
                 if (0 < n)
                 {
-                    /*
                     char ipdir[128] = {0};
                     sprintf(ipdir, "tcp:%d.%d.%d.%d:%d > %d.%d.%d.%d:%d",
                         buf[ip_h + 12], buf[ip_h + 13], buf[ip_h + 14], buf[ip_h + 15], src_port,
                         buf[ip_h + 16], buf[ip_h + 17], buf[ip_h + 18], buf[ip_h + 19], dst_port);
-                    */
                     std::vector<char> data(16 + n * 2, 0);
                     for (int i = 0; i < n; ++i)
                     {
                         sprintf(&data[0] + i * 2, "%02x", int(buf[tcp_h + tcp_header_size + i]));
                     }
-                    if (2 <= ms) {
+                    if (name == "modem_write" || name == "modem_read") {
                         WARN_LOG(MODEM, "[pppdumper][%s][%ldms]data:%s", name.c_str(), ms, data.begin());
                     }
                 }
@@ -117,6 +115,9 @@ public:
         buf.clear();
     }
 
+    std::mutex last_data_mtx;
+    unsigned char last_data[2000];
+    unsigned char last_data_len;
 private:
     std::vector<u8> buf;
     std::string name;
@@ -157,11 +158,13 @@ public:
         }
         return false;
     }
+
 private:
     std::string name;
     std::mutex mtx;
     bool started;
     std::chrono::time_point<std::chrono::high_resolution_clock> start_time;
+
 };
 extern safe_timer modem_write_pico_read_timer;
 #endif

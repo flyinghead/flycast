@@ -1210,6 +1210,7 @@ void dc_loadstate()
 	if (unserialized_size != total_size)
 		WARN_LOG(SAVESTATE, "Save state error: read %d bytes but used %d", total_size, unserialized_size);
 
+    gdxsv.Reset();
 	mmu_set_state();
 	sh4_cpu.ResetCache();
     dsp.dyndirty = true;
