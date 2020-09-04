@@ -8,7 +8,7 @@ typedef unsigned int u32;
 
 #include "mini-printf.h"
 
-#define ADDR_MCS_READ 0x0c0455ba
+#define CALL_ORG_FUNC 1
 #define BIN_OFFSET 0x80000000
 #define GDX_QUEUE_SIZE 512
 
@@ -84,10 +84,109 @@ void GDXFUNC write8(u32 addr, u8 value) {
     *p = value;
 }
 
-int GDXFUNC __attribute__((stdcall)) gdx_ReadSock(u32 sock, u8 *buf, u32 size) {
-    gdx_printf("gdx_ReadSock 0x%x 0x%x %d\n", sock, buf, size);
+int GDXFUNC gdx_sock_create(int param1, int param2, int param3) {
+    gdx_printf("%s %d %d %d\n", __FUNCTION__, param1, param2, param3);
+#if CALL_ORG_FUNC
+    int org_ret = ((int (*)(int, int, int)) 0x0c1a8c08)(param1, param2, param3);
+    gdx_printf("sock = %d\n", org_ret);
+    return org_ret;
+#else
+    return 7;
+#endif
+}
 
-    int org_ret = ((int (__attribute__((stdcall)) *)(u32, u8 *, u32)) ADDR_MCS_READ)(sock, buf, size); // call original read function
+int GDXFUNC gdx_sock_close(int param1) {
+    gdx_printf("%s %d\n", __FUNCTION__, param1);
+#if CALL_ORG_FUNC
+    int org_ret = ((int (*)(int)) 0x0c1a87a0)(param1);
+    return org_ret;
+#else
+    return 0;
+#endif
+}
+
+struct hostent {
+    u8 *h_name;
+    u8 **h_aliases;
+    u32 h_addrtype;
+    u32 h_length;
+    u8 **h_addr_list;
+};
+struct hostent host_entry GDXDATA;
+u8 *host_addr_list[1] GDXDATA;
+u8 host_addr_0[4] GDXDATA;
+
+void *GDXFUNC gdx_gethostbyname(const char *param1) {
+    gdx_printf("%s %s\n", __FUNCTION__, param1);
+#if CALL_ORG_FUNC
+    void *org_ret = ((void *(*)(const char *)) 0x0c1a71c0)(param1);
+    struct hostent *ent = (struct hostent *) org_ret;
+    if (org_ret != 0) {
+        gdx_printf("%d\n", ent->h_length);
+        if (ent->h_length != 0) {
+            gdx_printf("IP = %d.%d.%d.%d\n",
+                       (u8) *((ent->h_addr_list[0])),
+                       (u8) *((ent->h_addr_list[0]) + 1),
+                       (u8) *((ent->h_addr_list[0]) + 2),
+                       (u8) *((ent->h_addr_list[0]) + 3));
+        }
+    }
+    return org_ret;
+#else
+    host_entry.h_name = 0;
+    host_entry.h_aliases = 0;
+    host_entry.h_addrtype = 2; // AF_INET
+    host_entry.h_length = 1;
+    host_entry.h_addr_list = host_addr_list;
+    host_addr_list[0] = host_addr_0;
+    // todo fix addr
+    host_addr_0[0] = 192;
+    host_addr_0[1] = 168;
+    host_addr_0[2] = 0;
+    host_addr_0[3] = 9;
+    return &host_entry;
+#endif
+}
+
+struct sockaddr_t {
+    u8 sin_len;
+    u8 sin_family;
+    u16 sin_port;
+    u32 sin_addr;
+    u8 sin_zero[8];
+};
+
+int GDXFUNC connect_sock(int sock, struct sockaddr_t *sock_addr, int len) {
+    gdx_printf("%s %d %08x %d\n", __FUNCTION__, sock, sock_addr, len);
+    gdx_printf("addr:%08x port:%d\n", sock_addr->sin_addr, sock_addr->sin_port);
+    int org_ret = ((void *(*)(int, struct sockaddr_t *, int)) 0x0c1a76b8)(sock, sock_addr, len);
+    return org_ret;
+}
+
+int GDXFUNC gdx_lbs_sock_read(u32 sock, u8 *buf, u32 size) {
+    gdx_printf("%s %d %08x %d\n", __FUNCTION__, sock, buf, size);
+    int org_ret = ((int (*)(u32, u8 *, u32)) 0x0c1a88e4)(sock, buf, size);
+    for (int i = 0; i < size; ++i) {
+        gdx_printf("%02x", buf[i]);
+    }
+    gdx_printf("\n");
+    return org_ret;
+}
+
+int GDXFUNC gdx_lbs_sock_write(u32 sock, u8 *buf, u32 size) {
+    gdx_printf("%s %d %08x %d\n", __FUNCTION__, sock, buf, size);
+    int org_ret = ((int (*)(u32, u8 *, u32)) 0x0c1a8ad4)(sock, buf, size); // call original sock_write function
+    for (int i = 0; i < size; ++i) {
+        gdx_printf("%02x", buf[i]);
+    }
+    gdx_printf("\n");
+    return org_ret;
+}
+
+int GDXFUNC gdx_mcs_sock_read(u32 sock, u8 *buf, u32 size) {
+    gdx_printf("%s 0x%x 0x%x %d\n", __FUNCTION__, sock, buf, size);
+
+    int org_ret = ((int (*)(u32, u8 *, u32)) 0x0c0455ba)(sock, buf, size); // call original read function
     gdx_printf("org %02d : ", org_ret);
     for (int i = 0; i < org_ret; i++) {
         gdx_printf("%02x", buf[i]);
@@ -114,13 +213,48 @@ int GDXFUNC __attribute__((stdcall)) gdx_ReadSock(u32 sock, u8 *buf, u32 size) {
     return n;
 }
 
+int GDXFUNC gdx_mcs_sock_write(u32 sock, u8 *buf, u32 size, int unk) {
+    gdx_printf("%s %d %08x %d %d\n", __FUNCTION__, sock, buf, size, unk);
+    int org_ret = ((int (*)(u32, u32, int, int)) 0x0c1a8584)(sock, buf, size, unk);
+    for (int i = 0; i < size; ++i) {
+        gdx_printf("%02x", buf[i]);
+    }
+    gdx_printf("\n");
+    gdx_printf("ret = %d\n", org_ret);
+    return org_ret;
+}
+
+
 void GDXFUNC gdx_initialize() {
+    gdx_printf("gdx_initialize\n");
     gdx_queue_init(&gdx_rxq);
-    write32(BIN_OFFSET + 0x0c046678, gdx_ReadSock);
+
+    write32(BIN_OFFSET + 0x0c0228f8, gdx_sock_create);
+    write32(BIN_OFFSET + 0x0c045504, gdx_sock_create);
+    write32(BIN_OFFSET + 0x0c01f284, gdx_sock_close);
+    write32(BIN_OFFSET + 0x0c0228dc, gdx_sock_close);
+    write32(BIN_OFFSET + 0x0c022a08, gdx_sock_close);
+    write32(BIN_OFFSET + 0x0c022b28, gdx_sock_close);
+    write32(BIN_OFFSET + 0x0c022d3c, gdx_sock_close);
+    write32(BIN_OFFSET + 0x0c03322c, gdx_sock_close);
+    write32(BIN_OFFSET + 0x0c045510, gdx_sock_close);
+    write32(BIN_OFFSET + 0x0c045824, gdx_sock_close);
+    write32(BIN_OFFSET + 0x0c022908, gdx_gethostbyname);
+    write32(BIN_OFFSET + 0x0c022a04, connect_sock);
+    write32(BIN_OFFSET + 0x0c04550c, connect_sock);
+    write32(BIN_OFFSET + 0x0c033fd8, gdx_lbs_sock_read);
+    write32(BIN_OFFSET + 0x0c034464, gdx_lbs_sock_write);
+    write32(BIN_OFFSET + 0x0c046678, gdx_mcs_sock_read);
+    write32(BIN_OFFSET + 0x0c045820, gdx_mcs_sock_write);
     initialized += 1;
 }
 
+// replacement function 0c0212b6
 void GDXMAIN gdx_main() {
-    initialized += 1;
     gdx_initialize();
+#if CALL_ORG_FUNC
+    write8(0x0c391d79, 1);
+#else
+    write8(0x0c391d79, 2);
+#endif
 }

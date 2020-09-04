@@ -9,7 +9,9 @@ SECTIONS
         *(gdx.func*)
         *(.rodata*)
     }
-    . = 0x0C034C5C;
+    /* . = 0x0C034C5C; */
+    /* . = 0x0c1e0274;*/
+    . = 0x0c0212b6;
     gdx.main : {
         *(gdx.main*)
     }
