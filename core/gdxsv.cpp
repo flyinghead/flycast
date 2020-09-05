@@ -179,6 +179,7 @@ void Gdxsv::Reset() {
     std::string disk_num(ip_meta.disk_num, 1);
     if (disk_num == "1") {
         disk = 1;
+        WritePatchDisk1();
     }
     if (disk_num == "2") {
         disk = 2;
@@ -193,6 +194,8 @@ void Gdxsv::Update() {
     if (!enabled) {
         return;
     }
+
+    UpdateNetwork();
 
     if (ReadMem8_nommu(symbols["initialized"]) == 0) {
         NOTICE_LOG(COMMON, "Rewrite patch");
@@ -211,154 +214,97 @@ void Gdxsv::Update() {
         WriteMem32_nommu(symbols["print_buf_pos"], 0);
         NOTICE_LOG(COMMON, "%s", dump_buf);
     }
-
-    if (disk == 1) {
-        const u32 offset = 0x8C000000 + 0x00010000;
-
-        // Reduce max lag-frame
-        WriteMem8_nommu(offset + 0x00047f60, maxlag);
-        WriteMem8_nommu(offset + 0x00047f66, maxlag);
-
-        // Modem connection fix
-        const char *atm1 = "ATM1\r                                ";
-        for (int i = 0; i < strlen(atm1); ++i) {
-            WriteMem8_nommu(offset + 0x0015e703 + i, u8(atm1[i]));
-        }
-
-        // Overwrite serve address (max 20 chars)
-        for (int i = 0; i < 20; ++i) {
-            WriteMem8_nommu(offset + 0x0015e788 + i, (i < server.length()) ? u8(server[i]) : u8(0));
-        }
-
-        // Skip form validation
-        WriteMem16_nommu(offset + 0x0003b0c4, u16(9)); // nop
-        WriteMem16_nommu(offset + 0x0003b0cc, u16(9)); // nop
-        WriteMem16_nommu(offset + 0x0003b0d4, u16(9)); // nop
-        WriteMem16_nommu(offset + 0x0003b0dc, u16(9)); // nop
-
-        // Write LoginKey
-        if (ReadMem8_nommu(offset - 0x10000 + 0x002f6924) == 0) {
-            for (int i = 0; i < std::min(loginkey.length(), size_t(8)) + 1; ++i) {
-                WriteMem8_nommu(offset - 0x10000 + 0x002f6924 + i,
-                                (i < loginkey.length()) ? u8(loginkey[i]) : u8(0));
-            }
-        }
-    }
-
-    if (disk == 2) {
-        const u32 offset = 0x8C000000 + 0x00010000;
-
-        // Reduce max lag-frame
-        WriteMem8_nommu(offset + 0x00035348, maxlag);
-        WriteMem8_nommu(offset + 0x0003534e, maxlag);
-
-        // Modem connection fix
-        const char *atm1 = "ATM1\r                                ";
-        for (int i = 0; i < strlen(atm1); ++i) {
-            WriteMem8_nommu(offset + 0x001be7c7 + i, u8(atm1[i]));
-        }
-
-        // Overwrite serve address (max 20 chars)
-        for (int i = 0; i < 20; ++i) {
-            WriteMem8_nommu(offset + 0x001be84c + i, (i < server.length()) ? u8(server[i]) : u8(0));
-        }
-
-        // Skip form validation
-        WriteMem16_nommu(offset + 0x000284f0, u16(9)); // nop
-        WriteMem16_nommu(offset + 0x000284f8, u16(9)); // nop
-        WriteMem16_nommu(offset + 0x00028500, u16(9)); // nop
-        WriteMem16_nommu(offset + 0x00028508, u16(9)); // nop
-
-        // Write LoginKey
-        if (ReadMem8_nommu(offset - 0x10000 + 0x00392064) == 0) {
-            for (int i = 0; i < std::min(loginkey.length(), size_t(8)) + 1; ++i) {
-                WriteMem8_nommu(offset - 0x10000 + 0x00392064 + i,
-                                (i < loginkey.length()) ? u8(loginkey[i]) : u8(0));
-            }
-        }
-
-        gdx_rpc_t gdx_rpc;
-        u32 gdx_rpc_addr = symbols["gdx_rpc"];
-        gdx_rpc.request = ReadMem32_nommu(gdx_rpc_addr);
-        gdx_rpc.response = ReadMem32_nommu(gdx_rpc_addr + 4);
-        gdx_rpc.param1 = ReadMem32_nommu(gdx_rpc_addr + 8);
-        gdx_rpc.param2 = ReadMem32_nommu(gdx_rpc_addr + 12);
-        gdx_rpc.param3 = ReadMem32_nommu(gdx_rpc_addr + 16);
-        gdx_rpc.param4 = ReadMem32_nommu(gdx_rpc_addr + 20);
-
-        if (gdx_rpc.request == RPC_TCP_OPEN) {
-            u32 tolobby = gdx_rpc.param1;
-            u32 host_ip = gdx_rpc.param2;
-            u32 port_no = gdx_rpc.param3;
-
-            std::string host = server;
-            u16 port = port_no;
-
-            if (tolobby != 1) {
-                union {
-                    u32 _u32;
-                    u8 _u8[4];
-                } ipv4addr;
-                ipv4addr._u32 = host_ip;
-                auto ip = ipv4addr._u8;
-                char buf[1024] = {0};
-                sprintf(buf, "%d.%d.%d.%d", ip[0], ip[1], ip[2], ip[3]);
-                host = std::string(buf);
-            }
-            bool ok = tcp_client.do_connect(host.c_str(), port);
-            if (!ok) {
-                WARN_LOG(COMMON, "Failed to connect %s:%d", host.c_str(), port);
-            }
-        }
-        if (gdx_rpc.request == RPC_TCP_CLOSE) {
-            tcp_client.do_close();
-        }
-
-        WriteMem32_nommu(gdx_rpc_addr, 0);
-        WriteMem32_nommu(gdx_rpc_addr + 4, 0);
-        WriteMem32_nommu(gdx_rpc_addr + 8, 0);
-        WriteMem32_nommu(gdx_rpc_addr + 12, 0);
-        WriteMem32_nommu(gdx_rpc_addr + 16, 0);
-        WriteMem32_nommu(gdx_rpc_addr + 20, 0);
-
-        {
-            gdx_queue q;
-            q.head = ReadMem16_nommu(symbols["gdx_txq"]);
-            q.tail = ReadMem16_nommu(symbols["gdx_txq"] + 2);
-            u32 buf_addr = symbols["gdx_txq"] + 4;
-            u8 buf[GDX_QUEUE_SIZE];
-            int n = gdx_queue_size(&q);
-            if (0 < n) {
-                for (int i = 0; i < n; ++i) {
-                    buf[i] = ReadMem8_nommu(buf_addr + q.head);
-                    gdx_queue_pop(&q);
-                }
-                WriteMem16_nommu(symbols["gdx_txq"], q.head);
-                tcp_client.do_send((char *) buf, n);
-                // TODO: handle return value
-            }
-        }
-
-        {
-            u32 n = tcp_client.readable_size();
-            if (n) {
-                gdx_queue q;
-                q.head = ReadMem16_nommu(symbols["gdx_rxq"]);
-                q.tail = ReadMem16_nommu(symbols["gdx_rxq"] + 2);
-                u32 buf_addr = symbols["gdx_rxq"] + 4;
-
-                u8 buf[GDX_QUEUE_SIZE];
-                n = std::min(n, gdx_queue_avail(&q));
-                n = tcp_client.do_recv((char *) buf, n);
-                for (int i = 0; i < n; ++i) {
-                    WriteMem8_nommu(buf_addr + q.tail, buf[i]);
-                    gdx_queue_push(&q, 0);
-                }
-                WriteMem16_nommu(symbols["gdx_rxq"] + 2, q.tail);
-            }
-        }
-    }
 }
+
+void Gdxsv::UpdateNetwork() {
+    if (!enabled) {
+        return;
+    }
+
+    gdx_rpc_t gdx_rpc;
+    u32 gdx_rpc_addr = symbols["gdx_rpc"];
+    gdx_rpc.request = ReadMem32_nommu(gdx_rpc_addr);
+    gdx_rpc.response = ReadMem32_nommu(gdx_rpc_addr + 4);
+    gdx_rpc.param1 = ReadMem32_nommu(gdx_rpc_addr + 8);
+    gdx_rpc.param2 = ReadMem32_nommu(gdx_rpc_addr + 12);
+    gdx_rpc.param3 = ReadMem32_nommu(gdx_rpc_addr + 16);
+    gdx_rpc.param4 = ReadMem32_nommu(gdx_rpc_addr + 20);
+
+    if (gdx_rpc.request == RPC_TCP_OPEN) {
+        u32 tolobby = gdx_rpc.param1;
+        u32 host_ip = gdx_rpc.param2;
+        u32 port_no = gdx_rpc.param3;
+
+        std::string host = server;
+        u16 port = port_no;
+
+        if (tolobby != 1) {
+            union {
+                u32 _u32;
+                u8 _u8[4];
+            } ipv4addr;
+            ipv4addr._u32 = host_ip;
+            auto ip = ipv4addr._u8;
+            char buf[1024] = {0};
+            sprintf(buf, "%d.%d.%d.%d", ip[0], ip[1], ip[2], ip[3]);
+            host = std::string(buf);
+        }
+        bool ok = tcp_client.do_connect(host.c_str(), port);
+        if (!ok) {
+            WARN_LOG(COMMON, "Failed to connect %s:%d", host.c_str(), port);
+        }
+    }
+
+    if (gdx_rpc.request == RPC_TCP_CLOSE) {
+        tcp_client.do_close();
+    }
+
+    WriteMem32_nommu(gdx_rpc_addr, 0);
+    WriteMem32_nommu(gdx_rpc_addr + 4, 0);
+    WriteMem32_nommu(gdx_rpc_addr + 8, 0);
+    WriteMem32_nommu(gdx_rpc_addr + 12, 0);
+    WriteMem32_nommu(gdx_rpc_addr + 16, 0);
+    WriteMem32_nommu(gdx_rpc_addr + 20, 0);
+
+    {
+        gdx_queue q;
+        q.head = ReadMem16_nommu(symbols["gdx_txq"]);
+        q.tail = ReadMem16_nommu(symbols["gdx_txq"] + 2);
+        u32 buf_addr = symbols["gdx_txq"] + 4;
+        u8 buf[GDX_QUEUE_SIZE];
+        int n = gdx_queue_size(&q);
+        if (0 < n) {
+            for (int i = 0; i < n; ++i) {
+                buf[i] = ReadMem8_nommu(buf_addr + q.head);
+                gdx_queue_pop(&q);
+            }
+            WriteMem16_nommu(symbols["gdx_txq"], q.head);
+            tcp_client.do_send((char *) buf, n);
+            // TODO: handle return value
+        }
+    }
+
+    {
+        u32 n = tcp_client.readable_size();
+        if (n) {
+            gdx_queue q;
+            q.head = ReadMem16_nommu(symbols["gdx_rxq"]);
+            q.tail = ReadMem16_nommu(symbols["gdx_rxq"] + 2);
+            u32 buf_addr = symbols["gdx_rxq"] + 4;
+
+            u8 buf[GDX_QUEUE_SIZE];
+            n = std::min(n, gdx_queue_avail(&q));
+            n = tcp_client.do_recv((char *) buf, n);
+            for (int i = 0; i < n; ++i) {
+                WriteMem8_nommu(buf_addr + q.tail, buf[i]);
+                gdx_queue_push(&q, 0);
+            }
+            WriteMem16_nommu(symbols["gdx_rxq"] + 2, q.tail);
+        }
+    }
+
+}
+
 
 std::string Gdxsv::GenerateLoginKey() {
     const int n = 8;
@@ -373,7 +319,71 @@ std::string Gdxsv::GenerateLoginKey() {
     return key;
 }
 
+void Gdxsv::WritePatchDisk1() {
+    const u32 offset = 0x8C000000 + 0x00010000;
+
+    // Reduce max lag-frame
+    WriteMem8_nommu(offset + 0x00047f60, maxlag);
+    WriteMem8_nommu(offset + 0x00047f66, maxlag);
+
+    // Modem connection fix
+    const char *atm1 = "ATM1\r                                ";
+    for (int i = 0; i < strlen(atm1); ++i) {
+        WriteMem8_nommu(offset + 0x0015e703 + i, u8(atm1[i]));
+    }
+
+    // Overwrite serve address (max 20 chars)
+    for (int i = 0; i < 20; ++i) {
+        WriteMem8_nommu(offset + 0x0015e788 + i, (i < server.length()) ? u8(server[i]) : u8(0));
+    }
+
+    // Skip form validation
+    WriteMem16_nommu(offset + 0x0003b0c4, u16(9)); // nop
+    WriteMem16_nommu(offset + 0x0003b0cc, u16(9)); // nop
+    WriteMem16_nommu(offset + 0x0003b0d4, u16(9)); // nop
+    WriteMem16_nommu(offset + 0x0003b0dc, u16(9)); // nop
+
+    // Write LoginKey
+    if (ReadMem8_nommu(offset - 0x10000 + 0x002f6924) == 0) {
+        for (int i = 0; i < std::min(loginkey.length(), size_t(8)) + 1; ++i) {
+            WriteMem8_nommu(offset - 0x10000 + 0x002f6924 + i,
+                            (i < loginkey.length()) ? u8(loginkey[i]) : u8(0));
+        }
+    }
+}
+
 void Gdxsv::WritePatchDisk2() {
+    const u32 offset = 0x8C000000 + 0x00010000;
+
+    // Reduce max lag-frame
+    WriteMem8_nommu(offset + 0x00035348, maxlag);
+    WriteMem8_nommu(offset + 0x0003534e, maxlag);
+
+    // Modem connection fix
+    const char *atm1 = "ATM1\r                                ";
+    for (int i = 0; i < strlen(atm1); ++i) {
+        WriteMem8_nommu(offset + 0x001be7c7 + i, u8(atm1[i]));
+    }
+
+    // Overwrite serve address (max 20 chars)
+    for (int i = 0; i < 20; ++i) {
+        WriteMem8_nommu(offset + 0x001be84c + i, (i < server.length()) ? u8(server[i]) : u8(0));
+    }
+
+    // Skip form validation
+    WriteMem16_nommu(offset + 0x000284f0, u16(9)); // nop
+    WriteMem16_nommu(offset + 0x000284f8, u16(9)); // nop
+    WriteMem16_nommu(offset + 0x00028500, u16(9)); // nop
+    WriteMem16_nommu(offset + 0x00028508, u16(9)); // nop
+
+    // Write LoginKey
+    if (ReadMem8_nommu(offset - 0x10000 + 0x00392064) == 0) {
+        for (int i = 0; i < std::min(loginkey.length(), size_t(8)) + 1; ++i) {
+            WriteMem8_nommu(offset - 0x10000 + 0x00392064 + i,
+                            (i < loginkey.length()) ? u8(loginkey[i]) : u8(0));
+        }
+    }
+
 #include "gdxsv_disk2.patch"
 }
 

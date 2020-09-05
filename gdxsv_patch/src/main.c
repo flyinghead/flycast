@@ -3,7 +3,7 @@ typedef unsigned short u16;
 typedef unsigned int u32;
 
 #define CALL_ORG_FUNC 0
-#define DEBUG_PRINT 0
+#define DEBUG_PRINT 1
 
 #define GDXDATA __attribute__((section("gdx.data")))
 #define GDXFUNC __attribute__((section("gdx.func")))
@@ -142,7 +142,6 @@ int GDXFUNC gdx_sock_create(int param1, int param2, int param3) {
 
 int GDXFUNC gdx_sock_close(int param1) {
     gdx_printf("%s %d\n", __FUNCTION__, param1);
-    PRINT_RETURN_ADDR
 
 #if CALL_ORG_FUNC
     int org_ret = ((int (*)(int)) 0x0c1a87a0)(param1);
@@ -158,6 +157,7 @@ int GDXFUNC gdx_sock_close(int param1) {
 
 void *GDXFUNC gdx_gethostbyname(const char *param1) {
     gdx_printf("%s %s\n", __FUNCTION__, param1);
+
 #if CALL_ORG_FUNC
     void *org_ret = ((void *(*)(const char *)) 0x0c1a71c0)(param1);
     struct hostent *ent = (struct hostent *) org_ret;
@@ -194,6 +194,7 @@ int GDXFUNC connect_sock(int sock, struct sockaddr_t *sock_addr, int len) {
     int org_ret = ((void *(*)(int, struct sockaddr_t *, int)) 0x0c1a76b8)(sock, sock_addr, len);
     return org_ret;
 #else
+    is_online = 1;
     gdx_queue_init(&gdx_rxq);
     gdx_queue_init(&gdx_txq);
     u32 addr = sock_addr->sin_addr;
@@ -252,16 +253,20 @@ int GDXFUNC gdx_lbs_sock_read(u32 sock, u8 *buf, u32 size) {
     gdx_printf("\n");
     return org_ret;
 #else
-    int n = gdx_queue_size(&gdx_rxq);
-    if (size < n) n = size;
-    for (int i = 0; i < n; ++i) {
-        write8(buf + i, gdx_queue_pop(&gdx_rxq));
+    if (is_online) {
+        int n = gdx_queue_size(&gdx_rxq);
+        if (size < n) n = size;
+        for (int i = 0; i < n; ++i) {
+            write8(buf + i, gdx_queue_pop(&gdx_rxq));
+        }
+        for (int i = 0; i < n; ++i) {
+            gdx_printf("%02x", buf[i]);
+        }
+        gdx_printf("\n");
+        return n;
+    } else {
+        return -1;
     }
-    for (int i = 0; i < n; ++i) {
-        gdx_printf("%02x", buf[i]);
-    }
-    gdx_printf("\n");
-    return n;
 #endif
 }
 
@@ -321,27 +326,26 @@ int GDXFUNC ppp_get_status(u8 *param1) {
     PRINT_RETURN_ADDR;
 #if CALL_ORG_FUNC
     int org_ret = ((int (*)(u8 *)) 0x0c1a9766)(param1);
-    for (int i = 0; i < 12; ++i) {
+    for (int i = 0; i < 9; ++i) {
         gdx_printf("%08x: %02x\n", param1 + i, read8(param1 + i));
     }
     gdx_printf("org_ret = %d\n", org_ret);
     return org_ret;
 #else
+    param1[0] = 0x01;
+    param1[1] = 0xa7;
+    param1[2] = 0xa8;
+    param1[3] = 0xc0;
+    param1[4] = 0x02;
+    param1[5] = 0xa7;
+    param1[6] = 0xa8;
+    param1[7] = 0xc0;
     if (is_online) {
-        param1[0] = 0x01;
-        param1[1] = 0xa7;
-        param1[2] = 0xa8;
-        param1[3] = 0xc0;
-        param1[4] = 0x02;
-        param1[5] = 0xa7;
-        param1[6] = 0xa8;
-        param1[7] = 0xc0;
         param1[8] = 0x04;
-        return 0;
     } else {
         param1[8] = 0x00;
-        return 0;
     }
+    return 0;
 #endif
 }
 
