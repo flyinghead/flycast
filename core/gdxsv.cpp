@@ -197,6 +197,10 @@ void Gdxsv::Update() {
 
     UpdateNetwork();
 
+    NOTICE_LOG(COMMON, "COMconnect %d", ReadMem8_nommu(0x0c391d76));
+    NOTICE_LOG(COMMON, "COMconnect_1 %d", ReadMem8_nommu(0x0c391d77));
+    NOTICE_LOG(COMMON, "COM_R_Disconnect %d", ReadMem8_nommu(0x0c391d82));
+
     if (ReadMem8_nommu(symbols["initialized"]) == 0) {
         NOTICE_LOG(COMMON, "Rewrite patch");
         if (disk == 2) {

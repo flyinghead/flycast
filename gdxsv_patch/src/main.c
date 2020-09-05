@@ -208,6 +208,34 @@ int GDXFUNC connect_sock(int sock, struct sockaddr_t *sock_addr, int len) {
 #endif
 }
 
+int GDXFUNC ppp_get_status(u8 *param1) {
+    gdx_printf("%s %08x\n", __FUNCTION__, param1);
+    PRINT_RETURN_ADDR;
+#if CALL_ORG_FUNC
+    int org_ret = ((int (*)(u8 *)) 0x0c1a9766)(param1);
+    for (int i = 0; i < 9; ++i) {
+        gdx_printf("%08x: %02x\n", param1 + i, read8(param1 + i));
+    }
+    gdx_printf("org_ret = %d\n", org_ret);
+    return org_ret;
+#else
+    param1[0] = 0x01;
+    param1[1] = 0xa7;
+    param1[2] = 0xa8;
+    param1[3] = 0xc0;
+    param1[4] = 0x02;
+    param1[5] = 0xa7;
+    param1[6] = 0xa8;
+    param1[7] = 0xc0;
+    if (is_online) {
+        param1[8] = 0x04;
+    } else {
+        param1[8] = 0x00;
+    }
+    return 0;
+#endif
+}
+
 int GDXFUNC gdx_select(u32 param1, void *param2, u32 param3, void *param4, u32 param5) {
     gdx_printf("%s %d %08x %d %d %d\n", __FUNCTION__, param1, param2, param3, param4, param5);
 #if CALL_ORG_FUNC
@@ -315,55 +343,12 @@ int GDXFUNC gdx_mcs_sock_write(u32 sock, u8 *buf, u32 size, int unk) {
 #endif
 }
 
-void GDXFUNC debug_call_tk_logout() {
-    gdx_printf("%s\n", __FUNCTION__);
-    PRINT_RETURN_ADDR;
-    ((void (*)()) 0x0c033138)();
-}
-
-int GDXFUNC ppp_get_status(u8 *param1) {
-    gdx_printf("%s %08x\n", __FUNCTION__, param1);
-    PRINT_RETURN_ADDR;
-#if CALL_ORG_FUNC
-    int org_ret = ((int (*)(u8 *)) 0x0c1a9766)(param1);
-    for (int i = 0; i < 9; ++i) {
-        gdx_printf("%08x: %02x\n", param1 + i, read8(param1 + i));
-    }
-    gdx_printf("org_ret = %d\n", org_ret);
-    return org_ret;
-#else
-    param1[0] = 0x01;
-    param1[1] = 0xa7;
-    param1[2] = 0xa8;
-    param1[3] = 0xc0;
-    param1[4] = 0x02;
-    param1[5] = 0xa7;
-    param1[6] = 0xa8;
-    param1[7] = 0xc0;
-    if (is_online) {
-        param1[8] = 0x04;
-    } else {
-        param1[8] = 0x00;
-    }
-    return 0;
-#endif
-}
-
 
 void GDXFUNC gdx_initialize() {
     gdx_printf("gdx_initialize\n");
     gdx_queue_init(&gdx_rxq);
     gdx_queue_init(&gdx_txq);
-    is_online = 1;
-
-    // write32(BIN_OFFSET + 0x0c022058, debug_call_tk_logout);
-    // write32(BIN_OFFSET + 0x0c0313ac, debug_call_tk_logout);
-
-    write32(BIN_OFFSET + 0x0c045ad8, ppp_get_status);
-    write32(BIN_OFFSET + 0x0c034fc4, ppp_get_status);
-    write32(BIN_OFFSET + 0x0c033004, ppp_get_status);
-    write32(BIN_OFFSET + 0x0c0228cc, ppp_get_status);
-    write32(BIN_OFFSET + 0x0c022424, ppp_get_status);
+    is_online = 0;
 
     write32(BIN_OFFSET + 0x0c0228f8, gdx_sock_create);
     write32(BIN_OFFSET + 0x0c045504, gdx_sock_create);
@@ -380,10 +365,24 @@ void GDXFUNC gdx_initialize() {
     write32(BIN_OFFSET + 0x0c04550c, connect_sock);
     write32(BIN_OFFSET + 0x0c033ec0, gdx_select);
     write32(BIN_OFFSET + 0x0c045818, gdx_select);
+    write32(BIN_OFFSET + 0x0c045ad8, ppp_get_status);
+    write32(BIN_OFFSET + 0x0c034fc4, ppp_get_status);
+    write32(BIN_OFFSET + 0x0c033004, ppp_get_status);
+    write32(BIN_OFFSET + 0x0c0228cc, ppp_get_status);
+    write32(BIN_OFFSET + 0x0c022424, ppp_get_status);
     write32(BIN_OFFSET + 0x0c033fd8, gdx_lbs_sock_read);
     write32(BIN_OFFSET + 0x0c034464, gdx_lbs_sock_write);
     write32(BIN_OFFSET + 0x0c046678, gdx_mcs_sock_read);
     write32(BIN_OFFSET + 0x0c045820, gdx_mcs_sock_write);
+
+#if CALL_ORG_FUNC
+#else
+    // skip ppp finalize
+    for (u32 p = 0x0c022818; p <= 0x0c02282e; p += 2) {
+        write16(BIN_OFFSET + p, 0x0009);
+    }
+#endif
+
     initialized |= 1;
 }
 
@@ -392,8 +391,10 @@ void GDXFUNC gdx_initialize() {
 void GDXMAIN gdx_main() {
     gdx_initialize();
 #if CALL_ORG_FUNC
+    // start dialing step
     write8(0x0c391d79, 1);
 #else
+    // skip dialing step
     write8(0x0c391d79, 2);
 #endif
 }
