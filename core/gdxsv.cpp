@@ -137,6 +137,9 @@ namespace {
     GdxTcpClient tcp_client;
 }
 
+bool Gdxsv::Enabled() {
+    return enabled;
+}
 
 void Gdxsv::Reset() {
     if (settings.dreamcast.ContentPath.empty()) {
@@ -187,6 +190,7 @@ void Gdxsv::Reset() {
     }
 
     tcp_client.do_close();
+    last_update = std::chrono::high_resolution_clock::now();
     NOTICE_LOG(COMMON, "gdxsv disk:%d server:%s loginkey:%s maxlag:%d", disk, server.c_str(), loginkey.c_str(), maxlag);
 }
 
@@ -194,12 +198,6 @@ void Gdxsv::Update() {
     if (!enabled) {
         return;
     }
-
-    UpdateNetwork();
-
-    NOTICE_LOG(COMMON, "COMconnect %d", ReadMem8_nommu(0x0c391d76));
-    NOTICE_LOG(COMMON, "COMconnect_1 %d", ReadMem8_nommu(0x0c391d77));
-    NOTICE_LOG(COMMON, "COM_R_Disconnect %d", ReadMem8_nommu(0x0c391d82));
 
     if (ReadMem8_nommu(symbols["initialized"]) == 0) {
         NOTICE_LOG(COMMON, "Rewrite patch");
@@ -228,47 +226,49 @@ void Gdxsv::UpdateNetwork() {
     gdx_rpc_t gdx_rpc;
     u32 gdx_rpc_addr = symbols["gdx_rpc"];
     gdx_rpc.request = ReadMem32_nommu(gdx_rpc_addr);
-    gdx_rpc.response = ReadMem32_nommu(gdx_rpc_addr + 4);
-    gdx_rpc.param1 = ReadMem32_nommu(gdx_rpc_addr + 8);
-    gdx_rpc.param2 = ReadMem32_nommu(gdx_rpc_addr + 12);
-    gdx_rpc.param3 = ReadMem32_nommu(gdx_rpc_addr + 16);
-    gdx_rpc.param4 = ReadMem32_nommu(gdx_rpc_addr + 20);
+    if (gdx_rpc.request) {
+        gdx_rpc.response = ReadMem32_nommu(gdx_rpc_addr + 4);
+        gdx_rpc.param1 = ReadMem32_nommu(gdx_rpc_addr + 8);
+        gdx_rpc.param2 = ReadMem32_nommu(gdx_rpc_addr + 12);
+        gdx_rpc.param3 = ReadMem32_nommu(gdx_rpc_addr + 16);
+        gdx_rpc.param4 = ReadMem32_nommu(gdx_rpc_addr + 20);
 
-    if (gdx_rpc.request == RPC_TCP_OPEN) {
-        u32 tolobby = gdx_rpc.param1;
-        u32 host_ip = gdx_rpc.param2;
-        u32 port_no = gdx_rpc.param3;
+        if (gdx_rpc.request == RPC_TCP_OPEN) {
+            u32 tolobby = gdx_rpc.param1;
+            u32 host_ip = gdx_rpc.param2;
+            u32 port_no = gdx_rpc.param3;
 
-        std::string host = server;
-        u16 port = port_no;
+            std::string host = server;
+            u16 port = port_no;
 
-        if (tolobby != 1) {
-            union {
-                u32 _u32;
-                u8 _u8[4];
-            } ipv4addr;
-            ipv4addr._u32 = host_ip;
-            auto ip = ipv4addr._u8;
-            char buf[1024] = {0};
-            sprintf(buf, "%d.%d.%d.%d", ip[0], ip[1], ip[2], ip[3]);
-            host = std::string(buf);
+            if (tolobby != 1) {
+                union {
+                    u32 _u32;
+                    u8 _u8[4];
+                } ipv4addr;
+                ipv4addr._u32 = host_ip;
+                auto ip = ipv4addr._u8;
+                char buf[1024] = {0};
+                sprintf(buf, "%d.%d.%d.%d", ip[0], ip[1], ip[2], ip[3]);
+                host = std::string(buf);
+            }
+            bool ok = tcp_client.do_connect(host.c_str(), port);
+            if (!ok) {
+                WARN_LOG(COMMON, "Failed to connect %s:%d", host.c_str(), port);
+            }
         }
-        bool ok = tcp_client.do_connect(host.c_str(), port);
-        if (!ok) {
-            WARN_LOG(COMMON, "Failed to connect %s:%d", host.c_str(), port);
+
+        if (gdx_rpc.request == RPC_TCP_CLOSE) {
+            tcp_client.do_close();
         }
-    }
 
-    if (gdx_rpc.request == RPC_TCP_CLOSE) {
-        tcp_client.do_close();
+        WriteMem32_nommu(gdx_rpc_addr, 0);
+        WriteMem32_nommu(gdx_rpc_addr + 4, 0);
+        WriteMem32_nommu(gdx_rpc_addr + 8, 0);
+        WriteMem32_nommu(gdx_rpc_addr + 12, 0);
+        WriteMem32_nommu(gdx_rpc_addr + 16, 0);
+        WriteMem32_nommu(gdx_rpc_addr + 20, 0);
     }
-
-    WriteMem32_nommu(gdx_rpc_addr, 0);
-    WriteMem32_nommu(gdx_rpc_addr + 4, 0);
-    WriteMem32_nommu(gdx_rpc_addr + 8, 0);
-    WriteMem32_nommu(gdx_rpc_addr + 12, 0);
-    WriteMem32_nommu(gdx_rpc_addr + 16, 0);
-    WriteMem32_nommu(gdx_rpc_addr + 20, 0);
 
     {
         gdx_queue q;
@@ -307,6 +307,13 @@ void Gdxsv::UpdateNetwork() {
         }
     }
 
+    /*
+    auto end_time = std::chrono::high_resolution_clock::now();
+    ms = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - now).count();
+    if (2 <= ms) {
+        NOTICE_LOG(COMMON, "Gdxsv::UpdateNetwork() took %d ms", ms);
+    }
+     */
 }
 
 

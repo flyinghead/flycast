@@ -14,6 +14,7 @@
 #include "hw/pvr/pvr_mem.h"
 #include "hw/sh4/sh4_mem.h"
 #include "reios/reios.h"
+#include "gdxsv.h"
 
 MemChip *sys_rom;
 MemChip *sys_nvmem;
@@ -351,7 +352,10 @@ T DYNACALL ReadMem_area0(u32 addr)
 			return 0;
 		}
 	}
-	INFO_LOG(MEMORY, "Read from area0<%d> not implemented [Unassigned], addr=%x", sz, addr);
+	if (gdxsv.Enabled() && addr == 0x00400000) {
+	    gdxsv.UpdateNetwork();
+	}
+    INFO_LOG(MEMORY, "Read from area0<%d> not implemented [Unassigned], addr=%x", sz, addr);
 	return 0;
 }
 

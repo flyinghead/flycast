@@ -2,6 +2,7 @@
 
 #include <string>
 #include <deque>
+#include <chrono>
 
 #include "types.h"
 #include "cfg/cfg.h"
@@ -11,6 +12,7 @@
 class Gdxsv
 {
 public:
+    bool Enabled();
 	void Reset();
 	void Update();
     void UpdateNetwork();
@@ -25,6 +27,7 @@ private:
 	std::string server;
 	std::string loginkey;
 	std::map<std::string, u32> symbols;
+    std::chrono::system_clock::time_point last_update;
 };
 
 extern Gdxsv gdxsv;

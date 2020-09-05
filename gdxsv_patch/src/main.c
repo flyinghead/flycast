@@ -14,6 +14,7 @@ typedef unsigned int u32;
 #define BIN_OFFSET 0x80000000
 #define GDX_QUEUE_SIZE 1024
 
+
 enum {
     RPC_TCP_OPEN = 1,
     RPC_TCP_CLOSE = 2,
@@ -84,6 +85,7 @@ GDXDATA char print_buf[1024] = {0};
 struct hostent host_entry GDXDATA = {0};
 u8 *host_addr_list[1] GDXDATA = {0};
 u8 host_addr_0[4] GDXDATA = {0};
+volatile GDXDATA u8 dummy = 0;
 struct gdx_rpc_t gdx_rpc GDXDATA = {0};
 struct gdx_queue gdx_rxq GDXDATA = {0};
 struct gdx_queue gdx_txq GDXDATA = {0};
@@ -127,6 +129,10 @@ void GDXFUNC write16(u32 addr, u16 value) {
 void GDXFUNC write8(u32 addr, u8 value) {
     u8 *p = addr;
     *p = value;
+}
+
+void GDXFUNC gdx_flush() {
+    dummy = read8(0x00400000);
 }
 
 int GDXFUNC gdx_sock_create(int param1, int param2, int param3) {
@@ -244,6 +250,7 @@ int GDXFUNC gdx_select(u32 param1, void *param2, u32 param3, void *param4, u32 p
     return org_ret;
 #else
     if (is_online) {
+        gdx_flush();
         return 0 < gdx_queue_size(&gdx_rxq);
     } else {
         return -1;
@@ -266,6 +273,7 @@ int GDXFUNC gdx_lbs_sock_write(u32 sock, u8 *buf, u32 size) {
     for (int i = 0; i < n; ++i) {
         gdx_queue_push(&gdx_txq, buf[i]);
     }
+    gdx_flush();
     return n;
 #endif
 }
@@ -308,6 +316,7 @@ int GDXFUNC gdx_mcs_sock_read(u32 sock, u8 *buf, u32 size) {
     gdx_printf("\n");
     return org_ret;
 #else
+    gdx_flush();
     int n = gdx_queue_size(&gdx_rxq);
     if (size < n) n = size;
     for (int i = 0; i < n; ++i) {
@@ -382,7 +391,6 @@ void GDXFUNC gdx_initialize() {
         write16(BIN_OFFSET + p, 0x0009);
     }
 #endif
-
     initialized |= 1;
 }
 
