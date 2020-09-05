@@ -23,7 +23,7 @@ namespace {
         u8 name2[128];
     };
 
-    static const int GDX_QUEUE_SIZE = 512;
+    static const int GDX_QUEUE_SIZE = 1024;
 
     struct gdx_queue {
         u16 head;
@@ -357,101 +357,6 @@ void Gdxsv::Update() {
                 WriteMem16_nommu(symbols["gdx_rxq"] + 2, q.tail);
             }
         }
-
-        /*
-        recv_data_lock.lock();
-        if (!recv_data.empty()) {
-            gdx_queue q;
-            q.head = ReadMem16_nommu(symbols["gdx_rxq"]);
-            q.tail = ReadMem16_nommu(symbols["gdx_rxq"] + 2);
-            u32 buf_addr = symbols["gdx_rxq"] + 4;
-
-            int count = 0;
-            while (gdx_queue_size(&q) + 1 < GDX_QUEUE_SIZE && !recv_data.empty()) {
-                u8 data = recv_data.front();
-                sprintf(dump_buf + count * 2, "%02x", data);
-                WriteMem8_nommu(buf_addr + q.tail, data);
-                q.tail = (q.tail + 1) % GDX_QUEUE_SIZE;
-                recv_data.pop_front();
-                count++;
-            }
-            dump_buf[count * 2] = 0;
-            NOTICE_LOG(COMMON, "flycast queue write : %s", dump_buf);
-            NOTICE_LOG(COMMON, "flycast queue size:%d head:%d tail:%d", gdx_queue_size(&q), q.head, q.tail);
-            WriteMem16_nommu(symbols["gdx_rxq"] + 2, q.tail);
-        }
-        recv_data_lock.unlock();
-         */
-    }
-}
-
-void Gdxsv::OnPPPRecv(u8 c) {
-    if (!enabled) {
-        return;
-    }
-    auto &buf = ppp_recv_buf;
-    buf.push_back(c);
-    bool is_ppp_frame = 2 <= buf.size() && buf.front() == 0x7e && buf.back() == 0x7e;
-    if (is_ppp_frame) {
-        for (auto i = 0; i < buf.size(); ++i) {
-            if (buf[i] == 0x7d) {
-                buf[i + 1] ^= 0x20;
-                buf.erase(buf.begin() + i); // order
-            }
-        }
-        auto it_0x21 = std::find(buf.begin(), buf.end(), (u8) 0x21);
-        if (it_0x21 != buf.end() && (it_0x21 - buf.begin()) <= 6 && 40 <= buf.size()) {
-            int ip_h = 1 + (it_0x21 - buf.begin());
-            int ip_header_size = (buf[ip_h] & 0x0f) * 4;
-            int ip_size = int(buf[ip_h + 2]) << 8 | buf[ip_h + 3];
-            int proto_id = buf[ip_h + 9];
-            // tcp
-            if (proto_id == 6) {
-                int tcp_h = ip_h + ip_header_size;
-                // int src_port = int(buf[tcp_h + 0]) << 8 | buf[tcp_h + 1];
-                // int dst_port = int(buf[tcp_h + 2]) << 8 | buf[tcp_h + 3];
-                uint32_t seq = uint32_t(buf[tcp_h + 4]) << 24 |
-                               uint32_t(buf[tcp_h + 5]) << 16 |
-                               uint32_t(buf[tcp_h + 6]) << 8 |
-                               uint32_t(buf[tcp_h + 7]);
-                int tcp_header_size = (buf[tcp_h + 12] >> 4) * 4;
-                const int n = (ip_h + ip_size) - (tcp_h + tcp_header_size);
-                if (0 < n) {
-                    static u8 mcs_first_data[] = {0x0e, 0x61, 0x00, 0x22, 0x10, 0x31};
-                    bool is_mcs_first_data = sizeof(mcs_first_data) <= n &&
-                                             memcmp(mcs_first_data, &buf[tcp_h + tcp_header_size],
-                                                    sizeof(mcs_first_data)) == 0;
-                    recv_data_lock.lock();
-                    if (is_mcs_first_data) {
-                        recv_data.clear();
-                        WriteMem32_nommu(symbols["gdx_rxq"], 0); // BAD
-                        NOTICE_LOG(COMMON, "Clear recv_data");
-                        next_seq_no = seq;
-                    }
-                    if (seq == next_seq_no) {
-                        // NOTICE_LOG(COMMON, "good seq_no :%d", seq);
-                        for (int i = 0; i < n; ++i) {
-                            recv_data.push_back(buf[tcp_h + tcp_header_size + i]);
-                        }
-                        next_seq_no = seq + n;
-                        /*
-                        std::vector<char> data(16 + n * 2, 0);
-                        for (int i = 0; i < n; ++i) {
-                            sprintf(&data[0] + i * 2, "%02x", int(buf[tcp_h + tcp_header_size + i]));
-                        }
-                        NOTICE_LOG(COMMON, "[gdxsv]recv data:%s", data.begin());
-                         */
-                    } else {
-                        NOTICE_LOG(COMMON, "invalid seq_no expected:%d actual:%d", next_seq_no, seq);
-                    }
-                    recv_data_lock.unlock();
-                }
-            }
-        }
-    }
-
-    if (is_ppp_frame) {
-        ppp_recv_buf.clear();
     }
 }
 

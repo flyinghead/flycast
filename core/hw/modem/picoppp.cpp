@@ -146,7 +146,6 @@ static int modem_write(struct pico_device *dev, const void *data, int len)
 	in_buffer_lock.lock();
 	while (len > 0)
 	{
-	    gdxsv.OnPPPRecv(*p);
 #ifdef MODEM_DEBUG
 		modem_write_dump.push(*p);
 #endif

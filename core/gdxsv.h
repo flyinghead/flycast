@@ -20,7 +20,6 @@ class Gdxsv
 public:
 	void Reset();
 	void Update();
-	void OnPPPRecv(u8 p);
 
 private:
 	std::string GenerateLoginKey();
