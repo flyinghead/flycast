@@ -131,8 +131,12 @@ void GDXFUNC write8(u32 addr, u8 value) {
     *p = value;
 }
 
-void GDXFUNC gdx_flush() {
+void GDXFUNC gdx_read_sync() {
     dummy = read8(0x00400000);
+}
+
+void GDXFUNC gdx_write_sync() {
+    dummy = read8(0x00400001);
 }
 
 int GDXFUNC gdx_sock_create(int param1, int param2, int param3) {
@@ -210,6 +214,7 @@ int GDXFUNC connect_sock(int sock, struct sockaddr_t *sock_addr, int len) {
     gdx_rpc.param1 = addr == 0x0707;
     gdx_rpc.param2 = addr;
     gdx_rpc.param3 = port;
+    gdx_read_sync();
     return 1;
 #endif
 }
@@ -250,7 +255,7 @@ int GDXFUNC gdx_select(u32 param1, void *param2, u32 param3, void *param4, u32 p
     return org_ret;
 #else
     if (is_online) {
-        gdx_flush();
+        gdx_read_sync();
         return 0 < gdx_queue_size(&gdx_rxq);
     } else {
         return -1;
@@ -273,7 +278,7 @@ int GDXFUNC gdx_lbs_sock_write(u32 sock, u8 *buf, u32 size) {
     for (int i = 0; i < n; ++i) {
         gdx_queue_push(&gdx_txq, buf[i]);
     }
-    gdx_flush();
+    gdx_write_sync();
     return n;
 #endif
 }
@@ -290,6 +295,7 @@ int GDXFUNC gdx_lbs_sock_read(u32 sock, u8 *buf, u32 size) {
     return org_ret;
 #else
     if (is_online) {
+        gdx_read_sync();
         int n = gdx_queue_size(&gdx_rxq);
         if (size < n) n = size;
         for (int i = 0; i < n; ++i) {
@@ -316,17 +322,21 @@ int GDXFUNC gdx_mcs_sock_read(u32 sock, u8 *buf, u32 size) {
     gdx_printf("\n");
     return org_ret;
 #else
-    gdx_flush();
-    int n = gdx_queue_size(&gdx_rxq);
-    if (size < n) n = size;
-    for (int i = 0; i < n; ++i) {
-        write8(buf + i, gdx_queue_pop(&gdx_rxq));
+    if (is_online) {
+        gdx_read_sync();
+        int n = gdx_queue_size(&gdx_rxq);
+        if (size < n) n = size;
+        for (int i = 0; i < n; ++i) {
+            write8(buf + i, gdx_queue_pop(&gdx_rxq));
+        }
+        for (int i = 0; i < n; i++) {
+            gdx_printf("%02x", buf[i]);
+        }
+        gdx_printf("\n");
+        return n;
+    } else {
+        return -1;
     }
-    for (int i = 0; i < n; i++) {
-        gdx_printf("%02x", buf[i]);
-    }
-    gdx_printf("\n");
-    return n;
 #endif
 }
 
@@ -348,6 +358,7 @@ int GDXFUNC gdx_mcs_sock_write(u32 sock, u8 *buf, u32 size, int unk) {
     for (int i = 0; i < n; ++i) {
         gdx_printf("%02x", buf[i]);
     }
+    gdx_write_sync();
     return n;
 #endif
 }

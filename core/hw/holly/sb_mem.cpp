@@ -352,8 +352,8 @@ T DYNACALL ReadMem_area0(u32 addr)
 			return 0;
 		}
 	}
-	if (gdxsv.Enabled() && addr == 0x00400000) {
-	    gdxsv.UpdateNetwork();
+	if (gdxsv.Enabled() && (addr == 0x00400000 || addr == 0x00400001)) {
+	    gdxsv.SyncNetwork(addr & 1);
 	}
     INFO_LOG(MEMORY, "Read from area0<%d> not implemented [Unassigned], addr=%x", sz, addr);
 	return 0;

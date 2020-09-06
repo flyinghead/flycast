@@ -64,14 +64,6 @@ namespace {
         fclose(fp);
     }
 
-    void dump_memory(const char *prefix, u32 addr, size_t size) {
-        for (int i = 0; i < size; ++i) {
-            sprintf(reinterpret_cast<char *>(dump_buf + i * 2), "%02x", ReadMem8_nommu(addr + i));
-        }
-        dump_buf[size * 2] = 0;
-        NOTICE_LOG(COMMON, "%s : %s", prefix, dump_buf);
-    }
-
     class GdxTcpClient {
         sock_t sock = INVALID_SOCKET;
 
@@ -84,13 +76,12 @@ namespace {
                 WARN_LOG(COMMON, "do_connect fail 1 %d", get_last_error());
                 return false;
             }
-
-            set_tcp_nodelay(new_sock);
             auto host_entry = gethostbyname(host);
             struct sockaddr_in addr;
             addr.sin_family = AF_INET;
             addr.sin_addr = *((LPIN_ADDR) host_entry->h_addr_list[0]);
             addr.sin_port = htons(port);
+            set_recv_timeout(new_sock, 5000);
             if (::connect(new_sock, (const sockaddr *) &addr, sizeof(addr)) != NO_ERROR) {
                 WARN_LOG(COMMON, "do_connect fail 2 %d", get_last_error());
                 return false;
@@ -100,6 +91,8 @@ namespace {
                 closesocket(sock);
             }
 
+            set_tcp_nodelay(new_sock);
+            set_recv_timeout(new_sock, 1);
             sock = new_sock;
             return true;
         }
@@ -109,11 +102,23 @@ namespace {
         }
 
         int do_recv(char *buf, int len) {
-            return ::recv(sock, buf, len, 0);
+            int n = ::recv(sock, buf, len, 0);
+            if (n < 0 && get_last_error() != L_EAGAIN && get_last_error() != L_EWOULDBLOCK) {
+                NOTICE_LOG(COMMON, "recv failed. errno=%d", get_last_error());
+                do_close();
+            }
+            if (n < 0) return 0;
+            return n;
         }
 
         int do_send(const char *buf, int len) {
-            return ::send(sock, buf, len, 0);
+            int n = ::send(sock, buf, len, 0);
+            if (n < 0 && get_last_error() != L_EAGAIN && get_last_error() != L_EWOULDBLOCK) {
+                NOTICE_LOG(COMMON, "send failed. errno=%d", get_last_error());
+                do_close();
+            }
+            if (n < 0) return 0;
+            return n;
         }
 
         void do_close() {
@@ -137,6 +142,17 @@ namespace {
     GdxTcpClient tcp_client;
 }
 
+Gdxsv::Gdxsv() : enabled(false), disk(0), maxlag(10), net_terminate(false) {
+}
+
+Gdxsv::~Gdxsv() {
+    tcp_client.do_close();
+    net_terminate = true;
+    if (net_thread.joinable()) {
+        net_thread.join();
+    }
+}
+
 bool Gdxsv::Enabled() {
     return enabled;
 }
@@ -152,6 +168,14 @@ void Gdxsv::Reset() {
         return;
     }
     enabled = 1;
+
+    if (!net_thread.joinable()) {
+        NOTICE_LOG(COMMON, "start net thread");
+        net_thread = std::thread([this]() {
+            UpdateNetwork();
+            NOTICE_LOG(COMMON, "end net thread");
+        });
+    }
 
     WSADATA wsaData;
     if (WSAStartup(MAKEWORD(2, 0), &wsaData) != 0) {
@@ -190,7 +214,6 @@ void Gdxsv::Reset() {
     }
 
     tcp_client.do_close();
-    last_update = std::chrono::high_resolution_clock::now();
     NOTICE_LOG(COMMON, "gdxsv disk:%d server:%s loginkey:%s maxlag:%d", disk, server.c_str(), loginkey.c_str(), maxlag);
 }
 
@@ -218,104 +241,131 @@ void Gdxsv::Update() {
     }
 }
 
-void Gdxsv::UpdateNetwork() {
-    if (!enabled) {
-        return;
-    }
+void Gdxsv::SyncNetwork(bool write) {
+    std::lock_guard<std::mutex> net_lock(net_mtx);
 
-    gdx_rpc_t gdx_rpc;
-    u32 gdx_rpc_addr = symbols["gdx_rpc"];
-    gdx_rpc.request = ReadMem32_nommu(gdx_rpc_addr);
-    if (gdx_rpc.request) {
-        gdx_rpc.response = ReadMem32_nommu(gdx_rpc_addr + 4);
-        gdx_rpc.param1 = ReadMem32_nommu(gdx_rpc_addr + 8);
-        gdx_rpc.param2 = ReadMem32_nommu(gdx_rpc_addr + 12);
-        gdx_rpc.param3 = ReadMem32_nommu(gdx_rpc_addr + 16);
-        gdx_rpc.param4 = ReadMem32_nommu(gdx_rpc_addr + 20);
-
-        if (gdx_rpc.request == RPC_TCP_OPEN) {
-            u32 tolobby = gdx_rpc.param1;
-            u32 host_ip = gdx_rpc.param2;
-            u32 port_no = gdx_rpc.param3;
-
-            std::string host = server;
-            u16 port = port_no;
-
-            if (tolobby != 1) {
-                union {
-                    u32 _u32;
-                    u8 _u8[4];
-                } ipv4addr;
-                ipv4addr._u32 = host_ip;
-                auto ip = ipv4addr._u8;
-                char buf[1024] = {0};
-                sprintf(buf, "%d.%d.%d.%d", ip[0], ip[1], ip[2], ip[3]);
-                host = std::string(buf);
-            }
-            bool ok = tcp_client.do_connect(host.c_str(), port);
-            if (!ok) {
-                WARN_LOG(COMMON, "Failed to connect %s:%d", host.c_str(), port);
-            }
-        }
-
-        if (gdx_rpc.request == RPC_TCP_CLOSE) {
-            tcp_client.do_close();
-        }
-
-        WriteMem32_nommu(gdx_rpc_addr, 0);
-        WriteMem32_nommu(gdx_rpc_addr + 4, 0);
-        WriteMem32_nommu(gdx_rpc_addr + 8, 0);
-        WriteMem32_nommu(gdx_rpc_addr + 12, 0);
-        WriteMem32_nommu(gdx_rpc_addr + 16, 0);
-        WriteMem32_nommu(gdx_rpc_addr + 20, 0);
-    }
-
-    {
+    if (write) {
         gdx_queue q;
-        q.head = ReadMem16_nommu(symbols["gdx_txq"]);
-        q.tail = ReadMem16_nommu(symbols["gdx_txq"] + 2);
-        u32 buf_addr = symbols["gdx_txq"] + 4;
-        u8 buf[GDX_QUEUE_SIZE];
+        u32 gdx_txq_addr = symbols["gdx_txq"];
+        if (gdx_txq_addr == 0) return;
+        u32 buf_addr = gdx_txq_addr + 4;
+        q.head = ReadMem16_nommu(gdx_txq_addr);
+        q.tail = ReadMem16_nommu(gdx_txq_addr + 2);
         int n = gdx_queue_size(&q);
         if (0 < n) {
             for (int i = 0; i < n; ++i) {
-                buf[i] = ReadMem8_nommu(buf_addr + q.head);
+                send_buf.push_back(ReadMem8_nommu(buf_addr + q.head));
                 gdx_queue_pop(&q);
             }
-            WriteMem16_nommu(symbols["gdx_txq"], q.head);
-            tcp_client.do_send((char *) buf, n);
-            // TODO: handle return value
+            WriteMem16_nommu(gdx_txq_addr, q.head);
         }
-    }
+    } else {
+        gdx_rpc_t gdx_rpc;
+        u32 gdx_rpc_addr = symbols["gdx_rpc"];
+        if (gdx_rpc_addr == 0) return;
+        gdx_rpc.request = ReadMem32_nommu(gdx_rpc_addr);
+        if (gdx_rpc.request) {
+            gdx_rpc.response = ReadMem32_nommu(gdx_rpc_addr + 4);
+            gdx_rpc.param1 = ReadMem32_nommu(gdx_rpc_addr + 8);
+            gdx_rpc.param2 = ReadMem32_nommu(gdx_rpc_addr + 12);
+            gdx_rpc.param3 = ReadMem32_nommu(gdx_rpc_addr + 16);
+            gdx_rpc.param4 = ReadMem32_nommu(gdx_rpc_addr + 20);
 
-    {
-        u32 n = tcp_client.readable_size();
-        if (n) {
+            if (gdx_rpc.request == RPC_TCP_OPEN) {
+                recv_buf.clear();
+                send_buf.clear();
+
+                u32 tolobby = gdx_rpc.param1;
+                u32 host_ip = gdx_rpc.param2;
+                u32 port_no = gdx_rpc.param3;
+
+                std::string host = server;
+                u16 port = port_no;
+
+                if (tolobby != 1) {
+                    char addr_buf[INET_ADDRSTRLEN];
+                    inet_ntop(AF_INET, &host_ip, addr_buf, INET_ADDRSTRLEN);
+                    host = std::string(addr_buf);
+                }
+
+                bool ok = tcp_client.do_connect(host.c_str(), port);
+                if (!ok) {
+                    WARN_LOG(COMMON, "Failed to connect %s:%d", host.c_str(), port);
+                }
+            }
+
+            if (gdx_rpc.request == RPC_TCP_CLOSE) {
+                tcp_client.do_close();
+                recv_buf.clear();
+                send_buf.clear();
+            }
+
+            WriteMem32_nommu(gdx_rpc_addr, 0);
+            WriteMem32_nommu(gdx_rpc_addr + 4, 0);
+            WriteMem32_nommu(gdx_rpc_addr + 8, 0);
+            WriteMem32_nommu(gdx_rpc_addr + 12, 0);
+            WriteMem32_nommu(gdx_rpc_addr + 16, 0);
+            WriteMem32_nommu(gdx_rpc_addr + 20, 0);
+        }
+
+        if (recv_buf.size()) {
             gdx_queue q;
-            q.head = ReadMem16_nommu(symbols["gdx_rxq"]);
-            q.tail = ReadMem16_nommu(symbols["gdx_rxq"] + 2);
-            u32 buf_addr = symbols["gdx_rxq"] + 4;
+            u32 gdx_rxq_addr = symbols["gdx_rxq"];
+            u32 buf_addr = gdx_rxq_addr + 4;
+            q.head = ReadMem16_nommu(gdx_rxq_addr);
+            q.tail = ReadMem16_nommu(gdx_rxq_addr + 2);
 
             u8 buf[GDX_QUEUE_SIZE];
-            n = std::min(n, gdx_queue_avail(&q));
-            n = tcp_client.do_recv((char *) buf, n);
+            int n = std::min<int>(recv_buf.size(), gdx_queue_avail(&q));
             for (int i = 0; i < n; ++i) {
-                WriteMem8_nommu(buf_addr + q.tail, buf[i]);
+                WriteMem8_nommu(buf_addr + q.tail, recv_buf.front());
+                recv_buf.pop_front();
                 gdx_queue_push(&q, 0);
             }
-            WriteMem16_nommu(symbols["gdx_rxq"] + 2, q.tail);
+            WriteMem16_nommu(gdx_rxq_addr + 2, q.tail);
         }
     }
-
-    /*
-    auto end_time = std::chrono::high_resolution_clock::now();
-    ms = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - now).count();
-    if (2 <= ms) {
-        NOTICE_LOG(COMMON, "Gdxsv::UpdateNetwork() took %d ms", ms);
-    }
-     */
 }
 
+u32 Gdxsv::UpdateNetwork() {
+    u8 buf[GDX_QUEUE_SIZE];
+    while (!net_terminate) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        if (!tcp_client.is_connected()) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+            continue;
+        }
+
+        net_mtx.lock();
+        if (send_buf.size()) {
+            int n = std::min<int>(send_buf.size(), sizeof(buf));
+            for (int i = 0; i < n; ++i) {
+                buf[i] = send_buf.front();
+                send_buf.pop_front();
+            }
+            int m = tcp_client.do_send((char *) buf, n);
+            if (m < n) {
+                for (int i = n - 1; m <= i; --i) {
+                    send_buf.push_front(buf[i]);
+                }
+            }
+        }
+        net_mtx.unlock();
+
+        int n = tcp_client.readable_size();
+        if (0 < n) {
+            n = std::min(n, GDX_QUEUE_SIZE);
+            n = tcp_client.do_recv((char *) buf, n);
+            if (0 < n) {
+                net_mtx.lock();
+                for (int i = 0; i < n; ++i) {
+                    recv_buf.push_back(buf[i]);
+                }
+                net_mtx.unlock();
+            }
+        }
+    }
+}
 
 std::string Gdxsv::GenerateLoginKey() {
     const int n = 8;
