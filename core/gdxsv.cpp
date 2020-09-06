@@ -35,7 +35,7 @@ namespace {
         u8 buf[GDX_QUEUE_SIZE];
     };
 
-    u32 gdx_queue_init(struct gdx_queue *q) {
+    void gdx_queue_init(struct gdx_queue *q) {
         q->head = 0;
         q->tail = 0;
     }
@@ -327,7 +327,7 @@ void Gdxsv::SyncNetwork(bool write) {
     }
 }
 
-u32 Gdxsv::UpdateNetwork() {
+void Gdxsv::UpdateNetwork() {
     u8 buf[GDX_QUEUE_SIZE];
     while (!net_terminate) {
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
