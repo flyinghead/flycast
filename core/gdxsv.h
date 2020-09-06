@@ -24,21 +24,19 @@ private:
     void StartNetwork();
     u32 UpdateNetwork(); // run on network thread
 	std::string GenerateLoginKey();
+    void WritePatch();
     void WritePatchDisk1();
     void WritePatchDisk2();
-    void UpdatePatchDisk1();
-    void UpdatePatchDisk2();
 
     bool enabled;
     int disk;
 	u8 maxlag;
-    std::atomic<bool> net_terminate;
 
 	std::string server;
 	std::string loginkey;
 	std::map<std::string, u32> symbols;
-    std::chrono::system_clock::time_point last_update;
 
+    std::atomic<bool> net_terminate;
     std::thread net_thread;
     std::mutex net_mtx;
     std::deque<u8> send_buf;

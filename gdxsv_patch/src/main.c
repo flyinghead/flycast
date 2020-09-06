@@ -2,12 +2,13 @@ typedef unsigned char u8;
 typedef unsigned short u16;
 typedef unsigned int u32;
 
-#define CALL_ORG_FUNC 0
+#define CALL_ORG_FUNC 0 // works only disk2
 #define DEBUG_PRINT 0
 
 #define GDXDATA __attribute__((section("gdx.data")))
 #define GDXFUNC __attribute__((section("gdx.func")))
-#define GDXMAIN __attribute__((section("gdx.main")))
+#define GDXMAIN1 __attribute__((section("gdx.main1")))
+#define GDXMAIN2 __attribute__((section("gdx.main2")))
 
 #include "mini-printf.h"
 
@@ -78,7 +79,7 @@ u8 GDXFUNC gdx_queue_pop(struct gdx_queue *q) {
     return ret;
 }
 
-GDXDATA u32 initialized = 0x10;
+GDXDATA u32 patch_id = 0;
 GDXDATA u32 is_online = 0;
 GDXDATA u32 print_buf_pos = 0;
 GDXDATA char print_buf[1024] = {0};
@@ -363,52 +364,85 @@ int GDXFUNC gdx_mcs_sock_write(u32 sock, u8 *buf, u32 size, int unk) {
 #endif
 }
 
-
-void GDXFUNC gdx_initialize() {
+void GDXFUNC gdx_initialize(int disk) {
     gdx_printf("gdx_initialize\n");
     gdx_queue_init(&gdx_rxq);
     gdx_queue_init(&gdx_txq);
     is_online = 0;
 
-    write32(BIN_OFFSET + 0x0c0228f8, gdx_sock_create);
-    write32(BIN_OFFSET + 0x0c045504, gdx_sock_create);
-    write32(BIN_OFFSET + 0x0c01f284, gdx_sock_close);
-    write32(BIN_OFFSET + 0x0c0228dc, gdx_sock_close);
-    write32(BIN_OFFSET + 0x0c022a08, gdx_sock_close);
-    write32(BIN_OFFSET + 0x0c022b28, gdx_sock_close);
-    write32(BIN_OFFSET + 0x0c022d3c, gdx_sock_close);
-    write32(BIN_OFFSET + 0x0c03322c, gdx_sock_close);
-    write32(BIN_OFFSET + 0x0c045510, gdx_sock_close);
-    write32(BIN_OFFSET + 0x0c045824, gdx_sock_close);
-    write32(BIN_OFFSET + 0x0c022908, gdx_gethostbyname);
-    write32(BIN_OFFSET + 0x0c022a04, connect_sock);
-    write32(BIN_OFFSET + 0x0c04550c, connect_sock);
-    write32(BIN_OFFSET + 0x0c033ec0, gdx_select);
-    write32(BIN_OFFSET + 0x0c045818, gdx_select);
-    write32(BIN_OFFSET + 0x0c045ad8, ppp_get_status);
-    write32(BIN_OFFSET + 0x0c034fc4, ppp_get_status);
-    write32(BIN_OFFSET + 0x0c033004, ppp_get_status);
-    write32(BIN_OFFSET + 0x0c0228cc, ppp_get_status);
-    write32(BIN_OFFSET + 0x0c022424, ppp_get_status);
-    write32(BIN_OFFSET + 0x0c033fd8, gdx_lbs_sock_read);
-    write32(BIN_OFFSET + 0x0c034464, gdx_lbs_sock_write);
-    write32(BIN_OFFSET + 0x0c046678, gdx_mcs_sock_read);
-    write32(BIN_OFFSET + 0x0c045820, gdx_mcs_sock_write);
+    if (disk == 1) {
+        write32(BIN_OFFSET + 0x0c05811c, gdx_sock_create);
+        write32(BIN_OFFSET + 0x0c0354d4, gdx_sock_create);
+        write32(BIN_OFFSET + 0x0c05843c, gdx_sock_close);
+        write32(BIN_OFFSET + 0x0c058128, gdx_sock_close);
+        write32(BIN_OFFSET + 0x0c045e08, gdx_sock_close);
+        write32(BIN_OFFSET + 0x0c035918, gdx_sock_close);
+        write32(BIN_OFFSET + 0x0c035704, gdx_sock_close);
+        write32(BIN_OFFSET + 0x0c0355e4, gdx_sock_close);
+        write32(BIN_OFFSET + 0x0c0354b8, gdx_sock_close);
+        write32(BIN_OFFSET + 0x0c031efc, gdx_sock_close);
+        write32(BIN_OFFSET + 0x0c0354e4, gdx_gethostbyname);
+        write32(BIN_OFFSET + 0x0c058124, connect_sock);
+        write32(BIN_OFFSET + 0x0c0355e0, connect_sock);
+        write32(BIN_OFFSET + 0x0c058430, gdx_select);
+        write32(BIN_OFFSET + 0x0c046a9c, gdx_select);
+        write32(BIN_OFFSET + 0x0c0586f0, ppp_get_status);
+        write32(BIN_OFFSET + 0x0c047b98, ppp_get_status);
+        write32(BIN_OFFSET + 0x0c045be0, ppp_get_status);
+        write32(BIN_OFFSET + 0x0c0354a8, ppp_get_status);
+        write32(BIN_OFFSET + 0x0c035000, ppp_get_status);
+        write32(BIN_OFFSET + 0x0c046bb4, gdx_lbs_sock_read);
+        write32(BIN_OFFSET + 0x0c047040, gdx_lbs_sock_write);
+        write32(BIN_OFFSET + 0x0c059290, gdx_mcs_sock_read);
+        write32(BIN_OFFSET + 0x0c058438, gdx_mcs_sock_write);
 
-#if CALL_ORG_FUNC
-#else
-    // skip ppp finalize
-    for (u32 p = 0x0c022818; p <= 0x0c02282e; p += 2) {
-        write16(BIN_OFFSET + p, 0x0009);
+        for (u32 p = 0x0c0353f4; p <= 0x0c03540a; p += 2) {
+            write16(BIN_OFFSET + p, 0x0009);
+        }
     }
+    if (disk == 2) {
+        write32(BIN_OFFSET + 0x0c0228f8, gdx_sock_create);
+        write32(BIN_OFFSET + 0x0c045504, gdx_sock_create);
+        write32(BIN_OFFSET + 0x0c01f284, gdx_sock_close);
+        write32(BIN_OFFSET + 0x0c0228dc, gdx_sock_close);
+        write32(BIN_OFFSET + 0x0c022a08, gdx_sock_close);
+        write32(BIN_OFFSET + 0x0c022b28, gdx_sock_close);
+        write32(BIN_OFFSET + 0x0c022d3c, gdx_sock_close);
+        write32(BIN_OFFSET + 0x0c03322c, gdx_sock_close);
+        write32(BIN_OFFSET + 0x0c045510, gdx_sock_close);
+        write32(BIN_OFFSET + 0x0c045824, gdx_sock_close);
+        write32(BIN_OFFSET + 0x0c022908, gdx_gethostbyname);
+        write32(BIN_OFFSET + 0x0c022a04, connect_sock);
+        write32(BIN_OFFSET + 0x0c04550c, connect_sock);
+        write32(BIN_OFFSET + 0x0c033ec0, gdx_select);
+        write32(BIN_OFFSET + 0x0c045818, gdx_select);
+        write32(BIN_OFFSET + 0x0c045ad8, ppp_get_status);
+        write32(BIN_OFFSET + 0x0c034fc4, ppp_get_status);
+        write32(BIN_OFFSET + 0x0c033004, ppp_get_status);
+        write32(BIN_OFFSET + 0x0c0228cc, ppp_get_status);
+        write32(BIN_OFFSET + 0x0c022424, ppp_get_status);
+        write32(BIN_OFFSET + 0x0c033fd8, gdx_lbs_sock_read);
+        write32(BIN_OFFSET + 0x0c034464, gdx_lbs_sock_write);
+        write32(BIN_OFFSET + 0x0c046678, gdx_mcs_sock_read);
+        write32(BIN_OFFSET + 0x0c045820, gdx_mcs_sock_write);
+
+#if !CALL_ORG_FUNC
+        // skip ppp finalize
+        for (u32 p = 0x0c022818; p <= 0x0c02282e; p += 2) {
+            write16(BIN_OFFSET + p, 0x0009);
+        }
 #endif
-    initialized |= 1;
+    }
 }
 
+// replacement of internet_connect function
+void GDXFUNC gdx_dial_start_disk1() {
+    gdx_initialize(1);
+    write8(0x0c2f6639, 2);
+}
 
-// replacement function 0c0212b6
-void GDXMAIN gdx_main() {
-    gdx_initialize();
+void GDXFUNC gdx_dial_start_disk2() {
+    gdx_initialize(2);
 #if CALL_ORG_FUNC
     // start dialing step
     write8(0x0c391d79, 1);

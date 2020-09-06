@@ -5,6 +5,7 @@ Convert asm into c++ (flycast codes).
 """
 
 import re
+import time
 from typing import NamedTuple
 
 
@@ -27,7 +28,7 @@ symbols = {}
 section = None
 start = False
 
-for line in open('bin/gdxpatch.asm'):
+for line in open('bin/gdxsv_patch.asm'):
     line = line.rstrip()
     if 'Disassembly' in line:
         start = True
@@ -52,19 +53,25 @@ for line in open('bin/gdxpatch.asm'):
         patches.append(Patch(addr + 0, int(g.group(2), 16), section))
         patches.append(Patch(addr + 1, int(g.group(3), 16), section))
 
-with open('bin/flycast.patch', 'w') as f:
+with open('bin/gdxsv_patch.h', 'w') as f:
     f.write(f"#ifndef _CLION_IDE__\n")
 
-    f.write(f"#define W WriteMem8_nommu\n")
+    f.write(f"#define W8 WriteMem8_nommu\n")
     for i, p in enumerate(patches):
         if p.section == "gdx.data":
-            f.write(f"W(0x{p.addr:08x}, 0x{p.value:02x}); ")
+            f.write(f"W8(0x{p.addr:08x}, 0x{p.value:02x});")
         else:
-            f.write(f"W(0x{0x80000000 + p.addr:08x}, 0x{p.value:02x}); ")
-        if i and i % 10 == 0:
+            f.write(f"W8(0x{0x80000000 + p.addr:08x}, 0x{p.value:02x});")
+        if (i + 1) % 10 == 0:
             f.write("\n")
-    f.write(f"\n#undef W\n")
-
     for p in symbols.values():
         f.write(f'symbols["{p.name}"] = 0x{p.addr:08x};\n')
+    f.write(f"\n#undef W\n")
+
+    f.write(f'if (disk == 1) WriteMem32_nommu(0x8c181bb4, symbols["gdx_dial_start_disk1"]);\n')
+    f.write(f'if (disk == 2) WriteMem32_nommu(0x8c1e0274, symbols["gdx_dial_start_disk2"]);\n')
+    f.write(f'symbols[":patch_id"] = {str(int(time.time()) % 100000000)};\n')
+    f.write(f'WriteMem32_nommu(symbols["patch_id"], symbols[":patch_id"]);\n')
     f.write(f"#endif\n")
+
+

@@ -204,21 +204,15 @@ void Gdxsv::Reset() {
     cfgSaveBool("gdxsv", "overwritedconf", overwriteconf);
 
     std::string disk_num(ip_meta.disk_num, 1);
-    if (disk_num == "1") {
-        disk = 1;
-    }
-    if (disk_num == "2") {
-        disk = 2;
-    }
-
+    if (disk_num == "1") disk = 1;
+    if (disk_num == "2") disk = 2;
     tcp_client.do_close();
     NOTICE_LOG(COMMON, "gdxsv disk:%d server:%s loginkey:%s maxlag:%d", disk, server.c_str(), loginkey.c_str(), maxlag);
 }
 
 void Gdxsv::Update() {
     if (!enabled) return;
-    if (disk == 1) WritePatchDisk1();
-    if (disk == 2) WritePatchDisk2();
+    WritePatch();
 
     if (ReadMem32_nommu(symbols["print_buf_pos"])) {
         int n = ReadMem32_nommu(symbols["print_buf_pos"]);
@@ -371,6 +365,14 @@ std::string Gdxsv::GenerateLoginKey() {
     });
     return key;
 }
+void Gdxsv::WritePatch() {
+    if (disk == 1) WritePatchDisk1();
+    if (disk == 2) WritePatchDisk2();
+    if (symbols["patch_id"] == 0 || ReadMem32_nommu(symbols["patch_id"]) != symbols[":patch_id"]) {
+        NOTICE_LOG(COMMON, "patch %d %d", ReadMem32_nommu(symbols["patch_id"]) , symbols[":patch_id"]);
+#include "gdxsv_patch.h"
+    }
+}
 
 void Gdxsv::WritePatchDisk1() {
     const u32 offset = 0x8C000000 + 0x00010000;
@@ -403,6 +405,7 @@ void Gdxsv::WritePatchDisk1() {
                             (i < loginkey.length()) ? u8(loginkey[i]) : u8(0));
         }
     }
+
 }
 
 void Gdxsv::WritePatchDisk2() {
@@ -435,11 +438,6 @@ void Gdxsv::WritePatchDisk2() {
             WriteMem8_nommu(offset - 0x10000 + 0x00392064 + i,
                             (i < loginkey.length()) ? u8(loginkey[i]) : u8(0));
         }
-    }
-
-    if (symbols["initialized"] == 0 || ReadMem8_nommu(symbols["initialized"]) == 0) {
-        NOTICE_LOG(COMMON, "Rewrite patch");
-#include "gdxsv_disk2.patch"
     }
 }
 
