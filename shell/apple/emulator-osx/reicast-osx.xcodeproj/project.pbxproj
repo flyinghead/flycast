@@ -339,6 +339,7 @@
 		EBDF374F1BB96581001191B5 /* audiobackend_coreaudio.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EBDF374D1BB96581001191B5 /* audiobackend_coreaudio.cpp */; };
 		EBDF37511BB969EE001191B5 /* CoreAudio.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EBDF37501BB969EE001191B5 /* CoreAudio.framework */; };
 		EBDF37531BB969F8001191B5 /* AudioUnit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EBDF37521BB969F8001191B5 /* AudioUnit.framework */; };
+		F2F40E5F250581E700E863B1 /* gdxsv.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F2F40E5D250581E700E863B1 /* gdxsv.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -1053,6 +1054,9 @@
 		EBDF374E1BB96581001191B5 /* audiobackend_coreaudio.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = audiobackend_coreaudio.h; sourceTree = "<group>"; };
 		EBDF37501BB969EE001191B5 /* CoreAudio.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreAudio.framework; path = System/Library/Frameworks/CoreAudio.framework; sourceTree = SDKROOT; };
 		EBDF37521BB969F8001191B5 /* AudioUnit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioUnit.framework; path = System/Library/Frameworks/AudioUnit.framework; sourceTree = SDKROOT; };
+		F2F40E5C250581E700E863B1 /* gdxsv_patch.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = gdxsv_patch.h; path = ../../../core/gdxsv_patch.h; sourceTree = "<group>"; };
+		F2F40E5D250581E700E863B1 /* gdxsv.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = gdxsv.cpp; path = ../../../core/gdxsv.cpp; sourceTree = "<group>"; };
+		F2F40E5E250581E700E863B1 /* gdxsv.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = gdxsv.h; path = ../../../core/gdxsv.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -1153,6 +1157,7 @@
 				84B7BD131B72720100F9733F /* cfg */,
 				84B7BD171B72720100F9733F /* deps */,
 				84B7BDB81B72720100F9733F /* emitter */,
+				F2F40E5B250581DA00E863B1 /* gdxsv */,
 				84B7BDC61B72720100F9733F /* hw */,
 				84B7BE421B72720100F9733F /* imgread */,
 				AEE6278022131BB500EC7E89 /* input */,
@@ -2479,6 +2484,16 @@
 			path = stack;
 			sourceTree = "<group>";
 		};
+		F2F40E5B250581DA00E863B1 /* gdxsv */ = {
+			isa = PBXGroup;
+			children = (
+				F2F40E5C250581E700E863B1 /* gdxsv_patch.h */,
+				F2F40E5D250581E700E863B1 /* gdxsv.cpp */,
+				F2F40E5E250581E700E863B1 /* gdxsv.h */,
+			);
+			name = gdxsv;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -2693,6 +2708,7 @@
 				84B7BF121B72720200F9733F /* zip_unchange.c in Sources */,
 				AE8C27342111A31100D4D8F4 /* dsp_interp.cpp in Sources */,
 				84B7BF421B72720200F9733F /* blockmanager.cpp in Sources */,
+				F2F40E5F250581E700E863B1 /* gdxsv.cpp in Sources */,
 				84B7BEE21B72720200F9733F /* zip_add_dir.c in Sources */,
 				84B7BEE61B72720200F9733F /* zip_entry_free.c in Sources */,
 				AED73E8F2348E45000ECDB64 /* SpvPostProcess.cpp in Sources */,
