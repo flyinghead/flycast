@@ -206,11 +206,9 @@ void Gdxsv::Reset() {
     std::string disk_num(ip_meta.disk_num, 1);
     if (disk_num == "1") {
         disk = 1;
-        WritePatchDisk1();
     }
     if (disk_num == "2") {
         disk = 2;
-        WritePatchDisk2();
     }
 
     tcp_client.do_close();
@@ -218,16 +216,9 @@ void Gdxsv::Reset() {
 }
 
 void Gdxsv::Update() {
-    if (!enabled) {
-        return;
-    }
-
-    if (ReadMem8_nommu(symbols["initialized"]) == 0) {
-        NOTICE_LOG(COMMON, "Rewrite patch");
-        if (disk == 2) {
-            WritePatchDisk2();
-        }
-    }
+    if (!enabled) return;
+    if (disk == 1) WritePatchDisk1();
+    if (disk == 2) WritePatchDisk2();
 
     if (ReadMem32_nommu(symbols["print_buf_pos"])) {
         int n = ReadMem32_nommu(symbols["print_buf_pos"]);
@@ -237,6 +228,7 @@ void Gdxsv::Update() {
         }
         dump_buf[n] = 0;
         WriteMem32_nommu(symbols["print_buf_pos"], 0);
+        WriteMem32_nommu(symbols["print_buf"], 0);
         NOTICE_LOG(COMMON, "%s", dump_buf);
     }
 }
@@ -445,7 +437,10 @@ void Gdxsv::WritePatchDisk2() {
         }
     }
 
+    if (symbols["initialized"] == 0 || ReadMem8_nommu(symbols["initialized"]) == 0) {
+        NOTICE_LOG(COMMON, "Rewrite patch");
 #include "gdxsv_disk2.patch"
+    }
 }
 
 Gdxsv gdxsv;

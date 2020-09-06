@@ -26,6 +26,8 @@ private:
 	std::string GenerateLoginKey();
     void WritePatchDisk1();
     void WritePatchDisk2();
+    void UpdatePatchDisk1();
+    void UpdatePatchDisk2();
 
     bool enabled;
     int disk;
