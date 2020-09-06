@@ -64,9 +64,10 @@ with open('bin/gdxsv_patch.h', 'w') as f:
             f.write(f"W8(0x{0x80000000 + p.addr:08x}, 0x{p.value:02x});")
         if (i + 1) % 10 == 0:
             f.write("\n")
+    f.write(f"\n")
     for p in symbols.values():
         f.write(f'symbols["{p.name}"] = 0x{p.addr:08x};\n')
-    f.write(f"\n#undef W\n")
+    f.write(f"\n#undef W8\n")
 
     f.write(f'if (disk == 1) WriteMem32_nommu(0x8c181bb4, symbols["gdx_dial_start_disk1"]);\n')
     f.write(f'if (disk == 2) WriteMem32_nommu(0x8c1e0274, symbols["gdx_dial_start_disk2"]);\n')
