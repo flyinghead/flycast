@@ -242,8 +242,6 @@ void Gdxsv::Update() {
 }
 
 void Gdxsv::SyncNetwork(bool write) {
-    std::lock_guard<std::mutex> net_lock(net_mtx);
-
     if (write) {
         gdx_queue q;
         u32 gdx_txq_addr = symbols["gdx_txq"];
@@ -253,10 +251,12 @@ void Gdxsv::SyncNetwork(bool write) {
         q.tail = ReadMem16_nommu(gdx_txq_addr + 2);
         int n = gdx_queue_size(&q);
         if (0 < n) {
+            send_buf_mtx.lock();
             for (int i = 0; i < n; ++i) {
                 send_buf.push_back(ReadMem8_nommu(buf_addr + q.head));
                 gdx_queue_pop(&q);
             }
+            send_buf_mtx.unlock();
             WriteMem16_nommu(gdx_txq_addr, q.head);
         }
     } else {
@@ -272,8 +272,13 @@ void Gdxsv::SyncNetwork(bool write) {
             gdx_rpc.param4 = ReadMem32_nommu(gdx_rpc_addr + 20);
 
             if (gdx_rpc.request == RPC_TCP_OPEN) {
+                recv_buf_mtx.lock();
                 recv_buf.clear();
+                recv_buf_mtx.unlock();
+
+                send_buf_mtx.lock();
                 send_buf.clear();
+                send_buf_mtx.unlock();
 
                 u32 tolobby = gdx_rpc.param1;
                 u32 host_ip = gdx_rpc.param2;
@@ -296,8 +301,14 @@ void Gdxsv::SyncNetwork(bool write) {
 
             if (gdx_rpc.request == RPC_TCP_CLOSE) {
                 tcp_client.do_close();
+
+                recv_buf_mtx.lock();
                 recv_buf.clear();
+                recv_buf_mtx.unlock();
+
+                send_buf_mtx.lock();
                 send_buf.clear();
+                send_buf_mtx.unlock();
             }
 
             WriteMem32_nommu(gdx_rpc_addr, 0);
@@ -308,7 +319,10 @@ void Gdxsv::SyncNetwork(bool write) {
             WriteMem32_nommu(gdx_rpc_addr + 20, 0);
         }
 
-        if (recv_buf.size()) {
+        recv_buf_mtx.lock();
+        int n = recv_buf.size();
+        recv_buf_mtx.unlock();
+        if (0 < n) {
             gdx_queue q;
             u32 gdx_rxq_addr = symbols["gdx_rxq"];
             u32 buf_addr = gdx_rxq_addr + 4;
@@ -316,12 +330,14 @@ void Gdxsv::SyncNetwork(bool write) {
             q.tail = ReadMem16_nommu(gdx_rxq_addr + 2);
 
             u8 buf[GDX_QUEUE_SIZE];
+            recv_buf_mtx.lock();
             int n = std::min<int>(recv_buf.size(), gdx_queue_avail(&q));
             for (int i = 0; i < n; ++i) {
                 WriteMem8_nommu(buf_addr + q.tail, recv_buf.front());
                 recv_buf.pop_front();
                 gdx_queue_push(&q, 0);
             }
+            recv_buf_mtx.unlock();
             WriteMem16_nommu(gdx_rxq_addr + 2, q.tail);
         }
     }
@@ -336,25 +352,24 @@ u32 Gdxsv::UpdateNetwork() {
             continue;
         }
 
-        net_mtx.lock();
+        send_buf_mtx.lock();
         int n = send_buf.size();
-        net_mtx.unlock();
-
-        if (0 < n) {
-            net_mtx.lock();
-            int n = std::min<int>(send_buf.size(), sizeof(buf));
+        if (n == 0) {
+            send_buf_mtx.unlock();
+        } else {
+            n = std::min<int>(n, sizeof(buf));
             for (int i = 0; i < n; ++i) {
                 buf[i] = send_buf.front();
                 send_buf.pop_front();
             }
-            net_mtx.unlock();
+            send_buf_mtx.unlock();
             int m = tcp_client.do_send((char *) buf, n);
             if (m < n) {
-                net_mtx.lock();
+                send_buf_mtx.lock();
                 for (int i = n - 1; m <= i; --i) {
                     send_buf.push_front(buf[i]);
                 }
-                net_mtx.unlock();
+                send_buf_mtx.unlock();
             }
         }
 
@@ -363,11 +378,11 @@ u32 Gdxsv::UpdateNetwork() {
             n = std::min(n, GDX_QUEUE_SIZE);
             n = tcp_client.do_recv((char *) buf, n);
             if (0 < n) {
-                net_mtx.lock();
+                recv_buf_mtx.lock();
                 for (int i = 0; i < n; ++i) {
                     recv_buf.push_back(buf[i]);
                 }
-                net_mtx.unlock();
+                recv_buf_mtx.unlock();
             }
         }
     }

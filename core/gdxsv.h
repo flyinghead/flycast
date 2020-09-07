@@ -38,8 +38,9 @@ private:
 
     std::atomic<bool> net_terminate;
     std::thread net_thread;
-    std::mutex net_mtx;
+    std::mutex send_buf_mtx;
     std::deque<u8> send_buf;
+    std::mutex recv_buf_mtx;
     std::deque<u8> recv_buf;
 };
 
