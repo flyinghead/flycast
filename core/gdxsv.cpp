@@ -67,11 +67,10 @@ namespace {
     class GdxTcpClient {
         sock_t sock = INVALID_SOCKET;
 
-        bool set_send_timeout(sock_t fd, int delayms)
-        {
+        bool set_send_timeout(sock_t fd, int delayms) {
 #ifdef _WIN32
             const DWORD dwDelay = delayms;
-            return setsockopt(fd, SOL_SOCKET, SO_SNDTIMEO, (const char *)&dwDelay, sizeof(DWORD)) == 0;
+            return setsockopt(fd, SOL_SOCKET, SO_SNDTIMEO, (const char *) &dwDelay, sizeof(DWORD)) == 0;
 #else
             struct timeval tv;
             tv.tv_sec = delayms / 1000;
@@ -345,8 +344,12 @@ void Gdxsv::SyncNetwork(bool write) {
 
 u32 Gdxsv::UpdateNetwork() {
     u8 buf[GDX_QUEUE_SIZE];
+    bool updated = false;
     while (!net_terminate) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        if (!updated) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        }
+        updated = false;
         if (!tcp_client.is_connected()) {
             std::this_thread::sleep_for(std::chrono::milliseconds(1000));
             continue;
@@ -371,6 +374,7 @@ u32 Gdxsv::UpdateNetwork() {
                 }
                 send_buf_mtx.unlock();
             }
+            updated = true;
         }
 
         n = tcp_client.readable_size();
@@ -383,6 +387,7 @@ u32 Gdxsv::UpdateNetwork() {
                     recv_buf.push_back(buf[i]);
                 }
                 recv_buf_mtx.unlock();
+                updated = true;
             }
         }
     }
@@ -400,11 +405,13 @@ std::string Gdxsv::GenerateLoginKey() {
     });
     return key;
 }
+
 void Gdxsv::WritePatch() {
     if (disk == 1) WritePatchDisk1();
     if (disk == 2) WritePatchDisk2();
     if (symbols["patch_id"] == 0 || ReadMem32_nommu(symbols["patch_id"]) != symbols[":patch_id"]) {
-        NOTICE_LOG(COMMON, "patch %d %d", ReadMem32_nommu(symbols["patch_id"]) , symbols[":patch_id"]);
+        NOTICE_LOG(COMMON, "patch %d %d", ReadMem32_nommu(symbols["patch_id"]), symbols[":patch_id"]);
+
 #include "gdxsv_patch.h"
     }
 }
