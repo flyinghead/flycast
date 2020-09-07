@@ -22,7 +22,7 @@ public:
 
 private:
     void StartNetwork();
-    u32 UpdateNetwork(); // run on network thread
+    void UpdateNetwork(); // run on network thread
 	std::string GenerateLoginKey();
     void WritePatch();
     void WritePatchDisk1();

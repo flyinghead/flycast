@@ -5,6 +5,10 @@
 #include "gdxsv.h"
 #include "network/net_platform.h"
 
+#ifndef _WIN32
+#include <sys/ioctl.h>
+#endif
+
 namespace {
     enum {
         RPC_TCP_OPEN = 1,
@@ -31,7 +35,7 @@ namespace {
         u8 buf[GDX_QUEUE_SIZE];
     };
 
-    u32 gdx_queue_init(struct gdx_queue *q) {
+    void gdx_queue_init(struct gdx_queue *q) {
         q->head = 0;
         q->tail = 0;
     }
@@ -91,10 +95,18 @@ namespace {
             auto host_entry = gethostbyname(host);
             struct sockaddr_in addr;
             addr.sin_family = AF_INET;
+#ifdef _WIN32
             addr.sin_addr = *((LPIN_ADDR) host_entry->h_addr_list[0]);
+#else
+            memcpy(&addr.sin_addr, host_entry->h_addr_list[0], host_entry->h_length);
+#endif
             addr.sin_port = htons(port);
             set_recv_timeout(new_sock, 5000);
+#ifdef _WIN32
             if (::connect(new_sock, (const sockaddr *) &addr, sizeof(addr)) != NO_ERROR) {
+#else
+            if (::connect(new_sock, (const sockaddr *) &addr, sizeof(addr))) {
+#endif
                 WARN_LOG(COMMON, "do_connect fail 2 %d", get_last_error());
                 return false;
             }
@@ -144,7 +156,7 @@ namespace {
         u32 readable_size() {
             u_long n = 0;
 #ifndef _WIN32
-            ioctl(sock,FIONREAD,&n)
+            ioctl(sock, FIONREAD, &n);
 #else
             ioctlsocket(sock, FIONREAD, &n);
 #endif
@@ -190,12 +202,14 @@ void Gdxsv::Reset() {
         });
     }
 
+#ifdef _WIN32
     WSADATA wsaData;
     if (WSAStartup(MAKEWORD(2, 0), &wsaData) != 0) {
         ERROR_LOG(COMMON, "WSAStartup failed. errno=%d", get_last_error());
         return;
     }
-
+#endif
+    
     server = cfgLoadStr("gdxsv", "server", "zdxsv.net");
     maxlag = cfgLoadInt("gdxsv", "maxlag", 8); // Note: This should be not configurable. This is for development.
     loginkey = cfgLoadStr("gdxsv", "loginkey", "");
@@ -342,7 +356,7 @@ void Gdxsv::SyncNetwork(bool write) {
     }
 }
 
-u32 Gdxsv::UpdateNetwork() {
+void Gdxsv::UpdateNetwork() {
     u8 buf[GDX_QUEUE_SIZE];
     bool updated = false;
     while (!net_terminate) {
