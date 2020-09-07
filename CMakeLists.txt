@@ -161,7 +161,7 @@ else()
 endif()
 
 find_package(PkgConfig QUIET)
-if(PKG_CONFIG_FOUND AND NOT ANDROID)
+if(PKG_CONFIG_FOUND AND NOT ANDROID AND NOT APPLE)
     pkg_search_module(AO ao)
     if(AO_FOUND)
         target_compile_definitions(${PROJECT_NAME} PRIVATE USE_LIBAO)
