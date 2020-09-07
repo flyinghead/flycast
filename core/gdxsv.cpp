@@ -2,6 +2,7 @@
 #include <iomanip>
 #include <random>
 
+#include "version.h"
 #include "gdxsv.h"
 #include "network/net_platform.h"
 
@@ -105,7 +106,7 @@ namespace {
 #ifdef _WIN32
             if (::connect(new_sock, (const sockaddr *) &addr, sizeof(addr)) != NO_ERROR) {
 #else
-            if (::connect(new_sock, (const sockaddr *) &addr, sizeof(addr))) {
+                if (::connect(new_sock, (const sockaddr *) &addr, sizeof(addr))) {
 #endif
                 WARN_LOG(COMMON, "do_connect fail 2 %d", get_last_error());
                 return false;
@@ -129,7 +130,7 @@ namespace {
         int do_recv(char *buf, int len) {
             int n = ::recv(sock, buf, len, 0);
             if (n < 0 && get_last_error() != L_EAGAIN && get_last_error() != L_EWOULDBLOCK) {
-                NOTICE_LOG(COMMON, "recv failed. errno=%d", get_last_error());
+                WARN_LOG(COMMON, "recv failed. errno=%d", get_last_error());
                 do_close();
             }
             if (n < 0) return 0;
@@ -139,7 +140,7 @@ namespace {
         int do_send(const char *buf, int len) {
             int n = ::send(sock, buf, len, 0);
             if (n < 0 && get_last_error() != L_EAGAIN && get_last_error() != L_EWOULDBLOCK) {
-                NOTICE_LOG(COMMON, "send failed. errno=%d", get_last_error());
+                WARN_LOG(COMMON, "send failed. errno=%d", get_last_error());
                 do_close();
             }
             if (n < 0) return 0;
@@ -209,7 +210,7 @@ void Gdxsv::Reset() {
         return;
     }
 #endif
-    
+
     server = cfgLoadStr("gdxsv", "server", "zdxsv.net");
     maxlag = cfgLoadInt("gdxsv", "maxlag", 8); // Note: This should be not configurable. This is for development.
     loginkey = cfgLoadStr("gdxsv", "loginkey", "");
@@ -252,6 +253,65 @@ void Gdxsv::Update() {
         WriteMem32_nommu(symbols["print_buf"], 0);
         NOTICE_LOG(COMMON, "%s", dump_buf);
     }
+}
+
+std::vector<u8> Gdxsv::GeneratePlatformInfoPacket() {
+    std::vector<u8> packet = {
+            0x81,
+            0xFF,
+            0x99, 0x50,
+            0x00, 0x00,
+            0x00, 0x00,
+            0x00, 0xff, 0xff, 0xff};
+    std::stringstream ss;
+    ss << "flycast=" << REICAST_VERSION << "\n";
+    ss << "git_hash=" << GIT_HASH << "\n";
+    ss << "build_date=" << BUILD_DATE << "\n";
+    ss << "cpu=" <<
+       #if HOST_CPU == CPU_X86
+       "x86"
+       #elif HOST_CPU == CPU_ARM
+       "ARM"
+       #elif HOST_CPU == CPU_MIPS
+       "MIPS"
+       #elif HOST_CPU == CPU_X64
+       "x86/64"
+       #elif HOST_CPU == CPU_GENERIC
+       "Generic"
+       #elif HOST_CPU == CPU_ARM64
+       "ARM64"
+       #else
+       "Unknown"
+       #endif
+       << "\n";
+    ss << "os=" <<
+       #ifdef __ANDROID__
+       "Android"
+       #elif HOST_OS == OS_LINUX
+       "Linux"
+       #elif defined(__APPLE__)
+       #ifdef TARGET_IPHONE
+       "iOS"
+       #else
+       "OSX"
+       #endif
+       #elif defined(_WIN32)
+       "Windows"
+       #else
+       "Unknown"
+       #endif
+       << "\n";
+    ss << "disk" << disk << "\n";
+    ss << "maxlag" << maxlag << "\n";
+    ss << "patch_id" << symbols[":patch_id"] << "\n";
+    auto s = ss.str();
+    packet.push_back((s.size() >> 8) & 0xff);
+    packet.push_back(s.size() & 0xff);
+    std::copy(begin(s), end(s), std::back_inserter(packet));
+    u16 payload_size = (u16) (packet.size() - 12);
+    packet[4] = (payload_size >> 8) & 0xff;
+    packet[5] = payload_size & 0xff;
+    return packet;
 }
 
 void Gdxsv::SyncNetwork(bool write) {
@@ -309,6 +369,14 @@ void Gdxsv::SyncNetwork(bool write) {
                 bool ok = tcp_client.do_connect(host.c_str(), port);
                 if (!ok) {
                     WARN_LOG(COMMON, "Failed to connect %s:%d", host.c_str(), port);
+                }
+
+                if (ok && tolobby == 1) {
+                    auto packet = GeneratePlatformInfoPacket();
+                    send_buf_mtx.lock();
+                    send_buf.clear();
+                    std::copy(begin(packet), end(packet), std::back_inserter(send_buf));
+                    send_buf_mtx.unlock();
                 }
             }
 

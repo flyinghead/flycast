@@ -24,6 +24,7 @@ private:
     void StartNetwork();
     void UpdateNetwork(); // run on network thread
 	std::string GenerateLoginKey();
+    std::vector<u8> GeneratePlatformInfoPacket();
     void WritePatch();
     void WritePatchDisk1();
     void WritePatchDisk2();
