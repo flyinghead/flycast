@@ -67,6 +67,19 @@ namespace {
     class GdxTcpClient {
         sock_t sock = INVALID_SOCKET;
 
+        bool set_send_timeout(sock_t fd, int delayms)
+        {
+#ifdef _WIN32
+            const DWORD dwDelay = delayms;
+            return setsockopt(fd, SOL_SOCKET, SO_SNDTIMEO, (const char *)&dwDelay, sizeof(DWORD)) == 0;
+#else
+            struct timeval tv;
+            tv.tv_sec = delayms / 1000;
+            tv.tv_usec = (delayms % 1000) * 1000;
+            return setsockopt(fd, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv)) == 0;
+#endif
+        }
+
     public:
         bool do_connect(const char *host, int port) {
             NOTICE_LOG(COMMON, "do_connect : %s:%d", host, port);
@@ -93,6 +106,7 @@ namespace {
 
             set_tcp_nodelay(new_sock);
             set_recv_timeout(new_sock, 1);
+            set_send_timeout(new_sock, 1);
             sock = new_sock;
             return true;
         }
@@ -195,7 +209,7 @@ void Gdxsv::Reset() {
     if (overwriteconf) {
         NOTICE_LOG(COMMON, "Overwrite configs for gdxsv");
 
-        settings.aica.BufferSize = 512;
+        settings.aica.BufferSize = 529;
         settings.pvr.SynchronousRender = false;
     }
 
@@ -323,22 +337,28 @@ u32 Gdxsv::UpdateNetwork() {
         }
 
         net_mtx.lock();
-        if (send_buf.size()) {
+        int n = send_buf.size();
+        net_mtx.unlock();
+
+        if (0 < n) {
+            net_mtx.lock();
             int n = std::min<int>(send_buf.size(), sizeof(buf));
             for (int i = 0; i < n; ++i) {
                 buf[i] = send_buf.front();
                 send_buf.pop_front();
             }
+            net_mtx.unlock();
             int m = tcp_client.do_send((char *) buf, n);
             if (m < n) {
+                net_mtx.lock();
                 for (int i = n - 1; m <= i; --i) {
                     send_buf.push_front(buf[i]);
                 }
+                net_mtx.unlock();
             }
         }
-        net_mtx.unlock();
 
-        int n = tcp_client.readable_size();
+        n = tcp_client.readable_size();
         if (0 < n) {
             n = std::min(n, GDX_QUEUE_SIZE);
             n = tcp_client.do_recv((char *) buf, n);
