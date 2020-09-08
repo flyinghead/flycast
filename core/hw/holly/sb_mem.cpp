@@ -14,7 +14,7 @@
 #include "hw/pvr/pvr_mem.h"
 #include "hw/sh4/sh4_mem.h"
 #include "reios/reios.h"
-#include "gdxsv.h"
+#include "gdxsv/gdxsv.h"
 
 MemChip *sys_rom;
 MemChip *sys_nvmem;

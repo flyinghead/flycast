@@ -57,7 +57,7 @@ else()
     add_executable(${PROJECT_NAME} MACOSX_BUNDLE core/nullDC.cpp)
 endif()
 
-target_compile_features(${PROJECT_NAME} PRIVATE c_std_11 cxx_std_11)
+target_compile_features(${PROJECT_NAME} PRIVATE c_std_11 cxx_std_14)
 set_target_properties(${PROJECT_NAME} PROPERTIES CXX_EXTENSIONS OFF)
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     target_compile_options(${PROJECT_NAME} PRIVATE
@@ -750,12 +750,41 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/cheats.h
         core/dispframe.cpp
         core/emulator.h
-        core/gdxsv.cpp
-        core/gdxsv.h
         core/serialize.cpp
         core/stdclass.cpp
         core/stdclass.h
         core/types.h)
+
+
+target_include_directories(${PROJECT_NAME} PRIVATE core/deps/EmbeddedProto/src)
+target_sources(${PROJECT_NAME} PRIVATE
+        core/deps/EmbeddedProto/src/Errors.h
+        core/deps/EmbeddedProto/src/Fields.cpp
+        core/deps/EmbeddedProto/src/Fields.h
+        core/deps/EmbeddedProto/src/FieldStringBytes.h
+        core/deps/EmbeddedProto/src/MessageInterface.cpp
+        core/deps/EmbeddedProto/src/MessageInterface.h
+        core/deps/EmbeddedProto/src/MessageSizeCalculator.h
+        core/deps/EmbeddedProto/src/ReadBufferInterface.h
+        core/deps/EmbeddedProto/src/ReadBufferSection.cpp
+        core/deps/EmbeddedProto/src/ReadBufferSection.h
+        core/deps/EmbeddedProto/src/RepeatedField.h
+        core/deps/EmbeddedProto/src/RepeatedFieldFixedSize.h
+        core/deps/EmbeddedProto/src/WireFormatter.h
+        core/deps/EmbeddedProto/src/WriteBufferInterface.h)
+
+target_sources(${PROJECT_NAME} PRIVATE
+        core/gdxsv/packet.h
+        core/gdxsv/packet_reader.cpp
+        core/gdxsv/packet_reader.h
+        core/gdxsv/packet_writer.cpp
+        core/gdxsv/packet_writer.h
+        core/gdxsv/gdxsv.cpp
+        core/gdxsv/gdxsv.h
+        core/gdxsv/gdxsv_network.cpp
+        core/gdxsv/gdxsv_network.h
+        core/gdxsv/gdx_queue.h
+        core/gdxsv/gdxsv_patch.h)
 
 target_sources(${PROJECT_NAME} PRIVATE
         core/rend/gles/glcache.h
