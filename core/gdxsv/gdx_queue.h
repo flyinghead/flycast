@@ -5,8 +5,8 @@
 static const int GDX_QUEUE_SIZE = 1024;
 
 enum {
-    RPC_TCP_OPEN = 1,
-    RPC_TCP_CLOSE = 2,
+    GDXRPC_TCP_OPEN = 1,
+    GDXRPC_TCP_CLOSE = 2,
 };
 
 struct gdx_rpc_t {

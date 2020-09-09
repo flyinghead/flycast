@@ -75,6 +75,7 @@ void Gdxsv::Reset() {
     if (disk_num == "1") disk = 1;
     if (disk_num == "2") disk = 2;
     tcp_client.Close();
+    udp_client.Close();
     NOTICE_LOG(COMMON, "gdxsv disk:%d server:%s loginkey:%s maxlag:%d", disk, server.c_str(), loginkey.c_str(), maxlag);
 }
 
@@ -185,7 +186,7 @@ void Gdxsv::SyncNetwork(bool write) {
             gdx_rpc.param3 = ReadMem32_nommu(gdx_rpc_addr + 16);
             gdx_rpc.param4 = ReadMem32_nommu(gdx_rpc_addr + 20);
 
-            if (gdx_rpc.request == RPC_TCP_OPEN) {
+            if (gdx_rpc.request == GDXRPC_TCP_OPEN) {
                 recv_buf_mtx.lock();
                 recv_buf.clear();
                 recv_buf_mtx.unlock();
@@ -202,7 +203,6 @@ void Gdxsv::SyncNetwork(bool write) {
                 u16 port = port_no;
 
                 if (tolobby == 1) {
-                    udp_client.Close();
                     bool ok = tcp_client.Connect(host.c_str(), port);
                     if (!ok) {
                         WARN_LOG(COMMON, "Failed to connect %s:%d", host.c_str(), port);
@@ -217,13 +217,12 @@ void Gdxsv::SyncNetwork(bool write) {
                     char addr_buf[INET_ADDRSTRLEN];
                     inet_ntop(AF_INET, &host_ip, addr_buf, INET_ADDRSTRLEN);
                     host = std::string(addr_buf);
-                    tcp_client.Close();
                     bool ok = udp_client.Connect(host.c_str(), port);
                     if (ok) {
+                        start_session_exchange = true;
                         recv_buf_mtx.lock();
                         recv_buf.assign(
                                 {0x0e, 0x61, 0x00, 0x22, 0x10, 0x31, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd});
-                        start_session_exchange = true;
                         recv_buf_mtx.unlock();
                     } else {
                         WARN_LOG(COMMON, "Failed to connect %s:%d", host.c_str(), port);
@@ -231,8 +230,9 @@ void Gdxsv::SyncNetwork(bool write) {
                 }
             }
 
-            if (gdx_rpc.request == RPC_TCP_CLOSE) {
+            if (gdx_rpc.request == GDXRPC_TCP_CLOSE) {
                 tcp_client.Close();
+                udp_client.Close();
 
                 recv_buf_mtx.lock();
                 recv_buf.clear();
@@ -250,6 +250,8 @@ void Gdxsv::SyncNetwork(bool write) {
             WriteMem32_nommu(gdx_rpc_addr + 16, 0);
             WriteMem32_nommu(gdx_rpc_addr + 20, 0);
         }
+
+        WriteMem32_nommu(symbols["is_online"], tcp_client.IsConnected() || udp_client.IsConnected());
 
         recv_buf_mtx.lock();
         int n = recv_buf.size();
@@ -280,7 +282,7 @@ void Gdxsv::UpdateNetwork() {
     bool updated = false;
 
     static const int kFirstMessageSize = 20;
-    BattleBuffer message_buf;
+    MessageBuffer message_buf;
     MessageFilter message_filter;
     Packet pkt;
     std::string session_id;
@@ -298,6 +300,8 @@ void Gdxsv::UpdateNetwork() {
         if (start_session_exchange) {
             start_session_exchange = false;
             session_id.clear();
+            message_buf.Clear();
+            message_filter.Clear();
 
             // get session_id from client
             for (int i = 0; i < 60; ++i) {
@@ -330,11 +334,12 @@ void Gdxsv::UpdateNetwork() {
                 auto w = PacketWriter(buf, sizeof(buf));
                 pkt.serialize(w);
 
-                u8 buf2[1024];
-                Packet pkt2;
                 for (int i = 0; i < 10; ++i) {
                     udp_client.Send((const char *) buf, w.get_size());
                     std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+                    u8 buf2[1024];
+                    Packet pkt2;
                     int n = udp_client.Recv((char *) buf2, sizeof(buf2));
                     if (0 < n) {
                         auto r = PacketReader(buf2, n);
@@ -364,8 +369,7 @@ void Gdxsv::UpdateNetwork() {
             send_buf_mtx.unlock();
 
             if (tcp_client.IsConnected()) {
-                int m = 0;
-                m = tcp_client.Send((char *) buf, n);
+                int m = tcp_client.Send((char *) buf, n);
                 if (m < n) {
                     send_buf_mtx.lock();
                     for (int i = n - 1; m <= i; --i) {
@@ -374,17 +378,25 @@ void Gdxsv::UpdateNetwork() {
                     send_buf_mtx.unlock();
                 }
             } else if (udp_client.IsConnected()) {
-                message_buf.PushBattleMessage(message_filter.GenerateMessage(session_id, buf, n));
-                pkt.clear();
-                pkt.set_type(proto::MessageType::Battle);
-                message_buf.FillSendData(pkt);
-                auto w = PacketWriter(buf, sizeof(buf));
-                auto err = pkt.serialize(w);
-                if (err == ::EmbeddedProto::Error::NO_ERRORS) {
-                    NOTICE_LOG(COMMON, "packet serialized: %d", w.get_size());
-                    udp_client.Send((const char *) buf, w.get_size());
+                if (message_buf.CanPush()) {
+                    message_buf.PushBattleMessage(session_id, buf, n);
+                    pkt.clear();
+                    pkt.set_type(proto::MessageType::Battle);
+                    message_buf.FillSendData(pkt);
+                    auto w = PacketWriter(buf, sizeof(buf));
+                    auto err = pkt.serialize(w);
+                    if (err == ::EmbeddedProto::Error::NO_ERRORS) {
+                        NOTICE_LOG(COMMON, "packet serialized: %d", w.get_size());
+                        udp_client.Send((const char *) buf, w.get_size());
+                    } else {
+                        ERROR_LOG(COMMON, "packet serialize error %d", err);
+                    }
                 } else {
-                    ERROR_LOG(COMMON, "packet serialize error %d", err);
+                    send_buf_mtx.lock();
+                    for (int i = n - 1; 0 <= i; --i) {
+                        send_buf.push_front(buf[i]);
+                    }
+                    send_buf_mtx.unlock();
                 }
             }
             updated = true;
@@ -423,7 +435,6 @@ void Gdxsv::UpdateNetwork() {
                             case proto::Pong:
                                 break;
                             case proto::Battle:
-                                NOTICE_LOG(COMMON, "recv packet %d", pkt.get_battle_data().get_length());
                                 message_buf.ApplySeqAck(pkt.get_seq(), pkt.get_ack());
                                 recv_buf_mtx.lock();
                                 const auto &msgs = pkt.get_battle_data();

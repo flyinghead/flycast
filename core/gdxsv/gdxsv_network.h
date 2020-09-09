@@ -38,26 +38,25 @@ private:
     sock_t sock = INVALID_SOCKET;
 };
 
-class BattleBuffer {
+class MessageBuffer {
 public:
     static const int kRingSize = 4096;
 
-    BattleBuffer();
+    MessageBuffer();
 
-    void SetId(std::string &id);
+    bool CanPush() const;
 
-    const std::string &GetId();
+    bool PushBattleMessage(const std::string& id, u8 *body, u32 body_length);
 
-    void PushBattleMessage(BattleMessage msg);
-
-    void FillSendData(Packet& packet);
+    void FillSendData(Packet &packet);
 
     void ApplySeqAck(u32 seq, u32 ack);
 
+    void Clear();
+
 private:
-    std::mutex mtx;
-    std::string id_;
-    u32 ack_;
+    u32 msg_seq_;
+    u32 pkt_ack_;
     u32 begin_;
     u32 end_;
     std::vector<BattleMessage> rbuf_;
@@ -65,15 +64,12 @@ private:
 
 class MessageFilter {
 public:
-    void Reset();
-
-    BattleMessage GenerateMessage(const std::string &user_id, const u8 * body, u32 body_len);
+    void Clear();
 
     bool Filter(const BattleMessage &msg);
 
 private:
     std::mutex mtx;
-    u32 seq = 1;
     std::map<std::string, u32> recv_seq;
 };
 

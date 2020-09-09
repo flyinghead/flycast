@@ -81,30 +81,32 @@ u32 TcpClient::ReadableSize() const {
     return u32(n);
 }
 
-BattleBuffer::BattleBuffer() : id_(), ack_(0), begin_(1), end_(1), rbuf_(kRingSize) {
+MessageBuffer::MessageBuffer() : msg_seq_(0), pkt_ack_(0), begin_(1), end_(1), rbuf_(kRingSize) {
 }
 
-void BattleBuffer::SetId(std::string &id) {
-    std::lock_guard<std::mutex> lock(mtx);
-    id_ = id;
+bool MessageBuffer::CanPush() const {
+    return end_ - begin_ < kRingSize;
 }
 
-const std::string &BattleBuffer::GetId() {
-    std::lock_guard<std::mutex> lock(mtx);
-    return id_;
-}
+bool MessageBuffer::PushBattleMessage(const std::string& id, u8 *body, u32 body_length) {
+    if (!CanPush()) {
+        // buffer full
+        return false;
+    }
 
-void BattleBuffer::PushBattleMessage(BattleMessage msg) {
-    std::lock_guard<std::mutex> lock(mtx);
     auto index = end_;
-    rbuf_[index % kRingSize] = msg;
+    auto &msg = rbuf_[index % kRingSize];
+    msg.set_seq(msg_seq_);
+    msg.mutable_user_id().set(id.c_str(), id.size());
+    msg.mutable_body().set(body, body_length);
+    msg_seq_++;
     end_++;
+    return true;
 }
 
-void BattleBuffer::FillSendData(Packet &packet) {
+void MessageBuffer::FillSendData(Packet &packet) {
     packet.clear_battle_data();
 
-    std::lock_guard<std::mutex> lock(mtx);
     std::vector<BattleMessage *> msgs;
     u32 l = begin_ % kRingSize;
     u32 e = end_;
@@ -125,29 +127,26 @@ void BattleBuffer::FillSendData(Packet &packet) {
         }
     }
     packet.set_seq(e - 1);
-    packet.set_ack(ack_);
+    packet.set_ack(pkt_ack_);
 }
 
-void BattleBuffer::ApplySeqAck(u32 seq, u32 ack) {
-    std::lock_guard<std::mutex> lock(mtx);
+void MessageBuffer::ApplySeqAck(u32 seq, u32 ack) {
     begin_ = ack + 1;
-    ack_ = seq;
+    pkt_ack_ = seq;
 }
 
-void MessageFilter::Reset() {
+void MessageBuffer::Clear() {
+    msg_seq_ = 0;
+    pkt_ack_ = 0;
+    begin_ = 1;
+    end_ = 1;
+    rbuf_.clear();
+    rbuf_.resize(kRingSize);
+}
+
+void MessageFilter::Clear() {
     std::lock_guard<std::mutex> lock(mtx);
-    seq = 1;
     recv_seq.clear();
-}
-
-BattleMessage MessageFilter::GenerateMessage(const std::string &user_id, const u8 *body, u32 body_len) {
-    std::lock_guard<std::mutex> lock(mtx);
-    BattleMessage msg;
-    msg.set_seq(seq);
-    msg.mutable_user_id().set(user_id.c_str(), user_id.size());
-    msg.mutable_body().set(body, body_len);
-    seq++;
-    return msg;
 }
 
 bool MessageFilter::Filter(const BattleMessage &msg) {
