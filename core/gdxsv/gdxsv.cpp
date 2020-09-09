@@ -333,7 +333,7 @@ void Gdxsv::UpdateNetwork() {
             NOTICE_LOG(COMMON, "session_id:%s", session_id.c_str());
 
             // send session_id to server
-            if (session_id.size()) {
+            if (!session_id.empty()) {
                 pkt.clear();
                 pkt.set_type(proto::MessageType::HelloServer);
                 pkt.mutable_hello_server_data().mutable_session_id().set(session_id.c_str(), session_id.size());
@@ -369,10 +369,6 @@ void Gdxsv::UpdateNetwork() {
                     send_buf.pop_front();
                 }
                 send_buf_mtx.unlock();
-            } else {
-                WARN_LOG(COMMON, "fallback to TCP");
-                tcp_client.Connect(udp_client.host().c_str(), udp_client.port());
-                udp_client.Close();
             }
         }
 
