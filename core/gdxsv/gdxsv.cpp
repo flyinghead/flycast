@@ -284,7 +284,7 @@ void Gdxsv::SyncNetwork(bool write) {
 
 void Gdxsv::UpdateNetwork() {
     bool updated = false;
-
+    int udp_retransmit_countdown = 0;
     static const int kFirstMessageSize = 20;
     MessageBuffer message_buf;
     MessageFilter message_filter;
@@ -399,8 +399,11 @@ void Gdxsv::UpdateNetwork() {
                     auto w = PacketWriter(buf, sizeof(buf));
                     auto err = pkt.serialize(w);
                     if (err == ::EmbeddedProto::Error::NO_ERRORS) {
-                        NOTICE_LOG(COMMON, "packet serialized: %d", w.get_size());
-                        udp_client.Send((const char *) buf, w.get_size());
+                        if (udp_client.Send((const char *) buf, w.get_size())) {
+                            udp_retransmit_countdown = 16;
+                        } else {
+                            udp_retransmit_countdown = 4;
+                        }
                     } else {
                         ERROR_LOG(COMMON, "packet serialize error %d", err);
                     }
@@ -413,6 +416,25 @@ void Gdxsv::UpdateNetwork() {
                 }
             }
             updated = true;
+        }
+
+        if (!updated && udp_client.IsConnected()) {
+            if (udp_retransmit_countdown-- == 0) {
+                pkt.clear();
+                pkt.set_type(proto::MessageType::Battle);
+                message_buf.FillSendData(pkt);
+                auto w = PacketWriter(buf, sizeof(buf));
+                auto err = pkt.serialize(w);
+                if (err == ::EmbeddedProto::Error::NO_ERRORS) {
+                    if (udp_client.Send((const char *) buf, w.get_size())) {
+                        udp_retransmit_countdown = 16;
+                    } else {
+                        udp_retransmit_countdown = 4;
+                    }
+                } else {
+                    ERROR_LOG(COMMON, "packet serialize error %d", err);
+                }
+            }
         }
 
         if (tcp_client.IsConnected()) {

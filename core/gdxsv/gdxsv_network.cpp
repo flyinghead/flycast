@@ -32,9 +32,10 @@ bool TcpClient::Connect(const char *host, int port) {
         closesocket(sock_);
     }
 
-    set_tcp_nodelay(new_sock);
     set_recv_timeout(new_sock, 1);
     set_send_timeout(new_sock, 1);
+    set_tcp_nodelay(new_sock);
+    set_non_blocking(new_sock);
     sock_ = new_sock;
     host_ = std::string(host);
     port_ = port;
@@ -104,6 +105,7 @@ bool UdpClient::Connect(const char *host, int port) {
 
     set_recv_timeout(new_sock, 1);
     set_send_timeout(new_sock, 1);
+    set_non_blocking(new_sock);
     sock_ = new_sock;
     host_ = std::string(host);
     port_ = port;
