@@ -6,7 +6,7 @@
 #include "rend/gui.h"
 #include "rend/TexCache.h"
 #include "wsi/context.h"
-#include "gdxsv.h"
+#include "gdxsv/gdxsv.h"
 
 #include <zlib.h>
 

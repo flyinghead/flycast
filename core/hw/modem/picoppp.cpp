@@ -41,7 +41,6 @@ extern "C" {
 #include "types.h"
 #include "cfg/cfg.h"
 #include "picoppp.h"
-#include "gdxsv.h"
 
 #include <map>
 #include <mutex>

@@ -161,7 +161,9 @@ int GDXFUNC gdx_sock_close(int param1) {
     gdx_queue_init(&gdx_rxq);
     gdx_queue_init(&gdx_txq);
     gdx_rpc.request = RPC_TCP_CLOSE;
+    gdx_rpc.param1 = param1;
     is_online = 0;
+    gdx_read_sync();
     return 0;
 #endif
 }
@@ -216,7 +218,12 @@ int GDXFUNC connect_sock(int sock, struct sockaddr_t *sock_addr, int len) {
     gdx_rpc.param2 = addr;
     gdx_rpc.param3 = port;
     gdx_read_sync();
-    return 1;
+
+    if (addr == 0x0707) {
+        return 1;
+    } else {
+        return 2;
+    }
 #endif
 }
 
