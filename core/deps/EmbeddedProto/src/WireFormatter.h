@@ -54,6 +54,20 @@ namespace EmbeddedProto
       //! Definition of a mask indicating the most significant bit used in varint encoding.
       static constexpr uint8_t VARINT_MSB_BYTE = 0x80;
 
+      //! Convert the floating point number to the next highes integer.
+      /*!
+        The ceil function in std is not a constexpr. Some compilers doe not accept this.
+
+        \param num The value you would like ot convert.
+        \return The resulting integer. 
+      */
+      static constexpr int32_t constexpr_ceil(float num)
+      {
+          return (static_cast<float>(static_cast<int32_t>(num)) == num)
+              ? static_cast<int32_t>(num)
+              : static_cast<int32_t>(num) + ((num > 0) ? 1 : 0);
+      }
+
     public:
       //! Definitions of the different encoding types used in protobuf.
       enum class WireType 
@@ -521,7 +535,7 @@ namespace EmbeddedProto
         
         // Calculate how many bytes there are in a varint 128 base encoded number. This should 
         // yield 5 for a 32bit number and 10 for a 64bit number.
-        static constexpr uint8_t N_BYTES_IN_VARINT = static_cast<uint8_t>(std::ceil(
+        static constexpr uint8_t N_BYTES_IN_VARINT = static_cast<uint8_t>(constexpr_ceil(
                                                           std::numeric_limits<UINT_TYPE>::digits 
                                                         / static_cast<float>(VARINT_SHIFT_N_BITS)));
         
