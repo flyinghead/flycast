@@ -339,7 +339,13 @@
 		EBDF374F1BB96581001191B5 /* audiobackend_coreaudio.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EBDF374D1BB96581001191B5 /* audiobackend_coreaudio.cpp */; };
 		EBDF37511BB969EE001191B5 /* CoreAudio.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EBDF37501BB969EE001191B5 /* CoreAudio.framework */; };
 		EBDF37531BB969F8001191B5 /* AudioUnit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EBDF37521BB969F8001191B5 /* AudioUnit.framework */; };
-		F2F40E5F250581E700E863B1 /* gdxsv.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F2F40E5D250581E700E863B1 /* gdxsv.cpp */; };
+		F25B66A3250947E800959C8F /* packet_reader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F25B6698250947E800959C8F /* packet_reader.cpp */; };
+		F25B66A4250947E800959C8F /* packet_writer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F25B669B250947E800959C8F /* packet_writer.cpp */; };
+		F25B66A5250947E800959C8F /* gdxsv.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F25B669C250947E800959C8F /* gdxsv.cpp */; };
+		F25B66A6250947E800959C8F /* gdxsv_network.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F25B66A1250947E800959C8F /* gdxsv_network.cpp */; };
+		F25B66C52509488600959C8F /* MessageInterface.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F25B66B22509488600959C8F /* MessageInterface.cpp */; };
+		F25B66C62509488600959C8F /* ReadBufferSection.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F25B66B92509488600959C8F /* ReadBufferSection.cpp */; };
+		F25B66C72509488600959C8F /* Fields.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F25B66BE2509488600959C8F /* Fields.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -1054,9 +1060,31 @@
 		EBDF374E1BB96581001191B5 /* audiobackend_coreaudio.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = audiobackend_coreaudio.h; sourceTree = "<group>"; };
 		EBDF37501BB969EE001191B5 /* CoreAudio.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreAudio.framework; path = System/Library/Frameworks/CoreAudio.framework; sourceTree = SDKROOT; };
 		EBDF37521BB969F8001191B5 /* AudioUnit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioUnit.framework; path = System/Library/Frameworks/AudioUnit.framework; sourceTree = SDKROOT; };
-		F2F40E5C250581E700E863B1 /* gdxsv_patch.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = gdxsv_patch.h; path = ../../../core/gdxsv_patch.h; sourceTree = "<group>"; };
-		F2F40E5D250581E700E863B1 /* gdxsv.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = gdxsv.cpp; path = ../../../core/gdxsv.cpp; sourceTree = "<group>"; };
-		F2F40E5E250581E700E863B1 /* gdxsv.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = gdxsv.h; path = ../../../core/gdxsv.h; sourceTree = "<group>"; };
+		F25B6698250947E800959C8F /* packet_reader.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = packet_reader.cpp; sourceTree = "<group>"; };
+		F25B6699250947E800959C8F /* packet_writer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = packet_writer.h; sourceTree = "<group>"; };
+		F25B669A250947E800959C8F /* gdxsv.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = gdxsv.h; sourceTree = "<group>"; };
+		F25B669B250947E800959C8F /* packet_writer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = packet_writer.cpp; sourceTree = "<group>"; };
+		F25B669C250947E800959C8F /* gdxsv.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = gdxsv.cpp; sourceTree = "<group>"; };
+		F25B669D250947E800959C8F /* gdxsv_network.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = gdxsv_network.h; sourceTree = "<group>"; };
+		F25B669E250947E800959C8F /* packet_reader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = packet_reader.h; sourceTree = "<group>"; };
+		F25B669F250947E800959C8F /* gdx_queue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = gdx_queue.h; sourceTree = "<group>"; };
+		F25B66A0250947E800959C8F /* packet.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = packet.h; sourceTree = "<group>"; };
+		F25B66A1250947E800959C8F /* gdxsv_network.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = gdxsv_network.cpp; sourceTree = "<group>"; };
+		F25B66A2250947E800959C8F /* gdxsv_patch.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = gdxsv_patch.h; sourceTree = "<group>"; };
+		F25B66B12509488600959C8F /* ReadBufferSection.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ReadBufferSection.h; sourceTree = "<group>"; };
+		F25B66B22509488600959C8F /* MessageInterface.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = MessageInterface.cpp; sourceTree = "<group>"; };
+		F25B66B32509488600959C8F /* WriteBufferInterface.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WriteBufferInterface.h; sourceTree = "<group>"; };
+		F25B66B42509488600959C8F /* MessageSizeCalculator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MessageSizeCalculator.h; sourceTree = "<group>"; };
+		F25B66B52509488600959C8F /* Fields.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Fields.h; sourceTree = "<group>"; };
+		F25B66B62509488600959C8F /* Errors.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Errors.h; sourceTree = "<group>"; };
+		F25B66B72509488600959C8F /* FieldStringBytes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FieldStringBytes.h; sourceTree = "<group>"; };
+		F25B66B82509488600959C8F /* RepeatedFieldFixedSize.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RepeatedFieldFixedSize.h; sourceTree = "<group>"; };
+		F25B66B92509488600959C8F /* ReadBufferSection.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ReadBufferSection.cpp; sourceTree = "<group>"; };
+		F25B66BA2509488600959C8F /* ReadBufferInterface.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ReadBufferInterface.h; sourceTree = "<group>"; };
+		F25B66BB2509488600959C8F /* MessageInterface.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MessageInterface.h; sourceTree = "<group>"; };
+		F25B66BC2509488600959C8F /* RepeatedField.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RepeatedField.h; sourceTree = "<group>"; };
+		F25B66BD2509488600959C8F /* WireFormatter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WireFormatter.h; sourceTree = "<group>"; };
+		F25B66BE2509488600959C8F /* Fields.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Fields.cpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -1157,7 +1185,7 @@
 				84B7BD131B72720100F9733F /* cfg */,
 				84B7BD171B72720100F9733F /* deps */,
 				84B7BDB81B72720100F9733F /* emitter */,
-				F2F40E5B250581DA00E863B1 /* gdxsv */,
+				F25B6697250947E800959C8F /* gdxsv */,
 				84B7BDC61B72720100F9733F /* hw */,
 				84B7BE421B72720100F9733F /* imgread */,
 				AEE6278022131BB500EC7E89 /* input */,
@@ -1206,6 +1234,7 @@
 				84B7BD1B1B72720100F9733F /* chdr */,
 				84B7BD1F1B72720100F9733F /* coreio */,
 				84B7BD221B72720100F9733F /* crypto */,
+				F25B66A72509488600959C8F /* EmbeddedProto */,
 				AE649BB7218C552500EF4A81 /* flac */,
 				AED73DCD2348E44F00ECDB64 /* glslang */,
 				AEE6276C220D7B7E00EC7E89 /* imgui */,
@@ -2484,14 +2513,52 @@
 			path = stack;
 			sourceTree = "<group>";
 		};
-		F2F40E5B250581DA00E863B1 /* gdxsv */ = {
+		F25B6697250947E800959C8F /* gdxsv */ = {
 			isa = PBXGroup;
 			children = (
-				F2F40E5C250581E700E863B1 /* gdxsv_patch.h */,
-				F2F40E5D250581E700E863B1 /* gdxsv.cpp */,
-				F2F40E5E250581E700E863B1 /* gdxsv.h */,
+				F25B6698250947E800959C8F /* packet_reader.cpp */,
+				F25B6699250947E800959C8F /* packet_writer.h */,
+				F25B669A250947E800959C8F /* gdxsv.h */,
+				F25B669B250947E800959C8F /* packet_writer.cpp */,
+				F25B669C250947E800959C8F /* gdxsv.cpp */,
+				F25B669D250947E800959C8F /* gdxsv_network.h */,
+				F25B669E250947E800959C8F /* packet_reader.h */,
+				F25B669F250947E800959C8F /* gdx_queue.h */,
+				F25B66A0250947E800959C8F /* packet.h */,
+				F25B66A1250947E800959C8F /* gdxsv_network.cpp */,
+				F25B66A2250947E800959C8F /* gdxsv_patch.h */,
 			);
 			name = gdxsv;
+			path = ../../../core/gdxsv;
+			sourceTree = "<group>";
+		};
+		F25B66A72509488600959C8F /* EmbeddedProto */ = {
+			isa = PBXGroup;
+			children = (
+				F25B66B02509488600959C8F /* src */,
+			);
+			path = EmbeddedProto;
+			sourceTree = "<group>";
+		};
+		F25B66B02509488600959C8F /* src */ = {
+			isa = PBXGroup;
+			children = (
+				F25B66B12509488600959C8F /* ReadBufferSection.h */,
+				F25B66B22509488600959C8F /* MessageInterface.cpp */,
+				F25B66B32509488600959C8F /* WriteBufferInterface.h */,
+				F25B66B42509488600959C8F /* MessageSizeCalculator.h */,
+				F25B66B52509488600959C8F /* Fields.h */,
+				F25B66B62509488600959C8F /* Errors.h */,
+				F25B66B72509488600959C8F /* FieldStringBytes.h */,
+				F25B66B82509488600959C8F /* RepeatedFieldFixedSize.h */,
+				F25B66B92509488600959C8F /* ReadBufferSection.cpp */,
+				F25B66BA2509488600959C8F /* ReadBufferInterface.h */,
+				F25B66BB2509488600959C8F /* MessageInterface.h */,
+				F25B66BC2509488600959C8F /* RepeatedField.h */,
+				F25B66BD2509488600959C8F /* WireFormatter.h */,
+				F25B66BE2509488600959C8F /* Fields.cpp */,
+			);
+			path = src;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -2708,7 +2775,6 @@
 				84B7BF121B72720200F9733F /* zip_unchange.c in Sources */,
 				AE8C27342111A31100D4D8F4 /* dsp_interp.cpp in Sources */,
 				84B7BF421B72720200F9733F /* blockmanager.cpp in Sources */,
-				F2F40E5F250581E700E863B1 /* gdxsv.cpp in Sources */,
 				84B7BEE21B72720200F9733F /* zip_add_dir.c in Sources */,
 				84B7BEE61B72720200F9733F /* zip_entry_free.c in Sources */,
 				AED73E8F2348E45000ECDB64 /* SpvPostProcess.cpp in Sources */,
@@ -2741,6 +2807,7 @@
 				84B7BF2A1B72720200F9733F /* arm7.cpp in Sources */,
 				AE90679D235DF80400CE473C /* osd.cpp in Sources */,
 				84B7BF0D1B72720200F9733F /* zip_source_zip.c in Sources */,
+				F25B66A6250947E800959C8F /* gdxsv_network.cpp in Sources */,
 				84B7BEF51B72720200F9733F /* zip_fopen.c in Sources */,
 				84B7BF551B72720200F9733F /* sh4_mem.cpp in Sources */,
 				AE649C2C218C553A00EF4A81 /* Lzma86Enc.c in Sources */,
@@ -2751,6 +2818,8 @@
 				84B7BEEE1B72720200F9733F /* zip_error_to_str.c in Sources */,
 				AE1E293B2095FB1600FC6BA2 /* rec_cpp.cpp in Sources */,
 				AED73E6C2348E45000ECDB64 /* pch.cpp in Sources */,
+				F25B66A3250947E800959C8F /* packet_reader.cpp in Sources */,
+				F25B66A4250947E800959C8F /* packet_writer.cpp in Sources */,
 				84B7BEF81B72720200F9733F /* zip_free.c in Sources */,
 				84B7BF331B72720200F9733F /* sb_mem.cpp in Sources */,
 				AED73E892348E45000ECDB64 /* disassemble.cpp in Sources */,
@@ -2810,6 +2879,7 @@
 				84B7BF761B72720200F9733F /* reios.cpp in Sources */,
 				84B7BF3B1B72720200F9733F /* pvr_regs.cpp in Sources */,
 				84B7BF311B72720200F9733F /* sb.cpp in Sources */,
+				F25B66C72509488600959C8F /* Fields.cpp in Sources */,
 				84B7BF0C1B72720200F9733F /* zip_source_function.c in Sources */,
 				AE649C2B218C553A00EF4A81 /* Lzma86Dec.c in Sources */,
 				84B7BF4B1B72720200F9733F /* cpg.cpp in Sources */,
@@ -2858,9 +2928,11 @@
 				84B7BF791B72720200F9733F /* gldraw.cpp in Sources */,
 				84B7BF4E1B72720200F9733F /* mmu.cpp in Sources */,
 				AED73E852348E45000ECDB64 /* InitializeDll.cpp in Sources */,
+				F25B66C52509488600959C8F /* MessageInterface.cpp in Sources */,
 				AEF256512294060400348550 /* 7zArchive.cpp in Sources */,
 				84B7BEBA1B72720200F9733F /* elf32.cpp in Sources */,
 				84B7BEE91B72720200F9733F /* zip_error.c in Sources */,
+				F25B66A5250947E800959C8F /* gdxsv.cpp in Sources */,
 				84B7BF481B72720200F9733F /* sh4_opcodes.cpp in Sources */,
 				84B7BF141B72720200F9733F /* zip_unchange_archive.c in Sources */,
 				AE2A2D7E21D6851E004B308D /* Lzma2Dec.c in Sources */,
@@ -2930,6 +3002,7 @@
 				AEFF7F74214D9D590068CE11 /* pico_socket_multicast.c in Sources */,
 				AED73E6B2348E45000ECDB64 /* ParseHelper.cpp in Sources */,
 				84B7BF151B72720200F9733F /* zip_unchange_data.c in Sources */,
+				F25B66C62509488600959C8F /* ReadBufferSection.cpp in Sources */,
 				AEFF7F71214D9D590068CE11 /* pico_md5.c in Sources */,
 				84B7BEF11B72720200F9733F /* zip_file_error_get.c in Sources */,
 				AE649BFC218C552500EF4A81 /* lpc.c in Sources */,
@@ -3082,6 +3155,7 @@
 			baseConfigurationReference = AE2A234A22941AF000DD3034 /* DreamcastConfig.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
 				COMBINE_HIDPI_IMAGES = YES;
 				DEVELOPMENT_TEAM = "";
 				ENABLE_HARDENED_RUNTIME = NO;
@@ -3115,6 +3189,7 @@
 					../../../core/deps/xbyak,
 					../../../core/deps/stb,
 					/usr/local/include,
+					../../../core/deps/EmbeddedProto/src,
 				);
 				INFOPLIST_FILE = "emulator-osx/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
@@ -3132,6 +3207,7 @@
 			baseConfigurationReference = AE2A234A22941AF000DD3034 /* DreamcastConfig.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
 				COMBINE_HIDPI_IMAGES = YES;
 				DEVELOPMENT_TEAM = "";
 				ENABLE_HARDENED_RUNTIME = NO;
@@ -3162,6 +3238,7 @@
 					../../../core/deps/xbyak,
 					../../../core/deps/stb,
 					/usr/local/include,
+					../../../core/deps/EmbeddedProto/src,
 				);
 				INFOPLIST_FILE = "emulator-osx/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
