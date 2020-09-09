@@ -204,28 +204,36 @@ void Gdxsv::SyncNetwork(bool write) {
 
                 if (tolobby == 1) {
                     bool ok = tcp_client.Connect(host.c_str(), port);
-                    if (!ok) {
-                        WARN_LOG(COMMON, "Failed to connect %s:%d", host.c_str(), port);
+                    if (ok) {
+                        auto packet = GeneratePlatformInfoPacket();
+                        send_buf_mtx.lock();
+                        send_buf.clear();
+                        std::copy(begin(packet), end(packet), std::back_inserter(send_buf));
+                        send_buf_mtx.unlock();
+                    } else {
+                        WARN_LOG(COMMON, "Failed to connect with TCP %s:%d", host.c_str(), port);
                     }
-
-                    auto packet = GeneratePlatformInfoPacket();
-                    send_buf_mtx.lock();
-                    send_buf.clear();
-                    std::copy(begin(packet), end(packet), std::back_inserter(send_buf));
-                    send_buf_mtx.unlock();
                 } else {
                     char addr_buf[INET_ADDRSTRLEN];
                     inet_ntop(AF_INET, &host_ip, addr_buf, INET_ADDRSTRLEN);
                     host = std::string(addr_buf);
                     bool ok = udp_client.Connect(host.c_str(), port);
                     if (ok) {
-                        start_session_exchange = true;
+                        start_udp_session = true;
                         recv_buf_mtx.lock();
                         recv_buf.assign(
                                 {0x0e, 0x61, 0x00, 0x22, 0x10, 0x31, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd});
                         recv_buf_mtx.unlock();
                     } else {
-                        WARN_LOG(COMMON, "Failed to connect %s:%d", host.c_str(), port);
+                        WARN_LOG(COMMON, "Failed to connect with UDP %s:%d", host.c_str(), port);
+                        ok = tcp_client.Connect(host.c_str(), port);
+                        if (ok) {
+                            recv_buf_mtx.lock();
+                            recv_buf.clear();
+                            recv_buf_mtx.unlock();
+                        } else {
+                            WARN_LOG(COMMON, "Failed to connect with TCP %s:%d", host.c_str(), port);
+                        }
                     }
                 }
             }
@@ -278,13 +286,13 @@ void Gdxsv::SyncNetwork(bool write) {
 }
 
 void Gdxsv::UpdateNetwork() {
-    u8 buf[GDX_QUEUE_SIZE];
     bool updated = false;
 
     static const int kFirstMessageSize = 20;
     MessageBuffer message_buf;
     MessageFilter message_filter;
     Packet pkt;
+    u8 buf[1024];
     std::string session_id;
 
     while (!net_terminate) {
@@ -297,8 +305,9 @@ void Gdxsv::UpdateNetwork() {
             continue;
         }
 
-        if (start_session_exchange) {
-            start_session_exchange = false;
+        if (start_udp_session) {
+            start_udp_session = false;
+            bool udp_session_ok = false;
             session_id.clear();
             message_buf.Clear();
             message_filter.Clear();
@@ -316,9 +325,6 @@ void Gdxsv::UpdateNetwork() {
                 send_buf_mtx.lock();
                 for (int i = 12; i < kFirstMessageSize; ++i) {
                     session_id.push_back((char) send_buf[i]);
-                }
-                for (int i = 0; i < kFirstMessageSize; ++i) {
-                    send_buf.pop_front();
                 }
                 send_buf_mtx.unlock();
                 break;
@@ -345,14 +351,28 @@ void Gdxsv::UpdateNetwork() {
                         auto r = PacketReader(buf2, n);
                         if (pkt2.deserialize(r) == ::EmbeddedProto::Error::NO_ERRORS) {
                             if (pkt2.hello_server_data().get_ok()) {
-                                NOTICE_LOG(COMMON, "session validation OK");
+                                NOTICE_LOG(COMMON, "UDP session validation OK");
+                                udp_session_ok = true;
                                 break;
                             } else {
-                                WARN_LOG(COMMON, "session validation NG");
+                                WARN_LOG(COMMON, "UDP session validation NG");
                             }
                         }
                     }
                 }
+            }
+
+            if (udp_session_ok) {
+                // discard first message
+                send_buf_mtx.lock();
+                for (int i = 0; i < kFirstMessageSize; ++i) {
+                    send_buf.pop_front();
+                }
+                send_buf_mtx.unlock();
+            } else {
+                WARN_LOG(COMMON, "fallback to TCP");
+                tcp_client.Connect(udp_client.host().c_str(), udp_client.port());
+                udp_client.Close();
             }
         }
 
@@ -426,20 +446,12 @@ void Gdxsv::UpdateNetwork() {
                     pkt.clear();
                     if (pkt.deserialize(r) == ::EmbeddedProto::Error::NO_ERRORS) {
                         switch (pkt.get_type()) {
-                            case proto::None:
-                                break;
-                            case proto::HelloServer:
-                                break;
-                            case proto::Ping:
-                                break;
-                            case proto::Pong:
-                                break;
                             case proto::Battle:
                                 message_buf.ApplySeqAck(pkt.get_seq(), pkt.get_ack());
                                 recv_buf_mtx.lock();
                                 const auto &msgs = pkt.get_battle_data();
                                 for (int i = 0; i < msgs.get_length(); ++i) {
-                                    if (message_filter.Filter(msgs.get_const(i))) {
+                                    if (message_filter.IsNextMessage(msgs.get_const(i))) {
                                         const auto &body = msgs.get_const(i).body();
                                         for (int j = 0; j < body.get_length(); ++j) {
                                             recv_buf.push_back(body.get_const(j));
@@ -449,8 +461,6 @@ void Gdxsv::UpdateNetwork() {
                                 recv_buf_mtx.unlock();
                                 break;
                         }
-                    } else {
-                        // TODO
                     }
                     updated = true;
                 }

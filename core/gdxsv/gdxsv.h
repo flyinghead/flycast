@@ -46,7 +46,7 @@ private:
     std::map<std::string, u32> symbols;
 
     std::atomic<bool> net_terminate;
-    std::atomic<bool> start_session_exchange;
+    std::atomic<bool> start_udp_session;
     std::thread net_thread;
     std::mutex send_buf_mtx;
     std::deque<u8> send_buf;

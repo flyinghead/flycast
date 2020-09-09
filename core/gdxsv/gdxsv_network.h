@@ -34,43 +34,14 @@ public:
 
     u32 ReadableSize() const;
 
-private:
-    sock_t sock = INVALID_SOCKET;
-};
+    const std::string &host() { return host_; }
 
-class MessageBuffer {
-public:
-    static const int kRingSize = 4096;
-
-    MessageBuffer();
-
-    bool CanPush() const;
-
-    bool PushBattleMessage(const std::string& id, u8 *body, u32 body_length);
-
-    void FillSendData(Packet &packet);
-
-    void ApplySeqAck(u32 seq, u32 ack);
-
-    void Clear();
+    int port() { return port_; }
 
 private:
-    u32 msg_seq_;
-    u32 pkt_ack_;
-    u32 begin_;
-    u32 end_;
-    std::vector<BattleMessage> rbuf_;
-};
-
-class MessageFilter {
-public:
-    void Clear();
-
-    bool Filter(const BattleMessage &msg);
-
-private:
-    std::mutex mtx;
-    std::map<std::string, u32> recv_seq;
+    sock_t sock_ = INVALID_SOCKET;
+    std::string host_;
+    int port_;
 };
 
 
@@ -88,13 +59,50 @@ public:
 
     void Close();
 
-private:
-    sock_t sock = INVALID_SOCKET;
-    struct sockaddr_in remote_addr;
+    const std::string &host() { return host_; }
 
-    std::mutex mtx;
-    std::string id;
-    u32 ack;
-    u32 begin;
-    u32 end;
+    int port() { return port_; }
+
+private:
+    sock_t sock_ = INVALID_SOCKET;
+    sockaddr_in remote_addr_;
+    std::string host_;
+    int port_;
 };
+
+class MessageBuffer {
+public:
+    static const int kRingSize = 4096;
+
+    MessageBuffer();
+
+    bool CanPush() const;
+
+    bool PushBattleMessage(const std::string &id, u8 *body, u32 body_length);
+
+    void FillSendData(Packet &packet);
+
+    void ApplySeqAck(u32 seq, u32 ack);
+
+    void Clear();
+
+private:
+    u32 msg_seq_;
+    u32 pkt_ack_;
+    u32 begin_;
+    u32 end_;
+    std::vector<BattleMessage> rbuf_;
+};
+
+class MessageFilter {
+public:
+    bool IsNextMessage(const BattleMessage &msg);
+
+    void Clear();
+
+private:
+    std::mutex mtx;
+    std::map<std::string, u32> recv_seq;
+};
+
+

@@ -28,24 +28,26 @@ bool TcpClient::Connect(const char *host, int port) {
         return false;
     }
 
-    if (sock != INVALID_SOCKET) {
-        closesocket(sock);
+    if (sock_ != INVALID_SOCKET) {
+        closesocket(sock_);
     }
 
     set_tcp_nodelay(new_sock);
     set_recv_timeout(new_sock, 1);
     set_send_timeout(new_sock, 1);
-    sock = new_sock;
+    sock_ = new_sock;
+    host_ = std::string(host);
+    port_ = port;
     NOTICE_LOG(COMMON, "TCP Connect: %s:%d ok", host, port);
     return true;
 }
 
 int TcpClient::IsConnected() const {
-    return sock != INVALID_SOCKET;
+    return sock_ != INVALID_SOCKET;
 }
 
 int TcpClient::Recv(char *buf, int len) {
-    int n = ::recv(sock, buf, len, 0);
+    int n = ::recv(sock_, buf, len, 0);
     if (n < 0 && get_last_error() != L_EAGAIN && get_last_error() != L_EWOULDBLOCK) {
         WARN_LOG(COMMON, "Recv failed. errno=%d", get_last_error());
         this->Close();
@@ -55,7 +57,7 @@ int TcpClient::Recv(char *buf, int len) {
 }
 
 int TcpClient::Send(const char *buf, int len) {
-    int n = ::send(sock, buf, len, 0);
+    int n = ::send(sock_, buf, len, 0);
     if (n < 0 && get_last_error() != L_EAGAIN && get_last_error() != L_EWOULDBLOCK) {
         WARN_LOG(COMMON, "Recv failed. errno=%d", get_last_error());
         this->Close();
@@ -64,22 +66,92 @@ int TcpClient::Send(const char *buf, int len) {
     return n;
 }
 
-void TcpClient::Close() {
-    if (sock != INVALID_SOCKET) {
-        closesocket(sock);
-        sock = INVALID_SOCKET;
-    }
-}
-
 u32 TcpClient::ReadableSize() const {
     u_long n = 0;
 #ifndef _WIN32
-    ioctl(sock, FIONREAD, &n);
+    ioctl(sock_, FIONREAD, &n);
 #else
-    ioctlsocket(sock, FIONREAD, &n);
+    ioctlsocket(sock_, FIONREAD, &n);
 #endif
     return u32(n);
 }
+
+void TcpClient::Close() {
+    if (sock_ != INVALID_SOCKET) {
+        closesocket(sock_);
+        sock_ = INVALID_SOCKET;
+    }
+}
+
+
+bool UdpClient::Connect(const char *host, int port) {
+    NOTICE_LOG(COMMON, "UDP Connect : %s:%d", host, port);
+
+    sock_t new_sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    if (new_sock == INVALID_SOCKET) {
+        WARN_LOG(COMMON, "Connect fail 1 %d", get_last_error());
+        return false;
+    }
+    auto host_entry = gethostbyname(host);
+    if (host_entry == nullptr) {
+        WARN_LOG(COMMON, "Connect fail. gethostbyname %s", host);
+        return false;
+    }
+
+    remote_addr_.sin_family = AF_INET;
+    memcpy(&(remote_addr_.sin_addr.s_addr), host_entry->h_addr, host_entry->h_length);
+    remote_addr_.sin_port = htons(port);
+
+    set_recv_timeout(new_sock, 1);
+    set_send_timeout(new_sock, 1);
+    sock_ = new_sock;
+    host_ = std::string(host);
+    port_ = port;
+    NOTICE_LOG(COMMON, "UDP Connect : %s:%d ok", host, port);
+    return true;
+}
+
+int UdpClient::IsConnected() const {
+    return sock_ != INVALID_SOCKET;
+}
+
+int UdpClient::Recv(char *buf, int len) {
+    int n = ::recvfrom(sock_, buf, len, 0, nullptr, nullptr);
+    if (n < 0 && get_last_error() != L_EAGAIN && get_last_error() != L_EWOULDBLOCK) {
+        WARN_LOG(COMMON, "recv failed. errno=%d", get_last_error());
+        Close();
+    }
+    if (n < 0) return 0;
+    return n;
+}
+
+int UdpClient::Send(const char *buf, int len) {
+    int n = ::sendto(sock_, buf, len, 0, (const sockaddr *) &remote_addr_, sizeof(remote_addr_));
+    if (n < 0 && get_last_error() != L_EAGAIN && get_last_error() != L_EWOULDBLOCK) {
+        WARN_LOG(COMMON, "send failed. errno=%d", get_last_error());
+        Close();
+    }
+    if (n < 0) return 0;
+    return n;
+}
+
+u32 UdpClient::ReadableSize() const {
+    u_long n = 0;
+#ifndef _WIN32
+    ioctl(sock_, FIONREAD, &n);
+#else
+    ioctlsocket(sock_, FIONREAD, &n);
+#endif
+    return u32(n);
+}
+
+void UdpClient::Close() {
+    if (sock_ != INVALID_SOCKET) {
+        closesocket(sock_);
+        sock_ = INVALID_SOCKET;
+    }
+}
+
 
 MessageBuffer::MessageBuffer() : msg_seq_(0), pkt_ack_(0), begin_(1), end_(1), rbuf_(kRingSize) {
 }
@@ -88,7 +160,7 @@ bool MessageBuffer::CanPush() const {
     return end_ - begin_ < kRingSize;
 }
 
-bool MessageBuffer::PushBattleMessage(const std::string& id, u8 *body, u32 body_length) {
+bool MessageBuffer::PushBattleMessage(const std::string &id, u8 *body, u32 body_length) {
     if (!CanPush()) {
         // buffer full
         return false;
@@ -144,12 +216,8 @@ void MessageBuffer::Clear() {
     rbuf_.resize(kRingSize);
 }
 
-void MessageFilter::Clear() {
-    std::lock_guard<std::mutex> lock(mtx);
-    recv_seq.clear();
-}
 
-bool MessageFilter::Filter(const BattleMessage &msg) {
+bool MessageFilter::IsNextMessage(const BattleMessage &msg) {
     std::lock_guard<std::mutex> lock(mtx);
     auto ack = recv_seq[msg.get_user_id()];
     if (ack == 0 || msg.get_seq() == ack + 1) {
@@ -159,68 +227,8 @@ bool MessageFilter::Filter(const BattleMessage &msg) {
     return false;
 }
 
-bool UdpClient::Connect(const char *host, int port) {
-    NOTICE_LOG(COMMON, "UDP Connect : %s:%d", host, port);
-
-    sock_t new_sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-    if (new_sock == INVALID_SOCKET) {
-        WARN_LOG(COMMON, "Connect fail 1 %d", get_last_error());
-        return false;
-    }
-    auto host_entry = gethostbyname(host);
-    if (host_entry == nullptr) {
-        WARN_LOG(COMMON, "Connect fail. gethostbyname %s", host);
-        return false;
-    }
-
-    remote_addr.sin_family = AF_INET;
-    memcpy(&(remote_addr.sin_addr.s_addr), host_entry->h_addr, host_entry->h_length);
-    remote_addr.sin_port = htons(port);
-
-    set_recv_timeout(new_sock, 1);
-    set_send_timeout(new_sock, 1);
-    sock = new_sock;
-    NOTICE_LOG(COMMON, "UDP Connect : %s:%d ok", host, port);
-    return true;
+void MessageFilter::Clear() {
+    std::lock_guard<std::mutex> lock(mtx);
+    recv_seq.clear();
 }
 
-int UdpClient::IsConnected() const {
-    return sock != INVALID_SOCKET;
-}
-
-int UdpClient::Recv(char *buf, int len) {
-    int n = ::recvfrom(sock, buf, len, 0, nullptr, nullptr);
-    if (n < 0 && get_last_error() != L_EAGAIN && get_last_error() != L_EWOULDBLOCK) {
-        WARN_LOG(COMMON, "recv failed. errno=%d", get_last_error());
-        Close();
-    }
-    if (n < 0) return 0;
-    return n;
-}
-
-int UdpClient::Send(const char *buf, int len) {
-    int n = ::sendto(sock, buf, len, 0, (const sockaddr *) &remote_addr, sizeof(remote_addr));
-    if (n < 0 && get_last_error() != L_EAGAIN && get_last_error() != L_EWOULDBLOCK) {
-        WARN_LOG(COMMON, "send failed. errno=%d", get_last_error());
-        Close();
-    }
-    if (n < 0) return 0;
-    return n;
-}
-
-u32 UdpClient::ReadableSize() const {
-    u_long n = 0;
-#ifndef _WIN32
-    ioctl(sock, FIONREAD, &n);
-#else
-    ioctlsocket(sock, FIONREAD, &n);
-#endif
-    return u32(n);
-}
-
-void UdpClient::Close() {
-    if (sock != INVALID_SOCKET) {
-        closesocket(sock);
-        sock = INVALID_SOCKET;
-    }
-}

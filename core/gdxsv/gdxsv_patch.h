@@ -434,6 +434,6 @@ symbols["gdx_dial_start_disk2"] = 0x0c4f0d98;
 #undef W8
 if (disk == 1) WriteMem32_nommu(0x8c181bb4, symbols["gdx_dial_start_disk1"]);
 if (disk == 2) WriteMem32_nommu(0x8c1e0274, symbols["gdx_dial_start_disk2"]);
-symbols[":patch_id"] = 99656428;
+symbols[":patch_id"] = 99659660;
 WriteMem32_nommu(symbols["patch_id"], symbols[":patch_id"]);
 #endif
