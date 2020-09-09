@@ -1,11 +1,8 @@
 #include "gdxsv.h"
 
 #include <sstream>
-#include <iomanip>
 #include <random>
 
-#include "network/net_platform.h"
-#include "packet.h"
 #include "packet_reader.h"
 #include "packet_writer.h"
 #include "gdx_queue.h"
