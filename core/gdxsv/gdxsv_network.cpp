@@ -50,7 +50,7 @@ int TcpClient::IsConnected() const {
 int TcpClient::Recv(char *buf, int len) {
     int n = ::recv(sock_, buf, len, 0);
     if (n < 0 && get_last_error() != L_EAGAIN && get_last_error() != L_EWOULDBLOCK) {
-        WARN_LOG(COMMON, "Recv failed. errno=%d", get_last_error());
+        WARN_LOG(COMMON, "TCP Recv failed. errno=%d", get_last_error());
         this->Close();
     }
     if (n < 0) return 0;
@@ -60,7 +60,7 @@ int TcpClient::Recv(char *buf, int len) {
 int TcpClient::Send(const char *buf, int len) {
     int n = ::send(sock_, buf, len, 0);
     if (n < 0 && get_last_error() != L_EAGAIN && get_last_error() != L_EWOULDBLOCK) {
-        WARN_LOG(COMMON, "Recv failed. errno=%d", get_last_error());
+        WARN_LOG(COMMON, "TCP Send failed. errno=%d", get_last_error());
         this->Close();
     }
     if (n < 0) return 0;
@@ -90,12 +90,12 @@ bool UdpClient::Connect(const char *host, int port) {
 
     sock_t new_sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     if (new_sock == INVALID_SOCKET) {
-        WARN_LOG(COMMON, "Connect fail 1 %d", get_last_error());
+        WARN_LOG(COMMON, "UDP Connect fail %d", get_last_error());
         return false;
     }
     auto host_entry = gethostbyname(host);
     if (host_entry == nullptr) {
-        WARN_LOG(COMMON, "Connect fail. gethostbyname %s", host);
+        WARN_LOG(COMMON, "UDP Connect fail. gethostbyname %s", host);
         return false;
     }
 
@@ -120,7 +120,7 @@ int UdpClient::IsConnected() const {
 int UdpClient::Recv(char *buf, int len) {
     int n = ::recvfrom(sock_, buf, len, 0, nullptr, nullptr);
     if (n < 0 && get_last_error() != L_EAGAIN && get_last_error() != L_EWOULDBLOCK) {
-        WARN_LOG(COMMON, "recv failed. errno=%d", get_last_error());
+        WARN_LOG(COMMON, "UDP Recv failed. errno=%d", get_last_error());
         Close();
     }
     if (n < 0) return 0;
@@ -130,7 +130,7 @@ int UdpClient::Recv(char *buf, int len) {
 int UdpClient::Send(const char *buf, int len) {
     int n = ::sendto(sock_, buf, len, 0, (const sockaddr *) &remote_addr_, sizeof(remote_addr_));
     if (n < 0 && get_last_error() != L_EAGAIN && get_last_error() != L_EWOULDBLOCK) {
-        WARN_LOG(COMMON, "send failed. errno=%d", get_last_error());
+        WARN_LOG(COMMON, "UDP Send failed. errno=%d", get_last_error());
         Close();
     }
     if (n < 0) return 0;
@@ -152,10 +152,6 @@ void UdpClient::Close() {
         closesocket(sock_);
         sock_ = INVALID_SOCKET;
     }
-}
-
-
-MessageBuffer::MessageBuffer() : msg_seq_(0), pkt_ack_(0), begin_(1), end_(1), rbuf_(kRingSize) {
 }
 
 bool MessageBuffer::CanPush() const {
@@ -214,15 +210,12 @@ void MessageBuffer::Clear() {
     pkt_ack_ = 0;
     begin_ = 1;
     end_ = 1;
-    rbuf_.clear();
     rbuf_.resize(kRingSize);
 }
 
-
 bool MessageFilter::IsNextMessage(const BattleMessage &msg) {
-    std::lock_guard<std::mutex> lock(mtx);
-    auto ack = recv_seq[msg.get_user_id()];
-    if (ack == 0 || msg.get_seq() == ack + 1) {
+    auto last_seq = recv_seq[msg.get_user_id()];
+    if (last_seq == 0 || msg.get_seq() == last_seq + 1) {
         recv_seq[msg.get_user_id()] = msg.get_seq();
         return true;
     }
@@ -230,7 +223,5 @@ bool MessageFilter::IsNextMessage(const BattleMessage &msg) {
 }
 
 void MessageFilter::Clear() {
-    std::lock_guard<std::mutex> lock(mtx);
     recv_seq.clear();
 }
-

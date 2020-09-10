@@ -12,7 +12,7 @@ static const int kUserIdMaxLength = 16;
 static const int kSessionIdMaxLength = 16;
 static const int kMessageBodyMaxLength = 64;
 static const int kPublicAddrMaxLength = 16;
-static const int kBattleDataMaxLength = 64;
+static const int kBattleDataMaxLength = 128;
 
 using BattleMessage = proto::BattleMessage<kUserIdMaxLength, kMessageBodyMaxLength>;
 using PingMessage = proto::PingMessage<kUserIdMaxLength>;
@@ -36,7 +36,7 @@ public:
 
     const std::string &host() { return host_; }
 
-    int port() { return port_; }
+    int port() const { return port_; }
 
 private:
     sock_t sock_ = INVALID_SOCKET;
@@ -61,7 +61,7 @@ public:
 
     const std::string &host() { return host_; }
 
-    int port() { return port_; }
+    int port() const { return port_; }
 
 private:
     sock_t sock_ = INVALID_SOCKET;
@@ -74,7 +74,7 @@ class MessageBuffer {
 public:
     static const int kRingSize = 4096;
 
-    MessageBuffer();
+    MessageBuffer() = default;
 
     bool CanPush() const;
 
@@ -87,10 +87,10 @@ public:
     void Clear();
 
 private:
-    u32 msg_seq_;
-    u32 pkt_ack_;
-    u32 begin_;
-    u32 end_;
+    u32 msg_seq_{};
+    u32 pkt_ack_{};
+    u32 begin_{};
+    u32 end_{};
     std::vector<BattleMessage> rbuf_;
 };
 

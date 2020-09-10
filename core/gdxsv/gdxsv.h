@@ -17,7 +17,7 @@ public:
 
     ~Gdxsv();
 
-    bool Enabled();
+    bool Enabled() const;
 
     void Reset();
 
@@ -37,16 +37,16 @@ private:
 
     void WritePatchDisk2();
 
-    bool enabled;
-    int disk;
-    u8 maxlag;
+    bool enabled{};
+    int disk{};
+    u8 maxlag{};
 
     std::string server;
     std::string loginkey;
     std::map<std::string, u32> symbols;
 
-    std::atomic<bool> net_terminate;
-    std::atomic<bool> start_udp_session;
+    std::atomic<bool> net_terminate{};
+    std::atomic<bool> start_udp_session{};
     std::thread net_thread;
     std::mutex send_buf_mtx;
     std::deque<u8> send_buf;

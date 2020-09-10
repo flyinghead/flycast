@@ -16,7 +16,7 @@ Gdxsv::~Gdxsv() {
     }
 }
 
-bool Gdxsv::Enabled() {
+bool Gdxsv::Enabled() const {
     return enabled;
 }
 
@@ -27,10 +27,10 @@ void Gdxsv::Reset() {
 
     auto game_id = std::string(ip_meta.product_number, sizeof(ip_meta.product_number));
     if (game_id != "T13306M   ") {
-        enabled = 0;
+        enabled = false;
         return;
     }
-    enabled = 1;
+    enabled = true;
 
     if (!net_thread.joinable()) {
         NOTICE_LOG(COMMON, "start net thread");
@@ -66,7 +66,7 @@ void Gdxsv::Reset() {
 
     cfgSaveStr("gdxsv", "server", server.c_str());
     cfgSaveStr("gdxsv", "loginkey", loginkey.c_str());
-    cfgSaveBool("gdxsv", "overwritedconf", overwriteconf);
+    cfgSaveBool("gdxsv", "overwriteconf", overwriteconf);
 
     std::string disk_num(ip_meta.disk_num, 1);
     if (disk_num == "1") disk = 1;
@@ -200,6 +200,7 @@ void Gdxsv::SyncNetwork(bool write) {
                 u16 port = port_no;
 
                 if (tolobby == 1) {
+                    udp_client.Close();
                     bool ok = tcp_client.Connect(host.c_str(), port);
                     if (ok) {
                         auto packet = GeneratePlatformInfoPacket();
@@ -211,11 +212,16 @@ void Gdxsv::SyncNetwork(bool write) {
                         WARN_LOG(COMMON, "Failed to connect with TCP %s:%d", host.c_str(), port);
                     }
                 } else {
+                    tcp_client.Close();
                     char addr_buf[INET_ADDRSTRLEN];
                     inet_ntop(AF_INET, &host_ip, addr_buf, INET_ADDRSTRLEN);
                     host = std::string(addr_buf);
                     bool ok = udp_client.Connect(host.c_str(), port);
                     if (ok) {
+                        send_buf_mtx.lock();
+                        send_buf.clear();
+                        send_buf_mtx.unlock();
+
                         start_udp_session = true;
                         recv_buf_mtx.lock();
                         recv_buf.assign(
@@ -225,6 +231,10 @@ void Gdxsv::SyncNetwork(bool write) {
                         WARN_LOG(COMMON, "Failed to connect with UDP %s:%d", host.c_str(), port);
                         ok = tcp_client.Connect(host.c_str(), port);
                         if (ok) {
+                            send_buf_mtx.lock();
+                            send_buf.clear();
+                            send_buf_mtx.unlock();
+
                             recv_buf_mtx.lock();
                             recv_buf.clear();
                             recv_buf_mtx.unlock();
@@ -270,7 +280,7 @@ void Gdxsv::SyncNetwork(bool write) {
 
             u8 buf[GDX_QUEUE_SIZE];
             recv_buf_mtx.lock();
-            int n = std::min<int>(recv_buf.size(), gdx_queue_avail(&q));
+            n = std::min<int>(recv_buf.size(), gdx_queue_avail(&q));
             for (int i = 0; i < n; ++i) {
                 WriteMem8_nommu(buf_addr + q.tail, recv_buf.front());
                 recv_buf.pop_front();
@@ -283,14 +293,15 @@ void Gdxsv::SyncNetwork(bool write) {
 }
 
 void Gdxsv::UpdateNetwork() {
-    bool updated = false;
-    int udp_retransmit_countdown = 0;
     static const int kFirstMessageSize = 20;
+
     MessageBuffer message_buf;
     MessageFilter message_filter;
     Packet pkt;
-    u8 buf[1024];
+    bool updated = false;
+    int udp_retransmit_countdown = 0;
     std::string session_id;
+    u8 buf[1024];
 
     while (!net_terminate) {
         if (!updated) {
@@ -304,10 +315,11 @@ void Gdxsv::UpdateNetwork() {
 
         if (start_udp_session) {
             start_udp_session = false;
-            bool udp_session_ok = false;
+            udp_retransmit_countdown = 0;
             session_id.clear();
             message_buf.Clear();
             message_filter.Clear();
+            bool udp_session_ok = false;
 
             // get session_id from client
             for (int i = 0; i < 60; ++i) {
@@ -320,8 +332,8 @@ void Gdxsv::UpdateNetwork() {
                 }
 
                 send_buf_mtx.lock();
-                for (int i = 12; i < kFirstMessageSize; ++i) {
-                    session_id.push_back((char) send_buf[i]);
+                for (int j = 12; j < kFirstMessageSize; ++j) {
+                    session_id.push_back((char) send_buf[j]);
                 }
                 send_buf_mtx.unlock();
                 break;
@@ -335,7 +347,10 @@ void Gdxsv::UpdateNetwork() {
                 pkt.set_type(proto::MessageType::HelloServer);
                 pkt.mutable_hello_server_data().mutable_session_id().set(session_id.c_str(), session_id.size());
                 auto w = PacketWriter(buf, sizeof(buf));
-                pkt.serialize(w);
+                auto err = pkt.serialize(w);
+                if (err != ::EmbeddedProto::Error::NO_ERRORS) {
+                    ERROR_LOG(COMMON, "packet serialize error %d", err);
+                }
 
                 for (int i = 0; i < 10; ++i) {
                     udp_client.Send((const char *) buf, w.get_size());
@@ -343,17 +358,21 @@ void Gdxsv::UpdateNetwork() {
 
                     u8 buf2[1024];
                     Packet pkt2;
+                    pkt2.clear();
                     int n = udp_client.Recv((char *) buf2, sizeof(buf2));
                     if (0 < n) {
                         auto r = PacketReader(buf2, n);
-                        if (pkt2.deserialize(r) == ::EmbeddedProto::Error::NO_ERRORS) {
+                        err = pkt2.deserialize(r);
+                        if (err == ::EmbeddedProto::Error::NO_ERRORS) {
                             if (pkt2.hello_server_data().get_ok()) {
-                                NOTICE_LOG(COMMON, "UDP session validation OK");
+                                NOTICE_LOG(COMMON, "UDP session_id validation OK");
                                 udp_session_ok = true;
                                 break;
                             } else {
-                                WARN_LOG(COMMON, "UDP session validation NG");
+                                WARN_LOG(COMMON, "UDP session_id validation NG");
                             }
+                        } else {
+                            ERROR_LOG(COMMON, "packet deserialize error %d", err);
                         }
                     }
                 }
@@ -366,6 +385,8 @@ void Gdxsv::UpdateNetwork() {
                     send_buf.pop_front();
                 }
                 send_buf_mtx.unlock();
+            } else {
+                ERROR_LOG(COMMON, "UDP session failed");
             }
         }
 
@@ -413,6 +434,7 @@ void Gdxsv::UpdateNetwork() {
                         send_buf.push_front(buf[i]);
                     }
                     send_buf_mtx.unlock();
+                    WARN_LOG(COMMON, "message_buf is full");
                 }
             }
             updated = true;
@@ -457,9 +479,10 @@ void Gdxsv::UpdateNetwork() {
                 n = std::min<int>(n, sizeof(buf));
                 n = udp_client.Recv((char *) buf, n);
                 if (0 < n) {
-                    auto r = PacketReader(buf, n);
                     pkt.clear();
-                    if (pkt.deserialize(r) == ::EmbeddedProto::Error::NO_ERRORS) {
+                    auto r = PacketReader(buf, n);
+                    auto err = pkt.deserialize(r);
+                    if (err == ::EmbeddedProto::Error::NO_ERRORS) {
                         switch (pkt.get_type()) {
                             case proto::Battle:
                                 message_buf.ApplySeqAck(pkt.get_seq(), pkt.get_ack());
@@ -476,6 +499,8 @@ void Gdxsv::UpdateNetwork() {
                                 recv_buf_mtx.unlock();
                                 break;
                         }
+                    } else {
+                        ERROR_LOG(COMMON, "packet deserialize error %d", err);
                     }
                     updated = true;
                 }
@@ -538,7 +563,6 @@ void Gdxsv::WritePatchDisk1() {
                             (i < loginkey.length()) ? u8(loginkey[i]) : u8(0));
         }
     }
-
 }
 
 void Gdxsv::WritePatchDisk2() {
