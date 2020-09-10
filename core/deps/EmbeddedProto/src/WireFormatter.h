@@ -54,6 +54,20 @@ namespace EmbeddedProto
       //! Definition of a mask indicating the most significant bit used in varint encoding.
       static constexpr uint8_t VARINT_MSB_BYTE = 0x80;
 
+      //! Convert the floating point number to the next highes integer.
+      /*!
+        The ceil function in std is not a constexpr. Some compilers doe not accept this.
+
+        \param num The value you would like ot convert.
+        \return The resulting integer. 
+      */
+      static constexpr int32_t constexpr_ceil(float num)
+      {
+          return (static_cast<float>(static_cast<int32_t>(num)) == num)
+              ? static_cast<int32_t>(num)
+              : static_cast<int32_t>(num) + ((num > 0) ? 1 : 0);
+      }
+
     public:
       //! Definitions of the different encoding types used in protobuf.
       enum class WireType 
@@ -65,6 +79,114 @@ namespace EmbeddedProto
         END_GROUP         = 4,  //!< Deprecated
         FIXED32           = 5,  //!< fixed32, sfixed32, float
       };
+
+      //! Encode a signed integer using the zig zag method
+      /*!
+        As specified the right-shift must be arithmetic, hence the cast is after the shift. The 
+        left shift must be unsigned because of overflow.
+
+        This function is suitable for 32 and 64 bit.
+
+        \param[in] n The signed value to be encoded.
+        \return The zig zag transformed value ready for serialization into the array.
+      */
+      template<class INT_TYPE>
+      static constexpr auto ZigZagEncode(const INT_TYPE n) 
+      {
+        static_assert(std::is_same<INT_TYPE, int32_t>::value || 
+                      std::is_same<INT_TYPE, int64_t>::value, "Wrong type passed to ZigZagEncode.");
+
+        typedef typename std::make_unsigned<INT_TYPE>::type UINT_TYPE;
+        constexpr uint8_t N_BITS_TO_ZIGZAG = std::numeric_limits<UINT_TYPE>::digits - 1;
+
+        return (static_cast<UINT_TYPE>(n) << 1) ^ static_cast<UINT_TYPE>(n >> N_BITS_TO_ZIGZAG);
+      }
+
+      //! Decode a signed integer using the zig zag method
+      /*!
+          \param[in] n The value encoded in zig zag to be decoded.
+          \return The decoded signed value.
+
+          This function is suitable for 32 and 64 bit.
+      */
+      template<class UINT_TYPE>
+      static constexpr auto ZigZagDecode(const UINT_TYPE n) 
+      {
+        static_assert(std::is_same<UINT_TYPE, uint32_t>::value || 
+                      std::is_same<UINT_TYPE, uint64_t>::value, "Wrong type passed to ZigZagDecode.");
+
+        typedef typename std::make_signed<UINT_TYPE>::type INT_TYPE;
+
+        return static_cast<INT_TYPE>((n >> 1) ^ (~(n & 1) + 1));
+      }
+
+      //! Create the tag of a field. 
+      /*!
+        This is the combination of the field number and wire type of the field. The field number is 
+        shifted to the left by three bits. This creates space to or the wire type of the designated 
+        field.
+      */
+      static constexpr uint32_t MakeTag(const uint32_t field_number, const WireType type)
+      {
+        return ((static_cast<uint32_t>(field_number) << 3) | static_cast<uint32_t>(type));
+      }
+
+      /**
+         @brief Serialize fields, without tags the given buffer.
+         @{
+      **/
+
+      //! Serialize an unsigned fixed length field without the tag.
+      template<class UINT_TYPE>
+      static Error SerialzieFixedNoTag(UINT_TYPE value, WriteBufferInterface& buffer) 
+      {
+        static_assert(std::is_same<UINT_TYPE, uint32_t>::value || 
+                      std::is_same<UINT_TYPE, uint64_t>::value, "Wrong type passed to SerialzieFixedNoTag.");
+
+        // Push the data little endian to the buffer.
+        // TODO Define a little endian flag to support memcpy the data to the buffer.
+
+        bool result = true;
+
+        // Loop over all bytes in the integer.
+        for(uint8_t i = 0; (i < std::numeric_limits<UINT_TYPE>::digits) && result; i += 8) {
+          // Shift the value using the current value of i.
+          result = buffer.push(static_cast<uint8_t>((value >> i) & 0x00FF));
+        }
+        return result ? Error::NO_ERRORS : Error::BUFFER_FULL;
+      }
+
+      //! Serialize a signed fixed length field without the tag.
+      template<class INT_TYPE>
+      static Error SerialzieSFixedNoTag(INT_TYPE value, WriteBufferInterface& buffer)
+      {
+        static_assert(std::is_same<INT_TYPE, int32_t>::value || 
+                      std::is_same<INT_TYPE, int64_t>::value, "Wrong type passed to SerialzieSFixedNoTag.");
+
+        typedef typename std::make_unsigned<INT_TYPE>::type UINT_TYPE;
+
+        return SerialzieFixedNoTag(static_cast<UINT_TYPE>(value), buffer);
+      }
+
+      //! Serialize a 32bit real value without tag.
+      static Error SerialzieFloatNoTag(float value, WriteBufferInterface& buffer)
+      {
+        // Cast the type to void and to a 32 fixed number
+        void* pVoid = static_cast<void*>(&value);
+        uint32_t* fixed = static_cast<uint32_t*>(pVoid);
+        return SerialzieFixedNoTag(*fixed, buffer);
+      }
+
+      //! Serialize a 64bit real value without tag.
+      static Error SerialzieDoubleNoTag(double value, WriteBufferInterface& buffer)
+      {
+        // Cast the type to void and to a 64 fixed number
+        void* pVoid = static_cast<void*>(&value);
+        uint64_t* fixed = static_cast<uint64_t*>(pVoid);
+        return SerialzieFixedNoTag(*fixed, buffer);
+      }
+      /** @} **/
+
 
       /**
          @brief Serialize fields, including tags to the given buffer.
@@ -413,7 +535,7 @@ namespace EmbeddedProto
         
         // Calculate how many bytes there are in a varint 128 base encoded number. This should 
         // yield 5 for a 32bit number and 10 for a 64bit number.
-        static constexpr uint8_t N_BYTES_IN_VARINT = static_cast<uint8_t>(std::ceil(
+        static constexpr uint8_t N_BYTES_IN_VARINT = static_cast<uint8_t>(constexpr_ceil(
                                                           std::numeric_limits<UINT_TYPE>::digits 
                                                         / static_cast<float>(VARINT_SHIFT_N_BITS)));
         
@@ -449,112 +571,6 @@ namespace EmbeddedProto
         return return_value;
       }
 
-      //! Encode a signed integer using the zig zag method
-      /*!
-        As specified the right-shift must be arithmetic, hence the cast is after the shift. The 
-        left shift must be unsigned because of overflow.
-
-        This function is suitable for 32 and 64 bit.
-
-        \param[in] n The signed value to be encoded.
-        \return The zig zag transformed value ready for serialization into the array.
-      */
-      template<class INT_TYPE>
-      static constexpr auto ZigZagEncode(const INT_TYPE n) 
-      {
-        static_assert(std::is_same<INT_TYPE, int32_t>::value || 
-                      std::is_same<INT_TYPE, int64_t>::value, "Wrong type passed to ZigZagEncode.");
-
-        typedef typename std::make_unsigned<INT_TYPE>::type UINT_TYPE;
-        constexpr uint8_t N_BITS_TO_ZIGZAG = std::numeric_limits<UINT_TYPE>::digits - 1;
-
-        return (static_cast<UINT_TYPE>(n) << 1) ^ static_cast<UINT_TYPE>(n >> N_BITS_TO_ZIGZAG);
-      }
-
-      //! Decode a signed integer using the zig zag method
-      /*!
-          \param[in] n The value encoded in zig zag to be decoded.
-          \return The decoded signed value.
-
-          This function is suitable for 32 and 64 bit.
-      */
-      template<class UINT_TYPE>
-      static constexpr auto ZigZagDecode(const UINT_TYPE n) 
-      {
-        static_assert(std::is_same<UINT_TYPE, uint32_t>::value || 
-                      std::is_same<UINT_TYPE, uint64_t>::value, "Wrong type passed to ZigZagDecode.");
-
-        typedef typename std::make_signed<UINT_TYPE>::type INT_TYPE;
-
-        return static_cast<INT_TYPE>((n >> 1) ^ (~(n & 1) + 1));
-      }
-
-      //! Create the tag of a field. 
-      /*!
-        This is the combination of the field number and wire type of the field. The field number is 
-        shifted to the left by three bits. This creates space to or the wire type of the designated 
-        field.
-      */
-      static constexpr uint32_t MakeTag(const uint32_t field_number, const WireType type)
-      {
-        return ((static_cast<uint32_t>(field_number) << 3) | static_cast<uint32_t>(type));
-      }
-
-      /**
-         @brief Serialize fields, without tags the given buffer.
-         @{
-      **/
-
-      //! Serialize an unsigned fixed length field without the tag.
-      template<class UINT_TYPE>
-      static Error SerialzieFixedNoTag(UINT_TYPE value, WriteBufferInterface& buffer) 
-      {
-        static_assert(std::is_same<UINT_TYPE, uint32_t>::value || 
-                      std::is_same<UINT_TYPE, uint64_t>::value, "Wrong type passed to SerialzieFixedNoTag.");
-
-        // Push the data little endian to the buffer.
-        // TODO Define a little endian flag to support memcpy the data to the buffer.
-
-        bool result = true;
-
-        // Loop over all bytes in the integer.
-        for(uint8_t i = 0; (i < std::numeric_limits<UINT_TYPE>::digits) && result; i += 8) {
-          // Shift the value using the current value of i.
-          result = buffer.push(static_cast<uint8_t>((value >> i) & 0x00FF));
-        }
-        return result ? Error::NO_ERRORS : Error::BUFFER_FULL;
-      }
-
-      //! Serialize a signed fixed length field without the tag.
-      template<class INT_TYPE>
-      static Error SerialzieSFixedNoTag(INT_TYPE value, WriteBufferInterface& buffer)
-      {
-        static_assert(std::is_same<INT_TYPE, int32_t>::value || 
-                      std::is_same<INT_TYPE, int64_t>::value, "Wrong type passed to SerialzieSFixedNoTag.");
-
-        typedef typename std::make_unsigned<INT_TYPE>::type UINT_TYPE;
-
-        return SerialzieFixedNoTag(static_cast<UINT_TYPE>(value), buffer);
-      }
-
-      //! Serialize a 32bit real value without tag.
-      static Error SerialzieFloatNoTag(float value, WriteBufferInterface& buffer)
-      {
-        // Cast the type to void and to a 32 fixed number
-        void* pVoid = static_cast<void*>(&value);
-        uint32_t* fixed = static_cast<uint32_t*>(pVoid);
-        return SerialzieFixedNoTag(*fixed, buffer);
-      }
-
-      //! Serialize a 64bit real value without tag.
-      static Error SerialzieDoubleNoTag(double value, WriteBufferInterface& buffer)
-      {
-        // Cast the type to void and to a 64 fixed number
-        void* pVoid = static_cast<void*>(&value);
-        uint64_t* fixed = static_cast<uint64_t*>(pVoid);
-        return SerialzieFixedNoTag(*fixed, buffer);
-      }
-      /** @} **/
 
   };
 
