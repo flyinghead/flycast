@@ -1357,7 +1357,7 @@ static void gui_display_settings()
 	            ImGui::SameLine();
 	            ShowHelpMarker("Dump all textures into data/texdump/<game id>");
 
-	            bool logToFile = cfgLoadBool("log", "LogToFile", false);
+	            bool logToFile = cfgLoadBool("log", "LogToFile", true);
 	            bool newLogToFile = logToFile;
 				ImGui::Checkbox("Log to File", &newLogToFile);
 				if (logToFile != newLogToFile)
