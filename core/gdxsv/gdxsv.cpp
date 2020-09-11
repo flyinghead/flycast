@@ -2,6 +2,7 @@
 
 #include <sstream>
 #include <random>
+#include <fstream>
 
 #include "packet_reader.h"
 #include "packet_writer.h"
@@ -94,14 +95,7 @@ void Gdxsv::Update() {
     }
 }
 
-std::vector<u8> Gdxsv::GeneratePlatformInfoPacket() {
-    std::vector<u8> packet = {
-            0x81,
-            0xFF,
-            0x99, 0x50,
-            0x00, 0x00,
-            0x00, 0x00,
-            0x00, 0xff, 0xff, 0xff};
+std::string Gdxsv::GeneratePlatformInfoString() {
     std::stringstream ss;
     ss << "flycast=" << REICAST_VERSION << "\n";
     ss << "git_hash=" << GIT_HASH << "\n";
@@ -140,10 +134,21 @@ std::vector<u8> Gdxsv::GeneratePlatformInfoPacket() {
        "Unknown"
        #endif
        << "\n";
-    ss << "disk" << disk << "\n";
-    ss << "maxlag" << maxlag << "\n";
-    ss << "patch_id" << symbols[":patch_id"] << "\n";
-    auto s = ss.str();
+    ss << "disk=" << (int)disk << "\n";
+    ss << "maxlag=" << (int)maxlag << "\n";
+    ss << "patch_id=" << symbols[":patch_id"] << "\n";
+    return ss.str();
+}
+
+std::vector<u8> Gdxsv::GeneratePlatformInfoPacket() {
+    std::vector<u8> packet = {
+            0x81,
+            0xFF,
+            0x99, 0x50,
+            0x00, 0x00,
+            0x00, 0x00,
+            0x00, 0xff, 0xff, 0xff};
+    auto s = GeneratePlatformInfoString();
     packet.push_back((s.size() >> 8) & 0xffu);
     packet.push_back(s.size() & 0xffu);
     std::copy(begin(s), end(s), std::back_inserter(packet));
@@ -203,6 +208,7 @@ void Gdxsv::SyncNetwork(bool write) {
                     udp_client.Close();
                     bool ok = tcp_client.Connect(host.c_str(), port);
                     if (ok) {
+                        tcp_client.SetNonBlocking();
                         auto packet = GeneratePlatformInfoPacket();
                         send_buf_mtx.lock();
                         send_buf.clear();
@@ -231,6 +237,8 @@ void Gdxsv::SyncNetwork(bool write) {
                         WARN_LOG(COMMON, "Failed to connect with UDP %s:%d", host.c_str(), port);
                         ok = tcp_client.Connect(host.c_str(), port);
                         if (ok) {
+                            tcp_client.SetNonBlocking();
+
                             send_buf_mtx.lock();
                             send_buf.clear();
                             send_buf_mtx.unlock();
@@ -596,6 +604,72 @@ void Gdxsv::WritePatchDisk2() {
                             (i < loginkey.length()) ? u8(loginkey[i]) : u8(0));
         }
     }
+}
+
+bool Gdxsv::SendLog() {
+    const std::string post_host = "asia-northeast1-gdxsv-274515.cloudfunctions.net";
+    const std::string post_path = "/logfunc";
+#ifdef __ANDROID__
+    const std::string log_path = get_writable_data_path("/flycast.log");
+#else
+    const std::string log_path = "flycast.log";
+#endif
+
+    auto platform_info = GeneratePlatformInfoString();
+
+    std::ifstream ifs(log_path.c_str(), std::ios::binary);
+    if (!ifs) {
+        return false;
+    }
+
+    ifs.seekg(0, std::ios::end);
+    int file_size = ifs.tellg();
+    ifs.clear();
+    ifs.seekg(0, std::ios::beg);
+
+    if (file_size <= 0) {
+        return false;
+    }
+
+    std::stringstream ss;
+    ss << "POST " << post_path << " HTTP/1.1" << "\r\n";
+    ss << "Host: " << post_host << "\r\n";
+    ss << "User-Agent: flycast for gdxsv" << "\r\n";
+    ss << "Content-Type: application/octet-stream" << "\r\n";
+    ss << "Content-Length: " << platform_info.size() + file_size << "\r\n";
+    ss << "Connection: Close" << "\r\n";
+    ss << "\r\n"; // end of header
+
+
+    TcpClient client;
+    if (!client.Connect(post_host.c_str(), 80)) {
+        return false;
+    }
+
+    auto request_header = ss.str();
+    int n = client.Send(request_header.c_str(), request_header.size());
+    if (n < request_header.size()) {
+        return false;
+    }
+
+    n = client.Send(platform_info.c_str(), platform_info.size());
+    if (n < platform_info.size()) {
+        return false;
+    }
+
+    char buf[4096];
+    int sent = 0;
+    while (sent < file_size) {
+        n = ifs.readsome(buf, std::min<int>(sizeof(buf), (int)file_size - sent));
+        int m = client.Send(buf, n);
+        sent += m;
+        if (n == 0 || n != m) {
+            break;
+        }
+    }
+
+    client.Close();
+    return true;
 }
 
 Gdxsv gdxsv;

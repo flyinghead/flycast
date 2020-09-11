@@ -38,6 +38,7 @@
 #include "imgread/common.h"
 #include "log/LogManager.h"
 #include "emulator.h"
+#include "gdxsv/gdxsv.h"
 
 extern void UpdateInputState(u32 port);
 extern bool game_started;
@@ -731,8 +732,21 @@ static void gui_display_settings()
 		}
 	    ImGui::PopStyleVar();
 	}
+	if (gdxsv.Enabled())
+    {
+        ImGui::SameLine();
+        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(16 * scaling, normal_padding.y));
+        if (ImGui::Button("SendLog to gdxsv", ImVec2(0, 30 * scaling))) {
+            if (gdxsv.SendLog()) {
+                NOTICE_LOG(COMMON, "SendLog done");
+            } else {
+                ERROR_LOG(COMMON, "SendLog failed");
+            }
+        }
+        ImGui::PopStyleVar();
+    }
 
-	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(16 * scaling, 6 * scaling));		// from 4, 3
+    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(16 * scaling, 6 * scaling));		// from 4, 3
 
     if (ImGui::BeginTabBar("settings", ImGuiTabBarFlags_NoTooltip))
     {

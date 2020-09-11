@@ -32,19 +32,23 @@ bool TcpClient::Connect(const char *host, int port) {
         closesocket(sock_);
     }
 
-    set_recv_timeout(new_sock, 1);
-    set_send_timeout(new_sock, 1);
     set_tcp_nodelay(new_sock);
-    set_non_blocking(new_sock);
     sock_ = new_sock;
     host_ = std::string(host);
     port_ = port;
     NOTICE_LOG(COMMON, "TCP Connect: %s:%d ok", host, port);
     return true;
+
 }
 
 int TcpClient::IsConnected() const {
     return sock_ != INVALID_SOCKET;
+}
+
+void TcpClient::SetNonBlocking() {
+    set_recv_timeout(sock_, 1);
+    set_send_timeout(sock_, 1);
+    set_non_blocking(sock_);
 }
 
 int TcpClient::Recv(char *buf, int len) {

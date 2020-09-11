@@ -22,7 +22,13 @@ using Packet = proto::Packet<kBattleDataMaxLength, kUserIdMaxLength, kMessageBod
 
 class TcpClient {
 public:
+    ~TcpClient() {
+        Close();
+    }
+
     bool Connect(const char *host, int port);
+
+    void SetNonBlocking();
 
     int IsConnected() const;
 

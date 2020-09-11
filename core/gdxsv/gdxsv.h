@@ -25,11 +25,16 @@ public:
 
     void SyncNetwork(bool write);
 
+    bool SendLog();
+
 private:
     void UpdateNetwork(); // run on network thread
+
     static std::string GenerateLoginKey();
 
     std::vector<u8> GeneratePlatformInfoPacket();
+
+    std::string GeneratePlatformInfoString();
 
     void WritePatch();
 
