@@ -134,8 +134,8 @@ std::string Gdxsv::GeneratePlatformInfoString() {
        "Unknown"
        #endif
        << "\n";
-    ss << "disk=" << (int)disk << "\n";
-    ss << "maxlag=" << (int)maxlag << "\n";
+    ss << "disk=" << (int) disk << "\n";
+    ss << "maxlag=" << (int) maxlag << "\n";
     ss << "patch_id=" << symbols[":patch_id"] << "\n";
     return ss.str();
 }
@@ -311,6 +311,64 @@ void Gdxsv::UpdateNetwork() {
     std::string session_id;
     u8 buf[1024];
 
+    auto ping_test = [&]() {
+        if (!udp_client.IsConnected()) return;
+        int ping_cnt = 0;
+        int rtt_sum = 0;
+
+        for (int i = 0; i < 10; ++i) {
+            pkt.clear();
+            pkt.set_type(proto::MessageType::Ping);
+            pkt.mutable_ping_data().set_timestamp(std::chrono::duration_cast<std::chrono::milliseconds>(
+                    std::chrono::high_resolution_clock::now().time_since_epoch()).count());
+            auto w = PacketWriter(buf, sizeof(buf));
+            auto err = pkt.serialize(w);
+            if (err == ::EmbeddedProto::Error::NO_ERRORS) {
+                udp_client.Send((const char *) buf, w.get_size());
+            } else {
+                ERROR_LOG(COMMON, "packet serialize error %d", err);
+                return;
+            }
+
+            u8 buf2[1024];
+            Packet pkt2;
+            for (int j = 0; j < 100; ++j) {
+                if (!udp_client.IsConnected()) break;
+                int n = udp_client.Recv((char *) buf2, sizeof(buf2));
+                if (0 < n) {
+                    auto t2 = std::chrono::duration_cast<std::chrono::milliseconds>(
+                            std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+                    auto r = PacketReader(buf2, n);
+                    err = pkt2.deserialize(r);
+                    if (err == ::EmbeddedProto::Error::NO_ERRORS) {
+                        if (pkt2.get_type() == proto::MessageType::Pong) {
+                            auto t1_ = pkt2.pong_data().get_timestamp();
+                            auto ms = t2 - t1_;
+                            NOTICE_LOG(COMMON, "PING %d ms", ms);
+                            ping_cnt++;
+                            rtt_sum += ms;
+                            break;
+                        }
+                    } else {
+                        ERROR_LOG(COMMON, "packet deserialize error %d", err);
+                        return;
+                    }
+                } else {
+                    std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                }
+            }
+        }
+
+        auto rtt = double(rtt_sum) / ping_cnt;
+        NOTICE_LOG(COMMON, "PING AVG %.2f ms", rtt);
+        if (rtt < 20) { maxlag = 4; }
+        else if (rtt < 35) { maxlag = 6; }
+        else if (rtt < 50) { maxlag = 8; }
+        else if (rtt < 75) { maxlag = 10; }
+        else if (rtt < 100) { maxlag = 12; }
+        NOTICE_LOG(COMMON, "set maxlag %d", (int) maxlag);
+    };
+
     while (!net_terminate) {
         if (!updated) {
             std::this_thread::sleep_for(std::chrono::milliseconds(1));
@@ -328,6 +386,8 @@ void Gdxsv::UpdateNetwork() {
             message_buf.Clear();
             message_filter.Clear();
             bool udp_session_ok = false;
+
+            ping_test();
 
             // get session_id from client
             for (int i = 0; i < 60; ++i) {
@@ -660,7 +720,7 @@ bool Gdxsv::SendLog() {
     char buf[4096];
     int sent = 0;
     while (sent < file_size) {
-        n = ifs.readsome(buf, std::min<int>(sizeof(buf), (int)file_size - sent));
+        n = ifs.readsome(buf, std::min<int>(sizeof(buf), (int) file_size - sent));
         int m = client.Send(buf, n);
         sent += m;
         if (n == 0 || n != m) {
