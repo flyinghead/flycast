@@ -74,7 +74,8 @@ void Gdxsv::Reset() {
     if (disk_num == "2") disk = 2;
     tcp_client.Close();
     udp_client.Close();
-    NOTICE_LOG(COMMON, "gdxsv disk:%d server:%s loginkey:%s maxlag:%d", disk, server.c_str(), loginkey.c_str(), maxlag);
+    NOTICE_LOG(COMMON, "gdxsv disk:%d server:%s loginkey:%s maxlag:%d", (int) disk, server.c_str(), loginkey.c_str(),
+               (int) maxlag);
 }
 
 void Gdxsv::Update() {
