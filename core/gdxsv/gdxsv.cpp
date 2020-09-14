@@ -231,8 +231,7 @@ void Gdxsv::SyncNetwork(bool write) {
 
                         start_udp_session = true;
                         recv_buf_mtx.lock();
-                        recv_buf.assign(
-                                {0x0e, 0x61, 0x00, 0x22, 0x10, 0x31, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd});
+                        recv_buf.clear();
                         recv_buf_mtx.unlock();
                     } else {
                         WARN_LOG(COMMON, "Failed to connect with UDP %s:%d", host.c_str(), port);
@@ -391,6 +390,9 @@ void Gdxsv::UpdateNetwork() {
             ping_test();
 
             // get session_id from client
+            recv_buf_mtx.lock();
+            recv_buf.assign({0x0e, 0x61, 0x00, 0x22, 0x10, 0x31, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd});
+            recv_buf_mtx.unlock();
             for (int i = 0; i < 60; ++i) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(16));
                 send_buf_mtx.lock();
