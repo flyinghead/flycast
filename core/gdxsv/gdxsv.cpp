@@ -8,6 +8,7 @@
 #include "packet_writer.h"
 #include "gdx_queue.h"
 #include "version.h"
+#include "rend/gui.h"
 
 Gdxsv::~Gdxsv() {
     tcp_client.Close();
@@ -366,6 +367,10 @@ void Gdxsv::UpdateNetwork() {
         else if (rtt < 60) { maxlag = 8; }
         else { maxlag = 10; }
         NOTICE_LOG(COMMON, "set maxlag %d", (int) maxlag);
+
+        char osd_msg[128] = {};
+        sprintf(osd_msg, "PING:%.2f ms / maxlag: %d", rtt, (int) maxlag);
+        gui_display_notification(osd_msg, 3000);
     };
 
     while (!net_terminate) {
@@ -606,8 +611,7 @@ void Gdxsv::WritePatchDisk1() {
     const u32 offset = 0x8C000000 + 0x00010000;
 
     // Reduce max lag-frame
-    WriteMem8_nommu(offset + 0x00047f60, maxlag);
-    WriteMem8_nommu(offset + 0x00047f66, maxlag);
+    WriteMem8_nommu(0x0c310451, maxlag);
 
     // Modem connection fix
     const char *atm1 = "ATM1\r                                ";
@@ -639,8 +643,9 @@ void Gdxsv::WritePatchDisk2() {
     const u32 offset = 0x8C000000 + 0x00010000;
 
     // Reduce max lag-frame
-    WriteMem8_nommu(offset + 0x00035348, maxlag);
-    WriteMem8_nommu(offset + 0x0003534e, maxlag);
+    // WriteMem8_nommu(offset + 0x00035348, maxlag);
+    // WriteMem8_nommu(offset + 0x0003534e, maxlag);
+    WriteMem8_nommu(0x0c3abb91, maxlag);
 
     // Modem connection fix
     const char *atm1 = "ATM1\r                                ";
