@@ -93,10 +93,10 @@ public:
     void Clear();
 
 private:
-    u32 msg_seq_{};
-    u32 pkt_ack_{};
-    u32 begin_{};
-    u32 end_{};
+    u32 msg_seq_;
+    u32 pkt_ack_;
+    u32 begin_;
+    u32 end_;
     std::vector<BattleMessage> rbuf_;
 };
 

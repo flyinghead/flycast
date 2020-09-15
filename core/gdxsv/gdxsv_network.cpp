@@ -210,7 +210,7 @@ void MessageBuffer::ApplySeqAck(u32 seq, u32 ack) {
 }
 
 void MessageBuffer::Clear() {
-    msg_seq_ = 0;
+    msg_seq_ = 1;
     pkt_ack_ = 0;
     begin_ = 1;
     end_ = 1;

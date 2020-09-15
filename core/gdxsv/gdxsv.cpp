@@ -363,9 +363,8 @@ void Gdxsv::UpdateNetwork() {
         NOTICE_LOG(COMMON, "PING AVG %.2f ms", rtt);
         if (rtt < 20) { maxlag = 4; }
         else if (rtt < 35) { maxlag = 6; }
-        else if (rtt < 50) { maxlag = 8; }
-        else if (rtt < 75) { maxlag = 10; }
-        else if (rtt < 100) { maxlag = 12; }
+        else if (rtt < 60) { maxlag = 8; }
+        else { maxlag = 10; }
         NOTICE_LOG(COMMON, "set maxlag %d", (int) maxlag);
     };
 
@@ -554,21 +553,21 @@ void Gdxsv::UpdateNetwork() {
                     auto r = PacketReader(buf, n);
                     auto err = pkt.deserialize(r);
                     if (err == ::EmbeddedProto::Error::NO_ERRORS) {
-                        switch (pkt.get_type()) {
-                            case proto::Battle:
-                                message_buf.ApplySeqAck(pkt.get_seq(), pkt.get_ack());
-                                recv_buf_mtx.lock();
-                                const auto &msgs = pkt.get_battle_data();
-                                for (int i = 0; i < msgs.get_length(); ++i) {
-                                    if (message_filter.IsNextMessage(msgs.get_const(i))) {
-                                        const auto &body = msgs.get_const(i).body();
-                                        for (int j = 0; j < body.get_length(); ++j) {
-                                            recv_buf.push_back(body.get_const(j));
-                                        }
+                        if (pkt.get_type() == proto::Battle) {
+                            message_buf.ApplySeqAck(pkt.get_seq(), pkt.get_ack());
+                            recv_buf_mtx.lock();
+                            const auto &msgs = pkt.get_battle_data();
+                            for (int i = 0; i < msgs.get_length(); ++i) {
+                                if (message_filter.IsNextMessage(msgs.get_const(i))) {
+                                    const auto &body = msgs.get_const(i).body();
+                                    for (int j = 0; j < body.get_length(); ++j) {
+                                        recv_buf.push_back(body.get_const(j));
                                     }
                                 }
-                                recv_buf_mtx.unlock();
-                                break;
+                            }
+                            recv_buf_mtx.unlock();
+                        } else {
+                            WARN_LOG(COMMON, "recv unexpected pkt type %d", pkt.get_type());
                         }
                     } else {
                         ERROR_LOG(COMMON, "packet deserialize error %d", err);
