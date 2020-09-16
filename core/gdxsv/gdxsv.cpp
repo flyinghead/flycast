@@ -310,7 +310,7 @@ void Gdxsv::UpdateNetwork() {
     bool updated = false;
     int udp_retransmit_countdown = 0;
     std::string session_id;
-    u8 buf[1024];
+    u8 buf[16 * 1024];
 
     auto ping_test = [&]() {
         if (!udp_client.IsConnected()) return;
@@ -362,14 +362,11 @@ void Gdxsv::UpdateNetwork() {
 
         auto rtt = double(rtt_sum) / ping_cnt;
         NOTICE_LOG(COMMON, "PING AVG %.2f ms", rtt);
-        if (rtt < 20) { maxlag = 4; }
-        else if (rtt < 35) { maxlag = 6; }
-        else if (rtt < 60) { maxlag = 8; }
-        else { maxlag = 10; }
+        maxlag = std::min<int>(0x7f, 4 + (int) std::floor(rtt / 16));
         NOTICE_LOG(COMMON, "set maxlag %d", (int) maxlag);
 
         char osd_msg[128] = {};
-        sprintf(osd_msg, "PING:%.2f ms / maxlag: %d", rtt, (int) maxlag);
+        sprintf(osd_msg, "PING:%.0fms DELAY:%dfr", rtt, (int) maxlag);
         gui_display_notification(osd_msg, 3000);
     };
 
