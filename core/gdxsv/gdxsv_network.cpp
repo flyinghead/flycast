@@ -171,17 +171,17 @@ bool MessageBuffer::PushBattleMessage(const std::string &id, u8 *body, u32 body_
     auto index = end_;
     auto &msg = rbuf_[index % kRingSize];
     msg.set_seq(msg_seq_);
-    msg.mutable_user_id().set(id.c_str(), id.size());
-    msg.mutable_body().set(body, body_length);
+    msg.set_user_id(id);
+    msg.set_body(body, body_length);
     msg_seq_++;
     end_++;
     return true;
 }
 
-void MessageBuffer::FillSendData(Packet &packet) {
+void MessageBuffer::FillSendData(proto::Packet &packet) {
     packet.clear_battle_data();
 
-    std::vector<BattleMessage *> msgs;
+    std::vector<proto::BattleMessage *> msgs;
     u32 l = begin_ % kRingSize;
     u32 e = end_;
     if (begin_ + 50 < e) {
@@ -190,14 +190,14 @@ void MessageBuffer::FillSendData(Packet &packet) {
     u32 r = e % kRingSize;
     if (l <= r) {
         for (int i = l; i < r; ++i) {
-            packet.add_battle_data(rbuf_[i]);
+            packet.mutable_battle_data()->AddAllocated(&rbuf_[i]);
         }
     } else {
         for (int i = l; i < kRingSize; ++i) {
-            packet.add_battle_data(rbuf_[i]);
+            packet.mutable_battle_data()->AddAllocated(&rbuf_[i]);
         }
         for (int i = 0; i < r; ++i) {
-            packet.add_battle_data(rbuf_[i]);
+            packet.mutable_battle_data()->AddAllocated(&rbuf_[i]);
         }
     }
     packet.set_seq(e - 1);
@@ -217,10 +217,10 @@ void MessageBuffer::Clear() {
     rbuf_.resize(kRingSize);
 }
 
-bool MessageFilter::IsNextMessage(const BattleMessage &msg) {
-    auto last_seq = recv_seq[msg.get_user_id()];
-    if (last_seq == 0 || msg.get_seq() == last_seq + 1) {
-        recv_seq[msg.get_user_id()] = msg.get_seq();
+bool MessageFilter::IsNextMessage(const proto::BattleMessage &msg) {
+    auto last_seq = recv_seq[msg.user_id()];
+    if (last_seq == 0 || msg.seq() == last_seq + 1) {
+        recv_seq[msg.user_id()] = msg.seq();
         return true;
     }
     return false;

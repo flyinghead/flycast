@@ -6,19 +6,13 @@
 
 #include "types.h"
 #include "network/net_platform.h"
-#include "packet.h"
+#include "packet.pb.h"
 
 static const int kUserIdMaxLength = 16;
 static const int kSessionIdMaxLength = 16;
 static const int kMessageBodyMaxLength = 64;
 static const int kPublicAddrMaxLength = 16;
 static const int kBattleDataMaxLength = 128;
-
-using BattleMessage = proto::BattleMessage<kUserIdMaxLength, kMessageBodyMaxLength>;
-using PingMessage = proto::PingMessage<kUserIdMaxLength>;
-using PongMessage = proto::PongMessage<kUserIdMaxLength, kPublicAddrMaxLength>;
-using HelloServerMessage = proto::HelloServerMessage<kSessionIdMaxLength>;
-using Packet = proto::Packet<kBattleDataMaxLength, kUserIdMaxLength, kMessageBodyMaxLength, kSessionIdMaxLength, kPublicAddrMaxLength>;
 
 class TcpClient {
 public:
@@ -86,7 +80,7 @@ public:
 
     bool PushBattleMessage(const std::string &id, u8 *body, u32 body_length);
 
-    void FillSendData(Packet &packet);
+    void FillSendData(proto::Packet &packet);
 
     void ApplySeqAck(u32 seq, u32 ack);
 
@@ -97,12 +91,12 @@ private:
     u32 pkt_ack_;
     u32 begin_;
     u32 end_;
-    std::vector<BattleMessage> rbuf_;
+    std::vector<proto::BattleMessage> rbuf_;
 };
 
 class MessageFilter {
 public:
-    bool IsNextMessage(const BattleMessage &msg);
+    bool IsNextMessage(const proto::BattleMessage &msg);
 
     void Clear();
 
