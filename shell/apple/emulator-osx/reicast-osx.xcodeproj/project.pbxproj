@@ -3702,7 +3702,7 @@
 				SDKROOT = macosx;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
-				SYSTEM_HEADER_SEARCH_PATHS = "$(PROJECT_DIR)/../../../core/deps/protobuf-3.13.0/src";
+				SYSTEM_HEADER_SEARCH_PATHS = "";
 				USER_HEADER_SEARCH_PATHS = "";
 			};
 			name = Debug;
@@ -3757,7 +3757,7 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				SDKROOT = macosx;
 				SWIFT_VERSION = 5.0;
-				SYSTEM_HEADER_SEARCH_PATHS = "$(PROJECT_DIR)/../../../core/deps/protobuf-3.13.0/src";
+				SYSTEM_HEADER_SEARCH_PATHS = "";
 				USER_HEADER_SEARCH_PATHS = "";
 			};
 			name = Release;
@@ -3801,7 +3801,7 @@
 					../../../core/deps/xbyak,
 					../../../core/deps/stb,
 					/usr/local/include,
-					../../../core/deps/EmbeddedProto/src,
+					"../../../core/deps/protobuf-3.13.0/src",
 				);
 				INFOPLIST_FILE = "emulator-osx/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
@@ -3850,7 +3850,7 @@
 					../../../core/deps/xbyak,
 					../../../core/deps/stb,
 					/usr/local/include,
-					../../../core/deps/EmbeddedProto/src,
+					"../../../core/deps/protobuf-3.13.0/src",
 				);
 				INFOPLIST_FILE = "emulator-osx/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
