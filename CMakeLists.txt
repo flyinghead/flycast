@@ -958,7 +958,9 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/gdxsv/gdxsv_network.cpp
         core/gdxsv/gdxsv_network.h
         core/gdxsv/gdx_queue.h
-        core/gdxsv/gdxsv_patch.h)
+        core/gdxsv/gdxsv_patch.h
+        core/gdxsv/packet.pb.cc
+        core/gdxsv/packet.pb.h)
 
 target_sources(${PROJECT_NAME} PRIVATE
         core/rend/gles/glcache.h
