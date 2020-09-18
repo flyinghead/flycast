@@ -432,6 +432,8 @@
 		EBDF374F1BB96581001191B5 /* audiobackend_coreaudio.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EBDF374D1BB96581001191B5 /* audiobackend_coreaudio.cpp */; };
 		EBDF37511BB969EE001191B5 /* CoreAudio.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EBDF37501BB969EE001191B5 /* CoreAudio.framework */; };
 		EBDF37531BB969F8001191B5 /* AudioUnit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EBDF37521BB969F8001191B5 /* AudioUnit.framework */; };
+		F25999DD251571F0009022A2 /* libopenlibm.3.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = F25999DC251571F0009022A2 /* libopenlibm.3.dylib */; };
+		F25999DE25157207009022A2 /* libopenlibm.3.dylib in Embed Libraries */ = {isa = PBXBuildFile; fileRef = F25999DC251571F0009022A2 /* libopenlibm.3.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		F25B66A5250947E800959C8F /* gdxsv.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F25B669C250947E800959C8F /* gdxsv.cpp */; };
 		F25B66A6250947E800959C8F /* gdxsv_network.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F25B66A1250947E800959C8F /* gdxsv_network.cpp */; };
 /* End PBXBuildFile section */
@@ -445,6 +447,20 @@
 			remoteInfo = "reicast-osx";
 		};
 /* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		F25999DF25157207009022A2 /* Embed Libraries */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				F25999DE25157207009022A2 /* libopenlibm.3.dylib in Embed Libraries */,
+			);
+			name = "Embed Libraries";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		286392222514D2F9000AA076 /* LICENSE */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
@@ -1358,6 +1374,7 @@
 		EBDF374E1BB96581001191B5 /* audiobackend_coreaudio.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = audiobackend_coreaudio.h; sourceTree = "<group>"; };
 		EBDF37501BB969EE001191B5 /* CoreAudio.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreAudio.framework; path = System/Library/Frameworks/CoreAudio.framework; sourceTree = SDKROOT; };
 		EBDF37521BB969F8001191B5 /* AudioUnit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioUnit.framework; path = System/Library/Frameworks/AudioUnit.framework; sourceTree = SDKROOT; };
+		F25999DC251571F0009022A2 /* libopenlibm.3.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; path = libopenlibm.3.dylib; sourceTree = "<group>"; };
 		F25B669A250947E800959C8F /* gdxsv.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = gdxsv.h; sourceTree = "<group>"; };
 		F25B669C250947E800959C8F /* gdxsv.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = gdxsv.cpp; sourceTree = "<group>"; };
 		F25B669D250947E800959C8F /* gdxsv_network.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = gdxsv_network.h; sourceTree = "<group>"; };
@@ -1372,6 +1389,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				EBDF37531BB969F8001191B5 /* AudioUnit.framework in Frameworks */,
+				F25999DD251571F0009022A2 /* libopenlibm.3.dylib in Frameworks */,
 				AE7BCB62243DDD92007285F8 /* Carbon.framework in Frameworks */,
 				EBDF37511BB969EE001191B5 /* CoreAudio.framework in Frameworks */,
 				AE7BCB5C243DDCAE007285F8 /* ForceFeedback.framework in Frameworks */,
@@ -2697,6 +2715,7 @@
 		AED73DC52303E57C00ECDB64 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				F25999DC251571F0009022A2 /* libopenlibm.3.dylib */,
 				AE7BCB61243DDD92007285F8 /* Carbon.framework */,
 				AE7BCB5F243DDD3A007285F8 /* libiconv.2.tbd */,
 				AE7BCB5D243DDCD1007285F8 /* AudioToolbox.framework */,
@@ -3090,6 +3109,7 @@
 				84A388AF1B1CDD3E000166C0 /* Sources */,
 				84A388B01B1CDD3E000166C0 /* Frameworks */,
 				84A388B11B1CDD3E000166C0 /* Resources */,
+				F25999DF25157207009022A2 /* Embed Libraries */,
 			);
 			buildRules = (
 			);
@@ -3805,6 +3825,10 @@
 				);
 				INFOPLIST_FILE = "emulator-osx/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)",
+				);
 				OTHER_LDFLAGS = /usr/local/lib/libSDL2.a;
 				OTHER_LIBTOOLFLAGS = "";
 				PRODUCT_BUNDLE_IDENTIFIER = com.flyinghead.Flycast;
@@ -3854,6 +3878,10 @@
 				);
 				INFOPLIST_FILE = "emulator-osx/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)",
+				);
 				OTHER_LDFLAGS = /usr/local/lib/libSDL2.a;
 				OTHER_LIBTOOLFLAGS = "";
 				PRODUCT_NAME = "$(REI_APP_NAME)";
