@@ -181,7 +181,6 @@ bool MessageBuffer::PushBattleMessage(const std::string &id, u8 *body, u32 body_
 void MessageBuffer::FillSendData(proto::Packet &packet) {
     packet.clear_battle_data();
 
-    std::vector<proto::BattleMessage *> msgs;
     u32 l = begin_ % kRingSize;
     u32 e = end_;
     if (begin_ + 50 < e) {
@@ -190,16 +189,17 @@ void MessageBuffer::FillSendData(proto::Packet &packet) {
     u32 r = e % kRingSize;
     if (l <= r) {
         for (int i = l; i < r; ++i) {
-            packet.mutable_battle_data()->AddAllocated(&rbuf_[i]);
+            *packet.add_battle_data() = rbuf_[i];
         }
     } else {
         for (int i = l; i < kRingSize; ++i) {
-            packet.mutable_battle_data()->AddAllocated(&rbuf_[i]);
+            *packet.add_battle_data() = rbuf_[i];
         }
         for (int i = 0; i < r; ++i) {
-            packet.mutable_battle_data()->AddAllocated(&rbuf_[i]);
+            *packet.add_battle_data() = rbuf_[i];
         }
     }
+
     packet.set_seq(e - 1);
     packet.set_ack(pkt_ack_);
 }
