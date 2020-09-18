@@ -756,6 +756,7 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/types.h)
 
 
+target_compile_definitions(${PROJECT_NAME} PRIVATE HAVE_PTHREAD)
 target_include_directories(${PROJECT_NAME} PRIVATE core/deps/protobuf-3.13.0/src)
 target_sources(${PROJECT_NAME} PRIVATE
         core/deps/protobuf-3.13.0/src/google/protobuf/any.cc
