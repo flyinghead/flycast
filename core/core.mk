@@ -12,7 +12,12 @@ RZDCY_MODULES	:=	cfg/ hw/arm7/ hw/aica/ hw/holly/ hw/ hw/gdrom/ hw/maple/ \
  hw/mem/ hw/pvr/ hw/sh4/ hw/sh4/interpr/ hw/sh4/modules/ plugins/ profiler/ oslib/ \
  hw/extdev/ hw/arm/ hw/naomi/ imgread/ ./ deps/coreio/ deps/zlib/ deps/chdr/ deps/crypto/ \
  deps/libelf/ deps/chdpsr/ arm_emitter/ rend/ reios/ deps/xbrz/ \
- deps/libzip/ deps/imgui/ archive/ input/ log/ wsi/ network/ gdxsv/ deps/EmbeddedProto/src/
+ deps/libzip/ deps/imgui/ archive/ input/ log/ wsi/ network/ gdxsv/ \
+ deps/protobuf-3.13.0/src/google/protobuf/ \
+ deps/protobuf-3.13.0/src/google/protobuf/io/ \
+ deps/protobuf-3.13.0/src/google/protobuf/stubs/ \
+ deps/protobuf-3.13.0/src/google/protobuf/util/ \
+ deps/protobuf-3.13.0/src/google/protobuf/util/internal/
 
 ifndef NOT_ARM
     RZDCY_MODULES += rec-ARM/
@@ -139,7 +144,7 @@ endif
 
 RZDCY_CFLAGS += -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/rend/gles -I$(RZDCY_SRC_DIR)/deps \
 		 -I$(RZDCY_SRC_DIR)/deps/vixl -I$(RZDCY_SRC_DIR)/khronos -I$(RZDCY_SRC_DIR)/deps/glslang \
-		 -I$(RZDCY_SRC_DIR)/deps/glm -I$(RZDCY_SRC_DIR)/deps/xbyak -I$(RZDCY_SRC_DIR)/deps/EmbeddedProto/src/
+		 -I$(RZDCY_SRC_DIR)/deps/glm -I$(RZDCY_SRC_DIR)/deps/xbyak -I$(RZDCY_SRC_DIR)/deps/protobuf-3.13.0/src
 
 ifdef USE_MODEM
 	RZDCY_CFLAGS += -DENABLE_MODEM -I$(RZDCY_SRC_DIR)/deps/picotcp/include -I$(RZDCY_SRC_DIR)/deps/picotcp/modules

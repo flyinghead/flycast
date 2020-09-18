@@ -4,8 +4,7 @@
 #include <random>
 #include <fstream>
 
-#include "packet_reader.h"
-#include "packet_writer.h"
+#include "packet.pb.h"
 #include "gdx_queue.h"
 #include "version.h"
 #include "rend/gui.h"
@@ -306,7 +305,7 @@ void Gdxsv::UpdateNetwork() {
 
     MessageBuffer message_buf;
     MessageFilter message_filter;
-    Packet pkt;
+    proto::Packet pkt;
     bool updated = false;
     int udp_retransmit_countdown = 0;
     std::string session_id;
@@ -318,32 +317,28 @@ void Gdxsv::UpdateNetwork() {
         int rtt_sum = 0;
 
         for (int i = 0; i < 10; ++i) {
-            pkt.clear();
+            pkt.Clear();
             pkt.set_type(proto::MessageType::Ping);
-            pkt.mutable_ping_data().set_timestamp(std::chrono::duration_cast<std::chrono::milliseconds>(
+            pkt.mutable_ping_data()->set_timestamp(std::chrono::duration_cast<std::chrono::milliseconds>(
                     std::chrono::high_resolution_clock::now().time_since_epoch()).count());
-            auto w = PacketWriter(buf, sizeof(buf));
-            auto err = pkt.serialize(w);
-            if (err == ::EmbeddedProto::Error::NO_ERRORS) {
-                udp_client.Send((const char *) buf, w.get_size());
+            if (pkt.SerializePartialToArray((void *) buf, (int) sizeof(buf))) {
+                udp_client.Send((const char *) buf, pkt.GetCachedSize());
             } else {
-                ERROR_LOG(COMMON, "packet serialize error %d", err);
+                ERROR_LOG(COMMON, "packet serialize error");
                 return;
             }
 
             u8 buf2[1024];
-            Packet pkt2;
+            proto::Packet pkt2;
             for (int j = 0; j < 100; ++j) {
                 if (!udp_client.IsConnected()) break;
                 int n = udp_client.Recv((char *) buf2, sizeof(buf2));
                 if (0 < n) {
                     auto t2 = std::chrono::duration_cast<std::chrono::milliseconds>(
                             std::chrono::high_resolution_clock::now().time_since_epoch()).count();
-                    auto r = PacketReader(buf2, n);
-                    err = pkt2.deserialize(r);
-                    if (err == ::EmbeddedProto::Error::NO_ERRORS) {
-                        if (pkt2.get_type() == proto::MessageType::Pong) {
-                            auto t1_ = pkt2.pong_data().get_timestamp();
+                    if (pkt2.ParseFromArray(buf2, n)) {
+                        if (pkt2.type() == proto::MessageType::Pong) {
+                            auto t1_ = pkt2.pong_data().timestamp();
                             auto ms = t2 - t1_;
                             NOTICE_LOG(COMMON, "PING %d ms", ms);
                             ping_cnt++;
@@ -351,7 +346,7 @@ void Gdxsv::UpdateNetwork() {
                             break;
                         }
                     } else {
-                        ERROR_LOG(COMMON, "packet deserialize error %d", err);
+                        ERROR_LOG(COMMON, "packet deserialize error");
                         return;
                     }
                 } else {
@@ -415,28 +410,24 @@ void Gdxsv::UpdateNetwork() {
 
             // send session_id to server
             if (!session_id.empty()) {
-                pkt.clear();
+                pkt.Clear();
                 pkt.set_type(proto::MessageType::HelloServer);
-                pkt.mutable_hello_server_data().mutable_session_id().set(session_id.c_str(), session_id.size());
-                auto w = PacketWriter(buf, sizeof(buf));
-                auto err = pkt.serialize(w);
-                if (err != ::EmbeddedProto::Error::NO_ERRORS) {
-                    ERROR_LOG(COMMON, "packet serialize error %d", err);
+                pkt.mutable_hello_server_data()->set_session_id(session_id);
+                if (!pkt.SerializeToArray((void *) buf, (int) sizeof(buf))) {
+                    ERROR_LOG(COMMON, "packet serialize error");
                 }
 
                 for (int i = 0; i < 10; ++i) {
-                    udp_client.Send((const char *) buf, w.get_size());
+                    udp_client.Send((const char *) buf, pkt.GetCachedSize());
                     std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
                     u8 buf2[1024];
-                    Packet pkt2;
-                    pkt2.clear();
+                    proto::Packet pkt2;
+                    pkt2.Clear();
                     int n = udp_client.Recv((char *) buf2, sizeof(buf2));
                     if (0 < n) {
-                        auto r = PacketReader(buf2, n);
-                        err = pkt2.deserialize(r);
-                        if (err == ::EmbeddedProto::Error::NO_ERRORS) {
-                            if (pkt2.hello_server_data().get_ok()) {
+                        if (pkt2.ParseFromArray(buf2, n)) {
+                            if (pkt2.hello_server_data().ok()) {
                                 NOTICE_LOG(COMMON, "UDP session_id validation OK");
                                 udp_session_ok = true;
                                 break;
@@ -444,7 +435,7 @@ void Gdxsv::UpdateNetwork() {
                                 WARN_LOG(COMMON, "UDP session_id validation NG");
                             }
                         } else {
-                            ERROR_LOG(COMMON, "packet deserialize error %d", err);
+                            ERROR_LOG(COMMON, "packet deserialize error");
                         }
                     }
                 }
@@ -486,19 +477,17 @@ void Gdxsv::UpdateNetwork() {
             } else if (udp_client.IsConnected()) {
                 if (message_buf.CanPush()) {
                     message_buf.PushBattleMessage(session_id, buf, n);
-                    pkt.clear();
+                    pkt.Clear();
                     pkt.set_type(proto::MessageType::Battle);
                     message_buf.FillSendData(pkt);
-                    auto w = PacketWriter(buf, sizeof(buf));
-                    auto err = pkt.serialize(w);
-                    if (err == ::EmbeddedProto::Error::NO_ERRORS) {
-                        if (udp_client.Send((const char *) buf, w.get_size())) {
+                    if (pkt.SerializeToArray((void *) buf, (int) sizeof(buf))) {
+                        if (udp_client.Send((const char *) buf, pkt.GetCachedSize())) {
                             udp_retransmit_countdown = 16;
                         } else {
                             udp_retransmit_countdown = 4;
                         }
                     } else {
-                        ERROR_LOG(COMMON, "packet serialize error %d", err);
+                        ERROR_LOG(COMMON, "packet serialize error");
                     }
                 } else {
                     send_buf_mtx.lock();
@@ -514,19 +503,17 @@ void Gdxsv::UpdateNetwork() {
 
         if (!updated && udp_client.IsConnected()) {
             if (udp_retransmit_countdown-- == 0) {
-                pkt.clear();
+                pkt.Clear();
                 pkt.set_type(proto::MessageType::Battle);
                 message_buf.FillSendData(pkt);
-                auto w = PacketWriter(buf, sizeof(buf));
-                auto err = pkt.serialize(w);
-                if (err == ::EmbeddedProto::Error::NO_ERRORS) {
-                    if (udp_client.Send((const char *) buf, w.get_size())) {
+                if (pkt.SerializeToArray((void *) buf, (int) sizeof(buf))) {
+                    if (udp_client.Send((const char *) buf, pkt.GetCachedSize())) {
                         udp_retransmit_countdown = 16;
                     } else {
                         udp_retransmit_countdown = 4;
                     }
                 } else {
-                    ERROR_LOG(COMMON, "packet serialize error %d", err);
+                    ERROR_LOG(COMMON, "packet serialize error");
                 }
             }
         }
@@ -551,28 +538,25 @@ void Gdxsv::UpdateNetwork() {
                 n = std::min<int>(n, sizeof(buf));
                 n = udp_client.Recv((char *) buf, n);
                 if (0 < n) {
-                    pkt.clear();
-                    auto r = PacketReader(buf, n);
-                    auto err = pkt.deserialize(r);
-                    if (err == ::EmbeddedProto::Error::NO_ERRORS) {
-                        if (pkt.get_type() == proto::Battle) {
-                            message_buf.ApplySeqAck(pkt.get_seq(), pkt.get_ack());
+                    pkt.Clear();
+                    if (pkt.ParseFromArray(buf, n)) {
+                        if (pkt.type() == proto::MessageType::Battle) {
+                            message_buf.ApplySeqAck(pkt.seq(), pkt.ack());
                             recv_buf_mtx.lock();
-                            const auto &msgs = pkt.get_battle_data();
-                            for (int i = 0; i < msgs.get_length(); ++i) {
-                                if (message_filter.IsNextMessage(msgs.get_const(i))) {
-                                    const auto &body = msgs.get_const(i).body();
-                                    for (int j = 0; j < body.get_length(); ++j) {
-                                        recv_buf.push_back(body.get_const(j));
+                            const auto &msgs = pkt.battle_data();
+                            for (auto& msg : pkt.battle_data()) {
+                                if (message_filter.IsNextMessage(msg)) {
+                                    for (auto c : msg.body()) {
+                                        recv_buf.push_back(c);
                                     }
                                 }
                             }
                             recv_buf_mtx.unlock();
                         } else {
-                            WARN_LOG(COMMON, "recv unexpected pkt type %d", pkt.get_type());
+                            WARN_LOG(COMMON, "recv unexpected pkt type %d", pkt.type());
                         }
                     } else {
-                        ERROR_LOG(COMMON, "packet deserialize error %d", err);
+                        ERROR_LOG(COMMON, "packet deserialize error");
                     }
                     updated = true;
                 }
