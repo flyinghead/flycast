@@ -477,11 +477,8 @@ void Gdxsv::UpdateNetwork() {
             } else if (udp_client.IsConnected()) {
                 if (message_buf.CanPush()) {
                     message_buf.PushBattleMessage(session_id, buf, n);
-                    pkt.Clear();
-                    pkt.set_type(proto::MessageType::Battle);
-                    message_buf.FillSendData(pkt);
-                    if (pkt.SerializeToArray((void *) buf, (int) sizeof(buf))) {
-                        if (udp_client.Send((const char *) buf, pkt.GetCachedSize())) {
+                    if (message_buf.Packet().SerializeToArray((void *) buf, (int) sizeof(buf))) {
+                        if (udp_client.Send((const char *) buf, message_buf.Packet().GetCachedSize())) {
                             udp_retransmit_countdown = 16;
                         } else {
                             udp_retransmit_countdown = 4;
@@ -503,11 +500,8 @@ void Gdxsv::UpdateNetwork() {
 
         if (!updated && udp_client.IsConnected()) {
             if (udp_retransmit_countdown-- == 0) {
-                pkt.Clear();
-                pkt.set_type(proto::MessageType::Battle);
-                message_buf.FillSendData(pkt);
-                if (pkt.SerializeToArray((void *) buf, (int) sizeof(buf))) {
-                    if (udp_client.Send((const char *) buf, pkt.GetCachedSize())) {
+                if (message_buf.Packet().SerializeToArray((void *) buf, (int) sizeof(buf))) {
+                    if (udp_client.Send((const char *) buf, message_buf.Packet().GetCachedSize())) {
                         udp_retransmit_countdown = 16;
                     } else {
                         udp_retransmit_countdown = 4;
