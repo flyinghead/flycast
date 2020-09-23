@@ -72,7 +72,7 @@ private:
 
 class MessageBuffer {
 public:
-    static const int kRingSize = 4096;
+    static const int kBufSize = 50;
 
     MessageBuffer() = default;
 
@@ -80,7 +80,7 @@ public:
 
     bool PushBattleMessage(const std::string &id, u8 *body, u32 body_length);
 
-    void FillSendData(proto::Packet &packet);
+    const proto::Packet& Packet();
 
     void ApplySeqAck(u32 seq, u32 ack);
 
@@ -88,10 +88,8 @@ public:
 
 private:
     u32 msg_seq_;
-    u32 pkt_ack_;
-    u32 begin_;
-    u32 end_;
-    std::vector<proto::BattleMessage> rbuf_;
+    u32 snd_seq_;
+    proto::Packet packet_;
 };
 
 class MessageFilter {

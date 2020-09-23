@@ -159,7 +159,7 @@ void UdpClient::Close() {
 }
 
 bool MessageBuffer::CanPush() const {
-    return end_ - begin_ < kRingSize;
+    return packet_.battle_data().size() < kBufSize;
 }
 
 bool MessageBuffer::PushBattleMessage(const std::string &id, u8 *body, u32 body_length) {
@@ -168,53 +168,34 @@ bool MessageBuffer::PushBattleMessage(const std::string &id, u8 *body, u32 body_
         return false;
     }
 
-    auto index = end_;
-    auto &msg = rbuf_[index % kRingSize];
-    msg.set_seq(msg_seq_);
-    msg.set_user_id(id);
-    msg.set_body(body, body_length);
+    auto msg = packet_.add_battle_data();
+    msg->set_seq(msg_seq_);
+    msg->set_user_id(id);
+    msg->set_body(body, body_length);
+    packet_.set_seq(msg_seq_);
     msg_seq_++;
-    end_++;
     return true;
 }
 
-void MessageBuffer::FillSendData(proto::Packet &packet) {
-    packet.clear_battle_data();
-
-    u32 l = begin_ % kRingSize;
-    u32 e = end_;
-    if (begin_ + 50 < e) {
-        e = begin_ + 50;
-    }
-    u32 r = e % kRingSize;
-    if (l <= r) {
-        for (int i = l; i < r; ++i) {
-            *packet.add_battle_data() = rbuf_[i];
-        }
-    } else {
-        for (int i = l; i < kRingSize; ++i) {
-            *packet.add_battle_data() = rbuf_[i];
-        }
-        for (int i = 0; i < r; ++i) {
-            *packet.add_battle_data() = rbuf_[i];
-        }
-    }
-
-    packet.set_seq(e - 1);
-    packet.set_ack(pkt_ack_);
+const proto::Packet& MessageBuffer::Packet() {
+    return packet_;
 }
 
 void MessageBuffer::ApplySeqAck(u32 seq, u32 ack) {
-    begin_ = ack + 1;
-    pkt_ack_ = seq;
+    if (snd_seq_ <= ack) {
+        packet_.mutable_battle_data()->DeleteSubrange(0, ack - snd_seq_ + 1);
+        snd_seq_ = ack + 1;
+    }
+    if (packet_.ack() < seq) {
+        packet_.set_ack(seq);
+    }
 }
 
 void MessageBuffer::Clear() {
+    packet_.Clear();
+    packet_.set_type(proto::MessageType::Battle);
     msg_seq_ = 1;
-    pkt_ack_ = 0;
-    begin_ = 1;
-    end_ = 1;
-    rbuf_.resize(kRingSize);
+    snd_seq_ = 1;
 }
 
 bool MessageFilter::IsNextMessage(const proto::BattleMessage &msg) {
