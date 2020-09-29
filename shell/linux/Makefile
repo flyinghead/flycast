@@ -274,8 +274,8 @@ else ifneq (,$(findstring vero4k,$(platform)))
 else ifneq (,$(findstring win32,$(platform)))
     NOT_ARM := 1
     CFLAGS += -fno-builtin-sqrtf -funroll-loops -DHAVE_FSEEKO -I /mingw64/include
-    LDFLAGS += -static-libgcc -static-libstdc++ -Wl,-subsystem,windows
-    LIBS := -lopengl32 -lwinmm -lgdi32 -lwsock32 -lws2_32 -ldsound -lcomctl32 -lcomdlg32 -lxinput -liphlpapi -Wl,-Bstatic -lgomp
+    LDFLAGS += -static-libgcc -static-libstdc++ -Wl,-subsystem,windows -L$(LOCAL_PATH)/../windows
+    LIBS := -lopenlibm -lopengl32 -lwinmm -lgdi32 -lwsock32 -lws2_32 -ldsound -lcomctl32 -lcomdlg32 -lxinput -liphlpapi -Wl,-Bstatic -lgomp
     PLATFORM_EXT := exe
     CC = gcc
     CXX = g++
@@ -307,16 +307,16 @@ LDFLAGS += -g -Wl,-Map,$(notdir $@).map,--gc-sections -Wl,-O3 -Wl,--sort-common 
 
 CFLAGS += $(RZDCY_CFLAGS) -g -O3 -D NDEBUG -c -fopenmp #-D NO_REND
 CFLAGS += -frename-registers -fno-strict-aliasing
-CFLAGS += -ffast-math -ftree-vectorize  -Wno-unused-result
+CFLAGS += -ftree-vectorize  -Wno-unused-result
 
 CXXFLAGS += $(RZDCY_CFLAGS) -fno-rtti -fno-operator-names -D_GLIBCXX_USE_CXX11_ABI=0 -std=gnu++14
 
 INCS += -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/deps -I$(RZDCY_SRC_DIR)/khronos
 
 ifdef FOR_WINDOWS
-	LIBS += -lm -static -lpthread
+	LIBS += -static -lpthread
 else
-	LIBS += -lm -lpthread
+	LIBS += -lpthread
 endif
 ifdef FOR_LINUX
 LIBS += -lrt
