@@ -23,7 +23,9 @@ for:
           
           set PATH=%EXTRA_PATH%;%PATH%
 
-          set GIT_SHORT_HASH=%APPVEYOR_REPO_COMMIT:~0,7%
+          for /f "delims=" %%i in ('git describe --tags') do set SUFFIX=%%i
+
+          if defined APPVEYOR_REPO_TAG_NAME (set SUFFIX=%APPVEYOR_REPO_TAG_NAME%-%APPVEYOR_REPO_COMMIT:~0,7%)
           
           if not exist %BUILD_PATH% (mkdir %BUILD_PATH%)
          
@@ -39,11 +41,11 @@ for:
           
           mkdir artifacts
           
-          move %EXE_PATH% artifacts\Flycast-win_%PLATFORM%-%APPVEYOR_REPO_TAG_NAME%-%GIT_SHORT_HASH%.exe
+          move %EXE_PATH% artifacts\Flycast-win_%PLATFORM%-%SUFFIX%.exe
 
     artifacts:
       - path: artifacts
-        name: Flycast-win_$(PLATFORM)-$(APPVEYOR_REPO_TAG_NAME)-$(GIT_SHORT_HASH)
+        name: Flycast-win_$(PLATFORM)-$(SUFFIX)
 
     deploy:
       release: $(APPVEYOR_REPO_TAG_NAME)
@@ -51,7 +53,7 @@ for:
       provider: GitHub
       auth_token:
         secure: e8oocRdRnpl9yIxtLBVA7dE6MZO4YOWmfb9IaBj1J7wWkOMRjPcmW+gnJwe3PbZN
-      artifact: Flycast-win_$(PLATFORM)-$(APPVEYOR_REPO_TAG_NAME)-$(GIT_SHORT_HASH)
+      artifact: Flycast-win_$(PLATFORM)-$(SUFFIX)
       draft: false
       prerelease: false
       on:
@@ -65,7 +67,7 @@ for:
     
     before_build:
       - sh: >-
-          export GIT_SHORT_HASH=${APPVEYOR_REPO_COMMIT:0:7}
+          if [ -z "$APPVEYOR_REPO_TAG_NAME" ]; then export SUFFIX=$(git describe --tags); else export SUFFIX=$APPVEYOR_REPO_TAG_NAME-${APPVEYOR_REPO_COMMIT:0:7}; fi
 
           cd shell/apple
 
@@ -79,12 +81,12 @@ for:
 
     after_build:
       - sh: >-
-          mv flycast.xcarchive/Products/Applications/Flycast.app Flycast-$APPVEYOR_REPO_TAG_NAME-$GIT_SHORT_HASH.app
+          mv flycast.xcarchive/Products/Applications/Flycast.app Flycast-$SUFFIX.app
 
-          7z a artifacts/Flycast-macOS-$APPVEYOR_REPO_TAG_NAME-$GIT_SHORT_HASH.zip Flycast-$APPVEYOR_REPO_TAG_NAME-$GIT_SHORT_HASH.app "How to Open.pdf"
+          7z a artifacts/Flycast-macOS-$SUFFIX.zip Flycast-$SUFFIX.app "How to Open.pdf"
 
     artifacts:
-      - path: shell/apple/artifacts/Flycast-macOS-$APPVEYOR_REPO_TAG_NAME-$GIT_SHORT_HASH.zip
+      - path: shell/apple/artifacts/Flycast-macOS-$SUFFIX.zip
 
     deploy:
       release: $(APPVEYOR_REPO_TAG_NAME)
@@ -92,7 +94,7 @@ for:
       provider: GitHub
       auth_token:
         secure: e8oocRdRnpl9yIxtLBVA7dE6MZO4YOWmfb9IaBj1J7wWkOMRjPcmW+gnJwe3PbZN
-      artifact: shell/apple/artifacts/Flycast-macOS-$APPVEYOR_REPO_TAG_NAME-$GIT_SHORT_HASH.zip
+      artifact: shell/apple/artifacts/Flycast-macOS-$SUFFIX.zip
       draft: false
       prerelease: false
       on:
