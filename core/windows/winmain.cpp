@@ -135,7 +135,7 @@ void os_SetupInput()
 #endif
 }
 
-void os_LaunchFromURL(const string& url)
+void os_LaunchFromURL(const std::string& url)
 {
     ShellExecuteA((HWND)window_win, "open", url.c_str(), nullptr, nullptr, SW_SHOW);
 }
