@@ -617,7 +617,9 @@ void os_gdxFetchReleaseJSON()
         HINTERNET urlFile;
         std::string json;
         if (interwebs) {
-            urlFile = InternetOpenUrlA(interwebs, "https://api.github.com/repos/inada-s/flycast/releases/latest", NULL, 0, 0, 0);
+            const char* url = "https://api.github.com/repos/inada-s/flycast/releases/latest";
+            DeleteUrlCacheEntry(url);
+            urlFile = InternetOpenUrlA(interwebs, url, NULL, 0, 0, 0);
             if (urlFile) {
                 char buffer[2000];
                 DWORD bytesRead;
