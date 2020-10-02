@@ -26,6 +26,16 @@ public:
     void SyncNetwork(bool write);
 
     bool SendLog();
+    
+    bool UpdateAvailable();
+    
+    void OpenDownloadPage();
+    
+    void DismissUpdateDialog();
+    
+    void SetReleaseJSON(const std::string& json);
+    
+    std::string LatestVersion();
 
 private:
     void UpdateNetwork(); // run on network thread
@@ -60,6 +70,9 @@ private:
 
     TcpClient tcp_client;
     UdpClient udp_client;
+    
+    bool update_avaiable = false;
+    std::string latest_version;
 };
 
 extern Gdxsv gdxsv;

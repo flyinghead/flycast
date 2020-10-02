@@ -669,6 +669,37 @@ static void error_popup()
 	}
 }
 
+static void update_popup()
+{
+    if (gdxsv.UpdateAvailable())
+    {
+        ImGui::OpenPopup("New version");
+        if (ImGui::BeginPopupModal("New version", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
+        {
+            ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + 400.f * scaling);
+            ImGui::TextWrapped("  v%s is available for download!  ", gdxsv.LatestVersion().c_str());
+            ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(16 * scaling, 3 * scaling));
+            float currentwidth = ImGui::GetContentRegionAvailWidth();
+            ImGui::SetCursorPosX((currentwidth - 100.f * scaling) / 2.f + ImGui::GetStyle().WindowPadding.x - 100.f);
+            if (ImGui::Button("Download", ImVec2(100.f * scaling, 0.f)))
+            {
+                gdxsv.OpenDownloadPage();
+                ImGui::CloseCurrentPopup();
+            }
+            ImGui::SameLine();
+            ImGui::SetCursorPosX((currentwidth - 100.f * scaling) / 2.f + ImGui::GetStyle().WindowPadding.x + 100.f);
+            if (ImGui::Button("Cancel", ImVec2(100.f * scaling, 0.f)))
+            {
+                gdxsv.DismissUpdateDialog();
+                ImGui::CloseCurrentPopup();
+            }
+            ImGui::SetItemDefaultFocus();
+            ImGui::PopStyleVar();
+            ImGui::EndPopup();
+        }
+    }
+}
+
 void directory_selected_callback(bool cancelled, std::string selection)
 {
 	if (!cancelled)
@@ -1586,6 +1617,7 @@ static void gui_display_content()
     ImGui::PopStyleVar();
 
 	error_popup();
+    update_popup();
 
 	ImGui::Render();
 	ImGui_impl_RenderDrawData(ImGui::GetDrawData(), false);

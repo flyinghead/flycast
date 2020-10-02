@@ -7,6 +7,8 @@ double os_GetSeconds();
 void os_DoEvents();
 void os_CreateWindow();
 void os_SetupInput();
+void os_LaunchFromURL(const std::string& url);
+void os_gdxFetchReleaseJSON();
 void WriteSample(s16 right, s16 left);
 
 #ifdef _MSC_VER

@@ -26,6 +26,7 @@
 #include "wsi/context.h"
 #include "emulator.h"
 #include "hw/pvr/Renderer_if.h"
+#include "gdxsv/gdxsv.h"
 
 OSXKeyboardDevice keyboard(0);
 static std::shared_ptr<OSXKbGamepadDevice> kb_gamepad(0);
@@ -85,6 +86,28 @@ void os_SetupInput()
 	GamepadDevice::Register(kb_gamepad);
 	mouse_gamepad = std::make_shared<OSXMouseGamepadDevice>(0);
 	GamepadDevice::Register(mouse_gamepad);
+}
+
+void os_LaunchFromURL(const std::string& url) {
+    NSString *urlString = [NSString stringWithUTF8String:url.c_str()];
+    [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:urlString]];
+}
+
+void os_gdxFetchReleaseJSON(){
+    NSURL *URL = [NSURL URLWithString:@"https://api.github.com/repos/inada-s/flycast/releases/latest"];
+    NSURLRequest *request = [NSURLRequest requestWithURL:URL];
+
+    NSURLSession *session = [NSURLSession sharedSession];
+    NSURLSessionDataTask *task = [session dataTaskWithRequest:request
+                                            completionHandler:
+                                  ^(NSData *data, NSURLResponse *response, NSError *error) {
+        NSString* str = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+        
+        std::string json = std::string([str UTF8String], [str lengthOfBytesUsingEncoding:NSUTF8StringEncoding]);
+        gdxsv.SetReleaseJSON(json);
+    }];
+
+    [task resume];
 }
 
 void common_linux_setup();
