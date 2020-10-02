@@ -135,35 +135,6 @@ void os_SetupInput()
 #endif
 }
 
-void os_LaunchFromURL(const std::string& url)
-{
-    ShellExecuteA((HWND)window_win, "open", url.c_str(), nullptr, nullptr, SW_SHOW);
-}
-
-void os_gdxFetchReleaseJSON()
-{
-    HINTERNET interwebs = InternetOpenA("Mozilla/5.0", INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0);
-    HINTERNET urlFile;
-    std::string json;
-    if (interwebs) {
-        urlFile = InternetOpenUrlA(interwebs, "https://api.github.com/repos/inada-s/flycast/releases/latest", NULL, 0, 0, 0);
-        if (urlFile) {
-            char buffer[2000];
-            DWORD bytesRead;
-            do {
-                InternetReadFile(urlFile, buffer, 2000, &bytesRead);
-                json.append(buffer, bytesRead);
-                memset(buffer, 0, 2000);
-            } while (bytesRead);
-            InternetCloseHandle(interwebs);
-            InternetCloseHandle(urlFile);
-            gdxsv.SetReleaseJSON(json);
-            return;
-        }
-    }
-    InternetCloseHandle(interwebs);
-}
-
 LONG ExeptionHandler(EXCEPTION_POINTERS *ExceptionInfo)
 {
 	EXCEPTION_POINTERS* ep = ExceptionInfo;
@@ -632,6 +603,35 @@ void ReserveBottomMemory()
             (int)numVAllocs, (int)numHeapAllocs);
     OutputDebugStringA(buffer);
 #endif
+}
+
+void os_LaunchFromURL(const std::string& url)
+{
+    ShellExecuteA(hWnd, "open", url.c_str(), nullptr, nullptr, SW_SHOW);
+}
+
+void os_gdxFetchReleaseJSON()
+{
+    HINTERNET interwebs = InternetOpenA("Mozilla/5.0", INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0);
+    HINTERNET urlFile;
+    std::string json;
+    if (interwebs) {
+        urlFile = InternetOpenUrlA(interwebs, "https://api.github.com/repos/inada-s/flycast/releases/latest", NULL, 0, 0, 0);
+        if (urlFile) {
+            char buffer[2000];
+            DWORD bytesRead;
+            do {
+                InternetReadFile(urlFile, buffer, 2000, &bytesRead);
+                json.append(buffer, bytesRead);
+                memset(buffer, 0, 2000);
+            } while (bytesRead);
+            InternetCloseHandle(interwebs);
+            InternetCloseHandle(urlFile);
+            gdxsv.SetReleaseJSON(json);
+            return;
+        }
+    }
+    InternetCloseHandle(interwebs);
 }
 
 #ifdef _WIN64
