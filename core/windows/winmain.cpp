@@ -15,11 +15,11 @@
 #include "hw/maple/maple_devs.h"
 #include "emulator.h"
 
-#include <windows.h>
-#include <windowsx.h>
-
 #include <wininet.h>
 #include "gdxsv/gdxsv.h"
+
+#include <windows.h>
+#include <windowsx.h>
 
 PCHAR*
 	CommandLineToArgvA(
