@@ -608,7 +608,7 @@ void os_LaunchFromURL(const std::string& url)
     ShellExecuteA(hWnd, "open", url.c_str(), nullptr, nullptr, SW_SHOW);
 }
 
-std::string os_FetchStringFromURL(const std::string& url)()
+std::string os_FetchStringFromURL(const std::string& url)
 {
     HINTERNET interwebs = InternetOpenA("Mozilla/5.0", INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0);
     HINTERNET urlFile;
