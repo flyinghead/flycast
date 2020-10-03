@@ -1115,7 +1115,7 @@ elseif(WIN32)
             core/windows/xinput_gamepad.h
             shell/windows/reicast.rc)
 
-    target_link_libraries(${PROJECT_NAME} PRIVATE dsound opengl32 winmm ws2_32 wsock32 xinput9_1_0)
+    target_link_libraries(${PROJECT_NAME} PRIVATE dsound opengl32 winmm wininet.lib ws2_32 wsock32 xinput9_1_0)
 endif()
 
 if(BUILD_TESTING)
