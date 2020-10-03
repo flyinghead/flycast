@@ -432,6 +432,7 @@
 		EBDF374F1BB96581001191B5 /* audiobackend_coreaudio.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EBDF374D1BB96581001191B5 /* audiobackend_coreaudio.cpp */; };
 		EBDF37511BB969EE001191B5 /* CoreAudio.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EBDF37501BB969EE001191B5 /* CoreAudio.framework */; };
 		EBDF37531BB969F8001191B5 /* AudioUnit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EBDF37521BB969F8001191B5 /* AudioUnit.framework */; };
+		F204541A25287A7600B2C595 /* LICENSE.md in Resources */ = {isa = PBXBuildFile; fileRef = F204541925287A7600B2C595 /* LICENSE.md */; };
 		F25999DD251571F0009022A2 /* libopenlibm.3.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = F25999DC251571F0009022A2 /* libopenlibm.3.dylib */; };
 		F25999DE25157207009022A2 /* libopenlibm.3.dylib in Embed Libraries */ = {isa = PBXBuildFile; fileRef = F25999DC251571F0009022A2 /* libopenlibm.3.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		F25B66A5250947E800959C8F /* gdxsv.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F25B669C250947E800959C8F /* gdxsv.cpp */; };
@@ -1374,6 +1375,7 @@
 		EBDF374E1BB96581001191B5 /* audiobackend_coreaudio.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = audiobackend_coreaudio.h; sourceTree = "<group>"; };
 		EBDF37501BB969EE001191B5 /* CoreAudio.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreAudio.framework; path = System/Library/Frameworks/CoreAudio.framework; sourceTree = SDKROOT; };
 		EBDF37521BB969F8001191B5 /* AudioUnit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioUnit.framework; path = System/Library/Frameworks/AudioUnit.framework; sourceTree = SDKROOT; };
+		F204541925287A7600B2C595 /* LICENSE.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = LICENSE.md; sourceTree = "<group>"; };
 		F25999DC251571F0009022A2 /* libopenlibm.3.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; path = libopenlibm.3.dylib; sourceTree = "<group>"; };
 		F25B669A250947E800959C8F /* gdxsv.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = gdxsv.h; sourceTree = "<group>"; };
 		F25B669C250947E800959C8F /* gdxsv.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = gdxsv.cpp; sourceTree = "<group>"; };
@@ -1809,6 +1811,7 @@
 				84B7BD2D1B72720100F9733F /* libelf */,
 				84B7BD661B72720100F9733F /* libzip */,
 				AE649C08218C553A00EF4A81 /* lzma */,
+				F2045418252878FA00B2C595 /* openlibm */,
 				AEFF7ECE214D9D580068CE11 /* picotcp */,
 				AED73E932348E46400ECDB64 /* volk */,
 				AE8C273A21122E2500D4D8F4 /* xbrz */,
@@ -2715,7 +2718,6 @@
 		AED73DC52303E57C00ECDB64 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				F25999DC251571F0009022A2 /* libopenlibm.3.dylib */,
 				AE7BCB61243DDD92007285F8 /* Carbon.framework */,
 				AE7BCB5F243DDD3A007285F8 /* libiconv.2.tbd */,
 				AE7BCB5D243DDCD1007285F8 /* AudioToolbox.framework */,
@@ -3082,6 +3084,15 @@
 			path = stack;
 			sourceTree = "<group>";
 		};
+		F2045418252878FA00B2C595 /* openlibm */ = {
+			isa = PBXGroup;
+			children = (
+				F204541925287A7600B2C595 /* LICENSE.md */,
+				F25999DC251571F0009022A2 /* libopenlibm.3.dylib */,
+			);
+			path = openlibm;
+			sourceTree = "<group>";
+		};
 		F25B6697250947E800959C8F /* gdxsv */ = {
 			isa = PBXGroup;
 			children = (
@@ -3190,6 +3201,7 @@
 				84A388BB1B1CDD3E000166C0 /* Images.xcassets in Resources */,
 				84A388BE1B1CDD3E000166C0 /* MainMenu.xib in Resources */,
 				AE8C274121122E2500D4D8F4 /* Changelog.txt in Resources */,
+				F204541A25287A7600B2C595 /* LICENSE.md in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -3827,7 +3839,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
-					"$(PROJECT_DIR)",
+					../../../core/deps/openlibm/,
 				);
 				OTHER_LDFLAGS = /usr/local/lib/libSDL2.a;
 				OTHER_LIBTOOLFLAGS = "";
@@ -3880,7 +3892,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
-					"$(PROJECT_DIR)",
+					../../../core/deps/openlibm/,
 				);
 				OTHER_LDFLAGS = /usr/local/lib/libSDL2.a;
 				OTHER_LIBTOOLFLAGS = "";
