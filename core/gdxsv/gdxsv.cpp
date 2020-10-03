@@ -716,7 +716,7 @@ bool Gdxsv::SendLog() {
     return true;
 }
 
-void Gdxsv::SetReleaseJSON(const std::string& json) {
+void Gdxsv::handleReleaseJSON(const std::string& json){
     std::regex rgx("\"tag_name\":\"v.*?(?=\")");
     std::smatch match;
 
@@ -750,13 +750,15 @@ void Gdxsv::SetReleaseJSON(const std::string& json) {
     }
 }
 
-std::string Gdxsv::LatestVersion() {
-    return latest_version;
-}
-
 bool Gdxsv::UpdateAvailable() {
     static std::once_flag once;
-    std::call_once ( once, [ ]{ os_gdxFetchReleaseJSON(); } );
+    std::call_once ( once, [this]{
+        std::thread([this]() {
+            const std::string json = os_FetchStringFromURL("https://api.github.com/repos/inada-s/flycast/releases/latest");
+            if(json.empty()) return;
+            handleReleaseJSON(json);
+        }).detach();
+    });
     return update_avaiable;
 }
 
@@ -767,6 +769,10 @@ void Gdxsv::OpenDownloadPage() {
 
 void Gdxsv::DismissUpdateDialog() {
     update_avaiable = false;
+}
+
+std::string Gdxsv::LatestVersion() {
+    return latest_version;
 }
 
 Gdxsv gdxsv;

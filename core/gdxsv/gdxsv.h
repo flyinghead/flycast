@@ -33,8 +33,6 @@ public:
     
     void DismissUpdateDialog();
     
-    void SetReleaseJSON(const std::string& json);
-    
     std::string LatestVersion();
 
 private:
@@ -71,6 +69,7 @@ private:
     TcpClient tcp_client;
     UdpClient udp_client;
     
+    void handleReleaseJSON(const std::string& json);
     bool update_avaiable = false;
     std::string latest_version;
 };

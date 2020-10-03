@@ -26,7 +26,6 @@
 #include "wsi/context.h"
 #include "emulator.h"
 #include "hw/pvr/Renderer_if.h"
-#include "gdxsv/gdxsv.h"
 
 OSXKeyboardDevice keyboard(0);
 static std::shared_ptr<OSXKbGamepadDevice> kb_gamepad(0);
@@ -93,21 +92,28 @@ void os_LaunchFromURL(const std::string& url) {
     [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:urlString]];
 }
 
-void os_gdxFetchReleaseJSON(){
-    NSURL *URL = [NSURL URLWithString:@"https://api.github.com/repos/inada-s/flycast/releases/latest"];
+std::string os_FetchStringFromURL(const std::string& url) {
+    dispatch_semaphore_t sem = dispatch_semaphore_create(0);
+    __block std::string result;
+    
+    NSURL *URL = [NSURL URLWithString:[[NSString alloc] initWithCString:url.c_str() encoding:NSASCIIStringEncoding]];
     NSURLRequest *request = [NSURLRequest requestWithURL:URL];
 
     NSURLSession *session = [NSURLSession sharedSession];
     NSURLSessionDataTask *task = [session dataTaskWithRequest:request
                                             completionHandler:
                                   ^(NSData *data, NSURLResponse *response, NSError *error) {
-        NSString* str = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
-        
-        std::string json = std::string([str UTF8String], [str lengthOfBytesUsingEncoding:NSUTF8StringEncoding]);
-        gdxsv.SetReleaseJSON(json);
+        if(error == nil) {
+            NSString* str = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+            result = std::string([str UTF8String], [str lengthOfBytesUsingEncoding:NSUTF8StringEncoding]);
+        }
+        dispatch_semaphore_signal(sem);
     }];
 
     [task resume];
+    dispatch_semaphore_wait(sem, DISPATCH_TIME_FOREVER);
+    
+    return result;
 }
 
 void common_linux_setup();

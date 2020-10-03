@@ -16,8 +16,6 @@
 #include "emulator.h"
 
 #include <wininet.h>
-#include "gdxsv/gdxsv.h"
-
 #include <windows.h>
 #include <windowsx.h>
 
@@ -610,32 +608,31 @@ void os_LaunchFromURL(const std::string& url)
     ShellExecuteA(hWnd, "open", url.c_str(), nullptr, nullptr, SW_SHOW);
 }
 
-void os_gdxFetchReleaseJSON()
+std::string os_FetchStringFromURL(const std::string& url)()
 {
-    std::thread([]() {
-        HINTERNET interwebs = InternetOpenA("Mozilla/5.0", INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0);
-        HINTERNET urlFile;
-        std::string json;
-        if (interwebs) {
-            const char* url = "https://api.github.com/repos/inada-s/flycast/releases/latest";
-            DeleteUrlCacheEntry(url);
-            urlFile = InternetOpenUrlA(interwebs, url, NULL, 0, 0, 0);
-            if (urlFile) {
-                char buffer[2000];
-                DWORD bytesRead;
-                do {
-                    InternetReadFile(urlFile, buffer, 2000, &bytesRead);
-                    json.append(buffer, bytesRead);
-                    memset(buffer, 0, 2000);
-                } while (bytesRead);
-                InternetCloseHandle(interwebs);
-                InternetCloseHandle(urlFile);
-                gdxsv.SetReleaseJSON(json);
-                return;
-            }
+    HINTERNET interwebs = InternetOpenA("Mozilla/5.0", INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0);
+    HINTERNET urlFile;
+    std::string result;
+    if (interwebs) {
+        const char* lpszUrl = url.c_str();
+        DeleteUrlCacheEntry(lpszUrl);
+        urlFile = InternetOpenUrlA(interwebs, lpszUrl, NULL, 0, 0, 0);
+        if (urlFile) {
+            char buffer[2000];
+            DWORD bytesRead;
+            do {
+                InternetReadFile(urlFile, buffer, 2000, &bytesRead);
+                result.append(buffer, bytesRead);
+                memset(buffer, 0, 2000);
+            } while (bytesRead);
+            InternetCloseHandle(interwebs);
+            InternetCloseHandle(urlFile);
+            return result;
+            
         }
-        InternetCloseHandle(interwebs);
-    }).detach();
+    }
+    InternetCloseHandle(interwebs);
+    return result;
 }
 
 #ifdef _WIN64
