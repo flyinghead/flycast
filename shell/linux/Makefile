@@ -307,7 +307,7 @@ LDFLAGS += -g -Wl,-Map,$(notdir $@).map,--gc-sections -Wl,-O3 -Wl,--sort-common 
 
 CFLAGS += $(RZDCY_CFLAGS) -g -O3 -D NDEBUG -c -fopenmp #-D NO_REND
 CFLAGS += -frename-registers -fno-strict-aliasing
-CFLAGS += -ftree-vectorize  -Wno-unused-result
+CFLAGS += -ffast-math -ftree-vectorize  -Wno-unused-result
 
 CXXFLAGS += $(RZDCY_CFLAGS) -fno-rtti -fno-operator-names -D_GLIBCXX_USE_CXX11_ABI=0 -std=gnu++14
 
