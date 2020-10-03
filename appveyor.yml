@@ -1,5 +1,7 @@
 version: git-{branch}-{build}
-image: Visual Studio 2017
+image:
+  - Visual Studio 2017
+  - macos
 
 configuration:
 - fast
@@ -7,43 +9,94 @@ configuration:
 platform:
 - x64
 
-before_build:
-  - cmd: >-
-      set BUILD_PATH=shell\linux
-      
-      set EXTRA_PATH=C:\mingw-w64\x86_64-7.2.0-posix-seh-rt_v5-rev1\mingw64\bin\
-      
-      set PATH=%EXTRA_PATH%;%PATH%
-      
-      if not exist %BUILD_PATH% (mkdir %BUILD_PATH%)
-     
-      cd %BUILD_PATH%
-      
-build_script:
-  - cmd: >-
-      if "%CONFIGURATION%"=="fast" (mingw32-make -j2 platform=win32)
+for:
+  -
+    matrix:
+      only:
+        - image: Visual Studio 2017
 
-after_build:
-  - cmd: >-      
-      if "%CONFIGURATION%"=="fast" (cd ..\.. && set EXE_PATH=shell\linux\nosym-reicast.exe)
-      
-      mkdir artifacts
-      
-      move %EXE_PATH% artifacts\flycast-win_%PLATFORM%-%CONFIGURATION%-%APPVEYOR_REPO_COMMIT%.exe
+    before_build:
+      - cmd: >-
+          set BUILD_PATH=shell\linux
+          
+          set EXTRA_PATH=C:\mingw-w64\x86_64-7.2.0-posix-seh-rt_v5-rev1\mingw64\bin\
+          
+          set PATH=%EXTRA_PATH%;%PATH%
 
-artifacts:
-  - path: artifacts
-    name: flycast-win_$(PLATFORM)-$(CONFIGURATION)-$(APPVEYOR_REPO_COMMIT)
+          for /f "delims=" %%i in ('git describe --tags') do set SUFFIX=%%i
 
-deploy:
-  release: $(APPVEYOR_REPO_TAG_NAME)
-  description: 'DC emulator flycast for gdxsv'
-  provider: GitHub
-  auth_token:
-    secure: e8oocRdRnpl9yIxtLBVA7dE6MZO4YOWmfb9IaBj1J7wWkOMRjPcmW+gnJwe3PbZN
-  artifact: flycast-win_$(PLATFORM)-$(CONFIGURATION)-$(APPVEYOR_REPO_COMMIT)
-  draft: false
-  prerelease: false
-  on:
-    branch: gdxsv-dev2
-    APPVEYOR_REPO_TAG: true
+          if defined APPVEYOR_REPO_TAG_NAME (set SUFFIX=%APPVEYOR_REPO_TAG_NAME%-%APPVEYOR_REPO_COMMIT:~0,7%)
+          
+          if not exist %BUILD_PATH% (mkdir %BUILD_PATH%)
+         
+          cd %BUILD_PATH%
+          
+    build_script:
+      - cmd: >-
+          if "%CONFIGURATION%"=="fast" (mingw32-make -j2 platform=win32)
+
+    after_build:
+      - cmd: >-
+          if "%CONFIGURATION%"=="fast" (cd ..\.. && set EXE_PATH=shell\linux\nosym-reicast.exe)
+          
+          mkdir artifacts
+          
+          move %EXE_PATH% artifacts\Flycast-win_%PLATFORM%-%SUFFIX%.exe
+
+    artifacts:
+      - path: artifacts
+        name: Flycast-win_$(PLATFORM)-$(SUFFIX)
+
+    deploy:
+      release: $(APPVEYOR_REPO_TAG_NAME)
+      description: 'DC emulator flycast for gdxsv'
+      provider: GitHub
+      auth_token:
+        secure: e8oocRdRnpl9yIxtLBVA7dE6MZO4YOWmfb9IaBj1J7wWkOMRjPcmW+gnJwe3PbZN
+      artifact: Flycast-win_$(PLATFORM)-$(SUFFIX)
+      draft: false
+      prerelease: false
+      on:
+        branch: gdxsv-dev2
+        APPVEYOR_REPO_TAG: true
+
+  -
+    matrix:
+      only:
+        - image: macos      
+    
+    before_build:
+      - sh: >-
+          if [ -z "$APPVEYOR_REPO_TAG_NAME" ]; then export SUFFIX=$(git describe --tags); else export SUFFIX=$APPVEYOR_REPO_TAG_NAME-${APPVEYOR_REPO_COMMIT:0:7}; fi
+
+          cd shell/apple
+
+          mkdir artifacts
+
+          brew install sdl2
+
+    build_script:
+      - sh: >-
+          xcodebuild archive -workspace reicast.xcworkspace -scheme reicast-osx -archivePath flycast.xcarchive
+
+    after_build:
+      - sh: >-
+          mv flycast.xcarchive/Products/Applications/Flycast.app Flycast-$SUFFIX.app
+
+          7z a artifacts/Flycast-macOS-$SUFFIX.zip Flycast-$SUFFIX.app "How to Open.pdf"
+
+    artifacts:
+      - path: shell/apple/artifacts/Flycast-macOS-$SUFFIX.zip
+
+    deploy:
+      release: $(APPVEYOR_REPO_TAG_NAME)
+      description: 'DC emulator flycast for gdxsv'
+      provider: GitHub
+      auth_token:
+        secure: e8oocRdRnpl9yIxtLBVA7dE6MZO4YOWmfb9IaBj1J7wWkOMRjPcmW+gnJwe3PbZN
+      artifact: shell/apple/artifacts/Flycast-macOS-$SUFFIX.zip
+      draft: false
+      prerelease: false
+      on:
+        branch: gdxsv-dev2
+        APPVEYOR_REPO_TAG: true
