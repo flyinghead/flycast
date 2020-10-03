@@ -36,6 +36,16 @@ void os_CreateWindow()
 {
 }
 
+void os_LaunchFromURL(const std::string& url)
+{
+}
+
+std::string os_FetchStringFromURL(const std::string& url)
+{
+    std::string empty;
+    return empty;
+}
+
 int get_mic_data(u8* buffer)
 {
 	return 0;
