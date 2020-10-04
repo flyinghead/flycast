@@ -540,7 +540,7 @@ void Gdxsv::UpdateNetwork() {
                             message_buf.ApplySeqAck(pkt.seq(), pkt.ack());
                             recv_buf_mtx.lock();
                             const auto &msgs = pkt.battle_data();
-                            for (auto& msg : pkt.battle_data()) {
+                            for (auto &msg : pkt.battle_data()) {
                                 if (message_filter.IsNextMessage(msg)) {
                                     for (auto c : msg.body()) {
                                         recv_buf.push_back(c);
@@ -716,35 +716,40 @@ bool Gdxsv::SendLog() {
     return true;
 }
 
-void Gdxsv::handleReleaseJSON(const std::string& json){
+void Gdxsv::handleReleaseJSON(const std::string &json) {
     std::regex rgx("\"tag_name\":\"v.*?(?=\")");
     std::smatch match;
 
-    if (std::regex_search(json.begin(), json.end(), match, rgx)){
-        latest_version = match.str(0).substr(13,std::string::npos);
-        
+    if (std::regex_search(json.begin(), json.end(), match, rgx)) {
+        latest_version = match.str(0).substr(13, std::string::npos);
+
         std::string current_version = std::string(REICAST_VERSION);
-        current_version = current_version.substr(1,current_version.find_first_of("-")-1);
-        
-        auto version_compare = [](std::string v1, std::string v2){
-            size_t i=0, j=0;
-            while( i < v1.length() || j < v2.length() )
-            {
-                int acc1=0, acc2=0;
+        current_version = current_version.substr(1, current_version.find_first_of("-") - 1);
 
-                while (i < v1.length() && v1[i] != '.') {  acc1 = acc1 * 10 + (v1[i] - '0');  i++;  }
-                while (j < v2.length() && v2[j] != '.') {  acc2 = acc2 * 10 + (v2[j] - '0');  j++;  }
+        auto version_compare = [](std::string v1, std::string v2) {
+            size_t i = 0, j = 0;
+            while (i < v1.length() || j < v2.length()) {
+                int acc1 = 0, acc2 = 0;
 
-                if (acc1 < acc2)  return false;
-                if (acc1 > acc2)  return true;
+                while (i < v1.length() && v1[i] != '.') {
+                    acc1 = acc1 * 10 + (v1[i] - '0');
+                    i++;
+                }
+                while (j < v2.length() && v2[j] != '.') {
+                    acc2 = acc2 * 10 + (v2[j] - '0');
+                    j++;
+                }
+
+                if (acc1 < acc2) return false;
+                if (acc1 > acc2) return true;
 
                 ++i;
                 ++j;
             }
             return false;
         };
-        
-        if(version_compare(latest_version, current_version)){
+
+        if (version_compare(latest_version, current_version)) {
             update_available = true;
         }
     }
@@ -752,10 +757,11 @@ void Gdxsv::handleReleaseJSON(const std::string& json){
 
 bool Gdxsv::UpdateAvailable() {
     static std::once_flag once;
-    std::call_once ( once, [this]{
+    std::call_once(once, [this] {
         std::thread([this]() {
-            const std::string json = os_FetchStringFromURL("https://api.github.com/repos/inada-s/flycast/releases/latest");
-            if(json.empty()) return;
+            const std::string json = os_FetchStringFromURL(
+                    "https://api.github.com/repos/inada-s/flycast/releases/latest");
+            if (json.empty()) return;
             handleReleaseJSON(json);
         }).detach();
     });
