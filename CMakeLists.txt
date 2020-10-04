@@ -116,7 +116,7 @@ if(MINGW)
             INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_SOURCE_DIR}/core/deps/SDL2-2.0.12/include"
             IMPORTED_LINK_INTERFACE_LANGUAGES "C"
             IMPORTED_LOCATION "${CMAKE_CURRENT_SOURCE_DIR}/core/deps/SDL2-2.0.12/x86_64-w64-mingw32/lib/libSDL2.a"
-            INTERFACE_LINK_LIBRARIES "-L${CMAKE_CURRENT_SOURCE_DIR}/core/deps/SDL2-2.0.12/x86_64-w64-mingw32/lib -lmingw32 -lSDL2main -lSDL2 -mwindows  -Wl,--no-undefined -Wl,--dynamicbase -Wl,--nxcompat -Wl,--high-entropy-va -lm -ldinput8 -ldxguid -ldxerr8 -luser32 -lgdi32 -lwinmm -limm32 -lole32 -loleaut32 -lshell32 -lsetupapi -lversion -luuid -static-libgcc")
+            INTERFACE_LINK_LIBRARIES "-L${CMAKE_CURRENT_SOURCE_DIR}/core/deps/SDL2-2.0.12/x86_64-w64-mingw32/lib -lmingw32 -lSDL2main -lSDL2 -mwindows  -Wl,--no-undefined -Wl,--dynamicbase -Wl,--nxcompat -Wl,--high-entropy-va -lwininet -lm -ldinput8 -ldxguid -ldxerr8 -luser32 -lgdi32 -lwinmm -limm32 -lole32 -loleaut32 -lshell32 -lsetupapi -lversion -luuid -static-libgcc")
 elseif(MSVC)
     set(SDL2_FOUND TRUE)
     add_library(SDL2::SDL2 SHARED IMPORTED)
@@ -1115,7 +1115,7 @@ elseif(WIN32)
             core/windows/xinput_gamepad.h
             shell/windows/reicast.rc)
 
-    target_link_libraries(${PROJECT_NAME} PRIVATE dsound opengl32 winmm ws2_32 wsock32 xinput9_1_0)
+    target_link_libraries(${PROJECT_NAME} PRIVATE dsound opengl32 winmm wininet.lib ws2_32 wsock32 xinput9_1_0)
 endif()
 
 if(BUILD_TESTING)

@@ -87,6 +87,35 @@ void os_SetupInput()
 	GamepadDevice::Register(mouse_gamepad);
 }
 
+void os_LaunchFromURL(const std::string& url) {
+    NSString *urlString = [NSString stringWithUTF8String:url.c_str()];
+    [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:urlString]];
+}
+
+std::string os_FetchStringFromURL(const std::string& url) {
+    dispatch_semaphore_t sem = dispatch_semaphore_create(0);
+    __block std::string result;
+    
+    NSURL *URL = [NSURL URLWithString:[[NSString alloc] initWithCString:url.c_str() encoding:NSASCIIStringEncoding]];
+    NSURLRequest *request = [NSURLRequest requestWithURL:URL];
+
+    NSURLSession *session = [NSURLSession sharedSession];
+    NSURLSessionDataTask *task = [session dataTaskWithRequest:request
+                                            completionHandler:
+                                  ^(NSData *data, NSURLResponse *response, NSError *error) {
+        if(error == nil) {
+            NSString* str = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+            result = std::string([str UTF8String], [str lengthOfBytesUsingEncoding:NSUTF8StringEncoding]);
+        }
+        dispatch_semaphore_signal(sem);
+    }];
+
+    [task resume];
+    dispatch_semaphore_wait(sem, DISPATCH_TIME_FOREVER);
+    
+    return result;
+}
+
 void common_linux_setup();
 void rend_init_renderer();
 

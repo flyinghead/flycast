@@ -275,7 +275,7 @@ else ifneq (,$(findstring win32,$(platform)))
     NOT_ARM := 1
     CFLAGS += -fno-builtin-sqrtf -funroll-loops -DHAVE_FSEEKO -I /mingw64/include
     LDFLAGS += -static-libgcc -static-libstdc++ -Wl,-subsystem,windows -L$(LOCAL_PATH)/../../core/deps/openlibm
-    LIBS := -lopenlibm -lopengl32 -lwinmm -lgdi32 -lwsock32 -lws2_32 -ldsound -lcomctl32 -lcomdlg32 -lxinput -liphlpapi -Wl,-Bstatic -lgomp
+    LIBS := -lwininet -lopenlibm -lopengl32 -lwinmm -lgdi32 -lwsock32 -lws2_32 -ldsound -lcomctl32 -lcomdlg32 -lxinput -liphlpapi -Wl,-Bstatic -lgomp
     PLATFORM_EXT := exe
     CC = gcc
     CXX = g++

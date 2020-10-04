@@ -123,6 +123,19 @@ void os_CreateWindow()
 	#endif
 }
 
+void os_LaunchFromURL(const std::string& url)
+{
+    auto cmd = "xdg-open " + url;
+    auto rv = system(cmd.c_str());
+}
+
+std::string os_FetchStringFromURL(const std::string& url)
+{
+    //Not implemented
+    std::string empty;
+    return empty;
+}
+
 void common_linux_setup();
 void* rend_thread(void* p);
 
