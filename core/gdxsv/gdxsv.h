@@ -70,7 +70,7 @@ private:
     UdpClient udp_client;
     
     void handleReleaseJSON(const std::string& json);
-    bool update_avaiable = false;
+    bool update_available = false;
     std::string latest_version;
 };
 

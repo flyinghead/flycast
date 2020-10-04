@@ -745,7 +745,7 @@ void Gdxsv::handleReleaseJSON(const std::string& json){
         };
         
         if(version_compare(latest_version, current_version)){
-            update_avaiable = true;
+            update_available = true;
         }
     }
 }
@@ -759,16 +759,16 @@ bool Gdxsv::UpdateAvailable() {
             handleReleaseJSON(json);
         }).detach();
     });
-    return update_avaiable;
+    return update_available;
 }
 
 void Gdxsv::OpenDownloadPage() {
     os_LaunchFromURL("http://github.com/inada-s/flycast/releases/latest/");
-    update_avaiable = false;
+    update_available = false;
 }
 
 void Gdxsv::DismissUpdateDialog() {
-    update_avaiable = false;
+    update_available = false;
 }
 
 std::string Gdxsv::LatestVersion() {
