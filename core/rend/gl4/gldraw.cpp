@@ -592,7 +592,10 @@ void gl4DrawStrips(GLuint output_fbo, int width, int height)
 
 				// Translucent modifier volumes
 				if (settings.rend.ModifierVolumes)
+				{
+					SetBaseClipping();
 					DrawTranslucentModVols(previous_pass.mvo_tr_count, current_pass.mvo_tr_count - previous_pass.mvo_tr_count);
+				}
 
 				// Rebind the depth/stencil texture to the framebuffer
 				glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, stencilTexId, 0);
