@@ -16,10 +16,6 @@ workflows:
     steps:
     - activate-ssh-key@4.0.3:	
         run_if: '{{getenv "SSH_RSA_PRIVATE_KEY" | ne ""}}'
-    - brew-install:
-        title: Install SDL2
-        inputs:
-        - packages: "sdl2"
     - cache-pull@2.0.1: {}
     - script@1.1.5:
         inputs:
@@ -33,6 +29,9 @@ workflows:
         inputs:
         - project_path: "$BITRISE_PROJECT_PATH"
     - xcode-archive-mac@1.6.2:
+        deps:
+          brew:
+          - name: sdl2
         inputs:
         - project_path: "$BITRISE_PROJECT_PATH"
         - scheme: "$BITRISE_SCHEME"
@@ -53,10 +52,6 @@ workflows:
     steps:
     - activate-ssh-key@4.0.3:	
         run_if: '{{getenv "SSH_RSA_PRIVATE_KEY" | ne ""}}'
-    - brew-install:
-        title: Install SDL2
-        inputs:
-        - packages: "sdl2"
     - cache-pull@2.0.1: {}
     - script@1.1.5:
         inputs:
@@ -70,6 +65,9 @@ workflows:
         inputs:
         - project_path: "$BITRISE_PROJECT_PATH"
     - xcode-archive-mac@1.6.2:
+        deps:
+          brew:
+          - name: sdl2
         inputs:
         - project_path: "$BITRISE_PROJECT_PATH"
         - scheme: "$BITRISE_SCHEME"
