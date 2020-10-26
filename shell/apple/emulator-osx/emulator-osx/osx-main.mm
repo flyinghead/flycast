@@ -73,6 +73,9 @@ void os_CreateWindow() {
         printf("task_set_exception_ports: %s\n", mach_error_string(ret));
     }
 #endif
+    
+    //For settings.dreamcast.ContentPath.emplace_back("./"), Since macOS app bundle cwd is at "/"
+    chdir([[[[NSBundle mainBundle] bundlePath] stringByDeletingLastPathComponent] cStringUsingEncoding:NSUTF8StringEncoding]);
 }
 
 void os_SetupInput()
