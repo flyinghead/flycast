@@ -25,17 +25,17 @@ public:
 
     void SyncNetwork(bool write);
 
-    bool SendLog();
-    
     bool UpdateAvailable();
-    
+
     void OpenDownloadPage();
-    
+
     void DismissUpdateDialog();
-    
+
     std::string LatestVersion();
 
 private:
+    void GcpPingTest(); // run on network thread
+
     void UpdateNetwork(); // run on network thread
 
     static std::string GenerateLoginKey();
@@ -68,8 +68,12 @@ private:
 
     TcpClient tcp_client;
     UdpClient udp_client;
-    
-    void handleReleaseJSON(const std::string& json);
+
+    std::atomic<bool> gcp_ping_test_finished;
+    std::map<std::string, int> gcp_ping_test_result;
+
+    void handleReleaseJSON(const std::string &json);
+
     bool update_available = false;
     std::string latest_version;
 };

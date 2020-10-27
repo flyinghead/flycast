@@ -140,6 +140,11 @@ std::string Gdxsv::GeneratePlatformInfoString() {
     ss << "disk=" << (int) disk << "\n";
     ss << "maxlag=" << (int) maxlag << "\n";
     ss << "patch_id=" << symbols[":patch_id"] << "\n";
+    if (gcp_ping_test_finished) {
+        for (const auto &res : gcp_ping_test_result) {
+            ss << res.first << "=" << res.second << "\n";
+        }
+    }
     return ss.str();
 }
 
@@ -302,7 +307,82 @@ void Gdxsv::SyncNetwork(bool write) {
     }
 }
 
+void Gdxsv::GcpPingTest() {
+    // powered by https://github.com/cloudharmony/network
+    static const std::string get_path = "/probe/ping.js";
+    static const std::map<std::string, std::string> gcp_region_hosts = {
+            {"asia-east1",              "asia-east1-gce.cloudharmony.net"},
+            {"asia-east2",              "asia-east2-gce.cloudharmony.net"},
+            {"asia-northeast1",         "asia-northeast1-gce.cloudharmony.net"},
+            {"asia-northeast2",         "asia-northeast2-gce.cloudharmony.net"},
+            {"asia-northeast3",         "asia-northeast3-gce.cloudharmony.net"},
+            {"asia-south1",             "asia-south1-gce.cloudharmony.net"},
+            {"asia-southeast1",         "asia-southeast1-gce.cloudharmony.net"},
+            {"australia-southeast1",    "australia-southeast1-gce.cloudharmony.net"},
+            {"europe-north1",           "europe-north1-gce.cloudharmony.net"},
+            {"europe-west1",            "europe-west1-gce.cloudharmony.net"},
+            {"europe-west2",            "europe-west2-gce.cloudharmony.net"},
+            {"europe-west3",            "europe-west3-gce.cloudharmony.net"},
+            {"europe-west4",            "europe-west4-gce.cloudharmony.net"},
+            {"europe-west6",            "europe-west6-gce.cloudharmony.net"},
+            {"northamerica-northeast1", "northamerica-northeast1-gce.cloudharmony.net"},
+            {"southamerica-east1",      "southamerica-east1-gce.cloudharmony.net"},
+            {"us-central1",             "us-central1-gce.cloudharmony.net"},
+            {"us-east1",                "us-east1-gce.cloudharmony.net"},
+            {"us-east4",                "us-east4-gce.cloudharmony.net"},
+            {"us-west1",                "us-west1-gce.cloudharmony.net"},
+            {"us-west2",                "us-west2-a-gce.cloudharmony.net"},
+            {"us-west3",                "us-west3-gce.cloudharmony.net"},
+    };
+
+    for (const auto &region_host : gcp_region_hosts) {
+        TcpClient client;
+        std::stringstream ss;
+        ss << "HEAD " << get_path << " HTTP/1.1" << "\r\n";
+        ss << "Host: " << region_host.second << "\r\n";
+        ss << "User-Agent: flycast for gdxsv" << "\r\n";
+        ss << "Accept: */*" << "\r\n";
+        ss << "\r\n"; // end of header
+
+        if (!client.Connect(region_host.second.c_str(), 80)) {
+            ERROR_LOG(COMMON, "connect failed : %s", region_host.first.c_str());
+            continue;
+        }
+
+        auto request_header = ss.str();
+        auto t1 = std::chrono::high_resolution_clock::now();
+        int n = client.Send(request_header.c_str(), request_header.size());
+        if (n < request_header.size()) {
+            ERROR_LOG(COMMON, "send failed : %s", region_host.first.c_str());
+            client.Close();
+            continue;
+        }
+
+        char buf[1024] = {0};
+        n = client.Recv(buf, 1024);
+        if (n <= 0) {
+            ERROR_LOG(COMMON, "recv failed : %s", region_host.first.c_str());
+            client.Close();
+            continue;
+        }
+
+        auto t2 = std::chrono::high_resolution_clock::now();
+        int rtt = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
+        const std::string response_header(buf, n);
+        if (response_header.find("200 OK") != std::string::npos) {
+            NOTICE_LOG(COMMON, "%s : %d[ms]", region_host.first.c_str(), rtt);
+            gcp_ping_test_result[region_host.first] = rtt;
+        } else {
+            ERROR_LOG(COMMON, "error response : %s", response_header.c_str());
+        }
+        client.Close();
+    }
+    gcp_ping_test_finished = true;
+}
+
 void Gdxsv::UpdateNetwork() {
+    GcpPingTest();
+
     static const int kFirstMessageSize = 20;
 
     MessageBuffer message_buf;
@@ -313,7 +393,7 @@ void Gdxsv::UpdateNetwork() {
     std::string session_id;
     u8 buf[16 * 1024];
 
-    auto ping_test = [&]() {
+    auto mcs_ping_test = [&]() {
         if (!udp_client.IsConnected()) return;
         int ping_cnt = 0;
         int rtt_sum = 0;
@@ -359,7 +439,7 @@ void Gdxsv::UpdateNetwork() {
 
         auto rtt = double(rtt_sum) / ping_cnt;
         NOTICE_LOG(COMMON, "PING AVG %.2f ms", rtt);
-        maxlag = std::min<int>(0x7f, 4 + (int) std::floor(rtt / 16));
+        maxlag = std::min<int>(0x7f, std::max(5, 4 + (int) std::floor(rtt / 16)));
         NOTICE_LOG(COMMON, "set maxlag %d", (int) maxlag);
 
         char osd_msg[128] = {};
@@ -385,7 +465,7 @@ void Gdxsv::UpdateNetwork() {
             message_filter.Clear();
             bool udp_session_ok = false;
 
-            ping_test();
+            mcs_ping_test();
 
             // get session_id from client
             recv_buf_mtx.lock();
@@ -452,6 +532,7 @@ void Gdxsv::UpdateNetwork() {
                 send_buf_mtx.unlock();
             } else {
                 ERROR_LOG(COMMON, "UDP session failed");
+                udp_client.Close();
             }
         }
 
@@ -650,71 +731,6 @@ void Gdxsv::WritePatchDisk2() {
     }
 }
 
-bool Gdxsv::SendLog() {
-    const std::string post_host = "asia-northeast1-gdxsv-274515.cloudfunctions.net";
-    const std::string post_path = "/logfunc";
-#ifdef __ANDROID__
-    const std::string log_path = get_writable_data_path("/flycast.log");
-#else
-    const std::string log_path = "flycast.log";
-#endif
-
-    auto platform_info = GeneratePlatformInfoString();
-
-    std::ifstream ifs(log_path.c_str(), std::ios::binary);
-    if (!ifs) {
-        return false;
-    }
-
-    ifs.seekg(0, std::ios::end);
-    int file_size = ifs.tellg();
-    ifs.clear();
-    ifs.seekg(0, std::ios::beg);
-
-    if (file_size <= 0) {
-        return false;
-    }
-
-    std::stringstream ss;
-    ss << "POST " << post_path << " HTTP/1.1" << "\r\n";
-    ss << "Host: " << post_host << "\r\n";
-    ss << "User-Agent: flycast for gdxsv" << "\r\n";
-    ss << "Content-Type: application/octet-stream" << "\r\n";
-    ss << "Content-Length: " << platform_info.size() + file_size << "\r\n";
-    ss << "Connection: Close" << "\r\n";
-    ss << "\r\n"; // end of header
-
-
-    TcpClient client;
-    if (!client.Connect(post_host.c_str(), 80)) {
-        return false;
-    }
-
-    auto request_header = ss.str();
-    int n = client.Send(request_header.c_str(), request_header.size());
-    if (n < request_header.size()) {
-        return false;
-    }
-
-    n = client.Send(platform_info.c_str(), platform_info.size());
-    if (n < platform_info.size()) {
-        return false;
-    }
-
-    char buf[4096];
-    int sent = 0;
-    while (sent < file_size) {
-        n = ifs.readsome(buf, std::min<int>(sizeof(buf), (int) file_size - sent));
-        int m = client.Send(buf, n);
-        sent += m;
-        if (n == 0 || n != m) {
-            break;
-        }
-    }
-
-    client.Close();
-    return true;
-}
 
 void Gdxsv::handleReleaseJSON(const std::string &json) {
     std::regex rgx("\"tag_name\":\"v.*?(?=\")");

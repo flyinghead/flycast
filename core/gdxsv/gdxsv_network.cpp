@@ -13,6 +13,11 @@ bool TcpClient::Connect(const char *host, int port) {
         return false;
     }
     auto host_entry = gethostbyname(host);
+    if (host_entry == nullptr || host_entry->h_addr_list[0] == nullptr) {
+        WARN_LOG(COMMON, "Connect fail 2 gethostbyname");
+        return false;
+    }
+
     sockaddr_in addr{};
     addr.sin_family = AF_INET;
 #ifdef _WIN32
