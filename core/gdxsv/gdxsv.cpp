@@ -35,14 +35,6 @@ void Gdxsv::Reset() {
     }
     enabled = true;
 
-    if (!net_thread.joinable()) {
-        NOTICE_LOG(COMMON, "start net thread");
-        net_thread = std::thread([this]() {
-            UpdateNetwork();
-            NOTICE_LOG(COMMON, "end net thread");
-        });
-    }
-
 #ifdef _WIN32
     WSADATA wsaData;
     if (WSAStartup(MAKEWORD(2, 0), &wsaData) != 0) {
@@ -50,6 +42,14 @@ void Gdxsv::Reset() {
         return;
     }
 #endif
+
+    if (!net_thread.joinable()) {
+        NOTICE_LOG(COMMON, "start net thread");
+        net_thread = std::thread([this]() {
+            UpdateNetwork();
+            NOTICE_LOG(COMMON, "end net thread");
+        });
+    }
 
     server = cfgLoadStr("gdxsv", "server", "zdxsv.net");
     maxlag = cfgLoadInt("gdxsv", "maxlag", 8); // Note: This should be not configurable. This is for development.
@@ -382,7 +382,6 @@ void Gdxsv::GcpPingTest() {
 
 void Gdxsv::UpdateNetwork() {
     GcpPingTest();
-
     static const int kFirstMessageSize = 20;
 
     MessageBuffer message_buf;
