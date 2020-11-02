@@ -8,12 +8,6 @@
 #include "network/net_platform.h"
 #include "packet.pb.h"
 
-static const int kUserIdMaxLength = 16;
-static const int kSessionIdMaxLength = 16;
-static const int kMessageBodyMaxLength = 64;
-static const int kPublicAddrMaxLength = 16;
-static const int kBattleDataMaxLength = 128;
-
 class TcpClient {
 public:
     ~TcpClient() {

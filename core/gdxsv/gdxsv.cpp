@@ -2,7 +2,6 @@
 
 #include <sstream>
 #include <random>
-#include <fstream>
 #include <regex>
 
 #include "packet.pb.h"
@@ -667,6 +666,9 @@ void Gdxsv::WritePatch() {
 void Gdxsv::WritePatchDisk1() {
     const u32 offset = 0x8C000000 + 0x00010000;
 
+    // Max Rebattle Patch
+    WriteMem8_nommu(0x0c0345b0, 5);
+
     // Reduce max lag-frame
     WriteMem8_nommu(0x0c310451, maxlag);
 
@@ -698,6 +700,9 @@ void Gdxsv::WritePatchDisk1() {
 
 void Gdxsv::WritePatchDisk2() {
     const u32 offset = 0x8C000000 + 0x00010000;
+
+    // Max Rebattle Patch
+    WriteMem8_nommu(0x0c0219ec, 5);
 
     // Reduce max lag-frame
     // WriteMem8_nommu(offset + 0x00035348, maxlag);
