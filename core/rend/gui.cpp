@@ -684,8 +684,6 @@ static void contentpath_warning_popup()
             ImGui::SetCursorPosX((currentwidth - 100.f * scaling) / 2.f + ImGui::GetStyle().WindowPadding.x - 55.f * scaling);
             if (ImGui::Button("Reselect", ImVec2(100.f * scaling, 0.f)))
             {
-                settings.dreamcast.ContentPath.clear();
-                scanner.stop();
                 show_contentpath_warning_popup = false;
                 ImGui::CloseCurrentPopup();
                 show_contentpath_selection = true;
@@ -705,6 +703,9 @@ static void contentpath_warning_popup()
     }
     if (show_contentpath_selection)
     {
+        static auto original = settings.dreamcast.ContentPath;
+        settings.dreamcast.ContentPath.clear();
+        scanner.stop();
         ImGui::OpenPopup("Select Directory");
         select_directory_popup("Select Directory", scaling, [](bool cancelled, std::string selection)
         {
@@ -713,6 +714,11 @@ static void contentpath_warning_popup()
             if (!cancelled)
             {
                 settings.dreamcast.ContentPath.push_back(selection);
+                scanner.refresh();
+            }
+            else
+            {
+                settings.dreamcast.ContentPath = original;
                 scanner.refresh();
             }
         });
