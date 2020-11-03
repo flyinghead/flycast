@@ -183,6 +183,6 @@ public:
 
 	std::mutex& get_mutex() { return mutex; }
 	const std::vector<GameMedia>& get_game_list() { return game_list; }
-    uint still_no_rom_counter = 0;
+    unsigned int still_no_rom_counter = 0;
     bool path_is_too_dirty = false;
 };
