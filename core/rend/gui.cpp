@@ -700,6 +700,57 @@ static void update_popup()
     }
 }
 
+static void contentpath_warning_popup()
+{
+    static bool show_contentpath_warning_popup = true;
+    static bool show_contentpath_selection = false;
+    if (show_contentpath_warning_popup && scanner.path_is_too_dirty)
+    {
+        ImGui::OpenPopup("Incorrect Content Location?");
+        if (ImGui::BeginPopupModal("Incorrect Content Location?", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
+        {
+            ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + 400.f * scaling);
+            ImGui::TextWrapped("  Still searching in %d folders, no game can be found!  ", scanner.still_no_rom_counter);
+            ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(16 * scaling, 3 * scaling));
+            float currentwidth = ImGui::GetContentRegionAvailWidth();
+            ImGui::SetCursorPosX((currentwidth - 100.f * scaling) / 2.f + ImGui::GetStyle().WindowPadding.x - 55.f * scaling);
+            if (ImGui::Button("Reselect", ImVec2(100.f * scaling, 0.f)))
+            {
+                settings.dreamcast.ContentPath.clear();
+                scanner.stop();
+                show_contentpath_warning_popup = false;
+                ImGui::CloseCurrentPopup();
+                show_contentpath_selection = true;
+            }
+            
+            ImGui::SameLine();
+            ImGui::SetCursorPosX((currentwidth - 100.f * scaling) / 2.f + ImGui::GetStyle().WindowPadding.x + 55.f * scaling);
+            if (ImGui::Button("Cancel", ImVec2(100.f * scaling, 0.f)))
+            {
+                show_contentpath_warning_popup = false;
+                ImGui::CloseCurrentPopup();
+            }
+            ImGui::SetItemDefaultFocus();
+            ImGui::PopStyleVar();
+            ImGui::EndPopup();
+        }
+    }
+    if (show_contentpath_selection)
+    {
+        ImGui::OpenPopup("Select Directory");
+        select_directory_popup("Select Directory", scaling, [](bool cancelled, std::string selection)
+        {
+            show_contentpath_selection = false;
+            show_contentpath_warning_popup = true;
+            if (!cancelled)
+            {
+                settings.dreamcast.ContentPath.push_back(selection);
+                scanner.refresh();
+            }
+        });
+    }
+}
+
 void directory_selected_callback(bool cancelled, std::string selection)
 {
 	if (!cancelled)
@@ -1605,6 +1656,7 @@ static void gui_display_content()
 
 	error_popup();
     update_popup();
+    contentpath_warning_popup();
 
 	ImGui::Render();
 	ImGui_impl_RenderDrawData(ImGui::GetDrawData(), false);
