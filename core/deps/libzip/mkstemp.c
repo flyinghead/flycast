@@ -47,6 +47,9 @@
 #define O_BINARY 0
 #endif
 
+#if defined(__APPLE__)
+#include <unistd.h>
+#endif
 
 
 int
