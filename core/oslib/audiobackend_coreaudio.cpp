@@ -40,6 +40,7 @@ static OSStatus coreaudio_callback(void* ctx, AudioUnitRenderActionFlags* flags,
     for (int i = 0; i < abl->mNumberBuffers; i++)
     {
         u32 buf_size = abl->mBuffers[i].mDataByteSize;
+        u8* out_buffer = reinterpret_cast<u8*>(abl->mBuffers[i].mData);
         if ((samples_wptr - samples_rptr + BUFSIZE) % BUFSIZE < buf_size)
         {
             //printf("Core Audio: buffer underrun");
@@ -47,8 +48,24 @@ static OSStatus coreaudio_callback(void* ctx, AudioUnitRenderActionFlags* flags,
         }
         else
         {
-            memcpy(abl->mBuffers[i].mData, samples_temp + samples_rptr, buf_size);
+            if (samples_rptr + buf_size > BUFSIZE)
+            {
+                // The data wraps around the buffer, so we need to do 2 copies
+                int size1 = BUFSIZE - samples_rptr;
+                int size2 = buf_size - size1;
+                memcpy(out_buffer, samples_temp + samples_rptr, size1);
+                memcpy(out_buffer + size1, samples_temp, size2);
+            }
+            else
+            {
+                memcpy(out_buffer, samples_temp + samples_rptr, buf_size);
+            }
+            
+            // Increment the read pointer
             samples_rptr = (samples_rptr + buf_size) % BUFSIZE;
+
+            // Set the mutex to allow writing
+            bufferEmpty.Set();
         }
     }
 
