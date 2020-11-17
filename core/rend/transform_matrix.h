@@ -55,6 +55,8 @@ public:
 		return viewportMatrix;
 	}
 
+	// Return the width of the black bars when the screen is wider than 4:3. Returns a negative number when the screen is taller than 4:3,
+	// whose inverse is the height of the top and bottom bars.
 	float GetSidebarWidth() const {
 		return sidebarWidth;
 	}
@@ -128,34 +130,58 @@ public:
 			float scissoring_scale_x, scissoring_scale_y;
 			GetFramebufferScaling(true, scissoring_scale_x, scissoring_scale_y);
 
+			float x_coef;
+			float y_coef;
+			glm::mat4 trans_rot;
+
 			if (settings.rend.Rotate90)
 			{
 				float dc2s_scale_h = screen_height / 640.0f;
-				sidebarWidth =  (screen_width - dc2s_scale_h * 480.0f * screen_stretching) / 2;
-				float y_coef = -2.0f / (screen_width / dc2s_scale_h * scale_y) * screen_stretching;
-				float x_coef = -2.0f / dcViewport.x * (invertY ? -1 : 1);
-				glm::mat4 trans_rot = glm::rotate((float)M_PI_2, glm::vec3(0, 0, 1))
-					* glm::translate(glm::vec3(invertY ? -1.f : 1.f, 1 - 2 * sidebarWidth / screen_width, 0));
-				normalMatrix = trans_rot
-					* glm::scale(glm::vec3(x_coef, y_coef, 1.f))
-					* normalMatrix;
-				scissorMatrix = trans_rot
-					* glm::scale(glm::vec3(x_coef * scissoring_scale_x, y_coef * scissoring_scale_y, 1.f))
-					* scissorMatrix;
+				if (screen_width / 480.f < dc2s_scale_h)
+				{
+					dc2s_scale_h = screen_width / 480.f;
+					sidebarWidth = (screen_height - dc2s_scale_h * 640.f * screen_stretching) / 2;
+					x_coef = -2.0f / (screen_height / dc2s_scale_h * scale_x) * screen_stretching * (invertY ? -1 : 1);
+					y_coef = -2.0f / dcViewport.y;
+					trans_rot = glm::translate(glm::vec3((1 - 2 * sidebarWidth / screen_height) * (invertY ? -1 : 1), 1, 0));
+					sidebarWidth = -sidebarWidth;
+				}
+				else
+				{
+					sidebarWidth =  (screen_width - dc2s_scale_h * 480.0f * screen_stretching) / 2;
+					y_coef = -2.0f / (screen_width / dc2s_scale_h * scale_y) * screen_stretching;
+					x_coef = -2.0f / dcViewport.x * (invertY ? -1 : 1);
+					trans_rot = glm::translate(glm::vec3(invertY ? -1.f : 1.f, 1 - 2 * sidebarWidth / screen_width, 0));
+				}
+				trans_rot = glm::rotate((float)M_PI_2, glm::vec3(0, 0, 1))
+					* trans_rot;
 			}
 			else
 			{
 				float dc2s_scale_h = screen_height / 480.0f;
-				sidebarWidth =  (screen_width - dc2s_scale_h * 640.0f * screen_stretching) / 2;
-				float x_coef = 2.0f / (screen_width / dc2s_scale_h * scale_x) * screen_stretching;
-				float y_coef = 2.0f / dcViewport.y * (invertY ? -1 : 1);
-				normalMatrix = glm::translate(glm::vec3(-1 + 2 * sidebarWidth / screen_width, invertY ? 1 : -1, 0))
-					* glm::scale(glm::vec3(x_coef, y_coef, 1.f))
-					* normalMatrix;
-				scissorMatrix = glm::translate(glm::vec3(-1 + 2 * sidebarWidth / screen_width, invertY ? 1 : -1, 0))
-					* glm::scale(glm::vec3(x_coef * scissoring_scale_x, y_coef * scissoring_scale_y, 1.f))
-					* scissorMatrix;
+				if (screen_width / 640.f < dc2s_scale_h)
+				{
+					dc2s_scale_h = screen_width / 640.f;
+					sidebarWidth = (screen_height - dc2s_scale_h * 480.f * screen_stretching) / 2;
+					y_coef = 2.0f / (screen_height / dc2s_scale_h * scale_y) * screen_stretching * (invertY ? -1 : 1);
+					x_coef = 2.0f / dcViewport.x;
+					trans_rot = glm::translate(glm::vec3(-1, (1 - 2 * sidebarWidth / screen_height) * (invertY ? 1 : -1), 0));
+					sidebarWidth = -sidebarWidth;
+				}
+				else
+				{
+					sidebarWidth =  (screen_width - dc2s_scale_h * 640.0f * screen_stretching) / 2;
+					x_coef = 2.0f / (screen_width / dc2s_scale_h * scale_x) * screen_stretching;
+					y_coef = 2.0f / dcViewport.y * (invertY ? -1 : 1);
+					trans_rot = glm::translate(glm::vec3(-1 + 2 * sidebarWidth / screen_width, invertY ? 1 : -1, 0));
+				}
 			}
+			normalMatrix = trans_rot
+				* glm::scale(glm::vec3(x_coef, y_coef, 1.f))
+				* normalMatrix;
+			scissorMatrix = trans_rot
+				* glm::scale(glm::vec3(x_coef * scissoring_scale_x, y_coef * scissoring_scale_y, 1.f))
+				* scissorMatrix;
 		}
 		normalMatrix = glm::scale(glm::vec3(1, 1, 1 / settings.rend.ExtraDepthScale))
 				* normalMatrix;

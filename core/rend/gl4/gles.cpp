@@ -817,6 +817,17 @@ static bool RenderFrame()
 					glcache.Scissor((GLint)lroundf(screen_width * screen_scaling - scaled_offs_x), 0, (GLsizei)lroundf(scaled_offs_x) + 1, rendering_height);
 					glClear(GL_COLOR_BUFFER_BIT);
 				}
+				else if (matrices.GetSidebarWidth() < 0)
+				{
+					float scaled_offs_y = -matrices.GetSidebarWidth() * screen_scaling;
+
+					glcache.ClearColor(0.f, 0.f, 0.f, 0.f);
+					glcache.Enable(GL_SCISSOR_TEST);
+					glcache.Scissor(0, 0, rendering_width, (GLsizei)lroundf(scaled_offs_y));
+					glClear(GL_COLOR_BUFFER_BIT);
+					glcache.Scissor(0, (GLint)lroundf(screen_height * screen_scaling - scaled_offs_y), rendering_width, (GLsizei)lroundf(scaled_offs_y + 1.f));
+					glClear(GL_COLOR_BUFFER_BIT);
+				}
 			}
 			else
 			{
