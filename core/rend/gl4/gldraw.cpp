@@ -150,9 +150,9 @@ static void SetGPState(const PolyParam* gp)
 	if (palette)
 	{
 		if (gp->tcw.PixelFmt == PixelPal4)
-			gl4ShaderUniforms.palette_index = float(gp->tcw.PalSelect << 4) / 1023.f;
+			gl4ShaderUniforms.palette_index = gp->tcw.PalSelect << 4;
 		else
-			gl4ShaderUniforms.palette_index = float((gp->tcw.PalSelect >> 4) << 8) / 1023.f;
+			gl4ShaderUniforms.palette_index = (gp->tcw.PalSelect >> 4) << 8;
 	}
 
 	gl4ShaderUniforms.tsp0 = gp->tsp;

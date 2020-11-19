@@ -192,7 +192,8 @@ highp vec4 fog_clamp(lowp vec4 col)
 
 lowp vec4 palettePixel(highp vec2 coords)
 {
-	highp vec2 c = vec2((texture(tex, coords).FOG_CHANNEL * 255.0 + float(palette_index)) / 1023.0, 0.5);
+	highp int color_idx = int(floor(texture(tex, coords).FOG_CHANNEL * 255.0 + 0.5)) + palette_index;
+	highp vec2 c = vec2(mod(float(color_idx), 32.0) / 31.0, float(color_idx / 32) / 31.0);
 	return texture(palette, c);
 }
 
@@ -972,7 +973,7 @@ void UpdatePaletteTexture(GLenum texture_slot)
 		glcache.BindTexture(GL_TEXTURE_2D, paletteTextureId);
 
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1024, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, palette32_ram);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 32, 32, 0, GL_RGBA, GL_UNSIGNED_BYTE, palette32_ram);
 	glCheck();
 
 	glActiveTexture(GL_TEXTURE0);
