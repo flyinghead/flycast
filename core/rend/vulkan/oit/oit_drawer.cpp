@@ -377,7 +377,20 @@ bool OITDrawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 				vk::DependencyFlagBits::eByRegion, 1, &memoryBarrier, 0, nullptr, 0, nullptr);
 		vk::Pipeline pipeline = pipelineManager->GetClearPipeline();
 		cmdBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline);
+		quadBuffer->Bind(cmdBuffer);
 		quadBuffer->Draw(cmdBuffer);
+
+		if (oitBuffers->isFirstFrameAfterInit())
+		{
+			// missing the transparent stuff on the first frame cuz I'm lazy
+			vk::MemoryBarrier memoryBarrier(vk::AccessFlagBits::eShaderWrite, vk::AccessFlagBits::eShaderRead);
+			cmdBuffer.pipelineBarrier(vk::PipelineStageFlagBits::eFragmentShader, vk::PipelineStageFlagBits::eFragmentShader,
+					vk::DependencyFlagBits::eByRegion, 1, &memoryBarrier, 0, nullptr, 0, nullptr);
+			pipeline = pipelineManager->GetFinalPipeline();
+			cmdBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline);
+			quadBuffer->Bind(cmdBuffer);
+			quadBuffer->Draw(cmdBuffer);
+		}
 
 		if (!finalPass)
 		{

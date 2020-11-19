@@ -268,8 +268,6 @@ void SetCurrentTARC(u32 addr);
 bool QueueRender(TA_context* ctx);
 TA_context* DequeueRender();
 void FinishRender(TA_context* ctx);
-bool TryDecodeTARC();
-void VDecEnd();
 
 //must be moved to proper header
 void FillBGP(TA_context* ctx);

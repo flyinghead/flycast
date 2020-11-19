@@ -394,20 +394,29 @@ void rend_start_render()
 
 	if (ctx)
 	{
-		bool is_rtt=(FB_W_SOF1& 0x1000000)!=0 && !ctx->rend.isRenderFramebuffer;
-		
-		//tactx_Recycle(ctx); ctx = read_frame("frames/dcframe-SoA-intro-tr-autosort");
-		//printf("REP: %.2f ms\n",render_end_pending_cycles/200000.0);
-		if (!ctx->rend.isRenderFramebuffer)
+		if (ctx->rend.isRenderFramebuffer)
+		{
+			ctx->rend.isRTT = false;
+			ctx->rend.fb_X_CLIP.min = 0;
+			ctx->rend.fb_X_CLIP.max = 639;
+			ctx->rend.fb_Y_CLIP.min = 0;
+			ctx->rend.fb_Y_CLIP.max = 479;
+
+			ctx->rend.fog_clamp_min = 0;
+			ctx->rend.fog_clamp_max = 0xffffffff;
+		}
+		else
+		{
 			FillBGP(ctx);
 
-		ctx->rend.isRTT=is_rtt;
+			ctx->rend.isRTT = (FB_W_SOF1 & 0x1000000) != 0;
 
-		ctx->rend.fb_X_CLIP=FB_X_CLIP;
-		ctx->rend.fb_Y_CLIP=FB_Y_CLIP;
+			ctx->rend.fb_X_CLIP = FB_X_CLIP;
+			ctx->rend.fb_Y_CLIP = FB_Y_CLIP;
 
-		ctx->rend.fog_clamp_min = FOG_CLAMP_MIN;
-		ctx->rend.fog_clamp_max = FOG_CLAMP_MAX;
+			ctx->rend.fog_clamp_min = FOG_CLAMP_MIN;
+			ctx->rend.fog_clamp_max = FOG_CLAMP_MAX;
+		}
 
 		if (QueueRender(ctx))
 		{
@@ -460,7 +469,6 @@ void rend_vblank()
 		SetCurrentTARC(CORE_CURRENT_CTX);
 		ta_ctx->Reset();
 		ta_ctx->rend.isRenderFramebuffer = true;
-		ta_ctx->rend.isRTT = false;
 		rend_start_render();
 		PARAM_BASE = saved_ctx_addr;
 		if (restore_ctx)

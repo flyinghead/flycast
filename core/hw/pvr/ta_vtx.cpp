@@ -1574,11 +1574,12 @@ static void fix_texture_bleeding(const List<PolyParam> *list)
 
 bool ta_parse_vdrc(TA_context* ctx)
 {
+	ctx->rend_inuse.lock();
 	bool rv=false;
 	verify(vd_ctx == 0);
 	vd_ctx = ctx;
 	vd_rc = vd_ctx->rend;
-	
+
 	ta_parse_cnt++;
 	if (ctx->rend.isRTT || 0 == (ta_parse_cnt %  ( settings.pvr.ta_skip + 1)))
 	{

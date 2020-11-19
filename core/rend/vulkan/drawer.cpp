@@ -63,44 +63,36 @@ void BaseDrawer::SetBaseScissor()
 			&& !matrices.IsClipped() && !settings.rend.Rotate90;
 	if (!wide_screen_on)
 	{
-		if (pvrrc.isRenderFramebuffer)
-		{
-			baseScissor = vk::Rect2D(vk::Offset2D(0, 0),
-					vk::Extent2D(640, 480));
-		}
-		else
-		{
-			float width;
-			float height;
-			float min_x;
-			float min_y;
-			glm::vec4 clip_min(pvrrc.fb_X_CLIP.min, pvrrc.fb_Y_CLIP.min, 0, 1);
-			glm::vec4 clip_dim(pvrrc.fb_X_CLIP.max - pvrrc.fb_X_CLIP.min + 1,
-			pvrrc.fb_Y_CLIP.max - pvrrc.fb_Y_CLIP.min + 1, 0, 0);
-			clip_min = matrices.GetScissorMatrix() * clip_min;
-			clip_dim = matrices.GetScissorMatrix() * clip_dim;
+		float width;
+		float height;
+		float min_x;
+		float min_y;
+		glm::vec4 clip_min(pvrrc.fb_X_CLIP.min, pvrrc.fb_Y_CLIP.min, 0, 1);
+		glm::vec4 clip_dim(pvrrc.fb_X_CLIP.max - pvrrc.fb_X_CLIP.min + 1,
+		pvrrc.fb_Y_CLIP.max - pvrrc.fb_Y_CLIP.min + 1, 0, 0);
+		clip_min = matrices.GetScissorMatrix() * clip_min;
+		clip_dim = matrices.GetScissorMatrix() * clip_dim;
 
-			min_x = clip_min[0];
-			min_y = clip_min[1];
-			width = clip_dim[0];
-			height = clip_dim[1];
-			if (width < 0)
-			{
-				min_x += width;
-				width = -width;
-			}
-			if (height < 0)
-			{
-				min_y += height;
-				height = -height;
-			}
-
-			baseScissor = vk::Rect2D(
-					vk::Offset2D((u32) std::max(lroundf(min_x), 0L),
-							(u32) std::max(lroundf(min_y), 0L)),
-					vk::Extent2D((u32) std::max(lroundf(width), 0L),
-							(u32) std::max(lroundf(height), 0L)));
+		min_x = clip_min[0];
+		min_y = clip_min[1];
+		width = clip_dim[0];
+		height = clip_dim[1];
+		if (width < 0)
+		{
+			min_x += width;
+			width = -width;
 		}
+		if (height < 0)
+		{
+			min_y += height;
+			height = -height;
+		}
+
+		baseScissor = vk::Rect2D(
+				vk::Offset2D((u32) std::max(lroundf(min_x), 0L),
+						(u32) std::max(lroundf(min_y), 0L)),
+				vk::Extent2D((u32) std::max(lroundf(width), 0L),
+						(u32) std::max(lroundf(height), 0L)));
 	}
 	else
 	{
@@ -316,9 +308,6 @@ void Drawer::UploadMainBuffer(const VertexShaderUniforms& vertexUniforms, const 
 
 bool Drawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 {
-	VertexShaderUniforms vtxUniforms;
-	vtxUniforms.normal_matrix = matrices.GetNormalMatrix();
-
 	FragmentShaderUniforms fragUniforms = MakeFragmentUniforms<FragmentShaderUniforms>();
 
 	SortTriangles();
@@ -329,6 +318,9 @@ bool Drawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 	SetProvokingVertices();
 
 	// Upload vertex and index buffers
+	VertexShaderUniforms vtxUniforms;
+	vtxUniforms.normal_matrix = matrices.GetNormalMatrix();
+
 	UploadMainBuffer(vtxUniforms, fragUniforms);
 
 	// Update per-frame descriptor set and bind it

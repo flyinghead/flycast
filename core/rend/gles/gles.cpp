@@ -1045,15 +1045,12 @@ void OSD_DRAW(bool clear_screen)
 
 bool ProcessFrame(TA_context* ctx)
 {
-	ctx->rend_inuse.lock();
-
 	if (KillTex)
 		TexCache.Clear();
 
 	if (ctx->rend.isRenderFramebuffer)
 	{
 		RenderFramebuffer();
-		ctx->rend_inuse.unlock();
 	}
 	else
 	{

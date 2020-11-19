@@ -66,38 +66,6 @@ void SetCurrentTARC(u32 addr)
 	}
 }
 
-bool TryDecodeTARC()
-{
-	verify(ta_ctx != 0);
-
-	if (vd_ctx == 0)
-	{
-		vd_ctx = ta_ctx;
-
-		vd_ctx->rend.proc_start = vd_ctx->rend.proc_end + 32;
-		vd_ctx->rend.proc_end = vd_ctx->tad.thd_data;
-			
-		vd_ctx->rend_inuse.lock();
-		vd_rc = vd_ctx->rend;
-
-		//signal the vdec thread
-		return true;
-	}
-	else
-		return false;
-}
-
-void VDecEnd()
-{
-	verify(vd_ctx != 0);
-
-	vd_ctx->rend = vd_rc;
-
-	vd_ctx->rend_inuse.unlock();
-
-	vd_ctx = 0;
-}
-
 static std::mutex mtx_rqueue;
 TA_context* rqueue;
 cResetEvent frame_finished;

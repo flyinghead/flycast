@@ -68,9 +68,6 @@ public:
 
 	bool Render() override
 	{
-		if (pvrrc.isRenderFramebuffer)
-			return true;
-
 		OITDrawer *drawer;
 		if (pvrrc.isRTT)
 			drawer = &textureDrawer;
