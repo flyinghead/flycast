@@ -190,8 +190,6 @@ public:
 			return "Keypad -";
 		case kVK_ANSI_KeypadEquals:
 			return "Keypad =";
-		case kVK_ANSI_KeypadMultiply:
-			return "Keypad *";
 		case kVK_ANSI_Keypad0:
 			return "Keypad 0";
 		case kVK_ANSI_Keypad1:
