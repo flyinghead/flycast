@@ -186,6 +186,14 @@ public:
 			input_mapper = std::make_shared<KbInputMapping>();
 	}
 	virtual ~SDLKbGamepadDevice() {}
+
+	virtual const char *get_button_name(u32 code) override
+	{
+		const char *name = SDL_GetKeyName((SDL_Keycode)code);
+		if (name[0] == 0)
+			return nullptr;
+		return name;
+	}
 };
 
 class MouseInputMapping : public InputMapping
@@ -213,15 +221,35 @@ public:
 			input_mapper = std::make_shared<MouseInputMapping>();
 	}
 	virtual ~SDLMouseGamepadDevice() {}
+
 	bool gamepad_btn_input(u32 code, bool pressed) override
 	{
-		if (gui_is_open())
+		if (gui_is_open() && !is_detecting_input())
 			// Don't register mouse clicks as gamepad presses when gui is open
 			// This makes the gamepad presses to be handled first and the mouse position to be ignored
 			// TODO Make this generic
 			return false;
 		else
 			return GamepadDevice::gamepad_btn_input(code, pressed);
+	}
+
+	virtual const char *get_button_name(u32 code) override
+	{
+		switch(code)
+		{
+		case SDL_BUTTON_LEFT:
+			return "Left Button";
+		case SDL_BUTTON_RIGHT:
+			return "Right Button";
+		case SDL_BUTTON_MIDDLE:
+			return "Middle Button";
+		case SDL_BUTTON_X1:
+			return "X1 Button";
+		case SDL_BUTTON_X2:
+			return "X2 Button";
+		default:
+			return nullptr;
+		}
 	}
 };
 

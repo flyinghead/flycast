@@ -589,7 +589,13 @@ static void controller_mapping_popup(std::shared_ptr<GamepadDevice> gamepad)
 			ImGui::NextColumn();
 			u32 code = input_mapping->get_button_code(button_keys[j]);
 			if (code != (u32)-1)
-				ImGui::Text("%d", code);
+			{
+				const char *label = gamepad->get_button_name(code);
+				if (label != nullptr)
+					ImGui::Text("%s", label);
+				else
+					ImGui::Text("[%d]", code);
+			}
 			ImGui::NextColumn();
 			if (ImGui::Button("Map"))
 			{
@@ -623,7 +629,13 @@ static void controller_mapping_popup(std::shared_ptr<GamepadDevice> gamepad)
 			ImGui::NextColumn();
 			u32 code = input_mapping->get_axis_code(axis_keys[j]);
 			if (code != (u32)-1)
-				ImGui::Text("%d", code);
+			{
+				const char *label = gamepad->get_axis_name(code);
+				if (label != nullptr)
+					ImGui::Text("%s", label);
+				else
+					ImGui::Text("[%d]", code);
+			}
 			ImGui::NextColumn();
 			if (ImGui::Button("Map"))
 			{

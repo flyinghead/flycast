@@ -54,15 +54,43 @@ public:
 		if (!find_mapping())
 			input_mapper = std::make_shared<MouseInputMapping>();
 	}
+
 	bool gamepad_btn_input(u32 code, bool pressed) override
 	{
-		if (gui_is_open())
+		if (gui_is_open() && !is_detecting_input())
 			// Don't register mouse clicks as gamepad presses when gui is open
 			// This makes the gamepad presses to be handled first and the mouse position to be ignored
 			// TODO Make this generic
 			return false;
 		else
 			return GamepadDevice::gamepad_btn_input(code, pressed);
+	}
+
+	virtual const char *get_button_name(u32 code) override
+	{
+		switch (code)
+		{
+		case Button1:
+			return "Left Button";
+		case Button2:
+			return "Middle Button";
+		case Button3:
+			return "Right Button";
+		case Button4:
+			return "Scroll Up";
+		case Button5:
+			return "Scroll Down";
+		case 6:
+			return "Scroll Left";
+		case 7:
+			return "Scroll Right";
+		case 8:
+			return "Button 4";
+		case 9:
+			return "Button 5";
+		default:
+			return nullptr;
+		}
 	}
 };
 
@@ -246,7 +274,7 @@ void input_x11_handle()
 						}
 						else
 #endif
-						if (e.type == KeyRelease && e.xkey.keycode == KEY_F11)
+						if (e.type == KeyPress && e.xkey.keycode == KEY_F11)
 						{
 							x11_fullscreen = !x11_fullscreen;
 							x11_window_set_fullscreen(x11_fullscreen);
@@ -387,9 +415,16 @@ void x11_window_create()
 		sWA.event_mask |= PointerMotionMask | FocusChangeMask;
 		unsigned long ui32Mask = CWBackPixel | CWBorderPixel | CWEventMask | CWColormap;
 
-		x11_width = cfgLoadInt("x11", "width", DEFAULT_WINDOW_WIDTH);
-		x11_height = cfgLoadInt("x11", "height", DEFAULT_WINDOW_HEIGHT);
-		x11_fullscreen = cfgLoadBool("x11", "fullscreen", DEFAULT_FULLSCREEN);
+		x11_width = cfgLoadInt("window", "width", 0);
+		if (x11_width == 0)
+			x11_width = cfgLoadInt("x11", "width", DEFAULT_WINDOW_WIDTH);
+		x11_height = cfgLoadInt("window", "height", 0);
+		x11_fullscreen = cfgLoadBool("window", "fullscreen", DEFAULT_FULLSCREEN);
+		if (x11_height == 0)
+		{
+			x11_height = cfgLoadInt("x11", "height", DEFAULT_WINDOW_HEIGHT);
+			x11_fullscreen = cfgLoadBool("x11", "fullscreen", DEFAULT_FULLSCREEN);
+		}
 
 		if (x11_width < 0 || x11_height < 0)
 		{
@@ -467,10 +502,10 @@ void x11_window_destroy()
 	{
 		if (!x11_fullscreen)
 		{
-			cfgSaveInt("x11", "width", x11_width);
-			cfgSaveInt("x11", "height", x11_height);
+			cfgSaveInt("window", "width", x11_width);
+			cfgSaveInt("window", "height", x11_height);
 		}
-		cfgSaveBool("x11", "fullscreen", x11_fullscreen);
+		cfgSaveBool("window", "fullscreen", x11_fullscreen);
 		XDestroyWindow(x11_disp, x11_win);
 		x11_win = (Window)0;
 	}

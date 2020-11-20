@@ -39,6 +39,27 @@ enum {
 	AXIS_GAS = 0x16,
 	AXIS_BRAKE = 0x17,
 
+	KEYCODE_BACK = 4,
+	KEYCODE_DPAD_UP = 19,
+	KEYCODE_DPAD_DOWN = 20,
+	KEYCODE_DPAD_LEFT = 21,
+	KEYCODE_DPAD_RIGHT = 22,
+	KEYCODE_DPAD_CENTER = 23,
+	KEYCODE_BUTTON_A = 96,
+	KEYCODE_BUTTON_B = 97,
+	KEYCODE_BUTTON_C = 98,
+	KEYCODE_BUTTON_X = 99,
+	KEYCODE_BUTTON_Y = 100,
+	KEYCODE_BUTTON_Z = 101,
+	KEYCODE_BUTTON_L1 = 102,
+	KEYCODE_BUTTON_R1 = 103,
+	KEYCODE_BUTTON_L2 = 104,
+	KEYCODE_BUTTON_R2 = 105,
+	KEYCODE_BUTTON_THUMBL = 106,
+	KEYCODE_BUTTON_THUMBR = 107,
+	KEYCODE_BUTTON_START = 108,
+	KEYCODE_BUTTON_SELECT = 109,
+	KEYCODE_BUTTON_MODE = 110,
 };
 
 class DefaultInputMapping : public InputMapping
@@ -47,16 +68,16 @@ public:
 	DefaultInputMapping()
 	{
 		name = "Default";
-		set_button(DC_BTN_Y, 100);
-		set_button(DC_BTN_B, 97);
-		set_button(DC_BTN_A, 96);
-		set_button(DC_BTN_X, 99);
-		set_button(DC_BTN_START, 108);
-		set_button(DC_DPAD_UP, 19);
-		set_button(DC_DPAD_DOWN, 20);
-		set_button(DC_DPAD_LEFT, 21);
-		set_button(DC_DPAD_RIGHT, 22);
-		set_button(EMU_BTN_MENU, 4);
+		set_button(DC_BTN_Y, KEYCODE_BUTTON_Y);
+		set_button(DC_BTN_B, KEYCODE_BUTTON_B);
+		set_button(DC_BTN_A, KEYCODE_BUTTON_A);
+		set_button(DC_BTN_X, KEYCODE_BUTTON_X);
+		set_button(DC_BTN_START, KEYCODE_BUTTON_START);
+		set_button(DC_DPAD_UP, KEYCODE_DPAD_UP);
+		set_button(DC_DPAD_DOWN, KEYCODE_DPAD_DOWN);
+		set_button(DC_DPAD_LEFT, KEYCODE_DPAD_LEFT);
+		set_button(DC_DPAD_RIGHT, KEYCODE_DPAD_RIGHT);
+		set_button(EMU_BTN_MENU, KEYCODE_BACK);
 
 		set_axis(DC_AXIS_X, AXIS_X, false);
 		set_axis(DC_AXIS_Y, AXIS_Y, false);
@@ -75,12 +96,12 @@ public:
 	ShieldRemoteInputMapping()
 	{
 		name = "Default";
-		set_button(DC_BTN_A, 23);
-		set_button(DC_DPAD_UP, 19);
-		set_button(DC_DPAD_DOWN, 20);
-		set_button(DC_DPAD_LEFT, 21);
-		set_button(DC_DPAD_RIGHT, 22);
-		set_button(EMU_BTN_MENU, 4);
+		set_button(DC_BTN_A, KEYCODE_DPAD_CENTER);
+		set_button(DC_DPAD_UP, KEYCODE_DPAD_UP);
+		set_button(DC_DPAD_DOWN, KEYCODE_DPAD_DOWN);
+		set_button(DC_DPAD_LEFT, KEYCODE_DPAD_LEFT);
+		set_button(DC_DPAD_RIGHT, KEYCODE_DPAD_RIGHT);
+		set_button(EMU_BTN_MENU, KEYCODE_BACK);
 
 		dirty = false;
 	}
@@ -122,6 +143,96 @@ public:
 	virtual ~AndroidGamepadDevice() override
 	{
 		INFO_LOG(INPUT, "Android: Joystick '%s' on port %d disconnected", _name.c_str(), maple_port());
+	}
+
+	virtual const char *get_button_name(u32 code) override
+	{
+		switch(code)
+		{
+		case KEYCODE_BACK:
+			return "Back";
+		case KEYCODE_DPAD_UP:
+			return "DPad Up";
+		case KEYCODE_DPAD_DOWN:
+			return "DPad Down";
+		case KEYCODE_DPAD_LEFT:
+			return "DPad Left";
+		case KEYCODE_DPAD_RIGHT:
+			return "DPad Right";
+		case KEYCODE_DPAD_CENTER:
+			return "DPad Center";
+		case KEYCODE_BUTTON_A:
+			return "A";
+		case KEYCODE_BUTTON_B:
+			return "B";
+		case KEYCODE_BUTTON_C:
+			return "C";
+		case KEYCODE_BUTTON_X:
+			return "X";
+		case KEYCODE_BUTTON_Y:
+			return "Y";
+		case KEYCODE_BUTTON_Z:
+			return "Z";
+		case KEYCODE_BUTTON_L1:
+			return "L1";
+		case KEYCODE_BUTTON_R1:
+			return "R1";
+		case KEYCODE_BUTTON_L2:
+			return "L2";
+		case KEYCODE_BUTTON_R2:
+			return "R2";
+		case KEYCODE_BUTTON_THUMBL:
+			return "Thumb L";
+		case KEYCODE_BUTTON_THUMBR:
+			return "Thumb R";
+		case KEYCODE_BUTTON_START:
+			return "Start";
+		case KEYCODE_BUTTON_SELECT:
+			return "Select";
+		case KEYCODE_BUTTON_MODE:
+			return "Mode";
+		default:
+			return nullptr;
+		}
+	}
+
+	virtual const char *get_axis_name(u32 code) override
+	{
+		switch(code)
+		{
+		case AXIS_X:
+			return "X";
+		case AXIS_Y:
+			return "Y";
+		case AXIS_Z:
+			return "Z";
+		case AXIS_RX:
+			return "RX";
+		case AXIS_RY:
+			return "RY";
+		case AXIS_RZ:
+			return "RZ";
+		case AXIS_LTRIGGER:
+			return "Left Trigger";
+		case AXIS_RTRIGGER:
+			return "Right Trigger";
+		case AXIS_HAT_X:
+			return "Hat X";
+		case AXIS_HAT_Y:
+			return "Hat Y";
+		case AXIS_GAS:
+			return "Gas";
+		case AXIS_BRAKE:
+			return "Brake";
+		case AXIS_RUDDER:
+			return "Rudder";
+		case AXIS_WHEEL:
+			return "Wheel";
+		case AXIS_THROTTLE:
+			return "Throttle";
+		default:
+			return nullptr;
+		}
 	}
 
 	static std::shared_ptr<AndroidGamepadDevice> GetAndroidGamepad(int id)
@@ -223,13 +334,36 @@ public:
 
 	bool gamepad_btn_input(u32 code, bool pressed) override
 	{
-		if (gui_is_open())
+		if (gui_is_open() && !is_detecting_input())
 			// Don't register mouse clicks as gamepad presses when gui is open
 			// This makes the gamepad presses to be handled first and the mouse position to be ignored
 			// TODO Make this generic
 			return false;
 		else
 			return GamepadDevice::gamepad_btn_input(code, pressed);
+	}
+
+	virtual const char *get_button_name(u32 code) override
+	{
+		switch (code)
+		{
+		case 1:
+			return "Left Button";
+		case 2:
+			return "Right Button";
+		case 4:
+			return "Middle Button";
+		case 8:
+			return "Back Button";
+		case 16:
+			return "Forward Button";
+		case 32:
+			return "Stylus Primary";
+		case 64:
+			return "Stylus Second";
+		default:
+			return nullptr;
+		}
 	}
 };
 // FIXME Don't connect it by default or any screen touch will register as button A press

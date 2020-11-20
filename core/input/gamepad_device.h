@@ -47,6 +47,8 @@ public:
 	}
 	std::shared_ptr<InputMapping> get_input_mapping() { return input_mapper; }
 	void save_mapping();
+	virtual const char *get_button_name(u32 code) { return nullptr; }
+	virtual const char *get_axis_name(u32 code) { return nullptr; }
 	bool remappable() { return _remappable && input_mapper; }
 	virtual bool is_virtual_gamepad() { return false; }
 
@@ -70,6 +72,7 @@ protected:
 	bool find_mapping(const char *custom_mapping = nullptr);
 
 	virtual void load_axis_min_max(u32 axis) {}
+	bool is_detecting_input() { return _input_detected != nullptr; }
 
 	std::string _name;
 	std::string _unique_id = "";
