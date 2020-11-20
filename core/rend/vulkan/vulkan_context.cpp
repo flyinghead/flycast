@@ -520,75 +520,87 @@ void VulkanContext::CreateSwapChain()
 			colorFormat = (formats[0].format == vk::Format::eUndefined) ? vk::Format::eB8G8R8A8Unorm : formats[0].format;
 		}
 
-		vk::SurfaceCapabilitiesKHR surfaceCapabilities = physicalDevice.getSurfaceCapabilitiesKHR(GetSurface());
-		DEBUG_LOG(RENDERER, "Surface capabilities: %d x %d, %s, image count: %d - %d", surfaceCapabilities.currentExtent.width, surfaceCapabilities.currentExtent.height,
-				vk::to_string(surfaceCapabilities.currentTransform).c_str(), surfaceCapabilities.minImageCount, surfaceCapabilities.maxImageCount);
-		VkExtent2D swapchainExtent;
-		if (surfaceCapabilities.currentExtent.width == std::numeric_limits<uint32_t>::max())
-		{
-			// If the surface size is undefined, the size is set to the size of the images requested.
-			swapchainExtent.width = std::min(std::max(640u, surfaceCapabilities.minImageExtent.width), surfaceCapabilities.maxImageExtent.width);
-			swapchainExtent.height = std::min(std::max(480u, surfaceCapabilities.minImageExtent.height), surfaceCapabilities.maxImageExtent.height);
-		}
-		else
-		{
-			// If the surface size is defined, the swap chain size must match
-			swapchainExtent = surfaceCapabilities.currentExtent;
-		}
-		SetWindowSize(swapchainExtent.width, swapchainExtent.height);
+		int tries = 0;
+		do {
+			vk::SurfaceCapabilitiesKHR surfaceCapabilities = physicalDevice.getSurfaceCapabilitiesKHR(GetSurface());
+			DEBUG_LOG(RENDERER, "Surface capabilities: %d x %d, %s, image count: %d - %d", surfaceCapabilities.currentExtent.width, surfaceCapabilities.currentExtent.height,
+					vk::to_string(surfaceCapabilities.currentTransform).c_str(), surfaceCapabilities.minImageCount, surfaceCapabilities.maxImageCount);
+			VkExtent2D swapchainExtent;
+			if (surfaceCapabilities.currentExtent.width == std::numeric_limits<uint32_t>::max())
+			{
+				// If the surface size is undefined, the size is set to the size of the images requested.
+				swapchainExtent.width = std::min(std::max(640u, surfaceCapabilities.minImageExtent.width), surfaceCapabilities.maxImageExtent.width);
+				swapchainExtent.height = std::min(std::max(480u, surfaceCapabilities.minImageExtent.height), surfaceCapabilities.maxImageExtent.height);
+			}
+			else
+			{
+				// If the surface size is defined, the swap chain size must match
+				swapchainExtent = surfaceCapabilities.currentExtent;
+			}
+			SetWindowSize(swapchainExtent.width, swapchainExtent.height);
 
-		// The FIFO present mode is guaranteed by the spec to be supported
-		vk::PresentModeKHR swapchainPresentMode = vk::PresentModeKHR::eFifo;
-		// Use FIFO on mobile, prefer Mailbox on desktop
+			// The FIFO present mode is guaranteed by the spec to be supported
+			vk::PresentModeKHR swapchainPresentMode = vk::PresentModeKHR::eFifo;
+			// Use FIFO on mobile, prefer Mailbox on desktop
 #if HOST_CPU != CPU_ARM && HOST_CPU != CPU_ARM64 && !defined(__ANDROID__)
-		for (auto& presentMode : physicalDevice.getSurfacePresentModesKHR(GetSurface()))
-		{
-			if (presentMode == vk::PresentModeKHR::eMailbox)
+			for (auto& presentMode : physicalDevice.getSurfacePresentModesKHR(GetSurface()))
 			{
-				INFO_LOG(RENDERER, "Using mailbox present mode");
-				swapchainPresentMode = vk::PresentModeKHR::eMailbox;
-				break;
-			}
+				if (presentMode == vk::PresentModeKHR::eMailbox)
+				{
+					INFO_LOG(RENDERER, "Using mailbox present mode");
+					swapchainPresentMode = vk::PresentModeKHR::eMailbox;
+					break;
+				}
 #ifdef TEST_AUTOMATION
-			if (presentMode == vk::PresentModeKHR::eImmediate)
+				if (presentMode == vk::PresentModeKHR::eImmediate)
+				{
+					INFO_LOG(RENDERER, "Using immediate present mode");
+					swapchainPresentMode = vk::PresentModeKHR::eImmediate;
+					break;
+				}
+#endif
+			}
+#endif
+
+			vk::SurfaceTransformFlagBitsKHR preTransform = (surfaceCapabilities.supportedTransforms & vk::SurfaceTransformFlagBitsKHR::eIdentity) ? vk::SurfaceTransformFlagBitsKHR::eIdentity : surfaceCapabilities.currentTransform;
+
+			vk::CompositeAlphaFlagBitsKHR compositeAlpha =
+					(surfaceCapabilities.supportedCompositeAlpha & vk::CompositeAlphaFlagBitsKHR::ePreMultiplied) ? vk::CompositeAlphaFlagBitsKHR::ePreMultiplied :
+					(surfaceCapabilities.supportedCompositeAlpha & vk::CompositeAlphaFlagBitsKHR::ePostMultiplied) ? vk::CompositeAlphaFlagBitsKHR::ePostMultiplied :
+					(surfaceCapabilities.supportedCompositeAlpha & vk::CompositeAlphaFlagBitsKHR::eInherit) ? vk::CompositeAlphaFlagBitsKHR::eInherit : vk::CompositeAlphaFlagBitsKHR::eOpaque;
+			u32 imageCount = std::max(3u, surfaceCapabilities.minImageCount);
+			if (surfaceCapabilities.maxImageCount != 0)
+				imageCount = std::min(imageCount, surfaceCapabilities.maxImageCount);
+			vk::ImageUsageFlags usage = vk::ImageUsageFlagBits::eColorAttachment;
+#ifdef TEST_AUTOMATION
+			// for final screenshot
+			usage |= vk::ImageUsageFlagBits::eTransferSrc;
+#endif
+			vk::SwapchainCreateInfoKHR swapChainCreateInfo(vk::SwapchainCreateFlagsKHR(), GetSurface(), imageCount, colorFormat, vk::ColorSpaceKHR::eSrgbNonlinear,
+					swapchainExtent, 1, usage, vk::SharingMode::eExclusive, 0, nullptr, preTransform, compositeAlpha, swapchainPresentMode, true, nullptr);
+
+			u32 queueFamilyIndices[2] = { graphicsQueueIndex, presentQueueIndex };
+			if (graphicsQueueIndex != presentQueueIndex)
 			{
-				INFO_LOG(RENDERER, "Using immediate present mode");
-				swapchainPresentMode = vk::PresentModeKHR::eImmediate;
-				break;
+				// If the graphics and present queues are from different queue families, we either have to explicitly transfer ownership of images between
+				// the queues, or we have to create the swapchain with imageSharingMode as VK_SHARING_MODE_CONCURRENT
+				swapChainCreateInfo.imageSharingMode = vk::SharingMode::eConcurrent;
+				swapChainCreateInfo.queueFamilyIndexCount = 2;
+				swapChainCreateInfo.pQueueFamilyIndices = queueFamilyIndices;
 			}
-#endif
+
+			swapChain.reset();
+			try {
+				swapChain = device->createSwapchainKHRUnique(swapChainCreateInfo);
+			}
+			catch (const vk::SystemError& err)
+			{
+				DEBUG_LOG(RENDERER, "createSwapchainKHRUnique failed: %s", err.what());
+				if (++tries > 10)
+					throw err;
+			}
 		}
-#endif
-
-		vk::SurfaceTransformFlagBitsKHR preTransform = (surfaceCapabilities.supportedTransforms & vk::SurfaceTransformFlagBitsKHR::eIdentity) ? vk::SurfaceTransformFlagBitsKHR::eIdentity : surfaceCapabilities.currentTransform;
-
-		vk::CompositeAlphaFlagBitsKHR compositeAlpha =
-				(surfaceCapabilities.supportedCompositeAlpha & vk::CompositeAlphaFlagBitsKHR::ePreMultiplied) ? vk::CompositeAlphaFlagBitsKHR::ePreMultiplied :
-				(surfaceCapabilities.supportedCompositeAlpha & vk::CompositeAlphaFlagBitsKHR::ePostMultiplied) ? vk::CompositeAlphaFlagBitsKHR::ePostMultiplied :
-				(surfaceCapabilities.supportedCompositeAlpha & vk::CompositeAlphaFlagBitsKHR::eInherit) ? vk::CompositeAlphaFlagBitsKHR::eInherit : vk::CompositeAlphaFlagBitsKHR::eOpaque;
-		u32 imageCount = std::max(3u, surfaceCapabilities.minImageCount);
-		if (surfaceCapabilities.maxImageCount != 0)
-			imageCount = std::min(imageCount, surfaceCapabilities.maxImageCount);
-		vk::ImageUsageFlags usage = vk::ImageUsageFlagBits::eColorAttachment;
-#ifdef TEST_AUTOMATION
-		// for final screenshot
-		usage |= vk::ImageUsageFlagBits::eTransferSrc;
-#endif
-		vk::SwapchainCreateInfoKHR swapChainCreateInfo(vk::SwapchainCreateFlagsKHR(), GetSurface(), imageCount, colorFormat, vk::ColorSpaceKHR::eSrgbNonlinear,
-				swapchainExtent, 1, usage, vk::SharingMode::eExclusive, 0, nullptr, preTransform, compositeAlpha, swapchainPresentMode, true, nullptr);
-
-		u32 queueFamilyIndices[2] = { graphicsQueueIndex, presentQueueIndex };
-		if (graphicsQueueIndex != presentQueueIndex)
-		{
-			// If the graphics and present queues are from different queue families, we either have to explicitly transfer ownership of images between
-			// the queues, or we have to create the swapchain with imageSharingMode as VK_SHARING_MODE_CONCURRENT
-			swapChainCreateInfo.imageSharingMode = vk::SharingMode::eConcurrent;
-			swapChainCreateInfo.queueFamilyIndexCount = 2;
-			swapChainCreateInfo.pQueueFamilyIndices = queueFamilyIndices;
-		}
-
-		swapChain.reset();
-		swapChain = device->createSwapchainKHRUnique(swapChainCreateInfo);
+		while (!swapChain);
 
 		std::vector<vk::Image> swapChainImages = device->getSwapchainImagesKHR(*swapChain);
 
@@ -754,6 +766,7 @@ void VulkanContext::Present()
 		} catch (const vk::OutOfDateKHRError& e) {
 			// Sometimes happens when resizing the window
 			INFO_LOG(RENDERER, "vk::OutOfDateKHRError");
+			CreateSwapChain();
 		}
 		renderDone = false;
 	}
