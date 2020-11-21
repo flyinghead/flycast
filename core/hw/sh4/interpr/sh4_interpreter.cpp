@@ -146,13 +146,11 @@ void ExecuteDelayslot()
 #endif
 		u32 op = ReadNexOp();
 
-		if (op != 0)	// Looney Tunes: Space Race hack
-			ExecuteOpcode(op);
+		ExecuteOpcode(op);
 #if !defined(NO_MMU)
 	}
 	catch (SH4ThrownException& ex) {
 		AdjustDelaySlotException(ex);
-		//printf("Delay slot exception\n");
 		throw ex;
 	}
 #endif
@@ -175,12 +173,8 @@ void ExecuteDelayslot_RTE()
 // every SH4_TIMESLICE cycles
 int UpdateSystem()
 {
-	//this is an optimisation (mostly for ARM)
-	//makes scheduling easier !
-	//update_fp* tmu=pUpdateTMU;
-	
-	Sh4cntx.sh4_sched_next-=SH4_TIMESLICE;
-	if (Sh4cntx.sh4_sched_next<0)
+	Sh4cntx.sh4_sched_next -= SH4_TIMESLICE;
+	if (Sh4cntx.sh4_sched_next < 0)
 		sh4_sched_tick(SH4_TIMESLICE);
 
 	return Sh4cntx.interrupt_pend;
