@@ -7,6 +7,7 @@ USE_OSS := 1
 #USE_PULSEAUDIO := 1
 #USE_SDLAUDIO := 1
 #USE_LIBAO := 1
+#USE_SDL := 1
 ifndef USE_SDL
 USE_EVDEV := 1
 USE_UDEV := 1
@@ -300,7 +301,7 @@ LDFLAGS += -g -Wl,-Map,$(notdir $@).map,--gc-sections -Wl,-O3 -Wl,--sort-common 
 
 CFLAGS += $(RZDCY_CFLAGS) -g -O3 -D NDEBUG -c -fopenmp #-D NO_REND
 CFLAGS += -frename-registers -fno-strict-aliasing
-CFLAGS += -ffast-math -ftree-vectorize  -Wno-unused-result
+CFLAGS += -ffast-math -ftree-vectorize -Wall -Wno-unused-result
 
 CXXFLAGS += $(RZDCY_CFLAGS) -fno-rtti -fno-operator-names -D_GLIBCXX_USE_CXX11_ABI=0 -std=gnu++11
 
@@ -434,7 +435,7 @@ endif
 EXECUTABLE_STRIPPED=nosym-reicast.$(PLATFORM_EXT)
 DC_PLATFORM=dreamcast
 EXECUTABLE=reicast.$(PLATFORM_EXT)
-EXECUTABLE_NAME=reicast
+EXECUTABLE_NAME=flycast
 
 ifndef NOT_ARM
     AS=$(CC)
@@ -509,30 +510,26 @@ install: $(EXECUTABLE)
 	mkdir -p $(DESTDIR)$(MENUENTRY_DIR) 2>/dev/null || true
 	mkdir -p $(DESTDIR)$(ICON_DIR) 2>/dev/null || true
 	install -m755 $(EXECUTABLE) $(DESTDIR)$(PREFIX)/bin/$(EXECUTABLE_NAME)
-	install -m755 tools/reicast-joyconfig.py $(DESTDIR)$(PREFIX)/bin/reicast-joyconfig
 	install -m644 mappings/controller_gcwz.cfg $(DESTDIR)$(PREFIX)/share/reicast/mappings
 	install -m644 mappings/controller_generic.cfg $(DESTDIR)$(PREFIX)/share/reicast/mappings
 	install -m644 mappings/controller_pandora.cfg $(DESTDIR)$(PREFIX)/share/reicast/mappings
 	install -m644 mappings/controller_xboxdrv.cfg $(DESTDIR)$(PREFIX)/share/reicast/mappings
 	install -m644 mappings/controller_xpad.cfg $(DESTDIR)$(PREFIX)/share/reicast/mappings
 	install -m644 mappings/keyboard.cfg $(DESTDIR)$(PREFIX)/share/reicast/mappings
-	install -m644 man/reicast.1 $(DESTDIR)$(MAN_DIR)
-	install -m644 man/reicast-joyconfig.1 $(DESTDIR)$(MAN_DIR)
-	install -m644 reicast.desktop $(DESTDIR)$(MENUENTRY_DIR)
+	install -m644 man/flycast.1 $(DESTDIR)$(MAN_DIR)
+	install -m644 flycast.desktop $(DESTDIR)$(MENUENTRY_DIR)
 	install -m644 flycast.png $(DESTDIR)$(ICON_DIR)
 
 uninstall:
 	rm -f $(DESTDIR)$(PREFIX)/bin/$(EXECUTABLE_NAME)
-	rm -f $(DESTDIR)$(PREFIX)/bin/reicast-joyconfig
 	rm -f $(DESTDIR)$(PREFIX)/share/reicast/mappings/controller_gcwz.cfg
 	rm -f $(DESTDIR)$(PREFIX)/share/reicast/mappings/controller_generic.cfg
 	rm -f $(DESTDIR)$(PREFIX)/share/reicast/mappings/controller_pandora.cfg
 	rm -f $(DESTDIR)$(PREFIX)/share/reicast/mappings/controller_xboxdrv.cfg
 	rm -f $(DESTDIR)$(PREFIX)/share/reicast/mappings/controller_xpad.cfg
 	rm -f $(DESTDIR)$(PREFIX)/share/reicast/mappings/keyboard.cfg
-	rm -f $(DESTDIR)$(MAN_DIR)/reicast.1
-	rm -f $(DESTDIR)$(MAN_DIR)/reicast-joyconfig.1
-	rm -f $(DESTDIR)$(MENUENTRY_DIR)/reicast.desktop
+	rm -f $(DESTDIR)$(MAN_DIR)/flycast.1
+	rm -f $(DESTDIR)$(MENUENTRY_DIR)/flycast.desktop
 	rm -f $(DESTDIR)$(ICON_DIR)/flycast.png
 
 clean:
