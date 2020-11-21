@@ -1,4 +1,4 @@
-# core/libdreamcast
+# core
 ===========
 
 Here lies the core of our codebase. Everything that's OS inspecific rests here.
@@ -6,10 +6,13 @@ Here lies the core of our codebase. Everything that's OS inspecific rests here.
 
 ### Some rudimentary categories are:
 - hw				  -- DC Hardware Components Implementation
-- nullDC.cpp	-- NullDC, thy mighty child (also referenced as "debugger")
-- emitter			-- Cookie machine 
-- khronos			-- Vulkan stuff
-- oslib				-- Codebase abstraction effort
+- nullDC.cpp	-- Main entry points
+- emitter			-- x86 code emitter
+- khronos			-- OpenGL and Vulkan headers
+- oslib				-- Audio drivers
 - cfg				  -- Configuration backend structure
-- reios				-- (Our)Implementation of the DreamCast BIOS (Not functional)
-- deps				-- External C libraries (hackish, hand-written versions)
+- reios				-- (Our) Implementation of the DreamCast BIOS
+- deps				-- External dependencies
+- imgread			-- Content drivers
+- rec-*				-- Recompilers
+- rend				-- OpenGL and Vulkan renderers
