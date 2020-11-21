@@ -96,35 +96,35 @@ axis_list[] =
 
 std::map<std::string, std::shared_ptr<InputMapping>> InputMapping::loaded_mappings;
 
-void InputMapping::set_button(DreamcastKey id, u32 code)
+void InputMapping::set_button(u32 port, DreamcastKey id, u32 code)
 {
 	if (id != EMU_BTN_NONE)
 	{
 		while (true)
 		{
-			u32 code = get_button_code(id);
+			u32 code = get_button_code(port, id);
 			if (code == (u32)-1)
 				break;
-			buttons[code] = EMU_BTN_NONE;
+			buttons[port][code] = EMU_BTN_NONE;
 		}
-		buttons[code] = id;
+		buttons[port][code] = id;
 		dirty = true;
 	}
 }
 
-void InputMapping::set_axis(DreamcastKey id, u32 code, bool is_inverted)
+void InputMapping::set_axis(u32 port, DreamcastKey id, u32 code, bool is_inverted)
 {
 	if (id != EMU_AXIS_NONE)
 	{
 		while (true)
 		{
-			u32 code = get_axis_code(id);
+			u32 code = get_axis_code(port, id);
 			if (code == (u32)-1)
 				break;
-			axes[code] = EMU_AXIS_NONE;
+			axes[port][code] = EMU_AXIS_NONE;
 		}
-		axes[code] = id;
-		axes_inverted[code] = is_inverted;
+		axes[port][code] = id;
+		axes_inverted[port][code] = is_inverted;
 		dirty = true;
 	}
 }
@@ -144,29 +144,44 @@ void InputMapping::load(FILE* fp)
 
 	this->dead_zone = (float)dz / 100.f;
 
-	for (u32 i = 0; i < ARRAY_SIZE(button_list); i++)
+	for (int port = 0; port < 4; port++)
 	{
-		int button_code = mf.get_int(button_list[i].section, button_list[i].option, -1);
-		if (button_code >= 0)
+		for (u32 i = 0; i < ARRAY_SIZE(button_list); i++)
 		{
-			this->set_button(button_list[i].id, button_code);
+			std::string option;
+			if (port == 0)
+				option = button_list[i].option;
+			else
+				option = button_list[i].option + std::to_string(port);
+			int button_code = mf.get_int(button_list[i].section, option, -1);
+			if (button_code >= 0)
+				this->set_button(port, button_list[i].id, button_code);
 		}
-	}
 
-	for (u32 i = 0; i < ARRAY_SIZE(axis_list); i++)
-	{
-		int axis_code = mf.get_int(axis_list[i].section, axis_list[i].option, -1);
-		if (axis_code >= 0)
+		for (u32 i = 0; i < ARRAY_SIZE(axis_list); i++)
 		{
-			this->set_axis(axis_list[i].id, axis_code, mf.get_bool(axis_list[i].section_inverted, axis_list[i].option_inverted, false));
+			std::string option;
+			if (port == 0)
+				option = axis_list[i].option;
+			else
+				option = axis_list[i].option + std::to_string(port);
+			int axis_code = mf.get_int(axis_list[i].section, option, -1);
+			if (axis_code >= 0)
+			{
+				if (port == 0)
+					option = axis_list[i].option_inverted;
+				else
+					option = axis_list[i].option_inverted + std::to_string(port);
+				this->set_axis(port, axis_list[i].id, axis_code, mf.get_bool(axis_list[i].section_inverted, option, false));
+			}
 		}
 	}
 	dirty = false;
 }
 
-u32 InputMapping::get_button_code(DreamcastKey key)
+u32 InputMapping::get_button_code(u32 port, DreamcastKey key)
 {
-	for (auto& it : buttons)
+	for (auto& it : buttons[port])
 	{
 		if (it.second == key)
 			return it.first;
@@ -174,9 +189,9 @@ u32 InputMapping::get_button_code(DreamcastKey key)
 	return -1;
 }
 
-u32 InputMapping::get_axis_code(DreamcastKey key)
+u32 InputMapping::get_axis_code(u32 port, DreamcastKey key)
 {
-	for (auto& it : axes)
+	for (auto& it : axes[port])
 	{
 		if (it.second == key)
 			return it.first;
@@ -221,23 +236,43 @@ bool InputMapping::save(const char *name)
 	mf.set("emulator", "mapping_name", this->name);
 	mf.set_int("emulator", "dead_zone", (int)std::round(this->dead_zone * 100.f));
 
-	for (u32 i = 0; i < ARRAY_SIZE(button_list); i++)
+	for (int port = 0; port < 4; port++)
 	{
-		for (auto& it : buttons)
+		for (u32 i = 0; i < ARRAY_SIZE(button_list); i++)
 		{
-			if (it.second == button_list[i].id)
-				mf.set_int(button_list[i].section, button_list[i].option, (int)it.first);
-		}
-	}
+			std::string option;
+			if (port == 0)
+				option = button_list[i].option;
+			else
+				option = button_list[i].option + std::to_string(port);
 
-	for (u32 i = 0; i < ARRAY_SIZE(axis_list); i++)
-	{
-		for (auto& it : axes)
-		{
-			if (it.second == axis_list[i].id)
+			for (auto& it : buttons[port])
 			{
-				mf.set_int(axis_list[i].section, axis_list[i].option, (int)it.first);
-				mf.set_bool(axis_list[i].section_inverted, axis_list[i].option_inverted, axes_inverted[it.first]);
+				if (it.second == button_list[i].id)
+					mf.set_int(button_list[i].section, option, (int)it.first);
+			}
+		}
+
+		for (u32 i = 0; i < ARRAY_SIZE(axis_list); i++)
+		{
+			std::string option;
+			if (port == 0)
+				option = axis_list[i].option;
+			else
+				option = axis_list[i].option + std::to_string(port);
+			std::string option_inverted;
+			if (port == 0)
+				option_inverted = axis_list[i].option_inverted;
+			else
+				option_inverted = axis_list[i].option_inverted + std::to_string(port);
+
+			for (auto& it : axes[port])
+			{
+				if (it.second == axis_list[i].id)
+				{
+					mf.set_int(axis_list[i].section, option, (int)it.first);
+					mf.set_bool(axis_list[i].section_inverted, option_inverted, axes_inverted[port][it.first]);
+				}
 			}
 		}
 	}

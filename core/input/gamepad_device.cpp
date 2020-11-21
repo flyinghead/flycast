@@ -55,188 +55,229 @@ bool GamepadDevice::gamepad_btn_input(u32 code, bool pressed)
 		_input_detected = nullptr;
 		return true;
 	}
-	if (!input_mapper || _maple_port < 0 || _maple_port >= (int)ARRAY_SIZE(kcode))
-		return false;
-	DreamcastKey key = input_mapper->get_button_id(code);
-	if (key == EMU_BTN_NONE)
+	if (!input_mapper || _maple_port < 0 || _maple_port > (int)ARRAY_SIZE(kcode))
 		return false;
 
-	if (key < 0x10000)
+	auto handle_key = [&](u32 port, DreamcastKey key)
 	{
-		if (pressed)
+		if (key == EMU_BTN_NONE)
+			return false;
+
+		if (key < 0x10000)
 		{
-			kcode[_maple_port] &= ~(u16)key;
-			// Avoid two opposite dpad keys being pressed simultaneously
-			switch (key)
+			if (pressed)
 			{
-			case DC_DPAD_UP:
-				kcode[_maple_port] |= (u16)DC_DPAD_DOWN;
-				break;
-			case DC_DPAD_DOWN:
-				kcode[_maple_port] |= (u16)DC_DPAD_UP;
-				break;
-			case DC_DPAD_LEFT:
-				kcode[_maple_port] |= (u16)DC_DPAD_RIGHT;
-				break;
-			case DC_DPAD_RIGHT:
-				kcode[_maple_port] |= (u16)DC_DPAD_LEFT;
-				break;
-			case DC_DPAD2_UP:
-				kcode[_maple_port] |= (u16)DC_DPAD2_DOWN;
-				break;
-			case DC_DPAD2_DOWN:
-				kcode[_maple_port] |= (u16)DC_DPAD2_UP;
-				break;
-			case DC_DPAD2_LEFT:
-				kcode[_maple_port] |= (u16)DC_DPAD2_RIGHT;
-				break;
-			case DC_DPAD2_RIGHT:
-				kcode[_maple_port] |= (u16)DC_DPAD2_LEFT;
-				break;
-			default:
-				break;
+				kcode[port] &= ~(u16)key;
+				// Avoid two opposite dpad keys being pressed simultaneously
+				switch (key)
+				{
+				case DC_DPAD_UP:
+					kcode[port] |= (u16)DC_DPAD_DOWN;
+					break;
+				case DC_DPAD_DOWN:
+					kcode[port] |= (u16)DC_DPAD_UP;
+					break;
+				case DC_DPAD_LEFT:
+					kcode[port] |= (u16)DC_DPAD_RIGHT;
+					break;
+				case DC_DPAD_RIGHT:
+					kcode[port] |= (u16)DC_DPAD_LEFT;
+					break;
+				case DC_DPAD2_UP:
+					kcode[port] |= (u16)DC_DPAD2_DOWN;
+					break;
+				case DC_DPAD2_DOWN:
+					kcode[port] |= (u16)DC_DPAD2_UP;
+					break;
+				case DC_DPAD2_LEFT:
+					kcode[port] |= (u16)DC_DPAD2_RIGHT;
+					break;
+				case DC_DPAD2_RIGHT:
+					kcode[port] |= (u16)DC_DPAD2_LEFT;
+					break;
+				default:
+					break;
+				}
 			}
+			else
+				kcode[port] |= (u16)key;
+#ifdef TEST_AUTOMATION
+			if (record_input != NULL)
+				fprintf(record_input, "%ld button %x %04x\n", sh4_sched_now64(), port, kcode[port]);
+#endif
 		}
 		else
-			kcode[_maple_port] |= (u16)key;
-#ifdef TEST_AUTOMATION
-		if (record_input != NULL)
-			fprintf(record_input, "%ld button %x %04x\n", sh4_sched_now64(), _maple_port, kcode[_maple_port]);
-#endif
+		{
+			switch (key)
+			{
+			case EMU_BTN_ESCAPE:
+				if (pressed)
+					dc_exit();
+				break;
+			case EMU_BTN_MENU:
+				if (pressed)
+					gui_open_settings();
+				break;
+			case EMU_BTN_FFORWARD:
+				if (pressed)
+					fast_forward_mode = !fast_forward_mode;
+				break;
+			case EMU_BTN_TRIGGER_LEFT:
+				lt[port] = pressed ? 255 : 0;
+				break;
+			case EMU_BTN_TRIGGER_RIGHT:
+				rt[port] = pressed ? 255 : 0;
+				break;
+			case EMU_BTN_ANA_UP:
+				joyy[port] = pressed ? -128 : 0;
+				break;
+			case EMU_BTN_ANA_DOWN:
+				joyy[port] = pressed ? 127 : 0;
+				break;
+			case EMU_BTN_ANA_LEFT:
+				joyx[port] = pressed ? -128 : 0;
+				break;
+			case EMU_BTN_ANA_RIGHT:
+				joyx[port] = pressed ? 127 : 0;
+				break;
+			default:
+				return false;
+			}
+		}
+
+		DEBUG_LOG(INPUT, "%d: BUTTON %s %x -> %d. kcode=%x", port, pressed ? "down" : "up", code, key, kcode[port]);
+
+		return true;
+	};
+
+	bool rc = false;
+	if (_maple_port == 4)
+	{
+		for (int port = 0; port < 4; port++)
+		{
+			DreamcastKey key = input_mapper->get_button_id(port, code);
+			rc = handle_key(port, key) || rc;
+		}
 	}
 	else
 	{
-		switch (key)
-		{
-		case EMU_BTN_ESCAPE:
-			if (pressed)
-				dc_exit();
-			break;
-		case EMU_BTN_MENU:
-			if (pressed)
-				gui_open_settings();
-			break;
-		case EMU_BTN_FFORWARD:
-			if (pressed)
-				fast_forward_mode = !fast_forward_mode;
-			break;
-		case EMU_BTN_TRIGGER_LEFT:
-			lt[_maple_port] = pressed ? 255 : 0;
-			break;
-		case EMU_BTN_TRIGGER_RIGHT:
-			rt[_maple_port] = pressed ? 255 : 0;
-			break;
-		case EMU_BTN_ANA_UP:
-			joyy[_maple_port] = pressed ? -128 : 0;
-			break;
-		case EMU_BTN_ANA_DOWN:
-			joyy[_maple_port] = pressed ? 127 : 0;
-			break;
-		case EMU_BTN_ANA_LEFT:
-			joyx[_maple_port] = pressed ? -128 : 0;
-			break;
-		case EMU_BTN_ANA_RIGHT:
-			joyx[_maple_port] = pressed ? 127 : 0;
-			break;
-		default:
-			return false;
-		}
+		DreamcastKey key = input_mapper->get_button_id(0, code);
+		rc = handle_key(_maple_port, key);
 	}
 
-	DEBUG_LOG(INPUT, "%d: BUTTON %s %x -> %d. kcode=%x", _maple_port, pressed ? "down" : "up", code, key, kcode[_maple_port]);
-	return true;
+	return rc;
 }
 
 bool GamepadDevice::gamepad_axis_input(u32 code, int value)
 {
 	s32 v;
-	if (input_mapper->get_axis_inverted(code))
+	if (input_mapper->get_axis_inverted(0, code))
 		v = (get_axis_min_value(code) + get_axis_range(code) - value) * 255 / get_axis_range(code) - 128;
 	else
 		v = (value - get_axis_min_value(code)) * 255 / get_axis_range(code) - 128; //-128 ... +127 range
-	if (_input_detected != NULL && !_detecting_button 
+	if (_input_detected != NULL && !_detecting_button
 			&& os_GetSeconds() >= _detection_start_time && (v >= 64 || v <= -64))
 	{
 		_input_detected(code);
 		_input_detected = NULL;
 		return true;
 	}
-	if (!input_mapper || _maple_port < 0 || _maple_port >= (int)ARRAY_SIZE(kcode))
+	if (!input_mapper || _maple_port < 0 || _maple_port > 4)
 		return false;
-	DreamcastKey key = input_mapper->get_axis_id(code);
 
-	if ((int)key < 0x10000)
+	auto handle_axis = [&](u32 port, DreamcastKey key)
 	{
-		kcode[_maple_port] |= key | (key << 1);
-		if (v <= -64)
-			kcode[_maple_port] &= ~key;
-		else if (v >= 64)
-			kcode[_maple_port] &= ~(key << 1);
 
-		// printf("Mapped to %d %d %d\n",mo,kcode[port]&mo,kcode[port]&(mo*2));
-	}
-	else if (((int)key >> 16) == 1)	// Triggers
-	{
-		//printf("T-AXIS %d Mapped to %d -> %d\n",key, value, v + 128);
+		if ((int)key < 0x10000)
+		{
+			kcode[port] |= key | (key << 1);
+			if (v <= -64)
+				kcode[port] &= ~key;
+			else if (v >= 64)
+				kcode[port] &= ~(key << 1);
 
-		if (key == DC_AXIS_LT)
-			lt[_maple_port] = (u8)(v + 128);
-		else if (key == DC_AXIS_RT)
-			rt[_maple_port] = (u8)(v + 128);
+			// printf("Mapped to %d %d %d\n",mo,kcode[port]&mo,kcode[port]&(mo*2));
+		}
+		else if (((int)key >> 16) == 1)	// Triggers
+		{
+			//printf("T-AXIS %d Mapped to %d -> %d\n",key, value, v + 128);
+
+			if (key == DC_AXIS_LT)
+				lt[port] = (u8)(v + 128);
+			else if (key == DC_AXIS_RT)
+				rt[port] = (u8)(v + 128);
+			else
+				return false;
+		}
+		else if (((int)key >> 16) == 2) // Analog axes
+		{
+			//printf("AXIS %d Mapped to %d -> %d\n", key, value, v);
+			s8 *this_axis;
+			s8 *other_axis;
+			switch (key)
+			{
+			case DC_AXIS_X:
+				this_axis = &joyx[port];
+				other_axis = &joyy[port];
+				break;
+
+			case DC_AXIS_Y:
+				this_axis = &joyy[port];
+				other_axis = &joyx[port];
+				break;
+
+			case DC_AXIS_X2:
+				this_axis = &joyrx[port];
+				other_axis = &joyry[port];
+				break;
+
+			case DC_AXIS_Y2:
+				this_axis = &joyry[port];
+				other_axis = &joyrx[port];
+				break;
+
+			default:
+				return false;
+			}
+			// Radial dead zone
+			// FIXME compute both axes at the same time
+			if ((float)(v * v + *other_axis * *other_axis) < input_mapper->dead_zone * input_mapper->dead_zone * 128.f * 128.f)
+			{
+				*this_axis = 0;
+				*other_axis = 0;
+			}
+			else
+				*this_axis = (s8)v;
+		}
+		else if (((int)key >> 16) == 4) // Map triggers to digital buttons
+		{
+			if (v <= -64)
+				kcode[port] |=  (key & ~0x40000); // button released
+			else if (v >= 64)
+				kcode[port] &= ~(key & ~0x40000); // button pressed
+		}
 		else
 			return false;
-	}
-	else if (((int)key >> 16) == 2) // Analog axes
+
+		return true;
+	};
+
+	bool rc = false;
+	if (_maple_port == 4)
 	{
-		//printf("AXIS %d Mapped to %d -> %d\n", key, value, v);
-		s8 *this_axis;
-		s8 *other_axis;
-		switch (key)
+		for (u32 port = 0; port < 4; port++)
 		{
-		case DC_AXIS_X:
-			this_axis = &joyx[_maple_port];
-			other_axis = &joyy[_maple_port];
-			break;
-
-		case DC_AXIS_Y:
-			this_axis = &joyy[_maple_port];
-			other_axis = &joyx[_maple_port];
-			break;
-
-		case DC_AXIS_X2:
-			this_axis = &joyrx[_maple_port];
-			other_axis = &joyry[_maple_port];
-			break;
-
-		case DC_AXIS_Y2:
-			this_axis = &joyry[_maple_port];
-			other_axis = &joyrx[_maple_port];
-			break;
-
-		default:
-			return false;
+			DreamcastKey key = input_mapper->get_axis_id(port, code);
+			rc = handle_axis(port, key) || rc;
 		}
-		// Radial dead zone
-		// FIXME compute both axes at the same time
-		if ((float)(v * v + *other_axis * *other_axis) < input_mapper->dead_zone * input_mapper->dead_zone * 128.f * 128.f)
-		{
-			*this_axis = 0;
-			*other_axis = 0;
-		}
-		else
-			*this_axis = (s8)v;
-	}
-	else if (((int)key >> 16) == 4) // Map triggers to digital buttons
-	{
-		if (v <= -64)
-			kcode[_maple_port] |=  (key & ~0x40000); // button released
-		else if (v >= 64)
-			kcode[_maple_port] &= ~(key & ~0x40000); // button pressed
 	}
 	else
-		return false;
+	{
+		DreamcastKey key = input_mapper->get_axis_id(0, code);
+		rc = handle_axis(_maple_port, key);
+	}
 
-	return true;
+	return rc;
 }
 
 int GamepadDevice::get_axis_min_value(u32 axis) {

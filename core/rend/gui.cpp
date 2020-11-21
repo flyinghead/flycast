@@ -442,7 +442,7 @@ static const char *maple_expansion_device_name(MapleDeviceType type)
 	}
 }
 
-const char *maple_ports[] = { "None", "A", "B", "C", "D" };
+const char *maple_ports[] = { "None", "A", "B", "C", "D", "All" };
 const DreamcastKey button_keys[] = {
 		DC_BTN_START, DC_BTN_A, DC_BTN_B, DC_BTN_X, DC_BTN_Y, DC_DPAD_UP, DC_DPAD_DOWN, DC_DPAD_LEFT, DC_DPAD_RIGHT,
 		EMU_BTN_MENU, EMU_BTN_ESCAPE, EMU_BTN_FFORWARD, EMU_BTN_TRIGGER_LEFT, EMU_BTN_TRIGGER_RIGHT,
@@ -500,6 +500,7 @@ static std::shared_ptr<GamepadDevice> mapped_device;
 static u32 mapped_code;
 static double map_start_time;
 static bool arcade_button_mode;
+static u32 gamepad_port;
 
 static void input_detected(u32 code)
 {
@@ -525,15 +526,15 @@ static void detect_input_popup(int index, bool analog)
 			{
 				if (analog)
 				{
-					u32 previous_mapping = input_mapping->get_axis_code(axis_keys[index]);
+					u32 previous_mapping = input_mapping->get_axis_code(gamepad_port, axis_keys[index]);
 					bool inverted = false;
 					if (previous_mapping != (u32)-1)
-						inverted = input_mapping->get_axis_inverted(previous_mapping);
+						inverted = input_mapping->get_axis_inverted(gamepad_port, previous_mapping);
 					// FIXME Allow inverted to be set
-					input_mapping->set_axis(axis_keys[index], mapped_code, inverted);
+					input_mapping->set_axis(gamepad_port, axis_keys[index], mapped_code, inverted);
 				}
 				else
-					input_mapping->set_button(button_keys[index], mapped_code);
+					input_mapping->set_button(gamepad_port, button_keys[index], mapped_code);
 			}
 			mapped_device = NULL;
 			ImGui::CloseCurrentPopup();
@@ -569,6 +570,26 @@ static void controller_mapping_popup(std::shared_ptr<GamepadDevice> gamepad)
 			gamepad->save_mapping();
 		}
 		ImGui::SetItemDefaultFocus();
+
+		if (gamepad->maple_port() == MAPLE_PORTS)
+		{
+			ImGui::SameLine();
+			float w = ImGui::CalcItemWidth();
+			ImGui::PushItemWidth(w / 2);
+			if (ImGui::BeginCombo("Port", maple_ports[gamepad_port + 1]))
+			{
+				for (u32 j = 0; j < MAPLE_PORTS; j++)
+				{
+					bool is_selected = gamepad_port == j;
+					if (ImGui::Selectable(maple_ports[j + 1], &is_selected))
+						gamepad_port = j;
+					if (is_selected)
+						ImGui::SetItemDefaultFocus();
+				}
+				ImGui::EndCombo();
+			}
+			ImGui::PopItemWidth();
+		}
 		ImGui::SameLine(ImGui::GetContentRegionAvailWidth() - ImGui::CalcTextSize("Arcade button names").x
 				- ImGui::GetStyle().FramePadding.x * 3.0f - ImGui::GetStyle().ItemSpacing.x);
 		ImGui::Checkbox("Arcade button names", &arcade_button_mode);
@@ -587,7 +608,7 @@ static void controller_mapping_popup(std::shared_ptr<GamepadDevice> gamepad)
 			ImGui::PushID(key_id);
 			ImGui::Text("%s", arcade_button_mode ? arcade_button_names[j] : button_names[j]);
 			ImGui::NextColumn();
-			u32 code = input_mapping->get_button_code(button_keys[j]);
+			u32 code = input_mapping->get_button_code(gamepad_port, button_keys[j]);
 			if (code != (u32)-1)
 			{
 				const char *label = gamepad->get_button_name(code);
@@ -627,7 +648,7 @@ static void controller_mapping_popup(std::shared_ptr<GamepadDevice> gamepad)
 			ImGui::PushID(key_id);
 			ImGui::Text("%s", arcade_button_mode ? arcade_axis_names[j] : axis_names[j]);
 			ImGui::NextColumn();
-			u32 code = input_mapping->get_axis_code(axis_keys[j]);
+			u32 code = input_mapping->get_axis_code(gamepad_port, axis_keys[j]);
 			if (code != (u32)-1)
 			{
 				const char *label = gamepad->get_axis_name(code);
@@ -1015,7 +1036,7 @@ static void gui_display_settings()
 					ImGui::PushID(port_name);
 					if (ImGui::BeginCombo(port_name, maple_ports[gamepad->maple_port() + 1]))
 					{
-						for (int j = -1; j < MAPLE_PORTS; j++)
+						for (int j = -1; j < (int)ARRAY_SIZE(maple_ports) - 1; j++)
 						{
 							bool is_selected = gamepad->maple_port() == j;
 							if (ImGui::Selectable(maple_ports[j + 1], &is_selected))
@@ -1028,7 +1049,10 @@ static void gui_display_settings()
 					}
 					ImGui::NextColumn();
 					if (gamepad->remappable() && ImGui::Button("Map"))
+					{
+						gamepad_port = 0;
 						ImGui::OpenPopup("Controller Mapping");
+					}
 
 					controller_mapping_popup(gamepad);
 
