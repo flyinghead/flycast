@@ -583,8 +583,18 @@ shil_canonical
 (
 u64,f1,(u32 r1, u32 r2, u32 r3),
 	u64 dividend = ((u64)r3 << 32) | r1;
-	u32 quo = dividend / r2;
-	u32 rem = dividend % r2;
+	u32 quo;
+	u32 rem;
+	if (r2)
+	{
+		quo = dividend / r2;
+		rem = dividend % r2;
+	}
+	else
+	{
+		quo = 0;
+		rem = dividend;
+	}
 
 	u64 rv;
 	((u32*)&rv)[0]=quo;
@@ -613,7 +623,7 @@ u64,f1,(u32 r1, s32 r2, s32 r3),
 	if (dividend < 0)
 		dividend++;
 
-	s32 quo = (s32)(dividend / r2);
+	s32 quo = (s32)(r2 ? dividend / r2 : 0);
 	s32 rem = dividend - quo * r2;
 	u32 negative = (r3 ^ r2) & 0x80000000;
 	// 2's complement -> 1's complement
