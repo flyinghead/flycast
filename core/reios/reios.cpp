@@ -299,7 +299,7 @@ static void reios_sys_flashrom() {
 				u32 offset = r[4];
 				u32 dest = r[5];
 				u32 size = r[6];
-// FIXME after loading a hle savestate in a !hle env, flashrom is null (changing CT options -> crash)
+
 				debugf("reios_sys_flashrom: FLASHROM_READ offs %x dest %08x size %x", offset, dest, size);
 				for (u32 i = 0; i < size; i++)
 					WriteMem8(dest++, flashrom->Read8(offset + i));
@@ -350,7 +350,7 @@ static void reios_sys_flashrom() {
 					int part_offset;
 					int size;
 					static_cast<DCFlashChip*>(flashrom)->GetPartitionInfo(part, &part_offset, &size);
-					if (offset == part_offset)
+					if (offset == (u32)part_offset)
 					{
 						found = true;
 						memset(flashrom->data + offset, 0xFF, size);
@@ -654,7 +654,7 @@ static void reios_boot()
 				msgboxf("Naomi boot failure", MBX_ICONERROR);
 			}
 
-			int size = *sz;
+			const u32 size = *sz;
 
 			data_size = 1;
 			verify(size < RAM_SIZE && CurrentCartridge->GetPtr(size - 1, data_size) && "Invalid cart size");
@@ -719,10 +719,13 @@ bool reios_init()
 	return true;
 }
 
-void reios_reset(u8* rom, MemChip* flash)
+void reios_set_flash(MemChip* flash)
 {
 	flashrom = flash;
+}
 
+void reios_reset(u8* rom)
+{
 	memset(rom, 0x00, BIOS_SIZE);
 	memset(GetMemPtr(0x8C000000, 0), 0, RAM_SIZE);
 
