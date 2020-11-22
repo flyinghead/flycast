@@ -639,10 +639,6 @@ bool dc_is_running()
 #ifndef TARGET_DISPFRAME
 void* dc_run(void*)
 {
-#if FEAT_HAS_NIXPROF
-	install_prof_handler(0);
-#endif
-
 	InitAudio();
 
 	if (settings.dynarec.Enable)

@@ -149,7 +149,6 @@
 		84B7BF5F1B72720200F9733F /* ioctl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 84B7BE4B1B72720100F9733F /* ioctl.cpp */; };
 		84B7BF611B72720200F9733F /* common.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 84B7BE651B72720100F9733F /* common.cpp */; };
 		84B7BF621B72720200F9733F /* context.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 84B7BE661B72720100F9733F /* context.cpp */; };
-		84B7BF631B72720200F9733F /* nixprof.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 84B7BE691B72720100F9733F /* nixprof.cpp */; };
 		84B7BF661B72720200F9733F /* nullDC.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 84B7BE6E1B72720200F9733F /* nullDC.cpp */; };
 		84B7BF671B72720200F9733F /* audiobackend_alsa.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 84B7BE701B72720200F9733F /* audiobackend_alsa.cpp */; };
 		84B7BF681B72720200F9733F /* audiobackend_directsound.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 84B7BE731B72720200F9733F /* audiobackend_directsound.cpp */; };
@@ -607,7 +606,6 @@
 		84B7BE651B72720100F9733F /* common.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = common.cpp; sourceTree = "<group>"; };
 		84B7BE661B72720100F9733F /* context.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = context.cpp; sourceTree = "<group>"; };
 		84B7BE671B72720100F9733F /* context.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = context.h; sourceTree = "<group>"; };
-		84B7BE691B72720100F9733F /* nixprof.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = nixprof.cpp; sourceTree = "<group>"; };
 		84B7BE6E1B72720200F9733F /* nullDC.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = nullDC.cpp; path = ../../../core/nullDC.cpp; sourceTree = "<group>"; };
 		84B7BE701B72720200F9733F /* audiobackend_alsa.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = audiobackend_alsa.cpp; sourceTree = "<group>"; };
 		84B7BE711B72720200F9733F /* audiobackend_alsa.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = audiobackend_alsa.h; sourceTree = "<group>"; };
@@ -1701,19 +1699,10 @@
 				84B7BE651B72720100F9733F /* common.cpp */,
 				84B7BE661B72720100F9733F /* context.cpp */,
 				84B7BE671B72720100F9733F /* context.h */,
-				84B7BE681B72720100F9733F /* nixprof */,
 				AEF2564722886A2E00348550 /* posix_vmem.cpp */,
 			);
 			name = linux;
 			path = ../../../core/linux;
-			sourceTree = "<group>";
-		};
-		84B7BE681B72720100F9733F /* nixprof */ = {
-			isa = PBXGroup;
-			children = (
-				84B7BE691B72720100F9733F /* nixprof.cpp */,
-			);
-			path = nixprof;
 			sourceTree = "<group>";
 		};
 		84B7BE6F1B72720200F9733F /* oslib */ = {
@@ -2799,7 +2788,6 @@
 				84B7BF4B1B72720200F9733F /* cpg.cpp in Sources */,
 				AE2A2D8021D6851E004B308D /* 7zDec.c in Sources */,
 				AE649BFA218C552500EF4A81 /* float.c in Sources */,
-				84B7BF631B72720200F9733F /* nixprof.cpp in Sources */,
 				AE649C24218C553A00EF4A81 /* Alloc.c in Sources */,
 				AED73E602348E45000ECDB64 /* glslang_tab.cpp in Sources */,
 				AEE62768220D7B4400EC7E89 /* cue.cpp in Sources */,
@@ -2981,7 +2969,6 @@
 				GCC_FAST_MATH = YES;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PREPROCESSOR_DEFINITIONS = (
-					TARGET_NO_NIXPROF,
 					TARGET_NO_COREIO_HTTP,
 					TARGET_NO_OPENMP,
 					ENABLE_MODEM,
@@ -3036,7 +3023,6 @@
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_FAST_MATH = YES;
 				GCC_PREPROCESSOR_DEFINITIONS = (
-					TARGET_NO_NIXPROF,
 					TARGET_NO_COREIO_HTTP,
 					TARGET_NO_OPENMP,
 					ENABLE_MODEM,

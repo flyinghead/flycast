@@ -26,7 +26,6 @@
 		84967C9F1B8F492C005F1140 /* pngwtran.c in Sources */ = {isa = PBXBuildFile; fileRef = 84967C8D1B8F492C005F1140 /* pngwtran.c */; };
 		84967CA01B8F492C005F1140 /* pngwutil.c in Sources */ = {isa = PBXBuildFile; fileRef = 84967C8E1B8F492C005F1140 /* pngwutil.c */; };
 		8497BCBF1A41A0E900EFB9ED /* common.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8497BCBC1A41A0E900EFB9ED /* common.cpp */; };
-		8497BCC01A41A0E900EFB9ED /* nixprof.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8497BCBD1A41A0E900EFB9ED /* nixprof.cpp */; };
 		8497BCCF1A41BFD800EFB9ED /* coreio.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8497BCCD1A41BFD800EFB9ED /* coreio.cpp */; };
 		849C0D621B072C07008BAAA4 /* context.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 849C0D601B072C07008BAAA4 /* context.cpp */; };
 		849C0D661B072CF8008BAAA4 /* reios.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 849C0D641B072CF8008BAAA4 /* reios.cpp */; };
@@ -262,7 +261,6 @@
 		84967C8D1B8F492C005F1140 /* pngwtran.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pngwtran.c; sourceTree = "<group>"; };
 		84967C8E1B8F492C005F1140 /* pngwutil.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pngwutil.c; sourceTree = "<group>"; };
 		8497BCBC1A41A0E900EFB9ED /* common.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = common.cpp; sourceTree = "<group>"; };
-		8497BCBD1A41A0E900EFB9ED /* nixprof.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = nixprof.cpp; path = nixprof/nixprof.cpp; sourceTree = "<group>"; };
 		8497BCCD1A41BFD800EFB9ED /* coreio.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = coreio.cpp; sourceTree = "<group>"; };
 		8497BCCE1A41BFD800EFB9ED /* coreio.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = coreio.h; sourceTree = "<group>"; };
 		849C0D601B072C07008BAAA4 /* context.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = context.cpp; sourceTree = "<group>"; };
@@ -653,7 +651,6 @@
 				849C0D601B072C07008BAAA4 /* context.cpp */,
 				849C0D611B072C07008BAAA4 /* context.h */,
 				8497BCBC1A41A0E900EFB9ED /* common.cpp */,
-				8497BCBD1A41A0E900EFB9ED /* nixprof.cpp */,
 			);
 			path = linux;
 			sourceTree = "<group>";
@@ -1574,7 +1571,6 @@
 				9C7A3B5918C81A4F0070BB5F /* SWRevealViewController.m in Sources */,
 				9C7A3B0F18C806E00070BB5F /* maple_cfg.cpp in Sources */,
 				87FA52E91B8CE18600CEFC32 /* PadViewController.m in Sources */,
-				8497BCC01A41A0E900EFB9ED /* nixprof.cpp in Sources */,
 				9C7A3AE118C806E00070BB5F /* zip_set_file_comment.c in Sources */,
 				84967C9A1B8F492C005F1140 /* pngrutil.c in Sources */,
 				9C7A3AC718C806E00070BB5F /* zip_error_get_sys_type.c in Sources */,

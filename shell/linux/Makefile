@@ -287,7 +287,6 @@ endif
     undefine USE_EVDEV
     undefine USE_UDEV
     undefine FOR_LINUX
-    NO_NIXPROF := 1
     FOR_WINDOWS := 1
 	USE_VULKAN ?= 1
 else

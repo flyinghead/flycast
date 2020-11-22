@@ -650,7 +650,6 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/input/mapping.h)
 
 target_sources(${PROJECT_NAME} PRIVATE
-        core/linux/nixprof/nixprof.cpp
         core/linux/common.cpp)
 
 if(NOT WIN32)

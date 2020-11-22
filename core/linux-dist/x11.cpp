@@ -13,9 +13,6 @@
 #include "hw/maple/maple_devs.h"
 #include "emulator.h"
 
-#if FEAT_HAS_NIXPROF
-#include "profiler/profiler.h"
-#endif
 #include "x11_keyboard.h"
 
 #if defined(TARGET_PANDORA)
@@ -256,25 +253,12 @@ void input_x11_handle()
 					// TODO Move this to bindable keys or in the gui menu
 					if (x11_keyboard_input)
 					{
-#if 1
 						if (e.xkey.keycode == KEY_F10)
 						{
 							// Dump the next frame into a file
 							dump_frame_switch = e.type == KeyPress;
 						}
-						else
-#elif FEAT_HAS_NIXPROF
-						if (e.type == KeyRelease && e.xkey.keycode == KEY_F10)
-						{
-							if (sample_Switch(3000)) {
-								INFO_LOG(COMMON, "Starting profiling");
-							} else {
-								INFO_LOG(COMMON, "Stopping profiling");
-							}
-						}
-						else
-#endif
-						if (e.type == KeyPress && e.xkey.keycode == KEY_F11)
+						else if (e.type == KeyPress && e.xkey.keycode == KEY_F11)
 						{
 							x11_fullscreen = !x11_fullscreen;
 							x11_window_set_fullscreen(x11_fullscreen);

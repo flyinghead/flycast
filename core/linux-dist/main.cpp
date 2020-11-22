@@ -38,10 +38,6 @@
 	#include <sys/soundcard.h>
 #endif
 
-#if FEAT_HAS_NIXPROF
-#include "profiler/profiler.h"
-#endif
-
 #if defined(USE_JOYSTICK)
 	/* legacy joystick input */
 	static int joystick_fd = -1; // Joystick file descriptor
@@ -327,9 +323,6 @@ int main(int argc, char* argv[])
 	if (reicast_init(argc, argv))
 		die("Reicast initialization failed\n");
 
-	#if FEAT_HAS_NIXPROF
-	install_prof_handler(1);
-	#endif
 	rend_thread(NULL);
 
 	#ifdef TARGET_PANDORA

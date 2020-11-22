@@ -322,30 +322,11 @@ JNIEXPORT jint JNICALL Java_com_reicast_emulator_emu_JNIdc_send(JNIEnv *env,jobj
 #endif
         }
     }
-    else if (cmd==1)
-    {
-        if (param==0)
-            sample_Stop();
-        else
-            sample_Start(param);
-    }
-    else if (cmd==2)
-    {
-    }
     return 0;
 }
 
 JNIEXPORT jint JNICALL Java_com_reicast_emulator_emu_JNIdc_data(JNIEnv *env, jobject obj, jint id, jbyteArray d)
 {
-    if (id==1)
-    {
-    	INFO_LOG(DYNAREC, "Loading symtable (%p,%p,%d,%p)",env,obj,id,d);
-        jsize len=env->GetArrayLength(d);
-        u8* syms=(u8*)malloc((size_t)len);
-        INFO_LOG(DYNAREC, "Loading symtable to %8s, %d",syms,len);
-        env->GetByteArrayRegion(d,0,len,(jbyte*)syms);
-        sample_Syms(syms, (size_t)len);
-    }
     return 0;
 }
 

@@ -58,10 +58,6 @@ else
     RZDCY_MODULES += rend/norend/
 endif
 
-ifndef NO_NIXPROF
-    RZDCY_MODULES += linux/nixprof/
-endif
-
 ifdef FOR_ANDROID
     RZDCY_MODULES += android/ deps/libandroid/ linux/
 endif
