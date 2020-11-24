@@ -57,6 +57,19 @@ class GameScanner
 	void add_game_directory(const std::string& path)
 	{
 		//printf("Exploring %s\n", path.c_str());
+        if (game_list.size() == 0)
+        {
+            ++still_no_rom_counter;
+            if (still_no_rom_counter > 1000)
+            {
+                path_is_too_dirty = true;
+            }
+        }
+        else
+        {
+            path_is_too_dirty = false;
+        }
+        
 		DIR *dir = opendir(path.c_str());
 		if (dir == NULL)
 			return;
@@ -130,6 +143,8 @@ public:
 	void stop()
 	{
 		running = false;
+        still_no_rom_counter = 0;
+        path_is_too_dirty = false;
 		if (scan_thread && scan_thread->joinable())
 			scan_thread->join();
 	}
@@ -168,4 +183,6 @@ public:
 
 	std::mutex& get_mutex() { return mutex; }
 	const std::vector<GameMedia>& get_game_list() { return game_list; }
+    unsigned int still_no_rom_counter = 0;
+    bool path_is_too_dirty = false;
 };

@@ -39,6 +39,7 @@ extern int screen_width, screen_height;
 
 static std::string select_current_directory;
 static std::vector<std::string> select_subfolders;
+static std::vector<std::string> display_files;
 bool subfolders_read;
 #ifdef _WIN32
 static const std::string separators = "/\\";
@@ -103,6 +104,7 @@ void select_directory_popup(const char *prompt, float scaling, StringCallback ca
 		if (!subfolders_read)
 		{
 			select_subfolders.clear();
+            display_files.clear();
 			error_message.clear();
 #ifdef _WIN32
 			if (select_current_directory == PSEUDO_ROOT)
@@ -175,6 +177,14 @@ void select_directory_popup(const char *prompt, float scaling, StringCallback ca
 								dotdot_seen = true;
 							select_subfolders.push_back(name);
 						}
+                        else
+                        {
+                            std::string extension = get_file_extension(name);
+                            if ( extension == "zip" || extension == "7z" || extension == "chd" || extension == "gdi" || ((settings.dreamcast.HideLegacyNaomiRoms
+                                    || (extension != "bin" && extension != "lst" && extension != "dat"))
+                            && extension != "cdi" && extension != "cue") == false )
+                                display_files.push_back(name);
+                        }
 					}
 					closedir(dir);
 #if defined(_WIN32) || defined(__ANDROID__)
@@ -249,6 +259,13 @@ void select_directory_popup(const char *prompt, float scaling, StringCallback ca
 				select_current_directory = child_path;
 			}
 		}
+        ImGui::PushStyleColor(ImGuiCol_Text, { 1, 1, 1, 0.3});
+        for (auto& name : display_files)
+        {
+            ImGui::Text(name.c_str());
+        }
+        ImGui::PopStyleColor();
+        
 		ImGui::PopStyleVar();
 		ImGui::EndChild();
 		if (ImGui::Button("Select Current Directory", ImVec2(0, 30 * scaling)))
