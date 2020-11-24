@@ -772,6 +772,8 @@ public:
 		return texture;
 	}
 
+	virtual ~BaseTextureCache() {}
+
 	void CollectCleanup()
 	{
 		std::vector<u64> list;
@@ -789,7 +791,7 @@ public:
 
 		for (u64 id : list)
 		{
-			if (cache[id].Delete())
+			if (clearTexture(&cache[id]))
 				cache.erase(id);
 		}
 	}
@@ -797,11 +799,16 @@ public:
 	void Clear()
 	{
 		for (auto& pair : cache)
-			pair.second.Delete();
+			clearTexture(&pair.second);
 
 		cache.clear();
 		KillTex = false;
 		INFO_LOG(RENDERER, "Texture cache cleared");
+	}
+
+protected:
+	virtual bool clearTexture(Texture *tex) {
+		return tex->Delete();
 	}
 
 private:

@@ -218,7 +218,7 @@ extern struct ShaderUniforms_t
 
 } ShaderUniforms;
 
-class TextureCacheData : public BaseTextureCacheData
+class TextureCacheData final : public BaseTextureCacheData
 {
 public:
 	GLuint texID;   //gl texture
@@ -227,7 +227,7 @@ public:
 	virtual bool Delete() override;
 };
 
-class TextureCache : public BaseTextureCache<TextureCacheData>
+class TextureCache final : public BaseTextureCache<TextureCacheData>
 {
 };
 extern TextureCache TexCache;

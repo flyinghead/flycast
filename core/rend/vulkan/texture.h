@@ -33,7 +33,7 @@
 
 void setImageLayout(vk::CommandBuffer const& commandBuffer, vk::Image image, vk::Format format, u32 mipmapLevels, vk::ImageLayout oldImageLayout, vk::ImageLayout newImageLayout);
 
-class Texture : public BaseTextureCacheData
+class Texture final : public BaseTextureCacheData
 {
 public:
 	void UploadToGPU(int width, int height, u8 *data, bool mipmapped, bool mipmapsIncluded = false) override;
@@ -134,7 +134,7 @@ private:
 	vk::Device device;
 };
 
-class TextureCache : public BaseTextureCache<Texture>
+class TextureCache final : public BaseTextureCache<Texture>
 {
 public:
 	void SetCurrentIndex(int index) {
@@ -171,6 +171,15 @@ public:
 		trashedMem[currentIndex].push_back(std::move(texture->allocation));
 		trashedBuffers[currentIndex].push_back(std::move(texture->stagingBufferData));
 		texture->format = vk::Format::eUndefined;
+	}
+
+protected:
+	virtual bool clearTexture(Texture *tex) override
+	{
+		std::for_each(inFlightTextures.begin(), inFlightTextures.end(),
+			[tex](std::unordered_set<Texture *>& set) { set.erase(tex); });
+
+		return BaseTextureCache<Texture>::clearTexture(tex);
 	}
 
 private:
