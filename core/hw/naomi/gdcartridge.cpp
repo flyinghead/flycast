@@ -495,9 +495,16 @@ void GDCartridge::device_start()
 		u8 buffer[2048];
 		std::string gdrom_path = get_game_basename() + "/" + gdrom_name;
 		Disc *gdrom = OpenDisc((gdrom_path + ".chd").c_str());
-		if (gdrom == NULL)
+		if (gdrom == nullptr)
 			gdrom = OpenDisc((gdrom_path + ".gdi").c_str());
-		if (gdrom == NULL)
+		if (gdrom_parent_name != nullptr && gdrom == nullptr)
+		{
+			std::string gdrom_parent_path = get_game_basename() + "/" + gdrom_parent_name;
+			gdrom = OpenDisc((gdrom_parent_path + ".chd").c_str());
+			if (gdrom == nullptr)
+				gdrom = OpenDisc((gdrom_parent_path + ".gdi").c_str());
+		}
+		if (gdrom == nullptr)
 			throw NaomiCartException("Naomi GDROM: Cannot open " + gdrom_path + ".chd or " + gdrom_path + ".gdi");
 
 		// primary volume descriptor

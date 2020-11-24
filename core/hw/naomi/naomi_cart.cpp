@@ -258,7 +258,7 @@ static void naomi_cart_LoadZip(const char *filename)
 		case GD:
 			{
 				GDCartridge *gdcart = new GDCartridge(game->size);
-				gdcart->SetGDRomName(game->gdrom_name);
+				gdcart->SetGDRomName(game->gdrom_name, game->parent_name);
 				CurrentCartridge = gdcart;
 			}
 			break;
