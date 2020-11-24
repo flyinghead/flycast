@@ -555,21 +555,42 @@ s32 libARM_Init();
 void libARM_Reset(bool hard);
 void libARM_Term();
 
-#define 	ReadMemArrRet(arr,addr,sz)				\
-			{if (sz==1)								\
-				return arr[addr];					\
-			else if (sz==2)							\
-				return *(u16*)&arr[addr];			\
-			else if (sz==4)							\
-				return *(u32*)&arr[addr];}
+template<u32 sz>
+u32 ReadMemArr(u8 *array, u32 addr)
+{
+	switch(sz)
+	{
+	case 1:
+		return array[addr];
+	case 2:
+		return *(u16 *)&array[addr];
+	case 4:
+		return *(u32 *)&array[addr];
+	default:
+		die("invalid size");
+		return 0;
+	}
+}
 
-#define WriteMemArr(arr,addr,data,sz)				\
-			{if(sz==1)								\
-				{arr[addr]=(u8)data;}				\
-			else if (sz==2)							\
-				{*(u16*)&arr[addr]=(u16)data;}		\
-			else if (sz==4)							\
-			{*(u32*)&arr[addr]=data;}}
+template<u32 sz>
+void WriteMemArr(u8 *array, u32 addr, u32 data)
+{
+	switch(sz)
+	{
+	case 1:
+		array[addr] = data;
+		break;
+	case 2:
+		*(u16 *)&array[addr] = data;
+		break;
+	case 4:
+		*(u32 *)&array[addr] = data;
+		break;
+	default:
+		die("invalid size");
+		break;
+	}
+}
 
 struct OnLoad
 {

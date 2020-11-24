@@ -208,28 +208,28 @@ void WriteAicaReg(u32 reg,u32 data)
 		break;
 
 	case TIMER_A:
-		WriteMemArr(aica_reg,reg,data,sz);
+		WriteMemArr<sz>(aica_reg, reg, data);
 		timers[0].RegisterWrite();
 		break;
 
 	case TIMER_B:
-		WriteMemArr(aica_reg,reg,data,sz);
+		WriteMemArr<sz>(aica_reg, reg, data);
 		timers[1].RegisterWrite();
 		break;
 
 	case TIMER_C:
-		WriteMemArr(aica_reg,reg,data,sz);
+		WriteMemArr<sz>(aica_reg, reg, data);
 		timers[2].RegisterWrite();
 		break;
 
 	// DEXE, DDIR, DLG
 	case 0x288C:
-		WriteMemArr(aica_reg, reg, data, sz);
+		WriteMemArr<sz>(aica_reg, reg, data);
 		AicaInternalDMA();
 		break;
 
 	default:
-		WriteMemArr(aica_reg,reg,data,sz);
+		WriteMemArr<sz>(aica_reg, reg, data);
 		break;
 	}
 }

@@ -1319,7 +1319,10 @@ void ReadCommonReg(u32 reg,bool byte)
 			CommonData->LP=Chans[chan].loop.looped;
 			verify(CommonData->AFSEL == 0);
 			s32 aeg = Chans[chan].AEG.GetValue();
-			CommonData->EG = aeg << 3 | (aeg & 1 ? 7 : 0); //AEG is only 10 bits, FEG is 13 bits
+			if (aeg > 0x3BF)
+				CommonData->EG = 0x1FFF;
+			else
+				CommonData->EG = aeg; //AEG is only 10 bits, FEG is 13 bits
 			CommonData->SGC=Chans[chan].AEG.state;
 
 			if (! (byte && reg==0x2810))
@@ -1339,7 +1342,7 @@ void ReadCommonReg(u32 reg,bool byte)
 
 void WriteCommonReg8(u32 reg,u32 data)
 {
-	WriteMemArr(aica_reg,reg,data,1);
+	WriteMemArr<1>(aica_reg, reg, data);
 	if (reg==0x2804 || reg==0x2805)
 	{
 		dsp.RBL = (8192 << CommonData->RBL) - 1;
