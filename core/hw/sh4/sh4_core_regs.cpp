@@ -13,24 +13,12 @@ u8* sh4_dyna_rcb;
 
 static INLINE void ChangeGPR()
 {
-	u32 temp;
-	for (int i=0;i<8;i++)
-	{
-		temp=r[i];
-		r[i]=r_bank[i];
-		r_bank[i]=temp;
-	}
+	std::swap((u32 (&)[8])r, r_bank);
 }
 
 static INLINE void ChangeFP()
 {
-	u32 temp;
-	for (int i=0;i<16;i++)
-	{
-		temp=fr_hex[i];
-		fr_hex[i]=xf_hex[i];
-		xf_hex[i]=temp;
-	}
+	std::swap((f32 (&)[16])Sh4cntx.xffr, *(f32 (*)[16])&Sh4cntx.xffr[16]);
 }
 
 //called when sr is changed and we must check for reg banks etc.

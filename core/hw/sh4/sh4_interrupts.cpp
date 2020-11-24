@@ -38,8 +38,57 @@ struct InterptSourceList_Entry
 	u32 GetPrLvl() const { return ((*PrioReg)>>Shift)&0xF; }
 };
 
-//Can't be statically initialised because registers are dynamically allocated
-InterptSourceList_Entry InterruptSourceList[28];
+static const InterptSourceList_Entry InterruptSourceList[28] =
+{
+	//IRL
+	{IRLP9,0x320},//sh4_IRL_9           = KMIID(sh4_int,0x320,0),
+	{IRLP11,0x360},//sh4_IRL_11         = KMIID(sh4_int,0x360,1),
+	{IRLP13,0x3A0},//sh4_IRL_13         = KMIID(sh4_int,0x3A0,2),
+
+	//HUDI
+	{GIPC(0),0x600},//sh4_HUDI_HUDI     = KMIID(sh4_int,0x600,3),  /* H-UDI underflow */
+
+	//GPIO (missing on dc ?)
+	{GIPC(3),0x620},//sh4_GPIO_GPIOI    = KMIID(sh4_int,0x620,4),
+
+	//DMAC
+	{GIPC(2),0x640},//sh4_DMAC_DMTE0    = KMIID(sh4_int,0x640,5),
+	{GIPC(2),0x660},//sh4_DMAC_DMTE1    = KMIID(sh4_int,0x660,6),
+	{GIPC(2),0x680},//sh4_DMAC_DMTE2    = KMIID(sh4_int,0x680,7),
+	{GIPC(2),0x6A0},//sh4_DMAC_DMTE3    = KMIID(sh4_int,0x6A0,8),
+	{GIPC(2),0x6C0},//sh4_DMAC_DMAE     = KMIID(sh4_int,0x6C0,9),
+
+	//TMU
+	{GIPA(3),0x400},//sh4_TMU0_TUNI0    =  KMIID(sh4_int,0x400,10), /* TMU0 underflow */
+	{GIPA(2),0x420},//sh4_TMU1_TUNI1    =  KMIID(sh4_int,0x420,11), /* TMU1 underflow */
+	{GIPA(1),0x440},//sh4_TMU2_TUNI2    =  KMIID(sh4_int,0x440,12), /* TMU2 underflow */
+	{GIPA(1),0x460},//sh4_TMU2_TICPI2   =  KMIID(sh4_int,0x460,13),
+
+	//RTC
+	{GIPA(0),0x480},//sh4_RTC_ATI       = KMIID(sh4_int,0x480,14),
+	{GIPA(0),0x4A0},//sh4_RTC_PRI       = KMIID(sh4_int,0x4A0,15),
+	{GIPA(0),0x4C0},//sh4_RTC_CUI       = KMIID(sh4_int,0x4C0,16),
+
+	//SCI
+	{GIPB(1),0x4E0},//sh4_SCI1_ERI      = KMIID(sh4_int,0x4E0,17),
+	{GIPB(1),0x500},//sh4_SCI1_RXI      = KMIID(sh4_int,0x500,18),
+	{GIPB(1),0x520},//sh4_SCI1_TXI      = KMIID(sh4_int,0x520,19),
+	{GIPB(1),0x540},//sh4_SCI1_TEI      = KMIID(sh4_int,0x540,29),
+
+	//SCIF
+	{GIPC(1),0x700},//sh4_SCIF_ERI      = KMIID(sh4_int,0x700,21),
+	{GIPC(1),0x720},//sh4_SCIF_RXI      = KMIID(sh4_int,0x720,22),
+	{GIPC(1),0x740},//sh4_SCIF_BRI      = KMIID(sh4_int,0x740,23),
+	{GIPC(1),0x760},//sh4_SCIF_TXI      = KMIID(sh4_int,0x760,24),
+
+	//WDT
+	{GIPB(3),0x560},//sh4_WDT_ITI       = KMIID(sh4_int,0x560,25),
+
+	//REF
+	{GIPB(2),0x580},//sh4_REF_RCMI      = KMIID(sh4_int,0x580,26),
+	{GIPA(2),0x5A0},//sh4_REF_ROVI      = KMIID(sh4_int,0x5A0,27),
+};
+
 
 //Maps siid -> EventID
 alignas(64) u16 InterruptEnvId[32] = { 0 };
@@ -48,8 +97,7 @@ alignas(64) u32 InterruptBit[32] = { 0 };
 //Maps sh4 interrupt level to inclusive bitfield
 alignas(64) u32 InterruptLevelBit[16] = { 0 };
 
-bool Do_Interrupt(u32 intEvn);
-bool Do_Exception(u32 epc, u32 expEvn, u32 CallVect);
+static bool Do_Interrupt(u32 intEvn);
 
 u32 interrupt_vpend; // Vector of pending interrupts
 u32 interrupt_vmask; // Vector of masked interrupts             (-1 inhibits all interrupts)
@@ -142,7 +190,7 @@ void ResetInterruptMask(InterruptID intr)
 }
 
 
-bool Do_Interrupt(u32 intEvn)
+static bool Do_Interrupt(u32 intEvn)
 {
 	CCN_INTEVT = intEvn;
 
@@ -181,60 +229,6 @@ bool Do_Exception(u32 epc, u32 expEvn, u32 CallVect)
 //Init/Res/Term
 void interrupts_init()
 {
-	InterptSourceList_Entry InterruptSourceList2[]=
-	{
-		//IRL
-		{IRLP9,0x320},//sh4_IRL_9           = KMIID(sh4_int,0x320,0),
-		{IRLP11,0x360},//sh4_IRL_11         = KMIID(sh4_int,0x360,1),
-		{IRLP13,0x3A0},//sh4_IRL_13         = KMIID(sh4_int,0x3A0,2),
-
-		//HUDI
-		{GIPC(0),0x600},//sh4_HUDI_HUDI     = KMIID(sh4_int,0x600,3),  /* H-UDI underflow */
-
-		//GPIO (missing on dc ?)
-		{GIPC(3),0x620},//sh4_GPIO_GPIOI    = KMIID(sh4_int,0x620,4),
-
-		//DMAC
-		{GIPC(2),0x640},//sh4_DMAC_DMTE0    = KMIID(sh4_int,0x640,5),
-		{GIPC(2),0x660},//sh4_DMAC_DMTE1    = KMIID(sh4_int,0x660,6),
-		{GIPC(2),0x680},//sh4_DMAC_DMTE2    = KMIID(sh4_int,0x680,7),
-		{GIPC(2),0x6A0},//sh4_DMAC_DMTE3    = KMIID(sh4_int,0x6A0,8),
-		{GIPC(2),0x6C0},//sh4_DMAC_DMAE     = KMIID(sh4_int,0x6C0,9),
-
-		//TMU
-		{GIPA(3),0x400},//sh4_TMU0_TUNI0    =  KMIID(sh4_int,0x400,10), /* TMU0 underflow */
-		{GIPA(2),0x420},//sh4_TMU1_TUNI1    =  KMIID(sh4_int,0x420,11), /* TMU1 underflow */
-		{GIPA(1),0x440},//sh4_TMU2_TUNI2    =  KMIID(sh4_int,0x440,12), /* TMU2 underflow */
-		{GIPA(1),0x460},//sh4_TMU2_TICPI2   =  KMIID(sh4_int,0x460,13),
-
-		//RTC
-		{GIPA(0),0x480},//sh4_RTC_ATI       = KMIID(sh4_int,0x480,14),
-		{GIPA(0),0x4A0},//sh4_RTC_PRI       = KMIID(sh4_int,0x4A0,15),
-		{GIPA(0),0x4C0},//sh4_RTC_CUI       = KMIID(sh4_int,0x4C0,16),
-
-		//SCI
-		{GIPB(1),0x4E0},//sh4_SCI1_ERI      = KMIID(sh4_int,0x4E0,17),
-		{GIPB(1),0x500},//sh4_SCI1_RXI      = KMIID(sh4_int,0x500,18),
-		{GIPB(1),0x520},//sh4_SCI1_TXI      = KMIID(sh4_int,0x520,19),
-		{GIPB(1),0x540},//sh4_SCI1_TEI      = KMIID(sh4_int,0x540,29),
-
-		//SCIF
-		{GIPC(1),0x700},//sh4_SCIF_ERI      = KMIID(sh4_int,0x700,21),
-		{GIPC(1),0x720},//sh4_SCIF_RXI      = KMIID(sh4_int,0x720,22),
-		{GIPC(1),0x740},//sh4_SCIF_BRI      = KMIID(sh4_int,0x740,23),
-		{GIPC(1),0x760},//sh4_SCIF_TXI      = KMIID(sh4_int,0x760,24),
-
-		//WDT
-		{GIPB(3),0x560},//sh4_WDT_ITI       = KMIID(sh4_int,0x560,25),
-
-		//REF
-		{GIPB(2),0x580},//sh4_REF_RCMI      = KMIID(sh4_int,0x580,26),
-		{GIPA(2),0x5A0},//sh4_REF_ROVI      = KMIID(sh4_int,0x5A0,27),
-	};
-
-	verify(sizeof(InterruptSourceList)==sizeof(InterruptSourceList2));
-
-	memcpy(InterruptSourceList,InterruptSourceList2,sizeof(InterruptSourceList));
 }
 
 void interrupts_reset()
@@ -253,6 +247,5 @@ void interrupts_reset()
 
 void interrupts_term()
 {
-
 }
 

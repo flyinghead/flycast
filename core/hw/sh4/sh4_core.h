@@ -95,7 +95,6 @@ static INLINE void SetXD(u32 n,f64 val)
 	xf[(n<<1) | 0]=t.sgl[1];
 }
 
-bool Do_Interrupt(u32 intEvn);
 bool Do_Exception(u32 epc, u32 expEvn, u32 CallVect);
 
 struct SH4ThrownException {
