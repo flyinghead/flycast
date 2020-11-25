@@ -59,15 +59,13 @@ class GameScanner
 		//printf("Exploring %s\n", path.c_str());
         if (game_list.size() == 0)
         {
-            ++still_no_rom_counter;
-            if (still_no_rom_counter > 1000)
-            {
-                path_is_too_dirty = true;
-            }
+            ++empty_folders_scanned;
+            if (empty_folders_scanned > 1000)
+                content_path_looks_incorrect = true;
         }
         else
         {
-            path_is_too_dirty = false;
+            content_path_looks_incorrect = false;
         }
         
 		DIR *dir = opendir(path.c_str());
@@ -143,8 +141,8 @@ public:
 	void stop()
 	{
 		running = false;
-        still_no_rom_counter = 0;
-        path_is_too_dirty = false;
+        empty_folders_scanned = 0;
+        content_path_looks_incorrect = false;
 		if (scan_thread && scan_thread->joinable())
 			scan_thread->join();
 	}
@@ -183,6 +181,6 @@ public:
 
 	std::mutex& get_mutex() { return mutex; }
 	const std::vector<GameMedia>& get_game_list() { return game_list; }
-    unsigned int still_no_rom_counter = 0;
-    bool path_is_too_dirty = false;
+    unsigned int empty_folders_scanned = 0;
+    bool content_path_looks_incorrect = false;
 };

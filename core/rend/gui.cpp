@@ -703,21 +703,21 @@ static void error_popup()
 
 static void contentpath_warning_popup()
 {
-    static bool show_contentpath_warning_popup = true;
-    static bool show_contentpath_selection = false;
-    if (show_contentpath_warning_popup && scanner.path_is_too_dirty)
+    static bool show_contentpath_selection;
+
+    if (scanner.content_path_looks_incorrect)
     {
         ImGui::OpenPopup("Incorrect Content Location?");
         if (ImGui::BeginPopupModal("Incorrect Content Location?", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
         {
             ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + 400.f * scaling);
-            ImGui::TextWrapped("  Still searching in %d folders, no game can be found!  ", scanner.still_no_rom_counter);
+            ImGui::TextWrapped("  Scanned %d folders but no game can be found!  ", scanner.empty_folders_scanned);
             ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(16 * scaling, 3 * scaling));
             float currentwidth = ImGui::GetContentRegionAvailWidth();
             ImGui::SetCursorPosX((currentwidth - 100.f * scaling) / 2.f + ImGui::GetStyle().WindowPadding.x - 55.f * scaling);
             if (ImGui::Button("Reselect", ImVec2(100.f * scaling, 0.f)))
             {
-                show_contentpath_warning_popup = false;
+            	scanner.content_path_looks_incorrect = false;
                 ImGui::CloseCurrentPopup();
                 show_contentpath_selection = true;
             }
@@ -726,8 +726,10 @@ static void contentpath_warning_popup()
             ImGui::SetCursorPosX((currentwidth - 100.f * scaling) / 2.f + ImGui::GetStyle().WindowPadding.x + 55.f * scaling);
             if (ImGui::Button("Cancel", ImVec2(100.f * scaling, 0.f)))
             {
-                show_contentpath_warning_popup = false;
+            	scanner.content_path_looks_incorrect = false;
                 ImGui::CloseCurrentPopup();
+                scanner.stop();
+                settings.dreamcast.ContentPath.clear();
             }
             ImGui::SetItemDefaultFocus();
             ImGui::PopStyleVar();
@@ -736,24 +738,17 @@ static void contentpath_warning_popup()
     }
     if (show_contentpath_selection)
     {
-        static auto original = settings.dreamcast.ContentPath;
-        settings.dreamcast.ContentPath.clear();
         scanner.stop();
         ImGui::OpenPopup("Select Directory");
         select_directory_popup("Select Directory", scaling, [](bool cancelled, std::string selection)
         {
             show_contentpath_selection = false;
-            show_contentpath_warning_popup = true;
             if (!cancelled)
             {
+                settings.dreamcast.ContentPath.clear();
                 settings.dreamcast.ContentPath.push_back(selection);
-                scanner.refresh();
             }
-            else
-            {
-                settings.dreamcast.ContentPath = original;
-                scanner.refresh();
-            }
+            scanner.refresh();
         });
     }
 }
@@ -762,6 +757,7 @@ void directory_selected_callback(bool cancelled, std::string selection)
 {
 	if (!cancelled)
 	{
+		scanner.stop();
 		settings.dreamcast.ContentPath.push_back(selection);
 		scanner.refresh();
 	}
@@ -924,6 +920,7 @@ static void gui_display_settings()
         		ImGui::ListBoxFooter();
             	if (to_delete >= 0)
             	{
+            		scanner.stop();
             		settings.dreamcast.ContentPath.erase(settings.dreamcast.ContentPath.begin() + to_delete);
         			scanner.refresh();
             	}
@@ -1684,7 +1681,10 @@ static void systemdir_selected_callback(bool cancelled, std::string selection)
 			settings.pvr.rend = 0;
 			gui_state = Main;
 			if (settings.dreamcast.ContentPath.empty())
+			{
+				scanner.stop();
 				settings.dreamcast.ContentPath.push_back(selection);
+			}
 			SaveSettings();
 		}
 	}
