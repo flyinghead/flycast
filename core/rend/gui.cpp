@@ -186,13 +186,12 @@ void ImGui_Impl_NewFrame()
 	if ((mo_buttons & 0xf) == 0xf)
 	{
 		if (touch_up)
-		{
 			io.MousePos = ImVec2(-FLT_MAX, -FLT_MAX);
-			touch_up = false;
-		}
 		else if (io.MouseDown[0])
 			touch_up = true;
 	}
+	else
+		touch_up = false;
 #endif
 	if (io.WantCaptureMouse)
 	{
@@ -590,7 +589,7 @@ static void controller_mapping_popup(std::shared_ptr<GamepadDevice> gamepad)
 			}
 			ImGui::PopItemWidth();
 		}
-		ImGui::SameLine(ImGui::GetContentRegionAvailWidth() - ImGui::CalcTextSize("Arcade button names").x
+		ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Arcade button names").x
 				- ImGui::GetStyle().FramePadding.x * 3.0f - ImGui::GetStyle().ItemSpacing.x);
 		ImGui::Checkbox("Arcade button names", &arcade_button_mode);
 
@@ -687,7 +686,7 @@ static void error_popup()
 			ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + 400.f * scaling);
 			ImGui::TextWrapped("%s", error_msg.c_str());
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(16 * scaling, 3 * scaling));
-			float currentwidth = ImGui::GetContentRegionAvailWidth();
+			float currentwidth = ImGui::GetContentRegionAvail().x;
 			ImGui::SetCursorPosX((currentwidth - 80.f * scaling) / 2.f + ImGui::GetStyle().WindowPadding.x);
 			if (ImGui::Button("OK", ImVec2(80.f * scaling, 0.f)))
 			{
@@ -713,7 +712,7 @@ static void contentpath_warning_popup()
             ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + 400.f * scaling);
             ImGui::TextWrapped("  Scanned %d folders but no game can be found!  ", scanner.empty_folders_scanned);
             ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(16 * scaling, 3 * scaling));
-            float currentwidth = ImGui::GetContentRegionAvailWidth();
+            float currentwidth = ImGui::GetContentRegionAvail().x;
             ImGui::SetCursorPosX((currentwidth - 100.f * scaling) / 2.f + ImGui::GetStyle().WindowPadding.x - 55.f * scaling);
             if (ImGui::Button("Reselect", ImVec2(100.f * scaling, 0.f)))
             {
@@ -906,7 +905,7 @@ static void gui_display_settings()
                 	ImGui::PushID(settings.dreamcast.ContentPath[i].c_str());
                     ImGui::AlignTextToFramePadding();
                 	ImGui::Text("%s", settings.dreamcast.ContentPath[i].c_str());
-                	ImGui::SameLine(ImGui::GetContentRegionAvailWidth() - ImGui::CalcTextSize("X").x - ImGui::GetStyle().FramePadding.x);
+                	ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("X").x - ImGui::GetStyle().FramePadding.x);
                 	if (ImGui::Button("X"))
                 		to_delete = i;
                 	ImGui::PopID();
@@ -933,7 +932,7 @@ static void gui_display_settings()
             	ImGui::AlignTextToFramePadding();
                 ImGui::Text("%s", get_writable_config_path("").c_str());
 #ifdef __ANDROID__
-                ImGui::SameLine(ImGui::GetContentRegionAvailWidth() - ImGui::CalcTextSize("Change").x - ImGui::GetStyle().FramePadding.x);
+                ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Change").x - ImGui::GetStyle().FramePadding.x);
                 if (ImGui::Button("Change"))
                 	gui_state = Onboarding;
 #endif
@@ -1538,6 +1537,9 @@ static void gui_display_settings()
 		ImGui::EndTabBar();
     }
     ImGui::PopStyleVar();
+
+    ImVec2 mouse_delta = ImGui::GetIO().MouseDelta;
+    ScrollWhenDraggingOnVoid(ImVec2(0.0f, -mouse_delta.y), ImGuiMouseButton_Left);
     ImGui::End();
     ImGui::PopStyleVar();
 
@@ -1598,7 +1600,7 @@ static void gui_display_content()
     }
     if (gui_state != SelectDisk)
     {
-		ImGui::SameLine(ImGui::GetContentRegionAvailWidth() - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f /*+ ImGui::GetStyle().ItemSpacing.x*/);
+		ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f /*+ ImGui::GetStyle().ItemSpacing.x*/);
 		if (ImGui::Button("Settings"))//, ImVec2(0, 30 * scaling)))
 			gui_state = Settings;
     }
@@ -1745,7 +1747,7 @@ static void gui_network_start()
 	}
 	ImGui::Text("%s", get_notification().c_str());
 
-	float currentwidth = ImGui::GetContentRegionAvailWidth();
+	float currentwidth = ImGui::GetContentRegionAvail().x;
 	ImGui::SetCursorPosX((currentwidth - 100.f * scaling) / 2.f + ImGui::GetStyle().WindowPadding.x);
 	ImGui::SetCursorPosY(126.f * scaling);
 	if (ImGui::Button("Cancel", ImVec2(100.f * scaling, 0.f)))
@@ -1808,7 +1810,7 @@ static void gui_display_loadscreen()
 		ImGui::SameLine();
 		ImGui::Text("%s", get_notification().c_str());
 
-		float currentwidth = ImGui::GetContentRegionAvailWidth();
+		float currentwidth = ImGui::GetContentRegionAvail().x;
 		ImGui::SetCursorPosX((currentwidth - 100.f * scaling) / 2.f + ImGui::GetStyle().WindowPadding.x);
 		ImGui::SetCursorPosY(126.f * scaling);
 		if (ImGui::Button("Cancel", ImVec2(100.f * scaling, 0.f)))

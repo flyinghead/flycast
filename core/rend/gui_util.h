@@ -58,3 +58,5 @@ static inline void ImGui_impl_RenderDrawData(ImDrawData *draw_data, bool save_ba
 		ImGui_ImplOpenGL3_RenderDrawData(draw_data, save_background);
 	}
 }
+
+void ScrollWhenDraggingOnVoid(const ImVec2& delta, ImGuiMouseButton mouse_button);

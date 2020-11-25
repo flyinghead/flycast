@@ -34,6 +34,7 @@
 #include "types.h"
 #include "stdclass.h"
 #include "imgui/imgui.h"
+#include "imgui/imgui_internal.h"
 
 extern int screen_width, screen_height;
 
@@ -95,7 +96,7 @@ void select_directory_popup(const char *prompt, float scaling, StringCallback ca
 	if (ImGui::BeginPopupModal(prompt, NULL, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize ))
 	{
 		std::string path = select_current_directory;
-		int last_sep = path.find_last_of(separators);
+		std::string::size_type last_sep = path.find_last_of(separators);
 		if (last_sep == path.size() - 1)
 			path.pop_back();
 
@@ -262,7 +263,7 @@ void select_directory_popup(const char *prompt, float scaling, StringCallback ca
         ImGui::PushStyleColor(ImGuiCol_Text, { 1, 1, 1, 0.3});
         for (auto& name : display_files)
         {
-            ImGui::Text(name.c_str());
+            ImGui::Text("%s", name.c_str());
         }
         ImGui::PopStyleColor();
         
@@ -285,4 +286,20 @@ void select_directory_popup(const char *prompt, float scaling, StringCallback ca
 		ImGui::EndPopup();
 	}
 	ImGui::PopStyleVar();
+}
+
+// See https://github.com/ocornut/imgui/issues/3379
+void ScrollWhenDraggingOnVoid(const ImVec2& delta, ImGuiMouseButton mouse_button)
+{
+    ImGuiContext& g = *ImGui::GetCurrentContext();
+    ImGuiWindow* window = g.CurrentWindow;
+    bool hovered = false;
+    bool held = false;
+    ImGuiButtonFlags button_flags = (mouse_button == 0) ? ImGuiButtonFlags_MouseButtonLeft : (mouse_button == 1) ? ImGuiButtonFlags_MouseButtonRight : ImGuiButtonFlags_MouseButtonMiddle;
+    if (g.HoveredId == 0) // If nothing hovered so far in the frame (not same as IsAnyItemHovered()!)
+        ImGui::ButtonBehavior(window->Rect(), window->GetID("##scrolldraggingoverlay"), &hovered, &held, button_flags);
+    if (held && delta.x != 0.0f)
+        ImGui::SetScrollX(window, window->Scroll.x + delta.x);
+    if (held && delta.y != 0.0f)
+        ImGui::SetScrollY(window, window->Scroll.y + delta.y);
 }
