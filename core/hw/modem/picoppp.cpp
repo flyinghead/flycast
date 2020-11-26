@@ -184,8 +184,6 @@ static void read_from_dc_socket(pico_socket *pico_sock, sock_t nat_sock)
 
 static void tcp_callback(uint16_t ev, struct pico_socket *s)
 {
-	int r = 0;
-
 	if (ev & PICO_SOCK_EV_RD)
 	{
 		auto it = tcp_sockets.find(s);
@@ -202,7 +200,6 @@ static void tcp_callback(uint16_t ev, struct pico_socket *s)
 
 	if (ev & PICO_SOCK_EV_CONN)
 	{
-		uint32_t ka_val = 0;
 		struct pico_ip4 orig;
 		uint16_t port;
 		char peer[30];
@@ -221,7 +218,7 @@ static void tcp_callback(uint16_t ev, struct pico_socket *s)
 			//printf("Connection established from %s:%d to %08x:%d\n", peer, short_be(port), sock_a->local_addr.ip4.addr, short_be(sock_a->local_port));
 			pico_socket_setoption(sock_a, PICO_TCP_NODELAY, &yes);
 			/* Set keepalive options */
-	//		ka_val = 5;
+	//		uint32_t ka_val = 5;
 	//		pico_socket_setoption(sock_a, PICO_SOCKET_OPT_KEEPCNT, &ka_val);
 	//		ka_val = 30000;
 	//		pico_socket_setoption(sock_a, PICO_SOCKET_OPT_KEEPIDLE, &ka_val);
@@ -270,14 +267,21 @@ static void tcp_callback(uint16_t ev, struct pico_socket *s)
 
 	if (ev & PICO_SOCK_EV_FIN) {
 		auto it = tcp_sockets.find(s);
-		if (it == tcp_sockets.end())
-		{
-			INFO_LOG(MODEM, "PICO_SOCK_EV_FIN: Unknown socket: remote port %d", short_be(s->remote_port));
-		}
-		else
+		if (it != tcp_sockets.end())
 		{
 			closesocket(it->second);
 			tcp_sockets.erase(it);
+		}
+		else
+		{
+			auto it2 = tcp_connecting_sockets.find(s);
+			if (it2 != tcp_connecting_sockets.end())
+			{
+				closesocket(it2->second);
+				tcp_connecting_sockets.erase(it2);
+			}
+			else
+				INFO_LOG(MODEM, "PICO_SOCK_EV_FIN: Unknown socket: remote port %d", short_be(s->remote_port));
 		}
 	}
 
@@ -670,9 +674,7 @@ static bool pico_thread_running = false;
 
 static void *pico_thread_func(void *)
 {
-    struct pico_ip4 ipaddr, netmask, zero = {
-    	    0
-    	};
+    struct pico_ip4 ipaddr;
 
     if (!pico_stack_inited)
     {
@@ -729,7 +731,7 @@ static void *pico_thread_func(void *)
 	memset(&saddr, 0, sizeof(saddr));
 	saddr.sin_family = AF_INET;
 	saddr.sin_addr.s_addr = INADDR_ANY;
-    for (int i = 0; i < sizeof(games_udp_ports) / sizeof(uint16_t); i++)
+    for (u32 i = 0; i < sizeof(games_udp_ports) / sizeof(uint16_t); i++)
     {
     	uint16_t port = short_be(games_udp_ports[i]);
 		sock_t sockfd = find_udp_socket(port);
@@ -746,7 +748,7 @@ static void *pico_thread_func(void *)
 		}
     }
 
-    for (int i = 0; i < sizeof(games_tcp_ports) / sizeof(uint16_t); i++)
+    for (u32 i = 0; i < sizeof(games_tcp_ports) / sizeof(uint16_t); i++)
     {
     	uint16_t port = short_be(games_tcp_ports[i]);
     	saddr.sin_port = port;
