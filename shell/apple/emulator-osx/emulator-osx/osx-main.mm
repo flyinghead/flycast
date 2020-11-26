@@ -134,27 +134,32 @@ extern "C" void emu_gles_init(int width, int height) {
     char *home = getenv("HOME");
     if (home != NULL)
     {
-        std::string config_dir = std::string(home) + "/.reicast";
+        std::string config_dir = std::string(home) + "/.reicast/";
+        if (!file_exists(config_dir))
+        	config_dir = std::string(home) + "/.flycast/";
         int instanceNumber = (int)[[NSRunningApplication runningApplicationsWithBundleIdentifier:@"com.reicast.Flycast"] count];
         if (instanceNumber > 1){
-            config_dir += "/" + std::to_string(instanceNumber);
+            config_dir += std::to_string(instanceNumber) + "/";
             [[NSApp dockTile] setBadgeLabel:@(instanceNumber).stringValue];
         }
         mkdir(config_dir.c_str(), 0755); // create the directory if missing
         set_user_config_dir(config_dir);
+        add_system_data_dir(config_dir);
+        config_dir += "data/";
+        mkdir(config_dir.c_str(), 0755);
         set_user_data_dir(config_dir);
     }
     else
     {
-        set_user_config_dir(".");
-        set_user_data_dir(".");
+        set_user_config_dir("./");
+        set_user_data_dir("./");
     }
     // Add bundle resources path
     CFBundleRef mainBundle = CFBundleGetMainBundle();
     CFURLRef resourcesURL = CFBundleCopyResourcesDirectoryURL(mainBundle);
     char path[PATH_MAX];
     if (CFURLGetFileSystemRepresentation(resourcesURL, TRUE, (UInt8 *)path, PATH_MAX))
-        add_system_data_dir(std::string(path));
+        add_system_data_dir(std::string(path) + "/");
     CFRelease(resourcesURL);
     CFRelease(mainBundle);
 

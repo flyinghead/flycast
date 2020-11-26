@@ -20,10 +20,10 @@
 	#include <unistd.h>
 #endif
 
-std::string user_config_dir;
-std::string user_data_dir;
-std::vector<std::string> system_config_dirs;
-std::vector<std::string> system_data_dirs;
+static std::string user_config_dir;
+static std::string user_data_dir;
+static std::vector<std::string> system_config_dirs;
+static std::vector<std::string> system_data_dirs;
 
 bool file_exists(const std::string& filename)
 {
@@ -55,24 +55,20 @@ std::string get_writable_config_path(const std::string& filename)
 	/* Only stuff in the user_config_dir is supposed to be writable,
 	 * so we always return that.
 	 */
-	return (user_config_dir + filename);
+	return user_config_dir + filename;
 }
 
 std::string get_readonly_config_path(const std::string& filename)
 {
 	std::string user_filepath = get_writable_config_path(filename);
-	if(file_exists(user_filepath))
-	{
+	if (file_exists(user_filepath))
 		return user_filepath;
-	}
 
-	std::string filepath;
-	for (size_t i = 0; i < system_config_dirs.size(); i++) {
-		filepath = system_config_dirs[i] + filename;
+	for (const auto& config_dir : system_config_dirs)
+	{
+		std::string filepath = config_dir + filename;
 		if (file_exists(filepath))
-		{
 			return filepath;
-		}
 	}
 
 	// Not found, so we return the user variant
@@ -84,31 +80,31 @@ std::string get_writable_data_path(const std::string& filename)
 	/* Only stuff in the user_data_dir is supposed to be writable,
 	 * so we always return that.
 	 */
-	return (user_data_dir + filename);
+	return user_data_dir + filename;
 }
 
 std::string get_readonly_data_path(const std::string& filename)
 {
 	std::string user_filepath = get_writable_data_path(filename);
-	if(file_exists(user_filepath))
-	{
+	if (file_exists(user_filepath))
 		return user_filepath;
-	}
 
-	std::string filepath;
-	for (size_t i = 0; i < system_data_dirs.size(); i++) {
-		filepath = system_data_dirs[i] + filename;
+	for (const auto& data_dir : system_data_dirs)
+	{
+		std::string filepath = data_dir + filename;
 		if (file_exists(filepath))
-		{
 			return filepath;
-		}
 	}
+	// Try the game directory
+	std::string filepath = get_game_dir() + filename;
+	if (file_exists(filepath))
+		return filepath;
 
 	// Not found, so we return the user variant
 	return user_filepath;
 }
 
-static size_t get_last_slash_pos(const std::string& path)
+size_t get_last_slash_pos(const std::string& path)
 {
 	size_t lastindex = path.find_last_of('/');
 #ifdef _WIN32
@@ -127,7 +123,7 @@ std::string get_game_save_prefix()
 	size_t lastindex = get_last_slash_pos(save_file);
 	if (lastindex != std::string::npos)
 		save_file = save_file.substr(lastindex + 1);
-	return get_writable_data_path(DATA_PATH) + save_file;
+	return get_writable_data_path(save_file);
 }
 
 std::string get_game_basename()

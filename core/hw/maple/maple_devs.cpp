@@ -482,8 +482,11 @@ struct maple_sega_vmu: maple_base
 		memset(flash_data, 0, sizeof(flash_data));
 		memset(lcd_data, 0, sizeof(lcd_data));
 		char tempy[512];
-		sprintf(tempy, "/vmu_save_%s.bin", logical_port);
-		std::string apath = get_writable_data_path(tempy);
+		sprintf(tempy, "vmu_save_%s.bin", logical_port);
+		// VMU saves used to be stored in .reicast, not in .reicast/data
+		std::string apath = get_writable_config_path(tempy);
+		if (!file_exists(apath))
+			apath = get_writable_data_path(tempy);
 
 		file = fopen(apath.c_str(), "rb+");
 		if (!file)
@@ -492,25 +495,19 @@ struct maple_sega_vmu: maple_base
 			file = fopen(apath.c_str(), "wb");
 			if (file) {
 				if (!init_emptyvmu())
-					INFO_LOG(MAPLE, "Failed to initialize an empty VMU, you should reformat it using the BIOS");
+					WARN_LOG(MAPLE, "Failed to initialize an empty VMU, you should reformat it using the BIOS");
 
 				fwrite(flash_data, sizeof(flash_data), 1, file);
 				fseek(file, 0, SEEK_SET);
 			}
 			else
 			{
-				INFO_LOG(MAPLE, "Unable to create VMU!");
+				ERROR_LOG(MAPLE, "Failed to create VMU save file \"%s\"", apath.c_str());
 			}
 		}
 
-		if (!file)
-		{
-			INFO_LOG(MAPLE, "Failed to create VMU save file \"%s\"", apath.c_str());
-		}
-		else
-		{
+		if (file != nullptr)
 			fread(flash_data, 1, sizeof(flash_data), file);
-		}
 
 		u8 sum = 0;
 		for (u32 i = 0; i < sizeof(flash_data); i++)
@@ -521,20 +518,15 @@ struct maple_sega_vmu: maple_base
 
 			if (init_emptyvmu())
 			{
-				if (!file)
-					file = fopen(apath.c_str(), "wb");
-
-				if (file) {
+				if (file != nullptr)
+				{
 					fwrite(flash_data, sizeof(flash_data), 1, file);
 					fseek(file, 0, SEEK_SET);
-				}
-				else {
-					INFO_LOG(MAPLE, "Unable to create VMU!");
 				}
 			}
 			else
 			{
-				INFO_LOG(MAPLE, "Failed to initialize an empty VMU, you should reformat it using the BIOS");
+				WARN_LOG(MAPLE, "Failed to initialize an empty VMU, you should reformat it using the BIOS");
 			}
 		}
 
@@ -3001,7 +2993,7 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 	jvs_length = length - 2;
 
 	u8 calc_crc = 0;
-	for (int i = 1; i < length; i++)
+	for (u32 i = 1; i < length; i++)
 		calc_crc = ((calc_crc + buffer_out[i]) & 0xFF);
 
 	JVS_OUT(calc_crc);

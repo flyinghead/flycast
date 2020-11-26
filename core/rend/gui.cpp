@@ -1674,8 +1674,10 @@ static void systemdir_selected_callback(bool cancelled, std::string selection)
 {
 	if (!cancelled)
 	{
+		selection += "/";
 		set_user_config_dir(selection);
-		set_user_data_dir(selection);
+		add_system_data_dir(selection);
+		set_user_data_dir(selection + "data/");
 		if (cfgOpen())
 		{
 			LoadSettings(false);

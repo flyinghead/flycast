@@ -81,7 +81,7 @@ bool cfgOpen()
 		// Config dir not set (android onboarding)
 		return false;
 
-	const char* filename = "/emu.cfg";
+	const char* filename = "emu.cfg";
 	std::string config_path_read = get_readonly_config_path(filename);
 	cfgPath = get_writable_config_path(filename);
 

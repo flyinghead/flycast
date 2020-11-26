@@ -192,11 +192,16 @@ LONG ExeptionHandler(EXCEPTION_POINTERS *ExceptionInfo)
 void SetupPath()
 {
 	char fname[512];
-	GetModuleFileName(0,fname,512);
+	GetModuleFileName(0, fname, sizeof(fname));
 	std::string fn = std::string(fname);
-	fn=fn.substr(0,fn.find_last_of('\\'));
+	size_t pos = get_last_slash_pos(fn);
+	if (pos != std::string::npos)
+		fn = fn.substr(0, pos) + "\\";
+	else
+		fn = ".\\";
 	set_user_config_dir(fn);
-	set_user_data_dir(fn);
+	add_system_data_dir(fn);
+	set_user_data_dir(fn + "data\\");
 }
 
 static Win32KeyboardDevice keyboard(0);

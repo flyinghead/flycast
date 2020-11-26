@@ -76,8 +76,12 @@ static bool naomi_LoadBios(const char *filename, Archive *child_archive, Archive
 
 	struct BIOS_t *bios = &BIOS[biosid];
 
-	std::string basepath = get_readonly_data_path(DATA_PATH);
-	std::unique_ptr<Archive> bios_archive(OpenArchive((basepath + filename).c_str()));
+	std::string arch_name(filename);
+	std::string path = get_readonly_data_path(arch_name + ".zip");
+	if (!file_exists(path.c_str()))
+		path = get_readonly_data_path(arch_name + ".7z");
+	DEBUG_LOG(NAOMI, "Loading BIOS from %s", path.c_str());
+	std::unique_ptr<Archive> bios_archive(OpenArchive(path.c_str()));
 
 	bool found_region = false;
 
@@ -232,7 +236,7 @@ static void naomi_cart_LoadZip(const char *filename)
 		{
 			// If a specific BIOS is needed for this game, fail.
 			if (game->bios != NULL || !bios_loaded)
-				throw NaomiCartException(std::string("Error: cannot load BIOS ") + (game->bios != NULL ? game->bios : "naomi.zip") + " in " + get_readonly_data_path(DATA_PATH));
+				throw NaomiCartException(std::string("Error: cannot load BIOS ") + (game->bios != NULL ? game->bios : "naomi.zip"));
 
 			// otherwise use the default BIOS
 		}

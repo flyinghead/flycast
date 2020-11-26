@@ -195,13 +195,22 @@ JNIEXPORT jstring JNICALL Java_com_reicast_emulator_emu_JNIdc_initEnvironment(JN
         saveAndroidSettingsMid = env->GetMethodID(env->GetObjectClass(emulator), "SaveAndroidSettings", "(Ljava/lang/String;)V");
     }
     // Set home directory based on User config
-    const char* path = homeDirectory != NULL ? env->GetStringUTFChars(homeDirectory, 0) : "";
-    set_user_config_dir(path);
-    set_user_data_dir(path);
+    if (homeDirectory != NULL)
+    {
+    	const char *jchar = env->GetStringUTFChars(homeDirectory, 0);
+    	std::string path = jchar;
+		if (!path.empty())
+		{
+			if (path.back() != '/')
+				path += '/';
+			set_user_config_dir(path);
+			add_system_data_dir(path);
+			set_user_data_dir(path + "data/");
+		}
+    	env->ReleaseStringUTFChars(homeDirectory, jchar);
+    }
     INFO_LOG(BOOT, "Config dir is: %s", get_writable_config_path("").c_str());
     INFO_LOG(BOOT, "Data dir is:   %s", get_writable_data_path("").c_str());
-    if (homeDirectory != NULL)
-    	env->ReleaseStringUTFChars(homeDirectory, path);
 
     if (first_init)
     {

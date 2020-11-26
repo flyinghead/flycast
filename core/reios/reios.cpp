@@ -739,7 +739,7 @@ void reios_reset(u8* rom)
 	// 7078 24 × 24 pixels (72 bytes) characters
 	// 129 32 × 32 pixels (128 bytes) characters
 	memset(pFont, 0, 536496);
-	FILE *font = fopen(get_readonly_data_path(DATA_PATH "font.bin").c_str(), "rb");
+	FILE *font = fopen(get_readonly_data_path("font.bin").c_str(), "rb");
 	if (font == NULL)
 	{
 		INFO_LOG(REIOS, "font.bin not found. Using built-in font");

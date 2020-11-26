@@ -33,7 +33,7 @@
 
 VulkanContext *VulkanContext::contextInstance;
 
-static const char *PipelineCacheFileName = DATA_PATH "vulkan_pipeline.cache";
+static const char *PipelineCacheFileName = "vulkan_pipeline.cache";
 
 #ifndef __ANDROID__
 VKAPI_ATTR static VkBool32 VKAPI_CALL debugUtilsMessengerCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageTypes,
@@ -450,7 +450,7 @@ bool VulkanContext::InitDevice()
 	    		10000, ARRAY_SIZE(pool_sizes), pool_sizes));
 
 
-	    std::string cachePath = get_writable_data_path(PipelineCacheFileName);
+	    std::string cachePath = get_readonly_data_path(PipelineCacheFileName);
 	    FILE *f = fopen(cachePath.c_str(), "rb");
 	    if (f == nullptr)
 	    	pipelineCache = device->createPipelineCacheUnique(vk::PipelineCacheCreateInfo());

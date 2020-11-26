@@ -15,6 +15,7 @@
 
 #include "hw/maple/maple_cfg.h"
 #include "hw/sh4/sh4_mem.h"
+#include "hw/holly/sb_mem.h"
 
 #include "hw/naomi/naomi_cart.h"
 #include "reios/reios.h"
@@ -551,15 +552,14 @@ static void dc_start_game(const char *path)
 	dc_reset(true);
 	LoadSettings(false);
 	
-	std::string data_path = get_readonly_data_path(DATA_PATH);
 	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
 	{
-		if ((settings.bios.UseReios && !forced_bios_file) || !LoadRomFiles(data_path))
+		if ((settings.bios.UseReios && !forced_bios_file) || !LoadRomFiles())
 		{
 			if (forced_bios_file)
 				throw ReicastException("No BIOS file found");
 
-			if (!LoadHle(data_path))
+			if (!LoadHle())
 				throw ReicastException("Failed to initialize HLE BIOS");
 
 			NOTICE_LOG(BOOT, "Did not load BIOS, using reios");
@@ -567,7 +567,7 @@ static void dc_start_game(const char *path)
 	}
 	else
 	{
-		LoadRomFiles(data_path);
+		LoadRomFiles();
 	}
 	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
 	{
@@ -591,7 +591,7 @@ static void dc_start_game(const char *path)
 					// Content load failed. Boot the BIOS
 					settings.imgread.ImagePath[0] = '\0';
 					forced_bios_file = true;
-					if (!LoadRomFiles(data_path))
+					if (!LoadRomFiles())
 						throw ReicastException("No BIOS file found");
 					InitDrive();
 				}
@@ -656,7 +656,7 @@ void* dc_run(void*)
 
 		sh4_cpu.Run();
 
-   		SaveRomFiles(get_writable_data_path(DATA_PATH));
+   		SaveRomFiles();
    		if (reset_requested)
    		{
    			dc_reset(false);
@@ -933,7 +933,7 @@ static void LoadCustom()
 		if (*p == '\0')
 			return;
 	}
-	else if (settings.platform.system == DC_PLATFORM_NAOMI || settings.platform.system == DC_PLATFORM_ATOMISWAVE)
+	else
 	{
 		reios_id = naomi_game_id;
 	}
@@ -951,9 +951,9 @@ void SaveSettings()
 {
 	cfgSetAutoSave(false);
 	cfgSaveBool("config", "Dynarec.Enabled", settings.dynarec.Enable);
-	if (forced_game_cable == -1 || forced_game_cable != settings.dreamcast.cable)
+	if (forced_game_cable == -1 || forced_game_cable != (int)settings.dreamcast.cable)
 		cfgSaveInt("config", "Dreamcast.Cable", settings.dreamcast.cable);
-	if (forced_game_region == -1 || forced_game_region != settings.dreamcast.region)
+	if (forced_game_region == -1 || forced_game_region != (int)settings.dreamcast.region)
 		cfgSaveInt("config", "Dreamcast.Region", settings.dreamcast.region);
 	cfgSaveInt("config", "Dreamcast.Broadcast", settings.dreamcast.broadcast);
 	cfgSaveBool("config", "Dreamcast.ForceWindowsCE", settings.dreamcast.ForceWindowsCE);
@@ -1064,7 +1064,7 @@ static void cleanup_serialize(void *data)
 		free(data) ;
 }
 
-static std::string get_savestate_file_path()
+static std::string get_savestate_file_path(bool writable)
 {
 	std::string state_file = settings.imgread.ImagePath;
 	size_t lastindex = state_file.find_last_of('/');
@@ -1081,7 +1081,10 @@ static std::string get_savestate_file_path()
 	if (lastindex != std::string::npos)
 		state_file = state_file.substr(0, lastindex);
 	state_file = state_file + ".state";
-	return get_writable_data_path(DATA_PATH) + state_file;
+	if (writable)
+		return get_writable_data_path(state_file);
+	else
+		return get_readonly_data_path(state_file);
 }
 
 void dc_savestate()
@@ -1121,7 +1124,7 @@ void dc_savestate()
     	return;
 	}
 
-	filename = get_savestate_file_path();
+	filename = get_savestate_file_path(true);
 	f = fopen(filename.c_str(), "wb") ;
 
 	if ( f == NULL )
@@ -1150,7 +1153,7 @@ void dc_loadstate()
 
 	dc_stop();
 
-	filename = get_savestate_file_path();
+	filename = get_savestate_file_path(false);
 	f = fopen(filename.c_str(), "rb") ;
 
 	if ( f == NULL )

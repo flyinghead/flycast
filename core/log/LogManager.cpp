@@ -131,7 +131,7 @@ LogManager::LogManager()
 	if (cfgLoadBool("log", "LogToFile", false))
 	{
 #ifdef __ANDROID__
-		std::string logPath = get_writable_data_path("/flycast.log");
+		std::string logPath = get_writable_data_path("flycast.log");
 #else
 		std::string logPath = "flycast.log";
 #endif

@@ -205,7 +205,7 @@ std::shared_ptr<InputMapping> InputMapping::LoadMapping(const char *name)
 	if (it != loaded_mappings.end())
 		return it->second;
 
-	std::string path = get_writable_config_path((std::string("/mappings/") + name).c_str());
+	std::string path = get_readonly_config_path((std::string("mappings/") + name).c_str());
 	FILE *fp = fopen(path.c_str(), "r");
 	if (fp == NULL)
 		return NULL;
@@ -222,9 +222,9 @@ bool InputMapping::save(const char *name)
 	if (!dirty)
 		return true;
 
-	std::string path = get_writable_config_path("/mappings/");
+	std::string path = get_writable_config_path("mappings/");
 	make_directory(path);
-	path = get_writable_config_path((std::string("/mappings/") + name).c_str());
+	path = get_writable_config_path((std::string("mappings/") + name).c_str());
 	FILE *fp = fopen(path.c_str(), "w");
 	if (fp == NULL)
 	{

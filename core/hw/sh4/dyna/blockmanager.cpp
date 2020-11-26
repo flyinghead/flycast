@@ -652,7 +652,7 @@ void print_blocks()
 
 	if (print_stats)
 	{
-		f=fopen(get_writable_data_path("/blkmap.lst").c_str(),"w");
+		f=fopen(get_writable_data_path("blkmap.lst").c_str(),"w");
 		print_stats=0;
 
 		INFO_LOG(DYNAREC, "Writing blocks to %p", f);
@@ -680,9 +680,7 @@ void print_blocks()
 			fprintf(f,"host_opcodes: %d\n",blk->host_opcodes);
 			fprintf(f,"il_opcodes: %zd\n",blk->oplist.size());
 
-			u32 hcode=0;
 			s32 gcode=-1;
-			u8* pucode=(u8*)blk->code;
 
 			size_t j=0;
 			
