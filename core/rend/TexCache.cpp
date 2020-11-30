@@ -27,6 +27,7 @@ bool palette_updated;
 const std::array<f32, 16> D_Adjust_LoD_Bias = {
 		0.f, -4.f, -2.f, -1.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f
 };
+static void rend_text_invl(vram_block* bl);
 
 u32 detwiddle[2][11][1024];
 //input : address in the yyyyyxxxxx format
@@ -221,7 +222,7 @@ bool VramLockedWriteOffset(size_t offset)
 		{
 			if (lock != nullptr)
 			{
-				libPvr_LockedBlockWrite(lock, (u32)offset);
+				rend_text_invl(lock);
 
 				if (lock != nullptr)
 				{
@@ -907,7 +908,7 @@ void WriteTextureToVRam(u32 width, u32 height, u8 *data, u16 *dst)
 	}
 }
 
-void rend_text_invl(vram_block* bl)
+static void rend_text_invl(vram_block* bl)
 {
 	BaseTextureCacheData* tcd = (BaseTextureCacheData*)bl->userdata;
 	tcd->dirty = FrameCount;

@@ -518,8 +518,6 @@ s32 libPvr_Init();
 void libPvr_Reset(bool Manual);
 void libPvr_Term();
 
-void libPvr_LockedBlockWrite(vram_block* block,u32 addr);	//set to 0 if not used
-
 void* libPvr_GetRenderTarget();
 
 //GDR

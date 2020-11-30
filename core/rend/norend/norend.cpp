@@ -3,7 +3,6 @@
 #include "hw/pvr/Renderer_if.h"
 
 void rend_set_fb_scale(float x,float y) { }
-void rend_text_invl(vram_block* bl) { }
 
 struct norend : Renderer
 {

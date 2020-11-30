@@ -13,12 +13,6 @@
 #include "pvr_regs.h"
 #include "rend/TexCache.h"
 
-void libPvr_LockedBlockWrite (vram_block* block,u32 addr)
-{
-	rend_text_invl(block);
-}
-
-
 void libPvr_Reset(bool hard)
 {
 	KillTex = true;

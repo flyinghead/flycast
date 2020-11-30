@@ -820,8 +820,6 @@ private:
 	const TCW TCWTextureCacheMask = { { 0x1FFFFF, 0, 0, 1, 7, 1, 1 } };
 };
 
-void rend_text_invl(vram_block* bl);
-
 void ReadFramebuffer(PixelBuffer<u32>& pb, int& width, int& height);
 void WriteTextureToVRam(u32 width, u32 height, u8 *data, u16 *dst);
 
