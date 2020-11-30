@@ -28,7 +28,7 @@ u8 GetBtFromSgn(s8 val)
 	return val+128;
 }
 
-u32 awave_button_mapping[] = {
+u32 awave_button_mapping[16] = {
 		AWAVE_SERVICE_KEY,	// DC_BTN_C
 		AWAVE_BTN1_KEY,		// DC_BTN_B
 		AWAVE_BTN0_KEY,		// DC_BTN_A
@@ -42,9 +42,28 @@ u32 awave_button_mapping[] = {
 		AWAVE_BTN2_KEY,		// DC_BTN_X
 		AWAVE_COIN_KEY,		// DC_BTN_D
 		AWAVE_BTN4_KEY,		// DC_DPAD2_UP
-		// DC_DPAD2_DOWN
-		// DC_DPAD2_LEFT
-		// DC_DPAD2_RIGHT
+		0,					// DC_DPAD2_DOWN
+		0,					// DC_DPAD2_LEFT
+		0,					// DC_DPAD2_RIGHT
+};
+
+u32 awavelg_button_mapping[16] = {
+		AWAVE_SERVICE_KEY,	// DC_BTN_C
+		AWAVE_BTN0_KEY,		// DC_BTN_B
+		AWAVE_TRIGGER_KEY,	// DC_BTN_A
+		AWAVE_START_KEY,	// DC_BTN_START
+		AWAVE_UP_KEY,		// DC_DPAD_UP
+		AWAVE_DOWN_KEY,		// DC_DPAD_DOWN
+		AWAVE_LEFT_KEY,		// DC_DPAD_LEFT
+		AWAVE_RIGHT_KEY,	// DC_DPAD_RIGHT
+		AWAVE_TEST_KEY,		// DC_BTN_Z
+		AWAVE_BTN2_KEY,		// DC_BTN_Y
+		AWAVE_BTN1_KEY,		// DC_BTN_X
+		AWAVE_COIN_KEY,		// DC_BTN_D
+		AWAVE_BTN3_KEY,		// DC_DPAD2_UP
+		AWAVE_BTN4_KEY,		// DC_DPAD2_DOWN
+		0,					// DC_DPAD2_LEFT
+		0,					// DC_DPAD2_RIGHT
 };
 
 struct MapleConfigMap : IMapleConfigMap
@@ -79,11 +98,12 @@ struct MapleConfigMap : IMapleConfigMap
 		}
 		else if (settings.platform.system == DC_PLATFORM_ATOMISWAVE)
 		{
+			const u32* mapping = settings.input.JammaSetup == JVS::LightGun ? awavelg_button_mapping : awave_button_mapping;
 			pjs->kcode = 0xFFFF;
 			for (int i = 0; i < 16; i++)
 			{
 				if ((kcode[player_num] & (1 << i)) == 0)
-					pjs->kcode &= ~awave_button_mapping[i];
+					pjs->kcode &= ~mapping[i];
 			}
 			pjs->joy[PJAI_X1] = GetBtFromSgn(joyx[player_num]);
 			if (NaomiGameInputs != NULL && NaomiGameInputs->axes[1].name != NULL && NaomiGameInputs->axes[1].type == Half)

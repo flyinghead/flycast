@@ -1443,10 +1443,10 @@ struct maple_lightgun : maple_base
 		}
 	}
 
-	virtual void get_lightgun_pos()
+	virtual bool get_lightgun_pos() override
 	{
 		read_lightgun_position(mo_x_abs, mo_y_abs);
-		// TODO If NAOMI, set some bits at 0x600284 http://64darksoft.blogspot.com/2013/10/atomiswage-to-naomi-update-4.html
+		return true;
 	}
 };
 

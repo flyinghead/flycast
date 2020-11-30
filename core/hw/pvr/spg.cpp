@@ -1,6 +1,7 @@
 #include "spg.h"
 #include "Renderer_if.h"
 #include "hw/holly/holly_intc.h"
+#include "hw/holly/sb.h"
 #include "hw/sh4/sh4_sched.h"
 #include "input/gamepad_device.h"
 #include "oslib/oslib.h"
@@ -64,6 +65,7 @@ void CalculateSync()
 
 static u32 lightgun_line = 0xffff;
 static u32 lightgun_hpos;
+static bool maple_int_pending;
 
 u32 fskip;
 
@@ -81,7 +83,15 @@ int spg_line_sched(int tag, int cycl, int jit)
 		//Check for scanline interrupts -- really need to test the scanline values
 		
 		if (SPG_VBLANK_INT.vblank_in_interrupt_line_number == prv_cur_scanline)
+		{
+			if (maple_int_pending)
+			{
+				maple_int_pending = false;
+				SB_MDST = 0;
+				asic_RaiseInterrupt(holly_MAPLE_DMA);
+			}
 			asic_RaiseInterrupt(holly_SCANINT1);
+		}
 
 		if (SPG_VBLANK_INT.vblank_out_interrupt_line_number == prv_cur_scanline)
 			asic_RaiseInterrupt(holly_SCANINT2);
@@ -184,7 +194,9 @@ int spg_line_sched(int tag, int cycl, int jit)
 		}
 		if (lightgun_line != 0xffff && lightgun_line == prv_cur_scanline)
 		{
+			maple_int_pending = false;
 			SPG_TRIGGER_POS = ((lightgun_line & 0x3FF) << 16) | (lightgun_hpos & 0x3FF);
+			SB_MDST = 0;
 			asic_RaiseInterrupt(holly_MAPLE_DMA);
 			lightgun_line = 0xffff;
 		}
@@ -222,14 +234,19 @@ int spg_line_sched(int tag, int cycl, int jit)
 
 void read_lightgun_position(int x, int y)
 {
+	static u8 flip;
+	maple_int_pending = true;
 	if (y < 0 || y >= 480 || x < 0 || x >= 640)
+	{
 		// Off screen
 		lightgun_line = 0xffff;
+	}
 	else
 	{
 		lightgun_line = y / (SPG_CONTROL.interlace ? 2 : 1) + SPG_VBLANK_INT.vblank_out_interrupt_line_number;
-		lightgun_hpos = x * (SPG_HBLANK.hstart - SPG_HBLANK.hbend) / 640 + SPG_HBLANK.hbend * 2;	// Ok but why *2 ????
-		lightgun_hpos = std::min((u32)0x3FF, lightgun_hpos);
+		// For some reason returning the same position twice makes it register off screen
+		lightgun_hpos = (x + 286) ^ flip;
+		flip ^= 1;
 	}
 }
 
