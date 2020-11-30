@@ -81,13 +81,13 @@ struct socket_pair
 
 	pico_socket *pico_sock;
 	sock_t native_sock;
-	std::vector<u8> in_buffer;
+	std::vector<char> in_buffer;
 
 	void receive_native()
 	{
 		size_t len;
-		const u8 *data;
-		u8 buf[512];
+		const char *data;
+		char buf[512];
 
 		if (!in_buffer.empty())
 		{
@@ -136,7 +136,7 @@ struct socket_pair
 			if (r2 > 0 || in_buffer.empty())
 			{
 				len -= r2;
-				std::vector<u8> remain(len);
+				std::vector<char> remain(len);
 				memcpy(&remain[0], &data[r2], len);
 				std::swap(in_buffer, remain);
 			}
