@@ -284,7 +284,11 @@ static int modem_sched_func(int tag, int cycles, int jitter)
 			if (connected_time == 0)
 				connected_time = sh4_sched_now64();
 
-			callback_cycles = SH4_MAIN_CLOCK / 1000000 * 238;	// 238 us
+			// This value is critical. Setting it too low will cause some sockets to stall.
+			// Check Sonic Adventure 2 and Samba de Amigo (PAL) integrated browsers.
+			// 143 us/bytes corresponds to 56K but is too low for SA2 and SdA. They need >= 160.
+			// Using 166 for now (~ 48Kbps)
+			callback_cycles = SH4_MAIN_CLOCK / 1000000 * 166;
 			modem_regs.reg1e.TDBE = 1;
 
 			if (!modem_regs.reg1e.RDBF)
@@ -302,9 +306,6 @@ static int modem_sched_func(int tag, int cycles, int jitter)
 					if (modem_regs.reg04.FIFOEN)
 						SET_STATUS_BIT(0x0c, modem_regs.reg0c.RXFNE, 1);
 					SET_STATUS_BIT(0x01, modem_regs.reg01.RXHF, 1);
-
-					// Set small value to receive following data quickly.
-					callback_cycles = SH4_MAIN_CLOCK / 1000000 * 62;	// 62 us
 				}
 			}
 

@@ -24,7 +24,7 @@
 
 #define TCP_TIME (pico_time)(PICO_TIME_MS())
 
-#define PICO_TCP_RTO_MIN (70)
+#define PICO_TCP_RTO_MIN (1000)
 #define PICO_TCP_RTO_MAX (120000)
 #define PICO_TCP_IW          2
 #define PICO_TCP_SYN_TO  2000u
@@ -1444,6 +1444,7 @@ static inline void tcp_fill_rst_header(struct pico_frame *fr, struct pico_tcp_hd
     if(!(hdr1->flags & PICO_TCP_ACK))
         hdr->ack = long_be(long_be(((struct pico_tcp_hdr *)(fr->transport_hdr))->seq) + fr->payload_len);
 
+    hdr->crc = 0;
     hdr->crc = short_be(pico_tcp_checksum(f));
 }
 
@@ -1477,6 +1478,7 @@ int pico_tcp_reply_rst(struct pico_frame *fr)
     if (0) {
 #ifdef PICO_SUPPORT_IPV4
     } else if (IS_IPV4(f)) {
+    	f->local_ip.addr = fr->sock->local_addr.ip4.addr;	// Masqueraded
         tcp_dbg("Pushing IPv4 reset frame...\n");
         pico_ipv4_frame_push(f, &(((struct pico_ipv4_hdr *)(f->net_hdr))->dst), PICO_PROTO_TCP);
 #endif
@@ -1866,7 +1868,7 @@ static int tcp_rto_xmit(struct pico_socket_tcp *t, struct pico_frame *f)
         t->snd_last_out = SEQN(cpy);
         add_retransmission_timer(t, (t->rto << (++t->backoff)) + TCP_TIME);
         tcp_dbg("TCP_CWND, %lu, %u, %u, %u\n", TCP_TIME, t->cwnd, t->ssthresh, t->in_flight);
-        tcp_dbg("Sending RTO!\n");
+        tcp_dbg("Sending RTO! port %d\n", short_be(t->sock.remote_port));
         return 1;
     } else {
         tcp_dbg("RTO fail, retry!\n");
@@ -1939,7 +1941,7 @@ static void tcp_retrans_timeout(pico_time val, void *sock)
         return;
     }
 
-    tcp_dbg("TIMEOUT! backoff = %d, rto: %d\n", t->backoff, t->rto);
+    tcp_dbg("TIMEOUT! backoff = %d, rto: %d, port: %d\n", t->backoff, t->rto, short_be(t->sock.remote_port));
     t->retrans_tmr_due = 0ull;
 
     if (tcp_is_allowed_to_send(t)) {
@@ -1986,11 +1988,17 @@ static void add_retransmission_timer(struct pico_socket_tcp *t, pico_time next_t
                 val = next_ts + (t->rto << t->backoff);
             }
         }
+        if (next_ts == 0)
+        {
+        	t->retrans_tmr_due = 0;
+        	return;
+        }
+        tcp_dbg("add_retransmission_timer: timestamp %d, timeout %d, rto %d\n", (uint32_t)(next_ts - now), (uint32_t)(val - now), t->rto << t->backoff);
     } else {
         val = next_ts;
     }
 
-    if ((val > 0) || (val > now)) {
+    if (val > now) {
         t->retrans_tmr_due = val;
     } else {
         t->retrans_tmr_due = now + 1;
@@ -2837,10 +2845,10 @@ int pico_tcp_input(struct pico_socket *s, struct pico_frame *f)
     f->payload = (f->transport_hdr + ((hdr->len & 0xf0u) >> 2u));
     f->payload_len = (uint16_t)(f->transport_len - ((hdr->len & 0xf0u) >> 2u));
 
-    tcp_dbg("[sam] TCP> [tcp input] t_len: %u\n", f->transport_len);
-    tcp_dbg("[sam] TCP> flags = 0x%02x\n", hdr->flags);
-    tcp_dbg("[sam] TCP> s->state >> 8 = %u\n", s->state >> 8);
-    tcp_dbg("[sam] TCP> [tcp input] socket: %p state: %d <-- local port:%u remote port: %u seq: 0x%08x ack: 0x%08x flags: 0x%02x t_len: %u, hdr: %u payload: %d\n", s, s->state >> 8, short_be(hdr->trans.dport), short_be(hdr->trans.sport), SEQN(f), ACKN(f), hdr->flags, f->transport_len, (hdr->len & 0xf0) >> 2, f->payload_len );
+//    tcp_dbg("[sam] TCP> [tcp input] t_len: %u\n", f->transport_len);
+//    tcp_dbg("[sam] TCP> flags = 0x%02x\n", hdr->flags);
+//    tcp_dbg("[sam] TCP> s->state >> 8 = %u\n", s->state >> 8);
+    tcp_dbg("[tcp input] socket: %p state: %d <-- local port:%u remote port: %u seq: 0x%08x ack: 0x%08x flags: 0x%02x t_len: %u, hdr: %u payload: %d\n", s, s->state >> 8, short_be(hdr->trans.dport), short_be(hdr->trans.sport), SEQN(f), ACKN(f), hdr->flags, f->transport_len, (hdr->len & 0xf0) >> 2, f->payload_len );
 
     /* This copy of the frame has the current socket as owner */
     f->sock = s;
@@ -2960,11 +2968,11 @@ int pico_tcp_output(struct pico_socket *s, int loop_score)
             if (t->x_mode != PICO_TCP_WINDOW_FULL) {
                 tcp_dbg("TCP> RIGHT SIZING (rwnd: %d, frame len: %d\n", t->recv_wnd << t->recv_wnd_scale, f->payload_len);
                 tcp_dbg("In window full...\n");
-                t->snd_nxt = SEQN(una);
-                t->snd_retry = SEQN(una);
+                t->snd_nxt = SEQN(f);
+                t->snd_retry = SEQN(f);
                 t->x_mode = PICO_TCP_WINDOW_FULL;
             }
-
+            // TODO ? add_retransmission_timer(t, 0);
             break;
         }
 
