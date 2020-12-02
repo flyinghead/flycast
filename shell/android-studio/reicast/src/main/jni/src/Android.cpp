@@ -134,8 +134,6 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_screenDpi(JNIEnv *env
     screen_dpi = screenDpi;
 }
 
-bool egl_makecurrent();
-
 extern int screen_width,screen_height;
 
 float vjoy_pos[15][8];
@@ -150,21 +148,14 @@ static ANativeWindow *g_window = 0;
 
 void os_DoEvents()
 {
-    // @@@ Nothing here yet
 }
 
 void os_CreateWindow()
 {
 }
 
-//
-// Platform-specific NullDC functions
-//
-
-
-void UpdateInputState(u32 Port)
+void UpdateInputState()
 {
-    // @@@ Nothing here yet
 }
 
 void common_linux_setup();
@@ -339,8 +330,6 @@ JNIEXPORT jint JNICALL Java_com_reicast_emulator_emu_JNIdc_data(JNIEnv *env, job
     return 0;
 }
 
-extern void egl_stealcntx();
-
 static void *render_thread_func(void *)
 {
 #ifdef USE_VULKAN
@@ -387,19 +376,16 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_rendinitJava(JNIEnv *
 {
     screen_width = width;
     screen_height = height;
-    // FIXME egl_stealcntx();
     rend_init_renderer();
 }
 
 JNIEXPORT jboolean JNICALL Java_com_reicast_emulator_emu_JNIdc_rendframeJava(JNIEnv *env,jobject obj)
 {
-    // FIXME egl_stealcntx();
     return (jboolean)rend_single_frame();
 }
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_rendtermJava(JNIEnv * env, jobject obj)
 {
-	// FIXME egl_stealcntx();
     rend_term_renderer();
 }
 

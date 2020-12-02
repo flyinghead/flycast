@@ -54,9 +54,9 @@ void os_SetWindowText(const char * text) {
 void os_DoEvents() {
 }
 
-void UpdateInputState(u32 port) {
+void UpdateInputState() {
 #if defined(USE_SDL)
-	input_sdl_handle(port);
+	input_sdl_handle();
 #endif
 }
 

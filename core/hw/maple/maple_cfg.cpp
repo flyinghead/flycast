@@ -4,31 +4,12 @@
 #include "hw/naomi/naomi_cart.h"
 #include "input/gamepad_device.h"
 
-#define HAS_VMU
-/*
-bus_x=0{p0=1{config};p1=2{config};config;}
-Plugins:
-	Input Source
-		EventMap -- 'Raw' interface, source_name[seid]:mode
-		KeyMap -- translated chars ( no re-mapping possible)
-	Output
-		Image
-
-*/
-/*
-	MapleConfig:
-		InputUpdate(&fmt);
-		ImageUpdate(data);
-*/
-void UpdateInputState(u32 port);
-void UpdateVibration(u32 port, float power, float inclination, u32 duration_ms);
-
-u8 GetBtFromSgn(s8 val)
+static u8 GetBtFromSgn(s8 val)
 {
 	return val+128;
 }
 
-u32 awave_button_mapping[16] = {
+u32 awave_button_mapping[32] = {
 		AWAVE_SERVICE_KEY,	// DC_BTN_C
 		AWAVE_BTN1_KEY,		// DC_BTN_B
 		AWAVE_BTN0_KEY,		// DC_BTN_A
@@ -47,7 +28,7 @@ u32 awave_button_mapping[16] = {
 		0,					// DC_DPAD2_RIGHT
 };
 
-u32 awavelg_button_mapping[16] = {
+u32 awavelg_button_mapping[32] = {
 		AWAVE_SERVICE_KEY,	// DC_BTN_C
 		AWAVE_BTN0_KEY,		// DC_BTN_B
 		AWAVE_TRIGGER_KEY,	// DC_BTN_A
@@ -64,6 +45,8 @@ u32 awavelg_button_mapping[16] = {
 		AWAVE_BTN4_KEY,		// DC_DPAD2_DOWN
 		0,					// DC_DPAD2_LEFT
 		0,					// DC_DPAD2_RIGHT
+
+		AWAVE_BTN0_KEY		// DC_BTN_RELOAD (not needed for AW, mapped to BTN0 = pump)
 };
 
 struct MapleConfigMap : IMapleConfigMap
@@ -86,34 +69,78 @@ struct MapleConfigMap : IMapleConfigMap
 	void GetInput(PlainJoystickState* pjs)
 	{
 		int player_num = this->player_num == -1 ? dev->bus_id : this->player_num;
-		UpdateInputState(player_num);
 
-		pjs->kcode=kcode[player_num];
 		if (settings.platform.system == DC_PLATFORM_DREAMCAST)
 		{
-			pjs->joy[PJAI_X1]=GetBtFromSgn(joyx[player_num]);
-			pjs->joy[PJAI_Y1]=GetBtFromSgn(joyy[player_num]);
-			pjs->trigger[PJTI_R]=rt[player_num];
-			pjs->trigger[PJTI_L]=lt[player_num];
+			pjs->kcode = kcode[player_num];
+			pjs->joy[PJAI_X1] = GetBtFromSgn(joyx[player_num]);
+			pjs->joy[PJAI_Y1] = GetBtFromSgn(joyy[player_num]);
+			pjs->trigger[PJTI_R] = rt[player_num];
+			pjs->trigger[PJTI_L] = lt[player_num];
 		}
 		else if (settings.platform.system == DC_PLATFORM_ATOMISWAVE)
 		{
 			const u32* mapping = settings.input.JammaSetup == JVS::LightGun ? awavelg_button_mapping : awave_button_mapping;
-			pjs->kcode = 0xFFFF;
-			for (int i = 0; i < 16; i++)
+			pjs->kcode = ~0;
+			for (u32 i = 0; i < ARRAY_SIZE(awave_button_mapping); i++)
 			{
 				if ((kcode[player_num] & (1 << i)) == 0)
 					pjs->kcode &= ~mapping[i];
 			}
-			pjs->joy[PJAI_X1] = GetBtFromSgn(joyx[player_num]);
-			if (NaomiGameInputs != NULL && NaomiGameInputs->axes[1].name != NULL && NaomiGameInputs->axes[1].type == Half)
+			if (NaomiGameInputs != NULL)
 			{
-				// Driving games: put axis 2 on RT (accel) and axis 3 on LT (brake)
-				pjs->joy[PJAI_Y1] = rt[player_num];
-				pjs->joy[PJAI_X2] = lt[player_num];
+				for (u32 axis = 0; axis < PJAI_Count; axis++)
+				{
+					if (NaomiGameInputs->axes[axis].name != NULL)
+					{
+						if (NaomiGameInputs->axes[axis].type == Full)
+						{
+							switch (NaomiGameInputs->axes[axis].axis)
+							{
+							case 0:
+								pjs->joy[axis] = GetBtFromSgn(joyx[player_num]);
+								break;
+							case 1:
+								pjs->joy[axis] = GetBtFromSgn(joyy[player_num]);
+								break;
+							case 2:
+								pjs->joy[axis] = GetBtFromSgn(joyrx[player_num]);
+								break;
+							case 3:
+								pjs->joy[axis] = GetBtFromSgn(joyry[player_num]);
+								break;
+							default:
+								pjs->joy[axis] = 0x80;
+								break;
+							}
+						}
+						else
+						{
+							switch (NaomiGameInputs->axes[axis].axis)
+							{
+							case 4:
+								pjs->joy[axis] = rt[player_num];
+								break;
+							case 5:
+								pjs->joy[axis] = lt[player_num];
+								break;
+							default:
+								pjs->joy[axis] = 0x80;
+								break;
+							}
+						}
+						if (NaomiGameInputs->axes[axis].inverted)
+							pjs->joy[axis] = pjs->joy[axis] == 0 ? 0xff : 0x100 - pjs->joy[axis];
+					}
+					else
+					{
+						pjs->joy[axis] = 0x80;
+					}
+				}
 			}
 			else
 			{
+				pjs->joy[PJAI_X1] = GetBtFromSgn(joyx[player_num]);
 				pjs->joy[PJAI_Y1] = GetBtFromSgn(joyy[player_num]);
 				pjs->joy[PJAI_X2] = rt[player_num];
 				pjs->joy[PJAI_Y2] = lt[player_num];

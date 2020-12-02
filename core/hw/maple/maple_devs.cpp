@@ -8,6 +8,7 @@
 #include "stdclass.h"
 
 #include <algorithm>
+#include <array>
 #include <cstdlib>
 #include <zlib.h>
 #include <xxhash.h>
@@ -340,10 +341,7 @@ struct maple_atomiswave_controller: maple_sega_controller
 		if (index < 2 || index > 5)
 			return 0x80;
 		index -= 2;
-		if (NaomiGameInputs != NULL && NaomiGameInputs->axes[index].name != NULL && NaomiGameInputs->axes[index].inverted)
-			return pjs.joy[index] == 0 ? 0xff : 0x100 - pjs.joy[index];
-		else
-			return pjs.joy[index];
+		return pjs.joy[index];
 	}
 };
 
@@ -811,23 +809,18 @@ struct maple_sega_vmu: maple_base
 				{
 				case MFID_3_Clock:
 					{
-						u32 bp=r32();
+						u32 bp = r32();
 						if (bp)
-						{
 							INFO_LOG(MAPLE, "BEEP : %08X", bp);
-						}
-						return  MDRS_DeviceReply;//just ko
 					}
-					break;
+					return MDRS_DeviceReply; //just ko
 
 				default:
-					{
-						INFO_LOG(MAPLE, "VMU: command MDCF_SetCondition -> Bad function used, returning MDRE_UnknownFunction");
-						return MDRE_UnknownFunction;//bad function
-					}
-					break;
+					INFO_LOG(MAPLE, "VMU: command MDCF_SetCondition -> Bad function used, returning MDRE_UnknownFunction");
+					return MDRE_UnknownFunction; //bad function
 				}
 			}
+			break;
 
 		case MDC_DeviceReset:
 			return MDRS_DeviceReply;
@@ -1367,6 +1360,8 @@ struct maple_mouse : maple_base
 struct maple_lightgun : maple_base
 {
 	virtual u32 transform_kcode(u32 kcode) {
+		if ((kcode & DC_BTN_RELOAD) == 0)
+			kcode &= ~DC_BTN_A;	// trigger
 		return kcode | 0xFF01;
 	}
 
@@ -1445,7 +1440,13 @@ struct maple_lightgun : maple_base
 
 	virtual bool get_lightgun_pos() override
 	{
-		read_lightgun_position(mo_x_abs, mo_y_abs);
+		PlainJoystickState pjs;
+		config->GetInput(&pjs);
+
+		if ((pjs.kcode & DC_BTN_RELOAD) == 0)
+			read_lightgun_position(-1, -1);
+		else
+			read_lightgun_position(mo_x_abs, mo_y_abs);
 		return true;
 	}
 };
@@ -1453,6 +1454,7 @@ struct maple_lightgun : maple_base
 struct atomiswave_lightgun : maple_lightgun
 {
 	virtual u32 transform_kcode(u32 kcode) override {
+		// No need for reload on AW
 		return (kcode & AWAVE_TRIGGER_KEY) == 0 ? ~AWAVE_BTN0_KEY : ~0;
 	}
 };
@@ -1484,7 +1486,7 @@ void load_naomi_eeprom()
 	}
 }
 
-static u32 naomi_button_mapping[] = {
+static u32 naomi_button_mapping[32] = {
 		NAOMI_SERVICE_KEY,	// DC_BTN_C
 		NAOMI_BTN1_KEY,		// DC_BTN_B
 		NAOMI_BTN0_KEY,		// DC_BTN_A
@@ -1501,8 +1503,83 @@ static u32 naomi_button_mapping[] = {
 		NAOMI_BTN5_KEY,		// DC_DPAD2_DOWN
 		NAOMI_BTN6_KEY,		// DC_DPAD2_LEFT
 		NAOMI_BTN7_KEY,		// DC_DPAD2_RIGHT
+
+		0,					// DC_BTN_RELOAD
 		NAOMI_BTN8_KEY,
 };
+extern u32 awave_button_mapping[32];
+extern u32 awavelg_button_mapping[32];
+
+const char *GetCurrentGameButtonName(DreamcastKey key)
+{
+	if (NaomiGameInputs == nullptr || key == EMU_BTN_NONE)
+		return nullptr;
+	u32 pos = 0;
+	u32 val = (u32)key;
+	while ((val & 1) == 0)
+	{
+		pos++;
+		val >>= 1;
+	}
+	u32 arcade_key;
+	if (settings.platform.system == DC_PLATFORM_NAOMI)
+	{
+		if (pos >= ARRAY_SIZE(naomi_button_mapping))
+			return nullptr;
+		arcade_key = naomi_button_mapping[pos];
+	}
+	else
+	{
+		if (pos >= ARRAY_SIZE(awave_button_mapping))
+			return nullptr;
+		const u32* mapping = settings.input.JammaSetup == JVS::LightGun ? awavelg_button_mapping : awave_button_mapping;
+		arcade_key = mapping[pos];
+	}
+	for (int i = 0; NaomiGameInputs->buttons[i].source != 0; i++)
+		if (NaomiGameInputs->buttons[i].source == arcade_key)
+			return NaomiGameInputs->buttons[i].name;
+
+	return nullptr;
+}
+
+const char *GetCurrentGameAxisName(DreamcastKey axis)
+{
+	if (NaomiGameInputs == nullptr || axis == EMU_BTN_NONE)
+		return nullptr;
+
+	for (int i = 0; NaomiGameInputs->axes[i].name != nullptr; i++)
+	{
+		DreamcastKey cur_axis;
+		switch (NaomiGameInputs->axes[i].axis)
+		{
+		case 0:
+			cur_axis = DC_AXIS_X;
+			break;
+		case 1:
+			cur_axis = DC_AXIS_Y;
+			break;
+		case 2:
+			cur_axis = DC_AXIS_X2;
+			break;
+		case 3:
+			cur_axis = DC_AXIS_Y2;
+			break;
+		case 4:
+			cur_axis = DC_AXIS_RT;
+			break;
+		case 5:
+			cur_axis = DC_AXIS_LT;
+			break;
+		default:
+			cur_axis = EMU_BTN_NONE;
+			break;
+		}
+		if (cur_axis == axis)
+			return NaomiGameInputs->axes[i].name;
+	}
+
+	return nullptr;
+}
 
 /*
  * Sega JVS I/O board
@@ -1520,7 +1597,7 @@ public:
 		this->node_id = node_id;
 		this->parent = parent;
 		this->first_player = first_player;
-		init_p2_mapping();
+		init_mappings();
 	}
 	virtual ~jvs_io_board() = default;
 
@@ -1533,28 +1610,47 @@ public:
 protected:
 	virtual const char *get_id() = 0;
 	virtual u16 read_analog_axis(int player_num, int player_axis, bool inverted);
-	virtual u32 read_digital_in(int player_num) {
-		if (player_num >= (int)ARRAY_SIZE(kcode))
-			return 0;
-		u32 buttons = 0;
-		if (player_num > 0 && !p2_mappings.empty())
-		{
-			// Check for P1 buttons mapped to P2 inputs
-			u32 keycode = ~kcode[player_num - 1];
-			for (const auto& pair : p2_mappings)
-				if ((keycode & pair.first) != 0)
-					buttons |= pair.second;
 
-			return buttons;
-		}
-		u32 keycode = ~kcode[player_num];
-		for (int i = 0; i < 16; i++)
+	virtual void read_digital_in(u16 *v)
+	{
+		memset(v, 0, sizeof(u16) * 4);
+		for (u32 player = first_player; player < ARRAY_SIZE(kcode); player++)
 		{
-			if ((keycode & (1 << i)) != 0)
-				buttons |= naomi_button_mapping[i];
+			u32 keycode = ~kcode[player];
+			if (keycode == 0)
+				continue;
+			if (keycode & DC_BTN_RELOAD)
+				keycode |= DC_BTN_A;
+
+			// P1 mapping (only for P2)
+			if (player == 1)
+			{
+				for (u32 i = 0; i < p1_mapping.size(); i++)
+					if ((keycode & (1 << i)) != 0)
+						v[0] |= p1_mapping[i];
+			}
+			// normal mapping
+			for (u32 i = 0; i < cur_mapping.size(); i++)
+				if ((keycode & (1 << i)) != 0)
+					v[player - first_player] |= cur_mapping[i];
+			// P2 mapping (only for P1)
+			if (player == 0)
+			{
+				bool found = false;
+				for (u32 i = 0; i < p2_mapping.size(); i++)
+				{
+					if ((keycode & (1 << i)) != 0)
+						v[1] |= p2_mapping[i];
+					if (p2_mapping[i] != 0)
+						found = true;
+				}
+				if (found)
+					// if there are P2 mappings for P1 then there's only 1 player
+					break;
+			}
 		}
-		return buttons;
 	}
+
 	virtual void write_digital_out(int count, u8 *data) { }
 
 	u32 player_count = 0;
@@ -1567,29 +1663,41 @@ protected:
 	bool init_in_progress = false;
 
 private:
-	void init_p2_mapping()
+	void init_mappings()
 	{
+		p1_mapping.fill(0);
+		p2_mapping.fill(0);
+		memcpy(&cur_mapping[0], naomi_button_mapping, sizeof(naomi_button_mapping));
 		if (NaomiGameInputs == nullptr)
+			// Use default mapping
 			return;
-		for (int i = 0; NaomiGameInputs->buttons[i].name != nullptr; i++)
+
+		for (int i = 0; NaomiGameInputs->buttons[i].source != 0; i++)
 		{
-			const ButtonDescriptor& button = NaomiGameInputs->buttons[i];
-			if (button.p2_mask == 0)
-				continue;
-			for (int i = 0; i < 16; i++)
+			u32 source = NaomiGameInputs->buttons[i].source;
+			for (u32 j = 0; j < ARRAY_SIZE(naomi_button_mapping); j++)
 			{
-				if (naomi_button_mapping[i] == button.mask)
+				if (naomi_button_mapping[j] == source)
 				{
-					p2_mappings.push_back(std::make_pair(1 << i, button.p2_mask));
+					p1_mapping[j] = NaomiGameInputs->buttons[i].p1_target;
+					p2_mapping[j] = NaomiGameInputs->buttons[i].p2_target;
+					u32 target = NaomiGameInputs->buttons[i].target;
+					if (target == 0 && p1_mapping[j] == 0 && p2_mapping[j] == 0)
+						target = source;
+					cur_mapping[j] = target;
 					break;
 				}
 			}
 		}
 	}
+
 	u8 node_id;
 	maple_naomi_jamma *parent;
 	u8 first_player;
-	std::vector<std::pair<u32, u32>> p2_mappings;
+
+	std::array<u32, 32> cur_mapping;
+	std::array<u32, 32> p1_mapping;
+	std::array<u32, 32> p2_mapping;
 };
 
 // Most common JVS board
@@ -1700,35 +1808,29 @@ public:
 	{
 	}
 protected:
-	virtual u32 read_digital_in(int player_num) override {
-		u32 rv = jvs_837_13844::read_digital_in(player_num);
+	virtual void read_digital_in(u16 *v) override
+	{
+		jvs_837_13844::read_digital_in(v);
 
 		// The drive board RX0-7 is connected to the following player inputs
-		if (player_num == 0)
-		{
-			rv |= NAOMI_BTN2_KEY | NAOMI_BTN3_KEY | NAOMI_BTN4_KEY | NAOMI_BTN5_KEY;
-			if (drive_board & 16)
-				rv &= ~NAOMI_BTN5_KEY;
-			if (drive_board & 32)
-				rv &= ~NAOMI_BTN4_KEY;
-			if (drive_board & 64)
-				rv &= ~NAOMI_BTN3_KEY;
-			if (drive_board & 128)
-				rv &= ~NAOMI_BTN2_KEY;
-		}
-		else if (player_num == 1)
-		{
-			rv |= NAOMI_BTN2_KEY | NAOMI_BTN3_KEY | NAOMI_BTN4_KEY | NAOMI_BTN5_KEY;
-			if (drive_board & 1)
-				rv &= ~NAOMI_BTN5_KEY;
-			if (drive_board & 2)
-				rv &= ~NAOMI_BTN4_KEY;
-			if (drive_board & 4)
-				rv &= ~NAOMI_BTN3_KEY;
-			if (drive_board & 8)
-				rv &= ~NAOMI_BTN2_KEY;
-		}
-		return rv;
+		v[0] |= NAOMI_BTN2_KEY | NAOMI_BTN3_KEY | NAOMI_BTN4_KEY | NAOMI_BTN5_KEY;
+		if (drive_board & 16)
+			v[0] &= ~NAOMI_BTN5_KEY;
+		if (drive_board & 32)
+			v[0] &= ~NAOMI_BTN4_KEY;
+		if (drive_board & 64)
+			v[0] &= ~NAOMI_BTN3_KEY;
+		if (drive_board & 128)
+			v[0] &= ~NAOMI_BTN2_KEY;
+		v[1] |= NAOMI_BTN2_KEY | NAOMI_BTN3_KEY | NAOMI_BTN4_KEY | NAOMI_BTN5_KEY;
+		if (drive_board & 1)
+			v[1] &= ~NAOMI_BTN5_KEY;
+		if (drive_board & 2)
+			v[1] &= ~NAOMI_BTN4_KEY;
+		if (drive_board & 4)
+			v[1] &= ~NAOMI_BTN3_KEY;
+		if (drive_board & 8)
+			v[1] &= ~NAOMI_BTN2_KEY;
 	}
 
 	virtual void write_digital_out(int count, u8 *data) override {
@@ -1846,31 +1948,20 @@ public:
 protected:
 	virtual const char *get_id() override { return "SEGA ENTERPRISES,LTD.;I/O BD JVS;837-13551 ;Ver1.00;98/10"; }
 
-	virtual u32 read_digital_in(int player_num) override {
-		u32 keycode1 = jvs_io_board::read_digital_in(0);
-		u32 keycode2 = jvs_io_board::read_digital_in(1);
-		u32 keycode3 = jvs_io_board::read_digital_in(2);
-		u32 keycode4 = jvs_io_board::read_digital_in(3);
+	virtual void read_digital_in(u16 *v) override
+	{
+		jvs_io_board::read_digital_in(v);
 				// main button
-		return ((keycode1 & NAOMI_BTN0_KEY) << 6)		// start
-				| ((keycode2 & NAOMI_BTN0_KEY) << 2)	// left
-				| ((keycode3 & NAOMI_BTN0_KEY) << 1)	// right
-				| ((keycode4 & NAOMI_BTN0_KEY) >> 1)	// btn1
-				// soft kick
-//				| ((~keycode1 & NAOMI_BTN1_KEY) >> 1)	// btn2
-//				| ((~keycode2 & NAOMI_BTN1_KEY) >> 3)	// btn4
-//				| ((~keycode3 & NAOMI_BTN1_KEY) >> 5)	// btn6
-//				| ((~keycode4 & NAOMI_BTN1_KEY) >> 7)	// test?
-//				// hard kick
-//				| ((~keycode1 & NAOMI_BTN2_KEY) >> 1)	// btn3
-//				| ((~keycode2 & NAOMI_BTN2_KEY) >> 3)	// btn5
-//				| ((~keycode3 & NAOMI_BTN2_KEY) >> 5)	// btn7
-//				| ((~keycode4 & NAOMI_BTN2_KEY) >> 7)	// coin?
+		v[0] = ((v[0] & NAOMI_BTN0_KEY) << 6)		// start
+				| ((v[1] & NAOMI_BTN0_KEY) << 2)	// left
+				| ((v[2] & NAOMI_BTN0_KEY) << 1)	// right
+				| ((v[3] & NAOMI_BTN0_KEY) >> 1)	// btn1
 				// enter
-				| ((keycode1 & NAOMI_BTN3_KEY) << 3)	// btn0
+				| ((v[0] & NAOMI_BTN3_KEY) << 3)	// btn0
 				// service menu
-				| (keycode1 & (NAOMI_TEST_KEY | NAOMI_SERVICE_KEY | NAOMI_UP_KEY | NAOMI_DOWN_KEY));
+				| (v[0] & (NAOMI_TEST_KEY | NAOMI_SERVICE_KEY | NAOMI_UP_KEY | NAOMI_DOWN_KEY));
 	}
+
 	u16 read_joystick_x(int joy_num)
 	{
 		s8 axis_x = joyx[joy_num];
@@ -1936,15 +2027,19 @@ public:
 protected:
 	virtual const char *get_id() override { return "SEGA ENTERPRISES,LTD.;I/O BD JVS;837-13551 ;Ver1.00;98/10"; }
 
-	virtual u32 read_digital_in(int player_num) override {
-		u32 keycode = jvs_io_board::read_digital_in(player_num);
-		u8 trigger = rt[player_num] >> 2;
-				// Ball button
-		return ((trigger & 0x20) << 3) | ((trigger & 0x10) << 5) | ((trigger & 0x08) << 7)
-				| ((trigger & 0x04) << 9) | ((trigger & 0x02) << 11) | ((trigger & 0x01) << 13)
-				// other buttons
-				| (keycode & (NAOMI_SERVICE_KEY | NAOMI_TEST_KEY | NAOMI_START_KEY))
-				| ((keycode & NAOMI_BTN0_KEY) >> 4);		// remap button4 to button0 (change button)
+	virtual void read_digital_in(u16 *v) override
+	{
+		jvs_io_board::read_digital_in(v);
+		for (u32 player = 0; player < player_count; player++)
+		{
+			u8 trigger = rt[player] >> 2;
+					// Ball button
+			v[player] = ((trigger & 0x20) << 3) | ((trigger & 0x10) << 5) | ((trigger & 0x08) << 7)
+					| ((trigger & 0x04) << 9) | ((trigger & 0x02) << 11) | ((trigger & 0x01) << 13)
+					// other buttons
+					| (v[player] & (NAOMI_SERVICE_KEY | NAOMI_TEST_KEY | NAOMI_START_KEY))
+					| ((v[player] & NAOMI_BTN0_KEY) >> 4);		// remap button4 to button0 (change button)
+		}
 	}
 
 	u16 read_joystick_x(int joy_num)
@@ -2774,8 +2869,6 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 		if (jvs_cmd >= 0x20 && jvs_cmd <= 0x38) // Read inputs and more
 		{
 			LOGJVS("JVS Node %d: ", node_id);
-			PlainJoystickState pjs;
-			parent->config->GetInput(&pjs);
 
 			JVS_STATUS1();	// status
 			for (u32 cmdi = 0; cmdi < length_in; )
@@ -2786,18 +2879,18 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 					{
 						JVS_STATUS1();	// report byte
 
+						u16 btns[4];
+						read_digital_in(btns);
+						JVS_OUT((btns[0] & NAOMI_TEST_KEY) ? 0x80 : 0x00); // test, tilt1, tilt2, tilt3, unused, unused, unused, unused
 						LOGJVS("btns ");
 						for (int player = 0; player < buffer_in[cmdi + 1]; player++)
 						{
-							u16 cur_btns = read_digital_in(first_player + player);
-							if (player == 0)
-								JVS_OUT((cur_btns & NAOMI_TEST_KEY) ? 0x80 : 0x00); // test, tilt1, tilt2, tilt3, unused, unused, unused, unused
-							LOGJVS("P%d %02x ", player + 1 + first_player, cur_btns >> 8);
-							JVS_OUT(cur_btns >> 8);
+							LOGJVS("P%d %02x ", player + 1 + first_player, btns[player] >> 8);
+							JVS_OUT(btns[player] >> 8);
 							if (buffer_in[cmdi + 2] == 2)
 							{
-								LOGJVS("%02x ", cur_btns & 0xFF);
-								JVS_OUT(cur_btns);
+								LOGJVS("%02x ", btns[player] & 0xFF);
+								JVS_OUT(btns[player]);
 							}
 						}
 						cmdi += 3;
@@ -2809,7 +2902,7 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 						JVS_STATUS1();	// report byte
 						LOGJVS("coins ");
 						u32 mask = 0;
-						for (int i = 0; i < 16; i++)
+						for (u32 i = 0; i < ARRAY_SIZE(naomi_button_mapping); i++)
 						{
 							if (naomi_button_mapping[i] == NAOMI_COIN_KEY)
 							{
@@ -2819,7 +2912,7 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 						}
 						for (int slot = 0; slot < buffer_in[cmdi + 1]; slot++)
 						{
-							u16 keycode = ~kcode[first_player + slot];
+							u32 keycode = ~kcode[first_player + slot];
 							bool coin_chute = false;
 							if (keycode & mask)
 							{
@@ -2847,12 +2940,18 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 						LOGJVS("ana ");
 						if (lightgun_as_analog)
 						{
-							u16 x = mo_x_abs * 0xFFFF / 639;
-							u16 y = mo_y_abs * 0xFFFF / 479;
-							if (mo_x_abs < 0 || mo_x_abs > 639 || mo_y_abs < 0 || mo_y_abs > 479)
+							u16 x;
+							u16 y;
+							if (mo_x_abs < 0 || mo_x_abs > 639 || mo_y_abs < 0 || mo_y_abs > 479
+									|| (kcode[first_player] & DC_BTN_RELOAD) == 0)
 							{
 								x = 0;
 								y = 0;
+							}
+							else
+							{
+								x = mo_x_abs * 0xFFFF / 639;
+								y = mo_y_abs * 0xFFFF / 479;
 							}
 							LOGJVS("x,y:%4x,%4x ", x, y);
 							JVS_OUT(x >> 8);		// X, MSB
@@ -2863,7 +2962,6 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 						}
 
 						int full_axis_count = 0;
-						int half_axis_count = 0;
 						for (; axis < buffer_in[cmdi + 1]; axis++)
 						{
 							u16 axis_value;
@@ -2874,15 +2972,14 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 								const AxisDescriptor& axisDesc = NaomiGameInputs->axes[axis];
 								if (axisDesc.type == Half)
 								{
-									if (half_axis_count == 0)
+									if (axisDesc.axis == 4)
 										axis_value = rt[first_player] << 8;
-									else if (half_axis_count == 1)
+									else if (axisDesc.axis == 5)
 										axis_value = lt[first_player] << 8;
 									else
 										axis_value = 0;
 									if (axisDesc.inverted)
 										axis_value = 0xff00u - axis_value;
-									half_axis_count++;
 								}
 								else
 								{
@@ -2950,6 +3047,8 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 						u32 yr = 0x1fe - 0x40;
 						s16 x = mo_x_abs * xr / 639 + 0x37;
 						s16 y = mo_y_abs * yr / 479 + 0x40;
+						if ((kcode[first_player] & DC_BTN_RELOAD) == 0)
+							x = y = 0;
 						LOGJVS("lightgun %4x,%4x ", x, y);
 						JVS_OUT(x >> 8);		// X, MSB
 						JVS_OUT(x);				// X, LSB

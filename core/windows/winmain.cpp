@@ -209,29 +209,17 @@ static Win32KeyboardDevice keyboard(0);
 void ToggleFullscreen();
 
 
-void UpdateInputState(u32 port)
+void UpdateInputState()
 {
 #if defined(USE_SDL)
-	input_sdl_handle(port);
+	input_sdl_handle();
 #else
-	/*
-		 Disabled for now. Need new EMU_BTN_ANA_LEFT/RIGHT/.. virtual controller keys
-
-	joyx[port]=joyy[port]=0;
-
-	if (GetAsyncKeyState('J'))
-		joyx[port]-=126;
-	if (GetAsyncKeyState('L'))
-		joyx[port]+=126;
-
-	if (GetAsyncKeyState('I'))
-		joyy[port]-=126;
-	if (GetAsyncKeyState('K'))
-		joyy[port]+=126;
-	*/
-	std::shared_ptr<XInputGamepadDevice> gamepad = XInputGamepadDevice::GetXInputDevice(port);
-	if (gamepad != NULL)
-		gamepad->ReadInput();
+	for (int port = 0; port < 4; port++)
+	{
+		std::shared_ptr<XInputGamepadDevice> gamepad = XInputGamepadDevice::GetXInputDevice(port);
+		if (gamepad != nullptr)
+			gamepad->ReadInput();
+	}
 #endif
 }
 

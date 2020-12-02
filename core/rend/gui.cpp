@@ -39,7 +39,7 @@
 #include "log/LogManager.h"
 #include "emulator.h"
 
-extern void UpdateInputState(u32 port);
+extern void UpdateInputState();
 extern bool game_started;
 
 extern int screen_width, screen_height;
@@ -158,7 +158,7 @@ void ImGui_Impl_NewFrame()
 
 	ImGuiIO& io = ImGui::GetIO();
 
-	UpdateInputState(0);
+	UpdateInputState();
 
 	// Read keyboard modifiers inputs
 	io.KeyCtrl = (kb_shift & (0x01 | 0x10)) != 0;
@@ -446,18 +446,22 @@ const DreamcastKey button_keys[] = {
 		DC_BTN_START, DC_BTN_A, DC_BTN_B, DC_BTN_X, DC_BTN_Y, DC_DPAD_UP, DC_DPAD_DOWN, DC_DPAD_LEFT, DC_DPAD_RIGHT,
 		EMU_BTN_MENU, EMU_BTN_ESCAPE, EMU_BTN_FFORWARD, EMU_BTN_TRIGGER_LEFT, EMU_BTN_TRIGGER_RIGHT,
 		DC_BTN_C, DC_BTN_D, DC_BTN_Z, DC_DPAD2_UP, DC_DPAD2_DOWN, DC_DPAD2_LEFT, DC_DPAD2_RIGHT,
+		DC_BTN_RELOAD,
 		EMU_BTN_ANA_UP, EMU_BTN_ANA_DOWN, EMU_BTN_ANA_LEFT, EMU_BTN_ANA_RIGHT
 };
 const char *button_names[] = {
 		"Start", "A", "B", "X", "Y", "DPad Up", "DPad Down", "DPad Left", "DPad Right",
 		"Menu", "Exit", "Fast-forward", "Left Trigger", "Right Trigger",
 		"C", "D", "Z", "Right Dpad Up", "Right DPad Down", "Right DPad Left", "Right DPad Right",
+		"Reload",
 		"Left Stick Up", "Left Stick Down", "Left Stick Left", "Left Stick Right"
 };
 const char *arcade_button_names[] = {
 		"Start", "Button 1", "Button 2", "Button 3", "Button 4", "Up", "Down", "Left", "Right",
 		"Menu", "Exit", "Fast-forward", "N/A", "N/A",
-		"Service", "Coin", "Test", "Button 5", "Button 6", "Button 7", "Button 8", "N/A", "N/A", "N/A", "N/A"
+		"Service", "Coin", "Test", "Button 5", "Button 6", "Button 7", "Button 8",
+		"Reload",
+		"N/A", "N/A", "N/A", "N/A"
 };
 const DreamcastKey axis_keys[] = {
 		DC_AXIS_X, DC_AXIS_Y, DC_AXIS_LT, DC_AXIS_RT, DC_AXIS_X2, DC_AXIS_Y2, EMU_AXIS_DPAD1_X, EMU_AXIS_DPAD1_Y,
@@ -556,11 +560,10 @@ static void controller_mapping_popup(std::shared_ptr<GamepadDevice> gamepad)
 	if (ImGui::BeginPopupModal("Controller Mapping", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
 	{
 		const float width = screen_width / 2;
-		const float col0_width = ImGui::CalcTextSize("Right DPad Downxxx").x + ImGui::GetStyle().FramePadding.x * 2.0f + ImGui::GetStyle().ItemSpacing.x;
-		const float col1_width = width
+		const float col_width = (width
 				- ImGui::GetStyle().GrabMinSize
-				- (col0_width + ImGui::GetStyle().ItemSpacing.x)
-				- (ImGui::CalcTextSize("Map").x + ImGui::GetStyle().FramePadding.x * 2.0f + ImGui::GetStyle().ItemSpacing.x);
+				- (0 + ImGui::GetStyle().ItemSpacing.x)
+				- (ImGui::CalcTextSize("Map").x + ImGui::GetStyle().FramePadding.x * 2.0f + ImGui::GetStyle().ItemSpacing.x)) / 2;
 
 		std::shared_ptr<InputMapping> input_mapping = gamepad->get_input_mapping();
 		if (input_mapping == NULL || ImGui::Button("Done", ImVec2(100 * scaling, 30 * scaling)))
@@ -599,13 +602,20 @@ static void controller_mapping_popup(std::shared_ptr<GamepadDevice> gamepad)
 
 		ImGui::BeginChildFrame(ImGui::GetID("buttons"), ImVec2(width, 0), ImGuiWindowFlags_None);
 		ImGui::Columns(3, "bindings", false);
-		ImGui::SetColumnWidth(0, col0_width);
-		ImGui::SetColumnWidth(1, col1_width);
+		ImGui::SetColumnWidth(0, col_width);
+		ImGui::SetColumnWidth(1, col_width);
 		for (u32 j = 0; j < ARRAY_SIZE(button_keys); j++)
 		{
 			sprintf(key_id, "key_id%d", j);
 			ImGui::PushID(key_id);
-			ImGui::Text("%s", arcade_button_mode ? arcade_button_names[j] : button_names[j]);
+
+			const char *btn_name = arcade_button_mode ? arcade_button_names[j] : button_names[j];
+			const char *game_btn_name = GetCurrentGameButtonName(button_keys[j]);
+			if (game_btn_name != nullptr)
+				ImGui::Text("%s - %s", btn_name, game_btn_name);
+			else
+				ImGui::Text("%s", btn_name);
+
 			ImGui::NextColumn();
 			u32 code = input_mapping->get_button_code(gamepad_port, button_keys[j]);
 			if (code != (u32)-1)
@@ -638,14 +648,21 @@ static void controller_mapping_popup(std::shared_ptr<GamepadDevice> gamepad)
 		ImGui::Text("  Analog Axes  ");
 		ImGui::BeginChildFrame(ImGui::GetID("analog"), ImVec2(width, 0), ImGuiWindowFlags_None);
 		ImGui::Columns(3, "bindings", false);
-		ImGui::SetColumnWidth(0, col0_width);
-		ImGui::SetColumnWidth(1, col1_width);
+		ImGui::SetColumnWidth(0, col_width);
+		ImGui::SetColumnWidth(1, col_width);
 
 		for (u32 j = 0; j < ARRAY_SIZE(axis_keys); j++)
 		{
 			sprintf(key_id, "axis_id%d", j);
 			ImGui::PushID(key_id);
-			ImGui::Text("%s", arcade_button_mode ? arcade_axis_names[j] : axis_names[j]);
+
+			const char *axis_name = arcade_button_mode ? arcade_axis_names[j] : axis_names[j];
+			const char *game_axis_name = GetCurrentGameAxisName(axis_keys[j]);
+			if (game_axis_name != nullptr)
+				ImGui::Text("%s - %s", axis_name, game_axis_name);
+			else
+				ImGui::Text("%s", axis_name);
+
 			ImGui::NextColumn();
 			u32 code = input_mapping->get_axis_code(gamepad_port, axis_keys[j]);
 			if (code != (u32)-1)

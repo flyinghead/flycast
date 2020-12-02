@@ -54,6 +54,7 @@ button_list[] =
 	{ EMU_BTN_ANA_DOWN, "compat", "btn_analog_down" },
 	{ EMU_BTN_ANA_LEFT, "compat", "btn_analog_left" },
 	{ EMU_BTN_ANA_RIGHT, "compat", "btn_analog_right" },
+	{ DC_BTN_RELOAD, "dreamcast", "reload" },
 };
 
 static struct

@@ -99,11 +99,9 @@ static void set_mouse_position(int x, int y)
 	}
 }
 
-// FIXME this shouldn't be done by port. Need something like: handle_events() then get_port(0), get_port(2), ...
-void input_sdl_handle(u32 port)
+void input_sdl_handle()
 {
-	if (port == 0)	// FIXME hack
-		SDLGamepadDevice::UpdateRumble();
+	SDLGamepadDevice::UpdateRumble();
 
 	#define SET_FLAG(field, mask, expr) (field) = ((expr) ? ((field) & ~(mask)) : ((field) | (mask)))
 	SDL_Event event;

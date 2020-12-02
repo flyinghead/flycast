@@ -1,21 +1,6 @@
 #pragma once
 #include "types.h"
 
-enum PlainJoystickButtonId
-{
-	PJBI_B = 1,
-	PJBI_A = 2,
-	PJBI_START = 3,
-	PJBI_DPAD_UP = 4,
-	PJBI_DPAD_DOWN = 5,
-	PJBI_DPAD_LEFT = 6,
-	PJBI_DPAD_RIGHT = 7,
-	PJBI_Y = 9,
-	PJBI_X = 10,
-
-	PJBI_Count=16
-};
-
 enum PlainJoystickAxisId
 {
 	PJAI_X1 = 0,
@@ -38,12 +23,11 @@ struct PlainJoystickState
 {
 	PlainJoystickState()
 	{
-		kcode=0xFFFF;
 		joy[0]=joy[1]=joy[2]=joy[3]=0x80;
 		trigger[0]=trigger[1]=0;
 	}
 
-	u32 kcode;
+	u32 kcode = ~0;
 
 	u8 joy[PJAI_Count];
 	u8 trigger[PJTI_Count];

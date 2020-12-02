@@ -29,7 +29,7 @@
 #define MAPLE_PORT_CFG_PREFIX "maple_"
 
 // Gamepads
-u16 kcode[4] = { 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF };
+u32 kcode[4] = { ~0u, ~0u, ~0u, ~0u };
 s8 joyx[4];
 s8 joyy[4];
 s8 joyrx[4];
@@ -63,44 +63,44 @@ bool GamepadDevice::gamepad_btn_input(u32 code, bool pressed)
 		if (key == EMU_BTN_NONE)
 			return false;
 
-		if (key < 0x10000)
+		if (key <= DC_BTN_RELOAD)
 		{
 			if (pressed)
 			{
-				kcode[port] &= ~(u16)key;
+				kcode[port] &= ~key;
 				// Avoid two opposite dpad keys being pressed simultaneously
 				switch (key)
 				{
 				case DC_DPAD_UP:
-					kcode[port] |= (u16)DC_DPAD_DOWN;
+					kcode[port] |= DC_DPAD_DOWN;
 					break;
 				case DC_DPAD_DOWN:
-					kcode[port] |= (u16)DC_DPAD_UP;
+					kcode[port] |= DC_DPAD_UP;
 					break;
 				case DC_DPAD_LEFT:
-					kcode[port] |= (u16)DC_DPAD_RIGHT;
+					kcode[port] |= DC_DPAD_RIGHT;
 					break;
 				case DC_DPAD_RIGHT:
-					kcode[port] |= (u16)DC_DPAD_LEFT;
+					kcode[port] |= DC_DPAD_LEFT;
 					break;
 				case DC_DPAD2_UP:
-					kcode[port] |= (u16)DC_DPAD2_DOWN;
+					kcode[port] |= DC_DPAD2_DOWN;
 					break;
 				case DC_DPAD2_DOWN:
-					kcode[port] |= (u16)DC_DPAD2_UP;
+					kcode[port] |= DC_DPAD2_UP;
 					break;
 				case DC_DPAD2_LEFT:
-					kcode[port] |= (u16)DC_DPAD2_RIGHT;
+					kcode[port] |= DC_DPAD2_RIGHT;
 					break;
 				case DC_DPAD2_RIGHT:
-					kcode[port] |= (u16)DC_DPAD2_LEFT;
+					kcode[port] |= DC_DPAD2_LEFT;
 					break;
 				default:
 					break;
 				}
 			}
 			else
-				kcode[port] |= (u16)key;
+				kcode[port] |= key;
 #ifdef TEST_AUTOMATION
 			if (record_input != NULL)
 				fprintf(record_input, "%ld button %x %04x\n", sh4_sched_now64(), port, kcode[port]);

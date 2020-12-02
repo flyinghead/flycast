@@ -202,8 +202,7 @@ void input_evdev_close()
 	EvdevGamepadDevice::CloseDevices();
 }
 
-// FIXME this shouldn't be done by port. Need something like: handle_events() then get_port(0), get_port(2), ...
-bool input_evdev_handle(u32 port)
+bool input_evdev_handle()
 {
 #ifdef USE_UDEV
 	get_udev_events();

@@ -87,7 +87,7 @@ void os_CreateWindow() {
 void os_SetupInput() {
 }
 
-void UpdateInputState(u32 port) {
+void UpdateInputState() {
 
 }
 

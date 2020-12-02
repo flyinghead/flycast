@@ -73,18 +73,18 @@ void os_SetupInput()
 #endif
 }
 
-void UpdateInputState(u32 port)
+void UpdateInputState()
 {
 	#if defined(USE_JOYSTICK)
-		input_joystick_handle(joystick_fd, port);
+		input_joystick_handle(joystick_fd, 0);
 	#endif
 
 	#if defined(USE_EVDEV)
-		input_evdev_handle(port);
+		input_evdev_handle();
 	#endif
 
 	#if defined(USE_SDL)
-		input_sdl_handle(port);
+		input_sdl_handle();
 	#endif
 }
 
