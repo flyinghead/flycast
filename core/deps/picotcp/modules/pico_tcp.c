@@ -596,11 +596,11 @@ static void tcp_add_options(struct pico_socket_tcp *ts, struct pico_frame *f, ui
         f->start[i++] = PICO_TCP_OPTION_SACK_OK;
         f->start[i++] = PICO_TCPOPTLEN_SACK_OK;
     }
-
+#ifdef PICO_USE_WSCALE
     f->start[i++] = PICO_TCP_OPTION_WS;
     f->start[i++] = PICO_TCPOPTLEN_WS;
     f->start[i++] = (uint8_t)(ts->wnd_scale);
-
+#endif
     if ((flags & PICO_TCP_SYN) || ts->ts_ok) {
         f->start[i++] = PICO_TCP_OPTION_TIMESTAMP;
         f->start[i++] = PICO_TCPOPTLEN_TIMESTAMP;
@@ -620,13 +620,18 @@ static uint16_t tcp_options_size_frame(struct pico_frame *f)
 {
     uint16_t size = 0;
 
+#ifdef PICO_USE_WSCALE
     /* Always update window scale. */
     size = (uint16_t)(size + PICO_TCPOPTLEN_WS);
+#endif
     if (f->transport_flags_saved)
         size = (uint16_t)(size + PICO_TCPOPTLEN_TIMESTAMP);
+    if (size != 0)
+    {
+    	size = (uint16_t)(size + PICO_TCPOPTLEN_END);
+    	size = (uint16_t)(((uint16_t)(size + 3u) >> 2u) << 2u);
+    }
 
-    size = (uint16_t)(size + PICO_TCPOPTLEN_END);
-    size = (uint16_t)(((uint16_t)(size + 3u) >> 2u) << 2u);
     return size;
 }
 
@@ -641,10 +646,11 @@ static void tcp_add_options_frame(struct pico_socket_tcp *ts, struct pico_frame 
 
     memset(f->start, PICO_TCP_OPTION_NOOP, optsiz); /* fill blanks with noop */
 
-
+#ifdef PICO_USE_WSCALE
     f->start[i++] = PICO_TCP_OPTION_WS;
     f->start[i++] = PICO_TCPOPTLEN_WS;
     f->start[i++] = (uint8_t)(ts->wnd_scale);
+#endif
 
     if (f->transport_flags_saved) {
         f->start[i++] = PICO_TCP_OPTION_TIMESTAMP;
@@ -692,10 +698,15 @@ static void tcp_set_space(struct pico_socket_tcp *t)
     if (space < 0)
         space = 0;
 
+#ifdef PICO_USE_WSCALE
     while(space > 0xFFFF) {
         space = (int32_t)(((uint32_t)space >> 1u));
         shift++;
     }
+#else
+    if (space > 0xFFFF)
+    	space = 0xFFFF;
+#endif
     tcp_set_space_check_winupdate(t, space, shift);
 }
 
@@ -706,17 +717,15 @@ static uint16_t tcp_options_size(struct pico_socket_tcp *t, uint16_t flags)
     struct tcp_sack_block *sb = t->sacks;
 
     if (flags & PICO_TCP_SYN) { /* Full options */
-        size = PICO_TCPOPTLEN_MSS + PICO_TCP_OPTION_SACK_OK + PICO_TCPOPTLEN_WS + PICO_TCPOPTLEN_TIMESTAMP;
+        size = PICO_TCPOPTLEN_MSS + PICO_TCP_OPTION_SACK_OK + PICO_TCPOPTLEN_TIMESTAMP;
     } else {
-
-        /* Always update window scale. */
-        size = (uint16_t)(size + PICO_TCPOPTLEN_WS);
-
         if (t->ts_ok)
-            size = (uint16_t)(size + PICO_TCPOPTLEN_TIMESTAMP);
-
-        size = (uint16_t)(size + PICO_TCPOPTLEN_END);
+        	size = (uint16_t)(size + PICO_TCPOPTLEN_TIMESTAMP);
     }
+#ifdef PICO_USE_WSCALE
+    /* Always update window scale. */
+    size = (uint16_t)(size + PICO_TCPOPTLEN_WS);
+#endif
 
     if ((flags & PICO_TCP_ACK) && (t->sack_ok && sb)) {
         size = (uint16_t)(size + 2);
@@ -725,8 +734,11 @@ static uint16_t tcp_options_size(struct pico_socket_tcp *t, uint16_t flags)
             sb = sb->next;
         }
     }
-
-    size = (uint16_t)(((size + 3u) >> 2u) << 2u);
+    if (size != 0)
+    {
+    	size = (uint16_t)(size + PICO_TCPOPTLEN_END);
+    	size = (uint16_t)(((size + 3u) >> 2u) << 2u);
+    }
     return size;
 }
 
@@ -2177,6 +2189,8 @@ static int tcp_ack(struct pico_socket *s, struct pico_frame *f)
                (ACKN(f) != t->snd_nxt))              /* There is something in flight awaiting to be acked... */
     {
         /* Process incoming duplicate ack. */
+    	if (t->x_mode == PICO_TCP_WINDOW_FULL)
+    		t->x_mode = PICO_TCP_LOOKAHEAD;
         if (t->x_mode < PICO_TCP_RECOVER) {
             t->x_mode++;
             tcp_dbg("Mode: DUPACK %d, due to PURE ACK %0x, len = %d\n", t->x_mode, SEQN(f), f->payload_len);
@@ -2197,7 +2211,7 @@ static int tcp_ack(struct pico_socket *s, struct pico_frame *f)
                     t->ssthresh = 2;
             }
         } else if (t->x_mode == PICO_TCP_RECOVER) {
-            /* tcp_dbg("TCP RECOVER> DUPACK! snd_una: %08x, snd_nxt: %08x, acked now: %08x\n", SEQN(first_segment(&t->tcpq_out)), t->snd_nxt, ACKN(f)); */
+            tcp_dbg("TCP RECOVER> DUPACK! snd_una: %08x, snd_nxt: %08x, acked now: %08x\n", SEQN((struct pico_frame *)first_segment(&t->tcpq_out)), t->snd_nxt, ACKN(f));
             if (t->in_flight <= t->cwnd) {
                 struct pico_frame *nxt = peek_segment(&t->tcpq_out, t->snd_retry);
                 if (!nxt)
@@ -2217,7 +2231,7 @@ static int tcp_ack(struct pico_socket *s, struct pico_frame *f)
                     nxt = first_segment(&t->tcpq_out);
 
                 if (nxt) {
-                    tcp_retrans(t, peek_segment(&t->tcpq_out, t->snd_retry));
+                    tcp_retrans(t, nxt);
                     t->snd_retry = SEQN(nxt);
                 }
             }
@@ -2935,6 +2949,15 @@ static struct pico_frame *tcp_split_segment(struct pico_socket_tcp *t, struct pi
     if (pico_enqueue_segment(&t->tcpq_out, f2) < 0) {
         tcp_dbg("Discarding invalid segment\n");
         pico_frame_discard(f2);
+        f2 = NULL;
+    }
+    /* Enqueue f1 */
+    if (pico_enqueue_segment(&t->tcpq_out, f1) < 0) {
+        tcp_dbg("Discarding invalid segment f1\n");
+        pico_frame_discard(f1);
+        if (f2)
+	        pico_discard_segment(&t->tcpq_out, f2);
+        return NULL;
     }
 
     /* Return the partial frame */
@@ -2955,7 +2978,6 @@ int pico_tcp_output(struct pico_socket *s, int loop_score)
 
     while((f) && (t->cwnd >= t->in_flight)) {
         f->timestamp = TCP_TIME;
-        add_retransmission_timer(t, t->rto + TCP_TIME);
         tcp_add_options_frame(t, f);
         seq_diff = pico_seq_compare(SEQN(f), SEQN(una));
         if (seq_diff < 0) {
@@ -2965,22 +2987,22 @@ int pico_tcp_output(struct pico_socket *s, int loop_score)
 
         /* Check if advertised window is full */
         if ((uint32_t)seq_diff >= (uint32_t)(t->recv_wnd << t->recv_wnd_scale)) {
-            if (t->x_mode != PICO_TCP_WINDOW_FULL) {
+            if (t->x_mode == PICO_TCP_LOOKAHEAD) {
                 tcp_dbg("TCP> RIGHT SIZING (rwnd: %d, frame len: %d\n", t->recv_wnd << t->recv_wnd_scale, f->payload_len);
                 tcp_dbg("In window full...\n");
                 t->snd_nxt = SEQN(f);
-                t->snd_retry = SEQN(f);
                 t->x_mode = PICO_TCP_WINDOW_FULL;
             }
-            // TODO ? add_retransmission_timer(t, 0);
             break;
         }
 
         /* Check if the advertised window is too small to receive the current frame */
         if ((uint32_t)(seq_diff + f->payload_len) > (uint32_t)(t->recv_wnd << t->recv_wnd_scale)) {
-            f = tcp_split_segment(t, f, (uint16_t)(t->recv_wnd << t->recv_wnd_scale));
+            f = tcp_split_segment(t, f, (uint16_t)((t->recv_wnd << t->recv_wnd_scale) - seq_diff));
             if (!f)
                 break;
+            /* if we split the first segment, it has changed */
+            una = first_segment(&t->tcpq_out);
 
             /* Limit sending window to packets in flight (right sizing) */
             t->cwnd = (uint16_t)t->in_flight;
@@ -3008,6 +3030,8 @@ int pico_tcp_output(struct pico_socket *s, int loop_score)
     } else {
         /* Nothing to transmit. */
     }
+    if (sent > 0)
+        add_retransmission_timer(t, 0);
 
     if ((t->tcpq_out.frames == 0) && (s->state & PICO_SOCKET_STATE_SHUT_LOCAL)) {              /* if no more packets in queue, XXX replaced !f by tcpq check */
         if(!checkLocalClosing(&t->sock))              /* check if local closing started and send fin */

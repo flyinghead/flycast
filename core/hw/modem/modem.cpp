@@ -122,7 +122,7 @@ static void DSPTestStart();
 static void DSPTestEnd();
 
 static u64 last_dial_time;
-static u64 connected_time;
+static bool data_sent;
 
 #ifndef NDEBUG
 static double last_comm_stats;
@@ -267,7 +267,7 @@ static int modem_sched_func(int tag, int cycles, int jitter)
 			start_pppd();
 			connect_state = CONNECTED;
 			callback_cycles = SH4_MAIN_CLOCK / 1000000 * 238;	// 238 us
-			connected_time = 0;
+			data_sent = false;
 
 			break;
 
@@ -281,21 +281,17 @@ static int modem_sched_func(int tag, int cycles, int jitter)
 					LOG("modem_regs %02x == %02x", i, modem_regs.ptr[i]);
 			}
 #endif
-			if (connected_time == 0)
-				connected_time = sh4_sched_now64();
-
 			// This value is critical. Setting it too low will cause some sockets to stall.
 			// Check Sonic Adventure 2 and Samba de Amigo (PAL) integrated browsers.
-			// 143 us/bytes corresponds to 56K but is too low for SA2 and SdA. They need >= 160.
-			// Using 166 for now (~ 48Kbps)
-			callback_cycles = SH4_MAIN_CLOCK / 1000000 * 166;
+			// 143 us/bytes corresponds to 56K
+			callback_cycles = SH4_MAIN_CLOCK / 1000000 * 143;
 			modem_regs.reg1e.TDBE = 1;
 
-			if (!modem_regs.reg1e.RDBF)
+			// Let WinCE send data first to avoid choking it
+			if (!modem_regs.reg1e.RDBF && data_sent)
 			{
 				int c = read_pppd();
-				// Delay reading from ppp to avoid choking WinCE
-				if (c >= 0 && sh4_sched_now64() - connected_time >= SH4_MAIN_CLOCK / 4)
+				if (c >= 0)
 				{
 					//LOG("pppd received %02x", c);
 #ifndef NDEBUG
@@ -521,6 +517,7 @@ static void ModemNormalWrite(u32 reg, u32 data)
 		else if (connect_state == CONNECTED && modem_regs.reg08.RTS)
 		{
 			//LOG("ModemNormalWrite : TBUFFER = %X", data);
+			data_sent = true;
 #ifndef NDEBUG
 			sent_bytes++;
 			if (sent_fp)

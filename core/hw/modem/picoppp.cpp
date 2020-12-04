@@ -82,12 +82,13 @@ struct socket_pair
 	pico_socket *pico_sock;
 	sock_t native_sock;
 	std::vector<char> in_buffer;
+	bool shutdown = false;
 
 	void receive_native()
 	{
 		size_t len;
 		const char *data;
-		char buf[512];
+		char buf[536];
 
 		if (!in_buffer.empty())
 		{
@@ -97,12 +98,18 @@ struct socket_pair
 		else
 		{
 			if (native_sock == INVALID_SOCKET)
+			{
+				if (!shutdown && pico_sock->q_out.size == 0)
+				{
+					pico_socket_shutdown(pico_sock, PICO_SHUT_RDWR);
+					shutdown = true;
+				}
 				return;
+			}
 			int r = recv(native_sock, buf, sizeof(buf), 0);
 			if (r == 0)
 			{
 				INFO_LOG(MODEM, "Socket[%d] recv(%zd) returned 0 -> EOF", short_be(pico_sock->remote_port), sizeof(buf));
-				pico_socket_shutdown(pico_sock, PICO_SHUT_RDWR);
 				closesocket(native_sock);
 				native_sock = INVALID_SOCKET;
 				return;
@@ -114,7 +121,6 @@ struct socket_pair
 					perror("recv tcp socket");
 					closesocket(native_sock);
 					native_sock = INVALID_SOCKET;
-					pico_socket_shutdown(pico_sock, PICO_SHUT_RDWR);
 				}
 				return;
 			}
@@ -308,6 +314,7 @@ static void tcp_callback(uint16_t ev, struct pico_socket *s)
 			pico_ipv4_to_string(peer, sock_a->local_addr.ip4.addr);
 			//printf("Connection established from port %d to %s:%d\n", short_be(port), peer, short_be(sock_a->local_port));
 			pico_socket_setoption(sock_a, PICO_TCP_NODELAY, &yes);
+			pico_tcp_set_linger(sock_a, 10000);
 			/* Set keepalive options */
 	//		uint32_t ka_val = 5;
 	//		pico_socket_setoption(sock_a, PICO_SOCKET_OPT_KEEPCNT, &ka_val);
