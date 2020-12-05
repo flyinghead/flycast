@@ -171,6 +171,13 @@ static void LoadSpecialSettings()
 			settings.rend.ExtraDepthScale = 100;
 			extra_depth_game = true;
 		}
+		// Samurai Shodown 6 dc port
+		else if (!strncmp("T0002M", prod_id, 6))
+		{
+			INFO_LOG(BOOT, "Enabling Extra depth scaling for game %s", prod_id);
+			settings.rend.ExtraDepthScale = 1e26;
+			extra_depth_game = true;
+		}
 		// Super Producers
 		if (!strncmp("T14303M", prod_id, 7)
 			// Giant Killers
@@ -196,7 +203,11 @@ static void LoadSpecialSettings()
 			// StarLancer (EU) (for online support)
 			|| !strncmp("T17723D 05", prod_id, 10)
 			// Heroes of might and magic III
-			|| !strncmp("T0000M", prod_id, 6))
+			|| !strncmp("T0000M", prod_id, 6)
+			// WebTV
+			|| !strncmp("6107117", prod_id, 7)
+			// PBA
+			|| !strncmp("T26702N", prod_id, 7))
 		{
 			INFO_LOG(BOOT, "Disabling 32-bit virtual memory for game %s", prod_id);
 			settings.dynarec.disable_vmem32 = true;
