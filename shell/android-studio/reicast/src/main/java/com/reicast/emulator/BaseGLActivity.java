@@ -289,11 +289,11 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+            super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == AUDIO_PERM_REQUEST && permissions.length > 0
                 && Manifest.permission.RECORD_AUDIO .equals(permissions[0]) && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
             SipEmulator sip = new SipEmulator();
-            sip.startRecording();
             JNIdc.setupMic(sip);
         }
         else if (requestCode == STORAGE_PERM_REQUEST) {

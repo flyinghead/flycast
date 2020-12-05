@@ -261,6 +261,8 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_setGameUri(JNIEnv *en
 //stuff for microphone
 jobject sipemu;
 jmethodID getmicdata;
+jmethodID startRecordingMid;
+jmethodID stopRecordingMid;
 
 //stuff for audio
 #define SAMPLE_COUNT 512
@@ -273,7 +275,9 @@ static jobject g_audioBackend;
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_setupMic(JNIEnv *env,jobject obj,jobject sip)
 {
     sipemu = env->NewGlobalRef(sip);
-    getmicdata = env->GetMethodID(env->GetObjectClass(sipemu),"getData","()[B");
+    getmicdata = env->GetMethodID(env->GetObjectClass(sipemu),"getData","(I)[B");
+    startRecordingMid = env->GetMethodID(env->GetObjectClass(sipemu),"startRecording","(I)V");
+    stopRecordingMid = env->GetMethodID(env->GetObjectClass(sipemu),"stopRecording","()V");
 }
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_pause(JNIEnv *env,jobject obj)
@@ -437,7 +441,7 @@ JNIEXPORT jboolean JNICALL Java_com_reicast_emulator_emu_JNIdc_guiIsContentBrows
 }
 
 // Audio Stuff
-u32 androidaudio_push(const void* frame, u32 amt, bool wait)
+static u32 androidaudio_push(const void* frame, u32 amt, bool wait)
 {
     verify(amt==SAMPLE_COUNT);
     //yeah, do some audio piping magic here !
@@ -445,14 +449,40 @@ u32 androidaudio_push(const void* frame, u32 amt, bool wait)
     return jvm_attacher.getEnv()->CallIntMethod(g_audioBackend, writeBufferMid, jsamples, wait);
 }
 
-void androidaudio_init()
+static void androidaudio_init()
 {
 	jvm_attacher.getEnv()->CallVoidMethod(g_audioBackend, audioInitMid);
 }
 
-void androidaudio_term()
+static void androidaudio_term()
 {
 	jvm_attacher.getEnv()->CallVoidMethod(g_audioBackend, audioTermMid);
+}
+
+static bool androidaudio_init_record(u32 sampling_freq)
+{
+	if (sipemu == nullptr)
+		return false;
+	jvm_attacher.getEnv()->CallVoidMethod(sipemu, startRecordingMid, sampling_freq);
+	return true;
+}
+
+static void androidaudio_term_record()
+{
+	jvm_attacher.getEnv()->CallVoidMethod(sipemu, stopRecordingMid);
+}
+
+static u32 androidaudio_record(void *buffer, u32 samples)
+{
+    jbyteArray jdata = (jbyteArray)jvm_attacher.getEnv()->CallObjectMethod(sipemu, getmicdata, samples);
+    if (jdata == NULL)
+        return 0;
+    jsize size = jvm_attacher.getEnv()->GetArrayLength(jdata);
+    samples = std::min(samples, (u32)size * 2);
+    jvm_attacher.getEnv()->GetByteArrayRegion(jdata, 0, samples * 2, (jbyte*)buffer);
+    jvm_attacher.getEnv()->DeleteLocalRef(jdata);
+
+    return samples;
 }
 
 audiobackend_t audiobackend_android = {
@@ -461,7 +491,10 @@ audiobackend_t audiobackend_android = {
         &androidaudio_init,
         &androidaudio_push,
         &androidaudio_term,
-        NULL
+        NULL,
+		&androidaudio_init_record,
+		&androidaudio_record,
+		&androidaudio_term_record
 };
 
 static bool android = RegisterAudioBackend(&audiobackend_android);
@@ -488,18 +521,6 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_AudioBackend_setInstance(JN
             jsamples = (jshortArray) env->NewGlobalRef(jsamples);
         }
     }
-}
-
-int get_mic_data(u8* buffer)
-{
-    jbyteArray jdata = (jbyteArray)jvm_attacher.getEnv()->CallObjectMethod(sipemu,getmicdata);
-    if(jdata==NULL){
-        //LOGW("get_mic_data NULL");
-        return 0;
-    }
-    jvm_attacher.getEnv()->GetByteArrayRegion(jdata, 0, SIZE_OF_MIC_DATA, (jbyte*)buffer);
-    jvm_attacher.getEnv()->DeleteLocalRef(jdata);
-    return 1;
 }
 
 void os_DebugBreak()

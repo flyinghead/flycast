@@ -115,10 +115,7 @@ struct maple_device
 };
 
 maple_device* maple_Create(MapleDeviceType type);
-#define SIZE_OF_MIC_DATA	480 //ALSO DEFINED IN SipEmulator.java
-#ifndef TARGET_PANDORA
-int get_mic_data(u8* buffer); //implemented in Android.cpp
-#endif
+
 void push_vmu_screen(int bus_id, int bus_port, u8* buffer);
 #define MAPLE_PORTS 4
 

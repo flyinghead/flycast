@@ -45,8 +45,6 @@ int darw_printf(const char* text, ...)
     return 0;
 }
 
-int get_mic_data(u8* buffer) { return 0; }
-
 void os_SetWindowText(const char * text) {
     puts(text);
 }

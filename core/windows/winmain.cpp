@@ -808,5 +808,3 @@ void os_DoEvents()
 		DispatchMessage(&msg);
 	}
 }
-
-int get_mic_data(u8* buffer) { return 0; }

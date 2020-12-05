@@ -14,6 +14,9 @@ static u32 WritePtr;  //last WRITTEN sample
 static audiobackend_t *audiobackend_current = nullptr;
 static std::unique_ptr<std::vector<audiobackend_t *>> audiobackends;	// Using a pointer to avoid out of order init
 
+static bool audio_recording_started;
+static bool eight_khz;
+
 u32 GetAudioBackendCount()
 {
 	return audiobackends != nullptr ? audiobackends->size() : 0;
@@ -120,13 +123,52 @@ void InitAudio()
 
 	INFO_LOG(AUDIO, "Initializing audio backend \"%s\" (%s)...", audiobackend_current->slug.c_str(), audiobackend_current->name.c_str());
 	audiobackend_current->init();
+	if (audio_recording_started)
+	{
+		// Restart recording
+		audio_recording_started = false;
+		StartAudioRecording(eight_khz);
+	}
 }
 
 void TermAudio()
 {
 	if (audiobackend_current != nullptr) {
+		// Save recording state before stopping
+		bool rec_started = audio_recording_started;
+		StopAudioRecording();
+		audio_recording_started = rec_started;
 		audiobackend_current->term();
 		INFO_LOG(AUDIO, "Terminating audio backend \"%s\" (%s)...", audiobackend_current->slug.c_str(), audiobackend_current->name.c_str());
 		audiobackend_current = nullptr;
 	}
+}
+
+void StartAudioRecording(bool eight_khz)
+{
+	::eight_khz = eight_khz;
+	if (audiobackend_current != nullptr)
+	{
+		audio_recording_started = false;
+		if (audiobackend_current->init_record != nullptr)
+			audio_recording_started = audiobackend_current->init_record(eight_khz ? 8000 : 11025);
+	}
+	else
+		// might be called between TermAudio/InitAudio
+		audio_recording_started = true;
+}
+
+u32 RecordAudio(void *buffer, u32 samples)
+{
+	if (!audio_recording_started || audiobackend_current == nullptr)
+		return 0;
+	return audiobackend_current->record(buffer, samples);
+}
+
+void StopAudioRecording()
+{
+	// might be called between TermAudio/InitAudio
+	if (audio_recording_started && audiobackend_current != nullptr && audiobackend_current->term_record != nullptr)
+		audiobackend_current->term_record();
+	audio_recording_started = false;
 }

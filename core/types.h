@@ -257,6 +257,8 @@ bool dc_unserialize(void **data, unsigned int *total_size);
 #define REICAST_SA(v_arr,num) rc_serialize((v_arr), sizeof((v_arr)[0])*(num), data, total_size)
 #define REICAST_USA(v_arr,num) rc_unserialize((v_arr), sizeof((v_arr)[0])*(num), data, total_size)
 
+#define REICAST_SKIP(size) do { if (*data) *(u8**)data += (size); *total_size += (size); } while (false)
+
 #ifndef _MSC_VER
 #define stricmp strcasecmp
 #endif

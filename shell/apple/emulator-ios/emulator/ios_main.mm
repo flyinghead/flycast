@@ -90,7 +90,3 @@ void os_SetupInput() {
 void UpdateInputState() {
 
 }
-
-void get_mic_data(u8* ) {
-
-}

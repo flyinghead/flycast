@@ -6,6 +6,7 @@
 #include "hw/pvr/spg.h"
 #include "input/gamepad_device.h"
 #include "stdclass.h"
+#include "oslib/audiostream.h"
 
 #include <algorithm>
 #include <array>
@@ -838,39 +839,54 @@ struct maple_sega_vmu: maple_base
 
 struct maple_microphone: maple_base
 {
-	u8 micdata[SIZE_OF_MIC_DATA];
+	u32 gain;
+	bool sampling;
+	bool eight_khz;
 
-	virtual MapleDeviceType get_device_type()
+	virtual ~maple_microphone()
+	{
+		if (sampling)
+			StopAudioRecording();
+	}
+	virtual MapleDeviceType get_device_type() override
 	{
 		return MDT_Microphone;
 	}
 
-	virtual bool maple_serialize(void **data, unsigned int *total_size)
+	virtual bool maple_serialize(void **data, unsigned int *total_size) override
 	{
-		REICAST_SA(micdata,SIZE_OF_MIC_DATA);
-		return true ;
+		REICAST_S(gain);
+		REICAST_S(sampling);
+		REICAST_S(eight_khz);
+		REICAST_SKIP(480 - sizeof(u32) - sizeof(bool) * 2);
+		return true;
 	}
-	virtual bool maple_unserialize(void **data, unsigned int *total_size)
+	virtual bool maple_unserialize(void **data, unsigned int *total_size) override
 	{
-		REICAST_USA(micdata,SIZE_OF_MIC_DATA);
-		return true ;
+		if (sampling)
+			StopAudioRecording();
+		REICAST_US(gain);
+		REICAST_US(sampling);
+		REICAST_US(eight_khz);
+		REICAST_SKIP(480 - sizeof(u32) - sizeof(bool) * 2);
+		if (sampling)
+			StartAudioRecording(eight_khz);
+		return true;
 	}
-	virtual void OnSetup()
+	virtual void OnSetup() override
 	{
-		memset(micdata,0,sizeof(micdata));
+		gain = 0xf;
+		sampling = false;
+		eight_khz = false;
 	}
 
-	virtual u32 dma(u32 cmd)
+	virtual u32 dma(u32 cmd) override
 	{
-		//printf("maple_microphone::dma Called 0x%X;Command %d\n",this->maple_port,cmd);
-		//LOGD("maple_microphone::dma Called 0x%X;Command %d\n",this->maple_port,cmd);
-
 		switch (cmd)
 		{
 		case MDC_DeviceRequest:
 		case MDC_AllStatusReq:
 			DEBUG_LOG(MAPLE, "maple_microphone::dma MDC_DeviceRequest");
-			//this was copied from the controller case with just the id and name replaced!
 
 			//caps
 			//4
@@ -878,9 +894,9 @@ struct maple_microphone: maple_base
 
 			//struct data
 			//3*4
-			w32( 0xfe060f00);
-			w32( 0);
-			w32( 0);
+			w32(0xf0000000);
+			w32(0);
+			w32(0);
 
 			//1	area code
 			w8(0xFF);
@@ -889,140 +905,103 @@ struct maple_microphone: maple_base
 			w8(0);
 
 			//30
-			wstr(maple_sega_mic_name,30);
+			wstr(maple_sega_mic_name, 30);
 
 			//60
-			wstr(maple_sega_brand,60);
+			wstr(maple_sega_brand, 60);
 
 			//2
-			w16(0x01AE);	// 43 mA
+			w16(0x012C);	// 30 mA
 
 			//2
-			w16(0x01F4);	// 50 mA
+			w16(0x012C);	// 30 mA
 
 			return cmd == MDC_DeviceRequest ? MDRS_DeviceStatus : MDRS_DeviceStatusAll;
 
-		case MDCF_GetCondition:
-			{
-				DEBUG_LOG(MAPLE, "maple_microphone::dma MDCF_GetCondition");
-				//this was copied from the controller case with just the id replaced!
-
-				//PlainJoystickState pjs;
-				//config->GetInput(&pjs);
-				//caps
-				//4
-				w32(MFID_4_Mic);
-
-				//state data
-				//2 key code
-				//w16(pjs.kcode);
-
-				//triggers
-				//1 R
-				//w8(pjs.trigger[PJTI_R]);
-				//1 L
-				//w8(pjs.trigger[PJTI_L]);
-
-				//joyx
-				//1
-				//w8(pjs.joy[PJAI_X1]);
-				//joyy
-				//1
-				//w8(pjs.joy[PJAI_Y1]);
-
-				//not used
-				//1
-				w8(0x80);
-				//1
-				w8(0x80);
-			}
-
-			return MDRS_DataTransfer;
-
 		case MDC_DeviceReset:
-			//uhhh do nothing?
 			DEBUG_LOG(MAPLE, "maple_microphone::dma MDC_DeviceReset");
+			if (sampling)
+				StopAudioRecording();
+			OnSetup();
 			return MDRS_DeviceReply;
 
 		case MDCF_MICControl:
 		{
-			//LOGD("maple_microphone::dma handling MDCF_MICControl %d\n",cmd);
-			//MONEY
 			u32 function=r32();
-			//LOGD("maple_microphone::dma MDCF_MICControl function (1st word) %#010x\n", function);
-			//LOGD("maple_microphone::dma MDCF_MICControl words: %d\n", dma_count_in);
 
 			switch(function)
 			{
 			case MFID_4_Mic:
 			{
-				//MAGIC HERE
-				//http://dcemulation.org/phpBB/viewtopic.php?f=34&t=69600
-				// <3 <3 BlueCrab <3 <3
-				/*
-				2nd word               What it does:
-				0x0000??03          Sets the amplifier gain, ?? can be from 00 to 1F
-									0x0f = default
-				0x00008002          Enables recording
-				0x00000001          Returns sampled data while recording is enabled
-									While not enabled, returns status of the mic.
-				0x00000002          Disables recording
-				 *
-				 */
-				u32 secondword=r32();
-				//LOGD("maple_microphone::dma MDCF_MICControl subcommand (2nd word) %#010x\n", subcommand);
+				u32 subcommand = r8();
+				u32 dt1 = r8();
+				u16 dt23 = r16();
 
-				u32 subcommand = secondword & 0xFF; //just get last byte for now, deal with params later
-
-				//LOGD("maple_microphone::dma MDCF_MICControl (3rd word) %#010x\n", r32());
-				//LOGD("maple_microphone::dma MDCF_MICControl (4th word) %#010x\n", r32());
 				switch(subcommand)
 				{
-				case 0x01:
+				case 0x01:	// Get_Sampling_Data
 				{
-					//LOGI("maple_microphone::dma MDCF_MICControl someone wants some data! (2nd word) %#010x\n", secondword);
-
 					w32(MFID_4_Mic);
 
-					//from what i can tell this is up to spec but results in transmit again
-					//w32(secondword);
+					u8 micdata[240 * 2];
+					u32 samples = RecordAudio(micdata, 240);
 
 					//32 bit header
-					w8(0x04);//status (just the bit for recording)
-					w8(0x0f);//gain (default)
-					w8(0);//exp ?
-#ifndef TARGET_PANDORA
-					if(get_mic_data(micdata)){
-						w8(240);//ct (240 samples)
-						wptr(micdata, SIZE_OF_MIC_DATA);
-					}else
-#endif
-					{
-						w8(0);
-					}
+			        //status: bit   7      6     5 4      3      2    1    0
+			        //        name  EX_BIT SBFOV 0 14LSB1 14LSB0 SMPL ulaw Fs
+					w8((sampling << 2) | eight_khz);
+					w8(gain); // gain
+					w8(0);    //(unused)
+					w8(samples); // sample count (max 240)
+
+					wptr(micdata, ((samples + 1) >> 1) << 2);
 
 					return MDRS_DataTransfer;
 				}
-				case 0x02:
-					DEBUG_LOG(MAPLE, "maple_microphone::dma MDCF_MICControl toggle recording %#010x", secondword);
+
+				case 0x02:	// Basic_Control
+					DEBUG_LOG(MAPLE, "maple_microphone::dma MDCF_MICControl Basic_Control DT1 %02x", dt1);
+					eight_khz = ((dt1 >> 2) & 3) == 1;
+					if (((dt1 & 0x80) == 0x80) != sampling)
+					{
+						if (sampling)
+							StopAudioRecording();
+						else
+							StartAudioRecording(eight_khz);
+						sampling = (dt1 & 0x80) == 0x80;
+					}
 					return MDRS_DeviceReply;
-				case 0x03:
-					DEBUG_LOG(MAPLE, "maple_microphone::dma MDCF_MICControl set gain %#010x", secondword);
+
+				case 0x03:	// AMP_GAIN
+					gain = dt1;
+					DEBUG_LOG(MAPLE, "maple_microphone::dma MDCF_MICControl set gain %x", gain);
 					return MDRS_DeviceReply;
+
+				case 0x04:	// EXTU_BIT
+					DEBUG_LOG(MAPLE, "maple_microphone::dma MDCF_MICControl EXTU_BIT %#010x", dt1);
+					return MDRS_DeviceReply;
+
+				case 0x05:	// Volume_Mode
+					DEBUG_LOG(MAPLE, "maple_microphone::dma MDCF_MICControl Volume_Mode %#010x", dt1);
+					return MDRS_DeviceReply;
+
 				case MDRE_TransmitAgain:
 					WARN_LOG(MAPLE, "maple_microphone::dma MDCF_MICControl MDRE_TransmitAgain");
 					//apparently this doesnt matter
 					//wptr(micdata, SIZE_OF_MIC_DATA);
 					return MDRS_DeviceReply;//MDRS_DataTransfer;
+
 				default:
-					INFO_LOG(MAPLE, "maple_microphone::dma UNHANDLED secondword %#010x", secondword);
+					INFO_LOG(MAPLE, "maple_microphone::dma UNHANDLED DT1 %02x DT23 %04x", dt1, dt23);
 					return MDRE_UnknownFunction;
 				}
 			}
+
 			default:
 				INFO_LOG(MAPLE, "maple_microphone::dma UNHANDLED function %#010x", function);
 				return MDRE_UnknownFunction;
 			}
+			break;
 		}
 
 		case MDC_DeviceKill:

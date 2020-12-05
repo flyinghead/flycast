@@ -434,8 +434,6 @@ int main(int argc, char* argv[])
 }
 #endif
 
-int get_mic_data(u8* buffer) { return 0; }
-
 void os_DebugBreak()
 {
 	raise(SIGTRAP);

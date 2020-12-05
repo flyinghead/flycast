@@ -15,6 +15,9 @@ void* SoundThread(void* param);
 static IDirectSound8* dsound;
 static IDirectSoundBuffer8* buffer;
 
+static IDirectSoundCapture8 *dcapture;
+static IDirectSoundCaptureBuffer8 *capture_buffer;
+
 static u32 ds_ring_size;
 
 static void directsound_init()
@@ -144,13 +147,79 @@ static void directsound_term()
 	dsound->Release();
 }
 
+static bool directsound_init_record(u32 sampling_freq)
+{
+	if (FAILED(DirectSoundCaptureCreate8(&DSDEVID_DefaultVoiceCapture, &dcapture, NULL)))
+	{
+		INFO_LOG(AUDIO, "DirectSound capture device creation failed");
+		return false;
+	}
+	HRESULT hr;
+	WAVEFORMATEX wfx =
+	{ WAVE_FORMAT_PCM, 1, sampling_freq, sampling_freq * 2, 2, 16, 0 };
+	// wFormatTag, nChannels, nSamplesPerSec, nAvgBytesPerSec,
+	// nBlockAlign, wBitsPerSample, cbSize
+
+	DSCBUFFERDESC dscbd;
+	dscbd.dwSize = sizeof(DSCBUFFERDESC);
+	dscbd.dwFlags = 0;
+	dscbd.dwBufferBytes = 480 * 2;
+	dscbd.dwReserved = 0;
+	dscbd.lpwfxFormat = &wfx;
+	dscbd.dwFXCount = 0;
+	dscbd.lpDSCFXDesc = NULL;
+
+	LPDIRECTSOUNDCAPTUREBUFFER pDSCB;
+	if (FAILED(hr = dcapture->CreateCaptureBuffer(&dscbd, &pDSCB, NULL)))
+	{
+		INFO_LOG(AUDIO, "DirectSound capture buffer creation failed");
+		dcapture->Release();
+		dcapture = NULL;
+		return false;
+	}
+	pDSCB->QueryInterface(IID_IDirectSoundCaptureBuffer8, (LPVOID*)&capture_buffer);
+	pDSCB->Release();
+	capture_buffer->Start(DSCBSTART_LOOPING);
+	INFO_LOG(AUDIO, "DirectSound capture device and buffer created");
+
+	return true;
+}
+
+static u32 directsound_record(void *buffer, u32 samples)
+{
+	DWORD readPos;
+	capture_buffer->GetCurrentPosition(NULL, &readPos);
+	void *p1, *p2;
+	DWORD p1bytes, p2bytes;
+	capture_buffer->Lock(readPos, samples * 2, &p1, &p1bytes, &p2, &p2bytes, 0);
+	memcpy(buffer, p1, p1bytes);
+	if (p2bytes > 0)
+		memcpy((u8 *)buffer + p1bytes, p2, p2bytes);
+	capture_buffer->Unlock(p1, p1bytes, p2, p2bytes);
+	return (p1bytes + p2bytes) / 2;
+}
+
+static void directsound_term_record()
+{
+	if (dcapture == NULL)
+		return;
+	capture_buffer->Stop();
+	capture_buffer->Release();
+	capture_buffer = NULL;
+	dcapture->Release();
+	dcapture = NULL;
+}
+
 static audiobackend_t audiobackend_directsound = {
-    "directsound", // Slug
-    "Microsoft DirectSound", // Name
-    &directsound_init,
-    &directsound_push,
-    &directsound_term,
-	NULL
+	"directsound", // Slug
+	"Microsoft DirectSound", // Name
+	&directsound_init,
+	&directsound_push,
+	&directsound_term,
+	NULL,
+	&directsound_init_record,
+	&directsound_record,
+	&directsound_term_record
 };
 
 static bool ds = RegisterAudioBackend(&audiobackend_directsound);

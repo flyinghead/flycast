@@ -17,8 +17,6 @@
 #include "hw/naomi/naomi_cart.h"
 #include "hw/sh4/sh4_cache.h"
 
-#define REICAST_SKIP(size) do { if (*data) *(u8**)data += (size); *total_size += (size); } while (false)
-
 extern "C" void DYNACALL TAWriteSQ(u32 address,u8* sqb);
 
 //./core/hw/arm7/arm_mem.cpp

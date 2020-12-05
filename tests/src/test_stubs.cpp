@@ -35,8 +35,3 @@ void os_DoEvents()
 void os_CreateWindow()
 {
 }
-
-int get_mic_data(u8* buffer)
-{
-	return 0;
-}

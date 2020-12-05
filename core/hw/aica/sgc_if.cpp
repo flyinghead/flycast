@@ -23,7 +23,7 @@
 #include "aica_if.h"
 #include "aica_mem.h"
 #include "dsp.h"
-#include "oslib/oslib.h"
+#include "oslib/audiostream.h"
 
 #include <algorithm>
 #include <cmath>
