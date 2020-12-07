@@ -41,7 +41,7 @@ static void sdl_open_joystick(int index)
 		INFO_LOG(INPUT, "SDL: Cannot open joystick %d", index + 1);
 		return;
 	}
-	std::shared_ptr<SDLGamepadDevice> gamepad = std::make_shared<SDLGamepadDevice>(index < MAPLE_PORTS ? index : -1, pJoystick);
+	std::shared_ptr<SDLGamepadDevice> gamepad = std::make_shared<SDLGamepadDevice>(index < MAPLE_PORTS ? index : -1, index, pJoystick);
 	SDLGamepadDevice::AddSDLGamepad(gamepad);
 }
 
@@ -59,9 +59,17 @@ void input_sdl_init()
 		// We want joystick events even if we loose focus
 		SDL_SetHint(SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS, "1");
 		if (SDL_InitSubSystem(SDL_INIT_JOYSTICK) < 0)
-		{
 			die("SDL: error initializing Joystick subsystem");
+
+		std::string db = get_readonly_data_path("gamecontrollerdb.txt");
+		int rv = SDL_GameControllerAddMappingsFromFile(db.c_str());
+		if (rv < 0)
+		{
+			db = get_readonly_config_path("gamecontrollerdb.txt");
+			rv = SDL_GameControllerAddMappingsFromFile(db.c_str());
 		}
+		if (rv > 0)
+			DEBUG_LOG(INPUT ,"%d mappings loaded from %s", rv, db.c_str());
 	}
 	if (SDL_WasInit(SDL_INIT_HAPTIC) == 0)
 		SDL_InitSubSystem(SDL_INIT_HAPTIC);
