@@ -64,7 +64,7 @@ protected:
 class DecryptedCartridge : public NaomiCartridge
 {
 public:
-	DecryptedCartridge(u8 *rom_ptr, u32 size) : NaomiCartridge(size) { RomPtr = rom_ptr; }
+	DecryptedCartridge(u8 *rom_ptr, u32 size) : NaomiCartridge(size) { free(RomPtr); RomPtr = rom_ptr; }
 	virtual ~DecryptedCartridge() override;
 };
 
