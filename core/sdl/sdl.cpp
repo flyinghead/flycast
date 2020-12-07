@@ -10,6 +10,7 @@
 #include "sdl_keyboard.h"
 #include "wsi/context.h"
 #include "emulator.h"
+#include "stdclass.h"
 
 #ifdef USE_VULKAN
 #include <SDL2/SDL_vulkan.h>
