@@ -431,18 +431,10 @@ void rend_start_render()
 	}
 }
 
-
 void rend_end_render()
 {
-#if 1 //also disabled the printf, it takes quite some time ...
-	#if !defined(_WIN32) && !(defined(__ANDROID__) || defined(TARGET_PANDORA))
-		//too much console spam.
-		//TODO: how about a counter?
-		//if (!re.state) printf("Render > Extended time slice ...\n");
-	#endif
-#endif
-
-	if (pend_rend) {
+	if (pend_rend)
+	{
 #if !defined(TARGET_NO_THREADS)
 		re.Wait();
 #else

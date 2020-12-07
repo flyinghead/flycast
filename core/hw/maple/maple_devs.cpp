@@ -223,7 +223,7 @@ struct maple_sega_controller: maple_base
 			return 0x80;					// unused
 	}
 
-	virtual MapleDeviceType get_device_type()
+	virtual MapleDeviceType get_device_type() override
 	{
 		return MDT_SegaController;
 	}
@@ -238,7 +238,7 @@ struct maple_sega_controller: maple_base
 		return maple_sega_brand;
 	}
 
-	virtual u32 dma(u32 cmd)
+	virtual u32 dma(u32 cmd) override
 	{
 		//printf("maple_sega_controller::dma Called 0x%X;Command %d\n", bus_id, cmd);
 		switch (cmd)
@@ -443,7 +443,7 @@ struct maple_sega_vmu: maple_base
 	u8 lcd_data[192];
 	u8 lcd_data_decoded[48*32];
 
-	virtual MapleDeviceType get_device_type()
+	virtual MapleDeviceType get_device_type() override
 	{
 		return MDT_SegaVMU;
 	}
@@ -462,21 +462,21 @@ struct maple_sega_vmu: maple_base
 		return (rv == Z_OK && dec_sz == sizeof(flash_data));
 	}
 
-	virtual bool maple_serialize(void **data, unsigned int *total_size)
+	virtual bool maple_serialize(void **data, unsigned int *total_size) override
 	{
 		REICAST_SA(flash_data,128*1024);
 		REICAST_SA(lcd_data,192);
 		REICAST_SA(lcd_data_decoded,48*32);
 		return true ;
 	}
-	virtual bool maple_unserialize(void **data, unsigned int *total_size)
+	virtual bool maple_unserialize(void **data, unsigned int *total_size) override
 	{
 		REICAST_USA(flash_data,128*1024);
 		REICAST_USA(lcd_data,192);
 		REICAST_USA(lcd_data_decoded,48*32);
 		return true ;
 	}
-	virtual void OnSetup()
+	virtual void OnSetup() override
 	{
 		memset(flash_data, 0, sizeof(flash_data));
 		memset(lcd_data, 0, sizeof(lcd_data));
@@ -534,7 +534,7 @@ struct maple_sega_vmu: maple_base
 	{
 		if (file) fclose(file);
 	}
-	virtual u32 dma(u32 cmd)
+	virtual u32 dma(u32 cmd) override
 	{
 		//printf("maple_sega_vmu::dma Called for port %d:%d, Command %d\n", bus_id, bus_port, cmd);
 		switch (cmd)
@@ -1020,26 +1020,26 @@ struct maple_sega_purupuru : maple_base
 	u16 AST = 19, AST_ms = 5000;
 	u32 VIBSET;
 
-	virtual MapleDeviceType get_device_type()
+	virtual MapleDeviceType get_device_type() override
 	{
 		return MDT_PurupuruPack;
 	}
 
-   virtual bool maple_serialize(void **data, unsigned int *total_size)
+   virtual bool maple_serialize(void **data, unsigned int *total_size) override
    {
       REICAST_S(AST);
       REICAST_S(AST_ms);
       REICAST_S(VIBSET);
       return true ;
    }
-   virtual bool maple_unserialize(void **data, unsigned int *total_size)
+   virtual bool maple_unserialize(void **data, unsigned int *total_size) override
    {
       REICAST_US(AST);
       REICAST_US(AST_ms);
       REICAST_US(VIBSET);
       return true ;
    }
-	virtual u32 dma(u32 cmd)
+	virtual u32 dma(u32 cmd) override
 	{
 		switch (cmd)
 		{
@@ -1162,12 +1162,12 @@ u8 kb_key[6]={0};	// normal keys pressed
 
 struct maple_keyboard : maple_base
 {
-	virtual MapleDeviceType get_device_type()
+	virtual MapleDeviceType get_device_type() override
 	{
 		return MDT_Keyboard;
 	}
 
-	virtual u32 dma(u32 cmd)
+	virtual u32 dma(u32 cmd) override
 	{
 		switch (cmd)
 		{
@@ -1246,7 +1246,7 @@ s32 mo_y_abs;
 
 struct maple_mouse : maple_base
 {
-	virtual MapleDeviceType get_device_type()
+	virtual MapleDeviceType get_device_type() override
 	{
 		return MDT_Mouse;
 	}
@@ -1262,7 +1262,7 @@ struct maple_mouse : maple_base
 		return (u16)lroundf(delta);
 	}
 
-	virtual u32 dma(u32 cmd)
+	virtual u32 dma(u32 cmd) override
 	{
 		switch (cmd)
 		{
@@ -1344,12 +1344,12 @@ struct maple_lightgun : maple_base
 		return kcode | 0xFF01;
 	}
 
-	virtual MapleDeviceType get_device_type()
+	virtual MapleDeviceType get_device_type() override
 	{
 		return MDT_LightGun;
 	}
 
-	virtual u32 dma(u32 cmd)
+	virtual u32 dma(u32 cmd) override
 	{
 		switch (cmd)
 		{

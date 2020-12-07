@@ -304,7 +304,6 @@ typedef void DYNACALL TaListVoidFP(void* data);
 
 #define FPCB_SIZE (RAM_SIZE_MAX/2)
 #define FPCB_MASK (FPCB_SIZE -1)
-//#defeine FPCB_PAD 0x40000
 #define FPCB_PAD 0x100000
 #define FPCB_OFFSET (-(FPCB_SIZE*sizeof(void*) + FPCB_PAD)) 
 struct Sh4RCB
@@ -338,15 +337,6 @@ s32 rcb_noffs(T* ptr)
 { 
 	s32 rv= (u8*)ptr - (u8*)p_sh4rcb-sizeof(Sh4RCB); 
 	verify(rv<0);
-
-	return rv;
-}
-
-template<typename T>
-s32 rcb_poffs(T* ptr)  
-{ 
-	s32 rv= (u8*)ptr - (u8*)p_sh4rcb-sizeof(Sh4RCB); 
-	verify(rv>=0);
 
 	return rv;
 }
