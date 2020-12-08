@@ -11,6 +11,9 @@
 #include "wsi/context.h"
 #include "emulator.h"
 #include "stdclass.h"
+#if !defined(_WIN32) && !defined(__APPLE__)
+#include "linux-dist/icon.h"
+#endif
 
 #ifdef USE_VULKAN
 #include <SDL2/SDL_vulkan.h>
@@ -289,6 +292,21 @@ void sdl_recreate_window(u32 flags)
 	window = SDL_CreateWindow("Flycast", x, y, window_width, window_height, flags);
 	if (!window)
 		die("error creating SDL window");
+
+#ifndef _WIN32
+	// Set the window icon
+	u32 pixels[48 * 48];
+	for (int i = 0; i < 48 * 48; i++)
+		pixels[i] = reicast_icon[i + 2];
+	SDL_Surface *surface = SDL_CreateRGBSurfaceFrom(pixels, 48, 48, 32, 4 * 48, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000);
+	if (surface == NULL)
+	  INFO_LOG(COMMON, "Creating surface failed: %s", SDL_GetError());
+	else
+	{
+		SDL_SetWindowIcon(window, surface);
+		SDL_FreeSurface(surface);
+	}
+#endif
 
 #ifdef USE_VULKAN
 	theVulkanContext.SetWindow(window, nullptr);
