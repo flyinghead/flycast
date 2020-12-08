@@ -420,3 +420,25 @@ void FramebufferAttachment::Init(u32 width, u32 height, vk::Format format, vk::I
 		stencilView = device.createImageViewUnique(imageViewCreateInfo);
 	}
 }
+
+void TextureCache::Cleanup()
+{
+	std::vector<u64> list;
+
+	u32 TargetFrame = std::max((u32)120, FrameCount) - 120;
+
+	for (const auto& pair : cache)
+	{
+		if (pair.second.dirty && pair.second.dirty < TargetFrame)
+			list.push_back(pair.first);
+
+		if (list.size() > 5)
+			break;
+	}
+
+	for (u64 id : list)
+	{
+		if (clearTexture(&cache[id]))
+			cache.erase(id);
+	}
+}

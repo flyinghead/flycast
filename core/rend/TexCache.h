@@ -772,8 +772,6 @@ public:
 		return texture;
 	}
 
-	virtual ~BaseTextureCache() {}
-
 	void CollectCleanup()
 	{
 		std::vector<u64> list;
@@ -791,7 +789,7 @@ public:
 
 		for (u64 id : list)
 		{
-			if (clearTexture(&cache[id]))
+			if (cache[id].Delete())
 				cache.erase(id);
 		}
 	}
@@ -799,7 +797,7 @@ public:
 	void Clear()
 	{
 		for (auto& pair : cache)
-			clearTexture(&pair.second);
+			pair.second.Delete();
 
 		cache.clear();
 		KillTex = false;
@@ -807,11 +805,6 @@ public:
 	}
 
 protected:
-	virtual bool clearTexture(Texture *tex) {
-		return tex->Delete();
-	}
-
-private:
 	std::unordered_map<u64, Texture> cache;
 	// Only use TexU and TexV from TSP in the cache key
 	//     TexV : 7, TexU : 7

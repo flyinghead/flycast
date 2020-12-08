@@ -113,7 +113,7 @@ public:
 
 		texCommandPool.BeginFrame();
 		textureCache.SetCurrentIndex(texCommandPool.GetIndex());
-		textureCache.CollectCleanup();
+		textureCache.Cleanup();
 
 		bool result;
 
