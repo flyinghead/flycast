@@ -201,7 +201,10 @@ void SetupPath()
 		fn = ".\\";
 	set_user_config_dir(fn);
 	add_system_data_dir(fn);
-	set_user_data_dir(fn + "data\\");
+
+	std::string data_path = fn + "data\\";
+	set_user_data_dir(data_path);
+	CreateDirectory(data_path.c_str(), NULL);
 }
 
 static Win32KeyboardDevice keyboard(0);
