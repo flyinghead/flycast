@@ -1694,7 +1694,18 @@ static void systemdir_selected_callback(bool cancelled, std::string selection)
 		selection += "/";
 		set_user_config_dir(selection);
 		add_system_data_dir(selection);
-		set_user_data_dir(selection + "data/");
+
+		std::string data_path = selection + "data/";
+		set_user_data_dir(data_path);
+		if (!file_exists(data_path))
+		{
+			if (!make_directory(data_path))
+			{
+				WARN_LOG(BOOT, "Cannot create 'data' directory");
+				set_user_data_dir(selection);
+			}
+		}
+
 		if (cfgOpen())
 		{
 			LoadSettings(false);

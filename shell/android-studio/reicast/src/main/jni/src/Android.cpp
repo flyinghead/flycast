@@ -196,7 +196,16 @@ JNIEXPORT jstring JNICALL Java_com_reicast_emulator_emu_JNIdc_initEnvironment(JN
 				path += '/';
 			set_user_config_dir(path);
 			add_system_data_dir(path);
-			set_user_data_dir(path + "data/");
+			std::string data_path = path + "data/";
+			set_user_data_dir(data_path);
+			if (!file_exists(data_path))
+			{
+				if (!make_directory(data_path))
+				{
+					WARN_LOG(BOOT, "Cannot create 'data' directory");
+					set_user_data_dir(path);
+				}
+			}
 		}
     	env->ReleaseStringUTFChars(homeDirectory, jchar);
     }
