@@ -15,6 +15,7 @@
 
 #include "types.h"
 #include "hw/maple/maple_cfg.h"
+#include "hw/maple/maple_devs.h"
 #include "log/LogManager.h"
 #include "rend/gui.h"
 #include "osx_keyboard.h"
@@ -225,4 +226,9 @@ extern "C" void emu_character_input(const char *characters) {
 extern "C" void emu_mouse_buttons(int button, bool pressed)
 {
 	mouse_gamepad->gamepad_btn_input(button, pressed);
+}
+
+extern "C" void emu_set_mouse_position(int x, int y, int width, int height)
+{
+	SetMousePosition(x, y, width, height);
 }

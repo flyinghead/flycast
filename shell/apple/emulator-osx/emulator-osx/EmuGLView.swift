@@ -10,9 +10,6 @@ import Cocoa
 
 class EmuGLView: NSOpenGLView, NSWindowDelegate {
 
-	var mouse_prev_x: Int32 = 0
-	var mouse_prev_y: Int32 = 0
-	
     override var acceptsFirstResponder: Bool {
         return true;
     }
@@ -91,13 +88,7 @@ class EmuGLView: NSOpenGLView, NSWindowDelegate {
 	{
 		let point = convert(event.locationInWindow, from: self)
 		let size = frame.size
-		let scale = 480.0 / size.height
-		mo_x_abs = Int32((point.x - (size.width - 640.0 / scale) / 2.0) * scale)
-		mo_y_abs = Int32((size.height - point.y) * scale)
-		mo_x_delta += Float(mo_x_abs - mouse_prev_x)
-		mo_y_delta += Float(mo_y_abs - mouse_prev_y)
-		mouse_prev_x = mo_x_abs
-		mouse_prev_y = mo_y_abs
+		emu_set_mouse_position(Int32(point.x), Int32(size.height - point.y), Int32(size.width), Int32(size.height))
 	}
 	override func mouseDown(with event: NSEvent) {
 		emu_mouse_buttons(1, true)

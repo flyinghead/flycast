@@ -89,26 +89,12 @@ void input_sdl_init()
 #endif
 }
 
-static int mouse_prev_x = -1;
-static int mouse_prev_y = -1;
-
 static void set_mouse_position(int x, int y)
 {
 	int width, height;
 	SDL_GetWindowSize(window, &width, &height);
 	if (width != 0 && height != 0)
-	{
-		float scale = 480.f / height;
-		mo_x_abs = (x - (width - 640.f / scale) / 2.f) * scale;
-		mo_y_abs = y * scale;
-		if (mouse_prev_x != -1)
-		{
-			mo_x_delta += (f32)(x - mouse_prev_x) * settings.input.MouseSensitivity / 100.f;
-			mo_y_delta += (f32)(y - mouse_prev_y) * settings.input.MouseSensitivity / 100.f;
-		}
-		mouse_prev_x = x;
-		mouse_prev_y = y;
-	}
+		SetMousePosition(x, y, width, height);
 }
 
 void input_sdl_handle()

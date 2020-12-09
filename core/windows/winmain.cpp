@@ -294,12 +294,10 @@ LRESULT CALLBACK WndProc2(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		/* no break */
 	case WM_MOUSEMOVE:
 		{
-			static int prev_x = -1;
-			static int prev_y = -1;
 			int xPos = GET_X_LPARAM(lParam);
 			int yPos = GET_Y_LPARAM(lParam);
-			mo_x_abs = (xPos - (screen_width - 640 * screen_height / 480) / 2) * 480 / screen_height;
-			mo_y_abs = yPos * 480 / screen_height;
+			SetMousePosition(xPos, yPos, screen_width, screen_height);
+
 			mo_buttons = 0xffffffff;
 			if (wParam & MK_LBUTTON)
 				mo_buttons &= ~(1 << 2);
@@ -307,13 +305,6 @@ LRESULT CALLBACK WndProc2(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				mo_buttons &= ~(1 << 3);
 			if (wParam & MK_RBUTTON)
 				mo_buttons &= ~(1 << 1);
-			if (prev_x != -1)
-			{
-				mo_x_delta += (f32)(xPos - prev_x) * settings.input.MouseSensitivity / 100.f;
-				mo_y_delta += (f32)(yPos - prev_y) * settings.input.MouseSensitivity / 100.f;
-			}
-			prev_x = xPos;
-			prev_y = yPos;
 		}
 		if (message != WM_MOUSEMOVE)
 			return 0;

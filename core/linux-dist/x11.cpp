@@ -201,8 +201,6 @@ static void x11_uncapture_mouse()
 void input_x11_handle()
 {
 	//Handle X11
-	static int prev_x = -1;
-	static int prev_y = -1;
 	bool mouse_moved = false;
 	XEvent e;
 
@@ -313,27 +311,19 @@ void input_x11_handle()
 
 			case MotionNotify:
 				// For Light gun
-				mo_x_abs = (e.xmotion.x - (x11_width - x11_height * 640 / 480) / 2) * 480 / x11_height;
-				mo_y_abs = e.xmotion.y * 480 / x11_height;
-
+				SetMousePosition(e.xmotion.x, e.xmotion.y, x11_width, x11_height);
 				// For mouse
 				mouse_moved = true;
-				if (prev_x != -1)
-					mo_x_delta += (f32)(e.xmotion.x - prev_x) * settings.input.MouseSensitivity / 100.f;
-				if (prev_y != -1)
-					mo_y_delta += (f32)(e.xmotion.y - prev_y) * settings.input.MouseSensitivity / 100.f;
-				prev_x = e.xmotion.x;
-				prev_y = e.xmotion.y;
 
 				break;
 		}
 	}
 	if (capturing_mouse && mouse_moved)
 	{
-		prev_x = x11_width / 2;
-		prev_y = x11_height / 2;
+		mo_x_prev = x11_width / 2;
+		mo_y_prev = x11_height / 2;
 		XWarpPointer(x11_disp, None, x11_win, 0, 0, 0, 0,
-				prev_x, prev_y);
+				mo_x_prev, mo_y_prev);
 		XSync(x11_disp, true);
 	}
 }

@@ -188,6 +188,7 @@
 		AE43537322C9420C005E19CE /* ConsoleListenerNix.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE43536C22C9420C005E19CE /* ConsoleListenerNix.cpp */; };
 		AE43537422C9420C005E19CE /* ConsoleListenerWin.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE43536D22C9420C005E19CE /* ConsoleListenerWin.cpp */; };
 		AE43537522C9420C005E19CE /* LogManager.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE43536F22C9420C005E19CE /* LogManager.cpp */; };
+		AE4AF300257FDFD000F90C30 /* maple_jvs.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE4AF2FF257FDFD000F90C30 /* maple_jvs.cpp */; };
 		AE649BF3218C552500EF4A81 /* bitmath.c in Sources */ = {isa = PBXBuildFile; fileRef = AE649BCD218C552500EF4A81 /* bitmath.c */; };
 		AE649BF4218C552500EF4A81 /* bitreader.c in Sources */ = {isa = PBXBuildFile; fileRef = AE649BCE218C552500EF4A81 /* bitreader.c */; };
 		AE649BF5218C552500EF4A81 /* cpu.c in Sources */ = {isa = PBXBuildFile; fileRef = AE649BCF218C552500EF4A81 /* cpu.c */; };
@@ -690,6 +691,7 @@
 		AE43536F22C9420C005E19CE /* LogManager.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = LogManager.cpp; sourceTree = "<group>"; };
 		AE43537022C9420C005E19CE /* LogManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LogManager.h; sourceTree = "<group>"; };
 		AE43537122C9420C005E19CE /* StringUtil.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = StringUtil.h; sourceTree = "<group>"; };
+		AE4AF2FF257FDFD000F90C30 /* maple_jvs.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = maple_jvs.cpp; sourceTree = "<group>"; };
 		AE60BD9F22256E2500FA8A5B /* osx_keyboard.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = osx_keyboard.h; sourceTree = "<group>"; };
 		AE60BDA02225725800FA8A5B /* osx_gamepad.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = osx_gamepad.h; sourceTree = "<group>"; };
 		AE649BBA218C552500EF4A81 /* all.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = all.h; sourceTree = "<group>"; };
@@ -1486,6 +1488,7 @@
 				84B7BDF11B72720100F9733F /* maple_helper.h */,
 				84B7BDF21B72720100F9733F /* maple_if.cpp */,
 				84B7BDF31B72720100F9733F /* maple_if.h */,
+				AE4AF2FF257FDFD000F90C30 /* maple_jvs.cpp */,
 			);
 			path = maple;
 			sourceTree = "<group>";
@@ -2782,6 +2785,7 @@
 				84B7BEE51B72720200F9733F /* zip_dirent.c in Sources */,
 				84B7BF761B72720200F9733F /* reios.cpp in Sources */,
 				84B7BF3B1B72720200F9733F /* pvr_regs.cpp in Sources */,
+				AE4AF300257FDFD000F90C30 /* maple_jvs.cpp in Sources */,
 				84B7BF311B72720200F9733F /* sb.cpp in Sources */,
 				84B7BF0C1B72720200F9733F /* zip_source_function.c in Sources */,
 				AE649C2B218C553A00EF4A81 /* Lzma86Dec.c in Sources */,

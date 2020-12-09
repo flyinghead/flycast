@@ -172,14 +172,10 @@ void ImGui_Impl_NewFrame()
 			io.KeysDown[kb_key[i]] = true;
 		else
 			break;
-	float scale = screen_height / 480.0f;
-	float x_offset = (screen_width - 640.0f * scale) / 2;
-	int real_x = mo_x_abs * scale + x_offset;
-	int real_y = mo_y_abs * scale;
-	if (real_x < 0 || real_x >= screen_width || real_y < 0 || real_y >= screen_height)
+	if (mo_x_phy < 0 || mo_x_phy >= screen_width || mo_y_phy < 0 || mo_y_phy >= screen_height)
 		io.MousePos = ImVec2(-FLT_MAX, -FLT_MAX);
 	else
-		io.MousePos = ImVec2(real_x, real_y);
+		io.MousePos = ImVec2(mo_x_phy, mo_y_phy);
 #ifdef __ANDROID__
 	// Put the "mouse" outside the screen one frame after a touch up
 	// This avoids buttons and the like to stay selected
