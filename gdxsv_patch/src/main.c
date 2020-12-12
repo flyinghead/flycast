@@ -478,11 +478,13 @@ void GDXFUNC gdx_initialize() {
 
 // replacement of internet_connect function
 void GDXFUNC gdx_dial_start_disk1() {
+    disk = 1;
     gdx_initialize();
     write8(0x0c2f6639, 2);
 }
 
 void GDXFUNC gdx_dial_start_disk2() {
+    disk = 2;
     gdx_initialize();
 #if CALL_ORG_FUNC
     // start dialing step

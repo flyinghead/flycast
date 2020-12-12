@@ -683,9 +683,8 @@ void Gdxsv::WritePatch() {
     if (disk == 2) WritePatchDisk2();
     if (symbols["patch_id"] == 0 || ReadMem32_nommu(symbols["patch_id"]) != symbols[":patch_id"]) {
         NOTICE_LOG(COMMON, "patch %d %d", ReadMem32_nommu(symbols["patch_id"]), symbols[":patch_id"]);
-        WriteMem32_nommu(symbols["disk"], (int)disk);
-
 #include "gdxsv_patch.h"
+        WriteMem32_nommu(symbols["disk"], (int)disk);
     }
 }
 
@@ -694,6 +693,9 @@ void Gdxsv::WritePatchDisk1() {
 
     // Max Rebattle Patch
     WriteMem8_nommu(0x0c0345b0, 5);
+
+    // Fix cost 300 to 295
+    WriteMem16_nommu(0x0c1b0fd0, 295);
 
     // Reduce max lag-frame
     WriteMem8_nommu(0x0c310451, maxlag);
@@ -729,6 +731,11 @@ void Gdxsv::WritePatchDisk2() {
 
     // Max Rebattle Patch
     WriteMem8_nommu(0x0c0219ec, 5);
+
+    // Fix cost 300 to 295
+    WriteMem16_nommu(0x0c21bfec, 295);
+    WriteMem16_nommu(0x0c21bff4, 295);
+    WriteMem16_nommu(0x0c21c034, 295);
 
     // Reduce max lag-frame
     // WriteMem8_nommu(offset + 0x00035348, maxlag);
