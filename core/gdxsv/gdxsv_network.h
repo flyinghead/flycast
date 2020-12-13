@@ -70,11 +70,13 @@ public:
 
     MessageBuffer() = default;
 
+    void SessionId(const std::string &session_id);
+
     bool CanPush() const;
 
-    bool PushBattleMessage(const std::string &id, u8 *body, u32 body_length);
+    bool PushBattleMessage(const std::string &user_id, u8 *body, u32 body_length);
 
-    const proto::Packet& Packet();
+    const proto::Packet &Packet();
 
     void ApplySeqAck(u32 seq, u32 ack);
 

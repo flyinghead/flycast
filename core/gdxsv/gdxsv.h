@@ -19,6 +19,8 @@ public:
 
     bool Enabled() const;
 
+    bool InGame() const;
+
     void Reset();
 
     void Update();
@@ -50,12 +52,16 @@ private:
 
     void WritePatchDisk2();
 
+    void CloseUdpClientWithReason(const char *reason);
+
     std::atomic<bool> enabled;
     std::atomic<int> disk;
     std::atomic<u8> maxlag;
 
     std::string server;
     std::string loginkey;
+    std::string user_id;
+    std::string session_id;
     std::map<std::string, u32> symbols;
 
     std::atomic<bool> net_terminate;

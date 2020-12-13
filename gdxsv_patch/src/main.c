@@ -3,7 +3,7 @@ typedef unsigned short u16;
 typedef unsigned int u32;
 
 #define CALL_ORG_FUNC 0 // works only disk2
-#define DEBUG_PRINT 0
+#define DEBUG_PRINT 1
 
 #define GDXDATA __attribute__((section("gdx.data")))
 #define GDXFUNC __attribute__((section("gdx.func")))
@@ -166,6 +166,7 @@ int GDXFUNC gdx_sock_close(int param1) {
     gdx_queue_init(&gdx_txq);
     gdx_rpc.request = RPC_TCP_CLOSE;
     gdx_rpc.param1 = param1;
+    gdx_rpc.param2 = 0;
     is_online = 0;
     gdx_read_sync();
     return 0;
@@ -259,6 +260,8 @@ int GDXFUNC gdx_ppp_get_status(int param1, int param2, u8 *param3) {
         gdx_queue_init(&gdx_rxq);
         gdx_queue_init(&gdx_txq);
         gdx_rpc.request = RPC_TCP_CLOSE;
+        gdx_rpc.param1 = param1;
+        gdx_rpc.param2 = 1;
         gdx_read_sync();
     } else if (param1 == 2 || param1 == 3) {
         for (int i = 0; i < sizeof(ppp_status_ok); ++i) {
@@ -409,6 +412,29 @@ int GDXFUNC gdx_mcs_sock_write(u32 sock, u8 *buf, u32 size, int unk) {
 #endif
 }
 
+int GDXFUNC gdx_softreset_disconnect() {
+    gdx_printf("%s\n", __FUNCTION__);
+
+    int ret = 0;
+    if (disk == 1) {
+        ret = ((int (*)()) 0x0c045c68)();
+    }
+    if (disk == 2) {
+        ret = ((int (*)()) 0x0c03308c)();
+    }
+    gdx_printf("ret = %d\n", ret);
+
+    if (ret == 1 && is_online) {
+        gdx_queue_init(&gdx_rxq);
+        gdx_queue_init(&gdx_txq);
+        gdx_rpc.request = RPC_TCP_CLOSE;
+        gdx_rpc.param1 = 0;
+        gdx_rpc.param2 = 2;
+        gdx_read_sync();
+    }
+    return ret;
+}
+
 void GDXFUNC gdx_initialize() {
     gdx_printf("gdx_initialize disk = %d\n", disk);
     if (disk == 0) {
@@ -440,6 +466,10 @@ void GDXFUNC gdx_initialize() {
         write32(BIN_OFFSET + 0x0c047040, gdx_lbs_sock_write);
         write32(BIN_OFFSET + 0x0c059290, gdx_mcs_sock_read);
         write32(BIN_OFFSET + 0x0c058438, gdx_mcs_sock_write);
+        write32(BIN_OFFSET + 0x0c010a4c, gdx_softreset_disconnect);
+        write32(BIN_OFFSET + 0x0c010e00, gdx_softreset_disconnect);
+        write32(BIN_OFFSET + 0x0c01101c, gdx_softreset_disconnect);
+        write32(BIN_OFFSET + 0x0c064d20, gdx_softreset_disconnect);
 
         for (u32 p = 0x0c0353f4; p <= 0x0c03540a; p += 2) {
             write16(BIN_OFFSET + p, 0x0009);
@@ -466,6 +496,10 @@ void GDXFUNC gdx_initialize() {
         write32(BIN_OFFSET + 0x0c034464, gdx_lbs_sock_write);
         write32(BIN_OFFSET + 0x0c046678, gdx_mcs_sock_read);
         write32(BIN_OFFSET + 0x0c045820, gdx_mcs_sock_write);
+        write32(BIN_OFFSET + 0x0c010a54, gdx_softreset_disconnect);
+        write32(BIN_OFFSET + 0x0c010e04, gdx_softreset_disconnect);
+        write32(BIN_OFFSET + 0x0c011038, gdx_softreset_disconnect);
+        write32(BIN_OFFSET + 0x0c052134, gdx_softreset_disconnect);
 
 #if !CALL_ORG_FUNC
         // skip ppp finalize

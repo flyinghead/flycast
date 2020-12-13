@@ -16,6 +16,11 @@ Gdxsv::~Gdxsv() {
     if (net_thread.joinable()) {
         net_thread.join();
     }
+    CloseUdpClientWithReason("hard_quit");
+}
+
+bool Gdxsv::InGame() const {
+    return enabled && udp_client.IsConnected();
 }
 
 bool Gdxsv::Enabled() const {
@@ -26,6 +31,9 @@ void Gdxsv::Reset() {
     if (settings.dreamcast.ContentPath.empty()) {
         settings.dreamcast.ContentPath.emplace_back("./");
     }
+
+    tcp_client.Close();
+    CloseUdpClientWithReason("hard_reset");
 
     auto game_id = std::string(ip_meta.product_number, sizeof(ip_meta.product_number));
     if (game_id != "T13306M   ") {
@@ -61,7 +69,6 @@ void Gdxsv::Reset() {
 
     if (overwriteconf) {
         NOTICE_LOG(COMMON, "Overwrite configs for gdxsv");
-
         settings.aica.BufferSize = 529;
         settings.pvr.SynchronousRender = false;
     }
@@ -73,8 +80,6 @@ void Gdxsv::Reset() {
     std::string disk_num(ip_meta.disk_num, 1);
     if (disk_num == "1") disk = 1;
     if (disk_num == "2") disk = 2;
-    tcp_client.Close();
-    udp_client.Close();
     NOTICE_LOG(COMMON, "gdxsv disk:%d server:%s loginkey:%s maxlag:%d", (int) disk, server.c_str(), loginkey.c_str(),
                (int) maxlag);
 }
@@ -233,7 +238,7 @@ void Gdxsv::SyncNetwork(bool write) {
                 u16 port = port_no;
 
                 if (tolobby == 1) {
-                    udp_client.Close();
+                    CloseUdpClientWithReason("to_lobby");
                     bool ok = tcp_client.Connect(host.c_str(), port);
                     if (ok) {
                         tcp_client.SetNonBlocking();
@@ -282,7 +287,16 @@ void Gdxsv::SyncNetwork(bool write) {
 
             if (gdx_rpc.request == GDXRPC_TCP_CLOSE) {
                 tcp_client.Close();
-                udp_client.Close();
+
+                if (gdx_rpc.param2 == 0) {
+                    CloseUdpClientWithReason("app_close");
+                } else if (gdx_rpc.param2 == 1) {
+                    CloseUdpClientWithReason("ppp_close");
+                } else if (gdx_rpc.param2 == 2) {
+                    CloseUdpClientWithReason("soft_reset");
+                } else {
+                    CloseUdpClientWithReason("tcp_close");
+                }
 
                 recv_buf_mtx.lock();
                 recv_buf.clear();
@@ -413,7 +427,6 @@ void Gdxsv::UpdateNetwork() {
     proto::Packet pkt;
     bool updated = false;
     int udp_retransmit_countdown = 0;
-    std::string session_id;
     u8 buf[16 * 1024];
 
     auto mcs_ping_test = [&]() {
@@ -483,6 +496,7 @@ void Gdxsv::UpdateNetwork() {
         if (start_udp_session) {
             start_udp_session = false;
             udp_retransmit_countdown = 0;
+            user_id.clear();
             session_id.clear();
             message_buf.Clear();
             message_filter.Clear();
@@ -517,7 +531,7 @@ void Gdxsv::UpdateNetwork() {
             if (!session_id.empty()) {
                 pkt.Clear();
                 pkt.set_type(proto::MessageType::HelloServer);
-                pkt.mutable_hello_server_data()->set_session_id(session_id);
+                pkt.set_session_id(session_id);
                 if (!pkt.SerializeToArray((void *) buf, (int) sizeof(buf))) {
                     ERROR_LOG(COMMON, "packet serialize error");
                 }
@@ -535,6 +549,9 @@ void Gdxsv::UpdateNetwork() {
                             if (pkt2.hello_server_data().ok()) {
                                 NOTICE_LOG(COMMON, "UDP session_id validation OK");
                                 udp_session_ok = true;
+                                user_id = pkt2.hello_server_data().user_id();
+                                message_buf.SessionId(session_id);
+                                NOTICE_LOG(COMMON, "user_id:%s", user_id.c_str());
                                 break;
                             } else {
                                 WARN_LOG(COMMON, "UDP session_id validation NG");
@@ -555,7 +572,7 @@ void Gdxsv::UpdateNetwork() {
                 send_buf_mtx.unlock();
             } else {
                 ERROR_LOG(COMMON, "UDP session failed");
-                udp_client.Close();
+                CloseUdpClientWithReason("session_failed");
             }
         }
 
@@ -582,7 +599,7 @@ void Gdxsv::UpdateNetwork() {
                 }
             } else if (udp_client.IsConnected()) {
                 if (message_buf.CanPush()) {
-                    message_buf.PushBattleMessage(session_id, buf, n);
+                    message_buf.PushBattleMessage(user_id, buf, n);
                     if (message_buf.Packet().SerializeToArray((void *) buf, (int) sizeof(buf))) {
                         if (udp_client.Send((const char *) buf, message_buf.Packet().GetCachedSize())) {
                             udp_retransmit_countdown = 16;
@@ -652,6 +669,8 @@ void Gdxsv::UpdateNetwork() {
                                 }
                             }
                             recv_buf_mtx.unlock();
+                        } else if (pkt.type() == proto::MessageType::Fin) {
+                            CloseUdpClientWithReason("server_fin");
                         } else {
                             WARN_LOG(COMMON, "recv unexpected pkt type %d", pkt.type());
                         }
@@ -683,8 +702,10 @@ void Gdxsv::WritePatch() {
     if (disk == 2) WritePatchDisk2();
     if (symbols["patch_id"] == 0 || ReadMem32_nommu(symbols["patch_id"]) != symbols[":patch_id"]) {
         NOTICE_LOG(COMMON, "patch %d %d", ReadMem32_nommu(symbols["patch_id"]), symbols[":patch_id"]);
+
 #include "gdxsv_patch.h"
-        WriteMem32_nommu(symbols["disk"], (int)disk);
+
+        WriteMem32_nommu(symbols["disk"], (int) disk);
     }
 }
 
@@ -768,6 +789,24 @@ void Gdxsv::WritePatchDisk2() {
     }
 }
 
+void Gdxsv::CloseUdpClientWithReason(const char *reason) {
+    if (udp_client.IsConnected()) {
+        proto::Packet pkt;
+        pkt.Clear();
+        pkt.set_type(proto::MessageType::Fin);
+        pkt.set_session_id(session_id);
+        pkt.mutable_fin_data()->set_detail(reason);
+
+        char buf[1024];
+        if (pkt.SerializePartialToArray((void *) buf, (int) sizeof(buf))) {
+            udp_client.Send((const char *) buf, pkt.GetCachedSize());
+        } else {
+            ERROR_LOG(COMMON, "packet serialize error");
+        }
+
+        udp_client.Close();
+    }
+}
 
 void Gdxsv::handleReleaseJSON(const std::string &json) {
     std::regex rgx("\"tag_name\":\"v.*?(?=\")");
