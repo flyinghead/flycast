@@ -561,12 +561,6 @@ static bool gles_init()
 //    glDebugMessageCallback(gl_DebugOutput, NULL);
 //    glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
 
-
-	//clean up the buffer
-	glcache.ClearColor(0.f, 0.f, 0.f, 0.f);
-	glClear(GL_COLOR_BUFFER_BIT);
-	theGLContext.Swap();
-
 	initABuffer();
 
 	if (settings.rend.TextureUpscale > 1)

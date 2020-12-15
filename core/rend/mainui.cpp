@@ -38,7 +38,7 @@ bool mainui_rend_frame()
 		// TODO refactor android vjoy out of renderer
 		if (gui_state == VJoyEdit && renderer != NULL)
 			renderer->DrawOSD(true);
-		std::this_thread::sleep_for(std::chrono::milliseconds(16));	// FIXME probably not needed unless we manage the ui loop (apple, android?)
+		std::this_thread::sleep_for(std::chrono::milliseconds(16));
 	}
 	else
 	{
@@ -81,7 +81,16 @@ void mainui_loop()
 		if (renderer_changed != (int)settings.pvr.rend)
 		{
 			mainui_term();
-			SwitchRenderApi(renderer_changed == -1 ? settings.pvr.rend : (RenderType)renderer_changed);
+			if (renderer_changed == -1
+					|| settings.pvr.IsOpenGL() != ((RenderType)renderer_changed == RenderType::OpenGL || (RenderType)renderer_changed == RenderType::OpenGL_OIT))
+			{
+				// Switch between vulkan and opengl (or full reinit)
+				SwitchRenderApi(renderer_changed == -1 ? settings.pvr.rend : (RenderType)renderer_changed);
+			}
+			else
+			{
+				settings.pvr.rend = (RenderType)renderer_changed;
+			}
 			renderer_changed = (int)settings.pvr.rend;
 			mainui_init();
 		}
