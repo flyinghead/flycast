@@ -1428,6 +1428,7 @@ public:
 };
 
 static bool ClearZBeforePass(int pass_number);
+static void getRegionTileClipping(u32& xmin, u32& xmax, u32& ymin, u32& ymax);
 
 FifoSplitter<0> TAFifo0;
 
@@ -1615,7 +1616,7 @@ bool ta_parse_vdrc(TA_context* ctx)
 			if (ctx->rend.Overrun)
 				break;
 
-			bool empty_pass = vd_rc.global_param_op.used() == (pass == 0 ? 1 : (int)vd_rc.render_passes.LastPtr()->op_count)
+			bool empty_pass = vd_rc.global_param_op.used() == (pass == 0 ? 0 : (int)vd_rc.render_passes.LastPtr()->op_count)
 					&& vd_rc.global_param_pt.used() == (pass == 0 ? 0 : (int)vd_rc.render_passes.LastPtr()->pt_count)
 					&& vd_rc.global_param_tr.used() == (pass == 0 ? 0 : (int)vd_rc.render_passes.LastPtr()->tr_count);
 			empty_context = empty_context && empty_pass;
@@ -1651,6 +1652,15 @@ bool ta_parse_vdrc(TA_context* ctx)
 		fix_texture_bleeding(&vd_rc.global_param_op);
 		fix_texture_bleeding(&vd_rc.global_param_pt);
 		fix_texture_bleeding(&vd_rc.global_param_tr);
+	}
+	if (rv && !overrun)
+	{
+		u32 xmin, xmax, ymin, ymax;
+		getRegionTileClipping(xmin, xmax, ymin, ymax);
+		vd_rc.fb_X_CLIP.min = std::max(vd_rc.fb_X_CLIP.min, xmin);
+		vd_rc.fb_X_CLIP.max = std::min(vd_rc.fb_X_CLIP.max, xmax + 31);
+		vd_rc.fb_Y_CLIP.min = std::max(vd_rc.fb_Y_CLIP.min, ymin);
+		vd_rc.fb_Y_CLIP.max = std::min(vd_rc.fb_Y_CLIP.max, ymax + 31);
 	}
 
 	vd_ctx->rend = vd_rc;
@@ -1845,21 +1855,66 @@ void FillBGP(TA_context* ctx)
 	cv[3].v = max_v;
 }
 
-static RegionArrayTile getRegionTile(int pass_number)
+static void getRegionTileClipping(u32& xmin, u32& xmax, u32& ymin, u32& ymax)
 {
+	xmin = 20;
+	xmax = 0;
+	ymin = 15;
+	ymax = 0;
+
 	u32 addr = REGION_BASE;
+	const bool type1_tile = ((FPU_PARAM_CFG >> 21) & 1) == 0;
+	int tile_size = (type1_tile ? 5 : 6) * 4;
 	bool empty_first_region = true;
-	for (int i = 0; i < 5; i++)
-		if ((vri(addr + (i + 1) * 4) & 0x80000000) == 0)
+	for (int i = type1_tile ? 4 : 5; i > 0; i--)
+		if ((vri(addr + i * 4) & 0x80000000) == 0)
 		{
 			empty_first_region = false;
 			break;
 		}
 	if (empty_first_region)
-		addr += 6 * 4;
+		addr += tile_size;
 
 	RegionArrayTile tile;
-	tile.full = vri(addr + pass_number * 6 * 4);
+	do {
+		tile.full = vri(addr);
+		xmin = std::min(xmin, tile.X);
+		xmax = std::max(xmax, tile.X);
+		ymin = std::min(ymin, tile.Y);
+		ymax = std::max(ymax, tile.Y);
+		if (type1_tile && tile.PreSort)
+			// Windows CE weirdness
+			tile_size = 6 * 4;
+		addr += tile_size;
+	} while (!tile.LastRegion);
+
+	xmin *= 32;
+	xmax *= 32;
+	ymin *= 32;
+	ymax *= 32;
+}
+
+static RegionArrayTile getRegionTile(int pass_number)
+{
+	u32 addr = REGION_BASE;
+	const bool type1_tile = ((FPU_PARAM_CFG >> 21) & 1) == 0;
+	int tile_size = (type1_tile ? 5 : 6) * 4;
+	bool empty_first_region = true;
+	for (int i = type1_tile ? 4 : 5; i > 0; i--)
+		if ((vri(addr + i * 4) & 0x80000000) == 0)
+		{
+			empty_first_region = false;
+			break;
+		}
+	if (empty_first_region)
+		addr += tile_size;
+
+	RegionArrayTile tile;
+	tile.full = vri(addr);
+	if (type1_tile && tile.PreSort)
+		// Windows CE weirdness
+		tile_size = 6 * 4;
+	tile.full = vri(addr + pass_number * tile_size);
 
 	return tile;
 }
