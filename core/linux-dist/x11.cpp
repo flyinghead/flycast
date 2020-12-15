@@ -318,6 +318,11 @@ void input_x11_handle()
 				break;
 		}
 	}
+	if (gui_is_open() && capturing_mouse)
+	{
+		x11_uncapture_mouse();
+		capturing_mouse = false;
+	}
 	if (capturing_mouse && mouse_moved)
 	{
 		mo_x_prev = x11_width / 2;

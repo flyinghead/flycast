@@ -42,7 +42,7 @@ public:
 	bool Draw(const Texture *fogTexture, const Texture *paletteTexture);
 
 	virtual vk::CommandBuffer NewFrame() = 0;
-	virtual void EndFrame() = 0;
+	virtual void EndFrame() {  renderPass++; };
 
 protected:
 	void Init(SamplerManager *samplerManager, OITPipelineManager *pipelineManager, OITBuffers *oitBuffers)
@@ -79,30 +79,35 @@ protected:
 
 	int GetCurrentImage() const { return imageIndex; }
 
-	void NewImage() { imageIndex = (imageIndex + 1) % GetContext()->GetSwapChainSize(); }
+	void NewImage()
+	{
+		GetCurrentDescSet().Reset();
+		imageIndex = (imageIndex + 1) % GetContext()->GetSwapChainSize();
+		renderPass = 0;
+	}
 
 	OITDescriptorSets& GetCurrentDescSet() { return descriptorSets[GetCurrentImage()]; }
 
 	BufferData* GetMainBuffer(u32 size)
 	{
-		if (mainBuffers.empty())
+		u32 bufferIndex = imageIndex + renderPass * GetContext()->GetSwapChainSize();
+		while (mainBuffers.size() <= bufferIndex)
 		{
-			for (size_t i = 0; i < GetContext()->GetSwapChainSize(); i++)
-				mainBuffers.push_back(std::unique_ptr<BufferData>(new BufferData(std::max(512 * 1024u, size),
-						vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eUniformBuffer
-						| vk::BufferUsageFlagBits::eStorageBuffer)));
+			mainBuffers.push_back(std::unique_ptr<BufferData>(new BufferData(std::max(512 * 1024u, size),
+					vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eUniformBuffer
+					| vk::BufferUsageFlagBits::eStorageBuffer)));
 		}
-		else if (mainBuffers[GetCurrentImage()]->bufferSize < size)
+		if (mainBuffers[bufferIndex]->bufferSize < size)
 		{
-			u32 newSize = mainBuffers[GetCurrentImage()]->bufferSize;
+			u32 newSize = mainBuffers[bufferIndex]->bufferSize;
 			while (newSize < size)
 				newSize *= 2;
-			INFO_LOG(RENDERER, "Increasing main buffer size %d -> %d", (u32)mainBuffers[GetCurrentImage()]->bufferSize, newSize);
-			mainBuffers[GetCurrentImage()] = std::unique_ptr<BufferData>(new BufferData(newSize,
+			INFO_LOG(RENDERER, "Increasing main buffer size %d -> %d", (u32)mainBuffers[bufferIndex]->bufferSize, newSize);
+			mainBuffers[bufferIndex] = std::unique_ptr<BufferData>(new BufferData(newSize,
 					vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eUniformBuffer
 					| vk::BufferUsageFlagBits::eStorageBuffer));
 		}
-		return mainBuffers[GetCurrentImage()].get();
+		return mainBuffers[bufferIndex].get();
 	};
 
 	void MakeBuffers(int width, int height);
@@ -144,6 +149,7 @@ private:
 	int maxHeight = 0;
 	bool needDepthTransition = false;
 	int imageIndex = 0;
+	int renderPass = 0;
 	std::vector<OITDescriptorSets> descriptorSets;
 	std::vector<std::unique_ptr<BufferData>> mainBuffers;
 };
@@ -176,8 +182,19 @@ public:
 		currentCommandBuffer.end();
 		currentCommandBuffer = nullptr;
 		commandPool->EndFrame();
-		GetContext()->PresentFrame(finalColorAttachments[GetCurrentImage()]->GetImageView(),
-				vk::Offset2D(viewport.extent.width, viewport.extent.height));
+		OITDrawer::EndFrame();
+		frameRendered = true;
+	}
+
+	bool PresentFrame()
+	{
+		if (!frameRendered)
+			return false;
+		frameRendered = false;
+		GetContext()->PresentFrame(finalColorAttachments[GetCurrentImage()]->GetImageView(), vk::Offset2D(viewport.extent.width, viewport.extent.height));
+		NewImage();
+
+		return true;
 	}
 
 protected:
@@ -191,6 +208,8 @@ private:
 	std::vector<vk::UniqueFramebuffer> framebuffers;
 	std::unique_ptr<OITPipelineManager> screenPipelineManager;
 	int currentScreenScaling = 0;
+	int transitionsNeeded = 0;
+	bool frameRendered = false;
 };
 
 class OITTextureDrawer : public OITDrawer

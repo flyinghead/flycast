@@ -19,6 +19,7 @@
 
 #include <mutex>
 #include "gui.h"
+#include "osd.h"
 #include "cfg/cfg.h"
 #include "hw/maple/maple_if.h"
 #include "hw/maple/maple_devs.h"
@@ -27,17 +28,19 @@
 #include "gles/imgui_impl_opengl3.h"
 #include "imgui/roboto_medium.h"
 #include "network/naomi_network.h"
-#include "gles/gles.h"
+#include "wsi/context.h"
 #include "input/gamepad_device.h"
 #include "input/keyboard_device.h"
 #include "gui_util.h"
 #include "gui_android.h"
 #include "game_scanner.h"
 #include "version.h"
+#include "oslib/oslib.h"
 #include "oslib/audiostream.h"
 #include "imgread/common.h"
 #include "log/LogManager.h"
 #include "emulator.h"
+#include "rend/mainui.h"
 
 extern void UpdateInputState();
 extern bool game_started;
@@ -1915,9 +1918,9 @@ static std::string getFPSNotification()
 	{
 		double now = os_GetSeconds();
 		if (now - LastFPSTime >= 1.0) {
-			fps = (FrameCount - lastFrameCount) / (now - LastFPSTime);
+			fps = (MainFrameCount - lastFrameCount) / (now - LastFPSTime);
 			LastFPSTime = now;
-			lastFrameCount = FrameCount;
+			lastFrameCount = MainFrameCount;
 		}
 		if (fps >= 0.f && fps < 9999.f) {
 			char text[32];

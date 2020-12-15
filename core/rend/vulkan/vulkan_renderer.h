@@ -133,11 +133,6 @@ public:
 		return result;
 	}
 
-	void Present() override
-	{
-		GetContext()->Present();
-	}
-
 	void Resize(int w, int h) override
 	{
 		texCommandPool.Init();

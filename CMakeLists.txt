@@ -772,6 +772,7 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/rend/gui_android.h
         core/rend/gui_util.cpp
         core/rend/gui_util.h
+        core/rend/mainui.cpp
         core/rend/osd.cpp
         core/rend/osd.h
         core/rend/sorter.cpp

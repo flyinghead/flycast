@@ -286,9 +286,6 @@ bool OITDrawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 	GetCurrentDescSet().UpdateColorInputDescSet(1, colorAttachments[1]->GetImageView());
 	oitBuffers->BindDescriptorSet(cmdBuffer, pipelineManager->GetPipelineLayout(), 3);
 
-	// Reset per-poly descriptor set pool
-	GetCurrentDescSet().Reset();
-
 	// Bind vertex and index buffers
 	const vk::DeviceSize zeroOffset[] = { 0 };
 	cmdBuffer.bindVertexBuffers(0, 1, &mainBuffer, zeroOffset);
@@ -477,6 +474,7 @@ void OITScreenDrawer::MakeFramebuffers()
 		vk::FramebufferCreateInfo createInfo(vk::FramebufferCreateFlags(), screenPipelineManager->GetRenderPass(true, true),
 				ARRAY_SIZE(attachments), attachments, viewport.extent.width, viewport.extent.height, 1);
 		framebuffers.push_back(GetContext()->GetDevice().createFramebufferUnique(createInfo));
+		transitionsNeeded++;
 	}
 }
 
@@ -660,23 +658,30 @@ void OITTextureDrawer::EndFrame()
 		tmpBuf.init(clippedWidth, clippedHeight);
 		colorAttachment->GetBufferData()->download(clippedWidth * clippedHeight * 4, tmpBuf.data());
 		WriteTextureToVRam(clippedWidth, clippedHeight, (u8 *)tmpBuf.data(), dst);
-
-		return;
 	}
-	//memset(&vram[fb_rtt.TexAddr << 3], '\0', size);
+	else
+	{
+		//memset(&vram[fb_rtt.TexAddr << 3], '\0', size);
 
-	texture->dirty = 0;
-	if (texture->lock_block == NULL)
-		texture->lock_block = libCore_vramlock_Lock(texture->sa_tex, texture->sa + texture->size - 1, texture);
+		texture->dirty = 0;
+		if (texture->lock_block == NULL)
+			texture->lock_block = libCore_vramlock_Lock(texture->sa_tex, texture->sa + texture->size - 1, texture);
+	}
+	OITDrawer::EndFrame();
 }
 
 vk::CommandBuffer OITScreenDrawer::NewFrame()
 {
 	MakeFramebuffers();
-	NewImage();
 	vk::CommandBuffer commandBuffer = commandPool->Allocate();
 	commandBuffer.begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));
 
+	if (transitionsNeeded)
+	{
+		for (size_t i = finalColorAttachments.size() - transitionsNeeded; i < finalColorAttachments.size(); i++)
+			setImageLayout(commandBuffer, finalColorAttachments[i]->GetImage(), GetColorFormat(), 1, vk::ImageLayout::eUndefined, vk::ImageLayout::eShaderReadOnlyOptimal);
+		transitionsNeeded = 0;
+	}
 	matrices.CalcMatrices(&pvrrc);
 
 	SetBaseScissor();

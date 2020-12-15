@@ -189,6 +189,7 @@
 		AE43537422C9420C005E19CE /* ConsoleListenerWin.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE43536D22C9420C005E19CE /* ConsoleListenerWin.cpp */; };
 		AE43537522C9420C005E19CE /* LogManager.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE43536F22C9420C005E19CE /* LogManager.cpp */; };
 		AE4AF300257FDFD000F90C30 /* maple_jvs.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE4AF2FF257FDFD000F90C30 /* maple_jvs.cpp */; };
+		AE4AF3032588E7DE00F90C30 /* mainui.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE4AF3022588E7DE00F90C30 /* mainui.cpp */; };
 		AE649BF3218C552500EF4A81 /* bitmath.c in Sources */ = {isa = PBXBuildFile; fileRef = AE649BCD218C552500EF4A81 /* bitmath.c */; };
 		AE649BF4218C552500EF4A81 /* bitreader.c in Sources */ = {isa = PBXBuildFile; fileRef = AE649BCE218C552500EF4A81 /* bitreader.c */; };
 		AE649BF5218C552500EF4A81 /* cpu.c in Sources */ = {isa = PBXBuildFile; fileRef = AE649BCF218C552500EF4A81 /* cpu.c */; };
@@ -692,6 +693,8 @@
 		AE43537022C9420C005E19CE /* LogManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LogManager.h; sourceTree = "<group>"; };
 		AE43537122C9420C005E19CE /* StringUtil.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = StringUtil.h; sourceTree = "<group>"; };
 		AE4AF2FF257FDFD000F90C30 /* maple_jvs.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = maple_jvs.cpp; sourceTree = "<group>"; };
+		AE4AF3012588E7DE00F90C30 /* mainui.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = mainui.h; sourceTree = "<group>"; };
+		AE4AF3022588E7DE00F90C30 /* mainui.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = mainui.cpp; sourceTree = "<group>"; };
 		AE60BD9F22256E2500FA8A5B /* osx_keyboard.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = osx_keyboard.h; sourceTree = "<group>"; };
 		AE60BDA02225725800FA8A5B /* osx_gamepad.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = osx_gamepad.h; sourceTree = "<group>"; };
 		AE649BBA218C552500EF4A81 /* all.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = all.h; sourceTree = "<group>"; };
@@ -1767,6 +1770,8 @@
 				AEE62769220D7B5500EC7E89 /* gui.h */,
 				AEE6279222247C0A00EC7E89 /* gui_util.cpp */,
 				AEE6279322247C0A00EC7E89 /* gui_util.h */,
+				AE4AF3022588E7DE00F90C30 /* mainui.cpp */,
+				AE4AF3012588E7DE00F90C30 /* mainui.h */,
 				AE90679C235DF80400CE473C /* osd.cpp */,
 				AED73EAD2348E49900ECDB64 /* sorter.cpp */,
 				AED73EBD2348E49900ECDB64 /* sorter.h */,
@@ -2615,6 +2620,7 @@
 				AE80EDBF2157D4E600F7800F /* naomi_cart.cpp in Sources */,
 				AEFF7F5E214D9D590068CE11 /* pico_tcp.c in Sources */,
 				AE80EDBE2157D4E600F7800F /* naomi.cpp in Sources */,
+				AE4AF3032588E7DE00F90C30 /* mainui.cpp in Sources */,
 				84B7BEEB1B72720200F9733F /* zip_error_get.c in Sources */,
 				AEF256522294060400348550 /* archive.cpp in Sources */,
 				84B7BEB31B72720200F9733F /* coreio.cpp in Sources */,

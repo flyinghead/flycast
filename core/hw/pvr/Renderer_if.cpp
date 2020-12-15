@@ -1,12 +1,12 @@
 #include "Renderer_if.h"
+#include "spg.h"
 #include "cheats.h"
 #include "hw/mem/_vmem.h"
 #include "hw/pvr/pvr_mem.h"
 #include "oslib/oslib.h"
-#include "rend/gui.h"
 #include "rend/TexCache.h"
-#include "wsi/context.h"
 
+#include <mutex>
 #include <zlib.h>
 
 u32 VertexCount=0;
@@ -14,24 +14,21 @@ u32 FrameCount=1;
 
 Renderer* renderer;
 static Renderer* fallback_renderer;
-bool renderer_enabled = true;	// Signals the renderer thread to exit
-int renderer_changed = -1;	// Signals the renderer thread to switch renderer
-bool renderer_reinit_requested = false;	// Signals the renderer thread to reinit the renderer
 
-#if !defined(TARGET_NO_THREADS)
 cResetEvent rs, re;
-#endif
-static bool swap_pending;
 static bool do_swap;
+std::mutex swap_mutex;
+u32 fb_w_cur = 1;	// FIXME serialize
 
+// direct framebuffer write detection
 static bool render_called = false;
 u32 fb_watch_addr_start;
 u32 fb_watch_addr_end;
 bool fb_dirty;
 
+bool pend_rend = false;
+
 TA_context* _pvrrc;
-void SetREP(TA_context* cntx);
-static void rend_create_renderer();
 
 static void dump_frame(const char* file, TA_context* ctx, u8* vram, u8* vram_ref = NULL) {
 	FILE* fw = fopen(file, "wb");
@@ -188,95 +185,72 @@ static bool rend_frame(TA_context* ctx)
 		dump_frame_switch = false;
 	}
 	bool proc = renderer->Process(ctx);
-	if ((ctx->rend.isRTT || ctx->rend.isRenderFramebuffer) && swap_pending)
-	{
-		// If there is a frame swap pending, we want to do it now.
-		// The current frame "swapping" detection mechanism (using FB_R_SOF1) doesn't work
-		// if a RTT frame is rendered in between.
-		renderer->Present();
-		swap_pending = false;
-	}
-#if !defined(TARGET_NO_THREADS)
+
 	if (!proc || (!ctx->rend.isRTT && !ctx->rend.isRenderFramebuffer))
 		// If rendering to texture, continue locking until the frame is rendered
 		re.Set();
-#endif
 
 	return proc && renderer->Render();
 }
 
-bool rend_single_frame()
+bool rend_single_frame(const bool& enabled)
 {
-	if ((u32)renderer_changed != settings.pvr.rend)
-	{
-		rend_term_renderer();
-		SwitchRenderApi(renderer_changed);
-		rend_create_renderer();
-		rend_init_renderer();
-	}
+	if (renderer != NULL)
+		renderer->RenderLastFrame();
+
 	//wait render start only if no frame pending
 	do
 	{
-		// FIXME not here
-		os_DoEvents();
-#if !defined(TARGET_NO_THREADS)
-		if (gui_is_open() || gui_state == VJoyEdit)
+		if (!rs.Wait(50))
+			return false;
+		if (do_swap)
 		{
-			gui_display_ui();
-			if (gui_state == VJoyEdit && renderer != NULL)
-				renderer->DrawOSD(true);
-			FinishRender(NULL);
-			// Use the rendering start event to wait between two frames but save its value
-			if (rs.Wait(17))
-				rs.Set();
-			swap_pending = false;
-			return true;
-		}
-		else
-		{
-			if (renderer != NULL)
-				renderer->RenderLastFrame();
-
-			if (!rs.Wait(100))
-				return false;
-			if (do_swap)
+			do_swap = false;
+			if (renderer->Present())
 			{
-				do_swap = false;
-				renderer->Present();
+				rs.Set(); // don't miss any render
+				return true;
 			}
 		}
-#else
-		if (gui_is_open())
-		{
-			gui_display_ui();
-			FinishRender(NULL);
-			swap_pending = false;
-			return true;
-		}
-		if (renderer != NULL)
-			renderer->RenderLastFrame();
-#endif
-		if (!renderer_enabled)
+		if (!enabled)
 			return false;
 
 		_pvrrc = DequeueRender();
 	}
 	while (!_pvrrc);
-	bool do_swp = rend_frame(_pvrrc);
-	swap_pending = settings.rend.DelayFrameSwapping && do_swp && !_pvrrc->rend.isRenderFramebuffer
-			&& settings.pvr.rend != 4 && settings.pvr.rend != 5;	// TODO Fix vulkan
 
-#if !defined(TARGET_NO_THREADS)
+	bool frame_rendered = rend_frame(_pvrrc);
+
+	if (frame_rendered)
+	{
+		{
+			std::lock_guard<std::mutex> lock(swap_mutex);
+			if (settings.rend.DelayFrameSwapping && !_pvrrc->rend.isRenderFramebuffer && fb_w_cur != FB_R_SOF1 && !do_swap)
+				// Delay swap
+				frame_rendered = false;
+			else
+				// Swap now
+				do_swap = false;
+		}
+		if (frame_rendered)
+			frame_rendered = renderer->Present();
+	}
+
 	if (_pvrrc->rend.isRTT)
 		re.Set();
-#endif
 
 	//clear up & free data ..
 	FinishRender(_pvrrc);
-	_pvrrc=0;
+	_pvrrc = nullptr;
 
-	return do_swp;
+	return frame_rendered;
 }
+
+Renderer* rend_GLES2();
+Renderer* rend_GL4();
+Renderer* rend_norend();
+Renderer* rend_Vulkan();
+Renderer* rend_OITVulkan();
 
 static void rend_create_renderer()
 {
@@ -305,7 +279,6 @@ static void rend_create_renderer()
 #endif
 	}
 #endif
-	renderer_changed = settings.pvr.rend;
 }
 
 void rend_init_renderer()
@@ -329,6 +302,7 @@ void rend_init_renderer()
 
 void rend_term_renderer()
 {
+	rend_reset();
 	if (renderer != NULL)
 	{
 		renderer->Term();
@@ -342,38 +316,16 @@ void rend_term_renderer()
 	}
 }
 
-void* rend_thread(void* p)
+void rend_reset()
 {
-	renderer_enabled = true;
-
-	rend_init_renderer();
-
-	//we don't know if this is true, so let's not speculate here
-	//renderer->Resize(640, 480);
-
-	while (renderer_enabled)
-	{
-		if (rend_single_frame())
-		{
-			if (FB_R_SOF1 == FB_W_SOF1 || !swap_pending)
-			{
-				renderer->Present();
-				swap_pending = false;
-			}
-		}
-		if (renderer_reinit_requested)
-		{
-			renderer_reinit_requested = false;
-			rend_init_renderer();
-		}
-	}
-
-	rend_term_renderer();
-
-	return NULL;
+	FinishRender(DequeueRender());
+	do_swap = false;
+	render_called = false;
+	pend_rend = false;
+	FrameCount = 1;
+	VertexCount = 0;
+	fb_w_cur = 1;
 }
-
-bool pend_rend = false;
 
 void rend_resize(int width, int height)
 {
@@ -421,11 +373,7 @@ void rend_start_render()
 		if (QueueRender(ctx))
 		{
 			palette_update();
-#if !defined(TARGET_NO_THREADS)
 			rs.Set();
-#else
-			rend_single_frame();
-#endif
 			pend_rend = true;
 		}
 	}
@@ -434,20 +382,7 @@ void rend_start_render()
 void rend_end_render()
 {
 	if (pend_rend)
-	{
-#if !defined(TARGET_NO_THREADS)
 		re.Wait();
-#else
-		if (renderer != NULL)
-			renderer->Present();
-#endif
-	}
-}
-
-void rend_stop_renderer()
-{
-	renderer_enabled = false;
-	tactx_Term();
 }
 
 void rend_vblank()
@@ -482,16 +417,22 @@ void check_framebuffer_write()
 void rend_cancel_emu_wait()
 {
 	FinishRender(NULL);
-#if !defined(TARGET_NO_THREADS)
 	re.Set();
-#endif
 }
 
-void rend_swap_frame()
+void rend_set_fb_write_addr(u32 fb_w_sof1)
 {
-	if (swap_pending)
+	if (fb_w_sof1 & 0x1000000)
+		// render to texture
+		return;
+	fb_w_cur = fb_w_sof1;
+}
+
+void rend_swap_frame(u32 fb_r_sof1)
+{
+	std::lock_guard<std::mutex> lock(swap_mutex);
+	if (fb_r_sof1 == fb_w_cur)
 	{
-		swap_pending = false;
 		do_swap = true;
 		rs.Set();
 	}

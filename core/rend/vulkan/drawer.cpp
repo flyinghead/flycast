@@ -327,8 +327,6 @@ bool Drawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 	GetCurrentDescSet().UpdateUniforms(GetMainBuffer(0)->buffer.get(), offsets.vertexUniformOffset, offsets.fragmentUniformOffset,
 			fogTexture->GetImageView(), paletteTexture->GetImageView());
 	GetCurrentDescSet().BindPerFrameDescriptorSets(cmdBuffer);
-	// Reset per-poly descriptor set pool
-	GetCurrentDescSet().Reset();
 
 	// Bind vertex and index buffers
 	const vk::DeviceSize zeroOffset[] = { 0 };
@@ -568,14 +566,16 @@ void TextureDrawer::EndRenderPass()
 		tmpBuf.init(clippedWidth, clippedHeight);
 		colorAttachment->GetBufferData()->download(clippedWidth * clippedHeight * 4, tmpBuf.data());
 		WriteTextureToVRam(clippedWidth, clippedHeight, (u8 *)tmpBuf.data(), dst);
-
-		return;
 	}
-	//memset(&vram[fb_rtt.TexAddr << 3], '\0', size);
+	else
+	{
+		//memset(&vram[fb_rtt.TexAddr << 3], '\0', size);
 
-	texture->dirty = 0;
-	if (texture->lock_block == NULL)
-		texture->lock_block = libCore_vramlock_Lock(texture->sa_tex, texture->sa + texture->size - 1, texture);
+		texture->dirty = 0;
+		if (texture->lock_block == NULL)
+			texture->lock_block = libCore_vramlock_Lock(texture->sa_tex, texture->sa + texture->size - 1, texture);
+	}
+	Drawer::EndRenderPass();
 }
 
 void ScreenDrawer::Init(SamplerManager *samplerManager, ShaderManager *shaderManager)
@@ -605,9 +605,9 @@ void ScreenDrawer::Init(SamplerManager *samplerManager, ShaderManager *shaderMan
 		vk::AttachmentDescription attachmentDescriptions[] = {
 				// Color attachment
 				vk::AttachmentDescription(vk::AttachmentDescriptionFlags(), GetContext()->GetColorFormat(), vk::SampleCountFlagBits::e1,
-						vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eStore,
+						vk::AttachmentLoadOp::eLoad, vk::AttachmentStoreOp::eStore,
 						vk::AttachmentLoadOp::eDontCare, vk::AttachmentStoreOp::eDontCare,
-						vk::ImageLayout::eUndefined, vk::ImageLayout::eShaderReadOnlyOptimal),
+						vk::ImageLayout::eShaderReadOnlyOptimal, vk::ImageLayout::eShaderReadOnlyOptimal),
 				// Depth attachment
 				vk::AttachmentDescription(vk::AttachmentDescriptionFlags(), GetContext()->GetDepthFormat(), vk::SampleCountFlagBits::e1,
 						vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eDontCare,
@@ -634,7 +634,7 @@ void ScreenDrawer::Init(SamplerManager *samplerManager, ShaderManager *shaderMan
 				ARRAY_SIZE(subpasses), subpasses,
 				dependencies.size(), dependencies.data()));
 	}
-	size_t size = VulkanContext::Instance()->GetSwapChainSize();
+	size_t size = GetSwapChainSize();
 	if (colorAttachments.size() > size)
 	{
 		colorAttachments.resize(size);
@@ -656,6 +656,7 @@ void ScreenDrawer::Init(SamplerManager *samplerManager, ShaderManager *shaderMan
 			vk::FramebufferCreateInfo createInfo(vk::FramebufferCreateFlags(), *renderPass,
 					ARRAY_SIZE(attachments), attachments, viewport.width, viewport.height, 1);
 			framebuffers.push_back(GetContext()->GetDevice().createFramebufferUnique(createInfo));
+			transitionsNeeded++;
 		}
 	}
 
@@ -669,9 +670,16 @@ vk::CommandBuffer ScreenDrawer::BeginRenderPass()
 {
 	if (currentScreenScaling != settings.rend.ScreenScaling)
 		Init(samplerManager, shaderManager);
-	NewImage();
+
 	vk::CommandBuffer commandBuffer = commandPool->Allocate();
 	commandBuffer.begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));
+
+	if (transitionsNeeded)
+	{
+		for (size_t i = colorAttachments.size() - transitionsNeeded; i < colorAttachments.size(); i++)
+			setImageLayout(commandBuffer, colorAttachments[i]->GetImage(), GetContext()->GetColorFormat(), 1, vk::ImageLayout::eUndefined, vk::ImageLayout::eShaderReadOnlyOptimal);
+		transitionsNeeded = 0;
+	}
 
 	const vk::ClearValue clear_colors[] = { vk::ClearColorValue(std::array<float, 4> { 0.f, 0.f, 0.f, 1.f }), vk::ClearDepthStencilValue { 0.f, 0 } };
 	commandBuffer.beginRenderPass(vk::RenderPassBeginInfo(*renderPass, *framebuffers[GetCurrentImage()],
@@ -693,5 +701,6 @@ void ScreenDrawer::EndRenderPass()
 	currentCommandBuffer.end();
 	currentCommandBuffer = nullptr;
 	commandPool->EndFrame();
-	GetContext()->PresentFrame(colorAttachments[GetCurrentImage()]->GetImageView(), vk::Offset2D(viewport.width, viewport.height));
+	Drawer::EndRenderPass();
+	frameRendered = true;
 }

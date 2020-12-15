@@ -20,8 +20,6 @@
 #endif
 #endif
 
-float fb_scale_x, fb_scale_y; // FIXME
-
 //Fragment and vertex shaders code
 
 static const char* VertexShaderSource = R"(%s
@@ -1350,12 +1348,6 @@ bool RenderFrame()
 	return !is_rtt;
 }
 
-void rend_set_fb_scale(float x, float y)
-{
-	fb_scale_x = x;
-	fb_scale_y = y;
-}
-
 struct glesrend : Renderer
 {
 	bool Init() override { return gles_init(); }
@@ -1376,7 +1368,6 @@ struct glesrend : Renderer
 		return !pvrrc.isRTT;
 	}
 	bool RenderLastFrame() override { return !theGLContext.IsSwapBufferPreserved() ? render_output_framebuffer() : false; }
-	void Present() override { theGLContext.Swap(); }
 
 	void DrawOSD(bool clear_screen) override
 	{

@@ -104,18 +104,21 @@ class Drawer : public BaseDrawer
 public:
 	virtual ~Drawer() = default;
 	bool Draw(const Texture *fogTexture, const Texture *paletteTexture);
-	virtual void EndRenderPass() = 0;
+	virtual void EndRenderPass() { renderPass++; }
 
 protected:
+	virtual size_t GetSwapChainSize() { return GetContext()->GetSwapChainSize(); }
 	virtual vk::CommandBuffer BeginRenderPass() = 0;
 	void NewImage()
 	{
-		imageIndex = (imageIndex + 1) % GetContext()->GetSwapChainSize();
+		GetCurrentDescSet().Reset();
+		imageIndex = (imageIndex + 1) % GetSwapChainSize();
 		if (perStripSorting != settings.rend.PerStripSorting)
 		{
 			perStripSorting = settings.rend.PerStripSorting;
 			pipelineManager->Reset();
 		}
+		renderPass = 0;
 	}
 
 	void Init(SamplerManager *samplerManager, PipelineManager *pipelineManager)
@@ -123,7 +126,7 @@ protected:
 		this->pipelineManager = pipelineManager;
 		this->samplerManager = samplerManager;
 
-		size_t size = GetContext()->GetSwapChainSize();
+		size_t size = GetSwapChainSize();
 		if (descriptorSets.size() > size)
 			descriptorSets.resize(size);
 		else
@@ -138,22 +141,22 @@ protected:
 
 	BufferData* GetMainBuffer(u32 size)
 	{
-		if (mainBuffers.empty())
+		u32 bufferIndex = imageIndex + renderPass * GetSwapChainSize();
+		while (mainBuffers.size() <= bufferIndex)
 		{
-			for (size_t i = 0; i < GetContext()->GetSwapChainSize(); i++)
-				mainBuffers.push_back(std::unique_ptr<BufferData>(new BufferData(std::max(512 * 1024u, size),
-						vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eUniformBuffer)));
+			mainBuffers.push_back(std::unique_ptr<BufferData>(new BufferData(std::max(512 * 1024u, size),
+					vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eUniformBuffer)));
 		}
-		else if (mainBuffers[GetCurrentImage()]->bufferSize < size)
+		if (mainBuffers[bufferIndex]->bufferSize < size)
 		{
-			u32 newSize = mainBuffers[GetCurrentImage()]->bufferSize;
+			u32 newSize = mainBuffers[bufferIndex]->bufferSize;
 			while (newSize < size)
 				newSize *= 2;
-			INFO_LOG(RENDERER, "Increasing main buffer size %d -> %d", (u32)mainBuffers[GetCurrentImage()]->bufferSize, newSize);
-			mainBuffers[GetCurrentImage()] = std::unique_ptr<BufferData>(new BufferData(newSize,
+			INFO_LOG(RENDERER, "Increasing main buffer size %d -> %d", (u32)mainBuffers[bufferIndex]->bufferSize, newSize);
+			mainBuffers[bufferIndex] = std::unique_ptr<BufferData>(new BufferData(newSize,
 					vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eUniformBuffer));
 		}
-		return mainBuffers[GetCurrentImage()].get();
+		return mainBuffers[bufferIndex].get();
 	};
 
 	vk::CommandBuffer currentCommandBuffer;
@@ -168,6 +171,7 @@ private:
 	void UploadMainBuffer(const VertexShaderUniforms& vertexUniforms, const FragmentShaderUniforms& fragmentUniforms);
 
 	int imageIndex = 0;
+	int renderPass = 0;
 	struct {
 		vk::DeviceSize indexOffset = 0;
 		vk::DeviceSize modVolOffset = 0;
@@ -191,9 +195,20 @@ public:
 	void Init(SamplerManager *samplerManager, ShaderManager *shaderManager);
 	vk::RenderPass GetRenderPass() const { return *renderPass; }
 	virtual void EndRenderPass() override;
+	bool PresentFrame()
+	{
+		if (!frameRendered)
+			return false;
+		frameRendered = false;
+		GetContext()->PresentFrame(colorAttachments[GetCurrentImage()]->GetImageView(), vk::Offset2D(viewport.width, viewport.height));
+		NewImage();
+
+		return true;
+	}
 
 protected:
 	virtual vk::CommandBuffer BeginRenderPass() override;
+	virtual size_t GetSwapChainSize() override { return 2; }
 
 private:
 	std::unique_ptr<PipelineManager> screenPipelineManager;
@@ -205,6 +220,8 @@ private:
 	vk::Extent2D viewport;
 	int currentScreenScaling = 0;
 	ShaderManager *shaderManager = nullptr;
+	int transitionsNeeded = 0;
+	bool frameRendered = false;
 };
 
 class TextureDrawer : public Drawer

@@ -830,3 +830,10 @@ void dump_screenshot(u8 *buffer, u32 width, u32 height, bool alpha = false, u32 
 
 extern const std::array<f32, 16> D_Adjust_LoD_Bias;
 #undef clamp
+
+extern float fb_scale_x, fb_scale_y;
+static inline void rend_set_fb_scale(float x, float y)
+{
+	fb_scale_x = x;
+	fb_scale_y = y;
+}

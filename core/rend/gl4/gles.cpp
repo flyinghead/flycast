@@ -946,8 +946,6 @@ struct gl4rend : Renderer
 	}
 	bool RenderLastFrame() override { return !theGLContext.IsSwapBufferPreserved() ? gl4_render_output_framebuffer() : false; }
 
-	void Present() override { theGLContext.Swap(); }
-
 	void DrawOSD(bool clear_screen) override
 	{
 		OSD_DRAW(clear_screen);

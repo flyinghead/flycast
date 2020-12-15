@@ -21,7 +21,6 @@
 #include "reios/reios.h"
 #include "hw/sh4/sh4_sched.h"
 #include "hw/sh4/sh4_if.h"
-#include "hw/pvr/Renderer_if.h"
 #include "hw/pvr/spg.h"
 #include "hw/aica/aica_if.h"
 #include "hw/aica/dsp.h"
@@ -35,6 +34,7 @@
 #include "rend/CustomTexture.h"
 #include "hw/maple/maple_devs.h"
 #include "network/naomi_network.h"
+#include "rend/mainui.h"
 
 void FlushCache();
 static void LoadCustom();
@@ -434,6 +434,7 @@ int reicast_init(int argc, char* argv[])
 		LogManager::Init();
 		LoadSettings(false);
 	}
+	settings.pvr.rend = cfgLoadInt("config", "pvr.rend", settings.pvr.rend);
 
 	os_CreateWindow();
 	os_SetupInput();
@@ -712,7 +713,7 @@ void dc_request_reset()
 void dc_exit()
 {
 	dc_stop();
-	rend_stop_renderer();
+	mainui_stop();
 }
 
 void InitSettings()
@@ -757,7 +758,6 @@ void InitSettings()
 	settings.rend.WidescreenGameHacks = false;
 
 	settings.pvr.ta_skip			= 0;
-	settings.pvr.rend				= 0;
 
 	settings.pvr.MaxThreads		    = 3;
 	settings.pvr.SynchronousRender	= true;
@@ -858,9 +858,6 @@ void LoadSettings(bool game_specific)
 	settings.rend.WidescreenGameHacks = cfgLoadBool(config_section, "rend.WidescreenGameHacks", settings.rend.WidescreenGameHacks);
 
 	settings.pvr.ta_skip			= cfgLoadInt(config_section, "ta.skip", settings.pvr.ta_skip);
-	if (!game_specific)
-		// crashes if switching gl <-> vulkan
-		settings.pvr.rend				= cfgLoadInt(config_section, "pvr.rend", settings.pvr.rend);
 
 	settings.pvr.MaxThreads		    = cfgLoadInt(config_section, "pvr.MaxThreads", settings.pvr.MaxThreads);
 	settings.pvr.SynchronousRender	= cfgLoadBool(config_section, "pvr.SynchronousRendering", settings.pvr.SynchronousRender);

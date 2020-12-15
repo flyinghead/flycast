@@ -27,6 +27,7 @@
 #include "wsi/context.h"
 #include "emulator.h"
 #include "hw/pvr/Renderer_if.h"
+#include "rend/mainui.h"
 
 OSXKeyboardDevice keyboard(0);
 static std::shared_ptr<OSXKbGamepadDevice> kb_gamepad(0);
@@ -87,7 +88,6 @@ void os_SetupInput()
 }
 
 void common_linux_setup();
-void rend_init_renderer();
 
 extern "C" void emu_dc_exit()
 {
@@ -107,7 +107,6 @@ extern "C" void emu_dc_resume()
 }
 
 extern int screen_width,screen_height;
-bool rend_single_frame();
 bool rend_framePending();
 
 extern "C" bool emu_frame_pending()
@@ -117,16 +116,17 @@ extern "C" bool emu_frame_pending()
 
 extern "C" bool emu_renderer_enabled()
 {
-	return renderer_enabled;
+	return mainui_loop_enabled();
 }
 
-extern "C" int emu_single_frame(int w, int h) {
+extern "C" int emu_single_frame(int w, int h)
+{
     if (!emu_frame_pending())
         return 0;
+
     screen_width = w;
     screen_height = h;
-
-    return rend_single_frame();
+    return (int)mainui_rend_frame();
 }
 
 extern "C" void emu_gles_init(int width, int height) {
@@ -189,7 +189,8 @@ extern "C" void emu_gles_init(int width, int height) {
 	screen_height = height;
 
 	InitRenderApi();
-	rend_init_renderer();
+	mainui_init();
+	mainui_enabled = true;
 }
 
 extern "C" int emu_reicast_init()

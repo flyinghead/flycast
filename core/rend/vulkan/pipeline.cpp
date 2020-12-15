@@ -297,7 +297,7 @@ void PipelineManager::CreatePipeline(u32 listType, bool sortTriangles, const Pol
 	params.insideClipTest = (pp.tileclip >> 28) == 3;
 	params.fog = settings.rend.Fog ? pp.tsp.FogCtrl : 2;
 	params.gouraud = pp.pcw.Gouraud;
-	params.ignoreTexAlpha = pp.tsp.IgnoreTexA;
+	params.ignoreTexAlpha = pp.tsp.IgnoreTexA || pp.tcw.PixelFmt == Pixel565;
 	params.offset = pp.pcw.Offset;
 	params.shaderInstr = pp.tsp.ShadInstr;
 	params.texture = pp.pcw.Texture;

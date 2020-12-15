@@ -1,5 +1,4 @@
 #include "ta_ctx.h"
-#include "hw/sh4/sh4_sched.h"
 #include "oslib/oslib.h"
 
 extern u32 fskip;
@@ -70,30 +69,13 @@ static std::mutex mtx_rqueue;
 TA_context* rqueue;
 cResetEvent frame_finished;
 
-static double last_frame1, last_frame2;
-static u64 last_cycles1, last_cycles2;
-
 bool QueueRender(TA_context* ctx)
 {
 	verify(ctx != 0);
 	
- 	//Try to limit speed to a "sane" level
- 	//Speed is also limited via audio, but audio
- 	//is sometimes not accurate enough (android, vista+)
-	u32 cycle_span = (u32)(sh4_sched_now64() - last_cycles2);
-	last_cycles2 = last_cycles1;
-	last_cycles1 = sh4_sched_now64();
- 	double time_span = os_GetSeconds() - last_frame2;
- 	last_frame2 = last_frame1;
- 	last_frame1 = os_GetSeconds();
-
- 	bool too_fast = (cycle_span / time_span) > SH4_MAIN_CLOCK;
-
- 	// Vulkan: rtt frames seem to be discarded often
-	if (rqueue && (too_fast || ctx->rend.isRTT) && settings.pvr.SynchronousRender)
+	if (rqueue && settings.pvr.SynchronousRender)
 		//wait for a frame if
-		//  we have another one queue'd and
-		//  sh4 run at > 120% over the last two frames
+		//  we have another one queue'd
 		//  and SynchronousRender is enabled
 		frame_finished.Wait();
 
@@ -264,6 +246,14 @@ void SerializeTAContext(void **data, unsigned int *total_size)
 	const u32 taSize = ta_tad.thd_data - ta_tad.thd_root;
 	REICAST_S(taSize);
 	REICAST_SA(ta_tad.thd_root, taSize);
+#if 0
+	REICAST_S(ta_tad.render_pass_count);
+	for (u32 i = 0; i < ta_tad.render_pass_count; i++)
+	{
+		u32 offset = (u32)(ta_tad.render_passes[i] - ta_tad.thd_root);
+		REICAST_S(offset);
+	}
+#endif
 }
 
 void UnserializeTAContext(void **data, unsigned int *total_size)
@@ -277,4 +267,14 @@ void UnserializeTAContext(void **data, unsigned int *total_size)
 	REICAST_US(size);
 	REICAST_USA(ta_tad.thd_root, size);
 	ta_tad.thd_data = ta_tad.thd_root + size;
+	// FIXME savestate version
+#if 0
+	REICAST_US(ta_tad.render_pass_count);
+	for (u32 i = 0; i < ta_tad.render_pass_count; i++)
+	{
+		u32 offset;
+		REICAST_US(offset);
+		ta_tad.render_passes[i] = ta_tad.thd_root + offset;
+	}
+#endif
 }

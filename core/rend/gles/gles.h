@@ -156,7 +156,6 @@ GLuint init_output_framebuffer(int width, int height);
 bool render_output_framebuffer();
 void free_output_framebuffer();
 
-void HideOSD();
 void OSD_DRAW(bool clear_screen);
 PipelineShader *GetProgram(bool cp_AlphaTest, bool pp_InsideClipping,
 		bool pp_Texture, bool pp_UseAlpha, bool pp_IgnoreTexA, u32 pp_ShadInstr, bool pp_Offset,

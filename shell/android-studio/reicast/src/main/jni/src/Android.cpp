@@ -13,10 +13,9 @@
 #include <types.h>
 
 #include "hw/maple/maple_cfg.h"
-#include "hw/pvr/Renderer_if.h"
 #include "profiler/profiler.h"
 #include "rend/TexCache.h"
-#include "rend/gles/gles.h"
+#include "rend/osd.h"
 #include "hw/maple/maple_devs.h"
 #include "hw/maple/maple_if.h"
 #include "hw/naomi/naomi_cart.h"
@@ -28,6 +27,7 @@
 #include "log/LogManager.h"
 #include "wsi/context.h"
 #include "emulator.h"
+#include "rend/mainui.h"
 
 JavaVM* g_jvm;
 
@@ -351,7 +351,7 @@ static void *render_thread_func(void *)
 	theGLContext.SetNativeWindow((EGLNativeWindowType)g_window);
 	InitRenderApi();
 
-	rend_thread(NULL);
+	mainui_loop();
 
 	TermRenderApi();
 	ANativeWindow_release(g_window);
@@ -368,14 +368,14 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_rendinitNative(JNIEnv
 	{
 		if (surface == NULL)
 		{
-			renderer_enabled = false;
+			mainui_stop();
 	        render_thread.WaitToEnd();
 		}
 		else
 		{
 		    screen_width = width;
 		    screen_height = height;
-			renderer_reinit_requested = true;
+		    mainui_reinit();
 		}
 	}
 	else if (surface != NULL)
@@ -389,17 +389,17 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_rendinitJava(JNIEnv *
 {
     screen_width = width;
     screen_height = height;
-    rend_init_renderer();
+    mainui_init();
 }
 
 JNIEXPORT jboolean JNICALL Java_com_reicast_emulator_emu_JNIdc_rendframeJava(JNIEnv *env,jobject obj)
 {
-    return (jboolean)rend_single_frame();
+    return (jboolean)mainui_rend_frame();
 }
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_rendtermJava(JNIEnv * env, jobject obj)
 {
-    rend_term_renderer();
+    mainui_term();
 }
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_vjoy(JNIEnv * env, jobject obj,int id,float x, float y, float w, float h)

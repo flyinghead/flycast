@@ -68,6 +68,11 @@ public:
 		return !pvrrc.isRTT;
 	}
 
+	bool Present() override
+	{
+		return screenDrawer.PresentFrame();
+	}
+
 private:
 	SamplerManager samplerManager;
 	ScreenDrawer screenDrawer;

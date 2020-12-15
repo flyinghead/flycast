@@ -149,6 +149,7 @@ bool VulkanContext::InitInstance(const char** extensions, uint32_t extensions_co
 #ifdef VK_DEBUG
 #ifndef __ANDROID__
 		vext.push_back("VK_EXT_debug_utils");
+//		layer_names.push_back("VK_LAYER_KHRONOS_validation");
 		layer_names.push_back("VK_LAYER_LUNARG_standard_validation");
 		layer_names.push_back("VK_LAYER_LUNARG_assistant_layer");
 #else
@@ -568,7 +569,7 @@ void VulkanContext::CreateSwapChain()
 					(surfaceCapabilities.supportedCompositeAlpha & vk::CompositeAlphaFlagBitsKHR::ePreMultiplied) ? vk::CompositeAlphaFlagBitsKHR::ePreMultiplied :
 					(surfaceCapabilities.supportedCompositeAlpha & vk::CompositeAlphaFlagBitsKHR::ePostMultiplied) ? vk::CompositeAlphaFlagBitsKHR::ePostMultiplied :
 					(surfaceCapabilities.supportedCompositeAlpha & vk::CompositeAlphaFlagBitsKHR::eInherit) ? vk::CompositeAlphaFlagBitsKHR::eInherit : vk::CompositeAlphaFlagBitsKHR::eOpaque;
-			u32 imageCount = std::max(3u, surfaceCapabilities.minImageCount);
+			u32 imageCount = std::max(2u, surfaceCapabilities.minImageCount);
 			if (surfaceCapabilities.maxImageCount != 0)
 				imageCount = std::min(imageCount, surfaceCapabilities.maxImageCount);
 			vk::ImageUsageFlags usage = vk::ImageUsageFlagBits::eColorAttachment;

@@ -14,6 +14,7 @@
 #endif
 #include "hw/maple/maple_devs.h"
 #include "emulator.h"
+#include "rend/mainui.h"
 
 #include <windows.h>
 #include <windowsx.h>
@@ -730,8 +731,6 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 	__try
 #endif
 	{
-		void *rend_thread(void *);
-
 		if (reicast_init(argc, argv) != 0)
 			die("Reicast initialization failed");
 
@@ -739,7 +738,7 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 			setup_seh();
 		#endif
 
-		rend_thread(NULL);
+		mainui_loop();
 
 		dc_term();
 	}

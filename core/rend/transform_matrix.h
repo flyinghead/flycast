@@ -19,12 +19,12 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #pragma once
+#include "TexCache.h"
 #include "hw/pvr/ta_ctx.h"
 
 #include <glm/glm.hpp>
 #include <glm/gtx/transform.hpp>
 
-extern float fb_scale_x, fb_scale_y;
 extern int screen_width, screen_height;
 
 template<bool invertY>
@@ -122,6 +122,7 @@ public:
 			// some heuristic...
 			startx *= 0.8;
 			starty *= 1.1;
+			// TODO need to adjust lightgun coordinates
 #endif
 			normalMatrix = glm::translate(glm::vec3(startx, starty, 0));
 			scissorMatrix = normalMatrix;

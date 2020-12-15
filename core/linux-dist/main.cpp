@@ -4,6 +4,7 @@
 #include "hw/sh4/dyna/blockmanager.h"
 #include "log/LogManager.h"
 #include "emulator.h"
+#include "rend/mainui.h"
 
 #include <cstdarg>
 #include <csignal>
@@ -114,7 +115,6 @@ void os_CreateWindow()
 }
 
 void common_linux_setup();
-void* rend_thread(void* p);
 
 // Find the user config directory.
 // The following folders are checked in this order:
@@ -371,7 +371,7 @@ int main(int argc, char* argv[])
 	if (reicast_init(argc, argv))
 		die("Reicast initialization failed\n");
 
-	rend_thread(NULL);
+	mainui_loop();
 
 	dc_term();
 
@@ -379,9 +379,9 @@ int main(int argc, char* argv[])
 	input_evdev_close();
 #endif
 
-	#if defined(SUPPORT_X11)
-		x11_window_destroy();
-	#endif
+#if defined(SUPPORT_X11)
+	x11_window_destroy();
+#endif
 
 #if defined(USE_SDL)
 	sdl_window_destroy();
