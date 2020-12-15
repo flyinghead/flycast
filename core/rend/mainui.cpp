@@ -63,7 +63,7 @@ void mainui_term()
 void mainui_loop()
 {
 	mainui_enabled = true;
-	renderer_changed = settings.pvr.rend;
+	renderer_changed = (int)settings.pvr.rend;
 	mainui_init();
 
 	while (mainui_enabled)
@@ -78,11 +78,11 @@ void mainui_loop()
 #endif
 		}
 
-		if ((u32)renderer_changed != settings.pvr.rend)
+		if (renderer_changed != (int)settings.pvr.rend)
 		{
 			mainui_term();
-			SwitchRenderApi(renderer_changed == -1 ? settings.pvr.rend : renderer_changed);
-			renderer_changed = settings.pvr.rend;
+			SwitchRenderApi(renderer_changed == -1 ? settings.pvr.rend : (RenderType)renderer_changed);
+			renderer_changed = (int)settings.pvr.rend;
 			mainui_init();
 		}
 	}

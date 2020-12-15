@@ -434,7 +434,7 @@ int reicast_init(int argc, char* argv[])
 		LogManager::Init();
 		LoadSettings(false);
 	}
-	settings.pvr.rend = cfgLoadInt("config", "pvr.rend", settings.pvr.rend);
+	settings.pvr.rend = (RenderType)cfgLoadInt("config", "pvr.rend", (int)settings.pvr.rend);
 
 	os_CreateWindow();
 	os_SetupInput();
@@ -1011,7 +1011,7 @@ void SaveSettings()
 	if (!naomi_rotate_screen || !settings.rend.Rotate90)
 		cfgSaveBool("config", "rend.Rotate90", settings.rend.Rotate90);
 	cfgSaveInt("config", "ta.skip", settings.pvr.ta_skip);
-	cfgSaveInt("config", "pvr.rend", settings.pvr.rend);
+	cfgSaveInt("config", "pvr.rend", (int)settings.pvr.rend);
 	cfgSaveBool("config", "rend.PerStripSorting", settings.rend.PerStripSorting);
 	cfgSaveBool("config", "rend.DelayFrameSwapping", settings.rend.DelayFrameSwapping);
 	cfgSaveBool("config", "rend.WidescreenGameHacks", settings.rend.WidescreenGameHacks);

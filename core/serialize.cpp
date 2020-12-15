@@ -110,6 +110,7 @@ extern int modem_sched;
 
 //./core/hw/pvr/Renderer_if.o
 extern bool pend_rend;
+extern u32 fb_w_cur;
 
 //./core/hw/pvr/pvr_mem.o
 extern u32 YUV_tempdata[512/4];//512 bytes
@@ -273,7 +274,7 @@ bool dc_serialize(void **data, unsigned int *total_size)
 {
 	int i = 0;
 
-	serialize_version_enum version = V11;
+	serialize_version_enum version = V12;
 
 	*total_size = 0 ;
 
@@ -373,6 +374,7 @@ bool dc_serialize(void **data, unsigned int *total_size)
 
 	REICAST_S(in_vblank);
 	REICAST_S(clc_pvr_scanline);
+	REICAST_S(fb_w_cur);
 
 	REICAST_S(ta_fsm[2048]);
 	REICAST_S(ta_fsm_cl);
@@ -653,12 +655,13 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 
 	REICAST_US(in_vblank);
 	REICAST_US(clc_pvr_scanline);
+	fb_w_cur = 1;
 
 	REICAST_US(ta_fsm[2048]);
 	REICAST_US(ta_fsm_cl);
 	pal_needs_update = true;
 
-	UnserializeTAContext(data, total_size);
+	UnserializeTAContext(data, total_size, VCUR_LIBRETRO);
 
 	REICAST_USA(vram.data, vram.size);
 
@@ -973,6 +976,10 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 		REICAST_SKIP(4 * 256);
 		REICAST_SKIP(2048);		// ta_fsm
 	}
+	if (version >= V12)
+		REICAST_US(fb_w_cur);
+	else
+		fb_w_cur = 1;
 	REICAST_US(ta_fsm[2048]);
 	REICAST_US(ta_fsm_cl);
 
@@ -986,7 +993,7 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 		REICAST_SKIP(4);
 	}
 	if (version >= V11)
-		UnserializeTAContext(data, total_size);
+		UnserializeTAContext(data, total_size, version);
 
 	REICAST_USA(vram.data, vram.size);
 	pal_needs_update = true;

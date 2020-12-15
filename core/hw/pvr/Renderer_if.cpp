@@ -18,7 +18,7 @@ static Renderer* fallback_renderer;
 cResetEvent rs, re;
 static bool do_swap;
 std::mutex swap_mutex;
-u32 fb_w_cur = 1;	// FIXME serialize
+u32 fb_w_cur = 1;
 
 // direct framebuffer write detection
 static bool render_called = false;
@@ -260,20 +260,20 @@ static void rend_create_renderer()
 	switch (settings.pvr.rend)
 	{
 	default:
-	case 0:
+	case RenderType::OpenGL:
 		renderer = rend_GLES2();
 		break;
 #if !defined(GLES) && !defined(__APPLE__)
-	case 3:
+	case RenderType::OpenGL_OIT:
 		renderer = rend_GL4();
 		fallback_renderer = rend_GLES2();
 		break;
 #endif
 #ifdef USE_VULKAN
-	case 4:
+	case RenderType::Vulkan:
 		renderer = rend_Vulkan();
 		break;
-	case 5:
+	case RenderType::Vulkan_OIT:
 		renderer = rend_OITVulkan();
 		break;
 #endif

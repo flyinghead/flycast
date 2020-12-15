@@ -246,17 +246,15 @@ void SerializeTAContext(void **data, unsigned int *total_size)
 	const u32 taSize = ta_tad.thd_data - ta_tad.thd_root;
 	REICAST_S(taSize);
 	REICAST_SA(ta_tad.thd_root, taSize);
-#if 0
 	REICAST_S(ta_tad.render_pass_count);
 	for (u32 i = 0; i < ta_tad.render_pass_count; i++)
 	{
 		u32 offset = (u32)(ta_tad.render_passes[i] - ta_tad.thd_root);
 		REICAST_S(offset);
 	}
-#endif
 }
 
-void UnserializeTAContext(void **data, unsigned int *total_size)
+void UnserializeTAContext(void **data, unsigned int *total_size, serialize_version_enum version)
 {
 	u32 address;
 	REICAST_US(address);
@@ -267,14 +265,18 @@ void UnserializeTAContext(void **data, unsigned int *total_size)
 	REICAST_US(size);
 	REICAST_USA(ta_tad.thd_root, size);
 	ta_tad.thd_data = ta_tad.thd_root + size;
-	// FIXME savestate version
-#if 0
-	REICAST_US(ta_tad.render_pass_count);
-	for (u32 i = 0; i < ta_tad.render_pass_count; i++)
+	if (version >= V12)
 	{
-		u32 offset;
-		REICAST_US(offset);
-		ta_tad.render_passes[i] = ta_tad.thd_root + offset;
+		REICAST_US(ta_tad.render_pass_count);
+		for (u32 i = 0; i < ta_tad.render_pass_count; i++)
+		{
+			u32 offset;
+			REICAST_US(offset);
+			ta_tad.render_passes[i] = ta_tad.thd_root + offset;
+		}
 	}
-#endif
+	else
+	{
+		ta_tad.render_pass_count = 0;
+	}
 }

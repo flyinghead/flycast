@@ -350,6 +350,13 @@ enum class JVS {
 	WaveRunnerGP,
 };
 
+enum class RenderType {
+	OpenGL = 0,
+	OpenGL_OIT = 3,
+	Vulkan = 4,
+	Vulkan_OIT = 5
+};
+
 struct settings_t
 {
 	struct {
@@ -465,12 +472,12 @@ struct settings_t
 	struct
 	{
 		u32 ta_skip;
-		u32 rend;	// 0: GLES, GL3, 3: OIT/GL4.3, 4: Vulkan
+		RenderType rend;
 
 		u32 MaxThreads;
 		bool SynchronousRender;
 
-		bool IsOpenGL() { return rend == 0 || rend == 3; }
+		bool IsOpenGL() { return rend == RenderType::OpenGL || rend == RenderType::OpenGL_OIT; }
 	} pvr;
 
 	struct {
@@ -625,4 +632,5 @@ enum serialize_version_enum {
 	V9 = 804,
 	V10 = 805,
 	V11 = 806,
+	V12 = 807,
 } ;
