@@ -254,11 +254,7 @@ static void maple_DoDma()
 		{
 			u32 bus = (header_1 >> 16) & 3;
 			if (MapleDevices[bus][5])
-			{
 				occupy = MapleDevices[bus][5]->get_lightgun_pos();
-				verify(last);
-			}
-
 			addr += 1 * 4;
 		}
 		break;

@@ -274,6 +274,7 @@ void FlushCache();
 
 void arm_Reset()
 {
+	DEBUG_LOG(AICA_ARM, "AICA ARM Reset");
 #if FEAT_AREC != DYNAREC_NONE
 	FlushCache();
 #endif

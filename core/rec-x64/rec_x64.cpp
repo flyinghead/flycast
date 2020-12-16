@@ -1548,7 +1548,7 @@ private:
 				break;
 			default:
 				die("Invalid immediate size");
-				break;
+				return false;
 			}
 			if (rv != MMU_ERROR_NONE)
 				return false;
@@ -1698,7 +1698,7 @@ private:
 				break;
 			default:
 				die("Invalid immediate size");
-				break;
+				return false;
 			}
 			if (rv != MMU_ERROR_NONE)
 				return false;
@@ -2008,10 +2008,10 @@ private:
 	void GenCall(Ret(*function)(Params...), bool skip_floats = false)
 	{
 #ifndef _WIN32
-		bool xmm8_mapped = !skip_floats && current_opid != -1 && regalloc.IsMapped(xmm8, current_opid);
-		bool xmm9_mapped = !skip_floats && current_opid != -1 && regalloc.IsMapped(xmm9, current_opid);
-		bool xmm10_mapped = !skip_floats && current_opid != -1 && regalloc.IsMapped(xmm10, current_opid);
-		bool xmm11_mapped = !skip_floats && current_opid != -1 && regalloc.IsMapped(xmm11, current_opid);
+		bool xmm8_mapped = !skip_floats && current_opid != (size_t)-1 && regalloc.IsMapped(xmm8, current_opid);
+		bool xmm9_mapped = !skip_floats && current_opid != (size_t)-1 && regalloc.IsMapped(xmm9, current_opid);
+		bool xmm10_mapped = !skip_floats && current_opid != (size_t)-1 && regalloc.IsMapped(xmm10, current_opid);
+		bool xmm11_mapped = !skip_floats && current_opid != (size_t)-1 && regalloc.IsMapped(xmm11, current_opid);
 
 		// Need to save xmm registers as they are not preserved in linux/mach
 		int offset = 0;
