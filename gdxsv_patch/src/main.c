@@ -3,7 +3,7 @@ typedef unsigned short u16;
 typedef unsigned int u32;
 
 #define CALL_ORG_FUNC 0 // works only disk2
-#define DEBUG_PRINT 1
+#define DEBUG_PRINT 0
 
 #define GDXDATA __attribute__((section("gdx.data")))
 #define GDXFUNC __attribute__((section("gdx.func")))

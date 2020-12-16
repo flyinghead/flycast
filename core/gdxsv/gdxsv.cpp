@@ -16,7 +16,7 @@ Gdxsv::~Gdxsv() {
     if (net_thread.joinable()) {
         net_thread.join();
     }
-    CloseUdpClientWithReason("hard_quit");
+    CloseUdpClientWithReason("cl_hard_quit");
 }
 
 bool Gdxsv::InGame() const {
@@ -33,7 +33,7 @@ void Gdxsv::Reset() {
     }
 
     tcp_client.Close();
-    CloseUdpClientWithReason("hard_reset");
+    CloseUdpClientWithReason("cl_hard_reset");
 
     auto game_id = std::string(ip_meta.product_number, sizeof(ip_meta.product_number));
     if (game_id != "T13306M   ") {
@@ -238,7 +238,7 @@ void Gdxsv::SyncNetwork(bool write) {
                 u16 port = port_no;
 
                 if (tolobby == 1) {
-                    CloseUdpClientWithReason("to_lobby");
+                    CloseUdpClientWithReason("cl_to_lobby");
                     bool ok = tcp_client.Connect(host.c_str(), port);
                     if (ok) {
                         tcp_client.SetNonBlocking();
@@ -289,13 +289,13 @@ void Gdxsv::SyncNetwork(bool write) {
                 tcp_client.Close();
 
                 if (gdx_rpc.param2 == 0) {
-                    CloseUdpClientWithReason("app_close");
+                    CloseUdpClientWithReason("cl_app_close");
                 } else if (gdx_rpc.param2 == 1) {
-                    CloseUdpClientWithReason("ppp_close");
+                    CloseUdpClientWithReason("cl_ppp_close");
                 } else if (gdx_rpc.param2 == 2) {
-                    CloseUdpClientWithReason("soft_reset");
+                    CloseUdpClientWithReason("cl_soft_reset");
                 } else {
-                    CloseUdpClientWithReason("tcp_close");
+                    CloseUdpClientWithReason("cl_tcp_close");
                 }
 
                 recv_buf_mtx.lock();
@@ -572,7 +572,7 @@ void Gdxsv::UpdateNetwork() {
                 send_buf_mtx.unlock();
             } else {
                 ERROR_LOG(COMMON, "UDP session failed");
-                CloseUdpClientWithReason("session_failed");
+                CloseUdpClientWithReason("cl_session_failed");
             }
         }
 
@@ -670,7 +670,7 @@ void Gdxsv::UpdateNetwork() {
                             }
                             recv_buf_mtx.unlock();
                         } else if (pkt.type() == proto::MessageType::Fin) {
-                            CloseUdpClientWithReason("server_fin");
+                            CloseUdpClientWithReason("cl_recv_fin");
                         } else {
                             WARN_LOG(COMMON, "recv unexpected pkt type %d", pkt.type());
                         }
