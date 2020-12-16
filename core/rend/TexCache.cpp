@@ -769,7 +769,20 @@ void ReadFramebuffer(PixelBuffer<u32>& pb, int& width, int& height)
 			break;
 	}
 
-	u32 addr = SPG_CONTROL.interlace && !SPG_STATUS.fieldnum ? FB_R_SOF2 : FB_R_SOF1;
+	u32 addr = FB_R_SOF1;
+	if (SPG_CONTROL.interlace)
+	{
+		if (width == modulus && FB_R_SOF2 == FB_R_SOF1 + width * bpp)
+		{
+			// Typical case alternating even and odd lines -> take the whole buffer at once
+			modulus = 0;
+			height *= 2;
+		}
+		else
+		{
+			addr = SPG_STATUS.fieldnum ? FB_R_SOF2 : FB_R_SOF1;
+		}
+	}
 
 	pb.init(width, height);
 	u8 *dst = (u8*)pb.data();
