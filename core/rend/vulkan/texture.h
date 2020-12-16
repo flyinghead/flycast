@@ -180,6 +180,14 @@ public:
 		BaseTextureCache::Clear();
 		for (auto& set : inFlightTextures)
 			set.clear();
+		for (auto& v : trashedImageViews)
+			v.clear();
+		for (auto& v : trashedImages)
+			v.clear();
+		for (auto& v : trashedMem)
+			v.clear();
+		for (auto& v : trashedBuffers)
+			v.clear();
 	}
 
 private:
