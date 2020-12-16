@@ -480,7 +480,7 @@ void gl4_delete_shaders()
 	gl4.modvol_shader.program = 0;
 }
 
-static void gles_term(void)
+static void gl4_term(void)
 {
 	glDeleteBuffers(1, &gl4.vbo.geometry);
 	gl4.vbo.geometry = 0;
@@ -541,7 +541,7 @@ extern void initABuffer();
 void reshapeABuffer(int width, int height);
 extern void gl4CreateTextures(int width, int height);
 
-static bool gles_init()
+static bool gl4_init()
 {
 	findGLVersion();
 	if (gl.gl_major < 4 || (gl.gl_major == 4 && gl.gl_minor < 3))
@@ -875,15 +875,20 @@ static bool RenderFrame()
 
 void termABuffer();
 
-struct gl4rend : Renderer
+struct OpenGL4Renderer : OpenGLRenderer
 {
-	bool Init() override { return gles_init(); }
+	bool Init() override
+	{
+		return gl4_init();
+	}
+
 	void Resize(int w, int h) override
 	{
 		screen_width=w;
 		screen_height=h;
 		resize((int)lroundf(w * settings.rend.ScreenScaling / 100.f), (int)lroundf(h * settings.rend.ScreenScaling / 100.f));
 	}
+
 	void Term() override
 	{
 		termABuffer();
@@ -926,29 +931,28 @@ struct gl4rend : Renderer
 
 		gl_free_osd_resources();
 		free_output_framebuffer();
-		gles_term();
+		gl4_term();
 	}
 
-	bool Process(TA_context* ctx) override { return ProcessFrame(ctx); }
 	bool Render() override
 	{
 		RenderFrame();
-		if (!pvrrc.isRTT)
-			DrawOSD(false);
+		if (pvrrc.isRTT)
+			return false;
 
-		return !pvrrc.isRTT;
-	}
-	bool RenderLastFrame() override { return !theGLContext.IsSwapBufferPreserved() ? gl4_render_output_framebuffer() : false; }
+		DrawOSD(false);
+		frameRendered = true;
 
-	void DrawOSD(bool clear_screen) override
-	{
-		OSD_DRAW(clear_screen);
+		return true;
 	}
 
-	virtual u64 GetTexture(TSP tsp, TCW tcw) override
+	bool RenderLastFrame() override
 	{
-		return gl_GetTexture(tsp, tcw);
+		return !theGLContext.IsSwapBufferPreserved() ? gl4_render_output_framebuffer() : false;
 	}
 };
 
-Renderer* rend_GL4() { return new gl4rend(); }
+Renderer* rend_GL4()
+{
+	return new OpenGL4Renderer();
+}

@@ -260,7 +260,7 @@ void select_directory_popup(const char *prompt, float scaling, StringCallback ca
 				select_current_directory = child_path;
 			}
 		}
-        ImGui::PushStyleColor(ImGuiCol_Text, { 1, 1, 1, 0.3});
+        ImGui::PushStyleColor(ImGuiCol_Text, { 1, 1, 1, 0.3f });
         for (auto& name : display_files)
         {
             ImGui::Text("%s", name.c_str());

@@ -1343,36 +1343,35 @@ bool RenderFrame()
 	return !is_rtt;
 }
 
-struct glesrend : Renderer
+bool OpenGLRenderer::Init()
 {
-	bool Init() override { return gles_init(); }
-	void Resize(int w, int h) override { screen_width=w; screen_height=h; }
-	void Term() override
-	{
-		TexCache.Clear();
-		gles_term();
-	}
+	return gles_init();
+}
 
-	bool Process(TA_context* ctx) override { return ProcessFrame(ctx); }
-	bool Render() override
-	{
-		RenderFrame();
-		if (!pvrrc.isRTT)
-			DrawOSD(false);
+void OpenGLRenderer::Term()
+{
+	TexCache.Clear();
+	gles_term();
+}
 
-		return !pvrrc.isRTT;
-	}
-	bool RenderLastFrame() override { return !theGLContext.IsSwapBufferPreserved() ? render_output_framebuffer() : false; }
+bool OpenGLRenderer::Render()
+{
+	RenderFrame();
+	if (pvrrc.isRTT)
+		return false;
 
-	void DrawOSD(bool clear_screen) override
-	{
-		OSD_DRAW(clear_screen);
-	}
+	DrawOSD(false);
+	frameRendered = true;
 
-	virtual u64 GetTexture(TSP tsp, TCW tcw) override
-	{
-		return gl_GetTexture(tsp, tcw);
-	}
-};
+	return true;
+}
 
-Renderer* rend_GLES2() { return new glesrend(); }
+bool OpenGLRenderer::RenderLastFrame()
+{
+	return !theGLContext.IsSwapBufferPreserved() ? render_output_framebuffer() : false;
+}
+
+Renderer* rend_GLES2()
+{
+	return new OpenGLRenderer();
+}

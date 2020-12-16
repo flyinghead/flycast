@@ -233,3 +233,33 @@ extern TextureCache TexCache;
 
 extern const u32 Zfunction[8];
 extern const u32 SrcBlendGL[], DstBlendGL[];
+
+struct OpenGLRenderer : Renderer
+{
+	bool Init() override;
+	void Resize(int w, int h) override { screen_width = w; screen_height = h; }
+	void Term() override;
+
+	bool Process(TA_context* ctx) override { return ProcessFrame(ctx); }
+
+	bool Render() override;
+
+	bool RenderLastFrame() override;
+
+	void DrawOSD(bool clear_screen) override { OSD_DRAW(clear_screen); }
+
+	virtual u64 GetTexture(TSP tsp, TCW tcw) override
+	{
+		return gl_GetTexture(tsp, tcw);
+	}
+
+	virtual bool Present() override
+	{
+		if (!frameRendered)
+			return false;
+		frameRendered = false;
+		return true;
+	}
+
+	bool frameRendered = false;
+};
