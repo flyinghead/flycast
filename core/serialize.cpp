@@ -130,6 +130,7 @@ extern u32 in_vblank;
 extern u32 clc_pvr_scanline;
 extern int render_end_schid;
 extern int vblank_schid;
+extern bool maple_int_pending;
 
 //./core/hw/pvr/ta.o
 extern u8 ta_fsm[2049];	//[2048] stores the current state
@@ -374,6 +375,7 @@ bool dc_serialize(void **data, unsigned int *total_size)
 
 	REICAST_S(in_vblank);
 	REICAST_S(clc_pvr_scanline);
+	REICAST_S(maple_int_pending);
 	REICAST_S(fb_w_cur);
 
 	REICAST_S(ta_fsm[2048]);
@@ -977,7 +979,10 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 		REICAST_SKIP(2048);		// ta_fsm
 	}
 	if (version >= V12)
+	{
+		REICAST_US(maple_int_pending);
 		REICAST_US(fb_w_cur);
+	}
 	else
 		fb_w_cur = 1;
 	REICAST_US(ta_fsm[2048]);

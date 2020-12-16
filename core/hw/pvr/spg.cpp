@@ -2,6 +2,7 @@
 #include "hw/holly/holly_intc.h"
 #include "hw/holly/sb.h"
 #include "hw/sh4/sh4_sched.h"
+#include "input/gamepad_device.h"
 #include "oslib/oslib.h"
 #include "rend/TexCache.h"
 
@@ -64,7 +65,7 @@ void CalculateSync()
 
 static u32 lightgun_line = 0xffff;
 static u32 lightgun_hpos;
-static bool maple_int_pending;
+bool maple_int_pending;
 
 u32 fskip;
 
@@ -118,7 +119,7 @@ int spg_line_sched(int tag, int cycl, int jit)
 			break;
 		}
 
-		//Vblank start -- really need to test the scanline values
+		//Vblank start
 		if (prv_cur_scanline==0)
 		{
 			if (SPG_CONTROL.interlace)
@@ -126,10 +127,9 @@ int spg_line_sched(int tag, int cycl, int jit)
 			else
 				SPG_STATUS.fieldnum=0;
 
-			//Vblank counter
 			vblk_cnt++;
-			//TODO : rend_if_VBlank();
-			rend_vblank();//notify for vblank :)
+			rend_vblank();
+
 #ifdef TEST_AUTOMATION
 			replay_input();
 #endif

@@ -302,7 +302,6 @@ void rend_init_renderer()
 
 void rend_term_renderer()
 {
-	rend_reset();
 	if (renderer != NULL)
 	{
 		renderer->Term();
