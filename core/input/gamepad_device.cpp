@@ -22,6 +22,7 @@
 #include "oslib/oslib.h"
 #include "rend/gui.h"
 #include "emulator.h"
+#include "gdxsv/gdxsv.h"
 
 #include <algorithm>
 #include <climits>
@@ -109,15 +110,15 @@ bool GamepadDevice::gamepad_btn_input(u32 code, bool pressed)
 		switch (key)
 		{
 		case EMU_BTN_ESCAPE:
-			if (pressed)
+			if (pressed && !gdxsv.InGame())
 				dc_exit();
 			break;
 		case EMU_BTN_MENU:
-			if (pressed)
+			if (pressed && !gdxsv.InGame())
 				gui_open_settings();
 			break;
 		case EMU_BTN_FFORWARD:
-			if (pressed)
+			if (pressed && !gdxsv.InGame())
 				fast_forward_mode = !fast_forward_mode;
 			break;
 		case EMU_BTN_TRIGGER_LEFT:

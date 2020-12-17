@@ -48,7 +48,7 @@ struct TableStruct_packet_2eproto {
     PROTOBUF_SECTION_VARIABLE(protodesc_cold);
   static const ::PROTOBUF_NAMESPACE_ID::internal::AuxiliaryParseTableField aux[]
     PROTOBUF_SECTION_VARIABLE(protodesc_cold);
-  static const ::PROTOBUF_NAMESPACE_ID::internal::ParseTable schema[5]
+  static const ::PROTOBUF_NAMESPACE_ID::internal::ParseTable schema[6]
     PROTOBUF_SECTION_VARIABLE(protodesc_cold);
   static const ::PROTOBUF_NAMESPACE_ID::internal::FieldMetadata field_metadata[];
   static const ::PROTOBUF_NAMESPACE_ID::internal::SerializationTable serialization_table[];
@@ -59,6 +59,9 @@ namespace proto {
 class BattleMessage;
 class BattleMessageDefaultTypeInternal;
 extern BattleMessageDefaultTypeInternal _BattleMessage_default_instance_;
+class FinMessage;
+class FinMessageDefaultTypeInternal;
+extern FinMessageDefaultTypeInternal _FinMessage_default_instance_;
 class HelloServerMessage;
 class HelloServerMessageDefaultTypeInternal;
 extern HelloServerMessageDefaultTypeInternal _HelloServerMessage_default_instance_;
@@ -74,6 +77,7 @@ extern PongMessageDefaultTypeInternal _PongMessage_default_instance_;
 }  // namespace proto
 PROTOBUF_NAMESPACE_OPEN
 template<> ::proto::BattleMessage* Arena::CreateMaybeMessage<::proto::BattleMessage>(Arena*);
+template<> ::proto::FinMessage* Arena::CreateMaybeMessage<::proto::FinMessage>(Arena*);
 template<> ::proto::HelloServerMessage* Arena::CreateMaybeMessage<::proto::HelloServerMessage>(Arena*);
 template<> ::proto::Packet* Arena::CreateMaybeMessage<::proto::Packet>(Arena*);
 template<> ::proto::PingMessage* Arena::CreateMaybeMessage<::proto::PingMessage>(Arena*);
@@ -87,12 +91,13 @@ enum MessageType : int {
   Ping = 2,
   Pong = 3,
   Battle = 4,
+  Fin = 5,
   MessageType_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<::PROTOBUF_NAMESPACE_ID::int32>::min(),
   MessageType_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<::PROTOBUF_NAMESPACE_ID::int32>::max()
 };
 bool MessageType_IsValid(int value);
 constexpr MessageType MessageType_MIN = None;
-constexpr MessageType MessageType_MAX = Battle;
+constexpr MessageType MessageType_MAX = Fin;
 constexpr int MessageType_ARRAYSIZE = MessageType_MAX + 1;
 
 const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* MessageType_descriptor();
@@ -725,23 +730,40 @@ class HelloServerMessage PROTOBUF_FINAL :
   // accessors -------------------------------------------------------
 
   enum : int {
-    kSessionIdFieldNumber = 1,
+    kSessionIdDeprecatedFieldNumber = 1,
+    kUserIdFieldNumber = 3,
     kOkFieldNumber = 2,
   };
-  // string session_id = 1;
-  void clear_session_id();
-  const std::string& session_id() const;
-  void set_session_id(const std::string& value);
-  void set_session_id(std::string&& value);
-  void set_session_id(const char* value);
-  void set_session_id(const char* value, size_t size);
-  std::string* mutable_session_id();
-  std::string* release_session_id();
-  void set_allocated_session_id(std::string* session_id);
+  // string session_id_deprecated = 1;
+  void clear_session_id_deprecated();
+  const std::string& session_id_deprecated() const;
+  void set_session_id_deprecated(const std::string& value);
+  void set_session_id_deprecated(std::string&& value);
+  void set_session_id_deprecated(const char* value);
+  void set_session_id_deprecated(const char* value, size_t size);
+  std::string* mutable_session_id_deprecated();
+  std::string* release_session_id_deprecated();
+  void set_allocated_session_id_deprecated(std::string* session_id_deprecated);
   private:
-  const std::string& _internal_session_id() const;
-  void _internal_set_session_id(const std::string& value);
-  std::string* _internal_mutable_session_id();
+  const std::string& _internal_session_id_deprecated() const;
+  void _internal_set_session_id_deprecated(const std::string& value);
+  std::string* _internal_mutable_session_id_deprecated();
+  public:
+
+  // string user_id = 3;
+  void clear_user_id();
+  const std::string& user_id() const;
+  void set_user_id(const std::string& value);
+  void set_user_id(std::string&& value);
+  void set_user_id(const char* value);
+  void set_user_id(const char* value, size_t size);
+  std::string* mutable_user_id();
+  std::string* release_user_id();
+  void set_allocated_user_id(std::string* user_id);
+  private:
+  const std::string& _internal_user_id() const;
+  void _internal_set_user_id(const std::string& value);
+  std::string* _internal_mutable_user_id();
   public:
 
   // bool ok = 2;
@@ -760,8 +782,153 @@ class HelloServerMessage PROTOBUF_FINAL :
   template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
   typedef void InternalArenaConstructable_;
   typedef void DestructorSkippable_;
-  ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr session_id_;
+  ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr session_id_deprecated_;
+  ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr user_id_;
   bool ok_;
+  mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
+  friend struct ::TableStruct_packet_2eproto;
+};
+// -------------------------------------------------------------------
+
+class FinMessage PROTOBUF_FINAL :
+    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:proto.FinMessage) */ {
+ public:
+  inline FinMessage() : FinMessage(nullptr) {}
+  virtual ~FinMessage();
+
+  FinMessage(const FinMessage& from);
+  FinMessage(FinMessage&& from) noexcept
+    : FinMessage() {
+    *this = ::std::move(from);
+  }
+
+  inline FinMessage& operator=(const FinMessage& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline FinMessage& operator=(FinMessage&& from) noexcept {
+    if (GetArena() == from.GetArena()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* GetDescriptor() {
+    return GetMetadataStatic().descriptor;
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Reflection* GetReflection() {
+    return GetMetadataStatic().reflection;
+  }
+  static const FinMessage& default_instance();
+
+  static void InitAsDefaultInstance();  // FOR INTERNAL USE ONLY
+  static inline const FinMessage* internal_default_instance() {
+    return reinterpret_cast<const FinMessage*>(
+               &_FinMessage_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    4;
+
+  friend void swap(FinMessage& a, FinMessage& b) {
+    a.Swap(&b);
+  }
+  inline void Swap(FinMessage* other) {
+    if (other == this) return;
+    if (GetArena() == other->GetArena()) {
+      InternalSwap(other);
+    } else {
+      ::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(FinMessage* other) {
+    if (other == this) return;
+    GOOGLE_DCHECK(GetArena() == other->GetArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline FinMessage* New() const final {
+    return CreateMaybeMessage<FinMessage>(nullptr);
+  }
+
+  FinMessage* New(::PROTOBUF_NAMESPACE_ID::Arena* arena) const final {
+    return CreateMaybeMessage<FinMessage>(arena);
+  }
+  void CopyFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) final;
+  void MergeFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) final;
+  void CopyFrom(const FinMessage& from);
+  void MergeFrom(const FinMessage& from);
+  PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  const char* _InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) final;
+  ::PROTOBUF_NAMESPACE_ID::uint8* _InternalSerialize(
+      ::PROTOBUF_NAMESPACE_ID::uint8* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const final;
+  int GetCachedSize() const final { return _cached_size_.Get(); }
+
+  private:
+  inline void SharedCtor();
+  inline void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(FinMessage* other);
+  friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
+  static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
+    return "proto.FinMessage";
+  }
+  protected:
+  explicit FinMessage(::PROTOBUF_NAMESPACE_ID::Arena* arena);
+  private:
+  static void ArenaDtor(void* object);
+  inline void RegisterArenaDtor(::PROTOBUF_NAMESPACE_ID::Arena* arena);
+  public:
+
+  ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadata() const final;
+  private:
+  static ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadataStatic() {
+    ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&::descriptor_table_packet_2eproto);
+    return ::descriptor_table_packet_2eproto.file_level_metadata[kIndexInFileMessages];
+  }
+
+  public:
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  enum : int {
+    kDetailFieldNumber = 1,
+  };
+  // string detail = 1;
+  void clear_detail();
+  const std::string& detail() const;
+  void set_detail(const std::string& value);
+  void set_detail(std::string&& value);
+  void set_detail(const char* value);
+  void set_detail(const char* value, size_t size);
+  std::string* mutable_detail();
+  std::string* release_detail();
+  void set_allocated_detail(std::string* detail);
+  private:
+  const std::string& _internal_detail() const;
+  void _internal_set_detail(const std::string& value);
+  std::string* _internal_mutable_detail();
+  public:
+
+  // @@protoc_insertion_point(class_scope:proto.FinMessage)
+ private:
+  class _Internal;
+
+  template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
+  typedef void InternalArenaConstructable_;
+  typedef void DestructorSkippable_;
+  ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr detail_;
   mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   friend struct ::TableStruct_packet_2eproto;
 };
@@ -809,7 +976,7 @@ class Packet PROTOBUF_FINAL :
                &_Packet_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    4;
+    5;
 
   friend void swap(Packet& a, Packet& b) {
     a.Swap(&b);
@@ -881,9 +1048,11 @@ class Packet PROTOBUF_FINAL :
 
   enum : int {
     kBattleDataFieldNumber = 13,
+    kSessionIdFieldNumber = 5,
     kHelloServerDataFieldNumber = 10,
     kPingDataFieldNumber = 11,
     kPongDataFieldNumber = 12,
+    kFinDataFieldNumber = 14,
     kTypeFieldNumber = 1,
     kSeqFieldNumber = 2,
     kAckFieldNumber = 3,
@@ -905,6 +1074,22 @@ class Packet PROTOBUF_FINAL :
   ::proto::BattleMessage* add_battle_data();
   const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::proto::BattleMessage >&
       battle_data() const;
+
+  // string session_id = 5;
+  void clear_session_id();
+  const std::string& session_id() const;
+  void set_session_id(const std::string& value);
+  void set_session_id(std::string&& value);
+  void set_session_id(const char* value);
+  void set_session_id(const char* value, size_t size);
+  std::string* mutable_session_id();
+  std::string* release_session_id();
+  void set_allocated_session_id(std::string* session_id);
+  private:
+  const std::string& _internal_session_id() const;
+  void _internal_set_session_id(const std::string& value);
+  std::string* _internal_mutable_session_id();
+  public:
 
   // .proto.HelloServerMessage hello_server_data = 10;
   bool has_hello_server_data() const;
@@ -960,6 +1145,24 @@ class Packet PROTOBUF_FINAL :
       ::proto::PongMessage* pong_data);
   ::proto::PongMessage* unsafe_arena_release_pong_data();
 
+  // .proto.FinMessage fin_data = 14;
+  bool has_fin_data() const;
+  private:
+  bool _internal_has_fin_data() const;
+  public:
+  void clear_fin_data();
+  const ::proto::FinMessage& fin_data() const;
+  ::proto::FinMessage* release_fin_data();
+  ::proto::FinMessage* mutable_fin_data();
+  void set_allocated_fin_data(::proto::FinMessage* fin_data);
+  private:
+  const ::proto::FinMessage& _internal_fin_data() const;
+  ::proto::FinMessage* _internal_mutable_fin_data();
+  public:
+  void unsafe_arena_set_allocated_fin_data(
+      ::proto::FinMessage* fin_data);
+  ::proto::FinMessage* unsafe_arena_release_fin_data();
+
   // .proto.MessageType type = 1;
   void clear_type();
   ::proto::MessageType type() const;
@@ -995,9 +1198,11 @@ class Packet PROTOBUF_FINAL :
   typedef void InternalArenaConstructable_;
   typedef void DestructorSkippable_;
   ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::proto::BattleMessage > battle_data_;
+  ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr session_id_;
   ::proto::HelloServerMessage* hello_server_data_;
   ::proto::PingMessage* ping_data_;
   ::proto::PongMessage* pong_data_;
+  ::proto::FinMessage* fin_data_;
   int type_;
   ::PROTOBUF_NAMESPACE_ID::uint32 seq_;
   ::PROTOBUF_NAMESPACE_ID::uint32 ack_;
@@ -1397,66 +1602,66 @@ inline void PongMessage::set_allocated_public_addr(std::string* public_addr) {
 
 // HelloServerMessage
 
-// string session_id = 1;
-inline void HelloServerMessage::clear_session_id() {
-  session_id_.ClearToEmpty(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
+// string session_id_deprecated = 1;
+inline void HelloServerMessage::clear_session_id_deprecated() {
+  session_id_deprecated_.ClearToEmpty(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
 }
-inline const std::string& HelloServerMessage::session_id() const {
-  // @@protoc_insertion_point(field_get:proto.HelloServerMessage.session_id)
-  return _internal_session_id();
+inline const std::string& HelloServerMessage::session_id_deprecated() const {
+  // @@protoc_insertion_point(field_get:proto.HelloServerMessage.session_id_deprecated)
+  return _internal_session_id_deprecated();
 }
-inline void HelloServerMessage::set_session_id(const std::string& value) {
-  _internal_set_session_id(value);
-  // @@protoc_insertion_point(field_set:proto.HelloServerMessage.session_id)
+inline void HelloServerMessage::set_session_id_deprecated(const std::string& value) {
+  _internal_set_session_id_deprecated(value);
+  // @@protoc_insertion_point(field_set:proto.HelloServerMessage.session_id_deprecated)
 }
-inline std::string* HelloServerMessage::mutable_session_id() {
-  // @@protoc_insertion_point(field_mutable:proto.HelloServerMessage.session_id)
-  return _internal_mutable_session_id();
+inline std::string* HelloServerMessage::mutable_session_id_deprecated() {
+  // @@protoc_insertion_point(field_mutable:proto.HelloServerMessage.session_id_deprecated)
+  return _internal_mutable_session_id_deprecated();
 }
-inline const std::string& HelloServerMessage::_internal_session_id() const {
-  return session_id_.Get();
+inline const std::string& HelloServerMessage::_internal_session_id_deprecated() const {
+  return session_id_deprecated_.Get();
 }
-inline void HelloServerMessage::_internal_set_session_id(const std::string& value) {
+inline void HelloServerMessage::_internal_set_session_id_deprecated(const std::string& value) {
   
-  session_id_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), value, GetArena());
+  session_id_deprecated_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), value, GetArena());
 }
-inline void HelloServerMessage::set_session_id(std::string&& value) {
+inline void HelloServerMessage::set_session_id_deprecated(std::string&& value) {
   
-  session_id_.Set(
+  session_id_deprecated_.Set(
     &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::move(value), GetArena());
-  // @@protoc_insertion_point(field_set_rvalue:proto.HelloServerMessage.session_id)
+  // @@protoc_insertion_point(field_set_rvalue:proto.HelloServerMessage.session_id_deprecated)
 }
-inline void HelloServerMessage::set_session_id(const char* value) {
+inline void HelloServerMessage::set_session_id_deprecated(const char* value) {
   GOOGLE_DCHECK(value != nullptr);
   
-  session_id_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::string(value),
+  session_id_deprecated_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::string(value),
               GetArena());
-  // @@protoc_insertion_point(field_set_char:proto.HelloServerMessage.session_id)
+  // @@protoc_insertion_point(field_set_char:proto.HelloServerMessage.session_id_deprecated)
 }
-inline void HelloServerMessage::set_session_id(const char* value,
+inline void HelloServerMessage::set_session_id_deprecated(const char* value,
     size_t size) {
   
-  session_id_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::string(
+  session_id_deprecated_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::string(
       reinterpret_cast<const char*>(value), size), GetArena());
-  // @@protoc_insertion_point(field_set_pointer:proto.HelloServerMessage.session_id)
+  // @@protoc_insertion_point(field_set_pointer:proto.HelloServerMessage.session_id_deprecated)
 }
-inline std::string* HelloServerMessage::_internal_mutable_session_id() {
+inline std::string* HelloServerMessage::_internal_mutable_session_id_deprecated() {
   
-  return session_id_.Mutable(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
+  return session_id_deprecated_.Mutable(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
 }
-inline std::string* HelloServerMessage::release_session_id() {
-  // @@protoc_insertion_point(field_release:proto.HelloServerMessage.session_id)
-  return session_id_.Release(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
+inline std::string* HelloServerMessage::release_session_id_deprecated() {
+  // @@protoc_insertion_point(field_release:proto.HelloServerMessage.session_id_deprecated)
+  return session_id_deprecated_.Release(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
 }
-inline void HelloServerMessage::set_allocated_session_id(std::string* session_id) {
-  if (session_id != nullptr) {
+inline void HelloServerMessage::set_allocated_session_id_deprecated(std::string* session_id_deprecated) {
+  if (session_id_deprecated != nullptr) {
     
   } else {
     
   }
-  session_id_.SetAllocated(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), session_id,
+  session_id_deprecated_.SetAllocated(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), session_id_deprecated,
       GetArena());
-  // @@protoc_insertion_point(field_set_allocated:proto.HelloServerMessage.session_id)
+  // @@protoc_insertion_point(field_set_allocated:proto.HelloServerMessage.session_id_deprecated)
 }
 
 // bool ok = 2;
@@ -1477,6 +1682,134 @@ inline void HelloServerMessage::_internal_set_ok(bool value) {
 inline void HelloServerMessage::set_ok(bool value) {
   _internal_set_ok(value);
   // @@protoc_insertion_point(field_set:proto.HelloServerMessage.ok)
+}
+
+// string user_id = 3;
+inline void HelloServerMessage::clear_user_id() {
+  user_id_.ClearToEmpty(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
+}
+inline const std::string& HelloServerMessage::user_id() const {
+  // @@protoc_insertion_point(field_get:proto.HelloServerMessage.user_id)
+  return _internal_user_id();
+}
+inline void HelloServerMessage::set_user_id(const std::string& value) {
+  _internal_set_user_id(value);
+  // @@protoc_insertion_point(field_set:proto.HelloServerMessage.user_id)
+}
+inline std::string* HelloServerMessage::mutable_user_id() {
+  // @@protoc_insertion_point(field_mutable:proto.HelloServerMessage.user_id)
+  return _internal_mutable_user_id();
+}
+inline const std::string& HelloServerMessage::_internal_user_id() const {
+  return user_id_.Get();
+}
+inline void HelloServerMessage::_internal_set_user_id(const std::string& value) {
+  
+  user_id_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), value, GetArena());
+}
+inline void HelloServerMessage::set_user_id(std::string&& value) {
+  
+  user_id_.Set(
+    &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::move(value), GetArena());
+  // @@protoc_insertion_point(field_set_rvalue:proto.HelloServerMessage.user_id)
+}
+inline void HelloServerMessage::set_user_id(const char* value) {
+  GOOGLE_DCHECK(value != nullptr);
+  
+  user_id_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::string(value),
+              GetArena());
+  // @@protoc_insertion_point(field_set_char:proto.HelloServerMessage.user_id)
+}
+inline void HelloServerMessage::set_user_id(const char* value,
+    size_t size) {
+  
+  user_id_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::string(
+      reinterpret_cast<const char*>(value), size), GetArena());
+  // @@protoc_insertion_point(field_set_pointer:proto.HelloServerMessage.user_id)
+}
+inline std::string* HelloServerMessage::_internal_mutable_user_id() {
+  
+  return user_id_.Mutable(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
+}
+inline std::string* HelloServerMessage::release_user_id() {
+  // @@protoc_insertion_point(field_release:proto.HelloServerMessage.user_id)
+  return user_id_.Release(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
+}
+inline void HelloServerMessage::set_allocated_user_id(std::string* user_id) {
+  if (user_id != nullptr) {
+    
+  } else {
+    
+  }
+  user_id_.SetAllocated(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), user_id,
+      GetArena());
+  // @@protoc_insertion_point(field_set_allocated:proto.HelloServerMessage.user_id)
+}
+
+// -------------------------------------------------------------------
+
+// FinMessage
+
+// string detail = 1;
+inline void FinMessage::clear_detail() {
+  detail_.ClearToEmpty(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
+}
+inline const std::string& FinMessage::detail() const {
+  // @@protoc_insertion_point(field_get:proto.FinMessage.detail)
+  return _internal_detail();
+}
+inline void FinMessage::set_detail(const std::string& value) {
+  _internal_set_detail(value);
+  // @@protoc_insertion_point(field_set:proto.FinMessage.detail)
+}
+inline std::string* FinMessage::mutable_detail() {
+  // @@protoc_insertion_point(field_mutable:proto.FinMessage.detail)
+  return _internal_mutable_detail();
+}
+inline const std::string& FinMessage::_internal_detail() const {
+  return detail_.Get();
+}
+inline void FinMessage::_internal_set_detail(const std::string& value) {
+  
+  detail_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), value, GetArena());
+}
+inline void FinMessage::set_detail(std::string&& value) {
+  
+  detail_.Set(
+    &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::move(value), GetArena());
+  // @@protoc_insertion_point(field_set_rvalue:proto.FinMessage.detail)
+}
+inline void FinMessage::set_detail(const char* value) {
+  GOOGLE_DCHECK(value != nullptr);
+  
+  detail_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::string(value),
+              GetArena());
+  // @@protoc_insertion_point(field_set_char:proto.FinMessage.detail)
+}
+inline void FinMessage::set_detail(const char* value,
+    size_t size) {
+  
+  detail_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::string(
+      reinterpret_cast<const char*>(value), size), GetArena());
+  // @@protoc_insertion_point(field_set_pointer:proto.FinMessage.detail)
+}
+inline std::string* FinMessage::_internal_mutable_detail() {
+  
+  return detail_.Mutable(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
+}
+inline std::string* FinMessage::release_detail() {
+  // @@protoc_insertion_point(field_release:proto.FinMessage.detail)
+  return detail_.Release(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
+}
+inline void FinMessage::set_allocated_detail(std::string* detail) {
+  if (detail != nullptr) {
+    
+  } else {
+    
+  }
+  detail_.SetAllocated(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), detail,
+      GetArena());
+  // @@protoc_insertion_point(field_set_allocated:proto.FinMessage.detail)
 }
 
 // -------------------------------------------------------------------
@@ -1541,6 +1874,68 @@ inline void Packet::_internal_set_ack(::PROTOBUF_NAMESPACE_ID::uint32 value) {
 inline void Packet::set_ack(::PROTOBUF_NAMESPACE_ID::uint32 value) {
   _internal_set_ack(value);
   // @@protoc_insertion_point(field_set:proto.Packet.ack)
+}
+
+// string session_id = 5;
+inline void Packet::clear_session_id() {
+  session_id_.ClearToEmpty(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
+}
+inline const std::string& Packet::session_id() const {
+  // @@protoc_insertion_point(field_get:proto.Packet.session_id)
+  return _internal_session_id();
+}
+inline void Packet::set_session_id(const std::string& value) {
+  _internal_set_session_id(value);
+  // @@protoc_insertion_point(field_set:proto.Packet.session_id)
+}
+inline std::string* Packet::mutable_session_id() {
+  // @@protoc_insertion_point(field_mutable:proto.Packet.session_id)
+  return _internal_mutable_session_id();
+}
+inline const std::string& Packet::_internal_session_id() const {
+  return session_id_.Get();
+}
+inline void Packet::_internal_set_session_id(const std::string& value) {
+  
+  session_id_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), value, GetArena());
+}
+inline void Packet::set_session_id(std::string&& value) {
+  
+  session_id_.Set(
+    &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::move(value), GetArena());
+  // @@protoc_insertion_point(field_set_rvalue:proto.Packet.session_id)
+}
+inline void Packet::set_session_id(const char* value) {
+  GOOGLE_DCHECK(value != nullptr);
+  
+  session_id_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::string(value),
+              GetArena());
+  // @@protoc_insertion_point(field_set_char:proto.Packet.session_id)
+}
+inline void Packet::set_session_id(const char* value,
+    size_t size) {
+  
+  session_id_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::string(
+      reinterpret_cast<const char*>(value), size), GetArena());
+  // @@protoc_insertion_point(field_set_pointer:proto.Packet.session_id)
+}
+inline std::string* Packet::_internal_mutable_session_id() {
+  
+  return session_id_.Mutable(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
+}
+inline std::string* Packet::release_session_id() {
+  // @@protoc_insertion_point(field_release:proto.Packet.session_id)
+  return session_id_.Release(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
+}
+inline void Packet::set_allocated_session_id(std::string* session_id) {
+  if (session_id != nullptr) {
+    
+  } else {
+    
+  }
+  session_id_.SetAllocated(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), session_id,
+      GetArena());
+  // @@protoc_insertion_point(field_set_allocated:proto.Packet.session_id)
 }
 
 // .proto.HelloServerMessage hello_server_data = 10;
@@ -1831,9 +2226,94 @@ Packet::battle_data() const {
   return battle_data_;
 }
 
+// .proto.FinMessage fin_data = 14;
+inline bool Packet::_internal_has_fin_data() const {
+  return this != internal_default_instance() && fin_data_ != nullptr;
+}
+inline bool Packet::has_fin_data() const {
+  return _internal_has_fin_data();
+}
+inline void Packet::clear_fin_data() {
+  if (GetArena() == nullptr && fin_data_ != nullptr) {
+    delete fin_data_;
+  }
+  fin_data_ = nullptr;
+}
+inline const ::proto::FinMessage& Packet::_internal_fin_data() const {
+  const ::proto::FinMessage* p = fin_data_;
+  return p != nullptr ? *p : *reinterpret_cast<const ::proto::FinMessage*>(
+      &::proto::_FinMessage_default_instance_);
+}
+inline const ::proto::FinMessage& Packet::fin_data() const {
+  // @@protoc_insertion_point(field_get:proto.Packet.fin_data)
+  return _internal_fin_data();
+}
+inline void Packet::unsafe_arena_set_allocated_fin_data(
+    ::proto::FinMessage* fin_data) {
+  if (GetArena() == nullptr) {
+    delete reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(fin_data_);
+  }
+  fin_data_ = fin_data;
+  if (fin_data) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:proto.Packet.fin_data)
+}
+inline ::proto::FinMessage* Packet::release_fin_data() {
+  
+  ::proto::FinMessage* temp = fin_data_;
+  fin_data_ = nullptr;
+  if (GetArena() != nullptr) {
+    temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
+  }
+  return temp;
+}
+inline ::proto::FinMessage* Packet::unsafe_arena_release_fin_data() {
+  // @@protoc_insertion_point(field_release:proto.Packet.fin_data)
+  
+  ::proto::FinMessage* temp = fin_data_;
+  fin_data_ = nullptr;
+  return temp;
+}
+inline ::proto::FinMessage* Packet::_internal_mutable_fin_data() {
+  
+  if (fin_data_ == nullptr) {
+    auto* p = CreateMaybeMessage<::proto::FinMessage>(GetArena());
+    fin_data_ = p;
+  }
+  return fin_data_;
+}
+inline ::proto::FinMessage* Packet::mutable_fin_data() {
+  // @@protoc_insertion_point(field_mutable:proto.Packet.fin_data)
+  return _internal_mutable_fin_data();
+}
+inline void Packet::set_allocated_fin_data(::proto::FinMessage* fin_data) {
+  ::PROTOBUF_NAMESPACE_ID::Arena* message_arena = GetArena();
+  if (message_arena == nullptr) {
+    delete fin_data_;
+  }
+  if (fin_data) {
+    ::PROTOBUF_NAMESPACE_ID::Arena* submessage_arena =
+      ::PROTOBUF_NAMESPACE_ID::Arena::GetArena(fin_data);
+    if (message_arena != submessage_arena) {
+      fin_data = ::PROTOBUF_NAMESPACE_ID::internal::GetOwnedMessage(
+          message_arena, fin_data, submessage_arena);
+    }
+    
+  } else {
+    
+  }
+  fin_data_ = fin_data;
+  // @@protoc_insertion_point(field_set_allocated:proto.Packet.fin_data)
+}
+
 #ifdef __GNUC__
   #pragma GCC diagnostic pop
 #endif  // __GNUC__
+// -------------------------------------------------------------------
+
 // -------------------------------------------------------------------
 
 // -------------------------------------------------------------------

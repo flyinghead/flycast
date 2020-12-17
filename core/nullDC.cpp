@@ -391,6 +391,7 @@ void dc_reset(bool hard)
 	mem_Reset(hard);
 
 	sh4_cpu.Reset(hard);
+    gdxsv.Reset();
 }
 
 static bool reset_requested;

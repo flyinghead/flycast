@@ -167,7 +167,13 @@ bool MessageBuffer::CanPush() const {
     return packet_.battle_data().size() < kBufSize;
 }
 
-bool MessageBuffer::PushBattleMessage(const std::string &id, u8 *body, u32 body_length) {
+void MessageBuffer::SessionId(const std::string &session_id) {
+    NOTICE_LOG(COMMON, "set session id %s", session_id.c_str());
+    packet_.set_session_id(session_id.c_str());
+}
+
+bool
+MessageBuffer::PushBattleMessage(const std::string &user_id, u8 *body, u32 body_length) {
     if (!CanPush()) {
         // buffer full
         return false;
@@ -175,14 +181,14 @@ bool MessageBuffer::PushBattleMessage(const std::string &id, u8 *body, u32 body_
 
     auto msg = packet_.add_battle_data();
     msg->set_seq(msg_seq_);
-    msg->set_user_id(id);
+    msg->set_user_id(user_id);
     msg->set_body(body, body_length);
     packet_.set_seq(msg_seq_);
     msg_seq_++;
     return true;
 }
 
-const proto::Packet& MessageBuffer::Packet() {
+const proto::Packet &MessageBuffer::Packet() {
     return packet_;
 }
 
