@@ -435,36 +435,42 @@ void Naomi_DmaStart(u32 addr, u32 data)
 		return;
 	}
 	
-	SB_GDST|=data&1;
+	SB_GDST |= data & 1;
 
-	if (SB_GDST==1)
+	if (SB_GDST == 0)
+		return;
+
+	if (!m3comm.DmaStart(addr, data) && CurrentCartridge != NULL)
 	{
-		if (!m3comm.DmaStart(addr, data) && CurrentCartridge != NULL)
+		DEBUG_LOG(NAOMI, "NAOMI-DMA start addr %08X len %d", SB_GDSTAR, SB_GDLEN);
+		verify(1 == SB_GDDIR);
+		u32 start = SB_GDSTAR & 0x1FFFFFE0;
+		u32 len = (SB_GDLEN + 31) & ~31;
+		SB_GDLEND = 0;
+		while (len > 0)
 		{
-			DEBUG_LOG(NAOMI, "NAOMI-DMA start addr %08X len %d", SB_GDSTAR, SB_GDLEN);
-			verify(1 == SB_GDDIR);
-			u32 len = (SB_GDLEN + 30) & ~30;
-			u32 offset = 0;
-			while (len > 0)
+			u32 block_len = len;
+			void* ptr = CurrentCartridge->GetDmaPtr(block_len);
+			if (block_len == 0)
 			{
-				u32 block_len = len;
-				void* ptr = CurrentCartridge->GetDmaPtr(block_len);
-				if (block_len == 0)
-				{
-					INFO_LOG(NAOMI, "Aborted DMA transfer. Read past end of cart?");
-					break;
-				}
-				WriteMemBlock_nommu_ptr(SB_GDSTAR + offset, (u32*)ptr, block_len);
-				CurrentCartridge->AdvancePtr(block_len);
-				len -= block_len;
-				offset += block_len;
+				INFO_LOG(NAOMI, "Aborted DMA transfer. Read past end of cart?");
+				break;
 			}
+			WriteMemBlock_nommu_ptr(start, (u32*)ptr, block_len);
+			CurrentCartridge->AdvancePtr(block_len);
+			len -= block_len;
+			start += block_len;
+			SB_GDLEND += block_len;
 		}
+		SB_GDSTARD = start;
+	}
+	else
+	{
 		SB_GDSTARD = SB_GDSTAR + SB_GDLEN;
 		SB_GDLEND = SB_GDLEN;
-		SB_GDST = 0;
-		asic_RaiseInterrupt(holly_GDROM_DMA);
 	}
+	SB_GDST = 0;
+	asic_RaiseInterrupt(holly_GDROM_DMA);
 }
 
 
