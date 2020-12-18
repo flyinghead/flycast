@@ -17,9 +17,9 @@ struct MemChip
 
 	MemChip(u32 size, u32 write_protect_size = 0)
 	{
-		this->data=new u8[size];
-		this->size=size;
-		this->mask=size-1;//must be power of 2
+		this->data = new u8[size]();
+		this->size = size;
+		this->mask = size - 1; // must be power of 2
 		this->write_protect_size = write_protect_size;
 	}
 	virtual ~MemChip() { delete[] data; }
