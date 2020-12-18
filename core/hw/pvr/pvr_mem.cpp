@@ -217,44 +217,29 @@ void DYNACALL pvr_write_area1_32(u32 addr,u32 data)
 	*(u32*)&vram[pvr_map32(addr)] = data;
 }
 
-void TAWrite(u32 address,u32* data,u32 count)
+void TAWrite(u32 address, u32* data, u32 count)
 {
-	u32 address_w=address&0x1FFFFFF;//correct ?
-	if (address_w<0x800000)//TA poly
-	{
-		ta_vtx_data(data,count);
-	}
-	else if(address_w<0x1000000) //Yuv Converter
-	{
-		YUV_data(data,count);
-	}
-	else //Vram Writef
-	{
-		//shouldn't really get here (?) -> works on dc :D need to handle lmmodes
-		DEBUG_LOG(MEMORY, "Vram TAWrite 0x%X , bkls %d\n", address, count);
-		verify(SB_LMMODE0 == 0);
-		memcpy(&vram.data[address&VRAM_MASK],data,count*32);
-	}
-}
-
-void NOINLINE MemWrite32(void* dst, void* src)
-{
-	memcpy((u64*)dst,(u64*)src,32);
+	if ((address & 0x800000) == 0)
+		// TA poly
+		ta_vtx_data(data, count);
+	else
+		// YUV Converter
+		YUV_data(data, count);
 }
 
 #if HOST_CPU!=CPU_ARM
-extern "C" void DYNACALL TAWriteSQ(u32 address,u8* sqb)
+extern "C" void DYNACALL TAWriteSQ(u32 address, u8* sqb)
 {
-	u32 address_w=address&0x1FFFFFF;//correct ?
-	u8* sq=&sqb[address&0x20];
+	u32 address_w = address & 0x1FFFFE0;
+	u8* sq = &sqb[address & 0x20];
 
-	if (likely(address_w<0x800000))//TA poly
+	if (likely(address_w < 0x800000))//TA poly
 	{
 		ta_vtx_data32(sq);
 	}
-	else if(likely(address_w<0x1000000)) //Yuv Converter
+	else if(likely(address_w < 0x1000000)) //Yuv Converter
 	{
-		YUV_data((u32*)sq,1);
+		YUV_data((u32*)sq, 1);
 	}
 	else //Vram Writef
 	{
@@ -263,15 +248,13 @@ extern "C" void DYNACALL TAWriteSQ(u32 address,u8* sqb)
 		if (SB_LMMODE0 == 0)
 		{
 			// 64b path
-			MemWrite32(&vram[address_w&(VRAM_MASK-0x1F)],sq);
+			memcpy(&vram[address_w & VRAM_MASK], sq, 32);
 		}
 		else
 		{
 			// 32b path
 			for (int i = 0; i < 8; i++, address_w += 4)
-			{
 				pvr_write_area1_32(address_w, ((u32 *)sq)[i]);
-			}
 		}
 	}
 }
