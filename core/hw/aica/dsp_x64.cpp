@@ -52,21 +52,6 @@ public:
 		this->DSP = DSP;
 		DEBUG_LOG(AICA_ARM, "DSPAssembler::DSPCompile recompiling for x86/64 at %p", this->getCode());
 
-		if (DSP->Stopped)
-		{
-			// Clear EFREG
-			mov(rax, (uintptr_t)DSPData->EFREG);
-	        pxor(xmm0, xmm0);
-	        movups(xword[rax], xmm0);
-	        movups(xword[rax+16], xmm0);
-	        movups(xword[rax+32], xmm0);
-	        movups(xword[rax+48], xmm0);
-			ret();
-			ready();
-
-			return;
-		}
-
 		push(rbx);
 		push(rbp);
 		push(r12);
@@ -93,13 +78,6 @@ public:
 #else
 		const Xbyak::Reg32 call_arg0 = edi;
 #endif
-		// Clear EFREG
-		mov(rax, (uintptr_t)DSPData->EFREG);
-        pxor(xmm0, xmm0);
-        movups(xword[rax], xmm0);
-        movups(xword[rax+16], xmm0);
-        movups(xword[rax+32], xmm0);
-        movups(xword[rax+48], xmm0);
 
 		xor_(ACC, ACC);
 		mov(dword[rbx + dsp_operand(&DSP->FRC_REG)], 0);
@@ -464,7 +442,8 @@ void dsp_step()
 		dsp.dyndirty = false;
 		dsp_recompile();
 	}
-
+	if (dsp.Stopped)
+		return;
 	((void (*)())pCodeBuffer)();
 }
 

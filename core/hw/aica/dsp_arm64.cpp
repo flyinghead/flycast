@@ -39,28 +39,6 @@ public:
 		this->DSP = DSP;
 		DEBUG_LOG(AICA_ARM, "DSPAssembler::DSPCompile recompiling for arm64 at %p", GetBuffer()->GetStartAddress<void*>());
 
-		if (DSP->Stopped)
-		{
-			// Clear EFREG
-			Mov(x1, (uintptr_t)DSPData);
-			MemOperand efreg_op = dspdata_operand(DSPData->EFREG);	// just for the offset
-			if (efreg_op.IsRegisterOffset())
-				Add(x0, x1, efreg_op.GetRegisterOffset());
-			else
-				Add(x0, x1, efreg_op.GetOffset());
-			Stp(xzr, xzr, MemOperand(x0, 0));
-			Stp(xzr, xzr, MemOperand(x0, 16));
-			Stp(xzr, xzr, MemOperand(x0, 32));
-			Stp(xzr, xzr, MemOperand(x0, 48));
-			Ret();
-			FinalizeCode();
-			vmem_platform_flush_cache(
-				GetBuffer()->GetStartAddress<void*>(), GetBuffer()->GetEndAddress<void*>(),
-				GetBuffer()->GetStartAddress<void*>(), GetBuffer()->GetEndAddress<void*>());
-
-			return;
-		}
-
 		Instruction* instr_start = GetBuffer()->GetStartAddress<Instruction*>();
 
 		Stp(x29, x30, MemOperand(sp, -96, PreIndex));
@@ -81,17 +59,6 @@ public:
 		const Register& SHIFTED = w24;	// 24 bits
 		const Register& ADRS_REG = w22;	// 13 bits unsigned - saved
 		const Register& MDEC_CT = w23;	// saved
-
-		//memset(DSPData->EFREG, 0, sizeof(DSPData->EFREG));
-		MemOperand efreg_op = dspdata_operand(DSPData->EFREG);
-		if (efreg_op.IsRegisterOffset())
-			Add(x0, x27, efreg_op.GetRegisterOffset());
-		else
-			Add(x0, x27, efreg_op.GetOffset());
-		Stp(xzr, xzr, MemOperand(x0, 0));
-		Stp(xzr, xzr, MemOperand(x0, 16));
-		Stp(xzr, xzr, MemOperand(x0, 32));
-		Stp(xzr, xzr, MemOperand(x0, 48));
 
 		Mov(ACC, 0);
 		Mov(B, 0);
@@ -505,7 +472,8 @@ void dsp_step()
 		dsp.dyndirty = false;
 		dsp_recompile();
 	}
-
+	if (dsp.Stopped)
+		return;
 	((void (*)())&dsp.DynCode)();
 }
 

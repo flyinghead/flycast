@@ -773,17 +773,14 @@ void dsp_step_mame();
 void dsp_emu_grandia();
 void dsp_step()
 {
-	//clear output reg
-	memset(DSPData->EFREG,0,sizeof(DSPData->EFREG));
-
 	if (dsp.dyndirty)
 	{
 		dsp.dyndirty=false;
 		//dsp_print_mame();
 		dsp_recompile();
 	}
-	//dsp_step_mame();
-	//dsp_emu_grandia();
+	if (dsp.Stopped)
+		return;
 	
 	//run the code :p
 	((void (*)())&dsp.DynCode)();
