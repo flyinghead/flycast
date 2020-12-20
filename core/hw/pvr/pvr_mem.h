@@ -7,14 +7,6 @@ u32 vri(u32 addr);
 
 //vram 32-64b
 extern VArray2 vram;
-//read
-u8 DYNACALL pvr_read_area1_8(u32 addr);
-u16 DYNACALL pvr_read_area1_16(u32 addr);
-u32 DYNACALL pvr_read_area1_32(u32 addr);
-//write
-void DYNACALL pvr_write_area1_8(u32 addr,u8 data);
-void DYNACALL pvr_write_area1_16(u32 addr,u16 data);
-void DYNACALL pvr_write_area1_32(u32 addr,u32 data);
 
 //regs
 u32 pvr_ReadReg(u32 addr);
@@ -24,3 +16,8 @@ void TAWrite(u32 address,u32* data,u32 count);
 extern "C" void DYNACALL TAWriteSQ(u32 address,u8* sqb);
 
 void YUV_init();
+
+template<typename T> T DYNACALL pvr_read_area1(u32 addr);
+template<typename T> void DYNACALL pvr_write_area1(u32 addr, T data);
+template<typename T, bool upper> T pvr_read_area4(u32 addr);
+template<typename T, bool upper> void pvr_write_area4(u32 addr, T data);
