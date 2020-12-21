@@ -65,6 +65,7 @@ public:
 
 	virtual void Term() override
 	{
+		GetContext()->PresentFrame(nullptr, vk::Offset2D());
 		osdBuffer.reset();
 		vjoyTexture.reset();
 		textureCache.Clear();

@@ -809,18 +809,21 @@ extern Renderer *renderer;
 
 void VulkanContext::PresentFrame(vk::ImageView imageView, vk::Offset2D extent)
 {
-	NewFrame();
-	const std::vector<vk::UniqueCommandBuffer> *vmuCmdBuffers = nullptr;
-	if (settings.rend.FloatVMUs)
-		vmuCmdBuffers = PrepareVMUs();
+	if (imageView)
+	{
+		NewFrame();
+		const std::vector<vk::UniqueCommandBuffer> *vmuCmdBuffers = nullptr;
+		if (settings.rend.FloatVMUs)
+			vmuCmdBuffers = PrepareVMUs();
 
-	BeginRenderPass();
+		BeginRenderPass();
 
-	DrawFrame(imageView, extent);
-	if (settings.rend.FloatVMUs)
-		DrawVMUs(gui_get_scaling());
-	renderer->DrawOSD(false);
-	EndFrame(vmuCmdBuffers);
+		DrawFrame(imageView, extent);
+		if (settings.rend.FloatVMUs)
+			DrawVMUs(gui_get_scaling());
+		renderer->DrawOSD(false);
+		EndFrame(vmuCmdBuffers);
+	}
 
 	lastFrameView = imageView;
 	lastFrameExtent = extent;
