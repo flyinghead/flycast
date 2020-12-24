@@ -880,6 +880,7 @@ elseif(APPLE)
             shell/apple/emulator-osx/emulator-osx/osx_keyboard.h)
 
     set_target_properties(${PROJECT_NAME} PROPERTIES
+        MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/shell/cmake/MacOSXBundleInfo.plist.in
         MACOSX_BUNDLE_EXECUTABLE_NAME "Flycast"
         MACOSX_BUNDLE_INFO_STRING ""
         MACOSX_BUNDLE_ICON_FILE "AppIcon"
@@ -894,8 +895,9 @@ elseif(APPLE)
 
     find_library(AUDIO_UNIT_LIBRARY AudioUnit)
     find_library(FOUNDATION_LIBRARY Foundation)
+    find_library(AUDIO_TOOLBOX_LIBRARY AudioToolbox)
 
-    target_link_libraries(${PROJECT_NAME} PRIVATE ${AUDIO_UNIT_LIBRARY} ${FOUNDATION_LIBRARY})
+    target_link_libraries(${PROJECT_NAME} PRIVATE ${AUDIO_UNIT_LIBRARY} ${FOUNDATION_LIBRARY} ${AUDIO_TOOLBOX_LIBRARY})
 elseif(UNIX)
     if(NOT BUILD_TESTING)
         target_sources(${PROJECT_NAME} PRIVATE
