@@ -62,6 +62,11 @@ void input_sdl_init()
 	{
 		// We want joystick events even if we loose focus
 		SDL_SetHint(SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS, "1");
+#ifdef _WIN32
+		if (cfgLoadBool("input", "DisableXInput", false))
+			// Disable XInput for some old joytsicks
+			SDL_SetHint(SDL_HINT_XINPUT_ENABLED, "0");
+#endif
 		if (SDL_InitSubSystem(SDL_INIT_JOYSTICK) < 0)
 			die("SDL: error initializing Joystick subsystem");
 
