@@ -1432,8 +1432,6 @@ static void getRegionTileClipping(u32& xmin, u32& xmax, u32& ymin, u32& ymax);
 
 FifoSplitter<0> TAFifo0;
 
-int ta_parse_cnt = 0;
-
 //
 // Check if a vertex has huge x,y,z values or negative z
 //
@@ -1581,69 +1579,66 @@ bool ta_parse_vdrc(TA_context* ctx)
 	vd_ctx = ctx;
 	vd_rc = vd_ctx->rend;
 
-	ta_parse_cnt++;
-	if (ctx->rend.isRTT || 0 == (ta_parse_cnt %  ( settings.pvr.ta_skip + 1)))
+	TAFifo0.vdec_init();
+
+	bool empty_context = true;
+	int op_poly_count = 0;
+	int pt_poly_count = 0;
+	int tr_poly_count = 0;
+
+	PolyParam *bgpp = vd_rc.global_param_op.head();
+	if (bgpp->pcw.Texture)
 	{
-		TAFifo0.vdec_init();
-		
-		bool empty_context = true;
-		int op_poly_count = 0;
-		int pt_poly_count = 0;
-		int tr_poly_count = 0;
-
-		PolyParam *bgpp = vd_rc.global_param_op.head();
-		if (bgpp->pcw.Texture)
-		{
-			bgpp->texid = renderer->GetTexture(bgpp->tsp, bgpp->tcw);
-			empty_context = false;
-		}
-
-		for (u32 pass = 0; pass <= ctx->tad.render_pass_count; pass++)
-		{
-			ctx->MarkRend(pass);
-			vd_rc.proc_start = ctx->rend.proc_start;
-			vd_rc.proc_end = ctx->rend.proc_end;
-
-			Ta_Dma* ta_data=(Ta_Dma*)vd_rc.proc_start;
-			Ta_Dma* ta_data_end=((Ta_Dma*)vd_rc.proc_end)-1;
-
-			do
-			{
-				ta_data =TaCmd(ta_data,ta_data_end);
-			}
-			while(ta_data<=ta_data_end);
-
-			if (ctx->rend.Overrun)
-				break;
-
-			bool empty_pass = vd_rc.global_param_op.used() == (pass == 0 ? 0 : (int)vd_rc.render_passes.LastPtr()->op_count)
-					&& vd_rc.global_param_pt.used() == (pass == 0 ? 0 : (int)vd_rc.render_passes.LastPtr()->pt_count)
-					&& vd_rc.global_param_tr.used() == (pass == 0 ? 0 : (int)vd_rc.render_passes.LastPtr()->tr_count);
-			empty_context = empty_context && empty_pass;
-
-			if (pass == 0 || !empty_pass)
-			{
-				RenderPass *render_pass = vd_rc.render_passes.Append();
-				render_pass->op_count = vd_rc.global_param_op.used();
-				make_index(&vd_rc.global_param_op, op_poly_count,
-						render_pass->op_count, true, &vd_rc);
-				op_poly_count = render_pass->op_count;
-				render_pass->mvo_count = vd_rc.global_param_mvo.used();
-				render_pass->pt_count = vd_rc.global_param_pt.used();
-				make_index(&vd_rc.global_param_pt, pt_poly_count,
-						render_pass->pt_count, true, &vd_rc);
-				pt_poly_count = render_pass->pt_count;
-				render_pass->tr_count = vd_rc.global_param_tr.used();
-				make_index(&vd_rc.global_param_tr, tr_poly_count,
-						render_pass->tr_count, false, &vd_rc);
-				tr_poly_count = render_pass->tr_count;
-				render_pass->mvo_tr_count = vd_rc.global_param_mvo_tr.used();
-				render_pass->autosort = UsingAutoSort(pass);
-				render_pass->z_clear = ClearZBeforePass(pass);
-			}
-		}
-		rv = !empty_context;
+		bgpp->texid = renderer->GetTexture(bgpp->tsp, bgpp->tcw);
+		empty_context = false;
 	}
+
+	for (u32 pass = 0; pass <= ctx->tad.render_pass_count; pass++)
+	{
+		ctx->MarkRend(pass);
+		vd_rc.proc_start = ctx->rend.proc_start;
+		vd_rc.proc_end = ctx->rend.proc_end;
+
+		Ta_Dma* ta_data=(Ta_Dma*)vd_rc.proc_start;
+		Ta_Dma* ta_data_end=((Ta_Dma*)vd_rc.proc_end)-1;
+
+		do
+		{
+			ta_data =TaCmd(ta_data,ta_data_end);
+		}
+		while(ta_data<=ta_data_end);
+
+		if (ctx->rend.Overrun)
+			break;
+
+		bool empty_pass = vd_rc.global_param_op.used() == (pass == 0 ? 0 : (int)vd_rc.render_passes.LastPtr()->op_count)
+				&& vd_rc.global_param_pt.used() == (pass == 0 ? 0 : (int)vd_rc.render_passes.LastPtr()->pt_count)
+				&& vd_rc.global_param_tr.used() == (pass == 0 ? 0 : (int)vd_rc.render_passes.LastPtr()->tr_count);
+		empty_context = empty_context && empty_pass;
+
+		if (pass == 0 || !empty_pass)
+		{
+			RenderPass *render_pass = vd_rc.render_passes.Append();
+			render_pass->op_count = vd_rc.global_param_op.used();
+			make_index(&vd_rc.global_param_op, op_poly_count,
+					render_pass->op_count, true, &vd_rc);
+			op_poly_count = render_pass->op_count;
+			render_pass->mvo_count = vd_rc.global_param_mvo.used();
+			render_pass->pt_count = vd_rc.global_param_pt.used();
+			make_index(&vd_rc.global_param_pt, pt_poly_count,
+					render_pass->pt_count, true, &vd_rc);
+			pt_poly_count = render_pass->pt_count;
+			render_pass->tr_count = vd_rc.global_param_tr.used();
+			make_index(&vd_rc.global_param_tr, tr_poly_count,
+					render_pass->tr_count, false, &vd_rc);
+			tr_poly_count = render_pass->tr_count;
+			render_pass->mvo_tr_count = vd_rc.global_param_mvo_tr.used();
+			render_pass->autosort = UsingAutoSort(pass);
+			render_pass->z_clear = ClearZBeforePass(pass);
+		}
+	}
+	rv = !empty_context;
+
 	bool overrun = ctx->rend.Overrun;
 	if (overrun)
 		WARN_LOG(PVR, "ERROR: TA context overrun");

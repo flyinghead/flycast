@@ -475,7 +475,7 @@ struct settings_t
 		RenderType rend;
 
 		u32 MaxThreads;
-		bool SynchronousRender;
+		int AutoSkipFrame;		// 0: none, 1: some, 2: more
 
 		bool IsOpenGL() { return rend == RenderType::OpenGL || rend == RenderType::OpenGL_OIT; }
 	} pvr;

@@ -1,3 +1,4 @@
+#include <array>
 #include "spg.h"
 #include "hw/holly/holly_intc.h"
 #include "hw/holly/sb.h"
@@ -22,6 +23,11 @@ static u32 Line_Cycles;
 static u32 Frame_Cycles;
 int render_end_schid;
 int vblank_schid;
+
+static std::array<double, 4> real_times;
+static std::array<u64, 4> cpu_cycles;
+static u32 cpu_time_idx;
+bool SH4FastEnough;
 
 void CalculateSync()
 {
@@ -127,13 +133,28 @@ int spg_line_sched(int tag, int cycl, int jit)
 			else
 				SPG_STATUS.fieldnum=0;
 
-			vblk_cnt++;
 			rend_vblank();
+
+			double now = os_GetSeconds() * 1000000.0;
+			cpu_time_idx = (cpu_time_idx + 1) % cpu_cycles.size();
+			if (cpu_cycles[cpu_time_idx] != 0)
+			{
+				u32 cycle_span = (u32)(sh4_sched_now64() - cpu_cycles[cpu_time_idx]);
+				double time_span = now - real_times[cpu_time_idx];
+				double cpu_speed = ((double)cycle_span / time_span) / (SH4_MAIN_CLOCK / 100000000);
+				SH4FastEnough = cpu_speed >= 85.0;
+			}
+			else
+				SH4FastEnough = false;
+			cpu_cycles[cpu_time_idx] = sh4_sched_now64();
+			real_times[cpu_time_idx] = now;
 
 #ifdef TEST_AUTOMATION
 			replay_input();
 #endif
-			
+
+#if !defined(NDEBUG) || defined(DEBUGFAST)
+			vblk_cnt++;
 			if ((os_GetSeconds()-last_fps)>2)
 			{
 				static int Last_FC;
@@ -190,6 +211,7 @@ int spg_line_sched(int tag, int cycl, int jit)
 				fskip=0;
 				last_fps=os_GetSeconds();
 			}
+#endif
 		}
 		if (lightgun_line != 0xffff && lightgun_line == prv_cur_scanline)
 		{
@@ -273,6 +295,11 @@ void spg_Term()
 void spg_Reset(bool hard)
 {
 	CalculateSync();
+
+	SH4FastEnough = false;
+	cpu_time_idx = 0;
+	cpu_cycles.fill(0);
+	real_times.fill(0.0);
 }
 
 void SetREP(TA_context* cntx)

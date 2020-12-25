@@ -1151,9 +1151,21 @@ static void gui_display_settings()
 		    }
 		    if (ImGui::CollapsingHeader("Rendering Options", ImGuiTreeNodeFlags_DefaultOpen))
 		    {
-		    	ImGui::Checkbox("Synchronous Rendering", &settings.pvr.SynchronousRender);
+		    	ImGui::Text("Automatic Frame Skipping:");
+		    	ImGui::Columns(3, "autoskip", false);
+		    	ImGui::RadioButton("Disabled", &settings.pvr.AutoSkipFrame, 0);
 	            ImGui::SameLine();
-	            ShowHelpMarker("Reduce frame skipping by pausing the CPU when possible. Recommended for most platforms");
+	            ShowHelpMarker("No frame skipping");
+            	ImGui::NextColumn();
+		    	ImGui::RadioButton("Normal", &settings.pvr.AutoSkipFrame, 1);
+	            ImGui::SameLine();
+	            ShowHelpMarker("Skip a frame when the GPU and CPU are both running slow");
+            	ImGui::NextColumn();
+		    	ImGui::RadioButton("Maximum", &settings.pvr.AutoSkipFrame, 2);
+	            ImGui::SameLine();
+	            ShowHelpMarker("Skip a frame when the GPU is running slow");
+		    	ImGui::Columns(1, nullptr, false);
+
 		    	ImGui::Checkbox("Clipping", &settings.rend.Clipping);
 	            ImGui::SameLine();
 	            ShowHelpMarker("Enable clipping. May produce graphical errors when disabled");

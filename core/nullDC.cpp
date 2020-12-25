@@ -760,7 +760,7 @@ void InitSettings()
 	settings.pvr.ta_skip			= 0;
 
 	settings.pvr.MaxThreads		    = 3;
-	settings.pvr.SynchronousRender	= true;
+	settings.pvr.AutoSkipFrame		= 0;
 
 	settings.debug.SerialConsole	= false;
 	settings.debug.SerialPTY        = false;
@@ -860,7 +860,16 @@ void LoadSettings(bool game_specific)
 	settings.pvr.ta_skip			= cfgLoadInt(config_section, "ta.skip", settings.pvr.ta_skip);
 
 	settings.pvr.MaxThreads		    = cfgLoadInt(config_section, "pvr.MaxThreads", settings.pvr.MaxThreads);
-	settings.pvr.SynchronousRender	= cfgLoadBool(config_section, "pvr.SynchronousRendering", settings.pvr.SynchronousRender);
+	if (game_specific)
+		settings.pvr.AutoSkipFrame = cfgLoadInt(config_section, "pvr.AutoSkipFrame", settings.pvr.AutoSkipFrame);
+	else
+	{
+		// compatibility with previous SynchronousRendering option
+		int autoskip = cfgLoadInt(config_section, "pvr.AutoSkipFrame", 99);
+		if (autoskip == 99)
+			autoskip = cfgLoadBool(config_section, "pvr.SynchronousRendering", true) ? 1 : 2;
+		settings.pvr.AutoSkipFrame = autoskip;
+	}
 
 	settings.debug.SerialConsole	= cfgLoadBool(config_section, "Debug.SerialConsoleEnabled", settings.debug.SerialConsole);
 	settings.debug.SerialPTY		= cfgLoadBool(config_section, "Debug.SerialPTY", settings.debug.SerialPTY);
@@ -1017,7 +1026,7 @@ void SaveSettings()
 	cfgSaveBool("config", "rend.WidescreenGameHacks", settings.rend.WidescreenGameHacks);
 
 	cfgSaveInt("config", "pvr.MaxThreads", settings.pvr.MaxThreads);
-	cfgSaveBool("config", "pvr.SynchronousRendering", settings.pvr.SynchronousRender);
+	cfgSaveInt("config", "pvr.AutoSkipFrame", settings.pvr.AutoSkipFrame);
 
 	cfgSaveBool("config", "Debug.SerialConsoleEnabled", settings.debug.SerialConsole);
 	cfgSaveBool("config", "Debug.SerialPTY", settings.debug.SerialPTY);
