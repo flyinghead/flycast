@@ -719,7 +719,7 @@ void BaseTextureCacheData::Update()
 	if (lock_block == nullptr)
 		lock_block = libCore_vramlock_Lock(sa_tex,sa+size-1,this);
 
-	UploadToGPU(upscaled_w, upscaled_h, (u8*)temp_tex_buffer, mipmapped, mipmapped);
+	UploadToGPU(upscaled_w, upscaled_h, (u8*)temp_tex_buffer, IsMipmapped(), mipmapped);
 	if (settings.rend.DumpTextures)
 	{
 		ComputeHash();
