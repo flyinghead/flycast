@@ -35,6 +35,7 @@
 #include "hw/maple/maple_devs.h"
 #include "network/naomi_network.h"
 #include "rend/mainui.h"
+#include "archive/rzip.h"
 
 void FlushCache();
 static void LoadCustom();
@@ -1106,11 +1107,8 @@ static std::string get_savestate_file_path(bool writable)
 
 void dc_savestate()
 {
-	std::string filename;
 	unsigned int total_size = 0 ;
 	void *data = NULL ;
-	void *data_ptr = NULL ;
-	FILE *f ;
 
 	dc_stop();
 
@@ -1131,7 +1129,7 @@ void dc_savestate()
     	return;
 	}
 
-	data_ptr = data ;
+	void *data_ptr = data;
 
 	if ( ! dc_serialize(&data_ptr, &total_size) )
 	{
@@ -1141,8 +1139,9 @@ void dc_savestate()
     	return;
 	}
 
-	filename = get_savestate_file_path(true);
-	f = fopen(filename.c_str(), "wb") ;
+	std::string filename = get_savestate_file_path(true);
+#if 0
+	FILE *f = fopen(filename.c_str(), "wb") ;
 
 	if ( f == NULL )
 	{
@@ -1154,6 +1153,25 @@ void dc_savestate()
 
 	fwrite(data, 1, total_size, f) ;
 	fclose(f);
+#else
+	RZipFile zipFile;
+	if (!zipFile.Open(filename, true))
+	{
+		WARN_LOG(SAVESTATE, "Failed to save state - could not open %s for writing", filename.c_str());
+		gui_display_notification("Cannot open save file", 2000);
+		cleanup_serialize(data);
+    	return;
+	}
+	if (zipFile.Write(data, total_size) != total_size)
+	{
+		WARN_LOG(SAVESTATE, "Failed to save state - error writing %s", filename.c_str());
+		gui_display_notification("Error saving state", 2000);
+		zipFile.Close();
+		cleanup_serialize(data);
+    	return;
+	}
+	zipFile.Close();
+#endif
 
 	cleanup_serialize(data) ;
 	INFO_LOG(SAVESTATE, "Saved state to %s size %d", filename.c_str(), total_size) ;
@@ -1162,38 +1180,54 @@ void dc_savestate()
 
 void dc_loadstate()
 {
-    std::string filename;
-	unsigned int total_size = 0 ;
-	void *data = NULL ;
-	void *data_ptr = NULL ;
-	FILE *f ;
+	u32 total_size = 0;
+	FILE *f = nullptr;
 
 	dc_stop();
 
-	filename = get_savestate_file_path(false);
-	f = fopen(filename.c_str(), "rb") ;
-
-	if ( f == NULL )
+	std::string filename = get_savestate_file_path(false);
+	RZipFile zipFile;
+	if (zipFile.Open(filename, false))
 	{
-		WARN_LOG(SAVESTATE, "Failed to load state - could not open %s for reading", filename.c_str()) ;
-		gui_display_notification("Save state not found", 2000);
-		cleanup_serialize(data) ;
-    	return;
+		total_size = (u32)zipFile.Size();
 	}
-	fseek(f, 0, SEEK_END);
-	total_size = ftell(f);
-	fseek(f, 0, SEEK_SET);
-	data = malloc(total_size) ;
+	else
+	{
+		f = fopen(filename.c_str(), "rb") ;
+
+		if ( f == NULL )
+		{
+			WARN_LOG(SAVESTATE, "Failed to load state - could not open %s for reading", filename.c_str()) ;
+			gui_display_notification("Save state not found", 2000);
+			return;
+		}
+		fseek(f, 0, SEEK_END);
+		total_size = (u32)ftell(f);
+		fseek(f, 0, SEEK_SET);
+	}
+	void *data = malloc(total_size);
 	if ( data == NULL )
 	{
 		WARN_LOG(SAVESTATE, "Failed to load state - could not malloc %d bytes", total_size) ;
 		gui_display_notification("Failed to load state - memory full", 2000);
-		cleanup_serialize(data) ;
+		if (f != nullptr)
+			fclose(f);
+		else
+			zipFile.Close();
 		return;
 	}
 
-	size_t read_size = fread(data, 1, total_size, f) ;
-	fclose(f);
+	size_t read_size;
+	if (f == nullptr)
+	{
+		read_size = zipFile.Read(data, total_size);
+		zipFile.Close();
+	}
+	else
+	{
+		read_size = fread(data, 1, total_size, f) ;
+		fclose(f);
+	}
 	if (read_size != total_size)
 	{
 		WARN_LOG(SAVESTATE, "Failed to load state - I/O error");
@@ -1202,7 +1236,7 @@ void dc_loadstate()
 		return;
 	}
 
-	data_ptr = data ;
+	void *data_ptr = data;
 
 	custom_texture.Terminate();
 #if FEAT_AREC == DYNAREC_JIT

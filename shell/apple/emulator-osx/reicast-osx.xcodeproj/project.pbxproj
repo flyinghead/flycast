@@ -315,6 +315,7 @@
 		AEF256512294060400348550 /* 7zArchive.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AEF2564C2294060300348550 /* 7zArchive.cpp */; };
 		AEF256522294060400348550 /* archive.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AEF2564E2294060300348550 /* archive.cpp */; };
 		AEF77FDB24AA76BA00171080 /* audiobackend_null.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AEF77FDA24AA76B900171080 /* audiobackend_null.cpp */; };
+		AEF99730259682850038E0B8 /* rzip.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AEF9972F259682850038E0B8 /* rzip.cpp */; };
 		AEFF7ECC214AEC810068CE11 /* modem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AEFF7EC7214AEC800068CE11 /* modem.cpp */; };
 		AEFF7F4D214D9D590068CE11 /* pico_arp.c in Sources */ = {isa = PBXBuildFile; fileRef = AEFF7EFA214D9D590068CE11 /* pico_arp.c */; };
 		AEFF7F4E214D9D590068CE11 /* pico_dev_ppp.c in Sources */ = {isa = PBXBuildFile; fileRef = AEFF7EFE214D9D590068CE11 /* pico_dev_ppp.c */; };
@@ -967,6 +968,8 @@
 		AEF2564E2294060300348550 /* archive.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = archive.cpp; sourceTree = "<group>"; };
 		AEF2564F2294060400348550 /* 7zArchive.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = 7zArchive.h; sourceTree = "<group>"; };
 		AEF77FDA24AA76B900171080 /* audiobackend_null.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = audiobackend_null.cpp; sourceTree = "<group>"; };
+		AEF9972E259682850038E0B8 /* rzip.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = rzip.h; sourceTree = "<group>"; };
+		AEF9972F259682850038E0B8 /* rzip.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = rzip.cpp; sourceTree = "<group>"; };
 		AEFF7EC7214AEC800068CE11 /* modem.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = modem.cpp; sourceTree = "<group>"; };
 		AEFF7EC8214AEC800068CE11 /* modem.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = modem.h; sourceTree = "<group>"; };
 		AEFF7EC9214AEC800068CE11 /* modem_regs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = modem_regs.h; sourceTree = "<group>"; };
@@ -1831,6 +1834,8 @@
 				AEF2564C2294060300348550 /* 7zArchive.cpp */,
 				AEF2564F2294060400348550 /* 7zArchive.h */,
 				AEF2564E2294060300348550 /* archive.cpp */,
+				AEF9972F259682850038E0B8 /* rzip.cpp */,
+				AEF9972E259682850038E0B8 /* rzip.h */,
 				AEF2564B2294060300348550 /* archive.h */,
 				AEF2564A2294060300348550 /* ZipArchive.cpp */,
 				AEF2564D2294060300348550 /* ZipArchive.h */,
@@ -2630,6 +2635,7 @@
 				AED73E6F2348E45000ECDB64 /* PpAtom.cpp in Sources */,
 				84B7BF191B72720200F9733F /* deflate.c in Sources */,
 				84B7BF7E1B72720200F9733F /* TexCache.cpp in Sources */,
+				AEF99730259682850038E0B8 /* rzip.cpp in Sources */,
 				AE43537522C9420C005E19CE /* LogManager.cpp in Sources */,
 				AEFF7F4E214D9D590068CE11 /* pico_dev_ppp.c in Sources */,
 				84B7BEE41B72720200F9733F /* zip_delete.c in Sources */,

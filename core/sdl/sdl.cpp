@@ -64,8 +64,11 @@ void input_sdl_init()
 		SDL_SetHint(SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS, "1");
 #ifdef _WIN32
 		if (cfgLoadBool("input", "DisableXInput", false))
-			// Disable XInput for some old joytsicks
+		{
+			// Disable XInput for some old joysticks
+			NOTICE_LOG(INPUT, "Disabling XInput, using DirectInput");
 			SDL_SetHint(SDL_HINT_XINPUT_ENABLED, "0");
+		}
 #endif
 		if (SDL_InitSubSystem(SDL_INIT_JOYSTICK) < 0)
 			die("SDL: error initializing Joystick subsystem");

@@ -431,7 +431,9 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/archive/7zArchive.cpp
         core/archive/7zArchive.h
         core/archive/archive.cpp
-        core/archive/archive.h)
+        core/archive/archive.h
+        core/archive/rzip.cpp
+        core/archive/rzip.h)
 if(NOT MSVC)
     target_sources(${PROJECT_NAME} PRIVATE
             core/archive/ZipArchive.cpp
