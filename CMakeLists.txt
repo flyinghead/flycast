@@ -12,6 +12,10 @@ option(TEST_AUTOMATION "Enable test automation" OFF)
 option(ENABLE_LOG "Enable full logging" OFF)
 option(ASAN "Enable address sanitizer" OFF)
 
+if(APPLE)
+	set(CMAKE_OSX_DEPLOYMENT_TARGET 10.9)
+endif()
+
 project(flycast)
 
 if(ENABLE_CTEST)
