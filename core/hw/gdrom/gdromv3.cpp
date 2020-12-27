@@ -1111,6 +1111,7 @@ static int GDRomschd(int i, int c, int j)
 				verify(read_params.remaining_sectors>0);
 				//buffer is empty , fill it :)
 				FillReadBuffer();
+				continue;
 			}
 
 			//transfer up to len bytes

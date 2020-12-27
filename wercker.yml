@@ -1,4 +1,4 @@
-box: ubuntu
+box: ubuntu:18.04
 
 build:
     steps:
