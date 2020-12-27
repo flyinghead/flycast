@@ -20,13 +20,13 @@ class EmuGLView: NSOpenGLView, NSWindowDelegate {
         openGLContext!.makeCurrentContext()
         
         let rect = convertToBacking(dirtyRect)
-        if (emu_single_frame(Int32(rect.width), Int32(rect.height)) != 0)
-        {
+        if (emu_single_frame(Int32(rect.width), Int32(rect.height)) != 0) {
             openGLContext!.flushBuffer()
         }
     }
     
     override func awakeFromNib() {
+		//self.wantsBestResolutionOpenGLSurface = true
         let renderTimer = Timer.scheduledTimer(timeInterval: 0.001, target: self, selector: #selector(EmuGLView.timerTick), userInfo: nil, repeats: true)
         
 		RunLoop.current.add(renderTimer, forMode: .default)
@@ -52,12 +52,13 @@ class EmuGLView: NSOpenGLView, NSWindowDelegate {
         self.openGLContext = context
         
         openGLContext!.makeCurrentContext()
-        emu_gles_init(Int32(frame.width), Int32(frame.height))
+		let rect = convertToBacking(frame)
+        emu_gles_init(Int32(rect.width), Int32(rect.height))
 		
 		if (emu_reicast_init() != 0) {
 			let alert = NSAlert()
 			alert.alertStyle = .critical
-			alert.messageText = "Reicast initialization failed"
+			alert.messageText = "Flycast initialization failed"
 			alert.runModal()
 		}
     }
@@ -86,8 +87,8 @@ class EmuGLView: NSOpenGLView, NSWindowDelegate {
 
 	private func setMousePos(_ event: NSEvent)
 	{
-		let point = convert(event.locationInWindow, from: self)
-		let size = frame.size
+		let point = convertToBacking(convert(event.locationInWindow, from: self))
+		let size = convertToBacking(frame.size)
 		emu_set_mouse_position(Int32(point.x), Int32(size.height - point.y), Int32(size.width), Int32(size.height))
 	}
 	override func mouseDown(with event: NSEvent) {
