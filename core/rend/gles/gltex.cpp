@@ -321,7 +321,7 @@ u64 gl_GetTexture(TSP tsp, TCW tcw)
 	{
 		if (tf->IsCustomTextureAvailable())
 		{
-			glcache.DeleteTextures(1, &tf->texID);
+			TexCache.DeleteLater(tf->texID);
 			tf->texID = glcache.GenTexture();
 			tf->CheckCustomTexture();
 		}
@@ -338,10 +338,6 @@ u64 gl_GetTexture(TSP tsp, TCW tcw)
 
 	//return gl texture
 	return tf->texID;
-}
-
-void DoCleanup()
-{
 }
 
 GLuint fbTextureId;

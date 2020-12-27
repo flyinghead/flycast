@@ -143,7 +143,6 @@ void SetupMatrices(float dc_width, float dc_height,
 				   float &ds2s_offs_x, glm::mat4& normal_mat, glm::mat4& scissor_mat);
 
 text_info raw_GetTexture(TSP tsp, TCW tcw);
-void DoCleanup();
 void SetCull(u32 CullMode);
 s32 SetTileClip(u32 val, GLint uniform);
 void SetMVS_Mode(ModifierVolumeMode mv_mode, ISP_Modvol ispc);
@@ -228,6 +227,20 @@ public:
 
 class TextureCache final : public BaseTextureCache<TextureCacheData>
 {
+public:
+	void Cleanup()
+	{
+		if (!texturesToDelete.empty())
+		{
+			glcache.DeleteTextures((GLsizei)texturesToDelete.size(), &texturesToDelete[0]);
+			texturesToDelete.clear();
+		}
+		CollectCleanup();
+	}
+	void DeleteLater(GLuint texId) { texturesToDelete.push_back(texId); }
+
+private:
+	std::vector<GLuint> texturesToDelete;
 };
 extern TextureCache TexCache;
 

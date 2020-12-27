@@ -1040,6 +1040,7 @@ bool ProcessFrame(TA_context* ctx)
 {
 	if (KillTex)
 		TexCache.Clear();
+	TexCache.Cleanup();
 
 	if (ctx->rend.isRenderFramebuffer)
 	{
@@ -1050,7 +1051,6 @@ bool ProcessFrame(TA_context* ctx)
 		if (!ta_parse_vdrc(ctx))
 			return false;
 	}
-	TexCache.CollectCleanup();
 
 	return true;
 }
@@ -1075,7 +1075,6 @@ static void upload_vertex_indices()
 
 bool RenderFrame()
 {
-	DoCleanup();
 	create_modvol_shader();
 
 	bool is_rtt = pvrrc.isRTT;

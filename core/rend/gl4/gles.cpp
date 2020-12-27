@@ -611,7 +611,6 @@ static void resize(int w, int h)
 
 static bool RenderFrame()
 {
-	DoCleanup();
 	create_modvol_shader();
 
 	const bool is_rtt = pvrrc.isRTT;
