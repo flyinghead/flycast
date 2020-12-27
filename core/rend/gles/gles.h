@@ -3,6 +3,7 @@
 #include "hw/pvr/ta_ctx.h"
 #include "rend/TexCache.h"
 #include "wsi/gl_context.h"
+#include "glcache.h"
 
 #include <unordered_map>
 #include <glm/glm.hpp>
