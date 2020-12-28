@@ -146,12 +146,12 @@ endif()
 if(SDL2_FOUND)
     target_compile_definitions(${PROJECT_NAME} PRIVATE USE_SDL USE_SDL_AUDIO)
     target_sources(${PROJECT_NAME} PRIVATE core/sdl/sdl.cpp core/sdl/sdl.h core/sdl/sdl_gamepad.h core/sdl/sdl_keyboard.h)
+	target_include_directories(${PROJECT_NAME} PRIVATE "${SDL2_INCLUDE_DIRS}/..")
     if(TARGET SDL2::SDL2)
         target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2)
     elseif(MINGW AND TARGET SDL2::SDL2-static)
         target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2-static)
     else()
-        target_include_directories(${PROJECT_NAME} PRIVATE "${SDL2_INCLUDE_DIRS}/..")
         target_link_libraries(${PROJECT_NAME} PRIVATE ${SDL2_LIBRARIES})
     endif()
 endif()
@@ -904,10 +904,12 @@ elseif(APPLE)
             shell/apple/emulator-osx/emulator-osx/osx-main.mm
             shell/apple/emulator-osx/emulator-osx/osx_gamepad.h
             shell/apple/emulator-osx/emulator-osx/osx_keyboard.h)
+
 	set(XIB shell/apple/emulator-osx/emulator-osx/Base.lproj/MainMenu.xib)
 	set(ASSETS shell/apple/emulator-osx/emulator-osx/Images.xcassets)
 	target_sources(${PROJECT_NAME} PRIVATE ${XIB} ${ASSETS})
 	source_group("Resources" FILES ${XIB} ${ASSETS})
+	set_source_files_properties(${ASSETS} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
 
     set_target_properties(${PROJECT_NAME} PROPERTIES
         MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/shell/cmake/MacOSXBundleInfo.plist.in
