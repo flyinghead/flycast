@@ -15,7 +15,7 @@ option(ASAN "Enable address sanitizer" OFF)
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/shell/cmake")
 
 if(APPLE)
-	set(CMAKE_OSX_DEPLOYMENT_TARGET 10.9)
+	set(CMAKE_OSX_DEPLOYMENT_TARGET "10.9" CACHE STRING "Minimum macOS deployment version")
 endif()
 
 project(flycast)

@@ -33,6 +33,6 @@
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Flycast requires microphone access to emulate the Dreamcast microphone</string>
 	<key>LSMinimumSystemVersion</key>
-	<string>10.9</string>
+	<string>$(MACOSX_DEPLOYMENT_TARGET)</string>
 </dict>
 </plist>
