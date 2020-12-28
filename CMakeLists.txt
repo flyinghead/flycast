@@ -87,7 +87,7 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
 target_include_directories(${PROJECT_NAME} PRIVATE core core/deps core/deps/stb core/deps/xbyak core/khronos)
 
 find_package(OpenMP)
-if(OpenMP_CXX_FOUND)
+if(OpenMP_CXX_FOUND AND NOT APPLE)
     target_link_libraries(${PROJECT_NAME} PRIVATE OpenMP::OpenMP_CXX)
     if(ANDROID_NDK_MAJOR VERSION_GREATER_EQUAL 21)
         target_link_libraries(${PROJECT_NAME} PRIVATE -static-openmp)

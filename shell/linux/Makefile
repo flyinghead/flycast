@@ -322,7 +322,7 @@ ifdef USE_MODEM
 
 $(RZDCY_SRC_DIR)/deps/miniupnpc/libminiupnpc.a:
 ifdef FOR_WINDOWS
-	cd $(RZDCY_SRC_DIR)/deps/miniupnpc; make -f Makefile.mingw libminiupnpc.a
+	cd $(RZDCY_SRC_DIR)/deps/miniupnpc; mingw32-make -f Makefile.mingw libminiupnpc.a
 else
 	cd $(RZDCY_SRC_DIR)/deps/miniupnpc; make libminiupnpc.a
 endif
