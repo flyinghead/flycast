@@ -30,7 +30,9 @@
 	<true/>
 	<key>NSHumanReadableCopyright</key>
 	<string>${MACOSX_BUNDLE_COPYRIGHT}</string>
-        <key>NSMicrophoneUsageDescription</key>
-        <string>Flycast requires microphone access to emulate the Dreamcast microphone</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Flycast requires microphone access to emulate the Dreamcast microphone</string>
+	<key>LSMinimumSystemVersion</key>
+	<string>10.9</string>
 </dict>
 </plist>

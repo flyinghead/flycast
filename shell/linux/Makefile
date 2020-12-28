@@ -471,9 +471,9 @@ OBJECTS+=$(BUILDDIR)/reicastres.build_obj
 $(BUILDDIR)/reicastres.build_obj: $(LOCAL_PATH)/../windows/reicast.rc $(LOCAL_PATH)/../windows/flycast.ico $(RZDCY_SRC_DIR)/version.h
 	$(WINDRES) $< $@
 
-	ifdef USE_MODEM
-		OBJECTS+=$(RZDCY_SRC_DIR)/deps/miniupnpc/libminiupnpc.a
-	endif
+ifdef USE_MODEM
+	OBJECTS+=$(RZDCY_SRC_DIR)/deps/miniupnpc/libminiupnpc.a
+endif
 endif
 
 DEPDIR := .dep-$(BUILDDIR)
