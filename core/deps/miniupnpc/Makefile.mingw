@@ -39,7 +39,7 @@ COMMITREF=$(GITHUB_SHA)
 else
 COMMITREF=$(shell git rev-parse --short HEAD)
 endif
-DISTFILE:=$(shell echo "miniupnpc-bin-win32-`cat VERSION`-$(COMMITREF).zip")
+DISTFILE:=$(shell echo "miniupnpc-bin-win32-`cat VERSION.miniupnpc`-$(COMMITREF).zip")
 
 .PHONY:	all dist clean
 
@@ -97,20 +97,20 @@ ifeq ($(OS),Windows_NT)
 wingenminiupnpcstrings.exe:	wingenminiupnpcstrings.c
 	$(CC) $(CFLAGS) -o $@ $^
 
-miniupnpcstrings.h: miniupnpcstrings.h.in wingenminiupnpcstrings.exe VERSION
+miniupnpcstrings.h: miniupnpcstrings.h.in wingenminiupnpcstrings.exe VERSION.miniupnpc
 	wingenminiupnpcstrings.exe $< $@ rc_version.h
 
 rc_version.h:	miniupnpcstrings.h
 else
-miniupnpcstrings.h:	miniupnpcstrings.h.in VERSION
+miniupnpcstrings.h:	miniupnpcstrings.h.in VERSION.miniupnpc
 	sed 's|OS_STRING ".*"|OS_STRING "Windows/Mingw32"|' $< | \
-	sed 's|MINIUPNPC_VERSION_STRING ".*"|MINIUPNPC_VERSION_STRING "$(shell cat VERSION)"|' > $@
+	sed 's|MINIUPNPC_VERSION_STRING ".*"|MINIUPNPC_VERSION_STRING "$(shell cat VERSION.miniupnpc)"|' > $@
 
-rc_version.h:	VERSION
-	echo "#define LIBMINIUPNPC_DOTTED_VERSION \"$(shell cat VERSION)\"" > $@.tmp
-	echo "#define LIBMINIUPNPC_MAJOR_VERSION $(shell cat VERSION|cut -d. -f1)" >> $@.tmp
-	echo "#define LIBMINIUPNPC_MINOR_VERSION $(shell cat VERSION|cut -d. -f2)" >> $@.tmp
-	echo "#define LIBMINIUPNPC_MICRO_VERSION $(shell cat VERSION|cut -d. -f3)" >> $@.tmp
+rc_version.h:	VERSION.miniupnpc
+	echo "#define LIBMINIUPNPC_DOTTED_VERSION \"$(shell cat VERSION.miniupnpc)\"" > $@.tmp
+	echo "#define LIBMINIUPNPC_MAJOR_VERSION $(shell cat VERSION.miniupnpc|cut -d. -f1)" >> $@.tmp
+	echo "#define LIBMINIUPNPC_MINOR_VERSION $(shell cat VERSION.miniupnpc|cut -d. -f2)" >> $@.tmp
+	echo "#define LIBMINIUPNPC_MICRO_wVERSION $(shell cat VERSION.miniupnpc|cut -d. -f3)" >> $@.tmp
 	mv $@.tmp $@
 endif
 

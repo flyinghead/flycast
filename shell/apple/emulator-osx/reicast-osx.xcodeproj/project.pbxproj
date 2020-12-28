@@ -3213,6 +3213,7 @@
 					../../../core/deps/xbyak,
 					../../../core/deps/stb,
 					/usr/local/include,
+					../../../core/deps/miniupnpc,
 				);
 				INFOPLIST_FILE = "emulator-osx/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
@@ -3260,6 +3261,7 @@
 					../../../core/deps/xbyak,
 					../../../core/deps/stb,
 					/usr/local/include,
+					../../../core/deps/miniupnpc,
 				);
 				INFOPLIST_FILE = "emulator-osx/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";

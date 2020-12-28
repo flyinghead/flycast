@@ -41,7 +41,7 @@ int main(int argc, char * * argv) {
 	       osvi.dwMajorVersion, osvi.dwMinorVersion,
 	       osvi.dwBuildNumber, (const char *)&(osvi.szCSDVersion));
 
-	fin = fopen("VERSION", "r");
+	fin = fopen("VERSION.miniupnpc", "r");
 	fgets(miniupnpcVersion, sizeof(miniupnpcVersion), fin);
 	fclose(fin);
 	for(n = 0; n < sizeof(miniupnpcVersion); n++) {

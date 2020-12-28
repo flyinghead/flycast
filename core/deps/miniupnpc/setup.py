@@ -21,7 +21,7 @@ class make_then_build_ext(build_ext.build_ext):
             build_ext.build_ext.run(self)
 
 setup(name="miniupnpc",
-      version=open('VERSION').read().strip(),
+      version=open('VERSION.miniupnpc').read().strip(),
       author='Thomas BERNARD',
       author_email='miniupnp@free.fr',
       license=open('LICENSE').read(),

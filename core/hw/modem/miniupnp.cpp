@@ -16,15 +16,23 @@
     You should have received a copy of the GNU General Public License
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
-#include <miniupnpc/miniupnpc.h>
-#include <miniupnpc/upnpcommands.h>
+#include <miniupnpc.h>
+#include <upnpcommands.h>
 #include "types.h"
 #include "miniupnp.h"
+
+#ifndef UPNP_LOCAL_PORT_ANY
+#define UPNP_LOCAL_PORT_ANY 0
+#endif
 
 bool MiniUPnP::Init()
 {
 	int error = 0;
+#if MINIUPNPC_API_VERSION >= 14
 	UPNPDev *devlist = upnpDiscover(2000, nullptr, nullptr, UPNP_LOCAL_PORT_ANY, 0, 2, &error);
+#else
+	UPNPDev *devlist = upnpDiscover(2000, nullptr, nullptr, UPNP_LOCAL_PORT_ANY, 0, &error);
+#endif
 	if (devlist == nullptr)
 	{
 		INFO_LOG(MODEM, "UPnP discover failed: error %d", error);

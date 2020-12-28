@@ -314,6 +314,7 @@ if(NOT MINIUPNP_FOUND)
 	option(UPNPC_BUILD_SAMPLE "Build sample executables" OFF)
 	option(UPNPC_NO_INSTALL "Disable installation" ON)
 	add_subdirectory(core/deps/miniupnpc)
+	target_include_directories(${PROJECT_NAME} PRIVATE core/deps/miniupnpc)
 	target_link_libraries(${PROJECT_NAME} PRIVATE miniupnpc::miniupnpc)
 endif()
 

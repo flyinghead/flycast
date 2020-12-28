@@ -140,6 +140,9 @@ RZDCY_CFLAGS += -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/rend/gles -I$(RZDCY_SRC_DI
 ifdef USE_MODEM
 	RZDCY_CFLAGS += -DENABLE_MODEM -I$(RZDCY_SRC_DIR)/deps/picotcp/include -I$(RZDCY_SRC_DIR)/deps/picotcp/modules
 	RZDCY_MODULES += hw/modem/ deps/picotcp/modules/ deps/picotcp/stack/
+	ifndef FOR_WINDOWS
+		RZDCY_CFLAGS += -I/usr/include/miniupnpc
+	endif
 endif
 
 ifdef NO_REC

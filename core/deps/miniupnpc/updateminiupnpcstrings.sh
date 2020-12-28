@@ -37,7 +37,7 @@ if [ "$OS_NAME" = "AmigaOS" ]; then
 fi
 
 echo "Detected OS [$OS_NAME] version [$OS_VERSION]"
-MINIUPNPC_VERSION=`cat VERSION`
+MINIUPNPC_VERSION=`cat VERSION.miniupnpc`
 echo "MiniUPnPc version [${MINIUPNPC_VERSION}]"
 
 EXPR="s|OS_STRING \".*\"|OS_STRING \"${OS_NAME}/${OS_VERSION}\"|"

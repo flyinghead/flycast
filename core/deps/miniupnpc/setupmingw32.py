@@ -21,7 +21,7 @@ from distutils import sysconfig
 sysconfig.get_config_vars()["OPT"] = ''
 sysconfig.get_config_vars()["CFLAGS"] = ''
 setup(name="miniupnpc",
-      version=open('VERSION').read().strip(),
+      version=open('VERSION.miniupnpc').read().strip(),
       author='Thomas BERNARD',
       author_email='miniupnp@free.fr',
       license=open('LICENSE').read(),

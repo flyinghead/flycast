@@ -11,7 +11,7 @@
 # or
 # $ make install (default INSTALLPREFIX is /usr)
 OS = $(shell $(CC) -dumpmachine)
-VERSION = $(shell cat VERSION)
+VERSION = $(shell cat VERSION.miniupnpc)
 
 ifneq (, $(findstring darwin, $(OS)))
 JARSUFFIX=mac
@@ -278,7 +278,7 @@ cleaninstall:
 	$(RM) $(DESTDIR)$(INSTALLDIRLIB)/$(LIBRARY)
 	$(RM) $(DESTDIR)$(INSTALLDIRLIB)/$(SHAREDLIBRARY)
 
-miniupnpc.pc:	VERSION
+miniupnpc.pc:	VERSION.miniupnpc
 	$(RM) $@
 	echo "prefix=$(INSTALLPREFIX)" >> $@
 	echo "exec_prefix=\$${prefix}" >> $@
@@ -331,7 +331,7 @@ testportlistingparse:	$(TESTPORTLISTINGPARSE)
 
 testaddr_is_reserved:	$(TESTADDR_IS_RESERVED)
 
-miniupnpcstrings.h:	miniupnpcstrings.h.in updateminiupnpcstrings.sh VERSION
+miniupnpcstrings.h:	miniupnpcstrings.h.in updateminiupnpcstrings.sh VERSION.miniupnpc
 	$(SH) updateminiupnpcstrings.sh
 
 # ftp tool supplied with OpenBSD can download files from http.
