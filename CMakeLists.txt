@@ -151,7 +151,7 @@ if(SDL2_FOUND)
     elseif(MINGW AND TARGET SDL2::SDL2-static)
         target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2-static)
     else()
-        target_include_directories(${PROJECT_NAME} PRIVATE ${SDL2_INCLUDE_DIRS})
+        target_include_directories(${PROJECT_NAME} PRIVATE "${SDL2_INCLUDE_DIRS}/..")
         target_link_libraries(${PROJECT_NAME} PRIVATE ${SDL2_LIBRARIES})
     endif()
 endif()
@@ -904,6 +904,10 @@ elseif(APPLE)
             shell/apple/emulator-osx/emulator-osx/osx-main.mm
             shell/apple/emulator-osx/emulator-osx/osx_gamepad.h
             shell/apple/emulator-osx/emulator-osx/osx_keyboard.h)
+	set(XIB shell/apple/emulator-osx/emulator-osx/Base.lproj/MainMenu.xib)
+	set(ASSETS shell/apple/emulator-osx/emulator-osx/Images.xcassets)
+	target_sources(${PROJECT_NAME} PRIVATE ${XIB} ${ASSETS})
+	source_group("Resources" FILES ${XIB} ${ASSETS})
 
     set_target_properties(${PROJECT_NAME} PROPERTIES
         MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/shell/cmake/MacOSXBundleInfo.plist.in
@@ -917,6 +921,8 @@ elseif(APPLE)
         MACOSX_BUNDLE_BUNDLE_VERSION "1"
         MACOSX_BUNDLE_COPYRIGHT "Copyright © 2019 reicast contributors. All rights reserved."
         XCODE_ATTRIBUTE_SWIFT_OBJC_BRIDGING_HEADER "shell/apple/emulator-osx/emulator-osx/emulator-osx-Bridging-Header.h"
+		RESOURCE "${XIB}"
+		XCODE_ATTRIBUTE_ASSETCATALOG_COMPILER_APPICON_NAME "AppIcon"
     )
 
     find_library(AUDIO_UNIT_LIBRARY AudioUnit)

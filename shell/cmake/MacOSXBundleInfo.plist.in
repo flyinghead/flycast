@@ -10,6 +10,8 @@
 	<string>${MACOSX_BUNDLE_INFO_STRING}</string>
 	<key>CFBundleIconFile</key>
 	<string>${MACOSX_BUNDLE_ICON_FILE}</string>
+	<key>CFBundleIconName</key>
+	<string>${MACOSX_BUNDLE_ICON_FILE}</string>
 	<key>CFBundleIdentifier</key>
 	<string>${MACOSX_BUNDLE_GUI_IDENTIFIER}</string>
 	<key>CFBundleInfoDictionaryVersion</key>
@@ -30,6 +32,10 @@
 	<true/>
 	<key>NSHumanReadableCopyright</key>
 	<string>${MACOSX_BUNDLE_COPYRIGHT}</string>
+	<key>NSPrincipalClass</key>
+	<string>NSApplication</string>
+	<key>NSMainNibFile</key>
+	<string>MainMenu</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Flycast requires microphone access to emulate the Dreamcast microphone</string>
 	<key>LSMinimumSystemVersion</key>
