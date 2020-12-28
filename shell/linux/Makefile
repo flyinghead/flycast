@@ -310,10 +310,25 @@ ifdef FOR_WINDOWS
 	LIBS += -lm -static -lpthread
 else
 	LIBS += -lm -lpthread
+	ifdef USE_MODEM
+		LIBS += -lminiupnpc
+	endif
 endif
 ifdef FOR_LINUX
 LIBS += -lrt
 endif
+
+ifdef USE_MODEM
+
+$(RZDCY_SRC_DIR)/deps/miniupnpc/libminiupnpc.a:
+ifdef FOR_WINDOWS
+	cd $(RZDCY_SRC_DIR)/deps/miniupnpc; make -f Makefile.mingw libminiupnpc.a
+else
+	cd $(RZDCY_SRC_DIR)/deps/miniupnpc; make libminiupnpc.a
+endif
+
+endif
+
 
 PREFIX ?= /usr/local
 MAN_DIR ?= ${PREFIX}/share/man/man1
@@ -455,6 +470,10 @@ ifdef FOR_WINDOWS
 OBJECTS+=$(BUILDDIR)/reicastres.build_obj
 $(BUILDDIR)/reicastres.build_obj: $(LOCAL_PATH)/../windows/reicast.rc $(LOCAL_PATH)/../windows/flycast.ico $(RZDCY_SRC_DIR)/version.h
 	$(WINDRES) $< $@
+
+	ifdef USE_MODEM
+		OBJECTS+=$(RZDCY_SRC_DIR)/deps/miniupnpc/libminiupnpc.a
+	endif
 endif
 
 DEPDIR := .dep-$(BUILDDIR)

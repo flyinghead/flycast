@@ -12,6 +12,8 @@ option(TEST_AUTOMATION "Enable test automation" OFF)
 option(ENABLE_LOG "Enable full logging" OFF)
 option(ASAN "Enable address sanitizer" OFF)
 
+set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/shell/cmake")
+
 if(APPLE)
 	set(CMAKE_OSX_DEPLOYMENT_TARGET 10.9)
 endif()
@@ -210,6 +212,12 @@ if(PKG_CONFIG_FOUND AND NOT ANDROID AND NOT APPLE)
         target_compile_definitions(${PROJECT_NAME} PRIVATE DYNA_OPROF)
         target_link_libraries(${PROJECT_NAME} PRIVATE opagent)
     endif()
+    
+    find_package(miniupnpc)
+    if (MINIUPNP_FOUND)
+		target_include_directories(${PROJECT_NAME} PRIVATE ${MINIUPNP_INCLUDE_DIRS})
+		target_link_libraries(${PROJECT_NAME} PRIVATE ${MINIUPNP_LIBRARIES})
+    endif()
 endif()
 
 if(UNIX AND NOT APPLE AND NOT ANDROID)
@@ -298,6 +306,15 @@ if(NOT FLAC_FOUND)
             core/deps/flac/src/libFLAC/stream_decoder.c
             core/deps/flac/src/libFLAC/window.c
             core/deps/flac/src/libFLAC/windows_unicode_filenames.c)
+endif()
+
+if(NOT MINIUPNP_FOUND)
+	option(UPNPC_BUILD_SHARED "Build shared library" OFF)
+	option(UPNPC_BUILD_TESTS "Build test executables" OFF)
+	option(UPNPC_BUILD_SAMPLE "Build sample executables" OFF)
+	option(UPNPC_NO_INSTALL "Disable installation" ON)
+	add_subdirectory(core/deps/miniupnpc)
+	target_link_libraries(${PROJECT_NAME} PRIVATE miniupnpc::miniupnpc)
 endif()
 
 if(MSVC)
@@ -535,6 +552,8 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/hw/modem/modem_regs.h
         core/hw/modem/picoppp.cpp
         core/hw/modem/picoppp.h
+        core/hw/modem/miniupnp.cpp
+        core/hw/modem/miniupnp.h
         core/hw/naomi/awave_regs.h
         core/hw/naomi/awcartridge.cpp
         core/hw/naomi/awcartridge.h

@@ -27,7 +27,7 @@ jobs:
       - name: Set up build environment (ubuntu-latest)
         run: |
           sudo apt-get update
-          sudo apt-get -y install ccache libao-dev libasound2-dev libevdev-dev libflac-dev libgl1-mesa-dev libpulse-dev libsdl2-dev libudev-dev libzip-dev
+          sudo apt-get -y install ccache libao-dev libasound2-dev libevdev-dev libflac-dev libgl1-mesa-dev libpulse-dev libsdl2-dev libudev-dev libzip-dev libminiupnpc-dev
           echo "CCACHE_DIR=/tmp/ccache" >> $GITHUB_ENV
         if: matrix.config.os == 'ubuntu-latest'
 

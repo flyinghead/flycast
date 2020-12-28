@@ -119,3 +119,13 @@ static inline std::string get_file_basename(const std::string& s)
 		return s;
 	return s.substr(0, dot);
 }
+
+static inline std::string trim_trailing_ws(const std::string& str,
+                 const std::string& whitespace = " ")
+{
+    const auto strEnd = str.find_last_not_of(whitespace);
+	if (strEnd == std::string::npos)
+		return "";
+
+    return str.substr(0, strEnd + 1);
+}

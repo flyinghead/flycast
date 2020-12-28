@@ -316,6 +316,21 @@
 		AEF256522294060400348550 /* archive.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AEF2564E2294060300348550 /* archive.cpp */; };
 		AEF77FDB24AA76BA00171080 /* audiobackend_null.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AEF77FDA24AA76B900171080 /* audiobackend_null.cpp */; };
 		AEF99730259682850038E0B8 /* rzip.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AEF9972F259682850038E0B8 /* rzip.cpp */; };
+		AEF9980325988F080038E0B8 /* miniupnp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AEF9980125988F080038E0B8 /* miniupnp.cpp */; };
+		AEF9984B2598900A0038E0B8 /* minisoap.c in Sources */ = {isa = PBXBuildFile; fileRef = AEF998082598900A0038E0B8 /* minisoap.c */; };
+		AEF9984C2598900A0038E0B8 /* addr_is_reserved.c in Sources */ = {isa = PBXBuildFile; fileRef = AEF9980B2598900A0038E0B8 /* addr_is_reserved.c */; };
+		AEF998602598900A0038E0B8 /* portlistingparse.c in Sources */ = {isa = PBXBuildFile; fileRef = AEF998212598900A0038E0B8 /* portlistingparse.c */; };
+		AEF998622598900A0038E0B8 /* connecthostport.c in Sources */ = {isa = PBXBuildFile; fileRef = AEF998232598900A0038E0B8 /* connecthostport.c */; };
+		AEF998632598900A0038E0B8 /* upnpreplyparse.c in Sources */ = {isa = PBXBuildFile; fileRef = AEF998242598900A0038E0B8 /* upnpreplyparse.c */; };
+		AEF998652598900A0038E0B8 /* receivedata.c in Sources */ = {isa = PBXBuildFile; fileRef = AEF998272598900A0038E0B8 /* receivedata.c */; };
+		AEF998662598900A0038E0B8 /* miniwget.c in Sources */ = {isa = PBXBuildFile; fileRef = AEF998292598900A0038E0B8 /* miniwget.c */; };
+		AEF998672598900A0038E0B8 /* upnpdev.c in Sources */ = {isa = PBXBuildFile; fileRef = AEF9982C2598900A0038E0B8 /* upnpdev.c */; };
+		AEF9986B2598900A0038E0B8 /* upnpcommands.c in Sources */ = {isa = PBXBuildFile; fileRef = AEF998332598900A0038E0B8 /* upnpcommands.c */; };
+		AEF998732598900A0038E0B8 /* upnperrors.c in Sources */ = {isa = PBXBuildFile; fileRef = AEF9983F2598900A0038E0B8 /* upnperrors.c */; };
+		AEF998742598900A0038E0B8 /* minixml.c in Sources */ = {isa = PBXBuildFile; fileRef = AEF998422598900A0038E0B8 /* minixml.c */; };
+		AEF998752598900A0038E0B8 /* minissdpc.c in Sources */ = {isa = PBXBuildFile; fileRef = AEF998452598900A0038E0B8 /* minissdpc.c */; };
+		AEF998762598900A0038E0B8 /* miniupnpc.c in Sources */ = {isa = PBXBuildFile; fileRef = AEF998462598900A0038E0B8 /* miniupnpc.c */; };
+		AEF998782598900A0038E0B8 /* igd_desc_parse.c in Sources */ = {isa = PBXBuildFile; fileRef = AEF998492598900A0038E0B8 /* igd_desc_parse.c */; };
 		AEFF7ECC214AEC810068CE11 /* modem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AEFF7EC7214AEC800068CE11 /* modem.cpp */; };
 		AEFF7F4D214D9D590068CE11 /* pico_arp.c in Sources */ = {isa = PBXBuildFile; fileRef = AEFF7EFA214D9D590068CE11 /* pico_arp.c */; };
 		AEFF7F4E214D9D590068CE11 /* pico_dev_ppp.c in Sources */ = {isa = PBXBuildFile; fileRef = AEFF7EFE214D9D590068CE11 /* pico_dev_ppp.c */; };
@@ -970,6 +985,42 @@
 		AEF77FDA24AA76B900171080 /* audiobackend_null.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = audiobackend_null.cpp; sourceTree = "<group>"; };
 		AEF9972E259682850038E0B8 /* rzip.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = rzip.h; sourceTree = "<group>"; };
 		AEF9972F259682850038E0B8 /* rzip.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = rzip.cpp; sourceTree = "<group>"; };
+		AEF9980125988F080038E0B8 /* miniupnp.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = miniupnp.cpp; sourceTree = "<group>"; };
+		AEF9980225988F080038E0B8 /* miniupnp.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = miniupnp.h; sourceTree = "<group>"; };
+		AEF998072598900A0038E0B8 /* miniwget_private.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = miniwget_private.h; sourceTree = "<group>"; };
+		AEF998082598900A0038E0B8 /* minisoap.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = minisoap.c; sourceTree = "<group>"; };
+		AEF998092598900A0038E0B8 /* miniupnpcstrings.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = miniupnpcstrings.h; sourceTree = "<group>"; };
+		AEF9980A2598900A0038E0B8 /* miniupnpc_declspec.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = miniupnpc_declspec.h; sourceTree = "<group>"; };
+		AEF9980B2598900A0038E0B8 /* addr_is_reserved.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = addr_is_reserved.c; sourceTree = "<group>"; };
+		AEF9980E2598900A0038E0B8 /* upnpcommands.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = upnpcommands.h; sourceTree = "<group>"; };
+		AEF998212598900A0038E0B8 /* portlistingparse.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = portlistingparse.c; sourceTree = "<group>"; };
+		AEF998232598900A0038E0B8 /* connecthostport.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = connecthostport.c; sourceTree = "<group>"; };
+		AEF998242598900A0038E0B8 /* upnpreplyparse.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = upnpreplyparse.c; sourceTree = "<group>"; };
+		AEF998262598900A0038E0B8 /* minixml.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = minixml.h; sourceTree = "<group>"; };
+		AEF998272598900A0038E0B8 /* receivedata.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = receivedata.c; sourceTree = "<group>"; };
+		AEF998282598900A0038E0B8 /* miniupnpc_socketdef.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = miniupnpc_socketdef.h; sourceTree = "<group>"; };
+		AEF998292598900A0038E0B8 /* miniwget.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = miniwget.c; sourceTree = "<group>"; };
+		AEF9982A2598900A0038E0B8 /* upnperrors.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = upnperrors.h; sourceTree = "<group>"; };
+		AEF9982B2598900A0038E0B8 /* igd_desc_parse.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = igd_desc_parse.h; sourceTree = "<group>"; };
+		AEF9982C2598900A0038E0B8 /* upnpdev.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = upnpdev.c; sourceTree = "<group>"; };
+		AEF9982E2598900A0038E0B8 /* minissdpc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = minissdpc.h; sourceTree = "<group>"; };
+		AEF998312598900A0038E0B8 /* miniupnpc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = miniupnpc.h; sourceTree = "<group>"; };
+		AEF998322598900A0038E0B8 /* miniupnpctypes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = miniupnpctypes.h; sourceTree = "<group>"; };
+		AEF998332598900A0038E0B8 /* upnpcommands.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = upnpcommands.c; sourceTree = "<group>"; };
+		AEF998342598900A0038E0B8 /* addr_is_reserved.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = addr_is_reserved.h; sourceTree = "<group>"; };
+		AEF998372598900A0038E0B8 /* minisoap.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = minisoap.h; sourceTree = "<group>"; };
+		AEF9983B2598900A0038E0B8 /* portlistingparse.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = portlistingparse.h; sourceTree = "<group>"; };
+		AEF9983C2598900A0038E0B8 /* connecthostport.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = connecthostport.h; sourceTree = "<group>"; };
+		AEF9983F2598900A0038E0B8 /* upnperrors.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = upnperrors.c; sourceTree = "<group>"; };
+		AEF998402598900A0038E0B8 /* miniwget.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = miniwget.h; sourceTree = "<group>"; };
+		AEF998412598900A0038E0B8 /* codelength.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = codelength.h; sourceTree = "<group>"; };
+		AEF998422598900A0038E0B8 /* minixml.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = minixml.c; sourceTree = "<group>"; };
+		AEF998432598900A0038E0B8 /* receivedata.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = receivedata.h; sourceTree = "<group>"; };
+		AEF998442598900A0038E0B8 /* upnpreplyparse.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = upnpreplyparse.h; sourceTree = "<group>"; };
+		AEF998452598900A0038E0B8 /* minissdpc.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = minissdpc.c; sourceTree = "<group>"; };
+		AEF998462598900A0038E0B8 /* miniupnpc.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = miniupnpc.c; sourceTree = "<group>"; };
+		AEF998472598900A0038E0B8 /* upnpdev.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = upnpdev.h; sourceTree = "<group>"; };
+		AEF998492598900A0038E0B8 /* igd_desc_parse.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = igd_desc_parse.c; sourceTree = "<group>"; };
 		AEFF7EC7214AEC800068CE11 /* modem.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = modem.cpp; sourceTree = "<group>"; };
 		AEFF7EC8214AEC800068CE11 /* modem.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = modem.h; sourceTree = "<group>"; };
 		AEFF7EC9214AEC800068CE11 /* modem_regs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = modem_regs.h; sourceTree = "<group>"; };
@@ -1213,6 +1264,7 @@
 				84B7BD2D1B72720100F9733F /* libelf */,
 				84B7BD661B72720100F9733F /* libzip */,
 				AE649C08218C553A00EF4A81 /* lzma */,
+				AEF998042598900A0038E0B8 /* miniupnpc */,
 				AEFF7ECE214D9D580068CE11 /* picotcp */,
 				AED73E932348E46400ECDB64 /* volk */,
 				AE8C273A21122E2500D4D8F4 /* xbrz */,
@@ -2349,6 +2401,47 @@
 			path = ../../../core/input;
 			sourceTree = "<group>";
 		};
+		AEF998042598900A0038E0B8 /* miniupnpc */ = {
+			isa = PBXGroup;
+			children = (
+				AEF9980B2598900A0038E0B8 /* addr_is_reserved.c */,
+				AEF998342598900A0038E0B8 /* addr_is_reserved.h */,
+				AEF998412598900A0038E0B8 /* codelength.h */,
+				AEF998232598900A0038E0B8 /* connecthostport.c */,
+				AEF9983C2598900A0038E0B8 /* connecthostport.h */,
+				AEF998492598900A0038E0B8 /* igd_desc_parse.c */,
+				AEF9982B2598900A0038E0B8 /* igd_desc_parse.h */,
+				AEF998082598900A0038E0B8 /* minisoap.c */,
+				AEF998372598900A0038E0B8 /* minisoap.h */,
+				AEF998452598900A0038E0B8 /* minissdpc.c */,
+				AEF9982E2598900A0038E0B8 /* minissdpc.h */,
+				AEF9980A2598900A0038E0B8 /* miniupnpc_declspec.h */,
+				AEF998282598900A0038E0B8 /* miniupnpc_socketdef.h */,
+				AEF998462598900A0038E0B8 /* miniupnpc.c */,
+				AEF998312598900A0038E0B8 /* miniupnpc.h */,
+				AEF998092598900A0038E0B8 /* miniupnpcstrings.h */,
+				AEF998322598900A0038E0B8 /* miniupnpctypes.h */,
+				AEF998072598900A0038E0B8 /* miniwget_private.h */,
+				AEF998292598900A0038E0B8 /* miniwget.c */,
+				AEF998402598900A0038E0B8 /* miniwget.h */,
+				AEF998422598900A0038E0B8 /* minixml.c */,
+				AEF998262598900A0038E0B8 /* minixml.h */,
+				AEF998212598900A0038E0B8 /* portlistingparse.c */,
+				AEF9983B2598900A0038E0B8 /* portlistingparse.h */,
+				AEF998272598900A0038E0B8 /* receivedata.c */,
+				AEF998432598900A0038E0B8 /* receivedata.h */,
+				AEF998332598900A0038E0B8 /* upnpcommands.c */,
+				AEF9980E2598900A0038E0B8 /* upnpcommands.h */,
+				AEF9982C2598900A0038E0B8 /* upnpdev.c */,
+				AEF998472598900A0038E0B8 /* upnpdev.h */,
+				AEF9983F2598900A0038E0B8 /* upnperrors.c */,
+				AEF9982A2598900A0038E0B8 /* upnperrors.h */,
+				AEF998242598900A0038E0B8 /* upnpreplyparse.c */,
+				AEF998442598900A0038E0B8 /* upnpreplyparse.h */,
+			);
+			path = miniupnpc;
+			sourceTree = "<group>";
+		};
 		AEFF7EC6214AEC800068CE11 /* modem */ = {
 			isa = PBXGroup;
 			children = (
@@ -2358,6 +2451,8 @@
 				AEFF7EC7214AEC800068CE11 /* modem.cpp */,
 				AEFF7EC8214AEC800068CE11 /* modem.h */,
 				AEFF7EC9214AEC800068CE11 /* modem_regs.h */,
+				AEF9980125988F080038E0B8 /* miniupnp.cpp */,
+				AEF9980225988F080038E0B8 /* miniupnp.h */,
 			);
 			path = modem;
 			sourceTree = "<group>";
@@ -2595,7 +2690,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "echo \"#define REICAST_VERSION \\\"`git describe --tags --always`\\\"\" > $SRCROOT/../../../core/version.h\necho \"#define GIT_HASH \\\"`git rev-parse --short HEAD`\\\"\" >> $SRCROOT/../../../core/version.h\necho \"#define BUILD_DATE \\\"`date '+%Y-%m-%d %H:%M:%S %Z'`\\\"\" >> $SRCROOT/../../../core/version.h\n";
+			shellScript = "echo \"#define REICAST_VERSION \\\"`git describe --tags --always`\\\"\" > $SRCROOT/../../../core/version.h\necho \"#define GIT_HASH \\\"`git rev-parse --short HEAD`\\\"\" >> $SRCROOT/../../../core/version.h\necho \"#define BUILD_DATE \\\"`date '+%Y-%m-%d %H:%M:%S %Z'`\\\"\" >> $SRCROOT/../../../core/version.h\ncd $SRCROOT/../../../core/deps/miniupnpc; sh ./updateminiupnpcstrings.sh\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -2613,10 +2708,13 @@
 				84B7BF5B1B72720200F9733F /* chd.cpp in Sources */,
 				AED73E652348E45000ECDB64 /* IntermTraverse.cpp in Sources */,
 				84B7BF611B72720200F9733F /* common.cpp in Sources */,
+				AEF998742598900A0038E0B8 /* minixml.c in Sources */,
 				84B7BF0B1B72720200F9733F /* zip_source_free.c in Sources */,
 				AEFF7F5C214D9D590068CE11 /* pico_socket_udp.c in Sources */,
 				AE649C00218C552500EF4A81 /* lpc_intrin_sse41.c in Sources */,
 				84B7BF7A1B72720200F9733F /* gles.cpp in Sources */,
+				AEF998732598900A0038E0B8 /* upnperrors.c in Sources */,
+				AEF998602598900A0038E0B8 /* portlistingparse.c in Sources */,
 				84B7BEFC1B72720200F9733F /* zip_get_name.c in Sources */,
 				84B7BEFA1B72720200F9733F /* zip_get_archive_flag.c in Sources */,
 				84B7BF1E1B72720200F9733F /* Makefile in Sources */,
@@ -2665,6 +2763,7 @@
 				AE2A2D7C21D6851E004B308D /* 7zBuf.c in Sources */,
 				84B7BEB11B72720200F9733F /* cdipsr.cpp in Sources */,
 				AEF77FDB24AA76BA00171080 /* audiobackend_null.cpp in Sources */,
+				AEF9980325988F080038E0B8 /* miniupnp.cpp in Sources */,
 				AED73E642348E45000ECDB64 /* intermOut.cpp in Sources */,
 				AE649BF5218C552500EF4A81 /* cpu.c in Sources */,
 				AE2A2D5D21D68470004B308D /* m4cartridge.cpp in Sources */,
@@ -2681,6 +2780,7 @@
 				AE2A2D7821D6851E004B308D /* 7zCrc.c in Sources */,
 				84B7BF371B72720200F9733F /* maple_if.cpp in Sources */,
 				AEFF7F7A214DA3C90068CE11 /* picoppp.cpp in Sources */,
+				AEF998662598900A0038E0B8 /* miniwget.c in Sources */,
 				84B7BEF01B72720200F9733F /* zip_file_error_clear.c in Sources */,
 				84B7BF351B72720200F9733F /* maple_devs.cpp in Sources */,
 				AED73E5C2348E45000ECDB64 /* attribute.cpp in Sources */,
@@ -2736,12 +2836,14 @@
 				84B7BF041B72720200F9733F /* zip_set_archive_comment.c in Sources */,
 				84B7BF411B72720200F9733F /* ta_vtx.cpp in Sources */,
 				84B7BEF61B72720200F9733F /* zip_fopen_index.c in Sources */,
+				AEF9984C2598900A0038E0B8 /* addr_is_reserved.c in Sources */,
 				84B7BEEE1B72720200F9733F /* zip_error_to_str.c in Sources */,
 				AE1E293B2095FB1600FC6BA2 /* rec_cpp.cpp in Sources */,
 				AED73E6C2348E45000ECDB64 /* pch.cpp in Sources */,
 				84B7BEF81B72720200F9733F /* zip_free.c in Sources */,
 				84B7BF331B72720200F9733F /* sb_mem.cpp in Sources */,
 				AED73E892348E45000ECDB64 /* disassemble.cpp in Sources */,
+				AEF998782598900A0038E0B8 /* igd_desc_parse.c in Sources */,
 				AE649C03218C552500EF4A81 /* metadata_iterators.c in Sources */,
 				84B7BF2F1B72720200F9733F /* gdromv3.cpp in Sources */,
 				84B7BF591B72720200F9733F /* sh4_sched.cpp in Sources */,
@@ -2822,6 +2924,7 @@
 				AEFF7ECC214AEC810068CE11 /* modem.cpp in Sources */,
 				AED73E6E2348E45000ECDB64 /* Pp.cpp in Sources */,
 				84B7BF2E1B72720200F9733F /* gdrom_response.cpp in Sources */,
+				AEF9984B2598900A0038E0B8 /* minisoap.c in Sources */,
 				84B7BF7F1B72720200F9733F /* stdclass.cpp in Sources */,
 				AEFF7F59214D9D590068CE11 /* pico_ipv4.c in Sources */,
 				84B7BF271B72720200F9733F /* aica_mem.cpp in Sources */,
@@ -2837,6 +2940,7 @@
 				AE2A2D7A21D6851E004B308D /* 7zArcIn.c in Sources */,
 				84B7BF471B72720200F9733F /* sh4_interpreter.cpp in Sources */,
 				AED73E752348E45000ECDB64 /* RemoveTree.cpp in Sources */,
+				AEF998762598900A0038E0B8 /* miniupnpc.c in Sources */,
 				AE2A2D7921D6851E004B308D /* 7zStream.c in Sources */,
 				AED73E582348E45000ECDB64 /* Link.cpp in Sources */,
 				84B7BF531B72720200F9733F /* sh4_core_regs.cpp in Sources */,
@@ -2853,6 +2957,7 @@
 				84B7BF141B72720200F9733F /* zip_unchange_archive.c in Sources */,
 				AE2A2D7E21D6851E004B308D /* Lzma2Dec.c in Sources */,
 				AE649BF7218C552500EF4A81 /* fixed.c in Sources */,
+				AEF998632598900A0038E0B8 /* upnpreplyparse.c in Sources */,
 				AEFF7F5B214D9D590068CE11 /* pico_socket_tcp.c in Sources */,
 				AED73E8D2348E45000ECDB64 /* Logger.cpp in Sources */,
 				AE649C27218C553A00EF4A81 /* BraIA64.c in Sources */,
@@ -2863,6 +2968,7 @@
 				84B7BF4A1B72720200F9733F /* ccn.cpp in Sources */,
 				AEFF7F5F214D9D590068CE11 /* pico_udp.c in Sources */,
 				AEFF7F70214D9D590068CE11 /* pico_frame.c in Sources */,
+				AEF998652598900A0038E0B8 /* receivedata.c in Sources */,
 				AE8C274321122E2500D4D8F4 /* xbrz.cpp in Sources */,
 				AED73E632348E45000ECDB64 /* Intermediate.cpp in Sources */,
 				AE649C2E218C553A00EF4A81 /* LzmaEnc.c in Sources */,
@@ -2914,6 +3020,7 @@
 				84B7BF001B72720200F9733F /* zip_new.c in Sources */,
 				84B7BF0A1B72720200F9733F /* zip_source_filep.c in Sources */,
 				AEFF7F75214D9D590068CE11 /* pico_stack.c in Sources */,
+				AEF998672598900A0038E0B8 /* upnpdev.c in Sources */,
 				84B7BF091B72720200F9733F /* zip_source_file.c in Sources */,
 				AEFF7F74214D9D590068CE11 /* pico_socket_multicast.c in Sources */,
 				AED73E6B2348E45000ECDB64 /* ParseHelper.cpp in Sources */,
@@ -2921,8 +3028,11 @@
 				AEFF7F71214D9D590068CE11 /* pico_md5.c in Sources */,
 				84B7BEF11B72720200F9733F /* zip_file_error_get.c in Sources */,
 				AE649BFC218C552500EF4A81 /* lpc.c in Sources */,
+				AEF9986B2598900A0038E0B8 /* upnpcommands.c in Sources */,
+				AEF998622598900A0038E0B8 /* connecthostport.c in Sources */,
 				AED73E902348E45000ECDB64 /* SPVRemapper.cpp in Sources */,
 				AEFF7F54214D9D590068CE11 /* pico_dns_client.c in Sources */,
+				AEF998752598900A0038E0B8 /* minissdpc.c in Sources */,
 				AEFF7F57214D9D590068CE11 /* pico_fragments.c in Sources */,
 				84B7BF861B72871600F9733F /* EmuGLView.swift in Sources */,
 				AE649C3B218C555600EF4A81 /* flac.c in Sources */,
