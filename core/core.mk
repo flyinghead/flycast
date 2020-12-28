@@ -142,6 +142,8 @@ ifdef USE_MODEM
 	RZDCY_MODULES += hw/modem/ deps/picotcp/modules/ deps/picotcp/stack/
 	ifndef FOR_WINDOWS
 		RZDCY_CFLAGS += -I/usr/include/miniupnpc
+	else
+		RZDCY_CFLAGS += -I$(RZDCY_SRC_DIR)/deps/miniupnpc
 	endif
 endif
 
