@@ -322,9 +322,9 @@ ifdef USE_MODEM
 
 $(RZDCY_SRC_DIR)/deps/miniupnpc/libminiupnpc.a:
 ifdef FOR_WINDOWS
-	cd $(RZDCY_SRC_DIR)/deps/miniupnpc; mingw32-make -f Makefile.mingw libminiupnpc.a
+	$(MAKE) -C $(RZDCY_SRC_DIR)/deps/miniupnpc -f Makefile.mingw CC=gcc libminiupnpc.a
 else
-	cd $(RZDCY_SRC_DIR)/deps/miniupnpc; make libminiupnpc.a
+	$(MAKE) -C $(RZDCY_SRC_DIR)/deps/miniupnpc libminiupnpc.a
 endif
 
 endif
@@ -467,12 +467,13 @@ OBJECTS:=$(OBJECTS:.S=.build_obj)
 OBJECTS:=$(patsubst $(RZDCY_SRC_DIR)/%,$(BUILDDIR)/%,$(OBJECTS))
 
 ifdef FOR_WINDOWS
-OBJECTS+=$(BUILDDIR)/reicastres.build_obj
+OBJECTS += $(BUILDDIR)/reicastres.build_obj
 $(BUILDDIR)/reicastres.build_obj: $(LOCAL_PATH)/../windows/reicast.rc $(LOCAL_PATH)/../windows/flycast.ico $(RZDCY_SRC_DIR)/version.h
 	$(WINDRES) $< $@
 
 ifdef USE_MODEM
-OBJECTS+=$(RZDCY_SRC_DIR)/deps/miniupnpc/libminiupnpc.a
+OBJECTS += $(RZDCY_SRC_DIR)/deps/miniupnpc/libminiupnpc.a
+CFLAGS += -DMINIUPNP_STATICLIB
 endif
 endif
 
