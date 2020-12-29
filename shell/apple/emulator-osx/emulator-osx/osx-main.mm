@@ -201,12 +201,19 @@ extern "C" int emu_reicast_init()
 	NSArray *arguments = [[NSProcessInfo processInfo] arguments];
 	unsigned long argc = [arguments count];
 	char **argv = (char **)malloc(argc * sizeof(char*));
+	int paramCount = 0;
 	for (unsigned long i = 0; i < argc; i++)
-		argv[i] = strdup([[arguments objectAtIndex:i] UTF8String]);
+	{
+		const char *arg = [[arguments objectAtIndex:i] UTF8String];
+		if (!strncmp(arg, "-psn_", 5))
+			// ignore Process Serial Number argument on first launch
+			continue;
+		argv[paramCount++] = strdup(arg);
+	}
 	
-	int rc = reicast_init((int)argc, argv);
+	int rc = reicast_init(paramCount, argv);
 	
-	for (unsigned long i = 0; i < argc; i++)
+	for (unsigned long i = 0; i < paramCount; i++)
 		free(argv[i]);
 	free(argv);
 	

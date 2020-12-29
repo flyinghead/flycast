@@ -100,10 +100,10 @@ static void LoadSpecialSettings()
 {
 	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
 	{
-		char prod_id[sizeof(ip_meta.product_number) + 1] = {0};
-		memcpy(prod_id, ip_meta.product_number, sizeof(ip_meta.product_number));
+		std::string prod_id(ip_meta.product_number, sizeof(ip_meta.product_number));
+		prod_id = trim_trailing_ws(prod_id);
 
-		NOTICE_LOG(BOOT, "Game ID is [%s]", prod_id);
+		NOTICE_LOG(BOOT, "Game ID is [%s]", prod_id.c_str());
 		rtt_to_buffer_game = false;
 		safemode_game = false;
 		tr_poly_depth_mask_game = false;
@@ -113,7 +113,7 @@ static void LoadSpecialSettings()
 		forced_game_cable = -1;
 
 		if (ip_meta.isWindowsCE() || settings.dreamcast.ForceWindowsCE
-				|| !strncmp("T26702N", prod_id, 7)) // PBA Tour Bowling 2001
+				|| prod_id == "T26702N") // PBA Tour Bowling 2001
 		{
 			INFO_LOG(BOOT, "Enabling Full MMU and Extra depth scaling for Windows CE game");
 			settings.rend.ExtraDepthScale = 0.1; // taxi 2 needs 0.01 for FMV (amd, per-tri)
@@ -123,94 +123,94 @@ static void LoadSpecialSettings()
 		}
 
 		// Tony Hawk's Pro Skater 2
-		if (!strncmp("T13008D", prod_id, 7) || !strncmp("T13006N", prod_id, 7)
+		if (prod_id == "T13008D" || prod_id == "T13006N"
 				// Tony Hawk's Pro Skater 1
-				|| !strncmp("T40205N", prod_id, 7)
+				|| prod_id == "T40205N"
 				// Tony Hawk's Skateboarding
-				|| !strncmp("T40204D", prod_id, 7)
+				|| prod_id == "T40204D"
 				// Skies of Arcadia
-				|| !strncmp("MK-51052", prod_id, 8)
+				|| prod_id == "MK-51052"
 				// Eternal Arcadia (JP)
-				|| !strncmp("HDR-0076", prod_id, 8)
+				|| prod_id == "HDR-0076"
 				// Flag to Flag (US)
-				|| !strncmp("MK-51007", prod_id, 8)
+				|| prod_id == "MK-51007"
 				// Super Speed Racing (JP)
-				|| !strncmp("HDR-0013", prod_id, 8)
+				|| prod_id == "HDR-0013"
 				// Yu Suzuki Game Works Vol. 1
-				|| !strncmp("6108099", prod_id, 7)
+				|| prod_id == "6108099"
 				// L.O.L
-				|| !strncmp("T2106M", prod_id, 6)
+				|| prod_id == "T2106M"
 				// Miss Moonlight
-				|| !strncmp("T18702M", prod_id, 7)
+				|| prod_id == "T18702M"
 				// Tom Clancy's Rainbow Six (US)
-				|| !strncmp("T40401N", prod_id, 7)
+				|| prod_id == "T40401N"
 				// Tom Clancy's Rainbow Six incl. Eagle Watch Missions (EU)
-				|| !strncmp("T-45001D05", prod_id, 10))
+				|| prod_id == "T-45001D05")
 		{
-			INFO_LOG(BOOT, "Enabling render to texture buffer for game %s", prod_id);
+			INFO_LOG(BOOT, "Enabling render to texture buffer for game %s", prod_id.c_str());
 			settings.rend.RenderToTextureBuffer = 1;
 			rtt_to_buffer_game = true;
 		}
-		if (!strncmp("HDR-0176", prod_id, 8) || !strncmp("RDC-0057", prod_id, 8))
+		if (prod_id == "HDR-0176" || prod_id == "RDC-0057")
 		{
-			INFO_LOG(BOOT, "Enabling translucent depth multipass for game %s", prod_id);
+			INFO_LOG(BOOT, "Enabling translucent depth multipass for game %s", prod_id.c_str());
 			// Cosmic Smash
 			settings.rend.TranslucentPolygonDepthMask = 1;
 			tr_poly_depth_mask_game = true;
 		}
 		// NHL 2K2
-		if (!strncmp("MK-51182", prod_id, 8))
+		if (prod_id == "MK-51182")
 		{
-			INFO_LOG(BOOT, "Enabling Extra depth scaling for game %s", prod_id);
+			INFO_LOG(BOOT, "Enabling Extra depth scaling for game %s", prod_id.c_str());
 			settings.rend.ExtraDepthScale = 1000000;	// Mali needs 1M, 10K is enough for others
 			extra_depth_game = true;
 		}
 		// Re-Volt (US, EU)
-		else if (!strncmp("T-8109N", prod_id, 7) || !strncmp("T8107D  50", prod_id, 10))
+		else if (prod_id == "T-8109N" || prod_id == "T8107D  50")
 		{
-			INFO_LOG(BOOT, "Enabling Extra depth scaling for game %s", prod_id);
+			INFO_LOG(BOOT, "Enabling Extra depth scaling for game %s", prod_id.c_str());
 			settings.rend.ExtraDepthScale = 100;
 			extra_depth_game = true;
 		}
 		// Samurai Shodown 6 dc port
-		else if (!strncmp("T0002M", prod_id, 6))
+		else if (prod_id == "T0002M")
 		{
-			INFO_LOG(BOOT, "Enabling Extra depth scaling for game %s", prod_id);
+			INFO_LOG(BOOT, "Enabling Extra depth scaling for game %s", prod_id.c_str());
 			settings.rend.ExtraDepthScale = 1e26;
 			extra_depth_game = true;
 		}
 		// Super Producers
-		if (!strncmp("T14303M", prod_id, 7)
+		if (prod_id == "T14303M"
 			// Giant Killers
-			|| !strncmp("T45401D 50", prod_id, 10)
+			|| prod_id == "T45401D 50"
 			// Wild Metal (US)
-			|| !strncmp("T42101N 00", prod_id, 10)
+			|| prod_id == "T42101N 00"
 			// Wild Metal (EU)
-			|| !strncmp("T40501D-50", prod_id, 10)
+			|| prod_id == "T40501D-50"
 			// Resident Evil 2 (US)
-			|| !strncmp("T1205N", prod_id, 6)
+			|| prod_id == "T1205N"
 			// Resident Evil 2 (EU)
-			|| !strncmp("T7004D  50", prod_id, 10)
+			|| prod_id == "T7004D  50"
 			// Rune Jade
-			|| !strncmp("T14304M", prod_id, 7)
+			|| prod_id == "T14304M"
 			// Marionette Company
-			|| !strncmp("T5202M", prod_id, 6)
+			|| prod_id == "T5202M"
 			// Marionette Company 2
-			|| !strncmp("T5203M", prod_id, 6)
+			|| prod_id == "T5203M"
 			// Maximum Pool (for online support)
-			|| !strncmp("T11010N", prod_id, 7)
+			|| prod_id == "T11010N"
 			// StarLancer (US) (for online support)
-			|| !strncmp("T40209N", prod_id, 7)
+			|| prod_id == "T40209N"
 			// StarLancer (EU) (for online support)
-			|| !strncmp("T17723D 05", prod_id, 10)
+			|| prod_id == "T17723D 05"
 			// Heroes of might and magic III
-			|| !strncmp("T0000M", prod_id, 6)
+			|| prod_id == "T0000M"
 			// WebTV
-			|| !strncmp("6107117", prod_id, 7)
+			|| prod_id == "6107117"
 			// PBA
-			|| !strncmp("T26702N", prod_id, 7))
+			|| prod_id == "T26702N")
 		{
-			INFO_LOG(BOOT, "Disabling 32-bit virtual memory for game %s", prod_id);
+			INFO_LOG(BOOT, "Disabling 32-bit virtual memory for game %s", prod_id.c_str());
 			settings.dynarec.disable_vmem32 = true;
 			disable_vmem32_game = true;
 		}
@@ -266,17 +266,17 @@ static void LoadSpecialSettings()
 			forced_game_cable = settings.dreamcast.cable;
 		}
 		if (settings.dreamcast.cable == 2 &&
-				(!strncmp("T40602N", prod_id, 7)	// Centipede
-				|| !strncmp("T9710N", prod_id, 6)	// Gauntlet Legends (US)
-				|| !strncmp("MK-51152", prod_id, 8) // World Series Baseball 2K2
-				|| !strncmp("T-9701N", prod_id, 7)	// Mortal Kombat Gold (US)
-				|| !strncmp("T1203N", prod_id, 6)	// Street Fighter Alpha 3 (US)
-				|| !strncmp("T1203M", prod_id, 6)	// Street Fighter Zero 3 (JP)
-				|| !strncmp("T13002N", prod_id, 7)	// Vigilante 8 (US)
-				|| !strncmp("T13003N", prod_id, 7)	// Toy Story 2 (US)
-				|| !strncmp("T1209N", prod_id, 6)	// Gigawing (US)
-				|| !strncmp("T1208M", prod_id, 6)	// Gigawing (JP)
-				|| !strncmp("T1235M", prod_id, 6)))	// Vampire Chronicle for Matching Service
+				(prod_id == "T40602N"	 // Centipede
+				|| prod_id == "T9710N"   // Gauntlet Legends (US)
+				|| prod_id == "MK-51152" // World Series Baseball 2K2
+				|| prod_id == "T-9701N"	 // Mortal Kombat Gold (US)
+				|| prod_id == "T1203N"	 // Street Fighter Alpha 3 (US)
+				|| prod_id == "T1203M"	 // Street Fighter Zero 3 (JP)
+				|| prod_id == "T13002N"	 // Vigilante 8 (US)
+				|| prod_id == "T13003N"	 // Toy Story 2 (US)
+				|| prod_id == "T1209N"	 // Gigawing (US)
+				|| prod_id == "T1208M"	 // Gigawing (JP)
+				|| prod_id == "T1235M")) // Vampire Chronicle for Matching Service
 		{
 			NOTICE_LOG(BOOT, "Game doesn't support RGB. Using TV Composite instead");
 			settings.dreamcast.cable = 3;
@@ -435,8 +435,6 @@ int reicast_init(int argc, char* argv[])
 		LogManager::Init();
 		LoadSettings(false);
 	}
-	for (int i = 1; i < argc; i++)
-		NOTICE_LOG(BOOT, "Arg %d: %s", i, argv[i]);
 	settings.pvr.rend = (RenderType)cfgLoadInt("config", "pvr.rend", (int)settings.pvr.rend);
 
 	os_CreateWindow();
