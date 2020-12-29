@@ -435,6 +435,8 @@ int reicast_init(int argc, char* argv[])
 		LogManager::Init();
 		LoadSettings(false);
 	}
+	for (int i = 1; i < argc; i++)
+		NOTICE_LOG(BOOT, "Arg %d: %s", i, argv[i]);
 	settings.pvr.rend = (RenderType)cfgLoadInt("config", "pvr.rend", (int)settings.pvr.rend);
 
 	os_CreateWindow();
