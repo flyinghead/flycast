@@ -74,7 +74,11 @@ bool NaomiNetwork::init()
 	}
 #endif
 	if (settings.network.ActAsServer)
+	{
+		miniupnp.Init();
+		miniupnp.AddPortMapping(SERVER_PORT, true);
 		return createBeaconSocket() && createServerSocket();
+	}
 	else
 		return true;
 }
@@ -614,6 +618,8 @@ void NaomiNetwork::shutdown()
 void NaomiNetwork::terminate()
 {
 	shutdown();
+	if (settings.network.ActAsServer)
+		miniupnp.Term();
 	if (VALID(beacon_sock))
 		closeSocket(beacon_sock);
 	if (VALID(server_sock))

@@ -41,7 +41,7 @@ extern "C" {
 #include "types.h"
 #include "cfg/cfg.h"
 #include "picoppp.h"
-#include "miniupnp.h"
+#include "network/miniupnp.h"
 #include "reios/reios.h"
 
 #include <map>

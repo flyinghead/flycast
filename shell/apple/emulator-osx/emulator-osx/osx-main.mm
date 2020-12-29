@@ -201,7 +201,10 @@ extern "C" int emu_reicast_init()
 	unsigned long argc = [arguments count];
 	char **argv = (char **)malloc(argc * sizeof(char*));
 	for (unsigned long i = 0; i < argc; i++)
+	{
 		argv[i] = strdup([[arguments objectAtIndex:i] UTF8String]);
+		NOTICE_LOG(BOOT, "Arg %d: %s", i+1, argv[i]);
+	}
 	
 	int rc = reicast_init((int)argc, argv);
 	

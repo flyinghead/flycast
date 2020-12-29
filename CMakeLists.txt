@@ -105,8 +105,10 @@ option(BUILD_SHARED_LIBS "Build shared library" OFF)
 add_subdirectory(core/deps/glm)
 target_link_libraries(${PROJECT_NAME} PRIVATE glm::glm)
 
-add_subdirectory(core/deps/glslang)
-target_link_libraries(${PROJECT_NAME} PRIVATE SPIRV)
+if(NOT APPLE)
+	add_subdirectory(core/deps/glslang)
+	target_link_libraries(${PROJECT_NAME} PRIVATE SPIRV)
+endif()
 
 find_package(ALSA QUIET)
 if(ALSA_FOUND AND NOT ANDROID)
@@ -147,10 +149,10 @@ if(SDL2_FOUND)
     target_compile_definitions(${PROJECT_NAME} PRIVATE USE_SDL USE_SDL_AUDIO)
     target_sources(${PROJECT_NAME} PRIVATE core/sdl/sdl.cpp core/sdl/sdl.h core/sdl/sdl_gamepad.h core/sdl/sdl_keyboard.h)
 	target_include_directories(${PROJECT_NAME} PRIVATE "${SDL2_INCLUDE_DIRS}/..")
-    if(TARGET SDL2::SDL2)
-        target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2)
-    elseif(MINGW AND TARGET SDL2::SDL2-static)
+    if((MINGW OR APPLE) AND TARGET SDL2::SDL2-static)
         target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2-static)
+    elseif(TARGET SDL2::SDL2)
+        target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2)
     else()
         target_link_libraries(${PROJECT_NAME} PRIVATE ${SDL2_LIBRARIES})
     endif()
@@ -553,8 +555,6 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/hw/modem/modem_regs.h
         core/hw/modem/picoppp.cpp
         core/hw/modem/picoppp.h
-        core/hw/modem/miniupnp.cpp
-        core/hw/modem/miniupnp.h
         core/hw/naomi/awave_regs.h
         core/hw/naomi/awcartridge.cpp
         core/hw/naomi/awcartridge.h
@@ -710,6 +710,8 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/log/StringUtil.h)
 
 target_sources(${PROJECT_NAME} PRIVATE
+        core/network/miniupnp.cpp
+        core/network/miniupnp.h
         core/network/naomi_network.cpp
         core/network/naomi_network.h
         core/network/net_platform.h)
