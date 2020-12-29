@@ -228,6 +228,7 @@ static std::map<uint16_t, sock_t> tcp_listening_sockets;
 
 static bool pico_stack_inited;
 static bool pico_thread_running = false;
+extern "C" int dont_reject_opt_vj_hack;
 
 static void read_native_sockets();
 void get_host_by_name(const char *name, pico_ip4 dnsaddr);
@@ -736,6 +737,10 @@ static void *pico_thread_func(void *)
 			}
 		}
 	}
+	// Web TV requires the VJ compression option, which picotcp doesn't support.
+	// This hack allows WebTV to connect although the correct fix would
+	// be to implement VJ compression.
+	dont_reject_opt_vj_hack = gameId == "6107117" ? 1 : 0;
 	
 	// Initialize miniupnpc and map network ports
 	MiniUPnP upnp;
