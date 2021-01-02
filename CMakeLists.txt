@@ -359,11 +359,15 @@ else()
             core/deps/picotcp/include/pico_tree.h
             core/deps/picotcp/modules/pico_arp.c
             core/deps/picotcp/modules/pico_dev_ppp.c
+            core/deps/picotcp/modules/pico_dhcp_common.c
+            core/deps/picotcp/modules/pico_dhcp_common.h
+            core/deps/picotcp/modules/pico_dhcp_server.c
+            core/deps/picotcp/modules/pico_dhcp_server.h
             core/deps/picotcp/modules/pico_dns_client.c
             core/deps/picotcp/modules/pico_dns_common.c
             core/deps/picotcp/modules/pico_ethernet.c
             core/deps/picotcp/modules/pico_fragments.c
-            core/deps/picotcp/modules/pico_ipv4.c
+            core/deps/picotcp/modules/pico_icmp4.c
             core/deps/picotcp/modules/pico_socket_tcp.c
             core/deps/picotcp/modules/pico_socket_udp.c
             core/deps/picotcp/modules/pico_strings.c
