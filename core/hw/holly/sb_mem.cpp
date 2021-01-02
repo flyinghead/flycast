@@ -14,6 +14,7 @@
 #include "hw/pvr/pvr_mem.h"
 #include "hw/sh4/sh4_mem.h"
 #include "reios/reios.h"
+#include "hw/bba/bba.h"
 
 MemChip *sys_rom;
 MemChip *sys_nvmem;
@@ -314,7 +315,10 @@ T DYNACALL ReadMem_area0(u32 addr)
 			return (T)libExtDevice_ReadMem_A0_006(addr, sz);
 		else
 #if defined(ENABLE_MODEM)
-			return (T)ModemReadMem_A0_006(addr, sz);
+			if (!settings.network.EmulateBBA)
+				return (T)ModemReadMem_A0_006(addr, sz);
+			else
+				return (T)0;
 #else
 			return (T)0;
 #endif
@@ -346,10 +350,14 @@ T DYNACALL ReadMem_area0(u32 addr)
 		if (settings.platform.system == DC_PLATFORM_NAOMI)
 			return (T)libExtDevice_ReadMem_A0_010(addr, sz);
 		else
-		{
-			INFO_LOG(MEMORY, "Read from BBA not implemented, addr=%x", addr);
-			return 0;
-		}
+#if defined(ENABLE_MODEM)
+			if (settings.network.EmulateBBA)
+				return (T)bba_ReadMem(addr, sz);
+			else
+				return (T)0;
+#else
+			return (T)0;
+#endif
 	}
 	INFO_LOG(MEMORY, "Read from area0<%d> not implemented [Unassigned], addr=%x", sz, addr);
 	return 0;
@@ -407,7 +415,7 @@ void  DYNACALL WriteMem_area0(u32 addr,T data)
 		if (settings.platform.system != DC_PLATFORM_DREAMCAST)
 			libExtDevice_WriteMem_A0_006(addr, data, sz);
 #if defined(ENABLE_MODEM)
-		else
+		else if (!settings.network.EmulateBBA)
 			ModemWriteMem_A0_006(addr, data, sz);
 #endif
 	}
@@ -436,8 +444,10 @@ void  DYNACALL WriteMem_area0(u32 addr,T data)
 	{
 		if (settings.platform.system == DC_PLATFORM_NAOMI)
 			libExtDevice_WriteMem_A0_010(addr, data, sz);
-		else
-			INFO_LOG(COMMON, "Write to BBA not implemented, addr=%x, data=%x, size=%d", addr, data, sz);
+#if defined(ENABLE_MODEM)
+		else if (settings.network.EmulateBBA)
+			bba_WriteMem(addr, data, sz);
+#endif
 	}
 	else
 		INFO_LOG(COMMON, "Write to area0_32 not implemented [Unassigned], addr=%x,data=%x,size=%d", addr, data, sz);

@@ -1427,7 +1427,10 @@ static void gui_display_settings()
 		    }
 		    if (ImGui::CollapsingHeader("Network", ImGuiTreeNodeFlags_DefaultOpen))
 		    {
-		    	ImGui::Checkbox("Enable", &settings.network.Enable);
+		    	ImGui::Checkbox("Broadband Adapter Emulation", &settings.network.EmulateBBA);
+				ImGui::SameLine();
+				ShowHelpMarker("Emulate the Ethernet Broadband Adapter (BBA) instead of the Modem");
+		    	ImGui::Checkbox("Enable Naomi Networking", &settings.network.Enable);
 				ImGui::SameLine();
 				ShowHelpMarker("Enable networking for supported Naomi games");
 		    	if (settings.network.Enable)

@@ -53,6 +53,8 @@ static int pico_icmp4_process_in(struct pico_protocol *self, struct pico_frame *
     IGNORE_PARAMETER(self);
 
     if (hdr->type == PICO_ICMP_ECHO) {
+		struct pico_ipv4_hdr *ip4_hdr;
+
         hdr->type = PICO_ICMP_ECHOREPLY;
         /* outgoing frames require a f->len without the ethernet header len */
         if (f->dev && f->dev->eth)
@@ -68,6 +70,9 @@ static int pico_icmp4_process_in(struct pico_protocol *self, struct pico_frame *
         last_id = hdr->hun.ih_idseq.idseq_id;
         last_seq = hdr->hun.ih_idseq.idseq_seq;
         pico_icmp4_checksum(f);
+		// pretend the reply comes from the original destination
+		ip4_hdr = (struct pico_ipv4_hdr *) f->net_hdr;
+		f->local_ip.addr = ip4_hdr->dst.addr;
         pico_ipv4_rebound(f);
     } else if (hdr->type == PICO_ICMP_UNREACH) {
         f->net_hdr = f->transport_hdr + PICO_ICMPHDR_UN_SIZE;

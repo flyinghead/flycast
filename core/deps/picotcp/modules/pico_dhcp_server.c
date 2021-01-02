@@ -40,7 +40,6 @@ enum dhcp_server_state {
 };
 
 struct pico_dhcp_server_negotiation {
-    uint32_t xid;
     enum dhcp_server_state state;
     struct pico_dhcp_server_setting *dhcps;
     struct pico_ip4 ciaddr;
@@ -76,10 +75,8 @@ static PICO_TREE_DECLARE(DHCPSettings, dhcp_settings_cmp);
 static int dhcp_negotiations_cmp(void *ka, void *kb)
 {
     struct pico_dhcp_server_negotiation *a = ka, *b = kb;
-    if (a->xid == b->xid)
-        return 0;
-
-    return (a->xid < b->xid) ? (-1) : (1);
+	
+	return memcmp(&a->hwaddr.addr[0], &b->hwaddr.addr[0], sizeof(a->hwaddr.addr));
 }
 static PICO_TREE_DECLARE(DHCPNegotiations, dhcp_negotiations_cmp);
 
@@ -110,7 +107,6 @@ static inline struct pico_dhcp_server_setting *dhcps_try_open_socket(struct pico
         PICO_FREE(dhcps);
         return NULL;
     }
-
     if (pico_socket_bind(dhcps->s, &dhcps->server_ip, &port) < 0) {
         dhcps_dbg("DHCP server ERROR: failure binding socket (%s)\n", strerror(pico_err));
         PICO_FREE(dhcps);
@@ -156,6 +152,7 @@ static struct pico_dhcp_server_setting *pico_dhcp_server_add_setting(struct pico
     dhcps->pool_start = setting->pool_start;
     dhcps->pool_next = setting->pool_next;
     dhcps->pool_end = setting->pool_end;
+	dhcps->dns_server = setting->dns_server;
     dhcps->dev = link->dev;
     dhcps->server_ip = link->address;
     dhcps->netmask = link->netmask;
@@ -171,13 +168,13 @@ static struct pico_dhcp_server_setting *pico_dhcp_server_add_setting(struct pico
 
 }
 
-static struct pico_dhcp_server_negotiation *pico_dhcp_server_find_negotiation(uint32_t xid)
+static struct pico_dhcp_server_negotiation *pico_dhcp_server_find_negotiation(const uint8_t *hwaddr)
 {
     struct pico_dhcp_server_negotiation test = {
         0
     }, *found = NULL;
 
-    test.xid = xid;
+	memcpy(&test.hwaddr.addr[0], &hwaddr[0], sizeof(test.hwaddr.addr));
     found = pico_tree_findKey(&DHCPNegotiations, &test);
     if (found)
         return found;
@@ -205,7 +202,7 @@ static struct pico_dhcp_server_negotiation *pico_dhcp_server_add_negotiation(str
         0
     };
 
-    if (pico_dhcp_server_find_negotiation(hdr->xid))
+	if (pico_dhcp_server_find_negotiation(hdr->hwaddr))
         return NULL;
 
     dhcpn = PICO_ZALLOC(sizeof(struct pico_dhcp_server_negotiation));
@@ -214,9 +211,10 @@ static struct pico_dhcp_server_negotiation *pico_dhcp_server_add_negotiation(str
         return NULL;
     }
 
-    dhcpn->xid = hdr->xid;
-    dhcpn->state = PICO_DHCP_STATE_DISCOVER;
-    dhcpn->bcast = ((short_be(hdr->flags) & PICO_DHCP_FLAG_BROADCAST) != 0) ? (1) : (0);
+	dhcpn->state = PICO_DHCP_STATE_DISCOVER;
+    //dhcpn->bcast = ((short_be(hdr->flags) & PICO_DHCP_FLAG_BROADCAST) != 0) ? (1) : (0);
+	dhcpn->bcast = 1; // Some dhcp clients don't set the broadcast flag, but don't understand
+					  // unicast responses, so force the flag.
     memcpy(dhcpn->hwaddr.addr, hdr->hwaddr, PICO_SIZE_ETH);
 
     test.dev = dev;
@@ -237,7 +235,7 @@ static struct pico_dhcp_server_negotiation *pico_dhcp_server_add_negotiation(str
     return dhcpn;
 }
 
-static void dhcpd_make_reply(struct pico_dhcp_server_negotiation *dhcpn, uint8_t msg_type)
+static void dhcpd_make_reply(struct pico_dhcp_server_negotiation *dhcpn, uint8_t msg_type, uint32_t xid)
 {
     int r = 0, optlen = 0, offset = 0;
     struct pico_ip4 broadcast = {
@@ -249,7 +247,10 @@ static void dhcpd_make_reply(struct pico_dhcp_server_negotiation *dhcpn, uint8_t
     };
     struct pico_dhcp_hdr *hdr = NULL;
 
-    dns.addr = DHCP_SERVER_OPENDNS;
+	if (dhcpn->dhcps->dns_server.addr)
+		dns.addr = dhcpn->dhcps->dns_server.addr;
+	else
+		dns.addr = DHCP_SERVER_OPENDNS;
     broadcast.addr = dhcpn->dhcps->server_ip.addr | ~(dhcpn->dhcps->netmask.addr);
 
     optlen = PICO_DHCP_OPTLEN_MSGTYPE + PICO_DHCP_OPTLEN_SERVERID + PICO_DHCP_OPTLEN_LEASETIME + PICO_DHCP_OPTLEN_NETMASK + PICO_DHCP_OPTLEN_ROUTER
@@ -262,7 +263,7 @@ static void dhcpd_make_reply(struct pico_dhcp_server_negotiation *dhcpn, uint8_t
     hdr->op = PICO_DHCP_OP_REPLY;
     hdr->htype = PICO_DHCP_HTYPE_ETH;
     hdr->hlen = PICO_SIZE_ETH;
-    hdr->xid = dhcpn->xid;
+    hdr->xid = xid;
     hdr->yiaddr = dhcpn->ciaddr.addr;
     hdr->siaddr = dhcpn->dhcps->server_ip.addr;
     hdr->dhcp_magic = PICO_DHCPD_MAGIC_COOKIE;
@@ -314,24 +315,24 @@ static inline void parse_opt_serverid(struct pico_dhcp_opt *opt,  struct pico_ip
         *serverid = opt->ext.server_id.ip;
 }
 
-static inline void dhcps_make_reply_to_request_msg(struct pico_dhcp_server_negotiation *dhcpn, int bound_valid_flag)
+static inline void dhcps_make_reply_to_request_msg(struct pico_dhcp_server_negotiation *dhcpn, int bound_valid_flag, uint32_t xid)
 {
     if ((dhcpn->state == PICO_DHCP_STATE_BOUND) && bound_valid_flag)
-        dhcpd_make_reply(dhcpn, PICO_DHCP_MSG_ACK);
+        dhcpd_make_reply(dhcpn, PICO_DHCP_MSG_ACK, xid);
 
     if (dhcpn->state == PICO_DHCP_STATE_OFFER) {
         dhcpn->state = PICO_DHCP_STATE_BOUND;
-        dhcpd_make_reply(dhcpn, PICO_DHCP_MSG_ACK);
+        dhcpd_make_reply(dhcpn, PICO_DHCP_MSG_ACK, xid);
     }
 }
 
-static inline void dhcps_make_reply_to_discover_or_request(struct pico_dhcp_server_negotiation *dhcpn,  uint8_t msgtype, int bound_valid_flag)
+static inline void dhcps_make_reply_to_discover_or_request(struct pico_dhcp_server_negotiation *dhcpn,  uint8_t msgtype, int bound_valid_flag, uint32_t xid)
 {
     if (PICO_DHCP_MSG_DISCOVER == msgtype) {
-        dhcpd_make_reply(dhcpn, PICO_DHCP_MSG_OFFER);
+        dhcpd_make_reply(dhcpn, PICO_DHCP_MSG_OFFER, xid);
         dhcpn->state = PICO_DHCP_STATE_OFFER;
     } else if (PICO_DHCP_MSG_REQUEST == msgtype) {
-        dhcps_make_reply_to_request_msg(dhcpn, bound_valid_flag);
+        dhcps_make_reply_to_request_msg(dhcpn, bound_valid_flag, xid);
     }
 }
 
@@ -350,7 +351,7 @@ static inline void dhcps_parse_options_loop(struct pico_dhcp_server_negotiation 
         parse_opt_reqip(opt, &reqip);
         parse_opt_serverid(opt, &server_id);
     } while (pico_dhcp_next_option(&opt));
-    dhcps_make_reply_to_discover_or_request(dhcpn, msgtype, (!reqip.addr) && (!server_id.addr) && (hdr->ciaddr == dhcpn->ciaddr.addr));
+    dhcps_make_reply_to_discover_or_request(dhcpn, msgtype, (!reqip.addr) && (!server_id.addr) && (hdr->ciaddr == dhcpn->ciaddr.addr), hdr->xid);
 }
 
 static void pico_dhcp_server_recv(struct pico_socket *s, uint8_t *buf, uint32_t len)
@@ -364,7 +365,7 @@ static void pico_dhcp_server_recv(struct pico_socket *s, uint8_t *buf, uint32_t 
         return;
 
     dev = pico_ipv4_link_find(&s->local_addr.ip4);
-    dhcpn = pico_dhcp_server_find_negotiation(hdr->xid);
+    dhcpn = pico_dhcp_server_find_negotiation(hdr->hwaddr);
     if (!dhcpn)
         dhcpn = pico_dhcp_server_add_negotiation(dev, hdr);
 
@@ -417,7 +418,7 @@ int pico_dhcp_server_destroy(struct pico_device *dev)
         pico_err = PICO_ERR_ENOENT;
         return -1;
     }
-
+	pico_socket_close(found->s);
     pico_tree_delete(&DHCPSettings, found);
     PICO_FREE(found);
     return 0;

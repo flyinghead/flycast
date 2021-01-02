@@ -368,6 +368,7 @@ else()
             core/deps/picotcp/modules/pico_ethernet.c
             core/deps/picotcp/modules/pico_fragments.c
             core/deps/picotcp/modules/pico_icmp4.c
+            core/deps/picotcp/modules/pico_ipv4.c
             core/deps/picotcp/modules/pico_socket_tcp.c
             core/deps/picotcp/modules/pico_socket_udp.c
             core/deps/picotcp/modules/pico_strings.c
@@ -529,6 +530,10 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/hw/arm7/vbaARM.cpp
         core/hw/arm7/virt_arm.cpp
         core/hw/arm7/virt_arm.h
+        core/hw/bba/bba.h
+        core/hw/bba/bba.cpp
+        core/hw/bba/rtl8139c.h
+        core/hw/bba/rtl8139c.cpp
         core/hw/flashrom/flashrom.h
         core/hw/gdrom/gdrom_if.h
         core/hw/gdrom/gdrom_response.cpp
@@ -553,12 +558,9 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/hw/mem/vmem32.h
         core/hw/mem/_vmem.cpp
         core/hw/mem/_vmem.h
-        core/hw/modem/dns.cpp
         core/hw/modem/modem.cpp
         core/hw/modem/modem.h
         core/hw/modem/modem_regs.h
-        core/hw/modem/picoppp.cpp
-        core/hw/modem/picoppp.h
         core/hw/naomi/awave_regs.h
         core/hw/naomi/awcartridge.cpp
         core/hw/naomi/awcartridge.h
@@ -714,11 +716,14 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/log/StringUtil.h)
 
 target_sources(${PROJECT_NAME} PRIVATE
+        core/network/dns.cpp
         core/network/miniupnp.cpp
         core/network/miniupnp.h
         core/network/naomi_network.cpp
         core/network/naomi_network.h
-        core/network/net_platform.h)
+        core/network/net_platform.h
+        core/network/picoppp.cpp
+        core/network/picoppp.h)
 
 target_sources(${PROJECT_NAME} PRIVATE
         core/oslib/audiobackend_alsa.cpp

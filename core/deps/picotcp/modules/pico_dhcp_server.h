@@ -21,6 +21,7 @@ struct pico_dhcp_server_setting
     struct pico_socket *s;
     struct pico_ip4 server_ip;
     struct pico_ip4 netmask;
+	struct pico_ip4 dns_server;
     uint8_t flags; /* unused atm */
 };
 

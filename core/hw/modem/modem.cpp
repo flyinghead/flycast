@@ -26,13 +26,7 @@
 #include "hw/holly/holly_intc.h"
 #include "hw/sh4/sh4_sched.h"
 #include "oslib/oslib.h"
-#include "picoppp.h"
-
-#define start_pppd start_pico
-#define stop_pppd stop_pico
-#define write_pppd write_pico
-#define read_pppd read_pico
-
+#include "network/picoppp.h"
 
 #define MODEM_COUNTRY_RES 0
 #define MODEM_COUNTRY_JAP 1
@@ -264,7 +258,7 @@ static int modem_sched_func(int tag, int cycles, int jitter)
 			dspram[0x208] = 0xff;	// 2.4 - 19.2 kpbs supported
 			dspram[0x209] = 0xbf;	// 21.6 - 33.6 kpbs supported, asymmetric supported
 
-			start_pppd();
+			start_pico();
 			connect_state = CONNECTED;
 			callback_cycles = SH4_MAIN_CLOCK / 1000000 * 238;	// 238 us
 			data_sent = false;
@@ -290,7 +284,7 @@ static int modem_sched_func(int tag, int cycles, int jitter)
 			// Let WinCE send data first to avoid choking it
 			if (!modem_regs.reg1e.RDBF && data_sent)
 			{
-				int c = read_pppd();
+				int c = read_pico();
 				if (c >= 0)
 				{
 					//LOG("pppd received %02x", c);
@@ -327,7 +321,7 @@ void ModemInit()
 
 void ModemTerm()
 {
-	stop_pppd();
+	stop_pico();
 }
 
 static void schedule_callback(int ms)
@@ -436,7 +430,7 @@ static void modem_reset(u32 v)
 	{
 		if (state == MS_RESET)
 		{
-			stop_pppd();
+			stop_pico();
 			memset(&modem_regs, 0, sizeof(modem_regs));
 			state = MS_RESETING;
 			ControllerTestStart();
@@ -523,7 +517,7 @@ static void ModemNormalWrite(u32 reg, u32 data)
 			if (sent_fp)
 				fputc(data, sent_fp);
 #endif
-			write_pppd(data);
+			write_pico(data);
 			modem_regs.reg1e.TDBE = 0;
 		}
 		break;

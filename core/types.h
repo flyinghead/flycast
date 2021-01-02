@@ -502,6 +502,7 @@ struct settings_t
 		bool ActAsServer;
 		std::string dns;
 		std::string server;
+		bool EmulateBBA;
 	} network;
 };
 
@@ -633,4 +634,6 @@ enum serialize_version_enum {
 	V10 = 805,
 	V11 = 806,
 	V12 = 807,
+	V13 = 808,
+	VCUR_FLYCAST = V13,
 } ;

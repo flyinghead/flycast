@@ -16,6 +16,7 @@
 #include "hw/sh4/dyna/blockmanager.h"
 #include "hw/naomi/naomi_cart.h"
 #include "hw/sh4/sh4_cache.h"
+#include "hw/bba/bba.h"
 
 extern "C" void DYNACALL TAWriteSQ(u32 address,u8* sqb);
 
@@ -275,7 +276,7 @@ bool dc_serialize(void **data, unsigned int *total_size)
 {
 	int i = 0;
 
-	serialize_version_enum version = V12;
+	serialize_version_enum version = VCUR_FLYCAST;
 
 	*total_size = 0 ;
 
@@ -464,10 +465,18 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	REICAST_S(sch_list[vblank_schid].start) ;
 	REICAST_S(sch_list[vblank_schid].end) ;
 
+	REICAST_S(settings.network.EmulateBBA);
 #ifdef ENABLE_MODEM
-	REICAST_S(sch_list[modem_sched].tag) ;
-    REICAST_S(sch_list[modem_sched].start) ;
-    REICAST_S(sch_list[modem_sched].end) ;
+	if (settings.network.EmulateBBA)
+	{
+		bba_Serialize(data, total_size);
+	}
+	else
+	{
+		REICAST_S(sch_list[modem_sched].tag);
+		REICAST_S(sch_list[modem_sched].start);
+		REICAST_S(sch_list[modem_sched].end);
+	}
 #else
 	int modem_dummy = 0;
 	REICAST_S(modem_dummy);
@@ -815,6 +824,7 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 	if (CurrentCartridge != NULL)
 		CurrentCartridge->Unserialize(data, total_size);
 	gd_hle_state.Unserialize(data, total_size);
+	settings.network.EmulateBBA = false;
 
 	DEBUG_LOG(SAVESTATE, "Loaded %d bytes (libretro compat)", *total_size);
 
@@ -1100,10 +1110,21 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 		REICAST_US(i); // sch_list[time_sync].end
 	}
 
+	if (version >= V13)
+		REICAST_S(settings.network.EmulateBBA);
+	else
+		settings.network.EmulateBBA = false;
 #ifdef ENABLE_MODEM
-	REICAST_US(sch_list[modem_sched].tag) ;
-    REICAST_US(sch_list[modem_sched].start) ;
-    REICAST_US(sch_list[modem_sched].end) ;
+	if (settings.network.EmulateBBA)
+	{
+		bba_Unserialize(data, total_size);
+	}
+	else
+	{
+		REICAST_US(sch_list[modem_sched].tag);
+		REICAST_US(sch_list[modem_sched].start);
+		REICAST_US(sch_list[modem_sched].end);
+	}
 #else
 	int modem_dummy;
 	REICAST_US(modem_dummy);

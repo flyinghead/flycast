@@ -34,6 +34,7 @@ extern "C" {
 #include <pico_socket_tcp.h>
 #include <pico_ipv4.h>
 #include <pico_tcp.h>
+#include <pico_dhcp_server.h>
 }
 
 #include "network/net_platform.h"
@@ -52,7 +53,7 @@ extern "C" {
 #define AFO_ORIG_IP 0x83f2fb3f		// 63.251.242.131 in network order
 #define IGP_ORIG_IP 0xef2bd2cc		// 204.210.43.239 in network order
 
-static pico_device *ppp;
+static pico_device *pico_dev;
 
 static std::queue<u8> in_buffer;
 static std::queue<u8> out_buffer;
@@ -475,6 +476,7 @@ static void udp_callback(uint16_t ev, pico_socket *s)
 {
 	if (ev & PICO_SOCK_EV_RD)
 	{
+		printf("udp_callback(read)\n");
 		char buf[1510];
 		pico_ip4 src_addr;
 		uint16_t src_port;
@@ -490,7 +492,7 @@ static void udp_callback(uint16_t ev, pico_socket *s)
 					INFO_LOG(MODEM, "error UDP recv: %s", strerror(pico_err));
 				break;
 			}
-
+			printf("udp_callback(read) recvd port %d: %d bytes\n", src_port, r);
 			sock_t sockfd = find_udp_socket(src_port);
 			if (VALID(sockfd))
 			{
@@ -618,12 +620,12 @@ static void read_native_sockets()
 		r = (int)recvfrom(it->second, buf, sizeof(buf), 0, (sockaddr *)&src_addr, &addr_len);
 		if (r > 0)
 		{
-			msginfo.dev = ppp;
+			msginfo.dev = pico_dev;
 			msginfo.tos = 0;
 			msginfo.ttl = 0;
 			msginfo.local_addr.ip4.addr = src_addr.sin_addr.s_addr;
 			msginfo.local_port = src_addr.sin_port;
-			//printf("read_native_sockets UDP received %d bytes from %08x:%d\n", r, long_be(msginfo.local_addr.ip4.addr), short_be(msginfo.local_port));
+			printf("read_native_sockets UDP received %d bytes from %08x:%d\n", r, long_be(msginfo.local_addr.ip4.addr), short_be(msginfo.local_port));
 			int r2 = pico_socket_sendto_extended(pico_udp_socket, buf, r, &dcaddr, it->first, &msginfo);
 			if (r2 < r)
 				INFO_LOG(MODEM, "error UDP sending to %d: %s", short_be(it->first), strerror(pico_err));
@@ -707,6 +709,86 @@ static void check_dns_entries()
 	}
 }
 
+static pico_device *pico_eth_create()
+{
+    pico_device *eth = (pico_device *)PICO_ZALLOC(sizeof(pico_device));
+    if (!eth)
+        return nullptr;
+
+    const u8 mac_addr[6] = { 0xc, 0xa, 0xf, 0xe, 0, 1 };
+    if (0 != pico_device_init(eth, "ETHPEER", mac_addr))
+        return nullptr;
+
+	DEBUG_LOG(NETWORK, "Device %s created", eth->name);
+
+    return eth;
+}
+
+#define BBA_PCAPNG_DUMP
+static FILE *pcapngDump;
+
+static void dumpFrame(const u8 *frame, u32 size)
+{
+#ifdef BBA_PCAPNG_DUMP
+	if (pcapngDump == nullptr)
+	{
+		std::string path = getenv("HOME") + std::string("/bba.pcapng");
+		pcapngDump = fopen(path.c_str(), "wb");
+		if (pcapngDump == nullptr)
+			return;
+		u32 blockType = 0x0A0D0D0A; // Section Header Block
+		fwrite(&blockType, sizeof(blockType), 1, pcapngDump);
+		u32 blockLen = 28;
+		fwrite(&blockLen, sizeof(blockLen), 1, pcapngDump);
+		u32 magic = 0x1A2B3C4D;
+		fwrite(&magic, sizeof(magic), 1, pcapngDump);
+		u32 version = 1; // 1.0
+		fwrite(&version, sizeof(version), 1, pcapngDump);
+		u64 sectionLength = ~0; // unspecified
+		fwrite(&sectionLength, sizeof(sectionLength), 1, pcapngDump);
+		fwrite(&blockLen, sizeof(blockLen), 1, pcapngDump);
+
+		blockType = 1; // Interface Description Block
+		fwrite(&blockType, sizeof(blockType), 1, pcapngDump);
+		blockLen = 20;
+		fwrite(&blockLen, sizeof(blockLen), 1, pcapngDump);
+		const u32 linkType = 1; // Ethernet
+		fwrite(&linkType, sizeof(linkType), 1, pcapngDump);
+		const u32 snapLen = 0; // no limit
+		fwrite(&snapLen, sizeof(snapLen), 1, pcapngDump);
+		// TODO options? if name, ip/mac address
+		fwrite(&blockLen, sizeof(blockLen), 1, pcapngDump);
+	}
+	const u32 blockType = 3; // Simple Packet Block
+	fwrite(&blockType, sizeof(blockType), 1, pcapngDump);
+	u32 roundedSize = ((size + 3) & ~3) + 16;
+	fwrite(&roundedSize, sizeof(roundedSize), 1, pcapngDump);
+	fwrite(&size, sizeof(size), 1, pcapngDump);
+	fwrite(frame, 1, size, pcapngDump);
+	fwrite(frame, 1, roundedSize - size - 16, pcapngDump);
+	fwrite(&roundedSize, sizeof(roundedSize), 1, pcapngDump);
+#endif
+}
+static void closeDumpFile()
+{
+	if (pcapngDump != nullptr)
+	{
+		fclose(pcapngDump);
+		pcapngDump = nullptr;
+	}
+}
+void pico_receive_eth_frame(const u8 *frame, u32 size)
+{
+	dumpFrame(frame, size);
+	pico_stack_recv(pico_dev, (u8 *)frame, size);
+}
+
+static int send_eth_frame(pico_device *dev, void *data, int len)
+{
+	dumpFrame((const u8 *)data, len);
+	return pico_send_eth_frame((const u8 *)data, len);
+}
+
 static void *pico_thread_func(void *)
 {
     if (!pico_stack_inited)
@@ -759,26 +841,83 @@ static void *pico_thread_func(void *)
 		}
 	}
 
-    // PPP
-    ppp = pico_ppp_create();
-    if (!ppp)
-        return NULL;
-	u32 addr;
-    pico_string_to_ipv4("192.168.167.2", &addr);
-	memcpy(&dcaddr.addr, &addr, sizeof(addr));
-    pico_ppp_set_peer_ip(ppp, dcaddr);
-    pico_string_to_ipv4("192.168.167.1", &addr);
-    pico_ip4 ipaddr;
-	memcpy(&ipaddr.addr, &addr, sizeof(addr));
-	pico_ppp_set_ip(ppp, ipaddr);
+	// Empty queues
+    {
+		std::queue<u8> empty;
+		in_buffer_lock.lock();
+		std::swap(in_buffer, empty);
+		in_buffer_lock.unlock();
 
-    pico_string_to_ipv4(settings.network.dns.c_str(), &addr);
+		std::queue<u8> empty2;
+		out_buffer_lock.lock();
+		std::swap(out_buffer, empty2);
+		out_buffer_lock.unlock();
+    }
+
+	u32 addr;
+	pico_string_to_ipv4(settings.network.dns.c_str(), &addr);
 	memcpy(&dnsaddr.addr, &addr, sizeof(addr));
-    pico_ppp_set_dns1(ppp, dnsaddr);
+
+	// Create ppp/eth device
+	if (!settings.network.EmulateBBA)
+	{
+		// PPP
+		pico_dev = pico_ppp_create();
+		if (!pico_dev)
+			return NULL;
+		pico_string_to_ipv4("192.168.167.2", &addr);
+		memcpy(&dcaddr.addr, &addr, sizeof(addr));
+		pico_ppp_set_peer_ip(pico_dev, dcaddr);
+		pico_string_to_ipv4("192.168.167.1", &addr);
+		pico_ip4 ipaddr;
+		memcpy(&ipaddr.addr, &addr, sizeof(addr));
+		pico_ppp_set_ip(pico_dev, ipaddr);
+		pico_ppp_set_dns1(pico_dev, dnsaddr);
+
+		pico_ppp_set_serial_read(pico_dev, modem_read);
+		pico_ppp_set_serial_write(pico_dev, modem_write);
+		pico_ppp_set_serial_set_speed(pico_dev, modem_set_speed);
+		pico_dev->proxied = 1;
+
+		pico_ppp_connect(pico_dev);
+	}
+	else
+	{
+		// Ethernet
+		pico_dev = pico_eth_create();
+		if (pico_dev == nullptr)
+			return nullptr;
+		pico_dev->send = &send_eth_frame;
+		pico_dev->proxied = 1;
+
+		pico_string_to_ipv4("192.168.169.1", &addr);
+		pico_ip4 ipaddr;
+		memcpy(&ipaddr.addr, &addr, sizeof(addr));
+		pico_string_to_ipv4("255.255.255.0", &addr);
+		pico_ip4 netmask;
+		memcpy(&netmask.addr, &addr, sizeof(addr));
+		pico_ipv4_link_add(pico_dev, ipaddr, netmask);
+		// dreamcast IP
+		pico_string_to_ipv4("192.168.169.2", &addr);
+		memcpy(&dcaddr.addr, &addr, sizeof(addr));
+		
+		pico_dhcp_server_setting dhcpSettings{ 0 };
+		dhcpSettings.dev = pico_dev;
+		dhcpSettings.server_ip = ipaddr;
+		dhcpSettings.lease_time = long_be(24 * 60 * 60); // seconds
+		dhcpSettings.netmask = netmask;
+		dhcpSettings.pool_start = addr;
+		dhcpSettings.pool_end = addr;
+		dhcpSettings.pool_next = addr;
+		dhcpSettings.dns_server.addr = dnsaddr.addr;
+		if (pico_dhcp_server_initiate(&dhcpSettings) != 0)
+			WARN_LOG(MODEM, "DHCP server init failed");
+	}
 
     pico_udp_socket = pico_socket_open(PICO_PROTO_IPV4, PICO_PROTO_UDP, &udp_callback);
     if (pico_udp_socket == NULL) {
     	INFO_LOG(MODEM, "error opening UDP socket: %s", strerror(pico_err));
+		return nullptr;
     }
     int yes = 1;
     pico_ip4 inaddr_any = {0};
@@ -801,7 +940,6 @@ static void *pico_thread_func(void *)
         if (pico_socket_listen(pico_tcp_socket, 10) != 0)
         	INFO_LOG(MODEM, "error listening on port %u", short_be(listen_port));
     }
-    ppp->proxied = 1;
 
 	// Open listening sockets
 	sockaddr_in saddr;
@@ -849,25 +987,8 @@ static void *pico_thread_func(void *)
 			tcp_listening_sockets[port] = sockfd;
 		}
 	}
-    {
-		std::queue<u8> empty;
-		in_buffer_lock.lock();
-		std::swap(in_buffer, empty);
-		in_buffer_lock.unlock();
 
-		std::queue<u8> empty2;
-		out_buffer_lock.lock();
-		std::swap(out_buffer, empty2);
-		out_buffer_lock.unlock();
-    }
-
-    pico_ppp_set_serial_read(ppp, modem_read);
-    pico_ppp_set_serial_write(ppp, modem_write);
-    pico_ppp_set_serial_set_speed(ppp, modem_set_speed);
-
-    pico_ppp_connect(ppp);
-
-    while (pico_thread_running)
+	while (pico_thread_running)
     {
     	read_native_sockets();
     	pico_stack_tick();
@@ -881,10 +1002,19 @@ static void *pico_thread_func(void *)
 	pico_socket_close(pico_tcp_socket);
 	pico_socket_close(pico_udp_socket);
 
-	if (ppp)
+	if (pico_dev)
 	{
-		pico_ppp_destroy(ppp);
-		ppp = NULL;
+		if (!settings.network.EmulateBBA)
+		{
+			pico_ppp_destroy(pico_dev);
+		}
+		else
+		{
+			closeDumpFile();
+			pico_dhcp_server_destroy(pico_dev);
+			pico_device_destroy(pico_dev);
+		}
+		pico_dev = nullptr;
 	}
 	pico_stack_tick();
 	if (ports != nullptr)
@@ -897,6 +1027,8 @@ static cThread pico_thread(pico_thread_func, NULL);
 
 bool start_pico()
 {
+	if (pico_thread_running)
+		return false;
 	pico_thread_running = true;
 	pico_thread.Start();
 

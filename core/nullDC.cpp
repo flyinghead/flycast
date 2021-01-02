@@ -783,6 +783,7 @@ void InitSettings()
 	settings.network.ActAsServer = false;
 	settings.network.dns = "46.101.91.123";		// Dreamcast Live DNS
 	settings.network.server = "";
+	settings.network.EmulateBBA = false;
 
 #if SUPPORT_DISPMANX
 	settings.dispmanx.Width		= 0;
@@ -896,7 +897,8 @@ void LoadSettings(bool game_specific)
 	settings.network.ActAsServer = cfgLoadBool("network", "ActAsServer", settings.network.ActAsServer);
 	settings.network.dns = cfgLoadStr("network", "DNS", settings.network.dns.c_str());
 	settings.network.server = cfgLoadStr("network", "server", settings.network.server.c_str());
-
+	settings.network.EmulateBBA = cfgLoadBool("network", "EmulateBBA", settings.network.EmulateBBA);
+	
 #if SUPPORT_DISPMANX
 	settings.dispmanx.Width		= cfgLoadInt(game_specific ? cfgGetGameId() : "dispmanx", "width", settings.dispmanx.Width);
 	settings.dispmanx.Height	= cfgLoadInt(game_specific ? cfgGetGameId() : "dispmanx", "height", settings.dispmanx.Height);
@@ -1057,7 +1059,8 @@ void SaveSettings()
 	cfgSaveBool("network", "ActAsServer", settings.network.ActAsServer);
 	cfgSaveStr("network", "DNS", settings.network.dns.c_str());
 	cfgSaveStr("network", "server", settings.network.server.c_str());
-
+	cfgSaveBool("network", "EmulateBBA", settings.network.EmulateBBA);
+	
 	GamepadDevice::SaveMaplePorts();
 
 #ifdef __ANDROID__
