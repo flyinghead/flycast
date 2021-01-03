@@ -1617,6 +1617,7 @@ static void gui_display_content()
 	ImGui::SetNextWindowPos(ImVec2(0, 0));
 	ImGui::SetNextWindowSize(ImVec2(screen_width, screen_height));
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0);
 
     ImGui::Begin("##main", NULL, ImGuiWindowFlags_NoDecoration);
 
@@ -1693,6 +1694,7 @@ static void gui_display_content()
     }
 	ImGui::EndChild();
 	ImGui::End();
+    ImGui::PopStyleVar();
     ImGui::PopStyleVar();
 
 	error_popup();
