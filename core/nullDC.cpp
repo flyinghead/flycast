@@ -206,7 +206,7 @@ static void LoadSpecialSettings()
 			// Heroes of might and magic III
 			|| prod_id == "T0000M"
 			// WebTV
-			|| prod_id == "6107117"
+			|| prod_id == "6107117" || prod_id == "610-7390" || prod_id == "610-7391"
 			// PBA
 			|| prod_id == "T26702N")
 		{
