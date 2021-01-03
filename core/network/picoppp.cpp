@@ -22,6 +22,7 @@
 #if !defined(_MSC_VER) && !defined(TARGET_NO_THREADS)
 
 #include "stdclass.h"
+#include "oslib/oslib.h"
 
 #ifdef __MINGW32__
 #define _POSIX_SOURCE
@@ -37,17 +38,19 @@ extern "C" {
 #include <pico_dhcp_server.h>
 }
 
-#include "network/net_platform.h"
+#include "net_platform.h"
 
 #include "types.h"
 #include "cfg/cfg.h"
 #include "picoppp.h"
-#include "network/miniupnp.h"
+#include "miniupnp.h"
 #include "reios/reios.h"
+#include "hw/naomi/naomi_cart.h"
 
 #include <map>
 #include <mutex>
 #include <queue>
+#include <future>
 
 #define RESOLVER1_OPENDNS_COM "208.67.222.222"
 #define AFO_ORIG_IP 0x83f2fb3f		// 63.251.242.131 in network order
@@ -221,6 +224,12 @@ static GamePortList GamesPorts[] = {
 		{ "T22904N", "T7016D  50" },
 		{ },
 		{ 17219 },
+	},
+
+	{ // Atomiswave
+		{ "FASTER THAN SPEED" },
+		{ 8888 },
+		{ },
 	},
 };
 
@@ -465,6 +474,8 @@ static sock_t find_udp_socket(uint16_t src_port)
 	u_long optl = 1;
 	ioctlsocket(sockfd, FIONBIO, &optl);
 #endif
+	int broadcastEnable = 1;
+	setsockopt(sockfd, SOL_SOCKET, SO_BROADCAST, (const char *)&broadcastEnable, sizeof(broadcastEnable));
 
 	// FIXME Need to clean up at some point?
 	udp_sockets[src_port] = sockfd;
@@ -476,7 +487,6 @@ static void udp_callback(uint16_t ev, pico_socket *s)
 {
 	if (ev & PICO_SOCK_EV_RD)
 	{
-		printf("udp_callback(read)\n");
 		char buf[1510];
 		pico_ip4 src_addr;
 		uint16_t src_port;
@@ -492,7 +502,6 @@ static void udp_callback(uint16_t ev, pico_socket *s)
 					INFO_LOG(MODEM, "error UDP recv: %s", strerror(pico_err));
 				break;
 			}
-			printf("udp_callback(read) recvd port %d: %d bytes\n", src_port, r);
 			sock_t sockfd = find_udp_socket(src_port);
 			if (VALID(sockfd))
 			{
@@ -618,14 +627,15 @@ static void read_native_sockets()
 		addr_len = sizeof(src_addr);
 		memset(&src_addr, 0, addr_len);
 		r = (int)recvfrom(it->second, buf, sizeof(buf), 0, (sockaddr *)&src_addr, &addr_len);
-		if (r > 0)
+		// filter out messages coming from ourselves (happens for broadcasts)
+		if (r > 0 && !is_local_address(src_addr.sin_addr.s_addr))
 		{
 			msginfo.dev = pico_dev;
 			msginfo.tos = 0;
 			msginfo.ttl = 0;
 			msginfo.local_addr.ip4.addr = src_addr.sin_addr.s_addr;
 			msginfo.local_port = src_addr.sin_port;
-			printf("read_native_sockets UDP received %d bytes from %08x:%d\n", r, long_be(msginfo.local_addr.ip4.addr), short_be(msginfo.local_port));
+
 			int r2 = pico_socket_sendto_extended(pico_udp_socket, buf, r, &dcaddr, it->first, &msginfo);
 			if (r2 < r)
 				INFO_LOG(MODEM, "error UDP sending to %d: %s", short_be(it->first), strerror(pico_err));
@@ -724,7 +734,7 @@ static pico_device *pico_eth_create()
     return eth;
 }
 
-#define BBA_PCAPNG_DUMP
+//#define BBA_PCAPNG_DUMP
 static FILE *pcapngDump;
 
 static void dumpFrame(const u8 *frame, u32 size)
@@ -732,10 +742,18 @@ static void dumpFrame(const u8 *frame, u32 size)
 #ifdef BBA_PCAPNG_DUMP
 	if (pcapngDump == nullptr)
 	{
-		std::string path = getenv("HOME") + std::string("/bba.pcapng");
-		pcapngDump = fopen(path.c_str(), "wb");
+		pcapngDump = fopen("bba.pcapng", "wb");
 		if (pcapngDump == nullptr)
-			return;
+		{
+			const char *home = getenv("HOME");
+			if (home != nullptr)
+			{
+				std::string path = home + std::string("/bba.pcapng");
+				pcapngDump = fopen(path.c_str(), "wb");
+			}
+			if (pcapngDump == nullptr)
+				return;
+		}
 		u32 blockType = 0x0A0D0D0A; // Section Header Block
 		fwrite(&blockType, sizeof(blockType), 1, pcapngDump);
 		u32 blockLen = 28;
@@ -759,13 +777,19 @@ static void dumpFrame(const u8 *frame, u32 size)
 		// TODO options? if name, ip/mac address
 		fwrite(&blockLen, sizeof(blockLen), 1, pcapngDump);
 	}
-	const u32 blockType = 3; // Simple Packet Block
+	const u32 blockType = 6; // Extended Packet Block
 	fwrite(&blockType, sizeof(blockType), 1, pcapngDump);
-	u32 roundedSize = ((size + 3) & ~3) + 16;
+	u32 roundedSize = ((size + 3) & ~3) + 32;
 	fwrite(&roundedSize, sizeof(roundedSize), 1, pcapngDump);
+	u32 ifId = 0;
+	fwrite(&ifId, sizeof(ifId), 1, pcapngDump);
+	u64 now = (u64)(os_GetSeconds() * 1000000.0);
+	fwrite((u32 *)&now + 1, 4, 1, pcapngDump);
+	fwrite(&now, 4, 1, pcapngDump);
+	fwrite(&size, sizeof(size), 1, pcapngDump);
 	fwrite(&size, sizeof(size), 1, pcapngDump);
 	fwrite(frame, 1, size, pcapngDump);
-	fwrite(frame, 1, roundedSize - size - 16, pcapngDump);
+	fwrite(frame, 1, roundedSize - size - 32, pcapngDump);
 	fwrite(&roundedSize, sizeof(roundedSize), 1, pcapngDump);
 #endif
 }
@@ -780,7 +804,8 @@ static void closeDumpFile()
 void pico_receive_eth_frame(const u8 *frame, u32 size)
 {
 	dumpFrame(frame, size);
-	pico_stack_recv(pico_dev, (u8 *)frame, size);
+	if (pico_dev != nullptr)
+		pico_stack_recv(pico_dev, (u8 *)frame, size);
 }
 
 static int send_eth_frame(pico_device *dev, void *data, int len)
@@ -804,8 +829,16 @@ static void *pico_thread_func(void *)
 
 	// Find the network ports for the current game
 	const GamePortList *ports = nullptr;
-	std::string gameId(ip_meta.product_number, sizeof(ip_meta.product_number));
-	gameId = trim_trailing_ws(gameId);
+	std::string gameId;
+	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
+	{
+		gameId = std::string(ip_meta.product_number, sizeof(ip_meta.product_number));
+		gameId = trim_trailing_ws(gameId);
+	}
+	else
+	{
+		gameId = naomi_game_id;
+	}
 	for (u32 i = 0; i < ARRAY_SIZE(GamesPorts) && ports == nullptr; i++)
 	{
 		const auto& game = GamesPorts[i];
@@ -822,24 +855,28 @@ static void *pico_thread_func(void *)
 	// Web TV requires the VJ compression option, which picotcp doesn't support.
 	// This hack allows WebTV to connect although the correct fix would
 	// be to implement VJ compression.
-	dont_reject_opt_vj_hack = gameId == "6107117" ? 1 : 0;
-	
-	// Initialize miniupnpc and map network ports
-	MiniUPnP upnp;
-	if (ports != nullptr)
-	{
-		if (!upnp.Init())
-			WARN_LOG(MODEM, "UPNP Init failed");
-		else
-		{
-			for (u32 i = 0; i < ARRAY_SIZE(ports->udpPorts) && ports->udpPorts[i] != 0; i++)
-				if (!upnp.AddPortMapping(ports->udpPorts[i], false))
-					WARN_LOG(MODEM, "UPNP AddPortMapping UDP %d failed", ports->udpPorts[i]);
-			for (u32 i = 0; i < ARRAY_SIZE(ports->tcpPorts) && ports->tcpPorts[i] != 0; i++)
-				if (!upnp.AddPortMapping(ports->tcpPorts[i], true))
-					WARN_LOG(MODEM, "UPNP AddPortMapping TCP %d failed", ports->tcpPorts[i]);
-		}
-	}
+	dont_reject_opt_vj_hack = gameId == "6107117" || gameId == "610-7390" || gameId == "610-7391" ? 1 : 0;
+
+	std::future<MiniUPnP> upnp =
+		std::async(std::launch::async, [ports]() {
+			// Initialize miniupnpc and map network ports
+			MiniUPnP upnp;
+			if (ports != nullptr)
+			{
+				if (!upnp.Init())
+					WARN_LOG(MODEM, "UPNP Init failed");
+				else
+				{
+					for (u32 i = 0; i < ARRAY_SIZE(ports->udpPorts) && ports->udpPorts[i] != 0; i++)
+						if (!upnp.AddPortMapping(ports->udpPorts[i], false))
+							WARN_LOG(MODEM, "UPNP AddPortMapping UDP %d failed", ports->udpPorts[i]);
+					for (u32 i = 0; i < ARRAY_SIZE(ports->tcpPorts) && ports->tcpPorts[i] != 0; i++)
+						if (!upnp.AddPortMapping(ports->tcpPorts[i], true))
+							WARN_LOG(MODEM, "UPNP AddPortMapping TCP %d failed", ports->tcpPorts[i]);
+				}
+			}
+			return upnp;
+		});
 
 	// Empty queues
     {
@@ -1018,7 +1055,7 @@ static void *pico_thread_func(void *)
 	}
 	pico_stack_tick();
 	if (ports != nullptr)
-		upnp.Term();
+		upnp.get().Term();
 
 	return NULL;
 }

@@ -33,6 +33,8 @@ public:
 	bool Init();
 	void Term();
 	bool AddPortMapping(int port, bool tcp);
+	const char *localAddress() const { return lanAddress; }
+	const char *externalAddress() const { return wanAddress; }
 
 private:
 	UPNPUrls urls;

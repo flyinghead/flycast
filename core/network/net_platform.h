@@ -53,6 +53,8 @@ typedef SOCKET sock_t;
 #define perror(s) do { INFO_LOG(MODEM, "%s: Winsock error: %d\n", (s) != NULL ? (s) : "", WSAGetLastError()); } while (false)
 #endif
 
+bool is_local_address(u32 addr);
+
 static inline void set_non_blocking(sock_t fd)
 {
 #ifndef _WIN32

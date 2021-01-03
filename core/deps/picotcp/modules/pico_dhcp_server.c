@@ -13,6 +13,7 @@
 #include "pico_udp.h"
 #include "pico_stack.h"
 #include "pico_arp.h"
+#include "pico_dns_common.h"	// for pico_tree_destroy
 
 #if (defined PICO_SUPPORT_DHCPD && defined PICO_SUPPORT_UDP)
 
@@ -421,6 +422,7 @@ int pico_dhcp_server_destroy(struct pico_device *dev)
 	pico_socket_close(found->s);
     pico_tree_delete(&DHCPSettings, found);
     PICO_FREE(found);
+    pico_tree_destroy(&DHCPNegotiations, NULL);
     return 0;
 }
 

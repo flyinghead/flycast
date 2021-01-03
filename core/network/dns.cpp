@@ -21,10 +21,11 @@
 #if !defined(_MSC_VER)
 
 #include "types.h"
-#include "network/net_platform.h"
+#include "net_platform.h"
 
 #include <cstdio>
 #include <cerrno>
+#include <vector>
 
 extern "C" {
 #include <pico_stack.h>
@@ -43,7 +44,7 @@ static int qname_len;
 
 void get_host_by_name(const char *host, struct pico_ip4 dnsaddr)
 {
-	DEBUG_LOG(MODEM, "get_host_by_name: %s", host);
+	DEBUG_LOG(NETWORK, "get_host_by_name: %s", host);
     if (!VALID(sock_fd))
     {
     	sock_fd = socket(AF_INET , SOCK_DGRAM , IPPROTO_UDP);
@@ -149,4 +150,81 @@ char *read_name(char *reader, char *buffer, int *count)
 	return name;
 }
 
+#ifndef _WIN32
+#include <ifaddrs.h>
+#include <net/if.h>
+#endif
+
+#ifdef __ANDROID__
+extern "C" {
+int getifaddrs(struct ifaddrs **ifap);
+void freeifaddrs(struct ifaddrs *ifa);
+};
+#endif
+
+static std::vector<u32> localAddresses;
+
+bool is_local_address(u32 addr)
+{
+	if (localAddresses.empty())
+	{
+#ifdef _WIN32
+		SOCKET sd = WSASocket(AF_INET, SOCK_DGRAM, 0, 0, 0, 0);
+		if (sd == INVALID_SOCKET)
+		{
+			WARN_LOG(NETWORK, "WSASocket failed");
+			return false;
+		}
+		INTERFACE_INFO ifList[20];
+		unsigned long size;
+		if (WSAIoctl(sd, SIO_GET_INTERFACE_LIST, 0, 0, &ifList,
+				sizeof(ifList), &size, 0, 0) == SOCKET_ERROR)
+		{
+			WARN_LOG(NETWORK, "WSAIoctl failed");
+			closesocket(sd);
+			return false;
+		}
+
+		int count = size / sizeof(INTERFACE_INFO);
+		for (int i = 0; i < count; i++)
+		{
+			if ((ifList[i].iiFlags & IFF_UP) == 0)
+				continue;
+			if (ifList[i].iiAddress.Address.sa_family != AF_INET)
+				continue;
+			sockaddr_in *pAddress = (sockaddr_in *)&ifList[i].iiAddress;
+			localAddresses.push_back(pAddress->sin_addr.s_addr);
+		}
+		closesocket(sd);
+
+#else // !_WIN32
+
+		ifaddrs *myaddrs;
+		if (getifaddrs(&myaddrs) != 0)
+		{
+			WARN_LOG(NETWORK, "getifaddrs failed");
+			return false;
+		}
+		for (ifaddrs *ifa = myaddrs; ifa != NULL; ifa = ifa->ifa_next)
+		{
+			if (ifa->ifa_addr == NULL)
+				continue;
+			if (!(ifa->ifa_flags & IFF_UP))
+				continue;
+			if (ifa->ifa_addr->sa_family != AF_INET)
+				continue;
+
+			sockaddr_in *sa = (sockaddr_in *)ifa->ifa_addr;
+			localAddresses.push_back(sa->sin_addr.s_addr);
+		}
+		freeifaddrs(myaddrs);
+#endif
+	}
+
+	for (auto a : localAddresses)
+		if (a == addr)
+			return true;
+
+	return false;
+}
 #endif

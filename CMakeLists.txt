@@ -725,6 +725,11 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/network/picoppp.cpp
         core/network/picoppp.h)
 
+if(ANDROID)
+    target_sources(${PROJECT_NAME} PRIVATE
+            core/network/ifaddrs.c)
+endif()
+
 target_sources(${PROJECT_NAME} PRIVATE
         core/oslib/audiobackend_alsa.cpp
         core/oslib/audiobackend_coreaudio.cpp
