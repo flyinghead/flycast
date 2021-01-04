@@ -81,8 +81,7 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
         $<$<BOOL:MSVC>:_USE_MATH_DEFINES>
         $<$<BOOL:MSVC>:NOMINMAX>
         $<$<BOOL:${TEST_AUTOMATION}>:TEST_AUTOMATION>
-        $<$<BOOL:${ENABLE_LOG}>:DEBUGFAST>
-        ENABLE_MODEM)
+        $<$<BOOL:${ENABLE_LOG}>:DEBUGFAST>)
 
 target_include_directories(${PROJECT_NAME} PRIVATE core core/deps core/deps/stb core/deps/xbyak core/khronos)
 

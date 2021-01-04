@@ -466,7 +466,6 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	REICAST_S(sch_list[vblank_schid].end) ;
 
 	REICAST_S(settings.network.EmulateBBA);
-#ifdef ENABLE_MODEM
 	if (settings.network.EmulateBBA)
 	{
 		bba_Serialize(data, total_size);
@@ -477,12 +476,6 @@ bool dc_serialize(void **data, unsigned int *total_size)
 		REICAST_S(sch_list[modem_sched].start);
 		REICAST_S(sch_list[modem_sched].end);
 	}
-#else
-	int modem_dummy = 0;
-	REICAST_S(modem_dummy);
-	REICAST_S(modem_dummy);
-	REICAST_S(modem_dummy);
-#endif
 
 	REICAST_S(SCIF_SCFSR2);
 	REICAST_S(SCIF_SCSCR2);
@@ -750,16 +743,9 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 	REICAST_US(sch_list[vblank_schid].start) ;
 	REICAST_US(sch_list[vblank_schid].end) ;
 
-#ifdef ENABLE_MODEM
 	REICAST_US(sch_list[modem_sched].tag) ;
     REICAST_US(sch_list[modem_sched].start) ;
     REICAST_US(sch_list[modem_sched].end) ;
-#else
-	int modem_dummy;
-	REICAST_US(modem_dummy);
-	REICAST_US(modem_dummy);
-	REICAST_US(modem_dummy);
-#endif
 
 	REICAST_US(SCIF_SCFSR2);
 	REICAST_US(SCIF_SCSCR2);
@@ -1114,7 +1100,6 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 		REICAST_S(settings.network.EmulateBBA);
 	else
 		settings.network.EmulateBBA = false;
-#ifdef ENABLE_MODEM
 	if (settings.network.EmulateBBA)
 	{
 		bba_Unserialize(data, total_size);
@@ -1125,12 +1110,6 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 		REICAST_US(sch_list[modem_sched].start);
 		REICAST_US(sch_list[modem_sched].end);
 	}
-#else
-	int modem_dummy;
-	REICAST_US(modem_dummy);
-	REICAST_US(modem_dummy);
-	REICAST_US(modem_dummy);
-#endif
 
 	REICAST_US(SCIF_SCFSR2);
 	if (version < V8)

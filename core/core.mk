@@ -137,14 +137,12 @@ RZDCY_CFLAGS += -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/rend/gles -I$(RZDCY_SRC_DI
 		 -I$(RZDCY_SRC_DIR)/deps/vixl -I$(RZDCY_SRC_DIR)/khronos -I$(RZDCY_SRC_DIR)/deps/glslang \
 		 -I$(RZDCY_SRC_DIR)/deps/glm -I$(RZDCY_SRC_DIR)/deps/xbyak
 
-ifdef USE_MODEM
-	RZDCY_CFLAGS += -DENABLE_MODEM -I$(RZDCY_SRC_DIR)/deps/picotcp/include -I$(RZDCY_SRC_DIR)/deps/picotcp/modules
-	RZDCY_MODULES += hw/modem/ deps/picotcp/modules/ deps/picotcp/stack/
-	ifndef FOR_WINDOWS
-		RZDCY_CFLAGS += -I/usr/include/miniupnpc
-	else
-		RZDCY_CFLAGS += -I$(RZDCY_SRC_DIR)/deps/miniupnpc
-	endif
+RZDCY_CFLAGS += -I$(RZDCY_SRC_DIR)/deps/picotcp/include -I$(RZDCY_SRC_DIR)/deps/picotcp/modules
+RZDCY_MODULES += hw/modem/ deps/picotcp/modules/ deps/picotcp/stack/
+ifndef FOR_WINDOWS
+	RZDCY_CFLAGS += -I/usr/include/miniupnpc
+else
+	RZDCY_CFLAGS += -I$(RZDCY_SRC_DIR)/deps/miniupnpc
 endif
 
 ifdef NO_REC

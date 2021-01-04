@@ -581,12 +581,10 @@ void sb_Init()
 	maple_Init();
 	aica_sb_Init();
 
-#ifdef ENABLE_MODEM
 	if (settings.network.EmulateBBA)
 		bba_Init();
 	else
 		ModemInit();
-#endif
 }
 
 void sb_Reset(bool hard)
@@ -599,12 +597,12 @@ void sb_Reset(bool hard)
 	SB_ISTNRM = 0;
 	SB_FFST_rc = 0;
 	SB_FFST = 0;
-#ifdef ENABLE_MODEM
+
 	if (settings.network.EmulateBBA)
 		bba_Reset(hard);
 	else
 		ModemTerm();
-#endif
+
 	asic_reg_Reset(hard);
 	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
 		gdrom_reg_Reset(hard);
@@ -617,12 +615,10 @@ void sb_Reset(bool hard)
 
 void sb_Term()
 {
-#ifdef ENABLE_MODEM
 	if (settings.network.EmulateBBA)
 		bba_Term();
 	else
 		ModemTerm();
-#endif
 	aica_sb_Term();
 	maple_Term();
 	pvr_sb_Term();

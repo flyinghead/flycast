@@ -12,7 +12,6 @@ ifndef USE_SDL
 USE_EVDEV := 1
 USE_UDEV := 1
 endif
-USE_MODEM := 1
 PLATFORM_EXT := elf
 
 CXX ?= ${CC_PREFIX}g++
@@ -309,16 +308,11 @@ INCS += -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/deps -I$(RZDCY_SRC_DIR)/khronos
 ifdef FOR_WINDOWS
 	LIBS += -lm -static -lpthread
 else
-	LIBS += -lm -lpthread
-	ifdef USE_MODEM
-		LIBS += -lminiupnpc
-	endif
+	LIBS += -lminiupnpc -lm -lpthread
 endif
 ifdef FOR_LINUX
 LIBS += -lrt
 endif
-
-ifdef USE_MODEM
 
 $(RZDCY_SRC_DIR)/deps/miniupnpc/libminiupnpc.a:
 ifdef FOR_WINDOWS
@@ -326,9 +320,6 @@ ifdef FOR_WINDOWS
 else
 	$(MAKE) -C $(RZDCY_SRC_DIR)/deps/miniupnpc libminiupnpc.a
 endif
-
-endif
-
 
 PREFIX ?= /usr/local
 MAN_DIR ?= ${PREFIX}/share/man/man1
@@ -471,10 +462,8 @@ OBJECTS += $(BUILDDIR)/reicastres.build_obj
 $(BUILDDIR)/reicastres.build_obj: $(LOCAL_PATH)/../windows/reicast.rc $(LOCAL_PATH)/../windows/flycast.ico $(RZDCY_SRC_DIR)/version.h
 	$(WINDRES) $< $@
 
-ifdef USE_MODEM
 OBJECTS += $(RZDCY_SRC_DIR)/deps/miniupnpc/libminiupnpc.a
 CFLAGS += -DMINIUPNP_STATICLIB
-endif
 endif
 
 DEPDIR := .dep-$(BUILDDIR)
