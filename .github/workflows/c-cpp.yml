@@ -10,7 +10,7 @@ jobs:
     strategy:
       matrix:
         config:
-          - {name: i686-pc-windows-msvc, os: windows-latest, cmakeArgs: -G "Visual Studio 16 2019" -A Win32}
+#          - {name: i686-pc-windows-msvc, os: windows-latest, cmakeArgs: -G "Visual Studio 16 2019" -A Win32}
           - {name: x86_64-apple-darwin, os: macos-latest, cmakeArgs: -G "Xcode"}
           - {name: x86_64-pc-linux-gnu, os: ubuntu-latest}
           - {name: x86_64-pc-windows-msvc, os: windows-latest, cmakeArgs: -G "Visual Studio 16 2019" -A x64}
