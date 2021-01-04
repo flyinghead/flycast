@@ -431,6 +431,25 @@ static InputDescriptors zombie_inputs = {
 	  },
 };
 
+// World Series 99 / Super Major League 99
+// World Series Baseball / Super Major League
+static InputDescriptors wsbb_inputs = {
+	{
+		{ NAOMI_BTN0_KEY, "BTN A" },
+		{ NAOMI_BTN1_KEY, "BTN B" },
+		NAO_START_DESC
+		NAO_BASE_BTN_DESC
+		{ 0 },
+	},
+	{
+		{ "STICK Y", Full, 1, true },
+		{ "STICK X", Full, 0, true },
+		{ "BAT", Half, 4, true },
+		{ "", Half, 5 },	// unused but P2 starts at axis 4
+		{ NULL },
+	},
+};
+
 //
 // AtomisWave games
 //

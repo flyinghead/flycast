@@ -1504,36 +1504,47 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 							axis = 2;
 						}
 
-						int full_axis_count = 0;
-						for (; axis < buffer_in[cmdi + 1]; axis++)
+						u32 player_num = first_player;
+						u32 player_axis = axis;
+						for (; axis < buffer_in[cmdi + 1]; axis++, player_axis++)
 						{
 							u16 axis_value;
-							if (NaomiGameInputs != NULL
-									&& axis < ARRAY_SIZE(NaomiGameInputs->axes)
-									&& NaomiGameInputs->axes[axis].name != NULL)
+							if (NaomiGameInputs != NULL)
 							{
-								const AxisDescriptor& axisDesc = NaomiGameInputs->axes[axis];
-								if (axisDesc.type == Half)
+								if (player_axis >= ARRAY_SIZE(NaomiGameInputs->axes)
+										|| NaomiGameInputs->axes[player_axis].name == NULL)
 								{
-									if (axisDesc.axis == 4)
-										axis_value = rt[first_player] << 8;
-									else if (axisDesc.axis == 5)
-										axis_value = lt[first_player] << 8;
+									// Next player
+									player_num++;
+									player_axis = 0;
+								}
+								if (player_num < 4)
+								{
+									const AxisDescriptor& axisDesc = NaomiGameInputs->axes[player_axis];
+									if (axisDesc.type == Half)
+									{
+										if (axisDesc.axis == 4)
+											axis_value = rt[player_num] << 8;
+										else if (axisDesc.axis == 5)
+											axis_value = lt[player_num] << 8;
+										else
+											axis_value = 0;
+										if (axisDesc.inverted)
+											axis_value = 0xff00u - axis_value;
+									}
 									else
-										axis_value = 0;
-									if (axisDesc.inverted)
-										axis_value = 0xff00u - axis_value;
+									{
+										axis_value =  read_analog_axis(player_num, axisDesc.axis, axisDesc.inverted);
+									}
 								}
 								else
 								{
-									axis_value =  read_analog_axis(first_player, axisDesc.axis, axisDesc.inverted);
-									full_axis_count++;
+									axis_value = 0x8000;
 								}
 							}
 							else
 							{
-								axis_value = read_analog_axis(first_player, full_axis_count, false);
-								full_axis_count++;
+								axis_value = read_analog_axis(player_num, player_axis, false);
 							}
 							LOGJVS("%d:%4x ", axis, axis_value);
 							JVS_OUT(axis_value >> 8);

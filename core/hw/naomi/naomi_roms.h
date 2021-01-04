@@ -3260,7 +3260,9 @@ Games[] =
             { "mpr-22057.ic20s", 0xa000000, 0x800000 },
             { "mpr-22058.ic21s", 0xa800000, 0x800000 },        
             { NULL, 0, 0 },
-        }
+        },
+		NULL,
+		&wsbb_inputs,
     },
     // Slashout
     {
@@ -5826,6 +5828,7 @@ Games[] =
             { NULL, 0, 0 },
         },
         "gds-0010",
+		&wsbb_inputs,
     },
     // Sega Yonin Uchi Mahjong MJ (セガ四人打ち麻雀MJ), "Sega The 4Players Mah-Jong"
     // uses CRP-1231 card RW connected via 838-13661 RS422/RS232C converter BD, and 2x JVS I/O boards (or one special I/O ?).
