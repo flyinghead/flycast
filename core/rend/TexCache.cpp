@@ -414,7 +414,7 @@ bool BaseTextureCacheData::Delete()
 		lock_block = nullptr;
 	}
 
-	delete[] custom_image_data;
+	free(custom_image_data);
 
 	return true;
 }
@@ -735,7 +735,7 @@ void BaseTextureCacheData::CheckCustomTexture()
 	{
 		tex_type = TextureType::_8888;
 		UploadToGPU(custom_width, custom_height, custom_image_data, IsMipmapped(), false);
-		delete [] custom_image_data;
+		free(custom_image_data);
 		custom_image_data = NULL;
 	}
 }
