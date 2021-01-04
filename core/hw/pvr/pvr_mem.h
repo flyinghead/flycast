@@ -19,5 +19,5 @@ void YUV_init();
 
 template<typename T> T DYNACALL pvr_read_area1(u32 addr);
 template<typename T> void DYNACALL pvr_write_area1(u32 addr, T data);
-template<typename T, bool upper> T pvr_read_area4(u32 addr);
-template<typename T, bool upper> void pvr_write_area4(u32 addr, T data);
+template<typename T, bool upper> T DYNACALL pvr_read_area4(u32 addr);
+template<typename T, bool upper> void DYNACALL pvr_write_area4(u32 addr, T data);
