@@ -31,6 +31,12 @@
 class OITDescriptorSets
 {
 public:
+	OITDescriptorSets() = default;
+	OITDescriptorSets(OITDescriptorSets&&) = default;
+	OITDescriptorSets(const OITDescriptorSets&) = delete;
+	OITDescriptorSets& operator=(OITDescriptorSets&&) = default;
+	OITDescriptorSets& operator=(const OITDescriptorSets&) = delete;
+
 	// std140 alignment required
 	struct VertexShaderUniforms
 	{
@@ -86,8 +92,8 @@ public:
 	{
 		if (perFrameDescSets.empty())
 		{
-			perFrameDescSets = GetContext()->GetDevice().allocateDescriptorSetsUnique(
-					vk::DescriptorSetAllocateInfo(GetContext()->GetDescriptorPool(), 1, &perFrameLayout));
+			perFrameDescSets = std::move(GetContext()->GetDevice().allocateDescriptorSetsUnique(
+					vk::DescriptorSetAllocateInfo(GetContext()->GetDescriptorPool(), 1, &perFrameLayout)));
 		}
 		perFrameDescSetsInFlight.emplace_back(std::move(perFrameDescSets.back()));
 		perFrameDescSets.pop_back();

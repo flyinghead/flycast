@@ -28,6 +28,12 @@
 class DescriptorSets
 {
 public:
+	DescriptorSets() = default;
+	DescriptorSets(DescriptorSets &&) = default;
+	DescriptorSets(const DescriptorSets &) = delete;
+	DescriptorSets& operator=(DescriptorSets &&) = default;
+	DescriptorSets& operator=(const DescriptorSets &) = delete;
+
 	void Init(SamplerManager* samplerManager, vk::PipelineLayout pipelineLayout, vk::DescriptorSetLayout perFrameLayout, vk::DescriptorSetLayout perPolyLayout)
 	{
 		this->samplerManager = samplerManager;
@@ -40,8 +46,8 @@ public:
 	{
 		if (perFrameDescSets.empty())
 		{
-			perFrameDescSets = GetContext()->GetDevice().allocateDescriptorSetsUnique(
-					vk::DescriptorSetAllocateInfo(GetContext()->GetDescriptorPool(), 1, &perFrameLayout));
+			perFrameDescSets = std::move(GetContext()->GetDevice().allocateDescriptorSetsUnique(
+					vk::DescriptorSetAllocateInfo(GetContext()->GetDescriptorPool(), 1, &perFrameLayout)));
 		}
 		perFrameDescSetsInFlight.emplace_back(std::move(perFrameDescSets.back()));
 		perFrameDescSets.pop_back();

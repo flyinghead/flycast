@@ -29,7 +29,11 @@
 #include "hw/naomi/naomi_flashrom.h"
 
 #ifdef _MSC_VER
-typedef int ssize_t;
+#if defined(_WIN64)
+typedef __int64 ssize_t;
+#else
+typedef long ssize_t;
+#endif
 #endif
 
 NaomiNetwork naomiNetwork;

@@ -1646,17 +1646,29 @@ static void rtl8139_io_writeb(void *opaque, uint8_t addr, uint32_t val)
 
     switch (addr)
     {
-        case MAC0 ... MAC0+4:
+        case MAC0:
+        case MAC0 + 1:
+        case MAC0 + 2:
+        case MAC0 + 3:
+        case MAC0 + 4:
             s->phys[addr - MAC0] = val;
             break;
         case MAC0+5:
             s->phys[addr - MAC0] = val;
             //qemu_format_nic_info_str(qemu_get_queue(s->nic), s->phys);
             break;
-        case MAC0+6 ... MAC0+7:
+        case MAC0+6:
+        case MAC0+7:
             /* reserved */
             break;
-        case MAR0 ... MAR0+7:
+        case MAR0:
+        case MAR0 + 1:
+        case MAR0 + 2:
+        case MAR0 + 3:
+        case MAR0 + 4:
+        case MAR0 + 5:
+        case MAR0 + 6:
+        case MAR0 + 7:
             s->mult[addr - MAR0] = val;
             break;
         case ChipCmd:
@@ -1823,11 +1835,41 @@ static void rtl8139_io_writel(void *opaque, uint8_t addr, uint32_t val)
             rtl8139_RxConfig_write(s, val);
             break;
 
-        case TxStatus0 ... TxStatus0+4*4-1:
+        case TxStatus0:
+        case TxStatus0 + 1:
+        case TxStatus0 + 2:
+        case TxStatus0 + 3:
+        case TxStatus0 + 4:
+        case TxStatus0 + 5:
+        case TxStatus0 + 6:
+        case TxStatus0 + 7:
+        case TxStatus0 + 8:
+        case TxStatus0 + 9:
+        case TxStatus0 + 10:
+        case TxStatus0 + 11:
+        case TxStatus0 + 12:
+        case TxStatus0 + 13:
+        case TxStatus0 + 14:
+        case TxStatus0 + 15:
             rtl8139_TxStatus_write(s, addr-TxStatus0, val);
             break;
 
-        case TxAddr0 ... TxAddr0+4*4-1:
+        case TxAddr0:
+        case TxAddr0 + 1:
+        case TxAddr0 + 2:
+        case TxAddr0 + 3:
+        case TxAddr0 + 4:
+        case TxAddr0 + 5:
+        case TxAddr0 + 6:
+        case TxAddr0 + 7:
+        case TxAddr0 + 8:
+        case TxAddr0 + 9:
+        case TxAddr0 + 10:
+        case TxAddr0 + 11:
+        case TxAddr0 + 12:
+        case TxAddr0 + 13:
+        case TxAddr0 + 14:
+        case TxAddr0 + 15:
             rtl8139_TxAddr_write(s, addr-TxAddr0, val);
             break;
 
@@ -1875,16 +1917,44 @@ static uint32_t rtl8139_io_readb(void *opaque, uint8_t addr)
 
     switch (addr)
     {
-        case MAC0 ... MAC0+5:
+        case MAC0:
+        case MAC0 + 1:
+        case MAC0 + 2:
+        case MAC0 + 3:
+        case MAC0 + 4:
+        case MAC0 + 5:
             ret = s->phys[addr - MAC0];
             break;
-        case MAC0+6 ... MAC0+7:
+        case MAC0+6:
+        case MAC0+7:
             ret = 0;
             break;
-        case MAR0 ... MAR0+7:
+        case MAR0:
+        case MAR0 + 1:
+        case MAR0 + 2:
+        case MAR0 + 3:
+        case MAR0 + 4:
+        case MAR0 + 5:
+        case MAR0 + 6:
+        case MAR0 + 7:
             ret = s->mult[addr - MAR0];
             break;
-        case TxStatus0 ... TxStatus0+4*4-1:
+        case TxStatus0:
+        case TxStatus0 + 1:
+        case TxStatus0 + 2:
+        case TxStatus0 + 3:
+        case TxStatus0 + 4:
+        case TxStatus0 + 5:
+        case TxStatus0 + 6:
+        case TxStatus0 + 7:
+        case TxStatus0 + 8:
+        case TxStatus0 + 9:
+        case TxStatus0 + 10:
+        case TxStatus0 + 11:
+        case TxStatus0 + 12:
+        case TxStatus0 + 13:
+        case TxStatus0 + 14:
+        case TxStatus0 + 15:
             ret = rtl8139_TxStatus_TxAddr_read(s, s->TxStatus, TxStatus0,
                                                addr, 1);
             break;
@@ -1952,7 +2022,22 @@ static uint32_t rtl8139_io_readw(void *opaque, uint8_t addr)
 
     switch (addr)
     {
-        case TxAddr0 ... TxAddr0+4*4-1:
+        case TxAddr0:
+        case TxAddr0 + 1:
+        case TxAddr0 + 2:
+        case TxAddr0 + 3:
+        case TxAddr0 + 4:
+        case TxAddr0 + 5:
+        case TxAddr0 + 6:
+        case TxAddr0 + 7:
+        case TxAddr0 + 8:
+        case TxAddr0 + 9:
+        case TxAddr0 + 10:
+        case TxAddr0 + 11:
+        case TxAddr0 + 12:
+        case TxAddr0 + 13:
+        case TxAddr0 + 14:
+        case TxAddr0 + 15:
             ret = rtl8139_TxStatus_TxAddr_read(s, s->TxAddr, TxAddr0, addr, 2);
             break;
         case IntrMask:
@@ -2046,12 +2131,42 @@ static uint32_t rtl8139_io_readl(void *opaque, uint8_t addr)
             ret = rtl8139_RxConfig_read(s);
             break;
 
-        case TxStatus0 ... TxStatus0+4*4-1:
+        case TxStatus0:
+        case TxStatus0 + 1:
+        case TxStatus0 + 2:
+        case TxStatus0 + 3:
+        case TxStatus0 + 4:
+        case TxStatus0 + 5:
+        case TxStatus0 + 6:
+        case TxStatus0 + 7:
+        case TxStatus0 + 8:
+        case TxStatus0 + 9:
+        case TxStatus0 + 10:
+        case TxStatus0 + 11:
+        case TxStatus0 + 12:
+        case TxStatus0 + 13:
+        case TxStatus0 + 14:
+        case TxStatus0 + 15:
             ret = rtl8139_TxStatus_TxAddr_read(s, s->TxStatus, TxStatus0,
                                                addr, 4);
             break;
 
-        case TxAddr0 ... TxAddr0+4*4-1:
+        case TxAddr0:
+        case TxAddr0 + 1:
+        case TxAddr0 + 2:
+        case TxAddr0 + 3:
+        case TxAddr0 + 4:
+        case TxAddr0 + 5:
+        case TxAddr0 + 6:
+        case TxAddr0 + 7:
+        case TxAddr0 + 8:
+        case TxAddr0 + 9:
+        case TxAddr0 + 10:
+        case TxAddr0 + 11:
+        case TxAddr0 + 12:
+        case TxAddr0 + 13:
+        case TxAddr0 + 14:
+        case TxAddr0 + 15:
             ret = rtl8139_TxAddr_read(s, addr-TxAddr0);
             break;
 

@@ -105,6 +105,12 @@ private:
 class QuadDrawer
 {
 public:
+	QuadDrawer() = default;
+	QuadDrawer(QuadDrawer &&) = default;
+	QuadDrawer(const QuadDrawer &) = delete;
+	QuadDrawer& operator=(QuadDrawer &&) = default;
+	QuadDrawer& operator=(const QuadDrawer &) = delete;
+
 	void Init(QuadPipeline *pipeline);
 	void Draw(vk::CommandBuffer commandBuffer, vk::ImageView imageView, QuadVertex vertices[] = nullptr, bool nearestFilter = false);
 private:

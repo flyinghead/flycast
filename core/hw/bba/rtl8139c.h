@@ -29,6 +29,14 @@ typedef u64 uint64_t;
 typedef uint64_t dma_addr_t;
 typedef uint64_t hwaddr;
 
+#ifdef _MSC_VER
+#if defined(_WIN64)
+typedef __int64 ssize_t;
+#else
+typedef long ssize_t;
+#endif
+#endif
+
 #define ETH_ALEN 6
 
 #define DMA_ADDR_FMT "%" PRIx64
@@ -114,12 +122,12 @@ CPU_CONVERT(le, 32, uint32_t)
 static inline int lduw_he_p(const void *ptr)
 {
     uint16_t r;
-    __builtin_memcpy(&r, ptr, sizeof(r));
+    memcpy(&r, ptr, sizeof(r));
     return r;
 }
 static inline void stl_he_p(void *ptr, uint32_t v)
 {
-    __builtin_memcpy(ptr, &v, sizeof(v));
+    memcpy(ptr, &v, sizeof(v));
 }
 
 static inline int lduw_le_p(const void *ptr)

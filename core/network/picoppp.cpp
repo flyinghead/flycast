@@ -1086,5 +1086,6 @@ bool start_pico() { return false; }
 void stop_pico() { }
 void write_pico(u8 b) { }
 int read_pico() { return -1; }
+void pico_receive_eth_frame(const u8* frame, u32 size) {}
 
 #endif
