@@ -281,7 +281,7 @@ u32 vri(u32 addr)
 }
 
 template<typename T, bool upper>
-T pvr_read_area4(u32 addr)
+T DYNACALL pvr_read_area4(u32 addr)
 {
 	bool access32 = (upper ? SB_LMMODE1 : SB_LMMODE0) == 1;
 	if (access32)
@@ -297,7 +297,7 @@ template u16 pvr_read_area4<u16, true>(u32 addr);
 template u32 pvr_read_area4<u32, true>(u32 addr);
 
 template<typename T, bool upper>
-void pvr_write_area4(u32 addr, T data)
+void DYNACALL pvr_write_area4(u32 addr, T data)
 {
 	bool access32 = (upper ? SB_LMMODE1 : SB_LMMODE0) == 1;
 	if (access32)
