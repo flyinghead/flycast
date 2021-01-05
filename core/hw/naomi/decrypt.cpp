@@ -716,7 +716,7 @@ static void line_fill()
 
 	line_buffer_pos = 0;
 
-	for (u32 i = 0; i != line_buffer_size;)
+	for (u32 i = 0; i < line_buffer_size;)
 	{
 		// vlc 0: start of line
 		// vlc 1: interior of line
