@@ -87,9 +87,14 @@ target_include_directories(${PROJECT_NAME} PRIVATE core core/deps core/deps/stb 
 
 find_package(OpenMP)
 if(OpenMP_CXX_FOUND AND NOT APPLE)
-    target_link_libraries(${PROJECT_NAME} PRIVATE OpenMP::OpenMP_CXX)
-    if(ANDROID_NDK_MAJOR VERSION_GREATER_EQUAL 21)
-        target_link_libraries(${PROJECT_NAME} PRIVATE -static-openmp)
+    if(MINGW)
+        target_link_libraries(${PROJECT_NAME} PRIVATE "-static -lgomp -lpthread")
+        target_compile_options(${PROJECT_NAME} PRIVATE -fopenmp)
+    else()
+        target_link_libraries(${PROJECT_NAME} PRIVATE OpenMP::OpenMP_CXX)
+        if(ANDROID_NDK_MAJOR VERSION_GREATER_EQUAL 21)
+            target_link_libraries(${PROJECT_NAME} PRIVATE -static-openmp)
+        endif()
     endif()
 else()
     target_compile_definitions(${PROJECT_NAME} PRIVATE TARGET_NO_OPENMP)
@@ -117,13 +122,14 @@ if(ALSA_FOUND AND NOT ANDROID)
 endif()
 
 if(MINGW)
+    target_link_libraries(${PROJECT_NAME} PRIVATE "-static-libgcc -static-libstdc++")
     set(SDL2_FOUND TRUE)
     add_library(SDL2::SDL2-static STATIC IMPORTED)
     set_target_properties(SDL2::SDL2-static PROPERTIES
             INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_SOURCE_DIR}/core/deps/SDL2-2.0.12/include"
             IMPORTED_LINK_INTERFACE_LANGUAGES "C"
             IMPORTED_LOCATION "${CMAKE_CURRENT_SOURCE_DIR}/core/deps/SDL2-2.0.12/x86_64-w64-mingw32/lib/libSDL2.a"
-            INTERFACE_LINK_LIBRARIES "-L${CMAKE_CURRENT_SOURCE_DIR}/core/deps/SDL2-2.0.12/x86_64-w64-mingw32/lib -lmingw32 -lSDL2main -lSDL2 -mwindows  -Wl,--no-undefined -Wl,--dynamicbase -Wl,--nxcompat -Wl,--high-entropy-va -lm -ldinput8 -ldxguid -ldxerr8 -luser32 -lgdi32 -lwinmm -limm32 -lole32 -loleaut32 -lshell32 -lsetupapi -lversion -luuid -static-libgcc")
+            INTERFACE_LINK_LIBRARIES "-L${CMAKE_CURRENT_SOURCE_DIR}/core/deps/SDL2-2.0.12/x86_64-w64-mingw32/lib -lmingw32 -lSDL2main -lSDL2 -mwindows  -Wl,--no-undefined -Wl,--dynamicbase -Wl,--nxcompat -Wl,--high-entropy-va -lm -ldinput8 -ldxguid -ldxerr8 -luser32 -lgdi32 -lwinmm -limm32 -lole32 -loleaut32 -lshell32 -lsetupapi -lversion -luuid")
 elseif(MSVC)
     set(SDL2_FOUND TRUE)
     add_library(SDL2::SDL2 SHARED IMPORTED)
@@ -902,6 +908,8 @@ elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "i686.*|i386.*|x86.*|amd64.*|x86_64.*|AMD6
             set_source_files_properties(core/hw/aica/dsp_x64.cpp PROPERTIES COMPILE_FLAGS -fno-operator-names)
         endif()
     endif()
+else()
+    message(FATAL_ERROR "Unknown target processor: ${CMAKE_SYSTEM_PROCESSOR}")
 endif()
 
 if(ANDROID)
