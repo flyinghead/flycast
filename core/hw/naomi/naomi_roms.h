@@ -1647,7 +1647,9 @@ Games[] =
             { "mpr-22139.ic18s", 0x9000000, 0x0800000 },
             { "mpr-22140.ic19s", 0x9800000, 0x0800000 },
             { NULL, 0, 0 },
-        }
+        },
+		nullptr,
+		&wsbb_inputs,
     },
     // Dynamite Baseball NAOMI (Japan)
     {
@@ -1685,7 +1687,9 @@ Games[] =
             { "mpr-21573.ic20s", 0xa000000, 0x0800000 },
             { "mpr-21574.ic21s", 0xa800000, 0x0800000 },
             { NULL, 0, 0 },
-        }
+        },
+		nullptr,
+		&wsbb_inputs,
     },
     // Ferrari F355 Challenge (deluxe)
     {
@@ -2792,7 +2796,7 @@ Games[] =
             { NULL, 0, 0 },
         },
         NULL,
-        NULL,
+		&ringout_inputs,
         ringout_eeprom_dump
     },
     // Ring Out 4x4
@@ -2821,7 +2825,7 @@ Games[] =
             { NULL, 0, 0 },
         },
         NULL,
-        NULL,
+		&ringout_inputs,
         ringout_eeprom_dump
     },
     // Samba De Amigo (Rev B)
@@ -3393,7 +3397,9 @@ Games[] =
             { "mpr-23320.ic19s", 0x9800000, 0x800000 },
             { "mpr-23321.ic20s", 0xa000000, 0x800000 },
             { NULL, 0, 0 },
-        }
+        },
+		nullptr,
+		&sstrkfgt_inputs,
     },
     // Sega Strike Fighter (Rev A, no training mode)
     {
@@ -3429,7 +3435,9 @@ Games[] =
             { "mpr-23320.ic19s", 0x9800000, 0x800000 },
             { "mpr-23321.ic20s", 0xa000000, 0x800000 },
             { NULL, 0, 0 },
-        }
+        },
+		nullptr,
+		&sstrkfgt_inputs,
     },
     // Idol Janshi Suchie-Pai 3 (JPN)
     {
