@@ -586,6 +586,7 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/hw/naomi/naomi.cpp
         core/hw/naomi/naomi.h
         core/hw/naomi/naomi_regs.h
+        core/hw/naomi/naomi_roms.cpp
         core/hw/naomi/naomi_roms.h
         core/hw/naomi/naomi_roms_input.h
         core/hw/pvr/drkPvr.cpp

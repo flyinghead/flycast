@@ -243,6 +243,7 @@
 		AE80EDBF2157D4E600F7800F /* naomi_cart.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE80EDBB2157D4E600F7800F /* naomi_cart.cpp */; };
 		AE82C60025A0E45A00C79BC2 /* picoppp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE82C5FE25A0E45900C79BC2 /* picoppp.cpp */; };
 		AE82C60125A0E45A00C79BC2 /* dns.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE82C5FF25A0E45A00C79BC2 /* dns.cpp */; };
+		AE82C60625A4D92D00C79BC2 /* naomi_roms.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE82C60525A4D92D00C79BC2 /* naomi_roms.cpp */; };
 		AE8C27342111A31100D4D8F4 /* dsp_interp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE8C27332111A31100D4D8F4 /* dsp_interp.cpp */; };
 		AE8C274321122E2500D4D8F4 /* xbrz.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE8C273D21122E2500D4D8F4 /* xbrz.cpp */; };
 		AE90679B235B6F6400CE473C /* gl_context.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE90679A235B6F6400CE473C /* gl_context.cpp */; };
@@ -785,6 +786,8 @@
 		AE82C5FD25A0E45900C79BC2 /* picoppp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = picoppp.h; sourceTree = "<group>"; };
 		AE82C5FE25A0E45900C79BC2 /* picoppp.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = picoppp.cpp; sourceTree = "<group>"; };
 		AE82C5FF25A0E45A00C79BC2 /* dns.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = dns.cpp; sourceTree = "<group>"; };
+		AE82C60425A4D92D00C79BC2 /* naomi_flashrom.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = naomi_flashrom.h; sourceTree = "<group>"; };
+		AE82C60525A4D92D00C79BC2 /* naomi_roms.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = naomi_roms.cpp; sourceTree = "<group>"; };
 		AE8C27332111A31100D4D8F4 /* dsp_interp.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = dsp_interp.cpp; sourceTree = "<group>"; };
 		AE8C273D21122E2500D4D8F4 /* xbrz.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = xbrz.cpp; sourceTree = "<group>"; };
 		AE8C273E21122E2500D4D8F4 /* xbrz.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = xbrz.h; sourceTree = "<group>"; };
@@ -2021,17 +2024,19 @@
 				AE2A2D5021D6846F004B308D /* m1cartridge.h */,
 				AE2A2D5621D68470004B308D /* m4cartridge.cpp */,
 				AE2A2D5421D68470004B308D /* m4cartridge.h */,
+				AE80EDBB2157D4E600F7800F /* naomi_cart.cpp */,
+				AE80EDBC2157D4E600F7800F /* naomi_cart.h */,
 				AEA9492F244CDF50001134C7 /* naomi_flashrom.cpp */,
+				AE82C60425A4D92D00C79BC2 /* naomi_flashrom.h */,
 				AE7BCB6C24460910007285F8 /* naomi_m3comm.cpp */,
 				AE7BCB6D24460910007285F8 /* naomi_m3comm.h */,
+				AE80EDBD2157D4E600F7800F /* naomi_regs.h */,
 				AEA94930244CDF50001134C7 /* naomi_roms_eeprom.h */,
 				AE2A2D5821D68470004B308D /* naomi_roms_input.h */,
+				AE82C60525A4D92D00C79BC2 /* naomi_roms.cpp */,
 				AE2A2D5521D68470004B308D /* naomi_roms.h */,
 				AE80EDB92157D4E600F7800F /* naomi.cpp */,
 				AE80EDBA2157D4E600F7800F /* naomi.h */,
-				AE80EDBB2157D4E600F7800F /* naomi_cart.cpp */,
-				AE80EDBC2157D4E600F7800F /* naomi_cart.h */,
-				AE80EDBD2157D4E600F7800F /* naomi_regs.h */,
 			);
 			path = naomi;
 			sourceTree = "<group>";
@@ -2437,6 +2442,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				AE649C01218C552500EF4A81 /* md5.c in Sources */,
+				AE82C60625A4D92D00C79BC2 /* naomi_roms.cpp in Sources */,
 				AEF25642227C441F00348550 /* vmem32.cpp in Sources */,
 				84B7BF741B72720200F9733F /* descrambl.cpp in Sources */,
 				AE649BF9218C552500EF4A81 /* fixed_intrin_ssse3.c in Sources */,
