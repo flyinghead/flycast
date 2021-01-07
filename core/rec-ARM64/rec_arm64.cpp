@@ -1648,7 +1648,7 @@ private:
 
 		u32 size = op.flags & 0x7f;
 		u32 addr = op.rs1._imm;
-		if (mmu_enabled())
+		if (mmu_enabled() && mmu_is_translated<MMU_TT_DREAD>(addr, size))
 		{
 			if ((addr >> 12) != (block->vaddr >> 12))
 				// When full mmu is on, only consider addresses in the same 4k page
@@ -1870,7 +1870,7 @@ private:
 
 		u32 size = op.flags & 0x7f;
 		u32 addr = op.rs1._imm;
-		if (mmu_enabled())
+		if (mmu_enabled() && mmu_is_translated<MMU_TT_DWRITE>(addr, size))
 		{
 			if ((addr >> 12) != (block->vaddr >> 12) && ((addr >> 12) != ((block->vaddr + block->guest_opcodes * 2 - 1) >> 12)))
 				// When full mmu is on, only consider addresses in the same 4k page
