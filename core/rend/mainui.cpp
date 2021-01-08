@@ -28,6 +28,8 @@ bool mainui_enabled;
 int renderer_changed = -1;	// Signals the renderer thread to switch renderer
 u32 MainFrameCount;
 
+void UpdateInputState();
+
 bool mainui_rend_frame()
 {
 	os_DoEvents();
@@ -43,7 +45,10 @@ bool mainui_rend_frame()
 	else
 	{
 		if (!rend_single_frame(mainui_enabled))
+		{
+			UpdateInputState();
 			return false;
+		}
 	}
 	MainFrameCount++;
 
