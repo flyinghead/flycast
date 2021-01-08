@@ -248,7 +248,7 @@ static void handle_mem_exception(u32 exception_raised, u32 pc)
 			spc = pc - 1;
 		else
 			spc = pc;
-		cycle_counter += CPU_RATIO * 2;	// probably more is needed but no easy way to find out
+		cycle_counter += 2;	// probably more is needed but no easy way to find out
 		longjmp(jmp_env, 1);
 	}
 }
@@ -288,7 +288,7 @@ static void handle_sh4_exception(SH4ThrownException& ex, u32 pc)
 		pc--;
 	}
 	Do_Exception(pc, ex.expEvn, ex.callVect);
-	cycle_counter += CPU_RATIO * 4;	// probably more is needed
+	cycle_counter += 4;	// probably more is needed
 	longjmp(jmp_env, 1);
 }
 
@@ -1035,9 +1035,9 @@ public:
 					{
 						movss(rd, rs1);
 					}
-					if (cpu.has(Xbyak::util::Cpu::tFMA))
-						vfmadd231ss(rd, rs2, rs3);
-					else
+					//if (cpu.has(Xbyak::util::Cpu::tFMA))
+					//	vfmadd231ss(rd, rs2, rs3);
+					//else
 					{
 						movss(xmm0, rs2);
 						mulss(xmm0, rs3);

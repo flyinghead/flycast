@@ -616,7 +616,6 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/hw/sh4/dyna/decoder_opcodes.h
         core/hw/sh4/dyna/driver.cpp
         core/hw/sh4/dyna/ngen.h
-        core/hw/sh4/dyna/rec_config.h
         core/hw/sh4/dyna/regalloc.h
         core/hw/sh4/dyna/shil_canonical.h
         core/hw/sh4/dyna/shil.cpp
