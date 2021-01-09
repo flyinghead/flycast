@@ -354,6 +354,14 @@ bool OITDrawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 		// Final subpass
 		cmdBuffer.nextSubpass(vk::SubpassContents::eInline);
 		GetCurrentDescSet().BindColorInputDescSet(cmdBuffer, (pvrrc.render_passes.used() - 1 - render_pass) % 2);
+
+		if (initialPass && clearNeeded[GetCurrentImage()] && !pvrrc.isRTT)
+		{
+			clearNeeded[GetCurrentImage()] = false;
+			SetScissor(cmdBuffer, viewport);
+			cmdBuffer.clearAttachments(vk::ClearAttachment(vk::ImageAspectFlagBits::eColor, 0, clear_colors[0]),
+					vk::ClearRect(viewport, 0, 1));
+		}
 		SetScissor(cmdBuffer, baseScissor);
 
 		if (!oitBuffers->isFirstFrameAfterInit())
@@ -460,6 +468,8 @@ void OITScreenDrawer::MakeFramebuffers()
 	MakeBuffers(viewport.extent.width, viewport.extent.height);
 	framebuffers.clear();
 	finalColorAttachments.clear();
+	transitionNeeded.clear();
+	clearNeeded.clear();
 	while (finalColorAttachments.size() < GetContext()->GetSwapChainSize())
 	{
 		finalColorAttachments.push_back(std::unique_ptr<FramebufferAttachment>(
@@ -474,7 +484,8 @@ void OITScreenDrawer::MakeFramebuffers()
 		vk::FramebufferCreateInfo createInfo(vk::FramebufferCreateFlags(), screenPipelineManager->GetRenderPass(true, true),
 				ARRAY_SIZE(attachments), attachments, viewport.extent.width, viewport.extent.height, 1);
 		framebuffers.push_back(GetContext()->GetDevice().createFramebufferUnique(createInfo));
-		transitionsNeeded++;
+		transitionNeeded.push_back(true);
+		clearNeeded.push_back(true);
 	}
 }
 
@@ -676,11 +687,10 @@ vk::CommandBuffer OITScreenDrawer::NewFrame()
 	vk::CommandBuffer commandBuffer = commandPool->Allocate();
 	commandBuffer.begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));
 
-	if (transitionsNeeded)
+	if (transitionNeeded[GetCurrentImage()])
 	{
-		for (size_t i = finalColorAttachments.size() - transitionsNeeded; i < finalColorAttachments.size(); i++)
-			setImageLayout(commandBuffer, finalColorAttachments[i]->GetImage(), GetColorFormat(), 1, vk::ImageLayout::eUndefined, vk::ImageLayout::eShaderReadOnlyOptimal);
-		transitionsNeeded = 0;
+		setImageLayout(commandBuffer, finalColorAttachments[GetCurrentImage()]->GetImage(), GetColorFormat(), 1, vk::ImageLayout::eUndefined, vk::ImageLayout::eShaderReadOnlyOptimal);
+		transitionNeeded[GetCurrentImage()] = false;
 	}
 	matrices.CalcMatrices(&pvrrc);
 

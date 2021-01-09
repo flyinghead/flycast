@@ -142,7 +142,7 @@ private:
 	std::vector<vk::UniqueDescriptorSet> perPolyDescSets;
 	std::map<std::pair<u64, u32>, vk::UniqueDescriptorSet> perPolyDescSetsInFlight;
 
-	SamplerManager* samplerManager;
+	SamplerManager* samplerManager = nullptr;
 };
 
 class PipelineManager
@@ -278,7 +278,7 @@ protected:
 	VulkanContext *GetContext() const { return VulkanContext::Instance(); }
 
 	vk::RenderPass renderPass;
-	ShaderManager *shaderManager;
+	ShaderManager *shaderManager = nullptr;
 };
 
 class RttPipelineManager : public PipelineManager
@@ -326,7 +326,7 @@ public:
 
 private:
 	vk::UniqueRenderPass rttRenderPass;
-	bool renderToTextureBuffer;
+	bool renderToTextureBuffer = false;
 };
 
 class OSDPipeline
@@ -391,5 +391,5 @@ private:
 	vk::UniqueDescriptorSet descriptorSet;
 	vk::UniquePipelineLayout pipelineLayout;
 	vk::UniqueDescriptorSetLayout descSetLayout;
-	ShaderManager *shaderManager;
+	ShaderManager *shaderManager = nullptr;
 };

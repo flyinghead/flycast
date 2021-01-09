@@ -55,17 +55,24 @@ public:
 
 	bool Render() override
 	{
-		Drawer *drawer;
-		if (pvrrc.isRTT)
-			drawer = &textureDrawer;
-		else
-			drawer = &screenDrawer;
+		try {
+			Drawer *drawer;
+			if (pvrrc.isRTT)
+				drawer = &textureDrawer;
+			else
+				drawer = &screenDrawer;
 
-		drawer->Draw(fogTexture.get(), paletteTexture.get());
+			drawer->Draw(fogTexture.get(), paletteTexture.get());
 
-		drawer->EndRenderPass();
+			drawer->EndRenderPass();
 
-		return !pvrrc.isRTT;
+			return !pvrrc.isRTT;
+		} catch (const vk::SystemError& e) {
+			// Sometimes happens when resizing the window
+			WARN_LOG(RENDERER, "Vulkan system error %s", e.what());
+
+			return false;
+		}
 	}
 
 	bool Present() override

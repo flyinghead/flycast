@@ -118,6 +118,7 @@ protected:
 	std::array<std::unique_ptr<FramebufferAttachment>, 2> colorAttachments;
 	std::unique_ptr<FramebufferAttachment> depthAttachment;
 	vk::CommandBuffer currentCommandBuffer;
+	std::vector<bool> clearNeeded;
 
 private:
 	void DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sortTriangles, Pass pass,
@@ -166,6 +167,7 @@ public:
 
 		currentScreenScaling = 0;
 		MakeFramebuffers();
+		GetContext()->PresentFrame(vk::ImageView(), viewport.extent);
 	}
 	void Term()
 	{
@@ -191,7 +193,7 @@ public:
 		if (!frameRendered)
 			return false;
 		frameRendered = false;
-		GetContext()->PresentFrame(finalColorAttachments[GetCurrentImage()]->GetImageView(), vk::Offset2D(viewport.extent.width, viewport.extent.height));
+		GetContext()->PresentFrame(finalColorAttachments[GetCurrentImage()]->GetImageView(), viewport.extent);
 		NewImage();
 
 		return true;
@@ -208,7 +210,7 @@ private:
 	std::vector<vk::UniqueFramebuffer> framebuffers;
 	std::unique_ptr<OITPipelineManager> screenPipelineManager;
 	int currentScreenScaling = 0;
-	int transitionsNeeded = 0;
+	std::vector<bool> transitionNeeded;
 	bool frameRendered = false;
 };
 

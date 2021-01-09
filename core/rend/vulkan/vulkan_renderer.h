@@ -65,7 +65,7 @@ public:
 
 	virtual void Term() override
 	{
-		GetContext()->PresentFrame(nullptr, vk::Offset2D());
+		GetContext()->PresentFrame(nullptr, vk::Extent2D());
 		osdBuffer.reset();
 		vjoyTexture.reset();
 		textureCache.Clear();
@@ -147,40 +147,43 @@ public:
 		gui_display_osd();
 		if (!vjoyTexture)
 			return;
-		if (clear_screen)
-		{
-			GetContext()->NewFrame();
-			GetContext()->BeginRenderPass();
+		try {
+			if (clear_screen)
+			{
+				GetContext()->NewFrame();
+				GetContext()->BeginRenderPass();
+			}
+			const float dc2s_scale_h = screen_height / 480.0f;
+			const float sidebarWidth =  (screen_width - dc2s_scale_h * 640.0f) / 2;
+
+			std::vector<OSDVertex> osdVertices = GetOSDVertices();
+			const float x1 = 2.0f / (screen_width / dc2s_scale_h);
+			const float y1 = 2.0f / 480;
+			const float x2 = 1 - 2 * sidebarWidth / screen_width;
+			const float y2 = 1;
+			for (OSDVertex& vtx : osdVertices)
+			{
+				vtx.x = vtx.x * x1 - x2;
+				vtx.y = vtx.y * y1 - y2;
+			}
+
+			const vk::CommandBuffer cmdBuffer = GetContext()->GetCurrentCommandBuffer();
+			cmdBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, osdPipeline.GetPipeline());
+
+			osdPipeline.BindDescriptorSets(cmdBuffer);
+			const vk::Viewport viewport(0, 0, (float)screen_width, (float)screen_height, 0, 1.f);
+			cmdBuffer.setViewport(0, 1, &viewport);
+			const vk::Rect2D scissor({ 0, 0 }, { (u32)screen_width, (u32)screen_height });
+			cmdBuffer.setScissor(0, 1, &scissor);
+			osdBuffer->upload(osdVertices.size() * sizeof(OSDVertex), osdVertices.data());
+			const vk::DeviceSize zero = 0;
+			cmdBuffer.bindVertexBuffers(0, 1, &osdBuffer->buffer.get(), &zero);
+			for (size_t i = 0; i < osdVertices.size(); i += 4)
+				cmdBuffer.draw(4, 1, i, 0);
+			if (clear_screen)
+				GetContext()->EndFrame();
+		} catch (const InvalidVulkanContext& err) {
 		}
-		const float dc2s_scale_h = screen_height / 480.0f;
-		const float sidebarWidth =  (screen_width - dc2s_scale_h * 640.0f) / 2;
-
-		std::vector<OSDVertex> osdVertices = GetOSDVertices();
-		const float x1 = 2.0f / (screen_width / dc2s_scale_h);
-		const float y1 = 2.0f / 480;
-		const float x2 = 1 - 2 * sidebarWidth / screen_width;
-		const float y2 = 1;
-		for (OSDVertex& vtx : osdVertices)
-		{
-			vtx.x = vtx.x * x1 - x2;
-			vtx.y = vtx.y * y1 - y2;
-		}
-
-		const vk::CommandBuffer cmdBuffer = GetContext()->GetCurrentCommandBuffer();
-		cmdBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, osdPipeline.GetPipeline());
-
-		osdPipeline.BindDescriptorSets(cmdBuffer);
-		const vk::Viewport viewport(0, 0, (float)screen_width, (float)screen_height, 0, 1.f);
-		cmdBuffer.setViewport(0, 1, &viewport);
-		const vk::Rect2D scissor({ 0, 0 }, { (u32)screen_width, (u32)screen_height });
-		cmdBuffer.setScissor(0, 1, &scissor);
-		osdBuffer->upload(osdVertices.size() * sizeof(OSDVertex), osdVertices.data());
-		const vk::DeviceSize zero = 0;
-		cmdBuffer.bindVertexBuffers(0, 1, &osdBuffer->buffer.get(), &zero);
-		for (size_t i = 0; i < osdVertices.size(); i += 4)
-			cmdBuffer.draw(4, 1, i, 0);
-		if (clear_screen)
-			GetContext()->EndFrame();
 	}
 
 protected:

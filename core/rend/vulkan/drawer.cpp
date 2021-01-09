@@ -590,6 +590,9 @@ void ScreenDrawer::Init(SamplerManager *samplerManager, ShaderManager *shaderMan
 		framebuffers.clear();
 		colorAttachments.clear();
 		depthAttachment.reset();
+		transitionNeeded.clear();
+		clearNeeded.clear();
+		frameRendered = false;
 	}
 	this->viewport = viewport;
 	if (!depthAttachment)
@@ -600,7 +603,7 @@ void ScreenDrawer::Init(SamplerManager *samplerManager, ShaderManager *shaderMan
 				vk::ImageUsageFlagBits::eDepthStencilAttachment | vk::ImageUsageFlagBits::eTransientAttachment);
 	}
 
-	if (!renderPass)
+	if (!renderPassLoad)
 	{
 		vk::AttachmentDescription attachmentDescriptions[] = {
 				// Color attachment
@@ -629,7 +632,12 @@ void ScreenDrawer::Init(SamplerManager *samplerManager, ShaderManager *shaderMan
 		dependencies.emplace_back(0, VK_SUBPASS_EXTERNAL, vk::PipelineStageFlagBits::eColorAttachmentOutput, vk::PipelineStageFlagBits::eFragmentShader,
 				vk::AccessFlagBits::eColorAttachmentWrite, vk::AccessFlagBits::eShaderRead, vk::DependencyFlagBits::eByRegion);
 
-		renderPass = GetContext()->GetDevice().createRenderPassUnique(vk::RenderPassCreateInfo(vk::RenderPassCreateFlags(),
+		renderPassLoad = GetContext()->GetDevice().createRenderPassUnique(vk::RenderPassCreateInfo(vk::RenderPassCreateFlags(),
+				ARRAY_SIZE(attachmentDescriptions), attachmentDescriptions,
+				ARRAY_SIZE(subpasses), subpasses,
+				dependencies.size(), dependencies.data()));
+		attachmentDescriptions[0].loadOp = vk::AttachmentLoadOp::eClear;
+		renderPassClear = GetContext()->GetDevice().createRenderPassUnique(vk::RenderPassCreateInfo(vk::RenderPassCreateFlags(),
 				ARRAY_SIZE(attachmentDescriptions), attachmentDescriptions,
 				ARRAY_SIZE(subpasses), subpasses,
 				dependencies.size(), dependencies.data()));
@@ -639,6 +647,8 @@ void ScreenDrawer::Init(SamplerManager *samplerManager, ShaderManager *shaderMan
 	{
 		colorAttachments.resize(size);
 		framebuffers.resize(size);
+		transitionNeeded.resize(size);
+		clearNeeded.resize(size);
 	}
 	else
 	{
@@ -653,16 +663,18 @@ void ScreenDrawer::Init(SamplerManager *samplerManager, ShaderManager *shaderMan
 			colorAttachments.back()->Init(viewport.width, viewport.height, GetContext()->GetColorFormat(),
 					vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled);
 			attachments[0] = colorAttachments.back()->GetImageView();
-			vk::FramebufferCreateInfo createInfo(vk::FramebufferCreateFlags(), *renderPass,
+			vk::FramebufferCreateInfo createInfo(vk::FramebufferCreateFlags(), *renderPassLoad,
 					ARRAY_SIZE(attachments), attachments, viewport.width, viewport.height, 1);
 			framebuffers.push_back(GetContext()->GetDevice().createFramebufferUnique(createInfo));
-			transitionsNeeded++;
+			transitionNeeded.push_back(true);
+			clearNeeded.resize(true);
 		}
 	}
+	frameRendered = false;
 
 	if (!screenPipelineManager)
 		screenPipelineManager = std::unique_ptr<PipelineManager>(new PipelineManager());
-	screenPipelineManager->Init(shaderManager, *renderPass);
+	screenPipelineManager->Init(shaderManager, *renderPassLoad);
 	Drawer::Init(samplerManager, screenPipelineManager.get());
 }
 
@@ -674,15 +686,17 @@ vk::CommandBuffer ScreenDrawer::BeginRenderPass()
 	vk::CommandBuffer commandBuffer = commandPool->Allocate();
 	commandBuffer.begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));
 
-	if (transitionsNeeded)
+	if (transitionNeeded[GetCurrentImage()])
 	{
-		for (size_t i = colorAttachments.size() - transitionsNeeded; i < colorAttachments.size(); i++)
-			setImageLayout(commandBuffer, colorAttachments[i]->GetImage(), GetContext()->GetColorFormat(), 1, vk::ImageLayout::eUndefined, vk::ImageLayout::eShaderReadOnlyOptimal);
-		transitionsNeeded = 0;
+		setImageLayout(commandBuffer, colorAttachments[GetCurrentImage()]->GetImage(), GetContext()->GetColorFormat(),
+				1, vk::ImageLayout::eUndefined, vk::ImageLayout::eShaderReadOnlyOptimal);
+		transitionNeeded[GetCurrentImage()] = false;
 	}
 
+	vk::RenderPass renderPass = clearNeeded[GetCurrentImage()] ? *renderPassClear : *renderPassLoad;
+	clearNeeded[GetCurrentImage()] = false;
 	const vk::ClearValue clear_colors[] = { vk::ClearColorValue(std::array<float, 4> { 0.f, 0.f, 0.f, 1.f }), vk::ClearDepthStencilValue { 0.f, 0 } };
-	commandBuffer.beginRenderPass(vk::RenderPassBeginInfo(*renderPass, *framebuffers[GetCurrentImage()],
+	commandBuffer.beginRenderPass(vk::RenderPassBeginInfo(renderPass, *framebuffers[GetCurrentImage()],
 			vk::Rect2D( { 0, 0 }, viewport), 2, clear_colors), vk::SubpassContents::eInline);
 	commandBuffer.setViewport(0, vk::Viewport(0.0f, 0.0f, viewport.width, viewport.height, 1.0f, 0.0f));
 

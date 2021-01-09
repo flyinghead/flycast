@@ -193,14 +193,13 @@ class ScreenDrawer : public Drawer
 {
 public:
 	void Init(SamplerManager *samplerManager, ShaderManager *shaderManager);
-	vk::RenderPass GetRenderPass() const { return *renderPass; }
 	virtual void EndRenderPass() override;
 	bool PresentFrame()
 	{
 		if (!frameRendered)
 			return false;
 		frameRendered = false;
-		GetContext()->PresentFrame(colorAttachments[GetCurrentImage()]->GetImageView(), vk::Offset2D(viewport.width, viewport.height));
+		GetContext()->PresentFrame(colorAttachments[GetCurrentImage()]->GetImageView(), viewport);
 		NewImage();
 
 		return true;
@@ -213,14 +212,16 @@ protected:
 private:
 	std::unique_ptr<PipelineManager> screenPipelineManager;
 
-	vk::UniqueRenderPass renderPass;
+	vk::UniqueRenderPass renderPassLoad;
+	vk::UniqueRenderPass renderPassClear;
 	std::vector<vk::UniqueFramebuffer> framebuffers;
 	std::vector<std::unique_ptr<FramebufferAttachment>> colorAttachments;
 	std::unique_ptr<FramebufferAttachment> depthAttachment;
 	vk::Extent2D viewport;
 	int currentScreenScaling = 0;
 	ShaderManager *shaderManager = nullptr;
-	int transitionsNeeded = 0;
+	std::vector<bool> transitionNeeded;
+	std::vector<bool> clearNeeded;
 	bool frameRendered = false;
 };
 

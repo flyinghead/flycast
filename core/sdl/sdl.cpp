@@ -145,6 +145,17 @@ void input_sdl_handle()
 				for (int i = 0; event.text.text[i] != '\0'; i++)
 					sdl_keyboard->keyboard_character(event.text.text[i]);
 				break;
+#ifdef USE_VULKAN
+			case SDL_WINDOWEVENT:
+				if (event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED
+						|| event.window.event == SDL_WINDOWEVENT_RESTORED
+						|| event.window.event == SDL_WINDOWEVENT_MINIMIZED
+						|| event.window.event == SDL_WINDOWEVENT_MAXIMIZED)
+				{
+                	theVulkanContext.SetResized();
+				}
+				break;
+#endif
 #endif
 			case SDL_JOYBUTTONDOWN:
 			case SDL_JOYBUTTONUP:

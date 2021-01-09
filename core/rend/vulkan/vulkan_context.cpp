@@ -94,7 +94,7 @@ VKAPI_ATTR static VkBool32 VKAPI_CALL debugUtilsMessengerCallback(VkDebugUtilsMe
 		ERROR_LOG(RENDERER, "%s", msg.c_str());
 		break;
 	}
-	return VK_TRUE;
+	return VK_FALSE;
 }
 #else
 #if HOST_CPU == CPU_ARM
@@ -137,7 +137,8 @@ bool VulkanContext::InitInstance(const char** extensions, uint32_t extensions_co
 		{
 			u32 apiVersion;
 			if (vk::enumerateInstanceVersion(&apiVersion) == vk::Result::eSuccess)
-				vulkan11 = VK_VERSION_MINOR(apiVersion) == 1;
+				vulkan11 = VK_VERSION_MAJOR(apiVersion) > 1
+					|| (VK_VERSION_MAJOR(apiVersion) == 1 && VK_VERSION_MINOR(apiVersion) >= 1);
 		}
 		vk::ApplicationInfo applicationInfo("Flycast", 1, "Flycast", 1, vulkan11 ? VK_API_VERSION_1_1 : VK_API_VERSION_1_0);
 		std::vector<const char *> vext;
@@ -410,6 +411,15 @@ bool VulkanContext::InitDevice()
 				deviceExtensions.push_back(VK_KHR_DEDICATED_ALLOCATION_EXTENSION_NAME);
 				dedicatedAllocationSupported = true;
 			}
+#ifdef VK_DEBUG
+			else if (!strcmp(property.extensionName, VK_EXT_DEBUG_MARKER_EXTENSION_NAME)
+					|| !strcmp(property.extensionName, VK_EXT_DEBUG_REPORT_EXTENSION_NAME)
+					|| !strcmp(property.extensionName, VK_EXT_DEBUG_UTILS_EXTENSION_NAME))
+			{
+				NOTICE_LOG(RENDERER, "Debug extension %s available", property.extensionName);
+				deviceExtensions.push_back(property.extensionName);
+			}
+#endif
 		}
 		dedicatedAllocationSupported &= getMemReq2Supported;
 
@@ -482,6 +492,9 @@ bool VulkanContext::InitDevice()
 	{
 		ERROR_LOG(RENDERER, "Vulkan error: %s", err.what());
 	}
+	catch (const InvalidVulkanContext& err)
+	{
+	}
 	catch (...)
 	{
 		ERROR_LOG(RENDERER, "Unknown error");
@@ -501,7 +514,8 @@ void VulkanContext::CreateSwapChain()
 		renderCompleteSemaphores.clear();
 		commandBuffers.clear();
 		commandPools.clear();
-		imageViews.clear();
+		for (auto& img : imageViews)
+			img.reset();
 
 		// get the supported VkFormats
 		std::vector<vk::SurfaceFormatKHR> formats = physicalDevice.getSurfaceFormatsKHR(GetSurface());
@@ -539,6 +553,9 @@ void VulkanContext::CreateSwapChain()
 				swapchainExtent = surfaceCapabilities.currentExtent;
 			}
 			SetWindowSize(swapchainExtent.width, swapchainExtent.height);
+			resized = false;
+			if (swapchainExtent.width == 0 || swapchainExtent.height == 0)
+				throw InvalidVulkanContext();
 
 			// The FIFO present mode is guaranteed by the spec to be supported
 			vk::PresentModeKHR swapchainPresentMode = vk::PresentModeKHR::eFifo;
@@ -598,22 +615,23 @@ void VulkanContext::CreateSwapChain()
 			{
 				DEBUG_LOG(RENDERER, "createSwapchainKHRUnique failed: %s", err.what());
 				if (++tries > 10)
-					throw err;
+					throw InvalidVulkanContext();
 			}
 		}
 		while (!swapChain);
 
 		std::vector<vk::Image> swapChainImages = device->getSwapchainImagesKHR(*swapChain);
 
-		imageViews.reserve(swapChainImages.size());
+		imageViews.resize(swapChainImages.size());
 		commandPools.reserve(swapChainImages.size());
 		commandBuffers.reserve(swapChainImages.size());
 		vk::ComponentMapping componentMapping(vk::ComponentSwizzle::eR, vk::ComponentSwizzle::eG, vk::ComponentSwizzle::eB, vk::ComponentSwizzle::eA);
 		vk::ImageSubresourceRange subResourceRange(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1);
+		u32 imageIdx = 0;
 		for (auto image : swapChainImages)
 		{
 			vk::ImageViewCreateInfo imageViewCreateInfo(vk::ImageViewCreateFlags(), image, vk::ImageViewType::e2D, colorFormat, componentMapping, subResourceRange);
-			imageViews.push_back(device->createImageViewUnique(imageViewCreateInfo));
+			imageViews[imageIdx++] = device->createImageViewUnique(imageViewCreateInfo);
 
 			// create a UniqueCommandPool to allocate a CommandBuffer from
 			commandPools.push_back(device->createCommandPoolUnique(vk::CommandPoolCreateInfo(vk::CommandPoolCreateFlagBits::eTransient, graphicsQueueIndex)));
@@ -663,10 +681,8 @@ void VulkanContext::CreateSwapChain()
 	catch (const vk::SystemError& err)
 	{
 		ERROR_LOG(RENDERER, "Vulkan error: %s", err.what());
-	}
-	catch (...)
-	{
-		ERROR_LOG(RENDERER, "Unknown error");
+		SetWindowSize(0, 0);
+		throw InvalidVulkanContext();
 	}
 }
 
@@ -696,8 +712,9 @@ bool VulkanContext::Init()
 
 #if defined(USE_SDL)
     VkSurfaceKHR surface;
-    if (SDL_Vulkan_CreateSurface((SDL_Window *)window, (VkInstance)*instance, (VkSurfaceKHR *)&this->surface) == 0)
+    if (SDL_Vulkan_CreateSurface((SDL_Window *)window, (VkInstance)*instance, &surface) == 0)
     	return false;
+    this->surface.reset(surface);
 #elif defined(_WIN32)
 	vk::Win32SurfaceCreateInfoKHR createInfo(vk::Win32SurfaceCreateFlagsKHR(), GetModuleHandle(NULL), (HWND)window);
 	surface = instance->createWin32SurfaceKHRUnique(createInfo);
@@ -715,11 +732,14 @@ bool VulkanContext::Init()
 
 void VulkanContext::NewFrame()
 {
-	if (HasSurfaceDimensionChanged())
+	if (resized || HasSurfaceDimensionChanged())
 	{
 		CreateSwapChain();
-		rend_resize(width, height);
+		rend_resize(screen_width, screen_height);
+		lastFrameView = vk::ImageView();
 	}
+	if (!IsValid())
+		throw InvalidVulkanContext();
 	device->acquireNextImageKHR(*swapChain, UINT64_MAX, *imageAcquiredSemaphores[currentSemaphore], nullptr, &currentImage);
 	device->waitForFences(1, &(*drawFences[currentImage]), true, UINT64_MAX);
 	device->resetFences(1, &(*drawFences[currentImage]));
@@ -732,6 +752,8 @@ void VulkanContext::NewFrame()
 
 void VulkanContext::BeginRenderPass()
 {
+	if (!IsValid())
+		return;
 	const vk::ClearValue clear_colors[] = { vk::ClearColorValue(std::array<float, 4>{0.f, 0.f, 0.f, 1.f}), vk::ClearDepthStencilValue{ 0.f, 0 } };
 	vk::CommandBuffer commandBuffer = *commandBuffers[currentImage];
 	commandBuffer.beginRenderPass(vk::RenderPassBeginInfo(*renderPass, *framebuffers[currentImage], vk::Rect2D({0, 0}, {width, height}), 2, clear_colors),
@@ -740,6 +762,8 @@ void VulkanContext::BeginRenderPass()
 
 void VulkanContext::EndFrame(const std::vector<vk::UniqueCommandBuffer> *cmdBuffers)
 {
+	if (!IsValid())
+		return;
 	vk::CommandBuffer commandBuffer = *commandBuffers[currentImage];
 	commandBuffer.endRenderPass();
 	commandBuffer.end();
@@ -756,7 +780,7 @@ void VulkanContext::EndFrame(const std::vector<vk::UniqueCommandBuffer> *cmdBuff
 	renderDone = true;
 }
 
-void VulkanContext::Present()
+void VulkanContext::Present() noexcept
 {
 	if (renderDone)
 	{
@@ -764,18 +788,23 @@ void VulkanContext::Present()
 			DoSwapAutomation();
 			presentQueue.presentKHR(vk::PresentInfoKHR(1, &(*renderCompleteSemaphores[currentSemaphore]), 1, &(*swapChain), &currentImage));
 			currentSemaphore = (currentSemaphore + 1) % imageViews.size();
-		} catch (const vk::OutOfDateKHRError& e) {
-			// Sometimes happens when resizing the window
-			INFO_LOG(RENDERER, "vk::OutOfDateKHRError");
-			CreateSwapChain();
+		} catch (const vk::SystemError& e) {
+			// Happens when resizing the window
+			INFO_LOG(RENDERER, "vk::SystemError %s", e.what());
+			resized = true;
 		}
 		renderDone = false;
 	}
+	if (resized)
+		try {
+			CreateSwapChain();
+		} catch (const InvalidVulkanContext& err) {
+		}
 }
 
-void VulkanContext::DrawFrame(vk::ImageView imageView, vk::Offset2D extent)
+void VulkanContext::DrawFrame(vk::ImageView imageView, vk::Extent2D extent)
 {
-	float marginWidth = ((float)extent.y / extent.x * width / height - 1.f) / 2.f;
+	float marginWidth = ((float)extent.height / extent.width * width / height - 1.f) / 2.f;
 	QuadVertex vtx[] = {
 		{ { -1, -1, 0 }, { 0 - marginWidth, 0 } },
 		{ {  1, -1, 0 }, { 1 + marginWidth, 0 } },
@@ -795,6 +824,31 @@ void VulkanContext::DrawFrame(vk::ImageView imageView, vk::Offset2D extent)
 	quadDrawer->Draw(commandBuffer, imageView, vtx);
 }
 
+void VulkanContext::WaitIdle() const
+{
+	try {
+		graphicsQueue.waitIdle();
+	} catch (const vk::Error &err) {
+		WARN_LOG(RENDERER, "WaitIdle: %s", err.what());
+	}
+}
+
+std::string VulkanContext::GetDriverName() const
+{
+	vk::PhysicalDeviceProperties props;
+	physicalDevice.getProperties(&props);
+	return std::string(props.deviceName);
+}
+
+std::string VulkanContext::GetDriverVersion() const
+{
+	vk::PhysicalDeviceProperties props;
+	physicalDevice.getProperties(&props);
+	return std::to_string(VK_VERSION_MAJOR(props.driverVersion)) + "."
+			+ std::to_string(VK_VERSION_MINOR(props.driverVersion)) + "."
+			+ std::to_string(VK_VERSION_PATCH(props.driverVersion));
+}
+
 const std::vector<vk::UniqueCommandBuffer> *VulkanContext::PrepareVMUs()
 {
 	return vmus->PrepareVMUs(*commandPools[GetCurrentImageIndex()]);
@@ -802,36 +856,42 @@ const std::vector<vk::UniqueCommandBuffer> *VulkanContext::PrepareVMUs()
 
  void VulkanContext::DrawVMUs(float scaling)
 {
-	 vmus->DrawVMUs(vk::Extent2D(width, height), scaling);
+	 if (IsValid())
+		 vmus->DrawVMUs(vk::Extent2D(width, height), scaling);
 }
 
 extern Renderer *renderer;
 
-void VulkanContext::PresentFrame(vk::ImageView imageView, vk::Offset2D extent)
+void VulkanContext::PresentFrame(vk::ImageView imageView, vk::Extent2D extent) noexcept
 {
-	if (imageView)
-	{
-		NewFrame();
-		const std::vector<vk::UniqueCommandBuffer> *vmuCmdBuffers = nullptr;
-		if (settings.rend.FloatVMUs)
-			vmuCmdBuffers = PrepareVMUs();
-
-		BeginRenderPass();
-
-		DrawFrame(imageView, extent);
-		if (settings.rend.FloatVMUs)
-			DrawVMUs(gui_get_scaling());
-		renderer->DrawOSD(false);
-		EndFrame(vmuCmdBuffers);
-	}
-
 	lastFrameView = imageView;
 	lastFrameExtent = extent;
+
+	if (imageView && IsValid())
+	{
+		try {
+			NewFrame();
+			const std::vector<vk::UniqueCommandBuffer> *vmuCmdBuffers = nullptr;
+			if (settings.rend.FloatVMUs)
+				vmuCmdBuffers = PrepareVMUs();
+
+			BeginRenderPass();
+
+			if (lastFrameView) // Might have been nullified if swap chain recreated
+				DrawFrame(imageView, extent);
+
+			if (settings.rend.FloatVMUs)
+				DrawVMUs(gui_get_scaling());
+			renderer->DrawOSD(false);
+			EndFrame(vmuCmdBuffers);
+		} catch (const InvalidVulkanContext& err) {
+		}
+	}
 }
 
 void VulkanContext::PresentLastFrame()
 {
-	if (lastFrameView)
+	if (lastFrameView && IsValid())
 		DrawFrame(lastFrameView, lastFrameExtent);
 }
 
@@ -840,7 +900,7 @@ void VulkanContext::Term()
 	lastFrameView = nullptr;
 	if (!device)
 		return;
-	device->waitIdle();
+	WaitIdle();
 	ImGui_ImplVulkan_Shutdown();
 	gui_term();
 	if (device && pipelineCache)
@@ -875,6 +935,8 @@ void VulkanContext::Term()
 	allocator.Term();
 #ifndef USE_SDL
 	surface.reset();
+#else
+	::vkDestroySurfaceKHR(*instance, surface.release(), nullptr);
 #endif
 	pipelineCache.reset();
 	device.reset();
@@ -1011,3 +1073,46 @@ void VulkanContext::DoSwapAutomation()
 	}
 #endif
 }
+
+bool VulkanContext::HasSurfaceDimensionChanged() const
+{
+	vk::SurfaceCapabilitiesKHR surfaceCapabilities =
+			physicalDevice.getSurfaceCapabilitiesKHR(GetSurface());
+	VkExtent2D swapchainExtent;
+	if (surfaceCapabilities.currentExtent.width == std::numeric_limits < uint32_t > ::max())
+	{
+		// If the surface size is undefined, the size is set to the size of the images requested.
+		swapchainExtent.width = std::min(
+				std::max(width, surfaceCapabilities.minImageExtent.width),
+				surfaceCapabilities.maxImageExtent.width);
+		swapchainExtent.height = std::min(
+				std::max(height, surfaceCapabilities.minImageExtent.height),
+				surfaceCapabilities.maxImageExtent.height);
+	}
+	else
+	{
+		// If the surface size is defined, the swap chain size must match
+		swapchainExtent = surfaceCapabilities.currentExtent;
+	}
+	return width != swapchainExtent.width || height != swapchainExtent.height;
+}
+
+void VulkanContext::SetWindowSize(u32 width, u32 height)
+{
+	if (width != this->width || height != this->height)
+	{
+		this->width = width;
+		this->height = height;
+		// When the window is minimized, it can happen that the max surface dimension is 0,0
+		// In this case, the context becomes invalid but we keep the previous
+		// dimensions to not confuse the renderer and imgui
+		if (width != 0)
+			screen_width = width;
+
+		if (height != 0)
+			screen_height = height;
+
+		SetResized();
+	}
+}
+

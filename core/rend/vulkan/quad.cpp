@@ -164,6 +164,8 @@ void QuadDrawer::Init(QuadPipeline *pipeline)
 	this->pipeline = pipeline;
 	buffer = std::unique_ptr<QuadBuffer>(new QuadBuffer());
 	descriptorSets.resize(VulkanContext::Instance()->GetSwapChainSize());
+	for (auto& descSet : descriptorSets)
+		descSet.reset();
 }
 
 void QuadDrawer::Draw(vk::CommandBuffer commandBuffer, vk::ImageView imageView, QuadVertex vertices[], bool nearestFilter)
