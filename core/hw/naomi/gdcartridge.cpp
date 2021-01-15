@@ -499,7 +499,7 @@ void GDCartridge::device_start()
 			gdrom = OpenDisc((gdrom_path + ".gdi").c_str());
 		if (gdrom_parent_name != nullptr && gdrom == nullptr)
 		{
-			std::string gdrom_parent_path = get_game_basename() + "/" + gdrom_parent_name;
+			std::string gdrom_parent_path = get_game_dir() + "/" + gdrom_parent_name + "/" + gdrom_name;
 			gdrom = OpenDisc((gdrom_parent_path + ".chd").c_str());
 			if (gdrom == nullptr)
 				gdrom = OpenDisc((gdrom_parent_path + ".gdi").c_str());
