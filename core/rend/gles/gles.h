@@ -226,7 +226,7 @@ public:
 	virtual bool Delete() override;
 };
 
-class TextureCache final : public BaseTextureCache<TextureCacheData>
+class GlTextureCache final : public BaseTextureCache<TextureCacheData>
 {
 public:
 	void Cleanup()
@@ -243,7 +243,7 @@ public:
 private:
 	std::vector<GLuint> texturesToDelete;
 };
-extern TextureCache TexCache;
+extern GlTextureCache TexCache;
 
 extern const u32 Zfunction[8];
 extern const u32 SrcBlendGL[], DstBlendGL[];

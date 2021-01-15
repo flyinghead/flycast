@@ -6,7 +6,7 @@
 #include <cstdio>
 #include <cstdlib>
 
-TextureCache TexCache;
+GlTextureCache TexCache;
 
 void TextureCacheData::UploadToGPU(int width, int height, u8 *temp_tex_buffer, bool mipmapped, bool mipmapsIncluded)
 {
