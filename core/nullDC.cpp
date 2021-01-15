@@ -1301,5 +1301,6 @@ void dc_cancel_load()
 
 void dc_get_load_status()
 {
-	loading_done.get();
+	if (loading_done.valid())
+		loading_done.get();
 }
