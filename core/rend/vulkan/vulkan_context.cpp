@@ -554,7 +554,7 @@ void VulkanContext::CreateSwapChain()
 			}
 			SetWindowSize(swapchainExtent.width, swapchainExtent.height);
 			resized = false;
-			if (swapchainExtent.width == 0 || swapchainExtent.height == 0)
+			if (!IsValid())
 				throw InvalidVulkanContext();
 
 			// The FIFO present mode is guaranteed by the spec to be supported

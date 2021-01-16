@@ -49,10 +49,13 @@ TileClipping BaseDrawer::SetTileClip(u32 val, vk::Rect2D& clipRect)
 {
 	int rect[4] = {};
 	TileClipping clipmode = ::GetTileClip(val, matrices.GetViewportMatrix(), rect);
-	clipRect.offset.x = rect[0];
-	clipRect.offset.y = rect[1];
-	clipRect.extent.width = rect[2];
-	clipRect.extent.height = rect[3];
+	if (clipmode != TileClipping::Off)
+	{
+		clipRect.offset.x = rect[0];
+		clipRect.offset.y = rect[1];
+		clipRect.extent.width = rect[2];
+		clipRect.extent.height = rect[3];
+	}
 
 	return clipmode;
 }
@@ -96,11 +99,8 @@ void BaseDrawer::SetBaseScissor()
 	}
 	else
 	{
-		glm::vec4 clip_dim(screen_width, screen_height, 0, 0);
-		clip_dim = matrices.GetScissorMatrix() * clip_dim;
-		baseScissor = vk::Rect2D(vk::Offset2D(0, 0), vk::Extent2D(lroundf(clip_dim[0]), lroundf(clip_dim[1])));
+		baseScissor = { 0, 0, (u32)screen_width, (u32)screen_height };
 	}
-	currentScissor = { 0, 0, 0, 0 };
 }
 
 // Vulkan uses the color values of the first vertex for flat shaded triangle strips.
@@ -667,7 +667,7 @@ void ScreenDrawer::Init(SamplerManager *samplerManager, ShaderManager *shaderMan
 					ARRAY_SIZE(attachments), attachments, viewport.width, viewport.height, 1);
 			framebuffers.push_back(GetContext()->GetDevice().createFramebufferUnique(createInfo));
 			transitionNeeded.push_back(true);
-			clearNeeded.resize(true);
+			clearNeeded.push_back(true);
 		}
 	}
 	frameRendered = false;
