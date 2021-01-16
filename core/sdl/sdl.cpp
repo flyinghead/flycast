@@ -271,7 +271,7 @@ static void get_window_state()
 		SDL_GetWindowSize(window, &window_width, &window_height);
 }
 
-void sdl_recreate_window(u32 flags)
+bool sdl_recreate_window(u32 flags)
 {
 	int x = SDL_WINDOWPOS_UNDEFINED;
 	int y = SDL_WINDOWPOS_UNDEFINED;
@@ -295,8 +295,11 @@ void sdl_recreate_window(u32 flags)
 		flags |= SDL_WINDOW_MAXIMIZED;
 #endif
 	window = SDL_CreateWindow("Flycast", x, y, window_width, window_height, flags);
-	if (!window)
-		die("error creating SDL window");
+	if (window == nullptr)
+	{
+		ERROR_LOG(COMMON, "Window creation failed: %s", SDL_GetError());
+		return false;
+	}
 
 #ifndef _WIN32
 	// Set the window icon
@@ -305,7 +308,7 @@ void sdl_recreate_window(u32 flags)
 		pixels[i] = reicast_icon[i + 2];
 	SDL_Surface *surface = SDL_CreateRGBSurfaceFrom(pixels, 48, 48, 32, 4 * 48, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000);
 	if (surface == NULL)
-	  INFO_LOG(COMMON, "Creating surface failed: %s", SDL_GetError());
+	  INFO_LOG(COMMON, "Creating icon surface failed: %s", SDL_GetError());
 	else
 	{
 		SDL_SetWindowIcon(window, surface);
@@ -317,6 +320,8 @@ void sdl_recreate_window(u32 flags)
 	theVulkanContext.SetWindow(window, nullptr);
 #endif
 	theGLContext.SetWindow(window);
+
+	return true;
 }
 
 void sdl_window_create()

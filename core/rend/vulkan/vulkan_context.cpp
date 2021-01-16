@@ -691,7 +691,8 @@ bool VulkanContext::Init()
 	std::vector<const char *> extensions;
 	extensions.push_back(VK_KHR_SURFACE_EXTENSION_NAME);
 #if defined(USE_SDL)
-	sdl_recreate_window(SDL_WINDOW_VULKAN);
+	if (!sdl_recreate_window(SDL_WINDOW_VULKAN))
+		return false;
     uint32_t extensionsCount = 0;
     SDL_Vulkan_GetInstanceExtensions((SDL_Window *)window, &extensionsCount, NULL);
     extensions.resize(extensionsCount + 1);

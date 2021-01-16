@@ -2,12 +2,12 @@
 #include <SDL2/SDL.h>
 #include "types.h"
 
-extern void input_sdl_init();
-extern void input_sdl_handle();
-extern void sdl_window_create();
-extern void sdl_window_set_text(const char* text);
-extern void sdl_window_destroy();
-extern void sdl_recreate_window(u32 flags);
+void input_sdl_init();
+void input_sdl_handle();
+void sdl_window_create();
+void sdl_window_set_text(const char* text);
+void sdl_window_destroy();
+bool sdl_recreate_window(u32 flags);
 
 #ifdef _WIN32
 #include <windows.h>
