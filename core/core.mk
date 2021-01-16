@@ -1,9 +1,4 @@
-#LOCAL_PATH:=
 RZDCY_FILES :=
-
-#MFLAGS	:= -marm -march=armv7-a -mtune=cortex-a8 -mfpu=vfpv3-d16 -mfloat-abi=softfp
-#ASFLAGS	:= -march=armv7-a -mfpu=vfp-d16 -mfloat-abi=softfp
-#LDFLAGS	:= -Wl,-Map,$(notdir $@).map,--gc-sections -Wl,-O3 -Wl,--sort-common
 
 RZDCY_SRC_DIR ?= $(call my-dir)
 VERSION_HEADER := $(RZDCY_SRC_DIR)/version.h
@@ -85,7 +80,6 @@ RZDCY_CFLAGS	:= \
 	-frename-registers -fsingle-precision-constant -ffast-math \
 	-ftree-vectorize -fomit-frame-pointer
 	RZDCY_CFLAGS += -march=armv7-a -mtune=cortex-a8 -mfpu=neon
-	RZDCY_CFLAGS += -DTARGET_LINUX_ARMELv7
 else
 	ifdef FOR_ANDROID
 RZDCY_CFLAGS	:= \
@@ -96,17 +90,9 @@ RZDCY_CFLAGS	:= \
 
 		ifndef NOT_ARM
 			RZDCY_CFLAGS += -march=armv7-a -mtune=cortex-a9 -mfpu=vfpv3-d16
-			RZDCY_CFLAGS += -DTARGET_LINUX_ARMELv7
 		else
 			ifdef ISARM64
 				RZDCY_CFLAGS += -march=armv8-a
-				RZDCY_CFLAGS += -DTARGET_LINUX_ARMv8
-			else
-				ifdef ISMIPS
-					RZDCY_CFLAGS += -DTARGET_LINUX_MIPS
-				else
-					RZDCY_CFLAGS += -DTARGET_LINUX_x86
-				endif
 			endif
 		endif
 	else

@@ -120,7 +120,7 @@ endif
     MFLAGS += -m32
     ASFLAGS += --32
     LDFLAGS += -m32
-    CFLAGS += -m32 -D TARGET_LINUX_x86 -D TARGET_NO_AREC -fno-builtin-sqrtf
+    CFLAGS += -m32 -DTARGET_NO_AREC -fno-builtin-sqrtf
     CXXFLAGS += -fexceptions
 
 # Generic 64 bit x86 (a.k.a. x64/AMD64/x86_64/Intel64/EM64T)
@@ -131,7 +131,7 @@ ifndef USE_SDL
     USE_X11 := 1
 endif
 	USE_VULKAN ?= 1
-    CFLAGS += -D TARGET_LINUX_x64 -fno-builtin-sqrtf
+    CFLAGS += -fno-builtin-sqrtf
     CXXFLAGS += -fexceptions
     LDFLAGS := -no-pie
 
@@ -143,7 +143,7 @@ ifndef USE_SDL
 endif
     ARM64_REC := 1
     ISARM64 := 1
-    CFLAGS += -D TARGET_LINUX_ARMv8 -fno-builtin-sqrtf
+    CFLAGS += -fno-builtin-sqrtf
     CXXFLAGS += -fexceptions
 
 # Generic 32 bit ARMhf (a.k.a. ARMv7h)
@@ -162,7 +162,7 @@ else ifneq (,$(findstring lincpp,$(platform)))
     CPP_REC := 1
     NOT_ARM := 1
     USE_X11 := 1
-    CFLAGS += -D TARGET_LINUX_x64 -D TARGET_NO_JIT
+    CFLAGS += -D TARGET_NO_JIT
     CXXFLAGS += -fexceptions -std=gnu++11
 
 # Raspberry Pi 2
@@ -238,6 +238,20 @@ else ifneq (,$(findstring odroid,$(platform)))
 
         endif
     endif
+
+# ROCKCHIP
+else ifneq (,$(findstring rockchip,$(platform)))
+    MFLAGS += -marm -march=armv8-a+crc -mfpu=neon -mfloat-abi=hard -funroll-loops -mtune=cortex-a53
+    ASFLAGS += -march=armv8-a+crc -mfpu=neon -mfloat-abi=hard
+    CXXFLAGS += -fexceptions
+    CFLAGS += -fsingle-precision-constant -DMESA_EGL_NO_X11_HEADERS=1 -DEGL_NO_X11=1 -fpermissive -fno-builtin-sqrtf
+    INCS +=  -I/opt/vc/include/ -I/opt/vc/include/libdrm
+    LIBS += -ldrm -lGLESv2
+    USE_GLES := 1
+    USE_EVDEV := 1
+    USE_UDEV := 1
+    FOR_LINUX := 1
+    ISARM64 := 1
 
 # GCW Zero
 else ifneq (,$(findstring gcwz,$(platform)))
