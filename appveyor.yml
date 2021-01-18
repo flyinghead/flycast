@@ -73,7 +73,7 @@ for:
 
           mkdir artifacts
 
-          brew install sdl2
+          brew install --build-from-source ../../core/deps/SDL2-2.0.12/sdl2.rb
 
     build_script:
       - sh: >-
