@@ -437,6 +437,7 @@
 		F25999DE25157207009022A2 /* libopenlibm.3.dylib in Embed Libraries */ = {isa = PBXBuildFile; fileRef = F25999DC251571F0009022A2 /* libopenlibm.3.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		F25B66A5250947E800959C8F /* gdxsv.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F25B669C250947E800959C8F /* gdxsv.cpp */; };
 		F25B66A6250947E800959C8F /* gdxsv_network.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F25B66A1250947E800959C8F /* gdxsv_network.cpp */; };
+		F2E7B22825B61E8100BAF171 /* GameController.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F2E7B22725B61E8100BAF171 /* GameController.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -1383,6 +1384,7 @@
 		F25B669F250947E800959C8F /* gdx_queue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = gdx_queue.h; sourceTree = "<group>"; };
 		F25B66A1250947E800959C8F /* gdxsv_network.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = gdxsv_network.cpp; sourceTree = "<group>"; };
 		F25B66A2250947E800959C8F /* gdxsv_patch.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = gdxsv_patch.h; sourceTree = "<group>"; };
+		F2E7B22725B61E8100BAF171 /* GameController.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GameController.framework; path = System/Library/Frameworks/GameController.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -1397,6 +1399,7 @@
 				AE7BCB5C243DDCAE007285F8 /* ForceFeedback.framework in Frameworks */,
 				AE7BCB5E243DDCD1007285F8 /* AudioToolbox.framework in Frameworks */,
 				AE7BCB60243DDD49007285F8 /* libiconv.2.tbd in Frameworks */,
+				F2E7B22825B61E8100BAF171 /* GameController.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2718,6 +2721,7 @@
 		AED73DC52303E57C00ECDB64 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				F2E7B22725B61E8100BAF171 /* GameController.framework */,
 				AE7BCB61243DDD92007285F8 /* Carbon.framework */,
 				AE7BCB5F243DDD3A007285F8 /* libiconv.2.tbd */,
 				AE7BCB5D243DDCD1007285F8 /* AudioToolbox.framework */,
