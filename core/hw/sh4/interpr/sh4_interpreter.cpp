@@ -38,7 +38,8 @@ static u16 ReadNexOp()
 
 void Sh4_int_Run()
 {
-	sh4_int_bCpuRun=true;
+	sh4_int_bCpuRun = true;
+	RestoreHostRoundingMode();
 
 	l = SH4_TIMESLICE;
 

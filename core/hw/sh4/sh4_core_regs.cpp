@@ -42,11 +42,11 @@ bool UpdateSR()
 	return SRdecode();
 }
 
-//make host and sh4 float status registers match ;)
-u32 old_rm=0xFF;
-u32 old_dn=0xFF;
+// make host and sh4 rounding and denormal modes match
+static u32 old_rm = 0xFF;
+static u32 old_dn = 0xFF;
 
-static void SetFloatStatusReg()
+static void setHostRoundingMode()
 {
 	if ((old_rm!=fpscr.RM) || (old_dn!=fpscr.DN))
 	{
@@ -131,9 +131,15 @@ void UpdateFPSCR()
 		ChangeFP(); // FPU bank change
 
 	old_fpscr=fpscr;
-	SetFloatStatusReg(); // Ensure they are in sync :)
+	setHostRoundingMode();
 }
 
+void RestoreHostRoundingMode()
+{
+	old_rm = 0xFF;
+	old_dn = 0xFF;
+	setHostRoundingMode();
+}
 
 static u32* Sh4_int_GetRegisterPtr(Sh4RegType reg)
 {
