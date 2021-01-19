@@ -211,7 +211,7 @@ extern s32 mo_y_phy;
 extern s32 mo_x_prev;
 extern s32 mo_y_prev;
 
-static inline void SetMousePosition(int x, int y, int width, int height)
+static inline void SetMousePosition(int x, int y, int width, int height, int xrel = 0, int yrel = 0)
 {
 	mo_x_phy = x;
 	mo_y_phy = y;
@@ -222,6 +222,8 @@ static inline void SetMousePosition(int x, int y, int width, int height)
 		y = x;
 		x = height - t;
 		std::swap(width, height);
+		std::swap(xrel, yrel);
+		xrel = -xrel;
 	}
 	float fx, fy;
 	if ((float)width / height >= 640.f / 480.f)
@@ -241,7 +243,12 @@ static inline void SetMousePosition(int x, int y, int width, int height)
 	mo_x_abs = (int)roundf(fx);
 	mo_y_abs = (int)roundf(fy);
 
-	if (mo_x_prev != -1)
+	if (xrel != 0 || yrel != 0)
+	{
+		mo_x_delta += (f32)xrel * settings.input.MouseSensitivity / 100.f;
+		mo_y_delta += (f32)yrel * settings.input.MouseSensitivity / 100.f;
+	}
+	else if (mo_x_prev != -1)
 	{
 		mo_x_delta += (f32)(x - mo_x_prev) * settings.input.MouseSensitivity / 100.f;
 		mo_y_delta += (f32)(y - mo_y_prev) * settings.input.MouseSensitivity / 100.f;

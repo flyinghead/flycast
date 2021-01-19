@@ -35,6 +35,8 @@ static bool window_fullscreen;
 static bool window_maximized;
 static int window_width = WINDOW_WIDTH;
 static int window_height = WINDOW_HEIGHT;
+static bool gameRunning;
+static bool mouseCaptured;
 
 static void sdl_open_joystick(int index)
 {
@@ -54,6 +56,41 @@ static void sdl_close_joystick(SDL_JoystickID instance)
 	std::shared_ptr<SDLGamepadDevice> gamepad = SDLGamepadDevice::GetSDLGamepad(instance);
 	if (gamepad != NULL)
 		gamepad->close();
+}
+
+static void captureMouse(bool capture)
+{
+	if (window == nullptr || !gameRunning)
+		return;
+	if (!capture)
+	{
+		SDL_SetRelativeMouseMode(SDL_FALSE);
+		SDL_SetWindowTitle(window, "Flycast");
+		mouseCaptured = false;
+	}
+	else if (SDL_SetRelativeMouseMode(SDL_TRUE) == 0)
+	{
+		SDL_SetWindowTitle(window, "Flycast - mouse capture");
+		mouseCaptured = true;
+	}
+}
+
+static void emuEventCallback(Event event)
+{
+	switch (event)
+	{
+	case Event::Pause:
+		gameRunning = false;
+		SDL_SetRelativeMouseMode(SDL_FALSE);
+		SDL_SetWindowTitle(window, "Flycast");
+		break;
+	case Event::Resume:
+		gameRunning = true;
+		captureMouse(mouseCaptured);
+		break;
+	default:
+		break;
+	}
 }
 
 void input_sdl_init()
@@ -94,15 +131,18 @@ void input_sdl_init()
 	GamepadDevice::Register(sdl_kb_gamepad);
 	sdl_mouse_gamepad = std::make_shared<SDLMouseGamepadDevice>(0);
 	GamepadDevice::Register(sdl_mouse_gamepad);
+
+	EventManager::listen(Event::Pause, emuEventCallback);
+	EventManager::listen(Event::Resume, emuEventCallback);
 #endif
 }
 
-static void set_mouse_position(int x, int y)
+static void set_mouse_position(int x, int y, int xrel, int yrel)
 {
 	int width, height;
 	SDL_GetWindowSize(window, &width, &height);
 	if (width != 0 && height != 0)
-		SetMousePosition(x, y, width, height);
+		SetMousePosition(x, y, width, height, xrel, yrel);
 }
 
 void input_sdl_handle()
@@ -129,6 +169,10 @@ void input_sdl_handle()
 					else
 						SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN_DESKTOP);
 					window_fullscreen = !window_fullscreen;
+				}
+				else if (event.type == SDL_KEYDOWN && (event.key.keysym.mod & KMOD_LALT) && (event.key.keysym.mod & KMOD_LCTRL))
+				{
+					captureMouse(!mouseCaptured);
 				}
 				else
 				{
@@ -214,7 +258,7 @@ void input_sdl_handle()
 
 #if !defined(__APPLE__)
 			case SDL_MOUSEMOTION:
-				set_mouse_position(event.motion.x, event.motion.y);
+				set_mouse_position(event.motion.x, event.motion.y, event.motion.xrel, event.motion.yrel);
 				SET_FLAG(mo_buttons, 1 << 2, event.motion.state & SDL_BUTTON_LMASK);
 				SET_FLAG(mo_buttons, 1 << 1, event.motion.state & SDL_BUTTON_RMASK);
 				SET_FLAG(mo_buttons, 1 << 3, event.motion.state & SDL_BUTTON_MMASK);
@@ -222,7 +266,7 @@ void input_sdl_handle()
 
 			case SDL_MOUSEBUTTONDOWN:
 			case SDL_MOUSEBUTTONUP:
-				set_mouse_position(event.button.x, event.button.y);
+				set_mouse_position(event.button.x, event.button.y, 0, 0);
 				switch (event.button.button)
 				{
 				case SDL_BUTTON_LEFT:
@@ -255,10 +299,8 @@ void input_sdl_handle()
 
 void sdl_window_set_text(const char* text)
 {
-	if (window)
-	{
-		SDL_SetWindowTitle(window, text);    // *TODO*  Set Icon also...
-	}
+	if (window != nullptr)
+		SDL_SetWindowTitle(window, text);
 }
 
 #if !defined(__APPLE__)

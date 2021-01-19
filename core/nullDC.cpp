@@ -403,6 +403,8 @@ void dc_reset(bool hard)
 	mem_Reset(hard);
 
 	sh4_cpu.Reset(hard);
+	if (hard)
+		EventManager::event(Event::Terminate);
 }
 
 static bool reset_requested;
@@ -642,6 +644,7 @@ static void dc_start_game(const char *path)
 		}
 	}
 	fast_forward_mode = false;
+	EventManager::event(Event::Start);
 }
 
 bool dc_is_running()
@@ -702,6 +705,7 @@ void dc_stop()
 	sh4_cpu.Stop();
 	rend_cancel_emu_wait();
 	emu_thread.WaitToEnd();
+	EventManager::event(Event::Pause);
 }
 
 // Called on the emulator thread for soft reset
@@ -1075,6 +1079,7 @@ void dc_resume()
 {
 	SetMemoryHandlers();
 	game_started = true;
+	EventManager::event(Event::Resume);
 	if (!emu_thread.thread.joinable())
 		emu_thread.Start();
 }
@@ -1268,6 +1273,7 @@ void dc_loadstate()
     CalculateSync();
 
     cleanup_serialize(data) ;
+	EventManager::event(Event::LoadState);
     INFO_LOG(SAVESTATE, "Loaded state from %s size %d", filename.c_str(), total_size) ;
 }
 
@@ -1303,4 +1309,37 @@ void dc_get_load_status()
 {
 	if (loading_done.valid())
 		loading_done.get();
+}
+
+EventManager EventManager::Instance;
+
+void EventManager::registerEvent(Event event, Callback callback)
+{
+	unregisterEvent(event, callback);
+	auto it = callbacks.find(event);
+	if (it != callbacks.end())
+		it->second.push_back(callback);
+	else
+		callbacks.insert({ event, { callback } });
+}
+
+void EventManager::unregisterEvent(Event event, Callback callback) {
+	auto it = callbacks.find(event);
+	if (it == callbacks.end())
+		return;
+
+	auto it2 = std::find(it->second.begin(), it->second.end(), callback);
+	if (it2 == it->second.end())
+		return;
+
+	it->second.erase(it2);
+}
+
+void EventManager::broadcastEvent(Event event) {
+	auto it = callbacks.find(event);
+	if (it == callbacks.end())
+		return;
+
+	for (auto& callback : it->second)
+		callback(event);
 }
