@@ -286,10 +286,6 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/deps/chdr/huffman.h)
 
 target_sources(${PROJECT_NAME} PRIVATE
-        core/deps/coreio/coreio.cpp
-        core/deps/coreio/coreio.h)
-
-target_sources(${PROJECT_NAME} PRIVATE
         core/deps/crypto/md5.cpp
         core/deps/crypto/md5.h
         core/deps/crypto/sha1.cpp

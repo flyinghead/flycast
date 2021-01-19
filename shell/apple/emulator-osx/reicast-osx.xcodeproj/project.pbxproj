@@ -15,7 +15,6 @@
 		84B7BEAF1B72720200F9733F /* cfg.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 84B7BD141B72720100F9733F /* cfg.cpp */; };
 		84B7BEB01B72720200F9733F /* cl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 84B7BD161B72720100F9733F /* cl.cpp */; };
 		84B7BEB11B72720200F9733F /* cdipsr.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 84B7BD191B72720100F9733F /* cdipsr.cpp */; };
-		84B7BEB31B72720200F9733F /* coreio.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 84B7BD201B72720100F9733F /* coreio.cpp */; };
 		84B7BEB41B72720200F9733F /* md5.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 84B7BD231B72720100F9733F /* md5.cpp */; };
 		84B7BEB51B72720200F9733F /* sha1.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 84B7BD251B72720100F9733F /* sha1.cpp */; };
 		84B7BEB61B72720200F9733F /* sha256.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 84B7BD271B72720100F9733F /* sha256.cpp */; };
@@ -407,8 +406,6 @@
 		84B7BD1A1B72720100F9733F /* cdipsr.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = cdipsr.h; sourceTree = "<group>"; };
 		84B7BD1C1B72720100F9733F /* chd.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = chd.h; sourceTree = "<group>"; };
 		84B7BD1E1B72720100F9733F /* coretypes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = coretypes.h; sourceTree = "<group>"; };
-		84B7BD201B72720100F9733F /* coreio.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = coreio.cpp; sourceTree = "<group>"; };
-		84B7BD211B72720100F9733F /* coreio.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = coreio.h; sourceTree = "<group>"; };
 		84B7BD231B72720100F9733F /* md5.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = md5.cpp; sourceTree = "<group>"; };
 		84B7BD241B72720100F9733F /* md5.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = md5.h; sourceTree = "<group>"; };
 		84B7BD251B72720100F9733F /* sha1.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = sha1.cpp; sourceTree = "<group>"; };
@@ -1284,7 +1281,6 @@
 			children = (
 				84B7BD181B72720100F9733F /* chdpsr */,
 				84B7BD1B1B72720100F9733F /* chdr */,
-				84B7BD1F1B72720100F9733F /* coreio */,
 				84B7BD221B72720100F9733F /* crypto */,
 				AE649BB7218C552500EF4A81 /* flac */,
 				AEE6276C220D7B7E00EC7E89 /* imgui */,
@@ -1327,15 +1323,6 @@
 				84B7BD1E1B72720100F9733F /* coretypes.h */,
 			);
 			path = chdr;
-			sourceTree = "<group>";
-		};
-		84B7BD1F1B72720100F9733F /* coreio */ = {
-			isa = PBXGroup;
-			children = (
-				84B7BD201B72720100F9733F /* coreio.cpp */,
-				84B7BD211B72720100F9733F /* coreio.h */,
-			);
-			path = coreio;
 			sourceTree = "<group>";
 		};
 		84B7BD221B72720100F9733F /* crypto */ = {
@@ -2712,7 +2699,6 @@
 				AE82C6A825B64AE200C79BC2 /* zip_name_locate.c in Sources */,
 				AE82C69525B64AE200C79BC2 /* zip_fclose.c in Sources */,
 				AEF256522294060400348550 /* archive.cpp in Sources */,
-				84B7BEB31B72720200F9733F /* coreio.cpp in Sources */,
 				84B7BF281B72720200F9733F /* dsp.cpp in Sources */,
 				AE7B907F235A53D800145C6A /* switcher.cpp in Sources */,
 				AE82C6D825B64AE200C79BC2 /* zip_fseek.c in Sources */,

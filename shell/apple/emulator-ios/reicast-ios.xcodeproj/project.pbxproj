@@ -26,7 +26,6 @@
 		84967C9F1B8F492C005F1140 /* pngwtran.c in Sources */ = {isa = PBXBuildFile; fileRef = 84967C8D1B8F492C005F1140 /* pngwtran.c */; };
 		84967CA01B8F492C005F1140 /* pngwutil.c in Sources */ = {isa = PBXBuildFile; fileRef = 84967C8E1B8F492C005F1140 /* pngwutil.c */; };
 		8497BCBF1A41A0E900EFB9ED /* common.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8497BCBC1A41A0E900EFB9ED /* common.cpp */; };
-		8497BCCF1A41BFD800EFB9ED /* coreio.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8497BCCD1A41BFD800EFB9ED /* coreio.cpp */; };
 		849C0D621B072C07008BAAA4 /* context.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 849C0D601B072C07008BAAA4 /* context.cpp */; };
 		849C0D661B072CF8008BAAA4 /* reios.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 849C0D641B072CF8008BAAA4 /* reios.cpp */; };
 		849C0D6D1B072D14008BAAA4 /* descrambl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 849C0D671B072D14008BAAA4 /* descrambl.cpp */; };
@@ -261,8 +260,6 @@
 		84967C8D1B8F492C005F1140 /* pngwtran.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pngwtran.c; sourceTree = "<group>"; };
 		84967C8E1B8F492C005F1140 /* pngwutil.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pngwutil.c; sourceTree = "<group>"; };
 		8497BCBC1A41A0E900EFB9ED /* common.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = common.cpp; sourceTree = "<group>"; };
-		8497BCCD1A41BFD800EFB9ED /* coreio.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = coreio.cpp; sourceTree = "<group>"; };
-		8497BCCE1A41BFD800EFB9ED /* coreio.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = coreio.h; sourceTree = "<group>"; };
 		849C0D601B072C07008BAAA4 /* context.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = context.cpp; sourceTree = "<group>"; };
 		849C0D611B072C07008BAAA4 /* context.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = context.h; sourceTree = "<group>"; };
 		849C0D641B072CF8008BAAA4 /* reios.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = reios.cpp; path = reios/reios.cpp; sourceTree = "<group>"; };
@@ -674,16 +671,6 @@
 			path = oslib;
 			sourceTree = "<group>";
 		};
-		8497BCCC1A41BFD800EFB9ED /* coreio */ = {
-			isa = PBXGroup;
-			children = (
-				8497BCCD1A41BFD800EFB9ED /* coreio.cpp */,
-				8497BCCE1A41BFD800EFB9ED /* coreio.h */,
-			);
-			name = coreio;
-			path = deps/coreio;
-			sourceTree = "<group>";
-		};
 		849C0D631B072CE0008BAAA4 /* reios */ = {
 			isa = PBXGroup;
 			children = (
@@ -862,7 +849,6 @@
 			children = (
 				87D776E41EF5623300E08B55 /* zlib.xcodeproj */,
 				849C0D631B072CE0008BAAA4 /* reios */,
-				8497BCCC1A41BFD800EFB9ED /* coreio */,
 				8497BCC31A41BFBA00EFB9ED /* oslib */,
 				8497BCBB1A41A0E900EFB9ED /* linux */,
 				9C7A393918C806DE0070BB5F /* arm_emitter */,
@@ -1584,7 +1570,6 @@
 				9C7A3B1218C806E00070BB5F /* maple_if.cpp in Sources */,
 				9C7A3AC818C806E00070BB5F /* zip_error_strerror.c in Sources */,
 				877652CA1B6157FC00437F10 /* rec_arm.cpp in Sources */,
-				8497BCCF1A41BFD800EFB9ED /* coreio.cpp in Sources */,
 				84967C9D1B8F492C005F1140 /* pngwio.c in Sources */,
 				9C7A3B0E18C806E00070BB5F /* sb_mem.cpp in Sources */,
 				9C7A3B2C18C806E00070BB5F /* tmu.cpp in Sources */,
