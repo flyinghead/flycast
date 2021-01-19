@@ -61,23 +61,23 @@ namespace {
 
 Disc* load_gdi(const char* file)
 {
-	core_file *t = core_fopen(file);
+	FILE *t = nowide::fopen(file, "rb");
 	if (!t)
 		return nullptr;
 
-	size_t gdi_len = core_fsize(t);
+	size_t gdi_len = flycast::fsize(t);
 
 	char gdi_data[8193] = { 0 };
 
 	if (gdi_len >= sizeof(gdi_data))
 	{
 		WARN_LOG(GDROM, "GDI: file too big");
-		core_fclose(t);
+		std::fclose(t);
 		return nullptr;
 	}
 
-	core_fread(t, gdi_data, gdi_len);
-	core_fclose(t);
+	std::fread(gdi_data, 1, gdi_len, t);
+	std::fclose(t);
 
 	std::istringstream gdi(gdi_data);
 
@@ -142,7 +142,7 @@ Disc* load_gdi(const char* file)
 		if (SSIZE!=0)
 		{
 			std::string path = basepath + normalize_path_separator(track_filename);
-			t.file = new RawTrackFile(core_fopen(path.c_str()),OFFSET,t.StartFAD,SSIZE);	
+			t.file = new RawTrackFile(nowide::fopen(path.c_str(), "rb"), OFFSET, t.StartFAD,SSIZE);
 		}
 		if (!disc->tracks.empty())
 			disc->tracks.back().EndFAD = t.StartFAD - 1;

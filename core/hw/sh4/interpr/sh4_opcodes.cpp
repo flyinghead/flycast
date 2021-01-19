@@ -15,7 +15,6 @@
 #include "../sh4_core.h"
 #include "../modules/ccn.h"
 #include "../sh4_interrupts.h"
-#include "hw/gdrom/gdrom_if.h"
 #include "../sh4_cache.h"
 
 #include "hw/sh4/sh4_opcode.h"

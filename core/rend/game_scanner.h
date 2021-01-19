@@ -21,12 +21,11 @@
 #include <thread>
 #include <unordered_map>
 #include <unordered_set>
-#include <dirent.h>
-#include <sys/stat.h>
 
 #include "types.h"
 #include "stdclass.h"
 #include "hw/naomi/naomi_roms.h"
+#include "oslib/directory.h"
 
 struct GameMedia {
 	std::string name;
@@ -68,12 +67,12 @@ class GameScanner
             content_path_looks_incorrect = false;
         }
         
-		DIR *dir = opendir(path.c_str());
+		DIR *dir = flycast::opendir(path.c_str());
 		if (dir == NULL)
 			return;
 		while (running)
 		{
-			struct dirent *entry = readdir(dir);
+			dirent *entry = flycast::readdir(dir);
 			if (entry == NULL)
 				break;
 			std::string name(entry->d_name);
@@ -88,7 +87,7 @@ class GameScanner
 #endif
 			{
 				struct stat st;
-				if (stat(child_path.c_str(), &st) != 0)
+				if (flycast::stat(child_path.c_str(), &st) != 0)
 					continue;
 				if (S_ISDIR(st.st_mode))
 					is_dir = true;
@@ -124,7 +123,7 @@ class GameScanner
 				insert_game(GameMedia{ name, child_path });
 			}
 		}
-		closedir(dir);
+		flycast::closedir(dir);
 	}
 
 public:

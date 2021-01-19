@@ -402,7 +402,7 @@ static FILE *get_record_input(bool write)
 	size_t slash = game_dir.find_last_of("/");
 	size_t dot = game_dir.find_last_of(".");
 	std::string input_file = "scripts/" + game_dir.substr(slash + 1, dot - slash) + "input";
-	return fopen(input_file.c_str(), write ? "w" : "r");
+	return nowide::fopen(input_file.c_str(), write ? "w" : "r");
 }
 #endif
 

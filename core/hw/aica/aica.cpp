@@ -6,6 +6,7 @@
 #include "hw/holly/sb.h"
 #include "hw/sh4/sh4_sched.h"
 #include "hw/arm7/arm7.h"
+#include "hw/arm7/arm_mem.h"
 
 #define SH4_IRQ_BIT (1 << (holly_SPU_IRQ & 31))
 

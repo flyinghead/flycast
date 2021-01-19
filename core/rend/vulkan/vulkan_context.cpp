@@ -462,18 +462,18 @@ bool VulkanContext::InitDevice()
 
 
 	    std::string cachePath = get_readonly_data_path(PipelineCacheFileName);
-	    FILE *f = fopen(cachePath.c_str(), "rb");
+	    FILE *f = nowide::fopen(cachePath.c_str(), "rb");
 	    if (f == nullptr)
 	    	pipelineCache = device->createPipelineCacheUnique(vk::PipelineCacheCreateInfo());
 	    else
 	    {
-	    	fseek(f, 0, SEEK_END);
-	    	size_t cacheSize = ftell(f);
-	    	fseek(f, 0, SEEK_SET);
+	    	std::fseek(f, 0, SEEK_END);
+	    	size_t cacheSize = std::ftell(f);
+	    	std::fseek(f, 0, SEEK_SET);
 	    	u8 *cacheData = new u8[cacheSize];
-	    	if (fread(cacheData, 1, cacheSize, f) != cacheSize)
+	    	if (std::fread(cacheData, 1, cacheSize, f) != cacheSize)
 	    		cacheSize = 0;
-	    	fclose(f);
+	    	std::fclose(f);
     		pipelineCache = device->createPipelineCacheUnique(vk::PipelineCacheCreateInfo(vk::PipelineCacheCreateFlags(), cacheSize, cacheData));
     		delete [] cacheData;
     		INFO_LOG(RENDERER, "Vulkan pipeline cache loaded from %s: %zd bytes", cachePath.c_str(), cacheSize);
@@ -910,11 +910,11 @@ void VulkanContext::Term()
         if (!cacheData.empty())
         {
             std::string cachePath = get_writable_data_path(PipelineCacheFileName);
-            FILE *f = fopen(cachePath.c_str(), "wb");
+            FILE *f = nowide::fopen(cachePath.c_str(), "wb");
             if (f != nullptr)
             {
-                (void)fwrite(&cacheData[0], 1, cacheData.size(), f);
-                fclose(f);
+                (void)std::fwrite(&cacheData[0], 1, cacheData.size(), f);
+                std::fclose(f);
             }
         }
     }

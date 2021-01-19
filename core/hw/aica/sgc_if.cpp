@@ -24,6 +24,7 @@
 #include "aica_mem.h"
 #include "dsp.h"
 #include "oslib/audiostream.h"
+#include "hw/gdrom/gdrom_if.h"
 
 #include <algorithm>
 #include <cmath>

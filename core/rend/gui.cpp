@@ -148,7 +148,13 @@ void gui_init()
     if (scaling > 1)
 		ImGui::GetStyle().ScaleAllSizes(scaling);
 
-    io.Fonts->AddFontFromMemoryCompressedTTF(roboto_medium_compressed_data, roboto_medium_compressed_size, 17 * scaling);
+    static const ImWchar ranges[] =
+    {
+    	0x0020, 0xFFFF, // All chars
+        0,
+    };
+
+    io.Fonts->AddFontFromMemoryCompressedTTF(roboto_medium_compressed_data, roboto_medium_compressed_size, 17.f * scaling, nullptr, ranges);
     INFO_LOG(RENDERER, "Screen DPI is %d, size %d x %d. Scaling by %.2f", screen_dpi, screen_width, screen_height, scaling);
 }
 
@@ -1599,7 +1605,7 @@ static std::string get_notification()
 	return osd_message;
 }
 
-static void gui_display_demo()
+inline static void gui_display_demo()
 {
 	ImGui_Impl_NewFrame();
     ImGui::NewFrame();

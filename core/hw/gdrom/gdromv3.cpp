@@ -4,12 +4,14 @@
 */
 
 #include "gdromv3.h"
+#include "gdrom_if.h"
 #include "hw/holly/holly_intc.h"
 #include "hw/holly/sb.h"
 #include "hw/sh4/modules/dmac.h"
 #include "hw/sh4/sh4_interpreter.h"
 #include "hw/sh4/sh4_mem.h"
 #include "hw/sh4/sh4_sched.h"
+#include "imgread/common.h"
 
 int gdrom_schid;
 
@@ -630,7 +632,7 @@ void gd_process_spi_cmd()
 			//toc - dd/sd
 			libGDR_GetToc(&toc_gd[0],packet_cmd.data_8[1]&0x1);
 			 
-			gd_spi_pio_end((u8*)&toc_gd[0], (packet_cmd.data_8[4]) | (packet_cmd.data_8[3]<<8) );
+			gd_spi_pio_end((u8*)&toc_gd[0], std::min((u32)packet_cmd.data_8[4] | (packet_cmd.data_8[3] << 8), (u32)sizeof(toc_gd)));
 		}
 		break;
 
@@ -863,7 +865,7 @@ void gd_process_spi_cmd()
 			const u32 alloc_len = (packet_cmd.data_8[3] << 8) | packet_cmd.data_8[4];
 			u8 subc_info[100];
 			u32 size = gd_get_subcode(format, read_params.start_sector - 1, subc_info);
-			gd_spi_pio_end(subc_info, std::min(size, alloc_len));
+			gd_spi_pio_end(subc_info, std::min(std::min(size, alloc_len), (u32)sizeof(subc_info)));
 		}
 		break;
 

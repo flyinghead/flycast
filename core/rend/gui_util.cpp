@@ -21,18 +21,10 @@
 #include <vector>
 #include <algorithm>
 #include <cstdlib>
-#ifdef _MSC_VER
-#include <io.h>
-#define access _access
-#define R_OK   4
-#else
-#include <unistd.h>
-#endif
-#include <dirent.h>
-#include <sys/stat.h>
 
 #include "types.h"
 #include "stdclass.h"
+#include "oslib/directory.h"
 #include "imgui/imgui.h"
 #include "imgui/imgui_internal.h"
 
@@ -56,7 +48,7 @@ void select_directory_popup(const char *prompt, float scaling, StringCallback ca
 	if (select_current_directory.empty())
 	{
 #if defined(__ANDROID__)
-		const char *home = getenv("REICAST_HOME");
+		const char *home = nowide::getenv("REICAST_HOME");
 		if (home != NULL)
 		{
 			const char *pcolon = strchr(home, ':');
@@ -66,19 +58,16 @@ void select_directory_popup(const char *prompt, float scaling, StringCallback ca
 				select_current_directory = home;
 		}
 #elif HOST_OS == OS_LINUX || defined(__APPLE__)
-		const char *home = getenv("HOME");
+		const char *home = nowide::getenv("HOME");
 		if (home != NULL)
 			select_current_directory = home;
 #elif defined(_WIN32)
-		const char *home = getenv("HOMEPATH");
-		const char *home_drive = getenv("HOMEDRIVE");
-		if (home != NULL)
+		if (nowide::getenv("HOMEPATH") != NULL)
 		{
+			const char *home_drive = nowide::getenv("HOMEDRIVE");
 			if (home_drive != NULL)
 				select_current_directory = home_drive;
-			else
-				select_current_directory.clear();
-			select_current_directory += home;
+			select_current_directory += nowide::getenv("HOMEPATH");
 		}
 #endif
 		if (select_current_directory.empty())
@@ -141,7 +130,7 @@ void select_directory_popup(const char *prompt, float scaling, StringCallback ca
 			else
 #endif
 			{
-				DIR *dir = opendir(select_current_directory.c_str());
+				DIR *dir = flycast::opendir(select_current_directory.c_str());
 				if (dir == NULL)
 				{
 					error_message = "Cannot read " + select_current_directory;
@@ -152,7 +141,7 @@ void select_directory_popup(const char *prompt, float scaling, StringCallback ca
 					bool dotdot_seen = false;
 					while (true)
 					{
-						struct dirent *entry = readdir(dir);
+						struct dirent *entry = flycast::readdir(dir);
 						if (entry == NULL)
 							break;
 						std::string name(entry->d_name);
@@ -167,12 +156,12 @@ void select_directory_popup(const char *prompt, float scaling, StringCallback ca
 #endif
 						{
 							struct stat st;
-							if (stat(child_path.c_str(), &st) != 0)
+							if (flycast::stat(child_path.c_str(), &st) != 0)
 								continue;
 							if (S_ISDIR(st.st_mode))
 								is_dir = true;
 						}
-						if (is_dir && access(child_path.c_str(), R_OK) == 0)
+						if (is_dir && flycast::access(child_path.c_str(), R_OK) == 0)
 						{
 							if (name == "..")
 								dotdot_seen = true;
@@ -187,7 +176,7 @@ void select_directory_popup(const char *prompt, float scaling, StringCallback ca
                                 display_files.push_back(name);
                         }
 					}
-					closedir(dir);
+					flycast::closedir(dir);
 #if defined(_WIN32) || defined(__ANDROID__)
 					if (!dotdot_seen)
 						select_subfolders.push_back("..");

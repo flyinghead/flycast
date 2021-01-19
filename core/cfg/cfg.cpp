@@ -20,7 +20,7 @@ static bool has_game_specific_config = false;
 
 void savecfgf()
 {
-	FILE* cfgfile = fopen(cfgPath.c_str(),"wt");
+	FILE* cfgfile = nowide::fopen(cfgPath.c_str(), "wt");
 	if (!cfgfile)
 	{
 		WARN_LOG(COMMON, "Error: Unable to open file '%s' for saving", cfgPath.c_str());
@@ -28,7 +28,7 @@ void savecfgf()
 	else
 	{
 		cfgdb.save(cfgfile);
-		fclose(cfgfile);
+		std::fclose(cfgfile);
 	}
 }
 void  cfgSaveStr(const char * Section, const char * Key, const char * String)
@@ -85,10 +85,10 @@ bool cfgOpen()
 	std::string config_path_read = get_readonly_config_path(filename);
 	cfgPath = get_writable_config_path(filename);
 
-	FILE* cfgfile = fopen(config_path_read.c_str(),"r");
+	FILE* cfgfile = nowide::fopen(config_path_read.c_str(), "r");
 	if(cfgfile != NULL) {
 		cfgdb.parse(cfgfile);
-		fclose(cfgfile);
+		std::fclose(cfgfile);
 	}
 	else
 	{

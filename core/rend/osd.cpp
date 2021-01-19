@@ -150,7 +150,14 @@ u8 *loadOSDButtons(int &width, int &height)
 {
 	int n;
 	stbi_set_flip_vertically_on_load(1);
-	u8 *image_data = stbi_load(get_readonly_data_path("buttons.png").c_str(), &width, &height, &n, STBI_rgb_alpha);
+
+	FILE *file = nowide::fopen(get_readonly_data_path("buttons.png").c_str(), "rb");
+	u8 *image_data = nullptr;
+	if (file != nullptr)
+	{
+		image_data = stbi_load_from_file(file, &width, &height, &n, STBI_rgb_alpha);
+		std::fclose(file);
+	}
 	if (image_data == nullptr)
 	{
 		if (DefaultOSDButtons.empty())

@@ -129,9 +129,6 @@
     <ClInclude Include="..\core\imgread\common.h">
       <Filter>imgread</Filter>
     </ClInclude>
-    <ClInclude Include="..\core\imgread\gd_driver.h">
-      <Filter>imgread</Filter>
-    </ClInclude>
     <ClInclude Include="..\core\imgread\ImgReader.h">
       <Filter>imgread</Filter>
     </ClInclude>

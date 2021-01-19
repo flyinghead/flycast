@@ -207,12 +207,12 @@ std::shared_ptr<InputMapping> InputMapping::LoadMapping(const char *name)
 		return it->second;
 
 	std::string path = get_readonly_config_path((std::string("mappings/") + name).c_str());
-	FILE *fp = fopen(path.c_str(), "r");
+	FILE *fp = nowide::fopen(path.c_str(), "r");
 	if (fp == NULL)
 		return NULL;
 	std::shared_ptr<InputMapping> mapping = std::make_shared<InputMapping>();
 	mapping->load(fp);
-	fclose(fp);
+	std::fclose(fp);
 	loaded_mappings[name] = mapping;
 
 	return mapping;
@@ -226,7 +226,7 @@ bool InputMapping::save(const char *name)
 	std::string path = get_writable_config_path("mappings/");
 	make_directory(path);
 	path = get_writable_config_path((std::string("mappings/") + name).c_str());
-	FILE *fp = fopen(path.c_str(), "w");
+	FILE *fp = nowide::fopen(path.c_str(), "w");
 	if (fp == NULL)
 	{
 		WARN_LOG(INPUT, "Cannot save controller mappings into %s", path.c_str());
@@ -279,7 +279,7 @@ bool InputMapping::save(const char *name)
 	}
 	mf.save(fp);
 	dirty = false;
-	fclose(fp);
+	std::fclose(fp);
 
 	return true;
 }

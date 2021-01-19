@@ -18,6 +18,7 @@
  */
 #include "CustomTexture.h"
 #include "cfg/cfg.h"
+#include "oslib/directory.h"
 
 #include <algorithm>
 #include <dirent.h>
@@ -137,9 +138,14 @@ u8* CustomTexture::LoadCustomTexture(u32 hash, int& width, int& height)
 	if (it == texture_map.end())
 		return nullptr;
 
+	FILE *file = nowide::fopen(it->second.c_str(), "rb");
+	if (file == nullptr)
+		return nullptr;
 	int n;
 	stbi_set_flip_vertically_on_load(1);
-	return stbi_load(it->second.c_str(), &width, &height, &n, STBI_rgb_alpha);
+	u8 *imgData = stbi_load_from_file(file, &width, &height, &n, STBI_rgb_alpha);
+	std::fclose(file);
+	return imgData;
 }
 
 void CustomTexture::LoadCustomTextureAsync(BaseTextureCacheData *texture_data)
@@ -232,12 +238,12 @@ void CustomTexture::DumpTexture(u32 hash, int w, int h, TextureType textype, voi
 void CustomTexture::LoadMap()
 {
 	texture_map.clear();
-	DIR *dir = opendir(textures_path.c_str());
+	DIR *dir = flycast::opendir(textures_path.c_str());
 	if (dir == nullptr)
 		return;
 	while (true)
 	{
-		struct dirent *entry = readdir(dir);
+		struct dirent *entry = flycast::readdir(dir);
 		if (entry == nullptr)
 			break;
 		std::string name(entry->d_name);
@@ -251,7 +257,7 @@ void CustomTexture::LoadMap()
 #endif
 		{
 			struct stat st;
-			if (stat(child_path.c_str(), &st) != 0)
+			if (flycast::stat(child_path.c_str(), &st) != 0)
 				continue;
 			if (S_ISDIR(st.st_mode))
 				continue;
@@ -270,6 +276,6 @@ void CustomTexture::LoadMap()
 		}
 		texture_map[hash] = child_path;
 	}
-	closedir(dir);
+	flycast::closedir(dir);
 	custom_textures_available = !texture_map.empty();
 }

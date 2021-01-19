@@ -1144,7 +1144,7 @@ void dc_savestate()
 
 	std::string filename = get_savestate_file_path(true);
 #if 0
-	FILE *f = fopen(filename.c_str(), "wb") ;
+	FILE *f = nowide::fopen(filename.c_str(), "wb") ;
 
 	if ( f == NULL )
 	{
@@ -1154,8 +1154,8 @@ void dc_savestate()
     	return;
 	}
 
-	fwrite(data, 1, total_size, f) ;
-	fclose(f);
+	std::fwrite(data, 1, total_size, f) ;
+	std::fclose(f);
 #else
 	RZipFile zipFile;
 	if (!zipFile.Open(filename, true))
@@ -1196,7 +1196,7 @@ void dc_loadstate()
 	}
 	else
 	{
-		f = fopen(filename.c_str(), "rb") ;
+		f = nowide::fopen(filename.c_str(), "rb") ;
 
 		if ( f == NULL )
 		{
@@ -1204,9 +1204,9 @@ void dc_loadstate()
 			gui_display_notification("Save state not found", 2000);
 			return;
 		}
-		fseek(f, 0, SEEK_END);
-		total_size = (u32)ftell(f);
-		fseek(f, 0, SEEK_SET);
+		std::fseek(f, 0, SEEK_END);
+		total_size = (u32)std::ftell(f);
+		std::fseek(f, 0, SEEK_SET);
 	}
 	void *data = malloc(total_size);
 	if ( data == NULL )
@@ -1214,7 +1214,7 @@ void dc_loadstate()
 		WARN_LOG(SAVESTATE, "Failed to load state - could not malloc %d bytes", total_size) ;
 		gui_display_notification("Failed to load state - memory full", 2000);
 		if (f != nullptr)
-			fclose(f);
+			std::fclose(f);
 		else
 			zipFile.Close();
 		return;
@@ -1229,7 +1229,7 @@ void dc_loadstate()
 	else
 	{
 		read_size = fread(data, 1, total_size, f) ;
-		fclose(f);
+		std::fclose(f);
 	}
 	if (read_size != total_size)
 	{

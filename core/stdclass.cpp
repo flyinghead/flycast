@@ -1,5 +1,6 @@
 #include "types.h"
 #include "stdclass.h"
+#include "oslib/directory.h"
 
 #include <chrono>
 #include <cstring>
@@ -9,15 +10,6 @@
 
 #ifdef _WIN32
 	#include <algorithm>
-	#include <io.h>
-	#include <direct.h>
-	#define access _access
-	#ifndef R_OK
-		#define R_OK   4
-	#endif
-	#define mkdir(dir, mode) _mkdir(dir)
-#else
-	#include <unistd.h>
 #endif
 
 static std::string user_config_dir;
@@ -27,7 +19,7 @@ static std::vector<std::string> system_data_dirs;
 
 bool file_exists(const std::string& filename)
 {
-	return (access(filename.c_str(), R_OK) == 0);
+	return (flycast::access(filename.c_str(), R_OK) == 0);
 }
 
 void set_user_config_dir(const std::string& dir)
@@ -148,7 +140,7 @@ std::string get_game_dir()
 
 bool make_directory(const std::string& path)
 {
-	return mkdir(path.c_str(), 0755) == 0;
+	return flycast::mkdir(path.c_str(), 0755) == 0;
 }
 
 void cThread::Start()

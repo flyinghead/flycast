@@ -446,14 +446,14 @@ void naomi_cart_LoadRom(const char* file)
 	{
 		// LST file
 
-		FILE* fl = fopen(t, "r");
+		FILE* fl = nowide::fopen(t, "r");
 		if (!fl)
 			throw new ReicastException("Error: can't open " + std::string(t));
 
-		char* line = fgets(t, 512, fl);
+		char* line = std::fgets(t, 512, fl);
 		if (!line)
 		{
-			fclose(fl);
+			std::fclose(fl);
 			throw new ReicastException("Error: Invalid LST file");
 		}
 
@@ -465,10 +465,10 @@ void naomi_cart_LoadRom(const char* file)
 
 		DEBUG_LOG(NAOMI, "+Loading naomi rom : %s", line);
 
-		line = fgets(t, 512, fl);
+		line = std::fgets(t, 512, fl);
 		if (!line)
 		{
-			fclose(fl);
+			std::fclose(fl);
 			throw new ReicastException("Error: Invalid LST file");
 		}
 
@@ -489,20 +489,20 @@ void naomi_cart_LoadRom(const char* file)
 			else if (line[0] != 0 && line[0] != '\n' && line[0] != '\r')
 				WARN_LOG(NAOMI, "Warning: invalid line in .lst file: %s", line);
 
-			line = fgets(t, 512, fl);
+			line = std::fgets(t, 512, fl);
 		}
-		fclose(fl);
+		std::fclose(fl);
 	}
 	else
 	{
 		// BIN loading
-		FILE* fp = fopen(t, "rb");
+		FILE* fp = nowide::fopen(t, "rb");
 		if (fp == NULL)
 			throw new ReicastException("Error: can't open " + std::string(t));
 
-		fseek(fp, 0, SEEK_END);
-		u32 file_size = ftell(fp);
-		fclose(fp);
+		std::fseek(fp, 0, SEEK_END);
+		u32 file_size = std::ftell(fp);
+		std::fclose(fp);
 		files.push_back(t);
 		fstart.push_back(0);
 		fsize.push_back(file_size);
@@ -554,6 +554,7 @@ void naomi_cart_LoadRom(const char* file)
 			RomCacheMap[i] = INVALID_FD;
 			continue;
 		}
+		// FIXME use nowide::fopen instead
 #ifdef _WIN32
 		RomCache = CreateFile(t, FILE_READ_ACCESS, FILE_SHARE_READ, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
 #else

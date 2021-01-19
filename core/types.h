@@ -137,61 +137,8 @@ enum HollyInterruptID
 };
 
 
-
-struct vram_block
-{
-	u32 start;
-	u32 end;
-	u32 len;
-	u32 type;
-
-	void* userdata;
-};
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-//******************************************************
-//*********************** PowerVR **********************
-//******************************************************
-
-void libCore_vramlock_Unlock_block  (vram_block* block);
-vram_block* libCore_vramlock_Lock(u32 start_offset,u32 end_offset,void* userdata);
-
-
-
-//******************************************************
-//************************ GDRom ***********************
-//******************************************************
-enum DiscType
-{
-	CdDA=0x00,
-	CdRom=0x10,
-	CdRom_XA=0x20,
-	CdRom_Extra=0x30,
-	CdRom_CDI=0x40,
-	GdRom=0x80,
-
-	NoDisk=0x1,			//These are a bit hacky .. but work for now ...
-	Open=0x2,			//tray is open :)
-	Busy=0x3			//busy -> needs to be automatically done by gdhost
-};
-
-enum DiskArea
-{
-	SingleDensity,
-	DoubleDensity
-};
-
-//******************************************************
-//************************ AICA ************************
-//******************************************************
-void libARM_InterruptChange(u32 bits,u32 L);
-void libCore_CDDA_Sector(s16* sector);
-
-
-//includes from CRT
-#include <cstdlib>
-#include <cstdio>
+#include "nowide/cstdlib.hpp"
+#include "nowide/cstdio.hpp"
 
 #if defined(__APPLE__)
 int darw_printf(const char* Text,...);
@@ -529,22 +476,6 @@ void libPvr_Reset(bool Manual);
 void libPvr_Term();
 
 void* libPvr_GetRenderTarget();
-
-//GDR
-s32 libGDR_Init();
-void libGDR_Reset(bool hard);
-void libGDR_Term();
-
-void libCore_gdrom_disc_change();
-
-//IO
-void libGDR_ReadSector(u8 * buff,u32 StartSector,u32 SectorCount,u32 secsz);
-void libGDR_ReadSubChannel(u8 * buff, u32 format, u32 len);
-void libGDR_GetToc(u32* toc,u32 area);
-u32 libGDR_GetDiscType();
-void libGDR_GetSessionInfo(u8* pout,u8 session);
-u32 libGDR_GetTrackNumber(u32 sector, u32& elapsed);
-bool libGDR_GetTrack(u32 track_num, u32& start_fad, u32& end_fad);
 
 // 0x00600000 - 0x006007FF [NAOMI] (modem area for dreamcast)
 u32  libExtDevice_ReadMem_A0_006(u32 addr,u32 size);

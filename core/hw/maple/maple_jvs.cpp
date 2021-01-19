@@ -36,11 +36,11 @@ void load_naomi_eeprom()
 		EEPROM_loaded = true;
 		std::string nvmemSuffix = cfgLoadStr("net", "nvmem", "");
 		std::string eeprom_file = get_game_save_prefix() + nvmemSuffix + ".eeprom";
-		FILE* f = fopen(eeprom_file.c_str(), "rb");
+		FILE* f = nowide::fopen(eeprom_file.c_str(), "rb");
 		if (f)
 		{
-			fread(EEPROM, 1, 0x80, f);
-			fclose(f);
+			std::fread(EEPROM, 1, 0x80, f);
+			std::fclose(f);
 			DEBUG_LOG(MAPLE, "Loaded EEPROM from %s", eeprom_file.c_str());
 		}
 		else if (naomi_default_eeprom != NULL)
@@ -976,11 +976,11 @@ void maple_naomi_jamma::handle_86_subcommand()
 
 			std::string nvmemSuffix = cfgLoadStr("net", "nvmem", "");
 			std::string eeprom_file = get_game_save_prefix() + nvmemSuffix + ".eeprom";
-			FILE* f = fopen(eeprom_file.c_str(), "wb");
+			FILE* f = nowide::fopen(eeprom_file.c_str(), "wb");
 			if (f)
 			{
-				fwrite(EEPROM, 1, 0x80, f);
-				fclose(f);
+				std::fwrite(EEPROM, 1, 0x80, f);
+				std::fclose(f);
 				INFO_LOG(MAPLE, "Saved EEPROM to %s", eeprom_file.c_str());
 			}
 			else

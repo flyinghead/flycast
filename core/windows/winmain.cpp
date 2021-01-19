@@ -184,6 +184,7 @@ LONG ExeptionHandler(EXCEPTION_POINTERS *ExceptionInfo)
 	else
 	{
 	    ERROR_LOG(COMMON, "[GPF]Unhandled access to : %p", address);
+	    os_DebugBreak();
 	}
 
 	return EXCEPTION_CONTINUE_SEARCH;
@@ -732,7 +733,7 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 #endif
 	{
 		if (reicast_init(argc, argv) != 0)
-			die("Reicast initialization failed");
+			die("Flycast initialization failed");
 
 		#ifdef _WIN64
 			setup_seh();

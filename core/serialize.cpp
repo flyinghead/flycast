@@ -7,6 +7,7 @@
 #include "hw/holly/sb.h"
 #include "hw/flashrom/flashrom.h"
 #include "hw/gdrom/gdromv3.h"
+#include "hw/gdrom/gdrom_if.h"
 #include "hw/maple/maple_cfg.h"
 #include "hw/pvr/Renderer_if.h"
 #include "hw/sh4/sh4_sched.h"

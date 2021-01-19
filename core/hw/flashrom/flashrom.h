@@ -48,11 +48,11 @@ struct MemChip
 
 	bool Load(const std::string& file)
 	{
-		FILE* f=fopen(file.c_str(),"rb");
+		FILE *f = nowide::fopen(file.c_str(), "rb");
 		if (f)
 		{
-			bool rv = fread(data + write_protect_size, 1, size - write_protect_size, f) == size - write_protect_size;
-			fclose(f);
+			bool rv = std::fread(data + write_protect_size, 1, size - write_protect_size, f) == size - write_protect_size;
+			std::fclose(f);
 			if (rv)
 				this->load_filename = file;
 
@@ -68,11 +68,11 @@ struct MemChip
 
 	void Save(const std::string& file)
 	{
-		FILE* f=fopen(file.c_str(),"wb");
+		FILE *f = nowide::fopen(file.c_str(), "wb");
 		if (f)
 		{
-			fwrite(data + write_protect_size, 1, size - write_protect_size, f);
-			fclose(f);
+			std::fwrite(data + write_protect_size, 1, size - write_protect_size, f);
+			std::fclose(f);
 		}
 	}
 

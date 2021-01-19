@@ -455,7 +455,7 @@ _wopendir(
  * Returns pointer to static directory entry which may be overwritten by
  * subsequent calls to _wreaddir().
  */
-static struct _wdirent*
+inline static struct _wdirent*
 _wreaddir(
     _WDIR *dirp)
 {
@@ -723,7 +723,7 @@ opendir(
 /*
  * Read next directory entry.
  */
-static struct dirent*
+inline static struct dirent*
 readdir(
     DIR *dirp)
 {
@@ -861,7 +861,7 @@ closedir(
 /*
  * Rewind directory stream to beginning.
  */
-static void
+inline static void
 rewinddir(
     DIR* dirp)
 {
@@ -872,7 +872,7 @@ rewinddir(
 /*
  * Scan directory for entries.
  */
-static int
+inline static int
 scandir(
     const char *dirname,
     struct dirent ***namelist,
@@ -1019,7 +1019,7 @@ alphasort(
 }
 
 /* Sort versions */
-static int
+inline static int
 versionsort(
     const struct dirent **a, const struct dirent **b)
 {

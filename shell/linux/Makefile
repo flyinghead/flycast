@@ -13,6 +13,7 @@ USE_EVDEV := 1
 USE_UDEV := 1
 endif
 PLATFORM_EXT := elf
+#USE_SYSTEM_MINIUPNPC := 1
 
 CXX ?= ${CC_PREFIX}g++
 CC ?= ${CC_PREFIX}gcc
@@ -280,13 +281,14 @@ else ifneq (,$(findstring vero4k,$(platform)))
 # Windows
 else ifneq (,$(findstring win32,$(platform)))
     NOT_ARM := 1
-    CFLAGS += -fno-builtin-sqrtf -funroll-loops -DHAVE_FSEEKO -I /mingw64/include
+    CFLAGS += -fno-builtin-sqrtf -funroll-loops -I /mingw64/include
     LDFLAGS += -static-libgcc -static-libstdc++ -Wl,-subsystem,windows
     LIBS := -lopengl32 -lwinmm -lgdi32 -lwsock32 -lws2_32 -ldsound -lcomctl32 -lcomdlg32 -lxinput -liphlpapi -Wl,-Bstatic -lgomp
     PLATFORM_EXT := exe
     CC = gcc
     CXX = g++
     USE_SDL = 1
+    STATIC_LIBZIP = 1
 ifeq ($(WITH_DYNAREC), x86)
     X86_REC := 1
     LDFLAGS += -m32
@@ -320,12 +322,20 @@ CXXFLAGS += $(RZDCY_CFLAGS) -fno-rtti -fno-operator-names -D_GLIBCXX_USE_CXX11_A
 INCS += -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/deps -I$(RZDCY_SRC_DIR)/khronos
 
 ifdef FOR_WINDOWS
+	INCS += -I$(LOCAL_PATH)/include/mingw
 	LIBS += -lm -static -lpthread
 else
-	LIBS += -lminiupnpc -lm -lpthread
+	INCS += -I$(LOCAL_PATH)/include/linux
+	LIBS += -lm -lpthread
 endif
 ifdef FOR_LINUX
 LIBS += -lrt
+endif
+ifdef USE_SYSTEM_MINIUPNPC
+LIBS += -lminiupnpc
+endif
+ifndef STATIC_LIBZIP
+LIBS += -lzip
 endif
 
 $(RZDCY_SRC_DIR)/deps/miniupnpc/libminiupnpc.a:
@@ -476,6 +486,9 @@ OBJECTS += $(BUILDDIR)/reicastres.build_obj
 $(BUILDDIR)/reicastres.build_obj: $(LOCAL_PATH)/../windows/reicast.rc $(LOCAL_PATH)/../windows/flycast.ico $(RZDCY_SRC_DIR)/version.h
 	$(WINDRES) $< $@
 
+endif
+
+ifndef USE_SYSTEM_MINIUPNPC
 OBJECTS += $(RZDCY_SRC_DIR)/deps/miniupnpc/libminiupnpc.a
 CFLAGS += -DMINIUPNP_STATICLIB
 endif

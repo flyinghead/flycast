@@ -171,6 +171,15 @@ else()
     add_subdirectory(core/deps/zlib)
     target_include_directories(${PROJECT_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/core/deps/zlib" "${CMAKE_CURRENT_BINARY_DIR}/core/deps/zlib")
     target_link_libraries(${PROJECT_NAME} PRIVATE zlibstatic)
+    # help libzip find the package
+    set(ZLIB_FOUND TRUE)
+    if(MSVC)
+    	# FIXME
+	    set(ZLIB_LIBRARY "${CMAKE_CURRENT_BINARY_DIR}/core/deps/zlib/Release/zlibstatic.lib")
+	else()
+	    set(ZLIB_LIBRARY "libzlibstatic.a")
+	endif()
+    set(ZLIB_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/core/deps/zlib" "${CMAKE_CURRENT_BINARY_DIR}/core/deps/zlib")
 endif()
 
 find_package(PkgConfig QUIET)
@@ -288,6 +297,8 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/deps/crypto/sha256.cpp
         core/deps/crypto/sha256.h)
 
+target_include_directories(${PROJECT_NAME} PRIVATE core/deps/nowide/include)
+
 if(NOT FLAC_FOUND)
     target_compile_definitions(${PROJECT_NAME} PRIVATE HAVE_CONFIG_H $<$<BOOL:MINGW>:HAVE_FSEEKO>)
     target_include_directories(${PROJECT_NAME} PRIVATE core/deps/flac/include core/deps/flac/src/libFLAC/include)
@@ -325,9 +336,31 @@ if(NOT MINIUPNP_FOUND)
 	target_link_libraries(${PROJECT_NAME} PRIVATE miniupnpc::miniupnpc)
 endif()
 
-if(MSVC)
+if(NOT LIBZIP_FOUND)
+	option(ENABLE_COMMONCRYPTO "Enable use of CommonCrypto" OFF)
+	option(ENABLE_GNUTLS "Enable use of GnuTLS" OFF)
+	option(ENABLE_MBEDTLS "Enable use of mbed TLS" OFF)
+	option(ENABLE_OPENSSL "Enable use of OpenSSL" OFF)
+	option(ENABLE_WINDOWS_CRYPTO "Enable use of Windows cryptography libraries" OFF)
+	option(ENABLE_BZIP2 "Enable use of BZip2" OFF)
+	option(ENABLE_LZMA "Enable use of LZMA" OFF)
+	option(ENABLE_ZSTD "Enable use of Zstandard" OFF)
+	option(BUILD_TOOLS "Build tools in the src directory (zipcmp, zipmerge, ziptool)" OFF)
+	option(BUILD_REGRESS "Build regression tests" OFF)
+	option(BUILD_EXAMPLES "Build examples" OFF)
+	option(BUILD_DOC "Build documentation" OFF)
+	option(BUILD_SHARED_LIBS "Build shared libraries" OFF)
+	option(LIBZIP_DO_INSTALL "Install libzip and the related files" OFF)
+	add_subdirectory(core/deps/libzip)
+	target_include_directories(${PROJECT_NAME} PRIVATE core/deps/libzip/lib)
+	target_link_libraries(${PROJECT_NAME} PRIVATE zip)
+endif()
+
+if(WIN32)
     target_include_directories(${PROJECT_NAME} PRIVATE core/deps/dirent)
-else()
+endif()
+
+if(NOT MSVC)
     target_include_directories(${PROJECT_NAME} PRIVATE core/deps/picotcp/include core/deps/picotcp/modules)
     target_sources(${PROJECT_NAME} PRIVATE
             core/deps/picotcp/include/arch/pico_arm9.h
@@ -387,68 +420,6 @@ else()
             core/deps/picotcp/stack/pico_socket_multicast.c
             core/deps/picotcp/stack/pico_stack.c
             core/deps/picotcp/stack/pico_tree.c)
-
-    if(NOT LIBZIP_FOUND)
-        target_include_directories(${PROJECT_NAME} PRIVATE core/deps/libzip)
-        target_sources(${PROJECT_NAME} PRIVATE
-                core/deps/libzip/config.h
-                core/deps/libzip/mkstemp.c
-                core/deps/libzip/zip.h
-                core/deps/libzip/zip_add.c
-                core/deps/libzip/zip_add_dir.c
-                core/deps/libzip/zip_close.c
-                core/deps/libzip/zip_delete.c
-                core/deps/libzip/zip_dirent.c
-                core/deps/libzip/zip_entry_free.c
-                core/deps/libzip/zip_entry_new.c
-                core/deps/libzip/zip_error.c
-                core/deps/libzip/zip_error_clear.c
-                core/deps/libzip/zip_error_get.c
-                core/deps/libzip/zip_error_get_sys_type.c
-                core/deps/libzip/zip_error_strerror.c
-                core/deps/libzip/zip_error_to_str.c
-                core/deps/libzip/zip_err_str.c
-                core/deps/libzip/zip_fclose.c
-                core/deps/libzip/zip_file_error_clear.c
-                core/deps/libzip/zip_file_error_get.c
-                core/deps/libzip/zip_file_get_offset.c
-                core/deps/libzip/zip_filerange_crc.c
-                core/deps/libzip/zip_file_strerror.c
-                core/deps/libzip/zip_fopen.c
-                core/deps/libzip/zip_fopen_index.c
-                core/deps/libzip/zip_fread.c
-                core/deps/libzip/zip_free.c
-                core/deps/libzip/zip_get_archive_comment.c
-                core/deps/libzip/zip_get_archive_flag.c
-                core/deps/libzip/zip_get_file_comment.c
-                core/deps/libzip/zip_get_name.c
-                core/deps/libzip/zip_get_num_files.c
-                core/deps/libzip/zip_memdup.c
-                core/deps/libzip/zip_name_locate.c
-                core/deps/libzip/zip_new.c
-                core/deps/libzip/zip_open.c
-                core/deps/libzip/zip_rename.c
-                core/deps/libzip/zip_replace.c
-                core/deps/libzip/zip_set_archive_comment.c
-                core/deps/libzip/zip_set_archive_flag.c
-                core/deps/libzip/zip_set_file_comment.c
-                core/deps/libzip/zip_set_name.c
-                core/deps/libzip/zip_source_buffer.c
-                core/deps/libzip/zip_source_file.c
-                core/deps/libzip/zip_source_filep.c
-                core/deps/libzip/zip_source_free.c
-                core/deps/libzip/zip_source_function.c
-                core/deps/libzip/zip_source_zip.c
-                core/deps/libzip/zip_stat.c
-                core/deps/libzip/zip_stat_index.c
-                core/deps/libzip/zip_stat_init.c
-                core/deps/libzip/zip_strerror.c
-                core/deps/libzip/zip_unchange_all.c
-                core/deps/libzip/zip_unchange_archive.c
-                core/deps/libzip/zip_unchange.c
-                core/deps/libzip/zip_unchange_data.c
-                core/deps/libzip/zipint.h)
-    endif()
 endif()
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE _7ZIP_ST)
@@ -463,12 +434,9 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/archive/archive.cpp
         core/archive/archive.h
         core/archive/rzip.cpp
-        core/archive/rzip.h)
-if(NOT MSVC)
-    target_sources(${PROJECT_NAME} PRIVATE
-            core/archive/ZipArchive.cpp
-            core/archive/ZipArchive.h)
-endif()
+        core/archive/rzip.h
+        core/archive/ZipArchive.cpp
+        core/archive/ZipArchive.h)
 
 target_sources(${PROJECT_NAME} PRIVATE
         core/arm_emitter/arm_coding.h
@@ -672,7 +640,6 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/imgread/common.cpp
         core/imgread/common.h
         core/imgread/cue.cpp
-        core/imgread/gd_driver.h
         core/imgread/gdi.cpp
         core/imgread/ImgReader.cpp
         core/imgread/ioctl.cpp

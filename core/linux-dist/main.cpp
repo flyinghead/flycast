@@ -5,6 +5,7 @@
 #include "log/LogManager.h"
 #include "emulator.h"
 #include "rend/mainui.h"
+#include "oslib/directory.h"
 
 #include <cstdarg>
 #include <csignal>
@@ -21,8 +22,6 @@
 #if defined(USE_SDL)
 	#include "sdl/sdl.h"
 #endif
-
-#include <sys/stat.h>
 
 #if defined(USE_EVDEV)
 	#include "evdev.h"
@@ -126,11 +125,11 @@ std::string find_user_config_dir()
 {
 	struct stat info;
 	std::string xdg_home;
-	if (getenv("HOME") != NULL)
+	if (nowide::getenv("HOME") != NULL)
 	{
 		// Support for the legacy config dir at "$HOME/.reicast"
-		std::string legacy_home = (std::string)getenv("HOME") + "/.reicast/";
-		if (stat(legacy_home.c_str(), &info) == 0 && (info.st_mode & S_IFDIR))
+		std::string legacy_home = (std::string)nowide::getenv("HOME") + "/.reicast/";
+		if (flycast::stat(legacy_home.c_str(), &info) == 0 && (info.st_mode & S_IFDIR))
 			// "$HOME/.reicast" already exists, let's use it!
 			return legacy_home;
 
@@ -138,26 +137,26 @@ std::string find_user_config_dir()
 		 * Consult the XDG Base Directory Specification for details:
 		 *   http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html#variables
 		 */
-		xdg_home = (std::string)getenv("HOME") + "/.config";
+		xdg_home = (std::string)nowide::getenv("HOME") + "/.config";
 	}
-	if (getenv("XDG_CONFIG_HOME") != NULL)
+	if (nowide::getenv("XDG_CONFIG_HOME") != NULL)
 		// If XDG_CONFIG_HOME is set explicitly, we'll use that instead of $HOME/.config
-		xdg_home = (std::string)getenv("XDG_CONFIG_HOME");
+		xdg_home = (std::string)nowide::getenv("XDG_CONFIG_HOME");
 
 	if (!xdg_home.empty())
 	{
 		std::string fullpath = xdg_home + "/flycast/";
-		if (stat(fullpath.c_str(), &info) == 0 && (info.st_mode & S_IFDIR))
+		if (flycast::stat(fullpath.c_str(), &info) == 0 && (info.st_mode & S_IFDIR))
 			// Found .config/flycast
 			return fullpath;
 		fullpath = xdg_home + "/reicast/";
-		if (stat(fullpath.c_str(), &info) == 0 && (info.st_mode & S_IFDIR))
+		if (flycast::stat(fullpath.c_str(), &info) == 0 && (info.st_mode & S_IFDIR))
 			// Found .config/reicast
 			return fullpath;
 
 		// Create .config/flycast
 		fullpath = xdg_home + "/flycast/";
-		mkdir(fullpath.c_str(), 0755);
+		flycast::mkdir(fullpath.c_str(), 0755);
 
 		return fullpath;
 	}
@@ -176,11 +175,11 @@ std::string find_user_data_dir()
 {
 	struct stat info;
 	std::string xdg_home;
-	if (getenv("HOME") != NULL)
+	if (nowide::getenv("HOME") != NULL)
 	{
 		// Support for the legacy config dir at "$HOME/.reicast/data"
-		std::string legacy_data = (std::string)getenv("HOME") + "/.reicast/data/";
-		if (stat(legacy_data.c_str(), &info) == 0 && (info.st_mode & S_IFDIR))
+		std::string legacy_data = (std::string)nowide::getenv("HOME") + "/.reicast/data/";
+		if (flycast::stat(legacy_data.c_str(), &info) == 0 && (info.st_mode & S_IFDIR))
 			// "$HOME/.reicast/data" already exists, let's use it!
 			return legacy_data;
 
@@ -188,26 +187,26 @@ std::string find_user_data_dir()
 		 * Consult the XDG Base Directory Specification for details:
 		 *   http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html#variables
 		 */
-		xdg_home = (std::string)getenv("HOME") + "/.local/share";
+		xdg_home = (std::string)nowide::getenv("HOME") + "/.local/share";
 	}
-	if (getenv("XDG_DATA_HOME") != NULL)
+	if (nowide::getenv("XDG_DATA_HOME") != NULL)
 		// If XDG_DATA_HOME is set explicitly, we'll use that instead of $HOME/.local/share
-		xdg_home = (std::string)getenv("XDG_DATA_HOME");
+		xdg_home = (std::string)nowide::getenv("XDG_DATA_HOME");
 
 	if (!xdg_home.empty())
 	{
 		std::string fullpath = xdg_home + "/flycast/";
-		if (stat(fullpath.c_str(), &info) == 0 && (info.st_mode & S_IFDIR))
+		if (flycast::stat(fullpath.c_str(), &info) == 0 && (info.st_mode & S_IFDIR))
 			// Found .local/share/flycast
 			return fullpath;
 		fullpath = xdg_home + "/reicast/";
-		if (stat(fullpath.c_str(), &info) == 0 && (info.st_mode & S_IFDIR))
+		if (flycast::stat(fullpath.c_str(), &info) == 0 && (info.st_mode & S_IFDIR))
 			// Found .local/share/reicast
 			return fullpath;
 
 		// Create .local/share/flycast
 		fullpath = xdg_home + "/flycast/";
-		mkdir(fullpath.c_str(), 0755);
+		flycast::mkdir(fullpath.c_str(), 0755);
 
 		return fullpath;
 	}
@@ -233,15 +232,15 @@ std::vector<std::string> find_system_config_dirs()
 	std::vector<std::string> dirs;
 
 	std::string xdg_home;
-	if (getenv("HOME") != NULL)
+	if (nowide::getenv("HOME") != NULL)
 	{
 		// Support for the legacy config dir at "$HOME/.reicast"
-		dirs.push_back((std::string)getenv("HOME") + "/.reicast/");
-		xdg_home = (std::string)getenv("HOME") + "/.config";
+		dirs.push_back((std::string)nowide::getenv("HOME") + "/.reicast/");
+		xdg_home = (std::string)nowide::getenv("HOME") + "/.config";
 	}
-	if (getenv("XDG_CONFIG_HOME") != NULL)
+	if (nowide::getenv("XDG_CONFIG_HOME") != NULL)
 		// If XDG_CONFIG_HOME is set explicitly, we'll use that instead of $HOME/.config
-		xdg_home = (std::string)getenv("XDG_CONFIG_HOME");
+		xdg_home = (std::string)nowide::getenv("XDG_CONFIG_HOME");
 	if (!xdg_home.empty())
 	{
 		// XDG config locations
@@ -249,9 +248,9 @@ std::vector<std::string> find_system_config_dirs()
 		dirs.push_back(xdg_home + "/reicast/");
 	}
 
-	if (getenv("XDG_CONFIG_DIRS") != NULL)
+	if (nowide::getenv("XDG_CONFIG_DIRS") != NULL)
 	{
-		std::string s = (std::string)getenv("XDG_CONFIG_DIRS");
+		std::string s = (std::string)nowide::getenv("XDG_CONFIG_DIRS");
 
 		std::string::size_type pos = 0;
 		std::string::size_type n = s.find(':', pos);
@@ -295,15 +294,15 @@ std::vector<std::string> find_system_data_dirs()
 	std::vector<std::string> dirs;
 
 	std::string xdg_home;
-	if (getenv("HOME") != NULL)
+	if (nowide::getenv("HOME") != NULL)
 	{
 		// Support for the legacy data dir at "$HOME/.reicast/data"
-		dirs.push_back((std::string)getenv("HOME") + "/.reicast/data/");
-		xdg_home = (std::string)getenv("HOME") + "/.local/share";
+		dirs.push_back((std::string)nowide::getenv("HOME") + "/.reicast/data/");
+		xdg_home = (std::string)nowide::getenv("HOME") + "/.local/share";
 	}
-	if (getenv("XDG_DATA_HOME") != NULL)
+	if (nowide::getenv("XDG_DATA_HOME") != NULL)
 		// If XDG_DATA_HOME is set explicitly, we'll use that instead of $HOME/.local/share
-		xdg_home = (std::string)getenv("XDG_DATA_HOME");
+		xdg_home = (std::string)nowide::getenv("XDG_DATA_HOME");
 	if (!xdg_home.empty())
 	{
 		// XDG data locations
@@ -312,9 +311,9 @@ std::vector<std::string> find_system_data_dirs()
 		dirs.push_back(xdg_home + "/reicast/data/");
 	}
 
-	if (getenv("XDG_DATA_DIRS") != NULL)
+	if (nowide::getenv("XDG_DATA_DIRS") != NULL)
 	{
-		std::string s = (std::string)getenv("XDG_DATA_DIRS");
+		std::string s = (std::string)nowide::getenv("XDG_DATA_DIRS");
 
 		std::string::size_type pos = 0;
 		std::string::size_type n = s.find(':', pos);

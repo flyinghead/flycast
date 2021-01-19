@@ -25,16 +25,16 @@ bool RZipFile::Open(const std::string& path, bool write)
 {
 	verify(file == nullptr);
 
-	file = fopen(path.c_str(), write ? "wb" : "rb");
+	file = nowide::fopen(path.c_str(), write ? "wb" : "rb");
 	if (file == nullptr)
 		return false;
 	if (!write)
 	{
 		u8 header[sizeof(RZipHeader)];
-		if (fread(header, sizeof(header), 1, file) != 1
+		if (std::fread(header, sizeof(header), 1, file) != 1
 			|| memcmp(header, RZipHeader, sizeof(header))
-			|| fread(&maxChunkSize, sizeof(maxChunkSize), 1, file) != 1
-			|| fread(&size, sizeof(size), 1, file) != 1)
+			|| std::fread(&maxChunkSize, sizeof(maxChunkSize), 1, file) != 1
+			|| std::fread(&size, sizeof(size), 1, file) != 1)
 		{
 			Close();
 			return false;
@@ -51,7 +51,7 @@ void RZipFile::Close()
 {
 	if (file != nullptr)
 	{
-		fclose(file);
+		std::fclose(file);
 		file = nullptr;
 		if (chunk != nullptr)
 		{
@@ -74,10 +74,10 @@ size_t RZipFile::Read(void *data, size_t length)
 			chunkSize = 0;
 			chunkIndex = 0;
 			u32 zippedSize;
-			if (fread(&zippedSize, sizeof(zippedSize), 1, file) != 1)
+			if (std::fread(&zippedSize, sizeof(zippedSize), 1, file) != 1)
 				break;
 			u8 *zipped = new u8[zippedSize];
-			if (fread(zipped, zippedSize, 1, file) != 1)
+			if (std::fread(zipped, zippedSize, 1, file) != 1)
 			{
 				delete [] zipped;
 				break;
@@ -104,12 +104,12 @@ size_t RZipFile::Read(void *data, size_t length)
 size_t RZipFile::Write(const void *data, size_t length)
 {
 	verify(file != nullptr);
-	verify(ftell(file) == 0);
+	verify(std::ftell(file) == 0);
 
 	maxChunkSize = 1024 * 1024;
-	if (fwrite(RZipHeader, sizeof(RZipHeader), 1, file) != 1
-		|| fwrite(&maxChunkSize, sizeof(maxChunkSize), 1, file) != 1
-		|| fwrite(&length, sizeof(length), 1, file) != 1)
+	if (std::fwrite(RZipHeader, sizeof(RZipHeader), 1, file) != 1
+		|| std::fwrite(&maxChunkSize, sizeof(maxChunkSize), 1, file) != 1
+		|| std::fwrite(&length, sizeof(length), 1, file) != 1)
 		return 0;
 	const u8 *p = (const u8 *)data;
 	u8 *zipped = new u8[maxChunkSize];
@@ -121,8 +121,8 @@ size_t RZipFile::Write(const void *data, size_t length)
 		if (compress(zipped, &zippedSize, p, uncompressedSize) != Z_OK)
 			break;
 		u32 sz = (u32)zippedSize;
-		if (fwrite(&sz, sizeof(sz), 1, file) != 1
-			|| fwrite(zipped, zippedSize, 1, file) != 1)
+		if (std::fwrite(&sz, sizeof(sz), 1, file) != 1
+			|| std::fwrite(zipped, zippedSize, 1, file) != 1)
 			return 0;
 		p += uncompressedSize;
 		rv += uncompressedSize;

@@ -341,17 +341,17 @@ struct maple_sega_vmu: maple_base
 		if (!file_exists(apath))
 			apath = get_writable_data_path(tempy);
 
-		file = fopen(apath.c_str(), "rb+");
+		file = nowide::fopen(apath.c_str(), "rb+");
 		if (!file)
 		{
 			INFO_LOG(MAPLE, "Unable to open VMU save file \"%s\", creating new file", apath.c_str());
-			file = fopen(apath.c_str(), "wb");
+			file = nowide::fopen(apath.c_str(), "wb");
 			if (file) {
 				if (!init_emptyvmu())
 					WARN_LOG(MAPLE, "Failed to initialize an empty VMU, you should reformat it using the BIOS");
 
-				fwrite(flash_data, sizeof(flash_data), 1, file);
-				fseek(file, 0, SEEK_SET);
+				std::fwrite(flash_data, sizeof(flash_data), 1, file);
+				std::fseek(file, 0, SEEK_SET);
 			}
 			else
 			{
@@ -360,7 +360,7 @@ struct maple_sega_vmu: maple_base
 		}
 
 		if (file != nullptr)
-			fread(flash_data, 1, sizeof(flash_data), file);
+			std::fread(flash_data, 1, sizeof(flash_data), file);
 
 		u8 sum = 0;
 		for (u32 i = 0; i < sizeof(flash_data); i++)
@@ -373,8 +373,8 @@ struct maple_sega_vmu: maple_base
 			{
 				if (file != nullptr)
 				{
-					fwrite(flash_data, sizeof(flash_data), 1, file);
-					fseek(file, 0, SEEK_SET);
+					std::fwrite(flash_data, sizeof(flash_data), 1, file);
+					std::fseek(file, 0, SEEK_SET);
 				}
 			}
 			else
@@ -386,7 +386,7 @@ struct maple_sega_vmu: maple_base
 	}
 	virtual ~maple_sega_vmu()
 	{
-		if (file) fclose(file);
+		if (file) std::fclose(file);
 	}
 	virtual u32 dma(u32 cmd) override
 	{
@@ -595,9 +595,9 @@ struct maple_sega_vmu: maple_base
 
 						if (file)
 						{
-							fseek(file,write_adr,SEEK_SET);
-							fwrite(&flash_data[write_adr],1,write_len,file);
-							fflush(file);
+							std::fseek(file,write_adr,SEEK_SET);
+							std::fwrite(&flash_data[write_adr],1,write_len,file);
+							std::fflush(file);
 						}
 						else
 						{
