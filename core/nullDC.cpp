@@ -523,8 +523,6 @@ void dc_init()
 	init_done = true;
 }
 
-bool game_started;
-
 static int get_game_platform(const char *path)
 {
 	if (path == NULL)
@@ -1078,7 +1076,6 @@ void SaveSettings()
 void dc_resume()
 {
 	SetMemoryHandlers();
-	game_started = true;
 	EventManager::event(Event::Resume);
 	if (!emu_thread.thread.joinable())
 		emu_thread.Start();

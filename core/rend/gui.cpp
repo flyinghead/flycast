@@ -43,7 +43,7 @@
 #include "rend/mainui.h"
 
 extern void UpdateInputState();
-extern bool game_started;
+static bool game_started;
 
 extern int screen_width, screen_height;
 extern u8 kb_shift; 		// shift keys pressed (bitmask)
@@ -72,6 +72,12 @@ GameScanner scanner;
 float gui_get_scaling()
 {
 	return scaling;
+}
+
+static void emuEventCallback(Event event)
+{
+	if (event == Event::Resume)
+		game_started = true;
 }
 
 void gui_init()
@@ -156,6 +162,8 @@ void gui_init()
 
     io.Fonts->AddFontFromMemoryCompressedTTF(roboto_medium_compressed_data, roboto_medium_compressed_size, 17.f * scaling, nullptr, ranges);
     INFO_LOG(RENDERER, "Screen DPI is %d, size %d x %d. Scaling by %.2f", screen_dpi, screen_width, screen_height, scaling);
+
+    EventManager::listen(Event::Resume, emuEventCallback);
 }
 
 void ImGui_Impl_NewFrame()
@@ -2004,6 +2012,7 @@ void gui_term()
 		if (settings.pvr.IsOpenGL())
 			ImGui_ImplOpenGL3_Shutdown();
 		ImGui::DestroyContext();
+	    EventManager::unlisten(Event::Resume, emuEventCallback);
 	}
 }
 

@@ -139,12 +139,27 @@ extern int screen_width,screen_height;
 float vjoy_pos[15][8];
 
 extern bool print_stats;
-extern bool game_started;
+static bool game_started;
 
 //stuff for saving prefs
 jobject g_emulator;
 jmethodID saveAndroidSettingsMid;
 static ANativeWindow *g_window = 0;
+
+static void emuEventCallback(Event event)
+{
+	switch (event)
+	{
+	case Event::Pause:
+		game_started = false;
+		break;
+	case Event::Resume:
+		game_started = true;
+		break;
+	default:
+		break;
+	}
+}
 
 void os_DoEvents()
 {
@@ -216,6 +231,8 @@ JNIEXPORT jstring JNICALL Java_com_reicast_emulator_emu_JNIdc_initEnvironment(JN
     {
         // Do one-time initialization
     	LogManager::Init();
+    	EventManager::listen(Event::Pause, emuEventCallback);
+    	EventManager::listen(Event::Resume, emuEventCallback);
         jstring msg = NULL;
         int rc = reicast_init(0, NULL);
         if (rc == -4)
@@ -261,7 +278,6 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_setGameUri(JNIEnv *en
         if (game_started) {
             dc_stop();
             gui_state = Main;
-            game_started = false;
        		dc_reset(true);
         }
     }
@@ -292,7 +308,10 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_setupMic(JNIEnv *env,
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_pause(JNIEnv *env,jobject obj)
 {
     if (game_started)
+    {
         dc_stop();
+        game_started = true; // restart when resumed
+    }
 }
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_resume(JNIEnv *env,jobject obj)
@@ -303,7 +322,7 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_resume(JNIEnv *env,jo
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_stop(JNIEnv *env,jobject obj)
 {
-    if (game_started)
+    if (dc_is_running())
         dc_stop();
 }
 
