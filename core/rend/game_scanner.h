@@ -55,7 +55,7 @@ class GameScanner
 
 	void add_game_directory(const std::string& path)
 	{
-		//printf("Exploring %s\n", path.c_str());
+		// FIXME this won't work anymore
         if (game_list.size() == 0)
         {
             ++empty_folders_scanned;
@@ -67,63 +67,36 @@ class GameScanner
             content_path_looks_incorrect = false;
         }
         
-		DIR *dir = flycast::opendir(path.c_str());
-		if (dir == NULL)
-			return;
-		while (running)
-		{
-			dirent *entry = flycast::readdir(dir);
-			if (entry == NULL)
-				break;
-			std::string name(entry->d_name);
-			if (name == "." || name == "..")
+        DirectoryTree tree(path);
+        for (const DirectoryTree::item& item : tree)
+        {
+        	std::string name(item.name);
+			std::string child_path = item.parentPath + "/" + name;
+
+			std::string extension = get_file_extension(name);
+			if (extension == "zip" || extension == "7z")
+			{
+				std::string basename = get_file_basename(name);
+				string_tolower(basename);
+				auto it = arcade_games.find(basename);
+				if (it == arcade_games.end())
+					continue;
+				name = name + " (" + std::string(it->second->description) + ")";
+			}
+			else if (extension == "chd" || extension == "gdi")
+			{
+				// Hide arcade gdroms
+				std::string basename = get_file_basename(name);
+				string_tolower(basename);
+				if (arcade_gdroms.count(basename) != 0)
+					continue;
+			}
+			else if ((settings.dreamcast.HideLegacyNaomiRoms
+							|| (extension != "bin" && extension != "lst" && extension != "dat"))
+					&& extension != "cdi" && extension != "cue")
 				continue;
-			std::string child_path = path + "/" + name;
-			bool is_dir = false;
-#ifndef _WIN32
-			if (entry->d_type == DT_DIR)
-				is_dir = true;
-			if (entry->d_type == DT_UNKNOWN || entry->d_type == DT_LNK)
-#endif
-			{
-				struct stat st;
-				if (flycast::stat(child_path.c_str(), &st) != 0)
-					continue;
-				if (S_ISDIR(st.st_mode))
-					is_dir = true;
-			}
-			if (is_dir)
-			{
-				add_game_directory(child_path);
-			}
-			else
-			{
-				std::string extension = get_file_extension(name);
-				if (extension == "zip" || extension == "7z")
-				{
-					std::string basename = get_file_basename(name);
-					string_tolower(basename);
-					auto it = arcade_games.find(basename);
-					if (it == arcade_games.end())
-						continue;
-					name = name + " (" + std::string(it->second->description) + ")";
-				}
-				else if (extension == "chd" || extension == "gdi")
-				{
-					// Hide arcade gdroms
-					std::string basename = get_file_basename(name);
-					string_tolower(basename);
-					if (arcade_gdroms.count(basename) != 0)
-						continue;
-				}
-				else if ((settings.dreamcast.HideLegacyNaomiRoms
-								|| (extension != "bin" && extension != "lst" && extension != "dat"))
-						&& extension != "cdi" && extension != "cue")
-					continue;
-				insert_game(GameMedia{ name, child_path });
-			}
+			insert_game(GameMedia{ name, child_path });
 		}
-		flycast::closedir(dir);
 	}
 
 public:

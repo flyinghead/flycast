@@ -125,3 +125,133 @@ inline int mkdir(const char *path, mode_t mode) {
 #endif
 }
 
+// iterate depth-first over the files contained in a folder hierarchy
+class DirectoryTree
+{
+public:
+	struct item {
+		std::string name;
+		std::string parentPath;
+	};
+
+	class iterator
+	{
+	private:
+		iterator(DIR *dir, std::string pathname) {
+			if (dir != nullptr)
+			{
+				dirs.push_back(dir);
+				pathnames.push_back(pathname);
+				advance();
+			}
+		}
+
+	public:
+		~iterator() {
+			for (DIR *dir : dirs)
+				flycast::closedir(dir);
+		}
+
+		const item *operator->() {
+			if (direntry == nullptr)
+				throw std::runtime_error("null iterator");
+			return &currentItem;
+		}
+
+		const item& operator*() const {
+			if (direntry == nullptr)
+				throw std::runtime_error("null iterator");
+			return currentItem;
+		}
+
+		// Prefix increment
+		iterator& operator++() {
+			advance();
+			return *this;
+		}
+
+		// Basic (in)equality implementations, just intended to work when comparing with end() or this
+		friend bool operator==(const iterator& a, const iterator& b) {
+			return a.direntry == b.direntry;
+		}
+
+		friend bool operator!=(const iterator& a, const iterator& b) {
+			return a.direntry != b.direntry;
+		}
+
+	private:
+		void advance()
+		{
+			while (!dirs.empty())
+			{
+				direntry = flycast::readdir(dirs.back());
+				if (direntry == nullptr)
+				{
+					flycast::closedir(dirs.back());
+					dirs.pop_back();
+					pathnames.pop_back();
+					continue;
+				}
+				currentItem.name = direntry->d_name;
+				if (currentItem.name == "." || currentItem.name == "..")
+					continue;
+				std::string childPath = pathnames.back() + "/" + currentItem.name;
+				bool isDir = false;
+#ifndef _WIN32
+				if (entry->d_type == DT_DIR)
+					isDir = true;
+				else if (entry->d_type == DT_UNKNOWN || entry->d_type == DT_LNK)
+#endif
+				{
+					struct stat st;
+					if (flycast::stat(childPath.c_str(), &st) != 0)
+						continue;
+					if (S_ISDIR(st.st_mode))
+						isDir = true;
+				}
+				if (!isDir)
+				{
+					currentItem.parentPath = pathnames.back();
+					break;
+				}
+
+				DIR *childDir = flycast::opendir(childPath.c_str());
+				if (childDir == nullptr)
+				{
+					INFO_LOG(COMMON, "Cannot read directory '%s'", childPath.c_str());
+				}
+				else
+				{
+					dirs.push_back(childDir);
+					pathnames.push_back(childPath);
+				}
+			}
+		}
+
+		std::vector<DIR *> dirs;
+		std::vector<std::string> pathnames;
+		dirent *direntry = nullptr;
+		item currentItem;
+
+		friend class DirectoryTree;
+	};
+
+	DirectoryTree(const std::string& root) : root(root) {
+	}
+
+	iterator begin()
+	{
+		DIR *dir = flycast::opendir(root.c_str());
+		if (dir == nullptr)
+			INFO_LOG(COMMON, "Cannot read directory '%s'", root.c_str());
+
+		return iterator(dir, root);
+	}
+	iterator end()
+	{
+		return iterator(nullptr, root);
+	}
+
+private:
+	const std::string& root;
+};

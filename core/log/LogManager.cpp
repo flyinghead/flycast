@@ -138,7 +138,7 @@ LogManager::LogManager()
 		FileLogListener *listener = new FileLogListener(logPath);
 		if (!listener->IsValid())
 		{
-			const char *home = getenv("HOME");
+			const char *home = nowide::getenv("HOME");
 			if (home != nullptr)
 			{
 				delete listener;

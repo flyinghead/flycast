@@ -111,7 +111,7 @@ void select_directory_popup(const char *prompt, float scaling, StringCallback ca
 			if (select_current_directory == PSEUDO_ROOT)
 			{
 				error_message = "Storage Locations";
-				const char *home = getenv("REICAST_HOME");
+				const char *home = nowide::getenv("REICAST_HOME");
 				while (home != NULL)
 				{
 					const char *pcolon = strchr(home, ':');

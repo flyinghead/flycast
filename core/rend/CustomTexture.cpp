@@ -20,10 +20,7 @@
 #include "cfg/cfg.h"
 #include "oslib/directory.h"
 
-#include <algorithm>
-#include <dirent.h>
 #include <sstream>
-#include <sys/stat.h>
 #define STB_IMAGE_IMPLEMENTATION
 #define STBI_ONLY_JPEG
 #define STBI_ONLY_PNG
@@ -41,33 +38,33 @@ void CustomTexture::LoaderThread()
 		BaseTextureCacheData *texture;
 		
 		do {
-			texture = NULL;
-
-			work_queue_mutex.lock();
-			if (!work_queue.empty())
+			texture = nullptr;
 			{
-				texture = work_queue.back();
-				work_queue.pop_back();
+				std::unique_lock<std::mutex> lock(work_queue_mutex);
+				if (!work_queue.empty())
+				{
+					texture = work_queue.back();
+					work_queue.pop_back();
+				}
 			}
-			work_queue_mutex.unlock();
 			
-			if (texture != NULL)
+			if (texture != nullptr)
 			{
 				texture->ComputeHash();
-				if (texture->custom_image_data != NULL)
+				if (texture->custom_image_data != nullptr)
 				{
 					free(texture->custom_image_data);
-					texture->custom_image_data = NULL;
+					texture->custom_image_data = nullptr;
 				}
 				if (!texture->dirty)
 				{
 					int width, height;
 					u8 *image_data = LoadCustomTexture(texture->texture_hash, width, height);
-					if (image_data == NULL)
+					if (image_data == nullptr)
 					{
 						image_data = LoadCustomTexture(texture->old_texture_hash, width, height);
 					}
-					if (image_data != NULL)
+					if (image_data != nullptr)
 					{
 						texture->custom_width = width;
 						texture->custom_height = height;
@@ -77,7 +74,7 @@ void CustomTexture::LoaderThread()
 				texture->custom_load_in_progress--;
 			}
 
-		} while (texture != NULL);
+		} while (texture != nullptr);
 		
 		wakeup_thread.Wait();
 	}
@@ -105,8 +102,8 @@ bool CustomTexture::Init()
 		{
 			textures_path = get_readonly_data_path("textures/" + game_id) + "/";
 
-			DIR *dir = opendir(textures_path.c_str());
-			if (dir != NULL)
+			DIR *dir = flycast::opendir(textures_path.c_str());
+			if (dir != nullptr)
 			{
 				INFO_LOG(RENDERER, "Found custom textures directory: %s", textures_path.c_str());
 				custom_textures_available = true;
@@ -123,9 +120,10 @@ void CustomTexture::Terminate()
 	if (initialized)
 	{
 		initialized = false;
-		work_queue_mutex.lock();
-		work_queue.clear();
-		work_queue_mutex.unlock();
+		{
+			std::unique_lock<std::mutex> lock(work_queue_mutex);
+			work_queue.clear();
+		}
 		wakeup_thread.Set();
 		loader_thread.WaitToEnd();
 		texture_map.clear();
@@ -154,9 +152,10 @@ void CustomTexture::LoadCustomTextureAsync(BaseTextureCacheData *texture_data)
 		return;
 
 	texture_data->custom_load_in_progress++;
-	work_queue_mutex.lock();
-	work_queue.insert(work_queue.begin(), texture_data);
-	work_queue_mutex.unlock();
+	{
+		std::unique_lock<std::mutex> lock(work_queue_mutex);
+		work_queue.insert(work_queue.begin(), texture_data);
+	}
 	wakeup_thread.Set();
 }
 
@@ -238,35 +237,14 @@ void CustomTexture::DumpTexture(u32 hash, int w, int h, TextureType textype, voi
 void CustomTexture::LoadMap()
 {
 	texture_map.clear();
-	DIR *dir = flycast::opendir(textures_path.c_str());
-	if (dir == nullptr)
-		return;
-	while (true)
+	DirectoryTree tree(textures_path);
+	for (const DirectoryTree::item& item : tree)
 	{
-		struct dirent *entry = flycast::readdir(dir);
-		if (entry == nullptr)
-			break;
-		std::string name(entry->d_name);
-		if (name == "." || name == "..")
-			continue;
-		std::string child_path = textures_path + name;
-#ifndef _WIN32
-		if (entry->d_type == DT_DIR)
-			continue;
-		if (entry->d_type == DT_UNKNOWN || entry->d_type == DT_LNK)
-#endif
-		{
-			struct stat st;
-			if (flycast::stat(child_path.c_str(), &st) != 0)
-				continue;
-			if (S_ISDIR(st.st_mode))
-				continue;
-		}
-		std::string extension = get_file_extension(name);
+		std::string extension = get_file_extension(item.name);
 		if (extension != "jpg" && extension != "jpeg" && extension != "png")
 			continue;
-		std::string::size_type dotpos = name.find_last_of('.');
-		std::string basename = name.substr(0, dotpos);
+		std::string::size_type dotpos = item.name.find_last_of('.');
+		std::string basename = item.name.substr(0, dotpos);
 		char *endptr;
 		u32 hash = (u32)strtoll(basename.c_str(), &endptr, 16);
 		if (endptr - basename.c_str() < (ptrdiff_t)basename.length())
@@ -274,8 +252,7 @@ void CustomTexture::LoadMap()
 			INFO_LOG(RENDERER, "Invalid hash %s", basename.c_str());
 			continue;
 		}
-		texture_map[hash] = child_path;
+		texture_map[hash] = item.parentPath + "/" + item.name;
 	}
-	flycast::closedir(dir);
 	custom_textures_available = !texture_map.empty();
 }
