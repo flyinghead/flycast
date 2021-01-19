@@ -198,9 +198,9 @@ public:
 				std::string childPath = pathnames.back() + "/" + currentItem.name;
 				bool isDir = false;
 #ifndef _WIN32
-				if (entry->d_type == DT_DIR)
+				if (direntry->d_type == DT_DIR)
 					isDir = true;
-				else if (entry->d_type == DT_UNKNOWN || entry->d_type == DT_LNK)
+				else if (direntry->d_type == DT_UNKNOWN || direntry->d_type == DT_LNK)
 #endif
 				{
 					struct stat st;
