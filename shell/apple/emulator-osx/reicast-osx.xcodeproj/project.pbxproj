@@ -3205,6 +3205,7 @@
 					../../../core/deps/stb,
 					../../../core/deps/miniupnpc,
 					../../../core/deps/nowide/include,
+					../../../core/deps/libzip/lib,
 					/usr/local/include,
 				);
 				INFOPLIST_FILE = "emulator-osx/Info.plist";
@@ -3255,6 +3256,7 @@
 					../../../core/deps/stb,
 					../../../core/deps/miniupnpc,
 					../../../core/deps/nowide/include,
+					../../../core/deps/libzip/lib,
 					/usr/local/include,
 				);
 				INFOPLIST_FILE = "emulator-osx/Info.plist";
