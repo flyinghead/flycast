@@ -3230,7 +3230,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "echo \"#define REICAST_VERSION \\\"`git describe --tags --always`\\\"\" > $SRCROOT/../../../core/version.h\necho \"#define GIT_HASH \\\"`git rev-parse --short HEAD`\\\"\" >> $SRCROOT/../../../core/version.h\necho \"#define BUILD_DATE \\\"`date '+%Y-%m-%d %H:%M:%S %Z'`\\\"\" >> $SRCROOT/../../../core/version.h\n";
+			shellScript = "echo \"#define REICAST_VERSION \\\"`git describe --tags --always | sed -e 's/-/+/'`\\\"\" > $SRCROOT/../../../core/version.h\necho \"#define GIT_HASH \\\"`git rev-parse --short HEAD`\\\"\" >> $SRCROOT/../../../core/version.h\necho \"#define BUILD_DATE \\\"`date '+%Y-%m-%d %H:%M:%S %Z'`\\\"\" >> $SRCROOT/../../../core/version.h\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
