@@ -816,7 +816,7 @@ void Gdxsv::handleReleaseJSON(const std::string &json) {
         latest_version = match.str(0).substr(13, std::string::npos);
 
         std::string current_version = std::string(REICAST_VERSION);
-        current_version = current_version.substr(1, current_version.find_first_of("-") - 1);
+        current_version = current_version.substr(1, current_version.find_first_of("+") - 1);
 
         auto version_compare = [](std::string v1, std::string v2) {
             size_t i = 0, j = 0;
