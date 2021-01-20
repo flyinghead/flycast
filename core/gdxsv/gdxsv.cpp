@@ -401,13 +401,13 @@ void Gdxsv::GcpPingTest() {
         }
 
         auto t2 = std::chrono::high_resolution_clock::now();
-        int rtt = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
+        int rtt = (int)std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
         const std::string response_header(buf, n);
         if (response_header.find("200 OK") != std::string::npos) {
             gcp_ping_test_result[region_host.first] = rtt;
             char latency_str[256];
             snprintf(latency_str, 256, "%s : %d[ms]", region_host.first.c_str(), rtt);
-            NOTICE_LOG(COMMON, latency_str);
+            NOTICE_LOG(COMMON, "%s", latency_str);
             gui_display_notification(latency_str, 3000);
         } else {
             ERROR_LOG(COMMON, "error response : %s", response_header.c_str());
