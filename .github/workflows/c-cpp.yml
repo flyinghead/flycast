@@ -20,15 +20,15 @@ jobs:
       - name: Set up build environment (macos-latest)
         run: |
           brew install ccache flac libao libomp pulseaudio sdl2 zlib
-          echo "::add-path::/usr/local/opt/ccache/libexec"
-          echo "::set-env name=CCACHE_DIR::/tmp/ccache"
+          echo "/usr/local/opt/ccache/libexec" >> $GITHUB_PATH
+          echo "CCACHE_DIR=/tmp/ccache" >> $GITHUB_ENV
         if: matrix.config.os == 'macos-latest'
 
       - name: Set up build environment (ubuntu-latest)
         run: |
           sudo apt-get update
           sudo apt-get -y install ccache libao-dev libasound2-dev libevdev-dev libflac-dev libgl1-mesa-dev libpulse-dev libsdl2-dev libudev-dev libzip-dev
-          echo "::set-env name=CCACHE_DIR::/tmp/ccache"
+          echo "CCACHE_DIR=/tmp/ccache" >> $GITHUB_ENV
         if: matrix.config.os == 'ubuntu-latest'
 
       - uses: actions/cache@v1
