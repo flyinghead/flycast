@@ -23,7 +23,7 @@ for:
           
           set PATH=%EXTRA_PATH%;%PATH%
 
-          for /f "delims=" %%i in ('git describe --tags') do set SUFFIX=%%i
+          for /f "delims=" %%i in ('powershell "git describe --tags | %% {$_ -replace('(?=-)-(.*)','+$1')}"') do set SUFFIX=%%i
 
           if defined APPVEYOR_REPO_TAG_NAME (set SUFFIX=%APPVEYOR_REPO_TAG_NAME%-%APPVEYOR_REPO_COMMIT:~0,7%)
           
@@ -67,7 +67,7 @@ for:
     
     before_build:
       - sh: >-
-          if [ -z "$APPVEYOR_REPO_TAG_NAME" ]; then export SUFFIX=$(git describe --tags); else export SUFFIX=$APPVEYOR_REPO_TAG_NAME-${APPVEYOR_REPO_COMMIT:0:7}; fi
+          if [ -z "$APPVEYOR_REPO_TAG_NAME" ]; then export SUFFIX=$(git describe --tags | sed -e 's/-/+/'); else export SUFFIX=$APPVEYOR_REPO_TAG_NAME-${APPVEYOR_REPO_COMMIT:0:7}; fi
 
           cd shell/apple
 
