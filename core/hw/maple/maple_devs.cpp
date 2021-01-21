@@ -629,8 +629,8 @@ struct maple_sega_vmu: maple_base
 							}
 						}
 						config->SetImage(lcd_data_decoded);
-						push_vmu_screen(bus_id, bus_port, lcd_data_decoded);
-						return  MDRS_DeviceReply;//just ko
+
+						return  MDRS_DeviceReply;
 					}
 
 					case MFID_3_Clock:
@@ -1087,19 +1087,19 @@ struct maple_keyboard : maple_base
 // bit 1: Right button (B)
 // bit 2: Left button (A)
 // bit 3: Wheel button
-u32 mo_buttons = 0xFFFFFFFF;
+u32 mo_buttons[4] = { 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF };
 // Relative mouse coordinates [-512:511]
-f32 mo_x_delta;
-f32 mo_y_delta;
-f32 mo_wheel_delta;
+f32 mo_x_delta[4];
+f32 mo_y_delta[4];
+f32 mo_wheel_delta[4];
 // Absolute mouse coordinates
 // Range [0:639] [0:479]
 // but may be outside this range if the pointer is offscreen or outside the 4:3 window.
-s32 mo_x_abs;
-s32 mo_y_abs;
+s32 mo_x_abs[4];
+s32 mo_y_abs[4];
 // previous mouse coordinates for relative motion
-s32 mo_x_prev = -1;
-s32 mo_y_prev = -1;
+s32 mo_x_prev[4] = { -1, -1, -1, -1 };
+s32 mo_y_prev[4] = { -1, -1, -1, -1 };
 // physical mouse coordinates (relative to window/screen)
 s32 mo_x_phy;
 s32 mo_y_phy;
@@ -1111,15 +1111,9 @@ struct maple_mouse : maple_base
 		return MDT_Mouse;
 	}
 
-	static u16 mo_cvt(f32 delta)
+	static u16 mo_cvt(int delta)
 	{
-		delta += 0x200;
-		if (delta <= 0)
-			delta = 0;
-		else if (delta > 0x3FF)
-			delta = 0x3FF;
-
-		return (u16)lroundf(delta);
+		return (u16)std::min(0x3FF, std::max(0, delta + 0x200));
 	}
 
 	virtual u32 dma(u32 cmd) override
@@ -1156,30 +1150,32 @@ struct maple_mouse : maple_base
 			return cmd == MDC_DeviceRequest ? MDRS_DeviceStatus : MDRS_DeviceStatusAll;
 
 		case MDCF_GetCondition:
-			w32(MFID_9_Mouse);
-			//struct data
-			//int32 buttons       ; digital buttons bitfield (little endian)
-			w32(mo_buttons);
-			//int16 axis1         ; horizontal movement (0-$3FF) (little endian)
-			w16(mo_cvt(mo_x_delta));
-			//int16 axis2         ; vertical movement (0-$3FF) (little endian)
-			w16(mo_cvt(mo_y_delta));
-			//int16 axis3         ; mouse wheel movement (0-$3FF) (little endian)
-			w16(mo_cvt(mo_wheel_delta));
-			//int16 axis4         ; ? movement (0-$3FF) (little endian)
-			w16(mo_cvt(0));
-			//int16 axis5         ; ? movement (0-$3FF) (little endian)
-			w16(mo_cvt(0));
-			//int16 axis6         ; ? movement (0-$3FF) (little endian)
-			w16(mo_cvt(0));
-			//int16 axis7         ; ? movement (0-$3FF) (little endian)
-			w16(mo_cvt(0));
-			//int16 axis8         ; ? movement (0-$3FF) (little endian)
-			w16(mo_cvt(0));
+			{
+				u32 buttons;
+				int x, y, wheel;
+				config->GetMouseInput(buttons, x, y, wheel);
 
-			mo_x_delta=0;
-			mo_y_delta=0;
-			mo_wheel_delta = 0;
+				w32(MFID_9_Mouse);
+				//struct data
+				//int32 buttons       ; digital buttons bitfield (little endian)
+				w32(buttons);
+				//int16 axis1         ; horizontal movement (0-$3FF) (little endian)
+				w16(mo_cvt(x));
+				//int16 axis2         ; vertical movement (0-$3FF) (little endian)
+				w16(mo_cvt(y));
+				//int16 axis3         ; mouse wheel movement (0-$3FF) (little endian)
+				w16(mo_cvt(wheel));
+				//int16 axis4         ; ? movement (0-$3FF) (little endian)
+				w16(mo_cvt(0));
+				//int16 axis5         ; ? movement (0-$3FF) (little endian)
+				w16(mo_cvt(0));
+				//int16 axis6         ; ? movement (0-$3FF) (little endian)
+				w16(mo_cvt(0));
+				//int16 axis7         ; ? movement (0-$3FF) (little endian)
+				w16(mo_cvt(0));
+				//int16 axis8         ; ? movement (0-$3FF) (little endian)
+				w16(mo_cvt(0));
+			}
 
 			return MDRS_DataTransfer;
 
@@ -1281,11 +1277,13 @@ struct maple_lightgun : maple_base
 	{
 		PlainJoystickState pjs;
 		config->GetInput(&pjs);
+		int x, y;
+		config->GetAbsCoordinates(x, y);
 
 		if ((pjs.kcode & DC_BTN_RELOAD) == 0)
 			read_lightgun_position(-1, -1);
 		else
-			read_lightgun_position(mo_x_abs, mo_y_abs);
+			read_lightgun_position(x, y);
 		return true;
 	}
 };

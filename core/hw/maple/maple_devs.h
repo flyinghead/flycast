@@ -1,6 +1,7 @@
 #pragma once
 #include <memory>
 #include "types.h"
+#include "maple_cfg.h"
 #include "maple_helper.h"
 #include <cmath>
 #include "input/gamepad.h"
@@ -162,7 +163,7 @@ struct maple_device
 	u8 bus_port;            //0 .. 5
 	u8 bus_id;              //0 .. 3
 	char logical_port[3];  //A0, etc
-	IMapleConfigMap* config;
+	MapleConfigMap* config;
 
 	//fill in the info
 	void Setup(u32 prt);
@@ -179,7 +180,6 @@ struct maple_device
 
 maple_device* maple_Create(MapleDeviceType type);
 
-void push_vmu_screen(int bus_id, int bus_port, u8* buffer);
 #define MAPLE_PORTS 4
 
 template<int Magnitude>
@@ -198,23 +198,26 @@ extern u8 EEPROM[0x100];
 void load_naomi_eeprom();
 
 // Mouse position and buttons
-extern u32 mo_buttons;
-extern s32 mo_x_abs;
-extern s32 mo_y_abs;
-extern f32 mo_x_delta;
-extern f32 mo_y_delta;
-extern f32 mo_wheel_delta;
+extern u32 mo_buttons[4];
+extern s32 mo_x_abs[4];
+extern s32 mo_y_abs[4];
+extern f32 mo_x_delta[4];
+extern f32 mo_y_delta[4];
+extern f32 mo_wheel_delta[4];
 
 extern s32 mo_x_phy;
 extern s32 mo_y_phy;
 
-extern s32 mo_x_prev;
-extern s32 mo_y_prev;
+extern s32 mo_x_prev[4];
+extern s32 mo_y_prev[4];
 
-static inline void SetMousePosition(int x, int y, int width, int height, int xrel = 0, int yrel = 0)
+static inline void SetMousePosition(int x, int y, int width, int height, u32 mouseId = 0)
 {
-	mo_x_phy = x;
-	mo_y_phy = y;
+	if (mouseId == 0)
+	{
+		mo_x_phy = x;
+		mo_y_phy = y;
+	}
 
 	if (settings.rend.Rotate90)
 	{
@@ -222,8 +225,6 @@ static inline void SetMousePosition(int x, int y, int width, int height, int xre
 		y = x;
 		x = height - t;
 		std::swap(width, height);
-		std::swap(xrel, yrel);
-		xrel = -xrel;
 	}
 	float fx, fy;
 	if ((float)width / height >= 640.f / 480.f)
@@ -240,21 +241,31 @@ static inline void SetMousePosition(int x, int y, int width, int height, int xre
 		scale /= settings.rend.ScreenStretching / 100.f;
 		fy = (y - (height - 480.f / scale) / 2.f) * scale;
 	}
-	mo_x_abs = (int)roundf(fx);
-	mo_y_abs = (int)roundf(fy);
+	mo_x_abs[mouseId] = (int)std::round(fx);
+	mo_y_abs[mouseId] = (int)std::round(fy);
 
-	if (xrel != 0 || yrel != 0)
+	if (mo_x_prev[mouseId] != -1)
 	{
-		mo_x_delta += (f32)xrel * settings.input.MouseSensitivity / 100.f;
-		mo_y_delta += (f32)yrel * settings.input.MouseSensitivity / 100.f;
+		mo_x_delta[mouseId] += (f32)(x - mo_x_prev[mouseId]) * settings.input.MouseSensitivity / 100.f;
+		mo_y_delta[mouseId] += (f32)(y - mo_y_prev[mouseId]) * settings.input.MouseSensitivity / 100.f;
 	}
-	else if (mo_x_prev != -1)
+	mo_x_prev[mouseId] = x;
+	mo_y_prev[mouseId] = y;
+}
+
+static inline void SetRelativeMousePosition(int xrel, int yrel, u32 mouseId = 0)
+{
+	if (settings.rend.Rotate90)
 	{
-		mo_x_delta += (f32)(x - mo_x_prev) * settings.input.MouseSensitivity / 100.f;
-		mo_y_delta += (f32)(y - mo_y_prev) * settings.input.MouseSensitivity / 100.f;
+		std::swap(xrel, yrel);
+		xrel = -xrel;
 	}
-	mo_x_prev = x;
-	mo_y_prev = y;
+	float dx = (float)xrel * settings.input.MouseSensitivity / 100.f;
+	float dy = (float)yrel * settings.input.MouseSensitivity / 100.f;
+	mo_x_delta[mouseId] += dx;
+	mo_y_delta[mouseId] += dy;
+	mo_x_abs[mouseId] += (int)std::round(dx);
+	mo_y_abs[mouseId] += (int)std::round(dy);
 }
 
 #define SWAP32(a) ((((a) & 0xff) << 24)  | (((a) & 0xff00) << 8) | (((a) >> 8) & 0xff00) | (((a) >> 24) & 0xff))

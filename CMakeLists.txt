@@ -121,40 +121,33 @@ if(ALSA_FOUND AND NOT ANDROID)
     target_link_libraries(${PROJECT_NAME} PRIVATE ${ALSA_LIBRARIES})
 endif()
 
-if(MINGW)
-    target_link_libraries(${PROJECT_NAME} PRIVATE "-static-libgcc -static-libstdc++")
-    set(SDL2_FOUND TRUE)
-    add_library(SDL2::SDL2-static STATIC IMPORTED)
-    set_target_properties(SDL2::SDL2-static PROPERTIES
-            INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_SOURCE_DIR}/core/deps/SDL2-2.0.12/include"
-            IMPORTED_LINK_INTERFACE_LANGUAGES "C"
-            IMPORTED_LOCATION "${CMAKE_CURRENT_SOURCE_DIR}/core/deps/SDL2-2.0.12/x86_64-w64-mingw32/lib/libSDL2.a"
-            INTERFACE_LINK_LIBRARIES "-L${CMAKE_CURRENT_SOURCE_DIR}/core/deps/SDL2-2.0.12/x86_64-w64-mingw32/lib -lmingw32 -lSDL2main -lSDL2 -mwindows  -Wl,--no-undefined -Wl,--dynamicbase -Wl,--nxcompat -Wl,--high-entropy-va -lm -ldinput8 -ldxguid -ldxerr8 -luser32 -lgdi32 -lwinmm -limm32 -lole32 -loleaut32 -lshell32 -lsetupapi -lversion -luuid")
-elseif(MSVC)
-    set(SDL2_FOUND TRUE)
-    add_library(SDL2::SDL2 SHARED IMPORTED)
-	if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-		set_target_properties(SDL2::SDL2 PROPERTIES
-				INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_SOURCE_DIR}/core/deps/SDL2-2.0.12/include"
-				IMPORTED_LINK_INTERFACE_LANGUAGES "C"
-				IMPORTED_LOCATION "${CMAKE_CURRENT_SOURCE_DIR}/core/deps/SDL2-2.0.12/MSVC/lib/x64/SDL2.dll"
-				IMPORTED_IMPLIB "${CMAKE_CURRENT_SOURCE_DIR}/core/deps/SDL2-2.0.12/MSVC/lib/x64/SDL2.lib")
-	else()
-		set_target_properties(SDL2::SDL2 PROPERTIES
-				INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_SOURCE_DIR}/core/deps/SDL2-2.0.12/include"
-				IMPORTED_LINK_INTERFACE_LANGUAGES "C"
-				IMPORTED_LOCATION "${CMAKE_CURRENT_SOURCE_DIR}/core/deps/SDL2-2.0.12/MSVC/lib/x86/SDL2.dll"
-				IMPORTED_IMPLIB "${CMAKE_CURRENT_SOURCE_DIR}/core/deps/SDL2-2.0.12/MSVC/lib/x86/SDL2.lib")
-	endif()
-elseif(NOT ANDROID)
-    find_package(SDL2 QUIET)
+if(WIN32)
+	# Patch and build SDL
+	execute_process(COMMAND git apply -p1 ${CMAKE_CURRENT_SOURCE_DIR}/core/deps/patches/SDL.patch
+		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/core/deps/SDL) 
+	file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/core/deps/SDL")
+	execute_process(COMMAND ${CMAKE_COMMAND} 
+		"-DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/core/deps/SDL" 
+		-DBUILD_SHARED_LIBS=OFF
+		-G "${CMAKE_GENERATOR}"
+		$<$<BOOL:MSVC>:-A ${CMAKE_GENERATOR_PLATFORM}>
+		"${CMAKE_CURRENT_SOURCE_DIR}/core/deps/SDL" 
+    	WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/core/deps/SDL")
+	execute_process(COMMAND ${CMAKE_COMMAND} --build "${CMAKE_CURRENT_BINARY_DIR}/core/deps/SDL" --config Release --target install)
 endif()
 
+if(MINGW)
+	target_link_libraries(${PROJECT_NAME} PRIVATE "-static-libgcc -static-libstdc++")
+endif()
+
+if(NOT ANDROID)
+    find_package(SDL2 QUIET HINTS "${CMAKE_CURRENT_BINARY_DIR}/core/deps/SDL")
+endif()
 if(SDL2_FOUND)
     target_compile_definitions(${PROJECT_NAME} PRIVATE USE_SDL USE_SDL_AUDIO)
     target_sources(${PROJECT_NAME} PRIVATE core/sdl/sdl.cpp core/sdl/sdl.h core/sdl/sdl_gamepad.h core/sdl/sdl_keyboard.h)
-	target_include_directories(${PROJECT_NAME} PRIVATE "${SDL2_INCLUDE_DIRS}/..")
-    if((MINGW OR APPLE) AND TARGET SDL2::SDL2-static)
+	target_include_directories(${PROJECT_NAME} PRIVATE ${SDL2_INCLUDE_DIRS})
+    if((APPLE OR WIN32) AND TARGET SDL2::SDL2-static)
         target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2-static)
     elseif(TARGET SDL2::SDL2)
         target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2)

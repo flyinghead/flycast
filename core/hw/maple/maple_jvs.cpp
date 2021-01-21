@@ -472,7 +472,8 @@ protected:
 	virtual u16 read_analog_axis(int player_num, int player_axis, bool inverted) override {
 		if (init_in_progress)
 			return 0;
-		if (mo_x_abs < 0 || mo_x_abs > 639 || mo_y_abs < 0 || mo_y_abs > 479)
+		player_num = std::min(player_num, (int)ARRAY_SIZE(mo_x_abs));
+		if (mo_x_abs[player_num] < 0 || mo_x_abs[player_num] > 639 || mo_y_abs[player_num] < 0 || mo_y_abs[player_num] > 479)
 			return 0;
 		else
 			return 0x8000;
@@ -1483,25 +1484,29 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 						LOGJVS("ana ");
 						if (lightgun_as_analog)
 						{
-							u16 x;
-							u16 y;
-							if (mo_x_abs < 0 || mo_x_abs > 639 || mo_y_abs < 0 || mo_y_abs > 479
-									|| (kcode[first_player] & DC_BTN_RELOAD) == 0)
+							for (; axis / 2 < player_count && axis < buffer_in[cmdi + 1]; axis += 2)
 							{
-								x = 0;
-								y = 0;
+								int playerNum = first_player + axis / 2;
+								u16 x;
+								u16 y;
+								if (mo_x_abs[playerNum] < 0 || mo_x_abs[playerNum] > 639
+										|| mo_y_abs[playerNum] < 0 || mo_y_abs[playerNum] > 479
+										|| (kcode[playerNum] & DC_BTN_RELOAD) == 0)
+								{
+									x = 0;
+									y = 0;
+								}
+								else
+								{
+									x = mo_x_abs[playerNum] * 0xFFFF / 639;
+									y = mo_y_abs[playerNum] * 0xFFFF / 479;
+								}
+								LOGJVS("x,y:%4x,%4x ", x, y);
+								JVS_OUT(x >> 8);		// X, MSB
+								JVS_OUT(x);				// X, LSB
+								JVS_OUT(y >> 8);		// Y, MSB
+								JVS_OUT(y);				// Y, LSB
 							}
-							else
-							{
-								x = mo_x_abs * 0xFFFF / 639;
-								y = mo_y_abs * 0xFFFF / 479;
-							}
-							LOGJVS("x,y:%4x,%4x ", x, y);
-							JVS_OUT(x >> 8);		// X, MSB
-							JVS_OUT(x);				// X, LSB
-							JVS_OUT(y >> 8);		// Y, MSB
-							JVS_OUT(y);				// Y, LSB
-							axis = 2;
 						}
 
 						u32 player_num = first_player;
@@ -1559,10 +1564,12 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 						JVS_STATUS1();	// report byte
 						static s16 rotx = 0;
 						static s16 roty = 0;
-						rotx += mo_x_delta * 5;
-						roty -= mo_y_delta * 5;
-						mo_x_delta = 0;
-						mo_y_delta = 0;
+						// TODO Add more players.
+						// I can't think of any naomi multiplayer game that uses rotary encoders
+						rotx += mo_x_delta[first_player] * 5;
+						roty -= mo_y_delta[first_player] * 5;
+						mo_x_delta[first_player] = 0;
+						mo_y_delta[first_player] = 0;
 						LOGJVS("rotenc ");
 						for (int chan = 0; chan < buffer_in[cmdi + 1]; chan++)
 						{
@@ -1592,22 +1599,33 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 				case 0x25:	// Read screen pos inputs
 					{
 						JVS_STATUS1();	// report byte
-						// Channel number is jvs_request[channel][cmdi + 1]
-						// specs:
-						//u16 x = mo_x_abs * 0xFFFF / 639;
-						//u16 y = (479 - mo_y_abs) * 0xFFFF / 479;
-						// Ninja Assault:
-						u32 xr = 0x19d - 0x37;
-						u32 yr = 0x1fe - 0x40;
-						s16 x = mo_x_abs * xr / 639 + 0x37;
-						s16 y = mo_y_abs * yr / 479 + 0x40;
-						if ((kcode[first_player] & DC_BTN_RELOAD) == 0)
-							x = y = 0;
+
+						// Channel number (1-based) is in jvs_request[cmdi + 1]
+						int playerNum = first_player + buffer_in[cmdi + 1] - 1;
+						s16 x;
+						s16 y;
+						if ((kcode[playerNum] & DC_BTN_RELOAD) == 0)
+						{
+							x = 0;
+							y = 0;
+						}
+						else
+						{
+							// specs:
+							//u16 x = mo_x_abs * 0xFFFF / 639;
+							//u16 y = (479 - mo_y_abs) * 0xFFFF / 479;
+							// Ninja Assault:
+							u32 xr = 0x19d - 0x37;
+							u32 yr = 0x1fe - 0x40;
+							x = mo_x_abs[playerNum] * xr / 639 + 0x37;
+							y = mo_y_abs[playerNum] * yr / 479 + 0x40;
+						}
 						LOGJVS("lightgun %4x,%4x ", x, y);
 						JVS_OUT(x >> 8);		// X, MSB
 						JVS_OUT(x);				// X, LSB
 						JVS_OUT(y >> 8);		// Y, MSB
 						JVS_OUT(y);				// Y, LSB
+
 						cmdi += 2;
 					}
 					break;

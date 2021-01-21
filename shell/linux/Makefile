@@ -353,8 +353,7 @@ ICON_DIR ?= ${PREFIX}/share/pixmaps
 ifdef USE_SDL
 	ifdef FOR_WINDOWS
 	    CXXFLAGS += -D USE_SDL
-	    LIBS += -L$(RZDCY_SRC_DIR)/deps/SDL2-2.0.12/x86_64-w64-mingw32/lib -lsdl2 -ldinput8  -ldxguid -ldxerr8
-	    LIBS += -luser32 -lgdi32 -lwinmm -limm32 -lole32 -loleaut32 -lshell32 -lsetupapi -lversion -luuid
+	    INCS += -ISDL/include
 	else
 	    CXXFLAGS += `sdl2-config --cflags` -D USE_SDL
 	    LIBS += `sdl2-config --libs`
@@ -420,8 +419,14 @@ ifdef USE_PULSEAUDIO
 endif
 
 ifdef USE_SDLAUDIO
-    CXXFLAGS += `sdl2-config --cflags` -D USE_SDL_AUDIO
-    LIBS += `sdl2-config --libs`
+	ifdef FOR_WINDOWS
+	    CXXFLAGS += -D USE_SDL_AUDIO
+	    INCS += -ISDL/include
+	    USE_SDL = 1
+	else
+	    CXXFLAGS += `sdl2-config --cflags` -D USE_SDL_AUDIO
+	    LIBS += `sdl2-config --libs`
+	endif
 endif
 
 ifdef USE_LIBAO
@@ -491,6 +496,24 @@ endif
 ifndef USE_SYSTEM_MINIUPNPC
 OBJECTS += $(RZDCY_SRC_DIR)/deps/miniupnpc/libminiupnpc.a
 CFLAGS += -DMINIUPNP_STATICLIB
+endif
+
+ifdef USE_SDL
+	ifdef FOR_WINDOWS
+$(OBJECTS): SDL/lib/libSDL2.a
+ 
+SDL/lib/libSDL2.a:
+	-patch -p1 --directory=$(RZDCY_SRC_DIR)/deps/SDL --forward < $(RZDCY_SRC_DIR)/deps/patches/SDL.patch
+	mkdir -p SDL && \
+	  cd SDL && \
+	  cmake -G "MinGW Makefiles" -DCMAKE_INSTALL_PREFIX=. -DBUILD_SHARED_LIBS=OFF $(RZDCY_SRC_DIR)/deps/SDL && \
+	  cmake --build . --target install
+
+
+OBJECTS += SDL/lib/libSDL2.a
+LIBS += -ldinput8  -ldxguid -ldxerr8
+LIBS += -luser32 -lgdi32 -lwinmm -limm32 -lole32 -loleaut32 -lshell32 -lsetupapi -lversion -luuid
+	endif
 endif
 
 DEPDIR := .dep-$(BUILDDIR)

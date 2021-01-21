@@ -28,8 +28,9 @@
 
 class GamepadDevice
 {
-	typedef void (*input_detected_cb)(u32 code);
 public:
+	typedef void (*input_detected_cb)(u32 code);
+
 	const std::string& api_name() { return _api_name; }
 	const std::string& name() { return _name; }
 	int maple_port() { return _maple_port; }
@@ -39,9 +40,9 @@ public:
 	bool gamepad_axis_input(u32 code, int value);
 	virtual ~GamepadDevice() {}
 	
-	void detect_btn_input(input_detected_cb button_pressed);
+	virtual void detect_btn_input(input_detected_cb button_pressed);
 	void detect_axis_input(input_detected_cb axis_moved);
-	void cancel_detect_input()
+	virtual void cancel_detect_input()
 	{
 		_input_detected = nullptr;
 	}

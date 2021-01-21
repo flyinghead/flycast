@@ -99,10 +99,11 @@ public:
 	}
 };
 
-class SDLGamepadDevice : public GamepadDevice
+class SDLGamepad : public GamepadDevice
 {
 public:
-	SDLGamepadDevice(int maple_port, int joystick_idx, SDL_Joystick* sdl_joystick) : GamepadDevice(maple_port, "SDL"), sdl_joystick(sdl_joystick)
+	SDLGamepad(int maple_port, int joystick_idx, SDL_Joystick* sdl_joystick)
+		: GamepadDevice(maple_port, "SDL"), sdl_joystick(sdl_joystick)
 	{
 		_name = SDL_JoystickName(sdl_joystick);
 		sdl_joystick_instance = SDL_JoystickInstanceID(sdl_joystick);
@@ -155,12 +156,12 @@ public:
 		sdl_gamepads.erase(sdl_joystick_instance);
 	}
 
-	static void AddSDLGamepad(std::shared_ptr<SDLGamepadDevice> gamepad)
+	static void AddSDLGamepad(std::shared_ptr<SDLGamepad> gamepad)
 	{
 		sdl_gamepads[gamepad->sdl_joystick_instance] = gamepad;
 		GamepadDevice::Register(gamepad);
 	}
-	static std::shared_ptr<SDLGamepadDevice> GetSDLGamepad(SDL_JoystickID id)
+	static std::shared_ptr<SDLGamepad> GetSDLGamepad(SDL_JoystickID id)
 	{
 		auto it = sdl_gamepads.find(id);
 		if (it != sdl_gamepads.end())
@@ -187,10 +188,10 @@ private:
 	SDL_Haptic *sdl_haptic;
 	float vib_inclination = 0;
 	double vib_stop_time = 0;
-	static std::map<SDL_JoystickID, std::shared_ptr<SDLGamepadDevice>> sdl_gamepads;
+	static std::map<SDL_JoystickID, std::shared_ptr<SDLGamepad>> sdl_gamepads;
 };
 
-std::map<SDL_JoystickID, std::shared_ptr<SDLGamepadDevice>> SDLGamepadDevice::sdl_gamepads;
+std::map<SDL_JoystickID, std::shared_ptr<SDLGamepad>> SDLGamepad::sdl_gamepads;
 
 class KbInputMapping : public InputMapping
 {
@@ -226,7 +227,6 @@ public:
 		if (!find_mapping())
 			input_mapper = std::make_shared<KbInputMapping>();
 	}
-	virtual ~SDLKbGamepadDevice() {}
 
 	virtual const char *get_button_name(u32 code) override
 	{
@@ -251,20 +251,39 @@ public:
 	}
 };
 
-class SDLMouseGamepadDevice : public GamepadDevice
+class SDLMouse : public GamepadDevice
 {
 public:
-	SDLMouseGamepadDevice(int maple_port) : GamepadDevice(maple_port, "SDL")
+	SDLMouse() : GamepadDevice(0, "SDL")
 	{
-		_name = "Mouse";
-		_unique_id = "sdl_mouse";
+		this->_name = "Default Mouse";
+		this->_unique_id = "sdl_mouse";
 		if (!find_mapping())
 			input_mapper = std::make_shared<MouseInputMapping>();
 	}
-	virtual ~SDLMouseGamepadDevice() {}
+	SDLMouse(int maple_port, const std::string& name, const std::string& uniqueId, u32 handle)
+		: GamepadDevice(maple_port, "RAW")
+	{
+		this->_name = name;
+		this->_unique_id = uniqueId;
+		std::replace(this->_unique_id.begin(), this->_unique_id.end(), '=', '_');
+		std::replace(this->_unique_id.begin(), this->_unique_id.end(), '[', '_');
+		std::replace(this->_unique_id.begin(), this->_unique_id.end(), ']', '_');
+
+		this->rawHandle = handle;
+		if (!find_mapping())
+			input_mapper = std::make_shared<MouseInputMapping>();
+	}
 
 	bool gamepad_btn_input(u32 code, bool pressed) override
 	{
+		if (!is_detecting_input() && detectedRawMouse != nullptr)
+		{
+			bool handled = detectedRawMouse->gamepad_btn_input(code, pressed);
+			if (!detectedRawMouse->is_detecting_input())
+				detectedRawMouse = nullptr;
+			return handled;
+		}
 		if (gui_is_open() && !is_detecting_input())
 			// Don't register mouse clicks as gamepad presses when gui is open
 			// This makes the gamepad presses to be handled first and the mouse position to be ignored
@@ -292,5 +311,14 @@ public:
 			return nullptr;
 		}
 	}
-};
 
+	void setMouseAbsPos(int x, int y);
+	void setMouseRelPos(int deltax, int deltay);
+	void setMouseButton(u32 button, bool pressed);
+	virtual void detect_btn_input(input_detected_cb button_pressed) override;
+	virtual void cancel_detect_input() override;
+
+private:
+	u32 rawHandle = 0;
+	std::shared_ptr<SDLMouse> detectedRawMouse;
+};

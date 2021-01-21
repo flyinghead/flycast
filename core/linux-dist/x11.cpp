@@ -290,10 +290,10 @@ void input_x11_handle()
 						button_mask = 1 << 1;
 						break;
 					case Button4: 		// Mouse wheel up
-						mo_wheel_delta -= 16;
+						mo_wheel_delta[0] -= 16;
 						break;
 					case Button5: 		// Mouse wheel down
-						mo_wheel_delta += 16;
+						mo_wheel_delta[0] += 16;
 						break;
 					default:
 						break;
@@ -302,9 +302,9 @@ void input_x11_handle()
 					if (button_mask)
 					{
 						if (e.type == ButtonPress)
-							mo_buttons &= ~button_mask;
+							mo_buttons[0] &= ~button_mask;
 						else
-							mo_buttons |= button_mask;
+							mo_buttons[0] |= button_mask;
 					}
 				}
 				/* no break */
@@ -325,10 +325,10 @@ void input_x11_handle()
 	}
 	if (capturing_mouse && mouse_moved)
 	{
-		mo_x_prev = x11_width / 2;
-		mo_y_prev = x11_height / 2;
+		mo_x_prev[0] = x11_width / 2;
+		mo_y_prev[0] = x11_height / 2;
 		XWarpPointer(x11_disp, None, x11_win, 0, 0, 0, 0,
-				mo_x_prev, mo_y_prev);
+				mo_x_prev[0], mo_y_prev[0]);
 		XSync(x11_disp, true);
 	}
 }

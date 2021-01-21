@@ -49,109 +49,119 @@ u32 awavelg_button_mapping[32] = {
 		AWAVE_BTN0_KEY		// DC_BTN_RELOAD (not needed for AW, mapped to BTN0 = pump)
 };
 
-struct MapleConfigMap : IMapleConfigMap
+inline u32 MapleConfigMap::playerNum()
 {
-	maple_device* dev;
-	s32 player_num;
+	return this->player_num == -1 ? dev->bus_id : this->player_num;
+}
 
-	MapleConfigMap(maple_device* dev, s32 player_num = -1)
+void MapleConfigMap::SetVibration(float power, float inclination, u32 duration_ms)
+{
+	UpdateVibration(playerNum(), power, inclination, duration_ms);
+}
+
+void MapleConfigMap::GetInput(PlainJoystickState* pjs)
+{
+	int player_num = playerNum();
+
+	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
 	{
-		this->dev=dev;
-		this->player_num = player_num;
+		pjs->kcode = kcode[player_num];
+		pjs->joy[PJAI_X1] = GetBtFromSgn(joyx[player_num]);
+		pjs->joy[PJAI_Y1] = GetBtFromSgn(joyy[player_num]);
+		pjs->trigger[PJTI_R] = rt[player_num];
+		pjs->trigger[PJTI_L] = lt[player_num];
 	}
-
-	void SetVibration(float power, float inclination, u32 duration_ms)
+	else if (settings.platform.system == DC_PLATFORM_ATOMISWAVE)
 	{
-		int player_num = this->player_num == -1 ? dev->bus_id : this->player_num;
-		UpdateVibration(player_num, power, inclination, duration_ms);
-	}
-
-	void GetInput(PlainJoystickState* pjs)
-	{
-		int player_num = this->player_num == -1 ? dev->bus_id : this->player_num;
-
-		if (settings.platform.system == DC_PLATFORM_DREAMCAST)
+		const u32* mapping = settings.input.JammaSetup == JVS::LightGun ? awavelg_button_mapping : awave_button_mapping;
+		pjs->kcode = ~0;
+		for (u32 i = 0; i < ARRAY_SIZE(awave_button_mapping); i++)
 		{
-			pjs->kcode = kcode[player_num];
-			pjs->joy[PJAI_X1] = GetBtFromSgn(joyx[player_num]);
-			pjs->joy[PJAI_Y1] = GetBtFromSgn(joyy[player_num]);
-			pjs->trigger[PJTI_R] = rt[player_num];
-			pjs->trigger[PJTI_L] = lt[player_num];
+			if ((kcode[player_num] & (1 << i)) == 0)
+				pjs->kcode &= ~mapping[i];
 		}
-		else if (settings.platform.system == DC_PLATFORM_ATOMISWAVE)
+		if (NaomiGameInputs != NULL)
 		{
-			const u32* mapping = settings.input.JammaSetup == JVS::LightGun ? awavelg_button_mapping : awave_button_mapping;
-			pjs->kcode = ~0;
-			for (u32 i = 0; i < ARRAY_SIZE(awave_button_mapping); i++)
+			for (u32 axis = 0; axis < PJAI_Count; axis++)
 			{
-				if ((kcode[player_num] & (1 << i)) == 0)
-					pjs->kcode &= ~mapping[i];
-			}
-			if (NaomiGameInputs != NULL)
-			{
-				for (u32 axis = 0; axis < PJAI_Count; axis++)
+				if (NaomiGameInputs->axes[axis].name != NULL)
 				{
-					if (NaomiGameInputs->axes[axis].name != NULL)
+					if (NaomiGameInputs->axes[axis].type == Full)
 					{
-						if (NaomiGameInputs->axes[axis].type == Full)
+						switch (NaomiGameInputs->axes[axis].axis)
 						{
-							switch (NaomiGameInputs->axes[axis].axis)
-							{
-							case 0:
-								pjs->joy[axis] = GetBtFromSgn(joyx[player_num]);
-								break;
-							case 1:
-								pjs->joy[axis] = GetBtFromSgn(joyy[player_num]);
-								break;
-							case 2:
-								pjs->joy[axis] = GetBtFromSgn(joyrx[player_num]);
-								break;
-							case 3:
-								pjs->joy[axis] = GetBtFromSgn(joyry[player_num]);
-								break;
-							default:
-								pjs->joy[axis] = 0x80;
-								break;
-							}
+						case 0:
+							pjs->joy[axis] = GetBtFromSgn(joyx[player_num]);
+							break;
+						case 1:
+							pjs->joy[axis] = GetBtFromSgn(joyy[player_num]);
+							break;
+						case 2:
+							pjs->joy[axis] = GetBtFromSgn(joyrx[player_num]);
+							break;
+						case 3:
+							pjs->joy[axis] = GetBtFromSgn(joyry[player_num]);
+							break;
+						default:
+							pjs->joy[axis] = 0x80;
+							break;
 						}
-						else
-						{
-							switch (NaomiGameInputs->axes[axis].axis)
-							{
-							case 4:
-								pjs->joy[axis] = rt[player_num];
-								break;
-							case 5:
-								pjs->joy[axis] = lt[player_num];
-								break;
-							default:
-								pjs->joy[axis] = 0x80;
-								break;
-							}
-						}
-						if (NaomiGameInputs->axes[axis].inverted)
-							pjs->joy[axis] = pjs->joy[axis] == 0 ? 0xff : 0x100 - pjs->joy[axis];
 					}
 					else
 					{
-						pjs->joy[axis] = 0x80;
+						switch (NaomiGameInputs->axes[axis].axis)
+						{
+						case 4:
+							pjs->joy[axis] = rt[player_num];
+							break;
+						case 5:
+							pjs->joy[axis] = lt[player_num];
+							break;
+						default:
+							pjs->joy[axis] = 0x80;
+							break;
+						}
 					}
+					if (NaomiGameInputs->axes[axis].inverted)
+						pjs->joy[axis] = pjs->joy[axis] == 0 ? 0xff : 0x100 - pjs->joy[axis];
+				}
+				else
+				{
+					pjs->joy[axis] = 0x80;
 				}
 			}
-			else
-			{
-				pjs->joy[PJAI_X1] = GetBtFromSgn(joyx[player_num]);
-				pjs->joy[PJAI_Y1] = GetBtFromSgn(joyy[player_num]);
-				pjs->joy[PJAI_X2] = rt[player_num];
-				pjs->joy[PJAI_Y2] = lt[player_num];
-			}
+		}
+		else
+		{
+			pjs->joy[PJAI_X1] = GetBtFromSgn(joyx[player_num]);
+			pjs->joy[PJAI_Y1] = GetBtFromSgn(joyy[player_num]);
+			pjs->joy[PJAI_X2] = rt[player_num];
+			pjs->joy[PJAI_Y2] = lt[player_num];
 		}
 	}
-	void SetImage(void* img)
-	{
-		//?
-	}
-};
+}
+void MapleConfigMap::SetImage(u8 *img)
+{
+	push_vmu_screen(dev->bus_id, dev->bus_port, img);
+}
+
+void MapleConfigMap::GetAbsCoordinates(int& x, int& y)
+{
+	x = mo_x_abs[playerNum()];
+	y = mo_y_abs[playerNum()];
+}
+
+void MapleConfigMap::GetMouseInput(u32& buttons, int& x, int& y, int& wheel)
+{
+	int playerNum = this->playerNum();
+	buttons = mo_buttons[playerNum];
+	x = (int)std::round(mo_x_delta[playerNum]);
+	y = (int)std::round(mo_y_delta[playerNum]);
+	wheel = (int)std::round(mo_wheel_delta[playerNum]);
+	mo_x_delta[playerNum] = 0;
+	mo_y_delta[playerNum] = 0;
+	mo_wheel_delta[playerNum] = 0;
+}
 
 bool maple_atomiswave_coin_chute(int slot)
 {
@@ -222,7 +232,9 @@ void mcfg_CreateAtomisWaveControllers()
 	else if (settings.input.JammaSetup == JVS::SegaMarineFishing || settings.input.JammaSetup == JVS::RotaryEncoders)
 	{
 		// Sega Bass Fishing Challenge  needs a mouse (track-ball) on port 2
+		// Waiwai drive needs two track-balls
 		mcfg_Create(MDT_Mouse, 2, 5, 0);
+		mcfg_Create(MDT_Mouse, 3, 5, 1);
 	}
 }
 

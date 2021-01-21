@@ -19,6 +19,8 @@ before_build:
      
       cd %BUILD_PATH%
       
+      git submodule update --init --recursive
+
 build_script:
   - cmd: >-
       if "%CONFIGURATION%"=="fast" (mingw32-make -j2 platform=win32)

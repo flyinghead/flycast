@@ -196,7 +196,7 @@ void ImGui_Impl_NewFrame()
 #ifdef __ANDROID__
 	// Put the "mouse" outside the screen one frame after a touch up
 	// This avoids buttons and the like to stay selected
-	if ((mo_buttons & 0xf) == 0xf)
+	if ((mo_buttons[0] & 0xf) == 0xf)
 	{
 		if (touch_up)
 			io.MousePos = ImVec2(-FLT_MAX, -FLT_MAX);
@@ -208,16 +208,16 @@ void ImGui_Impl_NewFrame()
 #endif
 	if (io.WantCaptureMouse)
 	{
-		io.MouseWheel = -mo_wheel_delta / 16;
+		io.MouseWheel = -mo_wheel_delta[0] / 16;
 		// Reset all relative mouse positions
-		mo_x_delta = 0;
-		mo_y_delta = 0;
-		mo_wheel_delta = 0;
+		mo_x_delta[0] = 0;
+		mo_y_delta[0] = 0;
+		mo_wheel_delta[0] = 0;
 	}
-	io.MouseDown[0] = (mo_buttons & (1 << 2)) == 0;
-	io.MouseDown[1] = (mo_buttons & (1 << 1)) == 0;
-	io.MouseDown[2] = (mo_buttons & (1 << 3)) == 0;
-	io.MouseDown[3] = (mo_buttons & (1 << 0)) == 0;
+	io.MouseDown[0] = (mo_buttons[0] & (1 << 2)) == 0;
+	io.MouseDown[1] = (mo_buttons[0] & (1 << 1)) == 0;
+	io.MouseDown[2] = (mo_buttons[0] & (1 << 3)) == 0;
+	io.MouseDown[3] = (mo_buttons[0] & (1 << 0)) == 0;
 
 	io.NavInputs[ImGuiNavInput_Activate] = (kcode[0] & DC_BTN_A) == 0;
 	io.NavInputs[ImGuiNavInput_Cancel] = (kcode[0] & DC_BTN_B) == 0;

@@ -59,9 +59,6 @@ endif
 
 ifdef USE_SDL
     RZDCY_MODULES += sdl/
-	ifdef FOR_WINDOWS
-        RZDCY_CFLAGS += -I$(RZDCY_SRC_DIR)/deps/SDL2-2.0.12/include
-	endif
 endif
 
 ifdef FOR_LINUX

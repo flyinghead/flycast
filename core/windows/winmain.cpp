@@ -300,19 +300,19 @@ LRESULT CALLBACK WndProc2(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			int yPos = GET_Y_LPARAM(lParam);
 			SetMousePosition(xPos, yPos, screen_width, screen_height);
 
-			mo_buttons = 0xffffffff;
+			mo_buttons[0] = 0xffffffff;
 			if (wParam & MK_LBUTTON)
-				mo_buttons &= ~(1 << 2);
+				mo_buttons[0] &= ~(1 << 2);
 			if (wParam & MK_MBUTTON)
-				mo_buttons &= ~(1 << 3);
+				mo_buttons[0] &= ~(1 << 3);
 			if (wParam & MK_RBUTTON)
-				mo_buttons &= ~(1 << 1);
+				mo_buttons[0] &= ~(1 << 1);
 		}
 		if (message != WM_MOUSEMOVE)
 			return 0;
 		break;
 	case WM_MOUSEWHEEL:
-		mo_wheel_delta -= (float)GET_WHEEL_DELTA_WPARAM(wParam)/(float)WHEEL_DELTA * 16;
+		mo_wheel_delta[0] -= (float)GET_WHEEL_DELTA_WPARAM(wParam)/(float)WHEEL_DELTA * 16;
 		break;
 
 	case WM_KEYDOWN:

@@ -33,12 +33,23 @@ struct PlainJoystickState
 	u8 trigger[PJTI_Count];
 };
 
-struct IMapleConfigMap
+struct maple_device;
+
+class MapleConfigMap
 {
-	virtual void SetVibration(float power, float inclination, u32 duration_ms) = 0;
-	virtual void GetInput(PlainJoystickState* pjs)=0;
-	virtual void SetImage(void* img)=0;
-	virtual ~IMapleConfigMap() {}
+public:
+	MapleConfigMap(maple_device* dev, s32 player_num = -1) : dev(dev), player_num(player_num) {}
+	void SetVibration(float power, float inclination, u32 duration_ms);
+	void GetInput(PlainJoystickState* pjs);
+	void GetAbsCoordinates(int& x, int& y);
+	void GetMouseInput(u32& buttons, int& x, int& y, int& wheel);
+	void SetImage(u8 *img);
+
+private:
+	u32 playerNum();
+
+	maple_device* dev;
+	s32 player_num;
 };
 
 void mcfg_CreateDevices();
@@ -50,3 +61,4 @@ void mcfg_SerializeDevices(void **data, unsigned int *total_size);
 void mcfg_UnserializeDevices(void **data, unsigned int *total_size, bool old_type_numbering);
 
 bool maple_atomiswave_coin_chute(int slot);
+void push_vmu_screen(int bus_id, int bus_port, u8* buffer);
