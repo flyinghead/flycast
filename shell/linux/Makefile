@@ -506,7 +506,7 @@ SDL/lib/libSDL2.a:
 	-patch -p1 --directory=$(RZDCY_SRC_DIR)/deps/SDL --forward < $(RZDCY_SRC_DIR)/deps/patches/SDL.patch
 	mkdir -p SDL && \
 	  cd SDL && \
-	  cmake -G "MinGW Makefiles" -DCMAKE_INSTALL_PREFIX=. -DBUILD_SHARED_LIBS=OFF $(RZDCY_SRC_DIR)/deps/SDL && \
+	  cmake -G "MinGW Makefiles" -DCMAKE_INSTALL_PREFIX=. -DBUILD_SHARED_LIBS=OFF -DCMAKE_SH=SH-NOTFOUND $(RZDCY_SRC_DIR)/deps/SDL && \
 	  cmake --build . --target install
 
 
