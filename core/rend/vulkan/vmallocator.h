@@ -23,6 +23,10 @@
 #include "vulkan.h"
 #include "vk_mem_alloc.h"
 
+#if !defined(PRIu64) && defined(_WIN32)
+#define PRIu64 "I64u"
+#endif
+
 class VMAllocator;
 
 class Allocation
