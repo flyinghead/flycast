@@ -22,6 +22,6 @@ void emu_mouse_buttons(int button, bool pressed);
 void emu_set_mouse_position(int x, int y, int width, int height);
 
 bool emu_frame_pending();
-extern unsigned int mo_buttons[];
-extern float mo_wheel_delta[];
+extern unsigned int *pmo_buttons;
+extern float *pmo_wheel_delta;
 #endif

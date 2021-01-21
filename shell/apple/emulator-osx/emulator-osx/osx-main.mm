@@ -32,6 +32,8 @@
 OSXKeyboardDevice keyboard(0);
 static std::shared_ptr<OSXKbGamepadDevice> kb_gamepad(0);
 static std::shared_ptr<OSXMouseGamepadDevice> mouse_gamepad(0);
+unsigned int *pmo_buttons;
+float *pmo_wheel_delta;
 
 int darw_printf(const char* text, ...)
 {
@@ -130,7 +132,12 @@ extern "C" int emu_single_frame(int w, int h)
     return (int)mainui_rend_frame();
 }
 
-extern "C" void emu_gles_init(int width, int height) {
+extern "C" void emu_gles_init(int width, int height)
+{
+	// work around https://bugs.swift.org/browse/SR-12263
+	pmo_buttons = mo_buttons;
+	pmo_wheel_delta = mo_wheel_delta;
+
     char *home = getenv("HOME");
     if (home != NULL)
     {
