@@ -167,8 +167,8 @@ public:
 	virtual ~jvs_io_board() = default;
 
 	u32 handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_out);
-	bool maple_serialize(void **data, unsigned int *total_size);
-	bool maple_unserialize(void **data, unsigned int *total_size);
+	bool serialize(void **data, unsigned int *total_size);
+	bool unserialize(void **data, unsigned int *total_size, serialize_version_enum version);
 
 	bool lightgun_as_analog = false;
 
@@ -1230,8 +1230,9 @@ u32 maple_naomi_jamma::RawDma(u32* buffer_in, u32 buffer_in_len, u32* buffer_out
 	return out_len;
 }
 
-bool maple_naomi_jamma::maple_serialize(void **data, unsigned int *total_size)
+bool maple_naomi_jamma::serialize(void **data, unsigned int *total_size)
 {
+	maple_base::serialize(data, total_size);
 	REICAST_S(crazy_mode);
 	REICAST_S(jvs_repeat_request);
 	REICAST_S(jvs_receive_length);
@@ -1239,13 +1240,14 @@ bool maple_naomi_jamma::maple_serialize(void **data, unsigned int *total_size)
 	size_t board_count = io_boards.size();
 	REICAST_S(board_count);
 	for (u32 i = 0; i < io_boards.size(); i++)
-		io_boards[i]->maple_serialize(data, total_size);
+		io_boards[i]->serialize(data, total_size);
 
 	return true ;
 }
 
-bool maple_naomi_jamma::maple_unserialize(void **data, unsigned int *total_size)
+bool maple_naomi_jamma::unserialize(void **data, unsigned int *total_size, serialize_version_enum version)
 {
+	maple_base::unserialize(data, total_size, version);
 	REICAST_US(crazy_mode);
 	REICAST_US(jvs_repeat_request);
 	REICAST_US(jvs_receive_length);
@@ -1253,7 +1255,7 @@ bool maple_naomi_jamma::maple_unserialize(void **data, unsigned int *total_size)
 	size_t board_count;
 	REICAST_US(board_count);
 	for (u32 i = 0; i < board_count; i++)
-		io_boards[i]->maple_unserialize(data, total_size);
+		io_boards[i]->unserialize(data, total_size, version);
 
 	return true ;
 }
@@ -1673,7 +1675,7 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 	return length;
 }
 
-bool jvs_io_board::maple_serialize(void **data, unsigned int *total_size)
+bool jvs_io_board::serialize(void **data, unsigned int *total_size)
 {
 	REICAST_S(node_id);
 	REICAST_S(lightgun_as_analog);
@@ -1681,7 +1683,7 @@ bool jvs_io_board::maple_serialize(void **data, unsigned int *total_size)
 	return true ;
 }
 
-bool jvs_io_board::maple_unserialize(void **data, unsigned int *total_size)
+bool jvs_io_board::unserialize(void **data, unsigned int *total_size, serialize_version_enum version)
 {
 	REICAST_US(node_id);
 	REICAST_US(lightgun_as_analog);

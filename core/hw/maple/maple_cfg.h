@@ -38,7 +38,7 @@ struct maple_device;
 class MapleConfigMap
 {
 public:
-	MapleConfigMap(maple_device* dev, s32 player_num = -1) : dev(dev), player_num(player_num) {}
+	MapleConfigMap(maple_device* dev) : dev(dev) {}
 	void SetVibration(float power, float inclination, u32 duration_ms);
 	void GetInput(PlainJoystickState* pjs);
 	void GetAbsCoordinates(int& x, int& y);
@@ -49,7 +49,6 @@ private:
 	u32 playerNum();
 
 	maple_device* dev;
-	s32 player_num;
 };
 
 void mcfg_CreateDevices();
@@ -58,7 +57,7 @@ void mcfg_CreateAtomisWaveControllers();
 
 void mcfg_DestroyDevices();
 void mcfg_SerializeDevices(void **data, unsigned int *total_size);
-void mcfg_UnserializeDevices(void **data, unsigned int *total_size, bool old_type_numbering);
+void mcfg_UnserializeDevices(void **data, unsigned int *total_size, serialize_version_enum version);
 
 bool maple_atomiswave_coin_chute(int slot);
 void push_vmu_screen(int bus_id, int bus_port, u8* buffer);

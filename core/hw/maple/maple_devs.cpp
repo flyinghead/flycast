@@ -22,14 +22,15 @@ const char* maple_ascii_stick_name = "ASCII STICK";
 const char* maple_sega_brand = "Produced By or Under License From SEGA ENTERPRISES,LTD.";
 
 //fill in the info
-void maple_device::Setup(u32 prt)
+void maple_device::Setup(u32 port, int playerNum)
 {
-	maple_port = prt;
-	bus_port = maple_GetPort(prt);
-	bus_id = maple_GetBusId(prt);
+	maple_port = port;
+	bus_port = maple_GetPort(port);
+	bus_id = maple_GetBusId(port);
 	logical_port[0] = 'A' + bus_id;
 	logical_port[1] = bus_port == 5 ? 'x' : '1' + bus_port;
 	logical_port[2] = 0;
+	player_num = playerNum == -1 ? bus_id : playerNum;
 }
 maple_device::~maple_device()
 {
@@ -316,15 +317,17 @@ struct maple_sega_vmu: maple_base
 		return (rv == Z_OK && dec_sz == sizeof(flash_data));
 	}
 
-	virtual bool maple_serialize(void **data, unsigned int *total_size) override
+	virtual bool serialize(void **data, unsigned int *total_size) override
 	{
+		maple_base::serialize(data, total_size);
 		REICAST_SA(flash_data,128*1024);
 		REICAST_SA(lcd_data,192);
 		REICAST_SA(lcd_data_decoded,48*32);
 		return true ;
 	}
-	virtual bool maple_unserialize(void **data, unsigned int *total_size) override
+	virtual bool unserialize(void **data, unsigned int *total_size, serialize_version_enum version) override
 	{
+		maple_base::unserialize(data, total_size, version);
 		REICAST_USA(flash_data,128*1024);
 		REICAST_USA(lcd_data,192);
 		REICAST_USA(lcd_data_decoded,48*32);
@@ -707,18 +710,20 @@ struct maple_microphone: maple_base
 		return MDT_Microphone;
 	}
 
-	virtual bool maple_serialize(void **data, unsigned int *total_size) override
+	virtual bool serialize(void **data, unsigned int *total_size) override
 	{
+		maple_base::serialize(data, total_size);
 		REICAST_S(gain);
 		REICAST_S(sampling);
 		REICAST_S(eight_khz);
 		REICAST_SKIP(480 - sizeof(u32) - sizeof(bool) * 2);
 		return true;
 	}
-	virtual bool maple_unserialize(void **data, unsigned int *total_size) override
+	virtual bool unserialize(void **data, unsigned int *total_size, serialize_version_enum version) override
 	{
 		if (sampling)
 			StopAudioRecording();
+		maple_base::unserialize(data, total_size, version);
 		REICAST_US(gain);
 		REICAST_US(sampling);
 		REICAST_US(eight_khz);
@@ -879,15 +884,17 @@ struct maple_sega_purupuru : maple_base
 		return MDT_PurupuruPack;
 	}
 
-   virtual bool maple_serialize(void **data, unsigned int *total_size) override
+   virtual bool serialize(void **data, unsigned int *total_size) override
    {
+	  maple_base::serialize(data, total_size);
       REICAST_S(AST);
       REICAST_S(AST_ms);
       REICAST_S(VIBSET);
       return true ;
    }
-   virtual bool maple_unserialize(void **data, unsigned int *total_size) override
+   virtual bool unserialize(void **data, unsigned int *total_size, serialize_version_enum version) override
    {
+	  maple_base::unserialize(data, total_size, version);
       REICAST_US(AST);
       REICAST_US(AST_ms);
       REICAST_US(VIBSET);

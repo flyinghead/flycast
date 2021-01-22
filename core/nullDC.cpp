@@ -1267,7 +1267,6 @@ void dc_loadstate()
 	sh4_cpu.ResetCache();
     dsp.dyndirty = true;
     sh4_sched_ffts();
-    CalculateSync();
 
     cleanup_serialize(data) ;
 	EventManager::event(Event::LoadState);

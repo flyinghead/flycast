@@ -25,26 +25,6 @@ enum MapleDeviceType
 	MDT_Count
 };
 
-namespace OldMapleDeviceType
-{
-enum MapleDeviceType
-{
-	MDT_SegaController,
-
-	MDT_SegaVMU,
-	MDT_Microphone,
-	MDT_PurupuruPack,
-	MDT_Keyboard,
-	MDT_Mouse,
-	MDT_LightGun,
-
-	MDT_NaomiJamma,
-
-	MDT_None,
-	MDT_Count
-};
-}
-
 enum MapleFunctionID
 {
 	MFID_0_Input       = 0x01000000, //DC Controller, Lightgun buttons, arcade stick .. stuff like that
@@ -162,18 +142,26 @@ struct maple_device
 	u8 maple_port;          //raw maple port
 	u8 bus_port;            //0 .. 5
 	u8 bus_id;              //0 .. 3
+	u8 player_num;			// for Atomiswave
 	char logical_port[3];  //A0, etc
 	MapleConfigMap* config;
 
 	//fill in the info
-	void Setup(u32 prt);
+	void Setup(u32 port, int playerNum = -1);
 
 	virtual void OnSetup() {};
 	virtual ~maple_device();
 
 	virtual u32 RawDma(u32* buffer_in, u32 buffer_in_len, u32* buffer_out) = 0;
-	virtual bool maple_serialize(void **data, unsigned int *total_size) { return true; }
-	virtual bool maple_unserialize(void **data, unsigned int *total_size) { return true; }
+	virtual bool serialize(void **data, unsigned int *total_size) {
+		REICAST_S(player_num);
+		return true;
+	}
+	virtual bool unserialize(void **data, unsigned int *total_size, serialize_version_enum version) {
+		if (version >= V14)
+			REICAST_US(player_num);
+		return true;
+	}
 	virtual MapleDeviceType get_device_type() = 0;
 	virtual bool get_lightgun_pos() { return false; }
 };
@@ -387,6 +375,6 @@ struct maple_naomi_jamma : maple_base
 	virtual u32 RawDma(u32* buffer_in, u32 buffer_in_len, u32* buffer_out) override;
 	virtual u32 dma(u32 cmd) override { return 0; }
 
-	virtual bool maple_serialize(void **data, unsigned int *total_size) override;
-	virtual bool maple_unserialize(void **data, unsigned int *total_size) override;
+	virtual bool serialize(void **data, unsigned int *total_size) override;
+	virtual bool unserialize(void **data, unsigned int *total_size, serialize_version_enum version) override;
 };

@@ -10,11 +10,13 @@
 #include "hw/gdrom/gdrom_if.h"
 #include "hw/maple/maple_cfg.h"
 #include "hw/pvr/Renderer_if.h"
+#include "hw/pvr/spg.h"
 #include "hw/sh4/sh4_sched.h"
 #include "hw/sh4/sh4_mmr.h"
 #include "hw/sh4/modules/mmu.h"
 #include "reios/gdrom_hle.h"
 #include "hw/sh4/dyna/blockmanager.h"
+#include "hw/naomi/naomi.h"
 #include "hw/naomi/naomi_cart.h"
 #include "hw/sh4/sh4_cache.h"
 #include "hw/bba/bba.h"
@@ -128,11 +130,8 @@ extern bool fog_needs_update;
 extern u8 pvr_regs[pvr_RegSize];
 
 //./core/hw/pvr/spg.o
-extern u32 in_vblank;
-extern u32 clc_pvr_scanline;
 extern int render_end_schid;
 extern int vblank_schid;
-extern bool maple_int_pending;
 
 //./core/hw/pvr/ta.o
 extern u8 ta_fsm[2049];	//[2048] stores the current state
@@ -197,31 +196,6 @@ static u32 ITLB_LRU_USE[64];
 //./core/imgread/common.o
 extern u32 NullDriveDiscType;
 extern u8 q_subchannel[96];
-
-//./core/hw/naomi/naomi.o
-extern u32 GSerialBuffer;
-extern u32 BSerialBuffer;
-extern int GBufPos;
-extern int BBufPos;
-extern int GState;
-extern int BState;
-extern int GOldClk;
-extern int BOldClk;
-extern int BControl;
-extern int BCmd;
-extern int BLastCmd;
-extern int GControl;
-extern int GCmd;
-extern int GLastCmd;
-extern int SerStep;
-extern int SerStep2;
-extern unsigned char BSerial[];
-extern unsigned char GSerial[];
-extern u32 reg_dimm_command;
-extern u32 reg_dimm_offsetl;
-extern u32 reg_dimm_parameterl;
-extern u32 reg_dimm_parameterh;
-extern u32 reg_dimm_status;
 
 bool rc_serialize(const void *src, unsigned int src_size, void **dest, unsigned int *total_size)
 {
@@ -375,9 +349,8 @@ bool dc_serialize(void **data, unsigned int *total_size)
 
 	REICAST_SA(pvr_regs,pvr_RegSize);
 
-	REICAST_S(in_vblank);
-	REICAST_S(clc_pvr_scanline);
-	REICAST_S(maple_int_pending);
+	spg_Serialize(data, total_size);
+
 	REICAST_S(fb_w_cur);
 
 	REICAST_S(ta_fsm[2048]);
@@ -499,29 +472,7 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	REICAST_S(NullDriveDiscType);
 	REICAST_SA(q_subchannel,96);
 
-	REICAST_S(GSerialBuffer);
-	REICAST_S(BSerialBuffer);
-	REICAST_S(GBufPos);
-	REICAST_S(BBufPos);
-	REICAST_S(GState);
-	REICAST_S(BState);
-	REICAST_S(GOldClk);
-	REICAST_S(BOldClk);
-	REICAST_S(BControl);
-	REICAST_S(BCmd);
-	REICAST_S(BLastCmd);
-	REICAST_S(GControl);
-	REICAST_S(GCmd);
-	REICAST_S(GLastCmd);
-	REICAST_S(SerStep);
-	REICAST_S(SerStep2);
-	REICAST_SA(BSerial,69);
-	REICAST_SA(GSerial,69);
-	REICAST_S(reg_dimm_command);
-	REICAST_S(reg_dimm_offsetl);
-	REICAST_S(reg_dimm_parameterl);
-	REICAST_S(reg_dimm_parameterh);
-	REICAST_S(reg_dimm_status);
+	naomi_Serialize(data, total_size);
 
 	REICAST_S(settings.dreamcast.broadcast);
 	REICAST_S(settings.dreamcast.cable);
@@ -643,7 +594,7 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 	REICAST_US(EEPROM_loaded);
 
 	REICAST_US(maple_ddt_pending_reset);
-	mcfg_UnserializeDevices(data, total_size, false);
+	mcfg_UnserializeDevices(data, total_size, VCUR_LIBRETRO);
 
 	pend_rend = false;
 
@@ -658,8 +609,8 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 	REICAST_USA(pvr_regs,pvr_RegSize);
 	fog_needs_update = true ;
 
-	REICAST_US(in_vblank);
-	REICAST_US(clc_pvr_scanline);
+	spg_Unserialize(data, total_size, VCUR_LIBRETRO);
+
 	fb_w_cur = 1;
 
 	REICAST_US(ta_fsm[2048]);
@@ -779,30 +730,7 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 	REICAST_US(i);	// ARAM_MASK
 	REICAST_US(i);	// VRAM_MASK
 
-	REICAST_US(GSerialBuffer);
-	REICAST_US(BSerialBuffer);
-	REICAST_US(GBufPos);
-	REICAST_US(BBufPos);
-	REICAST_US(GState);
-	REICAST_US(BState);
-	REICAST_US(GOldClk);
-	REICAST_US(BOldClk);
-	REICAST_US(BControl);
-	REICAST_US(BCmd);
-	REICAST_US(BLastCmd);
-	REICAST_US(GControl);
-	REICAST_US(GCmd);
-	REICAST_US(GLastCmd);
-	REICAST_US(SerStep);
-	REICAST_US(SerStep2);
-	REICAST_USA(BSerial,69);
-	REICAST_USA(GSerial,69);
-	REICAST_US(reg_dimm_command);
-	REICAST_US(reg_dimm_offsetl);
-	REICAST_US(reg_dimm_parameterl);
-	REICAST_US(reg_dimm_parameterh);
-	REICAST_US(reg_dimm_status);
-	REICAST_SKIP(1); // NaomiDataRead
+	naomi_Unserialize(data, total_size, VCUR_LIBRETRO);
 
 	REICAST_US(settings.dreamcast.broadcast);
 	REICAST_US(settings.dreamcast.cable);
@@ -938,7 +866,7 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 
 	REICAST_US(maple_ddt_pending_reset);
 
-	mcfg_UnserializeDevices(data, total_size, version < 5);
+	mcfg_UnserializeDevices(data, total_size, version);
 
 	if (version < V5)
 	{
@@ -958,28 +886,15 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 	REICAST_USA(pvr_regs,pvr_RegSize);
 	fog_needs_update = true ;
 
-	REICAST_US(in_vblank);
-	REICAST_US(clc_pvr_scanline);
+	spg_Unserialize(data, total_size, version);
+
 	if (version < V5)
 	{
-		REICAST_US(i); 			// pvr_numscanlines
-		REICAST_US(i);			// prv_cur_scanline
-		REICAST_US(i);			// vblk_cnt
-		REICAST_US(i);			// Line_Cycles
-		REICAST_US(i);			// Frame_Cycles
-		REICAST_SKIP(8);		// speed_load_mspdf
-		REICAST_US(i);			// mips_counter
-		REICAST_SKIP(8);		// full_rps
-		REICAST_US(i); 			// fskip
-
 		REICAST_SKIP(4 * 256);
 		REICAST_SKIP(2048);		// ta_fsm
 	}
 	if (version >= V12)
-	{
-		REICAST_US(maple_int_pending);
 		REICAST_US(fb_w_cur);
-	}
 	else
 		fb_w_cur = 1;
 	REICAST_US(ta_fsm[2048]);
@@ -1146,31 +1061,7 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 		REICAST_SKIP(4);
 		REICAST_SKIP(4);
 	}
-	REICAST_US(GSerialBuffer);
-	REICAST_US(BSerialBuffer);
-	REICAST_US(GBufPos);
-	REICAST_US(BBufPos);
-	REICAST_US(GState);
-	REICAST_US(BState);
-	REICAST_US(GOldClk);
-	REICAST_US(BOldClk);
-	REICAST_US(BControl);
-	REICAST_US(BCmd);
-	REICAST_US(BLastCmd);
-	REICAST_US(GControl);
-	REICAST_US(GCmd);
-	REICAST_US(GLastCmd);
-	REICAST_US(SerStep);
-	REICAST_US(SerStep2);
-	REICAST_USA(BSerial,69);
-	REICAST_USA(GSerial,69);
-	REICAST_US(reg_dimm_command);
-	REICAST_US(reg_dimm_offsetl);
-	REICAST_US(reg_dimm_parameterl);
-	REICAST_US(reg_dimm_parameterh);
-	REICAST_US(reg_dimm_status);
-	if (version < V11)
-		REICAST_SKIP(1); // NaomiDataRead
+	naomi_Unserialize(data, total_size, version);
 
 	if (version < V5)
 	{

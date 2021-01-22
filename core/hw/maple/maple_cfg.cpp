@@ -51,7 +51,7 @@ u32 awavelg_button_mapping[32] = {
 
 inline u32 MapleConfigMap::playerNum()
 {
-	return this->player_num == -1 ? dev->bus_id : this->player_num;
+	return dev->player_num;
 }
 
 void MapleConfigMap::SetVibration(float power, float inclination, u32 duration_ms)
@@ -178,8 +178,8 @@ void mcfg_Create(MapleDeviceType type, u32 bus, u32 port, s32 player_num = -1)
 	if (MapleDevices[bus][port] != NULL)
 		delete MapleDevices[bus][port];
 	maple_device* dev = maple_Create(type);
-	dev->Setup(maple_GetAddress(bus, port));
-	dev->config = new MapleConfigMap(dev, player_num);
+	dev->Setup(maple_GetAddress(bus, port), player_num);
+	dev->config = new MapleConfigMap(dev);
 	dev->OnSetup();
 	MapleDevices[bus][port] = dev;
 }
@@ -306,76 +306,29 @@ void mcfg_SerializeDevices(void **data, unsigned int *total_size)
 	for (int i = 0; i < MAPLE_PORTS; i++)
 		for (int j = 0; j < 6; j++)
 		{
-			u8 **p = (u8 **)data;
-			if (MapleDevices[i][j] != NULL)
-			{
-				if (*p != NULL)
-				{
-					**p = MapleDevices[i][j]->get_device_type();
-					*p = *p + 1;
-				}
-				MapleDevices[i][j]->maple_serialize(data, total_size);
-			}
-			else if (*p != NULL)
-			{
-				**p = MDT_None;
-				*p = *p + 1;
-			}
-			*total_size = *total_size + 1;
+			u8 deviceType = MDT_None;
+			maple_device* device = MapleDevices[i][j];
+			if (device != nullptr)
+				deviceType =  device->get_device_type();
+			REICAST_S(deviceType);
+			if (device != nullptr)
+				device->serialize(data, total_size);
 		}
 }
 
-void mcfg_UnserializeDevices(void **data, unsigned int *total_size, bool old)
+void mcfg_UnserializeDevices(void **data, unsigned int *total_size, serialize_version_enum version)
 {
 	mcfg_DestroyDevices();
 
 	for (int i = 0; i < MAPLE_PORTS; i++)
 		for (int j = 0; j < 6; j++)
 		{
-			u8 **p = (u8 **)data;
-			MapleDeviceType device_type = (MapleDeviceType)**p;
-			*p = *p + 1;
-			*total_size = *total_size + 1;
-			if (old)
+			u8 deviceType;
+			REICAST_US(deviceType);
+			if (deviceType != MDT_None)
 			{
-				switch ((OldMapleDeviceType::MapleDeviceType)device_type)
-				{
-				case OldMapleDeviceType::MDT_None:
-					device_type = MDT_None;
-					break;
-				case OldMapleDeviceType::MDT_SegaController:
-					device_type = MDT_SegaController;
-					break;
-				case OldMapleDeviceType::MDT_SegaVMU:
-					device_type = MDT_SegaVMU;
-					break;
-				case OldMapleDeviceType::MDT_PurupuruPack:
-					device_type = MDT_PurupuruPack;
-					break;
-				case OldMapleDeviceType::MDT_Microphone:
-					device_type = MDT_Microphone;
-					break;
-				case OldMapleDeviceType::MDT_Keyboard:
-					device_type = MDT_Keyboard;
-					break;
-				case OldMapleDeviceType::MDT_Mouse:
-					device_type = MDT_Mouse;
-					break;
-				case OldMapleDeviceType::MDT_LightGun:
-					device_type = MDT_LightGun;
-					break;
-				case OldMapleDeviceType::MDT_NaomiJamma:
-					device_type = MDT_NaomiJamma;
-					break;
-				default:
-					die("Invalid maple device type");
-					break;
-				}
-			}
-			if (device_type != MDT_None)
-			{
-				mcfg_Create(device_type, i, j);
-				MapleDevices[i][j]->maple_unserialize(data, total_size);
+				mcfg_Create((MapleDeviceType)deviceType, i, j);
+				MapleDevices[i][j]->unserialize(data, total_size, version);
 			}
 		}
 }

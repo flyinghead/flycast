@@ -15,7 +15,7 @@ enum MaplePattern
 	MP_NOP = 7
 };
 
-maple_device* MapleDevices[4][6];
+maple_device* MapleDevices[MAPLE_PORTS][6];
 
 int maple_schid;
 

@@ -921,11 +921,14 @@ elseif(UNIX)
                 core/linux-dist/main.cpp)
     endif()
 elseif(WIN32)
-    target_sources(${PROJECT_NAME} PRIVATE
+    if(NOT BUILD_TESTING)
+        target_sources(${PROJECT_NAME} PRIVATE
             core/windows/win_keyboard.h
-            core/windows/win_vmem.cpp
             core/windows/winmain.cpp
-            core/windows/xinput_gamepad.h
+            core/windows/xinput_gamepad.h)
+    endif()
+    target_sources(${PROJECT_NAME} PRIVATE
+            core/windows/win_vmem.cpp
             shell/windows/reicast.rc)
 
     target_link_libraries(${PROJECT_NAME} PRIVATE dsound opengl32 winmm ws2_32 wsock32 xinput9_1_0)

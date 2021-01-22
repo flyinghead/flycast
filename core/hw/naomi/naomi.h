@@ -6,7 +6,9 @@
 
 void naomi_reg_Init();
 void naomi_reg_Term();
-void naomi_reg_Reset(bool Manual);
+void naomi_reg_Reset(bool hard);
+void naomi_Serialize(void **data, unsigned int *total_size);
+void naomi_Unserialize(void **data, unsigned int *total_size, serialize_version_enum version);
 
 u32  ReadMem_naomi(u32 Addr, u32 sz);
 void WriteMem_naomi(u32 Addr, u32 data, u32 sz);
