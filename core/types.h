@@ -346,6 +346,7 @@ struct settings_t
 		bool PerStripSorting;
 		bool DelayFrameSwapping; // Delay swapping frame until FB_R_SOF matches FB_W_SOF
 		bool WidescreenGameHacks;
+		u32 CrosshairColor[4];
 	} rend;
 
 	struct

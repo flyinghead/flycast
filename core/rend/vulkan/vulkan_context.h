@@ -19,13 +19,14 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #pragma once
+
 #ifdef USE_VULKAN
 #include <stdexcept>
 #include "vulkan.h"
 #include "vmallocator.h"
 #include "quad.h"
 #include "rend/TexCache.h"
-#include "vmu.h"
+#include "overlay.h"
 
 extern int screen_width, screen_height;
 
@@ -97,8 +98,8 @@ public:
 	u32 GetMaxStorageBufferRange() const { return maxStorageBufferRange; }
 	vk::DeviceSize GetMaxMemoryAllocationSize() const { return maxMemoryAllocationSize; }
 	u32 GetVendorID() const { return vendorID; }
-	const std::vector<vk::UniqueCommandBuffer> *PrepareVMUs();
-	void DrawVMUs(float scaling);
+	const std::vector<vk::UniqueCommandBuffer> *PrepareOverlay(bool vmu, bool crosshair);
+	void DrawOverlay(float scaling, bool vmu, bool crosshair);
 
 #ifdef VK_DEBUG
 	void setObjectName(u64 object, VkDebugReportObjectTypeEXT objectType, const std::string& name)
@@ -186,7 +187,7 @@ private:
 	vk::ImageView lastFrameView;
 	vk::Extent2D lastFrameExtent;
 
-	std::unique_ptr<VulkanVMUs> vmus;
+	std::unique_ptr<VulkanOverlay> overlay;
 
 #ifdef VK_DEBUG
 #ifndef __ANDROID__

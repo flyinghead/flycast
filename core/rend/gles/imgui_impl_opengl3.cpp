@@ -528,18 +528,29 @@ void ImGui_ImplOpenGL3_DrawBackground()
 	}
 }
 
-ImTextureID ImGui_ImplOpenGL3_CreateVmuTexture(const unsigned int *data)
+static ImTextureID createSimpleTexture(const unsigned int *data, u32 width, u32 height)
 {
 	GLuint tex_id = glcache.GenTexture();
     glcache.BindTexture(GL_TEXTURE_2D, tex_id);
     glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 48, 32, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
 
     return reinterpret_cast<ImTextureID>(tex_id);
 }
 
-void ImGui_ImplOpenGL3_DeleteVmuTexture(ImTextureID tex_id)
+ImTextureID ImGui_ImplOpenGL3_CreateVmuTexture(const unsigned int *data)
+{
+	return createSimpleTexture(data, 48, 32);
+}
+
+void ImGui_ImplOpenGL3_DeleteTexture(ImTextureID tex_id)
 {
 	glcache.DeleteTextures(1, &(GLuint &)tex_id);
 }
+
+ImTextureID ImGui_ImplOpenGL3_CreateCrosshairTexture(const unsigned int *data)
+{
+	return createSimpleTexture(data, 16, 16);
+}
+

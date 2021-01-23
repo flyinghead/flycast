@@ -45,10 +45,10 @@ static inline void ImGui_impl_RenderDrawData(ImDrawData *draw_data, bool save_ba
 			if (!rendering)
 			{
 				context->NewFrame();
-				vmuCmdBuffers = context->PrepareVMUs();
+				vmuCmdBuffers = context->PrepareOverlay(true, false);
 				context->BeginRenderPass();
 				context->PresentLastFrame();
-				context->DrawVMUs(gui_get_scaling());
+				context->DrawOverlay(gui_get_scaling(), true, false);
 			}
 			// Record Imgui Draw Data and draw funcs into command buffer
 			ImGui_ImplVulkan_RenderDrawData(draw_data, (VkCommandBuffer)context->GetCurrentCommandBuffer());

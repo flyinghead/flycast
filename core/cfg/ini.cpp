@@ -16,7 +16,7 @@ int ConfigEntry::get_int()
 {
 	if (strstr(this->value.c_str(), "0x") != NULL)
 	{
-		return strtol(this->value.c_str(), NULL, 16);
+		return (int)strtoul(this->value.c_str(), NULL, 16);
 	}
 	else
 	{

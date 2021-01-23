@@ -670,7 +670,7 @@ void VulkanContext::CreateSwapChain()
 	    }
 	    quadPipeline->Init(shaderManager.get(), *renderPass);
 	    quadDrawer->Init(quadPipeline.get());
-	    vmus->Init(quadPipeline.get());
+	    overlay->Init(quadPipeline.get());
 
 	    InitImgui();
 
@@ -726,7 +726,7 @@ bool VulkanContext::Init()
 	vk::AndroidSurfaceCreateInfoKHR createInfo(vk::AndroidSurfaceCreateFlagsKHR(), (struct ANativeWindow*)window);
 	surface = instance->createAndroidSurfaceKHRUnique(createInfo);
 #endif
-	vmus = std::unique_ptr<VulkanVMUs>(new VulkanVMUs());
+	overlay = std::unique_ptr<VulkanOverlay>(new VulkanOverlay());
 
 	return InitDevice();
 }
@@ -850,15 +850,15 @@ std::string VulkanContext::GetDriverVersion() const
 			+ std::to_string(VK_VERSION_PATCH(props.driverVersion));
 }
 
-const std::vector<vk::UniqueCommandBuffer> *VulkanContext::PrepareVMUs()
+const std::vector<vk::UniqueCommandBuffer> *VulkanContext::PrepareOverlay(bool vmu, bool crosshair)
 {
-	return vmus->PrepareVMUs(*commandPools[GetCurrentImageIndex()]);
+	return overlay->Prepare(*commandPools[GetCurrentImageIndex()], vmu, crosshair);
 }
 
- void VulkanContext::DrawVMUs(float scaling)
+ void VulkanContext::DrawOverlay(float scaling, bool vmu, bool crosshair)
 {
 	 if (IsValid())
-		 vmus->DrawVMUs(vk::Extent2D(width, height), scaling);
+		 overlay->Draw(vk::Extent2D(width, height), scaling, vmu, crosshair);
 }
 
 extern Renderer *renderer;
@@ -872,19 +872,16 @@ void VulkanContext::PresentFrame(vk::ImageView imageView, vk::Extent2D extent) n
 	{
 		try {
 			NewFrame();
-			const std::vector<vk::UniqueCommandBuffer> *vmuCmdBuffers = nullptr;
-			if (settings.rend.FloatVMUs)
-				vmuCmdBuffers = PrepareVMUs();
+			auto overlayCmdBuffers = PrepareOverlay(settings.rend.FloatVMUs, true);
 
 			BeginRenderPass();
 
 			if (lastFrameView) // Might have been nullified if swap chain recreated
 				DrawFrame(imageView, extent);
 
-			if (settings.rend.FloatVMUs)
-				DrawVMUs(gui_get_scaling());
+			DrawOverlay(gui_get_scaling(), settings.rend.FloatVMUs, true);
 			renderer->DrawOSD(false);
-			EndFrame(vmuCmdBuffers);
+			EndFrame(overlayCmdBuffers);
 		} catch (const InvalidVulkanContext& err) {
 		}
 	}
@@ -918,7 +915,7 @@ void VulkanContext::Term()
             }
         }
     }
-	vmus.reset();
+	overlay.reset();
 	ShaderCompiler::Term();
 	swapChain.reset();
 	imageViews.clear();

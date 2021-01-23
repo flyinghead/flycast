@@ -839,8 +839,8 @@ if(NOT APPLE)
             core/rend/vulkan/vk_mem_alloc.h
             core/rend/vulkan/vmallocator.cpp
             core/rend/vulkan/vmallocator.h
-            core/rend/vulkan/vmu.cpp
-            core/rend/vulkan/vmu.h
+            core/rend/vulkan/overlay.cpp
+            core/rend/vulkan/overlay.h
             core/rend/vulkan/vulkan_context.cpp
             core/rend/vulkan/vulkan_context.h
             core/rend/vulkan/vulkan.h

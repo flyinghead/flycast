@@ -759,6 +759,7 @@ void InitSettings()
 	settings.rend.PerStripSorting	= false;
 	settings.rend.DelayFrameSwapping = false;
 	settings.rend.WidescreenGameHacks = false;
+	memset(settings.rend.CrosshairColor, 0, sizeof(settings.rend.CrosshairColor));
 
 	settings.pvr.ta_skip			= 0;
 
@@ -860,6 +861,11 @@ void LoadSettings(bool game_specific)
 	settings.rend.PerStripSorting	= cfgLoadBool(config_section, "rend.PerStripSorting", settings.rend.PerStripSorting);
 	settings.rend.DelayFrameSwapping = cfgLoadBool(config_section, "rend.DelayFrameSwapping", settings.rend.DelayFrameSwapping);
 	settings.rend.WidescreenGameHacks = cfgLoadBool(config_section, "rend.WidescreenGameHacks", settings.rend.WidescreenGameHacks);
+	for (u32 i = 0; i < ARRAY_SIZE(settings.rend.CrosshairColor); i++)
+	{
+		std::string name = "rend.CrossHairColor" + std::to_string(i + 1);
+		settings.rend.CrosshairColor[i] = cfgLoadInt(config_section, name.c_str(), settings.rend.CrosshairColor[i]);
+	}
 
 	settings.pvr.ta_skip			= cfgLoadInt(config_section, "ta.skip", settings.pvr.ta_skip);
 
@@ -1029,6 +1035,11 @@ void SaveSettings()
 	cfgSaveBool("config", "rend.PerStripSorting", settings.rend.PerStripSorting);
 	cfgSaveBool("config", "rend.DelayFrameSwapping", settings.rend.DelayFrameSwapping);
 	cfgSaveBool("config", "rend.WidescreenGameHacks", settings.rend.WidescreenGameHacks);
+	for (u32 i = 0; i < ARRAY_SIZE(settings.rend.CrosshairColor); i++)
+	{
+		std::string name = "rend.CrossHairColor" + std::to_string(i + 1);
+		cfgSaveInt("config", name.c_str(), settings.rend.CrosshairColor[i]);
+	}
 
 	cfgSaveInt("config", "pvr.MaxThreads", settings.pvr.MaxThreads);
 	cfgSaveInt("config", "pvr.AutoSkipFrame", settings.pvr.AutoSkipFrame);

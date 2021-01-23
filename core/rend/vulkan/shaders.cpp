@@ -304,13 +304,19 @@ void main()
 
 static const char QuadFragmentShaderSource[] = R"(#version 450 
 
-layout (binding = 0) uniform sampler2D tex;
+layout (set = 0, binding = 0) uniform sampler2D tex;
+
+layout (push_constant) uniform pushBlock
+{
+	vec4 color;
+} pushConstants;
+
 layout (location = 0) in vec2 inUV;
 layout (location = 0) out vec4 FragColor;
 
 void main() 
 {
-	FragColor = texture(tex, inUV);
+	FragColor = pushConstants.color * texture(tex, inUV);
 }
 )";
 

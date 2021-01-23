@@ -66,6 +66,7 @@ static std::mutex osd_message_mutex;
 static void display_vmus();
 static void reset_vmus();
 static void term_vmus();
+static void displayCrosshairs();
 
 GameScanner scanner;
 
@@ -1031,6 +1032,38 @@ static void gui_display_settings()
 						}
 						ImGui::PopID();
 					}
+					if (settings.input.maple_devices[bus] == MDT_LightGun)
+					{
+						ImGui::SameLine();
+						sprintf(device_name, "##device%d.xhair", bus);
+						ImGui::PushID(device_name);
+						u32 color = settings.rend.CrosshairColor[bus];
+						float xhairColor[4] {
+							(color & 0xff) / 255.f,
+							((color >> 8) & 0xff) / 255.f,
+							((color >> 16) & 0xff) / 255.f,
+							((color >> 24) & 0xff) / 255.f
+						};
+						ImGui::ColorEdit4("Crosshair color", xhairColor, ImGuiColorEditFlags_AlphaBar | ImGuiColorEditFlags_AlphaPreviewHalf
+								| ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoTooltip | ImGuiColorEditFlags_NoLabel);
+						ImGui::SameLine();
+						bool enabled = color != 0;
+						ImGui::Checkbox("Crosshair", &enabled);
+						if (enabled)
+						{
+							settings.rend.CrosshairColor[bus] = (u8)(xhairColor[0] * 255.f)
+									| ((u8)(xhairColor[1] * 255.f) << 8)
+									| ((u8)(xhairColor[2] * 255.f) << 16)
+									| ((u8)(xhairColor[3] * 255.f) << 24);
+							if (settings.rend.CrosshairColor[bus] == 0)
+								settings.rend.CrosshairColor[bus] = 0xC0FFFFFF;
+						}
+						else
+						{
+							settings.rend.CrosshairColor[bus] = 0;
+						}
+						ImGui::PopID();
+					}
 					ImGui::PopItemWidth();
 				}
 				ImGui::Spacing();
@@ -1989,6 +2022,7 @@ void gui_display_osd()
 			ImGui::TextColored(ImVec4(1, 1, 0, 0.7), "%s", message.c_str());
 			ImGui::End();
 		}
+		displayCrosshairs();
 		if (settings.rend.FloatVMUs)
 			display_vmus();
 //		gui_plot_render_time(screen_width, screen_height);
@@ -2046,6 +2080,8 @@ bool vmu_lcd_status[8];
 bool vmu_lcd_changed[8];
 static ImTextureID vmu_lcd_tex_ids[8];
 
+static ImTextureID crosshairTexId;
+
 void push_vmu_screen(int bus_id, int bus_port, u8* buffer)
 {
 	int vmu_id = bus_id * 2 + bus_port;
@@ -2087,7 +2123,7 @@ static void display_vmus()
 			continue;
 
 		if (vmu_lcd_tex_ids[i] != (ImTextureID)0)
-			ImGui_ImplOpenGL3_DeleteVmuTexture(vmu_lcd_tex_ids[i]);
+			ImGui_ImplOpenGL3_DeleteTexture(vmu_lcd_tex_ids[i]);
 		vmu_lcd_tex_ids[i] = ImGui_ImplOpenGL3_CreateVmuTexture(vmu_lcd_data[i]);
 
 	    int x = vmu_coords[i][0];
@@ -2115,6 +2151,96 @@ static void display_vmus()
     ImGui::End();
 }
 
+static const int lightgunCrosshairData[16 * 16] =
+{
+	 0, 0, 0, 0, 0, 0, 0,-1,-1, 0, 0, 0, 0, 0, 0, 0,
+	 0, 0, 0, 0, 0, 0, 0,-1,-1, 0, 0, 0, 0, 0, 0, 0,
+	 0, 0, 0, 0, 0, 0, 0,-1,-1, 0, 0, 0, 0, 0, 0, 0,
+	 0, 0, 0, 0, 0, 0, 0,-1,-1, 0, 0, 0, 0, 0, 0, 0,
+	 0, 0, 0, 0, 0, 0, 0,-1,-1, 0, 0, 0, 0, 0, 0, 0,
+	 0, 0, 0, 0, 0, 0, 0,-1,-1, 0, 0, 0, 0, 0, 0, 0,
+	 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	-1,-1,-1,-1,-1,-1, 0, 0, 0, 0,-1,-1,-1,-1,-1,-1,
+	-1,-1,-1,-1,-1,-1, 0, 0, 0, 0,-1,-1,-1,-1,-1,-1,
+	 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	 0, 0, 0, 0, 0, 0, 0,-1,-1, 0, 0, 0, 0, 0, 0, 0,
+	 0, 0, 0, 0, 0, 0, 0,-1,-1, 0, 0, 0, 0, 0, 0, 0,
+	 0, 0, 0, 0, 0, 0, 0,-1,-1, 0, 0, 0, 0, 0, 0, 0,
+	 0, 0, 0, 0, 0, 0, 0,-1,-1, 0, 0, 0, 0, 0, 0, 0,
+	 0, 0, 0, 0, 0, 0, 0,-1,-1, 0, 0, 0, 0, 0, 0, 0,
+	 0, 0, 0, 0, 0, 0, 0,-1,-1, 0, 0, 0, 0, 0, 0, 0,
+};
+
+const u32 *getCrosshairTextureData()
+{
+	return (u32 *)lightgunCrosshairData;
+}
+
+std::pair<float, float> getCrosshairPosition(int playerNum)
+{
+	float fx = mo_x_abs[playerNum];
+	float fy = mo_y_abs[playerNum];
+	int width = screen_width;
+	int height = screen_height;
+	if (settings.rend.Rotate90)
+	{
+		float t = fy;
+		fy = width - fx;
+		fx = t;
+		std::swap(width, height);
+	}
+	if ((float)width / height >= 640.f / 480.f)
+	{
+		float scale = 480.f / height;
+		fy /= scale;
+		scale *= settings.rend.ScreenStretching / 100.f;
+		fx = fx / scale + (width - 640.f / scale) / 2.f;
+	}
+	else
+	{
+		float scale = 640.f / width;
+		fx /= scale;
+		scale *= settings.rend.ScreenStretching / 100.f;
+		fy = fy / scale + (height - 480.f / scale) / 2.f;
+	}
+	return std::make_pair(fx, fy);
+}
+
+static void displayCrosshairs()
+{
+	if (!game_started)
+		return;
+	if (!settings.pvr.IsOpenGL())
+		return;
+	if (!crosshairsNeeded())
+		return;
+
+	if (crosshairTexId == ImTextureID())
+		crosshairTexId = ImGui_ImplOpenGL3_CreateCrosshairTexture(getCrosshairTextureData());
+    ImGui::SetNextWindowBgAlpha(0);
+    ImGui::SetNextWindowPos(ImVec2(0, 0));
+    ImGui::SetNextWindowSize(ImVec2(screen_width, screen_height));
+
+    ImGui::Begin("xhair-window", NULL, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoInputs
+    		| ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoFocusOnAppearing);
+	for (u32 i = 0; i < ARRAY_SIZE(settings.rend.CrosshairColor); i++)
+	{
+		if (settings.rend.CrosshairColor[i] == 0)
+			continue;
+		if (settings.platform.system == DC_PLATFORM_DREAMCAST && settings.input.maple_devices[i] != MDT_LightGun)
+			continue;
+
+		ImVec2 pos;
+		std::tie(pos.x, pos.y) = getCrosshairPosition(i);
+		pos.x -= XHAIR_WIDTH / 2.f;
+		pos.y += XHAIR_WIDTH / 2.f;
+		ImVec2 pos_b(pos.x + XHAIR_WIDTH, pos.y - XHAIR_HEIGHT);
+
+		ImGui::GetWindowDrawList()->AddImage(crosshairTexId, pos, pos_b, ImVec2(0, 1), ImVec2(1, 0), settings.rend.CrosshairColor[i]);
+	}
+	ImGui::End();
+}
+
 static void reset_vmus()
 {
 	for (u32 i = 0; i < ARRAY_SIZE(vmu_lcd_status); i++)
@@ -2127,10 +2253,15 @@ static void term_vmus()
 		return;
 	for (u32 i = 0; i < ARRAY_SIZE(vmu_lcd_status); i++)
 	{
-		if (vmu_lcd_tex_ids[i] != (ImTextureID)0)
+		if (vmu_lcd_tex_ids[i] != ImTextureID())
 		{
-			ImGui_ImplOpenGL3_DeleteVmuTexture(vmu_lcd_tex_ids[i]);
-			vmu_lcd_tex_ids[i] = (ImTextureID)0;
+			ImGui_ImplOpenGL3_DeleteTexture(vmu_lcd_tex_ids[i]);
+			vmu_lcd_tex_ids[i] = ImTextureID();
 		}
+	}
+	if (crosshairTexId != ImTextureID())
+	{
+		ImGui_ImplOpenGL3_DeleteTexture(crosshairTexId);
+		crosshairTexId = ImTextureID();
 	}
 }
