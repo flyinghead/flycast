@@ -27,38 +27,59 @@ bool TcpClient::Connect(const char *host, int port) {
 #endif
     addr.sin_port = htons(port);
     
-    fd_set set;
+    fd_set setW, setE;
     struct timeval timeout = {5,0};
     int res;
     
-    //Use non-blocking mode for connect
-    long fcntl_flags = fcntl(new_sock, F_GETFL, NULL);
-    fcntl(new_sock, F_SETFL, fcntl_flags | O_NONBLOCK);
+    auto set_blocking_mode = [](const int &socket, bool is_blocking) {
+#ifdef _WIN32
+        u_long flags = is_blocking ? 0 : 1;
+        ioctlsocket(socket, FIONBIO, &flags);
+#else
+        const int flags = fcntl(socket, F_GETFL, 0);
+        fcntl(socket, F_SETFL, is_blocking ? flags ^ O_NONBLOCK : flags | O_NONBLOCK);
+#endif
+    };
+    
+    set_blocking_mode(new_sock, false);
     
     ::connect(new_sock, (const sockaddr *) &addr, sizeof(addr));
-    
+
+#ifdef _WIN32
+    if(get_last_error() != WSAEWOULDBLOCK){
+#else
     if(get_last_error() != EINPROGRESS){
+#endif
         WARN_LOG(COMMON, "Connect fail 2 %d", get_last_error());
         return false;
     } else {
         do {    
-            FD_ZERO(&set);
-            FD_SET(new_sock, &set);
-            res = select(new_sock+1, NULL, &set, NULL, &timeout);
+            FD_ZERO(&setW);
+            FD_SET(new_sock, &setW);
+            FD_ZERO(&setE);
+            FD_SET(new_sock, &setE);
+            
+            res = select(new_sock+1, NULL, &setW, &setE, &timeout);
             if (res < 0 && errno != EINTR) {
                 WARN_LOG(COMMON, "Connect fail 3 %d", get_last_error());
                 return false;
             } else if (res > 0) {
-                int error = 0;
-                unsigned int lon = sizeof(int);
-                if (getsockopt(new_sock, SOL_SOCKET, SO_ERROR, &error, &lon) < 0) {
-                    WARN_LOG(COMMON, "Connect fail 4 %d", get_last_error());
-                    return false;
-                }
-                if(error){
+                
+                if (FD_ISSET(new_sock, &setE)){
+#ifdef _WIN32
+                    char error;
+#else
+                    int error;
+#endif
+                    socklen_t l = sizeof(int);
+                    if (getsockopt(new_sock, SOL_SOCKET, SO_ERROR, &error, &l) < 0 || error) {
+                        WARN_LOG(COMMON, "Connect fail 4 %d", get_last_error());
+                        return false;
+                    }
                     WARN_LOG(COMMON, "Connect fail 5 %d", get_last_error());
                     return false;
                 }
+                
                 break;
             } else {
                 WARN_LOG(COMMON, "Timeout in select() - Cancelling!");
@@ -66,9 +87,7 @@ bool TcpClient::Connect(const char *host, int port) {
             }
         } while(1);
     }
-    
-    //restore flag
-    fcntl(new_sock, F_SETFL, fcntl_flags);
+    set_blocking_mode(new_sock, true);
 
     if (sock_ != INVALID_SOCKET) {
         closesocket(sock_);
