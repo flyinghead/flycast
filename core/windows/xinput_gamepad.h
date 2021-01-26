@@ -268,15 +268,31 @@ public:
 			input_mapper = std::make_shared<MouseInputMapping>();
 	}
 	virtual ~WinMouseGamepadDevice() {}
+
 	bool gamepad_btn_input(u32 code, bool pressed) override
 	{
-		if (gui_is_open())
+		if (gui_is_open() && !is_detecting_input())
 			// Don't register mouse clicks as gamepad presses when gui is open
 			// This makes the gamepad presses to be handled first and the mouse position to be ignored
 			// TODO Make this generic
 			return false;
 		else
 			return GamepadDevice::gamepad_btn_input(code, pressed);
+	}
+
+	virtual const char *get_button_name(u32 code) override
+	{
+		switch (code)
+		{
+		case 0:
+			return "Left Button";
+		case 2:
+			return "Right Button";
+		case 1:
+			return "Middle Button";
+		default:
+			return nullptr;
+		}
 	}
 };
 

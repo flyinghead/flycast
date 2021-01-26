@@ -37,20 +37,25 @@ static inline void ImGui_impl_RenderDrawData(ImDrawData *draw_data, bool save_ba
 	if (!settings.pvr.IsOpenGL())
 	{
 		VulkanContext *context = VulkanContext::Instance();
-		bool rendering = context->IsRendering();
-		const std::vector<vk::UniqueCommandBuffer> *vmuCmdBuffers = nullptr;
-		if (!rendering)
-		{
-			context->NewFrame();
-			vmuCmdBuffers = context->PrepareVMUs();
-			context->BeginRenderPass();
-			context->PresentLastFrame();
-			context->DrawVMUs(gui_get_scaling());
+		if (!context->IsValid())
+			return;
+		try {
+			bool rendering = context->IsRendering();
+			const std::vector<vk::UniqueCommandBuffer> *vmuCmdBuffers = nullptr;
+			if (!rendering)
+			{
+				context->NewFrame();
+				vmuCmdBuffers = context->PrepareOverlay(true, false);
+				context->BeginRenderPass();
+				context->PresentLastFrame();
+				context->DrawOverlay(gui_get_scaling(), true, false);
+			}
+			// Record Imgui Draw Data and draw funcs into command buffer
+			ImGui_ImplVulkan_RenderDrawData(draw_data, (VkCommandBuffer)context->GetCurrentCommandBuffer());
+			if (!rendering)
+				context->EndFrame(vmuCmdBuffers);
+		} catch (const InvalidVulkanContext& err) {
 		}
-		// Record Imgui Draw Data and draw funcs into command buffer
-		ImGui_ImplVulkan_RenderDrawData(draw_data, (VkCommandBuffer)context->GetCurrentCommandBuffer());
-		if (!rendering)
-			context->EndFrame(vmuCmdBuffers);
 	}
 	else
 #endif
@@ -58,3 +63,5 @@ static inline void ImGui_impl_RenderDrawData(ImDrawData *draw_data, bool save_ba
 		ImGui_ImplOpenGL3_RenderDrawData(draw_data, save_background);
 	}
 }
+
+void ScrollWhenDraggingOnVoid(const ImVec2& delta, ImGuiMouseButton mouse_button);

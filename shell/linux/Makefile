@@ -7,12 +7,13 @@ USE_OSS := 1
 #USE_PULSEAUDIO := 1
 #USE_SDLAUDIO := 1
 #USE_LIBAO := 1
+#USE_SDL := 1
 ifndef USE_SDL
 USE_EVDEV := 1
 USE_UDEV := 1
 endif
-USE_MODEM := 1
 PLATFORM_EXT := elf
+#USE_SYSTEM_MINIUPNPC := 1
 
 CXX ?= ${CC_PREFIX}g++
 CC ?= ${CC_PREFIX}gcc
@@ -127,7 +128,7 @@ endif
     MFLAGS += -m32
     ASFLAGS += --32
     LDFLAGS += -m32
-    CFLAGS += -m32 -D TARGET_LINUX_x86 -D TARGET_NO_AREC -fno-builtin-sqrtf
+    CFLAGS += -m32 -DTARGET_NO_AREC -fno-builtin-sqrtf
     CXXFLAGS += -fexceptions
 
 # Generic 64 bit x86 (a.k.a. x64/AMD64/x86_64/Intel64/EM64T)
@@ -138,7 +139,7 @@ ifndef USE_SDL
     USE_X11 := 1
 endif
 	USE_VULKAN ?= 1
-    CFLAGS += -D TARGET_LINUX_x64 -fno-builtin-sqrtf
+    CFLAGS += -fno-builtin-sqrtf
     CXXFLAGS += -fexceptions
     LDFLAGS := -no-pie
 
@@ -150,7 +151,7 @@ ifndef USE_SDL
 endif
     ARM64_REC := 1
     ISARM64 := 1
-    CFLAGS += -D TARGET_LINUX_ARMv8 -fno-builtin-sqrtf
+    CFLAGS += -fno-builtin-sqrtf
     CXXFLAGS += -fexceptions
 
 # Generic 32 bit ARMhf (a.k.a. ARMv7h)
@@ -169,7 +170,7 @@ else ifneq (,$(findstring lincpp,$(platform)))
     CPP_REC := 1
     NOT_ARM := 1
     USE_X11 := 1
-    CFLAGS += -D TARGET_LINUX_x64 -D TARGET_NO_JIT
+    CFLAGS += -D TARGET_NO_JIT
     CXXFLAGS += -fexceptions -std=gnu++11
 
 # Raspberry Pi 2
@@ -246,6 +247,20 @@ else ifneq (,$(findstring odroid,$(platform)))
         endif
     endif
 
+# ROCKCHIP
+else ifneq (,$(findstring rockchip,$(platform)))
+    MFLAGS += -marm -march=armv8-a+crc -mfpu=neon -mfloat-abi=hard -funroll-loops -mtune=cortex-a53
+    ASFLAGS += -march=armv8-a+crc -mfpu=neon -mfloat-abi=hard
+    CXXFLAGS += -fexceptions
+    CFLAGS += -fsingle-precision-constant -DMESA_EGL_NO_X11_HEADERS=1 -DEGL_NO_X11=1 -fpermissive -fno-builtin-sqrtf
+    INCS +=  -I/opt/vc/include/ -I/opt/vc/include/libdrm
+    LIBS += -ldrm -lGLESv2
+    USE_GLES := 1
+    USE_EVDEV := 1
+    USE_UDEV := 1
+    FOR_LINUX := 1
+    ISARM64 := 1
+
 # GCW Zero
 else ifneq (,$(findstring gcwz,$(platform)))
     NOT_ARM := 1
@@ -273,13 +288,14 @@ else ifneq (,$(findstring vero4k,$(platform)))
 # Windows
 else ifneq (,$(findstring win32,$(platform)))
     NOT_ARM := 1
-    CFLAGS += -fno-builtin-sqrtf -funroll-loops -DHAVE_FSEEKO -I /mingw64/include
+    CFLAGS += -fno-builtin-sqrtf -funroll-loops -I /mingw64/include
     LDFLAGS += -static-libgcc -static-libstdc++ -Wl,-subsystem,windows -L$(LOCAL_PATH)/../../core/deps/openlibm
     LIBS := -lwininet -lopenlibm -lopengl32 -lwinmm -lgdi32 -lwsock32 -lws2_32 -ldsound -lcomctl32 -lcomdlg32 -lxinput -liphlpapi -Wl,-Bstatic -lgomp
     PLATFORM_EXT := exe
     CC = gcc
     CXX = g++
     USE_SDL = 1
+    STATIC_LIBZIP = 1
 ifeq ($(WITH_DYNAREC), x86)
     X86_REC := 1
     LDFLAGS += -m32
@@ -293,7 +309,6 @@ endif
     undefine USE_EVDEV
     undefine USE_UDEV
     undefine FOR_LINUX
-    NO_NIXPROF := 1
     FOR_WINDOWS := 1
 	USE_VULKAN ?= 1
 else
@@ -307,19 +322,34 @@ LDFLAGS += -g -Wl,-Map,$(notdir $@).map,--gc-sections -Wl,-O3 -Wl,--sort-common 
 
 CFLAGS += $(RZDCY_CFLAGS) -g -O3 -D NDEBUG -c -fopenmp #-D NO_REND
 CFLAGS += -frename-registers -fno-strict-aliasing
-CFLAGS += -ffast-math -ftree-vectorize  -Wno-unused-result
+CFLAGS += -ffast-math -ftree-vectorize -Wall -Wno-unused-result
 
 CXXFLAGS += $(RZDCY_CFLAGS) -fno-rtti -fno-operator-names -D_GLIBCXX_USE_CXX11_ABI=0 -std=gnu++14
 
 INCS += -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/deps -I$(RZDCY_SRC_DIR)/khronos
 
 ifdef FOR_WINDOWS
-	LIBS += -static -lpthread
+	INCS += -I$(LOCAL_PATH)/include/mingw
+	LIBS += -lm -static -lpthread
 else
-	LIBS += -lpthread
+	INCS += -I$(LOCAL_PATH)/include/linux
+	LIBS += -lm -lpthread
 endif
 ifdef FOR_LINUX
 LIBS += -lrt
+endif
+ifdef USE_SYSTEM_MINIUPNPC
+LIBS += -lminiupnpc
+endif
+ifndef STATIC_LIBZIP
+LIBS += -lzip
+endif
+
+$(RZDCY_SRC_DIR)/deps/miniupnpc/libminiupnpc.a:
+ifdef FOR_WINDOWS
+	$(MAKE) -C $(RZDCY_SRC_DIR)/deps/miniupnpc -f Makefile.mingw CC=gcc libminiupnpc.a
+else
+	$(MAKE) -C $(RZDCY_SRC_DIR)/deps/miniupnpc libminiupnpc.a
 endif
 
 PREFIX ?= /usr/local
@@ -330,8 +360,7 @@ ICON_DIR ?= ${PREFIX}/share/pixmaps
 ifdef USE_SDL
 	ifdef FOR_WINDOWS
 	    CXXFLAGS += -D USE_SDL
-	    LIBS += -L$(RZDCY_SRC_DIR)/deps/SDL2-2.0.12/x86_64-w64-mingw32/lib -lsdl2 -ldinput8  -ldxguid -ldxerr8
-	    LIBS += -luser32 -lgdi32 -lwinmm -limm32 -lole32 -loleaut32 -lshell32 -lsetupapi -lversion -luuid
+	    INCS += -ISDL/include
 	else
 	    CXXFLAGS += `sdl2-config --cflags` -D USE_SDL
 	    LIBS += `sdl2-config --libs`
@@ -397,8 +426,14 @@ ifdef USE_PULSEAUDIO
 endif
 
 ifdef USE_SDLAUDIO
-    CXXFLAGS += `sdl2-config --cflags` -D USE_SDL_AUDIO
-    LIBS += `sdl2-config --libs`
+	ifdef FOR_WINDOWS
+	    CXXFLAGS += -D USE_SDL_AUDIO
+	    INCS += -ISDL/include
+	    USE_SDL = 1
+	else
+	    CXXFLAGS += `sdl2-config --cflags` -D USE_SDL_AUDIO
+	    LIBS += `sdl2-config --libs`
+	endif
 endif
 
 ifdef USE_LIBAO
@@ -441,7 +476,7 @@ endif
 EXECUTABLE_STRIPPED=nosym-reicast.$(PLATFORM_EXT)
 DC_PLATFORM=dreamcast
 EXECUTABLE=reicast.$(PLATFORM_EXT)
-EXECUTABLE_NAME=reicast
+EXECUTABLE_NAME=flycast
 
 ifndef NOT_ARM
     AS=$(CC)
@@ -459,9 +494,33 @@ OBJECTS:=$(OBJECTS:.S=.build_obj)
 OBJECTS:=$(patsubst $(RZDCY_SRC_DIR)/%,$(BUILDDIR)/%,$(OBJECTS))
 
 ifdef FOR_WINDOWS
-OBJECTS+=$(BUILDDIR)/reicastres.build_obj
+OBJECTS += $(BUILDDIR)/reicastres.build_obj
 $(BUILDDIR)/reicastres.build_obj: $(LOCAL_PATH)/../windows/reicast.rc $(LOCAL_PATH)/../windows/flycast.ico $(RZDCY_SRC_DIR)/version.h
 	$(WINDRES) $< $@
+
+endif
+
+ifndef USE_SYSTEM_MINIUPNPC
+OBJECTS += $(RZDCY_SRC_DIR)/deps/miniupnpc/libminiupnpc.a
+CFLAGS += -DMINIUPNP_STATICLIB
+endif
+
+ifdef USE_SDL
+	ifdef FOR_WINDOWS
+$(OBJECTS): SDL/lib/libSDL2.a
+ 
+SDL/lib/libSDL2.a:
+	-patch -p1 --directory=$(RZDCY_SRC_DIR)/deps/SDL --forward < $(RZDCY_SRC_DIR)/deps/patches/SDL.patch
+	mkdir -p SDL && \
+	  cd SDL && \
+	  cmake -G "MinGW Makefiles" -DCMAKE_INSTALL_PREFIX=. -DBUILD_SHARED_LIBS=OFF -DCMAKE_SH=SH-NOTFOUND $(RZDCY_SRC_DIR)/deps/SDL && \
+	  cmake --build . --target install
+
+
+OBJECTS += SDL/lib/libSDL2.a
+LIBS += -ldinput8  -ldxguid -ldxerr8
+LIBS += -luser32 -lgdi32 -lwinmm -limm32 -lole32 -loleaut32 -lshell32 -lsetupapi -lversion -luuid
+	endif
 endif
 
 DEPDIR := .dep-$(BUILDDIR)
@@ -516,30 +575,26 @@ install: $(EXECUTABLE)
 	mkdir -p $(DESTDIR)$(MENUENTRY_DIR) 2>/dev/null || true
 	mkdir -p $(DESTDIR)$(ICON_DIR) 2>/dev/null || true
 	install -m755 $(EXECUTABLE) $(DESTDIR)$(PREFIX)/bin/$(EXECUTABLE_NAME)
-	install -m755 tools/reicast-joyconfig.py $(DESTDIR)$(PREFIX)/bin/reicast-joyconfig
 	install -m644 mappings/controller_gcwz.cfg $(DESTDIR)$(PREFIX)/share/reicast/mappings
 	install -m644 mappings/controller_generic.cfg $(DESTDIR)$(PREFIX)/share/reicast/mappings
 	install -m644 mappings/controller_pandora.cfg $(DESTDIR)$(PREFIX)/share/reicast/mappings
 	install -m644 mappings/controller_xboxdrv.cfg $(DESTDIR)$(PREFIX)/share/reicast/mappings
 	install -m644 mappings/controller_xpad.cfg $(DESTDIR)$(PREFIX)/share/reicast/mappings
 	install -m644 mappings/keyboard.cfg $(DESTDIR)$(PREFIX)/share/reicast/mappings
-	install -m644 man/reicast.1 $(DESTDIR)$(MAN_DIR)
-	install -m644 man/reicast-joyconfig.1 $(DESTDIR)$(MAN_DIR)
-	install -m644 reicast.desktop $(DESTDIR)$(MENUENTRY_DIR)
+	install -m644 man/flycast.1 $(DESTDIR)$(MAN_DIR)
+	install -m644 flycast.desktop $(DESTDIR)$(MENUENTRY_DIR)
 	install -m644 flycast.png $(DESTDIR)$(ICON_DIR)
 
 uninstall:
 	rm -f $(DESTDIR)$(PREFIX)/bin/$(EXECUTABLE_NAME)
-	rm -f $(DESTDIR)$(PREFIX)/bin/reicast-joyconfig
 	rm -f $(DESTDIR)$(PREFIX)/share/reicast/mappings/controller_gcwz.cfg
 	rm -f $(DESTDIR)$(PREFIX)/share/reicast/mappings/controller_generic.cfg
 	rm -f $(DESTDIR)$(PREFIX)/share/reicast/mappings/controller_pandora.cfg
 	rm -f $(DESTDIR)$(PREFIX)/share/reicast/mappings/controller_xboxdrv.cfg
 	rm -f $(DESTDIR)$(PREFIX)/share/reicast/mappings/controller_xpad.cfg
 	rm -f $(DESTDIR)$(PREFIX)/share/reicast/mappings/keyboard.cfg
-	rm -f $(DESTDIR)$(MAN_DIR)/reicast.1
-	rm -f $(DESTDIR)$(MAN_DIR)/reicast-joyconfig.1
-	rm -f $(DESTDIR)$(MENUENTRY_DIR)/reicast.desktop
+	rm -f $(DESTDIR)$(MAN_DIR)/flycast.1
+	rm -f $(DESTDIR)$(MENUENTRY_DIR)/flycast.desktop
 	rm -f $(DESTDIR)$(ICON_DIR)/flycast.png
 
 clean:

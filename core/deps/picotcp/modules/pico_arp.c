@@ -437,10 +437,10 @@ static int pico_arp_process_in(struct pico_frame *f, struct pico_arp_hdr *hdr, s
     }
 
 	// FIXME Problem with proxy ARP
-//    if (pico_arp_check_flooding(f, me) < 0) {
-//        pico_frame_discard(f);
-//        return -1;
-//    }
+    if (pico_arp_check_flooding(f, me) < 0) {
+        pico_frame_discard(f);
+        return -1;
+    }
 
     /* If no existing entry was found, create a new entry, or fail trying. */
     /* Do not create an entry for Slaac V4 probe packets (0.0.0.0) */

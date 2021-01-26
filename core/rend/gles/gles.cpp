@@ -20,8 +20,6 @@
 #endif
 #endif
 
-float fb_scale_x, fb_scale_y; // FIXME
-
 //Fragment and vertex shaders code
 
 static const char* VertexShaderSource = R"(%s
@@ -192,7 +190,8 @@ highp vec4 fog_clamp(lowp vec4 col)
 
 lowp vec4 palettePixel(highp vec2 coords)
 {
-	highp vec2 c = vec2((texture(tex, coords).FOG_CHANNEL * 255.0 + float(palette_index)) / 1023.0, 0.5);
+	highp int color_idx = int(floor(texture(tex, coords).FOG_CHANNEL * 255.0 + 0.5)) + palette_index;
+	highp vec2 c = vec2(mod(float(color_idx), 32.0) / 31.0, float(color_idx / 32) / 31.0);
 	return texture(palette, c);
 }
 
@@ -907,11 +906,6 @@ bool gles_init()
 	glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
 #endif
 
-	//clean up the buffer
-	glcache.ClearColor(0.f, 0.f, 0.f, 0.f);
-	glClear(GL_COLOR_BUFFER_BIT);
-	theGLContext.Swap();
-
 #ifdef GL_GENERATE_MIPMAP_HINT
 	if (gl.is_gles)
 		glHint(GL_GENERATE_MIPMAP_HINT, GL_FASTEST);
@@ -972,7 +966,7 @@ void UpdatePaletteTexture(GLenum texture_slot)
 		glcache.BindTexture(GL_TEXTURE_2D, paletteTextureId);
 
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1024, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, palette32_ram);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 32, 32, 0, GL_RGBA, GL_UNSIGNED_BYTE, palette32_ram);
 	glCheck();
 
 	glActiveTexture(GL_TEXTURE0);
@@ -1044,22 +1038,19 @@ void OSD_DRAW(bool clear_screen)
 
 bool ProcessFrame(TA_context* ctx)
 {
-	ctx->rend_inuse.lock();
-
 	if (KillTex)
 		TexCache.Clear();
+	TexCache.Cleanup();
 
 	if (ctx->rend.isRenderFramebuffer)
 	{
 		RenderFramebuffer();
-		ctx->rend_inuse.unlock();
 	}
 	else
 	{
 		if (!ta_parse_vdrc(ctx))
 			return false;
 	}
-	TexCache.CollectCleanup();
 
 	return true;
 }
@@ -1084,7 +1075,6 @@ static void upload_vertex_indices()
 
 bool RenderFrame()
 {
-	DoCleanup();
 	create_modvol_shader();
 
 	bool is_rtt = pvrrc.isRTT;
@@ -1296,6 +1286,17 @@ bool RenderFrame()
 					glcache.Scissor(screen_width * screen_scaling - scaled_offs_x, 0, (GLsizei)lroundf(scaled_offs_x + 1.f), (GLsizei)lroundf(screen_height * screen_scaling));
 					glClear(GL_COLOR_BUFFER_BIT);
 				}
+				else if (matrices.GetSidebarWidth() < 0)
+				{
+					float scaled_offs_y = -matrices.GetSidebarWidth() * screen_scaling;
+
+					glcache.ClearColor(0.f, 0.f, 0.f, 0.f);
+					glcache.Enable(GL_SCISSOR_TEST);
+					glcache.Scissor(0, 0, (GLsizei)lroundf(screen_width * screen_scaling), (GLsizei)lroundf(scaled_offs_y));
+					glClear(GL_COLOR_BUFFER_BIT);
+					glcache.Scissor(0, screen_height * screen_scaling - scaled_offs_y, (GLsizei)lroundf(screen_width * screen_scaling), (GLsizei)lroundf(scaled_offs_y + 1.f));
+					glClear(GL_COLOR_BUFFER_BIT);
+				}
 			}
 			else
 			{
@@ -1341,43 +1342,35 @@ bool RenderFrame()
 	return !is_rtt;
 }
 
-void rend_set_fb_scale(float x, float y)
+bool OpenGLRenderer::Init()
 {
-	fb_scale_x = x;
-	fb_scale_y = y;
+	return gles_init();
 }
 
-struct glesrend : Renderer
+void OpenGLRenderer::Term()
 {
-	bool Init() override { return gles_init(); }
-	void Resize(int w, int h) override { screen_width=w; screen_height=h; }
-	void Term() override
-	{
-		TexCache.Clear();
-		gles_term();
-	}
+	TexCache.Clear();
+	gles_term();
+}
 
-	bool Process(TA_context* ctx) override { return ProcessFrame(ctx); }
-	bool Render() override
-	{
-		RenderFrame();
-		if (!pvrrc.isRTT)
-			DrawOSD(false);
+bool OpenGLRenderer::Render()
+{
+	RenderFrame();
+	if (pvrrc.isRTT)
+		return false;
 
-		return !pvrrc.isRTT;
-	}
-	bool RenderLastFrame() override { return !theGLContext.IsSwapBufferPreserved() ? render_output_framebuffer() : false; }
-	void Present() override { theGLContext.Swap(); }
+	DrawOSD(false);
+	frameRendered = true;
 
-	void DrawOSD(bool clear_screen) override
-	{
-		OSD_DRAW(clear_screen);
-	}
+	return true;
+}
 
-	virtual u64 GetTexture(TSP tsp, TCW tcw) override
-	{
-		return gl_GetTexture(tsp, tcw);
-	}
-};
+bool OpenGLRenderer::RenderLastFrame()
+{
+	return !theGLContext.IsSwapBufferPreserved() ? render_output_framebuffer() : false;
+}
 
-Renderer* rend_GLES2() { return new glesrend(); }
+Renderer* rend_GLES2()
+{
+	return new OpenGLRenderer();
+}

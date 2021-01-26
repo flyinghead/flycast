@@ -57,21 +57,21 @@ protected:
 private:
 	u32 get_decrypted_32b();
 
-	inline u32 lookb(int bits)
+	inline u32 lookb(u32 bits)
 	{
-		if(bits > avail_bits) {
+		if (bits > avail_bits) {
 			avail_val = (avail_val << 32) | get_decrypted_32b();
 			avail_bits += 32;
 		}
 		return (avail_val >> (avail_bits - bits)) & ((1 << bits)-1);
 	}
 
-	inline void skipb(int bits)
+	inline void skipb(u32 bits)
 	{
 		avail_bits -= bits;
 	}
 
-	inline u32 getb(int bits)
+	inline u32 getb(u32 bits)
 	{
 		u32 res = lookb(bits);
 		skipb(bits);

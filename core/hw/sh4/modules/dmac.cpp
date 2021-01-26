@@ -13,95 +13,63 @@
 #include "hw/sh4/sh4_interrupts.h"
 #include "hw/holly/holly_intc.h"
 
-/*
-u32 DMAC_SAR[4];
-u32 DMAC_DAR[4];
-u32 DMAC_DMATCR[4];
-DMAC_CHCR_type DMAC_CHCR[4];
-
-DMAC_DMAOR_type DMAC_DMAOR;
-
-*/
-
 void DMAC_Ch2St()
 {
-	u32 chcr = DMAC_CHCR(2).full;
 	u32 dmaor = DMAC_DMAOR.full;
-	u32 dmatcr = DMAC_DMATCR(2);
 
 	u32 src = DMAC_SAR(2);
-	u32 dst = SB_C2DSTAT;
-	u32 len = SB_C2DLEN ;
+	u32 dst = SB_C2DSTAT & 0x01ffffe0;
+	u32 len = SB_C2DLEN & 0x00ffffe0;
 
-	if(0x8201 != (dmaor &DMAOR_MASK))
+	if (0x8201 != (dmaor & DMAOR_MASK))
 	{
 		INFO_LOG(SH4, "DMAC: DMAOR has invalid settings (%X) !", dmaor);
 		return;
 	}
 
-	if (len & 0x1F)
-	{
-		INFO_LOG(SH4, "DMAC: SB_C2DLEN has invalid size (%X) !", len);
-		return;
-	}
-
-	DEBUG_LOG(SH4, ">> DMAC: Ch2 DMA SRC=%X DST=%X LEN=%X", src, dst, len);
+	DEBUG_LOG(SH4, ">> DMAC: Ch2 DMA SRC=%X DST=%X LEN=%X", src, SB_C2DSTAT, SB_C2DLEN);
 
 	// Direct DList DMA (Ch2)
 
-	// Texture DMA 
-	if((dst >= 0x10000000) && (dst <= 0x10FFFFFF))
+	// TA FIFO - Polygon and YUV converter paths and mirror
+	// 10000000 - 10FFFFE0
+	// 12000000 - 12FFFFE0
+	if ((dst & 0x01000000) == 0)
 	{
-		u32 p_addr=src & RAM_MASK;
-		//GetMemPtr perhaps ? it's not good to use the mem arrays directly 
-		while(len)
+		u32 *sys_buf = (u32 *)GetMemPtr(src, len);
+		if ((src & RAM_MASK) + len > RAM_SIZE)
 		{
-			if ((p_addr+len)>RAM_SIZE)
-			{
-				u32 *sys_buf=(u32 *)GetMemPtr(src,len);//(&mem_b[src&RAM_MASK]);
-				u32 new_len=RAM_SIZE-p_addr;
-				TAWrite(dst,sys_buf,(new_len/32));
-				len-=new_len;
-				src+=new_len;
-				//dst+=new_len;
-			}
-			else
-			{
-				u32 *sys_buf=(u32 *)GetMemPtr(src,len);//(&mem_b[src&RAM_MASK]);
-				TAWrite(dst,sys_buf,(len/32));
-				src+=len;
-				break;
-			}
+			u32 newLen = RAM_SIZE - (src & RAM_MASK);
+			TAWrite(dst, sys_buf, newLen / 32);
+			len -= newLen;
+			src += newLen;
+			sys_buf = (u32 *)GetMemPtr(src, len);
 		}
-		//libPvr_TADma(dst,sys_buf,(len/32));
+		TAWrite(dst, sys_buf, len / 32);
+		src += len;
 	}
-	// If SB_C2DSTAT reg is inrange from 0x11000000 to 0x11FFFFE0,	 set 1 in SB_LMMODE0 reg.
-	else if((dst >= 0x11000000) && (dst <= 0x11FFFFE0))
+	// Direct Texture path and mirror
+	// 11000000 - 11FFFFE0
+	// 13000000 - 13FFFFE0
+	else
 	{
-		//printf(">>\tDMAC: TEX LNMODE0 Ch2 DMA SRC=%X DST=%X LEN=%X SB_LMMODE0 %d\n", src, dst, len, SB_LMMODE0);
+		bool path64b = SB_C2DSTAT & 0x02000000 ? SB_LMMODE1 == 0 : SB_LMMODE0 == 0;
 
-		if (SB_LMMODE0 == 0)
+		if (path64b)
 		{
 			// 64-bit path
-			dst=(dst&0xFFFFFF) |0xa4000000;
-			u32 p_addr=src & RAM_MASK;
-			while(len)
+			dst = (dst & 0x00FFFFFF) | 0xa4000000;
+			if ((src & RAM_MASK) + len > RAM_SIZE)
 			{
-				if ((p_addr+len)>RAM_SIZE)
-				{
-					u32 new_len=RAM_SIZE-p_addr;
-					WriteMemBlock_nommu_dma(dst,src,new_len);
-					len-=new_len;
-					src+=new_len;
-					dst+=new_len;
-				}
-				else
-				{
-					WriteMemBlock_nommu_dma(dst,src,len);
-					src+=len;
-					break;
-				}
+				u32 newLen = RAM_SIZE - (src & RAM_MASK);
+				WriteMemBlock_nommu_dma(dst, src, newLen);
+				len -= newLen;
+				src += newLen;
+				dst += newLen;
 			}
+			WriteMemBlock_nommu_dma(dst, src, len);
+			src += len;
+			dst += len;
 		}
 		else
 		{
@@ -110,7 +78,7 @@ void DMAC_Ch2St()
 			while (len > 0)
 			{
 				u32 v = ReadMem32_nommu(src);
-				pvr_write_area1_32(dst, v);
+				pvr_write_area1<u32>(dst, v);
 				len -= 4;
 				src += 4;
 				dst += 4;
@@ -118,67 +86,16 @@ void DMAC_Ch2St()
 		}
 		SB_C2DSTAT = dst;
 	}
-	// If SB_C2DSTAT reg is in range from 0x13000000 to 0x13FFFFE0, set 1 in SB_LMMODE1 reg.
-	else if((dst >= 0x13000000) && (dst <= 0x13FFFFE0))
-	{
-        //printf(">>\tDMAC: PVR DList Ch2 DMA SRC=%X DST=%X LEN=%X SB_LMMODE0 %d\n", src, dst, len, SB_LMMODE0);
-        SB_C2DSTAT += len;
-
-        if (SB_LMMODE1 == 0)
-        {
-            // 64-bit path
-            dst = (dst & 0xFFFFFF) | 0xa4000000;
-            u32 p_addr = src & RAM_MASK;
-            while (len)
-            {
-                if ((p_addr + len) > RAM_SIZE)
-                {
-                    u32 new_len = RAM_SIZE - p_addr;
-                    WriteMemBlock_nommu_dma(dst, src, new_len);
-                    len -= new_len;
-                    src += new_len;
-                    dst += new_len;
-                }
-                else
-                {
-                    WriteMemBlock_nommu_dma(dst, src, len);
-                    src += len;
-                    break;
-                }
-            }
-        }
-        else
-        {
-            // 32-bit path
-            dst = (dst & 0xFFFFFF) | 0xa5000000;
-            while (len > 0)
-            {
-                u32 v = ReadMem32_nommu(src);
-                pvr_write_area1_32(dst, v);
-                len -= 4;
-                src += 4;
-                dst += 4;
-            }
-        }
-	}
-	else 
-	{ 
-		INFO_LOG(SH4, "DMAC: SB_C2DSTAT has invalid address (%X) !", dst);
-		src+=len;
-	}
-
 
 	// Setup some of the regs so it thinks we've finished DMA
 
-	DMAC_SAR(2) = (src);
+	DMAC_SAR(2) = src;
 	DMAC_CHCR(2).TE = 1;
 	DMAC_DMATCR(2) = 0;
 
 	SB_C2DST = 0;
 	SB_C2DLEN = 0;
 
-	// The DMA end interrupt flag (SB_ISTNRM - bit 19: DTDE2INT) is set to "1."
-	//-> fixed , holly_PVR_DMA is for different use now (fixed the interrupts enum too)
 	asic_RaiseInterrupt(holly_CH2_DMA);
 }
 
@@ -187,7 +104,11 @@ static const InterruptID dmac_itr[] = { sh4_DMAC_DMTE0, sh4_DMAC_DMTE1, sh4_DMAC
 template<u32 ch>
 void WriteCHCR(u32 addr, u32 data)
 {
-	DMAC_CHCR(ch).full=data;
+	if (ch == 0 || ch == 1)
+		DMAC_CHCR(ch).full = data & 0xff0ffff7;
+	else
+		// no AL or RL on channels 2 and 3
+		DMAC_CHCR(ch).full = data & 0xff0afff7;
 
 	if (DMAC_CHCR(ch).TE == 0 && DMAC_CHCR(ch).DE && DMAC_DMAOR.DME)
     {
@@ -195,7 +116,9 @@ void WriteCHCR(u32 addr, u32 data)
         {
 			u32 len = DMAC_DMATCR(ch) * 32;
 
-            DEBUG_LOG(SH4, "DMAC: Manual DMA ch:%d rs:%d src: %08X dst: %08X len: %08X SM: %d, DM: %d", ch, DMAC_CHCR(ch).RS, DMAC_SAR(ch), DMAC_DAR(ch), DMAC_DMATCR(ch), DMAC_CHCR(ch).SM, DMAC_CHCR(ch).DM);
+            DEBUG_LOG(SH4, "DMAC: Manual DMA ch:%d TS:%d src: %08X dst: %08X len: %08X SM: %d, DM: %d", ch, DMAC_CHCR(ch).TS,
+            		DMAC_SAR(ch), DMAC_DAR(ch), DMAC_DMATCR(ch), DMAC_CHCR(ch).SM, DMAC_CHCR(ch).DM);
+            verify(DMAC_CHCR(ch).TS == 4);
             for (u32 ofs = 0; ofs < len; ofs += 4)
             {
                 u32 data = ReadMem32_nommu(DMAC_SAR(ch) + ofs);
@@ -203,19 +126,24 @@ void WriteCHCR(u32 addr, u32 data)
             }
 
             DMAC_CHCR(ch).TE = 1;
+            if (DMAC_CHCR(ch).SM == 1)
+            	DMAC_SAR(ch) += len;
+            else if (DMAC_CHCR(ch).SM == 2)
+            	DMAC_SAR(ch) -= len;
+            if (DMAC_CHCR(ch).DM == 1)
+            	DMAC_DAR(ch) += len;
+            else if (DMAC_CHCR(ch).DM == 2)
+            	DMAC_DAR(ch) -= len;
         }
 
         InterruptPend(dmac_itr[ch], DMAC_CHCR(ch).TE);
         InterruptMask(dmac_itr[ch], DMAC_CHCR(ch).IE);
     }
-
-	//printf("Write to CHCR%d = 0x%X\n",ch,data);
 }
 
 void WriteDMAOR(u32 addr, u32 data)
 {
-	DMAC_DMAOR.full=data;
-	//printf("Write to DMAOR = 0x%X\n",data);
+	DMAC_DMAOR.full = data;
 }
 
 //Init term res

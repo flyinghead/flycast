@@ -1,9 +1,10 @@
 #include "ta_ctx.h"
-#include "hw/sh4/sh4_sched.h"
+#include "spg.h"
 #include "oslib/oslib.h"
 
 extern u32 fskip;
 extern u32 FrameCount;
+static int RenderCount;
 
 TA_context* ta_ctx;
 tad_context ta_tad;
@@ -66,70 +67,26 @@ void SetCurrentTARC(u32 addr)
 	}
 }
 
-bool TryDecodeTARC()
-{
-	verify(ta_ctx != 0);
-
-	if (vd_ctx == 0)
-	{
-		vd_ctx = ta_ctx;
-
-		vd_ctx->rend.proc_start = vd_ctx->rend.proc_end + 32;
-		vd_ctx->rend.proc_end = vd_ctx->tad.thd_data;
-			
-		vd_ctx->rend_inuse.lock();
-		vd_rc = vd_ctx->rend;
-
-		//signal the vdec thread
-		return true;
-	}
-	else
-		return false;
-}
-
-void VDecEnd()
-{
-	verify(vd_ctx != 0);
-
-	vd_ctx->rend = vd_rc;
-
-	vd_ctx->rend_inuse.unlock();
-
-	vd_ctx = 0;
-}
-
 static std::mutex mtx_rqueue;
 TA_context* rqueue;
 cResetEvent frame_finished;
-
-static double last_frame1, last_frame2;
-static u64 last_cycles1, last_cycles2;
 
 bool QueueRender(TA_context* ctx)
 {
 	verify(ctx != 0);
 	
- 	//Try to limit speed to a "sane" level
- 	//Speed is also limited via audio, but audio
- 	//is sometimes not accurate enough (android, vista+)
-	u32 cycle_span = (u32)(sh4_sched_now64() - last_cycles2);
-	last_cycles2 = last_cycles1;
-	last_cycles1 = sh4_sched_now64();
- 	double time_span = os_GetSeconds() - last_frame2;
- 	last_frame2 = last_frame1;
- 	last_frame1 = os_GetSeconds();
-
- 	bool too_fast = (cycle_span / time_span) > SH4_MAIN_CLOCK;
-
- 	// Vulkan: rtt frames seem to be discarded often
-	if (rqueue && (too_fast || ctx->rend.isRTT) && settings.pvr.SynchronousRender)
-		//wait for a frame if
-		//  we have another one queue'd and
-		//  sh4 run at > 120% over the last two frames
-		//  and SynchronousRender is enabled
+	bool skipFrame = false;
+	RenderCount++;
+	if (RenderCount % (settings.pvr.ta_skip + 1) != 0)
+		skipFrame = true;
+	else if (rqueue && (settings.pvr.AutoSkipFrame == 0
+				|| (settings.pvr.AutoSkipFrame == 1 && SH4FastEnough)))
+		// The previous render hasn't completed yet so we wait.
+		// If autoskipframe is enabled (normal level), we only do so if the CPU is running
+		// fast enough over the last frames
 		frame_finished.Wait();
 
-	if (rqueue)
+	if (skipFrame || rqueue)
 	{
 		tactx_Recycle(ctx);
 		fskip++;
@@ -296,9 +253,15 @@ void SerializeTAContext(void **data, unsigned int *total_size)
 	const u32 taSize = ta_tad.thd_data - ta_tad.thd_root;
 	REICAST_S(taSize);
 	REICAST_SA(ta_tad.thd_root, taSize);
+	REICAST_S(ta_tad.render_pass_count);
+	for (u32 i = 0; i < ta_tad.render_pass_count; i++)
+	{
+		u32 offset = (u32)(ta_tad.render_passes[i] - ta_tad.thd_root);
+		REICAST_S(offset);
+	}
 }
 
-void UnserializeTAContext(void **data, unsigned int *total_size)
+void UnserializeTAContext(void **data, unsigned int *total_size, serialize_version_enum version)
 {
 	u32 address;
 	REICAST_US(address);
@@ -309,4 +272,18 @@ void UnserializeTAContext(void **data, unsigned int *total_size)
 	REICAST_US(size);
 	REICAST_USA(ta_tad.thd_root, size);
 	ta_tad.thd_data = ta_tad.thd_root + size;
+	if (version >= V12)
+	{
+		REICAST_US(ta_tad.render_pass_count);
+		for (u32 i = 0; i < ta_tad.render_pass_count; i++)
+		{
+			u32 offset;
+			REICAST_US(offset);
+			ta_tad.render_passes[i] = ta_tad.thd_root + offset;
+		}
+	}
+	else
+	{
+		ta_tad.render_pass_count = 0;
+	}
 }

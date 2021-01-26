@@ -47,7 +47,8 @@ bool SDLGLGraphicsContext::Init()
 	SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
-	sdl_recreate_window(SDL_WINDOW_OPENGL);
+	if (!sdl_recreate_window(SDL_WINDOW_OPENGL))
+		return false;
 
 	glcontext = SDL_GL_CreateContext(window);
 	if (!glcontext)

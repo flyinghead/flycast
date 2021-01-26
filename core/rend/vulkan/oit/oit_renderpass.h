@@ -44,8 +44,9 @@ protected:
 	virtual vk::AttachmentDescription GetAttachment0Description(bool initial, bool last) const
 	{
 		return vk::AttachmentDescription(vk::AttachmentDescriptionFlags(), GetContext()->GetColorFormat(), vk::SampleCountFlagBits::e1,
-				vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eStore, vk::AttachmentLoadOp::eDontCare, vk::AttachmentStoreOp::eDontCare,
-				vk::ImageLayout::eUndefined, vk::ImageLayout::eShaderReadOnlyOptimal);
+				vk::AttachmentLoadOp::eLoad, vk::AttachmentStoreOp::eStore,
+				vk::AttachmentLoadOp::eDontCare, vk::AttachmentStoreOp::eDontCare,
+				vk::ImageLayout::eShaderReadOnlyOptimal, vk::ImageLayout::eShaderReadOnlyOptimal);
 	}
 	virtual vk::Format GetColorFormat() const { return GetContext()->GetColorFormat(); }
 	virtual std::vector<vk::SubpassDependency> GetSubpassDependencies() const

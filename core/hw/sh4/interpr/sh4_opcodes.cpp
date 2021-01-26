@@ -15,7 +15,6 @@
 #include "../sh4_core.h"
 #include "../modules/ccn.h"
 #include "../sh4_interrupts.h"
-#include "hw/gdrom/gdrom_if.h"
 #include "../sh4_cache.h"
 
 #include "hw/sh4/sh4_opcode.h"
@@ -1170,22 +1169,25 @@ sh4op(i0000_0000_0011_1000)
 //ocbi @<REG_N>
 sh4op(i0000_nnnn_1001_0011)
 {
-	//printf("OCBI @R%d (0x%08x)\n", GetN(op), r[GetN(op)]);
+#ifdef STRICT_MODE
 	ocache.WriteBack(r[GetN(op)], false, true);
+#endif
 }
 
 //ocbp @<REG_N>
 sh4op(i0000_nnnn_1010_0011)
 {
-	//printf("OCBP @R%d (%08x)\n", GetN(op), r[GetN(op)]);
+#ifdef STRICT_MODE
 	ocache.WriteBack(r[GetN(op)], true, true);
+#endif
 }
 
 //ocbwb @<REG_N>
 sh4op(i0000_nnnn_1011_0011)
 {
-	//printf("OCBWB @R%d (0x%08x)\n", GetN(op) ,r[GetN(op)]);
+#ifdef STRICT_MODE
 	ocache.WriteBack(r[GetN(op)], true, false);
+#endif
 }
 
 //pref @<REG_N>
@@ -1203,11 +1205,8 @@ INLINE void DYNACALL do_sqw(u32 Dest)
 	}
 	else
 	{
-
-#if HOST_CPU ==CPU_X86
 		//sanity/optimisation check
-		verify(CCN_QACR_TR[0]==CCN_QACR_TR[1]);
-#endif
+		//verify(CCN_QACR_TR[0]==CCN_QACR_TR[1]);
 
 		u32 QACR = CCN_QACR_TR[0];
 		/*
@@ -1265,8 +1264,9 @@ sh4op(i0000_nnnn_1000_0011)
 	}
 	else
 	{
-		//printf("PREF @R%d (0x%08x)\n", n, Dest);
+#ifdef STRICT_MODE
 		ocache.Prefetch(Dest);
+#endif
 	}
 }
 

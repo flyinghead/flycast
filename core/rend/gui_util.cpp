@@ -21,19 +21,12 @@
 #include <vector>
 #include <algorithm>
 #include <cstdlib>
-#ifdef _MSC_VER
-#include <io.h>
-#define access _access
-#define R_OK   4
-#else
-#include <unistd.h>
-#endif
-#include <dirent.h>
-#include <sys/stat.h>
 
 #include "types.h"
 #include "stdclass.h"
+#include "oslib/directory.h"
 #include "imgui/imgui.h"
+#include "imgui/imgui_internal.h"
 
 extern int screen_width, screen_height;
 
@@ -55,7 +48,7 @@ void select_directory_popup(const char *prompt, float scaling, StringCallback ca
 	if (select_current_directory.empty())
 	{
 #if defined(__ANDROID__)
-		const char *home = getenv("REICAST_HOME");
+		const char *home = nowide::getenv("REICAST_HOME");
 		if (home != NULL)
 		{
 			const char *pcolon = strchr(home, ':');
@@ -65,19 +58,16 @@ void select_directory_popup(const char *prompt, float scaling, StringCallback ca
 				select_current_directory = home;
 		}
 #elif HOST_OS == OS_LINUX || defined(__APPLE__)
-		const char *home = getenv("HOME");
+		const char *home = nowide::getenv("HOME");
 		if (home != NULL)
 			select_current_directory = home;
 #elif defined(_WIN32)
-		const char *home = getenv("HOMEPATH");
-		const char *home_drive = getenv("HOMEDRIVE");
-		if (home != NULL)
+		if (nowide::getenv("HOMEPATH") != NULL)
 		{
+			const char *home_drive = nowide::getenv("HOMEDRIVE");
 			if (home_drive != NULL)
 				select_current_directory = home_drive;
-			else
-				select_current_directory.clear();
-			select_current_directory += home;
+			select_current_directory += nowide::getenv("HOMEPATH");
 		}
 #endif
 		if (select_current_directory.empty())
@@ -95,7 +85,7 @@ void select_directory_popup(const char *prompt, float scaling, StringCallback ca
 	if (ImGui::BeginPopupModal(prompt, NULL, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize ))
 	{
 		std::string path = select_current_directory;
-		int last_sep = path.find_last_of(separators);
+		std::string::size_type last_sep = path.find_last_of(separators);
 		if (last_sep == path.size() - 1)
 			path.pop_back();
 
@@ -121,7 +111,7 @@ void select_directory_popup(const char *prompt, float scaling, StringCallback ca
 			if (select_current_directory == PSEUDO_ROOT)
 			{
 				error_message = "Storage Locations";
-				const char *home = getenv("REICAST_HOME");
+				const char *home = nowide::getenv("REICAST_HOME");
 				while (home != NULL)
 				{
 					const char *pcolon = strchr(home, ':');
@@ -140,7 +130,7 @@ void select_directory_popup(const char *prompt, float scaling, StringCallback ca
 			else
 #endif
 			{
-				DIR *dir = opendir(select_current_directory.c_str());
+				DIR *dir = flycast::opendir(select_current_directory.c_str());
 				if (dir == NULL)
 				{
 					error_message = "Cannot read " + select_current_directory;
@@ -151,7 +141,7 @@ void select_directory_popup(const char *prompt, float scaling, StringCallback ca
 					bool dotdot_seen = false;
 					while (true)
 					{
-						struct dirent *entry = readdir(dir);
+						struct dirent *entry = flycast::readdir(dir);
 						if (entry == NULL)
 							break;
 						std::string name(entry->d_name);
@@ -166,12 +156,12 @@ void select_directory_popup(const char *prompt, float scaling, StringCallback ca
 #endif
 						{
 							struct stat st;
-							if (stat(child_path.c_str(), &st) != 0)
+							if (flycast::stat(child_path.c_str(), &st) != 0)
 								continue;
 							if (S_ISDIR(st.st_mode))
 								is_dir = true;
 						}
-						if (is_dir && access(child_path.c_str(), R_OK) == 0)
+						if (is_dir && flycast::access(child_path.c_str(), R_OK) == 0)
 						{
 							if (name == "..")
 								dotdot_seen = true;
@@ -186,7 +176,7 @@ void select_directory_popup(const char *prompt, float scaling, StringCallback ca
                                 display_files.push_back(name);
                         }
 					}
-					closedir(dir);
+					flycast::closedir(dir);
 #if defined(_WIN32) || defined(__ANDROID__)
 					if (!dotdot_seen)
 						select_subfolders.push_back("..");
@@ -259,10 +249,10 @@ void select_directory_popup(const char *prompt, float scaling, StringCallback ca
 				select_current_directory = child_path;
 			}
 		}
-        ImGui::PushStyleColor(ImGuiCol_Text, { 1, 1, 1, 0.3});
+        ImGui::PushStyleColor(ImGuiCol_Text, { 1, 1, 1, 0.3f });
         for (auto& name : display_files)
         {
-            ImGui::Text(name.c_str());
+            ImGui::Text("%s", name.c_str());
         }
         ImGui::PopStyleColor();
         
@@ -285,4 +275,20 @@ void select_directory_popup(const char *prompt, float scaling, StringCallback ca
 		ImGui::EndPopup();
 	}
 	ImGui::PopStyleVar();
+}
+
+// See https://github.com/ocornut/imgui/issues/3379
+void ScrollWhenDraggingOnVoid(const ImVec2& delta, ImGuiMouseButton mouse_button)
+{
+    ImGuiContext& g = *ImGui::GetCurrentContext();
+    ImGuiWindow* window = g.CurrentWindow;
+    bool hovered = false;
+    bool held = false;
+    ImGuiButtonFlags button_flags = (mouse_button == 0) ? ImGuiButtonFlags_MouseButtonLeft : (mouse_button == 1) ? ImGuiButtonFlags_MouseButtonRight : ImGuiButtonFlags_MouseButtonMiddle;
+    if (g.HoveredId == 0) // If nothing hovered so far in the frame (not same as IsAnyItemHovered()!)
+        ImGui::ButtonBehavior(window->Rect(), window->GetID("##scrolldraggingoverlay"), &hovered, &held, button_flags);
+    if (held && delta.x != 0.0f)
+        ImGui::SetScrollX(window, window->Scroll.x + delta.x);
+    if (held && delta.y != 0.0f)
+        ImGui::SetScrollY(window, window->Scroll.y + delta.y);
 }

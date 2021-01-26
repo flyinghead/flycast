@@ -4,31 +4,12 @@
 #include "hw/naomi/naomi_cart.h"
 #include "input/gamepad_device.h"
 
-#define HAS_VMU
-/*
-bus_x=0{p0=1{config};p1=2{config};config;}
-Plugins:
-	Input Source
-		EventMap -- 'Raw' interface, source_name[seid]:mode
-		KeyMap -- translated chars ( no re-mapping possible)
-	Output
-		Image
-
-*/
-/*
-	MapleConfig:
-		InputUpdate(&fmt);
-		ImageUpdate(data);
-*/
-void UpdateInputState(u32 port);
-void UpdateVibration(u32 port, float power, float inclination, u32 duration_ms);
-
-u8 GetBtFromSgn(s8 val)
+static u8 GetBtFromSgn(s8 val)
 {
 	return val+128;
 }
 
-u32 awave_button_mapping[] = {
+u32 awave_button_mapping[32] = {
 		AWAVE_SERVICE_KEY,	// DC_BTN_C
 		AWAVE_BTN1_KEY,		// DC_BTN_B
 		AWAVE_BTN0_KEY,		// DC_BTN_A
@@ -42,69 +23,145 @@ u32 awave_button_mapping[] = {
 		AWAVE_BTN2_KEY,		// DC_BTN_X
 		AWAVE_COIN_KEY,		// DC_BTN_D
 		AWAVE_BTN4_KEY,		// DC_DPAD2_UP
-		// DC_DPAD2_DOWN
-		// DC_DPAD2_LEFT
-		// DC_DPAD2_RIGHT
+		0,					// DC_DPAD2_DOWN
+		0,					// DC_DPAD2_LEFT
+		0,					// DC_DPAD2_RIGHT
 };
 
-struct MapleConfigMap : IMapleConfigMap
+u32 awavelg_button_mapping[32] = {
+		AWAVE_SERVICE_KEY,	// DC_BTN_C
+		AWAVE_BTN0_KEY,		// DC_BTN_B
+		AWAVE_TRIGGER_KEY,	// DC_BTN_A
+		AWAVE_START_KEY,	// DC_BTN_START
+		AWAVE_UP_KEY,		// DC_DPAD_UP
+		AWAVE_DOWN_KEY,		// DC_DPAD_DOWN
+		AWAVE_LEFT_KEY,		// DC_DPAD_LEFT
+		AWAVE_RIGHT_KEY,	// DC_DPAD_RIGHT
+		AWAVE_TEST_KEY,		// DC_BTN_Z
+		AWAVE_BTN2_KEY,		// DC_BTN_Y
+		AWAVE_BTN1_KEY,		// DC_BTN_X
+		AWAVE_COIN_KEY,		// DC_BTN_D
+		AWAVE_BTN3_KEY,		// DC_DPAD2_UP
+		AWAVE_BTN4_KEY,		// DC_DPAD2_DOWN
+		0,					// DC_DPAD2_LEFT
+		0,					// DC_DPAD2_RIGHT
+
+		AWAVE_BTN0_KEY		// DC_BTN_RELOAD (not needed for AW, mapped to BTN0 = pump)
+};
+
+inline u32 MapleConfigMap::playerNum()
 {
-	maple_device* dev;
-	s32 player_num;
+	return dev->player_num;
+}
 
-	MapleConfigMap(maple_device* dev, s32 player_num = -1)
+void MapleConfigMap::SetVibration(float power, float inclination, u32 duration_ms)
+{
+	UpdateVibration(playerNum(), power, inclination, duration_ms);
+}
+
+void MapleConfigMap::GetInput(PlainJoystickState* pjs)
+{
+	int player_num = playerNum();
+
+	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
 	{
-		this->dev=dev;
-		this->player_num = player_num;
+		pjs->kcode = kcode[player_num];
+		pjs->joy[PJAI_X1] = GetBtFromSgn(joyx[player_num]);
+		pjs->joy[PJAI_Y1] = GetBtFromSgn(joyy[player_num]);
+		pjs->trigger[PJTI_R] = rt[player_num];
+		pjs->trigger[PJTI_L] = lt[player_num];
 	}
-
-	void SetVibration(float power, float inclination, u32 duration_ms)
+	else if (settings.platform.system == DC_PLATFORM_ATOMISWAVE)
 	{
-		int player_num = this->player_num == -1 ? dev->bus_id : this->player_num;
-		UpdateVibration(player_num, power, inclination, duration_ms);
-	}
-
-	void GetInput(PlainJoystickState* pjs)
-	{
-		int player_num = this->player_num == -1 ? dev->bus_id : this->player_num;
-		UpdateInputState(player_num);
-
-		pjs->kcode=kcode[player_num];
-		if (settings.platform.system == DC_PLATFORM_DREAMCAST)
+		const u32* mapping = settings.input.JammaSetup == JVS::LightGun ? awavelg_button_mapping : awave_button_mapping;
+		pjs->kcode = ~0;
+		for (u32 i = 0; i < ARRAY_SIZE(awave_button_mapping); i++)
 		{
-			pjs->joy[PJAI_X1]=GetBtFromSgn(joyx[player_num]);
-			pjs->joy[PJAI_Y1]=GetBtFromSgn(joyy[player_num]);
-			pjs->trigger[PJTI_R]=rt[player_num];
-			pjs->trigger[PJTI_L]=lt[player_num];
+			if ((kcode[player_num] & (1 << i)) == 0)
+				pjs->kcode &= ~mapping[i];
 		}
-		else if (settings.platform.system == DC_PLATFORM_ATOMISWAVE)
+		if (NaomiGameInputs != NULL)
 		{
-			pjs->kcode = 0xFFFF;
-			for (int i = 0; i < 16; i++)
+			for (u32 axis = 0; axis < PJAI_Count; axis++)
 			{
-				if ((kcode[player_num] & (1 << i)) == 0)
-					pjs->kcode &= ~awave_button_mapping[i];
+				if (NaomiGameInputs->axes[axis].name != NULL)
+				{
+					if (NaomiGameInputs->axes[axis].type == Full)
+					{
+						switch (NaomiGameInputs->axes[axis].axis)
+						{
+						case 0:
+							pjs->joy[axis] = GetBtFromSgn(joyx[player_num]);
+							break;
+						case 1:
+							pjs->joy[axis] = GetBtFromSgn(joyy[player_num]);
+							break;
+						case 2:
+							pjs->joy[axis] = GetBtFromSgn(joyrx[player_num]);
+							break;
+						case 3:
+							pjs->joy[axis] = GetBtFromSgn(joyry[player_num]);
+							break;
+						default:
+							pjs->joy[axis] = 0x80;
+							break;
+						}
+					}
+					else
+					{
+						switch (NaomiGameInputs->axes[axis].axis)
+						{
+						case 4:
+							pjs->joy[axis] = rt[player_num];
+							break;
+						case 5:
+							pjs->joy[axis] = lt[player_num];
+							break;
+						default:
+							pjs->joy[axis] = 0x80;
+							break;
+						}
+					}
+					if (NaomiGameInputs->axes[axis].inverted)
+						pjs->joy[axis] = pjs->joy[axis] == 0 ? 0xff : 0x100 - pjs->joy[axis];
+				}
+				else
+				{
+					pjs->joy[axis] = 0x80;
+				}
 			}
+		}
+		else
+		{
 			pjs->joy[PJAI_X1] = GetBtFromSgn(joyx[player_num]);
-			if (NaomiGameInputs != NULL && NaomiGameInputs->axes[1].name != NULL && NaomiGameInputs->axes[1].type == Half)
-			{
-				// Driving games: put axis 2 on RT (accel) and axis 3 on LT (brake)
-				pjs->joy[PJAI_Y1] = rt[player_num];
-				pjs->joy[PJAI_X2] = lt[player_num];
-			}
-			else
-			{
-				pjs->joy[PJAI_Y1] = GetBtFromSgn(joyy[player_num]);
-				pjs->joy[PJAI_X2] = rt[player_num];
-				pjs->joy[PJAI_Y2] = lt[player_num];
-			}
+			pjs->joy[PJAI_Y1] = GetBtFromSgn(joyy[player_num]);
+			pjs->joy[PJAI_X2] = rt[player_num];
+			pjs->joy[PJAI_Y2] = lt[player_num];
 		}
 	}
-	void SetImage(void* img)
-	{
-		//?
-	}
-};
+}
+void MapleConfigMap::SetImage(u8 *img)
+{
+	push_vmu_screen(dev->bus_id, dev->bus_port, img);
+}
+
+void MapleConfigMap::GetAbsCoordinates(int& x, int& y)
+{
+	x = mo_x_abs[playerNum()];
+	y = mo_y_abs[playerNum()];
+}
+
+void MapleConfigMap::GetMouseInput(u32& buttons, int& x, int& y, int& wheel)
+{
+	int playerNum = this->playerNum();
+	buttons = mo_buttons[playerNum];
+	x = (int)std::round(mo_x_delta[playerNum]);
+	y = (int)std::round(mo_y_delta[playerNum]);
+	wheel = (int)std::round(mo_wheel_delta[playerNum]);
+	mo_x_delta[playerNum] = 0;
+	mo_y_delta[playerNum] = 0;
+	mo_wheel_delta[playerNum] = 0;
+}
 
 bool maple_atomiswave_coin_chute(int slot)
 {
@@ -121,8 +178,8 @@ void mcfg_Create(MapleDeviceType type, u32 bus, u32 port, s32 player_num = -1)
 	if (MapleDevices[bus][port] != NULL)
 		delete MapleDevices[bus][port];
 	maple_device* dev = maple_Create(type);
-	dev->Setup(maple_GetAddress(bus, port));
-	dev->config = new MapleConfigMap(dev, player_num);
+	dev->Setup(maple_GetAddress(bus, port), player_num);
+	dev->config = new MapleConfigMap(dev);
 	dev->OnSetup();
 	MapleDevices[bus][port] = dev;
 }
@@ -175,7 +232,9 @@ void mcfg_CreateAtomisWaveControllers()
 	else if (settings.input.JammaSetup == JVS::SegaMarineFishing || settings.input.JammaSetup == JVS::RotaryEncoders)
 	{
 		// Sega Bass Fishing Challenge  needs a mouse (track-ball) on port 2
+		// Waiwai drive needs two track-balls
 		mcfg_Create(MDT_Mouse, 2, 5, 0);
+		mcfg_Create(MDT_Mouse, 3, 5, 1);
 	}
 }
 
@@ -247,76 +306,29 @@ void mcfg_SerializeDevices(void **data, unsigned int *total_size)
 	for (int i = 0; i < MAPLE_PORTS; i++)
 		for (int j = 0; j < 6; j++)
 		{
-			u8 **p = (u8 **)data;
-			if (MapleDevices[i][j] != NULL)
-			{
-				if (*p != NULL)
-				{
-					**p = MapleDevices[i][j]->get_device_type();
-					*p = *p + 1;
-				}
-				MapleDevices[i][j]->maple_serialize(data, total_size);
-			}
-			else if (*p != NULL)
-			{
-				**p = MDT_None;
-				*p = *p + 1;
-			}
-			*total_size = *total_size + 1;
+			u8 deviceType = MDT_None;
+			maple_device* device = MapleDevices[i][j];
+			if (device != nullptr)
+				deviceType =  device->get_device_type();
+			REICAST_S(deviceType);
+			if (device != nullptr)
+				device->serialize(data, total_size);
 		}
 }
 
-void mcfg_UnserializeDevices(void **data, unsigned int *total_size, bool old)
+void mcfg_UnserializeDevices(void **data, unsigned int *total_size, serialize_version_enum version)
 {
 	mcfg_DestroyDevices();
 
 	for (int i = 0; i < MAPLE_PORTS; i++)
 		for (int j = 0; j < 6; j++)
 		{
-			u8 **p = (u8 **)data;
-			MapleDeviceType device_type = (MapleDeviceType)**p;
-			*p = *p + 1;
-			*total_size = *total_size + 1;
-			if (old)
+			u8 deviceType;
+			REICAST_US(deviceType);
+			if (deviceType != MDT_None)
 			{
-				switch ((OldMapleDeviceType::MapleDeviceType)device_type)
-				{
-				case OldMapleDeviceType::MDT_None:
-					device_type = MDT_None;
-					break;
-				case OldMapleDeviceType::MDT_SegaController:
-					device_type = MDT_SegaController;
-					break;
-				case OldMapleDeviceType::MDT_SegaVMU:
-					device_type = MDT_SegaVMU;
-					break;
-				case OldMapleDeviceType::MDT_PurupuruPack:
-					device_type = MDT_PurupuruPack;
-					break;
-				case OldMapleDeviceType::MDT_Microphone:
-					device_type = MDT_Microphone;
-					break;
-				case OldMapleDeviceType::MDT_Keyboard:
-					device_type = MDT_Keyboard;
-					break;
-				case OldMapleDeviceType::MDT_Mouse:
-					device_type = MDT_Mouse;
-					break;
-				case OldMapleDeviceType::MDT_LightGun:
-					device_type = MDT_LightGun;
-					break;
-				case OldMapleDeviceType::MDT_NaomiJamma:
-					device_type = MDT_NaomiJamma;
-					break;
-				default:
-					die("Invalid maple device type");
-					break;
-				}
-			}
-			if (device_type != MDT_None)
-			{
-				mcfg_Create(device_type, i, j);
-				MapleDevices[i][j]->maple_unserialize(data, total_size);
+				mcfg_Create((MapleDeviceType)deviceType, i, j);
+				MapleDevices[i][j]->unserialize(data, total_size, version);
 			}
 		}
 }

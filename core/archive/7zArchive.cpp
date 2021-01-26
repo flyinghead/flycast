@@ -31,8 +31,21 @@ bool SzArchive::Open(const char* path)
 {
 	SzArEx_Init(&szarchive);
 
-	if (InFile_Open(&archiveStream.file, path))
+	File_Construct(&archiveStream.file);
+#ifdef USE_WINDOWS_FILE
+	nowide::wstackstring wpath;
+	if (!wpath.convert(path))
 		return false;
+	archiveStream.file.handle = CreateFileW(wpath.c_str(),
+			GENERIC_READ, FILE_SHARE_READ, NULL,
+			OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+	if (archiveStream.file.handle == INVALID_HANDLE_VALUE)
+		return false;
+#else
+	archiveStream.file.file = nowide::fopen(path, "rb");
+	if (archiveStream.file.file == nullptr)
+		return false;
+#endif
 	FileInStream_CreateVTable(&archiveStream);
 	LookToRead2_CreateVTable(&lookStream, false);
 	lookStream.buf = (Byte *)ISzAlloc_Alloc(&g_Alloc, kInputBufSize);

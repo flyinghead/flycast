@@ -34,10 +34,18 @@ typedef struct {
     audio_backend_push_func_t push;
     audio_backend_term_func_t term;
 	audio_options_func_t get_options;
+    bool (*init_record)(u32 sampling_freq);
+    u32 (*record)(void *, u32);
+    audio_backend_term_func_t term_record;
 } audiobackend_t;
-extern bool RegisterAudioBackend(audiobackend_t* backend);
-extern void InitAudio();
-extern void TermAudio();
+bool RegisterAudioBackend(audiobackend_t* backend);
+void InitAudio();
+void TermAudio();
+void WriteSample(s16 right, s16 left);
+
+void StartAudioRecording(bool eight_khz);
+u32 RecordAudio(void *buffer, u32 samples);
+void StopAudioRecording();
 
 u32 GetAudioBackendCount();
 audiobackend_t* GetAudioBackend(int num);

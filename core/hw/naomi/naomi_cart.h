@@ -64,7 +64,7 @@ protected:
 class DecryptedCartridge : public NaomiCartridge
 {
 public:
-	DecryptedCartridge(u8 *rom_ptr, u32 size) : NaomiCartridge(size) { RomPtr = rom_ptr; }
+	DecryptedCartridge(u8 *rom_ptr, u32 size) : NaomiCartridge(size) { free(RomPtr); RomPtr = rom_ptr; }
 	virtual ~DecryptedCartridge() override;
 };
 
@@ -103,9 +103,11 @@ extern Cartridge *CurrentCartridge;
 
 struct ButtonDescriptor
 {
-   u32 mask;
+   u32 source;
    const char *name;
-   u32 p2_mask;
+   u32 target;
+   u32 p2_target;	// map P1 input to JVS P2
+   u32 p1_target;	// map P2 input to JVS P1
 };
 
 enum AxisType {

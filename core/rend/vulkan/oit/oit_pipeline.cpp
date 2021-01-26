@@ -149,11 +149,10 @@ void OITPipelineManager::CreatePipeline(u32 listType, bool autosort, const PolyP
 	params.insideClipTest = (pp.tileclip >> 28) == 3;
 	params.fog = settings.rend.Fog ? pp.tsp.FogCtrl : 2;
 	params.gouraud = pp.pcw.Gouraud;
-	params.ignoreTexAlpha = pp.tsp.IgnoreTexA;
+	params.ignoreTexAlpha = pp.tsp.IgnoreTexA || pp.tcw.PixelFmt == Pixel565;
 	params.offset = pp.pcw.Offset;
 	params.shaderInstr = pp.tsp.ShadInstr;
 	params.texture = pp.pcw.Texture;
-	//params.trilinear = pp.pcw.Texture && pp.tsp.FilterMode > 1 && listType != ListType_Punch_Through;
 	params.useAlpha = pp.tsp.UseAlpha;
 	params.pass = pass;
 	params.twoVolume = pp.tsp1.full != (u32)-1 || pp.tcw1.full != (u32)-1;

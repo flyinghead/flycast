@@ -14,6 +14,7 @@
 #endif
 #include "hw/maple/maple_devs.h"
 #include "emulator.h"
+#include "rend/mainui.h"
 
 #include <wininet.h>
 #include <windows.h>
@@ -184,6 +185,7 @@ LONG ExeptionHandler(EXCEPTION_POINTERS *ExceptionInfo)
 	else
 	{
 	    ERROR_LOG(COMMON, "[GPF]Unhandled access to : %p", address);
+	    os_DebugBreak();
 	}
 
 	return EXCEPTION_CONTINUE_SEARCH;
@@ -193,11 +195,19 @@ LONG ExeptionHandler(EXCEPTION_POINTERS *ExceptionInfo)
 void SetupPath()
 {
 	char fname[512];
-	GetModuleFileName(0,fname,512);
+	GetModuleFileName(0, fname, sizeof(fname));
 	std::string fn = std::string(fname);
-	fn=fn.substr(0,fn.find_last_of('\\'));
+	size_t pos = get_last_slash_pos(fn);
+	if (pos != std::string::npos)
+		fn = fn.substr(0, pos) + "\\";
+	else
+		fn = ".\\";
 	set_user_config_dir(fn);
-	set_user_data_dir(fn);
+	add_system_data_dir(fn);
+
+	std::string data_path = fn + "data\\";
+	set_user_data_dir(data_path);
+	CreateDirectory(data_path.c_str(), NULL);
 }
 
 static Win32KeyboardDevice keyboard(0);
@@ -205,29 +215,17 @@ static Win32KeyboardDevice keyboard(0);
 void ToggleFullscreen();
 
 
-void UpdateInputState(u32 port)
+void UpdateInputState()
 {
 #if defined(USE_SDL)
-	input_sdl_handle(port);
+	input_sdl_handle();
 #else
-	/*
-		 Disabled for now. Need new EMU_BTN_ANA_LEFT/RIGHT/.. virtual controller keys
-
-	joyx[port]=joyy[port]=0;
-
-	if (GetAsyncKeyState('J'))
-		joyx[port]-=126;
-	if (GetAsyncKeyState('L'))
-		joyx[port]+=126;
-
-	if (GetAsyncKeyState('I'))
-		joyy[port]-=126;
-	if (GetAsyncKeyState('K'))
-		joyy[port]+=126;
-	*/
-	std::shared_ptr<XInputGamepadDevice> gamepad = XInputGamepadDevice::GetXInputDevice(port);
-	if (gamepad != NULL)
-		gamepad->ReadInput();
+	for (int port = 0; port < 4; port++)
+	{
+		std::shared_ptr<XInputGamepadDevice> gamepad = XInputGamepadDevice::GetXInputDevice(port);
+		if (gamepad != nullptr)
+			gamepad->ReadInput();
+	}
 #endif
 }
 
@@ -299,32 +297,23 @@ LRESULT CALLBACK WndProc2(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		/* no break */
 	case WM_MOUSEMOVE:
 		{
-			static int prev_x = -1;
-			static int prev_y = -1;
 			int xPos = GET_X_LPARAM(lParam);
 			int yPos = GET_Y_LPARAM(lParam);
-			mo_x_abs = (xPos - (screen_width - 640 * screen_height / 480) / 2) * 480 / screen_height;
-			mo_y_abs = yPos * 480 / screen_height;
-			mo_buttons = 0xffffffff;
+			SetMousePosition(xPos, yPos, screen_width, screen_height);
+
+			mo_buttons[0] = 0xffffffff;
 			if (wParam & MK_LBUTTON)
-				mo_buttons &= ~(1 << 2);
+				mo_buttons[0] &= ~(1 << 2);
 			if (wParam & MK_MBUTTON)
-				mo_buttons &= ~(1 << 3);
+				mo_buttons[0] &= ~(1 << 3);
 			if (wParam & MK_RBUTTON)
-				mo_buttons &= ~(1 << 1);
-			if (prev_x != -1)
-			{
-				mo_x_delta += (f32)(xPos - prev_x) * settings.input.MouseSensitivity / 100.f;
-				mo_y_delta += (f32)(yPos - prev_y) * settings.input.MouseSensitivity / 100.f;
-			}
-			prev_x = xPos;
-			prev_y = yPos;
+				mo_buttons[0] &= ~(1 << 1);
 		}
 		if (message != WM_MOUSEMOVE)
 			return 0;
 		break;
 	case WM_MOUSEWHEEL:
-		mo_wheel_delta -= (float)GET_WHEEL_DELTA_WPARAM(wParam)/(float)WHEEL_DELTA * 16;
+		mo_wheel_delta[0] -= (float)GET_WHEEL_DELTA_WPARAM(wParam)/(float)WHEEL_DELTA * 16;
 		break;
 
 	case WM_KEYDOWN:
@@ -776,16 +765,14 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 	__try
 #endif
 	{
-		void *rend_thread(void *);
-
 		if (reicast_init(argc, argv) != 0)
-			die("Reicast initialization failed");
+			die("Flycast initialization failed");
 
 		#ifdef _WIN64
 			setup_seh();
 		#endif
 
-		rend_thread(NULL);
+		mainui_loop();
 
 		dc_term();
 	}
@@ -848,5 +835,3 @@ void os_DoEvents()
 		DispatchMessage(&msg);
 	}
 }
-
-int get_mic_data(u8* buffer) { return 0; }

@@ -49,12 +49,6 @@ public :
 	void Wait();	//Wait for signal , then reset[if auto]
 };
 
-#if !defined(TARGET_IPHONE)
-#define DATA_PATH "/data/"
-#else
-#define DATA_PATH "/"
-#endif
-
 //Set the path !
 void set_user_config_dir(const std::string& dir);
 void set_user_data_dir(const std::string& dir);
@@ -72,6 +66,7 @@ bool make_directory(const std::string& path);
 std::string get_game_save_prefix();
 std::string get_game_basename();
 std::string get_game_dir();
+size_t get_last_slash_pos(const std::string& path);
 
 bool mem_region_lock(void *start, std::size_t len);
 bool mem_region_unlock(void *start, std::size_t len);
@@ -123,4 +118,14 @@ static inline std::string get_file_basename(const std::string& s)
 	if (dot == std::string::npos)
 		return s;
 	return s.substr(0, dot);
+}
+
+static inline std::string trim_trailing_ws(const std::string& str,
+                 const std::string& whitespace = " ")
+{
+    const auto strEnd = str.find_last_not_of(whitespace);
+	if (strEnd == std::string::npos)
+		return "";
+
+    return str.substr(0, strEnd + 1);
 }

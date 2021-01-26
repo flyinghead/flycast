@@ -257,7 +257,7 @@ extern struct gl4ShaderUniforms_t
 		int width;
 		int height;
 	} base_clipping;
-	float palette_index;
+	int palette_index;
 
 	void setUniformArray(GLint location, int v0, int v1)
 	{
@@ -314,7 +314,7 @@ extern struct gl4ShaderUniforms_t
 			glUniformMatrix4fv(s->normal_matrix, 1, GL_FALSE, &normal_mat[0][0]);
 
 		if (s->palette_index != -1)
-			glUniform1f(s->palette_index, palette_index);
+			glUniform1i(s->palette_index, palette_index);
 	}
 
 } gl4ShaderUniforms;

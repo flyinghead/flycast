@@ -1,5 +1,7 @@
 #include "types.h"
 #include "shil.h"
+#include "hw/sh4/modules/mmu.h"
+#include "hw/sh4/sh4_opcode_list.h"
 
 #include <set>
 #include <deque>

@@ -1,6 +1,5 @@
 #pragma once
 
-extern void* x11_glc;
 extern void input_x11_init();
 extern void event_x11_handle();
 extern void input_x11_handle();

@@ -3,6 +3,7 @@
 #include "hw/pvr/ta_ctx.h"
 #include "rend/TexCache.h"
 #include "wsi/gl_context.h"
+#include "glcache.h"
 
 #include <unordered_map>
 #include <glm/glm.hpp>
@@ -143,7 +144,6 @@ void SetupMatrices(float dc_width, float dc_height,
 				   float &ds2s_offs_x, glm::mat4& normal_mat, glm::mat4& scissor_mat);
 
 text_info raw_GetTexture(TSP tsp, TCW tcw);
-void DoCleanup();
 void SetCull(u32 CullMode);
 s32 SetTileClip(u32 val, GLint uniform);
 void SetMVS_Mode(ModifierVolumeMode mv_mode, ISP_Modvol ispc);
@@ -156,7 +156,6 @@ GLuint init_output_framebuffer(int width, int height);
 bool render_output_framebuffer();
 void free_output_framebuffer();
 
-void HideOSD();
 void OSD_DRAW(bool clear_screen);
 PipelineShader *GetProgram(bool cp_AlphaTest, bool pp_InsideClipping,
 		bool pp_Texture, bool pp_UseAlpha, bool pp_IgnoreTexA, u32 pp_ShadInstr, bool pp_Offset,
@@ -218,7 +217,7 @@ extern struct ShaderUniforms_t
 
 } ShaderUniforms;
 
-class TextureCacheData : public BaseTextureCacheData
+class TextureCacheData final : public BaseTextureCacheData
 {
 public:
 	GLuint texID;   //gl texture
@@ -227,10 +226,54 @@ public:
 	virtual bool Delete() override;
 };
 
-class TextureCache : public BaseTextureCache<TextureCacheData>
+class GlTextureCache final : public BaseTextureCache<TextureCacheData>
 {
+public:
+	void Cleanup()
+	{
+		if (!texturesToDelete.empty())
+		{
+			glcache.DeleteTextures((GLsizei)texturesToDelete.size(), &texturesToDelete[0]);
+			texturesToDelete.clear();
+		}
+		CollectCleanup();
+	}
+	void DeleteLater(GLuint texId) { texturesToDelete.push_back(texId); }
+
+private:
+	std::vector<GLuint> texturesToDelete;
 };
-extern TextureCache TexCache;
+extern GlTextureCache TexCache;
 
 extern const u32 Zfunction[8];
 extern const u32 SrcBlendGL[], DstBlendGL[];
+
+struct OpenGLRenderer : Renderer
+{
+	bool Init() override;
+	void Resize(int w, int h) override { screen_width = w; screen_height = h; }
+	void Term() override;
+
+	bool Process(TA_context* ctx) override { return ProcessFrame(ctx); }
+
+	bool Render() override;
+
+	bool RenderLastFrame() override;
+
+	void DrawOSD(bool clear_screen) override { OSD_DRAW(clear_screen); }
+
+	virtual u64 GetTexture(TSP tsp, TCW tcw) override
+	{
+		return gl_GetTexture(tsp, tcw);
+	}
+
+	virtual bool Present() override
+	{
+		if (!frameRendered)
+			return false;
+		frameRendered = false;
+		return true;
+	}
+
+	bool frameRendered = false;
+};

@@ -33,13 +33,27 @@ static u32 null_push(const void* frame, u32 samples, bool wait)
 	return 1;
 }
 
+static bool null_init_record(u32 sampling_freq)
+{
+	return true;
+}
+
+static u32 null_record(void *buffer, u32 samples)
+{
+	memset(buffer, 0, samples * 2);
+	return samples;
+}
+
 static audiobackend_t audiobackend_null = {
     "null", // Slug
     "No Audio", // Name
     &null_init,
     &null_push,
     &null_term,
-	nullptr
+	nullptr,
+	&null_init_record,
+	&null_record,
+	&null_term
 };
 
 static bool null = RegisterAudioBackend(&audiobackend_null);

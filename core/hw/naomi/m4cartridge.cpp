@@ -112,7 +112,7 @@ void M4Cartridge::PioOffsetChanged(u32 pio_offset)
 bool M4Cartridge::Read(u32 offset, u32 size, void *dst) {
 	if (cfi_mode)
 	{
-		int fpr_num = m4id & 0x7f;
+		u32 fpr_num = m4id & 0x7f;
 
 		if (((offset >> 26) & 0x07) < fpr_num) {
 			*(u16 *)dst = *(u16 *)&cfidata[offset & 0xffff];
@@ -155,7 +155,7 @@ void *M4Cartridge::GetDmaPtr(u32 &limit)
 	static u8 retzero[2] = { 0, 0 };
 
 	if (cfi_mode) {
-		int fpr_num = m4id & 0x7f;
+		u32 fpr_num = m4id & 0x7f;
 
 		if (((rom_cur_address >> 26) & 0x07) < fpr_num) {
 			limit = std::min(limit, (u32)2);

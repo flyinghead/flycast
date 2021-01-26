@@ -22,11 +22,13 @@ u32 palette32_ram[1024];
 u32 pal_hash_256[4];
 u32 pal_hash_16[64];
 bool palette_updated;
+float fb_scale_x, fb_scale_y;
 
 // Rough approximation of LoD bias from D adjust param, only used to increase LoD
 const std::array<f32, 16> D_Adjust_LoD_Bias = {
 		0.f, -4.f, -2.f, -1.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f
 };
+static void rend_text_invl(vram_block* bl);
 
 u32 detwiddle[2][11][1024];
 //input : address in the yyyyyxxxxx format
@@ -221,7 +223,7 @@ bool VramLockedWriteOffset(size_t offset)
 		{
 			if (lock != nullptr)
 			{
-				libPvr_LockedBlockWrite(lock, (u32)offset);
+				rend_text_invl(lock);
 
 				if (lock != nullptr)
 				{
@@ -405,7 +407,6 @@ bool BaseTextureCacheData::Delete()
 	if (custom_load_in_progress > 0)
 		return false;
 
-	if (lock_block)
 	{
 		std::lock_guard<std::mutex> lock(vramlist_lock);
 		if (lock_block)
@@ -413,7 +414,7 @@ bool BaseTextureCacheData::Delete()
 		lock_block = nullptr;
 	}
 
-	delete[] custom_image_data;
+	free(custom_image_data);
 
 	return true;
 }
@@ -718,7 +719,7 @@ void BaseTextureCacheData::Update()
 	if (lock_block == nullptr)
 		lock_block = libCore_vramlock_Lock(sa_tex,sa+size-1,this);
 
-	UploadToGPU(upscaled_w, upscaled_h, (u8*)temp_tex_buffer, mipmapped, mipmapped);
+	UploadToGPU(upscaled_w, upscaled_h, (u8*)temp_tex_buffer, IsMipmapped(), mipmapped);
 	if (settings.rend.DumpTextures)
 	{
 		ComputeHash();
@@ -734,7 +735,7 @@ void BaseTextureCacheData::CheckCustomTexture()
 	{
 		tex_type = TextureType::_8888;
 		UploadToGPU(custom_width, custom_height, custom_image_data, IsMipmapped(), false);
-		delete [] custom_image_data;
+		free(custom_image_data);
 		custom_image_data = NULL;
 	}
 }
@@ -768,7 +769,20 @@ void ReadFramebuffer(PixelBuffer<u32>& pb, int& width, int& height)
 			break;
 	}
 
-	u32 addr = SPG_CONTROL.interlace && !SPG_STATUS.fieldnum ? FB_R_SOF2 : FB_R_SOF1;
+	u32 addr = FB_R_SOF1;
+	if (SPG_CONTROL.interlace)
+	{
+		if (width == modulus && FB_R_SOF2 == FB_R_SOF1 + width * bpp)
+		{
+			// Typical case alternating even and odd lines -> take the whole buffer at once
+			modulus = 0;
+			height *= 2;
+		}
+		else
+		{
+			addr = SPG_STATUS.fieldnum ? FB_R_SOF2 : FB_R_SOF1;
+		}
+	}
 
 	pb.init(width, height);
 	u8 *dst = (u8*)pb.data();
@@ -780,7 +794,7 @@ void ReadFramebuffer(PixelBuffer<u32>& pb, int& width, int& height)
 			{
 				for (int i = 0; i < width; i++)
 				{
-					u16 src = pvr_read_area1_16(addr);
+					u16 src = pvr_read_area1<u16>(addr);
 					*dst++ = (((src >> 10) & 0x1F) << 3) + FB_R_CTRL.fb_concat;
 					*dst++ = (((src >> 5) & 0x1F) << 3) + FB_R_CTRL.fb_concat;
 					*dst++ = (((src >> 0) & 0x1F) << 3) + FB_R_CTRL.fb_concat;
@@ -796,7 +810,7 @@ void ReadFramebuffer(PixelBuffer<u32>& pb, int& width, int& height)
 			{
 				for (int i = 0; i < width; i++)
 				{
-					u16 src = pvr_read_area1_16(addr);
+					u16 src = pvr_read_area1<u16>(addr);
 					*dst++ = (((src >> 11) & 0x1F) << 3) + FB_R_CTRL.fb_concat;
 					*dst++ = (((src >> 5) & 0x3F) << 2) + (FB_R_CTRL.fb_concat & 3);
 					*dst++ = (((src >> 0) & 0x1F) << 3) + FB_R_CTRL.fb_concat;
@@ -811,7 +825,7 @@ void ReadFramebuffer(PixelBuffer<u32>& pb, int& width, int& height)
 			{
 				for (int i = 0; i < width; i += 4)
 				{
-					u32 src = pvr_read_area1_32(addr);
+					u32 src = pvr_read_area1<u32>(addr);
 					*dst++ = src >> 16;
 					*dst++ = src >> 8;
 					*dst++ = src;
@@ -819,7 +833,7 @@ void ReadFramebuffer(PixelBuffer<u32>& pb, int& width, int& height)
 					addr += 4;
 					if (i + 1 >= width)
 						break;
-					u32 src2 = pvr_read_area1_32(addr);
+					u32 src2 = pvr_read_area1<u32>(addr);
 					*dst++ = src2 >> 8;
 					*dst++ = src2;
 					*dst++ = src >> 24;
@@ -827,7 +841,7 @@ void ReadFramebuffer(PixelBuffer<u32>& pb, int& width, int& height)
 					addr += 4;
 					if (i + 2 >= width)
 						break;
-					u32 src3 = pvr_read_area1_32(addr);
+					u32 src3 = pvr_read_area1<u32>(addr);
 					*dst++ = src3;
 					*dst++ = src2 >> 24;
 					*dst++ = src2 >> 16;
@@ -848,7 +862,7 @@ void ReadFramebuffer(PixelBuffer<u32>& pb, int& width, int& height)
 			{
 				for (int i = 0; i < width; i++)
 				{
-					u32 src = pvr_read_area1_32(addr);
+					u32 src = pvr_read_area1<u32>(addr);
 					*dst++ = src >> 16;
 					*dst++ = src >> 8;
 					*dst++ = src;
@@ -908,7 +922,7 @@ void WriteTextureToVRam(u32 width, u32 height, u8 *data, u16 *dst)
 	}
 }
 
-void rend_text_invl(vram_block* bl)
+static void rend_text_invl(vram_block* bl)
 {
 	BaseTextureCacheData* tcd = (BaseTextureCacheData*)bl->userdata;
 	tcd->dirty = FrameCount;

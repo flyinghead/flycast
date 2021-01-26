@@ -70,7 +70,9 @@ private:
 class QuadPipeline
 {
 public:
+	QuadPipeline(bool withAlpha = false) : withAlpha(withAlpha) {}
 	void Init(ShaderManager *shaderManager, vk::RenderPass renderPass);
+	void Init(const QuadPipeline& other) { Init(other.shaderManager, other.renderPass); }
 	void Term() {
 		pipeline.reset();
 		linearSampler.reset();
@@ -99,14 +101,21 @@ private:
 	vk::UniqueSampler nearestSampler;
 	vk::UniquePipelineLayout pipelineLayout;
 	vk::UniqueDescriptorSetLayout descSetLayout;
-	ShaderManager *shaderManager;
+	ShaderManager *shaderManager = nullptr;
+	bool withAlpha;
 };
 
 class QuadDrawer
 {
 public:
+	QuadDrawer() = default;
+	QuadDrawer(QuadDrawer &&) = default;
+	QuadDrawer(const QuadDrawer &) = delete;
+	QuadDrawer& operator=(QuadDrawer &&) = default;
+	QuadDrawer& operator=(const QuadDrawer &) = delete;
+
 	void Init(QuadPipeline *pipeline);
-	void Draw(vk::CommandBuffer commandBuffer, vk::ImageView imageView, QuadVertex vertices[] = nullptr, bool nearestFilter = false);
+	void Draw(vk::CommandBuffer commandBuffer, vk::ImageView imageView, QuadVertex vertices[] = nullptr, bool nearestFilter = false, const float *color = nullptr);
 private:
 	QuadPipeline *pipeline = nullptr;
 	std::unique_ptr<QuadBuffer> buffer;

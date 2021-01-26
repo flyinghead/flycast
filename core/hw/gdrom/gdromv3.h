@@ -1,17 +1,5 @@
 #pragma once
-/*
-	Handy register definitions and other minor stuff
-*/
 #include "types.h"
-
-void gdrom_reg_Init();
-void gdrom_reg_Term();
-void gdrom_reg_Reset(bool Manual);
-
-u32 ReadMem_gdrom(u32 Addr, u32 sz);
-void WriteMem_gdrom(u32 Addr, u32 data, u32 sz);
-
-u32 gd_get_subcode(u32 format, u32 fad, u8 *subc_info);
 
 enum gd_states
 {

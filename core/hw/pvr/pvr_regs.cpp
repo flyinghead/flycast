@@ -88,11 +88,18 @@ void pvr_WriteReg(u32 paddr,u32 data)
 
 	case FB_R_SOF1_addr:
 		data &= 0x00fffffc;
-		if (data == FB_W_SOF1)
-			rend_swap_frame();
+		rend_swap_frame(data);
+		break;
+
+	case FB_R_SOF2_addr:
+		data &= 0x00fffffc;
 		break;
 
 	case FB_W_SOF1_addr:
+		data &= 0x01fffffc;
+		rend_set_fb_write_addr(data);
+		break;
+
 	case FB_W_SOF2_addr:
 		data &= 0x01fffffc;
 		break;

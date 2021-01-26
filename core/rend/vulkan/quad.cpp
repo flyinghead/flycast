@@ -65,17 +65,35 @@ void QuadPipeline::CreatePipeline()
 	vk::PipelineDepthStencilStateCreateInfo pipelineDepthStencilStateCreateInfo;
 
 	// Color flags and blending
-	vk::PipelineColorBlendAttachmentState pipelineColorBlendAttachmentState(
-			true,								// blendEnable
-			vk::BlendFactor::eConstantAlpha,	// srcColorBlendFactor
-			vk::BlendFactor::eOneMinusConstantAlpha, // dstColorBlendFactor
-			vk::BlendOp::eAdd,					// colorBlendOp
-			vk::BlendFactor::eConstantAlpha,	// srcAlphaBlendFactor
-			vk::BlendFactor::eOneMinusConstantAlpha, // dstAlphaBlendFactor
-			vk::BlendOp::eAdd,					// alphaBlendOp
-			vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG
-						| vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA
-	);
+	vk::PipelineColorBlendAttachmentState pipelineColorBlendAttachmentState;
+	if (withAlpha)
+	{
+		pipelineColorBlendAttachmentState = vk::PipelineColorBlendAttachmentState(
+				true,								// blendEnable
+				vk::BlendFactor::eSrcAlpha,			// srcColorBlendFactor
+				vk::BlendFactor::eOneMinusSrcAlpha, // dstColorBlendFactor
+				vk::BlendOp::eAdd,					// colorBlendOp
+				vk::BlendFactor::eSrcAlpha,			// srcAlphaBlendFactor
+				vk::BlendFactor::eOneMinusSrcAlpha, // dstAlphaBlendFactor
+				vk::BlendOp::eAdd,					// alphaBlendOp
+				vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG
+							| vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA
+		);
+	}
+	else
+	{
+		pipelineColorBlendAttachmentState = vk::PipelineColorBlendAttachmentState(
+				true,								// blendEnable
+				vk::BlendFactor::eConstantAlpha,	// srcColorBlendFactor
+				vk::BlendFactor::eOneMinusConstantAlpha, // dstColorBlendFactor
+				vk::BlendOp::eAdd,					// colorBlendOp
+				vk::BlendFactor::eConstantAlpha,	// srcAlphaBlendFactor
+				vk::BlendFactor::eOneMinusConstantAlpha, // dstAlphaBlendFactor
+				vk::BlendOp::eAdd,					// alphaBlendOp
+				vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG
+							| vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA
+		);
+	}
 	vk::PipelineColorBlendStateCreateInfo pipelineColorBlendStateCreateInfo
 	(
 	  vk::PipelineColorBlendStateCreateFlags(),   // flags
@@ -87,7 +105,7 @@ void QuadPipeline::CreatePipeline()
 	);
 
 	vk::DynamicState dynamicStates[] = { vk::DynamicState::eViewport, vk::DynamicState::eScissor, vk::DynamicState::eBlendConstants };
-	vk::PipelineDynamicStateCreateInfo pipelineDynamicStateCreateInfo(vk::PipelineDynamicStateCreateFlags(), ARRAY_SIZE(dynamicStates),
+	vk::PipelineDynamicStateCreateInfo pipelineDynamicStateCreateInfo(vk::PipelineDynamicStateCreateFlags(), ARRAY_SIZE(dynamicStates) - (withAlpha ? 1 : 0),
 			dynamicStates);
 
 	vk::PipelineShaderStageCreateInfo stages[] = {
@@ -125,8 +143,9 @@ void QuadPipeline::Init(ShaderManager *shaderManager, vk::RenderPass renderPass)
 		};
 		descSetLayout = GetContext()->GetDevice().createDescriptorSetLayoutUnique(
 				vk::DescriptorSetLayoutCreateInfo(vk::DescriptorSetLayoutCreateFlags(), ARRAY_SIZE(bindings), bindings));
+		vk::PushConstantRange pushConstant(vk::ShaderStageFlagBits::eFragment, 0, 4 * sizeof(float));
 		pipelineLayout = GetContext()->GetDevice().createPipelineLayoutUnique(
-				vk::PipelineLayoutCreateInfo(vk::PipelineLayoutCreateFlags(), 1, &descSetLayout.get()));
+				vk::PipelineLayoutCreateInfo(vk::PipelineLayoutCreateFlags(), 1, &descSetLayout.get(), 1, &pushConstant));
 	}
 	if (!linearSampler)
 	{
@@ -164,9 +183,11 @@ void QuadDrawer::Init(QuadPipeline *pipeline)
 	this->pipeline = pipeline;
 	buffer = std::unique_ptr<QuadBuffer>(new QuadBuffer());
 	descriptorSets.resize(VulkanContext::Instance()->GetSwapChainSize());
+	for (auto& descSet : descriptorSets)
+		descSet.reset();
 }
 
-void QuadDrawer::Draw(vk::CommandBuffer commandBuffer, vk::ImageView imageView, QuadVertex vertices[], bool nearestFilter)
+void QuadDrawer::Draw(vk::CommandBuffer commandBuffer, vk::ImageView imageView, QuadVertex vertices[], bool nearestFilter, const float *color)
 {
 	VulkanContext *context = GetContext();
 	auto &descSet = descriptorSets[context->GetCurrentImageIndex()];
@@ -185,5 +206,12 @@ void QuadDrawer::Draw(vk::CommandBuffer commandBuffer, vk::ImageView imageView, 
 
 	buffer->Update(vertices);
 	buffer->Bind(commandBuffer);
+
+	if (color == nullptr)
+	{
+		static float fullWhite[] { 1.f, 1.f, 1.f, 1.f };
+		color = fullWhite;
+	}
+	commandBuffer.pushConstants(pipeline->GetPipelineLayout(), vk::ShaderStageFlagBits::eFragment, 0, sizeof(float) * 4, color);
 	buffer->Draw(commandBuffer);
 }

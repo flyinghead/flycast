@@ -83,10 +83,10 @@ void mem_map_default();
 //For debugger(gdb) - dynarec
 u8* GetMemPtr(u32 Addr,u32 size);
 
-bool IsOnRam(u32 addr);
+static inline bool IsOnRam(u32 addr)
+{
+	// in area 3 but not in P4
+	return ((addr >> 26) & 7) == 3 && ((addr >> 29) & 7) != 7;
+}
 
-bool LoadRomFiles(const std::string& root);
-void SaveRomFiles(const std::string& root);
-bool LoadHle(const std::string& root);
-void FixUpFlash();
 void SetMemoryHandlers();

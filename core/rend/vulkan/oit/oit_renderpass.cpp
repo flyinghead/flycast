@@ -44,6 +44,8 @@ vk::UniqueRenderPass RenderPasses::MakeRenderPass(bool initial, bool last)
 
     vk::AttachmentReference depthReadOnlyRef(2, vk::ImageLayout::eDepthStencilReadOnlyOptimal);
     vk::AttachmentReference colorInput(1, vk::ImageLayout::eShaderReadOnlyOptimal);
+    // vk 1.2 sdk wants this layout for subpass 2
+    vk::AttachmentReference depthRefStencilReadOnly(2, vk::ImageLayout::eDepthAttachmentStencilReadOnlyOptimal);
 
     vk::SubpassDescription subpasses[] = {
     	// Depth and modvol pass	FIXME subpass 0 shouldn't reference the color attachment
@@ -63,7 +65,7 @@ vk::UniqueRenderPass RenderPasses::MakeRenderPass(bool initial, bool last)
     			1, &colorInput,
 				1, &swapChainReference,
 				nullptr,
-				&depthReference),	// depth-only Tr pass when continuation
+				&depthRefStencilReadOnly),	// depth-only Tr pass when continuation
     };
 
     std::vector<vk::SubpassDependency> dependencies = GetSubpassDependencies();

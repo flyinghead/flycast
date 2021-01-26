@@ -79,7 +79,8 @@ static u32 ReadSerialStatus(u32 addr)
 {
 #if HOST_OS == OS_LINUX || defined(__APPLE__)
 	int count = 0;
-	if (settings.debug.SerialConsole && ioctl(tty, FIONREAD, &count) == 0 && count > 0)
+	if (settings.debug.SerialConsole && tty != 1
+			&& ioctl(tty, FIONREAD, &count) == 0 && count > 0)
 	{
 		return SCIF_SCFSR2.full | 2;
 	}
@@ -112,7 +113,8 @@ static u32 Read_SCFDR2(u32 addr)
 static u32 ReadSerialData(u32 addr)
 {
 	u8 data = 0;
-	read(tty, &data, 1);
+	if (tty != 1)
+		read(tty, &data, 1);
 	return data;
 }
 

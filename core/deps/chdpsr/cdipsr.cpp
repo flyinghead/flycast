@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
-#include "deps/coreio/coreio.h"
 #include "cdipsr.h"
 
 // Global variables
@@ -11,11 +10,6 @@ unsigned long temp_value;
 
 
 /////////////////////////////////////////////////////////////////////////////
-
-#define FILE core_file
-#define fread(buff,sz,cnt,fc) core_fread(fc,buff,sz*cnt)
-#define fseek core_fseek
-#define ftell core_ftell
 
 unsigned long ask_type(FILE *fsource, long header_position)
 {
@@ -117,7 +111,8 @@ void CDI_get_tracks (FILE *fsource, image_s *image)
 
 bool CDI_init (FILE *fsource, image_s *image, const char *fsourcename)
 {
-	image->length = core_fsize(fsource);
+	fseek(fsource, 0, SEEK_END);
+	image->length = ftell(fsource);
 
 	if (image->length < 8)
 	{

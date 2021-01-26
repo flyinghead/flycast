@@ -254,7 +254,12 @@ void Texture::SetImage(u32 srcSize, void *srcData, bool isNew, bool genMipmaps)
 
 	void* data;
 	if (needsStaging)
+	{
+		if (!stagingBufferData)
+			// This can happen if a texture is first created for RTT, then later updated
+			stagingBufferData = std::unique_ptr<BufferData>(new BufferData(srcSize, vk::BufferUsageFlagBits::eTransferSrc));
 		data = stagingBufferData->MapMemory();
+	}
 	else
 		data = allocation.MapMemory();
 	verify(data != nullptr);
@@ -418,5 +423,27 @@ void FramebufferAttachment::Init(u32 width, u32 height, vk::Format format, vk::I
 		// Also create an imageView for the stencil
 		imageViewCreateInfo.subresourceRange = vk::ImageSubresourceRange(vk::ImageAspectFlagBits::eStencil, 0, 1, 0, 1);
 		stencilView = device.createImageViewUnique(imageViewCreateInfo);
+	}
+}
+
+void TextureCache::Cleanup()
+{
+	std::vector<u64> list;
+
+	u32 TargetFrame = std::max((u32)120, FrameCount) - 120;
+
+	for (const auto& pair : cache)
+	{
+		if (pair.second.dirty && pair.second.dirty < TargetFrame)
+			list.push_back(pair.first);
+
+		if (list.size() > 5)
+			break;
+	}
+
+	for (u64 id : list)
+	{
+		if (clearTexture(&cache[id]))
+			cache.erase(id);
 	}
 }

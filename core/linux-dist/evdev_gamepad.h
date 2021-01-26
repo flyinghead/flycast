@@ -117,6 +117,73 @@ public:
 		}
 	}
 
+	virtual const char *get_button_name(u32 code) override
+	{
+		switch (code)
+		{
+		case BTN_START:
+			return "Start";
+		case BTN_SELECT:
+			return "Select";
+		case BTN_MODE:
+			return "Mode";
+		case BTN_NORTH:
+			return "North";
+		case BTN_SOUTH:
+			return "South";
+		case BTN_EAST:
+			return "East";
+		case BTN_WEST:
+			return "West";
+		case BTN_C:
+			return "C";
+		case BTN_Z:
+			return "Z";
+		case BTN_DPAD_UP:
+			return "DPad Up";
+		case BTN_DPAD_DOWN:
+			return "DPad Down";
+		case BTN_DPAD_LEFT:
+			return "DPad Left";
+		case BTN_DPAD_RIGHT:
+			return "DPad Right";
+		case BTN_TL:
+			return "Trigger L";
+		case BTN_TR:
+			return "Trigger R";
+		case BTN_TL2:
+			return "Trigger L2";
+		case BTN_TR2:
+			return "Trigger R2";
+		case BTN_THUMBL:
+			return "Thumb L";
+		case BTN_THUMBR:
+			return "Thumb R";
+		default:
+			return nullptr;
+		}
+	}
+	virtual const char *get_axis_name(u32 code) override
+	{
+		switch (code)
+		{
+		case ABS_X:
+			return "Abs X";
+		case ABS_Y:
+			return "Abs Y";
+		case ABS_Z:
+			return "Abs Z";
+		case ABS_RX:
+			return "Abs RX";
+		case ABS_RY:
+			return "Abs RY";
+		case ABS_RZ:
+			return "Abs RZ";
+		default:
+			return nullptr;
+		}
+	}
+
 	static std::shared_ptr<EvdevGamepadDevice> GetControllerForPort(int port)
 	{
 		for (auto& pair : evdev_gamepads)

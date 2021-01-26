@@ -7,18 +7,13 @@ const uint32_t CD_TRACK_PADDING = 4;
 
 struct CHDDisc : Disc
 {
-	chd_file* chd;
-	u8* hunk_mem;
-	u32 old_hunk;
+	chd_file *chd = nullptr;
+	FILE *fp = nullptr;
+	u8* hunk_mem = nullptr;
+	u32 old_hunk = 0;
 
-	u32 hunkbytes;
-	u32 sph;
-
-	CHDDisc()
-	{
-		chd=0;
-		hunk_mem=0;
-	}
+	u32 hunkbytes = 0;
+	u32 sph = 0;
 
 	bool TryOpen(const char* file);
 
@@ -28,6 +23,8 @@ struct CHDDisc : Disc
 
 		if (chd)
 			chd_close(chd);
+		if (fp)
+			std::fclose(fp);
 	}
 };
 
@@ -81,11 +78,18 @@ struct CHDTrack : TrackFile
 
 bool CHDDisc::TryOpen(const char* file)
 {
-	chd_error err=chd_open(file,CHD_OPEN_READ,0,&chd);
-
-	if (err!=CHDERR_NONE)
+	fp = nowide::fopen(file, "rb");
+	if (fp == nullptr)
 	{
-		INFO_LOG(GDROM, "chd: chd_open failed for file %s: %d", file, err);
+		INFO_LOG(GDROM, "chd: fopen failed for file %s: %d", file, errno);
+		return false;
+	}
+	chd_error err = chd_open_file(fp, CHD_OPEN_READ, 0, &chd);
+
+	if (err != CHDERR_NONE)
+	{
+		std::fclose(fp);
+		INFO_LOG(GDROM, "chd: chd_open_file failed for file %s: %d", file, err);
 		return false;
 	}
 
@@ -147,7 +151,11 @@ bool CHDDisc::TryOpen(const char* file)
 			}
 		}
 
-		if (tkid!=(tracks.size()+1) || (strcmp(type,"MODE1_RAW")!=0 && strcmp(type,"AUDIO")!=0 && strcmp(type,"MODE1")!=0) || strcmp(subtype,"NONE")!=0 || pregap!=0 || postgap!=0)
+		if (tkid != (int)tracks.size() + 1
+				|| (strcmp(type, "MODE1_RAW") != 0 && strcmp(type, "AUDIO") != 0 && strcmp(type, "MODE1") != 0)
+				|| strcmp(subtype, "NONE") != 0
+				|| pregap != 0
+				|| postgap != 0)
 		{
 			INFO_LOG(GDROM, "chd: track type %s is not supported", type);
 			return false;

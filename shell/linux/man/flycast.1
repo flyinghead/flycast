@@ -1,0 +1,108 @@
+.\" flycast.1:
+
+.TH  "FLYCAST" "1" "November 21, 2020" "FLYCAST" "Flycast"
+
+.SH NAME
+
+flycast \- The Sega Dreamcast, Atomiswave and Naomi emulator.
+
+.SH SYNOPSIS
+
+\fBflycast\fR [OPTIONS]... [IMAGE FILE]
+
+.SH "DESCRIPTION"
+
+\fBflycast\fR is a multi-platform emulator for the Sega Dreamcast, Atomiswave and Naomi systems.
+
+.SH "EXAMPLE COMMANDLINE"
+
+.TP
+\fBNo command line options will start flycast and load all values from the config file.\fR
+flycast
+
+.TP
+\fBOverride the image specified in the config file to load a specific image.\fR
+flycast /path/to/your/image.gdi
+
+.TP
+\fBStart flycast in full screen.\fR
+flycast -config window:fullscreen=yes
+
+.SH "CONFIG FILE"
+
+.TP
+The config file for \fBflycast\fR can be found at:
+
+.IP
+~/.config/reicast/emu.cfg
+.LP
+
+.SH "VMU SAVE FILE"
+
+.TP
+The VMU save files can be found at ~/.local/share/reicast/, by default \fBflycast\fR will create two VMU files for the first controller:
+
+.IP
+~/.local/share/reicast/vmu_save_A1.bin
+.br
+~/.local/share/reicast/vmu_save_A2.bin
+.LP
+
+.SH "BIOS AND FLASH ROMS"
+
+.TP
+\fBflycast\fR needs the original Atomiswave or Naomi BIOS files. The Dreamcast BIOS isn't needed in most cases but is recommended. For copyright reasons it is not possible to distribute them bundled with \fBflycast\fR, so you have to dump them from your own Dreamcast. \fBflycast\fR will look for these files in:
+
+.IP
+~/.local/share/reicast/data/dc_boot.bin
+.br
+~/.local/share/reicast/data/naomi.zip
+.br
+~/.local/share/reicast/data/awbios.zip
+.LP
+
+.SH "CONTROLS"
+
+.TP
+\fBflycast\fR uses the kernel event devices for capturing input. You can define the evdev device id in the config file:
+.IP
+[input]
+.br
+evdev_device_id_1 = X
+.br
+evdev_mapping_1 = my_mapping.cfg
+.LP
+
+If your version of \fBflycast\fR is compiled against X11, you might want to disable the built-in X11 keyboard support as this can interfere if your controller is detected as a keyboard:
+.IP
+[input]
+.br
+enable_x11_keyboard = -1
+.LP
+
+.SH "GENERAL OPTIONS"
+
+.TP
+\fB-config section:option=value\fR
+Temporarily override a value of the config file.
+
+.TP
+\fB[IMAGE FILE]\fR
+Load a specific image file.
+
+Although \fBFlycast\fR supports images in GDI, CHD, CUE and CDI format, you should avoid CDI images since they often have issues.
+
+If no image is given on the command line, flycast will display the list of available content.
+
+.SH "AUTHOR"
+
+.TP
+\fBflycast\fR is developed by a number of people. A list of contributors can be obtained at:
+\fIhttps://github.com/flyinghead/flycast/graphs/contributors\fP
+
+.TP
+Head over to flycast's git repository if you want to contibute:
+\fIhttps://github.com/flyinghead/flycast\fP
+
+.TP
+This is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License (Version 2).

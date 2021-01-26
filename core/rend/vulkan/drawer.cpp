@@ -49,10 +49,13 @@ TileClipping BaseDrawer::SetTileClip(u32 val, vk::Rect2D& clipRect)
 {
 	int rect[4] = {};
 	TileClipping clipmode = ::GetTileClip(val, matrices.GetViewportMatrix(), rect);
-	clipRect.offset.x = rect[0];
-	clipRect.offset.y = rect[1];
-	clipRect.extent.width = rect[2];
-	clipRect.extent.height = rect[3];
+	if (clipmode != TileClipping::Off)
+	{
+		clipRect.offset.x = rect[0];
+		clipRect.offset.y = rect[1];
+		clipRect.extent.width = rect[2];
+		clipRect.extent.height = rect[3];
+	}
 
 	return clipmode;
 }
@@ -63,52 +66,41 @@ void BaseDrawer::SetBaseScissor()
 			&& !matrices.IsClipped() && !settings.rend.Rotate90;
 	if (!wide_screen_on)
 	{
-		if (pvrrc.isRenderFramebuffer)
-		{
-			baseScissor = vk::Rect2D(vk::Offset2D(0, 0),
-					vk::Extent2D(640, 480));
-		}
-		else
-		{
-			float width;
-			float height;
-			float min_x;
-			float min_y;
-			glm::vec4 clip_min(pvrrc.fb_X_CLIP.min, pvrrc.fb_Y_CLIP.min, 0, 1);
-			glm::vec4 clip_dim(pvrrc.fb_X_CLIP.max - pvrrc.fb_X_CLIP.min + 1,
-			pvrrc.fb_Y_CLIP.max - pvrrc.fb_Y_CLIP.min + 1, 0, 0);
-			clip_min = matrices.GetScissorMatrix() * clip_min;
-			clip_dim = matrices.GetScissorMatrix() * clip_dim;
+		float width;
+		float height;
+		float min_x;
+		float min_y;
+		glm::vec4 clip_min(pvrrc.fb_X_CLIP.min, pvrrc.fb_Y_CLIP.min, 0, 1);
+		glm::vec4 clip_dim(pvrrc.fb_X_CLIP.max - pvrrc.fb_X_CLIP.min + 1,
+		pvrrc.fb_Y_CLIP.max - pvrrc.fb_Y_CLIP.min + 1, 0, 0);
+		clip_min = matrices.GetScissorMatrix() * clip_min;
+		clip_dim = matrices.GetScissorMatrix() * clip_dim;
 
-			min_x = clip_min[0];
-			min_y = clip_min[1];
-			width = clip_dim[0];
-			height = clip_dim[1];
-			if (width < 0)
-			{
-				min_x += width;
-				width = -width;
-			}
-			if (height < 0)
-			{
-				min_y += height;
-				height = -height;
-			}
-
-			baseScissor = vk::Rect2D(
-					vk::Offset2D((u32) std::max(lroundf(min_x), 0L),
-							(u32) std::max(lroundf(min_y), 0L)),
-					vk::Extent2D((u32) std::max(lroundf(width), 0L),
-							(u32) std::max(lroundf(height), 0L)));
+		min_x = clip_min[0];
+		min_y = clip_min[1];
+		width = clip_dim[0];
+		height = clip_dim[1];
+		if (width < 0)
+		{
+			min_x += width;
+			width = -width;
 		}
+		if (height < 0)
+		{
+			min_y += height;
+			height = -height;
+		}
+
+		baseScissor = vk::Rect2D(
+				vk::Offset2D((u32) std::max(lroundf(min_x), 0L),
+						(u32) std::max(lroundf(min_y), 0L)),
+				vk::Extent2D((u32) std::max(lroundf(width), 0L),
+						(u32) std::max(lroundf(height), 0L)));
 	}
 	else
 	{
-		glm::vec4 clip_dim(screen_width, screen_height, 0, 0);
-		clip_dim = matrices.GetScissorMatrix() * clip_dim;
-		baseScissor = vk::Rect2D(vk::Offset2D(0, 0), vk::Extent2D(lroundf(clip_dim[0]), lroundf(clip_dim[1])));
+		baseScissor = { 0, 0, (u32)screen_width, (u32)screen_height };
 	}
-	currentScissor = { 0, 0, 0, 0 };
 }
 
 // Vulkan uses the color values of the first vertex for flat shaded triangle strips.
@@ -316,9 +308,6 @@ void Drawer::UploadMainBuffer(const VertexShaderUniforms& vertexUniforms, const 
 
 bool Drawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 {
-	VertexShaderUniforms vtxUniforms;
-	vtxUniforms.normal_matrix = matrices.GetNormalMatrix();
-
 	FragmentShaderUniforms fragUniforms = MakeFragmentUniforms<FragmentShaderUniforms>();
 
 	SortTriangles();
@@ -329,14 +318,15 @@ bool Drawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 	SetProvokingVertices();
 
 	// Upload vertex and index buffers
+	VertexShaderUniforms vtxUniforms;
+	vtxUniforms.normal_matrix = matrices.GetNormalMatrix();
+
 	UploadMainBuffer(vtxUniforms, fragUniforms);
 
 	// Update per-frame descriptor set and bind it
 	GetCurrentDescSet().UpdateUniforms(GetMainBuffer(0)->buffer.get(), offsets.vertexUniformOffset, offsets.fragmentUniformOffset,
 			fogTexture->GetImageView(), paletteTexture->GetImageView());
 	GetCurrentDescSet().BindPerFrameDescriptorSets(cmdBuffer);
-	// Reset per-poly descriptor set pool
-	GetCurrentDescSet().Reset();
 
 	// Bind vertex and index buffers
 	const vk::DeviceSize zeroOffset[] = { 0 };
@@ -576,14 +566,16 @@ void TextureDrawer::EndRenderPass()
 		tmpBuf.init(clippedWidth, clippedHeight);
 		colorAttachment->GetBufferData()->download(clippedWidth * clippedHeight * 4, tmpBuf.data());
 		WriteTextureToVRam(clippedWidth, clippedHeight, (u8 *)tmpBuf.data(), dst);
-
-		return;
 	}
-	//memset(&vram[fb_rtt.TexAddr << 3], '\0', size);
+	else
+	{
+		//memset(&vram[fb_rtt.TexAddr << 3], '\0', size);
 
-	texture->dirty = 0;
-	if (texture->lock_block == NULL)
-		texture->lock_block = libCore_vramlock_Lock(texture->sa_tex, texture->sa + texture->size - 1, texture);
+		texture->dirty = 0;
+		if (texture->lock_block == NULL)
+			texture->lock_block = libCore_vramlock_Lock(texture->sa_tex, texture->sa + texture->size - 1, texture);
+	}
+	Drawer::EndRenderPass();
 }
 
 void ScreenDrawer::Init(SamplerManager *samplerManager, ShaderManager *shaderManager)
@@ -598,6 +590,9 @@ void ScreenDrawer::Init(SamplerManager *samplerManager, ShaderManager *shaderMan
 		framebuffers.clear();
 		colorAttachments.clear();
 		depthAttachment.reset();
+		transitionNeeded.clear();
+		clearNeeded.clear();
+		frameRendered = false;
 	}
 	this->viewport = viewport;
 	if (!depthAttachment)
@@ -608,14 +603,14 @@ void ScreenDrawer::Init(SamplerManager *samplerManager, ShaderManager *shaderMan
 				vk::ImageUsageFlagBits::eDepthStencilAttachment | vk::ImageUsageFlagBits::eTransientAttachment);
 	}
 
-	if (!renderPass)
+	if (!renderPassLoad)
 	{
 		vk::AttachmentDescription attachmentDescriptions[] = {
 				// Color attachment
 				vk::AttachmentDescription(vk::AttachmentDescriptionFlags(), GetContext()->GetColorFormat(), vk::SampleCountFlagBits::e1,
-						vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eStore,
+						vk::AttachmentLoadOp::eLoad, vk::AttachmentStoreOp::eStore,
 						vk::AttachmentLoadOp::eDontCare, vk::AttachmentStoreOp::eDontCare,
-						vk::ImageLayout::eUndefined, vk::ImageLayout::eShaderReadOnlyOptimal),
+						vk::ImageLayout::eShaderReadOnlyOptimal, vk::ImageLayout::eShaderReadOnlyOptimal),
 				// Depth attachment
 				vk::AttachmentDescription(vk::AttachmentDescriptionFlags(), GetContext()->GetDepthFormat(), vk::SampleCountFlagBits::e1,
 						vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eDontCare,
@@ -637,16 +632,23 @@ void ScreenDrawer::Init(SamplerManager *samplerManager, ShaderManager *shaderMan
 		dependencies.emplace_back(0, VK_SUBPASS_EXTERNAL, vk::PipelineStageFlagBits::eColorAttachmentOutput, vk::PipelineStageFlagBits::eFragmentShader,
 				vk::AccessFlagBits::eColorAttachmentWrite, vk::AccessFlagBits::eShaderRead, vk::DependencyFlagBits::eByRegion);
 
-		renderPass = GetContext()->GetDevice().createRenderPassUnique(vk::RenderPassCreateInfo(vk::RenderPassCreateFlags(),
+		renderPassLoad = GetContext()->GetDevice().createRenderPassUnique(vk::RenderPassCreateInfo(vk::RenderPassCreateFlags(),
+				ARRAY_SIZE(attachmentDescriptions), attachmentDescriptions,
+				ARRAY_SIZE(subpasses), subpasses,
+				dependencies.size(), dependencies.data()));
+		attachmentDescriptions[0].loadOp = vk::AttachmentLoadOp::eClear;
+		renderPassClear = GetContext()->GetDevice().createRenderPassUnique(vk::RenderPassCreateInfo(vk::RenderPassCreateFlags(),
 				ARRAY_SIZE(attachmentDescriptions), attachmentDescriptions,
 				ARRAY_SIZE(subpasses), subpasses,
 				dependencies.size(), dependencies.data()));
 	}
-	size_t size = VulkanContext::Instance()->GetSwapChainSize();
+	size_t size = GetSwapChainSize();
 	if (colorAttachments.size() > size)
 	{
 		colorAttachments.resize(size);
 		framebuffers.resize(size);
+		transitionNeeded.resize(size);
+		clearNeeded.resize(size);
 	}
 	else
 	{
@@ -661,15 +663,18 @@ void ScreenDrawer::Init(SamplerManager *samplerManager, ShaderManager *shaderMan
 			colorAttachments.back()->Init(viewport.width, viewport.height, GetContext()->GetColorFormat(),
 					vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled);
 			attachments[0] = colorAttachments.back()->GetImageView();
-			vk::FramebufferCreateInfo createInfo(vk::FramebufferCreateFlags(), *renderPass,
+			vk::FramebufferCreateInfo createInfo(vk::FramebufferCreateFlags(), *renderPassLoad,
 					ARRAY_SIZE(attachments), attachments, viewport.width, viewport.height, 1);
 			framebuffers.push_back(GetContext()->GetDevice().createFramebufferUnique(createInfo));
+			transitionNeeded.push_back(true);
+			clearNeeded.push_back(true);
 		}
 	}
+	frameRendered = false;
 
 	if (!screenPipelineManager)
 		screenPipelineManager = std::unique_ptr<PipelineManager>(new PipelineManager());
-	screenPipelineManager->Init(shaderManager, *renderPass);
+	screenPipelineManager->Init(shaderManager, *renderPassLoad);
 	Drawer::Init(samplerManager, screenPipelineManager.get());
 }
 
@@ -677,12 +682,21 @@ vk::CommandBuffer ScreenDrawer::BeginRenderPass()
 {
 	if (currentScreenScaling != settings.rend.ScreenScaling)
 		Init(samplerManager, shaderManager);
-	NewImage();
+
 	vk::CommandBuffer commandBuffer = commandPool->Allocate();
 	commandBuffer.begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));
 
+	if (transitionNeeded[GetCurrentImage()])
+	{
+		setImageLayout(commandBuffer, colorAttachments[GetCurrentImage()]->GetImage(), GetContext()->GetColorFormat(),
+				1, vk::ImageLayout::eUndefined, vk::ImageLayout::eShaderReadOnlyOptimal);
+		transitionNeeded[GetCurrentImage()] = false;
+	}
+
+	vk::RenderPass renderPass = clearNeeded[GetCurrentImage()] ? *renderPassClear : *renderPassLoad;
+	clearNeeded[GetCurrentImage()] = false;
 	const vk::ClearValue clear_colors[] = { vk::ClearColorValue(std::array<float, 4> { 0.f, 0.f, 0.f, 1.f }), vk::ClearDepthStencilValue { 0.f, 0 } };
-	commandBuffer.beginRenderPass(vk::RenderPassBeginInfo(*renderPass, *framebuffers[GetCurrentImage()],
+	commandBuffer.beginRenderPass(vk::RenderPassBeginInfo(renderPass, *framebuffers[GetCurrentImage()],
 			vk::Rect2D( { 0, 0 }, viewport), 2, clear_colors), vk::SubpassContents::eInline);
 	commandBuffer.setViewport(0, vk::Viewport(0.0f, 0.0f, viewport.width, viewport.height, 1.0f, 0.0f));
 
@@ -701,5 +715,6 @@ void ScreenDrawer::EndRenderPass()
 	currentCommandBuffer.end();
 	currentCommandBuffer = nullptr;
 	commandPool->EndFrame();
-	GetContext()->PresentFrame(colorAttachments[GetCurrentImage()]->GetImageView(), vk::Offset2D(viewport.width, viewport.height));
+	Drawer::EndRenderPass();
+	frameRendered = true;
 }
