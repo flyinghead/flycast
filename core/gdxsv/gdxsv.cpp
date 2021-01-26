@@ -350,7 +350,7 @@ void Gdxsv::GcpPingTest() {
             {"asia-northeast1",         "asia-northeast1-gce.cloudharmony.net"},
             {"asia-northeast2",         "asia-northeast2-gce.cloudharmony.net"},
             {"asia-northeast3",         "asia-northeast3-gce.cloudharmony.net"},
-            {"asia-south1",             "asia-south1-gce.cloudharmony.net"},
+            // {"asia-south1",             "asia-south1-gce.cloudharmony.net"}, // inactive now.
             {"asia-southeast1",         "asia-southeast1-gce.cloudharmony.net"},
             {"australia-southeast1",    "australia-southeast1-gce.cloudharmony.net"},
             {"europe-north1",           "europe-north1-gce.cloudharmony.net"},
@@ -401,13 +401,13 @@ void Gdxsv::GcpPingTest() {
         }
 
         auto t2 = std::chrono::high_resolution_clock::now();
-        int rtt = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
+        int rtt = (int)std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
         const std::string response_header(buf, n);
         if (response_header.find("200 OK") != std::string::npos) {
             gcp_ping_test_result[region_host.first] = rtt;
             char latency_str[256];
             snprintf(latency_str, 256, "%s : %d[ms]", region_host.first.c_str(), rtt);
-            NOTICE_LOG(COMMON, latency_str);
+            NOTICE_LOG(COMMON, "%s", latency_str);
             gui_display_notification(latency_str, 3000);
         } else {
             ERROR_LOG(COMMON, "error response : %s", response_header.c_str());
@@ -816,7 +816,7 @@ void Gdxsv::handleReleaseJSON(const std::string &json) {
         latest_version = match.str(0).substr(13, std::string::npos);
 
         std::string current_version = std::string(REICAST_VERSION);
-        current_version = current_version.substr(1, current_version.find_first_of("-") - 1);
+        current_version = current_version.substr(1, current_version.find_first_of("+") - 1);
 
         auto version_compare = [](std::string v1, std::string v2) {
             size_t i = 0, j = 0;

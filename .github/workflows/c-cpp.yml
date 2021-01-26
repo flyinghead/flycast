@@ -10,25 +10,23 @@ jobs:
     strategy:
       matrix:
         config:
-          - {name: i686-pc-windows-msvc, os: windows-latest, cmakeArgs: -G "Visual Studio 16 2019" -A Win32}
           - {name: x86_64-apple-darwin, os: macos-latest, cmakeArgs: -G "Xcode"}
           - {name: x86_64-pc-linux-gnu, os: ubuntu-latest}
-          - {name: x86_64-pc-windows-msvc, os: windows-latest, cmakeArgs: -G "Visual Studio 16 2019" -A x64}
           - {name: x86_64-w64-mingw32, os: windows-latest, cmakeArgs: -G "MinGW Makefiles"}
 
     steps:
       - name: Set up build environment (macos-latest)
         run: |
           brew install ccache flac libao libomp pulseaudio sdl2 zlib
-          echo "::add-path::/usr/local/opt/ccache/libexec"
-          echo "::set-env name=CCACHE_DIR::/tmp/ccache"
+          echo "/usr/local/opt/ccache/libexec" >> $GITHUB_PATH
+          echo "CCACHE_DIR=/tmp/ccache" >> $GITHUB_ENV
         if: matrix.config.os == 'macos-latest'
 
       - name: Set up build environment (ubuntu-latest)
         run: |
           sudo apt-get update
           sudo apt-get -y install ccache libao-dev libasound2-dev libevdev-dev libflac-dev libgl1-mesa-dev libpulse-dev libsdl2-dev libudev-dev libzip-dev
-          echo "::set-env name=CCACHE_DIR::/tmp/ccache"
+          echo "CCACHE_DIR=/tmp/ccache" >> $GITHUB_ENV
         if: matrix.config.os == 'ubuntu-latest'
 
       - uses: actions/cache@v1

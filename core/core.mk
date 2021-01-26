@@ -185,7 +185,7 @@ RZDCY_FILES += $(foreach dir,$(addprefix $(RZDCY_SRC_DIR)/,$(RZDCY_MODULES)),$(w
 RZDCY_FILES += $(foreach dir,$(addprefix $(RZDCY_SRC_DIR)/,$(RZDCY_MODULES)),$(wildcard $(dir)*.S))
 
 $(VERSION_HEADER):
-	echo "#define REICAST_VERSION \"`git describe --tags --always`\"" > $(VERSION_HEADER)
+	echo "#define REICAST_VERSION \"`git describe --tags --always | sed -e 's/-/+/'`\"" > $(VERSION_HEADER)
 	echo "#define GIT_HASH \"`git rev-parse --short HEAD`\"" >> $(VERSION_HEADER)
 	echo "#define BUILD_DATE \"`date '+%Y-%m-%d %H:%M:%S %Z'`\"" >> $(VERSION_HEADER)
 
