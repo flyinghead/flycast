@@ -1,4 +1,7 @@
 #include "gdxsv_network.h"
+#include <future>
+#include <thread>
+#include <chrono>
 
 #ifndef _WIN32
 #include <sys/ioctl.h>
@@ -26,10 +29,23 @@ bool TcpClient::Connect(const char *host, int port) {
     memcpy(&addr.sin_addr, host_entry->h_addr_list[0], host_entry->h_length);
 #endif
     addr.sin_port = htons(port);
-    set_recv_timeout(new_sock, 5000);
 
-    if (::connect(new_sock, (const sockaddr *) &addr, sizeof(addr)) != 0) {
-        WARN_LOG(COMMON, "Connect fail 2 %d", get_last_error());
+    // FIXME: hotfix, we should use non-blocking socket to detect timeout.
+    auto future = std::async(std::launch::async, [&]() {
+        return ::connect(new_sock, (const sockaddr *) &addr, sizeof(addr));
+    });
+    if (!future.valid()) {
+        WARN_LOG(COMMON, "Connect fail 4 invalid future");
+        return false;
+    }
+    auto wait_status = future.wait_for(std::chrono::seconds(5));
+    if (wait_status != std::future_status::ready) {
+        WARN_LOG(COMMON, "Connect fail 5 timeout");
+        closesocket(new_sock);
+        return false;
+    }
+    if (future.get() != 0) {
+        WARN_LOG(COMMON, "Connect fail 3 %d", get_last_error());
         return false;
     }
 

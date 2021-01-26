@@ -350,7 +350,7 @@ void Gdxsv::GcpPingTest() {
             {"asia-northeast1",         "asia-northeast1-gce.cloudharmony.net"},
             {"asia-northeast2",         "asia-northeast2-gce.cloudharmony.net"},
             {"asia-northeast3",         "asia-northeast3-gce.cloudharmony.net"},
-            {"asia-south1",             "asia-south1-gce.cloudharmony.net"},
+            // {"asia-south1",             "asia-south1-gce.cloudharmony.net"}, // inactive now.
             {"asia-southeast1",         "asia-southeast1-gce.cloudharmony.net"},
             {"australia-southeast1",    "australia-southeast1-gce.cloudharmony.net"},
             {"europe-north1",           "europe-north1-gce.cloudharmony.net"},
