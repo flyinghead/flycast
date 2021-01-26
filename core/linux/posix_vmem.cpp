@@ -21,16 +21,23 @@
 #ifdef __ANDROID__
 	#include <linux/ashmem.h>
 	#ifndef ASHMEM_DEVICE
-	#define ASHMEM_DEVICE "/dev/ashmem"
-	#undef PAGE_MASK
-	#define PAGE_MASK (PAGE_SIZE-1)
-#else
-	#define PAGE_SIZE 4096
-	#define PAGE_MASK (PAGE_SIZE-1)
-#endif
+		#define ASHMEM_DEVICE "/dev/ashmem"
+		#undef PAGE_MASK
+		#define PAGE_MASK (PAGE_SIZE-1)
+	#else
+		#define PAGE_SIZE 4096
+		#define PAGE_MASK (PAGE_SIZE-1)
+	#endif
+
+// Only available in SDK 26+. Required in SDK 29+ (android 10)
+extern "C" int __attribute__((weak)) ASharedMemory_create(const char*, size_t);
 
 // Android specific ashmem-device stuff for creating shared memory regions
-int ashmem_create_region(const char *name, size_t size) {
+int ashmem_create_region(const char *name, size_t size)
+{
+	if (ASharedMemory_create != nullptr)
+		return ASharedMemory_create(name, size);
+
 	int fd = open(ASHMEM_DEVICE, O_RDWR);
 	if (fd < 0)
 		return -1;
@@ -110,32 +117,32 @@ bool mem_region_unmap_file(void *start, size_t len)
 // Allocates memory via a fd on shmem/ahmem or even a file on disk
 static int allocate_shared_filemem(unsigned size) {
 	int fd = -1;
-	#if defined(__ANDROID__)
+#if defined(__ANDROID__)
 	// Use Android's specific shmem stuff.
-	fd = ashmem_create_region(0, size);
-	#else
-		#if !defined(__APPLE__)
+	fd = ashmem_create_region("RAM", size);
+#else
+	#if !defined(__APPLE__)
 		fd = shm_open("/dcnzorz_mem", O_CREAT | O_EXCL | O_RDWR, S_IREAD | S_IWRITE);
 		shm_unlink("/dcnzorz_mem");
-		#endif
-
-		// if shmem does not work (or using OSX) fallback to a regular file on disk
-		if (fd < 0) {
-			std::string path = get_writable_data_path("dcnzorz_mem");
-			fd = open(path.c_str(), O_CREAT|O_RDWR|O_TRUNC, S_IRWXU|S_IRWXG|S_IRWXO);
-			unlink(path.c_str());
-		}
-		// If we can't open the file, fallback to slow mem.
-		if (fd < 0)
-			return -1;
-
-		// Finally make the file as big as we need!
-		if (ftruncate(fd, size)) {
-			// Can't get as much memory as needed, fallback.
-			close(fd);
-			return -1;
-		}
 	#endif
+
+	// if shmem does not work (or using OSX) fallback to a regular file on disk
+	if (fd < 0) {
+		std::string path = get_writable_data_path("dcnzorz_mem");
+		fd = open(path.c_str(), O_CREAT|O_RDWR|O_TRUNC, S_IRWXU|S_IRWXG|S_IRWXO);
+		unlink(path.c_str());
+	}
+	// If we can't open the file, fallback to slow mem.
+	if (fd < 0)
+		return -1;
+
+	// Finally make the file as big as we need!
+	if (ftruncate(fd, size)) {
+		// Can't get as much memory as needed, fallback.
+		close(fd);
+		return -1;
+	}
+#endif
 
 	return fd;
 }
