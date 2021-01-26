@@ -463,18 +463,6 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/cfg/ini.h)
 
 target_sources(${PROJECT_NAME} PRIVATE
-        core/emitter/generated_class_names.h
-        core/emitter/generated_class_names_string.h
-        core/emitter/generated_descriptors.h
-        core/emitter/generated_indexes.h
-        core/emitter/x86_emitter.cpp
-        core/emitter/x86_emitter.h
-        core/emitter/x86_matcher.h
-        core/emitter/x86_op_classes.h
-        core/emitter/x86_op_encoder.h
-        core/emitter/x86_op_table.h)
-
-target_sources(${PROJECT_NAME} PRIVATE
         core/hw/aica/aica.cpp
         core/hw/aica/aica.h
         core/hw/aica/aica_if.cpp
@@ -486,6 +474,7 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/hw/aica/dsp_arm64.cpp
         core/hw/aica/dsp_interp.cpp
         core/hw/aica/dsp_x64.cpp
+        core/hw/aica/dsp_x86.cpp
         core/hw/aica/sgc_if.cpp
         core/hw/aica/sgc_if.h
         core/hw/arm7/arm64.cpp

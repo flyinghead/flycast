@@ -92,6 +92,10 @@ void dsp_term();
 void dsp_step();
 void dsp_writenmem(u32 addr);
 
+void dsp_rec_init();
+void dsp_rec_step();
+void dsp_recompile();
+
 struct _INST
 {
 	u8 TRA;

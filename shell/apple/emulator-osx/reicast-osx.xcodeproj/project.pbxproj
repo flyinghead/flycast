@@ -32,7 +32,6 @@
 		84B7BF1F1B72720200F9733F /* trees.c in Sources */ = {isa = PBXBuildFile; fileRef = 84B7BDB01B72720100F9733F /* trees.c */; };
 		84B7BF201B72720200F9733F /* uncompr.c in Sources */ = {isa = PBXBuildFile; fileRef = 84B7BDB21B72720100F9733F /* uncompr.c */; };
 		84B7BF211B72720200F9733F /* zutil.c in Sources */ = {isa = PBXBuildFile; fileRef = 84B7BDB61B72720100F9733F /* zutil.c */; };
-		84B7BF241B72720200F9733F /* x86_emitter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 84B7BDC01B72720100F9733F /* x86_emitter.cpp */; };
 		84B7BF251B72720200F9733F /* aica.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 84B7BDC81B72720100F9733F /* aica.cpp */; };
 		84B7BF261B72720200F9733F /* aica_if.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 84B7BDCA1B72720100F9733F /* aica_if.cpp */; };
 		84B7BF271B72720200F9733F /* aica_mem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 84B7BDCC1B72720100F9733F /* aica_mem.cpp */; };
@@ -441,16 +440,6 @@
 		84B7BDB51B72720100F9733F /* zlib.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zlib.h; sourceTree = "<group>"; };
 		84B7BDB61B72720100F9733F /* zutil.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = zutil.c; sourceTree = "<group>"; };
 		84B7BDB71B72720100F9733F /* zutil.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zutil.h; sourceTree = "<group>"; };
-		84B7BDBB1B72720100F9733F /* generated_class_names.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = generated_class_names.h; sourceTree = "<group>"; };
-		84B7BDBC1B72720100F9733F /* generated_class_names_string.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = generated_class_names_string.h; sourceTree = "<group>"; };
-		84B7BDBD1B72720100F9733F /* generated_descriptors.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = generated_descriptors.h; sourceTree = "<group>"; };
-		84B7BDBE1B72720100F9733F /* generated_indexes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = generated_indexes.h; sourceTree = "<group>"; };
-		84B7BDC01B72720100F9733F /* x86_emitter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = x86_emitter.cpp; sourceTree = "<group>"; };
-		84B7BDC11B72720100F9733F /* x86_emitter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = x86_emitter.h; sourceTree = "<group>"; };
-		84B7BDC21B72720100F9733F /* x86_matcher.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = x86_matcher.h; sourceTree = "<group>"; };
-		84B7BDC31B72720100F9733F /* x86_op_classes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = x86_op_classes.h; sourceTree = "<group>"; };
-		84B7BDC41B72720100F9733F /* x86_op_encoder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = x86_op_encoder.h; sourceTree = "<group>"; };
-		84B7BDC51B72720100F9733F /* x86_op_table.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = x86_op_table.h; sourceTree = "<group>"; };
 		84B7BDC81B72720100F9733F /* aica.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = aica.cpp; sourceTree = "<group>"; };
 		84B7BDC91B72720100F9733F /* aica.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = aica.h; sourceTree = "<group>"; };
 		84B7BDCA1B72720100F9733F /* aica_if.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = aica_if.cpp; sourceTree = "<group>"; };
@@ -1235,7 +1224,6 @@
 				AE2A2D5F21D684B9004B308D /* archive */,
 				84B7BD131B72720100F9733F /* cfg */,
 				84B7BD171B72720100F9733F /* deps */,
-				84B7BDB81B72720100F9733F /* emitter */,
 				84B7BDC61B72720100F9733F /* hw */,
 				84B7BE421B72720100F9733F /* imgread */,
 				AEE6278022131BB500EC7E89 /* input */,
@@ -1503,24 +1491,6 @@
 				84B7BDB71B72720100F9733F /* zutil.h */,
 			);
 			path = zlib;
-			sourceTree = "<group>";
-		};
-		84B7BDB81B72720100F9733F /* emitter */ = {
-			isa = PBXGroup;
-			children = (
-				84B7BDBB1B72720100F9733F /* generated_class_names.h */,
-				84B7BDBC1B72720100F9733F /* generated_class_names_string.h */,
-				84B7BDBD1B72720100F9733F /* generated_descriptors.h */,
-				84B7BDBE1B72720100F9733F /* generated_indexes.h */,
-				84B7BDC01B72720100F9733F /* x86_emitter.cpp */,
-				84B7BDC11B72720100F9733F /* x86_emitter.h */,
-				84B7BDC21B72720100F9733F /* x86_matcher.h */,
-				84B7BDC31B72720100F9733F /* x86_op_classes.h */,
-				84B7BDC41B72720100F9733F /* x86_op_encoder.h */,
-				84B7BDC51B72720100F9733F /* x86_op_table.h */,
-			);
-			name = emitter;
-			path = ../../../core/emitter;
 			sourceTree = "<group>";
 		};
 		84B7BDC61B72720100F9733F /* hw */ = {
@@ -2936,7 +2906,6 @@
 				84B7BF1C1B72720200F9733F /* inflate.c in Sources */,
 				AE82C6DD25B64AE200C79BC2 /* zip_dir_add.c in Sources */,
 				AE82C69D25B64AE200C79BC2 /* zip_get_encryption_implementation.c in Sources */,
-				84B7BF241B72720200F9733F /* x86_emitter.cpp in Sources */,
 				AEE6277B220D7B7E00EC7E89 /* imgui_demo.cpp in Sources */,
 				AE649BFE218C552500EF4A81 /* lpc_intrin_sse.c in Sources */,
 				AE2A2D7A21D6851E004B308D /* 7zArcIn.c in Sources */,

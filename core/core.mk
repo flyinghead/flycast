@@ -14,7 +14,7 @@ ifndef NOT_ARM
 endif
 
 ifdef X86_REC
-    RZDCY_MODULES += rec-x86/ emitter/
+    RZDCY_MODULES += rec-x86/
 endif
 
 ifdef X64_REC

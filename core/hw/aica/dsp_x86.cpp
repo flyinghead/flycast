@@ -1,5 +1,5 @@
 /*
-	Copyright 2020 flyinghead
+	Copyright 2021 flyinghead
 
 	This file is part of flycast.
 
@@ -19,8 +19,9 @@
 
 #include "build.h"
 
-#if HOST_CPU == CPU_X64 && FEAT_DSPREC != DYNAREC_NONE
+#if HOST_CPU == CPU_X86 && FEAT_DSPREC != DYNAREC_NONE
 
+#define XBYAK32
 #define XBYAK_NO_OP_NAMES
 #include <xbyak/xbyak.h>
 #include "dsp.h"
@@ -43,48 +44,33 @@ alignas(4096) static u8 CodeBuffer[32 * 1024]
 #endif
 static u8 *WritableCodeBuffer;
 
-class X64DSPAssembler : public Xbyak::CodeGenerator
+class X86DSPAssembler : public Xbyak::CodeGenerator
 {
 public:
-	X64DSPAssembler(u8 *code_buffer, size_t size) : Xbyak::CodeGenerator(size, code_buffer) {}
+	X86DSPAssembler(u8 *code_buffer, size_t size) : Xbyak::CodeGenerator(size, code_buffer) {}
 
 	void Compile(struct dsp_t *DSP)
 	{
 		this->DSP = DSP;
-		DEBUG_LOG(AICA_ARM, "DSPAssembler::DSPCompile recompiling for x86/64 at %p", this->getCode());
+		DEBUG_LOG(AICA_ARM, "X86DSPAssembler::Compile recompiling for x86 at %p", this->getCode());
 
-		push(rbx);
-		push(rbp);
-		push(r12);
-		push(r13);
-		push(r14);
-		push(r15);
-#ifdef _WIN32
-		sub(rsp, 40);	// 32-byte shadow space + 8 bytes for 16-byte stack alignment
-#else
-		sub(rsp, 8);	// 16-byte stack alignment
+		push(esi);
+		push(edi);
+		push(ebp);
+		push(ebx);
+#ifndef _WIN32
+		// 16-byte alignment
+		sub(esp, 12);
 #endif
-		mov(rbx, (uintptr_t)&DSP->TEMP[0]);	// rbx points to TEMP, right after the code
-		mov(rbp, (uintptr_t)DSPData);		// rbp points to DSPData
-		const Xbyak::Reg32 INPUTS = r8d;	// 24 bits
-		const Xbyak::Reg32 ACC = r12d;		// 26 bits - saved
-		const Xbyak::Reg32 B = r9d;			// 26 bits
-		const Xbyak::Reg32 X = r10d;		// 24 bits
-		const Xbyak::Reg32 Y = r11d;		// 13 bits
-		const Xbyak::Reg32 Y_REG = r13d;	// 24 bits - saved
-		const Xbyak::Reg32 ADRS_REG = r14d;	// 13 bits unsigned - saved
-		const Xbyak::Reg32 MDEC_CT = r15d;	// saved
-#ifdef _WIN32
-		const Xbyak::Reg32 call_arg0 = ecx;
-#else
-		const Xbyak::Reg32 call_arg0 = edi;
-#endif
+		const Xbyak::Reg32 INPUTS = esi;	// 24 bits
+		const Xbyak::Reg32 ACC = edi;		// 26 bits - saved
+		const Xbyak::Reg32 X = ebp;			// 24 bits
+		const Xbyak::Reg32 Y = ebx;			// 13 bits
 
 		xor_(ACC, ACC);
-		mov(dword[rbx + dsp_operand(&DSP->FRC_REG)], 0);
-		xor_(Y_REG, Y_REG);
-		xor_(ADRS_REG, ADRS_REG);
-		mov(MDEC_CT, dword[rbx + dsp_operand(&DSP->regs.MDEC_CT)]);
+		mov(dword[&DSP->FRC_REG], 0);
+		mov(dword[&DSP->Y_REG], 0);
+		mov(dword[&DSP->ADRS_REG], 0);
 
 		for (int step = 0; step < 128; ++step)
 		{
@@ -97,17 +83,17 @@ public:
 			{
 				if (op.IRA <= 0x1f)
 					//INPUTS = DSP->MEMS[op.IRA];
-					mov(INPUTS, dword[rbx + dsp_operand(DSP->MEMS, op.IRA)]);
+					mov(INPUTS, dword[&DSP->MEMS[op.IRA]]);
 				else if (op.IRA <= 0x2F)
 				{
 					//INPUTS = DSP->MIXS[op.IRA - 0x20] << 4;		// MIXS is 20 bit
-					mov(INPUTS, dword[rbx + dsp_operand(DSP->MIXS, op.IRA - 0x20)]);
+					mov(INPUTS, dword[&DSP->MIXS[op.IRA - 0x20]]);
 					shl(INPUTS, 4);
 				}
 				else if (op.IRA <= 0x31)
 				{
 					//INPUTS = DSPData->EXTS[op.IRA - 0x30] << 8;	// EXTS is 16 bits
-					mov(INPUTS, dword[rbx + dsp_operand(DSPData->EXTS, op.IRA - 0x30)]);
+					mov(INPUTS, dword[&DSPData->EXTS[op.IRA - 0x30]]);
 					shl(INPUTS, 8);
 				}
 				else
@@ -119,8 +105,8 @@ public:
 			if (op.IWT)
 			{
 				//DSP->MEMS[op.IWA] = MEMVAL[step & 3];	// MEMVAL was selected in previous MRD
-				mov(eax, dword[rbx + dsp_operand(DSP->MEMVAL, step & 3)]);
-				mov(dword[rbx + dsp_operand(DSP->MEMS, op.IWA)], eax);
+				mov(eax, dword[&DSP->MEMVAL[step & 3]]);
+				mov(dword[&DSP->MEMS[op.IWA]], eax);
 			}
 
 			// Operand sel
@@ -129,19 +115,20 @@ public:
 			{
 				if (op.BSEL)
 					//B = ACC;
-					mov(B, ACC);
+					mov(dword[&DSP->B], ACC);
 				else
 				{
 					//B = DSP->TEMP[(TRA + DSP->regs.MDEC_CT) & 0x7F];
-					mov(eax, MDEC_CT);
+					mov(eax, dword[&DSP->regs.MDEC_CT]);
 					if (op.TRA)
 						add(eax, op.TRA);
 					and_(eax, 0x7f);
-					mov(B, dword[rbx + rax * 4]);
+					mov(eax, dword[(size_t)&DSP->TEMP + eax * 4]);
+					mov(dword[&DSP->B], eax);
 				}
 				if (op.NEGB)
 					//B = 0 - B;
-					neg(B);
+					neg(dword[&DSP->B]);
 			}
 
 			// X
@@ -153,14 +140,14 @@ public:
 			{
 				//X = DSP->TEMP[(TRA + DSP->regs.MDEC_CT) & 0x7F];
 				if (!op.ZERO && !op.BSEL && !op.NEGB)
-					X_alias = B;
+					mov(X, dword[&DSP->B]);
 				else
 				{
-					mov(eax, MDEC_CT);
+					mov(eax, dword[&DSP->regs.MDEC_CT]);
 					if (op.TRA)
 						add(eax, op.TRA);
 					and_(eax, 0x7f);
-					mov(X, dword[rbx + rax * 4]);
+					mov(X, dword[(size_t)&DSP->TEMP + eax * 4]);
 				}
 			}
 
@@ -168,31 +155,31 @@ public:
 			if (op.YSEL == 0)
 			{
 				//Y = FRC_REG;
-				mov(Y, dword[rbx + dsp_operand(&DSP->FRC_REG)]);
+				mov(Y, dword[&DSP->FRC_REG]);
 			}
 			else if (op.YSEL == 1)
 			{
 				//Y = DSPData->COEF[COEF] >> 3;	//COEF is 16 bits
-				movsx(Y, word[rbp + dspdata_operand(DSPData->COEF, COEF)]);
+				movsx(Y, word[&DSPData->COEF[COEF]]);
 				sar(Y, 3);
 			}
 			else if (op.YSEL == 2)
 			{
 				//Y = Y_REG >> 11;
-				mov(Y, Y_REG);
+				mov(Y, dword[&DSP->Y_REG]);
 				sar(Y, 11);
 			}
 			else if (op.YSEL == 3)
 			{
 				//Y = (Y_REG >> 4) & 0x0FFF;
-				mov(Y, Y_REG);
+				mov(Y, dword[&DSP->Y_REG]);
 				sar(Y, 4);
 				and_(Y, 0x0fff);
 			}
 
 			if (op.YRL)
 				//Y_REG = INPUTS;
-				mov(Y_REG, INPUTS);
+				mov(dword[&DSP->Y_REG], INPUTS);
 
 			if (op.TWT || op.FRCL || op.MWT || (op.ADRL && op.SHIFT == 3) || op.EWT)
 			{
@@ -202,70 +189,70 @@ public:
 				{
 					// SHIFTED = clamp(ACC, -0x80000, 0x7FFFF)
 			        cmp(ACC, 0xFF800000);
-			        mov(edx, 0xFF800000);
+			        mov(ecx, 0xFF800000);
 			        mov(eax, 0x007FFFFF);
-			        cmovge(edx, ACC);
-			        cmp(edx, 0x007FFFFF);
-			        cmovg(edx, eax);
+			        cmovge(ecx, ACC);
+			        cmp(ecx, 0x007FFFFF);
+			        cmovg(ecx, eax);
 				}
 				else if (op.SHIFT == 1)
 				{
 					//SHIFTED = ACC << 1;	// x2 scale
-					mov(ecx, ACC);
-					shl(ecx, 1);
+					mov(edx, ACC);
+					shl(edx, 1);
 					// SHIFTED = clamp(SHIFTED, -0x80000, 0x7FFFF)
-			        cmp(ecx, 0xFF800000);
-			        mov(edx, 0xFF800000);
+			        cmp(edx, 0xFF800000);
+			        mov(ecx, 0xFF800000);
 			        mov(eax, 0x007FFFFF);
-			        cmovge(edx, ecx);
-			        cmp(edx, 0x007FFFFF);
-			        cmovg(edx, eax);
+			        cmovge(ecx, edx);
+			        cmp(ecx, 0x007FFFFF);
+			        cmovg(ecx, eax);
 				}
 				else if (op.SHIFT == 2)
 				{
 					//SHIFTED = ACC << 1;	// x2 scale
-					mov(edx, ACC);
-					shl(edx, 1);
+					mov(ecx, ACC);
+					shl(ecx, 1);
 				}
 				else if (op.SHIFT == 3)
 				{
 					//SHIFTED = ACC;
-					mov(edx, ACC);
+					mov(ecx, ACC);
 				}
-				// edx contains SHIFTED
+				// ecx contains SHIFTED
 			}
 
 			// ACCUM
 			//ACC = (((s64)X * (s64)Y) >> 12) + B;
-			const Xbyak::Reg64 Xlong = X_alias.cvt64();
-			movsxd(Xlong, X_alias);
-			movsxd(rax, Y);
-			imul(rax, Xlong);
-			sar(rax, 12);
+			mov(eax, X_alias);
+			imul(Y);
+			shl(edx, 20);
+			shr(eax, 12);
+			or_(eax, edx);
 			mov(ACC, eax);
 			if (!op.ZERO)
-				add(ACC, B);
+				add(ACC, dword[&DSP->B]);
 
 			if (op.TWT)
 			{
 				//DSP->TEMP[(op.TWA + DSP->regs.MDEC_CT) & 0x7F] = SHIFTED;
-				mov(ecx, MDEC_CT);
+				mov(edx, dword[&DSP->regs.MDEC_CT]);
 				if (op.TWA)
-					add(ecx, op.TWA);
-				and_(ecx, 0x7f);
-				mov(dword[rbx + rcx * 4], edx);
+					add(edx, op.TWA);
+				and_(edx, 0x7f);
+				mov(dword[(size_t)&DSP->TEMP + edx * 4], ecx);
 			}
 
 			if (op.FRCL)
 			{
-				mov(ecx, edx);
+				mov(edx, ecx);
 				if (op.SHIFT == 3)
 					//FRC_REG = SHIFTED & 0x0FFF;
-					and_(ecx, 0xFFF);
+					and_(edx, 0xFFF);
 				else
 					//FRC_REG = SHIFTED >> 11;
-					sar(ecx, 11);
-				mov(dword[rbx + dsp_operand(&DSP->FRC_REG)], ecx);
+					sar(edx, 11);
+				mov(dword[&DSP->FRC_REG], edx);
 			}
 
 			if (step & 1)
@@ -273,36 +260,32 @@ public:
 				if (op.MRD || op.MWT)
 				{
 					if ((op.ADRL && op.SHIFT == 3) || op.EWT)
-						push(rdx);
-					if (op.ADRL && op.SHIFT != 3)
-						push(INPUTS.cvt64());
+						push(ecx);
 				}
 				const Xbyak::Reg32 ADDR = Y;
-				if (op.MRD)			// memory only allowed on odd. DoA inserts NOPs on even
-				{
-					//MEMVAL[(step + 2) & 3] = UNPACK(*(u16 *)&aica_ram[ADDR & ARAM_MASK]);
-					CalculateADDR(ADDR, op, ADRS_REG, MDEC_CT);
-					mov(rcx, (uintptr_t)&aica_ram[0]);
-					movzx(call_arg0, word[rcx + ADDR.cvt64()]);
-					GenCall(UNPACK);
-					mov(dword[rbx + dsp_operand(&DSP->MEMVAL[(step + 2) & 3])], eax);
-				}
 				if (op.MWT)
 				{
 					// *(u16 *)&aica_ram[ADDR & ARAM_MASK] = PACK(SHIFTED);
-					mov(call_arg0, edx);	// SHIFTED
-					GenCall(PACK);
+					// SHIFTED is in ecx
+					call(CC_RW2RX((const void *)PACK));
 
-					CalculateADDR(ADDR, op, ADRS_REG, MDEC_CT);
-					mov(rcx, (uintptr_t)&aica_ram[0]);
-					mov(word[rcx + ADDR.cvt64()], ax);
+					CalculateADDR(ADDR, op);
+					mov(ecx, (uintptr_t)&aica_ram[0]);
+					mov(word[ecx + ADDR], ax);
+				}
+				if (op.MRD)			// memory only allowed on odd. DoA inserts NOPs on even
+				{
+					//MEMVAL[(step + 2) & 3] = UNPACK(*(u16 *)&aica_ram[ADDR & ARAM_MASK]);
+					CalculateADDR(ADDR, op);
+					mov(ecx, (uintptr_t)&aica_ram[0]);
+					movzx(ecx, word[ecx + ADDR]);
+					call(CC_RW2RX((const void *)UNPACK));
+					mov(dword[&DSP->MEMVAL[(step + 2) & 3]], eax);
 				}
 				if (op.MRD || op.MWT)
 				{
-					if (op.ADRL && op.SHIFT != 3)
-						pop(INPUTS.cvt64());
 					if ((op.ADRL && op.SHIFT == 3) || op.EWT)
-						pop(rdx);
+						pop(ecx);
 				}
 			}
 
@@ -311,66 +294,55 @@ public:
 				if (op.SHIFT == 3)
 				{
 					//ADRS_REG = SHIFTED >> 12;
-					mov(ADRS_REG, edx);	// SHIFTED
-					sar(ADRS_REG, 12);
+					mov(dword[&DSP->ADRS_REG], ecx);	// SHIFTED
+					sar(dword[&DSP->ADRS_REG], 12);
 				}
 				else
 				{
 					//ADRS_REG = INPUTS >> 16;
-					mov(ADRS_REG, INPUTS);
-					sar(ADRS_REG, 16);
+					mov(dword[&DSP->ADRS_REG], INPUTS);
+					sar(dword[&DSP->ADRS_REG], 16);
 				}
 			}
 
 			if (op.EWT)
 			{
 				//DSPData->EFREG[op.EWA] = SHIFTED >> 8;
-				sar(edx, 8);	// SHIFTED
-				mov(dword[rbp + dspdata_operand(DSPData->EFREG, op.EWA)], edx);
+				sar(ecx, 8);	// SHIFTED
+				mov(dword[&DSPData->EFREG[op.EWA]], ecx);
 			}
 		}
 		// DSP->regs.MDEC_CT--
 		mov(eax, dsp.RBL + 1);
-		sub(MDEC_CT, 1);
+		mov(ecx, dword[&DSP->regs.MDEC_CT]);
+		sub(ecx, 1);
 		//if (dsp.regs.MDEC_CT == 0)
 		//	dsp.regs.MDEC_CT = dsp.RBL + 1;			// RBL is ring buffer length - 1
-		cmove(MDEC_CT, eax);
-		mov(dword[rbx + dsp_operand(&DSP->regs.MDEC_CT)], MDEC_CT);
+		cmove(ecx, eax);
+		mov(dword[&DSP->regs.MDEC_CT], ecx);
 
-#ifdef _WIN32
-		add(rsp, 40);
-#else
-		add(rsp, 8);
+#ifndef _WIN32
+		// 16-byte alignment
+		add(esp, 12);
 #endif
-		pop(r15);
-		pop(r14);
-		pop(r13);
-		pop(r12);
-		pop(rbp);
-		pop(rbx);
+		pop(ebx);
+		pop(ebp);
+		pop(edi);
+		pop(esi);
 
 		ret();
 		ready();
 	}
 
 private:
-	ptrdiff_t dsp_operand(void *data, int index = 0, u32 element_size = 4)
-	{
-		return ((u8*)data - (u8*)DSP) - offsetof(dsp_t, TEMP) + index  * element_size;
-	}
-	ptrdiff_t dspdata_operand(void *data, int index = 0, u32 element_size = 4)
-	{
-		return ((u8*)data - (u8*)DSPData) + index  * element_size;
-	}
-
-	void CalculateADDR(const Xbyak::Reg32 ADDR, const _INST& op, const Xbyak::Reg32 ADRS_REG, const Xbyak::Reg32 MDEC_CT)
+	void CalculateADDR(const Xbyak::Reg32 ADDR, const _INST& op)
 	{
 		//u32 ADDR = DSPData->MADRS[op.MASA];
-		mov(ADDR, dword[rbp + dspdata_operand(DSPData->MADRS, op.MASA)]);
+		mov(ADDR, dword[&DSPData->MADRS[op.MASA]]);
 		if (op.ADREB)
 		{
 			//ADDR += ADRS_REG & 0x0FFF;
-			mov(ecx, ADRS_REG);
+			mov(ecx, dword[&DSP->ADRS_REG]);
 			and_(ecx, 0x0FFF);
 			add(ADDR, ecx);
 		}
@@ -380,7 +352,7 @@ private:
 		if (!op.TABLE)
 		{
 			//ADDR += DSP->regs.MDEC_CT;
-			add(ADDR, MDEC_CT);
+			add(ADDR, dword[&DSP->regs.MDEC_CT]);
 			//ADDR &= DSP->RBL;
 			// RBL is constant for this program
 			and_(ADDR, DSP->RBL);
@@ -396,12 +368,6 @@ private:
 		add(ADDR, DSP->RBP);
 		// ADDR & ARAM_MASK
 		and_(ADDR, ARAM_MASK);
-	}
-
-	template<class Ret, class... Params>
-	void GenCall(Ret(*function)(Params...))
-	{
-		call(CC_RX2RW(function));
 	}
 
 	struct dsp_t *DSP = nullptr;
@@ -420,18 +386,18 @@ void dsp_recompile()
 			break;
 		}
 	}
-	X64DSPAssembler assembler(WritableCodeBuffer, sizeof(CodeBuffer));
+	X86DSPAssembler assembler(WritableCodeBuffer, sizeof(CodeBuffer));
 	assembler.Compile(&dsp);
 }
 
 void dsp_rec_init()
 {
 	if (!vmem_platform_prepare_jit_block(CodeBuffer, sizeof(CodeBuffer), (void**)&WritableCodeBuffer))
-		die("mprotect failed in x64 dsp");
+		die("mprotect failed in x86 dsp");
 }
 
 void dsp_rec_step()
 {
-	((void (*)())CodeBuffer)();
+	((void (*)())&CodeBuffer[0])();
 }
 #endif

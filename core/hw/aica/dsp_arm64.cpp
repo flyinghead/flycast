@@ -24,10 +24,11 @@
 #include "dsp.h"
 #include "aica.h"
 #include "aica_if.h"
+#include "hw/mem/_vmem.h"
 #include "deps/vixl/aarch64/macro-assembler-aarch64.h"
 using namespace vixl::aarch64;
 
-extern void vmem_platform_flush_cache(void *icache_start, void *icache_end, void *dcache_start, void *dcache_end);
+static u8 *WritableCodeBuffer;
 
 class DSPAssembler : public MacroAssembler
 {
@@ -140,7 +141,7 @@ public:
 			else
 			{
 				//X = DSP->TEMP[(TRA + DSP->regs.MDEC_CT) & 0x7F];
-				if (!op.ZERO && !op.BSEL)
+				if (!op.ZERO && !op.BSEL && !op.NEGB)
 					X_alias = &B;
 				else
 				{
@@ -446,56 +447,18 @@ void dsp_recompile()
 			break;
 		}
 	}
-	DSPAssembler assembler(&dsp.DynCode[0], sizeof(dsp.DynCode));
+	DSPAssembler assembler(WritableCodeBuffer, sizeof(dsp.DynCode));
 	assembler.Compile(&dsp);
 }
 
-void dsp_init()
+void dsp_rec_init()
 {
-	memset(&dsp, 0, sizeof(dsp));
-	dsp.RBL = 0x8000 - 1;
-	dsp.RBP=0;
-	dsp.regs.MDEC_CT = 1;
-	dsp.dyndirty = true;
-
-	if (!mem_region_set_exec(dsp.DynCode, sizeof(dsp.DynCode)))
-	{
-		perror("Couldn’t mprotect DSP code");
+	if (!vmem_platform_prepare_jit_block(dsp.DynCode, sizeof(dsp.DynCode), (void**)&WritableCodeBuffer))
 		die("mprotect failed in arm64 dsp");
-	}
 }
 
-void dsp_step()
+void dsp_rec_step()
 {
-	if (dsp.dyndirty)
-	{
-		dsp.dyndirty = false;
-		dsp_recompile();
-	}
-	if (dsp.Stopped)
-		return;
-	((void (*)())&dsp.DynCode)();
-}
-
-void dsp_writenmem(u32 addr)
-{
-	if (addr >= 0x3400 && addr < 0x3C00)
-	{
-		dsp.dyndirty = true;
-	}
-	else if (addr >= 0x4000 && addr < 0x4400)
-	{
-		// TODO proper sharing of memory with sh4 through DSPData
-		memset(dsp.TEMP, 0, sizeof(dsp.TEMP));
-	}
-	else if (addr >= 0x4400 && addr < 0x4500)
-	{
-		// TODO proper sharing of memory with sh4 through DSPData
-		memset(dsp.MEMS, 0, sizeof(dsp.MEMS));
-	}
-}
-
-void dsp_term()
-{
+	((void (*)())dsp.DynCode)();
 }
 #endif
