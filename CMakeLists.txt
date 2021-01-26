@@ -57,6 +57,7 @@ if(ANDROID)
     set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_RELEASE} -O3")
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_RELEASE} -O3")
     target_compile_options(${PROJECT_NAME} PRIVATE -fno-stack-protector)
+    set(CMAKE_ANDROID_STL_TYPE "c++_static")
 elseif(MSVC)
     add_executable(${PROJECT_NAME} WIN32 core/nullDC.cpp)
 else()
@@ -851,21 +852,64 @@ if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm.*|ARM.*)")
     target_sources(${PROJECT_NAME} PRIVATE core/rec-ARM/ngen_arm.S core/rec-ARM/rec_arm.cpp)
 elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^(aarch64.*|AARCH64.*)")
     target_include_directories(${PROJECT_NAME} PRIVATE core/deps/vixl)
-    target_sources(${PROJECT_NAME} PRIVATE core/deps/vixl/aarch64/abi-aarch64.h core/deps/vixl/aarch64/assembler-aarch64.cc core/deps/vixl/aarch64/assembler-aarch64.h core/deps/vixl/aarch64/constants-aarch64.h core/deps/vixl/aarch64/cpu-aarch64.cc core/deps/vixl/aarch64/cpu-aarch64.h core/deps/vixl/aarch64/cpu-features-auditor-aarch64.cc core/deps/vixl/aarch64/cpu-features-auditor-aarch64.h core/deps/vixl/aarch64/decoder-aarch64.cc core/deps/vixl/aarch64/decoder-aarch64.h core/deps/vixl/aarch64/disasm-aarch64.cc core/deps/vixl/aarch64/disasm-aarch64.h core/deps/vixl/aarch64/instructions-aarch64.cc core/deps/vixl/aarch64/instructions-aarch64.h core/deps/vixl/aarch64/instrument-aarch64.cc core/deps/vixl/aarch64/instrument-aarch64.h core/deps/vixl/aarch64/logic-aarch64.cc core/deps/vixl/aarch64/macro-assembler-aarch64.cc core/deps/vixl/aarch64/macro-assembler-aarch64.h core/deps/vixl/aarch64/operands-aarch64.cc core/deps/vixl/aarch64/operands-aarch64.h core/deps/vixl/aarch64/pointer-auth-aarch64.cc core/deps/vixl/aarch64/simulator-aarch64.cc core/deps/vixl/aarch64/simulator-aarch64.h core/deps/vixl/aarch64/simulator-constants-aarch64.h core/deps/vixl/assembler-base-vixl.h core/deps/vixl/code-buffer-vixl.cc core/deps/vixl/code-buffer-vixl.h core/deps/vixl/code-generation-scopes-vixl.h core/deps/vixl/compiler-intrinsics-vixl.cc core/deps/vixl/compiler-intrinsics-vixl.h core/deps/vixl/cpu-features.cc core/deps/vixl/cpu-features.h core/deps/vixl/globals-vixl.h core/deps/vixl/invalset-vixl.h core/deps/vixl/macro-assembler-interface.h core/deps/vixl/platform-vixl.h core/deps/vixl/pool-manager.h core/deps/vixl/pool-manager-impl.h core/deps/vixl/utils-vixl.cc core/deps/vixl/utils-vixl.h)
+    target_sources(${PROJECT_NAME} PRIVATE
+    	core/deps/vixl/aarch64/abi-aarch64.h
+    	core/deps/vixl/aarch64/assembler-aarch64.cc
+    	core/deps/vixl/aarch64/assembler-aarch64.h
+    	core/deps/vixl/aarch64/constants-aarch64.h
+    	core/deps/vixl/aarch64/cpu-aarch64.cc
+    	core/deps/vixl/aarch64/cpu-aarch64.h
+    	core/deps/vixl/aarch64/cpu-features-auditor-aarch64.cc
+    	core/deps/vixl/aarch64/cpu-features-auditor-aarch64.h
+    	core/deps/vixl/aarch64/decoder-aarch64.cc
+    	core/deps/vixl/aarch64/decoder-aarch64.h
+    	core/deps/vixl/aarch64/disasm-aarch64.cc
+    	core/deps/vixl/aarch64/disasm-aarch64.h
+    	core/deps/vixl/aarch64/instructions-aarch64.cc
+    	core/deps/vixl/aarch64/instructions-aarch64.h
+    	core/deps/vixl/aarch64/instrument-aarch64.cc
+    	core/deps/vixl/aarch64/instrument-aarch64.h
+    	core/deps/vixl/aarch64/logic-aarch64.cc
+    	core/deps/vixl/aarch64/macro-assembler-aarch64.cc
+    	core/deps/vixl/aarch64/macro-assembler-aarch64.h
+    	core/deps/vixl/aarch64/operands-aarch64.cc
+    	core/deps/vixl/aarch64/operands-aarch64.h
+    	core/deps/vixl/aarch64/pointer-auth-aarch64.cc
+    	core/deps/vixl/aarch64/simulator-aarch64.cc
+    	core/deps/vixl/aarch64/simulator-aarch64.h
+    	core/deps/vixl/aarch64/simulator-constants-aarch64.h
+    	core/deps/vixl/assembler-base-vixl.h
+    	core/deps/vixl/code-buffer-vixl.cc
+    	core/deps/vixl/code-buffer-vixl.h
+    	core/deps/vixl/code-generation-scopes-vixl.h
+    	core/deps/vixl/compiler-intrinsics-vixl.cc
+    	core/deps/vixl/compiler-intrinsics-vixl.h
+    	core/deps/vixl/cpu-features.cc
+    	core/deps/vixl/cpu-features.h
+    	core/deps/vixl/globals-vixl.h
+    	core/deps/vixl/invalset-vixl.h
+    	core/deps/vixl/macro-assembler-interface.h
+    	core/deps/vixl/platform-vixl.h
+    	core/deps/vixl/pool-manager.h
+    	core/deps/vixl/pool-manager-impl.h
+    	core/deps/vixl/utils-vixl.cc
+    	core/deps/vixl/utils-vixl.h)
     target_sources(${PROJECT_NAME} PRIVATE core/rec-ARM64/rec_arm64.cpp core/rec-ARM64/arm64_regalloc.h)
 elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "i686.*|i386.*|x86.*|amd64.*|x86_64.*|AMD64.*")
     if(CMAKE_SIZEOF_VOID_P EQUAL 4)
-        target_sources(${PROJECT_NAME} PRIVATE core/rec-x86/rec_x86_driver.cpp core/rec-x86/rec_x86_il.cpp core/rec-x86/rec_x86_asm.cpp core/rec-x86/rec_x86_ngen.h)
-        if(UNIX AND NOT APPLE)
-            target_sources(${PROJECT_NAME} PRIVATE core/rec-x86/rec_lin86_asm.S)
-        endif()
+    	target_sources(${PROJECT_NAME} PRIVATE
+    		core/rec-x64/xbyak_base.h
+    		core/rec-x86/rec_x86.h
+    		core/rec-x86/x86_regalloc.h
+    		core/rec-x86/rec_x86.cpp
+    		core/rec-x86/x86_ops.cpp)
     elseif(CMAKE_SIZEOF_VOID_P EQUAL 8)
-        target_sources(${PROJECT_NAME} PRIVATE core/rec-x64/rec_x64.cpp core/rec-x64/x64_regalloc.h)
+        target_sources(${PROJECT_NAME} PRIVATE
+        	core/rec-x64/xbyak_base.h
+        	core/rec-x64/rec_x64.cpp
+        	core/rec-x64/x64_regalloc.h)
         if(MSVC)
             target_sources(${PROJECT_NAME} PRIVATE core/rec-x64/msvc.asm)
-        else()
-            set_source_files_properties(core/rec-x64/rec_x64.cpp PROPERTIES COMPILE_FLAGS -fno-operator-names)
-            set_source_files_properties(core/hw/aica/dsp_x64.cpp PROPERTIES COMPILE_FLAGS -fno-operator-names)
         endif()
     endif()
 else()

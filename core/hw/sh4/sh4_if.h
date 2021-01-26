@@ -305,7 +305,7 @@ typedef void DYNACALL TaListVoidFP(void* data);
 #define FPCB_SIZE (RAM_SIZE_MAX/2)
 #define FPCB_MASK (FPCB_SIZE -1)
 #define FPCB_PAD 0x100000
-#define FPCB_OFFSET (-(FPCB_SIZE*sizeof(void*) + FPCB_PAD)) 
+#define FPCB_OFFSET (-(int)(FPCB_SIZE * sizeof(void*) + FPCB_PAD))
 struct Sh4RCB
 {
 	void* fpcb[FPCB_SIZE];

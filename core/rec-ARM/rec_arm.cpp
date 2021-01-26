@@ -232,7 +232,7 @@ eReg alloc_regs[]={r5,r6,r7,r10,r11,(eReg)-1};
 eFSReg alloc_fpu[]={f16,f17,f18,f19,f20,f21,f22,f23,
 					f24,f25,f26,f27,f28,f29,f30,f31,(eFSReg)-1};
 
-struct arm_reg_alloc: RegAlloc<eReg,eFSReg,false>
+struct arm_reg_alloc: RegAlloc<eReg, eFSReg>
 {
 	virtual void Preload(u32 reg,eReg nreg)
 	{

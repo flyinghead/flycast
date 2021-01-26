@@ -1205,11 +1205,8 @@ INLINE void DYNACALL do_sqw(u32 Dest)
 	}
 	else
 	{
-
-#if HOST_CPU ==CPU_X86
 		//sanity/optimisation check
-		verify(CCN_QACR_TR[0]==CCN_QACR_TR[1]);
-#endif
+		//verify(CCN_QACR_TR[0]==CCN_QACR_TR[1]);
 
 		u32 QACR = CCN_QACR_TR[0];
 		/*

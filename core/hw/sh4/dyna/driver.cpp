@@ -127,7 +127,7 @@ const char* RuntimeBlockInfo::hash()
 		{
 			u16 data = ptr[i];
 			//Do not count PC relative loads (relocated code)
-			if ((ptr[i] >> 12) == 0xD)
+			if ((data >> 12) == 0xD)
 				data = 0xD000;
 
 			XXH32_update(state, &data, 2);
@@ -239,7 +239,7 @@ DynarecCodeEntryPtr DYNACALL rdv_FailedToFindBlock_pc()
 
 DynarecCodeEntryPtr DYNACALL rdv_FailedToFindBlock(u32 pc)
 {
-	//printf("rdv_FailedToFindBlock ~ %08X\n",pc);
+	//DEBUG_LOG(DYNAREC, "rdv_FailedToFindBlock %08x", pc);
 	next_pc=pc;
 	DynarecCodeEntryPtr code = rdv_CompilePC(0);
 	if (code == NULL)
@@ -271,6 +271,7 @@ u32 DYNACALL rdv_DoInterrupts(void* block_cpde)
 // addr must be the physical address of the start of the block
 DynarecCodeEntryPtr DYNACALL rdv_BlockCheckFail(u32 addr)
 {
+	DEBUG_LOG(DYNAREC, "rdv_BlockCheckFail @ %08x", addr);
 	u32 blockcheck_failures = 0;
 	if (mmu_enabled())
 	{
@@ -304,6 +305,7 @@ DynarecCodeEntryPtr rdv_FindOrCompile()
 void* DYNACALL rdv_LinkBlock(u8* code,u32 dpc)
 {
 	// code is the RX addr to return after, however bm_GetBlock returns RW
+	//DEBUG_LOG(DYNAREC, "rdv_LinkBlock %p pc %08x", code, dpc);
 	RuntimeBlockInfoPtr rbi = bm_GetBlock(code);
 	bool stale_block = false;
 	if (!rbi)

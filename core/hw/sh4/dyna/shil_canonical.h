@@ -290,14 +290,6 @@ u64,f1,(u32 r1,u32 r2,u32 C),
 	((u32*)&rv)[0]=res;
 	((u32*)&rv)[1]=res>>32;
 
-	/*
-	//Damn macro magic//
-#if HOST_CPU==CPU_X86
-	verify(((u32*)&rv)[1]<=1);
-	verify(C<=1);
-#endif
-	*/
-
 	return rv;
 )
 
@@ -323,14 +315,6 @@ u64,f1,(u32 r1,u32 r2,u32 C),
 	u64 rv;
 	((u32*)&rv)[0]=res;
 	((u32*)&rv)[1]=(res>>32)&1; //alternatively: res>>63
-
-	/*
-	//Damn macro magic//
-#if HOST_CPU==CPU_X86
-	verify(((u32*)&rv)[1]<=1);
-	verify(C<=1);
-#endif
-	*/
 
 	return rv;
 )

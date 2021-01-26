@@ -28,7 +28,7 @@
 
 #define ssa_printf(...) DEBUG_LOG(DYNAREC, __VA_ARGS__)
 
-template<typename nreg_t, typename nregf_t, bool explode_spans = true>
+template<typename nreg_t, typename nregf_t>
 class RegAlloc
 {
 public:
