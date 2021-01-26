@@ -508,6 +508,7 @@ void VulkanContext::CreateSwapChain()
 	{
 		device->waitIdle();
 
+		overlay->Term();
 		framebuffers.clear();
 		drawFences.clear();
 		imageAcquiredSemaphores.clear();

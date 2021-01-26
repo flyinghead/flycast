@@ -45,6 +45,16 @@ public:
 		xhairDrawer = std::unique_ptr<QuadDrawer>(new QuadDrawer());
 		xhairDrawer->Init(alphaPipeline.get());
 	}
+
+	void Term()
+	{
+		commandBuffers.clear();
+		alphaPipeline.reset();
+		for (auto& drawer : drawers)
+			drawer.reset();
+		xhairDrawer.reset();
+	}
+
 	const std::vector<vk::UniqueCommandBuffer>* Prepare(vk::CommandPool commandPool, bool vmu, bool crosshair);
 	void Draw(vk::Extent2D viewport, float scaling, bool vmu, bool crosshair);
 
