@@ -61,13 +61,13 @@ bool TcpClient::Connect(const char *host, int port) {
                 } else if (res > 0) {
                     
                     if (FD_ISSET(new_sock, &setE)){
-#ifdef _WIN32
-                        char error;
-#else
                         int error;
-#endif
                         socklen_t l = sizeof(int);
+#ifdef _WIN32
+                        if (getsockopt(new_sock, SOL_SOCKET, SO_ERROR, (char*)&error, &l) < 0 || error) {
+#else
                         if (getsockopt(new_sock, SOL_SOCKET, SO_ERROR, &error, &l) < 0 || error) {
+#endif
                             WARN_LOG(COMMON, "Connect fail 4 %d", get_last_error());
                             return false;
                         }
