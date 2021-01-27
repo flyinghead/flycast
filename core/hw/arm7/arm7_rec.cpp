@@ -36,8 +36,6 @@
 
 extern "C" u32 DYNACALL arm_compilecode();
 
-extern reg_pair arm_Reg[RN_ARM_REG_COUNT];
-
 u8* icPtr;
 u8* ICache;
 extern const u32 ICacheSize = 1024 * 1024 * 4;
@@ -115,7 +113,7 @@ static std::vector<ArmOp> block_ops;
 static u8 cpuBitsSet[256];
 
 //findfirstset -- used in LDM/STM handling
-#if HOST_CPU==CPU_X86 && !defined(__GNUC__)
+#ifdef _MSC_VER
 #include <intrin.h>
 
 u32 findfirstset(u32 v)
@@ -340,7 +338,7 @@ static ArmOp decodeArmOp(u32 opcode, u32 arm_pc)
 				// Immediate offset
 				if (op.arg[0].getReg().armreg == RN_PC)
 					// Compute pc-relative address
-					op.arg[0] = ArmOp::Operand(arm_pc + 8 + (op.add_offset ? bits.imm12 : -bits.imm12));
+					op.arg[0] = ArmOp::Operand(arm_pc + 8 + (op.add_offset ? (int)bits.imm12 : -(int)bits.imm12));
 				else
 					op.arg[1] = ArmOp::Operand(bits.imm12);
 			}
@@ -709,10 +707,14 @@ extern "C" void DYNACALL arm_mainloop(u32 cycl, void* regs, void* entrypoints);
 
 // Run a timeslice of arm7
 
-void arm_Run(u32 CycleCount)
+void arm_Run(u32 samples)
 {
-	if (Arm7Enabled)
-		arm_mainloop(CycleCount, arm_Reg, EntryPoints);
+	for (u32 i = 0; i < samples; i++)
+	{
+		if (Arm7Enabled)
+			arm_mainloop(ARM_CYCLES_PER_SAMPLE, arm_Reg, EntryPoints);
+		libAICA_TimeStep();
+	}
 }
 
 #endif // FEAT_AREC != DYNAREC_NONE

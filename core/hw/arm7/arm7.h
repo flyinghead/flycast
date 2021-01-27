@@ -90,3 +90,16 @@ typedef union
 
 	u32 I;
 } reg_pair;
+
+#ifdef _MSC_VER
+extern "C" {
+#endif
+
+alignas(8) extern reg_pair arm_Reg[RN_ARM_REG_COUNT];
+
+#ifdef _MSC_VER
+}
+#endif
+
+#define ARM_CYCLES_PER_SAMPLE 256
+

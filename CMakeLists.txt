@@ -900,7 +900,7 @@ elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "i686.*|i386.*|x86.*|amd64.*|x86_64.*|AMD6
         	core/rec-x64/rec_x64.cpp
         	core/rec-x64/x64_regalloc.h)
         if(MSVC)
-            target_sources(${PROJECT_NAME} PRIVATE core/rec-x64/msvc.asm)
+            target_sources(${PROJECT_NAME} PRIVATE core/rec-x64/msvc.asm core/hw/arm7/arm7_x64_msvc.asm)
         endif()
     endif()
 else()

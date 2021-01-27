@@ -243,7 +243,7 @@ class ArmRegAlloc
 							alloc.host_reg = -1;
 							break;
 						}
-						if (nextUse_ != opidx && nextUse_ > bestRegUse)
+						if (nextUse_ != (int)opidx && nextUse_ > bestRegUse)
 						{
 							bestRegUse = nextUse_;
 							bestReg = (Arm7Reg)i;
@@ -265,7 +265,7 @@ class ArmRegAlloc
 								bestReg = (Arm7Reg)i;
 								break;
 							}
-							if (nextUse_ != opidx && nextUse_ > bestRegUse)
+							if (nextUse_ != (int)opidx && nextUse_ > bestRegUse)
 							{
 								bestRegUse = nextUse_;
 								bestReg = (Arm7Reg)i;
@@ -346,7 +346,7 @@ class ArmRegAlloc
 	{
 		if (alloc.dirty)
 		{
-			static_cast<T*>(this)->StoreReg(alloc.host_reg, (Arm7Reg)(&alloc - allocs.begin()));
+			static_cast<T*>(this)->StoreReg(alloc.host_reg, (Arm7Reg)(&alloc - &allocs.front()));
 			alloc.dirty = false;
 		}
 		host_regs.push_back(alloc.host_reg);

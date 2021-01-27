@@ -21,9 +21,15 @@
 #define CPUUpdateTicksAccess32(a) 1
 #define CPUUpdateTicksAccess16(a) 1
 
-#define ARM_CYCLES_PER_SAMPLE 256
+#ifdef _MSC_VER
+extern "C" {
+#endif
 
 alignas(8) reg_pair arm_Reg[RN_ARM_REG_COUNT];
+
+#ifdef _MSC_VER
+}
+#endif
 
 static void CPUSwap(u32 *a, u32 *b)
 {
@@ -57,7 +63,7 @@ static void CPUUndefinedException();
 //
 // ARM7 interpreter
 //
-void arm_Run(u32 CycleCount)
+static void runInterpreter(u32 CycleCount)
 {
 	if (!Arm7Enabled)
 		return;
@@ -77,7 +83,7 @@ void arm_Run(u32 samples)
 {
 	for (u32 i = 0; i < samples; i++)
 	{
-		arm_Run_(ARM_CYCLES_PER_SAMPLE);
+		runInterpreter(ARM_CYCLES_PER_SAMPLE);
 		libAICA_TimeStep();
 	}
 }

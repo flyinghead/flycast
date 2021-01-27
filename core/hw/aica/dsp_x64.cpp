@@ -432,6 +432,6 @@ void dsp_rec_init()
 
 void dsp_rec_step()
 {
-	((void (*)())CodeBuffer)();
+	((void (*)())&CodeBuffer[0])();
 }
 #endif

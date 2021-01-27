@@ -23,6 +23,7 @@
 
 #if	HOST_CPU == CPU_X64 && FEAT_AREC != DYNAREC_NONE
 
+#define XBYAK_NO_OP_NAMES
 #include <xbyak/xbyak.h>
 #include <xbyak/xbyak_util.h>
 using namespace Xbyak::util;
@@ -37,7 +38,6 @@ extern "C" void arm_dispatch();
 extern u8* icPtr;
 extern u8* ICache;
 extern const u32 ICacheSize;
-extern reg_pair arm_Reg[RN_ARM_REG_COUNT];
 
 #ifdef _WIN32
 static const Xbyak::Reg32 call_regs[] = { ecx, edx, r8d, r9d };
@@ -921,6 +921,8 @@ void arm7backend_compile(const std::vector<ArmOp> block_ops, u32 cycles)
 	assembler.compile(block_ops, cycles);
 }
 
+#ifndef _MSC_VER
+
 #ifndef TAIL_CALLING
 extern "C"
 u32 arm_compilecode()
@@ -970,7 +972,7 @@ void arm_mainloop(u32 cycl, void* regs, void* entrypoints)
 	);
 }
 
-#else
+#else // !TAIL_CALLING
 
 #ifdef __MACH__
 #define _U "_"
@@ -1046,5 +1048,6 @@ __asm__ (
 #endif
 		"ret								\n"
 );
-#endif // TAIL_CALLING
+#endif // !TAIL_CALLING
+#endif // !_MSC_VER
 #endif // X64 && DYNAREC_JIT
