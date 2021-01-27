@@ -743,7 +743,7 @@ static void update_popup()
             ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + 400.f * scaling);
             ImGui::TextWrapped("  v%s is available for download!  ", gdxsv.LatestVersion().c_str());
             ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(16 * scaling, 3 * scaling));
-            float currentwidth = ImGui::GetContentRegionAvailWidth();
+            float currentwidth = ImGui::GetContentRegionAvail().x;
             ImGui::SetCursorPosX((currentwidth - 100.f * scaling) / 2.f + ImGui::GetStyle().WindowPadding.x - 55.f * scaling);
             if (ImGui::Button("Download", ImVec2(100.f * scaling, 0.f)))
             {
