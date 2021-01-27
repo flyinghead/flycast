@@ -7,8 +7,9 @@ RZDCY_MODULES	:=	cfg/ hw/arm7/ hw/aica/ hw/holly/ hw/ hw/gdrom/ hw/maple/ \
  hw/mem/ hw/pvr/ hw/sh4/ hw/sh4/interpr/ hw/sh4/modules/ plugins/ profiler/ oslib/ \
  hw/extdev/ hw/arm/ hw/naomi/ imgread/ ./ deps/zlib/ deps/chdr/ deps/crypto/ \
  deps/libelf/ deps/chdpsr/ arm_emitter/ rend/ reios/ deps/xbrz/ \
- deps/imgui/ archive/ input/ log/ wsi/ network/ hw/bba/ \
- gdxsv/ \
+ deps/imgui/ archive/ input/ log/ wsi/ network/ hw/bba/
+
+RZDCY_MODULES += gdxsv/ \
  deps/protobuf-3.13.0/src/google/protobuf/ \
  deps/protobuf-3.13.0/src/google/protobuf/io/ \
  deps/protobuf-3.13.0/src/google/protobuf/stubs/ \
@@ -123,8 +124,9 @@ endif
 
 RZDCY_CFLAGS += -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/rend/gles -I$(RZDCY_SRC_DIR)/deps \
 		 -I$(RZDCY_SRC_DIR)/deps/vixl -I$(RZDCY_SRC_DIR)/khronos -I$(RZDCY_SRC_DIR)/deps/glslang \
-		 -I$(RZDCY_SRC_DIR)/deps/glm -I$(RZDCY_SRC_DIR)/deps/xbyak -I$(RZDCY_SRC_DIR)/deps/nowide/include \
-		 -I$(RZDCY_SRC_DIR)/deps/protobuf-3.13.0/src
+		 -I$(RZDCY_SRC_DIR)/deps/glm -I$(RZDCY_SRC_DIR)/deps/xbyak -I$(RZDCY_SRC_DIR)/deps/nowide/include
+
+RZDCY_CFLAGS += -I$(RZDCY_SRC_DIR)/deps/protobuf-3.13.0/src
 
 RZDCY_CFLAGS += -I$(RZDCY_SRC_DIR)/deps/picotcp/include -I$(RZDCY_SRC_DIR)/deps/picotcp/modules
 RZDCY_MODULES += hw/modem/ deps/picotcp/modules/ deps/picotcp/stack/
@@ -297,4 +299,3 @@ $(VERSION_HEADER):
 	echo "#define REICAST_VERSION \"`git describe --tags --always | sed -e 's/-/+/'`\"" > $(VERSION_HEADER)
 	echo "#define GIT_HASH \"`git rev-parse --short HEAD`\"" >> $(VERSION_HEADER)
 	echo "#define BUILD_DATE \"`date '+%Y-%m-%d %H:%M:%S %Z'`\"" >> $(VERSION_HEADER)
-
