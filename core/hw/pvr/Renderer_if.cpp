@@ -5,7 +5,6 @@
 #include "hw/pvr/pvr_mem.h"
 #include "oslib/oslib.h"
 #include "rend/TexCache.h"
-#include "wsi/context.h"
 #include "gdxsv/gdxsv.h"
 
 #include <mutex>
