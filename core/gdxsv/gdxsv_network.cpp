@@ -68,7 +68,7 @@ bool TcpClient::Connect(const char *host, int port) {
 #else
                         if (getsockopt(new_sock, SOL_SOCKET, SO_ERROR, &error, &l) < 0 || error) {
 #endif
-                            WARN_LOG(COMMON, "Connect fail 4 %d", get_last_error());
+                            WARN_LOG(COMMON, "Connect fail 4 %d", error);
                             return false;
                         }
                         WARN_LOG(COMMON, "Connect fail 5 %d", get_last_error());
