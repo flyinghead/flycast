@@ -264,7 +264,7 @@ s32 libAICA_Init()
 	sgc_Init();
 	if (aica_schid == -1)
 	{
-		aica_schid = sh4_sched_register(0, "AicaUpdate", &AicaUpdate);
+		aica_schid = sh4_sched_register(0, &AicaUpdate);
 		sh4_sched_request(aica_schid, AICA_TICK);
 	}
 

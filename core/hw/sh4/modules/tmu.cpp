@@ -288,7 +288,7 @@ void tmu_init()
 	sh4_rio_reg(TMU,TMU_TCPR2_addr,RIO_FUNC,32,&TMU_TCPR2_read,&TMU_TCPR2_write);
 
 	for (int i = 0; i < 3; i++) {
-		tmu_sched[i] = sh4_sched_register(i, "sched_tmu_cb", &sched_tmu_cb);
+		tmu_sched[i] = sh4_sched_register(i, &sched_tmu_cb);
 		sh4_sched_request(tmu_sched[i], -1);
 	}
 }

@@ -285,8 +285,8 @@ int rend_end_sch(int tag, int cycl, int jitt)
 
 bool spg_Init()
 {
-	render_end_schid=sh4_sched_register(0,"rend_end_sch", &rend_end_sch);
-	vblank_schid=sh4_sched_register(0,"spg_line_sched", &spg_line_sched);
+	render_end_schid=sh4_sched_register(0,&rend_end_sch);
+	vblank_schid=sh4_sched_register(0,&spg_line_sched);
 
 	return true;
 }
@@ -308,7 +308,7 @@ void spg_Reset(bool hard)
 void SetREP(TA_context* cntx)
 {
 	if (cntx)
-		sh4_sched_request(render_end_schid, 500000 * 6);
+		sh4_sched_request(render_end_schid, 500000 * 3);
 	else
 		sh4_sched_request(render_end_schid, 4096);
 }

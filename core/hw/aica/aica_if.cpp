@@ -175,7 +175,7 @@ void aica_Init()
 	RealTimeClock = GetRTC_now();
 	if (rtc_schid == -1)
 	{
-		rtc_schid = sh4_sched_register(0, "DreamcastSecond", &DreamcastSecond);
+		rtc_schid = sh4_sched_register(0, &DreamcastSecond);
 		sh4_sched_request(rtc_schid, SH4_MAIN_CLOCK);
 	}
 }
@@ -459,7 +459,7 @@ void aica_sb_Init()
 
 	sb_rio_register(SB_G2APRO_addr, RIO_WO_FUNC, nullptr, &Write_SB_G2APRO);
 
-	dma_sched_id = sh4_sched_register(0, "dma_end_sched", &dma_end_sched);
+	dma_sched_id = sh4_sched_register(0, &dma_end_sched);
 }
 
 void aica_sb_Reset(bool hard)

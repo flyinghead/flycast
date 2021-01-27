@@ -288,12 +288,6 @@ static int modem_sched_func(int tag, int cycles, int jitter)
 				if (c >= 0)
 				{
 					//LOG("pppd received %02x", c);
-
-#ifdef MODEM_DEBUG
-					modem_write_pico_read_timer.stop();
-					ppp_read_dump.push(c);
-#endif
-
 #ifndef NDEBUG
 					recvd_bytes++;
 #endif
@@ -322,7 +316,7 @@ static int modem_sched_func(int tag, int cycles, int jitter)
 
 void ModemInit()
 {
-	modem_sched = sh4_sched_register(0, "modem_sched_func", &modem_sched_func);
+	modem_sched = sh4_sched_register(0, &modem_sched_func);
 }
 
 void ModemTerm()
@@ -522,9 +516,6 @@ static void ModemNormalWrite(u32 reg, u32 data)
 			sent_bytes++;
 			if (sent_fp)
 				fputc(data, sent_fp);
-#endif
-#ifdef MODEM_DEBUG
-			ppp_write_dump.push(data & 0xff);
 #endif
 			write_pico(data);
 			modem_regs.reg1e.TDBE = 0;
