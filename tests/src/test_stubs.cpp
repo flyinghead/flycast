@@ -42,7 +42,6 @@ std::string os_FetchStringFromURL(const std::string& url)
     return empty;
 }
 
-int get_mic_data(u8* buffer)
 #ifdef _WIN32
 #include <windows.h>
 
