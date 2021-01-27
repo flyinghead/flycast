@@ -774,7 +774,6 @@ static void contentpath_warning_popup()
         if (ImGui::BeginPopupModal("Incorrect Content Location?", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
         {
             ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + 400.f * scaling);
-
             ImGui::TextWrapped("  Scanned %d folders but no game can be found!  ", scanner.empty_folders_scanned);
             ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(16 * scaling, 3 * scaling));
             float currentwidth = ImGui::GetContentRegionAvail().x;
@@ -1544,7 +1543,7 @@ static void gui_display_settings()
 	            ImGui::SameLine();
 	            ShowHelpMarker("Dump all textures into data/texdump/<game id>");
 
-	            bool logToFile = cfgLoadBool("log", "LogToFile", true);
+	            bool logToFile = cfgLoadBool("log", "LogToFile", false);
 	            bool newLogToFile = logToFile;
 				ImGui::Checkbox("Log to File", &newLogToFile);
 				if (logToFile != newLogToFile)
