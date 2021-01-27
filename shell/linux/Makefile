@@ -474,7 +474,8 @@ endif
 
 
 EXECUTABLE_STRIPPED=nosym-reicast.$(PLATFORM_EXT)
-DC_PLATFORM=dreamcast
+# DC_PLATFORM=dreamcast
+DC_PLATFORM=dc
 EXECUTABLE=reicast.$(PLATFORM_EXT)
 EXECUTABLE_NAME=flycast
 
