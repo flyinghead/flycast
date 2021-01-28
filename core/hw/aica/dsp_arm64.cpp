@@ -28,7 +28,7 @@
 #include "deps/vixl/aarch64/macro-assembler-aarch64.h"
 using namespace vixl::aarch64;
 
-static u8 *WritableCodeBuffer;
+static u8 *pCodeBuffer;
 
 class DSPAssembler : public MacroAssembler
 {
@@ -447,18 +447,18 @@ void dsp_recompile()
 			break;
 		}
 	}
-	DSPAssembler assembler(WritableCodeBuffer, sizeof(dsp.DynCode));
+	DSPAssembler assembler(pCodeBuffer, sizeof(dsp.DynCode));
 	assembler.Compile(&dsp);
 }
 
 void dsp_rec_init()
 {
-	if (!vmem_platform_prepare_jit_block(dsp.DynCode, sizeof(dsp.DynCode), (void**)&WritableCodeBuffer))
+	if (!vmem_platform_prepare_jit_block(dsp.DynCode, sizeof(dsp.DynCode), (void**)&pCodeBuffer))
 		die("mprotect failed in arm64 dsp");
 }
 
 void dsp_rec_step()
 {
-	((void (*)())dsp.DynCode)();
+	((void (*)())pCodeBuffer)();
 }
 #endif

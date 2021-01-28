@@ -75,17 +75,22 @@ public:
 
 	void genMainloop();
 	u32 relinkBlock(RuntimeBlockInfo *block);
+	bool rewriteMemAccess(size_t& host_pc, size_t retadr, size_t acc);
 
 private:
 	void genOpcode(RuntimeBlockInfo *block, bool optimise, shil_opcode& op);
 
 	bool genReadMemImmediate(const shil_opcode& op, RuntimeBlockInfo *block);
-	bool genReadMemoryFast(const shil_opcode& op, RuntimeBlockInfo *block);
-	void genReadMemorySlow(const shil_opcode& op, RuntimeBlockInfo *block);
-
 	bool genWriteMemImmediate(const shil_opcode& op, RuntimeBlockInfo *block);
-	bool genWriteMemoryFast(const shil_opcode& op, RuntimeBlockInfo *block);
-	void genWriteMemorySlow(const shil_opcode& op, RuntimeBlockInfo *block);
+	void genMemHandlers();
+	void alignStack(int amount) {
+#ifndef _WIN32
+		if (amount > 0)
+			add(esp, amount);
+		else
+			sub(esp, -amount);
+#endif
+	}
 
 	void checkBlock(bool smc_checks, RuntimeBlockInfo *block);
 	void freezeXMM();
