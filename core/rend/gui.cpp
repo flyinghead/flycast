@@ -2005,7 +2005,7 @@ void gui_display_osd()
 	if (message.empty())
 		message = getFPSNotification();
 
-	if (!message.empty() || settings.rend.FloatVMUs)
+	if (!message.empty() || settings.rend.FloatVMUs || crosshairsNeeded())
 	{
 		ImGui_Impl_NewFrame();
 		ImGui::NewFrame();
