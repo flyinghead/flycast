@@ -3,12 +3,12 @@
 #if FEAT_SHREC == DYNAREC_JIT && HOST_CPU == CPU_X64
 #include <setjmp.h>
 
-//#define PROFILING
 //#define CANONICAL_TEST
 
 #define XBYAK_NO_OP_NAMES
 #include <xbyak/xbyak.h>
 #include <xbyak/xbyak_util.h>
+using namespace Xbyak::util;
 
 #include "types.h"
 #include "hw/sh4/sh4_opcode_list.h"
@@ -20,7 +20,6 @@
 #include "hw/sh4/sh4_core.h"
 #include "hw/sh4/sh4_mem.h"
 #include "hw/mem/vmem32.h"
-#include "profiler/profiler.h"
 #include "oslib/oslib.h"
 #include "x64_regalloc.h"
 #include "xbyak_base.h"
@@ -36,190 +35,54 @@ struct DynaRBI : RuntimeBlockInfo
 	}
 };
 
-extern "C" {
-	int cycle_counter;
-}
-
-u64 host_cpu_time;
+static int cycle_counter;
+static void (*mainloop)();
 
 u32 mem_writes, mem_reads;
 u32 mem_rewrites_w, mem_rewrites_r;
 
-#ifdef PROFILING
-static clock_t slice_start;
-int start_cycle;
-extern "C"
-{
-static __attribute((used)) void* start_slice(void *p)
-{
-	slice_start = clock();
-	start_cycle = cycle_counter;
-	return p;
+static jmp_buf jmp_env;
+static u32 exception_raised;
+
+namespace MemSize {
+	enum {
+		S8,
+		S16,
+		S32,
+		S64,
+		Count
+	};
 }
-static __attribute((used)) void end_slice()
+namespace MemOp {
+	enum {
+		R,
+		W,
+		Count
+	};
+}
+namespace MemType {
+	enum {
+		Fast,
+		Slow,
+		Count
+	};
+}
+
+static const void *MemHandlers[MemType::Count][MemSize::Count][MemOp::Count];
+static const u8 *MemHandlerStart, *MemHandlerEnd;
+
+void ngen_mainloop(void *)
 {
-	clock_t now = clock();
-	if (slice_start != 0)
-	{
-		host_cpu_time += now - slice_start;
-		guest_cpu_cycles += start_cycle - cycle_counter;
+	try {
+		mainloop();
+	} catch (const SH4ThrownException&) {
+		ERROR_LOG(DYNAREC, "SH4ThrownException in mainloop");
+	} catch (...) {
+		ERROR_LOG(DYNAREC, "Uncaught unknown exception in mainloop");
 	}
-	slice_start = now;
-	start_cycle = cycle_counter;
 }
-}
-#endif
-
-#if defined(__APPLE__)
-#define _U "_"
-#else
-#define _U
-#endif
-
-#ifdef _WIN32
-#define WIN32_ONLY(x) x
-#else
-#define WIN32_ONLY(x)
-#endif
-
-#define STRINGIFY(x) #x
-#define _S(x) STRINGIFY(x)
-#if RAM_SIZE_MAX == 16*1024*1024
-#define CPU_RUNNING 68157284
-#define PC 68157256
-#elif RAM_SIZE_MAX == 32*1024*1024
-#define CPU_RUNNING 135266148
-#define PC 135266120
-#else
-#error RAM_SIZE_MAX unknown
-#endif
-
-extern "C" {
-	jmp_buf jmp_env;
-}
-
-#ifndef _MSC_VER
-
-#ifdef _WIN32
-        // Fully naked function in win32 for proper SEH prologue
-	__asm__ (
-			".text                          \n\t"
-			".p2align 4,,15                 \n\t"
-			".globl ngen_mainloop           \n\t"
-			".def   ngen_mainloop;  .scl    2;      .type   32;     .endef  \n\t"
-			".seh_proc      ngen_mainloop   \n\t"
-		"ngen_mainloop:                     \n\t"
-#else
-void ngen_mainloop(void* v_cntx)
-{
-	__asm__ (
-#endif
-			"pushq %rbx						\n\t"
-WIN32_ONLY( ".seh_pushreg %rbx				\n\t")
-#if !defined(__APPLE__)	// rbp is pushed in the standard function prologue
-			"pushq %rbp                     \n\t"
-#endif
-#ifdef _WIN32
-			".seh_pushreg %rbp              \n\t"
-			"pushq %rdi                     \n\t"
-			".seh_pushreg %rdi              \n\t"
-			"pushq %rsi                     \n\t"
-			".seh_pushreg %rsi              \n\t"
-#endif
-			"pushq %r12                     \n\t"
-WIN32_ONLY( ".seh_pushreg %r12              \n\t")
-			"pushq %r13                     \n\t"
-WIN32_ONLY( ".seh_pushreg %r13              \n\t")
-			"pushq %r14                     \n\t"
-WIN32_ONLY( ".seh_pushreg %r14              \n\t")
-			"pushq %r15                     \n\t"
-#ifdef _WIN32
-			".seh_pushreg %r15              \n\t"
-			"subq $40, %rsp                 \n\t"   // 32-byte shadow space + 8 for stack 16-byte alignment
-			".seh_stackalloc 40             \n\t"
-			".seh_endprologue               \n\t"
-#else
-			"subq $8, %rsp                  \n\t"   // 8 for stack 16-byte alignment
-#endif
-			"movl $" _S(SH4_TIMESLICE) "," _U "cycle_counter(%rip)  \n\t"
-
-#ifdef _WIN32
-			"leaq " _U "jmp_env(%rip), %rcx	\n\t"	// SETJMP
-			"xor %rdx, %rdx					\n\t"	// no frame pointer
-#else
-			"leaq " _U "jmp_env(%rip), %rdi	\n\t"
-#endif
-			"call " _U "setjmp				\n"
-
-		"1:                                 \n\t"   // run_loop
-			"movq " _U "p_sh4rcb(%rip), %rax		\n\t"
-			"movl " _S(CPU_RUNNING) "(%rax), %edx	\n\t"
-			"testl %edx, %edx               \n\t"
-			"je 3f                          \n"     // end_run_loop
-#ifdef PROFILING
-			"call start_slice				\n\t"
-#endif
-
-		"2:                                 \n\t"   // slice_loop
-			"movq " _U "p_sh4rcb(%rip), %rax	\n\t"
-#ifdef _WIN32
-			"movl " _S(PC)"(%rax), %ecx     \n\t"
-#else
-			"movl " _S(PC)"(%rax), %edi     \n\t"
-#endif
-			"call " _U "bm_GetCodeByVAddr	\n\t"
-			"call *%rax                     \n\t"
-#ifdef PROFILING
-			"call end_slice					\n\t"
-#endif
-			"movl " _U "cycle_counter(%rip), %ecx \n\t"
-			"testl %ecx, %ecx               \n\t"
-			"jg 2b                          \n\t"   // slice_loop
-
-			"addl $" _S(SH4_TIMESLICE) ", %ecx		\n\t"
-			"movl %ecx, " _U "cycle_counter(%rip)	\n\t"
-			"call " _U "UpdateSystem_INTC   \n\t"
-			"jmp 1b                         \n"     // run_loop
-
-		"3:                                 \n\t"   // end_run_loop
-
-#ifdef _WIN32
-			"addq $40, %rsp                 \n\t"
-#else
-			"addq $8, %rsp                  \n\t"
-#endif
-			"popq %r15                      \n\t"
-			"popq %r14                      \n\t"
-			"popq %r13                      \n\t"
-			"popq %r12                      \n\t"
-#ifdef _WIN32
-			"popq %rsi                      \n\t"
-			"popq %rdi                      \n\t"
-#endif
-#if !defined(__APPLE__)
-			"popq %rbp                      \n\t"
-#endif
-			"popq %rbx                      \n\t"
-#ifdef _WIN32
-			"ret                            \n\t"
-			".seh_endproc                   \n"
-	);
-#else
-	);
-}
-#endif
-
-#endif	// !_MSC_VER
-#undef _U
-#undef _S
 
 void ngen_init()
-{
-	verify(CPU_RUNNING == offsetof(Sh4RCB, cntx.CpuRunning));
-	verify(PC == offsetof(Sh4RCB, cntx.pc));
-}
-
-void ngen_ResetBlocks()
 {
 }
 
@@ -252,8 +115,6 @@ static void handle_mem_exception(u32 exception_raised, u32 pc)
 		longjmp(jmp_env, 1);
 	}
 }
-
-static u32 exception_raised;
 
 template<typename T>
 static T ReadMemNoEx(u32 addr, u32 pc)
@@ -310,24 +171,19 @@ static void do_sqw_mmu_no_ex(u32 addr, u32 pc)
 	}
 }
 
-static void do_sqw_nommu_local(u32 addr, u8* sqb)
-{
-	do_sqw_nommu(addr, sqb);
-}
-
 const std::array<Xbyak::Reg32, 4> call_regs
 #ifdef _WIN32
-	{ Xbyak::util::ecx, Xbyak::util::edx, Xbyak::util::r8d, Xbyak::util::r9d };
+	{ ecx, edx, r8d, r9d };
 #else
-	{ Xbyak::util::edi, Xbyak::util::esi, Xbyak::util::edx, Xbyak::util::ecx };
+	{ edi, esi, edx, ecx };
 #endif
 const std::array<Xbyak::Reg64, 4> call_regs64
 #ifdef _WIN32
-	{ Xbyak::util::rcx, Xbyak::util::rdx, Xbyak::util::r8, Xbyak::util::r9 };
+	{ rcx, rdx, r8, r9 };
 #else
-	{ Xbyak::util::rdi, Xbyak::util::rsi, Xbyak::util::rdx, Xbyak::util::rcx };
+	{ rdi, rsi, rdx, rcx };
 #endif
-const std::array<Xbyak::Xmm, 4> call_regsxmm { Xbyak::util::xmm0, Xbyak::util::xmm1, Xbyak::util::xmm2, Xbyak::util::xmm3 };
+const std::array<Xbyak::Xmm, 4> call_regsxmm { xmm0, xmm1, xmm2, xmm3 };
 
 class BlockCompiler : public BaseXbyakRec<BlockCompiler, true>
 {
@@ -432,11 +288,14 @@ public:
 							add(call_regs[0], dword[rax]);
 						}
 					}
-					if (!optimise || !GenReadMemoryFast(op, block))
-						GenReadMemorySlow(op, block);
+					int size = op.flags & 0x7f;
 
-					u32 size = op.flags & 0x7f;
-					if (size != 8)
+					if (mmu_enabled())
+						mov(call_regs[2], block->vaddr + op.guest_offs - (op.delay_slot ? 1 : 0));	// pc
+					size = size == 1 ? MemSize::S8 : size == 2 ? MemSize::S16 : size == 4 ? MemSize::S32 : MemSize::S64;
+					GenCall((void (*)())MemHandlers[optimise ? MemType::Fast : MemType::Slow][size][MemOp::R], mmu_enabled());
+
+					if (size != MemSize::S64)
 						host_reg_to_shil_param(op.rd, eax);
 					else {
 						mov(rcx, (uintptr_t)op.rd.reg_ptr());
@@ -470,8 +329,11 @@ public:
 						mov(rax, (uintptr_t)op.rs2.reg_ptr());
 						mov(call_regs64[1], qword[rax]);
 					}
-					if (!optimise || !GenWriteMemoryFast(op, block))
-						GenWriteMemorySlow(op, block);
+
+					if (mmu_enabled())
+						mov(call_regs[2], block->vaddr + op.guest_offs - (op.delay_slot ? 1 : 0));	// pc
+					size = size == 1 ? MemSize::S8 : size == 2 ? MemSize::S16 : size == 4 ? MemSize::S32 : MemSize::S64;
+					GenCall((void (*)())MemHandlers[optimise ? MemType::Fast : MemType::Slow][size][MemOp::W], mmu_enabled());
 				}
 			}
 			break;
@@ -514,52 +376,36 @@ public:
 				break;
 
 			case shop_pref:
-				if (op.rs1.is_imm())
 				{
-					// this test shouldn't be necessary
-					if ((op.rs1._imm & 0xFC000000) == 0xE0000000)
+					Xbyak::Label no_sqw;
+					if (op.rs1.is_imm())
 					{
-						mov(call_regs[0], op.rs1._imm);
-						if (mmu_enabled())
-						{
-							mov(call_regs[1], block->vaddr + op.guest_offs - (op.delay_slot ? 1 : 0));      // pc
+						// this test shouldn't be necessary
+						if ((op.rs1._imm & 0xFC000000) != 0xE0000000)
+							break;
 
-							GenCall(do_sqw_mmu_no_ex);
-						}
-						else
-						{
-							if (CCN_MMUCR.AT == 1)
-							{
-								GenCall(do_sqw_mmu);
-							}
-							else
-							{
-								mov(call_regs64[1], (uintptr_t)sq_both);
-								GenCall(&do_sqw_nommu_local);
-							}
-						}
-					}
-				}
-				else
-				{
-					Xbyak::Reg32 rn;
-					if (regalloc.IsAllocg(op.rs1))
-					{
-						rn = regalloc.MapRegister(op.rs1);
+						mov(call_regs[0], op.rs1._imm);
 					}
 					else
 					{
-						mov(rax, (uintptr_t)op.rs1.reg_ptr());
-						mov(eax, dword[rax]);
-						rn = eax;
-					}
-					mov(ecx, rn);
-					shr(ecx, 26);
-					cmp(ecx, 0x38);
-					Xbyak::Label no_sqw;
-					jne(no_sqw);
+						Xbyak::Reg32 rn;
+						if (regalloc.IsAllocg(op.rs1))
+						{
+							rn = regalloc.MapRegister(op.rs1);
+						}
+						else
+						{
+							mov(rax, (uintptr_t)op.rs1.reg_ptr());
+							mov(eax, dword[rax]);
+							rn = eax;
+						}
+						mov(ecx, rn);
+						shr(ecx, 26);
+						cmp(ecx, 0x38);
+						jne(no_sqw);
 
-					mov(call_regs[0], rn);
+						mov(call_regs[0], rn);
+					}
 					if (mmu_enabled())
 					{
 						mov(call_regs[1], block->vaddr + op.guest_offs - (op.delay_slot ? 1 : 0));	// pc
@@ -575,7 +421,10 @@ public:
 						else
 						{
 							mov(call_regs64[1], (uintptr_t)sq_both);
-							GenCall(&do_sqw_nommu_local);
+							mov(rax, (size_t)&do_sqw_nommu);
+							saveXmmRegisters();
+							call(qword[rax]);
+							restoreXmmRegisters();
 						}
 					}
 					L(no_sqw);
@@ -585,14 +434,14 @@ public:
 			case shop_frswap:
 				mov(rax, (uintptr_t)op.rs1.reg_ptr());
 				mov(rcx, (uintptr_t)op.rd.reg_ptr());
-				if (cpu.has(Xbyak::util::Cpu::tAVX512F))
+				if (cpu.has(Cpu::tAVX512F))
 				{
 					vmovaps(zmm0, zword[rax]);
 					vmovaps(zmm1, zword[rcx]);
 					vmovaps(zword[rax], zmm1);
 					vmovaps(zword[rcx], zmm0);
 				}
-				else if (cpu.has(Xbyak::util::Cpu::tAVX))
+				else if (cpu.has(Cpu::tAVX))
 				{
 					vmovaps(ymm0, yword[rax]);
 					vmovaps(ymm1, yword[rcx]);
@@ -707,113 +556,6 @@ public:
 		emit_Skip(getSize());
 	}
 
-	void GenReadMemorySlow(const shil_opcode& op, RuntimeBlockInfo* block)
-	{
-		const u8 *start_addr = getCurr();
-		if (mmu_enabled())
-			mov(call_regs[1], block->vaddr + op.guest_offs - (op.delay_slot ? 1 : 0));	// pc
-
-		u32 size = op.flags & 0x7f;
-		switch (size) {
-		case 1:
-			if (!mmu_enabled())
-				GenCall(ReadMem8);
-			else
-				GenCall(ReadMemNoEx<u8>, true);
-			movsx(eax, al);
-			break;
-		case 2:
-			if (!mmu_enabled())
-				GenCall(ReadMem16);
-			else
-				GenCall(ReadMemNoEx<u16>, true);
-			movsx(eax, ax);
-			break;
-
-		case 4:
-			if (!mmu_enabled())
-				GenCall(ReadMem32);
-			else
-				GenCall(ReadMemNoEx<u32>, true);
-			break;
-		case 8:
-			if (!mmu_enabled())
-				GenCall(ReadMem64);
-			else
-				GenCall(ReadMemNoEx<u64>, true);
-			break;
-		default:
-			die("1..8 bytes");
-		}
-
-		if (mmu_enabled() && vmem32_enabled())
-		{
-			Xbyak::Label quick_exit;
-			if (getCurr() - start_addr <= read_mem_op_size - 6)
-				jmp(quick_exit, T_NEAR);
-			while (getCurr() - start_addr < read_mem_op_size)
-				nop();
-			L(quick_exit);
-			verify(getCurr() - start_addr == read_mem_op_size);
-		}
-	}
-
-	void GenWriteMemorySlow(const shil_opcode& op, RuntimeBlockInfo* block)
-	{
-		const u8 *start_addr = getCurr();
-		if (mmu_enabled())
-			mov(call_regs[2], block->vaddr + op.guest_offs - (op.delay_slot ? 1 : 0));	// pc
-
-		u32 size = op.flags & 0x7f;
-		switch (size) {
-		case 1:
-			if (!mmu_enabled())
-				GenCall(WriteMem8);
-			else
-				GenCall(WriteMemNoEx<u8>, true);
-			break;
-		case 2:
-			if (!mmu_enabled())
-				GenCall(WriteMem16);
-			else
-				GenCall(WriteMemNoEx<u16>, true);
-			break;
-		case 4:
-			if (!mmu_enabled())
-				GenCall(WriteMem32);
-			else
-				GenCall(WriteMemNoEx<u32>, true);
-			break;
-		case 8:
-			if (!mmu_enabled())
-				GenCall(WriteMem64);
-			else
-				GenCall(WriteMemNoEx<u64>, true);
-			break;
-		default:
-			die("1..8 bytes");
-		}
-		if (mmu_enabled() && vmem32_enabled())
-		{
-			Xbyak::Label quick_exit;
-			if (getCurr() - start_addr <= write_mem_op_size - 6)
-				jmp(quick_exit, T_NEAR);
-			while (getCurr() - start_addr < write_mem_op_size)
-				nop();
-			L(quick_exit);
-			verify(getCurr() - start_addr == write_mem_op_size);
-		}
-	}
-
-	void InitializeRewrite(RuntimeBlockInfo *block, size_t opid)
-	{
-	}
-
-	void FinalizeRewrite()
-	{
-		ready();
-	}
-
 	void ngen_CC_Start(const shil_opcode& op)
 	{
 		CC_pars.clear();
@@ -907,6 +649,124 @@ public:
 	{
 		mov(rax, (size_t)GetRegPtr(reg));
 		movss(dword[rax], Xbyak::Xmm(nreg));
+	}
+
+	void genMainloop()
+	{
+		push(rbx);
+		push(rbp);
+#ifdef _WIN32
+		push(rdi);
+		push(rsi);
+#endif
+		push(r12);
+		push(r13);
+		push(r14);
+		push(r15);
+#ifdef _WIN32
+		sub(rsp, 40);				// 32-byte shadow space + 8 for stack 16-byte alignment
+#else
+		sub(rsp, 8);				// stack 16-byte alignment
+#endif
+
+		mov(dword[rip + &cycle_counter], SH4_TIMESLICE);
+
+		lea(call_regs64[0], qword[rip + &jmp_env]);
+#ifdef _WIN32
+		xor_(call_regs64[1], call_regs64[1]);	// no frame pointer
+#endif
+#ifdef _MSC_VER
+		// FIXME call((const void *)_setjmp);
+#else
+		call((const void *)_setjmp);
+#endif
+
+	//run_loop:
+		Xbyak::Label run_loop;
+		L(run_loop);
+		Xbyak::Label end_run_loop;
+		mov(rax, (size_t)&p_sh4rcb->cntx.CpuRunning);
+		mov(edx, dword[rax]);
+
+		test(edx, edx);
+		je(end_run_loop);
+
+	//slice_loop:
+		Xbyak::Label slice_loop;
+		L(slice_loop);
+		mov(rax, (size_t)&p_sh4rcb->cntx.pc);
+		mov(call_regs[0], dword[rax]);
+		call(bm_GetCodeByVAddr);
+		call(rax);
+		mov(ecx, dword[rip + &cycle_counter]);
+		test(ecx, ecx);
+		jg(slice_loop);
+
+		add(ecx, SH4_TIMESLICE);
+		mov(dword[rip + &cycle_counter], ecx);
+		call(UpdateSystem_INTC);
+		jmp(run_loop);
+
+	//end_run_loop:
+		L(end_run_loop);
+#ifdef _WIN32
+		add(rsp, 40);
+#else
+		add(rsp, 8);
+#endif
+		pop(r15);
+		pop(r14);
+		pop(r13);
+		pop(r12);
+#ifdef _WIN32
+		pop(rsi);
+		pop(rdi);
+#endif
+		pop(rbp);
+		pop(rbx);
+		ret();
+
+		genMemHandlers();
+
+		ready();
+		mainloop = (void (*)())getCode();
+
+		emit_Skip(getSize());
+	}
+
+	bool rewriteMemAccess(size_t& host_pc, size_t retadr, size_t accessedAddress)
+	{
+		if (!_nvmem_enabled() || (mmu_enabled() && !vmem32_enabled()))
+			return false;
+
+		//printf("ngen_Rewrite pc %p\n", host_pc);
+		if (host_pc < (size_t)MemHandlerStart || host_pc >= (size_t)MemHandlerEnd)
+			return false;
+
+		size_t ca = *(s32 *)(retadr - 4) + retadr;
+		for (int size = 0; size < MemSize::Count; size++)
+		{
+			for (int op = 0; op < MemOp::Count; op++)
+			{
+				if ((size_t)MemHandlers[MemType::Fast][size][op] != ca)
+					continue;
+
+				//found !
+				const u8 *start = getCurr();
+				call(MemHandlers[MemType::Slow][size][op]);
+				verify(getCurr() - start == 5);
+
+				ready();
+
+				host_pc = retadr - 5;
+
+				return true;
+			}
+		}
+		ERROR_LOG(DYNAREC, "rewriteMemAccess code not found: hpc %08x retadr %08x acc %08x", host_pc, retadr, accessedAddress);
+		die("Failed to match the code");
+
+		return false;
 	}
 
 private:
@@ -1157,104 +1017,6 @@ private:
 		return true;
 	}
 
-	bool GenReadMemoryFast(const shil_opcode& op, RuntimeBlockInfo* block)
-	{
-		if (!mmu_enabled() || !vmem32_enabled())
-			return false;
-		mem_reads++;
-		const u8 *start_addr = getCurr();
-
-		mov(rax, (uintptr_t)&p_sh4rcb->cntx.exception_pc);
-		mov(dword[rax], block->vaddr + op.guest_offs - (op.delay_slot ? 2 : 0));
-
-		mov(rax, (uintptr_t)virt_ram_base);
-
-		u32 size = op.flags & 0x7f;
-		//verify(getCurr() - start_addr == 26);
-		if (mem_access_offset == 0)
-			mem_access_offset = getCurr() - start_addr;
-		else
-			verify(getCurr() - start_addr == mem_access_offset);
-
-		block->memory_accesses[(void*)getCurr()] = (u32)current_opid;
-		switch (size)
-		{
-		case 1:
-			movsx(eax, byte[rax + call_regs64[0]]);
-			break;
-
-		case 2:
-			movsx(eax, word[rax + call_regs64[0]]);
-			break;
-
-		case 4:
-			mov(eax, dword[rax + call_regs64[0]]);
-			break;
-
-		case 8:
-			mov(rax, qword[rax + call_regs64[0]]);
-			break;
-
-		default:
-			die("1..8 bytes");
-		}
-
-		while (getCurr() - start_addr < read_mem_op_size)
-			nop();
-		verify(getCurr() - start_addr == read_mem_op_size);
-
-		return true;
-	}
-
-	bool GenWriteMemoryFast(const shil_opcode& op, RuntimeBlockInfo* block)
-	{
-		if (!mmu_enabled() || !vmem32_enabled())
-			return false;
-		mem_writes++;
-		const u8 *start_addr = getCurr();
-
-		mov(rax, (uintptr_t)&p_sh4rcb->cntx.exception_pc);
-		mov(dword[rax], block->vaddr + op.guest_offs - (op.delay_slot ? 2 : 0));
-
-		mov(rax, (uintptr_t)virt_ram_base);
-
-		u32 size = op.flags & 0x7f;
-		//verify(getCurr() - start_addr == 26);
-		if (mem_access_offset == 0)
-			mem_access_offset = getCurr() - start_addr;
-		else
-			verify(getCurr() - start_addr == mem_access_offset);
-
-		block->memory_accesses[(void*)getCurr()] = (u32)current_opid;
-		switch (size)
-		{
-		case 1:
-			mov(byte[rax + call_regs64[0] + 0], call_regs[1].cvt8());
-			break;
-
-		case 2:
-			mov(word[rax + call_regs64[0]], call_regs[1].cvt16());
-			break;
-
-		case 4:
-			mov(dword[rax + call_regs64[0]], call_regs[1]);
-			break;
-
-		case 8:
-			mov(qword[rax + call_regs64[0]], call_regs64[1]);
-			break;
-
-		default:
-			die("1..8 bytes");
-		}
-
-		while (getCurr() - start_addr < write_mem_op_size)
-			nop();
-		verify(getCurr() - start_addr == write_mem_op_size);
-
-		return true;
-	}
-
 	void CheckBlock(bool force_checks, RuntimeBlockInfo* block) {
 		mov(call_regs[0], block->addr);
 
@@ -1307,23 +1069,156 @@ private:
 		}
 	}
 
-	template<class Ret, class... Params>
-	void GenCall(Ret(*function)(Params...), bool skip_floats = false)
+	void genMemHandlers()
+	{
+		// make sure the memory handlers are set
+		verify(ReadMem8 != nullptr);
+
+		MemHandlerStart = getCurr();
+		for (int type = 0; type < MemOp::Count; type++)
+		{
+			for (int size = 0; size < MemSize::Count; size++)
+			{
+				for (int op = 0; op < MemOp::Count; op++)
+				{
+					MemHandlers[type][size][op] = getCurr();
+					if (type == MemType::Fast && _nvmem_enabled() && (!mmu_enabled() || vmem32_enabled()))
+					{
+						if (mmu_enabled())
+						{
+							mov(rax, (uintptr_t)&p_sh4rcb->cntx.exception_pc);
+							mov(dword[rax], call_regs[2]);
+						}
+						mov(rax, (uintptr_t)virt_ram_base);
+						mov(r9, call_regs64[0]);
+						if (!_nvmem_4gb_space())
+							and_(call_regs[0], 0x1FFFFFFF);
+						switch (size)
+						{
+						case MemSize::S8:
+							if (op == MemOp::R)
+								movsx(eax, byte[rax + call_regs64[0]]);
+							else
+								mov(byte[rax + call_regs64[0]], call_regs[1].cvt8());
+							break;
+
+						case MemSize::S16:
+							if (op == MemOp::R)
+								movsx(eax, word[rax + call_regs64[0]]);
+							else
+								mov(word[rax + call_regs64[0]], call_regs[1].cvt16());
+							break;
+
+						case MemSize::S32:
+							if (op == MemOp::R)
+								mov(eax, dword[rax + call_regs64[0]]);
+							else
+								mov(dword[rax + call_regs64[0]], call_regs[1]);
+							break;
+
+						case MemSize::S64:
+							if (op == MemOp::R)
+								mov(rax, qword[rax + call_regs64[0]]);
+							else
+								mov(qword[rax + call_regs64[0]], call_regs64[1]);
+							break;
+						}
+					}
+					else
+					{
+						// Slow path
+						if (op == MemOp::R)
+						{
+							if (mmu_enabled())
+								mov(call_regs[1], call_regs[2]);
+							switch (size) {
+							case MemSize::S8:
+								if (mmu_enabled())
+									call((const void *)ReadMemNoEx<u8>);
+								else
+									call((const void *)ReadMem8);
+								movsx(eax, al);
+								break;
+							case MemSize::S16:
+								if (mmu_enabled())
+									call((const void *)ReadMemNoEx<u16>);
+								else
+									call((const void *)ReadMem16);
+								movsx(eax, ax);
+								break;
+							case MemSize::S32:
+								if (mmu_enabled())
+									jmp((const void *)ReadMemNoEx<u32>);
+								else
+									jmp((const void *)ReadMem32);	// tail call
+								continue;
+							case MemSize::S64:
+								if (mmu_enabled())
+									jmp((const void *)ReadMemNoEx<u64>);
+								else
+									jmp((const void *)ReadMem64);	// tail call
+								continue;
+							default:
+								die("1..8 bytes");
+							}
+						}
+						else
+						{
+							switch (size) {
+							case MemSize::S8:
+								if (mmu_enabled())
+									jmp((const void *)WriteMemNoEx<u8>);
+								else
+									jmp((const void *)WriteMem8);	// tail call
+								continue;
+							case MemSize::S16:
+								if (mmu_enabled())
+									jmp((const void *)WriteMemNoEx<u16>);
+								else
+									jmp((const void *)WriteMem16);	// tail call
+								continue;
+							case MemSize::S32:
+								if (mmu_enabled())
+									jmp((const void *)WriteMemNoEx<u32>);
+								else
+									jmp((const void *)WriteMem32);	// tail call
+								continue;
+							case MemSize::S64:
+								if (mmu_enabled())
+									jmp((const void *)WriteMemNoEx<u64>);
+								else
+									jmp((const void *)WriteMem64);	// tail call
+								continue;
+							default:
+								die("1..8 bytes");
+							}
+						}
+					}
+					ret();
+				}
+			}
+		}
+		MemHandlerEnd = getCurr();
+	}
+
+	void saveXmmRegisters()
 	{
 #ifndef _WIN32
-		bool xmm8_mapped = !skip_floats && current_opid != (size_t)-1 && regalloc.IsMapped(xmm8, current_opid);
-		bool xmm9_mapped = !skip_floats && current_opid != (size_t)-1 && regalloc.IsMapped(xmm9, current_opid);
-		bool xmm10_mapped = !skip_floats && current_opid != (size_t)-1 && regalloc.IsMapped(xmm10, current_opid);
-		bool xmm11_mapped = !skip_floats && current_opid != (size_t)-1 && regalloc.IsMapped(xmm11, current_opid);
+		if (current_opid == (size_t)-1)
+			return;
+
+		bool xmm8_mapped = regalloc.IsMapped(xmm8, current_opid);
+		bool xmm9_mapped = regalloc.IsMapped(xmm9, current_opid);
+		bool xmm10_mapped = regalloc.IsMapped(xmm10, current_opid);
+		bool xmm11_mapped = regalloc.IsMapped(xmm11, current_opid);
 
 		// Need to save xmm registers as they are not preserved in linux/mach
-		int offset = 0;
-		u32 stack_size = 0;
 		if (xmm8_mapped || xmm9_mapped || xmm10_mapped || xmm11_mapped)
 		{
-			stack_size = 4 * (xmm8_mapped + xmm9_mapped + xmm10_mapped + xmm11_mapped);
+			u32 stack_size = 4 * (xmm8_mapped + xmm9_mapped + xmm10_mapped + xmm11_mapped);
 			stack_size = (((stack_size + 15) >> 4) << 4); // Stack needs to be 16-byte aligned before the call
 			sub(rsp, stack_size);
+			int offset = 0;
 			if (xmm8_mapped)
 			{
 				movd(ptr[rsp + offset], xmm8);
@@ -1340,41 +1235,60 @@ private:
 				offset += 4;
 			}
 			if (xmm11_mapped)
-			{
 				movd(ptr[rsp + offset], xmm11);
-				offset += 4;
-			}
 		}
 #endif
+	}
 
-		call(CC_RX2RW(function));
-
+	void restoreXmmRegisters()
+	{
 #ifndef _WIN32
+		if (current_opid == (size_t)-1)
+			return;
+
+		bool xmm8_mapped = regalloc.IsMapped(xmm8, current_opid);
+		bool xmm9_mapped = regalloc.IsMapped(xmm9, current_opid);
+		bool xmm10_mapped = regalloc.IsMapped(xmm10, current_opid);
+		bool xmm11_mapped = regalloc.IsMapped(xmm11, current_opid);
 		if (xmm8_mapped || xmm9_mapped || xmm10_mapped || xmm11_mapped)
 		{
+			u32 stack_size = 4 * (xmm8_mapped + xmm9_mapped + xmm10_mapped + xmm11_mapped);
+			int offset = stack_size;
+			stack_size = (((stack_size + 15) >> 4) << 4); // Stack needs to be 16-byte aligned before the call
 			if (xmm11_mapped)
 			{
-				offset -= 4;
 				movd(xmm11, ptr[rsp + offset]);
+				offset -= 4;
 			}
 			if (xmm10_mapped)
 			{
-				offset -= 4;
 				movd(xmm10, ptr[rsp + offset]);
+				offset -= 4;
 			}
 			if (xmm9_mapped)
 			{
-				offset -= 4;
 				movd(xmm9, ptr[rsp + offset]);
+				offset -= 4;
 			}
 			if (xmm8_mapped)
 			{
-				offset -= 4;
 				movd(xmm8, ptr[rsp + offset]);
+				offset -= 4;
 			}
+			verify(offset == -4);
 			add(rsp, stack_size);
 		}
 #endif
+	}
+
+	template<class Ret, class... Params>
+	void GenCall(Ret(*function)(Params...), bool skip_floats = false)
+	{
+		if (!skip_floats)
+			saveXmmRegisters();
+		call(CC_RX2RW(function));
+		if (!skip_floats)
+			restoreXmmRegisters();
 	}
 
 	struct CC_PS
@@ -1388,15 +1302,7 @@ private:
 	Xbyak::util::Cpu cpu;
 	size_t current_opid;
 	Xbyak::Label exit_block;
-	static const u32 read_mem_op_size;
-	static const u32 write_mem_op_size;
-public:
-	static u32 mem_access_offset;
 };
-
-const u32 BlockCompiler::read_mem_op_size = 30;
-const u32 BlockCompiler::write_mem_op_size = 30;
-u32 BlockCompiler::mem_access_offset = 0;
 
 void X64RegAlloc::Preload(u32 reg, Xbyak::Operand::Code nreg)
 {
@@ -1422,8 +1328,11 @@ void ngen_Compile(RuntimeBlockInfo* block, bool smc_checks, bool reset, bool sta
 	verify(emit_FreeSpace() >= 16 * 1024);
 
 	compiler = new BlockCompiler();
-	
-	compiler->compile(block, smc_checks, reset, staging, optimise);
+	try {
+		compiler->compile(block, smc_checks, reset, staging, optimise);
+	} catch (const Xbyak::Error& e) {
+		ERROR_LOG(DYNAREC, "Fatal xbyak error: %s", e.what());
+	}
 
 	delete compiler;
 }
@@ -1447,52 +1356,34 @@ void ngen_CC_Finish(shil_opcode* op)
 {
 }
 
-bool ngen_Rewrite(unat& host_pc, unat, unat)
+bool ngen_Rewrite(size_t& host_pc, size_t retadr, size_t acc)
 {
-	if (!mmu_enabled() || !vmem32_enabled())
-		return false;
-
-	//printf("ngen_Rewrite pc %p\n", host_pc);
-	RuntimeBlockInfoPtr block = bm_GetBlock((void *)host_pc);
-	if (block == NULL)
-	{
-		WARN_LOG(DYNAREC, "ngen_Rewrite: Block at %p not found", (void *)host_pc);
+	std::unique_ptr<BlockCompiler> compiler(new BlockCompiler((u8*)(retadr - 5)));
+	try {
+		return compiler->rewriteMemAccess(host_pc, retadr, acc);
+	} catch (const Xbyak::Error& e) {
+		ERROR_LOG(DYNAREC, "Fatal xbyak error: %s", e.what());
 		return false;
 	}
-	u8 *code_ptr = (u8*)host_pc;
-	auto it = block->memory_accesses.find(code_ptr);
-	if (it == block->memory_accesses.end())
-	{
-		WARN_LOG(DYNAREC, "ngen_Rewrite: memory access at %p not found (%lu entries)", code_ptr, block->memory_accesses.size());
-		return false;
-	}
-	u32 opid = it->second;
-	verify(opid < block->oplist.size());
-	const shil_opcode& op = block->oplist[opid];
-
-	BlockCompiler *assembler = new BlockCompiler(code_ptr - BlockCompiler::mem_access_offset);
-	assembler->InitializeRewrite(block.get(), opid);
-	if (op.op == shop_readm)
-	{
-		mem_rewrites_r++;
-		assembler->GenReadMemorySlow(op, block.get());
-	}
-	else
-	{
-		mem_rewrites_w++;
-		assembler->GenWriteMemorySlow(op, block.get());
-	}
-	assembler->FinalizeRewrite();
-	verify(block->host_code_size >= assembler->getSize());
-	delete assembler;
-	block->memory_accesses.erase(it);
-	host_pc = (unat)(code_ptr - BlockCompiler::mem_access_offset);
-
-	return true;
 }
 
 void ngen_HandleException()
 {
 	longjmp(jmp_env, 1);
 }
+
+void ngen_ResetBlocks()
+{
+	// Avoid generating the main loop more than once
+	if (mainloop != nullptr && mainloop != emit_GetCCPtr())
+		return;
+
+	std::unique_ptr<BlockCompiler> compiler(new BlockCompiler());
+	try {
+		compiler->genMainloop();
+	} catch (const Xbyak::Error& e) {
+		ERROR_LOG(DYNAREC, "Fatal xbyak error: %s", e.what());
+	}
+}
+
 #endif
