@@ -1,7 +1,4 @@
 #include "gdxsv_network.h"
-#include <future>
-#include <thread>
-#include <chrono>
 
 #ifndef _WIN32
 #include <sys/ioctl.h>
@@ -29,26 +26,65 @@ bool TcpClient::Connect(const char *host, int port) {
     memcpy(&addr.sin_addr, host_entry->h_addr_list[0], host_entry->h_length);
 #endif
     addr.sin_port = htons(port);
-
-    // FIXME: hotfix, we should use non-blocking socket to detect timeout.
-    auto future = std::async(std::launch::async, [&]() {
-        return ::connect(new_sock, (const sockaddr *) &addr, sizeof(addr));
-    });
-    if (!future.valid()) {
-        WARN_LOG(COMMON, "Connect fail 4 invalid future");
-        return false;
+    
+    fd_set setW, setE;
+    struct timeval timeout = {5,0};
+    int res;
+    
+    auto set_blocking_mode = [](const int &socket, bool is_blocking) {
+#ifdef _WIN32
+        u_long flags = is_blocking ? 0 : 1;
+        ioctlsocket(socket, FIONBIO, &flags);
+#else
+        const int flags = fcntl(socket, F_GETFL, 0);
+        fcntl(socket, F_SETFL, is_blocking ? flags ^ O_NONBLOCK : flags | O_NONBLOCK);
+#endif
+    };
+    
+    set_blocking_mode(new_sock, false);
+    
+    if(::connect(new_sock, (const sockaddr *) &addr, sizeof(addr)) != 0){
+        if (get_last_error() != EINPROGRESS && get_last_error() != L_EWOULDBLOCK) {
+            WARN_LOG(COMMON, "Connect fail 2 %d", get_last_error());
+            return false;
+        } else {
+            do {
+                FD_ZERO(&setW);
+                FD_SET(new_sock, &setW);
+                FD_ZERO(&setE);
+                FD_SET(new_sock, &setE);
+                
+                res = select(new_sock+1, NULL, &setW, &setE, &timeout);
+                if (res < 0 && errno != EINTR) {
+                    WARN_LOG(COMMON, "Connect fail 3 %d", get_last_error());
+                    return false;
+                } else if (res > 0) {
+                    
+                    if (FD_ISSET(new_sock, &setE)){
+                        int error;
+                        socklen_t l = sizeof(int);
+#ifdef _WIN32
+                        if (getsockopt(new_sock, SOL_SOCKET, SO_ERROR, (char*)&error, &l) < 0 || error) {
+#else
+                        if (getsockopt(new_sock, SOL_SOCKET, SO_ERROR, &error, &l) < 0 || error) {
+#endif
+                            WARN_LOG(COMMON, "Connect fail 4 %d", error);
+                            return false;
+                        }
+                        WARN_LOG(COMMON, "Connect fail 5 %d", get_last_error());
+                        return false;
+                    }
+                    
+                    break;
+                } else {
+                    WARN_LOG(COMMON, "Timeout in select() - Cancelling!");
+                    return false;
+                }
+            } while(1);
+        }
+        set_blocking_mode(new_sock, true);
     }
-    auto wait_status = future.wait_for(std::chrono::seconds(5));
-    if (wait_status != std::future_status::ready) {
-        WARN_LOG(COMMON, "Connect fail 5 timeout");
-        closesocket(new_sock);
-        return false;
-    }
-    if (future.get() != 0) {
-        WARN_LOG(COMMON, "Connect fail 3 %d", get_last_error());
-        return false;
-    }
-
+        
     if (sock_ != INVALID_SOCKET) {
         closesocket(sock_);
     }
