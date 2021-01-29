@@ -88,7 +88,7 @@ const int AICA_TICK = 145125;	// 44.1 KHz / 32
 
 static int AicaUpdate(int tag, int c, int j)
 {
-	arm_Run(32);
+	aicaarm::run(32);
 	if (!settings.aica.NoBatch && !settings.aica.DSPEnabled)
 		AICA_Sample32();
 

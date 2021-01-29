@@ -1,10 +1,14 @@
 #pragma once
 #include "types.h"
 
-void arm_Init();
-void arm_Reset();
-void arm_Run(u32 samples);
-void arm_SetEnabled(bool enabled);
+namespace aicaarm {
+
+void init();
+void reset();
+void run(u32 samples);
+void enable(bool enabled);
+
+}
 
 enum Arm7Reg
 {

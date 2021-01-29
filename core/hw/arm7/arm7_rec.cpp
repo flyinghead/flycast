@@ -707,7 +707,7 @@ extern "C" void DYNACALL arm_mainloop(u32 cycl, void* regs, void* entrypoints);
 
 // Run a timeslice of arm7
 
-void arm_Run(u32 samples)
+void aicaarm::run(u32 samples)
 {
 	for (u32 i = 0; i < samples; i++)
 	{

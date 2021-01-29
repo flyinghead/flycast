@@ -79,7 +79,7 @@ static void runInterpreter(u32 CycleCount)
 	}
 }
 
-void arm_Run(u32 samples)
+void aicaarm::run(u32 samples)
 {
 	for (u32 i = 0; i < samples; i++)
 	{
@@ -89,12 +89,12 @@ void arm_Run(u32 samples)
 }
 #endif
 
-void arm_Init()
+void aicaarm::init()
 {
 #if FEAT_AREC != DYNAREC_NONE
 	arm7rec_init();
 #endif
-	arm_Reset();
+	aicaarm::reset();
 
 	for (int i = 0; i < 256; i++)
 	{
@@ -270,7 +270,7 @@ static void CPUUndefinedException()
 	armNextPC = 0x04;
 }
 
-void arm_Reset()
+void aicaarm::reset()
 {
 	DEBUG_LOG(AICA_ARM, "AICA ARM Reset");
 #if FEAT_AREC != DYNAREC_NONE
@@ -333,10 +333,10 @@ void CPUFiq()
 */
 
 
-void arm_SetEnabled(bool enabled)
+void aicaarm::enable(bool enabled)
 {
 	if(!Arm7Enabled && enabled)
-			arm_Reset();
+		aicaarm::reset();
 	
 	Arm7Enabled=enabled;
 }
@@ -398,3 +398,4 @@ template void DYNACALL MSR_do<0>(u32 v);
 template void DYNACALL MSR_do<1>(u32 v);
 
 #endif	// FEAT_AREC != DYNAREC_NONE
+
