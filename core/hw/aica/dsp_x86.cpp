@@ -42,7 +42,7 @@ alignas(4096) static u8 CodeBuffer[32 * 1024]
 #else
 	#error CodeBuffer code section unknown
 #endif
-static u8 *WritableCodeBuffer;
+static u8 *pCodeBuffer;
 
 class X86DSPAssembler : public Xbyak::CodeGenerator
 {
@@ -386,18 +386,18 @@ void dsp_recompile()
 			break;
 		}
 	}
-	X86DSPAssembler assembler(WritableCodeBuffer, sizeof(CodeBuffer));
+	X86DSPAssembler assembler(pCodeBuffer, sizeof(CodeBuffer));
 	assembler.Compile(&dsp);
 }
 
 void dsp_rec_init()
 {
-	if (!vmem_platform_prepare_jit_block(CodeBuffer, sizeof(CodeBuffer), (void**)&WritableCodeBuffer))
+	if (!vmem_platform_prepare_jit_block(CodeBuffer, sizeof(CodeBuffer), (void**)&pCodeBuffer))
 		die("mprotect failed in x86 dsp");
 }
 
 void dsp_rec_step()
 {
-	((void (*)())&CodeBuffer[0])();
+	((void (*)())&pCodeBuffer[0])();
 }
 #endif

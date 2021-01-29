@@ -501,7 +501,10 @@ void dc_init()
 	set_platform(DC_PLATFORM_DREAMCAST);
 
 	plugins_Init();
+	mem_Init();
+	reios_init();
 
+	// the recompiler may start generating code at this point and needs a fully configured machine
 #if FEAT_SHREC != DYNAREC_NONE
 	Get_Sh4Recompiler(&sh4_cpu);
 	sh4_cpu.Init();		// Also initialize the interpreter
@@ -516,9 +519,6 @@ void dc_init()
 		sh4_cpu.Init();
 		INFO_LOG(INTERPRETER, "Using Interpreter");
 	}
-
-	mem_Init();
-	reios_init();
 
 	init_done = true;
 }
