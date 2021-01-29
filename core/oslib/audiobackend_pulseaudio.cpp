@@ -6,6 +6,7 @@
 #include <pulse/error.h>
 
 static pa_simple *pulse_stream;
+static pa_simple *pulse_record;
 
 static void pulseaudio_simple_init()
 {
@@ -40,13 +41,57 @@ static void pulseaudio_simple_term()
 	}
 }
 
+static bool pulseaudio_init_record(u32 sampling_freq)
+{
+	static const pa_sample_spec ss = {
+			.format = PA_SAMPLE_S16LE,
+	        .rate = sampling_freq,
+	        .channels = 1
+	};
+	int error;
+	pulse_record = pa_simple_new(NULL, "flycast", PA_STREAM_RECORD, NULL, "flycast", &ss, NULL, NULL, &error);
+	if (pulse_record == nullptr)
+	{
+		INFO_LOG(AUDIO, "PulseAudio: pa_simple_new() failed: %s", pa_strerror(error));
+		return false;
+	}
+	INFO_LOG(AUDIO, "PulseAudio: Successfully initialized capture device");
+
+	return true;
+}
+
+static void pulseaudio_term_record()
+{
+	if (pulse_record != nullptr)
+	{
+		pa_simple_free(pulse_record);
+		pulse_record = nullptr;
+	}
+}
+
+static u32 pulseaudio_record(void *buffer, u32 samples)
+{
+	if (pulse_record == nullptr)
+		return 0;
+	int error;
+	if (pa_simple_read(pulse_record, buffer, samples * 2, &error) < 0)
+	{
+		INFO_LOG(AUDIO, "PulseAudio: pa_simple_read() failed: %s", pa_strerror(error));
+		return 0;
+	}
+	return samples;
+}
+
 static audiobackend_t audiobackend_pulseaudio = {
 		"pulse", // Slug
 		"PulseAudio", // Name
 		&pulseaudio_simple_init,
 		&pulseaudio_simple_push,
 		&pulseaudio_simple_term,
-		NULL
+		NULL,
+		&pulseaudio_init_record,
+		&pulseaudio_record,
+		&pulseaudio_term_record,
 };
 
 #else	// !PULSEAUDIO_SIMPLE
@@ -56,6 +101,7 @@ static audiobackend_t audiobackend_pulseaudio = {
 pa_threaded_mainloop *mainloop;
 pa_context *context;
 pa_stream *stream;
+pa_stream *record_stream;
 
 static void context_state_cb(pa_context *c, void *userdata)
 {
@@ -236,13 +282,87 @@ static void pulseaudio_term()
 		pa_threaded_mainloop_free(mainloop);
 }
 
+static bool pulseaudio_init_record(u32 sampling_freq)
+{
+	pa_sample_spec spec{ PA_SAMPLE_S16LE, sampling_freq, 1 };
+
+	record_stream = pa_stream_new(context, "record", &spec, NULL);
+	if (!record_stream)
+	{
+		INFO_LOG(AUDIO, "PulseAudio: pa_stream_new failed");
+		return false;
+	}
+
+	pa_threaded_mainloop_lock(mainloop);
+
+	pa_buffer_attr buffer_attr;
+	buffer_attr.fragsize = 240 * 2;
+	buffer_attr.maxlength = buffer_attr.fragsize * 2;
+
+	if (pa_stream_connect_record(record_stream, nullptr, &buffer_attr, PA_STREAM_NOFLAGS) < 0)
+	{
+		INFO_LOG(AUDIO, "PulseAudio: pa_stream_connect_record failed");
+		pa_stream_unref(record_stream);
+		record_stream = nullptr;
+		return false;
+	}
+	pa_threaded_mainloop_unlock(mainloop);
+	INFO_LOG(AUDIO, "PulseAudio: Successfully initialized capture device");
+
+	return true;
+}
+
+static void pulseaudio_term_record()
+{
+	if (record_stream != nullptr)
+	{
+		pa_threaded_mainloop_lock(mainloop);
+		pa_stream_disconnect(record_stream);
+		pa_stream_unref(record_stream);
+		record_stream = nullptr;
+		pa_threaded_mainloop_unlock(mainloop);
+	}
+}
+
+static u32 pulseaudio_record(void *buffer, u32 samples)
+{
+	if (record_stream == nullptr)
+		return 0;
+	pa_threaded_mainloop_lock(mainloop);
+	const void *data;
+	size_t size;
+	if (pa_stream_peek(record_stream, &data, &size) < 0)
+	{
+		pa_threaded_mainloop_unlock(mainloop);
+		DEBUG_LOG(AUDIO, "PulseAudio: pa_stream_peek error");
+		return 0;
+	}
+	if (size == 0)
+	{
+		pa_threaded_mainloop_unlock(mainloop);
+		return 0;
+	}
+	size = std::min((size_t)samples * 2, size);
+	if (data != nullptr)
+		memcpy(buffer, data, size);
+	else
+		memset(buffer, 0, size);
+	pa_stream_drop(record_stream);
+	pa_threaded_mainloop_unlock(mainloop);
+
+	return size / 2;
+}
+
 static audiobackend_t audiobackend_pulseaudio = {
 		"pulse", // Slug
 		"PulseAudio", // Name
 		&pulseaudio_init,
 		&pulseaudio_push,
 		&pulseaudio_term,
-		NULL
+		NULL,
+		&pulseaudio_init_record,
+		&pulseaudio_record,
+		&pulseaudio_term_record,
 };
 #endif	// !PULSEAUDIO_SIMPLE
 

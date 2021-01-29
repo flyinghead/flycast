@@ -213,16 +213,8 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
             if (rc)
                 return true;
         }
-        else if ((event.getSource() & InputDevice.SOURCE_CLASS_POINTER) == InputDevice.SOURCE_CLASS_POINTER)
-        {
-            if (mView != null) {
-                float scl = mView.getHeight() / 480.0f;
-                float tx = (mView.getWidth() - 640.0f * scl) / 2;
-                int xpos = Math.round((event.getX() - tx) / scl);
-                int ypos = Math.round(event.getY() / scl);
-                InputDeviceManager.getInstance().mouseEvent(xpos, ypos, event.getButtonState());
-            }
-
+        else if ((event.getSource() & InputDevice.SOURCE_CLASS_POINTER) == InputDevice.SOURCE_CLASS_POINTER) {
+            InputDeviceManager.getInstance().mouseEvent(Math.round(event.getX()), Math.round(event.getY()), event.getButtonState());
         }
         return super.onGenericMotionEvent(event);
     }
@@ -289,11 +281,11 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+            super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == AUDIO_PERM_REQUEST && permissions.length > 0
                 && Manifest.permission.RECORD_AUDIO .equals(permissions[0]) && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
             SipEmulator sip = new SipEmulator();
-            sip.startRecording();
             JNIdc.setupMic(sip);
         }
         else if (requestCode == STORAGE_PERM_REQUEST) {

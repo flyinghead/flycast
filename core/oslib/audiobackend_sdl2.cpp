@@ -6,6 +6,7 @@
 #include "stdclass.h"
 
 #include <mutex>
+#include <atomic>
 
 static SDL_AudioDeviceID audiodev;
 static bool needs_resampling;
@@ -16,6 +17,11 @@ static struct {
 	uint32_t sample_buffer[2048];
 } audiobuf;
 static unsigned sample_count = 0;
+
+static SDL_AudioDeviceID recorddev;
+u8 recordbuf[480 * 2];
+std::atomic<size_t> rec_read;
+std::atomic<size_t> rec_write;
 
 // To easily access samples.
 union Sample { int16_t s[2]; uint32_t l; };
@@ -132,13 +138,81 @@ static void sdl2_audio_term() {
 	}
 }
 
+void sdl2_record_cb(void *userdata, u8 *stream, int len)
+{
+	DEBUG_LOG(AUDIO, "SDL2: sdl2_record_cb len %d write %zd read %zd", len, (size_t)rec_write, (size_t)rec_read);
+	while (len > 0)
+	{
+		size_t plen = std::min((size_t)len, sizeof(recordbuf) - rec_write);
+		memcpy(&recordbuf[rec_write], stream, plen);
+		len -= plen;
+		rec_write = (rec_write + plen) % sizeof(recordbuf);
+		stream += plen;
+	}
+}
+
+static bool sdl2_record_init(u32 sampling_freq)
+{
+	rec_write = 0;
+	rec_read = 0;
+
+	SDL_AudioSpec wav_spec, out_spec;
+	memset(&wav_spec, 0, sizeof(wav_spec));
+	wav_spec.freq = sampling_freq;
+	wav_spec.format = AUDIO_S16;
+	wav_spec.channels = 1;
+	wav_spec.samples = 256;  // Must be power of two
+	wav_spec.callback = sdl2_record_cb;
+	recorddev = SDL_OpenAudioDevice(NULL, 1, &wav_spec, &out_spec, 0);
+	if (recorddev == 0)
+	{
+		INFO_LOG(AUDIO, "SDL2: Cannot open audio capture device: %s", SDL_GetError());
+		return false;
+	}
+	SDL_PauseAudioDevice(recorddev, 0);
+	INFO_LOG(AUDIO, "SDL2: opened audio capture device");
+
+	return true;
+}
+
+static void sdl2_record_term()
+{
+	if (recorddev != 0)
+	{
+		SDL_PauseAudioDevice(recorddev, 1);
+		SDL_CloseAudioDevice(recorddev);
+		recorddev = 0;
+	}
+}
+
+static u32 sdl2_record(void* frame, u32 samples)
+{
+	u32 count = 0;
+	samples *= 2;
+	while (samples > 0)
+	{
+		u32 avail = std::min(rec_write - rec_read, sizeof(recordbuf) - rec_read);
+		avail = std::min(avail, samples);
+		memcpy((u8 *)frame + count, &recordbuf[rec_read], avail);
+		rec_read = (rec_read + avail) % sizeof(recordbuf);
+		samples -= avail;
+		count += avail;
+	}
+	DEBUG_LOG(AUDIO, "SDL2: sdl2_record len %d ret %d write %zd read %zd", samples * 2, count, (size_t)rec_write, (size_t)rec_read);
+
+	return count / 2;
+}
+
 static audiobackend_t audiobackend_sdl2audio = {
 		"sdl2", // Slug
 		"Simple DirectMedia Layer 2 Audio", // Name
 		&sdl2_audio_init,
 		&sdl2_audio_push,
 		&sdl2_audio_term,
-		NULL
+		NULL,
+		&sdl2_record_init,
+		&sdl2_record,
+		&sdl2_record_term
 };
 
 static bool sdl2audiobe = RegisterAudioBackend(&audiobackend_sdl2audio);

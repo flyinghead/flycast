@@ -339,8 +339,8 @@ public class VirtualJoystickDelegate {
                 {
                     MotionEvent.PointerCoords pointerCoords = new MotionEvent.PointerCoords();
                     event.getPointerCoords(0, pointerCoords);
-                    mouse_pos[0] = Math.round((pointerCoords.x - tx) / scl);
-                    mouse_pos[1] = Math.round(pointerCoords.y / scl);
+                    mouse_pos[0] = Math.round(pointerCoords.x);
+                    mouse_pos[1] = Math.round(pointerCoords.y);
                     mouse_btns = MotionEvent.BUTTON_PRIMARY;    // Mouse left button down
                 }
                 break;
@@ -350,8 +350,8 @@ public class VirtualJoystickDelegate {
                 {
                     MotionEvent.PointerCoords pointerCoords = new MotionEvent.PointerCoords();
                     event.getPointerCoords(0, pointerCoords);
-                    mouse_pos[0] = Math.round((pointerCoords.x - tx) / scl);
-                    mouse_pos[1] = Math.round(pointerCoords.y / scl);
+                    mouse_pos[0] = Math.round(pointerCoords.x);
+                    mouse_pos[1] = Math.round(pointerCoords.y);
                 }
                 break;
         }

@@ -26,13 +26,7 @@
 #include "hw/holly/holly_intc.h"
 #include "hw/sh4/sh4_sched.h"
 #include "oslib/oslib.h"
-#include "picoppp.h"
-
-#define start_pppd start_pico
-#define stop_pppd stop_pico
-#define write_pppd write_pico
-#define read_pppd read_pico
-
+#include "network/picoppp.h"
 
 #define MODEM_COUNTRY_RES 0
 #define MODEM_COUNTRY_JAP 1
@@ -122,7 +116,7 @@ static void DSPTestStart();
 static void DSPTestEnd();
 
 static u64 last_dial_time;
-static u64 connected_time;
+static bool data_sent;
 
 #ifndef NDEBUG
 static double last_comm_stats;
@@ -264,10 +258,10 @@ static int modem_sched_func(int tag, int cycles, int jitter)
 			dspram[0x208] = 0xff;	// 2.4 - 19.2 kpbs supported
 			dspram[0x209] = 0xbf;	// 21.6 - 33.6 kpbs supported, asymmetric supported
 
-			start_pppd();
+			start_pico();
 			connect_state = CONNECTED;
 			callback_cycles = SH4_MAIN_CLOCK / 1000000 * 238;	// 238 us
-			connected_time = 0;
+			data_sent = false;
 
 			break;
 
@@ -281,25 +275,19 @@ static int modem_sched_func(int tag, int cycles, int jitter)
 					LOG("modem_regs %02x == %02x", i, modem_regs.ptr[i]);
 			}
 #endif
-			if (connected_time == 0)
-				connected_time = sh4_sched_now64();
-
-			callback_cycles = SH4_MAIN_CLOCK / 1000000 * 238;	// 238 us
+			// This value is critical. Setting it too low will cause some sockets to stall.
+			// Check Sonic Adventure 2 and Samba de Amigo (PAL) integrated browsers.
+			// 143 us/bytes corresponds to 56K
+			callback_cycles = SH4_MAIN_CLOCK / 1000000 * 143;
 			modem_regs.reg1e.TDBE = 1;
 
-			if (!modem_regs.reg1e.RDBF)
+			// Let WinCE send data first to avoid choking it
+			if (!modem_regs.reg1e.RDBF && data_sent)
 			{
-				int c = read_pppd();
-				// Delay reading from ppp to avoid choking WinCE
-				if (c >= 0 && sh4_sched_now64() - connected_time >= SH4_MAIN_CLOCK / 4)
+				int c = read_pico();
+				if (c >= 0)
 				{
 					//LOG("pppd received %02x", c);
-
-#ifdef MODEM_DEBUG
-					modem_write_pico_read_timer.stop();
-					ppp_read_dump.push(c);
-#endif
-
 #ifndef NDEBUG
 					recvd_bytes++;
 #endif
@@ -308,9 +296,6 @@ static int modem_sched_func(int tag, int cycles, int jitter)
 					if (modem_regs.reg04.FIFOEN)
 						SET_STATUS_BIT(0x0c, modem_regs.reg0c.RXFNE, 1);
 					SET_STATUS_BIT(0x01, modem_regs.reg01.RXHF, 1);
-
-					// Set small value to receive following data quickly.
-					callback_cycles = SH4_MAIN_CLOCK / 1000000 * 62;	// 62 us
 				}
 			}
 
@@ -331,12 +316,12 @@ static int modem_sched_func(int tag, int cycles, int jitter)
 
 void ModemInit()
 {
-	modem_sched = sh4_sched_register(0, "modem_sched_func", &modem_sched_func);
+	modem_sched = sh4_sched_register(0, &modem_sched_func);
 }
 
 void ModemTerm()
 {
-	stop_pppd();
+	stop_pico();
 }
 
 static void schedule_callback(int ms)
@@ -445,7 +430,7 @@ static void modem_reset(u32 v)
 	{
 		if (state == MS_RESET)
 		{
-			stop_pppd();
+			stop_pico();
 			memset(&modem_regs, 0, sizeof(modem_regs));
 			state = MS_RESETING;
 			ControllerTestStart();
@@ -526,15 +511,13 @@ static void ModemNormalWrite(u32 reg, u32 data)
 		else if (connect_state == CONNECTED && modem_regs.reg08.RTS)
 		{
 			//LOG("ModemNormalWrite : TBUFFER = %X", data);
+			data_sent = true;
 #ifndef NDEBUG
 			sent_bytes++;
 			if (sent_fp)
 				fputc(data, sent_fp);
 #endif
-#ifdef MODEM_DEBUG
-			ppp_write_dump.push(data & 0xff);
-#endif
-			write_pppd(data);
+			write_pico(data);
 			modem_regs.reg1e.TDBE = 0;
 		}
 		break;

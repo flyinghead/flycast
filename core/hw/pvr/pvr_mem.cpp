@@ -174,104 +174,76 @@ void YUV_data(u32* data , u32 count)
 	verify(count==0);
 }
 
-//Regs
-
 //vram 32-64b
 
 //read
-u8 DYNACALL pvr_read_area1_8(u32 addr)
+template<typename T>
+T DYNACALL pvr_read_area1(u32 addr)
 {
-	return vram[pvr_map32(addr)];
+	return *(T *)&vram[pvr_map32(addr)];
 }
-
-u16 DYNACALL pvr_read_area1_16(u32 addr)
-{
-	return *(u16*)&vram[pvr_map32(addr)];
-}
-u32 DYNACALL pvr_read_area1_32(u32 addr)
-{
-	return *(u32*)&vram[pvr_map32(addr)];
-}
+template u8 pvr_read_area1<u8>(u32 addr);
+template u16 pvr_read_area1<u16>(u32 addr);
+template u32 pvr_read_area1<u32>(u32 addr);
 
 //write
-void DYNACALL pvr_write_area1_8(u32 addr,u8 data)
+template<typename T>
+void DYNACALL pvr_write_area1(u32 addr, T data)
 {
-	INFO_LOG(MEMORY, "%08x: 8-bit VRAM writes are not possible", addr);
-}
-void DYNACALL pvr_write_area1_16(u32 addr,u16 data)
-{
-    u32 vaddr = addr & VRAM_MASK;
-    if (vaddr >= fb_watch_addr_start && vaddr < fb_watch_addr_end)
-    {
-        fb_dirty = true;
-    }
-	*(u16*)&vram[pvr_map32(addr)]=data;
-}
-void DYNACALL pvr_write_area1_32(u32 addr,u32 data)
-{
-    u32 vaddr = addr & VRAM_MASK;
-    if (vaddr >= fb_watch_addr_start && vaddr < fb_watch_addr_end)
-    {
-        fb_dirty = true;
-    }
-	*(u32*)&vram[pvr_map32(addr)] = data;
-}
+	if (sizeof(T) == 1)
+	{
+		INFO_LOG(MEMORY, "%08x: 8-bit VRAM writes are not possible", addr);
+		return;
+	}
+	u32 vaddr = addr & VRAM_MASK;
+	if (vaddr >= fb_watch_addr_start && vaddr < fb_watch_addr_end)
+		fb_dirty = true;
 
-void TAWrite(u32 address,u32* data,u32 count)
-{
-	u32 address_w=address&0x1FFFFFF;//correct ?
-	if (address_w<0x800000)//TA poly
-	{
-		ta_vtx_data(data,count);
-	}
-	else if(address_w<0x1000000) //Yuv Converter
-	{
-		YUV_data(data,count);
-	}
-	else //Vram Writef
-	{
-		//shouldn't really get here (?) -> works on dc :D need to handle lmmodes
-		DEBUG_LOG(MEMORY, "Vram TAWrite 0x%X , bkls %d\n", address, count);
-		verify(SB_LMMODE0 == 0);
-		memcpy(&vram.data[address&VRAM_MASK],data,count*32);
-	}
+	*(T *)&vram[pvr_map32(addr)] = data;
 }
+template void pvr_write_area1<u8>(u32 addr, u8 data);
+template void pvr_write_area1<u16>(u32 addr, u16 data);
+template void pvr_write_area1<u32>(u32 addr, u32 data);
 
-void NOINLINE MemWrite32(void* dst, void* src)
+void TAWrite(u32 address, u32* data, u32 count)
 {
-	memcpy((u64*)dst,(u64*)src,32);
+	if ((address & 0x800000) == 0)
+		// TA poly
+		ta_vtx_data(data, count);
+	else
+		// YUV Converter
+		YUV_data(data, count);
 }
 
 #if HOST_CPU!=CPU_ARM
-extern "C" void DYNACALL TAWriteSQ(u32 address,u8* sqb)
+extern "C" void DYNACALL TAWriteSQ(u32 address, u8* sqb)
 {
-	u32 address_w=address&0x1FFFFFF;//correct ?
-	u8* sq=&sqb[address&0x20];
+	u32 address_w = address & 0x01FFFFE0;
+	u8* sq = &sqb[address & 0x20];
 
-	if (likely(address_w<0x800000))//TA poly
+	if (likely(address_w < 0x800000))//TA poly
 	{
 		ta_vtx_data32(sq);
 	}
-	else if(likely(address_w<0x1000000)) //Yuv Converter
+	else if(likely(address_w < 0x1000000)) //Yuv Converter
 	{
-		YUV_data((u32*)sq,1);
+		YUV_data((u32*)sq, 1);
 	}
 	else //Vram Writef
 	{
 		// Used by WinCE
 		DEBUG_LOG(MEMORY, "Vram TAWriteSQ 0x%X SB_LMMODE0 %d", address, SB_LMMODE0);
-		if (SB_LMMODE0 == 0)
+		bool path64b = (address & 0x02000000 ? SB_LMMODE1 : SB_LMMODE0) == 0;
+		if (path64b)
 		{
 			// 64b path
-			MemWrite32(&vram[address_w&(VRAM_MASK-0x1F)],sq);
+			memcpy(&vram[address_w & VRAM_MASK], sq, 32);
 		}
 		else
 		{
 			// 32b path
 			for (int i = 0; i < 8; i++, address_w += 4)
-			{
-				pvr_write_area1_32(address_w, ((u32 *)sq)[i]);
-			}
+				pvr_write_area1<u32>(address_w, ((u32 *)sq)[i]);
 		}
 	}
 }
@@ -307,3 +279,35 @@ u32 vri(u32 addr)
 {
 	return *(u32*)&vram[pvr_map32(addr)];
 }
+
+template<typename T, bool upper>
+T DYNACALL pvr_read_area4(u32 addr)
+{
+	bool access32 = (upper ? SB_LMMODE1 : SB_LMMODE0) == 1;
+	if (access32)
+		return pvr_read_area1<T>(addr);
+	else
+		return *(T*)&vram[addr & VRAM_MASK];
+}
+template u8 pvr_read_area4<u8, false>(u32 addr);
+template u16 pvr_read_area4<u16, false>(u32 addr);
+template u32 pvr_read_area4<u32, false>(u32 addr);
+template u8 pvr_read_area4<u8, true>(u32 addr);
+template u16 pvr_read_area4<u16, true>(u32 addr);
+template u32 pvr_read_area4<u32, true>(u32 addr);
+
+template<typename T, bool upper>
+void DYNACALL pvr_write_area4(u32 addr, T data)
+{
+	bool access32 = (upper ? SB_LMMODE1 : SB_LMMODE0) == 1;
+	if (access32)
+		pvr_write_area1(addr, data);
+	else
+		*(T*)&vram[addr & VRAM_MASK] = data;
+}
+template void pvr_write_area4<u8, false>(u32 addr, u8 data);
+template void pvr_write_area4<u16, false>(u32 addr, u16 data);
+template void pvr_write_area4<u32, false>(u32 addr, u32 data);
+template void pvr_write_area4<u8, true>(u32 addr, u8 data);
+template void pvr_write_area4<u16, true>(u32 addr, u16 data);
+template void pvr_write_area4<u32, true>(u32 addr, u32 data);

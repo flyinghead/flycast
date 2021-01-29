@@ -9,7 +9,6 @@ void os_CreateWindow();
 void os_SetupInput();
 void os_LaunchFromURL(const std::string& url);
 std::string os_FetchStringFromURL(const std::string& url);
-void WriteSample(s16 right, s16 left);
 
 #ifdef _MSC_VER
 #include <intrin.h>

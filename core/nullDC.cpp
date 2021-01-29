@@ -15,12 +15,12 @@
 
 #include "hw/maple/maple_cfg.h"
 #include "hw/sh4/sh4_mem.h"
+#include "hw/holly/sb_mem.h"
 
 #include "hw/naomi/naomi_cart.h"
 #include "reios/reios.h"
 #include "hw/sh4/sh4_sched.h"
 #include "hw/sh4/sh4_if.h"
-#include "hw/pvr/Renderer_if.h"
 #include "hw/pvr/spg.h"
 #include "hw/aica/aica_if.h"
 #include "hw/aica/dsp.h"
@@ -34,6 +34,9 @@
 #include "rend/CustomTexture.h"
 #include "hw/maple/maple_devs.h"
 #include "network/naomi_network.h"
+#include "rend/mainui.h"
+#include "archive/rzip.h"
+
 #include "gdxsv/gdxsv.h"
 
 void FlushCache();
@@ -99,10 +102,10 @@ static void LoadSpecialSettings()
 {
 	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
 	{
-		char prod_id[sizeof(ip_meta.product_number) + 1] = {0};
-		memcpy(prod_id, ip_meta.product_number, sizeof(ip_meta.product_number));
+		std::string prod_id(ip_meta.product_number, sizeof(ip_meta.product_number));
+		prod_id = trim_trailing_ws(prod_id);
 
-		NOTICE_LOG(BOOT, "Game ID is [%s]", prod_id);
+		NOTICE_LOG(BOOT, "Game ID is [%s]", prod_id.c_str());
 		rtt_to_buffer_game = false;
 		safemode_game = false;
 		tr_poly_depth_mask_game = false;
@@ -112,7 +115,7 @@ static void LoadSpecialSettings()
 		forced_game_cable = -1;
 
 		if (ip_meta.isWindowsCE() || settings.dreamcast.ForceWindowsCE
-				|| !strncmp("T26702N", prod_id, 7)) // PBA Tour Bowling 2001
+				|| prod_id == "T26702N") // PBA Tour Bowling 2001
 		{
 			INFO_LOG(BOOT, "Enabling Full MMU and Extra depth scaling for Windows CE game");
 			settings.rend.ExtraDepthScale = 0.1; // taxi 2 needs 0.01 for FMV (amd, per-tri)
@@ -122,83 +125,94 @@ static void LoadSpecialSettings()
 		}
 
 		// Tony Hawk's Pro Skater 2
-		if (!strncmp("T13008D", prod_id, 7) || !strncmp("T13006N", prod_id, 7)
+		if (prod_id == "T13008D" || prod_id == "T13006N"
 				// Tony Hawk's Pro Skater 1
-				|| !strncmp("T40205N", prod_id, 7)
+				|| prod_id == "T40205N"
 				// Tony Hawk's Skateboarding
-				|| !strncmp("T40204D", prod_id, 7)
+				|| prod_id == "T40204D"
 				// Skies of Arcadia
-				|| !strncmp("MK-51052", prod_id, 8)
+				|| prod_id == "MK-51052"
 				// Eternal Arcadia (JP)
-				|| !strncmp("HDR-0076", prod_id, 8)
+				|| prod_id == "HDR-0076"
 				// Flag to Flag (US)
-				|| !strncmp("MK-51007", prod_id, 8)
+				|| prod_id == "MK-51007"
 				// Super Speed Racing (JP)
-				|| !strncmp("HDR-0013", prod_id, 8)
+				|| prod_id == "HDR-0013"
 				// Yu Suzuki Game Works Vol. 1
-				|| !strncmp("6108099", prod_id, 7)
+				|| prod_id == "6108099"
 				// L.O.L
-				|| !strncmp("T2106M", prod_id, 6)
+				|| prod_id == "T2106M"
 				// Miss Moonlight
-				|| !strncmp("T18702M", prod_id, 7)
+				|| prod_id == "T18702M"
 				// Tom Clancy's Rainbow Six (US)
-				|| !strncmp("T40401N", prod_id, 7)
+				|| prod_id == "T40401N"
 				// Tom Clancy's Rainbow Six incl. Eagle Watch Missions (EU)
-				|| !strncmp("T-45001D05", prod_id, 10))
+				|| prod_id == "T-45001D05")
 		{
-			INFO_LOG(BOOT, "Enabling render to texture buffer for game %s", prod_id);
+			INFO_LOG(BOOT, "Enabling render to texture buffer for game %s", prod_id.c_str());
 			settings.rend.RenderToTextureBuffer = 1;
 			rtt_to_buffer_game = true;
 		}
-		if (!strncmp("HDR-0176", prod_id, 8) || !strncmp("RDC-0057", prod_id, 8))
+		if (prod_id == "HDR-0176" || prod_id == "RDC-0057")
 		{
-			INFO_LOG(BOOT, "Enabling translucent depth multipass for game %s", prod_id);
+			INFO_LOG(BOOT, "Enabling translucent depth multipass for game %s", prod_id.c_str());
 			// Cosmic Smash
 			settings.rend.TranslucentPolygonDepthMask = 1;
 			tr_poly_depth_mask_game = true;
 		}
 		// NHL 2K2
-		if (!strncmp("MK-51182", prod_id, 8))
+		if (prod_id == "MK-51182")
 		{
-			INFO_LOG(BOOT, "Enabling Extra depth scaling for game %s", prod_id);
+			INFO_LOG(BOOT, "Enabling Extra depth scaling for game %s", prod_id.c_str());
 			settings.rend.ExtraDepthScale = 1000000;	// Mali needs 1M, 10K is enough for others
 			extra_depth_game = true;
 		}
 		// Re-Volt (US, EU)
-		else if (!strncmp("T-8109N", prod_id, 7) || !strncmp("T8107D  50", prod_id, 10))
+		else if (prod_id == "T-8109N" || prod_id == "T8107D  50")
 		{
-			INFO_LOG(BOOT, "Enabling Extra depth scaling for game %s", prod_id);
+			INFO_LOG(BOOT, "Enabling Extra depth scaling for game %s", prod_id.c_str());
 			settings.rend.ExtraDepthScale = 100;
 			extra_depth_game = true;
 		}
-		// Super Producers
-		if (!strncmp("T14303M", prod_id, 7)
-			// Giant Killers
-			|| !strncmp("T45401D 50", prod_id, 10)
-			// Wild Metal (US)
-			|| !strncmp("T42101N 00", prod_id, 10)
-			// Wild Metal (EU)
-			|| !strncmp("T40501D-50", prod_id, 10)
-			// Resident Evil 2 (US)
-			|| !strncmp("T1205N", prod_id, 6)
-			// Resident Evil 2 (EU)
-			|| !strncmp("T7004D  50", prod_id, 10)
-			// Rune Jade
-			|| !strncmp("T14304M", prod_id, 7)
-			// Marionette Company
-			|| !strncmp("T5202M", prod_id, 6)
-			// Marionette Company 2
-			|| !strncmp("T5203M", prod_id, 6)
-			// Maximum Pool (for online support)
-			|| !strncmp("T11010N", prod_id, 7)
-			// StarLancer (US) (for online support)
-			|| !strncmp("T40209N", prod_id, 7)
-			// StarLancer (EU) (for online support)
-			|| !strncmp("T17723D 05", prod_id, 10)
-			// Heroes of might and magic III
-			|| !strncmp("T0000M", prod_id, 6))
+		// Samurai Shodown 6 dc port
+		else if (prod_id == "T0002M")
 		{
-			INFO_LOG(BOOT, "Disabling 32-bit virtual memory for game %s", prod_id);
+			INFO_LOG(BOOT, "Enabling Extra depth scaling for game %s", prod_id.c_str());
+			settings.rend.ExtraDepthScale = 1e26;
+			extra_depth_game = true;
+		}
+		// Super Producers
+		if (prod_id == "T14303M"
+			// Giant Killers
+			|| prod_id == "T45401D 50"
+			// Wild Metal (US)
+			|| prod_id == "T42101N 00"
+			// Wild Metal (EU)
+			|| prod_id == "T40501D-50"
+			// Resident Evil 2 (US)
+			|| prod_id == "T1205N"
+			// Resident Evil 2 (EU)
+			|| prod_id == "T7004D  50"
+			// Rune Jade
+			|| prod_id == "T14304M"
+			// Marionette Company
+			|| prod_id == "T5202M"
+			// Marionette Company 2
+			|| prod_id == "T5203M"
+			// Maximum Pool (for online support)
+			|| prod_id == "T11010N"
+			// StarLancer (US) (for online support)
+			|| prod_id == "T40209N"
+			// StarLancer (EU) (for online support)
+			|| prod_id == "T17723D 05"
+			// Heroes of might and magic III
+			|| prod_id == "T0000M"
+			// WebTV
+			|| prod_id == "6107117" || prod_id == "610-7390" || prod_id == "610-7391"
+			// PBA
+			|| prod_id == "T26702N")
+		{
+			INFO_LOG(BOOT, "Disabling 32-bit virtual memory for game %s", prod_id.c_str());
 			settings.dynarec.disable_vmem32 = true;
 			disable_vmem32_game = true;
 		}
@@ -254,17 +268,17 @@ static void LoadSpecialSettings()
 			forced_game_cable = settings.dreamcast.cable;
 		}
 		if (settings.dreamcast.cable == 2 &&
-				(!strncmp("T40602N", prod_id, 7)	// Centipede
-				|| !strncmp("T9710N", prod_id, 6)	// Gauntlet Legends (US)
-				|| !strncmp("MK-51152", prod_id, 8) // World Series Baseball 2K2
-				|| !strncmp("T-9701N", prod_id, 7)	// Mortal Kombat Gold (US)
-				|| !strncmp("T1203N", prod_id, 6)	// Street Fighter Alpha 3 (US)
-				|| !strncmp("T1203M", prod_id, 6)	// Street Fighter Zero 3 (JP)
-				|| !strncmp("T13002N", prod_id, 7)	// Vigilante 8 (US)
-				|| !strncmp("T13003N", prod_id, 7)	// Toy Story 2 (US)
-				|| !strncmp("T1209N", prod_id, 6)	// Gigawing (US)
-				|| !strncmp("T1208M", prod_id, 6)	// Gigawing (JP)
-				|| !strncmp("T1235M", prod_id, 6)))	// Vampire Chronicle for Matching Service
+				(prod_id == "T40602N"	 // Centipede
+				|| prod_id == "T9710N"   // Gauntlet Legends (US)
+				|| prod_id == "MK-51152" // World Series Baseball 2K2
+				|| prod_id == "T-9701N"	 // Mortal Kombat Gold (US)
+				|| prod_id == "T1203N"	 // Street Fighter Alpha 3 (US)
+				|| prod_id == "T1203M"	 // Street Fighter Zero 3 (JP)
+				|| prod_id == "T13002N"	 // Vigilante 8 (US)
+				|| prod_id == "T13003N"	 // Toy Story 2 (US)
+				|| prod_id == "T1209N"	 // Gigawing (US)
+				|| prod_id == "T1208M"	 // Gigawing (JP)
+				|| prod_id == "T1235M")) // Vampire Chronicle for Matching Service
 		{
 			NOTICE_LOG(BOOT, "Game doesn't support RGB. Using TV Composite instead");
 			settings.dreamcast.cable = 3;
@@ -392,6 +406,8 @@ void dc_reset(bool hard)
 
 	sh4_cpu.Reset(hard);
     gdxsv.Reset();
+	if (hard)
+		EventManager::event(Event::Terminate);
 }
 
 static bool reset_requested;
@@ -424,6 +440,7 @@ int reicast_init(int argc, char* argv[])
 		LogManager::Init();
 		LoadSettings(false);
 	}
+	settings.pvr.rend = (RenderType)cfgLoadInt("config", "pvr.rend", (int)settings.pvr.rend);
 
 	os_CreateWindow();
 	os_SetupInput();
@@ -509,8 +526,6 @@ void dc_init()
 	init_done = true;
 }
 
-bool game_started;
-
 static int get_game_platform(const char *path)
 {
 	if (path == NULL)
@@ -553,15 +568,14 @@ static void dc_start_game(const char *path)
 	dc_reset(true);
 	LoadSettings(false);
 	
-	std::string data_path = get_readonly_data_path(DATA_PATH);
 	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
 	{
-		if ((settings.bios.UseReios && !forced_bios_file) || !LoadRomFiles(data_path))
+		if ((settings.bios.UseReios && !forced_bios_file) || !LoadRomFiles())
 		{
 			if (forced_bios_file)
 				throw ReicastException("No BIOS file found");
 
-			if (!LoadHle(data_path))
+			if (!LoadHle())
 				throw ReicastException("Failed to initialize HLE BIOS");
 
 			NOTICE_LOG(BOOT, "Did not load BIOS, using reios");
@@ -569,7 +583,7 @@ static void dc_start_game(const char *path)
 	}
 	else
 	{
-		LoadRomFiles(data_path);
+		LoadRomFiles();
 	}
 	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
 	{
@@ -593,7 +607,7 @@ static void dc_start_game(const char *path)
 					// Content load failed. Boot the BIOS
 					settings.imgread.ImagePath[0] = '\0';
 					forced_bios_file = true;
-					if (!LoadRomFiles(data_path))
+					if (!LoadRomFiles())
 						throw ReicastException("No BIOS file found");
 					InitDrive();
 				}
@@ -632,6 +646,7 @@ static void dc_start_game(const char *path)
 	}
 	gdxsv.Reset();
 	fast_forward_mode = false;
+	EventManager::event(Event::Start);
 }
 
 bool dc_is_running()
@@ -642,10 +657,6 @@ bool dc_is_running()
 #ifndef TARGET_DISPFRAME
 void* dc_run(void*)
 {
-#if FEAT_HAS_NIXPROF
-	install_prof_handler(0);
-#endif
-
 	InitAudio();
 
 	if (settings.dynarec.Enable)
@@ -663,7 +674,7 @@ void* dc_run(void*)
 
 		sh4_cpu.Run();
 
-   		SaveRomFiles(get_writable_data_path(DATA_PATH));
+   		SaveRomFiles();
    		if (reset_requested)
    		{
    			dc_reset(false);
@@ -696,6 +707,7 @@ void dc_stop()
 	sh4_cpu.Stop();
 	rend_cancel_emu_wait();
 	emu_thread.WaitToEnd();
+	EventManager::event(Event::Pause);
 }
 
 // Called on the emulator thread for soft reset
@@ -708,7 +720,7 @@ void dc_request_reset()
 void dc_exit()
 {
 	dc_stop();
-	rend_stop_renderer();
+	mainui_stop();
 }
 
 void InitSettings()
@@ -751,12 +763,12 @@ void InitSettings()
 	settings.rend.PerStripSorting	= false;
 	settings.rend.DelayFrameSwapping = false;
 	settings.rend.WidescreenGameHacks = false;
+	memset(settings.rend.CrosshairColor, 0, sizeof(settings.rend.CrosshairColor));
 
 	settings.pvr.ta_skip			= 0;
-	settings.pvr.rend				= 0;
 
 	settings.pvr.MaxThreads		    = 3;
-	settings.pvr.SynchronousRender	= true;
+	settings.pvr.AutoSkipFrame		= 0;
 
 	settings.debug.SerialConsole	= false;
 	settings.debug.SerialPTY        = false;
@@ -778,6 +790,7 @@ void InitSettings()
 	settings.network.ActAsServer = false;
 	settings.network.dns = "46.101.91.123";		// Dreamcast Live DNS
 	settings.network.server = "";
+	settings.network.EmulateBBA = false;
 
 #if SUPPORT_DISPMANX
 	settings.dispmanx.Width		= 0;
@@ -852,14 +865,25 @@ void LoadSettings(bool game_specific)
 	settings.rend.PerStripSorting	= cfgLoadBool(config_section, "rend.PerStripSorting", settings.rend.PerStripSorting);
 	settings.rend.DelayFrameSwapping = cfgLoadBool(config_section, "rend.DelayFrameSwapping", settings.rend.DelayFrameSwapping);
 	settings.rend.WidescreenGameHacks = cfgLoadBool(config_section, "rend.WidescreenGameHacks", settings.rend.WidescreenGameHacks);
+	for (u32 i = 0; i < ARRAY_SIZE(settings.rend.CrosshairColor); i++)
+	{
+		std::string name = "rend.CrossHairColor" + std::to_string(i + 1);
+		settings.rend.CrosshairColor[i] = cfgLoadInt(config_section, name.c_str(), settings.rend.CrosshairColor[i]);
+	}
 
 	settings.pvr.ta_skip			= cfgLoadInt(config_section, "ta.skip", settings.pvr.ta_skip);
-	if (!game_specific)
-		// crashes if switching gl <-> vulkan
-		settings.pvr.rend				= cfgLoadInt(config_section, "pvr.rend", settings.pvr.rend);
 
 	settings.pvr.MaxThreads		    = cfgLoadInt(config_section, "pvr.MaxThreads", settings.pvr.MaxThreads);
-	settings.pvr.SynchronousRender	= cfgLoadBool(config_section, "pvr.SynchronousRendering", settings.pvr.SynchronousRender);
+	if (game_specific)
+		settings.pvr.AutoSkipFrame = cfgLoadInt(config_section, "pvr.AutoSkipFrame", settings.pvr.AutoSkipFrame);
+	else
+	{
+		// compatibility with previous SynchronousRendering option
+		int autoskip = cfgLoadInt(config_section, "pvr.AutoSkipFrame", 99);
+		if (autoskip == 99)
+			autoskip = cfgLoadBool(config_section, "pvr.SynchronousRendering", true) ? 1 : 2;
+		settings.pvr.AutoSkipFrame = autoskip;
+	}
 
 	settings.debug.SerialConsole	= cfgLoadBool(config_section, "Debug.SerialConsoleEnabled", settings.debug.SerialConsole);
 	settings.debug.SerialPTY		= cfgLoadBool(config_section, "Debug.SerialPTY", settings.debug.SerialPTY);
@@ -885,7 +909,8 @@ void LoadSettings(bool game_specific)
 	settings.network.ActAsServer = cfgLoadBool("network", "ActAsServer", settings.network.ActAsServer);
 	settings.network.dns = cfgLoadStr("network", "DNS", settings.network.dns.c_str());
 	settings.network.server = cfgLoadStr("network", "server", settings.network.server.c_str());
-
+	settings.network.EmulateBBA = cfgLoadBool("network", "EmulateBBA", settings.network.EmulateBBA);
+	
 #if SUPPORT_DISPMANX
 	settings.dispmanx.Width		= cfgLoadInt(game_specific ? cfgGetGameId() : "dispmanx", "width", settings.dispmanx.Width);
 	settings.dispmanx.Height	= cfgLoadInt(game_specific ? cfgGetGameId() : "dispmanx", "height", settings.dispmanx.Height);
@@ -940,7 +965,7 @@ static void LoadCustom()
 		if (*p == '\0')
 			return;
 	}
-	else if (settings.platform.system == DC_PLATFORM_NAOMI || settings.platform.system == DC_PLATFORM_ATOMISWAVE)
+	else
 	{
 		reios_id = naomi_game_id;
 	}
@@ -958,9 +983,9 @@ void SaveSettings()
 {
 	cfgSetAutoSave(false);
 	cfgSaveBool("config", "Dynarec.Enabled", settings.dynarec.Enable);
-	if (forced_game_cable == -1 || forced_game_cable != settings.dreamcast.cable)
+	if (forced_game_cable == -1 || forced_game_cable != (int)settings.dreamcast.cable)
 		cfgSaveInt("config", "Dreamcast.Cable", settings.dreamcast.cable);
-	if (forced_game_region == -1 || forced_game_region != settings.dreamcast.region)
+	if (forced_game_region == -1 || forced_game_region != (int)settings.dreamcast.region)
 		cfgSaveInt("config", "Dreamcast.Region", settings.dreamcast.region);
 	cfgSaveInt("config", "Dreamcast.Broadcast", settings.dreamcast.broadcast);
 	cfgSaveBool("config", "Dreamcast.ForceWindowsCE", settings.dreamcast.ForceWindowsCE);
@@ -1010,13 +1035,18 @@ void SaveSettings()
 	if (!naomi_rotate_screen || !settings.rend.Rotate90)
 		cfgSaveBool("config", "rend.Rotate90", settings.rend.Rotate90);
 	cfgSaveInt("config", "ta.skip", settings.pvr.ta_skip);
-	cfgSaveInt("config", "pvr.rend", settings.pvr.rend);
+	cfgSaveInt("config", "pvr.rend", (int)settings.pvr.rend);
 	cfgSaveBool("config", "rend.PerStripSorting", settings.rend.PerStripSorting);
 	cfgSaveBool("config", "rend.DelayFrameSwapping", settings.rend.DelayFrameSwapping);
 	cfgSaveBool("config", "rend.WidescreenGameHacks", settings.rend.WidescreenGameHacks);
+	for (u32 i = 0; i < ARRAY_SIZE(settings.rend.CrosshairColor); i++)
+	{
+		std::string name = "rend.CrossHairColor" + std::to_string(i + 1);
+		cfgSaveInt("config", name.c_str(), settings.rend.CrosshairColor[i]);
+	}
 
 	cfgSaveInt("config", "pvr.MaxThreads", settings.pvr.MaxThreads);
-	cfgSaveBool("config", "pvr.SynchronousRendering", settings.pvr.SynchronousRender);
+	cfgSaveInt("config", "pvr.AutoSkipFrame", settings.pvr.AutoSkipFrame);
 
 	cfgSaveBool("config", "Debug.SerialConsoleEnabled", settings.debug.SerialConsole);
 	cfgSaveBool("config", "Debug.SerialPTY", settings.debug.SerialPTY);
@@ -1046,7 +1076,8 @@ void SaveSettings()
 	cfgSaveBool("network", "ActAsServer", settings.network.ActAsServer);
 	cfgSaveStr("network", "DNS", settings.network.dns.c_str());
 	cfgSaveStr("network", "server", settings.network.server.c_str());
-
+	cfgSaveBool("network", "EmulateBBA", settings.network.EmulateBBA);
+	
 	GamepadDevice::SaveMaplePorts();
 
 #ifdef __ANDROID__
@@ -1060,7 +1091,7 @@ void SaveSettings()
 void dc_resume()
 {
 	SetMemoryHandlers();
-	game_started = true;
+	EventManager::event(Event::Resume);
 	if (!emu_thread.thread.joinable())
 		emu_thread.Start();
 }
@@ -1071,7 +1102,7 @@ static void cleanup_serialize(void *data)
 		free(data) ;
 }
 
-static std::string get_savestate_file_path()
+static std::string get_savestate_file_path(bool writable)
 {
 	std::string state_file = settings.imgread.ImagePath;
 	size_t lastindex = state_file.find_last_of('/');
@@ -1088,16 +1119,16 @@ static std::string get_savestate_file_path()
 	if (lastindex != std::string::npos)
 		state_file = state_file.substr(0, lastindex);
 	state_file = state_file + ".state";
-	return get_writable_data_path(DATA_PATH) + state_file;
+	if (writable)
+		return get_writable_data_path(state_file);
+	else
+		return get_readonly_data_path(state_file);
 }
 
 void dc_savestate()
 {
-	std::string filename;
 	unsigned int total_size = 0 ;
 	void *data = NULL ;
-	void *data_ptr = NULL ;
-	FILE *f ;
 
 	dc_stop();
 
@@ -1118,7 +1149,7 @@ void dc_savestate()
     	return;
 	}
 
-	data_ptr = data ;
+	void *data_ptr = data;
 
 	if ( ! dc_serialize(&data_ptr, &total_size) )
 	{
@@ -1128,8 +1159,9 @@ void dc_savestate()
     	return;
 	}
 
-	filename = get_savestate_file_path();
-	f = fopen(filename.c_str(), "wb") ;
+	std::string filename = get_savestate_file_path(true);
+#if 0
+	FILE *f = nowide::fopen(filename.c_str(), "wb") ;
 
 	if ( f == NULL )
 	{
@@ -1139,8 +1171,27 @@ void dc_savestate()
     	return;
 	}
 
-	fwrite(data, 1, total_size, f) ;
-	fclose(f);
+	std::fwrite(data, 1, total_size, f) ;
+	std::fclose(f);
+#else
+	RZipFile zipFile;
+	if (!zipFile.Open(filename, true))
+	{
+		WARN_LOG(SAVESTATE, "Failed to save state - could not open %s for writing", filename.c_str());
+		gui_display_notification("Cannot open save file", 2000);
+		cleanup_serialize(data);
+    	return;
+	}
+	if (zipFile.Write(data, total_size) != total_size)
+	{
+		WARN_LOG(SAVESTATE, "Failed to save state - error writing %s", filename.c_str());
+		gui_display_notification("Error saving state", 2000);
+		zipFile.Close();
+		cleanup_serialize(data);
+    	return;
+	}
+	zipFile.Close();
+#endif
 
 	cleanup_serialize(data) ;
 	INFO_LOG(SAVESTATE, "Saved state to %s size %d", filename.c_str(), total_size) ;
@@ -1149,38 +1200,54 @@ void dc_savestate()
 
 void dc_loadstate()
 {
-    std::string filename;
-	unsigned int total_size = 0 ;
-	void *data = NULL ;
-	void *data_ptr = NULL ;
-	FILE *f ;
+	u32 total_size = 0;
+	FILE *f = nullptr;
 
 	dc_stop();
 
-	filename = get_savestate_file_path();
-	f = fopen(filename.c_str(), "rb") ;
-
-	if ( f == NULL )
+	std::string filename = get_savestate_file_path(false);
+	RZipFile zipFile;
+	if (zipFile.Open(filename, false))
 	{
-		WARN_LOG(SAVESTATE, "Failed to load state - could not open %s for reading", filename.c_str()) ;
-		gui_display_notification("Save state not found", 2000);
-		cleanup_serialize(data) ;
-    	return;
+		total_size = (u32)zipFile.Size();
 	}
-	fseek(f, 0, SEEK_END);
-	total_size = ftell(f);
-	fseek(f, 0, SEEK_SET);
-	data = malloc(total_size) ;
+	else
+	{
+		f = nowide::fopen(filename.c_str(), "rb") ;
+
+		if ( f == NULL )
+		{
+			WARN_LOG(SAVESTATE, "Failed to load state - could not open %s for reading", filename.c_str()) ;
+			gui_display_notification("Save state not found", 2000);
+			return;
+		}
+		std::fseek(f, 0, SEEK_END);
+		total_size = (u32)std::ftell(f);
+		std::fseek(f, 0, SEEK_SET);
+	}
+	void *data = malloc(total_size);
 	if ( data == NULL )
 	{
 		WARN_LOG(SAVESTATE, "Failed to load state - could not malloc %d bytes", total_size) ;
 		gui_display_notification("Failed to load state - memory full", 2000);
-		cleanup_serialize(data) ;
+		if (f != nullptr)
+			std::fclose(f);
+		else
+			zipFile.Close();
 		return;
 	}
 
-	size_t read_size = fread(data, 1, total_size, f) ;
-	fclose(f);
+	size_t read_size;
+	if (f == nullptr)
+	{
+		read_size = zipFile.Read(data, total_size);
+		zipFile.Close();
+	}
+	else
+	{
+		read_size = fread(data, 1, total_size, f) ;
+		std::fclose(f);
+	}
 	if (read_size != total_size)
 	{
 		WARN_LOG(SAVESTATE, "Failed to load state - I/O error");
@@ -1189,7 +1256,7 @@ void dc_loadstate()
 		return;
 	}
 
-	data_ptr = data ;
+	void *data_ptr = data;
 
 	custom_texture.Terminate();
 #if FEAT_AREC == DYNAREC_JIT
@@ -1216,9 +1283,9 @@ void dc_loadstate()
 	sh4_cpu.ResetCache();
     dsp.dyndirty = true;
     sh4_sched_ffts();
-    CalculateSync();
 
     cleanup_serialize(data) ;
+	EventManager::event(Event::LoadState);
     INFO_LOG(SAVESTATE, "Loaded state from %s size %d", filename.c_str(), total_size) ;
 }
 
@@ -1252,5 +1319,39 @@ void dc_cancel_load()
 
 void dc_get_load_status()
 {
-	loading_done.get();
+	if (loading_done.valid())
+		loading_done.get();
+}
+
+EventManager EventManager::Instance;
+
+void EventManager::registerEvent(Event event, Callback callback)
+{
+	unregisterEvent(event, callback);
+	auto it = callbacks.find(event);
+	if (it != callbacks.end())
+		it->second.push_back(callback);
+	else
+		callbacks.insert({ event, { callback } });
+}
+
+void EventManager::unregisterEvent(Event event, Callback callback) {
+	auto it = callbacks.find(event);
+	if (it == callbacks.end())
+		return;
+
+	auto it2 = std::find(it->second.begin(), it->second.end(), callback);
+	if (it2 == it->second.end())
+		return;
+
+	it->second.erase(it2);
+}
+
+void EventManager::broadcastEvent(Event event) {
+	auto it = callbacks.find(event);
+	if (it == callbacks.end())
+		return;
+
+	for (auto& callback : it->second)
+		callback(event);
 }

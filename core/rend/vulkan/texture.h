@@ -33,7 +33,7 @@
 
 void setImageLayout(vk::CommandBuffer const& commandBuffer, vk::Image image, vk::Format format, u32 mipmapLevels, vk::ImageLayout oldImageLayout, vk::ImageLayout newImageLayout);
 
-class Texture : public BaseTextureCacheData
+class Texture final : public BaseTextureCacheData
 {
 public:
 	void UploadToGPU(int width, int height, u8 *data, bool mipmapped, bool mipmapsIncluded = false) override;
@@ -134,7 +134,7 @@ private:
 	vk::Device device;
 };
 
-class TextureCache : public BaseTextureCache<Texture>
+class TextureCache final : public BaseTextureCache<Texture>
 {
 public:
 	void SetCurrentIndex(int index) {
@@ -173,7 +173,32 @@ public:
 		texture->format = vk::Format::eUndefined;
 	}
 
+	void Cleanup();
+
+	void Clear()
+	{
+		BaseTextureCache::Clear();
+		for (auto& set : inFlightTextures)
+			set.clear();
+		for (auto& v : trashedImageViews)
+			v.clear();
+		for (auto& v : trashedImages)
+			v.clear();
+		for (auto& v : trashedMem)
+			v.clear();
+		for (auto& v : trashedBuffers)
+			v.clear();
+	}
+
 private:
+	bool clearTexture(Texture *tex)
+	{
+		for (auto& set : inFlightTextures)
+			set.erase(tex);
+
+		return tex->Delete();
+	}
+
 	template<typename T>
 	void EmptyTrash(T& v)
 	{

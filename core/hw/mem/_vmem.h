@@ -94,7 +94,6 @@ bool _vmem_reserve();
 void _vmem_release();
 
 //dynarec helpers
-void* _vmem_get_ptr2(u32 addr,u32& mask);
 void* _vmem_read_const(u32 addr,bool& ismem,u32 sz);
 void* _vmem_write_const(u32 addr,bool& ismem,u32 sz);
 

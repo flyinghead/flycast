@@ -15,6 +15,7 @@
 
 #include "types.h"
 #include "hw/maple/maple_cfg.h"
+#include "hw/maple/maple_devs.h"
 #include "log/LogManager.h"
 #include "rend/gui.h"
 #include "osx_keyboard.h"
@@ -26,10 +27,13 @@
 #include "wsi/context.h"
 #include "emulator.h"
 #include "hw/pvr/Renderer_if.h"
+#include "rend/mainui.h"
 
 OSXKeyboardDevice keyboard(0);
 static std::shared_ptr<OSXKbGamepadDevice> kb_gamepad(0);
 static std::shared_ptr<OSXMouseGamepadDevice> mouse_gamepad(0);
+unsigned int *pmo_buttons;
+float *pmo_wheel_delta;
 
 int darw_printf(const char* text, ...)
 {
@@ -45,8 +49,6 @@ int darw_printf(const char* text, ...)
     return 0;
 }
 
-int get_mic_data(u8* buffer) { return 0; }
-
 void os_SetWindowText(const char * text) {
     puts(text);
 }
@@ -54,9 +56,9 @@ void os_SetWindowText(const char * text) {
 void os_DoEvents() {
 }
 
-void UpdateInputState(u32 port) {
+void UpdateInputState() {
 #if defined(USE_SDL)
-	input_sdl_handle(port);
+	input_sdl_handle();
 #endif
 }
 
@@ -120,7 +122,6 @@ std::string os_FetchStringFromURL(const std::string& url) {
 }
 
 void common_linux_setup();
-void rend_init_renderer();
 
 extern "C" void emu_dc_exit()
 {
@@ -132,6 +133,7 @@ extern "C" void emu_dc_term()
 	if (dc_is_running())
 		dc_exit();
 	dc_term();
+	LogManager::Shutdown();
 }
 
 extern "C" void emu_dc_resume()
@@ -140,7 +142,6 @@ extern "C" void emu_dc_resume()
 }
 
 extern int screen_width,screen_height;
-bool rend_single_frame();
 bool rend_framePending();
 
 extern "C" bool emu_frame_pending()
@@ -150,43 +151,54 @@ extern "C" bool emu_frame_pending()
 
 extern "C" bool emu_renderer_enabled()
 {
-	return renderer_enabled;
+	return mainui_loop_enabled();
 }
 
-extern "C" int emu_single_frame(int w, int h) {
+extern "C" int emu_single_frame(int w, int h)
+{
     if (!emu_frame_pending())
         return 0;
+
     screen_width = w;
     screen_height = h;
-
-    return rend_single_frame();
+    return (int)mainui_rend_frame();
 }
 
-extern "C" void emu_gles_init(int width, int height) {
+extern "C" void emu_gles_init(int width, int height)
+{
+	// work around https://bugs.swift.org/browse/SR-12263
+	pmo_buttons = mo_buttons;
+	pmo_wheel_delta = mo_wheel_delta;
+
     char *home = getenv("HOME");
     if (home != NULL)
     {
-        std::string config_dir = std::string(home) + "/.reicast";
+        std::string config_dir = std::string(home) + "/.reicast/";
+        if (!file_exists(config_dir))
+        	config_dir = std::string(home) + "/.flycast/";
         int instanceNumber = (int)[[NSRunningApplication runningApplicationsWithBundleIdentifier:@"com.reicast.Flycast"] count];
         if (instanceNumber > 1){
-            config_dir += "/" + std::to_string(instanceNumber);
+            config_dir += std::to_string(instanceNumber) + "/";
             [[NSApp dockTile] setBadgeLabel:@(instanceNumber).stringValue];
         }
         mkdir(config_dir.c_str(), 0755); // create the directory if missing
         set_user_config_dir(config_dir);
+        add_system_data_dir(config_dir);
+        config_dir += "data/";
+        mkdir(config_dir.c_str(), 0755);
         set_user_data_dir(config_dir);
     }
     else
     {
-        set_user_config_dir(".");
-        set_user_data_dir(".");
+        set_user_config_dir("./");
+        set_user_data_dir("./");
     }
     // Add bundle resources path
     CFBundleRef mainBundle = CFBundleGetMainBundle();
     CFURLRef resourcesURL = CFBundleCopyResourcesDirectoryURL(mainBundle);
     char path[PATH_MAX];
     if (CFURLGetFileSystemRepresentation(resourcesURL, TRUE, (UInt8 *)path, PATH_MAX))
-        add_system_data_dir(std::string(path));
+        add_system_data_dir(std::string(path) + "/");
     CFRelease(resourcesURL);
     CFRelease(mainBundle);
 
@@ -217,7 +229,8 @@ extern "C" void emu_gles_init(int width, int height) {
 	screen_height = height;
 
 	InitRenderApi();
-	rend_init_renderer();
+	mainui_init();
+	mainui_enabled = true;
 }
 
 extern "C" int emu_reicast_init()
@@ -227,16 +240,16 @@ extern "C" int emu_reicast_init()
 	NSArray *arguments = [[NSProcessInfo processInfo] arguments];
 	unsigned long argc = [arguments count];
 	char **argv = (char **)malloc(argc * sizeof(char*));
-    int paramCount = 0;
+	int paramCount = 0;
 	for (unsigned long i = 0; i < argc; i++)
-    {
+	{
 		const char *arg = [[arguments objectAtIndex:i] UTF8String];
-        if (!strncmp(arg, "-psn_", 5))
-            // ignore Process Serial Number argument on first launch
-            continue;
-        argv[paramCount++] = strdup(arg);
-    }
-	
+		if (!strncmp(arg, "-psn_", 5))
+			// ignore Process Serial Number argument on first launch
+			continue;
+		argv[paramCount++] = strdup(arg);
+	}
+
 	int rc = reicast_init(paramCount, argv);
 	
 	for (unsigned long i = 0; i < paramCount; i++)
@@ -261,4 +274,9 @@ extern "C" void emu_character_input(const char *characters) {
 extern "C" void emu_mouse_buttons(int button, bool pressed)
 {
 	mouse_gamepad->gamepad_btn_input(button, pressed);
+}
+
+extern "C" void emu_set_mouse_position(int x, int y, int width, int height)
+{
+	SetMousePosition(x, y, width, height);
 }

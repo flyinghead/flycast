@@ -9,7 +9,7 @@ Disc* cdi_parse(const char* file)
 	if (len > 4 && stricmp( &file[len - 4], ".cdi"))
 		return nullptr;
 
-	core_file* fsource=core_fopen(file);
+	FILE *fsource = nowide::fopen(file, "rb");
 
 	if (!fsource)
 		return nullptr;
@@ -18,7 +18,7 @@ Disc* cdi_parse(const char* file)
 	track_s track = { 0 };
 	if (!CDI_init(fsource, &image, file))
 	{
-		core_fclose(fsource);
+		std::fclose(fsource);
 		return nullptr;
 	}
 
@@ -39,7 +39,7 @@ Disc* cdi_parse(const char* file)
 
 		CDI_get_tracks (fsource, &image);
 
-		image.header_position = core_ftell(fsource);
+		image.header_position = std::ftell(fsource);
 
 		//printf("\nSession %d has %d track(s)\n",image.global_current_session,image.tracks);
 
@@ -59,7 +59,7 @@ Disc* cdi_parse(const char* file)
 
 				CDI_read_track (fsource, &image, &track);
 
-				image.header_position = core_ftell(fsource);
+				image.header_position = std::ftell(fsource);
 
 				// Show info
 #if 0
@@ -103,7 +103,7 @@ Disc* cdi_parse(const char* file)
 				t.CTRL=track.mode==0?0:4;
 				t.StartFAD=track.start_lba+track.pregap_length;
 				t.EndFAD=t.StartFAD+track.length-1;
-				t.file = new RawTrackFile(core_fopen(file),track.position + track.pregap_length * track.sector_size,t.StartFAD,track.sector_size);
+				t.file = new RawTrackFile(nowide::fopen(file, "rb"), track.position + track.pregap_length * track.sector_size, t.StartFAD, track.sector_size);
 
 				rv->tracks.push_back(t);
 
@@ -119,21 +119,21 @@ Disc* cdi_parse(const char* file)
 					if (track.total_length < track.length + track.pregap_length)
 					{
 						WARN_LOG(GDROM, "This track seems truncated. Skipping...");
-						core_fseek(fsource, track.position, SEEK_SET);
-						core_fseek(fsource, track.total_length, SEEK_CUR);
-						track.position = core_ftell(fsource);
+						std::fseek(fsource, track.position, SEEK_SET);
+						std::fseek(fsource, track.total_length, SEEK_CUR);
+						track.position = std::ftell(fsource);
 					}
 					else
 					{
 						
 						//printf("Track position: %lu\n",track.position + track.pregap_length * track.sector_size);
-						core_fseek(fsource, track.position, SEEK_SET);
+						std::fseek(fsource, track.position, SEEK_SET);
 						//     fseek(fsource, track->pregap_length * track->sector_size, SEEK_CUR);
 						//     fseek(fsource, track->length * track->sector_size, SEEK_CUR);
-						core_fseek(fsource, track.total_length * track.sector_size, SEEK_CUR);
+						std::fseek(fsource, track.total_length * track.sector_size, SEEK_CUR);
 
 						//savetrack(fsource, &image, &track, &opts, &flags);
-						track.position = core_ftell(fsource);
+						track.position = std::ftell(fsource);
 
 						rv->EndFAD=track.start_lba +track.total_length;
 						// Generate cuesheet entries
@@ -144,7 +144,7 @@ Disc* cdi_parse(const char* file)
 					}
 				}
 
-				core_fseek(fsource, image.header_position, SEEK_SET);
+				std::fseek(fsource, image.header_position, SEEK_SET);
 
 
 				// Close loops
@@ -159,7 +159,7 @@ Disc* cdi_parse(const char* file)
 
 		image.remaining_sessions--;
 	}
-	core_fclose(fsource);
+	std::fclose(fsource);
 
 	rv->type=GuessDiscType(CD_M1,CD_M2,CD_DA);
 

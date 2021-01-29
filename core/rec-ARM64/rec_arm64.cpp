@@ -28,7 +28,6 @@
 #include "deps/vixl/aarch64/macro-assembler-aarch64.h"
 using namespace vixl::aarch64;
 
-//#define EXPLODE_SPANS
 //#define NO_BLOCK_LINKING
 
 #include "hw/sh4/sh4_opcode_list.h"
@@ -488,13 +487,8 @@ public:
 				verify(op.rd.is_reg());
 				verify(op.rs1.is_reg() || op.rs1.is_imm());
 
-#ifdef EXPLODE_SPANS
-				Fmov(regalloc.MapVRegister(op.rd, 0), regalloc.MapVRegister(op.rs1, 0));
-				Fmov(regalloc.MapVRegister(op.rd, 1), regalloc.MapVRegister(op.rs1, 1));
-#else
 				shil_param_to_host_reg(op.rs1, x15);
 				host_reg_to_shil_param(op.rd, x15);
-#endif
 				break;
 
 			case shop_readm:
@@ -1007,13 +1001,8 @@ public:
 					Add(x1, x1, Operand(regalloc.MapRegister(op.rs1), UXTH, 3));
 				else
 					Add(x1, x1, Operand(op.rs1.imm_value() << 3));
-#ifdef EXPLODE_SPANS
-				Ldr(regalloc.MapVRegister(op.rd, 0), MemOperand(x1, 4, PostIndex));
-				Ldr(regalloc.MapVRegister(op.rd, 1), MemOperand(x1));
-#else
 				Ldr(x2, MemOperand(x1));
 				Str(x2, sh4_context_mem_operand(op.rd.reg_ptr()));
-#endif
 				break;
 
 			case shop_fipr:
@@ -1629,16 +1618,7 @@ private:
 		if (size < 8)
 			host_reg_to_shil_param(op.rd, w0);
 		else
-		{
-#ifdef EXPLODE_SPANS
-			verify(op.rd.count() == 2 && regalloc.IsAllocf(op.rd, 0) && regalloc.IsAllocf(op.rd, 1));
-			Fmov(regalloc.MapVRegister(op.rd, 0), w0);
-			Lsr(x0, x0, 32);
-			Fmov(regalloc.MapVRegister(op.rd, 1), w0);
-#else
 			Str(x0, sh4_context_mem_operand(op.rd.reg_ptr()));
-#endif
-		}
 	}
 
 	bool GenReadMemoryImmediate(const shil_opcode& op)
@@ -1648,7 +1628,7 @@ private:
 
 		u32 size = op.flags & 0x7f;
 		u32 addr = op.rs1._imm;
-		if (mmu_enabled())
+		if (mmu_enabled() && mmu_is_translated<MMU_TT_DREAD>(addr, size))
 		{
 			if ((addr >> 12) != (block->vaddr >> 12))
 				// When full mmu is on, only consider addresses in the same 4k page
@@ -1846,17 +1826,7 @@ private:
 		if (size != 8)
 			shil_param_to_host_reg(op.rs2, *call_regs[1]);
 		else
-		{
-#ifdef EXPLODE_SPANS
-			verify(op.rs2.count() == 2 && regalloc.IsAllocf(op.rs2, 0) && regalloc.IsAllocf(op.rs2, 1));
-			Fmov(*call_regs[1], regalloc.MapVRegister(op.rs2, 1));
-			Lsl(*call_regs64[1], *call_regs64[1], 32);
-			Fmov(w2, regalloc.MapVRegister(op.rs2, 0));
-			Orr(*call_regs64[1], *call_regs64[1], x2);
-#else
 			shil_param_to_host_reg(op.rs2, *call_regs64[1]);
-#endif
-		}
 		if (optimise && GenWriteMemoryFast(op, opid))
 			return;
 
@@ -1870,7 +1840,7 @@ private:
 
 		u32 size = op.flags & 0x7f;
 		u32 addr = op.rs1._imm;
-		if (mmu_enabled())
+		if (mmu_enabled() && mmu_is_translated<MMU_TT_DWRITE>(addr, size))
 		{
 			if ((addr >> 12) != (block->vaddr >> 12) && ((addr >> 12) != ((block->vaddr + block->guest_opcodes * 2 - 1) >> 12)))
 				// When full mmu is on, only consider addresses in the same 4k page
@@ -1938,14 +1908,8 @@ private:
 				break;
 
 			case 8:
-#ifdef EXPLODE_SPANS
-				verify(op.rs2.count() == 2 && regalloc.IsAllocf(op.rs2, 0) && regalloc.IsAllocf(op.rs2, 1));
-				Str(regalloc.MapVRegister(op.rs2, 0),  MemOperand(x1));
-				Str(regalloc.MapVRegister(op.rs2, 1),  MemOperand(x1, 4));
-#else
 				shil_param_to_host_reg(op.rs2, x1);
 				Str(x1, MemOperand(x0));
-#endif
 				break;
 
 			default:

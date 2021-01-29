@@ -17,6 +17,7 @@ protected:
 
 TEST_F(SerializeTest, SizeTest)
 {
+	InitSettings();
 	settings.input.maple_devices[0] = MDT_SegaController;
 	settings.input.maple_expansion_devices[0][0] = MDT_SegaVMU;
 	settings.input.maple_expansion_devices[0][1] = MDT_SegaVMU;
@@ -28,7 +29,7 @@ TEST_F(SerializeTest, SizeTest)
 	unsigned int total_size = 0;
 	void *data = nullptr;
 	ASSERT_TRUE(dc_serialize(&data, &total_size));
-	ASSERT_EQ(28145458u, total_size);
+	ASSERT_EQ(28145495u, total_size);
 }
 
 

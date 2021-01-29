@@ -14,7 +14,7 @@ typedef int sh4_sched_callback(int tag, int sch_cycl, int jitter);
 	Registed a callback to the scheduler. The returned id 
 	is used for sh4_sched_request and sh4_sched_elapsed calls
 */
-int sh4_sched_register(int tag, const char* name, sh4_sched_callback* ssc);
+int sh4_sched_register(int tag, sh4_sched_callback* ssc);
 
 /*
 	current time in SH4 cycles, referenced to boot.

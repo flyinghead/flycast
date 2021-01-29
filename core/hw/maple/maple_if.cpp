@@ -15,10 +15,11 @@ enum MaplePattern
 	MP_NOP = 7
 };
 
-maple_device* MapleDevices[4][6];
+maple_device* MapleDevices[MAPLE_PORTS][6];
 
 int maple_schid;
 
+void UpdateInputState();
 /*
 	Maple host controller
 	Direct processing, async interrupt handling
@@ -94,6 +95,7 @@ static void maple_SB_MDEN_Write(u32 addr, u32 data)
 	}
 }
 
+#ifdef STRICT_MODE
 static bool check_mdapro(u32 addr)
 {
 	u32 area = (addr >> 26) & 7;
@@ -114,6 +116,7 @@ static void maple_SB_MDSTAR_Write(u32 addr, u32 data)
 	if (!check_mdapro(SB_MDSTAR))
 		asic_RaiseInterrupt(holly_MAPLE_ILLADDR);
 }
+#endif
 
 bool IsOnSh4Ram(u32 addr)
 {
@@ -143,9 +146,13 @@ static void maple_DoDma()
 		return;
 	}
 #endif
+
+	UpdateInputState();
+
 	const bool swap_msb = (SB_MMSEL == 0);
 	u32 xfer_count=0;
 	bool last = false;
+	bool occupy = false;
 	while (last != true)
 	{
 		u32 header_1 = ReadMem32_nommu(addr);
@@ -247,8 +254,7 @@ static void maple_DoDma()
 		{
 			u32 bus = (header_1 >> 16) & 3;
 			if (MapleDevices[bus][5])
-				MapleDevices[bus][5]->get_lightgun_pos();
-
+				occupy = MapleDevices[bus][5]->get_lightgun_pos();
 			addr += 1 * 4;
 		}
 		break;
@@ -272,7 +278,8 @@ static void maple_DoDma()
 	}
 
 	//printf("Maple XFER size %d bytes - %.2f ms\n",xfer_count,xfer_count*100.0f/(2*1024*1024/8));
-	sh4_sched_request(maple_schid, std::min((u64)xfer_count * (SH4_MAIN_CLOCK / (2 * 1024 * 1024 / 8)), (u64)SH4_MAIN_CLOCK));
+	if (!occupy)
+		sh4_sched_request(maple_schid, std::min((u64)xfer_count * (SH4_MAIN_CLOCK / (2 * 1024 * 1024 / 8)), (u64)SH4_MAIN_CLOCK));
 }
 
 static int maple_schd(int tag, int c, int j)
@@ -308,7 +315,7 @@ void maple_Init()
 	sb_rio_register(SB_MDSTAR_addr, RIO_WF, nullptr, &maple_SB_MDSTAR_Write);
 #endif
 
-	maple_schid=sh4_sched_register(0,"maple_schd",&maple_schd);
+	maple_schid=sh4_sched_register(0,&maple_schd);
 }
 
 void maple_Reset(bool hard)

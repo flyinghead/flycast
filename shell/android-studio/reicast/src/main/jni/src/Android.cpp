@@ -13,10 +13,9 @@
 #include <types.h>
 
 #include "hw/maple/maple_cfg.h"
-#include "hw/pvr/Renderer_if.h"
 #include "profiler/profiler.h"
 #include "rend/TexCache.h"
-#include "rend/gles/gles.h"
+#include "rend/osd.h"
 #include "hw/maple/maple_devs.h"
 #include "hw/maple/maple_if.h"
 #include "hw/naomi/naomi_cart.h"
@@ -28,6 +27,7 @@
 #include "log/LogManager.h"
 #include "wsi/context.h"
 #include "emulator.h"
+#include "rend/mainui.h"
 
 JavaVM* g_jvm;
 
@@ -134,14 +134,12 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_screenDpi(JNIEnv *env
     screen_dpi = screenDpi;
 }
 
-bool egl_makecurrent();
-
 extern int screen_width,screen_height;
 
 float vjoy_pos[15][8];
 
 extern bool print_stats;
-extern bool game_started;
+static bool game_started;
 
 //stuff for saving prefs
 jobject g_emulator;
@@ -149,23 +147,31 @@ jmethodID saveAndroidSettingsMid;
 jmethodID launchFromUrlMid;
 static ANativeWindow *g_window = 0;
 
+static void emuEventCallback(Event event)
+{
+	switch (event)
+	{
+	case Event::Pause:
+		game_started = false;
+		break;
+	case Event::Resume:
+		game_started = true;
+		break;
+	default:
+		break;
+	}
+}
+
 void os_DoEvents()
 {
-    // @@@ Nothing here yet
 }
 
 void os_CreateWindow()
 {
 }
 
-//
-// Platform-specific NullDC functions
-//
-
-
-void UpdateInputState(u32 Port)
+void UpdateInputState()
 {
-    // @@@ Nothing here yet
 }
 
 void common_linux_setup();
@@ -197,18 +203,38 @@ JNIEXPORT jstring JNICALL Java_com_reicast_emulator_emu_JNIdc_initEnvironment(JN
         launchFromUrlMid  = env->GetMethodID(env->GetObjectClass(emulator), "LaunchFromUrl", "(Ljava/lang/String;)V");
     }
     // Set home directory based on User config
-    const char* path = homeDirectory != NULL ? env->GetStringUTFChars(homeDirectory, 0) : "";
-    set_user_config_dir(path);
-    set_user_data_dir(path);
+    if (homeDirectory != NULL)
+    {
+    	const char *jchar = env->GetStringUTFChars(homeDirectory, 0);
+    	std::string path = jchar;
+		if (!path.empty())
+		{
+			if (path.back() != '/')
+				path += '/';
+			set_user_config_dir(path);
+			add_system_data_dir(path);
+			std::string data_path = path + "data/";
+			set_user_data_dir(data_path);
+			if (!file_exists(data_path))
+			{
+				if (!make_directory(data_path))
+				{
+					WARN_LOG(BOOT, "Cannot create 'data' directory");
+					set_user_data_dir(path);
+				}
+			}
+		}
+    	env->ReleaseStringUTFChars(homeDirectory, jchar);
+    }
     INFO_LOG(BOOT, "Config dir is: %s", get_writable_config_path("").c_str());
     INFO_LOG(BOOT, "Data dir is:   %s", get_writable_data_path("").c_str());
-    if (homeDirectory != NULL)
-    	env->ReleaseStringUTFChars(homeDirectory, path);
 
     if (first_init)
     {
         // Do one-time initialization
     	LogManager::Init();
+    	EventManager::listen(Event::Pause, emuEventCallback);
+    	EventManager::listen(Event::Resume, emuEventCallback);
         jstring msg = NULL;
         int rc = reicast_init(0, NULL);
         if (rc == -4)
@@ -254,7 +280,6 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_setGameUri(JNIEnv *en
         if (game_started) {
             dc_stop();
             gui_state = Main;
-            game_started = false;
        		dc_reset(true);
         }
     }
@@ -263,6 +288,8 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_setGameUri(JNIEnv *en
 //stuff for microphone
 jobject sipemu;
 jmethodID getmicdata;
+jmethodID startRecordingMid;
+jmethodID stopRecordingMid;
 
 //stuff for audio
 #define SAMPLE_COUNT 512
@@ -275,13 +302,18 @@ static jobject g_audioBackend;
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_setupMic(JNIEnv *env,jobject obj,jobject sip)
 {
     sipemu = env->NewGlobalRef(sip);
-    getmicdata = env->GetMethodID(env->GetObjectClass(sipemu),"getData","()[B");
+    getmicdata = env->GetMethodID(env->GetObjectClass(sipemu),"getData","(I)[B");
+    startRecordingMid = env->GetMethodID(env->GetObjectClass(sipemu),"startRecording","(I)V");
+    stopRecordingMid = env->GetMethodID(env->GetObjectClass(sipemu),"stopRecording","()V");
 }
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_pause(JNIEnv *env,jobject obj)
 {
     if (game_started)
+    {
         dc_stop();
+        game_started = true; // restart when resumed
+    }
 }
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_resume(JNIEnv *env,jobject obj)
@@ -292,7 +324,7 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_resume(JNIEnv *env,jo
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_stop(JNIEnv *env,jobject obj)
 {
-    if (game_started)
+    if (dc_is_running())
         dc_stop();
 }
 
@@ -324,34 +356,13 @@ JNIEXPORT jint JNICALL Java_com_reicast_emulator_emu_JNIdc_send(JNIEnv *env,jobj
 #endif
         }
     }
-    else if (cmd==1)
-    {
-        if (param==0)
-            sample_Stop();
-        else
-            sample_Start(param);
-    }
-    else if (cmd==2)
-    {
-    }
     return 0;
 }
 
 JNIEXPORT jint JNICALL Java_com_reicast_emulator_emu_JNIdc_data(JNIEnv *env, jobject obj, jint id, jbyteArray d)
 {
-    if (id==1)
-    {
-    	INFO_LOG(DYNAREC, "Loading symtable (%p,%p,%d,%p)",env,obj,id,d);
-        jsize len=env->GetArrayLength(d);
-        u8* syms=(u8*)malloc((size_t)len);
-        INFO_LOG(DYNAREC, "Loading symtable to %8s, %d",syms,len);
-        env->GetByteArrayRegion(d,0,len,(jbyte*)syms);
-        sample_Syms(syms, (size_t)len);
-    }
     return 0;
 }
-
-extern void egl_stealcntx();
 
 static void *render_thread_func(void *)
 {
@@ -361,7 +372,7 @@ static void *render_thread_func(void *)
 	theGLContext.SetNativeWindow((EGLNativeWindowType)g_window);
 	InitRenderApi();
 
-	rend_thread(NULL);
+	mainui_loop();
 
 	TermRenderApi();
 	ANativeWindow_release(g_window);
@@ -378,14 +389,14 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_rendinitNative(JNIEnv
 	{
 		if (surface == NULL)
 		{
-			renderer_enabled = false;
+			mainui_stop();
 	        render_thread.WaitToEnd();
 		}
 		else
 		{
 		    screen_width = width;
 		    screen_height = height;
-			renderer_reinit_requested = true;
+		    mainui_reinit();
 		}
 	}
 	else if (surface != NULL)
@@ -399,20 +410,17 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_rendinitJava(JNIEnv *
 {
     screen_width = width;
     screen_height = height;
-    // FIXME egl_stealcntx();
-    rend_init_renderer();
+    mainui_init();
 }
 
 JNIEXPORT jboolean JNICALL Java_com_reicast_emulator_emu_JNIdc_rendframeJava(JNIEnv *env,jobject obj)
 {
-    // FIXME egl_stealcntx();
-    return (jboolean)rend_single_frame();
+    return (jboolean)mainui_rend_frame();
 }
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_rendtermJava(JNIEnv * env, jobject obj)
 {
-	// FIXME egl_stealcntx();
-    rend_term_renderer();
+    mainui_term();
 }
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_vjoy(JNIEnv * env, jobject obj,int id,float x, float y, float w, float h)
@@ -463,7 +471,7 @@ JNIEXPORT jboolean JNICALL Java_com_reicast_emulator_emu_JNIdc_guiIsContentBrows
 }
 
 // Audio Stuff
-u32 androidaudio_push(const void* frame, u32 amt, bool wait)
+static u32 androidaudio_push(const void* frame, u32 amt, bool wait)
 {
     verify(amt==SAMPLE_COUNT);
     //yeah, do some audio piping magic here !
@@ -471,14 +479,40 @@ u32 androidaudio_push(const void* frame, u32 amt, bool wait)
     return jvm_attacher.getEnv()->CallIntMethod(g_audioBackend, writeBufferMid, jsamples, wait);
 }
 
-void androidaudio_init()
+static void androidaudio_init()
 {
 	jvm_attacher.getEnv()->CallVoidMethod(g_audioBackend, audioInitMid);
 }
 
-void androidaudio_term()
+static void androidaudio_term()
 {
 	jvm_attacher.getEnv()->CallVoidMethod(g_audioBackend, audioTermMid);
+}
+
+static bool androidaudio_init_record(u32 sampling_freq)
+{
+	if (sipemu == nullptr)
+		return false;
+	jvm_attacher.getEnv()->CallVoidMethod(sipemu, startRecordingMid, sampling_freq);
+	return true;
+}
+
+static void androidaudio_term_record()
+{
+	jvm_attacher.getEnv()->CallVoidMethod(sipemu, stopRecordingMid);
+}
+
+static u32 androidaudio_record(void *buffer, u32 samples)
+{
+    jbyteArray jdata = (jbyteArray)jvm_attacher.getEnv()->CallObjectMethod(sipemu, getmicdata, samples);
+    if (jdata == NULL)
+        return 0;
+    jsize size = jvm_attacher.getEnv()->GetArrayLength(jdata);
+    samples = std::min(samples, (u32)size * 2);
+    jvm_attacher.getEnv()->GetByteArrayRegion(jdata, 0, samples * 2, (jbyte*)buffer);
+    jvm_attacher.getEnv()->DeleteLocalRef(jdata);
+
+    return samples;
 }
 
 audiobackend_t audiobackend_android = {
@@ -487,7 +521,10 @@ audiobackend_t audiobackend_android = {
         &androidaudio_init,
         &androidaudio_push,
         &androidaudio_term,
-        NULL
+        NULL,
+		&androidaudio_init_record,
+		&androidaudio_record,
+		&androidaudio_term_record
 };
 
 static bool android = RegisterAudioBackend(&audiobackend_android);
@@ -514,18 +551,6 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_AudioBackend_setInstance(JN
             jsamples = (jshortArray) env->NewGlobalRef(jsamples);
         }
     }
-}
-
-int get_mic_data(u8* buffer)
-{
-    jbyteArray jdata = (jbyteArray)jvm_attacher.getEnv()->CallObjectMethod(sipemu,getmicdata);
-    if(jdata==NULL){
-        //LOGW("get_mic_data NULL");
-        return 0;
-    }
-    jvm_attacher.getEnv()->GetByteArrayRegion(jdata, 0, SIZE_OF_MIC_DATA, (jbyte*)buffer);
-    jvm_attacher.getEnv()->DeleteLocalRef(jdata);
-    return 1;
 }
 
 void os_DebugBreak()
@@ -619,15 +644,14 @@ JNIEXPORT jboolean JNICALL Java_com_reicast_emulator_periph_InputDeviceManager_j
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_periph_InputDeviceManager_mouseEvent(JNIEnv *env, jobject obj, jint xpos, jint ypos, jint buttons)
 {
-    mo_x_abs = xpos;
-    mo_y_abs = ypos;
-    mo_buttons = 0xFFFF;
+	SetMousePosition(xpos, ypos, screen_width, screen_height);
+    mo_buttons[0] = 0xFFFF;
     if (buttons & 1)	// Left
-    	mo_buttons &= ~4;
+    	mo_buttons[0] &= ~4;
     if (buttons & 2)	// Right
-    	mo_buttons &= ~2;
+    	mo_buttons[0] &= ~2;
     if (buttons & 4)	// Middle
-    	mo_buttons &= ~8;
+    	mo_buttons[0] &= ~8;
     mouse_gamepad.gamepad_btn_input(1, (buttons & 1) != 0);
     mouse_gamepad.gamepad_btn_input(2, (buttons & 2) != 0);
     mouse_gamepad.gamepad_btn_input(4, (buttons & 4) != 0);

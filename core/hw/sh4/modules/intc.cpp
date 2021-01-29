@@ -14,7 +14,7 @@
 
 //Register writes need interrupt re-testing !
 
-void write_INTC_IPRA(u32 addr, u32 data)
+static void write_INTC_IPRA(u32 addr, u32 data)
 {
 	if (INTC_IPRA.reg_data!=(u16)data)
 	{
@@ -22,7 +22,7 @@ void write_INTC_IPRA(u32 addr, u32 data)
 		SIIDRebuild();	//we need to rebuild the table
 	}
 }
-void write_INTC_IPRB(u32 addr, u32 data)
+static void write_INTC_IPRB(u32 addr, u32 data)
 {
 	if (INTC_IPRB.reg_data!=(u16)data)
 	{
@@ -30,7 +30,7 @@ void write_INTC_IPRB(u32 addr, u32 data)
 		SIIDRebuild(); //we need to rebuild the table
 	}
 }
-void write_INTC_IPRC(u32 addr, u32 data)
+static void write_INTC_IPRC(u32 addr, u32 data)
 {
 	if (INTC_IPRC.reg_data!=(u16)data)
 	{
@@ -70,8 +70,6 @@ void intc_reset()
 	INTC_IPRA.reg_data = 0x0;
 	INTC_IPRB.reg_data = 0x0;
 	INTC_IPRC.reg_data = 0x0;
-
-	SIIDRebuild(); //rebuild the interrupts table
 
 	interrupts_reset();
 }

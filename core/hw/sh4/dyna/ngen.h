@@ -41,7 +41,6 @@
 */
 
 #pragma once
-#include "rec_config.h"
 #include "decoder.h"
 #include "blockmanager.h"
 

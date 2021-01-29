@@ -19,6 +19,9 @@
 #include <stddef.h>
 #include <GLES32/gl32.h>
 #include <EGL/egl.h>
+#if defined(GLES3) && defined(__ANDROID__)
+#include <dlfcn.h>
+#endif
 #include "gl32funcs.h"
 #include "build.h"
 
@@ -26,7 +29,14 @@ void load_gles_symbols()
 {
 #ifdef GLES3
 	for (int i = 0; rglgen_symbol_map[i].sym != NULL; i++)
-		*(void **)rglgen_symbol_map[i].ptr = eglGetProcAddress(rglgen_symbol_map[i].sym);
+	{
+#if defined(__ANDROID__)
+		//try to load via dlsym -- older android (< 4.4?) can't load everything via eglGetProcAddress
+		*(void **)rglgen_symbol_map[i].ptr = (void*)dlsym(RTLD_DEFAULT, rglgen_symbol_map[i].sym);
+		if (*(void **)rglgen_symbol_map[i].ptr == NULL)
+#endif
+			*(void **)rglgen_symbol_map[i].ptr = eglGetProcAddress(rglgen_symbol_map[i].sym);
+	}
 #endif
 }
 

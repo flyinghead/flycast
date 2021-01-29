@@ -67,12 +67,6 @@ void Gdxsv::Reset() {
         loginkey = GenerateLoginKey();
     }
 
-    if (overwriteconf) {
-        NOTICE_LOG(COMMON, "Overwrite configs for gdxsv");
-        settings.aica.BufferSize = 529;
-        settings.pvr.SynchronousRender = false;
-    }
-
     cfgSaveStr("gdxsv", "server", server.c_str());
     cfgSaveStr("gdxsv", "loginkey", loginkey.c_str());
     cfgSaveBool("gdxsv", "overwriteconf", overwriteconf);

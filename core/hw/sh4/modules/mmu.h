@@ -85,6 +85,36 @@ template<u32 translation_type, typename T>
 extern u32 mmu_data_translation(u32 va, u32& rv);
 void DoMMUException(u32 addr, u32 error_code, u32 access_type);
 
+template<u32 translation_type>
+bool mmu_is_translated(u32 va, u32 size)
+{
+	if (va & (size - 1))
+		return true;
+
+	if (translation_type == MMU_TT_DWRITE)
+	{
+		if ((va & 0xFC000000) == 0xE0000000)
+			//SQ writes are not translated, only write backs are.
+			return false;
+	}
+#ifndef sr
+// This is why the preprocessor sucks
+#define sr Sh4cntx.sr
+#define undef_sr
+#endif
+	if (sr.MD == 1 && (va & 0xFC000000) == 0x7C000000)
+		return false;
+#ifdef undef_sr
+#undef sr
+#undef undef_sr
+#endif
+
+	if (fast_reg_lut[va >> 29] != 0)
+		return false;
+
+	return true;
+}
+
 #if defined(NO_MMU)
 	bool inline mmu_TranslateSQW(u32 addr, u32* mapped) {
 		*mapped = sq_remap[(addr>>20)&0x3F] | (addr & 0xFFFE0);

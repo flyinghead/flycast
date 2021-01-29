@@ -4,6 +4,8 @@
 #include "hw/sh4/dyna/blockmanager.h"
 #include "log/LogManager.h"
 #include "emulator.h"
+#include "rend/mainui.h"
+#include "oslib/directory.h"
 
 #include <cstdarg>
 #include <csignal>
@@ -21,8 +23,6 @@
 	#include "sdl/sdl.h"
 #endif
 
-#include <sys/stat.h>
-
 #if defined(USE_EVDEV)
 	#include "evdev.h"
 #endif
@@ -30,16 +30,6 @@
 #if defined(USE_JOYSTICK)
     #include "cfg/cfg.h"
 	#include "joystick.h"
-#endif
-
-#ifdef TARGET_PANDORA
-	#include <signal.h>
-	#include <execinfo.h>
-	#include <sys/soundcard.h>
-#endif
-
-#if FEAT_HAS_NIXPROF
-#include "profiler/profiler.h"
 #endif
 
 #if defined(USE_JOYSTICK)
@@ -77,18 +67,18 @@ void os_SetupInput()
 #endif
 }
 
-void UpdateInputState(u32 port)
+void UpdateInputState()
 {
 	#if defined(USE_JOYSTICK)
-		input_joystick_handle(joystick_fd, port);
+		input_joystick_handle(joystick_fd, 0);
 	#endif
 
 	#if defined(USE_EVDEV)
-		input_evdev_handle(port);
+		input_evdev_handle();
 	#endif
 
 	#if defined(USE_SDL)
-		input_sdl_handle(port);
+		input_sdl_handle();
 	#endif
 }
 
@@ -137,201 +127,254 @@ std::string os_FetchStringFromURL(const std::string& url)
 }
 
 void common_linux_setup();
-void* rend_thread(void* p);
 
-#ifdef TARGET_PANDORA
-	void clean_exit(int sig_num)
-	{
-		void* array[10];
-		size_t size;
-
-		if (joystick_fd >= 0) { close(joystick_fd); }
-		for (int port = 0; port < 4 ; port++)
-		{
-			if (evdev_controllers[port]->fd >= 0)
-			{
-				close(evdev_controllers[port]->fd);
-			}
-		}
-
-		x11_window_destroy();
-
-		// finish cleaning
-		if (sig_num!=0)
-		{
-			write(2, "\nSignal received\n", sizeof("\nSignal received\n"));
-
-			size = backtrace(array, 10);
-			backtrace_symbols_fd(array, size, STDERR_FILENO);
-			exit(1);
-		}
-	}
-#endif
-
+// Find the user config directory.
+// The following folders are checked in this order:
+// $HOME/.reicast
+// $HOME/.config/flycast
+// $HOME/.config/reicast
+// If no folder exists, $HOME/.config/flycast is created and used.
 std::string find_user_config_dir()
 {
 	struct stat info;
-	std::string home = "";
-	if(getenv("HOME") != NULL)
+	std::string xdg_home;
+	if (nowide::getenv("HOME") != NULL)
 	{
 		// Support for the legacy config dir at "$HOME/.reicast"
-		std::string legacy_home = (std::string)getenv("HOME") + "/.reicast";
-		if((stat(legacy_home.c_str(), &info) == 0) && (info.st_mode & S_IFDIR))
-		{
+		std::string legacy_home = (std::string)nowide::getenv("HOME") + "/.reicast/";
+		if (flycast::stat(legacy_home.c_str(), &info) == 0 && (info.st_mode & S_IFDIR))
 			// "$HOME/.reicast" already exists, let's use it!
 			return legacy_home;
-		}
 
 		/* If $XDG_CONFIG_HOME is not set, we're supposed to use "$HOME/.config" instead.
 		 * Consult the XDG Base Directory Specification for details:
 		 *   http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html#variables
 		 */
-		home = (std::string)getenv("HOME") + "/.config/reicast";
+		xdg_home = (std::string)nowide::getenv("HOME") + "/.config";
 	}
-	if(getenv("XDG_CONFIG_HOME") != NULL)
-	{
+	if (nowide::getenv("XDG_CONFIG_HOME") != NULL)
 		// If XDG_CONFIG_HOME is set explicitly, we'll use that instead of $HOME/.config
-		home = (std::string)getenv("XDG_CONFIG_HOME") + "/reicast";
-	}
+		xdg_home = (std::string)nowide::getenv("XDG_CONFIG_HOME");
 
-	if(!home.empty())
+	if (!xdg_home.empty())
 	{
-		if((stat(home.c_str(), &info) != 0) || !(info.st_mode & S_IFDIR))
-		{
-			// If the directory doesn't exist yet, create it!
-			mkdir(home.c_str(), 0755);
-		}
-		return home;
+		std::string fullpath = xdg_home + "/flycast/";
+		if (flycast::stat(fullpath.c_str(), &info) == 0 && (info.st_mode & S_IFDIR))
+			// Found .config/flycast
+			return fullpath;
+		fullpath = xdg_home + "/reicast/";
+		if (flycast::stat(fullpath.c_str(), &info) == 0 && (info.st_mode & S_IFDIR))
+			// Found .config/reicast
+			return fullpath;
+
+		// Create .config/flycast
+		fullpath = xdg_home + "/flycast/";
+		flycast::mkdir(fullpath.c_str(), 0755);
+
+		return fullpath;
 	}
 
 	// Unable to detect config dir, use the current folder
 	return ".";
 }
 
+// Find the user data directory.
+// The following folders are checked in this order:
+// $HOME/.reicast/data
+// $HOME/.local/share/flycast
+// $HOME/.local/share/reicast
+// If no folder exists, $HOME/.local/share/flycast is created and used.
 std::string find_user_data_dir()
 {
 	struct stat info;
-	std::string data = "";
-	if(getenv("HOME") != NULL)
+	std::string xdg_home;
+	if (nowide::getenv("HOME") != NULL)
 	{
-		// Support for the legacy config dir at "$HOME/.reicast"
-		std::string legacy_data = (std::string)getenv("HOME") + "/.reicast";
-		if((stat(legacy_data.c_str(), &info) == 0) && (info.st_mode & S_IFDIR))
-		{
-			// "$HOME/.reicast" already exists, let's use it!
+		// Support for the legacy config dir at "$HOME/.reicast/data"
+		std::string legacy_data = (std::string)nowide::getenv("HOME") + "/.reicast/data/";
+		if (flycast::stat(legacy_data.c_str(), &info) == 0 && (info.st_mode & S_IFDIR))
+			// "$HOME/.reicast/data" already exists, let's use it!
 			return legacy_data;
-		}
 
 		/* If $XDG_DATA_HOME is not set, we're supposed to use "$HOME/.local/share" instead.
 		 * Consult the XDG Base Directory Specification for details:
 		 *   http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html#variables
 		 */
-		data = (std::string)getenv("HOME") + "/.local/share/reicast";
+		xdg_home = (std::string)nowide::getenv("HOME") + "/.local/share";
 	}
-	if(getenv("XDG_DATA_HOME") != NULL)
+	if (nowide::getenv("XDG_DATA_HOME") != NULL)
+		// If XDG_DATA_HOME is set explicitly, we'll use that instead of $HOME/.local/share
+		xdg_home = (std::string)nowide::getenv("XDG_DATA_HOME");
+
+	if (!xdg_home.empty())
 	{
-		// If XDG_DATA_HOME is set explicitly, we'll use that instead of $HOME/.config
-		data = (std::string)getenv("XDG_DATA_HOME") + "/reicast";
+		std::string fullpath = xdg_home + "/flycast/";
+		if (flycast::stat(fullpath.c_str(), &info) == 0 && (info.st_mode & S_IFDIR))
+			// Found .local/share/flycast
+			return fullpath;
+		fullpath = xdg_home + "/reicast/";
+		if (flycast::stat(fullpath.c_str(), &info) == 0 && (info.st_mode & S_IFDIR))
+			// Found .local/share/reicast
+			return fullpath;
+
+		// Create .local/share/flycast
+		fullpath = xdg_home + "/flycast/";
+		flycast::mkdir(fullpath.c_str(), 0755);
+
+		return fullpath;
 	}
 
-	if(!data.empty())
-	{
-		if((stat(data.c_str(), &info) != 0) || !(info.st_mode & S_IFDIR))
-		{
-			// If the directory doesn't exist yet, create it!
-			mkdir(data.c_str(), 0755);
-		}
-		return data;
-	}
-
-	// Unable to detect config dir, use the current folder
+	// Unable to detect data dir, use the current folder
 	return ".";
 }
 
+// Find a file in the user and system config directories.
+// The following folders are checked in this order:
+// $HOME/.reicast
+// $HOME/.config/flycast
+// $HOME/.config/reicast
+// if XDG_CONFIG_DIRS is defined:
+//   <$XDG_CONFIG_DIRS>/flycast
+//   <$XDG_CONFIG_DIRS>/reicast
+// else
+//   /etc/flycast/
+//   /etc/xdg/flycast/
+// .
 std::vector<std::string> find_system_config_dirs()
 {
 	std::vector<std::string> dirs;
-	if (getenv("XDG_CONFIG_DIRS") != NULL)
+
+	std::string xdg_home;
+	if (nowide::getenv("HOME") != NULL)
 	{
-		std::string s = (std::string)getenv("XDG_CONFIG_DIRS");
+		// Support for the legacy config dir at "$HOME/.reicast"
+		dirs.push_back((std::string)nowide::getenv("HOME") + "/.reicast/");
+		xdg_home = (std::string)nowide::getenv("HOME") + "/.config";
+	}
+	if (nowide::getenv("XDG_CONFIG_HOME") != NULL)
+		// If XDG_CONFIG_HOME is set explicitly, we'll use that instead of $HOME/.config
+		xdg_home = (std::string)nowide::getenv("XDG_CONFIG_HOME");
+	if (!xdg_home.empty())
+	{
+		// XDG config locations
+		dirs.push_back(xdg_home + "/flycast/");
+		dirs.push_back(xdg_home + "/reicast/");
+	}
+
+	if (nowide::getenv("XDG_CONFIG_DIRS") != NULL)
+	{
+		std::string s = (std::string)nowide::getenv("XDG_CONFIG_DIRS");
 
 		std::string::size_type pos = 0;
 		std::string::size_type n = s.find(':', pos);
 		while(n != std::string::npos)
 		{
-			dirs.push_back(s.substr(pos, n-pos) + "/reicast");
+			dirs.push_back(s.substr(pos, n-pos) + "/flycast/");
+			dirs.push_back(s.substr(pos, n-pos) + "/reicast/");
 			pos = n + 1;
 			n = s.find(':', pos);
 		}
 		// Separator not found
-		dirs.push_back(s.substr(pos) + "/reicast");
+		dirs.push_back(s.substr(pos) + "/flycast/");
+		dirs.push_back(s.substr(pos) + "/reicast/");
 	}
 	else
 	{
-		dirs.push_back("/etc/reicast"); // This isn't part of the XDG spec, but much more common than /etc/xdg/
-		dirs.push_back("/etc/xdg/reicast");
+		dirs.push_back("/etc/flycast/"); // This isn't part of the XDG spec, but much more common than /etc/xdg/
+		dirs.push_back("/etc/xdg/flycast/");
 	}
+	dirs.push_back("./");
+
 	return dirs;
 }
 
+// Find a file in the user data directories.
+// The following folders are checked in this order:
+// $HOME/.reicast/data
+// $HOME/.local/share/flycast
+// $HOME/.local/share/reicast
+// if XDG_DATA_DIRS is defined:
+//   <$XDG_DATA_DIRS>/flycast
+//   <$XDG_DATA_DIRS>/reicast
+// else
+//   /usr/local/share/flycast
+//   /usr/share/flycast
+//   /usr/local/share/reicast
+//   /usr/share/reicast
+// ./data
 std::vector<std::string> find_system_data_dirs()
 {
 	std::vector<std::string> dirs;
-	if (getenv("XDG_DATA_DIRS") != NULL)
+
+	std::string xdg_home;
+	if (nowide::getenv("HOME") != NULL)
 	{
-		std::string s = (std::string)getenv("XDG_DATA_DIRS");
+		// Support for the legacy data dir at "$HOME/.reicast/data"
+		dirs.push_back((std::string)nowide::getenv("HOME") + "/.reicast/data/");
+		xdg_home = (std::string)nowide::getenv("HOME") + "/.local/share";
+	}
+	if (nowide::getenv("XDG_DATA_HOME") != NULL)
+		// If XDG_DATA_HOME is set explicitly, we'll use that instead of $HOME/.local/share
+		xdg_home = (std::string)nowide::getenv("XDG_DATA_HOME");
+	if (!xdg_home.empty())
+	{
+		// XDG data locations
+		dirs.push_back(xdg_home + "/flycast/");
+		dirs.push_back(xdg_home + "/reicast/");
+		dirs.push_back(xdg_home + "/reicast/data/");
+	}
+
+	if (nowide::getenv("XDG_DATA_DIRS") != NULL)
+	{
+		std::string s = (std::string)nowide::getenv("XDG_DATA_DIRS");
 
 		std::string::size_type pos = 0;
 		std::string::size_type n = s.find(':', pos);
 		while(n != std::string::npos)
 		{
-			dirs.push_back(s.substr(pos, n-pos) + "/reicast");
+			dirs.push_back(s.substr(pos, n-pos) + "/flycast/");
+			dirs.push_back(s.substr(pos, n-pos) + "/reicast/");
 			pos = n + 1;
 			n = s.find(':', pos);
 		}
 		// Separator not found
-		dirs.push_back(s.substr(pos) + "/reicast");
+		dirs.push_back(s.substr(pos) + "/flycast/");
+		dirs.push_back(s.substr(pos) + "/reicast/");
 	}
 	else
 	{
-		dirs.push_back("/usr/local/share/reicast");
-		dirs.push_back("/usr/share/reicast");
+		dirs.push_back("/usr/local/share/flycast/");
+		dirs.push_back("/usr/share/flycast/");
+		dirs.push_back("/usr/local/share/reicast/");
+		dirs.push_back("/usr/share/reicast/");
 	}
+	dirs.push_back("./");
+	dirs.push_back("data/");
+
 	return dirs;
 }
 
 int main(int argc, char* argv[])
 {
 	LogManager::Init();
-	#ifdef TARGET_PANDORA
-		signal(SIGSEGV, clean_exit);
-		signal(SIGKILL, clean_exit);
-	#endif
 
-	/* Set directories */
+	// Set directories
 	set_user_config_dir(find_user_config_dir());
 	set_user_data_dir(find_user_data_dir());
-	std::vector<std::string> dirs;
-	dirs = find_system_config_dirs();
-	for (std::size_t i = 0; i < dirs.size(); i++)
-	{
-		add_system_data_dir(dirs[i]);
-	}
-	dirs = find_system_data_dirs();
-	for (std::size_t i = 0; i < dirs.size(); i++)
-	{
-		add_system_data_dir(dirs[i]);
-	}
-	INFO_LOG(BOOT, "Config dir is: %s", get_writable_config_path("/").c_str());
-	INFO_LOG(BOOT, "Data dir is:   %s", get_writable_data_path("/").c_str());
+	for (const auto& dir : find_system_config_dirs())
+		add_system_config_dir(dir);
+	for (const auto& dir : find_system_data_dirs())
+		add_system_data_dir(dir);
+	INFO_LOG(BOOT, "Config dir is: %s", get_writable_config_path("").c_str());
+	INFO_LOG(BOOT, "Data dir is:   %s", get_writable_data_path("").c_str());
 
-	#if defined(USE_SDL)
-		// init video now: on rpi3 it installs a sigsegv handler(?)
-		if (SDL_Init(SDL_INIT_VIDEO) != 0)
-		{
-			die("SDL: Initialization failed!");
-		}
-	#endif
+#if defined(USE_SDL)
+	// init video now: on rpi3 it installs a sigsegv handler(?)
+	if (SDL_Init(SDL_INIT_VIDEO) != 0)
+	{
+		die("SDL: Initialization failed!");
+	}
+#endif
 
 	common_linux_setup();
 
@@ -340,24 +383,17 @@ int main(int argc, char* argv[])
 	if (reicast_init(argc, argv))
 		die("Reicast initialization failed\n");
 
-	#if FEAT_HAS_NIXPROF
-	install_prof_handler(1);
-	#endif
-	rend_thread(NULL);
-
-	#ifdef TARGET_PANDORA
-		clean_exit(0);
-	#endif
+	mainui_loop();
 
 	dc_term();
 
-	#if defined(USE_EVDEV)
-		input_evdev_close();
-	#endif
+#if defined(USE_EVDEV)
+	input_evdev_close();
+#endif
 
-	#if defined(SUPPORT_X11)
-		x11_window_destroy();
-	#endif
+#if defined(SUPPORT_X11)
+	x11_window_destroy();
+#endif
 
 #if defined(USE_SDL)
 	sdl_window_destroy();
@@ -366,8 +402,6 @@ int main(int argc, char* argv[])
 	return 0;
 }
 #endif
-
-int get_mic_data(u8* buffer) { return 0; }
 
 void os_DebugBreak()
 {

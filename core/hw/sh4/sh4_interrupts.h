@@ -102,11 +102,22 @@ enum InterruptID
 
 void SetInterruptPend(InterruptID intr);
 void ResetInterruptPend(InterruptID intr);
-#define InterruptPend(intr,v) ((v)==0?ResetInterruptPend(intr):SetInterruptPend(intr))
+inline static void InterruptPend(InterruptID intr, u32 v) {
+	if (v == 0)
+		ResetInterruptPend(intr);
+	else
+		SetInterruptPend(intr);
+}
 
 void SetInterruptMask(InterruptID intr);
 void ResetInterruptMask(InterruptID intr);
-#define InterruptMask(intr,v) ((v)==0?ResetInterruptMask(intr):SetInterruptMask(intr))
+inline static void InterruptMask(InterruptID intr, u32 v)
+{
+	if (v == 0)
+		ResetInterruptMask(intr);
+	else
+		SetInterruptMask(intr);
+}
 
 int UpdateINTC();
 

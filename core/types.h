@@ -137,61 +137,8 @@ enum HollyInterruptID
 };
 
 
-
-struct vram_block
-{
-	u32 start;
-	u32 end;
-	u32 len;
-	u32 type;
-
-	void* userdata;
-};
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-//******************************************************
-//*********************** PowerVR **********************
-//******************************************************
-
-void libCore_vramlock_Unlock_block  (vram_block* block);
-vram_block* libCore_vramlock_Lock(u32 start_offset,u32 end_offset,void* userdata);
-
-
-
-//******************************************************
-//************************ GDRom ***********************
-//******************************************************
-enum DiscType
-{
-	CdDA=0x00,
-	CdRom=0x10,
-	CdRom_XA=0x20,
-	CdRom_Extra=0x30,
-	CdRom_CDI=0x40,
-	GdRom=0x80,
-
-	NoDisk=0x1,			//These are a bit hacky .. but work for now ...
-	Open=0x2,			//tray is open :)
-	Busy=0x3			//busy -> needs to be automatically done by gdhost
-};
-
-enum DiskArea
-{
-	SingleDensity,
-	DoubleDensity
-};
-
-//******************************************************
-//************************ AICA ************************
-//******************************************************
-void libARM_InterruptChange(u32 bits,u32 L);
-void libCore_CDDA_Sector(s16* sector);
-
-
-//includes from CRT
-#include <cstdlib>
-#include <cstdio>
+#include "nowide/cstdlib.hpp"
+#include "nowide/cstdio.hpp"
 
 #if defined(__APPLE__)
 int darw_printf(const char* Text,...);
@@ -256,6 +203,8 @@ bool dc_unserialize(void **data, unsigned int *total_size);
 
 #define REICAST_SA(v_arr,num) rc_serialize((v_arr), sizeof((v_arr)[0])*(num), data, total_size)
 #define REICAST_USA(v_arr,num) rc_unserialize((v_arr), sizeof((v_arr)[0])*(num), data, total_size)
+
+#define REICAST_SKIP(size) do { if (*data) *(u8**)data += (size); *total_size += (size); } while (false)
 
 #ifndef _MSC_VER
 #define stricmp strcasecmp
@@ -348,6 +297,13 @@ enum class JVS {
 	WaveRunnerGP,
 };
 
+enum class RenderType {
+	OpenGL = 0,
+	OpenGL_OIT = 3,
+	Vulkan = 4,
+	Vulkan_OIT = 5
+};
+
 struct settings_t
 {
 	struct {
@@ -390,6 +346,7 @@ struct settings_t
 		bool PerStripSorting;
 		bool DelayFrameSwapping; // Delay swapping frame until FB_R_SOF matches FB_W_SOF
 		bool WidescreenGameHacks;
+		u32 CrosshairColor[4];
 	} rend;
 
 	struct
@@ -463,12 +420,12 @@ struct settings_t
 	struct
 	{
 		u32 ta_skip;
-		u32 rend;	// 0: GLES, GL3, 3: OIT/GL4.3, 4: Vulkan
+		RenderType rend;
 
 		u32 MaxThreads;
-		bool SynchronousRender;
+		int AutoSkipFrame;		// 0: none, 1: some, 2: more
 
-		bool IsOpenGL() { return rend == 0 || rend == 3; }
+		bool IsOpenGL() { return rend == RenderType::OpenGL || rend == RenderType::OpenGL_OIT; }
 	} pvr;
 
 	struct {
@@ -493,6 +450,7 @@ struct settings_t
 		bool ActAsServer;
 		std::string dns;
 		std::string server;
+		bool EmulateBBA;
 	} network;
 };
 
@@ -518,25 +476,7 @@ s32 libPvr_Init();
 void libPvr_Reset(bool Manual);
 void libPvr_Term();
 
-void libPvr_LockedBlockWrite(vram_block* block,u32 addr);	//set to 0 if not used
-
 void* libPvr_GetRenderTarget();
-
-//GDR
-s32 libGDR_Init();
-void libGDR_Reset(bool hard);
-void libGDR_Term();
-
-void libCore_gdrom_disc_change();
-
-//IO
-void libGDR_ReadSector(u8 * buff,u32 StartSector,u32 SectorCount,u32 secsz);
-void libGDR_ReadSubChannel(u8 * buff, u32 format, u32 len);
-void libGDR_GetToc(u32* toc,u32 area);
-u32 libGDR_GetDiscType();
-void libGDR_GetSessionInfo(u8* pout,u8 session);
-u32 libGDR_GetTrackNumber(u32 sector, u32& elapsed);
-bool libGDR_GetTrack(u32 track_num, u32& start_fad, u32& end_fad);
 
 // 0x00600000 - 0x006007FF [NAOMI] (modem area for dreamcast)
 u32  libExtDevice_ReadMem_A0_006(u32 addr,u32 size);
@@ -555,21 +495,42 @@ s32 libARM_Init();
 void libARM_Reset(bool hard);
 void libARM_Term();
 
-#define 	ReadMemArrRet(arr,addr,sz)				\
-			{if (sz==1)								\
-				return arr[addr];					\
-			else if (sz==2)							\
-				return *(u16*)&arr[addr];			\
-			else if (sz==4)							\
-				return *(u32*)&arr[addr];}
+template<u32 sz>
+u32 ReadMemArr(u8 *array, u32 addr)
+{
+	switch(sz)
+	{
+	case 1:
+		return array[addr];
+	case 2:
+		return *(u16 *)&array[addr];
+	case 4:
+		return *(u32 *)&array[addr];
+	default:
+		die("invalid size");
+		return 0;
+	}
+}
 
-#define WriteMemArr(arr,addr,data,sz)				\
-			{if(sz==1)								\
-				{arr[addr]=(u8)data;}				\
-			else if (sz==2)							\
-				{*(u16*)&arr[addr]=(u16)data;}		\
-			else if (sz==4)							\
-			{*(u32*)&arr[addr]=data;}}
+template<u32 sz>
+void WriteMemArr(u8 *array, u32 addr, u32 data)
+{
+	switch(sz)
+	{
+	case 1:
+		array[addr] = data;
+		break;
+	case 2:
+		*(u16 *)&array[addr] = data;
+		break;
+	case 4:
+		*(u32 *)&array[addr] = data;
+		break;
+	default:
+		die("invalid size");
+		break;
+	}
+}
 
 struct OnLoad
 {
@@ -604,4 +565,8 @@ enum serialize_version_enum {
 	V9 = 804,
 	V10 = 805,
 	V11 = 806,
+	V12 = 807,
+	V13 = 808,
+	V14 = 809,
+	VCUR_FLYCAST = V14,
 } ;

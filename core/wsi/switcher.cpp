@@ -28,20 +28,20 @@ VulkanContext theVulkanContext;
 void InitRenderApi()
 {
 #ifdef USE_VULKAN
-	if (settings.pvr.rend == 4 || settings.pvr.rend == 5)
+	if (!settings.pvr.IsOpenGL())
 	{
 		if (theVulkanContext.Init())
 			return;
 		// Fall back to Open GL
 		WARN_LOG(RENDERER, "Vulkan init failed. Falling back to Open GL.");
-		settings.pvr.rend = 0;
+		settings.pvr.rend = RenderType::OpenGL;
 	}
 #endif
 	if (!theGLContext.Init())
 		exit(1);
 }
 
-void SwitchRenderApi(int newApi)
+void SwitchRenderApi(RenderType newApi)
 {
 	TermRenderApi();
 	settings.pvr.rend = newApi;

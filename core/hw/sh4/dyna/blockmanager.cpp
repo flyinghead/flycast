@@ -134,7 +134,7 @@ RuntimeBlockInfoPtr bm_GetBlock(void* dynarec_code)
 	iter--;  // Need to go back to find the potential candidate
 
 	// However it might be out of bounds, check for that
-	if ((u8*)iter->second->code + iter->second->host_code_size < (u8*)dynarec_code)
+	if ((u8*)iter->second->code + iter->second->host_code_size <= (u8*)dynarec_code)
 		return NULL;
 
 	verify(iter->second->contains_code((u8*)dynarecrw));
@@ -156,7 +156,7 @@ RuntimeBlockInfoPtr bm_GetStaleBlock(void* dynarec_code)
 	auto it = del_blocks.end();
 	do
 	{
-		it--;
+		--it;
 		if ((*it)->contains_code((u8*)dynarecrw))
 			return *it;
 	} while (it != del_blocks.begin());
@@ -344,7 +344,6 @@ void bm_ResetTempCache(bool full)
 
 void bm_Init()
 {
-
 #ifdef DYNA_OPROF
 	oprofHandle=op_open_agent();
 	if (oprofHandle==0)
@@ -352,7 +351,6 @@ void bm_Init()
 	else
 		INFO_LOG(DYNAREC, "bm: Oprofile integration enabled !");
 #endif
-	bm_Reset();
 }
 
 void bm_Term()
@@ -526,10 +524,10 @@ void RuntimeBlockInfo::Discard()
 	// Update references
 	for (RuntimeBlockInfoPtr& ref : pre_refs)
 	{
-		if (ref->NextBlock == vaddr)
-			ref->pNextBlock = NULL;
-		if (ref->BranchBlock == vaddr)
-			ref->pBranchBlock = NULL;
+		if (ref->pNextBlock == this)
+			ref->pNextBlock = nullptr;
+		if (ref->pBranchBlock == this)
+			ref->pBranchBlock = nullptr;
 		ref->relink_data = 0;
 		ref->Relink();
 	}
@@ -652,7 +650,7 @@ void print_blocks()
 
 	if (print_stats)
 	{
-		f=fopen(get_writable_data_path("/blkmap.lst").c_str(),"w");
+		f=fopen(get_writable_data_path("blkmap.lst").c_str(),"w");
 		print_stats=0;
 
 		INFO_LOG(DYNAREC, "Writing blocks to %p", f);
@@ -680,9 +678,7 @@ void print_blocks()
 			fprintf(f,"host_opcodes: %d\n",blk->host_opcodes);
 			fprintf(f,"il_opcodes: %zd\n",blk->oplist.size());
 
-			u32 hcode=0;
 			s32 gcode=-1;
-			u8* pucode=(u8*)blk->code;
 
 			size_t j=0;
 			

@@ -41,13 +41,7 @@ static s8 alloc_fregs[] = { 8, 9, 10, 11, -1 };		// XMM8-11
 
 class BlockCompiler;
 
-struct X64RegAlloc : RegAlloc<Xbyak::Operand::Code, s8,
-#ifdef EXPLODE_SPANS
-														true
-#else
-														false
-#endif
-															 >
+struct X64RegAlloc : RegAlloc<Xbyak::Operand::Code, s8>
 {
 	X64RegAlloc(BlockCompiler *compiler) : compiler(compiler) {}
 

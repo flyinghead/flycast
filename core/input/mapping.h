@@ -31,43 +31,48 @@ public:
 	InputMapping(const InputMapping& other) {
 		name = other.name;
 		dead_zone = other.dead_zone;
-	    buttons = other.buttons;
-	    axes = other.axes;
-	    axes_inverted = other.axes_inverted;
+		for (int port = 0; port < 4; port++)
+		{
+			buttons[port] = other.buttons[port];
+			axes[port] = other.axes[port];
+			axes_inverted[port] = other.axes_inverted[port];
+		}
 	}
 
 	std::string name;
-	float dead_zone;
+	float dead_zone = 0.1f;
 
-	DreamcastKey get_button_id(u32 code)
+	DreamcastKey get_button_id(u32 port, u32 code)
 	{
-		auto it = buttons.find(code);
-		if (it != buttons.end())
+		auto it = buttons[port].find(code);
+		if (it != buttons[port].end())
 			return it->second;
 		else
 			return EMU_BTN_NONE;
 	}
-	void set_button(DreamcastKey id, u32 code);
-	u32 get_button_code(DreamcastKey key);
+	void set_button(u32 port, DreamcastKey id, u32 code);
+	void set_button(DreamcastKey id, u32 code) { set_button(0, id, code); }
+	u32 get_button_code(u32 port, DreamcastKey id);
 
-	DreamcastKey get_axis_id(u32 code)
+	DreamcastKey get_axis_id(u32 port, u32 code)
 	{
-		auto it = axes.find(code);
-		if (it != axes.end())
+		auto it = axes[port].find(code);
+		if (it != axes[port].end())
 			return it->second;
 		else
 			return EMU_AXIS_NONE;
 	}
-	bool get_axis_inverted(u32 code)
+	bool get_axis_inverted(u32 port, u32 code)
 	{
-		auto it = axes_inverted.find(code);
-		if (it != axes_inverted.end())
+		auto it = axes_inverted[port].find(code);
+		if (it != axes_inverted[port].end())
 			return it->second;
 		else
 			return false;
 	}
-	u32 get_axis_code(DreamcastKey key);
-	void set_axis(DreamcastKey id, u32 code, bool inverted);
+	u32 get_axis_code(u32 port, DreamcastKey key);
+	void set_axis(u32 port, DreamcastKey id, u32 code, bool inverted);
+	void set_axis(DreamcastKey id, u32 code, bool inverted) { set_axis(0, id, code, inverted); }
 
 	void load(FILE* fp);
 	bool save(const char *name);
@@ -81,9 +86,9 @@ protected:
 	bool dirty = false;
 
 private:
-	std::map<u32, DreamcastKey> buttons;
-	std::map<u32, DreamcastKey> axes;
-	std::map<u32, bool> axes_inverted;
+	std::map<u32, DreamcastKey> buttons[4];
+	std::map<u32, DreamcastKey> axes[4];
+	std::map<u32, bool> axes_inverted[4];
 
 	static std::map<std::string, std::shared_ptr<InputMapping>> loaded_mappings;
 };
@@ -96,12 +101,12 @@ public:
 		dead_zone = 0.1f;
 		
 		for (int i = 0; i < 32; i++)
-			set_button((DreamcastKey)(1 << i), 1 << i);
-		set_axis(DC_AXIS_X, DC_AXIS_X, false);
-		set_axis(DC_AXIS_Y, DC_AXIS_Y, false);
-		set_axis(DC_AXIS_LT, DC_AXIS_LT, false);
-		set_axis(DC_AXIS_RT, DC_AXIS_RT, false);
-		set_axis(DC_AXIS_X2, DC_AXIS_X2, false);
-		set_axis(DC_AXIS_Y2, DC_AXIS_Y2, false);
+			set_button(0, (DreamcastKey)(1 << i), 1 << i);
+		set_axis(0, DC_AXIS_X, DC_AXIS_X, false);
+		set_axis(0, DC_AXIS_Y, DC_AXIS_Y, false);
+		set_axis(0, DC_AXIS_LT, DC_AXIS_LT, false);
+		set_axis(0, DC_AXIS_RT, DC_AXIS_RT, false);
+		set_axis(0, DC_AXIS_X2, DC_AXIS_X2, false);
+		set_axis(0, DC_AXIS_Y2, DC_AXIS_Y2, false);
 	}
 };

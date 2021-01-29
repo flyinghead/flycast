@@ -16,7 +16,7 @@ int ConfigEntry::get_int()
 {
 	if (strstr(this->value.c_str(), "0x") != NULL)
 	{
-		return strtol(this->value.c_str(), NULL, 16);
+		return (int)strtoul(this->value.c_str(), NULL, 16);
 	}
 	else
 	{
@@ -205,7 +205,7 @@ void ConfigFile::parse(FILE* file)
 	int cline = 0;
 	while(file && !feof(file))
 	{
-		if (fgets(line, 512, file) == NULL || feof(file))
+		if (std::fgets(line, 512, file) == NULL || std::feof(file))
 		{
 			break;
 		}
@@ -274,16 +274,16 @@ void ConfigFile::save(FILE* file)
 		const std::string& section_name = section_it.first;
 		const ConfigSection& section = section_it.second;
 
-		fprintf(file, "[%s]\n", section_name.c_str());
+		std::fprintf(file, "[%s]\n", section_name.c_str());
 
 		for (const auto& entry_it : section.entries)
 		{
 			const std::string& entry_name = entry_it.first;
 			const ConfigEntry& entry = entry_it.second;
-			fprintf(file, "%s = %s\n", entry_name.c_str(), entry.get_string().c_str());
+			std::fprintf(file, "%s = %s\n", entry_name.c_str(), entry.get_string().c_str());
 		}
 
-		fputs("\n", file);
+		std::fputs("\n", file);
 	}
 }
 

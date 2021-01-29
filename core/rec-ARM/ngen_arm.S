@@ -7,7 +7,6 @@
 
 .equ SH4_TIMESLICE, 448
 .equ BM_BLOCKLIST_MASK, 65532 @FFFC
-.equ CPU_RATIO, 5
 
 #if defined(__APPLE__)
 #define CSYM(n) _##n
