@@ -470,6 +470,8 @@
 		F2E5596F25C12886006B0421 /* gdxsv.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F2E5596925C12886006B0421 /* gdxsv.cpp */; };
 		F2E5597025C12886006B0421 /* packet.pb.cc in Sources */ = {isa = PBXBuildFile; fileRef = F2E5596C25C12886006B0421 /* packet.pb.cc */; };
 		F2E5597125C12886006B0421 /* gdxsv_network.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F2E5596D25C12886006B0421 /* gdxsv_network.cpp */; };
+		F2E7578E25C5E0DB0021FAFD /* libopenlibm.3.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = F2E7578A25C5E0DB0021FAFD /* libopenlibm.3.dylib */; };
+		F2E7579125C5E1530021FAFD /* libopenlibm.3.dylib in Embed Libraries */ = {isa = PBXBuildFile; fileRef = F2E7578A25C5E0DB0021FAFD /* libopenlibm.3.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -481,6 +483,20 @@
 			remoteInfo = "reicast-osx";
 		};
 /* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		F2E7579225C5E1530021FAFD /* Embed Libraries */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				F2E7579125C5E1530021FAFD /* libopenlibm.3.dylib in Embed Libraries */,
+			);
+			name = "Embed Libraries";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		8491687D1B782B2D00F3F2B4 /* ini.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ini.cpp; sourceTree = "<group>"; };
@@ -1436,6 +1452,9 @@
 		F2E5596C25C12886006B0421 /* packet.pb.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = packet.pb.cc; sourceTree = "<group>"; };
 		F2E5596D25C12886006B0421 /* gdxsv_network.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = gdxsv_network.cpp; sourceTree = "<group>"; };
 		F2E5596E25C12886006B0421 /* gdxsv_patch.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = gdxsv_patch.h; sourceTree = "<group>"; };
+		F2E7578925C5E0DB0021FAFD /* LICENSE.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = LICENSE.md; sourceTree = "<group>"; };
+		F2E7578A25C5E0DB0021FAFD /* libopenlibm.3.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; path = libopenlibm.3.dylib; sourceTree = "<group>"; };
+		F2E7578C25C5E0DB0021FAFD /* version.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = version.txt; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -1446,6 +1465,7 @@
 				EBDF37531BB969F8001191B5 /* AudioUnit.framework in Frameworks */,
 				AEF9987D259B355C0038E0B8 /* GameController.framework in Frameworks */,
 				AE7BCB62243DDD92007285F8 /* Carbon.framework in Frameworks */,
+				F2E7578E25C5E0DB0021FAFD /* libopenlibm.3.dylib in Frameworks */,
 				EBDF37511BB969EE001191B5 /* CoreAudio.framework in Frameworks */,
 				AE7BCB5C243DDCAE007285F8 /* ForceFeedback.framework in Frameworks */,
 				AE7BCB5E243DDCD1007285F8 /* AudioToolbox.framework in Frameworks */,
@@ -1591,6 +1611,7 @@
 				AE649C08218C553A00EF4A81 /* lzma */,
 				AEF998042598900A0038E0B8 /* miniupnpc */,
 				AE82C6ED25B64BDC00C79BC2 /* nowide */,
+				F2E7578825C5E0DB0021FAFD /* openlibm */,
 				AEFF7ECE214D9D580068CE11 /* picotcp */,
 				F24713F925C12B80004E13FE /* protobuf-3.13.0 */,
 				AE8C273A21122E2500D4D8F4 /* xbrz */,
@@ -3123,6 +3144,16 @@
 			path = ../../../core/gdxsv;
 			sourceTree = "<group>";
 		};
+		F2E7578825C5E0DB0021FAFD /* openlibm */ = {
+			isa = PBXGroup;
+			children = (
+				F2E7578925C5E0DB0021FAFD /* LICENSE.md */,
+				F2E7578A25C5E0DB0021FAFD /* libopenlibm.3.dylib */,
+				F2E7578C25C5E0DB0021FAFD /* version.txt */,
+			);
+			path = openlibm;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -3134,6 +3165,7 @@
 				84A388AF1B1CDD3E000166C0 /* Sources */,
 				84A388B01B1CDD3E000166C0 /* Frameworks */,
 				84A388B11B1CDD3E000166C0 /* Resources */,
+				F2E7579225C5E1530021FAFD /* Embed Libraries */,
 			);
 			buildRules = (
 			);
@@ -3883,6 +3915,10 @@
 				);
 				INFOPLIST_FILE = "emulator-osx/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					../../../core/deps/openlibm/,
+				);
 				OTHER_LDFLAGS = /usr/local/lib/libSDL2.a;
 				OTHER_LIBTOOLFLAGS = "";
 				PRODUCT_BUNDLE_IDENTIFIER = com.flyinghead.Flycast;
@@ -3935,6 +3971,10 @@
 				);
 				INFOPLIST_FILE = "emulator-osx/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					../../../core/deps/openlibm/,
+				);
 				OTHER_LDFLAGS = /usr/local/lib/libSDL2.a;
 				OTHER_LIBTOOLFLAGS = "";
 				PRODUCT_NAME = "$(REI_APP_NAME)";
