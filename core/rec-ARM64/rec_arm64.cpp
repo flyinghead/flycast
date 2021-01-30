@@ -2228,10 +2228,10 @@ static const u32 op_sizes[] = {
 		4,
 		8,
 };
-bool ngen_Rewrite(unat& host_pc, unat, unat)
+bool ngen_Rewrite(host_context_t &context, void *faultAddress)
 {
-	//LOGI("ngen_Rewrite pc %zx\n", host_pc);
-	u32 *code_ptr = (u32 *)CC_RX2RW(host_pc);
+	//LOGI("ngen_Rewrite pc %zx\n", context.pc);
+	u32 *code_ptr = (u32 *)CC_RX2RW(context.pc);
 	u32 armv8_op = *code_ptr;
 	bool is_read;
 	u32 size;
@@ -2264,7 +2264,7 @@ bool ngen_Rewrite(unat& host_pc, unat, unat)
 	}
 	assembler->Finalize(true);
 	delete assembler;
-	host_pc = (unat)CC_RW2RX(code_rewrite);
+	context.pc = (unat)CC_RW2RX(code_rewrite);
 
 	return true;
 }
@@ -2287,8 +2287,9 @@ RuntimeBlockInfo* ngen_AllocateBlock()
 	return new DynaRBI();
 }
 
-void ngen_HandleException()
+void ngen_HandleException(host_context_t &context)
 {
+	// TODO
 	longjmp(jmp_env, 1);
 }
 

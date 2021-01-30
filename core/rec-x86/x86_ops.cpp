@@ -422,19 +422,20 @@ void X86Compiler::genOpcode(RuntimeBlockInfo* block, bool optimise, shil_opcode&
 	}
 }
 
-bool X86Compiler::rewriteMemAccess(size_t& host_pc, size_t retadr, size_t acc)
+bool X86Compiler::rewriteMemAccess(host_context_t &context)
 {
-	//DEBUG_LOG(DYNAREC, "rewriteMemAccess hpc %08x retadr %08x", host_pc, retadr);
-	if (host_pc < (size_t)MemHandlerStart || host_pc >= (size_t)MemHandlerEnd)
+	u8 *retAddr = *(u8 **)context.esp;
+	//DEBUG_LOG(DYNAREC, "rewriteMemAccess hpc %08x retadr %08x", context.pc, (size_t)retAddr);
+	if (context.pc < (size_t)MemHandlerStart || context.pc >= (size_t)MemHandlerEnd)
 		return false;
 
-	u32 ca = *(u32 *)(retadr - 4) + retadr;
+	void *ca = *(u32 *)(retAddr - 4) + retAddr;
 
 	for (int size = 0; size < MemOp::SizeCount; size++)
 	{
 		for (int op = 0; op < MemOp::OpCount; op++)
 		{
-			if ((u32)MemHandlers[MemOp::Fast][size][op] != ca)
+			if ((void *)MemHandlers[MemOp::Fast][size][op] != ca)
 				continue;
 
 			//found !
@@ -444,12 +445,16 @@ bool X86Compiler::rewriteMemAccess(size_t& host_pc, size_t retadr, size_t acc)
 
 			ready();
 
-			host_pc = retadr - 5;
+			context.pc = (size_t)(retAddr - 5);
+			//remove the call from call stack
+			context.esp += 4;
+			//restore the addr from eax to ecx so it's valid again
+			context.ecx = context.eax;
 
 			return true;
 		}
 	}
-	ERROR_LOG(DYNAREC, "rewriteMemAccess code not found: hpc %08x retadr %08x acc %08x", host_pc, retadr, acc);
+	ERROR_LOG(DYNAREC, "rewriteMemAccess code not found: hpc %08x retadr %p acc %08x", context.pc, retAddr, context.eax);
 	die("Failed to match the code");
 
 	return false;

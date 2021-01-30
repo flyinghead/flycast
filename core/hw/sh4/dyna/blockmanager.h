@@ -35,7 +35,7 @@ struct RuntimeBlockInfo: RuntimeBlockInfo_Core
 	fpscr_t fpu_cfg;
 	u32 guest_cycles;
 	u32 guest_opcodes;
-	u32 host_opcodes;
+	u32 host_opcodes;	// set by host code generator, optional
 	bool has_fpu_op;
 	u32 blockcheck_failures;
 	bool temp_block;
@@ -49,7 +49,6 @@ struct RuntimeBlockInfo: RuntimeBlockInfo_Core
 
 	u32 relink_offset;
 	u32 relink_data;
-	u32 csc_RetCache; //only for stats for now
 
 	BlockEndType BlockType;
 	bool has_jcond;
@@ -73,12 +72,8 @@ struct RuntimeBlockInfo: RuntimeBlockInfo_Core
 	void RemRef(RuntimeBlockInfoPtr other);
 
 	void Discard();
-	void UpdateRefs();
 	void SetProtectedFlags();
 
-	u32 memops;
-	u32 linkedmemops;
-	std::map<void*, u32> memory_accesses;	// key is host pc when access is made, value is opcode id
 	bool read_only;
 };
 

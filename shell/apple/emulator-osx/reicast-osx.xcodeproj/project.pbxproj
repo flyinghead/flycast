@@ -568,7 +568,6 @@
 		84B7BE631B72720100F9733F /* khrplatform.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = khrplatform.h; sourceTree = "<group>"; };
 		84B7BE651B72720100F9733F /* common.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = common.cpp; sourceTree = "<group>"; };
 		84B7BE661B72720100F9733F /* context.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = context.cpp; sourceTree = "<group>"; };
-		84B7BE671B72720100F9733F /* context.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = context.h; sourceTree = "<group>"; };
 		84B7BE6E1B72720200F9733F /* nullDC.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = nullDC.cpp; path = ../../../core/nullDC.cpp; sourceTree = "<group>"; };
 		84B7BE701B72720200F9733F /* audiobackend_alsa.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = audiobackend_alsa.cpp; sourceTree = "<group>"; };
 		84B7BE711B72720200F9733F /* audiobackend_alsa.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = audiobackend_alsa.h; sourceTree = "<group>"; };
@@ -1805,7 +1804,6 @@
 			children = (
 				84B7BE651B72720100F9733F /* common.cpp */,
 				84B7BE661B72720100F9733F /* context.cpp */,
-				84B7BE671B72720100F9733F /* context.h */,
 				AEF2564722886A2E00348550 /* posix_vmem.cpp */,
 			);
 			name = linux;

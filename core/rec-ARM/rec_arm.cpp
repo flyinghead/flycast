@@ -747,9 +747,10 @@ void vmem_slowpath(eReg raddr, eReg rt, eFSReg ft, eFDReg fd, mem_op_type optp, 
 	}
 }
 
-u32* ngen_readm_fail_v2(u32* ptrv,u32* regs,u32 fault_addr)
+bool ngen_Rewrite(host_context_t &context, void *faultAddress)
 {
-	arm_mem_op* ptr=(arm_mem_op*)ptrv;
+	u32 *regs = context.reg;
+	arm_mem_op *ptr = (arm_mem_op *)context.pc;
 
 	static_assert(sizeof(*ptr) == 4, "sizeof(arm_mem_op) == 4");
 
@@ -804,7 +805,7 @@ u32* ngen_readm_fail_v2(u32* ptrv,u32* regs,u32 fault_addr)
 
 	//get some other relevant data
 	u32 sh4_addr=regs[raddr];
-	u32 fault_offs=fault_addr-regs[8];
+	u32 fault_offs = (uintptr_t)faultAddress - regs[8];
 	u8* sh4_ctr=(u8*)regs[8];
 	bool is_sq=(sh4_addr>>26)==0x38;
 
@@ -900,9 +901,10 @@ u32* ngen_readm_fail_v2(u32* ptrv,u32* regs,u32 fault_addr)
 
 
 	vmem_platform_flush_cache((void*)ptr, (u8*)emit_ptr - 1, (void*)ptr, (u8*)emit_ptr - 1);
-	emit_ptr=0;
+	emit_ptr = 0;
+	context.pc = (size_t)ptr;
 
-	return (u32*)ptr;
+	return true;
 }
 
 EAPI NEG(eReg Rd, eReg Rs)

@@ -1,7 +1,6 @@
 #include "build.h"
 
 #if FEAT_SHREC == DYNAREC_JIT && HOST_CPU == CPU_X64
-#include <setjmp.h>
 
 //#define CANONICAL_TEST
 
@@ -37,12 +36,13 @@ struct DynaRBI : RuntimeBlockInfo
 
 static int cycle_counter;
 static void (*mainloop)();
+static void (*handleException)();
 
 u32 mem_writes, mem_reads;
 u32 mem_rewrites_w, mem_rewrites_r;
 
-static jmp_buf jmp_env;
 static u32 exception_raised;
+static u64 jmp_rsp;
 
 namespace MemSize {
 	enum {
@@ -73,6 +73,7 @@ static const u8 *MemHandlerStart, *MemHandlerEnd;
 
 void ngen_mainloop(void *)
 {
+	verify(mainloop != nullptr);
 	try {
 		mainloop();
 	} catch (const SH4ThrownException&) {
@@ -106,13 +107,9 @@ static void handle_mem_exception(u32 exception_raised, u32 pc)
 {
 	if (exception_raised)
 	{
-		if (pc & 1)
-			// Delay slot
-			spc = pc - 1;
-		else
-			spc = pc;
+		spc = pc;
 		cycle_counter += 2;	// probably more is needed but no easy way to find out
-		longjmp(jmp_env, 1);
+		handleException();
 	}
 }
 
@@ -150,7 +147,7 @@ static void handle_sh4_exception(SH4ThrownException& ex, u32 pc)
 	}
 	Do_Exception(pc, ex.expEvn, ex.callVect);
 	cycle_counter += 4;	// probably more is needed
-	longjmp(jmp_env, 1);
+	handleException();
 }
 
 static void interpreter_fallback(u16 op, OpCallFP *oph, u32 pc)
@@ -291,7 +288,7 @@ public:
 					int size = op.flags & 0x7f;
 
 					if (mmu_enabled())
-						mov(call_regs[2], block->vaddr + op.guest_offs - (op.delay_slot ? 1 : 0));	// pc
+						mov(call_regs[2], block->vaddr + op.guest_offs - (op.delay_slot ? 2 : 0));	// pc
 					size = size == 1 ? MemSize::S8 : size == 2 ? MemSize::S16 : size == 4 ? MemSize::S32 : MemSize::S64;
 					GenCall((void (*)())MemHandlers[optimise ? MemType::Fast : MemType::Slow][size][MemOp::R], mmu_enabled());
 
@@ -331,7 +328,7 @@ public:
 					}
 
 					if (mmu_enabled())
-						mov(call_regs[2], block->vaddr + op.guest_offs - (op.delay_slot ? 1 : 0));	// pc
+						mov(call_regs[2], block->vaddr + op.guest_offs - (op.delay_slot ? 2 : 0));	// pc
 					size = size == 1 ? MemSize::S8 : size == 2 ? MemSize::S16 : size == 4 ? MemSize::S32 : MemSize::S64;
 					GenCall((void (*)())MemHandlers[optimise ? MemType::Fast : MemType::Slow][size][MemOp::W], mmu_enabled());
 				}
@@ -670,16 +667,7 @@ public:
 #endif
 
 		mov(dword[rip + &cycle_counter], SH4_TIMESLICE);
-
-		lea(call_regs64[0], qword[rip + &jmp_env]);
-#ifdef _WIN32
-		xor_(call_regs64[1], call_regs64[1]);	// no frame pointer
-#endif
-#ifdef _MSC_VER
-		// FIXME call((const void *)_setjmp);
-#else
-		call((const void *)_setjmp);
-#endif
+		mov(qword[rip + &jmp_rsp], rsp);
 
 	//run_loop:
 		Xbyak::Label run_loop;
@@ -726,29 +714,37 @@ public:
 		pop(rbx);
 		ret();
 
+	//handleException:
+		Xbyak::Label handleExceptionLabel;
+		L(handleExceptionLabel);
+		mov(rsp, qword[rip + &jmp_rsp]);
+		jmp(run_loop);
+
 		genMemHandlers();
 
 		ready();
 		mainloop = (void (*)())getCode();
+		handleException = (void(*)())handleExceptionLabel.getAddress();
 
 		emit_Skip(getSize());
 	}
 
-	bool rewriteMemAccess(size_t& host_pc, size_t retadr, size_t accessedAddress)
+	bool rewriteMemAccess(host_context_t &context)
 	{
 		if (!_nvmem_enabled() || (mmu_enabled() && !vmem32_enabled()))
 			return false;
 
-		//printf("ngen_Rewrite pc %p\n", host_pc);
-		if (host_pc < (size_t)MemHandlerStart || host_pc >= (size_t)MemHandlerEnd)
+		//printf("ngen_Rewrite pc %p\n", context.pc);
+		if (context.pc < (size_t)MemHandlerStart || context.pc >= (size_t)MemHandlerEnd)
 			return false;
 
-		size_t ca = *(s32 *)(retadr - 4) + retadr;
+		u8 *retAddr = *(u8 **)context.rsp;
+		void *ca = *(s32 *)(retAddr - 4) + retAddr;
 		for (int size = 0; size < MemSize::Count; size++)
 		{
 			for (int op = 0; op < MemOp::Count; op++)
 			{
-				if ((size_t)MemHandlers[MemType::Fast][size][op] != ca)
+				if ((void *)MemHandlers[MemType::Fast][size][op] != ca)
 					continue;
 
 				//found !
@@ -758,12 +754,21 @@ public:
 
 				ready();
 
-				host_pc = retadr - 5;
+				context.pc = (uintptr_t)(retAddr - 5);
+				// remove the call from the stack
+				context.rsp += 8;
+				if (!_nvmem_4gb_space())
+					//restore the addr from r9 to arg0 (rcx or rdi) so it's valid again
+#ifdef _WIN32
+					context.rcx = context.r9;
+#else
+					context.rdi = context.r9;
+#endif
 
 				return true;
 			}
 		}
-		ERROR_LOG(DYNAREC, "rewriteMemAccess code not found: hpc %08x retadr %08x acc %08x", host_pc, retadr, accessedAddress);
+		ERROR_LOG(DYNAREC, "rewriteMemAccess code not found: host pc %p", (void *)context.pc);
 		die("Failed to match the code");
 
 		return false;
@@ -1090,9 +1095,11 @@ private:
 							mov(dword[rax], call_regs[2]);
 						}
 						mov(rax, (uintptr_t)virt_ram_base);
-						mov(r9, call_regs64[0]);
 						if (!_nvmem_4gb_space())
+						{
+							mov(r9, call_regs64[0]);
 							and_(call_regs[0], 0x1FFFFFFF);
+						}
 						switch (size)
 						{
 						case MemSize::S8:
@@ -1133,18 +1140,22 @@ private:
 								mov(call_regs[1], call_regs[2]);
 							switch (size) {
 							case MemSize::S8:
+								sub(rsp, 8);
 								if (mmu_enabled())
 									call((const void *)ReadMemNoEx<u8>);
 								else
 									call((const void *)ReadMem8);
 								movsx(eax, al);
+								add(rsp, 8);
 								break;
 							case MemSize::S16:
+								sub(rsp, 8);
 								if (mmu_enabled())
 									call((const void *)ReadMemNoEx<u16>);
 								else
 									call((const void *)ReadMem16);
 								movsx(eax, ax);
+								add(rsp, 8);
 								break;
 							case MemSize::S32:
 								if (mmu_enabled())
@@ -1253,7 +1264,7 @@ private:
 		if (xmm8_mapped || xmm9_mapped || xmm10_mapped || xmm11_mapped)
 		{
 			u32 stack_size = 4 * (xmm8_mapped + xmm9_mapped + xmm10_mapped + xmm11_mapped);
-			int offset = stack_size;
+			int offset = stack_size - 4;
 			stack_size = (((stack_size + 15) >> 4) << 4); // Stack needs to be 16-byte aligned before the call
 			if (xmm11_mapped)
 			{
@@ -1321,55 +1332,57 @@ void X64RegAlloc::Writeback_FPU(u32 reg, s8 nreg)
 	compiler->RegWriteback_FPU(reg, nreg);
 }
 
-static BlockCompiler* compiler;
+static BlockCompiler* ccCompiler;
 
 void ngen_Compile(RuntimeBlockInfo* block, bool smc_checks, bool reset, bool staging, bool optimise)
 {
 	verify(emit_FreeSpace() >= 16 * 1024);
 
-	compiler = new BlockCompiler();
+	BlockCompiler compiler;
+	::ccCompiler = &compiler;
 	try {
-		compiler->compile(block, smc_checks, reset, staging, optimise);
+		compiler.compile(block, smc_checks, reset, staging, optimise);
 	} catch (const Xbyak::Error& e) {
 		ERROR_LOG(DYNAREC, "Fatal xbyak error: %s", e.what());
 	}
-
-	delete compiler;
+	::ccCompiler = nullptr;
 }
 
 void ngen_CC_Start(shil_opcode* op)
 {
-	compiler->ngen_CC_Start(*op);
+	ccCompiler->ngen_CC_Start(*op);
 }
 
 void ngen_CC_Param(shil_opcode* op, shil_param* par, CanonicalParamType tp)
 {
-	compiler->ngen_CC_param(*op, *par, tp);
+	ccCompiler->ngen_CC_param(*op, *par, tp);
 }
 
 void ngen_CC_Call(shil_opcode* op, void* function)
 {
-	compiler->ngen_CC_Call(*op, function);
+	ccCompiler->ngen_CC_Call(*op, function);
 }
 
 void ngen_CC_Finish(shil_opcode* op)
 {
 }
 
-bool ngen_Rewrite(size_t& host_pc, size_t retadr, size_t acc)
+bool ngen_Rewrite(host_context_t &context, void *faultAddress)
 {
-	std::unique_ptr<BlockCompiler> compiler(new BlockCompiler((u8*)(retadr - 5)));
+	u8 *retAddr = *(u8 **)context.rsp - 5;
+	BlockCompiler compiler(retAddr);
 	try {
-		return compiler->rewriteMemAccess(host_pc, retadr, acc);
+		return compiler.rewriteMemAccess(context);
 	} catch (const Xbyak::Error& e) {
 		ERROR_LOG(DYNAREC, "Fatal xbyak error: %s", e.what());
 		return false;
 	}
 }
 
-void ngen_HandleException()
+void ngen_HandleException(host_context_t &context)
 {
-	longjmp(jmp_env, 1);
+	context.pc = (uintptr_t)handleException;
+	context.rsp = jmp_rsp;
 }
 
 void ngen_ResetBlocks()
@@ -1378,9 +1391,9 @@ void ngen_ResetBlocks()
 	if (mainloop != nullptr && mainloop != emit_GetCCPtr())
 		return;
 
-	std::unique_ptr<BlockCompiler> compiler(new BlockCompiler());
+	BlockCompiler compiler;
 	try {
-		compiler->genMainloop();
+		compiler.genMainloop();
 	} catch (const Xbyak::Error& e) {
 		ERROR_LOG(DYNAREC, "Fatal xbyak error: %s", e.what());
 	}

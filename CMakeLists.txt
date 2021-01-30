@@ -645,7 +645,6 @@ target_sources(${PROJECT_NAME} PRIVATE
 if(NOT WIN32)
     target_sources(${PROJECT_NAME} PRIVATE
             core/linux/context.cpp
-            core/linux/context.h
             core/linux/posix_vmem.cpp)
 endif()
 
@@ -699,6 +698,8 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/oslib/audiobackend_sdl2.cpp
         core/oslib/audiostream.cpp
         core/oslib/audiostream.h
+        core/oslib/directory.h
+        core/oslib/host_context.h
         core/oslib/oslib.h)
 
 target_sources(${PROJECT_NAME} PRIVATE

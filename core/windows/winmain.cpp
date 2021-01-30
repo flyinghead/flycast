@@ -15,6 +15,8 @@
 #include "hw/maple/maple_devs.h"
 #include "emulator.h"
 #include "rend/mainui.h"
+#include "hw/sh4/dyna/ngen.h"
+#include "oslib/host_context.h"
 
 #include <windows.h>
 #include <windowsx.h>
@@ -114,7 +116,6 @@ PCHAR*
 }
 
 bool VramLockedWrite(u8* address);
-bool ngen_Rewrite(unat& addr,unat retadr,unat acc);
 bool BM_LockedWrite(u8* address);
 
 static std::shared_ptr<WinKbGamepadDevice> kb_gamepad;
@@ -133,59 +134,75 @@ void os_SetupInput()
 #endif
 }
 
-LONG ExeptionHandler(EXCEPTION_POINTERS *ExceptionInfo)
+static void readContext(const EXCEPTION_POINTERS *ep, host_context_t &context)
 {
-	EXCEPTION_POINTERS* ep = ExceptionInfo;
+#if HOST_CPU == CPU_X86
+	context.pc = ep->ContextRecord->Eip;
+	context.esp = ep->ContextRecord->Esp;
+	context.eax = ep->ContextRecord->Eax;
+	context.ecx = ep->ContextRecord->Ecx;
+#elif HOST_CPU == CPU_X64
+	context.pc = ep->ContextRecord->Rip;
+	context.rsp = ep->ContextRecord->Rsp;
+	context.r9 = ep->ContextRecord->R9;
+	context.rcx = ep->ContextRecord->Rcx;
+#endif
+}
 
+static void writeContext(EXCEPTION_POINTERS *ep, const host_context_t &context)
+{
+#if HOST_CPU == CPU_X86
+	ep->ContextRecord->Eip = context.pc;
+	ep->ContextRecord->Esp = context.esp;
+	ep->ContextRecord->Eax = context.eax;
+	ep->ContextRecord->Ecx = context.ecx;
+#elif HOST_CPU == CPU_X64
+	ep->ContextRecord->Rip = context.pc;
+	ep->ContextRecord->Rsp = context.rsp;
+	ep->ContextRecord->R9 = context.r9;
+	ep->ContextRecord->Rcx = context.rcx;
+#endif
+}
+LONG ExeptionHandler(EXCEPTION_POINTERS *ep)
+{
 	u32 dwCode = ep->ExceptionRecord->ExceptionCode;
-
-	EXCEPTION_RECORD* pExceptionRecord=ep->ExceptionRecord;
 
 	if (dwCode != EXCEPTION_ACCESS_VIOLATION)
 		return EXCEPTION_CONTINUE_SEARCH;
 
-	u8* address=(u8*)pExceptionRecord->ExceptionInformation[1];
+	EXCEPTION_RECORD* pExceptionRecord = ep->ExceptionRecord;
+	u8* address = (u8 *)pExceptionRecord->ExceptionInformation[1];
 
 	//printf("[EXC] During access to : 0x%X\n", address);
 #if 0
-	bool write = false;	// TODO?
+	// WinCE virtual memory
+	bool write = false;
 	if (vmem32_handle_signal(address, write, 0))
 		return EXCEPTION_CONTINUE_EXECUTION;
 #endif
+	// code protection in RAM
 	if (bm_RamWriteAccess(address))
-	{
 		return EXCEPTION_CONTINUE_EXECUTION;
-	}
-	else if (VramLockedWrite(address))
-	{
+	// texture protection in VRAM
+	if (VramLockedWrite(address))
 		return EXCEPTION_CONTINUE_EXECUTION;
-	}
-	else if (BM_LockedWrite(address))
-	{
+	// FPCB jump table protection
+	if (BM_LockedWrite(address))
 		return EXCEPTION_CONTINUE_EXECUTION;
-	}
+
+	host_context_t context;
+	readContext(ep, context);
 #if FEAT_SHREC == DYNAREC_JIT
-#if HOST_CPU == CPU_X86
-		else if ( ngen_Rewrite((unat&)ep->ContextRecord->Eip,*(unat*)ep->ContextRecord->Esp,ep->ContextRecord->Eax) )
-		{
-			//remove the call from call stack
-			ep->ContextRecord->Esp+=4;
-			//restore the addr from eax to ecx so its valid again
-			ep->ContextRecord->Ecx=ep->ContextRecord->Eax;
-			return EXCEPTION_CONTINUE_EXECUTION;
-		}
-#elif HOST_CPU == CPU_X64
-		else if (ngen_Rewrite((unat&)ep->ContextRecord->Rip, 0, 0))
-		{
-			return EXCEPTION_CONTINUE_EXECUTION;
-		}
-#endif
-#endif
-	else
+	// fast mem access rewriting
+	if (ngen_Rewrite(context, address))
 	{
-	    ERROR_LOG(COMMON, "[GPF]Unhandled access to : %p", address);
-	    os_DebugBreak();
+		writeContext(ep, context);
+		return EXCEPTION_CONTINUE_EXECUTION;
 	}
+#endif
+
+    ERROR_LOG(COMMON, "[GPF] PC %p unhandled access to %p", (void *)context.pc, address);
+    os_DebugBreak();
 
 	return EXCEPTION_CONTINUE_SEARCH;
 }
@@ -592,7 +609,6 @@ void ReserveBottomMemory()
 }
 
 #ifdef _WIN64
-#include "hw/sh4/dyna/ngen.h"
 
 typedef union _UNWIND_CODE {
 	struct {
