@@ -432,28 +432,6 @@ protected:
 				mov(mapRegister(op.rd2), edx);
 			}
 			break;
-		case shop_mul_s64:
-			mov(eax, mapRegister(op.rs1));
-			if (op.rs2.is_reg())
-				mov(edx, mapRegister(op.rs2));
-			else
-				mov(edx, (s64)(s32)op.rs2._imm);
-			if (ArchX64)
-			{
-#ifndef XBYAK32
-				mul(rdx);
-				mov(mapRegister(op.rd), eax);
-				shr(rax, 32);
-				mov(mapRegister(op.rd2), eax);
-#endif
-			}
-			else
-			{
-				imul(edx);
-				mov(mapRegister(op.rd), eax);
-				mov(mapRegister(op.rd2), edx);
-			}
-			break;
 
 		case shop_ext_s8:
 			mov(eax, mapRegister(op.rs1));

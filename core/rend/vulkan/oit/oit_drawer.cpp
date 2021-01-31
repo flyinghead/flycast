@@ -355,7 +355,7 @@ bool OITDrawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 		cmdBuffer.nextSubpass(vk::SubpassContents::eInline);
 		GetCurrentDescSet().BindColorInputDescSet(cmdBuffer, (pvrrc.render_passes.used() - 1 - render_pass) % 2);
 
-		if (initialPass && clearNeeded[GetCurrentImage()] && !pvrrc.isRTT)
+		if (initialPass && !pvrrc.isRTT && clearNeeded[GetCurrentImage()])
 		{
 			clearNeeded[GetCurrentImage()] = false;
 			SetScissor(cmdBuffer, viewport);
