@@ -1022,8 +1022,10 @@ private:
 		return true;
 	}
 
-	void CheckBlock(bool force_checks, RuntimeBlockInfo* block) {
-		mov(call_regs[0], block->addr);
+	void CheckBlock(bool force_checks, RuntimeBlockInfo* block)
+	{
+		if (mmu_enabled() || force_checks)
+			mov(call_regs[0], block->addr);
 
 		// FIXME This test shouldn't be necessary
 		// However the decoder makes various assumptions about the current PC value, which are simply not
@@ -1382,7 +1384,6 @@ bool ngen_Rewrite(host_context_t &context, void *faultAddress)
 void ngen_HandleException(host_context_t &context)
 {
 	context.pc = (uintptr_t)handleException;
-	context.rsp = jmp_rsp;
 }
 
 void ngen_ResetBlocks()
