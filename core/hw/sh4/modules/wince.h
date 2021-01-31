@@ -360,16 +360,17 @@ static bool wince_resolve_address(u32 va, TLB_Entry &entry)
 	// WinCE hack
 	if ((va & 0x80000000) == 0)
 	{
-		u32 page_group = ReadMem32_nommu(CCN_TTB + ((va >> 25) << 2));
+		const u32 ram_mask = RAM_MASK;
+		u32 page_group = *(u32 *)&mem_b[(CCN_TTB + ((va >> 25) << 2)) & ram_mask];
 		u32 page = ((va >> 16) & 0x1ff) << 2;
-		u32 paddr = ReadMem32_nommu(page_group + page);
+		u32 paddr = *(u32 *)&mem_b[(page_group + page) & ram_mask];
 		if (paddr & 0x80000000)
 		{
-			u32 whatever = ReadMem32_nommu(r_bank[4] + 0x14);
-			if (whatever != ReadMem32_nommu(paddr))
+			u32 whatever = *(u32 *)&mem_b[(r_bank[4] + 0x14) & ram_mask];
+			if (whatever != *(u32 *)&mem_b[paddr & ram_mask])
 			{
 				paddr += 12;
-				u32 ptel = ReadMem32_nommu(paddr + ((va >> 10) & 0x3c));
+				u32 ptel = *(u32 *)&mem_b[(paddr + ((va >> 10) & 0x3c)) & ram_mask];
 				//FIXME CCN_PTEA = paddr >> 29;
 				if (ptel != 0)
 				{

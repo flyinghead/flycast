@@ -29,8 +29,9 @@
 
 #if 0
 // for debug
-#include "vixl/aarch32/disasm-aarch32.h"
+#include <aarch32/disasm-aarch32.h>
 #include <iostream>
+#include <sstream>
 #endif
 #define arm_printf(...) DEBUG_LOG(AICA_ARM, __VA_ARGS__)
 
@@ -494,7 +495,7 @@ static void block_ssa_pass()
 					newop2.arg[0] = newop2.rd;
 					newop2.arg[1] = it->arg[1];
 					newop2.arg[1].setReg(RN_SCRATCH);
-					if (newop2.condition != ArmOp::AL || (it->arg[1].shift_type == ArmOp::RRX && it->arg[1].shift_value == 0))
+					if (it->arg[1].shift_type == ArmOp::RRX && it->arg[1].shift_value == 0)
 						newop2.flags |= ArmOp::OP_READS_FLAGS;
 					it->flags &= ~ArmOp::OP_READS_FLAGS;
 					it->write_back = false;
@@ -510,7 +511,7 @@ static void block_ssa_pass()
 					newop.rd = ArmOp::Operand(it->arg[0]);
 					newop.arg[0] = newop.rd;
 					newop.arg[1] = it->arg[1];
-					if (newop.condition != ArmOp::AL || (it->arg[1].shift_type == ArmOp::RRX && it->arg[1].shift_value == 0))
+					if (it->arg[1].shift_type == ArmOp::RRX && it->arg[1].shift_value == 0)
 						newop.flags |= ArmOp::OP_READS_FLAGS;
 					it->flags &= ~ArmOp::OP_READS_FLAGS;
 					it->write_back = false;
@@ -568,9 +569,10 @@ extern "C" void arm7rec_compile()
 		u32 opcd = *(u32*)&aica_ram[pc & ARAM_MASK];
 
 #if 0
-		vixl::aarch32::Disassembler disassembler(std::cout, pc);
+		std::ostringstream ostr;
+		vixl::aarch32::Disassembler disassembler(ostr, pc);
 		disassembler.DecodeA32(opcd);
-		std::cout << std::endl;
+		arm_printf("%s", ostr.str().c_str());
 #endif
 
 		ArmOp last_op = decodeArmOp(opcd, pc);

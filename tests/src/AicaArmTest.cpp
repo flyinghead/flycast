@@ -178,28 +178,28 @@ TEST_F(AicaArmTest, ArithmeticOpsTest)
 	arm_Reg[2].I = 2;
 	RunOp();
 	ASSERT_EQ(arm_Reg[0].I, 0);
-	ASSERT_NZCV_EQ(0x60000000);	// Z,C
+	ASSERT_NZCV_EQ(Z_FLAG | C_FLAG);	// Z,C
 	arm_Reg[RN_PSR_FLAGS].I |= C_FLAG; // C set
 	arm_Reg[0].I = 0;
 	arm_Reg[1].I = 1;
 	arm_Reg[2].I = 2;
 	RunOp();
 	ASSERT_EQ(arm_Reg[0].I, 1);
-	ASSERT_NZCV_EQ(0x20000000);	// C
+	ASSERT_NZCV_EQ(C_FLAG);	// C
 
 	PrepareOp(0xe1500001);	// cmp r0, r1
 	ResetNZCV();
 	arm_Reg[0].I = 2;
 	arm_Reg[1].I = 1;
 	RunOp();
-	ASSERT_NZCV_EQ(0x20000000);	// C
+	ASSERT_NZCV_EQ(C_FLAG);	// C
 
 	PrepareOp(0xe1700001);	// cmn r0, r1
 	ResetNZCV();
 	arm_Reg[0].I = 2;
 	arm_Reg[1].I = -1;
 	RunOp();
-	ASSERT_NZCV_EQ(0x20000000);	// C
+	ASSERT_NZCV_EQ(C_FLAG);	// C
 }
 
 TEST_F(AicaArmTest, LogicOpsTest)
@@ -403,6 +403,20 @@ TEST_F(AicaArmTest, Operand2ImmTest)
 	arm_Reg[0].I = 2;
 	RunOp();
 	ASSERT_NZCV_EQ(0);
+
+	PrepareOp(0xe2522001);	// subs r2, #1
+	ResetNZCV();
+	arm_Reg[2].I = 1;
+	RunOp();
+	ASSERT_NZCV_EQ(Z_FLAG | C_FLAG);
+	ResetNZCV();
+	arm_Reg[2].I = 2;
+	RunOp();
+	ASSERT_NZCV_EQ(C_FLAG);
+	ResetNZCV();
+	arm_Reg[2].I = 0;
+	RunOp();
+	ASSERT_NZCV_EQ(N_FLAG);
 }
 
 TEST_F(AicaArmTest, Operand2ShiftImmTest)
@@ -451,7 +465,7 @@ TEST_F(AicaArmTest, Operand2ShiftImmTest)
 	arm_Reg[2].I = 0x22222221;
 	RunOp();
 	ASSERT_EQ(arm_Reg[0].I, 0x91111111);
-	ASSERT_NZCV_EQ(0xA0000000); // N,C
+	ASSERT_NZCV_EQ(N_FLAG | C_FLAG); // N,C
 
 	// When an Operand2 constant is used with the instructions MOVS, MVNS, ANDS, ORRS, ORNS, EORS, BICS, TEQ or TST, the carry flag is updated to bit[31] of the constant,
 	// if the constant is greater than 255 and can be produced by shifting an 8-bit value.
@@ -965,6 +979,19 @@ TEST_F(AicaArmTest, JumpTest)
 	*(u32*)&aica_ram[0x10000] = 0xbaadcafc;
 	RunOp();
 	ASSERT_EQ(arm_Reg[R15_ARM_NEXT].I, 0xbaadcafc);
+
+	PrepareOp(0x1b00003e);	// blne +248
+	ResetNZCV();
+	arm_Reg[14].I = 0;
+	RunOp();
+	ASSERT_EQ(arm_Reg[R15_ARM_NEXT].I, 0x1100);
+	ASSERT_EQ(arm_Reg[14].I, 0x1004);
+	ResetNZCV();
+	arm_Reg[RN_PSR_FLAGS].I |= Z_FLAG;
+	arm_Reg[14].I = 0;
+	RunOp();
+	ASSERT_EQ(arm_Reg[R15_ARM_NEXT].I, 0x1004);
+	ASSERT_EQ(arm_Reg[14].I, 0);
 }
 
 TEST_F(AicaArmTest, LdmStmTest)

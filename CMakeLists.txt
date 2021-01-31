@@ -978,5 +978,6 @@ if(BUILD_TESTING)
     target_sources(${PROJECT_NAME} PRIVATE
             tests/src/div32_test.cpp
             tests/src/test_stubs.cpp
-            tests/src/serialize_test.cpp)
+            tests/src/serialize_test.cpp
+            tests/src/AicaArmTest.cpp)
 endif()

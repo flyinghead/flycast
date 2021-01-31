@@ -24,9 +24,9 @@
 #include <sstream>
 #include "arm7_rec.h"
 #include "hw/mem/_vmem.h"
-#include "deps/vixl/aarch64/macro-assembler-aarch64.h"
+#include <aarch64/macro-assembler-aarch64.h>
 using namespace vixl::aarch64;
-//#include "deps/vixl/aarch32/disasm-aarch32.h"
+//#include <aarch32/disasm-aarch32.h>
 
 extern "C" void arm_dispatch();
 extern "C" void arm_exit();
@@ -404,11 +404,32 @@ class Arm7Compiler : public MacroAssembler
 				Add(rd, w0, op2);
 			break;
 		case 8:		// TST
+#ifdef STRICT_MODE
+			// In armv7, TST and TEQ do not affect the V flag.
+			// This isn't the case in armv8 so we need to save
+			// and restore it.
+			// Since this is a bit complicated/slow, let's assume nobody
+			// relies on this.
+			Cset(w3, vs);
+#endif
 			Tst(rn, op2);
+#ifdef STRICT_MODE
+			Mrs(x0, NZCV);
+			Bfi(x0, x3, 28, 1);		// V is bit 28
+			Msr(NZCV, x0);
+#endif
 			break;
 		case 9:		// TEQ
 			Eor(w0, rn, op2);
+#ifdef STRICT_MODE
+			Cset(w3, vs);
+#endif
 			Tst(w0, w0);
+#ifdef STRICT_MODE
+			Mrs(x0, NZCV);
+			Bfi(x0, x3, 28, 1);		// V is bit 28
+			Msr(NZCV, x0);
+#endif
 			break;
 		case 10:	// CMP
 			Cmp(rn, op2);
@@ -540,7 +561,7 @@ public:
 
 			Label *condLabel = nullptr;
 
-			if (op.flags & (ArmOp::OP_READS_FLAGS|ArmOp::OP_SETS_FLAGS))	// TODO OP_READS_FLAGS needed?
+			if (op.flags & (ArmOp::OP_READS_FLAGS|ArmOp::OP_SETS_FLAGS))
 				loadFlags();
 
 			if (op.op_type != ArmOp::FALLBACK)

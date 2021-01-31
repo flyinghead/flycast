@@ -40,7 +40,10 @@ struct ArmOp
 	static const u32 OP_SETS_PC = 8;
 
 	ArmOp() : ArmOp(FALLBACK, AL) {}
-	ArmOp(OpType type, Condition condition) : op_type(type), condition(condition) {	}
+	ArmOp(OpType type, Condition condition) : op_type(type), condition(condition) {
+		if (condition != AL)
+			flags |= OP_READS_FLAGS;
+	}
 
 	struct Register {
 		Register() : armreg((Arm7Reg)0) {}
