@@ -401,14 +401,14 @@ void X86Compiler::genOpcode(RuntimeBlockInfo* block, bool optimise, shil_opcode&
 		break;
 
 	case shop_mul_s64:
-		mov(eax, mapRegister(op.rs1));
+		mov(eax, regalloc.MapRegister(op.rs1));
 		if (op.rs2.is_reg())
-			mov(edx, mapRegister(op.rs2));
+			mov(edx, regalloc.MapRegister(op.rs2));
 		else
-			mov(edx, (s64)(s32)op.rs2._imm);
+			mov(edx, op.rs2._imm);
 		imul(edx);
-		mov(mapRegister(op.rd), eax);
-		mov(mapRegister(op.rd2), edx);
+		mov(regalloc.MapRegister(op.rd), eax);
+		mov(regalloc.MapRegister(op.rd2), edx);
 		break;
 
 	case shop_frswap:
