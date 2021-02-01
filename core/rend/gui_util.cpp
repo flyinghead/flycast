@@ -145,6 +145,10 @@ void select_directory_popup(const char *prompt, float scaling, StringCallback ca
 						if (entry == NULL)
 							break;
 						std::string name(entry->d_name);
+#ifdef __APPLE__
+                        extern std::string os_PrecomposedString(std::string string);
+                        name = os_PrecomposedString(name);
+#endif
 						if (name == ".")
 							continue;
 						std::string child_path = path + "/" + name;
