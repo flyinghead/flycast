@@ -72,6 +72,10 @@ class GameScanner
         {
         	std::string name(item.name);
 			std::string child_path = item.parentPath + "/" + name;
+#ifdef __APPLE__
+            extern std::string os_PrecomposedString(std::string string);
+            name = os_PrecomposedString(name);
+#endif
 
 			std::string extension = get_file_extension(name);
 			if (extension == "zip" || extension == "7z")

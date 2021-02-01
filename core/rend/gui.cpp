@@ -191,19 +191,41 @@ void gui_init()
     case 950:	// Traditional Chinese
 		{
 			font_cfg.FontNo = 1; // Microsoft JhengHei UI Regular
-			ImFont* font = io.Fonts->AddFontFromFileTTF((fontDir + "Msjh.ttc").c_str(), 17.f * scaling, &font_cfg, io.Fonts->GetGlyphRangesChineseFull());
+			ImFont* font = io.Fonts->AddFontFromFileTTF((fontDir + "Msjh.ttc").c_str(), 17.f * scaling, &font_cfg, GetGlyphRangesChineseTraditionalOfficial());
 			font_cfg.FontNo = 0;
 			if (font == nullptr)
-				io.Fonts->AddFontFromFileTTF((fontDir + "MSJH.ttf").c_str(), 17.f * scaling, &font_cfg, io.Fonts->GetGlyphRangesChineseFull());
+				io.Fonts->AddFontFromFileTTF((fontDir + "MSJH.ttf").c_str(), 17.f * scaling, &font_cfg, GetGlyphRangesChineseTraditionalOfficial());
 		}
     	break;
     case 936:	// Simplified Chinese
-		io.Fonts->AddFontFromFileTTF((fontDir + "Simsun.ttc").c_str(), 17.f * scaling, &font_cfg, io.Fonts->GetGlyphRangesChineseSimplifiedCommon());
+		io.Fonts->AddFontFromFileTTF((fontDir + "Simsun.ttc").c_str(), 17.f * scaling, &font_cfg, GetGlyphRangesChineseSimplifiedOfficial());
     	break;
     default:
     	break;
     }
-    // TODO linux, macOS, Android...
+#elif __APPLE__
+    std::string fontDir = std::string("/System/Library/Fonts/");
+    
+    extern std::string os_Locale();
+    std::string locale = os_Locale();
+    
+    if (locale.find("ja") == 0)             // Japanese
+    {
+        io.Fonts->AddFontFromFileTTF((fontDir + "ヒラギノ角ゴシック W4.ttc").c_str(), 17.f * scaling, &font_cfg, io.Fonts->GetGlyphRangesJapanese());
+    }
+    else if (locale.find("ko") == 0)       // Korean
+    {
+        io.Fonts->AddFontFromFileTTF((fontDir + "AppleSDGothicNeo.ttc").c_str(), 17.f * scaling, &font_cfg, io.Fonts->GetGlyphRangesKorean());
+    }
+    else if (locale.find("zh-Hant") == 0)  // Traditional Chinese
+    {
+        io.Fonts->AddFontFromFileTTF((fontDir + "PingFang.ttc").c_str(), 17.f * scaling, &font_cfg, GetGlyphRangesChineseTraditionalOfficial());
+    }
+    else if (locale.find("zh-Hans") == 0)  // Simplified Chinese
+    {
+        io.Fonts->AddFontFromFileTTF((fontDir + "PingFang.ttc").c_str(), 17.f * scaling, &font_cfg, GetGlyphRangesChineseSimplifiedOfficial());
+    }
+    // TODO linux, Android...
 #endif
     INFO_LOG(RENDERER, "Screen DPI is %d, size %d x %d. Scaling by %.2f", screen_dpi, screen_width, screen_height, scaling);
 
