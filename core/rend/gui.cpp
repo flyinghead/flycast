@@ -203,7 +203,29 @@ void gui_init()
     default:
     	break;
     }
-    // TODO linux, macOS, Android...
+#elif __APPLE__
+    std::string fontDir = std::string("/System/Library/Fonts/");
+    
+    extern std::string os_Locale();
+    std::string locale = os_Locale();
+    
+    if (locale.find("ja") == 0)             // Japanese
+    {
+        io.Fonts->AddFontFromFileTTF((fontDir + "ヒラギノ角ゴシック W4.ttc").c_str(), 17.f * scaling, &font_cfg, io.Fonts->GetGlyphRangesJapanese());
+    }
+    else if (locale.find("ko") == 0)       // Korean
+    {
+        io.Fonts->AddFontFromFileTTF((fontDir + "AppleSDGothicNeo.ttc").c_str(), 17.f * scaling, &font_cfg, io.Fonts->GetGlyphRangesKorean());
+    }
+    else if (locale.find("zh_Hant") == 0)  // Traditional Chinese
+    {
+        io.Fonts->AddFontFromFileTTF((fontDir + "PingFang.ttc").c_str(), 17.f * scaling, &font_cfg, GetGlyphRangesChineseTraditionalOfficial());
+    }
+    else if (locale.find("zh_Hans") == 0)  // Simplified Chinese
+    {
+        io.Fonts->AddFontFromFileTTF((fontDir + "PingFang.ttc").c_str(), 17.f * scaling, &font_cfg, GetGlyphRangesChineseSimplifiedOfficial());
+    }
+    // TODO linux, Android...
 #endif
     INFO_LOG(RENDERER, "Screen DPI is %d, size %d x %d. Scaling by %.2f", screen_dpi, screen_width, screen_height, scaling);
 

@@ -248,3 +248,7 @@ extern "C" void emu_set_mouse_position(int x, int y, int width, int height)
 {
 	SetMousePosition(x, y, width, height);
 }
+
+std::string os_Locale(){
+    return [[[NSLocale autoupdatingCurrentLocale] localeIdentifier] UTF8String];
+}
