@@ -217,11 +217,11 @@ void gui_init()
     {
         io.Fonts->AddFontFromFileTTF((fontDir + "AppleSDGothicNeo.ttc").c_str(), 17.f * scaling, &font_cfg, io.Fonts->GetGlyphRangesKorean());
     }
-    else if (locale.find("zh_Hant") == 0)  // Traditional Chinese
+    else if (locale.find("zh-Hant") == 0)  // Traditional Chinese
     {
         io.Fonts->AddFontFromFileTTF((fontDir + "PingFang.ttc").c_str(), 17.f * scaling, &font_cfg, GetGlyphRangesChineseTraditionalOfficial());
     }
-    else if (locale.find("zh_Hans") == 0)  // Simplified Chinese
+    else if (locale.find("zh-Hans") == 0)  // Simplified Chinese
     {
         io.Fonts->AddFontFromFileTTF((fontDir + "PingFang.ttc").c_str(), 17.f * scaling, &font_cfg, GetGlyphRangesChineseSimplifiedOfficial());
     }
