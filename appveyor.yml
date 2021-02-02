@@ -59,7 +59,7 @@ for:
       draft: false
       prerelease: false
       on:
-        branch: gdxsv-dev2
+        branch: gdxsv-master
         APPVEYOR_REPO_TAG: true
 
   -
@@ -100,5 +100,5 @@ for:
       draft: false
       prerelease: false
       on:
-        branch: gdxsv-dev2
+        branch: gdxsv-master
         APPVEYOR_REPO_TAG: true
