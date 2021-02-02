@@ -31,10 +31,13 @@
 extern int screen_width, screen_height;
 
 #define VENDOR_AMD 0x1022
+// AMD GPU products use the ATI vendor Id
+#define VENDOR_ATI 0x1002
 #define VENDOR_ARM 0x13B5
 #define VENDOR_INTEL 0x8086
 #define VENDOR_NVIDIA 0x10DE
 #define VENDOR_QUALCOMM 0x5143
+#define VENDOR_MESA 0x10005
 
 class VulkanContext
 {

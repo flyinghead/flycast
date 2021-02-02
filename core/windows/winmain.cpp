@@ -53,7 +53,7 @@ PCHAR*
 	i = 0;
 	j = 0;
 
-	while( a = CmdLine[i] )
+	while ((a = CmdLine[i]) != 0)
 	{
 		if(in_QM)
 		{
@@ -167,12 +167,12 @@ LONG ExeptionHandler(EXCEPTION_POINTERS *ExceptionInfo)
 	}
 #if FEAT_SHREC == DYNAREC_JIT
 #if HOST_CPU == CPU_X86
-		else if ( ngen_Rewrite((unat&)ep->ContextRecord->Eip,*(unat*)ep->ContextRecord->Esp,ep->ContextRecord->Eax) )
+		else if (ngen_Rewrite((unat&)ep->ContextRecord->Eip, *(unat*)ep->ContextRecord->Esp, ep->ContextRecord->Eax))
 		{
 			//remove the call from call stack
-			ep->ContextRecord->Esp+=4;
+			ep->ContextRecord->Esp += 4;
 			//restore the addr from eax to ecx so its valid again
-			ep->ContextRecord->Ecx=ep->ContextRecord->Eax;
+			ep->ContextRecord->Ecx = ep->ContextRecord->Eax;
 			return EXCEPTION_CONTINUE_EXECUTION;
 		}
 #elif HOST_CPU == CPU_X64
@@ -194,9 +194,15 @@ LONG ExeptionHandler(EXCEPTION_POINTERS *ExceptionInfo)
 
 void SetupPath()
 {
-	char fname[512];
-	GetModuleFileName(0, fname, sizeof(fname));
-	std::string fn = std::string(fname);
+	wchar_t fname[512];
+	GetModuleFileNameW(0, fname, ARRAY_SIZE(fname));
+
+	std::string fn;
+	nowide::stackstring path;
+	if (!path.convert(fname))
+		fn = ".\\";
+	else
+		fn = path.c_str();
 	size_t pos = get_last_slash_pos(fn);
 	if (pos != std::string::npos)
 		fn = fn.substr(0, pos) + "\\";
@@ -352,10 +358,11 @@ LRESULT CALLBACK WndProc2(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 }
 
 static HWND hWnd;
-static bool windowClassRegistered;
 static int window_x, window_y;
 
 #if !defined(USE_SDL)
+static bool windowClassRegistered;
+
 void CreateMainWindow()
 {
 	if (hWnd != NULL)
@@ -797,27 +804,25 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 	return 0;
 }
 
-
-
-static LARGE_INTEGER qpf;
-static double  qpfd;
-//Helper functions
 double os_GetSeconds()
 {
-	static bool initme = (QueryPerformanceFrequency(&qpf), qpfd=1/(double)qpf.QuadPart);
+	static double qpfd = []() {
+		LARGE_INTEGER qpf;
+		QueryPerformanceFrequency(&qpf);
+		return 1.0 / qpf.QuadPart; }();
+
 	LARGE_INTEGER time_now;
 
 	QueryPerformanceCounter(&time_now);
 	static LARGE_INTEGER time_now_base = time_now;
-	return (time_now.QuadPart - time_now_base.QuadPart)*qpfd;
+
+	return (time_now.QuadPart - time_now_base.QuadPart) * qpfd;
 }
 
 void os_DebugBreak()
 {
 	__debugbreak();
 }
-
-//#include "plugins/plugin_manager.h"
 
 void os_DoEvents()
 {

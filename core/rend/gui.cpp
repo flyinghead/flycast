@@ -164,6 +164,71 @@ void gui_init()
     };
 
     io.Fonts->AddFontFromMemoryCompressedTTF(roboto_medium_compressed_data, roboto_medium_compressed_size, 17.f * scaling, nullptr, ranges);
+    ImFontConfig font_cfg;
+    font_cfg.MergeMode = true;
+#ifdef _WIN32
+    u32 cp = GetACP();
+    std::string fontDir = std::string(nowide::getenv("SYSTEMROOT")) + "\\Fonts\\";
+    switch (cp)
+    {
+    case 932:	// Japanese
+		{
+			font_cfg.FontNo = 2;	// UIGothic
+			ImFont* font = io.Fonts->AddFontFromFileTTF((fontDir + "msgothic.ttc").c_str(), 17.f * scaling, &font_cfg, io.Fonts->GetGlyphRangesJapanese());
+			font_cfg.FontNo = 2;	// Meiryo UI
+			if (font == nullptr)
+				io.Fonts->AddFontFromFileTTF((fontDir + "Meiryo.ttc").c_str(), 17.f * scaling, &font_cfg, io.Fonts->GetGlyphRangesJapanese());
+		}
+		break;
+    case 949:	// Korean
+		{
+			ImFont* font = io.Fonts->AddFontFromFileTTF((fontDir + "Malgun.ttf").c_str(), 17.f * scaling, &font_cfg, io.Fonts->GetGlyphRangesKorean());
+			if (font == nullptr)
+			{
+				font_cfg.FontNo = 2;	// Dotum
+				io.Fonts->AddFontFromFileTTF((fontDir + "Gulim.ttc").c_str(), 17.f * scaling, &font_cfg, io.Fonts->GetGlyphRangesKorean());
+			}
+		}
+    	break;
+    case 950:	// Traditional Chinese
+		{
+			font_cfg.FontNo = 1; // Microsoft JhengHei UI Regular
+			ImFont* font = io.Fonts->AddFontFromFileTTF((fontDir + "Msjh.ttc").c_str(), 17.f * scaling, &font_cfg, GetGlyphRangesChineseTraditionalOfficial());
+			font_cfg.FontNo = 0;
+			if (font == nullptr)
+				io.Fonts->AddFontFromFileTTF((fontDir + "MSJH.ttf").c_str(), 17.f * scaling, &font_cfg, GetGlyphRangesChineseTraditionalOfficial());
+		}
+    	break;
+    case 936:	// Simplified Chinese
+		io.Fonts->AddFontFromFileTTF((fontDir + "Simsun.ttc").c_str(), 17.f * scaling, &font_cfg, GetGlyphRangesChineseSimplifiedOfficial());
+    	break;
+    default:
+    	break;
+    }
+#elif __APPLE__
+    std::string fontDir = std::string("/System/Library/Fonts/");
+    
+    extern std::string os_Locale();
+    std::string locale = os_Locale();
+    
+    if (locale.find("ja") == 0)             // Japanese
+    {
+        io.Fonts->AddFontFromFileTTF((fontDir + "ヒラギノ角ゴシック W4.ttc").c_str(), 17.f * scaling, &font_cfg, io.Fonts->GetGlyphRangesJapanese());
+    }
+    else if (locale.find("ko") == 0)       // Korean
+    {
+        io.Fonts->AddFontFromFileTTF((fontDir + "AppleSDGothicNeo.ttc").c_str(), 17.f * scaling, &font_cfg, io.Fonts->GetGlyphRangesKorean());
+    }
+    else if (locale.find("zh-Hant") == 0)  // Traditional Chinese
+    {
+        io.Fonts->AddFontFromFileTTF((fontDir + "PingFang.ttc").c_str(), 17.f * scaling, &font_cfg, GetGlyphRangesChineseTraditionalOfficial());
+    }
+    else if (locale.find("zh-Hans") == 0)  // Simplified Chinese
+    {
+        io.Fonts->AddFontFromFileTTF((fontDir + "PingFang.ttc").c_str(), 17.f * scaling, &font_cfg, GetGlyphRangesChineseSimplifiedOfficial());
+    }
+    // TODO linux, Android...
+#endif
     INFO_LOG(RENDERER, "Screen DPI is %d, size %d x %d. Scaling by %.2f", screen_dpi, screen_width, screen_height, scaling);
 
     EventManager::listen(Event::Resume, emuEventCallback);
@@ -2039,7 +2104,7 @@ void gui_display_osd()
 	if (message.empty())
 		message = getFPSNotification();
 
-	if (!message.empty() || settings.rend.FloatVMUs)
+	if (!message.empty() || settings.rend.FloatVMUs || crosshairsNeeded())
 	{
 		ImGui_Impl_NewFrame();
 		ImGui::NewFrame();

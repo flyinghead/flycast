@@ -219,28 +219,9 @@ u32 X86Compiler::relinkBlock(RuntimeBlockInfo* block)
 	case BET_DynamicRet:
 	case BET_DynamicCall:
 	case BET_DynamicJump:
-		if (block->relink_data == 0)
-		{
-			if (block->pBranchBlock)
-			{
-				cmp(dword[GetRegPtr(reg_pc_dyn)], block->pBranchBlock->addr);
-				je((const void *)block->pBranchBlock->code);
-				call(ngen_LinkBlock_Generic_stub);
-			}
-			else
-			{
-				// dummy cmp/je to keep same code size in both cases
-				cmp(dword[GetRegPtr(reg_pc_dyn)], 0xFABCDECF);
-				call(ngen_LinkBlock_Generic_stub);
-				je((const void *)ngen_LinkBlock_Generic_stub);
-			}
-		}
-		else
-		{
-			verify(block->pBranchBlock == nullptr);
-			mov(ecx, dword[GetRegPtr(reg_pc_dyn)]);
-			jmp((const void *)no_update);
-		}
+		mov(ecx, dword[GetRegPtr(reg_pc_dyn)]);
+		jmp((const void *)no_update);
+
 		break;
 
 	case BET_StaticCall:
@@ -398,9 +379,10 @@ void X86Compiler::genMainloop()
 //no_update:
 	Xbyak::Label no_updateLabel;
 	L(no_updateLabel);
-	mov(esi, ecx);	// save sh4 pc in ESI, used below if the jump table is still empty for this address
-	call((void *)bm_GetCodeByVAddr);
-	jmp(eax);
+	mov(esi, ecx);	// save sh4 pc in ESI, used below if FPCB is still empty for this address
+	mov(eax, (size_t)&p_sh4rcb->fpcb[0]);
+	and_(ecx, RAM_SIZE_MAX - 2);
+	jmp(dword[eax + ecx * 2]);
 
 //intc_sched:
 	Xbyak::Label intc_schedLabel;
@@ -472,6 +454,8 @@ void X86Compiler::genMainloop()
 	L(ngen_blockcheckfailLabel);
 	call((void *)rdv_BlockCheckFail);
 	jmp(eax);
+
+	genMemHandlers();
 
 	ready();
 
@@ -599,34 +583,6 @@ bool X86Compiler::genReadMemImmediate(const shil_opcode& op, RuntimeBlockInfo* b
 
 	return true;
 }
-bool X86Compiler::genReadMemoryFast(const shil_opcode& op, RuntimeBlockInfo* block)
-{
-	// TODO
-	return false;
-}
-void X86Compiler::genReadMemorySlow(const shil_opcode& op, RuntimeBlockInfo* block)
-{
-	u32 size = op.flags & 0x7f;
-	switch (size) {
-	case 1:
-		genCall(ReadMem8);
-		movsx(eax, al);
-		break;
-	case 2:
-		genCall(ReadMem16);
-		movsx(eax, ax);
-		break;
-
-	case 4:
-		genCall(ReadMem32);
-		break;
-	case 8:
-		genCall(ReadMem64);
-		break;
-	default:
-		die("1..8 bytes");
-	}
-}
 
 bool X86Compiler::genWriteMemImmediate(const shil_opcode& op, RuntimeBlockInfo* block)
 {
@@ -721,32 +677,6 @@ bool X86Compiler::genWriteMemImmediate(const shil_opcode& op, RuntimeBlockInfo* 
 	return true;
 }
 
-bool X86Compiler::genWriteMemoryFast(const shil_opcode& op, RuntimeBlockInfo* block)
-{
-	// TODO
-	return false;
-}
-void X86Compiler::genWriteMemorySlow(const shil_opcode& op, RuntimeBlockInfo* block)
-{
-	u32 size = op.flags & 0x7f;
-	switch (size) {
-	case 1:
-		genCall(WriteMem8);
-		break;
-	case 2:
-		genCall(WriteMem16);
-		break;
-	case 4:
-		genCall(WriteMem32);
-		break;
-	case 8:
-		genCall(WriteMem64);
-		break;
-	default:
-		die("1..8 bytes");
-	}
-}
-
 void X86Compiler::checkBlock(bool smc_checks, RuntimeBlockInfo* block)
 {
 	if (!smc_checks)
@@ -783,7 +713,11 @@ void ngen_ResetBlocks()
 
 	compiler = new X86Compiler();
 
-	compiler->genMainloop();
+	try {
+		compiler->genMainloop();
+	} catch (const Xbyak::Error& e) {
+		ERROR_LOG(DYNAREC, "Fatal xbyak error: %s", e.what());
+	}
 
 	delete compiler;
 	compiler = nullptr;
@@ -818,10 +752,13 @@ void ngen_Compile(RuntimeBlockInfo* block, bool smc_checks, bool, bool, bool opt
 	delete compiler;
 }
 
-bool ngen_Rewrite(unat& host_pc, unat, unat)
+bool ngen_Rewrite(size_t& host_pc, size_t addr, size_t acc)
 {
-	// TODO
-	return false;
+	X86Compiler *compiler = new X86Compiler((u8*)(addr - 5));
+	bool rv = compiler->rewriteMemAccess(host_pc, addr, acc);
+	delete compiler;
+
+	return rv;
 }
 
 void ngen_CC_Start(shil_opcode* op)

@@ -368,16 +368,6 @@ static void reios_sys_flashrom() {
 	}
 }
 
-static void reios_sys_gd()
-{
-	gdrom_hle_op();
-}
-
-static void reios_sys_gd2()
-{
-	gdrom_hle_op();
-}
-
 static void reios_sys_misc()
 {
 	INFO_LOG(REIOS, "reios_sys_misc - r7: 0x%08X, r4 0x%08X, r5 0x%08X, r6 0x%08X", r[7], r[4], r[5], r[6]);
@@ -395,7 +385,6 @@ static void reios_sys_misc()
 }
 
 typedef void hook_fp();
-static u32 hook_addr(hook_fp* fn);
 
 static void setup_syscall(u32 hook_addr, u32 syscall_addr) {
 	WriteMem32(syscall_addr, hook_addr);
@@ -615,12 +604,12 @@ static void reios_boot()
 
 	memset(GetMemPtr(0x8C000000, 0), 0xFF, 64 * 1024);
 
-	setup_syscall(hook_addr(&reios_sys_system), dc_bios_syscall_system);
-	setup_syscall(hook_addr(&reios_sys_font), dc_bios_syscall_font);
-	setup_syscall(hook_addr(&reios_sys_flashrom), dc_bios_syscall_flashrom);
-	setup_syscall(hook_addr(&reios_sys_gd), dc_bios_syscall_gd);
-	setup_syscall(hook_addr(&reios_sys_gd2), dc_bios_syscall_gd2);
-	setup_syscall(hook_addr(&reios_sys_misc), dc_bios_syscall_misc);
+	setup_syscall(0x8C001000, dc_bios_syscall_system);
+	setup_syscall(0x8C001002, dc_bios_syscall_font);
+	setup_syscall(0x8C001004, dc_bios_syscall_flashrom);
+	setup_syscall(0x8C001006, dc_bios_syscall_gd);
+	setup_syscall(dc_bios_entrypoint_gd2, dc_bios_syscall_gd2);
+	setup_syscall(0x8C001008, dc_bios_syscall_misc);
 
 	//Infinite loop for arm !
 	WriteMem32(0x80800000, 0xEAFFFFFE);
@@ -669,13 +658,11 @@ static void reios_boot()
 }
 
 static std::map<u32, hook_fp*> hooks;
-static std::map<hook_fp*, u32> hooks_rev;
 
 #define SYSCALL_ADDR_MAP(addr) (((addr) & 0x1FFFFFFF) | 0x80000000)
 
 static void register_hook(u32 pc, hook_fp* fn) {
 	hooks[SYSCALL_ADDR_MAP(pc)] = fn;
-	hooks_rev[fn] = pc;
 }
 
 void DYNACALL reios_trap(u32 op) {
@@ -693,16 +680,6 @@ void DYNACALL reios_trap(u32 op) {
 		next_pc = pr;
 }
 
-static u32 hook_addr(hook_fp* fn) {
-	if (hooks_rev.count(fn))
-		return hooks_rev[fn];
-	else {
-		ERROR_LOG(REIOS, "hook_addr: Failed to reverse lookup %p", fn);
-		verify(false);
-		return 0;
-	}
-}
-
 bool reios_init()
 {
 	INFO_LOG(REIOS, "reios: Init");
@@ -712,10 +689,10 @@ bool reios_init()
 	register_hook(0x8C001000, reios_sys_system);
 	register_hook(0x8C001002, reios_sys_font);
 	register_hook(0x8C001004, reios_sys_flashrom);
-	register_hook(0x8C001006, reios_sys_gd);
+	register_hook(0x8C001006, gdrom_hle_op);
 	register_hook(0x8C001008, reios_sys_misc);
 
-	register_hook(dc_bios_entrypoint_gd2, reios_sys_gd2);
+	register_hook(dc_bios_entrypoint_gd2, gdrom_hle_op);
 
 	return true;
 }

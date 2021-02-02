@@ -513,6 +513,18 @@ public:
 				}
 				break;
 
+			case shop_mul_s64:
+				movsxd(rax, regalloc.MapRegister(op.rs1));
+				if (op.rs2.is_reg())
+					movsxd(rcx, regalloc.MapRegister(op.rs2));
+				else
+					mov(rcx, (s64)(s32)op.rs2._imm);
+				mul(rcx);
+				mov(regalloc.MapRegister(op.rd), eax);
+				shr(rax, 32);
+				mov(regalloc.MapRegister(op.rd2), eax);
+				break;
+
 			case shop_pref:
 				if (op.rs1.is_imm())
 				{

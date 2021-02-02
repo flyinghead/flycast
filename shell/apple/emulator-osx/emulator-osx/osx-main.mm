@@ -280,3 +280,11 @@ extern "C" void emu_set_mouse_position(int x, int y, int width, int height)
 {
 	SetMousePosition(x, y, width, height);
 }
+
+std::string os_Locale(){
+    return [[[NSLocale preferredLanguages] objectAtIndex:0] UTF8String];
+}
+
+std::string os_PrecomposedString(std::string string){
+    return [[[NSString stringWithUTF8String:string.c_str()] precomposedStringWithCanonicalMapping] UTF8String];
+}
