@@ -94,41 +94,6 @@ void Gdxsv::Update() {
         WriteMem32_nommu(symbols["print_buf"], 0);
         NOTICE_LOG(COMMON, "%s", dump_buf);
     }
-
-    /*
-    static char state_buf[0x00ffffff];
-    count++;
-    if (count % 60 == 0) {
-        for (int i = 0; i < 0x00ffffff; i++) {
-            state_buf[i] = ReadMem8_nommu(0x0c000000 + i);
-        }
-        auto path = get_writable_config_path("dump.bin");
-        auto fp = fopen(path.c_str(), "wb");
-        fwrite(state_buf, 1, sizeof(state_buf), fp);
-        fclose(fp);
-    }
-    */
-
-    /*
-    const int Addr_COM_R_No0 = 0x0c391d79;
-    static int COM_R_No[10] = {0};
-    for (int i = 0; i < 10; ++i) {
-        if (COM_R_No[i] != ReadMem8_nommu(Addr_COM_R_No0 + i)) {
-            NOTICE_LOG(COMMON, "COM_R_No%d %d -> %d", i, COM_R_No[i], ReadMem8_nommu(Addr_COM_R_No0 + i));
-            COM_R_No[i] = ReadMem8_nommu(Addr_COM_R_No0 + i);
-        }
-    }
-
-    const int Addr_COM_Flags = 0x0c391d6e;
-    static int COM_Flags[10] = {0};
-    for (int i = 0; i < 10; ++i) {
-        if (COM_Flags[i] != ReadMem8_nommu(Addr_COM_Flags + i)) {
-            NOTICE_LOG(COMMON, "0x%08x (%d) %d -> %d", Addr_COM_Flags + i, i, COM_Flags[i],
-                       ReadMem8_nommu(Addr_COM_Flags + i));
-            COM_Flags[i] = ReadMem8_nommu(Addr_COM_Flags + i);
-        }
-    }
-     */
 }
 
 std::string Gdxsv::GeneratePlatformInfoString() {
