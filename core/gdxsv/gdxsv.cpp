@@ -724,7 +724,6 @@ void Gdxsv::WritePatchDisk1() {
     u16 hp_offset = 0x0180;
     if (InGame()) {
         u8 player_index = ReadMem8_nommu(0x0c2f6652);
-        NOTICE_LOG(COMMON, "player_index %d", player_index);
         if (player_index) {
             player_index--;
             // depend on 4 player battle
@@ -738,17 +737,6 @@ void Gdxsv::WritePatchDisk1() {
     WriteMem16_nommu(0x0c01d56e, hp_offset);
     WriteMem16_nommu(0x0c01d678, hp_offset);
     WriteMem16_nommu(0x0c01d89e, hp_offset);
-    // WriteMem16_nommu(, hp_offset);
-    // WriteMem16_nommu(, hp_offset);
-
-/*
-    WriteMem16_nommu(0x0c11da88, hp_offset);
-    WriteMem16_nommu(0x0c11dbbc, hp_offset);
-    WriteMem16_nommu(0x0c11dcc0, hp_offset);
-    WriteMem16_nommu(0x0c11ddd6, hp_offset);
-    WriteMem16_nommu(0x0c11df08, hp_offset);
-    WriteMem16_nommu(0x0c11e01a, hp_offset);
-    */
 }
 
 void Gdxsv::WritePatchDisk2() {
