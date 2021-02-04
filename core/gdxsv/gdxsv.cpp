@@ -96,6 +96,20 @@ void Gdxsv::Update() {
     }
 
     /*
+    static char state_buf[0x00ffffff];
+    count++;
+    if (count % 60 == 0) {
+        for (int i = 0; i < 0x00ffffff; i++) {
+            state_buf[i] = ReadMem8_nommu(0x0c000000 + i);
+        }
+        auto path = get_writable_config_path("dump.bin");
+        auto fp = fopen(path.c_str(), "wb");
+        fwrite(state_buf, 1, sizeof(state_buf), fp);
+        fclose(fp);
+    }
+    */
+
+    /*
     const int Addr_COM_R_No0 = 0x0c391d79;
     static int COM_R_No[10] = {0};
     for (int i = 0; i < 10; ++i) {
@@ -395,7 +409,7 @@ void Gdxsv::GcpPingTest() {
         }
 
         auto t2 = std::chrono::high_resolution_clock::now();
-        int rtt = (int)std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
+        int rtt = (int) std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
         const std::string response_header(buf, n);
         if (response_header.find("200 OK") != std::string::npos) {
             gcp_ping_test_result[region_host.first] = rtt;
@@ -739,6 +753,37 @@ void Gdxsv::WritePatchDisk1() {
                             (i < loginkey.length()) ? u8(loginkey[i]) : u8(0));
         }
     }
+
+
+    // Ally HP
+    u16 hp_offset = 0x0180;
+    if (InGame()) {
+        u8 player_index = ReadMem8_nommu(0x0c2f6652);
+        NOTICE_LOG(COMMON, "player_index %d", player_index);
+        if (player_index) {
+            player_index--;
+            // depend on 4 player battle
+            u8 ally_index = player_index - (player_index & 1) + !(player_index & 1);
+            u16 ally_hp = ReadMem16_nommu(0x0c3369d6 + ally_index * 0x2000);
+            WriteMem16_nommu(0x0c3369d2 + player_index * 0x2000, ally_hp);
+        }
+        hp_offset -= 2;
+    }
+    WriteMem16_nommu(0x0c01d336, hp_offset);
+    WriteMem16_nommu(0x0c01d56e, hp_offset);
+    WriteMem16_nommu(0x0c01d678, hp_offset);
+    WriteMem16_nommu(0x0c01d89e, hp_offset);
+    // WriteMem16_nommu(, hp_offset);
+    // WriteMem16_nommu(, hp_offset);
+
+/*
+    WriteMem16_nommu(0x0c11da88, hp_offset);
+    WriteMem16_nommu(0x0c11dbbc, hp_offset);
+    WriteMem16_nommu(0x0c11dcc0, hp_offset);
+    WriteMem16_nommu(0x0c11ddd6, hp_offset);
+    WriteMem16_nommu(0x0c11df08, hp_offset);
+    WriteMem16_nommu(0x0c11e01a, hp_offset);
+    */
 }
 
 void Gdxsv::WritePatchDisk2() {
@@ -781,6 +826,26 @@ void Gdxsv::WritePatchDisk2() {
                             (i < loginkey.length()) ? u8(loginkey[i]) : u8(0));
         }
     }
+
+    // Ally HP
+    u16 hp_offset = 0x0180;
+    if (InGame()) {
+        u8 player_index = ReadMem8_nommu(0x0c391d92);
+        if (player_index) {
+            player_index--;
+            // depend on 4 player battle
+            u8 ally_index = player_index - (player_index & 1) + !(player_index & 1);
+            u16 ally_hp = ReadMem16_nommu(0x0c3d1e56 + ally_index * 0x2000);
+            WriteMem16_nommu(0x0c3d1e52 + player_index * 0x2000, ally_hp);
+        }
+        hp_offset -= 2;
+    }
+    WriteMem16_nommu(0x0c11da88, hp_offset);
+    WriteMem16_nommu(0x0c11dbbc, hp_offset);
+    WriteMem16_nommu(0x0c11dcc0, hp_offset);
+    WriteMem16_nommu(0x0c11ddd6, hp_offset);
+    WriteMem16_nommu(0x0c11df08, hp_offset);
+    WriteMem16_nommu(0x0c11e01a, hp_offset);
 }
 
 void Gdxsv::CloseUdpClientWithReason(const char *reason) {
