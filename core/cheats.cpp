@@ -35,7 +35,7 @@ const Cheat CheatManager::_widescreen_cheats[] =
 		{ "T40209D 50", nullptr,    { 0x2A8750, 0 }, { 0x3F400000 } },		// AeroWings 2 (PAL)
 		{ "T34101M   ", nullptr,    { 0x24CF20, 0x24CEEC, 0 }, { 0x3FAAAAAB, 0x43F00000, 0 } },	// Animastar (JP)
 		{ "MK-51171  ", nullptr,    { 0xCA20B8, 0 }, { 0x43700000 } },		// Alien Front Online (USA)
-		{ "T2101M    ", nullptr,    { 0xBC3C94, 0 }, { 0x440A7C9A } },		// Berserk (JP)
+		{ "T2101M    ", nullptr,    { 0x13E8B4, 0x13E8E4, 0 }, { 0x43F00000, 0x3F400000 } },	// Berserk (JP)
 		{ "T13001D 18", nullptr,    { 0x2DAC44, 0 }, { 0x3F400000 } },		// Blue Stinger (En, De) (PAL)
 		{ "xxxxxxxxxx", nullptr,    { 0x2DAB84, 0 }, { 0x3F400000 } },		// Blue Stinger (Fr) (PAL)
 		{ "T13001D-05", nullptr,    { 0x2D9C84, 0 }, { 0x3F400000 } },		// Blue Stinger (Es, It?) (PAL)
