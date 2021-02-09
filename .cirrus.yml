@@ -1,8 +1,8 @@
 freebsd_instance:
-  image_family: freebsd-12-1
+  image_family: freebsd-12-2
 
 task:
-  install_script: pkg install -y alsa-lib cmake evdev-proto flac git libao libudev-devd libzip mesa-libs pkgconf png pulseaudio sdl2
+  install_script: pkg install -y alsa-lib cmake evdev-proto flac git libao libevdev libudev-devd libzip mesa-libs miniupnpc ninja pkgconf png pulseaudio sdl2
   script:
-    - cmake -B build -DCMAKE_BUILD_TYPE=Release
-    - cmake --build build --config Release --parallel 2
+    - cmake -B build -DCMAKE_BUILD_TYPE=Release -G Ninja
+    - cmake --build build --config Release
