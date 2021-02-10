@@ -73,6 +73,8 @@ ifeq (,$(platform))
         HARDWARE = $(shell grep Hardware /proc/cpuinfo)
         ifneq (,$(findstring BCM2709,$(HARDWARE)))
             platform = rpi2
+        else ifneq (,$(findstring BCM2711,$(HARDWARE)))
+            platform = rpi4-mesa
         else ifneq (,$(findstring AM33XX,$(HARDWARE)))
             platform = beagle
         else ifneq (,$(findstring Pandora,$(HARDWARE)))
@@ -166,7 +168,7 @@ else ifneq (,$(findstring lincpp,$(platform)))
     CFLAGS += -D TARGET_NO_JIT
     CXXFLAGS += -fexceptions -std=gnu++11
 
-# Raspberry Pi 2
+# Raspberry Pi
 else ifneq (,$(findstring rpi,$(platform)))
     CFLAGS += -DARM_HARDFP -fsingle-precision-constant
     ifneq (,$(findstring rpi2,$(platform)))
@@ -175,6 +177,10 @@ else ifneq (,$(findstring rpi,$(platform)))
     else ifneq (,$(findstring rpi3,$(platform)))
         MFLAGS += -march=armv8-a+crc -mtune=cortex-a53 -mfpu=neon-fp-armv8 -mfloat-abi=hard -marm
         ASFLAGS += -march=armv8-a+crc -mtune=cortex-a53 -mfpu=neon-fp-armv8 -mfloat-abi=hard -marm
+    else ifneq (,$(findstring rpi4,$(platform)))
+        MFLAGS += -march=armv8-a+crc -mtune=cortex-a72 -mfpu=neon-fp-armv8 -mfloat-abi=hard -marm
+        ASFLAGS += -march=armv8-a+crc -mtune=cortex-a72 -mfpu=neon-fp-armv8 -mfloat-abi=hard -marm
+        CFLAGS += -DGLES3
     endif
     ifneq (,$(findstring mesa,$(platform)))
         USE_SDL := 1
