@@ -237,6 +237,9 @@ const Cheat CheatManager::_widescreen_cheats[] =
 		{ "T36802N   ", nullptr,    { 0x129FA0, 0x12A9BC, 0x1C9FDC, 0 },
 				{ 0x3EF00000, 0x3EF00000, 0x000000F0 } },					// Soul Reaver (PAL) Code 2 is a Render Fix
 		{ "HDR-0190  ", nullptr,    { 0x14D3E0, 0 }, { 0x3F400000 } },		// Space Channel 5 Part 2 (JP)
+		{ "T1216M    ", nullptr, { 0x017C38, 0x17F00, 0 }, { 0x3A99999A, 0x3A99999A } }, // Spawn - In the Demon's Hand v1.003 (JP)
+		{ "T1216N    ", nullptr, { 0x017C58, 0x17F20, 0 }, { 0x3A99999A, 0x3A99999A } }, // Spawn - In the Demon's Hand v1.000 (US)
+		{ "T36816D 50", nullptr, { 0x017C78, 0x17F40, 0 }, { 0x3A99999A, 0x3A99999A } }, // Spawn - In the Demon's Hand v1.000 (EU)
 		// Star Wars Episode I Racer (USA)
 		// Code 1-4 removes the black bars on top and bottom in FMV
 		{ "T23001N   ", nullptr,    { 0x17AE20, 0x29A96C, 0x29A98C, 0x29A9AC, 0x29A9CC, 0 },
