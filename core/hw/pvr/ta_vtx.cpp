@@ -1599,14 +1599,11 @@ bool ta_parse_vdrc(TA_context* ctx)
 		vd_rc.proc_start = ctx->rend.proc_start;
 		vd_rc.proc_end = ctx->rend.proc_end;
 
-		Ta_Dma* ta_data=(Ta_Dma*)vd_rc.proc_start;
-		Ta_Dma* ta_data_end=((Ta_Dma*)vd_rc.proc_end)-1;
+		Ta_Dma* ta_data = (Ta_Dma *)vd_rc.proc_start;
+		Ta_Dma* ta_data_end = (Ta_Dma *)vd_rc.proc_end - 1;
 
-		do
-		{
-			ta_data =TaCmd(ta_data,ta_data_end);
-		}
-		while(ta_data<=ta_data_end);
+		while (ta_data <= ta_data_end)
+			ta_data = TaCmd(ta_data, ta_data_end);
 
 		if (ctx->rend.Overrun)
 			break;
