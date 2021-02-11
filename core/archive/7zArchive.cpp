@@ -31,6 +31,7 @@ bool SzArchive::Open(const char* path)
 {
 	SzArEx_Init(&szarchive);
 
+	File_Close(&archiveStream.file);
 	File_Construct(&archiveStream.file);
 #ifdef USE_WINDOWS_FILE
 	nowide::wstackstring wpath;
@@ -50,7 +51,10 @@ bool SzArchive::Open(const char* path)
 	LookToRead2_CreateVTable(&lookStream, false);
 	lookStream.buf = (Byte *)ISzAlloc_Alloc(&g_Alloc, kInputBufSize);
 	if (lookStream.buf == NULL)
+	{
+		File_Close(&archiveStream.file);
 		return false;
+	}
 	lookStream.bufSize = kInputBufSize;
 	lookStream.realStream = &archiveStream.vt;
 	LookToRead2_Init(&lookStream);
