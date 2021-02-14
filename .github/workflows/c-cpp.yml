@@ -31,7 +31,7 @@ jobs:
           echo "CCACHE_DIR=/tmp/ccache" >> $GITHUB_ENV
         if: matrix.config.os == 'ubuntu-latest'
 
-      - uses: actions/cache@v1
+      - uses: actions/cache@v2
         with:
           path: /tmp/ccache
           key: ccache-${{ matrix.config.os }}-${{ github.sha }}
