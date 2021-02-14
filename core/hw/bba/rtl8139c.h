@@ -63,22 +63,6 @@ struct MemoryRegion {
     uint32_t size;
 };
 
-/*
- * Byte swapping utilities
- */
-static inline uint16_t bswap16(uint16_t x)
-{
-    return (((x & 0x00ff) << 8) |
-            ((x & 0xff00) >> 8));
-}
-
-static inline uint32_t bswap32(uint32_t x)
-{
-    return (((x & 0x000000ffU) << 24) |
-            ((x & 0x0000ff00U) <<  8) |
-            ((x & 0x00ff0000U) >>  8) |
-            ((x & 0xff000000U) >> 24));
-}
 #define glue(a, b) _glue(a, b)
 #define _glue(a, b) a ## b
 
