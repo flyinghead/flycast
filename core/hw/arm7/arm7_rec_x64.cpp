@@ -924,7 +924,7 @@ __asm__ (
 		"movq " _U"entry_points(%rip), %rdx	\n\t"
 		"movl " _U"arm_Reg + 184(%rip), %ecx \n\t"	// R15_ARM_NEXT
 		"movl " _U"arm_Reg + 188(%rip), %eax \n\t"	// INTR_PEND
-		"cmp $0," _U"arm_Reg + 192(%rip)	\n\t"
+		"cmpl $0," _U"arm_Reg + 192(%rip)	\n\t"
 		"jle 2f								\n\t"	// timeslice is over
 		"test %eax, %eax					\n\t"
 		"jne 1f								\n\t"	// if interrupt pending, handle it

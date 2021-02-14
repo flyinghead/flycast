@@ -17,7 +17,7 @@ static const u32 C_FLAG = 1 << 29;
 static const u32 V_FLAG = 1 << 28;
 static const u32 NZCV_MASK = N_FLAG | Z_FLAG | C_FLAG | V_FLAG;
 
-extern "C" void DYNACALL arm_mainloop(u32 cycl, void* regs, void* entrypoints);
+extern "C" void DYNACALL arm_mainloop(void* regs, void* entrypoints);
 extern void *EntryPoints[];
 
 class AicaArmTest : public ::testing::Test {
@@ -48,8 +48,8 @@ protected:
 	void RunOp()
 	{
 		arm_Reg[R15_ARM_NEXT].I = 0x1000;
-		arm_Reg[CYCL_CNT].I = 0;
-		arm_mainloop(1, arm_Reg, EntryPoints);
+		arm_Reg[CYCL_CNT].I = 1;
+		arm_mainloop(arm_Reg, EntryPoints);
 	}
 	void ResetNZCV()
 	{
