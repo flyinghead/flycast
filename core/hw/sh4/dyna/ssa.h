@@ -50,6 +50,7 @@ public:
 		CombineShiftsPass();
 		DeadRegisterPass();
 		IdentityMovePass();
+		SingleBranchTargetPass();
 
 #if DEBUG
 		if (stats.prop_constants > 0 || stats.dead_code_ops > 0 || stats.constant_ops_replaced > 0
@@ -711,6 +712,50 @@ private:
 				stats.dead_code_ops++;
 				stats.waw_blocks++;
 			}
+		}
+	}
+
+	bool skipSingleBranchTarget(u32& addr, bool updateCycles)
+	{
+		if (addr == NullAddress)
+			return false;
+		bool success = false;
+		while (true)
+		{
+			if ((addr >> 12) != (block->vaddr >> 12)
+					&& (addr >> 12) != ((block->vaddr + (block->guest_opcodes - 1) * 2) >> 12))
+				break;
+
+			u32 op = IReadMem16(addr);
+			// Axxx: bra <bdisp12>
+			if ((op & 0xF000) != 0xA000)
+				break;
+
+			u16 delayOp = IReadMem16(addr + 2);
+			if (delayOp != 0x0000 && delayOp != 0x0009)	// nop
+				break;
+
+			int disp = GetSImm12(op) * 2 + 4;
+			if (disp == 0)
+				// infiniloop
+				break;
+			addr += disp;
+			if (updateCycles)
+			{
+				dec_updateBlockCycles(block, op);
+				dec_updateBlockCycles(block, delayOp);
+			}
+			success = true;
+		}
+		return success;
+	}
+
+	void SingleBranchTargetPass()
+	{
+		if (block->read_only)
+		{
+			bool updateCycles = !skipSingleBranchTarget(block->BranchBlock, true);
+			skipSingleBranchTarget(block->NextBlock, updateCycles);
 		}
 	}
 
