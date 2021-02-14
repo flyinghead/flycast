@@ -43,8 +43,6 @@ jobs:
           fetch-depth: 0
           submodules: recursive
 
-      - run: git fetch origin +refs/tags/*:refs/tags/*
-
       - name: Create artifact directory
         run: mkdir -p build/artifact
 
