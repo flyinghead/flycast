@@ -16,7 +16,7 @@ EXTERN arm_Reg: PTR DWORD
 EXTERN entry_points: QWORD
 
 PUBLIC arm_mainloop
-arm_mainloop PROC FRAME			; arm_mainloop(cycles, regs, entry points)
+arm_mainloop PROC FRAME			; arm_mainloop(regs, entry points)
 	push rdi
 	.pushreg rdi
 	push rsi
@@ -37,16 +37,14 @@ arm_mainloop PROC FRAME			; arm_mainloop(cycles, regs, entry points)
 	.allocstack 40
 	.endprolog
 
-	mov r14d, dword ptr [arm_Reg + 192]		; CYCL_CNT
-	add r14d, ecx							; add cycles for this timeslice
-	mov qword ptr [entry_points], r8
+	mov qword ptr [entry_points], rdx
 
 PUBLIC arm_dispatch
 arm_dispatch::
 	mov rdx, qword ptr [entry_points]
 	mov ecx, dword ptr [arm_Reg + 184]		; R15_ARM_NEXT
 	mov eax, dword ptr [arm_Reg + 188]		; INTR_PEND
-	cmp r14d, 0
+	cmp dword ptr [arm_Reg + 192], 0
 	jle arm_exit							; timeslice is over
 	test eax, eax
 	jne arm_dofiq							; if interrupt pending, handle it
@@ -59,7 +57,6 @@ arm_dofiq:
 	jmp arm_dispatch
 
 arm_exit:
-	mov dword ptr [arm_Reg + 192], r14d		; CYCL_CNT: save remaining cycles
 	add rsp, 40
 	pop rbp
 	pop rbx

@@ -423,6 +423,6 @@ void arm7rec_flush();
 extern "C" void arm7rec_compile();
 void *arm7rec_getMemOp(bool load, bool byte);
 template<u32 Pd> void DYNACALL MSR_do(u32 v);
-u32 DYNACALL arm_single_op(u32 opcode);
+void DYNACALL arm_single_op(u32 opcode);
 
 void arm7backend_compile(const std::vector<ArmOp> block_ops, u32 cycles);

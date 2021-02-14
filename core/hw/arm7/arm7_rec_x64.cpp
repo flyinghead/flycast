@@ -19,8 +19,6 @@
 
 #include "build.h"
 
-#define TAIL_CALLING 1
-
 #if	HOST_CPU == CPU_X64 && FEAT_AREC != DYNAREC_NONE
 
 #define XBYAK_NO_OP_NAMES
@@ -30,7 +28,6 @@ using namespace Xbyak::util;
 
 #include "arm7_rec.h"
 
-extern u32 arm_single_op(u32 opcode);
 extern "C" void CompileCode();
 extern "C" void CPUFiq();
 extern "C" void arm_dispatch();
@@ -44,24 +41,11 @@ static const Xbyak::Reg32 call_regs[] = { ecx, edx, r8d, r9d };
 #else
 static const Xbyak::Reg32 call_regs[] = { edi, esi, edx, ecx  };
 #endif
-#ifdef TAIL_CALLING
 extern "C" u32 (**entry_points)();
-#endif
 u32 (**entry_points)();
 
 class Arm7Compiler;
 
-#ifdef TAIL_CALLING
-#ifdef _WIN32
-static const std::array<Xbyak::Reg32, 7> alloc_regs {
-		ebx, ebp, edi, esi, r12d, r13d, r15d
-};
-#else
-static const std::array<Xbyak::Reg32, 5> alloc_regs {
-		ebx, ebp, r12d, r13d, r15d
-};
-#endif
-#else
 #ifdef _WIN32
 static const std::array<Xbyak::Reg32, 8> alloc_regs {
 		ebx, ebp, edi, esi, r12d, r13d, r14d, r15d
@@ -70,7 +54,6 @@ static const std::array<Xbyak::Reg32, 8> alloc_regs {
 static const std::array<Xbyak::Reg32, 6> alloc_regs {
 		ebx, ebp, r12d, r13d, r14d, r15d
 };
-#endif
 #endif
 
 class X64ArmRegAlloc : public ArmRegAlloc<sizeof(alloc_regs) / sizeof(alloc_regs[0]), X64ArmRegAlloc>
@@ -801,11 +784,6 @@ class Arm7Compiler : public Xbyak::CodeGenerator
 		set_flags = false;
 		mov(call_regs[0], op.arg[0].getImmediate());
 		call(arm_single_op);
-#ifdef TAIL_CALLING
-		sub(r14d, eax);
-#else
-		sub(dword[rip + &arm_Reg[CYCL_CNT].I], eax);
-#endif
 	}
 
 public:
@@ -815,13 +793,8 @@ public:
 	{
 		regalloc = new X64ArmRegAlloc(*this, block_ops);
 
-#ifndef TAIL_CALLING
-#ifdef _WIN32
-		sub(rsp, 40);	// 16-byte alignment + 32-byte shadow area
-#else
-		sub(rsp, 8);	// 16-byte alignment
-#endif
-#endif
+		sub(dword[rip + &arm_Reg[CYCL_CNT]], cycles);
+
 		ArmOp::Condition currentCondition = ArmOp::AL;
 		Xbyak::Label *condLabel = nullptr;
 
@@ -880,21 +853,9 @@ public:
 			}
 		}
 		endConditional(condLabel);
-#ifdef TAIL_CALLING
-		sub(r14d, cycles);
-#else
-		mov(eax, cycles);
-#endif
-#ifdef TAIL_CALLING
+
 		jmp((void*)&arm_dispatch);
-#else
-#ifdef _WIN32
-		add(rsp, 40);
-#else
-		add(rsp, 8);
-#endif
-		ret();
-#endif
+
 		ready();
 		icPtr += getSize();
 
@@ -923,57 +884,6 @@ void arm7backend_compile(const std::vector<ArmOp> block_ops, u32 cycles)
 
 #ifndef _MSC_VER
 
-#ifndef TAIL_CALLING
-extern "C"
-u32 arm_compilecode()
-{
-	CompileCode();
-	return 0;
-}
-
-extern "C"
-void arm_mainloop(u32 cycl, void* regs, void* entrypoints)
-{
-	entry_points = (u32 (**)())entrypoints;
-	arm_Reg[CYCL_CNT].I += cycl;
-
-	__asm__ (
-			"push %rbx				\n\t"
-			"push %rbp				\n\t"
-#ifdef _WIN32
-			"push %rdi				\n\t"
-			"push %rsi				\n\t"
-#endif
-			"push %r12				\n\t"
-			"push %r13				\n\t"
-			"push %r14				\n\t"
-			"push %r15				\n\t"
-	);
-
-	while ((int)arm_Reg[CYCL_CNT].I > 0)
-	{
-		if (arm_Reg[INTR_PEND].I)
-			CPUFiq();
-
-		arm_Reg[CYCL_CNT].I -= entry_points[(arm_Reg[R15_ARM_NEXT].I & (ARAM_SIZE_MAX - 1)) / 4]();
-	}
-
-	__asm__ (
-			"pop %r15				\n\t"
-			"pop %r14				\n\t"
-			"pop %r13				\n\t"
-			"pop %r12				\n\t"
-#ifdef _WIN32
-			"pop %rsi				\n\t"
-			"pop %rdi				\n\t"
-#endif
-			"pop %rbp				\n\t"
-			"pop %rbx				\n\t"
-	);
-}
-
-#else // !TAIL_CALLING
-
 #ifdef __MACH__
 #define _U "_"
 #else
@@ -986,7 +896,7 @@ __asm__ (
 		"jmp " _U"arm_dispatch				\n\t"
 
 		".globl " _U"arm_mainloop			\n"
-	_U"arm_mainloop:						\n\t"	//  arm_mainloop(cycles, regs, entry points)
+	_U"arm_mainloop:						\n\t"	//  arm_mainloop(regs, entry points)
 #ifdef _WIN32
 		"pushq %rdi							\n\t"
 		"pushq %rsi							\n\t"
@@ -1003,13 +913,10 @@ __asm__ (
 		"subq $8, %rsp						\n\t"	// 16-byte stack alignment
 #endif
 
-		"movl " _U"arm_Reg + 192(%rip), %r14d \n\t"	// CYCL_CNT
 #ifdef _WIN32
-		"add %ecx, %r14d					\n\t"	// add cycles for this timeslice
-		"movq %r8, entry_points(%rip)		\n\t"
+		"movq %rdx, entry_points(%rip)		\n\t"
 #else
-		"add %edi, %r14d					\n\t"	// add cycles for this timeslice
-		"movq %rdx, " _U"entry_points(%rip)	\n\t"
+		"movq %rsi, " _U"entry_points(%rip)	\n\t"
 #endif
 
 		".globl " _U"arm_dispatch			\n"
@@ -1017,7 +924,7 @@ __asm__ (
 		"movq " _U"entry_points(%rip), %rdx	\n\t"
 		"movl " _U"arm_Reg + 184(%rip), %ecx \n\t"	// R15_ARM_NEXT
 		"movl " _U"arm_Reg + 188(%rip), %eax \n\t"	// INTR_PEND
-		"cmp $0, %r14d						\n\t"
+		"cmp $0," _U"arm_Reg + 192(%rip)	\n\t"
 		"jle 2f								\n\t"	// timeslice is over
 		"test %eax, %eax					\n\t"
 		"jne 1f								\n\t"	// if interrupt pending, handle it
@@ -1030,7 +937,6 @@ __asm__ (
 		"jmp " _U"arm_dispatch				\n"
 
 	"2:										\n\t"	// arm_exit:
-		"movl %r14d, " _U"arm_Reg + 192(%rip) \n\t"	// CYCL_CNT: save remaining cycles
 #ifdef _WIN32
 		"addq $40, %rsp						\n\t"
 #else
@@ -1048,6 +954,5 @@ __asm__ (
 #endif
 		"ret								\n"
 );
-#endif // !TAIL_CALLING
 #endif // !_MSC_VER
 #endif // X64 && DYNAREC_JIT

@@ -49,8 +49,8 @@ static void storeReg(eReg host_reg, Arm7Reg guest_reg, ArmOp::Condition cc = Arm
 	STR(host_reg, r8, (u8*)&arm_Reg[guest_reg].I - (u8*)&arm_Reg[0].I, ARM::Offset, (ARM::ConditionCode)cc);
 }
 
-static const std::array<eReg, 5> alloc_regs{
-	r6, r7, r9, r10, r11
+static const std::array<eReg, 6> alloc_regs{
+	r5, r6, r7, r9, r10, r11
 };
 
 class Arm32ArmRegAlloc : public ArmRegAlloc<alloc_regs.size(), Arm32ArmRegAlloc>
@@ -428,11 +428,25 @@ static void emitFallback(const ArmOp& op)
 	//Call interpreter
 	MOV32(r0, op.arg[0].getImmediate());
 	call((u32)arm_single_op);
-	SUB(r5, r5, r0, false);
 }
 
 void arm7backend_compile(const std::vector<ArmOp> block_ops, u32 cycles)
 {
+	loadReg(r2, CYCL_CNT);
+	if (is_i8r4(cycles))
+		SUB(r2, r2, cycles);
+	else
+	{
+		u32 togo = cycles;
+		while(ARMImmid8r4_enc(togo) == -1)
+		{
+			SUB(r2, r2, 256);
+			togo -= 256;
+		}
+		SUB(r2, r2, togo);
+	}
+	storeReg(r2, CYCL_CNT);
+
 	regalloc = new Arm32ArmRegAlloc(block_ops);
 	void *codestart = icPtr;
 
@@ -474,19 +488,6 @@ void arm7backend_compile(const std::vector<ArmOp> block_ops, u32 cycles)
 	}
 	storeFlags();
 
-	if (is_i8r4(cycles))
-		SUB(r5, r5, cycles, true);
-	else
-	{
-		u32 togo = cycles;
-		while(ARMImmid8r4_enc(togo) == -1)
-		{
-			SUB(r5, r5, 256);
-			togo -= 256;
-		}
-		SUB(r5, r5, togo, true);
-	}
-	JUMP((u32)&arm_exit, CC_MI);	//statically predicted as not taken
 	JUMP((u32)&arm_dispatch);
 
 	vmem_platform_flush_cache(codestart, (u8*)icPtr - 1, codestart, (u8*)icPtr - 1);

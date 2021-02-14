@@ -2094,14 +2094,6 @@ void ngen_Compile(RuntimeBlockInfo* block, bool force_checks, bool reset, bool s
 	//StoreImms(r0,r1,(u32)&last_run_block,(u32)code); //useful when code jumps to random locations ...
 	++blockno;
 
-	if (settings.profile.run_counts)
-	{
-		MOV32(r1,(u32)&block->runs);
-		LDR(r0,r1);
-		ADD(r0,r0,1);
-		STR(r0,r1);
-	}
-
 	//reg alloc
 	reg.DoAlloc(block,alloc_regs,alloc_fpu);
 

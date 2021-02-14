@@ -408,7 +408,7 @@ static ArmOp decodeArmOp(u32 opcode, u32 arm_pc)
 					//Offset
 					newbits.full |= 4;
 
-					arm_printf("ARM: MEM TFX R %08X -> %08X\n", opcode, newbits.full);
+					arm_printf("ARM: MEM TFX R %08X -> %08X", opcode, newbits.full);
 
 					return decodeArmOp(newbits.full, arm_pc);
 				}
@@ -439,7 +439,7 @@ static ArmOp decodeArmOp(u32 opcode, u32 arm_pc)
 					//Offset
 					newbits.full |= 4;
 
-					arm_printf("ARM: MEM TFX W %08X -> %08X\n", opcode, newbits.full);
+					arm_printf("ARM: MEM TFX W %08X -> %08X", opcode, newbits.full);
 
 					return decodeArmOp(newbits.full, arm_pc);
 				}
@@ -705,7 +705,7 @@ void *arm7rec_getMemOp(bool Load, bool Byte)
 }
 
 extern bool Arm7Enabled;
-extern "C" void DYNACALL arm_mainloop(u32 cycl, void* regs, void* entrypoints);
+extern "C" void DYNACALL arm_mainloop(void* regs, void* entrypoints);
 
 // Run a timeslice of arm7
 
@@ -714,9 +714,17 @@ void aicaarm::run(u32 samples)
 	for (u32 i = 0; i < samples; i++)
 	{
 		if (Arm7Enabled)
-			arm_mainloop(ARM_CYCLES_PER_SAMPLE, arm_Reg, EntryPoints);
+		{
+			arm_Reg[CYCL_CNT].I += ARM_CYCLES_PER_SAMPLE;
+			arm_mainloop(arm_Reg, EntryPoints);
+		}
 		libAICA_TimeStep();
 	}
+}
+
+void aicaarm::avoidRaceCondition()
+{
+	arm_Reg[CYCL_CNT].I = std::max((int)arm_Reg[CYCL_CNT].I, 50);
 }
 
 #endif // FEAT_AREC != DYNAREC_NONE

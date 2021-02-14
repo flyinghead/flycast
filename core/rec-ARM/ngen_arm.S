@@ -216,7 +216,7 @@ XEntryPoints: .word CSYM(EntryPoints)
 
 .global CSYM(arm_mainloop)
 HIDDEN(arm_mainloop)
-CSYM(arm_mainloop): @(cntx,lookup_base,cycles)
+CSYM(arm_mainloop): @(cntx,lookup_base)
 
 	push {r4, r5, r6, r7, r8, r9, r10, r11, lr}
 	sub sp, #4				@ 8-byte stack alignment
@@ -225,19 +225,19 @@ CSYM(arm_mainloop): @(cntx,lookup_base,cycles)
 	ldr r8,Xarm_Reg			@load cntx
 	ldr r4,XEntryPoints		@load lookup base
 	#else
-	mov r8,r1			@load cntx
-	mov r4,r2		@load lookup base
+	mov r8,r0			@load cntx
+	mov r4,r1		@load lookup base
 	#endif
-
-	ldr r5,[r8,#192]	@load cycle count
-	add r5,r0			@add cycles for this timeslice
 
 	b CSYM(arm_dispatch)
 
 .global CSYM(arm_dispatch)
 HIDDEN(arm_dispatch)
 CSYM(arm_dispatch):
+	ldr r3,[r8,#192]
 	ldrd r0,r1,[r8,#184]		@load: Next PC, interrupt
+	cmp r3,#0
+	ble arm_exit
 	ubfx r2,r0,#2,#21		@ assuming 8 MB address space max (23 bits)
 	cmp r1,#0
 	bne arm_dofiq
@@ -251,7 +251,6 @@ arm_dofiq:
 .global CSYM(arm_exit)
 HIDDEN(arm_exit)
 CSYM(arm_exit):
-	str r5,[r8,#192]		@if timeslice is over, save remaining cycles
 	add sp, #4
 	pop {r4, r5, r6, r7, r8, r9, r10, r11, pc}
 

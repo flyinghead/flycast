@@ -7,7 +7,8 @@ void init();
 void reset();
 void run(u32 samples);
 void enable(bool enabled);
-
+// Called when the arm interrupts the SH4 to make sure it has enough cycles to finish what it's doing.
+void avoidRaceCondition();
 }
 
 enum Arm7Reg

@@ -23,6 +23,7 @@ u32 rtc_EN;
 int dma_sched_id;
 u32 RealTimeClock;
 int rtc_schid = -1;
+u32 SB_ADST;
 
 u32 GetRTC_now()
 {
@@ -330,7 +331,7 @@ static void Write_SB_ADST(u32 addr, u32 data)
 	//0x005F7818	SB_ADST		RW	AICA:G2-DMA start
 	//0x005F781C	SB_ADSUSP	RW	AICA:G2-DMA suspend 
 	
-	if (data&1)
+	if ((data & 1) == 1 && (SB_ADST & 1) == 0)
 	{
 		if (SB_ADEN&1)
 		{
@@ -391,6 +392,23 @@ static void Write_SB_ADST(u32 addr, u32 data)
 	}
 }
 
+u32 Read_SB_ADST(u32 addr)
+{
+	// Le Mans and Looney Tunes sometimes send the same dma transfer twice after checking SB_ADST == 0.
+	// To avoid this, we pretend SB_ADST is still set when there is a pending aica-dma interrupt.
+	// This is only done once.
+	if ((SB_ISTNRM & (1 << (u8)holly_SPU_DMA)) && !(SB_ADST & 2))
+	{
+		SB_ADST |= 2;
+		return 1;
+	}
+	else
+	{
+		SB_ADST &= ~2;
+		return SB_ADST;
+	}
+}
+
 template<u32 STAG, HollyInterruptID iainterrupt, const char *LogTag>
 void Write_SB_STAG(u32 addr, u32 data)
 {
@@ -433,7 +451,7 @@ void aica_sb_Init()
 	// G2-DMA registers
 
 	// AICA
-	sb_rio_register(SB_ADST_addr, RIO_WF, nullptr, &Write_SB_ADST);
+	sb_rio_register(SB_ADST_addr, RIO_FUNC, &Read_SB_ADST, &Write_SB_ADST);
 #ifdef STRICT_MODE
 	sb_rio_register(SB_ADSTAR_addr, RIO_WF, nullptr, &Write_SB_STAR<SB_ADSTAR_addr, holly_AICA_ILLADDR, AICA_TAG>);
 	sb_rio_register(SB_ADSTAG_addr, RIO_WF, nullptr, &Write_SB_STAG<SB_ADSTAG_addr, holly_AICA_ILLADDR, AICA_TAG>);
@@ -464,6 +482,8 @@ void aica_sb_Init()
 
 void aica_sb_Reset(bool hard)
 {
+	if (hard)
+		SB_ADST = 0;
 }
 
 void aica_sb_Term()

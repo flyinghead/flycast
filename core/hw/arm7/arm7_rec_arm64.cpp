@@ -37,7 +37,7 @@ extern const u32 ICacheSize;
 
 class Arm7Compiler;
 
-#define MAX_REGS 7
+#define MAX_REGS 8
 
 class AArch64ArmRegAlloc : public ArmRegAlloc<MAX_REGS, AArch64ArmRegAlloc>
 {
@@ -49,7 +49,7 @@ class AArch64ArmRegAlloc : public ArmRegAlloc<MAX_REGS, AArch64ArmRegAlloc>
 	static const WRegister& getReg(int i)
 	{
 		static const WRegister regs[] = {
-				w19, w20, w21, w22, w23, w24, w25
+				w19, w20, w21, w22, w23, w24, w25, w27
 		};
 		static_assert(MAX_REGS == ARRAY_SIZE(regs), "MAX_REGS == ARRAY_SIZE(regs)");
 		verify(i >= 0 && (u32)i < ARRAY_SIZE(regs));
@@ -539,7 +539,6 @@ class Arm7Compiler : public MacroAssembler
 		set_flags = false;
 		Mov(w0, op.arg[0].getImmediate());
 		call((void*)arm_single_op);
-		Subs(w27, w27, w0);
 	}
 
 public:
@@ -547,6 +546,10 @@ public:
 
 	void compile(const std::vector<ArmOp> block_ops, u32 cycles)
 	{
+		Ldr(w1, arm_reg_operand(CYCL_CNT));
+		Sub(w1, w1, cycles);
+		Str(w1, arm_reg_operand(CYCL_CNT));
+
 		regalloc = new AArch64ArmRegAlloc(*this, block_ops);
 
 		for (u32 i = 0; i < block_ops.size(); i++)
@@ -594,14 +597,7 @@ public:
 			endConditional(condLabel);
 		}
 
-		//pop registers & return
-		Subs(w27, w27, cycles);
-		ptrdiff_t offset = reinterpret_cast<uintptr_t>(arm_exit) - GetBuffer()->GetStartAddress<uintptr_t>();
-		Label arm_exit_label;
-		BindToOffset(&arm_exit_label, offset);
-		B(&arm_exit_label, mi);
-
-		offset = reinterpret_cast<uintptr_t>(arm_dispatch) - GetBuffer()->GetStartAddress<uintptr_t>();
+		ptrdiff_t offset = reinterpret_cast<uintptr_t>(arm_dispatch) - GetBuffer()->GetStartAddress<uintptr_t>();
 		Label arm_dispatch_label;
 		BindToOffset(&arm_dispatch_label, offset);
 		B(&arm_dispatch_label);
@@ -666,7 +662,7 @@ __asm__ (
 
 		".globl arm_mainloop				\n\t"
 		".hidden arm_mainloop				\n"
-	"arm_mainloop:							\n\t"	//  arm_mainloop(cycles, regs, entry points)
+	"arm_mainloop:							\n\t"	//  arm_mainloop(regs, entry points)
 		"stp x25, x26, [sp, #-96]!			\n\t"
 		"stp x27, x28, [sp, #16]			\n\t"
 		"stp x29, x30, [sp, #32]			\n\t"
@@ -674,16 +670,15 @@ __asm__ (
 		"stp x21, x22, [sp, #64]			\n\t"
 		"stp x23, x24, [sp, #80]			\n\t"
 
-		"mov x28, x1						\n\t"	// arm7 registers
-		"mov x26, x2						\n\t"	// lookup base
-
-		"ldr w27, [x28, #192]				\n\t"	// cycle count
-		"add w27, w27, w0					\n\t"	// add cycles for this timeslice
+		"mov x28, x0						\n\t"	// arm7 registers
+		"mov x26, x1						\n\t"	// lookup base
 
 		".globl arm_dispatch				\n\t"
 		".hidden arm_dispatch				\n"
 	"arm_dispatch:							\n\t"
+		"ldr w3, [x28, #192]				\n\t"	// load cycle counter
 		"ldp w0, w1, [x28, #184]			\n\t"	// load Next PC, interrupt
+		"tbnz w3, #31, arm_exit				\n\t"	// exit if cycle counter negative
 		"ubfx w2, w0, #2, #21				\n\t"	// w2 = pc >> 2. Note: assuming address space == 8 MB (23 bits)
 		"cbnz w1, arm_dofiq					\n\t"	// if interrupt pending, handle it
 
@@ -698,7 +693,6 @@ __asm__ (
 		".globl arm_exit					\n\t"
 		".hidden arm_exit					\n"
 	"arm_exit:								\n\t"
-		"str w27, [x28, #192]				\n\t"	// if timeslice is over, save remaining cycles
 		"ldp x23, x24, [sp, #80]			\n\t"
 		"ldp x21, x22, [sp, #64]			\n\t"
 		"ldp x19, x20, [sp, #48]			\n\t"

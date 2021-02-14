@@ -63,13 +63,15 @@ static void CPUUndefinedException();
 //
 // ARM7 interpreter
 //
+static int clockTicks;
+
 static void runInterpreter(u32 CycleCount)
 {
 	if (!Arm7Enabled)
 		return;
 
-	u32 clockTicks = 0;
-	while (clockTicks < CycleCount)
+	clockTicks -= CycleCount;
+	while (clockTicks < 0)
 	{
 		if (reg[INTR_PEND].I)
 			CPUFiq();
@@ -77,6 +79,11 @@ static void runInterpreter(u32 CycleCount)
 		reg[15].I = armNextPC + 8;
 		#include "arm-new.h"
 	}
+}
+
+void aicaarm::avoidRaceCondition()
+{
+	clockTicks = std::min(clockTicks, -50);
 }
 
 void aicaarm::run(u32 samples)
@@ -353,15 +360,15 @@ void update_armintc()
 
 //Emulate a single arm op, passed in opcode
 
-u32 DYNACALL arm_single_op(u32 opcode)
+void DYNACALL arm_single_op(u32 opcode)
 {
-	u32 clockTicks=0;
+	u32 clockTicks = 0;
 
 #define NO_OPCODE_READ
 
 #include "arm-new.h"
 
-	return clockTicks;
+	reg[CYCL_CNT].I -= clockTicks;
 }
 
 template<u32 Pd>
