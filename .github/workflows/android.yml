@@ -14,9 +14,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - run: git fetch origin +refs/tags/*:refs/tags/*
-
-      - uses: actions/cache@v1
+      - uses: actions/cache@v2
         with:
           path: ~/.gradle/caches
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*') }}
