@@ -28,12 +28,9 @@
 using namespace vixl::aarch64;
 //#include <aarch32/disasm-aarch32.h>
 
-extern "C" void arm_dispatch();
-extern "C" void arm_exit();
+namespace aicaarm {
 
-extern u8* icPtr;
-extern u8* ICache;
-extern const u32 ICacheSize;
+static void (*arm_dispatch)();
 
 class Arm7Compiler;
 
@@ -494,7 +491,7 @@ class Arm7Compiler : public MacroAssembler
 				Mov(w1, regalloc->map(op.arg[2].getReg().armreg));
 		}
 
-		call(arm7rec_getMemOp(op.op_type == ArmOp::LDR, op.byte_xfer));
+		call(recompiler::getMemOp(op.op_type == ArmOp::LDR, op.byte_xfer));
 
 		if (op.op_type == ArmOp::LDR)
 			Mov(regalloc->map(op.rd.getReg().armreg), w0);
@@ -529,22 +526,22 @@ class Arm7Compiler : public MacroAssembler
 		else
 			Mov(w0, regalloc->map(op.arg[0].getReg().armreg));
 		if (op.spsr)
-			call((void*)MSR_do<1>);
+			call((void*)recompiler::MSR_do<1>);
 		else
-			call((void*)MSR_do<0>);
+			call((void*)recompiler::MSR_do<0>);
 	}
 
 	void emitFallback(const ArmOp& op)
 	{
 		set_flags = false;
 		Mov(w0, op.arg[0].getImmediate());
-		call((void*)arm_single_op);
+		call((void*)recompiler::interpret);
 	}
 
 public:
-	Arm7Compiler() : MacroAssembler(icPtr, ICache + ICacheSize - icPtr) {}
+	Arm7Compiler() : MacroAssembler((u8 *)recompiler::currentCode(), recompiler::spaceLeft()) {}
 
-	void compile(const std::vector<ArmOp> block_ops, u32 cycles)
+	void compile(const std::vector<ArmOp>& block_ops, u32 cycles)
 	{
 		Ldr(w1, arm_reg_operand(CYCL_CNT));
 		Sub(w1, w1, cycles);
@@ -607,7 +604,7 @@ public:
 		vmem_platform_flush_cache(
 				GetBuffer()->GetStartAddress<void*>(), GetBuffer()->GetEndAddress<void*>(),
 				GetBuffer()->GetStartAddress<void*>(), GetBuffer()->GetEndAddress<void*>());
-		icPtr += GetBuffer()->GetSizeInBytes();
+		recompiler::advance(GetBuffer()->GetSizeInBytes());
 
 #if 0
 		Instruction* instr_start = (Instruction *)codestart;
@@ -625,7 +622,71 @@ public:
 #endif
 		delete regalloc;
 		regalloc = nullptr;
-	};
+	}
+
+	void generateMainLoop()
+	{
+		if (!recompiler::empty())
+		{
+			verify(arm_mainloop != nullptr);
+			verify(arm_compilecode != nullptr);
+			return;
+		}
+		Label arm_dispatch_label;
+		Label arm_dofiq;
+		Label arm_exit;
+
+		// arm_compilecode:
+		arm_compilecode = GetCursorAddress<void (*)()>();
+		call((void*)recompiler::compile);
+		B(&arm_dispatch_label);
+
+		// arm_mainloop(regs, entry points)
+		arm_mainloop = GetCursorAddress<arm_mainloop_t>();
+		Stp(x25, x26, MemOperand(sp, -96, AddrMode::PreIndex));
+		Stp(x27, x28, MemOperand(sp, 16));
+		Stp(x29, x30, MemOperand(sp, 32));
+		Stp(x19, x20, MemOperand(sp, 48));
+		Stp(x21, x22, MemOperand(sp, 64));
+		Stp(x23, x24, MemOperand(sp, 80));
+
+		Mov(x28, x0);		// arm7 registers
+		Mov(x26, x1);		// lookup base
+
+		// arm_dispatch:
+		Bind(&arm_dispatch_label);
+		arm_dispatch = GetCursorAddress<void (*)()>();
+		Ldr(w3, arm_reg_operand(CYCL_CNT));			// load cycle counter
+		Ldp(w0, w1, arm_reg_operand(R15_ARM_NEXT));	// load Next PC, interrupt
+		Tbnz(w3, 31, &arm_exit);					// exit if cycle counter negative
+		Ubfx(w2, w0, 2, 21);						// w2 = pc >> 2. Note: assuming address space == 8 MB (23 bits)
+		Cbnz(w1, &arm_dofiq);						// if interrupt pending, handle it
+
+		Add(x2, x26, Operand(x2, Shift::LSL, 3));	// x2 = EntryPoints + pc << 1
+		Ldr(x3, MemOperand(x2));
+		Br(x3);
+
+		// arm_dofiq:
+		Bind(&arm_dofiq);
+		call((void*)CPUFiq);
+		B(&arm_dispatch_label);
+
+		// arm_exit:
+		Bind(&arm_exit);
+		Ldp(x23, x24, MemOperand(sp, 80));
+		Ldp(x21, x22, MemOperand(sp, 64));
+		Ldp(x19, x20, MemOperand(sp, 48));
+		Ldp(x29, x30, MemOperand(sp, 32));
+		Ldp(x27, x28, MemOperand(sp, 16));
+		Ldp(x25, x26, MemOperand(sp, 96, AddrMode::PostIndex));
+		Ret();
+
+		FinalizeCode();
+		vmem_platform_flush_cache(
+				GetBuffer()->GetStartAddress<void*>(), GetBuffer()->GetEndAddress<void*>(),
+				GetBuffer()->GetStartAddress<void*>(), GetBuffer()->GetEndAddress<void*>());
+		recompiler::advance(GetBuffer()->GetSizeInBytes());
+	}
 };
 
 void AArch64ArmRegAlloc::LoadReg(int host_reg, Arm7Reg armreg)
@@ -640,66 +701,17 @@ void AArch64ArmRegAlloc::StoreReg(int host_reg, Arm7Reg armreg)
 	assembler.Str(getReg(host_reg), arm_reg_operand(armreg));
 }
 
-void arm7backend_compile(const std::vector<ArmOp> block_ops, u32 cycles)
+void arm7backend_compile(const std::vector<ArmOp>& block_ops, u32 cycles)
 {
 	Arm7Compiler assembler;
 	assembler.compile(block_ops, cycles);
 }
 
-//
-// Dynarec main loop
-//
-// w25 is used for temp mem save (post increment op2)
-// x26 is the entry points table
-// w27 is the cycle counter
-// x28 points to the arm7 registers base
-__asm__ (
-		".globl arm_compilecode				\n\t"
-		".hidden arm_compilecode			\n"
-	"arm_compilecode:						\n\t"
-		"bl CompileCode						\n\t"
-		"b arm_dispatch						\n\t"
+void arm7backend_flush()
+{
+	Arm7Compiler assembler;
+	assembler.generateMainLoop();
+}
 
-		".globl arm_mainloop				\n\t"
-		".hidden arm_mainloop				\n"
-	"arm_mainloop:							\n\t"	//  arm_mainloop(regs, entry points)
-		"stp x25, x26, [sp, #-96]!			\n\t"
-		"stp x27, x28, [sp, #16]			\n\t"
-		"stp x29, x30, [sp, #32]			\n\t"
-		"stp x19, x20, [sp, #48]			\n\t"
-		"stp x21, x22, [sp, #64]			\n\t"
-		"stp x23, x24, [sp, #80]			\n\t"
-
-		"mov x28, x0						\n\t"	// arm7 registers
-		"mov x26, x1						\n\t"	// lookup base
-
-		".globl arm_dispatch				\n\t"
-		".hidden arm_dispatch				\n"
-	"arm_dispatch:							\n\t"
-		"ldr w3, [x28, #192]				\n\t"	// load cycle counter
-		"ldp w0, w1, [x28, #184]			\n\t"	// load Next PC, interrupt
-		"tbnz w3, #31, arm_exit				\n\t"	// exit if cycle counter negative
-		"ubfx w2, w0, #2, #21				\n\t"	// w2 = pc >> 2. Note: assuming address space == 8 MB (23 bits)
-		"cbnz w1, arm_dofiq					\n\t"	// if interrupt pending, handle it
-
-		"add x2, x26, x2, lsl #3			\n\t"	// x2 = EntryPoints + pc << 1
-		"ldr x3, [x2]						\n\t"
-		"br x3								\n"
-
-	"arm_dofiq:								\n\t"
-		"bl CPUFiq							\n\t"
-		"b arm_dispatch						\n\t"
-
-		".globl arm_exit					\n\t"
-		".hidden arm_exit					\n"
-	"arm_exit:								\n\t"
-		"ldp x23, x24, [sp, #80]			\n\t"
-		"ldp x21, x22, [sp, #64]			\n\t"
-		"ldp x19, x20, [sp, #48]			\n\t"
-		"ldp x29, x30, [sp, #32]			\n\t"
-		"ldp x27, x28, [sp, #16]			\n\t"
-		"ldp x25, x26, [sp], #96			\n\t"
-		"ret								\n"
-);
-
+}
 #endif // ARM64

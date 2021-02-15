@@ -23,21 +23,19 @@
 #include "arm7_rec.h"
 #include "hw/mem/_vmem.h"
 
-#define _DEVEL          (1)
-#define EMIT_I          armEmit32((I))
-#define EMIT_GET_PTR()  armGetEmitPtr()
-static void armEmit32(u32 emit32);
-static void *armGetEmitPtr();
+#define _DEVEL          1
+#define EMIT_I          aicaarm::armEmit32(I)
+#define EMIT_GET_PTR()  aicaarm::recompiler::currentCode()
+namespace aicaarm {
+    static void armEmit32(u32 emit32);
+}
 #include "arm_emitter/arm_emitter.h"
 #undef I
 using namespace ARM;
 
-extern "C" void arm_dispatch();
-extern "C" void arm_exit();
+namespace aicaarm {
 
-extern u8* icPtr;
-extern u8* ICache;
-extern const u32 ICacheSize;
+static void (*arm_dispatch)();
 
 static void loadReg(eReg host_reg, Arm7Reg guest_reg, ArmOp::Condition cc = ArmOp::AL)
 {
@@ -90,19 +88,14 @@ public:
 
 static void armEmit32(u32 emit32)
 {
-	if (icPtr >= ICache + ICacheSize - 1024)
+	if (recompiler::spaceLeft() <= 1024)
 	{
-		ERROR_LOG(AICA_ARM, "JIT buffer full: %zd bytes free", ICacheSize - (icPtr - ICache));
+		ERROR_LOG(AICA_ARM, "JIT buffer full: %d bytes free", recompiler::spaceLeft());
 		die("AICA ARM code buffer full");
 	}
 
-	*(u32*)icPtr = emit32;
-	icPtr += 4;
-}
-
-static void *armGetEmitPtr()
-{
-	return icPtr;
+	*(u32 *)recompiler::currentCode() = emit32;
+	recompiler::advance(4);
 }
 
 static Arm32ArmRegAlloc *regalloc;
@@ -129,7 +122,7 @@ static u32 *startConditional(ArmOp::Condition cc)
 		return nullptr;
 	verify(cc <= ArmOp::LE);
 	ARM::ConditionCode condition = (ARM::ConditionCode)((u32)cc ^ 1);
-	u32 *code = (u32 *)icPtr;
+	u32 *code = (u32 *)recompiler::currentCode();
 	JUMP((u32)code, condition);
 
 	return code;
@@ -139,11 +132,11 @@ static void endConditional(u32 *pos)
 {
 	if (pos != nullptr)
 	{
-		u32 *curpos = (u32 *)icPtr;
+		u32 *curpos = (u32 *)recompiler::currentCode();
 		ARM::ConditionCode condition = (ARM::ConditionCode)(*pos >> 28);
-		icPtr = (u8 *)pos;
+		recompiler::icPtr = (u8 *)pos;
 		JUMP((u32)curpos, condition);
-		icPtr = (u8 *)curpos;
+		recompiler::icPtr = (u8 *)curpos;
 	}
 }
 
@@ -381,7 +374,7 @@ static void emitMemOp(const ArmOp& op)
 			MOV(r1, regalloc->map(op.arg[2].getReg().armreg));
 	}
 
-	call((u32)arm7rec_getMemOp(op.op_type == ArmOp::LDR, op.byte_xfer));
+	call((u32)recompiler::getMemOp(op.op_type == ArmOp::LDR, op.byte_xfer));
 
 	if (op.op_type == ArmOp::LDR)
 		MOV(regalloc->map(op.rd.getReg().armreg), r0);
@@ -418,37 +411,31 @@ static void emitMSR(const ArmOp& op)
 		MOV(r0, regalloc->map(op.arg[0].getReg().armreg));
 
 	if (op.spsr)
-		call((u32)MSR_do<1>);
+		call((u32)recompiler::MSR_do<1>);
 	else
-		call((u32)MSR_do<0>);
+		call((u32)recompiler::MSR_do<0>);
 }
 
 static void emitFallback(const ArmOp& op)
 {
 	//Call interpreter
 	MOV32(r0, op.arg[0].getImmediate());
-	call((u32)arm_single_op);
+	call((u32)recompiler::interpret);
 }
 
-void arm7backend_compile(const std::vector<ArmOp> block_ops, u32 cycles)
+void arm7backend_compile(const std::vector<ArmOp>& block_ops, u32 cycles)
 {
 	loadReg(r2, CYCL_CNT);
-	if (is_i8r4(cycles))
-		SUB(r2, r2, cycles);
-	else
+	while (!is_i8r4(cycles))
 	{
-		u32 togo = cycles;
-		while(ARMImmid8r4_enc(togo) == -1)
-		{
-			SUB(r2, r2, 256);
-			togo -= 256;
-		}
-		SUB(r2, r2, togo);
+		SUB(r2, r2, 256);
+		cycles -= 256;
 	}
+	SUB(r2, r2, cycles);
 	storeReg(r2, CYCL_CNT);
 
 	regalloc = new Arm32ArmRegAlloc(block_ops);
-	void *codestart = icPtr;
+	void *codestart = recompiler::currentCode();
 
 	loadFlags();
 
@@ -488,12 +475,83 @@ void arm7backend_compile(const std::vector<ArmOp> block_ops, u32 cycles)
 	}
 	storeFlags();
 
-	JUMP((u32)&arm_dispatch);
+	JUMP((uintptr_t)arm_dispatch);
 
-	vmem_platform_flush_cache(codestart, (u8*)icPtr - 1, codestart, (u8*)icPtr - 1);
+	vmem_platform_flush_cache(codestart, (u8*)recompiler::currentCode() - 1,
+			codestart, (u8*)recompiler::currentCode() - 1);
 
 	delete regalloc;
 	regalloc = nullptr;
 }
 
+void arm7backend_flush()
+{
+	if (!recompiler::empty())
+	{
+		verify(arm_mainloop != nullptr);
+		verify(arm_compilecode != nullptr);
+		return;
+	}
+	void *codestart = recompiler::currentCode();
+	uintptr_t arm_exit = (uintptr_t)codestart;
+	uintptr_t arm_dofiq = (uintptr_t)codestart;
+
+	// arm_mainloop:
+	arm_mainloop = (arm_mainloop_t)codestart;
+	u32 regList = (1 << r4) | (1 << r5) | (1 << r6) | (1 << r7)
+		 | (1 << r8) | (1 << r9) | (1 << r10) | (1 << r11) | (1 << lr);
+	PUSH(regList);
+	SUB(sp, sp, 4);							// 8-byte stack alignment
+
+	MOV(r8, r0);							// load regs
+	MOV(r4, r1);							// load entry points
+
+	// arm_dispatch:
+	arm_dispatch = (void (*)())recompiler::currentCode();
+	loadReg(r3, CYCL_CNT);					// load cycle counter
+	loadReg(r0, R15_ARM_NEXT);				// load Next PC
+	loadReg(r1, INTR_PEND);					// load Interrupt
+	CMP(r3, 0);
+	u8 *exit_fixup = (u8 *)recompiler::currentCode();
+	JUMP(arm_exit, CC_LE);					// exit if counter <= 0
+	UBFX(r2, r0, 2, 21);					// assuming 8 MB address space max (23 bits)
+	CMP(r1, 0);
+	u8 *dofiq_fixup = (u8 *)recompiler::currentCode();
+	JUMP(arm_dofiq, CC_NE);					// if interrupt pending, handle it
+
+	LDR(pc, r4, r2, AddrMode::Offset, true, ShiftOp::S_LSL, 2);
+
+	// arm_dofiq:
+	arm_dofiq = (uintptr_t)recompiler::currentCode();
+	// fix up
+	u8 *icptr_save = (u8 *)recompiler::currentCode();
+	recompiler::icPtr = dofiq_fixup;
+	JUMP(arm_dofiq, CC_NE);
+	recompiler::icPtr = icptr_save;
+	// end fix up
+	CALL((uintptr_t)CPUFiq);
+	JUMP((uintptr_t)arm_dispatch);
+
+	// arm_exit:
+	arm_exit = (uintptr_t)recompiler::currentCode();
+	// fix up
+	icptr_save = (u8 *)recompiler::currentCode();
+	recompiler::icPtr = exit_fixup;
+	JUMP(arm_exit, CC_LE);
+	recompiler::icPtr = icptr_save;
+	// end fix up
+	ADD(sp, sp, 4);
+	POP(regList);
+	MOV(pc, lr);
+
+	// arm_compilecode:
+	arm_compilecode = (void (*)())recompiler::currentCode();
+	CALL((uintptr_t)recompiler::compile);
+	JUMP((uintptr_t)arm_dispatch);
+
+	vmem_platform_flush_cache(codestart, (u8*)recompiler::currentCode() - 1,
+			codestart, (u8*)recompiler::currentCode() - 1);
+}
+
+}
 #endif // HOST_CPU == CPU_ARM && FEAT_AREC != DYNAREC_NONE

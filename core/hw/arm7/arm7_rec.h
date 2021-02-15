@@ -21,6 +21,8 @@
 #include "types.h"
 #include "arm7.h"
 
+namespace aicaarm {
+
 struct ArmOp
 {
 	enum OpType {
@@ -416,13 +418,39 @@ protected:
 	}
 };
 
-void CPUUpdateCPSR();
+namespace recompiler {
 
-void arm7rec_init();
-void arm7rec_flush();
-extern "C" void arm7rec_compile();
-void *arm7rec_getMemOp(bool load, bool byte);
+void init();
+void flush();
+void compile();
+void *getMemOp(bool load, bool byte);
 template<u32 Pd> void DYNACALL MSR_do(u32 v);
-void DYNACALL arm_single_op(u32 opcode);
+void DYNACALL interpret(u32 opcode);
 
-void arm7backend_compile(const std::vector<ArmOp> block_ops, u32 cycles);
+extern u8* icPtr;
+extern u8* ICache;
+const u32 ICacheSize = 1024 * 1024 * 4;
+
+static inline void *currentCode() {
+	return icPtr;
+}
+static inline u32 spaceLeft() {
+	return ICacheSize - (icPtr - ICache);
+}
+static inline bool empty() {
+	return icPtr == ICache;
+}
+static inline void advance(u32 size) {
+	icPtr += size;
+}
+
+}
+
+void arm7backend_compile(const std::vector<ArmOp>& block_ops, u32 cycles);
+void arm7backend_flush();
+
+extern void (*arm_compilecode)();
+using arm_mainloop_t = void (*)(reg_pair *arm_regs, void (*entrypoints[])());
+extern arm_mainloop_t arm_mainloop;
+
+}

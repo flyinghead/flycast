@@ -201,59 +201,6 @@ bx lr
 end_ngen_mainloop:
 @@@@@@@@@@ ngen_mainloop @@@@@@@@@@
 
-#if FEAT_AREC == DYNAREC_JIT
-.global CSYM(arm_compilecode)
-HIDDEN(arm_compilecode)
-CSYM(arm_compilecode):
-bl CSYM(CompileCode)
-b CSYM(arm_dispatch)
-#endif
-
-#ifdef TARGET_IPHONE
-Xarm_Reg: .word CSYM(arm_Reg)
-XEntryPoints: .word CSYM(EntryPoints)
-#endif
-
-.global CSYM(arm_mainloop)
-HIDDEN(arm_mainloop)
-CSYM(arm_mainloop): @(cntx,lookup_base)
-
-	push {r4, r5, r6, r7, r8, r9, r10, r11, lr}
-	sub sp, #4				@ 8-byte stack alignment
-
-	#ifdef TARGET_IPHONE
-	ldr r8,Xarm_Reg			@load cntx
-	ldr r4,XEntryPoints		@load lookup base
-	#else
-	mov r8,r0			@load cntx
-	mov r4,r1		@load lookup base
-	#endif
-
-	b CSYM(arm_dispatch)
-
-.global CSYM(arm_dispatch)
-HIDDEN(arm_dispatch)
-CSYM(arm_dispatch):
-	ldr r3,[r8,#192]
-	ldrd r0,r1,[r8,#184]		@load: Next PC, interrupt
-	cmp r3,#0
-	ble arm_exit
-	ubfx r2,r0,#2,#21		@ assuming 8 MB address space max (23 bits)
-	cmp r1,#0
-	bne arm_dofiq
-
-	ldr pc,[r4,r2,lsl #2]
-	
-arm_dofiq:
-	bl CSYM(CPUFiq)
-	b CSYM(arm_dispatch)
-
-.global CSYM(arm_exit)
-HIDDEN(arm_exit)
-CSYM(arm_exit):
-	add sp, #4
-	pop {r4, r5, r6, r7, r8, r9, r10, r11, pc}
-
 @@@@@@
 @matrix mul
 #ifndef __ANDROID__

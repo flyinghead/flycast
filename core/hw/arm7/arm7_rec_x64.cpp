@@ -28,21 +28,16 @@ using namespace Xbyak::util;
 
 #include "arm7_rec.h"
 
-extern "C" void CompileCode();
-extern "C" void CPUFiq();
-extern "C" void arm_dispatch();
+namespace aicaarm {
 
-extern u8* icPtr;
-extern u8* ICache;
-extern const u32 ICacheSize;
+static void (*arm_dispatch)();
 
 #ifdef _WIN32
 static const Xbyak::Reg32 call_regs[] = { ecx, edx, r8d, r9d };
 #else
 static const Xbyak::Reg32 call_regs[] = { edi, esi, edx, ecx  };
 #endif
-extern "C" u32 (**entry_points)();
-u32 (**entry_points)();
+static void (**entry_points)();
 
 class Arm7Compiler;
 
@@ -696,7 +691,7 @@ class Arm7Compiler : public Xbyak::CodeGenerator
 				mov(call_regs[1], regalloc->map(op.arg[2].getReg().armreg));
 		}
 
-		call(arm7rec_getMemOp(op.op_type == ArmOp::LDR, op.byte_xfer));
+		call(recompiler::getMemOp(op.op_type == ArmOp::LDR, op.byte_xfer));
 
 		if (op.op_type == ArmOp::LDR)
 			mov(regalloc->map(op.rd.getReg().armreg), eax);
@@ -764,9 +759,9 @@ class Arm7Compiler : public Xbyak::CodeGenerator
 		else
 			mov(call_regs[0], regalloc->map(op.arg[0].getReg().armreg));
 		if (op.spsr)
-			call(MSR_do<1>);
+			call(recompiler::MSR_do<1>);
 		else
-			call(MSR_do<0>);
+			call(recompiler::MSR_do<0>);
 	}
 
 	void emitMRS(const ArmOp& op)
@@ -783,13 +778,13 @@ class Arm7Compiler : public Xbyak::CodeGenerator
 	{
 		set_flags = false;
 		mov(call_regs[0], op.arg[0].getImmediate());
-		call(arm_single_op);
+		call(recompiler::interpret);
 	}
 
 public:
-	Arm7Compiler() : Xbyak::CodeGenerator(ICacheSize - (icPtr - ICache), icPtr) { }
+	Arm7Compiler() : Xbyak::CodeGenerator(recompiler::spaceLeft(), recompiler::currentCode()) { }
 
-	void compile(const std::vector<ArmOp> block_ops, u32 cycles)
+	void compile(const std::vector<ArmOp>& block_ops, u32 cycles)
 	{
 		regalloc = new X64ArmRegAlloc(*this, block_ops);
 
@@ -854,14 +849,96 @@ public:
 		}
 		endConditional(condLabel);
 
-		jmp((void*)&arm_dispatch);
+		jmp((void*)arm_dispatch);
 
 		ready();
-		icPtr += getSize();
+		recompiler::advance(getSize());
 
 		delete regalloc;
 		regalloc = nullptr;
 	}
+
+	void generateMainLoop()
+	{
+		if (!recompiler::empty())
+		{
+			verify(arm_mainloop != nullptr);
+			verify(arm_compilecode != nullptr);
+			return;
+		}
+		Xbyak::Label arm_dispatch_label;
+		Xbyak::Label arm_mainloop_label;
+
+		//arm_compilecode:
+		call(recompiler::compile);
+		jmp(arm_dispatch_label);
+
+		// arm_mainloop:
+		L(arm_mainloop_label);
+#ifdef _WIN32
+		push(rdi);
+		push(rsi);
+#endif
+		push(r12);
+		push(r13);
+		push(r14);
+		push(r15);
+		push(rbx);
+		push(rbp);
+#ifdef _WIN32
+		sub(rsp, 40);	// 32-byte shadow space + 16-byte stack alignment
+#else
+		sub(rsp, 8);		// 16-byte stack alignment
+#endif
+		mov(qword[rip + &entry_points], call_regs[1].cvt64());
+
+		// arm_dispatch:
+		L(arm_dispatch_label);
+		mov(rdx, qword[rip + &entry_points]);
+		mov(ecx, dword[rip + &arm_Reg[R15_ARM_NEXT]]);
+		mov(eax, dword[rip + &arm_Reg[INTR_PEND]]);
+		cmp(dword[rip + &arm_Reg[CYCL_CNT]], 0);
+		Xbyak::Label arm_exit;
+		jle(arm_exit);			// timeslice is over
+		test(eax, eax);
+		Xbyak::Label arm_dofiq;
+		jne(arm_dofiq);			// if interrupt pending, handle it
+
+		and_(ecx, 0x7ffffc);
+		jmp(qword[rdx + rcx * 2]);
+
+		// arm_dofiq:
+		L(arm_dofiq);
+		call(CPUFiq);
+		jmp(arm_dispatch_label);
+
+		// arm_exit:
+		L(arm_exit);
+#ifdef _WIN32
+		add(rsp, 40);
+#else
+		add(rsp, 8);
+#endif
+		pop(rbp);
+		pop(rbx);
+		pop(r15);
+		pop(r14);
+		pop(r13);
+		pop(r12);
+#ifdef _WIN32
+		pop(rsi);
+		pop(rdi);
+#endif
+		ret();
+
+		ready();
+		arm_compilecode = (void (*)())getCode();
+		arm_mainloop = (arm_mainloop_t)arm_mainloop_label.getAddress();
+		arm_dispatch = (void (*)())arm_dispatch_label.getAddress();
+
+		recompiler::advance(getSize());
+	}
+
 };
 
 void X64ArmRegAlloc::LoadReg(int host_reg, Arm7Reg armreg)
@@ -876,83 +953,17 @@ void X64ArmRegAlloc::StoreReg(int host_reg, Arm7Reg armreg)
 	assembler.mov(dword[rip + &arm_Reg[(u32)armreg].I], getReg32(host_reg));
 }
 
-void arm7backend_compile(const std::vector<ArmOp> block_ops, u32 cycles)
+void arm7backend_compile(const std::vector<ArmOp>& block_ops, u32 cycles)
 {
 	Arm7Compiler assembler;
 	assembler.compile(block_ops, cycles);
 }
 
-#ifndef _MSC_VER
+void arm7backend_flush()
+{
+	Arm7Compiler assembler;
+	assembler.generateMainLoop();
+}
 
-#ifdef __MACH__
-#define _U "_"
-#else
-#define _U
-#endif
-__asm__ (
-		".globl " _U"arm_compilecode		\n"
-	_U"arm_compilecode:						\n\t"
-		"call " _U"CompileCode				\n\t"
-		"jmp " _U"arm_dispatch				\n\t"
-
-		".globl " _U"arm_mainloop			\n"
-	_U"arm_mainloop:						\n\t"	//  arm_mainloop(regs, entry points)
-#ifdef _WIN32
-		"pushq %rdi							\n\t"
-		"pushq %rsi							\n\t"
-#endif
-		"pushq %r12							\n\t"
-		"pushq %r13							\n\t"
-		"pushq %r14							\n\t"
-		"pushq %r15							\n\t"
-		"pushq %rbx							\n\t"
-		"pushq %rbp							\n\t"
-#ifdef _WIN32
-		"subq $40, %rsp						\n\t"	// 32-byte shadow space + 16-byte stack alignment
-#else
-		"subq $8, %rsp						\n\t"	// 16-byte stack alignment
-#endif
-
-#ifdef _WIN32
-		"movq %rdx, entry_points(%rip)		\n\t"
-#else
-		"movq %rsi, " _U"entry_points(%rip)	\n\t"
-#endif
-
-		".globl " _U"arm_dispatch			\n"
-	_U"arm_dispatch:						\n\t"
-		"movq " _U"entry_points(%rip), %rdx	\n\t"
-		"movl " _U"arm_Reg + 184(%rip), %ecx \n\t"	// R15_ARM_NEXT
-		"movl " _U"arm_Reg + 188(%rip), %eax \n\t"	// INTR_PEND
-		"cmpl $0," _U"arm_Reg + 192(%rip)	\n\t"
-		"jle 2f								\n\t"	// timeslice is over
-		"test %eax, %eax					\n\t"
-		"jne 1f								\n\t"	// if interrupt pending, handle it
-
-		"and $0x7ffffc, %ecx				\n\t"
-		"jmp *(%rdx, %rcx, 2)				\n"
-
-	"1:										\n\t"	// arm_dofiq:
-		"call " _U"CPUFiq					\n\t"
-		"jmp " _U"arm_dispatch				\n"
-
-	"2:										\n\t"	// arm_exit:
-#ifdef _WIN32
-		"addq $40, %rsp						\n\t"
-#else
-		"addq $8, %rsp						\n\t"
-#endif
-		"popq %rbp							\n\t"
-		"popq %rbx							\n\t"
-		"popq %r15							\n\t"
-		"popq %r14							\n\t"
-		"popq %r13							\n\t"
-		"popq %r12							\n\t"
-#ifdef _WIN32
-		"popq %rsi							\n\t"
-		"popq %rdi							\n\t"
-#endif
-		"ret								\n"
-);
-#endif // !_MSC_VER
+}
 #endif // X64 && DYNAREC_JIT

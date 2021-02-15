@@ -33,14 +33,21 @@
 #include <iostream>
 #include <sstream>
 #endif
+
+extern bool Arm7Enabled;
+
+namespace aicaarm {
+
 #define arm_printf(...) DEBUG_LOG(AICA_ARM, __VA_ARGS__)
 
-extern "C" u32 DYNACALL arm_compilecode();
+void (*arm_compilecode)();
+arm_mainloop_t arm_mainloop;
+
+namespace recompiler {
 
 u8* icPtr;
 u8* ICache;
-extern const u32 ICacheSize = 1024 * 1024 * 4;
-void* EntryPoints[ARAM_SIZE_MAX / 4];
+void (*EntryPoints[ARAM_SIZE_MAX / 4])();
 
 #ifdef _WIN32
 alignas(4096) static u8 ARM7_TCB[ICacheSize];
@@ -541,7 +548,7 @@ static void block_ssa_pass()
 	}
 }
 
-extern "C" void arm7rec_compile()
+void compile()
 {
 	//Get the code ptr
 	void* rv = icPtr;
@@ -554,7 +561,7 @@ extern "C" void arm7rec_compile()
 	// also the size of the EntryPoints table. This way the dynarec
 	// main loop doesn't have to worry about the actual aica
 	// ram size. The aica ram always wraps to 8 MB anyway.
-	EntryPoints[(pc & (ARAM_SIZE_MAX - 1)) / 4] = rv;
+	EntryPoints[(pc & (ARAM_SIZE_MAX - 1)) / 4] = (void (*)())rv;
 
 	block_ops.clear();
 
@@ -581,38 +588,42 @@ extern "C" void arm7rec_compile()
 		//Goto next opcode
 		pc += 4;
 
-		if (last_op.op_type == ArmOp::FALLBACK)
-		{
-			// Interpreter needs pc + 8 in r15
-			ArmOp armop(ArmOp::MOV, ArmOp::AL);
-			armop.rd = ArmOp::Operand(RN_PC);
-			armop.arg[0] = ArmOp::Operand(pc + 4);
-			block_ops.push_back(armop);
-		}
-		//Branch ?
-		if (last_op.flags & ArmOp::OP_SETS_PC)
-		{
-			if (last_op.condition != ArmOp::AL)
+		if (opcd != 0)	// andeq r0, r0, r0 -> NOP
+		{				// ARAM is filled with these at start up
+
+			if (last_op.op_type == ArmOp::FALLBACK)
 			{
-				// insert a "mov armNextPC, pc + 4" before the jump if not taken
+				// Interpreter needs pc + 8 in r15
 				ArmOp armop(ArmOp::MOV, ArmOp::AL);
-				armop.rd = ArmOp::Operand(R15_ARM_NEXT);
-				armop.arg[0] = ArmOp::Operand(pc);
+				armop.rd = ArmOp::Operand(RN_PC);
+				armop.arg[0] = ArmOp::Operand(pc + 4);
 				block_ops.push_back(armop);
 			}
-			if (last_op.op_type == ArmOp::BL)
+			//Branch ?
+			if (last_op.flags & ArmOp::OP_SETS_PC)
 			{
-				// Save pc+4 into r14
-				ArmOp armop(ArmOp::MOV, last_op.condition);
-				armop.rd = ArmOp::Operand(RN_LR);
-				armop.arg[0] = ArmOp::Operand(pc);
-				block_ops.push_back(armop);
+				if (last_op.condition != ArmOp::AL)
+				{
+					// insert a "mov armNextPC, pc + 4" before the jump if not taken
+					ArmOp armop(ArmOp::MOV, ArmOp::AL);
+					armop.rd = ArmOp::Operand(R15_ARM_NEXT);
+					armop.arg[0] = ArmOp::Operand(pc);
+					block_ops.push_back(armop);
+				}
+				if (last_op.op_type == ArmOp::BL)
+				{
+					// Save pc+4 into r14
+					ArmOp armop(ArmOp::MOV, last_op.condition);
+					armop.rd = ArmOp::Operand(RN_LR);
+					armop.arg[0] = ArmOp::Operand(pc);
+					block_ops.push_back(armop);
+				}
+				block_ops.push_back(last_op);
+				arm_printf("ARM: %06X: Block End %d", pc, ops);
+				break;
 			}
 			block_ops.push_back(last_op);
-			arm_printf("ARM: %06X: Block End %d", pc, ops);
-			break;
 		}
-		block_ops.push_back(last_op);
 
 		//block size limit ?
 		if (ops == 31)
@@ -633,19 +644,16 @@ extern "C" void arm7rec_compile()
 	arm_printf("arm7rec_compile done: %p,%p", rv, icPtr);
 }
 
-void arm7rec_flush()
+void flush()
 {
 	icPtr = ICache;
+	arm7backend_flush();
+	verify(arm_compilecode != nullptr);
 	for (u32 i = 0; i < ARRAY_SIZE(EntryPoints); i++)
-		EntryPoints[i] = (void*)&arm_compilecode;
+		EntryPoints[i] = arm_compilecode;
 }
 
-extern "C" void CompileCode()
-{
-	arm7rec_compile();
-}
-
-void arm7rec_init()
+void init()
 {
 	if (!vmem_platform_prepare_jit_block(ARM7_TCB, ICacheSize, (void**)&ICache))
 		die("vmem_platform_prepare_jit_block failed");
@@ -686,7 +694,7 @@ u32 DYNACALL DoMemOp(u32 addr,u32 data)
 	return rv;
 }
 
-void *arm7rec_getMemOp(bool Load, bool Byte)
+void *getMemOp(bool Load, bool Byte)
 {
 	if (Load)
 	{
@@ -704,27 +712,26 @@ void *arm7rec_getMemOp(bool Load, bool Byte)
 	}
 }
 
-extern bool Arm7Enabled;
-extern "C" void DYNACALL arm_mainloop(void* regs, void* entrypoints);
-
+} // recompiler ns
 // Run a timeslice of arm7
 
-void aicaarm::run(u32 samples)
+void run(u32 samples)
 {
 	for (u32 i = 0; i < samples; i++)
 	{
 		if (Arm7Enabled)
 		{
 			arm_Reg[CYCL_CNT].I += ARM_CYCLES_PER_SAMPLE;
-			arm_mainloop(arm_Reg, EntryPoints);
+			arm_mainloop(arm_Reg, recompiler::EntryPoints);
 		}
 		libAICA_TimeStep();
 	}
 }
 
-void aicaarm::avoidRaceCondition()
+void avoidRaceCondition()
 {
 	arm_Reg[CYCL_CNT].I = std::max((int)arm_Reg[CYCL_CNT].I, 50);
 }
 
+} // aicarm ns
 #endif // FEAT_AREC != DYNAREC_NONE

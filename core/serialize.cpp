@@ -31,7 +31,6 @@ extern u32 e68k_reg_L;
 extern u32 e68k_reg_M;
 
 //./core/hw/arm7/arm7.cpp
-alignas(8) extern reg_pair arm_Reg[RN_ARM_REG_COUNT];
 extern bool armIrqEnable;
 extern bool armFiqEnable;
 extern int armMode;

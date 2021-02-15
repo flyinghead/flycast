@@ -6,7 +6,6 @@
 #include "hw/arm7/arm7_rec.h"
 
 extern bool Arm7Enabled;
-extern "C" void CompileCode();
 
 void dc_init();
 void dc_reset(bool hard);
@@ -17,8 +16,10 @@ static const u32 C_FLAG = 1 << 29;
 static const u32 V_FLAG = 1 << 28;
 static const u32 NZCV_MASK = N_FLAG | Z_FLAG | C_FLAG | V_FLAG;
 
-extern "C" void DYNACALL arm_mainloop(void* regs, void* entrypoints);
-extern void *EntryPoints[];
+
+namespace aicaarm::recompiler {
+
+extern void (*EntryPoints[])();
 
 class AicaArmTest : public ::testing::Test {
 protected:
@@ -41,8 +42,8 @@ protected:
 		for (int i = 0; i < count; i++)
 			*(u32*)&aica_ram[0x1000 + i * 4] = ops[i];
 		*(u32*)&aica_ram[0x1000 + count * 4] = 0xea000000 | ((u32)(-count * 4 - 8) << 2);	// b pc+8-12
-		arm7rec_flush();
-		CompileCode();
+		flush();
+		compile();
 	}
 
 	void RunOp()
@@ -1073,4 +1074,5 @@ TEST_F(AicaArmTest, ConditionRegAllocTest)
 	ASSERT_EQ(arm_Reg[0].I, 22);
 	ASSERT_EQ(arm_Reg[1].I, 0);
 	ASSERT_EQ(arm_Reg[2].I, 22);
+}
 }

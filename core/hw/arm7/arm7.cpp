@@ -21,15 +21,7 @@
 #define CPUUpdateTicksAccess32(a) 1
 #define CPUUpdateTicksAccess16(a) 1
 
-#ifdef _MSC_VER
-extern "C" {
-#endif
-
 alignas(8) reg_pair arm_Reg[RN_ARM_REG_COUNT];
-
-#ifdef _MSC_VER
-}
-#endif
 
 static void CPUSwap(u32 *a, u32 *b)
 {
@@ -52,8 +44,6 @@ bool Arm7Enabled = false;
 static u8 cpuBitsSet[256];
 
 static void CPUSwitchMode(int mode, bool saveState);
-extern "C" void CPUFiq();
-void CPUUpdateCPSR();
 static void CPUUpdateFlags();
 static void CPUSoftwareInterrupt(int comment);
 static void CPUUndefinedException();
@@ -99,7 +89,7 @@ void aicaarm::run(u32 samples)
 void aicaarm::init()
 {
 #if FEAT_AREC != DYNAREC_NONE
-	arm7rec_init();
+	recompiler::init();
 #endif
 	aicaarm::reset();
 
@@ -281,7 +271,7 @@ void aicaarm::reset()
 {
 	DEBUG_LOG(AICA_ARM, "AICA ARM Reset");
 #if FEAT_AREC != DYNAREC_NONE
-	arm7rec_flush();
+	recompiler::flush();
 #endif
 	aica_interr = false;
 	aica_reg_L = 0;
@@ -315,7 +305,6 @@ void aicaarm::reset()
 	reg[15].I += 4;
 }
 
-extern "C"
 NOINLINE
 void CPUFiq()
 {
@@ -328,7 +317,6 @@ void CPUFiq()
 
 	armNextPC = 0x1c;
 }
-
 
 /*
 	--Seems like aica has 3 interrupt controllers actualy (damn lazy sega ..)
@@ -357,16 +345,17 @@ void update_armintc()
 //
 // Used by ARM7 Recompiler
 //
+namespace aicaarm::recompiler {
 
 //Emulate a single arm op, passed in opcode
 
-void DYNACALL arm_single_op(u32 opcode)
+void DYNACALL interpret(u32 opcode)
 {
 	u32 clockTicks = 0;
 
 #define NO_OPCODE_READ
-
 #include "arm-new.h"
+#undef NO_OPCODE_READ
 
 	reg[CYCL_CNT].I -= clockTicks;
 }
@@ -404,5 +393,6 @@ void DYNACALL MSR_do(u32 v)
 template void DYNACALL MSR_do<0>(u32 v);
 template void DYNACALL MSR_do<1>(u32 v);
 
+}
 #endif	// FEAT_AREC != DYNAREC_NONE
 

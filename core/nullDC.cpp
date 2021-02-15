@@ -24,6 +24,7 @@
 #include "hw/pvr/spg.h"
 #include "hw/aica/aica_if.h"
 #include "hw/aica/dsp.h"
+#include "hw/arm7/arm7_rec.h"
 #include "imgread/common.h"
 #include "rend/gui.h"
 #include "profiler/profiler.h"
@@ -1256,7 +1257,7 @@ void dc_loadstate()
 
 	custom_texture.Terminate();
 #if FEAT_AREC == DYNAREC_JIT
-	arm7rec_flush();
+	aicaarm::recompiler::flush();
 #endif
 #ifndef NO_MMU
     mmu_flush_table();
