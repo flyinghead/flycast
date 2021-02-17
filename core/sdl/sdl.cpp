@@ -433,12 +433,40 @@ static void get_window_state()
 	u32 flags = SDL_GetWindowFlags(window);
 	window_fullscreen = flags & SDL_WINDOW_FULLSCREEN_DESKTOP;
 	window_maximized = flags & SDL_WINDOW_MAXIMIZED;
-	if (!window_fullscreen && !window_maximized)
-		SDL_GetWindowSize(window, &window_width, &window_height);
+    if (!window_fullscreen && !window_maximized){
+        SDL_GetWindowSize(window, &window_width, &window_height);
+        window_width /= scaling;
+        window_height /= scaling;
+    }
+		
 }
 
 bool sdl_recreate_window(u32 flags)
 {
+#ifdef _WIN32
+    //Enable HiDPI mode in Windows
+    typedef enum PROCESS_DPI_AWARENESS {
+        PROCESS_DPI_UNAWARE = 0,
+        PROCESS_SYSTEM_DPI_AWARE = 1,
+        PROCESS_PER_MONITOR_DPI_AWARE = 2
+    } PROCESS_DPI_AWARENESS;
+    
+    HRESULT(WINAPI *SetProcessDpiAwareness)(PROCESS_DPI_AWARENESS dpiAwareness); // Windows 8.1 and later
+    void* shcoreDLL = SDL_LoadObject("SHCORE.DLL");
+    if (shcoreDLL) {
+        SetProcessDpiAwareness = (HRESULT(WINAPI *)(PROCESS_DPI_AWARENESS)) SDL_LoadFunction(shcoreDLL, "SetProcessDpiAwareness");
+        if (SetProcessDpiAwareness) {
+            SetProcessDpiAwareness(PROCESS_PER_MONITOR_DPI_AWARE);
+            
+            float ddpi;
+            if (SDL_GetDisplayDPI(0, &ddpi, NULL, NULL) != -1){ //SDL_WINDOWPOS_UNDEFINED is Display 0
+                //When using HiDPI mode, set correct DPI scaling
+                scaling = ddpi/96.f;
+            }
+        }
+    }
+#endif
+    
 	int x = SDL_WINDOWPOS_UNDEFINED;
 	int y = SDL_WINDOWPOS_UNDEFINED;
 	window_width  = cfgLoadInt("window", "width", window_width);
@@ -460,7 +488,7 @@ bool sdl_recreate_window(u32 flags)
 	else if (window_maximized)
 		flags |= SDL_WINDOW_MAXIMIZED;
 #endif
-	window = SDL_CreateWindow("Flycast", x, y, window_width, window_height, flags);
+	window = SDL_CreateWindow("Flycast", x, y, window_width * scaling, window_height * scaling, flags);
 	if (window == nullptr)
 	{
 		ERROR_LOG(COMMON, "Window creation failed: %s", SDL_GetError());
