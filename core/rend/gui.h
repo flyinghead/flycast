@@ -29,6 +29,7 @@ void gui_term();
 void gui_refresh_files();
 
 extern int screen_dpi;
+extern float scaling;
 extern u32 vmu_lcd_data[8][48 * 32];
 extern bool vmu_lcd_status[8];
 extern bool vmu_lcd_changed[8];
