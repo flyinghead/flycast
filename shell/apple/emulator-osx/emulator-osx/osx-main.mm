@@ -193,6 +193,11 @@ extern "C" void emu_gles_init(int width, int height)
     CFRelease(allDisplayModes);
     
 	screen_dpi = (int)(displayNativeSize.width / displayPhysicalSize.width * 25.4f);
+    NSSize displayResolution;
+    displayResolution.width = CGDisplayPixelsWide(displayID);
+    displayResolution.height = CGDisplayPixelsHigh(displayID);
+    scaling = displayNativeSize.width / displayResolution.width;
+    
 	screen_width = width;
 	screen_height = height;
 
