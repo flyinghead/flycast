@@ -99,7 +99,9 @@ void BaseDrawer::SetBaseScissor()
 	}
 	else
 	{
-		baseScissor = { 0, 0, (u32)screen_width, (u32)screen_height };
+		u32 w = lroundf(screen_width * settings.rend.ScreenScaling / 100.f);
+		u32 h = lroundf(screen_height * settings.rend.ScreenScaling / 100.f);
+		baseScissor = { 0, 0, w, h };
 	}
 }
 
