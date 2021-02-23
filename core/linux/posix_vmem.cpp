@@ -49,6 +49,8 @@ int ashmem_create_region(const char *name, size_t size)
 
 	return fd;
 }
+#elif defined(__APPLE__)
+	#include <libkern/OSCacheControl.h>
 #endif  // #ifdef __ANDROID__
 
 bool mem_region_lock(void *start, size_t len)
@@ -298,7 +300,7 @@ static void Arm64_CacheFlush(void* start, void* end) {
 
 #if defined(__APPLE__)
 	// Header file says this is equivalent to: sys_icache_invalidate(start, end - start);
-	sys_cache_control(kCacheFunctionPrepareForExecution, start, end - start);
+	sys_cache_control(kCacheFunctionPrepareForExecution, start, (uintptr_t)end - (uintptr_t)start);
 #else
 	// Don't rely on GCC's __clear_cache implementation, as it caches
 	// icache/dcache cache line sizes, that can vary between cores on
