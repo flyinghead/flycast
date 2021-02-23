@@ -90,6 +90,51 @@ static __attribute((used)) void end_slice()
 }
 #endif
 
+#ifdef __APPLE__
+__asm__
+(
+		".globl _ngen_LinkBlock_cond_Branch_stub		\n\t"
+	"_ngen_LinkBlock_cond_Branch_stub:		\n\t"
+		"mov w1, #1							\n\t"
+		"b _ngen_LinkBlock_Shared_stub		\n"
+
+		".globl _ngen_LinkBlock_cond_Next_stub	\n\t"
+	"_ngen_LinkBlock_cond_Next_stub:		\n\t"
+		"mov w1, #0							\n\t"
+		"b _ngen_LinkBlock_Shared_stub		\n"
+
+		".globl _ngen_LinkBlock_Generic_stub	\n\t"
+	"_ngen_LinkBlock_Generic_stub:			\n\t"
+		"mov w1, w29						\n\t"	// djump/pc -> in case we need it ..
+		//"b _ngen_LinkBlock_Shared_stub		\n"
+
+		".globl _ngen_LinkBlock_Shared_stub	\n\t"
+	"_ngen_LinkBlock_Shared_stub:			\n\t"
+		"sub x0, lr, #4						\n\t"	// go before the call
+		"bl _rdv_LinkBlock					\n\t"   // returns an RX addr
+		"br x0								\n"
+
+		".globl _ngen_FailedToFindBlock_nommu	\n\t"
+	"_ngen_FailedToFindBlock_nommu:			\n\t"
+		"mov w0, w29						\n\t"
+		"bl _rdv_FailedToFindBlock			\n\t"
+		"br x0								\n"
+
+		".globl _ngen_FailedToFindBlock_mmu	\n\t"
+	"_ngen_FailedToFindBlock_mmu:			\n\t"
+		"bl _rdv_FailedToFindBlock_pc		\n\t"
+		"br x0								\n"
+
+		".globl _ngen_blockcheckfail		\n\t"
+	"_ngen_blockcheckfail:					\n\t"
+		"bl _rdv_BlockCheckFail				\n\t"
+		"cbnz x0, Ljumpblock				\n\t"
+		"ldr w0, [x28, 264]					\n\t"	// pc
+		"bl _bm_GetCodeByVAddr		        \n"
+	"Ljumpblock:							\n\t"
+		"br x0								\n"
+);
+#else //!__APPLE__
 __asm__
 (
 		".hidden ngen_LinkBlock_cond_Branch_stub	\n\t"
@@ -140,6 +185,7 @@ __asm__
 	"jumpblock:								\n\t"
 		"br x0								\n"
 );
+#endif //!__APPLE__
 static_assert(offsetof(Sh4Context, pc) == 264, "offsetof pc unexpected");
 
 static bool restarting;
