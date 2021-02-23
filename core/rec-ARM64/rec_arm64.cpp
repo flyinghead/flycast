@@ -93,39 +93,53 @@ static __attribute((used)) void end_slice()
 #ifdef __APPLE__
 __asm__
 (
+		".private_extern _ngen_LinkBlock_cond_Branch_stub \n\t"
 		".globl _ngen_LinkBlock_cond_Branch_stub		\n\t"
+		".p2align 2							\n\t"
 	"_ngen_LinkBlock_cond_Branch_stub:		\n\t"
 		"mov w1, #1							\n\t"
 		"b _ngen_LinkBlock_Shared_stub		\n"
 
+		".private_extern _ngen_LinkBlock_cond_Next_stub \n\t"
 		".globl _ngen_LinkBlock_cond_Next_stub	\n\t"
+		".p2align 2							\n\t"
 	"_ngen_LinkBlock_cond_Next_stub:		\n\t"
 		"mov w1, #0							\n\t"
 		"b _ngen_LinkBlock_Shared_stub		\n"
 
+		".private_extern _ngen_LinkBlock_Generic_stub \n\t"
 		".globl _ngen_LinkBlock_Generic_stub	\n\t"
+		".p2align 2							\n\t"
 	"_ngen_LinkBlock_Generic_stub:			\n\t"
 		"mov w1, w29						\n\t"	// djump/pc -> in case we need it ..
-		//"b _ngen_LinkBlock_Shared_stub		\n"
+		//"b ngen_LinkBlock_Shared_stub		\n"
 
+		".private_extern _ngen_LinkBlock_Shared_stub \n\t"
 		".globl _ngen_LinkBlock_Shared_stub	\n\t"
+		".p2align 2							\n\t"
 	"_ngen_LinkBlock_Shared_stub:			\n\t"
 		"sub x0, lr, #4						\n\t"	// go before the call
 		"bl _rdv_LinkBlock					\n\t"   // returns an RX addr
 		"br x0								\n"
 
+		".private_extern _ngen_FailedToFindBlock_nommu \n\t"
 		".globl _ngen_FailedToFindBlock_nommu	\n\t"
+		".p2align 2							\n\t"
 	"_ngen_FailedToFindBlock_nommu:			\n\t"
 		"mov w0, w29						\n\t"
 		"bl _rdv_FailedToFindBlock			\n\t"
 		"br x0								\n"
 
+		".private_extern _ngen_FailedToFindBlock_mmu \n\t"
 		".globl _ngen_FailedToFindBlock_mmu	\n\t"
+		".p2align 2							\n\t"
 	"_ngen_FailedToFindBlock_mmu:			\n\t"
 		"bl _rdv_FailedToFindBlock_pc		\n\t"
 		"br x0								\n"
 
+		".private_extern _ngen_blockcheckfail \n\t"
 		".globl _ngen_blockcheckfail		\n\t"
+		".p2align 2							\n\t"
 	"_ngen_blockcheckfail:					\n\t"
 		"bl _rdv_BlockCheckFail				\n\t"
 		"cbnz x0, Ljumpblock				\n\t"
