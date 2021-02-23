@@ -19,7 +19,7 @@
 
 #include "types.h"
 
-#if FEAT_SHREC == DYNAREC_JIT
+#if FEAT_SHREC == DYNAREC_JIT && HOST_CPU == CPU_ARM64
 
 #include <unistd.h>
 #include <map>
