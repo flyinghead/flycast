@@ -478,6 +478,48 @@ void armEmit32(u32 opcode)
 // x26 is the entry points table
 // w27 is the cycle counter
 // x28 points to the arm7 registers base
+#ifdef __APPLE__
+__asm__ (
+		".globl _arm_compilecode			\n"
+	"_arm_compilecode:						\n\t"
+		"bl _CompileCode					\n\t"
+		"b _arm_dispatch					\n\t"
+
+		".globl _arm_mainloop				\n"
+	"_arm_mainloop:							\n\t"	//  arm_mainloop(cycles, regs, entry points)
+		"stp x25, x26, [sp, #-48]!			\n\t"
+		"stp x27, x28, [sp, #16]			\n\t"
+		"stp x29, x30, [sp, #32]			\n\t"
+
+		"mov x28, x1						\n\t"	// arm7 registers
+		"mov x26, x2						\n\t"	// lookup base
+
+		"ldr w27, [x28, #192]				\n\t"	// cycle count
+		"add w27, w27, w0					\n\t"	// add cycles for this timeslice
+
+		".globl _arm_dispatch				\n"
+	"_arm_dispatch:							\n\t"
+		"ldp w0, w1, [x28, #184]			\n\t"	// load Next PC, interrupt
+		"ubfx w2, w0, #2, #21				\n\t"	// w2 = pc >> 2. Note: assuming address space == 8 MB (23 bits)
+		"cbnz w1, Larm_dofiq				\n\t"	// if interrupt pending, handle it
+
+		"add x2, x26, x2, lsl #3			\n\t"	// x2 = EntryPoints + pc << 1
+		"ldr x3, [x2]						\n\t"
+		"br x3								\n"
+
+	"Larm_dofiq:							\n\t"
+		"bl _CPUFiq							\n\t"
+		"b _arm_dispatch					\n\t"
+
+		".globl _arm_exit					\n"
+	"_arm_exit:								\n\t"
+		"str w27, [x28, #192]				\n\t"	// if timeslice is over, save remaining cycles
+		"ldp x29, x30, [sp, #32]			\n\t"
+		"ldp x27, x28, [sp, #16]			\n\t"
+		"ldp x25, x26, [sp], #48			\n\t"
+		"ret								\n"
+);
+#else // !__APPLE__
 __asm__ (
 		".globl arm_compilecode				\n\t"
 		".hidden arm_compilecode			\n"
@@ -522,4 +564,5 @@ __asm__ (
 		"ldp x25, x26, [sp], #48			\n\t"
 		"ret								\n"
 );
+#endif // !__APPLE__
 #endif // ARM64
