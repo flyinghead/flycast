@@ -52,8 +52,13 @@ void context_segfault(rei_host_context_t* reictx, void* segfault_ctx, bool to_se
 		#error HOST_OS
 	#endif
 #elif HOST_CPU == CPU_ARM64
-	bicopy(reictx->pc, MCTX(.pc), to_segfault);
-	bicopy(reictx->x2, MCTX(.regs[2]), to_segfault);
+	#if defined(__APPLE__)
+		bicopy(reictx->pc, MCTX(->__ss.__pc), to_segfault);
+		bicopy(reictx->x2, MCTX(->__ss.__x[2]), to_segfault);
+	#else
+		bicopy(reictx->pc, MCTX(.pc), to_segfault);
+		bicopy(reictx->x2, MCTX(.regs[2]), to_segfault);
+	#endif
 #elif HOST_CPU == CPU_X86
 	#if defined(__FreeBSD__)
 		bicopy(reictx->pc, MCTX(.mc_eip), to_segfault);
