@@ -90,117 +90,93 @@ static __attribute((used)) void end_slice()
 }
 #endif
 
-#ifdef __APPLE__
+#if defined(__APPLE__)
+#define _U "_"
+#else
+#define _U
+#endif
+
 __asm__
 (
+#if defined(__APPLE__)
 		".private_extern _ngen_LinkBlock_cond_Branch_stub \n\t"
-		".globl _ngen_LinkBlock_cond_Branch_stub		\n\t"
-		".p2align 2							\n\t"
-	"_ngen_LinkBlock_cond_Branch_stub:		\n\t"
+#else
+		".hidden ngen_LinkBlock_cond_Branch_stub	\n\t"
+#endif
+		".globl " _U "ngen_LinkBlock_cond_Branch_stub	\n\t"
+	_U "ngen_LinkBlock_cond_Branch_stub:	\n\t"
 		"mov w1, #1							\n\t"
-		"b _ngen_LinkBlock_Shared_stub		\n"
+		"b " _U "ngen_LinkBlock_Shared_stub	\n"
 
+#if defined(__APPLE__)
 		".private_extern _ngen_LinkBlock_cond_Next_stub \n\t"
-		".globl _ngen_LinkBlock_cond_Next_stub	\n\t"
-		".p2align 2							\n\t"
-	"_ngen_LinkBlock_cond_Next_stub:		\n\t"
+#else
+		".hidden ngen_LinkBlock_cond_Next_stub	\n\t"
+#endif
+		".globl " _U "ngen_LinkBlock_cond_Next_stub	\n\t"
+	_U "ngen_LinkBlock_cond_Next_stub:		\n\t"
 		"mov w1, #0							\n\t"
-		"b _ngen_LinkBlock_Shared_stub		\n"
+		"b " _U "ngen_LinkBlock_Shared_stub	\n"
 
+#if defined(__APPLE__)
 		".private_extern _ngen_LinkBlock_Generic_stub \n\t"
-		".globl _ngen_LinkBlock_Generic_stub	\n\t"
-		".p2align 2							\n\t"
-	"_ngen_LinkBlock_Generic_stub:			\n\t"
+#else
+		".hidden ngen_LinkBlock_Generic_stub	\n\t"
+#endif
+		".globl " _U "ngen_LinkBlock_Generic_stub	\n\t"
+	_U "ngen_LinkBlock_Generic_stub:		\n\t"
 		"mov w1, w29						\n\t"	// djump/pc -> in case we need it ..
 		//"b ngen_LinkBlock_Shared_stub		\n"
 
+#if defined(__APPLE__)
 		".private_extern _ngen_LinkBlock_Shared_stub \n\t"
-		".globl _ngen_LinkBlock_Shared_stub	\n\t"
-		".p2align 2							\n\t"
-	"_ngen_LinkBlock_Shared_stub:			\n\t"
+#else
+		".hidden ngen_LinkBlock_Shared_stub	\n\t"
+#endif
+		".globl " _U "ngen_LinkBlock_Shared_stub	\n\t"
+	_U "ngen_LinkBlock_Shared_stub:			\n\t"
 		"sub x0, lr, #4						\n\t"	// go before the call
-		"bl _rdv_LinkBlock					\n\t"   // returns an RX addr
+		"bl " _U "rdv_LinkBlock				\n\t"   // returns an RX addr
 		"br x0								\n"
 
+#if defined(__APPLE__)
 		".private_extern _ngen_FailedToFindBlock_nommu \n\t"
-		".globl _ngen_FailedToFindBlock_nommu	\n\t"
-		".p2align 2							\n\t"
-	"_ngen_FailedToFindBlock_nommu:			\n\t"
+#else
+		".hidden ngen_FailedToFindBlock_nommu	\n\t"
+#endif
+		".globl " _U "ngen_FailedToFindBlock_nommu	\n\t"
+	_U "ngen_FailedToFindBlock_nommu:		\n\t"
 		"mov w0, w29						\n\t"
-		"bl _rdv_FailedToFindBlock			\n\t"
+		"bl " _U "rdv_FailedToFindBlock		\n\t"
 		"br x0								\n"
 
+#if defined(__APPLE__)
 		".private_extern _ngen_FailedToFindBlock_mmu \n\t"
-		".globl _ngen_FailedToFindBlock_mmu	\n\t"
-		".p2align 2							\n\t"
-	"_ngen_FailedToFindBlock_mmu:			\n\t"
-		"bl _rdv_FailedToFindBlock_pc		\n\t"
+#else
+		".hidden ngen_FailedToFindBlock_mmu	\n\t"
+#endif
+		".globl " _U "ngen_FailedToFindBlock_mmu	\n\t"
+	_U "ngen_FailedToFindBlock_mmu:			\n\t"
+		"bl " _U "rdv_FailedToFindBlock_pc	\n\t"
 		"br x0								\n"
 
+#if defined(__APPLE__)
 		".private_extern _ngen_blockcheckfail \n\t"
-		".globl _ngen_blockcheckfail		\n\t"
-		".p2align 2							\n\t"
-	"_ngen_blockcheckfail:					\n\t"
-		"bl _rdv_BlockCheckFail				\n\t"
+#else
+		".hidden ngen_blockcheckfail		\n\t"
+#endif
+		".globl " _U "ngen_blockcheckfail	\n\t"
+	_U "ngen_blockcheckfail:				\n\t"
+		"bl " _U "rdv_BlockCheckFail		\n\t"
 		"cbnz x0, Ljumpblock				\n\t"
 		"ldr w0, [x28, 264]					\n\t"	// pc
-		"bl _bm_GetCodeByVAddr		        \n"
+		"bl " _U "bm_GetCodeByVAddr		    \n"
 	"Ljumpblock:							\n\t"
 		"br x0								\n"
 );
-#else //!__APPLE__
-__asm__
-(
-		".hidden ngen_LinkBlock_cond_Branch_stub	\n\t"
-		".globl ngen_LinkBlock_cond_Branch_stub		\n\t"
-	"ngen_LinkBlock_cond_Branch_stub:		\n\t"
-		"mov w1, #1							\n\t"
-		"b ngen_LinkBlock_Shared_stub		\n"
-
-		".hidden ngen_LinkBlock_cond_Next_stub	\n\t"
-		".globl ngen_LinkBlock_cond_Next_stub	\n\t"
-	"ngen_LinkBlock_cond_Next_stub:			\n\t"
-		"mov w1, #0							\n\t"
-		"b ngen_LinkBlock_Shared_stub		\n"
-
-		".hidden ngen_LinkBlock_Generic_stub	\n\t"
-		".globl ngen_LinkBlock_Generic_stub	\n\t"
-	"ngen_LinkBlock_Generic_stub:			\n\t"
-		"mov w1, w29						\n\t"	// djump/pc -> in case we need it ..
-		//"b ngen_LinkBlock_Shared_stub		\n"
-
-		".hidden ngen_LinkBlock_Shared_stub	\n\t"
-		".globl ngen_LinkBlock_Shared_stub	\n\t"
-	"ngen_LinkBlock_Shared_stub:			\n\t"
-		"sub x0, lr, #4						\n\t"	// go before the call
-		"bl rdv_LinkBlock					\n\t"   // returns an RX addr
-		"br x0								\n"
-
-		".hidden ngen_FailedToFindBlock_nommu	\n\t"
-		".globl ngen_FailedToFindBlock_nommu	\n\t"
-	"ngen_FailedToFindBlock_nommu:			\n\t"
-		"mov w0, w29						\n\t"
-		"bl rdv_FailedToFindBlock			\n\t"
-		"br x0								\n"
-
-		".hidden ngen_FailedToFindBlock_mmu	\n\t"
-		".globl ngen_FailedToFindBlock_mmu	\n\t"
-	"ngen_FailedToFindBlock_mmu:			\n\t"
-		"bl rdv_FailedToFindBlock_pc		\n\t"
-		"br x0								\n"
-
-		".hidden ngen_blockcheckfail		\n\t"
-		".globl ngen_blockcheckfail			\n\t"
-	"ngen_blockcheckfail:					\n\t"
-		"bl rdv_BlockCheckFail				\n\t"
-		"cbnz x0, jumpblock				    \n\t"
-		"ldr w0, [x28, 264]					\n\t"	// pc
-		"bl bm_GetCodeByVAddr		        \n"
-	"jumpblock:								\n\t"
-		"br x0								\n"
-);
-#endif //!__APPLE__
 static_assert(offsetof(Sh4Context, pc) == 264, "offsetof pc unexpected");
+
+#undef _U
 
 static bool restarting;
 
