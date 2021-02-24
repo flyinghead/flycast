@@ -12,6 +12,7 @@
 
 void emu_dc_exit();
 void emu_dc_term();
+void emu_gui_open_settings();
 bool emu_renderer_enabled();
 int emu_single_frame(int w, int h);
 void emu_gles_init(int width, int height);

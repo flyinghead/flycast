@@ -84,6 +84,10 @@ class EmuGLView: NSOpenGLView, NSWindowDelegate {
     override func keyUp(with e: NSEvent) {
         emu_key_input(e.keyCode, false, UInt32(e.modifierFlags.rawValue & NSEvent.ModifierFlags.deviceIndependentFlagsMask.rawValue))
     }
+	
+	override func flagsChanged(with e: NSEvent) {
+		emu_key_input(0xFF, false, UInt32(e.modifierFlags.rawValue & NSEvent.ModifierFlags.deviceIndependentFlagsMask.rawValue))
+	}
 
 	private func setMousePos(_ event: NSEvent)
 	{
@@ -148,4 +152,8 @@ class EmuGLView: NSOpenGLView, NSWindowDelegate {
         self.window!.delegate = self
 		self.window!.acceptsMouseMovedEvents = true
     }
+	
+	@IBAction func openMenu(_ sender: Any) {
+		emu_gui_open_settings();
+	}
 }
