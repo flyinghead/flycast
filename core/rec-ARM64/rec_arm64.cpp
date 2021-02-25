@@ -134,8 +134,13 @@ __asm__
 		".globl ngen_blockcheckfail			\n\t"
 	"ngen_blockcheckfail:					\n\t"
 		"bl rdv_BlockCheckFail				\n\t"
+		"cbnz x0, jumpblock				    \n\t"
+		"ldr w0, [x28, 264]					\n\t"	// pc
+		"bl bm_GetCodeByVAddr		        \n"
+	"jumpblock:								\n\t"
 		"br x0								\n"
 );
+static_assert(offsetof(Sh4Context, pc) == 264, "offsetof pc unexpected");
 
 static bool restarting;
 
@@ -2067,7 +2072,7 @@ private:
 		Label blockcheck_success;
 		B(&blockcheck_success);
 		Bind(&blockcheck_fail);
-		Ldr(w0, block->addr);
+		Mov(w0, block->addr);
 		TailCallRuntime(ngen_blockcheckfail);
 
 		Bind(&blockcheck_success);
