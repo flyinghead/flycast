@@ -56,6 +56,11 @@
 #include "deps/crypto/sha1.h"
 #include <zlib.h>
 
+#if defined(_MSC_VER)
+#include <BaseTsd.h>
+typedef SSIZE_T ssize_t;
+#endif
+
 #define TRUE 1
 #define FALSE 0
 
