@@ -171,13 +171,9 @@ else()
     target_link_libraries(${PROJECT_NAME} PRIVATE zlibstatic)
     # help libzip find the package
     set(ZLIB_FOUND TRUE)
-    if(MSVC)
-    	# FIXME
-	    set(ZLIB_LIBRARY "${CMAKE_CURRENT_BINARY_DIR}/core/deps/zlib/Release/zlibstatic.lib")
-	else()
-	    set(ZLIB_LIBRARY "libzlibstatic.a")
-	endif()
     set(ZLIB_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/core/deps/zlib" "${CMAKE_CURRENT_BINARY_DIR}/core/deps/zlib")
+    cmake_policy(SET CMP0026 OLD)
+    get_target_property(ZLIB_LIBRARY zlibstatic LOCATION)
 endif()
 
 find_package(PkgConfig QUIET)
