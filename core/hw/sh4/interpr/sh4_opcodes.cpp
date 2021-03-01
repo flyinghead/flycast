@@ -2093,7 +2093,6 @@ sh4op(iNotImplemented)
 {
 #ifndef NO_MMU
 	INFO_LOG(INTERPRETER, "iNimp %04X", op);
-	debugger::debugTrap(0x180);
 	SH4ThrownException ex = { next_pc - 2, 0x180, 0x100 };
 	throw ex;
 #else
