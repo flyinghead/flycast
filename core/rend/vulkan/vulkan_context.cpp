@@ -716,7 +716,7 @@ bool VulkanContext::Init()
     VkSurfaceKHR surface;
     if (SDL_Vulkan_CreateSurface((SDL_Window *)window, (VkInstance)*instance, &surface) == 0)
     	return false;
-    this->surface.reset(surface);
+    this->surface.reset(vk::SurfaceKHR(surface));
 #elif defined(_WIN32)
 	vk::Win32SurfaceCreateInfoKHR createInfo(vk::Win32SurfaceCreateFlagsKHR(), GetModuleHandle(NULL), (HWND)window);
 	surface = instance->createWin32SurfaceKHRUnique(createInfo);
@@ -935,7 +935,7 @@ void VulkanContext::Term()
 #ifndef USE_SDL
 	surface.reset();
 #else
-	::vkDestroySurfaceKHR(*instance, surface.release(), nullptr);
+	::vkDestroySurfaceKHR((VkInstance)*instance, (VkSurfaceKHR)surface.release(), nullptr);
 #endif
 	pipelineCache.reset();
 	device.reset();

@@ -735,27 +735,17 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 #else
 	SetUnhandledExceptionFilter((LPTOP_LEVEL_EXCEPTION_FILTER)&ExeptionHandler);
 #endif
-#ifndef __GNUC__
-	__try
+	if (reicast_init(argc, argv) != 0)
+		die("Flycast initialization failed");
+
+#ifdef _WIN64
+	setup_seh();
 #endif
-	{
-		if (reicast_init(argc, argv) != 0)
-			die("Flycast initialization failed");
 
-		#ifdef _WIN64
-			setup_seh();
-		#endif
+	mainui_loop();
 
-		mainui_loop();
+	dc_term();
 
-		dc_term();
-	}
-#ifndef __GNUC__
-	__except( ExeptionHandler(GetExceptionInformation()) )
-	{
-	    ERROR_LOG(COMMON, "Unhandled exception - UI thread halted...");
-	}
-#endif
 	SetUnhandledExceptionFilter(0);
 #ifdef USE_SDL
 	sdl_window_destroy();

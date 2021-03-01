@@ -405,6 +405,9 @@ int reicast_init(int argc, char* argv[])
 		LogManager::Init();
 		config::Settings::instance().load(false);
 	}
+	// Force the renderer type now since we're not switching
+	if (renderer_changed != -1)
+		config::RendererType = (RenderType)renderer_changed;
 
 	os_CreateWindow();
 	os_SetupInput();
