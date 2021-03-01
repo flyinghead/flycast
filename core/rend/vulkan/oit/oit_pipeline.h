@@ -347,7 +347,7 @@ private:
 		{
 			bool ignoreTexAlpha = pp->tsp.IgnoreTexA || pp->tcw.PixelFmt == Pixel565;
 			hash |= (pp->tsp.ShadInstr << 7) | (ignoreTexAlpha << 9) | (pp->tsp.UseAlpha << 10)
-				| (pp->tsp.ColorClamp << 11) | ((settings.rend.Fog ? pp->tsp.FogCtrl : 2) << 12)
+				| (pp->tsp.ColorClamp << 11) | ((config::Fog ? pp->tsp.FogCtrl : 2) << 12)
 				| (pp->tsp.SrcInstr << 14) | (pp->tsp.DstInstr << 17);
 		}
 		hash |= (pp->isp.ZWriteDis << 20) | (pp->isp.CullMode << 21) | ((autosort ? 6 : pp->isp.DepthMode) << 23);
@@ -421,12 +421,12 @@ public:
 		this->oitBuffers = oitBuffers;
 		OITPipelineManager::Init(shaderManager, oitBuffers);
 
-		renderToTextureBuffer = settings.rend.RenderToTextureBuffer;
+		renderToTextureBuffer = config::RenderToTextureBuffer;
 		rttRenderPasses.Reset();
 	}
 	void CheckSettingsChange()
 	{
-		if (renderToTextureBuffer != settings.rend.RenderToTextureBuffer)
+		if (renderToTextureBuffer != config::RenderToTextureBuffer)
 		{
 			Init(shaderManager, oitBuffers);
 		}

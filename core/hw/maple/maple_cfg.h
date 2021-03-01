@@ -1,6 +1,25 @@
 #pragma once
 #include "types.h"
 
+enum MapleDeviceType
+{
+	MDT_SegaController,
+
+	MDT_SegaVMU,
+	MDT_Microphone,
+	MDT_PurupuruPack,
+	MDT_AsciiStick,
+	MDT_Keyboard,
+	MDT_Mouse,
+	MDT_LightGun,
+	MDT_TwinStick,
+
+	MDT_NaomiJamma,
+
+	MDT_None,
+	MDT_Count
+};
+
 enum PlainJoystickAxisId
 {
 	PJAI_X1 = 0,

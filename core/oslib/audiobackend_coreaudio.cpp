@@ -120,7 +120,7 @@ static void coreaudio_init()
     err = AudioUnitInitialize(audioUnit);
     verify(err == noErr);
 
-	BUFSIZE = settings.aica.BufferSize * 4;
+	BUFSIZE = config::AudioBufferSize * 4;
 	samples_temp = new u8[BUFSIZE]();
 	samples_rptr = 0;
 	samples_wptr = 0;

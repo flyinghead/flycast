@@ -288,7 +288,7 @@ protected:
 			fogTexture->tex_type = TextureType::_8;
 			fog_needs_update = true;
 		}
-		if (!fog_needs_update || !settings.rend.Fog)
+		if (!fog_needs_update || !config::Fog)
 			return;
 		fog_needs_update = false;
 		u8 texData[256];

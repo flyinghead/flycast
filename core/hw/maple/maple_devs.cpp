@@ -4,6 +4,7 @@
 #include "hw/pvr/spg.h"
 #include "stdclass.h"
 #include "oslib/audiostream.h"
+#include "cfg/option.h"
 
 #include <zlib.h>
 
@@ -1361,4 +1362,61 @@ maple_device* maple_Create(MapleDeviceType type)
 	}
 
 	return rv;
+}
+
+void SetMousePosition(int x, int y, int width, int height, u32 mouseId)
+{
+	if (mouseId == 0)
+	{
+		mo_x_phy = x;
+		mo_y_phy = y;
+	}
+
+	if (config::Rotate90)
+	{
+		int t = y;
+		y = x;
+		x = height - t;
+		std::swap(width, height);
+	}
+	float fx, fy;
+	if ((float)width / height >= 640.f / 480.f)
+	{
+		float scale = 480.f / height;
+		fy = y * scale;
+		scale /= config::ScreenStretching / 100.f;
+		fx = (x - (width - 640.f / scale) / 2.f) * scale;
+	}
+	else
+	{
+		float scale = 640.f / width;
+		fx = x * scale;
+		scale /= config::ScreenStretching / 100.f;
+		fy = (y - (height - 480.f / scale) / 2.f) * scale;
+	}
+	mo_x_abs[mouseId] = (int)std::round(fx);
+	mo_y_abs[mouseId] = (int)std::round(fy);
+
+	if (mo_x_prev[mouseId] != -1)
+	{
+		mo_x_delta[mouseId] += (f32)(x - mo_x_prev[mouseId]) * config::MouseSensitivity / 100.f;
+		mo_y_delta[mouseId] += (f32)(y - mo_y_prev[mouseId]) * config::MouseSensitivity / 100.f;
+	}
+	mo_x_prev[mouseId] = x;
+	mo_y_prev[mouseId] = y;
+}
+
+void SetRelativeMousePosition(int xrel, int yrel, u32 mouseId)
+{
+	if (config::Rotate90)
+	{
+		std::swap(xrel, yrel);
+		xrel = -xrel;
+	}
+	float dx = (float)xrel * config::MouseSensitivity / 100.f;
+	float dy = (float)yrel * config::MouseSensitivity / 100.f;
+	mo_x_delta[mouseId] += dx;
+	mo_y_delta[mouseId] += dy;
+	mo_x_abs[mouseId] += (int)std::round(dx);
+	mo_y_abs[mouseId] += (int)std::round(dy);
 }

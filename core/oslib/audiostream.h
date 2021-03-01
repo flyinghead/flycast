@@ -1,5 +1,6 @@
 #pragma once
 #include "types.h"
+#include "cfg/option.h"
 
 typedef std::vector<std::string> (*audio_option_callback_t)();
 enum audio_option_type

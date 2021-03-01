@@ -31,6 +31,7 @@ struct ConfigFile {
 	public:
 		bool has_section(const std::string& name);
 		bool has_entry(const std::string& section_name, const std::string& entry_name);
+		bool is_virtual(const std::string& section_name, const std::string& entry_name);
 
 		void parse(FILE* fd);
 		void save(FILE* fd);

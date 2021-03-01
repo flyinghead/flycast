@@ -46,6 +46,7 @@ extern "C" {
 #include "miniupnp.h"
 #include "reios/reios.h"
 #include "hw/naomi/naomi_cart.h"
+#include "cfg/option.h"
 
 #include <map>
 #include <mutex>
@@ -892,11 +893,11 @@ static void *pico_thread_func(void *)
     }
 
 	u32 addr;
-	pico_string_to_ipv4(settings.network.dns.c_str(), &addr);
+	pico_string_to_ipv4(config::DNS.get().c_str(), &addr);
 	memcpy(&dnsaddr.addr, &addr, sizeof(addr));
 
 	// Create ppp/eth device
-	if (!settings.network.EmulateBBA)
+	if (!config::EmulateBBA)
 	{
 		// PPP
 		pico_dev = pico_ppp_create();
@@ -1041,7 +1042,7 @@ static void *pico_thread_func(void *)
 
 	if (pico_dev)
 	{
-		if (!settings.network.EmulateBBA)
+		if (!config::EmulateBBA)
 		{
 			pico_ppp_destroy(pico_dev);
 		}

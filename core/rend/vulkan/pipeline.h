@@ -227,7 +227,7 @@ private:
 		hash |= ((listType >> 1) << 5);
 		bool ignoreTexAlpha = pp->tsp.IgnoreTexA || pp->tcw.PixelFmt == Pixel565;
 		hash |= (pp->tsp.ShadInstr << 7) | (ignoreTexAlpha << 9) | (pp->tsp.UseAlpha << 10)
-			| (pp->tsp.ColorClamp << 11) | ((settings.rend.Fog ? pp->tsp.FogCtrl : 2) << 12) | (pp->tsp.SrcInstr << 14)
+			| (pp->tsp.ColorClamp << 11) | ((config::Fog ? pp->tsp.FogCtrl : 2) << 12) | (pp->tsp.SrcInstr << 14)
 			| (pp->tsp.DstInstr << 17);
 		hash |= (pp->isp.ZWriteDis << 20) | (pp->isp.CullMode << 21) | (pp->isp.DepthMode << 23);
 		hash |= ((u32)sortTriangles << 26) | ((u32)BaseTextureCacheData::IsGpuHandledPaletted(pp->tsp, pp->tcw) << 27);
@@ -287,7 +287,7 @@ public:
 	void Init(ShaderManager *shaderManager)
 	{
 		// RTT render pass
-		renderToTextureBuffer = settings.rend.RenderToTextureBuffer;
+		renderToTextureBuffer = config::RenderToTextureBuffer;
 	    vk::AttachmentDescription attachmentDescriptions[] = {
 	    		vk::AttachmentDescription(vk::AttachmentDescriptionFlags(), vk::Format::eR8G8B8A8Unorm, vk::SampleCountFlagBits::e1,
 	    				vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eStore, vk::AttachmentLoadOp::eDontCare, vk::AttachmentStoreOp::eDontCare,
@@ -320,7 +320,7 @@ public:
 
 	void CheckSettingsChange()
 	{
-		if (renderToTextureBuffer != settings.rend.RenderToTextureBuffer)
+		if (renderToTextureBuffer != config::RenderToTextureBuffer)
 			Init(shaderManager);
 	}
 

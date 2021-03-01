@@ -450,7 +450,9 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/cfg/cfg.h
         core/cfg/cl.cpp
         core/cfg/ini.cpp
-        core/cfg/ini.h)
+        core/cfg/ini.h
+        core/cfg/option.cpp
+        core/cfg/option.h)
 
 target_sources(${PROJECT_NAME} PRIVATE
         core/hw/aica/aica.cpp

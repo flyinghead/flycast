@@ -15,6 +15,7 @@
 #include "hw/sh4/sh4_mem.h"
 #include "reios/reios.h"
 #include "hw/bba/bba.h"
+#include "cfg/option.h"
 
 MemChip *sys_rom;
 MemChip *sys_nvmem;
@@ -110,20 +111,20 @@ void FixUpFlash()
 		static_cast<DCFlashChip*>(sys_nvmem)->Validate();
 
 		// overwrite factory flash settings
-		if (settings.dreamcast.region <= 2)
+		if (config::Region <= 2)
 		{
-			sys_nvmem->data[0x1a002] = '0' + settings.dreamcast.region;
-			sys_nvmem->data[0x1a0a2] = '0' + settings.dreamcast.region;
+			sys_nvmem->data[0x1a002] = '0' + config::Region;
+			sys_nvmem->data[0x1a0a2] = '0' + config::Region;
 		}
-		if (settings.dreamcast.language <= 5)
+		if (config::Language <= 5)
 		{
-			sys_nvmem->data[0x1a003] = '0' + settings.dreamcast.language;
-			sys_nvmem->data[0x1a0a3] = '0' + settings.dreamcast.language;
+			sys_nvmem->data[0x1a003] = '0' + config::Language;
+			sys_nvmem->data[0x1a0a3] = '0' + config::Language;
 		}
-		if (settings.dreamcast.broadcast <= 3)
+		if (config::Broadcast <= 3)
 		{
-			sys_nvmem->data[0x1a004] = '0' + settings.dreamcast.broadcast;
-			sys_nvmem->data[0x1a0a4] = '0' + settings.dreamcast.broadcast;
+			sys_nvmem->data[0x1a004] = '0' + config::Broadcast;
+			sys_nvmem->data[0x1a0a4] = '0' + config::Broadcast;
 		}
 
 		// overwrite user settings
@@ -143,8 +144,8 @@ void FixUpFlash()
 		u32 now = GetRTC_now();
 		syscfg.time_lo = now & 0xffff;
 		syscfg.time_hi = now >> 16;
-		if (settings.dreamcast.language <= 5)
-			syscfg.lang = settings.dreamcast.language;
+		if (config::Language <= 5)
+			syscfg.lang = config::Language;
 
 		if (static_cast<DCFlashChip*>(sys_nvmem)->WriteBlock(FLASH_PT_USER, FLASH_USER_SYSCFG, &syscfg) != 1)
 			WARN_LOG(FLASHROM, "Failed to save time and language to flash RAM");
@@ -208,7 +209,7 @@ void SaveRomFiles()
 bool LoadHle()
 {
 	if (!nvmem_load())
-		WARN_LOG(FLASHROM, "No nvmem loaded\n");
+		WARN_LOG(FLASHROM, "No nvmem loaded");
 
 	reios_reset(sys_rom->data);
 
@@ -313,7 +314,7 @@ T DYNACALL ReadMem_area0(u32 addr)
 	{
 		if (settings.platform.system != DC_PLATFORM_DREAMCAST)
 			return (T)libExtDevice_ReadMem_A0_006(addr, sz);
-		else if (!settings.network.EmulateBBA)
+		else if (!config::EmulateBBA)
 			return (T)ModemReadMem_A0_006(addr, sz);
 		else
 			return (T)0;
@@ -344,7 +345,7 @@ T DYNACALL ReadMem_area0(u32 addr)
 	{
 		if (settings.platform.system == DC_PLATFORM_NAOMI)
 			return (T)libExtDevice_ReadMem_A0_010(addr, sz);
-		else if (settings.network.EmulateBBA)
+		else if (config::EmulateBBA)
 			return (T)bba_ReadMem(addr, sz);
 		else
 			return (T)0;
@@ -404,7 +405,7 @@ void  DYNACALL WriteMem_area0(u32 addr,T data)
 	{
 		if (settings.platform.system != DC_PLATFORM_DREAMCAST)
 			libExtDevice_WriteMem_A0_006(addr, data, sz);
-		else if (!settings.network.EmulateBBA)
+		else if (!config::EmulateBBA)
 			ModemWriteMem_A0_006(addr, data, sz);
 	}
 	//map 0x0060 to 0x006F
@@ -432,7 +433,7 @@ void  DYNACALL WriteMem_area0(u32 addr,T data)
 	{
 		if (settings.platform.system == DC_PLATFORM_NAOMI)
 			libExtDevice_WriteMem_A0_010(addr, data, sz);
-		else if (settings.network.EmulateBBA)
+		else if (config::EmulateBBA)
 			bba_WriteMem(addr, data, sz);
 	}
 	else

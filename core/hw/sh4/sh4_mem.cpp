@@ -314,14 +314,14 @@ void SetMemoryHandlers()
 {
 #ifndef NO_MMU
 #ifdef STRICT_MODE
-	if (settings.dynarec.Enable && interpreterRunning)
+	if (config::DynarecEnabled && interpreterRunning)
 	{
 		// Flush caches when interp -> dynarec
 		ocache.WriteBackAll();
 		icache.Invalidate();
 	}
 
-	if (!settings.dynarec.Enable)
+	if (!config::DynarecEnabled)
 	{
 		interpreterRunning = true;
 		IReadMem16 = &IReadCachedMem;
@@ -339,7 +339,7 @@ void SetMemoryHandlers()
 	}
 	interpreterRunning = false;
 #endif
-	if (CCN_MMUCR.AT == 1 && settings.dreamcast.FullMMU)
+	if (CCN_MMUCR.AT == 1 && config::FullMMU)
 	{
 		IReadMem16 = &mmu_IReadMem16;
 		ReadMem8 = &mmu_ReadMem<u8>;

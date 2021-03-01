@@ -174,7 +174,7 @@ void select_directory_popup(const char *prompt, float scaling, StringCallback ca
                         else
                         {
                             std::string extension = get_file_extension(name);
-                            if ( extension == "zip" || extension == "7z" || extension == "chd" || extension == "gdi" || ((settings.dreamcast.HideLegacyNaomiRoms
+                            if (extension == "zip" || extension == "7z" || extension == "chd" || extension == "gdi" || ((config::HideLegacyNaomiRoms
                                     || (extension != "bin" && extension != "lst" && extension != "dat"))
                             && extension != "cdi" && extension != "cue") == false )
                                 display_files.push_back(name);
@@ -544,4 +544,128 @@ const ImWchar* GetGlyphRangesChineseTraditionalOfficial()
         UnpackAccumulativeOffsetsIntoRanges(0x4E00, accumulative_offsets_from_0x4E00, IM_ARRAYSIZE(accumulative_offsets_from_0x4E00), full_ranges + IM_ARRAYSIZE(base_ranges));
     }
     return &full_ranges[0];
+}
+
+// Helper to display a little (?) mark which shows a tooltip when hovered.
+void ShowHelpMarker(const char* desc)
+{
+    ImGui::TextDisabled("(?)");
+    if (ImGui::IsItemHovered())
+    {
+        ImGui::BeginTooltip();
+        ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
+        ImGui::TextUnformatted(desc);
+        ImGui::PopTextWrapPos();
+        ImGui::EndTooltip();
+    }
+}
+
+template<bool PerGameOption>
+bool OptionCheckbox(const char *name, config::Option<bool, PerGameOption>& option, const char *help)
+{
+	bool b = option;
+	if (option.isReadOnly())
+	{
+        ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
+        ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
+	}
+	bool pressed = ImGui::Checkbox(name, &b);
+	if (option.isReadOnly())
+	{
+        ImGui::PopItemFlag();
+        ImGui::PopStyleVar();
+	}
+	if (pressed)
+		option.set(b);
+	if (help != nullptr)
+	{
+		ImGui::SameLine();
+		ShowHelpMarker(help);
+	}
+	return pressed;
+}
+template bool OptionCheckbox(const char *name, config::Option<bool, true>& option, const char *help);
+template bool OptionCheckbox(const char *name, config::Option<bool, false>& option, const char *help);
+
+bool OptionSlider(const char *name, config::Option<int>& option, int min, int max, const char *help)
+{
+	int v = option;
+	if (option.isReadOnly())
+	{
+        ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
+        ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
+	}
+	bool valueChanged = ImGui::SliderInt(name, &v, min, max);
+	if (option.isReadOnly())
+	{
+        ImGui::PopItemFlag();
+        ImGui::PopStyleVar();
+	}
+	else if (valueChanged)
+		option.set(v);
+	if (help != nullptr)
+	{
+		ImGui::SameLine();
+		ShowHelpMarker(help);
+	}
+	return valueChanged;
+}
+
+template<typename T>
+bool OptionRadioButton(const char *name, config::Option<T>& option, T value, const char *help)
+{
+	int v = (int)option;
+	if (option.isReadOnly())
+	{
+        ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
+        ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
+	}
+	bool pressed = ImGui::RadioButton(name, &v, (int)value);
+	if (option.isReadOnly())
+	{
+        ImGui::PopItemFlag();
+        ImGui::PopStyleVar();
+	}
+	if (pressed)
+		option.set((T)v);
+	if (help != nullptr)
+	{
+		ImGui::SameLine();
+		ShowHelpMarker(help);
+	}
+	return pressed;
+}
+template bool OptionRadioButton<bool>(const char *name, config::Option<bool>& option, bool value, const char *help);
+template bool OptionRadioButton<int>(const char *name, config::Option<int>& option, int value, const char *help);
+
+void OptionComboBox(const char *name, config::Option<int>& option, const char *values[], int count,
+			const char *help)
+{
+	if (option.isReadOnly())
+	{
+        ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
+        ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
+	}
+	if (ImGui::BeginCombo(name, values[option], ImGuiComboFlags_None))
+	{
+		for (int i = 0; i < count; i++)
+		{
+			bool is_selected = option == i;
+			if (ImGui::Selectable(values[i], &is_selected))
+				option = i;
+            if (is_selected)
+                ImGui::SetItemDefaultFocus();
+		}
+		ImGui::EndCombo();
+	}
+	if (option.isReadOnly())
+	{
+        ImGui::PopItemFlag();
+        ImGui::PopStyleVar();
+	}
+	if (help != nullptr)
+	{
+		ImGui::SameLine();
+		ShowHelpMarker(help);
+	}
 }

@@ -2,6 +2,7 @@
 #include "types.h"
 #include "hw/sh4/sh4_mmr.h"
 #include "hw/mem/_vmem.h"
+#include "cfg/option.h"
 
 //Translation Types
 //Opcode read
@@ -51,7 +52,7 @@ void mmu_raise_exception(u32 mmu_error, u32 address, u32 am);
 static INLINE bool mmu_enabled()
 {
 #ifndef NO_MMU
-	return settings.dreamcast.FullMMU && CCN_MMUCR.AT == 1;
+	return config::FullMMU && CCN_MMUCR.AT == 1;
 #else
 	return false;
 #endif

@@ -174,7 +174,7 @@ void PipelineManager::CreatePipeline(u32 listType, bool sortTriangles, const Pol
 
 	// Input assembly state
 	vk::PipelineInputAssemblyStateCreateInfo pipelineInputAssemblyStateCreateInfo(vk::PipelineInputAssemblyStateCreateFlags(),
-			sortTriangles && !settings.rend.PerStripSorting ? vk::PrimitiveTopology::eTriangleList : vk::PrimitiveTopology::eTriangleStrip);
+			sortTriangles && !config::PerStripSorting ? vk::PrimitiveTopology::eTriangleList : vk::PrimitiveTopology::eTriangleStrip);
 
 	// Viewport and scissor states
 	vk::PipelineViewportStateCreateInfo pipelineViewportStateCreateInfo(vk::PipelineViewportStateCreateFlags(), 1, nullptr, 1, nullptr);
@@ -205,7 +205,7 @@ void PipelineManager::CreatePipeline(u32 listType, bool sortTriangles, const Pol
 	else
 		depthOp = depthOps[pp.isp.DepthMode];
 	bool depthWriteEnable;
-	if (sortTriangles && !settings.rend.PerStripSorting)
+	if (sortTriangles && !config::PerStripSorting)
 		// FIXME temporary work-around for intel driver bug
 		depthWriteEnable = GetContext()->GetVendorID() == VENDOR_INTEL;
 	else
@@ -295,7 +295,7 @@ void PipelineManager::CreatePipeline(u32 listType, bool sortTriangles, const Pol
 	params.bumpmap = pp.tcw.PixelFmt == PixelBumpMap;
 	params.clamping = pp.tsp.ColorClamp && (pvrrc.fog_clamp_min != 0 || pvrrc.fog_clamp_max != 0xffffffff);
 	params.insideClipTest = (pp.tileclip >> 28) == 3;
-	params.fog = settings.rend.Fog ? pp.tsp.FogCtrl : 2;
+	params.fog = config::Fog ? pp.tsp.FogCtrl : 2;
 	params.gouraud = pp.pcw.Gouraud;
 	params.ignoreTexAlpha = pp.tsp.IgnoreTexA || pp.tcw.PixelFmt == Pixel565;
 	params.offset = pp.pcw.Offset;

@@ -21,6 +21,7 @@
 #pragma once
 #include "TexCache.h"
 #include "hw/pvr/ta_ctx.h"
+#include "cfg/option.h"
 
 #include <glm/glm.hpp>
 #include <glm/gtx/transform.hpp>
@@ -127,7 +128,7 @@ public:
 			normalMatrix = glm::translate(glm::vec3(startx, starty, 0));
 			scissorMatrix = normalMatrix;
 
-			const float screen_stretching = settings.rend.ScreenStretching / 100.f;
+			const float screen_stretching = config::ScreenStretching / 100.f;
 			float scissoring_scale_x, scissoring_scale_y;
 			GetFramebufferScaling(true, scissoring_scale_x, scissoring_scale_y);
 
@@ -135,7 +136,7 @@ public:
 			float y_coef;
 			glm::mat4 trans_rot;
 
-			if (settings.rend.Rotate90)
+			if (config::Rotate90)
 			{
 				float dc2s_scale_h = screen_height / 640.0f;
 				if (screen_width / 480.f < dc2s_scale_h)
@@ -184,7 +185,7 @@ public:
 				* glm::scale(glm::vec3(x_coef * scissoring_scale_x, y_coef * scissoring_scale_y, 1.f))
 				* scissorMatrix;
 		}
-		normalMatrix = glm::scale(glm::vec3(1, 1, 1 / settings.rend.ExtraDepthScale))
+		normalMatrix = glm::scale(glm::vec3(1, 1, 1 / config::ExtraDepthScale))
 				* normalMatrix;
 
 		glm::mat4 vp_trans = glm::translate(glm::vec3(1, 1, 0));
@@ -195,7 +196,7 @@ public:
 		}
 		else
 		{
-			float screen_scaling = settings.rend.ScreenScaling / 100.f;
+			float screen_scaling = config::ScreenScaling / 100.f;
 			vp_trans = glm::scale(glm::vec3(screen_width * screen_scaling / 2, screen_height * screen_scaling / 2, 1.f))
 				* vp_trans;
 		}

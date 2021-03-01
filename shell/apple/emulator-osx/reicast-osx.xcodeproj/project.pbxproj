@@ -304,6 +304,7 @@
 		AE8C274321122E2500D4D8F4 /* xbrz.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE8C273D21122E2500D4D8F4 /* xbrz.cpp */; };
 		AE90679B235B6F6400CE473C /* gl_context.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE90679A235B6F6400CE473C /* gl_context.cpp */; };
 		AE90679D235DF80400CE473C /* osd.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE90679C235DF80400CE473C /* osd.cpp */; };
+		AE9125CC25E3BBDC00ED4594 /* option.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE9125CB25E3BBDC00ED4594 /* option.cpp */; };
 		AEA93E51259BA2180076297F /* audiobackend_sdl2.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AEA93E50259BA2170076297F /* audiobackend_sdl2.cpp */; };
 		AEA93E5C259BCD530076297F /* rtl8139c.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AEA93E56259BCD530076297F /* rtl8139c.cpp */; };
 		AEA93E60259BCD530076297F /* bba.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AEA93E5A259BCD530076297F /* bba.cpp */; };
@@ -915,6 +916,8 @@
 		AE8C274021122E2500D4D8F4 /* xbrz_tools.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = xbrz_tools.h; sourceTree = "<group>"; };
 		AE90679A235B6F6400CE473C /* gl_context.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = gl_context.cpp; sourceTree = "<group>"; };
 		AE90679C235DF80400CE473C /* osd.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = osd.cpp; sourceTree = "<group>"; };
+		AE9125CA25E3BBDC00ED4594 /* option.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = option.h; sourceTree = "<group>"; };
+		AE9125CB25E3BBDC00ED4594 /* option.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = option.cpp; sourceTree = "<group>"; };
 		AEA93E50259BA2170076297F /* audiobackend_sdl2.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = audiobackend_sdl2.cpp; sourceTree = "<group>"; };
 		AEA93E53259BCD530076297F /* rtl8139c.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = rtl8139c.h; sourceTree = "<group>"; };
 		AEA93E55259BCD530076297F /* bba.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = bba.h; sourceTree = "<group>"; };
@@ -1254,6 +1257,8 @@
 		84B7BD131B72720100F9733F /* cfg */ = {
 			isa = PBXGroup;
 			children = (
+				AE9125CB25E3BBDC00ED4594 /* option.cpp */,
+				AE9125CA25E3BBDC00ED4594 /* option.h */,
 				8491687D1B782B2D00F3F2B4 /* ini.cpp */,
 				8491687E1B782B2D00F3F2B4 /* ini.h */,
 				84B7BD141B72720100F9733F /* cfg.cpp */,
@@ -2950,6 +2955,7 @@
 				AEFF7F56214D9D590068CE11 /* pico_ethernet.c in Sources */,
 				AEE6277E220D7B7E00EC7E89 /* imgui_widgets.cpp in Sources */,
 				84B7BF771B72720200F9733F /* reios_elf.cpp in Sources */,
+				AE9125CC25E3BBDC00ED4594 /* option.cpp in Sources */,
 				84B7BF5C1B72720200F9733F /* common.cpp in Sources */,
 				AE82C6BE25B64AE200C79BC2 /* zip_source_crc.c in Sources */,
 				84B7BF681B72720200F9733F /* audiobackend_directsound.cpp in Sources */,
@@ -3056,7 +3062,6 @@
 				GCC_FAST_MATH = YES;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PREPROCESSOR_DEFINITIONS = (
-					TARGET_NO_COREIO_HTTP,
 					TARGET_NO_OPENMP,
 					CHD5_LZMA,
 					_7ZIP_ST,
@@ -3109,7 +3114,6 @@
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_FAST_MATH = YES;
 				GCC_PREPROCESSOR_DEFINITIONS = (
-					TARGET_NO_COREIO_HTTP,
 					TARGET_NO_OPENMP,
 					CHD5_LZMA,
 					_7ZIP_ST,

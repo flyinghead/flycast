@@ -200,8 +200,6 @@ void common_linux_setup()
 	install_fault_handler();
 	signal(SIGINT, exit);
 	
-	settings.profile.run_counts=0;
-	
 	DEBUG_LOG(BOOT, "Linux paging: %ld %08X %08X", sysconf(_SC_PAGESIZE), PAGE_SIZE, PAGE_MASK);
 	verify(PAGE_MASK==(sysconf(_SC_PAGESIZE)-1));
 }

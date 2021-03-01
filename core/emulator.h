@@ -23,8 +23,7 @@
 #include <map>
 #include <vector>
 
-void InitSettings();
-void LoadSettings(bool game_specific);
+void LoadGameSpecificSettings();
 void SaveSettings();
 
 extern std::atomic<bool> loading_canceled;
@@ -35,6 +34,7 @@ void dc_init();
 void* dc_run(void*);
 void dc_term();
 void dc_stop();
+void dc_term_game();
 void dc_request_reset();
 void dc_exit();
 void dc_resume();

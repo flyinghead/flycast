@@ -234,8 +234,8 @@ const Cheat CheatManager::_widescreen_cheats[] =
 		{ "T9103M    ", nullptr,    { 0x25C714, 0x25C744, 0 }, { 0x43F00000, 0x3F400000 } },	// Sorcerian - Shichisei Mahou no Shito
 		{ "T1401D  50", nullptr,    { 0x2D6138, 0 }, { 0x3F400000 } },		// Soul Calibur (PAL)
 		{ "T1401N    ", nullptr,    { 0x266C28, 0 }, { 0x3F400000 } },		// Soul Calibur (USA)
-		{ "T36802N   ", nullptr,    { 0x129FA0, 0x12A9BC, 0x1C9FDC, 0 },
-				{ 0x3EF00000, 0x3EF00000, 0x000000F0 } },					// Soul Reaver (PAL) Code 2 is a Render Fix
+		{ "T36802N   ", "  E     ", { 0x129FA0, 0x12A9BC, 0x1C9FDC, 0 },
+				{ 0x3EF55555, 0x3EF55555, 0x000000F0 } },					// Soul Reaver (PAL) Code 2 is a Render Fix
 		{ "HDR-0190  ", nullptr,    { 0x14D3E0, 0 }, { 0x3F400000 } },		// Space Channel 5 Part 2 (JP)
 		{ "T1216M    ", nullptr, { 0x017C38, 0x17F00, 0 }, { 0x3A99999A, 0x3A99999A } }, // Spawn - In the Demon's Hand v1.003 (JP)
 		{ "T1216N    ", nullptr, { 0x017C58, 0x17F20, 0 }, { 0x3A99999A, 0x3A99999A } }, // Spawn - In the Demon's Hand v1.000 (US)
@@ -305,7 +305,7 @@ CheatManager cheatManager;
 bool CheatManager::Reset()
 {
 	_widescreen_cheat = nullptr;
-	if (!settings.rend.WidescreenGameHacks)
+	if (!config::WidescreenGameHacks)
 		return false;
 	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
 	{

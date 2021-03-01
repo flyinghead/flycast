@@ -38,7 +38,7 @@ public:
 	virtual u32 ReadMem(u32 address, u32 size) override;
 	virtual void WriteMem(u32 address, u32 data, u32 size) override;
 	virtual void* GetDmaPtr(u32 &size) override;
-	virtual void AdvancePtr(u32 size) override;
+	virtual void AdvancePtr(u32 size) override {}
 	virtual void Serialize(void** data, unsigned int* total_size) override;
 	virtual void Unserialize(void** data, unsigned int* total_size) override;
 
@@ -52,20 +52,12 @@ protected:
 	u32 DmaOffset;
 	u32 DmaCount;
 	u32 key = 0;
-	// Naomi 840-0001E communication board
-	u16 comm_ctrl = 0xC000;
-	u16 comm_offset = 0;
-	u16 comm_status0 = 0;
-	u16 comm_status1 = 0;
-	u16 m68k_ram[128 * 1024 / sizeof(u16)];
-	u16 comm_ram[64 * 1024 / sizeof(u16)];
 };
 
 class DecryptedCartridge : public NaomiCartridge
 {
 public:
 	DecryptedCartridge(u8 *rom_ptr, u32 size) : NaomiCartridge(size) { free(RomPtr); RomPtr = rom_ptr; }
-	virtual ~DecryptedCartridge() override;
 };
 
 class M2Cartridge : public NaomiCartridge
@@ -94,10 +86,10 @@ public:
 void naomi_cart_LoadRom(const char* file);
 void naomi_cart_Close();
 int naomi_cart_GetPlatform(const char *path);
+void naomi_cart_LoadBios(const char *filename);
 
 extern char naomi_game_id[];
 extern u8 *naomi_default_eeprom;
-extern bool naomi_rotate_screen;
 
 extern Cartridge *CurrentCartridge;
 

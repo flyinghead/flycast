@@ -3,6 +3,7 @@
 #include "maple_if.h"
 #include "hw/naomi/naomi_cart.h"
 #include "input/gamepad_device.h"
+#include "cfg/option.h"
 
 static u8 GetBtFromSgn(s8 val)
 {
@@ -242,14 +243,14 @@ void mcfg_CreateDevices()
 {
 	for (int bus = 0; bus < MAPLE_PORTS; ++bus)
 	{
-		switch ((MapleDeviceType)settings.input.maple_devices[bus])
+		switch (config::MapleMainDevices[bus])
 		{
 		case MDT_SegaController:
 			mcfg_Create(MDT_SegaController, bus, 5);
-			if (settings.input.maple_expansion_devices[bus][0] != MDT_None)
-				mcfg_Create((MapleDeviceType)settings.input.maple_expansion_devices[bus][0], bus, 0);
-			if (settings.input.maple_expansion_devices[bus][1] != MDT_None)
-				mcfg_Create((MapleDeviceType)settings.input.maple_expansion_devices[bus][1], bus, 1);
+			if (config::MapleExpansionDevices[bus][0] != MDT_None)
+				mcfg_Create(config::MapleExpansionDevices[bus][0], bus, 0);
+			if (config::MapleExpansionDevices[bus][1] != MDT_None)
+				mcfg_Create(config::MapleExpansionDevices[bus][1], bus, 1);
 			break;
 
 		case MDT_Keyboard:
@@ -262,27 +263,27 @@ void mcfg_CreateDevices()
 
 		case MDT_LightGun:
 			mcfg_Create(MDT_LightGun, bus, 5);
-			if (settings.input.maple_expansion_devices[bus][0] != MDT_None)
-				mcfg_Create((MapleDeviceType)settings.input.maple_expansion_devices[bus][0], bus, 0);
+			if (config::MapleExpansionDevices[bus][0] != MDT_None)
+				mcfg_Create(config::MapleExpansionDevices[bus][0], bus, 0);
 			break;
 
 		case MDT_TwinStick:
 			mcfg_Create(MDT_TwinStick, bus, 5);
-			if (settings.input.maple_expansion_devices[bus][0] != MDT_None)
-				mcfg_Create((MapleDeviceType)settings.input.maple_expansion_devices[bus][0], bus, 0);
+			if (config::MapleExpansionDevices[bus][0] != MDT_None)
+				mcfg_Create(config::MapleExpansionDevices[bus][0], bus, 0);
 			break;
 
 		case MDT_AsciiStick:
 			mcfg_Create(MDT_AsciiStick, bus, 5);
-			if (settings.input.maple_expansion_devices[bus][0] != MDT_None)
-				mcfg_Create((MapleDeviceType)settings.input.maple_expansion_devices[bus][0], bus, 0);
+			if (config::MapleExpansionDevices[bus][0] != MDT_None)
+				mcfg_Create(config::MapleExpansionDevices[bus][0], bus, 0);
 			break;
 
 		case MDT_None:
 			break;
 
 		default:
-			WARN_LOG(MAPLE, "Invalid device type %d for port %d", settings.input.maple_devices[bus], bus);
+			WARN_LOG(MAPLE, "Invalid device type %d for port %d", (MapleDeviceType)config::MapleMainDevices[bus], bus);
 			break;
 		}
 	}

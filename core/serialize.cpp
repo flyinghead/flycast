@@ -20,6 +20,7 @@
 #include "hw/naomi/naomi_cart.h"
 #include "hw/sh4/sh4_cache.h"
 #include "hw/bba/bba.h"
+#include "cfg/option.h"
 
 extern "C" void DYNACALL TAWriteSQ(u32 address,u8* sqb);
 
@@ -439,8 +440,8 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	REICAST_S(sch_list[vblank_schid].start) ;
 	REICAST_S(sch_list[vblank_schid].end) ;
 
-	REICAST_S(settings.network.EmulateBBA);
-	if (settings.network.EmulateBBA)
+	REICAST_S(config::EmulateBBA.get());
+	if (config::EmulateBBA)
 	{
 		bba_Serialize(data, total_size);
 	}
@@ -474,9 +475,9 @@ bool dc_serialize(void **data, unsigned int *total_size)
 
 	naomi_Serialize(data, total_size);
 
-	REICAST_S(settings.dreamcast.broadcast);
-	REICAST_S(settings.dreamcast.cable);
-	REICAST_S(settings.dreamcast.region);
+	REICAST_S(config::Broadcast.get());
+	REICAST_S(config::Cable.get());
+	REICAST_S(config::Region.get());
 
 	if (CurrentCartridge != NULL)
 	   CurrentCartridge->Serialize(data, total_size);
@@ -732,14 +733,14 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 
 	naomi_Unserialize(data, total_size, VCUR_LIBRETRO);
 
-	REICAST_US(settings.dreamcast.broadcast);
-	REICAST_US(settings.dreamcast.cable);
-	REICAST_US(settings.dreamcast.region);
+	REICAST_US(config::Broadcast.get());
+	REICAST_US(config::Cable.get());
+	REICAST_US(config::Region.get());
 
 	if (CurrentCartridge != NULL)
 		CurrentCartridge->Unserialize(data, total_size);
 	gd_hle_state.Unserialize(data, total_size);
-	settings.network.EmulateBBA = false;
+	config::EmulateBBA.override(false);
 
 	DEBUG_LOG(SAVESTATE, "Loaded %d bytes (libretro compat)", *total_size);
 
@@ -1013,10 +1014,10 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 	}
 
 	if (version >= V13)
-		REICAST_S(settings.network.EmulateBBA);
+		REICAST_US(config::EmulateBBA.get());
 	else
-		settings.network.EmulateBBA = false;
-	if (settings.network.EmulateBBA)
+		config::EmulateBBA.override(false);
+	if (config::EmulateBBA)
 	{
 		bba_Unserialize(data, total_size);
 	}
@@ -1086,12 +1087,12 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 		REICAST_SKIP(4);
 		REICAST_SKIP(4);
 	}
-	REICAST_US(settings.dreamcast.broadcast);
-	verify(settings.dreamcast.broadcast <= 4);
-	REICAST_US(settings.dreamcast.cable);
-	verify(settings.dreamcast.cable <= 3);
-	REICAST_US(settings.dreamcast.region);
-	verify(settings.dreamcast.region <= 3);
+	REICAST_US(config::Broadcast.get());
+	verify(config::Broadcast <= 4);
+	REICAST_US(config::Cable.get());
+	verify(config::Cable <= 3);
+	REICAST_US(config::Region.get());
+	verify(config::Region <= 3);
 
 	if (CurrentCartridge != NULL)
 		CurrentCartridge->Unserialize(data, total_size);

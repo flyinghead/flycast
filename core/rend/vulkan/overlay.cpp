@@ -22,6 +22,7 @@
 #include "rend/gui.h"
 #include "hw/maple/maple_devs.h"
 #include "overlay.h"
+#include "cfg/option.h"
 
 VulkanOverlay::~VulkanOverlay()
 {
@@ -129,11 +130,11 @@ void VulkanOverlay::Draw(vk::Extent2D viewport, float scaling, bool vmu, bool cr
 	if (crosshair && crosshairsNeeded())
 	{
 		alphaPipeline->BindPipeline(commandBuffer);
-		for (size_t i = 0; i < ARRAY_SIZE(settings.rend.CrosshairColor); i++)
+		for (size_t i = 0; i < config::CrosshairColor.size(); i++)
 		{
-			if (settings.rend.CrosshairColor[i] == 0)
+			if (config::CrosshairColor[i] == 0)
 				continue;
-			if (settings.platform.system == DC_PLATFORM_DREAMCAST && settings.input.maple_devices[i] != MDT_LightGun)
+			if (settings.platform.system == DC_PLATFORM_DREAMCAST && config::MapleMainDevices[i] != MDT_LightGun)
 				continue;
 
 			float x, y;
@@ -143,7 +144,7 @@ void VulkanOverlay::Draw(vk::Extent2D viewport, float scaling, bool vmu, bool cr
 			vk::Viewport viewport(x, y, XHAIR_WIDTH, XHAIR_HEIGHT);
 			commandBuffer.setViewport(0, 1, &viewport);
 			commandBuffer.setScissor(0, vk::Rect2D(vk::Offset2D(x, y), vk::Extent2D(XHAIR_WIDTH, XHAIR_HEIGHT)));
-			u32 color = settings.rend.CrosshairColor[i];
+			u32 color = config::CrosshairColor[i];
 			float xhairColor[4] {
 				(color & 0xff) / 255.f,
 				((color >> 8) & 0xff) / 255.f,

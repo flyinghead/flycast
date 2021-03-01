@@ -873,14 +873,14 @@ void VulkanContext::PresentFrame(vk::ImageView imageView, vk::Extent2D extent) n
 	{
 		try {
 			NewFrame();
-			auto overlayCmdBuffers = PrepareOverlay(settings.rend.FloatVMUs, true);
+			auto overlayCmdBuffers = PrepareOverlay(config::FloatVMUs, true);
 
 			BeginRenderPass();
 
 			if (lastFrameView) // Might have been nullified if swap chain recreated
 				DrawFrame(imageView, extent);
 
-			DrawOverlay(gui_get_scaling(), settings.rend.FloatVMUs, true);
+			DrawOverlay(gui_get_scaling(), config::FloatVMUs, true);
 			renderer->DrawOSD(false);
 			EndFrame(overlayCmdBuffers);
 		} catch (const InvalidVulkanContext& err) {

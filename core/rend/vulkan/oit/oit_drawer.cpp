@@ -104,7 +104,7 @@ void OITDrawer::DrawList(const vk::CommandBuffer& cmdBuffer, u32 listType, bool 
 template<bool Translucent>
 void OITDrawer::DrawModifierVolumes(const vk::CommandBuffer& cmdBuffer, int first, int count)
 {
-	if (count == 0 || pvrrc.modtrig.used() == 0 || !settings.rend.ModifierVolumes)
+	if (count == 0 || pvrrc.modtrig.used() == 0 || !config::ModifierVolumes)
 		return;
 
 	vk::Buffer buffer = GetMainBuffer(0)->buffer.get();
@@ -456,9 +456,9 @@ void OITDrawer::MakeBuffers(int width, int height)
 
 void OITScreenDrawer::MakeFramebuffers()
 {
-	if (currentScreenScaling == settings.rend.ScreenScaling)
+	if (currentScreenScaling == config::ScreenScaling)
 		return;
-	currentScreenScaling = settings.rend.ScreenScaling;
+	currentScreenScaling = config::ScreenScaling;
 	viewport.offset.x = 0;
 	viewport.offset.y = 0;
 	viewport.extent = GetContext()->GetViewPort();
@@ -509,12 +509,12 @@ vk::CommandBuffer OITTextureDrawer::NewFrame()
 	while (widthPow2 < upscaledWidth)
 		widthPow2 *= 2;
 
-	if (settings.rend.RenderToTextureUpscale > 1 && !settings.rend.RenderToTextureBuffer)
+	if (config::RenderToTextureUpscale > 1 && !config::RenderToTextureBuffer)
 	{
-		upscaledWidth *= settings.rend.RenderToTextureUpscale;
-		upscaledHeight *= settings.rend.RenderToTextureUpscale;
-		widthPow2 *= settings.rend.RenderToTextureUpscale;
-		heightPow2 *= settings.rend.RenderToTextureUpscale;
+		upscaledWidth *= config::RenderToTextureUpscale;
+		upscaledHeight *= config::RenderToTextureUpscale;
+		widthPow2 *= config::RenderToTextureUpscale;
+		heightPow2 *= config::RenderToTextureUpscale;
 	}
 
 	rttPipelineManager->CheckSettingsChange();
@@ -529,7 +529,7 @@ vk::CommandBuffer OITTextureDrawer::NewFrame()
 	vk::ImageView colorImageView;
 	vk::ImageLayout colorImageCurrentLayout;
 
-	if (!settings.rend.RenderToTextureBuffer)
+	if (!config::RenderToTextureBuffer)
 	{
 		// TexAddr : fb_rtt.TexAddr, Reserved : 0, StrideSel : 0, ScanOrder : 1
 		TCW tcw = { { textureAddr >> 3, 0, 0, 1 } };
@@ -633,7 +633,7 @@ void OITTextureDrawer::EndFrame()
 		// Happens for Virtua Tennis
 		clippedWidth = stride / 2;
 
-	if (settings.rend.RenderToTextureBuffer)
+	if (config::RenderToTextureBuffer)
 	{
 		vk::BufferImageCopy copyRegion(0, clippedWidth, clippedHeight,
 				vk::ImageSubresourceLayers(vk::ImageAspectFlagBits::eColor, 0, 0, 1), vk::Offset3D(0, 0, 0),
@@ -658,7 +658,7 @@ void OITTextureDrawer::EndFrame()
 	currentCommandBuffer = nullptr;
 	commandPool->EndFrame();
 
-	if (settings.rend.RenderToTextureBuffer)
+	if (config::RenderToTextureBuffer)
 	{
 		vk::Fence fence = commandPool->GetCurrentFence();
 		GetContext()->GetDevice().waitForFences(1, &fence, true, UINT64_MAX);

@@ -5,6 +5,7 @@
 #include "hw/pvr/pvr_mem.h"
 #include "oslib/oslib.h"
 #include "rend/TexCache.h"
+#include "cfg/option.h"
 
 #include <mutex>
 #include <zlib.h>
@@ -225,7 +226,7 @@ bool rend_single_frame(const bool& enabled)
 	{
 		{
 			std::lock_guard<std::mutex> lock(swap_mutex);
-			if (settings.rend.DelayFrameSwapping && !_pvrrc->rend.isRenderFramebuffer && fb_w_cur != FB_R_SOF1 && !do_swap)
+			if (config::DelayFrameSwapping && !_pvrrc->rend.isRenderFramebuffer && fb_w_cur != FB_R_SOF1 && !do_swap)
 				// Delay swap
 				frame_rendered = false;
 			else
@@ -257,7 +258,7 @@ static void rend_create_renderer()
 #ifdef NO_REND
 	renderer	 = rend_norend();
 #else
-	switch (settings.pvr.rend)
+	switch (config::RendererType)
 	{
 	default:
 	case RenderType::OpenGL:

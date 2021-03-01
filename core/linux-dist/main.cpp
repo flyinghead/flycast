@@ -365,8 +365,6 @@ int main(int argc, char* argv[])
 
 	common_linux_setup();
 
-	settings.profile.run_counts=0;
-
 	if (reicast_init(argc, argv))
 		die("Reicast initialization failed\n");
 

@@ -202,10 +202,6 @@
 #define FEAT_DSPREC DYNAREC_NONE
 #endif
 
-#if defined(TARGET_NO_COREIO_HTTP)
-#define FEAT_HAS_COREIO_HTTP 0
-#endif
-
 //defaults
 
 #ifndef FEAT_SHREC
@@ -232,23 +228,9 @@
 	#endif
 #endif
 
-#ifndef FEAT_HAS_COREIO_HTTP
-	#define FEAT_HAS_COREIO_HTTP 1
-#endif
-
 #if HOST_CPU == CPU_X64 || HOST_CPU == CPU_ARM64
 #define HOST_64BIT_CPU
 #endif
-
-//Depricated build configs
-#ifdef HOST_NO_REC
-#error Dont use HOST_NO_REC
-#endif
-
-#ifdef HOST_NO_AREC
-#error Dont use HOST_NO_AREC
-#endif
-
 
 // Compiler Related
 
@@ -278,7 +260,7 @@
 #define GD_CLOCK 33868800				//GDROM XTAL -- 768fs
 
 #define AICA_CORE_CLOCK (GD_CLOCK*4/3)		//[45158400]  GD->PLL 3:4 -> AICA CORE	 -- 1024fs
-#define ADAC_CLOCK (AICA_CORE_CLOCK/2)		//[11289600]  44100*256, AICA CORE -> PLL 4:1 -> ADAC -- 256fs
+#define ADAC_CLOCK (AICA_CORE_CLOCK/4)		//[11289600]  44100*256, AICA CORE -> PLL 4:1 -> ADAC -- 256fs
 #define AICA_ARM_CLOCK (AICA_CORE_CLOCK/2)	//[22579200]  AICA CORE -> PLL 2:1 -> ARM
 #define AICA_SDRAM_CLOCK (GD_CLOCK*2)		//[67737600]  GD-> PLL 2 -> SDRAM
 #define SH4_MAIN_CLOCK (200*1000*1000)		//[200000000] XTal(13.5) -> PLL (33.3) -> PLL 1:6 (200)

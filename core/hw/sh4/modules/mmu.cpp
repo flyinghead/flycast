@@ -648,7 +648,7 @@ retry_ITLB_Match:
 
 void mmu_set_state()
 {
-	if (CCN_MMUCR.AT == 1 && settings.dreamcast.FullMMU)
+	if (CCN_MMUCR.AT == 1 && config::FullMMU)
 	{
 		NOTICE_LOG(SH4, "Enabling Full MMU support");
 		_vmem_enable_mmu(true);
@@ -745,7 +745,7 @@ template void mmu_WriteMem(u32 adr, u64 data);
 
 bool mmu_TranslateSQW(u32 adr, u32* out)
 {
-	if (!settings.dreamcast.FullMMU)
+	if (!config::FullMMU)
 	{
 		//This will only work for 1 mb pages .. hopefully nothing else is used
 		//*FIXME* to work for all page sizes ?

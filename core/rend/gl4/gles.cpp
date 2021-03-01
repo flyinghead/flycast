@@ -563,7 +563,7 @@ static bool gl4_init()
 
 	initABuffer();
 
-	if (settings.rend.TextureUpscale > 1)
+	if (config::TextureUpscale > 1)
 	{
 		// Trick to preload the tables used by xBRZ
 		u32 src[] { 0x11111111, 0x22222222, 0x33333333, 0x44444444 };
@@ -628,12 +628,12 @@ static bool RenderFrame()
 	/*
 		Handle Dc to screen scaling
 	*/
-	const float screen_scaling = settings.rend.ScreenScaling / 100.f;
+	const float screen_scaling = config::ScreenScaling / 100.f;
 	int rendering_width;
 	int rendering_height;
 	if (is_rtt)
 	{
-		int scaling = settings.rend.RenderToTextureBuffer ? 1 : settings.rend.RenderToTextureUpscale;
+		int scaling = config::RenderToTextureBuffer ? 1 : config::RenderToTextureUpscale;
 		rendering_width = matrices.GetDreamcastViewport().x * scaling;
 		rendering_height = matrices.GetDreamcastViewport().y * scaling;
 	}
@@ -661,7 +661,7 @@ static bool RenderFrame()
 	u8* fog_density=(u8*)&FOG_DENSITY;
 	float fog_den_mant=fog_density[1]/128.0f;  //bit 7 -> x. bit, so [6:0] -> fraction -> /128
 	s32 fog_den_exp=(s8)fog_density[0];
-	gl4ShaderUniforms.fog_den_float = fog_den_mant * powf(2.0f,fog_den_exp) * settings.rend.ExtraDepthScale;
+	gl4ShaderUniforms.fog_den_float = fog_den_mant * powf(2.0f,fog_den_exp) * config::ExtraDepthScale;
 
 	gl4ShaderUniforms.fog_clamp_min[0] = ((pvrrc.fog_clamp_min >> 16) & 0xFF) / 255.0f;
 	gl4ShaderUniforms.fog_clamp_min[1] = ((pvrrc.fog_clamp_min >> 8) & 0xFF) / 255.0f;
@@ -673,7 +673,7 @@ static bool RenderFrame()
 	gl4ShaderUniforms.fog_clamp_max[2] = ((pvrrc.fog_clamp_max >> 0) & 0xFF) / 255.0f;
 	gl4ShaderUniforms.fog_clamp_max[3] = ((pvrrc.fog_clamp_max >> 24) & 0xFF) / 255.0f;
 	
-	if (fog_needs_update && settings.rend.Fog)
+	if (fog_needs_update && config::Fog)
 	{
 		fog_needs_update = false;
 		UpdateFogTexture((u8 *)FOG_TABLE, GL_TEXTURE5, GL_RED);
@@ -735,7 +735,7 @@ static bool RenderFrame()
 	}
 	else
 	{
-		if (settings.rend.ScreenScaling != 100 || !theGLContext.IsSwapBufferPreserved())
+		if (config::ScreenScaling != 100 || !theGLContext.IsSwapBufferPreserved())
 		{
 			output_fbo = init_output_framebuffer(rendering_width, rendering_height);
 		}
@@ -772,7 +772,7 @@ static bool RenderFrame()
 		glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(struct PolyParam) * pvrrc.global_param_tr.used(), pvrrc.global_param_tr.head(), GL_STATIC_DRAW);
 		glCheck();
 
-		if (is_rtt || !settings.rend.WideScreen || matrices.IsClipped() || settings.rend.Rotate90)
+		if (is_rtt || !config::Widescreen || matrices.IsClipped() || config::Rotate90)
 		{
 			float width;
 			float height;
@@ -829,12 +829,12 @@ static bool RenderFrame()
 				height = pvrrc.fb_Y_CLIP.max - pvrrc.fb_Y_CLIP.min + 1;
 				min_x = pvrrc.fb_X_CLIP.min;
 				min_y = pvrrc.fb_Y_CLIP.min;
-				if (settings.rend.RenderToTextureUpscale > 1 && !settings.rend.RenderToTextureBuffer)
+				if (config::RenderToTextureUpscale > 1 && !config::RenderToTextureBuffer)
 				{
-					min_x *= settings.rend.RenderToTextureUpscale;
-					min_y *= settings.rend.RenderToTextureUpscale;
-					width *= settings.rend.RenderToTextureUpscale;
-					height *= settings.rend.RenderToTextureUpscale;
+					min_x *= config::RenderToTextureUpscale;
+					min_y *= config::RenderToTextureUpscale;
+					width *= config::RenderToTextureUpscale;
+					height *= config::RenderToTextureUpscale;
 				}
 			}
 			gl4ShaderUniforms.base_clipping.enabled = true;
@@ -866,7 +866,7 @@ static bool RenderFrame()
 
 	if (is_rtt)
 		ReadRTTBuffer();
-	else if (settings.rend.ScreenScaling != 100 || !theGLContext.IsSwapBufferPreserved())
+	else if (config::ScreenScaling != 100 || !theGLContext.IsSwapBufferPreserved())
 		gl4_render_output_framebuffer();
 
 	return !is_rtt;
@@ -885,7 +885,7 @@ struct OpenGL4Renderer : OpenGLRenderer
 	{
 		screen_width=w;
 		screen_height=h;
-		resize((int)lroundf(w * settings.rend.ScreenScaling / 100.f), (int)lroundf(h * settings.rend.ScreenScaling / 100.f));
+		resize((int)lroundf(w * config::ScreenScaling / 100.f), (int)lroundf(h * config::ScreenScaling / 100.f));
 	}
 
 	void Term() override

@@ -319,97 +319,15 @@ struct settings_t
 		u32 bbsram_size;
 	} platform;
 
-	struct {
-		bool UseReios;
-	} bios;
-
 	struct
 	{
-		bool UseMipmaps;
-		bool WideScreen;
-		bool ShowFPS;
-		bool RenderToTextureBuffer;
-		int RenderToTextureUpscale;
-		bool TranslucentPolygonDepthMask;
-		bool ModifierVolumes;
-		bool Clipping;
-		int TextureUpscale;
-		int MaxFilteredTextureSize;
-		f32 ExtraDepthScale;
-		bool CustomTextures;
-		bool DumpTextures;
-		int ScreenScaling;		// in percent. 50 means half the native resolution
-		int ScreenStretching;	// in percent. 150 means stretch from 4/3 to 6/3
-		bool Fog;
-		bool FloatVMUs;
-		bool Rotate90;			// Rotate the screen 90 deg CC
-		bool PerStripSorting;
-		bool DelayFrameSwapping; // Delay swapping frame until FB_R_SOF matches FB_W_SOF
-		bool WidescreenGameHacks;
-		u32 CrosshairColor[4];
-	} rend;
-
-	struct
-	{
-		bool Enable;
-		bool idleskip;
-		bool unstable_opt;
-		bool safemode;
 		bool disable_nvmem;
-		bool disable_vmem32;
 	} dynarec;
 
 	struct
 	{
-		u32 run_counts;
-	} profile;
-
-	struct
-	{
-		u32 cable;			// 0 -> VGA, 1 -> VGA, 2 -> RGB, 3 -> TV
-		u32 region;			// 0 -> JP, 1 -> USA, 2 -> EU, 3 -> default
-		u32 broadcast;		// 0 -> NTSC, 1 -> PAL, 2 -> PAL/M, 3 -> PAL/N, 4 -> default
-		u32 language;		// 0 -> JP, 1 -> EN, 2 -> DE, 3 -> FR, 4 -> SP, 5 -> IT, 6 -> default
-		std::vector<std::string> ContentPath;
-		bool FullMMU;
-		bool ForceWindowsCE;
-		bool HideLegacyNaomiRoms;
-	} dreamcast;
-
-	struct
-	{
-		u32 BufferSize;		//In samples ,*4 for bytes (1024)
-		bool LimitFPS;
-		u32 CDDAMute;
-		bool DSPEnabled;
 		bool NoBatch;
-		bool NoSound;
 	} aica;
-
-	struct{
-		std::string backend;
-
-		// slug<<key, value>>
-		std::map<std::string, std::map<std::string, std::string>> options;
-	} audio;
-
-
-#if USE_OMX
-	struct
-	{
-		u32 Audio_Latency;
-		bool Audio_HDMI;
-	} omx;
-#endif
-
-#if SUPPORT_DISPMANX
-	struct
-	{
-		u32 Width;
-		u32 Height;
-		bool Keep_Aspect;
-	} dispmanx;
-#endif
 
 	struct
 	{
@@ -417,41 +335,11 @@ struct settings_t
 		char ImagePath[512];
 	} imgread;
 
-	struct
-	{
-		u32 ta_skip;
-		RenderType rend;
-
-		u32 MaxThreads;
-		int AutoSkipFrame;		// 0: none, 1: some, 2: more
-
-		bool IsOpenGL() { return rend == RenderType::OpenGL || rend == RenderType::OpenGL_OIT; }
-	} pvr;
-
 	struct {
-		bool SerialConsole;
-		bool SerialPTY;
-	} debug;
-
-	struct {
-		bool OpenGlChecks;
-	} validate;
-
-	struct {
-		u32 MouseSensitivity;
 		JVS JammaSetup;
-		int maple_devices[4];
-		int maple_expansion_devices[4][2];
-		int VirtualGamepadVibration;
 	} input;
 
-	struct {
-		bool Enable;
-		bool ActAsServer;
-		std::string dns;
-		std::string server;
-		bool EmulateBBA;
-	} network;
+	bool gameStarted;
 };
 
 extern settings_t settings;

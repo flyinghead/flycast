@@ -14,6 +14,7 @@
 #include "types.h"
 #include "hw/sh4/sh4_mmr.h"
 #include "hw/sh4/sh4_interrupts.h"
+#include "cfg/option.h"
 
 static int tty = 1;	// stdout by default
 
@@ -65,7 +66,7 @@ static void Serial_UpdateInterrupts()
 
 static void SerialWrite(u32 addr, u32 data)
 {
-	if (settings.debug.SerialConsole)
+	if (config::SerialConsole)
 		write(tty, &data, 1);
 
 	SCIF_SCFSR2.TDFE = 1;
@@ -79,7 +80,7 @@ static u32 ReadSerialStatus(u32 addr)
 {
 #if HOST_OS == OS_LINUX || defined(__APPLE__)
 	int count = 0;
-	if (settings.debug.SerialConsole && tty != 1
+	if (config::SerialConsole && tty != 1
 			&& ioctl(tty, FIONREAD, &count) == 0 && count > 0)
 	{
 		return SCIF_SCFSR2.full | 2;
@@ -169,7 +170,7 @@ void serial_init()
 	sh4_rio_reg(SCIF,SCIF_SCLSR2_addr,RIO_DATA,16);
 
 #if HOST_OS == OS_LINUX || defined(__APPLE__)
-	if (settings.debug.SerialConsole && settings.debug.SerialPTY)
+	if (config::SerialConsole && config::SerialPTY)
 	{
 		tty = open("/dev/ptmx", O_RDWR | O_NDELAY | O_NOCTTY | O_NONBLOCK);
 		if (tty < 0)

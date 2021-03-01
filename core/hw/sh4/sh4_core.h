@@ -1,7 +1,7 @@
 #pragma once
 #include "types.h"
 #include "sh4_if.h"
-
+#include "cfg/option.h"
 
 #define r Sh4cntx.r
 #define r_bank Sh4cntx.r_bank
@@ -107,7 +107,7 @@ struct SH4ThrownException {
 static INLINE void RaiseFPUDisableException()
 {
 #if !defined(NO_MMU)
-	if (settings.dreamcast.FullMMU)
+	if (config::FullMMU)
 	{
 		SH4ThrownException ex = { next_pc - 2, 0x800, 0x100 };
 		throw ex;
@@ -126,7 +126,7 @@ static INLINE void AdjustDelaySlotException(SH4ThrownException& ex)
 		ex.expEvn = 0x1A0;			// Slot illegal instruction exception
 }
 
-// The SH4 sets the signaling bit to 0 for qNaN (unlike all recent CPUs). Some games relies on this.
+// The SH4 sets the signaling bit to 0 for qNaN (unlike all recent CPUs). Some games rely on this.
 static INLINE f32 fixNaN(f32 f)
 {
 #ifdef STRICT_MODE

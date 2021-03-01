@@ -372,7 +372,7 @@ bool vmem32_init()
 #ifdef _WIN32
 	return false;
 #else
-	if (settings.dynarec.disable_vmem32 || !_nvmem_4gb_space())
+	if (config::DisableVmem32 || !_nvmem_4gb_space())
 		return false;
 	vmem32_inited = true;
 	vmem32_flush_mmu();

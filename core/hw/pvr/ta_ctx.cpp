@@ -1,6 +1,7 @@
 #include "ta_ctx.h"
 #include "spg.h"
 #include "oslib/oslib.h"
+#include "cfg/option.h"
 
 extern u32 fskip;
 extern u32 FrameCount;
@@ -77,10 +78,10 @@ bool QueueRender(TA_context* ctx)
 	
 	bool skipFrame = false;
 	RenderCount++;
-	if (RenderCount % (settings.pvr.ta_skip + 1) != 0)
+	if (RenderCount % (config::SkipFrame + 1) != 0)
 		skipFrame = true;
-	else if (rqueue && (settings.pvr.AutoSkipFrame == 0
-				|| (settings.pvr.AutoSkipFrame == 1 && SH4FastEnough)))
+	else if (rqueue && (config::AutoSkipFrame == 0
+				|| (config::AutoSkipFrame == 1 && SH4FastEnough)))
 		// The previous render hasn't completed yet so we wait.
 		// If autoskipframe is enabled (normal level), we only do so if the CPU is running
 		// fast enough over the last frames

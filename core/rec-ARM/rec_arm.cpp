@@ -10,6 +10,7 @@
 #include "hw/sh4/sh4_core.h"
 #include "hw/sh4/dyna/ngen.h"
 #include "hw/sh4/sh4_mem.h"
+#include "cfg/option.h"
 
 #define _DEVEL 1
 #include "arm_emitter/arm_emitter.h"
@@ -949,7 +950,7 @@ u32* ngen_readm_fail_v2(u32* ptrv,u32* regs,u32 fault_addr)
 	//fault offset must always be the addr from ubfx (sanity check)
 	verify((fault_offs==0) || fault_offs==(0x1FFFFFFF&sh4_addr));
 
-	if (settings.dynarec.unstable_opt && is_sq) //THPS2 uses cross area SZ_32F so this is disabled for now
+	if (config::DynarecUnstableOpt && is_sq) //THPS2 uses cross area SZ_32F so this is disabled for now
 	{
 		//SQ !
 		s32 sq_offs=sq_both-sh4_ctr;
@@ -2209,14 +2210,6 @@ void ngen_Compile(RuntimeBlockInfo* block, bool force_checks, bool reset, bool s
 
 	//StoreImms(r0,r1,(u32)&last_run_block,(u32)code); //useful when code jumps to random locations ...
 	++blockno;
-
-	if (settings.profile.run_counts)
-	{
-		MOV32(r1,(u32)&block->runs);
-		LDR(r0,r1);
-		ADD(r0,r0,1);
-		STR(r0,r1);
-	}
 
 	//reg alloc
 	reg.DoAlloc(block,alloc_regs,alloc_fpu);

@@ -116,7 +116,7 @@ __forceinline
 		ShaderUniforms.trilinear_alpha = 1.f;
 
 	bool color_clamp = gp->tsp.ColorClamp && (pvrrc.fog_clamp_min != 0 || pvrrc.fog_clamp_max != 0xffffffff);
-	int fog_ctrl = settings.rend.Fog ? gp->tsp.FogCtrl : 2;
+	int fog_ctrl = config::Fog ? gp->tsp.FogCtrl : 2;
 
 	int clip_rect[4] = {};
 	TileClipping clipmode = GetTileClip(gp->tileclip, ViewportMatrix, clip_rect);
@@ -180,7 +180,7 @@ __forceinline
 	{
 		//bilinear filtering
 		//PowerVR supports also trilinear via two passes, but we ignore that for now
-		bool mipmapped = gp->tcw.MipMapped != 0 && gp->tcw.ScanOrder == 0 && settings.rend.UseMipmaps;
+		bool mipmapped = gp->tcw.MipMapped != 0 && gp->tcw.ScanOrder == 0 && config::UseMipmaps;
 		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, mipmapped ? GL_LINEAR_MIPMAP_NEAREST : GL_LINEAR);
 		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 #ifdef GL_TEXTURE_LOD_BIAS
@@ -213,7 +213,7 @@ __forceinline
 		glcache.DepthFunc(Zfunction[gp->isp.DepthMode]);
 	}
 
-	if (SortingEnabled && !settings.rend.PerStripSorting)
+	if (SortingEnabled && !config::PerStripSorting)
 		glcache.DepthMask(GL_FALSE);
 	else
 	{
@@ -332,7 +332,7 @@ void DrawSorted(bool multipass)
 				params++;
 			}
 
-			if (multipass && settings.rend.TranslucentPolygonDepthMask)
+			if (multipass && config::TranslucentPolygonDepthMask)
 			{
 				// Write to the depth buffer now. The next render pass might need it. (Cosmic Smash)
 				glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
@@ -610,14 +610,14 @@ void DrawStrips()
 		DrawList<ListType_Punch_Through,false>(pvrrc.global_param_pt, previous_pass.pt_count, current_pass.pt_count - previous_pass.pt_count);
 
 		// Modifier volumes
-		if (settings.rend.ModifierVolumes)
+		if (config::ModifierVolumes)
 			DrawModVols(previous_pass.mvo_count, current_pass.mvo_count - previous_pass.mvo_count);
 
 		//Alpha blended
 		{
 			if (current_pass.autosort)
             {
-				if (!settings.rend.PerStripSorting)
+				if (!config::PerStripSorting)
 				{
 					SortTriangles(previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);
 					DrawSorted(render_pass < pvrrc.render_passes.used() - 1);

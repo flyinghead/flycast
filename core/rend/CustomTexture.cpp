@@ -19,6 +19,7 @@
 #include "CustomTexture.h"
 #include "cfg/cfg.h"
 #include "oslib/directory.h"
+#include "cfg/option.h"
 
 #include <sstream>
 #define STB_IMAGE_IMPLEMENTATION
@@ -82,7 +83,7 @@ void CustomTexture::LoaderThread()
 
 std::string CustomTexture::GetGameId()
 {
-   std::string game_id(cfgGetGameId());
+   std::string game_id(config::Settings::instance().getGameId());
    const size_t str_end = game_id.find_last_not_of(' ');
    if (str_end == std::string::npos)
 	  return "";

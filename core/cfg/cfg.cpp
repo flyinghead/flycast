@@ -1,9 +1,3 @@
-/*
-	Config file crap
-	Supports various things, as virtual config entries and such crap
-	Works surprisingly well considering how old it is ...
-*/
-
 #include "cfg.h"
 #include "ini.h"
 #include "stdclass.h"
@@ -15,10 +9,8 @@ static bool save_config = true;
 static bool autoSave = true;
 
 static emucfg::ConfigFile cfgdb;
-static std::string game_id;
-static bool has_game_specific_config = false;
 
-void savecfgf()
+static void saveConfigFile()
 {
 	FILE* cfgfile = nowide::fopen(cfgPath.c_str(), "wt");
 	if (!cfgfile)
@@ -31,49 +23,13 @@ void savecfgf()
 		std::fclose(cfgfile);
 	}
 }
-void  cfgSaveStr(const char * Section, const char * Key, const char * String)
+void cfgSaveStr(const std::string& section, const std::string& key, const std::string& string)
 {
-	const std::string section(Section);
-	const std::string key(Key);
-	const std::string value(String);
-	if (cfgHasGameSpecificConfig())
-	{
-		if (cfgdb.get(section, key, "") == value)
-			// Same value as main config: delete entry
-			cfgdb.delete_entry(game_id, key);
-		else
-			cfgdb.set(game_id, key, value);
-	}
-	else
-		cfgdb.set(section, key, value);
+	cfgdb.set(section, key, string);
 
 	if (save_config && autoSave)
-		savecfgf();
+		saveConfigFile();
 }
-//New config code
-
-/*
-	I want config to be really flexible .. so , here is the new implementation :
-
-	Functions :
-	cfgLoadInt  : Load an int , if it does not exist save the default value to it and return it
-	cfgSaveInt  : Save an int
-	cfgLoadStr  : Load a str , if it does not exist save the default value to it and return it
-	cfgSaveStr  : Save a str
-	cfgExists   : Returns true if the Section:Key exists. If Key is null , it retuns true if Section exists
-
-	Config parameters can be read from the config file , and can be given at the command line
-	-cfg section:key=value -> defines a value at command line
-	If a cfgSave* is made on a value defined by command line , then the command line value is replaced by it
-
-	cfg values set by command line are not written to the cfg file , unless a cfgSave* is used
-*/
-
-///////////////////////////////
-/*
-**	This will verify there is a working file @ ./szIniFn
-**	- if not present, it will write defaults
-*/
 
 bool cfgOpen()
 {
@@ -99,7 +55,7 @@ bool cfgOpen()
 		{
 			// Config file didn't exist
 			INFO_LOG(COMMON, "Creating new empty config file at '%s'", cfgPath.c_str());
-			savecfgf();
+			saveConfigFile();
 		}
 		else
 		{
@@ -111,105 +67,54 @@ bool cfgOpen()
 	return true;
 }
 
-//Implementations of the interface :)
-//Section must be set
-//If key is 0 , it looks for the section
-//0 : not found
-//1 : found section , key was 0
-//2 : found section & key
-s32  cfgExists(const char * Section, const char * Key)
+std::string cfgLoadStr(const std::string& section, const std::string& key, const std::string& def)
 {
-	if(cfgdb.has_entry(std::string(Section), std::string(Key)))
-	{
-		return 2;
-	}
-	else
-	{
-		return (cfgdb.has_section(std::string(Section)) ? 1 : 0);
-	}
+	return cfgdb.get(section, key, def);
 }
 
-void  cfgLoadStr(const char * Section, const char * Key, char * Return,const char* Default)
+void  cfgSaveInt(const std::string& section, const std::string& key, s32 value)
 {
-	std::string value = cfgdb.get(Section, Key, Default);
-	// FIXME: Buffer overflow possible
-	strcpy(Return, value.c_str());
+	cfgSaveStr(section, key, std::to_string(value));
 }
 
-std::string  cfgLoadStr(const char * Section, const char * Key, const char* Default)
+s32 cfgLoadInt(const std::string& section, const std::string& key, s32 def)
 {
-	std::string v = cfgdb.get(std::string(Section), std::string(Key), std::string(Default));
-	if (cfgHasGameSpecificConfig())
-		v = cfgdb.get(game_id, std::string(Key), v);
-
-	return v;
+	return cfgdb.get_int(section, key, def);
 }
 
-//These are helpers , mainly :)
-void  cfgSaveInt(const char * Section, const char * Key, s32 Int)
+void  cfgSaveBool(const std::string& section, const std::string& key, bool value)
 {
-	char str[32];
-	sprintf(str, "%d", Int);
-	cfgSaveStr(Section, Key, str);
+	cfgSaveStr(section, key, value ? "yes" : "no");
 }
 
-s32 cfgLoadInt(const char * Section, const char * Key,s32 Default)
+bool  cfgLoadBool(const std::string& section, const std::string& key, bool def)
 {
-	s32 v = cfgdb.get_int(std::string(Section), std::string(Key), Default);
-	if (cfgHasGameSpecificConfig())
-		v = cfgdb.get_int(game_id, std::string(Key), v);
-
-    return v;
+	return cfgdb.get_bool(section, key, def);
 }
 
-void  cfgSaveBool(const char * Section, const char * Key, bool BoolValue)
+void cfgSetVirtual(const std::string& section, const std::string& key, const std::string& value)
 {
-	cfgSaveStr(Section, Key, BoolValue ? "yes" : "no");
+	cfgdb.set(section, key, value, true);
 }
 
-bool  cfgLoadBool(const char * Section, const char * Key,bool Default)
+bool cfgIsVirtual(const std::string& section, const std::string& key)
 {
-	bool v = cfgdb.get_bool(std::string(Section), std::string(Key), Default);
-	if (cfgHasGameSpecificConfig())
-		v = cfgdb.get_bool(game_id, std::string(Key), v);
-
-    return v;
+	return cfgdb.is_virtual(section, key);
 }
 
-void cfgSetVirtual(const char * Section, const char * Key, const char * String)
+bool cfgHasSection(const std::string& section)
 {
-	cfgdb.set(std::string(Section), std::string(Key), std::string(String), true);
+	return cfgdb.has_section(section);
 }
 
-void cfgSetGameId(const char *id)
+void cfgDeleteSection(const std::string& section)
 {
-	game_id = id;
-}
-
-const char *cfgGetGameId()
-{
-	return game_id.c_str();
-}
-
-bool cfgHasGameSpecificConfig()
-{
-	return has_game_specific_config || cfgdb.has_section(game_id);
-}
-
-void cfgMakeGameSpecificConfig()
-{
-	has_game_specific_config = true;
-}
-
-void cfgDeleteGameSpecificConfig()
-{
-	has_game_specific_config = false;
-	cfgdb.delete_section(game_id);
+	cfgdb.delete_section(section);
 }
 
 void cfgSetAutoSave(bool autoSave)
 {
 	::autoSave = autoSave;
 	if (autoSave)
-		savecfgf();
+		saveConfigFile();
 }

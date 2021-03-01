@@ -16,12 +16,12 @@ GLuint gl4BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
 	while (fbw2 < fbw)
 		fbw2 *= 2;
 
-	if (settings.rend.RenderToTextureUpscale > 1 && !settings.rend.RenderToTextureBuffer)
+	if (config::RenderToTextureUpscale > 1 && !config::RenderToTextureBuffer)
 	{
-		fbw *= settings.rend.RenderToTextureUpscale;
-		fbh *= settings.rend.RenderToTextureUpscale;
-		fbw2 *= settings.rend.RenderToTextureUpscale;
-		fbh2 *= settings.rend.RenderToTextureUpscale;
+		fbw *= config::RenderToTextureUpscale;
+		fbh *= config::RenderToTextureUpscale;
+		fbw2 *= config::RenderToTextureUpscale;
+		fbh2 *= config::RenderToTextureUpscale;
 	}
 
 	// Create a texture for rendering to

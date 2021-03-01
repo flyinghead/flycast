@@ -136,12 +136,12 @@ void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt)
 	while (fbw2 < fbw)
 		fbw2 *= 2;
 
-	if (settings.rend.RenderToTextureUpscale > 1 && !settings.rend.RenderToTextureBuffer)
+	if (config::RenderToTextureUpscale > 1 && !config::RenderToTextureBuffer)
 	{
-		fbw *= settings.rend.RenderToTextureUpscale;
-		fbh *= settings.rend.RenderToTextureUpscale;
-		fbw2 *= settings.rend.RenderToTextureUpscale;
-		fbh2 *= settings.rend.RenderToTextureUpscale;
+		fbw *= config::RenderToTextureUpscale;
+		fbh *= config::RenderToTextureUpscale;
+		fbw2 *= config::RenderToTextureUpscale;
+		fbh2 *= config::RenderToTextureUpscale;
 	}
 	// Get the currently bound frame buffer object. On most platforms this just gives 0.
 	//glGetIntegerv(GL_FRAMEBUFFER_BINDING, &m_i32OriginalFbo);
@@ -215,7 +215,7 @@ void ReadRTTBuffer() {
 
 	const u8 fb_packmode = FB_W_CTRL.fb_packmode;
 
-	if (settings.rend.RenderToTextureBuffer)
+	if (config::RenderToTextureBuffer)
 	{
 		u32 tex_addr = gl.rtt.TexAddr << 3;
 
@@ -257,7 +257,7 @@ void ReadRTTBuffer() {
 
     //dumpRtTexture(fb_rtt.TexAddr, w, h);
 
-    if (w > 1024 || h > 1024 || settings.rend.RenderToTextureBuffer) {
+    if (w > 1024 || h > 1024 || config::RenderToTextureBuffer) {
     	glcache.DeleteTextures(1, &gl.rtt.tex);
     }
     else

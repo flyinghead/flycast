@@ -1,6 +1,7 @@
 #pragma once
 #include "oslib/oslib.h"
 #include "hw/pvr/Renderer_if.h"
+#include "cfg/option.h"
 
 #include <algorithm>
 #include <array>
@@ -700,7 +701,7 @@ public:
 
 	bool IsMipmapped()
 	{
-		return tcw.MipMapped != 0 && tcw.ScanOrder == 0 && settings.rend.UseMipmaps;
+		return tcw.MipMapped != 0 && tcw.ScanOrder == 0 && config::UseMipmaps;
 	}
 
 	const char* GetPixelFormatName()
@@ -739,8 +740,8 @@ public:
 		// This is currently limited to textures using nearest filtering and not mipmapped.
 		// Enabling texture upscaling or dumping also disables this mode.
 		return (tcw.PixelFmt == PixelPal4 || tcw.PixelFmt == PixelPal8)
-				&& settings.rend.TextureUpscale == 1
-				&& !settings.rend.DumpTextures
+				&& config::TextureUpscale == 1
+				&& !config::DumpTextures
 				&& tsp.FilterMode == 0
 				&& !tcw.MipMapped
 				&& !tcw.VQ_Comp;

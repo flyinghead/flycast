@@ -62,8 +62,8 @@ TileClipping BaseDrawer::SetTileClip(u32 val, vk::Rect2D& clipRect)
 
 void BaseDrawer::SetBaseScissor()
 {
-	bool wide_screen_on = settings.rend.WideScreen && !pvrrc.isRenderFramebuffer
-			&& !matrices.IsClipped() && !settings.rend.Rotate90;
+	bool wide_screen_on = config::Widescreen && !pvrrc.isRenderFramebuffer
+			&& !matrices.IsClipped() && !config::Rotate90;
 	if (!wide_screen_on)
 	{
 		float width;
@@ -99,8 +99,8 @@ void BaseDrawer::SetBaseScissor()
 	}
 	else
 	{
-		u32 w = lroundf(screen_width * settings.rend.ScreenScaling / 100.f);
-		u32 h = lroundf(screen_height * settings.rend.ScreenScaling / 100.f);
+		u32 w = lroundf(screen_width * config::ScreenScaling / 100.f);
+		u32 h = lroundf(screen_height * config::ScreenScaling / 100.f);
 		baseScissor = { 0, 0, w, h };
 	}
 }
@@ -201,7 +201,7 @@ void Drawer::DrawList(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sor
 
 void Drawer::DrawModVols(const vk::CommandBuffer& cmdBuffer, int first, int count)
 {
-	if (count == 0 || pvrrc.modtrig.used() == 0 || !settings.rend.ModifierVolumes)
+	if (count == 0 || pvrrc.modtrig.used() == 0 || !config::ModifierVolumes)
 		return;
 
 	vk::Buffer buffer = GetMainBuffer(0)->buffer.get();
@@ -355,7 +355,7 @@ bool Drawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 		DrawModVols(cmdBuffer, previous_pass.mvo_count, current_pass.mvo_count - previous_pass.mvo_count);
 		if (current_pass.autosort)
         {
-			if (!settings.rend.PerStripSorting)
+			if (!config::PerStripSorting)
 			{
 				DrawSorted(cmdBuffer, sortedPolys[render_pass]);
 			}
@@ -401,12 +401,12 @@ vk::CommandBuffer TextureDrawer::BeginRenderPass()
 	while (widthPow2 < upscaledWidth)
 		widthPow2 *= 2;
 
-	if (settings.rend.RenderToTextureUpscale > 1 && !settings.rend.RenderToTextureBuffer)
+	if (config::RenderToTextureUpscale > 1 && !config::RenderToTextureBuffer)
 	{
-		upscaledWidth *= settings.rend.RenderToTextureUpscale;
-		upscaledHeight *= settings.rend.RenderToTextureUpscale;
-		widthPow2 *= settings.rend.RenderToTextureUpscale;
-		heightPow2 *= settings.rend.RenderToTextureUpscale;
+		upscaledWidth *= config::RenderToTextureUpscale;
+		upscaledHeight *= config::RenderToTextureUpscale;
+		widthPow2 *= config::RenderToTextureUpscale;
+		heightPow2 *= config::RenderToTextureUpscale;
 	}
 
 	rttPipelineManager->CheckSettingsChange();
@@ -430,7 +430,7 @@ vk::CommandBuffer TextureDrawer::BeginRenderPass()
 	vk::ImageView colorImageView;
 	vk::ImageLayout colorImageCurrentLayout;
 
-	if (!settings.rend.RenderToTextureBuffer)
+	if (!config::RenderToTextureBuffer)
 	{
 		// TexAddr : fb_rtt.TexAddr, Reserved : 0, StrideSel : 0, ScanOrder : 1
 		TCW tcw = { { textureAddr >> 3, 0, 0, 1 } };
@@ -534,7 +534,7 @@ void TextureDrawer::EndRenderPass()
 		// Happens for Virtua Tennis
 		clippedWidth = stride / 2;
 
-	if (settings.rend.RenderToTextureBuffer)
+	if (config::RenderToTextureBuffer)
 	{
 		vk::BufferImageCopy copyRegion(0, clippedWidth, clippedHeight, vk::ImageSubresourceLayers(vk::ImageAspectFlagBits::eColor, 0, 0, 1), vk::Offset3D(0, 0, 0),
 				vk::Extent3D(vk::Extent2D(clippedWidth, clippedHeight), 1));
@@ -557,7 +557,7 @@ void TextureDrawer::EndRenderPass()
 	currentCommandBuffer = nullptr;
 	commandPool->EndFrame();
 
-	if (settings.rend.RenderToTextureBuffer)
+	if (config::RenderToTextureBuffer)
 	{
 		vk::Fence fence = commandPool->GetCurrentFence();
 		GetContext()->GetDevice().waitForFences(1, &fence, true, UINT64_MAX);
@@ -583,7 +583,7 @@ void TextureDrawer::EndRenderPass()
 void ScreenDrawer::Init(SamplerManager *samplerManager, ShaderManager *shaderManager)
 {
 	this->shaderManager = shaderManager;
-	currentScreenScaling = settings.rend.ScreenScaling;
+	currentScreenScaling = config::ScreenScaling;
 	vk::Extent2D viewport = GetContext()->GetViewPort();
 	viewport.width = lroundf(viewport.width * currentScreenScaling / 100.f);
 	viewport.height = lroundf(viewport.height * currentScreenScaling / 100.f);
@@ -682,7 +682,7 @@ void ScreenDrawer::Init(SamplerManager *samplerManager, ShaderManager *shaderMan
 
 vk::CommandBuffer ScreenDrawer::BeginRenderPass()
 {
-	if (currentScreenScaling != settings.rend.ScreenScaling)
+	if (currentScreenScaling != config::ScreenScaling)
 		Init(samplerManager, shaderManager);
 
 	vk::CommandBuffer commandBuffer = commandPool->Allocate();

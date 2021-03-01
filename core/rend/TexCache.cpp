@@ -270,7 +270,7 @@ static inline int getThreadCount()
 	int tcount = omp_get_num_procs() - 1;
 	if (tcount < 1)
 		tcount = 1;
-	return std::min(tcount, (int)settings.pvr.MaxThreads);
+	return std::min(tcount, (int)config::MaxThreads);
 }
 
 template<typename Func>
@@ -563,7 +563,7 @@ void BaseTextureCacheData::Update()
 			return;
 		}
 	}
-	if (settings.rend.CustomTextures)
+	if (config::CustomTextures)
 		custom_texture.LoadCustomTextureAsync(this);
 
 	void *temp_tex_buffer = NULL;
@@ -575,9 +575,9 @@ void BaseTextureCacheData::Update()
 	PixelBuffer<u8> pb8;
 
 	// Figure out if we really need to use a 32-bit pixel buffer
-	bool textureUpscaling = settings.rend.TextureUpscale > 1
+	bool textureUpscaling = config::TextureUpscale > 1
 			// Don't process textures that are too big
-			&& (int)(w * h) <= settings.rend.MaxFilteredTextureSize * settings.rend.MaxFilteredTextureSize
+			&& (int)(w * h) <= config::MaxFilteredTextureSize * config::MaxFilteredTextureSize
 			// Don't process YUV textures
 			&& tcw.PixelFmt != PixelYUV;
 	bool need_32bit_buffer = true;
@@ -588,7 +588,7 @@ void BaseTextureCacheData::Update()
 		need_32bit_buffer = false;
 	// TODO avoid upscaling/depost. textures that change too often
 
-	bool mipmapped = IsMipmapped() && !settings.rend.DumpTextures;
+	bool mipmapped = IsMipmapped() && !config::DumpTextures;
 
 	if (texconv32 != NULL && need_32bit_buffer)
 	{
@@ -636,15 +636,15 @@ void BaseTextureCacheData::Update()
 			if (textureUpscaling)
 			{
 				PixelBuffer<u32> tmp_buf;
-				tmp_buf.init(w * settings.rend.TextureUpscale, h * settings.rend.TextureUpscale);
+				tmp_buf.init(w * config::TextureUpscale, h * config::TextureUpscale);
 
 				if (tcw.PixelFmt == Pixel1555 || tcw.PixelFmt == Pixel4444)
 					// Alpha channel formats. Palettes with alpha are already handled
 					has_alpha = true;
-				UpscalexBRZ(settings.rend.TextureUpscale, pb32.data(), tmp_buf.data(), w, h, has_alpha);
+				UpscalexBRZ(config::TextureUpscale, pb32.data(), tmp_buf.data(), w, h, has_alpha);
 				pb32.steal_data(tmp_buf);
-				upscaled_w *= settings.rend.TextureUpscale;
-				upscaled_h *= settings.rend.TextureUpscale;
+				upscaled_w *= config::TextureUpscale;
+				upscaled_h *= config::TextureUpscale;
 			}
 		}
 		temp_tex_buffer = pb32.data();
@@ -720,7 +720,7 @@ void BaseTextureCacheData::Update()
 		lock_block = libCore_vramlock_Lock(sa_tex,sa+size-1,this);
 
 	UploadToGPU(upscaled_w, upscaled_h, (u8*)temp_tex_buffer, IsMipmapped(), mipmapped);
-	if (settings.rend.DumpTextures)
+	if (config::DumpTextures)
 	{
 		ComputeHash();
 		custom_texture.DumpTexture(texture_hash, upscaled_w, upscaled_h, tex_type, temp_tex_buffer);

@@ -1,5 +1,4 @@
 #include "audiostream.h"
-#include "cfg/cfg.h"
 
 #include <algorithm>
 #include <memory>
@@ -19,7 +18,7 @@ static bool eight_khz;
 
 u32 GetAudioBackendCount()
 {
-	return audiobackends != nullptr ? audiobackends->size() : 0;
+	return audiobackends != nullptr ? (u32)audiobackends->size() : 0;
 }
 
 audiobackend_t* GetAudioBackend(int num)
@@ -98,7 +97,7 @@ void WriteSample(s16 r, s16 l)
 	WritePtr=ptr;
 
 	if (WritePtr == SAMPLE_COUNT - 1)
-		PushAudio(RingBuffer,SAMPLE_COUNT, settings.aica.LimitFPS);
+		PushAudio(RingBuffer,SAMPLE_COUNT, config::LimitFPS);
 }
 
 void InitAudio()
@@ -114,7 +113,7 @@ void InitAudio()
 
 	SortAudioBackends();
 
-	std::string audiobackend_slug = settings.audio.backend;
+	std::string audiobackend_slug = config::AudioBackend;
 	audiobackend_current = GetAudioBackend(audiobackend_slug);
 	if (audiobackend_current == nullptr) {
 		INFO_LOG(AUDIO, "WARNING: Running without audio!");

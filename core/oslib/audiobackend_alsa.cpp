@@ -112,7 +112,7 @@ static void alsa_init()
 	}
 
 	// Sample buffer size
-	buffer_size = settings.aica.BufferSize;
+	buffer_size = config::AudioBufferSize;
 	rc = snd_pcm_hw_params_set_buffer_size_near(handle, params, &buffer_size);
 	if (rc < 0)
 	{

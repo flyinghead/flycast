@@ -28,6 +28,7 @@
 #include "wsi/context.h"
 #include "emulator.h"
 #include "rend/mainui.h"
+#include "cfg/option.h"
 
 JavaVM* g_jvm;
 
@@ -75,11 +76,11 @@ static thread_local JVMAttacher jvm_attacher;
 
 #include "android_gamepad.h"
 
-#define SETTINGS_ACCESSORS(jsetting, csetting, type)                                                                                                    \
-JNIEXPORT type JNICALL Java_com_reicast_emulator_emu_JNIdc_get ## jsetting(JNIEnv *env, jobject obj)  __attribute__((visibility("default")));           \
-JNIEXPORT type JNICALL Java_com_reicast_emulator_emu_JNIdc_get ## jsetting(JNIEnv *env, jobject obj)                                                    \
+#define SETTINGS_ACCESSORS(setting, type)                                                                                                    \
+JNIEXPORT type JNICALL Java_com_reicast_emulator_emu_JNIdc_get ## setting(JNIEnv *env, jobject obj)  __attribute__((visibility("default")));           \
+JNIEXPORT type JNICALL Java_com_reicast_emulator_emu_JNIdc_get ## setting(JNIEnv *env, jobject obj)                                                    \
 {                                                                                                                                                       \
-    return settings.csetting;                                                                                                                           \
+    return (type)config::setting;                                                                                                                           \
 }
 
 extern "C"
@@ -107,8 +108,8 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_getControllers(JNIEnv
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_setupMic(JNIEnv *env,jobject obj,jobject sip)  __attribute__((visibility("default")));
 
-SETTINGS_ACCESSORS(VirtualGamepadVibration, input.VirtualGamepadVibration, jint);
-SETTINGS_ACCESSORS(AicaBufferSize, aica.BufferSize, jint);
+SETTINGS_ACCESSORS(VirtualGamepadVibration, jint);
+SETTINGS_ACCESSORS(AudioBufferSize, jint);
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_screenDpi(JNIEnv *env,jobject obj, jint screenDpi)  __attribute__((visibility("default")));
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_guiOpenSettings(JNIEnv *env,jobject obj)  __attribute__((visibility("default")));
@@ -277,7 +278,7 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_setGameUri(JNIEnv *en
         // TODO game paused/settings/...
         if (game_started) {
             dc_stop();
-            gui_state = Main;
+            gui_state = GuiState::Main;
        		dc_reset(true);
         }
     }
@@ -311,6 +312,8 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_pause(JNIEnv *env,job
     {
         dc_stop();
         game_started = true; // restart when resumed
+        if (config::AutoSavestate)
+            dc_savestate();
     }
 }
 
@@ -322,8 +325,14 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_resume(JNIEnv *env,jo
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_stop(JNIEnv *env,jobject obj)
 {
-    if (dc_is_running())
+    if (dc_is_running()) {
         dc_stop();
+        if (config::AutoSavestate)
+            dc_savestate();
+    }
+    dc_term_game();
+    gui_state = GuiState::Main;
+    settings.imgread.ImagePath[0] = '\0';
 }
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_destroy(JNIEnv *env,jobject obj)
@@ -339,19 +348,6 @@ JNIEXPORT jint JNICALL Java_com_reicast_emulator_emu_JNIdc_send(JNIEnv *env,jobj
         {
             KillTex=true;
             INFO_LOG(RENDERER, "Killing texture cache");
-        }
-
-        if (param==1)
-        {
-            settings.pvr.ta_skip^=1;
-            INFO_LOG(RENDERER, "settings.pvr.ta_skip: %d", settings.pvr.ta_skip);
-        }
-        if (param==2)
-        {
-#if FEAT_SHREC != DYNAREC_NONE
-            print_stats=true;
-            INFO_LOG(DYNAREC, "Storing blocks ...");
-#endif
         }
     }
     return 0;
@@ -439,15 +435,16 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_hideOsd(JNIEnv * env,
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_getControllers(JNIEnv *env, jobject obj, jintArray controllers, jobjectArray peripherals)
 {
     jint *controllers_body = env->GetIntArrayElements(controllers, 0);
-    memcpy(controllers_body, settings.input.maple_devices, sizeof(settings.input.maple_devices));
+    for (u32 i = 0; i < config::MapleMainDevices.size(); i++)
+    	controllers_body[i] = (MapleDeviceType)config::MapleMainDevices[i];
     env->ReleaseIntArrayElements(controllers, controllers_body, 0);
 
     int obj_len = env->GetArrayLength(peripherals);
     for (int i = 0; i < obj_len; ++i) {
         jintArray port = (jintArray) env->GetObjectArrayElement(peripherals, i);
         jint *items = env->GetIntArrayElements(port, 0);
-        items[0] = settings.input.maple_expansion_devices[i][0];
-        items[1] = settings.input.maple_expansion_devices[i][1];
+        items[0] = (MapleDeviceType)config::MapleExpansionDevices[i][0];
+        items[1] = (MapleDeviceType)config::MapleExpansionDevices[i][1];
         env->ReleaseIntArrayElements(port, items, 0);
         env->DeleteLocalRef(port);
     }

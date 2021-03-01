@@ -74,10 +74,13 @@ bool XGLGraphicsContext::Init()
 
 	glXMakeCurrent(this->display, this->window, context);
 
-	screen_width = 640;
-	screen_height = 480;
 	if (gl3wInit() == -1 || !gl3wIsSupported(3, 1))
 		return false;
+
+	Window win;
+	int temp;
+	unsigned int tempu;
+	XGetGeometry(display, window, &win, &temp, &temp, (u32 *)&screen_width, (u32 *)&screen_height, &tempu, &tempu);
 
 	PostInit();
 
