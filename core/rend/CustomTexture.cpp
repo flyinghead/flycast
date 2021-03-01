@@ -108,7 +108,7 @@ bool CustomTexture::Init()
 			{
 				INFO_LOG(RENDERER, "Found custom textures directory: %s", textures_path.c_str());
 				custom_textures_available = true;
-				closedir(dir);
+				flycast::closedir(dir);
 				loader_thread.Start();
 			}
 		}
