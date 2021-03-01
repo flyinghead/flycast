@@ -43,17 +43,7 @@ using namespace vixl::aarch64;
 
 #undef do_sqw_nommu
 
-extern "C" void ngen_blockcheckfail(u32 pc);
-extern "C" void ngen_LinkBlock_Generic_stub();
-extern "C" void ngen_LinkBlock_cond_Branch_stub();
-extern "C" void ngen_LinkBlock_cond_Next_stub();
-extern "C" void ngen_FailedToFindBlock_mmu();
-extern "C" void ngen_FailedToFindBlock_nommu();
-
 static void generate_mainloop();
-
-u32 mem_writes, mem_reads;
-u32 mem_rewrites_w, mem_rewrites_r;
 
 struct DynaRBI : RuntimeBlockInfo
 {
@@ -64,84 +54,20 @@ struct DynaRBI : RuntimeBlockInfo
 	}
 };
 
-double host_cpu_time;
-u64 guest_cpu_cycles;
 static u32 cycle_counter;
 static u64 jmp_stack;
 
 static void (*mainloop)(void *context);
-static int (*arm64_intc_sched)();
-static void (*arm64_no_update)();
 static void (*handleException)();
 
-#ifdef PROFILING
-#include <time.h>
+struct DynaCode;
 
-static clock_t slice_start;
-extern "C"
-{
-static __attribute((used)) void start_slice()
-{
-	slice_start = clock();
-}
-static __attribute((used)) void end_slice()
-{
-	host_cpu_time += (double)(clock() - slice_start) / CLOCKS_PER_SEC;
-}
-}
-#endif
-
-__asm__
-(
-		".hidden ngen_LinkBlock_cond_Branch_stub	\n\t"
-		".globl ngen_LinkBlock_cond_Branch_stub		\n\t"
-	"ngen_LinkBlock_cond_Branch_stub:		\n\t"
-		"mov w1, #1							\n\t"
-		"b ngen_LinkBlock_Shared_stub		\n"
-
-		".hidden ngen_LinkBlock_cond_Next_stub	\n\t"
-		".globl ngen_LinkBlock_cond_Next_stub	\n\t"
-	"ngen_LinkBlock_cond_Next_stub:			\n\t"
-		"mov w1, #0							\n\t"
-		"b ngen_LinkBlock_Shared_stub		\n"
-
-		".hidden ngen_LinkBlock_Generic_stub	\n\t"
-		".globl ngen_LinkBlock_Generic_stub	\n\t"
-	"ngen_LinkBlock_Generic_stub:			\n\t"
-		"mov w1, w29						\n\t"	// djump/pc -> in case we need it ..
-		//"b ngen_LinkBlock_Shared_stub		\n"
-
-		".hidden ngen_LinkBlock_Shared_stub	\n\t"
-		".globl ngen_LinkBlock_Shared_stub	\n\t"
-	"ngen_LinkBlock_Shared_stub:			\n\t"
-		"sub x0, lr, #4						\n\t"	// go before the call
-		"bl rdv_LinkBlock					\n\t"   // returns an RX addr
-		"br x0								\n"
-
-		".hidden ngen_FailedToFindBlock_nommu	\n\t"
-		".globl ngen_FailedToFindBlock_nommu	\n\t"
-	"ngen_FailedToFindBlock_nommu:			\n\t"
-		"mov w0, w29						\n\t"
-		"bl rdv_FailedToFindBlock			\n\t"
-		"br x0								\n"
-
-		".hidden ngen_FailedToFindBlock_mmu	\n\t"
-		".globl ngen_FailedToFindBlock_mmu	\n\t"
-	"ngen_FailedToFindBlock_mmu:			\n\t"
-		"bl rdv_FailedToFindBlock_pc		\n\t"
-		"br x0								\n"
-
-		".hidden ngen_blockcheckfail		\n\t"
-		".globl ngen_blockcheckfail			\n\t"
-	"ngen_blockcheckfail:					\n\t"
-		"bl rdv_BlockCheckFail				\n\t"
-		"cbnz x0, jumpblock				    \n\t"
-		"ldr w0, [x28, 264]					\n\t"	// pc
-		"bl bm_GetCodeByVAddr		        \n"
-	"jumpblock:								\n\t"
-		"br x0								\n"
-);
-static_assert(offsetof(Sh4Context, pc) == 264, "offsetof pc unexpected");
+static DynaCode *arm64_intc_sched;
+static DynaCode *arm64_no_update;
+static DynaCode *blockCheckFail;
+static DynaCode *linkBlockGenericStub;
+static DynaCode *linkBlockBranchStub;
+static DynaCode *linkBlockNextStub;
 
 static bool restarting;
 
@@ -160,22 +86,20 @@ void ngen_mainloop(void* v_cntx)
 void ngen_init()
 {
 	INFO_LOG(DYNAREC, "Initializing the ARM64 dynarec");
-	ngen_FailedToFindBlock = &ngen_FailedToFindBlock_nommu;
 }
 
 void ngen_ResetBlocks()
 {
-	mainloop = NULL;
-	if (mmu_enabled())
-		ngen_FailedToFindBlock = &ngen_FailedToFindBlock_mmu;
-	else
-		ngen_FailedToFindBlock = &ngen_FailedToFindBlock_nommu;
+	mainloop = nullptr;
+
 	if (p_sh4rcb->cntx.CpuRunning)
 	{
 		// Force the dynarec out of mainloop() to regenerate it
 		p_sh4rcb->cntx.CpuRunning = 0;
 		restarting = true;
 	}
+	else
+		generate_mainloop();
 }
 
 void ngen_GetFeatures(ngen_features* dst)
@@ -383,9 +307,6 @@ public:
 	void ngen_Compile(RuntimeBlockInfo* block, bool force_checks, bool reset, bool staging, bool optimise)
 	{
 		//printf("REC-ARM64 compiling %08x\n", block->addr);
-#ifdef PROFILING
-		SaveFramePointer();
-#endif
 		this->block = block;
 		CheckBlock(force_checks, block);
 		
@@ -406,21 +327,15 @@ public:
 		}
 		Label cycles_remaining;
 		B(&cycles_remaining, pl);
-		GenCall(*arm64_intc_sched);
+		GenCall(arm64_intc_sched);
 		Label cpu_running;
 		Cbnz(w0, &cpu_running);
 		Mov(w29, block->vaddr);
 		Str(w29, sh4_context_mem_operand(&next_pc));
-		GenBranch(*arm64_no_update);
+		GenBranch(arm64_no_update);
 		Bind(&cpu_running);
 		Bind(&cycles_remaining);
 
-#ifdef PROFILING
-		Ldr(x11, (uintptr_t)&guest_cpu_cycles);
-		Ldr(x0, MemOperand(x11));
-		Add(x0, x0, block->guest_cycles);
-		Str(x0, MemOperand(x11));
-#endif
 		for (size_t i = 0; i < block->oplist.size(); i++)
 		{
 			shil_opcode& op  = block->oplist[i];
@@ -1259,11 +1174,11 @@ public:
 			// next_pc = block->BranchBlock;
 #ifndef NO_BLOCK_LINKING
 			if (block->pBranchBlock != NULL)
-				GenBranch(block->pBranchBlock->code);
+				GenBranch((DynaCode *)block->pBranchBlock->code);
 			else
 			{
 				if (!mmu_enabled())
-					GenCallRuntime(ngen_LinkBlock_Generic_stub);
+					GenCall(linkBlockGenericStub);
 				else
 #else
 			{
@@ -1271,7 +1186,7 @@ public:
 				{
 					Mov(w29, block->BranchBlock);
 					Str(w29, sh4_context_mem_operand(&next_pc));
-					GenBranch(*arm64_no_update);
+					GenBranch(arm64_no_update);
 				}
 			}
 			break;
@@ -1295,11 +1210,11 @@ public:
 				B(ne, &branch_not_taken);
 #ifndef NO_BLOCK_LINKING
 				if (block->pBranchBlock != NULL)
-					GenBranch(block->pBranchBlock->code);
+					GenBranch((DynaCode *)block->pBranchBlock->code);
 				else
 				{
 					if (!mmu_enabled())
-						GenCallRuntime(ngen_LinkBlock_cond_Branch_stub);
+						GenCall(linkBlockBranchStub);
 					else
 #else
 				{
@@ -1307,7 +1222,7 @@ public:
 					{
 						Mov(w29, block->BranchBlock);
 						Str(w29, sh4_context_mem_operand(&next_pc));
-						GenBranch(*arm64_no_update);
+						GenBranch(arm64_no_update);
 					}
 				}
 
@@ -1315,11 +1230,11 @@ public:
 
 #ifndef NO_BLOCK_LINKING
 				if (block->pNextBlock != NULL)
-					GenBranch(block->pNextBlock->code);
+					GenBranch((DynaCode *)block->pNextBlock->code);
 				else
 				{
 					if (!mmu_enabled())
-						GenCallRuntime(ngen_LinkBlock_cond_Next_stub);
+						GenCall(linkBlockNextStub);
 					else
 #else
 				{
@@ -1327,7 +1242,7 @@ public:
 					{
 						Mov(w29, block->NextBlock);
 						Str(w29, sh4_context_mem_operand(&next_pc));
-						GenBranch(*arm64_no_update);
+						GenBranch(arm64_no_update);
 					}
 				}
 			}
@@ -1355,7 +1270,7 @@ public:
 			}
 			else
 			{
-				GenBranch(*arm64_no_update);
+				GenBranch(arm64_no_update);
 			}
 
 			break;
@@ -1372,7 +1287,7 @@ public:
 			GenCallRuntime(UpdateINTC);
 
 			Ldr(w29, sh4_context_mem_operand(&next_pc));
-			GenBranch(*arm64_no_update);
+			GenBranch(arm64_no_update);
 
 			break;
 
@@ -1431,7 +1346,7 @@ public:
 		Label end_mainloop;
 
 		// int intc_sched()
-		arm64_intc_sched = GetCursorAddress<int (*)()>();
+		arm64_intc_sched = GetCursorAddress<DynaCode *>();
 		B(&intc_sched);
 
 		// void no_update()
@@ -1547,6 +1462,7 @@ public:
 		Ldp(x19, x20, MemOperand(sp, 160, PostIndex));
 		Ret();
 
+		// Exception handler
 		Label handleExceptionLabel;
 		Bind(&handleExceptionLabel);
 		if (mmu_enabled())
@@ -1557,11 +1473,55 @@ public:
 			B(&reenterLabel);
 		}
 
+		// Block check fail
+		blockCheckFail = GetCursorAddress<DynaCode *>();
+		GenCallRuntime(rdv_BlockCheckFail);
+		if (mmu_enabled())
+		{
+			Label jumpblockLabel;
+			Cbnz(x0, &jumpblockLabel);
+			Ldr(w0, MemOperand(x28, offsetof(Sh4Context, pc)));
+			GenCallRuntime(bm_GetCodeByVAddr);
+			Bind(&jumpblockLabel);
+		}
+		Br(x0);
+
+		// Block linking stubs
+		linkBlockBranchStub = GetCursorAddress<DynaCode *>();
+		Label linkBlockShared;
+		Mov(w1, 1);
+		B(&linkBlockShared);
+
+		linkBlockNextStub = GetCursorAddress<DynaCode *>();
+		Mov(w1, 0);
+		B(&linkBlockShared);
+
+		linkBlockGenericStub = GetCursorAddress<DynaCode *>();
+		Mov(w1, w29);	// djump/pc -> in case we need it ..
+
+		Bind(&linkBlockShared);
+		Sub(x0, lr, 4);	// go before the call
+		GenCallRuntime(rdv_LinkBlock);	// returns an RX addr
+		Br(x0);
+
+		// Not yet compiled block stub
+		ngen_FailedToFindBlock = (void (*)())CC_RW2RX(GetCursorAddress<uintptr_t>());
+		if (mmu_enabled())
+		{
+			GenCallRuntime(rdv_FailedToFindBlock_pc);
+		}
+		else
+		{
+			Mov(w0, w29);
+			GenCallRuntime(rdv_FailedToFindBlock);
+		}
+		Br(x0);
+
 		FinalizeCode();
 		emit_Skip(GetBuffer()->GetSizeInBytes());
 
-		arm64_no_update = GetLabelAddress<void (*)()>(&no_update);
-		handleException = GetLabelAddress<void (*)()>(&handleExceptionLabel);
+		arm64_no_update = GetLabelAddress<DynaCode *>(&no_update);
+		handleException = (void (*)())CC_RW2RX(GetLabelAddress<uintptr_t>(&handleExceptionLabel));
 
 		// Flush and invalidate caches
 		vmem_platform_flush_cache(
@@ -1585,8 +1545,7 @@ private:
 		Bl(&function_label);
 	}
 
-	template <typename R, typename... P>
-	void GenCall(R (*function)(P...))
+	void GenCall(DynaCode *function)
 	{
 		ptrdiff_t offset = reinterpret_cast<uintptr_t>(function) - GetBuffer()->GetStartAddress<uintptr_t>();
 		verify(offset >= -128 * 1024 * 1024 && offset <= 128 * 1024 * 1024);
@@ -1607,8 +1566,7 @@ private:
 		B(&target_label);
 	}
 
-	template <typename R, typename... P>
-	void GenBranch(R (*code)(P...), Condition cond = al)
+	void GenBranch(DynaCode *code, Condition cond = al)
 	{
 		ptrdiff_t offset = reinterpret_cast<uintptr_t>(code) - GetBuffer()->GetStartAddress<uintptr_t>();
 		verify(offset >= -128 * 1024 * 1024 && offset < 128 * 1024 * 1024);
@@ -1792,7 +1750,6 @@ private:
 		// Direct memory access. Need to handle SIGSEGV and rewrite block as needed. See ngen_Rewrite()
 		if (!_nvmem_enabled() || (mmu_enabled() && !vmem32_enabled()))
 			return false;
-		mem_reads++;
 
 		Instruction *start_instruction = GetCursorAddress<Instruction *>();
 
@@ -1984,7 +1941,6 @@ private:
 		// Direct memory access. Need to handle SIGSEGV and rewrite block as needed. See ngen_Rewrite()
 		if (!_nvmem_enabled() || (mmu_enabled() && !vmem32_enabled()))
 			return false;
-		mem_writes++;
 
 		Instruction *start_instruction = GetCursorAddress<Instruction *>();
 
@@ -2087,7 +2043,7 @@ private:
 		B(&blockcheck_success);
 		Bind(&blockcheck_fail);
 		Mov(w0, block->addr);
-		TailCallRuntime(ngen_blockcheckfail);
+		GenBranch(blockCheckFail);
 
 		Bind(&blockcheck_success);
 
@@ -2102,7 +2058,7 @@ private:
 			Mov(*call_regs[2], 0x100);			// vector
 			CallRuntime(Do_Exception);
 			Ldr(w29, sh4_context_mem_operand(&next_pc));
-			GenBranch(*arm64_no_update);
+			GenBranch(arm64_no_update);
 
 			Bind(&fpu_enabled);
 		}
@@ -2271,15 +2227,9 @@ bool ngen_Rewrite(host_context_t &context, void *faultAddress)
 	u32 *code_rewrite = code_ptr - 1 - (!_nvmem_4gb_space() ? 1 : 0);
 	Arm64Assembler *assembler = new Arm64Assembler(code_rewrite);
 	if (is_read)
-	{
-		mem_rewrites_r++;
 		assembler->GenReadMemorySlow(size);
-	}
 	else
-	{
-		mem_rewrites_w++;
 		assembler->GenWriteMemorySlow(size);
-	}
 	assembler->Finalize(true);
 	delete assembler;
 	context.pc = (unat)CC_RW2RX(code_rewrite);
@@ -2341,25 +2291,5 @@ void Arm64RegAlloc::Preload_FPU(u32 reg, eFReg nreg)
 void Arm64RegAlloc::Writeback_FPU(u32 reg, eFReg nreg)
 {
 	assembler->Str(VRegister(nreg, 32), assembler->sh4_context_mem_operand(GetRegPtr(reg)));
-}
-
-
-extern "C" naked void do_sqw_nommu_area_3(u32 dst, u8* sqb)
-{
-	__asm__
-	(
-		"and x12, x0, #0x20			\n\t"	// SQ# selection, isolate
-		"add x12, x12, x1			\n\t"	// SQ# selection, add to SQ ptr
-		"ld2 { v0.2D, v1.2D }, [x12]\n\t"
-		"movz x11, #0x0C00, lsl #16 \n\t"
-		"add x11, x1, x11			\n\t"	// get ram ptr from x1, part 1
-		"ubfx x0, x0, #5, #20		\n\t"	// get ram offset
-		"add x11, x11, #512			\n\t"	// get ram ptr from x1, part 2
-		"add x11, x11, x0, lsl #5	\n\t"	// ram + offset
-		"st2 { v0.2D, v1.2D }, [x11] \n\t"
-		"ret						\n"
-
-		: : : "memory"
-	);
 }
 #endif	// FEAT_SHREC == DYNAREC_JIT

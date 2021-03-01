@@ -28,7 +28,6 @@
 #define GetSImm12(str) (((s16)((GetImm12(str))<<4))>>4)
 
 #define iNimp cpu_iNimp
-#define iWarn cpu_iWarn
 
 //Read Mem macros
 
@@ -59,11 +58,6 @@ void cpu_iNimp(u32 op, const char* info)
 	//next_pc = pr; //debug hackfix: try to recover by returning from call
 	die("iNimp reached\n");
 	//sh4_cpu.Stop();
-}
-
-void cpu_iWarn(u32 op, const char* info)
-{
-	INFO_LOG(INTERPRETER, "Check opcode : %X : %s @ %X", op, info, curr_pc);
 }
 
 //this file contains ALL register to register full moves
@@ -825,7 +819,6 @@ sh4op(i0000_nnnn_1100_0011)
 {
 	u32 n = GetN(op);
 	WriteMemU32(r[n],r[0]);//at r[n],r[0]
-	//iWarn(op, "movca.l R0, @<REG_N>");
 	// TODO ocache
 }
 
@@ -953,7 +946,6 @@ sh4op(i1010_iiii_iiii_iiii)
 // bsr <bdisp12>
 sh4op(i1011_iiii_iiii_iiii)
 {
-	//TODO: check pr vs real h/w
 	u32 newpr = next_pc + 2; //return after delayslot
 	u32 newpc = branch_target_s12(op);
 	ExecuteDelayslot();
@@ -985,7 +977,6 @@ sh4op(i0100_nnnn_0000_1011)
 {
 	u32 n = GetN(op);
 
-	//TODO: check pr vs real h/w
 	u32 newpr = next_pc + 2;   //return after delayslot
 	u32 newpc= r[n];
 	ExecuteDelayslot(); //r[n]/pr can change here
@@ -1231,17 +1222,17 @@ INLINE void DYNACALL do_sqw(u32 Dest)
 }
 
 void DYNACALL do_sqw_mmu(u32 dst) { do_sqw<true>(dst); }
-#if HOST_CPU != CPU_ARM && HOST_CPU != CPU_ARM64
+#if HOST_CPU != CPU_ARM
 //yes, this micro optimization makes a difference
-extern "C" void DYNACALL do_sqw_nommu_area_3(u32 dst,u8* sqb)
+extern "C" void DYNACALL do_sqw_nommu_area_3(u32 dst, u8 *sqb)
 {
-	u8* pmem=sqb+512+0x0C000000;
+	u8 *pmem = sqb + sizeof(Sh4RCB::sq_buffer) + sizeof(Sh4RCB::cntx) + 0x0C000000;
 
-	memcpy((u64*)&pmem[dst&(RAM_MASK-0x1F)],(u64*)&sqb[dst & 0x20],32);
+	memcpy((u64 *)&pmem[dst & (RAM_SIZE_MAX - 1 - 0x1F)], (u64 *)&sqb[dst & 0x20], 32);
 }
 #endif
 
-extern "C" void DYNACALL do_sqw_nommu_area_3_nonvmem(u32 dst,u8* sqb)
+void DYNACALL do_sqw_nommu_area_3_nonvmem(u32 dst,u8* sqb)
 {
 	u8* pmem = mem_b.data;
 
@@ -2102,6 +2093,7 @@ sh4op(iNotImplemented)
 {
 #ifndef NO_MMU
 	INFO_LOG(INTERPRETER, "iNimp %04X", op);
+	debugger::debugTrap(0x180);
 	SH4ThrownException ex = { next_pc - 2, 0x180, 0x100 };
 	throw ex;
 #else
