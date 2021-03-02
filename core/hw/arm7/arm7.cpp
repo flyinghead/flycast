@@ -345,7 +345,9 @@ void update_armintc()
 //
 // Used by ARM7 Recompiler
 //
-namespace aicaarm::recompiler {
+namespace aicaarm {
+
+namespace recompiler {
 
 //Emulate a single arm op, passed in opcode
 
@@ -393,6 +395,7 @@ void DYNACALL MSR_do(u32 v)
 template void DYNACALL MSR_do<0>(u32 v);
 template void DYNACALL MSR_do<1>(u32 v);
 
+}
 }
 #endif	// FEAT_AREC != DYNAREC_NONE
 
