@@ -1041,7 +1041,22 @@ struct maple_keyboard : maple_base
 
 			//struct data
 			//3*4
-			w32(0x80000502);	// US, 104 keys
+			w8((u8)settings.input.keyboardLangId);
+			switch (settings.input.keyboardLangId)
+			{
+			case KeyboardLayout::JP:
+				w8(2);	// 92 keys
+				break;
+			case KeyboardLayout::US:
+				w8(5);	// 104 keys
+				break;
+			default:
+				w8(6);	// 105 keys
+				break;
+			}
+			w8(0);
+			w8(0x80);	// keyboard-controlled LEDs
+
 			w32(0);
 			w32(0);
 			//1	area code

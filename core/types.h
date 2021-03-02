@@ -304,6 +304,25 @@ enum class RenderType {
 	Vulkan_OIT = 5
 };
 
+enum class KeyboardLayout {
+	JP = 1,
+	US,
+	UK,
+	GE,
+	FR,
+	IT,
+	SP,
+	SW,
+	CH,
+	NL,
+	PT,
+	LATAM,
+	FR_CA,
+	RU,
+	CN,
+	KO
+};
+
 struct settings_t
 {
 	struct {
@@ -337,6 +356,7 @@ struct settings_t
 
 	struct {
 		JVS JammaSetup;
+		KeyboardLayout keyboardLangId = KeyboardLayout::US;
 	} input;
 
 	bool gameStarted;

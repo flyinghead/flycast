@@ -83,6 +83,9 @@ template <typename Keycode>
 void KeyboardDeviceTemplate<Keycode>::keyboard_input(Keycode keycode, bool pressed, int modifier_keys)
 {
 	u8 dc_keycode = convert_keycode(keycode);
+	// Some OSes (Mac OS) don't distinguish left and right modifier keys to we set them both.
+	// But not for Alt since Right Alt is used as a special modifier keys on some international
+	// keyboards.
 	switch (dc_keycode)
 	{
 		case 0xE1: // Left Shift
@@ -94,17 +97,20 @@ void KeyboardDeviceTemplate<Keycode>::keyboard_input(Keycode keycode, bool press
 			setFlag(_modifier_keys, DC_KBMOD_LEFTCTRL | DC_KBMOD_RIGHTCTRL, pressed);
 			break;
 		case 0xE2: // Left Alt
-		case 0xE6: // Right Alt
-			setFlag(_modifier_keys, DC_KBMOD_LEFTALT | DC_KBMOD_RIGHTALT, pressed);
+			setFlag(_modifier_keys, DC_KBMOD_LEFTALT, pressed);
 			break;
-		case 0xE7: // S2/3 special key
+		case 0xE6: // Right Alt
+			setFlag(_modifier_keys, DC_KBMOD_RIGHTALT, pressed);
+			break;
+		case 0xE7: // S2 special key
 			setFlag(_modifier_keys, DC_KBMOD_S2, pressed);
 			break;
 		default:
 			break;
 	}
+	kb_shift = _modifier_keys;
 
-	if (dc_keycode != 0)
+	if (dc_keycode != 0 && dc_keycode < 0xE0)
 	{
 		if (pressed)
 		{
@@ -134,7 +140,7 @@ void KeyboardDeviceTemplate<Keycode>::keyboard_input(Keycode keycode, bool press
 				}
 			}
 		}
-		kb_shift = modifier_keys | _modifier_keys;
+		kb_shift |= modifier_keys;
 	}
 }
 

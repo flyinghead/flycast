@@ -700,7 +700,36 @@ void setup_seh() {
 }
 #endif
 
-
+static void findKeyboardLayout()
+{
+	HKL keyboardLayout = GetKeyboardLayout(0);
+	WORD lcid = HIWORD(keyboardLayout);
+	switch (PRIMARYLANGID(lcid)) {
+	case 0x09:	// English
+		if (lcid == 0x0809)
+			settings.input.keyboardLangId = KeyboardLayout::UK;
+		else
+			settings.input.keyboardLangId = KeyboardLayout::US;
+		break;
+	case 0x11:
+		settings.input.keyboardLangId = KeyboardLayout::JP;
+		break;
+	case 0x07:
+		settings.input.keyboardLangId = KeyboardLayout::GE;
+		break;
+	case 0x0c:
+		settings.input.keyboardLangId = KeyboardLayout::FR;
+		break;
+	case 0x10:
+		settings.input.keyboardLangId = KeyboardLayout::IT;
+		break;
+	case 0x0A:
+		settings.input.keyboardLangId = KeyboardLayout::SP;
+		break;
+	default:
+		break;
+	}
+}
 
 
 // DEF_CONSOLE allows you to override linker subsystem and therefore default console //
@@ -729,7 +758,7 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 
 	ReserveBottomMemory();
 	SetupPath();
-
+	findKeyboardLayout();
 #ifdef _WIN64
 	AddVectoredExceptionHandler(1, ExeptionHandler);
 #else

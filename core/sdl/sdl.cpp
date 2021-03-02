@@ -296,12 +296,7 @@ void input_sdl_handle()
 				else
 				{
 					sdl_kb_gamepad->gamepad_btn_input(event.key.keysym.sym, event.type == SDL_KEYDOWN);
-					int modifier_keys = 0;
-					if (event.key.keysym.mod & (KMOD_LSHIFT | KMOD_RSHIFT))
-						SET_FLAG(modifier_keys, (0x02 | 0x20), event.type == SDL_KEYUP);
-					if (event.key.keysym.mod & (KMOD_LCTRL | KMOD_RCTRL))
-						SET_FLAG(modifier_keys, (0x01 | 0x10), event.type == SDL_KEYUP);
-					sdl_keyboard->keyboard_input(event.key.keysym.sym, event.type == SDL_KEYDOWN, modifier_keys);
+					sdl_keyboard->keyboard_input(event.key.keysym.scancode, event.type == SDL_KEYDOWN);
 				}
 				break;
 			case SDL_TEXTINPUT:
