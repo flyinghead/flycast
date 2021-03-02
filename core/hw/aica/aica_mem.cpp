@@ -4,7 +4,7 @@
 #include "dsp.h"
 #include "sgc_if.h"
 
-u8 aica_reg[0x8000];
+alignas(4) u8 aica_reg[0x8000];
 
 //00000000~007FFFFF @DRAM_AREA* 
 //00800000~008027FF @CHANNEL_DATA 

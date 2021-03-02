@@ -23,9 +23,8 @@
 
 #include <unistd.h>
 #include <map>
-#include <setjmp.h>
 
-#include "deps/vixl/aarch64/macro-assembler-aarch64.h"
+#include <aarch64/macro-assembler-aarch64.h>
 using namespace vixl::aarch64;
 
 //#define NO_BLOCK_LINKING
@@ -40,6 +39,7 @@ using namespace vixl::aarch64;
 #include "hw/sh4/sh4_rom.h"
 #include "hw/mem/vmem32.h"
 #include "arm64_regalloc.h"
+#include "hw/mem/_vmem.h"
 
 #undef do_sqw_nommu
 
@@ -49,7 +49,7 @@ extern "C" void ngen_LinkBlock_cond_Branch_stub();
 extern "C" void ngen_LinkBlock_cond_Next_stub();
 extern "C" void ngen_FailedToFindBlock_mmu();
 extern "C" void ngen_FailedToFindBlock_nommu();
-extern void vmem_platform_flush_cache(void *icache_start, void *icache_end, void *dcache_start, void *dcache_end);
+
 static void generate_mainloop();
 
 u32 mem_writes, mem_reads;
@@ -66,12 +66,13 @@ struct DynaRBI : RuntimeBlockInfo
 
 double host_cpu_time;
 u64 guest_cpu_cycles;
-static jmp_buf jmp_env;
 static u32 cycle_counter;
+static u64 jmp_stack;
 
 static void (*mainloop)(void *context);
 static int (*arm64_intc_sched)();
 static void (*arm64_no_update)();
+static void (*handleException)();
 
 #ifdef PROFILING
 #include <time.h>
@@ -192,7 +193,7 @@ static T ReadMemNoEx(u32 addr, u32, u32 pc)
 	if (ex)
 	{
 		spc = pc;
-		longjmp(jmp_env, 1);
+		handleException();
 	}
 	return rv;
 #else
@@ -208,7 +209,7 @@ static void WriteMemNoEx(u32 addr, T data, u32 pc)
 	if (ex)
 	{
 		spc = pc;
-		longjmp(jmp_env, 1);
+		handleException();
 	}
 #endif
 }
@@ -225,7 +226,7 @@ static void interpreter_fallback(u16 op, OpCallFP *oph, u32 pc)
 			pc--;
 		}
 		Do_Exception(pc, ex.expEvn, ex.callVect);
-		longjmp(jmp_env, 1);
+		handleException();
 	}
 }
 
@@ -241,7 +242,7 @@ static void do_sqw_mmu_no_ex(u32 addr, u32 pc)
 			pc--;
 		}
 		Do_Exception(pc, ex.expEvn, ex.callVect);
-		longjmp(jmp_env, 1);
+		handleException();
 	}
 }
 
@@ -1472,6 +1473,7 @@ public:
 		Stp(x29, x30, MemOperand(sp, 144));
 
 		Sub(x0, x0, sizeof(Sh4Context));
+		Label reenterLabel;
 		if (mmu_enabled())
 		{
 			Ldr(x1, reinterpret_cast<uintptr_t>(&cycle_counter));
@@ -1480,10 +1482,11 @@ public:
 			Mov(w0, SH4_TIMESLICE);
 			Str(w0, MemOperand(x1));
 
-			Ldr(x0, reinterpret_cast<uintptr_t>(jmp_env));
-			Ldr(x1, reinterpret_cast<uintptr_t>(&setjmp));
-			Blr(x1);
+			Ldr(x0, reinterpret_cast<uintptr_t>(&jmp_stack));
+			Mov(x1, sp);
+			Str(x1, MemOperand(x0));
 
+			Bind(&reenterLabel);
 			Ldr(x28, MemOperand(sp));	// Set context
 		}
 		else
@@ -1544,10 +1547,21 @@ public:
 		Ldp(x19, x20, MemOperand(sp, 160, PostIndex));
 		Ret();
 
+		Label handleExceptionLabel;
+		Bind(&handleExceptionLabel);
+		if (mmu_enabled())
+		{
+			Ldr(x0, reinterpret_cast<uintptr_t>(&jmp_stack));
+			Ldr(x1, MemOperand(x0));
+			Mov(sp, x1);
+			B(&reenterLabel);
+		}
+
 		FinalizeCode();
 		emit_Skip(GetBuffer()->GetSizeInBytes());
 
 		arm64_no_update = GetLabelAddress<void (*)()>(&no_update);
+		handleException = GetLabelAddress<void (*)()>(&handleExceptionLabel);
 
 		// Flush and invalidate caches
 		vmem_platform_flush_cache(
@@ -2232,10 +2246,10 @@ static const u32 op_sizes[] = {
 		4,
 		8,
 };
-bool ngen_Rewrite(unat& host_pc, unat, unat)
+bool ngen_Rewrite(host_context_t &context, void *faultAddress)
 {
-	//LOGI("ngen_Rewrite pc %zx\n", host_pc);
-	u32 *code_ptr = (u32 *)CC_RX2RW(host_pc);
+	//LOGI("ngen_Rewrite pc %zx\n", context.pc);
+	u32 *code_ptr = (u32 *)CC_RX2RW(context.pc);
 	u32 armv8_op = *code_ptr;
 	bool is_read;
 	u32 size;
@@ -2268,7 +2282,7 @@ bool ngen_Rewrite(unat& host_pc, unat, unat)
 	}
 	assembler->Finalize(true);
 	delete assembler;
-	host_pc = (unat)CC_RW2RX(code_rewrite);
+	context.pc = (unat)CC_RW2RX(code_rewrite);
 
 	return true;
 }
@@ -2291,9 +2305,9 @@ RuntimeBlockInfo* ngen_AllocateBlock()
 	return new DynaRBI();
 }
 
-void ngen_HandleException()
+void ngen_HandleException(host_context_t &context)
 {
-	longjmp(jmp_env, 1);
+	context.pc = (uintptr_t)handleException;
 }
 
 u32 DynaRBI::Relink()

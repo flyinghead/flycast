@@ -458,10 +458,6 @@ ifdef DEBUGFAST
     CFLAGS += -DDEBUGFAST
 endif
 
-ifdef UNIT_TESTS
-    CFLAGS += -DUNIT_TESTS
-endif
-
 ifdef ASAN
 	CFLAGS += -fsanitize=address -static-libasan
 	LDFLAGS += -fsanitize=address -static-libasan
@@ -471,11 +467,20 @@ ifdef LOG_TO_PTY
     CFLAGS += -D LOG_TO_PTY
 endif
 
-
-EXECUTABLE_STRIPPED=nosym-reicast.$(PLATFORM_EXT)
-DC_PLATFORM=dreamcast
-EXECUTABLE=reicast.$(PLATFORM_EXT)
-EXECUTABLE_NAME=flycast
+ifdef UNIT_TESTS
+    CFLAGS += -DUNIT_TESTS
+	EXECUTABLE_STRIPPED=nosym-alltests
+	DC_PLATFORM=tests
+	EXECUTABLE=alltests.$(PLATFORM_EXT)
+	EXECUTABLE_NAME=alltests
+	TEST_SRC_DIR:=$(RZDCY_SRC_DIR)/../tests/src
+	RZDCY_FILES += $(wildcard $(TEST_SRC_DIR)/*.cpp) $(RZDCY_SRC_DIR)/deps/gtest/src/gtest_main.cc $(RZDCY_SRC_DIR)/deps/gtest/src/gtest-all.cc
+else
+	EXECUTABLE_STRIPPED=nosym-reicast.$(PLATFORM_EXT)
+	DC_PLATFORM=dreamcast
+	EXECUTABLE=reicast.$(PLATFORM_EXT)
+	EXECUTABLE_NAME=flycast
+endif
 
 ifndef NOT_ARM
     AS=$(CC)
@@ -597,27 +602,10 @@ uninstall:
 	rm -f $(DESTDIR)$(ICON_DIR)/flycast.png
 
 clean:
-	rm -f $(OBJECTS) $(EXECUTABLE) $(EXECUTABLE_STRIPPED) .map $(VERSION_HEADER) $(TEST_OBJ) alltests
+	rm -f $(OBJECTS) $(EXECUTABLE) $(EXECUTABLE_STRIPPED) .map $(VERSION_HEADER)
 
-TEST_SRC_DIR:=$(LOCAL_PATH)/../../tests/src
-TEST_SRC:=$(wildcard $(TEST_SRC_DIR)/*.cpp) $(RZDCY_SRC_DIR)/deps/gtest/src/gtest_main.cc $(RZDCY_SRC_DIR)/deps/gtest/src/gtest-all.cc
-TEST_OBJ:=$(TEST_SRC:.cpp=.build_obj)
-TEST_OBJ:=$(TEST_OBJ:.cc=.build_obj)
-TEST_OBJ:=$(patsubst $(TEST_SRC_DIR)/%,$(BUILDDIR)/%,$(TEST_OBJ))
-TEST_OBJ:=$(patsubst $(RZDCY_SRC_DIR)/%,$(BUILDDIR)/%,$(TEST_OBJ))
-
-$(BUILDDIR)/%.build_obj : $(TEST_SRC_DIR)/%.cpp
-$(BUILDDIR)/%.build_obj: $(TEST_SRC_DIR)/%.cpp $(DEPDIR)/%.d
-	mkdir -p $(dir $@)
-	mkdir -p .dep-$(dir $@)
-	$(CXX) $(EXTRAFLAGS) $(INCS) $(DEPFLAGS) $(CFLAGS) $(MFLAGS) $(CXXFLAGS) $< -o $@
-	$(POSTCOMPILE)
-
-tests: alltests
-	./alltests
-
-alltests: $(TEST_OBJ) $(OBJECTS)
-	$(CXX) $(MFLAGS) $(EXTRAFLAGS) $(LDFLAGS) $(TEST_OBJ) $(OBJECTS) $(LIBS) -o $@
+tests: alltests.$(PLATFORM_EXT)
+	./alltests.$(PLATFORM_EXT)
 
 .PRECIOUS = $(DEPDIR)/%.d
 $(DEPDIR)/%.d: ;

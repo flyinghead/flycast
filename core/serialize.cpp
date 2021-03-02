@@ -32,7 +32,6 @@ extern u32 e68k_reg_L;
 extern u32 e68k_reg_M;
 
 //./core/hw/arm7/arm7.cpp
-alignas(8) extern reg_pair arm_Reg[RN_ARM_REG_COUNT];
 extern bool armIrqEnable;
 extern bool armFiqEnable;
 extern int armMode;
@@ -50,6 +49,7 @@ extern u32 ARMRST;//arm reset reg
 extern u32 rtc_EN;
 extern int dma_sched_id;
 extern u32 RealTimeClock;
+extern u32 SB_ADST;
 
 //./core/hw/aica/aica_mem.o
 extern u8 aica_reg[0x8000];
@@ -267,7 +267,7 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	REICAST_S(e68k_reg_L) ;
 	REICAST_S(e68k_reg_M) ;
 
-	REICAST_SA(arm_Reg,RN_ARM_REG_COUNT);
+	REICAST_SA(arm_Reg,RN_ARM_REG_COUNT - 1);	// Too lazy to create a new version and the scratch register is not used between blocks anyway
 	REICAST_S(armIrqEnable);
 	REICAST_S(armFiqEnable);
 	REICAST_S(armMode);
@@ -298,7 +298,7 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	REICAST_S(SB_ISTNRM);
 	REICAST_S(SB_FFST_rc);
 	REICAST_S(SB_FFST);
-
+	REICAST_S(SB_ADST);
 
 	sys_rom->Serialize(data, total_size);
 	sys_nvmem->Serialize(data, total_size);
@@ -499,7 +499,7 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 	REICAST_US(e68k_reg_L) ;
 	REICAST_US(e68k_reg_M) ;
 
-	REICAST_USA(arm_Reg,RN_ARM_REG_COUNT);
+	REICAST_USA(arm_Reg,RN_ARM_REG_COUNT - 1);
 	REICAST_US(armIrqEnable);
 	REICAST_US(armFiqEnable);
 	REICAST_US(armMode);
@@ -529,6 +529,7 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 	REICAST_US(SB_ISTNRM);
 	REICAST_US(SB_FFST_rc);
 	REICAST_US(SB_FFST);
+	SB_ADST = 0;
 
 	if (settings.platform.system == DC_PLATFORM_NAOMI || settings.platform.system == DC_PLATFORM_ATOMISWAVE)
 	{
@@ -773,7 +774,7 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 	REICAST_US(e68k_reg_L) ;
 	REICAST_US(e68k_reg_M) ;
 
-	REICAST_USA(arm_Reg,RN_ARM_REG_COUNT);
+	REICAST_USA(arm_Reg,RN_ARM_REG_COUNT - 1);
 	REICAST_US(armIrqEnable);
 	REICAST_US(armFiqEnable);
 	REICAST_US(armMode);
@@ -821,6 +822,10 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 	REICAST_US(SB_ISTNRM);
 	REICAST_US(SB_FFST_rc);
 	REICAST_US(SB_FFST);
+	if (version >= V15)
+		REICAST_US(SB_ADST);
+	else
+		SB_ADST = 0;
 
 	if (version < V5)
 	{

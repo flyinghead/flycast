@@ -57,124 +57,6 @@ struct DynaRBI: RuntimeBlockInfo
 	ARM::eReg T_reg;
 };
 
-
-#ifdef __ANDROID__
-#include <sys/syscall.h>  // for cache flushing.
-#endif
-
-#if defined(__APPLE__)
-#include <libkern/OSCacheControl.h>
-void CacheFlush(void* code, void* pEnd)
-{
-    sys_dcache_flush(code, (u8*)pEnd - (u8*)code + 1);
-    sys_icache_invalidate(code, (u8*)pEnd - (u8*)code + 1);
-}
-#elif !defined(ARMCC)
-void CacheFlush(void* code, void* pEnd)
-{
-#if !defined(__ANDROID__) && !defined(__APPLE__)
-	__builtin___clear_cache((char *)code, pEnd);
-#else
-	void* start=code;
-	size_t size=(u8*)pEnd-(u8*)start+4;
-
-  // Ideally, we would call
-  //   syscall(__ARM_NR_cacheflush, start,
-  //           reinterpret_cast<intptr_t>(start) + size, 0);
-  // however, syscall(int, ...) is not supported on all platforms, especially
-  // not when using EABI, so we call the __ARM_NR_cacheflush syscall directly.
-
-  register uint32_t beg asm("a1") = reinterpret_cast<uint32_t>(start);
-  register uint32_t end asm("a2") = reinterpret_cast<uint32_t>(start) + size;
-  register uint32_t flg asm("a3") = 0;
-
-  #ifdef __ARM_EABI__
-    #if defined (__arm__) && !defined(__thumb__)
-      // __arm__ may be defined in thumb mode.
-      register uint32_t scno asm("r7") = __ARM_NR_cacheflush;
-      asm volatile(
-          "svc 0x0"
-          : "=r" (beg)
-          : "0" (beg), "r" (end), "r" (flg), "r" (scno));
-    #else
-      // r7 is reserved by the EABI in thumb mode.
-      asm volatile(
-      "@   Enter ARM Mode  \n\t"
-          "adr r3, 1f      \n\t"
-          "bx  r3          \n\t"
-          ".ALIGN 4        \n\t"
-          ".ARM            \n"
-      "1:  push {r7}       \n\t"
-          "mov r7, %4      \n\t"
-          "svc 0x0         \n\t"
-          "pop {r7}        \n\t"
-      "@   Enter THUMB Mode\n\t"
-          "adr r3, 2f+1    \n\t"
-          "bx  r3          \n\t"
-          ".THUMB          \n"
-      "2:                  \n\t"
-          : "=r" (beg)
-          : "0" (beg), "r" (end), "r" (flg), "r" (__ARM_NR_cacheflush)
-          : "r3");
-    #endif
-  #else
-    #if defined (__arm__) && !defined(__thumb__)
-      // __arm__ may be defined in thumb mode.
-      asm volatile(
-          "svc %1"
-          : "=r" (beg)
-          : "i" (__ARM_NR_cacheflush), "0" (beg), "r" (end), "r" (flg));
-    #else
-      // Do not use the value of __ARM_NR_cacheflush in the inline assembly
-      // below, because the thumb mode value would be used, which would be
-      // wrong, since we switch to ARM mode before executing the svc instruction
-      asm volatile(
-      "@   Enter ARM Mode  \n\t"
-          "adr r3, 1f      \n\t"
-          "bx  r3          \n\t"
-          ".ALIGN 4        \n\t"
-          ".ARM            \n"
-      "1:  svc 0x9f0002    \n"
-      "@   Enter THUMB Mode\n\t"
-          "adr r3, 2f+1    \n\t"
-          "bx  r3          \n\t"
-          ".THUMB          \n"
-      "2:                  \n\t"
-          : "=r" (beg)
-          : "0" (beg), "r" (end), "r" (flg)
-          : "r3");
-    #endif
-  #endif
-	#if 0
-		const int syscall = 0xf0002;
-		__asm __volatile (
-			"mov     r0, %0\n"
-			"mov     r1, %1\n"
-			"mov     r7, %2\n"
-			"mov     r2, #0x0\n"
-			"svc     0x00000000\n"
-			:
-			:   "r" (code), "r" (pEnd), "r" (syscall)
-			:   "r0", "r1", "r7"
-			);
-	#endif
-#endif
-}
-#else
-asm void CacheFlush(void* code, void* pEnd)
-{
-	ARM
-	push {r7}
-	//add r1, r1, r0
-	mov r7, #0xf0000
-	add r7, r7, #0x2
-	mov r2, #0x0
-	svc #0x0
-	pop {r7}
-	bx lr
-}
-#endif
-
 using namespace ARM;
 
 
@@ -471,7 +353,7 @@ u32 DynaRBI::Relink()
 		break;
 	}
 
-	CacheFlush(code_start,emit_ptr);
+	vmem_platform_flush_cache(code_start, emit_ptr - 1, code_start, emit_ptr - 1);
 
 	u32 sz=(u8*)emit_ptr-code_start;
 
@@ -866,11 +748,12 @@ void vmem_slowpath(eReg raddr, eReg rt, eFSReg ft, eFDReg fd, mem_op_type optp, 
 	}
 }
 
-u32* ngen_readm_fail_v2(u32* ptrv,u32* regs,u32 fault_addr)
+bool ngen_Rewrite(host_context_t &context, void *faultAddress)
 {
-	arm_mem_op* ptr=(arm_mem_op*)ptrv;
+	u32 *regs = context.reg;
+	arm_mem_op *ptr = (arm_mem_op *)context.pc;
 
-	verify(sizeof(*ptr)==4);
+	static_assert(sizeof(*ptr) == 4, "sizeof(arm_mem_op) == 4");
 
 	mem_op_type optp;
 	u32 read=0;
@@ -923,7 +806,7 @@ u32* ngen_readm_fail_v2(u32* ptrv,u32* regs,u32 fault_addr)
 
 	//get some other relevant data
 	u32 sh4_addr=regs[raddr];
-	u32 fault_offs=fault_addr-regs[8];
+	u32 fault_offs = (uintptr_t)faultAddress - regs[8];
 	u8* sh4_ctr=(u8*)regs[8];
 	bool is_sq=(sh4_addr>>26)==0x38;
 
@@ -1018,10 +901,11 @@ u32* ngen_readm_fail_v2(u32* ptrv,u32* regs,u32 fault_addr)
 	}
 
 
-	CacheFlush((void*)ptr, (void*)emit_ptr);
-	emit_ptr=0;
+	vmem_platform_flush_cache((void*)ptr, (u8*)emit_ptr - 1, (void*)ptr, (u8*)emit_ptr - 1);
+	emit_ptr = 0;
+	context.pc = (size_t)ptr;
 
-	return (u32*)ptr;
+	return true;
 }
 
 EAPI NEG(eReg Rd, eReg Rs)
@@ -1711,10 +1595,10 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 				EOR(r1, rs1, rs2);
 				MOVW(reg.mapg(op->rd), 0);
 				
-				TST(r1, 0xFF000000);
-				TST(r1, 0x00FF0000, CC_NE);
-				TST(r1, 0x0000FF00, CC_NE);
-				TST(r1, 0x000000FF, CC_NE);
+				TST(r1, 0xFF000000u);
+				TST(r1, 0x00FF0000u, CC_NE);
+				TST(r1, 0x0000FF00u, CC_NE);
+				TST(r1, 0x000000FFu, CC_NE);
 				MOVW(reg.mapg(op->rd), 1, CC_EQ);
 			}
 			break;
@@ -2355,16 +2239,13 @@ void ngen_Compile(RuntimeBlockInfo* block, bool force_checks, bool reset, bool s
 	u8* pEnd = (u8*)EMIT_GET_PTR();
 
 	// Clear the area we've written to for cache
-	CacheFlush((void*)block->code, pEnd);
+	vmem_platform_flush_cache((void*)block->code, pEnd - 1, (void*)block->code, pEnd - 1);
 
 	//blk_start might not be the same, due to profiling counters ..
 	block->host_opcodes=(pEnd-blk_start)/4;
 
 	//host code size needs to cover the entire range of the block
 	block->host_code_size=(pEnd-(u8*)block->code);
-
-	void emit_WriteCodeCache();
-//	emit_WriteCodeCache();
 }
 
 void ngen_ResetBlocks()
@@ -2382,7 +2263,7 @@ void ngen_ResetBlocks()
 void ngen_init()
 {
 	INFO_LOG(DYNAREC, "Initializing the ARM32 dynarec");
-    verify(FPCB_OFFSET == -0x2100000 || FPCB_OFFSET == -0x4100000);
+    static_assert(FPCB_OFFSET == -0x2100000 || FPCB_OFFSET == -0x4100000, "Invalid FPCB_OFFSET");
     verify(rcb_noffs(p_sh4rcb->fpcb) == FPCB_OFFSET);
     
     ngen_FailedToFindBlock = &ngen_FailedToFindBlock_;

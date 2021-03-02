@@ -256,8 +256,8 @@ void bm_Reset()
 	}
 	if (_nvmem_4gb_space())
 	{
-		mem_region_unlock(virt_ram_base + 0x8C000000, 0x90000000 - 0x8C000000);
-		mem_region_unlock(virt_ram_base + 0xAC000000, 0xB0000000 - 0xAC000000);
+		mem_region_unlock(virt_ram_base + 0x8C000000u, 0x90000000u - 0x8C000000u);
+		mem_region_unlock(virt_ram_base + 0xAC000000u, 0xB0000000u - 0xAC000000u);
 	}
 }
 

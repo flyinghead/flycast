@@ -1956,7 +1956,7 @@ void ngen_ResetBlocks()
 	*/
 }
 
-void ngen_HandleException()
+void ngen_HandleException(host_context_t &context)
 {
 	die("rec-cpp exceptions not supported");
 }

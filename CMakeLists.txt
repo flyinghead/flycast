@@ -473,15 +473,17 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/hw/aica/dsp_x86.cpp
         core/hw/aica/sgc_if.cpp
         core/hw/aica/sgc_if.h
-        core/hw/arm7/arm64.cpp
         core/hw/arm7/arm7.cpp
         core/hw/arm7/arm7.h
         core/hw/arm7/arm_mem.cpp
         core/hw/arm7/arm_mem.h
+        core/hw/arm7/arm7_rec_arm32.cpp
+        core/hw/arm7/arm7_rec_arm64.cpp
+        core/hw/arm7/arm7_rec_x64.cpp
+        core/hw/arm7/arm7_rec.cpp
+        core/hw/arm7/arm7_rec.h
         core/hw/arm7/arm-new.h
         core/hw/arm7/vbaARM.cpp
-        core/hw/arm7/virt_arm.cpp
-        core/hw/arm7/virt_arm.h
         core/hw/bba/bba.h
         core/hw/bba/bba.cpp
         core/hw/bba/rtl8139c.h
@@ -639,7 +641,6 @@ target_sources(${PROJECT_NAME} PRIVATE
 if(NOT WIN32)
     target_sources(${PROJECT_NAME} PRIVATE
             core/linux/context.cpp
-            core/linux/context.h
             core/linux/posix_vmem.cpp)
 endif()
 
@@ -693,6 +694,8 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/oslib/audiobackend_sdl2.cpp
         core/oslib/audiostream.cpp
         core/oslib/audiostream.h
+        core/oslib/directory.h
+        core/oslib/host_context.h
         core/oslib/oslib.h)
 
 target_sources(${PROJECT_NAME} PRIVATE
@@ -893,9 +896,6 @@ elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "i686.*|i386.*|x86.*|amd64.*|x86_64.*|AMD6
         	core/rec-x64/xbyak_base.h
         	core/rec-x64/rec_x64.cpp
         	core/rec-x64/x64_regalloc.h)
-        if(MSVC)
-            target_sources(${PROJECT_NAME} PRIVATE core/rec-x64/msvc.asm)
-        endif()
     endif()
 else()
     message(FATAL_ERROR "Unknown target processor: ${CMAKE_SYSTEM_PROCESSOR}")
@@ -971,5 +971,6 @@ if(BUILD_TESTING)
     target_sources(${PROJECT_NAME} PRIVATE
             tests/src/div32_test.cpp
             tests/src/test_stubs.cpp
-            tests/src/serialize_test.cpp)
+            tests/src/serialize_test.cpp
+            tests/src/AicaArmTest.cpp)
 endif()

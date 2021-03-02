@@ -43,6 +43,7 @@
 #pragma once
 #include "decoder.h"
 #include "blockmanager.h"
+#include "oslib/host_context.h"
 
 #define CODE_SIZE   (10*1024*1024)
 #ifdef NO_MMU
@@ -111,7 +112,8 @@ extern void (*ngen_FailedToFindBlock)();
 void ngen_mainloop(void* cntx);
 
 void ngen_GetFeatures(ngen_features* dst);
-void ngen_HandleException();
+void ngen_HandleException(host_context_t &context);
+bool ngen_Rewrite(host_context_t &context, void *faultAddress);
 
 //Canonical callback interface
 enum CanonicalParamType

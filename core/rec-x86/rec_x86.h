@@ -75,7 +75,7 @@ public:
 
 	void genMainloop();
 	u32 relinkBlock(RuntimeBlockInfo *block);
-	bool rewriteMemAccess(size_t& host_pc, size_t retadr, size_t acc);
+	bool rewriteMemAccess(host_context_t &context);
 
 private:
 	void genOpcode(RuntimeBlockInfo *block, bool optimise, shil_opcode& op);

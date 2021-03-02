@@ -82,7 +82,6 @@ bool find_entry_by_page_size(u32 address, const TLB_Entry **ret_entry)
 	u32 vpn = (address >> (10 + shift)) << shift;
 	u16 bucket = bucket_index(vpn << 10, size);
 	TLB_LinkedEntry *pEntry = entry_buckets[bucket];
-	u32 length = 0;
 	while (pEntry != NULL)
 	{
 		if (pEntry->entry.Address.VPN == vpn && (size >> 1) == pEntry->entry.Data.SZ1 && (size & 1) == pEntry->entry.Data.SZ0)

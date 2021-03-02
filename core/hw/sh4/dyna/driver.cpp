@@ -150,8 +150,9 @@ bool RuntimeBlockInfo::Setup(u32 rpc,fpscr_t rfpu_cfg)
 	pBranchBlock=pNextBlock=0;
 	code=0;
 	has_jcond=false;
-	BranchBlock=NextBlock=csc_RetCache=0xFFFFFFFF;
-	BlockType=BET_SCL_Intr;
+	BranchBlock = NullAddress;
+	NextBlock = NullAddress;
+	BlockType = BET_SCL_Intr;
 	has_fpu_op = false;
 	temp_block = false;
 	

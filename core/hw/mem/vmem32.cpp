@@ -147,7 +147,7 @@ void vmem32_protect_vram(u32 addr, u32 size)
 {
 	if (!vmem32_inited)
 		return;
-	for (int page = (addr & VRAM_MASK) / VRAM_PROT_SEGMENT; page <= ((addr & VRAM_MASK) + size - 1) / VRAM_PROT_SEGMENT; page++)
+	for (u32 page = (addr & VRAM_MASK) / VRAM_PROT_SEGMENT; page <= ((addr & VRAM_MASK) + size - 1) / VRAM_PROT_SEGMENT; page++)
 	{
 		vram_blocks[page].push_back({ addr, addr + size - 1 });
 	}
@@ -156,7 +156,7 @@ void vmem32_unprotect_vram(u32 addr, u32 size)
 {
 	if (!vmem32_inited)
 		return;
-	for (int page = (addr & VRAM_MASK) / VRAM_PROT_SEGMENT; page <= ((addr & VRAM_MASK) + size - 1) / VRAM_PROT_SEGMENT; page++)
+	for (u32 page = (addr & VRAM_MASK) / VRAM_PROT_SEGMENT; page <= ((addr & VRAM_MASK) + size - 1) / VRAM_PROT_SEGMENT; page++)
 	{
 		std::vector<vram_lock>& block_list = vram_blocks[page];
 		for (auto it = block_list.begin(); it != block_list.end(); )
@@ -241,7 +241,7 @@ static u32 vmem32_map_mmu(u32 address, bool write)
 		u32 vpn = (entry->Address.VPN << 10) & ~(page_size - 1);
 		u32 ppn = (entry->Data.PPN << 10) & ~(page_size - 1);
 		u32 offset = vmem32_paddr_to_offset(ppn);
-		if (offset == -1)
+		if (offset == (u32)-1)
 			return VMEM32_ERROR_NOT_MAPPED;
 
 		bool allow_write = (entry->Data.PR & 1) != 0;
@@ -334,27 +334,30 @@ static u32 vmem32_map_address(u32 address, bool write)
 }
 
 #if !defined(NO_MMU) && defined(HOST_64BIT_CPU)
-bool vmem32_handle_signal(void *fault_addr, bool write, u32 exception_pc)
+// returns:
+//  0 if the fault address isn't handled by the mmu
+//  1 if the fault was handled and the access should be reattempted
+// -1 if an sh4 exception has been thrown
+int vmem32_handle_signal(void *fault_addr, bool write, u32 exception_pc)
 {
 	if (!vmem32_inited || (u8*)fault_addr < virt_ram_base || (u8*)fault_addr >= virt_ram_base + VMEM32_SIZE)
-		return false;
+		return 0;
 	//vmem32_page_faults++;
 	u32 guest_addr = (u8*)fault_addr - virt_ram_base;
 	u32 rv = vmem32_map_address(guest_addr, write);
 	DEBUG_LOG(VMEM, "vmem32_handle_signal handled signal %s @ %p -> %08x rv=%d", write ? "W" : "R", fault_addr, guest_addr, rv);
 	if (rv == MMU_ERROR_NONE)
-		return true;
+		return 1;
 	if (rv == VMEM32_ERROR_NOT_MAPPED)
-		return false;
+		return 0;
 #if HOST_CPU == CPU_ARM64
 	p_sh4rcb->cntx.pc = exception_pc;
 #else
 	p_sh4rcb->cntx.pc = p_sh4rcb->cntx.exception_pc;
 #endif
 	DoMMUException(guest_addr, rv, write ? MMU_TT_DWRITE : MMU_TT_DREAD);
-	ngen_HandleException();
-	// not reached
-	return true;
+
+	return -1;
 }
 #endif
 

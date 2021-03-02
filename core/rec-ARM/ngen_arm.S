@@ -201,66 +201,6 @@ bx lr
 end_ngen_mainloop:
 @@@@@@@@@@ ngen_mainloop @@@@@@@@@@
 
-#if FEAT_AREC == DYNAREC_JIT
-.global CSYM(arm_compilecode)
-HIDDEN(arm_compilecode)
-CSYM(arm_compilecode):
-bl CSYM(CompileCode)
-b CSYM(arm_dispatch)
-#endif
-
-#ifdef TARGET_IPHONE
-Xarm_Reg: .word CSYM(arm_Reg)
-XEntryPoints: .word CSYM(EntryPoints)
-#endif
-
-.global CSYM(arm_mainloop)
-HIDDEN(arm_mainloop)
-CSYM(arm_mainloop): @(cntx,lookup_base,cycles)
-
-#if defined(__APPLE__)
-push {r4,r5,r8,r11,lr}
-#else
-push {r4,r5,r8,r9,lr}
-#endif
-
-	#ifdef TARGET_IPHONE
-	ldr r8,Xarm_Reg			@load cntx
-	ldr r4,XEntryPoints		@load lookup base
-	#else
-	mov r8,r1			@load cntx
-	mov r4,r2		@load lookup base
-	#endif
-
-	ldr r5,[r8,#192]	@load cycle count
-	add r5,r0			@add cycles for this timeslice
-
-	b CSYM(arm_dispatch)
-
-.global CSYM(arm_dispatch)
-HIDDEN(arm_dispatch)
-CSYM(arm_dispatch):
-	ldrd r0,r1,[r8,#184]		@load: Next PC, interrupt
-	ubfx r2,r0,#2,#21		@ assuming 8 MB address space max (23 bits)
-	cmp r1,#0
-	bne arm_dofiq
-
-	ldr pc,[r4,r2,lsl #2]
-	
-arm_dofiq:
-	bl CSYM(CPUFiq)
-	b CSYM(arm_dispatch)
-
-.global CSYM(arm_exit)
-HIDDEN(arm_exit)
-CSYM(arm_exit):
-	str r5,[r8,#192]		@if timeslice is over, save remaining cycles
-#if defined(__APPLE__)
-	pop {r4,r5,r8,r11,pc}
-#else
-	pop {r4,r5,r8,r9,pc}
-#endif
-
 @@@@@@
 @matrix mul
 #ifndef __ANDROID__

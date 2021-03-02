@@ -25,7 +25,7 @@
 #else
 #include "hw/sh4/dyna/ssa_regalloc.h"
 #endif
-#include "deps/vixl/aarch64/macro-assembler-aarch64.h"
+#include <aarch64/macro-assembler-aarch64.h>
 using namespace vixl::aarch64;
 
 enum eReg {
