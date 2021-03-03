@@ -291,7 +291,9 @@ bool vmem_platform_prepare_jit_block(void *code_area, unsigned size, void **code
 
 #if HOST_CPU == CPU_ARM64
 
+#if defined(__APPLE__)
 #include <libkern/OSCacheControl.h>
+#endif
 
 // Code borrowed from Dolphin https://github.com/dolphin-emu/dolphin
 static void Arm64_CacheFlush(void* start, void* end) {
