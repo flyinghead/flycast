@@ -23,8 +23,6 @@
 #include "cfg.h"
 #include "hw/maple/maple_cfg.h"
 
-extern int renderer_changed;
-
 namespace config {
 
 class BaseOption {
@@ -113,7 +111,7 @@ public:
 	}
 
 	virtual void reset() override {
-		value = defaultValue;
+		set(defaultValue);
 		overridden = false;
 	}
 
@@ -316,25 +314,35 @@ public:
 	bool isOpenGL() const {
 		return value == RenderType::OpenGL || value == RenderType::OpenGL_OIT;
 	}
+	void set(RenderType v)
+	{
+		newValue = v;
+	}
 	RenderType& operator=(const RenderType& v) { set(v); return value; }
 
 	virtual void load() override {
 		RenderType current = value;
 		Option<RenderType>::load();
-		if (current != value) {
-			::renderer_changed = (int)value;
-			value = current;
-		}
+		newValue = value;
+		value = current;
 	}
 
 	virtual void reset() override {
 		RenderType current = value;
 		Option<RenderType>::reset();
-		if (current != value) {
-			::renderer_changed = (int)value;
-			value = current;
-		}
+		newValue = value;
+		value = current;
 	}
+
+	bool pendingChange() {
+		return newValue != value;
+	}
+	void commit() {
+		value = newValue;
+	}
+
+private:
+	RenderType newValue = RenderType();
 };
 extern RendererOption RendererType;
 extern Option<bool> UseMipmaps;

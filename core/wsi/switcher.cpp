@@ -42,13 +42,6 @@ void InitRenderApi()
 		exit(1);
 }
 
-void SwitchRenderApi(RenderType newApi)
-{
-	TermRenderApi();
-	config::RendererType = newApi;
-	InitRenderApi();
-}
-
 void TermRenderApi()
 {
 #ifdef USE_VULKAN

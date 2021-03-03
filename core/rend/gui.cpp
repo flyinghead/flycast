@@ -1613,7 +1613,7 @@ static void gui_display_settings()
     if (vulkan != !config::RendererType.isOpenGL())
         pvr_rend = !vulkan ? RenderType::OpenGL
         		: config::RendererType == RenderType::OpenGL_OIT ? RenderType::Vulkan_OIT : RenderType::Vulkan;
-    renderer_changed = (int)pvr_rend;
+    config::RendererType = pvr_rend;
 }
 
 void gui_display_notification(const char *msg, int duration)

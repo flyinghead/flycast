@@ -26,8 +26,8 @@
 #include "cfg/option.h"
 
 bool mainui_enabled;
-int renderer_changed = -1;	// Signals the renderer thread to switch renderer
 u32 MainFrameCount;
+static bool forceReinit;
 
 void UpdateInputState();
 
@@ -69,7 +69,6 @@ void mainui_term()
 void mainui_loop()
 {
 	mainui_enabled = true;
-	renderer_changed = (int)(RenderType)config::RendererType;
 	mainui_init();
 
 	while (mainui_enabled)
@@ -84,21 +83,16 @@ void mainui_loop()
 #endif
 		}
 
-		if (renderer_changed != (int)(RenderType)config::RendererType)
+		if (config::RendererType.pendingChange() || forceReinit)
 		{
+			bool openGl = config::RendererType.isOpenGL();
 			mainui_term();
-			if (renderer_changed == -1
-					|| config::RendererType.isOpenGL() != ((RenderType)renderer_changed == RenderType::OpenGL || (RenderType)renderer_changed == RenderType::OpenGL_OIT))
-			{
+			config::RendererType.commit();
+			if (openGl != config::RendererType.isOpenGL() || forceReinit)
 				// Switch between vulkan and opengl (or full reinit)
-				SwitchRenderApi(renderer_changed == -1 ? config::RendererType : (RenderType)renderer_changed);
-			}
-			else
-			{
-				config::RendererType = (RenderType)renderer_changed;
-			}
-			renderer_changed = (int)(RenderType)config::RendererType;
+				SwitchRenderApi();
 			mainui_init();
+			forceReinit = false;
 		}
 	}
 
@@ -112,5 +106,5 @@ void mainui_stop()
 
 void mainui_reinit()
 {
-	renderer_changed = -1;
+	forceReinit = true;
 }
