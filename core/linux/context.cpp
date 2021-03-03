@@ -53,9 +53,15 @@ static void context_segfault(host_context_t* hostctx, void* segfault_ctx)
 		#error HOST_OS
 	#endif
 #elif HOST_CPU == CPU_ARM64
-	bicopy<ToSegfault>(hostctx->pc, MCTX(.pc));
-	bicopy<ToSegfault>(hostctx->sp, MCTX(.sp));
-	bicopy<ToSegfault>(hostctx->x2, MCTX(.regs[2]));
+	#if defined(__APPLE__)
+		bicopy<ToSegfault>(hostctx->pc, MCTX(->__ss.__pc));
+		bicopy<ToSegfault>(hostctx->sp, MCTX(->__ss.__sp));
+		bicopy<ToSegfault>(hostctx->x2, MCTX(->__ss.__x[2]));
+ 	#else
+ 		bicopy<ToSegfault>(hostctx->pc, MCTX(.pc));
+ 		bicopy<ToSegfault>(hostctx->sp, MCTX(.sp));
+ 		bicopy<ToSegfault>(hostctx->x2, MCTX(.regs[2]));
+ 	#endif
 #elif HOST_CPU == CPU_X86
 	#if defined(__FreeBSD__)
 		bicopy<ToSegfault>(hostctx->pc, MCTX(.mc_eip));

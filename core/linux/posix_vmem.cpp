@@ -291,6 +291,10 @@ bool vmem_platform_prepare_jit_block(void *code_area, unsigned size, void **code
 
 #if HOST_CPU == CPU_ARM64
 
+#if defined(__APPLE__)
+#include <libkern/OSCacheControl.h>
+#endif
+
 // Code borrowed from Dolphin https://github.com/dolphin-emu/dolphin
 static void Arm64_CacheFlush(void* start, void* end) {
 	if (start == end)
@@ -298,7 +302,7 @@ static void Arm64_CacheFlush(void* start, void* end) {
 
 #if defined(__APPLE__)
 	// Header file says this is equivalent to: sys_icache_invalidate(start, end - start);
-	sys_cache_control(kCacheFunctionPrepareForExecution, start, end - start);
+	sys_cache_control(kCacheFunctionPrepareForExecution, start, (uintptr_t)end - (uintptr_t)start);
 #else
 	// Don't rely on GCC's __clear_cache implementation, as it caches
 	// icache/dcache cache line sizes, that can vary between cores on
