@@ -146,7 +146,7 @@ if(MINGW)
 endif()
 
 if(NOT ANDROID)
-    find_package(SDL2 HINTS "${CMAKE_CURRENT_BINARY_DIR}/core/deps/SDL")
+    find_package(SDL2 HINTS "${CMAKE_CURRENT_BINARY_DIR}/core/deps/SDL/cmake")
 endif()
 if(SDL2_FOUND)
     target_compile_definitions(${PROJECT_NAME} PRIVATE USE_SDL USE_SDL_AUDIO)
