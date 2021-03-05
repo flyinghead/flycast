@@ -223,6 +223,9 @@ TA_context* tactx_Pop(u32 addr)
 
 void tactx_Term()
 {
+	if (ta_ctx != nullptr)
+		SetCurrentTARC(TACTX_NONE);
+
 	for (size_t i = 0; i < ctx_list.size(); i++)
 	{
 		ctx_list[i]->Free();
