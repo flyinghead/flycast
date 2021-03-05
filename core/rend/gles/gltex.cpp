@@ -287,8 +287,7 @@ void ReadRTTBuffer() {
     		texture_data->Create();
     	texture_data->texID = gl.rtt.tex;
     	texture_data->dirty = 0;
-    	if (texture_data->lock_block == NULL)
-    		texture_data->lock_block = libCore_vramlock_Lock(texture_data->sa_tex, texture_data->sa + texture_data->size - 1, texture_data);
+    	libCore_vramlock_Lock(texture_data->sa_tex, texture_data->sa + texture_data->size - 1, texture_data);
     }
     gl.rtt.tex = 0;
 

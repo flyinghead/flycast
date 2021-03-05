@@ -574,8 +574,7 @@ void TextureDrawer::EndRenderPass()
 		//memset(&vram[fb_rtt.TexAddr << 3], '\0', size);
 
 		texture->dirty = 0;
-		if (texture->lock_block == NULL)
-			texture->lock_block = libCore_vramlock_Lock(texture->sa_tex, texture->sa + texture->size - 1, texture);
+		libCore_vramlock_Lock(texture->sa_tex, texture->sa + texture->size - 1, texture);
 	}
 	Drawer::EndRenderPass();
 }
