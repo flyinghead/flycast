@@ -123,10 +123,14 @@ size_t RZipFile::Write(const void *data, size_t length)
 		u32 sz = (u32)zippedSize;
 		if (std::fwrite(&sz, sizeof(sz), 1, file) != 1
 			|| std::fwrite(zipped, zippedSize, 1, file) != 1)
-			return 0;
+		{
+			rv = 0;
+			break;
+		}
 		p += uncompressedSize;
 		rv += uncompressedSize;
 	}
+	delete [] zipped;
 	
 	return rv;
 }
