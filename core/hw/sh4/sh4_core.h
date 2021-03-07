@@ -131,12 +131,15 @@ static INLINE f32 fixNaN(f32 f)
 {
 #ifdef STRICT_MODE
 	u32& hex = *(u32 *)&f;
+#ifdef __FAST_MATH__
+	// fast-math
+	if ((hex & 0x7fffffff) > 0x7f800000)
+		hex = 0x7fbfffff;
+#else
 	// no fast-math
 	if (f != f)
 		hex = 0x7fbfffff;
-//	// fast-math
-//	if ((hex & 0x7fffffff) > 0x7f800000)
-//		hex = 0x7fbfffff;
+#endif
 #endif
 	return f;
 }
@@ -144,12 +147,16 @@ static INLINE f32 fixNaN(f32 f)
 static INLINE f64 fixNaN64(f64 f)
 {
 #ifdef STRICT_MODE
-	// no fast-math
 	u64& hex = *(u64 *)&f;
+#ifdef __FAST_MATH__
+	// fast-math
+	if ((hex & 0x7fffffffffffffffll) > 0x7ff0000000000000ll)
+		hex = 0x7ff7ffffffffffffll;
+#else
+	// no fast-math
 	if (f != f)
 		hex = 0x7ff7ffffffffffffll;
-	// fast-math
-//	return (*(u64 *)&f & 0x7fffffffffffffffll) <= 0x7f80000000000000ll ? f : 0x7ff7ffffffffffffll;
+#endif
 #endif
 	return f;
 }

@@ -335,6 +335,12 @@ public:
 			}
 			break;
 
+			case shop_jcond:
+			case shop_jdyn:
+			case shop_mov32:
+				genBaseOpcode(op);
+				break;
+
 #ifndef CANONICAL_TEST
 			case shop_sync_sr:
 				GenCall(UpdateSR);

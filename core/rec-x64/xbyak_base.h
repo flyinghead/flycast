@@ -566,11 +566,13 @@ protected:
 			}
 			else
 			{
-				//special case
-				//We want to take in account the 'unordered' case on the fpu
-				lahf();
-				test(ah, 0x44);
-				setnp(al);
+#ifdef __FAST_MATH__
+				sete(al);
+#else
+				mov(edx, 0);
+				setnp(al);	// Parity means unordered (NaN), ZF is set too
+				cmovne(eax, edx);
+#endif
 			}
 			movzx(mapRegister(op.rd), al);
 			break;
