@@ -764,10 +764,13 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 		WARN_LOG(SAVESTATE, "Save State version not supported: %d", version);
 		return false;
 	}
-	else
+	if (version > VCUR_FLYCAST)
 	{
-		DEBUG_LOG(SAVESTATE, "Loading state version %d", version);
+		WARN_LOG(SAVESTATE, "Save State version too recent: %d", version);
+		return false;
 	}
+	DEBUG_LOG(SAVESTATE, "Loading state version %d", version);
+
 	REICAST_US(aica_interr) ;
 	REICAST_US(aica_reg_L) ;
 	REICAST_US(e68k_out) ;

@@ -235,7 +235,7 @@ void vmem_platform_create_mappings(const vmem_mapping *vmem_maps, unsigned numma
 
 		for (unsigned j = 0; j < num_mirrors; j++) {
 			u64 offset = vmem_maps[i].start_address + j * vmem_maps[i].memsize;
-			verify(mem_region_unmap_file(&virt_ram_base[offset], vmem_maps[i].memsize));
+//			verify(mem_region_unmap_file(&virt_ram_base[offset], vmem_maps[i].memsize));
 			verify(mem_region_map_file((void*)(uintptr_t)vmem_fd, &virt_ram_base[offset],
 					vmem_maps[i].memsize, vmem_maps[i].memoffset, vmem_maps[i].allow_writes) != NULL);
 		}
