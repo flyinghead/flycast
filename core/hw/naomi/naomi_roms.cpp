@@ -3567,7 +3567,7 @@ Game Games[] =
         0x052e2901,
         NULL,
         M2,
-        REGION_AUSTRALIA,
+        REGION_JAPAN,
         ROT0,
         {
             { "trf1vera.2f", 0x0000000, 0x0800000 },
