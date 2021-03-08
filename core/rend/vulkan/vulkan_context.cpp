@@ -676,6 +676,7 @@ void VulkanContext::CreateSwapChain()
 	    InitImgui();
 
 	    currentImage = GetSwapChainSize() - 1;
+		rend_resize(screen_width, screen_height);
 
 	    INFO_LOG(RENDERER, "Vulkan swap chain created: %d x %d, swap chain size %d", width, height, (int)imageViews.size());
 	}
@@ -737,7 +738,6 @@ void VulkanContext::NewFrame()
 	if (resized || HasSurfaceDimensionChanged())
 	{
 		CreateSwapChain();
-		rend_resize(screen_width, screen_height);
 		lastFrameView = vk::ImageView();
 	}
 	if (!IsValid())
@@ -800,6 +800,7 @@ void VulkanContext::Present() noexcept
 	if (resized)
 		try {
 			CreateSwapChain();
+			lastFrameView = vk::ImageView();
 		} catch (const InvalidVulkanContext& err) {
 		}
 }
