@@ -90,6 +90,7 @@ class Arm7Compiler : public Xbyak::CodeGenerator
 	static const u32 C_FLAG = 1 << 29;
 	static const u32 V_FLAG = 1 << 28;
 
+	Xbyak::util::Cpu cpu;
 
 	Xbyak::Operand getOperand(const ArmOp::Operand& arg, Xbyak::Reg32 scratch_reg)
 	{
@@ -438,7 +439,25 @@ class Arm7Compiler : public Xbyak::CodeGenerator
 				mov(eax, op.arg[1].getImmediate());
 				arg1 = eax;
 			}
-			andn(rd, static_cast<Xbyak::Reg32&>(arg1), arg0);
+			if (cpu.has(Cpu::tBMI1))
+				andn(rd, static_cast<Xbyak::Reg32&>(arg1), arg0);
+			else
+			{
+				if (rd == arg0)
+				{
+					if (arg1 != r9d)
+						mov(r9d, arg1);
+					not_(r9d);
+					and_(rd, r9d);
+				}
+				else
+				{
+					if (arg1 != rd)
+						mov(rd, static_cast<Xbyak::Reg32&>(arg1));
+					not_(rd);
+					and_(rd, arg0);
+				}
+			}
 			save_v_flag = false;
 			break;
 
