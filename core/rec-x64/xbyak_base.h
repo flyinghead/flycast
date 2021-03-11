@@ -609,17 +609,22 @@ protected:
 		case shop_cvt_f2i_t:
 			{
 				Xbyak::Reg32 rd = mapRegister(op.rd);
-				cvttss2si(rd, mapXRegister(op.rs1));
-				mov(eax, 0x7fffffff);
-				cmp(rd, 0x7fffff80);	// 2147483520.0f
-				cmovge(rd, eax);
-				cmp(rd, 0x80000000);	// indefinite integer
-				Xbyak::Label done;
-				jne(done, T_SHORT);
-				movd(ecx, mapXRegister(op.rs1));
-				cmp(ecx, 0);
-				cmovge(rd, eax);		// restore the correct sign
-				L(done);
+		        Xbyak::Label done;
+
+		        cvttss2si(edx, mapXRegister(op.rs1));
+		        mov(rd, 0x7fffffff);
+		        cmp(edx, 0x7fffff80);
+		        jg(done, T_SHORT);
+		        mov(rd, edx);
+		        cmp(rd, 0x80000000);	// indefinite integer
+		        jne(done, T_SHORT);
+		        xor_(eax, eax);
+		        static u32 zero;
+		        ucomiss(mapXRegister(op.rs1), dword[&zero]);
+		        setb(al);
+		        add(eax, 0x7fffffff);
+		        mov(rd, eax);
+		        L(done);
 			}
 			break;
 		case shop_cvt_i2f_n:

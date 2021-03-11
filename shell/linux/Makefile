@@ -98,8 +98,6 @@ ifeq (,$(platform))
         else
             platform = armv7h
         endif
-    else ifneq (,$(findstring mips,$(ARCH)))
-        platform = gcwz
     else
         $(warning Unsupported CPU architecture, using lincpp)
         platform = lincpp
@@ -260,16 +258,6 @@ else ifneq (,$(findstring rockchip,$(platform)))
     FOR_LINUX := 1
     ISARM64 := 1
 
-# GCW Zero
-else ifneq (,$(findstring gcwz,$(platform)))
-    NOT_ARM := 1
-    NO_REC := 1
-    CC_PREFIX ?= /opt/gcw0-toolchain/usr/bin/mipsel-gcw0-linux-uclibc-
-    CFLAGS += -D TARGET_GCW0 -D TARGET_NO_REC -fsingle-precision-constant
-    LIBS += -L./gcwz/enta_viv -lglapi
-    GCWZ_PKG = reicast-gcwz.opk
-    GCWZ_PKG_FILES = gcwz/default.gcw0.desktop gcwz/icon-32.png
-
 # Vero4K
 else ifneq (,$(findstring vero4k,$(platform)))
     MFLAGS += -marm -march=armv8-a+crc -mtune=cortex-a53 -mfloat-abi=hard -funsafe-math-optimizations -funroll-loops
@@ -321,7 +309,7 @@ LDFLAGS += -g -Wl,-Map,$(notdir $@).map,--gc-sections -Wl,-O3 -Wl,--sort-common 
 
 CFLAGS += $(RZDCY_CFLAGS) -g -O3 -D NDEBUG -c -fopenmp #-D NO_REND
 CFLAGS += -frename-registers -fno-strict-aliasing
-CFLAGS += -ffast-math -ftree-vectorize -Wall -Wno-unused-result
+CFLAGS += -ftree-vectorize -Wall -Wno-unused-result
 
 CXXFLAGS += $(RZDCY_CFLAGS) -fno-rtti -fno-operator-names -D_GLIBCXX_USE_CXX11_ABI=0 -std=gnu++11
 
@@ -537,9 +525,6 @@ DEPS:=$(patsubst $(RZDCY_SRC_DIR)/%,$(DEPDIR)/%,$(DEPS))
 POSTCOMPILE = mv -f $(DEPDIR)/$*.Td $(DEPDIR)/$*.d
 
 all: $(CPPFILES) $(EXECUTABLE) $(EXECUTABLE_STRIPPED)
-ifneq (,$(findstring gcwz,$(platform)))
-	mksquashfs $(EXECUTABLE_STRIPPED) $(GCWZ_PKG_FILES) $(GCWZ_PKG) -all-root
-endif
 
 $(EXECUTABLE): $(OBJECTS)
 	$(CXX) $(MFLAGS) $(EXTRAFLAGS) $(LDFLAGS) $(OBJECTS) $(LIBS) -o $@
@@ -579,7 +564,6 @@ install: $(EXECUTABLE)
 	mkdir -p $(DESTDIR)$(MENUENTRY_DIR) 2>/dev/null || true
 	mkdir -p $(DESTDIR)$(ICON_DIR) 2>/dev/null || true
 	install -m755 $(EXECUTABLE) $(DESTDIR)$(PREFIX)/bin/$(EXECUTABLE_NAME)
-	install -m644 mappings/controller_gcwz.cfg $(DESTDIR)$(PREFIX)/share/reicast/mappings
 	install -m644 mappings/controller_generic.cfg $(DESTDIR)$(PREFIX)/share/reicast/mappings
 	install -m644 mappings/controller_pandora.cfg $(DESTDIR)$(PREFIX)/share/reicast/mappings
 	install -m644 mappings/controller_xboxdrv.cfg $(DESTDIR)$(PREFIX)/share/reicast/mappings
@@ -591,7 +575,6 @@ install: $(EXECUTABLE)
 
 uninstall:
 	rm -f $(DESTDIR)$(PREFIX)/bin/$(EXECUTABLE_NAME)
-	rm -f $(DESTDIR)$(PREFIX)/share/reicast/mappings/controller_gcwz.cfg
 	rm -f $(DESTDIR)$(PREFIX)/share/reicast/mappings/controller_generic.cfg
 	rm -f $(DESTDIR)$(PREFIX)/share/reicast/mappings/controller_pandora.cfg
 	rm -f $(DESTDIR)$(PREFIX)/share/reicast/mappings/controller_xboxdrv.cfg

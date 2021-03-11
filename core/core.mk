@@ -53,10 +53,6 @@ else
     RZDCY_MODULES += rend/norend/
 endif
 
-ifdef FOR_ANDROID
-    RZDCY_MODULES += android/ deps/libandroid/ linux/
-endif
-
 ifdef USE_SDL
     RZDCY_MODULES += sdl/
 endif
@@ -84,33 +80,13 @@ RZDCY_CFLAGS	+= \
 	-frename-registers -fsingle-precision-constant -ffast-math \
 	-ftree-vectorize -fomit-frame-pointer
 	RZDCY_CFLAGS += -march=armv7-a -mtune=cortex-a8 -mfpu=neon
-else
-	ifdef FOR_ANDROID
-RZDCY_CFLAGS	+= \
-		$(CFLAGS) -c -O3 \
-		-D_ANDROID -DNDEBUG \
-		-frename-registers -fsingle-precision-constant -ffast-math \
-		-ftree-vectorize -fomit-frame-pointer
-
-		ifndef NOT_ARM
-			RZDCY_CFLAGS += -march=armv7-a -mtune=cortex-a9 -mfpu=vfpv3-d16
-		else
-			ifdef ISARM64
-				RZDCY_CFLAGS += -march=armv8-a
-			endif
-		endif
-	endif
 endif
 
 ifdef USE_VULKAN
 	ifdef FOR_WINDOWS
 		RZDCY_CFLAGS += -DVK_USE_PLATFORM_WIN32_KHR
 	else
-		ifdef FOR_ANDROID
-			RZDCY_CFLAGS += -DVK_USE_PLATFORM_ANDROID_KHR
-		else
-			RZDCY_CFLAGS += -DVK_USE_PLATFORM_XLIB_KHR
-		endif
+		RZDCY_CFLAGS += -DVK_USE_PLATFORM_XLIB_KHR
 	endif
 	RZDCY_CFLAGS += -D USE_VULKAN
 endif

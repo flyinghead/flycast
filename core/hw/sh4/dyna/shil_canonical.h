@@ -715,7 +715,7 @@ u32,f1,(f32 f1),
 		s32 res = (s32)f1;
 
 		// Fix result sign for Intel CPUs
-		if (res == 0x80000000 && *(s32 *)&f1 > 0)
+		if ((u32)res == 0x80000000 && f1 == f1 && *(s32 *)&f1 > 0)
 			res = 0x7fffffff;
 
 		return res;
@@ -903,13 +903,12 @@ shil_canonical
 (
 f32,f1,(float* fn, float* fm),
 
-	// multiplications are done with 28 bits of precision (53 - 25) and the final sum at 30 bits
-	double idp = reduce_precision<25>((double)fn[0] * fm[0]);
-	idp += reduce_precision<25>((double)fn[1] * fm[1]);
-	idp += reduce_precision<25>((double)fn[2] * fm[2]);
-	idp += reduce_precision<25>((double)fn[3] * fm[3]);
+	double idp = (double)fn[0] * fm[0];
+	idp += (double)fn[1] * fm[1];
+	idp += (double)fn[2] * fm[2];
+	idp += (double)fn[3] * fm[3];
 
-	return (float)fixNaN64(idp);
+	return fixNaN((float)idp);
 )
 #else
 shil_canonical
@@ -944,30 +943,30 @@ shil_canonical
 (
 void,f1,(float* fd,float* fn, float* fm),
 
-	double v1 = reduce_precision<25>((double)fm[0]  * fn[0]) +
-				reduce_precision<25>((double)fm[4]  * fn[1]) +
-				reduce_precision<25>((double)fm[8]  * fn[2]) +
-				reduce_precision<25>((double)fm[12] * fn[3]);
+	double v1 = (double)fm[0]  * fn[0] +
+				(double)fm[4]  * fn[1] +
+				(double)fm[8]  * fn[2] +
+				(double)fm[12] * fn[3];
 
-	double v2 = reduce_precision<25>((double)fm[1]  * fn[0]) +
-				reduce_precision<25>((double)fm[5]  * fn[1]) +
-				reduce_precision<25>((double)fm[9]  * fn[2]) +
-				reduce_precision<25>((double)fm[13] * fn[3]);
+	double v2 = (double)fm[1]  * fn[0] +
+				(double)fm[5]  * fn[1] +
+				(double)fm[9]  * fn[2] +
+				(double)fm[13] * fn[3];
 
-	double v3 = reduce_precision<25>((double)fm[2]  * fn[0]) +
-				reduce_precision<25>((double)fm[6]  * fn[1]) +
-				reduce_precision<25>((double)fm[10] * fn[2]) +
-				reduce_precision<25>((double)fm[14] * fn[3]);
+	double v3 = (double)fm[2]  * fn[0] +
+				(double)fm[6]  * fn[1] +
+				(double)fm[10] * fn[2] +
+				(double)fm[14] * fn[3];
 
-	double v4 = reduce_precision<25>((double)fm[3]  * fn[0]) +
-				reduce_precision<25>((double)fm[7]  * fn[1]) +
-				reduce_precision<25>((double)fm[11] * fn[2]) +
-				reduce_precision<25>((double)fm[15] * fn[3]);
+	double v4 = (double)fm[3]  * fn[0] +
+				(double)fm[7]  * fn[1] +
+				(double)fm[11] * fn[2] +
+				(double)fm[15] * fn[3];
 
-	fd[0] = (float)fixNaN64(v1);
-	fd[1] = (float)fixNaN64(v2);
-	fd[2] = (float)fixNaN64(v3);
-	fd[3] = (float)fixNaN64(v4);
+	fd[0] = fixNaN((float)v1);
+	fd[1] = fixNaN((float)v2);
+	fd[2] = fixNaN((float)v3);
+	fd[3] = fixNaN((float)v4);
 )
 #else
 shil_canonical

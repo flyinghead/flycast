@@ -69,8 +69,7 @@ set_target_properties(${PROJECT_NAME} PROPERTIES CXX_EXTENSIONS OFF)
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     target_compile_options(${PROJECT_NAME} PRIVATE
         $<$<COMPILE_LANGUAGE:CXX>:-fno-rtti>
-        -fno-strict-aliasing
-        -ffast-math)
+        -fno-strict-aliasing)
 elseif(MSVC)
 	target_compile_options(${PROJECT_NAME} PRIVATE /GR- /GS-)
 endif()

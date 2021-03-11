@@ -37,7 +37,7 @@ class EvdevGamepadDevice : public GamepadDevice
 {
 public:
 	EvdevGamepadDevice(int maple_port, const char *devnode, int fd, const char *mapping_file = NULL)
-	: GamepadDevice(maple_port, "evdev"), _fd(fd), _rumble_effect_id(-1), _devnode(devnode)
+	: GamepadDevice(maple_port, "evdev"), _fd(fd), _devnode(devnode), _rumble_effect_id(-1)
 	{
 		fcntl(fd, F_SETFL, O_NONBLOCK);
 		char buf[256] = "Unknown";
@@ -56,8 +56,6 @@ public:
 		{
 #if defined(TARGET_PANDORA)
 			mapping_file = "controller_pandora.cfg";
-#elif defined(TARGET_GCW0)
-			mapping_file = "controller_gcwz.cfg";
 #else
 			if (_name == "Microsoft X-Box 360 pad"
 				|| _name == "Xbox 360 Wireless Receiver"
