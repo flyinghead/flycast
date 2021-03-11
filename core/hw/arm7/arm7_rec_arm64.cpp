@@ -552,7 +552,7 @@ public:
 		for (u32 i = 0; i < block_ops.size(); i++)
 		{
 			const ArmOp& op = block_ops[i];
-			DEBUG_LOG(AICA_ARM, "-> %s\n", op.toString().c_str());
+			DEBUG_LOG(AICA_ARM, "-> %s", op.toString().c_str());
 
 			set_flags = op.flags & ArmOp::OP_SETS_FLAGS;
 			logical_op_set_flags = op.isLogicalOp() && set_flags;

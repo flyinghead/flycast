@@ -588,8 +588,8 @@ void compile()
 		//Goto next opcode
 		pc += 4;
 
-		if (opcd != 0)	// andeq r0, r0, r0 -> NOP
-		{				// ARAM is filled with these at start up
+		if (opcd != 0 && opcd != 0x41474553)	// andeq r0, r0, r0 (== NOP) and 'SEGA'
+		{										// ARAM is filled with these at start up
 
 			if (last_op.op_type == ArmOp::FALLBACK)
 			{
