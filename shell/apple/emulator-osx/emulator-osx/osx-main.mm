@@ -187,7 +187,7 @@ void emu_gles_init(int width, int height)
     NSSize displayNativeSize;
     CFArrayRef allDisplayModes = CGDisplayCopyAllDisplayModes(displayID, NULL);
     CFIndex n = CFArrayGetCount(allDisplayModes);
-    for(int i = 0; i < n; ++i)
+    for(CFIndex i = 0; i < n; ++i)
     {
         CGDisplayModeRef m = (CGDisplayModeRef)CFArrayGetValueAtIndex(allDisplayModes, i);
         if(CGDisplayModeGetIOFlags(m) & kDisplayModeNativeFlag)

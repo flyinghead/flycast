@@ -1289,6 +1289,7 @@
 				AED73DC52303E57C00ECDB64 /* Frameworks */,
 			);
 			sourceTree = "<group>";
+			usesTabs = 0;
 		};
 		84A388B41B1CDD3E000166C0 /* Products */ = {
 			isa = PBXGroup;

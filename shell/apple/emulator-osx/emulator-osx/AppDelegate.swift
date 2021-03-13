@@ -19,7 +19,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 			window.title = name
 		}
         NSApplication.shared.mainMenu?.item(at: 1)?.submenu?.insertItem(
-            NSMenuItem(title: "New Instance", action: #selector(newInstance(_:)), keyEquivalent: "n"), at: 0
+            NSMenuItem(title: "New Instance", action: #selector(self.newInstance(_:)), keyEquivalent: "n"), at: 0
         )
     }
 
@@ -33,7 +33,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     func applicationDockMenu(_ sender: NSApplication) -> NSMenu? {
         let dockMenu = NSMenu()
-        dockMenu.addItem(withTitle: "New Instance", action: #selector(newInstance(_:)), keyEquivalent: "n")
+        dockMenu.addItem(withTitle: "New Instance", action: #selector(self.newInstance(_:)), keyEquivalent: "n")
         return dockMenu
     }
     
