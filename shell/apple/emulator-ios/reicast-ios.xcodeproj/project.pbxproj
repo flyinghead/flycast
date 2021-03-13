@@ -49,7 +49,6 @@
 		877652C91B6157FC00437F10 /* ngen_arm.S in Sources */ = {isa = PBXBuildFile; fileRef = 877652C71B6157FC00437F10 /* ngen_arm.S */; };
 		877652CA1B6157FC00437F10 /* rec_arm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 877652C81B6157FC00437F10 /* rec_arm.cpp */; };
 		878B0CFC1B8BB5B400A8D1C5 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 878B0CFB1B8BB5B400A8D1C5 /* Images.xcassets */; };
-		878B0D001B8BFE6200A8D1C5 /* disk_unknown.png in Resources */ = {isa = PBXBuildFile; fileRef = 878B0CFF1B8BFE6200A8D1C5 /* disk_unknown.png */; };
 		8794D9C31B88F3D600B1B3A3 /* DiskViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 8794D9C21B88F3D600B1B3A3 /* DiskViewCell.m */; };
 		87C208D71B7A4BFA00638BDD /* AboutViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 87C208C61B7A4BFA00638BDD /* AboutViewController.m */; };
 		87C208D81B7A4BFA00638BDD /* BrowserTableViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 87C208C81B7A4BFA00638BDD /* BrowserTableViewController.m */; };
@@ -63,28 +62,6 @@
 		87C4AA541A440BEB0048DBF4 /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 87C4AA531A440BEB0048DBF4 /* libz.dylib */; };
 		87C4AA561A4414070048DBF4 /* AssetsLibrary.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 87C4AA551A4414070048DBF4 /* AssetsLibrary.framework */; };
 		87D92EA81B7839E600D8FD9E /* ios_main.mm in Sources */ = {isa = PBXBuildFile; fileRef = 87D92EA71B7839E600D8FD9E /* ios_main.mm */; };
-		87D92F371B7A1B4800D8FD9E /* 210-octocat.png in Resources */ = {isa = PBXBuildFile; fileRef = 87D92F211B7A1B4800D8FD9E /* 210-octocat.png */; };
-		87D92F381B7A1B4800D8FD9E /* 210-octocat@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 87D92F221B7A1B4800D8FD9E /* 210-octocat@2x.png */; };
-		87D92F391B7A1B4800D8FD9E /* 210-twitterbird.png in Resources */ = {isa = PBXBuildFile; fileRef = 87D92F231B7A1B4800D8FD9E /* 210-twitterbird.png */; };
-		87D92F3A1B7A1B4800D8FD9E /* 210-twitterbird@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 87D92F241B7A1B4800D8FD9E /* 210-twitterbird@2x.png */; };
-		87D92F3B1B7A1B4800D8FD9E /* ABXYPad.png in Resources */ = {isa = PBXBuildFile; fileRef = 87D92F251B7A1B4800D8FD9E /* ABXYPad.png */; };
-		87D92F3C1B7A1B4800D8FD9E /* ABXYPad@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 87D92F261B7A1B4800D8FD9E /* ABXYPad@2x.png */; };
-		87D92F3D1B7A1B4800D8FD9E /* DPad.png in Resources */ = {isa = PBXBuildFile; fileRef = 87D92F271B7A1B4800D8FD9E /* DPad.png */; };
-		87D92F3E1B7A1B4800D8FD9E /* DPad@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 87D92F281B7A1B4800D8FD9E /* DPad@2x.png */; };
-		87D92F3F1B7A1B4800D8FD9E /* JoystickBackground.png in Resources */ = {isa = PBXBuildFile; fileRef = 87D92F291B7A1B4800D8FD9E /* JoystickBackground.png */; };
-		87D92F401B7A1B4800D8FD9E /* JoystickBackground@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 87D92F2A1B7A1B4800D8FD9E /* JoystickBackground@2x.png */; };
-		87D92F411B7A1B4800D8FD9E /* JoystickButton.png in Resources */ = {isa = PBXBuildFile; fileRef = 87D92F2B1B7A1B4800D8FD9E /* JoystickButton.png */; };
-		87D92F421B7A1B4800D8FD9E /* JoystickButton@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 87D92F2C1B7A1B4800D8FD9E /* JoystickButton@2x.png */; };
-		87D92F431B7A1B4800D8FD9E /* LTrigger.png in Resources */ = {isa = PBXBuildFile; fileRef = 87D92F2D1B7A1B4800D8FD9E /* LTrigger.png */; };
-		87D92F441B7A1B4800D8FD9E /* LTrigger@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 87D92F2E1B7A1B4800D8FD9E /* LTrigger@2x.png */; };
-		87D92F451B7A1B4800D8FD9E /* menuback.png in Resources */ = {isa = PBXBuildFile; fileRef = 87D92F2F1B7A1B4800D8FD9E /* menuback.png */; };
-		87D92F461B7A1B4800D8FD9E /* menuback@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 87D92F301B7A1B4800D8FD9E /* menuback@2x.png */; };
-		87D92F471B7A1B4800D8FD9E /* menuicon.png in Resources */ = {isa = PBXBuildFile; fileRef = 87D92F311B7A1B4800D8FD9E /* menuicon.png */; };
-		87D92F481B7A1B4800D8FD9E /* menuicon@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 87D92F321B7A1B4800D8FD9E /* menuicon@2x.png */; };
-		87D92F491B7A1B4800D8FD9E /* RTrigger.png in Resources */ = {isa = PBXBuildFile; fileRef = 87D92F331B7A1B4800D8FD9E /* RTrigger.png */; };
-		87D92F4A1B7A1B4800D8FD9E /* RTrigger@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 87D92F341B7A1B4800D8FD9E /* RTrigger@2x.png */; };
-		87D92F4B1B7A1B4800D8FD9E /* Start.png in Resources */ = {isa = PBXBuildFile; fileRef = 87D92F351B7A1B4800D8FD9E /* Start.png */; };
-		87D92F4C1B7A1B4800D8FD9E /* Start@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 87D92F361B7A1B4800D8FD9E /* Start@2x.png */; };
 		87D92F4E1B7A1B5700D8FD9E /* GameController.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 87D92F4D1B7A1B5700D8FD9E /* GameController.framework */; };
 		87D92F541B7A1BB100D8FD9E /* iCadeReaderView.m in Sources */ = {isa = PBXBuildFile; fileRef = 87D92F511B7A1BB100D8FD9E /* iCadeReaderView.m */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
 		87D92F551B7A1BB100D8FD9E /* LICENSE in Resources */ = {isa = PBXBuildFile; fileRef = 87D92F531B7A1BB100D8FD9E /* LICENSE */; };
@@ -293,7 +270,6 @@
 		877652C71B6157FC00437F10 /* ngen_arm.S */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.asm; path = ngen_arm.S; sourceTree = "<group>"; };
 		877652C81B6157FC00437F10 /* rec_arm.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = rec_arm.cpp; sourceTree = "<group>"; };
 		878B0CFB1B8BB5B400A8D1C5 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = "../reicast-ios/Images.xcassets"; sourceTree = "<group>"; };
-		878B0CFF1B8BFE6200A8D1C5 /* disk_unknown.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = disk_unknown.png; sourceTree = "<group>"; };
 		8794D9C11B88F3D600B1B3A3 /* DiskViewCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = DiskViewCell.h; path = emulator/DiskViewCell.h; sourceTree = "<group>"; };
 		8794D9C21B88F3D600B1B3A3 /* DiskViewCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = DiskViewCell.m; path = emulator/DiskViewCell.m; sourceTree = "<group>"; };
 		87C208C51B7A4BFA00638BDD /* AboutViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AboutViewController.h; path = emulator/AboutViewController.h; sourceTree = "<group>"; };
@@ -318,28 +294,6 @@
 		87C4AA551A4414070048DBF4 /* AssetsLibrary.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AssetsLibrary.framework; path = System/Library/Frameworks/AssetsLibrary.framework; sourceTree = SDKROOT; };
 		87D776E41EF5623300E08B55 /* zlib.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = zlib.xcodeproj; path = deps/zlib/zlib.xcodeproj; sourceTree = "<group>"; };
 		87D92EA71B7839E600D8FD9E /* ios_main.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = ios_main.mm; path = emulator/ios_main.mm; sourceTree = SOURCE_ROOT; };
-		87D92F211B7A1B4800D8FD9E /* 210-octocat.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "210-octocat.png"; sourceTree = "<group>"; };
-		87D92F221B7A1B4800D8FD9E /* 210-octocat@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "210-octocat@2x.png"; sourceTree = "<group>"; };
-		87D92F231B7A1B4800D8FD9E /* 210-twitterbird.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "210-twitterbird.png"; sourceTree = "<group>"; };
-		87D92F241B7A1B4800D8FD9E /* 210-twitterbird@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "210-twitterbird@2x.png"; sourceTree = "<group>"; };
-		87D92F251B7A1B4800D8FD9E /* ABXYPad.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = ABXYPad.png; sourceTree = "<group>"; };
-		87D92F261B7A1B4800D8FD9E /* ABXYPad@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "ABXYPad@2x.png"; sourceTree = "<group>"; };
-		87D92F271B7A1B4800D8FD9E /* DPad.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = DPad.png; sourceTree = "<group>"; };
-		87D92F281B7A1B4800D8FD9E /* DPad@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "DPad@2x.png"; sourceTree = "<group>"; };
-		87D92F291B7A1B4800D8FD9E /* JoystickBackground.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = JoystickBackground.png; sourceTree = "<group>"; };
-		87D92F2A1B7A1B4800D8FD9E /* JoystickBackground@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "JoystickBackground@2x.png"; sourceTree = "<group>"; };
-		87D92F2B1B7A1B4800D8FD9E /* JoystickButton.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = JoystickButton.png; sourceTree = "<group>"; };
-		87D92F2C1B7A1B4800D8FD9E /* JoystickButton@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "JoystickButton@2x.png"; sourceTree = "<group>"; };
-		87D92F2D1B7A1B4800D8FD9E /* LTrigger.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = LTrigger.png; sourceTree = "<group>"; };
-		87D92F2E1B7A1B4800D8FD9E /* LTrigger@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "LTrigger@2x.png"; sourceTree = "<group>"; };
-		87D92F2F1B7A1B4800D8FD9E /* menuback.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = menuback.png; sourceTree = "<group>"; };
-		87D92F301B7A1B4800D8FD9E /* menuback@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "menuback@2x.png"; sourceTree = "<group>"; };
-		87D92F311B7A1B4800D8FD9E /* menuicon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = menuicon.png; sourceTree = "<group>"; };
-		87D92F321B7A1B4800D8FD9E /* menuicon@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "menuicon@2x.png"; sourceTree = "<group>"; };
-		87D92F331B7A1B4800D8FD9E /* RTrigger.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = RTrigger.png; sourceTree = "<group>"; };
-		87D92F341B7A1B4800D8FD9E /* RTrigger@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "RTrigger@2x.png"; sourceTree = "<group>"; };
-		87D92F351B7A1B4800D8FD9E /* Start.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Start.png; sourceTree = "<group>"; };
-		87D92F361B7A1B4800D8FD9E /* Start@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Start@2x.png"; sourceTree = "<group>"; };
 		87D92F4D1B7A1B5700D8FD9E /* GameController.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GameController.framework; path = System/Library/Frameworks/GameController.framework; sourceTree = SDKROOT; };
 		87D92F501B7A1BB100D8FD9E /* iCadeReaderView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iCadeReaderView.h; sourceTree = "<group>"; };
 		87D92F511B7A1BB100D8FD9E /* iCadeReaderView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iCadeReaderView.m; sourceTree = "<group>"; };
@@ -741,7 +695,6 @@
 				87078AA418A47FE90034C7A0 /* Shader.vsh */,
 				87D92F4F1B7A1BB100D8FD9E /* iCade-iOS */,
 				9C7A393618C805F70070BB5F /* View Controller Subclasses */,
-				9C7A393718C806060070BB5F /* Images */,
 				9C7A393418C805980070BB5F /* Third-Party Frameworks */,
 				87078A9118A47FE90034C7A0 /* Supporting Files */,
 				9C7A393818C806DE0070BB5F /* Emulator Core Code */,
@@ -819,36 +772,6 @@
 			);
 			name = "View Controller Subclasses";
 			path = ..;
-			sourceTree = "<group>";
-		};
-		9C7A393718C806060070BB5F /* Images */ = {
-			isa = PBXGroup;
-			children = (
-				87D92F211B7A1B4800D8FD9E /* 210-octocat.png */,
-				87D92F221B7A1B4800D8FD9E /* 210-octocat@2x.png */,
-				87D92F231B7A1B4800D8FD9E /* 210-twitterbird.png */,
-				87D92F241B7A1B4800D8FD9E /* 210-twitterbird@2x.png */,
-				87D92F251B7A1B4800D8FD9E /* ABXYPad.png */,
-				87D92F261B7A1B4800D8FD9E /* ABXYPad@2x.png */,
-				87D92F271B7A1B4800D8FD9E /* DPad.png */,
-				87D92F281B7A1B4800D8FD9E /* DPad@2x.png */,
-				87D92F291B7A1B4800D8FD9E /* JoystickBackground.png */,
-				87D92F2A1B7A1B4800D8FD9E /* JoystickBackground@2x.png */,
-				87D92F2B1B7A1B4800D8FD9E /* JoystickButton.png */,
-				878B0CFF1B8BFE6200A8D1C5 /* disk_unknown.png */,
-				87D92F2C1B7A1B4800D8FD9E /* JoystickButton@2x.png */,
-				87D92F2D1B7A1B4800D8FD9E /* LTrigger.png */,
-				87D92F2E1B7A1B4800D8FD9E /* LTrigger@2x.png */,
-				87D92F2F1B7A1B4800D8FD9E /* menuback.png */,
-				87D92F301B7A1B4800D8FD9E /* menuback@2x.png */,
-				87D92F311B7A1B4800D8FD9E /* menuicon.png */,
-				87D92F321B7A1B4800D8FD9E /* menuicon@2x.png */,
-				87D92F331B7A1B4800D8FD9E /* RTrigger.png */,
-				87D92F341B7A1B4800D8FD9E /* RTrigger@2x.png */,
-				87D92F351B7A1B4800D8FD9E /* Start.png */,
-				87D92F361B7A1B4800D8FD9E /* Start@2x.png */,
-			);
-			path = Images;
 			sourceTree = "<group>";
 		};
 		9C7A393818C806DE0070BB5F /* Emulator Core Code */ = {
@@ -1432,39 +1355,16 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				87D92F461B7A1B4800D8FD9E /* menuback@2x.png in Resources */,
-				87D92F491B7A1B4800D8FD9E /* RTrigger.png in Resources */,
-				87D92F4B1B7A1B4800D8FD9E /* Start.png in Resources */,
 				9C7A393318C804A80070BB5F /* reicast.entitlements in Resources */,
 				AE8C274D21122F0E00D4D8F4 /* License.txt in Resources */,
-				87D92F391B7A1B4800D8FD9E /* 210-twitterbird.png in Resources */,
-				87D92F3A1B7A1B4800D8FD9E /* 210-twitterbird@2x.png in Resources */,
-				87D92F3D1B7A1B4800D8FD9E /* DPad.png in Resources */,
 				878B0CFC1B8BB5B400A8D1C5 /* Images.xcassets in Resources */,
-				87D92F3C1B7A1B4800D8FD9E /* ABXYPad@2x.png in Resources */,
-				87D92F401B7A1B4800D8FD9E /* JoystickBackground@2x.png in Resources */,
 				9C7A3AA418C806E00070BB5F /* core.mk in Resources */,
-				87D92F421B7A1B4800D8FD9E /* JoystickButton@2x.png in Resources */,
-				87D92F3F1B7A1B4800D8FD9E /* JoystickBackground.png in Resources */,
-				87D92F4A1B7A1B4800D8FD9E /* RTrigger@2x.png in Resources */,
 				87078AA318A47FE90034C7A0 /* Shader.fsh in Resources */,
 				9C7A3BC418C84EA10070BB5F /* MainStoryboard.storyboard in Resources */,
-				87D92F381B7A1B4800D8FD9E /* 210-octocat@2x.png in Resources */,
-				87D92F431B7A1B4800D8FD9E /* LTrigger.png in Resources */,
-				87D92F3E1B7A1B4800D8FD9E /* DPad@2x.png in Resources */,
 				9C7A3B4418C806E00070BB5F /* README.md in Resources */,
-				87D92F4C1B7A1B4800D8FD9E /* Start@2x.png in Resources */,
-				87D92F471B7A1B4800D8FD9E /* menuicon.png in Resources */,
-				87D92F411B7A1B4800D8FD9E /* JoystickButton.png in Resources */,
-				87D92F441B7A1B4800D8FD9E /* LTrigger@2x.png in Resources */,
 				87D92F551B7A1BB100D8FD9E /* LICENSE in Resources */,
-				87D92F451B7A1B4800D8FD9E /* menuback.png in Resources */,
 				87FA52EA1B8CE18600CEFC32 /* PadViewController.xib in Resources */,
 				87078AA518A47FE90034C7A0 /* Shader.vsh in Resources */,
-				878B0D001B8BFE6200A8D1C5 /* disk_unknown.png in Resources */,
-				87D92F3B1B7A1B4800D8FD9E /* ABXYPad.png in Resources */,
-				87D92F481B7A1B4800D8FD9E /* menuicon@2x.png in Resources */,
-				87D92F371B7A1B4800D8FD9E /* 210-octocat.png in Resources */,
 				AE8C274C21122F0E00D4D8F4 /* Changelog.txt in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
