@@ -57,7 +57,7 @@ protected:
 		else
 			while (descriptorSets.size() < GetContext()->GetSwapChainSize())
 			{
-				descriptorSets.push_back(OITDescriptorSets());
+				descriptorSets.emplace_back();
 				descriptorSets.back().Init(samplerManager,
 						pipelineManager->GetPipelineLayout(),
 						pipelineManager->GetPerFrameDSLayout(),
