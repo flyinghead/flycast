@@ -51,11 +51,9 @@ void (*EntryPoints[ARAM_SIZE_MAX / 4])();
 
 #ifdef _WIN32
 alignas(4096) static u8 ARM7_TCB[ICacheSize];
-#elif HOST_OS == OS_LINUX
-
+#elif defined(__unix__)
 alignas(4096) static u8 ARM7_TCB[ICacheSize] __attribute__((section(".text")));
-
-#elif HOST_OS==OS_DARWIN
+#elif defined(__APPLE__)
 alignas(4096) static u8 ARM7_TCB[ICacheSize] __attribute__((section("__TEXT, .text")));
 #else
 #error ARM7_TCB ALLOC

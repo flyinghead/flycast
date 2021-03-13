@@ -1,6 +1,6 @@
 #include "types.h"
 
-#if HOST_OS==OS_LINUX || defined(__APPLE__)
+#if defined(__unix__) || defined(__APPLE__)
 #if defined(__APPLE__)
 	#define _XOPEN_SOURCE 1
 	#define __USE_GNU 1
@@ -136,7 +136,7 @@ double os_GetSeconds()
 void os_DebugBreak() {
     __asm__("trap");
 }
-#elif HOST_OS != OS_LINUX
+#elif !defined(__unix__)
 void os_DebugBreak()
 {
 	__builtin_trap();

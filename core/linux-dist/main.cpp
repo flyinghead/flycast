@@ -1,6 +1,6 @@
 #include "types.h"
 
-#if HOST_OS==OS_LINUX
+#if defined(__unix__)
 #include "hw/sh4/dyna/blockmanager.h"
 #include "log/LogManager.h"
 #include "emulator.h"
