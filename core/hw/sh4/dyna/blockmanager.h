@@ -68,8 +68,8 @@ struct RuntimeBlockInfo: RuntimeBlockInfo_Core
 	//predecessors references
 	std::vector<RuntimeBlockInfoPtr> pre_refs;
 
-	void AddRef(RuntimeBlockInfoPtr other);
-	void RemRef(RuntimeBlockInfoPtr other);
+	void AddRef(const RuntimeBlockInfoPtr& other);
+	void RemRef(const RuntimeBlockInfoPtr& other);
 
 	void Discard();
 	void SetProtectedFlags();

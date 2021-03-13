@@ -634,7 +634,7 @@ static void detect_input_popup(int index, bool analog)
 	ImGui::PopStyleVar(2);
 }
 
-static void controller_mapping_popup(std::shared_ptr<GamepadDevice> gamepad)
+static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamepad)
 {
 	ImGui::SetNextWindowPos(ImVec2(0, 0));
 	ImGui::SetNextWindowSize(ImVec2(screen_width, screen_height));

@@ -507,12 +507,12 @@ RuntimeBlockInfo::~RuntimeBlockInfo()
 	}
 }
 
-void RuntimeBlockInfo::AddRef(RuntimeBlockInfoPtr other)
+void RuntimeBlockInfo::AddRef(const RuntimeBlockInfoPtr& other)
 { 
 	pre_refs.push_back(other); 
 }
 
-void RuntimeBlockInfo::RemRef(RuntimeBlockInfoPtr other)
+void RuntimeBlockInfo::RemRef(const RuntimeBlockInfoPtr& other)
 {
 	bm_List::iterator it = std::find(pre_refs.begin(), pre_refs.end(), other);
 	if (it != pre_refs.end())

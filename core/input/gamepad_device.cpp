@@ -406,7 +406,7 @@ static FILE *get_record_input(bool write)
 }
 #endif
 
-void GamepadDevice::Register(std::shared_ptr<GamepadDevice> gamepad)
+void GamepadDevice::Register(const std::shared_ptr<GamepadDevice>& gamepad)
 {
 	int maple_port = cfgLoadInt("input",
 			MAPLE_PORT_CFG_PREFIX + gamepad->unique_id(), 12345);
@@ -425,7 +425,7 @@ void GamepadDevice::Register(std::shared_ptr<GamepadDevice> gamepad)
 	_gamepads_mutex.unlock();
 }
 
-void GamepadDevice::Unregister(std::shared_ptr<GamepadDevice> gamepad)
+void GamepadDevice::Unregister(const std::shared_ptr<GamepadDevice>& gamepad)
 {
 	gamepad->save_mapping();
 	_gamepads_mutex.lock();

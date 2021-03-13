@@ -22,7 +22,7 @@
 #include "utils.h"
 #include "vulkan_context.h"
 
-BufferData::BufferData(vk::DeviceSize size, vk::BufferUsageFlags usage, vk::MemoryPropertyFlags propertyFlags)
+BufferData::BufferData(vk::DeviceSize size, const vk::BufferUsageFlags& usage, const vk::MemoryPropertyFlags& propertyFlags)
 	: bufferSize(size), m_usage(usage), m_propertyFlags(propertyFlags)
 {
 	VulkanContext *context = VulkanContext::Instance();
