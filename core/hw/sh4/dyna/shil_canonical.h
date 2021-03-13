@@ -97,7 +97,7 @@ extern "C" f32 fipr_asm(float* fn, float* fm);
 
 #if SHIL_MODE==1 || SHIL_MODE==2
 //only in structs we use the code :)
-#include <math.h>
+#include <cmath>
 #include "types.h"
 #include "shil.h"
 #include "decoder.h"

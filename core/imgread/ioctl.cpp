@@ -3,7 +3,7 @@
 #ifdef _WIN32
 #include "common.h"
 
-#include <stddef.h>
+#include <cstddef>
 #include <windows.h>
 
 #include <ntddscsi.h>
