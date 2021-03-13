@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		559E937425FD6376001B0F40 /* rec_arm64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 559E937225FD6376001B0F40 /* rec_arm64.cpp */; };
 		84967C8F1B8F492C005F1140 /* arm_init.c in Sources */ = {isa = PBXBuildFile; fileRef = 84967C741B8F492C005F1140 /* arm_init.c */; };
 		84967C901B8F492C005F1140 /* filter_neon.S in Sources */ = {isa = PBXBuildFile; fileRef = 84967C751B8F492C005F1140 /* filter_neon.S */; };
 		84967C911B8F492C005F1140 /* filter_neon_intrinsics.c in Sources */ = {isa = PBXBuildFile; fileRef = 84967C761B8F492C005F1140 /* filter_neon_intrinsics.c */; };
@@ -210,6 +211,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		559E937225FD6376001B0F40 /* rec_arm64.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = rec_arm64.cpp; sourceTree = "<group>"; };
+		559E937325FD6376001B0F40 /* arm64_regalloc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = arm64_regalloc.h; sourceTree = "<group>"; };
 		84967C741B8F492C005F1140 /* arm_init.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = arm_init.c; sourceTree = "<group>"; };
 		84967C751B8F492C005F1140 /* filter_neon.S */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.asm; path = filter_neon.S; sourceTree = "<group>"; };
 		84967C761B8F492C005F1140 /* filter_neon_intrinsics.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = filter_neon_intrinsics.c; sourceTree = "<group>"; };
@@ -231,14 +234,14 @@
 		8497BCBC1A41A0E900EFB9ED /* common.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = common.cpp; sourceTree = "<group>"; };
 		849C0D601B072C07008BAAA4 /* context.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = context.cpp; sourceTree = "<group>"; };
 		849C0D611B072C07008BAAA4 /* context.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = context.h; sourceTree = "<group>"; };
-		849C0D641B072CF8008BAAA4 /* reios.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = reios.cpp; path = reios/reios.cpp; sourceTree = "<group>"; };
-		849C0D651B072CF8008BAAA4 /* reios.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = reios.h; path = reios/reios.h; sourceTree = "<group>"; };
-		849C0D671B072D14008BAAA4 /* descrambl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = descrambl.cpp; path = reios/descrambl.cpp; sourceTree = "<group>"; };
-		849C0D681B072D14008BAAA4 /* descrambl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = descrambl.h; path = reios/descrambl.h; sourceTree = "<group>"; };
-		849C0D691B072D14008BAAA4 /* gdrom_hle.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = gdrom_hle.cpp; path = reios/gdrom_hle.cpp; sourceTree = "<group>"; };
-		849C0D6A1B072D14008BAAA4 /* gdrom_hle.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = gdrom_hle.h; path = reios/gdrom_hle.h; sourceTree = "<group>"; };
-		849C0D6B1B072D14008BAAA4 /* reios_elf.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = reios_elf.cpp; path = reios/reios_elf.cpp; sourceTree = "<group>"; };
-		849C0D6C1B072D14008BAAA4 /* reios_elf.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = reios_elf.h; path = reios/reios_elf.h; sourceTree = "<group>"; };
+		849C0D641B072CF8008BAAA4 /* reios.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = reios.cpp; sourceTree = "<group>"; };
+		849C0D651B072CF8008BAAA4 /* reios.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = reios.h; sourceTree = "<group>"; };
+		849C0D671B072D14008BAAA4 /* descrambl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = descrambl.cpp; sourceTree = "<group>"; };
+		849C0D681B072D14008BAAA4 /* descrambl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = descrambl.h; sourceTree = "<group>"; };
+		849C0D691B072D14008BAAA4 /* gdrom_hle.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = gdrom_hle.cpp; sourceTree = "<group>"; };
+		849C0D6A1B072D14008BAAA4 /* gdrom_hle.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = gdrom_hle.h; sourceTree = "<group>"; };
+		849C0D6B1B072D14008BAAA4 /* reios_elf.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = reios_elf.cpp; sourceTree = "<group>"; };
+		849C0D6C1B072D14008BAAA4 /* reios_elf.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = reios_elf.h; sourceTree = "<group>"; };
 		87078A8318A47FE90034C7A0 /* reicast-ios.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "reicast-ios.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		87078A8618A47FE90034C7A0 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		87078A8818A47FE90034C7A0 /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
@@ -601,6 +604,15 @@
 			name = "Recovered References";
 			sourceTree = "<group>";
 		};
+		559E937125FD6376001B0F40 /* rec-ARM64 */ = {
+			isa = PBXGroup;
+			children = (
+				559E937225FD6376001B0F40 /* rec_arm64.cpp */,
+				559E937325FD6376001B0F40 /* arm64_regalloc.h */,
+			);
+			path = "rec-ARM64";
+			sourceTree = "<group>";
+		};
 		8497BCBB1A41A0E900EFB9ED /* linux */ = {
 			isa = PBXGroup;
 			children = (
@@ -644,7 +656,7 @@
 				849C0D641B072CF8008BAAA4 /* reios.cpp */,
 				849C0D651B072CF8008BAAA4 /* reios.h */,
 			);
-			name = reios;
+			path = reios;
 			sourceTree = "<group>";
 		};
 		87078A7A18A47FE90034C7A0 = {
@@ -792,6 +804,7 @@
 				9C7A3A7C18C806E00070BB5F /* nullDC.cpp */,
 				9C7A3A8318C806E00070BB5F /* profiler */,
 				9C7A3A8618C806E00070BB5F /* README.md */,
+				559E937125FD6376001B0F40 /* rec-ARM64 */,
 				9C7A3A8718C806E00070BB5F /* rec-ARM */,
 				9C7A3A8A18C806E00070BB5F /* rend */,
 				9C7A3A9918C806E00070BB5F /* stdclass.cpp */,
@@ -1395,6 +1408,7 @@
 				9C7A3B0D18C806E00070BB5F /* sb_dma.cpp in Sources */,
 				87C208D81B7A4BFA00638BDD /* BrowserTableViewController.m in Sources */,
 				9C7A3ADC18C806E00070BB5F /* zip_open.c in Sources */,
+				559E937425FD6376001B0F40 /* rec_arm64.cpp in Sources */,
 				84967C9F1B8F492C005F1140 /* pngwtran.c in Sources */,
 				9C7A3B2718C806E00070BB5F /* dmac.cpp in Sources */,
 				9C7A3B3118C806E00070BB5F /* sh4_mmr.cpp in Sources */,
@@ -1701,10 +1715,10 @@
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
-					"../../../core/hw/**",
-					../../../core,
-					"../../../core/deps/**",
-					../../../core/khronos/,
+					"\"$(SRCROOT)/../../../core/hw\"/**",
+					"\"$(SRCROOT)/../../../core\"",
+					"\"$(SRCROOT)/../../../core/deps\"/**",
+					"\"$(SRCROOT)/../../../core/khronos/\"",
 				);
 				INFOPLIST_FILE = "$(SRCROOT)/emulator/reicast-ios-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
@@ -1735,10 +1749,10 @@
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
-					"../../../core/hw/**",
-					../../../core,
-					"../../../core/deps/**",
-					../../../core/khronos/,
+					"\"$(SRCROOT)/../../../core/hw\"/**",
+					"\"$(SRCROOT)/../../../core\"",
+					"\"$(SRCROOT)/../../../core/deps\"/**",
+					"\"$(SRCROOT)/../../../core/khronos/\"",
 				);
 				INFOPLIST_FILE = "$(SRCROOT)/emulator/reicast-ios-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
