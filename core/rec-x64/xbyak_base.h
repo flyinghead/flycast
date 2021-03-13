@@ -619,8 +619,8 @@ protected:
 		        cmp(rd, 0x80000000);	// indefinite integer
 		        jne(done, T_SHORT);
 		        xor_(eax, eax);
-		        static u32 zero;
-		        ucomiss(mapXRegister(op.rs1), dword[&zero]);
+		        pxor(xmm0, xmm0);
+		        ucomiss(mapXRegister(op.rs1), xmm0);
 		        setb(al);
 		        add(eax, 0x7fffffff);
 		        mov(rd, eax);
