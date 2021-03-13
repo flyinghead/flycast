@@ -64,7 +64,7 @@ private:
 class RttRenderPasses : public RenderPasses
 {
 protected:
-	virtual vk::AttachmentDescription GetAttachment0Description(bool initial, bool last) const override
+	vk::AttachmentDescription GetAttachment0Description(bool initial, bool last) const override
 	{
 		return vk::AttachmentDescription(vk::AttachmentDescriptionFlags(), vk::Format::eR8G8B8A8Unorm, vk::SampleCountFlagBits::e1,
 				vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eStore,
@@ -72,8 +72,8 @@ protected:
 				vk::ImageLayout::eUndefined,
 				config::RenderToTextureBuffer && last ? vk::ImageLayout::eTransferSrcOptimal : vk::ImageLayout::eShaderReadOnlyOptimal);
 	}
-	virtual vk::Format GetColorFormat() const override { return vk::Format::eR8G8B8A8Unorm; }
-	virtual std::vector<vk::SubpassDependency> GetSubpassDependencies() const override
+	vk::Format GetColorFormat() const override { return vk::Format::eR8G8B8A8Unorm; }
+	std::vector<vk::SubpassDependency> GetSubpassDependencies() const override
 	{
 		std::vector<vk::SubpassDependency> deps;
 		if (config::RenderToTextureBuffer)

@@ -30,7 +30,7 @@
 class BaseVulkanRenderer : public Renderer
 {
 public:
-	virtual bool Init() override
+	bool Init() override
 	{
 		texCommandPool.Init();
 
@@ -63,7 +63,7 @@ public:
 		return true;
 	}
 
-	virtual void Term() override
+	void Term() override
 	{
 		GetContext()->PresentFrame(nullptr, vk::Extent2D());
 		osdBuffer.reset();
@@ -75,7 +75,7 @@ public:
 		framebufferTextures.clear();
 	}
 
-	virtual u64 GetTexture(TSP tsp, TCW tcw) override
+	u64 GetTexture(TSP tsp, TCW tcw) override
 	{
 		Texture* tf = textureCache.getTextureCacheData(tsp, tcw);
 
@@ -107,7 +107,7 @@ public:
 		return tf->GetIntId();
 	}
 
-	virtual bool Process(TA_context* ctx) override
+	bool Process(TA_context* ctx) override
 	{
 		if (KillTex)
 			textureCache.Clear();

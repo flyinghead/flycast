@@ -246,7 +246,7 @@ struct maple_base: maple_device
 	}
 	virtual u32 dma(u32 cmd) = 0;
 
-	virtual u32 RawDma(u32* buffer_in, u32 buffer_in_len, u32* buffer_out)
+	u32 RawDma(u32* buffer_in, u32 buffer_in_len, u32* buffer_out) override
 	{
 		u32 command=buffer_in[0] &0xFF;
 		//Recipient address
@@ -280,9 +280,9 @@ struct maple_naomi_jamma : maple_base
 	u32 jvs_receive_length[32] = { 0 };
 
 	maple_naomi_jamma();
-	virtual ~maple_naomi_jamma();
+	~maple_naomi_jamma() override;
 
-	virtual MapleDeviceType get_device_type() override
+	MapleDeviceType get_device_type() override
 	{
 		return MDT_NaomiJamma;
 	}
@@ -299,9 +299,9 @@ struct maple_naomi_jamma : maple_base
 
 	void handle_86_subcommand();
 
-	virtual u32 RawDma(u32* buffer_in, u32 buffer_in_len, u32* buffer_out) override;
-	virtual u32 dma(u32 cmd) override { return 0; }
+	u32 RawDma(u32* buffer_in, u32 buffer_in_len, u32* buffer_out) override;
+	u32 dma(u32 cmd) override { return 0; }
 
-	virtual bool serialize(void **data, unsigned int *total_size) override;
-	virtual bool unserialize(void **data, unsigned int *total_size, serialize_version_enum version) override;
+	bool serialize(void **data, unsigned int *total_size) override;
+	bool unserialize(void **data, unsigned int *total_size, serialize_version_enum version) override;
 };

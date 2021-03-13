@@ -185,7 +185,7 @@ struct PhysicalTrack:TrackFile
 	PhysicalDrive* disc;
 	PhysicalTrack(PhysicalDrive* disc) { this->disc=disc; }
 
-	virtual void Read(u32 FAD,u8* dst,SectorFormat* sector_type,u8* subcode,SubcodeFormat* subcode_type);
+	void Read(u32 FAD,u8* dst,SectorFormat* sector_type,u8* subcode,SubcodeFormat* subcode_type) override;
 };
 
 struct PhysicalDrive:Disc
