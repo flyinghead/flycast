@@ -122,7 +122,7 @@ __forceinline
 	TileClipping clipmode = GetTileClip(gp->tileclip, ViewportMatrix, clip_rect);
 	bool palette = BaseTextureCacheData::IsGpuHandledPaletted(gp->tsp, gp->tcw);
 
-	CurrentShader = GetProgram(Type == ListType_Punch_Through ? 1 : 0,
+	CurrentShader = GetProgram(Type == ListType_Punch_Through ? true : false,
 								  clipmode == TileClipping::Inside,
 								  gp->pcw.Texture,
 								  gp->tsp.UseAlpha,
@@ -653,7 +653,7 @@ static void DrawQuad(GLuint texId, float x, float y, float w, float h, float u0,
 
 	ShaderUniforms.trilinear_alpha = 1.0;
 
-	PipelineShader *shader = GetProgram(0, false, 1, 0, 1, 0, 0, 2, false, false, false, false, false);
+	PipelineShader *shader = GetProgram(false, false, true, false, true, 0, false, 2, false, false, false, false, false);
 	glcache.UseProgram(shader->program);
 
 	glActiveTexture(GL_TEXTURE0);

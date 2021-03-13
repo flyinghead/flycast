@@ -33,7 +33,7 @@ protected:
 class NaomiCartridge : public Cartridge
 {
 public:
-	NaomiCartridge(u32 size) : Cartridge(size), RomPioOffset(0), RomPioAutoIncrement(0), DmaOffset(0), DmaCount(0xffff) {}
+	NaomiCartridge(u32 size) : Cartridge(size), RomPioOffset(0), RomPioAutoIncrement(false), DmaOffset(0), DmaCount(0xffff) {}
 
 	u32 ReadMem(u32 address, u32 size) override;
 	void WriteMem(u32 address, u32 data, u32 size) override;

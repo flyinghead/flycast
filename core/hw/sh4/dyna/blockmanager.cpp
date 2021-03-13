@@ -651,7 +651,7 @@ void print_blocks()
 	if (print_stats)
 	{
 		f=fopen(get_writable_data_path("blkmap.lst").c_str(),"w");
-		print_stats=0;
+		print_stats=false;
 
 		INFO_LOG(DYNAREC, "Writing blocks to %p", f);
 	}

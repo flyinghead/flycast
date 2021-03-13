@@ -106,13 +106,13 @@ static void SetGPState(const PolyParam* gp)
 
 	if (pass == Pass::Depth)
 	{
-		CurrentShader = gl4GetProgram(Type == ListType_Punch_Through ? 1 : 0,
+		CurrentShader = gl4GetProgram(Type == ListType_Punch_Through ? true : false,
 				clipmode == TileClipping::Inside,
-				Type == ListType_Punch_Through ? gp->pcw.Texture : 0,
-				1,
+				Type == ListType_Punch_Through ? gp->pcw.Texture : false,
+				true,
 				gp->tsp.IgnoreTexA,
 				0,
-				0,
+				false,
 				2,
 				false,	// TODO Can PT have two different textures for area 0 and 1 ??
 				false,
@@ -130,7 +130,7 @@ static void SetGPState(const PolyParam* gp)
 		int fog_ctrl = config::Fog ? gp->tsp.FogCtrl : 2;
 		palette = BaseTextureCacheData::IsGpuHandledPaletted(gp->tsp, gp->tcw);
 
-		CurrentShader = gl4GetProgram(Type == ListType_Punch_Through ? 1 : 0,
+		CurrentShader = gl4GetProgram(Type == ListType_Punch_Through ? true : false,
 				clipmode == TileClipping::Inside,
 				gp->pcw.Texture,
 				gp->tsp.UseAlpha,
@@ -677,13 +677,13 @@ static void gl4_draw_quad_texture(GLuint texture, float w, float h)
 
 	gl4ShaderUniforms.trilinear_alpha = 1.0;
 
-	CurrentShader = gl4GetProgram(0,
+	CurrentShader = gl4GetProgram(false,
 				false,
-				1,
+				true,
+				false,
+				true,
 				0,
-				1,
-				0,
-				0,
+				false,
 				2,
 				false,
 				false,
