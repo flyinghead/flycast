@@ -35,7 +35,7 @@
 alignas(4096) static u8 CodeBuffer[32 * 1024]
 #if defined(_WIN32)
 	;
-#elif HOST_OS == OS_LINUX
+#elif defined(__unix__)
 	__attribute__((section(".text")));
 #elif defined(__APPLE__)
 	__attribute__((section("__TEXT,.text")));

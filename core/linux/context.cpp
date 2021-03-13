@@ -37,7 +37,7 @@ static void context_segfault(host_context_t* hostctx, void* segfault_ctx)
 
 		for (int i = 0; i < 15; i++)
 			bicopy<ToSegfault>(hostctx->reg[i], MCTX(.__gregs[i]));
-	#elif HOST_OS == OS_LINUX
+	#elif defined(__unix__)
 		bicopy<ToSegfault>(hostctx->pc, MCTX(.arm_pc));
 		u32* reg =(u32*) &MCTX(.arm_r0);
 
@@ -50,7 +50,7 @@ static void context_segfault(host_context_t* hostctx, void* segfault_ctx)
 		for (int i = 0; i < 15; i++)
 			bicopy<ToSegfault>(hostctx->reg[i], MCTX(->__ss.__r[i]));
 	#else
-		#error HOST_OS
+		#error "Unsupported OS"
 	#endif
 #elif HOST_CPU == CPU_ARM64
 	#if defined(__APPLE__)
@@ -68,7 +68,7 @@ static void context_segfault(host_context_t* hostctx, void* segfault_ctx)
 		bicopy<ToSegfault>(hostctx->esp, MCTX(.mc_esp));
 		bicopy<ToSegfault>(hostctx->eax, MCTX(.mc_eax));
 		bicopy<ToSegfault>(hostctx->ecx, MCTX(.mc_ecx));
-	#elif HOST_OS == OS_LINUX
+	#elif defined(__unix__)
 		bicopy<ToSegfault>(hostctx->pc, MCTX(.gregs[REG_EIP]));
 		bicopy<ToSegfault>(hostctx->esp, MCTX(.gregs[REG_ESP]));
 		bicopy<ToSegfault>(hostctx->eax, MCTX(.gregs[REG_EAX]));
@@ -79,7 +79,7 @@ static void context_segfault(host_context_t* hostctx, void* segfault_ctx)
 		bicopy<ToSegfault>(hostctx->eax, MCTX(->__ss.__eax));
 		bicopy<ToSegfault>(hostctx->ecx, MCTX(->__ss.__ecx));
 	#else
-		#error HOST_OS
+		#error "Unsupported OS"
 	#endif
 #elif HOST_CPU == CPU_X64
 	#if defined(__FreeBSD__) || defined(__DragonFly__)
@@ -89,7 +89,7 @@ static void context_segfault(host_context_t* hostctx, void* segfault_ctx)
 		bicopy<ToSegfault>(hostctx->rsp, MCTX(.__gregs[REG_RSP]));
 		bicopy<ToSegfault>(hostctx->r9, MCTX(.__gregs[REG_R9]));
 		bicopy<ToSegfault>(hostctx->rdi, MCTX(.__gregs[REG_RDI]));
-	#elif HOST_OS == OS_LINUX
+	#elif defined(__unix__)
 		bicopy<ToSegfault>(hostctx->pc, MCTX(.gregs[REG_RIP]));
 		bicopy<ToSegfault>(hostctx->rsp, MCTX(.gregs[REG_RSP]));
 		bicopy<ToSegfault>(hostctx->r9, MCTX(.gregs[REG_R9]));
@@ -100,7 +100,7 @@ static void context_segfault(host_context_t* hostctx, void* segfault_ctx)
 		bicopy<ToSegfault>(hostctx->r9, MCTX(->__ss.__r9));
 		bicopy<ToSegfault>(hostctx->rdi, MCTX(->__ss.__rdi));
     #else
-	    #error HOST_OS
+        #error "Unsupported OS"
 	#endif
 #elif HOST_CPU == CPU_MIPS
 	bicopy<ToSegfault>(hostctx->pc, MCTX(.pc));

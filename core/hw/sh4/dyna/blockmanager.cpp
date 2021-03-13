@@ -15,7 +15,7 @@
 #include "hw/sh4/sh4_sched.h"
 
 
-#if HOST_OS==OS_LINUX && defined(DYNA_OPROF)
+#if defined(__unix__) && defined(DYNA_OPROF)
 #include <opagent.h>
 op_agent_t          oprofHandle;
 #endif

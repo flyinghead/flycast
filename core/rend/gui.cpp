@@ -1552,7 +1552,7 @@ static void gui_display_settings()
 		    	ImGui::Text("Operating System: %s",
 #ifdef __ANDROID__
 					"Android"
-#elif HOST_OS == OS_LINUX
+#elif defined(__unix__)
 					"Linux"
 #elif defined(__APPLE__)
 #ifdef TARGET_IPHONE

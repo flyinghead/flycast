@@ -346,7 +346,7 @@ void vmem_platform_flush_cache(void *icache_start, void *icache_end, void *dcach
 
 #elif HOST_CPU == CPU_ARM
 
-#if HOST_OS == OS_DARWIN
+#if defined(__APPLE__)
 
 #include <libkern/OSCacheControl.h>
 static void CacheFlush(void* code, void* pEnd)
