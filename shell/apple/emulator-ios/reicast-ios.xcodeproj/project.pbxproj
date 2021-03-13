@@ -236,24 +236,16 @@
 		84967C741B8F492C005F1140 /* arm_init.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = arm_init.c; sourceTree = "<group>"; };
 		84967C751B8F492C005F1140 /* filter_neon.S */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.asm; path = filter_neon.S; sourceTree = "<group>"; };
 		84967C761B8F492C005F1140 /* filter_neon_intrinsics.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = filter_neon_intrinsics.c; sourceTree = "<group>"; };
-		84967C771B8F492C005F1140 /* config.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = config.h; sourceTree = "<group>"; };
 		84967C791B8F492C005F1140 /* png.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = png.c; sourceTree = "<group>"; };
-		84967C7A1B8F492C005F1140 /* png.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = png.h; sourceTree = "<group>"; };
-		84967C7B1B8F492C005F1140 /* pngconf.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pngconf.h; sourceTree = "<group>"; };
-		84967C7C1B8F492C005F1140 /* pngdebug.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pngdebug.h; sourceTree = "<group>"; };
 		84967C7D1B8F492C005F1140 /* pngerror.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pngerror.c; sourceTree = "<group>"; };
 		84967C7E1B8F492C005F1140 /* pngget.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pngget.c; sourceTree = "<group>"; };
-		84967C7F1B8F492C005F1140 /* pnginfo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pnginfo.h; sourceTree = "<group>"; };
-		84967C801B8F492C005F1140 /* pnglibconf.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pnglibconf.h; sourceTree = "<group>"; };
 		84967C811B8F492C005F1140 /* pngmem.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pngmem.c; sourceTree = "<group>"; };
 		84967C821B8F492C005F1140 /* pngpread.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pngpread.c; sourceTree = "<group>"; };
-		84967C831B8F492C005F1140 /* pngpriv.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pngpriv.h; sourceTree = "<group>"; };
 		84967C841B8F492C005F1140 /* pngread.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pngread.c; sourceTree = "<group>"; };
 		84967C851B8F492C005F1140 /* pngrio.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pngrio.c; sourceTree = "<group>"; };
 		84967C861B8F492C005F1140 /* pngrtran.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pngrtran.c; sourceTree = "<group>"; };
 		84967C871B8F492C005F1140 /* pngrutil.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pngrutil.c; sourceTree = "<group>"; };
 		84967C881B8F492C005F1140 /* pngset.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pngset.c; sourceTree = "<group>"; };
-		84967C891B8F492C005F1140 /* pngstruct.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pngstruct.h; sourceTree = "<group>"; };
 		84967C8A1B8F492C005F1140 /* pngtrans.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pngtrans.c; sourceTree = "<group>"; };
 		84967C8B1B8F492C005F1140 /* pngwio.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pngwio.c; sourceTree = "<group>"; };
 		84967C8C1B8F492C005F1140 /* pngwrite.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pngwrite.c; sourceTree = "<group>"; };
@@ -301,7 +293,7 @@
 		877652C71B6157FC00437F10 /* ngen_arm.S */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.asm; path = ngen_arm.S; sourceTree = "<group>"; };
 		877652C81B6157FC00437F10 /* rec_arm.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = rec_arm.cpp; sourceTree = "<group>"; };
 		878B0CFB1B8BB5B400A8D1C5 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = "../reicast-ios/Images.xcassets"; sourceTree = "<group>"; };
-		878B0CFF1B8BFE6200A8D1C5 /* disk_unknown.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = disk_unknown.png; path = emulator/Images/disk_unknown.png; sourceTree = "<group>"; };
+		878B0CFF1B8BFE6200A8D1C5 /* disk_unknown.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = disk_unknown.png; sourceTree = "<group>"; };
 		8794D9C11B88F3D600B1B3A3 /* DiskViewCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = DiskViewCell.h; path = emulator/DiskViewCell.h; sourceTree = "<group>"; };
 		8794D9C21B88F3D600B1B3A3 /* DiskViewCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = DiskViewCell.m; path = emulator/DiskViewCell.m; sourceTree = "<group>"; };
 		87C208C51B7A4BFA00638BDD /* AboutViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AboutViewController.h; path = emulator/AboutViewController.h; sourceTree = "<group>"; };
@@ -326,28 +318,28 @@
 		87C4AA551A4414070048DBF4 /* AssetsLibrary.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AssetsLibrary.framework; path = System/Library/Frameworks/AssetsLibrary.framework; sourceTree = SDKROOT; };
 		87D776E41EF5623300E08B55 /* zlib.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = zlib.xcodeproj; path = deps/zlib/zlib.xcodeproj; sourceTree = "<group>"; };
 		87D92EA71B7839E600D8FD9E /* ios_main.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = ios_main.mm; path = emulator/ios_main.mm; sourceTree = SOURCE_ROOT; };
-		87D92F211B7A1B4800D8FD9E /* 210-octocat.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "210-octocat.png"; path = "emulator/Images/210-octocat.png"; sourceTree = "<group>"; };
-		87D92F221B7A1B4800D8FD9E /* 210-octocat@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "210-octocat@2x.png"; path = "emulator/Images//210-octocat@2x.png"; sourceTree = "<group>"; };
-		87D92F231B7A1B4800D8FD9E /* 210-twitterbird.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "210-twitterbird.png"; path = "emulator/Images//210-twitterbird.png"; sourceTree = "<group>"; };
-		87D92F241B7A1B4800D8FD9E /* 210-twitterbird@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "210-twitterbird@2x.png"; path = "emulator/Images//210-twitterbird@2x.png"; sourceTree = "<group>"; };
-		87D92F251B7A1B4800D8FD9E /* ABXYPad.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = ABXYPad.png; path = "emulator/Images//ABXYPad.png"; sourceTree = "<group>"; };
-		87D92F261B7A1B4800D8FD9E /* ABXYPad@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "ABXYPad@2x.png"; path = "emulator/Images//ABXYPad@2x.png"; sourceTree = "<group>"; };
-		87D92F271B7A1B4800D8FD9E /* DPad.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = DPad.png; path = "emulator/Images//DPad.png"; sourceTree = "<group>"; };
-		87D92F281B7A1B4800D8FD9E /* DPad@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "DPad@2x.png"; path = "emulator/Images//DPad@2x.png"; sourceTree = "<group>"; };
-		87D92F291B7A1B4800D8FD9E /* JoystickBackground.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = JoystickBackground.png; path = "emulator/Images//JoystickBackground.png"; sourceTree = "<group>"; };
-		87D92F2A1B7A1B4800D8FD9E /* JoystickBackground@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "JoystickBackground@2x.png"; path = "emulator/Images//JoystickBackground@2x.png"; sourceTree = "<group>"; };
-		87D92F2B1B7A1B4800D8FD9E /* JoystickButton.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = JoystickButton.png; path = "emulator/Images//JoystickButton.png"; sourceTree = "<group>"; };
-		87D92F2C1B7A1B4800D8FD9E /* JoystickButton@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "JoystickButton@2x.png"; path = "emulator/Images//JoystickButton@2x.png"; sourceTree = "<group>"; };
-		87D92F2D1B7A1B4800D8FD9E /* LTrigger.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = LTrigger.png; path = "emulator/Images//LTrigger.png"; sourceTree = "<group>"; };
-		87D92F2E1B7A1B4800D8FD9E /* LTrigger@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "LTrigger@2x.png"; path = "emulator/Images//LTrigger@2x.png"; sourceTree = "<group>"; };
-		87D92F2F1B7A1B4800D8FD9E /* menuback.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = menuback.png; path = "emulator/Images//menuback.png"; sourceTree = "<group>"; };
-		87D92F301B7A1B4800D8FD9E /* menuback@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "menuback@2x.png"; path = "emulator/Images//menuback@2x.png"; sourceTree = "<group>"; };
-		87D92F311B7A1B4800D8FD9E /* menuicon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = menuicon.png; path = "emulator/Images//menuicon.png"; sourceTree = "<group>"; };
-		87D92F321B7A1B4800D8FD9E /* menuicon@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "menuicon@2x.png"; path = "emulator/Images//menuicon@2x.png"; sourceTree = "<group>"; };
-		87D92F331B7A1B4800D8FD9E /* RTrigger.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = RTrigger.png; path = "emulator/Images//RTrigger.png"; sourceTree = "<group>"; };
-		87D92F341B7A1B4800D8FD9E /* RTrigger@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "RTrigger@2x.png"; path = "emulator/Images//RTrigger@2x.png"; sourceTree = "<group>"; };
-		87D92F351B7A1B4800D8FD9E /* Start.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = Start.png; path = "emulator/Images//Start.png"; sourceTree = "<group>"; };
-		87D92F361B7A1B4800D8FD9E /* Start@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "Start@2x.png"; path = "emulator/Images//Start@2x.png"; sourceTree = "<group>"; };
+		87D92F211B7A1B4800D8FD9E /* 210-octocat.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "210-octocat.png"; sourceTree = "<group>"; };
+		87D92F221B7A1B4800D8FD9E /* 210-octocat@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "210-octocat@2x.png"; sourceTree = "<group>"; };
+		87D92F231B7A1B4800D8FD9E /* 210-twitterbird.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "210-twitterbird.png"; sourceTree = "<group>"; };
+		87D92F241B7A1B4800D8FD9E /* 210-twitterbird@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "210-twitterbird@2x.png"; sourceTree = "<group>"; };
+		87D92F251B7A1B4800D8FD9E /* ABXYPad.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = ABXYPad.png; sourceTree = "<group>"; };
+		87D92F261B7A1B4800D8FD9E /* ABXYPad@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "ABXYPad@2x.png"; sourceTree = "<group>"; };
+		87D92F271B7A1B4800D8FD9E /* DPad.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = DPad.png; sourceTree = "<group>"; };
+		87D92F281B7A1B4800D8FD9E /* DPad@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "DPad@2x.png"; sourceTree = "<group>"; };
+		87D92F291B7A1B4800D8FD9E /* JoystickBackground.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = JoystickBackground.png; sourceTree = "<group>"; };
+		87D92F2A1B7A1B4800D8FD9E /* JoystickBackground@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "JoystickBackground@2x.png"; sourceTree = "<group>"; };
+		87D92F2B1B7A1B4800D8FD9E /* JoystickButton.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = JoystickButton.png; sourceTree = "<group>"; };
+		87D92F2C1B7A1B4800D8FD9E /* JoystickButton@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "JoystickButton@2x.png"; sourceTree = "<group>"; };
+		87D92F2D1B7A1B4800D8FD9E /* LTrigger.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = LTrigger.png; sourceTree = "<group>"; };
+		87D92F2E1B7A1B4800D8FD9E /* LTrigger@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "LTrigger@2x.png"; sourceTree = "<group>"; };
+		87D92F2F1B7A1B4800D8FD9E /* menuback.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = menuback.png; sourceTree = "<group>"; };
+		87D92F301B7A1B4800D8FD9E /* menuback@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "menuback@2x.png"; sourceTree = "<group>"; };
+		87D92F311B7A1B4800D8FD9E /* menuicon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = menuicon.png; sourceTree = "<group>"; };
+		87D92F321B7A1B4800D8FD9E /* menuicon@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "menuicon@2x.png"; sourceTree = "<group>"; };
+		87D92F331B7A1B4800D8FD9E /* RTrigger.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = RTrigger.png; sourceTree = "<group>"; };
+		87D92F341B7A1B4800D8FD9E /* RTrigger@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "RTrigger@2x.png"; sourceTree = "<group>"; };
+		87D92F351B7A1B4800D8FD9E /* Start.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Start.png; sourceTree = "<group>"; };
+		87D92F361B7A1B4800D8FD9E /* Start@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Start@2x.png"; sourceTree = "<group>"; };
 		87D92F4D1B7A1B5700D8FD9E /* GameController.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GameController.framework; path = System/Library/Frameworks/GameController.framework; sourceTree = SDKROOT; };
 		87D92F501B7A1BB100D8FD9E /* iCadeReaderView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iCadeReaderView.h; sourceTree = "<group>"; };
 		87D92F511B7A1BB100D8FD9E /* iCadeReaderView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iCadeReaderView.m; sourceTree = "<group>"; };
@@ -630,14 +622,29 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		84967C731B8F492C005F1140 /* arm */ = {
+		559E92DC25FCB94C001B0F40 /* Recovered References */ = {
 			isa = PBXGroup;
 			children = (
-				84967C741B8F492C005F1140 /* arm_init.c */,
+				84967C8D1B8F492C005F1140 /* pngwtran.c */,
+				84967C811B8F492C005F1140 /* pngmem.c */,
+				84967C8A1B8F492C005F1140 /* pngtrans.c */,
+				84967C7E1B8F492C005F1140 /* pngget.c */,
+				84967C871B8F492C005F1140 /* pngrutil.c */,
 				84967C751B8F492C005F1140 /* filter_neon.S */,
+				84967C881B8F492C005F1140 /* pngset.c */,
+				84967C8B1B8F492C005F1140 /* pngwio.c */,
+				84967C861B8F492C005F1140 /* pngrtran.c */,
+				84967C851B8F492C005F1140 /* pngrio.c */,
+				84967C791B8F492C005F1140 /* png.c */,
+				84967C7D1B8F492C005F1140 /* pngerror.c */,
+				84967C821B8F492C005F1140 /* pngpread.c */,
+				84967C841B8F492C005F1140 /* pngread.c */,
 				84967C761B8F492C005F1140 /* filter_neon_intrinsics.c */,
+				84967C741B8F492C005F1140 /* arm_init.c */,
+				84967C8C1B8F492C005F1140 /* pngwrite.c */,
+				84967C8E1B8F492C005F1140 /* pngwutil.c */,
 			);
-			path = arm;
+			name = "Recovered References";
 			sourceTree = "<group>";
 		};
 		8497BCBB1A41A0E900EFB9ED /* linux */ = {
@@ -692,6 +699,7 @@
 				87078A9018A47FE90034C7A0 /* reicast */,
 				87078A8518A47FE90034C7A0 /* Frameworks */,
 				87078A8418A47FE90034C7A0 /* Products */,
+				559E92DC25FCB94C001B0F40 /* Recovered References */,
 			);
 			sourceTree = "<group>";
 		};
@@ -840,8 +848,7 @@
 				87D92F351B7A1B4800D8FD9E /* Start.png */,
 				87D92F361B7A1B4800D8FD9E /* Start@2x.png */,
 			);
-			name = Images;
-			path = ..;
+			path = Images;
 			sourceTree = "<group>";
 		};
 		9C7A393818C806DE0070BB5F /* Emulator Core Code */ = {
@@ -1391,7 +1398,7 @@
 				ORGANIZATIONNAME = reicast;
 				TargetAttributes = {
 					87078A8218A47FE90034C7A0 = {
-                        DevelopmentTeam = QRT73U549N;
+						DevelopmentTeam = QRT73U549N;
 					};
 				};
 			};
@@ -1400,6 +1407,7 @@
 			developmentRegion = English;
 			hasScannedForEncodings = 0;
 			knownRegions = (
+				English,
 				en,
 				Base,
 			);
