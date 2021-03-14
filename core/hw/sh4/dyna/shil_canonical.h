@@ -901,7 +901,7 @@ shil_opc(fipr)
 #if HOST_CPU == CPU_X86 || HOST_CPU == CPU_X64
 shil_canonical
 (
-f32,f1,(float* fn, float* fm),
+f32,f1,(const float* fn, const float* fm),
 
 	double idp = (double)fn[0] * fm[0];
 	idp += (double)fn[1] * fm[1];
@@ -941,7 +941,7 @@ shil_opc(ftrv)
 #if HOST_CPU == CPU_X86 || HOST_CPU == CPU_X64
 shil_canonical
 (
-void,f1,(float* fd,float* fn, float* fm),
+void,f1,(float* fd, const float* fn, const float* fm),
 
 	double v1 = (double)fm[0]  * fn[0] +
 				(double)fm[4]  * fn[1] +
@@ -1081,7 +1081,7 @@ shil_opc_end()
 shil_opc(frswap)
 shil_canonical
 (
-void,f1,(u64* fd1,u64* fd2,u64* fs1,u64* fs2),
+void,f1,(u64* fd1, u64* fd2, const u64* fs1, const u64* fs2),
 
 	u64 temp;
 	for (int i=0;i<8;i++)

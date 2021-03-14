@@ -31,7 +31,7 @@ bool pend_rend = false;
 
 TA_context* _pvrrc;
 
-static void dump_frame(const char* file, TA_context* ctx, u8* vram, u8* vram_ref = NULL) {
+static void dump_frame(const char* file, TA_context* ctx, u8* vram, const u8* vram_ref = NULL) {
 	FILE* fw = fopen(file, "wb");
 
 	//append to it

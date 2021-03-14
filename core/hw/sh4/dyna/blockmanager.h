@@ -55,7 +55,7 @@ struct RuntimeBlockInfo: RuntimeBlockInfo_Core
 
 	std::vector<shil_opcode> oplist;
 
-	bool contains_code(u8* ptr)
+	bool contains_code(const u8* ptr)
 	{
 		return ((unat)(ptr-(u8*)code))<host_code_size;
 	}

@@ -62,7 +62,7 @@ s32 DYNACALL UNPACK(u16 val)
 	return uval;
 }
 
-void DecodeInst(u32 *IPtr,_INST *i)
+void DecodeInst(const u32 *IPtr, _INST *i)
 {
 	i->TRA = (IPtr[0] >> 9) & 0x7F;
 	i->TWT = IPtr[0] & 0x100;
