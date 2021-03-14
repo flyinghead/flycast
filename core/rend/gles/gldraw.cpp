@@ -270,7 +270,7 @@ static void SortTriangles(int first, int count)
 	GenSorted(first, count, pidx_sort, vidx_sort);
 
 	//Upload to GPU if needed
-	if (pidx_sort.size())
+	if (!pidx_sort.empty())
 	{
 		//Bind and upload sorted index buffer
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl.vbo.idxs2); glCheck();
@@ -294,7 +294,7 @@ static void SortTriangles(int first, int count)
 void DrawSorted(bool multipass)
 {
 	//if any drawing commands, draw them
-	if (pidx_sort.size())
+	if (!pidx_sort.empty())
 	{
 		u32 count=pidx_sort.size();
 		

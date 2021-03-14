@@ -244,7 +244,7 @@ public:
 	}
 
 	void Cleanup() {
-		verify(final_opend || block->oplist.size() == 0);
+		verify(final_opend || block->oplist.empty());
 		final_opend = false;
 		FlushAllRegs(true);
 		verify(reg_alloced.empty());
