@@ -291,8 +291,7 @@ void rend_init_renderer()
 		delete renderer;
     	if (fallback_renderer == NULL || !fallback_renderer->Init())
     	{
-    		if (fallback_renderer != NULL)
-    			delete fallback_renderer;
+            delete fallback_renderer;
     		die("Renderer initialization failed\n");
     	}
     	INFO_LOG(PVR, "Selected renderer initialization failed. Falling back to default renderer.");
