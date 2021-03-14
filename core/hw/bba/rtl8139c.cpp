@@ -1035,7 +1035,7 @@ static void rtl8139_BasicModeCtrl_write(RTL8139State *s, uint32_t val)
     /* mask unwritable bits */
     uint32_t mask = 0xccff;
 
-    if (1 || !rtl8139_config_writable(s))
+    if (true || !rtl8139_config_writable(s))
     {
         /* Speed setting and autonegotiation enable bits are read-only */
         mask |= 0x3000;

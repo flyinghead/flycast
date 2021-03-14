@@ -221,9 +221,9 @@ class TextureCacheData final : public BaseTextureCacheData
 {
 public:
 	GLuint texID;   //gl texture
-	virtual std::string GetId() override { return std::to_string(texID); }
-	virtual void UploadToGPU(int width, int height, u8 *temp_tex_buffer, bool mipmapped, bool mipmapsIncluded = false) override;
-	virtual bool Delete() override;
+	std::string GetId() override { return std::to_string(texID); }
+	void UploadToGPU(int width, int height, u8 *temp_tex_buffer, bool mipmapped, bool mipmapsIncluded = false) override;
+	bool Delete() override;
 };
 
 class GlTextureCache final : public BaseTextureCache<TextureCacheData>
@@ -262,12 +262,12 @@ struct OpenGLRenderer : Renderer
 
 	void DrawOSD(bool clear_screen) override { OSD_DRAW(clear_screen); }
 
-	virtual u64 GetTexture(TSP tsp, TCW tcw) override
+	u64 GetTexture(TSP tsp, TCW tcw) override
 	{
 		return gl_GetTexture(tsp, tcw);
 	}
 
-	virtual bool Present() override
+	bool Present() override
 	{
 		if (!frameRendered)
 			return false;

@@ -284,7 +284,7 @@ bool InputMapping::save(const char *name)
 	return true;
 }
 
-void InputMapping::SaveMapping(const char *name, std::shared_ptr<InputMapping> mapping)
+void InputMapping::SaveMapping(const char *name, const std::shared_ptr<InputMapping>& mapping)
 {
 	mapping->save(name);
 	InputMapping::loaded_mappings[name] = mapping;

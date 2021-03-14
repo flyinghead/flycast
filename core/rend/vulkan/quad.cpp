@@ -199,8 +199,7 @@ void QuadDrawer::Draw(vk::CommandBuffer commandBuffer, vk::ImageView imageView, 
 	}
 	vk::DescriptorImageInfo imageInfo(nearestFilter ? pipeline->GetNearestSampler() : pipeline->GetLinearSampler(), imageView, vk::ImageLayout::eShaderReadOnlyOptimal);
 	std::vector<vk::WriteDescriptorSet> writeDescriptorSets;
-	writeDescriptorSets.push_back(
-			vk::WriteDescriptorSet(*descSet, 0, 0, 1, vk::DescriptorType::eCombinedImageSampler, &imageInfo, nullptr, nullptr));
+	writeDescriptorSets.emplace_back(*descSet, 0, 0, 1, vk::DescriptorType::eCombinedImageSampler, &imageInfo, nullptr, nullptr);
 	context->GetDevice().updateDescriptorSets(writeDescriptorSets, nullptr);
 	commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipeline->GetPipelineLayout(), 0, 1, &descSet.get(), 0, nullptr);
 

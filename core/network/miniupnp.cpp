@@ -76,6 +76,6 @@ bool MiniUPnP::AddPortMapping(int port, bool tcp)
 		INFO_LOG(MODEM, "Port %d redirection failed: error %d", port, error);
 		return false;
 	}
-	mappedPorts.push_back(std::make_pair(portStr, tcp));
+	mappedPorts.emplace_back(portStr, tcp);
 	return true;
 }

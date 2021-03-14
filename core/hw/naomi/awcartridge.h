@@ -19,20 +19,20 @@ class AWCartridge: public Cartridge
 public:
 	AWCartridge(u32 size) : Cartridge(size) {}
 
-	virtual void Init() override;
-	virtual u32 ReadMem(u32 address, u32 size) override;
-	virtual void WriteMem(u32 address, u32 data, u32 size) override;
+	void Init() override;
+	u32 ReadMem(u32 address, u32 size) override;
+	void WriteMem(u32 address, u32 data, u32 size) override;
 
-	virtual void *GetDmaPtr(u32 &limit) override;
-	virtual void AdvancePtr(u32 size) override;
-	virtual std::string GetGameId() override;
+	void *GetDmaPtr(u32 &limit) override;
+	void AdvancePtr(u32 size) override;
+	std::string GetGameId() override;
 
 	void SetKey(u32 key) override;
-	virtual void Serialize(void **data, unsigned int *total_size) override;
-	virtual void Unserialize(void **data, unsigned int *total_size) override;
+	void Serialize(void **data, unsigned int *total_size) override;
+	void Unserialize(void **data, unsigned int *total_size) override;
 
 private:
-	virtual void device_reset();
+	void device_reset();
 
 	enum { EPR, MPR_RECORD, MPR_FILE };
 

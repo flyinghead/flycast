@@ -33,13 +33,13 @@ public:
 		memset(&archiveStream, 0, sizeof(archiveStream));
 		memset(&lookStream, 0, sizeof(lookStream));
 	}
-	virtual ~SzArchive();
+	~SzArchive() override;
 
-	virtual ArchiveFile* OpenFile(const char* name) override;
-	virtual ArchiveFile *OpenFileByCrc(u32 crc) override;
+	ArchiveFile* OpenFile(const char* name) override;
+	ArchiveFile *OpenFileByCrc(u32 crc) override;
 
 private:
-	virtual bool Open(const char* path) override;
+	bool Open(const char* path) override;
 
 	CSzArEx szarchive;
 	UInt32 block_idx;				/* it can have any value before first call (if outBuffer = 0) */
@@ -54,7 +54,7 @@ class SzArchiveFile : public ArchiveFile
 {
 public:
 	SzArchiveFile(u8 *data, u32 offset, u32 length) : data(data), offset(offset), length(length) {}
-	virtual u32 Read(void *buffer, u32 length) override
+	u32 Read(void *buffer, u32 length) override
 	{
 		length = std::min(length, this->length);
 		memcpy(buffer, data + offset, length);

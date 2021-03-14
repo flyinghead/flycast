@@ -507,12 +507,12 @@ RuntimeBlockInfo::~RuntimeBlockInfo()
 	}
 }
 
-void RuntimeBlockInfo::AddRef(RuntimeBlockInfoPtr other)
+void RuntimeBlockInfo::AddRef(const RuntimeBlockInfoPtr& other)
 { 
 	pre_refs.push_back(other); 
 }
 
-void RuntimeBlockInfo::RemRef(RuntimeBlockInfoPtr other)
+void RuntimeBlockInfo::RemRef(const RuntimeBlockInfoPtr& other)
 {
 	bm_List::iterator it = std::find(pre_refs.begin(), pre_refs.end(), other);
 	if (it != pre_refs.end())
@@ -651,7 +651,7 @@ void print_blocks()
 	if (print_stats)
 	{
 		f=fopen(get_writable_data_path("blkmap.lst").c_str(),"w");
-		print_stats=0;
+		print_stats=false;
 
 		INFO_LOG(DYNAREC, "Writing blocks to %p", f);
 	}

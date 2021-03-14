@@ -50,10 +50,10 @@ struct X64RegAlloc : RegAlloc<Xbyak::Operand::Code, s8>
 		RegAlloc::DoAlloc(block, alloc_regs, alloc_fregs);
 	}
 
-	virtual void Preload(u32 reg, Xbyak::Operand::Code nreg) override;
-	virtual void Writeback(u32 reg, Xbyak::Operand::Code nreg) override;
-	virtual void Preload_FPU(u32 reg, s8 nreg) override;
-	virtual void Writeback_FPU(u32 reg, s8 nreg) override;
+	void Preload(u32 reg, Xbyak::Operand::Code nreg) override;
+	void Writeback(u32 reg, Xbyak::Operand::Code nreg) override;
+	void Preload_FPU(u32 reg, s8 nreg) override;
+	void Writeback_FPU(u32 reg, s8 nreg) override;
 
 	Xbyak::Reg32 MapRegister(const shil_param& param)
 	{

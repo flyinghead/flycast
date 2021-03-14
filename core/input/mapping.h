@@ -80,7 +80,7 @@ public:
 	bool is_dirty() { return dirty; }
 
 	static std::shared_ptr<InputMapping> LoadMapping(const char *name);
-	static void SaveMapping(const char *name, std::shared_ptr<InputMapping> mapping);
+	static void SaveMapping(const char *name, const std::shared_ptr<InputMapping>& mapping);
 
 protected:
 	bool dirty = false;

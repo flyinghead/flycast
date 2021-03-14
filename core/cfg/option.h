@@ -110,12 +110,12 @@ public:
 		settings.options.push_back(this);
 	}
 
-	virtual void reset() override {
+	void reset() override {
 		set(defaultValue);
 		overridden = false;
 	}
 
-	virtual void load() override {
+	void load() override {
 		if (PerGameOption && settings.hasPerGameConfig())
 			set(doLoad(settings.getGameId(), section + "." + name));
 		else
@@ -126,7 +126,7 @@ public:
 		}
 	}
 
-	virtual void save() const override
+	void save() const override
 	{
 		if (overridden) {
 			if (value == overriddenDefault)
@@ -320,14 +320,14 @@ public:
 	}
 	RenderType& operator=(const RenderType& v) { set(v); return value; }
 
-	virtual void load() override {
+	void load() override {
 		RenderType current = value;
 		Option<RenderType>::load();
 		newValue = value;
 		value = current;
 	}
 
-	virtual void reset() override {
+	void reset() override {
 		RenderType current = value;
 		Option<RenderType>::reset();
 		newValue = value;

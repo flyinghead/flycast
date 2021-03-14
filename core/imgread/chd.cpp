@@ -17,7 +17,7 @@ struct CHDDisc : Disc
 
 	bool TryOpen(const char* file);
 
-	~CHDDisc()
+	~CHDDisc() override
 	{
 		delete[] hunk_mem;
 
@@ -45,7 +45,7 @@ struct CHDTrack : TrackFile
 		this->swap_bytes = swap_bytes;
 	}
 
-	virtual void Read(u32 FAD, u8* dst, SectorFormat* sector_type, u8* subcode, SubcodeFormat* subcode_type)
+	void Read(u32 FAD, u8* dst, SectorFormat* sector_type, u8* subcode, SubcodeFormat* subcode_type) override
 	{
 		u32 fad_offs = FAD + Offset;
 		u32 hunk=(fad_offs)/disc->sph;

@@ -2,9 +2,9 @@
 	Dreamcast serial port.
 	This is missing most of the functionality, but works for KOS (And thats all that uses it)
 */
-#include <stdlib.h>
+#include <cerrno>
+#include <cstdlib>
 #include <fcntl.h>
-#include <errno.h>
 #ifndef _WIN32
 #include <unistd.h>
 #include <sys/ioctl.h>

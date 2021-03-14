@@ -57,9 +57,9 @@ public:
 	virtual void update_rumble() {}
 	bool is_rumble_enabled() { return _rumble_enabled; }
 
-	static void Register(std::shared_ptr<GamepadDevice> gamepad);
+	static void Register(const std::shared_ptr<GamepadDevice>& gamepad);
 
-	static void Unregister(std::shared_ptr<GamepadDevice> gamepad);
+	static void Unregister(const std::shared_ptr<GamepadDevice>& gamepad);
 
 	static int GetGamepadCount();
 	static std::shared_ptr<GamepadDevice> GetGamepad(int index);

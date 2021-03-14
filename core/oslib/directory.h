@@ -137,7 +137,7 @@ public:
 	class iterator
 	{
 	private:
-		iterator(DIR *dir, std::string pathname) {
+		iterator(DIR *dir, const std::string& pathname) {
 			if (dir != nullptr)
 			{
 				dirs.push_back(dir);

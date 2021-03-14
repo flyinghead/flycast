@@ -300,7 +300,7 @@ struct RawTrackFile : TrackFile
 		this->cleanup=true;
 	}
 
-	virtual void Read(u32 FAD,u8* dst,SectorFormat* sector_type,u8* subcode,SubcodeFormat* subcode_type)
+	void Read(u32 FAD,u8* dst,SectorFormat* sector_type,u8* subcode,SubcodeFormat* subcode_type) override
 	{
 		//for now hackish
 		if (fmt==2352)
@@ -319,7 +319,7 @@ struct RawTrackFile : TrackFile
 		std::fseek(file, offset + FAD * fmt, SEEK_SET);
 		std::fread(dst, 1, fmt, file);
 	}
-	virtual ~RawTrackFile()
+	~RawTrackFile() override
 	{
 		if (cleanup && file)
 			std::fclose(file);

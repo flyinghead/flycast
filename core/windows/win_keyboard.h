@@ -141,10 +141,10 @@ public:
 		//E8-FF Reserved
 
 	}
-	virtual const char* name() override { return "Windows Keyboard"; }
+	const char* name() override { return "Windows Keyboard"; }
 
 protected:
-	virtual u8 convert_keycode(u8 keycode) override
+	u8 convert_keycode(u8 keycode) override
 	{
 		return kb_map[keycode];
 	}

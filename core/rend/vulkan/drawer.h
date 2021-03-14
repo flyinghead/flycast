@@ -194,7 +194,7 @@ class ScreenDrawer : public Drawer
 {
 public:
 	void Init(SamplerManager *samplerManager, ShaderManager *shaderManager);
-	virtual void EndRenderPass() override;
+	void EndRenderPass() override;
 	bool PresentFrame()
 	{
 		if (!frameRendered)
@@ -207,8 +207,8 @@ public:
 	}
 
 protected:
-	virtual vk::CommandBuffer BeginRenderPass() override;
-	virtual size_t GetSwapChainSize() override { return 2; }
+	vk::CommandBuffer BeginRenderPass() override;
+	size_t GetSwapChainSize() override { return 2; }
 
 private:
 	std::unique_ptr<PipelineManager> screenPipelineManager;
@@ -230,10 +230,10 @@ class TextureDrawer : public Drawer
 {
 public:
 	void Init(SamplerManager *samplerManager, ShaderManager *shaderManager, TextureCache *textureCache);
-	virtual void EndRenderPass() override;
+	void EndRenderPass() override;
 
 protected:
-	virtual vk::CommandBuffer BeginRenderPass() override;
+	vk::CommandBuffer BeginRenderPass() override;
 
 private:
 	u32 width = 0;

@@ -25,11 +25,11 @@ using namespace Xbyak::util;
 
 struct DynaRBI : RuntimeBlockInfo
 {
-	virtual u32 Relink() {
+	u32 Relink() override {
 		return 0;
 	}
 
-	virtual void Relocate(void* dst) {
+	void Relocate(void* dst) override {
 		verify(false);
 	}
 };

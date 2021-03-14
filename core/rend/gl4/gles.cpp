@@ -480,7 +480,7 @@ void gl4_delete_shaders()
 	gl4.modvol_shader.program = 0;
 }
 
-static void gl4_term(void)
+static void gl4_term()
 {
 	glDeleteBuffers(1, &gl4.vbo.geometry);
 	gl4.vbo.geometry = 0;
