@@ -405,7 +405,6 @@ static void recSh4_Reset(bool hard)
 {
 	Sh4_int_Reset(hard);
 	recSh4_ClearCache();
-	bm_Reset();
 }
 
 static void recSh4_Init()

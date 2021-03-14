@@ -234,7 +234,6 @@ void bm_vmem_pagefill(void** ptr, u32 size_bytes)
 
 void bm_Reset()
 {
-	bm_ResetCache();
 	bm_CleanupDeletedBlocks();
 	protected_blocks = 0;
 	unprotected_blocks = 0;

@@ -22,6 +22,7 @@ import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
+import android.view.Window;
 
 import com.reicast.emulator.config.Config;
 import com.reicast.emulator.debug.GenerateLogs;
@@ -36,6 +37,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 import tv.ouya.console.api.OuyaController;
+
+import static android.view.View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
+import static android.view.WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS;
+import static android.view.WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS;
 
 public abstract class BaseGLActivity extends Activity implements ActivityCompat.OnRequestPermissionsResultCallback {
     private static final int STORAGE_PERM_REQUEST = 1001;
@@ -56,6 +61,15 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            // Set the navigation bar color to 0 to avoid left over when it fades out on Android 10
+            Window window = getWindow();
+            window.addFlags(FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+            window.clearFlags(FLAG_TRANSLUCENT_STATUS);
+            window.setNavigationBarColor(0);
+            window.getDecorView().setSystemUiVisibility(SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
+        }
 
         if (!getFilesDir().exists()) {
             getFilesDir().mkdir();
