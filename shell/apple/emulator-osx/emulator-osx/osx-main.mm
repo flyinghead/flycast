@@ -20,6 +20,7 @@
 #include "rend/gui.h"
 #include "osx_keyboard.h"
 #include "osx_gamepad.h"
+#include "emulator-osx-Bridging-Header.h"
 #if defined(USE_SDL)
 #include "sdl/sdl.h"
 #endif
@@ -92,12 +93,12 @@ void os_SetupInput()
 
 void common_linux_setup();
 
-extern "C" void emu_dc_exit()
+void emu_dc_exit()
 {
     dc_exit();
 }
 
-extern "C" void emu_dc_term()
+void emu_dc_term()
 {
 	if (dc_is_running())
 		dc_exit();
@@ -105,30 +106,30 @@ extern "C" void emu_dc_term()
 	LogManager::Shutdown();
 }
 
-extern "C" void emu_gui_open_settings()
+void emu_gui_open_settings()
 {
 	gui_open_settings();
 }
 
-extern "C" void emu_dc_resume()
+void emu_dc_resume()
 {
 	dc_resume();
 }
 
 extern int screen_width,screen_height;
-bool rend_framePending();
+extern bool rend_framePending();
 
-extern "C" bool emu_frame_pending()
+bool emu_frame_pending()
 {
 	return rend_framePending() || gui_is_open();
 }
 
-extern "C" bool emu_renderer_enabled()
+bool emu_renderer_enabled()
 {
 	return mainui_loop_enabled();
 }
 
-extern "C" int emu_single_frame(int w, int h)
+int emu_single_frame(int w, int h)
 {
     if (!emu_frame_pending())
         return 0;
@@ -138,7 +139,7 @@ extern "C" int emu_single_frame(int w, int h)
     return (int)mainui_rend_frame();
 }
 
-extern "C" void emu_gles_init(int width, int height)
+void emu_gles_init(int width, int height)
 {
 	// work around https://bugs.swift.org/browse/SR-12263
 	pmo_buttons = mo_buttons;
@@ -186,7 +187,7 @@ extern "C" void emu_gles_init(int width, int height)
     NSSize displayNativeSize;
     CFArrayRef allDisplayModes = CGDisplayCopyAllDisplayModes(displayID, NULL);
     CFIndex n = CFArrayGetCount(allDisplayModes);
-    for(int i = 0; i < n; ++i)
+    for(CFIndex i = 0; i < n; ++i)
     {
         CGDisplayModeRef m = (CGDisplayModeRef)CFArrayGetValueAtIndex(allDisplayModes, i);
         if(CGDisplayModeGetIOFlags(m) & kDisplayModeNativeFlag)
@@ -212,7 +213,7 @@ extern "C" void emu_gles_init(int width, int height)
 	mainui_enabled = true;
 }
 
-extern "C" int emu_reicast_init()
+int emu_reicast_init()
 {
 	LogManager::Init();
 	common_linux_setup();
@@ -238,7 +239,7 @@ extern "C" int emu_reicast_init()
 	return rc;
 }
 
-extern "C" void emu_key_input(UInt16 keyCode, bool pressed, UInt modifierFlags) {
+void emu_key_input(UInt16 keyCode, bool pressed, UInt modifierFlags) {
 	if (keyCode != 0xFF)
 		keyboard.keyboard_input(keyCode, pressed, 0);
 	else
@@ -257,18 +258,18 @@ extern "C" void emu_key_input(UInt16 keyCode, bool pressed, UInt modifierFlags) 
 		 & (NSEventModifierFlagShift | NSEventModifierFlagControl | NSEventModifierFlagOption | NSEventModifierFlagCommand)) == 0)
 		kb_gamepad->gamepad_btn_input(keyCode, pressed);
 }
-extern "C" void emu_character_input(const char *characters) {
+void emu_character_input(const char *characters) {
 	if (characters != NULL)
 		while (*characters != '\0')
 			keyboard.keyboard_character(*characters++);
 }
 
-extern "C" void emu_mouse_buttons(int button, bool pressed)
+void emu_mouse_buttons(int button, bool pressed)
 {
 	mouse_gamepad->gamepad_btn_input(button, pressed);
 }
 
-extern "C" void emu_set_mouse_position(int x, int y, int width, int height)
+void emu_set_mouse_position(int x, int y, int width, int height)
 {
 	SetMousePosition(x, y, width, height);
 }

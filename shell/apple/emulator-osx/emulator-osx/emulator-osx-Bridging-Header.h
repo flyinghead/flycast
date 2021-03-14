@@ -10,6 +10,10 @@
 #define emulator_osx_osx_main_Bridging_Header_h
 #include <MacTypes.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void emu_dc_exit();
 void emu_dc_term();
 void emu_gui_open_settings();
@@ -25,4 +29,9 @@ void emu_set_mouse_position(int x, int y, int width, int height);
 bool emu_frame_pending();
 extern unsigned int *pmo_buttons;
 extern float *pmo_wheel_delta;
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif
