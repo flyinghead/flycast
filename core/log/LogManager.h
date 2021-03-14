@@ -14,7 +14,7 @@
 class LogListener
 {
 public:
-  virtual ~LogListener() {}
+  virtual ~LogListener() = default;
   virtual void Log(LogTypes::LOG_LEVELS, const char* msg) = 0;
 
   enum LISTENER

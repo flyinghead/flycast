@@ -24,9 +24,7 @@
 #include "overlay.h"
 #include "cfg/option.h"
 
-VulkanOverlay::~VulkanOverlay()
-{
-}
+VulkanOverlay::~VulkanOverlay() = default;
 
 std::unique_ptr<Texture> VulkanOverlay::createTexture(vk::CommandPool commandPool, int width, int height, u8 *data)
 {

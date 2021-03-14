@@ -27,7 +27,7 @@
 class InputMapping
 {
 public:
-	InputMapping() {}
+	InputMapping() = default;
 	InputMapping(const InputMapping& other) {
 		name = other.name;
 		dead_zone = other.dead_zone;

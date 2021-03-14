@@ -72,7 +72,7 @@ public:
 	}
 
 private:
-	EventManager() { }
+	EventManager() = default;
 
 	void registerEvent(Event event, Callback callback);
 	void unregisterEvent(Event event, Callback callback);

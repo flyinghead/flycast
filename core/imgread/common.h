@@ -116,7 +116,7 @@ struct Session
 struct TrackFile
 {
 	virtual void Read(u32 FAD,u8* dst,SectorFormat* sector_type,u8* subcode,SubcodeFormat* subcode_type)=0;
-	virtual ~TrackFile() {};
+	virtual ~TrackFile() = default;;
 };
 
 struct Track
