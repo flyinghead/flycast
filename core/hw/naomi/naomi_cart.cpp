@@ -62,7 +62,7 @@ static bool loadBios(const char *filename, Archive *child_archive, Archive *pare
 
 	std::string arch_name(filename);
 	std::string path = get_readonly_data_path(arch_name + ".zip");
-	if (!file_exists(path.c_str()))
+	if (!file_exists(path))
 		path = get_readonly_data_path(arch_name + ".7z");
 	DEBUG_LOG(NAOMI, "Loading BIOS from %s", path.c_str());
 	std::unique_ptr<Archive> bios_archive(OpenArchive(path.c_str()));
