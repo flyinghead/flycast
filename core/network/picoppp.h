@@ -27,4 +27,4 @@ int read_pico();
 
 void pico_receive_eth_frame(const u8 *frame, u32 size);
 // implemented in bba
-int pico_send_eth_frame(const u8 *frame, u32 size);
+int pico_send_eth_frame(const u8 *data, u32 len);

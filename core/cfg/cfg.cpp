@@ -23,9 +23,9 @@ static void saveConfigFile()
 		std::fclose(cfgfile);
 	}
 }
-void cfgSaveStr(const std::string& section, const std::string& key, const std::string& string)
+void cfgSaveStr(const std::string& section, const std::string& key, const std::string& value)
 {
-	cfgdb.set(section, key, string);
+	cfgdb.set(section, key, value);
 
 	if (save_config && autoSave)
 		saveConfigFile();

@@ -10,7 +10,7 @@ Takes vertex, textures and renders to the currently set up target
 
 */
 
-const static u32 CullMode[]= 
+const static u32 CullModes[] =
 {
 	GL_NONE, //0    No culling          No culling
 	GL_NONE, //1    Cull if Small       Cull if ( |det| < fpu_cull_val )
@@ -71,14 +71,14 @@ extern int screen_height;
 PipelineShader* CurrentShader;
 u32 gcflip;
 
-void SetCull(u32 CulliMode)
+void SetCull(u32 CullMode)
 {
-	if (CullMode[CulliMode]==GL_NONE)
+	if (CullModes[CullMode] == GL_NONE)
 		glcache.Disable(GL_CULL_FACE);
 	else
 	{
 		glcache.Enable(GL_CULL_FACE);
-		glcache.CullFace(CullMode[CulliMode]); //GL_FRONT/GL_BACK, ...
+		glcache.CullFace(CullModes[CullMode]); //GL_FRONT/GL_BACK, ...
 	}
 }
 

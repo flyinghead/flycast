@@ -386,11 +386,11 @@ void AWCartridge::recalc_dma_offset(int mode)
 	}
 }
 
-void *AWCartridge::GetDmaPtr(u32 &limit)
+void *AWCartridge::GetDmaPtr(u32 &size)
 {
-	limit = std::min(std::min(limit, (u32)32), dma_limit - dma_offset);
+	size = std::min(std::min(size, 32u), dma_limit - dma_offset);
 	u32 offset = dma_offset / 2;
-	for (u32 i = 0; i < limit / 2; i++)
+	for (u32 i = 0; i < size / 2; i++)
 		decrypted_buf[i] = decrypt16(offset + i);
 
 //	printf("AWCART Decrypted data @ %08x:\n", dma_offset);

@@ -23,7 +23,7 @@ public:
 	u32 ReadMem(u32 address, u32 size) override;
 	void WriteMem(u32 address, u32 data, u32 size) override;
 
-	void *GetDmaPtr(u32 &limit) override;
+	void *GetDmaPtr(u32 &size) override;
 	void AdvancePtr(u32 size) override;
 	std::string GetGameId() override;
 

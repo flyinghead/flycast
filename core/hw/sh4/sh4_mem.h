@@ -76,7 +76,7 @@ void WriteMemBlock_nommu_dma(u32 dst,u32 src,u32 size);
 //Init/Res/Term
 void mem_Init();
 void mem_Term();
-void mem_Reset(bool Manual);
+void mem_Reset(bool hard);
 void mem_map_default();
 
 //Get pointer to ram area , 0 if error

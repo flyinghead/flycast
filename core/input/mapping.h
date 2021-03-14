@@ -52,7 +52,7 @@ public:
 	}
 	void set_button(u32 port, DreamcastKey id, u32 code);
 	void set_button(DreamcastKey id, u32 code) { set_button(0, id, code); }
-	u32 get_button_code(u32 port, DreamcastKey id);
+	u32 get_button_code(u32 port, DreamcastKey key);
 
 	DreamcastKey get_axis_id(u32 port, u32 code)
 	{
