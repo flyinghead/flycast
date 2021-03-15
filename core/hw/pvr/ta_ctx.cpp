@@ -149,7 +149,7 @@ TA_context* tactx_Alloc()
 	TA_context* rv = 0;
 
 	mtx_pool.lock();
-	if (ctx_pool.size())
+	if (!ctx_pool.empty())
 	{
 		rv = ctx_pool[ctx_pool.size()-1];
 		ctx_pool.pop_back();

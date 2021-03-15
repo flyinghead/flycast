@@ -29,7 +29,7 @@ public:
 	int maple_port() { return _maple_port; }
 	void keyboard_character(char c);
 	std::string get_character_input();
-	virtual ~KeyboardDevice() {}
+	virtual ~KeyboardDevice() = default;
 
 	static KeyboardDevice *GetInstance() { return _instance; }
 

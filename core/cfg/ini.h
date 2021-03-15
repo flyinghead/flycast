@@ -33,8 +33,8 @@ struct ConfigFile {
 		bool has_entry(const std::string& section_name, const std::string& entry_name);
 		bool is_virtual(const std::string& section_name, const std::string& entry_name);
 
-		void parse(FILE* fd);
-		void save(FILE* fd);
+		void parse(FILE* file);
+		void save(FILE* file);
 
 		/* getting values */
 		std::string get(const std::string& section_name, const std::string& entry_name, const std::string& default_value = "");

@@ -27,7 +27,7 @@ namespace config {
 
 class BaseOption {
 public:
-	virtual ~BaseOption() {}
+	virtual ~BaseOption() = default;
 	virtual void save() const = 0;
 	virtual void load() = 0;
 	virtual void reset() = 0;

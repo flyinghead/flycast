@@ -379,7 +379,7 @@ inline bool is_u16(u32 v) { return (u16)v==(u32)v; }
 
 //PVR
 s32 libPvr_Init();
-void libPvr_Reset(bool Manual);
+void libPvr_Reset(bool hard);
 void libPvr_Term();
 
 void* libPvr_GetRenderTarget();

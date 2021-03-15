@@ -10,7 +10,7 @@ Takes vertex, textures and renders to the currently set up target
 
 */
 
-const static u32 CullMode[]= 
+const static u32 CullModes[] =
 {
 	GL_NONE, //0    No culling          No culling
 	GL_NONE, //1    Cull if Small       Cull if ( |det| < fpu_cull_val )
@@ -71,14 +71,14 @@ extern int screen_height;
 PipelineShader* CurrentShader;
 u32 gcflip;
 
-void SetCull(u32 CulliMode)
+void SetCull(u32 CullMode)
 {
-	if (CullMode[CulliMode]==GL_NONE)
+	if (CullModes[CullMode] == GL_NONE)
 		glcache.Disable(GL_CULL_FACE);
 	else
 	{
 		glcache.Enable(GL_CULL_FACE);
-		glcache.CullFace(CullMode[CulliMode]); //GL_FRONT/GL_BACK, ...
+		glcache.CullFace(CullModes[CullMode]); //GL_FRONT/GL_BACK, ...
 	}
 }
 
@@ -270,7 +270,7 @@ static void SortTriangles(int first, int count)
 	GenSorted(first, count, pidx_sort, vidx_sort);
 
 	//Upload to GPU if needed
-	if (pidx_sort.size())
+	if (!pidx_sort.empty())
 	{
 		//Bind and upload sorted index buffer
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl.vbo.idxs2); glCheck();
@@ -294,7 +294,7 @@ static void SortTriangles(int first, int count)
 void DrawSorted(bool multipass)
 {
 	//if any drawing commands, draw them
-	if (pidx_sort.size())
+	if (!pidx_sort.empty())
 	{
 		u32 count=pidx_sort.size();
 		

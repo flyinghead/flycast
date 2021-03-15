@@ -57,7 +57,7 @@ class GameScanner
 	void add_game_directory(const std::string& path)
 	{
 		// FIXME this won't work anymore
-        if (game_list.size() == 0)
+        if (game_list.empty())
         {
             ++empty_folders_scanned;
             if (empty_folders_scanned > 1000)

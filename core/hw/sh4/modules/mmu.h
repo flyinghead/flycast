@@ -84,7 +84,7 @@ u32 mmu_instruction_translation(u32 va, u32& rv);
 
 template<u32 translation_type, typename T>
 extern u32 mmu_data_translation(u32 va, u32& rv);
-void DoMMUException(u32 addr, u32 error_code, u32 access_type);
+void DoMMUException(u32 addr, u32 mmu_error, u32 access_type);
 
 template<u32 translation_type>
 bool mmu_is_translated(u32 va, u32 size)
@@ -128,7 +128,7 @@ bool mmu_is_translated(u32 va, u32 size)
 
 	template<typename T> void DYNACALL mmu_WriteMem(u32 adr, T data);
 	
-	bool mmu_TranslateSQW(u32 addr, u32* mapped);
+	bool mmu_TranslateSQW(u32 adr, u32* out);
 
 	template<typename T>
 	T DYNACALL mmu_ReadMemNoEx(u32 adr, u32 *exception_occurred)

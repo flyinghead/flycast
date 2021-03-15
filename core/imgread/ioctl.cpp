@@ -86,7 +86,7 @@ struct spti_s
 	BYTE  senseBuf[0x12];
 } ;
 
-ULONG msf2fad( UCHAR Addr[4] )
+ULONG msf2fad(const UCHAR Addr[4])
 {
 	ULONG Sectors = ( Addr[0] * (CD_BLOCKS_PER_SECOND*60) ) + ( Addr[1]*CD_BLOCKS_PER_SECOND) + Addr[2];
 	return Sectors;

@@ -240,7 +240,7 @@ public:
 		if (!find_mapping())
 			input_mapper = std::make_shared<KbInputMapping>();
 	}
-	~WinKbGamepadDevice() override {}
+	~WinKbGamepadDevice() override = default;
 };
 
 class MouseInputMapping : public InputMapping
@@ -267,7 +267,7 @@ public:
 		if (!find_mapping())
 			input_mapper = std::make_shared<MouseInputMapping>();
 	}
-	~WinMouseGamepadDevice() override {}
+	~WinMouseGamepadDevice() override = default;
 
 	bool gamepad_btn_input(u32 code, bool pressed) override
 	{

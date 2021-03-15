@@ -627,7 +627,7 @@ private:
 		return num_physical_blocks(size) - num_bitmap_blocks(size) - 1;
 	}
 
-	inline int is_allocated(u8 *bitmap, u32 phys_id)
+	inline int is_allocated(const u8 *bitmap, u32 phys_id)
 	{
 		int index = (phys_id - 1) % FLASH_BITMAP_BLOCKS;
 		return (bitmap[index / 8] & (0x80 >> (index % 8))) == 0x0;

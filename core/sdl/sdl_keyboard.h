@@ -6,7 +6,7 @@ class SDLKeyboardDevice : public KeyboardDeviceTemplate<SDL_Scancode>
 {
 public:
 	SDLKeyboardDevice(int maple_port) : KeyboardDeviceTemplate(maple_port) {}
-	virtual ~SDLKeyboardDevice() {}
+	virtual ~SDLKeyboardDevice() = default;
 	virtual const char* name() override { return "SDL Keyboard"; }
 
 protected:

@@ -35,8 +35,7 @@ void maple_device::Setup(u32 port, int playerNum)
 }
 maple_device::~maple_device()
 {
-	if (config)
-		delete config;
+    delete config;
 }
 
 /*

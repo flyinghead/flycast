@@ -165,7 +165,7 @@ struct PCIDevice {
 };
 
 void pci_set_irq(PCIDevice *pci_dev, int level);
-void pci_register_bar(PCIDevice *pci_dev, int region_num, uint8_t attr, MemoryRegion *memory);
+void pci_register_bar(PCIDevice *pci_dev, int region_num, uint8_t type, MemoryRegion *memory);
 
 void pci_dma_read(PCIDevice *dev, dma_addr_t addr, void *buf, dma_addr_t len);
 void pci_dma_write(PCIDevice *dev, dma_addr_t addr, const void *buf, dma_addr_t len);

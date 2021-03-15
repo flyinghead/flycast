@@ -735,7 +735,7 @@ public:
 	//true if : dirty or paletted texture and hashes don't match
 	bool NeedsUpdate();
 	virtual bool Delete();
-	virtual ~BaseTextureCacheData() {}
+	virtual ~BaseTextureCacheData() = default;
 	static bool IsGpuHandledPaletted(TSP tsp, TCW tcw)
 	{
 		// Some palette textures are handled on the GPU

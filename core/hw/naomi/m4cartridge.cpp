@@ -150,7 +150,7 @@ bool M4Cartridge::Read(u32 offset, u32 size, void *dst) {
 		return NaomiCartridge::Read(offset & 0x1ffffffe, size, dst);
 }
 
-void *M4Cartridge::GetDmaPtr(u32 &limit)
+void *M4Cartridge::GetDmaPtr(u32 &size)
 {
 	static u8 retzero[2] = { 0, 0 };
 
@@ -158,7 +158,7 @@ void *M4Cartridge::GetDmaPtr(u32 &limit)
 		u32 fpr_num = m4id & 0x7f;
 
 		if (((rom_cur_address >> 26) & 0x07) < fpr_num) {
-			limit = std::min(limit, (u32)2);
+			size = std::min(size, 2u);
 			return &cfidata[rom_cur_address & 0xffff];
 		}
 	}
@@ -176,7 +176,7 @@ void *M4Cartridge::GetDmaPtr(u32 &limit)
 	}
 	if (encryption)
 	{
-		limit = std::min(limit, (u32)sizeof(buffer));
+		size = std::min(size, (u32)sizeof(buffer));
 		return buffer;
 
 	}
@@ -184,12 +184,12 @@ void *M4Cartridge::GetDmaPtr(u32 &limit)
 	{
 		if ((DmaOffset & 0x1ffffffe) < RomSize)
 		{
-			limit = std::min(limit, RomSize - (DmaOffset & 0x1ffffffe));
+			size = std::min(size, RomSize - (DmaOffset & 0x1ffffffe));
 			return RomPtr + (DmaOffset & 0x1ffffffe);
 		}
 		else
 		{
-			limit = 2;
+			size = 2;
 			return retzero;
 		}
 	}

@@ -639,8 +639,8 @@ static bool RenderFrame()
 	}
 	else
 	{
-		rendering_width = screen_width * screen_scaling + 0.5f;
-		rendering_height = screen_height * screen_scaling + 0.5f;
+		rendering_width = std::lround(screen_width * screen_scaling);
+		rendering_height = std::lround(screen_height * screen_scaling);
 	}
 	resize(rendering_width, rendering_height);
 	

@@ -31,4 +31,4 @@ struct SortTrigDrawParam
 };
 
 // Sort based on min-z of each triangle
-void GenSorted(int first, int count, std::vector<SortTrigDrawParam>& sorted_pp, std::vector<u32>& sorted_idx);
+void GenSorted(int first, int count, std::vector<SortTrigDrawParam>& pidx_sort, std::vector<u32>& vidx_sort);

@@ -190,19 +190,19 @@ int UpdateSystem_INTC()
 
 void sh4_int_resetcache() { }
 //Get an interface to sh4 interpreter
-void Get_Sh4Interpreter(sh4_if* rv)
+void Get_Sh4Interpreter(sh4_if* cpu)
 {
-	rv->Run=Sh4_int_Run;
-	rv->Stop=Sh4_int_Stop;
-	rv->Start=Sh4_int_Start;
-	rv->Step=Sh4_int_Step;
-	rv->Skip=Sh4_int_Skip;
-	rv->Reset=Sh4_int_Reset;
-	rv->Init=Sh4_int_Init;
-	rv->Term=Sh4_int_Term;
-	rv->IsCpuRunning=Sh4_int_IsCpuRunning;
+	cpu->Run = Sh4_int_Run;
+	cpu->Stop = Sh4_int_Stop;
+	cpu->Start = Sh4_int_Start;
+	cpu->Step = Sh4_int_Step;
+	cpu->Skip = Sh4_int_Skip;
+	cpu->Reset = Sh4_int_Reset;
+	cpu->Init = Sh4_int_Init;
+	cpu->Term = Sh4_int_Term;
+	cpu->IsCpuRunning = Sh4_int_IsCpuRunning;
 
-	rv->ResetCache=sh4_int_resetcache;
+	cpu->ResetCache = sh4_int_resetcache;
 }
 
 void Sh4_int_Init()
