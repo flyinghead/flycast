@@ -1126,6 +1126,9 @@ s32 mo_y_prev[4] = { -1, -1, -1, -1 };
 // physical mouse coordinates (relative to window/screen)
 s32 mo_x_phy;
 s32 mo_y_phy;
+// last known screen/window size
+static s32 mo_width;
+static s32 mo_height;
 
 struct maple_mouse : maple_base
 {
@@ -1379,21 +1382,8 @@ maple_device* maple_Create(MapleDeviceType type)
 	return rv;
 }
 
-void SetMousePosition(int x, int y, int width, int height, u32 mouseId)
+static void screenToNative(int& x, int& y, int width, int height)
 {
-	if (mouseId == 0)
-	{
-		mo_x_phy = x;
-		mo_y_phy = y;
-	}
-
-	if (config::Rotate90)
-	{
-		int t = y;
-		y = x;
-		x = height - t;
-		std::swap(width, height);
-	}
 	float fx, fy;
 	if ((float)width / height >= 640.f / 480.f)
 	{
@@ -1409,8 +1399,30 @@ void SetMousePosition(int x, int y, int width, int height, u32 mouseId)
 		scale /= config::ScreenStretching / 100.f;
 		fy = (y - (height - 480.f / scale) / 2.f) * scale;
 	}
-	mo_x_abs[mouseId] = (int)std::round(fx);
-	mo_y_abs[mouseId] = (int)std::round(fy);
+	x = (int)std::round(fx);
+	y = (int)std::round(fy);
+}
+
+void SetMousePosition(int x, int y, int width, int height, u32 mouseId)
+{
+	if (mouseId == 0)
+	{
+		mo_x_phy = x;
+		mo_y_phy = y;
+	}
+	mo_width = width;
+	mo_height = height;
+
+	if (config::Rotate90)
+	{
+		int t = y;
+		y = x;
+		x = height - t;
+		std::swap(width, height);
+	}
+	screenToNative(x, y, width, height);
+	mo_x_abs[mouseId] = x;
+	mo_y_abs[mouseId] = y;
 
 	if (mo_x_prev[mouseId] != -1)
 	{
@@ -1423,15 +1435,26 @@ void SetMousePosition(int x, int y, int width, int height, u32 mouseId)
 
 void SetRelativeMousePosition(int xrel, int yrel, u32 mouseId)
 {
+	int width = mo_width;
+	int height = mo_height;
 	if (config::Rotate90)
 	{
 		std::swap(xrel, yrel);
 		xrel = -xrel;
+		std::swap(width, height);
 	}
 	float dx = (float)xrel * config::MouseSensitivity / 100.f;
 	float dy = (float)yrel * config::MouseSensitivity / 100.f;
 	mo_x_delta[mouseId] += dx;
 	mo_y_delta[mouseId] += dy;
+	int minX = -width / 32;
+	int minY = -height / 32;
+	int maxX = width + width / 32;
+	int maxY = height + height / 32;
+	screenToNative(minX, minY, width, height);
+	screenToNative(maxX, maxY, width, height);
 	mo_x_abs[mouseId] += (int)std::round(dx);
 	mo_y_abs[mouseId] += (int)std::round(dy);
+	mo_x_abs[mouseId] = std::min(std::max(mo_x_abs[mouseId], minX), maxX);
+	mo_y_abs[mouseId] = std::min(std::max(mo_y_abs[mouseId], minY), maxY);
 }
