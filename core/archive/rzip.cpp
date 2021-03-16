@@ -112,14 +112,20 @@ size_t RZipFile::Write(const void *data, size_t length)
 		|| std::fwrite(&length, sizeof(length), 1, file) != 1)
 		return 0;
 	const u8 *p = (const u8 *)data;
-	u8 *zipped = new u8[maxChunkSize];
+	// compression output buffer must be 0.1% larger + 12 bytes
+	uLongf maxZippedSize = maxChunkSize + maxChunkSize / 1000 + 12;
+	u8 *zipped = new u8[maxZippedSize];
 	size_t rv = 0;
 	while (rv < length)
 	{
-		uLongf zippedSize = maxChunkSize;
+		uLongf zippedSize = maxZippedSize;
 		uLongf uncompressedSize = std::min(maxChunkSize, (u32)(length - rv));
-		if (compress(zipped, &zippedSize, p, uncompressedSize) != Z_OK)
+		u32 rc = compress(zipped, &zippedSize, p, uncompressedSize);
+		if (rc != Z_OK)
+		{
+			WARN_LOG(SAVESTATE, "Compression error: %d", rc);
 			break;
+		}
 		u32 sz = (u32)zippedSize;
 		if (std::fwrite(&sz, sizeof(sz), 1, file) != 1
 			|| std::fwrite(zipped, zippedSize, 1, file) != 1)
