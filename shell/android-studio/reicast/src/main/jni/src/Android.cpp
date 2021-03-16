@@ -469,14 +469,14 @@ JNIEXPORT jboolean JNICALL Java_com_reicast_emulator_emu_JNIdc_guiIsContentBrows
 static u32 androidaudio_push(const void* frame, u32 amt, bool wait)
 {
     verify(amt==SAMPLE_COUNT);
-    //yeah, do some audio piping magic here !
     jvm_attacher.getEnv()->SetShortArrayRegion(jsamples, 0, amt * 2, (jshort *)frame);
     return jvm_attacher.getEnv()->CallIntMethod(g_audioBackend, writeBufferMid, jsamples, wait);
 }
 
 static void androidaudio_init()
 {
-	jvm_attacher.getEnv()->CallVoidMethod(g_audioBackend, audioInitMid);
+	jint bufferSize = config::AutoLatency ? 0 : config::AudioBufferSize;
+	jvm_attacher.getEnv()->CallVoidMethod(g_audioBackend, audioInitMid, bufferSize);
 }
 
 static void androidaudio_term()
@@ -539,7 +539,7 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_AudioBackend_setInstance(JN
     else {
         g_audioBackend = env->NewGlobalRef(instance);
         writeBufferMid = env->GetMethodID(env->GetObjectClass(g_audioBackend), "writeBuffer", "([SZ)I");
-        audioInitMid = env->GetMethodID(env->GetObjectClass(g_audioBackend), "init", "()V");
+        audioInitMid = env->GetMethodID(env->GetObjectClass(g_audioBackend), "init", "(I)V");
         audioTermMid = env->GetMethodID(env->GetObjectClass(g_audioBackend), "term", "()V");
         if (jsamples == NULL) {
             jsamples = env->NewShortArray(SAMPLE_COUNT * 2);

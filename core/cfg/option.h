@@ -277,6 +277,12 @@ protected:
 
 using OptionString = Option<std::string>;
 
+template<typename T, T value = T()>
+class ConstOption {
+public:
+	operator T() const { return value; }
+};
+
 // Dynarec
 
 extern Option<bool> DynarecEnabled;
@@ -297,10 +303,11 @@ extern Option<bool> AutoSavestate;
 
 // Sound
 
-extern Option<bool> LimitFPS;
+constexpr ConstOption<bool, true> LimitFPS;
 extern Option<bool> DSPEnabled;
 extern Option<bool> DisableSound;
-extern Option<int> AudioBufferSize;	//In samples ,*4 for bytes (1024)
+extern Option<int> AudioBufferSize;	//In samples ,*4 for bytes
+extern Option<bool> AutoLatency;
 
 extern OptionString AudioBackend;
 
@@ -352,7 +359,7 @@ extern Option<bool> RenderToTextureBuffer;
 extern Option<int> RenderToTextureUpscale;
 extern Option<bool> TranslucentPolygonDepthMask;
 extern Option<bool> ModifierVolumes;
-extern Option<bool> Clipping;
+constexpr ConstOption<bool, true> Clipping;
 extern Option<int> TextureUpscale;
 extern Option<int> MaxFilteredTextureSize;
 extern Option<float> ExtraDepthScale;

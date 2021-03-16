@@ -40,7 +40,6 @@ Option<bool> AutoSavestate("Dreamcast.AutoSavestate");
 
 // Sound
 
-Option<bool> LimitFPS("aica.LimitFPS", true);
 Option<bool> DSPEnabled("aica.DSPEnabled", false);
 Option<bool> DisableSound("aica.NoSound");
 #if HOST_CPU == CPU_ARM
@@ -48,6 +47,13 @@ Option<int> AudioBufferSize("aica.BufferSize", 5644);	// 128 ms
 #else
 Option<int> AudioBufferSize("aica.BufferSize", 2822);	// 64 ms
 #endif
+Option<bool> AutoLatency("aica.AutoLatency",
+#ifdef __ANDROID__
+		true
+#else
+		false
+#endif
+		);
 
 OptionString AudioBackend("backend", "auto", "audio");
 
@@ -61,7 +67,6 @@ Option<bool> RenderToTextureBuffer("rend.RenderToTextureBuffer");
 Option<int> RenderToTextureUpscale("rend.RenderToTextureUpscale", 1);
 Option<bool> TranslucentPolygonDepthMask("rend.TranslucentPolygonDepthMask");
 Option<bool> ModifierVolumes("rend.ModifierVolumes", true);
-Option<bool> Clipping("rend.Clipping", true);
 Option<int> TextureUpscale("rend.TextureUpscale", 1);
 Option<int> MaxFilteredTextureSize("rend.MaxFilteredTextureSize", 256);
 Option<float> ExtraDepthScale("rend.ExtraDepthScale", 1.f);

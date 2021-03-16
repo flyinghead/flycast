@@ -1,20 +1,20 @@
 /*
 	Copyright 2019 flyinghead
 
-	This file is part of reicast.
+	This file is part of Flycast.
 
-    reicast is free software: you can redistribute it and/or modify
+    Flycast is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    reicast is distributed in the hope that it will be useful,
+    Flycast is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with reicast.  If not, see <https://www.gnu.org/licenses/>.
+    along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
  */
 
 #include <mutex>
@@ -1007,7 +1007,7 @@ static void gui_display_settings()
                 ImGui::ListBoxFooter();
             }
             ImGui::SameLine();
-            ShowHelpMarker("The directory where reicast saves configuration files and VMUs. BIOS files should be in a subfolder named \"data\"");
+            ShowHelpMarker("The directory where Flycast saves configuration files and VMUs. BIOS files should be in a subfolder named \"data\"");
 			if (OptionCheckbox("Hide Legacy Naomi Roms", config::HideLegacyNaomiRoms,
 					"Hide .bin, .dat and .lst files from the content browser"))
 				scanner.refresh();
@@ -1245,8 +1245,6 @@ static void gui_display_settings()
 		    	OptionRadioButton("Maximum", config::AutoSkipFrame, 2, "Skip a frame when the GPU is running slow");
 		    	ImGui::Columns(1, nullptr, false);
 
-		    	OptionCheckbox("Clipping", config::Clipping,
-		    			"Enable clipping. May produce graphical errors when disabled");
 		    	OptionCheckbox("Shadows", config::ModifierVolumes,
 		    			"Enable modifier volumes, usually used for shadows");
 		    	OptionCheckbox("Fog", config::Fog, "Enable fog effects");
@@ -1342,14 +1340,19 @@ static void gui_display_settings()
 			OptionCheckbox("Disable Sound", config::DisableSound, "Disable the emulator sound output");
 			OptionCheckbox("Enable DSP", config::DSPEnabled,
 					"Enable the Dreamcast Digital Sound Processor. Only recommended on fast platforms");
-            OptionCheckbox("Limit Emulator Speed", config::LimitFPS,
-            		"Whether to limit the emulator speed using the audio output. Recommended");
-#if !defined(__ANDROID__) && !defined(_WIN32)
-			int latency = (int)roundf(config::AudioBufferSize * 1000.f / 44100.f);
-	    	ImGui::SliderInt("Latency", &latency, 12, 512, "%d ms");
-	    	config::AudioBufferSize = (int)roundf(latency * 44100.f / 1000.f);
-            ImGui::SameLine();
-            ShowHelpMarker("Sets the maximum audio latency. Not supported by all audio drivers.");
+#if !defined(_WIN32)
+#ifdef __ANDROID__
+            OptionCheckbox("Automatic Latency", config::AutoLatency,
+            		"Automatically set audio latency. Recommended");
+#endif
+            if (!config::AutoLatency)
+            {
+				int latency = (int)roundf(config::AudioBufferSize * 1000.f / 44100.f);
+				ImGui::SliderInt("Latency", &latency, 12, 512, "%d ms");
+				config::AudioBufferSize = (int)roundf(latency * 44100.f / 1000.f);
+				ImGui::SameLine();
+				ShowHelpMarker("Sets the maximum audio latency. Not supported by all audio drivers.");
+            }
 #endif
 
 			audiobackend_t* backend = nullptr;
@@ -1711,7 +1714,7 @@ static void gui_display_content()
 						}
 						else
 						{
-							 std::string gamePath(game.path);
+							std::string gamePath(game.path);
 							scanner.get_mutex().unlock();
 							gui_state = GuiState::Closed;
 							gui_start_game(gamePath);
