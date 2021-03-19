@@ -11,6 +11,10 @@ option(ENABLE_OPROFILE "Enable OProfile" OFF)
 option(TEST_AUTOMATION "Enable test automation" OFF)
 option(ENABLE_LOG "Enable full logging" OFF)
 option(ASAN "Enable address sanitizer" OFF)
+option(USE_GLES "Use GLES[3] API" OFF)
+option(USE_GLES2 "Use GLES2 API" OFF)
+option(USE_HOST_LIBZIP "Use host libzip" ON)
+option(USE_OPENMP "Use OpenMP if available" ON)
 
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/shell/cmake")
 
@@ -86,7 +90,7 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
 target_include_directories(${PROJECT_NAME} PRIVATE core core/deps core/deps/stb core/deps/xbyak core/khronos)
 
 find_package(OpenMP)
-if(OpenMP_CXX_FOUND AND NOT APPLE)
+if(OpenMP_CXX_FOUND AND NOT APPLE AND USE_OPENMP)
     if(MINGW)
         target_link_libraries(${PROJECT_NAME} PRIVATE "-static -lgomp -lpthread")
         target_compile_options(${PROJECT_NAME} PRIVATE -fopenmp)
@@ -192,17 +196,19 @@ if(PKG_CONFIG_FOUND AND NOT ANDROID AND NOT APPLE)
         target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::FLAC)
     endif()
 
-    pkg_check_modules(LIBEVDEV IMPORTED_TARGET libevdev)
-    if(LIBEVDEV_FOUND)
-        target_compile_definitions(${PROJECT_NAME} PRIVATE USE_EVDEV)
-        target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::LIBEVDEV)
-
-        pkg_check_modules(LIBUDEV IMPORTED_TARGET libudev)
-        if(LIBUDEV_FOUND)
-            target_compile_definitions(${PROJECT_NAME} PRIVATE USE_UDEV)
-            target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::LIBUDEV)
-        endif()
-    endif()
+	if(NOT SDL2_FOUND)
+	    pkg_check_modules(LIBEVDEV IMPORTED_TARGET libevdev)
+	    if(LIBEVDEV_FOUND)
+	        target_compile_definitions(${PROJECT_NAME} PRIVATE USE_EVDEV)
+	        target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::LIBEVDEV)
+	
+	        pkg_check_modules(LIBUDEV IMPORTED_TARGET libudev)
+	        if(LIBUDEV_FOUND)
+	            target_compile_definitions(${PROJECT_NAME} PRIVATE USE_UDEV)
+	            target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::LIBUDEV)
+	        endif()
+	    endif()
+	endif()
 
     pkg_check_modules(LIBPULSE IMPORTED_TARGET libpulse)
     if(LIBPULSE_FOUND)
@@ -210,9 +216,11 @@ if(PKG_CONFIG_FOUND AND NOT ANDROID AND NOT APPLE)
         target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::LIBPULSE)
     endif()
 
-    pkg_check_modules(LIBZIP IMPORTED_TARGET libzip)
-    if(LIBZIP_FOUND)
-        target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::LIBZIP)
+	if(USE_HOST_LIBZIP)
+		pkg_check_modules(LIBZIP IMPORTED_TARGET libzip)
+		if(LIBZIP_FOUND)
+			target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::LIBZIP)
+		endif()
     endif()
 
     if(ENABLE_OPROFILE)
@@ -228,9 +236,17 @@ if(PKG_CONFIG_FOUND AND NOT ANDROID AND NOT APPLE)
 endif()
 
 if(UNIX AND NOT APPLE AND NOT ANDROID)
-    set(OpenGL_GL_PREFERENCE LEGACY)
-    find_package(OpenGL REQUIRED)
-    target_link_libraries(${PROJECT_NAME} PRIVATE OpenGL::GL)
+	if(USE_GLES2)
+		target_compile_definitions(${PROJECT_NAME} PRIVATE GLES GLES2)
+		target_link_libraries(${PROJECT_NAME} PRIVATE GLESv2 EGL)
+	elseif(USE_GLES)
+		target_compile_definitions(${PROJECT_NAME} PRIVATE GLES GLES3)
+		target_link_libraries(${PROJECT_NAME} PRIVATE EGL)
+	else()
+	    set(OpenGL_GL_PREFERENCE LEGACY)
+	    find_package(OpenGL REQUIRED)
+	    target_link_libraries(${PROJECT_NAME} PRIVATE OpenGL::GL)
+	endif()
 
     find_package(Threads REQUIRED)
     target_link_libraries(${PROJECT_NAME} PRIVATE Threads::Threads)
@@ -248,6 +264,8 @@ if(UNIX AND NOT APPLE AND NOT ANDROID)
             target_include_directories(${PROJECT_NAME} PRIVATE ${X11_INCLUDE_DIR})
             target_link_libraries(${PROJECT_NAME} PRIVATE ${X11_LIBRARIES})
         endif()
+	else()
+		target_compile_definitions(${PROJECT_NAME} PRIVATE EGL_NO_X11)
     endif()
 
     target_link_libraries(${PROJECT_NAME} PRIVATE ${CMAKE_DL_LIBS} rt)
@@ -776,8 +794,13 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/rend/TexCache.cpp
         core/rend/TexCache.h)
 
-if(NOT APPLE AND NOT ANDROID)
-    target_sources(${PROJECT_NAME} PRIVATE core/rend/gl4/abuffer.cpp core/rend/gl4/gl4.h core/rend/gl4/gldraw.cpp core/rend/gl4/gles.cpp core/rend/gl4/gltex.cpp)
+if(NOT (APPLE OR ANDROID OR USE_GLES))
+    target_sources(${PROJECT_NAME} PRIVATE
+    	core/rend/gl4/abuffer.cpp
+    	core/rend/gl4/gl4.h
+    	core/rend/gl4/gldraw.cpp
+    	core/rend/gl4/gles.cpp
+    	core/rend/gl4/gltex.cpp)
 endif()
 
 if(NOT APPLE)

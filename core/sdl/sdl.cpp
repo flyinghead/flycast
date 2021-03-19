@@ -474,15 +474,17 @@ bool sdl_recreate_window(u32 flags)
 		get_window_state();
 		SDL_DestroyWindow(window);
 	}
-#ifdef TARGET_PANDORA
-	flags |= SDL_FULLSCREEN;
-#else
-	flags |= SDL_SWSURFACE | SDL_WINDOW_RESIZABLE;
+	flags |= SDL_SWSURFACE;
+#if !defined(GLES)
+	flags |= SDL_WINDOW_RESIZABLE;
 	if (window_fullscreen)
 		flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
 	else if (window_maximized)
 		flags |= SDL_WINDOW_MAXIMIZED;
+#else
+	flags |= SDL_WINDOW_FULLSCREEN;
 #endif
+
 	window = SDL_CreateWindow("Flycast", x, y, window_width * scaling, window_height * scaling, flags);
 	if (window == nullptr)
 	{
@@ -490,7 +492,7 @@ bool sdl_recreate_window(u32 flags)
 		return false;
 	}
 
-#ifndef _WIN32
+#if !defined(GLES) && !defined(_WIN32)
 	// Set the window icon
 	u32 pixels[48 * 48];
 	for (int i = 0; i < 48 * 48; i++)

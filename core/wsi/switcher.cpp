@@ -36,6 +36,7 @@ void InitRenderApi()
 		// Fall back to Open GL
 		WARN_LOG(RENDERER, "Vulkan init failed. Falling back to Open GL.");
 		config::RendererType = RenderType::OpenGL;
+		config::RendererType.commit();
 	}
 #endif
 	if (!theGLContext.Init())

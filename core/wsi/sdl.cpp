@@ -42,7 +42,6 @@ bool SDLGLGraphicsContext::Init()
 	SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
 	SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
 	SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
-	SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
 	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
 	SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
@@ -51,23 +50,21 @@ bool SDLGLGraphicsContext::Init()
 		return false;
 
 	glcontext = SDL_GL_CreateContext(window);
-	if (!glcontext)
-	{
 #ifndef GLES
+	if (glcontext == SDL_GLContext())
+	{
 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, 0);
 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
 		glcontext = SDL_GL_CreateContext(window);
-		if (!glcontext)
-		{
+	}
 #endif
-			ERROR_LOG(RENDERER, "Error creating SDL GL context");
-			SDL_DestroyWindow(window);
-			window = nullptr;
-			return false;
-#ifndef GLES
-		}
-#endif
+	if (glcontext == SDL_GLContext())
+	{
+		ERROR_LOG(RENDERER, "Error creating SDL GL context");
+		SDL_DestroyWindow(window);
+		window = nullptr;
+		return false;
 	}
 	SDL_GL_MakeCurrent(window, NULL);
 
