@@ -44,8 +44,6 @@
 #define clip_verify(x)
 #endif
 
-extern bool fast_forward_mode;
-
 //Sound generation, mixin, and channel regs emulation
 //x.15
 static s32 volume_lut[16];
@@ -1458,7 +1456,7 @@ void AICA_Sample32()
 		clip16(mixl);
 		clip16(mixr);
 
-		if (!fast_forward_mode && !config::DisableSound)
+		if (!settings.input.fastForwardMode && !config::DisableSound)
 			WriteSample(mixr,mixl);
 	}
 }
@@ -1502,7 +1500,7 @@ void AICA_Sample()
 			VOLPAN(*(s16*)&DSPData->EFREG[i], dsp_out_vol[i].EFSDL, dsp_out_vol[i].EFPAN, mixl, mixr);
 	}
 
-	if (fast_forward_mode || config::DisableSound)
+	if (settings.input.fastForwardMode || config::DisableSound)
 		return;
 
 	//Mono !
