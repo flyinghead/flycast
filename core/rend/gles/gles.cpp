@@ -22,25 +22,10 @@
 
 //Fragment and vertex shaders code
 
-static const char* VertexShaderSource = R"(%s
-#define TARGET_GL %s
+static const char* VertexShaderSource = "%s"
+VTX_SHADER_COMPAT
+R"(
 #define pp_Gouraud %d
-
-#define GLES2 0
-#define GLES3 1
-#define GL2 2
-#define GL3 3
-
-#if TARGET_GL == GL2
-#define highp
-#define lowp
-#define mediump
-#endif
-#if TARGET_GL == GLES2 || TARGET_GL == GL2
-#define in attribute
-#define out varying
-#endif
-
 
 #if TARGET_GL == GL3 || TARGET_GL == GLES3
 #if pp_Gouraud == 0
@@ -88,10 +73,9 @@ void main()
 }
 )";
 
-const char* PixelPipelineShader =
-R"(%s
-#define TARGET_GL %s
-
+const char* PixelPipelineShader = "%s"
+PIX_SHADER_COMPAT
+R"(
 #define cp_AlphaTest %d
 #define pp_ClipInside %d
 #define pp_UseAlpha %d
@@ -106,32 +90,6 @@ R"(%s
 #define pp_TriLinear %d
 #define pp_Palette %d
 
-#define PI 3.1415926
-
-#define GLES2 0
-#define GLES3 1
-#define GL2 2
-#define GL3 3
-
-#if TARGET_GL == GL2
-#define highp
-#define lowp
-#define mediump
-#endif
-#if TARGET_GL == GLES3
-out highp vec4 FragColor;
-#define gl_FragColor FragColor
-#define FOG_CHANNEL a
-#elif TARGET_GL == GL3
-out highp vec4 FragColor;
-#define gl_FragColor FragColor
-#define FOG_CHANNEL r
-#else
-#define in varying
-#define texture texture2D
-#define FOG_CHANNEL a
-#endif
-
 #if TARGET_GL == GL3 || TARGET_GL == GLES3
 #if pp_Gouraud == 0
 #define INTERPOLATION flat
@@ -141,6 +99,8 @@ out highp vec4 FragColor;
 #else
 #define INTERPOLATION
 #endif
+
+#define PI 3.1415926
 
 /* Shader program params*/
 /* gles has no alpha test stage, so its emulated on the shader */
@@ -191,7 +151,8 @@ highp vec4 fog_clamp(lowp vec4 col)
 lowp vec4 palettePixel(highp vec2 coords)
 {
 	highp int color_idx = int(floor(texture(tex, coords).FOG_CHANNEL * 255.0 + 0.5)) + palette_index;
-	highp vec2 c = vec2(mod(float(color_idx), 32.0) / 31.0, float(color_idx / 32) / 31.0);
+    highp vec2 c = vec2(mod(float(color_idx), 32.0) / 31.0, float(color_idx / 32) / 31.0);
+    //highp vec2 c = vec2((mod(float(color_idx), 32.0) * 2.0 + 1.0) / 64.0, (float(color_idx / 32) * 2.0 + 1.0) / 64.0);
 	return texture(palette, c);
 }
 
@@ -295,25 +256,9 @@ void main()
 }
 )";
 
-static const char* ModifierVolumeShader = 
-R"(%s
-#define TARGET_GL %s
-
-#define GLES2 0
-#define GLES3 1
-#define GL2 2
-#define GL3 3
-
-#if TARGET_GL == GL2
-#define highp
-#define lowp
-#define mediump
-#endif
-#if TARGET_GL != GLES2 && TARGET_GL != GL2
-out highp vec4 FragColor;
-#define gl_FragColor FragColor
-#endif
-
+static const char* ModifierVolumeShader = "%s"
+PIX_SHADER_COMPAT
+R"(
 uniform lowp float sp_ShaderColor;
 /* Vertex input*/
 void main()
@@ -326,25 +271,9 @@ void main()
 }
 )";
 
-const char* OSD_VertexShader =
-R"(%s
-#define TARGET_GL %s
-
-#define GLES2 0
-#define GLES3 1
-#define GL2 2
-#define GL3 3
-
-#if TARGET_GL == GL2
-#define highp
-#define lowp
-#define mediump
-#endif
-#if TARGET_GL == GLES2 || TARGET_GL == GL2
-#define in attribute
-#define out varying
-#endif
-
+const char* OSD_VertexShader = "%s"
+VTX_SHADER_COMPAT
+R"(
 uniform highp vec4      scale;
 
 in highp vec4    in_pos;
@@ -367,28 +296,9 @@ void main()
 }
 )";
 
-const char* OSD_Shader =
-R"(%s
-#define TARGET_GL %s
-
-#define GLES2 0
-#define GLES3 1
-#define GL2 2
-#define GL3 3
-
-#if TARGET_GL == GL2
-#define highp
-#define lowp
-#define mediump
-#endif
-#if TARGET_GL != GLES2 && TARGET_GL != GL2
-out highp vec4 FragColor;
-#define gl_FragColor FragColor
-#else
-#define in varying
-#define texture texture2D
-#endif
-
+const char* OSD_Shader = "%s"
+PIX_SHADER_COMPAT
+R"(
 in lowp vec4 vtx_base;
 in mediump vec2 vtx_uv;
 
@@ -417,22 +327,24 @@ void do_swap_automation()
 
 	if (video_file)
 	{
-		int bytesz = screen_width * screen_height * 3;
+		int bytesz = gl.ofbo.width * gl.ofbo.height * 3;
 		u8* img = new u8[bytesz];
 		
-		glReadPixels(0, 0, screen_width, screen_height, GL_RGB, GL_UNSIGNED_BYTE, img);
+		glBindFramebuffer(GL_READ_FRAMEBUFFER, gl.ofbo.fbo);
+		glReadPixels(0, 0, gl.ofbo.width, gl.ofbo.height, GL_RGB, GL_UNSIGNED_BYTE, img);
 		fwrite(img, 1, bytesz, video_file);
 		fflush(video_file);
 	}
 
 	if (do_screenshot)
 	{
-		int bytesz = screen_width * screen_height * 3;
+		int bytesz = gl.ofbo.width * gl.ofbo.height * 3;
 		u8* img = new u8[bytesz];
 		
+		glBindFramebuffer(GL_READ_FRAMEBUFFER, gl.ofbo.fbo);
 		glPixelStorei(GL_PACK_ALIGNMENT, 1);
-		glReadPixels(0, 0, screen_width, screen_height, GL_RGB, GL_UNSIGNED_BYTE, img);
-		dump_screenshot(img, screen_width, screen_height);
+		glReadPixels(0, 0, gl.ofbo.width, gl.ofbo.height, GL_RGB, GL_UNSIGNED_BYTE, img);
+		dump_screenshot(img, gl.ofbo.width, gl.ofbo.height);
 		delete[] img;
 		dc_exit();
 		theGLContext.Term();
@@ -456,6 +368,7 @@ static void gl_delete_shaders()
 
 static void gles_term()
 {
+	termQuad();
 	glDeleteBuffers(1, &gl.vbo.geometry);
 	gl.vbo.geometry = 0;
 	glDeleteBuffers(1, &gl.vbo.modvols);
@@ -850,6 +763,7 @@ bool gl_create_resources()
 	glGenBuffers(1, &gl.vbo.idxs2);
 
 	create_modvol_shader();
+	initQuad();
 
 	return true;
 }
@@ -1073,7 +987,7 @@ static void upload_vertex_indices()
 	glCheck();
 }
 
-bool RenderFrame()
+bool RenderFrame(int width, int height)
 {
 	create_modvol_shader();
 
@@ -1091,7 +1005,7 @@ bool RenderFrame()
 	vtx_min_fZ *= 0.98f;
 	vtx_max_fZ *= 1.001f;
 
-	TransformMatrix<true> matrices(pvrrc);
+	TransformMatrix<true> matrices(pvrrc, width, height);
 	ShaderUniforms.normal_mat = matrices.GetNormalMatrix();
 	const glm::mat4& scissor_mat = matrices.GetScissorMatrix();
 	ViewportMatrix = matrices.GetViewportMatrix();
@@ -1158,8 +1072,6 @@ bool RenderFrame()
 		ShaderUniforms.Set(&it.second);
 	}
 
-	const float screen_scaling = config::ScreenScaling / 100.f;
-
 	//setup render target first
 	if (is_rtt)
 	{
@@ -1202,18 +1114,7 @@ bool RenderFrame()
 	}
 	else
 	{
-		if (config::ScreenScaling != 100 || !theGLContext.IsSwapBufferPreserved())
-		{
-			init_output_framebuffer((int)lroundf(screen_width * screen_scaling), (int)lroundf(screen_height * screen_scaling));
-		}
-		else
-		{
-#if !defined(__APPLE__)
-			//Fix this in a proper way
-			glBindFramebuffer(GL_FRAMEBUFFER,0);
-#endif
-			glViewport(0, 0, screen_width, screen_height);
-		}
+		init_output_framebuffer(width, height);
 	}
 
 	bool wide_screen_on = !is_rtt && config::Widescreen && !matrices.IsClipped() && !config::Rotate90;
@@ -1249,8 +1150,8 @@ bool RenderFrame()
 
 		if (!wide_screen_on)
 		{
-			float width;
-			float height;
+			float fWidth;
+			float fHeight;
 			float min_x;
 			float min_y;
 			if (!is_rtt)
@@ -1263,60 +1164,49 @@ bool RenderFrame()
 
 				min_x = clip_min[0];
 				min_y = clip_min[1];
-				width = clip_dim[0];
-				height = clip_dim[1];
-				if (width < 0)
+				fWidth = clip_dim[0];
+				fHeight = clip_dim[1];
+				if (fWidth < 0)
 				{
-					min_x += width;
-					width = -width;
+					min_x += fWidth;
+					fWidth = -fWidth;
 				}
-				if (height < 0)
+				if (fHeight < 0)
 				{
-					min_y += height;
-					height = -height;
+					min_y += fHeight;
+					fHeight = -fHeight;
 				}
 				if (matrices.GetSidebarWidth() > 0)
 				{
-					float scaled_offs_x = matrices.GetSidebarWidth() * screen_scaling;
+					float scaled_offs_x = matrices.GetSidebarWidth();
 
 					glcache.ClearColor(0.f, 0.f, 0.f, 0.f);
 					glcache.Enable(GL_SCISSOR_TEST);
-					glcache.Scissor(0, 0, (GLsizei)lroundf(scaled_offs_x), (GLsizei)lroundf(screen_height * screen_scaling));
+					glcache.Scissor(0, 0, (GLsizei)lroundf(scaled_offs_x), (GLsizei)height);
 					glClear(GL_COLOR_BUFFER_BIT);
-					glcache.Scissor(screen_width * screen_scaling - scaled_offs_x, 0, (GLsizei)lroundf(scaled_offs_x + 1.f), (GLsizei)lroundf(screen_height * screen_scaling));
-					glClear(GL_COLOR_BUFFER_BIT);
-				}
-				else if (matrices.GetSidebarWidth() < 0)
-				{
-					float scaled_offs_y = -matrices.GetSidebarWidth() * screen_scaling;
-
-					glcache.ClearColor(0.f, 0.f, 0.f, 0.f);
-					glcache.Enable(GL_SCISSOR_TEST);
-					glcache.Scissor(0, 0, (GLsizei)lroundf(screen_width * screen_scaling), (GLsizei)lroundf(scaled_offs_y));
-					glClear(GL_COLOR_BUFFER_BIT);
-					glcache.Scissor(0, screen_height * screen_scaling - scaled_offs_y, (GLsizei)lroundf(screen_width * screen_scaling), (GLsizei)lroundf(scaled_offs_y + 1.f));
+					glcache.Scissor(width - scaled_offs_x, 0, (GLsizei)lroundf(scaled_offs_x + 1.f), (GLsizei)height);
 					glClear(GL_COLOR_BUFFER_BIT);
 				}
 			}
 			else
 			{
-				width = pvrrc.fb_X_CLIP.max - pvrrc.fb_X_CLIP.min + 1;
-				height = pvrrc.fb_Y_CLIP.max - pvrrc.fb_Y_CLIP.min + 1;
+				fWidth = pvrrc.fb_X_CLIP.max - pvrrc.fb_X_CLIP.min + 1;
+				fHeight = pvrrc.fb_Y_CLIP.max - pvrrc.fb_Y_CLIP.min + 1;
 				min_x = pvrrc.fb_X_CLIP.min;
 				min_y = pvrrc.fb_Y_CLIP.min;
 				if (config::RenderToTextureUpscale > 1 && !config::RenderToTextureBuffer)
 				{
 					min_x *= config::RenderToTextureUpscale;
 					min_y *= config::RenderToTextureUpscale;
-					width *= config::RenderToTextureUpscale;
-					height *= config::RenderToTextureUpscale;
+					fWidth *= config::RenderToTextureUpscale;
+					fHeight *= config::RenderToTextureUpscale;
 				}
 			}
 			ShaderUniforms.base_clipping.enabled = true;
 			ShaderUniforms.base_clipping.x = (int)lroundf(min_x);
 			ShaderUniforms.base_clipping.y = (int)lroundf(min_y);
-			ShaderUniforms.base_clipping.width = (int)lroundf(width);
-			ShaderUniforms.base_clipping.height = (int)lroundf(height);
+			ShaderUniforms.base_clipping.width = (int)lroundf(fWidth);
+			ShaderUniforms.base_clipping.height = (int)lroundf(fHeight);
 			glcache.Scissor(ShaderUniforms.base_clipping.x, ShaderUniforms.base_clipping.y, ShaderUniforms.base_clipping.width, ShaderUniforms.base_clipping.height);
 			glcache.Enable(GL_SCISSOR_TEST);
 		}
@@ -1336,7 +1226,7 @@ bool RenderFrame()
 
 	if (is_rtt)
 		ReadRTTBuffer();
-	else if (config::ScreenScaling != 100 || !theGLContext.IsSwapBufferPreserved())
+	else
 		render_output_framebuffer();
 
 	return !is_rtt;
@@ -1355,7 +1245,7 @@ void OpenGLRenderer::Term()
 
 bool OpenGLRenderer::Render()
 {
-	RenderFrame();
+	RenderFrame(width, height);
 	if (pvrrc.isRTT)
 		return false;
 
@@ -1367,7 +1257,7 @@ bool OpenGLRenderer::Render()
 
 bool OpenGLRenderer::RenderLastFrame()
 {
-	return !theGLContext.IsSwapBufferPreserved() ? render_output_framebuffer() : false;
+	return render_output_framebuffer();
 }
 
 Renderer* rend_GLES2()

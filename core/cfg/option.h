@@ -365,7 +365,6 @@ extern Option<int> MaxFilteredTextureSize;
 extern Option<float> ExtraDepthScale;
 extern Option<bool> CustomTextures;
 extern Option<bool> DumpTextures;
-extern Option<int> ScreenScaling;		// in percent. 50 means half the native resolution
 extern Option<int> ScreenStretching;	// in percent. 150 means stretch from 4/3 to 6/3
 extern Option<bool> Fog;
 extern Option<bool> FloatVMUs;
@@ -377,6 +376,7 @@ extern std::array<Option<int>, 4> CrosshairColor;
 extern Option<int> SkipFrame;
 extern Option<int> MaxThreads;
 extern Option<int> AutoSkipFrame;		// 0: none, 1: some, 2: more
+extern Option<int> RenderResolution;
 
 // Misc
 

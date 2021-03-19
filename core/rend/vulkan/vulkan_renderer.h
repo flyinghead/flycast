@@ -136,6 +136,14 @@ public:
 
 	void Resize(int w, int h) override
 	{
+		if ((u32)w == viewport.width && (u32)h == viewport.height)
+			return;
+		viewport.width = w;
+		viewport.height = h;
+	}
+
+	void ReInitOSD()
+	{
 		texCommandPool.Init();
 #ifdef __ANDROID__
 		osdPipeline.Init(&shaderManager, vjoyTexture->GetImageView(), GetContext()->GetRenderPass());
@@ -187,6 +195,8 @@ public:
 	}
 
 protected:
+	BaseVulkanRenderer() : viewport(640, 480) {}
+
 	VulkanContext *GetContext() const { return VulkanContext::Instance(); }
 
 	bool RenderFramebuffer(TA_context* ctx)
@@ -330,5 +340,6 @@ protected:
 	std::unique_ptr<Texture> vjoyTexture;
 	std::unique_ptr<BufferData> osdBuffer;
 	TextureCache textureCache;
+	vk::Extent2D viewport;
 };
 

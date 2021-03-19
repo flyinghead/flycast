@@ -99,6 +99,7 @@ bool    ImGui_ImplOpenGL3_Init(const char* glsl_version)
     IM_ASSERT((int)strlen(glsl_version) + 2 < IM_ARRAYSIZE(g_GlslVersionString));
     strcpy(g_GlslVersionString, glsl_version);
     strcat(g_GlslVersionString, "\n");
+    ImGui_ImplOpenGL3_DrawBackground();
 
     return true;
 }
@@ -513,6 +514,7 @@ void ImGui_ImplOpenGL3_DestroyDeviceObjects()
 
 void ImGui_ImplOpenGL3_DrawBackground()
 {
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glcache.Disable(GL_SCISSOR_TEST);
 	glcache.ClearColor(0, 0, 0, 0);
 	glClear(GL_COLOR_BUFFER_BIT);

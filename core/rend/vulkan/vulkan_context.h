@@ -57,7 +57,7 @@ public:
 	void BeginRenderPass();
 	void EndFrame(const std::vector<vk::UniqueCommandBuffer> *cmdBuffers = nullptr);
 	void Present() noexcept;
-	void PresentFrame(vk::ImageView imageView, vk::Extent2D extent) noexcept;
+	void PresentFrame(vk::ImageView imageView, const vk::Extent2D& extent) noexcept;
 	void PresentLastFrame();
 
 	vk::PhysicalDevice GetPhysicalDevice() const { return physicalDevice; }
@@ -123,7 +123,7 @@ private:
 	vk::Format FindDepthFormat();
 	void InitImgui();
 	void DoSwapAutomation();
-	void DrawFrame(vk::ImageView imageView, vk::Extent2D extent);
+	void DrawFrame(vk::ImageView imageView, const vk::Extent2D& extent);
 	vk::SurfaceKHR GetSurface() const { return *surface; }
 
 	bool HasSurfaceDimensionChanged() const;
@@ -184,7 +184,9 @@ private:
 	vk::UniquePipelineCache pipelineCache;
 
 	std::unique_ptr<QuadPipeline> quadPipeline;
+	std::unique_ptr<QuadPipeline> quadRotatePipeline;
 	std::unique_ptr<QuadDrawer> quadDrawer;
+	std::unique_ptr<QuadDrawer> quadRotateDrawer;
 	std::unique_ptr<ShaderManager> shaderManager;
 
 	vk::ImageView lastFrameView;

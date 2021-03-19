@@ -776,6 +776,7 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/rend/gles/gltex.cpp
         core/rend/gles/imgui_impl_opengl3.cpp
         core/rend/gles/imgui_impl_opengl3.h
+        core/rend/gles/quad.cpp
         core/rend/CustomTexture.cpp
         core/rend/CustomTexture.h
         core/rend/game_scanner.h

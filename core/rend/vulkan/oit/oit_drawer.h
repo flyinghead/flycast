@@ -158,16 +158,16 @@ private:
 class OITScreenDrawer : public OITDrawer
 {
 public:
-	void Init(SamplerManager *samplerManager, OITShaderManager *shaderManager, OITBuffers *oitBuffers)
+	void Init(SamplerManager *samplerManager, OITShaderManager *shaderManager, OITBuffers *oitBuffers,
+			const vk::Extent2D& viewport)
 	{
 		if (!screenPipelineManager)
 			screenPipelineManager = std::unique_ptr<OITPipelineManager>(new OITPipelineManager());
 		screenPipelineManager->Init(shaderManager, oitBuffers);
 		OITDrawer::Init(samplerManager, screenPipelineManager.get(), oitBuffers);
 
-		currentScreenScaling = 0;
-		MakeFramebuffers();
-		GetContext()->PresentFrame(vk::ImageView(), viewport.extent);
+		MakeFramebuffers(viewport);
+		GetContext()->PresentFrame(vk::ImageView(), viewport);
 	}
 	void Term()
 	{
@@ -204,12 +204,11 @@ protected:
 	vk::Format GetColorFormat() const override { return GetContext()->GetColorFormat(); }
 
 private:
-	void MakeFramebuffers();
+	void MakeFramebuffers(const vk::Extent2D& viewport);
 
 	std::vector<std::unique_ptr<FramebufferAttachment>> finalColorAttachments;
 	std::vector<vk::UniqueFramebuffer> framebuffers;
 	std::unique_ptr<OITPipelineManager> screenPipelineManager;
-	int currentScreenScaling = 0;
 	std::vector<bool> transitionNeeded;
 	bool frameRendered = false;
 };

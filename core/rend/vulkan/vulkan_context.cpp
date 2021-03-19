@@ -31,8 +31,9 @@
 #include "utils.h"
 #include "emulator.h"
 
-VulkanContext *VulkanContext::contextInstance;
+void ReInitOSD();
 
+VulkanContext *VulkanContext::contextInstance;
 static const char *PipelineCacheFileName = "vulkan_pipeline.cache";
 
 #ifndef __ANDROID__
@@ -483,6 +484,8 @@ bool VulkanContext::InitDevice()
 	    shaderManager = std::unique_ptr<ShaderManager>(new ShaderManager());
 	    quadPipeline = std::unique_ptr<QuadPipeline>(new QuadPipeline());
 	    quadDrawer = std::unique_ptr<QuadDrawer>(new QuadDrawer());
+	    quadRotatePipeline = std::unique_ptr<QuadPipeline>(new QuadPipeline(false, true));
+	    quadRotateDrawer = std::unique_ptr<QuadDrawer>(new QuadDrawer());
 
 		CreateSwapChain();
 
@@ -671,12 +674,14 @@ void VulkanContext::CreateSwapChain()
 	    }
 	    quadPipeline->Init(shaderManager.get(), *renderPass);
 	    quadDrawer->Init(quadPipeline.get());
+	    quadRotatePipeline->Init(shaderManager.get(), *renderPass);
+	    quadRotateDrawer->Init(quadRotatePipeline.get());
 	    overlay->Init(quadPipeline.get());
 
 	    InitImgui();
 
 	    currentImage = GetSwapChainSize() - 1;
-		rend_resize(screen_width, screen_height);
+	    ReInitOSD();
 
 	    INFO_LOG(RENDERER, "Vulkan swap chain created: %d x %d, swap chain size %d", width, height, (int)imageViews.size());
 	}
@@ -805,18 +810,36 @@ void VulkanContext::Present() noexcept
 		}
 }
 
-void VulkanContext::DrawFrame(vk::ImageView imageView, vk::Extent2D extent)
+void VulkanContext::DrawFrame(vk::ImageView imageView, const vk::Extent2D& extent)
 {
-	float marginWidth = ((float)extent.height / extent.width * width / height - 1.f) / 2.f;
 	QuadVertex vtx[] = {
-		{ { -1, -1, 0 }, { 0 - marginWidth, 0 } },
-		{ {  1, -1, 0 }, { 1 + marginWidth, 0 } },
-		{ { -1,  1, 0 }, { 0 - marginWidth, 1 } },
-		{ {  1,  1, 0 }, { 1 + marginWidth, 1 } },
+		{ { -1, -1, 0 }, { 0, 0 } },
+		{ {  1, -1, 0 }, { 1, 0 } },
+		{ { -1,  1, 0 }, { 0, 1 } },
+		{ {  1,  1, 0 }, { 1, 1 } },
 	};
+	if (config::Rotate90)
+	{
+		float marginWidth = ((float)extent.width / extent.height * width / height - 1.f) / 2.f;
+		vtx[0].uv[1] = 0 - marginWidth;
+		vtx[1].uv[1] = 0 - marginWidth;
+		vtx[2].uv[1] = 1 + marginWidth;
+		vtx[3].uv[1] = 1 + marginWidth;
+	}
+	else
+	{
+		float marginWidth = ((float)extent.height / extent.width * width / height - 1.f) / 2.f;
+		vtx[0].uv[0] = 0 - marginWidth;
+		vtx[1].uv[0] = 1 + marginWidth;
+		vtx[2].uv[0] = 0 - marginWidth;
+		vtx[3].uv[0] = 1 + marginWidth;
+	}
 
 	vk::CommandBuffer commandBuffer = GetCurrentCommandBuffer();
-	quadPipeline->BindPipeline(commandBuffer);
+	if (config::Rotate90)
+		quadRotatePipeline->BindPipeline(commandBuffer);
+	else
+		quadPipeline->BindPipeline(commandBuffer);
 
 	float blendConstants[4] = { 1.0, 1.0, 1.0, 1.0 };
 	commandBuffer.setBlendConstants(blendConstants);
@@ -824,7 +847,10 @@ void VulkanContext::DrawFrame(vk::ImageView imageView, vk::Extent2D extent)
 	vk::Viewport viewport(0, 0, width, height);
 	commandBuffer.setViewport(0, 1, &viewport);
 	commandBuffer.setScissor(0, vk::Rect2D(vk::Offset2D(0, 0), vk::Extent2D(width, height)));
-	quadDrawer->Draw(commandBuffer, imageView, vtx);
+	if (config::Rotate90)
+		quadRotateDrawer->Draw(commandBuffer, imageView, vtx);
+	else
+		quadDrawer->Draw(commandBuffer, imageView, vtx);
 }
 
 void VulkanContext::WaitIdle() const
@@ -865,7 +891,7 @@ const std::vector<vk::UniqueCommandBuffer> *VulkanContext::PrepareOverlay(bool v
 
 extern Renderer *renderer;
 
-void VulkanContext::PresentFrame(vk::ImageView imageView, vk::Extent2D extent) noexcept
+void VulkanContext::PresentFrame(vk::ImageView imageView, const vk::Extent2D& extent) noexcept
 {
 	lastFrameView = imageView;
 	lastFrameExtent = extent;
@@ -925,6 +951,8 @@ void VulkanContext::Term()
 	renderPass.reset();
 	quadDrawer.reset();
 	quadPipeline.reset();
+	quadRotateDrawer.reset();
+	quadRotatePipeline.reset();
 	shaderManager.reset();
 	descriptorPool.reset();
 	commandBuffers.clear();

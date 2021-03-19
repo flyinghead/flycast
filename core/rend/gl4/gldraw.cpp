@@ -1,16 +1,24 @@
+/*
+	Copyright 2018 flyinghead
+
+	This file is part of Flycast.
+
+    Flycast is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 2 of the License, or
+    (at your option) any later version.
+
+    Flycast is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
+*/
 #include "gl4.h"
 #include "rend/gles/glcache.h"
 #include "rend/tileclip.h"
-
-/*
-
-Drawing and related state management
-Takes vertex, textures and renders to the currently set up target
-
-
-
-
-*/
 
 static gl4PipelineShader* CurrentShader;
 extern u32 gcflip;
@@ -665,74 +673,4 @@ void gl4DrawStrips(GLuint output_fbo, int width, int height)
 	glBindSampler(0, 0);
 	glBindTexture(GL_TEXTURE_2D, opaqueTexId);
 	renderABuffer();
-}
-
-static void gl4_draw_quad_texture(GLuint texture, float w, float h)
-{
-	glcache.Disable(GL_SCISSOR_TEST);
-	glcache.Disable(GL_DEPTH_TEST);
-	glcache.Disable(GL_STENCIL_TEST);
-	glcache.Disable(GL_CULL_FACE);
-	glcache.Disable(GL_BLEND);
-
-	gl4ShaderUniforms.trilinear_alpha = 1.0;
-
-	CurrentShader = gl4GetProgram(false,
-				false,
-				true,
-				false,
-				true,
-				0,
-				false,
-				2,
-				false,
-				false,
-				false,
-				false,
-				false,
-				Pass::Color);
-	glcache.UseProgram(CurrentShader->program);
-	gl4ShaderUniforms.Set(CurrentShader);
-
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, texture);
-
-	struct Vertex vertices[] = {
-		{ 0,     0 + h, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 0, 1 },
-		{ 0,     0,     1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 0, 0 },
-		{ 0 + w, 0 + h, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 1, 1 },
-		{ 0 + w, 0,     1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 1, 0 },
-	};
-	GLushort indices[] = { 0, 1, 2, 1, 3 };
-
-	glBindVertexArray(gl4.vbo.main_vao);
-	glBindBuffer(GL_ARRAY_BUFFER, gl4.vbo.geometry);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl4.vbo.idxs);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STREAM_DRAW);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STREAM_DRAW);
-
-	glDrawElements(GL_TRIANGLE_STRIP, 5, GL_UNSIGNED_SHORT, (void *)0);
-	glCheck();
-}
-
-void gl4DrawFramebuffer(float w, float h)
-{
-	gl4_draw_quad_texture(fbTextureId, w, h);
-	glcache.DeleteTextures(1, &fbTextureId);
-	fbTextureId = 0;
-}
-
-bool gl4_render_output_framebuffer()
-{
-	glViewport(0, 0, screen_width, screen_height);
-	glcache.Disable(GL_SCISSOR_TEST);
-	if (gl.ofbo.fbo == 0)
-		return false;
-	glBindFramebuffer(GL_READ_FRAMEBUFFER, gl.ofbo.fbo);
-	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-	glBlitFramebuffer(0, 0, gl.ofbo.width, gl.ofbo.height,
-			0, 0, screen_width, screen_height,
-			GL_COLOR_BUFFER_BIT, GL_LINEAR);
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	return true;
 }

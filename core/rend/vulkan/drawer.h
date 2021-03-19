@@ -40,7 +40,7 @@ public:
 protected:
 	VulkanContext *GetContext() const { return VulkanContext::Instance(); }
 	TileClipping SetTileClip(u32 val, vk::Rect2D& clipRect);
-	void SetBaseScissor();
+	void SetBaseScissor(const vk::Extent2D& viewport = vk::Extent2D());
 	void SetProvokingVertices();
 
 	void SetScissor(const vk::CommandBuffer& cmdBuffer, const vk::Rect2D& scissor)
@@ -193,7 +193,7 @@ private:
 class ScreenDrawer : public Drawer
 {
 public:
-	void Init(SamplerManager *samplerManager, ShaderManager *shaderManager);
+	void Init(SamplerManager *samplerManager, ShaderManager *shaderManager, const vk::Extent2D& viewport);
 	void EndRenderPass() override;
 	bool PresentFrame()
 	{
@@ -219,7 +219,6 @@ private:
 	std::vector<std::unique_ptr<FramebufferAttachment>> colorAttachments;
 	std::unique_ptr<FramebufferAttachment> depthAttachment;
 	vk::Extent2D viewport;
-	int currentScreenScaling = 0;
 	ShaderManager *shaderManager = nullptr;
 	std::vector<bool> transitionNeeded;
 	std::vector<bool> clearNeeded;

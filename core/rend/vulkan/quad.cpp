@@ -109,7 +109,7 @@ void QuadPipeline::CreatePipeline()
 			dynamicStates);
 
 	vk::PipelineShaderStageCreateInfo stages[] = {
-			{ vk::PipelineShaderStageCreateFlags(), vk::ShaderStageFlagBits::eVertex, shaderManager->GetQuadVertexShader(), "main" },
+			{ vk::PipelineShaderStageCreateFlags(), vk::ShaderStageFlagBits::eVertex, shaderManager->GetQuadVertexShader(rotate), "main" },
 			{ vk::PipelineShaderStageCreateFlags(), vk::ShaderStageFlagBits::eFragment, shaderManager->GetQuadFragmentShader(), "main" },
 	};
 	vk::GraphicsPipelineCreateInfo graphicsPipelineCreateInfo

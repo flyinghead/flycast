@@ -290,6 +290,8 @@ void main()
 
 static const char QuadVertexShaderSource[] = R"(#version 450
 
+#define ROTATE %d
+
 layout (location = 0) in vec3 in_pos;
 layout (location = 1) in vec2 in_uv;
 
@@ -297,7 +299,11 @@ layout (location = 0) out vec2 outUV;
 
 void main()
 {
+#if ROTATE == 0
 	gl_Position = vec4(in_pos, 1.0);
+#else
+	gl_Position = vec4(in_pos.y, -in_pos.x, in_pos.z, 1.0);
+#endif
 	outUV = in_uv;
 }
 )";
@@ -377,9 +383,12 @@ vk::UniqueShaderModule ShaderManager::compileModVolFragmentShader()
 	return ShaderCompiler::Compile(vk::ShaderStageFlagBits::eFragment, ModVolFragmentShaderSource);
 }
 
-vk::UniqueShaderModule ShaderManager::compileQuadVertexShader()
+vk::UniqueShaderModule ShaderManager::compileQuadVertexShader(bool rotate)
 {
-	return ShaderCompiler::Compile(vk::ShaderStageFlagBits::eVertex, QuadVertexShaderSource);
+	char buf[sizeof(QuadVertexShaderSource) * 2];
+
+	sprintf(buf, QuadVertexShaderSource, (int)rotate);
+	return ShaderCompiler::Compile(vk::ShaderStageFlagBits::eVertex, buf);
 }
 
 vk::UniqueShaderModule ShaderManager::compileQuadFragmentShader()

@@ -91,8 +91,6 @@ void TextureCacheData::UploadToGPU(int width, int height, u8 *temp_tex_buffer, b
 		else
 #endif
 		{
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, mipmapLevels - 1);
 			for (int i = 0; i < mipmapLevels; i++)
 			{
 				glTexImage2D(GL_TEXTURE_2D, mipmapLevels - i - 1, comps, 1 << i, 1 << i, 0, comps, gltype, temp_tex_buffer);
@@ -367,7 +365,8 @@ void RenderFramebuffer()
 
 GLuint init_output_framebuffer(int width, int height)
 {
-	if (width != gl.ofbo.width || height != gl.ofbo.height)
+	if (width != gl.ofbo.width || height != gl.ofbo.height
+		|| (gl.ofbo.tex == 0) == config::Rotate90)
 	{
 		free_output_framebuffer();
 		gl.ofbo.width = width;
@@ -393,7 +392,7 @@ GLuint init_output_framebuffer(int width, int height)
 		else
 			glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
 
-		if (gl.gl_major < 3)
+		if (gl.gl_major < 3 || config::Rotate90)
 		{
 			// Create a texture for rendering to
 			gl.ofbo.tex = glcache.GenTexture();
@@ -424,7 +423,7 @@ GLuint init_output_framebuffer(int width, int height)
 			glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, gl.ofbo.depthb);
 
 		// Attach the texture/renderbuffer to the FBO
-		if (gl.gl_major < 3)
+		if (gl.ofbo.tex != 0)
 			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, gl.ofbo.tex, 0);
 		else
 			glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, gl.ofbo.colorb);

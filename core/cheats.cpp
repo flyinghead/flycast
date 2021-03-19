@@ -5,20 +5,20 @@
 		ELOTROLADO.NET, SEGARETRO.ORG, Sakuragi @ emutalk.net
 	Copyright 2019 flyinghead
 
-	This file is part of reicast.
+	This file is part of Flycast.
 
-    reicast is free software: you can redistribute it and/or modify
+    Flycast is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    reicast is distributed in the hope that it will be useful,
+    Flycast is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with reicast.  If not, see <https://www.gnu.org/licenses/>.
+    along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
  */
 #include "cheats.h"
 #include "hw/sh4/sh4_mem.h"
@@ -304,6 +304,7 @@ CheatManager cheatManager;
 
 bool CheatManager::Reset()
 {
+	active = false;
 	_widescreen_cheat = nullptr;
 	if (!config::WidescreenGameHacks)
 		return false;
@@ -340,6 +341,7 @@ bool CheatManager::Reset()
 	for (size_t i = 0; i < ARRAY_SIZE(_widescreen_cheat->addresses) && _widescreen_cheat->addresses[i] != 0; i++)
 		verify(_widescreen_cheat->addresses[i] < RAM_SIZE);
 
+	active = true;
 	return true;
 }
 

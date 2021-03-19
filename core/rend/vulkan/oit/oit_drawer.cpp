@@ -454,18 +454,13 @@ void OITDrawer::MakeBuffers(int width, int height)
 	tempFramebuffers[1] = GetContext()->GetDevice().createFramebufferUnique(createInfo);
 }
 
-void OITScreenDrawer::MakeFramebuffers()
+void OITScreenDrawer::MakeFramebuffers(const vk::Extent2D& viewport)
 {
-	if (currentScreenScaling == config::ScreenScaling)
-		return;
-	currentScreenScaling = config::ScreenScaling;
-	viewport.offset.x = 0;
-	viewport.offset.y = 0;
-	viewport.extent = GetContext()->GetViewPort();
-	viewport.extent.width = lroundf(viewport.extent.width * currentScreenScaling / 100.f);
-	viewport.extent.height = lroundf(viewport.extent.height * currentScreenScaling / 100.f);
+	this->viewport.offset.x = 0;
+	this->viewport.offset.y = 0;
+	this->viewport.extent = viewport;
 
-	MakeBuffers(viewport.extent.width, viewport.extent.height);
+	MakeBuffers(viewport.width, viewport.height);
 	framebuffers.clear();
 	finalColorAttachments.clear();
 	transitionNeeded.clear();
@@ -474,7 +469,7 @@ void OITScreenDrawer::MakeFramebuffers()
 	{
 		finalColorAttachments.push_back(std::unique_ptr<FramebufferAttachment>(
 				new FramebufferAttachment(GetContext()->GetPhysicalDevice(), GetContext()->GetDevice())));
-		finalColorAttachments.back()->Init(viewport.extent.width, viewport.extent.height, GetContext()->GetColorFormat(),
+		finalColorAttachments.back()->Init(viewport.width, viewport.height, GetContext()->GetColorFormat(),
 				vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled);
 		vk::ImageView attachments[] = {
 				finalColorAttachments.back()->GetImageView(),
@@ -482,7 +477,7 @@ void OITScreenDrawer::MakeFramebuffers()
 				depthAttachment->GetImageView(),
 		};
 		vk::FramebufferCreateInfo createInfo(vk::FramebufferCreateFlags(), screenPipelineManager->GetRenderPass(true, true),
-				ARRAY_SIZE(attachments), attachments, viewport.extent.width, viewport.extent.height, 1);
+				ARRAY_SIZE(attachments), attachments, viewport.width, viewport.height, 1);
 		framebuffers.push_back(GetContext()->GetDevice().createFramebufferUnique(createInfo));
 		transitionNeeded.push_back(true);
 		clearNeeded.push_back(true);
@@ -682,7 +677,6 @@ void OITTextureDrawer::EndFrame()
 
 vk::CommandBuffer OITScreenDrawer::NewFrame()
 {
-	MakeFramebuffers();
 	vk::CommandBuffer commandBuffer = commandPool->Allocate();
 	commandBuffer.begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));
 
@@ -691,9 +685,9 @@ vk::CommandBuffer OITScreenDrawer::NewFrame()
 		setImageLayout(commandBuffer, finalColorAttachments[GetCurrentImage()]->GetImage(), GetColorFormat(), 1, vk::ImageLayout::eUndefined, vk::ImageLayout::eShaderReadOnlyOptimal);
 		transitionNeeded[GetCurrentImage()] = false;
 	}
-	matrices.CalcMatrices(&pvrrc);
+	matrices.CalcMatrices(&pvrrc, viewport.extent.width, viewport.extent.height);
 
-	SetBaseScissor();
+	SetBaseScissor(viewport.extent);
 
 	commandBuffer.setScissor(0, baseScissor);
 	commandBuffer.setViewport(0, vk::Viewport(viewport.offset.x, viewport.offset.y, viewport.extent.width, viewport.extent.height, 1.0f, 0.0f));

@@ -33,7 +33,6 @@ public:
 	bool Init();
 	void Term();
 	void Swap();
-	bool IsSwapBufferPreserved() const { return true; }
 	bool ChooseVisual(Display* x11Display, XVisualInfo** visual, int* depth);
 	void SetDisplayAndWindow(Display *display, GLXDrawable window) { this->display = display; this->window = window; }
 

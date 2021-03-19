@@ -83,11 +83,11 @@ static void emuEventCallback(Event event)
 		game_started = true;
 		break;
 	case Event::Start:
-		if (config::AutoSavestate)
+		if (config::AutoSavestate && settings.imgread.ImagePath[0] != '\0')
 			dc_loadstate();
 		break;
 	case Event::Terminate:
-		if (config::AutoSavestate)
+		if (config::AutoSavestate && settings.imgread.ImagePath[0] != '\0')
 			dc_savestate();
 		break;
 	default:
@@ -406,6 +406,11 @@ static void gui_display_commands()
     ImGui::Begin("##commands", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize);
 
 	ImGui::Columns(2, "buttons", false);
+	if (settings.imgread.ImagePath[0] == '\0')
+	{
+        ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
+        ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
+	}
 	if (ImGui::Button("Load State", ImVec2(150 * scaling, 50 * scaling)))
 	{
 		gui_state = GuiState::Closed;
@@ -416,6 +421,11 @@ static void gui_display_commands()
 	{
 		gui_state = GuiState::Closed;
 		dc_savestate();
+	}
+	if (settings.imgread.ImagePath[0] == '\0')
+	{
+        ImGui::PopItemFlag();
+        ImGui::PopStyleVar();
 	}
 
 	ImGui::NextColumn();
@@ -1262,27 +1272,33 @@ static void gui_display_settings()
 	            ImGui::SameLine();
 	            ShowHelpMarker("Use Vulkan instead of Open GL/GLES");
 #endif
-                const std::map<int, const char*> scalings {
-                	{ 10, "0.1"}, { 20, "0.2" }, { 30, "0.3" }, { 40, "0.4" },
-					{ 50, "0.5" }, { 60, "0.6"  }, { 70, "0.7" }, { 80, "0.8" }, { 90, "0.9" },
-					{ 100, "1.0 (Host native)" }, { 200, "2.0 (2x SSAA)" }, { 300, "3.0 (3x SSAA)" },
-					{ 400, "4.0 (4x SSAA)" }, { 600, "6.0 (6x SSAA)" }, { 800, "8.0 (8x SSAA)" }
-                };
-                
-                if (scalings.count(config::ScreenScaling) == 0)
-                    config::ScreenScaling.set(100);
-                auto scalings_it = scalings.find(config::ScreenScaling);
+	            const std::array<float, 9> scalings{ 0.5f, 1.f, 1.5f, 2.f, 2.5f, 3.f, 4.f, 4.5f, 5.f };
+	            const std::array<std::string, 9> scalingsText{ "Half", "Native", "x1.5", "x2", "x2.5", "x3", "x4", "x4.5", "x5" };
+	            std::array<int, scalings.size()> vres;
+	            std::array<std::string, scalings.size()> resLabels;
+	            u32 selected = 0;
+	            for (u32 i = 0; i < scalings.size(); i++)
+	            {
+	            	vres[i] = scalings[i] * 480;
+	            	if (vres[i] == config::RenderResolution)
+	            		selected = i;
+	            	if (!config::Widescreen)
+	            		resLabels[i] = std::to_string((int)(scalings[i] * 640)) + "x" + std::to_string((int)(scalings[i] * 480));
+	            	else
+	            		resLabels[i] = std::to_string((int)(scalings[i] * 480 * 16 / 9)) + "x" + std::to_string((int)(scalings[i] * 480));
+	            	resLabels[i] += " (" + scalingsText[i] + ")";
+	            }
 
                 ImGuiStyle& scaling_style = ImGui::GetStyle();
                 float scaling_spacing = scaling_style.ItemInnerSpacing.x;
                 ImGui::PushItemWidth(ImGui::CalcItemWidth() - scaling_spacing * 2.0f - ImGui::GetFrameHeight() * 2.0f);
-                if (ImGui::BeginCombo("##Scaling", scalings.at(config::ScreenScaling), ImGuiComboFlags_NoArrowButton))
+                if (ImGui::BeginCombo("##Resolution", resLabels[selected].c_str(), ImGuiComboFlags_NoArrowButton))
                 {
-                    for (const auto& kv : scalings)
+                	for (u32 i = 0; i < scalings.size(); i++)
                     {
-                        bool is_selected = (kv.first == config::ScreenScaling);
-                        if (ImGui::Selectable(kv.second, is_selected))
-                            config::ScreenScaling.set(kv.first);
+                        bool is_selected = vres[i] == config::RenderResolution;
+                        if (ImGui::Selectable(resLabels[i].c_str(), is_selected))
+                        	config::RenderResolution = vres[i];
                         if (is_selected)
                             ImGui::SetItemDefaultFocus();
                     }
@@ -1291,22 +1307,22 @@ static void gui_display_settings()
                 ImGui::PopItemWidth();
                 ImGui::SameLine(0, scaling_spacing);
                 
-                if (ImGui::ArrowButton("##Decrease Scaling", ImGuiDir_Left))
+                if (ImGui::ArrowButton("##Decrease Res", ImGuiDir_Left))
                 {
-                    if (scalings_it != scalings.begin())
-                        config::ScreenScaling.set((--scalings_it)->first);
+                    if (selected > 0)
+                    	config::RenderResolution = vres[selected - 1];
                 }
                 ImGui::SameLine(0, scaling_spacing);
-                if (ImGui::ArrowButton("##Increase Scaling", ImGuiDir_Right))
+                if (ImGui::ArrowButton("##Increase Res", ImGuiDir_Right))
                 {
-                    if (scalings_it != (--scalings.end()))
-                        config::ScreenScaling.set((++scalings_it)->first);
+                    if (selected < vres.size() - 1)
+                    	config::RenderResolution = vres[selected + 1];
                 }
                 ImGui::SameLine(0, scaling_style.ItemInnerSpacing.x);
                 
-                ImGui::Text("Scaling (SSAA)");
+                ImGui::Text("Internal Resolution");
                 ImGui::SameLine();
-                ShowHelpMarker("Downscaling/Upscaling factor relative to native screen resolution. Higher is better but more demanding");
+                ShowHelpMarker("Internal render resolution. Higher is better but more demanding");
 
 		    	OptionSlider("Horizontal Stretching", config::ScreenStretching, 100, 150,
 		    			"Stretch the screen horizontally");
@@ -1856,7 +1872,9 @@ static void gui_network_start()
 static void gui_display_loadscreen()
 {
 	ImGui_Impl_NewFrame();
-    ImGui::NewFrame();
+	ImGui::NewFrame();
+	if (config::RendererType.isOpenGL())
+		ImGui_ImplOpenGL3_DrawBackground();
 
 	ImGui::SetNextWindowPos(ImVec2(screen_width / 2, screen_height / 2), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
 	ImGui::SetNextWindowSize(ImVec2(330 * scaling, 180 * scaling));
@@ -1966,8 +1984,6 @@ static float LastFPSTime;
 static int lastFrameCount = 0;
 static float fps = -1;
 
-extern bool fast_forward_mode;
-
 static std::string getFPSNotification()
 {
 	if (config::ShowFPS)
@@ -1980,12 +1996,12 @@ static std::string getFPSNotification()
 		}
 		if (fps >= 0.f && fps < 9999.f) {
 			char text[32];
-			snprintf(text, sizeof(text), "F:%.1f%s", fps, fast_forward_mode ? " >>" : "");
+			snprintf(text, sizeof(text), "F:%.1f%s", fps, settings.input.fastForwardMode ? " >>" : "");
 
 			return std::string(text);
 		}
 	}
-	return std::string(fast_forward_mode ? ">>" : "");
+	return std::string(settings.input.fastForwardMode ? ">>" : "");
 }
 
 void gui_display_osd()

@@ -355,6 +355,7 @@ struct settings_t
 	struct {
 		JVS JammaSetup;
 		KeyboardLayout keyboardLangId = KeyboardLayout::US;
+		bool fastForwardMode;
 	} input;
 
 	bool gameStarted;

@@ -196,10 +196,6 @@ static bool rend_frame(TA_context* ctx)
 
 bool rend_single_frame(const bool& enabled)
 {
-	if (renderer != NULL)
-		renderer->RenderLastFrame();
-
-	//wait render start only if no frame pending
 	do
 	{
 		if (!rs.Wait(50))
@@ -325,13 +321,6 @@ void rend_reset()
 	VertexCount = 0;
 	fb_w_cur = 1;
 }
-
-void rend_resize(int width, int height)
-{
-	if (renderer != nullptr)
-		renderer->Resize(width, height);
-}
-
 
 void rend_start_render()
 {

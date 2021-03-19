@@ -178,13 +178,6 @@ bool EGLGraphicsContext::Init()
 	screen_width = w;
 	screen_height = h;
 
-	// Required when doing partial redraws
-	swap_buffer_preserved = true;
-	if (!eglSurfaceAttrib(display, surface, EGL_SWAP_BEHAVIOR, EGL_BUFFER_PRESERVED))
-	{
-		INFO_LOG(RENDERER, "Swap buffers are not preserved. Last frame copy enabled");
-		swap_buffer_preserved = false;
-	}
 #ifdef TARGET_PANDORA
 	fbdev = open("/dev/fb0", O_RDONLY);
 #else

@@ -41,7 +41,6 @@ public:
 	void Term();
 	void Swap();
 	bool MakeCurrent();
-	bool IsSwapBufferPreserved() const { return swap_buffer_preserved; }
 	void SetNativeWindow(EGLNativeWindowType window)
 		{ nativeWindow = window; }
 	void SetNativeDisplay(EGLNativeDisplayType display)
@@ -53,7 +52,6 @@ private:
 	EGLDisplay display = EGL_NO_DISPLAY;
 	EGLSurface surface = EGL_NO_SURFACE;
 	EGLContext context = EGL_NO_CONTEXT;
-	bool swap_buffer_preserved = true;
 #ifdef TARGET_PANDORA
 	int fbdev = -1;
 #endif

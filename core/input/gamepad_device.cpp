@@ -39,7 +39,6 @@ u8 lt[4];
 
 std::vector<std::shared_ptr<GamepadDevice>> GamepadDevice::_gamepads;
 std::mutex GamepadDevice::_gamepads_mutex;
-bool fast_forward_mode;
 
 #ifdef TEST_AUTOMATION
 #include "hw/sh4/sh4_sched.h"
@@ -120,7 +119,7 @@ bool GamepadDevice::gamepad_btn_input(u32 code, bool pressed)
 				break;
 			case EMU_BTN_FFORWARD:
 				if (pressed)
-					fast_forward_mode = !fast_forward_mode;
+					settings.input.fastForwardMode = !settings.input.fastForwardMode;
 				break;
 			case EMU_BTN_TRIGGER_LEFT:
 				lt[port] = pressed ? 255 : 0;

@@ -60,7 +60,7 @@ TileClipping BaseDrawer::SetTileClip(u32 val, vk::Rect2D& clipRect)
 	return clipmode;
 }
 
-void BaseDrawer::SetBaseScissor()
+void BaseDrawer::SetBaseScissor(const vk::Extent2D& viewport)
 {
 	bool wide_screen_on = config::Widescreen && !pvrrc.isRenderFramebuffer
 			&& !matrices.IsClipped() && !config::Rotate90;
@@ -99,9 +99,7 @@ void BaseDrawer::SetBaseScissor()
 	}
 	else
 	{
-		u32 w = lroundf(screen_width * config::ScreenScaling / 100.f);
-		u32 h = lroundf(screen_height * config::ScreenScaling / 100.f);
-		baseScissor = { 0, 0, w, h };
+		baseScissor = { 0, 0, (u32)viewport.width, (u32)viewport.height };
 	}
 }
 
@@ -579,13 +577,9 @@ void TextureDrawer::EndRenderPass()
 	Drawer::EndRenderPass();
 }
 
-void ScreenDrawer::Init(SamplerManager *samplerManager, ShaderManager *shaderManager)
+void ScreenDrawer::Init(SamplerManager *samplerManager, ShaderManager *shaderManager, const vk::Extent2D& viewport)
 {
 	this->shaderManager = shaderManager;
-	currentScreenScaling = config::ScreenScaling;
-	vk::Extent2D viewport = GetContext()->GetViewPort();
-	viewport.width = lroundf(viewport.width * currentScreenScaling / 100.f);
-	viewport.height = lroundf(viewport.height * currentScreenScaling / 100.f);
 	if (this->viewport != viewport)
 	{
 		framebuffers.clear();
@@ -681,9 +675,6 @@ void ScreenDrawer::Init(SamplerManager *samplerManager, ShaderManager *shaderMan
 
 vk::CommandBuffer ScreenDrawer::BeginRenderPass()
 {
-	if (currentScreenScaling != config::ScreenScaling)
-		Init(samplerManager, shaderManager);
-
 	vk::CommandBuffer commandBuffer = commandPool->Allocate();
 	commandBuffer.begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));
 
@@ -701,9 +692,9 @@ vk::CommandBuffer ScreenDrawer::BeginRenderPass()
 			vk::Rect2D( { 0, 0 }, viewport), 2, clear_colors), vk::SubpassContents::eInline);
 	commandBuffer.setViewport(0, vk::Viewport(0.0f, 0.0f, viewport.width, viewport.height, 1.0f, 0.0f));
 
-	matrices.CalcMatrices(&pvrrc);
+	matrices.CalcMatrices(&pvrrc, viewport.width, viewport.height);
 
-	SetBaseScissor();
+	SetBaseScissor(viewport);
 	commandBuffer.setScissor(0, baseScissor);
 	currentCommandBuffer = commandBuffer;
 

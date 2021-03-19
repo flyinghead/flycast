@@ -251,7 +251,7 @@ extern const u32 SrcBlendGL[], DstBlendGL[];
 struct OpenGLRenderer : Renderer
 {
 	bool Init() override;
-	void Resize(int w, int h) override { screen_width = w; screen_height = h; }
+	void Resize(int w, int h) override { width = w; height = h; }
 	void Term() override;
 
 	bool Process(TA_context* ctx) override { return ProcessFrame(ctx); }
@@ -276,4 +276,51 @@ struct OpenGLRenderer : Renderer
 	}
 
 	bool frameRendered = false;
+	int width;
+	int height;
 };
+
+void initQuad();
+void termQuad();
+void drawQuad(GLuint texId, bool rotate = false, bool swapY = false);
+
+#define SHADER_COMPAT "						\n\
+#define TARGET_GL %s						\n\
+											\n\
+#define GLES2 0 							\n\
+#define GLES3 1 							\n\
+#define GL2 2								\n\
+#define GL3 3								\n\
+											\n\
+#if TARGET_GL == GL2 						\n\
+#define highp								\n\
+#define lowp								\n\
+#define mediump								\n\
+#endif										\n\
+#if TARGET_GL == GLES3						\n\
+out highp vec4 FragColor;					\n\
+#define gl_FragColor FragColor				\n\
+#define FOG_CHANNEL a						\n\
+#elif TARGET_GL == GL3						\n\
+out highp vec4 FragColor;					\n\
+#define gl_FragColor FragColor				\n\
+#define FOG_CHANNEL r						\n\
+#else										\n\
+#define texture texture2D					\n\
+#define FOG_CHANNEL a						\n\
+#endif										\n\
+											\n\
+"
+
+#define VTX_SHADER_COMPAT SHADER_COMPAT \
+"#if TARGET_GL == GLES2 || TARGET_GL == GL2 \n\
+#define in attribute						\n\
+#define out varying							\n\
+#endif										\n\
+"
+
+#define PIX_SHADER_COMPAT SHADER_COMPAT \
+"#if TARGET_GL == GLES2 || TARGET_GL == GL2 \n\
+#define in varying							\n\
+#endif										\n\
+"

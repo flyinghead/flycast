@@ -40,7 +40,6 @@ public:
 	bool Init();
 	void Term();
 	void Swap();
-	bool IsSwapBufferPreserved() const { return true; }
 	void SetWindow(SDL_Window *window) { this->window = window; }
 
 private:
