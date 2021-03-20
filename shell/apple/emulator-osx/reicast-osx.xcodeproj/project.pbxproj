@@ -330,6 +330,7 @@
 		AEA93E68259D07A30076297F /* pico_dhcp_common.c in Sources */ = {isa = PBXBuildFile; fileRef = AEA93E66259D07A30076297F /* pico_dhcp_common.c */; };
 		AEA93E6D259DE9160076297F /* pico_icmp4.c in Sources */ = {isa = PBXBuildFile; fileRef = AEA93E6C259DE9160076297F /* pico_icmp4.c */; };
 		AEA94931244CDF50001134C7 /* naomi_flashrom.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AEA9492F244CDF50001134C7 /* naomi_flashrom.cpp */; };
+		AED4473C25FC0CF100B045FF /* quad.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AED4473B25FC0CF100B045FF /* quad.cpp */; };
 		AED73DC42303E19200ECDB64 /* sdl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AED73DC02303E19100ECDB64 /* sdl.cpp */; };
 		AED73DCC233ACC9800ECDB64 /* cheats.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AED73DCB233ACC9800ECDB64 /* cheats.cpp */; };
 		AED73EBE2348E49900ECDB64 /* CustomTexture.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AED73EAB2348E49800ECDB64 /* CustomTexture.cpp */; };
@@ -664,10 +665,6 @@
 		84B7BF821B727AD700F9733F /* osx-main.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "osx-main.mm"; sourceTree = "<group>"; };
 		84B7BF841B72821900F9733F /* emulator-osx-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "emulator-osx-Bridging-Header.h"; sourceTree = "<group>"; };
 		84B7BF851B72871600F9733F /* EmuGLView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EmuGLView.swift; sourceTree = "<group>"; };
-		AE1E292820947D4700FC6BA2 /* xbyak.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = xbyak.h; sourceTree = "<group>"; };
-		AE1E292920947D4700FC6BA2 /* xbyak_bin2hex.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = xbyak_bin2hex.h; sourceTree = "<group>"; };
-		AE1E292A20947D4700FC6BA2 /* xbyak_mnemonic.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = xbyak_mnemonic.h; sourceTree = "<group>"; };
-		AE1E292B20947D4700FC6BA2 /* xbyak_util.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = xbyak_util.h; sourceTree = "<group>"; };
 		AE1E293A2095FB1600FC6BA2 /* rec_cpp.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = rec_cpp.cpp; sourceTree = "<group>"; };
 		AE1E293F20A96B0B00FC6BA2 /* rec_x64.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = rec_x64.cpp; sourceTree = "<group>"; };
 		AE2A234922941A0500DD3034 /* NaomiConfig.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = NaomiConfig.xcconfig; sourceTree = "<group>"; };
@@ -993,6 +990,13 @@
 		AEA93E6C259DE9160076297F /* pico_icmp4.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pico_icmp4.c; sourceTree = "<group>"; };
 		AEA9492F244CDF50001134C7 /* naomi_flashrom.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = naomi_flashrom.cpp; sourceTree = "<group>"; };
 		AEA94930244CDF50001134C7 /* naomi_roms_eeprom.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = naomi_roms_eeprom.h; sourceTree = "<group>"; };
+		AED4473B25FC0CF100B045FF /* quad.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = quad.cpp; sourceTree = "<group>"; };
+		AED4473D25FCB8C600B045FF /* xbyak_bin2hex.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = xbyak_bin2hex.h; path = xbyak/xbyak_bin2hex.h; sourceTree = "<group>"; };
+		AED4473E25FCB8C600B045FF /* xbyak.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = xbyak.h; path = xbyak/xbyak.h; sourceTree = "<group>"; };
+		AED4473F25FCB8C600B045FF /* xbyak_mnemonic.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = xbyak_mnemonic.h; path = xbyak/xbyak_mnemonic.h; sourceTree = "<group>"; };
+		AED4474025FCB8C600B045FF /* xbyak_util.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = xbyak_util.h; path = xbyak/xbyak_util.h; sourceTree = "<group>"; };
+		AED4474125FCBC8900B045FF /* xbyak_base.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = xbyak_base.h; sourceTree = "<group>"; };
+		AED4474225FCBC8900B045FF /* x64_regalloc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = x64_regalloc.h; sourceTree = "<group>"; };
 		AED73DC02303E19100ECDB64 /* sdl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = sdl.cpp; sourceTree = "<group>"; };
 		AED73DC12303E19100ECDB64 /* sdl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = sdl.h; sourceTree = "<group>"; };
 		AED73DC22303E19100ECDB64 /* sdl_gamepad.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = sdl_gamepad.h; sourceTree = "<group>"; };
@@ -2016,6 +2020,7 @@
 				84B7BE9F1B72720200F9733F /* gltex.cpp */,
 				AEE6278B2224762000EC7E89 /* imgui_impl_opengl3.cpp */,
 				AEE6278D2224762000EC7E89 /* imgui_impl_opengl3.h */,
+				AED4473B25FC0CF100B045FF /* quad.cpp */,
 			);
 			path = gles;
 			sourceTree = "<group>";
@@ -2023,10 +2028,10 @@
 		AE1E292620947D4700FC6BA2 /* xbyak */ = {
 			isa = PBXGroup;
 			children = (
-				AE1E292820947D4700FC6BA2 /* xbyak.h */,
-				AE1E292920947D4700FC6BA2 /* xbyak_bin2hex.h */,
-				AE1E292A20947D4700FC6BA2 /* xbyak_mnemonic.h */,
-				AE1E292B20947D4700FC6BA2 /* xbyak_util.h */,
+				AED4473D25FCB8C600B045FF /* xbyak_bin2hex.h */,
+				AED4473F25FCB8C600B045FF /* xbyak_mnemonic.h */,
+				AED4474025FCB8C600B045FF /* xbyak_util.h */,
+				AED4473E25FCB8C600B045FF /* xbyak.h */,
 			);
 			path = xbyak;
 			sourceTree = "<group>";
@@ -2042,6 +2047,8 @@
 		AE1E293E20A96B0B00FC6BA2 /* rec-x64 */ = {
 			isa = PBXGroup;
 			children = (
+				AED4474225FCBC8900B045FF /* x64_regalloc.h */,
+				AED4474125FCBC8900B045FF /* xbyak_base.h */,
 				AE1E293F20A96B0B00FC6BA2 /* rec_x64.cpp */,
 			);
 			path = "rec-x64";
@@ -3079,6 +3086,7 @@
 				559E933F25FCBFCA001B0F40 /* disasm-aarch64.cc in Sources */,
 				AE2A2D5E21D68470004B308D /* decrypt.cpp in Sources */,
 				AE82C68725B64AE200C79BC2 /* zip_set_archive_flag.c in Sources */,
+				AED4473C25FC0CF100B045FF /* quad.cpp in Sources */,
 				AEFF7F56214D9D590068CE11 /* pico_ethernet.c in Sources */,
 				AEE6277E220D7B7E00EC7E89 /* imgui_widgets.cpp in Sources */,
 				559E934425FCBFCA001B0F40 /* code-buffer-vixl.cc in Sources */,

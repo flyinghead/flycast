@@ -82,17 +82,24 @@ void initQuad()
 {
 	if (shader == 0)
 	{
-		char vtx[strlen(VertexShader) * 2];
-		snprintf(vtx, sizeof(vtx), VertexShader, gl.glsl_version_header, gl.gl_version, 0);
-		char frag[strlen(FragmentShader) * 2];
-		snprintf(frag, sizeof(frag), FragmentShader, gl.glsl_version_header, gl.gl_version);
+		size_t shaderLength = strlen(FragmentShader) * 2;
+		char *frag = new char[shaderLength];
+		snprintf(frag, shaderLength, FragmentShader, gl.glsl_version_header, gl.gl_version);
+
+		shaderLength = strlen(VertexShader) * 2;
+		char *vtx = new char[shaderLength];
+		snprintf(vtx, shaderLength, VertexShader, gl.glsl_version_header, gl.gl_version, 0);
 		shader = gl_CompileAndLink(vtx, frag);
 		GLint tex = glGetUniformLocation(shader, "tex");
 		glUniform1i(tex, 0);	// texture 0
-		snprintf(vtx, sizeof(vtx), VertexShader, gl.glsl_version_header, gl.gl_version, 1);
+
+		snprintf(vtx, shaderLength, VertexShader, gl.glsl_version_header, gl.gl_version, 1);
 		rot90shader = gl_CompileAndLink(vtx, frag);
 		tex = glGetUniformLocation(rot90shader, "tex");
 		glUniform1i(tex, 0);	// texture 0
+
+		delete [] vtx;
+		delete [] frag;
 	}
 #ifndef GLES2
 	if (quadVertexArray == 0 && gl.gl_major >= 3)
