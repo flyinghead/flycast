@@ -1,27 +1,12 @@
 /*
 
 	This is a header file that can create 
-	a) Shil opcode enums
-	b) Shil opcode classes/portable C implementation ("canonical" implementation)
-	c) The routing table for canonical implementations
-	d) Cookies (if you're really lucky)
-
+	SHIL_MODE == 0) Shil opcode enums
+	SHIL_MODE == 1) Shil opcode classes/portable C implementation ("canonical" implementation)
+	SHIL_MODE == 2) Shil opcode classes declaration
+	SHIL_MODE == 3) The routing table for canonical implementations
+	SHIL_MODE == 4) opcode name list (for logging/disass)
 */
-#if HOST_CPU == CPU_ARM && !defined(__ANDROID__) && 0
-//FIXME: Fix extern function support on shil, or remove these
-extern "C" void ftrv_asm(float* fd,float* fn, float* fm);
-extern "C" f32 fipr_asm(float* fn, float* fm);
-#define ftrv_impl ftrv_asm
-#define fipr_impl fipr_asm
-#endif
-
-#ifndef ftrv_impl
-#define ftrv_impl f1
-#endif
-
-#ifndef fipr_impl
-#define fipr_impl f1
-#endif
 
 #define fsca_impl fsca_table
 
@@ -928,7 +913,7 @@ shil_compile
 (
 	shil_cf_arg_ptr(rs2);
 	shil_cf_arg_ptr(rs1);
-	shil_cf(fipr_impl);
+	shil_cf(f1);
 	shil_cf_rv_f32(rd);
 )
 
@@ -1004,7 +989,7 @@ shil_compile
 	shil_cf_arg_ptr(rs2);
 	shil_cf_arg_ptr(rs1);
 	shil_cf_arg_ptr(rd);
-	shil_cf(ftrv_impl);
+	shil_cf(f1);
 )
 shil_opc_end()
 

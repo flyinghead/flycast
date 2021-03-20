@@ -6,7 +6,6 @@
 .align 8
 
 .equ SH4_TIMESLICE, 448
-.equ BM_BLOCKLIST_MASK, 65532 @FFFC
 
 #if defined(__APPLE__)
 #define CSYM(n) _##n
@@ -162,9 +161,14 @@ CSYM(intc_sched):        @ next_pc _MUST_ be on ram
     bl CSYM(UpdateSystem)
 	mov lr,r4
 	cmp r0,#0
-	bxeq lr			@faster than bxeq r4 (as it should, call stack cache)
+	bne CSYM(do_iter)
+	ldr r0,[r8,#-156]         @load CpuRunning
+	cmp r0,#0
+	beq CSYM(cleanup)
+	bx lr
 
-do_iter:
+HIDDEN(do_iter)
+CSYM(do_iter):
 	mov r0,r4
 	bl CSYM(rdv_DoInterrupts)
 	mov r4,r0
@@ -200,52 +204,5 @@ bx lr
 
 end_ngen_mainloop:
 @@@@@@@@@@ ngen_mainloop @@@@@@@@@@
-
-@@@@@@
-@matrix mul
-#ifndef __ANDROID__
-.global CSYM(ftrv_asm)
-HIDDEN(ftrv_asm)
-CSYM(ftrv_asm):
-
-@r0=dst,r1=vec,r2=mtx
-
-@3x vld1.32 might be faster
-vldm r2,{d16-d24}
-vldm r1, {d0-d1} 
-
-VMUL.F32 Q2,Q8,d0[0]
-VMLA.F32 Q2,Q9,d0[1]
-VMLA.F32 Q2,Q10,d1[0]
-VMLA.F32 Q2,Q11,d1[1]
-
-vstm r0,{d4,d5}
-
-bx lr
-
-.global CSYM(fipr_asm)
-HIDDEN(fipr_asm)
-CSYM(fipr_asm):
-
-@ vdot
-@		idp=fr[n+0]*fr[m+0];
-@		idp+=fr[n+1]*fr[m+1];
-@		idp+=fr[n+2]*fr[m+2];
-@		idp+=fr[n+3]*fr[m+3];
-
-
-vldm r0, {d0,d1}
-vldm r1, {d2,d3}
-
-vmul.f32 q0,q1
-@NEON is quite nice actually ! if only its performance was good enough ...
-vpadd.f32 d0,d0,d1 @d0={d0[0]+d0[1], d1[0]+d1[1]}
-vpadd.f32 d0,d0,d0 @d0={d0[0]+d0[1]+d1[0]+d1[1], d0[0]+d0[1]+d1[0]+d1[1]}
-
-@store to ret ..
-vmov r0,s0
-bx lr
-
-#endif
 
 #endif

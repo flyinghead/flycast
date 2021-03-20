@@ -425,6 +425,8 @@ static void emitFallback(const ArmOp& op)
 
 void arm7backend_compile(const std::vector<ArmOp>& block_ops, u32 cycles)
 {
+	void *codestart = recompiler::currentCode();
+
 	loadReg(r2, CYCL_CNT);
 	while (!is_i8r4(cycles))
 	{
@@ -435,7 +437,6 @@ void arm7backend_compile(const std::vector<ArmOp>& block_ops, u32 cycles)
 	storeReg(r2, CYCL_CNT);
 
 	regalloc = new Arm32ArmRegAlloc(block_ops);
-	void *codestart = recompiler::currentCode();
 
 	loadFlags();
 
