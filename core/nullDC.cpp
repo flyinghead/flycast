@@ -728,11 +728,21 @@ void dc_resume()
 	SetMemoryHandlers();
 	settings.aica.NoBatch = config::ForceWindowsCE || config::DSPEnabled;
 	int hres;
-	if ((config::Widescreen || cheatManager.isActive()) && !config::Rotate90)
+	int vres = config::RenderResolution;
+	if (config::Widescreen && !config::Rotate90)
+	{
 		hres = config::RenderResolution * 16 / 9;
-	else
+	}
+	else if (config::Rotate90)
+	{
+		vres = vres * config::ScreenStretching / 100;
 		hres = config::RenderResolution * 4 / 3;
-	renderer->Resize(hres, config::RenderResolution);
+	}
+	else
+	{
+		hres = config::RenderResolution * 4 * config::ScreenStretching / 3 / 100;
+	}
+	renderer->Resize(hres, vres);
 
 	EventManager::event(Event::Resume);
 	if (!emu_thread.thread.joinable())

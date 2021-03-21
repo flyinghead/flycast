@@ -637,7 +637,12 @@ void DrawStrips()
 
 void DrawFramebuffer()
 {
-	int sx = (int)roundf((gl.ofbo.width - 4.f / 3.f * gl.ofbo.height) / 2.f);
+	float aspectRatio = 4.f / 3.f;
+	if (config::Rotate90)
+		aspectRatio /= config::ScreenStretching / 100.f;
+	else
+		aspectRatio *= config::ScreenStretching / 100.f;
+	int sx = (int)roundf((gl.ofbo.width - aspectRatio * gl.ofbo.height) / 2.f);
 	glViewport(sx, 0, gl.ofbo.width - sx * 2, gl.ofbo.height);
 	drawQuad(fbTextureId, false, true);
 	glcache.DeleteTextures(1, &fbTextureId);

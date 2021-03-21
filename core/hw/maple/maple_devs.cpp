@@ -1384,7 +1384,7 @@ maple_device* maple_Create(MapleDeviceType type)
 static void screenToNative(int& x, int& y, int width, int height)
 {
 	float fx, fy;
-	if ((float)width / height >= 640.f / 480.f)
+	if (!config::Rotate90)
 	{
 		float scale = 480.f / height;
 		fy = y * scale;
@@ -1416,7 +1416,7 @@ void SetMousePosition(int x, int y, int width, int height, u32 mouseId)
 	{
 		int t = y;
 		y = x;
-		x = height - t;
+		x = height - 1 - t;
 		std::swap(width, height);
 	}
 	screenToNative(x, y, width, height);

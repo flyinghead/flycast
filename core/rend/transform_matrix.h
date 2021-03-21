@@ -137,11 +137,22 @@ public:
 			float y_coef;
 			glm::mat4 trans_rot;
 
-			float dc2s_scale_h = renderViewport.y / 480.0f;
+			if (config::Rotate90)
+			{
+				float dc2s_scale_h = renderViewport.x / 640.0f;
 
-			sidebarWidth =  (renderViewport.x - dc2s_scale_h * 640.0f * screen_stretching) / 2;
-			x_coef = 2.0f / (renderViewport.x / dc2s_scale_h * scale_x) * screen_stretching;
-			y_coef = 2.0f / dcViewport.y * (invertY ? -1 : 1);
+				sidebarWidth = 0;
+				y_coef = 2.0f / (renderViewport.y / dc2s_scale_h * scale_y) * screen_stretching * (invertY ? -1 : 1);
+				x_coef = 2.0f / dcViewport.x;
+			}
+			else
+			{
+				float dc2s_scale_h = renderViewport.y / 480.0f;
+
+				sidebarWidth =  (renderViewport.x - dc2s_scale_h * 640.0f * screen_stretching) / 2;
+				x_coef = 2.0f / (renderViewport.x / dc2s_scale_h * scale_x) * screen_stretching;
+				y_coef = 2.0f / dcViewport.y * (invertY ? -1 : 1);
+			}
 			trans_rot = glm::translate(glm::vec3(-1 + 2 * sidebarWidth / renderViewport.x, invertY ? 1 : -1, 0));
 
 			normalMatrix = trans_rot

@@ -69,7 +69,6 @@ const std::vector<vk::UniqueCommandBuffer>* VulkanOverlay::Prepare(vk::CommandPo
 	{
 		const u32* texData = getCrosshairTextureData();
 		xhairTexture = createTexture(commandPool, 16, 16, (u8*)texData);
-//		delete [] texData;
 	}
 
 	return &commandBuffers[context->GetCurrentImageIndex()];
@@ -141,7 +140,8 @@ void VulkanOverlay::Draw(vk::Extent2D viewport, float scaling, bool vmu, bool cr
 			y -= XHAIR_HEIGHT / 2;
 			vk::Viewport viewport(x, y, XHAIR_WIDTH, XHAIR_HEIGHT);
 			commandBuffer.setViewport(0, 1, &viewport);
-			commandBuffer.setScissor(0, vk::Rect2D(vk::Offset2D(x, y), vk::Extent2D(XHAIR_WIDTH, XHAIR_HEIGHT)));
+			commandBuffer.setScissor(0, vk::Rect2D(vk::Offset2D(std::max(0.f, x), std::max(0.f, y)),
+					vk::Extent2D(XHAIR_WIDTH, XHAIR_HEIGHT)));
 			u32 color = config::CrosshairColor[i];
 			float xhairColor[4] {
 				(color & 0xff) / 255.f,

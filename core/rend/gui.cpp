@@ -2187,29 +2187,21 @@ std::pair<float, float> getCrosshairPosition(int playerNum)
 {
 	float fx = mo_x_abs[playerNum];
 	float fy = mo_y_abs[playerNum];
-	int width = screen_width;
-	int height = screen_height;
+	float width = 640.f;
+	float height = 480.f;
+
 	if (config::Rotate90)
 	{
 		float t = fy;
-		fy = width - fx;
+		fy = 639.f - fx;
 		fx = t;
 		std::swap(width, height);
 	}
-	if ((float)width / height >= 640.f / 480.f)
-	{
-		float scale = 480.f / height;
-		fy /= scale;
-		scale *= config::ScreenStretching / 100.f;
-		fx = fx / scale + (width - 640.f / scale) / 2.f;
-	}
-	else
-	{
-		float scale = 640.f / width;
-		fx /= scale;
-		scale *= config::ScreenStretching / 100.f;
-		fy = fy / scale + (height - 480.f / scale) / 2.f;
-	}
+	float scale = height / screen_height;
+	fy /= scale;
+	scale /= config::ScreenStretching / 100.f;
+	fx = fx / scale + (screen_width - width / scale) / 2.f;
+
 	return std::make_pair(fx, fy);
 }
 
