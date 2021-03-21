@@ -72,16 +72,6 @@ ifdef FOR_WINDOWS
     RZDCY_CFLAGS += -I$(RZDCY_SRC_DIR)/deps/dirent
 endif
 
-ifdef FOR_PANDORA
-RZDCY_CFLAGS	+= \
-	$(CFLAGS) -c -O3 \
-	-DNDEBUG -DPANDORA\
-	-march=armv7-a -mtune=cortex-a8 -mfpu=neon -mfloat-abi=softfp \
-	-frename-registers -fsingle-precision-constant -ffast-math \
-	-ftree-vectorize -fomit-frame-pointer
-	RZDCY_CFLAGS += -march=armv7-a -mtune=cortex-a8 -mfpu=neon
-endif
-
 ifdef USE_VULKAN
 	ifdef FOR_WINDOWS
 		RZDCY_CFLAGS += -DVK_USE_PLATFORM_WIN32_KHR

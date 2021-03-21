@@ -1338,12 +1338,14 @@ static void gui_display_settings()
 		    }
 		    if (ImGui::CollapsingHeader("Texture Upscaling", ImGuiTreeNodeFlags_DefaultOpen))
 		    {
+#ifndef TARGET_NO_OPENMP
 		    	OptionSlider("Texture Upscaling", config::TextureUpscale, 1, 8,
 		    			"Upscale textures with the xBRZ algorithm. Only on fast platforms and for certain 2D games");
 		    	OptionSlider("Upscaled Texture Max Size", config::MaxFilteredTextureSize, 8, 1024,
 		    			"Textures larger than this dimension squared will not be upscaled");
 		    	OptionSlider("Max Threads", config::MaxThreads, 1, 8,
 		    			"Maximum number of threads to use for texture upscaling. Recommended: number of physical cores minus one");
+#endif
 		    	OptionCheckbox("Load Custom Textures", config::CustomTextures,
 		    			"Load custom/high-res textures from data/textures/<game id>");
 		    }

@@ -247,7 +247,7 @@
 #define SH4_RAM_CLOCK (100*1000*1000)		//[100000000] XTal(13.5) -> PLL (33.3) -> PLL 1:3 (100)	, also suplied to HOLLY chip
 #define G2_BUS_CLOCK (25*1000*1000)			//[25000000]  from Holly, from SH4_RAM_CLOCK w/ 2 2:1 plls
 
-#if defined(GLES) && !defined(GLES3)
+#if defined(GLES) && !defined(GLES3) && !defined(GLES2)
 // Only use GL ES 2.0 API functions
 #define GLES2
 #endif

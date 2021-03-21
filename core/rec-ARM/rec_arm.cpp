@@ -464,59 +464,42 @@ void ngen_CC_Param(shil_opcode* op,shil_param* par,CanonicalParamType tp)
 	switch(tp)
 	{
 		case CPT_f32rv:
-		#ifdef ARM_HARDFP
-			{
+			#ifdef __ARM_PCS_VFP
+				// -mfloat-abi=hard
 				if (reg.IsAllocg(*par))
-				{
-					//printf("MOV(reg.map(*par),r0); %d\n",reg.map(*par));
-					VMOV(reg.mapg(*par),f0);
-				}
+					VMOV(reg.mapg(*par), f0);
 				else if (reg.IsAllocf(*par))
-				{
-					//VMOV(reg.mapf(*par),0,r0); %d\n",reg.map(*par));
-					VMOV(reg.mapfs(*par),f0);
-				}
-			}
-			break;
-		#endif
+					VMOV(reg.mapfs(*par), f0);
+				break;
+			#endif
 
 		case CPT_u32rv:
 		case CPT_u64rvL:
-			{
-				if (reg.IsAllocg(*par))
-				{
-					//printf("MOV(reg.map(*par),r0); %d\n",reg.map(*par));
-					MOV(reg.mapg(*par),r0);
-				}
-				else if (reg.IsAllocf(*par))
-				{
-					//VMOV(reg.mapf(*par),0,r0); %d\n",reg.map(*par));
-					VMOV(reg.mapfs(*par),r0);
-				}
-				else
-					die("unhandled param");
-			}
+			if (reg.IsAllocg(*par))
+				MOV(reg.mapg(*par), r0);
+			else if (reg.IsAllocf(*par))
+				VMOV(reg.mapfs(*par), r0);
+			else
+				die("unhandled param");
 			break;
 
 		case CPT_u64rvH:
-			{
-				verify(reg.IsAllocg(*par));
-
-				MOV(reg.mapg(*par),r1);
-			}
+			verify(reg.IsAllocg(*par));
+			MOV(reg.mapg(*par), r1);
 			break;
 
 		case CPT_u32:
 		case CPT_ptr:
 		case CPT_f32:
 			{
-				CC_PS t={tp,par};
+				CC_PS t = { tp, par };
 				CC_pars.push_back(t);
 			}
 			break;
 
 		default:
 			die("invalid tp");
+			break;
 	}
 }
 
@@ -536,42 +519,30 @@ void ngen_CC_Call(shil_opcode* op, void* function)
 		{
 			if (param.par->is_reg())
 			{
-				#ifdef ARM_HARDFP
+				#ifdef __ARM_PCS_VFP
+				// -mfloat-abi=hard
 				if (param.type == CPT_f32)
 				{
 					if (reg.IsAllocg(*param.par))
-					{
-						//printf("MOV((eReg)rd,reg.map(*param.par)); %d %d\n",rd,reg.map(*param.par));
 						VMOV((eFSReg)fd, reg.mapg(*param.par));
-					}
 					else if (reg.IsAllocf(*param.par))
-					{
-						//printf("LoadSh4Reg_mem((eReg)rd, *param.par); %d\n",rd);
 						VMOV((eFSReg)fd, reg.mapfs(*param.par));
-					}
 					else
-						die("Must not happen!\n");
+						die("Must not happen!");
 					continue;
 				}
 				#endif
 
 				if (reg.IsAllocg(*param.par))
-				{
-					//printf("MOV((eReg)rd,reg.map(*param.par)); %d %d\n",rd,reg.map(*param.par));
 					MOV((eReg)rd, reg.mapg(*param.par));
-				}
 				else if (reg.IsAllocf(*param.par))
-				{
-					//printf("LoadSh4Reg_mem((eReg)rd, *param.par); %d\n",rd);
 					VMOV((eReg)rd, reg.mapfs(*param.par));
-				}
 				else
-					die("Must not happen!\n");
+					die("Must not happen!");
 			}
 			else
 			{
 				verify(param.par->is_imm());
-				//printf("MOV32((eReg)rd, param.par->_imm); %d\n",rd);
 				MOV32((eReg)rd, param.par->_imm);
 			}
 		}
