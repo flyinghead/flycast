@@ -24,7 +24,7 @@
 #include "../gui.h"
 #ifdef USE_SDL
 #include <sdl/sdl.h>
-#include <SDL2/SDL_vulkan.h>
+#include <SDL_vulkan.h>
 #endif
 #include "compiler.h"
 #include "texture.h"

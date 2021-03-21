@@ -1,7 +1,7 @@
 
 #if defined(USE_SDL_AUDIO)
 
-#include <SDL2/SDL.h>
+#include <SDL.h>
 #include "audiostream.h"
 #include "stdclass.h"
 

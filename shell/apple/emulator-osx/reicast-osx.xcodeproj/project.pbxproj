@@ -3344,6 +3344,8 @@
 					"\"$(SRCROOT)/../../../core/deps/nowide/include\"",
 					"\"$(SRCROOT)/../../../core/deps/libzip/lib\"",
 					"\"$(SRCROOT)/../../../core/deps/vixl\"",
+					/usr/local/include/SDL2,
+					"\"$(SRCROOT)/../../../core/deps/SDL/include\"",
 					/usr/local/include,
 				);
 				INFOPLIST_FILE = "emulator-osx/Info.plist";
@@ -3397,6 +3399,8 @@
 					"\"$(SRCROOT)/../../../core/deps/nowide/include\"",
 					"\"$(SRCROOT)/../../../core/deps/libzip/lib\"",
 					"\"$(SRCROOT)/../../../core/deps/vixl\"",
+					/usr/local/include/SDL2,
+					"\"$(SRCROOT)/../../../core/deps/SDL/include\"",
 					/usr/local/include,
 				);
 				INFOPLIST_FILE = "emulator-osx/Info.plist";

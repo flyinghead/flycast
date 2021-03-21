@@ -3,7 +3,7 @@
 #include "types.h"
 #include "cfg/cfg.h"
 #include "sdl/sdl.h"
-#include <SDL2/SDL_syswm.h>
+#include <SDL_syswm.h>
 #endif
 #include "hw/maple/maple_devs.h"
 #include "sdl_gamepad.h"
@@ -16,7 +16,7 @@
 #endif
 
 #ifdef USE_VULKAN
-#include <SDL2/SDL_vulkan.h>
+#include <SDL_vulkan.h>
 #endif
 
 static SDL_Window* window = NULL;
