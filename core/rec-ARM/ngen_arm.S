@@ -164,8 +164,7 @@ CSYM(intc_sched):        @ next_pc _MUST_ be on ram
 	bne CSYM(do_iter)
 	ldr r0,[r8,#-156]         @load CpuRunning
 	cmp r0,#0
-	beq CSYM(cleanup)
-	bx lr
+	bxne lr
 
 HIDDEN(do_iter)
 CSYM(do_iter):
