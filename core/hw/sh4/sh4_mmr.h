@@ -11,7 +11,7 @@ void map_p4();
 #define OnChipRAM_SIZE (0x2000)
 #define OnChipRAM_MASK (OnChipRAM_SIZE-1)
 
-#define sq_both ((u8*)sh4rcb.sq_buffer)
+#define sq_both (sh4rcb.sq_buffer)
 
 extern std::array<RegisterStruct, 18> CCN;
 extern std::array<RegisterStruct, 9> UBC;
@@ -1115,9 +1115,8 @@ union CCN_QACR_type
 #define CCN_INTEVT SH4IO_REG(CCN,INTEVT,32)
 #define CCN_PTEA SH4IO_REG_T(CCN,PTEA,32)
 
-#define CCN_QACR0 SH4IO_REG_T(CCN,QACR0,32)
-#define CCN_QACR1 SH4IO_REG_T(CCN,QACR1,32)
-
+#define CCN_QACR0 ((CCN_QACR_type&)SH4IO_REG(CCN, QACR0, 32))
+#define CCN_QACR1 ((CCN_QACR_type&)SH4IO_REG(CCN, QACR1, 32))
 
 #define CPG_FRQCR SH4IO_REG(CPG,FRQCR,16)
 #define CPG_STBCR SH4IO_REG(CPG,STBCR,8)

@@ -807,7 +807,7 @@ bool ngen_Rewrite(host_context_t &context, void *faultAddress)
 	if (config::DynarecUnstableOpt && is_sq) //THPS2 uses cross area SZ_32F so this is disabled for now
 	{
 		//SQ !
-		s32 sq_offs=sq_both-sh4_ctr;
+		s32 sq_offs=(u8 *)sq_both-sh4_ctr;
 		verify(sq_offs==rcb_noffs(sq_both));
 		
 		verify(!read && optp>=SZ_32I);
@@ -1175,10 +1175,7 @@ void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging,
 				}
 				if (_nvmem_enabled()) {
 					BIC(r1,raddr,0xE0000000);
-					//UBFX(r1,raddr,0,29);
-					//SUB(r1,raddr,raddr);
 
-					s32 sq_offs=rcb_noffs(sq_both);
 					switch(optp)
 					{
 					case SZ_8:

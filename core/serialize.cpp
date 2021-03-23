@@ -10,6 +10,7 @@
 #include "hw/gdrom/gdrom_if.h"
 #include "hw/maple/maple_cfg.h"
 #include "hw/pvr/Renderer_if.h"
+#include "hw/pvr/pvr_mem.h"
 #include "hw/pvr/spg.h"
 #include "hw/sh4/sh4_sched.h"
 #include "hw/sh4/sh4_mmr.h"
@@ -21,8 +22,6 @@
 #include "hw/sh4/sh4_cache.h"
 #include "hw/bba/bba.h"
 #include "cfg/option.h"
-
-extern "C" void DYNACALL TAWriteSQ(u32 address,u8* sqb);
 
 //./core/hw/arm7/arm_mem.cpp
 extern bool aica_interr;
@@ -116,15 +115,6 @@ extern int modem_sched;
 //./core/hw/pvr/Renderer_if.o
 extern bool pend_rend;
 extern u32 fb_w_cur;
-
-//./core/hw/pvr/pvr_mem.o
-extern u32 YUV_tempdata[512/4];//512 bytes
-extern u32 YUV_dest;
-extern u32 YUV_blockcount;
-extern u32 YUV_x_curr;
-extern u32 YUV_y_curr;
-extern u32 YUV_x_size;
-extern u32 YUV_y_size;
 
 //./core/hw/pvr/pvr_regs.o
 extern bool fog_needs_update;
@@ -340,13 +330,7 @@ bool dc_serialize(void **data, unsigned int *total_size)
 
 	mcfg_SerializeDevices(data, total_size);
 
-	REICAST_SA(YUV_tempdata,512/4);
-	REICAST_S(YUV_dest);
-	REICAST_S(YUV_blockcount);
-	REICAST_S(YUV_x_curr);
-	REICAST_S(YUV_y_curr);
-	REICAST_S(YUV_x_size);
-	REICAST_S(YUV_y_size);
+	YUV_serialize(data, total_size);
 
 	REICAST_SA(pvr_regs,pvr_RegSize);
 
@@ -392,14 +376,14 @@ bool dc_serialize(void **data, unsigned int *total_size)
 		i = 0 ;
 	else if (do_sqw_nommu == &do_sqw_nommu_area_3_nonvmem)
 		i = 1 ;
-	else if (do_sqw_nommu==(sqw_fp*)&TAWriteSQ)
+	else if (do_sqw_nommu == &TAWriteSQ)
 		i = 2 ;
 	else if (do_sqw_nommu==&do_sqw_nommu_full)
 		i = 3 ;
 
 	REICAST_S(i) ;
 
-	REICAST_SA((*p_sh4rcb).sq_buffer,64/8);
+	REICAST_S((*p_sh4rcb).sq_buffer);
 
 	REICAST_S((*p_sh4rcb).cntx);
 
@@ -600,13 +584,7 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 
 	pend_rend = false;
 
-	REICAST_USA(YUV_tempdata,512/4);
-	REICAST_US(YUV_dest);
-	REICAST_US(YUV_blockcount);
-	REICAST_US(YUV_x_curr);
-	REICAST_US(YUV_y_curr);
-	REICAST_US(YUV_x_size);
-	REICAST_US(YUV_y_size);
+	YUV_unserialize(data, total_size, VCUR_LIBRETRO);
 
 	REICAST_USA(pvr_regs,pvr_RegSize);
 	fog_needs_update = true ;
@@ -652,11 +630,11 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 	else if ( i == 1 )
 		do_sqw_nommu = &do_sqw_nommu_area_3_nonvmem ;
 	else if ( i == 2 )
-		do_sqw_nommu = (sqw_fp*)&TAWriteSQ ;
+		do_sqw_nommu = &TAWriteSQ ;
 	else if ( i == 3 )
 		do_sqw_nommu = &do_sqw_nommu_full ;
 
-	REICAST_USA((*p_sh4rcb).sq_buffer,64/8);
+	REICAST_US((*p_sh4rcb).sq_buffer);
 
 	REICAST_US((*p_sh4rcb).cntx);
 
@@ -884,13 +862,7 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 	}
 	pend_rend = false;
 
-	REICAST_USA(YUV_tempdata,512/4);
-	REICAST_US(YUV_dest);
-	REICAST_US(YUV_blockcount);
-	REICAST_US(YUV_x_curr);
-	REICAST_US(YUV_y_curr);
-	REICAST_US(YUV_x_size);
-	REICAST_US(YUV_y_size);
+	YUV_unserialize(data, total_size, version);
 
 	REICAST_USA(pvr_regs,pvr_RegSize);
 	fog_needs_update = true ;
@@ -962,11 +934,11 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 	else if ( i == 1 )
 		do_sqw_nommu = &do_sqw_nommu_area_3_nonvmem ;
 	else if ( i == 2 )
-		do_sqw_nommu = (sqw_fp*)&TAWriteSQ ;
+		do_sqw_nommu = &TAWriteSQ ;
 	else if ( i == 3 )
 		do_sqw_nommu = &do_sqw_nommu_full ;
 
-	REICAST_USA((*p_sh4rcb).sq_buffer,64/8);
+	REICAST_US((*p_sh4rcb).sq_buffer);
 
 	REICAST_US((*p_sh4rcb).cntx);
 	if (version < V5)

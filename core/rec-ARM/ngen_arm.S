@@ -32,39 +32,6 @@ vldm r1,{d0-d3}
 vstm r3,{d0-d3}
 bx lr
 
-.global CSYM(TAWriteSQ)
-HIDDEN(TAWriteSQ)
-@r0: addr
-@r1: sq_both
-CSYM(TAWriteSQ):
-BIC     R3, R0, #0xFE000000		@clear unused bits
-AND     R0, R0, #0x20			@SQ#, isolate
-CMP     R3, #0x800000			@TA write?
-ADD     R0, R1, R0				@SQ#, add to SQ ptr
-BCC     CSYM(_Z13ta_vtx_data32Pv)	@TA write?
-
-CSYM(TAWriteSQ_yuv):
-CMP     R3, #0x1000000	@Yuv write ?
-BCS     CSYM(TAWriteSQ_vram)
-MOV     R1, #1
-B       CSYM(_Z8YUV_dataPjj)
-
-CSYM(TAWriteSQ_vram):				@vram write ..
-#ifdef TARGET_IPHONE
-bkpt #0
-#else
-bkpt
-#endif
-ubfx r0,r3,#5,#19		@ get vram offset
-						@ should be only 18 bits for 8MB VRAM but it wraps around on dc
-add r3,r1,#0x04000000	@ get vram ptr from r1, part 1
-add r3,#512				@ get ram ptr from r1, part 2
-add r3,r0,lsl #5		@ ram + offset
-vldm r1,{d0-d3}
-vstm r3,{d0-d3}
-bx lr
-
-
 #if FEAT_SHREC != DYNAREC_NONE
 
 @@@@@@@@@@ ngen_LinkBlock_*****_stub @@@@@@@@@@

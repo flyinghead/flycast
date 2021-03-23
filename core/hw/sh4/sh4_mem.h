@@ -69,9 +69,9 @@ extern WriteMem64Func WriteMem64;
 #define WriteMem16_nommu _vmem_WriteMem16
 #define WriteMem32_nommu _vmem_WriteMem32
 
-void WriteMemBlock_nommu_ptr(u32 dst,u32* src,u32 size);
-void WriteMemBlock_nommu_sq(u32 dst,u32* src);
-void WriteMemBlock_nommu_dma(u32 dst,u32 src,u32 size);
+void WriteMemBlock_nommu_ptr(u32 dst, const u32 *src, u32 size);
+void WriteMemBlock_nommu_sq(u32 dst, const SQBuffer *src);
+void WriteMemBlock_nommu_dma(u32 dst, u32 src, u32 size);
 
 //Init/Res/Term
 void mem_Init();

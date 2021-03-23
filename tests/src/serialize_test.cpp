@@ -31,7 +31,7 @@ TEST_F(SerializeTest, SizeTest)
 	unsigned int total_size = 0;
 	void *data = nullptr;
 	ASSERT_TRUE(dc_serialize(&data, &total_size));
-	ASSERT_EQ(28145499u, total_size);
+	ASSERT_EQ(28145503u, total_size);
 }
 
 

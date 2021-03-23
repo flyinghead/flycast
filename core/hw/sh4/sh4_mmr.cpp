@@ -384,40 +384,6 @@ void DYNACALL WriteMem_P4(u32 addr,T data)
 	}
 }
 
-
-//***********
-//Store Queue
-//***********
-//TODO : replace w/ mem mapped array
-//Read SQ
-template <class T>
-T DYNACALL ReadMem_sq(u32 addr)
-{
-	if (sizeof(T) != 4)
-	{
-		INFO_LOG(SH4, "Store Queue Error - only 4 byte read are possible[x%X]", addr);
-		return 0xDE;
-	}
-
-	u32 united_offset=addr & 0x3C;
-
-	return (T)*(u32*)&sq_both[united_offset];
-}
-
-
-//Write SQ
-template <class T>
-void DYNACALL WriteMem_sq(u32 addr,T data)
-{
-	if (sizeof(T) != 4)
-		INFO_LOG(SH4, "Store Queue Error - only 4 byte writes are possible[x%X=0x%X]", addr, data);
-
-	u32 united_offset=addr & 0x3C;
-
-	*(u32*)&sq_both[united_offset]=data;
-}
-
-
 //***********
 //**Area  7**
 //***********

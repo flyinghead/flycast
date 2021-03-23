@@ -230,7 +230,7 @@ struct sh4_if
 
 extern sh4_if sh4_cpu;
 
-struct Sh4Context
+struct alignas(64) Sh4Context
 {
 	union
 	{
@@ -272,16 +272,21 @@ struct Sh4Context
 		};
 		u64 raw[64-8];
 	};
+};
 
+struct alignas(32) SQBuffer {
+	u8 data[32];
 };
 
 void DYNACALL do_sqw_mmu(u32 dst);
-extern "C" void DYNACALL do_sqw_nommu_area_3(u32 dst, u8* sqb);
-void DYNACALL do_sqw_nommu_area_3_nonvmem(u32 dst, u8* sqb);
-void DYNACALL do_sqw_nommu_full(u32 dst, u8* sqb);
+#if HOST_CPU == CPU_ARM
+extern "C"
+#endif
+void DYNACALL do_sqw_nommu_area_3(u32 dst, const SQBuffer *sqb);
+void DYNACALL do_sqw_nommu_area_3_nonvmem(u32 dst, const SQBuffer *sqb);
+void DYNACALL do_sqw_nommu_full(u32 dst, const SQBuffer *sqb);
 
-typedef void DYNACALL sqw_fp(u32 dst,u8* sqb);
-typedef void DYNACALL TaListVoidFP(void* data);
+typedef void DYNACALL sqw_fp(u32 dst, const SQBuffer *sqb);
 
 #define FPCB_SIZE (RAM_SIZE_MAX/2)
 #define FPCB_MASK (FPCB_SIZE -1)
@@ -290,14 +295,13 @@ typedef void DYNACALL TaListVoidFP(void* data);
 struct Sh4RCB
 {
 	void* fpcb[FPCB_SIZE];
-	u64 _pad[(FPCB_PAD-sizeof(Sh4Context)-64-sizeof(void*)*2)/8];
-	TaListVoidFP* tacmd_voud; //*TODO* remove (not used)
+	u64 _pad[(FPCB_PAD - sizeof(Sh4Context) - sizeof(SQBuffer) * 2 - sizeof(void *)) / 8];
 	sqw_fp* do_sqw_nommu;
-	u64 sq_buffer[64/8];
+	SQBuffer sq_buffer[2];
 	Sh4Context cntx;
 };
 
-extern "C" Sh4RCB* p_sh4rcb;
+extern Sh4RCB* p_sh4rcb;
 extern u8* sh4_dyna_rcb;
 
 INLINE u32 sh4_sr_GetFull()

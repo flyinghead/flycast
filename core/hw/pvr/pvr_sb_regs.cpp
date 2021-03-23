@@ -21,9 +21,7 @@ void RegWrite_SB_C2DST(u32 addr, u32 data)
 //PVR-DMA
 void do_pvr_dma()
 {
-	u32 chcr   = DMAC_CHCR(0).full;
 	u32 dmaor  = DMAC_DMAOR.full;
-	u32 dmatcr = DMAC_DMATCR(0);
 
 	u32 src = SB_PDSTAR;	// System RAM address
 	u32 dst = SB_PDSTAP;	// VRAM address
@@ -92,19 +90,18 @@ void pvr_do_sort_dma()
 
 	SB_SDDIV=0;//index is 0 now :)
 	u32 link_addr=calculate_start_link_addr();
-	u32 link_base_addr = SB_SDBAAW & ~31;
 
 	while (link_addr != 2)
 	{
 		if (SB_SDLAS==1)
 			link_addr*=32;
 
-		u32 ea=(link_base_addr+link_addr) & RAM_MASK;
+		u32 ea = (SB_SDBAAW + link_addr) & RAM_MASK & ~31;
 		u32* ea_ptr=(u32*)&mem_b[ea];
 
 		link_addr=ea_ptr[0x1C>>2];//Next link
 		//transfer global param
-		ta_vtx_data(ea_ptr,ea_ptr[0x18>>2]);
+		ta_vtx_data((const SQBuffer *)ea_ptr, ea_ptr[0x18 >> 2]);
 		if (link_addr == 1)
 		{
 			link_addr=calculate_start_link_addr();

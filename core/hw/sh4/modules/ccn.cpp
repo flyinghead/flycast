@@ -18,26 +18,31 @@ u32 CCN_QACR_TR[2];
 template<u32 idx>
 void CCN_QACR_write(u32 addr, u32 value)
 {
-	SH4IO_REGN(CCN,CCN_QACR0_addr+idx*4,32)=value;
-	//CCN_QACR[idx].reg_data=value;
+	if (idx == 0)
+		CCN_QACR0.reg_data = value;
+	else
+		CCN_QACR1.reg_data = value;
 
-	u32 area=((CCN_QACR_type&)value).Area;
+	u32 area = ((CCN_QACR_type&)value).Area;
 
-	CCN_QACR_TR[idx]=(area<<26)-0xE0000000; //-0xE0000000 because 0xE0000000 is added on the translation again ...
+	CCN_QACR_TR[idx] = (area << 26) - 0xE0000000; //-0xE0000000 because 0xE0000000 is added on the translation again ...
 
-	switch(area)
+	switch (area)
 	{
 		case 3: 
 			if (_nvmem_enabled())
-				do_sqw_nommu=&do_sqw_nommu_area_3;
+				do_sqw_nommu = &do_sqw_nommu_area_3;
 			else
-				do_sqw_nommu=&do_sqw_nommu_area_3_nonvmem;
+				do_sqw_nommu = &do_sqw_nommu_area_3_nonvmem;
 		break;
 
 		case 4:
-			do_sqw_nommu=(sqw_fp*)&TAWriteSQ;
+			do_sqw_nommu = &TAWriteSQ;
 			break;
-		default: do_sqw_nommu=&do_sqw_nommu_full;
+
+		default:
+			do_sqw_nommu = &do_sqw_nommu_full;
+			break;
 	}
 }
 

@@ -1190,34 +1190,35 @@ INLINE void DYNACALL do_sqw(u32 Dest)
 
 	if (((Address >> 26) & 0x7) != 4)//Area 4
 	{
-		u8* sq=&sq_both[Dest& 0x20];
-		WriteMemBlock_nommu_sq(Address,(u32*)sq);
+		SQBuffer *sq = &sq_both[(Dest >> 5) & 1];
+		WriteMemBlock_nommu_sq(Address, sq);
 	}
 	else
 	{
-		TAWriteSQ(Address,sq_both);
+		TAWriteSQ(Address, sq_both);
 	}
 }
 
 void DYNACALL do_sqw_mmu(u32 dst) { do_sqw<true>(dst); }
+
 #if HOST_CPU != CPU_ARM
 //yes, this micro optimization makes a difference
-extern "C" void DYNACALL do_sqw_nommu_area_3(u32 dst, u8 *sqb)
+void DYNACALL do_sqw_nommu_area_3(u32 dst, const SQBuffer *sqb)
 {
-	u8 *pmem = sqb + sizeof(Sh4RCB::sq_buffer) + sizeof(Sh4RCB::cntx) + 0x0C000000;
-
-	memcpy((u64 *)&pmem[dst & (RAM_SIZE_MAX - 1 - 0x1F)], (u64 *)&sqb[dst & 0x20], 32);
+	SQBuffer *pmem = (SQBuffer *)((u8 *)sqb + sizeof(Sh4RCB::sq_buffer) + sizeof(Sh4RCB::cntx) + 0x0C000000);
+	pmem += (dst & (RAM_SIZE_MAX - 1)) >> 5;
+	*pmem = sqb[(dst >> 5) & 1];
 }
 #endif
 
-void DYNACALL do_sqw_nommu_area_3_nonvmem(u32 dst,u8* sqb)
+void DYNACALL do_sqw_nommu_area_3_nonvmem(u32 dst, const SQBuffer *sqb)
 {
 	u8* pmem = mem_b.data;
 
-	memcpy((u64*)&pmem[dst&(RAM_MASK-0x1F)],(u64*)&sqb[dst & 0x20],32);
+	memcpy((SQBuffer *)&pmem[dst & (RAM_MASK - 0x1F)], &sqb[(dst >> 5) & 1], sizeof(SQBuffer));
 }
 
-void DYNACALL do_sqw_nommu_full(u32 dst, u8* sqb) { do_sqw<false>(dst); }
+void DYNACALL do_sqw_nommu_full(u32 dst, const SQBuffer *sqb) { do_sqw<false>(dst); }
 
 sh4op(i0000_nnnn_1000_0011)
 {

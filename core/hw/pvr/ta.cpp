@@ -283,7 +283,7 @@ void ta_vtx_SoftReset()
 }
 
 static INLINE
-void DYNACALL ta_thd_data32_i(void* data)
+void DYNACALL ta_thd_data32_i(const simd256_t *data)
 {
 	if (ta_ctx == NULL)
 	{
@@ -298,13 +298,12 @@ void DYNACALL ta_thd_data32_i(void* data)
 	}
 
 	simd256_t* dst = (simd256_t*)ta_tad.thd_data;
-	simd256_t* src = (simd256_t*)data;
 
 	// First byte is PCW
-	PCW pcw = *(PCW*)data;
+	PCW pcw = *(const PCW*)data;
 	
 	// Copy the TA data
-	*dst = *src;
+	*dst = *data;
 
 	ta_tad.thd_data += 32;
 
@@ -326,39 +325,30 @@ void DYNACALL ta_thd_data32_i(void* data)
 	}
 }
 
-void DYNACALL ta_vtx_data32(void* data)
+void DYNACALL ta_vtx_data32(const SQBuffer *data)
 {
-	ta_thd_data32_i(data);
+	ta_thd_data32_i((const simd256_t *)data);
 }
 
-void ta_vtx_data(u32* data, u32 size)
+void ta_vtx_data(const SQBuffer *data, u32 size)
 {
-	while(size>4)
+	while (size >= 4)
 	{
-		ta_thd_data32_i(data);
-
-		data+=8;
-		size--;
-
-		ta_thd_data32_i(data);
-
-		data+=8;
-		size--;
-
-		ta_thd_data32_i(data);
-		data+=8;
-		size--;
-
-		ta_thd_data32_i(data);
-		data+=8;
-		size--;
+		ta_thd_data32_i((simd256_t *)data);
+		data++;
+		ta_thd_data32_i((simd256_t *)data);
+		data++;
+		ta_thd_data32_i((simd256_t *)data);
+		data++;
+		ta_thd_data32_i((simd256_t *)data);
+		data++;
+		size -= 4;
 	}
 
-	while(size>0)
+	while (size > 0)
 	{
-		ta_thd_data32_i(data);
-
-		data+=8;
+		ta_thd_data32_i((simd256_t *)data);
+		data++;
 		size--;
 	}
 }
