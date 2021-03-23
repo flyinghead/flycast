@@ -37,6 +37,7 @@
 #include "network/naomi_network.h"
 #include "rend/mainui.h"
 #include "archive/rzip.h"
+#include "debug/gdb_server.h"
 
 settings_t settings;
 
@@ -373,6 +374,7 @@ void dc_reset(bool hard)
 }
 
 static bool reset_requested;
+static bool singleStep;
 
 int reicast_init(int argc, char* argv[])
 {
@@ -411,6 +413,7 @@ int reicast_init(int argc, char* argv[])
 	// Needed to avoid crash calling dc_is_running() in gui
 	Get_Sh4Interpreter(&sh4_cpu);
 	sh4_cpu.Init();
+	debugger::init();
 
 	return 0;
 }
@@ -611,16 +614,24 @@ void* dc_run(void*)
 		Get_Sh4Interpreter(&sh4_cpu);
 		INFO_LOG(DYNAREC, "Using Interpreter");
 	}
-	do {
-		reset_requested = false;
+	if (singleStep)
+	{
+		singleStep = false;
+		sh4_cpu.Step();
+	}
+	else
+	{
+		do {
+			reset_requested = false;
 
-		sh4_cpu.Run();
+			sh4_cpu.Run();
 
-   		SaveRomFiles();
+			SaveRomFiles();
 
-   		if (reset_requested)
-   			dc_reset(false);
-	} while (reset_requested);
+			if (reset_requested)
+				dc_reset(false);
+		} while (reset_requested);
+	}
 
     TermAudio();
 
@@ -645,6 +656,7 @@ void dc_term_game()
 void dc_term()
 {
 	dc_term_game();
+	debugger::term();
 	dc_cancel_load();
 	sh4_cpu.Term();
 	if (settings.platform.system != DC_PLATFORM_DREAMCAST)
@@ -747,6 +759,13 @@ void dc_resume()
 	EventManager::event(Event::Resume);
 	if (!emu_thread.thread.joinable())
 		emu_thread.Start();
+}
+
+void dc_step()
+{
+	singleStep = true;
+	dc_resume();
+	dc_stop();
 }
 
 static void cleanup_serialize(void *data)

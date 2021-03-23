@@ -38,6 +38,7 @@ void dc_term_game();
 void dc_request_reset();
 void dc_exit();
 void dc_resume();
+void dc_step();
 void dc_savestate();
 void dc_loadstate();
 void dc_load_game(const char *path);

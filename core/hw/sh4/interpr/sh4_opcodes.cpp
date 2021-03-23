@@ -1,21 +1,17 @@
 /*
-	sh4 base core
-	most of it is (very) old
-	could use many cleanups, lets hope someone does them
+	All non fpu opcodes
 */
-
-//All non fpu opcodes :)
 #include "types.h"
 
-
 #include "hw/pvr/pvr_mem.h"
-#include "../sh4_interpreter.h"
+#include "hw/sh4/sh4_interpreter.h"
 #include "hw/sh4/sh4_mem.h"
 #include "hw/sh4/sh4_mmr.h"
-#include "../sh4_core.h"
-#include "../modules/ccn.h"
-#include "../sh4_interrupts.h"
-#include "../sh4_cache.h"
+#include "hw/sh4/sh4_core.h"
+#include "hw/sh4/modules/ccn.h"
+#include "hw/sh4/sh4_interrupts.h"
+#include "hw/sh4/sh4_cache.h"
+#include "debug/gdb_server.h"
 
 #include "hw/sh4/sh4_opcode.h"
 
@@ -55,13 +51,8 @@
 void cpu_iNimp(u32 op, const char* info)
 {
 	ERROR_LOG(INTERPRETER, "Unimplemented opcode: %08X next_pc: %08X pr: %08X msg: %s", op, next_pc, pr, info);
-	//next_pc = pr; //debug hackfix: try to recover by returning from call
 	die("iNimp reached\n");
-	//sh4_cpu.Stop();
 }
-
-//this file contains ALL register to register full moves
-//
 
 //stc GBR,<REG_N>
 sh4op(i0000_nnnn_0001_0010)
@@ -159,7 +150,7 @@ sh4op(i0000_nnnn_mmmm_1100)
 
 //mov.w @(R0,<REG_M>),<REG_N>
 sh4op(i0000_nnnn_mmmm_1101)
-{//ToDo : Check This [26/4/05]
+{
 	u32 n = GetN(op);
 	u32 m = GetM(op);
 	ReadMemBOS16(r[n],r[0],r[m]);
@@ -728,7 +719,7 @@ sh4op(i1000_0101_mmmm_iiii)
 sh4op(i1001_nnnn_iiii_iiii)
 {
 	u32 n = GetN(op);
-	u32 disp = (GetImm8(op));
+	u32 disp = GetImm8(op);
 	ReadMemS16(r[n],(disp<<1) + next_pc + 2);
 }
 
@@ -747,18 +738,15 @@ sh4op(i1100_0000_iiii_iiii)
 sh4op(i1100_0001_iiii_iiii)
 {
 	u32 disp = GetImm8(op);
-	//Write_Word(GBR+(disp<<1),R[0]);
-	WriteMemBOU16(gbr , (disp << 1), r[0]);
+	WriteMemBOU16(gbr, (disp << 1), r[0]);
 }
 
 
 // mov.l R0,@(<disp>,GBR)
 sh4op(i1100_0010_iiii_iiii)
 {
-	u32 disp = (GetImm8(op));
-	//u32 source = (disp << 2) + gbr;
-
-	WriteMemBOU32(gbr,(disp << 2), r[0]);
+	u32 disp = GetImm8(op);
+	WriteMemBOU32(gbr, (disp << 2), r[0]);
 }
 
 // mov.b @(<disp>,GBR),R0
@@ -810,7 +798,7 @@ sh4op(i1101_nnnn_iiii_iiii)
 sh4op(i1110_nnnn_iiii_iiii)
 {
 	u32 n = GetN(op);
-	r[n] = (u32)(s32)(s8)(GetSImm8(op));//(u32)(s8)= signextend8 :)
+	r[n] = (u32)(s32)(s8)(GetSImm8(op));
 }
 
 
@@ -839,7 +827,6 @@ sh4op(i0000_nnnn_0010_0011)
 //bsrf <REG_N>
 sh4op(i0000_nnnn_0000_0011)
 {
-	//TODO: Check pr setting vs real h/w
 	u32 n = GetN(op);
 	u32 newpc = r[n] + next_pc +2;
 	u32 newpr = next_pc + 2;
@@ -848,6 +835,7 @@ sh4op(i0000_nnnn_0000_0011)
 	
 	pr = newpr;
 	next_pc = newpc;
+	debugger::subroutineCall();
 }
 
 
@@ -867,6 +855,7 @@ sh4op(i0000_0000_0010_1011)
 	{
 		UpdateINTC();
 	}
+	debugger::subroutineReturn();
 }
 
 
@@ -876,6 +865,7 @@ sh4op(i0000_0000_0000_1011)
 	u32 newpc=pr;
 	ExecuteDelayslot(); //WARN : pr can change here
 	next_pc=newpc;
+	debugger::subroutineReturn();
 }
 
 u32 branch_target_s8(u32 op)
@@ -885,7 +875,6 @@ u32 branch_target_s8(u32 op)
 // bf <bdisp8>
 sh4op(i1000_1011_iiii_iiii)
 {
-	//TODO : Check Me [26/4/05]  | Check DELAY SLOT [28/1/06]
 	if (sr.T==0)
 	{
 		//direct jump
@@ -938,7 +927,7 @@ u32 branch_target_s12(u32 op)
 // bra <bdisp12>
 sh4op(i1010_iiii_iiii_iiii)
 {
-	u32 newpc = branch_target_s12(op);//(u32) ((  ((s16)((GetImm12(op))<<4)) >>3)  + pc + 4);//(s16<<4,>>4(-1*2))
+	u32 newpc = branch_target_s12(op);
 	ExecuteDelayslot();
 	next_pc=newpc;
 }
@@ -951,13 +940,15 @@ sh4op(i1011_iiii_iiii_iiii)
 	ExecuteDelayslot();
 
 	pr = newpr;
-	next_pc=newpc;
+	next_pc = newpc;
+	debugger::subroutineCall();
 }
 
 // trapa #<imm>
 sh4op(i1100_0011_iiii_iiii)
 {
 	//printf("trapa 0x%X\n",(GetImm8(op) << 2));
+	debugger::debugTrap(0x160);
 	CCN_TRA = (GetImm8(op) << 2);
 	Do_Exception(next_pc,0x160,0x100);
 }
@@ -982,7 +973,8 @@ sh4op(i0100_nnnn_0000_1011)
 	ExecuteDelayslot(); //r[n]/pr can change here
 
 	pr = newpr;
-	next_pc=newpc;
+	next_pc = newpc;
+	debugger::subroutineCall();
 }
 
 //sleep
@@ -1012,10 +1004,7 @@ sh4op(i0011_nnnn_mmmm_1000)
 {
 	u32 n = GetN(op);
 	u32 m = GetM(op);
-	//rn=(s32)r[n];
-	//rm=(s32)r[m];
 	r[n] -=r[m];
-	//r[n]=(u32)rn;
 }
 
 //add <REG_M>,<REG_N>
@@ -1075,7 +1064,7 @@ sh4op(i0100_nnnn_0000_1000)
 
 //shll8 <REG_N>
 sh4op(i0100_nnnn_0001_1000)
-{//ToDo : Check This [26/4/05]
+{
 	u32 n = GetN(op);
 	r[n] <<= 8;
 }
@@ -1083,7 +1072,7 @@ sh4op(i0100_nnnn_0001_1000)
 
 //shll16 <REG_N>
 sh4op(i0100_nnnn_0010_1000)
-{//ToDo : Check This [26/4/05]
+{
 	u32 n = GetN(op);
 	r[n] <<= 16;
 }
@@ -1091,7 +1080,7 @@ sh4op(i0100_nnnn_0010_1000)
 
 //shlr2 <REG_N>
 sh4op(i0100_nnnn_0000_1001)
-{//ToDo : Check This [26/4/05]
+{
 	u32 n = GetN(op);
 	r[n] >>= 2;
 }
@@ -1114,7 +1103,7 @@ sh4op(i0100_nnnn_0010_1001)
 
 // and #<imm>,R0
 sh4op(i1100_1001_iiii_iiii)
-{//ToDo : Check This [26/4/05]
+{
 	u32 imm = GetImm8(op);
 	r[0] &= imm;
 }
@@ -1130,29 +1119,24 @@ sh4op(i1100_1010_iiii_iiii)
 
 // or #<imm>,R0
 sh4op(i1100_1011_iiii_iiii)
-{//ToDo : Check This [26/4/05]
+{
 	u32 imm = GetImm8(op);
 	r[0] |= imm;
 }
 
 
-
-//TODO : move it somewhere better
 //nop
 sh4op(i0000_0000_0000_1001)
 {
-	//no operation xD XD .. i just love this opcode ..
-	//what ? you expected something fancy or smth ?
 }
 
 //************************ TLB/Cache ************************
 //ldtlb
 sh4op(i0000_0000_0011_1000)
 {
-	//printf("ldtlb %d/%d\n",CCN_MMUCR.URC,CCN_MMUCR.URB);
-	UTLB[CCN_MMUCR.URC].Data=CCN_PTEL;
-	UTLB[CCN_MMUCR.URC].Address=CCN_PTEH;
-	UTLB[CCN_MMUCR.URC].Assistance=CCN_PTEA;
+	UTLB[CCN_MMUCR.URC].Data = CCN_PTEL;
+	UTLB[CCN_MMUCR.URC].Address = CCN_PTEH;
+	UTLB[CCN_MMUCR.URC].Assistance = CCN_PTEA;
 
 	UTLB_Sync(CCN_MMUCR.URC);
 }
@@ -1200,12 +1184,6 @@ INLINE void DYNACALL do_sqw(u32 Dest)
 		//verify(CCN_QACR_TR[0]==CCN_QACR_TR[1]);
 
 		u32 QACR = CCN_QACR_TR[0];
-		/*
-		//sq1 ? if so use QACR1
-		//(QACR1==QACR0 in all stuff i've tested)
-		if (Dest& 0x20)
-			QACR = CCN_QACR_TR[1];
-		*/
 		//QACR has already 0xE000_0000
 		Address= QACR+(Dest&~0x1f);
 	}
@@ -1340,7 +1318,7 @@ sh4op(i0011_nnnn_mmmm_0000)
 
 //cmp/hs <REG_M>,<REG_N>
 sh4op(i0011_nnnn_mmmm_0010)
-{//ToDo : Check Me [26/4/05]
+{
 	u32 n = GetN(op);
 	u32 m = GetM(op);
 	if (r[n] >= r[m])
@@ -1418,7 +1396,7 @@ sh4op(i1100_1000_iiii_iiii)
 }
 //tst <REG_M>,<REG_N>
 sh4op(i0010_nnnn_mmmm_1000)
-{//ToDo : Check This [26/4/05]
+{
 	u32 n = GetN(op);
 	u32 m = GetM(op);
 
@@ -1432,11 +1410,9 @@ sh4op(i0010_nnnn_mmmm_1000)
 //mulu.w <REG_M>,<REG_N>
 sh4op(i0010_nnnn_mmmm_1110)
 {
-	//check  ++
 	u32 n = GetN(op);
 	u32 m = GetM(op);
-	mac.l=((u16)r[n])*
-		((u16)r[m]);
+	mac.l = (u16)r[n] * (u16)r[m];
 }
 
 //muls.w <REG_M>,<REG_N>
@@ -1445,7 +1421,7 @@ sh4op(i0010_nnnn_mmmm_1111)
 	u32 n = GetN(op);
 	u32 m = GetM(op);
 
-	mac.l = (u32)(((s16)(u16)r[n]) * ((s16)(u16)r[m]));
+	mac.l = (u32)((s16)r[n] * (s16)r[m]);
 }
 //dmulu.l <REG_M>,<REG_N>
 sh4op(i0011_nnnn_mmmm_0101)
@@ -1459,7 +1435,6 @@ sh4op(i0011_nnnn_mmmm_0101)
 //dmuls.l <REG_M>,<REG_N>
 sh4op(i0011_nnnn_mmmm_1101)
 {
-	//check ++
 	u32 n = GetN(op);
 	u32 m = GetM(op);
 
@@ -1481,11 +1456,6 @@ sh4op(i0100_nnnn_mmmm_1111)
 		s32 rm,rn;
 
 		rn = (s32)(s16)ReadMem16(r[n]);
-		//if (n==m)
-		//{
-		//	r[n]+=2;
-		//	r[m]+=2;
-		//}
 		rm = (s32)(s16)ReadMem16(r[m] + (n == m ? 2 : 0));
 
 		r[n]+=2;
@@ -1510,8 +1480,6 @@ sh4op(i0000_nnnn_mmmm_1111)
 	r[n] += 4;
 
 	mac.full += (s64)rm * (s64)rn;
-
-	//printf("%I64u %I64u | %d %d | %d %d\n",mac,mul,macl,mach,rm,rn);
 }
 
 //mul.l <REG_M>,<REG_N>
@@ -1610,22 +1578,10 @@ sh4op(i0011_nnnn_mmmm_1110)
 // addv <REG_M>,<REG_N>
 sh4op(i0011_nnnn_mmmm_1111)
 {
-	//printf("WARN: addv <REG_M>,<REG_N> used, %04X\n",op);
 	//Retail game "Twinkle Star Sprites" "uses" this opcode.
 	u32 n = GetN(op);
 	u32 m = GetM(op);
 	s64 br=(s64)(s32)r[n]+(s64)(s32)r[m];
-	//u32 rm=r[m];
-	//u32 rn=r[n];
-	/*__asm
-	{
-		mov eax,rm;
-		mov ecx,rn;
-		add eax,ecx;
-		seto sr.T;
-		mov rn,eax;
-	};*/
-	//r[n]=rn;
 
 	if (br >=0x80000000)
 		sr.T=1;
@@ -1633,17 +1589,13 @@ sh4op(i0011_nnnn_mmmm_1111)
 		sr.T=1;
 	else
 		sr.T=0;
-	/*if (br>>32)
-		sr.T=1;
-	else
-		sr.T=0;*/
 
 	r[n]+=r[m];
 }
 
 //subc <REG_M>,<REG_N>
 sh4op(i0011_nnnn_mmmm_1010)
-{//ToDo : Check This [26/4/05]
+{
 	u32 n = GetN(op);
 	u32 m = GetM(op);
 
@@ -1663,7 +1615,6 @@ sh4op(i0011_nnnn_mmmm_1010)
 //subv <REG_M>,<REG_N>
 sh4op(i0011_nnnn_mmmm_1011)
 {
-	//printf("WARN: subv <REG_M>,<REG_N> used, %04X\n",op);
 	//Retail game "Twinkle Star Sprites" "uses" this opcode.
 	u32 n = GetN(op);
 	u32 m = GetM(op);
@@ -1675,23 +1626,8 @@ sh4op(i0011_nnnn_mmmm_1011)
 		sr.T=1;
 	else
 		sr.T=0;
-	/*if (br>>32)
-		sr.T=1;
-	else
-		sr.T=0;*/
 
 	r[n]-=r[m];
-	//u32 rm=r[m];
-	//u32 rn=r[n];
-	/*__asm
-	{
-		mov eax,rm;
-		mov ecx,rn;
-		sub eax,ecx;
-		seto sr.T;
-		mov rn,eax;
-	};*/
-	//r[n]=rn;
 }
 //dt <REG_N>
 sh4op(i0100_nnnn_0001_0000)
@@ -1726,7 +1662,7 @@ sh4op(i0110_nnnn_mmmm_1010)
 
 //neg <REG_M>,<REG_N>
 sh4op(i0110_nnnn_mmmm_1011)
-{//ToDo : Check This [26/4/05]
+{
 	u32 n = GetN(op);
 	u32 m = GetM(op);
 	r[n] = -r[m];
@@ -1745,7 +1681,7 @@ sh4op(i0110_nnnn_mmmm_0111)
 //************************ shifts/rotates ************************
 //shll <REG_N>
 sh4op(i0100_nnnn_0000_0000)
-{//ToDo : Check This [26/4/05]
+{
 	u32 n = GetN(op);
 
 	sr.T = r[n] >> 31;
@@ -1762,7 +1698,7 @@ sh4op(i0100_nnnn_0010_0000)
 
 //shlr <REG_N>
 sh4op(i0100_nnnn_0000_0001)
-{//ToDo : Check This [26/4/05]
+{
 	u32 n = GetN(op);
 	sr.T = r[n] & 0x1;
 	r[n] >>= 1;
@@ -1770,7 +1706,7 @@ sh4op(i0100_nnnn_0000_0001)
 
 //shar <REG_N>
 sh4op(i0100_nnnn_0010_0001)
-{//ToDo : Check This [26/4/05] x2
+{
 	u32 n = GetN(op);
 
 	sr.T=r[n] & 1;
@@ -1942,7 +1878,6 @@ sh4op(i0010_nnnn_mmmm_1101)
 //tst.b #<imm>,@(R0,GBR)
 sh4op(i1100_1100_iiii_iiii)
 {
-	//printf("WARN: tst.b #<imm>,@(R0,GBR) used, %04X\n",op);
 	//Retail game "Twinkle Star Sprites" "uses" this opcode.
 	u32 imm=GetImm8(op);
 
@@ -2022,7 +1957,6 @@ sh4op(i0000_nnnn_0110_1010)
 {
 	u32 n = GetN(op);
 	r[n] = fpscr.full;
-	//UpdateFPSCR();
 }
 
 //sts.l FPSCR,@-<REG_N>
@@ -2063,9 +1997,7 @@ sh4op(i0100_nnnn_0000_0111)
 	sh4_sr_SetFull(sr_t);
 	r[n] += 4;
 	if (UpdateSR())
-	{
 		UpdateINTC();
-	}
 }
 
 //lds <REG_N>,FPSCR
@@ -2082,9 +2014,7 @@ sh4op(i0100_nnnn_0000_1110)
 	u32 n = GetN(op);
 	sh4_sr_SetFull(r[n]);
 	if (UpdateSR())
-	{
 		UpdateINTC();
-	}
 }
 
 
@@ -2093,6 +2023,7 @@ sh4op(iNotImplemented)
 {
 #ifndef NO_MMU
 	INFO_LOG(INTERPRETER, "iNimp %04X", op);
+	debugger::debugTrap(0x180);
 	SH4ThrownException ex = { next_pc - 2, 0x180, 0x100 };
 	throw ex;
 #else

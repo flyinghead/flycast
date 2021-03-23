@@ -14,6 +14,7 @@
 #include "sh4_core.h"
 #include "sh4_mmr.h"
 #include "oslib/oslib.h"
+#include "debug/gdb_server.h"
 
 /*
 
@@ -202,6 +203,7 @@ static bool Do_Interrupt(u32 intEvn)
 	sr.RB = 1;
 	UpdateSR();
 	next_pc = vbr + 0x600;
+	debugger::subroutineCall();
 
 	return true;
 }
@@ -220,6 +222,7 @@ bool Do_Exception(u32 epc, u32 expEvn, u32 CallVect)
 	UpdateSR();
 
 	next_pc = vbr + CallVect;
+	debugger::subroutineCall();
 
 	//printf("RaiseException: from %08X , pc errh %08X, %08X vect\n", spc, epc, next_pc);
 	return true;

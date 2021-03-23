@@ -771,7 +771,8 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/serialize.cpp
         core/stdclass.cpp
         core/stdclass.h
-        core/types.h)
+        core/types.h
+        core/debug/gdb_server.h)
 
 target_sources(${PROJECT_NAME} PRIVATE
         core/rend/gles/glcache.h

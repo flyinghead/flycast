@@ -1,6 +1,5 @@
 #pragma once
 #include "types.h"
-#include "stdclass.h"
 
 enum Sh4RegType
 {
@@ -216,35 +215,17 @@ struct fpscr_t
 	};
 };
 
-
-typedef void RunFP();
-typedef void StopFP();
-typedef void StartFP();
-typedef void StepFP();
-typedef void SkipFP();
-typedef void ResetFP(bool hard);
-typedef void InitFP();
-typedef void TermFP();
-typedef bool IsCpuRunningFP();
-
-/*
-	The interface stuff should be replaced with something nicer
-*/
 //sh4 interface
 struct sh4_if
 {
-	RunFP* Run;
-	StopFP* Stop;
-	StepFP* Step;
-	SkipFP* Skip;
-	ResetFP* Reset;
-	InitFP* Init;
-	TermFP* Term;
-
-	TermFP* ResetCache;
-
-	IsCpuRunningFP* IsCpuRunning;
-	StartFP* Start;
+	void (*Run)();
+	void (*Stop)();
+	void (*Step)();
+	void (*Reset)(bool hard);
+	void (*Init)();
+	void (*Term)();
+	void (*ResetCache)();
+	bool (*IsCpuRunning)();
 };
 
 extern sh4_if sh4_cpu;

@@ -2,6 +2,7 @@
 #include "hw/sh4/sh4_if.h"
 #include "hw/sh4/sh4_interrupts.h"
 #include "hw/sh4/sh4_core.h"
+#include "debug/gdb_server.h"
 
 TLB_Entry UTLB[64];
 TLB_Entry ITLB[4];
@@ -148,8 +149,9 @@ void ITLB_Sync(u32 entry)
 }
 #endif
 
-void RaiseException(u32 expEvnt, u32 callVect) {
+static void RaiseException(u32 expEvnt, u32 callVect) {
 #if !defined(NO_MMU)
+	debugger::debugTrap(expEvnt);	// FIXME CCN_TEA and CCN_PTEH have been updated already
 	SH4ThrownException ex = { next_pc - 2, expEvnt, callVect };
 	throw ex;
 #else
