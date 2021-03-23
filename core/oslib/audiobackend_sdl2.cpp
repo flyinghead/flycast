@@ -14,7 +14,7 @@ static cResetEvent read_wait;
 static std::mutex stream_mutex;
 static struct {
 	uint32_t prevs;
-	uint32_t sample_buffer[2048];
+	uint32_t *sample_buffer;
 } audiobuf;
 static unsigned sample_count = 0;
 
@@ -79,13 +79,15 @@ static void sdl2_audio_init() {
 	if (!SDL_WasInit(SDL_INIT_AUDIO))
 		SDL_InitSubSystem(SDL_INIT_AUDIO);
 
+	audiobuf.sample_buffer = new uint32_t[config::AudioBufferSize]();
+
 	// Support 44.1KHz (native) but also upsampling to 48KHz
 	SDL_AudioSpec wav_spec, out_spec;
 	memset(&wav_spec, 0, sizeof(wav_spec));
 	wav_spec.freq = 44100;
 	wav_spec.format = AUDIO_S16;
 	wav_spec.channels = 2;
-	wav_spec.samples = 1024;  // Must be power of two
+	wav_spec.samples = SAMPLE_COUNT;  // Must be power of two
 	wav_spec.callback = sdl2_audiocb;
 	
 	// Try 44.1KHz which should be faster since it's native.
@@ -109,7 +111,7 @@ static u32 sdl2_audio_push(const void* frame, u32 samples, bool wait) {
 	// If wait, then wait for the buffer to be smaller than a certain size.
 	stream_mutex.lock();
 	if (wait) {
-		while (sample_count + samples > sizeof(audiobuf.sample_buffer)/sizeof(audiobuf.sample_buffer[0])) {
+		while (sample_count + samples > config::AudioBufferSize) {
 			stream_mutex.unlock();
 			read_wait.Wait();
 			read_wait.Reset();
@@ -118,7 +120,7 @@ static u32 sdl2_audio_push(const void* frame, u32 samples, bool wait) {
 	}
 
 	// Copy as many samples as possible, drop any remaining (this should not happen usually)
-	unsigned free_samples = sizeof(audiobuf.sample_buffer) / sizeof(audiobuf.sample_buffer[0]) - sample_count;
+	unsigned free_samples = config::AudioBufferSize - sample_count;
 	unsigned tocopy = samples < free_samples ? samples : free_samples;
 	memcpy(&audiobuf.sample_buffer[sample_count], frame, tocopy * sizeof(uint32_t));
 	sample_count += tocopy;
@@ -136,6 +138,8 @@ static void sdl2_audio_term() {
 		SDL_CloseAudioDevice(audiodev);
 		audiodev = SDL_AudioDeviceID();
 	}
+	delete [] audiobuf.sample_buffer;
+	audiobuf.sample_buffer = nullptr;
 }
 
 void sdl2_record_cb(void *userdata, u8 *stream, int len)
