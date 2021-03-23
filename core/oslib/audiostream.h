@@ -26,7 +26,7 @@ typedef struct {
 typedef audio_option_t* (*audio_options_func_t)(int* option_count);
 
 typedef void (*audio_backend_init_func_t)();
-typedef u32 (*audio_backend_push_func_t)(const void*, u32, bool);
+typedef u32 (*audio_backend_push_func_t)(const void *data, u32 frames, bool wait);
 typedef void (*audio_backend_term_func_t)();
 typedef struct {
     std::string slug;
@@ -51,3 +51,5 @@ void StopAudioRecording();
 u32 GetAudioBackendCount();
 audiobackend_t* GetAudioBackend(int num);
 audiobackend_t* GetAudioBackend(const std::string& slug);
+
+constexpr u32 SAMPLE_COUNT = 512;	// push() is always called with that many frames

@@ -291,7 +291,6 @@ jmethodID startRecordingMid;
 jmethodID stopRecordingMid;
 
 //stuff for audio
-#define SAMPLE_COUNT 512
 jshortArray jsamples;
 jmethodID writeBufferMid;
 jmethodID audioInitMid;
@@ -468,7 +467,6 @@ JNIEXPORT jboolean JNICALL Java_com_reicast_emulator_emu_JNIdc_guiIsContentBrows
 // Audio Stuff
 static u32 androidaudio_push(const void* frame, u32 amt, bool wait)
 {
-    verify(amt==SAMPLE_COUNT);
     jvm_attacher.getEnv()->SetShortArrayRegion(jsamples, 0, amt * 2, (jshort *)frame);
     return jvm_attacher.getEnv()->CallIntMethod(g_audioBackend, writeBufferMid, jsamples, wait);
 }

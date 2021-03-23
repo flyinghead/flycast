@@ -111,6 +111,16 @@ static void alsa_init()
 		return;
 	}
 
+	// Period size (512)
+	period_size = std::min(SAMPLE_COUNT, (u32)config::AudioBufferSize / 4);
+	rc = snd_pcm_hw_params_set_period_size_near(handle, params, &period_size, nullptr);
+	if (rc < 0)
+	{
+		WARN_LOG(AUDIO, "ALSA: Error:snd_pcm_hw_params_set_periods_near %s", snd_strerror(rc));
+		return;
+	}
+	INFO_LOG(AUDIO, "ALSA: period size set to %zd", (size_t)period_size);
+
 	// Sample buffer size
 	buffer_size = config::AudioBufferSize;
 	rc = snd_pcm_hw_params_set_buffer_size_near(handle, params, &buffer_size);
@@ -120,16 +130,6 @@ static void alsa_init()
 		return;
 	}
 	INFO_LOG(AUDIO, "ALSA: buffer size set to %ld", buffer_size);
-
-	// Period size (1024)
-	period_size = 1024;
-	rc = snd_pcm_hw_params_set_period_size_near(handle, params, &period_size, nullptr);
-	if (rc < 0)
-	{
-		WARN_LOG(AUDIO, "ALSA: Error:snd_pcm_hw_params_set_periods_near %s", snd_strerror(rc));
-		return;
-	}
-	INFO_LOG(AUDIO, "ALSA: period size set to %zd", (size_t)period_size);
 
 	/* Write the parameters to the driver */
 	rc = snd_pcm_hw_params(handle, params);
@@ -241,16 +241,19 @@ static u32 alsa_push(const void* frame, u32 samples, bool wait)
 	}
 
 	int rc = snd_pcm_writei(handle, frame, samples);
-	if (rc == -EPIPE)
+	if (rc < 0)
 	{
-		/* EPIPE means underrun */
-		snd_pcm_prepare(handle);
-		// Write some silence then our samples
-		const size_t silence_size = buffer_size - period_size;
-		void *silence = alloca(silence_size * 4);
-		memset(silence, 0, silence_size * 4);
-		snd_pcm_writei(handle, silence, silence_size);
-		snd_pcm_writei(handle, frame, samples);
+		snd_pcm_recover(handle, rc, 1);
+		if (rc == -EPIPE)
+		{
+			// EPIPE means underrun
+			// Write some silence then our samples
+			const size_t silence_size = buffer_size - samples;
+			void *silence = alloca(silence_size * 4);
+			memset(silence, 0, silence_size * 4);
+			snd_pcm_writei(handle, silence, silence_size);
+			snd_pcm_writei(handle, frame, samples);
+		}
 	}
 	return 1;
 }
