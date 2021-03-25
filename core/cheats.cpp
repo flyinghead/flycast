@@ -297,6 +297,7 @@ const Cheat CheatManager::_naomi_widescreen_cheats[] =
 				{ 0x43B90000, 0x3FAA9FBE, 0x43B90000, 0x43F00000 } },
 		{ "METAL SLUG 6", nullptr, { 0xE93478, 0xE9347C, 0 }, { 0x3F400000, 0x3F8872B0 } },
 		{ "TOY FIGHTER", nullptr, { 0x133E58, 0 }, { 0x43700000 } },
+		{ "LUPIN THE THIRD  -THE SHOOTING-", nullptr, { 0x045490 }, { 0x3F400000 } },
 
 		{ nullptr },
 };
