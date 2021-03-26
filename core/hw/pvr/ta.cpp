@@ -2,8 +2,6 @@
 #include "ta_ctx.h"
 #include "hw/holly/holly_intc.h"
 
-extern u32 ta_type_lut[256];
-
 /*
 	Threaded TA Implementation
 
@@ -135,7 +133,7 @@ static void fill_fsm()
 
 				for (int k=0;k<32;k++)
 				{
-					u32 uid=ta_type_lut[k*4];
+					u32 uid = TaTypeLut::instance().table[k * 4];
 					u32 vt=uid & 0x7f;
 
 					bool v64 = vt == 5 || vt == 6 || vt == 11 || vt == 12 || vt == 13 || vt == 14;

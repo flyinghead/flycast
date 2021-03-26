@@ -13,3 +13,16 @@ void DYNACALL ta_vtx_data32(const SQBuffer *data);
 void ta_vtx_data(const SQBuffer *data, u32 size);
 
 bool ta_parse_vdrc(TA_context* ctx);
+
+class TaTypeLut
+{
+public:
+	static const TaTypeLut& instance() {
+		static TaTypeLut _instance;
+		return _instance;
+	}
+	u32 table[256];
+
+private:
+	TaTypeLut();
+};
