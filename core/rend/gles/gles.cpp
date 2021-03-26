@@ -112,8 +112,10 @@ uniform sampler2D tex,fog_table;
 uniform lowp float trilinear_alpha;
 uniform lowp vec4 fog_clamp_min;
 uniform lowp vec4 fog_clamp_max;
+#if pp_Palette == 1
 uniform sampler2D palette;
 uniform mediump int palette_index;
+#endif
 
 /* Vertex input*/
 INTERPOLATION in lowp vec4 vtx_base;
@@ -369,6 +371,12 @@ static void gl_delete_shaders()
 static void gles_term()
 {
 	termQuad();
+#ifndef GLES2
+	glDeleteVertexArrays(1, &gl.vbo.mainVAO);
+	gl.vbo.mainVAO = 0;
+	glDeleteVertexArrays(1, &gl.vbo.modvolVAO);
+	gl.vbo.modvolVAO = 0;
+#endif
 	glDeleteBuffers(1, &gl.vbo.geometry);
 	gl.vbo.geometry = 0;
 	glDeleteBuffers(1, &gl.vbo.modvols);
@@ -647,11 +655,15 @@ bool CompilePipelineShader(	PipelineShader* s)
 static void SetupOSDVBO()
 {
 #ifndef GLES2
+	if (gl.OSD_SHADER.vao != 0)
+	{
+	   glBindVertexArray(gl.OSD_SHADER.vao);
+	   return;
+	}
 	if (gl.gl_major >= 3)
 	{
-		if (gl.OSD_SHADER.vao == 0)
-			glGenVertexArrays(1, &gl.OSD_SHADER.vao);
-		glBindVertexArray(gl.OSD_SHADER.vao);
+	   glGenVertexArrays(1, &gl.OSD_SHADER.vao);
+	   glBindVertexArray(gl.OSD_SHADER.vao);
 	}
 #endif
 	if (gl.OSD_SHADER.geometry == 0)
@@ -746,15 +758,8 @@ bool gl_create_resources()
 	findGLVersion();
 
 	if (gl.gl_major >= 3)
-	{
-		verify(glGenVertexArrays != NULL);
-		//create vao
-		//This is really not "proper", vaos are supposed to be defined once
-		//i keep updating the same one to make the es2 code work in 3.1 context
-#ifndef GLES2
-		glGenVertexArrays(1, &gl.vbo.vao);
-#endif
-	}
+		// will be used later. Better fail fast
+		verify(glGenVertexArrays != nullptr);
 
 	//create vbos
 	glGenBuffers(1, &gl.vbo.geometry);

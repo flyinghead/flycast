@@ -84,7 +84,8 @@ struct gl_ctx
 	struct
 	{
 		GLuint geometry,modvols,idxs,idxs2;
-		GLuint vao;
+		GLuint mainVAO;
+		GLuint modvolVAO;
 	} vbo;
 
 	struct

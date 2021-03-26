@@ -469,42 +469,62 @@ void SetMVS_Mode(ModifierVolumeMode mv_mode, ISP_Modvol ispc)
 static void SetupMainVBO()
 {
 #ifndef GLES2
+	if (gl.vbo.mainVAO != 0)
+	{
+	   glBindVertexArray(gl.vbo.mainVAO);
+	   return;
+	}
 	if (gl.gl_major >= 3)
-		glBindVertexArray(gl.vbo.vao);
+	{
+	   glGenVertexArrays(1, &gl.vbo.mainVAO);
+	   glBindVertexArray(gl.vbo.mainVAO);
+	}
 #endif
 	glBindBuffer(GL_ARRAY_BUFFER, gl.vbo.geometry); glCheck();
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl.vbo.idxs); glCheck();
 
 	//setup vertex buffers attrib pointers
-	glEnableVertexAttribArray(VERTEX_POS_ARRAY); glCheck();
-	glVertexAttribPointer(VERTEX_POS_ARRAY, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex,x)); glCheck();
+	glEnableVertexAttribArray(VERTEX_POS_ARRAY);
+	glVertexAttribPointer(VERTEX_POS_ARRAY, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex,x));
 
-	glEnableVertexAttribArray(VERTEX_COL_BASE_ARRAY); glCheck();
-	glVertexAttribPointer(VERTEX_COL_BASE_ARRAY, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Vertex), (void*)offsetof(Vertex,col)); glCheck();
+	glEnableVertexAttribArray(VERTEX_COL_BASE_ARRAY);
+	glVertexAttribPointer(VERTEX_COL_BASE_ARRAY, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Vertex), (void*)offsetof(Vertex,col));
 
-	glEnableVertexAttribArray(VERTEX_COL_OFFS_ARRAY); glCheck();
-	glVertexAttribPointer(VERTEX_COL_OFFS_ARRAY, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Vertex), (void*)offsetof(Vertex,spc)); glCheck();
+	glEnableVertexAttribArray(VERTEX_COL_OFFS_ARRAY);
+	glVertexAttribPointer(VERTEX_COL_OFFS_ARRAY, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Vertex), (void*)offsetof(Vertex,spc));
 
-	glEnableVertexAttribArray(VERTEX_UV_ARRAY); glCheck();
-	glVertexAttribPointer(VERTEX_UV_ARRAY, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex,u)); glCheck();
+	glEnableVertexAttribArray(VERTEX_UV_ARRAY);
+	glVertexAttribPointer(VERTEX_UV_ARRAY, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex,u));
+	glCheck();
 }
 
-void SetupModvolVBO()
+static void SetupModvolVBO()
 {
 #ifndef GLES2
+	if (gl.vbo.modvolVAO != 0)
+	{
+	   glBindVertexArray(gl.vbo.modvolVAO);
+	   return;
+	}
 	if (gl.gl_major >= 3)
-		glBindVertexArray(gl.vbo.vao);
+	{
+	   glGenVertexArrays(1, &gl.vbo.modvolVAO);
+	   glBindVertexArray(gl.vbo.modvolVAO);
+	}
 #endif
 	glBindBuffer(GL_ARRAY_BUFFER, gl.vbo.modvols); glCheck();
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
 	//setup vertex buffers attrib pointers
-	glEnableVertexAttribArray(VERTEX_POS_ARRAY); glCheck();
-	glVertexAttribPointer(VERTEX_POS_ARRAY, 3, GL_FLOAT, GL_FALSE, sizeof(float)*3, (void*)0); glCheck();
+	glEnableVertexAttribArray(VERTEX_POS_ARRAY);
+	glVertexAttribPointer(VERTEX_POS_ARRAY, 3, GL_FLOAT, GL_FALSE, sizeof(float)*3, (void*)0);
 
 	glDisableVertexAttribArray(VERTEX_UV_ARRAY);
 	glDisableVertexAttribArray(VERTEX_COL_OFFS_ARRAY);
 	glDisableVertexAttribArray(VERTEX_COL_BASE_ARRAY);
+	glCheck();
 }
+
 void DrawModVols(int first, int count)
 {
 	if (count == 0 || pvrrc.modtrig.used() == 0)

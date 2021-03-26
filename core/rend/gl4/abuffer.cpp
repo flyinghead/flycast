@@ -19,16 +19,17 @@
 #include "gl4.h"
 #include "rend/gles/glcache.h"
 
-GLuint pixels_buffer;
-GLuint pixels_pointers;
-GLuint atomic_buffer;
-gl4PipelineShader g_abuffer_final_shader;
-gl4PipelineShader g_abuffer_clear_shader;
-gl4PipelineShader g_abuffer_tr_modvol_shaders[ModeCount];
-static GLuint g_quadBuffer = 0;
-static GLuint g_quadVertexArray = 0;
+static GLuint pixels_buffer;
+static GLuint pixels_pointers;
+static GLuint atomic_buffer;
+static gl4PipelineShader g_abuffer_final_shader;
+static gl4PipelineShader g_abuffer_clear_shader;
+static gl4PipelineShader g_abuffer_tr_modvol_shaders[ModeCount];
+static GLuint g_quadBuffer;
+static GLuint g_quadIndexBuffer;
+static GLuint g_quadVertexArray;
 
-GLuint pixel_buffer_size = 512 * 1024 * 1024;	// Initial size 512 MB
+static GLuint pixel_buffer_size = 512 * 1024 * 1024;	// Initial size 512 MB
 
 #define MAX_PIXELS_PER_FRAGMENT "32"
 
@@ -254,6 +255,8 @@ void main()
 }
 )";
 
+static void abufferDrawQuad();
+
 void initABuffer()
 {
 	if (max_image_width > 0 && max_image_height > 0)
@@ -313,20 +316,37 @@ void initABuffer()
 			gl4CompilePipelineShader(&g_abuffer_tr_modvol_shaders[mode], source, VertexShaderSource);
 		}
 	}
-
-	if (g_quadVertexArray == 0)
-		glGenVertexArrays(1, &g_quadVertexArray);
 	if (g_quadBuffer == 0)
 	{
-		glBindVertexArray(g_quadVertexArray);
 		glGenBuffers(1, &g_quadBuffer);
 		glBindBuffer(GL_ARRAY_BUFFER, g_quadBuffer); glCheck();
+		static const float vertices[] = {
+				-1,  1, 1,
+				-1, -1, 1,
+				 1,  1, 1,
+				 1, -1, 1,
+		};
+		glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+	}
+	if (g_quadIndexBuffer == 0)
+	{
+		glGenBuffers(1, &g_quadIndexBuffer);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, g_quadIndexBuffer);
+		static const GLushort indices[] = { 0, 1, 2, 1, 3 };
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+	}
 
+	if (g_quadVertexArray == 0)
+	{
+		glGenVertexArrays(1, &g_quadVertexArray);
+		glBindVertexArray(g_quadVertexArray);
+		glBindBuffer(GL_ARRAY_BUFFER, g_quadBuffer);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, g_quadIndexBuffer);
 		glEnableVertexAttribArray(0);
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, (void*)0);
-
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0); glCheck();
 		glBindVertexArray(0);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	}
 	glCheck();
 
@@ -367,6 +387,11 @@ void termABuffer()
 		glDeleteBuffers(1, &g_quadBuffer);
 		g_quadBuffer = 0;
 	}
+	if (g_quadIndexBuffer != 0)
+	{
+		glDeleteBuffers(1, &g_quadIndexBuffer);
+		g_quadIndexBuffer = 0;
+	}
 	glcache.DeleteProgram(g_abuffer_final_shader.program);
 	g_abuffer_final_shader.program = 0;
 	glcache.DeleteProgram(g_abuffer_clear_shader.program);
@@ -388,22 +413,10 @@ void reshapeABuffer(int w, int h)
 	initABuffer();
 }
 
-void abufferDrawQuad()
+static void abufferDrawQuad()
 {
 	glBindVertexArray(g_quadVertexArray);
-
-	float vertices[] = {
-			-1,  1, 1,
-			-1, -1, 1,
-			 1,  1, 1,
-			 1, -1, 1,
-	};
-	GLushort indices[] = { 0, 1, 2, 1, 3 };
-
-	glBindBuffer(GL_ARRAY_BUFFER, g_quadBuffer); glCheck();
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STREAM_DRAW); glCheck();
-
-	glDrawElements(GL_TRIANGLE_STRIP, 5, GL_UNSIGNED_SHORT, indices); glCheck();
+	glDrawElements(GL_TRIANGLE_STRIP, 5, GL_UNSIGNED_SHORT, (GLvoid *)0);
 	glBindVertexArray(0);
 	glCheck();
 }

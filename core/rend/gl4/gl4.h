@@ -88,11 +88,16 @@ extern int max_image_width;
 extern int max_image_height;
 
 GLuint gl4BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt);
-void abufferDrawQuad();
 
 extern const char *gl4PixelPipelineShader;
 bool gl4CompilePipelineShader(gl4PipelineShader* s, const char *pixel_source = gl4PixelPipelineShader, const char *vertex_source = NULL);
-void gl4_delete_shaders();
+
+void initABuffer();
+void termABuffer();
+void reshapeABuffer(int width, int height);
+void renderABuffer();
+void DrawTranslucentModVols(int first, int count);
+void checkOverflowAndReset();
 
 extern GLuint stencilTexId;
 extern GLuint depthTexId;
@@ -248,6 +253,7 @@ bool isTwoVolumes(const PolyParam pp) \n\
 
 void gl4SetupMainVBO();
 void gl4SetupModvolVBO();
+void gl4CreateTextures(int width, int height);
 
 extern struct gl4ShaderUniforms_t
 {

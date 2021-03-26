@@ -118,8 +118,10 @@ uniform sampler2D DepthTex;
 uniform float trilinear_alpha;
 uniform vec4 fog_clamp_min;
 uniform vec4 fog_clamp_max;
+#if pp_Palette == 1
 uniform sampler2D palette;
 uniform int palette_index;
+#endif
 
 uniform ivec2 blend_mode[2];
 #if pp_TwoVolumes == 1
@@ -486,7 +488,7 @@ bool gl4CompilePipelineShader(	gl4PipelineShader* s, const char *pixel_source /*
 	return glIsProgram(s->program)==GL_TRUE;
 }
 
-void gl4_delete_shaders()
+static void gl4_delete_shaders()
 {
 	for (auto it : gl4.shaders)
 	{
@@ -556,9 +558,6 @@ static bool gl_create_resources()
 }
 
 //setup
-extern void initABuffer();
-void reshapeABuffer(int width, int height);
-extern void gl4CreateTextures(int width, int height);
 
 static bool gl4_init()
 {
@@ -870,8 +869,6 @@ static bool RenderFrame(int width, int height)
 
 	return !is_rtt;
 }
-
-void termABuffer();
 
 struct OpenGL4Renderer : OpenGLRenderer
 {

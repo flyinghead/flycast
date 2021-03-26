@@ -389,10 +389,6 @@ static void DrawModVols(int first, int count)
 	glcache.DepthMask(GL_TRUE);
 }
 
-void renderABuffer();
-void DrawTranslucentModVols(int first, int count);
-void checkOverflowAndReset();
-
 static GLuint CreateColorFBOTexture(int width, int height)
 {
 	GLuint texId = glcache.GenTexture();
