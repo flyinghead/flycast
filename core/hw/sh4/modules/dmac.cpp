@@ -78,7 +78,7 @@ void DMAC_Ch2St()
 			while (len > 0)
 			{
 				u32 v = ReadMem32_nommu(src);
-				pvr_write_area1<u32>(dst, v);
+				pvr_write32p<u32>(dst, v);
 				len -= 4;
 				src += 4;
 				dst += 4;

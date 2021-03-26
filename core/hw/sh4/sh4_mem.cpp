@@ -36,7 +36,7 @@ static _vmem_handler area1_32b;
 
 static void map_area1_init()
 {
-	area1_32b = _vmem_register_handler_Template(pvr_read_area1, pvr_write_area1);
+	area1_32b = _vmem_register_handler_Template(pvr_read32p, pvr_write32p);
 }
 
 static void map_area1(u32 base)

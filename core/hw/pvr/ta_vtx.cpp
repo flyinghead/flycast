@@ -1642,7 +1642,7 @@ static void decode_pvr_vertex(u32 base,u32 ptr,Vertex* cv)
 	//TSP
 	//TCW
 	ISP_TSP isp;
-	isp.full=vri(base);
+	isp.full = pvr_read32p<u32>(base);
 
 	//XYZ
 	//UV
@@ -1650,39 +1650,39 @@ static void decode_pvr_vertex(u32 base,u32 ptr,Vertex* cv)
 	//Offset Col
 
 	//XYZ are _always_ there :)
-	cv->x = vrf(ptr);
+	cv->x = pvr_read32p<float>(ptr);
 	ptr += 4;
-	cv->y = vrf(ptr);
+	cv->y = pvr_read32p<float>(ptr);
 	ptr += 4;
-	cv->z = vrf(ptr);
+	cv->z = pvr_read32p<float>(ptr);
 	ptr += 4;
 
 	if (isp.Texture)
 	{	//Do texture , if any
 		if (isp.UV_16b)
 		{
-			u32 uv = vri(ptr);
+			u32 uv = pvr_read32p<u32>(ptr);
 			cv->u = f16((u16)uv);
 			cv->v = f16((u16)(uv >> 16));
 			ptr+=4;
 		}
 		else
 		{
-			cv->u = vrf(ptr);
+			cv->u = pvr_read32p<float>(ptr);
 			ptr += 4;
-			cv->v = vrf(ptr);
+			cv->v = pvr_read32p<float>(ptr);
 			ptr += 4;
 		}
 	}
 
 	//Color
-	u32 col = vri(ptr);
+	u32 col = pvr_read32p<u32>(ptr);
 	ptr += 4;
 	vert_packed_color_(cv->col, col);
 	if (isp.Offset)
 	{
 		//Intensity color (can be missing too ;p)
-		u32 col = vri(ptr);
+		u32 col = pvr_read32p<u32>(ptr);
 		ptr += 4;
 		vert_packed_color_(cv->spc, col);
 	}
@@ -1751,9 +1751,9 @@ void FillBGP(TA_context* ctx)
 
 	bgpp->texid = -1;
 
-	bgpp->isp.full=vri(strip_base);
-	bgpp->tsp.full=vri(strip_base+4);
-	bgpp->tcw.full=vri(strip_base+8);
+	bgpp->isp.full = pvr_read32p<u32>(strip_base);
+	bgpp->tsp.full = pvr_read32p<u32>(strip_base + 4);
+	bgpp->tcw.full = pvr_read32p<u32>(strip_base + 8);
 	bgpp->tcw1.full = -1;
 	bgpp->tsp1.full = -1;
 	bgpp->texid1 = -1;
@@ -1828,7 +1828,7 @@ static void getRegionTileClipping(u32& xmin, u32& xmax, u32& ymin, u32& ymax)
 	int tile_size = (type1_tile ? 5 : 6) * 4;
 	bool empty_first_region = true;
 	for (int i = type1_tile ? 4 : 5; i > 0; i--)
-		if ((vri(addr + i * 4) & 0x80000000) == 0)
+		if ((pvr_read32p<u32>(addr + i * 4) & 0x80000000) == 0)
 		{
 			empty_first_region = false;
 			break;
@@ -1838,7 +1838,7 @@ static void getRegionTileClipping(u32& xmin, u32& xmax, u32& ymin, u32& ymax)
 
 	RegionArrayTile tile;
 	do {
-		tile.full = vri(addr);
+		tile.full = pvr_read32p<u32>(addr);
 		xmin = std::min(xmin, tile.X);
 		xmax = std::max(xmax, tile.X);
 		ymin = std::min(ymin, tile.Y);
@@ -1862,7 +1862,7 @@ static RegionArrayTile getRegionTile(int pass_number)
 	int tile_size = (type1_tile ? 5 : 6) * 4;
 	bool empty_first_region = true;
 	for (int i = type1_tile ? 4 : 5; i > 0; i--)
-		if ((vri(addr + i * 4) & 0x80000000) == 0)
+		if ((pvr_read32p<u32>(addr + i * 4) & 0x80000000) == 0)
 		{
 			empty_first_region = false;
 			break;
@@ -1871,11 +1871,11 @@ static RegionArrayTile getRegionTile(int pass_number)
 		addr += tile_size;
 
 	RegionArrayTile tile;
-	tile.full = vri(addr);
+	tile.full = pvr_read32p<u32>(addr);
 	if (type1_tile && tile.PreSort)
 		// Windows CE weirdness
 		tile_size = 6 * 4;
-	tile.full = vri(addr + pass_number * tile_size);
+	tile.full = pvr_read32p<u32>(addr + pass_number * tile_size);
 
 	return tile;
 }

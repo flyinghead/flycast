@@ -201,17 +201,18 @@ void YUV_unserialize(void **data, unsigned int *total_size, serialize_version_en
 
 //read
 template<typename T>
-T DYNACALL pvr_read_area1(u32 addr)
+T DYNACALL pvr_read32p(u32 addr)
 {
 	return *(T *)&vram[pvr_map32(addr)];
 }
-template u8 pvr_read_area1<u8>(u32 addr);
-template u16 pvr_read_area1<u16>(u32 addr);
-template u32 pvr_read_area1<u32>(u32 addr);
+template u8 pvr_read32p<u8>(u32 addr);
+template u16 pvr_read32p<u16>(u32 addr);
+template u32 pvr_read32p<u32>(u32 addr);
+template float pvr_read32p<float>(u32 addr);
 
 //write
 template<typename T>
-void DYNACALL pvr_write_area1(u32 addr, T data)
+void DYNACALL pvr_write32p(u32 addr, T data)
 {
 	if (sizeof(T) == 1)
 	{
@@ -224,9 +225,9 @@ void DYNACALL pvr_write_area1(u32 addr, T data)
 
 	*(T *)&vram[pvr_map32(addr)] = data;
 }
-template void pvr_write_area1<u8>(u32 addr, u8 data);
-template void pvr_write_area1<u16>(u32 addr, u16 data);
-template void pvr_write_area1<u32>(u32 addr, u32 data);
+template void pvr_write32p<u8>(u32 addr, u8 data);
+template void pvr_write32p<u16>(u32 addr, u16 data);
+template void pvr_write32p<u32>(u32 addr, u32 data);
 
 void DYNACALL TAWrite(u32 address, const SQBuffer *data, u32 count)
 {
@@ -255,7 +256,7 @@ void DYNACALL TAWriteSQ(u32 address, const SQBuffer *sqb)
 	{
 		// Used by WinCE
 		DEBUG_LOG(MEMORY, "Vram TAWriteSQ 0x%X SB_LMMODE0 %d", address, SB_LMMODE0);
-		bool path64b = (address & 0x02000000 ? SB_LMMODE1 : SB_LMMODE0) == 0;
+		bool path64b = (unlikely(address & 0x02000000) ? SB_LMMODE1 : SB_LMMODE0) == 0;
 		if (path64b)
 		{
 			// 64b path
@@ -266,7 +267,7 @@ void DYNACALL TAWriteSQ(u32 address, const SQBuffer *sqb)
 		{
 			// 32b path
 			for (u32 i = 0; i < sizeof(SQBuffer); i += 4)
-				pvr_write_area1<u32>(address_w + i, *(const u32 *)&sq->data[i]);
+				pvr_write32p<u32>(address_w + i, *(const u32 *)&sq->data[i]);
 		}
 	}
 }
@@ -292,22 +293,12 @@ static u32 pvr_map32(u32 offset32)
 	return rv;
 }
 
-
-f32 vrf(u32 addr)
-{
-	return *(f32*)&vram[pvr_map32(addr)];
-}
-u32 vri(u32 addr)
-{
-	return *(u32*)&vram[pvr_map32(addr)];
-}
-
 template<typename T, bool upper>
 T DYNACALL pvr_read_area4(u32 addr)
 {
 	bool access32 = (upper ? SB_LMMODE1 : SB_LMMODE0) == 1;
 	if (access32)
-		return pvr_read_area1<T>(addr);
+		return pvr_read32p<T>(addr);
 	else
 		return *(T*)&vram[addr & VRAM_MASK];
 }
@@ -323,7 +314,7 @@ void DYNACALL pvr_write_area4(u32 addr, T data)
 {
 	bool access32 = (upper ? SB_LMMODE1 : SB_LMMODE0) == 1;
 	if (access32)
-		pvr_write_area1(addr, data);
+		pvr_write32p(addr, data);
 	else
 		*(T*)&vram[addr & VRAM_MASK] = data;
 }

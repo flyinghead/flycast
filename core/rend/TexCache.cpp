@@ -797,7 +797,7 @@ void ReadFramebuffer(PixelBuffer<u32>& pb, int& width, int& height)
 			{
 				for (int i = 0; i < width; i++)
 				{
-					u16 src = pvr_read_area1<u16>(addr);
+					u16 src = pvr_read32p<u16>(addr);
 					*dst++ = (((src >> 10) & 0x1F) << 3) + FB_R_CTRL.fb_concat;
 					*dst++ = (((src >> 5) & 0x1F) << 3) + FB_R_CTRL.fb_concat;
 					*dst++ = (((src >> 0) & 0x1F) << 3) + FB_R_CTRL.fb_concat;
@@ -813,7 +813,7 @@ void ReadFramebuffer(PixelBuffer<u32>& pb, int& width, int& height)
 			{
 				for (int i = 0; i < width; i++)
 				{
-					u16 src = pvr_read_area1<u16>(addr);
+					u16 src = pvr_read32p<u16>(addr);
 					*dst++ = (((src >> 11) & 0x1F) << 3) + FB_R_CTRL.fb_concat;
 					*dst++ = (((src >> 5) & 0x3F) << 2) + (FB_R_CTRL.fb_concat & 3);
 					*dst++ = (((src >> 0) & 0x1F) << 3) + FB_R_CTRL.fb_concat;
@@ -828,7 +828,7 @@ void ReadFramebuffer(PixelBuffer<u32>& pb, int& width, int& height)
 			{
 				for (int i = 0; i < width; i += 4)
 				{
-					u32 src = pvr_read_area1<u32>(addr);
+					u32 src = pvr_read32p<u32>(addr);
 					*dst++ = src >> 16;
 					*dst++ = src >> 8;
 					*dst++ = src;
@@ -836,7 +836,7 @@ void ReadFramebuffer(PixelBuffer<u32>& pb, int& width, int& height)
 					addr += 4;
 					if (i + 1 >= width)
 						break;
-					u32 src2 = pvr_read_area1<u32>(addr);
+					u32 src2 = pvr_read32p<u32>(addr);
 					*dst++ = src2 >> 8;
 					*dst++ = src2;
 					*dst++ = src >> 24;
@@ -844,7 +844,7 @@ void ReadFramebuffer(PixelBuffer<u32>& pb, int& width, int& height)
 					addr += 4;
 					if (i + 2 >= width)
 						break;
-					u32 src3 = pvr_read_area1<u32>(addr);
+					u32 src3 = pvr_read32p<u32>(addr);
 					*dst++ = src3;
 					*dst++ = src2 >> 24;
 					*dst++ = src2 >> 16;
@@ -865,7 +865,7 @@ void ReadFramebuffer(PixelBuffer<u32>& pb, int& width, int& height)
 			{
 				for (int i = 0; i < width; i++)
 				{
-					u32 src = pvr_read_area1<u32>(addr);
+					u32 src = pvr_read32p<u32>(addr);
 					*dst++ = src >> 16;
 					*dst++ = src >> 8;
 					*dst++ = src;
