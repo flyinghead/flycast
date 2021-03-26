@@ -133,7 +133,6 @@ void palette_update()
 }
 
 static std::vector<vram_block*> VramLocks[VRAM_SIZE_MAX / PAGE_SIZE];
-VArray2 vram;  // vram 32-64b
 
 //List functions
 //

@@ -12,6 +12,8 @@
 
 static u32 pvr_map32(u32 offset32);
 
+VArray2 vram;
+
 // YUV converter code
 static SQBuffer YUV_tempdata[512 / sizeof(SQBuffer)];	// 512 bytes
 
