@@ -17,6 +17,7 @@
 	 along with flycast.  If not, see <https://www.gnu.org/licenses/>.
  */
 #include <array>
+#include <memory>
 #include "maple_devs.h"
 #include "stdclass.h"
 #include "cfg/cfg.h"
@@ -647,55 +648,55 @@ maple_naomi_jamma::maple_naomi_jamma()
 	{
 	case JVS::Default:
 	default:
-		io_boards.emplace_back(new jvs_837_13551(1, this));
+		io_boards.push_back(std::unique_ptr<jvs_837_13551>(new jvs_837_13551(1, this)));
 		break;
 	case JVS::FourPlayers:
-		io_boards.emplace_back(new jvs_837_13551_4P(1, this));
+		io_boards.push_back(std::unique_ptr<jvs_837_13551_4P>(new jvs_837_13551_4P(1, this)));
 		break;
 	case JVS::RotaryEncoders:
-		io_boards.emplace_back(new jvs_837_13938(1, this));
-		io_boards.emplace_back(new jvs_837_13551(2, this));
+		io_boards.push_back(std::unique_ptr<jvs_837_13938>(new jvs_837_13938(1, this)));
+		io_boards.push_back(std::unique_ptr<jvs_837_13551>(new jvs_837_13551(2, this)));
 		break;
 	case JVS::OutTrigger:
-		io_boards.emplace_back(new jvs_837_13938(1, this));
-		io_boards.emplace_back(new jvs_837_13551_noanalog(2, this));
+		io_boards.push_back(std::unique_ptr<jvs_837_13938>(new jvs_837_13938(1, this)));
+		io_boards.push_back(std::unique_ptr<jvs_837_13551_noanalog>(new jvs_837_13551_noanalog(2, this)));
 		break;
 	case JVS::SegaMarineFishing:
-		io_boards.emplace_back(new jvs_837_13844(1, this));
+		io_boards.push_back(std::unique_ptr<jvs_837_13844>(new jvs_837_13844(1, this)));
 		break;
 	case JVS::DualIOBoards4P:
-		io_boards.emplace_back(new jvs_837_13551(1, this));
-		io_boards.emplace_back(new jvs_837_13551(2, this, 2));
+		io_boards.push_back(std::unique_ptr<jvs_837_13551>(new jvs_837_13551(1, this)));
+		io_boards.push_back(std::unique_ptr<jvs_837_13551>(new jvs_837_13551(2, this, 2)));
 		break;
 	case JVS::LightGun:
-		io_boards.emplace_back(new jvs_namco_jyu(1, this));
+		io_boards.push_back(std::unique_ptr<jvs_namco_jyu>(new jvs_namco_jyu(1, this)));
 		break;
 	case JVS::LightGunAsAnalog:
 		// Regular board sending lightgun coords as axis 0/1
-		io_boards.emplace_back(new jvs_837_13551(1, this));
+		io_boards.push_back(std::unique_ptr<jvs_837_13551>(new jvs_837_13551(1, this)));
 		io_boards.back()->lightgun_as_analog = true;
 		break;
 	case JVS::Mazan:
-		io_boards.emplace_back(new jvs_namco_fcb(1, this));
-		io_boards.emplace_back(new jvs_namco_fcb(2, this));
+		io_boards.push_back(std::unique_ptr<jvs_namco_fcb>(new jvs_namco_fcb(1, this)));
+		io_boards.push_back(std::unique_ptr<jvs_namco_fcb>(new jvs_namco_fcb(2, this)));
 		break;
 	case JVS::GunSurvivor:
-		io_boards.emplace_back(new jvs_namco_fca(1, this));
+		io_boards.push_back(std::unique_ptr<jvs_namco_fca>(new jvs_namco_fca(1, this)));
 		break;
 	case JVS::DogWalking:
-		io_boards.emplace_back(new jvs_837_13844_encoders(1, this));
+		io_boards.push_back(std::unique_ptr<jvs_837_13844_encoders>(new jvs_837_13844_encoders(1, this)));
 		break;
 	case JVS::TouchDeUno:
-		io_boards.emplace_back(new jvs_837_13844_touch(1, this));
+		io_boards.push_back(std::unique_ptr<jvs_837_13844_touch>(new jvs_837_13844_touch(1, this)));
 		break;
 	case JVS::WorldKicks:
-		io_boards.emplace_back(new jvs_namco_v226(1, this));
+		io_boards.push_back(std::unique_ptr<jvs_namco_v226>(new jvs_namco_v226(1, this)));
 		break;
 	case JVS::WorldKicksPCB:
-		io_boards.emplace_back(new jvs_namco_v226_pcb(1, this));
+		io_boards.push_back(std::unique_ptr<jvs_namco_v226_pcb>(new jvs_namco_v226_pcb(1, this)));
 		break;
 	case JVS::WaveRunnerGP:
-		io_boards.emplace_back(new jvs_837_13844_wrungp(1, this));
+		io_boards.push_back(std::unique_ptr<jvs_837_13844_wrungp>(new jvs_837_13844_wrungp(1, this)));
 		break;
 	}
 }
