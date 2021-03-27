@@ -48,7 +48,7 @@ bool SzArchive::Open(const char* path)
 		return false;
 #endif
 	FileInStream_CreateVTable(&archiveStream);
-	LookToRead2_CreateVTable(&lookStream, false);
+	LookToRead2_CreateVTable(&lookStream, 0);
 	lookStream.buf = (Byte *)ISzAlloc_Alloc(&g_Alloc, kInputBufSize);
 	if (lookStream.buf == NULL)
 	{
