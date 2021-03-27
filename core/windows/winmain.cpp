@@ -514,7 +514,7 @@ void os_SetWindowText(const char* text)
 #if defined(USE_SDL)
 	sdl_window_set_text(text);
 #else
-	if (GetWindowLong(hWnd, GWL_STYLE) & WS_BORDER)
+	if (GetWindowLongPtr(hWnd, GWL_STYLE) & WS_BORDER)
 	{
 		SetWindowText(hWnd, text);
 	}
