@@ -287,7 +287,6 @@ public:
 
 extern Option<bool> DynarecEnabled;
 extern Option<bool> DynarecIdleSkip;
-extern Option<bool> DynarecUnstableOpt;
 extern Option<bool> DynarecSafeMode;
 extern Option<bool> DisableVmem32;
 

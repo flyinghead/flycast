@@ -720,10 +720,11 @@ private:
 		if (addr == NullAddress)
 			return false;
 		bool success = false;
+		const u32 start_page = block->vaddr >> 12;
+		const u32 end_page = (block->vaddr + (block->guest_opcodes - 1) * 2) >> 12;
 		while (true)
 		{
-			if ((addr >> 12) != (block->vaddr >> 12)
-					&& (addr >> 12) != ((block->vaddr + (block->guest_opcodes - 1) * 2) >> 12))
+			if ((addr >> 12) < start_page || ((addr + 2) >> 12) > end_page)
 				break;
 
 			u32 op = IReadMem16(addr);

@@ -71,11 +71,7 @@ static void recSh4_Run()
 
 	sh4_dyna_rcb=(u8*)&Sh4cntx + sizeof(Sh4cntx);
 	INFO_LOG(DYNAREC, "cntx // fpcb offset: %td // pc offset: %td // pc %08X", (u8*)&sh4rcb.fpcb - sh4_dyna_rcb, (u8*)&sh4rcb.cntx.pc - sh4_dyna_rcb, sh4rcb.cntx.pc);
-
-	if (config::DynarecUnstableOpt)
-		NOTICE_LOG(DYNAREC, "Warning: Unstable optimizations is on");
 	
-	verify(rcb_noffs(&next_pc)==-184);
 	ngen_mainloop(sh4_dyna_rcb);
 
 	sh4_int_bCpuRun = false;
@@ -405,12 +401,6 @@ static void recSh4_Init()
 	sh4Interp.Init();
 	bm_Init();
 
-	verify(rcb_noffs(p_sh4rcb->fpcb) == FPCB_OFFSET);
-
-	verify(rcb_noffs(p_sh4rcb->sq_buffer) == -512);
-
-	verify(rcb_noffs(&p_sh4rcb->cntx.sh4_sched_next) == -152);
-	verify(rcb_noffs(&p_sh4rcb->cntx.interrupt_pend) == -148);
 	
 	if (_nvmem_enabled())
 	{

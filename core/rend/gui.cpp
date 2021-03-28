@@ -1478,10 +1478,6 @@ static void gui_display_settings()
 		    {
 		    	OptionCheckbox("Safe Mode", config::DynarecSafeMode,
 		    			"Do not optimize integer division. Not recommended");
-#if HOST_CPU == CPU_ARM
-		    	OptionCheckbox("Unstable Optimizations", config::DynarecUnstableOpt,
-		    			"Enable unsafe optimizations. Will cause crash or environmental disaster");
-#endif
 		    	OptionCheckbox("Idle Skip", config::DynarecIdleSkip, "Skip wait loops. Recommended");
 		    }
 		    if (ImGui::CollapsingHeader("Network", ImGuiTreeNodeFlags_DefaultOpen))

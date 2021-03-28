@@ -1,5 +1,6 @@
 #pragma once
 #include "types.h"
+#include "stdclass.h"
 
 enum Sh4RegType
 {
@@ -290,12 +291,18 @@ typedef void DYNACALL sqw_fp(u32 dst, const SQBuffer *sqb);
 
 #define FPCB_SIZE (RAM_SIZE_MAX/2)
 #define FPCB_MASK (FPCB_SIZE -1)
+#if HOST_CPU == CPU_ARM
+// The arm32 dynarec context register (r8) points past the end of the Sh4RCB struct.
+// To get a pointer to the fpcb table, we substract sizeof(Sh4RCB), which we
+// want to be an i8r4 value that can be substracted in one op (such as 0x4100000)
 #define FPCB_PAD 0x100000
-#define FPCB_OFFSET (-(int)(FPCB_SIZE * sizeof(void*) + FPCB_PAD))
-struct Sh4RCB
+#else
+#define FPCB_PAD PAGE_SIZE
+#endif
+struct alignas(PAGE_SIZE) Sh4RCB
 {
 	void* fpcb[FPCB_SIZE];
-	u64 _pad[(FPCB_PAD - sizeof(Sh4Context) - sizeof(SQBuffer) * 2 - sizeof(void *)) / 8];
+	u8 _pad[FPCB_PAD - sizeof(Sh4Context) - sizeof(SQBuffer) * 2 - sizeof(void *)];
 	sqw_fp* do_sqw_nommu;
 	SQBuffer sq_buffer[2];
 	Sh4Context cntx;
@@ -316,15 +323,6 @@ INLINE void sh4_sr_SetFull(u32 value)
 }
 
 #define do_sqw_nommu sh4rcb.do_sqw_nommu
-
-template<typename T>
-s32 rcb_noffs(T* ptr)  
-{ 
-	s32 rv= (u8*)ptr - (u8*)p_sh4rcb-sizeof(Sh4RCB); 
-	verify(rv<0);
-
-	return rv;
-}
 
 #define sh4rcb (*p_sh4rcb)
 #define Sh4cntx (sh4rcb.cntx)

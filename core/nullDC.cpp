@@ -368,9 +368,8 @@ static void LoadSpecialSettings()
 void dc_reset(bool hard)
 {
 	plugins_Reset(hard);
-	mem_Reset(hard);
-
 	sh4_cpu.Reset(hard);
+	mem_Reset(hard);
 }
 
 static bool reset_requested;
