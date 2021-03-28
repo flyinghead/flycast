@@ -269,8 +269,7 @@ bool M4Cartridge::Write(u32 offset, u32 size, u32 data)
 
 M4Cartridge::~M4Cartridge()
 {
-	if (m_key_data != NULL)
-		free(m_key_data);
+	free(m_key_data);
 }
 
 std::string M4Cartridge::GetGameId()

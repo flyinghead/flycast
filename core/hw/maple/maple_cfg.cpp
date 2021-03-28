@@ -176,8 +176,7 @@ bool maple_atomiswave_coin_chute(int slot)
 
 void mcfg_Create(MapleDeviceType type, u32 bus, u32 port, s32 player_num = -1)
 {
-	if (MapleDevices[bus][port] != NULL)
-		delete MapleDevices[bus][port];
+	delete MapleDevices[bus][port];
 	maple_device* dev = maple_Create(type);
 	dev->Setup(maple_GetAddress(bus, port), player_num);
 	dev->config = new MapleConfigMap(dev);
