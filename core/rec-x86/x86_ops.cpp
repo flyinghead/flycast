@@ -27,30 +27,35 @@
 #include "hw/sh4/sh4_core.h"
 #include "hw/mem/_vmem.h"
 
-namespace MemOp {
-enum Size {
+namespace MemSize {
+enum {
 	S8,
 	S16,
 	S32,
 	F32,
 	F64,
-	SizeCount
-};
-
-enum Op {
-	R,
-	W,
-	OpCount
-};
-
-enum Type {
-	Fast,
-	Slow,
-	TypeCount
+	Count
 };
 }
 
-static const void *MemHandlers[MemOp::TypeCount][MemOp::SizeCount][MemOp::OpCount];
+namespace MemOp {
+enum {
+	R,
+	W,
+	Count
+};
+}
+
+namespace MemType {
+enum {
+	Fast,
+	StoreQueue,
+	Slow,
+	Count
+};
+}
+
+static const void *MemHandlers[MemType::Count][MemSize::Count][MemOp::Count];
 static const u8 *MemHandlerStart, *MemHandlerEnd;
 
 void X86Compiler::genMemHandlers()
@@ -59,15 +64,15 @@ void X86Compiler::genMemHandlers()
 	verify(ReadMem8 != nullptr);
 
 	MemHandlerStart = getCurr();
-	for (int type = 0; type < MemOp::TypeCount; type++)
+	for (int type = 0; type < MemType::Count; type++)
 	{
-		for (int size = 0; size < MemOp::SizeCount; size++)
+		for (int size = 0; size < MemSize::Count; size++)
 		{
-			for (int op = 0; op < MemOp::OpCount; op++)
+			for (int op = 0; op < MemOp::Count; op++)
 			{
 				MemHandlers[type][size][op] = getCurr();
 
-				if (type == MemOp::Fast && _nvmem_enabled())
+				if (type == MemType::Fast && _nvmem_enabled())
 				{
 					mov(eax, ecx);
 					and_(ecx, 0x1FFFFFFF);
@@ -75,15 +80,15 @@ void X86Compiler::genMemHandlers()
 					Xbyak::Reg reg;
 					switch (size)
 					{
-					case MemOp::S8:
+					case MemSize::S8:
 						address = byte[ecx + (size_t)virt_ram_base];
 						reg = op == MemOp::R ? (Xbyak::Reg)eax : (Xbyak::Reg)dl;
 						break;
-					case MemOp::S16:
+					case MemSize::S16:
 						address = word[ecx + (size_t)virt_ram_base];
 						reg = op == MemOp::R ? (Xbyak::Reg)eax : (Xbyak::Reg)dx;
 						break;
-					case MemOp::S32:
+					case MemSize::S32:
 						address = dword[ecx + (size_t)virt_ram_base];
 						reg = op == MemOp::R ? eax : edx;
 						break;
@@ -91,13 +96,13 @@ void X86Compiler::genMemHandlers()
 						address = dword[ecx + (size_t)virt_ram_base];
 						break;
 					}
-					if (size >= MemOp::F32)
+					if (size >= MemSize::F32)
 					{
 						if (op == MemOp::R)
 							movss(xmm0, address);
 						else
 							movss(address, xmm0);
-						if (size == MemOp::F64)
+						if (size == MemSize::F64)
 						{
 							address = dword[ecx + (size_t)virt_ram_base + 4];
 							if (op == MemOp::R)
@@ -110,7 +115,7 @@ void X86Compiler::genMemHandlers()
 					{
 						if (op == MemOp::R)
 						{
-							if (size <= MemOp::S16)
+							if (size <= MemSize::S16)
 								movsx(reg, address);
 							else
 								mov(reg, address);
@@ -119,37 +124,81 @@ void X86Compiler::genMemHandlers()
 							mov(address, reg);
 					}
 				}
+				else if (type == MemType::StoreQueue)
+				{
+					if (op != MemOp::W || size < MemSize::S32)
+						continue;
+					Xbyak::Label no_sqw;
+
+					mov(eax, ecx);
+					shr(eax, 26);
+					cmp(eax, 0x38);
+					jne(no_sqw);
+					and_(ecx, 0x3F);
+
+					if (size == MemSize::S32)
+						mov(dword[(size_t)p_sh4rcb->sq_buffer + ecx], edx);
+					else if (size >= MemSize::F32)
+					{
+						movss(dword[(size_t)p_sh4rcb->sq_buffer + ecx], xmm0);
+						if (size == MemSize::F64)
+							movss(dword[((size_t)p_sh4rcb->sq_buffer + 4) + ecx], xmm1);
+					}
+					ret();
+					L(no_sqw);
+					// TODO Fall through SQ -> slow path to avoid code dup
+					if (size == MemSize::F64)
+					{
+#ifndef _WIN32
+						// 16-byte alignment
+						alignStack(-12);
+#else
+						sub(esp, 8);
+#endif
+						movss(dword[esp], xmm0);
+						movss(dword[esp + 4], xmm1);
+						call((const void *)WriteMem64);	// dynacall adds 8 to esp
+						alignStack(4);
+					}
+					else
+					{
+						if (size == MemSize::F32)
+							movd(edx, xmm0);
+						jmp((const void *)WriteMem32);	// tail call
+						continue;
+					}
+				}
 				else
 				{
 					// Slow path
 					if (op == MemOp::R)
 					{
 						switch (size) {
-						case MemOp::S8:
+						case MemSize::S8:
 							// 16-byte alignment
 							alignStack(-12);
 							call((const void *)ReadMem8);
 							movsx(eax, al);
 							alignStack(12);
 							break;
-						case MemOp::S16:
+						case MemSize::S16:
 							// 16-byte alignment
 							alignStack(-12);
 							call((const void *)ReadMem16);
 							movsx(eax, ax);
 							alignStack(12);
 							break;
-						case MemOp::S32:
+						case MemSize::S32:
 							jmp((const void *)ReadMem32);	// tail call
 							continue;
-						case MemOp::F32:
+						case MemSize::F32:
 							// 16-byte alignment
 							alignStack(-12);
 							call((const void *)ReadMem32);
 							movd(xmm0, eax);
 							alignStack(12);
 							break;
-						case MemOp::F64:
+						case MemSize::F64:
 							// 16-byte alignment
 							alignStack(-12);
 							call((const void *)ReadMem64);
@@ -164,20 +213,20 @@ void X86Compiler::genMemHandlers()
 					else
 					{
 						switch (size) {
-						case MemOp::S8:
+						case MemSize::S8:
 							jmp((const void *)WriteMem8);	// tail call
 							continue;
-						case MemOp::S16:
+						case MemSize::S16:
 							jmp((const void *)WriteMem16);	// tail call
 							continue;
-						case MemOp::S32:
+						case MemSize::S32:
 							jmp((const void *)WriteMem32);	// tail call
 							continue;
-						case MemOp::F32:
+						case MemSize::F32:
 							movd(edx, xmm0);
 							jmp((const void *)WriteMem32);	// tail call
 							continue;
-						case MemOp::F64:
+						case MemSize::F64:
 #ifndef _WIN32
 							// 16-byte alignment
 							alignStack(-12);
@@ -246,30 +295,30 @@ void X86Compiler::genOpcode(RuntimeBlockInfo* block, bool optimise, shil_opcode&
 			switch (op.flags & 0x7f)
 			{
 			case 1:
-				memOpSize = MemOp::S8;
+				memOpSize = MemSize::S8;
 				break;
 			case 2:
-				memOpSize = MemOp::S16;
+				memOpSize = MemSize::S16;
 				break;
 			case 4:
-				memOpSize = regalloc.IsAllocf(op.rd) ? MemOp::F32 : MemOp::S32;
+				memOpSize = regalloc.IsAllocf(op.rd) ? MemSize::F32 : MemSize::S32;
 				break;
 			case 8:
-				memOpSize = MemOp::F64;
+				memOpSize = MemSize::F64;
 				break;
 			}
 
 			freezeXMM();
 			const u8 *start = getCurr();
-			call(MemHandlers[optimise ? MemOp::Fast : MemOp::Slow][memOpSize][MemOp::R]);
+			call(MemHandlers[optimise ? MemType::Fast : MemType::Slow][memOpSize][MemOp::R]);
 			verify(getCurr() - start == 5);
 			thawXMM();
 
-			if (memOpSize <= MemOp::S32)
+			if (memOpSize <= MemSize::S32)
 			{
 				host_reg_to_shil_param(op.rd, eax);
 			}
-			else if (memOpSize == MemOp::F32)
+			else if (memOpSize == MemSize::F32)
 			{
 				host_reg_to_shil_param(op.rd, xmm0);
 			}
@@ -310,22 +359,22 @@ void X86Compiler::genOpcode(RuntimeBlockInfo* block, bool optimise, shil_opcode&
 			switch (op.flags & 0x7f)
 			{
 			case 1:
-				memOpSize = MemOp::S8;
+				memOpSize = MemSize::S8;
 				break;
 			case 2:
-				memOpSize = MemOp::S16;
+				memOpSize = MemSize::S16;
 				break;
 			case 4:
-				memOpSize = regalloc.IsAllocf(op.rs2) ? MemOp::F32 : MemOp::S32;
+				memOpSize = regalloc.IsAllocf(op.rs2) ? MemSize::F32 : MemSize::S32;
 				break;
 			case 8:
-				memOpSize = MemOp::F64;
+				memOpSize = MemSize::F64;
 				break;
 			}
 
-			if (memOpSize <= MemOp::S32)
+			if (memOpSize <= MemSize::S32)
 				shil_param_to_host_reg(op.rs2, edx);
-			else if (memOpSize == MemOp::F32)
+			else if (memOpSize == MemSize::F32)
 				shil_param_to_host_reg(op.rs2, xmm0);
 			else {
 #ifdef EXPLODE_SPANS
@@ -343,7 +392,7 @@ void X86Compiler::genOpcode(RuntimeBlockInfo* block, bool optimise, shil_opcode&
 			}
 			freezeXMM();
 			const u8 *start = getCurr();
-			call(MemHandlers[optimise ? MemOp::Fast : MemOp::Slow][memOpSize][MemOp::W]);
+			call(MemHandlers[optimise ? MemType::Fast : MemType::Slow][memOpSize][MemOp::W]);
 			verify(getCurr() - start == 5);
 			thawXMM();
 		}
@@ -448,16 +497,19 @@ bool X86Compiler::rewriteMemAccess(host_context_t &context)
 
 	void *ca = *(u32 *)(retAddr - 4) + retAddr;
 
-	for (int size = 0; size < MemOp::SizeCount; size++)
+	for (int size = 0; size < MemSize::Count; size++)
 	{
-		for (int op = 0; op < MemOp::OpCount; op++)
+		for (int op = 0; op < MemOp::Count; op++)
 		{
-			if ((void *)MemHandlers[MemOp::Fast][size][op] != ca)
+			if ((void *)MemHandlers[MemType::Fast][size][op] != ca)
 				continue;
 
 			//found !
 			const u8 *start = getCurr();
-			call(MemHandlers[MemOp::Slow][size][op]);
+			if (op == MemOp::W && size >= MemSize::S32 && (context.eax >> 26) == 0x38)
+				call(MemHandlers[MemType::StoreQueue][size][MemOp::W]);
+			else
+				call(MemHandlers[MemType::Slow][size][op]);
 			verify(getCurr() - start == 5);
 
 			ready();
