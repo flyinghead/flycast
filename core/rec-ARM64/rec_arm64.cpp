@@ -68,6 +68,8 @@ static DynaCode *blockCheckFail;
 static DynaCode *linkBlockGenericStub;
 static DynaCode *linkBlockBranchStub;
 static DynaCode *linkBlockNextStub;
+static DynaCode *writeStoreQueue32;
+static DynaCode *writeStoreQueue64;
 
 static bool restarting;
 
@@ -349,7 +351,7 @@ public:
 					Mov(w10, op.rs2._imm);
 					Str(w10, sh4_context_mem_operand(&next_pc));
 				}
-				Mov(*call_regs[0], op.rs3._imm);
+				Mov(w0, op.rs3._imm);
 
 				if (!mmu_enabled())
 				{
@@ -357,8 +359,8 @@ public:
 				}
 				else
 				{
-					Mov(*call_regs64[1], reinterpret_cast<uintptr_t>(*OpDesc[op.rs3._imm]->oph));	// op handler
-					Mov(*call_regs[2], block->vaddr + op.guest_offs - (op.delay_slot ? 1 : 0));	// pc
+					Mov(x1, reinterpret_cast<uintptr_t>(*OpDesc[op.rs3._imm]->oph));	// op handler
+					Mov(w2, block->vaddr + op.guest_offs - (op.delay_slot ? 1 : 0));	// pc
 
 					GenCallRuntime(interpreter_fallback);
 				}
@@ -806,7 +808,7 @@ public:
 				{
 					Label not_sqw;
 					if (op.rs1.is_imm())
-						Mov(*call_regs[0], op.rs1._imm);
+						Mov(w0, op.rs1._imm);
 					else
 					{
 						if (regalloc.IsAllocg(op.rs1))
@@ -824,7 +826,7 @@ public:
 
 					if (mmu_enabled())
 					{
-						Mov(*call_regs[1], block->vaddr + op.guest_offs - (op.delay_slot ? 1 : 0));	// pc
+						Mov(w1, block->vaddr + op.guest_offs - (op.delay_slot ? 1 : 0));	// pc
 
 						GenCallRuntime(do_sqw_mmu_no_ex);
 					}
@@ -1516,11 +1518,40 @@ public:
 		}
 		Br(x0);
 
+		// Store Queue write handlers
+		Label writeStoreQueue32Label;
+		Bind(&writeStoreQueue32Label);
+		Lsr(x7, x0, 26);
+		Cmp(x7, 0x38);
+		if (!mmu_enabled())
+			GenBranchRuntime(WriteMem32, Condition::ne);
+		else
+			GenBranchRuntime(WriteMemNoEx<u32>, Condition::ne);
+		And(x0, x0, 0x3f);
+		Sub(x7, x0, sizeof(Sh4RCB::sq_buffer), LeaveFlags);
+		Str(w1, MemOperand(x28, x7));
+		Ret();
+
+		Label writeStoreQueue64Label;
+		Bind(&writeStoreQueue64Label);
+		Lsr(x7, x0, 26);
+		Cmp(x7, 0x38);
+		if (!mmu_enabled())
+			GenBranchRuntime(WriteMem64, Condition::ne);
+		else
+			GenBranchRuntime(WriteMemNoEx<u64>, Condition::ne);
+		And(x0, x0, 0x3f);
+		Sub(x7, x0, sizeof(Sh4RCB::sq_buffer), LeaveFlags);
+		Str(x1, MemOperand(x28, x7));
+		Ret();
+
 		FinalizeCode();
 		emit_Skip(GetBuffer()->GetSizeInBytes());
 
 		arm64_no_update = GetLabelAddress<DynaCode *>(&no_update);
 		handleException = (void (*)())CC_RW2RX(GetLabelAddress<uintptr_t>(&handleExceptionLabel));
+		writeStoreQueue32 = GetLabelAddress<DynaCode *>(&writeStoreQueue32Label);
+		writeStoreQueue64 = GetLabelAddress<DynaCode *>(&writeStoreQueue64Label);
 
 		// Flush and invalidate caches
 		vmem_platform_flush_cache(
@@ -1528,6 +1559,16 @@ public:
 			GetBuffer()->GetStartAddress<void*>(), GetBuffer()->GetEndAddress<void*>());
 	}
 
+	void GenWriteStoreQueue(u32 size)
+	{
+		Instruction *start_instruction = GetCursorAddress<Instruction *>();
+
+		if (size == 4)
+			GenCall(writeStoreQueue32);
+		else
+			GenCall(writeStoreQueue64);
+		EnsureCodeSize(start_instruction, write_memory_rewrite_size);
+	}
 
 private:
 	// Runtime branches/calls need to be adjusted if rx space is different to rw space.
@@ -1555,14 +1596,17 @@ private:
 	}
 
    template <typename R, typename... P>
-	void GenBranchRuntime(R (*target)(P...))
+	void GenBranchRuntime(R (*target)(P...), Condition cond = al)
 	{
 		ptrdiff_t offset = reinterpret_cast<uintptr_t>(target) - reinterpret_cast<uintptr_t>(CC_RW2RX(GetBuffer()->GetStartAddress<void*>()));
 		verify(offset >= -128 * 1024 * 1024 && offset <= 128 * 1024 * 1024);
 		verify((offset & 3) == 0);
 		Label target_label;
 		BindToOffset(&target_label, offset);
-		B(&target_label);
+		if (cond == al)
+			B(&target_label);
+		else
+			B(&target_label, cond);
 	}
 
 	void GenBranch(DynaCode *code, Condition cond = al)
@@ -1585,7 +1629,7 @@ private:
 
 		GenMemAddr(op, call_regs[0]);
 		if (mmu_enabled())
-			Mov(*call_regs[2], block->vaddr + op.guest_offs - (op.delay_slot ? 2 : 0));	// pc
+			Mov(w2, block->vaddr + op.guest_offs - (op.delay_slot ? 2 : 0));	// pc
 
 		u32 size = op.flags & 0x7f;
 		if (!optimise || !GenReadMemoryFast(op, opid))
@@ -1756,12 +1800,12 @@ private:
 		// Update ngen_Rewrite (and perhaps read_memory_rewrite_size) if adding or removing code
 		if (!_nvmem_4gb_space())
 		{
-			Ubfx(x1, *call_regs64[0], 0, 29);
+			Ubfx(x1, x0, 0, 29);
 			Add(x1, x1, sizeof(Sh4Context), LeaveFlags);
 		}
 		else
 		{
-			Add(x1, *call_regs64[0], sizeof(Sh4Context), LeaveFlags);
+			Add(x1, x0, sizeof(Sh4Context), LeaveFlags);
 		}
 
 		u32 size = op.flags & 0x7f;
@@ -1795,13 +1839,13 @@ private:
 
 		GenMemAddr(op, call_regs[0]);
 		if (mmu_enabled())
-			Mov(*call_regs[2], block->vaddr + op.guest_offs - (op.delay_slot ? 2 : 0));	// pc
+			Mov(w2, block->vaddr + op.guest_offs - (op.delay_slot ? 2 : 0));	// pc
 
 		u32 size = op.flags & 0x7f;
 		if (size != 8)
-			shil_param_to_host_reg(op.rs2, *call_regs[1]);
+			shil_param_to_host_reg(op.rs2, w1);
 		else
-			shil_param_to_host_reg(op.rs2, *call_regs64[1]);
+			shil_param_to_host_reg(op.rs2, x1);
 		if (optimise && GenWriteMemoryFast(op, opid))
 			return;
 
@@ -1947,12 +1991,12 @@ private:
 		// Update ngen_Rewrite (and perhaps write_memory_rewrite_size) if adding or removing code
 		if (!_nvmem_4gb_space())
 		{
-			Ubfx(x7, *call_regs64[0], 0, 29);
+			Ubfx(x7, x0, 0, 29);
 			Add(x7, x7, sizeof(Sh4Context), LeaveFlags);
 		}
 		else
 		{
-			Add(x7, *call_regs64[0], sizeof(Sh4Context), LeaveFlags);
+			Add(x7, x0, sizeof(Sh4Context), LeaveFlags);
 		}
 
 		u32 size = op.flags & 0x7f;
@@ -2052,9 +2096,9 @@ private:
 			Ldr(w10, sh4_context_mem_operand(&sr));
 			Tbz(w10, 15, &fpu_enabled);			// test SR.FD bit
 
-			Mov(*call_regs[0], block->vaddr);	// pc
-			Mov(*call_regs[1], 0x800);			// event
-			Mov(*call_regs[2], 0x100);			// vector
+			Mov(w0, block->vaddr);	// pc
+			Mov(w1, 0x800);			// event
+			Mov(w2, 0x100);			// vector
 			CallRuntime(Do_Exception);
 			Ldr(w29, sh4_context_mem_operand(&next_pc));
 			GenBranch(arm64_no_update);
@@ -2227,6 +2271,8 @@ bool ngen_Rewrite(host_context_t &context, void *faultAddress)
 	Arm64Assembler *assembler = new Arm64Assembler(code_rewrite);
 	if (is_read)
 		assembler->GenReadMemorySlow(size);
+	else if (!is_read && size >= 4 && (((u8 *)faultAddress - virt_ram_base) >> 26) == 0x38)
+		assembler->GenWriteStoreQueue(size);
 	else
 		assembler->GenWriteMemorySlow(size);
 	assembler->Finalize(true);
