@@ -76,6 +76,8 @@ size_t RZipFile::Read(void *data, size_t length)
 			u32 zippedSize;
 			if (std::fread(&zippedSize, sizeof(zippedSize), 1, file) != 1)
 				break;
+			if (zippedSize == 0)
+				continue;
 			u8 *zipped = new u8[zippedSize];
 			if (std::fread(zipped, zippedSize, 1, file) != 1)
 			{
