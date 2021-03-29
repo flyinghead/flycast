@@ -768,7 +768,14 @@ public:
 
 				//found !
 				const u8 *start = getCurr();
-				if (op == MemOp::W && size >= MemSize::S32 && (context.rdi >> 26) == 0x38)
+				u32 memAddress = _nvmem_4gb_space() ?
+#ifdef _WIN32
+						context.rcx
+#else
+						context.rdi
+#endif
+						: context.r9;
+				if (op == MemOp::W && size >= MemSize::S32 && (memAddress >> 26) == 0x38)
 					call(MemHandlers[MemType::StoreQueue][size][MemOp::W]);
 				else
 					call(MemHandlers[MemType::Slow][size][op]);
@@ -782,9 +789,9 @@ public:
 				if (!_nvmem_4gb_space())
 					//restore the addr from r9 to arg0 (rcx or rdi) so it's valid again
 #ifdef _WIN32
-					context.rcx = context.r9;
+					context.rcx = memAddress;
 #else
-					context.rdi = context.r9;
+					context.rdi = memAddress;
 #endif
 
 				return true;
