@@ -1019,7 +1019,7 @@ bool ngen_writemem_immediate(RuntimeBlockInfo* block, shil_opcode* op, bool stag
 
 	mem_op_type optp = memop_type(op);
 	bool isram = false;
-	void* ptr = _vmem_write_const(op->rs1._imm, isram, std::max(4u, memop_bytes(optp)));
+	void* ptr = _vmem_write_const(op->rs1._imm, isram, std::min(4u, memop_bytes(optp)));
 
 	eReg rs2 = r1;
 	eFSReg rs2f = f0;
