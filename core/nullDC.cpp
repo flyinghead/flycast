@@ -553,7 +553,7 @@ static void dc_start_game(const char *path)
 					// Content load failed. Boot the BIOS
 					settings.imgread.ImagePath[0] = '\0';
 					if (!LoadRomFiles())
-						throw ReicastException("No BIOS file found");
+						throw ReicastException("This media cannot be loaded");
 					InitDrive();
 				}
 			}

@@ -334,10 +334,8 @@ public:
 	}
 
 	void reset() override {
-		RenderType current = value;
-		Option<RenderType>::reset();
-		newValue = value;
-		value = current;
+		// don't reset the value to avoid vk -> gl -> vk quick switching
+		overridden = false;
 	}
 
 	bool pendingChange() {

@@ -88,7 +88,6 @@ bool CHDDisc::TryOpen(const char* file)
 
 	if (err != CHDERR_NONE)
 	{
-		std::fclose(fp);
 		INFO_LOG(GDROM, "chd: chd_open_file failed for file %s: %d", file, err);
 		return false;
 	}
