@@ -297,7 +297,7 @@ typedef void DYNACALL sqw_fp(u32 dst, const SQBuffer *sqb);
 // want to be an i8r4 value that can be substracted in one op (such as 0x4100000)
 #define FPCB_PAD 0x100000
 #else
-#define FPCB_PAD PAGE_SIZE
+#define FPCB_PAD 0x10000
 #endif
 struct alignas(PAGE_SIZE) Sh4RCB
 {
