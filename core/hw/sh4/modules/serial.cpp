@@ -136,6 +136,8 @@ static void SCSCR2_write(u32 addr, u32 data)
 //Init term res
 void serial_init()
 {
+	// Serial Communication Interface with FIFO
+
 	//SCIF SCSMR2 0xFFE80000 0x1FE80000 16 0x0000 0x0000 Held Held Pclk
 	sh4_rio_reg(SCIF,SCIF_SCSMR2_addr,RIO_DATA,16);
 
@@ -183,6 +185,15 @@ void serial_init()
 		}
 	}
 #endif
+
+	// Serial Communication Interface
+	sh4_rio_reg(SCI, SCI_SCSMR1_addr, RIO_DATA, 8);
+	sh4_rio_reg(SCI, SCI_SCBRR1_addr, RIO_DATA, 8);
+	sh4_rio_reg(SCI, SCI_SCSCR1_addr, RIO_DATA, 8);
+	sh4_rio_reg(SCI, SCI_SCTDR1_addr, RIO_DATA, 8);
+	sh4_rio_reg(SCI, SCI_SCSSR1_addr, RIO_DATA, 8);
+	sh4_rio_reg(SCI, SCI_SCRDR1_addr, RIO_RO, 8);
+	sh4_rio_reg(SCI, SCI_SCSPTR1_addr, RIO_DATA, 8);
 }
 void serial_reset()
 {
@@ -205,6 +216,14 @@ void serial_reset()
 	SCIF_SCSPTR2.full=0x000;
 	SCIF_SCLSR2.full=0x000;
 	SCIF_SCSCR2.full = 0;
+
+	SCI_SCSMR1 = 0;
+	SCI_SCBRR1 = 0xff;
+	SCI_SCSCR1 = 0;
+	SCI_SCTDR1 = 0xff;
+	SCI_SCSSR1 = 0x84;
+	SCI_SCRDR1 = 0;
+	SCI_SCSPTR1 = 0;
 }
 
 void serial_term()

@@ -300,7 +300,7 @@ void DYNACALL WriteMem_P4(u32 addr,T data)
 		}
 
 	case 0xF4:
-		DEBUG_LOG(SH4, "OC Address write %08x = %x", addr, data);
+//		DEBUG_LOG(SH4, "OC Address write %08x = %x", addr, data);
 		if (sz == 4)
 			ocache.WriteAddressArray(addr, data);
 		return;
@@ -415,12 +415,12 @@ T DYNACALL ReadMem_area7(u32 addr)
 
 	addr&=0x1FFFFFFF;
 	u32 map_base=addr>>16;
-	switch (map_base & 0x1FFF)
+	switch (map_base)
 	{
 	case A7_REG_HASH(CCN_BASE_addr):
 		if (addr<=0x1F000044)
 		{
-			return (T)sh4_rio_read<sz>(CCN,addr & 0xFF);
+			return (T)sh4_rio_read<sz>(CCN, addr);
 		}
 		else
 		{
@@ -432,7 +432,7 @@ T DYNACALL ReadMem_area7(u32 addr)
 	case A7_REG_HASH(UBC_BASE_addr):
 		if (addr<=0x1F200020)
 		{
-			return (T)sh4_rio_read<sz>(UBC,addr & 0xFF);
+			return (T)sh4_rio_read<sz>(UBC, addr);
 		}
 		else
 		{
@@ -444,7 +444,7 @@ T DYNACALL ReadMem_area7(u32 addr)
 	case A7_REG_HASH(BSC_BASE_addr):
 		if (addr<=0x1F800048)
 		{
-			return (T)sh4_rio_read<sz>(BSC,addr & 0xFF);
+			return (T)sh4_rio_read<sz>(BSC, addr);
 		}
 		else
 		{
@@ -452,6 +452,7 @@ T DYNACALL ReadMem_area7(u32 addr)
 			return 0;
 		}
 		break;
+
 	case A7_REG_HASH(BSC_SDMR2_addr):
 		//dram settings 2 / write only
 		INFO_LOG(SH4, "Read from write-only registers [dram settings 2]");
@@ -461,12 +462,10 @@ T DYNACALL ReadMem_area7(u32 addr)
 		INFO_LOG(SH4, "Read from write-only registers [dram settings 3]");
 		return 0;
 
-
-
 	case A7_REG_HASH(DMAC_BASE_addr):
 		if (addr<=0x1FA00040)
 		{
-			return (T)sh4_rio_read<sz>(DMAC,addr & 0xFF);
+			return (T)sh4_rio_read<sz>(DMAC, addr);
 		}
 		else
 		{
@@ -478,7 +477,7 @@ T DYNACALL ReadMem_area7(u32 addr)
 	case A7_REG_HASH(CPG_BASE_addr):
 		if (addr<=0x1FC00010)
 		{
-			return (T)sh4_rio_read<sz>(CPG,addr & 0xFF);
+			return (T)sh4_rio_read<sz>(CPG, addr);
 		}
 		else
 		{
@@ -490,7 +489,7 @@ T DYNACALL ReadMem_area7(u32 addr)
 	case A7_REG_HASH(RTC_BASE_addr):
 		if (addr<=0x1FC8003C)
 		{
-			return (T)sh4_rio_read<sz>(RTC,addr & 0xFF);
+			return (T)sh4_rio_read<sz>(RTC, addr);
 		}
 		else
 		{
@@ -502,7 +501,7 @@ T DYNACALL ReadMem_area7(u32 addr)
 	case A7_REG_HASH(INTC_BASE_addr):
 		if (addr<=0x1FD00010)
 		{
-			return (T)sh4_rio_read<sz>(INTC,addr & 0xFF);
+			return (T)sh4_rio_read<sz>(INTC, addr);
 		}
 		else
 		{
@@ -514,7 +513,7 @@ T DYNACALL ReadMem_area7(u32 addr)
 	case A7_REG_HASH(TMU_BASE_addr):
 		if (addr<=0x1FD8002C)
 		{
-			return (T)sh4_rio_read<sz>(TMU,addr & 0xFF);
+			return (T)sh4_rio_read<sz>(TMU, addr);
 		}
 		else
 		{
@@ -526,7 +525,7 @@ T DYNACALL ReadMem_area7(u32 addr)
 	case A7_REG_HASH(SCI_BASE_addr):
 		if (addr<=0x1FE0001C)
 		{
-			return (T)sh4_rio_read<sz>(SCI,addr & 0xFF);
+			return (T)sh4_rio_read<sz>(SCI, addr);
 		}
 		else
 		{
@@ -538,7 +537,7 @@ T DYNACALL ReadMem_area7(u32 addr)
 	case A7_REG_HASH(SCIF_BASE_addr):
 		if (addr<=0x1FE80024)
 		{
-			return (T)sh4_rio_read<sz>(SCIF,addr & 0xFF);
+			return (T)sh4_rio_read<sz>(SCIF, addr);
 		}
 		else
 		{
@@ -585,13 +584,13 @@ void DYNACALL WriteMem_area7(u32 addr,T data)
 
 	addr&=0x1FFFFFFF;
 	u32 map_base=addr>>16;
-	switch (map_base & 0x1FFF)
+	switch (map_base)
 	{
 
 	case A7_REG_HASH(CCN_BASE_addr):
 		if (addr<=0x1F00003C)
 		{
-			sh4_rio_write<sz>(CCN,addr & 0xFF,data);
+			sh4_rio_write<sz>(CCN, addr, data);
 		}
 		else
 		{
@@ -602,7 +601,7 @@ void DYNACALL WriteMem_area7(u32 addr,T data)
 	case A7_REG_HASH(UBC_BASE_addr):
 		if (addr<=0x1F200020)
 		{
-			sh4_rio_write<sz>(UBC,addr & 0xFF,data);
+			sh4_rio_write<sz>(UBC, addr, data);
 		}
 		else
 		{
@@ -613,7 +612,7 @@ void DYNACALL WriteMem_area7(u32 addr,T data)
 	case A7_REG_HASH(BSC_BASE_addr):
 		if (addr<=0x1F800048)
 		{
-			sh4_rio_write<sz>(BSC,addr & 0xFF,data);
+			sh4_rio_write<sz>(BSC, addr, data);
 		}
 		else
 		{
@@ -631,7 +630,7 @@ void DYNACALL WriteMem_area7(u32 addr,T data)
 	case A7_REG_HASH(DMAC_BASE_addr):
 		if (addr<=0x1FA00040)
 		{
-			sh4_rio_write<sz>(DMAC,addr & 0xFF,data);
+			sh4_rio_write<sz>(DMAC, addr, data);
 		}
 		else
 		{
@@ -642,7 +641,7 @@ void DYNACALL WriteMem_area7(u32 addr,T data)
 	case A7_REG_HASH(CPG_BASE_addr):
 		if (addr<=0x1FC00010)
 		{
-			sh4_rio_write<sz>(CPG,addr & 0xFF,data);
+			sh4_rio_write<sz>(CPG, addr, data);
 		}
 		else
 		{
@@ -653,7 +652,7 @@ void DYNACALL WriteMem_area7(u32 addr,T data)
 	case A7_REG_HASH(RTC_BASE_addr):
 		if (addr<=0x1FC8003C)
 		{
-			sh4_rio_write<sz>(RTC,addr & 0xFF,data);
+			sh4_rio_write<sz>(RTC, addr, data);
 		}
 		else
 		{
@@ -664,7 +663,7 @@ void DYNACALL WriteMem_area7(u32 addr,T data)
 	case A7_REG_HASH(INTC_BASE_addr):
 		if (addr<=0x1FD0000C)
 		{
-			sh4_rio_write<sz>(INTC,addr & 0xFF,data);
+			sh4_rio_write<sz>(INTC, addr, data);
 		}
 		else
 		{
@@ -675,7 +674,7 @@ void DYNACALL WriteMem_area7(u32 addr,T data)
 	case A7_REG_HASH(TMU_BASE_addr):
 		if (addr<=0x1FD8002C)
 		{
-			sh4_rio_write<sz>(TMU,addr & 0xFF,data);
+			sh4_rio_write<sz>(TMU, addr, data);
 		}
 		else
 		{
@@ -686,7 +685,7 @@ void DYNACALL WriteMem_area7(u32 addr,T data)
 	case A7_REG_HASH(SCI_BASE_addr):
 		if (addr<=0x1FE0001C)
 		{
-			sh4_rio_write<sz>(SCI,addr & 0xFF,data);
+			sh4_rio_write<sz>(SCI, addr, data);
 		}
 		else
 		{
@@ -697,7 +696,7 @@ void DYNACALL WriteMem_area7(u32 addr,T data)
 	case A7_REG_HASH(SCIF_BASE_addr):
 		if (addr<=0x1FE80024)
 		{
-			sh4_rio_write<sz>(SCIF,addr & 0xFF,data);
+			sh4_rio_write<sz>(SCIF, addr, data);
 		}
 		else
 		{
