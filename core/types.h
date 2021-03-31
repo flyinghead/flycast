@@ -149,13 +149,6 @@ int darw_printf(const char* Text,...);
 #include <string>
 #include <map>
 
-//used for asm-olny functions
-#ifdef _M_IX86
-#define naked __declspec(naked)
-#else
-#define naked __attribute__((naked))
-#endif
-
 #define INLINE __forceinline
 
 //no inline -- fixme
@@ -168,9 +161,11 @@ int darw_printf(const char* Text,...);
 #ifdef _MSC_VER
 #define likely(x) x
 #define unlikely(x) x
+#define expected(x, y) x
 #else
-#define likely(x)       __builtin_expect((x),1)
-#define unlikely(x)       __builtin_expect((x),0)
+#define likely(x)      __builtin_expect(!!(x), 1)
+#define unlikely(x)    __builtin_expect(!!(x), 0)
+#define expected(x, y) __builtin_expect((x), (y))
 #endif
 
 #include "log/Log.h"
@@ -333,7 +328,6 @@ struct settings_t
 		u32 aram_mask;
 		u32 bios_size;
 		u32 flash_size;
-		u32 bbsram_size;
 	} platform;
 
 	struct
@@ -370,8 +364,6 @@ extern settings_t settings;
 #define VRAM_SIZE settings.platform.vram_size
 #define VRAM_MASK settings.platform.vram_mask
 #define BIOS_SIZE settings.platform.bios_size
-#define FLASH_SIZE settings.platform.flash_size
-#define BBSRAM_SIZE settings.platform.bbsram_size
 
 inline bool is_s8(u32 v) { return (s8)v==(s32)v; }
 inline bool is_u8(u32 v) { return (u8)v==(s32)v; }
@@ -403,16 +395,16 @@ void libARM_Reset(bool hard);
 void libARM_Term();
 
 template<u32 sz>
-u32 ReadMemArr(u8 *array, u32 addr)
+u32 ReadMemArr(const u8 *array, u32 addr)
 {
 	switch(sz)
 	{
 	case 1:
 		return array[addr];
 	case 2:
-		return *(u16 *)&array[addr];
+		return *(const u16 *)&array[addr];
 	case 4:
-		return *(u32 *)&array[addr];
+		return *(const u32 *)&array[addr];
 	default:
 		die("invalid size");
 		return 0;

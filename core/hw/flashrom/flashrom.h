@@ -265,7 +265,7 @@ struct DCFlashChip : MemChip
 	{
 		if (sz != 1)
 		{
-			INFO_LOG(FLASHROM, "invalid access size %d", sz);
+			INFO_LOG(FLASHROM, "invalid access size %d addr %x", sz, addr);
 			return;
 		}
 

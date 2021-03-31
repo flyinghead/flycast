@@ -429,23 +429,20 @@ static void set_platform(int platform)
 		settings.platform.aram_size = 2 * 1024 * 1024;
 		settings.platform.bios_size = 2 * 1024 * 1024;
 		settings.platform.flash_size = 128 * 1024;
-		settings.platform.bbsram_size = 0;
 		break;
 	case DC_PLATFORM_NAOMI:
 		settings.platform.ram_size = 32 * 1024 * 1024;
 		settings.platform.vram_size = 16 * 1024 * 1024;
 		settings.platform.aram_size = 8 * 1024 * 1024;
 		settings.platform.bios_size = 2 * 1024 * 1024;
-		settings.platform.flash_size = 0;
-		settings.platform.bbsram_size = 32 * 1024;
+		settings.platform.flash_size = 32 * 1024;	// battery-backed ram
 		break;
 	case DC_PLATFORM_ATOMISWAVE:
 		settings.platform.ram_size = 16 * 1024 * 1024;
 		settings.platform.vram_size = 8 * 1024 * 1024;
 		settings.platform.aram_size = 8 * 1024 * 1024;
 		settings.platform.bios_size = 128 * 1024;
-		settings.platform.flash_size = 0;
-		settings.platform.bbsram_size = 128 * 1024;
+		settings.platform.flash_size = 128 * 1024;	// sram
 		break;
 	default:
 		die("Unsupported platform");
@@ -603,12 +600,14 @@ void* dc_run(void*)
 {
 	InitAudio();
 
+#if FEAT_SHREC != DYNAREC_NONE
 	if (config::DynarecEnabled)
 	{
 		Get_Sh4Recompiler(&sh4_cpu);
 		INFO_LOG(DYNAREC, "Using Recompiler");
 	}
 	else
+#endif
 	{
 		Get_Sh4Interpreter(&sh4_cpu);
 		INFO_LOG(DYNAREC, "Using Interpreter");
@@ -753,7 +752,8 @@ void dc_resume()
 	{
 		hres = config::RenderResolution * 4 * config::ScreenStretching / 3 / 100;
 	}
-	renderer->Resize(hres, vres);
+	if (renderer != nullptr)
+		renderer->Resize(hres, vres);
 
 	EventManager::event(Event::Resume);
 	if (!emu_thread.thread.joinable())
@@ -933,7 +933,9 @@ void dc_loadstate()
 #ifndef NO_MMU
     mmu_flush_table();
 #endif
+#if FEAT_SHREC != DYNAREC_NONE
 	bm_Reset();
+#endif
 
 	u32 unserialized_size = 0;
 	if ( ! dc_unserialize(&data_ptr, &unserialized_size) )
