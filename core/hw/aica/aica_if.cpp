@@ -40,77 +40,71 @@ u32 GetRTC_now()
 	return (20 * 365 + 5) * 24 * 60 * 60 + rawtime + time_offset;
 }
 
-u32 ReadMem_aica_rtc(u32 addr,u32 sz)
+u32 ReadMem_aica_rtc(u32 addr, u32 sz)
 {
-	switch( addr & 0xFF )
+	switch (addr & 0xFF)
 	{
 	case 0:
-		return RealTimeClock>>16;
+		return RealTimeClock >> 16;
 	case 4:
-		return RealTimeClock &0xFFFF;
+		return RealTimeClock & 0xFFFF;
 	case 8:
 		return 0;
 	}
 
-	WARN_LOG(AICA, "ReadMem_aica_rtc : invalid address %x sz %d", addr, sz);
+	WARN_LOG(AICA, "ReadMem_aica_rtc: invalid address %x sz %d", addr, sz);
 	return 0;
 }
 
-void WriteMem_aica_rtc(u32 addr,u32 data,u32 sz)
+void WriteMem_aica_rtc(u32 addr, u32 data, u32 sz)
 {
-	switch( addr & 0xFF )
+	switch (addr & 0xFF)
 	{
 	case 0:
 		if (rtc_EN)
 		{
-			RealTimeClock&=0xFFFF;
-			RealTimeClock|=(data&0xFFFF)<<16;
-			rtc_EN=0;
+			RealTimeClock &= 0xFFFF;
+			RealTimeClock |= (data & 0xFFFF) << 16;
+			rtc_EN = 0;
 		}
-		return;
+		break;
 	case 4:
 		if (rtc_EN)
 		{
-			RealTimeClock&=0xFFFF0000;
-			RealTimeClock|= data&0xFFFF;
+			RealTimeClock &= 0xFFFF0000;
+			RealTimeClock |= data & 0xFFFF;
 			//TODO: Clean the internal timer ?
 		}
-		return;
+		break;
 	case 8:
-		rtc_EN=data&1;
-		return;
+		rtc_EN = data & 1;
+		break;
+
+	default:
+		WARN_LOG(AICA, "WriteMem_aica_rtc: invalid address %x sz %d data %x", addr, sz, data);
+		break;
 	}
 }
 
-u32 ReadMem_aica_reg(u32 addr,u32 sz)
+u32 ReadMem_aica_reg(u32 addr, u32 sz)
 {
-	addr&=0x7FFF;
-	if (sz==1)
+	addr &= 0x7FFF;
+	if (sz == 1)
 	{
-		if (addr==0x2C01)
+		switch (addr)
 		{
-			return VREG;
-		}
-		else if (addr==0x2C00)
-		{
+		case 0x2C00:
 			return ARMRST;
-		}
-		else
-		{
-			return libAICA_ReadReg(addr, sz);
-		}
-	}
-	else
-	{
-		if (addr==0x2C00)
-		{
-			return (VREG<<8) | ARMRST;
-		}
-		else
-		{
-			return libAICA_ReadReg(addr, sz);
+		case 0x2C01:
+			return VREG;
+		default:
+			break;
 		}
 	}
+	else if (addr == 0x2C00)
+		return (VREG << 8) | ARMRST;
+
+	return libAICA_ReadReg(addr, sz);
 }
 
 static void ArmSetRST()
@@ -121,40 +115,34 @@ static void ArmSetRST()
 
 void WriteMem_aica_reg(u32 addr,u32 data,u32 sz)
 {
-	addr&=0x7FFF;
+	addr &= 0x7FFF;
 
-	if (sz==1)
+	if (sz == 1)
 	{
-		if (addr==0x2C01)
+		switch (addr)
 		{
-			VREG=data;
-			INFO_LOG(AICA_ARM, "VREG = %02X", VREG);
-		}
-		else if (addr==0x2C00)
-		{
-			ARMRST=data;
+		case 0x2C00:
+			ARMRST = data;
 			INFO_LOG(AICA_ARM, "ARMRST = %02X", ARMRST);
 			ArmSetRST();
-		}
-		else
-		{
-			libAICA_WriteReg(addr,data,sz);
+			return;
+		case 0x2C01:
+			VREG = data;
+			INFO_LOG(AICA_ARM, "VREG = %02X", VREG);
+			return;
+		default:
+			break;
 		}
 	}
-	else
+	else if (addr == 0x2C00)
 	{
-		if (addr==0x2C00)
-		{
-			VREG=(data>>8)&0xFF;
-			ARMRST=data&0xFF;
-			INFO_LOG(AICA_ARM, "VREG = %02X ARMRST %02X", VREG, ARMRST);
-			ArmSetRST();
-		}
-		else
-		{
-			libAICA_WriteReg(addr,data,sz);
-		}
+		VREG = (data >> 8) & 0xFF;
+		ARMRST = data & 0xFF;
+		INFO_LOG(AICA_ARM, "VREG = %02X ARMRST %02X", VREG, ARMRST);
+		ArmSetRST();
+		return;
 	}
+	libAICA_WriteReg(addr, data, sz);
 }
 
 static int DreamcastSecond(int tag, int c, int j)
@@ -196,15 +184,15 @@ void aica_Term()
 
 static int dma_end_sched(int tag, int cycl, int jitt)
 {
-	u32 len=SB_ADLEN & 0x7FFFFFFF;
+	u32 len = SB_ADLEN & 0x7FFFFFFF;
 
 	if (SB_ADLEN & 0x80000000)
 		SB_ADEN = 0;
 	else
 		SB_ADEN = 1;
 
-	SB_ADSTAR+=len;
-	SB_ADSTAG+=len;
+	SB_ADSTAR += len;
+	SB_ADSTAG += len;
 	SB_ADST = 0;	// dma done
 	SB_ADLEN = 0;
 
@@ -251,7 +239,9 @@ static bool check_STAR_overrun(u32 addr)
 #endif
 }
 
-template<u32 ENABLE, u32 START, u32 SRC, u32 DEST, u32 LEN, u32 DIR, HollyInterruptID interrupt, HollyInterruptID iainterrupt, HollyInterruptID ovinterrupt, const char *LogTag>
+template<u32 ENABLE, u32 START, u32 SRC, u32 DEST, u32 LEN, u32 DIR,
+	HollyInterruptID interrupt, HollyInterruptID iainterrupt, HollyInterruptID ovinterrupt,
+	const char *LogTag>
 void Write_DmaStart(u32 addr, u32 data)
 {
 	u32& enableReg = SB_REGN_32(ENABLE);
@@ -261,7 +251,7 @@ void Write_DmaStart(u32 addr, u32 data)
 	u32& lenReg = SB_REGN_32(LEN);
 	const u32 dirReg = SB_REGN_32(DIR);
 
-	if (!(data & 1) || !(enableReg & 1))
+	if (!(data & 1) || enableReg == 0)
 		return;
 	u32 src = sourceReg;
 	u32 dst = destReg;
@@ -296,14 +286,8 @@ void Write_DmaStart(u32 addr, u32 data)
 	}
 
 	if (dirReg == 1)
-	{
-		u32 t = src;
-		src = dst;
-		dst = t;
-		DEBUG_LOG(AICA, "%s: DIR == 1 DMA Read to 0x%X from 0x%X %d bytes", LogTag, dst, src, len);
-	}
-	else
-		DEBUG_LOG(AICA, "%s: DIR == 0 DMA Write to 0x%X from 0x%X %d bytes", LogTag, dst, src, len);
+		std::swap(src, dst);
+	DEBUG_LOG(AICA, "%s: DMA Write to %X from %X %d bytes", LogTag, dst, src, len);
 
 	WriteMemBlock_nommu_dma(dst, src, len);
 
@@ -333,7 +317,7 @@ static void Write_SB_ADST(u32 addr, u32 data)
 	
 	if ((data & 1) == 1 && (SB_ADST & 1) == 0)
 	{
-		if (SB_ADEN&1)
+		if (SB_ADEN == 1)
 		{
 			u32 src = SB_ADSTAR;
 			u32 dst = SB_ADSTAG;
@@ -365,18 +349,16 @@ static void Write_SB_ADST(u32 addr, u32 data)
 				return;
 			}
 
-			if ((SB_ADDIR&1)==1)
+			if (SB_ADDIR == 1)
 			{
 				//swap direction
-				u32 tmp=src;
-				src=dst;
-				dst=tmp;
+				std::swap(src, dst);
 				DEBUG_LOG(AICA, "AICA-DMA : SB_ADDIR==1 DMA Read to 0x%X from 0x%X %x bytes", dst, src, SB_ADLEN);
 			}
 			else
 				DEBUG_LOG(AICA, "AICA-DMA : SB_ADDIR==0:DMA Write to 0x%X from 0x%X %x bytes", dst, src, SB_ADLEN);
 
-			WriteMemBlock_nommu_dma(dst,src,len);
+			WriteMemBlock_nommu_dma(dst, src, len);
 
 			// indicate that dma is in progress
 			SB_ADST = 1;

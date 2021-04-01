@@ -19,7 +19,7 @@ void DMAC_Ch2St()
 
 	u32 src = DMAC_SAR(2) & 0x1fffffe0;
 	u32 dst = SB_C2DSTAT & 0x01ffffe0;
-	u32 len = SB_C2DLEN & 0x00ffffe0;
+	u32 len = SB_C2DLEN;
 
 	if (0x8201 != (dmaor & DMAOR_MASK))
 	{
