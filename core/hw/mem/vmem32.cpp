@@ -279,6 +279,7 @@ static u32 vmem32_map_mmu(u32 address, bool write)
 		}
 		else if (offset >= MAP_RAM_START_OFFSET && offset < MAP_RAM_START_OFFSET + RAM_SIZE)
 		{
+#if FEAT_SHREC != DYNAREC_NONE
 			// Check system RAM protected pages
 			u32 start = offset - MAP_RAM_START_OFFSET;
 
@@ -297,6 +298,7 @@ static u32 vmem32_map_mmu(u32 address, bool write)
 				}
 			}
 			else
+#endif
 				verify(vmem32_map_buffer(vpn, page_size, offset, page_size, allow_write) != NULL);
 		}
 		else

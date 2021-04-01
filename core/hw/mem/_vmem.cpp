@@ -103,7 +103,7 @@ void* _vmem_write_const(u32 addr,bool& ismem,u32 sz)
 template<typename T,typename Trv>
 INLINE Trv DYNACALL _vmem_readt(u32 addr)
 {
-	const u32 sz=sizeof(T);
+	constexpr u32 sz = sizeof(T);
 
 	u32   page=addr>>24;	//1 op, shift/extract
 	unat  iirf=(unat)_vmem_MemInfo_ptr[page]; //2 ops, insert + read [vmem table will be on reg ]
@@ -154,7 +154,7 @@ template u64 DYNACALL _vmem_readt<u64, u64>(u32 addr);
 template<typename T>
 INLINE void DYNACALL _vmem_writet(u32 addr,T data)
 {
-	const u32 sz=sizeof(T);
+	constexpr u32 sz = sizeof(T);
 
 	u32 page=addr>>24;
 	unat  iirf=(unat)_vmem_MemInfo_ptr[page];
@@ -214,8 +214,7 @@ void DYNACALL _vmem_WriteMem16(u32 Address,u16 data) { _vmem_writet<u16>(Address
 void DYNACALL _vmem_WriteMem32(u32 Address,u32 data) { _vmem_writet<u32>(Address,data); }
 void DYNACALL _vmem_WriteMem64(u32 Address,u64 data) { _vmem_writet<u64>(Address,data); }
 
-//0xDEADC0D3 or 0
-#define MEM_ERROR_RETURN_VALUE 0xDEADC0D3
+#define MEM_ERROR_RETURN_VALUE 0
 
 //default read handlers
 static u8 DYNACALL _vmem_ReadMem8_not_mapped(u32 addresss)
@@ -378,6 +377,8 @@ static void* malloc_pages(size_t size) {
 #endif
 }
 
+#if FEAT_SHREC != DYNAREC_NONE
+
 // Resets the FPCB table (by either clearing it to the default val
 // or by flushing it and making it fault on access again.
 void _vmem_bm_reset()
@@ -410,6 +411,7 @@ bool BM_LockedWrite(u8* address) {
 	}
 	return false;
 }
+#endif
 
 static void _vmem_set_p0_mappings()
 {
@@ -481,7 +483,9 @@ void _vmem_init_mappings()
 
 		// Allocate it all and initialize it.
 		p_sh4rcb = (Sh4RCB*)malloc_pages(sizeof(Sh4RCB));
+#if FEAT_SHREC != DYNAREC_NONE
 		bm_vmem_pagefill((void**)p_sh4rcb->fpcb, sizeof(p_sh4rcb->fpcb));
+#endif
 
 		mem_b.size = RAM_SIZE;
 		mem_b.data = (u8*)malloc_pages(RAM_SIZE);
@@ -726,7 +730,9 @@ u32 _vmem_get_vram_offset(void *addr)
 		}
 		if ((offset >> 24) != 4)
 			return -1;
-		verify((((u8*)addr - virt_ram_base) >> 29) == 0 || (((u8*)addr - virt_ram_base) >> 29) == 4  || (((u8*)addr - virt_ram_base) >> 29) == 5);	// others areas aren't mapped atm
+		if ((((u8*)addr - virt_ram_base) >> 29) != 0 && (((u8*)addr - virt_ram_base) >> 29) != 4  && (((u8*)addr - virt_ram_base) >> 29) != 5)
+			// other areas aren't mapped atm
+			return -1;
 
 		return offset & VRAM_MASK;
 	}

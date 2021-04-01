@@ -486,9 +486,9 @@ u32 mmu_data_translation(u32 va, u32& rv)
 		return MMU_ERROR_BADADDR;
 	}
 
-	if (sr.MD == 1 && ((va & 0xFC000000) == 0x7C000000))
+	if ((va & 0xFC000000) == 0x7C000000)
 	{
-		// 7C000000 to 7FFFFFFF in P0 not translated in supervisor mode
+		// 7C000000 to 7FFFFFFF in P0/U0 not translated
 		rv = va;
 		return MMU_ERROR_NONE;
 	}
@@ -537,6 +537,10 @@ u32 mmu_data_translation(u32 va, u32& rv)
 		else if (entry->Data.D == 0)
 			return MMU_ERROR_FIRSTWRITE;
 	}
+	if ((rv & 0x1C000000) == 0x1C000000)
+		// map 1C000000-1FFFFFFF to P4 memory-mapped registers
+		rv |= 0xF0000000;
+
 	return MMU_ERROR_NONE;
 }
 template u32 mmu_data_translation<MMU_TT_DREAD, u8>(u32 va, u32& rv);

@@ -98,17 +98,9 @@ bool mmu_is_translated(u32 va, u32 size)
 			//SQ writes are not translated, only write backs are.
 			return false;
 	}
-#ifndef sr
-// This is why the preprocessor sucks
-#define sr Sh4cntx.sr
-#define undef_sr
-#endif
-	if (sr.MD == 1 && (va & 0xFC000000) == 0x7C000000)
+	if ((va & 0xFC000000) == 0x7C000000)
+		// On-chip RAM area isn't translated
 		return false;
-#ifdef undef_sr
-#undef sr
-#undef undef_sr
-#endif
 
 	if (fast_reg_lut[va >> 29] != 0)
 		return false;
