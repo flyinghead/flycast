@@ -19,7 +19,7 @@ build:
             code: |
               mkdir s3
               pushd shell/linux
-              mv -f nosym-reicast.elf flycast
+              mv -f nosym-flycast.elf flycast
               gzip flycast
               popd
               mv shell/linux/flycast.gz s3

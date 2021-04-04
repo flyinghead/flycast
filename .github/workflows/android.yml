@@ -27,5 +27,5 @@ jobs:
 
       - uses: actions/upload-artifact@v2
         with:
-          name: reicast-dreamcast-debug.apk
-          path: shell/android-studio/reicast/build/outputs/apk/dreamcast/debug/reicast-dreamcast-debug.apk
+          name: flycast-debug.apk
+          path: shell/android-studio/flycast/build/outputs/apk/dreamcast/debug/flycast-dreamcast-debug.apk

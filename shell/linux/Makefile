@@ -459,9 +459,9 @@ ifdef UNIT_TESTS
 	TEST_SRC_DIR:=$(RZDCY_SRC_DIR)/../tests/src
 	RZDCY_FILES += $(wildcard $(TEST_SRC_DIR)/*.cpp) $(RZDCY_SRC_DIR)/deps/gtest/src/gtest_main.cc $(RZDCY_SRC_DIR)/deps/gtest/src/gtest-all.cc
 else
-	EXECUTABLE_STRIPPED=nosym-reicast.$(PLATFORM_EXT)
+	EXECUTABLE_STRIPPED=nosym-flycast.$(PLATFORM_EXT)
 	DC_PLATFORM=dreamcast
-	EXECUTABLE=reicast.$(PLATFORM_EXT)
+	EXECUTABLE=flycast.$(PLATFORM_EXT)
 	EXECUTABLE_NAME=flycast
 endif
 
@@ -554,27 +554,27 @@ $(BUILDDIR)/%.build_obj : $(RZDCY_SRC_DIR)/%.S $(VERSION_HEADER)
 
 install: $(EXECUTABLE)
 	mkdir -p $(DESTDIR)$(PREFIX)/bin 2>/dev/null || true
-	mkdir -p $(DESTDIR)$(PREFIX)/share/reicast/mappings 2>/dev/null || true
+	mkdir -p $(DESTDIR)$(PREFIX)/share/flycast/mappings 2>/dev/null || true
 	mkdir -p $(DESTDIR)$(MAN_DIR) 2>/dev/null || true
 	mkdir -p $(DESTDIR)$(MENUENTRY_DIR) 2>/dev/null || true
 	mkdir -p $(DESTDIR)$(ICON_DIR) 2>/dev/null || true
 	install -m755 $(EXECUTABLE) $(DESTDIR)$(PREFIX)/bin/$(EXECUTABLE_NAME)
-	install -m644 mappings/controller_generic.cfg $(DESTDIR)$(PREFIX)/share/reicast/mappings
-	install -m644 mappings/controller_pandora.cfg $(DESTDIR)$(PREFIX)/share/reicast/mappings
-	install -m644 mappings/controller_xboxdrv.cfg $(DESTDIR)$(PREFIX)/share/reicast/mappings
-	install -m644 mappings/controller_xpad.cfg $(DESTDIR)$(PREFIX)/share/reicast/mappings
-	install -m644 mappings/keyboard.cfg $(DESTDIR)$(PREFIX)/share/reicast/mappings
+	install -m644 mappings/controller_generic.cfg $(DESTDIR)$(PREFIX)/share/flycast/mappings
+	install -m644 mappings/controller_pandora.cfg $(DESTDIR)$(PREFIX)/share/flycast/mappings
+	install -m644 mappings/controller_xboxdrv.cfg $(DESTDIR)$(PREFIX)/share/flycast/mappings
+	install -m644 mappings/controller_xpad.cfg $(DESTDIR)$(PREFIX)/share/flycast/mappings
+	install -m644 mappings/keyboard.cfg $(DESTDIR)$(PREFIX)/share/flycast/mappings
 	install -m644 man/flycast.1 $(DESTDIR)$(MAN_DIR)
 	install -m644 flycast.desktop $(DESTDIR)$(MENUENTRY_DIR)
 	install -m644 flycast.png $(DESTDIR)$(ICON_DIR)
 
 uninstall:
 	rm -f $(DESTDIR)$(PREFIX)/bin/$(EXECUTABLE_NAME)
-	rm -f $(DESTDIR)$(PREFIX)/share/reicast/mappings/controller_generic.cfg
-	rm -f $(DESTDIR)$(PREFIX)/share/reicast/mappings/controller_pandora.cfg
-	rm -f $(DESTDIR)$(PREFIX)/share/reicast/mappings/controller_xboxdrv.cfg
-	rm -f $(DESTDIR)$(PREFIX)/share/reicast/mappings/controller_xpad.cfg
-	rm -f $(DESTDIR)$(PREFIX)/share/reicast/mappings/keyboard.cfg
+	rm -f $(DESTDIR)$(PREFIX)/share/flycast/mappings/controller_generic.cfg
+	rm -f $(DESTDIR)$(PREFIX)/share/flycast/mappings/controller_pandora.cfg
+	rm -f $(DESTDIR)$(PREFIX)/share/flycast/mappings/controller_xboxdrv.cfg
+	rm -f $(DESTDIR)$(PREFIX)/share/flycast/mappings/controller_xpad.cfg
+	rm -f $(DESTDIR)$(PREFIX)/share/flycast/mappings/keyboard.cfg
 	rm -f $(DESTDIR)$(MAN_DIR)/flycast.1
 	rm -f $(DESTDIR)$(MENUENTRY_DIR)/flycast.desktop
 	rm -f $(DESTDIR)$(ICON_DIR)/flycast.png

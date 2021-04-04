@@ -934,8 +934,8 @@ if(ANDROID)
     target_compile_definitions(${PROJECT_NAME} PRIVATE GLES GLES3)
 
     target_sources(${PROJECT_NAME} PRIVATE
-            shell/android-studio/reicast/src/main/jni/src/Android.cpp
-            shell/android-studio/reicast/src/main/jni/src/utils.cpp)
+            shell/android-studio/flycast/src/main/jni/src/Android.cpp
+            shell/android-studio/flycast/src/main/jni/src/utils.cpp)
 
     target_link_libraries(${PROJECT_NAME} PRIVATE android EGL GLESv2 log)
 elseif(APPLE)
@@ -962,7 +962,7 @@ elseif(APPLE)
         MACOSX_BUNDLE_BUNDLE_NAME "Flycast"
         MACOSX_BUNDLE_SHORT_VERSION_STRING "1.0"
         MACOSX_BUNDLE_BUNDLE_VERSION "1"
-        MACOSX_BUNDLE_COPYRIGHT "Copyright © 2019 reicast contributors. All rights reserved."
+        MACOSX_BUNDLE_COPYRIGHT "Copyright © 2019 Flycast contributors. All rights reserved."
         XCODE_ATTRIBUTE_SWIFT_OBJC_BRIDGING_HEADER "shell/apple/emulator-osx/emulator-osx/emulator-osx-Bridging-Header.h"
 		RESOURCE "${XIB}"
 		XCODE_ATTRIBUTE_ASSETCATALOG_COMPILER_APPICON_NAME "AppIcon"

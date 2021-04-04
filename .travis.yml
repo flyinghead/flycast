@@ -29,7 +29,7 @@ before_deploy:
   - GIT_HASH=`git log --pretty=format:'%h' -n 1`
   - GIT_BUILD=`git describe --all --always`-$GIT_HASH
   - mkdir -p artifacts/$GIT_BUILD/
-  - cp shell/android-studio/reicast/build/outputs/apk/dreamcast/debug/reicast-dreamcast-debug.apk artifacts/$GIT_BUILD/flycast-debug-$GIT_HASH.apk
+  - cp shell/android-studio/flycast/build/outputs/apk/dreamcast/debug/flycast-dreamcast-debug.apk artifacts/$GIT_BUILD/flycast-debug-$GIT_HASH.apk
 
 deploy:
   provider: s3
