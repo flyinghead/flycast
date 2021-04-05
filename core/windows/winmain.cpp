@@ -17,6 +17,7 @@
 #include "rend/mainui.h"
 #include "hw/sh4/dyna/ngen.h"
 #include "oslib/host_context.h"
+#include "../shell/windows/resource.h"
 
 #include <windows.h>
 #include <windowsx.h>
@@ -392,7 +393,7 @@ void CreateMainWindow()
 		sWC.cbClsExtra = 0;
 		sWC.cbWndExtra = 0;
 		sWC.hInstance = hInstance;
-		sWC.hIcon = 0;
+		sWC.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_ICON1));
 		sWC.hCursor = LoadCursor(NULL, IDC_ARROW);
 		sWC.lpszMenuName = 0;
 		sWC.hbrBackground = (HBRUSH) GetStockObject(WHITE_BRUSH);
