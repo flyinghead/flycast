@@ -580,7 +580,8 @@ static void dc_start_game(const char *path)
 		else if (settings.platform.system == DC_PLATFORM_ATOMISWAVE)
 			mcfg_CreateAtomisWaveControllers();
 	}
-	if (cheatManager.Reset())
+	cheatManager.reset(config::Settings::instance().getGameId());
+	if (cheatManager.isWidescreen())
 	{
 		gui_display_notification("Widescreen cheat activated", 1000);
 		config::ScreenStretching.override(134);	// 4:3 -> 16:9

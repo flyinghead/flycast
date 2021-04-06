@@ -31,10 +31,7 @@ void vjoy_stop_editing(bool canceled);
 
 void gui_display_vjoy_commands(int screen_width, int screen_height, float scaling)
 {
-	ImGui_Impl_NewFrame();
-    ImGui::NewFrame();
-
-    ImGui::SetNextWindowPos(ImVec2(screen_width / 2.f, screen_height / 2.f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+    centerNextWindow();
 
     ImGui::Begin("Virtual Joystick", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse
     		| ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize);
@@ -58,9 +55,6 @@ void gui_display_vjoy_commands(int screen_width, int screen_height, float scalin
 		gui_state = GuiState::Settings;
 	}
     ImGui::End();
-
-    ImGui::Render();
-    ImGui_impl_RenderDrawData(ImGui::GetDrawData(), false);
 }
 
 #endif // __ANDROID__

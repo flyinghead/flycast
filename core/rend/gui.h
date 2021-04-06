@@ -28,6 +28,7 @@ void gui_display_osd();
 void gui_open_onboarding();
 void gui_term();
 void gui_refresh_files();
+void gui_cheats();
 
 extern int screen_dpi;
 extern float scaling;
@@ -45,10 +46,10 @@ enum class GuiState {
 	VJoyEditCommands,
 	SelectDisk,
 	Loading,
-	NetworkStart
+	NetworkStart,
+	Cheats
 };
 extern GuiState gui_state;
-void ImGui_Impl_NewFrame();
 
 static inline bool gui_is_open()
 {
@@ -58,7 +59,9 @@ static inline bool gui_is_content_browser()
 {
 	return gui_state == GuiState::Main;
 }
-float gui_get_scaling();
+static inline float gui_get_scaling() {
+	return scaling;
+}
 
 #define XHAIR_WIDTH (40 * scaling)
 #define XHAIR_HEIGHT (40 * scaling)

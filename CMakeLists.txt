@@ -790,6 +790,7 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/rend/gui.h
         core/rend/gui_android.cpp
         core/rend/gui_android.h
+        core/rend/gui_cheats.cpp
         core/rend/gui_util.cpp
         core/rend/gui_util.h
         core/rend/mainui.cpp

@@ -68,6 +68,7 @@
 
 #include "wsi/gl_context.h"
 #include "glcache.h"
+#include "hw/pvr/Renderer_if.h"
 
 // OpenGL Data
 static char         g_GlslVersionString[32] = "";
@@ -76,7 +77,6 @@ static GLuint       g_ShaderHandle = 0, g_VertHandle = 0, g_FragHandle = 0;
 static int          g_AttribLocationTex = 0, g_AttribLocationProjMtx = 0;
 static int          g_AttribLocationPosition = 0, g_AttribLocationUV = 0, g_AttribLocationColor = 0;
 static unsigned int g_VboHandle = 0, g_ElementsHandle = 0;
-static GLuint g_BackgroundTexture = 0;
 
 // Functions
 bool    ImGui_ImplOpenGL3_Init(const char* glsl_version)
@@ -118,7 +118,7 @@ void    ImGui_ImplOpenGL3_NewFrame()
 // OpenGL3 Render function.
 // (this used to be set in io.RenderDrawListsFn and called by ImGui::Render(), but you can now call this directly from your main loop)
 // Note that this implementation is little overcomplicated because we are saving/setting up/restoring every OpenGL state explicitly, in order to be able to run within any OpenGL engine that doesn't do so.
-void    ImGui_ImplOpenGL3_RenderDrawData(ImDrawData* draw_data, bool save_background)
+void    ImGui_ImplOpenGL3_RenderDrawData(ImDrawData* draw_data)
 {
     // Avoid rendering when minimized, scale coordinates for retina displays (screen coordinates != framebuffer coordinates)
     ImGuiIO& io = ImGui::GetIO();
@@ -139,28 +139,6 @@ void    ImGui_ImplOpenGL3_RenderDrawData(ImDrawData* draw_data, bool save_backgr
 			clip_origin_lower_left = false;
     }
 #endif
-
-    if (save_background)
-    {
-#ifndef GLES2
-    	if (!theGLContext.IsGLES() && glReadBuffer != NULL)
-    		glReadBuffer(GL_FRONT);
-
-		// (Re-)create the background texture and reserve space for it
-		if (g_BackgroundTexture != 0)
-			glcache.DeleteTextures(1, &g_BackgroundTexture);
-		g_BackgroundTexture = glcache.GenTexture();
-		glcache.BindTexture(GL_TEXTURE_2D, g_BackgroundTexture);
-		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, fb_width, fb_height, 0, GL_RGB, GL_UNSIGNED_BYTE, (GLvoid*)NULL);
-
-		// Copy the current framebuffer into it
-		glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, fb_width, fb_height);
-#endif
-    }
 
     // Setup render state: alpha-blending enabled, no face culling, no depth testing, scissor enabled, polygon fill
     glcache.Enable(GL_BLEND);
@@ -506,10 +484,6 @@ void ImGui_ImplOpenGL3_DestroyDeviceObjects()
     g_ShaderHandle = 0;
 
     ImGui_ImplOpenGL3_DestroyFontsTexture();
-
-    if (g_BackgroundTexture != 0)
-    	glcache.DeleteTextures(1, &g_BackgroundTexture);
-    g_BackgroundTexture = 0;
 }
 
 void ImGui_ImplOpenGL3_DrawBackground()
@@ -518,16 +492,8 @@ void ImGui_ImplOpenGL3_DrawBackground()
 	glcache.Disable(GL_SCISSOR_TEST);
 	glcache.ClearColor(0, 0, 0, 0);
 	glClear(GL_COLOR_BUFFER_BIT);
-	if (g_BackgroundTexture != 0)
-	{
-		ImGuiIO& io = ImGui::GetIO();
-		ImGui::SetNextWindowPos(ImVec2(0, 0));
-		ImGui::SetNextWindowSize(io.DisplaySize);
-		ImGui::Begin("background", NULL, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoFocusOnAppearing
-				| ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoBackground);
-		ImGui::GetWindowDrawList()->AddImage((ImTextureID)(uintptr_t)g_BackgroundTexture, ImVec2(0, 0), io.DisplaySize, ImVec2(0, 1), ImVec2(1, 0), 0xffffffff);
-		ImGui::End();
-	}
+	if (renderer != nullptr)
+		renderer->RenderLastFrame();
 }
 
 static ImTextureID createSimpleTexture(const unsigned int *data, u32 width, u32 height)

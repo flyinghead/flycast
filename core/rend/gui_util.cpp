@@ -28,11 +28,9 @@
 #include "imgui/imgui.h"
 #include "imgui/imgui_internal.h"
 
-extern int screen_width, screen_height;
-
 static std::string select_current_directory;
-static std::vector<std::string> select_subfolders;
-static std::vector<std::string> display_files;
+static std::vector<std::string> subfolders;
+static std::vector<std::string> folderFiles;
 bool subfolders_read;
 #ifdef _WIN32
 static const std::string separators = "/\\";
@@ -43,7 +41,8 @@ static const std::string native_separator = "/";
 #endif
 #define PSEUDO_ROOT ":"
 
-void select_directory_popup(const char *prompt, float scaling, StringCallback callback)
+void select_file_popup(const char *prompt, StringCallback callback,
+		bool selectFile, const std::string& selectExtension)
 {
 	if (select_current_directory.empty())
 	{
@@ -93,8 +92,8 @@ void select_directory_popup(const char *prompt, float scaling, StringCallback ca
 
 		if (!subfolders_read)
 		{
-			select_subfolders.clear();
-            display_files.clear();
+			subfolders.clear();
+            folderFiles.clear();
 			error_message.clear();
 #ifdef _WIN32
 			if (select_current_directory == PSEUDO_ROOT)
@@ -104,7 +103,7 @@ void select_directory_popup(const char *prompt, float scaling, StringCallback ca
 				u32 drives = GetLogicalDrives();
 				for (int i = 0; i < 32; i++)
 					if ((drives & (1 << i)) != 0)
-						select_subfolders.push_back(std::string(1, (char)('A' + i)) + ":\\");
+						subfolders.push_back(std::string(1, (char)('A' + i)) + ":\\");
 			}
 			else
 #elif __ANDROID__
@@ -117,12 +116,12 @@ void select_directory_popup(const char *prompt, float scaling, StringCallback ca
 					const char *pcolon = strchr(home, ':');
 					if (pcolon != NULL)
 					{
-						select_subfolders.push_back(std::string(home, pcolon - home));
+						subfolders.push_back(std::string(home, pcolon - home));
 						home = pcolon + 1;
 					}
 					else
 					{
-						select_subfolders.push_back(home);
+						subfolders.push_back(home);
 						home = NULL;
 					}
 				}
@@ -134,7 +133,7 @@ void select_directory_popup(const char *prompt, float scaling, StringCallback ca
 				if (dir == NULL)
 				{
 					error_message = "Cannot read " + select_current_directory;
-					select_subfolders.emplace_back("..");
+					subfolders.emplace_back("..");
 				}
 				else
 				{
@@ -169,36 +168,45 @@ void select_directory_popup(const char *prompt, float scaling, StringCallback ca
 						{
 							if (name == "..")
 								dotdot_seen = true;
-							select_subfolders.push_back(name);
+							subfolders.push_back(name);
 						}
                         else
                         {
                             std::string extension = get_file_extension(name);
-                            if (extension == "zip" || extension == "7z" || extension == "chd" || extension == "gdi" || ((config::HideLegacyNaomiRoms
-                                    || (extension != "bin" && extension != "lst" && extension != "dat"))
-                            && extension != "cdi" && extension != "cue") == false )
-                                display_files.push_back(name);
+                            if (selectFile)
+                            {
+                            	if (extension == selectExtension)
+									folderFiles.push_back(name);
+                            }
+                            else if (extension == "zip" || extension == "7z" || extension == "chd"
+                            		|| extension == "gdi" || extension == "cdi" || extension == "cue"
+                            		|| (!config::HideLegacyNaomiRoms
+                            				&& (extension == "bin" || extension == "lst" || extension == "dat")))
+                            	folderFiles.push_back(name);
                         }
 					}
 					flycast::closedir(dir);
 #if defined(_WIN32) || defined(__ANDROID__)
 					if (!dotdot_seen)
-						select_subfolders.emplace_back("..");
+						subfolders.emplace_back("..");
+#else
+					(void)dotdot_seen;
 #endif
 				}
 			}
 
-			std::stable_sort(select_subfolders.begin(), select_subfolders.end());
+			std::stable_sort(subfolders.begin(), subfolders.end());
+			std::stable_sort(folderFiles.begin(), folderFiles.end());
 			subfolders_read = true;
 		}
 
 		ImGui::Text("%s", error_message.empty() ? select_current_directory.c_str() : error_message.c_str());
-		ImGui::BeginChild(ImGui::GetID("dir_list"), ImVec2(0, - 30 * scaling - ImGui::GetStyle().ItemSpacing.y), true);
+		ImGui::BeginChild(ImGui::GetID("dir_list"), ImVec2(0, - 30 * gui_get_scaling() - ImGui::GetStyle().ItemSpacing.y), true);
 
-		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(8 * scaling, 20 * scaling));		// from 8, 4
+		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(8 * gui_get_scaling(), 20 * gui_get_scaling()));		// from 8, 4
 
 
-		for (auto& name : select_subfolders)
+		for (const auto& name : subfolders)
 		{
 			std::string child_path;
 			if (name == "..")
@@ -253,23 +261,38 @@ void select_directory_popup(const char *prompt, float scaling, StringCallback ca
 				select_current_directory = child_path;
 			}
 		}
-        ImGui::PushStyleColor(ImGuiCol_Text, { 1, 1, 1, 0.3f });
-        for (auto& name : display_files)
+        ImGui::PushStyleColor(ImGuiCol_Text, { 1, 1, 1, selectFile ? 1.f : 0.3f });
+        for (const auto& name : folderFiles)
         {
-            ImGui::Text("%s", name.c_str());
+        	if (selectFile)
+        	{
+    			if (ImGui::Selectable(name.c_str()))
+    			{
+    				subfolders_read = false;
+    				callback(false, select_current_directory + native_separator + name);
+    				ImGui::CloseCurrentPopup();
+    			}
+        	}
+        	else
+        	{
+        		ImGui::Text("%s", name.c_str());
+        	}
         }
         ImGui::PopStyleColor();
         
 		ImGui::PopStyleVar();
 		ImGui::EndChild();
-		if (ImGui::Button("Select Current Directory", ImVec2(0, 30 * scaling)))
+		if (!selectFile)
 		{
-			subfolders_read = false;
-			callback(false, select_current_directory);
-			ImGui::CloseCurrentPopup();
+			if (ImGui::Button("Select Current Directory", ImVec2(0, 30 * gui_get_scaling())))
+			{
+				subfolders_read = false;
+				callback(false, select_current_directory);
+				ImGui::CloseCurrentPopup();
+			}
+			ImGui::SameLine();
 		}
-		ImGui::SameLine();
-		if (ImGui::Button("Cancel", ImVec2(0, 30 * scaling)))
+		if (ImGui::Button("Cancel", ImVec2(0, 30 * gui_get_scaling())))
 		{
 			subfolders_read = false;
 			callback(true, "");

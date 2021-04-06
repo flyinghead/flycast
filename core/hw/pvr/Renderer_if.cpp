@@ -392,7 +392,7 @@ void rend_vblank()
 	}
 	render_called = false;
 	check_framebuffer_write();
-	cheatManager.Apply();
+	cheatManager.apply();
 }
 
 void check_framebuffer_write()

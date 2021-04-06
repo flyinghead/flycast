@@ -28,11 +28,14 @@
 #include "vulkan/vulkan_context.h"
 #include "gui.h"
 
+extern int screen_width, screen_height;
+
 typedef void (*StringCallback)(bool cancelled, std::string selection);
 
-void select_directory_popup(const char *prompt, float scaling, StringCallback callback);
+void select_file_popup(const char *prompt, StringCallback callback,
+		bool selectFile = false, const std::string& extension = "");
 
-static inline void ImGui_impl_RenderDrawData(ImDrawData *draw_data, bool save_background = false)
+static inline void ImGui_impl_RenderDrawData(ImDrawData *draw_data)
 {
 #ifdef USE_VULKAN
 	if (!config::RendererType.isOpenGL())
@@ -61,7 +64,7 @@ static inline void ImGui_impl_RenderDrawData(ImDrawData *draw_data, bool save_ba
 	else
 #endif
 	{
-		ImGui_ImplOpenGL3_RenderDrawData(draw_data, save_background);
+		ImGui_ImplOpenGL3_RenderDrawData(draw_data);
 	}
 }
 
@@ -79,3 +82,8 @@ template<typename T>
 bool OptionRadioButton(const char *name, config::Option<T>& option, T value, const char *help = nullptr);
 void OptionComboBox(const char *name, config::Option<int>& option, const char *values[], int count,
 			const char *help = nullptr);
+
+static inline void centerNextWindow()
+{
+	ImGui::SetNextWindowPos(ImVec2(screen_width / 2.f, screen_height / 2.f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+}

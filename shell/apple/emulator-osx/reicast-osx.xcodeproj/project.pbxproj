@@ -126,6 +126,7 @@
 		84B7BF7F1B72720200F9733F /* stdclass.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 84B7BEA71B72720200F9733F /* stdclass.cpp */; };
 		84B7BF831B727AD700F9733F /* osx-main.mm in Sources */ = {isa = PBXBuildFile; fileRef = 84B7BF821B727AD700F9733F /* osx-main.mm */; };
 		84B7BF861B72871600F9733F /* EmuGLView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84B7BF851B72871600F9733F /* EmuGLView.swift */; };
+		AE039B40261C61C8005E24C5 /* gui_cheats.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE039B3F261C61C8005E24C5 /* gui_cheats.cpp */; };
 		AE1E293B2095FB1600FC6BA2 /* rec_cpp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE1E293A2095FB1600FC6BA2 /* rec_cpp.cpp */; };
 		AE1E294020A96B0B00FC6BA2 /* rec_x64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE1E293F20A96B0B00FC6BA2 /* rec_x64.cpp */; };
 		AE2A24DA22AE7EB600DD3034 /* ssa.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE2A24D922AE7EB600DD3034 /* ssa.cpp */; };
@@ -665,6 +666,7 @@
 		84B7BF821B727AD700F9733F /* osx-main.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "osx-main.mm"; sourceTree = "<group>"; };
 		84B7BF841B72821900F9733F /* emulator-osx-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "emulator-osx-Bridging-Header.h"; sourceTree = "<group>"; };
 		84B7BF851B72871600F9733F /* EmuGLView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EmuGLView.swift; sourceTree = "<group>"; };
+		AE039B3F261C61C8005E24C5 /* gui_cheats.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = gui_cheats.cpp; sourceTree = "<group>"; };
 		AE1E293A2095FB1600FC6BA2 /* rec_cpp.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = rec_cpp.cpp; sourceTree = "<group>"; };
 		AE1E293F20A96B0B00FC6BA2 /* rec_x64.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = rec_x64.cpp; sourceTree = "<group>"; };
 		AE2A234922941A0500DD3034 /* NaomiConfig.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = NaomiConfig.xcconfig; sourceTree = "<group>"; };
@@ -1993,6 +1995,7 @@
 				84B7BE9B1B72720200F9733F /* gles */,
 				AED73EAB2348E49800ECDB64 /* CustomTexture.cpp */,
 				AED73EAC2348E49900ECDB64 /* CustomTexture.h */,
+				AE039B3F261C61C8005E24C5 /* gui_cheats.cpp */,
 				AEE6279222247C0A00EC7E89 /* gui_util.cpp */,
 				AEE6279322247C0A00EC7E89 /* gui_util.h */,
 				AEE6276A220D7B5500EC7E89 /* gui.cpp */,
@@ -2936,6 +2939,7 @@
 				559E934125FCBFCA001B0F40 /* decoder-aarch64.cc in Sources */,
 				AE7BCB592415515B007285F8 /* arm7_rec.cpp in Sources */,
 				AE649C3C218C555600EF4A81 /* cdrom.c in Sources */,
+				AE039B40261C61C8005E24C5 /* gui_cheats.cpp in Sources */,
 				AE649BF3218C552500EF4A81 /* bitmath.c in Sources */,
 				AE649C30218C553A00EF4A81 /* Sort.c in Sources */,
 				AE82C6B325B64AE200C79BC2 /* zip_source_file_stdio.c in Sources */,

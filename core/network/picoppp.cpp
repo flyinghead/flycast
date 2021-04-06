@@ -1079,6 +1079,11 @@ void stop_pico()
 	pico_thread.WaitToEnd();
 }
 
+bool networkStarted()
+{
+	return pico_thread_running;
+}
+
 #else
 
 #include "types.h"
@@ -1088,5 +1093,8 @@ void stop_pico() { }
 void write_pico(u8 b) { }
 int read_pico() { return -1; }
 void pico_receive_eth_frame(const u8* frame, u32 size) {}
-
+bool networkStarted()
+{
+	return false;
+}
 #endif

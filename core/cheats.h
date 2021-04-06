@@ -21,7 +21,7 @@
 #pragma once
 #include "types.h"
 
-struct Cheat
+struct WidescreenCheat
 {
 	const char *game_id;
 	const char *area_or_version;
@@ -29,19 +29,52 @@ struct Cheat
 	u32 values[16];
 };
 
+struct Cheat
+{
+	enum class Type {
+		disabled,
+		setValue,
+		increase,
+		decrease,
+		runNextIfEq,
+		runNextIfNeq,
+		runNextIfGt,
+		runNextIfLt
+	};
+	Type type = Type::disabled;
+	std::string description;
+	bool enabled = false;
+	u32 size = 0;
+	u32 address = 0;
+	u32 value = 0;
+	u32 repeatCount = 1;
+	u32 repeatValueIncrement = 0;
+	u32 repeatAddressIncrement = 0;
+};
+
 class CheatManager
 {
 public:
-	CheatManager() : _widescreen_cheat(nullptr) {}
-	bool Reset();	// Returns true if using 16:9 anamorphic screen ratio
-	void Apply();
-	bool isActive() const { return active; }
+	void reset(const std::string& gameId);
+	void apply();
+	size_t cheatCount() const { return cheats.size(); }
+	const std::string& cheatDescription(size_t index) const { return cheats[index].description; }
+	bool cheatEnabled(size_t index) const { return cheats[index].enabled; }
+	void enableCheat(size_t index, bool enabled) { cheats[index].enabled = enabled; }
+	void loadCheatFile(const std::string& filename);
+	// Returns true if using 16:9 anamorphic screen ratio
+	bool isWidescreen() const { return widescreen_cheat != nullptr; }
 
 private:
-	static const Cheat _widescreen_cheats[];
-	static const Cheat _naomi_widescreen_cheats[];
-	const Cheat *_widescreen_cheat;
+	u32 readRam(u32 addr, u32 bits);
+	void writeRam(u32 addr, u32 value, u32 bits);
+
+	static const WidescreenCheat widescreen_cheats[];
+	static const WidescreenCheat naomi_widescreen_cheats[];
+	const WidescreenCheat *widescreen_cheat = nullptr;
 	bool active = false;
+	std::vector<Cheat> cheats;
+	std::string gameId;
 };
 
 extern CheatManager cheatManager;
