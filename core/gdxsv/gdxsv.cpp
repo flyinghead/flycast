@@ -48,6 +48,8 @@ void Gdxsv::Reset() {
         ERROR_LOG(COMMON, "WSAStartup failed. errno=%d", get_last_error());
         return;
     }
+#else
+    signal(SIGPIPE, SIG_IGN);
 #endif
 
     if (!net_thread.joinable()) {
