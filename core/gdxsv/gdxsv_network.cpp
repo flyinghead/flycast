@@ -60,17 +60,18 @@ bool TcpClient::Connect(const char *host, int port) {
                     return false;
                 } else if (res > 0) {
                     
-                    if (FD_ISSET(new_sock, &setE)){
-                        int error;
-                        socklen_t l = sizeof(int);
+                    int error;
+                    socklen_t l = sizeof(int);
 #ifdef _WIN32
-                        if (getsockopt(new_sock, SOL_SOCKET, SO_ERROR, (char*)&error, &l) < 0 || error) {
+                    if (getsockopt(new_sock, SOL_SOCKET, SO_ERROR, (char*)&error, &l) < 0 || error) {
 #else
-                        if (getsockopt(new_sock, SOL_SOCKET, SO_ERROR, &error, &l) < 0 || error) {
+                    if (getsockopt(new_sock, SOL_SOCKET, SO_ERROR, &error, &l) < 0 || error) {
 #endif
-                            WARN_LOG(COMMON, "Connect fail 4 %d", error);
-                            return false;
-                        }
+                        WARN_LOG(COMMON, "Connect fail 4 %d", error);
+                        return false;
+                    }
+                    
+                    if (FD_ISSET(new_sock, &setE)){
                         WARN_LOG(COMMON, "Connect fail 5 %d", get_last_error());
                         return false;
                     }
