@@ -149,17 +149,17 @@ std::string Gdxsv::GeneratePlatformInfoString() {
 }
 
 std::vector<u8> Gdxsv::GeneratePlatformInfoPacket() {
-    std::vector<u8> packet = {
-            0x81,
-            0xFF,
-            0x99, 0x50,
-            0x00, 0x00,
-            0x00, 0x00,
-            0x00, 0xff, 0xff, 0xff};
+    std::vector<u8> packet = {0x81, 0xff, 0x99, 0x50, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff};
     auto s = GeneratePlatformInfoString();
     packet.push_back((s.size() >> 8) & 0xffu);
     packet.push_back(s.size() & 0xffu);
-    std::copy(begin(s), end(s), std::back_inserter(packet));
+    std::copy(std::begin(s), std::end(s), std::back_inserter(packet));
+    std::vector<u8> e_loginkey(loginkey.size());
+    static const int magic[] = {0x46, 0xcf, 0x2d, 0x55};
+    for (int i = 0; i < e_loginkey.size(); ++i) e_loginkey[i] ^= loginkey[i] ^ magic[i & 3];
+    packet.push_back((e_loginkey.size() >> 8) & 0xffu);
+    packet.push_back(e_loginkey.size() & 0xffu);
+    std::copy(std::begin(e_loginkey), std::end(e_loginkey), std::back_inserter(packet));
     u16 payload_size = (u16) (packet.size() - 12);
     packet[4] = (payload_size >> 8) & 0xffu;
     packet[5] = payload_size & 0xffu;
