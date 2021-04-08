@@ -807,8 +807,7 @@ if(NOT (APPLE OR ANDROID OR USE_GLES OR USE_GLES2))
     	core/rend/gl4/abuffer.cpp
     	core/rend/gl4/gl4.h
     	core/rend/gl4/gldraw.cpp
-    	core/rend/gl4/gles.cpp
-    	core/rend/gl4/gltex.cpp)
+    	core/rend/gl4/gles.cpp)
 endif()
 
 if(USE_VULKAN AND NOT APPLE)

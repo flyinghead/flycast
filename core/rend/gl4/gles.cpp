@@ -713,43 +713,9 @@ static bool RenderFrame(int width, int height)
 	//setup render target first
 	if (is_rtt)
 	{
-		GLuint channels,format;
-		switch(FB_W_CTRL.fb_packmode)
-		{
-		case 0: //0x0   0555 KRGB 16 bit  (default)	Bit 15 is the value of fb_kval[7].
-			channels=GL_RGBA;
-			format=GL_UNSIGNED_BYTE;
-			break;
-
-		case 1: //0x1   565 RGB 16 bit
-			channels=GL_RGB;
-			format=GL_UNSIGNED_SHORT_5_6_5;
-			break;
-
-		case 2: //0x2   4444 ARGB 16 bit
-			channels=GL_RGBA;
-			format=GL_UNSIGNED_BYTE;
-			break;
-
-		case 3://0x3    1555 ARGB 16 bit    The alpha value is determined by comparison with the value of fb_alpha_threshold.
-			channels=GL_RGBA;
-			format=GL_UNSIGNED_BYTE;
-			break;
-
-		case 4: //0x4   888 RGB 24 bit packed
-		case 5: //0x5   0888 KRGB 32 bit    K is the value of fk_kval.
-		case 6: //0x6   8888 ARGB 32 bit
-			WARN_LOG(RENDERER, "Unsupported render to texture format: %d", FB_W_CTRL.fb_packmode);
+		output_fbo = BindRTT(false);
+		if (output_fbo == 0)
 			return false;
-
-		case 7: //7     invalid
-			die("7 is not valid");
-			return false;
-		}
-		DEBUG_LOG(RENDERER, "RTT packmode=%d stride=%d - %d,%d -> %d,%d", FB_W_CTRL.fb_packmode, FB_W_LINESTRIDE.stride * 8,
-				FB_X_CLIP.min, FB_Y_CLIP.min, FB_X_CLIP.max, FB_Y_CLIP.max);
-		output_fbo = gl4BindRTT(FB_W_SOF1 & VRAM_MASK, (u32)lroundf(matrices.GetDreamcastViewport().x),
-				(u32)lroundf(matrices.GetDreamcastViewport().y), channels, format);
 	}
 	else
 	{

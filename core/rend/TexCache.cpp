@@ -877,23 +877,24 @@ void ReadFramebuffer(PixelBuffer<u32>& pb, int& width, int& height)
 	}
 }
 
-void WriteTextureToVRam(u32 width, u32 height, u8 *data, u16 *dst)
+void WriteTextureToVRam(u32 width, u32 height, u8 *data, u16 *dst, u32 fb_w_ctrl_in, u32 linestride)
 {
-	u32 stride = FB_W_LINESTRIDE.stride * 8;
-	if (stride == 0)
-		stride = width * 2;
-	else if (width * 2 > stride) {
-    	// Happens for Virtua Tennis
-		width = stride / 2;
-    }
+	FB_W_CTRL_type fb_w_ctrl;
+	if (fb_w_ctrl_in != ~0u)
+		fb_w_ctrl.full = fb_w_ctrl_in;
+	else
+		fb_w_ctrl = FB_W_CTRL;
+	u32 padding = (linestride == ~0u ? FB_W_LINESTRIDE.stride * 8 : linestride);
+	if (padding != 0)
+		padding = padding / 2 - width;
 
-	const u16 kval_bit = (FB_W_CTRL.fb_kval & 0x80) << 8;
-	const u8 fb_alpha_threshold = FB_W_CTRL.fb_alpha_threshold;
+	const u16 kval_bit = (fb_w_ctrl.fb_kval & 0x80) << 8;
+	const u8 fb_alpha_threshold = fb_w_ctrl.fb_alpha_threshold;
 
 	u8 *p = data;
 
 	for (u32 l = 0; l < height; l++) {
-		switch(FB_W_CTRL.fb_packmode)
+		switch(fb_w_ctrl.fb_packmode)
 		{
 		case 0: //0x0   0555 KRGB 16 bit  (default)	Bit 15 is the value of fb_kval[7].
 			for (u32 c = 0; c < width; c++) {
@@ -920,7 +921,7 @@ void WriteTextureToVRam(u32 width, u32 height, u8 *data, u16 *dst)
 			}
 			break;
 		}
-		dst += (stride - width * 2) / 2;
+		dst += padding;
 	}
 }
 

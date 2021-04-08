@@ -830,7 +830,7 @@ protected:
 };
 
 void ReadFramebuffer(PixelBuffer<u32>& pb, int& width, int& height);
-void WriteTextureToVRam(u32 width, u32 height, u8 *data, u16 *dst);
+void WriteTextureToVRam(u32 width, u32 height, u8 *data, u16 *dst, u32 fb_w_ctrl = -1, u32 linestride = -1);
 
 static inline void MakeFogTexture(u8 *tex_data)
 {

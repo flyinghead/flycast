@@ -1522,16 +1522,6 @@ static void gui_display_settings()
 				ImGui::Text("Version: %s", REICAST_VERSION);
 				ImGui::Text("Git Hash: %s", GIT_HASH);
 				ImGui::Text("Build Date: %s", BUILD_DATE);
-				ImGui::Text("Target: %s",
-					settings.platform.system == DC_PLATFORM_DREAMCAST ?
-						"Dreamcast"
-					: settings.platform.system == DC_PLATFORM_NAOMI ?
-						"Naomi"
-					: settings.platform.system == DC_PLATFORM_ATOMISWAVE ?
-						"Atomiswave"
-					:
-						"Unknown"
-						);
 		    }
 		    if (ImGui::CollapsingHeader("Platform", ImGuiTreeNodeFlags_DefaultOpen))
 		    {

@@ -90,10 +90,17 @@ struct gl_ctx
 
 	struct
 	{
-		u32 TexAddr;
+		u32 texAddress = ~0;
 		GLuint depthb;
 		GLuint tex;
 		GLuint fbo;
+		GLuint pbo;
+		u32 pboSize;
+		bool directXfer;
+		u32 width;
+		u32 height;
+		u32 fb_w_ctrl;
+		u32 linestride;
 	} rtt;
 
 	struct
@@ -149,7 +156,7 @@ void SetCull(u32 CullMode);
 s32 SetTileClip(u32 val, GLint uniform);
 void SetMVS_Mode(ModifierVolumeMode mv_mode, ISP_Modvol ispc);
 
-void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt);
+GLuint BindRTT(bool withDepthBuffer = true);
 void ReadRTTBuffer();
 void RenderFramebuffer();
 void DrawFramebuffer();

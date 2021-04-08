@@ -87,8 +87,6 @@ extern gl4_ctx gl4;
 extern int max_image_width;
 extern int max_image_height;
 
-GLuint gl4BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt);
-
 extern const char *gl4PixelPipelineShader;
 bool gl4CompilePipelineShader(gl4PipelineShader* s, const char *pixel_source = gl4PixelPipelineShader, const char *vertex_source = NULL);
 

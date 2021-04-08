@@ -45,10 +45,9 @@ reicast-ios.xccheckout
 
 # Linux General
 shell/linux/.map
-shell/linux/nosym-reicast.elf
-shell/linux/reicast.elf
-shell/linux/reicast_naomi.elf
-shell/linux/reicast_awave.elf
+shell/linux/flycast.elf.map
+shell/linux/nosym-flycast.elf
+shell/linux/flycast.elf
 shell/linux/dispframe.elf
 
 # Visual Studio
@@ -58,9 +57,9 @@ generated
 # Android Studio
 *.iml
 shell/android-studio/.gradle/
-shell/android-studio/reicast/.cxx/
-shell/android-studio/reicast/build/
-shell/android-studio/reicast/local.properties
+shell/android-studio/flycast/.cxx/
+shell/android-studio/flycast/build/
+shell/android-studio/flycast/local.properties
 
 # JetBrains IDES
 .idea/
