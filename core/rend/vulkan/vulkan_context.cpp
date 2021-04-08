@@ -767,7 +767,7 @@ void VulkanContext::BeginRenderPass()
 			vk::SubpassContents::eInline);
 }
 
-void VulkanContext::EndFrame(const std::vector<vk::UniqueCommandBuffer> *cmdBuffers)
+void VulkanContext::EndFrame(vk::CommandBuffer overlayCmdBuffer)
 {
 	if (!IsValid())
 		return;
@@ -776,8 +776,8 @@ void VulkanContext::EndFrame(const std::vector<vk::UniqueCommandBuffer> *cmdBuff
 	commandBuffer.end();
 	vk::PipelineStageFlags wait_stage = vk::PipelineStageFlagBits::eColorAttachmentOutput;
 	std::vector<vk::CommandBuffer> allCmdBuffers;
-	if (cmdBuffers != nullptr)
-		allCmdBuffers = vk::uniqueToRaw(*cmdBuffers);
+	if (overlayCmdBuffer)
+		allCmdBuffers.push_back(overlayCmdBuffer);
 	allCmdBuffers.push_back(commandBuffer);
 	vk::SubmitInfo submitInfo(1, &(*imageAcquiredSemaphores[currentSemaphore]), &wait_stage, allCmdBuffers.size(),allCmdBuffers.data(),
 			1, &(*renderCompleteSemaphores[currentSemaphore]));
@@ -878,7 +878,7 @@ std::string VulkanContext::GetDriverVersion() const
 			+ std::to_string(VK_VERSION_PATCH(props.driverVersion));
 }
 
-const std::vector<vk::UniqueCommandBuffer> *VulkanContext::PrepareOverlay(bool vmu, bool crosshair)
+vk::CommandBuffer VulkanContext::PrepareOverlay(bool vmu, bool crosshair)
 {
 	return overlay->Prepare(*commandPools[GetCurrentImageIndex()], vmu, crosshair);
 }
@@ -900,7 +900,7 @@ void VulkanContext::PresentFrame(vk::ImageView imageView, const vk::Extent2D& ex
 	{
 		try {
 			NewFrame();
-			auto overlayCmdBuffers = PrepareOverlay(config::FloatVMUs, true);
+			auto overlayCmdBuffer = PrepareOverlay(config::FloatVMUs, true);
 
 			BeginRenderPass();
 
@@ -909,7 +909,7 @@ void VulkanContext::PresentFrame(vk::ImageView imageView, const vk::Extent2D& ex
 
 			DrawOverlay(gui_get_scaling(), config::FloatVMUs, true);
 			renderer->DrawOSD(false);
-			EndFrame(overlayCmdBuffers);
+			EndFrame(overlayCmdBuffer);
 		} catch (const InvalidVulkanContext& err) {
 		}
 	}
@@ -1144,3 +1144,26 @@ void VulkanContext::SetWindowSize(u32 width, u32 height)
 	}
 }
 
+void ImGui_ImplVulkan_RenderDrawData(ImDrawData *draw_data)
+{
+	VulkanContext *context = VulkanContext::Instance();
+	if (!context->IsValid())
+		return;
+	try {
+		bool rendering = context->IsRendering();
+		vk::CommandBuffer vmuCmdBuffer;
+		if (!rendering)
+		{
+			context->NewFrame();
+			vmuCmdBuffer = context->PrepareOverlay(true, false);
+			context->BeginRenderPass();
+			context->PresentLastFrame();
+			context->DrawOverlay(gui_get_scaling(), true, false);
+		}
+		// Record Imgui Draw Data and draw funcs into command buffer
+		ImGui_ImplVulkan_RenderDrawData(draw_data, (VkCommandBuffer)context->GetCurrentCommandBuffer());
+		if (!rendering)
+			context->EndFrame(vmuCmdBuffer);
+	} catch (const InvalidVulkanContext& err) {
+	}
+}

@@ -26,28 +26,29 @@
 
 VulkanOverlay::~VulkanOverlay() = default;
 
-std::unique_ptr<Texture> VulkanOverlay::createTexture(vk::CommandPool commandPool, int width, int height, u8 *data)
+std::unique_ptr<Texture> VulkanOverlay::createTexture(vk::CommandBuffer commandBuffer, int width, int height, u8 *data)
 {
 	VulkanContext *context = VulkanContext::Instance();
 	auto texture = std::unique_ptr<Texture>(new Texture());
 	texture->tex_type = TextureType::_8888;
 	texture->SetDevice(context->GetDevice());
 	texture->SetPhysicalDevice(context->GetPhysicalDevice());
-	commandBuffers[context->GetCurrentImageIndex()].emplace_back(std::move(
-			VulkanContext::Instance()->GetDevice().allocateCommandBuffersUnique(vk::CommandBufferAllocateInfo(commandPool, vk::CommandBufferLevel::ePrimary, 1))
-			.front()));
-	texture->SetCommandBuffer(*commandBuffers[context->GetCurrentImageIndex()].back());
+	texture->SetCommandBuffer(commandBuffer);
 	texture->UploadToGPU(width, height, data, false);
 	texture->SetCommandBuffer(nullptr);
 
 	return texture;
 }
 
-const std::vector<vk::UniqueCommandBuffer>* VulkanOverlay::Prepare(vk::CommandPool commandPool, bool vmu, bool crosshair)
+vk::CommandBuffer VulkanOverlay::Prepare(vk::CommandPool commandPool, bool vmu, bool crosshair)
 {
 	VulkanContext *context = VulkanContext::Instance();
 	commandBuffers.resize(context->GetSwapChainSize());
-	commandBuffers[context->GetCurrentImageIndex()].clear();
+	commandBuffers[context->GetCurrentImageIndex()] = std::move(
+			VulkanContext::Instance()->GetDevice().allocateCommandBuffersUnique(vk::CommandBufferAllocateInfo(commandPool, vk::CommandBufferLevel::ePrimary, 1))
+			.front());
+	vk::CommandBuffer cmdBuffer = *commandBuffers[context->GetCurrentImageIndex()];
+	cmdBuffer.begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));
 	if (vmu)
 	{
 		for (size_t i = 0; i < vmuTextures.size(); i++)
@@ -61,17 +62,18 @@ const std::vector<vk::UniqueCommandBuffer>* VulkanOverlay::Prepare(vk::CommandPo
 			if (texture != nullptr && !vmu_lcd_changed[i])
 				continue;
 
-			texture = createTexture(commandPool, 48, 32, (u8*)vmu_lcd_data[i]);
+			texture = createTexture(cmdBuffer, 48, 32, (u8*)vmu_lcd_data[i]);
 			vmu_lcd_changed[i] = false;
 		}
 	}
 	if (crosshair && !xhairTexture)
 	{
 		const u32* texData = getCrosshairTextureData();
-		xhairTexture = createTexture(commandPool, 16, 16, (u8*)texData);
+		xhairTexture = createTexture(cmdBuffer, 16, 16, (u8*)texData);
 	}
+	cmdBuffer.end();
 
-	return &commandBuffers[context->GetCurrentImageIndex()];
+	return cmdBuffer;
 }
 
 void VulkanOverlay::Draw(vk::Extent2D viewport, float scaling, bool vmu, bool crosshair)
