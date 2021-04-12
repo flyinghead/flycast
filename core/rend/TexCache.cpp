@@ -92,39 +92,80 @@ void palette_update()
 	pal_needs_update = false;
 	palette_updated = true;
 
-	switch(PAL_RAM_CTRL&3)
+	if (!config::RendererType.isDirectX())
 	{
-	case 0:
-		for (int i=0;i<1024;i++)
+		switch(PAL_RAM_CTRL&3)
 		{
-			palette16_ram[i] = ARGB1555(PALETTE_RAM[i]);
-			palette32_ram[i] = ARGB1555_32(PALETTE_RAM[i]);
-		}
-		break;
+		case 0:
+			for (int i=0;i<1024;i++)
+			{
+				palette16_ram[i] = Unpacker1555::unpack(PALETTE_RAM[i]);
+				palette32_ram[i] = Unpacker1555_32<RGBAPacker>::unpack(PALETTE_RAM[i]);
+			}
+			break;
 
-	case 1:
-		for (int i=0;i<1024;i++)
-		{
-			palette16_ram[i] = ARGB565(PALETTE_RAM[i]);
-			palette32_ram[i] = ARGB565_32(PALETTE_RAM[i]);
-		}
-		break;
+		case 1:
+			for (int i=0;i<1024;i++)
+			{
+				palette16_ram[i] = UnpackerNop<u16>::unpack(PALETTE_RAM[i]);
+				palette32_ram[i] = Unpacker565_32<RGBAPacker>::unpack(PALETTE_RAM[i]);
+			}
+			break;
 
-	case 2:
-		for (int i=0;i<1024;i++)
-		{
-			palette16_ram[i] = ARGB4444(PALETTE_RAM[i]);
-			palette32_ram[i] = ARGB4444_32(PALETTE_RAM[i]);
-		}
-		break;
+		case 2:
+			for (int i=0;i<1024;i++)
+			{
+				palette16_ram[i] = Unpacker4444::unpack(PALETTE_RAM[i]);
+				palette32_ram[i] = Unpacker4444_32<RGBAPacker>::unpack(PALETTE_RAM[i]);
+			}
+			break;
 
-	case 3:
-		for (int i=0;i<1024;i++)
-		{
-			palette16_ram[i] = ARGB8888(PALETTE_RAM[i]);
-			palette32_ram[i] = ARGB8888_32(PALETTE_RAM[i]);
+		case 3:
+			for (int i=0;i<1024;i++)
+			{
+				palette16_ram[i] = UnpackerRGBA8888::unpack(PALETTE_RAM[i]);
+				palette32_ram[i] = UnpackerRGBA8888_32<RGBAPacker>::unpack(PALETTE_RAM[i]);
+			}
+			break;
 		}
-		break;
+	}
+	else
+	{
+		switch(PAL_RAM_CTRL&3)
+		{
+
+		case 0:
+			for (int i=0;i<1024;i++)
+			{
+				palette16_ram[i] = UnpackerNop<u16>::unpack(PALETTE_RAM[i]);
+				palette32_ram[i] = Unpacker1555_32<BGRAPacker>::unpack(PALETTE_RAM[i]);
+			}
+			break;
+
+		case 1:
+			for (int i=0;i<1024;i++)
+			{
+				palette16_ram[i] = UnpackerNop<u16>::unpack(PALETTE_RAM[i]);
+				palette32_ram[i] = Unpacker565_32<BGRAPacker>::unpack(PALETTE_RAM[i]);
+			}
+			break;
+
+		case 2:
+			for (int i=0;i<1024;i++)
+			{
+				palette16_ram[i] = UnpackerNop<u16>::unpack(PALETTE_RAM[i]);
+				palette32_ram[i] = Unpacker4444_32<BGRAPacker>::unpack(PALETTE_RAM[i]);
+			}
+			break;
+
+		case 3:
+			for (int i=0;i<1024;i++)
+			{
+				palette16_ram[i] = UnpackerARGB8888::unpack(PALETTE_RAM[i]);
+				palette32_ram[i] = UnpackerNop<u32>::unpack(PALETTE_RAM[i]);
+			}
+			break;
+		}
 	}
 	for (int i = 0; i < 64; i++)
 		pal_hash_16[i] = XXH32(&PALETTE_RAM[i << 4], 16 * 4, 7);
@@ -312,28 +353,38 @@ struct PvrTexInfo
 	int bpp;        //4/8 for pal. 16 for yuv, rgb, argb
 	TextureType type;
 	// Conversion to 16 bpp
-	TexConvFP *PL;
-	TexConvFP *TW;
-	TexConvFP *VQ;
+	TexConvFP PL;
+	TexConvFP TW;
+	TexConvFP VQ;
 	// Conversion to 32 bpp
-	TexConvFP32 *PL32;
-	TexConvFP32 *TW32;
-	TexConvFP32 *VQ32;
+	TexConvFP32 PL32;
+	TexConvFP32 TW32;
+	TexConvFP32 VQ32;
 	// Conversion to 8 bpp (palette)
-	TexConvFP8 *TW8;
+	TexConvFP8 TW8;
 };
 
-static const PvrTexInfo format[8] =
-{	// name     bpp Final format			   Planar		Twiddled	 VQ				Planar(32b)    Twiddled(32b)  VQ (32b)      Palette (8b)
-	{"1555", 	16,	TextureType::_5551,        tex1555_PL,  tex1555_TW,  tex1555_VQ,    tex1555_PL32,  tex1555_TW32,  tex1555_VQ32, nullptr },	    //1555
-	{"565", 	16, TextureType::_565,         tex565_PL,   tex565_TW,   tex565_VQ,     tex565_PL32,   tex565_TW32,   tex565_VQ32,  nullptr },	    //565
-	{"4444", 	16, TextureType::_4444,        tex4444_PL,  tex4444_TW,  tex4444_VQ,    tex4444_PL32,  tex4444_TW32,  tex4444_VQ32, nullptr },	    //4444
-	{"yuv", 	16, TextureType::_8888,        nullptr,     nullptr,     nullptr,       texYUV422_PL,  texYUV422_TW,  texYUV422_VQ, nullptr },	    //yuv
-	{"bumpmap", 16, TextureType::_4444,        texBMP_PL,   texBMP_TW,	 texBMP_VQ,     tex4444_PL32,  tex4444_TW32,  tex4444_VQ32, nullptr },      //bump map
-	{"pal4", 	4,	TextureType::_5551,		   nullptr,     texPAL4_TW,  texPAL4_VQ,    nullptr,       texPAL4_TW32,  texPAL4_VQ32, texPAL4PT_TW },	//pal4
-	{"pal8", 	8,	TextureType::_5551,		   nullptr,     texPAL8_TW,  texPAL8_VQ,    nullptr,       texPAL8_TW32,  texPAL8_VQ32, texPAL8PT_TW },	//pal8
-	{"ns/1555", 0},	                                                                                                                                // Not supported (1555)
-};
+#define TEX_CONV_TABLE \
+const PvrTexInfo pvrTexInfo[8] = \
+{	/* name     bpp Final format			   Planar		Twiddled	 VQ				Planar(32b)    Twiddled(32b)  VQ (32b)      Palette (8b)	*/	\
+	{"1555", 	16,	TextureType::_5551,        tex1555_PL,  tex1555_TW,  tex1555_VQ,    tex1555_PL32,  tex1555_TW32,  tex1555_VQ32, nullptr },			\
+	{"565", 	16, TextureType::_565,         tex565_PL,   tex565_TW,   tex565_VQ,     tex565_PL32,   tex565_TW32,   tex565_VQ32,  nullptr },	    	\
+	{"4444", 	16, TextureType::_4444,        tex4444_PL,  tex4444_TW,  tex4444_VQ,    tex4444_PL32,  tex4444_TW32,  tex4444_VQ32, nullptr },	    	\
+	{"yuv", 	16, TextureType::_8888,        nullptr,     nullptr,     nullptr,       texYUV422_PL,  texYUV422_TW,  texYUV422_VQ, nullptr },			\
+	{"bumpmap", 16, TextureType::_4444,        texBMP_PL,   texBMP_TW,	 texBMP_VQ,     tex4444_PL32,  tex4444_TW32,  tex4444_VQ32, nullptr },			\
+	{"pal4", 	4,	TextureType::_5551,		   nullptr,     texPAL4_TW,  texPAL4_VQ,    nullptr,       texPAL4_TW32,  texPAL4_VQ32, texPAL4PT_TW },		\
+	{"pal8", 	8,	TextureType::_5551,		   nullptr,     texPAL8_TW,  texPAL8_VQ,    nullptr,       texPAL8_TW32,  texPAL8_VQ32, texPAL8PT_TW },		\
+	{"ns/1555", 0},	                                                                                                                                    \
+}
+
+namespace opengl {
+	TEX_CONV_TABLE;
+}
+namespace directx {
+	TEX_CONV_TABLE;
+}
+#undef TEX_CONV_TABLE
+static const PvrTexInfo *pvrTexInfo = opengl::pvrTexInfo;
 
 static const u32 VQMipPoint[11] =
 {
@@ -432,7 +483,7 @@ void BaseTextureCacheData::Create()
 	custom_load_in_progress = 0;
 
 	//decode info from tsp/tcw into the texture struct
-	tex = &format[tcw.PixelFmt == PixelReserved ? Pixel1555 : tcw.PixelFmt];	//texture format table entry
+	tex = &pvrTexInfo[tcw.PixelFmt == PixelReserved ? Pixel1555 : tcw.PixelFmt];	//texture format table entry
 
 	sa_tex = (tcw.TexAddr << 3) & VRAM_MASK;	//texture start address
 	sa = sa_tex;								//data texture start address (modified for MIPs, as needed)
@@ -624,7 +675,7 @@ void BaseTextureCacheData::Update()
 					vram_addr = sa_tex + OtherMipPoint[i] * tex->bpp / 8;
 				if (tcw.PixelFmt == PixelYUV && i == 0)
 					// Special case for YUV at 1x1 LoD
-					format[Pixel565].TW32(&pb32, &vram[vram_addr], 1, 1);
+					pvrTexInfo[Pixel565].TW32(&pb32, &vram[vram_addr], 1, 1);
 				else
 					texconv32(&pb32, &vram[vram_addr], 1 << i, 1 << i);
 			}
@@ -742,6 +793,11 @@ void BaseTextureCacheData::CheckCustomTexture()
 	}
 }
 
+void BaseTextureCacheData::SetDirectXColorOrder(bool enabled) {
+	pvrTexInfo = enabled ? directx::pvrTexInfo : opengl::pvrTexInfo;
+}
+
+template<typename Packer = RGBAPacker>
 void ReadFramebuffer(PixelBuffer<u32>& pb, int& width, int& height)
 {
 	width = (FB_R_SIZE.fb_x_size + 1) << 1;     // in 16-bit words
@@ -787,7 +843,7 @@ void ReadFramebuffer(PixelBuffer<u32>& pb, int& width, int& height)
 	}
 
 	pb.init(width, height);
-	u8 *dst = (u8*)pb.data();
+	u32 *dst = (u32 *)pb.data();
 
 	switch (FB_R_CTRL.fb_depth)
 	{
@@ -797,10 +853,11 @@ void ReadFramebuffer(PixelBuffer<u32>& pb, int& width, int& height)
 				for (int i = 0; i < width; i++)
 				{
 					u16 src = pvr_read32p<u16>(addr);
-					*dst++ = (((src >> 10) & 0x1F) << 3) + FB_R_CTRL.fb_concat;
-					*dst++ = (((src >> 5) & 0x1F) << 3) + FB_R_CTRL.fb_concat;
-					*dst++ = (((src >> 0) & 0x1F) << 3) + FB_R_CTRL.fb_concat;
-					*dst++ = 0xFF;
+					*dst++ = Packer::pack(
+							(((src >> 10) & 0x1F) << 3) + FB_R_CTRL.fb_concat,
+							(((src >> 5) & 0x1F) << 3) + FB_R_CTRL.fb_concat,
+							(((src >> 0) & 0x1F) << 3) + FB_R_CTRL.fb_concat,
+							0xff);
 					addr += bpp;
 				}
 				addr += modulus * bpp;
@@ -813,10 +870,11 @@ void ReadFramebuffer(PixelBuffer<u32>& pb, int& width, int& height)
 				for (int i = 0; i < width; i++)
 				{
 					u16 src = pvr_read32p<u16>(addr);
-					*dst++ = (((src >> 11) & 0x1F) << 3) + FB_R_CTRL.fb_concat;
-					*dst++ = (((src >> 5) & 0x3F) << 2) + (FB_R_CTRL.fb_concat & 3);
-					*dst++ = (((src >> 0) & 0x1F) << 3) + FB_R_CTRL.fb_concat;
-					*dst++ = 0xFF;
+					*dst++ = Packer::pack(
+							(((src >> 11) & 0x1F) << 3) + FB_R_CTRL.fb_concat,
+							(((src >> 5) & 0x3F) << 2) + (FB_R_CTRL.fb_concat & 3),
+							(((src >> 0) & 0x1F) << 3) + FB_R_CTRL.fb_concat,
+							0xFF);
 					addr += bpp;
 				}
 				addr += modulus * bpp;
@@ -828,33 +886,21 @@ void ReadFramebuffer(PixelBuffer<u32>& pb, int& width, int& height)
 				for (int i = 0; i < width; i += 4)
 				{
 					u32 src = pvr_read32p<u32>(addr);
-					*dst++ = src >> 16;
-					*dst++ = src >> 8;
-					*dst++ = src;
-					*dst++ = 0xFF;
+					*dst++ = Packer::pack(src >> 16, src >> 8, src, 0xff);
 					addr += 4;
 					if (i + 1 >= width)
 						break;
 					u32 src2 = pvr_read32p<u32>(addr);
-					*dst++ = src2 >> 8;
-					*dst++ = src2;
-					*dst++ = src >> 24;
-					*dst++ = 0xFF;
+					*dst++ = Packer::pack(src2 >> 8, src2, src >> 24, 0xff);
 					addr += 4;
 					if (i + 2 >= width)
 						break;
 					u32 src3 = pvr_read32p<u32>(addr);
-					*dst++ = src3;
-					*dst++ = src2 >> 24;
-					*dst++ = src2 >> 16;
-					*dst++ = 0xFF;
+					*dst++ = Packer::pack(src3, src2 >> 24, src2 >> 16, 0xff);
 					addr += 4;
 					if (i + 3 >= width)
 						break;
-					*dst++ = src3 >> 24;
-					*dst++ = src3 >> 16;
-					*dst++ = src3 >> 8;
-					*dst++ = 0xFF;
+					*dst++ = Packer::pack(src3 >> 24, src3 >> 16, src3 >> 8, 0xff);
 				}
 				addr += modulus * bpp;
 			}
@@ -865,10 +911,7 @@ void ReadFramebuffer(PixelBuffer<u32>& pb, int& width, int& height)
 				for (int i = 0; i < width; i++)
 				{
 					u32 src = pvr_read32p<u32>(addr);
-					*dst++ = src >> 16;
-					*dst++ = src >> 8;
-					*dst++ = src;
-					*dst++ = 0xFF;
+					*dst++ = Packer::pack(src >> 16, src >> 8, src, 0xff);
 					addr += bpp;
 				}
 				addr += modulus * bpp;
@@ -876,6 +919,8 @@ void ReadFramebuffer(PixelBuffer<u32>& pb, int& width, int& height)
 			break;
 	}
 }
+template void ReadFramebuffer<RGBAPacker>(PixelBuffer<u32>& pb, int& width, int& height);
+template void ReadFramebuffer<BGRAPacker>(PixelBuffer<u32>& pb, int& width, int& height);
 
 void WriteTextureToVRam(u32 width, u32 height, u8 *data, u16 *dst, u32 fb_w_ctrl_in, u32 linestride)
 {

@@ -865,6 +865,21 @@ if(USE_VULKAN AND NOT APPLE)
             core/rend/vulkan/vulkan_renderer.cpp)
 endif()
 
+if(WIN32)
+	target_sources(${PROJECT_NAME} PRIVATE
+		core/rend/dx9/d3d_renderer.h
+		core/rend/dx9/d3d_renderer.cpp
+		core/rend/dx9/d3d_shaders.h
+		core/rend/dx9/d3d_shaders.cpp
+		core/rend/dx9/d3d_texture.h
+		core/rend/dx9/d3d_texture.cpp
+		core/rend/dx9/dxcontext.h
+		core/rend/dx9/dxcontext.cpp
+		core/rend/dx9/imgui_impl_dx9.h
+		core/rend/dx9/imgui_impl_dx9.cpp)
+	target_link_libraries(${PROJECT_NAME} PRIVATE d3d9 d3dx9)
+endif()
+
 if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm.*|ARM.*)")
     target_sources(${PROJECT_NAME} PRIVATE core/rec-ARM/ngen_arm.S core/rec-ARM/rec_arm.cpp)
 elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^(aarch64.*|AARCH64.*)")

@@ -294,7 +294,8 @@ enum class RenderType {
 	OpenGL = 0,
 	OpenGL_OIT = 3,
 	Vulkan = 4,
-	Vulkan_OIT = 5
+	Vulkan_OIT = 5,
+	DirectX9 = 1,
 };
 
 enum class KeyboardLayout {

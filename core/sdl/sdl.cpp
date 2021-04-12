@@ -303,17 +303,20 @@ void input_sdl_handle()
 				for (int i = 0; event.text.text[i] != '\0'; i++)
 					sdl_keyboard->keyboard_character(event.text.text[i]);
 				break;
-#ifdef USE_VULKAN
 			case SDL_WINDOWEVENT:
 				if (event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED
 						|| event.window.event == SDL_WINDOWEVENT_RESTORED
 						|| event.window.event == SDL_WINDOWEVENT_MINIMIZED
 						|| event.window.event == SDL_WINDOWEVENT_MAXIMIZED)
 				{
+#ifdef USE_VULKAN
                 	theVulkanContext.SetResized();
+#endif
+#ifdef _WIN32
+                	theDXContext.resize();
+#endif
 				}
 				break;
-#endif
 #endif
 			case SDL_JOYBUTTONDOWN:
 			case SDL_JOYBUTTONUP:
@@ -474,7 +477,6 @@ bool sdl_recreate_window(u32 flags)
 		get_window_state();
 		SDL_DestroyWindow(window);
 	}
-	flags |= SDL_SWSURFACE;
 #if !defined(GLES)
 	flags |= SDL_WINDOW_RESIZABLE;
 	if (window_fullscreen)
@@ -491,6 +493,8 @@ bool sdl_recreate_window(u32 flags)
 		ERROR_LOG(COMMON, "Window creation failed: %s", SDL_GetError());
 		return false;
 	}
+	screen_width = window_width * scaling;
+	screen_height = window_height * scaling;
 
 #if !defined(GLES) && !defined(_WIN32)
 	// Set the window icon

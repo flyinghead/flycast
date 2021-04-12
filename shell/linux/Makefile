@@ -272,7 +272,7 @@ else ifneq (,$(findstring win32,$(platform)))
     NOT_ARM := 1
     CFLAGS += -fno-builtin-sqrtf -funroll-loops -I /mingw64/include
     LDFLAGS += -static-libgcc -static-libstdc++ -Wl,-subsystem,windows
-    LIBS := -lopengl32 -lwinmm -lgdi32 -lwsock32 -lws2_32 -ldsound -lcomctl32 -lcomdlg32 -lxinput -liphlpapi -Wl,-Bstatic -lgomp
+    LIBS := -lopengl32 -lwinmm -lgdi32 -lwsock32 -lws2_32 -ldsound -lcomctl32 -lcomdlg32 -lxinput -liphlpapi -ld3d9 -ld3dx9 -Wl,-Bstatic -lgomp
     PLATFORM_EXT := exe
     CC = gcc
     CXX = g++
@@ -506,7 +506,7 @@ SDL/lib/libSDL2.a:
 
 OBJECTS += SDL/lib/libSDL2.a
 LIBS += -ldinput8  -ldxguid -ldxerr8
-LIBS += -luser32 -lgdi32 -lwinmm -limm32 -lole32 -loleaut32 -lshell32 -lsetupapi -lversion -luuid
+LIBS += -luser32 -limm32 -lole32 -loleaut32 -lshell32 -lsetupapi -lversion -luuid
 	endif
 endif
 

@@ -158,11 +158,13 @@ __forceinline
 	else
 		SetBaseClipping();
 
-	//This bit control which pixels are affected
-	//by modvols
-	const u32 stencil=(gp->pcw.Shadow!=0)?0x80:0x0;
-
-	glcache.StencilFunc(GL_ALWAYS,stencil,stencil);
+	if (config::ModifierVolumes)
+	{
+		//This bit control which pixels are affected
+		//by modvols
+		const u32 stencil = gp->pcw.Shadow != 0 ? 0x80 : 0;
+		glcache.StencilFunc(GL_ALWAYS, stencil, stencil);
+	}
 
 	glcache.BindTexture(GL_TEXTURE_2D, gp->texid == (u64)-1 ? 0 : (GLuint)gp->texid);
 

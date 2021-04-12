@@ -65,6 +65,7 @@ ifdef FOR_LINUX
 endif
 
 ifdef FOR_WINDOWS
+	RZDCY_MODULES += rend/dx9/
 	ifndef UNIT_TESTS
 	    RZDCY_FILES += $(RZDCY_SRC_DIR)/windows/winmain.cpp
 	endif

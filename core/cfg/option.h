@@ -315,11 +315,22 @@ extern OptionString AudioBackend;
 class RendererOption : public Option<RenderType> {
 public:
 	RendererOption()
+#ifdef _WIN32
+		: Option<RenderType>("pvr.rend", RenderType::DirectX9) {}
+#else
 		: Option<RenderType>("pvr.rend", RenderType::OpenGL) {}
+#endif
 
 	bool isOpenGL() const {
 		return value == RenderType::OpenGL || value == RenderType::OpenGL_OIT;
 	}
+	bool isVulkan() const {
+		return value == RenderType::Vulkan || value == RenderType::Vulkan_OIT;
+	}
+	bool isDirectX() const {
+		return value == RenderType::DirectX9;
+	}
+
 	void set(RenderType v)
 	{
 		newValue = v;

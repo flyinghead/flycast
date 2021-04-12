@@ -246,6 +246,10 @@ static void ImGui_Impl_NewFrame()
 {
 	if (config::RendererType.isOpenGL())
 		ImGui_ImplOpenGL3_NewFrame();
+#ifdef _WIN32
+	else if (config::RendererType.isDirectX())
+		ImGui_ImplDX9_NewFrame();
+#endif
 	ImGui::GetIO().DisplaySize.x = screen_width;
 	ImGui::GetIO().DisplaySize.y = screen_height;
 
@@ -856,8 +860,6 @@ static void gui_display_settings()
 {
 	static bool maple_devices_changed;
 
-	RenderType pvr_rend = config::RendererType;
-	bool vulkan = !config::RendererType.isOpenGL();
 	ImGui::SetNextWindowPos(ImVec2(0, 0));
 	ImGui::SetNextWindowSize(ImVec2(screen_width, screen_height));
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
@@ -1175,10 +1177,37 @@ static void gui_display_settings()
 		}
 		if (ImGui::BeginTabItem("Video"))
 		{
+			int renderApi;
+			bool perPixel;
+			switch (config::RendererType)
+			{
+			default:
+			case RenderType::OpenGL:
+				renderApi = 0;
+				perPixel = false;
+				break;
+			case RenderType::OpenGL_OIT:
+				renderApi = 0;
+				perPixel = true;
+				break;
+			case RenderType::Vulkan:
+				renderApi = 1;
+				perPixel = false;
+				break;
+			case RenderType::Vulkan_OIT:
+				renderApi = 1;
+				perPixel = true;
+				break;
+			case RenderType::DirectX9:
+				renderApi = 2;
+				perPixel = false;
+				break;
+			}
+
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
 #if !defined(__APPLE__)
 			bool has_per_pixel = false;
-			if (!vulkan)
+			if (renderApi == 0)
 				has_per_pixel = !theGLContext.IsGLES() && theGLContext.GetMajorVersion() >= 4;
 #ifdef USE_VULKAN
 			else
@@ -1189,7 +1218,7 @@ static void gui_display_settings()
 #endif
 		    if (ImGui::CollapsingHeader("Transparent Sorting", ImGuiTreeNodeFlags_DefaultOpen))
 		    {
-		    	int renderer = (pvr_rend == RenderType::OpenGL_OIT || pvr_rend == RenderType::Vulkan_OIT) ? 2 : config::PerStripSorting ? 1 : 0;
+		    	int renderer = perPixel ? 2 : config::PerStripSorting ? 1 : 0;
 		    	ImGui::Columns(has_per_pixel ? 3 : 2, "renderers", false);
 		    	ImGui::RadioButton("Per Triangle", &renderer, 0);
 	            ImGui::SameLine();
@@ -1209,24 +1238,15 @@ static void gui_display_settings()
 		    	switch (renderer)
 		    	{
 		    	case 0:
-		    		if (!vulkan)
-		    			pvr_rend = RenderType::OpenGL;	// regular Open GL
-		    		else
-		    			pvr_rend = RenderType::Vulkan;	// regular Vulkan
+		    		perPixel = false;
 		    		config::PerStripSorting.set(false);
 		    		break;
 		    	case 1:
-		    		if (!vulkan)
-		    			pvr_rend = RenderType::OpenGL;
-		    		else
-		    			pvr_rend = RenderType::Vulkan;
+		    		perPixel = false;
 		    		config::PerStripSorting.set(true);
 		    		break;
 		    	case 2:
-		    		if (!vulkan)
-		    			pvr_rend = RenderType::OpenGL_OIT;
-		    		else
-		    			pvr_rend = RenderType::Vulkan_OIT;
+		    		perPixel = true;
 		    		break;
 		    	}
 		    }
@@ -1253,11 +1273,27 @@ static void gui_display_settings()
 		    	OptionCheckbox("Rotate Screen 90°", config::Rotate90, "Rotate the screen 90° counterclockwise");
 		    	OptionCheckbox("Delay Frame Swapping", config::DelayFrameSwapping,
 		    			"Useful to avoid flashing screen or glitchy videos. Not recommended on slow platforms");
-#ifdef USE_VULKAN
-				ImGui::Checkbox("Use Vulkan Renderer", &vulkan);
-	            ImGui::SameLine();
-	            ShowHelpMarker("Use Vulkan instead of Open GL/GLES");
+#if defined(USE_VULKAN) || defined(_WIN32)
+		    	ImGui::Text("Graphics API:");
+#if defined(USE_VULKAN) && defined(_WIN32)
+	            constexpr u32 columns = 3;
+#else
+	            constexpr u32 columns = 2;
 #endif
+	            ImGui::Columns(columns, "renderApi", false);
+		    	ImGui::RadioButton("Open GL", &renderApi, 0);
+            	ImGui::NextColumn();
+#ifdef USE_VULKAN
+		    	ImGui::RadioButton("Vulkan", &renderApi, 1);
+            	ImGui::NextColumn();
+#endif
+#ifdef _WIN32
+		    	ImGui::RadioButton("DirectX", &renderApi, 2);
+            	ImGui::NextColumn();
+#endif
+		    	ImGui::Columns(1, NULL, false);
+#endif
+
 	            const std::array<float, 9> scalings{ 0.5f, 1.f, 1.5f, 2.f, 2.5f, 3.f, 4.f, 4.5f, 5.f };
 	            const std::array<std::string, 9> scalingsText{ "Half", "Native", "x1.5", "x2", "x2.5", "x3", "x4", "x4.5", "x5" };
 	            std::array<int, scalings.size()> vres;
@@ -1337,6 +1373,19 @@ static void gui_display_settings()
 		    }
 			ImGui::PopStyleVar();
 			ImGui::EndTabItem();
+
+		    switch (renderApi)
+		    {
+		    case 0:
+		    	config::RendererType = perPixel ? RenderType::OpenGL_OIT : RenderType::OpenGL;
+		    	break;
+		    case 1:
+		    	config::RendererType = perPixel ? RenderType::Vulkan_OIT : RenderType::Vulkan;
+		    	break;
+		    case 2:
+		    	config::RendererType = RenderType::DirectX9;
+		    	break;
+		    }
 		}
 		if (ImGui::BeginTabItem("Audio"))
 		{
@@ -1569,13 +1618,25 @@ static void gui_display_settings()
 		    	}
 	    	}
 #ifdef USE_VULKAN
-	    	else
+	    	else if (config::RendererType.isVulkan())
 	    	{
 				if (ImGui::CollapsingHeader("Vulkan", ImGuiTreeNodeFlags_DefaultOpen))
 				{
 		    		std::string name = VulkanContext::Instance()->GetDriverName();
 		    		ImGui::Text("Driver Name: %s", name.c_str());
 		    		std::string version = VulkanContext::Instance()->GetDriverVersion();
+		    		ImGui::Text("Version: %s", version.c_str());
+				}
+	    	}
+#endif
+#ifdef _WIN32
+	    	else if (config::RendererType.isDirectX())
+	    	{
+				if (ImGui::CollapsingHeader("DirectX", ImGuiTreeNodeFlags_DefaultOpen))
+				{
+		    		std::string name = theDXContext.getDriverName();
+		    		ImGui::Text("Driver Name: %s", name.c_str());
+		    		std::string version = theDXContext.getDriverVersion();
 		    		ImGui::Text("Version: %s", version.c_str());
 				}
 	    	}
@@ -1599,11 +1660,6 @@ static void gui_display_settings()
     ScrollWhenDraggingOnVoid(ImVec2(0.0f, -mouse_delta.y), ImGuiMouseButton_Left);
     ImGui::End();
     ImGui::PopStyleVar();
-
-    if (vulkan != !config::RendererType.isOpenGL())
-        pvr_rend = !vulkan ? RenderType::OpenGL
-        		: config::RendererType == RenderType::OpenGL_OIT ? RenderType::Vulkan_OIT : RenderType::Vulkan;
-    config::RendererType = pvr_rend;
 }
 
 void gui_display_notification(const char *msg, int duration)
