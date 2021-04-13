@@ -76,7 +76,7 @@ Option<bool> Fog("rend.Fog", true);
 Option<bool> FloatVMUs("rend.FloatVMUs");
 Option<bool> Rotate90("rend.Rotate90");
 Option<bool> PerStripSorting("rend.PerStripSorting");
-Option<bool> DelayFrameSwapping("rend.DelayFrameSwapping");
+Option<bool> DelayFrameSwapping("rend.DelayFrameSwapping", true);
 Option<bool> WidescreenGameHacks("rend.WidescreenGameHacks");
 std::array<Option<int>, 4> CrosshairColor {
 	Option<int>("rend.CrossHairColor1"),

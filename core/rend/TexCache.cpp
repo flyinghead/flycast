@@ -797,7 +797,7 @@ void BaseTextureCacheData::SetDirectXColorOrder(bool enabled) {
 	pvrTexInfo = enabled ? directx::pvrTexInfo : opengl::pvrTexInfo;
 }
 
-template<typename Packer = RGBAPacker>
+template<typename Packer>
 void ReadFramebuffer(PixelBuffer<u32>& pb, int& width, int& height)
 {
 	width = (FB_R_SIZE.fb_x_size + 1) << 1;     // in 16-bit words
