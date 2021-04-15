@@ -759,6 +759,7 @@ protected:
 
 template<typename Packer = RGBAPacker>
 void ReadFramebuffer(PixelBuffer<u32>& pb, int& width, int& height);
+template<int Red = 0, int Green = 1, int Blue = 2, int Alpha = 3>
 void WriteTextureToVRam(u32 width, u32 height, u8 *data, u16 *dst, u32 fb_w_ctrl = -1, u32 linestride = -1);
 
 static inline void MakeFogTexture(u8 *tex_data)

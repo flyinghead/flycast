@@ -636,7 +636,7 @@ static bool RenderFrame(int width, int height)
 
 	const bool is_rtt = pvrrc.isRTT;
 
-	TransformMatrix<true> matrices(pvrrc, width, height);
+	TransformMatrix<COORD_OPENGL> matrices(pvrrc, width, height);
 	gl4ShaderUniforms.normal_mat = matrices.GetNormalMatrix();
 	const glm::mat4& scissor_mat = matrices.GetScissorMatrix();
 	ViewportMatrix = matrices.GetViewportMatrix();

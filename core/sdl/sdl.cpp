@@ -313,7 +313,7 @@ void input_sdl_handle()
                 	theVulkanContext.SetResized();
 #endif
 #ifdef _WIN32
-                	theDXContext.resize();
+               		theDXContext.resize();
 #endif
 				}
 				break;
@@ -515,6 +515,9 @@ bool sdl_recreate_window(u32 flags)
 	theVulkanContext.SetWindow(window, nullptr);
 #endif
 	theGLContext.SetWindow(window);
+#ifdef _WIN32
+	theDXContext.setNativeWindow(sdl_get_native_hwnd());
+#endif
 
 	return true;
 }

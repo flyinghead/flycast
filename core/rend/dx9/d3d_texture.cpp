@@ -57,16 +57,26 @@ void D3DTexture::UploadToGPU(int width, int height, u8* temp_tex_buffer, bool mi
 		for (int i = 0; i < mipmapLevels - 1; i++)
 			temp_tex_buffer += (1 << (2 * i)) * bpp;
 	}
-	if (texture == nullptr)
-	{
-		if (mipmapped)
-			theDXContext.getDevice()->CreateTexture(width, height, 0, D3DUSAGE_AUTOGENMIPMAP, d3dFormat, D3DPOOL_MANAGED, &texture.get(), 0);
-		else
-			theDXContext.getDevice()->CreateTexture(width, height, 1, 0, d3dFormat, D3DPOOL_MANAGED, &texture.get(), 0);
-		verify(texture != nullptr);
-	}
 	D3DLOCKED_RECT rect;
-	texture->LockRect(0, &rect, NULL, 0 /* | D3DLOCK_DISCARD*/);
+	while (true)
+	{
+		if (texture == nullptr)
+		{
+			if (mipmapped)
+				theDXContext.getDevice()->CreateTexture(width, height, 0, D3DUSAGE_AUTOGENMIPMAP, d3dFormat, D3DPOOL_MANAGED, &texture.get(), 0);
+			else
+				theDXContext.getDevice()->CreateTexture(width, height, 1, 0, d3dFormat, D3DPOOL_MANAGED, &texture.get(), 0);
+			verify(texture != nullptr);
+		}
+		if (SUCCEEDED(texture->LockRect(0, &rect, nullptr, 0)))
+			break;
+		D3DSURFACE_DESC desc;
+		texture->GetLevelDesc(0, &desc);
+		if (desc.Pool != D3DPOOL_DEFAULT)
+			// it should be lockable so error out
+			return;
+		texture.reset();
+	}
 	if (width * bpp == (u32)rect.Pitch)
 		memcpy(rect.pBits, temp_tex_buffer, width * bpp * height);
 	else

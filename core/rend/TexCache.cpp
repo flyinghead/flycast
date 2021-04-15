@@ -922,6 +922,7 @@ void ReadFramebuffer(PixelBuffer<u32>& pb, int& width, int& height)
 template void ReadFramebuffer<RGBAPacker>(PixelBuffer<u32>& pb, int& width, int& height);
 template void ReadFramebuffer<BGRAPacker>(PixelBuffer<u32>& pb, int& width, int& height);
 
+template<int Red, int Green, int Blue, int Alpha>
 void WriteTextureToVRam(u32 width, u32 height, u8 *data, u16 *dst, u32 fb_w_ctrl_in, u32 linestride)
 {
 	FB_W_CTRL_type fb_w_ctrl;
@@ -943,25 +944,25 @@ void WriteTextureToVRam(u32 width, u32 height, u8 *data, u16 *dst, u32 fb_w_ctrl
 		{
 		case 0: //0x0   0555 KRGB 16 bit  (default)	Bit 15 is the value of fb_kval[7].
 			for (u32 c = 0; c < width; c++) {
-				*dst++ = (((p[0] >> 3) & 0x1F) << 10) | (((p[1] >> 3) & 0x1F) << 5) | ((p[2] >> 3) & 0x1F) | kval_bit;
+				*dst++ = (((p[Red] >> 3) & 0x1F) << 10) | (((p[Green] >> 3) & 0x1F) << 5) | ((p[Blue] >> 3) & 0x1F) | kval_bit;
 				p += 4;
 			}
 			break;
 		case 1: //0x1   565 RGB 16 bit
 			for (u32 c = 0; c < width; c++) {
-				*dst++ = (((p[0] >> 3) & 0x1F) << 11) | (((p[1] >> 2) & 0x3F) << 5) | ((p[2] >> 3) & 0x1F);
+				*dst++ = (((p[Red] >> 3) & 0x1F) << 11) | (((p[Green] >> 2) & 0x3F) << 5) | ((p[Blue] >> 3) & 0x1F);
 				p += 4;
 			}
 			break;
 		case 2: //0x2   4444 ARGB 16 bit
 			for (u32 c = 0; c < width; c++) {
-				*dst++ = (((p[0] >> 4) & 0xF) << 8) | (((p[1] >> 4) & 0xF) << 4) | ((p[2] >> 4) & 0xF) | (((p[3] >> 4) & 0xF) << 12);
+				*dst++ = (((p[Red] >> 4) & 0xF) << 8) | (((p[Green] >> 4) & 0xF) << 4) | ((p[Blue] >> 4) & 0xF) | (((p[Alpha] >> 4) & 0xF) << 12);
 				p += 4;
 			}
 			break;
 		case 3://0x3    1555 ARGB 16 bit    The alpha value is determined by comparison with the value of fb_alpha_threshold.
 			for (u32 c = 0; c < width; c++) {
-				*dst++ = (((p[0] >> 3) & 0x1F) << 10) | (((p[1] >> 3) & 0x1F) << 5) | ((p[2] >> 3) & 0x1F) | (p[3] > fb_alpha_threshold ? 0x8000 : 0);
+				*dst++ = (((p[Red] >> 3) & 0x1F) << 10) | (((p[Green] >> 3) & 0x1F) << 5) | ((p[Blue] >> 3) & 0x1F) | (p[Alpha] > fb_alpha_threshold ? 0x8000 : 0);
 				p += 4;
 			}
 			break;
@@ -969,6 +970,8 @@ void WriteTextureToVRam(u32 width, u32 height, u8 *data, u16 *dst, u32 fb_w_ctrl
 		dst += padding;
 	}
 }
+template void WriteTextureToVRam<0, 1, 2, 3>(u32 width, u32 height, u8 *data, u16 *dst, u32 fb_w_ctrl_in, u32 linestride);
+template void WriteTextureToVRam<2, 1, 0, 3>(u32 width, u32 height, u8 *data, u16 *dst, u32 fb_w_ctrl_in, u32 linestride);
 
 static void rend_text_invl(vram_block* bl)
 {

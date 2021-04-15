@@ -107,6 +107,8 @@ struct D3DRenderer : public Renderer
 	bool Present() override { return true; }
 	void DrawOSD(bool clear_screen) override;
 	u64 GetTexture(TSP tsp, TCW tcw) override;
+	void preReset();
+	void postReset();
 
 private:
 	enum ModifierVolumeMode { Xor, Or, Inclusion, Exclusion, ModeCount };
@@ -115,7 +117,7 @@ private:
 	template <u32 Type, bool SortingEnabled>
 	void drawList(const List<PolyParam>& gply, int first, int count);
 	template <u32 Type, bool SortingEnabled>
-	void setGPState(const PolyParam *gp, u32 cflip = 0);
+	void setGPState(const PolyParam *gp);
 	bool ensureVertexBufferSize(ComPtr<IDirect3DVertexBuffer9>& buffer, u32& currentSize, u32 minSize);
 	bool ensureIndexBufferSize(ComPtr<IDirect3DIndexBuffer9>& buffer, u32& currentSize, u32 minSize);
 	void updatePaletteTexture();
@@ -129,6 +131,10 @@ private:
 	void drawModVols(int first, int count);
 	void setProvokingVertices();
 	void setTexMode(D3DSAMPLERSTATETYPE state, u32 clamp, u32 mirror);
+	void setBaseScissor();
+	void prepareRttRenderTarget(u32 texAddress);
+
+	void readRttRenderTarget(u32 texAddress);
 
 	RenderStateCache devCache;
 	ComPtr<IDirect3DDevice9> device;
@@ -152,12 +158,17 @@ private:
 	ComPtr<IDirect3DSurface9> dcfbSurface;
 	ComPtr<IDirect3DTexture9> rttTexture;
 	ComPtr<IDirect3DSurface9> rttSurface;
+	ComPtr<IDirect3DSurface9> depthSurface;
 
 	u32 width = 0;
 	u32 height = 0;
-	TransformMatrix<true, true> matrices;
+	TransformMatrix<COORD_DIRECTX> matrices;
 	D3DTextureCache texCache;
 	std::vector<SortTrigDrawParam> pidx_sort;
 	D3DShaders shaders;
+	RECT scissorRect{};
+	bool scissorEnable = false;
+	bool resetting = false;
+	bool frameRendered = false;
 };
 

@@ -18,8 +18,7 @@
 */
 #include "d3d_shaders.h"
 
-// FIXME
-#define SHADER_DEBUG D3DXSHADER_DEBUG|D3DXSHADER_SKIPOPTIMIZATION
+#define SHADER_DEBUG 0 // D3DXSHADER_DEBUG|D3DXSHADER_SKIPOPTIMIZATION
 
 const char *VertexShader = R"(
 struct vertex_in
@@ -43,16 +42,16 @@ float4x4 normal_matrix : register(c0);
 vertex_out main(in vertex_in vin)
 {
 	vertex_out vo;
+	vo.pos = mul(normal_matrix, vin.pos);
 #if pp_Gouraud == 1
-	vo.col = vin.col * vin.pos.z;
-	vo.spc = vin.spc * vin.pos.z;
+	vo.col = vin.col * vo.pos.z;
+	vo.spc = vin.spc * vo.pos.z;
 #else
 	// flat shading: no interpolation
 	vo.col = vin.col;
 	vo.spc = vin.spc;
 #endif
-	vo.uv = float4(vin.uv * vin.pos.z, 0, vin.pos.z);
-	vo.pos = mul(normal_matrix, vin.pos);
+	vo.uv = float4(vin.uv * vo.pos.z, 0, vo.pos.z);
 
 	vo.pos.w = 1.0f;
 	vo.pos.z = 0;
@@ -83,7 +82,7 @@ sampler2D fog_table : register(s2);
 float4 palette_index : register(c0);
 float4 FOG_COL_VERT : register(c1);
 float4 FOG_COL_RAM : register(c2);
-float4 FOG_DENSITY : register(c3);
+float4 FOG_DENSITY_SCALE : register(c3);
 float4 ClipTest : register(c4);
 float4 trilinear_alpha : register(c5);
 float4 fog_clamp_min : register(c6);
@@ -91,7 +90,7 @@ float4 fog_clamp_max : register(c7);
 
 float fog_mode2(float w)
 {
-	float z = clamp(w * FOG_DENSITY.x, 1.0f, 255.9999f);
+	float z = clamp(w * FOG_DENSITY_SCALE.x, 1.0f, 255.9999f);
 	float exp = floor(log2(z));
 	float m = z * 16.0f / pow(2.0, exp) - 16.0f;
 	float idx = floor(m) + exp * 16.0f + 0.5f;
@@ -204,7 +203,7 @@ PSO main(in pixel inpix)
 	color *= trilinear_alpha;
 	#endif
 
-	//color.rgb = float3(inpix.uv.w * sp_FOG_DENSITY / 128.0f);
+	//color.rgb = float3(inpix.uv.w * FOG_DENSITY_SCALE.x / 128.0f);
 	PSO pso;
 	float w = inpix.uv.w * 100000.0f;
 	pso.z = log2(1.0f + w) / 34.0f;
@@ -218,7 +217,7 @@ PSO modifierVolume(float4 uv : TEXCOORD0)
 	PSO pso;
 	float w = uv.w * 100000.0f;
 	pso.z = log2(1.0f + w) / 34.0f;
-	pso.col = float4(0, 0, 0, 0.5f);	// TODO use sp_ShaderColor uniform
+	pso.col = float4(0, 0, 0, FOG_DENSITY_SCALE.y);
 
 	return pso;
 }

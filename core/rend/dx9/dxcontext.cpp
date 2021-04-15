@@ -17,8 +17,10 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #include "dxcontext.h"
+#include "d3d_renderer.h"
 #include "rend/gui.h"
 #include "sdl/sdl.h"
+#include "hw/pvr/Renderer_if.h"
 
 DXContext theDXContext;
 extern int screen_width, screen_height; // FIXME
@@ -31,16 +33,18 @@ bool DXContext::Init()
 	pD3D.reset(Direct3DCreate9(D3D_SDK_VERSION));
 	if (!pD3D)
 		return false;
-	NOTICE_LOG(RENDERER, "Direct3D object created");
 	memset(&d3dpp, 0, sizeof(d3dpp));
-	d3dpp.Windowed = TRUE;	// FIXME
+	d3dpp.hDeviceWindow = hWnd;
+	d3dpp.Windowed = true;
 	d3dpp.SwapEffect = D3DSWAPEFFECT_DISCARD;
-	d3dpp.BackBufferFormat = D3DFMT_UNKNOWN; // Need to use an explicit format with alpha if needing per-pixel alpha composition.
-	d3dpp.EnableAutoDepthStencil = TRUE;
-	d3dpp.AutoDepthStencilFormat = D3DFMT_D24S8;			// TODO D3DFMT_D24FS8 if supported?
-	d3dpp.PresentationInterval = D3DPRESENT_INTERVAL_ONE;           // Present with vsync
-	//d3dpp.PresentationInterval = D3DPRESENT_INTERVAL_IMMEDIATE;   // Present without vsync, maximum unthrottled framerate
-	if (FAILED(pD3D->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, sdl_get_native_hwnd(),
+	d3dpp.BackBufferFormat = D3DFMT_UNKNOWN;
+	d3dpp.EnableAutoDepthStencil = FALSE;						// No need for depth/stencil buffer for the backbuffer
+#ifndef TEST_AUTOMATION
+	d3dpp.PresentationInterval = D3DPRESENT_INTERVAL_ONE;		// Present with vsync
+#else
+	d3dpp.PresentationInterval = D3DPRESENT_INTERVAL_IMMEDIATE;	// Present without vsync, maximum unthrottled framerate
+#endif
+	if (FAILED(pD3D->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, hWnd,
 			D3DCREATE_HARDWARE_VERTEXPROCESSING, &d3dpp, &pDevice.get())))
 	    return false;
 	gui_init();
@@ -58,8 +62,14 @@ void DXContext::Present()
 {
 	HRESULT result = pDevice->Present(NULL, NULL, NULL, NULL);
 	// Handle loss of D3D9 device
-	if (result == D3DERR_DEVICELOST && pDevice->TestCooperativeLevel() == D3DERR_DEVICENOTRESET)
-		resetDevice();
+	if (result == D3DERR_DEVICELOST)
+	{
+		result = pDevice->TestCooperativeLevel();
+		if (result == D3DERR_DEVICENOTRESET)
+			resetDevice();
+	}
+	else if (FAILED(result))
+		WARN_LOG(RENDERER, "Present failed %x", result);
 }
 
 void DXContext::EndImGuiFrame()
@@ -86,8 +96,27 @@ void DXContext::resize()
 	if (!pDevice)
 		return;
 	RECT rect;
-	GetClientRect(sdl_get_native_hwnd(), &rect);
+	GetClientRect(hWnd, &rect);
 	d3dpp.BackBufferWidth = screen_width = rect.right;
 	d3dpp.BackBufferHeight = screen_height = rect.bottom;
+	if (screen_width == 0 || screen_height == 0)
+		// window minimized
+		return;
 	resetDevice();
+}
+
+void DXContext::resetDevice()
+{
+	if (renderer != nullptr)
+		((D3DRenderer *)renderer)->preReset();
+    ImGui_ImplDX9_InvalidateDeviceObjects();
+    HRESULT hr = pDevice->Reset(&d3dpp);
+    if (hr == D3DERR_INVALIDCALL)
+    {
+        ERROR_LOG(RENDERER, "DX9 device reset failed");
+        return;
+    }
+    ImGui_ImplDX9_CreateDeviceObjects();
+	if (renderer != nullptr)
+		((D3DRenderer *)renderer)->postReset();
 }

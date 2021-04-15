@@ -33,6 +33,13 @@ public:
 			bool pp_Offset, u32 pp_FogCtrl, bool pp_BumpMap, bool fog_clamping, bool trilinear, bool palette, bool gouraud);
 	const ComPtr<IDirect3DVertexShader9>& getVertexShader(bool gouraud);
 	const ComPtr<IDirect3DPixelShader9>& getModVolShader();
+	void term() {
+		shaders.clear();
+		gouraudVertexShader.reset();
+		flatVertexShader.reset();
+		modVolShader.reset();
+		device.reset();
+	}
 
 private:
 	ComPtr<ID3DXBuffer> compileShader(const char* source, const char* function, const char* profile, const D3DXMACRO* pDefines);

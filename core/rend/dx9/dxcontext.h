@@ -22,7 +22,6 @@
 #include <d3d9.h>
 #include "imgui_impl_dx9.h"
 #include "types.h"
-#include "hw/pvr/Renderer_if.h"
 
 template<typename T>
 class ComPtr
@@ -97,23 +96,18 @@ public:
 		return std::to_string(id.DriverVersion.HighPart >> 16) + "." + std::to_string((u16)id.DriverVersion.HighPart)
 			+ "." + std::to_string(id.DriverVersion.LowPart >> 16) + "." + std::to_string((u16)id.DriverVersion.LowPart);
 	}
+	void setNativeWindow(HWND hWnd) {
+		this->hWnd = hWnd;
+	}
 
 private:
-	void resetDevice()
-	{
-		rend_term_renderer();
-	    ImGui_ImplDX9_InvalidateDeviceObjects();
-	    HRESULT hr = pDevice->Reset(&d3dpp);
-	    if (hr == D3DERR_INVALIDCALL)
-	        die("DX9 device reset failed");
-	    ImGui_ImplDX9_CreateDeviceObjects();
-	    rend_init_renderer();
-	}
+	void resetDevice();
 
 	ComPtr<IDirect3D9> pD3D;
 	ComPtr<IDirect3DDevice9> pDevice;
-	D3DPRESENT_PARAMETERS d3dpp;
-	bool overlay;
+	D3DPRESENT_PARAMETERS d3dpp{};
+	bool overlay = false;
+	HWND hWnd = nullptr;
 };
 extern DXContext theDXContext;
 #endif
