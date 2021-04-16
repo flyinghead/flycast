@@ -1159,20 +1159,59 @@ void D3DRenderer::renderFramebuffer()
 	else
 		sx = (int)roundf((screen_width - renderAR * screen_height) / 2.f);
 
-	RECT rs { 0, 0, (long)width, (long)height };
-	RECT rd { 0, 0, screen_width, screen_height };
-	if (sx != 0)
+	if (!config::Rotate90)
 	{
-		rd.left = sx;
-		rd.right = screen_width - sx;
+		RECT rs { 0, 0, (long)width, (long)height };
+		RECT rd { 0, 0, screen_width, screen_height };
+		if (sx != 0)
+		{
+			rd.left = sx;
+			rd.right = screen_width - sx;
+		}
+		else
+		{
+			rs.left = fx;
+			rs.right = width - fx;
+		}
+		device->StretchRect(framebufferSurface, &rs, backbuffer, &rd, D3DTEXF_LINEAR);	// This can fail if window is minimized
 	}
 	else
 	{
-		rs.left = fx;
-		rs.right = width - fx;
+		device->SetPixelShader(NULL);
+		device->SetVertexShader(NULL);
+		device->SetRenderState(D3DRS_CULLMODE, D3DCULL_NONE);
+		device->SetRenderState(D3DRS_ZENABLE, FALSE);
+		device->SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
+		device->SetRenderState(D3DRS_ALPHATESTENABLE, FALSE);
+		device->SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_LINEAR);
+		device->SetSamplerState(0, D3DSAMP_MAGFILTER, D3DTEXF_LINEAR);
+
+		glm::mat4 identity = glm::identity<glm::mat4>();
+		glm::mat4 projection = glm::translate(glm::vec3(-1.f / screen_width, 1.f / screen_height, 0))
+			* glm::rotate((float)M_PI_2, glm::vec3(0, 0, 1));
+
+		device->SetTransform(D3DTS_WORLD, (const D3DMATRIX *)&identity[0][0]);
+		device->SetTransform(D3DTS_VIEW, (const D3DMATRIX *)&identity[0][0]);
+		device->SetTransform(D3DTS_PROJECTION, (const D3DMATRIX *)&projection[0][0]);
+
+		device->SetFVF(D3DFVF_XYZ | D3DFVF_TEX1);
+		D3DVIEWPORT9 viewport;
+		viewport.X = sx;
+		viewport.Y = fx * screen_width / height;
+		viewport.Width = screen_width - sx * 2;
+		viewport.Height = screen_height - 2 * fx * screen_width / height;
+		viewport.MinZ = 0;
+		viewport.MaxZ = 1;
+		verifyWin(device->SetViewport(&viewport));
+		float coords[] {
+			-1,  1, 0.5f,  0, 0,
+			-1, -1, 0.5f,  0, 1,
+			 1,  1, 0.5f,  1, 0,
+			 1, -1, 0.5f,  1, 1,
+		};
+		device->SetTexture(0, framebufferTexture);
+		device->DrawPrimitiveUP(D3DPT_TRIANGLESTRIP, 2, coords, sizeof(float) * 5);
 	}
-	// FIXME rotate
-	device->StretchRect(framebufferSurface, &rs, backbuffer, &rd, D3DTEXF_LINEAR);	// This can fail if window is minimized
 }
 
 bool D3DRenderer::RenderLastFrame()
