@@ -28,13 +28,14 @@ public:
 	void UploadToGPU(int width, int height, u8* temp_tex_buffer, bool mipmapped,
 			bool mipmapsIncluded = false) override;
 	bool Delete() override;
+	void loadCustomTexture();
 };
 
 class D3DTextureCache final : public BaseTextureCache<D3DTexture>
 {
 public:
 	D3DTextureCache() {
-		D3DTexture::SetDirectXColorOrder(true);			// TODO need to be reset to false by other renderers
+		D3DTexture::SetDirectXColorOrder(true);
 	}
 	~D3DTextureCache() {
 		Clear();

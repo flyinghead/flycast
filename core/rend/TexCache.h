@@ -206,7 +206,7 @@ struct Unpacker565_32 {
 		return Packer::pack(
 				(((word >> 11) & 0x1F) << 3) | ((word >> 13) & 7),
 				(((word >> 5) & 0x3F) << 2) | ((word >> 9) & 3),
-				(((word >> 0) & 0x1F) << 13) | ((word >> 2) & 7),
+				(((word >> 0) & 0x1F) << 3) | ((word >> 2) & 7),
 				0xFF);
 	}
 };

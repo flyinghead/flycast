@@ -48,11 +48,13 @@ bool DXContext::Init()
 			D3DCREATE_HARDWARE_VERTEXPROCESSING, &d3dpp, &pDevice.get())))
 	    return false;
 	gui_init();
+	overlay.init(pDevice);
 	return ImGui_ImplDX9_Init(pDevice.get());
 }
 
 void DXContext::Term()
 {
+	overlay.term();
 	ImGui_ImplDX9_Shutdown();
 	pDevice.reset();
 	pD3D.reset();
@@ -78,7 +80,7 @@ void DXContext::EndImGuiFrame()
 	pDevice->SetRenderState(D3DRS_ZENABLE, FALSE);
 	pDevice->SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
 	pDevice->SetRenderState(D3DRS_SCISSORTESTENABLE, FALSE);
-	if (!overlay)
+	if (!overlayOnly)
 	{
 		pDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_RGBA(0, 0, 0, 255), 1.0f, 0);
 		if (renderer != nullptr)
@@ -86,6 +88,15 @@ void DXContext::EndImGuiFrame()
 	}
 	if (SUCCEEDED(pDevice->BeginScene()))
 	{
+		if (overlayOnly)
+		{
+			if (crosshairsNeeded() || config::FloatVMUs)
+				overlay.draw(screen_width, screen_height, config::FloatVMUs, true);
+		}
+		else
+		{
+			overlay.draw(screen_width, screen_height, true, false);
+		}
 		ImGui_ImplDX9_RenderDrawData(ImGui::GetDrawData());
 		pDevice->EndScene();
 	}
@@ -109,6 +120,7 @@ void DXContext::resetDevice()
 {
 	if (renderer != nullptr)
 		((D3DRenderer *)renderer)->preReset();
+	overlay.term();
     ImGui_ImplDX9_InvalidateDeviceObjects();
     HRESULT hr = pDevice->Reset(&d3dpp);
     if (hr == D3DERR_INVALIDCALL)
@@ -117,6 +129,7 @@ void DXContext::resetDevice()
         return;
     }
     ImGui_ImplDX9_CreateDeviceObjects();
+    overlay.init(pDevice);
 	if (renderer != nullptr)
 		((D3DRenderer *)renderer)->postReset();
 }

@@ -18,61 +18,12 @@
 */
 #pragma once
 #ifdef _WIN32
+#include "types.h"
 #include <windows.h>
 #include <d3d9.h>
 #include "imgui_impl_dx9.h"
-#include "types.h"
-
-template<typename T>
-class ComPtr
-{
-public:
-	ComPtr() = default;
-	ComPtr(const ComPtr& other) : ptr(other.ptr) {
-		if (ptr != nullptr)
-			ptr->AddRef();
-	}
-	ComPtr(ComPtr&& other) noexcept {
-		std::swap(ptr, other.ptr);
-	}
-	~ComPtr() {
-		if (ptr != nullptr)
-			ptr->Release();
-	}
-
-	ComPtr& operator=(const ComPtr& other) {
-		if (this != &other)
-			*this = ComPtr(other);
-		return *this;
-	}
-	ComPtr& operator=(ComPtr&& other) noexcept {
-		std::swap(ptr, other.ptr);
-		return *this;
-	}
-
-	T* operator->() const noexcept {
-		return ptr;
-	}
-	explicit operator bool() const noexcept {
-		return ptr != nullptr;
-	}
-	operator T*() const noexcept {
-		return ptr;
-	}
-	T*& get() noexcept {
-		return ptr;
-	}
-	void reset(T *ptr = nullptr) {
-		if (ptr == this->ptr)
-			return;
-		std::swap(this->ptr, ptr);
-		if (ptr != nullptr)
-			ptr->Release();
-	}
-
-private:
-	T *ptr = nullptr;
-};
+#include "comptr.h"
+#include "d3d_overlay.h"
 
 class DXContext
 {
@@ -84,7 +35,7 @@ public:
 	const ComPtr<IDirect3D9>& getD3D() const { return pD3D; }
 	const ComPtr<IDirect3DDevice9>& getDevice() const { return pDevice; }
 	void resize();
-	void setOverlay(bool overlay) { this->overlay = overlay; }
+	void setOverlay(bool overlayOnly) { this->overlayOnly = overlayOnly; }
 	std::string getDriverName() const {
 		D3DADAPTER_IDENTIFIER9 id;
 		pD3D->GetAdapterIdentifier(D3DADAPTER_DEFAULT, 0, &id);
@@ -106,8 +57,9 @@ private:
 	ComPtr<IDirect3D9> pD3D;
 	ComPtr<IDirect3DDevice9> pDevice;
 	D3DPRESENT_PARAMETERS d3dpp{};
-	bool overlay = false;
+	bool overlayOnly = false;
 	HWND hWnd = nullptr;
+	D3DOverlay overlay;
 };
 extern DXContext theDXContext;
 #endif

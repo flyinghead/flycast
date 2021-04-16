@@ -264,7 +264,7 @@ const ComPtr<IDirect3DPixelShader9>& D3DShaders::getShader(bool pp_Texture, bool
 		bool pp_Offset, u32 pp_FogCtrl, bool pp_BumpMap, bool fog_clamping,
 		bool trilinear, bool palette, bool gouraud)
 {
-	u32 hash = pp_Texture
+	u32 hash = (int)pp_Texture
 			| (pp_UseAlpha << 1)
 			| (pp_IgnoreTexA << 2)
 			| (pp_ShadInstr << 3)

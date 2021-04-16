@@ -867,6 +867,9 @@ endif()
 
 if(WIN32)
 	target_sources(${PROJECT_NAME} PRIVATE
+		core/rend/dx9/comptr.h
+		core/rend/dx9/d3d_overlay.h
+		core/rend/dx9/d3d_overlay.cpp
 		core/rend/dx9/d3d_renderer.h
 		core/rend/dx9/d3d_renderer.cpp
 		core/rend/dx9/d3d_shaders.h

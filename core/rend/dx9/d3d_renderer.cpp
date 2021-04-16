@@ -225,7 +225,7 @@ u64 D3DRenderer::GetTexture(TSP tsp, TCW tcw)
 		{
 			texCache.DeleteLater(tf->texture);
 			tf->texture.reset();
-			tf->CheckCustomTexture();
+			tf->loadCustomTexture();
 		}
 	}
 	return (uintptr_t)tf->texture.get();
@@ -250,7 +250,14 @@ void D3DRenderer::readDCFramebuffer()
 
 	D3DLOCKED_RECT rect;
 	dcfbTexture->LockRect(0, &rect, nullptr, 0);
-	memcpy(rect.pBits, pb.data(), width * height * 4);
+	if ((u32)rect.Pitch ==  width * sizeof(u32))
+		memcpy(rect.pBits, pb.data(), width * height * sizeof(u32));
+	else
+	{
+		u8 *dst = (u8 *)rect.pBits;
+		for (int y = 0; y < height; y++)
+			memcpy(dst + y * rect.Pitch, pb.data() + y * width, width * sizeof(u32));
+	}
 	dcfbTexture->UnlockRect(0);
 }
 
@@ -303,7 +310,7 @@ void D3DRenderer::setGPState(const PolyParam *gp)
 	float trilinear_alpha;
 	if (gp->pcw.Texture && gp->tsp.FilterMode > 1 && Type != ListType_Punch_Through && gp->tcw.MipMapped == 1)
 	{
-		trilinear_alpha = 0.25 * (gp->tsp.MipMapD & 0x3);
+		trilinear_alpha = 0.25f * (gp->tsp.MipMapD & 0x3);
 		if (gp->tsp.FilterMode == 2)
 			// Trilinear pass A
 			trilinear_alpha = 1.f - trilinear_alpha;
@@ -340,15 +347,13 @@ void D3DRenderer::setGPState(const PolyParam *gp)
 	{
 		float paletteIndex[4];
 		if (gp->tcw.PixelFmt == PixelPal4)
-			paletteIndex[0] = gp->tcw.PalSelect << 4;
+			paletteIndex[0] = (float)(gp->tcw.PalSelect << 4);
 		else
-			paletteIndex[0] = (gp->tcw.PalSelect >> 4) << 8;
+			paletteIndex[0] = (float)((gp->tcw.PalSelect >> 4) << 8);
 		device->SetPixelShaderConstantF(0, paletteIndex, 1);
 	}
 	devCache.SetVertexShader(shaders.getVertexShader(gp->pcw.Gouraud));
 	devCache.SetRenderState(D3DRS_SHADEMODE, gp->pcw.Gouraud == 1 ? D3DSHADE_GOURAUD : D3DSHADE_FLAT);
-	devCache.SetRenderState(D3DRS_CLIPPLANEENABLE, 0);
-	devCache.SetRenderState(D3DRS_CLIPPING, FALSE);
 
 	/* TODO
 	if (clipmode == TileClipping::Inside)
@@ -395,7 +400,7 @@ void D3DRenderer::setGPState(const PolyParam *gp)
 			//bilinear filtering
 			devCache.SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_LINEAR);
 			devCache.SetSamplerState(0, D3DSAMP_MAGFILTER, D3DTEXF_LINEAR);
-			devCache.SetSamplerState(0, D3DSAMP_MIPFILTER, D3DTEXF_LINEAR);		// //LINEAR for Trilinear filtering
+			devCache.SetSamplerState(0, D3DSAMP_MIPFILTER, D3DTEXF_LINEAR);		// LINEAR for Trilinear filtering
 		}
 	}
 
@@ -849,10 +854,10 @@ void D3DRenderer::setBaseScissor()
 		}
 		else
 		{
-			fWidth = pvrrc.fb_X_CLIP.max - pvrrc.fb_X_CLIP.min + 1;
-			fHeight = pvrrc.fb_Y_CLIP.max - pvrrc.fb_Y_CLIP.min + 1;
-			min_x = pvrrc.fb_X_CLIP.min;
-			min_y = pvrrc.fb_Y_CLIP.min;
+			fWidth = (float)(pvrrc.fb_X_CLIP.max - pvrrc.fb_X_CLIP.min + 1);
+			fHeight = (float)(pvrrc.fb_Y_CLIP.max - pvrrc.fb_Y_CLIP.min + 1);
+			min_x = (float)pvrrc.fb_X_CLIP.min;
+			min_y = (float)pvrrc.fb_Y_CLIP.min;
 			if (config::RenderToTextureUpscale > 1 && !config::RenderToTextureBuffer)
 			{
 				min_x *= config::RenderToTextureUpscale;
@@ -1010,7 +1015,10 @@ bool D3DRenderer::Render()
 	}
 	verifyWin(device->SetDepthStencilSurface(depthSurface));
 	matrices.CalcMatrices(&pvrrc, width, height);
-	verifyWin(device->SetVertexShaderConstantF(0, &matrices.GetNormalMatrix()[0][0], 4));
+	// infamous DX9 half-pixel viewport shift
+	// https://docs.microsoft.com/en-us/windows/win32/direct3d9/directly-mapping-texels-to-pixels
+	glm::mat4 normalMat = glm::translate(glm::vec3(-1.f / width, 1.f / height, 0)) * matrices.GetNormalMatrix();
+	verifyWin(device->SetVertexShaderConstantF(0, &normalMat[0][0], 4));
 
 	devCache.reset();
 	devCache.SetRenderState(D3DRS_SCISSORTESTENABLE, FALSE);
@@ -1055,7 +1063,7 @@ bool D3DRenderer::Render()
 		u8* fog_density = (u8*)&FOG_DENSITY;
 		float fog_den_mant = fog_density[1] / 128.0f;  //bit 7 -> x. bit, so [6:0] -> fraction -> /128
 		s32 fog_den_exp = (s8)fog_density[0];
-		float fog_den_float = fog_den_mant * powf(2.0f, fog_den_exp) * config::ExtraDepthScale;
+		float fog_den_float = fog_den_mant * powf(2.0f, (float)fog_den_exp) * config::ExtraDepthScale;
 		float fogDensityAndScale[4]= { fog_den_float, 1.f - FPU_SHAD_SCALE.scale_factor / 256.f, 0, 1 };
 		device->SetPixelShaderConstantF(3, fogDensityAndScale, 1);
 
@@ -1084,10 +1092,10 @@ bool D3DRenderer::Render()
 		devCache.SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_LINEAR);
 		devCache.SetSamplerState(0, D3DSAMP_MAGFILTER, D3DTEXF_LINEAR);
 
-		devCache.SetRenderState(D3DRS_TEXTUREFACTOR, 0xFFFFFFFF);
-
 		devCache.SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
 		devCache.SetRenderState(D3DRS_ALPHATESTENABLE, FALSE);
+		devCache.SetRenderState(D3DRS_FILLMODE, D3DFILL_SOLID);
+		devCache.SetRenderState(D3DRS_CLIPPLANEENABLE, 0);
 
 		setBaseScissor();
 
@@ -1186,8 +1194,15 @@ void D3DRenderer::updatePaletteTexture()
 
 	D3DLOCKED_RECT rect;
 	verifyWin(paletteTexture->LockRect(0, &rect, nullptr, 0));
-	verify(rect.Pitch == 32 * 4);
-	memcpy(rect.pBits, palette32_ram, 32 * 32 * 4);
+	if (rect.Pitch == 32 * sizeof(u32))
+		memcpy(rect.pBits, palette32_ram, 32 * 32 * sizeof(u32));
+	else
+	{
+		u8 *dst = (u8 *)rect.pBits;
+		for (int y = 0; y < 32; y++)
+			memcpy(dst + y * rect.Pitch, palette32_ram + y * 32, 32 * sizeof(u32));
+	}
+
 	paletteTexture->UnlockRect(0);
 	device->SetTexture(1, paletteTexture);
 }
@@ -1202,8 +1217,14 @@ void D3DRenderer::updateFogTexture()
 
 	D3DLOCKED_RECT rect;
 	verifyWin(fogTexture->LockRect(0, &rect, nullptr, 0));
-	verify(rect.Pitch == 128);
-	memcpy(rect.pBits, temp_tex_buffer, 128 * 2 * 1);
+	if (rect.Pitch == 128)
+		memcpy(rect.pBits, temp_tex_buffer, 128 * 2 * 1);
+	else
+	{
+		u8 *dst = (u8 *)rect.pBits;
+		for (int y = 0; y < 2; y++)
+			memcpy(dst + y * rect.Pitch, temp_tex_buffer + y * 128, 128);
+	}
 	fogTexture->UnlockRect(0);
 	device->SetTexture(2, fogTexture);
 }
