@@ -155,10 +155,10 @@ public:
 		GetContext()->GetDevice().updateDescriptorSets(1, &writeDescriptorSet, 0, nullptr);
 	}
 
-	void SetTexture(Texture *texture, TSP tsp0, Texture *texture1, TSP tsp1)
+	void SetTexture(Texture *texture0, TSP tsp0, Texture *texture1, TSP tsp1)
 	{
-		auto index = std::make_tuple((u64)texture, tsp0.full & SamplerManager::TSP_Mask,
-				(u64)texture1, tsp1.full & SamplerManager::TSP_Mask);
+		auto index = std::make_tuple(texture0, tsp0.full & SamplerManager::TSP_Mask,
+				texture1, tsp1.full & SamplerManager::TSP_Mask);
 		if (perPolyDescSetsInFlight.find(index) != perPolyDescSetsInFlight.end())
 			return;
 
@@ -168,7 +168,7 @@ public:
 			perPolyDescSets = GetContext()->GetDevice().allocateDescriptorSetsUnique(
 					vk::DescriptorSetAllocateInfo(GetContext()->GetDescriptorPool(), layouts.size(), &layouts[0]));
 		}
-		vk::DescriptorImageInfo imageInfo0(samplerManager->GetSampler(tsp0), texture->GetReadOnlyImageView(), vk::ImageLayout::eShaderReadOnlyOptimal);
+		vk::DescriptorImageInfo imageInfo0(samplerManager->GetSampler(tsp0), texture0->GetReadOnlyImageView(), vk::ImageLayout::eShaderReadOnlyOptimal);
 
 		std::vector<vk::WriteDescriptorSet> writeDescriptorSets;
 		writeDescriptorSets.emplace_back(*perPolyDescSets.back(), 0, 0, 1, vk::DescriptorType::eCombinedImageSampler, &imageInfo0, nullptr, nullptr);
@@ -194,9 +194,9 @@ public:
 		cmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 2, 1, &colorInputDescSets[index].get(), 0, nullptr);
 	}
 
-	void BindPerPolyDescriptorSets(vk::CommandBuffer cmdBuffer, u64 textureId0, TSP tsp0, u64 textureId1, TSP tsp1)
+	void BindPerPolyDescriptorSets(vk::CommandBuffer cmdBuffer, Texture *texture0, TSP tsp0, Texture *texture1, TSP tsp1)
 	{
-		auto index = std::make_tuple(textureId0, tsp0.full & SamplerManager::TSP_Mask, textureId1, tsp1.full & SamplerManager::TSP_Mask);
+		auto index = std::make_tuple(texture0, tsp0.full & SamplerManager::TSP_Mask, texture1, tsp1.full & SamplerManager::TSP_Mask);
 		cmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 1, 1,
 				&perPolyDescSetsInFlight[index].get(), 0, nullptr);
 	}
@@ -223,7 +223,7 @@ private:
 	std::vector<vk::UniqueDescriptorSet> perFrameDescSetsInFlight;
 	std::array<vk::UniqueDescriptorSet, 2> colorInputDescSets;
 	std::vector<vk::UniqueDescriptorSet> perPolyDescSets;
-	std::map<std::tuple<u64, u32, u64, u32>, vk::UniqueDescriptorSet> perPolyDescSetsInFlight;
+	std::map<std::tuple<Texture *, u32, Texture *, u32>, vk::UniqueDescriptorSet> perPolyDescSetsInFlight;
 
 	SamplerManager* samplerManager;
 };

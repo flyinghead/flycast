@@ -85,7 +85,7 @@ void OITDrawer::DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool 
 	vk::Pipeline pipeline = pipelineManager->GetPipeline(listType, autosort, poly, pass, gpuPalette);
 	cmdBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline);
 	if (needTexture)
-		GetCurrentDescSet().BindPerPolyDescriptorSets(cmdBuffer, (u64)poly.texture, poly.tsp, (u64)poly.texture1, poly.tsp1);
+		GetCurrentDescSet().BindPerPolyDescriptorSets(cmdBuffer, (Texture *)poly.texture, poly.tsp, (Texture *)poly.texture1, poly.tsp1);
 
 	cmdBuffer.drawIndexed(count, 1, first, 0, 0);
 }

@@ -88,7 +88,7 @@ public:
 	void SetTexture(Texture *texture, TSP tsp)
 	{
 		auto& inFlight = perPolyDescSetsInFlight;
-		std::pair<u64, u32> index = std::make_pair((u64)texture, tsp.full & SamplerManager::TSP_Mask);
+		std::pair<Texture *, u32> index = std::make_pair(texture, tsp.full & SamplerManager::TSP_Mask);
 		if (inFlight.find(index) != inFlight.end())
 			return;
 
@@ -113,10 +113,10 @@ public:
 		cmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, 1, &perFrameDescSetsInFlight.back().get(), 0, nullptr);
 	}
 
-	void BindPerPolyDescriptorSets(vk::CommandBuffer cmdBuffer, u64 textureId, TSP tsp)
+	void BindPerPolyDescriptorSets(vk::CommandBuffer cmdBuffer, Texture *texture, TSP tsp)
 	{
 		cmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 1, 1,
-				&perPolyDescSetsInFlight[std::make_pair(textureId, tsp.full & SamplerManager::TSP_Mask)].get(), 0, nullptr);
+				&perPolyDescSetsInFlight[std::make_pair(texture, tsp.full & SamplerManager::TSP_Mask)].get(), 0, nullptr);
 	}
 
 	void Reset()
@@ -139,7 +139,7 @@ private:
 	std::vector<vk::UniqueDescriptorSet> perFrameDescSets;
 	std::vector<vk::UniqueDescriptorSet> perFrameDescSetsInFlight;
 	std::vector<vk::UniqueDescriptorSet> perPolyDescSets;
-	std::map<std::pair<u64, u32>, vk::UniqueDescriptorSet> perPolyDescSetsInFlight;
+	std::map<std::pair<Texture *, u32>, vk::UniqueDescriptorSet> perPolyDescSetsInFlight;
 
 	SamplerManager* samplerManager = nullptr;
 };

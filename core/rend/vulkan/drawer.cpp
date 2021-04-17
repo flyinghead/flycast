@@ -178,7 +178,7 @@ void Drawer::DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sor
 	vk::Pipeline pipeline = pipelineManager->GetPipeline(listType, sortTriangles, poly, gpuPalette);
 	cmdBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline);
 	if (poly.pcw.Texture)
-		GetCurrentDescSet().BindPerPolyDescriptorSets(cmdBuffer, (u64)poly.texture, poly.tsp);
+		GetCurrentDescSet().BindPerPolyDescriptorSets(cmdBuffer, (Texture *)poly.texture, poly.tsp);
 
 	cmdBuffer.drawIndexed(count, 1, first, 0, 0);
 }
