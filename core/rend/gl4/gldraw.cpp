@@ -37,19 +37,19 @@ static gl4PipelineShader *gl4GetProgram(bool cp_AlphaTest, bool pp_InsideClippin
 {
 	u32 rv=0;
 
-	rv |= pp_InsideClipping;
-	rv <<= 1; rv |= cp_AlphaTest;
-	rv <<= 1; rv |= pp_Texture;
-	rv <<= 1; rv |= pp_UseAlpha;
-	rv <<= 1; rv |= pp_IgnoreTexA;
+	rv |= (int)pp_InsideClipping;
+	rv <<= 1; rv |= (int)cp_AlphaTest;
+	rv <<= 1; rv |= (int)pp_Texture;
+	rv <<= 1; rv |= (int)pp_UseAlpha;
+	rv <<= 1; rv |= (int)pp_IgnoreTexA;
 	rv <<= 2; rv |= pp_ShadInstr;
-	rv <<= 1; rv |= pp_Offset;
+	rv <<= 1; rv |= (int)pp_Offset;
 	rv <<= 2; rv |= pp_FogCtrl;
-	rv <<= 1; rv |= pp_TwoVolumes;
-	rv <<= 1; rv |= pp_Gouraud;
-	rv <<= 1; rv |= pp_BumpMap;
-	rv <<= 1; rv |= fog_clamping;
-	rv <<= 1; rv |= palette;
+	rv <<= 1; rv |= (int)pp_TwoVolumes;
+	rv <<= 1; rv |= (int)pp_Gouraud;
+	rv <<= 1; rv |= (int)pp_BumpMap;
+	rv <<= 1; rv |= (int)fog_clamping;
+	rv <<= 1; rv |= (int)palette;
 	rv <<= 2; rv |= (int)pass;
 
 	gl4PipelineShader *shader = &gl4.shaders[rv];
@@ -100,17 +100,17 @@ static void SetGPState(const PolyParam* gp)
 	// Trilinear filtering. Ignore if texture isn't mipmapped (shenmue snowflakes)
 	if (gp->pcw.Texture && gp->tsp.FilterMode > 1 && Type != ListType_Punch_Through && gp->tcw.MipMapped == 1)
 	{
-		gl4ShaderUniforms.trilinear_alpha = 0.25 * (gp->tsp.MipMapD & 0x3);
+		gl4ShaderUniforms.trilinear_alpha = 0.25f * (gp->tsp.MipMapD & 0x3);
 		if (gp->tsp.FilterMode == 2)
 			// Trilinear pass A
-			gl4ShaderUniforms.trilinear_alpha = 1.0 - gl4ShaderUniforms.trilinear_alpha;
+			gl4ShaderUniforms.trilinear_alpha = 1.0f - gl4ShaderUniforms.trilinear_alpha;
 	}
 	else
 		gl4ShaderUniforms.trilinear_alpha = 1.0;
 
 	int clip_rect[4] = {};
 	TileClipping clipmode = GetTileClip(gp->tileclip, ViewportMatrix, clip_rect);
-	bool palette = false;
+	bool gpuPalette = false;
 
 	if (pass == Pass::Depth)
 	{
@@ -136,7 +136,7 @@ static void SetGPState(const PolyParam* gp)
 		bool color_clamp = gp->tsp.ColorClamp && (pvrrc.fog_clamp_min != 0 || pvrrc.fog_clamp_max != 0xffffffff);
 
 		int fog_ctrl = config::Fog ? gp->tsp.FogCtrl : 2;
-		palette = BaseTextureCacheData::IsGpuHandledPaletted(gp->tsp, gp->tcw);
+		gpuPalette = gp->texture != nullptr ? gp->texture->gpuPalette : false;
 
 		CurrentShader = gl4GetProgram(Type == ListType_Punch_Through ? true : false,
 				clipmode == TileClipping::Inside,
@@ -150,12 +150,12 @@ static void SetGPState(const PolyParam* gp)
 				gp->pcw.Gouraud,
 				gp->tcw.PixelFmt == PixelBumpMap,
 				color_clamp,
-				palette,
+				gpuPalette,
 				pass);
 	}
 	glcache.UseProgram(CurrentShader->program);
 
-	if (palette)
+	if (gpuPalette)
 	{
 		if (gp->tcw.PixelFmt == PixelPal4)
 			gl4ShaderUniforms.palette_index = gp->tcw.PalSelect << 4;
@@ -178,7 +178,8 @@ static void SetGPState(const PolyParam* gp)
 		glcache.Disable(GL_BLEND);
 
 	if (clipmode == TileClipping::Inside)
-		glUniform4f(CurrentShader->pp_ClipTest, clip_rect[0], clip_rect[1], clip_rect[0] + clip_rect[2], clip_rect[1] + clip_rect[3]);
+		glUniform4f(CurrentShader->pp_ClipTest, (float)clip_rect[0], (float)clip_rect[1],
+				(float)(clip_rect[0] + clip_rect[2]), (float)(clip_rect[1] + clip_rect[3]));
 	if (clipmode == TileClipping::Outside)
 	{
 		glcache.Enable(GL_SCISSOR_TEST);
@@ -197,11 +198,11 @@ static void SetGPState(const PolyParam* gp)
 		for (int i = 0; i < 2; i++)
 		{
 			glActiveTexture(GL_TEXTURE0 + i);
-			GLuint texid = (GLuint)(i == 0 ? gp->texid : gp->texid1);
+			TextureCacheData *texture = (TextureCacheData *)(i == 0 ? gp->texture : gp->texture1);
 
-			glBindTexture(GL_TEXTURE_2D, texid == (GLuint)-1 ? 0 : texid);
+			glBindTexture(GL_TEXTURE_2D, texture == nullptr ? 0 : texture->texID);
 
-			if (texid != (GLuint)-1)
+			if (texture != nullptr)
 			{
 				TSP tsp = i == 0 ? gp->tsp : gp->tsp1;
 

@@ -106,7 +106,7 @@ struct D3DRenderer : public Renderer
 	bool RenderLastFrame() override;
 	bool Present() override { return true; }
 	void DrawOSD(bool clear_screen) override;
-	u64 GetTexture(TSP tsp, TCW tcw) override;
+	BaseTextureCacheData *GetTexture(TSP tsp, TCW tcw) override;
 	void preReset();
 	void postReset();
 

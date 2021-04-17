@@ -302,12 +302,6 @@ static void libCore_vramlock_Unlock_block_wb(vram_block* block)
 	free(block);
 }
 
-void libCore_vramlock_Unlock_block(vram_block* block)
-{
-	std::lock_guard<std::mutex> lock(vramlist_lock);
-	libCore_vramlock_Unlock_block_wb(block);
-}
-
 #ifndef TARGET_NO_OPENMP
 static inline int getThreadCount()
 {
@@ -481,20 +475,15 @@ void BaseTextureCacheData::Create()
 	lock_block = nullptr;
 	custom_image_data = nullptr;
 	custom_load_in_progress = 0;
+	gpuPalette = false;
 
 	//decode info from tsp/tcw into the texture struct
 	tex = &pvrTexInfo[tcw.PixelFmt == PixelReserved ? Pixel1555 : tcw.PixelFmt];	//texture format table entry
 
 	sa_tex = (tcw.TexAddr << 3) & VRAM_MASK;	//texture start address
 	sa = sa_tex;								//data texture start address (modified for MIPs, as needed)
-	w = 8 << tsp.TexU;							//tex width
-	h = 8 << tsp.TexV;							//tex height
-
-	//PAL texture
-	if (tex->bpp == 4)
-		palette_index = tcw.PalSelect << 4;
-	else if (tex->bpp == 8)
-		palette_index = (tcw.PalSelect >> 4) << 8;
+	width = 8 << tsp.TexU;						//tex width
+	height = 8 << tsp.TexV;						//tex height
 
 	texconv8 = nullptr;
 
@@ -514,7 +503,7 @@ void BaseTextureCacheData::Create()
 		}
 
 		//Planar textures support stride selection, mostly used for non power of 2 textures (videos)
-		int stride = w;
+		int stride = width;
 		if (tcw.StrideSel)
 			stride = (TEXT_CONTROL & 31) * 32;
 
@@ -522,26 +511,28 @@ void BaseTextureCacheData::Create()
 		texconv = tex->PL;
 		texconv32 = tex->PL32;
 		//calculate the size, in bytes, for the locking
-		size = stride * h * tex->bpp / 8;
+		size = stride * height * tex->bpp / 8;
 	}
 	else
 	{
-		tcw.ScanOrder = 0;
-		tcw.StrideSel = 0;
+		if (!IsPaletted())
+		{
+			tcw.ScanOrder = 0;
+			tcw.StrideSel = 0;
+		}
 		// Quake 3 Arena uses one
 		if (tcw.MipMapped)
 			// Mipmapped texture must be square and TexV is ignored
-			h = w;
+			height = width;
 
 		if (tcw.VQ_Comp)
 		{
 			verify(tex->VQ != NULL || tex->VQ32 != NULL);
-			vq_codebook = sa;
 			if (tcw.MipMapped)
 				sa += VQMipPoint[tsp.TexU + 3];
 			texconv = tex->VQ;
 			texconv32 = tex->VQ32;
-			size = w * h / 8;
+			size = width * height / 8 + 256 * 8;
 		}
 		else
 		{
@@ -550,7 +541,7 @@ void BaseTextureCacheData::Create()
 				sa += OtherMipPoint[tsp.TexU + 3] * tex->bpp / 8;
 			texconv = tex->TW;
 			texconv32 = tex->TW32;
-			size = w * h * tex->bpp / 8;
+			size = width * height * tex->bpp / 8;
 			texconv8 = tex->TW8;
 		}
 	}
@@ -558,26 +549,39 @@ void BaseTextureCacheData::Create()
 
 void BaseTextureCacheData::ComputeHash()
 {
-	texture_hash = XXH32(&vram[sa], size, 7);
+	u32 hashSize = size;
+	if (tcw.VQ_Comp)
+	{
+		// The size for VQ textures wasn't correctly calculated.
+		// We use the old size to compute the hash for backward-compatibility
+		// with existing custom texture packs.
+		hashSize = size - 256 * 8;
+	}
+	texture_hash = XXH32(&vram[sa], hashSize, 7);
 	if (IsPaletted())
 		texture_hash ^= palette_hash;
 	old_texture_hash = texture_hash;
-	texture_hash ^= tcw.full & 0xFC000000;	// everything but texaddr, reserved and stride
+	// Include everything but texaddr, reserved and stride. Palette textures don't have ScanOrder
+	const u32 tcwMask = IsPaletted() ? 0xF8000000 : 0xFC000000;
+	texture_hash ^= tcw.full & tcwMask;
 }
 
 void BaseTextureCacheData::Update()
 {
 	//texture state tracking stuff
 	Updates++;
-	dirty=0;
-
+	dirty = 0;
+	gpuPalette = false;
 	tex_type = tex->type;
 
 	bool has_alpha = false;
 	if (IsPaletted())
 	{
 		if (IsGpuHandledPaletted(tsp, tcw))
+		{
 			tex_type = TextureType::_8;
+			gpuPalette = true;
+		}
 		else
 		{
 			tex_type = PAL_TYPE[PAL_RAM_CTRL&3];
@@ -586,30 +590,37 @@ void BaseTextureCacheData::Update()
 		}
 
 		// Get the palette hash to check for future updates
+		// TODO get rid of ::palette_index and ::vq_codebook
 		if (tcw.PixelFmt == PixelPal4)
+		{
 			palette_hash = pal_hash_16[tcw.PalSelect];
+			::palette_index = tcw.PalSelect << 4;
+		}
 		else
+		{
 			palette_hash = pal_hash_256[tcw.PalSelect >> 4];
+			::palette_index = (tcw.PalSelect >> 4) << 8;
+		}
 	}
 
-	::palette_index = this->palette_index; // might be used if pal. tex
-	::vq_codebook = &vram[vq_codebook];    // might be used if VQ tex
+	if (tcw.VQ_Comp)
+		::vq_codebook = &vram[sa_tex];    // might be used if VQ tex
 
 	//texture conversion work
-	u32 stride = w;
+	u32 stride = width;
 
 	if (tcw.StrideSel && tcw.ScanOrder && (tex->PL || tex->PL32))
 		stride = (TEXT_CONTROL & 31) * 32;
 
-	u32 original_h = h;
+	u32 original_h = height;
 	if (sa_tex > VRAM_SIZE || size == 0 || sa + size > VRAM_SIZE)
 	{
 		if (sa < VRAM_SIZE && sa + size > VRAM_SIZE && tcw.ScanOrder && stride > 0)
 		{
 			// Shenmue Space Harrier mini-arcade loads a texture that goes beyond the end of VRAM
 			// but only uses the top portion of it
-			h = (VRAM_SIZE - sa) * 8 / stride / tex->bpp;
-			size = stride * h * tex->bpp/8;
+			height = (VRAM_SIZE - sa) * 8 / stride / tex->bpp;
+			size = stride * height * tex->bpp/8;
 		}
 		else
 		{
@@ -621,8 +632,8 @@ void BaseTextureCacheData::Update()
 		custom_texture.LoadCustomTextureAsync(this);
 
 	void *temp_tex_buffer = NULL;
-	u32 upscaled_w = w;
-	u32 upscaled_h = h;
+	u32 upscaled_w = width;
+	u32 upscaled_h = height;
 
 	PixelBuffer<u16> pb16;
 	PixelBuffer<u32> pb32;
@@ -631,7 +642,7 @@ void BaseTextureCacheData::Update()
 	// Figure out if we really need to use a 32-bit pixel buffer
 	bool textureUpscaling = config::TextureUpscale > 1
 			// Don't process textures that are too big
-			&& (int)(w * h) <= config::MaxFilteredTextureSize * config::MaxFilteredTextureSize
+			&& (int)(width * height) <= config::MaxFilteredTextureSize * config::MaxFilteredTextureSize
 			// Don't process YUV textures
 			&& tcw.PixelFmt != PixelYUV;
 	bool need_32bit_buffer = true;
@@ -654,7 +665,7 @@ void BaseTextureCacheData::Update()
 
 		if (mipmapped)
 		{
-			pb32.init(w, h, true);
+			pb32.init(width, height, true);
 			for (u32 i = 0; i <= tsp.TexU + 3u; i++)
 			{
 				pb32.set_mipmap(i);
@@ -683,19 +694,19 @@ void BaseTextureCacheData::Update()
 		}
 		else
 		{
-			pb32.init(w, h);
-			texconv32(&pb32, (u8*)&vram[sa], stride, h);
+			pb32.init(width, height);
+			texconv32(&pb32, (u8*)&vram[sa], stride, height);
 
 			// xBRZ scaling
 			if (textureUpscaling)
 			{
 				PixelBuffer<u32> tmp_buf;
-				tmp_buf.init(w * config::TextureUpscale, h * config::TextureUpscale);
+				tmp_buf.init(width * config::TextureUpscale, height * config::TextureUpscale);
 
 				if (tcw.PixelFmt == Pixel1555 || tcw.PixelFmt == Pixel4444)
 					// Alpha channel formats. Palettes with alpha are already handled
 					has_alpha = true;
-				UpscalexBRZ(config::TextureUpscale, pb32.data(), tmp_buf.data(), w, h, has_alpha);
+				UpscalexBRZ(config::TextureUpscale, pb32.data(), tmp_buf.data(), width, height, has_alpha);
 				pb32.steal_data(tmp_buf);
 				upscaled_w *= config::TextureUpscale;
 				upscaled_h *= config::TextureUpscale;
@@ -707,7 +718,8 @@ void BaseTextureCacheData::Update()
 	{
 		if (mipmapped)
 		{
-			pb8.init(w, h, true);
+			// This shouldn't happen since mipmapped palette textures are converted to rgba
+			pb8.init(width, height, true);
 			for (u32 i = 0; i <= tsp.TexU + 3u; i++)
 			{
 				pb8.set_mipmap(i);
@@ -718,8 +730,8 @@ void BaseTextureCacheData::Update()
 		}
 		else
 		{
-			pb8.init(w, h);
-			texconv8(&pb8, &vram[sa], stride, h);
+			pb8.init(width, height);
+			texconv8(&pb8, &vram[sa], stride, height);
 		}
 		temp_tex_buffer = pb8.data();
 	}
@@ -727,7 +739,7 @@ void BaseTextureCacheData::Update()
 	{
 		if (mipmapped)
 		{
-			pb16.init(w, h, true);
+			pb16.init(width, height, true);
 			for (u32 i = 0; i <= tsp.TexU + 3u; i++)
 			{
 				pb16.set_mipmap(i);
@@ -752,8 +764,8 @@ void BaseTextureCacheData::Update()
 		}
 		else
 		{
-			pb16.init(w, h);
-			texconv(&pb16,(u8*)&vram[sa],stride,h);
+			pb16.init(width, height);
+			texconv(&pb16,(u8*)&vram[sa],stride,height);
 		}
 		temp_tex_buffer = pb16.data();
 	}
@@ -761,13 +773,13 @@ void BaseTextureCacheData::Update()
 	{
 		//fill it in with a temp color
 		WARN_LOG(RENDERER, "UNHANDLED TEXTURE");
-		pb16.init(w, h);
-		memset(pb16.data(), 0x80, w * h * 2);
+		pb16.init(width, height);
+		memset(pb16.data(), 0x80, width * height * 2);
 		temp_tex_buffer = pb16.data();
 		mipmapped = false;
 	}
 	// Restore the original texture height if it was constrained to VRAM limits above
-	h = original_h;
+	height = original_h;
 
 	//lock the texture to detect changes in it
 	libCore_vramlock_Lock(sa_tex, sa + size - 1, this);
@@ -787,9 +799,10 @@ void BaseTextureCacheData::CheckCustomTexture()
 	if (IsCustomTextureAvailable())
 	{
 		tex_type = TextureType::_8888;
+		gpuPalette = false;
 		UploadToGPU(custom_width, custom_height, custom_image_data, IsMipmapped(), false);
 		free(custom_image_data);
-		custom_image_data = NULL;
+		custom_image_data = nullptr;
 	}
 }
 

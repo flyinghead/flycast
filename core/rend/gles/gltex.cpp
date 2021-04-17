@@ -389,7 +389,7 @@ static int TexCacheLookups;
 static int TexCacheHits;
 //static float LastTexCacheStats;
 
-u64 gl_GetTexture(TSP tsp, TCW tcw)
+BaseTextureCacheData *gl_GetTexture(TSP tsp, TCW tcw)
 {
 	TexCacheLookups++;
 
@@ -426,7 +426,7 @@ u64 gl_GetTexture(TSP tsp, TCW tcw)
 //	}
 
 	//return gl texture
-	return tf->texID;
+	return tf;
 }
 
 GLuint fbTextureId;

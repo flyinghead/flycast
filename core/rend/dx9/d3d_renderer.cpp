@@ -206,10 +206,10 @@ void D3DRenderer::Term()
 	device.reset();
 }
 
-u64 D3DRenderer::GetTexture(TSP tsp, TCW tcw)
+BaseTextureCacheData *D3DRenderer::GetTexture(TSP tsp, TCW tcw)
 {
 	if (resetting)
-		return 0;
+		return nullptr;
 	//lookup texture
 	D3DTexture* tf = texCache.getTextureCacheData(tsp, tcw);
 
@@ -228,7 +228,7 @@ u64 D3DRenderer::GetTexture(TSP tsp, TCW tcw)
 			tf->loadCustomTexture();
 		}
 	}
-	return (uintptr_t)tf->texture.get();
+	return tf;
 }
 
 void D3DRenderer::readDCFramebuffer()
@@ -323,7 +323,8 @@ void D3DRenderer::setGPState(const PolyParam *gp)
 
 	int clip_rect[4] = {};
 	TileClipping clipmode = GetTileClip(gp->tileclip, matrices.GetViewportMatrix(), clip_rect);
-	bool palette = BaseTextureCacheData::IsGpuHandledPaletted(gp->tsp, gp->tcw);
+	D3DTexture *texture = (D3DTexture *)gp->texture;
+	bool gpuPalette = texture != nullptr ? texture->gpuPalette : false;
 
 	devCache.SetPixelShader(shaders.getShader(
 			gp->pcw.Texture,
@@ -335,7 +336,7 @@ void D3DRenderer::setGPState(const PolyParam *gp)
 			gp->tcw.PixelFmt == PixelBumpMap,
 			color_clamp,
 			trilinear_alpha != 1.f,
-			palette,
+			gpuPalette,
 			gp->pcw.Gouraud));
 
 	if (trilinear_alpha != 1.f)
@@ -343,7 +344,7 @@ void D3DRenderer::setGPState(const PolyParam *gp)
 		float f[4] { trilinear_alpha, 0, 0, 0 };
 		device->SetPixelShaderConstantF(5, f, 1);
 	}
-	if (palette)
+	if (gpuPalette)
 	{
 		float paletteIndex[4];
 		if (gp->tcw.PixelFmt == PixelPal4)
@@ -380,15 +381,14 @@ void D3DRenderer::setGPState(const PolyParam *gp)
 	if (config::ModifierVolumes)
 		devCache.SetRenderState(D3DRS_STENCILREF, stencil);
 
-	if (gp->pcw.Texture)
+	if (texture != nullptr)
 	{
-		IDirect3DTexture9 *tex = (IDirect3DTexture9 *)GetTexture(gp->tsp, gp->tcw);
-		devCache.SetTexture(0, tex);
+		devCache.SetTexture(0, texture->texture);
 		setTexMode(D3DSAMP_ADDRESSU, gp->tsp.ClampU, gp->tsp.FlipU);
 		setTexMode(D3DSAMP_ADDRESSV, gp->tsp.ClampV, gp->tsp.FlipV);
 
 		//set texture filter mode
-		if (gp->tsp.FilterMode == 0 || palette)
+		if (gp->tsp.FilterMode == 0 || gpuPalette)
 		{
 			//disable filtering, mipmaps
 			devCache.SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_POINT);

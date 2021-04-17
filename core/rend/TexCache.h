@@ -577,7 +577,6 @@ struct vram_block
 class BaseTextureCacheData;
 
 bool VramLockedWriteOffset(size_t offset);
-void libCore_vramlock_Unlock_block(vram_block *block);
 void libCore_vramlock_Lock(u32 start_offset, u32 end_offset, BaseTextureCacheData *texture);
 
 void UpscalexBRZ(int factor, u32* source, u32* dest, int width, int height, bool has_alpha);
@@ -588,37 +587,36 @@ enum class TextureType { _565, _5551, _4444, _8888, _8 };
 class BaseTextureCacheData
 {
 public:
-	TSP tsp;        //dreamcast texture parameters
+	TSP tsp;        	//dreamcast texture parameters
 	TCW tcw;
 
 	// Decoded/filtered texture format
 	TextureType tex_type;
+	u32 sa_tex;			// texture data start address in vram
 
-	u32 sa;         //pixel data start address in vram (might be offset for mipmaps/etc)
-	u32 sa_tex;		//texture data start address in vram
-	u32 w,h;        //width & height of the texture
-	u32 size;       //size, in bytes, in vram
+	u32 dirty;			// frame number at which texture was overwritten
+	vram_block* lock_block;
+
+	u32 sa;         	// pixel data start address of max level mipmap
+	u16 width, height;	// width & height of the texture
+	u32 size;       	// size in bytes of max level mipmap in vram
 
 	const PvrTexInfo* tex;
 	TexConvFP texconv;
 	TexConvFP32 texconv32;
 	TexConvFP8 texconv8;
 
-	u32 dirty;
-	vram_block* lock_block;
-
 	u32 Updates;
 
-	u32 palette_index;
 	//used for palette updates
 	u32 palette_hash;			// Palette hash at time of last update
-	u32 vq_codebook;            // VQ quantizers table for compressed textures
 	u32 texture_hash;			// xxhash of texture data, used for custom textures
 	u32 old_texture_hash;		// legacy hash
 	u8* custom_image_data;		// loaded custom image data
 	u32 custom_width;
 	u32 custom_height;
 	std::atomic_int custom_load_in_progress;
+	bool gpuPalette;
 
 	void PrintTextureName();
 	virtual std::string GetId() = 0;

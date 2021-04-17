@@ -705,14 +705,14 @@ private:
 		d_pp->pcw = pp->pcw;
 		d_pp->tileclip = tileclip_val;
 
-		d_pp->texid = -1;
-
 		if (d_pp->pcw.Texture)
-			d_pp->texid = renderer->GetTexture(d_pp->tsp,d_pp->tcw);
+			d_pp->texture = renderer->GetTexture(d_pp->tsp, d_pp->tcw);
+		else
+			d_pp->texture = nullptr;
 
 		d_pp->tsp1.full = -1;
 		d_pp->tcw1.full = -1;
-		d_pp->texid1 = -1;
+		d_pp->texture1 = nullptr;
 	}
 
 	#define glob_param_bdc(pp) glob_param_bdc_( (TA_PolyParam0*)pp)
@@ -777,7 +777,7 @@ private:
 		CurrentPP->tsp1.full = pp->tsp1.full;
 		CurrentPP->tcw1.full = pp->tcw1.full;
 		if (pp->pcw.Texture)
-			CurrentPP->texid1 = renderer->GetTexture(pp->tsp1, pp->tcw1);
+			CurrentPP->texture1 = renderer->GetTexture(pp->tsp1, pp->tcw1);
 	}
 
 	// Intensity, with Two Volumes
@@ -791,7 +791,7 @@ private:
 		CurrentPP->tsp1.full = pp->tsp1.full;
 		CurrentPP->tcw1.full = pp->tcw1.full;
 		if (pp->pcw.Texture)
-			CurrentPP->texid1 = renderer->GetTexture(pp->tsp1, pp->tcw1);
+			CurrentPP->texture1 = renderer->GetTexture(pp->tsp1, pp->tcw1);
 	}
 
 	__forceinline
@@ -1167,14 +1167,14 @@ private:
 		d_pp->pcw=spr->pcw; 
 		d_pp->tileclip=tileclip_val;
 
-		d_pp->texid = -1;
-		
 		if (d_pp->pcw.Texture)
-			d_pp->texid = renderer->GetTexture(d_pp->tsp, d_pp->tcw);
+			d_pp->texture = renderer->GetTexture(d_pp->tsp, d_pp->tcw);
+		else
+			d_pp->texture = nullptr;
 
 		d_pp->tcw1.full = -1;
 		d_pp->tsp1.full = -1;
-		d_pp->texid1 = -1;
+		d_pp->texture1 = nullptr;
 
 		SFaceBaseColor=spr->BaseCol;
 		SFaceOffsColor=spr->OffsCol;
@@ -1560,7 +1560,7 @@ bool ta_parse_vdrc(TA_context* ctx, bool bgraColors)
 	PolyParam *bgpp = vd_rc.global_param_op.head();
 	if (bgpp->pcw.Texture)
 	{
-		bgpp->texid = renderer->GetTexture(bgpp->tsp, bgpp->tcw);
+		bgpp->texture = renderer->GetTexture(bgpp->tsp, bgpp->tcw);
 		empty_context = false;
 	}
 
@@ -1752,14 +1752,14 @@ void FillBGP(TA_context* ctx)
 	u32 vertex_ptr=strip_vert_num*strip_vs+strip_base +3*4;
 	//now , all the info is ready :p
 
-	bgpp->texid = -1;
+	bgpp->texture = nullptr;
 
 	bgpp->isp.full = pvr_read32p<u32>(strip_base);
 	bgpp->tsp.full = pvr_read32p<u32>(strip_base + 4);
 	bgpp->tcw.full = pvr_read32p<u32>(strip_base + 8);
 	bgpp->tcw1.full = -1;
 	bgpp->tsp1.full = -1;
-	bgpp->texid1 = -1;
+	bgpp->texture1 = nullptr;
 	bgpp->count=4;
 	bgpp->first=0;
 	bgpp->tileclip=0;//disabled ! HA ~
