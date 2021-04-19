@@ -277,6 +277,7 @@ else ifneq (,$(findstring win32,$(platform)))
     CC = gcc
     CXX = g++
     USE_SDL = 1
+    USE_SDLAUDIO = 1
     STATIC_LIBZIP = 1
 ifeq ($(WITH_DYNAREC), x86)
     X86_REC := 1

@@ -111,10 +111,9 @@ static u32 sdl2_audio_push(const void* frame, u32 samples, bool wait) {
 	// If wait, then wait for the buffer to be smaller than a certain size.
 	stream_mutex.lock();
 	if (wait) {
-		while (sample_count + samples > config::AudioBufferSize) {
+		while (sample_count + samples > (u32)config::AudioBufferSize) {
 			stream_mutex.unlock();
 			read_wait.Wait();
-			read_wait.Reset();
 			stream_mutex.lock();
 		}
 	}
