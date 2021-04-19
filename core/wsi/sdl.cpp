@@ -77,6 +77,13 @@ bool SDLGLGraphicsContext::Init()
 	INFO_LOG(RENDERER, "Created SDL Window and GL Context successfully");
 
 	SDL_GL_MakeCurrent(window, glcontext);
+#ifndef TEST_AUTOMATION
+	// Swap at vsync
+	SDL_GL_SetSwapInterval(1);
+#else
+	// Swap immediately
+	SDL_GL_SetSwapInterval(0);
+#endif
 
 #ifdef GLES
 	load_gles_symbols();
@@ -94,6 +101,9 @@ bool SDLGLGraphicsContext::Init()
 
 void SDLGLGraphicsContext::Swap()
 {
+#ifdef TEST_AUTOMATION
+	do_swap_automation();
+#endif
 	SDL_GL_SwapWindow(window);
 
 	/* Check if drawable has been resized */
