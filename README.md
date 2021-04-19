@@ -13,6 +13,18 @@ Join us on our [**Discord server**](https://discord.gg/X8YWP8w) for a chat.
 
 ## Install
 
+### Flatpak
+
+1. [Set up Flatpak](https://www.flatpak.org/setup/)
+
+2. Install Flycast from [Flathub](https://flathub.org/apps/details/org.flycast.Flycast)
+
+`flatpak install -y org.flycast.Flycast`
+
+3. Run Flycast
+
+`flatpak run org.flycast.Flycast`
+
 ### Binaries
 
 Get fresh builds for your system [on the builds page](https://flyinghead.github.io/flycast-builds/).
