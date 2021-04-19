@@ -527,7 +527,7 @@ static void dc_start_game(const char *path)
 		{
 			// Boot BIOS
 			if (!LoadRomFiles())
-				throw ReicastException("No BIOS file found");
+				throw ReicastException("No BIOS file found in " + get_writable_data_path(""));
 			TermDrive();
 			InitDrive();
 		}
