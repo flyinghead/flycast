@@ -1344,7 +1344,6 @@ static void gui_display_settings()
 			OptionCheckbox("Disable Sound", config::DisableSound, "Disable the emulator sound output");
 			OptionCheckbox("Enable DSP", config::DSPEnabled,
 					"Enable the Dreamcast Digital Sound Processor. Only recommended on fast platforms");
-#if !defined(_WIN32)
 #ifdef __ANDROID__
             OptionCheckbox("Automatic Latency", config::AutoLatency,
             		"Automatically set audio latency. Recommended");
@@ -1357,7 +1356,6 @@ static void gui_display_settings()
 				ImGui::SameLine();
 				ShowHelpMarker("Sets the maximum audio latency. Not supported by all audio drivers.");
             }
-#endif
 
 			audiobackend_t* backend = nullptr;
 			std::string backend_name = config::AudioBackend;
