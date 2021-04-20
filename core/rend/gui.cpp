@@ -1916,7 +1916,9 @@ void gui_display_ui()
 		std::string game_file = settings.imgread.ImagePath;
 		if (!game_file.empty())
 		{
+#ifndef __ANDROID__
 			commandLineStart = true;
+#endif
 			gui_start_game(game_file);
 			return;
 		}
