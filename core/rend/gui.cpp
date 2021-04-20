@@ -1266,6 +1266,20 @@ static void gui_display_settings()
 		    	OptionCheckbox("Fog", config::Fog, "Enable fog effects");
 		    	OptionCheckbox("Widescreen", config::Widescreen,
 		    			"Draw geometry outside of the normal 4:3 aspect ratio. May produce graphical glitches in the revealed areas");
+		    	if (!config::Widescreen)
+		    	{
+			        ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
+			        ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
+		    	}
+		    	ImGui::Indent();
+		    	OptionCheckbox("Super Widescreen", config::SuperWidescreen,
+		    			"Use the full width of the screen or window when its aspect ratio is greater than 16:9");
+		    	ImGui::Unindent();
+		    	if (!config::Widescreen)
+		    	{
+			        ImGui::PopItemFlag();
+			        ImGui::PopStyleVar();
+		    	}
 		    	OptionCheckbox("Widescreen Game Cheats", config::WidescreenGameHacks,
 		    			"Modify the game so that it displays in 16:9 anamorphic format and use horizontal screen stretching. Only some games are supported.");
 		    	OptionCheckbox("Show FPS Counter", config::ShowFPS, "Show on-screen frame/sec counter");

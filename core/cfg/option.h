@@ -351,6 +351,7 @@ private:
 extern RendererOption RendererType;
 extern Option<bool> UseMipmaps;
 extern Option<bool> Widescreen;
+extern Option<bool> SuperWidescreen;
 extern Option<bool> ShowFPS;
 extern Option<bool> RenderToTextureBuffer;
 extern Option<int> RenderToTextureUpscale;

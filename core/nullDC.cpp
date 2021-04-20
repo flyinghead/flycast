@@ -40,6 +40,7 @@
 #include "debug/gdb_server.h"
 
 settings_t settings;
+extern int screen_width, screen_height;
 
 cThread emu_thread(&dc_run, NULL);
 
@@ -742,7 +743,10 @@ void dc_resume()
 	int vres = config::RenderResolution;
 	if (config::Widescreen && !config::Rotate90)
 	{
-		hres = config::RenderResolution * 16 / 9;
+		if (config::SuperWidescreen)
+			hres = config::RenderResolution * screen_width / screen_height	;
+		else
+			hres = config::RenderResolution * 16 / 9;
 	}
 	else if (config::Rotate90)
 	{
