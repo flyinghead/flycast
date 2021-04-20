@@ -53,6 +53,7 @@ int screen_dpi = 96;
 static bool inited = false;
 float scaling = 1;
 GuiState gui_state = GuiState::Main;
+static bool commandLineStart;
 #ifdef __ANDROID__
 static bool touch_up;
 #endif
@@ -450,11 +451,19 @@ static void gui_display_commands()
 	if (ImGui::Button("Exit", ImVec2(300 * scaling + ImGui::GetStyle().ColumnsMinSpacing + ImGui::GetStyle().FramePadding.x * 2 - 1,
 			50 * scaling)))
 	{
-		// Exit to main menu
-		dc_term_game();
-		gui_state = GuiState::Main;
-		game_started = false;
-		settings.imgread.ImagePath[0] = '\0';
+		if (!commandLineStart)
+		{
+			// Exit to main menu
+			dc_term_game();
+			gui_state = GuiState::Main;
+			game_started = false;
+			settings.imgread.ImagePath[0] = '\0';
+		}
+		else
+		{
+			// Exit emulator
+			dc_exit();
+		}
 	}
 
 	ImGui::End();
@@ -1893,6 +1902,7 @@ void gui_display_ui()
 		std::string game_file = settings.imgread.ImagePath;
 		if (!game_file.empty())
 		{
+			commandLineStart = true;
 			gui_start_game(game_file);
 			return;
 		}
