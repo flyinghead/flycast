@@ -114,6 +114,9 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
                     },
                     STORAGE_PERM_REQUEST);
         }
+        else
+            storagePermissionGranted = true;
+
 
         InputDeviceManager.getInstance().startListening(getApplicationContext());
         register(this);
