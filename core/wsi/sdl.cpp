@@ -79,11 +79,12 @@ bool SDLGLGraphicsContext::Init()
 	SDL_GL_MakeCurrent(window, glcontext);
 #ifndef TEST_AUTOMATION
 	// Swap at vsync
-	SDL_GL_SetSwapInterval(1);
+	swapOnVSync = true;
 #else
 	// Swap immediately
-	SDL_GL_SetSwapInterval(0);
+	swapOnVSync = false;
 #endif
+	SDL_GL_SetSwapInterval((int)swapOnVSync);
 
 #ifdef GLES
 	load_gles_symbols();
@@ -103,6 +104,12 @@ void SDLGLGraphicsContext::Swap()
 {
 #ifdef TEST_AUTOMATION
 	do_swap_automation();
+#else
+	if (swapOnVSync == settings.input.fastForwardMode)
+	{
+		swapOnVSync = !settings.input.fastForwardMode;
+		SDL_GL_SetSwapInterval((int)swapOnVSync);
+	}
 #endif
 	SDL_GL_SwapWindow(window);
 

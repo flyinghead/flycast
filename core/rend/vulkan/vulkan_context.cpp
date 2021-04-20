@@ -564,25 +564,24 @@ void VulkanContext::CreateSwapChain()
 			// The FIFO present mode is guaranteed by the spec to be supported
 			vk::PresentModeKHR swapchainPresentMode = vk::PresentModeKHR::eFifo;
 			// Use FIFO on mobile, prefer Mailbox on desktop
-#if HOST_CPU != CPU_ARM && HOST_CPU != CPU_ARM64 && !defined(__ANDROID__)
 			for (auto& presentMode : physicalDevice.getSurfacePresentModesKHR(GetSurface()))
 			{
-				if (presentMode == vk::PresentModeKHR::eMailbox && vendorID != VENDOR_ATI && vendorID != VENDOR_AMD)
+#if HOST_CPU != CPU_ARM && HOST_CPU != CPU_ARM64 && !defined(__ANDROID__)
+				if (swapOnVSync && presentMode == vk::PresentModeKHR::eMailbox
+						&& vendorID != VENDOR_ATI && vendorID != VENDOR_AMD)
 				{
 					INFO_LOG(RENDERER, "Using mailbox present mode");
 					swapchainPresentMode = vk::PresentModeKHR::eMailbox;
 					break;
 				}
-#ifdef TEST_AUTOMATION
-				if (presentMode == vk::PresentModeKHR::eImmediate)
+#endif
+				if (!swapOnVSync && presentMode == vk::PresentModeKHR::eImmediate)
 				{
 					INFO_LOG(RENDERER, "Using immediate present mode");
 					swapchainPresentMode = vk::PresentModeKHR::eImmediate;
 					break;
 				}
-#endif
 			}
-#endif
 
 			vk::SurfaceTransformFlagBitsKHR preTransform = (surfaceCapabilities.supportedTransforms & vk::SurfaceTransformFlagBitsKHR::eIdentity) ? vk::SurfaceTransformFlagBitsKHR::eIdentity : surfaceCapabilities.currentTransform;
 
@@ -802,6 +801,13 @@ void VulkanContext::Present() noexcept
 		}
 		renderDone = false;
 	}
+#ifndef TEST_AUTOMATION
+	if (swapOnVSync == settings.input.fastForwardMode)
+	{
+		swapOnVSync = !settings.input.fastForwardMode;
+		resized = true;
+	}
+#endif
 	if (resized)
 		try {
 			CreateSwapChain();
