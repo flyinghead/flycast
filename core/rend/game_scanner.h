@@ -71,6 +71,9 @@ class GameScanner
         DirectoryTree tree(path);
         for (const DirectoryTree::item& item : tree)
         {
+            if(running == false)
+                break;
+            
         	if (item.name.substr(0, 2) == "._")
         		// Ignore Mac OS turds
         		continue;
