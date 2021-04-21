@@ -60,7 +60,7 @@ class GameScanner
         std::string emptyParentPath = "";
         for (const DirectoryTree::item& item : tree)
         {
-            if(running == false)
+            if (running == false)
                 break;
             
             if (game_list.size() == 0)
