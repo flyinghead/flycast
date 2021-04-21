@@ -56,21 +56,28 @@ class GameScanner
 
 	void add_game_directory(const std::string& path)
 	{
-		// FIXME this won't work anymore
-        if (game_list.empty())
-        {
-            ++empty_folders_scanned;
-            if (empty_folders_scanned > 1000)
-                content_path_looks_incorrect = true;
-        }
-        else
-        {
-            content_path_looks_incorrect = false;
-        }
-        
         DirectoryTree tree(path);
+        std::string emptyParentPath = "";
         for (const DirectoryTree::item& item : tree)
         {
+            if (running == false)
+                break;
+            
+            if (game_list.size() == 0)
+            {
+                if(item.parentPath.compare(emptyParentPath))
+                {
+                    ++empty_folders_scanned;
+                    emptyParentPath = item.parentPath;
+                    if (empty_folders_scanned > 1000)
+                        content_path_looks_incorrect = true;
+                }
+            }
+            else
+            {
+                content_path_looks_incorrect = false;
+            }
+            
         	if (item.name.substr(0, 2) == "._")
         		// Ignore Mac OS turds
         		continue;
