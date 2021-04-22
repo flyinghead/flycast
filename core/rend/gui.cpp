@@ -234,7 +234,25 @@ void gui_init()
     {
         io.Fonts->AddFontFromFileTTF((fontDir + "PingFang.ttc").c_str(), 17.f * scaling, &font_cfg, GetGlyphRangesChineseSimplifiedOfficial());
     }
-    // TODO linux, Android...
+#elif defined(__ANDROID__)
+    if (getenv("FLYCAST_LOCALE") != nullptr)
+    {
+    	const ImWchar *glyphRanges = nullptr;
+    	std::string locale = getenv("FLYCAST_LOCALE");
+        if (locale.find("ja") == 0)				// Japanese
+        	glyphRanges = io.Fonts->GetGlyphRangesJapanese();
+        else if (locale.find("ko") == 0)		// Korean
+        	glyphRanges = io.Fonts->GetGlyphRangesKorean();
+        else if (locale.find("zh_TW") == 0)		// Traditional Chinese
+        	glyphRanges = GetGlyphRangesChineseTraditionalOfficial();
+        else if (locale.find("zh_CN") == 0)		// Simplified Chinese
+        	glyphRanges = GetGlyphRangesChineseSimplifiedOfficial();
+
+        if (glyphRanges != nullptr)
+        	io.Fonts->AddFontFromFileTTF("/system/fonts/NotoSansCJK-Regular.ttc", 17.f * scaling, &font_cfg, glyphRanges);
+    }
+
+    // TODO Linux...
 #endif
     INFO_LOG(RENDERER, "Screen DPI is %d, size %d x %d. Scaling by %.2f", screen_dpi, screen_width, screen_height, scaling);
 
