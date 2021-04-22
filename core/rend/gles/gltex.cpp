@@ -523,7 +523,8 @@ GLuint init_output_framebuffer(int width, int height)
 		// Check that our FBO creation was successful
 		GLuint uStatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
 
-		verify(uStatus == GL_FRAMEBUFFER_COMPLETE);
+		if (uStatus != GL_FRAMEBUFFER_COMPLETE)
+			return 0;
 
 		glcache.Disable(GL_SCISSOR_TEST);
 		glcache.ClearColor(0.f, 0.f, 0.f, 0.f);

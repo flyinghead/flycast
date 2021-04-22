@@ -735,10 +735,8 @@ void SaveSettings()
 #endif
 }
 
-void dc_resume()
+void dc_resize_renderer()
 {
-	SetMemoryHandlers();
-	settings.aica.NoBatch = config::ForceWindowsCE || config::DSPEnabled;
 	int hres;
 	int vres = config::RenderResolution;
 	if (config::Widescreen && !config::Rotate90)
@@ -759,6 +757,13 @@ void dc_resume()
 	}
 	if (renderer != nullptr)
 		renderer->Resize(hres, vres);
+}
+
+void dc_resume()
+{
+	SetMemoryHandlers();
+	settings.aica.NoBatch = config::ForceWindowsCE || config::DSPEnabled;
+	dc_resize_renderer();
 
 	EventManager::event(Event::Resume);
 	if (!emu_thread.thread.joinable())

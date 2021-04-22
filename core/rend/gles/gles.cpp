@@ -1099,7 +1099,8 @@ bool RenderFrame(int width, int height)
 	}
 	else
 	{
-		init_output_framebuffer(width, height);
+		if (init_output_framebuffer(width, height) == 0)
+			return false;
 	}
 
 	bool wide_screen_on = !is_rtt && config::Widescreen && !matrices.IsClipped() && !config::Rotate90;
