@@ -181,7 +181,12 @@ bool EGLGraphicsContext::Init()
 #ifdef TARGET_PANDORA
 	fbdev = open("/dev/fb0", O_RDONLY);
 #else
-	eglSwapInterval(display, 1);
+#ifndef TEST_AUTOMATION
+	swapOnVSync = true;
+#else
+	swapOnVSync = false;
+#endif
+	eglSwapInterval(display, (int)swapOnVSync);
 #endif
 
 	PostInit();
@@ -215,12 +220,11 @@ void EGLGraphicsContext::Swap()
 {
 #ifdef TEST_AUTOMATION
 	do_swap_automation();
-#endif
-#if 0 && defined(TARGET_PANDORA)
-	if (fbdev >= 0)
+#else
+	if (swapOnVSync == settings.input.fastForwardMode)
 	{
-		int arg = 0;
-		ioctl(fbdev,FBIO_WAITFORVSYNC,&arg);
+		swapOnVSync = !settings.input.fastForwardMode;
+		eglSwapInterval(display, (int)swapOnVSync);
 	}
 #endif
 	eglSwapBuffers(display, surface);

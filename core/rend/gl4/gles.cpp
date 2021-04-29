@@ -714,15 +714,11 @@ static bool RenderFrame(int width, int height)
 
 	//setup render target first
 	if (is_rtt)
-	{
 		output_fbo = BindRTT(false);
-		if (output_fbo == 0)
-			return false;
-	}
 	else
-	{
 		output_fbo = init_output_framebuffer(rendering_width, rendering_height);
-	}
+	if (output_fbo == 0)
+		return false;
 
 	glcache.Disable(GL_SCISSOR_TEST);
 

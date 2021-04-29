@@ -46,6 +46,7 @@ bool dc_is_load_done();
 void dc_cancel_load();
 void dc_get_load_status();
 bool dc_is_running();
+void dc_resize_renderer();
 
 enum class Event {
 	Start,

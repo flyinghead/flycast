@@ -55,6 +55,7 @@ private:
 #ifdef TARGET_PANDORA
 	int fbdev = -1;
 #endif
+	bool swapOnVSync = false;
 };
 
 extern EGLGraphicsContext theGLContext;

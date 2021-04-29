@@ -82,6 +82,21 @@ bool XGLGraphicsContext::Init()
 	unsigned int tempu;
 	XGetGeometry(display, window, &win, &temp, &temp, (u32 *)&screen_width, (u32 *)&screen_height, &tempu, &tempu);
 
+#ifndef TEST_AUTOMATION
+	swapOnVSync = true;
+#else
+	swapOnVSync = false;
+#endif
+	glXSwapIntervalMESA = (int (*)(unsigned))glXGetProcAddress((const GLubyte*)"glXSwapIntervalMESA");
+	if (glXSwapIntervalMESA != nullptr)
+		glXSwapIntervalMESA((unsigned)swapOnVSync);
+	else
+	{
+		glXSwapIntervalEXT = (PFNGLXSWAPINTERVALEXTPROC)glXGetProcAddress((const GLubyte*)"glXSwapIntervalEXT");
+		if (glXSwapIntervalEXT != nullptr)
+			glXSwapIntervalEXT(display, window, (int)swapOnVSync);
+	}
+
 	PostInit();
 
 	return true;
@@ -142,32 +157,22 @@ void XGLGraphicsContext::Swap()
 {
 #ifdef TEST_AUTOMATION
 	do_swap_automation();
+#else
+	if (swapOnVSync == settings.input.fastForwardMode)
+	{
+		swapOnVSync = !settings.input.fastForwardMode;
+		if (glXSwapIntervalMESA != nullptr)
+			glXSwapIntervalMESA((unsigned)swapOnVSync);
+		else if (glXSwapIntervalEXT != nullptr)
+			glXSwapIntervalEXT(display, window, (int)swapOnVSync);
+	}
 #endif
 	glXSwapBuffers(display, window);
 
 	Window win;
 	int temp;
-	unsigned int tempu, new_w, new_h;
-	XGetGeometry(display, window, &win, &temp, &temp, &new_w, &new_h, &tempu, &tempu);
-
-	//if resized, clear up the draw buffers, to avoid out-of-draw-area junk data
-	if (new_w != screen_width || new_h != screen_height) {
-		screen_width = new_w;
-		screen_height = new_h;
-	}
-
-#if 0
-	//handy to debug really stupid render-not-working issues ...
-
-	glcache.ClearColor(0, 0.5, 1, 1);
-	glClear(GL_COLOR_BUFFER_BIT);
-	glXSwapBuffers(display, window);
-
-
-	glcache.ClearColor(1, 0.5, 0, 1);
-	glClear(GL_COLOR_BUFFER_BIT);
-	glXSwapBuffers(display, window);
-#endif
+	unsigned int tempu;
+	XGetGeometry(display, window, &win, &temp, &temp, (u32 *)&screen_width, (u32 *)&screen_height, &tempu, &tempu);
 }
 
 void XGLGraphicsContext::Term()

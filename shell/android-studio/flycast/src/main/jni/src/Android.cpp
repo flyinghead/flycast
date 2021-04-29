@@ -85,7 +85,7 @@ JNIEXPORT type JNICALL Java_com_reicast_emulator_emu_JNIdc_get ## setting(JNIEnv
 
 extern "C"
 {
-JNIEXPORT jstring JNICALL Java_com_reicast_emulator_emu_JNIdc_initEnvironment(JNIEnv *env, jobject obj, jobject emulator, jstring homeDirectory)  __attribute__((visibility("default")));
+JNIEXPORT jstring JNICALL Java_com_reicast_emulator_emu_JNIdc_initEnvironment(JNIEnv *env, jobject obj, jobject emulator, jstring homeDirectory, jstring locale)  __attribute__((visibility("default")));
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_setExternalStorageDirectories(JNIEnv *env, jobject obj, jobjectArray pathList)  __attribute__((visibility("default")));
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_setGameUri(JNIEnv *env,jobject obj,jstring fileName)  __attribute__((visibility("default")));
 JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_pause(JNIEnv *env,jobject obj)  __attribute__((visibility("default")));
@@ -184,7 +184,7 @@ void os_SetWindowText(char const *Text)
 {
 }
 
-JNIEXPORT jstring JNICALL Java_com_reicast_emulator_emu_JNIdc_initEnvironment(JNIEnv *env, jobject obj, jobject emulator, jstring homeDirectory)
+JNIEXPORT jstring JNICALL Java_com_reicast_emulator_emu_JNIdc_initEnvironment(JNIEnv *env, jobject obj, jobject emulator, jstring homeDirectory, jstring locale)
 {
     // Initialize platform-specific stuff
     common_linux_setup();
@@ -227,7 +227,13 @@ JNIEXPORT jstring JNICALL Java_com_reicast_emulator_emu_JNIdc_initEnvironment(JN
     }
     INFO_LOG(BOOT, "Config dir is: %s", get_writable_config_path("").c_str());
     INFO_LOG(BOOT, "Data dir is:   %s", get_writable_data_path("").c_str());
-
+    if (locale != nullptr)
+    {
+        const char *jchar = env->GetStringUTFChars(locale, 0);
+        std::string localeName = jchar;
+        env->ReleaseStringUTFChars(locale, jchar);
+        setenv("FLYCAST_LOCALE", localeName.c_str(), 1);
+    }
     if (first_init)
     {
         // Do one-time initialization

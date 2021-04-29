@@ -1,41 +1,139 @@
-#include "audiostream.h"
 #ifdef _WIN32
-#include "oslib.h"
+#include "audiostream.h"
 #include <initguid.h>
 #include <dsound.h>
 #ifdef USE_SDL
 #include "sdl/sdl.h"
 #endif
+#include <vector>
+#include <algorithm>
+#include <atomic>
+#include <thread>
+#include "stdclass.h"
 
 #define verifyc(x) verify(!FAILED(x))
 
-void* SoundThread(void* param);
-#define V2_BUFFERSZ (16*1024)
-
 static IDirectSound8* dsound;
 static IDirectSoundBuffer8* buffer;
+static std::vector<HANDLE> notificationEvents;
 
 static IDirectSoundCapture8 *dcapture;
 static IDirectSoundCaptureBuffer8 *capture_buffer;
 
-static u32 ds_ring_size;
+static std::atomic_bool audioThreadRunning;
+static std::thread audioThread;
+static cResetEvent pushWait;
+
+constexpr u32 SAMPLE_BYTES = SAMPLE_COUNT * 4;
+
+class RingBuffer
+{
+	std::vector<u8> buffer;
+	std::atomic_int readCursor { 0 };
+	std::atomic_int writeCursor { 0 };
+
+	u32 readSize() {
+		return (writeCursor - readCursor + buffer.size()) % buffer.size();
+	}
+	u32 writeSize() {
+		return (readCursor - writeCursor + buffer.size() - 1) % buffer.size();
+	}
+
+public:
+	bool write(const u8 *data, u32 size)
+	{
+		if (size > writeSize())
+			return false;
+		u32 wc = writeCursor;
+		u32 chunkSize = std::min<u32>(size, buffer.size() - wc);
+		memcpy(&buffer[wc], data, chunkSize);
+		wc = (wc + chunkSize) % buffer.size();
+		size -= chunkSize;
+		if (size > 0)
+		{
+			data += chunkSize;
+			memcpy(&buffer[wc], data, size);
+			wc = (wc + size) % buffer.size();
+		}
+		writeCursor = wc;
+		return true;
+	}
+
+	bool read(u8 *data, u32 size)
+	{
+		if (size > readSize())
+			return false;
+		u32 rc = readCursor;
+		u32 chunkSize = std::min<u32>(size, buffer.size() - rc);
+		memcpy(data, &buffer[rc], chunkSize);
+		rc = (rc + chunkSize) % buffer.size();
+		size -= chunkSize;
+		if (size > 0)
+		{
+			data += chunkSize;
+			memcpy(data, &buffer[rc], size);
+			rc = (rc + size) % buffer.size();
+		}
+		readCursor = rc;
+		return true;
+	}
+
+	void setCapacity(size_t size)
+	{
+		std::fill(buffer.begin(), buffer.end(), 0);
+		buffer.resize(size);
+		readCursor = 0;
+		writeCursor = 0;
+	}
+};
+static RingBuffer ringBuffer;
+
+static u32 notificationOffset(int index) {
+	return index * SAMPLE_BYTES;
+}
+
+static void audioThreadMain()
+{
+	audioThreadRunning = true;
+	while (true)
+	{
+		u32 rv = WaitForMultipleObjects(notificationEvents.size(), &notificationEvents[0], false, 100);
+
+		if (!audioThreadRunning)
+			break;
+		if (rv == WAIT_TIMEOUT || rv == WAIT_FAILED)
+			continue;
+		rv -= WAIT_OBJECT_0;
+
+		void *p1, *p2;
+		DWORD sz1, sz2;
+
+		if (SUCCEEDED(buffer->Lock(notificationOffset(rv), SAMPLE_BYTES, &p1, &sz1, &p2, &sz2, 0)))
+		{
+			if (!ringBuffer.read((u8*)p1, sz1))
+				memset(p1, 0, sz1);
+			if (sz2 != 0)
+			{
+				if (!ringBuffer.read((u8*)p2, sz2))
+					memset(p2, 0, sz2);
+			}
+			buffer->Unlock(p1, sz1, p2, sz2);
+			pushWait.Set();
+		}
+	}
+}
 
 static void directsound_init()
 {
-	verifyc(DirectSoundCreate8(NULL,&dsound,NULL));
+	verifyc(DirectSoundCreate8(NULL, &dsound, NULL));
 
 #ifdef USE_SDL
 	verifyc(dsound->SetCooperativeLevel(sdl_get_native_hwnd(), DSSCL_PRIORITY));
 #else
 	verifyc(dsound->SetCooperativeLevel((HWND)libPvr_GetRenderTarget(), DSSCL_PRIORITY));
 #endif
-	IDirectSoundBuffer* buffer_;
-
-	WAVEFORMATEX wfx;
-	DSBUFFERDESC desc;
-
 	// Set up WAV format structure.
-
+	WAVEFORMATEX wfx;
 	memset(&wfx, 0, sizeof(WAVEFORMATEX));
 	wfx.wFormatTag = WAVE_FORMAT_PCM;
 	wfx.nChannels = 2;
@@ -45,104 +143,64 @@ static void directsound_init()
 	wfx.wBitsPerSample = 16;
 
 	// Set up DSBUFFERDESC structure.
-
-	ds_ring_size=8192*wfx.nBlockAlign;
-
+	DSBUFFERDESC desc;
 	memset(&desc, 0, sizeof(DSBUFFERDESC));
 	desc.dwSize = sizeof(DSBUFFERDESC);
 	desc.dwFlags = DSBCAPS_GETCURRENTPOSITION2 | DSBCAPS_CTRLPOSITIONNOTIFY | DSBCAPS_GLOBALFOCUS;
-
-	desc.dwBufferBytes = ds_ring_size;
+	desc.dwBufferBytes = SAMPLE_BYTES * 2;
 	desc.lpwfxFormat = &wfx;
 
-	verifyc(dsound->CreateSoundBuffer(&desc,&buffer_,0));
-	verifyc(buffer_->QueryInterface(IID_IDirectSoundBuffer8,(void**)&buffer));
+	// Create the buffer
+	IDirectSoundBuffer* buffer_;
+	verifyc(dsound->CreateSoundBuffer(&desc, &buffer_, 0));
+	verifyc(buffer_->QueryInterface(IID_IDirectSoundBuffer8, (void**)&buffer));
 	buffer_->Release();
 
-	//Play the buffer !
-	verifyc(buffer->Play(0,0,DSBPLAY_LOOPING));
-
-}
-
-
-static DWORD wc=0;
-
-
-static int directsound_getfreesz()
-{
-	DWORD pc,wch;
-
-	buffer->GetCurrentPosition(&pc,&wch);
-
-	int fsz=0;
-	if (wc>=pc)
-		fsz=ds_ring_size-wc+pc;
-	else
-		fsz=pc-wc;
-
-	fsz-=32;
-	return fsz;
-}
-
-static int directsound_getusedSamples()
-{
-	return (ds_ring_size-directsound_getfreesz())/4;
-}
-
-static u32 directsound_push_nw(const void* frame, u32 samplesb)
-{
-	DWORD pc,wch;
-
-	u32 bytes=samplesb*4;
-
-	buffer->GetCurrentPosition(&pc,&wch);
-
-	int fsz=0;
-	if (wc>=pc)
-		fsz=ds_ring_size-wc+pc;
-	else
-		fsz=pc-wc;
-
-	fsz-=32;
-
-	//printf("%d: r:%d w:%d (f:%d wh:%d)\n",fsz>bytes,pc,wc,fsz,wch);
-
-	if (fsz>bytes)
+	// Set up notifications
+	IDirectSoundNotify *bufferNotify;
+	verifyc(buffer->QueryInterface(IID_IDirectSoundNotify8, (void**)&bufferNotify));
+	notificationEvents.clear();
+	std::vector<DSBPOSITIONNOTIFY> posNotify;
+	for (int i = 0; notificationOffset(i) < desc.dwBufferBytes; i++)
 	{
-		void* ptr1,* ptr2;
-		DWORD ptr1sz,ptr2sz;
-
-		const u8* data=(const u8*)frame;
-
-		buffer->Lock(wc,bytes,&ptr1,&ptr1sz,&ptr2,&ptr2sz,0);
-		memcpy(ptr1,data,ptr1sz);
-		if (ptr2sz)
-		{
-			data+=ptr1sz;
-			memcpy(ptr2,data,ptr2sz);
-		}
-
-		buffer->Unlock(ptr1,ptr1sz,ptr2,ptr2sz);
-		wc=(wc+bytes)%ds_ring_size;
-		return 1;
+		notificationEvents.push_back(CreateEvent(nullptr, false, false, nullptr));
+		posNotify.push_back({ notificationOffset(i), notificationEvents.back() });
 	}
-	return 0;
-	//ds_ring_size
+	bufferNotify->SetNotificationPositions(posNotify.size(), &posNotify[0]);
+	bufferNotify->Release();
+
+	// Clear the buffers
+	void *p1, *p2;
+	DWORD sz1, sz2;
+	verifyc(buffer->Lock(0, desc.dwBufferBytes, &p1, &sz1, &p2, &sz2, 0));
+	verify(p2 == nullptr);
+	memset(p1, 0, sz1);
+	verifyc(buffer->Unlock(p1, sz1, p2, sz2));
+	ringBuffer.setCapacity(config::AudioBufferSize * 4);
+
+	// Start the thread
+	audioThread = std::thread(audioThreadMain);
+
+	// Play the buffer !
+	verifyc(buffer->Play(0, 0, DSBPLAY_LOOPING));
 }
 
 static u32 directsound_push(const void* frame, u32 samples, bool wait)
 {
-	while (!directsound_push_nw(frame, samples) && wait)
-		//DEBUG_LOG(AUDIO, "FAILED waiting on audio FAILED %d", directsound_getusedSamples())
-		;
+	while (!ringBuffer.write((const u8 *)frame, samples * 4) && wait)
+		pushWait.Wait();
 
 	return 1;
 }
 
 static void directsound_term()
 {
+	audioThreadRunning = false;
+	audioThread.join();
 	buffer->Stop();
 
+	for (HANDLE event : notificationEvents)
+		CloseHandle(event);
 	buffer->Release();
 	dsound->Release();
 }

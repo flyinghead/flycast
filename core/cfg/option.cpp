@@ -61,6 +61,7 @@ OptionString AudioBackend("backend", "auto", "audio");
 RendererOption RendererType;
 Option<bool> UseMipmaps("rend.UseMipmaps", true);
 Option<bool> Widescreen("rend.WideScreen");
+Option<bool> SuperWidescreen("rend.SuperWideScreen");
 Option<bool> ShowFPS("rend.ShowFPS");
 Option<bool> RenderToTextureBuffer("rend.RenderToTextureBuffer");
 Option<int> RenderToTextureUpscale("rend.RenderToTextureUpscale", 1);

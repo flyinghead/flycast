@@ -41,6 +41,9 @@ private:
 	Display *display;
 	GLXContext context;
 	GLXFBConfig* framebufferConfigs = nullptr;
+	PFNGLXSWAPINTERVALEXTPROC glXSwapIntervalEXT = nullptr;
+	int (*glXSwapIntervalMESA)(unsigned int interval) = nullptr;
+	bool swapOnVSync = false;
 };
 
 extern XGLGraphicsContext theGLContext;

@@ -52,6 +52,7 @@ int screen_dpi = 96;
 static bool inited = false;
 float scaling = 1;
 GuiState gui_state = GuiState::Main;
+static bool commandLineStart;
 #ifdef __ANDROID__
 static bool touch_up;
 #endif
@@ -235,7 +236,25 @@ void gui_init()
     {
         io.Fonts->AddFontFromFileTTF((fontDir + "PingFang.ttc").c_str(), 17.f * scaling, &font_cfg, GetGlyphRangesChineseSimplifiedOfficial());
     }
-    // TODO linux, Android...
+#elif defined(__ANDROID__)
+    if (getenv("FLYCAST_LOCALE") != nullptr)
+    {
+    	const ImWchar *glyphRanges = nullptr;
+    	std::string locale = getenv("FLYCAST_LOCALE");
+        if (locale.find("ja") == 0)				// Japanese
+        	glyphRanges = io.Fonts->GetGlyphRangesJapanese();
+        else if (locale.find("ko") == 0)		// Korean
+        	glyphRanges = io.Fonts->GetGlyphRangesKorean();
+        else if (locale.find("zh_TW") == 0)		// Traditional Chinese
+        	glyphRanges = GetGlyphRangesChineseTraditionalOfficial();
+        else if (locale.find("zh_CN") == 0)		// Simplified Chinese
+        	glyphRanges = GetGlyphRangesChineseSimplifiedOfficial();
+
+        if (glyphRanges != nullptr)
+        	io.Fonts->AddFontFromFileTTF("/system/fonts/NotoSansCJK-Regular.ttc", 17.f * scaling, &font_cfg, glyphRanges);
+    }
+
+    // TODO Linux...
 #endif
     INFO_LOG(RENDERER, "Screen DPI is %d, size %d x %d. Scaling by %.2f", screen_dpi, screen_width, screen_height, scaling);
 
@@ -472,11 +491,19 @@ static void gui_display_commands()
 	if (ImGui::Button("Exit", ImVec2(300 * scaling + ImGui::GetStyle().ColumnsMinSpacing + ImGui::GetStyle().FramePadding.x * 2 - 1,
 			50 * scaling)))
 	{
-		// Exit to main menu
-		dc_term_game();
-		gui_state = GuiState::Main;
-		game_started = false;
-		settings.imgread.ImagePath[0] = '\0';
+		if (!commandLineStart)
+		{
+			// Exit to main menu
+			dc_term_game();
+			gui_state = GuiState::Main;
+			game_started = false;
+			settings.imgread.ImagePath[0] = '\0';
+		}
+		else
+		{
+			// Exit emulator
+			dc_exit();
+		}
 	}
 
 	ImGui::End();
@@ -1011,6 +1038,16 @@ static void gui_display_settings()
             ImGui::SameLine();
             ShowHelpMarker("The directories where your games are stored");
 
+#ifdef __linux__
+            if (ImGui::ListBoxHeader("Data Directory", 1))
+            {
+            	ImGui::AlignTextToFramePadding();
+                ImGui::Text("%s", get_writable_data_path("").c_str());
+                ImGui::ListBoxFooter();
+            }
+            ImGui::SameLine();
+            ShowHelpMarker("The directory containing BIOS files, as well as saved VMUs and states");
+#else
             if (ImGui::ListBoxHeader("Home Directory", 1))
             {
             	ImGui::AlignTextToFramePadding();
@@ -1024,6 +1061,7 @@ static void gui_display_settings()
             }
             ImGui::SameLine();
             ShowHelpMarker("The directory where Flycast saves configuration files and VMUs. BIOS files should be in a subfolder named \"data\"");
+#endif
 			if (OptionCheckbox("Hide Legacy Naomi Roms", config::HideLegacyNaomiRoms,
 					"Hide .bin, .dat and .lst files from the content browser"))
 				scanner.refresh();
@@ -1287,6 +1325,20 @@ static void gui_display_settings()
 		    	OptionCheckbox("Fog", config::Fog, "Enable fog effects");
 		    	OptionCheckbox("Widescreen", config::Widescreen,
 		    			"Draw geometry outside of the normal 4:3 aspect ratio. May produce graphical glitches in the revealed areas");
+		    	if (!config::Widescreen)
+		    	{
+			        ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
+			        ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
+		    	}
+		    	ImGui::Indent();
+		    	OptionCheckbox("Super Widescreen", config::SuperWidescreen,
+		    			"Use the full width of the screen or window when its aspect ratio is greater than 16:9");
+		    	ImGui::Unindent();
+		    	if (!config::Widescreen)
+		    	{
+			        ImGui::PopItemFlag();
+			        ImGui::PopStyleVar();
+		    	}
 		    	OptionCheckbox("Widescreen Game Cheats", config::WidescreenGameHacks,
 		    			"Modify the game so that it displays in 16:9 anamorphic format and use horizontal screen stretching. Only some games are supported.");
 		    	OptionCheckbox("Show FPS Counter", config::ShowFPS, "Show on-screen frame/sec counter");
@@ -1414,7 +1466,6 @@ static void gui_display_settings()
 			OptionCheckbox("Disable Sound", config::DisableSound, "Disable the emulator sound output");
 			OptionCheckbox("Enable DSP", config::DSPEnabled,
 					"Enable the Dreamcast Digital Sound Processor. Only recommended on fast platforms");
-#if !defined(_WIN32)
 #ifdef __ANDROID__
             OptionCheckbox("Automatic Latency", config::AutoLatency,
             		"Automatically set audio latency. Recommended");
@@ -1427,7 +1478,6 @@ static void gui_display_settings()
 				ImGui::SameLine();
 				ShowHelpMarker("Sets the maximum audio latency. Not supported by all audio drivers.");
             }
-#endif
 
 			audiobackend_t* backend = nullptr;
 			std::string backend_name = config::AudioBackend;
@@ -1960,6 +2010,9 @@ void gui_display_ui()
 		std::string game_file = settings.imgread.ImagePath;
 		if (!game_file.empty())
 		{
+#ifndef __ANDROID__
+			commandLineStart = true;
+#endif
 			gui_start_game(game_file);
 			return;
 		}

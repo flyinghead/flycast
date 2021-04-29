@@ -35,6 +35,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import tv.ouya.console.api.OuyaController;
 
@@ -83,7 +84,8 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
         OuyaController.init(this);
 
         String home_directory = prefs.getString(Config.pref_home, "");
-        String result = JNIdc.initEnvironment((Emulator)getApplicationContext(), home_directory);
+        String result = JNIdc.initEnvironment((Emulator)getApplicationContext(), home_directory,
+                Locale.getDefault().toString());
         if (result != null) {
             AlertDialog.Builder dlgAlert  = new AlertDialog.Builder(this);
             dlgAlert.setMessage("Initialization failed. Please try again and/or reinstall.\n\n"
@@ -114,6 +116,9 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
                     },
                     STORAGE_PERM_REQUEST);
         }
+        else
+            storagePermissionGranted = true;
+
 
         InputDeviceManager.getInstance().startListening(getApplicationContext());
         register(this);

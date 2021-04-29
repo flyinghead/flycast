@@ -24,6 +24,7 @@
 #include "oslib/oslib.h"
 #include "wsi/context.h"
 #include "cfg/option.h"
+#include "emulator.h"
 
 bool mainui_enabled;
 u32 MainFrameCount;
@@ -59,6 +60,7 @@ bool mainui_rend_frame()
 void mainui_init()
 {
 	rend_init_renderer();
+	dc_resize_renderer();
 }
 
 void mainui_term()
