@@ -122,10 +122,7 @@ void palette_update()
 
 		case 3:
 			for (int i=0;i<1024;i++)
-			{
-				palette16_ram[i] = UnpackerRGBA8888::unpack(PALETTE_RAM[i]);
-				palette32_ram[i] = UnpackerRGBA8888_32<RGBAPacker>::unpack(PALETTE_RAM[i]);
-			}
+				palette32_ram[i] = Unpacker8888<RGBAPacker>::unpack(PALETTE_RAM[i]);
 			break;
 		}
 	}
@@ -160,10 +157,7 @@ void palette_update()
 
 		case 3:
 			for (int i=0;i<1024;i++)
-			{
-				palette16_ram[i] = UnpackerARGB8888::unpack(PALETTE_RAM[i]);
 				palette32_ram[i] = UnpackerNop<u32>::unpack(PALETTE_RAM[i]);
-			}
 			break;
 		}
 	}

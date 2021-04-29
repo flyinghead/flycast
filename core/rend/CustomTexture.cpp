@@ -256,7 +256,7 @@ void CustomTexture::DumpTexture(u32 hash, int w, int h, TextureType textype, voi
 			case TextureType::_8888:
 				for (int x = 0; x < w; x++)
 				{
-					*(u32 *)dst = UnpackerRGBA8888_32<RGBAPacker>::unpack(*(u32 *)src);
+					*(u32 *)dst = Unpacker8888<RGBAPacker>::unpack(*(u32 *)src);
 					dst += 4;
 					src += 2;
 				}

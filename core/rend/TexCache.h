@@ -173,20 +173,6 @@ struct Unpacker4444 {
 		return (((word >> 0) & 0xF) << 4) | (((word >> 4) & 0xF) << 8) | (((word >> 8) & 0xF) << 12) | (((word >> 12) & 0xF) << 0);
 	}
 };
-// ARGB8888 to RGBA4444
-struct UnpackerRGBA8888 {
-	using unpacked_type = u16;
-	static u16 unpack(u32 word) {
-		return (((word >> 4) & 0xF) << 4) | (((word >> 12) & 0xF) << 8) | (((word >> 20) & 0xF) << 12) | (((word >> 28) & 0xF) << 0);
-	}
-};
-// ARGB8888 to ARGB4444
-struct UnpackerARGB8888 {
-	using unpacked_type = u16;
-	static u16 unpack(u32 word) {
-		return (((word >> 4) & 0xF) << 0) | (((word >> 12) & 0xF) << 4) | (((word >> 20) & 0xF) << 8) | (((word >> 28) & 0xF) << 12);
-	}
-};
 
 template <typename Packer>
 struct Unpacker1555_32 {
@@ -221,8 +207,9 @@ struct Unpacker4444_32 {
 				(((word >> 12) & 0xF) << 4) | ((word >> 12) & 0xF));
 	}
 };
+// ARGB8888 to whatever
 template <typename Packer>
-struct UnpackerRGBA8888_32 {
+struct Unpacker8888 {
 	using unpacked_type = u32;
 	static u32 unpack(u32 word) {
 		return Packer::pack(
@@ -471,9 +458,9 @@ void texture_VQ(PixelBuffer<typename PixelConvertor::unpacked_type>* pb,u8* p_in
 	}
 }
 
-typedef void (*TexConvFP)(PixelBuffer<u16>* pb, u8* p_in, u32 Width, u32 Height);
-typedef void (*TexConvFP8)(PixelBuffer<u8>* pb, u8* p_in, u32 Width, u32 Height);
-typedef void (*TexConvFP32)(PixelBuffer<u32>* pb, u8* p_in, u32 Width, u32 Height);
+typedef void (*TexConvFP)(PixelBuffer<u16> *pb, u8 *p_in, u32 width, u32 height);
+typedef void (*TexConvFP8)(PixelBuffer<u8> *pb, u8 *p_in, u32 width, u32 height);
+typedef void (*TexConvFP32)(PixelBuffer<u32> *pb, u8 *p_in, u32 width, u32 height);
 
 //Planar
 constexpr TexConvFP tex565_PL = texture_PL<ConvertPlanar<UnpackerNop<u16>>>;
