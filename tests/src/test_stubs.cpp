@@ -49,7 +49,4 @@ double os_GetSeconds()
 	static LARGE_INTEGER time_now_base = time_now;
 	return (time_now.QuadPart - time_now_base.QuadPart)*qpfd;
 }
-void DestroyMainWindow()
-{
-}
 #endif

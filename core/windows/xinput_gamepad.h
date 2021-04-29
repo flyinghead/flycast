@@ -117,7 +117,7 @@ public:
 	{
 		if (vib_stop_time > 0)
 		{
-			int rem_time = (vib_stop_time - os_GetSeconds()) * 1000;
+			int rem_time = (int)((vib_stop_time - os_GetSeconds()) * 1000.0);
 			if (rem_time <= 0)
 			{
 				vib_stop_time = 0;
@@ -206,43 +206,6 @@ private:
 
 std::vector<std::shared_ptr<XInputGamepadDevice>> XInputGamepadDevice::xinput_gamepads(XUSER_MAX_COUNT);
 
-class KbInputMapping : public InputMapping
-{
-public:
-	KbInputMapping()
-	{
-		name = "Windows Keyboard";
-		set_button(DC_BTN_A, 'X');
-		set_button(DC_BTN_B, 'C');
-		set_button(DC_BTN_X, 'S');
-		set_button(DC_BTN_Y, 'D');
-		set_button(DC_DPAD_UP, VK_UP);
-		set_button(DC_DPAD_DOWN, VK_DOWN);
-		set_button(DC_DPAD_LEFT, VK_LEFT);
-		set_button(DC_DPAD_RIGHT, VK_RIGHT);
-		set_button(DC_BTN_START, VK_RETURN);
-		set_button(EMU_BTN_TRIGGER_LEFT, 'F');
-		set_button(EMU_BTN_TRIGGER_RIGHT, 'V');
-		set_button(EMU_BTN_MENU, VK_TAB);
-		set_button(EMU_BTN_FFORWARD, VK_SPACE);
-
-		dirty = false;
-	}
-};
-
-class WinKbGamepadDevice : public GamepadDevice
-{
-public:
-	WinKbGamepadDevice(int maple_port) : GamepadDevice(maple_port, "win32")
-	{
-		_name = "Keyboard";
-		_unique_id = "win_keyboard";
-		if (!find_mapping())
-			input_mapper = std::make_shared<KbInputMapping>();
-	}
-	~WinKbGamepadDevice() override = default;
-};
-
 class MouseInputMapping : public InputMapping
 {
 public:
@@ -257,17 +220,17 @@ public:
 	}
 };
 
-class WinMouseGamepadDevice : public GamepadDevice
+class WinMouse : public GamepadDevice
 {
 public:
-	WinMouseGamepadDevice(int maple_port) : GamepadDevice(maple_port, "win32")
+	WinMouse(int maple_port) : GamepadDevice(maple_port, "win32")
 	{
 		_name = "Mouse";
 		_unique_id = "win_mouse";
 		if (!find_mapping())
 			input_mapper = std::make_shared<MouseInputMapping>();
 	}
-	~WinMouseGamepadDevice() override = default;
+	~WinMouse() override = default;
 
 	bool gamepad_btn_input(u32 code, bool pressed) override
 	{

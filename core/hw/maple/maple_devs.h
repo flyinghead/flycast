@@ -174,9 +174,6 @@ extern f32 mo_x_delta[4];
 extern f32 mo_y_delta[4];
 extern f32 mo_wheel_delta[4];
 
-extern s32 mo_x_phy;
-extern s32 mo_y_phy;
-
 extern s32 mo_x_prev[4];
 extern s32 mo_y_prev[4];
 

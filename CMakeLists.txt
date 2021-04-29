@@ -127,9 +127,7 @@ if(ALSA_FOUND AND NOT ANDROID)
 endif()
 
 if(WIN32)
-	# Patch and build SDL
-	execute_process(COMMAND git apply -p1 ${CMAKE_CURRENT_SOURCE_DIR}/core/deps/patches/SDL.patch
-		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/core/deps/SDL) 
+	# Build SDL
 	file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/core/deps/SDL")
 	if(MSVC)
 		set(SDL_CMAKE_ARCH_ARG -A ${CMAKE_GENERATOR_PLATFORM})
@@ -652,7 +650,6 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/input/gamepad.h
         core/input/gamepad_device.cpp
         core/input/gamepad_device.h
-        core/input/keyboard_device.cpp
         core/input/keyboard_device.h
         core/input/mapping.cpp
         core/input/mapping.h)
@@ -1007,6 +1004,8 @@ elseif(UNIX)
 elseif(WIN32)
     if(NOT BUILD_TESTING)
         target_sources(${PROJECT_NAME} PRIVATE
+        	core/windows/rawinput.cpp
+        	core/windows/rawinput.h
             core/windows/win_keyboard.h
             core/windows/winmain.cpp
             core/windows/xinput_gamepad.h)

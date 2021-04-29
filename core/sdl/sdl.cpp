@@ -14,6 +14,9 @@
 #if !defined(_WIN32) && !defined(__APPLE__)
 #include "linux-dist/icon.h"
 #endif
+#ifdef _WIN32
+#include "windows/rawinput.h"
+#endif
 
 #ifdef USE_VULKAN
 #include <SDL_vulkan.h>
@@ -28,16 +31,14 @@ static SDL_Window* window = NULL;
 #endif
 #define WINDOW_HEIGHT  480
 
-static std::shared_ptr<SDLMouse> sdl_mouse_gamepad;
-static std::shared_ptr<SDLKbGamepadDevice> sdl_kb_gamepad;
-static SDLKeyboardDevice* sdl_keyboard = NULL;
+static std::shared_ptr<SDLMouse> sdl_mouse;
+static std::shared_ptr<SDLKeyboardDevice> sdl_keyboard;
 static bool window_fullscreen;
 static bool window_maximized;
 static int window_width = WINDOW_WIDTH;
 static int window_height = WINDOW_HEIGHT;
 static bool gameRunning;
 static bool mouseCaptured;
-static std::map<u32, std::shared_ptr<SDLMouse>> mice;
 
 static void sdl_open_joystick(int index)
 {
@@ -65,14 +66,23 @@ static void captureMouse(bool capture)
 		return;
 	if (!capture)
 	{
-		SDL_SetRelativeMouseMode(SDL_FALSE);
+		if (!config::UseRawInput)
+			SDL_SetRelativeMouseMode(SDL_FALSE);
+		else
+			SDL_ShowCursor(SDL_ENABLE);
 		SDL_SetWindowTitle(window, "Flycast");
 		mouseCaptured = false;
 	}
-	else if (SDL_SetRelativeMouseMode(SDL_TRUE) == 0)
+	else
 	{
-		SDL_SetWindowTitle(window, "Flycast - mouse capture");
-		mouseCaptured = true;
+		if (config::UseRawInput
+				|| SDL_SetRelativeMouseMode(SDL_TRUE) == 0)
+		{
+			if (config::UseRawInput)
+				SDL_ShowCursor(SDL_DISABLE);
+			SDL_SetWindowTitle(window, "Flycast - mouse capture");
+			mouseCaptured = true;
+		}
 	}
 }
 
@@ -82,7 +92,10 @@ static void emuEventCallback(Event event)
 	{
 	case Event::Pause:
 		gameRunning = false;
-		SDL_SetRelativeMouseMode(SDL_FALSE);
+		if (!config::UseRawInput)
+			SDL_SetRelativeMouseMode(SDL_FALSE);
+		else
+			SDL_ShowCursor(SDL_ENABLE);
 		SDL_SetWindowTitle(window, "Flycast");
 		break;
 	case Event::Resume:
@@ -94,76 +107,39 @@ static void emuEventCallback(Event event)
 	}
 }
 
-static void clearMice()
+static void checkRawInput()
 {
-	for (const auto& pair : mice)
-		GamepadDevice::Unregister(pair.second);
-	mice.clear();
-}
-
-static void discoverMice()
-{
-	clearMice();
-
-	auto defaultMouse = std::make_shared<SDLMouse>();
-	mice[0] = defaultMouse;
-	GamepadDevice::Register(defaultMouse);
-
 #ifdef _WIN32
-	u32 numDevices;
-	GetRawInputDeviceList(NULL, &numDevices, sizeof(RAWINPUTDEVICELIST));
-	if (numDevices > 0)
+	if ((bool)config::UseRawInput != (bool)sdl_mouse)
+		return;
+	if (config::UseRawInput)
 	{
-		RAWINPUTDEVICELIST *deviceList;
-		deviceList = new RAWINPUTDEVICELIST[numDevices];
-		if (deviceList != nullptr)
-		{
-			GetRawInputDeviceList(deviceList, &numDevices, sizeof(RAWINPUTDEVICELIST));
-			for (u32 i = 0; i < numDevices; ++i)
-			{
-				RAWINPUTDEVICELIST& device = deviceList[i];
-				if (device.dwType == RIM_TYPEMOUSE)
-				{
-					// Get the device name
-					std::string name;
-					std::string uniqueId;
-					u32 size;
-					GetRawInputDeviceInfo(device.hDevice, RIDI_DEVICENAME, nullptr, &size);
-					if (size > 0)
-					{
-						std::vector<char> deviceNameData(size);
-						u32 res = GetRawInputDeviceInfo(device.hDevice, RIDI_DEVICENAME, &deviceNameData[0], &size);
-						if (res != (u32)-1)
-						{
-							std::string deviceName(&deviceNameData[0], std::strlen(&deviceNameData[0]));
-							name = "Mouse " + deviceName;
-							uniqueId = "sdl_mouse_" + deviceName;
-						}
-					}
-					u32 handle = (u32)(uintptr_t)device.hDevice;
-					if (name.empty())
-						name = "Mouse " + std::to_string(handle);
-					if (uniqueId.empty())
-						uniqueId = "sdl_mouse_" + std::to_string(handle);
-
-					auto ptr = std::make_shared<SDLMouse>(mice.size() >= 4 ? 3 : mice.size(), name, uniqueId, handle);
-					mice[handle] = ptr;
-					GamepadDevice::Register(ptr);
-				}
-			}
-			delete [] deviceList;
-		}
+		GamepadDevice::Unregister(sdl_keyboard);
+		sdl_keyboard = nullptr;
+		GamepadDevice::Unregister(sdl_mouse);
+		sdl_mouse = nullptr;
+		rawinput::init();
+	}
+	else
+	{
+		rawinput::term();
+		sdl_keyboard = std::make_shared<SDLKeyboardDevice>(0);
+		GamepadDevice::Register(sdl_keyboard);
+		sdl_mouse = std::make_shared<SDLMouse>();
+		GamepadDevice::Register(sdl_mouse);
+	}
+#else
+	if (!sdl_keyboard)
+	{
+		sdl_keyboard = std::make_shared<SDLKeyboardDevice>(0);
+		GamepadDevice::Register(sdl_keyboard);
+	}
+	if (!sdl_mouse)
+	{
+		sdl_mouse = std::make_shared<SDLMouse>();
+		GamepadDevice::Register(sdl_mouse);
 	}
 #endif
-}
-
-static std::shared_ptr<SDLMouse> getMouse(u32 handle)
-{
-	auto it = mice.find(handle);
-	if (it != mice.end())
-		return it->second;
-	else
-		return nullptr;
 }
 
 void input_sdl_init()
@@ -199,34 +175,11 @@ void input_sdl_init()
 #if !defined(__APPLE__)
 	SDL_SetRelativeMouseMode(SDL_FALSE);
 
-	sdl_keyboard = new SDLKeyboardDevice(0);
-	sdl_kb_gamepad = std::make_shared<SDLKbGamepadDevice>(0);
-	GamepadDevice::Register(sdl_kb_gamepad);
-	discoverMice();
-
 	EventManager::listen(Event::Pause, emuEventCallback);
 	EventManager::listen(Event::Resume, emuEventCallback);
+
+	checkRawInput();
 #endif
-}
-
-inline void SDLMouse::detect_btn_input(input_detected_cb button_pressed)
-{
-	GamepadDevice::detect_btn_input(button_pressed);
-	if (rawHandle != 0)
-	{
-		auto defaultMouse = getMouse(0);
-		defaultMouse->detectedRawMouse = getMouse(rawHandle);
-	}
-}
-
-inline void SDLMouse::cancel_detect_input()
-{
-	GamepadDevice::cancel_detect_input();
-	if (rawHandle != 0)
-	{
-		auto defaultMouse = getMouse(0);
-		defaultMouse->detectedRawMouse = nullptr;
-	}
 }
 
 inline void SDLMouse::setMouseAbsPos(int x, int y) {
@@ -281,6 +234,7 @@ void input_sdl_handle()
 
 			case SDL_KEYDOWN:
 			case SDL_KEYUP:
+				checkRawInput();
 				if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_RETURN && (event.key.keysym.mod & KMOD_ALT))
 				{
 					if (window_fullscreen)
@@ -293,15 +247,13 @@ void input_sdl_handle()
 				{
 					captureMouse(!mouseCaptured);
 				}
-				else
+				else if (!config::UseRawInput)
 				{
-					sdl_kb_gamepad->gamepad_btn_input(event.key.keysym.sym, event.type == SDL_KEYDOWN);
 					sdl_keyboard->keyboard_input(event.key.keysym.scancode, event.type == SDL_KEYDOWN);
 				}
 				break;
 			case SDL_TEXTINPUT:
-				for (int i = 0; event.text.text[i] != '\0'; i++)
-					sdl_keyboard->keyboard_character(event.text.text[i]);
+				gui_keyboard_inputUTF8(event.text.text);
 				break;
 			case SDL_WINDOWEVENT:
 				if (event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED
@@ -375,37 +327,70 @@ void input_sdl_handle()
 
 #if !defined(__APPLE__)
 			case SDL_MOUSEMOTION:
+				gui_set_mouse_position(event.motion.x, event.motion.y);
+				checkRawInput();
+				if (!config::UseRawInput)
 				{
-					std::shared_ptr<SDLMouse> mouse = getMouse(event.motion.which);
-					if (mouse != nullptr)
-					{
-						if (mouseCaptured && gameRunning)
-							mouse->setMouseRelPos(event.motion.xrel, event.motion.yrel);
-						else
-							mouse->setMouseAbsPos(event.motion.x, event.motion.y);
-						mouse->setMouseButton(SDL_BUTTON_LEFT, event.motion.state & SDL_BUTTON_LMASK);
-						mouse->setMouseButton(SDL_BUTTON_RIGHT, event.motion.state & SDL_BUTTON_RMASK);
-						mouse->setMouseButton(SDL_BUTTON_MIDDLE, event.motion.state & SDL_BUTTON_MMASK);
-					}
+					if (mouseCaptured && gameRunning)
+						sdl_mouse->setMouseRelPos(event.motion.xrel, event.motion.yrel);
+					else
+						sdl_mouse->setMouseAbsPos(event.motion.x, event.motion.y);
+					sdl_mouse->setMouseButton(SDL_BUTTON_LEFT, event.motion.state & SDL_BUTTON_LMASK);
+					sdl_mouse->setMouseButton(SDL_BUTTON_RIGHT, event.motion.state & SDL_BUTTON_RMASK);
+					sdl_mouse->setMouseButton(SDL_BUTTON_MIDDLE, event.motion.state & SDL_BUTTON_MMASK);
+				}
+				else if (mouseCaptured && gameRunning)
+				{
+					int x, y;
+					SDL_GetWindowSize(window, &x, &y);
+					x /= 2;
+					y /= 2;
+					if (std::abs(x - event.motion.x) > 10 || std::abs(y - event.motion.y) > 10 )
+						SDL_WarpMouseInWindow(window, x, y);
 				}
 				break;
 
 			case SDL_MOUSEBUTTONDOWN:
 			case SDL_MOUSEBUTTONUP:
 				{
-					std::shared_ptr<SDLMouse> mouse = getMouse(event.button.which);
-					if (mouse != nullptr)
+					gui_set_mouse_position(event.button.x, event.button.y);
+					int button;
+					switch (event.button.button)
 					{
-						if (!mouseCaptured || !gameRunning)
-							mouse->setMouseAbsPos(event.button.x, event.button.y);
-						mouse->setMouseButton(event.button.button, event.button.state == SDL_PRESSED);
-						mouse->gamepad_btn_input(event.button.button, event.button.state == SDL_PRESSED);
+					case SDL_BUTTON_LEFT:
+						button = 0;
+						break;
+					case SDL_BUTTON_RIGHT:
+						button = 1;
+						break;
+					case SDL_BUTTON_MIDDLE:
+						button = 2;
+						break;
+					case SDL_BUTTON_X1:
+						button = 3;
+						break;
+					default:
+						button = -1;
+						break;
 					}
+					if (button != -1)
+						gui_set_mouse_button(button, event.button.state == SDL_PRESSED);
+				}
+				checkRawInput();
+				if (!config::UseRawInput)
+				{
+					if (!mouseCaptured || !gameRunning)
+						sdl_mouse->setMouseAbsPos(event.button.x, event.button.y);
+					sdl_mouse->setMouseButton(event.button.button, event.button.state == SDL_PRESSED);
+					sdl_mouse->gamepad_btn_input(event.button.button, event.button.state == SDL_PRESSED);
 				}
 				break;
 
 			case SDL_MOUSEWHEEL:
-				mo_wheel_delta[0] -= event.wheel.y * 35;
+				gui_set_mouse_wheel(-event.wheel.y * 35);
+				checkRawInput();
+				if (!config::UseRawInput)
+					mo_wheel_delta[0] -= event.wheel.y * 35;
 				break;
 #endif
 			case SDL_JOYDEVICEADDED:

@@ -217,7 +217,14 @@ void input_x11_handle()
 					KeySym keysym_return;
 					int len = XLookupString(&e.xkey, buf, 1, &keysym_return, NULL);
 					if (len > 0)
-						x11_keyboard->keyboard_character(buf[0]);
+					{
+						// Cheap ISO Latin-1 to UTF-8 conversion
+						u16 b = (u8)buf[0];
+						if (b < 0x80)
+							gui_keyboard_input(b);
+						else
+							gui_keyboard_input((u16)((0xc2 + (b > 0xbf)) | ((b & 0x3f) + 0x80) << 8));
+					}
 				}
 				/* no break */
 			case KeyRelease:

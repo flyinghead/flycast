@@ -141,5 +141,6 @@ std::array<std::array<Option<MapleDeviceType>, 2>, 4> MapleExpansionDevices {
 	Option<MapleDeviceType>("device4.1", MDT_None, "input"),
 	Option<MapleDeviceType>("device4.2", MDT_None, "input"),
 };
+Option<bool> UseRawInput("RawInput", false, "input");
 
 } // namespace config

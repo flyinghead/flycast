@@ -5,9 +5,19 @@
 class SDLKeyboardDevice : public KeyboardDeviceTemplate<SDL_Scancode>
 {
 public:
-	SDLKeyboardDevice(int maple_port) : KeyboardDeviceTemplate(maple_port) {}
-	virtual ~SDLKeyboardDevice() = default;
-	virtual const char* name() override { return "SDL Keyboard"; }
+	SDLKeyboardDevice(int maple_port) : KeyboardDeviceTemplate(maple_port, "SDL") {
+		_unique_id = "sdl_keyboard";
+		if (!find_mapping())
+			input_mapper = std::make_shared<KeyboardInputMapping>();
+	}
+
+	virtual const char *get_button_name(u32 code) override
+	{
+		const char *name = SDL_GetKeyName(SDL_GetKeyFromScancode((SDL_Scancode)code));
+		if (name[0] == 0)
+			return nullptr;
+		return name;
+	}
 
 protected:
 	virtual u8 convert_keycode(SDL_Scancode scancode) override

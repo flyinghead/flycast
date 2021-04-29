@@ -19,7 +19,9 @@
 #include "dxcontext.h"
 #include "d3d_renderer.h"
 #include "rend/gui.h"
+#ifdef USE_SDL
 #include "sdl/sdl.h"
+#endif
 #include "hw/pvr/Renderer_if.h"
 
 DXContext theDXContext;
@@ -27,8 +29,10 @@ extern int screen_width, screen_height; // FIXME
 
 bool DXContext::Init()
 {
+#ifdef USE_SDL
 	if (!sdl_recreate_window(0))
 		return false;
+#endif
 
 	pD3D.reset(Direct3DCreate9(D3D_SDK_VERSION));
 	if (!pD3D)
@@ -82,7 +86,7 @@ void DXContext::EndImGuiFrame()
 	pDevice->SetRenderState(D3DRS_SCISSORTESTENABLE, FALSE);
 	if (!overlayOnly)
 	{
-		pDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_RGBA(0, 0, 0, 255), 1.0f, 0);
+		pDevice->Clear(0, NULL, D3DCLEAR_TARGET, D3DCOLOR_RGBA(0, 0, 0, 255), 1.0f, 0);
 		if (renderer != nullptr)
 			renderer->RenderLastFrame();
 	}

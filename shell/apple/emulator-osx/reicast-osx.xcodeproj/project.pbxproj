@@ -346,7 +346,6 @@
 		AEE6278822131BB500EC7E89 /* mapping.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AEE6278522131BB500EC7E89 /* mapping.cpp */; };
 		AEE6278E2224762000EC7E89 /* imgui_impl_opengl3.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AEE6278B2224762000EC7E89 /* imgui_impl_opengl3.cpp */; };
 		AEE6279422247C0A00EC7E89 /* gui_util.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AEE6279222247C0A00EC7E89 /* gui_util.cpp */; };
-		AEE6279622247C2B00EC7E89 /* keyboard_device.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AEE6279522247C2B00EC7E89 /* keyboard_device.cpp */; };
 		AEF25642227C441F00348550 /* vmem32.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AEF25640227C441F00348550 /* vmem32.cpp */; };
 		AEF25646227C442F00348550 /* fastmmu.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AEF25644227C442F00348550 /* fastmmu.cpp */; };
 		AEF2564822886A2E00348550 /* posix_vmem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AEF2564722886A2E00348550 /* posix_vmem.cpp */; };
@@ -1052,7 +1051,6 @@
 		AEE6278D2224762000EC7E89 /* imgui_impl_opengl3.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = imgui_impl_opengl3.h; sourceTree = "<group>"; };
 		AEE6279222247C0A00EC7E89 /* gui_util.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = gui_util.cpp; sourceTree = "<group>"; };
 		AEE6279322247C0A00EC7E89 /* gui_util.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = gui_util.h; sourceTree = "<group>"; };
-		AEE6279522247C2B00EC7E89 /* keyboard_device.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = keyboard_device.cpp; sourceTree = "<group>"; };
 		AEF25640227C441F00348550 /* vmem32.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = vmem32.cpp; sourceTree = "<group>"; };
 		AEF25641227C441F00348550 /* vmem32.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = vmem32.h; sourceTree = "<group>"; };
 		AEF25643227C442F00348550 /* mmu_impl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = mmu_impl.h; sourceTree = "<group>"; };
@@ -2464,7 +2462,6 @@
 				AEE6278122131BB500EC7E89 /* gamepad.h */,
 				AEE6278222131BB500EC7E89 /* gamepad_device.cpp */,
 				AEE6278322131BB500EC7E89 /* gamepad_device.h */,
-				AEE6279522247C2B00EC7E89 /* keyboard_device.cpp */,
 				AEE6278422131BB500EC7E89 /* keyboard_device.h */,
 				AEE6278522131BB500EC7E89 /* mapping.cpp */,
 				AEE6278622131BB500EC7E89 /* mapping.h */,
@@ -2833,7 +2830,6 @@
 				84B7BF451B72720200F9733F /* shil.cpp in Sources */,
 				AE82C6B225B64AE200C79BC2 /* zip_get_num_files.c in Sources */,
 				AE82C6C425B64AE200C79BC2 /* zip_stat.c in Sources */,
-				AEE6279622247C2B00EC7E89 /* keyboard_device.cpp in Sources */,
 				AE82C69225B64AE200C79BC2 /* zip_source_tell.c in Sources */,
 				AE82C6D125B64AE200C79BC2 /* zip_source_write.c in Sources */,
 				AEFF7F6F214D9D590068CE11 /* pico_device.c in Sources */,

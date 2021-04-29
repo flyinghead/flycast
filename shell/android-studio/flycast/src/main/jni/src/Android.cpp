@@ -622,6 +622,10 @@ JNIEXPORT jboolean JNICALL Java_com_reicast_emulator_periph_InputDeviceManager_j
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_periph_InputDeviceManager_mouseEvent(JNIEnv *env, jobject obj, jint xpos, jint ypos, jint buttons)
 {
+	gui_set_mouse_position(xpos, ypos);
+	gui_set_mouse_button(0, buttons & 1);
+	gui_set_mouse_button(1, buttons & 2);
+	gui_set_mouse_button(2, buttons & 4);
 	SetMousePosition(xpos, ypos, screen_width, screen_height);
     mo_buttons[0] = 0xFFFF;
     if (buttons & 1)	// Left

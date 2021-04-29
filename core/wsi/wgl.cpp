@@ -24,7 +24,6 @@
 
 #if defined(_WIN32) && !defined(USE_SDL)
 void CreateMainWindow();
-void DestroyMainWindow();
 
 WGLGraphicsContext theGLContext;
 
@@ -138,7 +137,6 @@ void WGLGraphicsContext::Term()
 		wglMakeCurrent(ourWindowHandleToDeviceContext, NULL);
 		wglDeleteContext(ourOpenGLRenderingContext);
 		ourOpenGLRenderingContext = NULL;
-		DestroyMainWindow();
 	}
 }
 

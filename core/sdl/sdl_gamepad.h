@@ -193,50 +193,6 @@ private:
 
 std::map<SDL_JoystickID, std::shared_ptr<SDLGamepad>> SDLGamepad::sdl_gamepads;
 
-class KbInputMapping : public InputMapping
-{
-public:
-	KbInputMapping()
-	{
-		name = "SDL Keyboard";
-		set_button(DC_BTN_A, SDLK_x);
-		set_button(DC_BTN_B, SDLK_c);
-		set_button(DC_BTN_X, SDLK_s);
-		set_button(DC_BTN_Y, SDLK_d);
-		set_button(DC_DPAD_UP, SDLK_UP);
-		set_button(DC_DPAD_DOWN, SDLK_DOWN);
-		set_button(DC_DPAD_LEFT, SDLK_LEFT);
-		set_button(DC_DPAD_RIGHT, SDLK_RIGHT);
-		set_button(DC_BTN_START, SDLK_RETURN);
-		set_button(EMU_BTN_TRIGGER_LEFT, SDLK_f);
-		set_button(EMU_BTN_TRIGGER_RIGHT, SDLK_v);
-		set_button(EMU_BTN_MENU, SDLK_TAB);
-		set_button(EMU_BTN_FFORWARD, SDLK_SPACE);
-
-		dirty = false;
-	}
-};
-
-class SDLKbGamepadDevice : public GamepadDevice
-{
-public:
-	SDLKbGamepadDevice(int maple_port) : GamepadDevice(maple_port, "SDL")
-	{
-		_name = "Keyboard";
-		_unique_id = "sdl_keyboard";
-		if (!find_mapping())
-			input_mapper = std::make_shared<KbInputMapping>();
-	}
-
-	virtual const char *get_button_name(u32 code) override
-	{
-		const char *name = SDL_GetKeyName((SDL_Keycode)code);
-		if (name[0] == 0)
-			return nullptr;
-		return name;
-	}
-};
-
 class MouseInputMapping : public InputMapping
 {
 public:
@@ -261,29 +217,9 @@ public:
 		if (!find_mapping())
 			input_mapper = std::make_shared<MouseInputMapping>();
 	}
-	SDLMouse(int maple_port, const std::string& name, const std::string& uniqueId, u32 handle)
-		: GamepadDevice(maple_port, "RAW")
-	{
-		this->_name = name;
-		this->_unique_id = uniqueId;
-		std::replace(this->_unique_id.begin(), this->_unique_id.end(), '=', '_');
-		std::replace(this->_unique_id.begin(), this->_unique_id.end(), '[', '_');
-		std::replace(this->_unique_id.begin(), this->_unique_id.end(), ']', '_');
-
-		this->rawHandle = handle;
-		if (!find_mapping())
-			input_mapper = std::make_shared<MouseInputMapping>();
-	}
 
 	bool gamepad_btn_input(u32 code, bool pressed) override
 	{
-		if (!is_detecting_input() && detectedRawMouse != nullptr)
-		{
-			bool handled = detectedRawMouse->gamepad_btn_input(code, pressed);
-			if (!detectedRawMouse->is_detecting_input())
-				detectedRawMouse = nullptr;
-			return handled;
-		}
 		if (gui_is_open() && !is_detecting_input())
 			// Don't register mouse clicks as gamepad presses when gui is open
 			// This makes the gamepad presses to be handled first and the mouse position to be ignored
@@ -315,10 +251,4 @@ public:
 	void setMouseAbsPos(int x, int y);
 	void setMouseRelPos(int deltax, int deltay);
 	void setMouseButton(u32 button, bool pressed);
-	virtual void detect_btn_input(input_detected_cb button_pressed) override;
-	virtual void cancel_detect_input() override;
-
-private:
-	u32 rawHandle = 0;
-	std::shared_ptr<SDLMouse> detectedRawMouse;
 };

@@ -260,8 +260,7 @@ void emu_key_input(UInt16 keyCode, bool pressed, UInt modifierFlags) {
 }
 void emu_character_input(const char *characters) {
 	if (characters != NULL)
-		while (*characters != '\0')
-			keyboard.keyboard_character(*characters++);
+		gui_keyboard_inputUTF8(characters);
 }
 
 void emu_mouse_buttons(int button, bool pressed)

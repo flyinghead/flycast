@@ -30,7 +30,6 @@
 #include "network/naomi_network.h"
 #include "wsi/context.h"
 #include "input/gamepad_device.h"
-#include "input/keyboard_device.h"
 #include "gui_util.h"
 #include "gui_android.h"
 #include "game_scanner.h"
@@ -45,8 +44,8 @@
 extern void UpdateInputState();
 static bool game_started;
 
-extern u8 kb_shift; 		// shift keys pressed (bitmask)
-extern u8 kb_key[6];		// normal keys pressed
+extern u8 kb_shift[MAPLE_PORTS]; // shift keys pressed (bitmask)
+extern u8 kb_key[MAPLE_PORTS][6];		// normal keys pressed
 
 int screen_dpi = 96;
 
@@ -56,6 +55,9 @@ GuiState gui_state = GuiState::Main;
 #ifdef __ANDROID__
 static bool touch_up;
 #endif
+static u32 mouseButtons;
+static int mouseX, mouseY;
+static float mouseWheel;
 static std::string error_msg;
 static std::string osd_message;
 static double osd_message_end;
@@ -242,6 +244,39 @@ void gui_init()
     EventManager::listen(Event::Terminate, emuEventCallback);
 }
 
+void gui_keyboard_input(u16 wc)
+{
+	ImGuiIO& io = ImGui::GetIO();
+	if (io.WantCaptureKeyboard)
+		io.AddInputCharacter(wc);
+}
+
+void gui_keyboard_inputUTF8(const std::string& s)
+{
+	ImGuiIO& io = ImGui::GetIO();
+	if (io.WantCaptureKeyboard)
+		io.AddInputCharactersUTF8(s.c_str());
+}
+
+void gui_set_mouse_position(int x, int y)
+{
+	mouseX = x;
+	mouseY = y;
+}
+
+void gui_set_mouse_button(int button, bool pressed)
+{
+	if (pressed)
+		mouseButtons |= 1 << button;
+	else
+		mouseButtons &= ~(1 << button);
+}
+
+void gui_set_mouse_wheel(float delta)
+{
+	mouseWheel += delta;
+}
+
 static void ImGui_Impl_NewFrame()
 {
 	if (config::RendererType.isOpenGL())
@@ -258,25 +293,25 @@ static void ImGui_Impl_NewFrame()
 	UpdateInputState();
 
 	// Read keyboard modifiers inputs
-	io.KeyCtrl = (kb_shift & (0x01 | 0x10)) != 0;
-	io.KeyShift = (kb_shift & (0x02 | 0x20)) != 0;
+	io.KeyCtrl = (kb_shift[0] & (0x01 | 0x10)) != 0;
+	io.KeyShift = (kb_shift[0] & (0x02 | 0x20)) != 0;
 	io.KeyAlt = false;
 	io.KeySuper = false;
 
 	memset(&io.KeysDown[0], 0, sizeof(io.KeysDown));
-	for (int i = 0; i < IM_ARRAYSIZE(kb_key); i++)
-		if (kb_key[i] != 0)
-			io.KeysDown[kb_key[i]] = true;
+	for (int i = 0; i < IM_ARRAYSIZE(kb_key[0]); i++)
+		if (kb_key[0][i] != 0)
+			io.KeysDown[kb_key[0][i]] = true;
 		else
 			break;
-	if (mo_x_phy < 0 || mo_x_phy >= screen_width || mo_y_phy < 0 || mo_y_phy >= screen_height)
+	if (mouseX < 0 || mouseX >= screen_width || mouseY < 0 || mouseY >= screen_height)
 		io.MousePos = ImVec2(-FLT_MAX, -FLT_MAX);
 	else
-		io.MousePos = ImVec2(mo_x_phy, mo_y_phy);
+		io.MousePos = ImVec2(mouseX, mouseY);
 #ifdef __ANDROID__
 	// Put the "mouse" outside the screen one frame after a touch up
 	// This avoids buttons and the like to stay selected
-	if ((mo_buttons[0] & 0xf) == 0xf)
+	if (mouseButtons == 0)
 	{
 		if (touch_up)
 			io.MousePos = ImVec2(-FLT_MAX, -FLT_MAX);
@@ -288,16 +323,13 @@ static void ImGui_Impl_NewFrame()
 #endif
 	if (io.WantCaptureMouse)
 	{
-		io.MouseWheel = -mo_wheel_delta[0] / 16;
-		// Reset all relative mouse positions
-		mo_x_delta[0] = 0;
-		mo_y_delta[0] = 0;
-		mo_wheel_delta[0] = 0;
+		io.MouseWheel = -mouseWheel / 16;
+		mouseWheel = 0;
 	}
-	io.MouseDown[0] = (mo_buttons[0] & (1 << 2)) == 0;
-	io.MouseDown[1] = (mo_buttons[0] & (1 << 1)) == 0;
-	io.MouseDown[2] = (mo_buttons[0] & (1 << 3)) == 0;
-	io.MouseDown[3] = (mo_buttons[0] & (1 << 0)) == 0;
+	io.MouseDown[0] = (mouseButtons & (1 << 0)) != 0;
+	io.MouseDown[1] = (mouseButtons & (1 << 1)) != 0;
+	io.MouseDown[2] = (mouseButtons & (1 << 2)) != 0;
+	io.MouseDown[3] = (mouseButtons & (1 << 3)) != 0;
 
 	io.NavInputs[ImGuiNavInput_Activate] = (kcode[0] & DC_BTN_A) == 0;
 	io.NavInputs[ImGuiNavInput_Cancel] = (kcode[0] & DC_BTN_B) == 0;
@@ -318,20 +350,6 @@ static void ImGui_Impl_NewFrame()
 	io.NavInputs[ImGuiNavInput_LStickDown] = joyy[0] > 0 ? (float)joyy[0] / 128.f : 0.f;
 	if (io.NavInputs[ImGuiNavInput_LStickDown] < 0.1f)
 		io.NavInputs[ImGuiNavInput_LStickDown] = 0.f;
-
-	if (KeyboardDevice::GetInstance() != NULL)
-	{
-		const std::string input_text = KeyboardDevice::GetInstance()->get_character_input();
-		if (io.WantCaptureKeyboard)
-		{
-			for (const u8 b : input_text)
-				// Cheap ISO Latin-1 to UTF-8 conversion
-			    if (b < 0x80)
-			    	io.AddInputCharacter(b);
-			    else
-			    	io.AddInputCharacter((0xc2 + (b > 0xbf)) | ((b & 0x3f) + 0x80) << 8);
-		}
-	}
 }
 
 #if 0
@@ -1171,6 +1189,9 @@ static void gui_display_settings()
 
 	    	ImGui::Spacing();
 	    	OptionSlider("Mouse sensitivity", config::MouseSensitivity, 1, 500);
+#ifdef _WIN32
+	    	OptionCheckbox("Use Raw Input", config::UseRawInput, "Supports multiple pointing devices (mice, light guns) and keyboards");
+#endif
 
 			ImGui::PopStyleVar();
 			ImGui::EndTabItem();
@@ -1698,11 +1719,10 @@ static void gui_display_content()
     ImGui::Unindent(10 * scaling);
 
     static ImGuiTextFilter filter;
-    if (KeyboardDevice::GetInstance() != NULL)
-    {
-        ImGui::SameLine(0, 32 * scaling);
-    	filter.Draw("Filter");
-    }
+#ifndef __ANDROID__
+	ImGui::SameLine(0, 32 * scaling);
+	filter.Draw("Filter");
+#endif
     if (gui_state != GuiState::SelectDisk)
     {
 		ImGui::SameLine(ImGui::GetContentRegionMax().x - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f);
