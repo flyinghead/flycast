@@ -47,10 +47,10 @@ audiobackend_t* GetAudioBackend(const std::string& slug)
 	{
 		if (slug == "auto")
 		{
-			// Don't select the null driver
+			// Don't select the null or OpenSL/Oboe drivers
 			audiobackend_t *autoselection = nullptr;
 			for (auto backend : *audiobackends)
-				if (backend->slug != "null")
+				if (backend->slug != "null" && backend->slug != "OpenSL" && backend->slug != "Oboe")
 				{
 					autoselection = backend;
 					break;

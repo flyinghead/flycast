@@ -23,9 +23,9 @@ jobs:
 
       - name: Gradle
         working-directory: shell/android-studio
-        run: ./gradlew assembleDreamcastDebug --parallel
+        run: ./gradlew assembleDebug --parallel
 
       - uses: actions/upload-artifact@v2
         with:
           name: flycast-debug.apk
-          path: shell/android-studio/flycast/build/outputs/apk/dreamcast/debug/flycast-dreamcast-debug.apk
+          path: shell/android-studio/flycast/build/outputs/apk/debug/flycast-debug.apk

@@ -281,6 +281,12 @@ if(ASAN)
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=address -static-libasan")
 endif()
 
+if(ANDROID)
+	find_package(oboe REQUIRED CONFIG)
+	target_compile_definitions(${PROJECT_NAME} PRIVATE USE_OBOE)
+	target_link_libraries(${PROJECT_NAME} PRIVATE oboe::oboe)
+endif()
+
 target_sources(${PROJECT_NAME} PRIVATE
         core/deps/chdpsr/cdipsr.cpp
         core/deps/chdpsr/cdipsr.h)
@@ -710,6 +716,7 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/oslib/audiobackend_directsound.cpp
         core/oslib/audiobackend_libao.cpp
         core/oslib/audiobackend_null.cpp
+        core/oslib/audiobackend_oboe.cpp
         core/oslib/audiobackend_omx.cpp
         core/oslib/audiobackend_oss.cpp
         core/oslib/audiobackend_pulseaudio.cpp

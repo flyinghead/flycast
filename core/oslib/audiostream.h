@@ -1,6 +1,9 @@
 #pragma once
 #include "types.h"
 #include "cfg/option.h"
+#include <vector>
+#include <algorithm>
+#include <atomic>
 
 typedef std::vector<std::string> (*audio_option_callback_t)();
 enum audio_option_type
@@ -53,3 +56,64 @@ audiobackend_t* GetAudioBackend(int num);
 audiobackend_t* GetAudioBackend(const std::string& slug);
 
 constexpr u32 SAMPLE_COUNT = 512;	// push() is always called with that many frames
+
+class RingBuffer
+{
+	std::vector<u8> buffer;
+	std::atomic_int readCursor { 0 };
+	std::atomic_int writeCursor { 0 };
+
+	u32 readSize() {
+		return (writeCursor - readCursor + buffer.size()) % buffer.size();
+	}
+	u32 writeSize() {
+		return (readCursor - writeCursor + buffer.size() - 1) % buffer.size();
+	}
+
+public:
+	bool write(const u8 *data, u32 size)
+	{
+		if (size > writeSize())
+			return false;
+		u32 wc = writeCursor;
+		u32 chunkSize = std::min<u32>(size, buffer.size() - wc);
+		memcpy(&buffer[wc], data, chunkSize);
+		wc = (wc + chunkSize) % buffer.size();
+		size -= chunkSize;
+		if (size > 0)
+		{
+			data += chunkSize;
+			memcpy(&buffer[wc], data, size);
+			wc = (wc + size) % buffer.size();
+		}
+		writeCursor = wc;
+		return true;
+	}
+
+	bool read(u8 *data, u32 size)
+	{
+		if (size > readSize())
+			return false;
+		u32 rc = readCursor;
+		u32 chunkSize = std::min<u32>(size, buffer.size() - rc);
+		memcpy(data, &buffer[rc], chunkSize);
+		rc = (rc + chunkSize) % buffer.size();
+		size -= chunkSize;
+		if (size > 0)
+		{
+			data += chunkSize;
+			memcpy(data, &buffer[rc], size);
+			rc = (rc + size) % buffer.size();
+		}
+		readCursor = rc;
+		return true;
+	}
+
+	void setCapacity(size_t size)
+	{
+		std::fill(buffer.begin(), buffer.end(), 0);
+		buffer.resize(size);
+		readCursor = 0;
+		writeCursor = 0;
+	}
+};

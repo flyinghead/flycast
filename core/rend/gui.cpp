@@ -1398,8 +1398,9 @@ static void gui_display_settings()
 			OptionCheckbox("Enable DSP", config::DSPEnabled,
 					"Enable the Dreamcast Digital Sound Processor. Only recommended on fast platforms");
 #ifdef __ANDROID__
-            OptionCheckbox("Automatic Latency", config::AutoLatency,
-            		"Automatically set audio latency. Recommended");
+			if (config::AudioBackend.get() == "auto" || config::AudioBackend.get() == "android")
+				OptionCheckbox("Automatic Latency", config::AutoLatency,
+						"Automatically set audio latency. Recommended");
 #endif
             if (!config::AutoLatency)
             {
