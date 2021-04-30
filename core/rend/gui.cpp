@@ -243,7 +243,8 @@ void gui_init()
         	glyphRanges = io.Fonts->GetGlyphRangesJapanese();
         else if (locale.find("ko") == 0)		// Korean
         	glyphRanges = io.Fonts->GetGlyphRangesKorean();
-        else if (locale.find("zh_TW") == 0)		// Traditional Chinese
+        else if (locale.find("zh_TW") == 0
+        		|| locale.find("zh_HK") == 0)	// Traditional Chinese
         	glyphRanges = GetGlyphRangesChineseTraditionalOfficial();
         else if (locale.find("zh_CN") == 0)		// Simplified Chinese
         	glyphRanges = GetGlyphRangesChineseSimplifiedOfficial();
