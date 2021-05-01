@@ -1402,7 +1402,8 @@ static void gui_display_settings()
 				OptionCheckbox("Automatic Latency", config::AutoLatency,
 						"Automatically set audio latency. Recommended");
 #endif
-            if (!config::AutoLatency)
+            if (!config::AutoLatency
+            		|| (config::AudioBackend.get() != "auto" && config::AudioBackend.get() != "android"))
             {
 				int latency = (int)roundf(config::AudioBufferSize * 1000.f / 44100.f);
 				ImGui::SliderInt("Latency", &latency, 12, 512, "%d ms");

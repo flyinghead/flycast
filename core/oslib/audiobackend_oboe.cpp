@@ -31,21 +31,34 @@ static cResetEvent pushWait;
 static std::shared_ptr<oboe::AudioStream> stream;
 static std::shared_ptr<oboe::AudioStream> recordStream;
 
+static void audio_init();
+static void audio_term();
+
 class AudioCallback : public oboe::AudioStreamDataCallback
 {
 public:
-    oboe::DataCallbackResult onAudioReady(oboe::AudioStream *audioStream, void *audioData, int32_t numFrames)
+    oboe::DataCallbackResult onAudioReady(oboe::AudioStream *audioStream, void *audioData, int32_t numFrames) override
     {
     	if (!ringBuffer.read((u8 *)audioData, numFrames * 4))
     		// underrun
     		memset(audioData, 0, numFrames * 4);
-    	else
-    		pushWait.Set();
+   		pushWait.Set();
 
         return oboe::DataCallbackResult::Continue;
     }
 };
 static AudioCallback audioCallback;
+
+class AudioErrorCallback : public oboe::AudioStreamErrorCallback
+{
+public:
+	void onErrorAfterClose(oboe::AudioStream *stream, oboe::Result error) override {
+		WARN_LOG(AUDIO, "Audio device lost. Attempting to reopen the audio stream");
+		audio_term();
+		audio_init();
+	}
+};
+static AudioErrorCallback errorCallback;
 
 static void audio_init()
 {
@@ -61,15 +74,20 @@ static void audio_init()
 			->setSampleRate(44100)
 			->setFramesPerCallback(SAMPLE_COUNT)
 			->setDataCallback(&audioCallback)
+			->setErrorCallback(&errorCallback)
+			->setUsage(oboe::Usage::Game)
 			->openStream(stream);
 	if (result != oboe::Result::OK)
 	{
 		ERROR_LOG(AUDIO, "Oboe open stream failed: %s", oboe::convertToText(result));
 		return;
 	}
+	if (stream->getAudioApi() == oboe::AudioApi::AAudio)
+		stream->setBufferSizeInFrames(stream->getFramesPerBurst());
 	stream->requestStart();
-	NOTICE_LOG(AUDIO, "Oboe driver started. stream capacity: %d frames, frames/callback: %d, frames/burst: %d",
-			stream->getBufferCapacityInFrames(), stream->getFramesPerCallback(), stream->getFramesPerBurst());
+	NOTICE_LOG(AUDIO, "Oboe driver started. stream capacity: %d frames, size: %d frames, frames/callback: %d, frames/burst: %d",
+			stream->getBufferCapacityInFrames(), stream->getBufferSizeInFrames(),
+			stream->getFramesPerCallback(), stream->getFramesPerBurst());
 }
 
 static void audio_term()
@@ -125,8 +143,17 @@ static bool init_record(u32 sampling_freq)
 
 static u32 record(void *data, u32 samples)
 {
+	if (recordStream == nullptr)
+		return 0;
 	oboe::ResultWithValue<int32_t> result = recordStream->read(data, samples, 0);
-	return result.value();
+	if (result == oboe::Result::ErrorDisconnected)
+	{
+		WARN_LOG(AUDIO, "Recording device lost. Attempting to reopen the audio stream");
+		u32 sampleRate = recordStream->getSampleRate();
+		term_record();
+		init_record(sampleRate);
+	}
+	return std::max(0, result.value());
 }
 
 static audiobackend_t audiobackend_oboe = {
