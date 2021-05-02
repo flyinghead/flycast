@@ -94,7 +94,6 @@ bool QueueRender(TA_context* ctx)
 		return false;
 	}
 
-	frame_finished.Reset();
 	mtx_rqueue.lock();
 	TA_context* old = rqueue;
 	rqueue=ctx;
