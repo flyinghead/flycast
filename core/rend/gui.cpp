@@ -49,6 +49,7 @@ extern u8 kb_shift; 		// shift keys pressed (bitmask)
 extern u8 kb_key[6];		// normal keys pressed
 
 int screen_dpi = 96;
+int insetLeft, insetRight, insetTop, insetBottom;
 
 static bool inited = false;
 float scaling = 1;
@@ -266,8 +267,8 @@ static void ImGui_Impl_NewFrame()
 {
 	if (config::RendererType.isOpenGL())
 		ImGui_ImplOpenGL3_NewFrame();
-	ImGui::GetIO().DisplaySize.x = screen_width;
-	ImGui::GetIO().DisplaySize.y = screen_height;
+	ImGui::GetIO().DisplaySize.x = screen_width - insetLeft - insetRight;
+	ImGui::GetIO().DisplaySize.y = screen_height - insetTop - insetBottom;
 
 	ImGuiIO& io = ImGui::GetIO();
 
@@ -288,7 +289,7 @@ static void ImGui_Impl_NewFrame()
 	if (mo_x_phy < 0 || mo_x_phy >= screen_width || mo_y_phy < 0 || mo_y_phy >= screen_height)
 		io.MousePos = ImVec2(-FLT_MAX, -FLT_MAX);
 	else
-		io.MousePos = ImVec2(mo_x_phy, mo_y_phy);
+		io.MousePos = ImVec2(mo_x_phy - insetLeft, mo_y_phy - insetTop);
 #ifdef __ANDROID__
 	// Put the "mouse" outside the screen one frame after a touch up
 	// This avoids buttons and the like to stay selected
@@ -350,6 +351,14 @@ static void ImGui_Impl_NewFrame()
 	}
 }
 
+void gui_set_insets(int left, int right, int top, int bottom)
+{
+	insetLeft = left;
+	insetRight = right;
+	insetTop = top;
+	insetBottom = bottom;
+}
+
 #if 0
 #include "oslib/timeseries.h"
 TimeSeries renderTimes;
@@ -402,9 +411,6 @@ static void gui_start_game(const std::string& path)
 static void gui_display_commands()
 {
 	dc_stop();
-
-	if (config::RendererType.isOpenGL())
-		ImGui_ImplOpenGL3_DrawBackground();
 
    	display_vmus();
 
@@ -477,6 +483,7 @@ static void gui_display_commands()
 			gui_state = GuiState::Main;
 			game_started = false;
 			settings.imgread.ImagePath[0] = '\0';
+			reset_vmus();
 		}
 		else
 		{
@@ -660,11 +667,11 @@ static void detect_input_popup(int index, bool analog)
 static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamepad)
 {
 	ImGui::SetNextWindowPos(ImVec2(0, 0));
-	ImGui::SetNextWindowSize(ImVec2(screen_width, screen_height));
+	ImGui::SetNextWindowSize(ImGui::GetIO().DisplaySize);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
 	if (ImGui::BeginPopupModal("Controller Mapping", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
 	{
-		const float width = screen_width / 2;
+		const float width = ImGui::GetIO().DisplaySize.x / 2;
 		const float col_width = (width
 				- ImGui::GetStyle().GrabMinSize
 				- (0 + ImGui::GetStyle().ItemSpacing.x)
@@ -887,7 +894,7 @@ static void gui_display_settings()
 	RenderType pvr_rend = config::RendererType;
 	bool vulkan = !config::RendererType.isOpenGL();
 	ImGui::SetNextWindowPos(ImVec2(0, 0));
-	ImGui::SetNextWindowSize(ImVec2(screen_width, screen_height));
+	ImGui::SetNextWindowSize(ImGui::GetIO().DisplaySize);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
 
     ImGui::Begin("Settings", NULL, /*ImGuiWindowFlags_AlwaysAutoResize |*/ ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
@@ -1682,7 +1689,7 @@ inline static void gui_display_demo()
 static void gui_display_content()
 {
 	ImGui::SetNextWindowPos(ImVec2(0, 0));
-	ImGui::SetNextWindowSize(ImVec2(screen_width, screen_height));
+	ImGui::SetNextWindowSize(ImGui::GetIO().DisplaySize);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0);
 
@@ -1874,9 +1881,6 @@ static void gui_network_start()
 
 static void gui_display_loadscreen()
 {
-	if (config::RendererType.isOpenGL())
-		ImGui_ImplOpenGL3_DrawBackground();
-
 	centerNextWindow();
 	ImGui::SetNextWindowSize(ImVec2(330 * scaling, 180 * scaling));
 
@@ -1969,7 +1973,7 @@ void gui_display_ui()
 		break;
 	case GuiState::VJoyEditCommands:
 #ifdef __ANDROID__
-		gui_display_vjoy_commands(screen_width, screen_height, scaling);
+		gui_display_vjoy_commands(scaling);
 #endif
 		break;
 	case GuiState::SelectDisk:
@@ -2035,8 +2039,8 @@ void gui_display_osd()
 		if (!message.empty())
 		{
 			ImGui::SetNextWindowBgAlpha(0);
-			ImGui::SetNextWindowPos(ImVec2(0, screen_height), ImGuiCond_Always, ImVec2(0.f, 1.f));	// Lower left corner
-			ImGui::SetNextWindowSize(ImVec2(screen_width, 0));
+			ImGui::SetNextWindowPos(ImVec2(0, ImGui::GetIO().DisplaySize.y), ImGuiCond_Always, ImVec2(0.f, 1.f));	// Lower left corner
+			ImGui::SetNextWindowSize(ImVec2(ImGui::GetIO().DisplaySize.x, 0));
 
 			ImGui::Begin("##osd", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoNav
 					| ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoBackground);
@@ -2135,7 +2139,7 @@ static void display_vmus()
 		return;
     ImGui::SetNextWindowBgAlpha(0);
     ImGui::SetNextWindowPos(ImVec2(0, 0));
-    ImGui::SetNextWindowSize(ImVec2(screen_width, screen_height));
+    ImGui::SetNextWindowSize(ImGui::GetIO().DisplaySize);
 
     ImGui::Begin("vmu-window", NULL, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoInputs
     		| ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoFocusOnAppearing);
@@ -2154,7 +2158,7 @@ static void display_vmus()
 	    if (x == 0)
 	    	pos.x = VMU_PADDING;
 	    else
-	    	pos.x = screen_width - VMU_WIDTH - VMU_PADDING;
+	    	pos.x = ImGui::GetIO().DisplaySize.x - VMU_WIDTH - VMU_PADDING;
 	    if (y == 0)
 	    {
 	    	pos.y = VMU_PADDING;
@@ -2163,7 +2167,7 @@ static void display_vmus()
 	    }
 	    else
 	    {
-	    	pos.y = screen_height - VMU_HEIGHT - VMU_PADDING;
+	    	pos.y = ImGui::GetIO().DisplaySize.y - VMU_HEIGHT - VMU_PADDING;
 	    	if (i & 1)
 	    		pos.y -= VMU_HEIGHT + VMU_PADDING;
 	    }
@@ -2233,7 +2237,7 @@ static void displayCrosshairs()
 		crosshairTexId = ImGui_ImplOpenGL3_CreateCrosshairTexture(getCrosshairTextureData());
     ImGui::SetNextWindowBgAlpha(0);
     ImGui::SetNextWindowPos(ImVec2(0, 0));
-    ImGui::SetNextWindowSize(ImVec2(screen_width, screen_height));
+    ImGui::SetNextWindowSize(ImGui::GetIO().DisplaySize);
 
     ImGui::Begin("xhair-window", NULL, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoInputs
     		| ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoFocusOnAppearing);

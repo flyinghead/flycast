@@ -29,6 +29,7 @@ void gui_open_onboarding();
 void gui_term();
 void gui_refresh_files();
 void gui_cheats();
+void gui_set_insets(int left, int right, int top, int bottom);
 
 extern int screen_dpi;
 extern float scaling;

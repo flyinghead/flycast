@@ -23,6 +23,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.Window;
+import android.view.WindowManager;
 
 import com.reicast.emulator.config.Config;
 import com.reicast.emulator.debug.GenerateLogs;
@@ -71,6 +72,10 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
             window.setNavigationBarColor(0);
             window.getDecorView().setSystemUiVisibility(SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
         }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            getWindow().getAttributes().layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
+        }
+
 
         if (!getFilesDir().exists()) {
             getFilesDir().mkdir();

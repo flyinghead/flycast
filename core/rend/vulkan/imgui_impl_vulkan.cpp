@@ -199,6 +199,8 @@ static void CreateOrResizeBuffer(VkBuffer& buffer, VkDeviceMemory& buffer_memory
     p_buffer_size = new_size;
 }
 
+extern int insetLeft, insetTop; // Android notches
+
 // Render function
 // (this used to be set in io.RenderDrawListsFn and called by ImGui::Render(), but you can now call this directly from your main loop)
 void ImGui_ImplVulkan_RenderDrawData(ImDrawData* draw_data, VkCommandBuffer command_buffer)
@@ -265,8 +267,8 @@ void ImGui_ImplVulkan_RenderDrawData(ImDrawData* draw_data, VkCommandBuffer comm
     // Setup viewport:
     {
         VkViewport viewport;
-        viewport.x = 0;
-        viewport.y = 0;
+        viewport.x = insetLeft;
+        viewport.y = insetTop;
         viewport.width = draw_data->DisplaySize.x;
         viewport.height = draw_data->DisplaySize.y;
         viewport.minDepth = 0.0f;
@@ -306,8 +308,12 @@ void ImGui_ImplVulkan_RenderDrawData(ImDrawData* draw_data, VkCommandBuffer comm
                 // Apply scissor/clipping rectangle
                 // FIXME: We could clamp width/height based on clamped min/max values.
                 VkRect2D scissor;
-                scissor.offset.x = (int32_t)(pcmd->ClipRect.x - display_pos.x) > 0 ? (int32_t)(pcmd->ClipRect.x - display_pos.x) : 0;
-                scissor.offset.y = (int32_t)(pcmd->ClipRect.y - display_pos.y) > 0 ? (int32_t)(pcmd->ClipRect.y - display_pos.y) : 0;
+                scissor.offset.x = (int32_t)(pcmd->ClipRect.x - display_pos.x + insetLeft) > 0
+                		? (int32_t)(pcmd->ClipRect.x - display_pos.x + insetLeft)
+                				: 0;
+                scissor.offset.y = (int32_t)(pcmd->ClipRect.y - display_pos.y + insetTop) > 0
+                		? (int32_t)(pcmd->ClipRect.y - display_pos.y + insetTop)
+                				: 0;
                 scissor.extent.width = (uint32_t)(pcmd->ClipRect.z - pcmd->ClipRect.x);
                 scissor.extent.height = (uint32_t)(pcmd->ClipRect.w - pcmd->ClipRect.y + 1); // FIXME: Why +1 here?
                 vkCmdSetScissor(command_buffer, 0, 1, &scissor);

@@ -169,6 +169,7 @@ public:
 			{
 				GetContext()->NewFrame();
 				GetContext()->BeginRenderPass();
+				GetContext()->PresentLastFrame();
 			}
 			const float dc2s_scale_h = screen_height / 480.0f;
 			const float sidebarWidth =  (screen_width - dc2s_scale_h * 640.0f) / 2;

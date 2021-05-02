@@ -23,9 +23,6 @@
 
 void gui_cheats()
 {
-    if (config::RendererType.isOpenGL())
-    	ImGui_ImplOpenGL3_DrawBackground();
-
     centerNextWindow();
     ImGui::SetNextWindowSize(ImVec2(std::min<float>(screen_width, 600 * scaling), std::min<float>(screen_height, 400 * scaling)));
 

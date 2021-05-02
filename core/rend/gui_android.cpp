@@ -29,12 +29,12 @@
 void vjoy_reset_editing();
 void vjoy_stop_editing(bool canceled);
 
-void gui_display_vjoy_commands(int screen_width, int screen_height, float scaling)
+void gui_display_vjoy_commands(float scaling)
 {
     centerNextWindow();
 
     ImGui::Begin("Virtual Joystick", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse
-    		| ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize);
+    		| ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoScrollbar);
 
 	if (ImGui::Button("Save", ImVec2(150 * scaling, 50 * scaling)))
 	{
