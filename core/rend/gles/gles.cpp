@@ -853,6 +853,7 @@ bool gles_init()
 		UpscalexBRZ(2, src, dst, 2, 2, false);
 	}
 	fog_needs_update = true;
+	palette_updated = true;
 
 	return true;
 }
