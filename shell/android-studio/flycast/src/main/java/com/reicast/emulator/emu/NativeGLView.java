@@ -60,10 +60,7 @@ public class NativeGLView extends SurfaceView implements SurfaceHolder.Callback 
         DisplayMetrics dm = context.getResources().getDisplayMetrics();
         JNIdc.screenDpi((int)Math.max(dm.xdpi, dm.ydpi));
 
-        this.setLayerType(prefs.getInt(Config.pref_rendertype, LAYER_TYPE_HARDWARE), null);
-
-        if (NativeGLActivity.syms != null)
-            JNIdc.data(1, NativeGLActivity.syms);
+        this.setLayerType(LAYER_TYPE_HARDWARE, null);
     }
 
     @Override

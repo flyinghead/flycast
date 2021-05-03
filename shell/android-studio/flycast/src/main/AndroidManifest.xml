@@ -46,11 +46,6 @@
 
         <meta-data android:name="android.max_aspect" android:value="2.1" />
         <activity
-            android:name="com.reicast.emulator.GL2JNIActivity"
-            android:configChanges="orientation|navigation|screenSize|screenLayout|uiMode|keyboard|keyboardHidden"
-            android:screenOrientation="sensorLandscape">
-        </activity>
-        <activity
             android:name="com.reicast.emulator.NativeGLActivity"
             android:configChanges="orientation|navigation|screenSize|screenLayout|uiMode|keyboard|keyboardHidden"
             android:screenOrientation="sensorLandscape"

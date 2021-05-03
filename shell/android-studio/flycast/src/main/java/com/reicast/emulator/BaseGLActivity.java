@@ -48,12 +48,10 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
     private static final int STORAGE_PERM_REQUEST = 1001;
     private static final int AUDIO_PERM_REQUEST = 1002;
 
-    protected View mView;
     protected SharedPreferences prefs;
     protected float[][] vjoy_d_cached;    // Used for VJoy editing
     private AudioBackend audioBackend;
     protected Handler handler = new Handler();
-    public static byte[] syms;
     private boolean audioPermissionRequested = false;
     private boolean storagePermissionGranted = false;
     private boolean paused = true;

@@ -17,13 +17,7 @@ public final class JNIdc
 	public static native void stop();
 	public static native void destroy();
 
-	public static native int send(int cmd, int opt);
-	public static native int data(int cmd, byte[] data);
-
 	public static native void rendinitNative(Surface surface, int w, int h);
-	public static native void rendinitJava(int w, int h);
-	public static native boolean rendframeJava();
-	public static native void rendtermJava();
 
 	public static native void vjoy(int id,float x, float y, float w, float h);
 
@@ -31,7 +25,6 @@ public final class JNIdc
 
 	public static native void setupMic(SipEmulator sip);
 	public static native int getVirtualGamepadVibration();
-	public static native int getAudioBufferSize();
 
 	public static native void screenDpi(int screenDpi);
 	public static native void guiOpenSettings();
