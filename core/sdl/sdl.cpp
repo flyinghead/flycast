@@ -424,6 +424,18 @@ static void get_window_state()
 		
 }
 
+#ifdef _WIN32
+#include <windows.h>
+
+HWND getNativeHwnd()
+{
+	SDL_SysWMinfo wmInfo;
+	SDL_VERSION(&wmInfo.version);
+	SDL_GetWindowWMInfo(window, &wmInfo);
+	return wmInfo.info.win.window;
+}
+#endif
+
 bool sdl_recreate_window(u32 flags)
 {
 #ifdef _WIN32
@@ -501,7 +513,7 @@ bool sdl_recreate_window(u32 flags)
 #endif
 	theGLContext.SetWindow(window);
 #ifdef _WIN32
-	theDXContext.setNativeWindow(sdl_get_native_hwnd());
+	theDXContext.setNativeWindow(getNativeHwnd());
 #endif
 
 	return true;
@@ -529,18 +541,6 @@ void sdl_window_destroy()
 	TermRenderApi();
 	SDL_DestroyWindow(window);
 }
-
-#ifdef _WIN32
-#include <windows.h>
-
-HWND sdl_get_native_hwnd()
-{
-	SDL_SysWMinfo wmInfo;
-	SDL_VERSION(&wmInfo.version);
-	SDL_GetWindowWMInfo(window, &wmInfo);
-	return wmInfo.info.win.window;
-}
-#endif
 
 #endif // !defined(__APPLE__)
 

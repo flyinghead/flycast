@@ -25,6 +25,8 @@
 #define CALLBACK
 #endif
 
+HWND getNativeHwnd();
+
 namespace rawinput {
 
 static std::map<HANDLE, std::shared_ptr<RawMouse>> mice;
@@ -237,7 +239,15 @@ void RawMouse::buttonInput(u32 buttonId, u16 flags, u16 downFlag, u16 upFlag) {
 void RawMouse::updateState(RAWMOUSE* state)
 {
 	if (state->usFlags & MOUSE_MOVE_ABSOLUTE)
-		SetMousePosition(state->lLastX, state->lLastY, screen_width, screen_height, maple_port());
+	{
+		bool isVirtualDesktop = (state->usFlags & MOUSE_VIRTUAL_DESKTOP) == MOUSE_VIRTUAL_DESKTOP;
+		int width = GetSystemMetrics(isVirtualDesktop ? SM_CXVIRTUALSCREEN : SM_CXSCREEN);
+		int height = GetSystemMetrics(isVirtualDesktop ? SM_CYVIRTUALSCREEN : SM_CYSCREEN);
+
+		POINT pt { long(state->lLastX / 65535.0f * width), long(state->lLastY / 65535.0f * height) };
+		ScreenToClient(getNativeHwnd(), &pt);
+		SetMousePosition(pt.x, pt.y, screen_width, screen_height, maple_port());
+	}
 	else if (state->lLastX != 0 || state->lLastY != 0)
 		SetRelativeMousePosition(state->lLastX, state->lLastY, maple_port());
 	buttonInput(0, state->usButtonFlags, RI_MOUSE_LEFT_BUTTON_DOWN, RI_MOUSE_LEFT_BUTTON_UP);

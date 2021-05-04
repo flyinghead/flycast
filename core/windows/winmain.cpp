@@ -610,12 +610,12 @@ static void toggleFullscreen()
 	}
 
 }
-#endif
 
-void* libPvr_GetRenderTarget()
+HWND getNativeHwnd()
 {
-	return (void*)hWnd;
+	return hWnd;
 }
+#endif
 
 void os_SetWindowText(const char* text)
 {

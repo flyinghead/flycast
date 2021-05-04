@@ -12,10 +12,12 @@ void os_DebugBreak()
 #endif
 }
 
-void* libPvr_GetRenderTarget()
+#ifdef _WIN32
+HWND getNativeHwnd()
 {
-	return nullptr;
+	return (HWND)NULL;
 }
+#endif
 
 void os_SetupInput()
 {
