@@ -66,10 +66,13 @@ bool EGLGraphicsContext::Init()
 	if (surface == EGL_NO_SURFACE)
 	{
 		EGLint pi32ConfigAttribs[]  = {
-				EGL_SURFACE_TYPE, EGL_WINDOW_BIT | EGL_SWAP_BEHAVIOR_PRESERVED_BIT,
+				EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
 				EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
 				EGL_DEPTH_SIZE, 24,
 				EGL_STENCIL_SIZE, 8,
+				EGL_RED_SIZE, 8,
+				EGL_GREEN_SIZE, 8,
+				EGL_BLUE_SIZE, 8,
 				EGL_NONE
 		};
 
@@ -78,19 +81,8 @@ bool EGLGraphicsContext::Init()
 		EGLConfig config;
 		if (!eglChooseConfig(display, pi32ConfigAttribs, &config, 1, &num_config) || (num_config != 1))
 		{
-			// Fall back to non preserved swap buffers
-			EGLint pi32ConfigFallbackAttribs[] = {
-					EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
-					EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
-					EGL_DEPTH_SIZE, 24,
-					EGL_STENCIL_SIZE, 8,
-					EGL_NONE
-			};
-			if (!eglChooseConfig(display, pi32ConfigFallbackAttribs, &config, 1, &num_config) || (num_config != 1))
-			{
-				ERROR_LOG(RENDERER, "EGL Error: eglChooseConfig failed");
-				return false;
-			}
+			ERROR_LOG(RENDERER, "EGL Error: eglChooseConfig failed");
+			return false;
 		}
 #ifdef __ANDROID__
 		EGLint format;
@@ -174,6 +166,7 @@ bool EGLGraphicsContext::Init()
 	EGLint w,h;
 	eglQuerySurface(display, surface, EGL_WIDTH, &w);
 	eglQuerySurface(display, surface, EGL_HEIGHT, &h);
+	NOTICE_LOG(RENDERER, "eglQuerySurface: %d - %d", w, h);
 
 	screen_width = w;
 	screen_height = h;
