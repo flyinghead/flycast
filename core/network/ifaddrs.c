@@ -576,12 +576,12 @@ int getifaddrs(struct ifaddrs **ifap)
     }
     
     unsigned l_numLinks = countLinks(l_socket, l_linkResults) + countLinks(l_socket, l_addrResults);
-    struct ifaddrs *l_links[l_numLinks];
-    memset(l_links, 0, l_numLinks * sizeof(struct ifaddrs *));
+    struct ifaddrs *l_links = calloc(l_numLinks, sizeof(struct ifaddrs *));
     
     interpret(l_socket, l_linkResults, l_links, ifap);
     interpret(l_socket, l_addrResults, l_links, ifap);
 
+    free(l_links);
     freeResultList(l_linkResults);
     freeResultList(l_addrResults);
     close(l_socket);
