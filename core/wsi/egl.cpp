@@ -22,6 +22,7 @@
 
 #ifdef USE_EGL
 #include "types.h"
+#include "cfg/option.h"
 
 #ifdef __ANDROID__
 #include <android/native_window.h> // requires ndk r5 or newer
@@ -175,7 +176,7 @@ bool EGLGraphicsContext::Init()
 	fbdev = open("/dev/fb0", O_RDONLY);
 #else
 #ifndef TEST_AUTOMATION
-	swapOnVSync = true;
+	swapOnVSync = config::VSync;
 #else
 	swapOnVSync = false;
 #endif
@@ -214,9 +215,9 @@ void EGLGraphicsContext::Swap()
 #ifdef TEST_AUTOMATION
 	do_swap_automation();
 #else
-	if (swapOnVSync == settings.input.fastForwardMode)
+	if (swapOnVSync == (settings.input.fastForwardMode || !config::VSync))
 	{
-		swapOnVSync = !settings.input.fastForwardMode;
+		swapOnVSync = (!settings.input.fastForwardMode && config::VSync);
 		eglSwapInterval(display, (int)swapOnVSync);
 	}
 #endif
