@@ -354,7 +354,6 @@ extern Option<bool> Widescreen;
 extern Option<bool> SuperWidescreen;
 extern Option<bool> ShowFPS;
 extern Option<bool> RenderToTextureBuffer;
-extern Option<int> RenderToTextureUpscale;
 extern Option<bool> TranslucentPolygonDepthMask;
 extern Option<bool> ModifierVolumes;
 constexpr ConstOption<bool, true> Clipping;

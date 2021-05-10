@@ -1183,12 +1183,13 @@ bool RenderFrame(int width, int height)
 				fHeight = pvrrc.fb_Y_CLIP.max - pvrrc.fb_Y_CLIP.min + 1;
 				min_x = pvrrc.fb_X_CLIP.min;
 				min_y = pvrrc.fb_Y_CLIP.min;
-				if (config::RenderToTextureUpscale > 1 && !config::RenderToTextureBuffer)
+				if (config::RenderResolution > 480 && !config::RenderToTextureBuffer)
 				{
-					min_x *= config::RenderToTextureUpscale;
-					min_y *= config::RenderToTextureUpscale;
-					fWidth *= config::RenderToTextureUpscale;
-					fHeight *= config::RenderToTextureUpscale;
+					float scale = config::RenderResolution / 480.f;
+					min_x *= scale;
+					min_y *= scale;
+					fWidth *= scale;
+					fHeight *= scale;
 				}
 			}
 			ShaderUniforms.base_clipping.enabled = true;

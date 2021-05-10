@@ -71,10 +71,11 @@ static inline TileClipping GetTileClip(u32 val, const glm::mat4& viewport, int *
 	}
 	else if (!config::RenderToTextureBuffer)
 	{
-		csx *= config::RenderToTextureUpscale;
-		csy *= config::RenderToTextureUpscale;
-		cex *= config::RenderToTextureUpscale;
-		cey *= config::RenderToTextureUpscale;
+		float scale = config::RenderResolution / 480.f;
+		csx *= scale;
+		csy *= scale;
+		cex *= scale;
+		cey *= scale;
 	}
 	clip_rect[0] = std::max(0, (int)lroundf(csx));
 	clip_rect[1] = std::max(0, (int)lroundf(std::min(csy, cey)));

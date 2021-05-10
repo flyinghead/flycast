@@ -495,17 +495,19 @@ vk::CommandBuffer OITTextureDrawer::NewFrame()
 	textureAddr = FB_W_SOF1 & VRAM_MASK;
 	u32 origWidth = pvrrc.fb_X_CLIP.max + 1;
 	u32 origHeight = pvrrc.fb_Y_CLIP.max + 1;
-	u32 upscale = 1;
+	float upscale = 1.f;
 	if (!config::RenderToTextureBuffer)
-		upscale = config::RenderToTextureUpscale;
-	u32 upscaledWidth = origWidth * upscale;
-	u32 upscaledHeight = origHeight * upscale;
+		upscale = config::RenderResolution / 480.f;
 	u32 heightPow2 = 8;
-	while (heightPow2 < upscaledHeight)
+	while (heightPow2 < origHeight)
 		heightPow2 *= 2;
 	u32 widthPow2 = 8;
-	while (widthPow2 < upscaledWidth)
+	while (widthPow2 < origWidth)
 		widthPow2 *= 2;
+	u32 upscaledWidth = origWidth * upscale;
+	u32 upscaledHeight = origHeight * upscale;
+	widthPow2 *= upscale;
+	heightPow2 *= upscale;
 
 	rttPipelineManager->CheckSettingsChange();
 	VulkanContext *context = GetContext();

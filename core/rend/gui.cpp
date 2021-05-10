@@ -1382,8 +1382,6 @@ static void gui_display_settings()
 		    {
 		    	OptionCheckbox("Copy to VRAM", config::RenderToTextureBuffer,
 		    			"Copy rendered-to textures back to VRAM. Slower but accurate");
-		    	OptionSlider("Render to Texture Upscaling", config::RenderToTextureUpscale, 1, 8,
-		    			"Upscale rendered-to textures. Should be the same as the screen or window upscale ratio, or lower for slow platforms");
 		    }
 		    if (ImGui::CollapsingHeader("Texture Upscaling", ImGuiTreeNodeFlags_DefaultOpen))
 		    {
