@@ -41,10 +41,10 @@ public:
 	}
 };
 
-class X11MouseGamepadDevice : public GamepadDevice
+class X11Mouse : public GamepadDevice
 {
 public:
-	X11MouseGamepadDevice(int maple_port) : GamepadDevice(maple_port, "X11")
+	X11Mouse(int maple_port) : GamepadDevice(maple_port, "X11")
 	{
 		_name = "Mouse";
 		_unique_id = "x11_mouse";
@@ -91,10 +91,8 @@ public:
 	}
 };
 
-static int x11_keyboard_input = 0;
-static std::shared_ptr<X11KeyboardDevice> x11_keyboard;
-static std::shared_ptr<X11KbGamepadDevice> kb_gamepad;
-static std::shared_ptr<X11MouseGamepadDevice> mouse_gamepad;
+static std::shared_ptr<X11Keyboard> x11Keyboard;
+static std::shared_ptr<X11Mouse> x11Mouse;
 
 int x11_width;
 int x11_height;
@@ -239,10 +237,7 @@ void input_x11_handle()
 							// Key wasn’t actually released: auto repeat
 							continue;
 					}
-					// Dreamcast keyboard emulation
-					x11_keyboard->keyboard_input(e.xkey.keycode, e.type == KeyPress);
-					// keyboard-based emulated gamepad
-					kb_gamepad->gamepad_btn_input(e.xkey.keycode, e.type == KeyPress);
+					x11Keyboard->keyboard_input(e.xkey.keycode, e.type == KeyPress);
 
 					// Start/stop mouse capture with Left Ctrl + Left Alt
 					if (e.type == KeyPress
@@ -256,18 +251,18 @@ void input_x11_handle()
 							x11_uncapture_mouse();
 					}
 					// TODO Move this to bindable keys or in the gui menu
-					if (x11_keyboard_input)
+#if 0
+					if (e.xkey.keycode == KEY_F10)
 					{
-						if (e.xkey.keycode == KEY_F10)
-						{
-							// Dump the next frame into a file
-							dump_frame_switch = e.type == KeyPress;
-						}
-						else if (e.type == KeyPress && e.xkey.keycode == KEY_F11)
-						{
-							x11_fullscreen = !x11_fullscreen;
-							x11_window_set_fullscreen(x11_fullscreen);
-						}
+						// Dump the next frame into a file
+						dump_frame_switch = e.type == KeyPress;
+					}
+					else
+#endif
+					if (e.type == KeyPress && e.xkey.keycode == KEY_F11)
+					{
+						x11_fullscreen = !x11_fullscreen;
+						x11_window_set_fullscreen(x11_fullscreen);
 					}
 				}
 				break;
@@ -282,24 +277,30 @@ void input_x11_handle()
 
 			case ButtonPress:
 			case ButtonRelease:
-				mouse_gamepad->gamepad_btn_input(e.xbutton.button, e.type == ButtonPress);
+				gui_set_mouse_position(e.xbutton.x, e.xbutton.y);
+				x11Mouse->gamepad_btn_input(e.xbutton.button, e.type == ButtonPress);
 				{
 					u32 button_mask = 0;
 					switch (e.xbutton.button)
 					{
 					case Button1:		// Left button
+						gui_set_mouse_button(0, e.type == ButtonPress);
 						button_mask = 1 << 2;
 						break;
 					case Button2:		// Middle button
+						gui_set_mouse_button(2, e.type == ButtonPress);
 						button_mask = 1 << 3;
 						break;
 					case Button3:		// Right button
+						gui_set_mouse_button(1, e.type == ButtonPress);
 						button_mask = 1 << 1;
 						break;
 					case Button4: 		// Mouse wheel up
+						gui_set_mouse_wheel(-16);
 						mo_wheel_delta[0] -= 16;
 						break;
 					case Button5: 		// Mouse wheel down
+						gui_set_mouse_wheel(16);
 						mo_wheel_delta[0] += 16;
 						break;
 					default:
@@ -317,6 +318,7 @@ void input_x11_handle()
 				/* no break */
 
 			case MotionNotify:
+				gui_set_mouse_position(e.xmotion.x, e.xmotion.y);
 				// For Light gun
 				SetMousePosition(e.xmotion.x, e.xmotion.y, x11_width, x11_height);
 				// For mouse
@@ -342,15 +344,10 @@ void input_x11_handle()
 
 void input_x11_init()
 {
-	x11_keyboard = std::make_shared<X11KeyboardDevice>(0);
-	kb_gamepad = std::make_shared<X11KbGamepadDevice>(0);
-	GamepadDevice::Register(kb_gamepad);
-	mouse_gamepad = std::make_shared<X11MouseGamepadDevice>(0);
-	GamepadDevice::Register(mouse_gamepad);
-
-	x11_keyboard_input = (cfgLoadInt("input", "enable_x11_keyboard", 1) >= 1);
-	if (!x11_keyboard_input)
-		INFO_LOG(INPUT, "X11 Keyboard input disabled by config.");
+	x11Keyboard = std::make_shared<X11Keyboard>(0);
+	GamepadDevice::Register(x11Keyboard);
+	x11Mouse = std::make_shared<X11Mouse>(0);
+	GamepadDevice::Register(x11Mouse);
 }
 
 void x11_window_create()

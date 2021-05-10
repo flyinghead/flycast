@@ -139,11 +139,9 @@ class EmuGLView: NSOpenGLView, NSWindowDelegate {
 	}
 	override func scrollWheel(with event: NSEvent) {
 		if (event.hasPreciseScrollingDeltas) {
-			// 1 per "line"
-			pmo_wheel_delta[0] -= Float(event.scrollingDeltaY) * 3.2
+            emu_mouse_wheel(-Float(event.scrollingDeltaY) / 5)
 		} else {
-			// 0.1 per wheel notch
-			pmo_wheel_delta[0] -= Float(event.scrollingDeltaY) * 160
+            emu_mouse_wheel(-Float(event.scrollingDeltaY) * 10)
 		}
 	}
 	
