@@ -394,7 +394,7 @@ vk::CommandBuffer TextureDrawer::BeginRenderPass()
 	while (heightPow2 < origHeight)
 		heightPow2 *= 2;
 	u32 widthPow2 = 8;
-	while (widthPow2 < origHeight)
+	while (widthPow2 < origWidth)
 		widthPow2 *= 2;
 	float upscale = 1.f;
 	if (!config::RenderToTextureBuffer)
