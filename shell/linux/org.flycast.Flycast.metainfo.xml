@@ -4,7 +4,7 @@
   <name>Flycast</name>
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>GPL-2.0</project_license>
-  <summary>Multiplatform Sega Dreamcast, Naomi and Atomiswave emulator.</summary>
+  <summary>Sega Dreamcast, Naomi and Atomiswave emulator</summary>
   <description>
     <p>Flycast is a multi-platform Sega Dreamcast, Naomi and Atomiswave emulator derived from reicast.</p>
   </description>
