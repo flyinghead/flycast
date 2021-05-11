@@ -95,7 +95,7 @@ vec4 resolveAlphaBlend(ivec2 coords) {
 			srcColor = secondaryBuffer;
 		else
 		{
-			srcColor = pixel.color;
+			srcColor = unpackColors(pixel.color);
 			if (shadowed)
 				srcColor.rgb *= shade_scale_factor;
 		}

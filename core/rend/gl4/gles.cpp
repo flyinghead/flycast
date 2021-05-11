@@ -375,7 +375,7 @@ void main()
 		uint idx =  getNextPixelIndex();
 		
 		Pixel pixel;
-		pixel.color = color;
+		pixel.color = packColors(clamp(color, vec4(0.0), vec4(1.0)));
 		pixel.depth = gl_FragDepth;
 		pixel.seq_num = uint(pp_Number);
 		pixel.next = imageAtomicExchange(abufferPointerImg, coords, idx);
@@ -740,8 +740,19 @@ static bool RenderFrame(int width, int height)
 		}
 
 		// TR PolyParam data
-		glBindBuffer(GL_SHADER_STORAGE_BUFFER, gl4.vbo.tr_poly_params);
-		glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(struct PolyParam) * pvrrc.global_param_tr.used(), pvrrc.global_param_tr.head(), GL_STATIC_DRAW);
+		if (pvrrc.global_param_tr.used() != 0)
+		{
+			glBindBuffer(GL_SHADER_STORAGE_BUFFER, gl4.vbo.tr_poly_params);
+			std::vector<u32> trPolyParams(pvrrc.global_param_tr.used() * 2);
+			const PolyParam *pp_end = pvrrc.global_param_tr.LastPtr(0);
+			const PolyParam *pp = pvrrc.global_param_tr.head();
+			for (int i = 0; pp != pp_end; i += 2, pp++)
+			{
+				trPolyParams[i] = (pp->tsp.full & 0xffff00c0) | ((pp->isp.full >> 16) & 0xe400) | ((pp->pcw.full >> 7) & 1);
+				trPolyParams[i + 1] = pp->tsp1.full;
+			}
+			glBufferData(GL_SHADER_STORAGE_BUFFER, trPolyParams.size() * 4, trPolyParams.data(), GL_STATIC_DRAW);
+		}
 		glCheck();
 
 		if (is_rtt || !config::Widescreen || matrices.IsClipped() || config::Rotate90)
