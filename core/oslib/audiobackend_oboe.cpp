@@ -82,8 +82,20 @@ static void audio_init()
 		ERROR_LOG(AUDIO, "Oboe open stream failed: %s", oboe::convertToText(result));
 		return;
 	}
-	if (stream->getAudioApi() == oboe::AudioApi::AAudio)
-		stream->setBufferSizeInFrames(stream->getFramesPerBurst());
+
+	if (stream->getAudioApi() == oboe::AudioApi::AAudio && config::AudioBufferSize < 1764)
+	{
+		// Reduce internal buffer for low latency (< 40 ms)
+		int bufSize = stream->getBufferSizeInFrames();
+		int burst = stream->getFramesPerBurst();
+		if (bufSize - burst > SAMPLE_COUNT)
+		{
+			while (bufSize - burst > SAMPLE_COUNT)
+				bufSize -= burst;
+			stream->setBufferSizeInFrames(bufSize);
+		}
+	}
+
 	stream->requestStart();
 	NOTICE_LOG(AUDIO, "Oboe driver started. stream capacity: %d frames, size: %d frames, frames/callback: %d, frames/burst: %d",
 			stream->getBufferCapacityInFrames(), stream->getBufferSizeInFrames(),
