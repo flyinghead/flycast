@@ -151,7 +151,7 @@ void emu_gles_init(int width, int height)
         std::string config_dir = std::string(home) + "/.reicast/";
         if (!file_exists(config_dir))
         	config_dir = std::string(home) + "/.flycast/";
-        int instanceNumber = (int)[[NSRunningApplication runningApplicationsWithBundleIdentifier:@"com.reicast.Flycast"] count];
+        int instanceNumber = (int)[[NSRunningApplication runningApplicationsWithBundleIdentifier:@"com.flyinghead.Flycast"] count];
         if (instanceNumber > 1){
             config_dir += std::to_string(instanceNumber) + "/";
             [[NSApp dockTile] setBadgeLabel:@(instanceNumber).stringValue];
