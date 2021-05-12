@@ -185,19 +185,41 @@ void emu_gles_init(int width, int height)
     
     //Neither CGDisplayScreenSize(description's NSScreenNumber) nor [NSScreen backingScaleFactor] can calculate the correct dpi in macOS. E.g. backingScaleFactor is always 2 in all display modes for rMBP 16"
     NSSize displayNativeSize;
-    CFArrayRef allDisplayModes = CGDisplayCopyAllDisplayModes(displayID, NULL);
+    CFStringRef dmKeys[1] = { kCGDisplayShowDuplicateLowResolutionModes };
+    CFBooleanRef dmValues[1] = { kCFBooleanTrue };
+    CFDictionaryRef dmOptions = CFDictionaryCreate(kCFAllocatorDefault, (const void**) dmKeys, (const void**) dmValues, 1, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks );
+    CFArrayRef allDisplayModes = CGDisplayCopyAllDisplayModes(displayID, dmOptions);
     CFIndex n = CFArrayGetCount(allDisplayModes);
     for(CFIndex i = 0; i < n; ++i)
     {
         CGDisplayModeRef m = (CGDisplayModeRef)CFArrayGetValueAtIndex(allDisplayModes, i);
-        if(CGDisplayModeGetIOFlags(m) & kDisplayModeNativeFlag)
+        CGFloat width = CGDisplayModeGetPixelWidth(m);
+        CGFloat height = CGDisplayModeGetPixelHeight(m);
+        CGFloat modeWidth = CGDisplayModeGetWidth(m);
+        BOOL isNative = (CGDisplayModeGetIOFlags(m) & kDisplayModeNativeFlag) ? true : false;
+        CFRelease(m);
+        
+        //Only check 1x mode
+        if(width == modeWidth)
         {
-            displayNativeSize.width = CGDisplayModeGetPixelWidth(m);
-            displayNativeSize.height = CGDisplayModeGetPixelHeight(m);
-            break;
+            if(isNative)
+            {
+                displayNativeSize.width = width;
+                displayNativeSize.height = height;
+                break;
+            }
+            
+            //Get the largest size even if kDisplayModeNativeFlag is not present e.g. iMac 27-Inch with 5K Retina
+            if(width > displayNativeSize.width)
+            {
+                displayNativeSize.width = width;
+                displayNativeSize.height = height;
+            }
         }
+        
     }
     CFRelease(allDisplayModes);
+    CFRelease(dmOptions);
     
 	screen_dpi = (int)(displayNativeSize.width / displayPhysicalSize.width * 25.4f);
     NSSize displayResolution;
