@@ -170,18 +170,9 @@ int darw_printf(const char* Text,...);
 
 #include "log/Log.h"
 
-#ifndef NO_MMU
-#define _X_x_X_MMU_VER_STR "/mmu"
-#else
-#define _X_x_X_MMU_VER_STR ""
-#endif
-
-
 #define VER_EMUNAME		"Flycast"
-
-#define VER_FULLNAME	VER_EMUNAME " git" _X_x_X_MMU_VER_STR " (built " __DATE__ "@" __TIME__ ")"
-#define VER_SHORTNAME	VER_EMUNAME " git" _X_x_X_MMU_VER_STR
-
+#define VER_FULLNAME	VER_EMUNAME " (built " __DATE__ "@" __TIME__ ")"
+#define VER_SHORTNAME	VER_EMUNAME
 
 void os_DebugBreak();
 #define dbgbreak os_DebugBreak()

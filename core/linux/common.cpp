@@ -46,7 +46,7 @@ void sigill_handler(int sn, siginfo_t * si, void *segfault_ctx) {
 
 void fault_handler (int sn, siginfo_t * si, void *segfault_ctx)
 {
-#if !defined(NO_MMU) && defined(HOST_64BIT_CPU)
+#if defined(HOST_64BIT_CPU)
 	// WinCE virtual memory
 #if HOST_CPU == CPU_ARM64
 #define HOST_CTX_READY

@@ -113,31 +113,23 @@ void ngen_GetFeatures(ngen_features* dst)
 template<typename T>
 static T ReadMemNoEx(u32 addr, u32, u32 pc)
 {
-#ifndef NO_MMU
-	u32 ex;
-	T rv = mmu_ReadMemNoEx<T>(addr, &ex);
-	if (ex)
+	auto rv = mmu_ReadMemNoEx<T>(addr);
+	if (rv.second)
 	{
 		spc = pc;
 		handleException();
 	}
-	return rv;
-#else
-	return (T)0;	// not used
-#endif
+	return rv.first;
 }
 
 template<typename T>
 static void WriteMemNoEx(u32 addr, T data, u32 pc)
 {
-#ifndef NO_MMU
-	u32 ex = mmu_WriteMemNoEx<T>(addr, data);
-	if (ex)
+	if (mmu_WriteMemNoEx<T>(addr, data))
 	{
 		spc = pc;
 		handleException();
 	}
-#endif
 }
 
 static void interpreter_fallback(u16 op, OpCallFP *oph, u32 pc)
@@ -1648,9 +1640,9 @@ private:
 
 		u32 size = op.flags & 0x7f;
 		u32 addr = op.rs1._imm;
-		if (mmu_enabled() && mmu_is_translated<MMU_TT_DREAD>(addr, size))
+		if (mmu_enabled() && mmu_is_translated(addr, size))
 		{
-			if ((addr >> 12) != (block->vaddr >> 12))
+			if ((addr >> 12) != (block->vaddr >> 12) && ((addr >> 12) != ((block->vaddr + block->guest_opcodes * 2 - 1) >> 12)))
 				// When full mmu is on, only consider addresses in the same 4k page
 				return false;
 			u32 paddr;
@@ -1859,7 +1851,7 @@ private:
 
 		u32 size = op.flags & 0x7f;
 		u32 addr = op.rs1._imm;
-		if (mmu_enabled() && mmu_is_translated<MMU_TT_DWRITE>(addr, size))
+		if (mmu_enabled() && mmu_is_translated(addr, size))
 		{
 			if ((addr >> 12) != (block->vaddr >> 12) && ((addr >> 12) != ((block->vaddr + block->guest_opcodes * 2 - 1) >> 12)))
 				// When full mmu is on, only consider addresses in the same 4k page

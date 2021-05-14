@@ -217,7 +217,6 @@ static u32 vmem32_paddr_to_offset(u32 address)
 
 static u32 vmem32_map_mmu(u32 address, bool write)
 {
-#ifndef NO_MMU
 	u32 pa;
 	const TLB_Entry *entry;
 	u32 rc = mmu_full_lookup<false>(address, &entry, pa);
@@ -307,9 +306,7 @@ static u32 vmem32_map_mmu(u32 address, bool write)
 
 		return MMU_ERROR_NONE;
 	}
-#else
-	u32 rc = MMU_ERROR_PROTECTED;
-#endif
+
 	return rc;
 }
 
@@ -335,7 +332,7 @@ static u32 vmem32_map_address(u32 address, bool write)
 	return VMEM32_ERROR_NOT_MAPPED;
 }
 
-#if !defined(NO_MMU) && defined(HOST_64BIT_CPU)
+#if defined(HOST_64BIT_CPU)
 // returns:
 //  0 if the fault address isn't handled by the mmu
 //  1 if the fault was handled and the access should be reattempted

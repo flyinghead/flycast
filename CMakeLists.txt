@@ -617,7 +617,6 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/hw/sh4/modules/intc.cpp
         core/hw/sh4/modules/mmu.cpp
         core/hw/sh4/modules/mmu.h
-        core/hw/sh4/modules/mmu_impl.h
         core/hw/sh4/modules/modules.h
         core/hw/sh4/modules/rtc.cpp
         core/hw/sh4/modules/serial.cpp

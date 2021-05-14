@@ -1055,7 +1055,6 @@
 		AEE6279522247C2B00EC7E89 /* keyboard_device.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = keyboard_device.cpp; sourceTree = "<group>"; };
 		AEF25640227C441F00348550 /* vmem32.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = vmem32.cpp; sourceTree = "<group>"; };
 		AEF25641227C441F00348550 /* vmem32.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = vmem32.h; sourceTree = "<group>"; };
-		AEF25643227C442F00348550 /* mmu_impl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = mmu_impl.h; sourceTree = "<group>"; };
 		AEF25644227C442F00348550 /* fastmmu.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = fastmmu.cpp; sourceTree = "<group>"; };
 		AEF25645227C442F00348550 /* wince.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = wince.h; sourceTree = "<group>"; };
 		AEF2564722886A2E00348550 /* posix_vmem.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = posix_vmem.cpp; sourceTree = "<group>"; };
@@ -1835,7 +1834,6 @@
 			isa = PBXGroup;
 			children = (
 				AEF25644227C442F00348550 /* fastmmu.cpp */,
-				AEF25643227C442F00348550 /* mmu_impl.h */,
 				AEF25645227C442F00348550 /* wince.h */,
 				84B7BE221B72720100F9733F /* bsc.cpp */,
 				84B7BE231B72720100F9733F /* ccn.cpp */,

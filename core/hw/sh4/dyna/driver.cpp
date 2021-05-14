@@ -169,18 +169,14 @@ bool RuntimeBlockInfo::Setup(u32 rpc,fpscr_t rfpu_cfg)
 	
 	oplist.clear();
 
-#if !defined(NO_MMU)
 	try {
-#endif
 		if (!dec_DecodeBlock(this, SH4_TIMESLICE / 2))
 			return false;
-#if !defined(NO_MMU)
 	}
 	catch (SH4ThrownException& ex) {
 		Do_Exception(rpc, ex.expEvn, ex.callVect);
 		return false;
 	}
-#endif
 	SetProtectedFlags();
 
 	AnalyseBlock(this);

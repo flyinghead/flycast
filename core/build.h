@@ -115,7 +115,6 @@
 
 */
 
-//#define NO_MMU
 //#define STRICT_MODE
 #ifndef STRICT_MODE
 #define FAST_MMU

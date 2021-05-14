@@ -41,7 +41,6 @@ static void (*handleException)();
 u32 mem_writes, mem_reads;
 u32 mem_rewrites_w, mem_rewrites_r;
 
-static u32 exception_raised;
 static u64 jmp_rsp;
 
 namespace MemSize {
@@ -104,38 +103,28 @@ static void ngen_blockcheckfail(u32 pc) {
 	rdv_BlockCheckFail(pc);
 }
 
-static void handle_mem_exception(u32 exception_raised, u32 pc)
+static void handle_mem_exception(u32 pc)
 {
-	if (exception_raised)
-	{
-		spc = pc;
-		cycle_counter += 2;	// probably more is needed but no easy way to find out
-		handleException();
-	}
+	spc = pc;
+	cycle_counter += 2;	// probably more is needed but no easy way to find out
+	handleException();
 }
 
 template<typename T>
 static T ReadMemNoEx(u32 addr, u32 pc)
 {
-#ifndef NO_MMU
-	T rv = mmu_ReadMemNoEx<T>(addr, &exception_raised);
-	handle_mem_exception(exception_raised, pc);
+	auto rv = mmu_ReadMemNoEx<T>(addr);
+	if (unlikely(rv.second))
+		handle_mem_exception(pc);
 
-	return rv;
-#else
-	// not used
-	return (T)0;
-#endif
+	return rv.first;
 }
 
 template<typename T>
-static u32 WriteMemNoEx(u32 addr, T data, u32 pc)
+static void WriteMemNoEx(u32 addr, T data, u32 pc)
 {
-#ifndef NO_MMU
-	u32 exception_raised = mmu_WriteMemNoEx<T>(addr, data);
-	handle_mem_exception(exception_raised, pc);
-	return exception_raised;
-#endif
+	if (mmu_WriteMemNoEx<T>(addr, data))
+		handle_mem_exception(pc);
 }
 
 static void handle_sh4_exception(SH4ThrownException& ex, u32 pc)
@@ -810,9 +799,9 @@ private:
 			return false;
 		u32 size = op.flags & 0x7f;
 		u32 addr = op.rs1._imm;
-		if (mmu_enabled() && mmu_is_translated<MMU_TT_DREAD>(addr, size))
+		if (mmu_enabled() && mmu_is_translated(addr, size))
 		{
-			if ((addr >> 12) != (block->vaddr >> 12))
+			if ((addr >> 12) != (block->vaddr >> 12) && ((addr >> 12) != ((block->vaddr + block->guest_opcodes * 2 - 1) >> 12)))
 				// When full mmu is on, only consider addresses in the same 4k page
 				return false;
 
@@ -949,9 +938,9 @@ private:
 			return false;
 		u32 size = op.flags & 0x7f;
 		u32 addr = op.rs1._imm;
-		if (mmu_enabled() && mmu_is_translated<MMU_TT_DWRITE>(addr, size))
+		if (mmu_enabled() && mmu_is_translated(addr, size))
 		{
-			if ((addr >> 12) != (block->vaddr >> 12))
+			if ((addr >> 12) != (block->vaddr >> 12) && ((addr >> 12) != ((block->vaddr + block->guest_opcodes * 2 - 1) >> 12)))
 				// When full mmu is on, only consider addresses in the same 4k page
 				return false;
 

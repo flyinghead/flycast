@@ -2018,18 +2018,11 @@ sh4op(i0100_nnnn_0000_1110)
 		UpdateINTC();
 }
 
-
-//Not implt
 sh4op(iNotImplemented)
 {
-#ifndef NO_MMU
 	INFO_LOG(INTERPRETER, "iNimp %04X", op);
 	debugger::debugTrap(0x180);
-	SH4ThrownException ex = { next_pc - 2, 0x180, 0x100 };
+	SH4ThrownException ex { next_pc - 2, 0x180, 0x100 };
 	throw ex;
-#else
-	cpu_iNimp(op, "Unknown opcode");
-#endif
-	
 }
 

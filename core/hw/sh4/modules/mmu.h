@@ -23,7 +23,7 @@
 #define MMU_ERROR_PROTECTED 3
 //Mem is write protected , firstwrite
 #define MMU_ERROR_FIRSTWRITE 4
-//data-Opcode read/write missasligned
+//data-Opcode read/write misaligned
 #define MMU_ERROR_BADADDR 5
 //Can't Execute
 #define MMU_ERROR_EXECPROT 6
@@ -38,9 +38,24 @@ struct TLB_Entry
 extern TLB_Entry UTLB[64];
 extern TLB_Entry ITLB[4];
 extern u32 sq_remap[64];
-extern const u32 fast_reg_lut[8];
 
-//These are working only for SQ remaps on ndce
+constexpr u32 fast_reg_lut[8] =
+{
+	0, 0, 0, 0	//P0-U0
+	, 1		//P1
+	, 1		//P2
+	, 0		//P3
+	, 1		//P4
+};
+
+constexpr u32 mmu_mask[4] =
+{
+	((0xFFFFFFFF) >> 10) << 10,	//1 kb page
+	((0xFFFFFFFF) >> 12) << 12,	//4 kb page
+	((0xFFFFFFFF) >> 16) << 16,	//64 kb page
+	((0xFFFFFFFF) >> 20) << 20	//1 MB page
+};
+
 bool UTLB_Sync(u32 entry);
 void ITLB_Sync(u32 entry);
 
@@ -51,11 +66,7 @@ void mmu_raise_exception(u32 mmu_error, u32 address, u32 am);
 
 static INLINE bool mmu_enabled()
 {
-#ifndef NO_MMU
 	return config::FullMMU && CCN_MMUCR.AT == 1;
-#else
-	return false;
-#endif
 }
 
 template<bool internal = false>
@@ -75,83 +86,91 @@ static INLINE u32 mmu_instruction_translation(u32 va, u32& rv)
 		return MMU_ERROR_NONE;
 	}
 
-	const TLB_Entry *tlb_entry;
-	return mmu_full_lookup(va, &tlb_entry, rv);
+	return mmu_full_lookup(va, nullptr, rv);
 }
 #else
 u32 mmu_instruction_translation(u32 va, u32& rv);
 #endif
 
 template<u32 translation_type, typename T>
-extern u32 mmu_data_translation(u32 va, u32& rv);
+u32 mmu_data_translation(u32 va, u32& rv);
 void DoMMUException(u32 addr, u32 mmu_error, u32 access_type);
 
-template<u32 translation_type>
-bool mmu_is_translated(u32 va, u32 size)
+inline static bool mmu_is_translated(u32 va, u32 size)
 {
+#ifndef FAST_MMU
 	if (va & (size - 1))
 		return true;
-
-	if (translation_type == MMU_TT_DWRITE)
-	{
-		if ((va & 0xFC000000) == 0xE0000000)
-			//SQ writes are not translated, only write backs are.
-			return false;
-	}
-	if ((va & 0xFC000000) == 0x7C000000)
-		// On-chip RAM area isn't translated
-		return false;
+#endif
 
 	if (fast_reg_lut[va >> 29] != 0)
+		return false;
+
+	if ((va & 0xFC000000) == 0x7C000000)
+		// On-chip RAM area isn't translated
 		return false;
 
 	return true;
 }
 
-#if defined(NO_MMU)
-	bool inline mmu_TranslateSQW(u32 addr, u32* mapped) {
-		*mapped = sq_remap[(addr>>20)&0x3F] | (addr & 0xFFFE0);
-		return true;
+template<typename T> T DYNACALL mmu_ReadMem(u32 adr);
+u16 DYNACALL mmu_IReadMem16(u32 addr);
+
+template<typename T> void DYNACALL mmu_WriteMem(u32 adr, T data);
+
+bool mmu_TranslateSQW(u32 adr, u32* out);
+
+extern u32 lastVAddr[2];
+extern u32 lastPAddr[2];
+extern u8 lastIdx;
+
+template<typename T>
+std::pair<T, bool> DYNACALL mmu_ReadMemNoEx(u32 adr)
+{
+	u32 addr;
+	if (lastVAddr[0] == (adr & ~PAGE_MASK)) {
+		addr = lastPAddr[0] | (adr & PAGE_MASK);
 	}
-	void inline mmu_flush_table() {}
-#else
-	template<typename T> T DYNACALL mmu_ReadMem(u32 adr);
-	u16 DYNACALL mmu_IReadMem16(u32 addr);
-
-	template<typename T> void DYNACALL mmu_WriteMem(u32 adr, T data);
-	
-	bool mmu_TranslateSQW(u32 adr, u32* out);
-
-	template<typename T>
-	T DYNACALL mmu_ReadMemNoEx(u32 adr, u32 *exception_occurred)
+	else if (lastVAddr[1] == (adr & ~PAGE_MASK)) {
+		addr = lastPAddr[1] | (adr & PAGE_MASK);
+	}
+	else
 	{
-		u32 addr;
 		u32 rv = mmu_data_translation<MMU_TT_DREAD, T>(adr, addr);
-		if (rv != MMU_ERROR_NONE)
+		if (unlikely(rv != MMU_ERROR_NONE))
 		{
 			DoMMUException(adr, rv, MMU_TT_DREAD);
-			*exception_occurred = 1;
-			return 0;
+			return std::make_pair(0, true);
 		}
-		else
-		{
-			*exception_occurred = 0;
-			return _vmem_readt<T, T>(addr);
-		}
+		lastVAddr[lastIdx] = adr & ~PAGE_MASK;
+		lastPAddr[lastIdx] = addr & ~PAGE_MASK;
+		lastIdx ^= 1;
 	}
+	return std::make_pair(_vmem_readt<T, T>(addr), false);
+}
 
-	template<typename T>
-	u32 DYNACALL mmu_WriteMemNoEx(u32 adr, T data)
+template<typename T>
+u32 DYNACALL mmu_WriteMemNoEx(u32 adr, T data)
+{
+	u32 addr;
+	if (lastVAddr[0] == (adr & ~PAGE_MASK)) {
+		addr = lastPAddr[0] | (adr & PAGE_MASK);
+	}
+	else if (lastVAddr[1] == (adr & ~PAGE_MASK)) {
+		addr = lastPAddr[1] | (adr & PAGE_MASK);
+	}
+	else
 	{
-		u32 addr;
-		u32 rv = mmu_data_translation<MMU_TT_DWRITE, T>(adr, addr);
-		if (rv != MMU_ERROR_NONE)
+		u32 rv = mmu_data_translation<MMU_TT_DREAD, T>(adr, addr);
+		if (unlikely(rv != MMU_ERROR_NONE))
 		{
 			DoMMUException(adr, rv, MMU_TT_DWRITE);
 			return 1;
 		}
-		_vmem_writet<T>(addr, data);
-		return 0;
+		lastVAddr[lastIdx] = adr & ~PAGE_MASK;
+		lastPAddr[lastIdx] = addr & ~PAGE_MASK;
+		lastIdx ^= 1;
 	}
-
-#endif
+	_vmem_writet<T>(addr, data);
+	return 0;
+}
