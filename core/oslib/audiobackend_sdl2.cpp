@@ -19,7 +19,7 @@ static struct {
 static unsigned sample_count = 0;
 
 static SDL_AudioDeviceID recorddev;
-u8 recordbuf[480 * 2];
+u8 recordbuf[480 * 4];
 std::atomic<size_t> rec_read;
 std::atomic<size_t> rec_write;
 
@@ -195,6 +195,8 @@ static u32 sdl2_record(void* frame, u32 samples)
 	while (samples > 0)
 	{
 		u32 avail = std::min(rec_write - rec_read, sizeof(recordbuf) - rec_read);
+		if (avail == 0)
+			break;
 		avail = std::min(avail, samples);
 		memcpy((u8 *)frame + count, &recordbuf[rec_read], avail);
 		rec_read = (rec_read + avail) % sizeof(recordbuf);
