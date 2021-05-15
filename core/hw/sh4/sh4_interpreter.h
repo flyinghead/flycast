@@ -42,12 +42,6 @@ void ExecuteDelayslot();
 void ExecuteDelayslot_RTE();
 
 #define SH4_TIMESLICE 448	// at 112 Bangai-O doesn't start. 224 is ok
-							// at 448 Gundam Side Story hangs on Sega copyright screen, 224 ok, 672 ok(!)
-
-extern "C" {
 
 int UpdateSystem();
-
-ATTR_USED int UpdateSystem_INTC();
-
-}
+int UpdateSystem_INTC();

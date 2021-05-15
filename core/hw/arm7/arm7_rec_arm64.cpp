@@ -112,7 +112,7 @@ class Arm7Compiler : public MacroAssembler
 		Bl(&function_label);
 	}
 
-	Operand getOperand(ArmOp::Operand arg, const Register& scratch_reg)
+	Operand getOperand(const ArmOp::Operand& arg, const Register& scratch_reg)
 	{
 		Register rm;
 		if (arg.isNone())
@@ -691,13 +691,11 @@ public:
 
 void AArch64ArmRegAlloc::LoadReg(int host_reg, Arm7Reg armreg)
 {
-	// printf("LoadReg W%d <- r%d\n", host_reg, armreg);
 	assembler.Ldr(getReg(host_reg), arm_reg_operand(armreg));
 }
 
 void AArch64ArmRegAlloc::StoreReg(int host_reg, Arm7Reg armreg)
 {
-	// printf("StoreReg W%d -> r%d\n", host_reg, armreg);
 	assembler.Str(getReg(host_reg), arm_reg_operand(armreg));
 }
 

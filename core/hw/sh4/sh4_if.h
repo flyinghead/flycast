@@ -280,9 +280,6 @@ struct alignas(32) SQBuffer {
 };
 
 void DYNACALL do_sqw_mmu(u32 dst);
-#if HOST_CPU == CPU_ARM
-extern "C"
-#endif
 void DYNACALL do_sqw_nommu_area_3(u32 dst, const SQBuffer *sqb);
 void DYNACALL do_sqw_nommu_area_3_nonvmem(u32 dst, const SQBuffer *sqb);
 void DYNACALL do_sqw_nommu_full(u32 dst, const SQBuffer *sqb);
@@ -309,7 +306,6 @@ struct alignas(PAGE_SIZE) Sh4RCB
 };
 
 extern Sh4RCB* p_sh4rcb;
-extern u8* sh4_dyna_rcb;
 
 INLINE u32 sh4_sr_GetFull()
 {

@@ -9,7 +9,6 @@
 
 Sh4RCB* p_sh4rcb;
 sh4_if  sh4_cpu;
-u8* sh4_dyna_rcb;
 
 static INLINE void ChangeGPR()
 {

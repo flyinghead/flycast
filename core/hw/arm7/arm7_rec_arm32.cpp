@@ -23,31 +23,39 @@
 #include "arm7_rec.h"
 #include "hw/mem/_vmem.h"
 
-#define _DEVEL          1
-#define EMIT_I          aicaarm::armEmit32(I)
-#define EMIT_GET_PTR()  aicaarm::recompiler::currentCode()
-namespace aicaarm {
-    static void armEmit32(u32 emit32);
-}
-#include "arm_emitter/arm_emitter.h"
-#undef I
-using namespace ARM;
+#include <aarch32/macro-assembler-aarch32.h>
+using namespace vixl::aarch32;
 
 namespace aicaarm {
+
+class Arm32Assembler : public MacroAssembler
+{
+public:
+	Arm32Assembler() = default;
+	Arm32Assembler(u8 *buffer, size_t size) : MacroAssembler(buffer, size, A32) {}
+
+	void Finalize() {
+		FinalizeCode();
+		vmem_platform_flush_cache(GetBuffer()->GetStartAddress<void *>(), GetCursorAddress<u8 *>() - 1,
+				GetBuffer()->GetStartAddress<void *>(), GetCursorAddress<u8 *>() - 1);
+	}
+};
+
+static Arm32Assembler ass;
 
 static void (*arm_dispatch)();
 
-static void loadReg(eReg host_reg, Arm7Reg guest_reg, ArmOp::Condition cc = ArmOp::AL)
+static void loadReg(Register host_reg, Arm7Reg guest_reg, ConditionType cc = al)
 {
-	LDR(host_reg, r8, (u8*)&arm_Reg[guest_reg].I - (u8*)&arm_Reg[0].I, ARM::Offset, (ARM::ConditionCode)cc);
+	ass.Ldr(cc, host_reg, MemOperand(r8, (u8*)&arm_Reg[guest_reg].I - (u8*)&arm_Reg[0].I));
 }
 
-static void storeReg(eReg host_reg, Arm7Reg guest_reg, ArmOp::Condition cc = ArmOp::AL)
+static void storeReg(Register host_reg, Arm7Reg guest_reg, ConditionType cc = al)
 {
-	STR(host_reg, r8, (u8*)&arm_Reg[guest_reg].I - (u8*)&arm_Reg[0].I, ARM::Offset, (ARM::ConditionCode)cc);
+	ass.Str(cc, host_reg, MemOperand(r8, (u8*)&arm_Reg[guest_reg].I - (u8*)&arm_Reg[0].I));
 }
 
-static const std::array<eReg, 6> alloc_regs{
+const std::array<Register, 6> alloc_regs{
 	r5, r6, r7, r9, r10, r11
 };
 
@@ -57,19 +65,16 @@ class Arm32ArmRegAlloc : public ArmRegAlloc<alloc_regs.size(), Arm32ArmRegAlloc>
 
 	void LoadReg(int host_reg, Arm7Reg armreg, ArmOp::Condition cc = ArmOp::AL)
 	{
-		// printf("LoadReg R%d <- r%d\n", host_reg, armreg);
-		loadReg(getReg(host_reg), armreg, cc);
+		loadReg(getReg(host_reg), armreg, (ConditionType)cc);
 	}
 
 	void StoreReg(int host_reg, Arm7Reg armreg, ArmOp::Condition cc = ArmOp::AL)
 	{
-		// printf("StoreReg R%d -> r%d\n", host_reg, armreg);
-		storeReg(getReg(host_reg), armreg, cc);
+		storeReg(getReg(host_reg), armreg, (ConditionType)cc);
 	}
 
-	static eReg getReg(int i)
+	static Register getReg(int i)
 	{
-		verify(i >= 0 && (u32)i < alloc_regs.size());
 		return alloc_regs[i];
 	}
 
@@ -77,7 +82,7 @@ public:
 	Arm32ArmRegAlloc(const std::vector<ArmOp>& block_ops)
 		: super(block_ops) {}
 
-	eReg map(Arm7Reg r)
+	Register map(Arm7Reg r)
 	{
 		int i = super::map(r);
 		return getReg(i);
@@ -86,18 +91,6 @@ public:
 	friend super;
 };
 
-static void armEmit32(u32 emit32)
-{
-	if (recompiler::spaceLeft() <= 1024)
-	{
-		ERROR_LOG(AICA_ARM, "JIT buffer full: %d bytes free", recompiler::spaceLeft());
-		die("AICA ARM code buffer full");
-	}
-
-	*(u32 *)recompiler::currentCode() = emit32;
-	recompiler::advance(4);
-}
-
 static Arm32ArmRegAlloc *regalloc;
 
 static void loadFlags()
@@ -105,158 +98,117 @@ static void loadFlags()
 	//Load flags
 	loadReg(r3, RN_PSR_FLAGS);
 	//move them to flags register
-	MSR(0, 8, r3);
+	ass.Msr(APSR_nzcvq, r3);
 }
 
 static void storeFlags()
 {
 	//get results from flags register
-	MRS(r3, 0);
+	ass.Mrs(r3, APSR);
 	//Store flags
 	storeReg(r3, RN_PSR_FLAGS);
 }
 
-static u32 *startConditional(ArmOp::Condition cc)
+static Label *startConditional(ArmOp::Condition cc)
 {
 	if (cc == ArmOp::AL)
 		return nullptr;
-	verify(cc <= ArmOp::LE);
-	ARM::ConditionCode condition = (ARM::ConditionCode)((u32)cc ^ 1);
-	u32 *code = (u32 *)recompiler::currentCode();
-	JUMP((u32)code, condition);
+	ConditionType condition = (ConditionType)((u32)cc ^ 1);
+	Label *label = new Label();
+	ass.B(condition, label);
 
-	return code;
+	return label;
 }
 
-static void endConditional(u32 *pos)
+static void endConditional(Label *label)
 {
-	if (pos != nullptr)
+	if (label != nullptr)
 	{
-		u32 *curpos = (u32 *)recompiler::currentCode();
-		ARM::ConditionCode condition = (ARM::ConditionCode)(*pos >> 28);
-		recompiler::icPtr = (u8 *)pos;
-		JUMP((u32)curpos, condition);
-		recompiler::icPtr = (u8 *)curpos;
+		ass.Bind(label);
+		delete label;
 	}
 }
 
-static eReg getOperand(ArmOp::Operand arg, eReg scratch_reg)
+static Operand getOperand(const ArmOp::Operand& arg)
 {
+	Register reg;
 	if (arg.isNone())
-		return (eReg)-1;
-	else if (arg.isImmediate())
-	{
-		if (is_i8r4(arg.getImmediate()))
-			MOV(scratch_reg, arg.getImmediate());
-		else
-			MOV32(scratch_reg, arg.getImmediate());
-	}
-	else if (arg.isReg())
+		return reg;
+	if (arg.isImmediate())
 	{
 		if (!arg.isShifted())
-			return regalloc->map(arg.getReg().armreg);
-		MOV(scratch_reg, regalloc->map(arg.getReg().armreg));
+			return Operand(arg.getImmediate());
+		// Used by pc-rel ops: pc is immediate but can be shifted by reg (or even imm if op sets flags)
+		ass.Mov(r1, arg.getImmediate());
+		reg = r1;
+	}
+	else if (arg.isReg())
+		reg = regalloc->map(arg.getReg().armreg);
+
+	if (arg.isShifted())
+	{
+		if (!arg.shift_imm)
+		{
+			// Shift by register
+			Register shift_reg = regalloc->map(arg.shift_reg.armreg);
+			return Operand(reg, (ShiftType)arg.shift_type, shift_reg);
+		}
+		else
+		{
+			// Shift by immediate
+			if (arg.shift_value != 0 || arg.shift_type != ArmOp::LSL)	// LSL 0 is a no-op
+			{
+				if (arg.shift_value == 0 && arg.shift_type == ArmOp::ROR)
+					return Operand(reg, RRX);
+				else
+				{
+					u32 shiftValue = arg.shift_value;
+					if (shiftValue == 0 && (arg.shift_type == ArmOp::LSR || arg.shift_type == ArmOp::ASR))
+						shiftValue = 32;
+					return Operand(reg, (ShiftType)arg.shift_type, shiftValue);
+				}
+			}
+		}
 	}
 
-	if (!arg.shift_imm)
-	{
-		// Shift by register
-		eReg shift_reg = regalloc->map(arg.shift_reg.armreg);
-		MOV(scratch_reg, scratch_reg, (ARM::ShiftOp)arg.shift_type, shift_reg);
-	}
-	else
-	{
-		// Shift by immediate
-		if (arg.shift_value != 0 || arg.shift_type != ArmOp::LSL)	// LSL 0 is a no-op
-			MOV(scratch_reg, scratch_reg, (ARM::ShiftOp)arg.shift_type, arg.shift_value);
-	}
+	return reg;
 
+}
+
+static Register loadOperand(const ArmOp::Operand& arg, Register scratch_reg)
+{
+	Operand operand = getOperand(arg);
+	if (operand.IsPlainRegister())
+		return operand.GetBaseRegister();
+	ass.Mov(scratch_reg, operand);
 	return scratch_reg;
 }
 
-template <void (*OpImmediate)(eReg rd, eReg rn, s32 imm8, bool S, ConditionCode cc),
-		void (*OpShiftImm)(eReg rd, eReg rn, eReg rm, ShiftOp Shift, u32 ImmShift, bool S, ConditionCode cc),
-		void (*OpShiftReg)(eReg rd, eReg rn, eReg rm, ShiftOp Shift, eReg shift_reg, bool S, ConditionCode cc)>
+template <void (MacroAssembler::*Op)(FlagsUpdate flags, Condition cond, Register rd, Register rn, const Operand& operand)>
 void emit3ArgOp(const ArmOp& op)
 {
-	eReg rn;
-	const ArmOp::Operand *op2;
-	if (op.op_type != ArmOp::MOV && op.op_type != ArmOp::MVN)
-	{
-		rn = getOperand(op.arg[0], r2);
-		op2 = &op.arg[1];
-	}
-	else
-		op2 = &op.arg[0];
-
-	eReg rd = regalloc->map(op.rd.getReg().armreg);
-
 	bool set_flags = op.flags & ArmOp::OP_SETS_FLAGS;
-	eReg rm;
-	if (op2->isImmediate())
-	{
-		if (is_i8r4(op2->getImmediate()) && op2->shift_imm)
-		{
-			OpImmediate(rd, rn, op2->getImmediate(), set_flags, CC_AL);
-			return;
-		}
-		MOV32(r0, op2->getImmediate());
-		rm = r0;
-	}
-	else if (op2->isReg())
-		rm = regalloc->map(op2->getReg().armreg);
-
-	if (op2->shift_imm)
-		OpShiftImm(rd, rn, rm, (ShiftOp)op2->shift_type, op2->shift_value, set_flags, CC_AL);
-	else
-	{
-		// Shift by reg
-		eReg shift_reg = regalloc->map(op2->shift_reg.armreg);
-		OpShiftReg(rd, rn, rm, (ShiftOp)op2->shift_type, shift_reg, set_flags, CC_AL);
-	}
+	Register rd = regalloc->map(op.rd.getReg().armreg);
+	Register rn = loadOperand(op.arg[0], r2);
+	Operand operand = getOperand(op.arg[1]);
+	(ass.*Op)((FlagsUpdate)set_flags, al, rd, rn, operand);
 }
 
-template <void (*OpImmediate)(eReg rd, s32 imm8, bool S, ConditionCode cc),
-		void (*OpShiftImm)(eReg rd, eReg rm, ShiftOp Shift, u32 ImmShift, bool S, ConditionCode cc),
-		void (*OpShiftReg)(eReg rd, eReg rm, ShiftOp Shift, eReg shift_reg, bool S, ConditionCode cc)>
+template <void (MacroAssembler::*Op)(FlagsUpdate flags, Condition cond, Register rd, const Operand& operand)>
 void emit2ArgOp(const ArmOp& op)
 {
-	// Used for rd (MOV, MVN) and rn (CMP, TST, ...)
-	eReg rd;
-	const ArmOp::Operand *op2;
-	if (op.op_type != ArmOp::MOV && op.op_type != ArmOp::MVN)
-	{
-		rd = getOperand(op.arg[0], r2);
-		op2 = &op.arg[1];
-	}
-	else {
-		op2 = &op.arg[0];
-		rd = regalloc->map(op.rd.getReg().armreg);
-	}
-
 	bool set_flags = op.flags & ArmOp::OP_SETS_FLAGS;
-	eReg rm;
-	if (op2->isImmediate())
-	{
-		if (is_i8r4(op2->getImmediate()) && op2->shift_imm)
-		{
-			OpImmediate(rd, op2->getImmediate(), set_flags, CC_AL);
-			return;
-		}
-		MOV32(r0, op2->getImmediate());
-		rm = r0;
-	}
-	else if (op2->isReg())
-		rm = regalloc->map(op2->getReg().armreg);
+	Register rd = regalloc->map(op.rd.getReg().armreg);
+	Operand operand = getOperand(op.arg[0]);
+	(ass.*Op)((FlagsUpdate)set_flags, al, rd, operand);
+}
 
-	if (op2->shift_imm)
-		OpShiftImm(rd, rm, (ShiftOp)op2->shift_type, op2->shift_value, set_flags, CC_AL);
-	else
-	{
-		// Shift by reg
-		eReg shift_reg = regalloc->map(op2->shift_reg.armreg);
-		OpShiftReg(rd, rm, (ShiftOp)op2->shift_type, shift_reg, set_flags, CC_AL);
-	}
+template <void (MacroAssembler::*Op)(Condition cond, Register rn, const Operand& operand)>
+void emitTestOp(const ArmOp& op)
+{
+	Register rn = loadOperand(op.arg[0], r2);
+	Operand operand = getOperand(op.arg[1]);
+	(ass.*Op)(al, rn, operand);
 }
 
 static void emitDataProcOp(const ArmOp& op)
@@ -264,52 +216,52 @@ static void emitDataProcOp(const ArmOp& op)
 	switch (op.op_type)
 	{
 	case ArmOp::AND:
-		emit3ArgOp<&AND, &AND, &AND>(op);
+		emit3ArgOp<&MacroAssembler::And>(op);
 		break;
 	case ArmOp::EOR:
-		emit3ArgOp<&EOR, &EOR, &EOR>(op);
+		emit3ArgOp<&MacroAssembler::Eor>(op);
 		break;
 	case ArmOp::SUB:
-		emit3ArgOp<&SUB, &SUB, &SUB>(op);
+		emit3ArgOp<&MacroAssembler::Sub>(op);
 		break;
 	case ArmOp::RSB:
-		emit3ArgOp<&RSB, &RSB, &RSB>(op);
+		emit3ArgOp<&MacroAssembler::Rsb>(op);
 		break;
 	case ArmOp::ADD:
-		emit3ArgOp<&ADD, &ADD, &ADD>(op);
+		emit3ArgOp<&MacroAssembler::Add>(op);
 		break;
 	case ArmOp::ORR:
-		emit3ArgOp<&ORR, &ORR, &ORR>(op);
+		emit3ArgOp<&MacroAssembler::Orr>(op);
 		break;
 	case ArmOp::BIC:
-		emit3ArgOp<&BIC, &BIC, &BIC>(op);
+		emit3ArgOp<&MacroAssembler::Bic>(op);
 		break;
 	case ArmOp::ADC:
-		emit3ArgOp<&ADC, &ADC, &ADC>(op);
+		emit3ArgOp<&MacroAssembler::Adc>(op);
 		break;
 	case ArmOp::SBC:
-		emit3ArgOp<&SBC, &SBC, &SBC>(op);
+		emit3ArgOp<&MacroAssembler::Sbc>(op);
 		break;
 	case ArmOp::RSC:
-		emit3ArgOp<&RSC, &RSC, &RSC>(op);
+		emit3ArgOp<&MacroAssembler::Rsc>(op);
 		break;
 	case ArmOp::TST:
-		emit2ArgOp<&TST, &TST, &TST>(op);
+		emitTestOp<&MacroAssembler::Tst>(op);
 		break;
 	case ArmOp::TEQ:
-		emit2ArgOp<&TEQ, &TEQ, &TEQ>(op);
+		emitTestOp<&MacroAssembler::Teq>(op);
 		break;
 	case ArmOp::CMP:
-		emit2ArgOp<&CMP, &CMP, &CMP>(op);
+		emitTestOp<&MacroAssembler::Cmp>(op);
 		break;
 	case ArmOp::CMN:
-		emit2ArgOp<&CMN, &CMN, &CMN>(op);
+		emitTestOp<&MacroAssembler::Cmn>(op);
 		break;
 	case ArmOp::MOV:
-		emit2ArgOp<&MOV, &MOV, &MOV>(op);
+		emit2ArgOp<&MacroAssembler::Mov>(op);
 		break;
 	case ArmOp::MVN:
-		emit2ArgOp<&MVN, &MVN, &MVN>(op);
+		emit2ArgOp<&MacroAssembler::Mvn>(op);
 		break;
 	default:
 		die("invalid op");
@@ -317,85 +269,91 @@ static void emitDataProcOp(const ArmOp& op)
 	}
 }
 
-static void call(u32 addr, ARM::ConditionCode cc = ARM::CC_AL)
+static void jump(const void *code)
 {
-	storeFlags();
-	CALL(addr, cc);
-	loadFlags();
+	ptrdiff_t offset = reinterpret_cast<uintptr_t>(code) - ass.GetBuffer()->GetStartAddress<uintptr_t>();
+	Label code_label(offset);
+	ass.B(&code_label);
+}
+
+static void call(const void *code, bool saveFlags = true)
+{
+	if (saveFlags)
+		storeFlags();
+	ptrdiff_t offset = reinterpret_cast<uintptr_t>(code) - ass.GetBuffer()->GetStartAddress<uintptr_t>();
+	Label code_label(offset);
+	ass.Bl(&code_label);
+	if (saveFlags)
+		loadFlags();
 }
 
 static void emitMemOp(const ArmOp& op)
 {
-	eReg addr_reg = getOperand(op.arg[0], r2);
+	Register addr_reg = loadOperand(op.arg[0], r2);
 	if (op.pre_index)
 	{
 		const ArmOp::Operand& offset = op.arg[1];
 		if (offset.isReg())
 		{
-			eReg offset_reg = getOperand(offset, r3);
+			Register offset_reg = loadOperand(offset, r3);
 			if (op.add_offset)
-				ADD(r0, addr_reg, offset_reg);
+				ass.Add(r0, addr_reg, offset_reg);
 			else
-				SUB(r0, addr_reg, offset_reg);
+				ass.Sub(r0, addr_reg, offset_reg);
 			addr_reg = r0;
 		}
 		else if (offset.isImmediate() && offset.getImmediate() != 0)
 		{
-			if (is_i8r4(offset.getImmediate()))
+			if (ImmediateA32::IsImmediateA32(offset.getImmediate()))
 			{
 				if (op.add_offset)
-					ADD(r0, addr_reg, offset.getImmediate());
+					ass.Add(r0, addr_reg, offset.getImmediate());
 				else
-					SUB(r0, addr_reg, offset.getImmediate());
+					ass.Sub(r0, addr_reg, offset.getImmediate());
 			}
 			else
 			{
-				MOV32(r0, offset.getImmediate());
+				ass.Mov(r0, offset.getImmediate());
 				if (op.add_offset)
-					ADD(r0, addr_reg, r0);
+					ass.Add(r0, addr_reg, r0);
 				else
-					SUB(r0, addr_reg, r0);
+					ass.Sub(r0, addr_reg, r0);
 			}
 			addr_reg = r0;
 		}
 	}
-	if (addr_reg != r0)
-		MOV(r0, addr_reg);
+	if (!addr_reg.Is(r0))
+		ass.Mov(r0, addr_reg);
 	if (op.op_type == ArmOp::STR)
 	{
 		if (op.arg[2].isImmediate())
-		{
-			if (is_i8r4(op.arg[2].getImmediate()))
-				MOV(r1, op.arg[2].getImmediate());
-			else
-				MOV32(r1, op.arg[2].getImmediate());
-		}
+			ass.Mov(r1, op.arg[2].getImmediate());
 		else
-			MOV(r1, regalloc->map(op.arg[2].getReg().armreg));
+			ass.Mov(r1, regalloc->map(op.arg[2].getReg().armreg));
 	}
 
-	call((u32)recompiler::getMemOp(op.op_type == ArmOp::LDR, op.byte_xfer));
+	call(recompiler::getMemOp(op.op_type == ArmOp::LDR, op.byte_xfer));
 
 	if (op.op_type == ArmOp::LDR)
-		MOV(regalloc->map(op.rd.getReg().armreg), r0);
+		ass.Mov(regalloc->map(op.rd.getReg().armreg), r0);
 
 }
 
 static void emitBranch(const ArmOp& op)
 {
 	if (op.arg[0].isImmediate())
-		MOV32(r0, op.arg[0].getImmediate());
+		ass.Mov(r0, op.arg[0].getImmediate());
 	else
 	{
-		MOV(r0, regalloc->map(op.arg[0].getReg().armreg));
-		BIC(r0, r0, 3);
+		ass.Mov(r0, regalloc->map(op.arg[0].getReg().armreg));
+		ass.Bic(r0, r0, 3);
 	}
 	storeReg(r0, R15_ARM_NEXT);
 }
 
 static void emitMRS(const ArmOp& op)
 {
-	call((u32)CPUUpdateCPSR);
+	call((void *)CPUUpdateCPSR);
 
 	if (op.spsr)
 		loadReg(regalloc->map(op.rd.getReg().armreg), RN_SPSR);
@@ -406,34 +364,34 @@ static void emitMRS(const ArmOp& op)
 static void emitMSR(const ArmOp& op)
 {
 	if (op.arg[0].isImmediate())
-		MOV32(r0, op.arg[0].getImmediate());
+		ass.Mov(r0, op.arg[0].getImmediate());
 	else
-		MOV(r0, regalloc->map(op.arg[0].getReg().armreg));
+		ass.Mov(r0, regalloc->map(op.arg[0].getReg().armreg));
 
 	if (op.spsr)
-		call((u32)recompiler::MSR_do<1>);
+		call((void *)recompiler::MSR_do<1>);
 	else
-		call((u32)recompiler::MSR_do<0>);
+		call((void *)recompiler::MSR_do<0>);
 }
 
 static void emitFallback(const ArmOp& op)
 {
 	//Call interpreter
-	MOV32(r0, op.arg[0].getImmediate());
-	call((u32)recompiler::interpret);
+	ass.Mov(r0, op.arg[0].getImmediate());
+	call((void *)recompiler::interpret);
 }
 
 void arm7backend_compile(const std::vector<ArmOp>& block_ops, u32 cycles)
 {
-	void *codestart = recompiler::currentCode();
+	ass = Arm32Assembler((u8 *)recompiler::currentCode(), recompiler::spaceLeft());
 
 	loadReg(r2, CYCL_CNT);
-	while (!is_i8r4(cycles))
+	while (!ImmediateA32::IsImmediateA32(cycles))
 	{
-		SUB(r2, r2, 256);
+		ass.Sub(r2, r2, 256);
 		cycles -= 256;
 	}
-	SUB(r2, r2, cycles);
+	ass.Sub(r2, r2, cycles);
 	storeReg(r2, CYCL_CNT);
 
 	regalloc = new Arm32ArmRegAlloc(block_ops);
@@ -445,10 +403,10 @@ void arm7backend_compile(const std::vector<ArmOp>& block_ops, u32 cycles)
 		const ArmOp& op = block_ops[i];
 		DEBUG_LOG(AICA_ARM, "-> %s", op.toString().c_str());
 
-		u32 *condPos = nullptr;
+		Label *condLabel = nullptr;
 
 		if (op.op_type != ArmOp::FALLBACK)
-			condPos = startConditional(op.condition);
+			condLabel = startConditional(op.condition);
 
 		regalloc->load(i);
 
@@ -472,14 +430,14 @@ void arm7backend_compile(const std::vector<ArmOp>& block_ops, u32 cycles)
 
 		regalloc->store(i);
 
-		endConditional(condPos);
+		endConditional(condLabel);
 	}
 	storeFlags();
 
-	JUMP((uintptr_t)arm_dispatch);
+	jump((void *)arm_dispatch);
 
-	vmem_platform_flush_cache(codestart, (u8*)recompiler::currentCode() - 1,
-			codestart, (u8*)recompiler::currentCode() - 1);
+	ass.Finalize();
+	recompiler::advance(ass.GetBuffer()->GetSizeInBytes());
 
 	delete regalloc;
 	regalloc = nullptr;
@@ -493,65 +451,53 @@ void arm7backend_flush()
 		verify(arm_compilecode != nullptr);
 		return;
 	}
-	void *codestart = recompiler::currentCode();
-	uintptr_t arm_exit = (uintptr_t)codestart;
-	uintptr_t arm_dofiq = (uintptr_t)codestart;
+	ass = Arm32Assembler((u8 *)recompiler::currentCode(), recompiler::spaceLeft());
+	Label arm_exit;
+	Label arm_dofiq;
 
 	// arm_mainloop:
-	arm_mainloop = (arm_mainloop_t)codestart;
-	u32 regList = (1 << r4) | (1 << r5) | (1 << r6) | (1 << r7)
-		 | (1 << r8) | (1 << r9) | (1 << r10) | (1 << r11) | (1 << lr);
-	PUSH(regList);
-	SUB(sp, sp, 4);							// 8-byte stack alignment
+	arm_mainloop = ass.GetCursorAddress<arm_mainloop_t>();
+	RegisterList regList = RegisterList::Union(
+			RegisterList(r4, r5, r6, r7),
+			RegisterList(r8, r9, r10, r11),
+			RegisterList(lr));
+	ass.Push(regList);
+	ass.Sub(sp, sp, 4);						// 8-byte stack alignment
 
-	MOV(r8, r0);							// load regs
-	MOV(r4, r1);							// load entry points
+	ass.Mov(r8, r0);						// load regs
+	ass.Mov(r4, r1);						// load entry points
 
 	// arm_dispatch:
-	arm_dispatch = (void (*)())recompiler::currentCode();
+	arm_dispatch = ass.GetCursorAddress<void (*)()>();
 	loadReg(r3, CYCL_CNT);					// load cycle counter
 	loadReg(r0, R15_ARM_NEXT);				// load Next PC
 	loadReg(r1, INTR_PEND);					// load Interrupt
-	CMP(r3, 0);
-	u8 *exit_fixup = (u8 *)recompiler::currentCode();
-	JUMP(arm_exit, CC_LE);					// exit if counter <= 0
-	UBFX(r2, r0, 2, 21);					// assuming 8 MB address space max (23 bits)
-	CMP(r1, 0);
-	u8 *dofiq_fixup = (u8 *)recompiler::currentCode();
-	JUMP(arm_dofiq, CC_NE);					// if interrupt pending, handle it
+	ass.Cmp(r3, 0);
+	ass.B(le, &arm_exit);					// exit if counter <= 0
+	ass.Ubfx(r2, r0, 2, 21);				// assuming 8 MB address space max (23 bits)
+	ass.Cmp(r1, 0);
+	ass.B(ne, &arm_dofiq);					// if interrupt pending, handle it
 
-	LDR(pc, r4, r2, AddrMode::Offset, true, ShiftOp::S_LSL, 2);
+	ass.Ldr(pc, MemOperand(r4, r2, LSL, 2));
 
 	// arm_dofiq:
-	arm_dofiq = (uintptr_t)recompiler::currentCode();
-	// fix up
-	u8 *icptr_save = (u8 *)recompiler::currentCode();
-	recompiler::icPtr = dofiq_fixup;
-	JUMP(arm_dofiq, CC_NE);
-	recompiler::icPtr = icptr_save;
-	// end fix up
-	CALL((uintptr_t)CPUFiq);
-	JUMP((uintptr_t)arm_dispatch);
+	ass.Bind(&arm_dofiq);
+	call((void *)CPUFiq, false);
+	jump((void *)arm_dispatch);
 
 	// arm_exit:
-	arm_exit = (uintptr_t)recompiler::currentCode();
-	// fix up
-	icptr_save = (u8 *)recompiler::currentCode();
-	recompiler::icPtr = exit_fixup;
-	JUMP(arm_exit, CC_LE);
-	recompiler::icPtr = icptr_save;
-	// end fix up
-	ADD(sp, sp, 4);
-	POP(regList);
-	MOV(pc, lr);
+	ass.Bind(&arm_exit);
+	ass.Add(sp, sp, 4);
+	ass.Pop(regList);
+	ass.Mov(pc, lr);
 
 	// arm_compilecode:
-	arm_compilecode = (void (*)())recompiler::currentCode();
-	CALL((uintptr_t)recompiler::compile);
-	JUMP((uintptr_t)arm_dispatch);
+	arm_compilecode = ass.GetCursorAddress<void (*)()>();
+	call((void *)recompiler::compile, false);
+	jump((void *)arm_dispatch);
 
-	vmem_platform_flush_cache(codestart, (u8*)recompiler::currentCode() - 1,
-			codestart, (u8*)recompiler::currentCode() - 1);
+	ass.Finalize();
+	recompiler::advance(ass.GetBuffer()->GetSizeInBytes());
 }
 
 }

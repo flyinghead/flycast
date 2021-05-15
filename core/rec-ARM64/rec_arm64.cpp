@@ -1946,25 +1946,7 @@ private:
 			else
 			{
 				Mov(w1, reg2);
-
-				switch(size)
-				{
-				case 1:
-					GenCallRuntime((void (*)())ptr);
-					break;
-
-				case 2:
-					GenCallRuntime((void (*)())ptr);
-					break;
-
-				case 4:
-					GenCallRuntime((void (*)())ptr);
-					break;
-
-				default:
-					die("Invalid size");
-					break;
-				}
+				GenCallRuntime((void (*)())ptr);
 			}
 		}
 
