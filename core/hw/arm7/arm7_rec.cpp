@@ -518,7 +518,8 @@ static void block_ssa_pass()
 					newop.arg[1] = it->arg[1];
 					if (it->arg[1].shift_type == ArmOp::RRX && it->arg[1].shift_value == 0)
 						newop.flags |= ArmOp::OP_READS_FLAGS;
-					it->flags &= ~ArmOp::OP_READS_FLAGS;
+					if (it->condition == ArmOp::AL)
+						it->flags &= ~ArmOp::OP_READS_FLAGS;
 					it->write_back = false;
 					it->arg[1] = ArmOp::Operand();
 					if (it->pre_index)
