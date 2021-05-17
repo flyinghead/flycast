@@ -499,8 +499,6 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/hw/maple/maple_if.cpp
         core/hw/maple/maple_if.h
         core/hw/maple/maple_jvs.cpp
-        core/hw/mem/vmem32.cpp
-        core/hw/mem/vmem32.h
         core/hw/mem/_vmem.cpp
         core/hw/mem/_vmem.h
         core/hw/modem/modem.cpp
