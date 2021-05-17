@@ -190,7 +190,7 @@ void emu_gles_init(int width, int height)
     CFDictionaryRef dmOptions = CFDictionaryCreate(kCFAllocatorDefault, (const void**) dmKeys, (const void**) dmValues, 1, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks );
     CFArrayRef allDisplayModes = CGDisplayCopyAllDisplayModes(displayID, dmOptions);
     CFIndex n = CFArrayGetCount(allDisplayModes);
-    for(CFIndex i = 0; i < n; ++i)
+    for (CFIndex i = 0; i < n; ++i)
     {
         CGDisplayModeRef m = (CGDisplayModeRef)CFArrayGetValueAtIndex(allDisplayModes, i);
         CGFloat width = CGDisplayModeGetPixelWidth(m);
@@ -198,7 +198,7 @@ void emu_gles_init(int width, int height)
         CGFloat modeWidth = CGDisplayModeGetWidth(m);
         
         //Only check 1x mode
-        if(width == modeWidth)
+        if (width == modeWidth)
         {
             if (CGDisplayModeGetIOFlags(m) & kDisplayModeNativeFlag)
             {
@@ -208,7 +208,7 @@ void emu_gles_init(int width, int height)
             }
             
             //Get the largest size even if kDisplayModeNativeFlag is not present e.g. iMac 27-Inch with 5K Retina
-            if(width > displayNativeSize.width)
+            if (width > displayNativeSize.width)
             {
                 displayNativeSize.width = width;
                 displayNativeSize.height = height;
