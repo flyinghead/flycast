@@ -3,6 +3,7 @@
 #include "hw/sh4/sh4_mmr.h"
 #include "hw/mem/_vmem.h"
 #include "cfg/option.h"
+#include "hw/sh4/dyna/ngen.h"
 
 //Translation Types
 //Opcode read
@@ -64,7 +65,7 @@ void mmu_set_state();
 void mmu_flush_table();
 void mmu_raise_exception(u32 mmu_error, u32 address, u32 am);
 
-static INLINE bool mmu_enabled()
+static inline bool mmu_enabled()
 {
 	return config::FullMMU && CCN_MMUCR.AT == 1;
 }
@@ -76,7 +77,7 @@ template<u32 translation_type>
 u32 mmu_full_SQ(u32 va, u32& rv);
 
 #ifdef FAST_MMU
-static INLINE u32 mmu_instruction_translation(u32 va, u32& rv)
+static inline u32 mmu_instruction_translation(u32 va, u32& rv)
 {
 	if (va & 1)
 		return MMU_ERROR_BADADDR;
@@ -120,57 +121,38 @@ template<typename T> void DYNACALL mmu_WriteMem(u32 adr, T data);
 
 bool mmu_TranslateSQW(u32 adr, u32* out);
 
-extern u32 lastVAddr[2];
-extern u32 lastPAddr[2];
-extern u8 lastIdx;
+// maps 4K virtual page number to physical address
+extern u32 mmuAddressLUT[0x100000];
 
-template<typename T>
-std::pair<T, bool> DYNACALL mmu_ReadMemNoEx(u32 adr)
-{
-	u32 addr;
-	if (lastVAddr[0] == (adr & ~PAGE_MASK)) {
-		addr = lastPAddr[0] | (adr & PAGE_MASK);
-	}
-	else if (lastVAddr[1] == (adr & ~PAGE_MASK)) {
-		addr = lastPAddr[1] | (adr & PAGE_MASK);
-	}
+static inline void mmuAddressLUTFlush(bool full) {
+	if (full)
+		memset(mmuAddressLUT, 0, sizeof(mmuAddressLUT));
 	else
 	{
-		u32 rv = mmu_data_translation<MMU_TT_DREAD, T>(adr, addr);
-		if (unlikely(rv != MMU_ERROR_NONE))
-		{
-			DoMMUException(adr, rv, MMU_TT_DREAD);
-			return std::make_pair(0, true);
-		}
-		lastVAddr[lastIdx] = adr & ~PAGE_MASK;
-		lastPAddr[lastIdx] = addr & ~PAGE_MASK;
-		lastIdx ^= 1;
+		constexpr u32 slotPages = (32 * 1024 * 1024) >> 12;
+		memset(mmuAddressLUT, 0, slotPages * sizeof(u32));	// flush slot 0
 	}
-	return std::make_pair(_vmem_readt<T, T>(addr), false);
 }
 
-template<typename T>
-u32 DYNACALL mmu_WriteMemNoEx(u32 adr, T data)
+static inline u32 mmuDynarecLookup(u32 vaddr, u32 write, u32 pc)
 {
-	u32 addr;
-	if (lastVAddr[0] == (adr & ~PAGE_MASK)) {
-		addr = lastPAddr[0] | (adr & PAGE_MASK);
-	}
-	else if (lastVAddr[1] == (adr & ~PAGE_MASK)) {
-		addr = lastPAddr[1] | (adr & PAGE_MASK);
-	}
+	u32 paddr;
+	u32 rv;
+	if (write)
+		rv = mmu_data_translation<MMU_TT_DWRITE, u32>(vaddr, paddr);
 	else
+		rv = mmu_data_translation<MMU_TT_DREAD, u32>(vaddr, paddr);
+	if (unlikely(rv != MMU_ERROR_NONE))
 	{
-		u32 rv = mmu_data_translation<MMU_TT_DREAD, T>(adr, addr);
-		if (unlikely(rv != MMU_ERROR_NONE))
-		{
-			DoMMUException(adr, rv, MMU_TT_DWRITE);
-			return 1;
-		}
-		lastVAddr[lastIdx] = adr & ~PAGE_MASK;
-		lastPAddr[lastIdx] = addr & ~PAGE_MASK;
-		lastIdx ^= 1;
+		Sh4cntx.pc = pc;
+		DoMMUException(vaddr, rv, write ? MMU_TT_DWRITE : MMU_TT_DREAD);
+		host_context_t ctx;
+		ngen_HandleException(ctx);
+		((void (*)())ctx.pc)();
+		// not reached
+		return 0;
 	}
-	_vmem_writet<T>(addr, data);
-	return 0;
+	mmuAddressLUT[vaddr >> 12] = paddr & ~0xfff;
+
+	return paddr;
 }

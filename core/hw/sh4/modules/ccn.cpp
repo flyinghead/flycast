@@ -4,7 +4,6 @@
 #include "ccn.h"
 #include "mmu.h"
 #include "hw/mem/_vmem.h"
-#include "hw/mem/vmem32.h"
 #include "hw/pvr/pvr_mem.h"
 #include "hw/sh4/sh4_if.h"
 #include "hw/sh4/sh4_mmr.h"
@@ -50,8 +49,8 @@ void CCN_PTEH_write(u32 addr, u32 value)
 {
 	CCN_PTEH_type temp;
 	temp.reg_data = value;
-	if (temp.ASID != CCN_PTEH.ASID && vmem32_enabled())
-		vmem32_flush_mmu();
+	if (temp.ASID != CCN_PTEH.ASID)
+		mmuAddressLUTFlush(false);
 
 	CCN_PTEH = temp;
 }
@@ -65,10 +64,8 @@ void CCN_MMUCR_write(u32 addr, u32 value)
 
 	if (temp.TI != 0)
 	{
-		//sh4_cpu.ResetCache();
+		DEBUG_LOG(SH4, "Full MMU flush");
 		mmu_flush_table();
-		if (vmem32_enabled())
-			vmem32_flush_mmu();
 
 		temp.TI = 0;
 	}

@@ -54,10 +54,6 @@ constexpr u32 ITLB_LRU_AND[4] =
 	0x3F,//xx1x11
 };
 
-u32 lastVAddr[2] { 1, 1 };
-u32 lastPAddr[2];
-u8 lastIdx;
-
 #ifndef FAST_MMU
 //sync mem mapping to mmu , suspend compiled blocks if needed.entry is a UTLB entry # , -1 is for full sync
 bool UTLB_Sync(u32 entry)
@@ -511,12 +507,7 @@ retry_ITLB_Match:
 void mmu_set_state()
 {
 	if (CCN_MMUCR.AT == 1 && config::FullMMU)
-	{
 		NOTICE_LOG(SH4, "Enabling Full MMU support");
-		_vmem_enable_mmu(true);
-	}
-	else
-		_vmem_enable_mmu(false);
 
 	SetMemoryHandlers();
 }
@@ -565,8 +556,7 @@ void mmu_flush_table()
 
 	for (u32 i = 0; i < 64; i++)
 		UTLB[i].Data.V = 0;
-	lastVAddr[0] = 1;
-	lastVAddr[1] = 1;
+	mmuAddressLUTFlush(true);
 }
 #endif
 

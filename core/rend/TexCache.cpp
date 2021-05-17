@@ -3,7 +3,6 @@
 #include "deps/xbrz/xbrz.h"
 #include "hw/pvr/pvr_mem.h"
 #include "hw/mem/_vmem.h"
-#include "hw/mem/vmem32.h"
 #include "hw/sh4/modules/mmu.h"
 
 #include <algorithm>
@@ -255,8 +254,6 @@ bool VramLockedWrite(u8* address)
 //also frees the handle
 static void libCore_vramlock_Unlock_block_wb(vram_block* block)
 {
-	if (mmu_enabled())
-		vmem32_unprotect_vram(block->start, block->len);
 	vramlock_list_remove(block);
 	free(block);
 }
