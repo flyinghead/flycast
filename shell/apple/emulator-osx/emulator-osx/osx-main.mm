@@ -196,13 +196,11 @@ void emu_gles_init(int width, int height)
         CGFloat width = CGDisplayModeGetPixelWidth(m);
         CGFloat height = CGDisplayModeGetPixelHeight(m);
         CGFloat modeWidth = CGDisplayModeGetWidth(m);
-        BOOL isNative = (CGDisplayModeGetIOFlags(m) & kDisplayModeNativeFlag) ? true : false;
-        CFRelease(m);
         
         //Only check 1x mode
         if(width == modeWidth)
         {
-            if(isNative)
+            if (CGDisplayModeGetIOFlags(m) & kDisplayModeNativeFlag)
             {
                 displayNativeSize.width = width;
                 displayNativeSize.height = height;
