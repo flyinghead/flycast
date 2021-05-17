@@ -24,6 +24,14 @@ workflows:
             export GIT_HASH=`git log --pretty=format:'%h' -n 1`
             envman add --key GIT_HASH --value $GIT_HASH
             envman add --key GIT_BUILD --value `git describe --all --always | sed 's/remotes\/origin/heads/'`-$GIT_HASH
+    - script@1.1.5:
+        inputs:
+        - content: |
+            #!/bin/bash
+            set -ex
+            cd shell/apple
+            mkdir artifacts
+            brew install --build-from-source ./sdl2.rb
     - certificate-and-profile-installer@1.10.1: {}
     - recreate-user-schemes@1.0.2:
         inputs:
@@ -65,9 +73,6 @@ workflows:
         inputs:
         - project_path: "$BITRISE_PROJECT_PATH"
     - xcode-archive-mac@1.6.2:
-        deps:
-          brew:
-          - name: sdl2
         inputs:
         - project_path: "$BITRISE_PROJECT_PATH"
         - scheme: "$BITRISE_SCHEME"
