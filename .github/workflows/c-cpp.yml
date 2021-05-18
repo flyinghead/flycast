@@ -19,7 +19,10 @@ jobs:
     steps:
       - name: Set up build environment (macos-latest)
         run: |
-          brew install ccache flac libao libomp pulseaudio sdl2 zlib
+          brew install ccache flac libao libomp pulseaudio zlib
+          cd shell/apple
+          mkdir artifacts
+          brew install --build-from-source ./sdl2.rb
           echo "/usr/local/opt/ccache/libexec" >> $GITHUB_PATH
           echo "CCACHE_DIR=/tmp/ccache" >> $GITHUB_ENV
         if: matrix.config.os == 'macos-latest'

@@ -126,11 +126,11 @@ extern u32 mmuAddressLUT[0x100000];
 
 static inline void mmuAddressLUTFlush(bool full) {
 	if (full)
-		memset(mmuAddressLUT, 0, sizeof(mmuAddressLUT));
+		memset(mmuAddressLUT, 0, sizeof(mmuAddressLUT) / 2);	// flush user memory
 	else
 	{
 		constexpr u32 slotPages = (32 * 1024 * 1024) >> 12;
-		memset(mmuAddressLUT, 0, slotPages * sizeof(u32));	// flush slot 0
+		memset(mmuAddressLUT, 0, slotPages * sizeof(u32));		// flush slot 0
 	}
 }
 
@@ -152,7 +152,8 @@ static inline u32 mmuDynarecLookup(u32 vaddr, u32 write, u32 pc)
 		// not reached
 		return 0;
 	}
-	mmuAddressLUT[vaddr >> 12] = paddr & ~0xfff;
+	if (vaddr >> 31 == 0)
+		mmuAddressLUT[vaddr >> 12] = paddr & ~0xfff;
 
 	return paddr;
 }

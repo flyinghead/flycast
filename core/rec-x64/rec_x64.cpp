@@ -775,7 +775,15 @@ private:
 
 			mov(eax, call_regs[0]);
 			shr(eax, 12);
-			mov(eax, dword[(uintptr_t)mmuAddressLUT + rax * 4]);
+			if ((uintptr_t)mmuAddressLUT >> 32 != 0)
+			{
+				mov(r9, (uintptr_t)mmuAddressLUT);
+				mov(eax, dword[r9 + rax * 4]);
+			}
+			else
+			{
+				mov(eax, dword[(uintptr_t)mmuAddressLUT + rax * 4]);
+			}
 			test(eax, eax);
 			jne(inCache);
 			mov(call_regs[1], write);

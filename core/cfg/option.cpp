@@ -25,7 +25,6 @@ namespace config {
 Option<bool> DynarecEnabled("Dynarec.Enabled", true);
 Option<bool> DynarecIdleSkip("Dynarec.idleskip", true);
 Option<bool> DynarecSafeMode("Dynarec.safe-mode");
-Option<bool> DisableVmem32("Dynarec.DisableVmem32");
 
 // General
 
