@@ -20,9 +20,6 @@ jobs:
       - name: Set up build environment (macos-latest)
         run: |
           brew install ccache flac libao libomp pulseaudio zlib
-          cd shell/apple
-          mkdir artifacts
-          brew install --build-from-source ./sdl2.rb
           echo "/usr/local/opt/ccache/libexec" >> $GITHUB_PATH
           echo "CCACHE_DIR=/tmp/ccache" >> $GITHUB_ENV
         if: matrix.config.os == 'macos-latest'
@@ -48,6 +45,13 @@ jobs:
 
       - name: Create artifact directory
         run: mkdir -p build/artifact
+
+      - name: Build SDL (macos-latest)
+        run: |
+          cd shell/apple
+          mkdir artifacts
+          brew install --build-from-source ./sdl2.rb
+        if: matrix.config.os == 'macos-latest'
 
       - name: CMake
         run: |
