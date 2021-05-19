@@ -141,8 +141,7 @@ public:
 		//E8-FF Reserved
 
 		_unique_id = "x11_keyboard";
-		if (!find_mapping())
-			input_mapper = std::make_shared<KeyboardInputMapping>();
+		loadMapping();
 	}
 
 protected:

@@ -27,67 +27,13 @@
 static Window x11_win;
 Display *x11_disp;
 
-class MouseInputMapping : public InputMapping
+class X11Mouse : public SystemMouse
 {
 public:
-	MouseInputMapping()
+	X11Mouse() : SystemMouse("X11")
 	{
-		name = "X11 Mouse";
-		set_button(DC_BTN_A, Button1);
-		set_button(DC_BTN_B, Button3);
-		set_button(DC_BTN_START, Button2);
-
-		dirty = false;
-	}
-};
-
-class X11Mouse : public GamepadDevice
-{
-public:
-	X11Mouse(int maple_port) : GamepadDevice(maple_port, "X11")
-	{
-		_name = "Mouse";
 		_unique_id = "x11_mouse";
-		if (!find_mapping())
-			input_mapper = std::make_shared<MouseInputMapping>();
-	}
-
-	bool gamepad_btn_input(u32 code, bool pressed) override
-	{
-		if (gui_is_open() && !is_detecting_input())
-			// Don't register mouse clicks as gamepad presses when gui is open
-			// This makes the gamepad presses to be handled first and the mouse position to be ignored
-			// TODO Make this generic
-			return false;
-		else
-			return GamepadDevice::gamepad_btn_input(code, pressed);
-	}
-
-	virtual const char *get_button_name(u32 code) override
-	{
-		switch (code)
-		{
-		case Button1:
-			return "Left Button";
-		case Button2:
-			return "Middle Button";
-		case Button3:
-			return "Right Button";
-		case Button4:
-			return "Scroll Up";
-		case Button5:
-			return "Scroll Down";
-		case 6:
-			return "Scroll Left";
-		case 7:
-			return "Scroll Right";
-		case 8:
-			return "Button 4";
-		case 9:
-			return "Button 5";
-		default:
-			return nullptr;
-		}
+		loadMapping();
 	}
 };
 
@@ -268,62 +214,38 @@ void input_x11_handle()
 				break;
 
 			case FocusOut:
-				{
-					if (capturing_mouse)
-						x11_uncapture_mouse();
-					capturing_mouse = false;
-				}
+				if (capturing_mouse)
+					x11_uncapture_mouse();
+				capturing_mouse = false;
 				break;
 
 			case ButtonPress:
 			case ButtonRelease:
-				gui_set_mouse_position(e.xbutton.x, e.xbutton.y);
-				x11Mouse->gamepad_btn_input(e.xbutton.button, e.type == ButtonPress);
+				switch (e.xbutton.button)
 				{
-					u32 button_mask = 0;
-					switch (e.xbutton.button)
-					{
-					case Button1:		// Left button
-						gui_set_mouse_button(0, e.type == ButtonPress);
-						button_mask = 1 << 2;
-						break;
-					case Button2:		// Middle button
-						gui_set_mouse_button(2, e.type == ButtonPress);
-						button_mask = 1 << 3;
-						break;
-					case Button3:		// Right button
-						gui_set_mouse_button(1, e.type == ButtonPress);
-						button_mask = 1 << 1;
-						break;
-					case Button4: 		// Mouse wheel up
-						gui_set_mouse_wheel(-16);
-						mo_wheel_delta[0] -= 16;
-						break;
-					case Button5: 		// Mouse wheel down
-						gui_set_mouse_wheel(16);
-						mo_wheel_delta[0] += 16;
-						break;
-					default:
-						break;
-					}
-
-					if (button_mask)
-					{
-						if (e.type == ButtonPress)
-							mo_buttons[0] &= ~button_mask;
-						else
-							mo_buttons[0] |= button_mask;
-					}
+				case Button1:		// Left button
+					x11Mouse->setButton(Mouse::LEFT_BUTTON, e.type == ButtonPress);
+					break;
+				case Button2:		// Middle button
+					x11Mouse->setButton(Mouse::MIDDLE_BUTTON, e.type == ButtonPress);
+					break;
+				case Button3:		// Right button
+					x11Mouse->setButton(Mouse::RIGHT_BUTTON, e.type == ButtonPress);
+					break;
+				case Button4: 		// Mouse wheel up
+					x11Mouse->setWheel(-1);
+					break;
+				case Button5: 		// Mouse wheel down
+					x11Mouse->setWheel(1);
+					break;
+				default:
+					break;
 				}
 				/* no break */
 
 			case MotionNotify:
-				gui_set_mouse_position(e.xmotion.x, e.xmotion.y);
-				// For Light gun
-				SetMousePosition(e.xmotion.x, e.xmotion.y, x11_width, x11_height);
-				// For mouse
+				x11Mouse->setAbsPos(e.xmotion.x, e.xmotion.y, x11_width, x11_height);
 				mouse_moved = true;
-
 				break;
 		}
 	}
@@ -346,7 +268,7 @@ void input_x11_init()
 {
 	x11Keyboard = std::make_shared<X11Keyboard>(0);
 	GamepadDevice::Register(x11Keyboard);
-	x11Mouse = std::make_shared<X11Mouse>(0);
+	x11Mouse = std::make_shared<X11Mouse>();
 	GamepadDevice::Register(x11Mouse);
 }
 

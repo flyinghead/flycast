@@ -31,8 +31,7 @@
 #include "rend/mainui.h"
 
 static std::shared_ptr<OSXKeyboard> keyboard(0);
-static std::shared_ptr<OSXMouseGamepadDevice> mouse_gamepad(0);
-unsigned int *pmo_buttons;
+static std::shared_ptr<OSXMouse> mouse;
 static UInt32 keyboardModifiers;
 
 int darw_printf(const char* text, ...)
@@ -85,8 +84,8 @@ void os_SetupInput()
 
 	keyboard = std::make_shared<OSXKeyboard>(0);
 	GamepadDevice::Register(keyboard);
-	mouse_gamepad = std::make_shared<OSXMouseGamepadDevice>(0);
-	GamepadDevice::Register(mouse_gamepad);
+	mouse = std::make_shared<OSXMouse>();
+	GamepadDevice::Register(mouse);
 }
 
 void common_linux_setup();
@@ -139,9 +138,6 @@ int emu_single_frame(int w, int h)
 
 void emu_gles_init(int width, int height)
 {
-	// work around https://bugs.swift.org/browse/SR-12263
-	pmo_buttons = mo_buttons;
-
     char *home = getenv("HOME");
     if (home != NULL)
     {
@@ -259,20 +255,32 @@ void emu_character_input(const char *characters) {
 
 void emu_mouse_buttons(int button, bool pressed)
 {
-    gui_set_mouse_button(button - 1, pressed);
-	mouse_gamepad->gamepad_btn_input(button, pressed);
+    Mouse::Button dcButton;
+    switch (button) {
+    case 1:
+    	dcButton = Mouse::LEFT_BUTTON;
+    	break;
+    case 2:
+    	dcButton = Mouse::RIGHT_BUTTON;
+    	break;
+    case 3:
+    	dcButton = Mouse::MIDDLE_BUTTON;
+    	break;
+    default:
+    	dcButton = Mouse::BUTTON_4;
+    	break;
+    }
+	mouse->setButton(dcButton, pressed);
 }
 
 void emu_mouse_wheel(float v)
 {
-    mo_wheel_delta[0] += v;
-    gui_set_mouse_wheel(v);
+    mouse->setWheel((int)v);
 }
 
 void emu_set_mouse_position(int x, int y, int width, int height)
 {
-    gui_set_mouse_position(x, y);
-	SetMousePosition(x, y, width, height);
+    mouse->setAbsPos(x, y, width, height);
 }
 
 std::string os_Locale(){

@@ -110,10 +110,7 @@ public:
 		_unique_id = "sdl_joystick_" + std::to_string(sdl_joystick_instance);
 		INFO_LOG(INPUT, "SDL: Opened joystick %d on port %d: '%s' unique_id=%s", sdl_joystick_instance, maple_port, _name.c_str(), _unique_id.c_str());
 
-		if (!find_mapping())
-			input_mapper = std::make_shared<DefaultInputMapping>(joystick_idx);
-		else
-			INFO_LOG(INPUT, "using custom mapping '%s'", input_mapper->name.c_str());
+		loadMapping();
 		sdl_haptic = SDL_HapticOpenFromJoystick(sdl_joystick);
 		if (SDL_HapticRumbleInit(sdl_haptic) != 0)
 		{
@@ -193,62 +190,16 @@ private:
 
 std::map<SDL_JoystickID, std::shared_ptr<SDLGamepad>> SDLGamepad::sdl_gamepads;
 
-class MouseInputMapping : public InputMapping
+class SDLMouse : public Mouse
 {
 public:
-	MouseInputMapping()
-	{
-		name = "SDL Mouse";
-		set_button(DC_BTN_A, SDL_BUTTON_LEFT);
-		set_button(DC_BTN_B, SDL_BUTTON_RIGHT);
-		set_button(DC_BTN_START, SDL_BUTTON_MIDDLE);
-
-		dirty = false;
-	}
-};
-
-class SDLMouse : public GamepadDevice
-{
-public:
-	SDLMouse() : GamepadDevice(0, "SDL")
+	SDLMouse() : Mouse("SDL")
 	{
 		this->_name = "Default Mouse";
 		this->_unique_id = "sdl_mouse";
-		if (!find_mapping())
-			input_mapper = std::make_shared<MouseInputMapping>();
+		loadMapping();
 	}
 
-	bool gamepad_btn_input(u32 code, bool pressed) override
-	{
-		if (gui_is_open() && !is_detecting_input())
-			// Don't register mouse clicks as gamepad presses when gui is open
-			// This makes the gamepad presses to be handled first and the mouse position to be ignored
-			// TODO Make this generic
-			return false;
-		else
-			return GamepadDevice::gamepad_btn_input(code, pressed);
-	}
-
-	virtual const char *get_button_name(u32 code) override
-	{
-		switch(code)
-		{
-		case SDL_BUTTON_LEFT:
-			return "Left Button";
-		case SDL_BUTTON_RIGHT:
-			return "Right Button";
-		case SDL_BUTTON_MIDDLE:
-			return "Middle Button";
-		case SDL_BUTTON_X1:
-			return "X1 Button";
-		case SDL_BUTTON_X2:
-			return "X2 Button";
-		default:
-			return nullptr;
-		}
-	}
-
-	void setMouseAbsPos(int x, int y);
-	void setMouseRelPos(int deltax, int deltay);
-	void setMouseButton(u32 button, bool pressed);
+	void setAbsPos(int x, int y);
 };
+

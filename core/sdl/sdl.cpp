@@ -94,13 +94,15 @@ static void emuEventCallback(Event event)
 		gameRunning = false;
 		if (!config::UseRawInput)
 			SDL_SetRelativeMouseMode(SDL_FALSE);
-		else
-			SDL_ShowCursor(SDL_ENABLE);
+		SDL_ShowCursor(SDL_ENABLE);
 		SDL_SetWindowTitle(window, "Flycast");
 		break;
 	case Event::Resume:
 		gameRunning = true;
 		captureMouse(mouseCaptured);
+		if (window_fullscreen && !mouseCaptured)
+			SDL_ShowCursor(SDL_DISABLE);
+
 		break;
 	default:
 		break;
@@ -182,40 +184,11 @@ void input_sdl_init()
 #endif
 }
 
-inline void SDLMouse::setMouseAbsPos(int x, int y) {
-	if (maple_port() < 0)
-		return;
-
+inline void SDLMouse::setAbsPos(int x, int y) {
 	int width, height;
 	SDL_GetWindowSize(window, &width, &height);
 	if (width != 0 && height != 0)
-		SetMousePosition(x, y, width, height, maple_port());
-}
-
-inline void SDLMouse::setMouseRelPos(int deltax, int deltay) {
-	if (maple_port() < 0)
-		return;
-	SetRelativeMousePosition(deltax, deltay, maple_port());
-}
-
-#define SET_FLAG(field, mask, expr) (field) = ((expr) ? ((field) & ~(mask)) : ((field) | (mask)))
-
-inline void SDLMouse::setMouseButton(u32 button, bool pressed) {
-	if (maple_port() < 0)
-		return;
-
-	switch (button)
-	{
-	case SDL_BUTTON_LEFT:
-		SET_FLAG(mo_buttons[maple_port()], 1 << 2, pressed);
-		break;
-	case SDL_BUTTON_RIGHT:
-		SET_FLAG(mo_buttons[maple_port()], 1 << 1, pressed);
-		break;
-	case SDL_BUTTON_MIDDLE:
-		SET_FLAG(mo_buttons[maple_port()], 1 << 3, pressed);
-		break;
-	}
+		Mouse::setAbsPos(x, y, width, height);
 }
 
 void input_sdl_handle()
@@ -238,9 +211,17 @@ void input_sdl_handle()
 				if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_RETURN && (event.key.keysym.mod & KMOD_ALT))
 				{
 					if (window_fullscreen)
+					{
 						SDL_SetWindowFullscreen(window, 0);
+						if (!gameRunning || !mouseCaptured)
+							SDL_ShowCursor(SDL_ENABLE);
+					}
 					else
+					{
 						SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN_DESKTOP);
+						if (gameRunning)
+							SDL_ShowCursor(SDL_DISABLE);
+					}
 					window_fullscreen = !window_fullscreen;
 				}
 				else if (event.type == SDL_KEYDOWN && (event.key.keysym.mod & KMOD_LALT) && (event.key.keysym.mod & KMOD_LCTRL))
@@ -267,6 +248,16 @@ void input_sdl_handle()
 #ifdef _WIN32
                		theDXContext.resize();
 #endif
+				}
+				else if (event.window.event == SDL_WINDOWEVENT_FOCUS_GAINED)
+				{
+					if (window_fullscreen && gameRunning)
+						SDL_ShowCursor(SDL_DISABLE);
+				}
+				else if (event.window.event == SDL_WINDOWEVENT_FOCUS_LOST)
+				{
+					if (window_fullscreen)
+						SDL_ShowCursor(SDL_ENABLE);
 				}
 				break;
 #endif
@@ -332,12 +323,14 @@ void input_sdl_handle()
 				if (!config::UseRawInput)
 				{
 					if (mouseCaptured && gameRunning)
-						sdl_mouse->setMouseRelPos(event.motion.xrel, event.motion.yrel);
+						sdl_mouse->setRelPos(event.motion.xrel, event.motion.yrel);
 					else
-						sdl_mouse->setMouseAbsPos(event.motion.x, event.motion.y);
-					sdl_mouse->setMouseButton(SDL_BUTTON_LEFT, event.motion.state & SDL_BUTTON_LMASK);
-					sdl_mouse->setMouseButton(SDL_BUTTON_RIGHT, event.motion.state & SDL_BUTTON_RMASK);
-					sdl_mouse->setMouseButton(SDL_BUTTON_MIDDLE, event.motion.state & SDL_BUTTON_MMASK);
+						sdl_mouse->setAbsPos(event.motion.x, event.motion.y);
+					sdl_mouse->setButton(Mouse::LEFT_BUTTON, event.motion.state & SDL_BUTTON_LMASK);
+					sdl_mouse->setButton(Mouse::RIGHT_BUTTON, event.motion.state & SDL_BUTTON_RMASK);
+					sdl_mouse->setButton(Mouse::MIDDLE_BUTTON, event.motion.state & SDL_BUTTON_MMASK);
+					sdl_mouse->setButton(Mouse::BUTTON_4, event.motion.state & SDL_BUTTON_X1MASK);
+					sdl_mouse->setButton(Mouse::BUTTON_5, event.motion.state & SDL_BUTTON_X2MASK);
 				}
 				else if (mouseCaptured && gameRunning)
 				{
@@ -352,37 +345,31 @@ void input_sdl_handle()
 
 			case SDL_MOUSEBUTTONDOWN:
 			case SDL_MOUSEBUTTONUP:
-				{
-					gui_set_mouse_position(event.button.x, event.button.y);
-					int button;
-					switch (event.button.button)
-					{
-					case SDL_BUTTON_LEFT:
-						button = 0;
-						break;
-					case SDL_BUTTON_RIGHT:
-						button = 1;
-						break;
-					case SDL_BUTTON_MIDDLE:
-						button = 2;
-						break;
-					case SDL_BUTTON_X1:
-						button = 3;
-						break;
-					default:
-						button = -1;
-						break;
-					}
-					if (button != -1)
-						gui_set_mouse_button(button, event.button.state == SDL_PRESSED);
-				}
+				gui_set_mouse_position(event.button.x, event.button.y);
+				gui_set_mouse_button(event.button.button - 1, event.button.state == SDL_PRESSED);
 				checkRawInput();
 				if (!config::UseRawInput)
 				{
 					if (!mouseCaptured || !gameRunning)
-						sdl_mouse->setMouseAbsPos(event.button.x, event.button.y);
-					sdl_mouse->setMouseButton(event.button.button, event.button.state == SDL_PRESSED);
-					sdl_mouse->gamepad_btn_input(event.button.button, event.button.state == SDL_PRESSED);
+						sdl_mouse->setAbsPos(event.button.x, event.button.y);
+					bool pressed = event.button.state == SDL_PRESSED;
+					switch (event.button.button) {
+					case SDL_BUTTON_LEFT:
+						sdl_mouse->setButton(Mouse::LEFT_BUTTON, pressed);
+						break;
+					case SDL_BUTTON_RIGHT:
+						sdl_mouse->setButton(Mouse::RIGHT_BUTTON, pressed);
+						break;
+					case SDL_BUTTON_MIDDLE:
+						sdl_mouse->setButton(Mouse::MIDDLE_BUTTON, pressed);
+						break;
+					case SDL_BUTTON_X1:
+						sdl_mouse->setButton(Mouse::BUTTON_4, pressed);
+						break;
+					case SDL_BUTTON_X2:
+						sdl_mouse->setButton(Mouse::BUTTON_5, pressed);
+						break;
+					}
 				}
 				break;
 
@@ -390,7 +377,7 @@ void input_sdl_handle()
 				gui_set_mouse_wheel(-event.wheel.y * 35);
 				checkRawInput();
 				if (!config::UseRawInput)
-					mo_wheel_delta[0] -= event.wheel.y * 35;
+					sdl_mouse->setWheel(-event.wheel.y);
 				break;
 #endif
 			case SDL_JOYDEVICEADDED:

@@ -28,7 +28,6 @@ void emu_set_mouse_position(int x, int y, int width, int height);
 void emu_mouse_wheel(float v);
 
 bool emu_frame_pending();
-extern unsigned int *pmo_buttons;
 
 #ifdef __cplusplus
 }

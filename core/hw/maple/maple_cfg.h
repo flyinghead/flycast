@@ -61,7 +61,7 @@ public:
 	void SetVibration(float power, float inclination, u32 duration_ms);
 	void GetInput(PlainJoystickState* pjs);
 	void GetAbsCoordinates(int& x, int& y);
-	void GetMouseInput(u32& buttons, int& x, int& y, int& wheel);
+	void GetMouseInput(u8& buttons, int& x, int& y, int& wheel);
 	void SetImage(u8 *img);
 
 private:

@@ -50,11 +50,12 @@ class KeyboardDevice : public GamepadDevice
 {
 protected:
 	KeyboardDevice(int maple_port, const char* apiName, bool remappable = true)
-		: GamepadDevice(maple_port, apiName, remappable)
-	{
+		: GamepadDevice(maple_port, apiName, remappable) {
 		_name = "Keyboard";
-		if (!find_mapping())
-			input_mapper = std::make_shared<KeyboardInputMapping>();
+	}
+
+	virtual std::shared_ptr<InputMapping> getDefaultMapping() override {
+		return std::make_shared<KeyboardInputMapping>();
 	}
 
 public:

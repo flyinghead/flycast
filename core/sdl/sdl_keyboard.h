@@ -7,8 +7,7 @@ class SDLKeyboardDevice : public KeyboardDeviceTemplate<SDL_Scancode>
 public:
 	SDLKeyboardDevice(int maple_port) : KeyboardDeviceTemplate(maple_port, "SDL") {
 		_unique_id = "sdl_keyboard";
-		if (!find_mapping())
-			input_mapper = std::make_shared<KeyboardInputMapping>();
+		loadMapping();
 	}
 
 	virtual const char *get_button_name(u32 code) override

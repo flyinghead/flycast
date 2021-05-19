@@ -22,6 +22,7 @@
 #include "oslib/oslib.h"
 #include "rend/gui.h"
 #include "emulator.h"
+#include "hw/maple/maple_devs.h"
 
 #include <algorithm>
 #include <climits>
@@ -444,6 +445,54 @@ void GamepadDevice::SaveMaplePorts()
 		if (gamepad != NULL && !gamepad->unique_id().empty())
 			cfgSaveInt("input", MAPLE_PORT_CFG_PREFIX + gamepad->unique_id(), gamepad->maple_port());
 	}
+}
+
+void Mouse::setAbsPos(int x, int y, int width, int height) {
+	SetMousePosition(x, y, width, height, maple_port());
+}
+
+void Mouse::setRelPos(int deltax, int deltay) {
+	SetRelativeMousePosition(deltax, deltay, maple_port());
+}
+
+void Mouse::setWheel(int delta) {
+	if (maple_port() >= 0 && maple_port() < ARRAY_SIZE(mo_wheel_delta))
+		mo_wheel_delta[maple_port()] += delta;
+}
+
+void Mouse::setButton(Button button, bool pressed)
+{
+	if (maple_port() >= 0 && maple_port() < ARRAY_SIZE(mo_buttons))
+	{
+		if (pressed)
+			mo_buttons[maple_port()] &= ~(1 << (int)button);
+		else
+			mo_buttons[maple_port()] |= 1 << (int)button;
+	}
+	if (gui_is_open() && !is_detecting_input())
+		// Don't register mouse clicks as gamepad presses when gui is open
+		// This makes the gamepad presses to be handled first and the mouse position to be ignored
+		return;
+	gamepad_btn_input(button, pressed);
+}
+
+
+void SystemMouse::setAbsPos(int x, int y, int width, int height) {
+	gui_set_mouse_position(x, y);
+	Mouse::setAbsPos(x, y, width, height);
+}
+
+void SystemMouse::setButton(Button button, bool pressed) {
+	int uiBtn = (int)button - 1;
+	if (uiBtn < 2)
+		uiBtn ^= 1;
+	gui_set_mouse_button(uiBtn, pressed);
+	Mouse::setButton(button, pressed);
+}
+
+void SystemMouse::setWheel(int delta) {
+	gui_set_mouse_wheel(delta * 35);
+	Mouse::setWheel(delta);
 }
 
 #ifdef TEST_AUTOMATION

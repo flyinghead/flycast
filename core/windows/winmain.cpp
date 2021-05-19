@@ -4,13 +4,14 @@
 #include "hw/mem/vmem32.h"
 #include "stdclass.h"
 #include "cfg/cfg.h"
-#include "xinput_gamepad.h"
 #include "win_keyboard.h"
 #include "hw/sh4/dyna/blockmanager.h"
 #include "log/LogManager.h"
 #include "wsi/context.h"
 #if defined(USE_SDL)
 #include "sdl/sdl.h"
+#else
+#include "xinput_gamepad.h"
 #endif
 #include "hw/maple/maple_devs.h"
 #include "emulator.h"
@@ -166,7 +167,7 @@ static void checkRawInput()
 		rawinput::term();
 		keyboard = std::make_shared<Win32KeyboardDevice>(0);
 		GamepadDevice::Register(keyboard);
-		mouse = std::make_shared<WinMouse>(0);
+		mouse = std::make_shared<WinMouse>();
 		GamepadDevice::Register(mouse);
 	}
 }
@@ -390,34 +391,23 @@ static LRESULT CALLBACK WndProc2(HWND hWnd, UINT message, WPARAM wParam, LPARAM 
 		switch (message)
 		{
 		case WM_LBUTTONDOWN:
-			if (!mouseCaptured && !config::UseRawInput)
-				mouse->gamepad_btn_input(0, true);
-			gui_set_mouse_button(0, true);
-			break;
 		case WM_LBUTTONUP:
 			if (!mouseCaptured && !config::UseRawInput)
-				mouse->gamepad_btn_input(0, false);
-			gui_set_mouse_button(0, false);
+				mouse->setButton(Mouse::LEFT_BUTTON, message == WM_LBUTTONDOWN);
+			gui_set_mouse_button(0, message == WM_LBUTTONDOWN);
 			break;
+
 		case WM_MBUTTONDOWN:
-			if (!mouseCaptured && !config::UseRawInput)
-				mouse->gamepad_btn_input(1, true);
-			gui_set_mouse_button(2, true);
-			break;
 		case WM_MBUTTONUP:
 			if (!mouseCaptured && !config::UseRawInput)
-				mouse->gamepad_btn_input(1, false);
-			gui_set_mouse_button(2, false);
+				mouse->setButton(Mouse::MIDDLE_BUTTON, message == WM_MBUTTONDOWN);
+			gui_set_mouse_button(2, message == WM_MBUTTONDOWN);
 			break;
 		case WM_RBUTTONDOWN:
-			if (!mouseCaptured && !config::UseRawInput)
-				mouse->gamepad_btn_input(2, true);
-			gui_set_mouse_button(1, true);
-			break;
 		case WM_RBUTTONUP:
 			if (!mouseCaptured && !config::UseRawInput)
-				mouse->gamepad_btn_input(2, false);
-			gui_set_mouse_button(1, false);
+				mouse->setButton(Mouse::RIGHT_BUTTON, message == WM_RBUTTONDOWN);
+			gui_set_mouse_button(1, message == WM_RBUTTONDOWN);
 			break;
 		}
 		if (mouseCaptured)
@@ -433,24 +423,23 @@ static LRESULT CALLBACK WndProc2(HWND hWnd, UINT message, WPARAM wParam, LPARAM 
 		{
 			int xPos = GET_X_LPARAM(lParam);
 			int yPos = GET_Y_LPARAM(lParam);
-			SetMousePosition(xPos, yPos, screen_width, screen_height);
+			mouse->setAbsPos(xPos, yPos, screen_width, screen_height);
 
-			mo_buttons[0] = 0xffffffff;
 			if (wParam & MK_LBUTTON)
-				mo_buttons[0] &= ~(1 << 2);
+				mouse->setButton(Button::LEFT_BUTTON, true);
 			if (wParam & MK_MBUTTON)
-				mo_buttons[0] &= ~(1 << 3);
+				mouse->setButton(Button::MIDDLE_BUTTON, true);
 			if (wParam & MK_RBUTTON)
-				mo_buttons[0] &= ~(1 << 1);
+				mouse->setButton(Button::RIGHT_BUTTON, true);
 		}
 		if (message != WM_MOUSEMOVE)
 			return 0;
 		break;
 	case WM_MOUSEWHEEL:
-		gui_set_mouse_wheel(-(float)GET_WHEEL_DELTA_WPARAM(wParam)/(float)WHEEL_DELTA * 16);
+		gui_set_mouse_wheel(-(float)GET_WHEEL_DELTA_WPARAM(wParam) / (float)WHEEL_DELTA * 16);
 		checkRawInput();
 		if (!config::UseRawInput)
-			mo_wheel_delta[0] -= (float)GET_WHEEL_DELTA_WPARAM(wParam)/(float)WHEEL_DELTA * 16;
+			mouse->setWheel(-GET_WHEEL_DELTA_WPARAM(wParam) / WHEEL_DELTA);
 		break;
 
 	case WM_KEYDOWN:

@@ -25,6 +25,7 @@
 #define CALLBACK
 #endif
 
+extern int screen_width, screen_height;
 HWND getNativeHwnd();
 
 namespace rawinput {
@@ -32,8 +33,6 @@ namespace rawinput {
 static std::map<HANDLE, std::shared_ptr<RawMouse>> mice;
 static std::map<HANDLE, std::shared_ptr<RawKeyboard>> keyboards;
 static HWND hWnd;
-
-#define SET_FLAG(field, mask, expr) (field) = ((expr) ? ((field) & ~(mask)) : ((field) | (mask)))
 
 const u8 Ps2toUsb[0x80] {
 		// 00
@@ -198,42 +197,22 @@ const u8 Ps2toUsbE0[][2] {
 };
 
 RawMouse::RawMouse(int maple_port, const std::string& name, const std::string& uniqueId, HANDLE handle) :
-		GamepadDevice(maple_port, "RAW"), handle(handle)
+		Mouse("RAW", maple_port), handle(handle)
 {
 	this->_name = name;
 	this->_unique_id = uniqueId;
 	std::replace(this->_unique_id.begin(), this->_unique_id.end(), '=', '_');
 	std::replace(this->_unique_id.begin(), this->_unique_id.end(), '[', '_');
 	std::replace(this->_unique_id.begin(), this->_unique_id.end(), ']', '_');
-	if (!find_mapping())
-		input_mapper = std::make_shared<RawMouseInputMapping>();
+	loadMapping();
 
-	SetMousePosition(screen_width / 2, screen_height / 2, screen_width, screen_height, maple_port);
+	setAbsPos(screen_width / 2, screen_height / 2, screen_width, screen_height);
 }
 
-void RawMouse::buttonInput(u32 buttonId, u16 flags, u16 downFlag, u16 upFlag) {
-	if (flags & downFlag)
-		gamepad_btn_input(buttonId, true);
-	else if (flags & upFlag)
-		gamepad_btn_input(buttonId, false);
-
-	if (maple_port() >= 0 && (flags & (downFlag | upFlag)))
-	{
-		switch (buttonId)
-		{
-		case 0:		// left button
-			SET_FLAG(mo_buttons[maple_port()], 1 << 2, flags & downFlag);
-			break;
-		case 1:		// middle button
-			SET_FLAG(mo_buttons[maple_port()], 1 << 3, flags & downFlag);
-			break;
-		case 2:		// right button
-			SET_FLAG(mo_buttons[maple_port()], 1 << 1, flags & downFlag);
-			break;
-		default:
-			break;
-		}
-	}
+void RawMouse::buttonInput(Button button, u16 flags, u16 downFlag, u16 upFlag)
+{
+	if (flags & (downFlag | upFlag))
+		setButton(button, flags & downFlag);
 }
 
 void RawMouse::updateState(RAWMOUSE* state)
@@ -246,23 +225,17 @@ void RawMouse::updateState(RAWMOUSE* state)
 
 		POINT pt { long(state->lLastX / 65535.0f * width), long(state->lLastY / 65535.0f * height) };
 		ScreenToClient(getNativeHwnd(), &pt);
-		SetMousePosition(pt.x, pt.y, screen_width, screen_height, maple_port());
+		setAbsPos(pt.x, pt.y, screen_width, screen_height);
 	}
 	else if (state->lLastX != 0 || state->lLastY != 0)
-		SetRelativeMousePosition(state->lLastX, state->lLastY, maple_port());
-	buttonInput(0, state->usButtonFlags, RI_MOUSE_LEFT_BUTTON_DOWN, RI_MOUSE_LEFT_BUTTON_UP);
-	buttonInput(1, state->usButtonFlags, RI_MOUSE_MIDDLE_BUTTON_DOWN, RI_MOUSE_MIDDLE_BUTTON_UP);
-	buttonInput(2, state->usButtonFlags, RI_MOUSE_RIGHT_BUTTON_DOWN, RI_MOUSE_RIGHT_BUTTON_UP);
-	buttonInput(3, state->usButtonFlags, RI_MOUSE_BUTTON_4_DOWN, RI_MOUSE_BUTTON_4_UP);
-	buttonInput(4, state->usButtonFlags, RI_MOUSE_BUTTON_5_DOWN, RI_MOUSE_BUTTON_5_UP);
-	if (state->usButtonFlags & RI_MOUSE_WHEEL)
-	{
-		// TODO wheel
-//		if ((SHORT)state->usButtonData > 0)
-//			InterlockedExchange(&mouse->whl_u, 1);
-//		else if ((SHORT)state->usButtonData < 0)
-//			InterlockedExchange(&mouse->whl_d, 1);
-	}
+		setRelPos(state->lLastX, state->lLastY);
+	buttonInput(LEFT_BUTTON, state->usButtonFlags, RI_MOUSE_LEFT_BUTTON_DOWN, RI_MOUSE_LEFT_BUTTON_UP);
+	buttonInput(MIDDLE_BUTTON, state->usButtonFlags, RI_MOUSE_MIDDLE_BUTTON_DOWN, RI_MOUSE_MIDDLE_BUTTON_UP);
+	buttonInput(RIGHT_BUTTON, state->usButtonFlags, RI_MOUSE_RIGHT_BUTTON_DOWN, RI_MOUSE_RIGHT_BUTTON_UP);
+	buttonInput(BUTTON_4, state->usButtonFlags, RI_MOUSE_BUTTON_4_DOWN, RI_MOUSE_BUTTON_4_UP);
+	buttonInput(BUTTON_5, state->usButtonFlags, RI_MOUSE_BUTTON_5_DOWN, RI_MOUSE_BUTTON_5_UP);
+	if ((state->usButtonFlags & RI_MOUSE_WHEEL))
+		setWheel(-(short)state->usButtonData / WHEEL_DELTA);
 }
 
 static LRESULT CALLBACK rawWindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)

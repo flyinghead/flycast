@@ -1107,7 +1107,7 @@ struct maple_keyboard : maple_base
 // bit 1: Right button (B)
 // bit 2: Left button (A)
 // bit 3: Wheel button
-u32 mo_buttons[4] = { 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF };
+u8 mo_buttons[4] = { 0xFF, 0xFF, 0xFF, 0xFF };
 // Relative mouse coordinates [-512:511]
 f32 mo_x_delta[4];
 f32 mo_y_delta[4];
@@ -1171,14 +1171,19 @@ struct maple_mouse : maple_base
 
 		case MDCF_GetCondition:
 			{
-				u32 buttons;
+				u8 buttons;
 				int x, y, wheel;
 				config->GetMouseInput(buttons, x, y, wheel);
 
 				w32(MFID_9_Mouse);
-				//struct data
-				//int32 buttons       ; digital buttons bitfield (little endian)
-				w32(buttons);
+				// buttons (RLDUSABC, where A is left btn, B is right, and S is middle/scrollwheel)
+				w8(buttons);
+				// options
+				w8(0);
+				// axes overflow
+				w8(0);
+				// reserved
+				w8(0);
 				//int16 axis1         ; horizontal movement (0-$3FF) (little endian)
 				w16(mo_cvt(x));
 				//int16 axis2         ; vertical movement (0-$3FF) (little endian)

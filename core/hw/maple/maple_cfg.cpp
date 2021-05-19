@@ -152,7 +152,7 @@ void MapleConfigMap::GetAbsCoordinates(int& x, int& y)
 	y = mo_y_abs[playerNum()];
 }
 
-void MapleConfigMap::GetMouseInput(u32& buttons, int& x, int& y, int& wheel)
+void MapleConfigMap::GetMouseInput(u8& buttons, int& x, int& y, int& wheel)
 {
 	int playerNum = this->playerNum();
 	buttons = mo_buttons[playerNum];

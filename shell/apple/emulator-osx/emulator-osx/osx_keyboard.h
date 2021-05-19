@@ -15,8 +15,7 @@ public:
 	{
 		_name = "Keyboard";
 		_unique_id = "osx_keyboard";
-		if (!find_mapping())
-			input_mapper = std::make_shared<KeyboardInputMapping>();
+		loadMapping();
 
 		//04-1D Letter keys A-Z (in alphabetic order)
 		kb_map[kVK_ANSI_A] = 0x04;
