@@ -1176,14 +1176,20 @@ struct maple_mouse : maple_base
 
 		case MDCF_GetCondition:
 			{
-				u32 buttons;
+				u8 buttons;
 				int x, y, wheel;
 				config->GetMouseInput(buttons, x, y, wheel);
 
 				w32(MFID_9_Mouse);
 				//struct data
-				//int32 buttons       ; digital buttons bitfield (little endian)
-				w32(buttons);
+				//int8 buttons       ; buttons (RLDUSABC, where A is left btn, B is right, and S is middle/scrollwheel)
+				w8(buttons);
+				//int8 options
+				w8(0);
+				//int8 axes overflow
+				w8(0);
+				//int8 reserved
+				w8(0);
 				//int16 axis1         ; horizontal movement (0-$3FF) (little endian)
 				w16(mo_cvt(x));
 				//int16 axis2         ; vertical movement (0-$3FF) (little endian)

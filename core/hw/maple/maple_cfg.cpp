@@ -152,10 +152,10 @@ void MapleConfigMap::GetAbsCoordinates(int& x, int& y)
 	y = mo_y_abs[playerNum()];
 }
 
-void MapleConfigMap::GetMouseInput(u32& buttons, int& x, int& y, int& wheel)
+void MapleConfigMap::GetMouseInput(u8& buttons, int& x, int& y, int& wheel)
 {
 	int playerNum = this->playerNum();
-	buttons = mo_buttons[playerNum];
+	buttons = mo_buttons[playerNum] & 0xff;
 	x = (int)std::round(mo_x_delta[playerNum]);
 	y = (int)std::round(mo_y_delta[playerNum]);
 	wheel = (int)std::round(mo_wheel_delta[playerNum]);
