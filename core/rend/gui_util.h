@@ -61,5 +61,6 @@ void OptionComboBox(const char *name, config::Option<int>& option, const char *v
 
 static inline void centerNextWindow()
 {
-	ImGui::SetNextWindowPos(ImVec2(screen_width / 2.f, screen_height / 2.f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+	ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x / 2.f, ImGui::GetIO().DisplaySize.y / 2.f),
+			ImGuiCond_Always, ImVec2(0.5f, 0.5f));
 }

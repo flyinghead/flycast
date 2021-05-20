@@ -24,7 +24,7 @@
 void gui_cheats()
 {
     centerNextWindow();
-    ImGui::SetNextWindowSize(ImVec2(std::min<float>(screen_width, 600 * scaling), std::min<float>(screen_height, 400 * scaling)));
+    ImGui::SetNextWindowSize(ImVec2(std::min(ImGui::GetIO().DisplaySize.x, 600 * scaling), std::min(ImGui::GetIO().DisplaySize.y, 400 * scaling)));
 
     ImGui::Begin("##main", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar
     		| ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize);

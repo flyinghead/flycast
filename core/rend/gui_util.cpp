@@ -78,7 +78,7 @@ void select_file_popup(const char *prompt, StringCallback callback,
 	}
 
 	ImGui::SetNextWindowPos(ImVec2(0, 0));
-	ImGui::SetNextWindowSize(ImVec2(screen_width, screen_height));
+	ImGui::SetNextWindowSize(ImGui::GetIO().DisplaySize);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
 
 	if (ImGui::BeginPopupModal(prompt, NULL, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize ))
