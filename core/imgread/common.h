@@ -7,31 +7,6 @@
 #include "rend/gui.h"
 
 extern u32 NullDriveDiscType;
-struct TocTrackInfo
-{
-	u32 FAD;    //fad, Intel format
-	u8 Control; //control info
-	u8 Addr;    //address info
-	u8 Session; //Session where the track belongs
-};
-struct TocInfo
-{
-	//0-98 ->1-99
-	TocTrackInfo tracks[99];
-
-	u8 FistTrack;
-	u8 LastTrack;
-
-	TocTrackInfo LeadOut; //session set to 0 on that one
-};
-
-struct SessionInfo
-{
-	u32 SessionsEndFAD;   //end of Disc (?)
-	u8 SessionCount;      //must be at least 1
-	u32 SessionStart[99]; //start track for session
-	u32 SessionFAD[99];   //for sessions 1-99 ;)
-};
 
 /*
 Mode2 Subheader:
@@ -98,13 +73,10 @@ extern signed int sns_asc;
 extern signed int sns_ascq;
 extern signed int sns_key;
 
-void ConvToc(u32* to,TocInfo* from);
 void GetDriveToc(u32* to,DiskArea area);
 void GetDriveSector(u8 * buff,u32 StartSector,u32 SectorCount,u32 secsz);
 
 void GetDriveSessionInfo(u8* to,u8 session);
-int msgboxf(char* text,unsigned int type,...);
-void printtoc(TocInfo* toc,SessionInfo* ses);
 extern u8 q_subchannel[96];
 
 struct Session

@@ -333,7 +333,6 @@ struct settings_t
 
 	struct
 	{
-		bool PatchRegion;
 		char ImagePath[512];
 	} imgread;
 
