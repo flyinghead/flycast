@@ -211,6 +211,8 @@
 #define HOST_64BIT_CPU
 #endif
 
+#define USE_MINIUPNPC
+
 // Compiler Related
 
 #ifndef _MSC_VER
