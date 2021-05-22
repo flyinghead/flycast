@@ -1,6 +1,6 @@
 #include "common.h"
 
-#include "deps/chdr/chd.h"
+#include <libchdr/chd.h>
 
 /* tracks are padded to a multiple of this many frames */
 const uint32_t CD_TRACK_PADDING = 4;
