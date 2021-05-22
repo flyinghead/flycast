@@ -125,16 +125,16 @@ if(WIN32)
 	execute_process(COMMAND git apply -p1 ${CMAKE_CURRENT_SOURCE_DIR}/core/deps/patches/SDL.patch
 		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/core/deps/SDL) 
 	file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/core/deps/SDL")
-	if(MSVC)
+	if(CMAKE_GENERATOR MATCHES "Visual Studio")
 		set(SDL_CMAKE_ARCH_ARG -A ${CMAKE_GENERATOR_PLATFORM})
 	endif()
-	execute_process(COMMAND ${CMAKE_COMMAND} 
-		"-DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/core/deps/SDL" 
+	execute_process(COMMAND ${CMAKE_COMMAND}
+		"-DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/core/deps/SDL"
 		-DLIBC=ON
 		-DBUILD_SHARED_LIBS=OFF
 		-G "${CMAKE_GENERATOR}"
 		${SDL_CMAKE_ARCH_ARG}
-		"${CMAKE_CURRENT_SOURCE_DIR}/core/deps/SDL" 
+		"${CMAKE_CURRENT_SOURCE_DIR}/core/deps/SDL"
     	WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/core/deps/SDL")
 	execute_process(COMMAND ${CMAKE_COMMAND} --build "${CMAKE_CURRENT_BINARY_DIR}/core/deps/SDL" --config Release --target install)
 endif()
