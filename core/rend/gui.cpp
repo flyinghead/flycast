@@ -1951,12 +1951,12 @@ void gui_select_save_states(bool saving) {
 			if (saving)
 			{
 				gui_state = GuiState::Closed;
-				dc_savestate(); // TODO: save state according to index
+				dc_savestate(i);
 			}
 			else
 			{
 				gui_state = GuiState::Closed;
-				dc_loadstate(); // TODO: load state according to index
+				dc_loadstate(i);
 			}
 		}
 	}
