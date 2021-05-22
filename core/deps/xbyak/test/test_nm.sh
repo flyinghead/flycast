@@ -1,45 +1,57 @@
-#!/bin/tcsh
+#!/bin/sh
 
-set FILTER=cat
+FILTER=cat
 
-if ($1 == "Y") then
+case $1 in
+Y)
 	echo "yasm(32bit)"
-	set EXE=yasm
-	set OPT2="-DUSE_YASM -DXBYAK32"
-	set OPT3=win32
-else if ($1 == "64") then
+	EXE=yasm
+	OPT2="-DUSE_YASM -DXBYAK32"
+	OPT3=win32
+	;;
+64)
 	echo "nasm(64bit)"
-	set EXE=nasm
-	set OPT2=-DXBYAK64
-	set OPT3=win64
-	set FILTER=./normalize_prefix
-else if ($1 == "Y64") then
+	EXE=nasm
+	OPT2=-DXBYAK64
+	OPT3=win64
+	FILTER=./normalize_prefix
+	;;
+Y64)
 	echo "yasm(64bit)"
-	set EXE=yasm
-	set OPT2="-DUSE_YASM -DXBYAK64"
-	set OPT3=win64
-	set FILTER=./normalize_prefix
-else if ($1 == "avx512") then
+	EXE=yasm
+	OPT2="-DUSE_YASM -DXBYAK64"
+	OPT3=win64
+	FILTER=./normalize_prefix
+	;;
+avx512)
 	echo "nasm(64bit) + avx512"
-	set EXE=nasm
-	set OPT2="-DXBYAK64 -DUSE_AVX512"
-	set OPT3=win64
-	set FILTER=./normalize_prefix
-else
+	EXE=nasm
+	OPT2="-DXBYAK64 -DUSE_AVX512"
+	OPT3=win64
+	FILTER=./normalize_prefix
+	;;
+noexcept)
+	echo "nasm(32bit) without exception"
+	EXE=nasm
+	OPT2="-DXBYAK32 -DXBYAK_NO_EXCEPTION"
+	OPT3=win32
+	;;
+*)
 	echo "nasm(32bit)"
-	set EXE=nasm
-	set OPT2=-DXBYAK32
-	set OPT3=win32
-endif
+	EXE=nasm
+	OPT2=-DXBYAK32
+	OPT3=win32
+	;;
+esac
 
-set CFLAGS="-Wall -fno-operator-names -I../ $OPT2"
-echo "compile make_nm.cpp"
+CFLAGS="-Wall -fno-operator-names -I../ $OPT2"
+echo "compile make_nm.cpp with $CFLAGS"
 g++ $CFLAGS make_nm.cpp -o make_nm
 
 ./make_nm > a.asm
 echo "asm"
 $EXE -f$OPT3 a.asm -l a.lst
-awk '{if (index($3, "-")) { conti=substr($3, 0, length($3) - 1) } else { conti = conti $3; print conti; conti = "" }} ' < a.lst | $FILTER | grep -v "1+1" > ok.lst
+awk '$3 != "1+1" {printf "%s", sub(/-$/, "", $3) ? $3 : $3 ORS}' a.lst | $FILTER > ok.lst
 
 echo "xbyak"
 ./make_nm jit > nm.cpp

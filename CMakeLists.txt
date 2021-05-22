@@ -82,7 +82,7 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
         $<$<BOOL:${TEST_AUTOMATION}>:TEST_AUTOMATION>
         $<$<BOOL:${ENABLE_LOG}>:DEBUGFAST>)
 
-target_include_directories(${PROJECT_NAME} PRIVATE core core/deps core/deps/stb core/deps/xbyak core/khronos)
+target_include_directories(${PROJECT_NAME} PRIVATE core core/deps core/deps/stb core/khronos)
 
 find_package(OpenMP)
 if(OpenMP_CXX_FOUND AND NOT APPLE AND USE_OPENMP)
@@ -912,6 +912,8 @@ elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^(aarch64.*|AARCH64.*)")
     	core/deps/vixl/utils-vixl.h)
     target_sources(${PROJECT_NAME} PRIVATE core/rec-ARM64/rec_arm64.cpp core/rec-ARM64/arm64_regalloc.h)
 elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "i686.*|i386.*|x86.*|amd64.*|x86_64.*|AMD64.*")
+    add_subdirectory(core/deps/xbyak)
+    target_link_libraries(${PROJECT_NAME} PRIVATE xbyak::xbyak)
     if(CMAKE_SIZEOF_VOID_P EQUAL 4)
     	target_sources(${PROJECT_NAME} PRIVATE
     		core/rec-x64/xbyak_base.h

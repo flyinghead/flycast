@@ -148,7 +148,7 @@ public:
 	}
 };
 
-void dump(const Xbyak::uint8 *code, size_t size)
+void dump(const uint8_t *code, size_t size)
 {
 	puts("#include <stdio.h>\nstatic int stack[128 * 1024];");
 #ifdef _MSC_VER

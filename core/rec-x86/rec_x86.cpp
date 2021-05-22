@@ -67,9 +67,9 @@ void X86RegAlloc::Writeback_FPU(u32 reg, s8 nreg)
 
 struct DynaRBI : RuntimeBlockInfo
 {
-	virtual u32 Relink() override;
+	u32 Relink() override;
 
-	virtual void Relocate(void* dst) override {
+	void Relocate(void* dst) override {
 		verify(false);
 	}
 };
