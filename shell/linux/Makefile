@@ -517,9 +517,10 @@ endif
 
 libchdr/libchdr-static.a:
 	mkdir -p libchdr && \
-	cd libchdr && \
-	cmake $(CMAKE_FLAVOR) -DBUILD_SHARED_LIBS=OFF $(RZDCY_SRC_DIR)/deps/libchdr && \
-	cmake --build .
+	  cd libchdr && \
+	  cmake $(CMAKE_FLAVOR) -DBUILD_SHARED_LIBS=OFF $(RZDCY_SRC_DIR)/deps/libchdr && \
+	  cmake --build .
+
 
 OBJECTS += libchdr/libchdr-static.a
 

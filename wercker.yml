@@ -9,6 +9,9 @@ build:
             name: gcc-version
             code: gcc --version
         - script:
+            name: git submodule
+            code: git submodule update --init --recursive
+        - script:
             name: flycast tests
             code: make -C shell/linux UNIT_TESTS=1 tests
         - script:
