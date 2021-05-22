@@ -1,10 +1,13 @@
-[![Build Status](https://travis-ci.org/herumi/xbyak.png)](https://travis-ci.org/herumi/xbyak)
+[![Build Status](https://github.com/herumi/xbyak/actions/workflows/main.yml/badge.svg)](https://github.com/herumi/xbyak/actions/workflows/main.yml)
 
-# Xbyak 5.891 ; JIT assembler for x86(IA32), x64(AMD64, x86-64) by C++
+# Xbyak 5.992 ; JIT assembler for x86(IA32), x64(AMD64, x86-64) by C++
 
 ## Abstract
 
 Xbyak is a C++ header library that enables dynamically to assemble x86(IA32), x64(AMD64, x86-64) mnemonic.
+
+The pronunciation of Xbyak is `kəi-bja-k`.
+It is named from a Japanese word [開闢](https://translate.google.com/?hl=ja&sl=ja&tl=en&text=%E9%96%8B%E9%97%A2&op=translate), which means the beginning of the world.
 
 ## Feature
 * header file only
@@ -14,6 +17,13 @@ Xbyak is a C++ header library that enables dynamically to assemble x86(IA32), x6
 **Note**:
 Use `and_()`, `or_()`, ... instead of `and()`, `or()`.
 If you want to use them, then specify `-fno-operator-names` option to gcc/clang.
+
+### News
+- vnni instructions such as vpdpbusd supports vex encoding.
+- (break backward compatibility) `push(byte, imm)` (resp. `push(word, imm)`) forces to cast `imm` to 8(resp. 16) bit.
+- (Windows) `#include <winsock2.h>` has been removed from xbyak.h, so add it explicitly if you need it.
+- support exception-less mode see. [Exception-less mode](#exception-less-mode)
+- `XBYAK_USE_MMAP_ALLOCATOR` will be defined on Linux/macOS unless `XBYAK_DONT_USE_MMAP_ALLOCATOR` is defined.
 
 ### Supported OS
 
@@ -148,9 +158,15 @@ vcvtpd2dq xmm19, [eax+32]{1to4}         --> vcvtpd2dq(xmm19, yword_b [eax+32]); 
 vfpclassps k5{k3}, zword [rax+64], 5    --> vfpclassps(k5|k3, zword [rax+64], 5); // specify m512
 vfpclasspd k5{k3}, [rax+64]{1to2}, 5    --> vfpclasspd(k5|k3, xword_b [rax+64], 5); // broadcast 64-bit to 128-bit
 vfpclassps k5{k3}, [rax+64]{1to4}, 5    --> vfpclassps(k5|k3, yword_b [rax+64], 5); // broadcast 64-bit to 256-bit
+
+vpdpbusd(xm0, xm1, xm2); // default encoding is EVEX
+vpdpbusd(xm0, xm1, xm2, EvexEncoding); // same as the above
+vpdpbusd(xm0, xm1, xm2, VexEncoding); // VEX encoding
 ```
 ### Remark
 * `k1`, ..., `k7` are opmask registers.
+  - `k0` is dealt as no mask.
+  - e.g. `vmovaps(zmm0|k0, ptr[rax]);` and `vmovaps(zmm0|T_z, ptr[rax]);` are same to `vmovaps(zmm0, ptr[rax]);`.
 * use `| T_z`, `| T_sae`, `| T_rn_sae`, `| T_rd_sae`, `| T_ru_sae`, `| T_rz_sae` instead of `,{z}`, `,{sae}`, `,{rn-sae}`, `,{rd-sae}`, `,{ru-sae}`, `,{rz-sae}` respectively.
 * `k4 | k3` is different from `k3 | k4`.
 * use `ptr_b` for broadcast `{1toX}`. X is automatically determined.
@@ -331,9 +347,9 @@ public:
 
 ## User allocated memory
 
-You can make jit code on prepaired memory.
+You can make jit code on prepared memory.
 
-Call `setProtectModeRE` yourself to change memory mode if using the prepaired memory.
+Call `setProtectModeRE` yourself to change memory mode if using the prepared memory.
 
 ```
 uint8_t alignas(4096) buf[8192]; // C++11 or later
@@ -400,15 +416,22 @@ c.setProtectModeRE();
 Call `readyRE()` instead of `ready()` when using `AutoGrow` mode.
 See [protect-re.cpp](sample/protect-re.cpp).
 
+## Exception-less mode
+If `XBYAK_NO_EXCEPTION` is defined, then gcc/clang can compile xbyak with `-fno-exceptions`.
+In stead of throwing an exception, `Xbyak::GetError()` returns non-zero value (e.g. `ERR_BAD_ADDRESSING`) if there is something wrong.
+The status will not be changed automatically, then you should reset it by `Xbyak::ClearError()`.
+`CodeGenerator::reset()` calls `ClearError()`.
+
 ## Macro
 
 * **XBYAK32** is defined on 32bit.
 * **XBYAK64** is defined on 64bit.
-* **XBYAK64_WIN** is defined on 64bit Windows(VC)
-* **XBYAK64_GCC** is defined on 64bit gcc, cygwin
+* **XBYAK64_WIN** is defined on 64bit Windows(VC).
+* **XBYAK64_GCC** is defined on 64bit gcc, cygwin.
 * define **XBYAK_USE_OP_NAMES** on gcc with `-fno-operator-names` if you want to use `and()`, ....
-* define **XBYAK_ENABLE_OMITTED_OPERAND** if you use omitted destination such as `vaddps(xmm2, xmm3);`(deprecated in the future)
-* define **XBYAK_UNDEF_JNL** if Bessel function jnl is defined as macro
+* define **XBYAK_ENABLE_OMITTED_OPERAND** if you use omitted destination such as `vaddps(xmm2, xmm3);`(deprecated in the future).
+* define **XBYAK_UNDEF_JNL** if Bessel function jnl is defined as macro.
+* define **XBYAK_NO_EXCEPTION** for a compiler option `-fno-exceptions`.
 
 ## Sample
 
@@ -423,6 +446,21 @@ modified new BSD License
 http://opensource.org/licenses/BSD-3-Clause
 
 ## History
+* 2021/May/09 ver 5.992 support endbr32 and endbr64
+* 2020/Nov/16 ver 5.991 disable constexpr for gcc-5 with -std=c++-14
+* 2020/Oct/19 ver 5.99 support VNNI instructions(Thanks to akharito)
+* 2020/Oct/17 ver 5.98 support the form of [scale * reg]
+* 2020/Sep/08 ver 5.97 replace uint32 with uint32_t etc.
+* 2020/Aug/28 ver 5.95 some constructors of register classes support constexpr if C++14 or later
+* 2020/Aug/04 ver 5.941 `CodeGenerator::reset()` calls `ClearError()`.
+* 2020/Jul/28 ver 5.94 remove #include <winsock2.h> (only windows)
+* 2020/Jul/21 ver 5.93 support exception-less mode
+* 2020/Jun/30 ver 5.92 support Intel AMX instruction set (Thanks to nshustrov)
+* 2020/Jun/22 ver 5.913 fix mov(r64, imm64) on 32-bit env with XBYAK64
+* 2020/Jun/19 ver 5.912 define MAP_JIT on macOS regardless of Xcode version (Thanks to rsdubtso)
+* 2020/May/10 ver 5.911 XBYAK_USE_MMAP_ALLOCATOR is defined unless XBYAK_DONT_USE_MMAP_ALLOCATOR is defined.
+* 2020/Apr/20 ver 5.91 accept mask register k0 (it means no mask)
+* 2020/Apr/09 ver 5.90 kmov{b,d,w,q} throws exception for an unsupported register
 * 2020/Feb/26 ver 5.891 fix typo of type
 * 2020/Jan/03 ver 5.89 fix error of vfpclasspd
 * 2019/Dec/20 ver 5.88 fix compile error on Windows
@@ -575,3 +613,5 @@ http://opensource.org/licenses/BSD-3-Clause
 ## Author
 MITSUNARI Shigeo(herumi@nifty.com)
 
+## Sponsors welcome
+[GitHub Sponsor](https://github.com/sponsors/herumi)

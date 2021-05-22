@@ -16,10 +16,8 @@
     You should have received a copy of the GNU General Public License
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
-#include "build.h"
+#pragma once
 
-#define XBYAK32
-#define XBYAK_NO_OP_NAMES
 #include <xbyak/xbyak.h>
 #include <xbyak/xbyak_util.h>
 

@@ -16,9 +16,7 @@
     You should have received a copy of the GNU General Public License
     along with reicast.  If not, see <https://www.gnu.org/licenses/>.
  */
-
-#ifndef CORE_REC_X64_X64_REGALLOC_H_
-#define CORE_REC_X64_X64_REGALLOC_H_
+#pragma once
 
 //#define OLD_REGALLOC
 
@@ -91,5 +89,3 @@ struct X64RegAlloc : RegAlloc<Xbyak::Operand::Code, s8>
 
 	BlockCompiler *compiler;
 };
-
-#endif /* CORE_REC_X64_X64_REGALLOC_H_ */
