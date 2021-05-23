@@ -33,8 +33,10 @@ jobs:
 
       - name: Set up git vars
         run: |
-          echo GIT_HASH=`git log --pretty=format:'%h' -n 1` >> $GITHUB_ENV
-          echo GIT_BUILD=`git describe --all --always | sed 's/remotes\/origin/heads/'`-$GIT_HASH >> $GITHUB_ENV
+          echo GIT_BUILD=`git describe --all --always | sed 's/remotes\/origin/heads/'`-$GITHUB_SHA >> $GITHUB_ENV
+
+      - name: Clean up
+        run: rm shell/android-studio/flycast/build/outputs/apk/debug/*.json
 
       - uses: jakejarvis/s3-sync-action@master
         with:

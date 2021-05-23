@@ -83,12 +83,11 @@ jobs:
         run: |
           powershell Compress-Archive build/artifact/flycast.exe build/artifact/flycast.zip 
           rm build/artifact/flycast.exe
-        if: matrix.config.os == 'x86_64-w64-mingw32'
+        if: matrix.config.name == 'x86_64-w64-mingw32'
 
       - name: Set up git vars
         run: |
-          echo GIT_HASH=`git log --pretty=format:'%h' -n 1` >> $GITHUB_ENV
-          echo GIT_BUILD=`git describe --all --always | sed 's/remotes\/origin/heads/'`-$GIT_HASH >> $GITHUB_ENV
+          echo GIT_BUILD=`git describe --all --always | sed 's/remotes\/origin/heads/'`-$GITHUB_SHA >> $GITHUB_ENV
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v1
@@ -98,5 +97,5 @@ jobs:
           aws-region: us-east-2
 
       - name: Upload to S3
-        run: aws s3 sync build/artifact s3://flycast-builds/${{ matrix.config.destDir }}/$GIT_BUILD --acl public-read --follow-symlinks
+        run: aws s3 sync build/artifact s3://flycast-builds/${{ matrix.config.destDir }}/{{ env.GIT_BUILD }} --acl public-read --follow-symlinks
         if: ${{ github.event_name == 'push' && matrix.config.destDir != '' }}
