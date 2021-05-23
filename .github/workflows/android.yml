@@ -44,6 +44,6 @@ jobs:
           AWS_ACCESS_KEY_ID: AKIAJOZQS4H2PHQWYFCA
           AWS_SECRET_ACCESS_KEY: ${{ secrets.S3_SECRET_KEY }}
           AWS_REGION: 'us-east-2'
-          SOURCE_DIR: 'shell/android-studio/flycast/build/outputs/apk/debug/flycast-debug.apk'
+          SOURCE_DIR: 'shell/android-studio/flycast/build/outputs/apk/debug/'
           DEST_DIR: android/${{ env.GIT_BUILD }}
         if: ${{ github.event_name == 'push' }}
