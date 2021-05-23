@@ -36,7 +36,7 @@ jobs:
           echo GIT_BUILD=`git describe --all --always | sed 's/remotes\/origin/heads/'`-$GITHUB_SHA >> $GITHUB_ENV
 
       - name: Clean up
-        run: rm shell/android-studio/flycast/build/outputs/apk/debug/*.json
+        run: rm -f shell/android-studio/flycast/build/outputs/apk/debug/*.json
 
       - uses: jakejarvis/s3-sync-action@master
         with:
