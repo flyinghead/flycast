@@ -5,7 +5,7 @@ VERSION_HEADER := $(RZDCY_SRC_DIR)/version.h
 
 RZDCY_MODULES	:=	cfg/ hw/arm7/ hw/aica/ hw/holly/ hw/ hw/gdrom/ hw/maple/ \
  hw/mem/ hw/pvr/ hw/sh4/ hw/sh4/interpr/ hw/sh4/modules/ profiler/ oslib/ \
- hw/naomi/ imgread/ ./ deps/zlib/ deps/libchdr/src/ \
+ hw/naomi/ imgread/ ./ deps/libchdr/src/ deps/libchdr/deps/zlib-1.2.11/ \
  deps/libelf/ deps/chdpsr/ rend/ reios/ deps/xbrz/ \
  deps/imgui/ archive/ input/ log/ wsi/ network/ hw/bba/ debug/ \
  hw/modem/ deps/picotcp/modules/ deps/picotcp/stack/
@@ -88,8 +88,8 @@ RZDCY_CFLAGS += -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/rend/gles -I$(RZDCY_SRC_DI
 		 -I$(RZDCY_SRC_DIR)/deps/vixl -I$(RZDCY_SRC_DIR)/khronos -I$(RZDCY_SRC_DIR)/deps/glslang \
 		 -I$(RZDCY_SRC_DIR)/deps/glm -I$(RZDCY_SRC_DIR)/deps/xbyak -I$(RZDCY_SRC_DIR)/deps/nowide/include \
 		 -I$(RZDCY_SRC_DIR)/deps/picotcp/include -I$(RZDCY_SRC_DIR)/deps/picotcp/modules \
-		 -I$(RZDCY_SRC_DIR)/deps/libchdr/include -I$(RZDCY_SRC_DIR)/deps/libchdr/deps/lzma-19.00 \
-		 -I$(RZDCY_SRC_DIR)/deps/libchdr/deps/lzma-19.00/include
+		 -I$(RZDCY_SRC_DIR)/deps/libchdr/include -I$(RZDCY_SRC_DIR)/deps/libchdr/deps/zlib-1.2.11/ \
+		 -I$(RZDCY_SRC_DIR)/deps/libchdr/deps/lzma-19.00 -I$(RZDCY_SRC_DIR)/deps/libchdr/deps/lzma-19.00/include
 
 ifdef USE_SYSTEM_MINIUPNPC
 	RZDCY_CFLAGS += -I/usr/include/miniupnpc
@@ -119,7 +119,6 @@ ifdef CHD5_LZMA
 	RZDCY_CFLAGS += -D_7ZIP_ST -DCHD5_LZMA
 endif
 
-RZDCY_CFLAGS += -DZ_HAVE_UNISTD_H -I$(RZDCY_SRC_DIR)/deps/zlib
 RZDCY_CFLAGS += -DXXH_INLINE_ALL -I$(RZDCY_SRC_DIR)/deps/xxHash -I$(RZDCY_SRC_DIR)/deps/stb
 
 RZDCY_FILES += $(foreach dir,$(addprefix $(RZDCY_SRC_DIR)/,$(RZDCY_MODULES)),$(wildcard $(dir)*.cpp))
