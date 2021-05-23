@@ -19,7 +19,7 @@ jobs:
     steps:
       - name: Set up build environment (macos-latest)
         run: |
-          brew install ccache flac libao libomp pulseaudio zlib
+          brew install ccache flac libao libomp pulseaudio zlib awscli
           echo "/usr/local/opt/ccache/libexec" >> $GITHUB_PATH
           echo "CCACHE_DIR=/tmp/ccache" >> $GITHUB_ENV
         if: matrix.config.os == 'macos-latest'
@@ -90,14 +90,13 @@ jobs:
           echo GIT_HASH=`git log --pretty=format:'%h' -n 1` >> $GITHUB_ENV
           echo GIT_BUILD=`git describe --all --always | sed 's/remotes\/origin/heads/'`-$GIT_HASH >> $GITHUB_ENV
 
-      - uses: jakejarvis/s3-sync-action@master
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
         with:
-          args: --acl public-read --follow-symlinks
-        env:
-          AWS_S3_BUCKET: flycast-builds
-          AWS_ACCESS_KEY_ID: AKIAJOZQS4H2PHQWYFCA
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.S3_SECRET_KEY }}
-          AWS_REGION: 'us-east-2'
-          SOURCE_DIR: 'build/artifact'
-          DEST_DIR: ${{ matrix.config.destDir }}/${{ env.GIT_BUILD }}
+          aws-access-key-id: AKIAJOZQS4H2PHQWYFCA
+          aws-secret-access-key: ${{ secrets.S3_SECRET_KEY }}
+          aws-region: us-east-2
+
+      - name: Upload to S3
+        run: aws s3 sync build/artifact s3://flycast-builds/${{ matrix.config.destDir }}/$GIT_BUILD --acl public-read --follow-symlinks
         if: ${{ github.event_name == 'push' && matrix.config.destDir != '' }}
