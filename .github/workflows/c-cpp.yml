@@ -11,10 +11,10 @@ jobs:
       matrix:
         config:
           - {name: i686-pc-windows-msvc, os: windows-latest, cmakeArgs: -DCMAKE_SYSTEM_VERSION="10.0.18362.0" -G "Visual Studio 16 2019" -A Win32}
-          - {name: x86_64-apple-darwin, os: macos-latest, cmakeArgs: -G "Xcode"}
+          - {name: x86_64-apple-darwin, os: macos-latest, cmakeArgs: -G "Xcode", destDir: osx}
           - {name: x86_64-pc-linux-gnu, os: ubuntu-latest}
           - {name: x86_64-pc-windows-msvc, os: windows-latest, cmakeArgs: -DCMAKE_SYSTEM_VERSION="10.0.18362.0" -G "Visual Studio 16 2019" -A x64}
-          - {name: x86_64-w64-mingw32, os: windows-latest, cmakeArgs: -G "MinGW Makefiles"}
+          - {name: x86_64-w64-mingw32, os: windows-latest, cmakeArgs: -G "MinGW Makefiles", destDir: win}
 
     steps:
       - name: Set up build environment (macos-latest)
@@ -70,3 +70,34 @@ jobs:
         with:
           name: flycast-${{ matrix.config.name }}
           path: build/artifact
+
+      - name: Package app (macos)
+        run: |
+          cd build/artifact
+          rm -rf flycast.swiftmodule
+          zip -r flycast.app.zip flycast.app
+          rm -rf flycast.app
+        if: matrix.config.os == 'macos-latest'
+
+      - name: Package app (windows)
+        run: |
+          powershell Compress-Archive build/artifact/flycast.exe build/artifact/flycast.zip 
+          rm build/artifact/flycast.exe
+        if: matrix.config.os == 'x86_64-w64-mingw32'
+
+      - name: Set up git vars
+        run: |
+          echo GIT_HASH=`git log --pretty=format:'%h' -n 1` >> $GITHUB_ENV
+          echo GIT_BUILD=`git describe --all --always | sed 's/remotes\/origin/heads/'`-$GIT_HASH >> $GITHUB_ENV
+
+      - uses: jakejarvis/s3-sync-action@master
+        with:
+          args: --acl public-read --follow-symlinks
+        env:
+          AWS_S3_BUCKET: flycast-builds
+          AWS_ACCESS_KEY_ID: AKIAJOZQS4H2PHQWYFCA
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.S3_SECRET_KEY }}
+          AWS_REGION: 'us-east-2'
+          SOURCE_DIR: 'build/artifact'
+          DEST_DIR: ${{ matrix.config.destDir }}/${{ env.GIT_BUILD }}
+        if: ${{ github.event_name == 'push' && matrix.config.destDir != '' }}
