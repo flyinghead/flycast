@@ -374,7 +374,7 @@
 		F219065F265C247D00AA2ACA /* trees.c in Sources */ = {isa = PBXBuildFile; fileRef = F219064E265C247C00AA2ACA /* trees.c */; };
 		F2190660265C247D00AA2ACA /* inffast.c in Sources */ = {isa = PBXBuildFile; fileRef = F219064F265C247C00AA2ACA /* inffast.c */; };
 		F2190661265C247D00AA2ACA /* gzwrite.c in Sources */ = {isa = PBXBuildFile; fileRef = F2190650265C247C00AA2ACA /* gzwrite.c */; };
-		F2D7C89B265B2E79002812E2 /* CoreHaptics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F2D7C89A265B2E79002812E2 /* CoreHaptics.framework */; };
+		F2190668265C2B7300AA2ACA /* CoreHaptics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F2D7C89A265B2E79002812E2 /* CoreHaptics.framework */; };
 		F2D7C89F265B304F002812E2 /* dsp_arm64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F2D7C89E265B304F002812E2 /* dsp_arm64.cpp */; };
 		F2D7C8A3265B3082002812E2 /* arm7_rec_arm64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F2D7C8A2265B3082002812E2 /* arm7_rec_arm64.cpp */; };
 /* End PBXBuildFile section */
@@ -1137,7 +1137,7 @@
 				EBDF37511BB969EE001191B5 /* CoreAudio.framework in Frameworks */,
 				AE7BCB5C243DDCAE007285F8 /* ForceFeedback.framework in Frameworks */,
 				AE7BCB5E243DDCD1007285F8 /* AudioToolbox.framework in Frameworks */,
-				F2D7C89B265B2E79002812E2 /* CoreHaptics.framework in Frameworks */,
+				F2190668265C2B7300AA2ACA /* CoreHaptics.framework in Frameworks */,
 				AE7BCB60243DDD49007285F8 /* libiconv.2.tbd in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
