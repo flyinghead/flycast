@@ -1955,8 +1955,9 @@ void gui_select_save_states(bool saving) {
 		}
 	}
 
-	ImGui::NextColumn();
-	if (ImGui::Button(saving ? "Stop Saving" : "Stop Loading", ImVec2(150 * scaling, 50 * scaling)))
+	ImGui::Columns(1, nullptr, false);
+	if (ImGui::Button("Cancel", ImVec2(300 * scaling + ImGui::GetStyle().ColumnsMinSpacing + ImGui::GetStyle().FramePadding.x * 2 - 1,
+			50 * scaling)))
 	{
 		gui_state = GuiState::Commands;
 	}
