@@ -582,7 +582,6 @@
 		84B7BE481B72720100F9733F /* gdi.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = gdi.cpp; sourceTree = "<group>"; };
 		84B7BE491B72720100F9733F /* ImgReader.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ImgReader.cpp; sourceTree = "<group>"; };
 		84B7BE4B1B72720100F9733F /* ioctl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ioctl.cpp; sourceTree = "<group>"; };
-		84B7BE4C1B72720100F9733F /* SCSIDEFS.H */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = SCSIDEFS.H; sourceTree = "<group>"; };
 		84B7BE4F1B72720100F9733F /* egl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = egl.h; sourceTree = "<group>"; };
 		84B7BE501B72720100F9733F /* eglplatform.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = eglplatform.h; sourceTree = "<group>"; };
 		84B7BE511B72720100F9733F /* khrplatform.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = khrplatform.h; sourceTree = "<group>"; };
@@ -1747,7 +1746,6 @@
 				84B7BE481B72720100F9733F /* gdi.cpp */,
 				84B7BE491B72720100F9733F /* ImgReader.cpp */,
 				84B7BE4B1B72720100F9733F /* ioctl.cpp */,
-				84B7BE4C1B72720100F9733F /* SCSIDEFS.H */,
 			);
 			path = imgread;
 			sourceTree = "<group>";

@@ -1,90 +1,60 @@
-#include "build.h"
-
 #ifdef _WIN32
+#include "types.h"
 #include "common.h"
 
 #include <cstddef>
 #include <windows.h>
 
+#include <ntddcdrm.h>
 #include <ntddscsi.h>
-#include "SCSIDEFS.H"
 
+#ifdef _MSC_VER
+#define _NTSCSI_USER_MODE_
+#include <scsi.h>
+#undef _NTSCSI_USER_MODE_
+#else
+#define CD_RAW_READ_SUBCODE_SIZE               (         96)
 
-#ifndef noheaders
+#pragma pack(push, cdb, 1)
+typedef union _CDB {
+    struct _READ_CD {
+        UCHAR OperationCode;    // 0xBE - SCSIOP_READ_CD
+        UCHAR RelativeAddress : 1;
+        UCHAR Reserved0 : 1;
+        UCHAR ExpectedSectorType : 3;
+        UCHAR Lun : 3;
+        UCHAR StartingLBA[4];
+        UCHAR TransferBlocks[3];
+        UCHAR Reserved2 : 1;
+        UCHAR ErrorFlags : 2;
+        UCHAR IncludeEDC : 1;
+        UCHAR IncludeUserData : 1;
+        UCHAR HeaderCode : 2;
+        UCHAR IncludeSyncData : 1;
+        UCHAR SubChannelSelection : 3;
+        UCHAR Reserved3 : 5;
+        UCHAR Control;
+    } READ_CD;
+} CDB, *PCDB;
+#pragma pack(pop, cdb)
+
+#define READ_TOC_FORMAT_FULL_TOC    0x02
+
+#define SCSIOP_READ                     0x28
+#define SCSIOP_READ_CD                  0xBE
+#endif
+
 #define RAW_SECTOR_SIZE         2352
 #define CD_SECTOR_SIZE          2048
-#define MAXIMUM_NUMBER_TRACKS   100
 #define SECTORS_AT_READ         20
 #define CD_BLOCKS_PER_SECOND    75
-#define IOCTL_CDROM_RAW_READ    0x2403E
-#define IOCTL_CDROM_READ_TOC    0x24000
-#define IOCTL_CDROM_READ_TOC_EX 0x24054
 
-// These structures are defined somewhere in the windows-api, but I did
-//   not have the include-file.
-typedef struct _TRACK_DATA
-{
-	UCHAR Reserved;
-	UCHAR Control : 4;
-	UCHAR Adr : 4;
-	UCHAR TrackNumber;
-	UCHAR Reserved1;
-	UCHAR Address[4];
-} TRACK_DATA;
-
-typedef struct _CDROM_TOC
-{
-	UCHAR Length[2];
-	UCHAR FirstTrack;
-	UCHAR LastTrack;
-	TRACK_DATA TrackData[MAXIMUM_NUMBER_TRACKS];
-} CDROM_TOC;
-
-typedef enum _TRACK_MODE_TYPE
-{
-	YellowMode2,
-	XAForm2,
-	CDDA
-} TRACK_MODE_TYPE, *PTRACK_MODE_TYPE;
-
-typedef struct __RAW_READ_INFO
-{
-	LARGE_INTEGER  DiskOffset;
-	ULONG  SectorCount;
-	TRACK_MODE_TYPE  TrackMode;
-} RAW_READ_INFO, *PRAW_READ_INFO;
-typedef struct _CDROM_TOC_FULL_TOC_DATA_BLOCK {  UCHAR  SessionNumber;  UCHAR  Control:4;  UCHAR  Adr:4;  UCHAR  Reserved1;  UCHAR  Point;  UCHAR  MsfExtra[3];  UCHAR  Zero;  UCHAR  Msf[3];} CDROM_TOC_FULL_TOC_DATA_BLOCK, *PCDROM_TOC_FULL_TOC_DATA_BLOCK;
-typedef struct _CDROM_TOC_FULL_TOC_DATA
-{
-	UCHAR  Length[2];
-	UCHAR  FirstCompleteSession;
-	UCHAR  LastCompleteSession;
-	CDROM_TOC_FULL_TOC_DATA_BLOCK  Descriptors[0];
-} CDROM_TOC_FULL_TOC_DATA, *PCDROM_TOC_FULL_TOC_DATA;
-/* CDROM_READ_TOC_EX.Format constants */
-  #define CDROM_READ_TOC_EX_FORMAT_TOC      0x00
-  #define CDROM_READ_TOC_EX_FORMAT_SESSION  0x01
-  #define CDROM_READ_TOC_EX_FORMAT_FULL_TOC 0x02
-  #define CDROM_READ_TOC_EX_FORMAT_PMA      0x03
-  #define CDROM_READ_TOC_EX_FORMAT_ATIP     0x04
-  #define CDROM_READ_TOC_EX_FORMAT_CDTEXT   0x05
-  
-typedef struct _CDROM_READ_TOC_EX 
-{
-    UCHAR  Format : 4;
-    UCHAR  Reserved1 : 3;
-    UCHAR  Msf : 1;
-    UCHAR  SessionTrack;
-   UCHAR  Reserved2;
-    UCHAR  Reserved3;
- } CDROM_READ_TOC_EX, *PCDROM_READ_TOC_EX;
-#endif
 struct spti_s 
 {
 	SCSI_PASS_THROUGH_DIRECT sptd;
 	DWORD alignmentDummy;
 	BYTE  senseBuf[0x12];
-} ;
+};
 
 ULONG msf2fad(const UCHAR Addr[4])
 {
@@ -107,7 +77,7 @@ bool spti_SendCommand(HANDLE hand,spti_s& s,SCSI_ADDRESS& ioctl_addr)
 	//s.sptd.CdbLength        = 0x0A;
 	s.sptd.SenseInfoLength    = 0x12;
 	s.sptd.SenseInfoOffset    = offsetof(spti_s, senseBuf);
-//	s.sptd.DataIn             = 0x01;//DATA_IN
+//	s.sptd.DataIn             = SCSI_IOCTL_DATA_IN;
 //	s.sptd.DataTransferLength = 0x800;
 //	s.sptd.DataBuffer         = pdata;
 
@@ -125,7 +95,7 @@ bool spti_Read10(HANDLE hand,void * pdata,u32 sector,SCSI_ADDRESS& ioctl_addr)
 	spti_s s;
 	memset(&s,0,sizeof(spti_s));
 
-	s.sptd.Cdb[0] = SCSI_READ10;
+	s.sptd.Cdb[0] = SCSIOP_READ;
 	s.sptd.Cdb[1] = (ioctl_addr.Lun&7) << 5;// | DPO ;	DPO = 8
 
 	s.sptd.Cdb[2] = (BYTE)(sector >> 0x18 & 0xFF); // MSB
@@ -137,7 +107,7 @@ bool spti_Read10(HANDLE hand,void * pdata,u32 sector,SCSI_ADDRESS& ioctl_addr)
 	s.sptd.Cdb[8] = 1;
 	
 	s.sptd.CdbLength          = 0x0A;
-	s.sptd.DataIn             = 0x01;//DATA_IN
+	s.sptd.DataIn             = SCSI_IOCTL_DATA_IN;
 	s.sptd.DataTransferLength = 0x800;
 	s.sptd.DataBuffer         = pdata;
 
@@ -147,33 +117,30 @@ bool spti_ReadCD(HANDLE hand,void * pdata,u32 sector,SCSI_ADDRESS& ioctl_addr)
 {
 	spti_s s;
 	memset(&s,0,sizeof(spti_s));
-	MMC_READCD& r=*(MMC_READCD*)s.sptd.Cdb;
+	CDB& r = *(PCDB)s.sptd.Cdb;
 
-	r.opcode	= MMC_READCD_OPCODE;
-	
+	r.READ_CD.OperationCode = SCSIOP_READ_CD;
 
-	//lba
-	r.LBA[0] = (BYTE)(sector >> 0x18 & 0xFF);
-	r.LBA[1] = (BYTE)(sector >> 0x10 & 0xFF);
-	r.LBA[2] = (BYTE)(sector >> 0x08 & 0xFF);
-	r.LBA[3] = (BYTE)(sector >> 0x00 & 0xFF);
+	r.READ_CD.StartingLBA[0] = (BYTE)(sector >> 0x18 & 0xFF);
+	r.READ_CD.StartingLBA[1] = (BYTE)(sector >> 0x10 & 0xFF);
+	r.READ_CD.StartingLBA[2] = (BYTE)(sector >> 0x08 & 0xFF);
+	r.READ_CD.StartingLBA[3] = (BYTE)(sector >> 0x00 & 0xFF);
 
-	//1 sector
-	r.len[0]=0;
-	r.len[1]=0;
-	r.len[2]=1;
-	
-	//0xF8
-	r.sync=1;
-	r.HeaderCodes=3;
-	r.UserData=1;
-	r.EDC_ECC=1;
-	
+	// 1 sector
+	r.READ_CD.TransferBlocks[0] = 0;
+	r.READ_CD.TransferBlocks[1] = 0;
+	r.READ_CD.TransferBlocks[2] = 1;
 
-	r.subchannel=1;
-	
+	// 0xF8
+	r.READ_CD.IncludeSyncData = 1;
+	r.READ_CD.HeaderCode = 3;
+	r.READ_CD.IncludeUserData = 1;
+	r.READ_CD.IncludeEDC = 1;
+
+	r.READ_CD.SubChannelSelection = 1;
+
 	s.sptd.CdbLength          = 12;
-	s.sptd.DataIn             = 0x01;//DATA_IN
+	s.sptd.DataIn             = SCSI_IOCTL_DATA_IN;
 	s.sptd.DataTransferLength = 2448;
 	s.sptd.DataBuffer         = pdata;
 	return spti_SendCommand(hand,s,ioctl_addr);
@@ -212,7 +179,7 @@ struct PhysicalDrive:Disc
 		// Get track-table and parse it
 		CDROM_READ_TOC_EX tocrq={0};
 		 
-	 	tocrq.Format = CDROM_READ_TOC_EX_FORMAT_FULL_TOC;
+	 	tocrq.Format = READ_TOC_FORMAT_FULL_TOC;
 	 	tocrq.Msf=1;
 	 	tocrq.SessionTrack=1;
 		u8 buff[2048];
@@ -311,8 +278,8 @@ void PhysicalTrack::Read(u32 FAD,u8* dst,SectorFormat* sector_type,u8* subcode,S
 		else
 		{
 			//sector read success, with subcode
-			memcpy(dst,temp,2352);
-			memcpy(subcode,temp+2352,96);
+			memcpy(dst, temp, 2352);
+			memcpy(subcode, temp + 2352, CD_RAW_READ_SUBCODE_SIZE);
 
 			*sector_type=SECFMT_2352;
 			*subcode_type=SUBFMT_96;
