@@ -1949,15 +1949,9 @@ void gui_select_save_states(bool saving) {
 		{
 			gui_state = GuiState::Closed;
 			if (saving)
-			{
-				gui_state = GuiState::Closed;
 				dc_savestate(i);
-			}
 			else
-			{
-				gui_state = GuiState::Closed;
 				dc_loadstate(i);
-			}
 		}
 	}
 
