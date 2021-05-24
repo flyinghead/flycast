@@ -914,6 +914,7 @@ elseif(APPLE)
 	set_source_files_properties(${ASSETS} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
 
     set_target_properties(${PROJECT_NAME} PROPERTIES
+        OUTPUT_NAME "Flycast"
         MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/shell/cmake/MacOSXBundleInfo.plist.in
         MACOSX_BUNDLE_EXECUTABLE_NAME "Flycast"
         MACOSX_BUNDLE_INFO_STRING ""
