@@ -49,7 +49,7 @@ index 2557d8628..f3d214b1d 100644
  
              /* Mouse data (ignoring synthetic mouse events generated for touchscreens) */
              if (inp.header.dwType == RIM_TYPEMOUSE) {
-+            	SDL_MouseID mouseID;
++                SDL_MouseID mouseID;
                  if (GetMouseMessageSource() == SDL_MOUSE_EVENT_SOURCE_TOUCH ||
                      (GetMessageExtraInfo() & 0x82) == 0x82) {
                      break;

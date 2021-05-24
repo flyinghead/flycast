@@ -11,10 +11,10 @@ jobs:
       matrix:
         config:
           - {name: i686-pc-windows-msvc, os: windows-latest, cmakeArgs: -DCMAKE_SYSTEM_VERSION="10.0.18362.0" -G "Visual Studio 16 2019" -A Win32}
-          - {name: x86_64-apple-darwin, os: macos-latest, cmakeArgs: -G "Xcode"}
+          - {name: x86_64-apple-darwin, os: macos-latest, cmakeArgs: -G "Xcode", destDir: osx}
           - {name: x86_64-pc-linux-gnu, os: ubuntu-latest}
           - {name: x86_64-pc-windows-msvc, os: windows-latest, cmakeArgs: -DCMAKE_SYSTEM_VERSION="10.0.18362.0" -G "Visual Studio 16 2019" -A x64}
-          - {name: x86_64-w64-mingw32, os: windows-latest, cmakeArgs: -G "MinGW Makefiles"}
+          - {name: x86_64-w64-mingw32, os: windows-latest, cmakeArgs: -G "MinGW Makefiles", destDir: win}
 
     steps:
       - name: Set up build environment (macos-latest)
@@ -70,3 +70,33 @@ jobs:
         with:
           name: flycast-${{ matrix.config.name }}
           path: build/artifact
+
+      - name: Package app (macos)
+        run: |
+          cd build/artifact
+          rm -rf flycast.swiftmodule
+          zip -r flycast.app.zip flycast.app
+          rm -rf flycast.app
+        if: matrix.config.os == 'macos-latest'
+
+      - name: Package app (windows)
+        run: |
+          powershell Compress-Archive build/artifact/flycast.exe build/artifact/flycast.zip 
+          rm build/artifact/flycast.exe
+        if: matrix.config.name == 'x86_64-w64-mingw32'
+
+      - name: Set up git vars
+        run: |
+          echo GIT_BUILD=`git describe --all --always | sed 's/remotes\/origin/heads/'`-$GITHUB_SHA >> $GITHUB_ENV
+        shell: bash
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: AKIAJOZQS4H2PHQWYFCA
+          aws-secret-access-key: ${{ secrets.S3_SECRET_KEY }}
+          aws-region: us-east-2
+
+      - name: Upload to S3
+        run: aws s3 sync build/artifact s3://flycast-builds/${{ matrix.config.destDir }}/${{ env.GIT_BUILD }} --acl public-read --follow-symlinks
+        if: ${{ github.event_name == 'push' && matrix.config.destDir != '' }}

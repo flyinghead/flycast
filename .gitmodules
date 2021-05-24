@@ -1,3 +1,6 @@
 [submodule "core/deps/SDL"]
 	path = core/deps/SDL
 	url = https://github.com/libsdl-org/SDL.git
+[submodule "core/deps/libchdr"]
+	path = core/deps/libchdr
+	url = https://github.com/rtissera/libchdr.git

@@ -32,10 +32,10 @@ struct X86RegAlloc : RegAlloc<Xbyak::Operand::Code, s8>
 {
 	X86RegAlloc(X86Compiler *compiler) : compiler(compiler) {}
 
-	virtual void Preload(u32 reg, Xbyak::Operand::Code nreg) override;
-	virtual void Writeback(u32 reg, Xbyak::Operand::Code nreg) override;
-	virtual void Preload_FPU(u32 reg, s8 nreg) override;
-	virtual void Writeback_FPU(u32 reg, s8 nreg) override;
+	void Preload(u32 reg, Xbyak::Operand::Code nreg) override;
+	void Writeback(u32 reg, Xbyak::Operand::Code nreg) override;
+	void Preload_FPU(u32 reg, s8 nreg) override;
+	void Writeback_FPU(u32 reg, s8 nreg) override;
 
 	void doAlloc(RuntimeBlockInfo* block);
 

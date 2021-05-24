@@ -493,6 +493,10 @@ OBJECTS += $(RZDCY_SRC_DIR)/deps/miniupnpc/libminiupnpc.a
 CFLAGS += -DMINIUPNP_STATICLIB
 endif
 
+ifdef FOR_WINDOWS
+CMAKE_FLAVOR = -G "MinGW Makefiles"
+endif
+
 ifdef USE_SDL
 	ifdef FOR_WINDOWS
 $(OBJECTS): SDL/lib/libSDL2.a
@@ -501,7 +505,7 @@ SDL/lib/libSDL2.a:
 	-patch -p1 --directory=$(RZDCY_SRC_DIR)/deps/SDL --forward < $(RZDCY_SRC_DIR)/deps/patches/SDL.patch
 	mkdir -p SDL && \
 	  cd SDL && \
-	  cmake -G "MinGW Makefiles" -DCMAKE_INSTALL_PREFIX=. -DBUILD_SHARED_LIBS=OFF -DCMAKE_SH=SH-NOTFOUND $(RZDCY_SRC_DIR)/deps/SDL && \
+	  cmake $(CMAKE_FLAVOR) -DCMAKE_INSTALL_PREFIX=. -DBUILD_SHARED_LIBS=OFF -DCMAKE_SH=SH-NOTFOUND $(RZDCY_SRC_DIR)/deps/SDL && \
 	  cmake --build . --target install
 
 
@@ -510,6 +514,15 @@ LIBS += -ldinput8  -ldxguid -ldxerr8
 LIBS += -luser32 -lgdi32 -lwinmm -limm32 -lole32 -loleaut32 -lshell32 -lsetupapi -lversion -luuid
 	endif
 endif
+
+libchdr/libchdr-static.a:
+	mkdir -p libchdr && \
+	  cd libchdr && \
+	  cmake $(CMAKE_FLAVOR) -DBUILD_SHARED_LIBS=OFF -DCMAKE_SH=SH-NOTFOUND $(RZDCY_SRC_DIR)/deps/libchdr && \
+	  cmake --build .
+
+
+OBJECTS += libchdr/libchdr-static.a
 
 DEPDIR := .dep-$(BUILDDIR)
 DEPFLAGS = -MT $@ -MD -MP -MF $(DEPDIR)/$*.Td

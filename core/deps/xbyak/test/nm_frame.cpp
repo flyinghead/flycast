@@ -22,16 +22,19 @@ class ErrorSample : public CodeGenerator {
 public:
 	void gen()
 	{
+#ifndef XBYAK_NO_EXCEPTION
 		CYBOZU_TEST_EXCEPTION(mov(ptr[eax],1), std::exception);
 		CYBOZU_TEST_EXCEPTION(test(ptr[eax],1), std::exception);
 		CYBOZU_TEST_EXCEPTION(adc(ptr[eax],1), std::exception);
 		CYBOZU_TEST_EXCEPTION(setz(eax), std::exception);
+#endif
 	}
 };
 
 int main()
 {
-	CYBOZU_TEST_EQUAL(sizeof(Xbyak::Operand), 4u);
+	// the size of Operand exceeds 32 bit.
+	CYBOZU_TEST_EQUAL(sizeof(Xbyak::Operand), 8u);
 	Sample s;
 	s.gen();
 	ErrorSample es;
