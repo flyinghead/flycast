@@ -131,7 +131,6 @@
     <ClInclude Include="..\core\deps\zlib\zutil.h" />
     <ClInclude Include="..\core\imgread\common.h" />
     <ClInclude Include="..\core\imgread\ImgReader.h" />
-    <ClInclude Include="..\core\imgread\SCSIDEFS.H" />
     <ClInclude Include="src\cdromfs.h" />
     <ClInclude Include="src\cdromfs_imp.h" />
   </ItemGroup>

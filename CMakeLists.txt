@@ -571,8 +571,7 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/imgread/cue.cpp
         core/imgread/gdi.cpp
         core/imgread/ImgReader.cpp
-        core/imgread/ioctl.cpp
-        core/imgread/SCSIDEFS.H)
+        core/imgread/ioctl.cpp)
 
 target_sources(${PROJECT_NAME} PRIVATE
         core/input/gamepad.h
