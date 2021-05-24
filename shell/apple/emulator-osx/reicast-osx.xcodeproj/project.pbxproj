@@ -1530,6 +1530,7 @@
 				84B7BDCF1B72720100F9733F /* dsp.h */,
 				AE8C27332111A31100D4D8F4 /* dsp_interp.cpp */,
 				AE7BCB512406EDB0007285F8 /* dsp_x64.cpp */,
+				F2D7C89E265B304F002812E2 /* dsp_arm64.cpp */,
 				84B7BDD01B72720100F9733F /* sgc_if.cpp */,
 				84B7BDD11B72720100F9733F /* sgc_if.h */,
 			);
@@ -1540,6 +1541,7 @@
 			isa = PBXGroup;
 			children = (
 				AE7BCB562415515B007285F8 /* arm7_rec_x64.cpp */,
+				F2D7C8A2265B3082002812E2 /* arm7_rec_arm64.cpp */,
 				AE7BCB572415515B007285F8 /* arm7_rec.cpp */,
 				AE7BCB552415515B007285F8 /* arm7_rec.h */,
 				84B7BDD31B72720100F9733F /* arm-new.h */,
@@ -2749,6 +2751,7 @@
 				84B7BF2A1B72720200F9733F /* arm7.cpp in Sources */,
 				AE90679D235DF80400CE473C /* osd.cpp in Sources */,
 				AE82C67D25B64AE200C79BC2 /* zip_get_name.c in Sources */,
+				F2D7C8A3265B3082002812E2 /* arm7_rec_arm64.cpp in Sources */,
 				84B7BF551B72720200F9733F /* sh4_mem.cpp in Sources */,
 				AE82C69F25B64AE200C79BC2 /* zip_open.c in Sources */,
 				AE649C2C218C553A00EF4A81 /* Lzma86Enc.c in Sources */,
@@ -2916,6 +2919,7 @@
 				84B7BF771B72720200F9733F /* reios_elf.cpp in Sources */,
 				AE9125CC25E3BBDC00ED4594 /* option.cpp in Sources */,
 				84B7BF5C1B72720200F9733F /* common.cpp in Sources */,
+				F2D7C89F265B304F002812E2 /* dsp_arm64.cpp in Sources */,
 				AE82C6BE25B64AE200C79BC2 /* zip_source_crc.c in Sources */,
 				84B7BF681B72720200F9733F /* audiobackend_directsound.cpp in Sources */,
 				AE2A2D5C21D68470004B308D /* awcartridge.cpp in Sources */,
