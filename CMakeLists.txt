@@ -145,7 +145,7 @@ if(MINGW)
 	target_link_libraries(${PROJECT_NAME} PRIVATE "-static-libgcc -static-libstdc++")
 endif()
 
-if(WIN32)
+if(APPLE OR WIN32)
     find_package(SDL2 HINTS "${CMAKE_CURRENT_BINARY_DIR}/core/deps/SDL/cmake")
 elseif(NOT ANDROID)
     find_package(SDL2)
