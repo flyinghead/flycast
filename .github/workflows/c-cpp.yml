@@ -74,9 +74,9 @@ jobs:
       - name: Package app (macos)
         run: |
           cd build/artifact
-          rm -rf flycast.swiftmodule
-          zip -r flycast.app.zip flycast.app
-          rm -rf flycast.app
+          rm -rf Flycast.swiftmodule
+          zip -r flycast.app.zip Flycast.app
+          rm -rf Flycast.app
         if: matrix.config.os == 'macos-latest'
 
       - name: Package app (windows)
