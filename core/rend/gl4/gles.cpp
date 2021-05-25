@@ -249,7 +249,9 @@ void main()
 			#endif
 			
 			#if cp_AlphaTest == 1
-				if (cp_AlphaTestValue>texcol.a) discard;
+				if (cp_AlphaTestValue > texcol.a)
+					discard;
+				texcol.a = 1.0;
 			#endif 
 		#endif
 		#if pp_ShadInstr==0 || pp_TwoVolumes == 1 // DECAL
@@ -307,10 +309,6 @@ void main()
 	#endif
 	
 	color *= trilinear_alpha;
-	
-	#if cp_AlphaTest == 1
-		color.a=1.0;
-	#endif 
 	
 	//color.rgb=vec3(gl_FragCoord.w * sp_FOG_DENSITY / 128.0);
 	
