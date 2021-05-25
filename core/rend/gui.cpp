@@ -1612,7 +1612,7 @@ static void gui_display_settings()
 #ifdef TARGET_IPHONE
 		    		"iOS"
 #else
-					"OSX"
+					"macOS"
 #endif
 #elif defined(_WIN32)
 					"Windows"

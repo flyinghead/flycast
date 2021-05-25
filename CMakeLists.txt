@@ -145,7 +145,7 @@ if(MINGW)
 	target_link_libraries(${PROJECT_NAME} PRIVATE "-static-libgcc -static-libstdc++")
 endif()
 
-if(WIN32)
+if(APPLE OR WIN32)
     find_package(SDL2 HINTS "${CMAKE_CURRENT_BINARY_DIR}/core/deps/SDL/cmake")
 elseif(NOT ANDROID)
     find_package(SDL2)
@@ -913,6 +913,7 @@ elseif(APPLE)
 	set_source_files_properties(${ASSETS} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
 
     set_target_properties(${PROJECT_NAME} PROPERTIES
+        OUTPUT_NAME "Flycast"
         MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/shell/cmake/MacOSXBundleInfo.plist.in
         MACOSX_BUNDLE_EXECUTABLE_NAME "Flycast"
         MACOSX_BUNDLE_INFO_STRING ""
