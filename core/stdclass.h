@@ -12,7 +12,11 @@
 #undef PAGE_MASK
 #define PAGE_MASK (PAGE_SIZE-1)
 #else
+#if defined(__APPLE__) && defined(__aarch64__)
+#define PAGE_SIZE 16384
+#else
 #define PAGE_SIZE 4096
+#endif
 #define PAGE_MASK (PAGE_SIZE-1)
 #endif
 
