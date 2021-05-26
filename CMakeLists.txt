@@ -962,5 +962,6 @@ if(BUILD_TESTING)
             tests/src/div32_test.cpp
             tests/src/test_stubs.cpp
             tests/src/serialize_test.cpp
-            tests/src/AicaArmTest.cpp)
+            tests/src/AicaArmTest.cpp
+            tests/src/Sh4InterpreterTest.cpp)
 endif()
