@@ -104,7 +104,13 @@ struct D3DRenderer : public Renderer
 	bool Process(TA_context* ctx) override;
 	bool Render() override;
 	bool RenderLastFrame() override;
-	bool Present() override { return true; }
+	bool Present() override
+	{
+		if (!frameRendered)
+			return false;
+		frameRendered = false;
+		return true;
+	}
 	void DrawOSD(bool clear_screen) override;
 	BaseTextureCacheData *GetTexture(TSP tsp, TCW tcw) override;
 	void preReset();

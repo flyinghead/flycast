@@ -1244,6 +1244,8 @@ void D3DRenderer::updatePaletteTexture()
 
 	paletteTexture->UnlockRect(0);
 	device->SetTexture(1, paletteTexture);
+	device->SetSamplerState(1, D3DSAMP_MINFILTER, D3DTEXF_POINT);
+	device->SetSamplerState(1, D3DSAMP_MAGFILTER, D3DTEXF_POINT);
 }
 
 void D3DRenderer::updateFogTexture()
@@ -1266,6 +1268,8 @@ void D3DRenderer::updateFogTexture()
 	}
 	fogTexture->UnlockRect(0);
 	device->SetTexture(2, fogTexture);
+	device->SetSamplerState(2, D3DSAMP_MINFILTER, D3DTEXF_LINEAR);
+	device->SetSamplerState(2, D3DSAMP_MAGFILTER, D3DTEXF_LINEAR);
 }
 
 void D3DRenderer::DrawOSD(bool clear_screen)
