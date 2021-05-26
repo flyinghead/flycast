@@ -282,7 +282,6 @@ using OptionString = Option<std::string>;
 extern Option<bool> DynarecEnabled;
 extern Option<bool> DynarecIdleSkip;
 extern Option<bool> DynarecSafeMode;
-extern Option<bool> DisableVmem32;
 
 // General
 
@@ -359,7 +358,6 @@ extern Option<bool> Widescreen;
 extern Option<bool> SuperWidescreen;
 extern Option<bool> ShowFPS;
 extern Option<bool> RenderToTextureBuffer;
-extern Option<int> RenderToTextureUpscale;
 extern Option<bool> TranslucentPolygonDepthMask;
 extern Option<bool> ModifierVolumes;
 constexpr bool Clipping = true;
@@ -380,6 +378,7 @@ extern Option<int> SkipFrame;
 extern Option<int> MaxThreads;
 extern Option<int> AutoSkipFrame;		// 0: none, 1: some, 2: more
 extern Option<int> RenderResolution;
+extern Option<bool> VSync;
 
 // Misc
 

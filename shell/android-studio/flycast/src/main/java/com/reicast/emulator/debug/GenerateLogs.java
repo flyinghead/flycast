@@ -1,20 +1,11 @@
 package com.reicast.emulator.debug;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
-import android.support.constraint.ConstraintLayout;
-import android.support.design.widget.Snackbar;
-import android.support.graphics.drawable.VectorDrawableCompat;
-import android.view.Gravity;
-import android.view.View;
-import android.widget.TextView;
 
-import com.reicast.emulator.R;
 import com.reicast.emulator.config.Config;
 
 import java.io.BufferedReader;

@@ -25,7 +25,6 @@ namespace config {
 Option<bool> DynarecEnabled("Dynarec.Enabled", true);
 Option<bool> DynarecIdleSkip("Dynarec.idleskip", true);
 Option<bool> DynarecSafeMode("Dynarec.safe-mode");
-Option<bool> DisableVmem32("Dynarec.DisableVmem32");
 
 // General
 
@@ -64,7 +63,6 @@ Option<bool> Widescreen("rend.WideScreen");
 Option<bool> SuperWidescreen("rend.SuperWideScreen");
 Option<bool> ShowFPS("rend.ShowFPS");
 Option<bool> RenderToTextureBuffer("rend.RenderToTextureBuffer");
-Option<int> RenderToTextureUpscale("rend.RenderToTextureUpscale", 1);
 Option<bool> TranslucentPolygonDepthMask("rend.TranslucentPolygonDepthMask");
 Option<bool> ModifierVolumes("rend.ModifierVolumes", true);
 Option<int> TextureUpscale("rend.TextureUpscale", 1);
@@ -89,6 +87,7 @@ Option<int> SkipFrame("ta.skip");
 Option<int> MaxThreads("pvr.MaxThreads", 3);
 Option<int> AutoSkipFrame("pvr.AutoSkipFrame", 0);
 Option<int> RenderResolution("rend.Resolution", 480);
+Option<bool> VSync("rend.vsync", true);
 
 // Misc
 

@@ -4,29 +4,32 @@ RZDCY_SRC_DIR ?= $(call my-dir)
 VERSION_HEADER := $(RZDCY_SRC_DIR)/version.h
 
 RZDCY_MODULES	:=	cfg/ hw/arm7/ hw/aica/ hw/holly/ hw/ hw/gdrom/ hw/maple/ \
- hw/mem/ hw/pvr/ hw/sh4/ hw/sh4/interpr/ hw/sh4/modules/ plugins/ profiler/ oslib/ \
- hw/extdev/ hw/arm/ hw/naomi/ imgread/ ./ deps/zlib/ deps/chdr/ deps/crypto/ \
- deps/libelf/ deps/chdpsr/ arm_emitter/ rend/ reios/ deps/xbrz/ \
- deps/imgui/ archive/ input/ log/ wsi/ network/ hw/bba/ debug/
+ hw/mem/ hw/pvr/ hw/sh4/ hw/sh4/interpr/ hw/sh4/modules/ profiler/ oslib/ \
+ hw/naomi/ imgread/ ./ deps/libchdr/src/ deps/libchdr/deps/zlib-1.2.11/ \
+ deps/libelf/ deps/chdpsr/ rend/ reios/ deps/xbrz/ \
+ deps/imgui/ archive/ input/ log/ wsi/ network/ hw/bba/ debug/ \
+ hw/modem/ deps/picotcp/modules/ deps/picotcp/stack/
 
-ifndef NOT_ARM
-    RZDCY_MODULES += rec-ARM/
-endif
-
-ifdef X86_REC
-    RZDCY_MODULES += rec-x86/
-endif
-
-ifdef X64_REC
-    RZDCY_MODULES += rec-x64/
-endif
-
-ifdef CPP_REC
-    RZDCY_MODULES += rec-cpp/
-endif
-
-ifdef ARM64_REC
-    RZDCY_MODULES += rec-ARM64/ deps/vixl/ deps/vixl/aarch64/
+ifndef NO_REC
+	ifndef NOT_ARM
+	    RZDCY_MODULES += rec-ARM/ deps/vixl/ deps/vixl/aarch32/
+	endif
+	
+	ifdef X86_REC
+	    RZDCY_MODULES += rec-x86/
+	endif
+	
+	ifdef X64_REC
+	    RZDCY_MODULES += rec-x64/
+	endif
+	
+	ifdef CPP_REC
+	    RZDCY_MODULES += rec-cpp/
+	endif
+	
+	ifdef ARM64_REC
+	    RZDCY_MODULES += rec-ARM64/ deps/vixl/ deps/vixl/aarch64/
+	endif
 endif
 
 ifndef NO_REND
@@ -84,10 +87,11 @@ endif
 
 RZDCY_CFLAGS += -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/rend/gles -I$(RZDCY_SRC_DIR)/deps \
 		 -I$(RZDCY_SRC_DIR)/deps/vixl -I$(RZDCY_SRC_DIR)/khronos -I$(RZDCY_SRC_DIR)/deps/glslang \
-		 -I$(RZDCY_SRC_DIR)/deps/glm -I$(RZDCY_SRC_DIR)/deps/xbyak -I$(RZDCY_SRC_DIR)/deps/nowide/include
+		 -I$(RZDCY_SRC_DIR)/deps/glm -I$(RZDCY_SRC_DIR)/deps/xbyak -I$(RZDCY_SRC_DIR)/deps/nowide/include \
+		 -I$(RZDCY_SRC_DIR)/deps/picotcp/include -I$(RZDCY_SRC_DIR)/deps/picotcp/modules \
+		 -I$(RZDCY_SRC_DIR)/deps/libchdr/include -I$(RZDCY_SRC_DIR)/deps/libchdr/deps/zlib-1.2.11/ \
+		 -I$(RZDCY_SRC_DIR)/deps/libchdr/deps/lzma-19.00 -I$(RZDCY_SRC_DIR)/deps/libchdr/deps/lzma-19.00/include
 
-RZDCY_CFLAGS += -I$(RZDCY_SRC_DIR)/deps/picotcp/include -I$(RZDCY_SRC_DIR)/deps/picotcp/modules
-RZDCY_MODULES += hw/modem/ deps/picotcp/modules/ deps/picotcp/stack/
 ifdef USE_SYSTEM_MINIUPNPC
 	RZDCY_CFLAGS += -I/usr/include/miniupnpc
 else
@@ -116,10 +120,7 @@ ifdef CHD5_LZMA
 	RZDCY_CFLAGS += -D_7ZIP_ST -DCHD5_LZMA
 endif
 
-RZDCY_CFLAGS += -DZ_HAVE_UNISTD_H -I$(RZDCY_SRC_DIR)/deps/zlib
 RZDCY_CFLAGS += -DXXH_INLINE_ALL -I$(RZDCY_SRC_DIR)/deps/xxHash -I$(RZDCY_SRC_DIR)/deps/stb
-
-RZDCY_CXXFLAGS := $(RZDCY_CFLAGS) -fno-rtti -std=c++11
 
 RZDCY_FILES += $(foreach dir,$(addprefix $(RZDCY_SRC_DIR)/,$(RZDCY_MODULES)),$(wildcard $(dir)*.cpp))
 RZDCY_FILES += $(foreach dir,$(addprefix $(RZDCY_SRC_DIR)/,$(RZDCY_MODULES)),$(wildcard $(dir)*.cc))

@@ -858,12 +858,12 @@ void D3DRenderer::setBaseScissor()
 			fHeight = (float)(pvrrc.fb_Y_CLIP.max - pvrrc.fb_Y_CLIP.min + 1);
 			min_x = (float)pvrrc.fb_X_CLIP.min;
 			min_y = (float)pvrrc.fb_Y_CLIP.min;
-			if (config::RenderToTextureUpscale > 1 && !config::RenderToTextureBuffer)
+			if (config::RenderResolution > 480 && !config::RenderToTextureBuffer)
 			{
-				min_x *= config::RenderToTextureUpscale;
-				min_y *= config::RenderToTextureUpscale;
-				fWidth *= config::RenderToTextureUpscale;
-				fHeight *= config::RenderToTextureUpscale;
+				min_x *= config::RenderResolution / 480.f;
+				min_y *= config::RenderResolution / 480.f;
+				fWidth *= config::RenderResolution / 480.f;
+				fHeight *= config::RenderResolution / 480.f;
 			}
 		}
 		scissorEnable = true;
@@ -887,11 +887,6 @@ void D3DRenderer::prepareRttRenderTarget(u32 texAddress)
 	u32 fbh = pvrrc.fb_Y_CLIP.max + 1;
 	DEBUG_LOG(RENDERER, "RTT packmode=%d stride=%d - %d x %d @ %06x",
 			FB_W_CTRL.fb_packmode, FB_W_LINESTRIDE.stride * 8, fbw, fbh, texAddress);
-	if (!config::RenderToTextureBuffer)
-	{
-		fbw *= config::RenderToTextureUpscale;
-		fbh *= config::RenderToTextureUpscale;
-	}
 	// Find the smallest power of two texture that fits the viewport
 	u32 fbh2 = 2;
 	while (fbh2 < fbh)
@@ -899,6 +894,13 @@ void D3DRenderer::prepareRttRenderTarget(u32 texAddress)
 	u32 fbw2 = 2;
 	while (fbw2 < fbw)
 		fbw2 *= 2;
+	if (!config::RenderToTextureBuffer)
+	{
+		fbw *= config::RenderResolution / 480.f;
+		fbh *= config::RenderResolution / 480.f;
+		fbw2 *= config::RenderResolution / 480.f;
+		fbh2 *= config::RenderResolution / 480.f;
+	}
 	rttTexture.reset();
 	device->CreateTexture(fbw2, fbh2, 1, D3DUSAGE_RENDERTARGET, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &rttTexture.get(), NULL);
 

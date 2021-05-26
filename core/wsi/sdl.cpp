@@ -24,6 +24,7 @@
 #include "gl_context.h"
 #include "rend/gui.h"
 #include "sdl/sdl.h"
+#include "cfg/option.h"
 
 SDLGLGraphicsContext theGLContext;
 
@@ -79,7 +80,7 @@ bool SDLGLGraphicsContext::Init()
 	SDL_GL_MakeCurrent(window, glcontext);
 #ifndef TEST_AUTOMATION
 	// Swap at vsync
-	swapOnVSync = true;
+	swapOnVSync = config::VSync;
 #else
 	// Swap immediately
 	swapOnVSync = false;
@@ -105,9 +106,9 @@ void SDLGLGraphicsContext::Swap()
 #ifdef TEST_AUTOMATION
 	do_swap_automation();
 #else
-	if (swapOnVSync == settings.input.fastForwardMode)
+	if (swapOnVSync == (settings.input.fastForwardMode || !config::VSync))
 	{
-		swapOnVSync = !settings.input.fastForwardMode;
+		swapOnVSync = (!settings.input.fastForwardMode && config::VSync);
 		SDL_GL_SetSwapInterval((int)swapOnVSync);
 	}
 #endif

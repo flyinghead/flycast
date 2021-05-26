@@ -25,8 +25,6 @@
 #define SH_CURTHREAD            1
 #define SH_CURPROC              2
 
-extern const u32 mmu_mask[4];
-
 static bool read_mem32(u32 addr, u32& data)
 {
 	u32 pa;

@@ -197,6 +197,7 @@ void main()
 			#if cp_AlphaTest == 1
 				if (cp_AlphaTestValue > texcol.a)
 					discard;
+				texcol.a = 1.0;
 			#endif 
 		#endif
 		#if pp_ShadInstr==0
@@ -246,9 +247,6 @@ void main()
 	color *= trilinear_alpha;
 	#endif
 	
-	#if cp_AlphaTest == 1
-		color.a=1.0;
-	#endif 
 	//color.rgb=vec3(gl_FragCoord.w * sp_FOG_DENSITY / 128.0);
 #if TARGET_GL != GLES2
 	highp float w = gl_FragCoord.w * 100000.0;
@@ -909,12 +907,22 @@ void UpdatePaletteTexture(GLenum texture_slot)
 
 void OSD_DRAW(bool clear_screen)
 {
+	gui_display_osd();
 #ifdef __ANDROID__
 	if (gl.OSD_SHADER.osd_tex == 0)
 		gl_load_osd_resources();
 	if (gl.OSD_SHADER.osd_tex != 0)
 	{
-		const std::vector<OSDVertex>& osdVertices = GetOSDVertices();
+		glcache.Disable(GL_SCISSOR_TEST);
+		glViewport(0, 0, screen_width, screen_height);
+
+		if (clear_screen)
+		{
+			glcache.ClearColor(0.7f, 0.7f, 0.7f, 1.f);
+			glClear(GL_COLOR_BUFFER_BIT);
+			render_output_framebuffer();
+			glViewport(0, 0, screen_width, screen_height);
+		}
 
 #ifndef GLES2
 		if (gl.gl_major >= 3)
@@ -942,6 +950,7 @@ void OSD_DRAW(bool clear_screen)
 
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
+		const std::vector<OSDVertex>& osdVertices = GetOSDVertices();
 		glBufferData(GL_ARRAY_BUFFER, osdVertices.size() * sizeof(OSDVertex), osdVertices.data(), GL_STREAM_DRAW); glCheck();
 
 		glcache.Enable(GL_BLEND);
@@ -952,14 +961,6 @@ void OSD_DRAW(bool clear_screen)
 		glcache.DepthFunc(GL_ALWAYS);
 
 		glcache.Disable(GL_CULL_FACE);
-		glcache.Disable(GL_SCISSOR_TEST);
-		glViewport(0, 0, screen_width, screen_height);
-
-		if (clear_screen)
-		{
-			glcache.ClearColor(0.7f, 0.7f, 0.7f, 1.f);
-			glClear(GL_COLOR_BUFFER_BIT);
-		}
 		int dfa = osdVertices.size() / 4;
 
 		for (int i = 0; i < dfa; i++)
@@ -968,7 +969,6 @@ void OSD_DRAW(bool clear_screen)
 		glCheck();
 	}
 #endif
-	gui_display_osd();
 }
 
 bool ProcessFrame(TA_context* ctx)
@@ -1182,12 +1182,13 @@ bool RenderFrame(int width, int height)
 				fHeight = pvrrc.fb_Y_CLIP.max - pvrrc.fb_Y_CLIP.min + 1;
 				min_x = pvrrc.fb_X_CLIP.min;
 				min_y = pvrrc.fb_Y_CLIP.min;
-				if (config::RenderToTextureUpscale > 1 && !config::RenderToTextureBuffer)
+				if (config::RenderResolution > 480 && !config::RenderToTextureBuffer)
 				{
-					min_x *= config::RenderToTextureUpscale;
-					min_y *= config::RenderToTextureUpscale;
-					fWidth *= config::RenderToTextureUpscale;
-					fHeight *= config::RenderToTextureUpscale;
+					float scale = config::RenderResolution / 480.f;
+					min_x *= scale;
+					min_y *= scale;
+					fWidth *= scale;
+					fHeight *= scale;
 				}
 			}
 			ShaderUniforms.base_clipping.enabled = true;

@@ -452,7 +452,6 @@ sh4op(i1111_nnn0_1111_1101)
 //FSRRA //1111_nnnn_0111_1101
 sh4op(i1111_nnnn_0111_1101)
 {
-	// What about double precision?
 	u32 n = GetN(op);
 	if (fpscr.PR==0)
 	{

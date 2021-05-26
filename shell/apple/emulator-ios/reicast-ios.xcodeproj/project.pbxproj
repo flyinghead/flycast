@@ -519,7 +519,6 @@
 		9C7A3A6018C806E00070BB5F /* gdi.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = gdi.cpp; sourceTree = "<group>"; };
 		9C7A3A6118C806E00070BB5F /* ImgReader.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ImgReader.cpp; sourceTree = "<group>"; };
 		9C7A3A6318C806E00070BB5F /* ioctl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ioctl.cpp; sourceTree = "<group>"; };
-		9C7A3A6418C806E00070BB5F /* SCSIDEFS.H */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = SCSIDEFS.H; sourceTree = "<group>"; };
 		9C7A3A6718C806E00070BB5F /* egl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = egl.h; sourceTree = "<group>"; };
 		9C7A3A6818C806E00070BB5F /* eglext.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = eglext.h; sourceTree = "<group>"; };
 		9C7A3A6918C806E00070BB5F /* eglplatform.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = eglplatform.h; sourceTree = "<group>"; };
@@ -1197,7 +1196,6 @@
 				9C7A3A6018C806E00070BB5F /* gdi.cpp */,
 				9C7A3A6118C806E00070BB5F /* ImgReader.cpp */,
 				9C7A3A6318C806E00070BB5F /* ioctl.cpp */,
-				9C7A3A6418C806E00070BB5F /* SCSIDEFS.H */,
 			);
 			path = imgread;
 			sourceTree = "<group>";
@@ -1724,7 +1722,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
 				ONLY_ACTIVE_ARCH = NO;
 				OTHER_CFLAGS = "-mno-thumb";
-				PRODUCT_BUNDLE_IDENTIFIER = "com.reicast.$(PRODUCT_NAME:rfc1034identifier)";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.flyinghead.$(PRODUCT_NAME:rfc1034identifier)";
 				PRODUCT_NAME = "reicast-ios";
 				PROVISIONING_PROFILE = "";
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -1758,7 +1756,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
 				ONLY_ACTIVE_ARCH = NO;
 				OTHER_CFLAGS = "-mno-thumb";
-				PRODUCT_BUNDLE_IDENTIFIER = "com.reicast.$(PRODUCT_NAME:rfc1034identifier)";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.flyinghead.$(PRODUCT_NAME:rfc1034identifier)";
 				PRODUCT_NAME = "reicast-ios";
 				PROVISIONING_PROFILE = "";
 				TARGETED_DEVICE_FAMILY = "1,2";

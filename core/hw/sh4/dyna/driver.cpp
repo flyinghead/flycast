@@ -69,7 +69,7 @@ static void recSh4_Run()
 	sh4_int_bCpuRun = true;
 	RestoreHostRoundingMode();
 
-	sh4_dyna_rcb=(u8*)&Sh4cntx + sizeof(Sh4cntx);
+	u8 *sh4_dyna_rcb = (u8 *)&Sh4cntx + sizeof(Sh4cntx);
 	INFO_LOG(DYNAREC, "cntx // fpcb offset: %td // pc offset: %td // pc %08X", (u8*)&sh4rcb.fpcb - sh4_dyna_rcb, (u8*)&sh4rcb.cntx.pc - sh4_dyna_rcb, sh4rcb.cntx.pc);
 	
 	ngen_mainloop(sh4_dyna_rcb);
@@ -169,18 +169,14 @@ bool RuntimeBlockInfo::Setup(u32 rpc,fpscr_t rfpu_cfg)
 	
 	oplist.clear();
 
-#if !defined(NO_MMU)
 	try {
-#endif
 		if (!dec_DecodeBlock(this, SH4_TIMESLICE / 2))
 			return false;
-#if !defined(NO_MMU)
 	}
 	catch (SH4ThrownException& ex) {
 		Do_Exception(rpc, ex.expEvn, ex.callVect);
 		return false;
 	}
-#endif
 	SetProtectedFlags();
 
 	AnalyseBlock(this);

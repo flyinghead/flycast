@@ -4,7 +4,6 @@
 
 //#define CANONICAL_TEST
 
-#define XBYAK_NO_OP_NAMES
 #include <xbyak/xbyak.h>
 #include <xbyak/xbyak_util.h>
 using namespace Xbyak::util;
@@ -18,7 +17,6 @@ using namespace Xbyak::util;
 
 #include "hw/sh4/sh4_core.h"
 #include "hw/sh4/sh4_mem.h"
-#include "hw/mem/vmem32.h"
 #include "oslib/oslib.h"
 #include "x64_regalloc.h"
 #include "xbyak_base.h"
@@ -39,9 +37,7 @@ static void (*mainloop)();
 static void (*handleException)();
 
 u32 mem_writes, mem_reads;
-u32 mem_rewrites_w, mem_rewrites_r;
 
-static u32 exception_raised;
 static u64 jmp_rsp;
 
 namespace MemSize {
@@ -102,40 +98,6 @@ RuntimeBlockInfo* ngen_AllocateBlock()
 static void ngen_blockcheckfail(u32 pc) {
 	//printf("X64 JIT: SMC invalidation at %08X\n", pc);
 	rdv_BlockCheckFail(pc);
-}
-
-static void handle_mem_exception(u32 exception_raised, u32 pc)
-{
-	if (exception_raised)
-	{
-		spc = pc;
-		cycle_counter += 2;	// probably more is needed but no easy way to find out
-		handleException();
-	}
-}
-
-template<typename T>
-static T ReadMemNoEx(u32 addr, u32 pc)
-{
-#ifndef NO_MMU
-	T rv = mmu_ReadMemNoEx<T>(addr, &exception_raised);
-	handle_mem_exception(exception_raised, pc);
-
-	return rv;
-#else
-	// not used
-	return (T)0;
-#endif
-}
-
-template<typename T>
-static u32 WriteMemNoEx(u32 addr, T data, u32 pc)
-{
-#ifndef NO_MMU
-	u32 exception_raised = mmu_WriteMemNoEx<T>(addr, data);
-	handle_mem_exception(exception_raised, pc);
-	return exception_raised;
-#endif
 }
 
 static void handle_sh4_exception(SH4ThrownException& ex, u32 pc)
@@ -286,10 +248,9 @@ public:
 							add(call_regs[0], dword[rax]);
 						}
 					}
-					int size = op.flags & 0x7f;
+					genMmuLookup(block, op, 0);
 
-					if (mmu_enabled())
-						mov(call_regs[2], block->vaddr + op.guest_offs - (op.delay_slot ? 2 : 0));	// pc
+					int size = op.flags & 0x7f;
 					size = size == 1 ? MemSize::S8 : size == 2 ? MemSize::S16 : size == 4 ? MemSize::S32 : MemSize::S64;
 					GenCall((void (*)())MemHandlers[optimise ? MemType::Fast : MemType::Slow][size][MemOp::R], mmu_enabled());
 
@@ -319,6 +280,7 @@ public:
 							add(call_regs[0], dword[rax]);
 						}
 					}
+					genMmuLookup(block, op, 1);
 
 					u32 size = op.flags & 0x7f;
 					if (size != 8)
@@ -328,8 +290,6 @@ public:
 						mov(call_regs64[1], qword[rax]);
 					}
 
-					if (mmu_enabled())
-						mov(call_regs[2], block->vaddr + op.guest_offs - (op.delay_slot ? 2 : 0));	// pc
 					size = size == 1 ? MemSize::S8 : size == 2 ? MemSize::S16 : size == 4 ? MemSize::S32 : MemSize::S64;
 					GenCall((void (*)())MemHandlers[optimise ? MemType::Fast : MemType::Slow][size][MemOp::W], mmu_enabled());
 				}
@@ -750,7 +710,7 @@ public:
 
 	bool rewriteMemAccess(host_context_t &context)
 	{
-		if (!_nvmem_enabled() || (mmu_enabled() && !vmem32_enabled()))
+		if (!_nvmem_enabled())
 			return false;
 
 		//printf("ngen_Rewrite pc %p\n", context.pc);
@@ -804,15 +764,46 @@ public:
 	}
 
 private:
+	void genMmuLookup(const RuntimeBlockInfo* block, const shil_opcode& op, u32 write)
+	{
+		if (mmu_enabled())
+		{
+			Xbyak::Label inCache;
+			Xbyak::Label done;
+
+			mov(eax, call_regs[0]);
+			shr(eax, 12);
+			if ((uintptr_t)mmuAddressLUT >> 32 != 0)
+			{
+				mov(r9, (uintptr_t)mmuAddressLUT);
+				mov(eax, dword[r9 + rax * 4]);
+			}
+			else
+			{
+				mov(eax, dword[(uintptr_t)mmuAddressLUT + rax * 4]);
+			}
+			test(eax, eax);
+			jne(inCache);
+			mov(call_regs[1], write);
+			mov(call_regs[2], block->vaddr + op.guest_offs - (op.delay_slot ? 2 : 0));	// pc
+			GenCall(mmuDynarecLookup);
+			mov(call_regs[0], eax);
+			jmp(done);
+			L(inCache);
+			and_(call_regs[0], 0xFFF);
+			or_(call_regs[0], eax);
+			L(done);
+		}
+	}
 	bool GenReadMemImmediate(const shil_opcode& op, RuntimeBlockInfo* block)
 	{
 		if (!op.rs1.is_imm())
 			return false;
 		u32 size = op.flags & 0x7f;
 		u32 addr = op.rs1._imm;
-		if (mmu_enabled() && mmu_is_translated<MMU_TT_DREAD>(addr, size))
+		if (mmu_enabled() && mmu_is_translated(addr, size))
 		{
-			if ((addr >> 12) != (block->vaddr >> 12))
+			if ((addr >> 12) != (block->vaddr >> 12) && ((addr >> 12) != ((block->vaddr + block->guest_opcodes * 2 - 1) >> 12)))
 				// When full mmu is on, only consider addresses in the same 4k page
 				return false;
 
@@ -949,9 +940,9 @@ private:
 			return false;
 		u32 size = op.flags & 0x7f;
 		u32 addr = op.rs1._imm;
-		if (mmu_enabled() && mmu_is_translated<MMU_TT_DWRITE>(addr, size))
+		if (mmu_enabled() && mmu_is_translated(addr, size))
 		{
-			if ((addr >> 12) != (block->vaddr >> 12))
+			if ((addr >> 12) != (block->vaddr >> 12) && ((addr >> 12) != ((block->vaddr + block->guest_opcodes * 2 - 1) >> 12)))
 				// When full mmu is on, only consider addresses in the same 4k page
 				return false;
 
@@ -1118,13 +1109,8 @@ private:
 				for (int op = 0; op < MemOp::Count; op++)
 				{
 					MemHandlers[type][size][op] = getCurr();
-					if (type == MemType::Fast && _nvmem_enabled() && (!mmu_enabled() || vmem32_enabled()))
+					if (type == MemType::Fast && _nvmem_enabled())
 					{
-						if (mmu_enabled())
-						{
-							mov(rax, (uintptr_t)&p_sh4rcb->cntx.exception_pc);
-							mov(dword[rax], call_regs[2]);
-						}
 						mov(rax, (uintptr_t)virt_ram_base);
 						if (!_nvmem_4gb_space())
 						{
@@ -1182,19 +1168,9 @@ private:
 						ret();
 						L(no_sqw);
 						if (size == MemSize::S32)
-						{
-							if (mmu_enabled())
-								jmp((const void *)WriteMemNoEx<u32>);
-							else
-								jmp((const void *)WriteMem32);	// tail call
-						}
+							jmp((const void *)_vmem_WriteMem32);	// tail call
 						else
-						{
-							if (mmu_enabled())
-								jmp((const void *)WriteMemNoEx<u64>);
-							else
-								jmp((const void *)WriteMem64);	// tail call
-						}
+							jmp((const void *)_vmem_WriteMem64);	// tail call
 						continue;
 					}
 					else
@@ -1202,38 +1178,24 @@ private:
 						// Slow path
 						if (op == MemOp::R)
 						{
-							if (mmu_enabled())
-								mov(call_regs[1], call_regs[2]);
 							switch (size) {
 							case MemSize::S8:
 								sub(rsp, 8);
-								if (mmu_enabled())
-									call((const void *)ReadMemNoEx<u8>);
-								else
-									call((const void *)ReadMem8);
+								call((const void *)_vmem_ReadMem8);
 								movsx(eax, al);
 								add(rsp, 8);
 								break;
 							case MemSize::S16:
 								sub(rsp, 8);
-								if (mmu_enabled())
-									call((const void *)ReadMemNoEx<u16>);
-								else
-									call((const void *)ReadMem16);
+								call((const void *)_vmem_ReadMem16);
 								movsx(eax, ax);
 								add(rsp, 8);
 								break;
 							case MemSize::S32:
-								if (mmu_enabled())
-									jmp((const void *)ReadMemNoEx<u32>);
-								else
-									jmp((const void *)ReadMem32);	// tail call
+								jmp((const void *)_vmem_ReadMem32);	// tail call
 								continue;
 							case MemSize::S64:
-								if (mmu_enabled())
-									jmp((const void *)ReadMemNoEx<u64>);
-								else
-									jmp((const void *)ReadMem64);	// tail call
+								jmp((const void *)_vmem_ReadMem64);	// tail call
 								continue;
 							default:
 								die("1..8 bytes");
@@ -1243,28 +1205,16 @@ private:
 						{
 							switch (size) {
 							case MemSize::S8:
-								if (mmu_enabled())
-									jmp((const void *)WriteMemNoEx<u8>);
-								else
-									jmp((const void *)WriteMem8);	// tail call
+								jmp((const void *)_vmem_WriteMem8);	// tail call
 								continue;
 							case MemSize::S16:
-								if (mmu_enabled())
-									jmp((const void *)WriteMemNoEx<u16>);
-								else
-									jmp((const void *)WriteMem16);	// tail call
+								jmp((const void *)_vmem_WriteMem16);	// tail call
 								continue;
 							case MemSize::S32:
-								if (mmu_enabled())
-									jmp((const void *)WriteMemNoEx<u32>);
-								else
-									jmp((const void *)WriteMem32);	// tail call
+								jmp((const void *)_vmem_WriteMem32);	// tail call
 								continue;
 							case MemSize::S64:
-								if (mmu_enabled())
-									jmp((const void *)WriteMemNoEx<u64>);
-								else
-									jmp((const void *)WriteMem64);	// tail call
+								jmp((const void *)_vmem_WriteMem64);	// tail call
 								continue;
 							default:
 								die("1..8 bytes");

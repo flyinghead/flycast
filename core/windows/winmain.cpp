@@ -1,7 +1,6 @@
 #include "oslib/oslib.h"
 #include "oslib/audiostream.h"
 #include "imgread/common.h"
-#include "hw/mem/vmem32.h"
 #include "stdclass.h"
 #include "cfg/cfg.h"
 #include "win_keyboard.h"
@@ -227,12 +226,7 @@ static LONG exceptionHandler(EXCEPTION_POINTERS *ep)
 	u8* address = (u8 *)pExceptionRecord->ExceptionInformation[1];
 
 	//printf("[EXC] During access to : 0x%X\n", address);
-#if 0
-	// WinCE virtual memory
-	bool write = false;
-	if (vmem32_handle_signal(address, write, 0))
-		return EXCEPTION_CONTINUE_EXECUTION;
-#endif
+
 	// code protection in RAM
 	if (bm_RamWriteAccess(address))
 		return EXCEPTION_CONTINUE_EXECUTION;

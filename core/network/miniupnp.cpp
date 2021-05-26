@@ -16,6 +16,8 @@
     You should have received a copy of the GNU General Public License
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
+#include "build.h"
+#ifdef USE_MINIUPNPC
 #include <miniupnpc.h>
 #include <upnpcommands.h>
 #include "types.h"
@@ -79,3 +81,4 @@ bool MiniUPnP::AddPortMapping(int port, bool tcp)
 	mappedPorts.emplace_back(portStr, tcp);
 	return true;
 }
+#endif

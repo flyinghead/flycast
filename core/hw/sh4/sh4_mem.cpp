@@ -17,7 +17,6 @@
 //main system mem
 VArray2 mem_b;
 
-#ifndef NO_MMU
 // Memory handlers
 ReadMem8Func ReadMem8;
 ReadMem16Func ReadMem16;
@@ -29,7 +28,6 @@ WriteMem8Func WriteMem8;
 WriteMem16Func WriteMem16;
 WriteMem32Func WriteMem32;
 WriteMem64Func WriteMem64;
-#endif
 
 //AREA 1
 static _vmem_handler area1_32b;
@@ -313,7 +311,6 @@ static bool interpreterRunning = false;
 
 void SetMemoryHandlers()
 {
-#ifndef NO_MMU
 #ifdef STRICT_MODE
 	if (config::DynarecEnabled && interpreterRunning)
 	{
@@ -366,5 +363,4 @@ void SetMemoryHandlers()
 		WriteMem32 = &_vmem_WriteMem32;
 		WriteMem64 = &_vmem_WriteMem64;
 	}
-#endif
 }

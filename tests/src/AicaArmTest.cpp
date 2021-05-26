@@ -743,6 +743,16 @@ TEST_F(AicaArmTest, MemoryTest)
 	RunOp();
 	ASSERT_EQ(arm_Reg[0].I, (*(u32*)&aica_ram[0x1004]) >> 16 | (*(u32*)&aica_ram[0x1004]) << 16);
 	ASSERT_EQ(arm_Reg[2].I, 1);
+
+	// conditional with write-back, false condition
+	PrepareOp(0x04910004);	// ldreq r0, [r1], #4
+	ResetNZCV();
+	arm_Reg[0].I = 0;
+	arm_Reg[1].I = 0x1004;
+	RunOp();
+	ASSERT_EQ(arm_Reg[0].I, 0);
+	ASSERT_EQ(arm_Reg[1].I, 0x1004);
+
 }
 
 TEST_F(AicaArmTest, PcRelativeTest)

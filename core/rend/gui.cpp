@@ -48,6 +48,7 @@ extern u8 kb_shift[MAPLE_PORTS]; // shift keys pressed (bitmask)
 extern u8 kb_key[MAPLE_PORTS][6];		// normal keys pressed
 
 int screen_dpi = 96;
+int insetLeft, insetRight, insetTop, insetBottom;
 
 static bool inited = false;
 float scaling = 1;
@@ -245,7 +246,8 @@ void gui_init()
         	glyphRanges = io.Fonts->GetGlyphRangesJapanese();
         else if (locale.find("ko") == 0)		// Korean
         	glyphRanges = io.Fonts->GetGlyphRangesKorean();
-        else if (locale.find("zh_TW") == 0)		// Traditional Chinese
+        else if (locale.find("zh_TW") == 0
+        		|| locale.find("zh_HK") == 0)	// Traditional Chinese
         	glyphRanges = GetGlyphRangesChineseTraditionalOfficial();
         else if (locale.find("zh_CN") == 0)		// Simplified Chinese
         	glyphRanges = GetGlyphRangesChineseSimplifiedOfficial();
@@ -304,8 +306,8 @@ static void ImGui_Impl_NewFrame()
 	else if (config::RendererType.isDirectX())
 		ImGui_ImplDX9_NewFrame();
 #endif
-	ImGui::GetIO().DisplaySize.x = screen_width;
-	ImGui::GetIO().DisplaySize.y = screen_height;
+	ImGui::GetIO().DisplaySize.x = screen_width - insetLeft - insetRight;
+	ImGui::GetIO().DisplaySize.y = screen_height - insetTop - insetBottom;
 
 	ImGuiIO& io = ImGui::GetIO();
 
@@ -326,7 +328,7 @@ static void ImGui_Impl_NewFrame()
 	if (mouseX < 0 || mouseX >= screen_width || mouseY < 0 || mouseY >= screen_height)
 		io.MousePos = ImVec2(-FLT_MAX, -FLT_MAX);
 	else
-		io.MousePos = ImVec2(mouseX, mouseY);
+		io.MousePos = ImVec2(mouseX - insetLeft, mouseY - insetTop);
 #ifdef __ANDROID__
 	// Put the "mouse" outside the screen one frame after a touch up
 	// This avoids buttons and the like to stay selected
@@ -369,6 +371,14 @@ static void ImGui_Impl_NewFrame()
 	io.NavInputs[ImGuiNavInput_LStickDown] = joyy[0] > 0 ? (float)joyy[0] / 128.f : 0.f;
 	if (io.NavInputs[ImGuiNavInput_LStickDown] < 0.1f)
 		io.NavInputs[ImGuiNavInput_LStickDown] = 0.f;
+}
+
+void gui_set_insets(int left, int right, int top, int bottom)
+{
+	insetLeft = left;
+	insetRight = right;
+	insetTop = top;
+	insetBottom = bottom;
 }
 
 #if 0
@@ -423,9 +433,6 @@ static void gui_start_game(const std::string& path)
 static void gui_display_commands()
 {
 	dc_stop();
-
-	if (config::RendererType.isOpenGL())
-		ImGui_ImplOpenGL3_DrawBackground();
 
    	display_vmus();
 
@@ -498,6 +505,7 @@ static void gui_display_commands()
 			gui_state = GuiState::Main;
 			game_started = false;
 			settings.imgread.ImagePath[0] = '\0';
+			reset_vmus();
 		}
 		else
 		{
@@ -681,11 +689,11 @@ static void detect_input_popup(int index, bool analog)
 static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamepad)
 {
 	ImGui::SetNextWindowPos(ImVec2(0, 0));
-	ImGui::SetNextWindowSize(ImVec2(screen_width, screen_height));
+	ImGui::SetNextWindowSize(ImGui::GetIO().DisplaySize);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
 	if (ImGui::BeginPopupModal("Controller Mapping", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
 	{
-		const float width = screen_width / 2;
+		const float width = ImGui::GetIO().DisplaySize.x / 2;
 		const float col_width = (width
 				- ImGui::GetStyle().GrabMinSize
 				- (0 + ImGui::GetStyle().ItemSpacing.x)
@@ -906,7 +914,7 @@ static void gui_display_settings()
 	static bool maple_devices_changed;
 
 	ImGui::SetNextWindowPos(ImVec2(0, 0));
-	ImGui::SetNextWindowSize(ImVec2(screen_width, screen_height));
+	ImGui::SetNextWindowSize(ImGui::GetIO().DisplaySize);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
 
     ImGui::Begin("Settings", NULL, /*ImGuiWindowFlags_AlwaysAutoResize |*/ ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
@@ -1341,6 +1349,9 @@ static void gui_display_settings()
 		    	}
 		    	OptionCheckbox("Widescreen Game Cheats", config::WidescreenGameHacks,
 		    			"Modify the game so that it displays in 16:9 anamorphic format and use horizontal screen stretching. Only some games are supported.");
+#ifndef __APPLE__
+		    	OptionCheckbox("VSync", config::VSync, "Synchronizes the frame rate with the screen refresh rate. Recommended");
+#endif
 		    	OptionCheckbox("Show FPS Counter", config::ShowFPS, "Show on-screen frame/sec counter");
 		    	OptionCheckbox("Show VMU In-game", config::FloatVMUs, "Show the VMU LCD screens while in-game");
 		    	OptionCheckbox("Rotate Screen 90°", config::Rotate90, "Rotate the screen 90° counterclockwise");
@@ -1428,8 +1439,6 @@ static void gui_display_settings()
 		    {
 		    	OptionCheckbox("Copy to VRAM", config::RenderToTextureBuffer,
 		    			"Copy rendered-to textures back to VRAM. Slower but accurate");
-		    	OptionSlider("Render to Texture Upscaling", config::RenderToTextureUpscale, 1, 8,
-		    			"Upscale rendered-to textures. Should be the same as the screen or window upscale ratio, or lower for slow platforms");
 		    }
 		    if (ImGui::CollapsingHeader("Texture Upscaling", ImGuiTreeNodeFlags_DefaultOpen))
 		    {
@@ -1467,10 +1476,12 @@ static void gui_display_settings()
 			OptionCheckbox("Enable DSP", config::DSPEnabled,
 					"Enable the Dreamcast Digital Sound Processor. Only recommended on fast platforms");
 #ifdef __ANDROID__
-            OptionCheckbox("Automatic Latency", config::AutoLatency,
-            		"Automatically set audio latency. Recommended");
+			if (config::AudioBackend.get() == "auto" || config::AudioBackend.get() == "android")
+				OptionCheckbox("Automatic Latency", config::AutoLatency,
+						"Automatically set audio latency. Recommended");
 #endif
-            if (!config::AutoLatency)
+            if (!config::AutoLatency
+            		|| (config::AudioBackend.get() != "auto" && config::AudioBackend.get() != "android"))
             {
 				int latency = (int)roundf(config::AudioBufferSize * 1000.f / 44100.f);
 				ImGui::SliderInt("Latency", &latency, 12, 512, "%d ms");
@@ -1671,7 +1682,7 @@ static void gui_display_settings()
 #ifdef TARGET_IPHONE
 		    		"iOS"
 #else
-					"OSX"
+					"macOS"
 #endif
 #elif defined(_WIN32)
 					"Windows"
@@ -1756,7 +1767,7 @@ inline static void gui_display_demo()
 static void gui_display_content()
 {
 	ImGui::SetNextWindowPos(ImVec2(0, 0));
-	ImGui::SetNextWindowSize(ImVec2(screen_width, screen_height));
+	ImGui::SetNextWindowSize(ImGui::GetIO().DisplaySize);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0);
 
@@ -1947,9 +1958,6 @@ static void gui_network_start()
 
 static void gui_display_loadscreen()
 {
-	if (config::RendererType.isOpenGL())
-		ImGui_ImplOpenGL3_DrawBackground();
-
 	centerNextWindow();
 	ImGui::SetNextWindowSize(ImVec2(330 * scaling, 180 * scaling));
 
@@ -2042,7 +2050,7 @@ void gui_display_ui()
 		break;
 	case GuiState::VJoyEditCommands:
 #ifdef __ANDROID__
-		gui_display_vjoy_commands(screen_width, screen_height, scaling);
+		gui_display_vjoy_commands(scaling);
 #endif
 		break;
 	case GuiState::SelectDisk:
@@ -2108,8 +2116,8 @@ void gui_display_osd()
 		if (!message.empty())
 		{
 			ImGui::SetNextWindowBgAlpha(0);
-			ImGui::SetNextWindowPos(ImVec2(0, screen_height), ImGuiCond_Always, ImVec2(0.f, 1.f));	// Lower left corner
-			ImGui::SetNextWindowSize(ImVec2(screen_width, 0));
+			ImGui::SetNextWindowPos(ImVec2(0, ImGui::GetIO().DisplaySize.y), ImGuiCond_Always, ImVec2(0.f, 1.f));	// Lower left corner
+			ImGui::SetNextWindowSize(ImVec2(ImGui::GetIO().DisplaySize.x, 0));
 
 			ImGui::Begin("##osd", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoNav
 					| ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoBackground);
@@ -2208,7 +2216,7 @@ static void display_vmus()
 		return;
     ImGui::SetNextWindowBgAlpha(0);
     ImGui::SetNextWindowPos(ImVec2(0, 0));
-    ImGui::SetNextWindowSize(ImVec2(screen_width, screen_height));
+    ImGui::SetNextWindowSize(ImGui::GetIO().DisplaySize);
 
     ImGui::Begin("vmu-window", NULL, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoInputs
     		| ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoFocusOnAppearing);
@@ -2227,7 +2235,7 @@ static void display_vmus()
 	    if (x == 0)
 	    	pos.x = VMU_PADDING;
 	    else
-	    	pos.x = screen_width - VMU_WIDTH - VMU_PADDING;
+	    	pos.x = ImGui::GetIO().DisplaySize.x - VMU_WIDTH - VMU_PADDING;
 	    if (y == 0)
 	    {
 	    	pos.y = VMU_PADDING;
@@ -2236,7 +2244,7 @@ static void display_vmus()
 	    }
 	    else
 	    {
-	    	pos.y = screen_height - VMU_HEIGHT - VMU_PADDING;
+	    	pos.y = ImGui::GetIO().DisplaySize.y - VMU_HEIGHT - VMU_PADDING;
 	    	if (i & 1)
 	    		pos.y -= VMU_HEIGHT + VMU_PADDING;
 	    }
@@ -2306,7 +2314,7 @@ static void displayCrosshairs()
 		crosshairTexId = ImGui_ImplOpenGL3_CreateCrosshairTexture(getCrosshairTextureData());
     ImGui::SetNextWindowBgAlpha(0);
     ImGui::SetNextWindowPos(ImVec2(0, 0));
-    ImGui::SetNextWindowSize(ImVec2(screen_width, screen_height));
+    ImGui::SetNextWindowSize(ImGui::GetIO().DisplaySize);
 
     ImGui::Begin("xhair-window", NULL, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoInputs
     		| ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoFocusOnAppearing);

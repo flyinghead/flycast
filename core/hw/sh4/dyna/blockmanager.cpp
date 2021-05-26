@@ -53,59 +53,53 @@ static DynarecCodeEntryPtr DYNACALL bm_GetCode(u32 addr)
 // This returns an executable address
 DynarecCodeEntryPtr DYNACALL bm_GetCodeByVAddr(u32 addr)
 {
-#ifndef NO_MMU
 	if (!mmu_enabled())
-#endif
 		return bm_GetCode(addr);
-#ifndef NO_MMU
-	else
+
+	if (addr & 1)
 	{
-		if (addr & 1)
+		switch (addr)
 		{
-			switch (addr)
-			{
 #ifdef USE_WINCE_HACK
-			case 0xfffffde7: // GetTickCount
-				// This should make this syscall faster
-				r[0] = sh4_sched_now64() * 1000 / SH4_MAIN_CLOCK;
-				next_pc = pr;
-				break;
+		case 0xfffffde7: // GetTickCount
+			// This should make this syscall faster
+			r[0] = sh4_sched_now64() * 1000 / SH4_MAIN_CLOCK;
+			next_pc = pr;
+			break;
 
-			case 0xfffffd05: // QueryPerformanceCounter(u64 *)
+		case 0xfffffd05: // QueryPerformanceCounter(u64 *)
+			{
+				u32 paddr;
+				if (mmu_data_translation<MMU_TT_DWRITE, u64>(r[4], paddr) == MMU_ERROR_NONE)
 				{
-					u32 paddr;
-					if (mmu_data_translation<MMU_TT_DWRITE, u64>(r[4], paddr) == MMU_ERROR_NONE)
-					{
-						_vmem_WriteMem64(paddr, sh4_sched_now64() >> 4);
-						r[0] = 1;
-						next_pc = pr;
-					}
-					else
-					{
-						Do_Exception(addr, 0xE0, 0x100);
-					}
+					_vmem_WriteMem64(paddr, sh4_sched_now64() >> 4);
+					r[0] = 1;
+					next_pc = pr;
 				}
-				break;
-#endif
-
-			default:
-				Do_Exception(addr, 0xE0, 0x100);
-				break;
+				else
+				{
+					Do_Exception(addr, 0xE0, 0x100);
+				}
 			}
-			addr = next_pc;
-		}
-
-		u32 paddr;
-		u32 rv = mmu_instruction_translation(addr, paddr);
-		if (rv != MMU_ERROR_NONE)
-		{
-			DoMMUException(addr, rv, MMU_TT_IREAD);
-			mmu_instruction_translation(next_pc, paddr);
-		}
-
-		return bm_GetCode(paddr);
-	}
+			break;
 #endif
+
+		default:
+			Do_Exception(addr, 0xE0, 0x100);
+			break;
+		}
+		addr = next_pc;
+	}
+
+	u32 paddr;
+	u32 rv = mmu_instruction_translation(addr, paddr);
+	if (rv != MMU_ERROR_NONE)
+	{
+		DoMMUException(addr, rv, MMU_TT_IREAD);
+		mmu_instruction_translation(next_pc, paddr);
+	}
+
+	return bm_GetCode(paddr);
 }
 
 // addr must be a physical address
@@ -263,8 +257,7 @@ void bm_Reset()
 static void bm_LockPage(u32 addr)
 {
 	addr = addr & (RAM_MASK - PAGE_MASK);
-	if (!mmu_enabled() || !_nvmem_4gb_space())
-		mem_region_lock(virt_ram_base + 0x0C000000 + addr, PAGE_SIZE);
+	mem_region_lock(virt_ram_base + 0x0C000000 + addr, PAGE_SIZE);
 	if (_nvmem_4gb_space())
 	{
 		mem_region_lock(virt_ram_base + 0x8C000000 + addr, PAGE_SIZE);
@@ -276,8 +269,7 @@ static void bm_LockPage(u32 addr)
 static void bm_UnlockPage(u32 addr)
 {
 	addr = addr & (RAM_MASK - PAGE_MASK);
-	if (!mmu_enabled() || !_nvmem_4gb_space())
-		mem_region_unlock(virt_ram_base + 0x0C000000 + addr, PAGE_SIZE);
+	mem_region_unlock(virt_ram_base + 0x0C000000 + addr, PAGE_SIZE);
 	if (_nvmem_4gb_space())
 	{
 		mem_region_unlock(virt_ram_base + 0x8C000000 + addr, PAGE_SIZE);
@@ -607,10 +599,6 @@ bool bm_RamWriteAccess(void *p)
 			return false;
 	}
 	u32 addr = (u8*)p - virt_ram_base;
-	if (mmu_enabled() && _nvmem_4gb_space() && (addr & 0x80000000) == 0)
-		// If mmu enabled, let vmem32 manage user space
-		// shouldn't be necessary since it's called first
-		return false;
 	if (!IsOnRam(addr) || ((addr >> 29) > 0 && (addr >> 29) < 4))	// system RAM is not mapped to 20, 40 and 60 because of laziness
 		return false;
 	bm_RamWriteAccess(addr);
@@ -691,20 +679,16 @@ void print_blocks()
 				{
 					gcode=op->guest_offs;
 					u32 rpc=blk->vaddr+gcode;
-#ifndef NO_MMU
 					try {
-#endif
 						u16 op=IReadMem16(rpc);
 
 						char temp[128];
 						OpDesc[op]->Disassemble(temp,rpc,op);
 
 						fprintf(f,"//g: %04X %s\n", op, temp);
-#ifndef NO_MMU
 					} catch (SH4ThrownException& ex) {
 						fprintf(f,"//g: ???? (page fault)\n");
 					}
-#endif
 				}
 
 				std::string s = op->dissasm();

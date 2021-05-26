@@ -107,7 +107,6 @@ static inline bool _nvmem_4gb_space() {
 	return vmem_4gb_space;
 }
 void _vmem_bm_reset();
-void _vmem_enable_mmu(bool enable);
 
 #define MAP_RAM_START_OFFSET  0
 #define MAP_VRAM_START_OFFSET (MAP_RAM_START_OFFSET+RAM_SIZE)

@@ -13,6 +13,7 @@ import com.reicast.emulator.periph.VJoy;
 public final class NativeGLActivity extends BaseGLActivity {
 
     private static ViewGroup mLayout;   // used for text input
+    private NativeGLView mView;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -30,30 +31,30 @@ public final class NativeGLActivity extends BaseGLActivity {
 
     @Override
     protected void doPause() {
-        ((NativeGLView)mView).pause();
+        mView.pause();
     }
 
     @Override
     protected void doResume() {
-        ((NativeGLView)mView).resume();
+        mView.resume();
     }
 
     @Override
     public boolean isSurfaceReady() {
-        return ((NativeGLView)mView).isSurfaceReady();
+        return mView.isSurfaceReady();
     }
 
     // Called from native code
     private void VJoyStartEditing() {
         vjoy_d_cached = VJoy.readCustomVjoyValues(getApplicationContext());
         JNIdc.show_osd();
-        ((NativeGLView)mView).setEditVjoyMode(true);
+        mView.setEditVjoyMode(true);
     }
     // Called from native code
     private void VJoyResetEditing() {
         VJoy.resetCustomVjoyValues(getApplicationContext());
-        ((NativeGLView)mView).readCustomVjoyValues();
-        ((NativeGLView)mView).resetEditMode();
+        mView.readCustomVjoyValues();
+        mView.resetEditMode();
         handler.post(new Runnable() {
             @Override
             public void run() {
@@ -67,8 +68,8 @@ public final class NativeGLActivity extends BaseGLActivity {
             @Override
             public void run() {
                 if (canceled)
-                    ((NativeGLView) mView).restoreCustomVjoyValues(vjoy_d_cached);
-                ((NativeGLView) mView).setEditVjoyMode(false);
+                    mView.restoreCustomVjoyValues(vjoy_d_cached);
+                mView.setEditVjoyMode(false);
             }
         });
     }

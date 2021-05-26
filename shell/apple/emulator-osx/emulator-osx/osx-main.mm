@@ -144,7 +144,7 @@ void emu_gles_init(int width, int height)
         std::string config_dir = std::string(home) + "/.reicast/";
         if (!file_exists(config_dir))
         	config_dir = std::string(home) + "/.flycast/";
-        int instanceNumber = (int)[[NSRunningApplication runningApplicationsWithBundleIdentifier:@"com.reicast.Flycast"] count];
+        int instanceNumber = (int)[[NSRunningApplication runningApplicationsWithBundleIdentifier:@"com.flyinghead.Flycast"] count];
         if (instanceNumber > 1){
             config_dir += std::to_string(instanceNumber) + "/";
             [[NSApp dockTile] setBadgeLabel:@(instanceNumber).stringValue];
@@ -178,19 +178,39 @@ void emu_gles_init(int width, int height)
     
     //Neither CGDisplayScreenSize(description's NSScreenNumber) nor [NSScreen backingScaleFactor] can calculate the correct dpi in macOS. E.g. backingScaleFactor is always 2 in all display modes for rMBP 16"
     NSSize displayNativeSize;
-    CFArrayRef allDisplayModes = CGDisplayCopyAllDisplayModes(displayID, NULL);
+    CFStringRef dmKeys[1] = { kCGDisplayShowDuplicateLowResolutionModes };
+    CFBooleanRef dmValues[1] = { kCFBooleanTrue };
+    CFDictionaryRef dmOptions = CFDictionaryCreate(kCFAllocatorDefault, (const void**) dmKeys, (const void**) dmValues, 1, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks );
+    CFArrayRef allDisplayModes = CGDisplayCopyAllDisplayModes(displayID, dmOptions);
     CFIndex n = CFArrayGetCount(allDisplayModes);
-    for(CFIndex i = 0; i < n; ++i)
+    for (CFIndex i = 0; i < n; ++i)
     {
         CGDisplayModeRef m = (CGDisplayModeRef)CFArrayGetValueAtIndex(allDisplayModes, i);
-        if(CGDisplayModeGetIOFlags(m) & kDisplayModeNativeFlag)
+        CGFloat width = CGDisplayModeGetPixelWidth(m);
+        CGFloat height = CGDisplayModeGetPixelHeight(m);
+        CGFloat modeWidth = CGDisplayModeGetWidth(m);
+        
+        //Only check 1x mode
+        if (width == modeWidth)
         {
-            displayNativeSize.width = CGDisplayModeGetPixelWidth(m);
-            displayNativeSize.height = CGDisplayModeGetPixelHeight(m);
-            break;
+            if (CGDisplayModeGetIOFlags(m) & kDisplayModeNativeFlag)
+            {
+                displayNativeSize.width = width;
+                displayNativeSize.height = height;
+                break;
+            }
+            
+            //Get the largest size even if kDisplayModeNativeFlag is not present e.g. iMac 27-Inch with 5K Retina
+            if (width > displayNativeSize.width)
+            {
+                displayNativeSize.width = width;
+                displayNativeSize.height = height;
+            }
         }
+        
     }
     CFRelease(allDisplayModes);
+    CFRelease(dmOptions);
     
 	screen_dpi = (int)(displayNativeSize.width / displayPhysicalSize.width * 25.4f);
     NSSize displayResolution;

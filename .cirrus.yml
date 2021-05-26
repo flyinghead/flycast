@@ -4,5 +4,6 @@ freebsd_instance:
 task:
   install_script: pkg install -y alsa-lib cmake evdev-proto flac git libao libevdev libudev-devd libzip mesa-libs miniupnpc ninja pkgconf png pulseaudio sdl2
   script:
+    - git submodule update --init --recursive
     - cmake -B build -DCMAKE_BUILD_TYPE=Release -G Ninja
     - cmake --build build --config Release

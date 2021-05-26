@@ -128,7 +128,13 @@ static void LoadSpecialSettings()
 				// Tom Clancy's Rainbow Six (US)
 				|| prod_id == "T40401N"
 				// Tom Clancy's Rainbow Six incl. Eagle Watch Missions (EU)
-				|| prod_id == "T-45001D05")
+				|| prod_id == "T-45001D05"
+				// Jet Grind Radio (US)
+				|| prod_id == "MK-51058"
+				// JSR (JP)
+				|| prod_id == "HDR-0078"
+				// JSR (EU)
+				|| prod_id == "MK-5105850")
 		{
 			INFO_LOG(BOOT, "Enabling render to texture buffer for game %s", prod_id.c_str());
 			config::RenderToTextureBuffer.override(true);
@@ -157,40 +163,7 @@ static void LoadSpecialSettings()
 			INFO_LOG(BOOT, "Enabling Extra depth scaling for game %s", prod_id.c_str());
 			config::ExtraDepthScale.override(1e26f);
 		}
-		// Super Producers
-		if (prod_id == "T14303M"
-			// Giant Killers
-			|| prod_id == "T45401D 50"
-			// Wild Metal (US)
-			|| prod_id == "T42101N 00"
-			// Wild Metal (EU)
-			|| prod_id == "T40501D-50"
-			// Resident Evil 2 (US)
-			|| prod_id == "T1205N"
-			// Resident Evil 2 (EU)
-			|| prod_id == "T7004D  50"
-			// Rune Jade
-			|| prod_id == "T14304M"
-			// Marionette Company
-			|| prod_id == "T5202M"
-			// Marionette Company 2
-			|| prod_id == "T5203M"
-			// Maximum Pool (for online support)
-			|| prod_id == "T11010N"
-			// StarLancer (US) (for online support)
-			|| prod_id == "T40209N"
-			// StarLancer (EU) (for online support)
-			|| prod_id == "T17723D 05"
-			// Heroes of might and magic III
-			|| prod_id == "T0000M"
-			// WebTV
-			|| prod_id == "6107117" || prod_id == "610-7390" || prod_id == "610-7391"
-			// PBA
-			|| prod_id == "T26702N")
-		{
-			INFO_LOG(BOOT, "Disabling 32-bit virtual memory for game %s", prod_id.c_str());
-			config::DisableVmem32.override(true);
-		}
+
 		std::string areas(ip_meta.area_symbols, sizeof(ip_meta.area_symbols));
 		bool region_usa = areas.find('U') != std::string::npos;
 		bool region_eu = areas.find('E') != std::string::npos;
@@ -940,9 +913,7 @@ void dc_loadstate()
 #if FEAT_AREC == DYNAREC_JIT
 	aicaarm::recompiler::flush();
 #endif
-#ifndef NO_MMU
     mmu_flush_table();
-#endif
 #if FEAT_SHREC != DYNAREC_NONE
 	bm_Reset();
 #endif

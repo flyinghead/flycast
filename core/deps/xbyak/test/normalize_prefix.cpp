@@ -6,7 +6,7 @@
 #include <iostream>
 #include <memory.h>
 
-typedef unsigned char uint8;
+typedef unsigned char uint8_t;
 
 std::string normalize(const std::string& line)
 {

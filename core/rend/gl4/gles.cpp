@@ -249,7 +249,9 @@ void main()
 			#endif
 			
 			#if cp_AlphaTest == 1
-				if (cp_AlphaTestValue>texcol.a) discard;
+				if (cp_AlphaTestValue > texcol.a)
+					discard;
+				texcol.a = 1.0;
 			#endif 
 		#endif
 		#if pp_ShadInstr==0 || pp_TwoVolumes == 1 // DECAL
@@ -307,10 +309,6 @@ void main()
 	#endif
 	
 	color *= trilinear_alpha;
-	
-	#if cp_AlphaTest == 1
-		color.a=1.0;
-	#endif 
 	
 	//color.rgb=vec3(gl_FragCoord.w * sp_FOG_DENSITY / 128.0);
 	
@@ -375,7 +373,7 @@ void main()
 		uint idx =  getNextPixelIndex();
 		
 		Pixel pixel;
-		pixel.color = color;
+		pixel.color = packColors(clamp(color, vec4(0.0), vec4(1.0)));
 		pixel.depth = gl_FragDepth;
 		pixel.seq_num = uint(pp_Number);
 		pixel.next = imageAtomicExchange(abufferPointerImg, coords, idx);
@@ -653,7 +651,7 @@ static bool RenderFrame(int width, int height)
 	int rendering_height;
 	if (is_rtt)
 	{
-		int scaling = config::RenderToTextureBuffer ? 1 : config::RenderToTextureUpscale;
+		float scaling = config::RenderToTextureBuffer ? 1.f : config::RenderResolution / 480.f;
 		rendering_width = matrices.GetDreamcastViewport().x * scaling;
 		rendering_height = matrices.GetDreamcastViewport().y * scaling;
 	}
@@ -741,8 +739,19 @@ static bool RenderFrame(int width, int height)
 		}
 
 		// TR PolyParam data
-		glBindBuffer(GL_SHADER_STORAGE_BUFFER, gl4.vbo.tr_poly_params);
-		glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(struct PolyParam) * pvrrc.global_param_tr.used(), pvrrc.global_param_tr.head(), GL_STATIC_DRAW);
+		if (pvrrc.global_param_tr.used() != 0)
+		{
+			glBindBuffer(GL_SHADER_STORAGE_BUFFER, gl4.vbo.tr_poly_params);
+			std::vector<u32> trPolyParams(pvrrc.global_param_tr.used() * 2);
+			const PolyParam *pp_end = pvrrc.global_param_tr.LastPtr(0);
+			const PolyParam *pp = pvrrc.global_param_tr.head();
+			for (int i = 0; pp != pp_end; i += 2, pp++)
+			{
+				trPolyParams[i] = (pp->tsp.full & 0xffff00c0) | ((pp->isp.full >> 16) & 0xe400) | ((pp->pcw.full >> 7) & 1);
+				trPolyParams[i + 1] = pp->tsp1.full;
+			}
+			glBufferData(GL_SHADER_STORAGE_BUFFER, trPolyParams.size() * 4, trPolyParams.data(), GL_STATIC_DRAW);
+		}
 		glCheck();
 
 		if (is_rtt || !config::Widescreen || matrices.IsClipped() || config::Rotate90)
@@ -791,12 +800,13 @@ static bool RenderFrame(int width, int height)
 				fHeight = pvrrc.fb_Y_CLIP.max - pvrrc.fb_Y_CLIP.min + 1;
 				min_x = pvrrc.fb_X_CLIP.min;
 				min_y = pvrrc.fb_Y_CLIP.min;
-				if (config::RenderToTextureUpscale > 1 && !config::RenderToTextureBuffer)
+				if (config::RenderResolution > 480 && !config::RenderToTextureBuffer)
 				{
-					min_x *= config::RenderToTextureUpscale;
-					min_y *= config::RenderToTextureUpscale;
-					fWidth *= config::RenderToTextureUpscale;
-					fHeight *= config::RenderToTextureUpscale;
+					float scale = config::RenderResolution / 480.f;
+					min_x *= scale;
+					min_y *= scale;
+					fWidth *= scale;
+					fHeight *= scale;
 				}
 			}
 			gl4ShaderUniforms.base_clipping.enabled = true;

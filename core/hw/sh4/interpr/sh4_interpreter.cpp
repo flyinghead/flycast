@@ -47,9 +47,7 @@ static void Sh4_int_Run()
 	try {
 		do
 		{
-#if !defined(NO_MMU)
 			try {
-#endif
 				do
 				{
 					u32 op = ReadNexOp();
@@ -58,13 +56,10 @@ static void Sh4_int_Run()
 				} while (l > 0);
 				l += SH4_TIMESLICE;
 				UpdateSystem_INTC();
-#if !defined(NO_MMU)
-			}
-			catch (SH4ThrownException& ex) {
+			} catch (const SH4ThrownException& ex) {
 				Do_Exception(ex.epc, ex.expEvn, ex.callVect);
 				l -= CPU_RATIO * 5;	// an exception requires the instruction pipeline to drain, so approx 5 cycles
 			}
-#endif
 		} while (sh4_int_bCpuRun);
 	} catch (const debugger::Stop& e) {
 	}
@@ -83,18 +78,11 @@ static void Sh4_int_Step()
 
 	RestoreHostRoundingMode();
 	try {
-#if !defined(NO_MMU)
-		try {
-#endif
-			u32 op = ReadNexOp();
-			ExecuteOpcode(op);
-#if !defined(NO_MMU)
-		}
-		catch (SH4ThrownException& ex) {
-			Do_Exception(ex.epc, ex.expEvn, ex.callVect);
-			l -= CPU_RATIO * 5;	// an exception requires the instruction pipeline to drain, so approx 5 cycles
-		}
-#endif
+		u32 op = ReadNexOp();
+		ExecuteOpcode(op);
+	} catch (const SH4ThrownException& ex) {
+		Do_Exception(ex.epc, ex.expEvn, ex.callVect);
+		l -= CPU_RATIO * 5;	// an exception requires the instruction pipeline to drain, so approx 5 cycles
 	} catch (const debugger::Stop& e) {
 	}
 }
@@ -134,37 +122,26 @@ static bool Sh4_int_IsCpuRunning()
 //TODO : Check for valid delayslot instruction
 void ExecuteDelayslot()
 {
-#if !defined(NO_MMU)
 	try {
-#endif
 		u32 op = ReadNexOp();
 
 		ExecuteOpcode(op);
-#if !defined(NO_MMU)
-	}
-	catch (SH4ThrownException& ex) {
+	} catch (SH4ThrownException& ex) {
 		AdjustDelaySlotException(ex);
 		throw ex;
-	}
-	catch (const debugger::Stop& e) {
+	} catch (const debugger::Stop& e) {
 		next_pc -= 2;	// break on previous instruction
 		throw e;
 	}
-#endif
 }
 
 void ExecuteDelayslot_RTE()
 {
-#if !defined(NO_MMU)
 	try {
-#endif
 		ExecuteDelayslot();
-#if !defined(NO_MMU)
-	}
-	catch (SH4ThrownException& ex) {
+	} catch (const SH4ThrownException& ex) {
 		ERROR_LOG(INTERPRETER, "Exception in RTE delay slot");
 	}
-#endif
 }
 
 // every SH4_TIMESLICE cycles

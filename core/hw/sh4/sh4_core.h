@@ -106,15 +106,11 @@ struct SH4ThrownException {
 
 static INLINE void RaiseFPUDisableException()
 {
-#if !defined(NO_MMU)
 	if (config::FullMMU)
 	{
-		SH4ThrownException ex = { next_pc - 2, 0x800, 0x100 };
+		SH4ThrownException ex { next_pc - 2, 0x800, 0x100 };
 		throw ex;
 	}
-#else
-	msgboxf("Full MMU support needed", MBX_ICONERROR);
-#endif
 }
 
 static INLINE void AdjustDelaySlotException(SH4ThrownException& ex)

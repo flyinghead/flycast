@@ -1,7 +1,29 @@
-#include <unistd.h>
+/*
+	This file is part of Flycast.
+
+    Flycast is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 2 of the License, or
+    (at your option) any later version.
+
+    Flycast is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
+*/
 #include "types.h"
 
-#if FEAT_SHREC == DYNAREC_JIT
+#if FEAT_SHREC == DYNAREC_JIT && HOST_CPU == CPU_ARM
+#include <unistd.h>
+#include <array>
+#include <map>
+
+#include <aarch32/macro-assembler-aarch32.h>
+using namespace vixl::aarch32;
+
 #include "hw/sh4/sh4_opcode_list.h"
 
 #include "hw/sh4/sh4_mmr.h"
@@ -9,11 +31,9 @@
 #include "hw/sh4/sh4_interrupts.h"
 #include "hw/sh4/sh4_core.h"
 #include "hw/sh4/dyna/ngen.h"
+#include "hw/sh4/dyna/ssa_regalloc.h"
 #include "hw/sh4/sh4_mem.h"
 #include "cfg/option.h"
-
-#define _DEVEL 1
-#include "arm_emitter/arm_emitter.h"
 
 //#define CANONICALTEST
 
@@ -40,208 +60,218 @@
 		r8: sh4 cntx
 		r9: cycle counter
 
-	Callstack cache
-
 	fpu reg alloc
 	d8:d15, single storage
 
 */
 
-#define FPCB_OFFSET (-(int)(FPCB_SIZE * sizeof(void*) + FPCB_PAD))
-
-template<typename T>
-s32 rcb_noffs(T* ptr)
+#ifdef __clang__
+extern "C" char *stpcpy(char *dst, char const *src)
 {
-	s32 rv = (u8*)ptr - (u8*)p_sh4rcb - sizeof(Sh4RCB);
-	verify(rv < 0);
-
-	return rv;
+	size_t src_len = strlen(src);
+	return (char *)memcpy(dst, src, src_len) + src_len;
 }
+#endif
 
+#undef do_sqw_nommu
+#define rcbOffset(x) (-sizeof(Sh4RCB) + offsetof(Sh4RCB, x))
 
 struct DynaRBI: RuntimeBlockInfo
 {
 	virtual u32 Relink();
-	virtual void Relocate(void* dst)
-	{
-
-	}
-	ARM::eReg T_reg;
+	virtual void Relocate(void* dst) { }
+	Register T_reg;
 };
 
-using namespace ARM;
+using FPBinOP = void (MacroAssembler::*)(DataType, SRegister, SRegister, SRegister);
+using FPUnOP = void (MacroAssembler::*)(DataType, SRegister, SRegister);
+using BinaryOP = void (MacroAssembler::*)(Register, Register, const Operand&);
 
-
-// These have to be declared somewhere or linker dies
-u8* ARM::emit_opt=0;
-eReg ARM::reg_addr;
-eReg ARM::reg_dst;
-s32 ARM::imma;
-
-
-typedef ConditionCode eCC;
-
-#define EmitAPI		\
-	inline static void
-
-#define lr_r14 r14
-#define rfp_r9 r9
-
-
-typedef void FPBinOP        (eFSReg Sd, eFSReg Sn, eFSReg Sm, ConditionCode CC);
-typedef void FPUnOP         (eFSReg Sd, eFSReg Sm,            ConditionCode CC);
-typedef void BinaryOP       (eReg Rd, eReg Rn, eReg Rm,       ConditionCode CC);
-typedef void BinaryOPImm    (eReg Rd, eReg Rn, s32 sImm8,     ConditionCode CC);
-typedef void UnaryOP        (eReg Rd, eReg Rs);
-
-// you pick reg, loads Base with reg addr, no reg. mapping yet !
-static void LoadSh4Reg_mem(eReg Rt, u32 Sh4_Reg, eCC CC=CC_AL)
+class Arm32Assembler : public MacroAssembler
 {
-	const u32 shRegOffs = (u8*)GetRegPtr(Sh4_Reg)-sh4_dyna_rcb ;
+public:
+	Arm32Assembler() = default;
+	Arm32Assembler(u8 *buffer, size_t size) : MacroAssembler(buffer, size, A32) {}
 
-	LDR(Rt, r8, shRegOffs, Offset, CC);
-}
-
-
-// you pick regs, loads Base with reg addr, no reg. mapping yet !
-// data should already exist for Rt !
-static void StoreSh4Reg_mem(eReg Rt,u32 Sh4_Reg, eCC CC=CC_AL)
-{
-	const u32 shRegOffs = (u8*)GetRegPtr(Sh4_Reg)-sh4_dyna_rcb ;
-
-	STR(Rt, r8, shRegOffs, Offset, CC);
-}
-
-//#define OLD_REGALLOC
-#ifdef OLD_REGALLOC
-#include "hw/sh4/dyna/regalloc.h"
-#else
-#include "hw/sh4/dyna/ssa_regalloc.h"
-#endif
-
-#if defined(__APPLE__)
-eReg alloc_regs[]={r5,r6,r7,r10,(eReg)-1};
-#else
-eReg alloc_regs[]={r5,r6,r7,r10,r11,(eReg)-1};
-#endif
-eFSReg alloc_fpu[]={f16,f17,f18,f19,f20,f21,f22,f23,
-					f24,f25,f26,f27,f28,f29,f30,f31,(eFSReg)-1};
-
-struct arm_reg_alloc: RegAlloc<eReg, eFSReg>
-{
-	virtual void Preload(u32 reg,eReg nreg)
-	{
-		verify(reg!=reg_pc_dyn);
-		LoadSh4Reg_mem(nreg,reg);
+	void Finalize() {
+		FinalizeCode();
+		vmem_platform_flush_cache(GetBuffer()->GetStartAddress<void *>(), GetCursorAddress<u8 *>() - 1,
+				GetBuffer()->GetStartAddress<void *>(), GetCursorAddress<u8 *>() - 1);
 	}
-	virtual void Writeback(u32 reg,eReg nreg)
+};
+
+static Arm32Assembler ass;
+static u8 *sh4_dyna_context;
+
+static void loadSh4Reg(Register Rt, u32 Sh4_Reg)
+{
+	const int shRegOffs = (u8*)GetRegPtr(Sh4_Reg) - sh4_dyna_context;
+
+	ass.Ldr(Rt, MemOperand(r8, shRegOffs));
+}
+
+static void storeSh4Reg(Register Rt, u32 Sh4_Reg)
+{
+	const int shRegOffs = (u8*)GetRegPtr(Sh4_Reg) - sh4_dyna_context;
+
+	ass.Str(Rt, MemOperand(r8, shRegOffs));
+}
+
+const int alloc_regs[] = { 5, 6, 7, 10, 11, -1 };
+const int alloc_fpu[] = { 16, 17, 18, 19, 20, 21, 22, 23,
+				24, 25, 26, 27, 28, 29, 30, 31, -1 };
+
+struct arm_reg_alloc: RegAlloc<int, int>
+{
+	void Preload(u32 reg, int nreg) override
 	{
-		if (reg==reg_pc_dyn)
+		loadSh4Reg(Register(nreg), reg);
+	}
+	void Writeback(u32 reg, int nreg) override
+	{
+		if (reg == reg_pc_dyn)
 			// reg_pc_dyn has been stored in r4 by the jdyn op implementation
 			// No need to write it back since it won't be used past the end of the block
-			; //MOV(r4,nreg);
+			; //ass.Mov(r4, Register(nreg));
 		else
-			StoreSh4Reg_mem(nreg,reg);
+			storeSh4Reg(Register(nreg), reg);
 	}
 
-	virtual void Preload_FPU(u32 reg,eFSReg nreg)
+	void Preload_FPU(u32 reg, int nreg) override
 	{
-		const s32 shRegOffs = (u8*)GetRegPtr(reg)-sh4_dyna_rcb ;
+		const s32 shRegOffs = (u8*)GetRegPtr(reg) - sh4_dyna_context;
 
-		VLDR((nreg),r8,shRegOffs/4);
+		ass.Vldr(SRegister(nreg), MemOperand(r8, shRegOffs));
 	}
-	virtual void Writeback_FPU(u32 reg,eFSReg nreg)
+	void Writeback_FPU(u32 reg, int nreg) override
 	{
-		const s32 shRegOffs = (u8*)GetRegPtr(reg)-sh4_dyna_rcb ;
+		const s32 shRegOffs = (u8*)GetRegPtr(reg) - sh4_dyna_context;
 
-		VSTR((nreg),r8,shRegOffs/4);
+		ass.Vstr(SRegister(nreg), MemOperand(r8, shRegOffs));
 	}
-	eFSReg mapfs(const shil_param& prm)
+
+	SRegister mapFReg(const shil_param& prm)
 	{
-		return mapf(prm);
+		return SRegister(mapf(prm));
+	}
+	Register mapReg(const shil_param& prm)
+	{
+		return Register(mapg(prm));
 	}
 };
 
 static arm_reg_alloc reg;
 
-static u32 blockno=0;
+static const void *no_update;
+static const void *intc_sched;
+static const void *ngen_blockcheckfail;
+static const void *ngen_LinkBlock_Generic_stub;
+static const void *ngen_LinkBlock_cond_Branch_stub;
+static const void *ngen_LinkBlock_cond_Next_stub;
+static void (*ngen_FailedToFindBlock_)();
+static void (*mainloop)(void *);
 
-extern "C" void no_update();
-extern "C" void intc_sched();
-extern "C" void ngen_blockcheckfail();
+static std::map<shilop, ConditionType> ccmap;
+static std::map<shilop, ConditionType> ccnmap;
 
-
-extern "C" void ngen_LinkBlock_Generic_stub();
-extern "C" void ngen_LinkBlock_cond_Branch_stub();
-extern "C" void ngen_LinkBlock_cond_Next_stub();
-
-extern "C" void ngen_FailedToFindBlock_();
-
-#include <map>
-
-static std::map<shilop,ConditionCode> ccmap;
-static std::map<shilop,ConditionCode> ccnmap;
-
-u32 DynaRBI::Relink()
+void ngen_mainloop(void* context)
 {
-	verify(emit_ptr==0);
-	u8* code_start=(u8*)code+relink_offset;
-	emit_ptr=(u32*)code_start;
+	sh4_dyna_context = (u8 *)context;
+	mainloop(context);
+}
 
-	switch(BlockType)
+static void jump(const void *code, ConditionType cond = al)
+{
+	ptrdiff_t offset = reinterpret_cast<uintptr_t>(code) - ass.GetBuffer()->GetStartAddress<uintptr_t>();
+	verify((offset & 3) == 0);
+	if (offset < -32 * 1024 * 1024 || offset >= 32 * 1024 * 1024)
+	{
+		WARN_LOG(DYNAREC, "jump offset too large: %d", offset);
+		UseScratchRegisterScope scope(&ass);
+		Register reg = scope.Acquire();
+		ass.Mov(cond, reg, (u32)code);
+		ass.Bx(cond, reg);
+	}
+	else
+	{
+		Label code_label(offset);
+		ass.B(cond, &code_label);
+	}
+}
+
+static void call(const void *code, ConditionType cond = al)
+{
+	ptrdiff_t offset = reinterpret_cast<uintptr_t>(code) - ass.GetBuffer()->GetStartAddress<uintptr_t>();
+	verify((offset & 3) == 0);
+	if (offset < -32 * 1024 * 1024 || offset >= 32 * 1024 * 1024)
+	{
+		WARN_LOG(DYNAREC, "call offset too large: %d", offset);
+		UseScratchRegisterScope scope(&ass);
+		Register reg = scope.Acquire();
+		ass.Mov(cond, reg, (u32)code);
+		ass.Blx(cond, reg);
+	}
+	else
+	{
+		Label code_label(offset);
+		ass.Bl(cond, &code_label);
+	}
+}
+
+static u32 relinkBlock(DynaRBI *block)
+{
+	u32 start_offset = ass.GetCursorOffset();
+	switch(block->BlockType)
 	{
 	case BET_Cond_0:
 	case BET_Cond_1:
 	{
 		//quick opt here:
-		//peek into reg alloc, store actuall sr_T register to relink_data
+		//peek into reg alloc, store actual sr_T register to relink_data
 #ifndef CANONICALTEST
-		bool last_op_sets_flags=!has_jcond && oplist.size() > 0 && 
-			oplist[oplist.size()-1].rd._reg==reg_sr_T && ccmap.count(oplist[oplist.size()-1].op);
+		bool last_op_sets_flags = !block->has_jcond && !block->oplist.empty() &&
+				block->oplist.back().rd._reg == reg_sr_T && ccmap.count(block->oplist.back().op);
 #else
 		bool last_op_sets_flags = false;
 #endif
 
-		ConditionCode CC=CC_EQ;
+		ConditionType CC = eq;
 
 		if (last_op_sets_flags)
 		{
-			shilop op=oplist[oplist.size()-1].op;
+			shilop op = block->oplist.back().op;
 
-			verify(ccmap.count(op)>0);
-
-			if ((BlockType&1)==1)
-				CC=ccmap[op];
+			if ((block->BlockType & 1) == 1)
+				CC = ccmap[op];
 			else
-				CC=ccnmap[op];
+				CC = ccnmap[op];
 		}
 		else
 		{
-			if (!has_jcond)
+			if (!block->has_jcond)
 			{
-				if (T_reg != (eReg)-1)
+				if (block->T_reg.IsRegister())
 				{
-					MOV(r4, T_reg);
+					ass.Mov(r4, block->T_reg);
 				}
 				else
 				{
-					INFO_LOG(DYNAREC, "SLOW COND PATH %d", oplist.empty() ? -1 : oplist[oplist.size()-1].op);
-					LoadSh4Reg_mem(r4, reg_sr_T);
+					INFO_LOG(DYNAREC, "SLOW COND PATH %x", block->oplist.empty() ? -1 : block->oplist.back().op);
+					loadSh4Reg(r4, reg_sr_T);
 				}
 			}
-
-			CMP(r4,(BlockType&1));
+			ass.Cmp(r4, block->BlockType & 1);
 		}
 
-		if (pBranchBlock)
-			JUMP((u32)pBranchBlock->code,CC);
+		if (block->pBranchBlock)
+			jump((void *)block->pBranchBlock->code, CC);
 		else
-			CALL((u32)ngen_LinkBlock_cond_Branch_stub,CC);
+			call(ngen_LinkBlock_cond_Branch_stub, CC);
 
-		if (pNextBlock)
-			JUMP((u32)pNextBlock->code);
+		if (block->pNextBlock)
+			jump((void *)block->pNextBlock->code);
 		else
-			CALL((u32)ngen_LinkBlock_cond_Next_stub);
+			call(ngen_LinkBlock_cond_Next_stub);
 		break;
 	}
 
@@ -249,173 +279,85 @@ u32 DynaRBI::Relink()
 	case BET_DynamicRet:
 	case BET_DynamicCall:
 	case BET_DynamicJump:
-    {
-#ifdef CALLSTACK
-#error offset broken
-		SUB(r2, r8, -FPCB_OFFSET);
+		ass.Sub(r2, r8, -rcbOffset(fpcb));
 #if RAM_SIZE_MAX == 33554432
-		UBFX(r1, r4, 1, 24);
+		ass.Ubfx(r1, r4, 1, 24);
 #else
-		UBFX(r1, r4, 1, 23);
+		ass.Ubfx(r1, r4, 1, 23);
 #endif
-
-		if (BlockType==BET_DynamicRet)
-		{
-			LDR(r14,r2,r1,Offset,true,S_LSL,2);
-			BX(R14);    //BX LR (ret hint)
-		}
-		else if (BlockType==BET_DynamicCall)
-		{
-			LDR(r0,r2,r1,Offset,true,S_LSL,2);
-			BLX(r0);    //BLX r0 (call hint)
-		}
-		else
-		{
-			LDR(r15,r2,r1,Offset,true,S_LSL,2);
-		}
-#else
-		if (relink_data==0)
-		{
-#if 1
-			//this is faster
-			//why ? (Icache ?)
-			SUB(r2, r8, -FPCB_OFFSET);
-#if RAM_SIZE_MAX == 33554432
-			UBFX(r1, r4, 1, 24);
-#else
-			UBFX(r1, r4, 1, 23);
-#endif
-			LDR(r15,r2,r1,Offset,true,S_LSL,2);
-			
-#else
-			if (pBranchBlock)
-			{
-				MOV32(r1,pBranchBlock->addr);           //2
-				CMP(r4,r1);                             //1
-				JUMP((unat)pBranchBlock->code,CC_EQ);   //1
-				CALL((unat)ngen_LinkBlock_Generic_stub);//1
-			}
-			else
-			{
-				SUB(r2, r8, -FPCB_OFFSET);
-
-#if RAM_SIZE_MAX == 33554432
-				UBFX(r1, r4, 1, 24);
-#else
-				UBFX(r1, r4, 1, 23);
-#endif
-				NOP();NOP();                            //2
-				LDR(r15,r2,r1,Offset,true,S_LSL,2);     //1
-			}
-#endif
-		}
-		else
-		{
-			verify(pBranchBlock==0);
-			SUB(r2, r8, -FPCB_OFFSET);
-
-#if RAM_SIZE_MAX == 33554432
-			UBFX(r1, r4, 1, 24);
-#else
-			UBFX(r1, r4, 1, 23);
-#endif
-			LDR(r15,r2,r1,Offset,true,S_LSL,2);
-		}
-#endif
+		ass.Ldr(pc, MemOperand(r2, r1, LSL, 2));
 		break;
-	}
 
 	case BET_StaticCall:
 	case BET_StaticJump:
-	{
-		if (pBranchBlock==0)
-			CALL((u32)ngen_LinkBlock_Generic_stub);
+		if (block->pBranchBlock == nullptr)
+			call(ngen_LinkBlock_Generic_stub);
 		else
-		{
-#ifdef CALLSTACK
-			if (BlockType==BET_StaticCall)
-				CALL((u32)pBranchBlock->code);
-			else
-#endif
-				JUMP((u32)pBranchBlock->code);
-		}
+			call((void *)block->pBranchBlock->code);
 		break;
-	}
 
 	case BET_StaticIntr:
 	case BET_DynamicIntr:
-		{
-			if (BlockType==BET_StaticIntr)
-			{
-				MOV32(r4,NextBlock);
-			}
-			//else -> already in r4 djump !
+		if (block->BlockType == BET_StaticIntr)
+			ass.Mov(r4, block->NextBlock);
+		//else -> already in r4 djump !
 
-			StoreSh4Reg_mem(r4,reg_nextpc);
-
-			CALL((u32)UpdateINTC);
-			LoadSh4Reg_mem(r4,reg_nextpc);
-			JUMP((u32)no_update);
-			break;
-		}
+		storeSh4Reg(r4, reg_nextpc);
+		call((void *)UpdateINTC);
+		loadSh4Reg(r4, reg_nextpc);
+		jump(no_update);
+		break;
 
 	default:
-		ERROR_LOG(DYNAREC, "Error, Relink() Block Type: %X", BlockType);
+		ERROR_LOG(DYNAREC, "Error, Relink() Block Type: %X", block->BlockType);
 		verify(false);
 		break;
 	}
-
-	vmem_platform_flush_cache(code_start, emit_ptr - 1, code_start, emit_ptr - 1);
-
-	u32 sz=(u8*)emit_ptr-code_start;
-
-	emit_ptr=0;
-	return sz;
+	return ass.GetCursorOffset() - start_offset;
 }
 
-static eReg GetParam(const shil_param& param, eReg raddr = r0)
+u32 DynaRBI::Relink()
+{
+	ass = Arm32Assembler((u8 *)code + relink_offset, host_code_size - relink_offset);
+
+	u32 size = relinkBlock(this);
+
+	ass.Finalize();
+
+	return size;
+}
+
+static Register GetParam(const shil_param& param, Register raddr = r0)
 {
 	if (param.is_imm())
 	{
-		MOV32(raddr, param._imm);
+		ass.Mov(raddr, param._imm);
 		return raddr;
 	}
-	else if (param.is_r32i())
-	{
-		return reg.mapg(param);
-	}
-	else
-	{
-		die("Invalid parameter");
-		return (eReg)-1;
-	}
+	if (param.is_r32i())
+		return reg.mapReg(param);
+
+	die("Invalid parameter");
+	return Register();
 }
 
-static void ngen_Unary(shil_opcode* op, UnaryOP unop)
+static void ngen_Binary(shil_opcode* op, BinaryOP dtop)
 {
-	unop(reg.mapg(op->rd),reg.mapg(op->rs1));
-}
-
-static void ngen_Binary(shil_opcode* op, BinaryOP dtop, BinaryOPImm dtopimm)
-{
-	eReg rs1 = GetParam(op->rs1);
+	Register rs1 = GetParam(op->rs1);
 	
-	eReg rs2 = r1;
+	Register rs2 = r1;
 	if (op->rs2.is_imm())
 	{
-		if (is_i8r4(op->rs2._imm))
+		if (ImmediateA32::IsImmediateA32(op->rs2._imm))
 		{
-			dtopimm(reg.mapg(op->rd), rs1, op->rs2._imm, CC_AL);
+			(ass.*dtop)(reg.mapReg(op->rd), rs1, Operand(op->rs2._imm));
 			return;
 		}
-		else
-		{
-			MOV32(rs2, op->rs2._imm);
-		}
+		ass.Mov(rs2, op->rs2._imm);
 	}
 	else if (op->rs2.is_r32i())
 	{
-		rs2 = reg.mapg(op->rs2);
+		rs2 = reg.mapReg(op->rs2);
 	}
 	else
 	{
@@ -423,42 +365,39 @@ static void ngen_Binary(shil_opcode* op, BinaryOP dtop, BinaryOPImm dtopimm)
 		verify(false);
 	}
 
-	dtop(reg.mapg(op->rd), rs1, rs2, CC_AL);
+	(ass.*dtop)(reg.mapReg(op->rd), rs1, rs2);
 }
 
 static void ngen_fp_bin(shil_opcode* op, FPBinOP fpop)
 {
-	eFSReg rs1 = f0;
+	SRegister rs1 = s0;
 	if (op->rs1.is_imm())
 	{
-		MOV32(r0, op->rs1._imm);
-		VMOV(rs1, r0);
+		ass.Mov(r0, op->rs1._imm);
+		ass.Vmov(rs1, r0);
 	}
 	else
 	{
-		rs1 = reg.mapf(op->rs1);
+		rs1 = reg.mapFReg(op->rs1);
 	}
 
-	eFSReg rs2 = f1;
+	SRegister rs2 = s1;
 	if (op->rs2.is_imm())
 	{
-		MOV32(r0, op->rs2._imm);
-		VMOV(rs2, r0);
+		ass.Mov(r0, op->rs2._imm);
+		ass.Vmov(rs2, r0);
 	}
 	else
 	{
-		rs2 = reg.mapf(op->rs2);
+		rs2 = reg.mapFReg(op->rs2);
 	}
 
-	fpop(reg.mapfs(op->rd), rs1, rs2, CC_AL);
+	(ass.*fpop)(DataType(F32), reg.mapFReg(op->rd), rs1, rs2);
 }
 
 static void ngen_fp_una(shil_opcode* op, FPUnOP fpop)
 {
-	verify(op->rd.is_r32f());
-	verify(op->rs1.is_r32f());
-
-	fpop(reg.mapfs(op->rd), reg.mapfs(op->rs1), CC_AL);
+	(ass.*fpop)(DataType(F32), reg.mapFReg(op->rd), reg.mapFReg(op->rs1));
 }
 
 struct CC_PS
@@ -478,28 +417,28 @@ void ngen_CC_Param(shil_opcode* op,shil_param* par,CanonicalParamType tp)
 	switch(tp)
 	{
 		case CPT_f32rv:
-			#ifdef __ARM_PCS_VFP
-				// -mfloat-abi=hard
-				if (reg.IsAllocg(*par))
-					VMOV(reg.mapg(*par), f0);
-				else if (reg.IsAllocf(*par))
-					VMOV(reg.mapfs(*par), f0);
-				break;
-			#endif
+#ifdef __ARM_PCS_VFP
+			// -mfloat-abi=hard
+			if (reg.IsAllocg(*par))
+				ass.Vmov(reg.mapReg(*par), s0);
+			else if (reg.IsAllocf(*par))
+				ass.Vmov(reg.mapFReg(*par), s0);
+			break;
+#endif
 
 		case CPT_u32rv:
 		case CPT_u64rvL:
 			if (reg.IsAllocg(*par))
-				MOV(reg.mapg(*par), r0);
+				ass.Mov(reg.mapReg(*par), r0);
 			else if (reg.IsAllocf(*par))
-				VMOV(reg.mapfs(*par), r0);
+				ass.Vmov(reg.mapFReg(*par), r0);
 			else
 				die("unhandled param");
 			break;
 
 		case CPT_u64rvH:
 			verify(reg.IsAllocg(*par));
-			MOV(reg.mapg(*par), r1);
+			ass.Mov(reg.mapReg(*par), r1);
 			break;
 
 		case CPT_u32:
@@ -519,52 +458,51 @@ void ngen_CC_Param(shil_opcode* op,shil_param* par,CanonicalParamType tp)
 
 void ngen_CC_Call(shil_opcode* op, void* function)
 {
-	u32 rd = r0;
-	u32 fd = f0;
+	Register rd = r0;
+	SRegister fd = s0;
 
 	for (int i = CC_pars.size(); i-- > 0; )
 	{
 		CC_PS& param = CC_pars[i];
 		if (param.type == CPT_ptr)
 		{
-			MOV32((eReg)rd, (u32)param.par->reg_ptr());
+			ass.Mov(rd, (u32)param.par->reg_ptr());
 		}
 		else
 		{
 			if (param.par->is_reg())
 			{
-				#ifdef __ARM_PCS_VFP
+#ifdef __ARM_PCS_VFP
 				// -mfloat-abi=hard
 				if (param.type == CPT_f32)
 				{
 					if (reg.IsAllocg(*param.par))
-						VMOV((eFSReg)fd, reg.mapg(*param.par));
+						ass.Vmov(fd, reg.mapReg(*param.par));
 					else if (reg.IsAllocf(*param.par))
-						VMOV((eFSReg)fd, reg.mapfs(*param.par));
+						ass.Vmov(fd, reg.mapFReg(*param.par));
 					else
 						die("Must not happen!");
 					continue;
 				}
-				#endif
+#endif
 
 				if (reg.IsAllocg(*param.par))
-					MOV((eReg)rd, reg.mapg(*param.par));
+					ass.Mov(rd, reg.mapReg(*param.par));
 				else if (reg.IsAllocf(*param.par))
-					VMOV((eReg)rd, reg.mapfs(*param.par));
+					ass.Vmov(rd, reg.mapFReg(*param.par));
 				else
 					die("Must not happen!");
 			}
 			else
 			{
 				verify(param.par->is_imm());
-				MOV32((eReg)rd, param.par->_imm);
+				ass.Mov(rd, param.par->_imm);
 			}
 		}
-		rd++;
-		fd++;
+		rd = Register(rd.GetCode() + 1);
+		fd = SRegister(fd.GetCode() + 1);
 	}
-	//printf("used reg r0 to r%d, %d params, calling %08X\n",rd-1,CC_pars.size(),function);
-	CALL((u32)function);
+	call(function);
 }
 
 void ngen_CC_Finish(shil_opcode* op) 
@@ -583,66 +521,29 @@ enum mem_op_type
 
 static mem_op_type memop_type(shil_opcode* op)
 {
+	int sz = op->flags & 0x7f;
+	bool fp32 = op->rs2.is_r32f() || op->rd.is_r32f();
 
-	int Lsz=-1;
-	int sz=op->flags&0x7f;
+	if (sz == 1)
+		return SZ_8;
+	else if (sz == 2)
+		return SZ_16;
+	else if (sz == 4)
+		return fp32 ? SZ_32F : SZ_32I;
+	else if (sz == 8)
+		return SZ_64F;
 
-	bool fp32=op->rs2.is_r32f() || op->rd.is_r32f();
-
-	if (sz==1) Lsz=SZ_8;
-	if (sz==2) Lsz=SZ_16;
-	if (sz==4 && !fp32) Lsz=SZ_32I;
-	if (sz==4 && fp32) Lsz=SZ_32F;
-	if (sz==8) Lsz=SZ_64F;
-
-	verify(Lsz!=-1);
-	
-	return (mem_op_type)Lsz;
+	die("Unknown op");
+	return SZ_32I;
 }
 
-static u32 memop_bytes(mem_op_type tp)
+const u32 memop_bytes[] = { 1, 2, 4, 4, 8 };
+static const void *_mem_hndl_SQ32[3][14];
+static const void *_mem_hndl[2][3][14];
+const void * const _mem_func[2][2] =
 {
-	const u32 rv[] = { 1,2,4,4,8};
-
-	return rv[tp];
-}
-
-/*
-	8/16/32 I R/W B
-	ubfx r0,raddr,..
-	ldr(sh/sb)/str(h/b) rd/s,[r0+r8]
-
-	32/64 F R/W B
-	ubfx r0,raddr,..
-	add r0,r0,r8
-	vldr/vstr rd/s,[r0] {32 or 64 bit forms}
-
-
-	32 I / 32/64 F W SQ
-	ubfx r0,raddr,..
-	add r0,r0,r8
-	str/vstr/vstr.d rs,[r0-offs]
-
-	8/16/32 I R/W M
-	mov r0,raddr
-	call MEMHANDLER<rd/s>
-
-	32/64 F R M
-	mov r0,raddr
-	vmov r1,rs // vmov.d r3:r2,rs
-	call MEMHANDER<r1> // call MEMHANDLER64
-
-	32/64 F W M
-	mov r0,raddr
-	call MEMHANDER<r1> // call MEMHANDLER64
-	vmov rd,r0 // vmov.d rd,r3:r2
-*/
-static unat _mem_hndl_SQ32[3][14];
-static unat _mem_hndl[2][3][14];
-const unat _mem_func[2][5]=
-{
-	{0,0,0,(unat)_vmem_WriteMem32,(unat)_vmem_WriteMem64},
-	{0,0,0,(unat)_vmem_ReadMem32,(unat)_vmem_ReadMem64},
+	{ (void *)_vmem_WriteMem32, (void *)_vmem_WriteMem64 },
+	{ (void *)_vmem_ReadMem32, (void *)_vmem_ReadMem64 },
 };
 
 const struct
@@ -653,32 +554,32 @@ const struct
 	mem_op_type optp;
 	u32 offs;
 }
-op_table[]=
+op_table[] =
 {
 	//LDRSB
-	{0x0E500FF0,0x001000D0,true,SZ_8,1},
+	{ 0x0E500FF0, 0x001000D0, true, SZ_8, 1 },
 	//LDRSH
-	{0x0E500FF0,0x001000F0,true,SZ_16,1},
+	{ 0x0E500FF0, 0x001000F0, true, SZ_16, 1 },
 	//LDR
-	{0x0E500010,0x06100000,true,SZ_32I,1},
+	{ 0x0E500010, 0x06100000, true, SZ_32I, 1 },
 	//VLDR.32
-	{0x0F300F00,0x0D100A00,true,SZ_32F,2},
+	{ 0x0F300F00, 0x0D100A00, true, SZ_32F, 2 },
 	//VLDR.64
-	{0x0F300F00,0x0D100B00,true,SZ_64F,2},
+	{ 0x0F300F00, 0x0D100B00, true, SZ_64F, 2 },
 
 	//
 	//STRB
-	{0x0FF00010,0x07C00000,false,SZ_8,1},
+	{ 0x0FF00010, 0x07C00000, false, SZ_8, 1 },
 	//STRH
-	{0x0FF00FF0,0x018000B0,false,SZ_16,1},
+	{ 0x0FF00FF0, 0x018000B0, false, SZ_16, 1 },
 	//STR
-	{0x0E500010,0x06000000,false,SZ_32I,1},
+	{ 0x0E500010, 0x06000000, false, SZ_32I, 1 },
 	//VSTR.32
-	{0x0F300F00,0x0D000A00,false,SZ_32F,2},
+	{ 0x0F300F00, 0x0D000A00, false, SZ_32F, 2 },
 	//VSTR.64
-	{0x0F300F00,0x0D000B00,false,SZ_64F,2},
+	{ 0x0F300F00, 0x0D000B00, false, SZ_64F, 2 },
 	
-	{0,0},
+	{ 0, 0 },
 };
 
 union arm_mem_op
@@ -699,38 +600,39 @@ union arm_mem_op
 	u32 full;
 };
 
-static void vmem_slowpath(eReg raddr, eReg rt, eFSReg ft, eFDReg fd, mem_op_type optp, bool read)
+static void vmem_slowpath(Register raddr, Register rt, SRegister ft, DRegister fd, mem_op_type optp, bool read)
 {
-	if (raddr != r0)
-		MOV(r0, (eReg)raddr);
+	if (!raddr.Is(r0))
+		ass.Mov(r0, raddr);
 
 	if (!read)
 	{
-		if (optp <= SZ_32I) MOV(r1, rt);
-		else if (optp == SZ_32F) VMOV(r1, ft);
-		else if (optp == SZ_64F) VMOV(r2, r3, fd);
+		if (optp <= SZ_32I)
+			ass.Mov(r1, rt);
+		else if (optp == SZ_32F)
+			ass.Vmov(r1, ft);
+		else if (optp == SZ_64F)
+			ass.Vmov(r2, r3, fd);
 	}
 
-	if (fd != d0 && optp == SZ_64F)
-	{
-		die("BLAH");
-	}
-
-	u32 funct = 0;
+	const void *funct = nullptr;
 
 	if (optp <= SZ_32I)
-		funct = _mem_hndl[read][optp][raddr];
+		funct = _mem_hndl[read][optp][raddr.GetCode()];
 	else
-		funct = _mem_func[read][optp];
+		funct = _mem_func[read][optp - SZ_32F];
 
-	verify(funct != 0);
-	CALL(funct);
+	verify(funct != nullptr);
+	call(funct);
 
 	if (read)
 	{
-		if (optp <= SZ_32I) MOV(rt, r0);
-		else if (optp == SZ_32F) VMOV(ft, r0);
-		else if (optp == SZ_64F) VMOV(fd, r0, r1);
+		if (optp <= SZ_32I)
+			ass.Mov(rt, r0);
+		else if (optp == SZ_32F)
+			ass.Vmov(ft, r0);
+		else if (optp == SZ_64F)
+			ass.Vmov(fd, r0, r1);
 	}
 }
 
@@ -739,25 +641,23 @@ bool ngen_Rewrite(host_context_t &context, void *faultAddress)
 	u32 *regs = context.reg;
 	arm_mem_op *ptr = (arm_mem_op *)context.pc;
 
-	static_assert(sizeof(*ptr) == 4, "sizeof(arm_mem_op) == 4");
-
 	mem_op_type optp;
-	u32 read=0;
-	s32 offs=-1;
+	u32 read;
+	s32 offs = -1;
 
-	u32 fop=ptr[0].full;
+	u32 fop = ptr[0].full;
 
-	for (int i=0;op_table[i].mask;i++)
+	for (int i = 0; op_table[i].mask; i++)
 	{
-		if ((fop&op_table[i].mask)==op_table[i].key)
+		if ((fop & op_table[i].mask) == op_table[i].key)
 		{
-			optp=op_table[i].optp;
-			read=op_table[i].read;
-			offs=op_table[i].offs;
+			optp = op_table[i].optp;
+			read = op_table[i].read;
+			offs = op_table[i].offs;
 		}
 	}
 
-	if (offs==-1)
+	if (offs == -1)
 	{
 		ERROR_LOG(DYNAREC, "%08X : invalid size", fop);
 		die("can't decode opcode\n");
@@ -765,20 +665,20 @@ bool ngen_Rewrite(host_context_t &context, void *faultAddress)
 
 	ptr -= offs;
 
-	eReg raddr,rt;
-	eFSReg ft;
-	eFDReg fd;
+	Register raddr, rt;
+	SRegister ft;
+	DRegister fd;
 
 	//Get used regs from opcodes ..
 	
-	if ((ptr[0].full & 0x0FE00070)==0x07E00050)
+	if ((ptr[0].full & 0x0FE00070) == 0x07E00050)
 	{
 		//from ubfx !
-		raddr=(eReg)(ptr[0].Ra);
+		raddr = Register(ptr[0].Ra);
 	}
-	else if ((ptr[0].full & 0x0FE00000)==0x03C00000)
+	else if ((ptr[0].full & 0x0FE00000) == 0x03C00000)
 	{
-		raddr=(eReg)(ptr[0].Rn);
+		raddr = Register(ptr[0].Rn);
 	}
 	else
 	{
@@ -786,160 +686,112 @@ bool ngen_Rewrite(host_context_t &context, void *faultAddress)
 		die("Invalid opcode: vmem fixup\n");
 	}
 	//from mem op
-	rt=(eReg)(ptr[offs].Rt);
-	ft=(eFSReg)(ptr[offs].Rt*2 + ptr[offs].D);
-	fd=(eFDReg)(ptr[offs].D*16 + ptr[offs].Rt);
+	rt = Register(ptr[offs].Rt);
+	ft = SRegister(ptr[offs].Rt * 2 + ptr[offs].D);
+	fd = DRegister(ptr[offs].D * 16 + ptr[offs].Rt);
 
 	//get some other relevant data
-	u32 sh4_addr=regs[raddr];
+	u32 sh4_addr = regs[raddr.GetCode()];
 	u32 fault_offs = (uintptr_t)faultAddress - regs[8];
-	u8* sh4_ctr=(u8*)regs[8];
-	bool is_sq=(sh4_addr>>26)==0x38;
+	bool is_sq = (sh4_addr >> 26) == 0x38;
 
-	verify(emit_ptr==0);
-	emit_ptr=(u32*)ptr;
+	ass = Arm32Assembler((u8 *)ptr, 12);
 
-
-	/*
-			mov r0,raddr
-
-		8/16/32I:
-			call _mem_hdlp[read][optp][rt]
-		32F/64F:
-	32F,r:	vmov r1,ft
-	64F,r:	vmov [r3:r2],fd
-			call _mem_hdlp[read][optp][0]
-	32F,w:	vmov ft,r0
-	64F,w:	vmov fd,[r1:r0]
-	*/
-	
 	//fault offset must always be the addr from ubfx (sanity check)
-	verify((fault_offs==0) || fault_offs==(0x1FFFFFFF&sh4_addr));
+	verify(fault_offs == 0 || fault_offs == (sh4_addr & 0x1FFFFFFF));
 
 	if (is_sq && !read && optp >= SZ_32I)
 	{
 		if (optp >= SZ_32F)
 		{
-			MOV(r0, raddr);
+			if (!raddr.Is(r0))
+				ass.Mov(r0, raddr);
+			else
+				ass.Nop();
 			raddr = r0;
 		}
 		switch (optp)
 		{
 		case SZ_32I:
-			MOV(r1, rt);
+			ass.Mov(r1, rt);
 			break;
 		case SZ_32F:
-			VMOV(r1, ft);
+			ass.Vmov(r1, ft);
 			break;
 		case SZ_64F:
-			VMOV(r2, r3, fd);
+			ass.Vmov(r2, r3, fd);
 			break;
 		default:
 			break;
 		}
-		CALL((unat)_mem_hndl_SQ32[optp - SZ_32I][raddr]);
-	}
-	else if (false && is_sq) //THPS2 uses cross area SZ_32F so this is disabled for now
-	{
-		//SQ !
-		s32 sq_offs=(u8 *)sq_both-sh4_ctr;
-		verify(sq_offs==rcb_noffs(sq_both));
-		
-		verify(!read && optp>=SZ_32I);
-
-		if (optp==SZ_32I)
-		{
-			MOV(r1,rt);
-
-			CALL((unat)_mem_hndl_SQ32[raddr]);
-		}
-		else
-		{
-			//UBFX(r1,raddr,0,6);
-			AND(r1,raddr,0x3F);
-			ADD(r1,r1,r8);
-
-			if (optp==SZ_32I) STR(rt,r1,sq_offs); // cross writes are possible, so this can't be assumed
-			else if (optp==SZ_32F) VSTR(ft,r1,sq_offs/4);
-			else if (optp==SZ_64F) VSTR(fd,r1,sq_offs/4);
-		}
+		call(_mem_hndl_SQ32[optp - SZ_32I][raddr.GetCode()]);
 	}
 	else
 	{
 		//Fallback to function !
 
-		if (offs==2)
+		if (optp >= SZ_32F)
 		{
-			if (raddr!=r0)
-				MOV(r0,(eReg)raddr);
+			if (!raddr.Is(r0))
+				ass.Mov(r0, raddr);
 			else
-				NOP();
+				ass.Nop();
 		}
 
 		if (!read)
 		{
-			if (optp<=SZ_32I) MOV(r1,rt);
-			else if (optp==SZ_32F) VMOV(r1,ft);
-			else if (optp==SZ_64F) VMOV(r2,r3,fd);
+			if (optp <= SZ_32I)
+				ass.Mov(r1, rt);
+			else if (optp == SZ_32F)
+				ass.Vmov(r1, ft);
+			else if (optp == SZ_64F)
+				ass.Vmov(r2, r3, fd);
 		}
 
-		if (fd!=d0 && optp==SZ_64F)
-		{
-			die("BLAH");
-		}
+		const void *funct = nullptr;
 
-		u32 funct=0;
+		if (offs == 1)
+			funct = _mem_hndl[read][optp][raddr.GetCode()];
+		else if (optp >= SZ_32F)
+			funct = _mem_func[read][optp - SZ_32F];
 
-		if (offs==1)
-			funct=_mem_hndl[read][optp][raddr];
-		else if (offs==2)
-			funct=_mem_func[read][optp];
-
-		verify(funct!=0);
-		CALL(funct);
+		verify(funct != nullptr);
+		call(funct);
 
 		if (read)
 		{
-			if (optp<=SZ_32I) MOV(rt,r0);
-			else if (optp==SZ_32F) VMOV(ft,r0);
-			else if (optp==SZ_64F) VMOV(fd,r0,r1);
+			if (optp <= SZ_32I)
+				ass.Mov(rt, r0);
+			else if (optp == SZ_32F)
+				ass.Vmov(ft, r0);
+			else if (optp == SZ_64F)
+				ass.Vmov(fd, r0, r1);
 		}
 	}
 
-	vmem_platform_flush_cache((void*)ptr, (u8*)emit_ptr - 1, (void*)ptr, (u8*)emit_ptr - 1);
-	emit_ptr = 0;
+	ass.Finalize();
 	context.pc = (size_t)ptr;
 
 	return true;
 }
 
-EAPI NEG(eReg Rd, eReg Rs)
-{
-	RSB(Rd, Rs, 0);
-}
-
-EAPI NEG(eReg Rd, eReg Rs, ConditionCode CC)
-{
-	RSB(Rd, Rs, 0, CC);
-}
-
-static eReg GenMemAddr(shil_opcode* op, eReg raddr = r0)
+static Register GenMemAddr(shil_opcode* op, Register raddr = r0)
 {
 	if (op->rs3.is_imm())
 	{
-		if(is_i8r4(op->rs3._imm))
+		if (ImmediateA32::IsImmediateA32(op->rs3._imm))
 		{
-			ADD(raddr,reg.mapg(op->rs1),op->rs3._imm);
+			ass.Add(raddr, reg.mapReg(op->rs1), op->rs3._imm);
 		}
 		else 
 		{
-			MOV32(r1,op->rs3._imm);
-			ADD(raddr,reg.mapg(op->rs1),r1);
+			ass.Mov(r1, op->rs3._imm);
+			ass.Add(raddr, reg.mapReg(op->rs1), r1);
 		}
 	}
 	else if (op->rs3.is_r32i())
 	{
-		ADD(raddr,reg.mapg(op->rs1),reg.mapg(op->rs3));
+		ass.Add(raddr, reg.mapReg(op->rs1), reg.mapReg(op->rs3));
 	}
 	else if (!op->rs3.is_null())
 	{
@@ -948,50 +800,50 @@ static eReg GenMemAddr(shil_opcode* op, eReg raddr = r0)
 	}
 	else if (op->rs1.is_imm())
 	{
-		MOV32(raddr, op->rs1._imm);
+		ass.Mov(raddr, op->rs1._imm);
 	}
 	else
 	{
-		raddr = reg.mapg(op->rs1);
+		raddr = reg.mapReg(op->rs1);
 	}
 
 	return raddr;
 }
 
-static bool ngen_readm_immediate(RuntimeBlockInfo* block, shil_opcode* op, bool staging, bool optimise)
+static bool ngen_readm_immediate(RuntimeBlockInfo* block, shil_opcode* op, bool optimise)
 {
 	if (!op->rs1.is_imm())
 		return false;
 
 	mem_op_type optp = memop_type(op);
 	bool isram = false;
-	void* ptr = _vmem_read_const(op->rs1._imm, isram, std::min(4u, memop_bytes(optp)));
-	eReg rd = (optp != SZ_32F && optp != SZ_64F) ? reg.mapg(op->rd) : r0;
+	void* ptr = _vmem_read_const(op->rs1._imm, isram, std::min(4u, memop_bytes[optp]));
+	Register rd = (optp != SZ_32F && optp != SZ_64F) ? reg.mapReg(op->rd) : r0;
 
 	if (isram)
 	{
-		MOV32(r0, (u32)ptr);
+		ass.Mov(r0, (u32)ptr);
 		switch(optp)
 		{
 		case SZ_8:
-			LDRSB(rd, r0);
+			ass.Ldrsb(rd, MemOperand(r0));
 			break;
 
 		case SZ_16:
-			LDRSH(rd, r0);
+			ass.Ldrsh(rd, MemOperand(r0));
 			break;
 
 		case SZ_32I:
-			LDR(rd, r0);
+			ass.Ldr(rd, MemOperand(r0));
 			break;
 
 		case SZ_32F:
-			VLDR(reg.mapfs(op->rd), r0, 0);
+			ass.Vldr(reg.mapFReg(op->rd), MemOperand(r0));
 			break;
 
 		case SZ_64F:
-			VLDR(d0, r0, 0);
-			VSTR(d0, r8, op->rd.reg_nofs() / 4);
+			ass.Vldr(d0, MemOperand(r0));
+			ass.Vstr(d0, MemOperand(r8, op->rd.reg_nofs()));
 			break;
 		}
 	}
@@ -1002,27 +854,27 @@ static bool ngen_readm_immediate(RuntimeBlockInfo* block, shil_opcode* op, bool 
 		{
 			verify(!reg.IsAllocAny(op->rd));
 			// Need to call the handler twice
-			MOV32(r0, op->rs1._imm);
-			CALL((u32)ptr);
-			STR(r0, r8, op->rd.reg_nofs());
+			ass.Mov(r0, op->rs1._imm);
+			call(ptr);
+			ass.Str(r0, MemOperand(r8, op->rd.reg_nofs()));
 
-			MOV32(r0, op->rs1._imm + 4);
-			CALL((u32)ptr);
-			STR(r0, r8, op->rd.reg_nofs() + 4);
+			ass.Mov(r0, op->rs1._imm + 4);
+			call(ptr);
+			ass.Str(r0, MemOperand(r8, op->rd.reg_nofs() + 4));
 		}
 		else
 		{
-			MOV32(r0, op->rs1._imm);
-			CALL((u32)ptr);
+			ass.Mov(r0, op->rs1._imm);
+			call(ptr);
 
 			switch(optp)
 			{
 			case SZ_8:
-				SXTB(r0, r0);
+				ass.Sxtb(r0, r0);
 				break;
 
 			case SZ_16:
-				SXTH(r0, r0);
+				ass.Sxth(r0, r0);
 				break;
 
 			case SZ_32I:
@@ -1035,9 +887,9 @@ static bool ngen_readm_immediate(RuntimeBlockInfo* block, shil_opcode* op, bool 
 			}
 
 			if (reg.IsAllocg(op->rd))
-				MOV(rd, r0);
+				ass.Mov(rd, r0);
 			else if (reg.IsAllocf(op->rd))
-				VMOV(reg.mapfs(op->rd), r0);
+				ass.Vmov(reg.mapFReg(op->rd), r0);
 			else
 				die("Unsupported");
 		}
@@ -1046,48 +898,48 @@ static bool ngen_readm_immediate(RuntimeBlockInfo* block, shil_opcode* op, bool 
 	return true;
 }
 
-static bool ngen_writemem_immediate(RuntimeBlockInfo* block, shil_opcode* op, bool staging, bool optimise)
+static bool ngen_writemem_immediate(RuntimeBlockInfo* block, shil_opcode* op, bool optimise)
 {
 	if (!op->rs1.is_imm())
 		return false;
 
 	mem_op_type optp = memop_type(op);
 	bool isram = false;
-	void* ptr = _vmem_write_const(op->rs1._imm, isram, std::min(4u, memop_bytes(optp)));
+	void* ptr = _vmem_write_const(op->rs1._imm, isram, std::min(4u, memop_bytes[optp]));
 
-	eReg rs2 = r1;
-	eFSReg rs2f = f0;
+	Register rs2 = r1;
+	SRegister rs2f = s0;
 	if (op->rs2.is_imm())
-		MOV32(rs2, op->rs2._imm);
+		ass.Mov(rs2, op->rs2._imm);
 	else if (optp == SZ_32F)
-		rs2f = reg.mapf(op->rs2);
+		rs2f = reg.mapFReg(op->rs2);
 	else if (optp != SZ_64F)
-		rs2 = reg.mapg(op->rs2);
+		rs2 = reg.mapReg(op->rs2);
 
 	if (isram)
 	{
-		MOV32(r0, (u32)ptr);
+		ass.Mov(r0, (u32)ptr);
 		switch(optp)
 		{
 		case SZ_8:
-			STRB(rs2, r0);
+			ass.Strb(rs2, MemOperand(r0));
 			break;
 
 		case SZ_16:
-			STRH(rs2, r0, 0);
+			ass.Strh(rs2, MemOperand(r0));
 			break;
 
 		case SZ_32I:
-			STR(rs2, r0);
+			ass.Str(rs2, MemOperand(r0));
 			break;
 
 		case SZ_32F:
-			VSTR(rs2f, r0, 0);
+			ass.Vstr(rs2f, MemOperand(r0));
 			break;
 
 		case SZ_64F:
-			VLDR(d0, r8, op->rs2.reg_nofs() / 4);
-			VSTR(d0, r0, 0);
+			ass.Vldr(d0, MemOperand(r8, op->rs2.reg_nofs()));
+			ass.Vstr(d0, MemOperand(r0));
 			break;
 
 		default:
@@ -1099,154 +951,151 @@ static bool ngen_writemem_immediate(RuntimeBlockInfo* block, shil_opcode* op, bo
 	{
 		if (optp == SZ_64F)
 			die("SZ_64F not supported");
-		MOV32(r0, op->rs1._imm);
+		ass.Mov(r0, op->rs1._imm);
 		if (optp == SZ_32F)
-			VMOV(r1, rs2f);
-		else if (r1 != rs2)
-			MOV(r1, rs2);
+			ass.Vmov(r1, rs2f);
+		else if (!rs2.Is(r1))
+			ass.Mov(r1, rs2);
 
-		CALL((u32)ptr);
+		call(ptr);
 	}
 	return true;
 }
 
-static void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool staging, bool optimise)
+static void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool optimise)
 {
 	switch(op->op)
 	{
 		case shop_readm:
-		{
-			if (!ngen_readm_immediate(block, op, staging, optimise))
+			if (!ngen_readm_immediate(block, op, optimise))
 			{
 				mem_op_type optp = memop_type(op);
-				eReg raddr=GenMemAddr(op);
+				Register raddr = GenMemAddr(op);
 
 				if (_nvmem_enabled()) {
-					BIC(r1,raddr,0xE0000000);
+					ass.Bic(r1, raddr, 0xE0000000);
 
 					switch(optp)
 					{
 					case SZ_8:	
-						LDRSB(reg.mapg(op->rd),r1,r8,true); 
+						ass.Ldrsb(reg.mapReg(op->rd), MemOperand(r1, r8));
 						break;
 
 					case SZ_16: 
-						LDRSH(reg.mapg(op->rd),r1,r8,true); 
+						ass.Ldrsh(reg.mapReg(op->rd), MemOperand(r1, r8));
 						break;
 
 					case SZ_32I: 
-						LDR(reg.mapg(op->rd),r1,r8,Offset,true); 
+						ass.Ldr(reg.mapReg(op->rd), MemOperand(r1, r8));
 						break;
 
 					case SZ_32F:
-						ADD(r1,r1,r8);	//3 opcodes, there's no [REG+REG] VLDR
-						VLDR(reg.mapf(op->rd),r1,0);
+						ass.Add(r1, r1, r8);	//3 opcodes, there's no [REG+REG] VLDR
+						ass.Vldr(reg.mapFReg(op->rd), MemOperand(r1));
 						break;
 
 					case SZ_64F:
-						ADD(r1,r1,r8);	//3 opcodes, there's no [REG+REG] VLDR
-						VLDR(d0,r1,0);	//TODO: use reg alloc
+						ass.Add(r1, r1, r8);	//3 opcodes, there's no [REG+REG] VLDR
+						ass.Vldr(d0, MemOperand(r1));	//TODO: use reg alloc
 
-						VSTR(d0,r8,op->rd.reg_nofs()/4);
+						ass.Vstr(d0, MemOperand(r8, op->rd.reg_nofs()));
 						break;
 					}
 				} else {
 					switch(optp)
 					{
 					case SZ_8:	
-						vmem_slowpath(raddr, reg.mapg(op->rd), f0, d0, optp, true);
+						vmem_slowpath(raddr, reg.mapReg(op->rd), s0, d0, optp, true);
 						break;
 
 					case SZ_16: 
-						vmem_slowpath(raddr, reg.mapg(op->rd), f0, d0, optp, true);
+						vmem_slowpath(raddr, reg.mapReg(op->rd), s0, d0, optp, true);
 						break;
 
 					case SZ_32I: 
-						vmem_slowpath(raddr, reg.mapg(op->rd), f0, d0, optp, true);
+						vmem_slowpath(raddr, reg.mapReg(op->rd), s0, d0, optp, true);
 						break;
 
 					case SZ_32F:
-						vmem_slowpath(raddr, r0, reg.mapf(op->rd), d0, optp, true);
+						vmem_slowpath(raddr, r0, reg.mapFReg(op->rd), d0, optp, true);
 						break;
 
 					case SZ_64F:
-						vmem_slowpath(raddr, r0, f0, d0, optp, true);
-						VSTR(d0,r8,op->rd.reg_nofs()/4);
+						vmem_slowpath(raddr, r0, s0, d0, optp, true);
+						ass.Vstr(d0, MemOperand(r8, op->rd.reg_nofs()));
 						break;
 					}
 				}
 			}
-		}
-		break;
-
+			break;
 
 		case shop_writem:
-		{
-			if (!ngen_writemem_immediate(block, op, staging, optimise))
+			if (!ngen_writemem_immediate(block, op, optimise))
 			{
 				mem_op_type optp = memop_type(op);
 
-				eReg raddr=GenMemAddr(op);
+				Register raddr = GenMemAddr(op);
 
-				eReg rs2 = r2;
-				eFSReg rs2f = f2;
+				Register rs2 = r2;
+				SRegister rs2f = s2;
 
 				//TODO: use reg alloc
 				if (optp == SZ_64F)
-					VLDR(d0,r8,op->rs2.reg_nofs()/4);
+					ass.Vldr(d0, MemOperand(r8, op->rs2.reg_nofs()));
 				else if (op->rs2.is_imm())
 				{
-					MOV32(rs2, op->rs2._imm);
+					ass.Mov(rs2, op->rs2._imm);
 					if (optp == SZ_32F)
-						VMOV(rs2f, rs2);
+						ass.Vmov(rs2f, rs2);
 				}
 				else
 				{
 					if (optp == SZ_32F)
-						rs2f = reg.mapf(op->rs2);
+						rs2f = reg.mapFReg(op->rs2);
 					else
-						rs2 = reg.mapg(op->rs2);
+						rs2 = reg.mapReg(op->rs2);
 				}
-				if (_nvmem_enabled()) {
-					BIC(r1,raddr,0xE0000000);
+				if (_nvmem_enabled())
+				{
+					ass.Bic(r1, raddr, 0xE0000000);
 
 					switch(optp)
 					{
 					case SZ_8:
-						STRB(rs2, r1, r8, Offset, true);
+						ass.Strb(rs2, MemOperand(r1, r8));
 						break;
 
 					case SZ_16:
-						STRH(rs2, r1, r8, true);
+						ass.Strh(rs2, MemOperand(r1, r8));
 						break;
 
 					case SZ_32I:
-						STR(rs2, r1, r8, Offset, true);
+						ass.Str(rs2, MemOperand(r1, r8));
 						break;
 
 					case SZ_32F:
-						ADD(r1, r1, r8);	//3 opcodes: there's no [REG+REG] VLDR, also required for SQ
-						VSTR(rs2f, r1, 0);
+						ass.Add(r1, r1, r8);	//3 opcodes: there's no [REG+REG] VLDR, also required for SQ
+						ass.Vstr(rs2f, MemOperand(r1));
 						break;
 
 					case SZ_64F:
-						ADD(r1, r1, r8);	//3 opcodes: there's no [REG+REG] VLDR, also required for SQ
-						VSTR(d0, r1, 0);	//TODO: use reg alloc
+						ass.Add(r1, r1, r8);	//3 opcodes: there's no [REG+REG] VLDR, also required for SQ
+						ass.Vstr(d0, MemOperand(r1));	//TODO: use reg alloc
 						break;
 					}
 				} else {
 					switch(optp)
 					{
 					case SZ_8:
-						vmem_slowpath(raddr, rs2, f0, d0, optp, false);
+						vmem_slowpath(raddr, rs2, s0, d0, optp, false);
 						break;
 
 					case SZ_16:
-						vmem_slowpath(raddr, rs2, f0, d0, optp, false);
+						vmem_slowpath(raddr, rs2, s0, d0, optp, false);
 						break;
 
 					case SZ_32I:
-						vmem_slowpath(raddr, rs2, f0, d0, optp, false);
+						vmem_slowpath(raddr, rs2, s0, d0, optp, false);
 						break;
 
 					case SZ_32F:
@@ -1254,289 +1103,264 @@ static void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool s
 						break;
 
 					case SZ_64F:
-						vmem_slowpath(raddr, r0, f0, d0, optp, false);
+						vmem_slowpath(raddr, r0, s0, d0, optp, false);
 						break;
 					}
 				}
 			}
-		}
-		break;
+			break;
 
 		//dynamic jump, r+imm32.This will be at the end of the block, but doesn't -have- to be the last opcode
 		case shop_jdyn:
-		{
-			//ReadReg rs1(r4,op->rs1);
-			verify(op->rd.is_reg() && op->rd._reg==reg_pc_dyn);
+			verify(op->rd.is_reg() && op->rd._reg == reg_pc_dyn);
 			if (op->rs2.is_imm())
 			{
-				MOV32(r2, op->rs2.imm_value());
-				ADD(r4, reg.mapg(op->rs1), r2);
+				ass.Mov(r2, op->rs2.imm_value());
+				ass.Add(r4, reg.mapReg(op->rs1), r2);
 			}
-			else //if (r4!=rs1.reg)
+			else
 			{
-				MOV(r4, reg.mapg(op->rs1));
+				ass.Mov(r4, reg.mapReg(op->rs1));
 			}
 			break;
-		}
 
 		case shop_mov32:
+			verify(op->rd.is_r32());
+
+			if (op->rs1.is_imm())
 			{
-				verify(op->rd.is_r32());
-
-				if (op->rs1.is_imm())
+				if (op->rd.is_r32i())
 				{
-					if (op->rd.is_r32i())
-					{
-						MOV32(reg.mapg(op->rd),op->rs1._imm);
-					}
-					else
-					{
-						if (op->rs1._imm==0)
-						{
-							//VEOR(reg.mapf(op->rd),reg.mapf(op->rd),reg.mapf(op->rd));
-							//hum, vmov can't do 0, but can do all kind of weird small consts ... really useful ...
-							//simd is slow on a9
-#if 0
-							MOVW(r0,0);
-							VMOV(reg.mapfs(op->rd),r0);
-#else
-							//1-1=0 !
-							//should be slightly faster ...
-							//we could get rid of the imm mov, if not for infs & co ..
-							VMOV(reg.mapfs(op->rd),fpu_imm_1);
-							VSUB_VFP(reg.mapfs(op->rd),reg.mapfs(op->rd),reg.mapfs(op->rd));
-#endif
-						}
-						else if (op->rs1._imm == 0x3F800000)
-							VMOV(reg.mapfs(op->rd), fpu_imm_1);
-						else
-						{
-							MOV32(r0, op->rs1._imm);
-							VMOV(reg.mapfs(op->rd), r0);
-						}
-					}
-				}
-				else if (op->rs1.is_r32())
-				{
-					u32 type=0;
-
-					if (reg.IsAllocf(op->rd))
-						type|=1;
-					
-					if (reg.IsAllocf(op->rs1))
-						type|=2;
-
-					switch(type)
-					{
-					case 0: //reg=reg
-						if (reg.mapg(op->rd)!=reg.mapg(op->rs1))
-							MOV(reg.mapg(op->rd),reg.mapg(op->rs1));
-						break;
-
-					case 1: //vfp=reg
-						VMOV(reg.mapfs(op->rd),reg.mapg(op->rs1));
-						break;
-
-					case 2: //reg=vfp
-						VMOV(reg.mapg(op->rd),reg.mapfs(op->rs1));
-						break;
-
-					case 3: //vfp=vfp
-						VMOV(reg.mapfs(op->rd),reg.mapfs(op->rs1));
-						break;
-					}
+					ass.Mov(reg.mapReg(op->rd), op->rs1._imm);
 				}
 				else
 				{
-					die("Invalid mov32 size");
+					if (op->rs1._imm==0)
+					{
+						//VEOR(reg.mapFReg(op->rd),reg.mapFReg(op->rd),reg.mapFReg(op->rd));
+						//hum, vmov can't do 0, but can do all kind of weird small consts ... really useful ...
+						//simd is slow on a9
+#if 0
+						ass.Movw(r0, 0);
+						ass.Vmov(reg.mapFReg(op->rd), r0);
+#else
+						//1-1=0 !
+						//should be slightly faster ...
+						//we could get rid of the imm mov, if not for infs & co ..
+						ass.Vmov(reg.mapFReg(op->rd), 1.f);;
+						ass.Vsub(reg.mapFReg(op->rd), reg.mapFReg(op->rd), reg.mapFReg(op->rd));
+#endif
+					}
+					else if (op->rs1._imm == 0x3F800000)
+						ass.Vmov(reg.mapFReg(op->rd), 1.f);
+					else
+					{
+						ass.Mov(r0, op->rs1._imm);
+						ass.Vmov(reg.mapFReg(op->rd), r0);
+					}
 				}
-				
+			}
+			else if (op->rs1.is_r32())
+			{
+				u32 type = 0;
+
+				if (reg.IsAllocf(op->rd))
+					type |= 1;
+
+				if (reg.IsAllocf(op->rs1))
+					type |= 2;
+
+				switch(type)
+				{
+				case 0: // reg = reg
+					ass.Mov(reg.mapReg(op->rd), reg.mapReg(op->rs1));
+					break;
+
+				case 1: // vfp = reg
+					ass.Vmov(reg.mapFReg(op->rd), reg.mapReg(op->rs1));
+					break;
+
+				case 2: // reg = vfp
+					ass.Vmov(reg.mapReg(op->rd), reg.mapFReg(op->rs1));
+					break;
+
+				case 3: // vfp = vfp
+					ass.Vmov(reg.mapFReg(op->rd), reg.mapFReg(op->rs1));
+					break;
+				}
+			}
+			else
+			{
+				die("Invalid mov32 size");
 			}
 			break;
 			
 		case shop_mov64:
-		{
 			verify(op->rs1.is_r64() && op->rd.is_r64());
-			//LoadSh4Reg64(r0,op->rs1);
-			//StoreSh4Reg64(r0,op->rd);
-			
-			VLDR(d0,r8,op->rs1.reg_nofs()/4);
-			VSTR(d0,r8,op->rd.reg_nofs()/4);
+			ass.Vldr(d0, MemOperand(r8, op->rs1.reg_nofs()));
+			ass.Vstr(d0, MemOperand(r8, op->rd.reg_nofs()));
 			break;
-		}
 
 		case shop_jcond:
-		{
-			verify(op->rd.is_reg() && op->rd._reg==reg_pc_dyn);
-			//ReadReg rs1(r4,op->rs1);
-
-			//if (r4!=rs1.reg)
-				MOV(r4,reg.mapg(op->rs1));
+			verify(op->rd.is_reg() && op->rd._reg == reg_pc_dyn);
+			ass.Mov(r4, reg.mapReg(op->rs1));
 			break;
-		}
 
 		case shop_ifb:
-		{
 			if (op->rs1._imm) 
 			{
-				MOV32(r1,op->rs2._imm);
-				StoreSh4Reg_mem(r1,reg_nextpc);
-				//StoreImms(r3,r2,(u32)&next_pc,(u32)op->rs2._imm);
+				ass.Mov(r1, op->rs2._imm);
+				storeSh4Reg(r1, reg_nextpc);
 			}
 
-			MOV32(r0, op->rs3._imm);
-			CALL((u32)(OpPtr[op->rs3._imm]));
+			ass.Mov(r0, op->rs3._imm);
+			call((void *)OpPtr[op->rs3._imm]);
 			break;
-		}
 
 #ifndef CANONICALTEST
-		case shop_neg: ngen_Unary(op,NEG);     break;
-		case shop_not: ngen_Unary(op,NOT);     break;
+		case shop_neg:
+			ass.Rsb(reg.mapReg(op->rd), reg.mapReg(op->rs1), 0);
+			break;
+		case shop_not:
+			ass.Mvn(reg.mapReg(op->rd), reg.mapReg(op->rs1));
+			break;
 
+		case shop_shl:
+			ngen_Binary(op, &MacroAssembler::Lsl);
+			break;
+		case shop_shr:
+			ngen_Binary(op, &MacroAssembler::Lsr);
+			break;
+		case shop_sar:
+			ngen_Binary(op, &MacroAssembler::Asr);
+			break;
 
-		case shop_shl: ngen_Binary(op,LSL,LSL); break;
-		case shop_shr: ngen_Binary(op,LSR,LSR); break;
-		case shop_sar: ngen_Binary(op,ASR,ASR); break;
+		case shop_and:
+			ngen_Binary(op, &MacroAssembler::And);
+			break;
+		case shop_or:
+			ngen_Binary(op, &MacroAssembler::Orr);
+			break;
+		case shop_xor:
+			ngen_Binary(op, &MacroAssembler::Eor);
+			break;
 
-		case shop_and:  ngen_Binary(op,AND,AND);    break;
-		case shop_or:   ngen_Binary(op,ORR,ORR);    break;
-		case shop_xor:	ngen_Binary(op,EOR,EOR);    break;
+		case shop_add:
+			ngen_Binary(op, &MacroAssembler::Add);
+			break;
+		case shop_sub:
+			ngen_Binary(op, &MacroAssembler::Sub);
+			break;
+		case shop_ror:
+			ngen_Binary(op, &MacroAssembler::Ror);
+			break;
 
-		case shop_add:	ngen_Binary(op,ADD,ADD);    break;
-		case shop_sub:	ngen_Binary(op,SUB,SUB);    break;
-		case shop_ror:	ngen_Binary(op,ROR,ROR);    break;
-			
 		case shop_adc:
-		{
-			//RSBS(reg.map(op.rs3),reg.map(op.rs3),0);
-			//ADCS(reg.map(op.rs1),reg.map(op.rs2),reg.map(op.rs3));
-			//ADC(reg.map(op.rs3),reg.map(op.rs3),reg.map(op.rs3),LSL,31);
+			{
+				Register rs1 = GetParam(op->rs1, r1);
+				Register rs2 = GetParam(op->rs2, r2);
+				Register rs3 = GetParam(op->rs3, r3);
 
-			//ADD(r0,reg.map(op.rs1),
-
-#if 0
-			MOVW(r1,0);
-			ADD(r0,reg.mapg(op->rs1),reg.mapg(op->rs2),true);
-			ADC(r1,r1,0);
-			ADD(reg.mapg(op->rd),r0,reg.mapg(op->rs3),true);
-			ADC(reg.mapg(op->rd2),r1,0);
-#else
-			eReg rs1 = GetParam(op->rs1, r1);
-			eReg rs2 = GetParam(op->rs2, r2);
-			eReg rs3 = GetParam(op->rs3, r3);
-
-			LSR(r0, rs3, 1, true); //C=rs3, r0=0
-			ADC(reg.mapg(op->rd), rs1, rs2, true); //(C,rd)=rs1+rs2+rs3(C)
-			ADC(reg.mapg(op->rd2), r0, 0);	//rd2=C, (or MOVCS rd2, 1)
-#endif
-		}
-		break;
+				ass.Lsr(SetFlags, r0, rs3, 1); 					 //C=rs3, r0=0
+				ass.Adc(SetFlags, reg.mapReg(op->rd), rs1, rs2); //(C,rd)=rs1+rs2+rs3(C)
+				ass.Adc(reg.mapReg(op->rd2), r0, 0);			 //rd2=C, (or MOVCS rd2, 1)
+			}
+			break;
 
 		case shop_rocr:
 			{
-				eReg rd2 = reg.mapg(op->rd2);
-				eReg rs1 = GetParam(op->rs1, r1);
-				eReg rs2 = GetParam(op->rs2, r2);
-				if (rd2 != rs1) {
-					LSR(rd2, rs2, 1, true);	//C=rs2, rd2=0
-					AND(rd2, rs1, 1);     	//get new carry
+				Register rd2 = reg.mapReg(op->rd2);
+				Register rs1 = GetParam(op->rs1, r1);
+				Register rs2 = GetParam(op->rs2, r2);
+				if (!rd2.Is(rs1)) {
+					ass.Lsr(SetFlags, rd2, rs2, 1);	//C=rs2, rd2=0
+					ass.And(rd2, rs1, 1);     		//get new carry
 				} else {
-					LSR(r0, rs2, 1, true);	//C=rs2, rd2=0
-					ADD(r0, rs1, 1);
+					ass.Lsr(SetFlags, r0, rs2, 1);	//C=rs2, rd2=0
+					ass.Add(r0, rs1, 1);
 				}
-				RRX(reg.mapg(op->rd), rs1);	//RRX w/ carry :)
-				if (rd2 == rs1)
-					MOV(rd2, r0);
-				
+				ass.Rrx(reg.mapReg(op->rd), rs1);	//RRX w/ carry :)
+				if (rd2.Is(rs1))
+					ass.Mov(rd2, r0);
 			}
 			break;
 			
 		case shop_rocl:
 			{
-				//ADD(reg.mapg(op->rd),reg.mapg(op->rs2),reg.mapg(op->rs1),1,true); //(C,rd)= rs1<<1 + (|) rs2
-				eReg rs1 = GetParam(op->rs1, r1);
-				eReg rs2 = GetParam(op->rs2, r2);
-				ORR(reg.mapg(op->rd), rs2, rs1, true, S_LSL, 1); //(C,rd)= rs1<<1 + (|) rs2
-				MOVW(reg.mapg(op->rd2), 0);						//clear rd2 (for ADC/MOVCS)
-				ADC(reg.mapg(op->rd2), reg.mapg(op->rd2), 0);	//rd2=C (or MOVCS rd2, 1)
+				Register rs1 = GetParam(op->rs1, r1);
+				Register rs2 = GetParam(op->rs2, r2);
+				ass.Orr(SetFlags, reg.mapReg(op->rd), rs2, Operand(rs1, LSL, 1)); //(C,rd)= rs1<<1 + (|) rs2
+				ass.Mov(reg.mapReg(op->rd2), 0);								  //clear rd2 (for ADC/MOVCS)
+				ass.Adc(reg.mapReg(op->rd2), reg.mapReg(op->rd2), 0);			  //rd2=C (or MOVCS rd2, 1)
 			}
 			break;
 			
 		case shop_sbc:
-			//printf("sbc: r%d r%d r%d r%d r%d\n",reg.mapg(op->rd),reg.mapg(op->rd2),reg.mapg(op->rs1),reg.mapg(op->rs2), reg.mapg(op->rs3));
 			{
-				eReg rd2 = reg.mapg(op->rd2);
-				eReg rs1 = GetParam(op->rs1, r1);
-				if (rs1 == rd2)
+				Register rd2 = reg.mapReg(op->rd2);
+				Register rs1 = GetParam(op->rs1, r1);
+				if (rs1.Is(rd2))
 				{
-					MOV(r1, rs1);
+					ass.Mov(r1, rs1);
 					rs1 = r1;
 				}
-				eReg rs2 = GetParam(op->rs2, r2);
-				if (rs2 == rd2)
+				Register rs2 = GetParam(op->rs2, r2);
+				if (rs2.Is(rd2))
 				{
-					MOV(r2, rs2);
+					ass.Mov(r2, rs2);
 					rs2 = r2;
 				}
-				eReg rs3 = GetParam(op->rs3, r3);
-				EOR(rd2, rs3, 1);
-				LSR(rd2, rd2, 1, true); //C=rs3, rd2=0
-				SBC(reg.mapg(op->rd), rs1, rs2, true);
-				MOV(rd2, 1, CC_CC);
+				Register rs3 = GetParam(op->rs3, r3);
+				ass.Eor(rd2, rs3, 1);
+				ass.Lsr(SetFlags, rd2, rd2, 1); //C=rs3, rd2=0
+				ass.Sbc(SetFlags, reg.mapReg(op->rd), rs1, rs2);
+				ass.Mov(cc, rd2, 1);
 			}
 			break;
 		
 		case shop_negc:
 			{
-				eReg rd2 = reg.mapg(op->rd2);
-				eReg rs1 = GetParam(op->rs1, r1);
-				if (rs1 == rd2)
+				Register rd2 = reg.mapReg(op->rd2);
+				Register rs1 = GetParam(op->rs1, r1);
+				if (rs1.Is(rd2))
 				{
-					MOV(r1, rs1);
+					ass.Mov(r1, rs1);
 					rs1 = r1;
 				}
-				eReg rs2 = GetParam(op->rs2, r2);
-				EOR(rd2, rs2, 1);
-				LSR(rd2, rd2, 1, true); //C=rs3, rd2=0
-				SBC(reg.mapg(op->rd), rd2, rs1, true);	// rd2 == 0
-				MOV(rd2, 1, CC_CC);
+				Register rs2 = GetParam(op->rs2, r2);
+				ass.Eor(rd2, rs2, 1);
+				ass.Lsr(SetFlags, rd2, rd2, 1);						//C=rs3, rd2=0
+				ass.Sbc(SetFlags, reg.mapReg(op->rd), rd2, rs1);	// rd2 == 0
+				ass.Mov(cc, rd2, 1);
 			}
 			break;
 
 		case shop_shld:
-			//printf("shld: r%d r%d r%d\n",reg.mapg(op->rd),reg.mapg(op->rs1),reg.mapg(op->rs2));
 			{
 				verify(!op->rs2.is_imm());
-				AND(r0, reg.mapg(op->rs2), 0x8000001F, true);
-				RSB(r0, r0, 0x80000020, CC_MI);
-				eReg rs1 = GetParam(op->rs1, r1);
-				LSR(reg.mapg(op->rd), rs1, r0, CC_MI);
-				LSL(reg.mapg(op->rd), rs1, r0, CC_PL);
-				//MOV(reg.mapg(op->rd), reg.mapg(op->rs1), S_LSL, r0, CC_PL);
-				//MOV(reg.mapg(op->rd), reg.mapg(op->rs1), S_LSR, r0, CC_MI);
+				ass.And(SetFlags, r0, reg.mapReg(op->rs2), 0x8000001F);
+				ass.Rsb(mi, r0, r0, 0x80000020);
+				Register rs1 = GetParam(op->rs1, r1);
+				ass.Lsr(mi, reg.mapReg(op->rd), rs1, r0);
+				ass.Lsl(pl, reg.mapReg(op->rd), rs1, r0);
 			}		
 			break;
 
 		case shop_shad:
-			//printf("shad: r%d r%d r%d\n",reg.mapg(op->rd),reg.mapg(op->rs1),reg.mapg(op->rs2));
 			{
 				verify(!op->rs2.is_imm());
-				AND(r0, reg.mapg(op->rs2), 0x8000001F, true);
-				RSB(r0, r0, 0x80000020, CC_MI);
-				eReg rs1 = GetParam(op->rs1, r1);
-				ASR(reg.mapg(op->rd), rs1, r0, CC_MI);
-				LSL(reg.mapg(op->rd), rs1, r0, CC_PL);
-				//MOV(reg.mapg(op->rd), reg.mapg(op->rs1), S_LSL, r0, CC_PL);
-				//MOV(reg.mapg(op->rd), reg.mapg(op->rs1), S_ASR, r0, CC_MI);
+				ass.And(SetFlags, r0, reg.mapReg(op->rs2), 0x8000001F);
+				ass.Rsb(mi, r0, r0, 0x80000020);
+				Register rs1 = GetParam(op->rs1, r1);
+				ass.Asr(mi, reg.mapReg(op->rd), rs1, r0);
+				ass.Lsl(pl, reg.mapReg(op->rd), rs1, r0);
 			}		
 			break;
 
 		case shop_sync_sr:
-		{
 			//must flush: SRS, SRT, r0-r7, r0b-r7b
-			CALL((u32)UpdateSR);
+			call((void *)UpdateSR);
 			break;
-		}
 
 		case shop_test:
 		case shop_seteq:
@@ -1544,64 +1368,64 @@ static void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool s
 		case shop_setgt:
 		case shop_setae:
 		case shop_setab:
-		{
-			eReg rd = reg.mapg(op->rd);
-			eReg rs1 = GetParam(op->rs1, r0);
-
-			eReg rs2 = r1;
-			bool is_imm = false;
-
-			if (op->rs2.is_imm())
 			{
-				if (!is_i8r4(op->rs2._imm))
-					MOV32(rs2,(u32)op->rs2._imm);
+				Register rd = reg.mapReg(op->rd);
+				Register rs1 = GetParam(op->rs1, r0);
+
+				Register rs2 = r1;
+				bool is_imm = false;
+
+				if (op->rs2.is_imm())
+				{
+					if (!ImmediateA32::IsImmediateA32(op->rs2._imm))
+						ass.Mov(rs2, (u32)op->rs2._imm);
+					else
+						is_imm = true;
+				}
+				else if (op->rs2.is_r32i())
+				{
+					rs2 = reg.mapReg(op->rs2);
+				}
 				else
-					is_imm = true;
-			}
-			else if (op->rs2.is_r32i())
-			{
-				rs2 = reg.mapg(op->rs2);
-			}
-			else
-			{
-				ERROR_LOG(DYNAREC, "ngen_Bin ??? %d", op->rs2.type);
-				verify(false);
-			}
+				{
+					ERROR_LOG(DYNAREC, "ngen_Bin ??? %d", op->rs2.type);
+					verify(false);
+				}
 
-			if (op->op == shop_test)
-			{
-				if (is_imm)
-					TST(rs1, op->rs2._imm);
+				if (op->op == shop_test)
+				{
+					if (is_imm)
+						ass.Tst(rs1, op->rs2._imm);
+					else
+						ass.Tst(rs1, rs2);
+				}
 				else
-					TST(rs1, rs2);
-			}
-			else
-			{
-				if (is_imm)
-					CMP(rs1, op->rs2._imm);
-				else
-					CMP(rs1, rs2);
-			}
+				{
+					if (is_imm)
+						ass.Cmp(rs1, op->rs2._imm);
+					else
+						ass.Cmp(rs1, rs2);
+				}
 
-			eCC opcls2[]={CC_EQ,CC_EQ,CC_GE,CC_GT,CC_HS,CC_HI };
+				static const ConditionType opcls2[] = { eq, eq, ge, gt, hs, hi };
 
-			MOVW(rd, 0);
-		    MOVW(rd, 1, opcls2[op->op-shop_test]);
-		    break;
-        }
+				ass.Mov(rd, 0);
+				ass.Mov(opcls2[op->op-shop_test], rd, 1);
+			}
+			break;
 
 		case shop_setpeq:
 			{
-				eReg rs1 = GetParam(op->rs1, r1);
-				eReg rs2 = GetParam(op->rs2, r2);
-				EOR(r1, rs1, rs2);
-				MOVW(reg.mapg(op->rd), 0);
+				Register rs1 = GetParam(op->rs1, r1);
+				Register rs2 = GetParam(op->rs2, r2);
+				ass.Eor(r1, rs1, rs2);
+				ass.Mov(reg.mapReg(op->rd), 0);
 				
-				TST(r1, 0xFF000000u);
-				TST(r1, 0x00FF0000u, CC_NE);
-				TST(r1, 0x0000FF00u, CC_NE);
-				TST(r1, 0x000000FFu, CC_NE);
-				MOVW(reg.mapg(op->rd), 1, CC_EQ);
+				ass.Tst(r1, 0xFF000000u);
+				ass.Tst(ne, r1, 0x00FF0000u);
+				ass.Tst(ne, r1, 0x0000FF00u);
+				ass.Tst(ne, r1, 0x000000FFu);
+				ass.Mov(eq, reg.mapReg(op->rd), 1);
 			}
 			break;
 		
@@ -1609,100 +1433,98 @@ static void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool s
 
 		case shop_mul_u16:
 			{
-				eReg rs2 = GetParam(op->rs2, r2);
-				UXTH(r1, reg.mapg(op->rs1));
-				UXTH(r2, rs2);
-				MUL(reg.mapg(op->rd), r1, r2);
+				Register rs2 = GetParam(op->rs2, r2);
+				ass.Uxth(r1, reg.mapReg(op->rs1));
+				ass.Uxth(r2, rs2);
+				ass.Mul(reg.mapReg(op->rd), r1, r2);
 			}
 			break;
 		case shop_mul_s16:
 			{
-				eReg rs2 = GetParam(op->rs2, r2);
-				SXTH(r1, reg.mapg(op->rs1));
-				SXTH(r2, rs2);
-				MUL(reg.mapg(op->rd), r1, r2);
+				Register rs2 = GetParam(op->rs2, r2);
+				ass.Sxth(r1, reg.mapReg(op->rs1));
+				ass.Sxth(r2, rs2);
+				ass.Mul(reg.mapReg(op->rd), r1, r2);
 			}
 			break;
 		case shop_mul_i32:
 			{
-				eReg rs2 = GetParam(op->rs2, r2);
+				Register rs2 = GetParam(op->rs2, r2);
 				//x86_opcode_class opdt[]={op_movzx16to32,op_movsx16to32,op_mov32,op_mov32,op_mov32};
 				//x86_opcode_class opmt[]={op_mul32,op_mul32,op_mul32,op_mul32,op_imul32};
 				//only the top 32 bits are different on signed vs unsigned
 
-				MUL(reg.mapg(op->rd), reg.mapg(op->rs1), rs2);
+				ass.Mul(reg.mapReg(op->rd), reg.mapReg(op->rs1), rs2);
 			}
 			break;
 		case shop_mul_u64:
 			{
-				eReg rs2 = GetParam(op->rs2, r2);
-				UMULL(reg.mapg(op->rd2), reg.mapg(op->rd), reg.mapg(op->rs1), rs2);
+				Register rs2 = GetParam(op->rs2, r2);
+				ass.Umull(reg.mapReg(op->rd), reg.mapReg(op->rd2), reg.mapReg(op->rs1), rs2);
 			}
 			break;
 		case shop_mul_s64:
 			{
-				eReg rs2 = GetParam(op->rs2, r2);
-				SMULL(reg.mapg(op->rd2), reg.mapg(op->rd), reg.mapg(op->rs1), rs2);
+				Register rs2 = GetParam(op->rs2, r2);
+				ass.Smull(reg.mapReg(op->rd), reg.mapReg(op->rd2), reg.mapReg(op->rs1), rs2);
 			}
 			break;
 	
 		case shop_pref:
 			{
-				ConditionCode cc = CC_EQ;
+				ConditionType cc = eq;
 				if (!op->rs1.is_imm())
 				{
-					LSR(r1,reg.mapg(op->rs1),26);
-					MOV(r0,reg.mapg(op->rs1));
-					CMP(r1,0x38);
+					ass.Lsr(r1, reg.mapReg(op->rs1), 26);
+					ass.Mov(r0, reg.mapReg(op->rs1));
+					ass.Cmp(r1, 0x38);
 				}
 				else
 				{
 					// The SSA pass has already checked that the
 					// destination is a store queue so no need to check
-					MOV32(r0, op->rs1.imm_value());
-					cc = CC_AL;
+					ass.Mov(r0, op->rs1.imm_value());
+					cc = al;
 				}
 
 				if (CCN_MMUCR.AT)
 				{
-					CALL((unat)&do_sqw_mmu, cc);
+					call((void *)do_sqw_mmu, cc);
 				}
 				else
 				{	
-					LDR(r2,r8,rcb_noffs(&do_sqw_nommu));
-					SUB(r1,r8,-rcb_noffs(sq_both));
-					BLX(r2, cc);
+					ass.Ldr(r2, MemOperand(r8, rcbOffset(do_sqw_nommu)));
+					ass.Sub(r1, r8, -rcbOffset(sq_buffer));
+					ass.Blx(cc, r2);
 				}
 			}
 			break;
 
 		case shop_ext_s8:
 		case shop_ext_s16:
-			{
-				verify(op->rd.is_r32i());
-				verify(op->rs1.is_r32i());
-
-				(op->op==shop_ext_s8?SXTB:SXTH)(reg.mapg(op->rd),reg.mapg(op->rs1),CC_AL);
-			}
+			if (op->op == shop_ext_s8)
+				ass.Sxtb(reg.mapReg(op->rd), reg.mapReg(op->rs1));
+			else
+				ass.Sxth(reg.mapReg(op->rd), reg.mapReg(op->rs1));
 			break;
 			
 		case shop_xtrct:
 			{
-				eReg rd = reg.mapg(op->rd);
-				eReg rs1 = reg.mapg(op->rs1);
-				eReg rs2 = reg.mapg(op->rs2);
-				if (rd == rs1)
+				Register rd = reg.mapReg(op->rd);
+				Register rs1 = reg.mapReg(op->rs1);
+				Register rs2 = reg.mapReg(op->rs2);
+				if (rd.Is(rs1))
 				{
-					verify(rd != rs2);
-					LSR(rd, rs1, 16);
-					LSL(r0, rs2, 16);
+					verify(!rd.Is(rs2));
+					ass.Lsr(rd, rs1, 16);
+					ass.Lsl(r0, rs2, 16);
 				}
 				else
 				{
-					LSL(rd, rs2, 16);
-					LSR(r0, rs1, 16);
+					ass.Lsl(rd, rs2, 16);
+					ass.Lsr(r0, rs1, 16);
 				}
-				ORR(rd, rd, r0);
+				ass.Orr(rd, rd, r0);
 			}
 			break;
 
@@ -1714,188 +1536,160 @@ static void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool s
 		case shop_fsub:
 		case shop_fmul:
 		case shop_fdiv:
-		{
-			FPBinOP* opcds[] = { VADD_VFP, VSUB_VFP, VMUL_VFP, VDIV_VFP };
-			ngen_fp_bin(op, opcds[op->op-shop_fadd]);
-		}
-		break;
+			{
+				static const FPBinOP opcds[] = {
+						&MacroAssembler::Vadd, &MacroAssembler::Vsub, &MacroAssembler::Vmul, &MacroAssembler::Vdiv
+				};
+				ngen_fp_bin(op, opcds[op->op - shop_fadd]);
+			}
+			break;
 
 		case shop_fabs:
 		case shop_fneg:
-		{
-			FPUnOP* opcds[] = { VABS_VFP, VNEG_VFP };
-			ngen_fp_una(op, opcds[op->op-shop_fabs]);
-		}
-		break;
+			{
+				static const FPUnOP opcds[] = { &MacroAssembler::Vabs, &MacroAssembler::Vneg };
+				ngen_fp_una(op, opcds[op->op - shop_fabs]);
+			}
+			break;
 
 		case shop_fsqrt:
-		{
-			ngen_fp_una(op, VSQRT_F32);
-		}
-		break;
+			ngen_fp_una(op, &MacroAssembler::Vsqrt);
+			break;
 
 		
 		case shop_fmac:
 			{
-				eFSReg rd = reg.mapf(op->rd);
-				eFSReg rs1 = f1;
+				SRegister rd = reg.mapFReg(op->rd);
+				SRegister rs1 = s1;
 				if (op->rs1.is_imm())
 				{
-					MOV32(r0, op->rs1.imm_value());
-					VMOV(rs1, r0);
+					ass.Mov(r0, op->rs1.imm_value());
+					ass.Vmov(rs1, r0);
 				}
 				else
-					rs1 = reg.mapf(op->rs1);
-				eFSReg rs2 = f2;
+					rs1 = reg.mapFReg(op->rs1);
+				SRegister rs2 = s2;
 				if (op->rs2.is_imm())
 				{
-					MOV32(r1, op->rs2.imm_value());
-					VMOV(rs2, r1);
+					ass.Mov(r1, op->rs2.imm_value());
+					ass.Vmov(rs2, r1);
 				}
 				else
 				{
-					rs2 = reg.mapf(op->rs2);
-					if (rs2 == rd)
+					rs2 = reg.mapFReg(op->rs2);
+					if (rs2.Is(rd))
 					{
-						VMOV(f2, rs2);
-						rs2 = f2;
+						ass.Vmov(s2, rs2);
+						rs2 = s2;
 					}
 				}
-				eFSReg rs3 = f3;
+				SRegister rs3 = s3;
 				if (op->rs3.is_imm())
 				{
-					MOV32(r2, op->rs3.imm_value());
-					VMOV(rs3, r2);
+					ass.Mov(r2, op->rs3.imm_value());
+					ass.Vmov(rs3, r2);
 				}
 				else
 				{
-					rs3 = reg.mapf(op->rs3);
-					if (rs3 == rd)
+					rs3 = reg.mapFReg(op->rs3);
+					if (rs3.Is(rd))
 					{
-						VMOV(f3, rs3);
-						rs3 = f3;
+						ass.Vmov(s3, rs3);
+						rs3 = s3;
 					}
 				}
-				if (rd != rs1)
-					VMOV(rd, rs1);
-				VMLA_VFP(rd, rs2, rs3);
+				if (!rd.Is(rs1))
+					ass.Vmov(rd, rs1);
+				ass.Vmla(rd, rs2, rs3);
 			}
 			break;
 
 		case shop_fsrra:
-			{
-				VMOV(f1,fpu_imm_1);
-				VSQRT_VFP(f0,reg.mapfs(op->rs1));
-
-				VDIV_VFP(reg.mapfs(op->rd),f1,f0);
-			}
+			ass.Vmov(s1, 1.f);
+			ass.Vsqrt(s0, reg.mapFReg(op->rs1));
+			ass.Vdiv(reg.mapFReg(op->rd), s1, s0);
 			break;
 
 		case shop_fsetgt:
 		case shop_fseteq:
-		{
-			//
-
 #if 1
-			{
-				//this is apparently much faster (tested on A9)
-				MOVW(reg.mapg(op->rd),0);
-				VCMP_F32(reg.mapfs(op->rs1),reg.mapfs(op->rs2));
+			//this is apparently much faster (tested on A9)
+			ass.Mov(reg.mapReg(op->rd), 0);
+			ass.Vcmp(reg.mapFReg(op->rs1), reg.mapFReg(op->rs2));
 
-				VMRS(R15);
-				if (op->op==shop_fsetgt)
-				{
-					MOVW(reg.mapg(op->rd),1,CC_GT);
-				}
-				else
-				{
-					MOVW(reg.mapg(op->rd),1,CC_EQ);
-				}
-			}
+			ass.Vmrs(RegisterOrAPSR_nzcv(APSR_nzcv), FPSCR);
+			if (op->op == shop_fsetgt)
+				ass.Mov(gt, reg.mapReg(op->rd), 1);
+			else
+				ass.Mov(eq, reg.mapReg(op->rd), 1);
 #else
-			{
-				if (op->op==shop_fsetgt)
-					VCGT_F32(d0,reg.mapf(op->rs1),reg.mapf(op->rs2));
-				else
-					VCEQ_F32(d0,reg.mapf(op->rs1),reg.mapf(op->rs2));
+			if (op->op == shop_fsetgt)
+				ass.Vcgt(d0, reg.mapFReg(op->rs1), reg.mapFReg(op->rs2));
+			else
+				ass.Vceq(d0, reg.mapFReg(op->rs1), reg.mapFReg(op->rs2));
 
-				VMOV(r0,f0);
-
-				AND(reg.mapg(op->rd),r0,1);
-			}
+			ass.Vmov(r0, s0);
+			ass.And(reg.mapReg(op->rd), r0, 1);
 #endif
-		}
-		break;
+			break;
 			
 
 		case shop_fsca:
-			{
-				//r1: base ptr
-				MOVW(r1,((unat)sin_table)&0xFFFF);
-				UXTH(r0,reg.mapg(op->rs1));
-				MOVT(r1,((u32)sin_table)>>16);
-				
-				/*
-					LDRD(r0,r1,r0,lsl,3);
-					VMOV.64
-					or
-					ADD(r0,r1,r0,LSL,3);
-					VLDR(d0,r0);
-				*/
+			//r1: base ptr
+			ass.Mov(r1, (u32)sin_table & 0xFFFF);
+			ass.Uxth(r0, reg.mapReg(op->rs1));
+			ass.Movt(r1, (u32)sin_table >> 16);
 
-				//LSL(r0,r0,3);
-				//ADD(r0,r1,r0); //EMITTER: Todo, add with shifted !
-				ADD(r0,r1,r0, S_LSL, 3);
-				
-				VLDR(/*reg.mapf(op->rd,0)*/d0,r0,0);
-				VSTR(d0,r8,op->rd.reg_nofs()/4);
-			}
+			ass.Add(r0, r1, Operand(r0, LSL, 3));
+
+			ass.Vldr(d0, MemOperand(r0));
+			ass.Vstr(d0, MemOperand(r8, op->rd.reg_nofs()));
 			break;
 
 		case shop_fipr:
 			{
 				
-				eFQReg _r1=q0;
-				eFQReg _r2=q0;
+				QRegister _r1 = q0;
+				QRegister _r2 = q0;
 
-				SUB(r0,r8,op->rs1.reg_aofs());
-				if (op->rs2.reg_aofs()==op->rs1.reg_aofs())
+				ass.Sub(r0, r8, op->rs1.reg_aofs());
+				if (op->rs2.reg_aofs() == op->rs1.reg_aofs())
 				{
-					VLDM(d0,r0,2);
+					ass.Vldm(r0, NO_WRITE_BACK, DRegisterList(d0, 2));
 				}
 				else
 				{
-					SUB(r1,r8,op->rs2.reg_aofs());
-					VLDM(d0,r0,2);
-					VLDM(d2,r1,2);
-					_r2=q1;
+					ass.Sub(r1, r8, op->rs2.reg_aofs());
+					ass.Vldm(r0, NO_WRITE_BACK, DRegisterList(d0, 2));
+					ass.Vldm(r1, NO_WRITE_BACK, DRegisterList(d2, 2));
+					_r2 = q1;
 				}
 
 #if 1
 				//VFP
-				eFSReg fs2=_r2==q0?f0:f4;
+				SRegister fs2 = _r2.Is(q0) ? s0 : s4;
 
-				VMUL_VFP(reg.mapfs(op->rd),f0,(eFSReg)(fs2+0));
-				VMLA_VFP(reg.mapfs(op->rd),f1,(eFSReg)(fs2+1));
-				VMLA_VFP(reg.mapfs(op->rd),f2,(eFSReg)(fs2+2));
-				VMLA_VFP(reg.mapfs(op->rd),f3,(eFSReg)(fs2+3));
+				ass.Vmul(reg.mapFReg(op->rd), s0, fs2);
+				ass.Vmla(reg.mapFReg(op->rd), s1, SRegister(fs2.GetCode() + 1));
+				ass.Vmla(reg.mapFReg(op->rd), s2, SRegister(fs2.GetCode() + 2));
+				ass.Vmla(reg.mapFReg(op->rd), s3, SRegister(fs2.GetCode() + 3));
 #else			
-				VMUL_F32(q0,_r1,_r2);
-				VPADD_F32(d0,d0,d1);
-				VADD_VFP(reg.mapfs(op->rd),f0,f1);
+				ass.Vmul(q0, _r1, _r2);
+				ass.Vpadd(d0, d0, d1);
+				ass.Vadd(reg.mapFReg(op->rd), f0, f1);
 #endif
 			}
 			break;
 
 		case shop_ftrv:
 			{
-				eReg rdp=r1;
-				SUB(r2,r8,op->rs2.reg_aofs());
-				SUB(r1,r8,op->rs1.reg_aofs());
+				Register rdp = r1;
+				ass.Sub(r2, r8, op->rs2.reg_aofs());
+				ass.Sub(r1, r8, op->rs1.reg_aofs());
 				if (op->rs1.reg_aofs() != op->rd.reg_aofs())
 				{
-					rdp=r0;
-					SUB(r0,r8,op->rd.reg_aofs());
+					rdp = r0;
+					ass.Sub(r0, r8, op->rd.reg_aofs());
 				}
 	
 #if 1
@@ -1905,178 +1699,116 @@ static void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool s
 				//f12,f13,f14,f15 : mtx temp
 				//(This is actually faster than using neon)
 
-				VLDM(d4,r2,2,1);
-				VLDM(d0,r1,2);
+				ass.Vldm(r2, WRITE_BACK, DRegisterList(d4, 2));
+				ass.Vldm(r1, NO_WRITE_BACK, DRegisterList(d0, 2));
 
-				VMUL_VFP(f4,f8,f0);
-				VMUL_VFP(f5,f9,f0);
-				VMUL_VFP(f6,f10,f0);
-				VMUL_VFP(f7,f11,f0);
+				ass.Vmul(s4, vixl::aarch32::s8, s0);
+				ass.Vmul(s5, s9, s0);
+				ass.Vmul(s6, s10, s0);
+				ass.Vmul(s7, s11, s0);
 				
-				VLDM(d6,r2,2,1);
+				ass.Vldm(r2, WRITE_BACK, DRegisterList(d6, 2));
 
-				VMLA_VFP(f4,f12,f1);
-				VMLA_VFP(f5,f13,f1);
-				VMLA_VFP(f6,f14,f1);
-				VMLA_VFP(f7,f15,f1);
+				ass.Vmla(s4, s12, s1);
+				ass.Vmla(s5, s13, s1);
+				ass.Vmla(s6, s14, s1);
+				ass.Vmla(s7, s15, s1);
 
-				VLDM(d4,r2,2,1);
+				ass.Vldm(r2, WRITE_BACK, DRegisterList(d4, 2));
 
-				VMLA_VFP(f4,f8,f2);
-				VMLA_VFP(f5,f9,f2);
-				VMLA_VFP(f6,f10,f2);
-				VMLA_VFP(f7,f11,f2);
+				ass.Vmla(s4, vixl::aarch32::s8, s2);
+				ass.Vmla(s5, s9, s2);
+				ass.Vmla(s6, s10, s2);
+				ass.Vmla(s7, s11, s2);
 
-				VLDM(d6,r2,2);
+				ass.Vldm(r2, NO_WRITE_BACK, DRegisterList(d6, 2));
 
-				VMLA_VFP(f4,f12,f3);
-				VMLA_VFP(f5,f13,f3);
-				VMLA_VFP(f6,f14,f3);
-				VMLA_VFP(f7,f15,f3);
+				ass.Vmla(s4, s12, s3);
+				ass.Vmla(s5, s13, s3);
+				ass.Vmla(s6, s14, s3);
+				ass.Vmla(s7, s15, s3);
 
-				VSTM(d2,rdp,2);
+				ass.Vstm(rdp, NO_WRITE_BACK, DRegisterList(d2, 2));
 #else
 				//this fits really nicely to NEON !
-				VLDM(d16,r2,8);
-				VLDM(d0,r1,2);
+				// TODO
+				ass.Vldm(d16,r2,8);
+				ass.Vldm(d0,r1,2);
 
-				VMUL_F32(q2,q8,d0,0);
-				VMLA_F32(q2,q9,d0,1);
-				VMLA_F32(q2,q10,d1,0);
-				VMLA_F32(q2,q11,d1,1);
-				VSTM(d4,rdp,2);
-
-
-				/*
-					Alternative mtrx
-
-					0 1 4 5
-					2 3 6 7
-					8 9 c d
-					a b e f
-
-					* ABCD
-
-					v0= A*0 + B*4 + C*8 + D*c
-					v1= A*1 + B*5 + C*9 + D*d
-					v3= A*2 + B*6 + C*a + D*e
-					v4= A*3 + B*7 + C*b + D*f
-					D0      D1
-					f0   f1     f2   f3
-					0145 * AABB + 89cd*CCDD = A0+C8|A1+C9|B4+Dc|B5+Dd -> 
-					
-					v01=D0+D1 =  { A0+B4+C8+Dc, A1+B5+C9+Dd }
-
-						AB, CD -> AABB CCDD
-
-
-					//in-shuffle
-					//4 mul
-					//4 mla
-					//1 add
-				*/
+				ass.Vmla(q2,q8,d0,0);
+				ass.Vmla(q2,q9,d0,1);
+				ass.Vmla(q2,q10,d1,0);
+				ass.Vmla(q2,q11,d1,1);
+				ass.Vstm(d4,rdp,2);
 #endif
 			}
 			break;
 
-
-			case shop_frswap:
-			{
-				verify(op->rd._reg==op->rs2._reg);
-				verify(op->rd2._reg==op->rs1._reg);
-
-				verify(op->rs1.count()==16 && op->rs2.count()==16);
-				verify(op->rd2.count()==16 && op->rd.count()==16);
-
-				SUB(r0,r8,op->rs1.reg_aofs());
-				SUB(r1,r8,op->rd.reg_aofs());
-				//Assumes no FPU reg alloc here
-				//frswap touches all FPU regs, so all spans should be clear here ..
-				VLDM(d0,r1,8);
-				VLDM(d8,r0,8);
-				VSTM(d0,r0,8);
-				VSTM(d8,r1,8);
-			}
+		case shop_frswap:
+			ass.Sub(r0, r8, op->rs1.reg_aofs());
+			ass.Sub(r1, r8, op->rd.reg_aofs());
+			//Assumes no FPU reg alloc here
+			//frswap touches all FPU regs, so all spans should be clear here ..
+			ass.Vldm(r1, NO_WRITE_BACK, DRegisterList(d0, 8));
+			ass.Vldm(r0, NO_WRITE_BACK, DRegisterList(d8, 8));
+			ass.Vstm(r0, NO_WRITE_BACK, DRegisterList(d0, 8));
+			ass.Vstm(r1, NO_WRITE_BACK, DRegisterList(d8, 8));
 			break;
 
-			
-			case shop_cvt_f2i_t:
-				
-				//printf("f2i: r%d f%d\n",reg.mapg(op->rd),reg.mapf(op->rs1));
-				//BKPT();
-				VCVT_to_S32_VFP(f0,reg.mapf(op->rs1));
-				VMOV(reg.mapg(op->rd),f0);
-				//shil_chf[op->op](op);
-				break;
-			
-			case shop_cvt_i2f_n:	// may be some difference should be made ?
-			case shop_cvt_i2f_z:
-			
-				//printf("i2f: f%d r%d\n",reg.mapf(op->rd),reg.mapg(op->rs1));
-				//BKPT();
-				VMOV(f0, reg.mapg(op->rs1));
-				VCVT_from_S32_VFP(reg.mapfs(op->rd),f0);
-				//shil_chf[op->op](op);
-				break;
+		case shop_cvt_f2i_t:
+			ass.Vcvt(S32, F32, s0, reg.mapFReg(op->rs1));
+			ass.Vmov(reg.mapReg(op->rd), s0);
+			break;
+
+		case shop_cvt_i2f_n:	// may be some difference should be made ?
+		case shop_cvt_i2f_z:
+			ass.Vmov(s0, reg.mapReg(op->rs1));
+			ass.Vcvt(F32, S32, reg.mapFReg(op->rd), s0);
+			break;
 #endif
 
 		default:
-			//printf("CFB %d\n",op->op);
 			shil_chf[op->op](op);
 			break;
-
-__default:
-			ERROR_LOG(DYNAREC, "@@  Error, Default case (0x%X) in ngen_CompileBlock!", op->op);
-			verify(false);
-			break;
-		}
+	}
 }
 
 
-void ngen_Compile(RuntimeBlockInfo* block, bool force_checks, bool reset, bool staging,bool optimise)
+void ngen_Compile(RuntimeBlockInfo* block, bool force_checks, bool reset, bool staging, bool optimise)
 {
-	//printf("Compile: %08X, %d, %d\n",block->addr,staging,optimise);
-	block->code=(DynarecCodeEntryPtr)EMIT_GET_PTR();
+	ass = Arm32Assembler((u8 *)emit_GetCCPtr(), emit_FreeSpace());
 
-	//StoreImms(r0,r1,(u32)&last_run_block,(u32)code); //useful when code jumps to random locations ...
-	++blockno;
+	block->code = (DynarecCodeEntryPtr)emit_GetCCPtr();
 
 	//reg alloc
-	reg.DoAlloc(block,alloc_regs,alloc_fpu);
+	reg.DoAlloc(block, alloc_regs, alloc_fpu);
 
-	u8* blk_start=(u8*)EMIT_GET_PTR();
+	u8* blk_start = ass.GetCursorAddress<u8 *>();
 
-	if (staging)
-	{
-		MOV32(r0,(u32)&block->staging_runs);
-		LDR(r1,r0);
-		SUB(r1,r1,1);
-		STR(r1,r0);
-	}
 	//pre-load the first reg alloc operations, for better efficiency ..
 	if (!block->oplist.empty())
-		reg.OpBegin(&block->oplist[0],0);
+		reg.OpBegin(&block->oplist[0], 0);
 
 	//scheduler
 	if (force_checks)
 	{
 		s32 sz = block->sh4_code_size;
 		u32 addr = block->addr;
-		MOV32(r0,addr);
+		ass.Mov(r0, addr);
 
 		while (sz > 0)
 		{
 			if (sz > 2)
 			{
-				u32* ptr=(u32*)GetMemPtr(addr,4);
-				if (ptr != NULL)
+				u32* ptr = (u32*)GetMemPtr(addr, 4);
+				if (ptr != nullptr)
 				{
-					MOV32(r2,(u32)ptr);
-					LDR(r2,r2,0);
-					MOV32(r1,*ptr);
-					CMP(r1,r2);
+					ass.Mov(r2, (u32)ptr);
+					ass.Ldr(r2, MemOperand(r2));
+					ass.Mov(r1, *ptr);
+					ass.Cmp(r1, r2);
 
-					JUMP((u32)ngen_blockcheckfail, CC_NE);
+					jump(ngen_blockcheckfail, ne);
 				}
 				addr += 4;
 				sz -= 4;
@@ -2084,14 +1816,14 @@ void ngen_Compile(RuntimeBlockInfo* block, bool force_checks, bool reset, bool s
 			else
 			{
 				u16* ptr = (u16 *)GetMemPtr(addr, 2);
-				if (ptr != NULL)
+				if (ptr != nullptr)
 				{
-					MOV32(r2, (u32)ptr);
-					LDRH(r2, r2, 0, AL);
-					MOVW(r1, *ptr, AL);
-					CMP(r1, r2);
+					ass.Mov(r2, (u32)ptr);
+					ass.Ldrh(r2, MemOperand(r2));
+					ass.Mov(r1, *ptr);
+					ass.Cmp(r1, r2);
 
-					JUMP((u32)ngen_blockcheckfail, CC_NE);
+					jump(ngen_blockcheckfail, ne);
 				}
 				addr += 2;
 				sz -= 2;
@@ -2099,31 +1831,25 @@ void ngen_Compile(RuntimeBlockInfo* block, bool force_checks, bool reset, bool s
 		}
 	}
 
-	u32 cyc=block->guest_cycles;
-	if (!is_i8r4(cyc))
-	{
-		cyc&=~3;
-	}
+	u32 cyc = block->guest_cycles;
+	if (!ImmediateA32::IsImmediateA32(cyc))
+		cyc &= ~3;
 
-#if defined(__APPLE__)
-	SUB(r11,r11,cyc,true,CC_AL);
-#else
-	SUB(rfp_r9,rfp_r9,cyc,true,CC_AL);
-#endif
-	CALL((u32)intc_sched, CC_LE);
+	ass.Sub(SetFlags, r9, r9, cyc);
+	call(intc_sched, le);
 
 	//compile the block's opcodes
 	shil_opcode* op;
-	for (size_t i=0;i<block->oplist.size();i++)
+	for (size_t i = 0; i < block->oplist.size(); i++)
 	{
-		op=&block->oplist[i];
+		op = &block->oplist[i];
 		
-		op->host_offs=(u8*)EMIT_GET_PTR()-blk_start;
+		op->host_offs = ass.GetCursorOffset();
 
-		if (i!=0)
-			reg.OpBegin(op,i);
+		if (i != 0)
+			reg.OpBegin(op, i);
 
-		ngen_compile_opcode(block,op,staging,optimise);
+		ngen_compile_opcode(block, op, optimise);
 
 		reg.OpEnd(op);
 	}
@@ -2133,65 +1859,44 @@ void ngen_Compile(RuntimeBlockInfo* block, bool force_checks, bool reset, bool s
 		// This will be used when the block in (re)linked
 		const shil_param param = shil_param(reg_sr_T);
 		if (reg.IsAllocg(param))
-		{
-			((DynaRBI *)block)->T_reg = reg.mapg(param);
-		}
+			((DynaRBI *)block)->T_reg = reg.mapReg(param);
 		else
-		{
-			((DynaRBI *)block)->T_reg = (eReg)-1;
-		}
+			((DynaRBI *)block)->T_reg = Register();
 	}
 	reg.Cleanup();
+
+	//try to early-lookup the blocks -- to avoid rewrites in case they exist ...
+	//this isn't enabled for now, as the shared_ptr to this block doesn't exist yet
 	/*
-
-	extern u32 ralst[4];
-
-	MOV32(r0,(u32)&ralst[0]);
-	
-	LDR(r1,r0,0);
-	ADD(r1,r1,reg.preload_gpr);
-	STR(r1,r0,0);
-
-	LDR(r1,r0,4);
-	ADD(r1,r1,reg.preload_fpu);
-	STR(r1,r0,4);
-
-	LDR(r1,r0,8);
-	ADD(r1,r1,reg.writeback_gpr);
-	STR(r1,r0,8);
-
-	LDR(r1,r0,12);
-	ADD(r1,r1,reg.writeback_fpu);
-	STR(r1,r0,12);
+	if (block->BranchBlock != NullAddress)
+	{
+		block->pBranchBlock = bm_GetBlock(block->BranchBlock).get();
+		if (block->pNextBlock)
+			block->pNextBlock->AddRef(block);
+	}
+	if (block->NextBlock != NullAddress)
+	{
+		block->pNextBlock = bm_GetBlock(block->NextBlock).get();
+		if (block->pBranchBlock)
+			block->pBranchBlock->AddRef(block);
+	}
 	*/
 
-	/*
-		//try to early-lookup the blocks -- to avoid rewrites in case they exist ...
-		//this isn't enabled for now, as I'm not quite solid on the state of block referrals ..
-
-		block->pBranchBlock=bm_GetBlock(block->BranchBlock);
-		block->pNextBlock=bm_GetBlock(block->NextBlock);
-		if (block->pNextBlock) block->pNextBlock->AddRef(block);
-		if (block->pBranchBlock) block->pBranchBlock->AddRef(block);
-	*/
-
-	
 	//Relink written bytes must be added to the count !
 
-	block->relink_offset=(u8*)EMIT_GET_PTR()-(u8*)block->code;
-	block->relink_data=0;
+	block->relink_offset = ass.GetCursorOffset();
+	block->relink_data = 0;
 
-	emit_Skip(block->Relink());
-	u8* pEnd = (u8*)EMIT_GET_PTR();
-
-	// Clear the area we've written to for cache
-	vmem_platform_flush_cache((void*)block->code, pEnd - 1, (void*)block->code, pEnd - 1);
+	emit_Skip(block->relink_offset);
+	emit_Skip(relinkBlock((DynaRBI *)block));
+	ass.Finalize();
+	u8* pEnd = ass.GetCursorAddress<u8 *>();
 
 	//blk_start might not be the same, due to profiling counters ..
-	block->host_opcodes=(pEnd-blk_start)/4;
+	block->host_opcodes = (pEnd - blk_start) / 4;
 
 	//host code size needs to cover the entire range of the block
-	block->host_code_size=(pEnd-(u8*)block->code);
+	block->host_code_size = pEnd - (u8*)block->code;
 }
 
 void ngen_ResetBlocks()
@@ -2199,26 +1904,110 @@ void ngen_ResetBlocks()
 	INFO_LOG(DYNAREC, "@@  ngen_ResetBlocks()");
 }
 
-// FPCB_OFFSET must be i8r4
-#if RAM_SIZE_MAX == 33554432
-static_assert(FPCB_OFFSET == -0x4100000, "Invalid FPCB_OFFSET");
-#elif RAM_SIZE_MAX == 16777216
-static_assert(FPCB_OFFSET == -0x2100000, "Invalid FPCB_OFFSET");
-#endif
-
 void ngen_init()
 {
 	INFO_LOG(DYNAREC, "Initializing the ARM32 dynarec");
-    verify(rcb_noffs(p_sh4rcb->fpcb) == FPCB_OFFSET);
-	verify(rcb_noffs(p_sh4rcb->sq_buffer) == -512);
-	verify(rcb_noffs(&next_pc) == -184);
-	verify(rcb_noffs(&p_sh4rcb->cntx.CpuRunning) == -156);
 
-    ngen_FailedToFindBlock = &ngen_FailedToFindBlock_;
+	ass = Arm32Assembler((u8 *)emit_GetCCPtr(), emit_FreeSpace());
 
+	// Stubs
+	Label ngen_LinkBlock_Shared_stub;
+	// ngen_LinkBlock_Generic_stub
+	ngen_LinkBlock_Generic_stub = ass.GetCursorAddress<const void *>();
+	ass.Mov(r1,r4);		// djump/pc -> in case we need it ..
+	ass.B(&ngen_LinkBlock_Shared_stub);
+	// ngen_LinkBlock_cond_Branch_stub
+	ngen_LinkBlock_cond_Branch_stub = ass.GetCursorAddress<const void *>();
+	ass.Mov(r1, 1);
+	ass.B(&ngen_LinkBlock_Shared_stub);
+	// ngen_LinkBlock_cond_Next_stub
+	ngen_LinkBlock_cond_Next_stub = ass.GetCursorAddress<const void *>();
+	ass.Mov(r1, 0);
+	ass.B(&ngen_LinkBlock_Shared_stub);
+	// ngen_LinkBlock_Shared_stub
+	ass.Bind(&ngen_LinkBlock_Shared_stub);
+	ass.Mov(r0, lr);
+	ass.Sub(r0, r0, 4);		// go before the call
+	call((void *)rdv_LinkBlock);
+	ass.Bx(r0);
+	// ngen_FailedToFindBlock_
+	ngen_FailedToFindBlock_ = ass.GetCursorAddress<void (*)()>();
+	ass.Mov(r0, r4);
+	call((void *)rdv_FailedToFindBlock);
+	ass.Bx(r0);
+	// ngen_blockcheckfail
+	ngen_blockcheckfail = ass.GetCursorAddress<const void *>();
+	call((void *)rdv_BlockCheckFail);
+	ass.Bx(r0);
+
+	// Main loop
+	Label no_updateLabel;
+	// ngen_mainloop:
+	mainloop = ass.GetCursorAddress<void (*)(void *)>();
+	RegisterList savedRegisters = RegisterList::Union(
+			RegisterList(r4, r5, r6, r7),
+			RegisterList(r8, r9, r10, r11),
+			RegisterList(r12, lr));
+	{
+		UseScratchRegisterScope scope(&ass);
+		scope.ExcludeAll();
+		ass.Push(savedRegisters);
+	}
+	ass.Mov(r9, SH4_TIMESLICE);							// load cycle counter
+	ass.Mov(r8, r0);									// load context
+	ass.Ldr(r4, MemOperand(r8, rcbOffset(cntx.pc)));	// load pc
+	ass.B(&no_updateLabel);								// Go to mainloop !
+	// this code is here for fall-through behavior of do_iter
+	Label do_iter;
+	Label cleanup;
+	// intc_sched:
+	intc_sched = ass.GetCursorAddress<const void *>();
+	ass.Add(r9, r9, SH4_TIMESLICE);
+	ass.Mov(r4, lr);
+	call((void *)UpdateSystem);
+	ass.Mov(lr, r4);
+	ass.Cmp(r0, 0);
+	ass.B(ne, &do_iter);
+	ass.Ldr(r0, MemOperand(r8, rcbOffset(cntx.CpuRunning)));
+	ass.Cmp(r0, 0);
+	ass.Bx(ne, lr);
+	// do_iter:
+	ass.Bind(&do_iter);
+	ass.Mov(r0, r4);
+	call((void *)rdv_DoInterrupts);
+	ass.Mov(r4, r0);
+
+	// no_update:
+	no_update = ass.GetCursorAddress<const void *>();
+	ass.Bind(&no_updateLabel);
+	// next_pc _MUST_ be on r4 *R4 NOT R0 anymore*
+	ass.Ldr(r0, MemOperand(r8, rcbOffset(cntx.CpuRunning)));
+	ass.Cmp(r0, 0);
+	ass.B(eq, &cleanup);
+
+	ass.Sub(r2, r8, -rcbOffset(fpcb));
+#if RAM_SIZE_MAX == 33554432
+	ass.Ubfx(r1, r4, 1, 24);	// 24+1 bits: 32 MB
+								// RAM wraps around so if actual RAM size is 16MB, we won't overflow
+#elif RAM_SIZE_MAX == 16777216
+	ass.Ubfx(r1, r4, 1, 23);	// 23+1 bits: 16 MB
+#else
+#error "Define RAM_SIZE_MAX"
+#endif
+	ass.Ldr(pc, MemOperand(r2, r1, LSL, 2));
+	// cleanup:
+	ass.Bind(&cleanup);
+	{
+		UseScratchRegisterScope scope(&ass);
+		scope.ExcludeAll();
+		ass.Pop(savedRegisters);
+	}
+	ass.Bx(lr);
+
+    // Memory handlers
     for (int s=0;s<6;s++)
 	{
-		void* fn=s==0?(void*)_vmem_ReadMem8SX32:
+		const void* fn=s==0?(void*)_vmem_ReadMem8SX32:
 				 s==1?(void*)_vmem_ReadMem16SX32:
 				 s==2?(void*)_vmem_ReadMem32:
 				 s==3?(void*)_vmem_WriteMem8:
@@ -2234,97 +2023,82 @@ void ngen_init()
 			if (i==1 || i ==2 || i == 3 || i == 4 || i==12 || i==13)
 				continue;
 
-			unat v;
-			if (read)
-			{
-				if (i==0)
-					v=(unat)fn;
-				else
-				{
-					v=(unat)EMIT_GET_PTR();
-					MOV(r0,(eReg)(i));
-					JUMP((u32)fn);
-				}
-			}
+			const void *v;
+			if (i == 0)
+				v = fn;
 			else
 			{
-				if (i==0)
-					v=(unat)fn;
-				else
-				{
-					v=(unat)EMIT_GET_PTR();
-					MOV(r0,(eReg)(i));
-					JUMP((u32)fn);
-				}
+				v = ass.GetCursorAddress<const void *>();
+				ass.Mov(r0, Register(i));
+				jump(fn);
 			}
 
-			_mem_hndl[read][s%3][i]=v;
+			_mem_hndl[read][s % 3][i] = v;
 		}
 	}
 
 	for (int optp = SZ_32I; optp <= SZ_64F; optp++)
 	{
 		//r0 to r13
-		for (eReg reg = r0; reg <= r13; reg = (eReg)(reg + 1))
+		for (int reg = 0; reg <= 13; reg++)
 		{
-			if (reg == r1 || reg == r2 || reg == r3 || reg == r4 || reg == r12 || reg == r13)
+			if (reg == 1 || reg == 2 || reg == 3 || reg == 4 || reg == 12 || reg == 13)
 				continue;
-			if (optp != SZ_32I && reg != r0)
+			if (optp != SZ_32I && reg != 0)
 				continue;
 
-			_mem_hndl_SQ32[optp - SZ_32I][reg] = (unat)EMIT_GET_PTR();
+			_mem_hndl_SQ32[optp - SZ_32I][reg] = ass.GetCursorAddress<const void *>();
 
 			if (optp == SZ_64F)
 			{
-				LSR(r1, r0, 26);
-				CMP(r1, 0x38);
-				AND(r1, r0, 0x3F);
-				ADD(r1, r1, r8);
-				JUMP((unat)&_vmem_WriteMem64, CC_NE);
-				STR(r2, r1, rcb_noffs(sq_both));
-				STR(r3, r1, rcb_noffs(sq_both) + 4);
+				ass.Lsr(r1, r0, 26);
+				ass.Cmp(r1, 0x38);
+				ass.And(r1, r0, 0x3F);
+				ass.Add(r1, r1, r8);
+				jump((void *)&_vmem_WriteMem64, ne);
+				ass.Strd(r2, r3, MemOperand(r1, rcbOffset(sq_buffer)));
 			}
 			else
 			{
-				AND(r3, reg, 0x3F);
-				LSR(r2, reg, 26);
-				ADD(r3, r3, r8);
-				CMP(r2, 0x38);
-				if (reg != r0)
-					MOV(r0, reg, CC_NE);
-				JUMP((unat)&_vmem_WriteMem32, CC_NE);
-				STR(r1, r3, rcb_noffs(sq_both));
+				ass.And(r3, Register(reg), 0x3F);
+				ass.Lsr(r2, Register(reg), 26);
+				ass.Add(r3, r3, r8);
+				ass.Cmp(r2, 0x38);
+				if (reg != 0)
+					ass.Mov(ne, r0, Register(reg));
+				jump((void *)&_vmem_WriteMem32, ne);
+				ass.Str(r1, MemOperand(r3, rcbOffset(sq_buffer)));
 			}
-			BX(LR);
+			ass.Bx(lr);
 		}
 	}
+	ass.Finalize();
+	emit_Skip(ass.GetBuffer()->GetSizeInBytes());
 
-	INFO_LOG(DYNAREC, "readm helpers: up to %p", EMIT_GET_PTR());
+    ngen_FailedToFindBlock = ngen_FailedToFindBlock_;
+
+	INFO_LOG(DYNAREC, "readm helpers: up to %p", ass.GetCursorAddress<void *>());
 	emit_SetBaseAddr();
 
 
-	ccmap[shop_test]=CC_EQ;
-	ccnmap[shop_test]=CC_NE;
+	ccmap[shop_test] = eq;
+	ccnmap[shop_test] = ne;
 
-	ccmap[shop_seteq]=CC_EQ;
-	ccnmap[shop_seteq]=CC_NE;
+	ccmap[shop_seteq] = eq;
+	ccnmap[shop_seteq] = ne;
 	
 	
-	ccmap[shop_setge]=CC_GE;
-	ccnmap[shop_setge]=CC_LT;
+	ccmap[shop_setge] = ge;
+	ccnmap[shop_setge] = lt;
 	
-	ccmap[shop_setgt]=CC_GT;
-	ccnmap[shop_setgt]=CC_LE;
+	ccmap[shop_setgt] = gt;
+	ccnmap[shop_setgt] = le;
 
-	ccmap[shop_setae]=CC_HS;
-	ccnmap[shop_setae]=CC_LO;
+	ccmap[shop_setae] = hs;
+	ccnmap[shop_setae] = lo;
 
-	ccmap[shop_setab]=CC_HI;
-	ccnmap[shop_setab]=CC_LS;
-
-	//ccmap[shop_fseteq]=CC_EQ;
-	//ccmap[shop_fsetgt]=CC_GT;
-
+	ccmap[shop_setab] = hi;
+	ccnmap[shop_setab] = ls;
 }
 
 

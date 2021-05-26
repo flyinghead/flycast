@@ -268,7 +268,6 @@ struct alignas(64) Sh4Context
 			int sh4_sched_next;
 			u32 interrupt_pend;
 
-			u32 exception_pc;
 			u32 temp_reg;
 		};
 		u64 raw[64-8];
@@ -280,9 +279,6 @@ struct alignas(32) SQBuffer {
 };
 
 void DYNACALL do_sqw_mmu(u32 dst);
-#if HOST_CPU == CPU_ARM
-extern "C"
-#endif
 void DYNACALL do_sqw_nommu_area_3(u32 dst, const SQBuffer *sqb);
 void DYNACALL do_sqw_nommu_area_3_nonvmem(u32 dst, const SQBuffer *sqb);
 void DYNACALL do_sqw_nommu_full(u32 dst, const SQBuffer *sqb);
@@ -309,14 +305,13 @@ struct alignas(PAGE_SIZE) Sh4RCB
 };
 
 extern Sh4RCB* p_sh4rcb;
-extern u8* sh4_dyna_rcb;
 
-INLINE u32 sh4_sr_GetFull()
+static inline u32 sh4_sr_GetFull()
 {
 	return (p_sh4rcb->cntx.sr.status & STATUS_MASK) | p_sh4rcb->cntx.sr.T;
 }
 
-INLINE void sh4_sr_SetFull(u32 value)
+static inline void sh4_sr_SetFull(u32 value)
 {
 	p_sh4rcb->cntx.sr.status=value & STATUS_MASK;
 	p_sh4rcb->cntx.sr.T=value&1;

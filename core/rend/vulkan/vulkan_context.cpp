@@ -802,9 +802,9 @@ void VulkanContext::Present() noexcept
 		renderDone = false;
 	}
 #ifndef TEST_AUTOMATION
-	if (swapOnVSync == settings.input.fastForwardMode)
+	if (swapOnVSync == (settings.input.fastForwardMode || !config::VSync))
 	{
-		swapOnVSync = !settings.input.fastForwardMode;
+		swapOnVSync = (!settings.input.fastForwardMode && config::VSync);
 		resized = true;
 	}
 #endif

@@ -616,7 +616,7 @@ static void read_native_sockets()
 		}
 	}
 
-	char buf[1500];
+	static char buf[1500];
 	pico_msginfo msginfo;
 
 	// Read UDP sockets

@@ -269,7 +269,7 @@ static void CPUUndefinedException()
 
 void aicaarm::reset()
 {
-	DEBUG_LOG(AICA_ARM, "AICA ARM Reset");
+	INFO_LOG(AICA_ARM, "AICA ARM Reset");
 #if FEAT_AREC != DYNAREC_NONE
 	recompiler::flush();
 #endif

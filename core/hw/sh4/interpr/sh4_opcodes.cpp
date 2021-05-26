@@ -1201,7 +1201,6 @@ INLINE void DYNACALL do_sqw(u32 Dest)
 
 void DYNACALL do_sqw_mmu(u32 dst) { do_sqw<true>(dst); }
 
-#if HOST_CPU != CPU_ARM
 //yes, this micro optimization makes a difference
 void DYNACALL do_sqw_nommu_area_3(u32 dst, const SQBuffer *sqb)
 {
@@ -1209,7 +1208,6 @@ void DYNACALL do_sqw_nommu_area_3(u32 dst, const SQBuffer *sqb)
 	pmem += (dst & (RAM_SIZE_MAX - 1)) >> 5;
 	*pmem = sqb[(dst >> 5) & 1];
 }
-#endif
 
 void DYNACALL do_sqw_nommu_area_3_nonvmem(u32 dst, const SQBuffer *sqb)
 {
@@ -2018,18 +2016,11 @@ sh4op(i0100_nnnn_0000_1110)
 		UpdateINTC();
 }
 
-
-//Not implt
 sh4op(iNotImplemented)
 {
-#ifndef NO_MMU
 	INFO_LOG(INTERPRETER, "iNimp %04X", op);
 	debugger::debugTrap(0x180);
-	SH4ThrownException ex = { next_pc - 2, 0x180, 0x100 };
+	SH4ThrownException ex { next_pc - 2, 0x180, 0x100 };
 	throw ex;
-#else
-	cpu_iNimp(op, "Unknown opcode");
-#endif
-	
 }
 

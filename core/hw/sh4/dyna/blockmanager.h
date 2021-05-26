@@ -1,6 +1,3 @@
-/*
-	In case you wonder, the extern "C" stuff are for the assembly code on beagleboard/pandora
-*/
 #pragma once
 
 #include "types.h"
@@ -79,11 +76,7 @@ struct RuntimeBlockInfo: RuntimeBlockInfo_Core
 
 void bm_WriteBlockMap(const std::string& file);
 
-
-extern "C" {
-ATTR_USED DynarecCodeEntryPtr DYNACALL bm_GetCodeByVAddr(u32 addr);
-}
-
+DynarecCodeEntryPtr DYNACALL bm_GetCodeByVAddr(u32 addr);
 RuntimeBlockInfoPtr bm_GetBlock(void* dynarec_code);
 RuntimeBlockInfoPtr bm_GetStaleBlock(void* dynarec_code);
 RuntimeBlockInfoPtr DYNACALL bm_GetBlock(u32 addr);

@@ -13,60 +13,14 @@ u32 ITLB_LRU_USE[64];
 // Used when FullMMU is off
 u32 sq_remap[64];
 
-#if defined(NO_MMU)
-
-//Sync memory mapping to MMU , suspend compiled blocks if needed.entry is a UTLB entry # , -1 is for full sync
-bool UTLB_Sync(u32 entry)
-{	
-	if ((UTLB[entry].Address.VPN & (0xFC000000 >> 10)) == (0xE0000000 >> 10))
-	{
-		u32 vpn_sq = ((UTLB[entry].Address.VPN & 0x7FFFF) >> 10) & 0x3F;//upper bits are always known [0xE0/E1/E2/E3]
-		sq_remap[vpn_sq] = UTLB[entry].Data.PPN << 10;
-		INFO_LOG(SH4, "SQ remap %d : 0x%X to 0x%X", entry, UTLB[entry].Address.VPN << 10, UTLB[entry].Data.PPN << 10);
-	}
-	else
-	{
-		INFO_LOG(SH4, "MEM remap %d : 0x%X to 0x%X", entry, UTLB[entry].Address.VPN << 10, UTLB[entry].Data.PPN << 10);
-	}
-
-	return true;
-}
-//Sync memory mapping to MMU, suspend compiled blocks if needed.entry is a ITLB entry # , -1 is for full sync
-void ITLB_Sync(u32 entry)
-{
-	INFO_LOG(SH4, "ITLB MEM remap %d : 0x%X to 0x%X",entry,ITLB[entry].Address.VPN<<10,ITLB[entry].Data.PPN<<10);
-}
-
-void mmu_set_state()
-{
-}
-
-void MMU_init()
-{
-
-}
-
-void MMU_reset()
-{
-	memset(UTLB,0,sizeof(UTLB));
-	memset(ITLB,0,sizeof(ITLB));
-}
-
-void MMU_term()
-{
-}
-#else
 /*
 MMU support code
 This is mostly hacked-on as the core was never meant to have mmu support
 
 There are two modes, one with 'full' mmu emulation (for wince/bleem/wtfever)
 and a fast-hack mode for 1mb sqremaps (for katana)
-
-defining NO_MMU disables the full mmu emulation
 */
 #include "mmu.h"
-#include "mmu_impl.h"
 #include "hw/sh4/sh4_if.h"
 #include "ccn.h"
 #include "hw/sh4/sh4_interrupts.h"
@@ -74,9 +28,6 @@ defining NO_MMU disables the full mmu emulation
 #include "hw/sh4/sh4_mem.h"
 
 #include "hw/mem/_vmem.h"
-
-template<bool internal = false>
-u32 mmu_full_lookup(u32 va, u32& idx, u32& rv);
 
 //#define TRACE_WINCE_SYSCALLS
 
@@ -88,31 +39,14 @@ u32 unresolved_unicode_string;
 
 #define printf_mmu(...) DEBUG_LOG(SH4, __VA_ARGS__)
 
-extern const u32 mmu_mask[4] =
-{
-	((0xFFFFFFFF) >> 10) << 10,	//1 kb page
-	((0xFFFFFFFF) >> 12) << 12,	//4 kb page
-	((0xFFFFFFFF) >> 16) << 16,	//64 kb page
-	((0xFFFFFFFF) >> 20) << 20	//1 MB page
-};
-
-extern const u32 fast_reg_lut[8] =
-{
-	0, 0, 0, 0	//P0-U0
-	, 1		//P1
-	, 1		//P2
-	, 0		//P3
-	, 1		//P4
-};
-
-const u32 ITLB_LRU_OR[4] =
+constexpr u32 ITLB_LRU_OR[4] =
 {
 	0x00,//000xxx
 	0x20,//1xx00x
 	0x14,//x1x1x0
 	0x0B,//xx1x11
 };
-const u32 ITLB_LRU_AND[4] =
+constexpr u32 ITLB_LRU_AND[4] =
 {
 	0x07,//000xxx
 	0x39,//1xx00x
@@ -149,19 +83,10 @@ void ITLB_Sync(u32 entry)
 }
 #endif
 
-static void RaiseException(u32 expEvnt, u32 callVect) {
-#if !defined(NO_MMU)
-	debugger::debugTrap(expEvnt);	// FIXME CCN_TEA and CCN_PTEH have been updated already
-	SH4ThrownException ex = { next_pc - 2, expEvnt, callVect };
-	throw ex;
-#else
-	msgboxf("Can't raise exceptions yet", MBX_ICONERROR);
-#endif
-}
-
-void mmu_raise_exception(u32 mmu_error, u32 address, u32 am)
+template<typename F>
+static void mmuException(u32 mmu_error, u32 address, u32 am, F raise)
 {
-	printf_mmu("mmu_raise_exception -> pc = 0x%X : ", next_pc);
+	printf_mmu("MMU exception -> pc = 0x%X : ", next_pc);
 	CCN_TEA = address;
 	CCN_PTEH.VPN = address >> 10;
 
@@ -169,18 +94,18 @@ void mmu_raise_exception(u32 mmu_error, u32 address, u32 am)
 	{
 		//No error
 	case MMU_ERROR_NONE:
-		die("Error : mmu_raise_exception(MMU_ERROR_NONE)");
-		break;
+		die("Error: mmu_error == MMU_ERROR_NONE)");
+		return;
 
 		//TLB miss
 	case MMU_ERROR_TLB_MISS:
 		printf_mmu("MMU_ERROR_UTLB_MISS 0x%X, handled", address);
 		if (am == MMU_TT_DWRITE)			//WTLBMISS - Write Data TLB Miss Exception
-			RaiseException(0x60, 0x400);
+			raise(0x60, 0x400);
 		else if (am == MMU_TT_DREAD)		//RTLBMISS - Read Data TLB Miss Exception
-			RaiseException(0x40, 0x400);
+			raise(0x40, 0x400);
 		else							//ITLBMISS - Instruction TLB Miss Exception
-			RaiseException(0x40, 0x400);
+			raise(0x40, 0x400);
 		return;
 
 		//TLB Multihit
@@ -192,11 +117,11 @@ void mmu_raise_exception(u32 mmu_error, u32 address, u32 am)
 	case MMU_ERROR_PROTECTED:
 		printf_mmu("MMU_ERROR_PROTECTED 0x%X, handled", address);
 		if (am == MMU_TT_DWRITE)			//WRITEPROT - Write Data TLB Protection Violation Exception
-			RaiseException(0xC0, 0x100);
+			raise(0xC0, 0x100);
 		else if (am == MMU_TT_DREAD)		//READPROT - Data TLB Protection Violation Exception
-			RaiseException(0xA0, 0x100);
+			raise(0xA0, 0x100);
 		else								//READPROT - Instr TLB Protection Violation Exception
-			RaiseException(0xA0, 0x100);
+			raise(0xA0, 0x100);
 		return;
 
 		//Mem is write protected , firstwrite
@@ -204,7 +129,7 @@ void mmu_raise_exception(u32 mmu_error, u32 address, u32 am)
 		printf_mmu("MMU_ERROR_FIRSTWRITE");
 		verify(am == MMU_TT_DWRITE);
 		//FIRSTWRITE - Initial Page Write Exception
-		RaiseException(0x80, 0x100);
+		raise(0x80, 0x100);
 		return;
 
 		//data read/write missasligned
@@ -212,12 +137,12 @@ void mmu_raise_exception(u32 mmu_error, u32 address, u32 am)
 		if (am == MMU_TT_DWRITE)			//WADDERR - Write Data Address Error
 		{
 			printf_mmu("MMU_ERROR_BADADDR(dw) 0x%X", address);
-			RaiseException(0x100, 0x100);
+			raise(0x100, 0x100);
 		}
 		else if (am == MMU_TT_DREAD)		//RADDERR - Read Data Address Error
 		{
 			printf_mmu("MMU_ERROR_BADADDR(dr) 0x%X", address);
-			RaiseException(0xE0, 0x100);
+			raise(0xE0, 0x100);
 		}
 		else							//IADDERR - Instruction Address Error
 		{
@@ -225,7 +150,7 @@ void mmu_raise_exception(u32 mmu_error, u32 address, u32 am)
 			if (!print_wince_syscall(address))
 #endif
 				printf_mmu("MMU_ERROR_BADADDR(i) 0x%X", address);
-			RaiseException(0xE0, 0x100);
+			raise(0xE0, 0x100);
 		}
 		return;
 
@@ -234,99 +159,28 @@ void mmu_raise_exception(u32 mmu_error, u32 address, u32 am)
 		INFO_LOG(SH4, "MMU_ERROR_EXECPROT 0x%X", address);
 
 		//EXECPROT - Instruction TLB Protection Violation Exception
-		RaiseException(0xA0, 0x100);
+		raise(0xA0, 0x100);
 		return;
 	}
 
 	die("Unknown mmu_error");
 }
 
+void mmu_raise_exception(u32 mmu_error, u32 address, u32 am)
+{
+	mmuException(mmu_error, address, am, [](u32 event, u32 vector) {
+		debugger::debugTrap(event);	// FIXME CCN_TEA and CCN_PTEH have been updated already
+		SH4ThrownException ex { next_pc - 2, event, vector };
+		throw ex;
+	});
+}
+
 
 void DoMMUException(u32 address, u32 mmu_error, u32 access_type)
 {
-	printf_mmu("DoMMUException -> pc = 0x%X : %d ", next_pc, access_type);
-	CCN_TEA = address;
-	CCN_PTEH.VPN = address >> 10;
-
-	switch (mmu_error)
-	{
-		//No error
-	case MMU_ERROR_NONE:
-		die("Error : mmu_raise_exception(MMU_ERROR_NONE)");
-		break;
-
-		//TLB miss
-	case MMU_ERROR_TLB_MISS:
-		printf_mmu("MMU_ERROR_UTLB_MISS 0x%X, handled", address);
-		if (access_type == MMU_TT_DWRITE)			//WTLBMISS - Write Data TLB Miss Exception
-			Do_Exception(next_pc, 0x60, 0x400);
-		else if (access_type == MMU_TT_DREAD)		//RTLBMISS - Read Data TLB Miss Exception
-			Do_Exception(next_pc, 0x40, 0x400);
-		else							//ITLBMISS - Instruction TLB Miss Exception
-			Do_Exception(next_pc, 0x40, 0x400);
-
-		return;
-		break;
-
-		//TLB Multihit
-	case MMU_ERROR_TLB_MHIT:
-		INFO_LOG(SH4, "MMU_ERROR_TLB_MHIT @ 0x%X", address);
-		break;
-
-		//Mem is read/write protected (depends on translation type)
-	case MMU_ERROR_PROTECTED:
-		printf_mmu("MMU_ERROR_PROTECTED 0x%X, handled", address);
-		if (access_type == MMU_TT_DWRITE)			//WRITEPROT - Write Data TLB Protection Violation Exception
-			Do_Exception(next_pc, 0xC0, 0x100);
-		else if (access_type == MMU_TT_DREAD)		//READPROT - Data TLB Protection Violation Exception
-			Do_Exception(next_pc, 0xA0, 0x100);
-		else
-		{
-			verify(false);
-		}
-		return;
-		break;
-
-		//Mem is write protected , firstwrite
-	case MMU_ERROR_FIRSTWRITE:
-		printf_mmu("MMU_ERROR_FIRSTWRITE");
-		verify(access_type == MMU_TT_DWRITE);
-		//FIRSTWRITE - Initial Page Write Exception
-		Do_Exception(next_pc, 0x80, 0x100);
-
-		return;
-		break;
-
-		//data read/write missasligned
-	case MMU_ERROR_BADADDR:
-		if (access_type == MMU_TT_DWRITE)			//WADDERR - Write Data Address Error
-			Do_Exception(next_pc, 0x100, 0x100);
-		else if (access_type == MMU_TT_DREAD)		//RADDERR - Read Data Address Error
-			Do_Exception(next_pc, 0xE0, 0x100);
-		else							//IADDERR - Instruction Address Error
-		{
-#ifdef TRACE_WINCE_SYSCALLS
-			if (!print_wince_syscall(address))
-#endif
-				printf_mmu("MMU_ERROR_BADADDR(i) 0x%X", address);
-			Do_Exception(next_pc, 0xE0, 0x100);
-			return;
-		}
-		printf_mmu("MMU_ERROR_BADADDR(d) 0x%X, handled", address);
-		return;
-		break;
-
-		//Can't Execute
-	case MMU_ERROR_EXECPROT:
-		INFO_LOG(SH4, "MMU_ERROR_EXECPROT 0x%X", address);
-
-		//EXECPROT - Instruction TLB Protection Violation Exception
-		Do_Exception(next_pc, 0xA0, 0x100);
-		return;
-		break;
-	}
-
-	die("Unknown mmu_error");
+	mmuException(mmu_error, address, access_type, [](u32 event, u32 vector) {
+		Do_Exception(next_pc, event, vector);
+	});
 }
 
 bool mmu_match(u32 va, CCN_PTEH_type Address, CCN_PTEL_type Data)
@@ -396,10 +250,9 @@ u32 mmu_full_lookup(u32 va, const TLB_Entry** tlb_entry_ret, u32& rv)
 
 	return MMU_ERROR_NONE;
 }
-#endif
 
 //Simple QACR translation for mmu (when AT is off)
-u32 mmu_QACR_SQ(u32 va)
+static u32 mmu_QACR_SQ(u32 va)
 {
 	u32 QACR;
 
@@ -412,7 +265,6 @@ u32 mmu_QACR_SQ(u32 va)
 	return QACR + va;
 }
 
-#ifndef FAST_MMU
 template<u32 translation_type>
 u32 mmu_full_SQ(u32 va, u32& rv)
 {
@@ -655,12 +507,7 @@ retry_ITLB_Match:
 void mmu_set_state()
 {
 	if (CCN_MMUCR.AT == 1 && config::FullMMU)
-	{
 		NOTICE_LOG(SH4, "Enabling Full MMU support");
-		_vmem_enable_mmu(true);
-	}
-	else
-		_vmem_enable_mmu(false);
 
 	SetMemoryHandlers();
 }
@@ -682,6 +529,9 @@ void MMU_init()
 		}
 	}
 	mmu_set_state();
+	// pre-fill kernel memory
+	for (int vpn = ARRAY_SIZE(mmuAddressLUT) / 2; vpn < ARRAY_SIZE(mmuAddressLUT); vpn++)
+		mmuAddressLUT[vpn] = vpn << 12;
 }
 
 
@@ -709,6 +559,7 @@ void mmu_flush_table()
 
 	for (u32 i = 0; i < 64; i++)
 		UTLB[i].Data.V = 0;
+	mmuAddressLUTFlush(true);
 }
 #endif
 
@@ -773,4 +624,3 @@ bool mmu_TranslateSQW(u32 adr, u32* out)
 
 	return true;
 }
-#endif

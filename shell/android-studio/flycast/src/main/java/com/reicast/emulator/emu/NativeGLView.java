@@ -4,15 +4,15 @@ import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Build;
-import android.os.Handler;
-import android.os.SystemClock;
 import android.preference.PreferenceManager;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
+import android.view.DisplayCutout;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
+import android.view.WindowInsets;
 
 import com.reicast.emulator.Emulator;
 import com.reicast.emulator.NativeGLActivity;
@@ -60,10 +60,7 @@ public class NativeGLView extends SurfaceView implements SurfaceHolder.Callback 
         DisplayMetrics dm = context.getResources().getDisplayMetrics();
         JNIdc.screenDpi((int)Math.max(dm.xdpi, dm.ydpi));
 
-        this.setLayerType(prefs.getInt(Config.pref_rendertype, LAYER_TYPE_HARDWARE), null);
-
-        if (NativeGLActivity.syms != null)
-            JNIdc.data(1, NativeGLActivity.syms);
+        this.setLayerType(LAYER_TYPE_HARDWARE, null);
     }
 
     @Override
@@ -71,6 +68,16 @@ public class NativeGLView extends SurfaceView implements SurfaceHolder.Callback 
     {
         super.onLayout(changed, left, top, right, bottom);
         vjoyDelegate.layout(getWidth(), getHeight());
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            // Get the display cutouts if any
+            WindowInsets insets = getRootWindowInsets();
+            if (insets != null) {
+                DisplayCutout cutout = insets.getDisplayCutout();
+                if (cutout != null)
+                    JNIdc.guiSetInsets(cutout.getSafeInsetLeft(), cutout.getSafeInsetRight(),
+                            cutout.getSafeInsetTop(), cutout.getSafeInsetBottom());
+            }
+        }
     }
 
     public void resetEditMode() {

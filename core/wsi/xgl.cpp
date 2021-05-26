@@ -21,6 +21,7 @@
 #include "types.h"
 #if defined(SUPPORT_X11) && !defined(USE_SDL)
 #include "gl_context.h"
+#include "cfg/option.h"
 
 #ifndef GLX_CONTEXT_MAJOR_VERSION_ARB
 #define GLX_CONTEXT_MAJOR_VERSION_ARB       0x2091
@@ -83,7 +84,7 @@ bool XGLGraphicsContext::Init()
 	XGetGeometry(display, window, &win, &temp, &temp, (u32 *)&screen_width, (u32 *)&screen_height, &tempu, &tempu);
 
 #ifndef TEST_AUTOMATION
-	swapOnVSync = true;
+	swapOnVSync = config::VSync;
 #else
 	swapOnVSync = false;
 #endif
@@ -158,9 +159,9 @@ void XGLGraphicsContext::Swap()
 #ifdef TEST_AUTOMATION
 	do_swap_automation();
 #else
-	if (swapOnVSync == settings.input.fastForwardMode)
+	if (swapOnVSync == (settings.input.fastForwardMode || !config::VSync))
 	{
-		swapOnVSync = !settings.input.fastForwardMode;
+		swapOnVSync = (!settings.input.fastForwardMode && config::VSync);
 		if (glXSwapIntervalMESA != nullptr)
 			glXSwapIntervalMESA((unsigned)swapOnVSync);
 		else if (glXSwapIntervalEXT != nullptr)

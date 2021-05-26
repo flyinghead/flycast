@@ -14,7 +14,6 @@
 #endif
 #include <unistd.h>
 #include "hw/sh4/dyna/blockmanager.h"
-#include "hw/mem/vmem32.h"
 
 #include "oslib/host_context.h"
 
@@ -46,33 +45,6 @@ void sigill_handler(int sn, siginfo_t * si, void *segfault_ctx) {
 
 void fault_handler (int sn, siginfo_t * si, void *segfault_ctx)
 {
-#if !defined(NO_MMU) && defined(HOST_64BIT_CPU)
-	// WinCE virtual memory
-#if HOST_CPU == CPU_ARM64
-#define HOST_CTX_READY
-	host_context_t ctx;
-	context_from_segfault(&ctx, segfault_ctx);
-	u32 op = *(u32*)ctx.pc;
-	bool write = (op & 0x00400000) == 0;
-	u32 exception_pc = ctx.x2;
-#elif HOST_CPU == CPU_X64
-	bool write = false;	// TODO?
-	u32 exception_pc = 0;
-#endif
-	int rv = vmem32_handle_signal(si->si_addr, write, exception_pc);
-	if (rv == 1)
-		return;
-	if (rv == -1)
-	{
-#ifndef HOST_CTX_READY
-		host_context_t ctx;
-		context_from_segfault(&ctx, segfault_ctx);
-#endif
-		ngen_HandleException(ctx);
-		context_to_segfault(&ctx, segfault_ctx);
-		return;
-	}
-#endif
 	// code protection in RAM
 	if (bm_RamWriteAccess(si->si_addr))
 		return;
@@ -85,10 +57,8 @@ void fault_handler (int sn, siginfo_t * si, void *segfault_ctx)
 
 #if FEAT_SHREC == DYNAREC_JIT
 	// fast mem access rewriting
-#ifndef HOST_CTX_READY
 	host_context_t ctx;
 	context_from_segfault(&ctx, segfault_ctx);
-#endif
 	bool dyna_cde = ((unat)CC_RX2RW(ctx.pc) >= (unat)CodeCache) && ((unat)CC_RX2RW(ctx.pc) < (unat)(CodeCache + CODE_SIZE + TEMP_CODE_SIZE));
 
 	if (dyna_cde && ngen_Rewrite(ctx, si->si_addr))

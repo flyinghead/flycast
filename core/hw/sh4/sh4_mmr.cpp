@@ -315,16 +315,11 @@ void DYNACALL WriteMem_P4(u32 addr,T data)
 		{
 			if (addr&0x80)
 			{
-#ifdef NO_MMU
-				INFO_LOG(SH4, "Unhandled p4 Write [Unified TLB address array, Associative Write] 0x%x = %x", addr, data);
-#endif
-
 				CCN_PTEH_type t;
 				t.reg_data=data;
 
 				u32 va=t.VPN<<10;
 
-#ifndef NO_MMU
 				for (int i=0;i<64;i++)
 				{
 					if (mmu_match(va,UTLB[i].Address,UTLB[i].Data))
@@ -344,7 +339,6 @@ void DYNACALL WriteMem_P4(u32 addr,T data)
 						ITLB_Sync(i);
 					}
 				}
-#endif
 			}
 			else
 			{

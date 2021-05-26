@@ -1,0 +1,11 @@
+name: test
+on: [push]
+
+jobs:
+  build:
+    name: test
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - run: sudo apt install nasm yasm g++-multilib tcsh
+    - run: make test

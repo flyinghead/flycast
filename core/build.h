@@ -115,7 +115,6 @@
 
 */
 
-//#define NO_MMU
 //#define STRICT_MODE
 #ifndef STRICT_MODE
 #define FAST_MMU
@@ -211,6 +210,8 @@
 #if HOST_CPU == CPU_X64 || HOST_CPU == CPU_ARM64
 #define HOST_64BIT_CPU
 #endif
+
+#define USE_MINIUPNPC
 
 // Compiler Related
 

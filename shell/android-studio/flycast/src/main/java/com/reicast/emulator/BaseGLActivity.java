@@ -23,6 +23,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.Window;
+import android.view.WindowManager;
 
 import com.reicast.emulator.config.Config;
 import com.reicast.emulator.debug.GenerateLogs;
@@ -47,12 +48,10 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
     private static final int STORAGE_PERM_REQUEST = 1001;
     private static final int AUDIO_PERM_REQUEST = 1002;
 
-    protected View mView;
     protected SharedPreferences prefs;
     protected float[][] vjoy_d_cached;    // Used for VJoy editing
     private AudioBackend audioBackend;
     protected Handler handler = new Handler();
-    public static byte[] syms;
     private boolean audioPermissionRequested = false;
     private boolean storagePermissionGranted = false;
     private boolean paused = true;
@@ -71,6 +70,10 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
             window.setNavigationBarColor(0);
             window.getDecorView().setSystemUiVisibility(SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
         }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            getWindow().getAttributes().layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
+        }
+
 
         if (!getFilesDir().exists()) {
             getFilesDir().mkdir();

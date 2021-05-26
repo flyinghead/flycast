@@ -25,7 +25,6 @@ def getVersionName = { ->
 
 android {
     compileSdkVersion 28
-    buildToolsVersion '28.0.3'
 
     defaultConfig {
         applicationId "com.flycast.emulator"
@@ -37,7 +36,7 @@ android {
 
         externalNativeBuild {
             cmake {
-                arguments '-DANDROID_ARM_MODE=arm'
+                arguments "-DANDROID_STL=c++_shared", "-DANDROID_ARM_MODE=arm"
             }
         }
 
@@ -75,13 +74,6 @@ android {
         }
     }
 
-    flavorDimensions "systemtype"
-    productFlavors {
-        dreamcast {
-
-        }
-    }
-
     externalNativeBuild {
         cmake {
             version '3.10.2+'
@@ -92,13 +84,16 @@ android {
     lintOptions {
         abortOnError false
     }
+    buildFeatures {
+        prefab true
+    }
 }
 
 afterEvaluate {
     android.applicationVariants.all { v ->
         if (v.buildType.name == "release") {
-            def hashtag = getVersionHash()
-            v.outputs[0].outputFileName = "flycast-android-" + hashtag + ".apk"
+//            def hashtag = getVersionHash()
+//            v.outputs[0].outputFileName = "flycast-android-" + hashtag + ".apk"
         }
     }
 }
@@ -115,4 +110,5 @@ dependencies {
         exclude module: 'junit'
     }
     implementation fileTree(include: ['*.jar'], dir: 'libs')
+    implementation 'com.google.oboe:oboe:1.5.0'
 }

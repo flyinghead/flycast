@@ -37,7 +37,6 @@ using namespace vixl::aarch64;
 #include "hw/sh4/dyna/ngen.h"
 #include "hw/sh4/sh4_mem.h"
 #include "hw/sh4/sh4_rom.h"
-#include "hw/mem/vmem32.h"
 #include "arm64_regalloc.h"
 #include "hw/mem/_vmem.h"
 
@@ -108,36 +107,6 @@ void ngen_GetFeatures(ngen_features* dst)
 {
 	dst->InterpreterFallback = false;
 	dst->OnlyDynamicEnds = false;
-}
-
-template<typename T>
-static T ReadMemNoEx(u32 addr, u32, u32 pc)
-{
-#ifndef NO_MMU
-	u32 ex;
-	T rv = mmu_ReadMemNoEx<T>(addr, &ex);
-	if (ex)
-	{
-		spc = pc;
-		handleException();
-	}
-	return rv;
-#else
-	return (T)0;	// not used
-#endif
-}
-
-template<typename T>
-static void WriteMemNoEx(u32 addr, T data, u32 pc)
-{
-#ifndef NO_MMU
-	u32 ex = mmu_WriteMemNoEx<T>(addr, data);
-	if (ex)
-	{
-		spc = pc;
-		handleException();
-	}
-#endif
 }
 
 static void interpreter_fallback(u16 op, OpCallFP *oph, u32 pc)
@@ -1087,33 +1056,21 @@ public:
 		switch (size)
 		{
 		case 1:
-			if (!mmu_enabled())
-				GenCallRuntime(ReadMem8);
-			else
-				GenCallRuntime(ReadMemNoEx<u8>);
+			GenCallRuntime(_vmem_ReadMem8);
 			Sxtb(w0, w0);
 			break;
 
 		case 2:
-			if (!mmu_enabled())
-				GenCallRuntime(ReadMem16);
-			else
-				GenCallRuntime(ReadMemNoEx<u16>);
+			GenCallRuntime(_vmem_ReadMem16);
 			Sxth(w0, w0);
 			break;
 
 		case 4:
-			if (!mmu_enabled())
-				GenCallRuntime(ReadMem32);
-			else
-				GenCallRuntime(ReadMemNoEx<u32>);
+			GenCallRuntime(_vmem_ReadMem32);
 			break;
 
 		case 8:
-			if (!mmu_enabled())
-				GenCallRuntime(ReadMem64);
-			else
-				GenCallRuntime(ReadMemNoEx<u64>);
+			GenCallRuntime(_vmem_ReadMem64);
 			break;
 
 		default:
@@ -1130,31 +1087,19 @@ public:
 		switch (size)
 		{
 		case 1:
-			if (!mmu_enabled())
-				GenCallRuntime(WriteMem8);
-			else
-				GenCallRuntime(WriteMemNoEx<u8>);
+			GenCallRuntime(_vmem_WriteMem8);
 			break;
 
 		case 2:
-			if (!mmu_enabled())
-				GenCallRuntime(WriteMem16);
-			else
-				GenCallRuntime(WriteMemNoEx<u16>);
+			GenCallRuntime(_vmem_WriteMem16);
 			break;
 
 		case 4:
-			if (!mmu_enabled())
-				GenCallRuntime(WriteMem32);
-			else
-				GenCallRuntime(WriteMemNoEx<u32>);
+			GenCallRuntime(_vmem_WriteMem32);
 			break;
 
 		case 8:
-			if (!mmu_enabled())
-				GenCallRuntime(WriteMem64);
-			else
-				GenCallRuntime(WriteMemNoEx<u64>);
+			GenCallRuntime(_vmem_WriteMem64);
 			break;
 
 		default:
@@ -1404,6 +1349,7 @@ public:
 
 			Bind(&reenterLabel);
 			Ldr(x28, MemOperand(sp));	// Set context
+			Mov(x27, reinterpret_cast<uintptr_t>(mmuAddressLUT));
 		}
 		else
 		{
@@ -1523,10 +1469,7 @@ public:
 		Bind(&writeStoreQueue32Label);
 		Lsr(x7, x0, 26);
 		Cmp(x7, 0x38);
-		if (!mmu_enabled())
-			GenBranchRuntime(WriteMem32, Condition::ne);
-		else
-			GenBranchRuntime(WriteMemNoEx<u32>, Condition::ne);
+		GenBranchRuntime(_vmem_WriteMem32, Condition::ne);
 		And(x0, x0, 0x3f);
 		Sub(x7, x0, sizeof(Sh4RCB::sq_buffer), LeaveFlags);
 		Str(w1, MemOperand(x28, x7));
@@ -1536,10 +1479,7 @@ public:
 		Bind(&writeStoreQueue64Label);
 		Lsr(x7, x0, 26);
 		Cmp(x7, 0x38);
-		if (!mmu_enabled())
-			GenBranchRuntime(WriteMem64, Condition::ne);
-		else
-			GenBranchRuntime(WriteMemNoEx<u64>, Condition::ne);
+		GenBranchRuntime(_vmem_WriteMem64, Condition::ne);
 		And(x0, x0, 0x3f);
 		Sub(x7, x0, sizeof(Sh4RCB::sq_buffer), LeaveFlags);
 		Str(x1, MemOperand(x28, x7));
@@ -1622,14 +1562,34 @@ private:
 			B(&code_label, cond);
 	}
 
+	void genMmuLookup(const shil_opcode& op, u32 write)
+	{
+		if (mmu_enabled())
+		{
+			Label inCache;
+			Label done;
+
+			Lsr(w1, w0, 12);
+			Ldr(w1, MemOperand(x27, x1, LSL, 2));
+			Cbnz(w1, &inCache);
+			Mov(w1, write);
+			Mov(w2, block->vaddr + op.guest_offs - (op.delay_slot ? 2 : 0));	// pc
+			GenCallRuntime(mmuDynarecLookup);
+			B(&done);
+			Bind(&inCache);
+			And(w0, w0, 0xFFF);
+			Orr(w0, w0, w1);
+			Bind(&done);
+		}
+	}
+
 	void GenReadMemory(const shil_opcode& op, size_t opid, bool optimise)
 	{
 		if (GenReadMemoryImmediate(op))
 			return;
 
-		GenMemAddr(op, call_regs[0]);
-		if (mmu_enabled())
-			Mov(w2, block->vaddr + op.guest_offs - (op.delay_slot ? 2 : 0));	// pc
+		GenMemAddr(op, &w0);
+		genMmuLookup(op, 0);
 
 		u32 size = op.flags & 0x7f;
 		if (!optimise || !GenReadMemoryFast(op, opid))
@@ -1648,9 +1608,9 @@ private:
 
 		u32 size = op.flags & 0x7f;
 		u32 addr = op.rs1._imm;
-		if (mmu_enabled() && mmu_is_translated<MMU_TT_DREAD>(addr, size))
+		if (mmu_enabled() && mmu_is_translated(addr, size))
 		{
-			if ((addr >> 12) != (block->vaddr >> 12))
+			if ((addr >> 12) != (block->vaddr >> 12) && ((addr >> 12) != ((block->vaddr + block->guest_opcodes * 2 - 1) >> 12)))
 				// When full mmu is on, only consider addresses in the same 4k page
 				return false;
 			u32 paddr;
@@ -1791,7 +1751,7 @@ private:
 	bool GenReadMemoryFast(const shil_opcode& op, size_t opid)
 	{
 		// Direct memory access. Need to handle SIGSEGV and rewrite block as needed. See ngen_Rewrite()
-		if (!_nvmem_enabled() || (mmu_enabled() && !vmem32_enabled()))
+		if (!_nvmem_enabled())
 			return false;
 
 		Instruction *start_instruction = GetCursorAddress<Instruction *>();
@@ -1837,9 +1797,8 @@ private:
 		if (GenWriteMemoryImmediate(op))
 			return;
 
-		GenMemAddr(op, call_regs[0]);
-		if (mmu_enabled())
-			Mov(w2, block->vaddr + op.guest_offs - (op.delay_slot ? 2 : 0));	// pc
+		GenMemAddr(op, &w0);
+		genMmuLookup(op, 1);
 
 		u32 size = op.flags & 0x7f;
 		if (size != 8)
@@ -1859,7 +1818,7 @@ private:
 
 		u32 size = op.flags & 0x7f;
 		u32 addr = op.rs1._imm;
-		if (mmu_enabled() && mmu_is_translated<MMU_TT_DWRITE>(addr, size))
+		if (mmu_enabled() && mmu_is_translated(addr, size))
 		{
 			if ((addr >> 12) != (block->vaddr >> 12) && ((addr >> 12) != ((block->vaddr + block->guest_opcodes * 2 - 1) >> 12)))
 				// When full mmu is on, only consider addresses in the same 4k page
@@ -1954,25 +1913,7 @@ private:
 			else
 			{
 				Mov(w1, reg2);
-
-				switch(size)
-				{
-				case 1:
-					GenCallRuntime((void (*)())ptr);
-					break;
-
-				case 2:
-					GenCallRuntime((void (*)())ptr);
-					break;
-
-				case 4:
-					GenCallRuntime((void (*)())ptr);
-					break;
-
-				default:
-					die("Invalid size");
-					break;
-				}
+				GenCallRuntime((void (*)())ptr);
 			}
 		}
 
@@ -1982,7 +1923,7 @@ private:
 	bool GenWriteMemoryFast(const shil_opcode& op, size_t opid)
 	{
 		// Direct memory access. Need to handle SIGSEGV and rewrite block as needed. See ngen_Rewrite()
-		if (!_nvmem_enabled() || (mmu_enabled() && !vmem32_enabled()))
+		if (!_nvmem_enabled())
 			return false;
 
 		Instruction *start_instruction = GetCursorAddress<Instruction *>();
