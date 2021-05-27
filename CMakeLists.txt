@@ -927,6 +927,8 @@ elseif(APPLE)
         XCODE_ATTRIBUTE_SWIFT_OBJC_BRIDGING_HEADER "shell/apple/emulator-osx/emulator-osx/emulator-osx-Bridging-Header.h"
 		RESOURCE "${XIB}"
 		XCODE_ATTRIBUTE_ASSETCATALOG_COMPILER_APPICON_NAME "AppIcon"
+        BUILD_WITH_INSTALL_RPATH TRUE
+        INSTALL_RPATH "@loader_path/../Frameworks"
     )
 
     find_library(AUDIO_UNIT_LIBRARY AudioUnit)
