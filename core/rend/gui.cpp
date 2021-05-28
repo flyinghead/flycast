@@ -1580,7 +1580,7 @@ static void gui_display_settings()
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
 		    if (ImGui::CollapsingHeader("Flycast", ImGuiTreeNodeFlags_DefaultOpen))
 		    {
-				ImGui::Text("Version: %s", REICAST_VERSION);
+				ImGui::Text("Version: %s", GIT_VERSION);
 				ImGui::Text("Git Hash: %s", GIT_HASH);
 				ImGui::Text("Build Date: %s", BUILD_DATE);
 		    }
