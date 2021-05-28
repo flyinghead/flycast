@@ -217,7 +217,7 @@ if(PKG_CONFIG_FOUND AND NOT ANDROID AND NOT APPLE)
 	if(USE_HOST_LIBZIP)
 		pkg_check_modules(LIBZIP IMPORTED_TARGET libzip)
 		if(LIBZIP_FOUND)
-			target_link_libraries(${PROJECT_NAME} PRIVATE ${LIBZIP_LIBRARIES})
+			target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::LIBZIP)
 		endif()
     endif()
 
