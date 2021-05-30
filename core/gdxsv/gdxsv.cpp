@@ -144,8 +144,6 @@ std::string Gdxsv::GeneratePlatformInfoString() {
     Cx86cpuid cpuid;
     if (x86cpuid_CheckAndRead(&cpuid)) {
         ss << "cpuid=" << std::hex << cpuid.vendor[0] << cpuid.vendor[1] << cpuid.vendor[2] << std::dec << "\n";
-    } else {
-        ss << "cpuid=" << "Unknown" << "\n";
     }
     if (gcp_ping_test_finished) {
         for (const auto &res : gcp_ping_test_result) {
