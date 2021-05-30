@@ -9,6 +9,7 @@
 #include "version.h"
 #include "rend/gui.h"
 #include "oslib/oslib.h"
+#include "lzma/CpuArch.h"
 
 Gdxsv::~Gdxsv() {
     tcp_client.Close();
@@ -140,6 +141,12 @@ std::string Gdxsv::GeneratePlatformInfoString() {
     ss << "disk=" << (int) disk << "\n";
     ss << "maxlag=" << (int) maxlag << "\n";
     ss << "patch_id=" << symbols[":patch_id"] << "\n";
+    Cx86cpuid cpuid;
+    if (x86cpuid_CheckAndRead(&cpuid)) {
+        ss << "cpuid=" << std::hex << cpuid.vendor[0] << cpuid.vendor[1] << cpuid.vendor[2] << std::dec << "\n";
+    } else {
+        ss << "cpuid=" << "Unknown" << "\n";
+    }
     if (gcp_ping_test_finished) {
         for (const auto &res : gcp_ping_test_result) {
             ss << res.first << "=" << res.second << "\n";
