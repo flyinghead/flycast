@@ -255,7 +255,8 @@ bool OITDrawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 	{
 		needDepthTransition = false;
 		// Not convinced that this is really needed but it makes validation layers happy
-		setImageLayout(cmdBuffer, depthAttachment->GetImage(), GetContext()->GetDepthFormat(), 1, vk::ImageLayout::eUndefined, vk::ImageLayout::eDepthStencilReadOnlyOptimal);
+		for (auto& attachment : depthAttachments)
+			setImageLayout(cmdBuffer, attachment->GetImage(), GetContext()->GetDepthFormat(), 1, vk::ImageLayout::eUndefined, vk::ImageLayout::eDepthStencilReadOnlyOptimal);
 	}
 
 	OITDescriptorSets::VertexShaderUniforms vtxUniforms;
@@ -279,8 +280,8 @@ bool OITDrawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 	const vk::Buffer mainBuffer = GetMainBuffer(0)->buffer.get();
 	GetCurrentDescSet().UpdateUniforms(mainBuffer, offsets.vertexUniformOffset, offsets.fragmentUniformOffset,
 			fogTexture->GetImageView(), offsets.polyParamsOffset,
-			offsets.polyParamsSize, depthAttachment->GetStencilView(),
-			depthAttachment->GetImageView(), paletteTexture->GetImageView());
+			offsets.polyParamsSize, depthAttachments[0]->GetStencilView(),
+			depthAttachments[0]->GetImageView(), paletteTexture->GetImageView());
 	GetCurrentDescSet().BindPerFrameDescriptorSets(cmdBuffer);
 	GetCurrentDescSet().UpdateColorInputDescSet(0, colorAttachments[0]->GetImageView());
 	GetCurrentDescSet().UpdateColorInputDescSet(1, colorAttachments[1]->GetImageView());
@@ -295,9 +296,10 @@ bool OITDrawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 	OITDescriptorSets::PushConstants pushConstants = { };
 	cmdBuffer.pushConstants<OITDescriptorSets::PushConstants>(pipelineManager->GetPipelineLayout(), vk::ShaderStageFlagBits::eFragment, 0, pushConstants);
 
-	const std::array<vk::ClearValue, 3> clear_colors = {
+	const std::array<vk::ClearValue, 4> clear_colors = {
 			vk::ClearColorValue(std::array<float, 4>{0.f, 0.f, 0.f, 1.f}),
 			vk::ClearColorValue(std::array<float, 4>{0.f, 0.f, 0.f, 1.f}),
+			vk::ClearDepthStencilValue{ 0.f, 0 },
 			vk::ClearDepthStencilValue{ 0.f, 0 },
 	};
 
@@ -434,17 +436,21 @@ void OITDrawer::MakeBuffers(int width, int height)
 				vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eInputAttachment);
 	}
 
-	depthAttachment.reset();
-	depthAttachment = std::unique_ptr<FramebufferAttachment>(
-			new FramebufferAttachment(GetContext()->GetPhysicalDevice(), GetContext()->GetDevice()));
-	depthAttachment->Init(maxWidth, maxHeight, GetContext()->GetDepthFormat(),
-			vk::ImageUsageFlagBits::eDepthStencilAttachment | vk::ImageUsageFlagBits::eInputAttachment);
+	for (auto& attachment : depthAttachments)
+	{
+		attachment.reset();
+		attachment = std::unique_ptr<FramebufferAttachment>(
+				new FramebufferAttachment(GetContext()->GetPhysicalDevice(), GetContext()->GetDevice()));
+		attachment->Init(maxWidth, maxHeight, GetContext()->GetDepthFormat(),
+				vk::ImageUsageFlagBits::eDepthStencilAttachment | vk::ImageUsageFlagBits::eInputAttachment);
+	}
 	needDepthTransition = true;
 
 	vk::ImageView attachments[] = {
 			colorAttachments[1]->GetImageView(),
 			colorAttachments[0]->GetImageView(),
-			depthAttachment->GetImageView(),
+			depthAttachments[0]->GetImageView(),
+			depthAttachments[1]->GetImageView(),
 	};
 	vk::FramebufferCreateInfo createInfo(vk::FramebufferCreateFlags(), pipelineManager->GetRenderPass(true, true),
 			ARRAY_SIZE(attachments), attachments, width, height, 1);
@@ -474,7 +480,8 @@ void OITScreenDrawer::MakeFramebuffers(const vk::Extent2D& viewport)
 		vk::ImageView attachments[] = {
 				finalColorAttachments.back()->GetImageView(),
 				colorAttachments[0]->GetImageView(),
-				depthAttachment->GetImageView(),
+				depthAttachments[0]->GetImageView(),
+				depthAttachments[1]->GetImageView(),
 		};
 		vk::FramebufferCreateInfo createInfo(vk::FramebufferCreateFlags(), screenPipelineManager->GetRenderPass(true, true),
 				ARRAY_SIZE(attachments), attachments, viewport.width, viewport.height, 1);
@@ -599,7 +606,8 @@ vk::CommandBuffer OITTextureDrawer::NewFrame()
 	vk::ImageView imageViews[] = {
 		colorImageView,
 		colorAttachments[0]->GetImageView(),
-		depthAttachment->GetImageView(),
+		depthAttachments[0]->GetImageView(),
+		depthAttachments[1]->GetImageView(),
 	};
 	framebuffers.resize(GetContext()->GetSwapChainSize());
 	framebuffers[GetCurrentImage()] = device.createFramebufferUnique(vk::FramebufferCreateInfo(vk::FramebufferCreateFlags(),
