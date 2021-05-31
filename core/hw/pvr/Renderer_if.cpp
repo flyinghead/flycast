@@ -3,7 +3,6 @@
 #include "cheats.h"
 #include "hw/mem/_vmem.h"
 #include "hw/pvr/pvr_mem.h"
-#include "oslib/oslib.h"
 #include "rend/TexCache.h"
 #include "cfg/option.h"
 

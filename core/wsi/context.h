@@ -33,4 +33,3 @@ static inline void SwitchRenderApi()
 	TermRenderApi();
 	InitRenderApi();
 }
-

@@ -6,7 +6,6 @@
 #include "sdl/sdl.h"
 #endif
 #include <vector>
-#include <algorithm>
 #include <atomic>
 #include <thread>
 #include "stdclass.h"

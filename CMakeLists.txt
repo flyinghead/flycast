@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10.2 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.10.2)
 
 find_program(CCACHE_FOUND ccache)
 if(CCACHE_FOUND)
@@ -555,7 +555,6 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/hw/sh4/sh4_mem.h
         core/hw/sh4/sh4_mmr.cpp
         core/hw/sh4/sh4_mmr.h
-        core/hw/sh4/sh4_opcode.h
         core/hw/sh4/sh4_opcode_list.cpp
         core/hw/sh4/sh4_opcode_list.h
         core/hw/sh4/sh4_rom.cpp

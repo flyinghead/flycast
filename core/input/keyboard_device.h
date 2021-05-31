@@ -26,7 +26,7 @@ class KeyboardDevice
 {
 public:
 	virtual const char* name() = 0;
-	int maple_port() { return _maple_port; }
+	int maple_port() const { return _maple_port; }
 	void keyboard_character(char c);
 	std::string get_character_input();
 	virtual ~KeyboardDevice() = default;

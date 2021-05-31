@@ -1,4 +1,5 @@
 #include "ini.h"
+#include "types.h"
 #include <sstream>
 
 char* trim_ws(char* str);

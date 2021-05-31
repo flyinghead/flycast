@@ -1,6 +1,8 @@
 #pragma once
-#include "types.h"
+
+#include <cstdio>
 #include <map>
+#include <string>
 
 namespace emucfg {
 

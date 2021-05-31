@@ -4,6 +4,7 @@
 #include "cfg/cfg.h"
 #include "sdl/sdl.h"
 #include <SDL_syswm.h>
+#include <SDL_video.h>
 #endif
 #include "hw/maple/maple_devs.h"
 #include "sdl_gamepad.h"
@@ -15,10 +16,6 @@
 #include "linux-dist/icon.h"
 #endif
 
-#ifdef USE_VULKAN
-#include <SDL_vulkan.h>
-#endif
-
 static SDL_Window* window = NULL;
 
 #ifdef TARGET_PANDORA
@@ -28,7 +25,6 @@ static SDL_Window* window = NULL;
 #endif
 #define WINDOW_HEIGHT  480
 
-static std::shared_ptr<SDLMouse> sdl_mouse_gamepad;
 static std::shared_ptr<SDLKbGamepadDevice> sdl_kb_gamepad;
 static SDLKeyboardDevice* sdl_keyboard = NULL;
 static bool window_fullscreen;
@@ -496,7 +492,7 @@ bool sdl_recreate_window(u32 flags)
 	// Set the window icon
 	u32 pixels[48 * 48];
 	for (int i = 0; i < 48 * 48; i++)
-		pixels[i] = reicast_icon[i + 2];
+		pixels[i] = window_icon[i + 2];
 	SDL_Surface *surface = SDL_CreateRGBSurfaceFrom(pixels, 48, 48, 32, 4 * 48, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000);
 	if (surface == NULL)
 	  INFO_LOG(COMMON, "Creating icon surface failed: %s", SDL_GetError());
@@ -551,4 +547,3 @@ HWND sdl_get_native_hwnd()
 #endif
 
 #endif // !defined(__APPLE__)
-

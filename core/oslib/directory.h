@@ -245,11 +245,11 @@ public:
 		if (dir == nullptr)
 			INFO_LOG(COMMON, "Cannot read directory '%s'", root.c_str());
 
-		return iterator(dir, root);
+		return {dir, root};
 	}
 	iterator end()
 	{
-		return iterator(nullptr, root);
+		return {nullptr, root};
 	}
 
 private:

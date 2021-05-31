@@ -33,7 +33,7 @@ public:
 
 	const std::string& api_name() { return _api_name; }
 	const std::string& name() { return _name; }
-	int maple_port() { return _maple_port; }
+	int maple_port() const { return _maple_port; }
 	void set_maple_port(int port) { _maple_port = port; }
 	const std::string& unique_id() { return _unique_id; }
 	virtual bool gamepad_btn_input(u32 code, bool pressed);
@@ -55,7 +55,7 @@ public:
 
 	virtual void rumble(float power, float inclination, u32 duration_ms) {}
 	virtual void update_rumble() {}
-	bool is_rumble_enabled() { return _rumble_enabled; }
+	bool is_rumble_enabled() const { return _rumble_enabled; }
 
 	static void Register(const std::shared_ptr<GamepadDevice>& gamepad);
 

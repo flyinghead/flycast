@@ -27,7 +27,6 @@
 #include "hw/arm7/arm7_rec.h"
 #include "imgread/common.h"
 #include "rend/gui.h"
-#include "profiler/profiler.h"
 #include "input/gamepad_device.h"
 #include "hw/sh4/dyna/blockmanager.h"
 #include "log/LogManager.h"

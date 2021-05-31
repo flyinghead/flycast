@@ -77,7 +77,7 @@ public:
 	void load(FILE* fp);
 	bool save(const char *name);
 
-	bool is_dirty() { return dirty; }
+	bool is_dirty() const { return dirty; }
 
 	static std::shared_ptr<InputMapping> LoadMapping(const char *name);
 	static void SaveMapping(const char *name, const std::shared_ptr<InputMapping>& mapping);

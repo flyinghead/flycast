@@ -16,10 +16,6 @@
 #include "oslib/oslib.h"
 #include "debug/gdb_server.h"
 
-/*
-
-*/
-
 //these are fixed
 const u16 IRLPriority = 0x0246;
 #define IRLP9 &IRLPriority,0

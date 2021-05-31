@@ -21,8 +21,6 @@
 
 #if HOST_CPU == CPU_X86 && FEAT_DSPREC != DYNAREC_NONE
 
-#define XBYAK32
-#define XBYAK_NO_OP_NAMES
 #include <xbyak/xbyak.h>
 #include "dsp.h"
 #include "aica.h"

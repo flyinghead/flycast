@@ -407,5 +407,3 @@ static bool wince_resolve_address(u32 va, TLB_Entry &entry)
 
 	return false;
 }
-
-
