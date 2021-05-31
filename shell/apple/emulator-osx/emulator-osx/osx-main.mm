@@ -29,6 +29,8 @@
 #include "hw/pvr/Renderer_if.h"
 #include "rend/mainui.h"
 
+#import <SystemConfiguration/SystemConfiguration.h>
+
 OSXKeyboardDevice keyboard(0);
 static std::shared_ptr<OSXKbGamepadDevice> kb_gamepad(0);
 static std::shared_ptr<OSXMouseGamepadDevice> mouse_gamepad(0);
@@ -145,6 +147,52 @@ std::string os_GetMachineID(){
         }
     }
     return "";
+}
+
+NSString* runCommand(NSString* commandToRun) {
+    NSTask *task = [[NSTask alloc] init];
+    [task setLaunchPath:@"/bin/sh"];
+
+    NSArray *arguments = [NSArray arrayWithObjects:
+                          @"-c" ,
+                          [NSString stringWithFormat:@"%@", commandToRun],
+                          nil];
+    [task setArguments:arguments];
+
+    NSPipe *pipe = [NSPipe pipe];
+    [task setStandardOutput:pipe];
+
+    NSFileHandle *file = [pipe fileHandleForReading];
+
+    [task launch];
+
+    NSData *data = [file readDataToEndOfFile];
+
+    NSString *output = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+    return output;
+}
+
+std::string os_GetConnectionMedium() {
+    NSString* bestInterface = runCommand(@"route get 8.8.8.8 | grep interface | awk '{split($0,a,\": \"); printf \"%s\", a[2]}'");
+    
+    CFArrayRef ref = SCNetworkInterfaceCopyAll();
+    NSArray* networkInterfaces = (__bridge NSArray *)(ref);
+    NSString* interfaceType;
+    for(int i = 0; i < networkInterfaces.count; i++) {
+        SCNetworkInterfaceRef interface = (__bridge SCNetworkInterfaceRef)(networkInterfaces[i]);
+        NSString* bsdName = (NSString*) SCNetworkInterfaceGetBSDName(interface);
+        
+        if([bestInterface isEqualToString:bsdName]){
+            interfaceType = ((NSString *)SCNetworkInterfaceGetInterfaceType(interface)) ;
+            break;
+        }
+    }
+    
+    if ([interfaceType isEqualToString:@"IEEE80211"] || [interfaceType isEqualToString:@"Bluetooth"] || [interfaceType isEqualToString:@"IrDA"]) {
+        return "Wireless";
+    } else {
+        return "Wired";
+    }
 }
 
 void common_linux_setup();

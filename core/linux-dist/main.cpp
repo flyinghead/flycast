@@ -133,6 +133,13 @@ std::string os_GetMachineID()
     return empty;
 }
 
+std::string os_GetConnectionMedium()
+{
+    //Not implemented
+    std::string empty;
+    return empty;
+}
+
 void common_linux_setup();
 
 // Find the user config directory.
