@@ -1,3 +1,4 @@
+#define _WINSOCKAPI_    // stops windows.h including winsock.h
 #include "oslib/oslib.h"
 #include "oslib/audiostream.h"
 #include "imgread/common.h"
@@ -16,6 +17,10 @@
 #include "emulator.h"
 #include "rend/mainui.h"
 
+#include <winsock2.h>
+#include <ws2ipdef.h>
+#include <iphlpapi.h>
+#include <netioapi.h>
 #include <wininet.h>
 #include <windows.h>
 #include <windowsx.h>
@@ -646,6 +651,56 @@ std::string os_GetMachineID()
     {
         return "";
     }
+}
+
+std::string os_GetConnectionMedium(){
+    std::string result = "Unknown";
+    DWORD dwIfIndex;
+    if (NO_ERROR != GetBestInterface (inet_addr ("8.8.8.8"), &dwIfIndex))
+        return result;
+        
+    PMIB_IF_TABLE2 table = NULL;
+    if (NOERROR != GetIfTable2Ex(MibIfTableRaw, &table) )
+        return result;
+    
+    MIB_IF_ROW2 row;
+    ZeroMemory(&row, sizeof(MIB_IF_ROW2));
+    
+    row.InterfaceIndex = dwIfIndex;
+    
+    if (NOERROR == GetIfEntry2(&row)) {
+        switch(row.PhysicalMediumType) {
+            case NdisPhysicalMediumWirelessLan:
+            case NdisPhysicalMediumWirelessWan:
+            case NdisPhysicalMediumNative802_11:
+            case NdisPhysicalMediumBluetooth:
+            case NdisPhysicalMediumWiMax:
+            case NdisPhysicalMediumUWB:
+            case NdisPhysicalMediumIrda:
+                result = "Wireless";
+                break;
+            case NdisPhysicalMediumCableModem:
+            case NdisPhysicalMediumPhoneLine:
+            case NdisPhysicalMediumPowerLine:
+            case NdisPhysicalMediumDSL:
+            case NdisPhysicalMediumFibreChannel:
+            case NdisPhysicalMedium1394:
+            case NdisPhysicalMediumInfiniband:
+            case NdisPhysicalMedium802_3:
+            case NdisPhysicalMedium802_5:
+            case NdisPhysicalMediumWiredWAN:
+            case NdisPhysicalMediumWiredCoWan:
+                result = "Wired";
+                break;
+
+          default:
+                result = "Unspecified";
+        }
+         
+    }
+    FreeMibTable(table);
+    
+    return result;
 }
 
 #ifdef _WIN64

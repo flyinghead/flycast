@@ -1153,8 +1153,9 @@ elseif(APPLE)
     find_library(AUDIO_UNIT_LIBRARY AudioUnit)
     find_library(FOUNDATION_LIBRARY Foundation)
     find_library(AUDIO_TOOLBOX_LIBRARY AudioToolbox)
+    find_library(SYSTEMCONFIGURATION_LIBRARY SystemConfiguration)
 
-    target_link_libraries(${PROJECT_NAME} PRIVATE ${AUDIO_UNIT_LIBRARY} ${FOUNDATION_LIBRARY} ${AUDIO_TOOLBOX_LIBRARY})
+    target_link_libraries(${PROJECT_NAME} PRIVATE ${AUDIO_UNIT_LIBRARY} ${FOUNDATION_LIBRARY} ${AUDIO_TOOLBOX_LIBRARY} ${SYSTEMCONFIGURATION_LIBRARY})
 elseif(UNIX)
     if(NOT BUILD_TESTING)
         target_sources(${PROJECT_NAME} PRIVATE
@@ -1171,7 +1172,7 @@ elseif(WIN32)
             core/windows/win_vmem.cpp
             shell/windows/reicast.rc)
 
-    target_link_libraries(${PROJECT_NAME} PRIVATE dsound opengl32 winmm wininet.lib ws2_32 wsock32 xinput9_1_0)
+    target_link_libraries(${PROJECT_NAME} PRIVATE dsound opengl32 winmm wininet.lib iphlpapi.lib ws2_32 wsock32 xinput9_1_0)
 endif()
 
 if(BUILD_TESTING)

@@ -594,6 +594,13 @@ std::string os_GetMachineID()
     return empty;
 }
 
+std::string os_GetConnectionMedium()
+{
+    //Not implemented
+    std::string empty;
+    return empty;
+}
+
 JNIEXPORT void JNICALL Java_com_reicast_emulator_periph_InputDeviceManager_init(JNIEnv *env, jobject obj)
 {
     input_device_manager = env->NewGlobalRef(obj);

@@ -48,6 +48,12 @@ std::string os_GetMachineID()
     return empty;
 }
 
+std::string os_GetConnectionMedium()
+{
+    std::string empty;
+    return empty;
+}
+
 
 #ifdef _WIN32
 #include <windows.h>

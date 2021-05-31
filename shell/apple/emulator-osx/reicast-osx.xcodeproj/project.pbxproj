@@ -467,6 +467,8 @@
 		F247152C25C12B80004E13FE /* extension_set.cc in Sources */ = {isa = PBXBuildFile; fileRef = F24714CE25C12B80004E13FE /* extension_set.cc */; };
 		F247152D25C12B80004E13FE /* generated_enum_util.cc in Sources */ = {isa = PBXBuildFile; fileRef = F24714CF25C12B80004E13FE /* generated_enum_util.cc */; };
 		F247152E25C12B80004E13FE /* generated_message_table_driven.cc in Sources */ = {isa = PBXBuildFile; fileRef = F24714D025C12B80004E13FE /* generated_message_table_driven.cc */; };
+		F252BB9426652AA300806876 /* CoreHaptics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F252BB9326652AA300806876 /* CoreHaptics.framework */; };
+		F252BB9726652AB600806876 /* SystemConfiguration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F252BB9626652AB600806876 /* SystemConfiguration.framework */; };
 		F2E5596F25C12886006B0421 /* gdxsv.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F2E5596925C12886006B0421 /* gdxsv.cpp */; };
 		F2E5597025C12886006B0421 /* packet.pb.cc in Sources */ = {isa = PBXBuildFile; fileRef = F2E5596C25C12886006B0421 /* packet.pb.cc */; };
 		F2E5597125C12886006B0421 /* gdxsv_network.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F2E5596D25C12886006B0421 /* gdxsv_network.cpp */; };
@@ -1444,6 +1446,8 @@
 		F24714CF25C12B80004E13FE /* generated_enum_util.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = generated_enum_util.cc; sourceTree = "<group>"; };
 		F24714D025C12B80004E13FE /* generated_message_table_driven.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = generated_message_table_driven.cc; sourceTree = "<group>"; };
 		F24714D125C12B80004E13FE /* wire_format_lite.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = wire_format_lite.h; sourceTree = "<group>"; };
+		F252BB9326652AA300806876 /* CoreHaptics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreHaptics.framework; path = System/Library/Frameworks/CoreHaptics.framework; sourceTree = SDKROOT; };
+		F252BB9626652AB600806876 /* SystemConfiguration.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SystemConfiguration.framework; path = System/Library/Frameworks/SystemConfiguration.framework; sourceTree = SDKROOT; };
 		F2E5596725C12886006B0421 /* packet.pb.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = packet.pb.h; sourceTree = "<group>"; };
 		F2E5596825C12886006B0421 /* gdxsv.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = gdxsv.h; sourceTree = "<group>"; };
 		F2E5596925C12886006B0421 /* gdxsv.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = gdxsv.cpp; sourceTree = "<group>"; };
@@ -1463,10 +1467,12 @@
 			buildActionMask = 2147483647;
 			files = (
 				EBDF37531BB969F8001191B5 /* AudioUnit.framework in Frameworks */,
+				F252BB9426652AA300806876 /* CoreHaptics.framework in Frameworks */,
 				AEF9987D259B355C0038E0B8 /* GameController.framework in Frameworks */,
 				AE7BCB62243DDD92007285F8 /* Carbon.framework in Frameworks */,
 				F2E7578E25C5E0DB0021FAFD /* libopenlibm.3.dylib in Frameworks */,
 				EBDF37511BB969EE001191B5 /* CoreAudio.framework in Frameworks */,
+				F252BB9726652AB600806876 /* SystemConfiguration.framework in Frameworks */,
 				AE7BCB5C243DDCAE007285F8 /* ForceFeedback.framework in Frameworks */,
 				AE7BCB5E243DDCD1007285F8 /* AudioToolbox.framework in Frameworks */,
 				AE7BCB60243DDD49007285F8 /* libiconv.2.tbd in Frameworks */,
@@ -2613,6 +2619,8 @@
 		AED73DC52303E57C00ECDB64 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				F252BB9626652AB600806876 /* SystemConfiguration.framework */,
+				F252BB9326652AA300806876 /* CoreHaptics.framework */,
 				AEF9987C259B355C0038E0B8 /* GameController.framework */,
 				AE7BCB61243DDD92007285F8 /* Carbon.framework */,
 				AE7BCB5F243DDD3A007285F8 /* libiconv.2.tbd */,
