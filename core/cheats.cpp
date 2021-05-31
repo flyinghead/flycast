@@ -319,13 +319,13 @@ void CheatManager::loadCheatFile(const std::string& filename)
 	while (fgets(buffer, sizeof(buffer), cheatfile) != nullptr)
 	{
 		std::string l = buffer;
-		auto equalPos = l.find("=");
+		auto equalPos = l.find('=');
 		if (equalPos == std::string::npos)
 			continue;
-		auto quotePos = l.find("\"", equalPos);
+		auto quotePos = l.find('"', equalPos);
 		if (quotePos == std::string::npos)
 			continue;
-		auto quote2Pos = l.find("\"", quotePos + 1);
+		auto quote2Pos = l.find('"', quotePos + 1);
 		if (quote2Pos == std::string::npos)
 			continue;
 		if (l.substr(0, 5) != "cheat" || l[5] < '0' || l[5] > '9')

@@ -116,8 +116,6 @@ enum AWAVE_KEYS
 	AWAVE_TRIGGER_KEY = 1 << 12,
 };
 
-struct IMapleConfigMap;
-
 struct maple_device
 {
 	u8 maple_port;          //raw maple port

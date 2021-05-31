@@ -21,7 +21,6 @@
 
 #if	HOST_CPU == CPU_X64 && FEAT_AREC != DYNAREC_NONE
 
-#define XBYAK_NO_OP_NAMES
 #include <xbyak/xbyak.h>
 #include <xbyak/xbyak_util.h>
 using namespace Xbyak::util;

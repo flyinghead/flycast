@@ -16,8 +16,8 @@
     You should have received a copy of the GNU General Public License
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
-#include "audiostream.h"
 #ifdef USE_OBOE
+#include "audiostream.h"
 #include <oboe/Oboe.h>
 #include <vector>
 #include <algorithm>

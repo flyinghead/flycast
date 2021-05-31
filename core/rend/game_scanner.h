@@ -57,13 +57,13 @@ class GameScanner
 	void add_game_directory(const std::string& path)
 	{
         DirectoryTree tree(path);
-        std::string emptyParentPath = "";
+        std::string emptyParentPath;
         for (const DirectoryTree::item& item : tree)
         {
             if (running == false)
                 break;
             
-            if (game_list.size() == 0)
+            if (game_list.empty())
             {
                 if(item.parentPath.compare(emptyParentPath))
                 {

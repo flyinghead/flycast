@@ -1,5 +1,5 @@
-#include "audiostream.h"
 #if USE_ALSA
+#include "audiostream.h"
 #include <alsa/asoundlib.h>
 #include "cfg/cfg.h"
 

@@ -62,7 +62,7 @@ void MapleConfigMap::SetVibration(float power, float inclination, u32 duration_m
 
 void MapleConfigMap::GetInput(PlainJoystickState* pjs)
 {
-	int player_num = playerNum();
+	u32 player_num = playerNum();
 
 	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
 	{
@@ -154,7 +154,7 @@ void MapleConfigMap::GetAbsCoordinates(int& x, int& y)
 
 void MapleConfigMap::GetMouseInput(u8& buttons, int& x, int& y, int& wheel)
 {
-	int playerNum = this->playerNum();
+	u32 playerNum = this->playerNum();
 	buttons = mo_buttons[playerNum] & 0xff;
 	x = (int)std::round(mo_x_delta[playerNum]);
 	y = (int)std::round(mo_y_delta[playerNum]);

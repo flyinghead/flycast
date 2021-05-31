@@ -940,4 +940,3 @@ void dump_screenshot(u8 *buffer, u32 width, u32 height, bool alpha, u32 rowPitch
 	stbi_write_png("screenshot.png", width, height, alpha ? 4 : 3, buffer, rowPitch);
 }
 #endif
-
