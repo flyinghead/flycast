@@ -142,7 +142,7 @@ std::string Gdxsv::GeneratePlatformInfoString() {
     ss << "maxlag=" << (int) maxlag << "\n";
     ss << "patch_id=" << symbols[":patch_id"] << "\n";
     ss << "machine_id=" << os_GetMachineID() << "\n";
-    ss << "wireless=" << (os_GetConnectionMedium() == "Wireless") << "\n";
+    ss << "wireless=" << (int) (os_GetConnectionMedium() == "Wireless") << "\n";
     
     if (gcp_ping_test_finished) {
         for (const auto &res : gcp_ping_test_result) {
