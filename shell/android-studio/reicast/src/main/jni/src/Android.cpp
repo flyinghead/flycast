@@ -587,6 +587,13 @@ std::string os_FetchStringFromURL(const std::string& url)
     return empty;
 }
 
+std::string os_GetMachineID()
+{
+    //Not implemented
+    std::string empty;
+    return empty;
+}
+
 JNIEXPORT void JNICALL Java_com_reicast_emulator_periph_InputDeviceManager_init(JNIEnv *env, jobject obj)
 {
     input_device_manager = env->NewGlobalRef(obj);
