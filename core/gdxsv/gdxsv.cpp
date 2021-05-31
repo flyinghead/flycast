@@ -141,7 +141,7 @@ std::string Gdxsv::GeneratePlatformInfoString() {
     ss << "disk=" << (int) disk << "\n";
     ss << "maxlag=" << (int) maxlag << "\n";
     ss << "patch_id=" << symbols[":patch_id"] << "\n";
-    ss << "hwid=" << os_GetMachineID() << "\n";
+    ss << "machine_id=" << os_GetMachineID() << "\n";
     
     if (gcp_ping_test_finished) {
         for (const auto &res : gcp_ping_test_result) {
