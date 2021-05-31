@@ -881,6 +881,32 @@ static void contentpath_warning_popup()
     }
 }
 
+static void wireless_warning_popup()
+{
+    static bool show_wireless_warning = true;
+    if (os_GetConnectionMedium() == "Wireless" && show_wireless_warning)
+    {
+        ImGui::OpenPopup("Wireless connection detected");
+        if (ImGui::BeginPopupModal("Wireless connection detected", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
+        {
+            ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + 400.f * scaling);
+            ImGui::TextWrapped("  Please use LAN cable for the best gameplay experience!  ");
+            ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(16 * scaling, 3 * scaling));
+            float currentwidth = ImGui::GetContentRegionAvail().x;
+            
+            ImGui::SetCursorPosX((currentwidth - 100.f * scaling) / 2.f + ImGui::GetStyle().WindowPadding.x);
+            if (ImGui::Button("OK", ImVec2(100.f * scaling, 0.f)))
+            {
+                show_wireless_warning = false;
+                ImGui::CloseCurrentPopup();
+            }
+            ImGui::SetItemDefaultFocus();
+            ImGui::PopStyleVar();
+            ImGui::EndPopup();
+        }
+    }
+}
+
 void directory_selected_callback(bool cancelled, std::string selection)
 {
 	if (!cancelled)
@@ -1845,6 +1871,7 @@ static void gui_display_content()
 	error_popup();
     update_popup();
     contentpath_warning_popup();
+    wireless_warning_popup();
 
 	ImGui::Render();
 	ImGui_impl_RenderDrawData(ImGui::GetDrawData(), false);
