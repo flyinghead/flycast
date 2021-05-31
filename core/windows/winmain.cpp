@@ -631,6 +631,23 @@ std::string os_FetchStringFromURL(const std::string& url)
     return result;
 }
 
+std::string os_GetMachineID()
+{
+    char value[255];
+    DWORD BufferSize = sizeof(value);
+    LONG res = RegGetValueA(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Cryptography", "MachineGuid", RRF_RT_REG_SZ, NULL, value, &BufferSize);
+    if (res == 0)
+    {
+        std::string s;
+        s += value;
+        return s;
+    }
+    else
+    {
+        return "";
+    }
+}
+
 #ifdef _WIN64
 #include "hw/sh4/dyna/ngen.h"
 

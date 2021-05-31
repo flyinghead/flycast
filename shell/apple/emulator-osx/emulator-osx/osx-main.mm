@@ -121,6 +121,32 @@ std::string os_FetchStringFromURL(const std::string& url) {
     return result;
 }
 
+std::string os_GetMachineID(){
+    io_service_t    platformExpert = IOServiceGetMatchingService(kIOMasterPortDefault,IOServiceMatching("IOPlatformExpertDevice"));
+    CFStringRef serialNumberAsCFString = NULL;
+
+    if (platformExpert) {
+        serialNumberAsCFString =
+        (CFStringRef)IORegistryEntryCreateCFProperty(platformExpert,
+                                        CFSTR(kIOPlatformSerialNumberKey),
+                                        kCFAllocatorDefault, 0);
+        IOObjectRelease(platformExpert);
+        if (serialNumberAsCFString) {
+            CFIndex bufferSize = CFStringGetLength(serialNumberAsCFString);
+            bufferSize = CFStringGetMaximumSizeForEncoding(bufferSize, kCFStringEncodingUTF8);
+            char value[bufferSize+1];
+
+            if (CFStringGetCString(serialNumberAsCFString, value, bufferSize, kCFStringEncodingUTF8))
+            {
+                std::string s;
+                s += value;
+                return s;
+            }
+        }
+    }
+    return "";
+}
+
 void common_linux_setup();
 
 extern "C" void emu_dc_exit()

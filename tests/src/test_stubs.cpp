@@ -42,6 +42,13 @@ std::string os_FetchStringFromURL(const std::string& url)
     return empty;
 }
 
+std::string os_GetMachineID()
+{
+    std::string empty;
+    return empty;
+}
+
+
 #ifdef _WIN32
 #include <windows.h>
 

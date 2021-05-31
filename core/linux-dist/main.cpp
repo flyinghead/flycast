@@ -126,6 +126,13 @@ std::string os_FetchStringFromURL(const std::string& url)
     return empty;
 }
 
+std::string os_GetMachineID()
+{
+    //Not implemented
+    std::string empty;
+    return empty;
+}
+
 void common_linux_setup();
 
 // Find the user config directory.
