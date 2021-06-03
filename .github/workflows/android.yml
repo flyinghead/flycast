@@ -50,4 +50,4 @@ jobs:
           AWS_REGION: 'us-east-2'
           SOURCE_DIR: 'shell/android-studio/flycast/build/outputs/apk/debug/'
           DEST_DIR: android/${{ env.GIT_BUILD }}
-        if: ${{ github.event_name == 'push' }}
+        if: ${{ github.repository == 'flyinghead/flycast' && github.event_name == 'push' }}
