@@ -146,7 +146,7 @@ std::string Gdxsv::GeneratePlatformInfoString() {
     if(machine_id.length()){
         sha1_ctx shactx;
         sha1_init(&shactx);
-        sha1_update(&shactx, (uint)machine_id.length(), reinterpret_cast<const UINT8 *>(machine_id.c_str()));
+        sha1_update(&shactx, (uint32_t)machine_id.length(), reinterpret_cast<const UINT8 *>(machine_id.c_str()));
         sha1_final(&shactx);
         ss << "machine_id=" << std::hex << shactx.digest[0] << shactx.digest[1] << shactx.digest[2] << shactx.digest[3] << shactx.digest[4] << std::dec << "\n";
     }
