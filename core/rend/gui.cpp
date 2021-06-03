@@ -79,11 +79,11 @@ static void emuEventCallback(Event event)
 		break;
 	case Event::Start:
 		if (config::AutoSavestate && settings.imgread.ImagePath[0] != '\0')
-			dc_loadstate();
+			dc_loadstate(config::SavestateSlot);
 		break;
 	case Event::Terminate:
 		if (config::AutoSavestate && settings.imgread.ImagePath[0] != '\0')
-			dc_savestate();
+			dc_savestate(config::SavestateSlot);
 		break;
 	default:
 		break;
@@ -419,20 +419,35 @@ static void gui_display_commands()
 
     ImGui::Begin("##commands", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize);
 
-	ImGui::Columns(2, "buttons", false);
 	if (settings.imgread.ImagePath[0] == '\0')
 	{
         ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
         ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
 	}
-	if (ImGui::Button("Load State", ImVec2(150 * scaling, 50 * scaling)))
+	if (ImGui::Button("Load State", ImVec2(110 * scaling, 50 * scaling)))
 	{
-		gui_state = GuiState::SelectLoadingStates;
+		gui_state = GuiState::Closed;
+		dc_loadstate(config::SavestateSlot);
 	}
-	ImGui::NextColumn();
-	if (ImGui::Button("Save State", ImVec2(150 * scaling, 50 * scaling)))
+	ImGui::SameLine();
+	std::string slot = "Slot " + std::to_string((int)config::SavestateSlot + 1);
+	if (ImGui::Button(slot.c_str(), ImVec2(80 * scaling - ImGui::GetStyle().FramePadding.x, 50 * scaling)))
+		ImGui::OpenPopup("slot_select_popup");
+    if (ImGui::BeginPopup("slot_select_popup"))
+    {
+        for (int i = 0; i < 10; i++)
+            if (ImGui::Selectable(std::to_string(i + 1).c_str(), config::SavestateSlot == i, 0,
+            		ImVec2(ImGui::CalcTextSize("Slot 8").x, 0))) {
+                config::SavestateSlot = i;
+                SaveSettings();
+            }
+        ImGui::EndPopup();
+    }
+	ImGui::SameLine();
+	if (ImGui::Button("Save State", ImVec2(110 * scaling, 50 * scaling)))
 	{
-		gui_state = GuiState::SelectSavingStates;
+		gui_state = GuiState::Closed;
+		dc_savestate(config::SavestateSlot);
 	}
 	if (settings.imgread.ImagePath[0] == '\0')
 	{
@@ -440,7 +455,7 @@ static void gui_display_commands()
         ImGui::PopStyleVar();
 	}
 
-	ImGui::NextColumn();
+	ImGui::Columns(2, "buttons", false);
 	if (ImGui::Button("Settings", ImVec2(150 * scaling, 50 * scaling)))
 	{
 		gui_state = GuiState::Settings;
@@ -1931,40 +1946,6 @@ static void gui_display_loadscreen()
     ImGui::End();
 }
 
-void gui_select_save_states(bool saving) {
-    centerNextWindow();
-    ImGui::SetNextWindowSize(ImVec2(330 * scaling, 0));
-
-    ImGui::Begin("##select states", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize);
-
-	ImGui::Columns(2, "buttons", false);
-
-	for (int i = 0; i < SAVE_STATES_CAPACITY; i++) {
-		if (i != 0)
-			ImGui::NextColumn();
-
-		char state_button_name[32];
-		sprintf(state_button_name, "State %d", i);
-		if (ImGui::Button(state_button_name, ImVec2(150 * scaling, 50 * scaling)))
-		{
-			gui_state = GuiState::Closed;
-			if (saving)
-				dc_savestate(i);
-			else
-				dc_loadstate(i);
-		}
-	}
-
-	ImGui::Columns(1, nullptr, false);
-	if (ImGui::Button("Cancel", ImVec2(300 * scaling + ImGui::GetStyle().ColumnsMinSpacing + ImGui::GetStyle().FramePadding.x * 2 - 1,
-			50 * scaling)))
-	{
-		gui_state = GuiState::Commands;
-	}
-
-	ImGui::End();
-}
-
 void gui_display_ui()
 {
 	if (gui_state == GuiState::Closed || gui_state == GuiState::VJoyEdit)
@@ -2020,12 +2001,6 @@ void gui_display_ui()
 		break;
 	case GuiState::Cheats:
 		gui_cheats();
-		break;
-	case GuiState::SelectLoadingStates:
-		gui_select_save_states(false);
-		break;
-	case GuiState::SelectSavingStates:
-		gui_select_save_states(true);
 		break;
 	default:
 		die("Unknown UI state");

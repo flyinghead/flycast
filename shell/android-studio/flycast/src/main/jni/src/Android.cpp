@@ -309,7 +309,7 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_pause(JNIEnv *env,job
         dc_stop();
         game_started = true; // restart when resumed
         if (config::AutoSavestate)
-            dc_savestate();
+            dc_savestate(config::SavestateSlot);
     }
 }
 
@@ -324,7 +324,7 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_stop(JNIEnv *env,jobj
     if (dc_is_running()) {
         dc_stop();
         if (config::AutoSavestate)
-            dc_savestate();
+            dc_savestate(config::SavestateSlot);
     }
     dc_term_game();
     gui_state = GuiState::Main;

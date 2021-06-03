@@ -298,6 +298,7 @@ extern Option<int> Language;	// 0 -> JP, 1 -> EN, 2 -> DE, 3 -> FR, 4 -> SP, 5 -
 extern Option<bool> FullMMU;
 extern Option<bool> ForceWindowsCE;
 extern Option<bool> AutoSavestate;
+extern Option<int> SavestateSlot;
 
 // Sound
 
