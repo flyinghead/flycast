@@ -3,6 +3,7 @@
 #include <sstream>
 #include <random>
 #include <regex>
+#include <iomanip>
 
 #include "packet.pb.h"
 #include "gdx_queue.h"
@@ -148,7 +149,7 @@ std::string Gdxsv::GeneratePlatformInfoString() {
         sha1_init(&shactx);
         sha1_update(&shactx, (uint32_t)machine_id.length(), reinterpret_cast<const UINT8 *>(machine_id.c_str()));
         sha1_final(&shactx);
-        ss << "machine_id=" << std::hex << shactx.digest[0] << shactx.digest[1] << shactx.digest[2] << shactx.digest[3] << shactx.digest[4] << std::dec << "\n";
+        ss << "machine_id=" << std::hex << std::setfill('0') << std::setw(8) << shactx.digest[0] << std::setw(8) <<  shactx.digest[1] << std::setw(8) << shactx.digest[2] << std::setw(8) << shactx.digest[3] << std::setw(8) << shactx.digest[4] << std::dec << "\n";
     }
     ss << "wireless=" << (int) (os_GetConnectionMedium() == "Wireless") << "\n";
     
