@@ -48,7 +48,9 @@ enum class GuiState {
 	SelectDisk,
 	Loading,
 	NetworkStart,
-	Cheats
+	Cheats,
+	SelectLoadingStates,
+	SelectSavingStates
 };
 extern GuiState gui_state;
 
@@ -81,3 +83,5 @@ static inline bool crosshairsNeeded()
 }
 const u32 *getCrosshairTextureData();
 std::pair<float, float> getCrosshairPosition(int playerNum);
+
+#define SAVE_STATES_CAPACITY 10

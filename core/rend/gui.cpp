@@ -427,14 +427,12 @@ static void gui_display_commands()
 	}
 	if (ImGui::Button("Load State", ImVec2(150 * scaling, 50 * scaling)))
 	{
-		gui_state = GuiState::Closed;
-		dc_loadstate();
+		gui_state = GuiState::SelectLoadingStates;
 	}
 	ImGui::NextColumn();
 	if (ImGui::Button("Save State", ImVec2(150 * scaling, 50 * scaling)))
 	{
-		gui_state = GuiState::Closed;
-		dc_savestate();
+		gui_state = GuiState::SelectSavingStates;
 	}
 	if (settings.imgread.ImagePath[0] == '\0')
 	{
@@ -1933,6 +1931,40 @@ static void gui_display_loadscreen()
     ImGui::End();
 }
 
+void gui_select_save_states(bool saving) {
+    centerNextWindow();
+    ImGui::SetNextWindowSize(ImVec2(330 * scaling, 0));
+
+    ImGui::Begin("##select states", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize);
+
+	ImGui::Columns(2, "buttons", false);
+
+	for (int i = 0; i < SAVE_STATES_CAPACITY; i++) {
+		if (i != 0)
+			ImGui::NextColumn();
+
+		char state_button_name[32];
+		sprintf(state_button_name, "State %d", i);
+		if (ImGui::Button(state_button_name, ImVec2(150 * scaling, 50 * scaling)))
+		{
+			gui_state = GuiState::Closed;
+			if (saving)
+				dc_savestate(i);
+			else
+				dc_loadstate(i);
+		}
+	}
+
+	ImGui::Columns(1, nullptr, false);
+	if (ImGui::Button("Cancel", ImVec2(300 * scaling + ImGui::GetStyle().ColumnsMinSpacing + ImGui::GetStyle().FramePadding.x * 2 - 1,
+			50 * scaling)))
+	{
+		gui_state = GuiState::Commands;
+	}
+
+	ImGui::End();
+}
+
 void gui_display_ui()
 {
 	if (gui_state == GuiState::Closed || gui_state == GuiState::VJoyEdit)
@@ -1988,6 +2020,12 @@ void gui_display_ui()
 		break;
 	case GuiState::Cheats:
 		gui_cheats();
+		break;
+	case GuiState::SelectLoadingStates:
+		gui_select_save_states(false);
+		break;
+	case GuiState::SelectSavingStates:
+		gui_select_save_states(true);
 		break;
 	default:
 		die("Unknown UI state");
