@@ -91,13 +91,14 @@ jobs:
         shell: bash
 
       - name: Configure AWS Credentials
+        id: aws-credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
           aws-access-key-id: AKIAJOZQS4H2PHQWYFCA
           aws-secret-access-key: ${{ secrets.S3_SECRET_KEY }}
           aws-region: us-east-2
-        if: github.event_name == 'push'
+        if: github.repository == 'flyinghead/flycast' && github.event_name == 'push' && matrix.config.destDir != ''
 
       - name: Upload to S3
         run: aws s3 sync build/artifact s3://flycast-builds/${{ matrix.config.destDir }}/${{ env.GIT_BUILD }} --acl public-read --follow-symlinks
-        if: github.event_name == 'push' && matrix.config.destDir != ''
+        if: ${{ steps.aws-credentials.outputs.aws-account-id != '' }}
