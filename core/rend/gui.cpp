@@ -774,58 +774,67 @@ static void controller_mapping_popup(std::shared_ptr<GamepadDevice> gamepad)
 	ImGui::PopStyleVar();
 }
 
+//ImGui DOES NOT support multiple non-stacked modal popup
+bool no_popup_opened()
+{
+    return !ImGui::IsPopupOpen(0, ImGuiPopupFlags_AnyPopupId);
+}
+
 static void error_popup()
 {
-	if (!error_msg.empty())
+    static auto popup_msg = error_msg;
+    if (!error_msg.empty() && no_popup_opened())
 	{
-		ImGui::OpenPopup("Error");
-		if (ImGui::BeginPopupModal("Error", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
-		{
-			ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + 400.f * scaling);
-			ImGui::TextWrapped("%s", error_msg.c_str());
-			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(16 * scaling, 3 * scaling));
-			float currentwidth = ImGui::GetContentRegionAvail().x;
-			ImGui::SetCursorPosX((currentwidth - 80.f * scaling) / 2.f + ImGui::GetStyle().WindowPadding.x);
-			if (ImGui::Button("OK", ImVec2(80.f * scaling, 0.f)))
-			{
-				error_msg.clear();
-				ImGui::CloseCurrentPopup();
-			}
-			ImGui::SetItemDefaultFocus();
-			ImGui::PopStyleVar();
-			ImGui::EndPopup();
-		}
+        ImGui::OpenPopup("Error");
+        popup_msg = error_msg;
+        error_msg.clear();
 	}
+    if (ImGui::BeginPopupModal("Error", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
+    {
+        ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + 400.f * scaling);
+        ImGui::TextWrapped("%s", popup_msg.c_str());
+        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(16 * scaling, 3 * scaling));
+        float currentwidth = ImGui::GetContentRegionAvail().x;
+        ImGui::SetCursorPosX((currentwidth - 80.f * scaling) / 2.f + ImGui::GetStyle().WindowPadding.x);
+        if (ImGui::Button("OK", ImVec2(80.f * scaling, 0.f)))
+        {
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::SetItemDefaultFocus();
+        ImGui::PopStyleVar();
+        ImGui::EndPopup();
+    }
 }
 
 static void update_popup()
 {
-    if (gdxsv.UpdateAvailable())
+    if (gdxsv.UpdateAvailable() && no_popup_opened())
     {
         ImGui::OpenPopup("New version");
-        if (ImGui::BeginPopupModal("New version", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
+        gdxsv.DismissUpdateDialog();
+    }
+    if (ImGui::BeginPopupModal("New version", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
+    {
+        ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + 400.f * scaling);
+        ImGui::TextWrapped("  v%s is available for download!  ", gdxsv.LatestVersion().c_str());
+        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(16 * scaling, 3 * scaling));
+        float currentwidth = ImGui::GetContentRegionAvail().x;
+        ImGui::SetCursorPosX((currentwidth - 100.f * scaling) / 2.f + ImGui::GetStyle().WindowPadding.x - 55.f * scaling);
+        if (ImGui::Button("Download", ImVec2(100.f * scaling, 0.f)))
         {
-            ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + 400.f * scaling);
-            ImGui::TextWrapped("  v%s is available for download!  ", gdxsv.LatestVersion().c_str());
-            ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(16 * scaling, 3 * scaling));
-            float currentwidth = ImGui::GetContentRegionAvail().x;
-            ImGui::SetCursorPosX((currentwidth - 100.f * scaling) / 2.f + ImGui::GetStyle().WindowPadding.x - 55.f * scaling);
-            if (ImGui::Button("Download", ImVec2(100.f * scaling, 0.f)))
-            {
-                gdxsv.OpenDownloadPage();
-                ImGui::CloseCurrentPopup();
-            }
-            ImGui::SameLine();
-            ImGui::SetCursorPosX((currentwidth - 100.f * scaling) / 2.f + ImGui::GetStyle().WindowPadding.x + 55.f * scaling);
-            if (ImGui::Button("Cancel", ImVec2(100.f * scaling, 0.f)))
-            {
-                gdxsv.DismissUpdateDialog();
-                ImGui::CloseCurrentPopup();
-            }
-            ImGui::SetItemDefaultFocus();
-            ImGui::PopStyleVar();
-            ImGui::EndPopup();
+            gdxsv.OpenDownloadPage();
+            ImGui::CloseCurrentPopup();
         }
+        ImGui::SameLine();
+        ImGui::SetCursorPosX((currentwidth - 100.f * scaling) / 2.f + ImGui::GetStyle().WindowPadding.x + 55.f * scaling);
+        if (ImGui::Button("Cancel", ImVec2(100.f * scaling, 0.f)))
+        {
+            gdxsv.DismissUpdateDialog();
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::SetItemDefaultFocus();
+        ImGui::PopStyleVar();
+        ImGui::EndPopup();
     }
 }
 
@@ -833,36 +842,36 @@ static void contentpath_warning_popup()
 {
     static bool show_contentpath_selection;
 
-    if (scanner.content_path_looks_incorrect)
+    if (scanner.content_path_looks_incorrect && no_popup_opened())
     {
         ImGui::OpenPopup("Incorrect Content Location?");
-        if (ImGui::BeginPopupModal("Incorrect Content Location?", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
+        scanner.content_path_looks_incorrect = false;
+    }
+    if (ImGui::BeginPopupModal("Incorrect Content Location?", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
+    {
+        ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + 400.f * scaling);
+        ImGui::TextWrapped("  Scanned %d folders but no game can be found!  ", scanner.empty_folders_scanned);
+        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(16 * scaling, 3 * scaling));
+        float currentwidth = ImGui::GetContentRegionAvail().x;
+        ImGui::SetCursorPosX((currentwidth - 100.f * scaling) / 2.f + ImGui::GetStyle().WindowPadding.x - 55.f * scaling);
+        if (ImGui::Button("Reselect", ImVec2(100.f * scaling, 0.f)))
         {
-            ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + 400.f * scaling);
-            ImGui::TextWrapped("  Scanned %d folders but no game can be found!  ", scanner.empty_folders_scanned);
-            ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(16 * scaling, 3 * scaling));
-            float currentwidth = ImGui::GetContentRegionAvail().x;
-            ImGui::SetCursorPosX((currentwidth - 100.f * scaling) / 2.f + ImGui::GetStyle().WindowPadding.x - 55.f * scaling);
-            if (ImGui::Button("Reselect", ImVec2(100.f * scaling, 0.f)))
-            {
-            	scanner.content_path_looks_incorrect = false;
-                ImGui::CloseCurrentPopup();
-                show_contentpath_selection = true;
-            }
-            
-            ImGui::SameLine();
-            ImGui::SetCursorPosX((currentwidth - 100.f * scaling) / 2.f + ImGui::GetStyle().WindowPadding.x + 55.f * scaling);
-            if (ImGui::Button("Cancel", ImVec2(100.f * scaling, 0.f)))
-            {
-            	scanner.content_path_looks_incorrect = false;
-                ImGui::CloseCurrentPopup();
-                scanner.stop();
-                settings.dreamcast.ContentPath.clear();
-            }
-            ImGui::SetItemDefaultFocus();
-            ImGui::PopStyleVar();
-            ImGui::EndPopup();
+            scanner.content_path_looks_incorrect = false;
+            ImGui::CloseCurrentPopup();
+            show_contentpath_selection = true;
         }
+        
+        ImGui::SameLine();
+        ImGui::SetCursorPosX((currentwidth - 100.f * scaling) / 2.f + ImGui::GetStyle().WindowPadding.x + 55.f * scaling);
+        if (ImGui::Button("Cancel", ImVec2(100.f * scaling, 0.f)))
+        {
+            ImGui::CloseCurrentPopup();
+            scanner.stop();
+            settings.dreamcast.ContentPath.clear();
+        }
+        ImGui::SetItemDefaultFocus();
+        ImGui::PopStyleVar();
+        ImGui::EndPopup();
     }
     if (show_contentpath_selection)
     {
@@ -884,26 +893,26 @@ static void contentpath_warning_popup()
 static void wireless_warning_popup()
 {
     static bool show_wireless_warning = true;
-    if (os_GetConnectionMedium() == "Wireless" && show_wireless_warning)
+    if (os_GetConnectionMedium() == "Wireless" && show_wireless_warning && no_popup_opened())
     {
         ImGui::OpenPopup("Wireless connection detected");
-        if (ImGui::BeginPopupModal("Wireless connection detected", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
+        show_wireless_warning = false;
+    }
+    if (ImGui::BeginPopupModal("Wireless connection detected", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
+    {
+        ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + 400.f * scaling);
+        ImGui::TextWrapped("  Please use LAN cable for the best gameplay experience!  ");
+        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(16 * scaling, 3 * scaling));
+        float currentwidth = ImGui::GetContentRegionAvail().x;
+        
+        ImGui::SetCursorPosX((currentwidth - 100.f * scaling) / 2.f + ImGui::GetStyle().WindowPadding.x);
+        if (ImGui::Button("OK", ImVec2(100.f * scaling, 0.f)))
         {
-            ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + 400.f * scaling);
-            ImGui::TextWrapped("  Please use LAN cable for the best gameplay experience!  ");
-            ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(16 * scaling, 3 * scaling));
-            float currentwidth = ImGui::GetContentRegionAvail().x;
-            
-            ImGui::SetCursorPosX((currentwidth - 100.f * scaling) / 2.f + ImGui::GetStyle().WindowPadding.x);
-            if (ImGui::Button("OK", ImVec2(100.f * scaling, 0.f)))
-            {
-                show_wireless_warning = false;
-                ImGui::CloseCurrentPopup();
-            }
-            ImGui::SetItemDefaultFocus();
-            ImGui::PopStyleVar();
-            ImGui::EndPopup();
+            ImGui::CloseCurrentPopup();
         }
+        ImGui::SetItemDefaultFocus();
+        ImGui::PopStyleVar();
+        ImGui::EndPopup();
     }
 }
 
