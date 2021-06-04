@@ -78,11 +78,11 @@ static void emuEventCallback(Event event)
 		game_started = true;
 		break;
 	case Event::Start:
-		if (config::AutoSavestate && settings.imgread.ImagePath[0] != '\0')
+		if (config::AutoLoadState && settings.imgread.ImagePath[0] != '\0')
 			dc_loadstate(config::SavestateSlot);
 		break;
 	case Event::Terminate:
-		if (config::AutoSavestate && settings.imgread.ImagePath[0] != '\0')
+		if (config::AutoSaveState && settings.imgread.ImagePath[0] != '\0')
 			dc_savestate(config::SavestateSlot);
 		break;
 	default:
@@ -290,18 +290,14 @@ static void ImGui_Impl_NewFrame()
 		io.MousePos = ImVec2(-FLT_MAX, -FLT_MAX);
 	else
 		io.MousePos = ImVec2(mo_x_phy - insetLeft, mo_y_phy - insetTop);
+	static bool delayTouch;
 #ifdef __ANDROID__
-	// Put the "mouse" outside the screen one frame after a touch up
-	// This avoids buttons and the like to stay selected
-	if ((mo_buttons[0] & 0xf) == 0xf)
-	{
-		if (touch_up)
-			io.MousePos = ImVec2(-FLT_MAX, -FLT_MAX);
-		else if (io.MouseDown[0])
-			touch_up = true;
-	}
+	// Delay touch by one frame to allow widgets to be hovered before click
+	// This is required for widgets using ImGuiButtonFlags_AllowItemOverlap such as TabItem's
+	if (!delayTouch && (mo_buttons[0] & (1 << 2)) == 0 && io.MouseDown[ImGuiMouseButton_Left] == 0)
+		delayTouch = true;
 	else
-		touch_up = false;
+		delayTouch = false;
 #endif
 	if (io.WantCaptureMouse)
 	{
@@ -311,9 +307,10 @@ static void ImGui_Impl_NewFrame()
 		mo_y_delta[0] = 0;
 		mo_wheel_delta[0] = 0;
 	}
-	io.MouseDown[0] = (mo_buttons[0] & (1 << 2)) == 0;
-	io.MouseDown[1] = (mo_buttons[0] & (1 << 1)) == 0;
-	io.MouseDown[2] = (mo_buttons[0] & (1 << 3)) == 0;
+	if (!delayTouch)
+		io.MouseDown[ImGuiMouseButton_Left] = (mo_buttons[0] & (1 << 2)) == 0;
+	io.MouseDown[ImGuiMouseButton_Right] = (mo_buttons[0] & (1 << 1)) == 0;
+	io.MouseDown[ImGuiMouseButton_Middle] = (mo_buttons[0] & (1 << 3)) == 0;
 	io.MouseDown[3] = (mo_buttons[0] & (1 << 0)) == 0;
 
 	io.NavInputs[ImGuiNavInput_Activate] = (kcode[0] & DC_BTN_A) == 0;
@@ -1066,8 +1063,12 @@ static void gui_display_settings()
 			if (OptionCheckbox("Hide Legacy Naomi Roms", config::HideLegacyNaomiRoms,
 					"Hide .bin, .dat and .lst files from the content browser"))
 				scanner.refresh();
-			OptionCheckbox("Auto load/save state", config::AutoSavestate,
-					"Automatically save the state of the game when stopping and load it at start up.");
+	    	ImGui::Text("Automatic State:");
+			OptionCheckbox("Load", config::AutoLoadState,
+					"Load the last saved state of the game when starting");
+			ImGui::SameLine();
+			OptionCheckbox("Save", config::AutoSaveState,
+					"Save the state of the game when stopping");
 
 			ImGui::PopStyleVar();
 			ImGui::EndTabItem();
