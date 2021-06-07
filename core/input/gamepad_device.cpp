@@ -22,6 +22,7 @@
 #include "oslib/oslib.h"
 #include "rend/gui.h"
 #include "emulator.h"
+#include "stdclass.h"
 
 #include <algorithm>
 #include <climits>
@@ -320,6 +321,74 @@ std::string GamepadDevice::make_mapping_filename(bool instance)
 	return mapping_file;
 }
 
+void GamepadDevice::verify_or_create_system_mappings()
+{
+	std::string dc_name = make_mapping_filename(false, 0);
+	std::string arcade_name = make_mapping_filename(false, 2);
+
+	std::string dc_path = get_readonly_config_path(std::string("mappings/") + dc_name);
+	std::string arcade_path = get_readonly_config_path(std::string("mappings/") + arcade_name);
+
+	if (!file_exists(arcade_path))
+	{
+		save_mapping(2);
+		input_mapper->ClearMappings();
+	}
+	if (!file_exists(dc_path))
+	{
+		save_mapping(0);
+		input_mapper->ClearMappings();
+	}
+
+	find_mapping(DC_PLATFORM_DREAMCAST);
+}
+
+void GamepadDevice::load_system_mappings(int system)
+{
+	for (int i = 0; i < GetGamepadCount(); i++)
+	{
+		std::shared_ptr<GamepadDevice> gamepad = GetGamepad(i);
+		gamepad->find_mapping(system);
+	}
+}
+
+std::string GamepadDevice::make_mapping_filename(bool instance, int system)
+{
+	std::string mapping_file = api_name() + "_" + name();
+	if (instance)
+		mapping_file += "-" + _unique_id;
+	if (system == 0)
+		mapping_file += "_dc";
+	else
+		mapping_file += "_arcade";
+	std::replace(mapping_file.begin(), mapping_file.end(), '/', '-');
+	std::replace(mapping_file.begin(), mapping_file.end(), '\\', '-');
+	std::replace(mapping_file.begin(), mapping_file.end(), ':', '-');
+	std::replace(mapping_file.begin(), mapping_file.end(), '?', '-');
+	std::replace(mapping_file.begin(), mapping_file.end(), '*', '-');
+	std::replace(mapping_file.begin(), mapping_file.end(), '|', '-');
+	std::replace(mapping_file.begin(), mapping_file.end(), '"', '-');
+	std::replace(mapping_file.begin(), mapping_file.end(), '<', '-');
+	std::replace(mapping_file.begin(), mapping_file.end(), '>', '-');
+	mapping_file += ".cfg";
+
+	return mapping_file;
+}
+
+bool GamepadDevice::find_mapping(int system)
+{
+	std::string mapping_file;
+	mapping_file = make_mapping_filename(false, system);
+
+	// fall back on default flycast mapping filename if system profile not found
+	std::string system_mapping_path = get_readonly_config_path(std::string("mappings/") + mapping_file);
+	if (!file_exists(system_mapping_path))
+		mapping_file = make_mapping_filename(false);
+
+	input_mapper = InputMapping::LoadMapping(mapping_file.c_str());
+	return !!input_mapper;
+}
+
 bool GamepadDevice::find_mapping(const char *custom_mapping /* = nullptr */)
 {
 	std::string mapping_file;
@@ -362,6 +431,15 @@ void GamepadDevice::save_mapping()
 	if (!input_mapper)
 		return;
 	std::string filename = make_mapping_filename();
+	InputMapping::SaveMapping(filename.c_str(), input_mapper);
+}
+
+void GamepadDevice::save_mapping(int system)
+{
+	if (!input_mapper)
+		return;
+	std::string filename = make_mapping_filename(false, system);
+	input_mapper->set_dirty();
 	InputMapping::SaveMapping(filename.c_str(), input_mapper);
 }
 

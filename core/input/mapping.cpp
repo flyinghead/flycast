@@ -230,6 +230,11 @@ u32 InputMapping::get_axis_code(u32 port, DreamcastKey key)
 	return -1;
 }
 
+void InputMapping::ClearMappings()
+{
+	loaded_mappings.clear();
+}
+
 std::shared_ptr<InputMapping> InputMapping::LoadMapping(const char *name)
 {
 	auto it = loaded_mappings.find(name);
@@ -246,6 +251,11 @@ std::shared_ptr<InputMapping> InputMapping::LoadMapping(const char *name)
 	loaded_mappings[name] = mapping;
 
 	return mapping;
+}
+
+void InputMapping::set_dirty()
+{
+	dirty = true;
 }
 
 bool InputMapping::save(const char *name)
