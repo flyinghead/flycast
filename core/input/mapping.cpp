@@ -97,6 +97,21 @@ axis_list[] =
 
 std::map<std::string, std::shared_ptr<InputMapping>> InputMapping::loaded_mappings;
 
+void InputMapping::clear_button(u32 port, DreamcastKey id, u32 code)
+{
+	if (id != EMU_BTN_NONE)
+	{
+		while (true)
+		{
+			u32 code = get_button_code(port, id);
+			if (code == (u32)-1)
+				break;
+			buttons[port][code] = EMU_BTN_NONE;
+		}
+		dirty = true;
+	}
+}
+
 void InputMapping::set_button(u32 port, DreamcastKey id, u32 code)
 {
 	if (id != EMU_BTN_NONE)
@@ -109,6 +124,21 @@ void InputMapping::set_button(u32 port, DreamcastKey id, u32 code)
 			buttons[port][code] = EMU_BTN_NONE;
 		}
 		buttons[port][code] = id;
+		dirty = true;
+	}
+}
+
+void InputMapping::clear_axis(u32 port, DreamcastKey id, u32 code)
+{
+	if (id != EMU_AXIS_NONE)
+	{
+		while (true)
+		{
+			u32 code = get_axis_code(port, id);
+			if (code == (u32)-1)
+				break;
+			axes[port][code] = EMU_AXIS_NONE;
+		}
 		dirty = true;
 	}
 }

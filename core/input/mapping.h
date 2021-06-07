@@ -50,6 +50,7 @@ public:
 		else
 			return EMU_BTN_NONE;
 	}
+	void clear_button(u32 port, DreamcastKey id, u32 code);
 	void set_button(u32 port, DreamcastKey id, u32 code);
 	void set_button(DreamcastKey id, u32 code) { set_button(0, id, code); }
 	u32 get_button_code(u32 port, DreamcastKey key);
@@ -71,6 +72,7 @@ public:
 			return false;
 	}
 	u32 get_axis_code(u32 port, DreamcastKey key);
+	void clear_axis(u32 port, DreamcastKey id, u32 code);
 	void set_axis(u32 port, DreamcastKey id, u32 code, bool inverted);
 	void set_axis(DreamcastKey id, u32 code, bool inverted) { set_axis(0, id, code, inverted); }
 
