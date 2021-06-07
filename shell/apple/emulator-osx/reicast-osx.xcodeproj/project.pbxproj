@@ -467,7 +467,7 @@
 		F247152C25C12B80004E13FE /* extension_set.cc in Sources */ = {isa = PBXBuildFile; fileRef = F24714CE25C12B80004E13FE /* extension_set.cc */; };
 		F247152D25C12B80004E13FE /* generated_enum_util.cc in Sources */ = {isa = PBXBuildFile; fileRef = F24714CF25C12B80004E13FE /* generated_enum_util.cc */; };
 		F247152E25C12B80004E13FE /* generated_message_table_driven.cc in Sources */ = {isa = PBXBuildFile; fileRef = F24714D025C12B80004E13FE /* generated_message_table_driven.cc */; };
-		F252BB9426652AA300806876 /* CoreHaptics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F252BB9326652AA300806876 /* CoreHaptics.framework */; };
+		F252BB9426652AA300806876 /* CoreHaptics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F252BB9326652AA300806876 /* CoreHaptics.framework */; settings = {ATTRIBUTES = (Weak, ); }; };
 		F252BB9726652AB600806876 /* SystemConfiguration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F252BB9626652AB600806876 /* SystemConfiguration.framework */; };
 		F2E5596F25C12886006B0421 /* gdxsv.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F2E5596925C12886006B0421 /* gdxsv.cpp */; };
 		F2E5597025C12886006B0421 /* packet.pb.cc in Sources */ = {isa = PBXBuildFile; fileRef = F2E5596C25C12886006B0421 /* packet.pb.cc */; };
