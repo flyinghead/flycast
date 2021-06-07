@@ -391,6 +391,7 @@ void gui_open_settings()
 	else if (gui_state == GuiState::Commands)
 	{
 		gui_state = GuiState::Closed;
+		GamepadDevice::load_system_mappings();
 		dc_resume();
 	}
 }
@@ -460,6 +461,7 @@ static void gui_display_commands()
 	ImGui::NextColumn();
 	if (ImGui::Button("Resume", ImVec2(150 * scaling, 50 * scaling)))
 	{
+		GamepadDevice::load_system_mappings();
 		gui_state = GuiState::Closed;
 	}
 
