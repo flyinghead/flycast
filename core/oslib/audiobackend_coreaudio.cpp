@@ -11,10 +11,8 @@
 
     It does work on my macmini though
  */
-
-#include "audiostream.h"
-
 #if defined(__APPLE__)
+#include "audiostream.h"
 #include "stdclass.h"
 
 #include <atomic>

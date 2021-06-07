@@ -33,4 +33,4 @@ Get fresh builds for your system [on the builds page](https://flyinghead.github.
 
 ## Disclaimer
 
-All code contritbuted to this fork is *not* bound by the Individual Contributor License Agreement of the upstream repository (https://github.com/reicast/reicast-emulator) and shall *not* be considered as a contribution to the upstream repository.
+All code contributed to this fork is *not* bound by the Individual Contributor License Agreement of the upstream repository (https://github.com/reicast/reicast-emulator) and shall *not* be considered as a contribution to the upstream repository.

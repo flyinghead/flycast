@@ -303,20 +303,6 @@ struct maple_sega_vmu: maple_base
 		return MDT_SegaVMU;
 	}
 
-	// creates an empty VMU
-	bool init_emptyvmu()
-	{
-		INFO_LOG(MAPLE, "Initialising empty VMU...");
-
-		uLongf dec_sz = sizeof(flash_data);
-		int rv = uncompress(flash_data, &dec_sz, vmu_default, sizeof(vmu_default));
-
-		verify(rv == Z_OK);
-		verify(dec_sz == sizeof(flash_data));
-
-		return (rv == Z_OK && dec_sz == sizeof(flash_data));
-	}
-
 	bool serialize(void **data, unsigned int *total_size) override
 	{
 		maple_base::serialize(data, total_size);
@@ -333,6 +319,26 @@ struct maple_sega_vmu: maple_base
 		REICAST_USA(lcd_data_decoded,48*32);
 		return true ;
 	}
+
+	void initializeVmu()
+	{
+		INFO_LOG(MAPLE, "Initialising empty VMU...");
+
+		uLongf dec_sz = sizeof(flash_data);
+		int rv = uncompress(flash_data, &dec_sz, vmu_default, sizeof(vmu_default));
+
+		verify(rv == Z_OK);
+		verify(dec_sz == sizeof(flash_data));
+
+		if (file != nullptr)
+		{
+			if (std::fwrite(flash_data, sizeof(flash_data), 1, file) != 1)
+				WARN_LOG(MAPLE, "Failed to write the VMU to disk");
+			if (std::fseek(file, 0, SEEK_SET) != 0)
+				WARN_LOG(MAPLE, "VMU: I/O error");
+		}
+	}
+
 	void OnSetup() override
 	{
 		memset(flash_data, 0, sizeof(flash_data));
@@ -345,52 +351,34 @@ struct maple_sega_vmu: maple_base
 			apath = get_writable_data_path(tempy);
 
 		file = nowide::fopen(apath.c_str(), "rb+");
-		if (!file)
+		if (file == nullptr)
 		{
 			INFO_LOG(MAPLE, "Unable to open VMU save file \"%s\", creating new file", apath.c_str());
-			file = nowide::fopen(apath.c_str(), "wb");
-			if (file) {
-				if (!init_emptyvmu())
-					WARN_LOG(MAPLE, "Failed to initialize an empty VMU, you should reformat it using the BIOS");
-
-				std::fwrite(flash_data, sizeof(flash_data), 1, file);
-				std::fseek(file, 0, SEEK_SET);
-			}
-			else
-			{
+			file = nowide::fopen(apath.c_str(), "wb+");
+			if (file == nullptr)
 				ERROR_LOG(MAPLE, "Failed to create VMU save file \"%s\"", apath.c_str());
-			}
+			initializeVmu();
 		}
 
 		if (file != nullptr)
-			std::fread(flash_data, 1, sizeof(flash_data), file);
+			if (std::fread(flash_data, sizeof(flash_data), 1, file) != 1)
+				WARN_LOG(MAPLE, "Failed to read the VMU from disk");
 
 		u8 sum = 0;
 		for (u32 i = 0; i < sizeof(flash_data); i++)
 			sum |= flash_data[i];
 
-		if (sum == 0) {
+		if (sum == 0)
 			// This means the existing VMU file is completely empty and needs to be recreated
-
-			if (init_emptyvmu())
-			{
-				if (file != nullptr)
-				{
-					std::fwrite(flash_data, sizeof(flash_data), 1, file);
-					std::fseek(file, 0, SEEK_SET);
-				}
-			}
-			else
-			{
-				WARN_LOG(MAPLE, "Failed to initialize an empty VMU, you should reformat it using the BIOS");
-			}
-		}
-
+			initializeVmu();
 	}
+
 	~maple_sega_vmu() override
 	{
-		if (file) std::fclose(file);
+		if (file != nullptr)
+			std::fclose(file);
 	}
+
 	u32 dma(u32 cmd) override
 	{
 		//printf("maple_sega_vmu::dma Called for port %d:%d, Command %d\n", bus_id, bus_port, cmd);
@@ -579,7 +567,8 @@ struct maple_sega_vmu: maple_base
 
 		case MDCF_BlockWrite:
 			{
-				switch(r32())
+				u32 function = r32();
+				switch (function)
 				{
 					case MFID_1_Storage:
 					{
@@ -592,21 +581,26 @@ struct maple_sega_vmu: maple_base
 						if (write_adr + write_len > sizeof(flash_data))
 						{
 							INFO_LOG(MAPLE, "Failed to write VMU %s: overflow", logical_port);
-							return MDRE_TransmitAgain; //invalid params
+							skip(write_len);
+							return MDRE_FileError; //invalid params
 						}
 						rptr(&flash_data[write_adr],write_len);
 
-						if (file)
+						if (file != nullptr)
 						{
-							std::fseek(file,write_adr,SEEK_SET);
-							std::fwrite(&flash_data[write_adr],1,write_len,file);
+							if (std::fseek(file, write_adr, SEEK_SET) != 0
+									|| std::fwrite(&flash_data[write_adr], write_len, 1, file) != 1)
+							{
+								WARN_LOG(MAPLE, "Failed to save VMU %s: I/O error", logical_port);
+								return MDRE_FileError; // I/O error
+							}
 							std::fflush(file);
 						}
 						else
 						{
 							INFO_LOG(MAPLE, "Failed to save VMU %s data", logical_port);
 						}
-						return MDRS_DeviceReply;//just ko
+						return MDRS_DeviceReply;
 					}
 
 					case MFID_2_LCD:
@@ -652,7 +646,7 @@ struct maple_sega_vmu: maple_base
 						}
 
 					default:
-						INFO_LOG(MAPLE, "VMU: command MDCF_BlockWrite -> Bad function used, returning MDRE_UnknownFunction");
+						INFO_LOG(MAPLE, "VMU: command MDCF_BlockWrite -> Unknown function %x", function);
 						return  MDRE_UnknownFunction;//bad function
 				}
 			}

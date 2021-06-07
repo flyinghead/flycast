@@ -51,10 +51,10 @@ struct Arm64RegAlloc : RegAlloc<eReg, eFReg>
 		RegAlloc::DoAlloc(block, alloc_regs, alloc_fregs);
 	}
 
-	virtual void Preload(u32 reg, eReg nreg) override;
-	virtual void Writeback(u32 reg, eReg nreg) override;
-	virtual void Preload_FPU(u32 reg, eFReg nreg) override;
-	virtual void Writeback_FPU(u32 reg, eFReg nreg) override;
+	void Preload(u32 reg, eReg nreg) override;
+	void Writeback(u32 reg, eReg nreg) override;
+	void Preload_FPU(u32 reg, eFReg nreg) override;
+	void Writeback_FPU(u32 reg, eFReg nreg) override;
 
 	const Register& MapRegister(const shil_param& param)
 	{

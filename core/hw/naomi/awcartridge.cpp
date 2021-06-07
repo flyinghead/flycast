@@ -243,9 +243,9 @@ void AWCartridge::WriteMem(u32 address, u32 data, u32 size)
 
 /*
 We are using 8 bits keys with the following subfields' structure:
-bits 0-3 is a index of 16-bits XOR (only 11 was used in known games)
-bits 4-5 is a index to the sboxes table
-bits 6-7 is a index to the permutation table
+bits 0-3 is an index of 16-bits XOR (only 11 was used in known games)
+bits 4-5 is an index to the sboxes table
+bits 6-7 is an index to the permutation table
 
 These subfields could be differing from the "real" ones in the following ways:
 - Current keys equal to decrypted game code binary 8-bit sum (of each byte's swapped 4-bit nibbles)

@@ -53,11 +53,6 @@ typedef size_t unat;
 typedef u64 unat;
 #endif
 
-#ifndef CDECL
-#define CDECL __cdecl
-#endif
-
-
 //intc function pointer and enums
 enum HollyInterruptType
 {
@@ -459,4 +454,4 @@ enum serialize_version_enum {
 	V15 = 810,
 	V16 = 811,
 	VCUR_FLYCAST = V16,
-} ;
+};

@@ -13,8 +13,6 @@
 #include "hw/sh4/sh4_cache.h"
 #include "debug/gdb_server.h"
 
-#include "hw/sh4/sh4_opcode.h"
-
 #define GetN(str) ((str>>8) & 0xf)
 #define GetM(str) ((str>>4) & 0xf)
 #define GetImm4(str) ((str>>0) & 0xf)

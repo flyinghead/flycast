@@ -119,7 +119,7 @@ public:
 		}
 	}
 
-	virtual void rumble(float power, float inclination, u32 duration_ms) override
+	void rumble(float power, float inclination, u32 duration_ms) override
 	{
 		if (sdl_haptic != NULL)
 		{
@@ -129,7 +129,7 @@ public:
 			SDL_HapticRumblePlay(sdl_haptic, power, duration_ms);
 		}
 	}
-	virtual void update_rumble() override
+	void update_rumble() override
 	{
 		if (sdl_haptic == NULL)
 			return;
@@ -173,7 +173,7 @@ public:
 	}
 
 protected:
-	virtual void load_axis_min_max(u32 axis) override
+	void load_axis_min_max(u32 axis) override
 	{
 		axis_min_values[axis] = -32768;
 		axis_ranges[axis] = 65535;

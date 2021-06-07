@@ -54,12 +54,12 @@ protected:
 		_name = "Keyboard";
 	}
 
-	virtual std::shared_ptr<InputMapping> getDefaultMapping() override {
+	std::shared_ptr<InputMapping> getDefaultMapping() override {
 		return std::make_shared<KeyboardInputMapping>();
 	}
 
 public:
-	virtual const char *get_button_name(u32 code) override
+	const char *get_button_name(u32 code) override
 	{
 		switch (code)
 		{

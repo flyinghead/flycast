@@ -4,6 +4,7 @@
 #include "cfg/cfg.h"
 #include "sdl/sdl.h"
 #include <SDL_syswm.h>
+#include <SDL_video.h>
 #endif
 #include "hw/maple/maple_devs.h"
 #include "sdl_gamepad.h"
@@ -16,10 +17,6 @@
 #endif
 #ifdef _WIN32
 #include "windows/rawinput.h"
-#endif
-
-#ifdef USE_VULKAN
-#include <SDL_vulkan.h>
 #endif
 
 static SDL_Window* window = NULL;
@@ -484,7 +481,7 @@ bool sdl_recreate_window(u32 flags)
 	// Set the window icon
 	u32 pixels[48 * 48];
 	for (int i = 0; i < 48 * 48; i++)
-		pixels[i] = reicast_icon[i + 2];
+		pixels[i] = window_icon[i + 2];
 	SDL_Surface *surface = SDL_CreateRGBSurfaceFrom(pixels, 48, 48, 32, 4 * 48, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000);
 	if (surface == NULL)
 	  INFO_LOG(COMMON, "Creating icon surface failed: %s", SDL_GetError());
@@ -530,4 +527,3 @@ void sdl_window_destroy()
 }
 
 #endif // !defined(__APPLE__)
-

@@ -72,7 +72,8 @@ protected:
 		colorAttachments[1].reset();
 		tempFramebuffers[0].reset();
 		tempFramebuffers[1].reset();
-		depthAttachment.reset();
+		depthAttachments[0].reset();
+		depthAttachments[1].reset();
 		mainBuffers.clear();
 		descriptorSets.clear();
 	}
@@ -116,7 +117,7 @@ protected:
 
 	vk::Rect2D viewport;
 	std::array<std::unique_ptr<FramebufferAttachment>, 2> colorAttachments;
-	std::unique_ptr<FramebufferAttachment> depthAttachment;
+	std::array<std::unique_ptr<FramebufferAttachment>, 2> depthAttachments;
 	vk::CommandBuffer currentCommandBuffer;
 	std::vector<bool> clearNeeded;
 

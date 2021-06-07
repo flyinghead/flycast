@@ -167,7 +167,7 @@ VMemType vmem_platform_init(void **vmem_base_addr, void **sh4rcb_addr) {
 
 	// Now try to allocate a contiguous piece of memory.
 	VMemType rv;
-#ifdef HOST_64BIT_CPU
+#if HOST_CPU == CPU_X64 || HOST_CPU == CPU_ARM64
 	reserved_size = 0x100000000L + sizeof(Sh4RCB) + 0x10000;	// 4GB + context size + 64K padding
 	reserved_base = mem_region_reserve(NULL, reserved_size);
 	rv = MemType4GB;

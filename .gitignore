@@ -10,7 +10,6 @@ Workdir/emu.cfg
 Workdir/lib*ant.properties
 
 # iOS General
-.DS_Store
 */build/*
 **/build/*
 *.pbxuser
@@ -33,14 +32,7 @@ build/*
 *Karen_angelXwind*
 local.properties
 ant.properties
-*build_obj
 *.d
-Workdir/data
-Workdir/reicast*
-Workdir/vmu*
-Workdir/webui*
-Workdir/emu.cfg
-Workdir/lib*ant.properties
 reicast-ios.xccheckout
 
 # Linux General

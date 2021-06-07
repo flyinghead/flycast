@@ -10,7 +10,7 @@ public:
 		loadMapping();
 	}
 
-	virtual const char *get_button_name(u32 code) override
+	const char *get_button_name(u32 code) override
 	{
 		const char *name = SDL_GetKeyName(SDL_GetKeyFromScancode((SDL_Scancode)code));
 		if (name[0] == 0)
@@ -19,7 +19,7 @@ public:
 	}
 
 protected:
-	virtual u8 convert_keycode(SDL_Scancode scancode) override
+	u8 convert_keycode(SDL_Scancode scancode) override
 	{
 		if (settings.input.keyboardLangId != KeyboardLayout::US && scancode == SDL_SCANCODE_BACKSLASH)
 			return (u8)SDL_SCANCODE_NONUSHASH;

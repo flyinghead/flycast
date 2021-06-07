@@ -165,7 +165,7 @@ public:
 	}
 	
 protected:
-	virtual u8 convert_keycode(UInt16 keycode) override
+	u8 convert_keycode(UInt16 keycode) override
 	{
 		return kb_map[keycode];
 	}

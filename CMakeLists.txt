@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10.2 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.10.2)
 
 find_program(CCACHE_FOUND ccache)
 if(CCACHE_FOUND)
@@ -215,7 +215,7 @@ if(PKG_CONFIG_FOUND AND NOT ANDROID AND NOT APPLE)
 	if(USE_HOST_LIBZIP)
 		pkg_check_modules(LIBZIP IMPORTED_TARGET libzip)
 		if(LIBZIP_FOUND)
-			target_link_libraries(${PROJECT_NAME} PRIVATE ${LIBZIP_LIBRARIES})
+			target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::LIBZIP)
 		endif()
     endif()
 
@@ -553,7 +553,6 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/hw/sh4/sh4_mem.h
         core/hw/sh4/sh4_mmr.cpp
         core/hw/sh4/sh4_mmr.h
-        core/hw/sh4/sh4_opcode.h
         core/hw/sh4/sh4_opcode_list.cpp
         core/hw/sh4/sh4_opcode_list.h
         core/hw/sh4/sh4_rom.cpp
@@ -950,6 +949,8 @@ elseif(APPLE)
         XCODE_ATTRIBUTE_SWIFT_OBJC_BRIDGING_HEADER "shell/apple/emulator-osx/emulator-osx/emulator-osx-Bridging-Header.h"
 		RESOURCE "${XIB}"
 		XCODE_ATTRIBUTE_ASSETCATALOG_COMPILER_APPICON_NAME "AppIcon"
+        BUILD_WITH_INSTALL_RPATH TRUE
+        INSTALL_RPATH "@loader_path/../Frameworks"
     )
 
     find_library(AUDIO_UNIT_LIBRARY AudioUnit)
@@ -973,7 +974,7 @@ elseif(WIN32)
     endif()
     target_sources(${PROJECT_NAME} PRIVATE
             core/windows/win_vmem.cpp
-            shell/windows/reicast.rc)
+            shell/windows/flycast.rc)
 
     target_link_libraries(${PROJECT_NAME} PRIVATE dsound opengl32 winmm ws2_32 wsock32 xinput9_1_0)
 endif()

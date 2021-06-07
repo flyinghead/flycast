@@ -34,7 +34,9 @@ Option<int> Broadcast("Dreamcast.Broadcast", 0);	// NTSC
 Option<int> Language("Dreamcast.Language", 1);		// English
 Option<bool> FullMMU("Dreamcast.FullMMU");
 Option<bool> ForceWindowsCE("Dreamcast.ForceWindowsCE");
-Option<bool> AutoSavestate("Dreamcast.AutoSavestate");
+Option<bool> AutoLoadState("Dreamcast.AutoLoadState");
+Option<bool> AutoSaveState("Dreamcast.AutoSaveState");
+Option<int> SavestateSlot("Dreamcast.SavestateSlot");
 
 // Sound
 

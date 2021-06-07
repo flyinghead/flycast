@@ -353,4 +353,3 @@ protected:
 	vk::Extent2D viewport;
 	vk::CommandBuffer texCommandBuffer;
 };
-

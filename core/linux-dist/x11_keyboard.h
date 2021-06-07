@@ -145,7 +145,7 @@ public:
 	}
 
 protected:
-	virtual u8 convert_keycode(int keycode) override
+	u8 convert_keycode(int keycode) override
 	{
 		if (kb_map.find(keycode) == kb_map.end()) {
 			DEBUG_LOG(INPUT, "Unknown key %x", keycode);

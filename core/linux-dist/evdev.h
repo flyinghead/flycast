@@ -1,5 +1,4 @@
 #pragma once
-#include "types.h"
 
 extern void input_evdev_init();
 extern void input_evdev_close();

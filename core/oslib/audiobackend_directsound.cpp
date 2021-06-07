@@ -3,7 +3,6 @@
 #include <initguid.h>
 #include <dsound.h>
 #include <vector>
-#include <algorithm>
 #include <atomic>
 #include <thread>
 #include "stdclass.h"

@@ -1,10 +1,8 @@
 #pragma once
-#include "types.h"
 
 void bsc_init();
 void bsc_reset(bool hard);
 void bsc_term();
-
 
 void cpg_init();
 void cpg_reset();
