@@ -44,7 +44,7 @@ static inline void ImGui_impl_RenderDrawData(ImDrawData *draw_data)
 		ImGui_ImplOpenGL3_RenderDrawData(draw_data);
 }
 
-void ScrollWhenDraggingOnVoid(const ImVec2& delta, ImGuiMouseButton mouse_button);
+void scrollWhenDraggingOnVoid(ImGuiMouseButton mouse_button = ImGuiMouseButton_Left);
 
 IMGUI_API const ImWchar*    GetGlyphRangesChineseSimplifiedOfficial();// Default + Half-Width + Japanese Hiragana/Katakana + set of 7800 CJK Unified Ideographs from General Standard Chinese Characters
 IMGUI_API const ImWchar*    GetGlyphRangesChineseTraditionalOfficial();// Default + Half-Width + Japanese Hiragana/Katakana + set of 4700 CJK Unified Ideographs from Hong Kong's List of Graphemes of Commonly-Used Chinese Characters
@@ -58,9 +58,23 @@ template<typename T>
 bool OptionRadioButton(const char *name, config::Option<T>& option, T value, const char *help = nullptr);
 void OptionComboBox(const char *name, config::Option<int>& option, const char *values[], int count,
 			const char *help = nullptr);
+bool OptionArrowButtons(const char *name, config::Option<int>& option, int min, int max, const char *help = nullptr);
 
 static inline void centerNextWindow()
 {
 	ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x / 2.f, ImGui::GetIO().DisplaySize.y / 2.f),
 			ImGuiCond_Always, ImVec2(0.5f, 0.5f));
 }
+
+static inline bool operator==(const ImVec2& l, const ImVec2& r)
+{
+	return l.x == r.x && l.y == r.y;
+}
+
+static inline bool operator!=(const ImVec2& l, const ImVec2& r)
+{
+	return !(l == r);
+}
+
+void fullScreenWindow(bool modal);
+void windowDragScroll();

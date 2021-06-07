@@ -27,6 +27,7 @@
 #include "oslib/directory.h"
 #include "imgui/imgui.h"
 #include "imgui/imgui_internal.h"
+#include "hw/maple/maple_devs.h"
 
 static std::string select_current_directory;
 static std::vector<std::string> subfolders;
@@ -40,6 +41,8 @@ static const std::string separators = "/";
 static const std::string native_separator = "/";
 #endif
 #define PSEUDO_ROOT ":"
+
+extern int insetLeft, insetRight, insetTop, insetBottom;
 
 void select_file_popup(const char *prompt, StringCallback callback,
 		bool selectFile, const std::string& selectExtension)
@@ -77,8 +80,7 @@ void select_file_popup(const char *prompt, StringCallback callback,
 		}
 	}
 
-	ImGui::SetNextWindowPos(ImVec2(0, 0));
-	ImGui::SetNextWindowSize(ImGui::GetIO().DisplaySize);
+	fullScreenWindow(true);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
 
 	if (ImGui::BeginPopupModal(prompt, NULL, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize ))
@@ -280,6 +282,9 @@ void select_file_popup(const char *prompt, StringCallback callback,
         }
         ImGui::PopStyleColor();
         
+        scrollWhenDraggingOnVoid();
+        windowDragScroll();
+
 		ImGui::PopStyleVar();
 		ImGui::EndChild();
 		if (!selectFile)
@@ -305,20 +310,24 @@ void select_file_popup(const char *prompt, StringCallback callback,
 }
 
 // See https://github.com/ocornut/imgui/issues/3379
-void ScrollWhenDraggingOnVoid(const ImVec2& delta, ImGuiMouseButton mouse_button)
+void scrollWhenDraggingOnVoid(ImGuiMouseButton mouse_button)
 {
     ImGuiContext& g = *ImGui::GetCurrentContext();
     ImGuiWindow* window = g.CurrentWindow;
+    while ((window->Flags & ImGuiWindowFlags_ChildWindow) && window->ScrollMax.x == 0.0f && window->ScrollMax.y == 0.0f)
+        window = window->ParentWindow;
     bool hovered = false;
     bool held = false;
     ImGuiButtonFlags button_flags = (mouse_button == ImGuiMouseButton_Left) ? ImGuiButtonFlags_MouseButtonLeft
     		: (mouse_button == ImGuiMouseButton_Right) ? ImGuiButtonFlags_MouseButtonRight : ImGuiButtonFlags_MouseButtonMiddle;
     if (g.HoveredId == 0) // If nothing hovered so far in the frame (not same as IsAnyItemHovered()!)
         ImGui::ButtonBehavior(window->Rect(), window->GetID("##scrolldraggingoverlay"), &hovered, &held, button_flags);
-    if (held && delta.x != 0.0f)
-        ImGui::SetScrollX(window, window->Scroll.x + delta.x);
-    if (held && delta.y != 0.0f)
-        ImGui::SetScrollY(window, window->Scroll.y + delta.y);
+    const ImVec2& delta = ImGui::GetIO().MouseDelta;
+    if (held && delta != ImVec2())
+    {
+    	window->DragScrolling = true;
+    	window->ScrollSpeed = delta;
+    }
 }
 
 static void UnpackAccumulativeOffsetsIntoRanges(int base_codepoint, const short* accumulative_offsets, int accumulative_offsets_count, ImWchar* out_ranges)
@@ -635,6 +644,44 @@ bool OptionSlider(const char *name, config::Option<int>& option, int min, int ma
 	return valueChanged;
 }
 
+bool OptionArrowButtons(const char *name, config::Option<int>& option, int min, int max, const char *help)
+{
+	const float innerSpacing = ImGui::GetStyle().ItemInnerSpacing.x;
+	ImGui::PushStyleVar(ImGuiStyleVar_ButtonTextAlign, ImVec2(0.f, 0.5f)); // Left
+	ImGui::PushStyleColor(ImGuiCol_Button, ImGui::GetStyle().Colors[ImGuiCol_FrameBg]);
+	float width = ImGui::CalcItemWidth() - innerSpacing * 2.0f - ImGui::GetFrameHeight() * 2.0f;
+	ImGui::ButtonEx(std::to_string((int)option).c_str(), ImVec2(width, 0), ImGuiButtonFlags_Disabled);
+	ImGui::PopStyleColor();
+	ImGui::PopStyleVar();
+
+	ImGui::SameLine(0.0f, innerSpacing);
+    ImGui::PushButtonRepeat(true);
+    bool valueChanged = false;
+	if (option.isReadOnly())
+	{
+        ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
+        ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
+	}
+	std::string id = "##" + std::string(name);
+    if (ImGui::ArrowButton((id + "left").c_str(), ImGuiDir_Left)) { option.set(std::max(min, option - 1)); valueChanged = true; }
+    ImGui::SameLine(0.0f, innerSpacing);
+    if (ImGui::ArrowButton((id + "right").c_str(), ImGuiDir_Right)) { option.set(std::min(max, option + 1)); valueChanged = true; }
+	if (option.isReadOnly())
+	{
+        ImGui::PopItemFlag();
+        ImGui::PopStyleVar();
+	}
+    ImGui::PopButtonRepeat();
+    ImGui::SameLine(0.0f, innerSpacing);
+    ImGui::Text("%s", name);
+	if (help != nullptr)
+	{
+		ImGui::SameLine();
+		ShowHelpMarker(help);
+	}
+	return valueChanged;
+}
+
 template<typename T>
 bool OptionRadioButton(const char *name, config::Option<T>& option, T value, const char *help)
 {
@@ -691,5 +738,93 @@ void OptionComboBox(const char *name, config::Option<int>& option, const char *v
 	{
 		ImGui::SameLine();
 		ShowHelpMarker(help);
+	}
+}
+
+void fullScreenWindow(bool modal)
+{
+	if (!modal)
+	{
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0);
+
+		if (insetLeft > 0)
+		{
+			ImGui::SetNextWindowPos(ImVec2(0, 0));
+			ImGui::SetNextWindowSize(ImVec2(insetLeft, ImGui::GetIO().DisplaySize.y));
+			ImGui::Begin("##insetLeft", NULL, ImGuiWindowFlags_NoDecoration);
+			ImGui::End();
+		}
+		if (insetRight > 0)
+		{
+			ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x - insetRight, 0));
+			ImGui::SetNextWindowSize(ImVec2(insetRight, ImGui::GetIO().DisplaySize.y));
+			ImGui::Begin("##insetRight", NULL, ImGuiWindowFlags_NoDecoration);
+			ImGui::End();
+		}
+		if (insetTop > 0)
+		{
+			ImGui::SetNextWindowPos(ImVec2(0, 0));
+			ImGui::SetNextWindowSize(ImVec2(ImGui::GetIO().DisplaySize.x, insetTop));
+			ImGui::Begin("##insetTop", NULL, ImGuiWindowFlags_NoDecoration);
+			ImGui::End();
+		}
+		if (insetBottom > 0)
+		{
+			ImGui::SetNextWindowPos(ImVec2(0, ImGui::GetIO().DisplaySize.y - insetBottom));
+			ImGui::SetNextWindowSize(ImVec2(ImGui::GetIO().DisplaySize.x, insetBottom));
+			ImGui::Begin("##insetBottom", NULL, ImGuiWindowFlags_NoDecoration);
+			ImGui::End();
+		}
+		ImGui::PopStyleVar(2);
+	}
+	ImGui::SetNextWindowPos(ImVec2(insetLeft, insetTop));
+	ImGui::SetNextWindowSize(ImVec2(ImGui::GetIO().DisplaySize.x - insetLeft - insetRight, ImGui::GetIO().DisplaySize.y - insetTop - insetBottom));
+}
+
+static void computeScrollSpeed(float &v)
+{
+	constexpr float friction = 3.f;
+	if (std::abs(v) > friction)
+	{
+		float sign = (v > 0.f) - (v < 0.f);
+		v -= friction * sign;
+	}
+	else
+	{
+		v = 0.f;
+	}
+}
+
+void windowDragScroll()
+{
+	ImGuiWindow *window = ImGui::GetCurrentWindow();
+	if (window->DragScrolling)
+	{
+		if (!ImGui::GetIO().MouseDown[ImGuiMouseButton_Left])
+		{
+			computeScrollSpeed(window->ScrollSpeed.x);
+			computeScrollSpeed(window->ScrollSpeed.y);
+			if (window->ScrollSpeed == ImVec2())
+			{
+				window->DragScrolling = false;
+				// FIXME we should really move the mouse off-screen after a touch up and this wouldn't be necessary
+				// the only problem is tool tips
+				mo_x_phy = -1;
+				mo_y_phy = -1;
+			}
+		}
+		else
+		{
+			ImVec2 delta = ImGui::GetMouseDragDelta(ImGuiMouseButton_Left);
+			if (delta != ImVec2())
+				ImGui::ResetMouseDragDelta();
+			window->ScrollSpeed = delta;
+		}
+		if (window->DragScrolling)
+		{
+			ImGui::SetScrollX(window, window->Scroll.x - window->ScrollSpeed.x);
+			ImGui::SetScrollY(window, window->Scroll.y - window->ScrollSpeed.y);
+		}
 	}
 }
