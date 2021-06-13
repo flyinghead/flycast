@@ -92,19 +92,3 @@ static inline bool set_recv_timeout(sock_t fd, int delayms)
     return setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)) == 0;
 #endif
 }
-
-#if defined(_WIN32) && _WIN32_WINNT < 0x0600
-static inline const char *inet_ntop(int af, const void* src, char* dst, int cnt)
-{
-    struct sockaddr_in srcaddr;
-
-    memset(&srcaddr, 0, sizeof(struct sockaddr_in));
-    memcpy(&srcaddr.sin_addr, src, sizeof(srcaddr.sin_addr));
-
-    srcaddr.sin_family = af;
-    if (WSAAddressToString((struct sockaddr *)&srcaddr, sizeof(struct sockaddr_in), 0, dst, (LPDWORD)&cnt) != 0)
-        return nullptr;
-    else
-    	return dst;
-}
-#endif
