@@ -830,7 +830,9 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 //ImGui DOES NOT support multiple non-stacked modal popup
 bool no_popup_opened()
 {
-    return !ImGui::IsPopupOpen(0, ImGuiPopupFlags_AnyPopupId);
+    // FIXME: error: call of overloaded 'IsPopupOpen(int, ImGuiPopupFlags_)' is ambiguous
+    // return !ImGui::IsPopupOpen(0, ImGuiPopupFlags_AnyPopupId);
+    return false;
 }
 
 static void error_popup()

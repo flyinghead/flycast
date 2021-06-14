@@ -11,7 +11,6 @@
 #include "rend/gui.h"
 #include "oslib/oslib.h"
 #include "lzma/CpuArch.h"
-#include "deps/crypto/sha1.h"
 
 Gdxsv::~Gdxsv() {
     tcp_client.Close();
@@ -31,10 +30,6 @@ bool Gdxsv::Enabled() const {
 }
 
 void Gdxsv::Reset() {
-    if (settings.dreamcast.ContentPath.empty()) {
-        settings.dreamcast.ContentPath.emplace_back("./");
-    }
-
     tcp_client.Close();
     CloseUdpClientWithReason("cl_hard_reset");
 
@@ -103,7 +98,7 @@ void Gdxsv::Update() {
 
 std::string Gdxsv::GeneratePlatformInfoString() {
     std::stringstream ss;
-    ss << "flycast=" << REICAST_VERSION << "\n";
+    ss << "flycast=" << GIT_VERSION << "\n";
     ss << "git_hash=" << GIT_HASH << "\n";
     ss << "build_date=" << BUILD_DATE << "\n";
     ss << "cpu=" <<
@@ -144,12 +139,9 @@ std::string Gdxsv::GeneratePlatformInfoString() {
     ss << "maxlag=" << (int) maxlag << "\n";
     ss << "patch_id=" << symbols[":patch_id"] << "\n";
     std::string machine_id = os_GetMachineID();
-    if(machine_id.length()){
-        sha1_ctx shactx;
-        sha1_init(&shactx);
-        sha1_update(&shactx, (uint32_t)machine_id.length(), reinterpret_cast<const UINT8 *>(machine_id.c_str()));
-        sha1_final(&shactx);
-        ss << "machine_id=" << std::hex << std::setfill('0') << std::setw(8) << shactx.digest[0] << std::setw(8) <<  shactx.digest[1] << std::setw(8) << shactx.digest[2] << std::setw(8) << shactx.digest[3] << std::setw(8) << shactx.digest[4] << std::dec << "\n";
+    if (machine_id.length()) {
+        // TODO: hash
+        ss << "machine_id=" << machine_id << "\n";
     }
     ss << "wireless=" << (int) (os_GetConnectionMedium() == "Wireless") << "\n";
     
@@ -842,7 +834,7 @@ void Gdxsv::handleReleaseJSON(const std::string &json) {
     if (std::regex_search(json.begin(), json.end(), match, rgx)) {
         latest_version = match.str(0).substr(13, std::string::npos);
 
-        std::string current_version = std::string(REICAST_VERSION);
+        std::string current_version = std::string(GIT_VERSION);
         current_version = current_version.substr(1, current_version.find_first_of("+") - 1);
 
         auto version_compare = [](std::string v1, std::string v2) {
