@@ -26,9 +26,11 @@
 #ifndef NETTLE_SHA1_H_INCLUDED
 #define NETTLE_SHA1_H_INCLUDED
 
-#include "../chdr/coretypes.h"
+#include <stdint.h>
 
-
+typedef uint32_t UINT32;
+typedef uint16_t UINT16;
+typedef uint8_t UINT8;
 
 #define SHA1_DIGEST_SIZE 20
 #define SHA1_DATA_SIZE 64

@@ -287,6 +287,10 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/deps/chdpsr/cdipsr.cpp
         core/deps/chdpsr/cdipsr.h)
 
+target_sources(${PROJECT_NAME} PRIVATE
+        core/deps/crypto/sha1.cpp
+        core/deps/crypto/sha1.h)
+
 target_include_directories(${PROJECT_NAME} PRIVATE core/deps/nowide/include)
 
 if(NOT MINIUPNP_FOUND)

@@ -11,6 +11,7 @@
 #include "rend/gui.h"
 #include "oslib/oslib.h"
 #include "lzma/CpuArch.h"
+#include "crypto/sha1.h"
 
 Gdxsv::~Gdxsv() {
     tcp_client.Close();
@@ -140,8 +141,11 @@ std::string Gdxsv::GeneratePlatformInfoString() {
     ss << "patch_id=" << symbols[":patch_id"] << "\n";
     std::string machine_id = os_GetMachineID();
     if (machine_id.length()) {
-        // TODO: hash
-        ss << "machine_id=" << machine_id << "\n";
+        sha1_ctx sha1;
+        sha1_init(&sha1);
+        sha1_update(&sha1, (uint32_t)machine_id.length(), reinterpret_cast<const UINT8 *>(machine_id.c_str()));
+        sha1_final(&sha1);
+        ss << "machine_id=" << std::hex << std::setfill('0') << std::setw(8) << sha1.digest[0] << std::setw(8) << sha1.digest[1] << std::setw(8) << sha1.digest[2] << std::setw(8) << sha1.digest[3] << std::setw(8) << sha1.digest[4] << std::dec << "\n";
     }
     ss << "wireless=" << (int) (os_GetConnectionMedium() == "Wireless") << "\n";
     
