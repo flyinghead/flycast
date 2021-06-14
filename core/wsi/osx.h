@@ -34,7 +34,6 @@ public:
 	bool Init() { PostInit(); return true; }
 	void Term() { PreTerm(); }
 	void Swap();
-	bool IsSwapBufferPreserved() const { return true; }
 };
 
 extern OSXGraphicsContext theGLContext;

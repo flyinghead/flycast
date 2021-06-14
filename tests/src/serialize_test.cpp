@@ -4,6 +4,7 @@
 #include "hw/maple/maple_cfg.h"
 #include "hw/maple/maple_devs.h"
 #include "emulator.h"
+#include "cfg/option.h"
 
 class SerializeTest : public ::testing::Test {
 protected:
@@ -17,19 +18,20 @@ protected:
 
 TEST_F(SerializeTest, SizeTest)
 {
-	InitSettings();
-	settings.input.maple_devices[0] = MDT_SegaController;
-	settings.input.maple_expansion_devices[0][0] = MDT_SegaVMU;
-	settings.input.maple_expansion_devices[0][1] = MDT_SegaVMU;
-	settings.input.maple_devices[1] = MDT_SegaController;
-	settings.input.maple_expansion_devices[1][0] = MDT_SegaVMU;
-	settings.input.maple_expansion_devices[1][1] = MDT_SegaVMU;
+	using namespace config;
+	Settings::instance().reset();
+	MapleMainDevices[0] = MDT_SegaController;
+	MapleExpansionDevices[0][0] = MDT_SegaVMU;
+	MapleExpansionDevices[0][1] = MDT_SegaVMU;
+	MapleMainDevices[1] = MDT_SegaController;
+	MapleExpansionDevices[1][0] = MDT_SegaVMU;
+	MapleExpansionDevices[1][1] = MDT_SegaVMU;
 	mcfg_CreateDevices();
 
 	unsigned int total_size = 0;
 	void *data = nullptr;
 	ASSERT_TRUE(dc_serialize(&data, &total_size));
-	ASSERT_EQ(28145495u, total_size);
+	ASSERT_EQ(28145503u, total_size);
 }
 
 

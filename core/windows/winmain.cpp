@@ -2,7 +2,6 @@
 #include "oslib/oslib.h"
 #include "oslib/audiostream.h"
 #include "imgread/common.h"
-#include "hw/mem/vmem32.h"
 #include "stdclass.h"
 #include "cfg/cfg.h"
 #include "xinput_gamepad.h"
@@ -16,6 +15,9 @@
 #include "hw/maple/maple_devs.h"
 #include "emulator.h"
 #include "rend/mainui.h"
+#include "hw/sh4/dyna/ngen.h"
+#include "oslib/host_context.h"
+#include "../shell/windows/resource.h"
 
 #include <winsock2.h>
 #include <ws2ipdef.h>
@@ -120,7 +122,6 @@ PCHAR*
 }
 
 bool VramLockedWrite(u8* address);
-bool ngen_Rewrite(unat& addr,unat retadr,unat acc);
 bool BM_LockedWrite(u8* address);
 
 static std::shared_ptr<WinKbGamepadDevice> kb_gamepad;
@@ -139,59 +140,70 @@ void os_SetupInput()
 #endif
 }
 
-LONG ExeptionHandler(EXCEPTION_POINTERS *ExceptionInfo)
+static void readContext(const EXCEPTION_POINTERS *ep, host_context_t &context)
 {
-	EXCEPTION_POINTERS* ep = ExceptionInfo;
+#if HOST_CPU == CPU_X86
+	context.pc = ep->ContextRecord->Eip;
+	context.esp = ep->ContextRecord->Esp;
+	context.eax = ep->ContextRecord->Eax;
+	context.ecx = ep->ContextRecord->Ecx;
+#elif HOST_CPU == CPU_X64
+	context.pc = ep->ContextRecord->Rip;
+	context.rsp = ep->ContextRecord->Rsp;
+	context.r9 = ep->ContextRecord->R9;
+	context.rcx = ep->ContextRecord->Rcx;
+#endif
+}
 
+static void writeContext(EXCEPTION_POINTERS *ep, const host_context_t &context)
+{
+#if HOST_CPU == CPU_X86
+	ep->ContextRecord->Eip = context.pc;
+	ep->ContextRecord->Esp = context.esp;
+	ep->ContextRecord->Eax = context.eax;
+	ep->ContextRecord->Ecx = context.ecx;
+#elif HOST_CPU == CPU_X64
+	ep->ContextRecord->Rip = context.pc;
+	ep->ContextRecord->Rsp = context.rsp;
+	ep->ContextRecord->R9 = context.r9;
+	ep->ContextRecord->Rcx = context.rcx;
+#endif
+}
+LONG ExeptionHandler(EXCEPTION_POINTERS *ep)
+{
 	u32 dwCode = ep->ExceptionRecord->ExceptionCode;
-
-	EXCEPTION_RECORD* pExceptionRecord=ep->ExceptionRecord;
 
 	if (dwCode != EXCEPTION_ACCESS_VIOLATION)
 		return EXCEPTION_CONTINUE_SEARCH;
 
-	u8* address=(u8*)pExceptionRecord->ExceptionInformation[1];
+	EXCEPTION_RECORD* pExceptionRecord = ep->ExceptionRecord;
+	u8* address = (u8 *)pExceptionRecord->ExceptionInformation[1];
 
 	//printf("[EXC] During access to : 0x%X\n", address);
-#if 0
-	bool write = false;	// TODO?
-	if (vmem32_handle_signal(address, write, 0))
-		return EXCEPTION_CONTINUE_EXECUTION;
-#endif
+
+	// code protection in RAM
 	if (bm_RamWriteAccess(address))
-	{
 		return EXCEPTION_CONTINUE_EXECUTION;
-	}
-	else if (VramLockedWrite(address))
-	{
+	// texture protection in VRAM
+	if (VramLockedWrite(address))
 		return EXCEPTION_CONTINUE_EXECUTION;
-	}
-	else if (BM_LockedWrite(address))
-	{
+	// FPCB jump table protection
+	if (BM_LockedWrite(address))
 		return EXCEPTION_CONTINUE_EXECUTION;
-	}
+
+	host_context_t context;
+	readContext(ep, context);
 #if FEAT_SHREC == DYNAREC_JIT
-#if HOST_CPU == CPU_X86
-		else if (ngen_Rewrite((unat&)ep->ContextRecord->Eip, *(unat*)ep->ContextRecord->Esp, ep->ContextRecord->Eax))
-		{
-			//remove the call from call stack
-			ep->ContextRecord->Esp += 4;
-			//restore the addr from eax to ecx so its valid again
-			ep->ContextRecord->Ecx = ep->ContextRecord->Eax;
-			return EXCEPTION_CONTINUE_EXECUTION;
-		}
-#elif HOST_CPU == CPU_X64
-		else if (ngen_Rewrite((unat&)ep->ContextRecord->Rip, 0, 0))
-		{
-			return EXCEPTION_CONTINUE_EXECUTION;
-		}
-#endif
-#endif
-	else
+	// fast mem access rewriting
+	if (ngen_Rewrite(context, address))
 	{
-	    ERROR_LOG(COMMON, "[GPF]Unhandled access to : %p", address);
-	    os_DebugBreak();
+		writeContext(ep, context);
+		return EXCEPTION_CONTINUE_EXECUTION;
 	}
+#endif
+
+    ERROR_LOG(COMMON, "[GPF] PC %p unhandled access to %p", (void *)context.pc, address);
+    os_DebugBreak();
 
 	return EXCEPTION_CONTINUE_SEARCH;
 }
@@ -381,7 +393,7 @@ void CreateMainWindow()
 		sWC.cbClsExtra = 0;
 		sWC.cbWndExtra = 0;
 		sWC.hInstance = hInstance;
-		sWC.hIcon = 0;
+		sWC.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_ICON1));
 		sWC.hCursor = LoadCursor(NULL, IDC_ARROW);
 		sWC.lpszMenuName = 0;
 		sWC.hbrBackground = (HBRUSH) GetStockObject(WHITE_BRUSH);
@@ -503,7 +515,7 @@ void os_SetWindowText(const char* text)
 #if defined(USE_SDL)
 	sdl_window_set_text(text);
 #else
-	if (GetWindowLong(hWnd, GWL_STYLE) & WS_BORDER)
+	if (GetWindowLongPtr(hWnd, GWL_STYLE) & WS_BORDER)
 	{
 		SetWindowText(hWnd, text);
 	}
@@ -704,7 +716,6 @@ std::string os_GetConnectionMedium(){
 }
 
 #ifdef _WIN64
-#include "hw/sh4/dyna/ngen.h"
 
 typedef union _UNWIND_CODE {
 	struct {
@@ -805,7 +816,36 @@ void setup_seh() {
 }
 #endif
 
-
+static void findKeyboardLayout()
+{
+	HKL keyboardLayout = GetKeyboardLayout(0);
+	WORD lcid = HIWORD(keyboardLayout);
+	switch (PRIMARYLANGID(lcid)) {
+	case 0x09:	// English
+		if (lcid == 0x0809)
+			settings.input.keyboardLangId = KeyboardLayout::UK;
+		else
+			settings.input.keyboardLangId = KeyboardLayout::US;
+		break;
+	case 0x11:
+		settings.input.keyboardLangId = KeyboardLayout::JP;
+		break;
+	case 0x07:
+		settings.input.keyboardLangId = KeyboardLayout::GE;
+		break;
+	case 0x0c:
+		settings.input.keyboardLangId = KeyboardLayout::FR;
+		break;
+	case 0x10:
+		settings.input.keyboardLangId = KeyboardLayout::IT;
+		break;
+	case 0x0A:
+		settings.input.keyboardLangId = KeyboardLayout::SP;
+		break;
+	default:
+		break;
+	}
+}
 
 
 // DEF_CONSOLE allows you to override linker subsystem and therefore default console //
@@ -834,33 +874,23 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 
 	ReserveBottomMemory();
 	SetupPath();
-
+	findKeyboardLayout();
 #ifdef _WIN64
 	AddVectoredExceptionHandler(1, ExeptionHandler);
 #else
 	SetUnhandledExceptionFilter((LPTOP_LEVEL_EXCEPTION_FILTER)&ExeptionHandler);
 #endif
-#ifndef __GNUC__
-	__try
+	if (reicast_init(argc, argv) != 0)
+		die("Flycast initialization failed");
+
+#ifdef _WIN64
+	setup_seh();
 #endif
-	{
-		if (reicast_init(argc, argv) != 0)
-			die("Flycast initialization failed");
 
-		#ifdef _WIN64
-			setup_seh();
-		#endif
+	mainui_loop();
 
-		mainui_loop();
+	dc_term();
 
-		dc_term();
-	}
-#ifndef __GNUC__
-	__except( ExeptionHandler(GetExceptionInformation()) )
-	{
-	    ERROR_LOG(COMMON, "Unhandled exception - UI thread halted...");
-	}
-#endif
 	SetUnhandledExceptionFilter(0);
 #ifdef USE_SDL
 	sdl_window_destroy();

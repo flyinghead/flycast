@@ -26,6 +26,10 @@
 extern VulkanContext theVulkanContext;
 #endif
 void InitRenderApi();
-void SwitchRenderApi(RenderType newApi);
 void TermRenderApi();
 
+static inline void SwitchRenderApi()
+{
+	TermRenderApi();
+	InitRenderApi();
+}

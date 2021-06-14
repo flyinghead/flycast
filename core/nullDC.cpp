@@ -4,7 +4,6 @@
 #include <future>
 #include <thread>
 
-//initialse Emu
 #include "types.h"
 #include "emulator.h"
 #include "oslib/oslib.h"
@@ -12,6 +11,7 @@
 #include "hw/mem/_vmem.h"
 #include "stdclass.h"
 #include "cfg/cfg.h"
+#include "cfg/option.h"
 
 #include "hw/maple/maple_cfg.h"
 #include "hw/sh4/sh4_mem.h"
@@ -24,9 +24,9 @@
 #include "hw/pvr/spg.h"
 #include "hw/aica/aica_if.h"
 #include "hw/aica/dsp.h"
+#include "hw/arm7/arm7_rec.h"
 #include "imgread/common.h"
 #include "rend/gui.h"
-#include "profiler/profiler.h"
 #include "input/gamepad_device.h"
 #include "hw/sh4/dyna/blockmanager.h"
 #include "log/LogManager.h"
@@ -36,29 +36,18 @@
 #include "network/naomi_network.h"
 #include "rend/mainui.h"
 #include "archive/rzip.h"
+#include "debug/gdb_server.h"
 
 #include "gdxsv/gdxsv.h"
 
-void FlushCache();
-static void LoadCustom();
-
-extern bool fast_forward_mode;
-
 settings_t settings;
-// Set if game has corresponding option by default, so that it's not saved in the config
-static bool rtt_to_buffer_game;
-static bool safemode_game;
-static bool tr_poly_depth_mask_game;
-static bool extra_depth_game;
-static bool disable_vmem32_game;
-static int forced_game_region = -1;
-static int forced_game_cable = -1;
-static int saved_screen_stretching = -1;
+extern int screen_width, screen_height;
 
 cThread emu_thread(&dc_run, NULL);
 
 static std::future<void> loading_done;
 std::atomic<bool> loading_canceled;
+static bool init_done;
 
 static s32 plugins_Init()
 {
@@ -106,22 +95,15 @@ static void LoadSpecialSettings()
 		prod_id = trim_trailing_ws(prod_id);
 
 		NOTICE_LOG(BOOT, "Game ID is [%s]", prod_id.c_str());
-		rtt_to_buffer_game = false;
-		safemode_game = false;
-		tr_poly_depth_mask_game = false;
-		extra_depth_game = false;
-		disable_vmem32_game = false;
-		forced_game_region = -1;
-		forced_game_cable = -1;
 
-		if (ip_meta.isWindowsCE() || settings.dreamcast.ForceWindowsCE
+		if (ip_meta.isWindowsCE() || config::ForceWindowsCE
 				|| prod_id == "T26702N") // PBA Tour Bowling 2001
 		{
 			INFO_LOG(BOOT, "Enabling Full MMU and Extra depth scaling for Windows CE game");
-			settings.rend.ExtraDepthScale = 0.1; // taxi 2 needs 0.01 for FMV (amd, per-tri)
-			extra_depth_game = true;
-			settings.dreamcast.FullMMU = true;
-			settings.aica.NoBatch = true;
+			config::ExtraDepthScale.override(0.1); // taxi 2 needs 0.01 for FMV (amd, per-tri)
+			config::FullMMU.override(true);
+			if (!config::ForceWindowsCE)
+				config::ForceWindowsCE.override(true);
 		}
 
 		// Tony Hawk's Pro Skater 2
@@ -147,127 +129,89 @@ static void LoadSpecialSettings()
 				// Tom Clancy's Rainbow Six (US)
 				|| prod_id == "T40401N"
 				// Tom Clancy's Rainbow Six incl. Eagle Watch Missions (EU)
-				|| prod_id == "T-45001D05")
+				|| prod_id == "T-45001D05"
+				// Jet Grind Radio (US)
+				|| prod_id == "MK-51058"
+				// JSR (JP)
+				|| prod_id == "HDR-0078"
+				// JSR (EU)
+				|| prod_id == "MK-5105850")
 		{
 			INFO_LOG(BOOT, "Enabling render to texture buffer for game %s", prod_id.c_str());
-			settings.rend.RenderToTextureBuffer = 1;
-			rtt_to_buffer_game = true;
+			config::RenderToTextureBuffer.override(true);
 		}
 		if (prod_id == "HDR-0176" || prod_id == "RDC-0057")
 		{
 			INFO_LOG(BOOT, "Enabling translucent depth multipass for game %s", prod_id.c_str());
 			// Cosmic Smash
-			settings.rend.TranslucentPolygonDepthMask = 1;
-			tr_poly_depth_mask_game = true;
+			config::TranslucentPolygonDepthMask.override(true);
 		}
 		// NHL 2K2
 		if (prod_id == "MK-51182")
 		{
 			INFO_LOG(BOOT, "Enabling Extra depth scaling for game %s", prod_id.c_str());
-			settings.rend.ExtraDepthScale = 1000000;	// Mali needs 1M, 10K is enough for others
-			extra_depth_game = true;
+			config::ExtraDepthScale.override(1000000.f);	// Mali needs 1M, 10K is enough for others
 		}
 		// Re-Volt (US, EU)
 		else if (prod_id == "T-8109N" || prod_id == "T8107D  50")
 		{
 			INFO_LOG(BOOT, "Enabling Extra depth scaling for game %s", prod_id.c_str());
-			settings.rend.ExtraDepthScale = 100;
-			extra_depth_game = true;
+			config::ExtraDepthScale.override(100.f);
 		}
 		// Samurai Shodown 6 dc port
 		else if (prod_id == "T0002M")
 		{
 			INFO_LOG(BOOT, "Enabling Extra depth scaling for game %s", prod_id.c_str());
-			settings.rend.ExtraDepthScale = 1e26;
-			extra_depth_game = true;
+			config::ExtraDepthScale.override(1e26f);
 		}
-		// Super Producers
-		if (prod_id == "T14303M"
-			// Giant Killers
-			|| prod_id == "T45401D 50"
-			// Wild Metal (US)
-			|| prod_id == "T42101N 00"
-			// Wild Metal (EU)
-			|| prod_id == "T40501D-50"
-			// Resident Evil 2 (US)
-			|| prod_id == "T1205N"
-			// Resident Evil 2 (EU)
-			|| prod_id == "T7004D  50"
-			// Rune Jade
-			|| prod_id == "T14304M"
-			// Marionette Company
-			|| prod_id == "T5202M"
-			// Marionette Company 2
-			|| prod_id == "T5203M"
-			// Maximum Pool (for online support)
-			|| prod_id == "T11010N"
-			// StarLancer (US) (for online support)
-			|| prod_id == "T40209N"
-			// StarLancer (EU) (for online support)
-			|| prod_id == "T17723D 05"
-			// Heroes of might and magic III
-			|| prod_id == "T0000M"
-			// WebTV
-			|| prod_id == "6107117" || prod_id == "610-7390" || prod_id == "610-7391"
-			// PBA
-			|| prod_id == "T26702N")
-		{
-			INFO_LOG(BOOT, "Disabling 32-bit virtual memory for game %s", prod_id.c_str());
-			settings.dynarec.disable_vmem32 = true;
-			disable_vmem32_game = true;
-		}
+
 		std::string areas(ip_meta.area_symbols, sizeof(ip_meta.area_symbols));
 		bool region_usa = areas.find('U') != std::string::npos;
 		bool region_eu = areas.find('E') != std::string::npos;
 		bool region_japan = areas.find('J') != std::string::npos;
 		if (region_usa || region_eu || region_japan)
 		{
-			switch (settings.dreamcast.region)
+			switch (config::Region)
 			{
 			case 0: // Japan
 				if (!region_japan)
 				{
 					NOTICE_LOG(BOOT, "Japan region not supported. Using %s instead", region_usa ? "USA" : "Europe");
-					settings.dreamcast.region = region_usa ? 1 : 2;
-					forced_game_region = settings.dreamcast.region;
+					config::Region.override(region_usa ? 1 : 2);
 				}
 				break;
 			case 1: // USA
 				if (!region_usa)
 				{
 					NOTICE_LOG(BOOT, "USA region not supported. Using %s instead", region_eu ? "Europe" : "Japan");
-					settings.dreamcast.region = region_eu ? 2 : 0;
-					forced_game_region = settings.dreamcast.region;
+					config::Region.override(region_eu ? 2 : 0);
 				}
 				break;
 			case 2: // Europe
 				if (!region_eu)
 				{
 					NOTICE_LOG(BOOT, "Europe region not supported. Using %s instead", region_usa ? "USA" : "Japan");
-					settings.dreamcast.region = region_usa ? 1 : 0;
-					forced_game_region = settings.dreamcast.region;
+					config::Region.override(region_usa ? 1 : 0);
 				}
 				break;
 			case 3: // Default
 				if (region_usa)
-					settings.dreamcast.region = 1;
+					config::Region.override(1);
 				else if (region_eu)
-					settings.dreamcast.region = 2;
+					config::Region.override(2);
 				else
-					settings.dreamcast.region = 0;
-				forced_game_region = settings.dreamcast.region;
+					config::Region.override(0);
 				break;
 			}
 		}
 		else
 			WARN_LOG(BOOT, "No region specified in IP.BIN");
-		if (settings.dreamcast.cable <= 1 && !ip_meta.supportsVGA())
+		if (config::Cable <= 1 && !ip_meta.supportsVGA())
 		{
 			NOTICE_LOG(BOOT, "Game doesn't support VGA. Using TV Composite instead");
-			settings.dreamcast.cable = 3;
-			forced_game_cable = settings.dreamcast.cable;
+			config::Cable.override(3);
 		}
-		if (settings.dreamcast.cable == 2 &&
+		if (config::Cable == 2 &&
 				(prod_id == "T40602N"	 // Centipede
 				|| prod_id == "T9710N"   // Gauntlet Legends (US)
 				|| prod_id == "MK-51152" // World Series Baseball 2K2
@@ -281,8 +225,7 @@ static void LoadSpecialSettings()
 				|| prod_id == "T1235M")) // Vampire Chronicle for Matching Service
 		{
 			NOTICE_LOG(BOOT, "Game doesn't support RGB. Using TV Composite instead");
-			settings.dreamcast.cable = 3;
-			forced_game_cable = settings.dreamcast.cable;
+			config::Cable.override(3);
 		}
 	}
 	else if (settings.platform.system == DC_PLATFORM_NAOMI || settings.platform.system == DC_PLATFORM_ATOMISWAVE)
@@ -291,16 +234,15 @@ static void LoadSpecialSettings()
 		if (!strcmp("SAMURAI SPIRITS 6", naomi_game_id))
 		{
 			INFO_LOG(BOOT, "Enabling Extra depth scaling for game %s", naomi_game_id);
-			settings.rend.ExtraDepthScale = 1e26;
-			extra_depth_game = true;
+			config::ExtraDepthScale.override(1e26f);
 		}
 		if (!strcmp("COSMIC SMASH IN JAPAN", naomi_game_id))
 		{
 			INFO_LOG(BOOT, "Enabling translucent depth multipass for game %s", naomi_game_id);
-			settings.rend.TranslucentPolygonDepthMask = true;
-			tr_poly_depth_mask_game = true;
+			config::TranslucentPolygonDepthMask.override(true);
 		}
 		// Input configuration
+		settings.input.JammaSetup = JVS::Default;
 		if (!strcmp("DYNAMIC GOLF", naomi_game_id)
 				|| !strcmp("SHOOTOUT POOL", naomi_game_id)
 				|| !strcmp("SHOOTOUT POOL MEDAL", naomi_game_id)
@@ -395,22 +337,19 @@ static void LoadSpecialSettings()
 			INFO_LOG(BOOT, "Enabling specific JVS setup for game %s", naomi_game_id);
 			settings.input.JammaSetup = JVS::TouchDeUno;
 		}
-		settings.rend.Rotate90 = naomi_rotate_screen;
 	}
 }
 
 void dc_reset(bool hard)
 {
 	plugins_Reset(hard);
-	mem_Reset(hard);
-
 	sh4_cpu.Reset(hard);
+	mem_Reset(hard);
     gdxsv.Reset();
-	if (hard)
-		EventManager::event(Event::Terminate);
 }
 
 static bool reset_requested;
+static bool singleStep;
 
 int reicast_init(int argc, char* argv[])
 {
@@ -427,7 +366,7 @@ int reicast_init(int argc, char* argv[])
 	{
         return 69;
 	}
-	InitSettings();
+	config::Settings::instance().reset();
 	LogManager::Shutdown();
 	if (!cfgOpen())
 	{
@@ -438,9 +377,10 @@ int reicast_init(int argc, char* argv[])
 	else
 	{
 		LogManager::Init();
-		LoadSettings(false);
+		config::Settings::instance().load(false);
 	}
-	settings.pvr.rend = (RenderType)cfgLoadInt("config", "pvr.rend", (int)settings.pvr.rend);
+	// Force the renderer type now since we're not switching
+	config::RendererType.commit();
 
 	os_CreateWindow();
 	os_SetupInput();
@@ -448,6 +388,7 @@ int reicast_init(int argc, char* argv[])
 	// Needed to avoid crash calling dc_is_running() in gui
 	Get_Sh4Interpreter(&sh4_cpu);
 	sh4_cpu.Init();
+	debugger::init();
 
 	return 0;
 }
@@ -464,23 +405,20 @@ static void set_platform(int platform)
 		settings.platform.aram_size = 2 * 1024 * 1024;
 		settings.platform.bios_size = 2 * 1024 * 1024;
 		settings.platform.flash_size = 128 * 1024;
-		settings.platform.bbsram_size = 0;
 		break;
 	case DC_PLATFORM_NAOMI:
 		settings.platform.ram_size = 32 * 1024 * 1024;
 		settings.platform.vram_size = 16 * 1024 * 1024;
 		settings.platform.aram_size = 8 * 1024 * 1024;
 		settings.platform.bios_size = 2 * 1024 * 1024;
-		settings.platform.flash_size = 0;
-		settings.platform.bbsram_size = 32 * 1024;
+		settings.platform.flash_size = 32 * 1024;	// battery-backed ram
 		break;
 	case DC_PLATFORM_ATOMISWAVE:
 		settings.platform.ram_size = 16 * 1024 * 1024;
 		settings.platform.vram_size = 8 * 1024 * 1024;
 		settings.platform.aram_size = 8 * 1024 * 1024;
 		settings.platform.bios_size = 128 * 1024;
-		settings.platform.flash_size = 0;
-		settings.platform.bbsram_size = 128 * 1024;
+		settings.platform.flash_size = 128 * 1024;	// sram
 		break;
 	default:
 		die("Unsupported platform");
@@ -495,8 +433,6 @@ static void set_platform(int platform)
 
 void dc_init()
 {
-	static bool init_done;
-
 	if (init_done)
 		return;
 
@@ -511,7 +447,7 @@ void dc_init()
 #if FEAT_SHREC != DYNAREC_NONE
 	Get_Sh4Recompiler(&sh4_cpu);
 	sh4_cpu.Init();		// Also initialize the interpreter
-	if(settings.dynarec.Enable)
+	if(config::DynarecEnabled)
 	{
 		INFO_LOG(DYNAREC, "Using Recompiler");
 	}
@@ -533,7 +469,7 @@ static int get_game_platform(const char *path)
 		return DC_PLATFORM_DREAMCAST;
 
 	std::string extension = get_file_extension(path);
-	if (extension == "")
+	if (extension.empty())
 		return DC_PLATFORM_DREAMCAST;	// unknown
 	if (extension == "zip" || extension == "7z")
 		return naomi_cart_GetPlatform(path);
@@ -546,52 +482,28 @@ static int get_game_platform(const char *path)
 static void dc_start_game(const char *path)
 {
 	DEBUG_LOG(BOOT, "Loading game %s", path == nullptr ? "(nil)" : path);
-	bool forced_bios_file = false;
 
-	if (path != NULL)
-	{
+	if (path != nullptr)
 		strcpy(settings.imgread.ImagePath, path);
-	}
 	else
-	{
-		// Booting the BIOS requires a BIOS file
-		forced_bios_file = true;
 		settings.imgread.ImagePath[0] = '\0';
-	}
 
 	dc_init();
 
 	set_platform(get_game_platform(path));
 	mem_map_default();
 
-	InitSettings();
+	config::Settings::instance().reset();
 	dc_reset(true);
-	LoadSettings(false);
+	config::Settings::instance().load(false);
 	
 	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
 	{
-		if ((settings.bios.UseReios && !forced_bios_file) || !LoadRomFiles())
-		{
-			if (forced_bios_file)
-				throw ReicastException("No BIOS file found");
-
-			if (!LoadHle())
-				throw ReicastException("Failed to initialize HLE BIOS");
-
-			NOTICE_LOG(BOOT, "Did not load BIOS, using reios");
-		}
-	}
-	else
-	{
-		LoadRomFiles();
-	}
-	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
-	{
-		mcfg_CreateDevices();
-
 		if (path == NULL)
 		{
 			// Boot BIOS
+			if (!LoadRomFiles())
+				throw ReicastException("No BIOS file found in " + get_writable_data_path(""));
 			TermDrive();
 			InitDrive();
 		}
@@ -601,26 +513,41 @@ static void dc_start_game(const char *path)
 			if (extension != "elf")
 			{
 				if (InitDrive())
-					LoadCustom();
+				{
+					LoadGameSpecificSettings();
+					if (config::UseReios || !LoadRomFiles())
+					{
+						LoadHle();
+						NOTICE_LOG(BOOT, "Did not load BIOS, using reios");
+					}
+				}
 				else
 				{
 					// Content load failed. Boot the BIOS
 					settings.imgread.ImagePath[0] = '\0';
-					forced_bios_file = true;
 					if (!LoadRomFiles())
-						throw ReicastException("No BIOS file found");
+						throw ReicastException("This media cannot be loaded");
 					InitDrive();
 				}
 			}
+			else
+			{
+				// Elf only supported with HLE BIOS
+				LoadHle();
+			}
 		}
+		mcfg_CreateDevices();
 		FixUpFlash();
 	}
 	else if (settings.platform.system == DC_PLATFORM_NAOMI || settings.platform.system == DC_PLATFORM_ATOMISWAVE)
 	{
+		LoadRomFiles();
 		naomi_cart_LoadRom(path);
 		if (loading_canceled)
 			return;
-		LoadCustom();
+		LoadGameSpecificSettings();
+		// Reload the BIOS in case a game-specific region is set
+		naomi_cart_LoadBios(path);
 		if (settings.platform.system == DC_PLATFORM_NAOMI)
 		{
 			mcfg_CreateNAOMIJamma();
@@ -629,24 +556,20 @@ static void dc_start_game(const char *path)
 		else if (settings.platform.system == DC_PLATFORM_ATOMISWAVE)
 			mcfg_CreateAtomisWaveControllers();
 	}
-	if (cheatManager.Reset())
+	cheatManager.reset(config::Settings::instance().getGameId());
+	if (cheatManager.isWidescreen())
 	{
 		gui_display_notification("Widescreen cheat activated", 1000);
-		if (saved_screen_stretching == -1)
-			saved_screen_stretching = settings.rend.ScreenStretching;
-		settings.rend.ScreenStretching = 133;	// 4:3 -> 16:9
+		config::ScreenStretching.override(134);	// 4:3 -> 16:9
 	}
-	else
-	{
-		if (saved_screen_stretching != -1)
-		{
-			settings.rend.ScreenStretching = saved_screen_stretching;
-			saved_screen_stretching = -1;
-		}
-	}
+<<<<<<< HEAD
 	gdxsv.Reset();
 	fast_forward_mode = false;
+=======
+	settings.input.fastForwardMode = false;
+>>>>>>> upstream/master
 	EventManager::event(Event::Start);
+	settings.gameStarted = true;
 }
 
 bool dc_is_running()
@@ -659,27 +582,36 @@ void* dc_run(void*)
 {
 	InitAudio();
 
-	if (settings.dynarec.Enable)
+#if FEAT_SHREC != DYNAREC_NONE
+	if (config::DynarecEnabled)
 	{
 		Get_Sh4Recompiler(&sh4_cpu);
 		INFO_LOG(DYNAREC, "Using Recompiler");
 	}
 	else
+#endif
 	{
 		Get_Sh4Interpreter(&sh4_cpu);
 		INFO_LOG(DYNAREC, "Using Interpreter");
 	}
-	do {
-		reset_requested = false;
+	if (singleStep)
+	{
+		singleStep = false;
+		sh4_cpu.Step();
+	}
+	else
+	{
+		do {
+			reset_requested = false;
 
-		sh4_cpu.Run();
+			sh4_cpu.Run();
 
-   		SaveRomFiles();
-   		if (reset_requested)
-   		{
-   			dc_reset(false);
-   		}
-	} while (reset_requested);
+			SaveRomFiles();
+
+			if (reset_requested)
+				dc_reset(false);
+		} while (reset_requested);
+	}
 
     TermAudio();
 
@@ -687,8 +619,24 @@ void* dc_run(void*)
 }
 #endif
 
+void dc_term_game()
+{
+	if (settings.gameStarted)
+	{
+		settings.gameStarted = false;
+		EventManager::event(Event::Terminate);
+	}
+	if (init_done)
+		dc_reset(true);
+
+	config::Settings::instance().reset();
+	config::Settings::instance().load(false);
+}
+
 void dc_term()
 {
+	dc_term_game();
+	debugger::term();
 	dc_cancel_load();
 	sh4_cpu.Term();
 	if (settings.platform.system != DC_PLATFORM_DREAMCAST)
@@ -704,10 +652,12 @@ void dc_term()
 
 void dc_stop()
 {
+	bool running = dc_is_running();
 	sh4_cpu.Stop();
 	rend_cancel_emu_wait();
 	emu_thread.WaitToEnd();
-	EventManager::event(Event::Pause);
+	if (running)
+		EventManager::event(Event::Pause);
 }
 
 // Called on the emulator thread for soft reset
@@ -723,6 +673,7 @@ void dc_exit()
 	mainui_stop();
 }
 
+<<<<<<< HEAD
 void InitSettings()
 {
 	settings.dynarec.Enable			= true;
@@ -949,6 +900,9 @@ void LoadSettings(bool game_specific)
 }
 
 static void LoadCustom()
+=======
+void LoadGameSpecificSettings()
+>>>>>>> upstream/master
 {
 	char *reios_id;
 	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
@@ -973,136 +927,71 @@ static void LoadCustom()
 	// Default per-game settings
 	LoadSpecialSettings();
 
-	cfgSetGameId(reios_id);
+	config::Settings::instance().setGameId(reios_id);
 
 	// Reload per-game settings
-	LoadSettings(true);
+	config::Settings::instance().load(true);
 }
 
 void SaveSettings()
 {
-	cfgSetAutoSave(false);
-	cfgSaveBool("config", "Dynarec.Enabled", settings.dynarec.Enable);
-	if (forced_game_cable == -1 || forced_game_cable != (int)settings.dreamcast.cable)
-		cfgSaveInt("config", "Dreamcast.Cable", settings.dreamcast.cable);
-	if (forced_game_region == -1 || forced_game_region != (int)settings.dreamcast.region)
-		cfgSaveInt("config", "Dreamcast.Region", settings.dreamcast.region);
-	cfgSaveInt("config", "Dreamcast.Broadcast", settings.dreamcast.broadcast);
-	cfgSaveBool("config", "Dreamcast.ForceWindowsCE", settings.dreamcast.ForceWindowsCE);
-	cfgSaveBool("config", "Dynarec.idleskip", settings.dynarec.idleskip);
-	cfgSaveBool("config", "Dynarec.unstable-opt", settings.dynarec.unstable_opt);
-	if (!safemode_game || !settings.dynarec.safemode)
-		cfgSaveBool("config", "Dynarec.safe-mode", settings.dynarec.safemode);
-	cfgSaveBool("config", "bios.UseReios", settings.bios.UseReios);
-
-//	if (!disable_vmem32_game || !settings.dynarec.disable_vmem32)
-//		cfgSaveBool("config", "Dynarec.DisableVmem32", settings.dynarec.disable_vmem32);
-	cfgSaveInt("config", "Dreamcast.Language", settings.dreamcast.language);
-	cfgSaveBool("config", "aica.LimitFPS", settings.aica.LimitFPS);
-	cfgSaveBool("config", "aica.DSPEnabled", settings.aica.DSPEnabled);
-	cfgSaveBool("config", "aica.NoSound", settings.aica.NoSound);
-	cfgSaveInt("config", "aica.BufferSize", settings.aica.BufferSize);
-	cfgSaveStr("audio", "backend", settings.audio.backend.c_str());
-
-	// Write backend specific settings
-	// std::map<std::string, std::map<std::string, std::string>>
-	for (const auto& pair : settings.audio.options)
-	{
-		const std::string& section = pair.first;
-		const auto& options = pair.second;
-		for (const auto& option : options)
-			cfgSaveStr(section.c_str(), option.first.c_str(), option.second.c_str());
-	}
-
-	cfgSaveBool("config", "rend.WideScreen", settings.rend.WideScreen);
-	cfgSaveBool("config", "rend.ShowFPS", settings.rend.ShowFPS);
-	if (!rtt_to_buffer_game || !settings.rend.RenderToTextureBuffer)
-		cfgSaveBool("config", "rend.RenderToTextureBuffer", settings.rend.RenderToTextureBuffer);
-	cfgSaveInt("config", "rend.RenderToTextureUpscale", settings.rend.RenderToTextureUpscale);
-	cfgSaveBool("config", "rend.ModifierVolumes", settings.rend.ModifierVolumes);
-	cfgSaveBool("config", "rend.Clipping", settings.rend.Clipping);
-	cfgSaveInt("config", "rend.TextureUpscale", settings.rend.TextureUpscale);
-	cfgSaveInt("config", "rend.MaxFilteredTextureSize", settings.rend.MaxFilteredTextureSize);
-	cfgSaveBool("config", "rend.CustomTextures", settings.rend.CustomTextures);
-	cfgSaveBool("config", "rend.DumpTextures", settings.rend.DumpTextures);
-	cfgSaveInt("config", "rend.ScreenScaling", settings.rend.ScreenScaling);
-	if (saved_screen_stretching != -1)
-		cfgSaveInt("config", "rend.ScreenStretching", saved_screen_stretching);
-	else
-		cfgSaveInt("config", "rend.ScreenStretching", settings.rend.ScreenStretching);
-	cfgSaveBool("config", "rend.Fog", settings.rend.Fog);
-	cfgSaveBool("config", "rend.FloatVMUs", settings.rend.FloatVMUs);
-	if (!naomi_rotate_screen || !settings.rend.Rotate90)
-		cfgSaveBool("config", "rend.Rotate90", settings.rend.Rotate90);
-	cfgSaveInt("config", "ta.skip", settings.pvr.ta_skip);
-	cfgSaveInt("config", "pvr.rend", (int)settings.pvr.rend);
-	cfgSaveBool("config", "rend.PerStripSorting", settings.rend.PerStripSorting);
-	cfgSaveBool("config", "rend.DelayFrameSwapping", settings.rend.DelayFrameSwapping);
-	cfgSaveBool("config", "rend.WidescreenGameHacks", settings.rend.WidescreenGameHacks);
-	for (u32 i = 0; i < ARRAY_SIZE(settings.rend.CrosshairColor); i++)
-	{
-		std::string name = "rend.CrossHairColor" + std::to_string(i + 1);
-		cfgSaveInt("config", name.c_str(), settings.rend.CrosshairColor[i]);
-	}
-
-	cfgSaveInt("config", "pvr.MaxThreads", settings.pvr.MaxThreads);
-	cfgSaveInt("config", "pvr.AutoSkipFrame", settings.pvr.AutoSkipFrame);
-
-	cfgSaveBool("config", "Debug.SerialConsoleEnabled", settings.debug.SerialConsole);
-	cfgSaveBool("config", "Debug.SerialPTY", settings.debug.SerialPTY);
-	cfgSaveInt("input", "MouseSensitivity", settings.input.MouseSensitivity);
-	cfgSaveInt("input", "VirtualGamepadVibration", settings.input.VirtualGamepadVibration);
-	for (int i = 0; i < MAPLE_PORTS; i++)
-	{
-		char device_name[32];
-		sprintf(device_name, "device%d", i + 1);
-		cfgSaveInt("input", device_name, (s32)settings.input.maple_devices[i]);
-		sprintf(device_name, "device%d.1", i + 1);
-		cfgSaveInt("input", device_name, (s32)settings.input.maple_expansion_devices[i][0]);
-		sprintf(device_name, "device%d.2", i + 1);
-		cfgSaveInt("input", device_name, (s32)settings.input.maple_expansion_devices[i][1]);
-	}
-	// FIXME This should never be a game-specific setting
-	std::string paths;
-	for (auto& path : settings.dreamcast.ContentPath)
-	{
-		if (!paths.empty())
-			paths += ";";
-		paths += path;
-	}
-	cfgSaveStr("config", "Dreamcast.ContentPath", paths.c_str());
-	cfgSaveBool("config", "Dreamcast.HideLegacyNaomiRoms", settings.dreamcast.HideLegacyNaomiRoms);
-	cfgSaveBool("network", "Enable", settings.network.Enable);
-	cfgSaveBool("network", "ActAsServer", settings.network.ActAsServer);
-	cfgSaveStr("network", "DNS", settings.network.dns.c_str());
-	cfgSaveStr("network", "server", settings.network.server.c_str());
-	cfgSaveBool("network", "EmulateBBA", settings.network.EmulateBBA);
-	
+	config::Settings::instance().save();
 	GamepadDevice::SaveMaplePorts();
 
 #ifdef __ANDROID__
 	void SaveAndroidSettings();
 	SaveAndroidSettings();
 #endif
+}
 
-	cfgSetAutoSave(true);
+void dc_resize_renderer()
+{
+	int hres;
+	int vres = config::RenderResolution;
+	if (config::Widescreen && !config::Rotate90)
+	{
+		if (config::SuperWidescreen)
+			hres = config::RenderResolution * screen_width / screen_height	;
+		else
+			hres = config::RenderResolution * 16 / 9;
+	}
+	else if (config::Rotate90)
+	{
+		vres = vres * config::ScreenStretching / 100;
+		hres = config::RenderResolution * 4 / 3;
+	}
+	else
+	{
+		hres = config::RenderResolution * 4 * config::ScreenStretching / 3 / 100;
+	}
+	if (renderer != nullptr)
+		renderer->Resize(hres, vres);
 }
 
 void dc_resume()
 {
 	SetMemoryHandlers();
+	settings.aica.NoBatch = config::ForceWindowsCE || config::DSPEnabled;
+	dc_resize_renderer();
+
 	EventManager::event(Event::Resume);
 	if (!emu_thread.thread.joinable())
 		emu_thread.Start();
 }
 
-static void cleanup_serialize(void *data)
+void dc_step()
 {
-	if ( data != NULL )
-		free(data) ;
+	singleStep = true;
+	dc_resume();
+	dc_stop();
 }
 
-static std::string get_savestate_file_path(bool writable)
+static void cleanup_serialize(void *data)
+{
+	free(data);
+}
+
+static std::string get_savestate_file_path(int index, bool writable)
 {
 	std::string state_file = settings.imgread.ImagePath;
 	size_t lastindex = state_file.find_last_of('/');
@@ -1118,19 +1007,22 @@ static std::string get_savestate_file_path(bool writable)
 	lastindex = state_file.find_last_of('.');
 	if (lastindex != std::string::npos)
 		state_file = state_file.substr(0, lastindex);
-	state_file = state_file + ".state";
+
+	char index_str[4] = "";
+	if (index != 0) // When index is 0, use same name before multiple states is added
+		sprintf(index_str, "_%d", index);
+
+	state_file = state_file + index_str + ".state";
 	if (writable)
 		return get_writable_data_path(state_file);
 	else
 		return get_readonly_data_path(state_file);
 }
 
-void dc_savestate()
+void dc_savestate(int index)
 {
 	unsigned int total_size = 0 ;
 	void *data = NULL ;
-
-	dc_stop();
 
 	if ( ! dc_serialize(&data, &total_size) )
 	{
@@ -1159,7 +1051,7 @@ void dc_savestate()
     	return;
 	}
 
-	std::string filename = get_savestate_file_path(true);
+	std::string filename = get_savestate_file_path(index, true);
 #if 0
 	FILE *f = nowide::fopen(filename.c_str(), "wb") ;
 
@@ -1198,14 +1090,14 @@ void dc_savestate()
 	gui_display_notification("State saved", 1000);
 }
 
-void dc_loadstate()
+void dc_loadstate(int index)
 {
 	u32 total_size = 0;
 	FILE *f = nullptr;
 
 	dc_stop();
 
-	std::string filename = get_savestate_file_path(false);
+	std::string filename = get_savestate_file_path(index, false);
 	RZipFile zipFile;
 	if (zipFile.Open(filename, false))
 	{
@@ -1260,12 +1152,12 @@ void dc_loadstate()
 
 	custom_texture.Terminate();
 #if FEAT_AREC == DYNAREC_JIT
-    FlushCache();
+	aicaarm::recompiler::flush();
 #endif
-#ifndef NO_MMU
     mmu_flush_table();
-#endif
+#if FEAT_SHREC != DYNAREC_NONE
 	bm_Reset();
+#endif
 
 	u32 unserialized_size = 0;
 	if ( ! dc_unserialize(&data_ptr, &unserialized_size) )

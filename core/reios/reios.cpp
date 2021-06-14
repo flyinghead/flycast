@@ -18,12 +18,13 @@
 #include "hw/sh4/sh4_core.h"
 #include "hw/sh4/sh4_mem.h"
 #include "hw/holly/sb_mem.h"
+#include "hw/holly/sb.h"
 #include "hw/naomi/naomi_cart.h"
 #include "iso9660.h"
 #include "font.h"
 #include "hw/aica/aica.h"
 #include "hw/aica/aica_mem.h"
-#include "oslib/oslib.h"
+#include "hw/pvr/pvr_regs.h"
 #include "imgread/common.h"
 
 #include <map>
@@ -46,6 +47,7 @@
 static MemChip *flashrom;
 static u32 base_fad = 45150;
 static bool descrambl = false;
+static u32 bootSectors;
 
 static void reios_pre_init()
 {
@@ -110,11 +112,18 @@ static bool reios_locate_bootfile(const char* bootfile)
 		{
 			INFO_LOG(REIOS, "Found %.*s at offset %X", bootfile_len, bootfile, i);
 
-			u32 lba = decode_iso733(dir->extent);
+			u32 lba = decode_iso733(dir->extent) + 150;
 			u32 len = decode_iso733(dir->size);
-			
-			if (!memcmp(bootfile, "0WINCEOS.BIN", 12))
+
+			if (ip_meta.wince == '1')
 			{
+				if (descrambl)
+				{
+					WARN_LOG(REIOS, "Unsupported CDI: wince == '1'");
+					delete[] temp;
+					return false;
+				}
+				libGDR_ReadSector(GetMemPtr(0x8ce01000, 0), lba, 1, 2048);
 				lba++;
 				len -= 2048;
 			}
@@ -122,10 +131,11 @@ static bool reios_locate_bootfile(const char* bootfile)
 			INFO_LOG(REIOS, "file LBA: %d", lba);
 			INFO_LOG(REIOS, "file LEN: %d", len);
 
+			bootSectors = (len + 2047) / 2048;
 			if (descrambl)
-				descrambl_file(lba + 150, len, GetMemPtr(0x8c010000, 0));
+				descrambl_file(lba, len, GetMemPtr(0x8c010000, 0));
 			else
-				libGDR_ReadSector(GetMemPtr(0x8c010000, 0), lba + 150, (len + 2047) / 2048, 2048);
+				libGDR_ReadSector(GetMemPtr(0x8c010000, 0), lba, bootSectors, 2048);
 
 			delete[] temp;
 
@@ -213,7 +223,7 @@ static void reios_sys_system() {
 		debugf("reios_sys_system: SYSINFO_ICON");
 		// r4 = icon number (0-9, but only 5-9 seems to really be icons)
 		// r5 = destination buffer (704 bytes in size)
-		r[0] = 704;
+		r[0] = r[4] > 9 ? -1 : 704;
 		break;
 
 	case 3: //SYSINFO_ID
@@ -223,6 +233,7 @@ static void reios_sys_system() {
 
 	default:
 		WARN_LOG(REIOS, "reios_sys_system: unhandled cmd %d", cmd);
+		r[0] = -1;
 		break;
 	}
 }
@@ -373,13 +384,29 @@ static void reios_sys_misc()
 	INFO_LOG(REIOS, "reios_sys_misc - r7: 0x%08X, r4 0x%08X, r5 0x%08X, r6 0x%08X", r[7], r[4], r[5], r[6]);
 	switch (r[4])
 	{
+	case 0: // normal init
+		SB_GDSTARD = 0xc010000 + bootSectors * 2048;
+		SB_IML2NRM = 0;
+		r[0] = 0xc0bebc;
+		VO_BORDER_COL.full = r[0];
+		break;
+
+	case 1:	// Exit to BIOS menu
+		WARN_LOG(REIOS, "SYS_MISC 1");
+		break;
+
 	case 2:	// check disk
 		r[0] = 0;
 		// Reload part of IP.BIN bootstrap
 		libGDR_ReadSector(GetMemPtr(0x8c008100, 0), base_fad, 7, 2048);
 		break;
 
+	case 3: // Exit to CD menu
+		WARN_LOG(REIOS, "SYS_MISC 3");
+		break;
+
 	default:
+		WARN_LOG(REIOS, "Unknown SYS_MISC call: %d", r[4]);
 		break;
 	}
 }

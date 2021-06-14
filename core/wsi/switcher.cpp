@@ -20,6 +20,7 @@
 */
 #include "context.h"
 #include "rend/gui.h"
+#include "cfg/option.h"
 
 #ifdef USE_VULKAN
 VulkanContext theVulkanContext;
@@ -28,24 +29,18 @@ VulkanContext theVulkanContext;
 void InitRenderApi()
 {
 #ifdef USE_VULKAN
-	if (!settings.pvr.IsOpenGL())
+	if (!config::RendererType.isOpenGL())
 	{
 		if (theVulkanContext.Init())
 			return;
 		// Fall back to Open GL
 		WARN_LOG(RENDERER, "Vulkan init failed. Falling back to Open GL.");
-		settings.pvr.rend = RenderType::OpenGL;
+		config::RendererType = RenderType::OpenGL;
+		config::RendererType.commit();
 	}
 #endif
 	if (!theGLContext.Init())
 		exit(1);
-}
-
-void SwitchRenderApi(RenderType newApi)
-{
-	TermRenderApi();
-	settings.pvr.rend = newApi;
-	InitRenderApi();
 }
 
 void TermRenderApi()

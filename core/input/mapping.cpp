@@ -206,7 +206,7 @@ std::shared_ptr<InputMapping> InputMapping::LoadMapping(const char *name)
 	if (it != loaded_mappings.end())
 		return it->second;
 
-	std::string path = get_readonly_config_path((std::string("mappings/") + name).c_str());
+	std::string path = get_readonly_config_path(std::string("mappings/") + name);
 	FILE *fp = nowide::fopen(path.c_str(), "r");
 	if (fp == NULL)
 		return NULL;
@@ -225,7 +225,7 @@ bool InputMapping::save(const char *name)
 
 	std::string path = get_writable_config_path("mappings/");
 	make_directory(path);
-	path = get_writable_config_path((std::string("mappings/") + name).c_str());
+	path = get_writable_config_path(std::string("mappings/") + name);
 	FILE *fp = nowide::fopen(path.c_str(), "w");
 	if (fp == NULL)
 	{
@@ -284,7 +284,7 @@ bool InputMapping::save(const char *name)
 	return true;
 }
 
-void InputMapping::SaveMapping(const char *name, std::shared_ptr<InputMapping> mapping)
+void InputMapping::SaveMapping(const char *name, const std::shared_ptr<InputMapping>& mapping)
 {
 	mapping->save(name);
 	InputMapping::loaded_mappings[name] = mapping;

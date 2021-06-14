@@ -16,10 +16,8 @@
     You should have received a copy of the GNU General Public License
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
-#include "build.h"
+#pragma once
 
-#define XBYAK32
-#define XBYAK_NO_OP_NAMES
 #include <xbyak/xbyak.h>
 #include <xbyak/xbyak_util.h>
 
@@ -75,7 +73,7 @@ public:
 
 	void genMainloop();
 	u32 relinkBlock(RuntimeBlockInfo *block);
-	bool rewriteMemAccess(size_t& host_pc, size_t retadr, size_t acc);
+	bool rewriteMemAccess(host_context_t &context);
 
 private:
 	void genOpcode(RuntimeBlockInfo *block, bool optimise, shil_opcode& op);

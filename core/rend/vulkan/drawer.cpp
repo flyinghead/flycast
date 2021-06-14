@@ -60,10 +60,10 @@ TileClipping BaseDrawer::SetTileClip(u32 val, vk::Rect2D& clipRect)
 	return clipmode;
 }
 
-void BaseDrawer::SetBaseScissor()
+void BaseDrawer::SetBaseScissor(const vk::Extent2D& viewport)
 {
-	bool wide_screen_on = settings.rend.WideScreen && !pvrrc.isRenderFramebuffer
-			&& !matrices.IsClipped() && !settings.rend.Rotate90;
+	bool wide_screen_on = config::Widescreen && !pvrrc.isRenderFramebuffer
+			&& !matrices.IsClipped() && !config::Rotate90;
 	if (!wide_screen_on)
 	{
 		float width;
@@ -99,7 +99,7 @@ void BaseDrawer::SetBaseScissor()
 	}
 	else
 	{
-		baseScissor = { 0, 0, (u32)screen_width, (u32)screen_height };
+		baseScissor = { 0, 0, (u32)viewport.width, (u32)viewport.height };
 	}
 }
 
@@ -199,7 +199,7 @@ void Drawer::DrawList(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sor
 
 void Drawer::DrawModVols(const vk::CommandBuffer& cmdBuffer, int first, int count)
 {
-	if (count == 0 || pvrrc.modtrig.used() == 0 || !settings.rend.ModifierVolumes)
+	if (count == 0 || pvrrc.modtrig.used() == 0 || !config::ModifierVolumes)
 		return;
 
 	vk::Buffer buffer = GetMainBuffer(0)->buffer.get();
@@ -353,7 +353,7 @@ bool Drawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 		DrawModVols(cmdBuffer, previous_pass.mvo_count, current_pass.mvo_count - previous_pass.mvo_count);
 		if (current_pass.autosort)
         {
-			if (!settings.rend.PerStripSorting)
+			if (!config::PerStripSorting)
 			{
 				DrawSorted(cmdBuffer, sortedPolys[render_pass]);
 			}
@@ -383,29 +383,26 @@ void TextureDrawer::Init(SamplerManager *samplerManager, ShaderManager *shaderMa
 
 vk::CommandBuffer TextureDrawer::BeginRenderPass()
 {
-	DEBUG_LOG(RENDERER, "RenderToTexture packmode=%d stride=%d - %d,%d -> %d,%d @ %08x", FB_W_CTRL.fb_packmode, FB_W_LINESTRIDE.stride * 8,
-			FB_X_CLIP.min, FB_Y_CLIP.min, FB_X_CLIP.max, FB_Y_CLIP.max, FB_W_SOF1 & VRAM_MASK);
+	DEBUG_LOG(RENDERER, "RenderToTexture packmode=%d stride=%d - %d x %d @ %06x", FB_W_CTRL.fb_packmode, FB_W_LINESTRIDE.stride * 8,
+			pvrrc.fb_X_CLIP.max + 1, pvrrc.fb_Y_CLIP.max + 1, FB_W_SOF1 & VRAM_MASK);
 	matrices.CalcMatrices(&pvrrc);
 
 	textureAddr = FB_W_SOF1 & VRAM_MASK;
-	u32 origWidth = pvrrc.fb_X_CLIP.max - pvrrc.fb_X_CLIP.min + 1;
-	u32 origHeight = pvrrc.fb_Y_CLIP.max - pvrrc.fb_Y_CLIP.min + 1;
-	u32 upscaledWidth = origWidth;
-	u32 upscaledHeight = origHeight;
+	u32 origWidth = pvrrc.fb_X_CLIP.max + 1;
+	u32 origHeight = pvrrc.fb_Y_CLIP.max + 1;
 	u32 heightPow2 = 8;
-	while (heightPow2 < upscaledHeight)
+	while (heightPow2 < origHeight)
 		heightPow2 *= 2;
 	u32 widthPow2 = 8;
-	while (widthPow2 < upscaledWidth)
+	while (widthPow2 < origWidth)
 		widthPow2 *= 2;
-
-	if (settings.rend.RenderToTextureUpscale > 1 && !settings.rend.RenderToTextureBuffer)
-	{
-		upscaledWidth *= settings.rend.RenderToTextureUpscale;
-		upscaledHeight *= settings.rend.RenderToTextureUpscale;
-		widthPow2 *= settings.rend.RenderToTextureUpscale;
-		heightPow2 *= settings.rend.RenderToTextureUpscale;
-	}
+	float upscale = 1.f;
+	if (!config::RenderToTextureBuffer)
+		upscale = config::RenderResolution / 480.f;
+	u32 upscaledWidth = origWidth * upscale;
+	u32 upscaledHeight = origHeight * upscale;
+	widthPow2 *= upscale;
+	heightPow2 *= upscale;
 
 	rttPipelineManager->CheckSettingsChange();
 	VulkanContext *context = GetContext();
@@ -428,7 +425,7 @@ vk::CommandBuffer TextureDrawer::BeginRenderPass()
 	vk::ImageView colorImageView;
 	vk::ImageLayout colorImageCurrentLayout;
 
-	if (!settings.rend.RenderToTextureBuffer)
+	if (!config::RenderToTextureBuffer)
 	{
 		// TexAddr : fb_rtt.TexAddr, Reserved : 0, StrideSel : 0, ScanOrder : 1
 		TCW tcw = { { textureAddr >> 3, 0, 0, 1 } };
@@ -513,7 +510,8 @@ vk::CommandBuffer TextureDrawer::BeginRenderPass()
 	commandBuffer.beginRenderPass(vk::RenderPassBeginInfo(rttPipelineManager->GetRenderPass(),	*framebuffers[GetCurrentImage()],
 			vk::Rect2D( { 0, 0 }, { width, height }), 2, clear_colors), vk::SubpassContents::eInline);
 	commandBuffer.setViewport(0, vk::Viewport(0.0f, 0.0f, (float)upscaledWidth, (float)upscaledHeight, 1.0f, 0.0f));
-	baseScissor = vk::Rect2D(vk::Offset2D(0, 0), vk::Extent2D(upscaledWidth, upscaledHeight));
+	baseScissor = vk::Rect2D(vk::Offset2D(pvrrc.fb_X_CLIP.min * upscale, pvrrc.fb_Y_CLIP.min * upscale),
+			vk::Extent2D(upscaledWidth, upscaledHeight));
 	commandBuffer.setScissor(0, baseScissor);
 	currentCommandBuffer = commandBuffer;
 
@@ -524,15 +522,10 @@ void TextureDrawer::EndRenderPass()
 {
 	currentCommandBuffer.endRenderPass();
 
-	u32 clippedWidth = pvrrc.fb_X_CLIP.max - pvrrc.fb_X_CLIP.min + 1;
-	u32 clippedHeight = pvrrc.fb_Y_CLIP.max - pvrrc.fb_Y_CLIP.min + 1;
+	u32 clippedWidth = pvrrc.fb_X_CLIP.max + 1;
+	u32 clippedHeight = pvrrc.fb_Y_CLIP.max + 1;
 
-	u32 stride = FB_W_LINESTRIDE.stride * 8;
-	if (clippedWidth * 2 > stride)
-		// Happens for Virtua Tennis
-		clippedWidth = stride / 2;
-
-	if (settings.rend.RenderToTextureBuffer)
+	if (config::RenderToTextureBuffer)
 	{
 		vk::BufferImageCopy copyRegion(0, clippedWidth, clippedHeight, vk::ImageSubresourceLayers(vk::ImageAspectFlagBits::eColor, 0, 0, 1), vk::Offset3D(0, 0, 0),
 				vk::Extent3D(vk::Extent2D(clippedWidth, clippedHeight), 1));
@@ -555,7 +548,7 @@ void TextureDrawer::EndRenderPass()
 	currentCommandBuffer = nullptr;
 	commandPool->EndFrame();
 
-	if (settings.rend.RenderToTextureBuffer)
+	if (config::RenderToTextureBuffer)
 	{
 		vk::Fence fence = commandPool->GetCurrentFence();
 		GetContext()->GetDevice().waitForFences(1, &fence, true, UINT64_MAX);
@@ -572,19 +565,14 @@ void TextureDrawer::EndRenderPass()
 		//memset(&vram[fb_rtt.TexAddr << 3], '\0', size);
 
 		texture->dirty = 0;
-		if (texture->lock_block == NULL)
-			texture->lock_block = libCore_vramlock_Lock(texture->sa_tex, texture->sa + texture->size - 1, texture);
+		libCore_vramlock_Lock(texture->sa_tex, texture->sa + texture->size - 1, texture);
 	}
 	Drawer::EndRenderPass();
 }
 
-void ScreenDrawer::Init(SamplerManager *samplerManager, ShaderManager *shaderManager)
+void ScreenDrawer::Init(SamplerManager *samplerManager, ShaderManager *shaderManager, const vk::Extent2D& viewport)
 {
 	this->shaderManager = shaderManager;
-	currentScreenScaling = settings.rend.ScreenScaling;
-	vk::Extent2D viewport = GetContext()->GetViewPort();
-	viewport.width = lroundf(viewport.width * currentScreenScaling / 100.f);
-	viewport.height = lroundf(viewport.height * currentScreenScaling / 100.f);
 	if (this->viewport != viewport)
 	{
 		framebuffers.clear();
@@ -680,9 +668,6 @@ void ScreenDrawer::Init(SamplerManager *samplerManager, ShaderManager *shaderMan
 
 vk::CommandBuffer ScreenDrawer::BeginRenderPass()
 {
-	if (currentScreenScaling != settings.rend.ScreenScaling)
-		Init(samplerManager, shaderManager);
-
 	vk::CommandBuffer commandBuffer = commandPool->Allocate();
 	commandBuffer.begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));
 
@@ -700,9 +685,9 @@ vk::CommandBuffer ScreenDrawer::BeginRenderPass()
 			vk::Rect2D( { 0, 0 }, viewport), 2, clear_colors), vk::SubpassContents::eInline);
 	commandBuffer.setViewport(0, vk::Viewport(0.0f, 0.0f, viewport.width, viewport.height, 1.0f, 0.0f));
 
-	matrices.CalcMatrices(&pvrrc);
+	matrices.CalcMatrices(&pvrrc, viewport.width, viewport.height);
 
-	SetBaseScissor();
+	SetBaseScissor(viewport);
 	commandBuffer.setScissor(0, baseScissor);
 	currentCommandBuffer = commandBuffer;
 

@@ -1,5 +1,5 @@
-#include "audiostream.h"
 #ifdef USE_PULSEAUDIO
+#include "audiostream.h"
 
 #ifdef PULSEAUDIO_SIMPLE
 #include <pulse/simple.h>
@@ -210,7 +210,7 @@ static void pulseaudio_init()
 
 	pa_buffer_attr buffer_attr;
 	buffer_attr.maxlength = -1;
-	buffer_attr.tlength = pa_usec_to_bytes(settings.aica.BufferSize * PA_USEC_PER_SEC / 44100, &spec);
+	buffer_attr.tlength = pa_usec_to_bytes(config::AudioBufferSize * PA_USEC_PER_SEC / 44100, &spec);
 	buffer_attr.prebuf = -1;
 	buffer_attr.minreq = -1;
 	buffer_attr.fragsize = -1;

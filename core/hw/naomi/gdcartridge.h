@@ -21,19 +21,19 @@ public:
 	GDCartridge(u32 size) : NaomiCartridge(size)
 	{
 	}
-	~GDCartridge()
+	~GDCartridge() override
 	{
 		free(dimm_data);
 	}
-	virtual void Init() override
+	void Init() override
 	{
 		device_start();
 		device_reset();
 	}
-	virtual void* GetDmaPtr(u32 &size) override;
-	virtual void AdvancePtr(u32 size) override;
-	virtual bool Read(u32 offset, u32 size, void* dst) override;
-	virtual std::string GetGameId() override;
+	void* GetDmaPtr(u32 &size) override;
+	void AdvancePtr(u32 size) override;
+	bool Read(u32 offset, u32 size, void* dst) override;
+	std::string GetGameId() override;
 
 	void SetGDRomName(const char *name, const char *parentName) { this->gdrom_name = name; this->gdrom_parent_name = parentName; }
 
@@ -66,7 +66,7 @@ private:
 	void find_file(const char *name, const u8 *dir_sector, u32 &file_start, u32 &file_size);
 
 	inline void permutate(u32 &a, u32 &b, u32 m, int shift);
-	void des_generate_subkeys(const u64 key, u32 *subkeys);
+	void des_generate_subkeys(u64 key, u32 *subkeys);
 	template<bool decrypt>
 	u64 des_encrypt_decrypt(u64 src, const u32 *des_subkeys);
 	u64 rev64(u64 src);

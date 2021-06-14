@@ -3,6 +3,7 @@
 #include "maple_if.h"
 #include "hw/naomi/naomi_cart.h"
 #include "input/gamepad_device.h"
+#include "cfg/option.h"
 
 static u8 GetBtFromSgn(s8 val)
 {
@@ -61,7 +62,7 @@ void MapleConfigMap::SetVibration(float power, float inclination, u32 duration_m
 
 void MapleConfigMap::GetInput(PlainJoystickState* pjs)
 {
-	int player_num = playerNum();
+	u32 player_num = playerNum();
 
 	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
 	{
@@ -151,10 +152,10 @@ void MapleConfigMap::GetAbsCoordinates(int& x, int& y)
 	y = mo_y_abs[playerNum()];
 }
 
-void MapleConfigMap::GetMouseInput(u32& buttons, int& x, int& y, int& wheel)
+void MapleConfigMap::GetMouseInput(u8& buttons, int& x, int& y, int& wheel)
 {
-	int playerNum = this->playerNum();
-	buttons = mo_buttons[playerNum];
+	u32 playerNum = this->playerNum();
+	buttons = mo_buttons[playerNum] & 0xff;
 	x = (int)std::round(mo_x_delta[playerNum]);
 	y = (int)std::round(mo_y_delta[playerNum]);
 	wheel = (int)std::round(mo_wheel_delta[playerNum]);
@@ -175,8 +176,7 @@ bool maple_atomiswave_coin_chute(int slot)
 
 void mcfg_Create(MapleDeviceType type, u32 bus, u32 port, s32 player_num = -1)
 {
-	if (MapleDevices[bus][port] != NULL)
-		delete MapleDevices[bus][port];
+	delete MapleDevices[bus][port];
 	maple_device* dev = maple_Create(type);
 	dev->Setup(maple_GetAddress(bus, port), player_num);
 	dev->config = new MapleConfigMap(dev);
@@ -242,14 +242,14 @@ void mcfg_CreateDevices()
 {
 	for (int bus = 0; bus < MAPLE_PORTS; ++bus)
 	{
-		switch ((MapleDeviceType)settings.input.maple_devices[bus])
+		switch (config::MapleMainDevices[bus])
 		{
 		case MDT_SegaController:
 			mcfg_Create(MDT_SegaController, bus, 5);
-			if (settings.input.maple_expansion_devices[bus][0] != MDT_None)
-				mcfg_Create((MapleDeviceType)settings.input.maple_expansion_devices[bus][0], bus, 0);
-			if (settings.input.maple_expansion_devices[bus][1] != MDT_None)
-				mcfg_Create((MapleDeviceType)settings.input.maple_expansion_devices[bus][1], bus, 1);
+			if (config::MapleExpansionDevices[bus][0] != MDT_None)
+				mcfg_Create(config::MapleExpansionDevices[bus][0], bus, 0);
+			if (config::MapleExpansionDevices[bus][1] != MDT_None)
+				mcfg_Create(config::MapleExpansionDevices[bus][1], bus, 1);
 			break;
 
 		case MDT_Keyboard:
@@ -262,27 +262,27 @@ void mcfg_CreateDevices()
 
 		case MDT_LightGun:
 			mcfg_Create(MDT_LightGun, bus, 5);
-			if (settings.input.maple_expansion_devices[bus][0] != MDT_None)
-				mcfg_Create((MapleDeviceType)settings.input.maple_expansion_devices[bus][0], bus, 0);
+			if (config::MapleExpansionDevices[bus][0] != MDT_None)
+				mcfg_Create(config::MapleExpansionDevices[bus][0], bus, 0);
 			break;
 
 		case MDT_TwinStick:
 			mcfg_Create(MDT_TwinStick, bus, 5);
-			if (settings.input.maple_expansion_devices[bus][0] != MDT_None)
-				mcfg_Create((MapleDeviceType)settings.input.maple_expansion_devices[bus][0], bus, 0);
+			if (config::MapleExpansionDevices[bus][0] != MDT_None)
+				mcfg_Create(config::MapleExpansionDevices[bus][0], bus, 0);
 			break;
 
 		case MDT_AsciiStick:
 			mcfg_Create(MDT_AsciiStick, bus, 5);
-			if (settings.input.maple_expansion_devices[bus][0] != MDT_None)
-				mcfg_Create((MapleDeviceType)settings.input.maple_expansion_devices[bus][0], bus, 0);
+			if (config::MapleExpansionDevices[bus][0] != MDT_None)
+				mcfg_Create(config::MapleExpansionDevices[bus][0], bus, 0);
 			break;
 
 		case MDT_None:
 			break;
 
 		default:
-			WARN_LOG(MAPLE, "Invalid device type %d for port %d", settings.input.maple_devices[bus], bus);
+			WARN_LOG(MAPLE, "Invalid device type %d for port %d", (MapleDeviceType)config::MapleMainDevices[bus], bus);
 			break;
 		}
 	}

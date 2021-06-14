@@ -63,7 +63,7 @@ public:
 			return GamepadDevice::gamepad_btn_input(code, pressed);
 	}
 
-	virtual const char *get_button_name(u32 code) override
+	const char *get_button_name(u32 code) override
 	{
 		switch (code)
 		{
@@ -425,7 +425,7 @@ void x11_window_create()
 		Atom net_wm_icon = XInternAtom(x11_disp, "_NET_WM_ICON", False);
 		Atom cardinal = XInternAtom(x11_disp, "CARDINAL", False);
 		XChangeProperty(x11_disp, x11_win, net_wm_icon, cardinal, 32, PropModeReplace,
-				(const unsigned char*)reicast_icon, sizeof(reicast_icon) / sizeof(*reicast_icon));
+				(const unsigned char*)window_icon, sizeof(window_icon) / sizeof(*window_icon));
 
 		// Capture the close window event
 		wmDeleteMessage = XInternAtom(x11_disp, "WM_DELETE_WINDOW", False);

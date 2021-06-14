@@ -76,11 +76,11 @@ public:
 					vk::DescriptorSetAllocateInfo(context->GetDescriptorPool(), 1, &descSetLayout.get())).front());
 		std::vector<vk::WriteDescriptorSet> writeDescriptorSets;
 		vk::DescriptorBufferInfo pixelBufferInfo(*pixelBuffer->buffer, 0, VK_WHOLE_SIZE);
-		writeDescriptorSets.push_back(vk::WriteDescriptorSet(*descSet, 0, 0, 1, vk::DescriptorType::eStorageBuffer, nullptr, &pixelBufferInfo, nullptr));
+		writeDescriptorSets.emplace_back(*descSet, 0, 0, 1, vk::DescriptorType::eStorageBuffer, nullptr, &pixelBufferInfo, nullptr);
 		vk::DescriptorBufferInfo pixelCounterBufferInfo(*pixelCounter->buffer, 0, 4);
-		writeDescriptorSets.push_back(vk::WriteDescriptorSet(*descSet, 1, 0, 1, vk::DescriptorType::eStorageBuffer, nullptr, &pixelCounterBufferInfo, nullptr));
+		writeDescriptorSets.emplace_back(*descSet, 1, 0, 1, vk::DescriptorType::eStorageBuffer, nullptr, &pixelCounterBufferInfo, nullptr);
 		vk::DescriptorImageInfo pointerImageInfo(vk::Sampler(), abufferPointerAttachment->GetImageView(), vk::ImageLayout::eGeneral);
-		writeDescriptorSets.push_back(vk::WriteDescriptorSet(*descSet, 2, 0, 1, vk::DescriptorType::eStorageImage, &pointerImageInfo, nullptr, nullptr));
+		writeDescriptorSets.emplace_back(*descSet, 2, 0, 1, vk::DescriptorType::eStorageImage, &pointerImageInfo, nullptr, nullptr);
 		context->GetDevice().updateDescriptorSets(writeDescriptorSets, nullptr);
 	}
 

@@ -8,7 +8,7 @@
 #include <unordered_map>
 #include <glm/glm.hpp>
 
-#define glCheck() do { if (unlikely(settings.validate.OpenGlChecks)) { verify(glGetError()==GL_NO_ERROR); } } while(0)
+#define glCheck() do { if (unlikely(config::OpenGlChecks)) { verify(glGetError()==GL_NO_ERROR); } } while(0)
 
 #define VERTEX_POS_ARRAY 0
 #define VERTEX_COL_BASE_ARRAY 1
@@ -84,15 +84,23 @@ struct gl_ctx
 	struct
 	{
 		GLuint geometry,modvols,idxs,idxs2;
-		GLuint vao;
+		GLuint mainVAO;
+		GLuint modvolVAO;
 	} vbo;
 
 	struct
 	{
-		u32 TexAddr;
+		u32 texAddress = ~0;
 		GLuint depthb;
 		GLuint tex;
 		GLuint fbo;
+		GLuint pbo;
+		u32 pboSize;
+		bool directXfer;
+		u32 width;
+		u32 height;
+		u32 fb_w_ctrl;
+		u32 linestride;
 	} rtt;
 
 	struct
@@ -148,7 +156,7 @@ void SetCull(u32 CullMode);
 s32 SetTileClip(u32 val, GLint uniform);
 void SetMVS_Mode(ModifierVolumeMode mv_mode, ISP_Modvol ispc);
 
-void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt);
+GLuint BindRTT(bool withDepthBuffer = true);
 void ReadRTTBuffer();
 void RenderFramebuffer();
 void DrawFramebuffer();
@@ -221,9 +229,9 @@ class TextureCacheData final : public BaseTextureCacheData
 {
 public:
 	GLuint texID;   //gl texture
-	virtual std::string GetId() override { return std::to_string(texID); }
-	virtual void UploadToGPU(int width, int height, u8 *temp_tex_buffer, bool mipmapped, bool mipmapsIncluded = false) override;
-	virtual bool Delete() override;
+	std::string GetId() override { return std::to_string(texID); }
+	void UploadToGPU(int width, int height, u8 *temp_tex_buffer, bool mipmapped, bool mipmapsIncluded = false) override;
+	bool Delete() override;
 };
 
 class GlTextureCache final : public BaseTextureCache<TextureCacheData>
@@ -251,7 +259,7 @@ extern const u32 SrcBlendGL[], DstBlendGL[];
 struct OpenGLRenderer : Renderer
 {
 	bool Init() override;
-	void Resize(int w, int h) override { screen_width = w; screen_height = h; }
+	void Resize(int w, int h) override { width = w; height = h; }
 	void Term() override;
 
 	bool Process(TA_context* ctx) override { return ProcessFrame(ctx); }
@@ -262,12 +270,12 @@ struct OpenGLRenderer : Renderer
 
 	void DrawOSD(bool clear_screen) override { OSD_DRAW(clear_screen); }
 
-	virtual u64 GetTexture(TSP tsp, TCW tcw) override
+	u64 GetTexture(TSP tsp, TCW tcw) override
 	{
 		return gl_GetTexture(tsp, tcw);
 	}
 
-	virtual bool Present() override
+	bool Present() override
 	{
 		if (!frameRendered)
 			return false;
@@ -276,4 +284,51 @@ struct OpenGLRenderer : Renderer
 	}
 
 	bool frameRendered = false;
+	int width;
+	int height;
 };
+
+void initQuad();
+void termQuad();
+void drawQuad(GLuint texId, bool rotate = false, bool swapY = false);
+
+#define SHADER_COMPAT "						\n\
+#define TARGET_GL %s						\n\
+											\n\
+#define GLES2 0 							\n\
+#define GLES3 1 							\n\
+#define GL2 2								\n\
+#define GL3 3								\n\
+											\n\
+#if TARGET_GL == GL2 						\n\
+#define highp								\n\
+#define lowp								\n\
+#define mediump								\n\
+#endif										\n\
+#if TARGET_GL == GLES3						\n\
+out highp vec4 FragColor;					\n\
+#define gl_FragColor FragColor				\n\
+#define FOG_CHANNEL a						\n\
+#elif TARGET_GL == GL3						\n\
+out highp vec4 FragColor;					\n\
+#define gl_FragColor FragColor				\n\
+#define FOG_CHANNEL r						\n\
+#else										\n\
+#define texture texture2D					\n\
+#define FOG_CHANNEL a						\n\
+#endif										\n\
+											\n\
+"
+
+#define VTX_SHADER_COMPAT SHADER_COMPAT \
+"#if TARGET_GL == GLES2 || TARGET_GL == GL2 \n\
+#define in attribute						\n\
+#define out varying							\n\
+#endif										\n\
+"
+
+#define PIX_SHADER_COMPAT SHADER_COMPAT \
+"#if TARGET_GL == GLES2 || TARGET_GL == GL2 \n\
+#define in varying							\n\
+#endif										\n\
+"

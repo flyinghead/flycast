@@ -122,7 +122,7 @@ public:
 		}
 	}
 
-	virtual void rumble(float power, float inclination, u32 duration_ms) override
+	void rumble(float power, float inclination, u32 duration_ms) override
 	{
 		if (sdl_haptic != NULL)
 		{
@@ -132,7 +132,7 @@ public:
 			SDL_HapticRumblePlay(sdl_haptic, power, duration_ms);
 		}
 	}
-	virtual void update_rumble() override
+	void update_rumble() override
 	{
 		if (sdl_haptic == NULL)
 			return;
@@ -176,7 +176,7 @@ public:
 	}
 
 protected:
-	virtual void load_axis_min_max(u32 axis) override
+	void load_axis_min_max(u32 axis) override
 	{
 		axis_min_values[axis] = -32768;
 		axis_ranges[axis] = 65535;
@@ -228,7 +228,7 @@ public:
 			input_mapper = std::make_shared<KbInputMapping>();
 	}
 
-	virtual const char *get_button_name(u32 code) override
+	const char *get_button_name(u32 code) override
 	{
 		const char *name = SDL_GetKeyName((SDL_Keycode)code);
 		if (name[0] == 0)
@@ -293,7 +293,7 @@ public:
 			return GamepadDevice::gamepad_btn_input(code, pressed);
 	}
 
-	virtual const char *get_button_name(u32 code) override
+	const char *get_button_name(u32 code) override
 	{
 		switch(code)
 		{
@@ -315,8 +315,8 @@ public:
 	void setMouseAbsPos(int x, int y);
 	void setMouseRelPos(int deltax, int deltay);
 	void setMouseButton(u32 button, bool pressed);
-	virtual void detect_btn_input(input_detected_cb button_pressed) override;
-	virtual void cancel_detect_input() override;
+	void detect_btn_input(input_detected_cb button_pressed) override;
+	void cancel_detect_input() override;
 
 private:
 	u32 rawHandle = 0;

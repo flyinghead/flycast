@@ -113,10 +113,10 @@ const std::vector<OSDVertex>& GetOSDVertices()
 
 	DrawButton(vjoy_pos[10], rt[0]);
 
-	DrawButton2(vjoy_pos[11], 1);
-	DrawButton2(vjoy_pos[12], 0);
+	DrawButton2(vjoy_pos[11], true);
+	DrawButton2(vjoy_pos[12], false);
 
-	DrawButton2(vjoy_pos[13], 0);
+	DrawButton2(vjoy_pos[13], false);
 
 	return osdVertices;
 }

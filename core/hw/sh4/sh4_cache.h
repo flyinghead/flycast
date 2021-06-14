@@ -198,8 +198,8 @@ private:
 		cached = CCN_CCR.ICE == 1 && cachedArea(area);
 
 		if (CCN_MMUCR.AT == 0 || !translatedArea(area)
-				// 7C000000 to 7FFFFFFF in P0 not translated in supervisor mode
-				|| (!userMode && (address & 0xFC000000) == 0x7C000000))
+				// 7C000000 to 7FFFFFFF in P0/U0 not translated
+				|| (address & 0xFC000000) == 0x7C000000)
 		{
 			physAddr = address;
 		}
@@ -531,8 +531,8 @@ private:
 			copyBack = area == 4 ? CCN_CCR.CB : !CCN_CCR.WT;
 
 		if (CCN_MMUCR.AT == 0 || !translatedArea(area)
-				// 7C000000 to 7FFFFFFF in P0 not translated in supervisor mode
-				|| (!userMode && (address & 0xFC000000) == 0x7C000000))
+				// 7C000000 to 7FFFFFFF in P0/U0 not translated
+				|| (address & 0xFC000000) == 0x7C000000)
 		{
 			physAddr = address;
 		}
@@ -563,6 +563,10 @@ private:
 				copyBack = copyBack && entry->Data.WT == 0;
 			}
 			cached = cached && entry->Data.C == 1;
+			if ((physAddr & 0x1C000000) == 0x1C000000)
+				// map 1C000000-1FFFFFFF to P4 memory-mapped registers
+				physAddr |= 0xF0000000;
+
 		}
 		return MMU_ERROR_NONE;
 	}

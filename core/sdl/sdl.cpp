@@ -3,7 +3,8 @@
 #include "types.h"
 #include "cfg/cfg.h"
 #include "sdl/sdl.h"
-#include <SDL2/SDL_syswm.h>
+#include <SDL_syswm.h>
+#include <SDL_video.h>
 #endif
 #include "hw/maple/maple_devs.h"
 #include "sdl_gamepad.h"
@@ -15,10 +16,6 @@
 #include "linux-dist/icon.h"
 #endif
 
-#ifdef USE_VULKAN
-#include <SDL2/SDL_vulkan.h>
-#endif
-
 static SDL_Window* window = NULL;
 
 #ifdef TARGET_PANDORA
@@ -28,7 +25,6 @@ static SDL_Window* window = NULL;
 #endif
 #define WINDOW_HEIGHT  480
 
-static std::shared_ptr<SDLMouse> sdl_mouse_gamepad;
 static std::shared_ptr<SDLKbGamepadDevice> sdl_kb_gamepad;
 static SDLKeyboardDevice* sdl_keyboard = NULL;
 static bool window_fullscreen;
@@ -296,12 +292,7 @@ void input_sdl_handle()
 				else
 				{
 					sdl_kb_gamepad->gamepad_btn_input(event.key.keysym.sym, event.type == SDL_KEYDOWN);
-					int modifier_keys = 0;
-					if (event.key.keysym.mod & (KMOD_LSHIFT | KMOD_RSHIFT))
-						SET_FLAG(modifier_keys, (0x02 | 0x20), event.type == SDL_KEYUP);
-					if (event.key.keysym.mod & (KMOD_LCTRL | KMOD_RCTRL))
-						SET_FLAG(modifier_keys, (0x01 | 0x10), event.type == SDL_KEYUP);
-					sdl_keyboard->keyboard_input(event.key.keysym.sym, event.type == SDL_KEYDOWN, modifier_keys);
+					sdl_keyboard->keyboard_input(event.key.keysym.scancode, event.type == SDL_KEYDOWN);
 				}
 				break;
 			case SDL_TEXTINPUT:
@@ -433,12 +424,40 @@ static void get_window_state()
 	u32 flags = SDL_GetWindowFlags(window);
 	window_fullscreen = flags & SDL_WINDOW_FULLSCREEN_DESKTOP;
 	window_maximized = flags & SDL_WINDOW_MAXIMIZED;
-	if (!window_fullscreen && !window_maximized)
-		SDL_GetWindowSize(window, &window_width, &window_height);
+    if (!window_fullscreen && !window_maximized){
+        SDL_GetWindowSize(window, &window_width, &window_height);
+        window_width /= scaling;
+        window_height /= scaling;
+    }
+		
 }
 
 bool sdl_recreate_window(u32 flags)
 {
+#ifdef _WIN32
+    //Enable HiDPI mode in Windows
+    typedef enum PROCESS_DPI_AWARENESS {
+        PROCESS_DPI_UNAWARE = 0,
+        PROCESS_SYSTEM_DPI_AWARE = 1,
+        PROCESS_PER_MONITOR_DPI_AWARE = 2
+    } PROCESS_DPI_AWARENESS;
+    
+    HRESULT(WINAPI *SetProcessDpiAwareness)(PROCESS_DPI_AWARENESS dpiAwareness); // Windows 8.1 and later
+    void* shcoreDLL = SDL_LoadObject("SHCORE.DLL");
+    if (shcoreDLL) {
+        SetProcessDpiAwareness = (HRESULT(WINAPI *)(PROCESS_DPI_AWARENESS)) SDL_LoadFunction(shcoreDLL, "SetProcessDpiAwareness");
+        if (SetProcessDpiAwareness) {
+            SetProcessDpiAwareness(PROCESS_PER_MONITOR_DPI_AWARE);
+            
+            float ddpi;
+            if (SDL_GetDisplayDPI(0, &ddpi, NULL, NULL) != -1){ //SDL_WINDOWPOS_UNDEFINED is Display 0
+                //When using HiDPI mode, set correct DPI scaling
+                scaling = ddpi/96.f;
+            }
+        }
+    }
+#endif
+    
 	int x = SDL_WINDOWPOS_UNDEFINED;
 	int y = SDL_WINDOWPOS_UNDEFINED;
 	window_width  = cfgLoadInt("window", "width", window_width);
@@ -451,27 +470,29 @@ bool sdl_recreate_window(u32 flags)
 		get_window_state();
 		SDL_DestroyWindow(window);
 	}
-#ifdef TARGET_PANDORA
-	flags |= SDL_FULLSCREEN;
-#else
-	flags |= SDL_SWSURFACE | SDL_WINDOW_RESIZABLE;
+	flags |= SDL_SWSURFACE;
+#if !defined(GLES)
+	flags |= SDL_WINDOW_RESIZABLE;
 	if (window_fullscreen)
 		flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
 	else if (window_maximized)
 		flags |= SDL_WINDOW_MAXIMIZED;
+#else
+	flags |= SDL_WINDOW_FULLSCREEN;
 #endif
-	window = SDL_CreateWindow("Flycast", x, y, window_width, window_height, flags);
+
+	window = SDL_CreateWindow("Flycast", x, y, window_width * scaling, window_height * scaling, flags);
 	if (window == nullptr)
 	{
 		ERROR_LOG(COMMON, "Window creation failed: %s", SDL_GetError());
 		return false;
 	}
 
-#ifndef _WIN32
+#if !defined(GLES) && !defined(_WIN32)
 	// Set the window icon
 	u32 pixels[48 * 48];
 	for (int i = 0; i < 48 * 48; i++)
-		pixels[i] = reicast_icon[i + 2];
+		pixels[i] = window_icon[i + 2];
 	SDL_Surface *surface = SDL_CreateRGBSurfaceFrom(pixels, 48, 48, 32, 4 * 48, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000);
 	if (surface == NULL)
 	  INFO_LOG(COMMON, "Creating icon surface failed: %s", SDL_GetError());
@@ -527,4 +548,3 @@ HWND sdl_get_native_hwnd()
 #endif
 
 #endif // !defined(__APPLE__)
-

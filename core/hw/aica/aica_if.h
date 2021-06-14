@@ -21,3 +21,4 @@ void aica_sb_Term();
 s32 libAICA_Init();
 void libAICA_Reset(bool hard);
 void libAICA_Term();
+void libAICA_TimeStep();

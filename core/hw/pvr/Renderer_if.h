@@ -16,8 +16,6 @@ void rend_swap_frame(u32 fb_r_sof1);
 void rend_set_fb_write_addr(u32 fb_w_sof1);
 void rend_reset();
 
-void rend_resize(int width, int height);
-
 ///////
 extern TA_context* _pvrrc;
 
@@ -26,7 +24,7 @@ extern TA_context* _pvrrc;
 struct Renderer
 {
 	virtual bool Init()=0;
-	virtual ~Renderer() {}
+	virtual ~Renderer() = default;
 	
 	virtual void Resize(int w, int h)=0;
 

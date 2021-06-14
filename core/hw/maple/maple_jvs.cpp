@@ -17,6 +17,7 @@
 	 along with flycast.  If not, see <https://www.gnu.org/licenses/>.
  */
 #include <array>
+#include <memory>
 #include "maple_devs.h"
 #include "stdclass.h"
 #include "cfg/cfg.h"
@@ -279,7 +280,7 @@ public:
 		output_count = 6;
 	}
 protected:
-	virtual const char *get_id() override { return "SEGA ENTERPRISES,LTD.;I/O BD JVS;837-13551 ;Ver1.00;98/10"; }
+	const char *get_id() override { return "SEGA ENTERPRISES,LTD.;I/O BD JVS;837-13551 ;Ver1.00;98/10"; }
 
 };
 
@@ -321,7 +322,7 @@ public:
 		output_count = 8;
 	}
 protected:
-	virtual const char *get_id() override { return "SEGA ENTERPRISES,LTD.;837-13938 ENCORDER BD  ;Ver0.01;99/08"; }
+	const char *get_id() override { return "SEGA ENTERPRISES,LTD.;837-13938 ENCORDER BD  ;Ver0.01;99/08"; }
 
 };
 
@@ -339,7 +340,7 @@ public:
 		output_count = 22;
 	}
 protected:
-	virtual const char *get_id() override { return "SEGA ENTERPRISES,LTD.;837-13844-01 I/O CNTL BD2 ;Ver1.00;99/07"; }
+	const char *get_id() override { return "SEGA ENTERPRISES,LTD.;837-13844-01 I/O CNTL BD2 ;Ver1.00;99/07"; }
 
 };
 
@@ -373,7 +374,7 @@ public:
 	{
 	}
 protected:
-	virtual void read_digital_in(u16 *v) override
+	void read_digital_in(u16 *v) override
 	{
 		jvs_837_13844::read_digital_in(v);
 
@@ -398,7 +399,7 @@ protected:
 			v[1] &= ~NAOMI_BTN2_KEY;
 	}
 
-	virtual void write_digital_out(int count, u8 *data) override {
+	void write_digital_out(int count, u8 *data) override {
 		if (count != 3)
 			return;
 
@@ -448,7 +449,7 @@ public:
 		light_gun_count = 2;
 	}
 protected:
-	virtual const char *get_id() override { return "namco ltd.;JYU-PCB;Ver1.00;JPN,2Coins 2Guns"; }
+	const char *get_id() override { return "namco ltd.;JYU-PCB;Ver1.00;JPN,2Coins 2Guns"; }
 };
 
 // Mazan
@@ -467,9 +468,9 @@ public:
 		encoder_count = 2;
 	}
 protected:
-	virtual const char *get_id() override { return "namco ltd.;FCB;Ver1.0;JPN,Touch Panel & Multipurpose"; }
+	const char *get_id() override { return "namco ltd.;FCB;Ver1.0;JPN,Touch Panel & Multipurpose"; }
 
-	virtual u16 read_analog_axis(int player_num, int player_axis, bool inverted) override {
+	u16 read_analog_axis(int player_num, int player_axis, bool inverted) override {
 		if (init_in_progress)
 			return 0;
 		player_num = std::min(player_num, (int)ARRAY_SIZE(mo_x_abs));
@@ -495,7 +496,7 @@ public:
 		encoder_count = 2;
 	}
 protected:
-	virtual const char *get_id() override { return "namco ltd.;FCA-1;Ver1.01;JPN,Multipurpose + Rotary Encoder"; }
+	const char *get_id() override { return "namco ltd.;FCA-1;Ver1.01;JPN,Multipurpose + Rotary Encoder"; }
 };
 
 // World Kicks
@@ -512,9 +513,9 @@ public:
 		output_count = 6;
 	}
 protected:
-	virtual const char *get_id() override { return "SEGA ENTERPRISES,LTD.;I/O BD JVS;837-13551 ;Ver1.00;98/10"; }
+	const char *get_id() override { return "SEGA ENTERPRISES,LTD.;I/O BD JVS;837-13551 ;Ver1.00;98/10"; }
 
-	virtual void read_digital_in(u16 *v) override
+	void read_digital_in(u16 *v) override
 	{
 		jvs_io_board::read_digital_in(v);
 				// main button
@@ -541,7 +542,7 @@ protected:
 		return std::min(0xff, 0x80 - axis_y) << 8;
 	}
 
-	virtual u16 read_analog_axis(int player_num, int player_axis, bool inverted) override {
+	u16 read_analog_axis(int player_num, int player_axis, bool inverted) override {
 		switch (player_axis)
 		{
 		case 0:
@@ -591,9 +592,9 @@ public:
 		output_count = 6;
 	}
 protected:
-	virtual const char *get_id() override { return "SEGA ENTERPRISES,LTD.;I/O BD JVS;837-13551 ;Ver1.00;98/10"; }
+	const char *get_id() override { return "SEGA ENTERPRISES,LTD.;I/O BD JVS;837-13551 ;Ver1.00;98/10"; }
 
-	virtual void read_digital_in(u16 *v) override
+	void read_digital_in(u16 *v) override
 	{
 		jvs_io_board::read_digital_in(v);
 		for (u32 player = 0; player < player_count; player++)
@@ -621,7 +622,7 @@ protected:
 		return std::min(0xff, 0x80 - axis_y) << 8;
 	}
 
-	virtual u16 read_analog_axis(int player_num, int player_axis, bool inverted) override {
+	u16 read_analog_axis(int player_num, int player_axis, bool inverted) override {
 		switch (player_axis)
 		{
 		case 0:
@@ -647,55 +648,55 @@ maple_naomi_jamma::maple_naomi_jamma()
 	{
 	case JVS::Default:
 	default:
-		io_boards.emplace_back(new jvs_837_13551(1, this));
+		io_boards.push_back(std::unique_ptr<jvs_837_13551>(new jvs_837_13551(1, this)));
 		break;
 	case JVS::FourPlayers:
-		io_boards.emplace_back(new jvs_837_13551_4P(1, this));
+		io_boards.push_back(std::unique_ptr<jvs_837_13551_4P>(new jvs_837_13551_4P(1, this)));
 		break;
 	case JVS::RotaryEncoders:
-		io_boards.emplace_back(new jvs_837_13938(1, this));
-		io_boards.emplace_back(new jvs_837_13551(2, this));
+		io_boards.push_back(std::unique_ptr<jvs_837_13938>(new jvs_837_13938(1, this)));
+		io_boards.push_back(std::unique_ptr<jvs_837_13551>(new jvs_837_13551(2, this)));
 		break;
 	case JVS::OutTrigger:
-		io_boards.emplace_back(new jvs_837_13938(1, this));
-		io_boards.emplace_back(new jvs_837_13551_noanalog(2, this));
+		io_boards.push_back(std::unique_ptr<jvs_837_13938>(new jvs_837_13938(1, this)));
+		io_boards.push_back(std::unique_ptr<jvs_837_13551_noanalog>(new jvs_837_13551_noanalog(2, this)));
 		break;
 	case JVS::SegaMarineFishing:
-		io_boards.emplace_back(new jvs_837_13844(1, this));
+		io_boards.push_back(std::unique_ptr<jvs_837_13844>(new jvs_837_13844(1, this)));
 		break;
 	case JVS::DualIOBoards4P:
-		io_boards.emplace_back(new jvs_837_13551(1, this));
-		io_boards.emplace_back(new jvs_837_13551(2, this, 2));
+		io_boards.push_back(std::unique_ptr<jvs_837_13551>(new jvs_837_13551(1, this)));
+		io_boards.push_back(std::unique_ptr<jvs_837_13551>(new jvs_837_13551(2, this, 2)));
 		break;
 	case JVS::LightGun:
-		io_boards.emplace_back(new jvs_namco_jyu(1, this));
+		io_boards.push_back(std::unique_ptr<jvs_namco_jyu>(new jvs_namco_jyu(1, this)));
 		break;
 	case JVS::LightGunAsAnalog:
 		// Regular board sending lightgun coords as axis 0/1
-		io_boards.emplace_back(new jvs_837_13551(1, this));
+		io_boards.push_back(std::unique_ptr<jvs_837_13551>(new jvs_837_13551(1, this)));
 		io_boards.back()->lightgun_as_analog = true;
 		break;
 	case JVS::Mazan:
-		io_boards.emplace_back(new jvs_namco_fcb(1, this));
-		io_boards.emplace_back(new jvs_namco_fcb(2, this));
+		io_boards.push_back(std::unique_ptr<jvs_namco_fcb>(new jvs_namco_fcb(1, this)));
+		io_boards.push_back(std::unique_ptr<jvs_namco_fcb>(new jvs_namco_fcb(2, this)));
 		break;
 	case JVS::GunSurvivor:
-		io_boards.emplace_back(new jvs_namco_fca(1, this));
+		io_boards.push_back(std::unique_ptr<jvs_namco_fca>(new jvs_namco_fca(1, this)));
 		break;
 	case JVS::DogWalking:
-		io_boards.emplace_back(new jvs_837_13844_encoders(1, this));
+		io_boards.push_back(std::unique_ptr<jvs_837_13844_encoders>(new jvs_837_13844_encoders(1, this)));
 		break;
 	case JVS::TouchDeUno:
-		io_boards.emplace_back(new jvs_837_13844_touch(1, this));
+		io_boards.push_back(std::unique_ptr<jvs_837_13844_touch>(new jvs_837_13844_touch(1, this)));
 		break;
 	case JVS::WorldKicks:
-		io_boards.emplace_back(new jvs_namco_v226(1, this));
+		io_boards.push_back(std::unique_ptr<jvs_namco_v226>(new jvs_namco_v226(1, this)));
 		break;
 	case JVS::WorldKicksPCB:
-		io_boards.emplace_back(new jvs_namco_v226_pcb(1, this));
+		io_boards.push_back(std::unique_ptr<jvs_namco_v226_pcb>(new jvs_namco_v226_pcb(1, this)));
 		break;
 	case JVS::WaveRunnerGP:
-		io_boards.emplace_back(new jvs_837_13844_wrungp(1, this));
+		io_boards.push_back(std::unique_ptr<jvs_837_13844_wrungp>(new jvs_837_13844_wrungp(1, this)));
 		break;
 	}
 }

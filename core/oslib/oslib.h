@@ -26,5 +26,3 @@ u32 static INLINE bitscanrev(u32 v)
 	return rv;
 #endif
 }
-
-void os_DebugBreak();

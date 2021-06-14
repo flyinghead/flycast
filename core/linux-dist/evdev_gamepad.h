@@ -37,7 +37,7 @@ class EvdevGamepadDevice : public GamepadDevice
 {
 public:
 	EvdevGamepadDevice(int maple_port, const char *devnode, int fd, const char *mapping_file = NULL)
-	: GamepadDevice(maple_port, "evdev"), _fd(fd), _rumble_effect_id(-1), _devnode(devnode)
+	: GamepadDevice(maple_port, "evdev"), _fd(fd), _devnode(devnode), _rumble_effect_id(-1)
 	{
 		fcntl(fd, F_SETFL, O_NONBLOCK);
 		char buf[256] = "Unknown";
@@ -56,8 +56,6 @@ public:
 		{
 #if defined(TARGET_PANDORA)
 			mapping_file = "controller_pandora.cfg";
-#elif defined(TARGET_GCW0)
-			mapping_file = "controller_gcwz.cfg";
 #else
 			if (_name == "Microsoft X-Box 360 pad"
 				|| _name == "Xbox 360 Wireless Receiver"
@@ -92,20 +90,20 @@ public:
 		else
 			INFO_LOG(INPUT, "using custom mapping '%s'", input_mapper->name.c_str());
 	}
-	virtual ~EvdevGamepadDevice() override
+	~EvdevGamepadDevice() override
 	{
 		INFO_LOG(INPUT, "evdev: Device '%s' on port %d disconnected", _name.c_str(), maple_port());
 		close(_fd);
 	}
 
-	virtual void rumble(float power, float inclination, u32 duration_ms) override
+	void rumble(float power, float inclination, u32 duration_ms) override
 	{
 		vib_inclination = inclination * power;
 		vib_stop_time = os_GetSeconds() + duration_ms / 1000.0;
 
 		do_rumble(power, duration_ms);
 	}
-	virtual void update_rumble() override
+	void update_rumble() override
 	{
 		if (vib_inclination > 0)
 		{
@@ -117,7 +115,7 @@ public:
 		}
 	}
 
-	virtual const char *get_button_name(u32 code) override
+	const char *get_button_name(u32 code) override
 	{
 		switch (code)
 		{
@@ -163,7 +161,7 @@ public:
 			return nullptr;
 		}
 	}
-	virtual const char *get_axis_name(u32 code) override
+	const char *get_axis_name(u32 code) override
 	{
 		switch (code)
 		{
@@ -224,7 +222,7 @@ public:
 	}
 
 protected:
-	virtual void load_axis_min_max(u32 axis) override
+	void load_axis_min_max(u32 axis) override
 	{
 		struct input_absinfo abs;
 		if (ioctl(_fd, EVIOCGABS(axis), &abs))

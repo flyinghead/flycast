@@ -33,11 +33,11 @@ public:
 		try {
 			BaseVulkanRenderer::Init();
 
-			oitBuffers.Init(0, 0);
+			oitBuffers.Init(viewport.width, viewport.height);
 			textureDrawer.Init(&samplerManager, &oitShaderManager, &textureCache, &oitBuffers);
 			textureDrawer.SetCommandPool(&texCommandPool);
 
-			screenDrawer.Init(&samplerManager, &oitShaderManager, &oitBuffers);
+			screenDrawer.Init(&samplerManager, &oitShaderManager, &oitBuffers, viewport);
 			screenDrawer.SetCommandPool(&texCommandPool);
 
 			return true;
@@ -51,8 +51,10 @@ public:
 
 	void Resize(int w, int h) override
 	{
+		if ((u32)w == viewport.width && (u32)h == viewport.height)
+			return;
 		BaseVulkanRenderer::Resize(w, h);
-		screenDrawer.Init(&samplerManager, &oitShaderManager, &oitBuffers);
+		screenDrawer.Init(&samplerManager, &oitShaderManager, &oitBuffers, viewport);
 	}
 
 	void Term() override

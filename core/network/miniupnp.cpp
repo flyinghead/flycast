@@ -16,6 +16,8 @@
     You should have received a copy of the GNU General Public License
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
+#include "build.h"
+#ifdef USE_MINIUPNPC
 #include <miniupnpc.h>
 #include <upnpcommands.h>
 #include "types.h"
@@ -76,6 +78,7 @@ bool MiniUPnP::AddPortMapping(int port, bool tcp)
 		INFO_LOG(MODEM, "Port %d redirection failed: error %d", port, error);
 		return false;
 	}
-	mappedPorts.push_back(std::make_pair(portStr, tcp));
+	mappedPorts.emplace_back(portStr, tcp);
 	return true;
 }
+#endif

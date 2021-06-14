@@ -67,9 +67,9 @@ void X86RegAlloc::Writeback_FPU(u32 reg, s8 nreg)
 
 struct DynaRBI : RuntimeBlockInfo
 {
-	virtual u32 Relink() override;
+	u32 Relink() override;
 
-	virtual void Relocate(void* dst) override {
+	void Relocate(void* dst) override {
 		verify(false);
 	}
 };
@@ -752,10 +752,11 @@ void ngen_Compile(RuntimeBlockInfo* block, bool smc_checks, bool, bool, bool opt
 	delete compiler;
 }
 
-bool ngen_Rewrite(size_t& host_pc, size_t addr, size_t acc)
+bool ngen_Rewrite(host_context_t &context, void *faultAddress)
 {
-	X86Compiler *compiler = new X86Compiler((u8*)(addr - 5));
-	bool rv = compiler->rewriteMemAccess(host_pc, addr, acc);
+	u8 *rewriteAddr = *(u8 **)context.esp - 5;
+	X86Compiler *compiler = new X86Compiler(rewriteAddr);
+	bool rv = compiler->rewriteMemAccess(context);
 	delete compiler;
 
 	return rv;

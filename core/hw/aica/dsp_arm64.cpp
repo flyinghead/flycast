@@ -25,7 +25,7 @@
 #include "aica.h"
 #include "aica_if.h"
 #include "hw/mem/_vmem.h"
-#include "deps/vixl/aarch64/macro-assembler-aarch64.h"
+#include <aarch64/macro-assembler-aarch64.h>
 using namespace vixl::aarch64;
 
 static u8 *pCodeBuffer;

@@ -1,5 +1,24 @@
+/*
+	Copyright 2018 flyinghead
+
+	This file is part of Flycast.
+
+    Flycast is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 2 of the License, or
+    (at your option) any later version.
+
+    Flycast is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
+*/
 #pragma once
 #include "rend/gles/gles.h"
+#include "glsl.h"
 #include <unordered_map>
 
 void gl4DrawStrips(GLuint output_fbo, int width, int height);
@@ -66,19 +85,18 @@ struct gl4_ctx
 
 extern gl4_ctx gl4;
 
-extern int screen_width;
-extern int screen_height;
 extern int max_image_width;
 extern int max_image_height;
 
-GLuint gl4BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt);
-void gl4DrawFramebuffer(float w, float h);
-bool gl4_render_output_framebuffer();
-void abufferDrawQuad();
-
 extern const char *gl4PixelPipelineShader;
 bool gl4CompilePipelineShader(gl4PipelineShader* s, const char *pixel_source = gl4PixelPipelineShader, const char *vertex_source = NULL);
-void gl4_delete_shaders();
+
+void initABuffer();
+void termABuffer();
+void reshapeABuffer(int width, int height);
+void renderABuffer();
+void DrawTranslucentModVols(int first, int count);
+void checkOverflowAndReset();
 
 extern GLuint stencilTexId;
 extern GLuint depthTexId;
@@ -91,27 +109,15 @@ extern GLuint depth_fbo;
 #define SHADER_HEADER "#version 430 \n\
 \n\
 layout(r32ui, binding = 4) uniform coherent restrict uimage2D abufferPointerImg; \n\
-struct Pixel { \n\
-	vec4 color; \n\
-	float depth; \n\
-	uint seq_num; \n\
-	uint next; \n\
-}; \n\
-#define EOL 0xFFFFFFFFu \n\
+\n\
+layout(binding = 0, offset = 0) uniform atomic_uint buffer_index; \n\
+\n" \
+OIT_POLY_PARAM \
+"\
 layout (binding = 0, std430) coherent restrict buffer PixelBuffer { \n\
 	Pixel pixels[]; \n\
 }; \n\
-layout(binding = 0, offset = 0) uniform atomic_uint buffer_index; \n\
 \n\
-#define ZERO				0 \n\
-#define ONE					1 \n\
-#define OTHER_COLOR			2 \n\
-#define INVERSE_OTHER_COLOR	3 \n\
-#define SRC_ALPHA			4 \n\
-#define INVERSE_SRC_ALPHA	5 \n\
-#define DST_ALPHA			6 \n\
-#define INVERSE_DST_ALPHA	7 \n\
- \n\
 uint getNextPixelIndex() \n\
 { \n\
 	uint index = atomicCounterIncrement(buffer_index); \n\
@@ -122,118 +128,15 @@ uint getNextPixelIndex() \n\
 	return index; \n\
 } \n\
 \n\
-void setFragDepth(void) \n\
-{ \n\
-	float w = 100000.0 * gl_FragCoord.w; \n\
-	gl_FragDepth = log2(1.0 + w) / 34.0; \n\
-} \n\
-struct PolyParam { \n\
-	int first; \n\
-	int count; \n\
-	int texid_low; \n\
-	int texid_high; \n\
-	int tsp; \n\
-	int tcw; \n\
-	int pcw; \n\
-	int isp; \n\
-	float zvZ; \n\
-	int tileclip; \n\
-	int tsp1; \n\
-	int tcw1; \n\
-	int texid1_low; \n\
-	int texid1_high; \n\
-}; \n\
 layout (binding = 1, std430) readonly buffer TrPolyParamBuffer { \n\
 	PolyParam tr_poly_params[]; \n\
 }; \n\
- \n\
-#define GET_TSP_FOR_AREA int tsp; if (area1) tsp = pp.tsp1; else tsp = pp.tsp; \n\
- \n\
-int getSrcBlendFunc(const PolyParam pp, bool area1) \n\
-{ \n\
-	GET_TSP_FOR_AREA \n\
-	return (tsp >> 29) & 7; \n\
-} \n\
-\n\
-int getDstBlendFunc(const PolyParam pp, bool area1) \n\
-{ \n\
-	GET_TSP_FOR_AREA \n\
-	return (tsp >> 26) & 7; \n\
-} \n\
-\n\
-bool getSrcSelect(const PolyParam pp, bool area1) \n\
-{ \n\
-	GET_TSP_FOR_AREA \n\
-	return ((tsp >> 25) & 1) != 0; \n\
-} \n\
-\n\
-bool getDstSelect(const PolyParam pp, bool area1) \n\
-{ \n\
-	GET_TSP_FOR_AREA \n\
-	return ((tsp >> 24) & 1) != 0; \n\
-} \n\
-\n\
-int getFogControl(const PolyParam pp, bool area1) \n\
-{ \n\
-	GET_TSP_FOR_AREA \n\
-	return (tsp >> 22) & 3; \n\
-} \n\
-\n\
-bool getUseAlpha(const PolyParam pp, bool area1) \n\
-{ \n\
-	GET_TSP_FOR_AREA \n\
-	return ((tsp >> 20) & 1) != 0; \n\
-} \n\
-\n\
-bool getIgnoreTexAlpha(const PolyParam pp, bool area1) \n\
-{ \n\
-	GET_TSP_FOR_AREA \n\
-	return ((tsp >> 19) & 1) != 0; \n\
-} \n\
-\n\
-int getShadingInstruction(const PolyParam pp, bool area1) \n\
-{ \n\
-	GET_TSP_FOR_AREA \n\
-	return (tsp >> 6) & 3; \n\
-} \n\
-\n\
-int getDepthFunc(const PolyParam pp) \n\
-{ \n\
-	return (pp.isp >> 29) & 7; \n\
-} \n\
-\n\
-bool getDepthMask(const PolyParam pp) \n\
-{ \n\
-	return ((pp.isp >> 26) & 1) != 1; \n\
-} \n\
-\n\
-bool getShadowEnable(const PolyParam pp) \n\
-{ \n\
-	return ((pp.pcw >> 7) & 1) != 0; \n\
-} \n\
-\n\
-uint getPolyNumber(const Pixel pixel) \n\
-{ \n\
-	return pixel.seq_num & 0x3FFFFFFFu; \n\
-} \n\
-\n\
-#define SHADOW_STENCIL 0x40000000u \n\
-#define SHADOW_ACC	   0x80000000u \n\
-\n\
-bool isShadowed(const Pixel pixel) \n\
-{ \n\
-	return (pixel.seq_num & SHADOW_ACC) == SHADOW_ACC; \n\
-} \n\
-\n\
-bool isTwoVolumes(const PolyParam pp) \n\
-{ \n\
-	return pp.tsp1 != -1 || pp.tcw1 != -1; \n\
-} \n\
  \n\
 "
 
 void gl4SetupMainVBO();
 void gl4SetupModvolVBO();
+void gl4CreateTextures(int width, int height);
 
 extern struct gl4ShaderUniforms_t
 {

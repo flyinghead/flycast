@@ -35,7 +35,6 @@ enum NextDecoderOperation
 	NDO_NextOp,     //pc+=2
 	NDO_End,        //End the block, Type = BlockEndType
 	NDO_Delayslot,  //pc+=2, NextOp=DelayOp
-	NDO_Jump,       //pc=JumpAddr,NextOp=JumpOp
 };
 //ngen features
 struct ngen_features
@@ -46,12 +45,12 @@ struct ngen_features
 
 struct RuntimeBlockInfo;
 bool dec_DecodeBlock(RuntimeBlockInfo* rbi,u32 max_cycles);
+void dec_updateBlockCycles(RuntimeBlockInfo *block, u16 op);
 
 struct state_t
 {
 	NextDecoderOperation NextOp;
 	NextDecoderOperation DelayOp;
-	NextDecoderOperation JumpOp;
 	u32 JumpAddr;
 	u32 NextAddr;
 	BlockEndType BlockType;
@@ -73,5 +72,8 @@ struct state_t
 		bool has_writem;
 		bool has_fpu;
 	} info;
+};
 
-} ;
+const u32 NullAddress = 0xFFFFFFFF;
+#define GetImm12(str) ((str>>0) & 0xfff)
+#define GetSImm12(str) (((short)((GetImm12(str))<<4))>>4)

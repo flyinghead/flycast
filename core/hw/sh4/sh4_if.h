@@ -216,40 +216,22 @@ struct fpscr_t
 	};
 };
 
-
-typedef void RunFP();
-typedef void StopFP();
-typedef void StartFP();
-typedef void StepFP();
-typedef void SkipFP();
-typedef void ResetFP(bool hard);
-typedef void InitFP();
-typedef void TermFP();
-typedef bool IsCpuRunningFP();
-
-/*
-	The interface stuff should be replaced with something nicer
-*/
 //sh4 interface
 struct sh4_if
 {
-	RunFP* Run;
-	StopFP* Stop;
-	StepFP* Step;
-	SkipFP* Skip;
-	ResetFP* Reset;
-	InitFP* Init;
-	TermFP* Term;
-
-	TermFP* ResetCache;
-
-	IsCpuRunningFP* IsCpuRunning;
-	StartFP* Start;
+	void (*Run)();
+	void (*Stop)();
+	void (*Step)();
+	void (*Reset)(bool hard);
+	void (*Init)();
+	void (*Term)();
+	void (*ResetCache)();
+	bool (*IsCpuRunning)();
 };
 
 extern sh4_if sh4_cpu;
 
-struct Sh4Context
+struct alignas(64) Sh4Context
 {
 	union
 	{
@@ -286,60 +268,56 @@ struct Sh4Context
 			int sh4_sched_next;
 			u32 interrupt_pend;
 
-			u32 exception_pc;
 			u32 temp_reg;
 		};
 		u64 raw[64-8];
 	};
+};
 
+struct alignas(32) SQBuffer {
+	u8 data[32];
 };
 
 void DYNACALL do_sqw_mmu(u32 dst);
-extern "C" void DYNACALL do_sqw_nommu_area_3(u32 dst, u8* sqb);
-extern "C" void DYNACALL do_sqw_nommu_area_3_nonvmem(u32 dst, u8* sqb);
-void DYNACALL do_sqw_nommu_full(u32 dst, u8* sqb);
+void DYNACALL do_sqw_nommu_area_3(u32 dst, const SQBuffer *sqb);
+void DYNACALL do_sqw_nommu_area_3_nonvmem(u32 dst, const SQBuffer *sqb);
+void DYNACALL do_sqw_nommu_full(u32 dst, const SQBuffer *sqb);
 
-typedef void DYNACALL sqw_fp(u32 dst,u8* sqb);
-typedef void DYNACALL TaListVoidFP(void* data);
+typedef void DYNACALL sqw_fp(u32 dst, const SQBuffer *sqb);
 
 #define FPCB_SIZE (RAM_SIZE_MAX/2)
 #define FPCB_MASK (FPCB_SIZE -1)
+#if HOST_CPU == CPU_ARM
+// The arm32 dynarec context register (r8) points past the end of the Sh4RCB struct.
+// To get a pointer to the fpcb table, we substract sizeof(Sh4RCB), which we
+// want to be an i8r4 value that can be substracted in one op (such as 0x4100000)
 #define FPCB_PAD 0x100000
-#define FPCB_OFFSET (-(int)(FPCB_SIZE * sizeof(void*) + FPCB_PAD))
-struct Sh4RCB
+#else
+#define FPCB_PAD 0x10000
+#endif
+struct alignas(PAGE_SIZE) Sh4RCB
 {
 	void* fpcb[FPCB_SIZE];
-	u64 _pad[(FPCB_PAD-sizeof(Sh4Context)-64-sizeof(void*)*2)/8];
-	TaListVoidFP* tacmd_voud; //*TODO* remove (not used)
+	u8 _pad[FPCB_PAD - sizeof(Sh4Context) - sizeof(SQBuffer) * 2 - sizeof(void *)];
 	sqw_fp* do_sqw_nommu;
-	u64 sq_buffer[64/8];
+	SQBuffer sq_buffer[2];
 	Sh4Context cntx;
 };
 
-extern "C" Sh4RCB* p_sh4rcb;
-extern u8* sh4_dyna_rcb;
+extern Sh4RCB* p_sh4rcb;
 
-INLINE u32 sh4_sr_GetFull()
+static inline u32 sh4_sr_GetFull()
 {
 	return (p_sh4rcb->cntx.sr.status & STATUS_MASK) | p_sh4rcb->cntx.sr.T;
 }
 
-INLINE void sh4_sr_SetFull(u32 value)
+static inline void sh4_sr_SetFull(u32 value)
 {
 	p_sh4rcb->cntx.sr.status=value & STATUS_MASK;
 	p_sh4rcb->cntx.sr.T=value&1;
 }
 
 #define do_sqw_nommu sh4rcb.do_sqw_nommu
-
-template<typename T>
-s32 rcb_noffs(T* ptr)  
-{ 
-	s32 rv= (u8*)ptr - (u8*)p_sh4rcb-sizeof(Sh4RCB); 
-	verify(rv<0);
-
-	return rv;
-}
 
 #define sh4rcb (*p_sh4rcb)
 #define Sh4cntx (sh4rcb.cntx)

@@ -4,7 +4,6 @@
 #include "ccn.h"
 #include "mmu.h"
 #include "hw/mem/_vmem.h"
-#include "hw/mem/vmem32.h"
 #include "hw/pvr/pvr_mem.h"
 #include "hw/sh4/sh4_if.h"
 #include "hw/sh4/sh4_mmr.h"
@@ -18,26 +17,31 @@ u32 CCN_QACR_TR[2];
 template<u32 idx>
 void CCN_QACR_write(u32 addr, u32 value)
 {
-	SH4IO_REGN(CCN,CCN_QACR0_addr+idx*4,32)=value;
-	//CCN_QACR[idx].reg_data=value;
+	if (idx == 0)
+		CCN_QACR0.reg_data = value;
+	else
+		CCN_QACR1.reg_data = value;
 
-	u32 area=((CCN_QACR_type&)value).Area;
+	u32 area = ((CCN_QACR_type&)value).Area;
 
-	CCN_QACR_TR[idx]=(area<<26)-0xE0000000; //-0xE0000000 because 0xE0000000 is added on the translation again ...
+	CCN_QACR_TR[idx] = (area << 26) - 0xE0000000; //-0xE0000000 because 0xE0000000 is added on the translation again ...
 
-	switch(area)
+	switch (area)
 	{
 		case 3: 
 			if (_nvmem_enabled())
-				do_sqw_nommu=&do_sqw_nommu_area_3;
+				do_sqw_nommu = &do_sqw_nommu_area_3;
 			else
-				do_sqw_nommu=&do_sqw_nommu_area_3_nonvmem;
+				do_sqw_nommu = &do_sqw_nommu_area_3_nonvmem;
 		break;
 
 		case 4:
-			do_sqw_nommu=(sqw_fp*)&TAWriteSQ;
+			do_sqw_nommu = &TAWriteSQ;
 			break;
-		default: do_sqw_nommu=&do_sqw_nommu_full;
+
+		default:
+			do_sqw_nommu = &do_sqw_nommu_full;
+			break;
 	}
 }
 
@@ -45,8 +49,8 @@ void CCN_PTEH_write(u32 addr, u32 value)
 {
 	CCN_PTEH_type temp;
 	temp.reg_data = value;
-	if (temp.ASID != CCN_PTEH.ASID && vmem32_enabled())
-		vmem32_flush_mmu();
+	if (temp.ASID != CCN_PTEH.ASID)
+		mmuAddressLUTFlush(false);
 
 	CCN_PTEH = temp;
 }
@@ -60,10 +64,8 @@ void CCN_MMUCR_write(u32 addr, u32 value)
 
 	if (temp.TI != 0)
 	{
-		//sh4_cpu.ResetCache();
+		DEBUG_LOG(SH4, "Full MMU flush");
 		mmu_flush_table();
-		if (vmem32_enabled())
-			vmem32_flush_mmu();
 
 		temp.TI = 0;
 	}
@@ -84,13 +86,13 @@ void CCN_CCR_write(u32 addr, u32 value)
 	if (temp.ICI) {
 		DEBUG_LOG(SH4, "Sh4: i-cache invalidation %08X", curr_pc);
 		//Shikigami No Shiro II uses ICI frequently
-		if (!settings.dynarec.Enable)
+		if (!config::DynarecEnabled)
 			icache.Invalidate();
 		temp.ICI = 0;
 	}
 	if (temp.OCI) {
 		DEBUG_LOG(SH4, "Sh4: o-cache invalidation %08X", curr_pc);
-		if (!settings.dynarec.Enable)
+		if (!config::DynarecEnabled)
 			ocache.Invalidate();
 		temp.OCI = 0;
 	}

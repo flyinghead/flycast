@@ -10,6 +10,7 @@
 #include "hw/gdrom/gdrom_if.h"
 #include "hw/maple/maple_cfg.h"
 #include "hw/pvr/Renderer_if.h"
+#include "hw/pvr/pvr_mem.h"
 #include "hw/pvr/spg.h"
 #include "hw/sh4/sh4_sched.h"
 #include "hw/sh4/sh4_mmr.h"
@@ -20,8 +21,7 @@
 #include "hw/naomi/naomi_cart.h"
 #include "hw/sh4/sh4_cache.h"
 #include "hw/bba/bba.h"
-
-extern "C" void DYNACALL TAWriteSQ(u32 address,u8* sqb);
+#include "cfg/option.h"
 
 //./core/hw/arm7/arm_mem.cpp
 extern bool aica_interr;
@@ -31,7 +31,6 @@ extern u32 e68k_reg_L;
 extern u32 e68k_reg_M;
 
 //./core/hw/arm7/arm7.cpp
-alignas(8) extern reg_pair arm_Reg[RN_ARM_REG_COUNT];
 extern bool armIrqEnable;
 extern bool armFiqEnable;
 extern int armMode;
@@ -49,6 +48,7 @@ extern u32 ARMRST;//arm reset reg
 extern u32 rtc_EN;
 extern int dma_sched_id;
 extern u32 RealTimeClock;
+extern u32 SB_ADST;
 
 //./core/hw/aica/aica_mem.o
 extern u8 aica_reg[0x8000];
@@ -115,15 +115,6 @@ extern int modem_sched;
 //./core/hw/pvr/Renderer_if.o
 extern bool pend_rend;
 extern u32 fb_w_cur;
-
-//./core/hw/pvr/pvr_mem.o
-extern u32 YUV_tempdata[512/4];//512 bytes
-extern u32 YUV_dest;
-extern u32 YUV_blockcount;
-extern u32 YUV_x_curr;
-extern u32 YUV_y_curr;
-extern u32 YUV_x_size;
-extern u32 YUV_y_size;
 
 //./core/hw/pvr/pvr_regs.o
 extern bool fog_needs_update;
@@ -266,7 +257,7 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	REICAST_S(e68k_reg_L) ;
 	REICAST_S(e68k_reg_M) ;
 
-	REICAST_SA(arm_Reg,RN_ARM_REG_COUNT);
+	REICAST_SA(arm_Reg,RN_ARM_REG_COUNT - 1);	// Too lazy to create a new version and the scratch register is not used between blocks anyway
 	REICAST_S(armIrqEnable);
 	REICAST_S(armFiqEnable);
 	REICAST_S(armMode);
@@ -297,7 +288,7 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	REICAST_S(SB_ISTNRM);
 	REICAST_S(SB_FFST_rc);
 	REICAST_S(SB_FFST);
-
+	REICAST_S(SB_ADST);
 
 	sys_rom->Serialize(data, total_size);
 	sys_nvmem->Serialize(data, total_size);
@@ -339,13 +330,7 @@ bool dc_serialize(void **data, unsigned int *total_size)
 
 	mcfg_SerializeDevices(data, total_size);
 
-	REICAST_SA(YUV_tempdata,512/4);
-	REICAST_S(YUV_dest);
-	REICAST_S(YUV_blockcount);
-	REICAST_S(YUV_x_curr);
-	REICAST_S(YUV_y_curr);
-	REICAST_S(YUV_x_size);
-	REICAST_S(YUV_y_size);
+	YUV_serialize(data, total_size);
 
 	REICAST_SA(pvr_regs,pvr_RegSize);
 
@@ -391,14 +376,14 @@ bool dc_serialize(void **data, unsigned int *total_size)
 		i = 0 ;
 	else if (do_sqw_nommu == &do_sqw_nommu_area_3_nonvmem)
 		i = 1 ;
-	else if (do_sqw_nommu==(sqw_fp*)&TAWriteSQ)
+	else if (do_sqw_nommu == &TAWriteSQ)
 		i = 2 ;
 	else if (do_sqw_nommu==&do_sqw_nommu_full)
 		i = 3 ;
 
 	REICAST_S(i) ;
 
-	REICAST_SA((*p_sh4rcb).sq_buffer,64/8);
+	REICAST_S((*p_sh4rcb).sq_buffer);
 
 	REICAST_S((*p_sh4rcb).cntx);
 
@@ -439,8 +424,8 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	REICAST_S(sch_list[vblank_schid].start) ;
 	REICAST_S(sch_list[vblank_schid].end) ;
 
-	REICAST_S(settings.network.EmulateBBA);
-	if (settings.network.EmulateBBA)
+	REICAST_S(config::EmulateBBA.get());
+	if (config::EmulateBBA)
 	{
 		bba_Serialize(data, total_size);
 	}
@@ -474,9 +459,9 @@ bool dc_serialize(void **data, unsigned int *total_size)
 
 	naomi_Serialize(data, total_size);
 
-	REICAST_S(settings.dreamcast.broadcast);
-	REICAST_S(settings.dreamcast.cable);
-	REICAST_S(settings.dreamcast.region);
+	REICAST_S(config::Broadcast.get());
+	REICAST_S(config::Cable.get());
+	REICAST_S(config::Region.get());
 
 	if (CurrentCartridge != NULL)
 	   CurrentCartridge->Serialize(data, total_size);
@@ -498,7 +483,7 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 	REICAST_US(e68k_reg_L) ;
 	REICAST_US(e68k_reg_M) ;
 
-	REICAST_USA(arm_Reg,RN_ARM_REG_COUNT);
+	REICAST_USA(arm_Reg,RN_ARM_REG_COUNT - 1);
 	REICAST_US(armIrqEnable);
 	REICAST_US(armFiqEnable);
 	REICAST_US(armMode);
@@ -528,6 +513,7 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 	REICAST_US(SB_ISTNRM);
 	REICAST_US(SB_FFST_rc);
 	REICAST_US(SB_FFST);
+	SB_ADST = 0;
 
 	if (settings.platform.system == DC_PLATFORM_NAOMI || settings.platform.system == DC_PLATFORM_ATOMISWAVE)
 	{
@@ -598,13 +584,7 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 
 	pend_rend = false;
 
-	REICAST_USA(YUV_tempdata,512/4);
-	REICAST_US(YUV_dest);
-	REICAST_US(YUV_blockcount);
-	REICAST_US(YUV_x_curr);
-	REICAST_US(YUV_y_curr);
-	REICAST_US(YUV_x_size);
-	REICAST_US(YUV_y_size);
+	YUV_unserialize(data, total_size, VCUR_LIBRETRO);
 
 	REICAST_USA(pvr_regs,pvr_RegSize);
 	fog_needs_update = true ;
@@ -650,11 +630,11 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 	else if ( i == 1 )
 		do_sqw_nommu = &do_sqw_nommu_area_3_nonvmem ;
 	else if ( i == 2 )
-		do_sqw_nommu = (sqw_fp*)&TAWriteSQ ;
+		do_sqw_nommu = &TAWriteSQ ;
 	else if ( i == 3 )
 		do_sqw_nommu = &do_sqw_nommu_full ;
 
-	REICAST_USA((*p_sh4rcb).sq_buffer,64/8);
+	REICAST_US((*p_sh4rcb).sq_buffer);
 
 	REICAST_US((*p_sh4rcb).cntx);
 
@@ -732,14 +712,14 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 
 	naomi_Unserialize(data, total_size, VCUR_LIBRETRO);
 
-	REICAST_US(settings.dreamcast.broadcast);
-	REICAST_US(settings.dreamcast.cable);
-	REICAST_US(settings.dreamcast.region);
+	REICAST_US(config::Broadcast.get());
+	REICAST_US(config::Cable.get());
+	REICAST_US(config::Region.get());
 
 	if (CurrentCartridge != NULL)
 		CurrentCartridge->Unserialize(data, total_size);
 	gd_hle_state.Unserialize(data, total_size);
-	settings.network.EmulateBBA = false;
+	config::EmulateBBA.override(false);
 
 	DEBUG_LOG(SAVESTATE, "Loaded %d bytes (libretro compat)", *total_size);
 
@@ -762,17 +742,20 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 		WARN_LOG(SAVESTATE, "Save State version not supported: %d", version);
 		return false;
 	}
-	else
+	if (version > VCUR_FLYCAST)
 	{
-		DEBUG_LOG(SAVESTATE, "Loading state version %d", version);
+		WARN_LOG(SAVESTATE, "Save State version too recent: %d", version);
+		return false;
 	}
+	DEBUG_LOG(SAVESTATE, "Loading state version %d", version);
+
 	REICAST_US(aica_interr) ;
 	REICAST_US(aica_reg_L) ;
 	REICAST_US(e68k_out) ;
 	REICAST_US(e68k_reg_L) ;
 	REICAST_US(e68k_reg_M) ;
 
-	REICAST_USA(arm_Reg,RN_ARM_REG_COUNT);
+	REICAST_USA(arm_Reg,RN_ARM_REG_COUNT - 1);
 	REICAST_US(armIrqEnable);
 	REICAST_US(armFiqEnable);
 	REICAST_US(armMode);
@@ -820,6 +803,10 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 	REICAST_US(SB_ISTNRM);
 	REICAST_US(SB_FFST_rc);
 	REICAST_US(SB_FFST);
+	if (version >= V15)
+		REICAST_US(SB_ADST);
+	else
+		SB_ADST = 0;
 
 	if (version < V5)
 	{
@@ -875,13 +862,7 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 	}
 	pend_rend = false;
 
-	REICAST_USA(YUV_tempdata,512/4);
-	REICAST_US(YUV_dest);
-	REICAST_US(YUV_blockcount);
-	REICAST_US(YUV_x_curr);
-	REICAST_US(YUV_y_curr);
-	REICAST_US(YUV_x_size);
-	REICAST_US(YUV_y_size);
+	YUV_unserialize(data, total_size, version);
 
 	REICAST_USA(pvr_regs,pvr_RegSize);
 	fog_needs_update = true ;
@@ -953,11 +934,11 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 	else if ( i == 1 )
 		do_sqw_nommu = &do_sqw_nommu_area_3_nonvmem ;
 	else if ( i == 2 )
-		do_sqw_nommu = (sqw_fp*)&TAWriteSQ ;
+		do_sqw_nommu = &TAWriteSQ ;
 	else if ( i == 3 )
 		do_sqw_nommu = &do_sqw_nommu_full ;
 
-	REICAST_USA((*p_sh4rcb).sq_buffer,64/8);
+	REICAST_US((*p_sh4rcb).sq_buffer);
 
 	REICAST_US((*p_sh4rcb).cntx);
 	if (version < V5)
@@ -1013,10 +994,10 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 	}
 
 	if (version >= V13)
-		REICAST_S(settings.network.EmulateBBA);
+		REICAST_US(config::EmulateBBA.get());
 	else
-		settings.network.EmulateBBA = false;
-	if (settings.network.EmulateBBA)
+		config::EmulateBBA.override(false);
+	if (config::EmulateBBA)
 	{
 		bba_Unserialize(data, total_size);
 	}
@@ -1086,12 +1067,12 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 		REICAST_SKIP(4);
 		REICAST_SKIP(4);
 	}
-	REICAST_US(settings.dreamcast.broadcast);
-	verify(settings.dreamcast.broadcast <= 4);
-	REICAST_US(settings.dreamcast.cable);
-	verify(settings.dreamcast.cable <= 3);
-	REICAST_US(settings.dreamcast.region);
-	verify(settings.dreamcast.region <= 3);
+	REICAST_US(config::Broadcast.get());
+	verify(config::Broadcast <= 4);
+	REICAST_US(config::Cable.get());
+	verify(config::Cable <= 3);
+	REICAST_US(config::Region.get());
+	verify(config::Region <= 3);
 
 	if (CurrentCartridge != NULL)
 		CurrentCartridge->Unserialize(data, total_size);

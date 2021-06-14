@@ -1,6 +1,6 @@
 #include "common.h"
 
-#include "deps/chdr/chd.h"
+#include <libchdr/chd.h>
 
 /* tracks are padded to a multiple of this many frames */
 const uint32_t CD_TRACK_PADDING = 4;
@@ -17,7 +17,7 @@ struct CHDDisc : Disc
 
 	bool TryOpen(const char* file);
 
-	~CHDDisc()
+	~CHDDisc() override
 	{
 		delete[] hunk_mem;
 
@@ -45,7 +45,7 @@ struct CHDTrack : TrackFile
 		this->swap_bytes = swap_bytes;
 	}
 
-	virtual void Read(u32 FAD, u8* dst, SectorFormat* sector_type, u8* subcode, SubcodeFormat* subcode_type)
+	void Read(u32 FAD, u8* dst, SectorFormat* sector_type, u8* subcode, SubcodeFormat* subcode_type) override
 	{
 		u32 fad_offs = FAD + Offset;
 		u32 hunk=(fad_offs)/disc->sph;
@@ -88,7 +88,6 @@ bool CHDDisc::TryOpen(const char* file)
 
 	if (err != CHDERR_NONE)
 	{
-		std::fclose(fp);
 		INFO_LOG(GDROM, "chd: chd_open_file failed for file %s: %d", file, err);
 		return false;
 	}

@@ -30,4 +30,3 @@ enum
 	AW_MPR_FILE_OFFSETH_addr		= 0x18,
 	AW_PIO_DATA_addr				= 0x80,
 };
-

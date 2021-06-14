@@ -226,8 +226,8 @@ void Texture::Init(u32 width, u32 height, vk::Format format, u32 dataSize, bool 
 	CreateImage(imageTiling, usageFlags, initialLayout, vk::ImageAspectFlagBits::eColor);
 }
 
-void Texture::CreateImage(vk::ImageTiling tiling, vk::ImageUsageFlags usage, vk::ImageLayout initialLayout,
-		vk::ImageAspectFlags aspectMask)
+void Texture::CreateImage(vk::ImageTiling tiling, const vk::ImageUsageFlags& usage, vk::ImageLayout initialLayout,
+		const vk::ImageAspectFlags& aspectMask)
 {
 	vk::ImageCreateInfo imageCreateInfo(vk::ImageCreateFlags(), vk::ImageType::e2D, format, vk::Extent3D(extent, 1), mipmapLevels, 1,
 										vk::SampleCountFlagBits::e1, tiling, usage,
@@ -247,7 +247,6 @@ void Texture::CreateImage(vk::ImageTiling tiling, vk::ImageUsageFlags usage, vk:
 void Texture::SetImage(u32 srcSize, void *srcData, bool isNew, bool genMipmaps)
 {
 	verify((bool)commandBuffer);
-	commandBuffer.begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));
 
 	if (!isNew && !needsStaging)
 		setImageLayout(commandBuffer, image.get(), format, mipmapLevels, vk::ImageLayout::eShaderReadOnlyOptimal, vk::ImageLayout::eGeneral);
@@ -338,7 +337,6 @@ void Texture::SetImage(u32 srcSize, void *srcData, bool isNew, bool genMipmaps)
 			setImageLayout(commandBuffer, image.get(), format, mipmapLevels, isNew ? vk::ImageLayout::ePreinitialized : vk::ImageLayout::eGeneral,
 					vk::ImageLayout::eShaderReadOnlyOptimal);
 	}
-	commandBuffer.end();
 }
 
 void Texture::GenerateMipmaps()
@@ -393,7 +391,7 @@ void Texture::GenerateMipmaps()
 	commandBuffer.pipelineBarrier(vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eFragmentShader, {}, nullptr, nullptr, barrier);
 }
 
-void FramebufferAttachment::Init(u32 width, u32 height, vk::Format format, vk::ImageUsageFlags usage)
+void FramebufferAttachment::Init(u32 width, u32 height, vk::Format format, const vk::ImageUsageFlags& usage)
 {
 	this->format = format;
 	this->extent = vk::Extent2D { width, height };

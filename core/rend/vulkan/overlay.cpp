@@ -22,33 +22,33 @@
 #include "rend/gui.h"
 #include "hw/maple/maple_devs.h"
 #include "overlay.h"
+#include "cfg/option.h"
 
-VulkanOverlay::~VulkanOverlay()
-{
-}
+VulkanOverlay::~VulkanOverlay() = default;
 
-std::unique_ptr<Texture> VulkanOverlay::createTexture(vk::CommandPool commandPool, int width, int height, u8 *data)
+std::unique_ptr<Texture> VulkanOverlay::createTexture(vk::CommandBuffer commandBuffer, int width, int height, u8 *data)
 {
 	VulkanContext *context = VulkanContext::Instance();
 	auto texture = std::unique_ptr<Texture>(new Texture());
 	texture->tex_type = TextureType::_8888;
 	texture->SetDevice(context->GetDevice());
 	texture->SetPhysicalDevice(context->GetPhysicalDevice());
-	commandBuffers[context->GetCurrentImageIndex()].emplace_back(std::move(
-			VulkanContext::Instance()->GetDevice().allocateCommandBuffersUnique(vk::CommandBufferAllocateInfo(commandPool, vk::CommandBufferLevel::ePrimary, 1))
-			.front()));
-	texture->SetCommandBuffer(*commandBuffers[context->GetCurrentImageIndex()].back());
+	texture->SetCommandBuffer(commandBuffer);
 	texture->UploadToGPU(width, height, data, false);
 	texture->SetCommandBuffer(nullptr);
 
 	return texture;
 }
 
-const std::vector<vk::UniqueCommandBuffer>* VulkanOverlay::Prepare(vk::CommandPool commandPool, bool vmu, bool crosshair)
+vk::CommandBuffer VulkanOverlay::Prepare(vk::CommandPool commandPool, bool vmu, bool crosshair)
 {
 	VulkanContext *context = VulkanContext::Instance();
 	commandBuffers.resize(context->GetSwapChainSize());
-	commandBuffers[context->GetCurrentImageIndex()].clear();
+	commandBuffers[context->GetCurrentImageIndex()] = std::move(
+			VulkanContext::Instance()->GetDevice().allocateCommandBuffersUnique(vk::CommandBufferAllocateInfo(commandPool, vk::CommandBufferLevel::ePrimary, 1))
+			.front());
+	vk::CommandBuffer cmdBuffer = *commandBuffers[context->GetCurrentImageIndex()];
+	cmdBuffer.begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));
 	if (vmu)
 	{
 		for (size_t i = 0; i < vmuTextures.size(); i++)
@@ -62,18 +62,18 @@ const std::vector<vk::UniqueCommandBuffer>* VulkanOverlay::Prepare(vk::CommandPo
 			if (texture != nullptr && !vmu_lcd_changed[i])
 				continue;
 
-			texture = createTexture(commandPool, 48, 32, (u8*)vmu_lcd_data[i]);
+			texture = createTexture(cmdBuffer, 48, 32, (u8*)vmu_lcd_data[i]);
 			vmu_lcd_changed[i] = false;
 		}
 	}
 	if (crosshair && !xhairTexture)
 	{
 		const u32* texData = getCrosshairTextureData();
-		xhairTexture = createTexture(commandPool, 16, 16, (u8*)texData);
-//		delete [] texData;
+		xhairTexture = createTexture(cmdBuffer, 16, 16, (u8*)texData);
 	}
+	cmdBuffer.end();
 
-	return &commandBuffers[context->GetCurrentImageIndex()];
+	return cmdBuffer;
 }
 
 void VulkanOverlay::Draw(vk::Extent2D viewport, float scaling, bool vmu, bool crosshair)
@@ -129,11 +129,11 @@ void VulkanOverlay::Draw(vk::Extent2D viewport, float scaling, bool vmu, bool cr
 	if (crosshair && crosshairsNeeded())
 	{
 		alphaPipeline->BindPipeline(commandBuffer);
-		for (size_t i = 0; i < ARRAY_SIZE(settings.rend.CrosshairColor); i++)
+		for (size_t i = 0; i < config::CrosshairColor.size(); i++)
 		{
-			if (settings.rend.CrosshairColor[i] == 0)
+			if (config::CrosshairColor[i] == 0)
 				continue;
-			if (settings.platform.system == DC_PLATFORM_DREAMCAST && settings.input.maple_devices[i] != MDT_LightGun)
+			if (settings.platform.system == DC_PLATFORM_DREAMCAST && config::MapleMainDevices[i] != MDT_LightGun)
 				continue;
 
 			float x, y;
@@ -142,8 +142,9 @@ void VulkanOverlay::Draw(vk::Extent2D viewport, float scaling, bool vmu, bool cr
 			y -= XHAIR_HEIGHT / 2;
 			vk::Viewport viewport(x, y, XHAIR_WIDTH, XHAIR_HEIGHT);
 			commandBuffer.setViewport(0, 1, &viewport);
-			commandBuffer.setScissor(0, vk::Rect2D(vk::Offset2D(x, y), vk::Extent2D(XHAIR_WIDTH, XHAIR_HEIGHT)));
-			u32 color = settings.rend.CrosshairColor[i];
+			commandBuffer.setScissor(0, vk::Rect2D(vk::Offset2D(std::max(0.f, x), std::max(0.f, y)),
+					vk::Extent2D(XHAIR_WIDTH, XHAIR_HEIGHT)));
+			u32 color = config::CrosshairColor[i];
 			float xhairColor[4] {
 				(color & 0xff) / 255.f,
 				((color >> 8) & 0xff) / 255.f,

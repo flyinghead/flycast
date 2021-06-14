@@ -2,9 +2,9 @@
 	Dreamcast serial port.
 	This is missing most of the functionality, but works for KOS (And thats all that uses it)
 */
-#include <stdlib.h>
+#include <cerrno>
+#include <cstdlib>
 #include <fcntl.h>
-#include <errno.h>
 #ifndef _WIN32
 #include <unistd.h>
 #include <sys/ioctl.h>
@@ -14,6 +14,7 @@
 #include "types.h"
 #include "hw/sh4/sh4_mmr.h"
 #include "hw/sh4/sh4_interrupts.h"
+#include "cfg/option.h"
 
 static int tty = 1;	// stdout by default
 
@@ -65,7 +66,7 @@ static void Serial_UpdateInterrupts()
 
 static void SerialWrite(u32 addr, u32 data)
 {
-	if (settings.debug.SerialConsole)
+	if (config::SerialConsole)
 		write(tty, &data, 1);
 
 	SCIF_SCFSR2.TDFE = 1;
@@ -77,9 +78,9 @@ static void SerialWrite(u32 addr, u32 data)
 //SCIF_SCFSR2 read
 static u32 ReadSerialStatus(u32 addr)
 {
-#if HOST_OS == OS_LINUX || defined(__APPLE__)
+#if defined(__unix__) || defined(__APPLE__)
 	int count = 0;
-	if (settings.debug.SerialConsole && tty != 1
+	if (config::SerialConsole && tty != 1
 			&& ioctl(tty, FIONREAD, &count) == 0 && count > 0)
 	{
 		return SCIF_SCFSR2.full | 2;
@@ -135,6 +136,8 @@ static void SCSCR2_write(u32 addr, u32 data)
 //Init term res
 void serial_init()
 {
+	// Serial Communication Interface with FIFO
+
 	//SCIF SCSMR2 0xFFE80000 0x1FE80000 16 0x0000 0x0000 Held Held Pclk
 	sh4_rio_reg(SCIF,SCIF_SCSMR2_addr,RIO_DATA,16);
 
@@ -168,8 +171,8 @@ void serial_init()
 	//SCIF SCLSR2 0xFFE80024 0x1FE80024 16 0x0000 0x0000 Held Held Pclk
 	sh4_rio_reg(SCIF,SCIF_SCLSR2_addr,RIO_DATA,16);
 
-#if HOST_OS == OS_LINUX || defined(__APPLE__)
-	if (settings.debug.SerialConsole && settings.debug.SerialPTY)
+#if defined(__unix__) || defined(__APPLE__)
+	if (config::SerialConsole && config::SerialPTY)
 	{
 		tty = open("/dev/ptmx", O_RDWR | O_NDELAY | O_NOCTTY | O_NONBLOCK);
 		if (tty < 0)
@@ -182,6 +185,15 @@ void serial_init()
 		}
 	}
 #endif
+
+	// Serial Communication Interface
+	sh4_rio_reg(SCI, SCI_SCSMR1_addr, RIO_DATA, 8);
+	sh4_rio_reg(SCI, SCI_SCBRR1_addr, RIO_DATA, 8);
+	sh4_rio_reg(SCI, SCI_SCSCR1_addr, RIO_DATA, 8);
+	sh4_rio_reg(SCI, SCI_SCTDR1_addr, RIO_DATA, 8);
+	sh4_rio_reg(SCI, SCI_SCSSR1_addr, RIO_DATA, 8);
+	sh4_rio_reg(SCI, SCI_SCRDR1_addr, RIO_RO, 8);
+	sh4_rio_reg(SCI, SCI_SCSPTR1_addr, RIO_DATA, 8);
 }
 void serial_reset()
 {
@@ -204,6 +216,14 @@ void serial_reset()
 	SCIF_SCSPTR2.full=0x000;
 	SCIF_SCLSR2.full=0x000;
 	SCIF_SCSCR2.full = 0;
+
+	SCI_SCSMR1 = 0;
+	SCI_SCBRR1 = 0xff;
+	SCI_SCSCR1 = 0;
+	SCI_SCTDR1 = 0xff;
+	SCI_SCSSR1 = 0x84;
+	SCI_SCRDR1 = 0;
+	SCI_SCSPTR1 = 0;
 }
 
 void serial_term()

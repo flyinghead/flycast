@@ -40,7 +40,7 @@ public:
 protected:
 	VulkanContext *GetContext() const { return VulkanContext::Instance(); }
 	TileClipping SetTileClip(u32 val, vk::Rect2D& clipRect);
-	void SetBaseScissor();
+	void SetBaseScissor(const vk::Extent2D& viewport = vk::Extent2D());
 	void SetProvokingVertices();
 
 	void SetScissor(const vk::CommandBuffer& cmdBuffer, const vk::Rect2D& scissor)
@@ -77,7 +77,7 @@ protected:
 		u8* fog_density = (u8*)&FOG_DENSITY;
 		float fog_den_mant = fog_density[1] / 128.0f;  //bit 7 -> x. bit, so [6:0] -> fraction -> /128
 		s32 fog_den_exp = (s8)fog_density[0];
-		fragUniforms.sp_FOG_DENSITY = fog_den_mant * powf(2.0f, fog_den_exp) * settings.rend.ExtraDepthScale;
+		fragUniforms.sp_FOG_DENSITY = fog_den_mant * powf(2.0f, fog_den_exp) * config::ExtraDepthScale;
 
 		fragUniforms.colorClampMin[0] = ((pvrrc.fog_clamp_min >> 16) & 0xFF) / 255.0f;
 		fragUniforms.colorClampMin[1] = ((pvrrc.fog_clamp_min >> 8) & 0xFF) / 255.0f;
@@ -114,9 +114,9 @@ protected:
 	{
 		GetCurrentDescSet().Reset();
 		imageIndex = (imageIndex + 1) % GetSwapChainSize();
-		if (perStripSorting != settings.rend.PerStripSorting)
+		if (perStripSorting != config::PerStripSorting)
 		{
-			perStripSorting = settings.rend.PerStripSorting;
+			perStripSorting = config::PerStripSorting;
 			pipelineManager->Reset();
 		}
 		renderPass = 0;
@@ -167,7 +167,7 @@ private:
 	void SortTriangles();
 	void DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sortTriangles, const PolyParam& poly, u32 first, u32 count);
 	void DrawSorted(const vk::CommandBuffer& cmdBuffer, const std::vector<SortTrigDrawParam>& polys);
-	void DrawList(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sortTriangles, const List<PolyParam>& polys, u32 first, u32 count);
+	void DrawList(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sortTriangles, const List<PolyParam>& polys, u32 first, u32 last);
 	void DrawModVols(const vk::CommandBuffer& cmdBuffer, int first, int count);
 	void UploadMainBuffer(const VertexShaderUniforms& vertexUniforms, const FragmentShaderUniforms& fragmentUniforms);
 
@@ -193,8 +193,8 @@ private:
 class ScreenDrawer : public Drawer
 {
 public:
-	void Init(SamplerManager *samplerManager, ShaderManager *shaderManager);
-	virtual void EndRenderPass() override;
+	void Init(SamplerManager *samplerManager, ShaderManager *shaderManager, const vk::Extent2D& viewport);
+	void EndRenderPass() override;
 	bool PresentFrame()
 	{
 		if (!frameRendered)
@@ -207,8 +207,8 @@ public:
 	}
 
 protected:
-	virtual vk::CommandBuffer BeginRenderPass() override;
-	virtual size_t GetSwapChainSize() override { return 2; }
+	vk::CommandBuffer BeginRenderPass() override;
+	size_t GetSwapChainSize() override { return 2; }
 
 private:
 	std::unique_ptr<PipelineManager> screenPipelineManager;
@@ -219,7 +219,6 @@ private:
 	std::vector<std::unique_ptr<FramebufferAttachment>> colorAttachments;
 	std::unique_ptr<FramebufferAttachment> depthAttachment;
 	vk::Extent2D viewport;
-	int currentScreenScaling = 0;
 	ShaderManager *shaderManager = nullptr;
 	std::vector<bool> transitionNeeded;
 	std::vector<bool> clearNeeded;
@@ -230,10 +229,10 @@ class TextureDrawer : public Drawer
 {
 public:
 	void Init(SamplerManager *samplerManager, ShaderManager *shaderManager, TextureCache *textureCache);
-	virtual void EndRenderPass() override;
+	void EndRenderPass() override;
 
 protected:
-	virtual vk::CommandBuffer BeginRenderPass() override;
+	vk::CommandBuffer BeginRenderPass() override;
 
 private:
 	u32 width = 0;

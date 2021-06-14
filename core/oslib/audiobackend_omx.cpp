@@ -1,6 +1,5 @@
-#include "audiostream.h"
 #if USE_OMX
-
+#include "audiostream.h"
 #include <IL/OMX_Broadcom.h>
 #include <unistd.h>
 
@@ -87,8 +86,8 @@ static void omx_init()
 	}
 
 	// Initialize settings
-	latency_max = settings.omx.Audio_Latency;
-	buffer_size = settings.aica.BufferSize * 4;
+	latency_max = config::OmxAudioLatency;
+	buffer_size = config::AudioBufferSize * 4;
 	buffer_count = 2 + OUTPUT_FREQ * latency_max / (buffer_size * 1000);
 
 	OMX_CALLBACKTYPE callbacks;
@@ -224,7 +223,7 @@ static void omx_init()
 	}
 
 	const char* output_device = "local";
-	if(settings.omx.Audio_HDMI)
+	if (config::OmxAudioHdmi)
 		output_device = (const char*)"hdmi";
 
 	// Set audio destination

@@ -39,7 +39,7 @@
 using namespace Xbyak;
 
 class ToyVm : public Xbyak::CodeGenerator {
-	typedef std::vector<uint32> Buffer;
+	typedef std::vector<uint32_t> Buffer;
 public:
 	enum Reg {
 		A, B
@@ -53,14 +53,14 @@ public:
 	{
 		::memset(mem_, 0, sizeof(mem_));
 	}
-	void vldi(Reg r, uint16 imm) { encode(LDI, r, imm); }
-	void vld(Reg r, uint16 idx) { encode(LD, r, idx); }
-	void vst(Reg r, uint16 idx) { encode(ST, r, idx); }
-	void vadd(Reg r, uint16 idx) { encode(ADD, r, idx); }
-	void vaddi(Reg r, uint16 imm) { encode(ADDI, r, imm); }
-	void vsub(Reg r, uint16 idx) { encode(SUB, r, idx); }
-	void vsubi(Reg r, uint16 imm) { encode(SUBI, r, imm); }
-	void vjnz(Reg r, int offset) { encode(JNZ, r, static_cast<uint16>(offset)); }
+	void vldi(Reg r, uint16_t imm) { encode(LDI, r, imm); }
+	void vld(Reg r, uint16_t idx) { encode(LD, r, idx); }
+	void vst(Reg r, uint16_t idx) { encode(ST, r, idx); }
+	void vadd(Reg r, uint16_t idx) { encode(ADD, r, idx); }
+	void vaddi(Reg r, uint16_t imm) { encode(ADDI, r, imm); }
+	void vsub(Reg r, uint16_t idx) { encode(SUB, r, idx); }
+	void vsubi(Reg r, uint16_t imm) { encode(SUBI, r, imm); }
+	void vjnz(Reg r, int offset) { encode(JNZ, r, static_cast<uint16_t>(offset)); }
 	void vput(Reg r) { encode(PUT, r); }
 	void setMark()
 	{
@@ -73,12 +73,12 @@ public:
 	void run()
 	{
 		bool debug = false;//true;
-		uint32 reg[2] = { 0, 0 };
+		uint32_t reg[2] = { 0, 0 };
 		const size_t end = code_.size();
-		uint32 pc = 0;
+		uint32_t pc = 0;
 		for (;;) {
-			uint32 x = code_[pc];
-			uint32 code, r, imm;
+			uint32_t x = code_[pc];
+			uint32_t code, r, imm;
 			decode(code, r, imm, x);
 			if (debug) {
 				printf("---\n");
@@ -149,11 +149,11 @@ public:
 		xor_(edi, edi);
 		mov(mem, (size_t)mem_);
 		const size_t end = code_.size();
-		uint32 pc = 0;
-		uint32 labelNum = 0;
+		uint32_t pc = 0;
+		uint32_t labelNum = 0;
 		for (;;) {
-			uint32 x = code_[pc];
-			uint32 code, r, imm;
+			uint32_t x = code_[pc];
+			uint32_t code, r, imm;
 			decode(code, r, imm, x);
 		L(Label::toStr(labelNum++));
 			switch (code) {
@@ -229,18 +229,18 @@ public:
 		ret();
 	}
 private:
-	uint32 mem_[65536];
+	uint32_t mem_[65536];
 	Buffer code_;
 	int mark_;
-	void decode(uint32& code, uint32& r, uint32& imm, uint32 x)
+	void decode(uint32_t& code, uint32_t& r, uint32_t& imm, uint32_t x)
 	{
 		code = x >> 24;
 		r = (x >> 16) & 0xff;
 		imm = x & 0xffff;
 	}
-	void encode(Code code, Reg r, uint16 imm = 0)
+	void encode(Code code, Reg r, uint16_t imm = 0)
 	{
-		uint32 x = (code << 24) | (r << 16) | imm;
+		uint32_t x = (code << 24) | (r << 16) | imm;
 		code_.push_back(x);
 	}
 };
@@ -262,7 +262,7 @@ public:
 		*/
 		vldi(A, 1); // c
 		vst(A, 0); // p(1)
-		vldi(B, static_cast<uint16>(n));
+		vldi(B, static_cast<uint16_t>(n));
 		vst(B, 2); // n
 		// lp
 	setMark();
@@ -283,9 +283,9 @@ public:
 	}
 };
 
-void fibC(uint32 n)
+void fibC(uint32_t n)
 {
-	uint32 p, c, t;
+	uint32_t p, c, t;
 	p = 1;
 	c = 1;
 lp:

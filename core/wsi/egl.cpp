@@ -22,6 +22,7 @@
 
 #ifdef USE_EGL
 #include "types.h"
+#include "cfg/option.h"
 
 #ifdef __ANDROID__
 #include <android/native_window.h> // requires ndk r5 or newer
@@ -66,10 +67,13 @@ bool EGLGraphicsContext::Init()
 	if (surface == EGL_NO_SURFACE)
 	{
 		EGLint pi32ConfigAttribs[]  = {
-				EGL_SURFACE_TYPE, EGL_WINDOW_BIT | EGL_SWAP_BEHAVIOR_PRESERVED_BIT,
+				EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
 				EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
 				EGL_DEPTH_SIZE, 24,
 				EGL_STENCIL_SIZE, 8,
+				EGL_RED_SIZE, 8,
+				EGL_GREEN_SIZE, 8,
+				EGL_BLUE_SIZE, 8,
 				EGL_NONE
 		};
 
@@ -78,19 +82,8 @@ bool EGLGraphicsContext::Init()
 		EGLConfig config;
 		if (!eglChooseConfig(display, pi32ConfigAttribs, &config, 1, &num_config) || (num_config != 1))
 		{
-			// Fall back to non preserved swap buffers
-			EGLint pi32ConfigFallbackAttribs[] = {
-					EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
-					EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
-					EGL_DEPTH_SIZE, 24,
-					EGL_STENCIL_SIZE, 8,
-					EGL_NONE
-			};
-			if (!eglChooseConfig(display, pi32ConfigFallbackAttribs, &config, 1, &num_config) || (num_config != 1))
-			{
-				ERROR_LOG(RENDERER, "EGL Error: eglChooseConfig failed");
-				return false;
-			}
+			ERROR_LOG(RENDERER, "EGL Error: eglChooseConfig failed");
+			return false;
 		}
 #ifdef __ANDROID__
 		EGLint format;
@@ -174,21 +167,20 @@ bool EGLGraphicsContext::Init()
 	EGLint w,h;
 	eglQuerySurface(display, surface, EGL_WIDTH, &w);
 	eglQuerySurface(display, surface, EGL_HEIGHT, &h);
+	NOTICE_LOG(RENDERER, "eglQuerySurface: %d - %d", w, h);
 
 	screen_width = w;
 	screen_height = h;
 
-	// Required when doing partial redraws
-	swap_buffer_preserved = true;
-	if (!eglSurfaceAttrib(display, surface, EGL_SWAP_BEHAVIOR, EGL_BUFFER_PRESERVED))
-	{
-		INFO_LOG(RENDERER, "Swap buffers are not preserved. Last frame copy enabled");
-		swap_buffer_preserved = false;
-	}
 #ifdef TARGET_PANDORA
 	fbdev = open("/dev/fb0", O_RDONLY);
 #else
-	eglSwapInterval(display, 1);
+#ifndef TEST_AUTOMATION
+	swapOnVSync = config::VSync;
+#else
+	swapOnVSync = false;
+#endif
+	eglSwapInterval(display, (int)swapOnVSync);
 #endif
 
 	PostInit();
@@ -222,12 +214,11 @@ void EGLGraphicsContext::Swap()
 {
 #ifdef TEST_AUTOMATION
 	do_swap_automation();
-#endif
-#if 0 && defined(TARGET_PANDORA)
-	if (fbdev >= 0)
+#else
+	if (swapOnVSync == (settings.input.fastForwardMode || !config::VSync))
 	{
-		int arg = 0;
-		ioctl(fbdev,FBIO_WAITFORVSYNC,&arg);
+		swapOnVSync = (!settings.input.fastForwardMode && config::VSync);
+		eglSwapInterval(display, (int)swapOnVSync);
 	}
 #endif
 	eglSwapBuffers(display, surface);

@@ -39,6 +39,12 @@ bool RZipFile::Open(const std::string& path, bool write)
 			Close();
 			return false;
 		}
+		// savestates created on 32-bit platforms used to have a 32-bit size
+		if (size >> 32 != 0)
+		{
+			size &= 0xffffffff;
+			std::fseek(file, -4, SEEK_CUR);
+		}
 		chunk = new u8[maxChunkSize];
 		chunkIndex = 0;
 		chunkSize = 0;
@@ -76,6 +82,8 @@ size_t RZipFile::Read(void *data, size_t length)
 			u32 zippedSize;
 			if (std::fread(&zippedSize, sizeof(zippedSize), 1, file) != 1)
 				break;
+			if (zippedSize == 0)
+				continue;
 			u8 *zipped = new u8[zippedSize];
 			if (std::fread(zipped, zippedSize, 1, file) != 1)
 			{
@@ -107,26 +115,37 @@ size_t RZipFile::Write(const void *data, size_t length)
 	verify(std::ftell(file) == 0);
 
 	maxChunkSize = 1024 * 1024;
+	size = length;
 	if (std::fwrite(RZipHeader, sizeof(RZipHeader), 1, file) != 1
 		|| std::fwrite(&maxChunkSize, sizeof(maxChunkSize), 1, file) != 1
-		|| std::fwrite(&length, sizeof(length), 1, file) != 1)
+		|| std::fwrite(&size, sizeof(size), 1, file) != 1)
 		return 0;
 	const u8 *p = (const u8 *)data;
-	u8 *zipped = new u8[maxChunkSize];
+	// compression output buffer must be 0.1% larger + 12 bytes
+	uLongf maxZippedSize = maxChunkSize + maxChunkSize / 1000 + 12;
+	u8 *zipped = new u8[maxZippedSize];
 	size_t rv = 0;
 	while (rv < length)
 	{
-		uLongf zippedSize = maxChunkSize;
+		uLongf zippedSize = maxZippedSize;
 		uLongf uncompressedSize = std::min(maxChunkSize, (u32)(length - rv));
-		if (compress(zipped, &zippedSize, p, uncompressedSize) != Z_OK)
+		u32 rc = compress(zipped, &zippedSize, p, uncompressedSize);
+		if (rc != Z_OK)
+		{
+			WARN_LOG(SAVESTATE, "Compression error: %d", rc);
 			break;
+		}
 		u32 sz = (u32)zippedSize;
 		if (std::fwrite(&sz, sizeof(sz), 1, file) != 1
 			|| std::fwrite(zipped, zippedSize, 1, file) != 1)
-			return 0;
+		{
+			rv = 0;
+			break;
+		}
 		p += uncompressedSize;
 		rv += uncompressedSize;
 	}
+	delete [] zipped;
 	
 	return rv;
 }

@@ -102,7 +102,7 @@ private:
 		MAX_CONST_NUM = 32
 	};
 	MIE_ALIGN(16) double constTbl_[MAX_CONST_NUM];
-	Xbyak::uint64 negConst_;
+	Xbyak::uint64_t negConst_;
 	size_t constTblPos_;
 #ifdef XBYAK32
 	const Xbyak::Reg32& varTbl_;
@@ -118,7 +118,7 @@ public:
 		      64bit: x [rcx](win), xmm0(gcc), return xmm0
 	*/
 	Jit()
-		: negConst_(Xbyak::uint64(1) << 63)
+		: negConst_(Xbyak::uint64_t(1) << 63)
 		, constTblPos_(0)
 #ifdef XBYAK32
 		, varTbl_(eax)

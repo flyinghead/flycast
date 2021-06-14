@@ -2,6 +2,7 @@
 #include <unistd.h>
 #include "types.h"
 
+#ifndef __ANDROID__
 void os_DebugBreak()
 {
 #ifdef __linux__
@@ -31,6 +32,7 @@ void os_DoEvents()
 void os_CreateWindow()
 {
 }
+#endif
 
 void os_LaunchFromURL(const std::string& url)
 {

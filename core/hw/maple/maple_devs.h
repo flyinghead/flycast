@@ -6,25 +6,6 @@
 #include <cmath>
 #include "input/gamepad.h"
 
-enum MapleDeviceType
-{
-	MDT_SegaController,
-
-	MDT_SegaVMU,
-	MDT_Microphone,
-	MDT_PurupuruPack,
-	MDT_AsciiStick,
-	MDT_Keyboard,
-	MDT_Mouse,
-	MDT_LightGun,
-	MDT_TwinStick,
-
-	MDT_NaomiJamma,
-
-	MDT_None,
-	MDT_Count
-};
-
 enum MapleFunctionID
 {
 	MFID_0_Input       = 0x01000000, //DC Controller, Lightgun buttons, arcade stick .. stuff like that
@@ -135,8 +116,6 @@ enum AWAVE_KEYS
 	AWAVE_TRIGGER_KEY = 1 << 12,
 };
 
-struct IMapleConfigMap;
-
 struct maple_device
 {
 	u8 maple_port;          //raw maple port
@@ -199,62 +178,8 @@ extern s32 mo_y_phy;
 extern s32 mo_x_prev[4];
 extern s32 mo_y_prev[4];
 
-static inline void SetMousePosition(int x, int y, int width, int height, u32 mouseId = 0)
-{
-	if (mouseId == 0)
-	{
-		mo_x_phy = x;
-		mo_y_phy = y;
-	}
-
-	if (settings.rend.Rotate90)
-	{
-		int t = y;
-		y = x;
-		x = height - t;
-		std::swap(width, height);
-	}
-	float fx, fy;
-	if ((float)width / height >= 640.f / 480.f)
-	{
-		float scale = 480.f / height;
-		fy = y * scale;
-		scale /= settings.rend.ScreenStretching / 100.f;
-		fx = (x - (width - 640.f / scale) / 2.f) * scale;
-	}
-	else
-	{
-		float scale = 640.f / width;
-		fx = x * scale;
-		scale /= settings.rend.ScreenStretching / 100.f;
-		fy = (y - (height - 480.f / scale) / 2.f) * scale;
-	}
-	mo_x_abs[mouseId] = (int)std::round(fx);
-	mo_y_abs[mouseId] = (int)std::round(fy);
-
-	if (mo_x_prev[mouseId] != -1)
-	{
-		mo_x_delta[mouseId] += (f32)(x - mo_x_prev[mouseId]) * settings.input.MouseSensitivity / 100.f;
-		mo_y_delta[mouseId] += (f32)(y - mo_y_prev[mouseId]) * settings.input.MouseSensitivity / 100.f;
-	}
-	mo_x_prev[mouseId] = x;
-	mo_y_prev[mouseId] = y;
-}
-
-static inline void SetRelativeMousePosition(int xrel, int yrel, u32 mouseId = 0)
-{
-	if (settings.rend.Rotate90)
-	{
-		std::swap(xrel, yrel);
-		xrel = -xrel;
-	}
-	float dx = (float)xrel * settings.input.MouseSensitivity / 100.f;
-	float dy = (float)yrel * settings.input.MouseSensitivity / 100.f;
-	mo_x_delta[mouseId] += dx;
-	mo_y_delta[mouseId] += dy;
-	mo_x_abs[mouseId] += (int)std::round(dx);
-	mo_y_abs[mouseId] += (int)std::round(dy);
-}
+void SetMousePosition(int x, int y, int width, int height, u32 mouseId = 0);
+void SetRelativeMousePosition(int xrel, int yrel, u32 mouseId = 0);
 
 #define SWAP32(a) ((((a) & 0xff) << 24)  | (((a) & 0xff00) << 8) | (((a) >> 8) & 0xff00) | (((a) >> 24) & 0xff))
 
@@ -298,6 +223,10 @@ struct maple_base: maple_device
 	u8 r8() { u8  rv = *(u8*)dma_buffer_in; dma_buffer_in += 1; dma_count_in -= 1; return rv; }
 	u16 r16() { u16 rv = *(u16*)dma_buffer_in; dma_buffer_in += 2; dma_count_in -= 2; return rv; }
 	u32 r32() { u32 rv = *(u32*)dma_buffer_in; dma_buffer_in += 4; dma_count_in -= 4; return rv; }
+	void skip(u32 len) {
+		dma_buffer_in += len;
+		dma_count_in -= len;
+	}
 
 	void rptr(void* dst, u32 len)
 	{
@@ -319,7 +248,7 @@ struct maple_base: maple_device
 	}
 	virtual u32 dma(u32 cmd) = 0;
 
-	virtual u32 RawDma(u32* buffer_in, u32 buffer_in_len, u32* buffer_out)
+	u32 RawDma(u32* buffer_in, u32 buffer_in_len, u32* buffer_out) override
 	{
 		u32 command=buffer_in[0] &0xFF;
 		//Recipient address
@@ -353,9 +282,9 @@ struct maple_naomi_jamma : maple_base
 	u32 jvs_receive_length[32] = { 0 };
 
 	maple_naomi_jamma();
-	virtual ~maple_naomi_jamma();
+	~maple_naomi_jamma() override;
 
-	virtual MapleDeviceType get_device_type() override
+	MapleDeviceType get_device_type() override
 	{
 		return MDT_NaomiJamma;
 	}
@@ -372,9 +301,9 @@ struct maple_naomi_jamma : maple_base
 
 	void handle_86_subcommand();
 
-	virtual u32 RawDma(u32* buffer_in, u32 buffer_in_len, u32* buffer_out) override;
-	virtual u32 dma(u32 cmd) override { return 0; }
+	u32 RawDma(u32* buffer_in, u32 buffer_in_len, u32* buffer_out) override;
+	u32 dma(u32 cmd) override { return 0; }
 
-	virtual bool serialize(void **data, unsigned int *total_size) override;
-	virtual bool unserialize(void **data, unsigned int *total_size, serialize_version_enum version) override;
+	bool serialize(void **data, unsigned int *total_size) override;
+	bool unserialize(void **data, unsigned int *total_size, serialize_version_enum version) override;
 };
