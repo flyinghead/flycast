@@ -75,7 +75,9 @@ for:
 
           mkdir artifacts
 
-          brew install --build-from-source ../../core/deps/SDL2-2.0.12/sdl2.rb
+          brew install --build-from-source ./sdl2.rb
+
+          git submodule update --init -- ../../core/deps/libchdr
 
     build_script:
       - sh: >-
