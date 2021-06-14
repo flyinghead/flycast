@@ -39,7 +39,7 @@ for:
 
     after_build:
       - cmd: >-
-          if "%CONFIGURATION%"=="fast" (cd ..\.. && set EXE_PATH=shell\linux\nosym-reicast.exe)
+          if "%CONFIGURATION%"=="fast" (cd ..\.. && set EXE_PATH=shell\linux\nosym-flycast.exe)
           
           mkdir artifacts
           
