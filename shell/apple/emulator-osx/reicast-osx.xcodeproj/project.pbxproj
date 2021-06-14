@@ -359,7 +359,6 @@
 		EBDF374F1BB96581001191B5 /* audiobackend_coreaudio.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EBDF374D1BB96581001191B5 /* audiobackend_coreaudio.cpp */; };
 		EBDF37511BB969EE001191B5 /* CoreAudio.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EBDF37501BB969EE001191B5 /* CoreAudio.framework */; };
 		EBDF37531BB969F8001191B5 /* AudioUnit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EBDF37521BB969F8001191B5 /* AudioUnit.framework */; };
-<<<<<<< HEAD
 		F24714D225C12B80004E13FE /* LICENSE in Resources */ = {isa = PBXBuildFile; fileRef = F24713FA25C12B80004E13FE /* LICENSE */; };
 		F24714D325C12B80004E13FE /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = F24713FB25C12B80004E13FE /* README.md */; };
 		F24714D425C12B80004E13FE /* any.cc in Sources */ = {isa = PBXBuildFile; fileRef = F247140025C12B80004E13FE /* any.cc */; };
@@ -460,7 +459,6 @@
 		F2E5597125C12886006B0421 /* gdxsv_network.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F2E5596D25C12886006B0421 /* gdxsv_network.cpp */; };
 		F2E7578E25C5E0DB0021FAFD /* libopenlibm.3.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = F2E7578A25C5E0DB0021FAFD /* libopenlibm.3.dylib */; };
 		F2E7579125C5E1530021FAFD /* libopenlibm.3.dylib in Embed Libraries */ = {isa = PBXBuildFile; fileRef = F2E7578A25C5E0DB0021FAFD /* libopenlibm.3.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
-=======
 		F2190636265C243C00AA2ACA /* adler32.c in Sources */ = {isa = PBXBuildFile; fileRef = F2190635265C243C00AA2ACA /* adler32.c */; };
 		F219063A265C244200AA2ACA /* compress.c in Sources */ = {isa = PBXBuildFile; fileRef = F2190639265C244200AA2ACA /* compress.c */; };
 		F2190655265C247D00AA2ACA /* inftrees.c in Sources */ = {isa = PBXBuildFile; fileRef = F219063D265C247C00AA2ACA /* inftrees.c */; };
@@ -476,10 +474,6 @@
 		F219065F265C247D00AA2ACA /* trees.c in Sources */ = {isa = PBXBuildFile; fileRef = F219064E265C247C00AA2ACA /* trees.c */; };
 		F2190660265C247D00AA2ACA /* inffast.c in Sources */ = {isa = PBXBuildFile; fileRef = F219064F265C247C00AA2ACA /* inffast.c */; };
 		F2190661265C247D00AA2ACA /* gzwrite.c in Sources */ = {isa = PBXBuildFile; fileRef = F2190650265C247C00AA2ACA /* gzwrite.c */; };
-		F2190668265C2B7300AA2ACA /* CoreHaptics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F2D7C89A265B2E79002812E2 /* CoreHaptics.framework */; };
-		F2D7C89F265B304F002812E2 /* dsp_arm64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F2D7C89E265B304F002812E2 /* dsp_arm64.cpp */; };
-		F2D7C8A3265B3082002812E2 /* arm7_rec_arm64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F2D7C8A2265B3082002812E2 /* arm7_rec_arm64.cpp */; };
->>>>>>> upstream/master
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -1211,7 +1205,6 @@
 		EBDF374E1BB96581001191B5 /* audiobackend_coreaudio.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = audiobackend_coreaudio.h; sourceTree = "<group>"; };
 		EBDF37501BB969EE001191B5 /* CoreAudio.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreAudio.framework; path = System/Library/Frameworks/CoreAudio.framework; sourceTree = SDKROOT; };
 		EBDF37521BB969F8001191B5 /* AudioUnit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioUnit.framework; path = System/Library/Frameworks/AudioUnit.framework; sourceTree = SDKROOT; };
-<<<<<<< HEAD
 		F24713FA25C12B80004E13FE /* LICENSE */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
 		F24713FB25C12B80004E13FE /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		F24713FF25C12B80004E13FE /* source_context.pb.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = source_context.pb.h; sourceTree = "<group>"; };
@@ -1434,7 +1427,6 @@
 		F2E7578925C5E0DB0021FAFD /* LICENSE.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = LICENSE.md; sourceTree = "<group>"; };
 		F2E7578A25C5E0DB0021FAFD /* libopenlibm.3.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; path = libopenlibm.3.dylib; sourceTree = "<group>"; };
 		F2E7578C25C5E0DB0021FAFD /* version.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = version.txt; sourceTree = "<group>"; };
-=======
 		F2190635265C243C00AA2ACA /* adler32.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = adler32.c; sourceTree = "<group>"; };
 		F2190639265C244200AA2ACA /* compress.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = compress.c; sourceTree = "<group>"; };
 		F219063D265C247C00AA2ACA /* inftrees.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = inftrees.c; sourceTree = "<group>"; };
@@ -1461,10 +1453,6 @@
 		F2190652265C247D00AA2ACA /* trees.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = trees.h; sourceTree = "<group>"; };
 		F2190653265C247D00AA2ACA /* gzguts.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = gzguts.h; sourceTree = "<group>"; };
 		F2190654265C247D00AA2ACA /* inffast.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = inffast.h; sourceTree = "<group>"; };
-		F2D7C89A265B2E79002812E2 /* CoreHaptics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreHaptics.framework; path = System/Library/Frameworks/CoreHaptics.framework; sourceTree = SDKROOT; };
-		F2D7C89E265B304F002812E2 /* dsp_arm64.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = dsp_arm64.cpp; sourceTree = "<group>"; };
-		F2D7C8A2265B3082002812E2 /* arm7_rec_arm64.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = arm7_rec_arm64.cpp; sourceTree = "<group>"; };
->>>>>>> upstream/master
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -1481,7 +1469,6 @@
 				F252BB9726652AB600806876 /* SystemConfiguration.framework in Frameworks */,
 				AE7BCB5C243DDCAE007285F8 /* ForceFeedback.framework in Frameworks */,
 				AE7BCB5E243DDCD1007285F8 /* AudioToolbox.framework in Frameworks */,
-				F2190668265C2B7300AA2ACA /* CoreHaptics.framework in Frameworks */,
 				AE7BCB60243DDD49007285F8 /* libiconv.2.tbd in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1691,11 +1678,8 @@
 				AE82C6ED25B64BDC00C79BC2 /* nowide */,
 				F2E7578825C5E0DB0021FAFD /* openlibm */,
 				AEFF7ECE214D9D580068CE11 /* picotcp */,
-<<<<<<< HEAD
 				F24713F925C12B80004E13FE /* protobuf-3.13.0 */,
-=======
 				559E92F425FCBFCA001B0F40 /* vixl */,
->>>>>>> upstream/master
 				AE8C273A21122E2500D4D8F4 /* xbrz */,
 				AE1E292620947D4700FC6BA2 /* xbyak */,
 			);
@@ -2496,14 +2480,10 @@
 		AED73DC52303E57C00ECDB64 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-<<<<<<< HEAD
 				F252BB9626652AB600806876 /* SystemConfiguration.framework */,
 				F252BB9326652AA300806876 /* CoreHaptics.framework */,
-=======
-				F2D7C89A265B2E79002812E2 /* CoreHaptics.framework */,
 				EBDF37521BB969F8001191B5 /* AudioUnit.framework */,
 				EBDF37501BB969EE001191B5 /* CoreAudio.framework */,
->>>>>>> upstream/master
 				AEF9987C259B355C0038E0B8 /* GameController.framework */,
 				AE7BCB61243DDD92007285F8 /* Carbon.framework */,
 				AE7BCB5F243DDD3A007285F8 /* libiconv.2.tbd */,
@@ -2799,7 +2779,6 @@
 			path = stack;
 			sourceTree = "<group>";
 		};
-<<<<<<< HEAD
 		F24713F925C12B80004E13FE /* protobuf-3.13.0 */ = {
 			isa = PBXGroup;
 			children = (
@@ -3084,8 +3063,7 @@
 				F2E5596D25C12886006B0421 /* gdxsv_network.cpp */,
 				F2E5596E25C12886006B0421 /* gdxsv_patch.h */,
 			);
-			name = gdxsv;
-			path = ../../../core/gdxsv;
+			path = gdxsv;
 			sourceTree = "<group>";
 		};
 		F2E7578825C5E0DB0021FAFD /* openlibm */ = {
@@ -3096,8 +3074,9 @@
 				F2E7578C25C5E0DB0021FAFD /* version.txt */,
 			);
 			path = openlibm;
-=======
-		F2190633265C23CC00AA2ACA /* deps */ = {
+			sourceTree = "<group>";
+		};
+				F2190633265C23CC00AA2ACA /* deps */ = {
 			isa = PBXGroup;
 			children = (
 				F2190634265C23F200AA2ACA /* zlib-1.2.11 */,
@@ -3136,7 +3115,6 @@
 				F2190651265C247C00AA2ACA /* zutil.h */,
 			);
 			path = "zlib-1.2.11";
->>>>>>> upstream/master
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -3252,11 +3230,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-<<<<<<< HEAD
-			shellScript = "echo \"#define REICAST_VERSION \\\"`git describe --tags --always | sed -e 's/-/+/'`\\\"\" > $SRCROOT/../../../core/version.h\necho \"#define GIT_HASH \\\"`git rev-parse --short HEAD`\\\"\" >> $SRCROOT/../../../core/version.h\necho \"#define BUILD_DATE \\\"`date '+%Y-%m-%d %H:%M:%S %Z'`\\\"\" >> $SRCROOT/../../../core/version.h\ncd $SRCROOT/../../../core/deps/miniupnpc; sh ./updateminiupnpcstrings.sh\n";
-=======
-			shellScript = "echo \"#define GIT_VERSION \\\"`git describe --tags --always`\\\"\" > $SRCROOT/../../../core/version.h\necho \"#define GIT_HASH \\\"`git rev-parse --short HEAD`\\\"\" >> $SRCROOT/../../../core/version.h\necho \"#define BUILD_DATE \\\"`date '+%Y-%m-%d %H:%M:%S %Z'`\\\"\" >> $SRCROOT/../../../core/version.h\ncd $SRCROOT/../../../core/deps/miniupnpc; sh ./updateminiupnpcstrings.sh\n";
->>>>>>> upstream/master
+			shellScript = "echo \"#define GIT_VERSION \\\"`git describe --tags --always | sed -e 's/-/+/'`\\\"\" > $SRCROOT/../../../core/version.h\necho \"#define GIT_HASH \\\"`git rev-parse --short HEAD`\\\"\" >> $SRCROOT/../../../core/version.h\necho \"#define BUILD_DATE \\\"`date '+%Y-%m-%d %H:%M:%S %Z'`\\\"\" >> $SRCROOT/../../../core/version.h\ncd $SRCROOT/../../../core/deps/miniupnpc; sh ./updateminiupnpcstrings.sh\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -3266,31 +3240,15 @@
 			buildActionMask = 2147483647;
 			files = (
 				AE82C60625A4D92D00C79BC2 /* naomi_roms.cpp in Sources */,
-<<<<<<< HEAD
-				F247151425C12B80004E13FE /* struct.proto in Sources */,
-				AEF25642227C441F00348550 /* vmem32.cpp in Sources */,
-				F247151525C12B80004E13FE /* repeated_field.cc in Sources */,
 				AE82C6A225B64AE200C79BC2 /* zip_unchange_data.c in Sources */,
 				84B7BF741B72720200F9733F /* descrambl.cpp in Sources */,
-				F24714E425C12B80004E13FE /* any_lite.cc in Sources */,
-				AE649BF9218C552500EF4A81 /* fixed_intrin_ssse3.c in Sources */,
-=======
-				AE82C6A225B64AE200C79BC2 /* zip_unchange_data.c in Sources */,
-				84B7BF741B72720200F9733F /* descrambl.cpp in Sources */,
->>>>>>> upstream/master
 				84B7BF5D1B72720200F9733F /* gdi.cpp in Sources */,
-				F247152E25C12B80004E13FE /* generated_message_table_driven.cc in Sources */,
 				84B7BF5B1B72720200F9733F /* chd.cpp in Sources */,
 				84B7BF611B72720200F9733F /* common.cpp in Sources */,
 				AEF998742598900A0038E0B8 /* minixml.c in Sources */,
 				AEFF7F5C214D9D590068CE11 /* pico_socket_udp.c in Sources */,
 				AEFF7278265901BF003E8022 /* libchdr_cdrom.c in Sources */,
 				AE82C6B825B64AE200C79BC2 /* zip_file_error_get.c in Sources */,
-<<<<<<< HEAD
-				AE649C00218C552500EF4A81 /* lpc_intrin_sse41.c in Sources */,
-				F247151C25C12B80004E13FE /* any.proto in Sources */,
-=======
->>>>>>> upstream/master
 				84B7BF7A1B72720200F9733F /* gles.cpp in Sources */,
 				AEF998732598900A0038E0B8 /* upnperrors.c in Sources */,
 				F219065E265C247D00AA2ACA /* gzlib.c in Sources */,
@@ -3298,7 +3256,6 @@
 				F2190658265C247D00AA2ACA /* gzclose.c in Sources */,
 				AE82C67325B64AE200C79BC2 /* zip_source_error.c in Sources */,
 				AE80EDBF2157D4E600F7800F /* naomi_cart.cpp in Sources */,
-				F247152925C12B80004E13FE /* timestamp.pb.cc in Sources */,
 				AEA93E6D259DE9160076297F /* pico_icmp4.c in Sources */,
 				AE82C6C125B64AE200C79BC2 /* zip_file_error_clear.c in Sources */,
 				AE82C67C25B64AE200C79BC2 /* zip_set_file_compression.c in Sources */,
@@ -3307,28 +3264,18 @@
 				AE80EDBE2157D4E600F7800F /* naomi.cpp in Sources */,
 				AE4AF3032588E7DE00F90C30 /* mainui.cpp in Sources */,
 				AE82C6A825B64AE200C79BC2 /* zip_name_locate.c in Sources */,
-				F247151D25C12B80004E13FE /* generated_message_util.cc in Sources */,
 				AE82C69525B64AE200C79BC2 /* zip_fclose.c in Sources */,
-				F247150B25C12B80004E13FE /* strtod.cc in Sources */,
 				AEF256522294060400348550 /* archive.cpp in Sources */,
 				84B7BF281B72720200F9733F /* dsp.cpp in Sources */,
-<<<<<<< HEAD
-				F24714EB25C12B80004E13FE /* delimited_message_util.cc in Sources */,
-				F24714F225C12B80004E13FE /* json_stream_parser.cc in Sources */,
-=======
 				559E932F25FCBFCA001B0F40 /* utils-vixl.cc in Sources */,
->>>>>>> upstream/master
 				AE7B907F235A53D800145C6A /* switcher.cpp in Sources */,
 				AE82C6D825B64AE200C79BC2 /* zip_fseek.c in Sources */,
 				AE82C6C925B64AE200C79BC2 /* zip_error_clear.c in Sources */,
 				84B7BF3D1B72720200F9733F /* Renderer_if.cpp in Sources */,
 				AE82C69B25B64AE200C79BC2 /* zip_fopen_encrypted.c in Sources */,
 				84B7BF7E1B72720200F9733F /* TexCache.cpp in Sources */,
-				F24714DB25C12B80004E13FE /* strutil.cc in Sources */,
 				AEF99730259682850038E0B8 /* rzip.cpp in Sources */,
 				AE82C6A425B64AE200C79BC2 /* zip_file_add.c in Sources */,
-				F24714EC25C12B80004E13FE /* field_comparator.cc in Sources */,
-				F2E5597025C12886006B0421 /* packet.pb.cc in Sources */,
 				AE82C6D725B64AE200C79BC2 /* zip_fopen_index.c in Sources */,
 				AE82C67725B64AE200C79BC2 /* zip_error_to_str.c in Sources */,
 				AE43537522C9420C005E19CE /* LogManager.cpp in Sources */,
@@ -3348,16 +3295,10 @@
 				F219065D265C247D00AA2ACA /* gzread.c in Sources */,
 				AEA93E68259D07A30076297F /* pico_dhcp_common.c in Sources */,
 				EBDF374F1BB96581001191B5 /* audiobackend_coreaudio.cpp in Sources */,
-				F247152425C12B80004E13FE /* wire_format.cc in Sources */,
-				F247152B25C12B80004E13FE /* port_def.inc in Sources */,
-				F24714FE25C12B80004E13FE /* type_resolver_util.cc in Sources */,
 				AE7B907D235A53D800145C6A /* osx.cpp in Sources */,
-				F24714F425C12B80004E13FE /* proto_writer.cc in Sources */,
 				84B7BF581B72720200F9733F /* sh4_rom.cpp in Sources */,
-				F24714FA25C12B80004E13FE /* type_info.cc in Sources */,
 				AE82C67625B64AE200C79BC2 /* zip_ftell.c in Sources */,
 				84B7BF441B72720200F9733F /* driver.cpp in Sources */,
-				F24714E325C12B80004E13FE /* generated_message_table_driven_lite.cc in Sources */,
 				AE2A2D7D21D6851E004B308D /* 7zCrcOpt.c in Sources */,
 				84B7BF451B72720200F9733F /* shil.cpp in Sources */,
 				AE82C6B225B64AE200C79BC2 /* zip_get_num_files.c in Sources */,
@@ -3371,27 +3312,16 @@
 				559E933A25FCBFCA001B0F40 /* pointer-auth-aarch64.cc in Sources */,
 				559E933C25FCBFCA001B0F40 /* logic-aarch64.cc in Sources */,
 				AE82C6A025B64AE200C79BC2 /* zip_pkware.c in Sources */,
-<<<<<<< HEAD
-				F247152825C12B80004E13FE /* field_mask.pb.cc in Sources */,
-=======
 				F2190659265C247D00AA2ACA /* deflate.c in Sources */,
 				F2190661265C247D00AA2ACA /* gzwrite.c in Sources */,
 				559E932E25FCBFCA001B0F40 /* cpu-features.cc in Sources */,
->>>>>>> upstream/master
 				AEFF7F4D214D9D590068CE11 /* pico_arp.c in Sources */,
 				AE82C68225B64AE200C79BC2 /* zip_source_seek.c in Sources */,
 				AED73EBE2348E49900ECDB64 /* CustomTexture.cpp in Sources */,
-				F247150425C12B80004E13FE /* zero_copy_stream_impl_lite.cc in Sources */,
 				AE2A2D7C21D6851E004B308D /* 7zBuf.c in Sources */,
-				F24714F125C12B80004E13FE /* object_writer.cc in Sources */,
 				84B7BEB11B72720200F9733F /* cdipsr.cpp in Sources */,
 				AE82C6A525B64AE200C79BC2 /* zip_algorithm_deflate.c in Sources */,
 				AEF77FDB24AA76BA00171080 /* audiobackend_null.cpp in Sources */,
-<<<<<<< HEAD
-				AE649BF5218C552500EF4A81 /* cpu.c in Sources */,
-				F247150E25C12B80004E13FE /* parse_context.cc in Sources */,
-=======
->>>>>>> upstream/master
 				AE82C68E25B64AE200C79BC2 /* zip_source_buffer.c in Sources */,
 				AE82C6C725B64AE200C79BC2 /* zip_source_is_deleted.c in Sources */,
 				AE2A2D5D21D68470004B308D /* m4cartridge.cpp in Sources */,
@@ -3402,40 +3332,27 @@
 				AE82C6D425B64AE200C79BC2 /* zip_source_window.c in Sources */,
 				AE649C2F218C553A00EF4A81 /* LzmaLib.c in Sources */,
 				AEFF7F55214D9D590068CE11 /* pico_dns_common.c in Sources */,
-				F247150925C12B80004E13FE /* gzip_stream.cc in Sources */,
-				F247151725C12B80004E13FE /* implicit_weak_message.cc in Sources */,
 				AE82C68125B64AE200C79BC2 /* zip_source_file_common.c in Sources */,
 				AE2A2D7821D6851E004B308D /* 7zCrc.c in Sources */,
-				F24714F825C12B80004E13FE /* datapiece.cc in Sources */,
 				AE82C67425B64AE200C79BC2 /* zip_source_remove.c in Sources */,
 				F2190636265C243C00AA2ACA /* adler32.c in Sources */,
 				84B7BF371B72720200F9733F /* maple_if.cpp in Sources */,
 				AE82C6BC25B64AE200C79BC2 /* zip_strerror.c in Sources */,
-				F24714F725C12B80004E13FE /* error_listener.cc in Sources */,
 				AE82C69E25B64AE200C79BC2 /* zip_error_strerror.c in Sources */,
 				AEF998662598900A0038E0B8 /* miniwget.c in Sources */,
-				F24714EA25C12B80004E13FE /* field_mask_util.cc in Sources */,
 				84B7BF351B72720200F9733F /* maple_devs.cpp in Sources */,
 				84B7BF461B72720200F9733F /* sh4_fpu.cpp in Sources */,
 				AE649C26218C553A00EF4A81 /* Bra86.c in Sources */,
 				AE82C69325B64AE200C79BC2 /* zip_file_get_external_attributes.c in Sources */,
-				F247150825C12B80004E13FE /* tokenizer.cc in Sources */,
 				84B7BEAF1B72720200F9733F /* cfg.cpp in Sources */,
 				84B7BF521B72720200F9733F /* ubc.cpp in Sources */,
 				AEA93E5C259BCD530076297F /* rtl8139c.cpp in Sources */,
 				AE82C6CF25B64AE200C79BC2 /* zip_set_name.c in Sources */,
-				F247150125C12B80004E13FE /* extension_set_heavy.cc in Sources */,
 				AE82C6DB25B64AE200C79BC2 /* zip_file_get_comment.c in Sources */,
-				F247152325C12B80004E13FE /* empty.proto in Sources */,
 				AE82C6DA25B64AE200C79BC2 /* zip_source_tell_write.c in Sources */,
 				AE8C27342111A31100D4D8F4 /* dsp_interp.cpp in Sources */,
 				84B7BF421B72720200F9733F /* blockmanager.cpp in Sources */,
 				84B7BF511B72720200F9733F /* tmu.cpp in Sources */,
-<<<<<<< HEAD
-				F24714EF25C12B80004E13FE /* protostream_objectsource.cc in Sources */,
-				84B7BF181B72720200F9733F /* crc32.c in Sources */,
-=======
->>>>>>> upstream/master
 				AE82C6C225B64AE200C79BC2 /* zip_source_compress.c in Sources */,
 				AE82C68B25B64AE200C79BC2 /* zip_source_rollback_write.c in Sources */,
 				AE43537422C9420C005E19CE /* ConsoleListenerWin.cpp in Sources */,
@@ -3443,29 +3360,21 @@
 				F219065F265C247D00AA2ACA /* trees.c in Sources */,
 				84B7BF7B1B72720200F9733F /* gltex.cpp in Sources */,
 				AE1E294020A96B0B00FC6BA2 /* rec_x64.cpp in Sources */,
-				F24714ED25C12B80004E13FE /* message_differencer.cc in Sources */,
 				AEE6278822131BB500EC7E89 /* mapping.cpp in Sources */,
 				AEFF7F76214D9D590068CE11 /* pico_tree.c in Sources */,
 				AEE6277A220D7B7E00EC7E89 /* imgui.cpp in Sources */,
-<<<<<<< HEAD
-				F24714DF25C12B80004E13FE /* stringpiece.cc in Sources */,
-=======
 				F219065C265C247D00AA2ACA /* zutil.c in Sources */,
->>>>>>> upstream/master
 				AE82C69425B64AE200C79BC2 /* zip_error_get_sys_type.c in Sources */,
 				AE82C69925B64AE200C79BC2 /* zip_unchange_archive.c in Sources */,
 				559E933825FCBFCA001B0F40 /* instrument-aarch64.cc in Sources */,
 				84B7BEB91B72720200F9733F /* elf.cpp in Sources */,
 				AE82C60025A0E45A00C79BC2 /* picoppp.cpp in Sources */,
-				F247150225C12B80004E13FE /* api.proto in Sources */,
 				84B7BF2B1B72720200F9733F /* arm_mem.cpp in Sources */,
 				84B7BF4F1B72720200F9733F /* rtc.cpp in Sources */,
 				AE90679B235B6F6400CE473C /* gl_context.cpp in Sources */,
 				84B7BF361B72720200F9733F /* maple_helper.cpp in Sources */,
 				84B7BF541B72720200F9733F /* sh4_interrupts.cpp in Sources */,
 				AE2A2D7F21D6851E004B308D /* 7zFile.c in Sources */,
-				F247151E25C12B80004E13FE /* api.pb.cc in Sources */,
-				F247152C25C12B80004E13FE /* extension_set.cc in Sources */,
 				AEF2564822886A2E00348550 /* posix_vmem.cpp in Sources */,
 				84B7BF6B1B72720200F9733F /* audiostream.cpp in Sources */,
 				84B7BF301B72720200F9733F /* holly_intc.cpp in Sources */,
@@ -3475,19 +3384,14 @@
 				AE82C6A125B64AE200C79BC2 /* zip_source_accept_empty.c in Sources */,
 				84B7BF2A1B72720200F9733F /* arm7.cpp in Sources */,
 				AE90679D235DF80400CE473C /* osd.cpp in Sources */,
-				F247152125C12B80004E13FE /* descriptor.cc in Sources */,
 				AE82C67D25B64AE200C79BC2 /* zip_get_name.c in Sources */,
 				84B7BF551B72720200F9733F /* sh4_mem.cpp in Sources */,
 				AE82C69F25B64AE200C79BC2 /* zip_open.c in Sources */,
-				F247151925C12B80004E13FE /* duration.pb.cc in Sources */,
 				AE649C2C218C553A00EF4A81 /* Lzma86Enc.c in Sources */,
-				F24714DC25C12B80004E13FE /* stringprintf.cc in Sources */,
 				AE82C69725B64AE200C79BC2 /* zip_close.c in Sources */,
 				84B7BF411B72720200F9733F /* ta_vtx.cpp in Sources */,
 				AEF9984C2598900A0038E0B8 /* addr_is_reserved.c in Sources */,
-				F247151125C12B80004E13FE /* wrappers.pb.cc in Sources */,
 				AE82C6B725B64AE200C79BC2 /* zip_source_close.c in Sources */,
-				F24714D925C12B80004E13FE /* bytestream.cc in Sources */,
 				AE1E293B2095FB1600FC6BA2 /* rec_cpp.cpp in Sources */,
 				AE82C6AE25B64AE200C79BC2 /* zip_source_free.c in Sources */,
 				84B7BF331B72720200F9733F /* sb_mem.cpp in Sources */,
@@ -3501,25 +3405,15 @@
 				84B7BF261B72720200F9733F /* aica_if.cpp in Sources */,
 				AEE6278722131BB500EC7E89 /* gamepad_device.cpp in Sources */,
 				AE82C68625B64AE200C79BC2 /* zip_set_archive_comment.c in Sources */,
-<<<<<<< HEAD
-				84B7BF171B72720200F9733F /* compress.c in Sources */,
-				AE649C3C218C555600EF4A81 /* cdrom.c in Sources */,
-				F24714F925C12B80004E13FE /* default_value_objectwriter.cc in Sources */,
-				AE649BF3218C552500EF4A81 /* bitmath.c in Sources */,
-				F24714FD25C12B80004E13FE /* json_format_proto3.proto in Sources */,
-=======
 				559E934125FCBFCA001B0F40 /* decoder-aarch64.cc in Sources */,
 				AE7BCB592415515B007285F8 /* arm7_rec.cpp in Sources */,
 				AE039B40261C61C8005E24C5 /* gui_cheats.cpp in Sources */,
->>>>>>> upstream/master
 				AE649C30218C553A00EF4A81 /* Sort.c in Sources */,
 				AE82C6B325B64AE200C79BC2 /* zip_source_file_stdio.c in Sources */,
-				F247151225C12B80004E13FE /* unknown_field_set.cc in Sources */,
 				AE82C6D525B64AE200C79BC2 /* zip_set_default_password.c in Sources */,
 				AE82C6EB25B64BAB00C79BC2 /* zip_source_file_stdio_named.c in Sources */,
 				8491687F1B782B2D00F3F2B4 /* ini.cpp in Sources */,
 				AE82C6BB25B64AE200C79BC2 /* zip_unchange.c in Sources */,
-				F24714D725C12B80004E13FE /* status.cc in Sources */,
 				AE82C69625B64AE200C79BC2 /* zip_fopen.c in Sources */,
 				AEFF7274265901BF003E8022 /* libchdr_bitstream.c in Sources */,
 				AEA93E60259BCD530076297F /* bba.cpp in Sources */,
@@ -3530,16 +3424,12 @@
 				AE82C6AB25B64AE200C79BC2 /* zip_set_file_comment.c in Sources */,
 				AE82C6B025B64AE200C79BC2 /* zip_source_open.c in Sources */,
 				AEA94931244CDF50001134C7 /* naomi_flashrom.cpp in Sources */,
-				F247152725C12B80004E13FE /* descriptor.proto in Sources */,
-				F247150625C12B80004E13FE /* coded_stream.cc in Sources */,
 				AE82C6B925B64AE200C79BC2 /* zip_replace.c in Sources */,
 				AE82C69C25B64AE200C79BC2 /* zip_error.c in Sources */,
 				AE82C6CE25B64AE200C79BC2 /* zip_fread.c in Sources */,
 				AE649C25218C553A00EF4A81 /* Bra.c in Sources */,
 				AE82C69025B64AE200C79BC2 /* zip_extra_field_api.c in Sources */,
-				F24714FF25C12B80004E13FE /* type.pb.cc in Sources */,
 				AE82C6B625B64AE200C79BC2 /* zip_stat_index.c in Sources */,
-				F24714E225C12B80004E13FE /* descriptor.pb.cc in Sources */,
 				84B7BF401B72720200F9733F /* ta_ctx.cpp in Sources */,
 				AE2A2D5A21D68470004B308D /* gdcartridge.cpp in Sources */,
 				AE82C6C325B64AE200C79BC2 /* zip_source_begin_write_cloning.c in Sources */,
@@ -3547,9 +3437,7 @@
 				84B7BF4D1B72720200F9733F /* intc.cpp in Sources */,
 				559E92ED25FCBF23001B0F40 /* rec_arm64.cpp in Sources */,
 				84B7BEB01B72720200F9733F /* cl.cpp in Sources */,
-				F24714FC25C12B80004E13FE /* json_format.proto in Sources */,
 				AED73DCC233ACC9800ECDB64 /* cheats.cpp in Sources */,
-				F24714F325C12B80004E13FE /* protostream_objectwriter.cc in Sources */,
 				84B7BF391B72720200F9733F /* drkPvr.cpp in Sources */,
 				84B7BF621B72720200F9733F /* context.cpp in Sources */,
 				AE82C6C525B64AE200C79BC2 /* zip_source_get_file_attributes.c in Sources */,
@@ -3563,7 +3451,6 @@
 				AE2A24DA22AE7EB600DD3034 /* ssa.cpp in Sources */,
 				AE82C6CB25B64AE200C79BC2 /* zip_file_replace.c in Sources */,
 				AE82C68F25B64AE200C79BC2 /* zip_fdopen.c in Sources */,
-				F247151825C12B80004E13FE /* wrappers.proto in Sources */,
 				AED73DC42303E19200ECDB64 /* sdl.cpp in Sources */,
 				F2190655265C247D00AA2ACA /* inftrees.c in Sources */,
 				AE82C6BD25B64AE200C79BC2 /* zip_file_set_encryption.c in Sources */,
@@ -3571,26 +3458,9 @@
 				AE82C69125B64AE200C79BC2 /* zip_dirent.c in Sources */,
 				AE7BCB6B244608B6007285F8 /* naomi_network.cpp in Sources */,
 				84B7BF5A1B72720200F9733F /* cdi.cpp in Sources */,
-<<<<<<< HEAD
-				AE649C05218C552500EF4A81 /* stream_decoder.c in Sources */,
-				F24714E025C12B80004E13FE /* timestamp.proto in Sources */,
-=======
->>>>>>> upstream/master
 				AE43537322C9420C005E19CE /* ConsoleListenerNix.cpp in Sources */,
-				F24714E925C12B80004E13FE /* time_util.cc in Sources */,
-				F247151A25C12B80004E13FE /* source_context.proto in Sources */,
-				F24714D525C12B80004E13FE /* int128.cc in Sources */,
-				F247152525C12B80004E13FE /* dynamic_message.cc in Sources */,
 				AE82C67825B64AE200C79BC2 /* zip_progress.c in Sources */,
-<<<<<<< HEAD
-				AE649C02218C552500EF4A81 /* memory.c in Sources */,
-				F24714D625C12B80004E13FE /* structurally_valid.cc in Sources */,
-				F24714D825C12B80004E13FE /* common.cc in Sources */,
-				F247151325C12B80004E13FE /* any.pb.cc in Sources */,
-=======
->>>>>>> upstream/master
 				84B7BF831B727AD700F9733F /* osx-main.mm in Sources */,
-				F24714E125C12B80004E13FE /* field_mask.proto in Sources */,
 				84B7BF761B72720200F9733F /* reios.cpp in Sources */,
 				84B7BF3B1B72720200F9733F /* pvr_regs.cpp in Sources */,
 				559E933B25FCBFCA001B0F40 /* instructions-aarch64.cc in Sources */,
@@ -3599,24 +3469,12 @@
 				84B7BF311B72720200F9733F /* sb.cpp in Sources */,
 				AE649C2B218C553A00EF4A81 /* Lzma86Dec.c in Sources */,
 				84B7BF4B1B72720200F9733F /* cpg.cpp in Sources */,
-				F247151B25C12B80004E13FE /* struct.pb.cc in Sources */,
 				AE2A2D8021D6851E004B308D /* 7zDec.c in Sources */,
-<<<<<<< HEAD
-				AE649BFA218C552500EF4A81 /* float.c in Sources */,
-				F2E5597125C12886006B0421 /* gdxsv_network.cpp in Sources */,
-=======
->>>>>>> upstream/master
 				AE82C67A25B64AE200C79BC2 /* zip_source_seek_write.c in Sources */,
 				AE649C24218C553A00EF4A81 /* Alloc.c in Sources */,
 				AE82C6B125B64AE200C79BC2 /* zip_unchange_all.c in Sources */,
 				AEE62768220D7B4400EC7E89 /* cue.cpp in Sources */,
-				F24714E525C12B80004E13FE /* descriptor_database.cc in Sources */,
 				AEE6278E2224762000EC7E89 /* imgui_impl_opengl3.cpp in Sources */,
-<<<<<<< HEAD
-				AE649BFF218C552500EF4A81 /* lpc_intrin_sse2.c in Sources */,
-				F247151025C12B80004E13FE /* duration.proto in Sources */,
-=======
->>>>>>> upstream/master
 				AE82C6A325B64AE200C79BC2 /* zip_get_archive_comment.c in Sources */,
 				AE80EDB72157D4D500F7800F /* serialize.cpp in Sources */,
 				AEE6276B220D7B5500EC7E89 /* gui.cpp in Sources */,
@@ -3627,7 +3485,6 @@
 				AEFF7ECC214AEC810068CE11 /* modem.cpp in Sources */,
 				84B7BF2E1B72720200F9733F /* gdrom_response.cpp in Sources */,
 				AEF9984B2598900A0038E0B8 /* minisoap.c in Sources */,
-				F247150A25C12B80004E13FE /* zero_copy_stream.cc in Sources */,
 				AE82C6C825B64AE200C79BC2 /* zip_get_file_comment.c in Sources */,
 				AE82C6D225B64AE200C79BC2 /* zip_buffer.c in Sources */,
 				84B7BF7F1B72720200F9733F /* stdclass.cpp in Sources */,
@@ -3637,26 +3494,15 @@
 				AEFF7F59214D9D590068CE11 /* pico_ipv4.c in Sources */,
 				AE82C67525B64AE200C79BC2 /* zip_delete.c in Sources */,
 				84B7BF271B72720200F9733F /* aica_mem.cpp in Sources */,
-				F247150C25C12B80004E13FE /* io_win32.cc in Sources */,
 				84B7BF571B72720200F9733F /* sh4_opcode_list.cpp in Sources */,
 				84B7BF691B72720200F9733F /* audiobackend_oss.cpp in Sources */,
 				AEF9987B259B345E0038E0B8 /* miniupnp.cpp in Sources */,
 				AEA93E51259BA2180076297F /* audiobackend_sdl2.cpp in Sources */,
-<<<<<<< HEAD
-				F24714E825C12B80004E13FE /* arena.cc in Sources */,
-				84B7BF1D1B72720200F9733F /* inftrees.c in Sources */,
-=======
->>>>>>> upstream/master
 				AE82C67925B64AE200C79BC2 /* zip_error_get.c in Sources */,
 				AE82C6DD25B64AE200C79BC2 /* zip_dir_add.c in Sources */,
 				AE82C69D25B64AE200C79BC2 /* zip_get_encryption_implementation.c in Sources */,
 				559E933025FCBFCA001B0F40 /* compiler-intrinsics-vixl.cc in Sources */,
 				AEE6277B220D7B7E00EC7E89 /* imgui_demo.cpp in Sources */,
-<<<<<<< HEAD
-				AE649BFE218C552500EF4A81 /* lpc_intrin_sse.c in Sources */,
-				F24714F025C12B80004E13FE /* field_mask_utility.cc in Sources */,
-=======
->>>>>>> upstream/master
 				AE2A2D7A21D6851E004B308D /* 7zArcIn.c in Sources */,
 				84B7BF471B72720200F9733F /* sh4_interpreter.cpp in Sources */,
 				AEF998762598900A0038E0B8 /* miniupnpc.c in Sources */,
@@ -3667,7 +3513,6 @@
 				AE82C6A725B64AE200C79BC2 /* zip_libzip_version.c in Sources */,
 				84B7BF791B72720200F9733F /* gldraw.cpp in Sources */,
 				AE82C6E925B64BAB00C79BC2 /* zip_mkstempm.c in Sources */,
-				F24714F625C12B80004E13FE /* json_objectwriter.cc in Sources */,
 				84B7BF4E1B72720200F9733F /* mmu.cpp in Sources */,
 				AE82C6AF25B64AE200C79BC2 /* zip_file_rename.c in Sources */,
 				AE82C6B525B64AE200C79BC2 /* zip_source_begin_write.c in Sources */,
@@ -3675,17 +3520,13 @@
 				84B7BEBA1B72720200F9733F /* elf32.cpp in Sources */,
 				84B7BF481B72720200F9733F /* sh4_opcodes.cpp in Sources */,
 				AE2A2D7E21D6851E004B308D /* Lzma2Dec.c in Sources */,
-				F247150325C12B80004E13FE /* message_lite.cc in Sources */,
-				F24714D425C12B80004E13FE /* any.cc in Sources */,
 				AE82C68825B64AE200C79BC2 /* zip_source_stat.c in Sources */,
 				AEF998632598900A0038E0B8 /* upnpreplyparse.c in Sources */,
 				AEFF7F5B214D9D590068CE11 /* pico_socket_tcp.c in Sources */,
 				AE82C68D25B64AE200C79BC2 /* zip_file_set_mtime.c in Sources */,
 				F2190657265C247D00AA2ACA /* infback.c in Sources */,
 				AE649C27218C553A00EF4A81 /* BraIA64.c in Sources */,
-				F247151F25C12B80004E13FE /* message.cc in Sources */,
 				AED73EBF2348E49900ECDB64 /* sorter.cpp in Sources */,
-				F24714FB25C12B80004E13FE /* json_escaping.cc in Sources */,
 				AE82C6CA25B64AE200C79BC2 /* zip_new.c in Sources */,
 				AEF25646227C442F00348550 /* fastmmu.cpp in Sources */,
 				84B7BF4A1B72720200F9733F /* ccn.cpp in Sources */,
@@ -3700,77 +3541,44 @@
 				AE82C67B25B64AE200C79BC2 /* zip_get_archive_flag.c in Sources */,
 				559E933925FCBFCA001B0F40 /* cpu-features-auditor-aarch64.cc in Sources */,
 				84B7BF4C1B72720200F9733F /* dmac.cpp in Sources */,
-				F24714E625C12B80004E13FE /* port_undef.inc in Sources */,
 				AE82C6CD25B64AE200C79BC2 /* zip_source_call.c in Sources */,
 				559E933F25FCBFCA001B0F40 /* disasm-aarch64.cc in Sources */,
 				AE2A2D5E21D68470004B308D /* decrypt.cpp in Sources */,
 				AE82C68725B64AE200C79BC2 /* zip_set_archive_flag.c in Sources */,
-<<<<<<< HEAD
-				F24714DA25C12B80004E13FE /* statusor.cc in Sources */,
-				F24714DD25C12B80004E13FE /* time.cc in Sources */,
-=======
 				AED4473C25FC0CF100B045FF /* quad.cpp in Sources */,
->>>>>>> upstream/master
 				AEFF7F56214D9D590068CE11 /* pico_ethernet.c in Sources */,
 				AEE6277E220D7B7E00EC7E89 /* imgui_widgets.cpp in Sources */,
 				559E934425FCBFCA001B0F40 /* code-buffer-vixl.cc in Sources */,
 				84B7BF771B72720200F9733F /* reios_elf.cpp in Sources */,
-<<<<<<< HEAD
-				F2E5596F25C12886006B0421 /* gdxsv.cpp in Sources */,
-=======
 				AE9125CC25E3BBDC00ED4594 /* option.cpp in Sources */,
->>>>>>> upstream/master
 				84B7BF5C1B72720200F9733F /* common.cpp in Sources */,
 				AE82C6BE25B64AE200C79BC2 /* zip_source_crc.c in Sources */,
 				84B7BF681B72720200F9733F /* audiobackend_directsound.cpp in Sources */,
 				AE2A2D5C21D68470004B308D /* awcartridge.cpp in Sources */,
-				F247152A25C12B80004E13FE /* text_format.cc in Sources */,
-				F247150725C12B80004E13FE /* printer.cc in Sources */,
 				AE82C6B425B64AE200C79BC2 /* zip_source_pkware_decode.c in Sources */,
 				84B7BF3A1B72720200F9733F /* pvr_mem.cpp in Sources */,
 				84B7BF661B72720200F9733F /* nullDC.cpp in Sources */,
 				AE82C60125A0E45A00C79BC2 /* dns.cpp in Sources */,
 				AEE6279422247C0A00EC7E89 /* gui_util.cpp in Sources */,
-				F24714E725C12B80004E13FE /* reflection_ops.cc in Sources */,
 				84B7BF291B72720200F9733F /* sgc_if.cpp in Sources */,
 				F219065B265C247D00AA2ACA /* uncompr.c in Sources */,
 				84B7BF5E1B72720200F9733F /* ImgReader.cpp in Sources */,
 				AEFF7275265901BF003E8022 /* libchdr_huffman.c in Sources */,
 				AE82C6DC25B64AE200C79BC2 /* zip_extra_field.c in Sources */,
 				AE82C6D325B64AE200C79BC2 /* zip_string.c in Sources */,
-<<<<<<< HEAD
-				84B7BEB51B72720200F9733F /* sha1.cpp in Sources */,
-				F247150F25C12B80004E13FE /* source_context.pb.cc in Sources */,
-=======
->>>>>>> upstream/master
 				AE82C68025B64AE200C79BC2 /* zip_source_function.c in Sources */,
 				84B7BF2C1B72720200F9733F /* vbaARM.cpp in Sources */,
 				AE2A2D7B21D6851E004B308D /* Bcj2.c in Sources */,
 				84B7BF561B72720200F9733F /* sh4_mmr.cpp in Sources */,
 				84B7BF3C1B72720200F9733F /* pvr_sb_regs.cpp in Sources */,
-				F24714F525C12B80004E13FE /* utility.cc in Sources */,
 				84B7BF671B72720200F9733F /* audiobackend_alsa.cpp in Sources */,
-				F247151625C12B80004E13FE /* generated_message_reflection.cc in Sources */,
-				F247152225C12B80004E13FE /* type.proto in Sources */,
 				84B7BF501B72720200F9733F /* serial.cpp in Sources */,
 				84B7BF381B72720200F9733F /* _vmem.cpp in Sources */,
 				84B7BF5F1B72720200F9733F /* ioctl.cpp in Sources */,
 				AEA93E67259D07A30076297F /* pico_dhcp_server.c in Sources */,
-				F24714EE25C12B80004E13FE /* json_util.cc in Sources */,
 				AE7BCB522406EDB0007285F8 /* dsp_x64.cpp in Sources */,
 				AE82C6D025B64AE200C79BC2 /* zip_fopen_index_encrypted.c in Sources */,
-<<<<<<< HEAD
-				F247152625C12B80004E13FE /* map_field.cc in Sources */,
-				AE649BF4218C552500EF4A81 /* bitreader.c in Sources */,
 				84B7BF491B72720200F9733F /* bsc.cpp in Sources */,
-				F247152D25C12B80004E13FE /* generated_enum_util.cc in Sources */,
-				AE649BFB218C552500EF4A81 /* format.c in Sources */,
-				F247152025C12B80004E13FE /* service.cc in Sources */,
-				F247150025C12B80004E13FE /* empty.pb.cc in Sources */,
-				84B7BF2D1B72720200F9733F /* virt_arm.cpp in Sources */,
-=======
-				84B7BF491B72720200F9733F /* bsc.cpp in Sources */,
->>>>>>> upstream/master
 				AE43537222C9420C005E19CE /* ConsoleListenerDroid.cpp in Sources */,
 				84A388B91B1CDD3E000166C0 /* AppDelegate.swift in Sources */,
 				AEFF7F75214D9D590068CE11 /* pico_stack.c in Sources */,
@@ -3785,16 +3593,90 @@
 				559E934025FCBFCA001B0F40 /* operands-aarch64.cc in Sources */,
 				AEF998752598900A0038E0B8 /* minissdpc.c in Sources */,
 				AEFF7F57214D9D590068CE11 /* pico_fragments.c in Sources */,
-				F24714DE25C12B80004E13FE /* substitute.cc in Sources */,
 				AE82C68C25B64AE200C79BC2 /* zip_file_set_comment.c in Sources */,
-				F247150D25C12B80004E13FE /* wire_format_lite.cc in Sources */,
 				84B7BF861B72871600F9733F /* EmuGLView.swift in Sources */,
-<<<<<<< HEAD
-				AE649C3B218C555600EF4A81 /* flac.c in Sources */,
-				F247150525C12B80004E13FE /* zero_copy_stream_impl.cc in Sources */,
-=======
->>>>>>> upstream/master
 				AE82C67E25B64AE200C79BC2 /* zip_source_zip.c in Sources */,
+				F247151525C12B80004E13FE /* repeated_field.cc in Sources */,
+				F24714E425C12B80004E13FE /* any_lite.cc in Sources */,
+				F247152E25C12B80004E13FE /* generated_message_table_driven.cc in Sources */,
+				F247152925C12B80004E13FE /* timestamp.pb.cc in Sources */,
+				F247151D25C12B80004E13FE /* generated_message_util.cc in Sources */,
+				F247150B25C12B80004E13FE /* strtod.cc in Sources */,
+				F24714EB25C12B80004E13FE /* delimited_message_util.cc in Sources */,
+				F24714F225C12B80004E13FE /* json_stream_parser.cc in Sources */,
+				F24714DB25C12B80004E13FE /* strutil.cc in Sources */,
+				F24714EC25C12B80004E13FE /* field_comparator.cc in Sources */,
+				F2E5597025C12886006B0421 /* packet.pb.cc in Sources */,
+				F247152425C12B80004E13FE /* wire_format.cc in Sources */,
+				F247152B25C12B80004E13FE /* port_def.inc in Sources */,
+				F24714FE25C12B80004E13FE /* type_resolver_util.cc in Sources */,
+				F24714F425C12B80004E13FE /* proto_writer.cc in Sources */,
+				F24714FA25C12B80004E13FE /* type_info.cc in Sources */,
+				F24714E325C12B80004E13FE /* generated_message_table_driven_lite.cc in Sources */,
+				F247152825C12B80004E13FE /* field_mask.pb.cc in Sources */,
+				F247150425C12B80004E13FE /* zero_copy_stream_impl_lite.cc in Sources */,
+				F24714F125C12B80004E13FE /* object_writer.cc in Sources */,
+				F247150E25C12B80004E13FE /* parse_context.cc in Sources */,
+				F247150925C12B80004E13FE /* gzip_stream.cc in Sources */,
+				F247151725C12B80004E13FE /* implicit_weak_message.cc in Sources */,
+				F24714F825C12B80004E13FE /* datapiece.cc in Sources */,
+				F24714F725C12B80004E13FE /* error_listener.cc in Sources */,
+				F24714EA25C12B80004E13FE /* field_mask_util.cc in Sources */,
+				F247150825C12B80004E13FE /* tokenizer.cc in Sources */,
+				F247150125C12B80004E13FE /* extension_set_heavy.cc in Sources */,
+				F24714EF25C12B80004E13FE /* protostream_objectsource.cc in Sources */,
+				F24714ED25C12B80004E13FE /* message_differencer.cc in Sources */,
+				F24714DF25C12B80004E13FE /* stringpiece.cc in Sources */,
+				F247151E25C12B80004E13FE /* api.pb.cc in Sources */,
+				F247152C25C12B80004E13FE /* extension_set.cc in Sources */,
+				F247152125C12B80004E13FE /* descriptor.cc in Sources */,
+				F247151925C12B80004E13FE /* duration.pb.cc in Sources */,
+				F24714DC25C12B80004E13FE /* stringprintf.cc in Sources */,
+				F247151125C12B80004E13FE /* wrappers.pb.cc in Sources */,
+				F24714D925C12B80004E13FE /* bytestream.cc in Sources */,
+				F24714F925C12B80004E13FE /* default_value_objectwriter.cc in Sources */,
+				F247151225C12B80004E13FE /* unknown_field_set.cc in Sources */,
+				F24714D725C12B80004E13FE /* status.cc in Sources */,
+				F247150625C12B80004E13FE /* coded_stream.cc in Sources */,
+				F24714FF25C12B80004E13FE /* type.pb.cc in Sources */,
+				F24714E225C12B80004E13FE /* descriptor.pb.cc in Sources */,
+				F24714F325C12B80004E13FE /* protostream_objectwriter.cc in Sources */,
+				F24714E925C12B80004E13FE /* time_util.cc in Sources */,
+				F24714D525C12B80004E13FE /* int128.cc in Sources */,
+				F247152525C12B80004E13FE /* dynamic_message.cc in Sources */,
+				F24714D625C12B80004E13FE /* structurally_valid.cc in Sources */,
+				F24714D825C12B80004E13FE /* common.cc in Sources */,
+				F247151325C12B80004E13FE /* any.pb.cc in Sources */,
+				F247151B25C12B80004E13FE /* struct.pb.cc in Sources */,
+				F2E5597125C12886006B0421 /* gdxsv_network.cpp in Sources */,
+				F24714E525C12B80004E13FE /* descriptor_database.cc in Sources */,
+				F247150A25C12B80004E13FE /* zero_copy_stream.cc in Sources */,
+				F247150C25C12B80004E13FE /* io_win32.cc in Sources */,
+				F24714E825C12B80004E13FE /* arena.cc in Sources */,
+				F24714F025C12B80004E13FE /* field_mask_utility.cc in Sources */,
+				F24714F625C12B80004E13FE /* json_objectwriter.cc in Sources */,
+				F247150325C12B80004E13FE /* message_lite.cc in Sources */,
+				F24714D425C12B80004E13FE /* any.cc in Sources */,
+				F247151F25C12B80004E13FE /* message.cc in Sources */,
+				F24714FB25C12B80004E13FE /* json_escaping.cc in Sources */,
+				F24714E625C12B80004E13FE /* port_undef.inc in Sources */,
+				F24714DA25C12B80004E13FE /* statusor.cc in Sources */,
+				F24714DD25C12B80004E13FE /* time.cc in Sources */,
+				F2E5596F25C12886006B0421 /* gdxsv.cpp in Sources */,
+				F247152A25C12B80004E13FE /* text_format.cc in Sources */,
+				F247150725C12B80004E13FE /* printer.cc in Sources */,
+				F24714E725C12B80004E13FE /* reflection_ops.cc in Sources */,
+				F247150F25C12B80004E13FE /* source_context.pb.cc in Sources */,
+				F24714F525C12B80004E13FE /* utility.cc in Sources */,
+				F247151625C12B80004E13FE /* generated_message_reflection.cc in Sources */,
+				F24714EE25C12B80004E13FE /* json_util.cc in Sources */,
+				F247152625C12B80004E13FE /* map_field.cc in Sources */,
+				F247152D25C12B80004E13FE /* generated_enum_util.cc in Sources */,
+				F247152025C12B80004E13FE /* service.cc in Sources */,
+				F247150025C12B80004E13FE /* empty.pb.cc in Sources */,
+				F24714DE25C12B80004E13FE /* substitute.cc in Sources */,
+				F247150D25C12B80004E13FE /* wire_format_lite.cc in Sources */,
+				F247150525C12B80004E13FE /* zero_copy_stream_impl.cc in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
