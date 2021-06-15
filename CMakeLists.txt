@@ -911,22 +911,6 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/gdxsv/packet.pb.cc
         core/gdxsv/packet.pb.h)
 
-# link openlibm
-# NOTE: Out-sync issue was caused by the difference in math results between platforms.
-# To fix this, we installed openlibm.
-# c.f. https://github.com/inada-s/flycast/pull/5
-# After a while, I tested it again. The problem of Out-sync was not reproduced at that time,
-# at least with and without openlibm on mingw-win64 build.
-# The upstream flycast fix may have solved this problem.
-# I still use openlibm just in case but may be able to remove the dependency of openlibm.
-if(MINGW)
-    target_link_directories(${PROJECT_NAME} PRIVATE "core/deps/openlibm")
-    target_link_libraries(${PROJECT_NAME} PRIVATE "-lopenlibm")
-elseif(APPLE)
-    target_link_directories(${PROJECT_NAME} PRIVATE "core/deps/openlibm")
-    target_link_libraries(${PROJECT_NAME} PRIVATE "libopenlibm.3.dylib")
-endif()
-
 target_sources(${PROJECT_NAME} PRIVATE
         core/rend/gles/glcache.h
         core/rend/gles/gldraw.cpp
