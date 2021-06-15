@@ -923,7 +923,8 @@ if(MINGW)
     target_link_directories(${PROJECT_NAME} PRIVATE "core/deps/openlibm")
     target_link_libraries(${PROJECT_NAME} PRIVATE "-lopenlibm")
 elseif(APPLE)
-    target_link_libraries(${PROJECT_NAME} PRIVATE "core/deps/openlibm/libopenlibm.3.dylib")
+    target_link_directories(${PROJECT_NAME} PRIVATE "core/deps/openlibm")
+    target_link_libraries(${PROJECT_NAME} PRIVATE "libopenlibm")
 endif()
 
 target_sources(${PROJECT_NAME} PRIVATE
