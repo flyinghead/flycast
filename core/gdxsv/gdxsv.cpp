@@ -884,7 +884,7 @@ bool Gdxsv::UpdateAvailable() {
 }
 
 void Gdxsv::OpenDownloadPage() {
-    os_LaunchFromURL("http://github.com/inada-s/flycast/releases/latest/");
+    os_LaunchFromURL("https://github.com/inada-s/flycast/releases/latest/");
     update_available = false;
 }
 
