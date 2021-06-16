@@ -75,6 +75,7 @@ jobs:
         run: |
           cd build/artifact
           rm -rf Flycast.swiftmodule
+          chmod -R 755 Flycast.app
           zip -r flycast.app.zip Flycast.app
           rm -rf Flycast.app
         if: matrix.config.os == 'macos-latest'
