@@ -81,7 +81,7 @@ private:
     void handleReleaseJSON(const std::string &json);
 
     bool update_available = false;
-    std::string latest_version;
+    std::string latest_version_tag;
 };
 
 extern Gdxsv gdxsv;

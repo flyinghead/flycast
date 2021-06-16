@@ -145,7 +145,7 @@ std::string Gdxsv::GeneratePlatformInfoString() {
         ss << "machine_id=" << std::hex << digest << "\n";
     }
     ss << "wireless=" << (int) (os_GetConnectionMedium() == "Wireless") << "\n";
-    
+
     if (gcp_ping_test_finished) {
         for (const auto &res : gcp_ping_test_result) {
             ss << res.first << "=" << res.second << "\n";
@@ -829,41 +829,42 @@ void Gdxsv::CloseUdpClientWithReason(const char *reason) {
 }
 
 void Gdxsv::handleReleaseJSON(const std::string &json) {
-    std::regex rgx("\"tag_name\":\"v.*?(?=\")");
+    const std::string version_prefix = "gdxsv-";
+    const std::regex tag_name_regex(R"|#|("tag_name":"(.*?)")|#|");
+    const std::regex semver_regex(
+            R"|#|(^([0-9]+)\.([0-9]+)\.([0-9]+)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+[0-9A-Za-z-]+)?$)|#|");
+
+    auto trim_prefix = [&version_prefix](const std::string &s) {
+        if (s.size() < version_prefix.size())
+            return s;
+        if (version_prefix == s.substr(0, version_prefix.size()))
+            return s.substr(version_prefix.size());
+        return s;
+    };
+
     std::smatch match;
 
-    if (std::regex_search(json.begin(), json.end(), match, rgx)) {
-        latest_version = match.str(0).substr(13, std::string::npos);
+    auto current_version_str = std::string(GIT_VERSION);
+    if (!std::regex_match(current_version_str, match, semver_regex)) return;
 
-        std::string current_version = std::string(GIT_VERSION);
-        current_version = current_version.substr(1, current_version.find_first_of("+") - 1);
+    if (match.size() < 4) return;
+    auto current_version = std::tuple<int, int, int>(
+            std::stoi(match.str(1)), std::stoi(match.str(2)), std::stoi(match.str(3)));
 
-        auto version_compare = [](std::string v1, std::string v2) {
-            size_t i = 0, j = 0;
-            while (i < v1.length() || j < v2.length()) {
-                int acc1 = 0, acc2 = 0;
+    if (!std::regex_search(json, match, tag_name_regex)) return;
+    if (match.size() < 2) return;
+    auto tag_name = match.str(1);
+    auto latest_version_str = trim_prefix(tag_name);
 
-                while (i < v1.length() && v1[i] != '.') {
-                    acc1 = acc1 * 10 + (v1[i] - '0');
-                    i++;
-                }
-                while (j < v2.length() && v2[j] != '.') {
-                    acc2 = acc2 * 10 + (v2[j] - '0');
-                    j++;
-                }
+    if (!std::regex_match(latest_version_str, match, semver_regex)) return;
+    if (match.size() < 4) return;
+    auto latest_version = std::tuple<int, int, int>(
+            std::stoi(match.str(1)), std::stoi(match.str(2)), std::stoi(match.str(3)));
 
-                if (acc1 < acc2) return false;
-                if (acc1 > acc2) return true;
+    latest_version_tag = tag_name;
 
-                ++i;
-                ++j;
-            }
-            return false;
-        };
-
-        if (version_compare(latest_version, current_version)) {
-            update_available = true;
-        }
+    if (current_version < latest_version) {
+        update_available = true;
     }
 }
 
@@ -890,7 +891,7 @@ void Gdxsv::DismissUpdateDialog() {
 }
 
 std::string Gdxsv::LatestVersion() {
-    return latest_version;
+    return latest_version_tag;
 }
 
 Gdxsv gdxsv;
