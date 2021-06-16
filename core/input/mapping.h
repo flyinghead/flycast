@@ -27,7 +27,7 @@
 class InputMapping
 {
 public:
-	InputMapping() {}
+	InputMapping() = default;
 	InputMapping(const InputMapping& other) {
 		name = other.name;
 		dead_zone = other.dead_zone;
@@ -52,7 +52,7 @@ public:
 	}
 	void set_button(u32 port, DreamcastKey id, u32 code);
 	void set_button(DreamcastKey id, u32 code) { set_button(0, id, code); }
-	u32 get_button_code(u32 port, DreamcastKey id);
+	u32 get_button_code(u32 port, DreamcastKey key);
 
 	DreamcastKey get_axis_id(u32 port, u32 code)
 	{
@@ -77,10 +77,10 @@ public:
 	void load(FILE* fp);
 	bool save(const char *name);
 
-	bool is_dirty() { return dirty; }
+	bool is_dirty() const { return dirty; }
 
 	static std::shared_ptr<InputMapping> LoadMapping(const char *name);
-	static void SaveMapping(const char *name, std::shared_ptr<InputMapping> mapping);
+	static void SaveMapping(const char *name, const std::shared_ptr<InputMapping>& mapping);
 
 protected:
 	bool dirty = false;

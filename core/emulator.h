@@ -23,8 +23,7 @@
 #include <map>
 #include <vector>
 
-void InitSettings();
-void LoadSettings(bool game_specific);
+void LoadGameSpecificSettings();
 void SaveSettings();
 
 extern std::atomic<bool> loading_canceled;
@@ -35,16 +34,19 @@ void dc_init();
 void* dc_run(void*);
 void dc_term();
 void dc_stop();
+void dc_term_game();
 void dc_request_reset();
 void dc_exit();
 void dc_resume();
-void dc_savestate();
-void dc_loadstate();
+void dc_step();
+void dc_savestate(int index = 0);
+void dc_loadstate(int index = 0);
 void dc_load_game(const char *path);
 bool dc_is_load_done();
 void dc_cancel_load();
 void dc_get_load_status();
 bool dc_is_running();
+void dc_resize_renderer();
 
 enum class Event {
 	Start,
@@ -72,7 +74,7 @@ public:
 	}
 
 private:
-	EventManager() { }
+	EventManager() = default;
 
 	void registerEvent(Event event, Callback callback);
 	void unregisterEvent(Event event, Callback callback);

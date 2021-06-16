@@ -17,9 +17,9 @@ void DMAC_Ch2St()
 {
 	u32 dmaor = DMAC_DMAOR.full;
 
-	u32 src = DMAC_SAR(2);
+	u32 src = DMAC_SAR(2) & 0x1fffffe0;
 	u32 dst = SB_C2DSTAT & 0x01ffffe0;
-	u32 len = SB_C2DLEN & 0x00ffffe0;
+	u32 len = SB_C2DLEN;
 
 	if (0x8201 != (dmaor & DMAOR_MASK))
 	{
@@ -36,16 +36,16 @@ void DMAC_Ch2St()
 	// 12000000 - 12FFFFE0
 	if ((dst & 0x01000000) == 0)
 	{
-		u32 *sys_buf = (u32 *)GetMemPtr(src, len);
+		SQBuffer *sys_buf = (SQBuffer *)GetMemPtr(src, len);
 		if ((src & RAM_MASK) + len > RAM_SIZE)
 		{
 			u32 newLen = RAM_SIZE - (src & RAM_MASK);
-			TAWrite(dst, sys_buf, newLen / 32);
+			TAWrite(dst, sys_buf, newLen / sizeof(SQBuffer));
 			len -= newLen;
 			src += newLen;
-			sys_buf = (u32 *)GetMemPtr(src, len);
+			sys_buf = (SQBuffer *)GetMemPtr(src, len);
 		}
-		TAWrite(dst, sys_buf, len / 32);
+		TAWrite(dst, sys_buf, len / sizeof(SQBuffer));
 		src += len;
 	}
 	// Direct Texture path and mirror
@@ -78,7 +78,7 @@ void DMAC_Ch2St()
 			while (len > 0)
 			{
 				u32 v = ReadMem32_nommu(src);
-				pvr_write_area1<u32>(dst, v);
+				pvr_write32p<u32>(dst, v);
 				len -= 4;
 				src += 4;
 				dst += 4;
@@ -89,7 +89,6 @@ void DMAC_Ch2St()
 
 	// Setup some of the regs so it thinks we've finished DMA
 
-	DMAC_SAR(2) = src;
 	DMAC_CHCR(2).TE = 1;
 	DMAC_DMATCR(2) = 0;
 

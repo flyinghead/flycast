@@ -21,6 +21,7 @@
 
 #include "types.h"
 #include "hw/pvr/Renderer_if.h"
+#include "cfg/option.h"
 
 enum class TileClipping {
 	Inside,			// Render stuff outside the region
@@ -31,7 +32,7 @@ enum class TileClipping {
 // clip_rect[] will contain x, y, width, height
 static inline TileClipping GetTileClip(u32 val, const glm::mat4& viewport, int *clip_rect)
 {
-	if (!settings.rend.Clipping)
+	if (!config::Clipping)
 		return TileClipping::Off;
 
 	u32 clipmode = val >> 28;
@@ -68,12 +69,13 @@ static inline TileClipping GetTileClip(u32 val, const glm::mat4& viewport, int *
 		cey = clip_end[1];
 		cex = clip_end[0];
 	}
-	else if (!settings.rend.RenderToTextureBuffer)
+	else if (!config::RenderToTextureBuffer)
 	{
-		csx *= settings.rend.RenderToTextureUpscale;
-		csy *= settings.rend.RenderToTextureUpscale;
-		cex *= settings.rend.RenderToTextureUpscale;
-		cey *= settings.rend.RenderToTextureUpscale;
+		float scale = config::RenderResolution / 480.f;
+		csx *= scale;
+		csy *= scale;
+		cex *= scale;
+		cey *= scale;
 	}
 	clip_rect[0] = std::max(0, (int)lroundf(csx));
 	clip_rect[1] = std::max(0, (int)lroundf(std::min(csy, cey)));

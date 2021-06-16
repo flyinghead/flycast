@@ -22,3 +22,4 @@ Terminal=false
 Type=Application
 StartupNotify=false
 Categories=Game;Emulator;
+PrefersNonDefaultGPU=true

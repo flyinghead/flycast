@@ -106,14 +106,14 @@ public:
 			last_right_thumb_y = 0;
 		}
 	}
-	virtual void rumble(float power, float inclination, u32 duration_ms) override
+	void rumble(float power, float inclination, u32 duration_ms) override
 	{
 		vib_inclination = inclination * power;
 		vib_stop_time = os_GetSeconds() + duration_ms / 1000.0;
 
 		do_rumble(power);
 	}
-	virtual void update_rumble() override
+	void update_rumble() override
 	{
 		if (vib_stop_time > 0)
 		{
@@ -166,7 +166,7 @@ public:
 	}
 
 protected:
-	virtual void load_axis_min_max(u32 axis) override
+	void load_axis_min_max(u32 axis) override
 	{
 		if (axis == 0 || axis == 1)
 		{
@@ -240,7 +240,7 @@ public:
 		if (!find_mapping())
 			input_mapper = std::make_shared<KbInputMapping>();
 	}
-	virtual ~WinKbGamepadDevice() {}
+	~WinKbGamepadDevice() override = default;
 };
 
 class MouseInputMapping : public InputMapping
@@ -267,7 +267,7 @@ public:
 		if (!find_mapping())
 			input_mapper = std::make_shared<MouseInputMapping>();
 	}
-	virtual ~WinMouseGamepadDevice() {}
+	~WinMouseGamepadDevice() override = default;
 
 	bool gamepad_btn_input(u32 code, bool pressed) override
 	{
@@ -280,7 +280,7 @@ public:
 			return GamepadDevice::gamepad_btn_input(code, pressed);
 	}
 
-	virtual const char *get_button_name(u32 code) override
+	const char *get_button_name(u32 code) override
 	{
 		switch (code)
 		{

@@ -27,12 +27,11 @@
 #include "oslib/directory.h"
 #include "imgui/imgui.h"
 #include "imgui/imgui_internal.h"
-
-extern int screen_width, screen_height;
+#include "hw/maple/maple_devs.h"
 
 static std::string select_current_directory;
-static std::vector<std::string> select_subfolders;
-static std::vector<std::string> display_files;
+static std::vector<std::string> subfolders;
+static std::vector<std::string> folderFiles;
 bool subfolders_read;
 #ifdef _WIN32
 static const std::string separators = "/\\";
@@ -43,7 +42,10 @@ static const std::string native_separator = "/";
 #endif
 #define PSEUDO_ROOT ":"
 
-void select_directory_popup(const char *prompt, float scaling, StringCallback callback)
+extern int insetLeft, insetRight, insetTop, insetBottom;
+
+void select_file_popup(const char *prompt, StringCallback callback,
+		bool selectFile, const std::string& selectExtension)
 {
 	if (select_current_directory.empty())
 	{
@@ -57,7 +59,7 @@ void select_directory_popup(const char *prompt, float scaling, StringCallback ca
 			else
 				select_current_directory = home;
 		}
-#elif HOST_OS == OS_LINUX || defined(__APPLE__)
+#elif defined(__unix__) || defined(__APPLE__)
 		const char *home = nowide::getenv("HOME");
 		if (home != NULL)
 			select_current_directory = home;
@@ -78,8 +80,7 @@ void select_directory_popup(const char *prompt, float scaling, StringCallback ca
 		}
 	}
 
-	ImGui::SetNextWindowPos(ImVec2(0, 0));
-	ImGui::SetNextWindowSize(ImVec2(screen_width, screen_height));
+	fullScreenWindow(true);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
 
 	if (ImGui::BeginPopupModal(prompt, NULL, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize ))
@@ -93,8 +94,8 @@ void select_directory_popup(const char *prompt, float scaling, StringCallback ca
 
 		if (!subfolders_read)
 		{
-			select_subfolders.clear();
-            display_files.clear();
+			subfolders.clear();
+            folderFiles.clear();
 			error_message.clear();
 #ifdef _WIN32
 			if (select_current_directory == PSEUDO_ROOT)
@@ -104,7 +105,7 @@ void select_directory_popup(const char *prompt, float scaling, StringCallback ca
 				u32 drives = GetLogicalDrives();
 				for (int i = 0; i < 32; i++)
 					if ((drives & (1 << i)) != 0)
-						select_subfolders.push_back(std::string(1, (char)('A' + i)) + ":\\");
+						subfolders.push_back(std::string(1, (char)('A' + i)) + ":\\");
 			}
 			else
 #elif __ANDROID__
@@ -117,12 +118,12 @@ void select_directory_popup(const char *prompt, float scaling, StringCallback ca
 					const char *pcolon = strchr(home, ':');
 					if (pcolon != NULL)
 					{
-						select_subfolders.push_back(std::string(home, pcolon - home));
+						subfolders.push_back(std::string(home, pcolon - home));
 						home = pcolon + 1;
 					}
 					else
 					{
-						select_subfolders.push_back(home);
+						subfolders.push_back(home);
 						home = NULL;
 					}
 				}
@@ -134,7 +135,7 @@ void select_directory_popup(const char *prompt, float scaling, StringCallback ca
 				if (dir == NULL)
 				{
 					error_message = "Cannot read " + select_current_directory;
-					select_subfolders.push_back("..");
+					subfolders.emplace_back("..");
 				}
 				else
 				{
@@ -169,36 +170,45 @@ void select_directory_popup(const char *prompt, float scaling, StringCallback ca
 						{
 							if (name == "..")
 								dotdot_seen = true;
-							select_subfolders.push_back(name);
+							subfolders.push_back(name);
 						}
                         else
                         {
                             std::string extension = get_file_extension(name);
-                            if ( extension == "zip" || extension == "7z" || extension == "chd" || extension == "gdi" || ((settings.dreamcast.HideLegacyNaomiRoms
-                                    || (extension != "bin" && extension != "lst" && extension != "dat"))
-                            && extension != "cdi" && extension != "cue") == false )
-                                display_files.push_back(name);
+                            if (selectFile)
+                            {
+                            	if (extension == selectExtension)
+									folderFiles.push_back(name);
+                            }
+                            else if (extension == "zip" || extension == "7z" || extension == "chd"
+                            		|| extension == "gdi" || extension == "cdi" || extension == "cue"
+                            		|| (!config::HideLegacyNaomiRoms
+                            				&& (extension == "bin" || extension == "lst" || extension == "dat")))
+                            	folderFiles.push_back(name);
                         }
 					}
 					flycast::closedir(dir);
 #if defined(_WIN32) || defined(__ANDROID__)
 					if (!dotdot_seen)
-						select_subfolders.push_back("..");
+						subfolders.emplace_back("..");
+#else
+					(void)dotdot_seen;
 #endif
 				}
 			}
 
-			std::stable_sort(select_subfolders.begin(), select_subfolders.end());
+			std::stable_sort(subfolders.begin(), subfolders.end());
+			std::stable_sort(folderFiles.begin(), folderFiles.end());
 			subfolders_read = true;
 		}
 
 		ImGui::Text("%s", error_message.empty() ? select_current_directory.c_str() : error_message.c_str());
-		ImGui::BeginChild(ImGui::GetID("dir_list"), ImVec2(0, - 30 * scaling - ImGui::GetStyle().ItemSpacing.y), true);
+		ImGui::BeginChild(ImGui::GetID("dir_list"), ImVec2(0, - 30 * gui_get_scaling() - ImGui::GetStyle().ItemSpacing.y), true);
 
-		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(8 * scaling, 20 * scaling));		// from 8, 4
+		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(8 * gui_get_scaling(), 20 * gui_get_scaling()));		// from 8, 4
 
 
-		for (auto& name : select_subfolders)
+		for (const auto& name : subfolders)
 		{
 			std::string child_path;
 			if (name == "..")
@@ -253,23 +263,41 @@ void select_directory_popup(const char *prompt, float scaling, StringCallback ca
 				select_current_directory = child_path;
 			}
 		}
-        ImGui::PushStyleColor(ImGuiCol_Text, { 1, 1, 1, 0.3f });
-        for (auto& name : display_files)
+        ImGui::PushStyleColor(ImGuiCol_Text, { 1, 1, 1, selectFile ? 1.f : 0.3f });
+        for (const auto& name : folderFiles)
         {
-            ImGui::Text("%s", name.c_str());
+        	if (selectFile)
+        	{
+    			if (ImGui::Selectable(name.c_str()))
+    			{
+    				subfolders_read = false;
+    				callback(false, select_current_directory + native_separator + name);
+    				ImGui::CloseCurrentPopup();
+    			}
+        	}
+        	else
+        	{
+        		ImGui::Text("%s", name.c_str());
+        	}
         }
         ImGui::PopStyleColor();
         
+        scrollWhenDraggingOnVoid();
+        windowDragScroll();
+
 		ImGui::PopStyleVar();
 		ImGui::EndChild();
-		if (ImGui::Button("Select Current Directory", ImVec2(0, 30 * scaling)))
+		if (!selectFile)
 		{
-			subfolders_read = false;
-			callback(false, select_current_directory);
-			ImGui::CloseCurrentPopup();
+			if (ImGui::Button("Select Current Directory", ImVec2(0, 30 * gui_get_scaling())))
+			{
+				subfolders_read = false;
+				callback(false, select_current_directory);
+				ImGui::CloseCurrentPopup();
+			}
+			ImGui::SameLine();
 		}
-		ImGui::SameLine();
-		if (ImGui::Button("Cancel", ImVec2(0, 30 * scaling)))
+		if (ImGui::Button("Cancel", ImVec2(0, 30 * gui_get_scaling())))
 		{
 			subfolders_read = false;
 			callback(true, "");
@@ -282,19 +310,24 @@ void select_directory_popup(const char *prompt, float scaling, StringCallback ca
 }
 
 // See https://github.com/ocornut/imgui/issues/3379
-void ScrollWhenDraggingOnVoid(const ImVec2& delta, ImGuiMouseButton mouse_button)
+void scrollWhenDraggingOnVoid(ImGuiMouseButton mouse_button)
 {
     ImGuiContext& g = *ImGui::GetCurrentContext();
     ImGuiWindow* window = g.CurrentWindow;
+    while ((window->Flags & ImGuiWindowFlags_ChildWindow) && window->ScrollMax.x == 0.0f && window->ScrollMax.y == 0.0f)
+        window = window->ParentWindow;
     bool hovered = false;
     bool held = false;
-    ImGuiButtonFlags button_flags = (mouse_button == 0) ? ImGuiButtonFlags_MouseButtonLeft : (mouse_button == 1) ? ImGuiButtonFlags_MouseButtonRight : ImGuiButtonFlags_MouseButtonMiddle;
+    ImGuiButtonFlags button_flags = (mouse_button == ImGuiMouseButton_Left) ? ImGuiButtonFlags_MouseButtonLeft
+    		: (mouse_button == ImGuiMouseButton_Right) ? ImGuiButtonFlags_MouseButtonRight : ImGuiButtonFlags_MouseButtonMiddle;
     if (g.HoveredId == 0) // If nothing hovered so far in the frame (not same as IsAnyItemHovered()!)
         ImGui::ButtonBehavior(window->Rect(), window->GetID("##scrolldraggingoverlay"), &hovered, &held, button_flags);
-    if (held && delta.x != 0.0f)
-        ImGui::SetScrollX(window, window->Scroll.x + delta.x);
-    if (held && delta.y != 0.0f)
-        ImGui::SetScrollY(window, window->Scroll.y + delta.y);
+    const ImVec2& delta = ImGui::GetIO().MouseDelta;
+    if (held && delta != ImVec2())
+    {
+    	window->DragScrolling = true;
+    	window->ScrollSpeed = delta;
+    }
 }
 
 static void UnpackAccumulativeOffsetsIntoRanges(int base_codepoint, const short* accumulative_offsets, int accumulative_offsets_count, ImWchar* out_ranges)
@@ -544,4 +577,254 @@ const ImWchar* GetGlyphRangesChineseTraditionalOfficial()
         UnpackAccumulativeOffsetsIntoRanges(0x4E00, accumulative_offsets_from_0x4E00, IM_ARRAYSIZE(accumulative_offsets_from_0x4E00), full_ranges + IM_ARRAYSIZE(base_ranges));
     }
     return &full_ranges[0];
+}
+
+// Helper to display a little (?) mark which shows a tooltip when hovered.
+void ShowHelpMarker(const char* desc)
+{
+    ImGui::TextDisabled("(?)");
+    if (ImGui::IsItemHovered())
+    {
+        ImGui::BeginTooltip();
+        ImGui::PushTextWrapPos(ImGui::GetFontSize() * 25.0f);
+        ImGui::TextUnformatted(desc);
+        ImGui::PopTextWrapPos();
+        ImGui::EndTooltip();
+    }
+}
+
+template<bool PerGameOption>
+bool OptionCheckbox(const char *name, config::Option<bool, PerGameOption>& option, const char *help)
+{
+	bool b = option;
+	if (option.isReadOnly())
+	{
+        ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
+        ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
+	}
+	bool pressed = ImGui::Checkbox(name, &b);
+	if (option.isReadOnly())
+	{
+        ImGui::PopItemFlag();
+        ImGui::PopStyleVar();
+	}
+	if (pressed)
+		option.set(b);
+	if (help != nullptr)
+	{
+		ImGui::SameLine();
+		ShowHelpMarker(help);
+	}
+	return pressed;
+}
+template bool OptionCheckbox(const char *name, config::Option<bool, true>& option, const char *help);
+template bool OptionCheckbox(const char *name, config::Option<bool, false>& option, const char *help);
+
+bool OptionSlider(const char *name, config::Option<int>& option, int min, int max, const char *help)
+{
+	int v = option;
+	if (option.isReadOnly())
+	{
+        ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
+        ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
+	}
+	bool valueChanged = ImGui::SliderInt(name, &v, min, max);
+	if (option.isReadOnly())
+	{
+        ImGui::PopItemFlag();
+        ImGui::PopStyleVar();
+	}
+	else if (valueChanged)
+		option.set(v);
+	if (help != nullptr)
+	{
+		ImGui::SameLine();
+		ShowHelpMarker(help);
+	}
+	return valueChanged;
+}
+
+bool OptionArrowButtons(const char *name, config::Option<int>& option, int min, int max, const char *help)
+{
+	const float innerSpacing = ImGui::GetStyle().ItemInnerSpacing.x;
+	ImGui::PushStyleVar(ImGuiStyleVar_ButtonTextAlign, ImVec2(0.f, 0.5f)); // Left
+	ImGui::PushStyleColor(ImGuiCol_Button, ImGui::GetStyle().Colors[ImGuiCol_FrameBg]);
+	float width = ImGui::CalcItemWidth() - innerSpacing * 2.0f - ImGui::GetFrameHeight() * 2.0f;
+	ImGui::ButtonEx(std::to_string((int)option).c_str(), ImVec2(width, 0), ImGuiButtonFlags_Disabled);
+	ImGui::PopStyleColor();
+	ImGui::PopStyleVar();
+
+	ImGui::SameLine(0.0f, innerSpacing);
+    ImGui::PushButtonRepeat(true);
+    bool valueChanged = false;
+	if (option.isReadOnly())
+	{
+        ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
+        ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
+	}
+	std::string id = "##" + std::string(name);
+    if (ImGui::ArrowButton((id + "left").c_str(), ImGuiDir_Left)) { option.set(std::max(min, option - 1)); valueChanged = true; }
+    ImGui::SameLine(0.0f, innerSpacing);
+    if (ImGui::ArrowButton((id + "right").c_str(), ImGuiDir_Right)) { option.set(std::min(max, option + 1)); valueChanged = true; }
+	if (option.isReadOnly())
+	{
+        ImGui::PopItemFlag();
+        ImGui::PopStyleVar();
+	}
+    ImGui::PopButtonRepeat();
+    ImGui::SameLine(0.0f, innerSpacing);
+    ImGui::Text("%s", name);
+	if (help != nullptr)
+	{
+		ImGui::SameLine();
+		ShowHelpMarker(help);
+	}
+	return valueChanged;
+}
+
+template<typename T>
+bool OptionRadioButton(const char *name, config::Option<T>& option, T value, const char *help)
+{
+	int v = (int)option;
+	if (option.isReadOnly())
+	{
+        ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
+        ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
+	}
+	bool pressed = ImGui::RadioButton(name, &v, (int)value);
+	if (option.isReadOnly())
+	{
+        ImGui::PopItemFlag();
+        ImGui::PopStyleVar();
+	}
+	if (pressed)
+		option.set((T)v);
+	if (help != nullptr)
+	{
+		ImGui::SameLine();
+		ShowHelpMarker(help);
+	}
+	return pressed;
+}
+template bool OptionRadioButton<bool>(const char *name, config::Option<bool>& option, bool value, const char *help);
+template bool OptionRadioButton<int>(const char *name, config::Option<int>& option, int value, const char *help);
+
+void OptionComboBox(const char *name, config::Option<int>& option, const char *values[], int count,
+			const char *help)
+{
+	if (option.isReadOnly())
+	{
+        ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
+        ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
+	}
+	if (ImGui::BeginCombo(name, values[option], ImGuiComboFlags_None))
+	{
+		for (int i = 0; i < count; i++)
+		{
+			bool is_selected = option == i;
+			if (ImGui::Selectable(values[i], &is_selected))
+				option = i;
+            if (is_selected)
+                ImGui::SetItemDefaultFocus();
+		}
+		ImGui::EndCombo();
+	}
+	if (option.isReadOnly())
+	{
+        ImGui::PopItemFlag();
+        ImGui::PopStyleVar();
+	}
+	if (help != nullptr)
+	{
+		ImGui::SameLine();
+		ShowHelpMarker(help);
+	}
+}
+
+void fullScreenWindow(bool modal)
+{
+	if (!modal)
+	{
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0);
+
+		if (insetLeft > 0)
+		{
+			ImGui::SetNextWindowPos(ImVec2(0, 0));
+			ImGui::SetNextWindowSize(ImVec2(insetLeft, ImGui::GetIO().DisplaySize.y));
+			ImGui::Begin("##insetLeft", NULL, ImGuiWindowFlags_NoDecoration);
+			ImGui::End();
+		}
+		if (insetRight > 0)
+		{
+			ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x - insetRight, 0));
+			ImGui::SetNextWindowSize(ImVec2(insetRight, ImGui::GetIO().DisplaySize.y));
+			ImGui::Begin("##insetRight", NULL, ImGuiWindowFlags_NoDecoration);
+			ImGui::End();
+		}
+		if (insetTop > 0)
+		{
+			ImGui::SetNextWindowPos(ImVec2(0, 0));
+			ImGui::SetNextWindowSize(ImVec2(ImGui::GetIO().DisplaySize.x, insetTop));
+			ImGui::Begin("##insetTop", NULL, ImGuiWindowFlags_NoDecoration);
+			ImGui::End();
+		}
+		if (insetBottom > 0)
+		{
+			ImGui::SetNextWindowPos(ImVec2(0, ImGui::GetIO().DisplaySize.y - insetBottom));
+			ImGui::SetNextWindowSize(ImVec2(ImGui::GetIO().DisplaySize.x, insetBottom));
+			ImGui::Begin("##insetBottom", NULL, ImGuiWindowFlags_NoDecoration);
+			ImGui::End();
+		}
+		ImGui::PopStyleVar(2);
+	}
+	ImGui::SetNextWindowPos(ImVec2(insetLeft, insetTop));
+	ImGui::SetNextWindowSize(ImVec2(ImGui::GetIO().DisplaySize.x - insetLeft - insetRight, ImGui::GetIO().DisplaySize.y - insetTop - insetBottom));
+}
+
+static void computeScrollSpeed(float &v)
+{
+	constexpr float friction = 3.f;
+	if (std::abs(v) > friction)
+	{
+		float sign = (v > 0.f) - (v < 0.f);
+		v -= friction * sign;
+	}
+	else
+	{
+		v = 0.f;
+	}
+}
+
+void windowDragScroll()
+{
+	ImGuiWindow *window = ImGui::GetCurrentWindow();
+	if (window->DragScrolling)
+	{
+		if (!ImGui::GetIO().MouseDown[ImGuiMouseButton_Left])
+		{
+			computeScrollSpeed(window->ScrollSpeed.x);
+			computeScrollSpeed(window->ScrollSpeed.y);
+			if (window->ScrollSpeed == ImVec2())
+			{
+				window->DragScrolling = false;
+				// FIXME we should really move the mouse off-screen after a touch up and this wouldn't be necessary
+				// the only problem is tool tips
+				mo_x_phy = -1;
+				mo_y_phy = -1;
+			}
+		}
+		else
+		{
+			ImVec2 delta = ImGui::GetMouseDragDelta(ImGuiMouseButton_Left);
+			if (delta != ImVec2())
+				ImGui::ResetMouseDragDelta();
+			window->ScrollSpeed = delta;
+		}
+		if (window->DragScrolling)
+		{
+			ImGui::SetScrollX(window, window->Scroll.x - window->ScrollSpeed.x);
+			ImGui::SetScrollY(window, window->Scroll.y - window->ScrollSpeed.y);
+		}
+	}
 }

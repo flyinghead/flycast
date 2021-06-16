@@ -4,6 +4,7 @@
 #include "hw/sh4/sh4_mmr.h"
 
 #include "hw/naomi/naomi.h"
+#include "cfg/option.h"
 
 BSC_PDTRA_type BSC_PDTRA;
 
@@ -52,7 +53,7 @@ u32 read_BSC_PDTRA(u32 addr)
 		else if ((tpctra&0xf) == 0xC && (tpdtra&0xf) == 2)
 			tfinal = 3;      
 
-		tfinal |= settings.dreamcast.cable <<8;  
+		tfinal |= config::Cable << 8;
 
 		return tfinal;
 	}

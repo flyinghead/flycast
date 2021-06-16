@@ -73,6 +73,8 @@ ifeq (,$(platform))
         HARDWARE = $(shell grep Hardware /proc/cpuinfo)
         ifneq (,$(findstring BCM2709,$(HARDWARE)))
             platform = rpi2
+        else ifneq (,$(findstring BCM2711,$(HARDWARE)))
+            platform = rpi4-mesa
         else ifneq (,$(findstring AM33XX,$(HARDWARE)))
             platform = beagle
         else ifneq (,$(findstring Pandora,$(HARDWARE)))
@@ -96,8 +98,6 @@ ifeq (,$(platform))
         else
             platform = armv7h
         endif
-    else ifneq (,$(findstring mips,$(ARCH)))
-        platform = gcwz
     else
         $(warning Unsupported CPU architecture, using lincpp)
         platform = lincpp
@@ -155,7 +155,6 @@ else ifneq (,$(findstring armv7h,$(platform)))
         MFLAGS += -mfpu=neon
         ASFLAGS += -mfpu=neon
     endif
-    CFLAGS += -DARM_HARDFP -fsingle-precision-constant
     USE_GLES := 1
 
 # LinCPP
@@ -166,15 +165,18 @@ else ifneq (,$(findstring lincpp,$(platform)))
     CFLAGS += -D TARGET_NO_JIT
     CXXFLAGS += -fexceptions -std=gnu++11
 
-# Raspberry Pi 2
+# Raspberry Pi
 else ifneq (,$(findstring rpi,$(platform)))
-    CFLAGS += -DARM_HARDFP -fsingle-precision-constant
     ifneq (,$(findstring rpi2,$(platform)))
         MFLAGS += -mcpu=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard
         ASFLAGS += -mcpu=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard
     else ifneq (,$(findstring rpi3,$(platform)))
         MFLAGS += -march=armv8-a+crc -mtune=cortex-a53 -mfpu=neon-fp-armv8 -mfloat-abi=hard -marm
         ASFLAGS += -march=armv8-a+crc -mtune=cortex-a53 -mfpu=neon-fp-armv8 -mfloat-abi=hard -marm
+    else ifneq (,$(findstring rpi4,$(platform)))
+        MFLAGS += -march=armv8-a+crc -mtune=cortex-a72 -mfpu=neon-fp-armv8 -mfloat-abi=hard -marm
+        ASFLAGS += -march=armv8-a+crc -mtune=cortex-a72 -mfpu=neon-fp-armv8 -mfloat-abi=hard -marm
+        CFLAGS += -DGLES3
     endif
     ifneq (,$(findstring mesa,$(platform)))
         USE_SDL := 1
@@ -194,19 +196,17 @@ else ifneq (,$(findstring beagle,$(platform)))
     CC_PREFIX ?= arm-none-linux-gnueabi-
     MFLAGS += -marm -march=armv7-a -mtune=cortex-a9 -mfpu=neon -mfloat-abi=softfp -funroll-loops
     ASFLAGS := -march=armv7-a -mfpu=neon -mfloat-abi=softfp
-    CFLAGS += -fsingle-precision-constant
     USE_GLES := 1
 
 # Pandora
 else ifneq (,$(findstring pandora,$(platform)))
-    FOR_PANDORA := 1
     USE_X11 := 1
     USE_SDL := 1
     PGO_USE := 1
     USE_GLES := 1
-    MFLAGS +== -marm -march=armv7-a -mtune=cortex-a8 -mfpu=neon -mfloat-abi=softfp -funroll-loops -fpermissive
+    MFLAGS += -marm -march=armv7-a -mtune=cortex-a8 -mfpu=neon -mfloat-abi=softfp -funroll-loops -ftree-vectorize -fomit-frame-pointer
     ASFLAGS += -march=armv7-a -mfpu=neon -mfloat-abi=softfp
-    CFLAGS += -D TARGET_PANDORA  -D WEIRD_SLOWNESS -fsingle-precision-constant
+    CFLAGS += -D TARGET_PANDORA -DPANDORA
 
 # ODROIDs
 else ifneq (,$(findstring odroid,$(platform)))
@@ -245,7 +245,7 @@ else ifneq (,$(findstring rockchip,$(platform)))
     MFLAGS += -marm -march=armv8-a+crc -mfpu=neon -mfloat-abi=hard -funroll-loops -mtune=cortex-a53
     ASFLAGS += -march=armv8-a+crc -mfpu=neon -mfloat-abi=hard
     CXXFLAGS += -fexceptions
-    CFLAGS += -fsingle-precision-constant -DMESA_EGL_NO_X11_HEADERS=1 -DEGL_NO_X11=1 -fpermissive -fno-builtin-sqrtf
+    CFLAGS += -DMESA_EGL_NO_X11_HEADERS=1 -DEGL_NO_X11=1 -fpermissive -fno-builtin-sqrtf
     INCS +=  -I/opt/vc/include/ -I/opt/vc/include/libdrm
     LIBS += -ldrm -lGLESv2
     USE_GLES := 1
@@ -253,16 +253,6 @@ else ifneq (,$(findstring rockchip,$(platform)))
     USE_UDEV := 1
     FOR_LINUX := 1
     ISARM64 := 1
-
-# GCW Zero
-else ifneq (,$(findstring gcwz,$(platform)))
-    NOT_ARM := 1
-    NO_REC := 1
-    CC_PREFIX ?= /opt/gcw0-toolchain/usr/bin/mipsel-gcw0-linux-uclibc-
-    CFLAGS += -D TARGET_GCW0 -D TARGET_NO_REC -fsingle-precision-constant
-    LIBS += -L./gcwz/enta_viv -lglapi
-    GCWZ_PKG = reicast-gcwz.opk
-    GCWZ_PKG_FILES = gcwz/default.gcw0.desktop gcwz/icon-32.png
 
 # Vero4K
 else ifneq (,$(findstring vero4k,$(platform)))
@@ -272,7 +262,6 @@ else ifneq (,$(findstring vero4k,$(platform)))
         MFLAGS += -mfpu=neon
         ASFLAGS += -mfpu=neon
     endif
-    CFLAGS += -DARM_HARDFP -fsingle-precision-constant
     INCS += -I/opt/vero3/include/
     LIBS += -L/opt/vero3/lib/ -lEGL -lGLESv2
     USE_GLES := 1
@@ -283,13 +272,12 @@ else ifneq (,$(findstring win32,$(platform)))
     NOT_ARM := 1
     CFLAGS += -fno-builtin-sqrtf -funroll-loops -I /mingw64/include
     LDFLAGS += -static-libgcc -static-libstdc++ -Wl,-subsystem,windows
-    LDFLAGS += -L$(LOCAL_PATH)/../../core/deps/openlibm
     LIBS := -lopengl32 -lwinmm -lgdi32 -lwsock32 -lws2_32 -ldsound -lcomctl32 -lcomdlg32 -lxinput -liphlpapi -Wl,-Bstatic -lgomp
-    LIBS += -lwininet -lopenlibm
     PLATFORM_EXT := exe
     CC = gcc
     CXX = g++
     USE_SDL = 1
+    USE_SDLAUDIO = 1
     STATIC_LIBZIP = 1
 ifeq ($(WITH_DYNAREC), x86)
     X86_REC := 1
@@ -316,8 +304,8 @@ include $(RZDCY_SRC_DIR)/core.mk
 LDFLAGS += -g -Wl,-Map,$(notdir $@).map,--gc-sections -Wl,-O3 -Wl,--sort-common -fopenmp
 
 CFLAGS += $(RZDCY_CFLAGS) -g -O3 -D NDEBUG -c -fopenmp #-D NO_REND
-CFLAGS += -frename-registers -fno-strict-aliasing
-CFLAGS += -ffast-math -ftree-vectorize -Wall -Wno-unused-result
+CFLAGS += -frename-registers -fno-strict-aliasing -fsingle-precision-constant
+CFLAGS += -ftree-vectorize -Wall -Wno-unused-result
 
 CXXFLAGS += $(RZDCY_CFLAGS) -fno-rtti -fno-operator-names -D_GLIBCXX_USE_CXX11_ABI=0 -std=gnu++14
 
@@ -355,7 +343,7 @@ ICON_DIR ?= ${PREFIX}/share/pixmaps
 ifdef USE_SDL
 	ifdef FOR_WINDOWS
 	    CXXFLAGS += -D USE_SDL
-	    INCS += -ISDL/include
+	    INCS += -I$(RZDCY_SRC_DIR)/deps/SDL/include
 	else
 	    CXXFLAGS += `sdl2-config --cflags` -D USE_SDL
 	    LIBS += `sdl2-config --libs`
@@ -454,10 +442,6 @@ ifdef DEBUGFAST
     CFLAGS += -DDEBUGFAST
 endif
 
-ifdef UNIT_TESTS
-    CFLAGS += -DUNIT_TESTS
-endif
-
 ifdef ASAN
 	CFLAGS += -fsanitize=address -static-libasan
 	LDFLAGS += -fsanitize=address -static-libasan
@@ -467,12 +451,20 @@ ifdef LOG_TO_PTY
     CFLAGS += -D LOG_TO_PTY
 endif
 
-
-EXECUTABLE_STRIPPED=nosym-reicast.$(PLATFORM_EXT)
-# DC_PLATFORM=dreamcast
-DC_PLATFORM=dc
-EXECUTABLE=reicast.$(PLATFORM_EXT)
-EXECUTABLE_NAME=flycast
+ifdef UNIT_TESTS
+    CFLAGS += -DUNIT_TESTS
+	EXECUTABLE_STRIPPED=nosym-alltests
+	DC_PLATFORM=tests
+	EXECUTABLE=alltests.$(PLATFORM_EXT)
+	EXECUTABLE_NAME=alltests
+	TEST_SRC_DIR:=$(RZDCY_SRC_DIR)/../tests/src
+	RZDCY_FILES += $(wildcard $(TEST_SRC_DIR)/*.cpp) $(RZDCY_SRC_DIR)/deps/gtest/src/gtest_main.cc $(RZDCY_SRC_DIR)/deps/gtest/src/gtest-all.cc
+else
+	EXECUTABLE_STRIPPED=nosym-flycast.$(PLATFORM_EXT)
+	DC_PLATFORM=dc
+	EXECUTABLE=flycast.$(PLATFORM_EXT)
+	EXECUTABLE_NAME=flycast
+endif
 
 ifndef NOT_ARM
     AS=$(CC)
@@ -490,8 +482,8 @@ OBJECTS:=$(OBJECTS:.S=.build_obj)
 OBJECTS:=$(patsubst $(RZDCY_SRC_DIR)/%,$(BUILDDIR)/%,$(OBJECTS))
 
 ifdef FOR_WINDOWS
-OBJECTS += $(BUILDDIR)/reicastres.build_obj
-$(BUILDDIR)/reicastres.build_obj: $(LOCAL_PATH)/../windows/reicast.rc $(LOCAL_PATH)/../windows/flycast.ico $(RZDCY_SRC_DIR)/version.h
+OBJECTS += $(BUILDDIR)/flycastres.build_obj
+$(BUILDDIR)/flycastres.build_obj: $(LOCAL_PATH)/../windows/flycast.rc $(LOCAL_PATH)/../windows/flycast.ico $(RZDCY_SRC_DIR)/version.h
 	$(WINDRES) $< $@
 
 endif
@@ -499,6 +491,10 @@ endif
 ifndef USE_SYSTEM_MINIUPNPC
 OBJECTS += $(RZDCY_SRC_DIR)/deps/miniupnpc/libminiupnpc.a
 CFLAGS += -DMINIUPNP_STATICLIB
+endif
+
+ifdef FOR_WINDOWS
+CMAKE_FLAVOR = -G "MinGW Makefiles"
 endif
 
 ifdef USE_SDL
@@ -509,7 +505,7 @@ SDL/lib/libSDL2.a:
 	-patch -p1 --directory=$(RZDCY_SRC_DIR)/deps/SDL --forward < $(RZDCY_SRC_DIR)/deps/patches/SDL.patch
 	mkdir -p SDL && \
 	  cd SDL && \
-	  cmake -G "MinGW Makefiles" -DCMAKE_INSTALL_PREFIX=. -DBUILD_SHARED_LIBS=OFF -DCMAKE_SH=SH-NOTFOUND $(RZDCY_SRC_DIR)/deps/SDL && \
+	  cmake $(CMAKE_FLAVOR) -DCMAKE_INSTALL_PREFIX=. -DBUILD_SHARED_LIBS=OFF -DCMAKE_SH=SH-NOTFOUND $(RZDCY_SRC_DIR)/deps/SDL && \
 	  cmake --build . --target install
 
 
@@ -518,6 +514,15 @@ LIBS += -ldinput8  -ldxguid -ldxerr8
 LIBS += -luser32 -lgdi32 -lwinmm -limm32 -lole32 -loleaut32 -lshell32 -lsetupapi -lversion -luuid
 	endif
 endif
+
+libchdr/libchdr-static.a:
+	mkdir -p libchdr && \
+	  cd libchdr && \
+	  cmake $(CMAKE_FLAVOR) -DBUILD_SHARED_LIBS=OFF -DCMAKE_SH=SH-NOTFOUND $(RZDCY_SRC_DIR)/deps/libchdr && \
+	  cmake --build .
+
+
+OBJECTS += libchdr/libchdr-static.a
 
 DEPDIR := .dep-$(BUILDDIR)
 DEPFLAGS = -MT $@ -MD -MP -MF $(DEPDIR)/$*.Td
@@ -529,9 +534,6 @@ DEPS:=$(patsubst $(RZDCY_SRC_DIR)/%,$(DEPDIR)/%,$(DEPS))
 POSTCOMPILE = mv -f $(DEPDIR)/$*.Td $(DEPDIR)/$*.d
 
 all: $(CPPFILES) $(EXECUTABLE) $(EXECUTABLE_STRIPPED)
-ifneq (,$(findstring gcwz,$(platform)))
-	mksquashfs $(EXECUTABLE_STRIPPED) $(GCWZ_PKG_FILES) $(GCWZ_PKG) -all-root
-endif
 
 $(EXECUTABLE): $(OBJECTS)
 	$(CXX) $(MFLAGS) $(EXTRAFLAGS) $(LDFLAGS) $(OBJECTS) $(LIBS) -o $@
@@ -566,55 +568,36 @@ $(BUILDDIR)/%.build_obj : $(RZDCY_SRC_DIR)/%.S $(VERSION_HEADER)
 
 install: $(EXECUTABLE)
 	mkdir -p $(DESTDIR)$(PREFIX)/bin 2>/dev/null || true
-	mkdir -p $(DESTDIR)$(PREFIX)/share/reicast/mappings 2>/dev/null || true
+	mkdir -p $(DESTDIR)$(PREFIX)/share/flycast/mappings 2>/dev/null || true
 	mkdir -p $(DESTDIR)$(MAN_DIR) 2>/dev/null || true
 	mkdir -p $(DESTDIR)$(MENUENTRY_DIR) 2>/dev/null || true
 	mkdir -p $(DESTDIR)$(ICON_DIR) 2>/dev/null || true
 	install -m755 $(EXECUTABLE) $(DESTDIR)$(PREFIX)/bin/$(EXECUTABLE_NAME)
-	install -m644 mappings/controller_gcwz.cfg $(DESTDIR)$(PREFIX)/share/reicast/mappings
-	install -m644 mappings/controller_generic.cfg $(DESTDIR)$(PREFIX)/share/reicast/mappings
-	install -m644 mappings/controller_pandora.cfg $(DESTDIR)$(PREFIX)/share/reicast/mappings
-	install -m644 mappings/controller_xboxdrv.cfg $(DESTDIR)$(PREFIX)/share/reicast/mappings
-	install -m644 mappings/controller_xpad.cfg $(DESTDIR)$(PREFIX)/share/reicast/mappings
-	install -m644 mappings/keyboard.cfg $(DESTDIR)$(PREFIX)/share/reicast/mappings
+	install -m644 mappings/controller_generic.cfg $(DESTDIR)$(PREFIX)/share/flycast/mappings
+	install -m644 mappings/controller_pandora.cfg $(DESTDIR)$(PREFIX)/share/flycast/mappings
+	install -m644 mappings/controller_xboxdrv.cfg $(DESTDIR)$(PREFIX)/share/flycast/mappings
+	install -m644 mappings/controller_xpad.cfg $(DESTDIR)$(PREFIX)/share/flycast/mappings
+	install -m644 mappings/keyboard.cfg $(DESTDIR)$(PREFIX)/share/flycast/mappings
 	install -m644 man/flycast.1 $(DESTDIR)$(MAN_DIR)
 	install -m644 flycast.desktop $(DESTDIR)$(MENUENTRY_DIR)
 	install -m644 flycast.png $(DESTDIR)$(ICON_DIR)
 
 uninstall:
 	rm -f $(DESTDIR)$(PREFIX)/bin/$(EXECUTABLE_NAME)
-	rm -f $(DESTDIR)$(PREFIX)/share/reicast/mappings/controller_gcwz.cfg
-	rm -f $(DESTDIR)$(PREFIX)/share/reicast/mappings/controller_generic.cfg
-	rm -f $(DESTDIR)$(PREFIX)/share/reicast/mappings/controller_pandora.cfg
-	rm -f $(DESTDIR)$(PREFIX)/share/reicast/mappings/controller_xboxdrv.cfg
-	rm -f $(DESTDIR)$(PREFIX)/share/reicast/mappings/controller_xpad.cfg
-	rm -f $(DESTDIR)$(PREFIX)/share/reicast/mappings/keyboard.cfg
+	rm -f $(DESTDIR)$(PREFIX)/share/flycast/mappings/controller_generic.cfg
+	rm -f $(DESTDIR)$(PREFIX)/share/flycast/mappings/controller_pandora.cfg
+	rm -f $(DESTDIR)$(PREFIX)/share/flycast/mappings/controller_xboxdrv.cfg
+	rm -f $(DESTDIR)$(PREFIX)/share/flycast/mappings/controller_xpad.cfg
+	rm -f $(DESTDIR)$(PREFIX)/share/flycast/mappings/keyboard.cfg
 	rm -f $(DESTDIR)$(MAN_DIR)/flycast.1
 	rm -f $(DESTDIR)$(MENUENTRY_DIR)/flycast.desktop
 	rm -f $(DESTDIR)$(ICON_DIR)/flycast.png
 
 clean:
-	rm -f $(OBJECTS) $(EXECUTABLE) $(EXECUTABLE_STRIPPED) .map $(VERSION_HEADER) $(TEST_OBJ) alltests
+	rm -f $(OBJECTS) $(EXECUTABLE) $(EXECUTABLE_STRIPPED) .map $(VERSION_HEADER)
 
-TEST_SRC_DIR:=$(LOCAL_PATH)/../../tests/src
-TEST_SRC:=$(wildcard $(TEST_SRC_DIR)/*.cpp) $(RZDCY_SRC_DIR)/deps/gtest/src/gtest_main.cc $(RZDCY_SRC_DIR)/deps/gtest/src/gtest-all.cc
-TEST_OBJ:=$(TEST_SRC:.cpp=.build_obj)
-TEST_OBJ:=$(TEST_OBJ:.cc=.build_obj)
-TEST_OBJ:=$(patsubst $(TEST_SRC_DIR)/%,$(BUILDDIR)/%,$(TEST_OBJ))
-TEST_OBJ:=$(patsubst $(RZDCY_SRC_DIR)/%,$(BUILDDIR)/%,$(TEST_OBJ))
-
-$(BUILDDIR)/%.build_obj : $(TEST_SRC_DIR)/%.cpp
-$(BUILDDIR)/%.build_obj: $(TEST_SRC_DIR)/%.cpp $(DEPDIR)/%.d
-	mkdir -p $(dir $@)
-	mkdir -p .dep-$(dir $@)
-	$(CXX) $(EXTRAFLAGS) $(INCS) $(DEPFLAGS) $(CFLAGS) $(MFLAGS) $(CXXFLAGS) $< -o $@
-	$(POSTCOMPILE)
-
-tests: alltests
-	./alltests
-
-alltests: $(TEST_OBJ) $(OBJECTS)
-	$(CXX) $(MFLAGS) $(EXTRAFLAGS) $(LDFLAGS) $(TEST_OBJ) $(OBJECTS) $(LIBS) -o $@
+tests: alltests.$(PLATFORM_EXT)
+	./alltests.$(PLATFORM_EXT)
 
 .PRECIOUS = $(DEPDIR)/%.d
 $(DEPDIR)/%.d: ;

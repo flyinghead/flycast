@@ -18,7 +18,7 @@ void update_e68k()
 	{
 		//Set the pending signal
 		//Is L register held here too ?
-		e68k_out=1;
+		e68k_out=true;
 		e68k_reg_L=aica_reg_L;
 
 		update_armintc();

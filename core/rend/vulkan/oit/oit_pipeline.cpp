@@ -53,22 +53,20 @@ void OITPipelineManager::CreatePipeline(u32 listType, bool autosort, const PolyP
 
 	// Depth and stencil
 	vk::CompareOp depthOp;
-	if (pass == Pass::Color && !pp.isp.ZWriteDis && listType != ListType_Translucent)
-		depthOp = vk::CompareOp::eEqual;
-	else if (listType == ListType_Punch_Through || autosort)
+	 if (listType == ListType_Punch_Through || autosort)
 		depthOp = vk::CompareOp::eGreaterOrEqual;
 	else
 		depthOp = depthOps[pp.isp.DepthMode];
-	bool depthWriteEnable;
-	// FIXME temporary Intel driver bug workaround
-	if (pass != Pass::Depth && !((!autosort || GetContext()->GetVendorID() == VENDOR_INTEL) && pass == Pass::Color))
-		depthWriteEnable = false;
-	// Z Write Disable seems to be ignored for punch-through.
-	// Fixes Worms World Party, Bust-a-Move 4 and Re-Volt
-	else if (listType == ListType_Punch_Through)
-		depthWriteEnable = true;
-	else
-		depthWriteEnable = !pp.isp.ZWriteDis;
+	bool depthWriteEnable = false;
+	if (pass == Pass::Depth || pass == Pass::Color)
+	{
+		// Z Write Disable seems to be ignored for punch-through.
+		// Fixes Worms World Party, Bust-a-Move 4 and Re-Volt
+		if (listType == ListType_Punch_Through)
+			depthWriteEnable = true;
+		else
+			depthWriteEnable = !pp.isp.ZWriteDis;
+	}
 
 	bool shadowed = pass == Pass::Depth && (listType == ListType_Opaque || listType == ListType_Punch_Through);
 	vk::StencilOpState stencilOpState;
@@ -147,7 +145,7 @@ void OITPipelineManager::CreatePipeline(u32 listType, bool autosort, const PolyP
 	params.bumpmap = pp.tcw.PixelFmt == PixelBumpMap;
 	params.clamping = pp.tsp.ColorClamp && (pvrrc.fog_clamp_min != 0 || pvrrc.fog_clamp_max != 0xffffffff);
 	params.insideClipTest = (pp.tileclip >> 28) == 3;
-	params.fog = settings.rend.Fog ? pp.tsp.FogCtrl : 2;
+	params.fog = config::Fog ? pp.tsp.FogCtrl : 2;
 	params.gouraud = pp.pcw.Gouraud;
 	params.ignoreTexAlpha = pp.tsp.IgnoreTexA || pp.tcw.PixelFmt == Pixel565;
 	params.offset = pp.pcw.Offset;

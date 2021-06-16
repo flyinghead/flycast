@@ -1,7 +1,7 @@
 #pragma once
 #include "types.h"
 #include "sh4_if.h"
-
+#include "cfg/option.h"
 
 #define r Sh4cntx.r
 #define r_bank Sh4cntx.r_bank
@@ -106,15 +106,11 @@ struct SH4ThrownException {
 
 static INLINE void RaiseFPUDisableException()
 {
-#if !defined(NO_MMU)
-	if (settings.dreamcast.FullMMU)
+	if (config::FullMMU)
 	{
-		SH4ThrownException ex = { next_pc - 2, 0x800, 0x100 };
+		SH4ThrownException ex { next_pc - 2, 0x800, 0x100 };
 		throw ex;
 	}
-#else
-	msgboxf("Full MMU support needed", MBX_ICONERROR);
-#endif
 }
 
 static INLINE void AdjustDelaySlotException(SH4ThrownException& ex)
@@ -126,17 +122,20 @@ static INLINE void AdjustDelaySlotException(SH4ThrownException& ex)
 		ex.expEvn = 0x1A0;			// Slot illegal instruction exception
 }
 
-// The SH4 sets the signaling bit to 0 for qNaN (unlike all recent CPUs). Some games relies on this.
+// The SH4 sets the signaling bit to 0 for qNaN (unlike all recent CPUs). Some games rely on this.
 static INLINE f32 fixNaN(f32 f)
 {
 #ifdef STRICT_MODE
 	u32& hex = *(u32 *)&f;
+#ifdef __FAST_MATH__
+	// fast-math
+	if ((hex & 0x7fffffff) > 0x7f800000)
+		hex = 0x7fbfffff;
+#else
 	// no fast-math
 	if (f != f)
 		hex = 0x7fbfffff;
-//	// fast-math
-//	if ((hex & 0x7fffffff) > 0x7f800000)
-//		hex = 0x7fbfffff;
+#endif
 #endif
 	return f;
 }
@@ -144,22 +143,16 @@ static INLINE f32 fixNaN(f32 f)
 static INLINE f64 fixNaN64(f64 f)
 {
 #ifdef STRICT_MODE
-	// no fast-math
 	u64& hex = *(u64 *)&f;
+#ifdef __FAST_MATH__
+	// fast-math
+	if ((hex & 0x7fffffffffffffffll) > 0x7ff0000000000000ll)
+		hex = 0x7ff7ffffffffffffll;
+#else
+	// no fast-math
 	if (f != f)
 		hex = 0x7ff7ffffffffffffll;
-	// fast-math
-//	return (*(u64 *)&f & 0x7fffffffffffffffll) <= 0x7f80000000000000ll ? f : 0x7ff7ffffffffffffll;
+#endif
 #endif
 	return f;
-}
-
-// Reduces the precision of the argument f by a given number of bits
-// double have 53 bits of precision so the returned result will have a precision of 53 - bits
-// Note: with -ffast-math c -(c - f) is simplified to ... f, which makes this function a nop
-template<int bits>
-static INLINE double reduce_precision(double f)
-{
-	double c = (double)((1ull << bits) + 1) * f;
-	return c - (c - f);
 }

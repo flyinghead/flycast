@@ -53,11 +53,6 @@ typedef size_t unat;
 typedef u64 unat;
 #endif
 
-#ifndef CDECL
-#define CDECL __cdecl
-#endif
-
-
 //intc function pointer and enums
 enum HollyInterruptType
 {
@@ -142,21 +137,12 @@ enum HollyInterruptID
 
 #if defined(__APPLE__)
 int darw_printf(const char* Text,...);
-#define printf darw_printf
-#define puts(X) printf("%s\n", X)
 #endif
 
 //includes from c++rt
 #include <vector>
 #include <string>
 #include <map>
-
-//used for asm-olny functions
-#ifdef _M_IX86
-#define naked __declspec(naked)
-#else
-#define naked __attribute__((naked))
-#endif
 
 #define INLINE __forceinline
 
@@ -170,25 +156,18 @@ int darw_printf(const char* Text,...);
 #ifdef _MSC_VER
 #define likely(x) x
 #define unlikely(x) x
+#define expected(x, y) x
 #else
-#define likely(x)       __builtin_expect((x),1)
-#define unlikely(x)       __builtin_expect((x),0)
+#define likely(x)      __builtin_expect(!!(x), 1)
+#define unlikely(x)    __builtin_expect(!!(x), 0)
+#define expected(x, y) __builtin_expect((x), (y))
 #endif
 
 #include "log/Log.h"
 
-#ifndef NO_MMU
-#define _X_x_X_MMU_VER_STR "/mmu"
-#else
-#define _X_x_X_MMU_VER_STR ""
-#endif
-
-
 #define VER_EMUNAME		"Flycast"
-
-#define VER_FULLNAME	VER_EMUNAME " git" _X_x_X_MMU_VER_STR " (built " __DATE__ "@" __TIME__ ")"
-#define VER_SHORTNAME	VER_EMUNAME " git" _X_x_X_MMU_VER_STR
-
+#define VER_FULLNAME	VER_EMUNAME " (built " __DATE__ "@" __TIME__ ")"
+#define VER_SHORTNAME	VER_EMUNAME
 
 void os_DebugBreak();
 #define dbgbreak os_DebugBreak()
@@ -304,6 +283,25 @@ enum class RenderType {
 	Vulkan_OIT = 5
 };
 
+enum class KeyboardLayout {
+	JP = 1,
+	US,
+	UK,
+	GE,
+	FR,
+	IT,
+	SP,
+	SW,
+	CH,
+	NL,
+	PT,
+	LATAM,
+	FR_CA,
+	RU,
+	CN,
+	KO
+};
+
 struct settings_t
 {
 	struct {
@@ -316,142 +314,30 @@ struct settings_t
 		u32 aram_mask;
 		u32 bios_size;
 		u32 flash_size;
-		u32 bbsram_size;
 	} platform;
 
-	struct {
-		bool UseReios;
-	} bios;
-
 	struct
 	{
-		bool UseMipmaps;
-		bool WideScreen;
-		bool ShowFPS;
-		bool RenderToTextureBuffer;
-		int RenderToTextureUpscale;
-		bool TranslucentPolygonDepthMask;
-		bool ModifierVolumes;
-		bool Clipping;
-		int TextureUpscale;
-		int MaxFilteredTextureSize;
-		f32 ExtraDepthScale;
-		bool CustomTextures;
-		bool DumpTextures;
-		int ScreenScaling;		// in percent. 50 means half the native resolution
-		int ScreenStretching;	// in percent. 150 means stretch from 4/3 to 6/3
-		bool Fog;
-		bool FloatVMUs;
-		bool Rotate90;			// Rotate the screen 90 deg CC
-		bool PerStripSorting;
-		bool DelayFrameSwapping; // Delay swapping frame until FB_R_SOF matches FB_W_SOF
-		bool WidescreenGameHacks;
-		u32 CrosshairColor[4];
-	} rend;
-
-	struct
-	{
-		bool Enable;
-		bool idleskip;
-		bool unstable_opt;
-		bool safemode;
 		bool disable_nvmem;
-		bool disable_vmem32;
 	} dynarec;
 
 	struct
 	{
-		u32 run_counts;
-	} profile;
-
-	struct
-	{
-		u32 cable;			// 0 -> VGA, 1 -> VGA, 2 -> RGB, 3 -> TV
-		u32 region;			// 0 -> JP, 1 -> USA, 2 -> EU, 3 -> default
-		u32 broadcast;		// 0 -> NTSC, 1 -> PAL, 2 -> PAL/M, 3 -> PAL/N, 4 -> default
-		u32 language;		// 0 -> JP, 1 -> EN, 2 -> DE, 3 -> FR, 4 -> SP, 5 -> IT, 6 -> default
-		std::vector<std::string> ContentPath;
-		bool FullMMU;
-		bool ForceWindowsCE;
-		bool HideLegacyNaomiRoms;
-	} dreamcast;
-
-	struct
-	{
-		u32 BufferSize;		//In samples ,*4 for bytes (1024)
-		bool LimitFPS;
-		u32 CDDAMute;
-		bool DSPEnabled;
 		bool NoBatch;
-		bool NoSound;
 	} aica;
 
-	struct{
-		std::string backend;
-
-		// slug<<key, value>>
-		std::map<std::string, std::map<std::string, std::string>> options;
-	} audio;
-
-
-#if USE_OMX
 	struct
 	{
-		u32 Audio_Latency;
-		bool Audio_HDMI;
-	} omx;
-#endif
-
-#if SUPPORT_DISPMANX
-	struct
-	{
-		u32 Width;
-		u32 Height;
-		bool Keep_Aspect;
-	} dispmanx;
-#endif
-
-	struct
-	{
-		bool PatchRegion;
 		char ImagePath[512];
 	} imgread;
 
-	struct
-	{
-		u32 ta_skip;
-		RenderType rend;
-
-		u32 MaxThreads;
-		int AutoSkipFrame;		// 0: none, 1: some, 2: more
-
-		bool IsOpenGL() { return rend == RenderType::OpenGL || rend == RenderType::OpenGL_OIT; }
-	} pvr;
-
 	struct {
-		bool SerialConsole;
-		bool SerialPTY;
-	} debug;
-
-	struct {
-		bool OpenGlChecks;
-	} validate;
-
-	struct {
-		u32 MouseSensitivity;
 		JVS JammaSetup;
-		int maple_devices[4];
-		int maple_expansion_devices[4][2];
-		int VirtualGamepadVibration;
+		KeyboardLayout keyboardLangId = KeyboardLayout::US;
+		bool fastForwardMode;
 	} input;
 
-	struct {
-		bool Enable;
-		bool ActAsServer;
-		std::string dns;
-		std::string server;
-		bool EmulateBBA;
-	} network;
+	bool gameStarted;
 };
 
 extern settings_t settings;
@@ -463,8 +349,6 @@ extern settings_t settings;
 #define VRAM_SIZE settings.platform.vram_size
 #define VRAM_MASK settings.platform.vram_mask
 #define BIOS_SIZE settings.platform.bios_size
-#define FLASH_SIZE settings.platform.flash_size
-#define BBSRAM_SIZE settings.platform.bbsram_size
 
 inline bool is_s8(u32 v) { return (s8)v==(s32)v; }
 inline bool is_u8(u32 v) { return (u8)v==(s32)v; }
@@ -473,7 +357,7 @@ inline bool is_u16(u32 v) { return (u16)v==(u32)v; }
 
 //PVR
 s32 libPvr_Init();
-void libPvr_Reset(bool Manual);
+void libPvr_Reset(bool hard);
 void libPvr_Term();
 
 void* libPvr_GetRenderTarget();
@@ -496,16 +380,16 @@ void libARM_Reset(bool hard);
 void libARM_Term();
 
 template<u32 sz>
-u32 ReadMemArr(u8 *array, u32 addr)
+u32 ReadMemArr(const u8 *array, u32 addr)
 {
 	switch(sz)
 	{
 	case 1:
 		return array[addr];
 	case 2:
-		return *(u16 *)&array[addr];
+		return *(const u16 *)&array[addr];
 	case 4:
-		return *(u32 *)&array[addr];
+		return *(const u32 *)&array[addr];
 	default:
 		die("invalid size");
 		return 0;
@@ -568,5 +452,7 @@ enum serialize_version_enum {
 	V12 = 807,
 	V13 = 808,
 	V14 = 809,
-	VCUR_FLYCAST = V14,
-} ;
+	V15 = 810,
+	V16 = 811,
+	VCUR_FLYCAST = V16,
+};

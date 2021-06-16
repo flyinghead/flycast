@@ -140,10 +140,10 @@ public:
 		//E7 Right S3
 		//E8-FF Reserved
 	}
-	virtual const char* name() override { return "X11 Keyboard"; }
+	const char* name() override { return "X11 Keyboard"; }
 
 protected:
-	virtual u8 convert_keycode(int keycode) override
+	u8 convert_keycode(int keycode) override
 	{
 		return kb_map[keycode];
 	}
@@ -187,7 +187,7 @@ public:
 			input_mapper = std::make_shared<KbInputMapping>();
 	}
 
-	virtual const char *get_button_name(u32 code) override
+	const char *get_button_name(u32 code) override
 	{
 		switch (code)
 		{

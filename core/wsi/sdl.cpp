@@ -24,6 +24,7 @@
 #include "gl_context.h"
 #include "rend/gui.h"
 #include "sdl/sdl.h"
+#include "cfg/option.h"
 
 SDLGLGraphicsContext theGLContext;
 
@@ -42,7 +43,6 @@ bool SDLGLGraphicsContext::Init()
 	SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
 	SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
 	SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
-	SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
 	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
 	SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
@@ -51,23 +51,21 @@ bool SDLGLGraphicsContext::Init()
 		return false;
 
 	glcontext = SDL_GL_CreateContext(window);
-	if (!glcontext)
-	{
 #ifndef GLES
+	if (glcontext == SDL_GLContext())
+	{
 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, 0);
 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
 		glcontext = SDL_GL_CreateContext(window);
-		if (!glcontext)
-		{
+	}
 #endif
-			ERROR_LOG(RENDERER, "Error creating SDL GL context");
-			SDL_DestroyWindow(window);
-			window = nullptr;
-			return false;
-#ifndef GLES
-		}
-#endif
+	if (glcontext == SDL_GLContext())
+	{
+		ERROR_LOG(RENDERER, "Error creating SDL GL context");
+		SDL_DestroyWindow(window);
+		window = nullptr;
+		return false;
 	}
 	SDL_GL_MakeCurrent(window, NULL);
 
@@ -80,6 +78,14 @@ bool SDLGLGraphicsContext::Init()
 	INFO_LOG(RENDERER, "Created SDL Window and GL Context successfully");
 
 	SDL_GL_MakeCurrent(window, glcontext);
+#ifndef TEST_AUTOMATION
+	// Swap at vsync
+	swapOnVSync = config::VSync;
+#else
+	// Swap immediately
+	swapOnVSync = false;
+#endif
+	SDL_GL_SetSwapInterval((int)swapOnVSync);
 
 #ifdef GLES
 	load_gles_symbols();
@@ -97,6 +103,15 @@ bool SDLGLGraphicsContext::Init()
 
 void SDLGLGraphicsContext::Swap()
 {
+#ifdef TEST_AUTOMATION
+	do_swap_automation();
+#else
+	if (swapOnVSync == (settings.input.fastForwardMode || !config::VSync))
+	{
+		swapOnVSync = (!settings.input.fastForwardMode && config::VSync);
+		SDL_GL_SetSwapInterval((int)swapOnVSync);
+	}
+#endif
 	SDL_GL_SwapWindow(window);
 
 	/* Check if drawable has been resized */

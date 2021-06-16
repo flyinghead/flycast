@@ -24,8 +24,8 @@
 
 struct BufferData
 {
-	BufferData(vk::DeviceSize size, vk::BufferUsageFlags usage,
-			vk::MemoryPropertyFlags propertyFlags = vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
+	BufferData(vk::DeviceSize size, const vk::BufferUsageFlags& usage,
+			const vk::MemoryPropertyFlags& propertyFlags = vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
 	~BufferData()
 	{
 		buffer.reset();

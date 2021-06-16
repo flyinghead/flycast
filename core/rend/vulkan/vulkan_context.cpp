@@ -24,15 +24,16 @@
 #include "../gui.h"
 #ifdef USE_SDL
 #include <sdl/sdl.h>
-#include <SDL2/SDL_vulkan.h>
+#include <SDL_vulkan.h>
 #endif
 #include "compiler.h"
 #include "texture.h"
 #include "utils.h"
 #include "emulator.h"
 
-VulkanContext *VulkanContext::contextInstance;
+void ReInitOSD();
 
+VulkanContext *VulkanContext::contextInstance;
 static const char *PipelineCacheFileName = "vulkan_pipeline.cache";
 
 #ifndef __ANDROID__
@@ -483,6 +484,8 @@ bool VulkanContext::InitDevice()
 	    shaderManager = std::unique_ptr<ShaderManager>(new ShaderManager());
 	    quadPipeline = std::unique_ptr<QuadPipeline>(new QuadPipeline());
 	    quadDrawer = std::unique_ptr<QuadDrawer>(new QuadDrawer());
+	    quadRotatePipeline = std::unique_ptr<QuadPipeline>(new QuadPipeline(false, true));
+	    quadRotateDrawer = std::unique_ptr<QuadDrawer>(new QuadDrawer());
 
 		CreateSwapChain();
 
@@ -561,25 +564,24 @@ void VulkanContext::CreateSwapChain()
 			// The FIFO present mode is guaranteed by the spec to be supported
 			vk::PresentModeKHR swapchainPresentMode = vk::PresentModeKHR::eFifo;
 			// Use FIFO on mobile, prefer Mailbox on desktop
-#if HOST_CPU != CPU_ARM && HOST_CPU != CPU_ARM64 && !defined(__ANDROID__)
 			for (auto& presentMode : physicalDevice.getSurfacePresentModesKHR(GetSurface()))
 			{
-				if (presentMode == vk::PresentModeKHR::eMailbox && vendorID != VENDOR_ATI && vendorID != VENDOR_AMD)
+#if HOST_CPU != CPU_ARM && HOST_CPU != CPU_ARM64 && !defined(__ANDROID__)
+				if (swapOnVSync && presentMode == vk::PresentModeKHR::eMailbox
+						&& vendorID != VENDOR_ATI && vendorID != VENDOR_AMD)
 				{
 					INFO_LOG(RENDERER, "Using mailbox present mode");
 					swapchainPresentMode = vk::PresentModeKHR::eMailbox;
 					break;
 				}
-#ifdef TEST_AUTOMATION
-				if (presentMode == vk::PresentModeKHR::eImmediate)
+#endif
+				if (!swapOnVSync && presentMode == vk::PresentModeKHR::eImmediate)
 				{
 					INFO_LOG(RENDERER, "Using immediate present mode");
 					swapchainPresentMode = vk::PresentModeKHR::eImmediate;
 					break;
 				}
-#endif
 			}
-#endif
 
 			vk::SurfaceTransformFlagBitsKHR preTransform = (surfaceCapabilities.supportedTransforms & vk::SurfaceTransformFlagBitsKHR::eIdentity) ? vk::SurfaceTransformFlagBitsKHR::eIdentity : surfaceCapabilities.currentTransform;
 
@@ -671,11 +673,14 @@ void VulkanContext::CreateSwapChain()
 	    }
 	    quadPipeline->Init(shaderManager.get(), *renderPass);
 	    quadDrawer->Init(quadPipeline.get());
+	    quadRotatePipeline->Init(shaderManager.get(), *renderPass);
+	    quadRotateDrawer->Init(quadRotatePipeline.get());
 	    overlay->Init(quadPipeline.get());
 
 	    InitImgui();
 
 	    currentImage = GetSwapChainSize() - 1;
+	    ReInitOSD();
 
 	    INFO_LOG(RENDERER, "Vulkan swap chain created: %d x %d, swap chain size %d", width, height, (int)imageViews.size());
 	}
@@ -716,7 +721,7 @@ bool VulkanContext::Init()
     VkSurfaceKHR surface;
     if (SDL_Vulkan_CreateSurface((SDL_Window *)window, (VkInstance)*instance, &surface) == 0)
     	return false;
-    this->surface.reset(surface);
+    this->surface.reset(vk::SurfaceKHR(surface));
 #elif defined(_WIN32)
 	vk::Win32SurfaceCreateInfoKHR createInfo(vk::Win32SurfaceCreateFlagsKHR(), GetModuleHandle(NULL), (HWND)window);
 	surface = instance->createWin32SurfaceKHRUnique(createInfo);
@@ -737,7 +742,6 @@ void VulkanContext::NewFrame()
 	if (resized || HasSurfaceDimensionChanged())
 	{
 		CreateSwapChain();
-		rend_resize(screen_width, screen_height);
 		lastFrameView = vk::ImageView();
 	}
 	if (!IsValid())
@@ -762,7 +766,7 @@ void VulkanContext::BeginRenderPass()
 			vk::SubpassContents::eInline);
 }
 
-void VulkanContext::EndFrame(const std::vector<vk::UniqueCommandBuffer> *cmdBuffers)
+void VulkanContext::EndFrame(vk::CommandBuffer overlayCmdBuffer)
 {
 	if (!IsValid())
 		return;
@@ -771,8 +775,8 @@ void VulkanContext::EndFrame(const std::vector<vk::UniqueCommandBuffer> *cmdBuff
 	commandBuffer.end();
 	vk::PipelineStageFlags wait_stage = vk::PipelineStageFlagBits::eColorAttachmentOutput;
 	std::vector<vk::CommandBuffer> allCmdBuffers;
-	if (cmdBuffers != nullptr)
-		allCmdBuffers = vk::uniqueToRaw(*cmdBuffers);
+	if (overlayCmdBuffer)
+		allCmdBuffers.push_back(overlayCmdBuffer);
 	allCmdBuffers.push_back(commandBuffer);
 	vk::SubmitInfo submitInfo(1, &(*imageAcquiredSemaphores[currentSemaphore]), &wait_stage, allCmdBuffers.size(),allCmdBuffers.data(),
 			1, &(*renderCompleteSemaphores[currentSemaphore]));
@@ -797,25 +801,51 @@ void VulkanContext::Present() noexcept
 		}
 		renderDone = false;
 	}
+#ifndef TEST_AUTOMATION
+	if (swapOnVSync == (settings.input.fastForwardMode || !config::VSync))
+	{
+		swapOnVSync = (!settings.input.fastForwardMode && config::VSync);
+		resized = true;
+	}
+#endif
 	if (resized)
 		try {
 			CreateSwapChain();
+			lastFrameView = vk::ImageView();
 		} catch (const InvalidVulkanContext& err) {
 		}
 }
 
-void VulkanContext::DrawFrame(vk::ImageView imageView, vk::Extent2D extent)
+void VulkanContext::DrawFrame(vk::ImageView imageView, const vk::Extent2D& extent)
 {
-	float marginWidth = ((float)extent.height / extent.width * width / height - 1.f) / 2.f;
 	QuadVertex vtx[] = {
-		{ { -1, -1, 0 }, { 0 - marginWidth, 0 } },
-		{ {  1, -1, 0 }, { 1 + marginWidth, 0 } },
-		{ { -1,  1, 0 }, { 0 - marginWidth, 1 } },
-		{ {  1,  1, 0 }, { 1 + marginWidth, 1 } },
+		{ { -1, -1, 0 }, { 0, 0 } },
+		{ {  1, -1, 0 }, { 1, 0 } },
+		{ { -1,  1, 0 }, { 0, 1 } },
+		{ {  1,  1, 0 }, { 1, 1 } },
 	};
+	if (config::Rotate90)
+	{
+		float marginWidth = ((float)extent.width / extent.height * width / height - 1.f) / 2.f;
+		vtx[0].uv[1] = 0 - marginWidth;
+		vtx[1].uv[1] = 0 - marginWidth;
+		vtx[2].uv[1] = 1 + marginWidth;
+		vtx[3].uv[1] = 1 + marginWidth;
+	}
+	else
+	{
+		float marginWidth = ((float)extent.height / extent.width * width / height - 1.f) / 2.f;
+		vtx[0].uv[0] = 0 - marginWidth;
+		vtx[1].uv[0] = 1 + marginWidth;
+		vtx[2].uv[0] = 0 - marginWidth;
+		vtx[3].uv[0] = 1 + marginWidth;
+	}
 
 	vk::CommandBuffer commandBuffer = GetCurrentCommandBuffer();
-	quadPipeline->BindPipeline(commandBuffer);
+	if (config::Rotate90)
+		quadRotatePipeline->BindPipeline(commandBuffer);
+	else
+		quadPipeline->BindPipeline(commandBuffer);
 
 	float blendConstants[4] = { 1.0, 1.0, 1.0, 1.0 };
 	commandBuffer.setBlendConstants(blendConstants);
@@ -823,7 +853,10 @@ void VulkanContext::DrawFrame(vk::ImageView imageView, vk::Extent2D extent)
 	vk::Viewport viewport(0, 0, width, height);
 	commandBuffer.setViewport(0, 1, &viewport);
 	commandBuffer.setScissor(0, vk::Rect2D(vk::Offset2D(0, 0), vk::Extent2D(width, height)));
-	quadDrawer->Draw(commandBuffer, imageView, vtx);
+	if (config::Rotate90)
+		quadRotateDrawer->Draw(commandBuffer, imageView, vtx);
+	else
+		quadDrawer->Draw(commandBuffer, imageView, vtx);
 }
 
 void VulkanContext::WaitIdle() const
@@ -851,7 +884,7 @@ std::string VulkanContext::GetDriverVersion() const
 			+ std::to_string(VK_VERSION_PATCH(props.driverVersion));
 }
 
-const std::vector<vk::UniqueCommandBuffer> *VulkanContext::PrepareOverlay(bool vmu, bool crosshair)
+vk::CommandBuffer VulkanContext::PrepareOverlay(bool vmu, bool crosshair)
 {
 	return overlay->Prepare(*commandPools[GetCurrentImageIndex()], vmu, crosshair);
 }
@@ -864,7 +897,7 @@ const std::vector<vk::UniqueCommandBuffer> *VulkanContext::PrepareOverlay(bool v
 
 extern Renderer *renderer;
 
-void VulkanContext::PresentFrame(vk::ImageView imageView, vk::Extent2D extent) noexcept
+void VulkanContext::PresentFrame(vk::ImageView imageView, const vk::Extent2D& extent) noexcept
 {
 	lastFrameView = imageView;
 	lastFrameExtent = extent;
@@ -873,16 +906,16 @@ void VulkanContext::PresentFrame(vk::ImageView imageView, vk::Extent2D extent) n
 	{
 		try {
 			NewFrame();
-			auto overlayCmdBuffers = PrepareOverlay(settings.rend.FloatVMUs, true);
+			auto overlayCmdBuffer = PrepareOverlay(config::FloatVMUs, true);
 
 			BeginRenderPass();
 
 			if (lastFrameView) // Might have been nullified if swap chain recreated
 				DrawFrame(imageView, extent);
 
-			DrawOverlay(gui_get_scaling(), settings.rend.FloatVMUs, true);
+			DrawOverlay(gui_get_scaling(), config::FloatVMUs, true);
 			renderer->DrawOSD(false);
-			EndFrame(overlayCmdBuffers);
+			EndFrame(overlayCmdBuffer);
 		} catch (const InvalidVulkanContext& err) {
 		}
 	}
@@ -924,6 +957,8 @@ void VulkanContext::Term()
 	renderPass.reset();
 	quadDrawer.reset();
 	quadPipeline.reset();
+	quadRotateDrawer.reset();
+	quadRotatePipeline.reset();
 	shaderManager.reset();
 	descriptorPool.reset();
 	commandBuffers.clear();
@@ -935,7 +970,7 @@ void VulkanContext::Term()
 #ifndef USE_SDL
 	surface.reset();
 #else
-	::vkDestroySurfaceKHR(*instance, surface.release(), nullptr);
+	::vkDestroySurfaceKHR((VkInstance)*instance, (VkSurfaceKHR)surface.release(), nullptr);
 #endif
 	pipelineCache.reset();
 	device.reset();
@@ -1115,3 +1150,26 @@ void VulkanContext::SetWindowSize(u32 width, u32 height)
 	}
 }
 
+void ImGui_ImplVulkan_RenderDrawData(ImDrawData *draw_data)
+{
+	VulkanContext *context = VulkanContext::Instance();
+	if (!context->IsValid())
+		return;
+	try {
+		bool rendering = context->IsRendering();
+		vk::CommandBuffer vmuCmdBuffer;
+		if (!rendering)
+		{
+			context->NewFrame();
+			vmuCmdBuffer = context->PrepareOverlay(true, false);
+			context->BeginRenderPass();
+			context->PresentLastFrame();
+			context->DrawOverlay(gui_get_scaling(), true, false);
+		}
+		// Record Imgui Draw Data and draw funcs into command buffer
+		ImGui_ImplVulkan_RenderDrawData(draw_data, (VkCommandBuffer)context->GetCurrentCommandBuffer());
+		if (!rendering)
+			context->EndFrame(vmuCmdBuffer);
+	} catch (const InvalidVulkanContext& err) {
+	}
+}

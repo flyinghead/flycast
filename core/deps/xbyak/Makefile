@@ -1,4 +1,4 @@
-PREFIX=/usr/local
+PREFIX?=/usr/local
 INSTALL_DIR=$(PREFIX)/include/xbyak
 
 all:

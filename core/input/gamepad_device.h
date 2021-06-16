@@ -33,12 +33,12 @@ public:
 
 	const std::string& api_name() { return _api_name; }
 	const std::string& name() { return _name; }
-	int maple_port() { return _maple_port; }
+	int maple_port() const { return _maple_port; }
 	void set_maple_port(int port) { _maple_port = port; }
 	const std::string& unique_id() { return _unique_id; }
 	virtual bool gamepad_btn_input(u32 code, bool pressed);
 	bool gamepad_axis_input(u32 code, int value);
-	virtual ~GamepadDevice() {}
+	virtual ~GamepadDevice() = default;
 	
 	virtual void detect_btn_input(input_detected_cb button_pressed);
 	void detect_axis_input(input_detected_cb axis_moved);
@@ -55,11 +55,11 @@ public:
 
 	virtual void rumble(float power, float inclination, u32 duration_ms) {}
 	virtual void update_rumble() {}
-	bool is_rumble_enabled() { return _rumble_enabled; }
+	bool is_rumble_enabled() const { return _rumble_enabled; }
 
-	static void Register(std::shared_ptr<GamepadDevice> gamepad);
+	static void Register(const std::shared_ptr<GamepadDevice>& gamepad);
 
-	static void Unregister(std::shared_ptr<GamepadDevice> gamepad);
+	static void Unregister(const std::shared_ptr<GamepadDevice>& gamepad);
 
 	static int GetGamepadCount();
 	static std::shared_ptr<GamepadDevice> GetGamepad(int index);
@@ -76,7 +76,7 @@ protected:
 	bool is_detecting_input() { return _input_detected != nullptr; }
 
 	std::string _name;
-	std::string _unique_id = "";
+	std::string _unique_id;
 	std::shared_ptr<InputMapping> input_mapper;
 	std::map<u32, int> axis_min_values;
 	std::map<u32, unsigned int> axis_ranges;

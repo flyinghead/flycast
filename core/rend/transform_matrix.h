@@ -21,6 +21,7 @@
 #pragma once
 #include "TexCache.h"
 #include "hw/pvr/ta_ctx.h"
+#include "cfg/option.h"
 
 #include <glm/glm.hpp>
 #include <glm/gtx/transform.hpp>
@@ -32,9 +33,9 @@ class TransformMatrix
 {
 public:
 	TransformMatrix() = default;
-	TransformMatrix(const rend_context& renderingContext)
+	TransformMatrix(const rend_context& renderingContext, int width = 0, int height = 0)
 	{
-		CalcMatrices(&renderingContext);
+		CalcMatrices(&renderingContext, width, height);
 	}
 
 	bool IsClipped() const
@@ -65,8 +66,9 @@ public:
 		return dcViewport;
 	}
 
-	void CalcMatrices(const rend_context *renderingContext)
+	void CalcMatrices(const rend_context *renderingContext, int width = 0, int height = 0)
 	{
+		renderViewport = { width == 0 ? screen_width : width, height == 0 ? screen_height : height };
 		this->renderingContext = renderingContext;
 
 		GetFramebufferScaling(false, scale_x, scale_y);
@@ -127,7 +129,7 @@ public:
 			normalMatrix = glm::translate(glm::vec3(startx, starty, 0));
 			scissorMatrix = normalMatrix;
 
-			const float screen_stretching = settings.rend.ScreenStretching / 100.f;
+			const float screen_stretching = config::ScreenStretching / 100.f;
 			float scissoring_scale_x, scissoring_scale_y;
 			GetFramebufferScaling(true, scissoring_scale_x, scissoring_scale_y);
 
@@ -135,48 +137,24 @@ public:
 			float y_coef;
 			glm::mat4 trans_rot;
 
-			if (settings.rend.Rotate90)
+			if (config::Rotate90)
 			{
-				float dc2s_scale_h = screen_height / 640.0f;
-				if (screen_width / 480.f < dc2s_scale_h)
-				{
-					dc2s_scale_h = screen_width / 480.f;
-					sidebarWidth = (screen_height - dc2s_scale_h * 640.f * screen_stretching) / 2;
-					x_coef = -2.0f / (screen_height / dc2s_scale_h * scale_x) * screen_stretching * (invertY ? -1 : 1);
-					y_coef = -2.0f / dcViewport.y;
-					trans_rot = glm::translate(glm::vec3((1 - 2 * sidebarWidth / screen_height) * (invertY ? -1 : 1), 1, 0));
-					sidebarWidth = -sidebarWidth;
-				}
-				else
-				{
-					sidebarWidth =  (screen_width - dc2s_scale_h * 480.0f * screen_stretching) / 2;
-					y_coef = -2.0f / (screen_width / dc2s_scale_h * scale_y) * screen_stretching;
-					x_coef = -2.0f / dcViewport.x * (invertY ? -1 : 1);
-					trans_rot = glm::translate(glm::vec3(invertY ? -1.f : 1.f, 1 - 2 * sidebarWidth / screen_width, 0));
-				}
-				trans_rot = glm::rotate((float)M_PI_2, glm::vec3(0, 0, 1))
-					* trans_rot;
+				float dc2s_scale_h = renderViewport.x / 640.0f;
+
+				sidebarWidth = 0;
+				y_coef = 2.0f / (renderViewport.y / dc2s_scale_h * scale_y) * screen_stretching * (invertY ? -1 : 1);
+				x_coef = 2.0f / dcViewport.x;
 			}
 			else
 			{
-				float dc2s_scale_h = screen_height / 480.0f;
-				if (screen_width / 640.f < dc2s_scale_h)
-				{
-					dc2s_scale_h = screen_width / 640.f;
-					sidebarWidth = (screen_height - dc2s_scale_h * 480.f * screen_stretching) / 2;
-					y_coef = 2.0f / (screen_height / dc2s_scale_h * scale_y) * screen_stretching * (invertY ? -1 : 1);
-					x_coef = 2.0f / dcViewport.x;
-					trans_rot = glm::translate(glm::vec3(-1, (1 - 2 * sidebarWidth / screen_height) * (invertY ? 1 : -1), 0));
-					sidebarWidth = -sidebarWidth;
-				}
-				else
-				{
-					sidebarWidth =  (screen_width - dc2s_scale_h * 640.0f * screen_stretching) / 2;
-					x_coef = 2.0f / (screen_width / dc2s_scale_h * scale_x) * screen_stretching;
-					y_coef = 2.0f / dcViewport.y * (invertY ? -1 : 1);
-					trans_rot = glm::translate(glm::vec3(-1 + 2 * sidebarWidth / screen_width, invertY ? 1 : -1, 0));
-				}
+				float dc2s_scale_h = renderViewport.y / 480.0f;
+
+				sidebarWidth =  (renderViewport.x - dc2s_scale_h * 640.0f * screen_stretching) / 2;
+				x_coef = 2.0f / (renderViewport.x / dc2s_scale_h * scale_x) * screen_stretching;
+				y_coef = 2.0f / dcViewport.y * (invertY ? -1 : 1);
 			}
+			trans_rot = glm::translate(glm::vec3(-1 + 2 * sidebarWidth / renderViewport.x, invertY ? 1 : -1, 0));
+
 			normalMatrix = trans_rot
 				* glm::scale(glm::vec3(x_coef, y_coef, 1.f))
 				* normalMatrix;
@@ -184,7 +162,7 @@ public:
 				* glm::scale(glm::vec3(x_coef * scissoring_scale_x, y_coef * scissoring_scale_y, 1.f))
 				* scissorMatrix;
 		}
-		normalMatrix = glm::scale(glm::vec3(1, 1, 1 / settings.rend.ExtraDepthScale))
+		normalMatrix = glm::scale(glm::vec3(1, 1, 1 / config::ExtraDepthScale))
 				* normalMatrix;
 
 		glm::mat4 vp_trans = glm::translate(glm::vec3(1, 1, 0));
@@ -195,8 +173,7 @@ public:
 		}
 		else
 		{
-			float screen_scaling = settings.rend.ScreenScaling / 100.f;
-			vp_trans = glm::scale(glm::vec3(screen_width * screen_scaling / 2, screen_height * screen_scaling / 2, 1.f))
+			vp_trans = glm::scale(glm::vec3(renderViewport.x / 2, renderViewport.y / 2, 1.f))
 				* vp_trans;
 		}
 		viewportMatrix = vp_trans * normalMatrix;
@@ -244,6 +221,7 @@ private:
 	glm::mat4 scissorMatrix;
 	glm::mat4 viewportMatrix;
 	glm::vec2 dcViewport;
+	glm::vec2 renderViewport;
 	float scale_x = 0;
 	float scale_y = 0;
 	float sidebarWidth = 0;

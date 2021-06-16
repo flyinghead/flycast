@@ -30,7 +30,7 @@
 class BaseVulkanRenderer : public Renderer
 {
 public:
-	virtual bool Init() override
+	bool Init() override
 	{
 		texCommandPool.Init();
 
@@ -46,9 +46,12 @@ public:
 			vjoyTexture->tsp.full = 0;
 			vjoyTexture->SetPhysicalDevice(GetContext()->GetPhysicalDevice());
 			vjoyTexture->SetDevice(GetContext()->GetDevice());
-			vjoyTexture->SetCommandBuffer(texCommandPool.Allocate());
+			vk::CommandBuffer cmdBuffer = texCommandPool.Allocate();
+			cmdBuffer.begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));
+			vjoyTexture->SetCommandBuffer(cmdBuffer);
 			vjoyTexture->UploadToGPU(OSD_TEX_W, OSD_TEX_H, image_data, false);
 			vjoyTexture->SetCommandBuffer(nullptr);
+			cmdBuffer.end();
 			texCommandPool.EndFrame();
 			delete [] image_data;
 			osdPipeline.Init(&shaderManager, vjoyTexture->GetImageView(), GetContext()->GetRenderPass());
@@ -63,7 +66,7 @@ public:
 		return true;
 	}
 
-	virtual void Term() override
+	void Term() override
 	{
 		GetContext()->PresentFrame(nullptr, vk::Extent2D());
 		osdBuffer.reset();
@@ -75,7 +78,7 @@ public:
 		framebufferTextures.clear();
 	}
 
-	virtual u64 GetTexture(TSP tsp, TCW tcw) override
+	u64 GetTexture(TSP tsp, TCW tcw) override
 	{
 		Texture* tf = textureCache.getTextureCacheData(tsp, tcw);
 
@@ -92,13 +95,13 @@ public:
 			// This kills performance when a frame is skipped and lots of texture updated each frame
 			//if (textureCache.IsInFlight(tf))
 			//	textureCache.DestroyLater(tf);
-			tf->SetCommandBuffer(texCommandPool.Allocate());
+			tf->SetCommandBuffer(texCommandBuffer);
 			tf->Update();
 		}
 		else if (tf->IsCustomTextureAvailable())
 		{
 			textureCache.DestroyLater(tf);
-			tf->SetCommandBuffer(texCommandPool.Allocate());
+			tf->SetCommandBuffer(texCommandBuffer);
 			tf->CheckCustomTexture();
 		}
 		tf->SetCommandBuffer(nullptr);
@@ -107,7 +110,7 @@ public:
 		return tf->GetIntId();
 	}
 
-	virtual bool Process(TA_context* ctx) override
+	bool Process(TA_context* ctx) override
 	{
 		if (KillTex)
 			textureCache.Clear();
@@ -116,8 +119,10 @@ public:
 		textureCache.SetCurrentIndex(texCommandPool.GetIndex());
 		textureCache.Cleanup();
 
-		bool result;
+		texCommandBuffer = texCommandPool.Allocate();
+		texCommandBuffer.begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));
 
+		bool result;
 		if (ctx->rend.isRenderFramebuffer)
 			result = RenderFramebuffer(ctx);
 		else
@@ -127,14 +132,26 @@ public:
 		{
 			CheckFogTexture();
 			CheckPaletteTexture();
+			texCommandBuffer.end();
 		}
 		else
+		{
+			texCommandBuffer.end();
 			texCommandPool.EndFrame();
+		}
 
 		return result;
 	}
 
 	void Resize(int w, int h) override
+	{
+		if ((u32)w == viewport.width && (u32)h == viewport.height)
+			return;
+		viewport.width = w;
+		viewport.height = h;
+	}
+
+	void ReInitOSD()
 	{
 		texCommandPool.Init();
 #ifdef __ANDROID__
@@ -152,6 +169,7 @@ public:
 			{
 				GetContext()->NewFrame();
 				GetContext()->BeginRenderPass();
+				GetContext()->PresentLastFrame();
 			}
 			const float dc2s_scale_h = screen_height / 480.0f;
 			const float sidebarWidth =  (screen_width - dc2s_scale_h * 640.0f) / 2;
@@ -187,6 +205,8 @@ public:
 	}
 
 protected:
+	BaseVulkanRenderer() : viewport(640, 480) {}
+
 	VulkanContext *GetContext() const { return VulkanContext::Instance(); }
 
 	bool RenderFramebuffer(TA_context* ctx)
@@ -211,7 +231,7 @@ protected:
 			curTexture->SetPhysicalDevice(GetContext()->GetPhysicalDevice());
 			curTexture->SetDevice(GetContext()->GetDevice());
 		}
-		curTexture->SetCommandBuffer(texCommandPool.Allocate());
+		curTexture->SetCommandBuffer(texCommandBuffer);
 		curTexture->UploadToGPU(width, height, (u8*)pb.data(), false);
 		curTexture->SetCommandBuffer(nullptr);
 
@@ -288,12 +308,12 @@ protected:
 			fogTexture->tex_type = TextureType::_8;
 			fog_needs_update = true;
 		}
-		if (!fog_needs_update || !settings.rend.Fog)
+		if (!fog_needs_update || !config::Fog)
 			return;
 		fog_needs_update = false;
 		u8 texData[256];
 		MakeFogTexture(texData);
-		fogTexture->SetCommandBuffer(texCommandPool.Allocate());
+		fogTexture->SetCommandBuffer(texCommandBuffer);
 
 		fogTexture->UploadToGPU(128, 2, texData, false);
 
@@ -314,7 +334,7 @@ protected:
 			return;
 		palette_updated = false;
 
-		paletteTexture->SetCommandBuffer(texCommandPool.Allocate());
+		paletteTexture->SetCommandBuffer(texCommandBuffer);
 
 		paletteTexture->UploadToGPU(1024, 1, (u8 *)palette32_ram, false);
 
@@ -330,5 +350,6 @@ protected:
 	std::unique_ptr<Texture> vjoyTexture;
 	std::unique_ptr<BufferData> osdBuffer;
 	TextureCache textureCache;
+	vk::Extent2D viewport;
+	vk::CommandBuffer texCommandBuffer;
 };
-

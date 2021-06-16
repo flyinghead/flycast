@@ -566,11 +566,13 @@ protected:
 			}
 			else
 			{
-				//special case
-				//We want to take in account the 'unordered' case on the fpu
-				lahf();
-				test(ah, 0x44);
-				setnp(al);
+#ifdef __FAST_MATH__
+				sete(al);
+#else
+				mov(edx, 0);
+				setnp(al);	// Parity means unordered (NaN), ZF is set too
+				cmovne(eax, edx);
+#endif
 			}
 			movzx(mapRegister(op.rd), al);
 			break;
@@ -607,17 +609,22 @@ protected:
 		case shop_cvt_f2i_t:
 			{
 				Xbyak::Reg32 rd = mapRegister(op.rd);
-				cvttss2si(rd, mapXRegister(op.rs1));
-				mov(eax, 0x7fffffff);
-				cmp(rd, 0x7fffff80);	// 2147483520.0f
-				cmovge(rd, eax);
-				cmp(rd, 0x80000000);	// indefinite integer
-				Xbyak::Label done;
-				jne(done, T_SHORT);
-				movd(ecx, mapXRegister(op.rs1));
-				cmp(ecx, 0);
-				cmovge(rd, eax);		// restore the correct sign
-				L(done);
+		        Xbyak::Label done;
+
+		        cvttss2si(edx, mapXRegister(op.rs1));
+		        mov(rd, 0x7fffffff);
+		        cmp(edx, 0x7fffff80);
+		        jg(done, T_SHORT);
+		        mov(rd, edx);
+		        cmp(rd, 0x80000000);	// indefinite integer
+		        jne(done, T_SHORT);
+		        xor_(eax, eax);
+		        pxor(xmm0, xmm0);
+		        ucomiss(mapXRegister(op.rs1), xmm0);
+		        setb(al);
+		        add(eax, 0x7fffffff);
+		        mov(rd, eax);
+		        L(done);
 			}
 			break;
 		case shop_cvt_i2f_n:

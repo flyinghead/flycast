@@ -1,6 +1,25 @@
 #pragma once
 #include "types.h"
 
+enum MapleDeviceType
+{
+	MDT_SegaController,
+
+	MDT_SegaVMU,
+	MDT_Microphone,
+	MDT_PurupuruPack,
+	MDT_AsciiStick,
+	MDT_Keyboard,
+	MDT_Mouse,
+	MDT_LightGun,
+	MDT_TwinStick,
+
+	MDT_NaomiJamma,
+
+	MDT_None,
+	MDT_Count
+};
+
 enum PlainJoystickAxisId
 {
 	PJAI_X1 = 0,
@@ -42,7 +61,7 @@ public:
 	void SetVibration(float power, float inclination, u32 duration_ms);
 	void GetInput(PlainJoystickState* pjs);
 	void GetAbsCoordinates(int& x, int& y);
-	void GetMouseInput(u32& buttons, int& x, int& y, int& wheel);
+	void GetMouseInput(u8& buttons, int& x, int& y, int& wheel);
 	void SetImage(u8 *img);
 
 private:

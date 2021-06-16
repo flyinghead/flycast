@@ -4,10 +4,11 @@ RZDCY_SRC_DIR ?= $(call my-dir)
 VERSION_HEADER := $(RZDCY_SRC_DIR)/version.h
 
 RZDCY_MODULES	:=	cfg/ hw/arm7/ hw/aica/ hw/holly/ hw/ hw/gdrom/ hw/maple/ \
- hw/mem/ hw/pvr/ hw/sh4/ hw/sh4/interpr/ hw/sh4/modules/ plugins/ profiler/ oslib/ \
- hw/extdev/ hw/arm/ hw/naomi/ imgread/ ./ deps/zlib/ deps/chdr/ deps/crypto/ \
- deps/libelf/ deps/chdpsr/ arm_emitter/ rend/ reios/ deps/xbrz/ \
- deps/imgui/ archive/ input/ log/ wsi/ network/ hw/bba/
+ hw/mem/ hw/pvr/ hw/sh4/ hw/sh4/interpr/ hw/sh4/modules/ profiler/ oslib/ \
+ hw/naomi/ imgread/ ./ deps/libchdr/src/ deps/libchdr/deps/zlib-1.2.11/ \
+ deps/libelf/ deps/chdpsr/ rend/ reios/ deps/xbrz/ \
+ deps/imgui/ archive/ input/ log/ wsi/ network/ hw/bba/ debug/ \
+ hw/modem/ deps/picotcp/modules/ deps/picotcp/stack/
 
 RZDCY_MODULES += gdxsv/ \
  deps/protobuf-3.13.0/src/google/protobuf/ \
@@ -16,24 +17,26 @@ RZDCY_MODULES += gdxsv/ \
  deps/protobuf-3.13.0/src/google/protobuf/util/ \
  deps/protobuf-3.13.0/src/google/protobuf/util/internal/
 
-ifndef NOT_ARM
-    RZDCY_MODULES += rec-ARM/
-endif
-
-ifdef X86_REC
-    RZDCY_MODULES += rec-x86/
-endif
-
-ifdef X64_REC
-    RZDCY_MODULES += rec-x64/
-endif
-
-ifdef CPP_REC
-    RZDCY_MODULES += rec-cpp/
-endif
-
-ifdef ARM64_REC
-    RZDCY_MODULES += rec-ARM64/ deps/vixl/ deps/vixl/aarch64/
+ifndef NO_REC
+	ifndef NOT_ARM
+	    RZDCY_MODULES += rec-ARM/ deps/vixl/ deps/vixl/aarch32/
+	endif
+	
+	ifdef X86_REC
+	    RZDCY_MODULES += rec-x86/
+	endif
+	
+	ifdef X64_REC
+	    RZDCY_MODULES += rec-x64/
+	endif
+	
+	ifdef CPP_REC
+	    RZDCY_MODULES += rec-cpp/
+	endif
+	
+	ifdef ARM64_REC
+	    RZDCY_MODULES += rec-ARM64/ deps/vixl/ deps/vixl/aarch64/
+	endif
 endif
 
 ifndef NO_REND
@@ -60,10 +63,6 @@ else
     RZDCY_MODULES += rend/norend/
 endif
 
-ifdef FOR_ANDROID
-    RZDCY_MODULES += android/ deps/libandroid/ linux/
-endif
-
 ifdef USE_SDL
     RZDCY_MODULES += sdl/
 endif
@@ -83,53 +82,24 @@ ifdef FOR_WINDOWS
     RZDCY_CFLAGS += -I$(RZDCY_SRC_DIR)/deps/dirent
 endif
 
-ifdef FOR_PANDORA
-RZDCY_CFLAGS	+= \
-	$(CFLAGS) -c -O3 \
-	-DNDEBUG -DPANDORA\
-	-march=armv7-a -mtune=cortex-a8 -mfpu=neon -mfloat-abi=softfp \
-	-frename-registers -fsingle-precision-constant -ffast-math \
-	-ftree-vectorize -fomit-frame-pointer
-	RZDCY_CFLAGS += -march=armv7-a -mtune=cortex-a8 -mfpu=neon
-else
-	ifdef FOR_ANDROID
-RZDCY_CFLAGS	+= \
-		$(CFLAGS) -c -O3 \
-		-D_ANDROID -DNDEBUG \
-		-frename-registers -fsingle-precision-constant -ffast-math \
-		-ftree-vectorize -fomit-frame-pointer
-
-		ifndef NOT_ARM
-			RZDCY_CFLAGS += -march=armv7-a -mtune=cortex-a9 -mfpu=vfpv3-d16
-		else
-			ifdef ISARM64
-				RZDCY_CFLAGS += -march=armv8-a
-			endif
-		endif
-	endif
-endif
-
 ifdef USE_VULKAN
 	ifdef FOR_WINDOWS
 		RZDCY_CFLAGS += -DVK_USE_PLATFORM_WIN32_KHR
 	else
-		ifdef FOR_ANDROID
-			RZDCY_CFLAGS += -DVK_USE_PLATFORM_ANDROID_KHR
-		else
-			RZDCY_CFLAGS += -DVK_USE_PLATFORM_XLIB_KHR
-		endif
+		RZDCY_CFLAGS += -DVK_USE_PLATFORM_XLIB_KHR
 	endif
 	RZDCY_CFLAGS += -D USE_VULKAN
 endif
 
 RZDCY_CFLAGS += -I$(RZDCY_SRC_DIR) -I$(RZDCY_SRC_DIR)/rend/gles -I$(RZDCY_SRC_DIR)/deps \
 		 -I$(RZDCY_SRC_DIR)/deps/vixl -I$(RZDCY_SRC_DIR)/khronos -I$(RZDCY_SRC_DIR)/deps/glslang \
-		 -I$(RZDCY_SRC_DIR)/deps/glm -I$(RZDCY_SRC_DIR)/deps/xbyak -I$(RZDCY_SRC_DIR)/deps/nowide/include
+		 -I$(RZDCY_SRC_DIR)/deps/glm -I$(RZDCY_SRC_DIR)/deps/xbyak -I$(RZDCY_SRC_DIR)/deps/nowide/include \
+		 -I$(RZDCY_SRC_DIR)/deps/picotcp/include -I$(RZDCY_SRC_DIR)/deps/picotcp/modules \
+		 -I$(RZDCY_SRC_DIR)/deps/libchdr/include -I$(RZDCY_SRC_DIR)/deps/libchdr/deps/zlib-1.2.11/ \
+		 -I$(RZDCY_SRC_DIR)/deps/libchdr/deps/lzma-19.00 -I$(RZDCY_SRC_DIR)/deps/libchdr/deps/lzma-19.00/include
 
 RZDCY_CFLAGS += -I$(RZDCY_SRC_DIR)/deps/protobuf-3.13.0/src
 
-RZDCY_CFLAGS += -I$(RZDCY_SRC_DIR)/deps/picotcp/include -I$(RZDCY_SRC_DIR)/deps/picotcp/modules
-RZDCY_MODULES += hw/modem/ deps/picotcp/modules/ deps/picotcp/stack/
 ifdef USE_SYSTEM_MINIUPNPC
 	RZDCY_CFLAGS += -I/usr/include/miniupnpc
 else
@@ -158,7 +128,6 @@ ifdef CHD5_LZMA
 	RZDCY_CFLAGS += -D_7ZIP_ST -DCHD5_LZMA
 endif
 
-RZDCY_CFLAGS += -DZ_HAVE_UNISTD_H -I$(RZDCY_SRC_DIR)/deps/zlib
 RZDCY_CFLAGS += -DXXH_INLINE_ALL -I$(RZDCY_SRC_DIR)/deps/xxHash -I$(RZDCY_SRC_DIR)/deps/stb
 
 RZDCY_CXXFLAGS := $(RZDCY_CFLAGS) -fno-rtti -std=c++14
@@ -296,6 +265,6 @@ RZDCY_FILES += $(LIBZIP_DIR)/zip_add.c \
 endif
 
 $(VERSION_HEADER):
-	echo "#define REICAST_VERSION \"`git describe --tags --always | sed -e 's/-/+/'`\"" > $(VERSION_HEADER)
+	echo "#define GIT_VERSION \"`git describe --tags --always | sed -e 's/-/+/'`\"" > $(VERSION_HEADER)
 	echo "#define GIT_HASH \"`git rev-parse --short HEAD`\"" >> $(VERSION_HEADER)
 	echo "#define BUILD_DATE \"`date '+%Y-%m-%d %H:%M:%S %Z'`\"" >> $(VERSION_HEADER)

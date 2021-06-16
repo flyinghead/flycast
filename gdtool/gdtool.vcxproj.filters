@@ -120,9 +120,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\core\imgread\SCSIDEFS.H">
-      <Filter>imgread</Filter>
-    </ClInclude>
     <ClInclude Include="..\core\imgread\common.h">
       <Filter>imgread</Filter>
     </ClInclude>

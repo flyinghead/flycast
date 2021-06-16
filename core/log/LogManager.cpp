@@ -218,7 +218,8 @@ void LogManager::SetEnable(LogTypes::LOG_TYPE type, bool enable)
 
 bool LogManager::IsEnabled(LogTypes::LOG_TYPE type, LogTypes::LOG_LEVELS level) const
 {
-	return m_log[type].m_enable && GetLogLevel() >= level;
+	return level <= LogTypes::LOG_LEVELS::LWARNING
+			|| (m_log[type].m_enable && GetLogLevel() >= level);
 }
 
 const char* LogManager::GetShortName(LogTypes::LOG_TYPE type) const

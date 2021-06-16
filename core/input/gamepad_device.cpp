@@ -40,7 +40,6 @@ u8 lt[4];
 
 std::vector<std::shared_ptr<GamepadDevice>> GamepadDevice::_gamepads;
 std::mutex GamepadDevice::_gamepads_mutex;
-bool fast_forward_mode;
 
 #ifdef TEST_AUTOMATION
 #include "hw/sh4/sh4_sched.h"
@@ -121,7 +120,7 @@ bool GamepadDevice::gamepad_btn_input(u32 code, bool pressed)
 				break;
 			case EMU_BTN_FFORWARD:
                 if (pressed && !gdxsv.InGame())
-					fast_forward_mode = !fast_forward_mode;
+					settings.input.fastForwardMode = !settings.input.fastForwardMode;
 				break;
 			case EMU_BTN_TRIGGER_LEFT:
 				lt[port] = pressed ? 255 : 0;
@@ -403,10 +402,10 @@ static FILE *get_record_input(bool write)
 }
 #endif
 
-void GamepadDevice::Register(std::shared_ptr<GamepadDevice> gamepad)
+void GamepadDevice::Register(const std::shared_ptr<GamepadDevice>& gamepad)
 {
 	int maple_port = cfgLoadInt("input",
-			(MAPLE_PORT_CFG_PREFIX + gamepad->unique_id()).c_str(), 12345);
+			MAPLE_PORT_CFG_PREFIX + gamepad->unique_id(), 12345);
 	if (maple_port != 12345)
 		gamepad->set_maple_port(maple_port);
 #ifdef TEST_AUTOMATION
@@ -422,7 +421,7 @@ void GamepadDevice::Register(std::shared_ptr<GamepadDevice> gamepad)
 	_gamepads_mutex.unlock();
 }
 
-void GamepadDevice::Unregister(std::shared_ptr<GamepadDevice> gamepad)
+void GamepadDevice::Unregister(const std::shared_ptr<GamepadDevice>& gamepad)
 {
 	gamepad->save_mapping();
 	_gamepads_mutex.lock();
@@ -440,11 +439,12 @@ void GamepadDevice::SaveMaplePorts()
 	{
 		std::shared_ptr<GamepadDevice> gamepad = GamepadDevice::GetGamepad(i);
 		if (gamepad != NULL && !gamepad->unique_id().empty())
-			cfgSaveInt("input", (MAPLE_PORT_CFG_PREFIX + gamepad->unique_id()).c_str(), gamepad->maple_port());
+			cfgSaveInt("input", MAPLE_PORT_CFG_PREFIX + gamepad->unique_id(), gamepad->maple_port());
 	}
 }
 
 #ifdef TEST_AUTOMATION
+#include "cfg/option.h"
 static bool replay_inited;
 FILE *replay_file;
 u64 next_event;
@@ -460,10 +460,10 @@ void replay_input()
 		replay_inited = true;
 	}
 	u64 now = sh4_sched_now64();
-	if (settings.bios.UseReios)
+	if (config::UseReios)
 	{
 		// Account for the swirl time
-		if (settings.dreamcast.broadcast == 0)
+		if (config::Broadcast == 0)
 			now = std::max((int64_t)now - 2152626532L, 0L);
 		else
 			now = std::max((int64_t)now - 2191059108L, 0L);

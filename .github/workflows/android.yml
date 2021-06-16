@@ -13,21 +13,41 @@ jobs:
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0
+          submodules: recursive
 
-      - run: git fetch origin +refs/tags/*:refs/tags/*
-
-      - uses: actions/cache@v1
+      - uses: actions/cache@v2
         with:
-          path: ~/.gradle/caches
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*') }}
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
           restore-keys: |
             ${{ runner.os }}-gradle-
 
       - name: Gradle
         working-directory: shell/android-studio
-        run: ./gradlew assembleDreamcastDebug --parallel
+        run: ./gradlew assembleDebug --parallel
 
       - uses: actions/upload-artifact@v2
         with:
-          name: reicast-dreamcast-debug.apk
-          path: shell/android-studio/reicast/build/outputs/apk/dreamcast/debug/reicast-dreamcast-debug.apk
+          name: flycast-debug.apk
+          path: shell/android-studio/flycast/build/outputs/apk/debug/flycast-debug.apk
+
+      - name: Set up git vars
+        run: |
+          echo GIT_BUILD=`git describe --all --always | sed 's/remotes\/origin/heads/'`-$GITHUB_SHA >> $GITHUB_ENV
+
+      - name: Clean up
+        run: rm -f shell/android-studio/flycast/build/outputs/apk/debug/*.json
+
+      - uses: jakejarvis/s3-sync-action@master
+        with:
+          args: --acl public-read --follow-symlinks
+        env:
+          AWS_S3_BUCKET: flycast-builds
+          AWS_ACCESS_KEY_ID: AKIAJOZQS4H2PHQWYFCA
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.S3_SECRET_KEY }}
+          AWS_REGION: 'us-east-2'
+          SOURCE_DIR: 'shell/android-studio/flycast/build/outputs/apk/debug/'
+          DEST_DIR: android/${{ env.GIT_BUILD }}
+        if: ${{ github.repository == 'flyinghead/flycast' && github.event_name == 'push' }}

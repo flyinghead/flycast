@@ -3,7 +3,6 @@
 #include "deps/xbrz/xbrz.h"
 #include "hw/pvr/pvr_mem.h"
 #include "hw/mem/_vmem.h"
-#include "hw/mem/vmem32.h"
 #include "hw/sh4/modules/mmu.h"
 
 #include <algorithm>
@@ -133,7 +132,6 @@ void palette_update()
 }
 
 static std::vector<vram_block*> VramLocks[VRAM_SIZE_MAX / PAGE_SIZE];
-VArray2 vram;  // vram 32-64b
 
 //List functions
 //
@@ -174,7 +172,7 @@ void vramlock_list_add(vram_block* block)
  
 std::mutex vramlist_lock;
 
-vram_block* libCore_vramlock_Lock(u32 start_offset64,u32 end_offset64,void* userdata)
+void libCore_vramlock_Lock(u32 start_offset64, u32 end_offset64, BaseTextureCacheData *texture)
 {
 	vram_block* block=(vram_block* )malloc(sizeof(vram_block));
  
@@ -195,17 +193,21 @@ vram_block* libCore_vramlock_Lock(u32 start_offset64,u32 end_offset64,void* user
 	block->end=end_offset64;
 	block->start=start_offset64;
 	block->len=end_offset64-start_offset64+1;
-	block->userdata=userdata;
+	block->userdata = texture;
 	block->type=64;
 
 	{
 		std::lock_guard<std::mutex> lock(vramlist_lock);
 
-		// This also protects vram if needed
-		vramlock_list_add(block);
+		if (texture->lock_block == nullptr)
+		{
+			// This also protects vram if needed
+			vramlock_list_add(block);
+			texture->lock_block = block;
+		}
+		else
+			free(block);
 	}
-
-	return block;
 }
 
 bool VramLockedWriteOffset(size_t offset)
@@ -217,7 +219,7 @@ bool VramLockedWriteOffset(size_t offset)
 	std::vector<vram_block *>& list = VramLocks[addr_hash];
 
 	{
-		std::lock_guard<std::mutex> lock(vramlist_lock);
+		std::lock_guard<std::mutex> lockguard(vramlist_lock);
 
 		for (auto& lock : list)
 		{
@@ -252,8 +254,6 @@ bool VramLockedWrite(u8* address)
 //also frees the handle
 static void libCore_vramlock_Unlock_block_wb(vram_block* block)
 {
-	if (mmu_enabled())
-		vmem32_unprotect_vram(block->start, block->len);
 	vramlock_list_remove(block);
 	free(block);
 }
@@ -270,7 +270,7 @@ static inline int getThreadCount()
 	int tcount = omp_get_num_procs() - 1;
 	if (tcount < 1)
 		tcount = 1;
-	return std::min(tcount, (int)settings.pvr.MaxThreads);
+	return std::min(tcount, (int)config::MaxThreads);
 }
 
 template<typename Func>
@@ -563,7 +563,7 @@ void BaseTextureCacheData::Update()
 			return;
 		}
 	}
-	if (settings.rend.CustomTextures)
+	if (config::CustomTextures)
 		custom_texture.LoadCustomTextureAsync(this);
 
 	void *temp_tex_buffer = NULL;
@@ -575,9 +575,9 @@ void BaseTextureCacheData::Update()
 	PixelBuffer<u8> pb8;
 
 	// Figure out if we really need to use a 32-bit pixel buffer
-	bool textureUpscaling = settings.rend.TextureUpscale > 1
+	bool textureUpscaling = config::TextureUpscale > 1
 			// Don't process textures that are too big
-			&& (int)(w * h) <= settings.rend.MaxFilteredTextureSize * settings.rend.MaxFilteredTextureSize
+			&& (int)(w * h) <= config::MaxFilteredTextureSize * config::MaxFilteredTextureSize
 			// Don't process YUV textures
 			&& tcw.PixelFmt != PixelYUV;
 	bool need_32bit_buffer = true;
@@ -588,7 +588,7 @@ void BaseTextureCacheData::Update()
 		need_32bit_buffer = false;
 	// TODO avoid upscaling/depost. textures that change too often
 
-	bool mipmapped = IsMipmapped() && !settings.rend.DumpTextures;
+	bool mipmapped = IsMipmapped() && !config::DumpTextures;
 
 	if (texconv32 != NULL && need_32bit_buffer)
 	{
@@ -636,15 +636,15 @@ void BaseTextureCacheData::Update()
 			if (textureUpscaling)
 			{
 				PixelBuffer<u32> tmp_buf;
-				tmp_buf.init(w * settings.rend.TextureUpscale, h * settings.rend.TextureUpscale);
+				tmp_buf.init(w * config::TextureUpscale, h * config::TextureUpscale);
 
 				if (tcw.PixelFmt == Pixel1555 || tcw.PixelFmt == Pixel4444)
 					// Alpha channel formats. Palettes with alpha are already handled
 					has_alpha = true;
-				UpscalexBRZ(settings.rend.TextureUpscale, pb32.data(), tmp_buf.data(), w, h, has_alpha);
+				UpscalexBRZ(config::TextureUpscale, pb32.data(), tmp_buf.data(), w, h, has_alpha);
 				pb32.steal_data(tmp_buf);
-				upscaled_w *= settings.rend.TextureUpscale;
-				upscaled_h *= settings.rend.TextureUpscale;
+				upscaled_w *= config::TextureUpscale;
+				upscaled_h *= config::TextureUpscale;
 			}
 		}
 		temp_tex_buffer = pb32.data();
@@ -716,11 +716,10 @@ void BaseTextureCacheData::Update()
 	h = original_h;
 
 	//lock the texture to detect changes in it
-	if (lock_block == nullptr)
-		lock_block = libCore_vramlock_Lock(sa_tex,sa+size-1,this);
+	libCore_vramlock_Lock(sa_tex, sa + size - 1, this);
 
 	UploadToGPU(upscaled_w, upscaled_h, (u8*)temp_tex_buffer, IsMipmapped(), mipmapped);
-	if (settings.rend.DumpTextures)
+	if (config::DumpTextures)
 	{
 		ComputeHash();
 		custom_texture.DumpTexture(texture_hash, upscaled_w, upscaled_h, tex_type, temp_tex_buffer);
@@ -794,7 +793,7 @@ void ReadFramebuffer(PixelBuffer<u32>& pb, int& width, int& height)
 			{
 				for (int i = 0; i < width; i++)
 				{
-					u16 src = pvr_read_area1<u16>(addr);
+					u16 src = pvr_read32p<u16>(addr);
 					*dst++ = (((src >> 10) & 0x1F) << 3) + FB_R_CTRL.fb_concat;
 					*dst++ = (((src >> 5) & 0x1F) << 3) + FB_R_CTRL.fb_concat;
 					*dst++ = (((src >> 0) & 0x1F) << 3) + FB_R_CTRL.fb_concat;
@@ -810,7 +809,7 @@ void ReadFramebuffer(PixelBuffer<u32>& pb, int& width, int& height)
 			{
 				for (int i = 0; i < width; i++)
 				{
-					u16 src = pvr_read_area1<u16>(addr);
+					u16 src = pvr_read32p<u16>(addr);
 					*dst++ = (((src >> 11) & 0x1F) << 3) + FB_R_CTRL.fb_concat;
 					*dst++ = (((src >> 5) & 0x3F) << 2) + (FB_R_CTRL.fb_concat & 3);
 					*dst++ = (((src >> 0) & 0x1F) << 3) + FB_R_CTRL.fb_concat;
@@ -825,7 +824,7 @@ void ReadFramebuffer(PixelBuffer<u32>& pb, int& width, int& height)
 			{
 				for (int i = 0; i < width; i += 4)
 				{
-					u32 src = pvr_read_area1<u32>(addr);
+					u32 src = pvr_read32p<u32>(addr);
 					*dst++ = src >> 16;
 					*dst++ = src >> 8;
 					*dst++ = src;
@@ -833,7 +832,7 @@ void ReadFramebuffer(PixelBuffer<u32>& pb, int& width, int& height)
 					addr += 4;
 					if (i + 1 >= width)
 						break;
-					u32 src2 = pvr_read_area1<u32>(addr);
+					u32 src2 = pvr_read32p<u32>(addr);
 					*dst++ = src2 >> 8;
 					*dst++ = src2;
 					*dst++ = src >> 24;
@@ -841,7 +840,7 @@ void ReadFramebuffer(PixelBuffer<u32>& pb, int& width, int& height)
 					addr += 4;
 					if (i + 2 >= width)
 						break;
-					u32 src3 = pvr_read_area1<u32>(addr);
+					u32 src3 = pvr_read32p<u32>(addr);
 					*dst++ = src3;
 					*dst++ = src2 >> 24;
 					*dst++ = src2 >> 16;
@@ -862,7 +861,7 @@ void ReadFramebuffer(PixelBuffer<u32>& pb, int& width, int& height)
 			{
 				for (int i = 0; i < width; i++)
 				{
-					u32 src = pvr_read_area1<u32>(addr);
+					u32 src = pvr_read32p<u32>(addr);
 					*dst++ = src >> 16;
 					*dst++ = src >> 8;
 					*dst++ = src;
@@ -875,23 +874,24 @@ void ReadFramebuffer(PixelBuffer<u32>& pb, int& width, int& height)
 	}
 }
 
-void WriteTextureToVRam(u32 width, u32 height, u8 *data, u16 *dst)
+void WriteTextureToVRam(u32 width, u32 height, u8 *data, u16 *dst, u32 fb_w_ctrl_in, u32 linestride)
 {
-	u32 stride = FB_W_LINESTRIDE.stride * 8;
-	if (stride == 0)
-		stride = width * 2;
-	else if (width * 2 > stride) {
-    	// Happens for Virtua Tennis
-		width = stride / 2;
-    }
+	FB_W_CTRL_type fb_w_ctrl;
+	if (fb_w_ctrl_in != ~0u)
+		fb_w_ctrl.full = fb_w_ctrl_in;
+	else
+		fb_w_ctrl = FB_W_CTRL;
+	u32 padding = (linestride == ~0u ? FB_W_LINESTRIDE.stride * 8 : linestride);
+	if (padding != 0)
+		padding = padding / 2 - width;
 
-	const u16 kval_bit = (FB_W_CTRL.fb_kval & 0x80) << 8;
-	const u8 fb_alpha_threshold = FB_W_CTRL.fb_alpha_threshold;
+	const u16 kval_bit = (fb_w_ctrl.fb_kval & 0x80) << 8;
+	const u8 fb_alpha_threshold = fb_w_ctrl.fb_alpha_threshold;
 
 	u8 *p = data;
 
 	for (u32 l = 0; l < height; l++) {
-		switch(FB_W_CTRL.fb_packmode)
+		switch(fb_w_ctrl.fb_packmode)
 		{
 		case 0: //0x0   0555 KRGB 16 bit  (default)	Bit 15 is the value of fb_kval[7].
 			for (u32 c = 0; c < width; c++) {
@@ -918,7 +918,7 @@ void WriteTextureToVRam(u32 width, u32 height, u8 *data, u16 *dst)
 			}
 			break;
 		}
-		dst += (stride - width * 2) / 2;
+		dst += padding;
 	}
 }
 
@@ -940,4 +940,3 @@ void dump_screenshot(u8 *buffer, u32 width, u32 height, bool alpha, u32 rowPitch
 	stbi_write_png("screenshot.png", width, height, alpha ? 4 : 3, buffer, rowPitch);
 }
 #endif
-

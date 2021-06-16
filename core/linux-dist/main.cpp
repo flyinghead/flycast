@@ -1,6 +1,6 @@
 #include "types.h"
 
-#if HOST_OS==OS_LINUX
+#if defined(__unix__)
 #include "hw/sh4/dyna/blockmanager.h"
 #include "log/LogManager.h"
 #include "emulator.h"
@@ -242,6 +242,22 @@ std::string find_user_data_dir()
 	return ".";
 }
 
+static void addDirectoriesFromPath(std::vector<std::string>& dirs, const std::string& path, const std::string& suffix)
+{
+	std::string::size_type pos = 0;
+	std::string::size_type n = path.find(':', pos);
+	while (n != std::string::npos)
+	{
+		if (n != pos)
+			dirs.push_back(path.substr(pos, n - pos) + suffix);
+		pos = n + 1;
+		n = path.find(':', pos);
+	}
+	// Separator not found
+	if (pos < path.length())
+		dirs.push_back(path.substr(pos) + suffix);
+}
+
 // Find a file in the user and system config directories.
 // The following folders are checked in this order:
 // $HOME/.reicast
@@ -277,20 +293,9 @@ std::vector<std::string> find_system_config_dirs()
 
 	if (nowide::getenv("XDG_CONFIG_DIRS") != NULL)
 	{
-		std::string s = (std::string)nowide::getenv("XDG_CONFIG_DIRS");
-
-		std::string::size_type pos = 0;
-		std::string::size_type n = s.find(':', pos);
-		while(n != std::string::npos)
-		{
-			dirs.push_back(s.substr(pos, n-pos) + "/flycast/");
-			dirs.push_back(s.substr(pos, n-pos) + "/reicast/");
-			pos = n + 1;
-			n = s.find(':', pos);
-		}
-		// Separator not found
-		dirs.push_back(s.substr(pos) + "/flycast/");
-		dirs.push_back(s.substr(pos) + "/reicast/");
+		std::string path = (std::string)nowide::getenv("XDG_CONFIG_DIRS");
+		addDirectoriesFromPath(dirs, path, "/flycast/");
+		addDirectoriesFromPath(dirs, path, "/reicast/");
 	}
 	else
 	{
@@ -315,6 +320,8 @@ std::vector<std::string> find_system_config_dirs()
 //   /usr/share/flycast
 //   /usr/local/share/reicast
 //   /usr/share/reicast
+// <$FLYCAST_BIOS_PATH>
+// ./
 // ./data
 std::vector<std::string> find_system_data_dirs()
 {
@@ -340,20 +347,10 @@ std::vector<std::string> find_system_data_dirs()
 
 	if (nowide::getenv("XDG_DATA_DIRS") != NULL)
 	{
-		std::string s = (std::string)nowide::getenv("XDG_DATA_DIRS");
+		std::string path = (std::string)nowide::getenv("XDG_DATA_DIRS");
 
-		std::string::size_type pos = 0;
-		std::string::size_type n = s.find(':', pos);
-		while(n != std::string::npos)
-		{
-			dirs.push_back(s.substr(pos, n-pos) + "/flycast/");
-			dirs.push_back(s.substr(pos, n-pos) + "/reicast/");
-			pos = n + 1;
-			n = s.find(':', pos);
-		}
-		// Separator not found
-		dirs.push_back(s.substr(pos) + "/flycast/");
-		dirs.push_back(s.substr(pos) + "/reicast/");
+		addDirectoriesFromPath(dirs, path, "/flycast/");
+		addDirectoriesFromPath(dirs, path, "/reicast/");
 	}
 	else
 	{
@@ -361,6 +358,11 @@ std::vector<std::string> find_system_data_dirs()
 		dirs.push_back("/usr/share/flycast/");
 		dirs.push_back("/usr/local/share/reicast/");
 		dirs.push_back("/usr/share/reicast/");
+	}
+	if (nowide::getenv("FLYCAST_BIOS_PATH") != NULL)
+	{
+		std::string path = (std::string)nowide::getenv("FLYCAST_BIOS_PATH");
+		addDirectoriesFromPath(dirs, path, "/");
 	}
 	dirs.push_back("./");
 	dirs.push_back("data/");
@@ -392,10 +394,8 @@ int main(int argc, char* argv[])
 
 	common_linux_setup();
 
-	settings.profile.run_counts=0;
-
 	if (reicast_init(argc, argv))
-		die("Reicast initialization failed\n");
+		die("Flycast initialization failed\n");
 
 	mainui_loop();
 
@@ -421,6 +421,3 @@ void os_DebugBreak()
 {
 	raise(SIGTRAP);
 }
-
-
-

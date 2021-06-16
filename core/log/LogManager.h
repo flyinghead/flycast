@@ -14,7 +14,7 @@
 class LogListener
 {
 public:
-  virtual ~LogListener() {}
+  virtual ~LogListener() = default;
   virtual void Log(LogTypes::LOG_LEVELS, const char* msg) = 0;
 
   enum LISTENER
@@ -35,9 +35,9 @@ public:
   static void Shutdown();
 
   void Log(LogTypes::LOG_LEVELS level, LogTypes::LOG_TYPE type, const char* file, int line,
-           const char* fmt, va_list args);
+           const char* format, va_list args);
   void LogWithFullPath(LogTypes::LOG_LEVELS level, LogTypes::LOG_TYPE type, const char* file,
-                       int line, const char* fmt, va_list args);
+                       int line, const char* format, va_list args);
 
   LogTypes::LOG_LEVELS GetLogLevel() const;
   void SetLogLevel(LogTypes::LOG_LEVELS level);

@@ -121,7 +121,7 @@ inline static void InterruptMask(InterruptID intr, u32 v)
 
 int UpdateINTC();
 
-bool Do_Exception(u32 lvl, u32 expEvn, u32 CallVect);
+bool Do_Exception(u32 epc, u32 expEvn, u32 CallVect);
 
 bool SRdecode();
 void SIIDRebuild();

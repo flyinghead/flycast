@@ -1,13 +1,13 @@
 #include "types.h"
 #include <unordered_set>
 
-#include "../sh4_interpreter.h"
-#include "../sh4_opcode_list.h"
-#include "../sh4_core.h"
+#include "hw/sh4/sh4_interpreter.h"
+#include "hw/sh4/sh4_core.h"
 #include "hw/sh4/sh4_interrupts.h"
 
 #include "hw/sh4/sh4_mem.h"
 #include "hw/sh4/modules/mmu.h"
+#include "cfg/option.h"
 
 #include <ctime>
 #include <cfloat>
@@ -23,7 +23,7 @@
 u8 SH4_TCB[CODE_SIZE + TEMP_CODE_SIZE + 4096]
 #if defined(_WIN32) || FEAT_SHREC != DYNAREC_JIT
 	;
-#elif HOST_OS == OS_LINUX
+#elif defined(__unix__)
 	__attribute__((section(".text")));
 #elif defined(__APPLE__)
 	__attribute__((section("__TEXT,.text")));
@@ -42,6 +42,8 @@ u32* emit_ptr=0;
 u32* emit_ptr_limit;
 
 std::unordered_set<u32> smc_hotspots;
+
+static sh4_if sh4Interp;
 
 void* emit_GetCCPtr() { return emit_ptr==0?(void*)&CodeCache[LastAddr]:(void*)emit_ptr; }
 void emit_SetBaseAddr() { LastAddr_min = LastAddr; }
@@ -67,13 +69,9 @@ static void recSh4_Run()
 	sh4_int_bCpuRun = true;
 	RestoreHostRoundingMode();
 
-	sh4_dyna_rcb=(u8*)&Sh4cntx + sizeof(Sh4cntx);
+	u8 *sh4_dyna_rcb = (u8 *)&Sh4cntx + sizeof(Sh4cntx);
 	INFO_LOG(DYNAREC, "cntx // fpcb offset: %td // pc offset: %td // pc %08X", (u8*)&sh4rcb.fpcb - sh4_dyna_rcb, (u8*)&sh4rcb.cntx.pc - sh4_dyna_rcb, sh4rcb.cntx.pc);
-
-	if (settings.dynarec.unstable_opt)
-		NOTICE_LOG(DYNAREC, "Warning: Unstable optimizations is on");
 	
-	verify(rcb_noffs(&next_pc)==-184);
 	ngen_mainloop(sh4_dyna_rcb);
 
 	sh4_int_bCpuRun = false;
@@ -149,8 +147,9 @@ bool RuntimeBlockInfo::Setup(u32 rpc,fpscr_t rfpu_cfg)
 	pBranchBlock=pNextBlock=0;
 	code=0;
 	has_jcond=false;
-	BranchBlock=NextBlock=csc_RetCache=0xFFFFFFFF;
-	BlockType=BET_SCL_Intr;
+	BranchBlock = NullAddress;
+	NextBlock = NullAddress;
+	BlockType = BET_SCL_Intr;
 	has_fpu_op = false;
 	temp_block = false;
 	
@@ -170,18 +169,14 @@ bool RuntimeBlockInfo::Setup(u32 rpc,fpscr_t rfpu_cfg)
 	
 	oplist.clear();
 
-#if !defined(NO_MMU)
 	try {
-#endif
 		if (!dec_DecodeBlock(this, SH4_TIMESLICE / 2))
 			return false;
-#if !defined(NO_MMU)
 	}
 	catch (SH4ThrownException& ex) {
 		Do_Exception(rpc, ex.expEvn, ex.callVect);
 		return false;
 	}
-#endif
 	SetProtectedFlags();
 
 	AnalyseBlock(this);
@@ -381,43 +376,27 @@ void* DYNACALL rdv_LinkBlock(u8* code,u32 dpc)
 }
 static void recSh4_Stop()
 {
-	Sh4_int_Stop();
-}
-
-static void recSh4_Start()
-{
-	Sh4_int_Start();
+	sh4Interp.Stop();
 }
 
 static void recSh4_Step()
 {
-	Sh4_int_Step();
-}
-
-static void recSh4_Skip()
-{
-	Sh4_int_Skip();
+	sh4Interp.Step();
 }
 
 static void recSh4_Reset(bool hard)
 {
-	Sh4_int_Reset(hard);
+	sh4Interp.Reset(hard);
 	recSh4_ClearCache();
-	bm_Reset();
 }
 
 static void recSh4_Init()
 {
 	INFO_LOG(DYNAREC, "recSh4 Init");
-	Sh4_int_Init();
+	Get_Sh4Interpreter(&sh4Interp);
+	sh4Interp.Init();
 	bm_Init();
 
-	verify(rcb_noffs(p_sh4rcb->fpcb) == FPCB_OFFSET);
-
-	verify(rcb_noffs(p_sh4rcb->sq_buffer) == -512);
-
-	verify(rcb_noffs(&p_sh4rcb->cntx.sh4_sched_next) == -152);
-	verify(rcb_noffs(&p_sh4rcb->cntx.interrupt_pend) == -148);
 	
 	if (_nvmem_enabled())
 	{
@@ -454,26 +433,24 @@ static void recSh4_Term()
 {
 	INFO_LOG(DYNAREC, "recSh4 Term");
 	bm_Term();
-	Sh4_int_Term();
+	sh4Interp.Term();
 }
 
 static bool recSh4_IsCpuRunning()
 {
-	return Sh4_int_IsCpuRunning();
+	return sh4Interp.IsCpuRunning();
 }
 
-void Get_Sh4Recompiler(sh4_if* rv)
+void Get_Sh4Recompiler(sh4_if* cpu)
 {
-	rv->Run = recSh4_Run;
-	rv->Stop = recSh4_Stop;
-	rv->Start = recSh4_Start;
-	rv->Step = recSh4_Step;
-	rv->Skip = recSh4_Skip;
-	rv->Reset = recSh4_Reset;
-	rv->Init = recSh4_Init;
-	rv->Term = recSh4_Term;
-	rv->IsCpuRunning = recSh4_IsCpuRunning;
-	rv->ResetCache = recSh4_ClearCache;
+	cpu->Run = recSh4_Run;
+	cpu->Stop = recSh4_Stop;
+	cpu->Step = recSh4_Step;
+	cpu->Reset = recSh4_Reset;
+	cpu->Init = recSh4_Init;
+	cpu->Term = recSh4_Term;
+	cpu->IsCpuRunning = recSh4_IsCpuRunning;
+	cpu->ResetCache = recSh4_ClearCache;
 }
 
 #endif  // FEAT_SHREC != DYNAREC_NONE

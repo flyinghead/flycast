@@ -55,14 +55,14 @@ public:
 		xhairDrawer.reset();
 	}
 
-	const std::vector<vk::UniqueCommandBuffer>* Prepare(vk::CommandPool commandPool, bool vmu, bool crosshair);
+	vk::CommandBuffer Prepare(vk::CommandPool commandPool, bool vmu, bool crosshair);
 	void Draw(vk::Extent2D viewport, float scaling, bool vmu, bool crosshair);
 
 private:
-	std::unique_ptr<Texture> createTexture(vk::CommandPool commandPool, int width, int height, u8 *data);
+	std::unique_ptr<Texture> createTexture(vk::CommandBuffer commandBuffer, int width, int height, u8 *data);
 
 	std::array<std::unique_ptr<Texture>, 8> vmuTextures;
-	std::vector<std::vector<vk::UniqueCommandBuffer>> commandBuffers;
+	std::vector<vk::UniqueCommandBuffer> commandBuffers;
 	std::array<std::unique_ptr<QuadDrawer>, 8> drawers;
 	QuadPipeline *pipeline = nullptr;
 

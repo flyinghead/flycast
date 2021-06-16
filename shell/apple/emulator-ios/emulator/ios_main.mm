@@ -58,8 +58,6 @@ extern "C" int reicast_main(int argc, char* argv[])
 
     common_linux_setup();
 
-    settings.profile.run_counts=0;
-
     dc_init(argc,argv);
 
     dc_run();

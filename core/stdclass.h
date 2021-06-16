@@ -49,13 +49,11 @@ public :
 	void Wait();	//Wait for signal , then reset[if auto]
 };
 
-//Set the path !
 void set_user_config_dir(const std::string& dir);
 void set_user_data_dir(const std::string& dir);
 void add_system_config_dir(const std::string& dir);
 void add_system_data_dir(const std::string& dir);
 
-//subpath format: /data/fsca-table.bit
 std::string get_writable_config_path(const std::string& filename);
 std::string get_writable_data_path(const std::string& filename);
 std::string get_readonly_config_path(const std::string& filename);
@@ -63,9 +61,13 @@ std::string get_readonly_data_path(const std::string& filename);
 bool file_exists(const std::string& filename);
 bool make_directory(const std::string& path);
 
+// returns a prefix for a game save file, for example: ~/.local/share/flycast/mvsc2.zip
 std::string get_game_save_prefix();
+// returns the full path of the game, without the file extension
 std::string get_game_basename();
+// returns the game directory
 std::string get_game_dir();
+// returns the position of the last path separator, or string::npos if none
 size_t get_last_slash_pos(const std::string& path);
 
 bool mem_region_lock(void *start, std::size_t len);

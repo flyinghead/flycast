@@ -1,6 +1,5 @@
 #include "types.h"
 #include <cmath>
-#include <cfloat>
 
 #include "sh4_opcodes.h"
 #include "../sh4_core.h"
@@ -19,7 +18,7 @@
 
 #define pi (3.14159265f)
 
-void iNimp(const char*str);
+static void iNimp(const char *str);
 
 #define IS_DENORMAL(f) (((*(f))&0x7f800000) == 0)
 
@@ -168,14 +167,14 @@ sh4op(i1111_nnnn_mmmm_0100)
 		u32 n = GetN(op);
 		u32 m = GetM(op);
 
-		sr.T = !!(fr[m] == fr[n]);
+		sr.T = fr[m] == fr[n];
 	}
 	else
 	{
 		u32 n = (op >> 9) & 0x07;
 		u32 m = (op >> 5) & 0x07;
 
-		sr.T = !!(GetDR(m) == GetDR(n));
+		sr.T = GetDR(m) == GetDR(n);
 	}
 }
 //fcmp/gt <FREG_M>,<FREG_N>
@@ -339,7 +338,6 @@ sh4op(i1111_nnnn_mmmm_1011)
 {
 	if (fpscr.SZ == 0)
 	{
-		//iNimp("fmov.s <FREG_M>,@-<REG_N>");
 		u32 n = GetN(op);
 		u32 m = GetM(op);
 
@@ -453,7 +451,6 @@ sh4op(i1111_nnn0_1111_1101)
 //FSRRA //1111_nnnn_0111_1101
 sh4op(i1111_nnnn_0111_1101)
 {
-	// What about double precision?
 	u32 n = GetN(op);
 	if (fpscr.PR==0)
 	{
@@ -505,12 +502,12 @@ sh4op(i1111_nnmm_1110_1101)
 	{
 #if HOST_CPU == CPU_X86 || HOST_CPU == CPU_X64
 		// multiplications are done with 28 bits of precision (53 - 25) and the final sum at 30 bits
-		double idp = reduce_precision<25>((double)fr[n + 0] * fr[m + 0]);
-		idp += reduce_precision<25>((double)fr[n + 1] * fr[m + 1]);
-		idp += reduce_precision<25>((double)fr[n + 2] * fr[m + 2]);
-		idp += reduce_precision<25>((double)fr[n + 3] * fr[m + 3]);
+		double idp = (double)fr[n + 0] * fr[m + 0];
+		idp += (double)fr[n + 1] * fr[m + 1];
+		idp += (double)fr[n + 2] * fr[m + 2];
+		idp += (double)fr[n + 3] * fr[m + 3];
 
-		fr[n + 3] = (float)fixNaN64(idp);
+		fr[n + 3] = fixNaN((float)idp);
 #else
 		float rv = fr[n + 0] * fr[m + 0];
 		rv += fr[n + 1] * fr[m + 1];
@@ -604,7 +601,6 @@ sh4op(i1111_1011_1111_1101)
 //fschg
 sh4op(i1111_0011_1111_1101)
 {
-	//iNimp("fschg");
 	fpscr.SZ = 1 - fpscr.SZ;
 }
 
@@ -634,10 +630,12 @@ sh4op(i1111_nnnn_0011_1101)
 	if (fpscr.PR == 0)
 	{
 		u32 n = GetN(op);
-		fpul = (u32)(s32)std::min(fr[n], 2147483520.0f);     // IEEE 754: 0x4effffff
+		fpul = (u32)(s32)fr[n];
 
+		if ((s32)fpul > 0x7fffff80)
+			fpul = 0x7fffffff;
 		// Intel CPUs convert out of range float numbers to 0x80000000. Manually set the correct sign
-		if (fpul == 0x80000000)
+		else if (fpul == 0x80000000 && fr[n] == fr[n])
 		{
 			if (*(int *)&fr[n] > 0) // Using integer math to avoid issues with Inf and NaN
 				fpul--;
@@ -649,8 +647,9 @@ sh4op(i1111_nnnn_0011_1101)
 		f64 f = GetDR(n);
 		fpul = (u32)(s32)f;
 
+		// TODO saturate
 		// Intel CPUs convert out of range float numbers to 0x80000000. Manually set the correct sign
-		if (fpul == 0x80000000)
+		if (fpul == 0x80000000 && f == f)
 		{
 			if (*(s64 *)&f > 0)     // Using integer math to avoid issues with Inf and NaN
 				fpul--;
@@ -662,7 +661,6 @@ sh4op(i1111_nnnn_0011_1101)
 //fmac <FREG_0>,<FREG_M>,<FREG_N>
 sh4op(i1111_nnnn_mmmm_1110)
 {
-	//iNimp("fmac <FREG_0>,<FREG_M>,<FREG_N>");
 	if (fpscr.PR==0)
 	{
 		u32 n = GetN(op);
@@ -681,15 +679,11 @@ sh4op(i1111_nnnn_mmmm_1110)
 //ftrv xmtrx,<FV_N>
 sh4op(i1111_nn01_1111_1101)
 {
-	//iNimp("ftrv xmtrx,<FV_N>");
-
 	/*
 	XF[0] XF[4] XF[8] XF[12]    FR[n]      FR[n]
 	XF[1] XF[5] XF[9] XF[13]  *	FR[n+1] -> FR[n+1]
 	XF[2] XF[6] XF[10] XF[14]   FR[n+2]    FR[n+2]
 	XF[3] XF[7] XF[11] XF[15]   FR[n+3]    FR[n+3]
-	
-	gota love linear algebra !
 	*/
 
 	u32 n=GetN(op)&0xC;
@@ -697,30 +691,30 @@ sh4op(i1111_nn01_1111_1101)
 	if (fpscr.PR==0)
 	{
 #if HOST_CPU == CPU_X86 || HOST_CPU == CPU_X64
-		double v1 = reduce_precision<25>((double)xf[0]  * fr[n + 0]) +
-					reduce_precision<25>((double)xf[4]  * fr[n + 1]) +
-					reduce_precision<25>((double)xf[8]  * fr[n + 2]) +
-					reduce_precision<25>((double)xf[12] * fr[n + 3]);
+		double v1 = (double)xf[0]  * fr[n + 0] +
+					(double)xf[4]  * fr[n + 1] +
+					(double)xf[8]  * fr[n + 2] +
+					(double)xf[12] * fr[n + 3];
 
-		double v2 = reduce_precision<25>((double)xf[1]  * fr[n + 0]) +
-					reduce_precision<25>((double)xf[5]  * fr[n + 1]) +
-					reduce_precision<25>((double)xf[9]  * fr[n + 2]) +
-					reduce_precision<25>((double)xf[13] * fr[n + 3]);
+		double v2 = (double)xf[1]  * fr[n + 0] +
+					(double)xf[5]  * fr[n + 1] +
+					(double)xf[9]  * fr[n + 2] +
+					(double)xf[13] * fr[n + 3];
 
-		double v3 = reduce_precision<25>((double)xf[2]  * fr[n + 0]) +
-					reduce_precision<25>((double)xf[6]  * fr[n + 1]) +
-					reduce_precision<25>((double)xf[10] * fr[n + 2]) +
-					reduce_precision<25>((double)xf[14] * fr[n + 3]);
+		double v3 = (double)xf[2]  * fr[n + 0] +
+					(double)xf[6]  * fr[n + 1] +
+					(double)xf[10] * fr[n + 2] +
+					(double)xf[14] * fr[n + 3];
 
-		double v4 = reduce_precision<25>((double)xf[3]  * fr[n + 0]) +
-					reduce_precision<25>((double)xf[7]  * fr[n + 1]) +
-					reduce_precision<25>((double)xf[11] * fr[n + 2]) +
-					reduce_precision<25>((double)xf[15] * fr[n + 3]);
+		double v4 = (double)xf[3]  * fr[n + 0] +
+					(double)xf[7]  * fr[n + 1] +
+					(double)xf[11] * fr[n + 2] +
+					(double)xf[15] * fr[n + 3];
 
-		fr[n + 0] = (float)fixNaN64(v1);
-		fr[n + 1] = (float)fixNaN64(v2);
-		fr[n + 2] = (float)fixNaN64(v3);
-		fr[n + 3] = (float)fixNaN64(v4);
+		fr[n + 0] = fixNaN((float)v1);
+		fr[n + 1] = fixNaN((float)v2);
+		fr[n + 2] = fixNaN((float)v3);
+		fr[n + 3] = fixNaN((float)v4);
 #else
 		float v1, v2, v3, v4;
 
@@ -761,9 +755,7 @@ sh4op(i1111_nn01_1111_1101)
 	}
 }
 
-
-void iNimp(const char*str)
+static void iNimp(const char *str)
 {
 	WARN_LOG(INTERPRETER, "Unimplemented sh4 FPU instruction: %s", str);
-	//Sh4_int_Stop();
 }

@@ -160,10 +160,7 @@ cResetEvent::cResetEvent() : state(false)
 
 }
 
-cResetEvent::~cResetEvent()
-{
-
-}
+cResetEvent::~cResetEvent() = default;
 
 void cResetEvent::Set()//Signal
 {

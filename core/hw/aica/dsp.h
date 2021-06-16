@@ -127,6 +127,6 @@ struct _INST
 	bool NXADR; //MRQ set
 };
 
-void DecodeInst(u32 *IPtr,_INST *i);
+void DecodeInst(const u32 *IPtr, _INST *i);
 u16 DYNACALL PACK(s32 val);
 s32 DYNACALL UNPACK(u16 val);

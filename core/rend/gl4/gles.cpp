@@ -1,3 +1,21 @@
+/*
+	Copyright 2018 flyinghead
+
+	This file is part of Flycast.
+
+    Flycast is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 2 of the License, or
+    (at your option) any later version.
+
+    Flycast is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
+*/
 #include "gl4.h"
 #include "rend/gles/glcache.h"
 #include "rend/transform_matrix.h"
@@ -100,8 +118,10 @@ uniform sampler2D DepthTex;
 uniform float trilinear_alpha;
 uniform vec4 fog_clamp_min;
 uniform vec4 fog_clamp_max;
+#if pp_Palette == 1
 uniform sampler2D palette;
 uniform int palette_index;
+#endif
 
 uniform ivec2 blend_mode[2];
 #if pp_TwoVolumes == 1
@@ -229,7 +249,9 @@ void main()
 			#endif
 			
 			#if cp_AlphaTest == 1
-				if (cp_AlphaTestValue>texcol.a) discard;
+				if (cp_AlphaTestValue > texcol.a)
+					discard;
+				texcol.a = 1.0;
 			#endif 
 		#endif
 		#if pp_ShadInstr==0 || pp_TwoVolumes == 1 // DECAL
@@ -287,10 +309,6 @@ void main()
 	#endif
 	
 	color *= trilinear_alpha;
-	
-	#if cp_AlphaTest == 1
-		color.a=1.0;
-	#endif 
 	
 	//color.rgb=vec3(gl_FragCoord.w * sp_FOG_DENSITY / 128.0);
 	
@@ -355,7 +373,7 @@ void main()
 		uint idx =  getNextPixelIndex();
 		
 		Pixel pixel;
-		pixel.color = color;
+		pixel.color = packColors(clamp(color, vec4(0.0), vec4(1.0)));
 		pixel.depth = gl_FragDepth;
 		pixel.seq_num = uint(pp_Number);
 		pixel.next = imageAtomicExchange(abufferPointerImg, coords, idx);
@@ -468,7 +486,7 @@ bool gl4CompilePipelineShader(	gl4PipelineShader* s, const char *pixel_source /*
 	return glIsProgram(s->program)==GL_TRUE;
 }
 
-void gl4_delete_shaders()
+static void gl4_delete_shaders()
 {
 	for (auto it : gl4.shaders)
 	{
@@ -480,7 +498,7 @@ void gl4_delete_shaders()
 	gl4.modvol_shader.program = 0;
 }
 
-static void gl4_term(void)
+static void gl4_term()
 {
 	glDeleteBuffers(1, &gl4.vbo.geometry);
 	gl4.vbo.geometry = 0;
@@ -531,15 +549,13 @@ static bool gl_create_resources()
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, gl4.vbo.tr_poly_params);
 	// Declare storage
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, gl4.vbo.tr_poly_params);
+	initQuad();
 	glCheck();
 
 	return true;
 }
 
 //setup
-extern void initABuffer();
-void reshapeABuffer(int width, int height);
-extern void gl4CreateTextures(int width, int height);
 
 static bool gl4_init()
 {
@@ -563,7 +579,7 @@ static bool gl4_init()
 
 	initABuffer();
 
-	if (settings.rend.TextureUpscale > 1)
+	if (config::TextureUpscale > 1)
 	{
 		// Trick to preload the tables used by xBRZ
 		u32 src[] { 0x11111111, 0x22222222, 0x33333333, 0x44444444 };
@@ -571,6 +587,7 @@ static bool gl4_init()
 		UpscalexBRZ(2, src, dst, 2, 2, false);
 	}
 	fog_needs_update = true;
+	palette_updated = true;
 
 	return true;
 }
@@ -606,16 +623,17 @@ static void resize(int w, int h)
 		}
 		gl4CreateTextures(max_image_width, max_image_height);
 		reshapeABuffer(max_image_width, max_image_height);
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}
 }
 
-static bool RenderFrame()
+static bool RenderFrame(int width, int height)
 {
 	create_modvol_shader();
 
 	const bool is_rtt = pvrrc.isRTT;
 
-	TransformMatrix<true> matrices(pvrrc);
+	TransformMatrix<true> matrices(pvrrc, width, height);
 	gl4ShaderUniforms.normal_mat = matrices.GetNormalMatrix();
 	const glm::mat4& scissor_mat = matrices.GetScissorMatrix();
 	ViewportMatrix = matrices.GetViewportMatrix();
@@ -628,19 +646,18 @@ static bool RenderFrame()
 	/*
 		Handle Dc to screen scaling
 	*/
-	const float screen_scaling = settings.rend.ScreenScaling / 100.f;
 	int rendering_width;
 	int rendering_height;
 	if (is_rtt)
 	{
-		int scaling = settings.rend.RenderToTextureBuffer ? 1 : settings.rend.RenderToTextureUpscale;
+		float scaling = config::RenderToTextureBuffer ? 1.f : config::RenderResolution / 480.f;
 		rendering_width = matrices.GetDreamcastViewport().x * scaling;
 		rendering_height = matrices.GetDreamcastViewport().y * scaling;
 	}
 	else
 	{
-		rendering_width = screen_width * screen_scaling + 0.5f;
-		rendering_height = screen_height * screen_scaling + 0.5f;
+		rendering_width = width;
+		rendering_height = height;
 	}
 	resize(rendering_width, rendering_height);
 	
@@ -661,7 +678,7 @@ static bool RenderFrame()
 	u8* fog_density=(u8*)&FOG_DENSITY;
 	float fog_den_mant=fog_density[1]/128.0f;  //bit 7 -> x. bit, so [6:0] -> fraction -> /128
 	s32 fog_den_exp=(s8)fog_density[0];
-	gl4ShaderUniforms.fog_den_float = fog_den_mant * powf(2.0f,fog_den_exp) * settings.rend.ExtraDepthScale;
+	gl4ShaderUniforms.fog_den_float = fog_den_mant * powf(2.0f,fog_den_exp) * config::ExtraDepthScale;
 
 	gl4ShaderUniforms.fog_clamp_min[0] = ((pvrrc.fog_clamp_min >> 16) & 0xFF) / 255.0f;
 	gl4ShaderUniforms.fog_clamp_min[1] = ((pvrrc.fog_clamp_min >> 8) & 0xFF) / 255.0f;
@@ -673,7 +690,7 @@ static bool RenderFrame()
 	gl4ShaderUniforms.fog_clamp_max[2] = ((pvrrc.fog_clamp_max >> 0) & 0xFF) / 255.0f;
 	gl4ShaderUniforms.fog_clamp_max[3] = ((pvrrc.fog_clamp_max >> 24) & 0xFF) / 255.0f;
 	
-	if (fog_needs_update && settings.rend.Fog)
+	if (fog_needs_update && config::Fog)
 	{
 		fog_needs_update = false;
 		UpdateFogTexture((u8 *)FOG_TABLE, GL_TEXTURE5, GL_RED);
@@ -694,58 +711,11 @@ static bool RenderFrame()
 
 	//setup render target first
 	if (is_rtt)
-	{
-		GLuint channels,format;
-		switch(FB_W_CTRL.fb_packmode)
-		{
-		case 0: //0x0   0555 KRGB 16 bit  (default)	Bit 15 is the value of fb_kval[7].
-			channels=GL_RGBA;
-			format=GL_UNSIGNED_BYTE;
-			break;
-
-		case 1: //0x1   565 RGB 16 bit
-			channels=GL_RGB;
-			format=GL_UNSIGNED_SHORT_5_6_5;
-			break;
-
-		case 2: //0x2   4444 ARGB 16 bit
-			channels=GL_RGBA;
-			format=GL_UNSIGNED_BYTE;
-			break;
-
-		case 3://0x3    1555 ARGB 16 bit    The alpha value is determined by comparison with the value of fb_alpha_threshold.
-			channels=GL_RGBA;
-			format=GL_UNSIGNED_BYTE;
-			break;
-
-		case 4: //0x4   888 RGB 24 bit packed
-		case 5: //0x5   0888 KRGB 32 bit    K is the value of fk_kval.
-		case 6: //0x6   8888 ARGB 32 bit
-			WARN_LOG(RENDERER, "Unsupported render to texture format: %d", FB_W_CTRL.fb_packmode);
-			return false;
-
-		case 7: //7     invalid
-			die("7 is not valid");
-			return false;
-		}
-		DEBUG_LOG(RENDERER, "RTT packmode=%d stride=%d - %d,%d -> %d,%d", FB_W_CTRL.fb_packmode, FB_W_LINESTRIDE.stride * 8,
-				FB_X_CLIP.min, FB_Y_CLIP.min, FB_X_CLIP.max, FB_Y_CLIP.max);
-		output_fbo = gl4BindRTT(FB_W_SOF1 & VRAM_MASK, (u32)lroundf(matrices.GetDreamcastViewport().x),
-				(u32)lroundf(matrices.GetDreamcastViewport().y), channels, format);
-	}
+		output_fbo = BindRTT(false);
 	else
-	{
-		if (settings.rend.ScreenScaling != 100 || !theGLContext.IsSwapBufferPreserved())
-		{
-			output_fbo = init_output_framebuffer(rendering_width, rendering_height);
-		}
-		else
-		{
-			glBindFramebuffer(GL_FRAMEBUFFER,0);
-			glViewport(0, 0, screen_width, screen_height);
-			output_fbo = 0;
-		}
-	}
+		output_fbo = init_output_framebuffer(rendering_width, rendering_height);
+	if (output_fbo == 0)
+		return false;
 
 	glcache.Disable(GL_SCISSOR_TEST);
 
@@ -768,14 +738,25 @@ static bool RenderFrame()
 		}
 
 		// TR PolyParam data
-		glBindBuffer(GL_SHADER_STORAGE_BUFFER, gl4.vbo.tr_poly_params);
-		glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(struct PolyParam) * pvrrc.global_param_tr.used(), pvrrc.global_param_tr.head(), GL_STATIC_DRAW);
+		if (pvrrc.global_param_tr.used() != 0)
+		{
+			glBindBuffer(GL_SHADER_STORAGE_BUFFER, gl4.vbo.tr_poly_params);
+			std::vector<u32> trPolyParams(pvrrc.global_param_tr.used() * 2);
+			const PolyParam *pp_end = pvrrc.global_param_tr.LastPtr(0);
+			const PolyParam *pp = pvrrc.global_param_tr.head();
+			for (int i = 0; pp != pp_end; i += 2, pp++)
+			{
+				trPolyParams[i] = (pp->tsp.full & 0xffff00c0) | ((pp->isp.full >> 16) & 0xe400) | ((pp->pcw.full >> 7) & 1);
+				trPolyParams[i + 1] = pp->tsp1.full;
+			}
+			glBufferData(GL_SHADER_STORAGE_BUFFER, trPolyParams.size() * 4, trPolyParams.data(), GL_STATIC_DRAW);
+		}
 		glCheck();
 
-		if (is_rtt || !settings.rend.WideScreen || matrices.IsClipped() || settings.rend.Rotate90)
+		if (is_rtt || !config::Widescreen || matrices.IsClipped() || config::Rotate90)
 		{
-			float width;
-			float height;
+			float fWidth;
+			float fHeight;
 			float min_x;
 			float min_y;
 			if (!is_rtt)
@@ -788,60 +769,50 @@ static bool RenderFrame()
 				
 				min_x = clip_min[0];
 				min_y = clip_min[1];
-				width = clip_dim[0];
-				height = clip_dim[1];
-				if (width < 0)
+				fWidth = clip_dim[0];
+				fHeight = clip_dim[1];
+				if (fWidth < 0)
 				{
-					min_x += width;
-					width = -width;
+					min_x += fWidth;
+					fWidth = -fWidth;
 				}
-				if (height < 0)
+				if (fHeight < 0)
 				{
-					min_y += height;
-					height = -height;
+					min_y += fHeight;
+					fHeight = -fHeight;
 				}
 				if (matrices.GetSidebarWidth() > 0)
 				{
-					float scaled_offs_x = matrices.GetSidebarWidth() * screen_scaling;
+					float scaled_offs_x = matrices.GetSidebarWidth();
 
 					glcache.ClearColor(0.f, 0.f, 0.f, 0.f);
 					glcache.Enable(GL_SCISSOR_TEST);
 					glcache.Scissor(0, 0, (GLsizei)lroundf(scaled_offs_x), rendering_height);
 					glClear(GL_COLOR_BUFFER_BIT);
-					glcache.Scissor((GLint)lroundf(screen_width * screen_scaling - scaled_offs_x), 0, (GLsizei)lroundf(scaled_offs_x) + 1, rendering_height);
-					glClear(GL_COLOR_BUFFER_BIT);
-				}
-				else if (matrices.GetSidebarWidth() < 0)
-				{
-					float scaled_offs_y = -matrices.GetSidebarWidth() * screen_scaling;
-
-					glcache.ClearColor(0.f, 0.f, 0.f, 0.f);
-					glcache.Enable(GL_SCISSOR_TEST);
-					glcache.Scissor(0, 0, rendering_width, (GLsizei)lroundf(scaled_offs_y));
-					glClear(GL_COLOR_BUFFER_BIT);
-					glcache.Scissor(0, (GLint)lroundf(screen_height * screen_scaling - scaled_offs_y), rendering_width, (GLsizei)lroundf(scaled_offs_y + 1.f));
+					glcache.Scissor((GLint)lroundf(rendering_width - scaled_offs_x), 0, (GLsizei)lroundf(scaled_offs_x) + 1, rendering_height);
 					glClear(GL_COLOR_BUFFER_BIT);
 				}
 			}
 			else
 			{
-				width = pvrrc.fb_X_CLIP.max - pvrrc.fb_X_CLIP.min + 1;
-				height = pvrrc.fb_Y_CLIP.max - pvrrc.fb_Y_CLIP.min + 1;
+				fWidth = pvrrc.fb_X_CLIP.max - pvrrc.fb_X_CLIP.min + 1;
+				fHeight = pvrrc.fb_Y_CLIP.max - pvrrc.fb_Y_CLIP.min + 1;
 				min_x = pvrrc.fb_X_CLIP.min;
 				min_y = pvrrc.fb_Y_CLIP.min;
-				if (settings.rend.RenderToTextureUpscale > 1 && !settings.rend.RenderToTextureBuffer)
+				if (config::RenderResolution > 480 && !config::RenderToTextureBuffer)
 				{
-					min_x *= settings.rend.RenderToTextureUpscale;
-					min_y *= settings.rend.RenderToTextureUpscale;
-					width *= settings.rend.RenderToTextureUpscale;
-					height *= settings.rend.RenderToTextureUpscale;
+					float scale = config::RenderResolution / 480.f;
+					min_x *= scale;
+					min_y *= scale;
+					fWidth *= scale;
+					fHeight *= scale;
 				}
 			}
 			gl4ShaderUniforms.base_clipping.enabled = true;
 			gl4ShaderUniforms.base_clipping.x = (int)lroundf(min_x);
 			gl4ShaderUniforms.base_clipping.y = (int)lroundf(min_y);
-			gl4ShaderUniforms.base_clipping.width = (int)lroundf(width);
-			gl4ShaderUniforms.base_clipping.height = (int)lroundf(height);
+			gl4ShaderUniforms.base_clipping.width = (int)lroundf(fWidth);
+			gl4ShaderUniforms.base_clipping.height = (int)lroundf(fHeight);
 			glcache.Scissor(gl4ShaderUniforms.base_clipping.x, gl4ShaderUniforms.base_clipping.y,
 					gl4ShaderUniforms.base_clipping.width, gl4ShaderUniforms.base_clipping.height);
 			glcache.Enable(GL_SCISSOR_TEST);
@@ -861,18 +832,16 @@ static bool RenderFrame()
 		glcache.ClearColor(0.f, 0.f, 0.f, 0.f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
-		gl4DrawFramebuffer(640.f, 480.f);
+		DrawFramebuffer();
 	}
 
 	if (is_rtt)
 		ReadRTTBuffer();
-	else if (settings.rend.ScreenScaling != 100 || !theGLContext.IsSwapBufferPreserved())
-		gl4_render_output_framebuffer();
+	else
+		render_output_framebuffer();
 
 	return !is_rtt;
 }
-
-void termABuffer();
 
 struct OpenGL4Renderer : OpenGLRenderer
 {
@@ -883,13 +852,14 @@ struct OpenGL4Renderer : OpenGLRenderer
 
 	void Resize(int w, int h) override
 	{
-		screen_width=w;
-		screen_height=h;
-		resize((int)lroundf(w * settings.rend.ScreenScaling / 100.f), (int)lroundf(h * settings.rend.ScreenScaling / 100.f));
+		width = w;
+		height = h;
+		resize(w, h);
 	}
 
 	void Term() override
 	{
+		termQuad();
 		termABuffer();
 		if (stencilTexId != 0)
 		{
@@ -935,7 +905,7 @@ struct OpenGL4Renderer : OpenGLRenderer
 
 	bool Render() override
 	{
-		RenderFrame();
+		RenderFrame(width, height);
 		if (pvrrc.isRTT)
 			return false;
 
@@ -947,7 +917,7 @@ struct OpenGL4Renderer : OpenGLRenderer
 
 	bool RenderLastFrame() override
 	{
-		return !theGLContext.IsSwapBufferPreserved() ? gl4_render_output_framebuffer() : false;
+		return render_output_framebuffer();
 	}
 };
 

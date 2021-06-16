@@ -24,7 +24,8 @@ void *dc_run(void*)
     rend_set_fb_scale(1.0, 1.0);
 
     char frame_path[512];
-    cfgLoadStr("config", "image", frame_path, "null");
+    std::string s = cfgLoadStr("config", "image", "null");
+    strcpy(frame_path, s.c_str());
 
     printf("Loading %s\n", frame_path);
 

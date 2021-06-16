@@ -57,7 +57,7 @@ protected:
 		else
 			while (descriptorSets.size() < GetContext()->GetSwapChainSize())
 			{
-				descriptorSets.push_back(OITDescriptorSets());
+				descriptorSets.emplace_back();
 				descriptorSets.back().Init(samplerManager,
 						pipelineManager->GetPipelineLayout(),
 						pipelineManager->GetPerFrameDSLayout(),
@@ -72,7 +72,8 @@ protected:
 		colorAttachments[1].reset();
 		tempFramebuffers[0].reset();
 		tempFramebuffers[1].reset();
-		depthAttachment.reset();
+		depthAttachments[0].reset();
+		depthAttachments[1].reset();
 		mainBuffers.clear();
 		descriptorSets.clear();
 	}
@@ -116,15 +117,15 @@ protected:
 
 	vk::Rect2D viewport;
 	std::array<std::unique_ptr<FramebufferAttachment>, 2> colorAttachments;
-	std::unique_ptr<FramebufferAttachment> depthAttachment;
+	std::array<std::unique_ptr<FramebufferAttachment>, 2> depthAttachments;
 	vk::CommandBuffer currentCommandBuffer;
 	std::vector<bool> clearNeeded;
 
 private:
-	void DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sortTriangles, Pass pass,
+	void DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool autosort, Pass pass,
 			const PolyParam& poly, u32 first, u32 count);
 	void DrawList(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sortTriangles, Pass pass,
-			const List<PolyParam>& polys, u32 first, u32 count);
+			const List<PolyParam>& polys, u32 first, u32 last);
 	template<bool Translucent>
 	void DrawModifierVolumes(const vk::CommandBuffer& cmdBuffer, int first, int count);
 	void UploadMainBuffer(const OITDescriptorSets::VertexShaderUniforms& vertexUniforms,
@@ -158,16 +159,16 @@ private:
 class OITScreenDrawer : public OITDrawer
 {
 public:
-	void Init(SamplerManager *samplerManager, OITShaderManager *shaderManager, OITBuffers *oitBuffers)
+	void Init(SamplerManager *samplerManager, OITShaderManager *shaderManager, OITBuffers *oitBuffers,
+			const vk::Extent2D& viewport)
 	{
 		if (!screenPipelineManager)
 			screenPipelineManager = std::unique_ptr<OITPipelineManager>(new OITPipelineManager());
 		screenPipelineManager->Init(shaderManager, oitBuffers);
 		OITDrawer::Init(samplerManager, screenPipelineManager.get(), oitBuffers);
 
-		currentScreenScaling = 0;
-		MakeFramebuffers();
-		GetContext()->PresentFrame(vk::ImageView(), viewport.extent);
+		MakeFramebuffers(viewport);
+		GetContext()->PresentFrame(vk::ImageView(), viewport);
 	}
 	void Term()
 	{
@@ -177,8 +178,8 @@ public:
 		OITDrawer::Term();
 	}
 
-	virtual vk::CommandBuffer NewFrame() override;
-	virtual void EndFrame() override
+	vk::CommandBuffer NewFrame() override;
+	void EndFrame() override
 	{
 		currentCommandBuffer.endRenderPass();
 		currentCommandBuffer.end();
@@ -200,16 +201,15 @@ public:
 	}
 
 protected:
-	virtual vk::Framebuffer GetFinalFramebuffer() const override { return *framebuffers[GetCurrentImage()]; }
-	virtual vk::Format GetColorFormat() const override { return GetContext()->GetColorFormat(); }
+	vk::Framebuffer GetFinalFramebuffer() const override { return *framebuffers[GetCurrentImage()]; }
+	vk::Format GetColorFormat() const override { return GetContext()->GetColorFormat(); }
 
 private:
-	void MakeFramebuffers();
+	void MakeFramebuffers(const vk::Extent2D& viewport);
 
 	std::vector<std::unique_ptr<FramebufferAttachment>> finalColorAttachments;
 	std::vector<vk::UniqueFramebuffer> framebuffers;
 	std::unique_ptr<OITPipelineManager> screenPipelineManager;
-	int currentScreenScaling = 0;
 	std::vector<bool> transitionNeeded;
 	bool frameRendered = false;
 };
@@ -235,12 +235,12 @@ public:
 		OITDrawer::Term();
 	}
 
-	virtual void EndFrame() override;
+	void EndFrame() override;
 
 protected:
-	virtual vk::CommandBuffer NewFrame() override;
-	virtual vk::Framebuffer GetFinalFramebuffer() const override { return *framebuffers[GetCurrentImage()]; }
-	virtual vk::Format GetColorFormat() const override { return vk::Format::eR8G8B8A8Unorm; }
+	vk::CommandBuffer NewFrame() override;
+	vk::Framebuffer GetFinalFramebuffer() const override { return *framebuffers[GetCurrentImage()]; }
+	vk::Format GetColorFormat() const override { return vk::Format::eR8G8B8A8Unorm; }
 
 private:
 	u32 textureAddr = 0;

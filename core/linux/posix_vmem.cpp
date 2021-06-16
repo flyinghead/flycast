@@ -167,7 +167,7 @@ VMemType vmem_platform_init(void **vmem_base_addr, void **sh4rcb_addr) {
 
 	// Now try to allocate a contiguous piece of memory.
 	VMemType rv;
-#ifdef HOST_64BIT_CPU
+#if HOST_CPU == CPU_X64 || HOST_CPU == CPU_ARM64
 	reserved_size = 0x100000000L + sizeof(Sh4RCB) + 0x10000;	// 4GB + context size + 64K padding
 	reserved_base = mem_region_reserve(NULL, reserved_size);
 	rv = MemType4GB;
@@ -235,7 +235,7 @@ void vmem_platform_create_mappings(const vmem_mapping *vmem_maps, unsigned numma
 
 		for (unsigned j = 0; j < num_mirrors; j++) {
 			u64 offset = vmem_maps[i].start_address + j * vmem_maps[i].memsize;
-			verify(mem_region_unmap_file(&virt_ram_base[offset], vmem_maps[i].memsize));
+//			verify(mem_region_unmap_file(&virt_ram_base[offset], vmem_maps[i].memsize));
 			verify(mem_region_map_file((void*)(uintptr_t)vmem_fd, &virt_ram_base[offset],
 					vmem_maps[i].memsize, vmem_maps[i].memoffset, vmem_maps[i].allow_writes) != NULL);
 		}
@@ -291,6 +291,10 @@ bool vmem_platform_prepare_jit_block(void *code_area, unsigned size, void **code
 
 #if HOST_CPU == CPU_ARM64
 
+#if defined(__APPLE__)
+#include <libkern/OSCacheControl.h>
+#endif
+
 // Code borrowed from Dolphin https://github.com/dolphin-emu/dolphin
 static void Arm64_CacheFlush(void* start, void* end) {
 	if (start == end)
@@ -298,7 +302,7 @@ static void Arm64_CacheFlush(void* start, void* end) {
 
 #if defined(__APPLE__)
 	// Header file says this is equivalent to: sys_icache_invalidate(start, end - start);
-	sys_cache_control(kCacheFunctionPrepareForExecution, start, end - start);
+	sys_cache_control(kCacheFunctionPrepareForExecution, start, (uintptr_t)end - (uintptr_t)start);
 #else
 	// Don't rely on GCC's __clear_cache implementation, as it caches
 	// icache/dcache cache line sizes, that can vary between cores on
@@ -340,5 +344,131 @@ void vmem_platform_flush_cache(void *icache_start, void *icache_end, void *dcach
 		Arm64_CacheFlush(icache_start, icache_end);
 }
 
-#endif // #if HOST_CPU == CPU_ARM64
+#elif HOST_CPU == CPU_ARM
+
+#if defined(__APPLE__)
+
+#include <libkern/OSCacheControl.h>
+static void CacheFlush(void* code, void* pEnd)
+{
+    sys_dcache_flush(code, (u8*)pEnd - (u8*)code + 1);
+    sys_icache_invalidate(code, (u8*)pEnd - (u8*)code + 1);
+}
+
+#elif !defined(ARMCC)
+
+#ifdef __ANDROID__
+#include <sys/syscall.h>  // for cache flushing.
+#endif
+
+static void CacheFlush(void* code, void* pEnd)
+{
+#if !defined(__ANDROID__)
+	__clear_cache((void*)code, pEnd);
+#else // defined(__ANDROID__)
+	void* start=code;
+	size_t size=(u8*)pEnd-(u8*)start+4;
+
+  // Ideally, we would call
+  //   syscall(__ARM_NR_cacheflush, start,
+  //           reinterpret_cast<intptr_t>(start) + size, 0);
+  // however, syscall(int, ...) is not supported on all platforms, especially
+  // not when using EABI, so we call the __ARM_NR_cacheflush syscall directly.
+
+  register uint32_t beg asm("a1") = reinterpret_cast<uint32_t>(start);
+  register uint32_t end asm("a2") = reinterpret_cast<uint32_t>(start) + size;
+  register uint32_t flg asm("a3") = 0;
+
+  #ifdef __ARM_EABI__
+    #if defined (__arm__) && !defined(__thumb__)
+      // __arm__ may be defined in thumb mode.
+      register uint32_t scno asm("r7") = __ARM_NR_cacheflush;
+      asm volatile(
+          "svc 0x0"
+          : "=r" (beg)
+          : "0" (beg), "r" (end), "r" (flg), "r" (scno));
+    #else
+      // r7 is reserved by the EABI in thumb mode.
+      asm volatile(
+      "@   Enter ARM Mode  \n\t"
+          "adr r3, 1f      \n\t"
+          "bx  r3          \n\t"
+          ".ALIGN 4        \n\t"
+          ".ARM            \n"
+      "1:  push {r7}       \n\t"
+          "mov r7, %4      \n\t"
+          "svc 0x0         \n\t"
+          "pop {r7}        \n\t"
+      "@   Enter THUMB Mode\n\t"
+          "adr r3, 2f+1    \n\t"
+          "bx  r3          \n\t"
+          ".THUMB          \n"
+      "2:                  \n\t"
+          : "=r" (beg)
+          : "0" (beg), "r" (end), "r" (flg), "r" (__ARM_NR_cacheflush)
+          : "r3");
+    #endif // !defined (__arm__) || defined(__thumb__)
+  #else // ! __ARM_EABI__
+    #if defined (__arm__) && !defined(__thumb__)
+      // __arm__ may be defined in thumb mode.
+      asm volatile(
+          "svc %1"
+          : "=r" (beg)
+          : "i" (__ARM_NR_cacheflush), "0" (beg), "r" (end), "r" (flg));
+    #else
+      // Do not use the value of __ARM_NR_cacheflush in the inline assembly
+      // below, because the thumb mode value would be used, which would be
+      // wrong, since we switch to ARM mode before executing the svc instruction
+      asm volatile(
+      "@   Enter ARM Mode  \n\t"
+          "adr r3, 1f      \n\t"
+          "bx  r3          \n\t"
+          ".ALIGN 4        \n\t"
+          ".ARM            \n"
+      "1:  svc 0x9f0002    \n"
+      "@   Enter THUMB Mode\n\t"
+          "adr r3, 2f+1    \n\t"
+          "bx  r3          \n\t"
+          ".THUMB          \n"
+      "2:                  \n\t"
+          : "=r" (beg)
+          : "0" (beg), "r" (end), "r" (flg)
+          : "r3");
+    #endif // !defined (__arm__) || defined(__thumb__)
+  #endif // !__ARM_EABI__
+	#if 0
+		const int syscall = 0xf0002;
+		__asm __volatile (
+			"mov     r0, %0\n"
+			"mov     r1, %1\n"
+			"mov     r7, %2\n"
+			"mov     r2, #0x0\n"
+			"svc     0x00000000\n"
+			:
+			:   "r" (code), "r" (pEnd), "r" (syscall)
+			:   "r0", "r1", "r7"
+			);
+	#endif
+#endif // defined(__ANDROID__)
+}
+#else // defined(ARMCC)
+asm static void CacheFlush(void* code, void* pEnd)
+{
+	ARM
+	push {r7}
+	//add r1, r1, r0
+	mov r7, #0xf0000
+	add r7, r7, #0x2
+	mov r2, #0x0
+	svc #0x0
+	pop {r7}
+	bx lr
+}
+#endif
+
+void vmem_platform_flush_cache(void *icache_start, void *icache_end, void *dcache_start, void *dcache_end)
+{
+	CacheFlush(icache_start, icache_end);
+}
+#endif // #if HOST_CPU == CPU_ARM
 

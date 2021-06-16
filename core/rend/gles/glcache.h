@@ -194,7 +194,6 @@ public:
 		_depth_func = 0xFFFFFFFFu;
 		_depth_mask = 0xFF;
 		_program = 0xFFFFFFFFu;
-		_texture_cache_size = 0;
 		_stencil_func = 0xFFFFFFFFu;
 		_stencil_ref = -1;
 		_stencil_fmask = 0;
@@ -297,7 +296,7 @@ private:
 		GLsizei height;
 	} _scissor;
 	GLuint _texture_ids[TEXTURE_ID_CACHE_SIZE];
-	GLuint _texture_cache_size;
+	GLsizei _texture_cache_size = 0;
 	std::map<GLuint, TextureParameters> _texture_params;
 	bool _disable_cache;
 };

@@ -13,6 +13,7 @@
 #include "hw/pvr/pvr_sb_regs.h"
 #include "emulator.h"
 #include "hw/bba/bba.h"
+#include "cfg/option.h"
 
 std::array<RegisterStruct, 0x540> sb_regs;
 
@@ -146,7 +147,7 @@ static void sb_write_SB_SFRES(u32 addr, u32 data)
 {
 	if ((u16)data==0x7611)
 	{
-		INFO_LOG(SH4, "SB/HOLLY: System reset requested");
+		NOTICE_LOG(SH4, "SB/HOLLY: System reset requested");
 		dc_request_reset();
 	}
 }
@@ -581,7 +582,7 @@ void sb_Init()
 	maple_Init();
 	aica_sb_Init();
 
-	if (settings.network.EmulateBBA)
+	if (config::EmulateBBA)
 		bba_Init();
 	else
 		ModemInit();
@@ -598,7 +599,7 @@ void sb_Reset(bool hard)
 	SB_FFST_rc = 0;
 	SB_FFST = 0;
 
-	if (settings.network.EmulateBBA)
+	if (config::EmulateBBA)
 		bba_Reset(hard);
 	else
 		ModemTerm();
@@ -615,7 +616,7 @@ void sb_Reset(bool hard)
 
 void sb_Term()
 {
-	if (settings.network.EmulateBBA)
+	if (config::EmulateBBA)
 		bba_Term();
 	else
 		ModemTerm();

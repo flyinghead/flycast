@@ -3,9 +3,9 @@
 #include "cheats.h"
 #include "hw/mem/_vmem.h"
 #include "hw/pvr/pvr_mem.h"
-#include "oslib/oslib.h"
 #include "rend/TexCache.h"
 #include "gdxsv/gdxsv.h"
+#include "cfg/option.h"
 
 #include <mutex>
 #include <zlib.h>
@@ -31,7 +31,7 @@ bool pend_rend = false;
 
 TA_context* _pvrrc;
 
-static void dump_frame(const char* file, TA_context* ctx, u8* vram, u8* vram_ref = NULL) {
+static void dump_frame(const char* file, TA_context* ctx, u8* vram, const u8* vram_ref = NULL) {
 	FILE* fw = fopen(file, "wb");
 
 	//append to it
@@ -196,10 +196,6 @@ static bool rend_frame(TA_context* ctx)
 
 bool rend_single_frame(const bool& enabled)
 {
-	if (renderer != NULL)
-		renderer->RenderLastFrame();
-
-	//wait render start only if no frame pending
 	do
 	{
 		if (!rs.Wait(50))
@@ -226,7 +222,7 @@ bool rend_single_frame(const bool& enabled)
 	{
 		{
 			std::lock_guard<std::mutex> lock(swap_mutex);
-			if (settings.rend.DelayFrameSwapping && !_pvrrc->rend.isRenderFramebuffer && fb_w_cur != FB_R_SOF1 && !do_swap)
+			if (config::DelayFrameSwapping && !_pvrrc->rend.isRenderFramebuffer && fb_w_cur != FB_R_SOF1 && !do_swap)
 				// Delay swap
 				frame_rendered = false;
 			else
@@ -258,7 +254,7 @@ static void rend_create_renderer()
 #ifdef NO_REND
 	renderer	 = rend_norend();
 #else
-	switch (settings.pvr.rend)
+	switch (config::RendererType)
 	{
 	default:
 	case RenderType::OpenGL:
@@ -291,8 +287,7 @@ void rend_init_renderer()
 		delete renderer;
     	if (fallback_renderer == NULL || !fallback_renderer->Init())
     	{
-    		if (fallback_renderer != NULL)
-    			delete fallback_renderer;
+            delete fallback_renderer;
     		die("Renderer initialization failed\n");
     	}
     	INFO_LOG(PVR, "Selected renderer initialization failed. Falling back to default renderer.");
@@ -326,13 +321,6 @@ void rend_reset()
 	VertexCount = 0;
 	fb_w_cur = 1;
 }
-
-void rend_resize(int width, int height)
-{
-	if (renderer != nullptr)
-		renderer->Resize(width, height);
-}
-
 
 void rend_start_render()
 {
@@ -404,7 +392,7 @@ void rend_vblank()
 	}
 	render_called = false;
 	check_framebuffer_write();
-	cheatManager.Apply();
+    cheatManager.apply();
 	gdxsv.Update();
 }
 

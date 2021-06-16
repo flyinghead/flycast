@@ -15,6 +15,7 @@
 	 along with reicast.  If not, see <https://www.gnu.org/licenses/>.
  */
 #include "sorter.h"
+#include "hw/pvr/Renderer_if.h"
 #include <algorithm>
 
 struct IndexTrig

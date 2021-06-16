@@ -42,7 +42,7 @@ void maple_vblank()
 {
 	if (SB_MDEN & 1)
 	{
-		if (SB_MDTSEL & 1)
+		if (SB_MDTSEL == 1)
 		{
 			if (maple_ddt_pending_reset)
 			{
@@ -321,13 +321,13 @@ void maple_Init()
 void maple_Reset(bool hard)
 {
 	maple_ddt_pending_reset=false;
-	SB_MDTSEL = 0x00000000;
-	SB_MDEN   = 0x00000000;
-	SB_MDST   = 0x00000000;
+	SB_MDTSEL = 0;
+	SB_MDEN   = 0;
+	SB_MDST   = 0;
 	SB_MSYS   = 0x3A980000;
-	SB_MSHTCL = 0x00000000;
+	SB_MSHTCL = 0;
 	SB_MDAPRO = 0x00007F00;
-	SB_MMSEL  = 0x00000001;
+	SB_MMSEL  = 1;
 }
 
 void maple_Term()

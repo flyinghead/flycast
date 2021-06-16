@@ -1,27 +1,12 @@
 /*
 
 	This is a header file that can create 
-	a) Shil opcode enums
-	b) Shil opcode classes/portable C implementation ("canonical" implementation)
-	c) The routing table for canonical implementations
-	d) Cookies (if you're really lucky)
-
+	SHIL_MODE == 0) Shil opcode enums
+	SHIL_MODE == 1) Shil opcode classes/portable C implementation ("canonical" implementation)
+	SHIL_MODE == 2) Shil opcode classes declaration
+	SHIL_MODE == 3) The routing table for canonical implementations
+	SHIL_MODE == 4) opcode name list (for logging/disass)
 */
-#if HOST_CPU == CPU_ARM && !defined(__ANDROID__) && 0
-//FIXME: Fix extern function support on shil, or remove these
-extern "C" void ftrv_asm(float* fd,float* fn, float* fm);
-extern "C" f32 fipr_asm(float* fn, float* fm);
-#define ftrv_impl ftrv_asm
-#define fipr_impl fipr_asm
-#endif
-
-#ifndef ftrv_impl
-#define ftrv_impl f1
-#endif
-
-#ifndef fipr_impl
-#define fipr_impl f1
-#endif
 
 #define fsca_impl fsca_table
 
@@ -97,7 +82,7 @@ extern "C" f32 fipr_asm(float* fn, float* fm);
 
 #if SHIL_MODE==1 || SHIL_MODE==2
 //only in structs we use the code :)
-#include <math.h>
+#include <cmath>
 #include "types.h"
 #include "shil.h"
 #include "decoder.h"
@@ -715,7 +700,7 @@ u32,f1,(f32 f1),
 		s32 res = (s32)f1;
 
 		// Fix result sign for Intel CPUs
-		if (res == 0x80000000 && *(s32 *)&f1 > 0)
+		if ((u32)res == 0x80000000 && f1 == f1 && *(s32 *)&f1 > 0)
 			res = 0x7fffffff;
 
 		return res;
@@ -901,15 +886,14 @@ shil_opc(fipr)
 #if HOST_CPU == CPU_X86 || HOST_CPU == CPU_X64
 shil_canonical
 (
-f32,f1,(float* fn, float* fm),
+f32,f1,(const float* fn, const float* fm),
 
-	// multiplications are done with 28 bits of precision (53 - 25) and the final sum at 30 bits
-	double idp = reduce_precision<25>((double)fn[0] * fm[0]);
-	idp += reduce_precision<25>((double)fn[1] * fm[1]);
-	idp += reduce_precision<25>((double)fn[2] * fm[2]);
-	idp += reduce_precision<25>((double)fn[3] * fm[3]);
+	double idp = (double)fn[0] * fm[0];
+	idp += (double)fn[1] * fm[1];
+	idp += (double)fn[2] * fm[2];
+	idp += (double)fn[3] * fm[3];
 
-	return (float)fixNaN64(idp);
+	return fixNaN((float)idp);
 )
 #else
 shil_canonical
@@ -929,7 +913,7 @@ shil_compile
 (
 	shil_cf_arg_ptr(rs2);
 	shil_cf_arg_ptr(rs1);
-	shil_cf(fipr_impl);
+	shil_cf(f1);
 	shil_cf_rv_f32(rd);
 )
 
@@ -942,32 +926,32 @@ shil_opc(ftrv)
 #if HOST_CPU == CPU_X86 || HOST_CPU == CPU_X64
 shil_canonical
 (
-void,f1,(float* fd,float* fn, float* fm),
+void,f1,(float* fd, const float* fn, const float* fm),
 
-	double v1 = reduce_precision<25>((double)fm[0]  * fn[0]) +
-				reduce_precision<25>((double)fm[4]  * fn[1]) +
-				reduce_precision<25>((double)fm[8]  * fn[2]) +
-				reduce_precision<25>((double)fm[12] * fn[3]);
+	double v1 = (double)fm[0]  * fn[0] +
+				(double)fm[4]  * fn[1] +
+				(double)fm[8]  * fn[2] +
+				(double)fm[12] * fn[3];
 
-	double v2 = reduce_precision<25>((double)fm[1]  * fn[0]) +
-				reduce_precision<25>((double)fm[5]  * fn[1]) +
-				reduce_precision<25>((double)fm[9]  * fn[2]) +
-				reduce_precision<25>((double)fm[13] * fn[3]);
+	double v2 = (double)fm[1]  * fn[0] +
+				(double)fm[5]  * fn[1] +
+				(double)fm[9]  * fn[2] +
+				(double)fm[13] * fn[3];
 
-	double v3 = reduce_precision<25>((double)fm[2]  * fn[0]) +
-				reduce_precision<25>((double)fm[6]  * fn[1]) +
-				reduce_precision<25>((double)fm[10] * fn[2]) +
-				reduce_precision<25>((double)fm[14] * fn[3]);
+	double v3 = (double)fm[2]  * fn[0] +
+				(double)fm[6]  * fn[1] +
+				(double)fm[10] * fn[2] +
+				(double)fm[14] * fn[3];
 
-	double v4 = reduce_precision<25>((double)fm[3]  * fn[0]) +
-				reduce_precision<25>((double)fm[7]  * fn[1]) +
-				reduce_precision<25>((double)fm[11] * fn[2]) +
-				reduce_precision<25>((double)fm[15] * fn[3]);
+	double v4 = (double)fm[3]  * fn[0] +
+				(double)fm[7]  * fn[1] +
+				(double)fm[11] * fn[2] +
+				(double)fm[15] * fn[3];
 
-	fd[0] = (float)fixNaN64(v1);
-	fd[1] = (float)fixNaN64(v2);
-	fd[2] = (float)fixNaN64(v3);
-	fd[3] = (float)fixNaN64(v4);
+	fd[0] = fixNaN((float)v1);
+	fd[1] = fixNaN((float)v2);
+	fd[2] = fixNaN((float)v3);
+	fd[3] = fixNaN((float)v4);
 )
 #else
 shil_canonical
@@ -1005,7 +989,7 @@ shil_compile
 	shil_cf_arg_ptr(rs2);
 	shil_cf_arg_ptr(rs1);
 	shil_cf_arg_ptr(rd);
-	shil_cf(ftrv_impl);
+	shil_cf(f1);
 )
 shil_opc_end()
 
@@ -1082,7 +1066,7 @@ shil_opc_end()
 shil_opc(frswap)
 shil_canonical
 (
-void,f1,(u64* fd1,u64* fd2,u64* fs1,u64* fs2),
+void,f1,(u64* fd1, u64* fd2, const u64* fs1, const u64* fs2),
 
 	u64 temp;
 	for (int i=0;i<8;i++)

@@ -1035,7 +1035,7 @@ static void rtl8139_BasicModeCtrl_write(RTL8139State *s, uint32_t val)
     /* mask unwritable bits */
     uint32_t mask = 0xccff;
 
-    if (1 || !rtl8139_config_writable(s))
+    if (true || !rtl8139_config_writable(s))
     {
         /* Speed setting and autonegotiation enable bits are read-only */
         mask |= 0x3000;
@@ -1415,7 +1415,7 @@ static void rtl8139_TxStatus_write(RTL8139State *s, uint32_t txRegOffset, uint32
     rtl8139_transmit(s);
 }
 
-static uint32_t rtl8139_TxStatus_TxAddr_read(RTL8139State *s, uint32_t regs[],
+static uint32_t rtl8139_TxStatus_TxAddr_read(RTL8139State *s, const uint32_t regs[],
                                              uint32_t base, uint8_t addr,
                                              int size)
 {

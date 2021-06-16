@@ -34,7 +34,7 @@ public:
 		textureDrawer.Init(&samplerManager, &shaderManager, &textureCache);
 		textureDrawer.SetCommandPool(&texCommandPool);
 
-		screenDrawer.Init(&samplerManager, &shaderManager);
+		screenDrawer.Init(&samplerManager, &shaderManager, viewport);
 		screenDrawer.SetCommandPool(&texCommandPool);
 
 		return true;
@@ -42,8 +42,10 @@ public:
 
 	void Resize(int w, int h) override
 	{
+		if ((u32)w == viewport.width && (u32)h == viewport.height)
+			return;
 		BaseVulkanRenderer::Resize(w, h);
-		screenDrawer.Init(&samplerManager, &shaderManager);
+		screenDrawer.Init(&samplerManager, &shaderManager, viewport);
 	}
 
 	void Term() override
@@ -89,4 +91,10 @@ private:
 Renderer* rend_Vulkan()
 {
 	return new VulkanRenderer();
+}
+
+void ReInitOSD()
+{
+	if (renderer != nullptr)
+		((BaseVulkanRenderer *)renderer)->ReInitOSD();
 }

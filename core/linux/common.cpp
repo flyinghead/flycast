@@ -1,6 +1,6 @@
 #include "types.h"
 
-#if HOST_OS==OS_LINUX || defined(__APPLE__)
+#if defined(__unix__) || defined(__APPLE__)
 #if defined(__APPLE__)
 	#define _XOPEN_SOURCE 1
 	#define __USE_GNU 1
@@ -14,22 +14,22 @@
 #endif
 #include <unistd.h>
 #include "hw/sh4/dyna/blockmanager.h"
-#include "hw/mem/vmem32.h"
 
-#include "linux/context.h"
+#include "oslib/host_context.h"
 
 #include "hw/sh4/dyna/ngen.h"
 
 #if !defined(TARGET_NO_EXCEPTIONS)
-bool ngen_Rewrite(unat& addr,unat retadr,unat acc);
-u32* ngen_readm_fail_v2(u32* ptr,u32* regs,u32 saddr);
 bool VramLockedWrite(u8* address);
 bool BM_LockedWrite(u8* address);
+
+void context_from_segfault(host_context_t* hctx, void* segfault_ctx);
+void context_to_segfault(host_context_t* hctx, void* segfault_ctx);
 
 #if defined(__APPLE__)
 void sigill_handler(int sn, siginfo_t * si, void *segfault_ctx) {
 	
-    rei_host_context_t ctx;
+	host_context_t ctx;
     
     context_from_segfault(&ctx, segfault_ctx);
 
@@ -45,68 +45,35 @@ void sigill_handler(int sn, siginfo_t * si, void *segfault_ctx) {
 
 void fault_handler (int sn, siginfo_t * si, void *segfault_ctx)
 {
-	rei_host_context_t ctx;
-	context_from_segfault(&ctx, segfault_ctx);
-
-	bool dyna_cde = ((unat)CC_RX2RW(ctx.pc) > (unat)CodeCache) && ((unat)CC_RX2RW(ctx.pc) < (unat)(CodeCache + CODE_SIZE + TEMP_CODE_SIZE));
-
-#if !defined(NO_MMU) && defined(HOST_64BIT_CPU)
-#if HOST_CPU == CPU_ARM64
-	u32 op = *(u32*)ctx.pc;
-	bool write = (op & 0x00400000) == 0;
-	u32 exception_pc = ctx.x2;
-#elif HOST_CPU == CPU_X64
-	bool write = false;	// TODO?
-	u32 exception_pc = 0;
-#endif
-	if (vmem32_handle_signal(si->si_addr, write, exception_pc))
-		return;
-#endif
+	// code protection in RAM
 	if (bm_RamWriteAccess(si->si_addr))
 		return;
-	if (VramLockedWrite((u8*)si->si_addr) || BM_LockedWrite((u8*)si->si_addr))
+	// texture protection in VRAM
+	if (VramLockedWrite((u8*)si->si_addr))
 		return;
-	#if FEAT_SHREC == DYNAREC_JIT
-		#if HOST_CPU==CPU_ARM
-			else if (dyna_cde)
-			{
-				ctx.pc = (u32)ngen_readm_fail_v2((u32*)ctx.pc, ctx.r, (unat)si->si_addr);
+	// FPCB jump table protection
+	if (BM_LockedWrite((u8*)si->si_addr))
+		return;
 
-				context_to_segfault(&ctx, segfault_ctx);
-			}
-		#elif HOST_CPU==CPU_X86
-			else if (ngen_Rewrite((unat&)ctx.pc, *(unat*)ctx.esp, ctx.eax))
-			{
-				//remove the call from call stack
-				ctx.esp += 4;
-				//restore the addr from eax to ecx so it's valid again
-				ctx.ecx = ctx.eax;
+#if FEAT_SHREC == DYNAREC_JIT
+	// fast mem access rewriting
+	host_context_t ctx;
+	context_from_segfault(&ctx, segfault_ctx);
+	bool dyna_cde = ((unat)CC_RX2RW(ctx.pc) >= (unat)CodeCache) && ((unat)CC_RX2RW(ctx.pc) < (unat)(CodeCache + CODE_SIZE + TEMP_CODE_SIZE));
 
-				context_to_segfault(&ctx, segfault_ctx);
-			}
-		#elif HOST_CPU == CPU_X64
-			else if (dyna_cde && ngen_Rewrite((unat&)ctx.pc, 0, 0))
-			{
-				context_to_segfault(&ctx, segfault_ctx);
-			}
-		#elif HOST_CPU == CPU_ARM64
-			else if (dyna_cde && ngen_Rewrite(ctx.pc, 0, 0))
-			{
-				context_to_segfault(&ctx, segfault_ctx);
-			}
-		#else
-			#error JIT: Not supported arch
-		#endif
-	#endif
-	else
+	if (dyna_cde && ngen_Rewrite(ctx, si->si_addr))
 	{
-		ERROR_LOG(COMMON, "SIGSEGV @ %zx -> %p was not in vram, dynacode:%d", ctx.pc, si->si_addr, dyna_cde);
-		die("segfault");
-		signal(SIGSEGV, SIG_DFL);
+		context_to_segfault(&ctx, segfault_ctx);
+		return;
 	}
+#endif
+	ERROR_LOG(COMMON, "SIGSEGV @ %p -> %p was not in vram, dynacode:%d", (void *)ctx.pc, si->si_addr, dyna_cde);
+	die("segfault");
+	signal(SIGSEGV, SIG_DFL);
 }
+#undef HOST_CTX_READY
 
-void install_fault_handler(void)
+void install_fault_handler()
 {
 	struct sigaction act, segv_oact;
 	memset(&act, 0, sizeof(act));
@@ -124,7 +91,7 @@ void install_fault_handler(void)
 }
 #else  // !defined(TARGET_NO_EXCEPTIONS)
 // No exceptions/nvmem dummy handlers.
-void install_fault_handler(void) {}
+void install_fault_handler() {}
 #endif // !defined(TARGET_NO_EXCEPTIONS)
 
 double os_GetSeconds()
@@ -139,7 +106,7 @@ double os_GetSeconds()
 void os_DebugBreak() {
     __asm__("trap");
 }
-#elif HOST_OS != OS_LINUX
+#elif !defined(__unix__)
 void os_DebugBreak()
 {
 	__builtin_trap();
@@ -199,8 +166,6 @@ void common_linux_setup()
 	enable_runfast();
 	install_fault_handler();
 	signal(SIGINT, exit);
-	
-	settings.profile.run_counts=0;
 	
 	DEBUG_LOG(BOOT, "Linux paging: %ld %08X %08X", sysconf(_SC_PAGESIZE), PAGE_SIZE, PAGE_MASK);
 	verify(PAGE_MASK==(sysconf(_SC_PAGESIZE)-1));

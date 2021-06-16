@@ -30,6 +30,9 @@
 
 extern int screen_width, screen_height;
 
+struct ImDrawData;
+void ImGui_ImplVulkan_RenderDrawData(ImDrawData *draw_data);
+
 #define VENDOR_AMD 0x1022
 // AMD GPU products use the ATI vendor Id
 #define VENDOR_ATI 0x1002
@@ -55,9 +58,9 @@ public:
 	bool IsValid() { return width != 0 && height != 0; }
 	void NewFrame();
 	void BeginRenderPass();
-	void EndFrame(const std::vector<vk::UniqueCommandBuffer> *cmdBuffers = nullptr);
+	void EndFrame(vk::CommandBuffer cmdBuffer = vk::CommandBuffer());
 	void Present() noexcept;
-	void PresentFrame(vk::ImageView imageView, vk::Extent2D extent) noexcept;
+	void PresentFrame(vk::ImageView imageView, const vk::Extent2D& extent) noexcept;
 	void PresentLastFrame();
 
 	vk::PhysicalDevice GetPhysicalDevice() const { return physicalDevice; }
@@ -101,7 +104,7 @@ public:
 	u32 GetMaxStorageBufferRange() const { return maxStorageBufferRange; }
 	vk::DeviceSize GetMaxMemoryAllocationSize() const { return maxMemoryAllocationSize; }
 	u32 GetVendorID() const { return vendorID; }
-	const std::vector<vk::UniqueCommandBuffer> *PrepareOverlay(bool vmu, bool crosshair);
+	vk::CommandBuffer PrepareOverlay(bool vmu, bool crosshair);
 	void DrawOverlay(float scaling, bool vmu, bool crosshair);
 
 #ifdef VK_DEBUG
@@ -123,7 +126,7 @@ private:
 	vk::Format FindDepthFormat();
 	void InitImgui();
 	void DoSwapAutomation();
-	void DrawFrame(vk::ImageView imageView, vk::Extent2D extent);
+	void DrawFrame(vk::ImageView imageView, const vk::Extent2D& extent);
 	vk::SurfaceKHR GetSurface() const { return *surface; }
 
 	bool HasSurfaceDimensionChanged() const;
@@ -137,6 +140,11 @@ private:
 	u32 width = 0;
 	u32 height = 0;
 	bool resized = false;
+#ifndef TEST_AUTOMATION
+	bool swapOnVSync = true;
+#else
+	bool swapOnVSync = false;
+#endif
 	vk::UniqueInstance instance;
 	vk::PhysicalDevice physicalDevice;
 
@@ -184,7 +192,9 @@ private:
 	vk::UniquePipelineCache pipelineCache;
 
 	std::unique_ptr<QuadPipeline> quadPipeline;
+	std::unique_ptr<QuadPipeline> quadRotatePipeline;
 	std::unique_ptr<QuadDrawer> quadDrawer;
+	std::unique_ptr<QuadDrawer> quadRotateDrawer;
 	std::unique_ptr<ShaderManager> shaderManager;
 
 	vk::ImageView lastFrameView;

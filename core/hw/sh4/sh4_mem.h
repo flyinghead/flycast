@@ -8,23 +8,6 @@ extern VArray2 mem_b;
 #include "hw/mem/_vmem.h"
 #include "modules/mmu.h"
 
-#ifdef NO_MMU
-#define ReadMem8 _vmem_ReadMem8
-#define ReadMem16 _vmem_ReadMem16
-#define IReadMem16 ReadMem16
-#define ReadMem32 _vmem_ReadMem32
-#define ReadMem64 _vmem_ReadMem64
-
-#define WriteMem8 _vmem_WriteMem8
-#define WriteMem16 _vmem_WriteMem16
-#define WriteMem32 _vmem_WriteMem32
-#define WriteMem64 _vmem_WriteMem64
-#ifdef STRICT_MODE
-#error Strict mode requires the MMU
-#endif
-
-#else
-
 #ifdef _MSC_VER
 	typedef u8 (DYNACALL *ReadMem8Func)(u32 addr);
 	typedef u16 (DYNACALL *ReadMem16Func)(u32 addr);
@@ -58,8 +41,6 @@ extern WriteMem16Func WriteMem16;
 extern WriteMem32Func WriteMem32;
 extern WriteMem64Func WriteMem64;
 
-#endif
-
 #define ReadMem8_nommu _vmem_ReadMem8
 #define ReadMem16_nommu _vmem_ReadMem16
 #define IReadMem16_nommu _vmem_IReadMem16
@@ -69,14 +50,14 @@ extern WriteMem64Func WriteMem64;
 #define WriteMem16_nommu _vmem_WriteMem16
 #define WriteMem32_nommu _vmem_WriteMem32
 
-void WriteMemBlock_nommu_ptr(u32 dst,u32* src,u32 size);
-void WriteMemBlock_nommu_sq(u32 dst,u32* src);
-void WriteMemBlock_nommu_dma(u32 dst,u32 src,u32 size);
+void WriteMemBlock_nommu_ptr(u32 dst, const u32 *src, u32 size);
+void WriteMemBlock_nommu_sq(u32 dst, const SQBuffer *src);
+void WriteMemBlock_nommu_dma(u32 dst, u32 src, u32 size);
 
 //Init/Res/Term
 void mem_Init();
 void mem_Term();
-void mem_Reset(bool Manual);
+void mem_Reset(bool hard);
 void mem_map_default();
 
 //Get pointer to ram area , 0 if error

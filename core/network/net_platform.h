@@ -51,6 +51,11 @@ typedef SOCKET sock_t;
 #define L_EAGAIN WSAEWOULDBLOCK
 #define get_last_error() (WSAGetLastError())
 #define perror(s) do { INFO_LOG(MODEM, "%s: Winsock error: %d\n", (s) != NULL ? (s) : "", WSAGetLastError()); } while (false)
+
+#ifndef SHUT_WR
+#define SHUT_WR SD_SEND // workaround fix until mingw update
+#endif
+
 #endif
 
 bool is_local_address(u32 addr);

@@ -46,6 +46,7 @@ extern "C" {
 #include "miniupnp.h"
 #include "reios/reios.h"
 #include "hw/naomi/naomi_cart.h"
+#include "cfg/option.h"
 
 #include <map>
 #include <mutex>
@@ -615,7 +616,7 @@ static void read_native_sockets()
 		}
 	}
 
-	char buf[1500];
+	static char buf[1500];
 	pico_msginfo msginfo;
 
 	// Read UDP sockets
@@ -892,11 +893,11 @@ static void *pico_thread_func(void *)
     }
 
 	u32 addr;
-	pico_string_to_ipv4(settings.network.dns.c_str(), &addr);
+	pico_string_to_ipv4(config::DNS.get().c_str(), &addr);
 	memcpy(&dnsaddr.addr, &addr, sizeof(addr));
 
 	// Create ppp/eth device
-	if (!settings.network.EmulateBBA)
+	if (!config::EmulateBBA)
 	{
 		// PPP
 		pico_dev = pico_ppp_create();
@@ -1041,7 +1042,7 @@ static void *pico_thread_func(void *)
 
 	if (pico_dev)
 	{
-		if (!settings.network.EmulateBBA)
+		if (!config::EmulateBBA)
 		{
 			pico_ppp_destroy(pico_dev);
 		}
@@ -1078,6 +1079,11 @@ void stop_pico()
 	pico_thread.WaitToEnd();
 }
 
+bool networkStarted()
+{
+	return pico_thread_running;
+}
+
 #else
 
 #include "types.h"
@@ -1087,5 +1093,8 @@ void stop_pico() { }
 void write_pico(u8 b) { }
 int read_pico() { return -1; }
 void pico_receive_eth_frame(const u8* frame, u32 size) {}
-
+bool networkStarted()
+{
+	return false;
+}
 #endif

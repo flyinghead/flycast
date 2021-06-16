@@ -1,4 +1,5 @@
 #include "ini.h"
+#include "types.h"
 #include <sstream>
 
 char* trim_ws(char* str);
@@ -297,6 +298,14 @@ void ConfigFile::delete_entry(const std::string& section_name, const std::string
 	ConfigSection *section = get_section(section_name, false);
 	if (section != NULL)
 		section->delete_entry(entry_name);
+}
+
+bool ConfigFile::is_virtual(const std::string& section_name, const std::string& entry_name)
+{
+	ConfigSection *section = get_section(section_name, true);
+	if (section == nullptr)
+		return false;
+	return section->has_entry(entry_name);
 }
 
 } // namespace emucfg
