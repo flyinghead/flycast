@@ -114,11 +114,11 @@ jobs:
           aws-region: us-east-2
         if: github.repository == 'flyinghead/flycast' && github.event_name == 'push' && matrix.config.destDir != ''
 
-       - name: Upload to S3
+      - name: Upload to S3
         run: aws s3 sync build/artifact s3://flycast-builds/${{ matrix.config.destDir }}/${{ env.GIT_BUILD }} --acl public-read --follow-symlinks
         if: ${{ steps.aws-credentials.outputs.aws-account-id != '' }}
 
-      - name: Release gdxsv
+      - name: Release flycast-gdxsv
         uses: meeDamian/github-release@2.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
