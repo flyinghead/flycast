@@ -124,5 +124,6 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           files: build/artifact/${{ matrix.config.packageName }}
+          gzip: false
           allow_override: true
         if: github.repository == 'inada-s/flycast' && github.event_name == 'push' && startsWith(github.ref, 'refs/tags/gdxsv-') && matrix.config.packageName != ''
