@@ -96,9 +96,10 @@ jobs:
 
       - name: Package app (linux)
         run: |
-          mv build/artifact/flycast build/artifact/flycast-gdxsv
-          zip build/artifact/${{ matrix.config.packageName }} build/artifact/flycast-gdxsv
-          rm build/artifact/flycast-gdxsv
+          cd build/artifact
+          mv flycast flycast-gdxsv
+          zip ${{ matrix.config.packageName }} flycast-gdxsv
+          rm flycast-gdxsv
         if: matrix.config.name == 'x86_64-pc-linux-gnu'
 
       - name: Set up git vars
@@ -120,10 +121,12 @@ jobs:
         if: ${{ steps.aws-credentials.outputs.aws-account-id != '' }}
 
       - name: Release flycast-gdxsv
-        uses: meeDamian/github-release@2.0
+        uses: softprops/action-gh-release@v1
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
           files: build/artifact/${{ matrix.config.packageName }}
-          gzip: false
-          allow_override: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         if: github.repository == 'inada-s/flycast' && github.event_name == 'push' && startsWith(github.ref, 'refs/tags/gdxsv-') && matrix.config.packageName != ''
+      - name: Release
+          
+          
