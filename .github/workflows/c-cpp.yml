@@ -99,6 +99,7 @@ jobs:
           mv build/artifact/flycast build/artifact/flycast-gdxsv
           zip ${{ matrix.config.packageName }} build/artifact/flycast-gdxsv
           rm build/artifact/flycast-gdxsv
+        if: matrix.config.name == 'x86_64-pc-linux-gnu'
 
       - name: Set up git vars
         run: |
