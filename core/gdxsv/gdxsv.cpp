@@ -122,13 +122,13 @@ std::string Gdxsv::GeneratePlatformInfoString() {
     ss << "os=" <<
        #ifdef __ANDROID__
        "Android"
-       #elif HOST_OS == OS_LINUX
+       #elif defined(__unix__)
        "Linux"
        #elif defined(__APPLE__)
        #ifdef TARGET_IPHONE
        "iOS"
        #else
-       "OSX"
+       "macOS"
        #endif
        #elif defined(_WIN32)
        "Windows"
