@@ -1,6 +1,11 @@
 name: C/C++ CI
 
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - '**'
+    tags:
+      - 'gdxsv-*'
 
 jobs:
   build:
@@ -11,10 +16,10 @@ jobs:
       matrix:
         config:
           # - {name: i686-pc-windows-msvc, os: windows-latest, cmakeArgs: -DCMAKE_SYSTEM_VERSION="10.0.18362.0" -G "Visual Studio 16 2019" -A Win32}
-          - {name: x86_64-apple-darwin, os: macos-latest, cmakeArgs: -G "Xcode", destDir: osx}
-          - {name: x86_64-pc-linux-gnu, os: ubuntu-latest}
+          - {name: x86_64-apple-darwin, os: macos-latest, cmakeArgs: -G "Xcode", destDir: osx, packageName: flycast-gdxsv-macos-x86_64.zip}
+          - {name: x86_64-pc-linux-gnu, os: ubuntu-latest, packageName: flycast-gdxsv-linux-x86_64.zip}
           # - {name: x86_64-pc-windows-msvc, os: windows-latest, cmakeArgs: -DCMAKE_SYSTEM_VERSION="10.0.18362.0" -G "Visual Studio 16 2019" -A x64}
-          - {name: x86_64-w64-mingw32, os: windows-latest, cmakeArgs: -G "MinGW Makefiles", destDir: win}
+          - {name: x86_64-w64-mingw32, os: windows-latest, cmakeArgs: -G "MinGW Makefiles", destDir: win, packageName: flycast-gdxsv-windows-x86_64-mingw32.zip}
 
     steps:
       - name: Set up build environment (macos-latest)
@@ -73,32 +78,50 @@ jobs:
 
       - name: Package app (macos)
         run: |
+          cp shell/apple/HowToOpen.pdf build/artifact/
           cd build/artifact
           rm -rf Flycast.swiftmodule
-          zip -r flycast.app.zip Flycast.app
-          rm -rf Flycast.app
+          mv Flycast.app Flycast-gdxsv.app
+          zip -r ${{ matrix.config.packageName }} Flycast-gdxsv.app HowToOpen.pdf
+          rm -rf Flycast-gdxsv.app
+          rm HowToOpen.pdf
         if: matrix.config.os == 'macos-latest'
 
       - name: Package app (windows)
         run: |
-          powershell Compress-Archive build/artifact/flycast.exe build/artifact/flycast.zip 
-          rm build/artifact/flycast.exe
+          mv build/artifact/flycast.exe build/artifact/flycast-gdxsv.exe
+          powershell Compress-Archive build/artifact/flycast-gdxsv.exe build/artifact/${{ matrix.config.packageName }}
+          rm build/artifact/flycast-gdxsv.exe
         if: matrix.config.name == 'x86_64-w64-mingw32'
+
+      - name: Package app (linux)
+        run: |
+          mv build/artifact/flycast build/artifact/flycast-gdxsv
+          zip ${{ matrix.config.packageName }} build/artifact/flycast-gdxsv
+          rm build/artifact/flycast-gdxsv
 
       - name: Set up git vars
         run: |
           echo GIT_BUILD=`git describe --all --always | sed 's/remotes\/origin/heads/'`-$GITHUB_SHA >> $GITHUB_ENV
         shell: bash
 
-      #- name: Configure AWS Credentials
-      #  id: aws-credentials
-      #  uses: aws-actions/configure-aws-credentials@v1
-      #  with:
-      #    aws-access-key-id: AKIAJOZQS4H2PHQWYFCA
-      #    aws-secret-access-key: ${{ secrets.S3_SECRET_KEY }}
-      #    aws-region: us-east-2
-      #  if: github.repository == 'flyinghead/flycast' && github.event_name == 'push' && matrix.config.destDir != ''
+      - name: Configure AWS Credentials
+        id: aws-credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: AKIAJOZQS4H2PHQWYFCA
+          aws-secret-access-key: ${{ secrets.S3_SECRET_KEY }}
+          aws-region: us-east-2
+        if: github.repository == 'flyinghead/flycast' && github.event_name == 'push' && matrix.config.destDir != ''
 
-      # - name: Upload to S3
-      #  run: aws s3 sync build/artifact s3://flycast-builds/${{ matrix.config.destDir }}/${{ env.GIT_BUILD }} --acl public-read --follow-symlinks
-      #  if: ${{ steps.aws-credentials.outputs.aws-account-id != '' }}
+       - name: Upload to S3
+        run: aws s3 sync build/artifact s3://flycast-builds/${{ matrix.config.destDir }}/${{ env.GIT_BUILD }} --acl public-read --follow-symlinks
+        if: ${{ steps.aws-credentials.outputs.aws-account-id != '' }}
+
+      - name: Release gdxsv
+        uses: meeDamian/github-release@2.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          files: build/artifact/flycast-${{ matrix.config.packageName }}
+          allow_override: true
+        if: github.repository == 'inada-s/gdxsv' && github.event_name == 'push' && startsWith(github.ref, 'refs/tags/gdxsv-') && matrix.config.packageName != ''
