@@ -142,7 +142,7 @@ std::string Gdxsv::GeneratePlatformInfoString() {
     std::string machine_id = os_GetMachineID();
     if (machine_id.length()) {
         auto digest = XXH64(machine_id.c_str(), machine_id.size(), 37);
-        ss << "machine_id=" << std::hex << digest << "\n";
+        ss << "machine_id=" << std::hex << digest << std::dec << "\n";
     }
     ss << "wireless=" << (int) (os_GetConnectionMedium() == "Wireless") << "\n";
 
