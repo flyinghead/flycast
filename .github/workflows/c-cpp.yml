@@ -2,10 +2,11 @@ name: C/C++ CI
 
 on:
   push:
-    branches:
-      - '**'
     tags:
       - 'gdxsv-*'
+  pull_request:
+    branches:
+      - '**'
 
 jobs:
   build:
