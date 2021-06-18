@@ -3,9 +3,12 @@ name: C/C++ CI
 on:
   push:
     branches:
-      - '**'
+      - 'gdxsv-master'
     tags:
       - 'gdxsv-*'
+  pull_request:
+    branches:
+      - '**'
 
 jobs:
   build:
