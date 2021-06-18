@@ -844,7 +844,7 @@ void Gdxsv::handleReleaseJSON(const std::string &json) {
 
     std::smatch match;
 
-    auto current_version_str = std::string(GIT_VERSION);
+    auto current_version_str = trim_prefix(std::string(GIT_VERSION));
     if (!std::regex_match(current_version_str, match, semver_regex)) return;
 
     if (match.size() < 4) return;
