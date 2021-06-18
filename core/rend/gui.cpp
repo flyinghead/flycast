@@ -869,7 +869,7 @@ static void update_popup()
     if (ImGui::BeginPopupModal("New version", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
     {
         ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + 400.f * scaling);
-        ImGui::TextWrapped("  v%s is available for download!  ", gdxsv.LatestVersion().c_str());
+        ImGui::TextWrapped("  %s is available for download!  ", gdxsv.LatestVersion().c_str());
         ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(16 * scaling, 3 * scaling));
         float currentwidth = ImGui::GetContentRegionAvail().x;
         ImGui::SetCursorPosX((currentwidth - 100.f * scaling) / 2.f + ImGui::GetStyle().WindowPadding.x - 55.f * scaling);
