@@ -51,6 +51,13 @@ void Gdxsv::Reset() {
     signal(SIGPIPE, SIG_IGN);
 #endif
 
+#ifdef _WIN32
+    // Automatically add ContentPath if it is empty.
+    if (config::ContentPath.get().empty()) {
+        config::ContentPath.get().push_back("./");
+    }
+#endif
+
     if (!net_thread.joinable()) {
         NOTICE_LOG(COMMON, "start net thread");
         net_thread = std::thread([this]() {
