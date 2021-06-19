@@ -459,6 +459,7 @@ void dc_init()
 		INFO_LOG(INTERPRETER, "Using Interpreter");
 	}
 
+	gdxsv.Reset();
 	init_done = true;
 }
 
