@@ -378,6 +378,10 @@ int reicast_init(int argc, char* argv[])
 	{
 		LogManager::Init();
 		config::Settings::instance().load(false);
+		//gdxsv auto find content in cwd
+		if (config::ContentPath.get().empty()) {
+			config::ContentPath.get().push_back("./");
+		}
 	}
 	// Force the renderer type now since we're not switching
 	config::RendererType.commit();
