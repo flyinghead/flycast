@@ -34,13 +34,11 @@ void Gdxsv::Reset() {
     tcp_client.Close();
     CloseUdpClientWithReason("cl_hard_reset");
 
-#ifdef _WIN32
     // Automatically add ContentPath if it is empty.
     if (config::ContentPath.get().empty()) {
         config::ContentPath.get().push_back("./");
     }
-#endif
-
+    
     auto game_id = std::string(ip_meta.product_number, sizeof(ip_meta.product_number));
     if (game_id != "T13306M   ") {
         enabled = false;
