@@ -357,9 +357,7 @@ std::string GamepadDevice::make_mapping_filename(bool instance, int system)
 	std::string mapping_file = api_name() + "_" + name();
 	if (instance)
 		mapping_file += "-" + _unique_id;
-	if (system == 0)
-		mapping_file += "_dc";
-	else
+	if (system != 0)
 		mapping_file += "_arcade";
 	std::replace(mapping_file.begin(), mapping_file.end(), '/', '-');
 	std::replace(mapping_file.begin(), mapping_file.end(), '\\', '-');
