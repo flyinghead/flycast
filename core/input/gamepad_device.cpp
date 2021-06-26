@@ -26,6 +26,7 @@
 
 #include <algorithm>
 #include <climits>
+#include <fstream>
 
 #define MAPLE_PORT_CFG_PREFIX "maple_"
 
@@ -384,6 +385,18 @@ bool GamepadDevice::find_mapping(int system)
 		mapping_file = make_mapping_filename(false);
 
 	input_mapper = InputMapping::LoadMapping(mapping_file.c_str());
+
+	// fallback to default mapping filename for sdl inputs
+	if (!input_mapper && mapping_file.find("SDL") != std::string::npos)
+	{
+		mapping_file = make_mapping_filename(false);
+		std::string mapping_path = get_readonly_config_path(std::string("mappings/") + mapping_file);
+
+		// create default mapping filename if none exists
+		if (!file_exists(mapping_path))
+			std::ofstream file{ mapping_path.c_str() };
+		input_mapper = InputMapping::LoadMapping(mapping_file.c_str());
+	}
 	return !!input_mapper;
 }
 
