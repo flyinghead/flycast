@@ -1,4 +1,5 @@
-#define _WINSOCKAPI_    // stops windows.h including winsock.h
+#include <winsock2.h>
+
 #include "oslib/oslib.h"
 #include "oslib/audiostream.h"
 #include "imgread/common.h"
@@ -19,7 +20,6 @@
 #include "oslib/host_context.h"
 #include "../shell/windows/resource.h"
 
-#include <winsock2.h>
 #include <ws2ipdef.h>
 #include <iphlpapi.h>
 #include <netioapi.h>
