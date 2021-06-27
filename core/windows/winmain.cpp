@@ -433,7 +433,7 @@ void os_CreateWindow()
 #endif	// !USE_SDL
 	WSADATA wsaData;
 	if (WSAStartup(MAKEWORD(2, 0), &wsaData) != 0) {
-		ERROR_LOG(COMMON, "WSAStartup failed. errno=%d", get_last_error());
+		ERROR_LOG(COMMON, "WSAStartup failed. errno=%d", WSAGetLastError());
 		return;
 	}
 }
