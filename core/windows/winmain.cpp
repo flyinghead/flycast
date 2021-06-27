@@ -431,6 +431,11 @@ void os_CreateWindow()
 	CreateMainWindow();
 	InitRenderApi();
 #endif	// !USE_SDL
+	WSADATA wsaData;
+	if (WSAStartup(MAKEWORD(2, 0), &wsaData) != 0) {
+		ERROR_LOG(COMMON, "WSAStartup failed. errno=%d", get_last_error());
+		return;
+	}
 }
 
 void DestroyMainWindow()
@@ -446,6 +451,7 @@ void DestroyMainWindow()
 		DestroyWindow(hWnd);
 		hWnd = NULL;
 	}
+	WSACleanup();
 }
 
 void* libPvr_GetRenderTarget()
