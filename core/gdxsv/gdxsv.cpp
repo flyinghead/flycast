@@ -19,11 +19,11 @@ Gdxsv::~Gdxsv() {
     if (net_thread.joinable()) {
         net_thread.join();
     }
-    CloseUdpClientWithReason("cl_hard_quit");
+    CloseMcsRemoteWithReason("cl_hard_quit");
 }
 
 bool Gdxsv::InGame() const {
-    return enabled && udp_client.IsConnected();
+    return enabled && udp_client.Initialized() && mcs_remote.is_open();
 }
 
 bool Gdxsv::Enabled() const {
@@ -32,7 +32,7 @@ bool Gdxsv::Enabled() const {
 
 void Gdxsv::Reset() {
     tcp_client.Close();
-    CloseUdpClientWithReason("cl_hard_reset");
+    CloseMcsRemoteWithReason("cl_hard_reset");
 
     // Automatically add ContentPath if it is empty.
     if (config::ContentPath.get().empty()) {
@@ -62,6 +62,10 @@ void Gdxsv::Reset() {
             UpdateNetwork();
             NOTICE_LOG(COMMON, "end net thread");
         });
+    }
+
+    if (!udp_client.Initialized()) {
+        udp_client.Bind(0);
     }
 
     server = cfgLoadStr("gdxsv", "server", "zdxsv.net");
@@ -224,7 +228,7 @@ void Gdxsv::SyncNetwork(bool write) {
                 u16 port = port_no;
 
                 if (tolobby == 1) {
-                    CloseUdpClientWithReason("cl_to_lobby");
+                    CloseMcsRemoteWithReason("cl_to_lobby");
                     bool ok = tcp_client.Connect(host.c_str(), port);
                     if (ok) {
                         tcp_client.SetNonBlocking();
@@ -241,7 +245,8 @@ void Gdxsv::SyncNetwork(bool write) {
                     char addr_buf[INET_ADDRSTRLEN];
                     inet_ntop(AF_INET, &host_ip, addr_buf, INET_ADDRSTRLEN);
                     host = std::string(addr_buf);
-                    bool ok = udp_client.Connect(host.c_str(), port);
+                    mcs_remote.Close();
+                    bool ok = mcs_remote.Open(host.c_str(), port);
                     if (ok) {
                         send_buf_mtx.lock();
                         send_buf.clear();
@@ -275,13 +280,13 @@ void Gdxsv::SyncNetwork(bool write) {
                 tcp_client.Close();
 
                 if (gdx_rpc.param2 == 0) {
-                    CloseUdpClientWithReason("cl_app_close");
+                    CloseMcsRemoteWithReason("cl_app_close");
                 } else if (gdx_rpc.param2 == 1) {
-                    CloseUdpClientWithReason("cl_ppp_close");
+                    CloseMcsRemoteWithReason("cl_ppp_close");
                 } else if (gdx_rpc.param2 == 2) {
-                    CloseUdpClientWithReason("cl_soft_reset");
+                    CloseMcsRemoteWithReason("cl_soft_reset");
                 } else {
-                    CloseUdpClientWithReason("cl_tcp_close");
+                    CloseMcsRemoteWithReason("cl_tcp_close");
                 }
 
                 recv_buf_mtx.lock();
@@ -301,7 +306,7 @@ void Gdxsv::SyncNetwork(bool write) {
             WriteMem32_nommu(gdx_rpc_addr + 20, 0);
         }
 
-        WriteMem32_nommu(symbols["is_online"], tcp_client.IsConnected() || udp_client.IsConnected());
+        WriteMem32_nommu(symbols["is_online"], tcp_client.IsConnected() || udp_client.Initialized());
 
         recv_buf_mtx.lock();
         int n = recv_buf.size();
@@ -416,7 +421,8 @@ void Gdxsv::UpdateNetwork() {
     u8 buf[16 * 1024];
 
     auto mcs_ping_test = [&]() {
-        if (!udp_client.IsConnected()) return;
+        if (!udp_client.Initialized()) return;
+        if (!mcs_remote.is_open()) return;
         int ping_cnt = 0;
         int rtt_sum = 0;
 
@@ -426,7 +432,7 @@ void Gdxsv::UpdateNetwork() {
             pkt.mutable_ping_data()->set_timestamp(std::chrono::duration_cast<std::chrono::milliseconds>(
                     std::chrono::high_resolution_clock::now().time_since_epoch()).count());
             if (pkt.SerializePartialToArray((void *) buf, (int) sizeof(buf))) {
-                udp_client.Send((const char *) buf, pkt.GetCachedSize());
+                udp_client.SendTo((const char *) buf, pkt.GetCachedSize(), mcs_remote);
             } else {
                 ERROR_LOG(COMMON, "packet serialize error");
                 return;
@@ -435,9 +441,10 @@ void Gdxsv::UpdateNetwork() {
             u8 buf2[1024];
             proto::Packet pkt2;
             for (int j = 0; j < 100; ++j) {
-                if (!udp_client.IsConnected()) break;
-                int n = udp_client.Recv((char *) buf2, sizeof(buf2));
-                if (0 < n) {
+                if (!udp_client.Initialized()) break;
+                std::string sender;
+                int n = udp_client.RecvFrom((char *) buf2, sizeof(buf2), sender);
+                if (0 < n && sender == mcs_remote.str_addr()) {
                     auto t2 = std::chrono::duration_cast<std::chrono::milliseconds>(
                             std::chrono::high_resolution_clock::now().time_since_epoch()).count();
                     if (pkt2.ParseFromArray(buf2, n)) {
@@ -474,7 +481,7 @@ void Gdxsv::UpdateNetwork() {
             std::this_thread::sleep_for(std::chrono::milliseconds(1));
         }
         updated = false;
-        if (!tcp_client.IsConnected() && !udp_client.IsConnected()) {
+        if (!tcp_client.IsConnected() && !udp_client.Initialized()) {
             std::this_thread::sleep_for(std::chrono::milliseconds(1000));
             continue;
         }
@@ -523,14 +530,15 @@ void Gdxsv::UpdateNetwork() {
                 }
 
                 for (int i = 0; i < 10; ++i) {
-                    udp_client.Send((const char *) buf, pkt.GetCachedSize());
+                    udp_client.SendTo((const char *) buf, pkt.GetCachedSize(), mcs_remote);
                     std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
                     u8 buf2[1024];
                     proto::Packet pkt2;
                     pkt2.Clear();
-                    int n = udp_client.Recv((char *) buf2, sizeof(buf2));
-                    if (0 < n) {
+                    std::string sender;
+                    int n = udp_client.RecvFrom((char *) buf2, sizeof(buf2), sender);
+                    if (0 < n && sender == mcs_remote.str_addr()) {
                         if (pkt2.ParseFromArray(buf2, n)) {
                             if (pkt2.hello_server_data().ok()) {
                                 NOTICE_LOG(COMMON, "UDP session_id validation OK");
@@ -558,7 +566,7 @@ void Gdxsv::UpdateNetwork() {
                 send_buf_mtx.unlock();
             } else {
                 ERROR_LOG(COMMON, "UDP session failed");
-                CloseUdpClientWithReason("cl_session_failed");
+                CloseMcsRemoteWithReason("cl_session_failed");
             }
         }
 
@@ -583,11 +591,11 @@ void Gdxsv::UpdateNetwork() {
                     }
                     send_buf_mtx.unlock();
                 }
-            } else if (udp_client.IsConnected()) {
+            } else if (udp_client.Initialized() && mcs_remote.is_open()) {
                 if (message_buf.CanPush()) {
                     message_buf.PushBattleMessage(user_id, buf, n);
                     if (message_buf.Packet().SerializeToArray((void *) buf, (int) sizeof(buf))) {
-                        if (udp_client.Send((const char *) buf, message_buf.Packet().GetCachedSize())) {
+                        if (udp_client.SendTo((const char *) buf, message_buf.Packet().GetCachedSize(), mcs_remote)) {
                             udp_retransmit_countdown = 16;
                         } else {
                             udp_retransmit_countdown = 4;
@@ -607,10 +615,10 @@ void Gdxsv::UpdateNetwork() {
             updated = true;
         }
 
-        if (!updated && udp_client.IsConnected()) {
+        if (!updated && udp_client.Initialized(), mcs_remote.is_open()) {
             if (udp_retransmit_countdown-- == 0) {
                 if (message_buf.Packet().SerializeToArray((void *) buf, (int) sizeof(buf))) {
-                    if (udp_client.Send((const char *) buf, message_buf.Packet().GetCachedSize())) {
+                    if (udp_client.SendTo((const char *) buf, message_buf.Packet().GetCachedSize(), mcs_remote)) {
                         udp_retransmit_countdown = 16;
                     } else {
                         udp_retransmit_countdown = 4;
@@ -635,12 +643,13 @@ void Gdxsv::UpdateNetwork() {
                     updated = true;
                 }
             }
-        } else if (udp_client.IsConnected()) {
+        } else if (udp_client.Initialized()) {
             n = udp_client.ReadableSize();
             if (0 < n) {
                 n = std::min<int>(n, sizeof(buf));
-                n = udp_client.Recv((char *) buf, n);
-                if (0 < n) {
+                std::string sender;
+                n = udp_client.RecvFrom((char *) buf, n, sender);
+                if (0 < n && sender == mcs_remote.str_addr()) {
                     pkt.Clear();
                     if (pkt.ParseFromArray(buf, n)) {
                         if (pkt.type() == proto::MessageType::Battle) {
@@ -656,7 +665,7 @@ void Gdxsv::UpdateNetwork() {
                             }
                             recv_buf_mtx.unlock();
                         } else if (pkt.type() == proto::MessageType::Fin) {
-                            CloseUdpClientWithReason("cl_recv_fin");
+                            CloseMcsRemoteWithReason("cl_recv_fin");
                         } else {
                             WARN_LOG(COMMON, "recv unexpected pkt type %d", pkt.type());
                         }
@@ -814,8 +823,8 @@ void Gdxsv::WritePatchDisk2() {
     WriteMem16_nommu(0x0c11e01a, hp_offset);
 }
 
-void Gdxsv::CloseUdpClientWithReason(const char *reason) {
-    if (udp_client.IsConnected()) {
+void Gdxsv::CloseMcsRemoteWithReason(const char *reason) {
+    if (udp_client.Initialized() && mcs_remote.is_open()) {
         proto::Packet pkt;
         pkt.Clear();
         pkt.set_type(proto::MessageType::Fin);
@@ -824,12 +833,12 @@ void Gdxsv::CloseUdpClientWithReason(const char *reason) {
 
         char buf[1024];
         if (pkt.SerializePartialToArray((void *) buf, (int) sizeof(buf))) {
-            udp_client.Send((const char *) buf, pkt.GetCachedSize());
+            udp_client.SendTo((const char *) buf, pkt.GetCachedSize(), mcs_remote);
         } else {
             ERROR_LOG(COMMON, "packet serialize error");
         }
 
-        udp_client.Close();
+        mcs_remote.Close();
     }
 }
 

@@ -52,7 +52,7 @@ private:
 
     void WritePatchDisk2();
 
-    void CloseUdpClientWithReason(const char *reason);
+    void CloseMcsRemoteWithReason(const char *reason);
 
     std::atomic<bool> enabled;
     std::atomic<int> disk;
@@ -74,6 +74,7 @@ private:
 
     TcpClient tcp_client;
     UdpClient udp_client;
+    UdpRemote mcs_remote;
 
     std::atomic<bool> gcp_ping_test_finished;
     std::map<std::string, int> gcp_ping_test_result;

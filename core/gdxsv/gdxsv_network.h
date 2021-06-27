@@ -38,32 +38,6 @@ private:
     int port_;
 };
 
-
-class UdpClient {
-public:
-    bool Connect(const char *host, int port);
-
-    int IsConnected() const;
-
-    int Recv(char *buf, int len);
-
-    int Send(const char *buf, int len);
-
-    u32 ReadableSize() const;
-
-    void Close();
-
-    const std::string &host() { return host_; }
-
-    int port() const { return port_; }
-
-private:
-    sock_t sock_ = INVALID_SOCKET;
-    sockaddr_in remote_addr_;
-    std::string host_;
-    int port_;
-};
-
 class MessageBuffer {
 public:
     static const int kBufSize = 50;
@@ -100,3 +74,43 @@ private:
 };
 
 
+class UdpRemote {
+public:
+    bool Open(const char* host, int port);
+
+    void Close();
+
+    bool is_open() const;
+
+    const std::string &str_addr() const;
+
+    const sockaddr_in &net_addr() const;
+
+    MessageBuffer &msg_buf();
+
+private:
+    bool is_open_;
+    std::string str_addr_;
+    sockaddr_in net_addr_;
+    MessageBuffer msg_buf_;
+};
+
+class UdpClient {
+public:
+    bool Bind(int port);
+
+    bool Initialized() const;
+
+    int RecvFrom(char *buf, int len, std::string& sender);
+
+    int SendTo(const char *buf, int len, const UdpRemote& remote);
+
+    u32 ReadableSize() const;
+
+    void Close();
+
+private:
+    sock_t sock_ = INVALID_SOCKET;
+    int bind_port_;
+    std::string bind_ip_;
+};
