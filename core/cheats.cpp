@@ -288,7 +288,8 @@ const WidescreenCheat CheatManager::widescreen_cheats[] =
 		{ "MK-51038",   nullptr,    { 0x948058, 0 }, { 0x43700000 } },		// Zombie Revenge (USA)
 		{ "HDR-0026",   nullptr,    { 0x948B18, 0 }, { 0x43700000 } },		// Zombie Revenge (JP)
 		{ "T43301M",    nullptr,    { 0x4B0218, 0 }, { 0x3F400000 } },		// Zusar Vasar (JP)
-
+		{ "T13306M",    "2/2  ",    { 0x1E7948, 0x1E7958, 0x1E7968, 0x1E7978, 0 },
+				{ 0x3FE38E39, 0x3FE38E39, 0x3FE38E39, 0x3FE38E39} }, // Gundam: Federation vs. Zeon & DX Disc2 (JP)
 		{ nullptr },
 };
 const WidescreenCheat CheatManager::naomi_widescreen_cheats[] =
@@ -392,7 +393,8 @@ void CheatManager::reset(const std::string& gameId)
 			if (!strcmp(gameId.c_str(), widescreen_cheats[i].game_id)
 					&& (widescreen_cheats[i].area_or_version == nullptr
 							|| !strncmp(ip_meta.area_symbols, widescreen_cheats[i].area_or_version, sizeof(ip_meta.area_symbols))
-							|| !strncmp(ip_meta.product_version, widescreen_cheats[i].area_or_version, sizeof(ip_meta.product_version))))
+							|| !strncmp(ip_meta.product_version, widescreen_cheats[i].area_or_version, sizeof(ip_meta.product_version))
+                            || !strncmp(ip_meta.disk_num, widescreen_cheats[i].area_or_version, sizeof(ip_meta.disk_num))))
 			{
 				widescreen_cheat = &widescreen_cheats[i];
 				NOTICE_LOG(COMMON, "Applying widescreen hack to game %s", gameId.c_str());
