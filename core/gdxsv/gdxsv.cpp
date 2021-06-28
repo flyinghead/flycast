@@ -46,13 +46,7 @@ void Gdxsv::Reset() {
     }
     enabled = true;
 
-#ifdef _WIN32
-    WSADATA wsaData;
-    if (WSAStartup(MAKEWORD(2, 0), &wsaData) != 0) {
-        ERROR_LOG(COMMON, "WSAStartup failed. errno=%d", get_last_error());
-        return;
-    }
-#else
+#ifdef __APPLE__
     signal(SIGPIPE, SIG_IGN);
 #endif
 
