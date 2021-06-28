@@ -825,8 +825,7 @@ void Gdxsv::WritePatchDisk2() {
         u32 ratio = 0x3Faaaaab; // default 4/3
         if (ReadMem8_nommu(0x0c3d16d4) == 2) { // In main game part
             // Changing this value outside the game part will break UI layout.
-            // ratio = 0x3fe38e39; // wide 16/9
-            ratio = 0x3fe4b17e;
+            ratio = 0x3fe4b17e; // wide 4/3 * 1.34
         }
         WriteMem32_nommu(0x0c1e7948, ratio);
         WriteMem32_nommu(0x0c1e7958, ratio);
