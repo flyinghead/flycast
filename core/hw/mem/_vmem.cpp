@@ -1,5 +1,4 @@
 #include "_vmem.h"
-#include "vmem32.h"
 #include "hw/aica/aica_if.h"
 #include "hw/pvr/pvr_mem.h"
 #include "hw/sh4/dyna/blockmanager.h"
@@ -24,18 +23,6 @@ static _vmem_WriteMem32FP* _vmem_WF32[HANDLER_COUNT];
 //upper 8b of the address
 static void* _vmem_MemInfo_ptr[0x100];
 
-void* _vmem_get_ptr2(u32 addr,u32& mask)
-{
-	u32   page=addr>>24;
-	unat  iirf=(unat)_vmem_MemInfo_ptr[page];
-	void* ptr=(void*)(iirf&~HANDLER_MAX);
-
-	if (ptr==0) return 0;
-
-	mask=0xFFFFFFFF>>iirf;
-	return ptr;
-}
-
 void* _vmem_read_const(u32 addr,bool& ismem,u32 sz)
 {
 	u32   page=addr>>24;
@@ -48,19 +35,20 @@ void* _vmem_read_const(u32 addr,bool& ismem,u32 sz)
 		const unat id=iirf;
 		if (sz==1)
 		{
-			return (void*)_vmem_RF8[id/4];
+			return (void*)_vmem_RF8[id];
 		}
 		else if (sz==2)
 		{
-			return (void*)_vmem_RF16[id/4];
+			return (void*)_vmem_RF16[id];
 		}
 		else if (sz==4)
 		{
-			return (void*)_vmem_RF32[id/4];
+			return (void*)_vmem_RF32[id];
 		}
 		else
 		{
 			die("Invalid size");
+			return nullptr;
 		}
 	}
 	else
@@ -71,9 +59,6 @@ void* _vmem_read_const(u32 addr,bool& ismem,u32 sz)
 
 		return &(((u8*)ptr)[addr]);
 	}
-	die("Invalid memory size");
-
-	return 0;
 }
 
 void* _vmem_write_const(u32 addr,bool& ismem,u32 sz)
@@ -88,19 +73,20 @@ void* _vmem_write_const(u32 addr,bool& ismem,u32 sz)
 		const unat id=iirf;
 		if (sz==1)
 		{
-			return (void*)_vmem_WF8[id/4];
+			return (void*)_vmem_WF8[id];
 		}
 		else if (sz==2)
 		{
-			return (void*)_vmem_WF16[id/4];
+			return (void*)_vmem_WF16[id];
 		}
 		else if (sz==4)
 		{
-			return (void*)_vmem_WF32[id/4];
+			return (void*)_vmem_WF32[id];
 		}
 		else
 		{
 			die("Invalid size");
+			return nullptr;
 		}
 	}
 	else
@@ -111,15 +97,12 @@ void* _vmem_write_const(u32 addr,bool& ismem,u32 sz)
 
 		return &(((u8*)ptr)[addr]);
 	}
-	die("Invalid memory size");
-
-	return 0;
 }
 
-template<typename T,typename Trv>
-INLINE Trv DYNACALL _vmem_readt(u32 addr)
+template<typename T, typename Trv>
+Trv DYNACALL _vmem_readt(u32 addr)
 {
-	const u32 sz=sizeof(T);
+	constexpr u32 sz = sizeof(T);
 
 	u32   page=addr>>24;	//1 op, shift/extract
 	unat  iirf=(unat)_vmem_MemInfo_ptr[page]; //2 ops, insert + read [vmem table will be on reg ]
@@ -138,26 +121,27 @@ INLINE Trv DYNACALL _vmem_readt(u32 addr)
 		const u32 id=iirf;
 		if (sz==1)
 		{
-			return (T)_vmem_RF8[id/4](addr);
+			return (T)_vmem_RF8[id](addr);
 		}
 		else if (sz==2)
 		{
-			return (T)_vmem_RF16[id/4](addr);
+			return (T)_vmem_RF16[id](addr);
 		}
 		else if (sz==4)
 		{
-			return _vmem_RF32[id/4](addr);
+			return _vmem_RF32[id](addr);
 		}
 		else if (sz==8)
 		{
-			T rv=_vmem_RF32[id/4](addr);
-			rv|=(T)((u64)_vmem_RF32[id/4](addr+4)<<32);
+			T rv=_vmem_RF32[id](addr);
+			rv|=(T)((u64)_vmem_RF32[id](addr+4)<<32);
 			
 			return rv;
 		}
 		else
 		{
 			die("Invalid size");
+			return 0;
 		}
 	}
 }
@@ -167,9 +151,9 @@ template u32 DYNACALL _vmem_readt<u32, u32>(u32 addr);
 template u64 DYNACALL _vmem_readt<u64, u64>(u32 addr);
 
 template<typename T>
-INLINE void DYNACALL _vmem_writet(u32 addr,T data)
+void DYNACALL _vmem_writet(u32 addr, T data)
 {
-	const u32 sz=sizeof(T);
+	constexpr u32 sz = sizeof(T);
 
 	u32 page=addr>>24;
 	unat  iirf=(unat)_vmem_MemInfo_ptr[page];
@@ -187,20 +171,20 @@ INLINE void DYNACALL _vmem_writet(u32 addr,T data)
 		const u32 id=iirf;
 		if (sz==1)
 		{
-			 _vmem_WF8[id/4](addr,data);
+			 _vmem_WF8[id](addr,data);
 		}
 		else if (sz==2)
 		{
-			 _vmem_WF16[id/4](addr,data);
+			 _vmem_WF16[id](addr,data);
 		}
 		else if (sz==4)
 		{
-			 _vmem_WF32[id/4](addr,data);
+			 _vmem_WF32[id](addr,data);
 		}
 		else if (sz==8)
 		{
-			_vmem_WF32[id/4](addr,(u32)data);
-			_vmem_WF32[id/4](addr+4,(u32)((u64)data>>32));
+			_vmem_WF32[id](addr,(u32)data);
+			_vmem_WF32[id](addr+4,(u32)((u64)data>>32));
 		}
 		else
 		{
@@ -229,11 +213,8 @@ void DYNACALL _vmem_WriteMem16(u32 Address,u16 data) { _vmem_writet<u16>(Address
 void DYNACALL _vmem_WriteMem32(u32 Address,u32 data) { _vmem_writet<u32>(Address,data); }
 void DYNACALL _vmem_WriteMem64(u32 Address,u64 data) { _vmem_writet<u64>(Address,data); }
 
-//0xDEADC0D3 or 0
-#define MEM_ERROR_RETURN_VALUE 0xDEADC0D3
+#define MEM_ERROR_RETURN_VALUE 0
 
-//phew .. that was lota asm code ;) lets go back to C :D
-//default mem handlers ;)
 //default read handlers
 static u8 DYNACALL _vmem_ReadMem8_not_mapped(u32 addresss)
 {
@@ -309,7 +290,7 @@ void _vmem_map_handler(_vmem_handler Handler,u32 start,u32 end)
 	verify(start<=end);
 	for (u32 i=start;i<=end;i++)
 	{
-		_vmem_MemInfo_ptr[i]=((u8*)0)+(0x00000000 + Handler*4);
+		_vmem_MemInfo_ptr[i] = (u8*)nullptr + Handler;
 	}
 }
 
@@ -395,6 +376,8 @@ static void* malloc_pages(size_t size) {
 #endif
 }
 
+#if FEAT_SHREC != DYNAREC_NONE
+
 // Resets the FPCB table (by either clearing it to the default val
 // or by flushing it and making it fault on access again.
 void _vmem_bm_reset()
@@ -427,6 +410,7 @@ bool BM_LockedWrite(u8* address) {
 	}
 	return false;
 }
+#endif
 
 static void _vmem_set_p0_mappings()
 {
@@ -498,7 +482,9 @@ void _vmem_init_mappings()
 
 		// Allocate it all and initialize it.
 		p_sh4rcb = (Sh4RCB*)malloc_pages(sizeof(Sh4RCB));
+#if FEAT_SHREC != DYNAREC_NONE
 		bm_vmem_pagefill((void**)p_sh4rcb->fpcb, sizeof(p_sh4rcb->fpcb));
+#endif
 
 		mem_b.size = RAM_SIZE;
 		mem_b.data = (u8*)malloc_pages(RAM_SIZE);
@@ -616,36 +602,18 @@ void _vmem_release() {
 	}
 }
 
-void _vmem_enable_mmu(bool enable)
-{
-	if (enable)
-	{
-		vmem32_init();
-	}
-	else
-	{
-		// Restore P0/U0 mem mappings
-		vmem32_term();
-		if (_nvmem_4gb_space())
-			_vmem_set_p0_mappings();
-	}
-}
-
 void _vmem_protect_vram(u32 addr, u32 size)
 {
 	addr &= VRAM_MASK;
 	if (_nvmem_enabled())
 	{
-		if (!mmu_enabled() || !_nvmem_4gb_space())
+		mem_region_lock(virt_ram_base + 0x04000000 + addr, size);	// P0
+		//mem_region_lock(virt_ram_base + 0x06000000 + addr, size);	// P0 - mirror
+		if (VRAM_SIZE == 0x800000)
 		{
-			mem_region_lock(virt_ram_base + 0x04000000 + addr, size);	// P0
-			//mem_region_lock(virt_ram_base + 0x06000000 + addr, size);	// P0 - mirror
-			if (VRAM_SIZE == 0x800000)
-			{
-				// wraps when only 8MB VRAM
-				mem_region_lock(virt_ram_base + 0x04000000 + addr + VRAM_SIZE, size);	// P0 wrap
-				//mem_region_lock(virt_ram_base + 0x06000000 + addr + VRAM_SIZE, size);	// P0 mirror wrap
-			}
+			// wraps when only 8MB VRAM
+			mem_region_lock(virt_ram_base + 0x04000000 + addr + VRAM_SIZE, size);	// P0 wrap
+			//mem_region_lock(virt_ram_base + 0x06000000 + addr + VRAM_SIZE, size);	// P0 mirror wrap
 		}
 		if (_nvmem_4gb_space())
 		{
@@ -665,7 +633,6 @@ void _vmem_protect_vram(u32 addr, u32 size)
 				//mem_region_lock(virt_ram_base + 0xC4000000 + addr + VRAM_SIZE, size);	// P3 wrap
 				//mem_region_lock(virt_ram_base + 0xC6000000 + addr + VRAM_SIZE, size);	// P3 - mirror wrap
 			}
-			vmem32_protect_vram(addr, size);
 		}
 	}
 	else
@@ -679,32 +646,29 @@ void _vmem_unprotect_vram(u32 addr, u32 size)
 	addr &= VRAM_MASK;
 	if (_nvmem_enabled())
 	{
-		if (!mmu_enabled() || !_nvmem_4gb_space())
+		mem_region_unlock(virt_ram_base + 0x04000000 + addr, size);		// P0
+		//mem_region_unlock(virt_ram_base + 0x06000000 + addr, size);	// P0 - mirror
+		if (VRAM_SIZE == 0x800000)
 		{
-			mem_region_unlock(virt_ram_base + 0x04000000 + addr, size);		// P0
-			//mem_region_unlock(virt_ram_base + 0x06000000 + addr, size);	// P0 - mirror
-			if (VRAM_SIZE == 0x800000)
-			{
-				// wraps when only 8MB VRAM
-				mem_region_unlock(virt_ram_base + 0x04000000 + addr + VRAM_SIZE, size);		// P0 wrap
-				//mem_region_unlock(virt_ram_base + 0x06000000 + addr + VRAM_SIZE, size);	// P0 mirror wrap
-			}
+			// wraps when only 8MB VRAM
+			mem_region_unlock(virt_ram_base + 0x04000000 + addr + VRAM_SIZE, size);		// P0 wrap
+			//mem_region_unlock(virt_ram_base + 0x06000000 + addr + VRAM_SIZE, size);	// P0 mirror wrap
 		}
 		if (_nvmem_4gb_space())
 		{
 			mem_region_unlock(virt_ram_base + 0x84000000 + addr, size);		// P1
-			//mem_region_unlock(virt_ram_base + 0x86000000 + addr, size);		// P1 - mirror
+			//mem_region_unlock(virt_ram_base + 0x86000000 + addr, size);	// P1 - mirror
 			mem_region_unlock(virt_ram_base + 0xA4000000 + addr, size);		// P2
-			//mem_region_unlock(virt_ram_base + 0xA6000000 + addr, size);		// P2 - mirror
+			//mem_region_unlock(virt_ram_base + 0xA6000000 + addr, size);	// P2 - mirror
 			// We should also lock P3 and its mirrors, but it doesn't seem to be used...
 			//mem_region_unlock(virt_ram_base + 0xC4000000 + addr, size);	// P3
 			//mem_region_unlock(virt_ram_base + 0xC6000000 + addr, size);	// P3 - mirror
 			if (VRAM_SIZE == 0x800000)
 			{
 				mem_region_unlock(virt_ram_base + 0x84000000 + addr + VRAM_SIZE, size);		// P1 wrap
-				//mem_region_unlock(virt_ram_base + 0x86000000 + addr + VRAM_SIZE, size);		// P1 - mirror wrap
+				//mem_region_unlock(virt_ram_base + 0x86000000 + addr + VRAM_SIZE, size);	// P1 - mirror wrap
 				mem_region_unlock(virt_ram_base + 0xA4000000 + addr + VRAM_SIZE, size);		// P2 wrap
-				//mem_region_unlock(virt_ram_base + 0xA6000000 + addr + VRAM_SIZE, size);		// P2 - mirror wrap
+				//mem_region_unlock(virt_ram_base + 0xA6000000 + addr + VRAM_SIZE, size);	// P2 - mirror wrap
 				//mem_region_unlock(virt_ram_base + 0xC4000000 + addr + VRAM_SIZE, size);	// P3 wrap
 				//mem_region_unlock(virt_ram_base + 0xC6000000 + addr + VRAM_SIZE, size);	// P3 - mirror wrap
 			}
@@ -723,17 +687,8 @@ u32 _vmem_get_vram_offset(void *addr)
 		ptrdiff_t offset = (u8*)addr - virt_ram_base;
 		if (_nvmem_4gb_space())
 		{
-			if (mmu_enabled())
-			{
-				// Only kernel mirrors
-				if (offset < 0x80000000 || offset >= 0xE0000000)
-					return -1;
-			}
-			else
-			{
-				if (offset < 0 || offset >= 0xE0000000)
-					return -1;
-			}
+			if (offset < 0 || offset >= 0xE0000000)
+				return -1;
 			offset &= 0x1FFFFFFF;
 		}
 		else
@@ -743,7 +698,9 @@ u32 _vmem_get_vram_offset(void *addr)
 		}
 		if ((offset >> 24) != 4)
 			return -1;
-		verify((((u8*)addr - virt_ram_base) >> 29) == 0 || (((u8*)addr - virt_ram_base) >> 29) == 4  || (((u8*)addr - virt_ram_base) >> 29) == 5);	// others areas aren't mapped atm
+		if ((((u8*)addr - virt_ram_base) >> 29) != 0 && (((u8*)addr - virt_ram_base) >> 29) != 4  && (((u8*)addr - virt_ram_base) >> 29) != 5)
+			// other areas aren't mapped atm
+			return -1;
 
 		return offset & VRAM_MASK;
 	}

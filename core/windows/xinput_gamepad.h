@@ -106,14 +106,14 @@ public:
 			last_right_thumb_y = 0;
 		}
 	}
-	virtual void rumble(float power, float inclination, u32 duration_ms) override
+	void rumble(float power, float inclination, u32 duration_ms) override
 	{
 		vib_inclination = inclination * power;
 		vib_stop_time = os_GetSeconds() + duration_ms / 1000.0;
 
 		do_rumble(power);
 	}
-	virtual void update_rumble() override
+	void update_rumble() override
 	{
 		if (vib_stop_time > 0)
 		{
@@ -166,7 +166,7 @@ public:
 	}
 
 protected:
-	virtual void load_axis_min_max(u32 axis) override
+	void load_axis_min_max(u32 axis) override
 	{
 		if (axis == 0 || axis == 1)
 		{
@@ -240,7 +240,7 @@ public:
 		if (!find_mapping())
 			input_mapper = std::make_shared<KbInputMapping>();
 	}
-	virtual ~WinKbGamepadDevice() {}
+	~WinKbGamepadDevice() override = default;
 };
 
 class MouseInputMapping : public InputMapping
@@ -267,16 +267,32 @@ public:
 		if (!find_mapping())
 			input_mapper = std::make_shared<MouseInputMapping>();
 	}
-	virtual ~WinMouseGamepadDevice() {}
+	~WinMouseGamepadDevice() override = default;
+
 	bool gamepad_btn_input(u32 code, bool pressed) override
 	{
-		if (gui_is_open())
+		if (gui_is_open() && !is_detecting_input())
 			// Don't register mouse clicks as gamepad presses when gui is open
 			// This makes the gamepad presses to be handled first and the mouse position to be ignored
 			// TODO Make this generic
 			return false;
 		else
 			return GamepadDevice::gamepad_btn_input(code, pressed);
+	}
+
+	const char *get_button_name(u32 code) override
+	{
+		switch (code)
+		{
+		case 0:
+			return "Left Button";
+		case 2:
+			return "Right Button";
+		case 1:
+			return "Middle Button";
+		default:
+			return nullptr;
+		}
 	}
 };
 

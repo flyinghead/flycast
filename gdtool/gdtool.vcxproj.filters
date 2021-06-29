@@ -115,21 +115,12 @@
     <ClCompile Include="src\cdromfs.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="..\core\deps\coreio\coreio.cpp">
-      <Filter>deps\coreio</Filter>
-    </ClCompile>
     <ClCompile Include="..\core\deps\crypto\sha256.cpp">
       <Filter>deps\crypto</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\core\imgread\SCSIDEFS.H">
-      <Filter>imgread</Filter>
-    </ClInclude>
     <ClInclude Include="..\core\imgread\common.h">
-      <Filter>imgread</Filter>
-    </ClInclude>
-    <ClInclude Include="..\core\imgread\gd_driver.h">
       <Filter>imgread</Filter>
     </ClInclude>
     <ClInclude Include="..\core\imgread\ImgReader.h">
@@ -201,9 +192,6 @@
     <ClInclude Include="src\cdromfs_imp.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="..\core\deps\coreio\coreio.h">
-      <Filter>deps\coreio</Filter>
-    </ClInclude>
     <ClInclude Include="..\core\deps\crypto\sha256.h">
       <Filter>deps\crypto</Filter>
     </ClInclude>
@@ -232,9 +220,6 @@
     </Filter>
     <Filter Include="deps\crypto">
       <UniqueIdentifier>{a78ba9fb-70ba-4319-89e7-926abca0794c}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="deps\coreio">
-      <UniqueIdentifier>{cac3d6da-3b7f-47ae-89be-59803c990f41}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

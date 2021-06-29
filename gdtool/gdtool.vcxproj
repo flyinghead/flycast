@@ -66,7 +66,6 @@
   <ItemGroup>
     <ClCompile Include="..\core\deps\chdpsr\cdipsr.cpp" />
     <ClCompile Include="..\core\deps\chdr\chdr.cpp" />
-    <ClCompile Include="..\core\deps\coreio\coreio.cpp" />
     <ClCompile Include="..\core\deps\crypto\md5.cpp" />
     <ClCompile Include="..\core\deps\crypto\sha1.cpp" />
     <ClCompile Include="..\core\deps\crypto\sha256.cpp" />
@@ -112,7 +111,6 @@
     <ClInclude Include="..\core\deps\chdpsr\cdipsr.h" />
     <ClInclude Include="..\core\deps\chdr\chd.h" />
     <ClInclude Include="..\core\deps\chdr\coretypes.h" />
-    <ClInclude Include="..\core\deps\coreio\coreio.h" />
     <ClInclude Include="..\core\deps\crypto\md5.h" />
     <ClInclude Include="..\core\deps\crypto\sha1.h" />
     <ClInclude Include="..\core\deps\crypto\sha256.h" />
@@ -132,9 +130,7 @@
     <ClInclude Include="..\core\deps\zlib\zlib.h" />
     <ClInclude Include="..\core\deps\zlib\zutil.h" />
     <ClInclude Include="..\core\imgread\common.h" />
-    <ClInclude Include="..\core\imgread\gd_driver.h" />
     <ClInclude Include="..\core\imgread\ImgReader.h" />
-    <ClInclude Include="..\core\imgread\SCSIDEFS.H" />
     <ClInclude Include="src\cdromfs.h" />
     <ClInclude Include="src\cdromfs_imp.h" />
   </ItemGroup>

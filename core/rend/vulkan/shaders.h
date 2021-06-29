@@ -93,11 +93,20 @@ public:
 			modVolShader = compileModVolFragmentShader();
 		return *modVolShader;
 	}
-	vk::ShaderModule GetQuadVertexShader()
+	vk::ShaderModule GetQuadVertexShader(bool rotate = false)
 	{
-		if (!quadVertexShader)
-			quadVertexShader = compileQuadVertexShader();
-		return *quadVertexShader;
+		if (rotate)
+		{
+			if (!quadRotateVertexShader)
+				quadRotateVertexShader = compileQuadVertexShader(rotate);
+			return *quadRotateVertexShader;
+		}
+		else
+		{
+			if (!quadVertexShader)
+				quadVertexShader = compileQuadVertexShader(rotate);
+			return *quadVertexShader;
+		}
 	}
 	vk::ShaderModule GetQuadFragmentShader()
 	{
@@ -132,7 +141,7 @@ private:
 	vk::UniqueShaderModule compileShader(const FragmentShaderParams& params);
 	vk::UniqueShaderModule compileModVolVertexShader();
 	vk::UniqueShaderModule compileModVolFragmentShader();
-	vk::UniqueShaderModule compileQuadVertexShader();
+	vk::UniqueShaderModule compileQuadVertexShader(bool rotate);
 	vk::UniqueShaderModule compileQuadFragmentShader();
 	vk::UniqueShaderModule compileOSDVertexShader();
 	vk::UniqueShaderModule compileOSDFragmentShader();
@@ -142,6 +151,7 @@ private:
 	vk::UniqueShaderModule modVolVertexShader;
 	vk::UniqueShaderModule modVolShader;
 	vk::UniqueShaderModule quadVertexShader;
+	vk::UniqueShaderModule quadRotateVertexShader;
 	vk::UniqueShaderModule quadFragmentShader;
 	vk::UniqueShaderModule osdVertexShader;
 	vk::UniqueShaderModule osdFragmentShader;

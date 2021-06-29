@@ -33,11 +33,11 @@ public:
 		try {
 			BaseVulkanRenderer::Init();
 
-			oitBuffers.Init(0, 0);
+			oitBuffers.Init(viewport.width, viewport.height);
 			textureDrawer.Init(&samplerManager, &oitShaderManager, &textureCache, &oitBuffers);
 			textureDrawer.SetCommandPool(&texCommandPool);
 
-			screenDrawer.Init(&samplerManager, &oitShaderManager, &oitBuffers);
+			screenDrawer.Init(&samplerManager, &oitShaderManager, &oitBuffers, viewport);
 			screenDrawer.SetCommandPool(&texCommandPool);
 
 			return true;
@@ -51,14 +51,15 @@ public:
 
 	void Resize(int w, int h) override
 	{
-		NOTICE_LOG(RENDERER, "OIT Resize %d x %d", w, h);
+		if ((u32)w == viewport.width && (u32)h == viewport.height)
+			return;
 		BaseVulkanRenderer::Resize(w, h);
-		screenDrawer.Init(&samplerManager, &oitShaderManager, &oitBuffers);
+		screenDrawer.Init(&samplerManager, &oitShaderManager, &oitBuffers, viewport);
 	}
 
 	void Term() override
 	{
-		DEBUG_LOG(RENDERER, "VulkanRenderer::Term");
+		DEBUG_LOG(RENDERER, "OITVulkanRenderer::Term");
 		GetContext()->WaitIdle();
 		screenDrawer.Term();
 		textureDrawer.Term();
@@ -68,20 +69,29 @@ public:
 
 	bool Render() override
 	{
-		if (pvrrc.isRenderFramebuffer)
-			return true;
+		try {
+			OITDrawer *drawer;
+			if (pvrrc.isRTT)
+				drawer = &textureDrawer;
+			else
+				drawer = &screenDrawer;
 
-		OITDrawer *drawer;
-		if (pvrrc.isRTT)
-			drawer = &textureDrawer;
-		else
-			drawer = &screenDrawer;
+			drawer->Draw(fogTexture.get(), paletteTexture.get());
 
-		drawer->Draw(fogTexture.get(), paletteTexture.get());
+			drawer->EndFrame();
 
-		drawer->EndFrame();
+			return !pvrrc.isRTT;
+		} catch (const vk::SystemError& e) {
+			// Sometimes happens when resizing the window
+			WARN_LOG(RENDERER, "Vulkan system error %s", e.what());
 
-		return !pvrrc.isRTT;
+			return false;
+		}
+	}
+
+	bool Present() override
+	{
+		return screenDrawer.PresentFrame();
 	}
 
 private:

@@ -1,6 +1,7 @@
 #pragma once
 #include "oslib/oslib.h"
 #include "hw/pvr/Renderer_if.h"
+#include "cfg/option.h"
 
 #include <algorithm>
 #include <array>
@@ -632,7 +633,22 @@ void texture_VQ(PixelBuffer<pixel_type>* pb,u8* p_in,u32 Width,u32 Height)
 #define texPAL4_VQ32 texture_VQ<convPAL4_TW<u32>, u32>
 #define texPAL8_VQ32 texture_VQ<convPAL8_TW<u32>, u32>
 
+struct vram_block
+{
+	u32 start;
+	u32 end;
+	u32 len;
+	u32 type;
+
+	void* userdata;
+};
+
+class BaseTextureCacheData;
+
 bool VramLockedWriteOffset(size_t offset);
+void libCore_vramlock_Unlock_block(vram_block *block);
+void libCore_vramlock_Lock(u32 start_offset, u32 end_offset, BaseTextureCacheData *texture);
+
 void UpscalexBRZ(int factor, u32* source, u32* dest, int width, int height, bool has_alpha);
 
 struct PvrTexInfo;
@@ -687,7 +703,7 @@ public:
 
 	bool IsMipmapped()
 	{
-		return tcw.MipMapped != 0 && tcw.ScanOrder == 0 && settings.rend.UseMipmaps;
+		return tcw.MipMapped != 0 && tcw.ScanOrder == 0 && config::UseMipmaps;
 	}
 
 	const char* GetPixelFormatName()
@@ -719,15 +735,15 @@ public:
 	//true if : dirty or paletted texture and hashes don't match
 	bool NeedsUpdate();
 	virtual bool Delete();
-	virtual ~BaseTextureCacheData() {}
+	virtual ~BaseTextureCacheData() = default;
 	static bool IsGpuHandledPaletted(TSP tsp, TCW tcw)
 	{
 		// Some palette textures are handled on the GPU
 		// This is currently limited to textures using nearest filtering and not mipmapped.
 		// Enabling texture upscaling or dumping also disables this mode.
 		return (tcw.PixelFmt == PixelPal4 || tcw.PixelFmt == PixelPal8)
-				&& settings.rend.TextureUpscale == 1
-				&& !settings.rend.DumpTextures
+				&& config::TextureUpscale == 1
+				&& !config::DumpTextures
 				&& tsp.FilterMode == 0
 				&& !tcw.MipMapped
 				&& !tcw.VQ_Comp;
@@ -804,7 +820,7 @@ public:
 		INFO_LOG(RENDERER, "Texture cache cleared");
 	}
 
-private:
+protected:
 	std::unordered_map<u64, Texture> cache;
 	// Only use TexU and TexV from TSP in the cache key
 	//     TexV : 7, TexU : 7
@@ -813,10 +829,8 @@ private:
 	const TCW TCWTextureCacheMask = { { 0x1FFFFF, 0, 0, 1, 7, 1, 1 } };
 };
 
-void rend_text_invl(vram_block* bl);
-
 void ReadFramebuffer(PixelBuffer<u32>& pb, int& width, int& height);
-void WriteTextureToVRam(u32 width, u32 height, u8 *data, u16 *dst);
+void WriteTextureToVRam(u32 width, u32 height, u8 *data, u16 *dst, u32 fb_w_ctrl = -1, u32 linestride = -1);
 
 static inline void MakeFogTexture(u8 *tex_data)
 {
@@ -832,3 +846,10 @@ void dump_screenshot(u8 *buffer, u32 width, u32 height, bool alpha = false, u32 
 
 extern const std::array<f32, 16> D_Adjust_LoD_Bias;
 #undef clamp
+
+extern float fb_scale_x, fb_scale_y;
+static inline void rend_set_fb_scale(float x, float y)
+{
+	fb_scale_x = x;
+	fb_scale_y = y;
+}

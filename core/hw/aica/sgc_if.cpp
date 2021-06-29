@@ -23,7 +23,9 @@
 #include "aica_if.h"
 #include "aica_mem.h"
 #include "dsp.h"
-#include "oslib/oslib.h"
+#include "oslib/audiostream.h"
+#include "hw/gdrom/gdrom_if.h"
+#include "cfg/option.h"
 
 #include <algorithm>
 #include <cmath>
@@ -41,8 +43,6 @@
 #else
 #define clip_verify(x)
 #endif
-
-extern bool fast_forward_mode;
 
 //Sound generation, mixin, and channel regs emulation
 //x.15
@@ -531,7 +531,7 @@ struct ChannelEx
 		Step(oLeft, oRight, oDsp);
 
 		*VolMix.DSPOut += oDsp;
-		if (oLeft + oRight == 0 && !settings.aica.DSPEnabled)
+		if (oLeft + oRight == 0 && !config::DSPEnabled)
 			oLeft = oRight = oDsp >> 4;
 
 		mixl+=oLeft;
@@ -1319,7 +1319,10 @@ void ReadCommonReg(u32 reg,bool byte)
 			CommonData->LP=Chans[chan].loop.looped;
 			verify(CommonData->AFSEL == 0);
 			s32 aeg = Chans[chan].AEG.GetValue();
-			CommonData->EG = aeg << 3 | (aeg & 1 ? 7 : 0); //AEG is only 10 bits, FEG is 13 bits
+			if (aeg > 0x3BF)
+				CommonData->EG = 0x1FFF;
+			else
+				CommonData->EG = aeg; //AEG is only 10 bits, FEG is 13 bits
 			CommonData->SGC=Chans[chan].AEG.state;
 
 			if (! (byte && reg==0x2810))
@@ -1339,7 +1342,7 @@ void ReadCommonReg(u32 reg,bool byte)
 
 void WriteCommonReg8(u32 reg,u32 data)
 {
-	WriteMemArr(aica_reg,reg,data,1);
+	WriteMemArr<1>(aica_reg, reg, data);
 	if (reg==0x2804 || reg==0x2805)
 	{
 		dsp.RBL = (8192 << CommonData->RBL) - 1;
@@ -1402,15 +1405,12 @@ void AICA_Sample32()
 		//Add CDDA / DSP effect(s)
 
 		//CDDA
-		if (settings.aica.CDDAMute==0) 
-		{
-			VOLPAN(EXTS0L,dsp_out_vol[16].EFSDL,dsp_out_vol[16].EFPAN,mixl,mixr);
-			VOLPAN(EXTS0R,dsp_out_vol[17].EFSDL,dsp_out_vol[17].EFPAN,mixl,mixr);
-		}
+		VOLPAN(EXTS0L, dsp_out_vol[16].EFSDL, dsp_out_vol[16].EFPAN, mixl, mixr);
+		VOLPAN(EXTS0R, dsp_out_vol[17].EFSDL, dsp_out_vol[17].EFPAN, mixl, mixr);
 
 		/*
 		no dsp for now -- needs special handling of oDSP for ch paraller version ...
-		if (settings.aica.DSPEnabled)
+		if (config::DSPEnabled)
 		{
 			dsp_step();
 
@@ -1456,7 +1456,7 @@ void AICA_Sample32()
 		clip16(mixl);
 		clip16(mixr);
 
-		if (!fast_forward_mode && !settings.aica.NoSound)
+		if (!settings.input.fastForwardMode && !config::DisableSound)
 			WriteSample(mixr,mixl);
 	}
 }
@@ -1486,20 +1486,13 @@ void AICA_Sample()
 	//Add CDDA / DSP effect(s)
 
 	//CDDA
-	if (settings.aica.CDDAMute==0) 
-	{
-		VOLPAN(EXTS0L,dsp_out_vol[16].EFSDL,dsp_out_vol[16].EFPAN,mixl,mixr);
-		VOLPAN(EXTS0R,dsp_out_vol[17].EFSDL,dsp_out_vol[17].EFPAN,mixl,mixr);
+	VOLPAN(EXTS0L, dsp_out_vol[16].EFSDL, dsp_out_vol[16].EFPAN, mixl, mixr);
+	VOLPAN(EXTS0R, dsp_out_vol[17].EFSDL, dsp_out_vol[17].EFPAN, mixl, mixr);
 
-		DSPData->EXTS[0] = EXTS0L;
-		DSPData->EXTS[1] = EXTS0R;
-	}
-	else
-	{
-		DSPData->EXTS[0] = 0;
-		DSPData->EXTS[1] = 0;
-	}
-	if (settings.aica.DSPEnabled)
+	DSPData->EXTS[0] = EXTS0L;
+	DSPData->EXTS[1] = EXTS0R;
+
+	if (config::DSPEnabled)
 	{
 		dsp_step();
 
@@ -1507,7 +1500,7 @@ void AICA_Sample()
 			VOLPAN(*(s16*)&DSPData->EFREG[i], dsp_out_vol[i].EFSDL, dsp_out_vol[i].EFPAN, mixl, mixr);
 	}
 
-	if (fast_forward_mode || settings.aica.NoSound)
+	if (settings.input.fastForwardMode || config::DisableSound)
 		return;
 
 	//Mono !

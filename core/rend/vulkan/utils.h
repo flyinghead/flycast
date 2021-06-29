@@ -60,7 +60,7 @@ static inline vk::BlendFactor getBlendFactor(u32 instr, bool src)
 	}
 }
 
-static inline u32 findMemoryType(vk::PhysicalDeviceMemoryProperties const& memoryProperties, u32 typeBits, vk::MemoryPropertyFlags requirementsMask)
+static inline u32 findMemoryType(vk::PhysicalDeviceMemoryProperties const& memoryProperties, u32 typeBits, const vk::MemoryPropertyFlags& requirementsMask)
 {
 	u32 typeIndex = u32(~0);
 	for (u32 i = 0; i < memoryProperties.memoryTypeCount; i++)

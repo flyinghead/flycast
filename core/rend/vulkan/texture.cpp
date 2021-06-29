@@ -226,8 +226,8 @@ void Texture::Init(u32 width, u32 height, vk::Format format, u32 dataSize, bool 
 	CreateImage(imageTiling, usageFlags, initialLayout, vk::ImageAspectFlagBits::eColor);
 }
 
-void Texture::CreateImage(vk::ImageTiling tiling, vk::ImageUsageFlags usage, vk::ImageLayout initialLayout,
-		vk::ImageAspectFlags aspectMask)
+void Texture::CreateImage(vk::ImageTiling tiling, const vk::ImageUsageFlags& usage, vk::ImageLayout initialLayout,
+		const vk::ImageAspectFlags& aspectMask)
 {
 	vk::ImageCreateInfo imageCreateInfo(vk::ImageCreateFlags(), vk::ImageType::e2D, format, vk::Extent3D(extent, 1), mipmapLevels, 1,
 										vk::SampleCountFlagBits::e1, tiling, usage,
@@ -247,14 +247,18 @@ void Texture::CreateImage(vk::ImageTiling tiling, vk::ImageUsageFlags usage, vk:
 void Texture::SetImage(u32 srcSize, void *srcData, bool isNew, bool genMipmaps)
 {
 	verify((bool)commandBuffer);
-	commandBuffer.begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));
 
 	if (!isNew && !needsStaging)
 		setImageLayout(commandBuffer, image.get(), format, mipmapLevels, vk::ImageLayout::eShaderReadOnlyOptimal, vk::ImageLayout::eGeneral);
 
 	void* data;
 	if (needsStaging)
+	{
+		if (!stagingBufferData)
+			// This can happen if a texture is first created for RTT, then later updated
+			stagingBufferData = std::unique_ptr<BufferData>(new BufferData(srcSize, vk::BufferUsageFlagBits::eTransferSrc));
 		data = stagingBufferData->MapMemory();
+	}
 	else
 		data = allocation.MapMemory();
 	verify(data != nullptr);
@@ -333,7 +337,6 @@ void Texture::SetImage(u32 srcSize, void *srcData, bool isNew, bool genMipmaps)
 			setImageLayout(commandBuffer, image.get(), format, mipmapLevels, isNew ? vk::ImageLayout::ePreinitialized : vk::ImageLayout::eGeneral,
 					vk::ImageLayout::eShaderReadOnlyOptimal);
 	}
-	commandBuffer.end();
 }
 
 void Texture::GenerateMipmaps()
@@ -388,7 +391,7 @@ void Texture::GenerateMipmaps()
 	commandBuffer.pipelineBarrier(vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eFragmentShader, {}, nullptr, nullptr, barrier);
 }
 
-void FramebufferAttachment::Init(u32 width, u32 height, vk::Format format, vk::ImageUsageFlags usage)
+void FramebufferAttachment::Init(u32 width, u32 height, vk::Format format, const vk::ImageUsageFlags& usage)
 {
 	this->format = format;
 	this->extent = vk::Extent2D { width, height };
@@ -418,5 +421,27 @@ void FramebufferAttachment::Init(u32 width, u32 height, vk::Format format, vk::I
 		// Also create an imageView for the stencil
 		imageViewCreateInfo.subresourceRange = vk::ImageSubresourceRange(vk::ImageAspectFlagBits::eStencil, 0, 1, 0, 1);
 		stencilView = device.createImageViewUnique(imageViewCreateInfo);
+	}
+}
+
+void TextureCache::Cleanup()
+{
+	std::vector<u64> list;
+
+	u32 TargetFrame = std::max((u32)120, FrameCount) - 120;
+
+	for (const auto& pair : cache)
+	{
+		if (pair.second.dirty && pair.second.dirty < TargetFrame)
+			list.push_back(pair.first);
+
+		if (list.size() > 5)
+			break;
+	}
+
+	for (u64 id : list)
+	{
+		if (clearTexture(&cache[id]))
+			cache.erase(id);
 	}
 }

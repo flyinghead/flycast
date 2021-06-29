@@ -13,7 +13,9 @@
 #include "hw/sh4/sh4_opcode_list.h"
 #include "hw/sh4/sh4_core.h"
 #include "hw/sh4/sh4_mem.h"
+#include "hw/sh4/modules/mmu.h"
 #include "decoder_opcodes.h"
+#include "cfg/option.h"
 
 #define BLOCK_MAX_SH_OPS_SOFT 500
 #define BLOCK_MAX_SH_OPS_HARD 511
@@ -101,13 +103,13 @@ static void dec_DynamicSet(u32 regbase,u32 offs=0)
 		Emit(shop_jdyn,reg_pc_dyn,mk_reg((Sh4RegType)regbase),mk_imm(offs));
 }
 
-static void dec_End(u32 dst,BlockEndType flags,bool delay)
+static void dec_End(u32 dst, BlockEndType flags, bool delaySlot)
 {
 	if (state.ngen.OnlyDynamicEnds && flags == BET_StaticJump)
 	{
-		Emit(shop_mov32,mk_reg(reg_nextpc),mk_imm(dst));
+		Emit(shop_mov32, mk_reg(reg_nextpc), mk_imm(dst));
 		dec_DynamicSet(reg_nextpc);
-		dec_End(0xFFFFFFFF,BET_DynamicJump,delay);
+		dec_End(NullAddress, BET_DynamicJump, delaySlot);
 		return;
 	}
 
@@ -116,11 +118,14 @@ static void dec_End(u32 dst,BlockEndType flags,bool delay)
 		verify(flags == BET_DynamicJump);
 	}
 
-	state.BlockType=flags;
-	state.NextOp=delay?NDO_Delayslot:NDO_End;
-	state.DelayOp=NDO_End;
-	state.JumpAddr=dst;
-	state.NextAddr=state.cpu.rpc+2+(delay?2:0);
+	state.BlockType = flags;
+	state.NextOp = delaySlot ? NDO_Delayslot : NDO_End;
+	state.DelayOp = NDO_End;
+	state.JumpAddr = dst;
+	if (flags != BET_StaticCall && flags != BET_StaticJump)
+		state.NextAddr = state.cpu.rpc + 2 + (delaySlot ? 2 : 0);
+	else
+		verify(state.JumpAddr != NullAddress);
 }
 
 #define GetN(str) ((str>>8) & 0xf)
@@ -128,9 +133,6 @@ static void dec_End(u32 dst,BlockEndType flags,bool delay)
 #define GetImm4(str) ((str>>0) & 0xf)
 #define GetImm8(str) ((str>>0) & 0xff)
 #define GetSImm8(str) ((s8)((str>>0) & 0xff))
-#define GetImm12(str) ((str>>0) & 0xfff)
-#define GetSImm12(str) (((s16)((GetImm12(str))<<4))>>4)
-
 
 #define SR_STATUS_MASK 0x700083F2
 #define SR_T_MASK 1
@@ -189,7 +191,7 @@ sh4dec(i0000_nnnn_0010_0011)
 	u32 n = GetN(op);
 
 	dec_DynamicSet(reg_r0+n,state.cpu.rpc + 4);
-	dec_End(0xFFFFFFFF,BET_DynamicJump,true);
+	dec_End(NullAddress, BET_DynamicJump, true);
 }
 //jmp @<REG_N>
 sh4dec(i0100_nnnn_0010_1011)
@@ -197,39 +199,36 @@ sh4dec(i0100_nnnn_0010_1011)
 	u32 n = GetN(op);
 
 	dec_DynamicSet(reg_r0+n);
-	dec_End(0xFFFFFFFF,BET_DynamicJump,true);
+	dec_End(NullAddress, BET_DynamicJump, true);
 }
 //bsr <bdisp12>
 sh4dec(i1011_iiii_iiii_iiii)
 {
-	//TODO: set PR
 	dec_set_pr();
-	dec_End(dec_jump_simm12(op),BET_StaticCall,true);
+	dec_End(dec_jump_simm12(op), BET_StaticCall, true);
 }
 //bsrf <REG_N>
 sh4dec(i0000_nnnn_0000_0011)
 {
 	u32 n = GetN(op);
-	//TODO: set PR
 	u32 retaddr=dec_set_pr();
 	dec_DynamicSet(reg_r0+n,retaddr);
-	dec_End(0xFFFFFFFF,BET_DynamicCall,true);
+	dec_End(NullAddress, BET_DynamicCall, true);
 }
 //jsr @<REG_N>
 sh4dec(i0100_nnnn_0000_1011) 
 {
 	u32 n = GetN(op);
 
-	//TODO: Set pr
 	dec_set_pr();
 	dec_DynamicSet(reg_r0+n);
-	dec_End(0xFFFFFFFF,BET_DynamicCall,true);
+	dec_End(NullAddress, BET_DynamicCall, true);
 }
 //rts
 sh4dec(i0000_0000_0000_1011)
 {
 	dec_DynamicSet(reg_pr);
-	dec_End(0xFFFFFFFF,BET_DynamicRet,true);
+	dec_End(NullAddress, BET_DynamicRet, true);
 }
 //rte
 sh4dec(i0000_0000_0010_1011)
@@ -238,7 +237,7 @@ sh4dec(i0000_0000_0010_1011)
 	dec_write_sr(reg_ssr);
 	Emit(shop_sync_sr);
 	dec_DynamicSet(reg_spc);
-	dec_End(0xFFFFFFFF,BET_DynamicIntr,true);
+	dec_End(NullAddress, BET_DynamicIntr, true);
 }
 //trapa #<imm>
 sh4dec(i1100_0011_iiii_iiii)
@@ -246,7 +245,7 @@ sh4dec(i1100_0011_iiii_iiii)
 	//TODO: ifb
 	dec_fallback(op);
 	dec_DynamicSet(reg_nextpc);
-	dec_End(0xFFFFFFFF,BET_DynamicJump,false);
+	dec_End(NullAddress, BET_DynamicJump, false);
 }
 //sleep
 sh4dec(i0000_0000_0001_1011)
@@ -254,7 +253,7 @@ sh4dec(i0000_0000_0001_1011)
 	//TODO: ifb
 	dec_fallback(op);
 	dec_DynamicSet(reg_nextpc);
-	dec_End(0xFFFFFFFF,BET_DynamicJump,false);
+	dec_End(NullAddress, BET_DynamicJump, false);
 }
 
 //ldc.l @<REG_N>+,SR
@@ -272,7 +271,7 @@ sh4dec(i0100_nnnn_0000_0111)
 		//FIXME only if interrupts got on .. :P
 		UpdateINTC();
 	}
-	dec_End(0xFFFFFFFF,BET_StaticIntr,false);
+	dec_End(NullAddress,BET_StaticIntr,false);
 }
 */
 
@@ -283,7 +282,7 @@ sh4dec(i0100_nnnn_0000_1110)
 
 	dec_write_sr((Sh4RegType)(reg_r0+n));
 	Emit(shop_sync_sr);
-	dec_End(0xFFFFFFFF,BET_StaticIntr,false);
+	dec_End(NullAddress, BET_StaticIntr, false);
 }
 
 //nop !
@@ -623,7 +622,7 @@ static u32 MatchDiv32(u32 pc , Sh4RegType &reg1,Sh4RegType &reg2 , Sh4RegType &r
 
 static bool MatchDiv32u(u32 op,u32 pc)
 {
-	if (settings.dynarec.safemode)
+	if (config::DynarecSafeMode)
 		return false;
 
 	div_som_reg1=NoReg;
@@ -645,7 +644,7 @@ static bool MatchDiv32u(u32 op,u32 pc)
 
 static bool MatchDiv32s(u32 op,u32 pc)
 {
-	if (settings.dynarec.safemode)
+	if (config::DynarecSafeMode)
 		return false;
 
 	u32 n = GetN(op);
@@ -867,6 +866,7 @@ static bool dec_generic(u32 op)
 
 				default:
 					die("DM_MUL: Failed to classify opcode");
+					return false;
 			}
 
 			Emit(op,rd,rs1,rs2,0,shil_param(),rd2);
@@ -890,7 +890,7 @@ static bool dec_generic(u32 op)
 					
 					//skip the aggregated opcodes
 					state.cpu.rpc += 128;
-					blk->guest_cycles += CPU_RATIO*64;
+					blk->guest_cycles += 64;
 				}
 				else
 				{
@@ -922,7 +922,7 @@ static bool dec_generic(u32 op)
 
 					//skip the aggregated opcodes
 					state.cpu.rpc+=128;
-					blk->guest_cycles += CPU_RATIO * 64;
+					blk->guest_cycles += 64;
 				}
 				else
 				{
@@ -974,14 +974,27 @@ static void state_Setup(u32 rpc,fpscr_t fpu_cfg)
 	//verify(fpu_cfg.RM<2);	// Happens with many wince games (set to 3)
 	//what about fp/fs ?
 
-	state.NextOp=NDO_NextOp;
-	state.BlockType=BET_SCL_Intr;
-	state.JumpAddr=0xFFFFFFFF;
-	state.NextAddr=0xFFFFFFFF;
+	state.NextOp = NDO_NextOp;
+	state.BlockType = BET_SCL_Intr;
+	state.JumpAddr = NullAddress;
+	state.NextAddr = NullAddress;
 
 	state.info.has_readm=false;
 	state.info.has_writem=false;
 	state.info.has_fpu=false;
+}
+
+void dec_updateBlockCycles(RuntimeBlockInfo *block, u16 op)
+{
+	if (!mmu_enabled())
+	{
+		if (op < 0xF000)
+			block->guest_cycles++;
+	}
+	else
+	{
+		block->guest_cycles += std::max((int)OpDesc[op]->LatencyCycles, 1);
+	}
 }
 
 bool dec_DecodeBlock(RuntimeBlockInfo* rbi,u32 max_cycles)
@@ -1013,70 +1026,74 @@ bool dec_DecodeBlock(RuntimeBlockInfo* rbi,u32 max_cycles)
 				{
 					u32 op = IReadMem16(state.cpu.rpc);
 
-					if (op==0 && state.cpu.is_delayslot)
+					blk->guest_opcodes++;
+					dec_updateBlockCycles(blk, op);
+
+					if (OpDesc[op]->IsFloatingPoint())
 					{
-						INFO_LOG(DYNAREC, "Delayslot 0 hack!");
+						if (sr.FD == 1)
+						{
+							// We need to know FPSCR to compile the block, so let the exception handler run first
+							// as it may change the fp registers
+							Do_Exception(next_pc, 0x800, 0x100);
+							return false;
+						}
+						blk->has_fpu_op = true;
+					}
+
+					verify(!(state.cpu.is_delayslot && OpDesc[op]->SetPC()));
+					if (state.ngen.OnlyDynamicEnds || !OpDesc[op]->rec_oph)
+					{
+						if (state.ngen.InterpreterFallback || !dec_generic(op))
+						{
+							dec_fallback(op);
+							if (OpDesc[op]->SetPC())
+							{
+								dec_DynamicSet(reg_nextpc);
+								dec_End(NullAddress, BET_DynamicJump, false);
+							}
+							else if (OpDesc[op]->SetFPSCR() && !state.cpu.is_delayslot)
+							{
+								dec_End(state.cpu.rpc + 2, BET_StaticJump, false);
+							}
+						}
 					}
 					else
 					{
-						blk->guest_opcodes++;
-						if (!mmu_enabled())
-						{
-							if (op>=0xF000)
-								blk->guest_cycles+=0;
-							else
-								blk->guest_cycles+=CPU_RATIO;
-						}
-						else
-						{
-							blk->guest_cycles += std::max((int)OpDesc[op]->LatencyCycles, 1);
-						}
-						if (OpDesc[op]->IsFloatingPoint())
-						{
-							if (sr.FD == 1)
-							{
-								// We need to know FPSCR to compile the block, so let the exception handler run first
-								// as it may change the fp registers
-								Do_Exception(next_pc, 0x800, 0x100);
-								return false;
-							}
-							blk->has_fpu_op = true;
-						}
-
-						verify(!(state.cpu.is_delayslot && OpDesc[op]->SetPC()));
-						if (state.ngen.OnlyDynamicEnds || !OpDesc[op]->rec_oph)
-						{
-							if (state.ngen.InterpreterFallback || !dec_generic(op))
-							{
-								dec_fallback(op);
-								if (OpDesc[op]->SetPC())
-								{
-									dec_DynamicSet(reg_nextpc);
-									dec_End(0xFFFFFFFF,BET_DynamicJump,false);
-								}
-								if (OpDesc[op]->SetFPSCR() && !state.cpu.is_delayslot)
-								{
-									dec_End(state.cpu.rpc+2,BET_StaticJump,false);
-								}
-							}
-						}
-						else
-						{
-							OpDesc[op]->rec_oph(op);
-						}
+						OpDesc[op]->rec_oph(op);
 					}
 					state.cpu.rpc+=2;
 				}
 			}
 			break;
 
-		case NDO_Jump:
-			die("Too old");
-			//state.NextOp=state.JumpOp;
-			//state.cpu.rpc=state.JumpAddr;
-			break;
-
 		case NDO_End:
+			// Disabled for now since we need to know if the block is read-only,
+			// which isn't determined until after the decoding.
+			// This is a relatively rare optimization anyway
+#if 0
+			// detect if calling an empty subroutine and skip it
+			if (state.BlockType == BET_StaticCall && blk->read_only)
+			{
+				if ((state.JumpAddr >> 12) == (blk->vaddr >> 12)
+						|| (state.JumpAddr >> 12) == ((blk->vaddr + (blk->guest_opcodes - 1) * 2) >> 12))
+				{
+					u32 op = IReadMem16(state.JumpAddr);
+					if (op == 0x000B)	// rts
+					{
+						u16 delayOp = IReadMem16(state.JumpAddr + 2);
+						if (delayOp == 0x0000 || delayOp == 0x0009)	// nop
+						{
+							state.NextOp = NDO_NextOp;
+							state.cpu.is_delayslot = false;
+							dec_updateBlockCycles(blk, op);
+							dec_updateBlockCycles(blk, delayOp);
+							continue;
+						}
+					}
+				}
+			}
+#endif
 			goto _end;
 		}
 	}
@@ -1103,7 +1120,7 @@ _end:
 #endif
 
 	//cycle tricks
-	if (settings.dynarec.idleskip)
+	if (config::DynarecIdleSkip)
 	{
 		//Experimental hash-id based idle skip
 		if (!mmu_enabled() && strstr(idle_hash, blk->hash()))

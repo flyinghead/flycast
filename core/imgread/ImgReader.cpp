@@ -82,7 +82,6 @@ void libGDR_Reset(bool hard)
 s32 libGDR_Init()
 {
 	libCore_gdrom_disc_change();
-	settings.imgread.PatchRegion = true;
 	return 0;
 }
 

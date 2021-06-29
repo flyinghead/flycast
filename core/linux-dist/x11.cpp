@@ -13,9 +13,6 @@
 #include "hw/maple/maple_devs.h"
 #include "emulator.h"
 
-#if FEAT_HAS_NIXPROF
-#include "profiler/profiler.h"
-#endif
 #include "x11_keyboard.h"
 
 #if defined(TARGET_PANDORA)
@@ -54,15 +51,43 @@ public:
 		if (!find_mapping())
 			input_mapper = std::make_shared<MouseInputMapping>();
 	}
+
 	bool gamepad_btn_input(u32 code, bool pressed) override
 	{
-		if (gui_is_open())
+		if (gui_is_open() && !is_detecting_input())
 			// Don't register mouse clicks as gamepad presses when gui is open
 			// This makes the gamepad presses to be handled first and the mouse position to be ignored
 			// TODO Make this generic
 			return false;
 		else
 			return GamepadDevice::gamepad_btn_input(code, pressed);
+	}
+
+	const char *get_button_name(u32 code) override
+	{
+		switch (code)
+		{
+		case Button1:
+			return "Left Button";
+		case Button2:
+			return "Middle Button";
+		case Button3:
+			return "Right Button";
+		case Button4:
+			return "Scroll Up";
+		case Button5:
+			return "Scroll Down";
+		case 6:
+			return "Scroll Left";
+		case 7:
+			return "Scroll Right";
+		case 8:
+			return "Button 4";
+		case 9:
+			return "Button 5";
+		default:
+			return nullptr;
+		}
 	}
 };
 
@@ -176,8 +201,6 @@ static void x11_uncapture_mouse()
 void input_x11_handle()
 {
 	//Handle X11
-	static int prev_x = -1;
-	static int prev_y = -1;
 	bool mouse_moved = false;
 	XEvent e;
 
@@ -228,25 +251,12 @@ void input_x11_handle()
 					// TODO Move this to bindable keys or in the gui menu
 					if (x11_keyboard_input)
 					{
-#if 1
 						if (e.xkey.keycode == KEY_F10)
 						{
 							// Dump the next frame into a file
 							dump_frame_switch = e.type == KeyPress;
 						}
-						else
-#elif FEAT_HAS_NIXPROF
-						if (e.type == KeyRelease && e.xkey.keycode == KEY_F10)
-						{
-							if (sample_Switch(3000)) {
-								INFO_LOG(COMMON, "Starting profiling");
-							} else {
-								INFO_LOG(COMMON, "Stopping profiling");
-							}
-						}
-						else
-#endif
-						if (e.type == KeyRelease && e.xkey.keycode == KEY_F11)
+						else if (e.type == KeyPress && e.xkey.keycode == KEY_F11)
 						{
 							x11_fullscreen = !x11_fullscreen;
 							x11_window_set_fullscreen(x11_fullscreen);
@@ -280,10 +290,10 @@ void input_x11_handle()
 						button_mask = 1 << 1;
 						break;
 					case Button4: 		// Mouse wheel up
-						mo_wheel_delta -= 16;
+						mo_wheel_delta[0] -= 16;
 						break;
 					case Button5: 		// Mouse wheel down
-						mo_wheel_delta += 16;
+						mo_wheel_delta[0] += 16;
 						break;
 					default:
 						break;
@@ -292,36 +302,33 @@ void input_x11_handle()
 					if (button_mask)
 					{
 						if (e.type == ButtonPress)
-							mo_buttons &= ~button_mask;
+							mo_buttons[0] &= ~button_mask;
 						else
-							mo_buttons |= button_mask;
+							mo_buttons[0] |= button_mask;
 					}
 				}
 				/* no break */
 
 			case MotionNotify:
 				// For Light gun
-				mo_x_abs = (e.xmotion.x - (x11_width - x11_height * 640 / 480) / 2) * 480 / x11_height;
-				mo_y_abs = e.xmotion.y * 480 / x11_height;
-
+				SetMousePosition(e.xmotion.x, e.xmotion.y, x11_width, x11_height);
 				// For mouse
 				mouse_moved = true;
-				if (prev_x != -1)
-					mo_x_delta += (f32)(e.xmotion.x - prev_x) * settings.input.MouseSensitivity / 100.f;
-				if (prev_y != -1)
-					mo_y_delta += (f32)(e.xmotion.y - prev_y) * settings.input.MouseSensitivity / 100.f;
-				prev_x = e.xmotion.x;
-				prev_y = e.xmotion.y;
 
 				break;
 		}
 	}
+	if (gui_is_open() && capturing_mouse)
+	{
+		x11_uncapture_mouse();
+		capturing_mouse = false;
+	}
 	if (capturing_mouse && mouse_moved)
 	{
-		prev_x = x11_width / 2;
-		prev_y = x11_height / 2;
+		mo_x_prev[0] = x11_width / 2;
+		mo_y_prev[0] = x11_height / 2;
 		XWarpPointer(x11_disp, None, x11_win, 0, 0, 0, 0,
-				prev_x, prev_y);
+				mo_x_prev[0], mo_y_prev[0]);
 		XSync(x11_disp, true);
 	}
 }
@@ -387,9 +394,16 @@ void x11_window_create()
 		sWA.event_mask |= PointerMotionMask | FocusChangeMask;
 		unsigned long ui32Mask = CWBackPixel | CWBorderPixel | CWEventMask | CWColormap;
 
-		x11_width = cfgLoadInt("x11", "width", DEFAULT_WINDOW_WIDTH);
-		x11_height = cfgLoadInt("x11", "height", DEFAULT_WINDOW_HEIGHT);
-		x11_fullscreen = cfgLoadBool("x11", "fullscreen", DEFAULT_FULLSCREEN);
+		x11_width = cfgLoadInt("window", "width", 0);
+		if (x11_width == 0)
+			x11_width = cfgLoadInt("x11", "width", DEFAULT_WINDOW_WIDTH);
+		x11_height = cfgLoadInt("window", "height", 0);
+		x11_fullscreen = cfgLoadBool("window", "fullscreen", DEFAULT_FULLSCREEN);
+		if (x11_height == 0)
+		{
+			x11_height = cfgLoadInt("x11", "height", DEFAULT_WINDOW_HEIGHT);
+			x11_fullscreen = cfgLoadBool("x11", "fullscreen", DEFAULT_FULLSCREEN);
+		}
 
 		if (x11_width < 0 || x11_height < 0)
 		{
@@ -411,7 +425,7 @@ void x11_window_create()
 		Atom net_wm_icon = XInternAtom(x11_disp, "_NET_WM_ICON", False);
 		Atom cardinal = XInternAtom(x11_disp, "CARDINAL", False);
 		XChangeProperty(x11_disp, x11_win, net_wm_icon, cardinal, 32, PropModeReplace,
-				(const unsigned char*)reicast_icon, sizeof(reicast_icon) / sizeof(*reicast_icon));
+				(const unsigned char*)window_icon, sizeof(window_icon) / sizeof(*window_icon));
 
 		// Capture the close window event
 		wmDeleteMessage = XInternAtom(x11_disp, "WM_DELETE_WINDOW", False);
@@ -467,10 +481,10 @@ void x11_window_destroy()
 	{
 		if (!x11_fullscreen)
 		{
-			cfgSaveInt("x11", "width", x11_width);
-			cfgSaveInt("x11", "height", x11_height);
+			cfgSaveInt("window", "width", x11_width);
+			cfgSaveInt("window", "height", x11_height);
 		}
-		cfgSaveBool("x11", "fullscreen", x11_fullscreen);
+		cfgSaveBool("window", "fullscreen", x11_fullscreen);
 		XDestroyWindow(x11_disp, x11_win);
 		x11_win = (Window)0;
 	}

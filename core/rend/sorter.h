@@ -16,7 +16,7 @@
  */
 #pragma once
 #include "types.h"
-#include "hw/pvr/Renderer_if.h"
+#include "hw/pvr/ta_ctx.h"
 
 #include <vector>
 
@@ -31,4 +31,4 @@ struct SortTrigDrawParam
 };
 
 // Sort based on min-z of each triangle
-void GenSorted(int first, int count, std::vector<SortTrigDrawParam>& sorted_pp, std::vector<u32>& sorted_idx);
+void GenSorted(int first, int count, std::vector<SortTrigDrawParam>& pidx_sort, std::vector<u32>& vidx_sort);

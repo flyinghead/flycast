@@ -1,5 +1,5 @@
-#include "audiostream.h"
 #if USE_ALSA
+#include "audiostream.h"
 #include <alsa/asoundlib.h>
 #include "cfg/cfg.h"
 
@@ -7,8 +7,8 @@ static snd_pcm_t *handle;
 static bool pcm_blocking = true;
 static snd_pcm_uframes_t buffer_size;
 static snd_pcm_uframes_t period_size;
+static snd_pcm_t *handle_record;
 
-// We're making these functions static - there's no need to pollute the global namespace
 static void alsa_init()
 {
 	snd_pcm_hw_params_t *params;
@@ -107,22 +107,12 @@ static void alsa_init()
 	rc = snd_pcm_hw_params_set_rate(handle, params, 44100, 0);
 	if (rc < 0)
 	{
-		WARN_LOG(AUDIO, "ALSA: Error:snd_pcm_hw_params_set_rate_near %s", snd_strerror(rc));
+		WARN_LOG(AUDIO, "ALSA: Error:snd_pcm_hw_params_set_rate %s", snd_strerror(rc));
 		return;
 	}
 
-	// Sample buffer size
-	buffer_size = settings.aica.BufferSize;
-	rc = snd_pcm_hw_params_set_buffer_size_near(handle, params, &buffer_size);
-	if (rc < 0)
-	{
-		WARN_LOG(AUDIO, "ALSA: Error:snd_pcm_hw_params_set_buffer_size_near %s", snd_strerror(rc));
-		return;
-	}
-	INFO_LOG(AUDIO, "ALSA: buffer size set to %ld", buffer_size);
-
-	// Period size (1024)
-	period_size = 1024;
+	// Period size (512)
+	period_size = std::min(SAMPLE_COUNT, (u32)config::AudioBufferSize / 4);
 	rc = snd_pcm_hw_params_set_period_size_near(handle, params, &period_size, nullptr);
 	if (rc < 0)
 	{
@@ -130,6 +120,16 @@ static void alsa_init()
 		return;
 	}
 	INFO_LOG(AUDIO, "ALSA: period size set to %zd", (size_t)period_size);
+
+	// Sample buffer size
+	buffer_size = config::AudioBufferSize;
+	rc = snd_pcm_hw_params_set_buffer_size_near(handle, params, &buffer_size);
+	if (rc < 0)
+	{
+		WARN_LOG(AUDIO, "ALSA: Error:snd_pcm_hw_params_set_buffer_size_near %s", snd_strerror(rc));
+		return;
+	}
+	INFO_LOG(AUDIO, "ALSA: buffer size set to %ld", buffer_size);
 
 	/* Write the parameters to the driver */
 	rc = snd_pcm_hw_params(handle, params);
@@ -140,6 +140,99 @@ static void alsa_init()
 	}
 }
 
+static bool alsa_init_record(u32 sampling_freq)
+{
+	int err;
+	if ((err = snd_pcm_open(&handle_record, "default", SND_PCM_STREAM_CAPTURE, 0)) < 0)
+	{
+		INFO_LOG(AUDIO, "ALSA: Cannot open default audio capture device: %s", snd_strerror(err));
+		return false;
+	}
+	snd_pcm_hw_params_t *hw_params;
+	if ((err = snd_pcm_hw_params_malloc(&hw_params)) < 0)
+	{
+		INFO_LOG(AUDIO, "ALSA: Cannot allocate hardware parameter structure: %s", snd_strerror(err));
+		snd_pcm_close(handle_record);
+		return false;
+	}
+	if ((err = snd_pcm_hw_params_any(handle_record, hw_params)) < 0)
+	{
+		INFO_LOG(AUDIO, "ALSA: Cannot initialize hardware parameter structure: %s", snd_strerror(err));
+		snd_pcm_hw_params_free(hw_params);
+		snd_pcm_close(handle_record);
+		return false;
+	}
+	if ((err = snd_pcm_hw_params_set_access(handle_record, hw_params, SND_PCM_ACCESS_RW_INTERLEAVED)) < 0)
+	{
+		INFO_LOG(AUDIO, "ALSA: Cannot set access type: %s\n", snd_strerror(err));
+		snd_pcm_hw_params_free(hw_params);
+		snd_pcm_close(handle_record);
+		return false;
+	}
+	if ((err = snd_pcm_hw_params_set_format(handle_record, hw_params, SND_PCM_FORMAT_S16_LE)) < 0)
+	{
+		INFO_LOG(AUDIO, "ALSA: Cannot set sample format: %s", snd_strerror(err));
+		snd_pcm_hw_params_free(hw_params);
+		snd_pcm_close(handle_record);
+		return false;
+	}
+	if ((err = snd_pcm_hw_params_set_rate(handle_record, hw_params, sampling_freq, 0)) < 0)
+	{
+		INFO_LOG(AUDIO, "ALSA: Cannot set sample rate to %d Hz: %s", sampling_freq, snd_strerror(err));
+		snd_pcm_hw_params_free(hw_params);
+		snd_pcm_close(handle_record);
+		return false;
+	}
+	if ((err = snd_pcm_hw_params_set_channels(handle_record, hw_params, 1)) < 0)
+	{
+		INFO_LOG(AUDIO, "ALSA: Cannot set channel count: %s", snd_strerror(err));
+		snd_pcm_hw_params_free(hw_params);
+		snd_pcm_close(handle_record);
+		return false;
+	}
+	if ((err = snd_pcm_hw_params(handle_record, hw_params)) < 0)
+	{
+		INFO_LOG(AUDIO, "ALSA: Cannot set parameters: %s", snd_strerror(err));
+		snd_pcm_hw_params_free(hw_params);
+		snd_pcm_close(handle_record);
+		return false;
+	}
+	snd_pcm_hw_params_free(hw_params);
+	snd_pcm_nonblock(handle_record, 1);
+	if ((err = snd_pcm_prepare(handle_record)) < 0)
+	{
+		INFO_LOG(AUDIO, "ALSA: Cannot prepare device: %s", snd_strerror(err));
+		snd_pcm_close(handle_record);
+		return false;
+	}
+	INFO_LOG(AUDIO, "ALSA: Successfully initialized capture device");
+
+	return true;
+}
+
+static void alsa_term_record()
+{
+	snd_pcm_close(handle_record);
+}
+
+static u32 alsa_record(void* frame, u32 samples)
+{
+	int err = snd_pcm_readi(handle_record, frame, samples);
+	if (err < (int)samples)
+	{
+		if (err < 0)
+		{
+			DEBUG_LOG(AUDIO, "ALSA: Recording error: %s", snd_strerror(err));
+			err = 0;
+			err = snd_pcm_prepare(handle_record);
+		}
+		u8 *buffer = (u8 *)frame + err;
+		memset(buffer, 0, (samples - err) * 2);
+	}
+
+	return err;
+}
+
 static u32 alsa_push(const void* frame, u32 samples, bool wait)
 {
 	if (wait != pcm_blocking) {
@@ -148,16 +241,19 @@ static u32 alsa_push(const void* frame, u32 samples, bool wait)
 	}
 
 	int rc = snd_pcm_writei(handle, frame, samples);
-	if (rc == -EPIPE)
+	if (rc < 0)
 	{
-		/* EPIPE means underrun */
-		snd_pcm_prepare(handle);
-		// Write some silence then our samples
-		const size_t silence_size = buffer_size - period_size;
-		void *silence = alloca(silence_size * 4);
-		memset(silence, 0, silence_size * 4);
-		snd_pcm_writei(handle, silence, silence_size);
-		snd_pcm_writei(handle, frame, samples);
+		snd_pcm_recover(handle, rc, 1);
+		if (rc == -EPIPE)
+		{
+			// EPIPE means underrun
+			// Write some silence then our samples
+			const size_t silence_size = buffer_size - samples;
+			void *silence = alloca(silence_size * 4);
+			memset(silence, 0, silence_size * 4);
+			snd_pcm_writei(handle, silence, silence_size);
+			snd_pcm_writei(handle, frame, samples);
+		}
 	}
 	return 1;
 }
@@ -244,7 +340,10 @@ static audiobackend_t audiobackend_alsa = {
     &alsa_init,
     &alsa_push,
     &alsa_term,
-	&alsa_audio_options
+	&alsa_audio_options,
+	&alsa_init_record,
+	&alsa_record,
+	&alsa_term_record
 };
 
 static bool alsa = RegisterAudioBackend(&audiobackend_alsa);

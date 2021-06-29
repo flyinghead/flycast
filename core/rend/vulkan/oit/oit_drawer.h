@@ -42,7 +42,7 @@ public:
 	bool Draw(const Texture *fogTexture, const Texture *paletteTexture);
 
 	virtual vk::CommandBuffer NewFrame() = 0;
-	virtual void EndFrame() = 0;
+	virtual void EndFrame() {  renderPass++; };
 
 protected:
 	void Init(SamplerManager *samplerManager, OITPipelineManager *pipelineManager, OITBuffers *oitBuffers)
@@ -57,7 +57,7 @@ protected:
 		else
 			while (descriptorSets.size() < GetContext()->GetSwapChainSize())
 			{
-				descriptorSets.push_back(OITDescriptorSets());
+				descriptorSets.emplace_back();
 				descriptorSets.back().Init(samplerManager,
 						pipelineManager->GetPipelineLayout(),
 						pipelineManager->GetPerFrameDSLayout(),
@@ -72,37 +72,43 @@ protected:
 		colorAttachments[1].reset();
 		tempFramebuffers[0].reset();
 		tempFramebuffers[1].reset();
-		depthAttachment.reset();
+		depthAttachments[0].reset();
+		depthAttachments[1].reset();
 		mainBuffers.clear();
 		descriptorSets.clear();
 	}
 
 	int GetCurrentImage() const { return imageIndex; }
 
-	void NewImage() { imageIndex = (imageIndex + 1) % GetContext()->GetSwapChainSize(); }
+	void NewImage()
+	{
+		GetCurrentDescSet().Reset();
+		imageIndex = (imageIndex + 1) % GetContext()->GetSwapChainSize();
+		renderPass = 0;
+	}
 
 	OITDescriptorSets& GetCurrentDescSet() { return descriptorSets[GetCurrentImage()]; }
 
 	BufferData* GetMainBuffer(u32 size)
 	{
-		if (mainBuffers.empty())
+		u32 bufferIndex = imageIndex + renderPass * GetContext()->GetSwapChainSize();
+		while (mainBuffers.size() <= bufferIndex)
 		{
-			for (size_t i = 0; i < GetContext()->GetSwapChainSize(); i++)
-				mainBuffers.push_back(std::unique_ptr<BufferData>(new BufferData(std::max(512 * 1024u, size),
-						vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eUniformBuffer
-						| vk::BufferUsageFlagBits::eStorageBuffer)));
+			mainBuffers.push_back(std::unique_ptr<BufferData>(new BufferData(std::max(512 * 1024u, size),
+					vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eUniformBuffer
+					| vk::BufferUsageFlagBits::eStorageBuffer)));
 		}
-		else if (mainBuffers[GetCurrentImage()]->bufferSize < size)
+		if (mainBuffers[bufferIndex]->bufferSize < size)
 		{
-			u32 newSize = mainBuffers[GetCurrentImage()]->bufferSize;
+			u32 newSize = mainBuffers[bufferIndex]->bufferSize;
 			while (newSize < size)
 				newSize *= 2;
-			INFO_LOG(RENDERER, "Increasing main buffer size %d -> %d", (u32)mainBuffers[GetCurrentImage()]->bufferSize, newSize);
-			mainBuffers[GetCurrentImage()] = std::unique_ptr<BufferData>(new BufferData(newSize,
+			INFO_LOG(RENDERER, "Increasing main buffer size %d -> %d", (u32)mainBuffers[bufferIndex]->bufferSize, newSize);
+			mainBuffers[bufferIndex] = std::unique_ptr<BufferData>(new BufferData(newSize,
 					vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eUniformBuffer
 					| vk::BufferUsageFlagBits::eStorageBuffer));
 		}
-		return mainBuffers[GetCurrentImage()].get();
+		return mainBuffers[bufferIndex].get();
 	};
 
 	void MakeBuffers(int width, int height);
@@ -111,14 +117,15 @@ protected:
 
 	vk::Rect2D viewport;
 	std::array<std::unique_ptr<FramebufferAttachment>, 2> colorAttachments;
-	std::unique_ptr<FramebufferAttachment> depthAttachment;
+	std::array<std::unique_ptr<FramebufferAttachment>, 2> depthAttachments;
 	vk::CommandBuffer currentCommandBuffer;
+	std::vector<bool> clearNeeded;
 
 private:
-	void DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sortTriangles, Pass pass,
+	void DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool autosort, Pass pass,
 			const PolyParam& poly, u32 first, u32 count);
 	void DrawList(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sortTriangles, Pass pass,
-			const List<PolyParam>& polys, u32 first, u32 count);
+			const List<PolyParam>& polys, u32 first, u32 last);
 	template<bool Translucent>
 	void DrawModifierVolumes(const vk::CommandBuffer& cmdBuffer, int first, int count);
 	void UploadMainBuffer(const OITDescriptorSets::VertexShaderUniforms& vertexUniforms,
@@ -144,6 +151,7 @@ private:
 	int maxHeight = 0;
 	bool needDepthTransition = false;
 	int imageIndex = 0;
+	int renderPass = 0;
 	std::vector<OITDescriptorSets> descriptorSets;
 	std::vector<std::unique_ptr<BufferData>> mainBuffers;
 };
@@ -151,15 +159,16 @@ private:
 class OITScreenDrawer : public OITDrawer
 {
 public:
-	void Init(SamplerManager *samplerManager, OITShaderManager *shaderManager, OITBuffers *oitBuffers)
+	void Init(SamplerManager *samplerManager, OITShaderManager *shaderManager, OITBuffers *oitBuffers,
+			const vk::Extent2D& viewport)
 	{
 		if (!screenPipelineManager)
 			screenPipelineManager = std::unique_ptr<OITPipelineManager>(new OITPipelineManager());
 		screenPipelineManager->Init(shaderManager, oitBuffers);
 		OITDrawer::Init(samplerManager, screenPipelineManager.get(), oitBuffers);
 
-		currentScreenScaling = 0;
-		MakeFramebuffers();
+		MakeFramebuffers(viewport);
+		GetContext()->PresentFrame(vk::ImageView(), viewport);
 	}
 	void Term()
 	{
@@ -169,28 +178,40 @@ public:
 		OITDrawer::Term();
 	}
 
-	virtual vk::CommandBuffer NewFrame() override;
-	virtual void EndFrame() override
+	vk::CommandBuffer NewFrame() override;
+	void EndFrame() override
 	{
 		currentCommandBuffer.endRenderPass();
 		currentCommandBuffer.end();
 		currentCommandBuffer = nullptr;
 		commandPool->EndFrame();
-		GetContext()->PresentFrame(finalColorAttachments[GetCurrentImage()]->GetImageView(),
-				vk::Offset2D(viewport.extent.width, viewport.extent.height));
+		OITDrawer::EndFrame();
+		frameRendered = true;
+	}
+
+	bool PresentFrame()
+	{
+		if (!frameRendered)
+			return false;
+		frameRendered = false;
+		GetContext()->PresentFrame(finalColorAttachments[GetCurrentImage()]->GetImageView(), viewport.extent);
+		NewImage();
+
+		return true;
 	}
 
 protected:
-	virtual vk::Framebuffer GetFinalFramebuffer() const override { return *framebuffers[GetCurrentImage()]; }
-	virtual vk::Format GetColorFormat() const override { return GetContext()->GetColorFormat(); }
+	vk::Framebuffer GetFinalFramebuffer() const override { return *framebuffers[GetCurrentImage()]; }
+	vk::Format GetColorFormat() const override { return GetContext()->GetColorFormat(); }
 
 private:
-	void MakeFramebuffers();
+	void MakeFramebuffers(const vk::Extent2D& viewport);
 
 	std::vector<std::unique_ptr<FramebufferAttachment>> finalColorAttachments;
 	std::vector<vk::UniqueFramebuffer> framebuffers;
 	std::unique_ptr<OITPipelineManager> screenPipelineManager;
-	int currentScreenScaling = 0;
+	std::vector<bool> transitionNeeded;
+	bool frameRendered = false;
 };
 
 class OITTextureDrawer : public OITDrawer
@@ -214,12 +235,12 @@ public:
 		OITDrawer::Term();
 	}
 
-	virtual void EndFrame() override;
+	void EndFrame() override;
 
 protected:
-	virtual vk::CommandBuffer NewFrame() override;
-	virtual vk::Framebuffer GetFinalFramebuffer() const override { return *framebuffers[GetCurrentImage()]; }
-	virtual vk::Format GetColorFormat() const override { return vk::Format::eR8G8B8A8Unorm; }
+	vk::CommandBuffer NewFrame() override;
+	vk::Framebuffer GetFinalFramebuffer() const override { return *framebuffers[GetCurrentImage()]; }
+	vk::Format GetColorFormat() const override { return vk::Format::eR8G8B8A8Unorm; }
 
 private:
 	u32 textureAddr = 0;

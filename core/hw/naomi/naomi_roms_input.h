@@ -3,26 +3,24 @@
 
 	Copyright 2018 flyinghead
 
-	This file is part of reicast.
+	This file is part of Flycast.
 
-    reicast is free software: you can redistribute it and/or modify
+    Flycast is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
-    reicast is distributed in the hope that it will be useful,
+    Flycast is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with reicast.  If not, see <https://www.gnu.org/licenses/>.
+    along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
  */
-
-#ifndef CORE_HW_NAOMI_NAOMI_ROMS_INPUT_H_
-#define CORE_HW_NAOMI_NAOMI_ROMS_INPUT_H_
-
+#pragma once
 #include "hw/maple/maple_devs.h"
+#include "naomi_cart.h"
 
 //
 // NAOMI Games
@@ -33,13 +31,24 @@
 						 { NAOMI_SERVICE_KEY, "SERVICE" },
 #define NAO_START_DESC { NAOMI_START_KEY, "START" },
 
+#define INPUT_2_BUTTONS(btn0, btn1) {	\
+	{									\
+		{ NAOMI_BTN0_KEY, btn0 },		\
+		{ NAOMI_BTN1_KEY, btn1 },		\
+		NAO_START_DESC					\
+		NAO_BASE_BTN_DESC				\
+		{ 0 },							\
+	}									\
+};										\
+
 static InputDescriptors _18wheelr_inputs = {
 	  {
 			{ NAOMI_BTN0_KEY, "HORN" },
 			{ NAOMI_DOWN_KEY, "VIEW" },
-			{ NAOMI_BTN1_KEY, "SHIFT L", NAOMI_DOWN_KEY },		// This button uses P2 inputs for P1
-			{ NAOMI_BTN2_KEY, "SHIFT H", NAOMI_UP_KEY },		// This button uses P2 inputs for P1
-			{ NAOMI_BTN3_KEY, "SHIFT R", NAOMI_LEFT_KEY },		// This button uses P2 inputs for P1
+			{ NAOMI_BTN1_KEY, "SHIFT L", 0, NAOMI_DOWN_KEY },	// This button uses P2 inputs for P1
+			{ NAOMI_BTN2_KEY, "SHIFT H", 0, NAOMI_UP_KEY },		// This button uses P2 inputs for P1
+			{ NAOMI_BTN3_KEY, "SHIFT R", 0, NAOMI_LEFT_KEY | NAOMI_DOWN_KEY },
+																// This button uses P2 inputs for P1
 			NAO_START_DESC
 			NAO_BASE_BTN_DESC
 			{ 0 },
@@ -55,9 +64,9 @@ static InputDescriptors _18wheelr_inputs = {
 static InputDescriptors alienfnt_inputs = {
 	  {
 			{ NAOMI_BTN0_KEY, "LEFT SHOT" },
-			{ NAOMI_BTN1_KEY, "ROTATION R" },
-			{ NAOMI_BTN2_KEY, "RIGHT SHOT" },
-			{ NAOMI_BTN3_KEY, "ROTATION L" },
+			{ NAOMI_BTN3_KEY, "ROTATION R", NAOMI_BTN1_KEY },
+			{ NAOMI_BTN1_KEY, "RIGHT SHOT", NAOMI_BTN2_KEY },
+			{ NAOMI_BTN2_KEY, "ROTATION L", NAOMI_BTN3_KEY },
 			NAO_START_DESC
 			NAO_BASE_BTN_DESC
 			{ 0 },
@@ -80,12 +89,12 @@ static InputDescriptors alpilot_inputs = {
 			{ 0 },
 	  },
 	  {
-			{ "ELEVATOR", Full, 0 },
-			{ "AILERON", Full, 1 },
-			{ "", Full, 2 },
-			{ "RUDDER PEDAL", Full, 3 },
-			{ "THRUST LEVER L", Half, 4 },
-			{ "THRUST LEVER R", Half, 5 },
+			{ "ELEVATOR", Full, 1 },
+			{ "AILERON", Full, 0 },
+			{ "", Full, 3 },
+			{ "RUDDER PEDAL", Full, 2 },
+			{ "THRUST LEVER L", Half, 5 },
+			{ "THRUST LEVER R", Half, 4 },
 			{ NULL },
 	  },
 };
@@ -156,20 +165,6 @@ static InputDescriptors trigger_inputs = {
 	  },
 };
 
-static InputDescriptors deathcox_inputs = {
-	  {
-			{ NAOMI_BTN0_KEY, "TRIGGER" },
-			NAO_START_DESC
-			NAO_BASE_BTN_DESC
-			{ 0 },
-	  },
-	  {
-			{ "GUN-X", Full, 0 },
-			{ "GUN-Y", Full, 1 },
-			{ NULL },
-	  },
-};
-
 static InputDescriptors gunsur2_inputs = {
 	  {
 			{ NAOMI_BTN0_KEY, "GUN BUTTON" },
@@ -190,8 +185,8 @@ static InputDescriptors gunsur2_inputs = {
 
 static InputDescriptors jambo_inputs = {
 	  {
-			{ NAOMI_UP_KEY, "LEVER UP", NAOMI_DOWN_KEY },	// This button uses P2 inputs for P1
-			{ NAOMI_DOWN_KEY, "LEVER DOWN", NAOMI_UP_KEY },	// This button uses P2 inputs for P1
+			{ NAOMI_BTN1_KEY, "LEVER UP", 0, NAOMI_DOWN_KEY },		// This button uses P2 inputs for P1
+			{ NAOMI_BTN0_KEY, "LEVER DOWN", 0, NAOMI_UP_KEY },		// This button uses P2 inputs for P1
 			NAO_START_DESC
 			NAO_BASE_BTN_DESC
 			{ 0 },
@@ -248,11 +243,9 @@ static InputDescriptors sfz3ugd_inputs = {
 
 static InputDescriptors ninjaslt_inputs = {
 	  {
-			{ NAOMI_BTN0_KEY, "ENTER" },
-			{ NAOMI_BTN2_KEY, "START 1P" },
-			{ NAOMI_BTN3_KEY, "START 2P" },
-			{ NAOMI_BTN4_KEY, "TRIGGER 1P" },
-			{ NAOMI_BTN5_KEY, "TRIGGER 2P" },
+			{ NAOMI_BTN2_KEY, "ENTER", NAOMI_BTN0_KEY },
+			{ NAOMI_START_KEY, "START", NAOMI_BTN2_KEY, 0, NAOMI_BTN3_KEY },
+			{ NAOMI_BTN0_KEY, "TRIGGER", NAOMI_BTN4_KEY, 0, NAOMI_BTN5_KEY },
 			{ NAOMI_UP_KEY, "SELECT UP" },
 			{ NAOMI_DOWN_KEY, "SELECT DOWN" },
 			NAO_BASE_BTN_DESC
@@ -271,14 +264,14 @@ static InputDescriptors vonot_inputs = {
 			{ NAOMI_RIGHT_KEY, "L RIGHT" },
 			{ NAOMI_BTN0_KEY, "L TRIGGER" },
 			{ NAOMI_BTN1_KEY, "L TURBO" },
-			{ NAOMI_BTN2_KEY, "QM" },
+			{ NAOMI_BTN8_KEY, "QM" },
 			// These buttons use P2 inputs for P1
-			{ NAOMI_BTN3_KEY, "R TRIGGER", NAOMI_BTN0_KEY },
-			{ NAOMI_BTN4_KEY, "R TURBO", NAOMI_BTN1_KEY },
-			{ NAOMI_BTN5_KEY, "R UP", NAOMI_UP_KEY },
-			{ NAOMI_BTN6_KEY, "R DOWN", NAOMI_DOWN_KEY },
-			{ NAOMI_BTN7_KEY, "R LEFT", NAOMI_LEFT_KEY },
-			{ NAOMI_BTN8_KEY, "R RIGHT", NAOMI_RIGHT_KEY },
+			{ NAOMI_BTN2_KEY, "R TRIGGER", 0, NAOMI_BTN0_KEY },
+			{ NAOMI_BTN3_KEY, "R TURBO", 0, NAOMI_BTN1_KEY },
+			{ NAOMI_BTN4_KEY, "R UP", 0, NAOMI_UP_KEY },
+			{ NAOMI_BTN5_KEY, "R DOWN", 0, NAOMI_DOWN_KEY },
+			{ NAOMI_BTN6_KEY, "R LEFT", 0, NAOMI_LEFT_KEY },
+			{ NAOMI_BTN7_KEY, "R RIGHT", 0, NAOMI_RIGHT_KEY },
 
 			NAO_START_DESC
 			NAO_BASE_BTN_DESC
@@ -289,21 +282,46 @@ static InputDescriptors vonot_inputs = {
 	  },
 };
 
-static InputDescriptors vtenis2c_inputs = {
-	  {
-			{ NAOMI_BTN0_KEY, "SHOT1" },
-			{ NAOMI_BTN1_KEY, "SHOT2" },
-			{ NAOMI_UP_KEY, "UP" },
-			{ NAOMI_DOWN_KEY, "DOWN" },
-			{ NAOMI_LEFT_KEY, "LEFT" },
-			{ NAOMI_RIGHT_KEY, "RIGHT" },
-			NAO_START_DESC
-			NAO_BASE_BTN_DESC
-			{ 0 },
-	  },
-	  {
-			{ NULL },
-	  },
+static InputDescriptors shot12_inputs = {
+	{
+		{ NAOMI_BTN0_KEY, "SHOT1" },
+		{ NAOMI_BTN1_KEY, "SHOT2" },
+		{ NAOMI_UP_KEY, "UP" },
+		{ NAOMI_DOWN_KEY, "DOWN" },
+		{ NAOMI_LEFT_KEY, "LEFT" },
+		{ NAOMI_RIGHT_KEY, "RIGHT" },
+		NAO_START_DESC
+		NAO_BASE_BTN_DESC
+	},
+};
+
+static InputDescriptors shot123_inputs = {
+	{
+		{ NAOMI_BTN0_KEY, "SHOT1" },
+		{ NAOMI_BTN1_KEY, "SHOT2" },
+		{ NAOMI_BTN2_KEY, "SHOT3" },
+		{ NAOMI_UP_KEY, "UP" },
+		{ NAOMI_DOWN_KEY, "DOWN" },
+		{ NAOMI_LEFT_KEY, "LEFT" },
+		{ NAOMI_RIGHT_KEY, "RIGHT" },
+		NAO_START_DESC
+		NAO_BASE_BTN_DESC
+	},
+};
+
+static InputDescriptors shot1234_inputs = {
+	{
+		{ NAOMI_BTN0_KEY, "SHOT1" },
+		{ NAOMI_BTN1_KEY, "SHOT2" },
+		{ NAOMI_BTN2_KEY, "SHOT3" },
+		{ NAOMI_BTN3_KEY, "SHOT4" },
+		{ NAOMI_UP_KEY, "UP" },
+		{ NAOMI_DOWN_KEY, "DOWN" },
+		{ NAOMI_LEFT_KEY, "LEFT" },
+		{ NAOMI_RIGHT_KEY, "RIGHT" },
+		NAO_START_DESC
+		NAO_BASE_BTN_DESC
+	},
 };
 
 static InputDescriptors monkeyba_inputs = {
@@ -340,6 +358,36 @@ static InputDescriptors cvs2_inputs = {
 	  },
 };
 
+static InputDescriptors pjustic_inputs = {
+	{
+		{ NAOMI_BTN0_KEY, "SHOT1" },
+		{ NAOMI_BTN1_KEY, "SHOT2" },
+		{ NAOMI_BTN2_KEY, "SHOT3", NAOMI_BTN3_KEY },
+		{ NAOMI_BTN3_KEY, "SHOT4", NAOMI_BTN4_KEY },
+		{ NAOMI_UP_KEY, "UP" },
+		{ NAOMI_DOWN_KEY, "DOWN" },
+		{ NAOMI_LEFT_KEY, "LEFT" },
+		{ NAOMI_RIGHT_KEY, "RIGHT" },
+		NAO_START_DESC
+		NAO_BASE_BTN_DESC
+	},
+};
+
+static InputDescriptors slashout_inputs = {
+	{
+		{ NAOMI_BTN0_KEY, "BLADE" },
+		{ NAOMI_BTN1_KEY, "CHARGE" },
+		{ NAOMI_BTN2_KEY, "JUMP" },
+		{ NAOMI_BTN3_KEY, "SHIFT" },
+		{ NAOMI_UP_KEY, "UP" },
+		{ NAOMI_DOWN_KEY, "DOWN" },
+		{ NAOMI_LEFT_KEY, "LEFT" },
+		{ NAOMI_RIGHT_KEY, "RIGHT" },
+		NAO_START_DESC
+		NAO_BASE_BTN_DESC
+	},
+};
+
 static InputDescriptors tokyobus_inputs = {
 	  {
 			{ NAOMI_BTN0_KEY, "HORN" },
@@ -347,18 +395,18 @@ static InputDescriptors tokyobus_inputs = {
 			{ NAOMI_LEFT_KEY, "ANNOUNCE" },
 			{ NAOMI_RIGHT_KEY, "DOOR CLOSE" },
 			// These buttons uses P2 inputs for P1
-			{ NAOMI_BTN1_KEY, "WINKER RIGHT", NAOMI_BTN0_KEY },
-			{ NAOMI_BTN2_KEY, "WINKER LEFT", NAOMI_BTN1_KEY },
-			{ NAOMI_BTN3_KEY, "SHIFT FRONT", NAOMI_UP_KEY },
-			{ NAOMI_BTN4_KEY, "SHIFT REVERSE", NAOMI_DOWN_KEY },
+			{ NAOMI_BTN1_KEY, "WINKER RIGHT", 0, NAOMI_BTN0_KEY },
+			{ NAOMI_BTN2_KEY, "WINKER LEFT", 0, NAOMI_BTN1_KEY },
+			{ NAOMI_BTN3_KEY, "SHIFT FRONT", 0, NAOMI_UP_KEY },
+			{ NAOMI_BTN4_KEY, "SHIFT REVERSE", 0, NAOMI_DOWN_KEY },
 			NAO_START_DESC
 			NAO_BASE_BTN_DESC
 			{ 0 },
 	  },
 	  {
 			{ "HANDLE", Full, 0 },
-			{ "ACCEL", Half, 1 },
-			{ "BRAKE", Half, 2 },
+			{ "ACCEL", Half, 4 },
+			{ "BRAKE", Half, 5 },
 			{ NULL },
 	  },
 };
@@ -372,13 +420,14 @@ static InputDescriptors wrungp_inputs = {
 	  },
 	  {
 			{ "HANDLE BAR", Full, 0 },
-			{ "THROTTLE LEVER", Half, 1, true },
+			{ "THROTTLE LEVER", Half, 4, true },
 			{ "ROLL", Full, 2 },
 			{ "PITCH", Full, 3 },
 			{ NULL },
 	  },
 };
 
+// Standard cabinet. The Deluxe version has different (and more) inputs.
 static InputDescriptors marine_fishing_inputs = {
 	  {
 			{ NAOMI_START_KEY, "CAST" },
@@ -391,7 +440,7 @@ static InputDescriptors marine_fishing_inputs = {
 			{ "ROD X", Full, 0 },
 			{ "STICK X", Full, 2 },
 			{ "STICK Y", Full, 3 },
-			{ "REEL SPEED", Half, 0 },
+			{ "REEL SPEED", Half, 4 },
 			{ NULL },
 	  },
 };
@@ -401,9 +450,9 @@ static InputDescriptors f355_inputs = {
 			{ NAOMI_BTN0_KEY, "ASSIST SC" },
 			{ NAOMI_BTN1_KEY, "ASSIST TC" },
 			{ NAOMI_BTN2_KEY, "ASSIST ABS" },
-			{ NAOMI_BTN3_KEY, "ASSIST IBS", NAOMI_BTN1_KEY },
-			{ NAOMI_BTN4_KEY, "WING SHIFT L", NAOMI_DOWN_KEY },
-			{ NAOMI_BTN5_KEY, "WING SHIFT R", NAOMI_UP_KEY },
+			{ NAOMI_BTN3_KEY, "ASSIST IBS", 0, NAOMI_BTN1_KEY },
+			{ NAOMI_BTN4_KEY, "WING SHIFT L", 0, NAOMI_DOWN_KEY },
+			{ NAOMI_BTN5_KEY, "WING SHIFT R", 0, NAOMI_UP_KEY },
 
 			// Manual gearshift (Deluxe only)
 			//    L   R
@@ -420,8 +469,8 @@ static InputDescriptors f355_inputs = {
 			{ 0 },
 	  },
 	  {
-			{ "ACCEL", Half, 0 },
-			{ "BRAKE", Half, 1 },
+			{ "ACCEL", Half, 4 },
+			{ "BRAKE", Half, 5 },
 			{ "CLUTCH", Full, 2 },	// Deluxe only
 			{ "unused", Full, 4 },
 			{ "HANDLE", Full, 0 },
@@ -445,6 +494,58 @@ static InputDescriptors zombie_inputs = {
 	  },
 };
 
+// World Series 99 / Super Major League 99
+// World Series Baseball / Super Major League
+static InputDescriptors wsbb_inputs = {
+	{
+		{ NAOMI_BTN0_KEY, "BTN A" },
+		{ NAOMI_BTN1_KEY, "BTN B" },
+		NAO_START_DESC
+		NAO_BASE_BTN_DESC
+		{ 0 },
+	},
+	{
+		{ "STICK Y", Full, 1, true },
+		{ "STICK X", Full, 0, true },
+		{ "BAT", Half, 4, true },
+		{ "", Half, 5 },	// unused but P2 starts at axis 4
+		{ NULL },
+	},
+};
+
+static InputDescriptors ringout_inputs  = {
+	{
+		{ NAOMI_BTN0_KEY, "BUMPER" },
+		{ NAOMI_BTN1_KEY, "BACK" },
+		NAO_START_DESC
+		NAO_BASE_BTN_DESC
+		{ 0 },
+	},
+	{
+		{ "STEER", Full, 0 },
+		{ "ACCEL", Half, 4 },
+		{ NULL },
+	},
+};
+
+static InputDescriptors sstrkfgt_inputs = {
+	{
+		{ NAOMI_BTN0_KEY, "GUN TRIGGER" },
+		{ NAOMI_BTN1_KEY, "MISSILE BTN" },
+		{ NAOMI_BTN2_KEY, "AIR BRAKE" },
+		{ NAOMI_BTN3_KEY, "VIEW CHANGE" },
+		NAO_START_DESC
+		NAO_BASE_BTN_DESC
+		{ 0 },
+	},
+	{
+		{ "ELEVATOR", Full, 1 },
+		{ "AILERON", Full, 0 },
+		{ "THRUST LEVER", Half, 4 },
+		{ "RUDDER PEDAL", Full, 2 },
+		{ NULL },
+	},
+};
 //
 // AtomisWave games
 //
@@ -465,8 +566,8 @@ static InputDescriptors ftspeed_inputs = {
 	  },
 	  {
 			{ "STEERING WHEEL", Full, 0 },
-			{ "GAS PEDAL", Half, 1 },
-			{ "BRAKE PEDAL", Half, 2 },
+			{ "GAS PEDAL", Half, 4 },
+			{ "BRAKE PEDAL", Half, 5 },
 			{ NULL },
 	  },
 };
@@ -515,8 +616,8 @@ static InputDescriptors maxspeed_inputs = {
 	  },
 	  {
 			{ "STEERING", Full, 0 },
-			{ "ACCELERATOR", Half, 1 },
-			{ "BRAKE", Half, 2 },
+			{ "ACCELERATOR", Half, 4 },
+			{ "BRAKE", Half, 5 },
 			{ NULL },
 	  },
 };
@@ -563,7 +664,9 @@ static InputDescriptors blockpong_inputs = {
 	  },
 	  {
 			{ "ANALOG X", Full, 0, true },
+			{ "ANALOG Y", Full, 1 },
+			{ "ANALOG X", Full, 0 },	// for P2
+			{ "ANALOG Y", Full, 1 },	// for P2
 			{ NULL },
 	  },
 };
-#endif /* CORE_HW_NAOMI_NAOMI_ROMS_INPUT_H_ */

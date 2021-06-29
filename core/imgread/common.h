@@ -2,36 +2,11 @@
 #include "types.h"
 #include <vector>
 
-#include "deps/coreio/coreio.h"
 #include "emulator.h"
+#include "hw/gdrom/gdrom_if.h"
 #include "rend/gui.h"
 
 extern u32 NullDriveDiscType;
-struct TocTrackInfo
-{
-	u32 FAD;    //fad, Intel format
-	u8 Control; //control info
-	u8 Addr;    //address info
-	u8 Session; //Session where the track belongs
-};
-struct TocInfo
-{
-	//0-98 ->1-99
-	TocTrackInfo tracks[99];
-
-	u8 FistTrack;
-	u8 LastTrack;
-
-	TocTrackInfo LeadOut; //session set to 0 on that one
-};
-
-struct SessionInfo
-{
-	u32 SessionsEndFAD;   //end of Disc (?)
-	u8 SessionCount;      //must be at least 1
-	u32 SessionStart[99]; //start track for session
-	u32 SessionFAD[99];   //for sessions 1-99 ;)
-};
 
 /*
 Mode2 Subheader:
@@ -82,6 +57,12 @@ enum SubcodeFormat
 	SUBFMT_96					//raw 96-byte subcode info
 };
 
+enum DiskArea
+{
+	SingleDensity,
+	DoubleDensity
+};
+
 bool ConvertSector(u8* in_buff , u8* out_buff , int from , int to,int sector);
 
 bool InitDrive();
@@ -92,15 +73,11 @@ extern signed int sns_asc;
 extern signed int sns_ascq;
 extern signed int sns_key;
 
-void ConvToc(u32* to,TocInfo* from);
 void GetDriveToc(u32* to,DiskArea area);
 void GetDriveSector(u8 * buff,u32 StartSector,u32 SectorCount,u32 secsz);
 
 void GetDriveSessionInfo(u8* to,u8 session);
-int msgboxf(char* text,unsigned int type,...);
-void printtoc(TocInfo* toc,SessionInfo* ses);
 extern u8 q_subchannel[96];
-
 
 struct Session
 {
@@ -111,7 +88,7 @@ struct Session
 struct TrackFile
 {
 	virtual void Read(u32 FAD,u8* dst,SectorFormat* sector_type,u8* subcode,SubcodeFormat* subcode_type)=0;
-	virtual ~TrackFile() {};
+	virtual ~TrackFile() = default;;
 };
 
 struct Track
@@ -227,8 +204,8 @@ struct Disc
 	}
 	virtual ~Disc() 
 	{
-		for (size_t i=0;i<tracks.size();i++)
-			tracks[i].Destroy();
+		for (auto& track : tracks)
+			track.Destroy();
 	};
 
 	void FillGDSession()
@@ -262,15 +239,15 @@ struct Disc
 			char fsto[1024];
 			sprintf(fsto,"%s%s%d.img",path.c_str(),".track",i);
 			
-			FILE* fo=fopen(fsto,"wb");
+			FILE *fo = nowide::fopen(fsto, "wb");
 
 			for (u32 j=tracks[i].StartFAD;j<=tracks[i].EndFAD;j++)
 			{
 				u8 temp[2352];
 				ReadSectors(j,1,temp,fmt);
-				fwrite(temp,fmt,1,fo);
+				std::fwrite(temp, fmt, 1, fo);
 			}
-			fclose(fo);
+			std::fclose(fo);
 		}
 	}
 };
@@ -281,12 +258,12 @@ Disc* OpenDisc(const char* fn);
 
 struct RawTrackFile : TrackFile
 {
-	core_file* file;
+	FILE *file;
 	s32 offset;
 	u32 fmt;
 	bool cleanup;
 
-	RawTrackFile(core_file* file,u32 file_offs,u32 first_fad,u32 secfmt)
+	RawTrackFile(FILE *file, u32 file_offs, u32 first_fad, u32 secfmt)
 	{
 		verify(file!=0);
 		this->file=file;
@@ -295,7 +272,7 @@ struct RawTrackFile : TrackFile
 		this->cleanup=true;
 	}
 
-	virtual void Read(u32 FAD,u8* dst,SectorFormat* sector_type,u8* subcode,SubcodeFormat* subcode_type)
+	void Read(u32 FAD,u8* dst,SectorFormat* sector_type,u8* subcode,SubcodeFormat* subcode_type) override
 	{
 		//for now hackish
 		if (fmt==2352)
@@ -311,16 +288,43 @@ struct RawTrackFile : TrackFile
 			verify(false);
 		}
 
-		core_fseek(file,offset+FAD*fmt,SEEK_SET);
-		core_fread(file, dst, fmt);
+		std::fseek(file, offset + FAD * fmt, SEEK_SET);
+		std::fread(dst, 1, fmt, file);
 	}
-	virtual ~RawTrackFile()
+	~RawTrackFile() override
 	{
 		if (cleanup && file)
-			core_fclose(file);
+			std::fclose(file);
 	}
 };
 
 DiscType GuessDiscType(bool m1, bool m2, bool da);
+void gd_setdisc();
 
-extern void gd_setdisc();
+//GDR
+s32 libGDR_Init();
+void libGDR_Reset(bool hard);
+void libGDR_Term();
+
+//IO
+void libGDR_ReadSector(u8 * buff,u32 StartSector,u32 SectorCount,u32 secsz);
+void libGDR_ReadSubChannel(u8 * buff, u32 format, u32 len);
+void libGDR_GetToc(u32* toc,u32 area);
+u32 libGDR_GetDiscType();
+void libGDR_GetSessionInfo(u8* pout,u8 session);
+u32 libGDR_GetTrackNumber(u32 sector, u32& elapsed);
+bool libGDR_GetTrack(u32 track_num, u32& start_fad, u32& end_fad);
+
+namespace flycast
+{
+
+inline static size_t fsize(FILE *f)
+{
+	size_t p = std::ftell(f);
+    std::fseek(f, 0, SEEK_END);
+    size_t size = std::ftell(f);
+    std::fseek(f, p, SEEK_SET);
+    return size;
+}
+
+}

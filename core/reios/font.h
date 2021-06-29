@@ -1,3 +1,5 @@
+#pragma once
+
 //
 // Neep Bold by Jim Knoble
 //

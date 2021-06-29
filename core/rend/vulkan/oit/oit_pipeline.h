@@ -31,6 +31,12 @@
 class OITDescriptorSets
 {
 public:
+	OITDescriptorSets() = default;
+	OITDescriptorSets(OITDescriptorSets&&) = default;
+	OITDescriptorSets(const OITDescriptorSets&) = delete;
+	OITDescriptorSets& operator=(OITDescriptorSets&&) = default;
+	OITDescriptorSets& operator=(const OITDescriptorSets&) = delete;
+
 	// std140 alignment required
 	struct VertexShaderUniforms
 	{
@@ -84,18 +90,22 @@ public:
 			u32 polyParamsOffset, u32 polyParamsSize, vk::ImageView stencilImageView, vk::ImageView depthImageView,
 			vk::ImageView paletteImageView)
 	{
-		if (!perFrameDescSet)
+		if (perFrameDescSets.empty())
 		{
-			perFrameDescSet = std::move(GetContext()->GetDevice().allocateDescriptorSetsUnique(
-					vk::DescriptorSetAllocateInfo(GetContext()->GetDescriptorPool(), 1, &perFrameLayout)).front());
+			perFrameDescSets = std::move(GetContext()->GetDevice().allocateDescriptorSetsUnique(
+					vk::DescriptorSetAllocateInfo(GetContext()->GetDescriptorPool(), 1, &perFrameLayout)));
 		}
+		perFrameDescSetsInFlight.emplace_back(std::move(perFrameDescSets.back()));
+		perFrameDescSets.pop_back();
+		vk::DescriptorSet perFrameDescSet = *perFrameDescSetsInFlight.back();
+
 		std::vector<vk::DescriptorBufferInfo> bufferInfos;
-		bufferInfos.push_back(vk::DescriptorBufferInfo(buffer, vertexUniformOffset, sizeof(VertexShaderUniforms)));
-		bufferInfos.push_back(vk::DescriptorBufferInfo(buffer, fragmentUniformOffset, sizeof(FragmentShaderUniforms)));
+		bufferInfos.emplace_back(buffer, vertexUniformOffset, sizeof(VertexShaderUniforms));
+		bufferInfos.emplace_back(buffer, fragmentUniformOffset, sizeof(FragmentShaderUniforms));
 
 		std::vector<vk::WriteDescriptorSet> writeDescriptorSets;
-		writeDescriptorSets.push_back(vk::WriteDescriptorSet(*perFrameDescSet, 0, 0, 1, vk::DescriptorType::eUniformBuffer, nullptr, &bufferInfos[0], nullptr));
-		writeDescriptorSets.push_back(vk::WriteDescriptorSet(*perFrameDescSet, 1, 0, 1, vk::DescriptorType::eUniformBuffer, nullptr, &bufferInfos[1], nullptr));
+		writeDescriptorSets.emplace_back(perFrameDescSet, 0, 0, 1, vk::DescriptorType::eUniformBuffer, nullptr, &bufferInfos[0], nullptr);
+		writeDescriptorSets.emplace_back(perFrameDescSet, 1, 0, 1, vk::DescriptorType::eUniformBuffer, nullptr, &bufferInfos[1], nullptr);
 		if (fogImageView)
 		{
 			TSP fogTsp = {};
@@ -105,7 +115,7 @@ public:
 			vk::Sampler fogSampler = samplerManager->GetSampler(fogTsp);
 			static vk::DescriptorImageInfo imageInfo;
 			imageInfo = { fogSampler, fogImageView, vk::ImageLayout::eShaderReadOnlyOptimal };
-			writeDescriptorSets.push_back(vk::WriteDescriptorSet(*perFrameDescSet, 2, 0, 1, vk::DescriptorType::eCombinedImageSampler, &imageInfo, nullptr, nullptr));
+			writeDescriptorSets.emplace_back(perFrameDescSet, 2, 0, 1, vk::DescriptorType::eCombinedImageSampler, &imageInfo, nullptr, nullptr);
 		}
 		if (paletteImageView)
 		{
@@ -116,18 +126,18 @@ public:
 			vk::Sampler palSampler = samplerManager->GetSampler(palTsp);
 			static vk::DescriptorImageInfo imageInfo;
 			imageInfo = { palSampler, paletteImageView, vk::ImageLayout::eShaderReadOnlyOptimal };
-			writeDescriptorSets.push_back(vk::WriteDescriptorSet(*perFrameDescSet, 6, 0, 1, vk::DescriptorType::eCombinedImageSampler, &imageInfo, nullptr, nullptr));
+			writeDescriptorSets.emplace_back(perFrameDescSet, 6, 0, 1, vk::DescriptorType::eCombinedImageSampler, &imageInfo, nullptr, nullptr);
 		}
 		if (polyParamsSize > 0)
 		{
 			static vk::DescriptorBufferInfo polyParamsBufferInfo;
 			polyParamsBufferInfo = vk::DescriptorBufferInfo(buffer, polyParamsOffset, polyParamsSize);
-			writeDescriptorSets.push_back(vk::WriteDescriptorSet(*perFrameDescSet, 3, 0, 1, vk::DescriptorType::eStorageBuffer, nullptr, &polyParamsBufferInfo, nullptr));
+			writeDescriptorSets.emplace_back(perFrameDescSet, 3, 0, 1, vk::DescriptorType::eStorageBuffer, nullptr, &polyParamsBufferInfo, nullptr);
 		}
 		vk::DescriptorImageInfo stencilImageInfo(vk::Sampler(), stencilImageView, vk::ImageLayout::eDepthStencilReadOnlyOptimal);
-		writeDescriptorSets.push_back(vk::WriteDescriptorSet(*perFrameDescSet, 4, 0, 1, vk::DescriptorType::eInputAttachment, &stencilImageInfo, nullptr, nullptr));
+		writeDescriptorSets.emplace_back(perFrameDescSet, 4, 0, 1, vk::DescriptorType::eInputAttachment, &stencilImageInfo, nullptr, nullptr);
 		vk::DescriptorImageInfo depthImageInfo(vk::Sampler(), depthImageView, vk::ImageLayout::eDepthStencilReadOnlyOptimal);
-		writeDescriptorSets.push_back(vk::WriteDescriptorSet(*perFrameDescSet, 5, 0, 1, vk::DescriptorType::eInputAttachment, &depthImageInfo, nullptr, nullptr));
+		writeDescriptorSets.emplace_back(perFrameDescSet, 5, 0, 1, vk::DescriptorType::eInputAttachment, &depthImageInfo, nullptr, nullptr);
 
 		GetContext()->GetDevice().updateDescriptorSets(writeDescriptorSets, nullptr);
 	}
@@ -135,13 +145,14 @@ public:
 	void UpdateColorInputDescSet(int index, vk::ImageView colorImageView)
 	{
 		if (!colorInputDescSets[index])
+		{
 			colorInputDescSets[index] = std::move(GetContext()->GetDevice().allocateDescriptorSetsUnique(
 					vk::DescriptorSetAllocateInfo(GetContext()->GetDescriptorPool(), 1, &colorInputLayout)).front());
-		std::vector<vk::WriteDescriptorSet> writeDescriptorSets;
+		}
 		vk::DescriptorImageInfo colorImageInfo(vk::Sampler(), colorImageView, vk::ImageLayout::eShaderReadOnlyOptimal);
-		writeDescriptorSets.push_back(vk::WriteDescriptorSet(*colorInputDescSets[index], 0, 0, 1, vk::DescriptorType::eInputAttachment, &colorImageInfo, nullptr, nullptr));
+		vk::WriteDescriptorSet writeDescriptorSet(*colorInputDescSets[index], 0, 0, 1, vk::DescriptorType::eInputAttachment, &colorImageInfo, nullptr, nullptr);
 
-		GetContext()->GetDevice().updateDescriptorSets(writeDescriptorSets, nullptr);
+		GetContext()->GetDevice().updateDescriptorSets(1, &writeDescriptorSet, 0, nullptr);
 	}
 
 	void SetTexture(u64 textureId0, TSP tsp0, u64 textureId1, TSP tsp1)
@@ -161,14 +172,14 @@ public:
 		vk::DescriptorImageInfo imageInfo0(samplerManager->GetSampler(tsp0), texture->GetReadOnlyImageView(), vk::ImageLayout::eShaderReadOnlyOptimal);
 
 		std::vector<vk::WriteDescriptorSet> writeDescriptorSets;
-		writeDescriptorSets.push_back(vk::WriteDescriptorSet(*perPolyDescSets.back(), 0, 0, 1, vk::DescriptorType::eCombinedImageSampler, &imageInfo0, nullptr, nullptr));
+		writeDescriptorSets.emplace_back(*perPolyDescSets.back(), 0, 0, 1, vk::DescriptorType::eCombinedImageSampler, &imageInfo0, nullptr, nullptr);
 
 		if (textureId1 != (u64)-1)
 		{
 			Texture *texture1 = reinterpret_cast<Texture *>(textureId1);
 			vk::DescriptorImageInfo imageInfo1(samplerManager->GetSampler(tsp1), texture1->GetReadOnlyImageView(), vk::ImageLayout::eShaderReadOnlyOptimal);
 
-			writeDescriptorSets.push_back(vk::WriteDescriptorSet(*perPolyDescSets.back(), 1, 0, 1, vk::DescriptorType::eCombinedImageSampler, &imageInfo1, nullptr, nullptr));
+			writeDescriptorSets.emplace_back(*perPolyDescSets.back(), 1, 0, 1, vk::DescriptorType::eCombinedImageSampler, &imageInfo1, nullptr, nullptr);
 		}
 		GetContext()->GetDevice().updateDescriptorSets(writeDescriptorSets, nullptr);
 		perPolyDescSetsInFlight[index] = std::move(perPolyDescSets.back());
@@ -177,7 +188,7 @@ public:
 
 	void BindPerFrameDescriptorSets(vk::CommandBuffer cmdBuffer)
 	{
-		cmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, 1, &perFrameDescSet.get(), 0, nullptr);
+		cmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, 1, &perFrameDescSetsInFlight.back().get(), 0, nullptr);
 	}
 
 	void BindColorInputDescSet(vk::CommandBuffer cmdBuffer, int index)
@@ -197,7 +208,9 @@ public:
 		for (auto& pair : perPolyDescSetsInFlight)
 			perPolyDescSets.emplace_back(std::move(pair.second));
 		perPolyDescSetsInFlight.clear();
-
+		for (auto& descset : perFrameDescSetsInFlight)
+			perFrameDescSets.emplace_back(std::move(descset));
+		perFrameDescSetsInFlight.clear();
 	}
 
 private:
@@ -208,7 +221,8 @@ private:
 	vk::DescriptorSetLayout colorInputLayout;
 	vk::PipelineLayout pipelineLayout;
 
-	vk::UniqueDescriptorSet perFrameDescSet;
+	std::vector<vk::UniqueDescriptorSet> perFrameDescSets;
+	std::vector<vk::UniqueDescriptorSet> perFrameDescSetsInFlight;
 	std::array<vk::UniqueDescriptorSet, 2> colorInputDescSets;
 	std::vector<vk::UniqueDescriptorSet> perPolyDescSets;
 	std::map<std::tuple<u64, u32, u64, u32>, vk::UniqueDescriptorSet> perPolyDescSetsInFlight;
@@ -331,8 +345,9 @@ private:
 		}
 		else
 		{
-			hash |= (pp->tsp.ShadInstr << 7) | (pp->tsp.IgnoreTexA << 9) | (pp->tsp.UseAlpha << 10)
-				| (pp->tsp.ColorClamp << 11) | ((settings.rend.Fog ? pp->tsp.FogCtrl : 2) << 12)
+			bool ignoreTexAlpha = pp->tsp.IgnoreTexA || pp->tcw.PixelFmt == Pixel565;
+			hash |= (pp->tsp.ShadInstr << 7) | (ignoreTexAlpha << 9) | (pp->tsp.UseAlpha << 10)
+				| (pp->tsp.ColorClamp << 11) | ((config::Fog ? pp->tsp.FogCtrl : 2) << 12)
 				| (pp->tsp.SrcInstr << 14) | (pp->tsp.DstInstr << 17);
 		}
 		hash |= (pp->isp.ZWriteDis << 20) | (pp->isp.CullMode << 21) | ((autosort ? 6 : pp->isp.DepthMode) << 23);
@@ -406,12 +421,12 @@ public:
 		this->oitBuffers = oitBuffers;
 		OITPipelineManager::Init(shaderManager, oitBuffers);
 
-		renderToTextureBuffer = settings.rend.RenderToTextureBuffer;
+		renderToTextureBuffer = config::RenderToTextureBuffer;
 		rttRenderPasses.Reset();
 	}
 	void CheckSettingsChange()
 	{
-		if (renderToTextureBuffer != settings.rend.RenderToTextureBuffer)
+		if (renderToTextureBuffer != config::RenderToTextureBuffer)
 		{
 			Init(shaderManager, oitBuffers);
 		}

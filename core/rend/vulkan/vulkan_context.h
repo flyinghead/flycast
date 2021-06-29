@@ -19,21 +19,28 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #pragma once
-#ifdef USE_VULKAN
 
+#ifdef USE_VULKAN
+#include <stdexcept>
 #include "vulkan.h"
 #include "vmallocator.h"
 #include "quad.h"
 #include "rend/TexCache.h"
-#include "vmu.h"
+#include "overlay.h"
 
 extern int screen_width, screen_height;
 
+struct ImDrawData;
+void ImGui_ImplVulkan_RenderDrawData(ImDrawData *draw_data);
+
 #define VENDOR_AMD 0x1022
+// AMD GPU products use the ATI vendor Id
+#define VENDOR_ATI 0x1002
 #define VENDOR_ARM 0x13B5
 #define VENDOR_INTEL 0x8086
 #define VENDOR_NVIDIA 0x10DE
 #define VENDOR_QUALCOMM 0x5143
+#define VENDOR_MESA 0x10005
 
 class VulkanContext
 {
@@ -42,20 +49,18 @@ public:
 	~VulkanContext() { verify(contextInstance == this); contextInstance = nullptr; }
 
 	bool Init();
-	bool InitInstance(const char** extensions, uint32_t extensions_count);
-	bool InitDevice();
-	void CreateSwapChain();
 	void Term();
 	void SetWindow(void *window, void *display) { this->window = window; this->display = display; }
 
 	VkInstance GetInstance() const { return static_cast<VkInstance>(instance.get()); }
 	u32 GetGraphicsQueueFamilyIndex() const { return graphicsQueueIndex; }
-	void SetWindowSize(u32 width, u32 height) { this->width = screen_width = width; this->height = screen_height = height; }
+	void SetResized() { resized = true; }
+	bool IsValid() { return width != 0 && height != 0; }
 	void NewFrame();
 	void BeginRenderPass();
-	void EndFrame(const std::vector<vk::UniqueCommandBuffer> *cmdBuffers = nullptr);
-	void Present();
-	void PresentFrame(vk::ImageView imageView, vk::Offset2D extent);
+	void EndFrame(vk::CommandBuffer cmdBuffer = vk::CommandBuffer());
+	void Present() noexcept;
+	void PresentFrame(vk::ImageView imageView, const vk::Extent2D& extent) noexcept;
 	void PresentLastFrame();
 
 	vk::PhysicalDevice GetPhysicalDevice() const { return physicalDevice; }
@@ -64,10 +69,10 @@ public:
 	vk::RenderPass GetRenderPass() const { return *renderPass; }
 	vk::CommandBuffer GetCurrentCommandBuffer() const { return *commandBuffers[GetCurrentImageIndex()]; }
 	vk::DescriptorPool GetDescriptorPool() const { return *descriptorPool; }
-	vk::Extent2D GetViewPort() const { return { width, height }; }
+	vk::Extent2D GetViewPort() const { return { (u32)screen_width, (u32)screen_height }; }
 	size_t GetSwapChainSize() const { return imageViews.size(); }
 	int GetCurrentImageIndex() const { return currentImage; }
-	void WaitIdle() const { graphicsQueue.waitIdle(); }
+	void WaitIdle() const;
 	bool IsRendering() const { return rendering; }
 	vk::Queue GetGraphicsQueue() const { return graphicsQueue; }
 	vk::DeviceSize GetUniformBufferAlignment() const { return uniformBufferAlignment; }
@@ -86,15 +91,8 @@ public:
 			return true;
 		}
 	}
-	std::string GetDriverName() const { vk::PhysicalDeviceProperties props; physicalDevice.getProperties(&props); return std::string(props.deviceName); }
-	std::string GetDriverVersion() const {
-		vk::PhysicalDeviceProperties props;
-		physicalDevice.getProperties(&props);
-
-		return std::to_string(VK_VERSION_MAJOR(props.driverVersion))
-			+ "." + std::to_string(VK_VERSION_MINOR(props.driverVersion))
-			+ "." + std::to_string(VK_VERSION_PATCH(props.driverVersion));
-	}
+	std::string GetDriverName() const;
+	std::string GetDriverVersion() const;
 	vk::Format GetColorFormat() const { return colorFormat; }
 	vk::Format GetDepthFormat() const { return depthFormat; }
 	static VulkanContext *Instance() { return contextInstance; }
@@ -106,45 +104,33 @@ public:
 	u32 GetMaxStorageBufferRange() const { return maxStorageBufferRange; }
 	vk::DeviceSize GetMaxMemoryAllocationSize() const { return maxMemoryAllocationSize; }
 	u32 GetVendorID() const { return vendorID; }
-	const std::vector<vk::UniqueCommandBuffer> *PrepareVMUs();
-	void DrawVMUs(float scaling);
+	vk::CommandBuffer PrepareOverlay(bool vmu, bool crosshair);
+	void DrawOverlay(float scaling, bool vmu, bool crosshair);
+
+#ifdef VK_DEBUG
+	void setObjectName(u64 object, VkDebugReportObjectTypeEXT objectType, const std::string& name)
+	{
+		VkDebugMarkerObjectNameInfoEXT nameInfo = {};
+		nameInfo.sType = VK_STRUCTURE_TYPE_DEBUG_MARKER_OBJECT_NAME_INFO_EXT;
+		nameInfo.objectType = objectType;
+		nameInfo.object = object;
+		nameInfo.pObjectName = name.c_str();
+		vkDebugMarkerSetObjectNameEXT((VkDevice)*device, &nameInfo);
+	}
+#endif
 
 private:
+	void CreateSwapChain();
+	bool InitDevice();
+	bool InitInstance(const char** extensions, uint32_t extensions_count);
 	vk::Format FindDepthFormat();
 	void InitImgui();
 	void DoSwapAutomation();
-	void DrawFrame(vk::ImageView imageView, vk::Offset2D extent);
-	vk::SurfaceKHR GetSurface() {
-#ifdef USE_SDL
-		return surface;
-#else
-		return *surface;
-#endif
-	}
+	void DrawFrame(vk::ImageView imageView, const vk::Extent2D& extent);
+	vk::SurfaceKHR GetSurface() const { return *surface; }
 
-	bool HasSurfaceDimensionChanged()
-	{
-		vk::SurfaceCapabilitiesKHR surfaceCapabilities = physicalDevice.getSurfaceCapabilitiesKHR(GetSurface());
-		VkExtent2D swapchainExtent;
-		if (surfaceCapabilities.currentExtent.width == std::numeric_limits<uint32_t>::max())
-		{
-			// If the surface size is undefined, the size is set to the size of the images requested.
-			swapchainExtent.width = std::min(std::max(width, surfaceCapabilities.minImageExtent.width), surfaceCapabilities.maxImageExtent.width);
-			swapchainExtent.height = std::min(std::max(height, surfaceCapabilities.minImageExtent.height), surfaceCapabilities.maxImageExtent.height);
-		}
-		else
-		{
-			// If the surface size is defined, the swap chain size must match
-			swapchainExtent = surfaceCapabilities.currentExtent;
-		}
-		if (width == swapchainExtent.width && height == swapchainExtent.height)
-			return false;
-
-		screen_width = width = swapchainExtent.width;
-		screen_height = height = swapchainExtent.height;
-
-		return true;
-	}
+	bool HasSurfaceDimensionChanged() const;
+	void SetWindowSize(u32 width, u32 height);
 
 	VMAllocator allocator;
 	void *window = nullptr;
@@ -153,6 +139,12 @@ private:
 	bool renderDone = false;
 	u32 width = 0;
 	u32 height = 0;
+	bool resized = false;
+#ifndef TEST_AUTOMATION
+	bool swapOnVSync = true;
+#else
+	bool swapOnVSync = false;
+#endif
 	vk::UniqueInstance instance;
 	vk::PhysicalDevice physicalDevice;
 
@@ -172,11 +164,7 @@ private:
 	u32 vendorID = 0;
 	vk::UniqueDevice device;
 
-#ifdef USE_SDL
-	vk::SurfaceKHR surface;
-#else
 	vk::UniqueSurfaceKHR surface;
-#endif
 
 	vk::UniqueSwapchainKHR swapChain;
 	std::vector<vk::UniqueImageView> imageViews;
@@ -204,13 +192,15 @@ private:
 	vk::UniquePipelineCache pipelineCache;
 
 	std::unique_ptr<QuadPipeline> quadPipeline;
+	std::unique_ptr<QuadPipeline> quadRotatePipeline;
 	std::unique_ptr<QuadDrawer> quadDrawer;
+	std::unique_ptr<QuadDrawer> quadRotateDrawer;
 	std::unique_ptr<ShaderManager> shaderManager;
 
 	vk::ImageView lastFrameView;
-	vk::Offset2D lastFrameExtent;
+	vk::Extent2D lastFrameExtent;
 
-	std::unique_ptr<VulkanVMUs> vmus;
+	std::unique_ptr<VulkanOverlay> overlay;
 
 #ifdef VK_DEBUG
 #ifndef __ANDROID__
@@ -220,6 +210,11 @@ private:
 #endif
 #endif
 	static VulkanContext *contextInstance;
+};
+
+class InvalidVulkanContext : public std::runtime_error {
+public:
+	InvalidVulkanContext() : std::runtime_error("Invalid Vulkan context") {}
 };
 
 #endif // USE_VULKAN

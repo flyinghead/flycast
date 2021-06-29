@@ -35,7 +35,6 @@ public:
 	void closeNetwork();
 
 private:
-	void initNetwork();
 	void connectNetwork();
 	void receiveNetwork();
 	void sendNetwork();

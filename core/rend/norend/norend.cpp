@@ -2,9 +2,6 @@
 #include "hw/pvr/ta_structs.h"
 #include "hw/pvr/Renderer_if.h"
 
-void rend_set_fb_scale(float x,float y) { }
-void rend_text_invl(vram_block* bl) { }
-
 struct norend : Renderer
 {
 	bool Init()
@@ -24,8 +21,6 @@ struct norend : Renderer
 	{
 		return !pvrrc.isRTT;
 	}
-
-	void Present() { }
 };
 
 

@@ -11,7 +11,7 @@ void map_p4();
 #define OnChipRAM_SIZE (0x2000)
 #define OnChipRAM_MASK (OnChipRAM_SIZE-1)
 
-#define sq_both ((u8*)sh4rcb.sq_buffer)
+#define sq_both (sh4rcb.sq_buffer)
 
 extern std::array<RegisterStruct, 18> CCN;
 extern std::array<RegisterStruct, 9> UBC;
@@ -29,9 +29,7 @@ void sh4_mmr_reset(bool hard);
 void sh4_mmr_term();
 
 template<typename T>
-void sh4_rio_reg(T& arr, u32 addr, RegIO flags, u32 sz, RegReadAddrFP* rp=0, RegWriteAddrFP* wp=0);
-
-#define A7_REG_HASH(addr) (((addr) >> 16) & 0x1FFF)
+void sh4_rio_reg(T& arr, u32 addr, RegIO flags, u32 sz, RegReadAddrFP* rf=0, RegWriteAddrFP* wf=0);
 
 #define SH4IO_REGN(mod, addr, size) ((mod)[((addr) & 255) / 4].data##size)
 #define SH4IO_REG(mod, name, size) SH4IO_REGN(mod, mod##_##name##_addr, size)
@@ -1115,9 +1113,8 @@ union CCN_QACR_type
 #define CCN_INTEVT SH4IO_REG(CCN,INTEVT,32)
 #define CCN_PTEA SH4IO_REG_T(CCN,PTEA,32)
 
-#define CCN_QACR0 SH4IO_REG_T(CCN,QACR0,32)
-#define CCN_QACR1 SH4IO_REG_T(CCN,QACR1,32)
-
+#define CCN_QACR0 ((CCN_QACR_type&)SH4IO_REG(CCN, QACR0, 32))
+#define CCN_QACR1 ((CCN_QACR_type&)SH4IO_REG(CCN, QACR1, 32))
 
 #define CPG_FRQCR SH4IO_REG(CPG,FRQCR,16)
 #define CPG_STBCR SH4IO_REG(CPG,STBCR,8)
@@ -1499,3 +1496,11 @@ union INTC_IPRC_type
 #define INTC_IPRA SH4IO_REG_T(INTC,IPRA,16)
 #define INTC_IPRB SH4IO_REG_T(INTC,IPRB,16)
 #define INTC_IPRC SH4IO_REG_T(INTC,IPRC,16)
+
+#define SCI_SCSMR1 SH4IO_REG(SCI, SCSMR1, 8)
+#define SCI_SCBRR1 SH4IO_REG(SCI, SCBRR1, 8)
+#define SCI_SCSCR1 SH4IO_REG(SCI, SCSCR1, 8)
+#define SCI_SCTDR1 SH4IO_REG(SCI, SCTDR1, 8)
+#define SCI_SCSSR1 SH4IO_REG(SCI, SCSSR1, 8)
+#define SCI_SCRDR1 SH4IO_REG(SCI, SCRDR1, 8)
+#define SCI_SCSPTR1 SH4IO_REG(SCI, SCSPTR1, 8)

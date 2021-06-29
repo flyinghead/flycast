@@ -184,6 +184,7 @@ void main()
 			#if cp_AlphaTest == 1
 				if (uniformBuffer.cp_AlphaTestValue > texcol.a)
 					discard;
+				texcol.a = 1.0;
 			#endif 
 		#endif
 		#if pp_ShadInstr == 0
@@ -233,9 +234,6 @@ void main()
 	color *= pushConstants.trilinearAlpha;
 	#endif
 	
-	#if cp_AlphaTest == 1
-		color.a = 1.0;
-	#endif 
 	//color.rgb = vec3(gl_FragCoord.w * uniformBuffer.sp_FOG_DENSITY / 128.0);
 
 	float w = gl_FragCoord.w * 100000.0;
@@ -290,6 +288,8 @@ void main()
 
 static const char QuadVertexShaderSource[] = R"(#version 450
 
+#define ROTATE %d
+
 layout (location = 0) in vec3 in_pos;
 layout (location = 1) in vec2 in_uv;
 
@@ -297,20 +297,30 @@ layout (location = 0) out vec2 outUV;
 
 void main()
 {
+#if ROTATE == 0
 	gl_Position = vec4(in_pos, 1.0);
+#else
+	gl_Position = vec4(in_pos.y, -in_pos.x, in_pos.z, 1.0);
+#endif
 	outUV = in_uv;
 }
 )";
 
 static const char QuadFragmentShaderSource[] = R"(#version 450 
 
-layout (binding = 0) uniform sampler2D tex;
+layout (set = 0, binding = 0) uniform sampler2D tex;
+
+layout (push_constant) uniform pushBlock
+{
+	vec4 color;
+} pushConstants;
+
 layout (location = 0) in vec2 inUV;
 layout (location = 0) out vec4 FragColor;
 
 void main() 
 {
-	FragColor = texture(tex, inUV);
+	FragColor = pushConstants.color * texture(tex, inUV);
 }
 )";
 
@@ -371,9 +381,12 @@ vk::UniqueShaderModule ShaderManager::compileModVolFragmentShader()
 	return ShaderCompiler::Compile(vk::ShaderStageFlagBits::eFragment, ModVolFragmentShaderSource);
 }
 
-vk::UniqueShaderModule ShaderManager::compileQuadVertexShader()
+vk::UniqueShaderModule ShaderManager::compileQuadVertexShader(bool rotate)
 {
-	return ShaderCompiler::Compile(vk::ShaderStageFlagBits::eVertex, QuadVertexShaderSource);
+	char buf[sizeof(QuadVertexShaderSource) * 2];
+
+	sprintf(buf, QuadVertexShaderSource, (int)rotate);
+	return ShaderCompiler::Compile(vk::ShaderStageFlagBits::eVertex, buf);
 }
 
 vk::UniqueShaderModule ShaderManager::compileQuadFragmentShader()

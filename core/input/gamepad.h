@@ -35,10 +35,10 @@ enum DreamcastKey
 	DC_DPAD2_DOWN      = 1 << 13,
 	DC_DPAD2_LEFT      = 1 << 14,
 	DC_DPAD2_RIGHT     = 1 << 15,
+	DC_BTN_RELOAD      = 1 << 16,	// Not a real button but handled like one
 
 	// System buttons
 	EMU_BTN_NONE			= 0,
-	EMU_BTN_ESCAPE			= 1 << 16,
 	EMU_BTN_TRIGGER_LEFT	= 1 << 17,
 	EMU_BTN_TRIGGER_RIGHT	= 1 << 18,
 	EMU_BTN_MENU			= 1 << 19,
@@ -47,6 +47,7 @@ enum DreamcastKey
 	EMU_BTN_ANA_DOWN		= 1 << 22,
 	EMU_BTN_ANA_LEFT		= 1 << 23,
 	EMU_BTN_ANA_RIGHT		= 1 << 24,
+	EMU_BTN_ESCAPE			= 1 << 25,
 
 	// Real axes
 	DC_AXIS_LT		 = 0x10000,

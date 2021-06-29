@@ -7,7 +7,6 @@ double os_GetSeconds();
 void os_DoEvents();
 void os_CreateWindow();
 void os_SetupInput();
-void WriteSample(s16 right, s16 left);
 
 #ifdef _MSC_VER
 #include <intrin.h>
@@ -23,5 +22,3 @@ u32 static INLINE bitscanrev(u32 v)
 	return rv;
 #endif
 }
-
-void os_DebugBreak();

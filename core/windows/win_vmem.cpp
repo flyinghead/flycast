@@ -65,14 +65,14 @@ static std::vector<void *> mapped_regions;
 // Implement vmem initialization for RAM, ARAM, VRAM and SH4 context, fpcb etc.
 // The function supports allocating 512MB or 4GB addr spaces.
 
-// Plase read the POSIX implementation for more information. On Windows this is
+// Please read the POSIX implementation for more information. On Windows this is
 // rather straightforward.
 VMemType vmem_platform_init(void **vmem_base_addr, void **sh4rcb_addr)
 {
 	unmapped_regions.reserve(32);
 	mapped_regions.reserve(32);
 
-	// Firt let's try to allocate the in-memory file
+	// First let's try to allocate the in-memory file
 	mem_handle = CreateFileMapping(INVALID_HANDLE_VALUE, 0, PAGE_READWRITE, 0, RAM_SIZE_MAX + VRAM_SIZE_MAX + ARAM_SIZE_MAX, 0);
 
 	// Now allocate the actual address space (it will be 64KB aligned on windows).
@@ -158,7 +158,7 @@ void vmem_platform_create_mappings(const vmem_mapping *vmem_maps, unsigned numma
 
 typedef void* (*mapper_fn) (void *addr, unsigned size);
 
-// This is a tempalted function since it's used twice
+// This is a templated function since it's used twice
 static void* vmem_platform_prepare_jit_block_template(void *code_area, unsigned size, mapper_fn mapper) {
 	// Several issues on Windows: can't protect arbitrary pages due to (I guess) the way
 	// kernel tracks mappings, so only stuff that has been allocated with VirtualAlloc can be

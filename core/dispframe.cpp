@@ -24,7 +24,8 @@ void *dc_run(void*)
     rend_set_fb_scale(1.0, 1.0);
 
     char frame_path[512];
-    cfgLoadStr("config", "image", frame_path, "null");
+    std::string s = cfgLoadStr("config", "image", "null");
+    strcpy(frame_path, s.c_str());
 
     printf("Loading %s\n", frame_path);
 
@@ -47,11 +48,7 @@ void *dc_run(void*)
 			frame_finished.Wait();
 		if (QueueRender(ctx))  {
 			palette_update();
-#if !defined(TARGET_NO_THREADS)
 			rs.Set();
-#else
-			rend_single_frame();
-#endif
 		}
 		else
 			SetREP(NULL);	// Sched end of render interrupt

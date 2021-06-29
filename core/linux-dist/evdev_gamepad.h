@@ -37,7 +37,7 @@ class EvdevGamepadDevice : public GamepadDevice
 {
 public:
 	EvdevGamepadDevice(int maple_port, const char *devnode, int fd, const char *mapping_file = NULL)
-	: GamepadDevice(maple_port, "evdev"), _fd(fd), _rumble_effect_id(-1), _devnode(devnode)
+	: GamepadDevice(maple_port, "evdev"), _fd(fd), _devnode(devnode), _rumble_effect_id(-1)
 	{
 		fcntl(fd, F_SETFL, O_NONBLOCK);
 		char buf[256] = "Unknown";
@@ -56,8 +56,6 @@ public:
 		{
 #if defined(TARGET_PANDORA)
 			mapping_file = "controller_pandora.cfg";
-#elif defined(TARGET_GCW0)
-			mapping_file = "controller_gcwz.cfg";
 #else
 			if (_name == "Microsoft X-Box 360 pad"
 				|| _name == "Xbox 360 Wireless Receiver"
@@ -92,20 +90,20 @@ public:
 		else
 			INFO_LOG(INPUT, "using custom mapping '%s'", input_mapper->name.c_str());
 	}
-	virtual ~EvdevGamepadDevice() override
+	~EvdevGamepadDevice() override
 	{
 		INFO_LOG(INPUT, "evdev: Device '%s' on port %d disconnected", _name.c_str(), maple_port());
 		close(_fd);
 	}
 
-	virtual void rumble(float power, float inclination, u32 duration_ms) override
+	void rumble(float power, float inclination, u32 duration_ms) override
 	{
 		vib_inclination = inclination * power;
 		vib_stop_time = os_GetSeconds() + duration_ms / 1000.0;
 
 		do_rumble(power, duration_ms);
 	}
-	virtual void update_rumble() override
+	void update_rumble() override
 	{
 		if (vib_inclination > 0)
 		{
@@ -114,6 +112,73 @@ public:
 				vib_inclination = 0;
 			else
 				do_rumble(vib_inclination * rem_time, rem_time);
+		}
+	}
+
+	const char *get_button_name(u32 code) override
+	{
+		switch (code)
+		{
+		case BTN_START:
+			return "Start";
+		case BTN_SELECT:
+			return "Select";
+		case BTN_MODE:
+			return "Mode";
+		case BTN_NORTH:
+			return "North";
+		case BTN_SOUTH:
+			return "South";
+		case BTN_EAST:
+			return "East";
+		case BTN_WEST:
+			return "West";
+		case BTN_C:
+			return "C";
+		case BTN_Z:
+			return "Z";
+		case BTN_DPAD_UP:
+			return "DPad Up";
+		case BTN_DPAD_DOWN:
+			return "DPad Down";
+		case BTN_DPAD_LEFT:
+			return "DPad Left";
+		case BTN_DPAD_RIGHT:
+			return "DPad Right";
+		case BTN_TL:
+			return "Trigger L";
+		case BTN_TR:
+			return "Trigger R";
+		case BTN_TL2:
+			return "Trigger L2";
+		case BTN_TR2:
+			return "Trigger R2";
+		case BTN_THUMBL:
+			return "Thumb L";
+		case BTN_THUMBR:
+			return "Thumb R";
+		default:
+			return nullptr;
+		}
+	}
+	const char *get_axis_name(u32 code) override
+	{
+		switch (code)
+		{
+		case ABS_X:
+			return "Abs X";
+		case ABS_Y:
+			return "Abs Y";
+		case ABS_Z:
+			return "Abs Z";
+		case ABS_RX:
+			return "Abs RX";
+		case ABS_RY:
+			return "Abs RY";
+		case ABS_RZ:
+			return "Abs RZ";
+		default:
+			return nullptr;
 		}
 	}
 
@@ -157,7 +222,7 @@ public:
 	}
 
 protected:
-	virtual void load_axis_min_max(u32 axis) override
+	void load_axis_min_max(u32 axis) override
 	{
 		struct input_absinfo abs;
 		if (ioctl(_fd, EVIOCGABS(axis), &abs))

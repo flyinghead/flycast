@@ -17,6 +17,10 @@ if /i "%1"=="Y" (
 	set OPT2=-DUSE_YASM -DXBYAK64
 	set OPT3=win64
 	set FILTER=normalize_prefix
+) else if /i "%1"=="noexcept" (
+	set EXE=nasm.exe
+	set OPT2=-DXBYAK32 -DXBYAK_NO_EXCEPTION
+	set OPT3=win32
 ) else (
 	set EXE=nasm.exe
 	set OPT2=-DXBYAK32

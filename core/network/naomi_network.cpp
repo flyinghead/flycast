@@ -27,9 +27,14 @@
 #include "rend/gui.h"
 #include "hw/naomi/naomi_cart.h"
 #include "hw/naomi/naomi_flashrom.h"
+#include "cfg/option.h"
 
 #ifdef _MSC_VER
-typedef int ssize_t;
+#if defined(_WIN64)
+typedef __int64 ssize_t;
+#else
+typedef long ssize_t;
+#endif
 #endif
 
 NaomiNetwork naomiNetwork;
@@ -63,7 +68,7 @@ sock_t NaomiNetwork::createAndBind(int protocol)
 
 bool NaomiNetwork::init()
 {
-	if (!settings.network.Enable)
+	if (!config::NetworkEnable)
 		return false;
 #ifdef _WIN32
 	WSADATA wsaData;
@@ -73,8 +78,12 @@ bool NaomiNetwork::init()
 		return false;
 	}
 #endif
-	if (settings.network.ActAsServer)
+	if (config::ActAsServer)
+	{
+		miniupnp.Init();
+		miniupnp.AddPortMapping(SERVER_PORT, true);
 		return createBeaconSocket() && createServerSocket();
+	}
 	else
 		return true;
 }
@@ -215,7 +224,7 @@ bool NaomiNetwork::startNetwork()
 	using namespace std::chrono;
 	const auto timeout = seconds(20);
 
-	if (settings.network.ActAsServer)
+	if (config::ActAsServer)
 	{
 		NOTICE_LOG(NETWORK, "Waiting for slave connections");
 		steady_clock::time_point start_time = steady_clock::now();
@@ -330,11 +339,11 @@ bool NaomiNetwork::startNetwork()
 	}
 	else
 	{
-		if (!settings.network.server.empty())
+		if (!config::NetworkServer.get().empty())
 		{
 			struct addrinfo *resultAddr;
-			if (getaddrinfo(settings.network.server.c_str(), 0, nullptr, &resultAddr))
-				WARN_LOG(NETWORK, "Server %s is unknown", settings.network.server.c_str());
+			if (getaddrinfo(config::NetworkServer.get().c_str(), 0, nullptr, &resultAddr))
+				WARN_LOG(NETWORK, "Server %s is unknown", config::NetworkServer.get().c_str());
 			else
 				for (struct addrinfo *ptr = resultAddr; ptr != nullptr; ptr = ptr->ai_next)
 					if (ptr->ai_family == AF_INET)
@@ -400,7 +409,7 @@ bool NaomiNetwork::syncNetwork()
 	using namespace std::chrono;
 	const auto timeout = seconds(10);
 
-	if (settings.network.ActAsServer)
+	if (config::ActAsServer)
 	{
 		steady_clock::time_point start_time = steady_clock::now();
 
@@ -614,6 +623,8 @@ void NaomiNetwork::shutdown()
 void NaomiNetwork::terminate()
 {
 	shutdown();
+	if (config::ActAsServer)
+		miniupnp.Term();
 	if (VALID(beacon_sock))
 		closeSocket(beacon_sock);
 	if (VALID(server_sock))
@@ -703,7 +714,7 @@ bool NaomiNetworkSupported()
 		"HEAVY METAL JAPAN", "OUTTRIGGER     JAPAN", "SLASHOUT JAPAN VERSION", "SPAWN JAPAN",
 		"SPIKERS BATTLE JAPAN VERSION", "VIRTUAL-ON ORATORIO TANGRAM", "WAVE RUNNER GP", "WORLD KICKS"
 	};
-	if (!settings.network.Enable)
+	if (!config::NetworkEnable)
 		return false;
 	for (auto game : games)
 		if (!strcmp(game, naomi_game_id))

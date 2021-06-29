@@ -92,6 +92,10 @@ void dsp_term();
 void dsp_step();
 void dsp_writenmem(u32 addr);
 
+void dsp_rec_init();
+void dsp_rec_step();
+void dsp_recompile();
+
 struct _INST
 {
 	u8 TRA;
@@ -123,6 +127,6 @@ struct _INST
 	bool NXADR; //MRQ set
 };
 
-void DecodeInst(u32 *IPtr,_INST *i);
+void DecodeInst(const u32 *IPtr, _INST *i);
 u16 DYNACALL PACK(s32 val);
 s32 DYNACALL UNPACK(u16 val);

@@ -25,7 +25,7 @@
 #else
 #include "hw/sh4/dyna/ssa_regalloc.h"
 #endif
-#include "deps/vixl/aarch64/macro-assembler-aarch64.h"
+#include <aarch64/macro-assembler-aarch64.h>
 using namespace vixl::aarch64;
 
 enum eReg {
@@ -42,11 +42,7 @@ static eFReg alloc_fregs[] = { S8, S9, S10, S11, S12, S13, S14, S15, (eFReg)-1 }
 
 class Arm64Assembler;
 
-struct Arm64RegAlloc : RegAlloc<eReg, eFReg
-#ifndef EXPLODE_SPANS
-											, false
-#endif
-													>
+struct Arm64RegAlloc : RegAlloc<eReg, eFReg>
 {
 	Arm64RegAlloc(Arm64Assembler *assembler) : assembler(assembler) {}
 
@@ -55,10 +51,10 @@ struct Arm64RegAlloc : RegAlloc<eReg, eFReg
 		RegAlloc::DoAlloc(block, alloc_regs, alloc_fregs);
 	}
 
-	virtual void Preload(u32 reg, eReg nreg) override;
-	virtual void Writeback(u32 reg, eReg nreg) override;
-	virtual void Preload_FPU(u32 reg, eFReg nreg) override;
-	virtual void Writeback_FPU(u32 reg, eFReg nreg) override;
+	void Preload(u32 reg, eReg nreg) override;
+	void Writeback(u32 reg, eReg nreg) override;
+	void Preload_FPU(u32 reg, eFReg nreg) override;
+	void Writeback_FPU(u32 reg, eFReg nreg) override;
 
 	const Register& MapRegister(const shil_param& param)
 	{
@@ -73,9 +69,6 @@ struct Arm64RegAlloc : RegAlloc<eReg, eFReg
 #ifdef OLD_REGALLOC
 		eFReg ereg = mapfv(param, index);
 #else
-#ifdef EXPLODE_SPANS
-#error EXPLODE_SPANS not supported with ssa regalloc
-#endif
 		verify(index == 0);
 		eFReg ereg = mapf(param);
 #endif

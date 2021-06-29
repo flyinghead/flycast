@@ -302,18 +302,9 @@ extern InterruptInfo* SCIRE;
 extern CommonData_struct* CommonData;
 extern DSPData_struct*	  DSPData;
 
-void UpdateAICA(u32 Cycles);
-
-void AICA_Init();
-void AICA_Term();
-
-//u32 ReadAicaReg(u32 reg);
-void WriteAicaReg8(u32 reg,u32 data);
-
 template<u32 sz>
 void WriteAicaReg(u32 reg,u32 data);
 
-////
 //Timers :)
 struct AicaTimerData
 {

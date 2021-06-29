@@ -1,10 +1,12 @@
-TARGET = test quantize bf toyvm test_util memfunc static_buf jmp_table
 XBYAK_INC=../xbyak/xbyak.h
 
 BOOST_EXIST=$(shell echo "\#include <boost/spirit/core.hpp>" | (gcc -E - 2>/dev/null) | grep "boost/spirit/core.hpp" >/dev/null && echo "1")
 UNAME_M=$(shell uname -m)
 
+ONLY_64BIT=0
 ifeq ($(shell uname -s),Darwin)
+	ONLY_64BIT=1
+	OS=mac
 	ifeq ($(UNAME_M),x86_64)
 		BIT=64
 	endif
@@ -27,19 +29,27 @@ else
 endif
 
 ifeq ($(BIT),64)
-TARGET += test64 bf64 memfunc64 test_util64 static_buf64 jmp_table64
+TARGET += test64 bf64 memfunc64 test_util64 jmp_table64
 ifeq ($(BOOST_EXIST),1)
 TARGET += calc64 #calc2_64
 endif
 endif
 
+ifneq ($(OS),mac)
+TARGET += static_buf64
+endif
+
+
+ifneq ($(ONLY_64BIT),1)
+	TARGET += test quantize bf toyvm test_util memfunc static_buf jmp_table
 ifeq ($(BOOST_EXIST),1)
-TARGET += calc #calc2
+	TARGET += calc #calc2
+endif
 endif
 
 all: $(TARGET)
 
-CFLAGS_WARN=-Wall -Wextra -Wformat=2 -Wcast-qual -Wcast-align -Wwrite-strings -Wfloat-equal -Wpointer-arith -pedantic
+CFLAGS_WARN=-Wall -Wextra -Wformat=2 -Wcast-qual -Wcast-align -Wwrite-strings -Wfloat-equal -Wpointer-arith #-pedantic
 
 CFLAGS=-g -O2 -fomit-frame-pointer -Wall -I../ $(CFLAGS_WARN)
 

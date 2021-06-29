@@ -131,11 +131,21 @@ LogManager::LogManager()
 	if (cfgLoadBool("log", "LogToFile", false))
 	{
 #ifdef __ANDROID__
-		std::string logPath = get_writable_data_path("/flycast.log");
+		std::string logPath = get_writable_data_path("flycast.log");
 #else
 		std::string logPath = "flycast.log";
 #endif
-		RegisterListener(LogListener::FILE_LISTENER, new FileLogListener(logPath));
+		FileLogListener *listener = new FileLogListener(logPath);
+		if (!listener->IsValid())
+		{
+			const char *home = nowide::getenv("HOME");
+			if (home != nullptr)
+			{
+				delete listener;
+				listener = new FileLogListener(home + ("/" + logPath));
+			}
+		}
+		RegisterListener(LogListener::FILE_LISTENER, listener);
 		EnableListener(LogListener::FILE_LISTENER, true);
 	}
 	EnableListener(LogListener::CONSOLE_LISTENER, cfgLoadBool("log", "LogToConsole", true));
@@ -208,7 +218,8 @@ void LogManager::SetEnable(LogTypes::LOG_TYPE type, bool enable)
 
 bool LogManager::IsEnabled(LogTypes::LOG_TYPE type, LogTypes::LOG_LEVELS level) const
 {
-	return m_log[type].m_enable && GetLogLevel() >= level;
+	return level <= LogTypes::LOG_LEVELS::LWARNING
+			|| (m_log[type].m_enable && GetLogLevel() >= level);
 }
 
 const char* LogManager::GetShortName(LogTypes::LOG_TYPE type) const

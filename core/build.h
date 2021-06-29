@@ -115,7 +115,6 @@
 
 */
 
-//#define NO_MMU
 //#define STRICT_MODE
 #ifndef STRICT_MODE
 #define FAST_MMU
@@ -130,20 +129,6 @@
 #define DC_PLATFORM_ATOMISWAVE  4   /* Works, for the most part */
 #define DC_PLATFORM_HIKARU      5   /* Needs to be done, 2xsh4, 2x aica , custom vpu */
 #define DC_PLATFORM_AURORA      6   /* Needs to be done, Uses newer 300 mhz sh4 + 150 mhz pvr mbx SoC */
-
-
-
-//HOST_OS
-#define OS_WINDOWS   0x10000001
-#define OS_LINUX     0x10000002
-#define OS_DARWIN    0x10000003
-#define OS_IOS       0x10000004
-#define OS_ANDROID   0x10000005
-
-#define OS_UWP       0x10000011
-#define OS_NSW_HOS   0x80000001
-#define OS_PS4_BSD   0x80000002
-
 
 //HOST_CPU
 #define CPU_X86      0x20000001
@@ -178,12 +163,6 @@
 	#define HOST_CPU CPU_GENERIC
 #endif
 
-#if defined(__APPLE__)
-	#define HOST_OS OS_DARWIN
-#elif defined(__unix__)
-	#define HOST_OS OS_LINUX
-#endif
-
 #if defined(TARGET_NO_REC)
 #define FEAT_SHREC DYNAREC_NONE
 #define FEAT_AREC DYNAREC_NONE
@@ -202,14 +181,6 @@
 #define FEAT_DSPREC DYNAREC_NONE
 #endif
 
-#if defined(TARGET_NO_NIXPROF)
-#define FEAT_HAS_NIXPROF 0
-#endif
-
-#if defined(TARGET_NO_COREIO_HTTP)
-#define FEAT_HAS_COREIO_HTTP 0
-#endif
-
 //defaults
 
 #ifndef FEAT_SHREC
@@ -221,7 +192,7 @@
 #endif
 
 #ifndef FEAT_AREC
-	#if HOST_CPU == CPU_ARM || HOST_CPU == CPU_ARM64
+	#if HOST_CPU == CPU_ARM || HOST_CPU == CPU_ARM64 || HOST_CPU == CPU_X64
 		#define FEAT_AREC DYNAREC_JIT
 	#else
 		#define FEAT_AREC DYNAREC_NONE
@@ -236,40 +207,7 @@
 	#endif
 #endif
 
-#ifndef FEAT_HAS_NIXPROF
-  #ifndef _WIN32
-    #define FEAT_HAS_NIXPROF 1
-  #endif
-#endif
-
-#ifndef FEAT_HAS_COREIO_HTTP
-	#define FEAT_HAS_COREIO_HTTP 1
-#endif
-
-#if HOST_CPU == CPU_X64 || HOST_CPU == CPU_ARM64
-#define HOST_64BIT_CPU
-#endif
-
-//Depricated build configs
-#ifdef HOST_NO_REC
-#error Dont use HOST_NO_REC
-#endif
-
-#ifdef HOST_NO_AREC
-#error Dont use HOST_NO_AREC
-#endif
-
-
-// Compiler Related
-
-#ifndef _MSC_VER
-#define ATTR_USED   __attribute__((used))
-#define ATTR_UNUSED __attribute__((used))
-#else
-#define ATTR_USED
-#define ATTR_UNUSED
-#endif
-
+#define USE_MINIUPNPC
 
 // Some restrictions on FEAT_NO_RWX_PAGES
 #if defined(FEAT_NO_RWX_PAGES) && FEAT_SHREC == DYNAREC_JIT
@@ -288,14 +226,14 @@
 #define GD_CLOCK 33868800				//GDROM XTAL -- 768fs
 
 #define AICA_CORE_CLOCK (GD_CLOCK*4/3)		//[45158400]  GD->PLL 3:4 -> AICA CORE	 -- 1024fs
-#define ADAC_CLOCK (AICA_CORE_CLOCK/2)		//[11289600]  44100*256, AICA CORE -> PLL 4:1 -> ADAC -- 256fs
+#define ADAC_CLOCK (AICA_CORE_CLOCK/4)		//[11289600]  44100*256, AICA CORE -> PLL 4:1 -> ADAC -- 256fs
 #define AICA_ARM_CLOCK (AICA_CORE_CLOCK/2)	//[22579200]  AICA CORE -> PLL 2:1 -> ARM
 #define AICA_SDRAM_CLOCK (GD_CLOCK*2)		//[67737600]  GD-> PLL 2 -> SDRAM
 #define SH4_MAIN_CLOCK (200*1000*1000)		//[200000000] XTal(13.5) -> PLL (33.3) -> PLL 1:6 (200)
 #define SH4_RAM_CLOCK (100*1000*1000)		//[100000000] XTal(13.5) -> PLL (33.3) -> PLL 1:3 (100)	, also suplied to HOLLY chip
 #define G2_BUS_CLOCK (25*1000*1000)			//[25000000]  from Holly, from SH4_RAM_CLOCK w/ 2 2:1 plls
 
-#if defined(GLES) && !defined(GLES3)
+#if defined(GLES) && !defined(GLES3) && !defined(GLES2)
 // Only use GL ES 2.0 API functions
 #define GLES2
 #endif

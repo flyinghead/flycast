@@ -1,14 +1,27 @@
 #pragma once
-
 #include "types.h"
-
-//there were at least 4 gdrom implementations, ZGDROM, HLE, gdromv1 (never worked), gdromv2 (first release)
-//i removed the #defines to select them as they are now redundant, so this just becomes a part of
-//the code's history :)
 
 void gdrom_reg_Init();
 void gdrom_reg_Term();
-void gdrom_reg_Reset(bool Manual);
+void gdrom_reg_Reset(bool hard);
 
 u32  ReadMem_gdrom(u32 Addr, u32 sz);
 void WriteMem_gdrom(u32 Addr, u32 data, u32 sz);
+void libCore_CDDA_Sector(s16* sector);
+void libCore_gdrom_disc_change();
+u32 gd_get_subcode(u32 format, u32 fad, u8 *subc_info);
+
+enum DiscType
+{
+	CdDA=0x00,
+	CdRom=0x10,
+	CdRom_XA=0x20,
+	CdRom_Extra=0x30,
+	CdRom_CDI=0x40,
+	GdRom=0x80,
+
+	NoDisk=0x1,			//These are a bit hacky .. but work for now ...
+	Open=0x2,			//tray is open :)
+	Busy=0x3			//busy -> needs to be automatically done by gdhost
+};
+

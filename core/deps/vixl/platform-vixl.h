@@ -32,6 +32,7 @@ extern "C" {
 #include <signal.h>
 }
 
+#define VIXL_INCLUDE_TARGET_A32
 #define VIXL_CODE_BUFFER_MALLOC
 //#define VIXL_DEBUG
 

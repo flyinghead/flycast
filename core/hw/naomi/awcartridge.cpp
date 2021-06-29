@@ -243,9 +243,9 @@ void AWCartridge::WriteMem(u32 address, u32 data, u32 size)
 
 /*
 We are using 8 bits keys with the following subfields' structure:
-bits 0-3 is a index of 16-bits XOR (only 11 was used in known games)
-bits 4-5 is a index to the sboxes table
-bits 6-7 is a index to the permutation table
+bits 0-3 is an index of 16-bits XOR (only 11 was used in known games)
+bits 4-5 is an index to the sboxes table
+bits 6-7 is an index to the permutation table
 
 These subfields could be differing from the "real" ones in the following ways:
 - Current keys equal to decrypted game code binary 8-bit sum (of each byte's swapped 4-bit nibbles)
@@ -386,11 +386,11 @@ void AWCartridge::recalc_dma_offset(int mode)
 	}
 }
 
-void *AWCartridge::GetDmaPtr(u32 &limit)
+void *AWCartridge::GetDmaPtr(u32 &size)
 {
-	limit = std::min(std::min(limit, (u32)32), dma_limit - dma_offset);
+	size = std::min(std::min(size, 32u), dma_limit - dma_offset);
 	u32 offset = dma_offset / 2;
-	for (u32 i = 0; i < limit / 2; i++)
+	for (u32 i = 0; i < size / 2; i++)
 		decrypted_buf[i] = decrypt16(offset + i);
 
 //	printf("AWCART Decrypted data @ %08x:\n", dma_offset);

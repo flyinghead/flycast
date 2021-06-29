@@ -25,41 +25,6 @@ Disc*(*drivers[])(const char* path)=
 
 u8 q_subchannel[96];
 
-static void PatchRegion_0(u8* sector, int size)
-{
-	if (!settings.imgread.PatchRegion)
-		return;
-
-	u8* usersect=sector;
-
-	if (size!=2048)
-	{
-		INFO_LOG(GDROM, "PatchRegion_0 -> sector size %d , skipping patch", size);
-	}
-
-	//patch meta info
-	u8* p_area_symbol=&usersect[0x30];
-	memcpy(p_area_symbol,"JUE     ",8);
-}
-
-static void PatchRegion_6(u8* sector, int size)
-{
-	if (!settings.imgread.PatchRegion)
-		return;
-
-	u8* usersect=sector;
-
-	if (size!=2048)
-	{
-		INFO_LOG(GDROM, "PatchRegion_6 -> sector size %d , skipping patch", size);
-	}
-
-	//patch area symbols
-	u8* p_area_text=&usersect[0x700];
-	memcpy(&p_area_text[4],"For JAPAN,TAIWAN,PHILIPINES.",28);
-	memcpy(&p_area_text[4 + 32],"For USA and CANADA.         ",28);
-	memcpy(&p_area_text[4 + 32 + 32],"For EUROPE.                 ",28);
-}
 bool ConvertSector(u8* in_buff , u8* out_buff , int from , int to,int sector)
 {
 	//get subchannel data, if any
@@ -228,20 +193,12 @@ static u32 CreateTrackInfo_se(u32 ctrl, u32 addr, u32 tracknum)
 	return *(u32*)p;
 }
 
-
 void GetDriveSector(u8 * buff,u32 StartSector,u32 SectorCount,u32 secsz)
 {
-	//printf("GD: read %08X, %d\n",StartSector,SectorCount);
-	if (disc)
-	{
-		disc->ReadSectors(StartSector,SectorCount,buff,secsz);
-		if (disc->type == GdRom && StartSector==45150 && SectorCount==7)
-		{
-			PatchRegion_0(buff,secsz);
-			PatchRegion_6(buff+2048*6,secsz);
-		}
-	}
+	if (disc != nullptr)
+		disc->ReadSectors(StartSector, SectorCount, buff, secsz);
 }
+
 void GetDriveToc(u32* to,DiskArea area)
 {
 	if (!disc)
@@ -301,23 +258,6 @@ void GetDriveSessionInfo(u8* to,u8 session)
 		to[4]=disc->sessions[session-1].StartFAD>>8;
 		to[5]=disc->sessions[session-1].StartFAD>>0;
 	}
-}
-
-void printtoc(TocInfo* toc,SessionInfo* ses)
-{
-	INFO_LOG(GDROM, "Sessions %d", ses->SessionCount);
-	for (u32 i=0;i<ses->SessionCount;i++)
-	{
-		INFO_LOG(GDROM, "Session %d: FAD %d,First Track %d", i + 1, ses->SessionFAD[i], ses->SessionStart[i]);
-		for (u32 t=toc->FistTrack-1;t<=toc->LastTrack;t++)
-		{
-			if (toc->tracks[t].Session==i+1)
-			{
-				INFO_LOG(GDROM, "    Track %d : FAD %d CTRL %d ADR %d", t, toc->tracks[t].FAD, toc->tracks[t].Control, toc->tracks[t].Addr);
-			}
-		}
-	}
-	INFO_LOG(GDROM, "Session END: FAD END %d", ses->SessionsEndFAD);
 }
 
 DiscType GuessDiscType(bool m1, bool m2, bool da)

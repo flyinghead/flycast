@@ -33,14 +33,14 @@ protected:
 class NaomiCartridge : public Cartridge
 {
 public:
-	NaomiCartridge(u32 size) : Cartridge(size), RomPioOffset(0), RomPioAutoIncrement(0), DmaOffset(0), DmaCount(0xffff) {}
+	NaomiCartridge(u32 size) : Cartridge(size), RomPioOffset(0), RomPioAutoIncrement(false), DmaOffset(0), DmaCount(0xffff) {}
 
-	virtual u32 ReadMem(u32 address, u32 size) override;
-	virtual void WriteMem(u32 address, u32 data, u32 size) override;
-	virtual void* GetDmaPtr(u32 &size) override;
-	virtual void AdvancePtr(u32 size) override;
-	virtual void Serialize(void** data, unsigned int* total_size) override;
-	virtual void Unserialize(void** data, unsigned int* total_size) override;
+	u32 ReadMem(u32 address, u32 size) override;
+	void WriteMem(u32 address, u32 data, u32 size) override;
+	void* GetDmaPtr(u32 &size) override;
+	void AdvancePtr(u32 size) override {}
+	void Serialize(void** data, unsigned int* total_size) override;
+	void Unserialize(void** data, unsigned int* total_size) override;
 
 	void SetKey(u32 key) override { this->key = key; }
 
@@ -52,20 +52,12 @@ protected:
 	u32 DmaOffset;
 	u32 DmaCount;
 	u32 key = 0;
-	// Naomi 840-0001E communication board
-	u16 comm_ctrl = 0xC000;
-	u16 comm_offset = 0;
-	u16 comm_status0 = 0;
-	u16 comm_status1 = 0;
-	u16 m68k_ram[128 * 1024 / sizeof(u16)];
-	u16 comm_ram[64 * 1024 / sizeof(u16)];
 };
 
 class DecryptedCartridge : public NaomiCartridge
 {
 public:
-	DecryptedCartridge(u8 *rom_ptr, u32 size) : NaomiCartridge(size) { RomPtr = rom_ptr; }
-	virtual ~DecryptedCartridge() override;
+	DecryptedCartridge(u8 *rom_ptr, u32 size) : NaomiCartridge(size) { free(RomPtr); RomPtr = rom_ptr; }
 };
 
 class M2Cartridge : public NaomiCartridge
@@ -73,13 +65,13 @@ class M2Cartridge : public NaomiCartridge
 public:
 	M2Cartridge(u32 size) : NaomiCartridge(size) {}
 
-	virtual bool Read(u32 offset, u32 size, void* dst) override;
-	virtual bool Write(u32 offset, u32 size, u32 data) override;
+	bool Read(u32 offset, u32 size, void* dst) override;
+	bool Write(u32 offset, u32 size, u32 data) override;
 	u16 ReadCipheredData(u32 offset);
-	virtual void Serialize(void** data, unsigned int* total_size) override;
-	virtual void Unserialize(void** data, unsigned int* total_size) override;
-	virtual void* GetDmaPtr(u32& size) override;
-	virtual std::string GetGameId() override;
+	void Serialize(void** data, unsigned int* total_size) override;
+	void Unserialize(void** data, unsigned int* total_size) override;
+	void* GetDmaPtr(u32& size) override;
+	std::string GetGameId() override;
 
 private:
 	u8 naomi_cart_ram[64 * 1024];
@@ -94,18 +86,20 @@ public:
 void naomi_cart_LoadRom(const char* file);
 void naomi_cart_Close();
 int naomi_cart_GetPlatform(const char *path);
+void naomi_cart_LoadBios(const char *filename);
 
 extern char naomi_game_id[];
 extern u8 *naomi_default_eeprom;
-extern bool naomi_rotate_screen;
 
 extern Cartridge *CurrentCartridge;
 
 struct ButtonDescriptor
 {
-   u32 mask;
+   u32 source;
    const char *name;
-   u32 p2_mask;
+   u32 target;
+   u32 p2_target;	// map P1 input to JVS P2
+   u32 p1_target;	// map P2 input to JVS P1
 };
 
 enum AxisType {

@@ -1,17 +1,5 @@
 #pragma once
-/*
-	Handy register definitions and other minor stuff
-*/
 #include "types.h"
-
-void gdrom_reg_Init();
-void gdrom_reg_Term();
-void gdrom_reg_Reset(bool Manual);
-
-u32 ReadMem_gdrom(u32 Addr, u32 sz);
-void WriteMem_gdrom(u32 Addr, u32 data, u32 sz);
-
-u32 gd_get_subcode(u32 format, u32 fad, u8 *subc_info);
 
 enum gd_states
 {
@@ -141,7 +129,7 @@ struct read_params_t
 	u32 start_sector;
 	u32 remaining_sectors;
 	u32 sector_type;
-} ;
+};
 
 struct packet_cmd_t
 {
@@ -174,7 +162,7 @@ struct packet_cmd_t
 			};
 		}GDReadBlock;
 	};
-} ;
+};
 
 //Buffer for sector reads [dma]
 struct read_buff_t
@@ -182,7 +170,7 @@ struct read_buff_t
 	u32 cache_index;
 	u32 cache_size;
 	u8 cache[2352 * 32];
-} ;
+};
 
 //pio buffer
 struct pio_buff_t
@@ -191,12 +179,12 @@ struct pio_buff_t
 	u32 index;
 	u32 size;
 	u16 data[0x10000>>1]; //64 kb
-} ;
+};
 
 struct ata_cmd_t
 {
 	u8 command;
-} ;
+};
 
 struct cdda_t
 {
@@ -212,7 +200,7 @@ struct cdda_t
 			u8 B2; // LSB
 		};
 	}CurrAddr,EndAddr,StartAddr;
-} ;
+};
 extern cdda_t cdda;
 
 union ByteCount_t
@@ -224,7 +212,7 @@ union ByteCount_t
 	};
 
 	u16 full;
-} ;
+};
 
 // REQ_MODE / SET_MODE
 struct GD_HardwareInfo_t

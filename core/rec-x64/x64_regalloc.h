@@ -16,9 +16,7 @@
     You should have received a copy of the GNU General Public License
     along with reicast.  If not, see <https://www.gnu.org/licenses/>.
  */
-
-#ifndef CORE_REC_X64_X64_REGALLOC_H_
-#define CORE_REC_X64_X64_REGALLOC_H_
+#pragma once
 
 //#define OLD_REGALLOC
 
@@ -41,13 +39,7 @@ static s8 alloc_fregs[] = { 8, 9, 10, 11, -1 };		// XMM8-11
 
 class BlockCompiler;
 
-struct X64RegAlloc : RegAlloc<Xbyak::Operand::Code, s8,
-#ifdef EXPLODE_SPANS
-														true
-#else
-														false
-#endif
-															 >
+struct X64RegAlloc : RegAlloc<Xbyak::Operand::Code, s8>
 {
 	X64RegAlloc(BlockCompiler *compiler) : compiler(compiler) {}
 
@@ -56,10 +48,10 @@ struct X64RegAlloc : RegAlloc<Xbyak::Operand::Code, s8,
 		RegAlloc::DoAlloc(block, alloc_regs, alloc_fregs);
 	}
 
-	virtual void Preload(u32 reg, Xbyak::Operand::Code nreg) override;
-	virtual void Writeback(u32 reg, Xbyak::Operand::Code nreg) override;
-	virtual void Preload_FPU(u32 reg, s8 nreg) override;
-	virtual void Writeback_FPU(u32 reg, s8 nreg) override;
+	void Preload(u32 reg, Xbyak::Operand::Code nreg) override;
+	void Writeback(u32 reg, Xbyak::Operand::Code nreg) override;
+	void Preload_FPU(u32 reg, s8 nreg) override;
+	void Writeback_FPU(u32 reg, s8 nreg) override;
 
 	Xbyak::Reg32 MapRegister(const shil_param& param)
 	{
@@ -97,5 +89,3 @@ struct X64RegAlloc : RegAlloc<Xbyak::Operand::Code, s8,
 
 	BlockCompiler *compiler;
 };
-
-#endif /* CORE_REC_X64_X64_REGALLOC_H_ */

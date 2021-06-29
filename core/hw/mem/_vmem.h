@@ -94,7 +94,6 @@ bool _vmem_reserve();
 void _vmem_release();
 
 //dynarec helpers
-void* _vmem_get_ptr2(u32 addr,u32& mask);
 void* _vmem_read_const(u32 addr,bool& ismem,u32 sz);
 void* _vmem_write_const(u32 addr,bool& ismem,u32 sz);
 
@@ -108,7 +107,6 @@ static inline bool _nvmem_4gb_space() {
 	return vmem_4gb_space;
 }
 void _vmem_bm_reset();
-void _vmem_enable_mmu(bool enable);
 
 #define MAP_RAM_START_OFFSET  0
 #define MAP_VRAM_START_OFFSET (MAP_RAM_START_OFFSET+RAM_SIZE)

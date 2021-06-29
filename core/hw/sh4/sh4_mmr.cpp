@@ -300,7 +300,7 @@ void DYNACALL WriteMem_P4(u32 addr,T data)
 		}
 
 	case 0xF4:
-		DEBUG_LOG(SH4, "OC Address write %08x = %x", addr, data);
+//		DEBUG_LOG(SH4, "OC Address write %08x = %x", addr, data);
 		if (sz == 4)
 			ocache.WriteAddressArray(addr, data);
 		return;
@@ -315,16 +315,11 @@ void DYNACALL WriteMem_P4(u32 addr,T data)
 		{
 			if (addr&0x80)
 			{
-#ifdef NO_MMU
-				INFO_LOG(SH4, "Unhandled p4 Write [Unified TLB address array, Associative Write] 0x%x = %x", addr, data);
-#endif
-
 				CCN_PTEH_type t;
 				t.reg_data=data;
 
 				u32 va=t.VPN<<10;
 
-#ifndef NO_MMU
 				for (int i=0;i<64;i++)
 				{
 					if (mmu_match(va,UTLB[i].Address,UTLB[i].Data))
@@ -344,7 +339,6 @@ void DYNACALL WriteMem_P4(u32 addr,T data)
 						ITLB_Sync(i);
 					}
 				}
-#endif
 			}
 			else
 			{
@@ -384,49 +378,16 @@ void DYNACALL WriteMem_P4(u32 addr,T data)
 	}
 }
 
-
-//***********
-//Store Queue
-//***********
-//TODO : replace w/ mem mapped array
-//Read SQ
-template <class T>
-T DYNACALL ReadMem_sq(u32 addr)
-{
-	if (sizeof(T) != 4)
-	{
-		INFO_LOG(SH4, "Store Queue Error - only 4 byte read are possible[x%X]", addr);
-		return 0xDE;
-	}
-
-	u32 united_offset=addr & 0x3C;
-
-	return (T)*(u32*)&sq_both[united_offset];
-}
-
-
-//Write SQ
-template <class T>
-void DYNACALL WriteMem_sq(u32 addr,T data)
-{
-	if (sizeof(T) != 4)
-		INFO_LOG(SH4, "Store Queue Error - only 4 byte writes are possible[x%X=0x%X]", addr, data);
-
-	u32 united_offset=addr & 0x3C;
-
-	*(u32*)&sq_both[united_offset]=data;
-}
-
-
 //***********
 //**Area  7**
 //***********
 
 #define OUT_OF_RANGE(reg) INFO_LOG(SH4, "Out of range on register %s index %x", reg, addr)
+#define A7_REG_HASH(addr) (((addr) >> 16) & 0x1FFF)
 
-//Read Area7
+//Read P4 memory-mapped registers
 template <class T>
-T DYNACALL ReadMem_area7(u32 addr)
+T DYNACALL ReadMem_p4mmr(u32 addr)
 {
 	constexpr size_t sz = sizeof(T);
 	/*
@@ -449,12 +410,12 @@ T DYNACALL ReadMem_area7(u32 addr)
 
 	addr&=0x1FFFFFFF;
 	u32 map_base=addr>>16;
-	switch (map_base & 0x1FFF)
+	switch (expected(map_base, A7_REG_HASH(TMU_BASE_addr)))
 	{
 	case A7_REG_HASH(CCN_BASE_addr):
 		if (addr<=0x1F000044)
 		{
-			return (T)sh4_rio_read<sz>(CCN,addr & 0xFF);
+			return (T)sh4_rio_read<sz>(CCN, addr);
 		}
 		else
 		{
@@ -466,7 +427,7 @@ T DYNACALL ReadMem_area7(u32 addr)
 	case A7_REG_HASH(UBC_BASE_addr):
 		if (addr<=0x1F200020)
 		{
-			return (T)sh4_rio_read<sz>(UBC,addr & 0xFF);
+			return (T)sh4_rio_read<sz>(UBC, addr);
 		}
 		else
 		{
@@ -478,7 +439,7 @@ T DYNACALL ReadMem_area7(u32 addr)
 	case A7_REG_HASH(BSC_BASE_addr):
 		if (addr<=0x1F800048)
 		{
-			return (T)sh4_rio_read<sz>(BSC,addr & 0xFF);
+			return (T)sh4_rio_read<sz>(BSC, addr);
 		}
 		else
 		{
@@ -486,6 +447,7 @@ T DYNACALL ReadMem_area7(u32 addr)
 			return 0;
 		}
 		break;
+
 	case A7_REG_HASH(BSC_SDMR2_addr):
 		//dram settings 2 / write only
 		INFO_LOG(SH4, "Read from write-only registers [dram settings 2]");
@@ -495,12 +457,10 @@ T DYNACALL ReadMem_area7(u32 addr)
 		INFO_LOG(SH4, "Read from write-only registers [dram settings 3]");
 		return 0;
 
-
-
 	case A7_REG_HASH(DMAC_BASE_addr):
 		if (addr<=0x1FA00040)
 		{
-			return (T)sh4_rio_read<sz>(DMAC,addr & 0xFF);
+			return (T)sh4_rio_read<sz>(DMAC, addr);
 		}
 		else
 		{
@@ -512,7 +472,7 @@ T DYNACALL ReadMem_area7(u32 addr)
 	case A7_REG_HASH(CPG_BASE_addr):
 		if (addr<=0x1FC00010)
 		{
-			return (T)sh4_rio_read<sz>(CPG,addr & 0xFF);
+			return (T)sh4_rio_read<sz>(CPG, addr);
 		}
 		else
 		{
@@ -524,7 +484,7 @@ T DYNACALL ReadMem_area7(u32 addr)
 	case A7_REG_HASH(RTC_BASE_addr):
 		if (addr<=0x1FC8003C)
 		{
-			return (T)sh4_rio_read<sz>(RTC,addr & 0xFF);
+			return (T)sh4_rio_read<sz>(RTC, addr);
 		}
 		else
 		{
@@ -536,7 +496,7 @@ T DYNACALL ReadMem_area7(u32 addr)
 	case A7_REG_HASH(INTC_BASE_addr):
 		if (addr<=0x1FD00010)
 		{
-			return (T)sh4_rio_read<sz>(INTC,addr & 0xFF);
+			return (T)sh4_rio_read<sz>(INTC, addr);
 		}
 		else
 		{
@@ -548,7 +508,7 @@ T DYNACALL ReadMem_area7(u32 addr)
 	case A7_REG_HASH(TMU_BASE_addr):
 		if (addr<=0x1FD8002C)
 		{
-			return (T)sh4_rio_read<sz>(TMU,addr & 0xFF);
+			return (T)sh4_rio_read<sz>(TMU, addr);
 		}
 		else
 		{
@@ -560,7 +520,7 @@ T DYNACALL ReadMem_area7(u32 addr)
 	case A7_REG_HASH(SCI_BASE_addr):
 		if (addr<=0x1FE0001C)
 		{
-			return (T)sh4_rio_read<sz>(SCI,addr & 0xFF);
+			return (T)sh4_rio_read<sz>(SCI, addr);
 		}
 		else
 		{
@@ -572,7 +532,7 @@ T DYNACALL ReadMem_area7(u32 addr)
 	case A7_REG_HASH(SCIF_BASE_addr):
 		if (addr<=0x1FE80024)
 		{
-			return (T)sh4_rio_read<sz>(SCIF,addr & 0xFF);
+			return (T)sh4_rio_read<sz>(SCIF, addr);
 		}
 		else
 		{
@@ -597,13 +557,13 @@ T DYNACALL ReadMem_area7(u32 addr)
 		break;
 	}
 
-	INFO_LOG(SH4, "Unknown Read from Area7 - addr=%x", addr);
+	INFO_LOG(SH4, "Unknown Read from P4 mmr - addr=%x", addr);
 	return 0;
 }
 
-//Write Area7
+//Write P4 memory-mapped registers
 template <class T>
-void DYNACALL WriteMem_area7(u32 addr,T data)
+void DYNACALL WriteMem_p4mmr(u32 addr,T data)
 {
 	constexpr size_t sz = sizeof(T);
 	if (likely(addr==0xFF000038))
@@ -619,13 +579,13 @@ void DYNACALL WriteMem_area7(u32 addr,T data)
 
 	addr&=0x1FFFFFFF;
 	u32 map_base=addr>>16;
-	switch (map_base & 0x1FFF)
+	switch (map_base)
 	{
 
 	case A7_REG_HASH(CCN_BASE_addr):
 		if (addr<=0x1F00003C)
 		{
-			sh4_rio_write<sz>(CCN,addr & 0xFF,data);
+			sh4_rio_write<sz>(CCN, addr, data);
 		}
 		else
 		{
@@ -636,7 +596,7 @@ void DYNACALL WriteMem_area7(u32 addr,T data)
 	case A7_REG_HASH(UBC_BASE_addr):
 		if (addr<=0x1F200020)
 		{
-			sh4_rio_write<sz>(UBC,addr & 0xFF,data);
+			sh4_rio_write<sz>(UBC, addr, data);
 		}
 		else
 		{
@@ -647,7 +607,7 @@ void DYNACALL WriteMem_area7(u32 addr,T data)
 	case A7_REG_HASH(BSC_BASE_addr):
 		if (addr<=0x1F800048)
 		{
-			sh4_rio_write<sz>(BSC,addr & 0xFF,data);
+			sh4_rio_write<sz>(BSC, addr, data);
 		}
 		else
 		{
@@ -665,7 +625,7 @@ void DYNACALL WriteMem_area7(u32 addr,T data)
 	case A7_REG_HASH(DMAC_BASE_addr):
 		if (addr<=0x1FA00040)
 		{
-			sh4_rio_write<sz>(DMAC,addr & 0xFF,data);
+			sh4_rio_write<sz>(DMAC, addr, data);
 		}
 		else
 		{
@@ -676,7 +636,7 @@ void DYNACALL WriteMem_area7(u32 addr,T data)
 	case A7_REG_HASH(CPG_BASE_addr):
 		if (addr<=0x1FC00010)
 		{
-			sh4_rio_write<sz>(CPG,addr & 0xFF,data);
+			sh4_rio_write<sz>(CPG, addr, data);
 		}
 		else
 		{
@@ -687,7 +647,7 @@ void DYNACALL WriteMem_area7(u32 addr,T data)
 	case A7_REG_HASH(RTC_BASE_addr):
 		if (addr<=0x1FC8003C)
 		{
-			sh4_rio_write<sz>(RTC,addr & 0xFF,data);
+			sh4_rio_write<sz>(RTC, addr, data);
 		}
 		else
 		{
@@ -698,7 +658,7 @@ void DYNACALL WriteMem_area7(u32 addr,T data)
 	case A7_REG_HASH(INTC_BASE_addr):
 		if (addr<=0x1FD0000C)
 		{
-			sh4_rio_write<sz>(INTC,addr & 0xFF,data);
+			sh4_rio_write<sz>(INTC, addr, data);
 		}
 		else
 		{
@@ -709,7 +669,7 @@ void DYNACALL WriteMem_area7(u32 addr,T data)
 	case A7_REG_HASH(TMU_BASE_addr):
 		if (addr<=0x1FD8002C)
 		{
-			sh4_rio_write<sz>(TMU,addr & 0xFF,data);
+			sh4_rio_write<sz>(TMU, addr, data);
 		}
 		else
 		{
@@ -720,7 +680,7 @@ void DYNACALL WriteMem_area7(u32 addr,T data)
 	case A7_REG_HASH(SCI_BASE_addr):
 		if (addr<=0x1FE0001C)
 		{
-			sh4_rio_write<sz>(SCI,addr & 0xFF,data);
+			sh4_rio_write<sz>(SCI, addr, data);
 		}
 		else
 		{
@@ -731,7 +691,7 @@ void DYNACALL WriteMem_area7(u32 addr,T data)
 	case A7_REG_HASH(SCIF_BASE_addr):
 		if (addr<=0x1FE80024)
 		{
-			sh4_rio_write<sz>(SCIF,addr & 0xFF,data);
+			sh4_rio_write<sz>(SCIF, addr, data);
 		}
 		else
 		{
@@ -755,59 +715,30 @@ void DYNACALL WriteMem_area7(u32 addr,T data)
 		break;
 	}
 
-	INFO_LOG(SH4, "Write to Area7 not implemented, addr=%x, data=%x", addr, data);
+	INFO_LOG(SH4, "Write to P4 mmr not implemented, addr=%x, data=%x", addr, data);
 }
 
 
 //***********
 //On Chip Ram
 //***********
-//Read OCR
 template <class T>
-T DYNACALL ReadMem_area7_OCR_T(u32 addr)
+T DYNACALL ReadMem_area7_OCR(u32 addr)
 {
-	if (CCN_CCR.ORA)
-	{
-		if (sizeof(T) == 1)
-			return (T)OnChipRAM[addr&OnChipRAM_MASK];
-		else if (sizeof(T) == 2)
-			return (T)*(u16*)&OnChipRAM[addr&OnChipRAM_MASK];
-		else if (sizeof(T) == 4)
-			return (T)*(u32*)&OnChipRAM[addr&OnChipRAM_MASK];
-		else
-		{
-			ERROR_LOG(SH4, "ReadMem_area7_OCR_T: template SZ is wrong = %zd", sizeof(T));
-			return 0xDE;
-		}
-	}
-	else
-	{
-		INFO_LOG(SH4, "On Chip Ram Read, but OCR is disabled. addr %x", addr);
-		return 0xDE;
-	}
+	if (CCN_CCR.ORA == 1)
+		return *(T *)&OnChipRAM[addr & OnChipRAM_MASK];
+
+	INFO_LOG(SH4, "On Chip Ram Read, but OCR is disabled. addr %x", addr);
+	return 0;
 }
 
-//Write OCR
 template <class T>
-void DYNACALL WriteMem_area7_OCR_T(u32 addr,T data)
+void DYNACALL WriteMem_area7_OCR(u32 addr, T data)
 {
-	if (CCN_CCR.ORA)
-	{
-		if (sizeof(T) == 1)
-			OnChipRAM[addr&OnChipRAM_MASK]=(u8)data;
-		else if (sizeof(T) == 2)
-			*(u16*)&OnChipRAM[addr&OnChipRAM_MASK]=(u16)data;
-		else if (sizeof(T) == 4)
-			*(u32*)&OnChipRAM[addr&OnChipRAM_MASK]=data;
-		else
-		{
-			ERROR_LOG(SH4, "WriteMem_area7_OCR_T: template SZ is wrong = %zd", sizeof(T));
-		}
-	}
+	if (CCN_CCR.ORA == 1)
+		*(T *)&OnChipRAM[addr & OnChipRAM_MASK] = data;
 	else
-	{
 		INFO_LOG(SH4, "On Chip Ram Write, but OCR is disabled. addr %x", addr);
-	}
 }
 
 template <class T>
@@ -898,42 +829,31 @@ void sh4_mmr_term()
 	ccn_term();
 	bsc_term();
 }
-//Mem map :)
 
-//AREA 7--Sh4 Regs
-_vmem_handler area7_handler;
-
-_vmem_handler area7_orc_handler;
+// AREA 7--Sh4 Regs
+static _vmem_handler p4mmr_handler;
+static _vmem_handler area7_ocr_handler;
 
 void map_area7_init()
 {
-	//=_vmem_register_handler(ReadMem8_area7,ReadMem16_area7,ReadMem32_area7,
-	//									WriteMem8_area7,WriteMem16_area7,WriteMem32_area7);
-
-	//default area7 handler
-	area7_handler= _vmem_register_handler_Template(ReadMem_area7,WriteMem_area7);
-
-	area7_orc_handler= _vmem_register_handler_Template(ReadMem_area7_OCR_T,WriteMem_area7_OCR_T);
+	p4mmr_handler = _vmem_register_handler_Template(ReadMem_p4mmr, WriteMem_p4mmr);
+	area7_ocr_handler = _vmem_register_handler_Template(ReadMem_area7_OCR, WriteMem_area7_OCR);
 }
+
 void map_area7(u32 base)
 {
-	//OCR @
-	//((addr>=0x7C000000) && (addr<=0x7FFFFFFF))
-	if (base==0x60)
-		_vmem_map_handler(area7_orc_handler,0x1C | base , 0x1F| base);
-	else
-	{
-		_vmem_map_handler(area7_handler,0x1C | base , 0x1F| base);
-	}
+	// on-chip RAM: 7C000000-7FFFFFFF
+	if (base == 0x60)
+		_vmem_map_handler(area7_ocr_handler, 0x7C, 0x7F);
 }
 
 //P4
 void map_p4()
 {
 	//P4 Region :
-	_vmem_handler p4_handler = _vmem_register_handler_Template(ReadMem_P4,WriteMem_P4);
+	_vmem_handler p4_handler = _vmem_register_handler_Template(ReadMem_P4, WriteMem_P4);
 
-	//register this before area7 and SQ , so they overwrite it and handle em :)
+	//register this before mmr and SQ so they overwrite it and handle em
 	//default P4 handler
 	//0xE0000000-0xFFFFFFFF
 	_vmem_map_handler(p4_handler,0xE0,0xFF);
@@ -944,5 +864,5 @@ void map_p4()
 	_vmem_map_block(sq_both,0xE2,0xE2,63);
 	_vmem_map_block(sq_both,0xE3,0xE3,63);
 
-	map_area7(0xE0);
+	_vmem_map_handler(p4mmr_handler, 0xFF, 0xFF);
 }

@@ -20,9 +20,10 @@
  */
 #pragma once
 #include <atomic>
+#include <map>
+#include <vector>
 
-void InitSettings();
-void LoadSettings(bool game_specific);
+void LoadGameSpecificSettings();
 void SaveSettings();
 
 extern std::atomic<bool> loading_canceled;
@@ -33,13 +34,52 @@ void dc_init();
 void* dc_run(void*);
 void dc_term();
 void dc_stop();
+void dc_term_game();
 void dc_request_reset();
 void dc_exit();
 void dc_resume();
-void dc_savestate();
-void dc_loadstate();
+void dc_step();
+void dc_savestate(int index = 0);
+void dc_loadstate(int index = 0);
 void dc_load_game(const char *path);
 bool dc_is_load_done();
 void dc_cancel_load();
 void dc_get_load_status();
 bool dc_is_running();
+void dc_resize_renderer();
+
+enum class Event {
+	Start,
+	Pause,
+	Resume,
+	Terminate,
+	LoadState,
+};
+
+class EventManager
+{
+public:
+	using Callback = void (*)(Event);
+
+	static void listen(Event event, Callback callback) {
+		Instance.registerEvent(event, callback);
+	}
+
+	static void unlisten(Event event, Callback callback) {
+		Instance.unregisterEvent(event, callback);
+	}
+
+	static void event(Event event) {
+		Instance.broadcastEvent(event);
+	}
+
+private:
+	EventManager() = default;
+
+	void registerEvent(Event event, Callback callback);
+	void unregisterEvent(Event event, Callback callback);
+	void broadcastEvent(Event event);
+
+	static EventManager Instance;
+	std::map<Event, std::vector<Callback>> callbacks;
+};

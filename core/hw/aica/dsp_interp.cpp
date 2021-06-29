@@ -39,8 +39,6 @@ void AICADSP_Step(struct dsp_t *DSP)
 	s32 Y_REG = 0;		//24 bit
 	u32 ADRS_REG = 0;	//13 bit
 
-	memset(DSPData->EFREG, 0, sizeof(DSPData->EFREG));
-
 	if (DSP->Stopped)
 		return;
 

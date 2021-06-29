@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10.2 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.10.2)
 
 find_program(CCACHE_FOUND ccache)
 if(CCACHE_FOUND)
@@ -11,6 +11,17 @@ option(ENABLE_OPROFILE "Enable OProfile" OFF)
 option(TEST_AUTOMATION "Enable test automation" OFF)
 option(ENABLE_LOG "Enable full logging" OFF)
 option(ASAN "Enable address sanitizer" OFF)
+option(USE_GLES "Use GLES[3] API" OFF)
+option(USE_GLES2 "Use GLES2 API" OFF)
+option(USE_HOST_LIBZIP "Use host libzip" ON)
+option(USE_OPENMP "Use OpenMP if available" ON)
+option(USE_VULKAN "Build with Vulkan support" ON)
+
+set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/shell/cmake")
+
+if(APPLE)
+	set(CMAKE_OSX_DEPLOYMENT_TARGET "10.9" CACHE STRING "Minimum macOS deployment version")
+endif()
 
 project(flycast)
 
@@ -18,18 +29,12 @@ if(ENABLE_CTEST)
     include(CTest)
 endif()
 
-if(MSVC)
-    enable_language(ASM_MASM)
-else()
-    enable_language(ASM)
-endif()
-
 if(APPLE)
     set(CMAKE_Swift_LANGUAGE_VERSION 5.0)
     enable_language(Swift)
 endif()
 
-find_package(Git QUIET)
+find_package(Git)
 if(GIT_FOUND AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/.git")
     execute_process(
         COMMAND ${GIT_EXECUTABLE} describe --tags --always
@@ -51,6 +56,7 @@ if(ANDROID)
     set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_RELEASE} -O3")
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_RELEASE} -O3")
     target_compile_options(${PROJECT_NAME} PRIVATE -fno-stack-protector)
+    set(CMAKE_ANDROID_STL_TYPE "c++_static")
 elseif(MSVC)
     add_executable(${PROJECT_NAME} WIN32 core/nullDC.cpp)
 else()
@@ -58,12 +64,13 @@ else()
 endif()
 
 target_compile_features(${PROJECT_NAME} PRIVATE c_std_11 cxx_std_11)
-set_target_properties(${PROJECT_NAME} PROPERTIES CXX_EXTENSIONS OFF)
+set_target_properties(${PROJECT_NAME} PROPERTIES
+	CXX_EXTENSIONS OFF
+	LINK_FLAGS_RELEASE -s)
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     target_compile_options(${PROJECT_NAME} PRIVATE
         $<$<COMPILE_LANGUAGE:CXX>:-fno-rtti>
-        -fno-strict-aliasing
-        -ffast-math)
+        -fno-strict-aliasing)
 elseif(MSVC)
 	target_compile_options(${PROJECT_NAME} PRIVATE /GR- /GS-)
 endif()
@@ -75,16 +82,20 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
         $<$<BOOL:MSVC>:_USE_MATH_DEFINES>
         $<$<BOOL:MSVC>:NOMINMAX>
         $<$<BOOL:${TEST_AUTOMATION}>:TEST_AUTOMATION>
-        $<$<BOOL:${ENABLE_LOG}>:DEBUGFAST>
-        ENABLE_MODEM)
+        $<$<BOOL:${ENABLE_LOG}>:DEBUGFAST>)
 
-target_include_directories(${PROJECT_NAME} PRIVATE core core/deps core/deps/stb core/deps/xbyak core/khronos)
+target_include_directories(${PROJECT_NAME} PRIVATE core core/deps core/deps/stb core/khronos)
 
 find_package(OpenMP)
-if(OpenMP_CXX_FOUND)
-    target_link_libraries(${PROJECT_NAME} PRIVATE OpenMP::OpenMP_CXX)
-    if(ANDROID_NDK_MAJOR VERSION_GREATER_EQUAL 21)
-        target_link_libraries(${PROJECT_NAME} PRIVATE -static-openmp)
+if(OpenMP_CXX_FOUND AND NOT APPLE AND USE_OPENMP)
+    if(MINGW)
+        target_link_libraries(${PROJECT_NAME} PRIVATE "-static -lgomp -lpthread")
+        target_compile_options(${PROJECT_NAME} PRIVATE -fopenmp)
+    else()
+        target_link_libraries(${PROJECT_NAME} PRIVATE OpenMP::OpenMP_CXX)
+        if(ANDROID_NDK_MAJOR VERSION_GREATER_EQUAL 21)
+            target_link_libraries(${PROJECT_NAME} PRIVATE -static-openmp)
+        endif()
     endif()
 else()
     target_compile_definitions(${PROJECT_NAME} PRIVATE TARGET_NO_OPENMP)
@@ -99,119 +110,143 @@ option(BUILD_SHARED_LIBS "Build shared library" OFF)
 add_subdirectory(core/deps/glm)
 target_link_libraries(${PROJECT_NAME} PRIVATE glm::glm)
 
-add_subdirectory(core/deps/glslang)
-target_link_libraries(${PROJECT_NAME} PRIVATE SPIRV)
+if(NOT APPLE)
+	add_subdirectory(core/deps/glslang)
+	target_link_libraries(${PROJECT_NAME} PRIVATE SPIRV)
+endif()
 
-find_package(ALSA QUIET)
+find_package(ALSA)
 if(ALSA_FOUND AND NOT ANDROID)
     target_compile_definitions(${PROJECT_NAME} PRIVATE USE_ALSA)
     target_include_directories(${PROJECT_NAME} PRIVATE ${ALSA_INCLUDE_DIRS})
     target_link_libraries(${PROJECT_NAME} PRIVATE ${ALSA_LIBRARIES})
 endif()
 
-if(MINGW)
-    set(SDL2_FOUND TRUE)
-    add_library(SDL2::SDL2-static STATIC IMPORTED)
-    set_target_properties(SDL2::SDL2-static PROPERTIES
-            INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_SOURCE_DIR}/core/deps/SDL2-2.0.12/include"
-            IMPORTED_LINK_INTERFACE_LANGUAGES "C"
-            IMPORTED_LOCATION "${CMAKE_CURRENT_SOURCE_DIR}/core/deps/SDL2-2.0.12/x86_64-w64-mingw32/lib/libSDL2.a"
-            INTERFACE_LINK_LIBRARIES "-L${CMAKE_CURRENT_SOURCE_DIR}/core/deps/SDL2-2.0.12/x86_64-w64-mingw32/lib -lmingw32 -lSDL2main -lSDL2 -mwindows  -Wl,--no-undefined -Wl,--dynamicbase -Wl,--nxcompat -Wl,--high-entropy-va -lm -ldinput8 -ldxguid -ldxerr8 -luser32 -lgdi32 -lwinmm -limm32 -lole32 -loleaut32 -lshell32 -lsetupapi -lversion -luuid -static-libgcc")
-elseif(MSVC)
-    set(SDL2_FOUND TRUE)
-    add_library(SDL2::SDL2 SHARED IMPORTED)
-	if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-		set_target_properties(SDL2::SDL2 PROPERTIES
-				INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_SOURCE_DIR}/core/deps/SDL2-2.0.12/include"
-				IMPORTED_LINK_INTERFACE_LANGUAGES "C"
-				IMPORTED_LOCATION "${CMAKE_CURRENT_SOURCE_DIR}/core/deps/SDL2-2.0.12/MSVC/lib/x64/SDL2.dll"
-				IMPORTED_IMPLIB "${CMAKE_CURRENT_SOURCE_DIR}/core/deps/SDL2-2.0.12/MSVC/lib/x64/SDL2.lib")
-	else()
-		set_target_properties(SDL2::SDL2 PROPERTIES
-				INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_SOURCE_DIR}/core/deps/SDL2-2.0.12/include"
-				IMPORTED_LINK_INTERFACE_LANGUAGES "C"
-				IMPORTED_LOCATION "${CMAKE_CURRENT_SOURCE_DIR}/core/deps/SDL2-2.0.12/MSVC/lib/x86/SDL2.dll"
-				IMPORTED_IMPLIB "${CMAKE_CURRENT_SOURCE_DIR}/core/deps/SDL2-2.0.12/MSVC/lib/x86/SDL2.lib")
+if(WIN32)
+	# Patch and build SDL
+	execute_process(COMMAND git apply -p1 ${CMAKE_CURRENT_SOURCE_DIR}/core/deps/patches/SDL.patch
+		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/core/deps/SDL) 
+	file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/core/deps/SDL")
+	if(CMAKE_GENERATOR MATCHES "Visual Studio")
+		set(SDL_CMAKE_ARCH_ARG -A ${CMAKE_GENERATOR_PLATFORM})
 	endif()
-elseif(NOT ANDROID)
-    find_package(SDL2 QUIET)
+	execute_process(COMMAND ${CMAKE_COMMAND}
+		"-DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/core/deps/SDL"
+		-DLIBC=ON
+		-DBUILD_SHARED_LIBS=OFF
+		-G "${CMAKE_GENERATOR}"
+		${SDL_CMAKE_ARCH_ARG}
+		"${CMAKE_CURRENT_SOURCE_DIR}/core/deps/SDL"
+    	WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/core/deps/SDL")
+	execute_process(COMMAND ${CMAKE_COMMAND} --build "${CMAKE_CURRENT_BINARY_DIR}/core/deps/SDL" --config Release --target install)
 endif()
 
+if(MINGW)
+	target_link_libraries(${PROJECT_NAME} PRIVATE "-static-libgcc -static-libstdc++")
+endif()
+
+if(APPLE OR WIN32)
+    find_package(SDL2 HINTS "${CMAKE_CURRENT_BINARY_DIR}/core/deps/SDL/cmake")
+elseif(NOT ANDROID)
+    find_package(SDL2)
+endif()
 if(SDL2_FOUND)
     target_compile_definitions(${PROJECT_NAME} PRIVATE USE_SDL USE_SDL_AUDIO)
     target_sources(${PROJECT_NAME} PRIVATE core/sdl/sdl.cpp core/sdl/sdl.h core/sdl/sdl_gamepad.h core/sdl/sdl_keyboard.h)
-    if(TARGET SDL2::SDL2)
-        target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2)
-    elseif(MINGW AND TARGET SDL2::SDL2-static)
-        target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2-static)
+    if(APPLE)
+        target_include_directories(${PROJECT_NAME} PRIVATE "${SDL2_INCLUDE_DIRS}/..")
     else()
         target_include_directories(${PROJECT_NAME} PRIVATE ${SDL2_INCLUDE_DIRS})
+    endif()
+    if((APPLE OR WIN32) AND TARGET SDL2::SDL2-static)
+        target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2-static)
+    elseif(TARGET SDL2::SDL2)
+        target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2)
+    else()
         target_link_libraries(${PROJECT_NAME} PRIVATE ${SDL2_LIBRARIES})
     endif()
 endif()
 
-find_package(ZLIB QUIET)
-if(TARGET ZLIB::ZLIB AND NOT ANDROID)
+find_package(ZLIB)
+if(TARGET ZLIB::ZLIB AND NOT ANDROID AND NOT WIN32)
+    set(WITH_SYSTEM_ZLIB ON CACHE BOOL "Use system provided zlib library")
     target_link_libraries(${PROJECT_NAME} PRIVATE ZLIB::ZLIB)
-else()
-    set(SKIP_INSTALL_ALL ON)
-    add_subdirectory(core/deps/zlib)
-    target_include_directories(${PROJECT_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/core/deps/zlib" "${CMAKE_CURRENT_BINARY_DIR}/core/deps/zlib")
-    target_link_libraries(${PROJECT_NAME} PRIVATE zlibstatic)
+endif()
+add_subdirectory(core/deps/libchdr)
+target_link_libraries(${PROJECT_NAME} PRIVATE chdr-static)
+target_include_directories(${PROJECT_NAME} PRIVATE core/deps/libchdr/include)
+
+if(NOT WITH_SYSTEM_ZLIB)
+    target_include_directories(${PROJECT_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/core/deps/libchdr/deps/zlib-1.2.11")
+    target_link_libraries(${PROJECT_NAME} PRIVATE zlib)
+    # help libzip find the package
+    set(ZLIB_FOUND TRUE)
+    set(ZLIB_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/core/deps/libchdr/deps/zlib-1.2.11")
+    cmake_policy(SET CMP0026 OLD)
+    get_target_property(ZLIB_LIBRARY zlib LOCATION)
 endif()
 
-find_package(PkgConfig QUIET)
+find_package(PkgConfig)
 if(PKG_CONFIG_FOUND AND NOT ANDROID AND NOT APPLE)
-    pkg_search_module(AO ao)
+    pkg_check_modules(AO IMPORTED_TARGET ao)
     if(AO_FOUND)
         target_compile_definitions(${PROJECT_NAME} PRIVATE USE_LIBAO)
-        target_include_directories(${PROJECT_NAME} PRIVATE ${AO_INCLUDE_DIRS})
-        target_link_libraries(${PROJECT_NAME} PRIVATE ${AO_LIBRARIES})
+        target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::AO)
     endif()
 
-    pkg_search_module(FLAC flac)
-    if(FLAC_FOUND)
-        target_include_directories(${PROJECT_NAME} PRIVATE ${FLAC_INCLUDE_DIRS})
-        target_link_libraries(${PROJECT_NAME} PRIVATE ${FLAC_LIBRARIES})
-    endif()
+	if(NOT SDL2_FOUND)
+	    pkg_check_modules(LIBEVDEV IMPORTED_TARGET libevdev)
+	    if(LIBEVDEV_FOUND)
+	        target_compile_definitions(${PROJECT_NAME} PRIVATE USE_EVDEV)
+	        target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::LIBEVDEV)
+	
+	        pkg_check_modules(LIBUDEV IMPORTED_TARGET libudev)
+	        if(LIBUDEV_FOUND)
+	            target_compile_definitions(${PROJECT_NAME} PRIVATE USE_UDEV)
+	            target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::LIBUDEV)
+	        endif()
+	    endif()
+	endif()
 
-    pkg_search_module(LIBEVDEV libevdev)
-    if(LIBEVDEV_FOUND)
-        target_compile_definitions(${PROJECT_NAME} PRIVATE USE_EVDEV)
-        target_include_directories(${PROJECT_NAME} PRIVATE ${LIBEVDEV_INCLUDE_DIRS})
-        target_link_libraries(${PROJECT_NAME} PRIVATE ${LIBEVDEV_LIBRARIES})
-
-        pkg_search_module(LIBUDEV libudev)
-        if(LIBUDEV_FOUND)
-            target_compile_definitions(${PROJECT_NAME} PRIVATE USE_UDEV)
-            target_include_directories(${PROJECT_NAME} PRIVATE ${LIBUDEV_INCLUDE_DIRS})
-            target_link_libraries(${PROJECT_NAME} PRIVATE ${LIBUDEV_LIBRARIES})
-        endif()
-    endif()
-
-    pkg_search_module(LIBPULSE libpulse)
+    pkg_check_modules(LIBPULSE IMPORTED_TARGET libpulse)
     if(LIBPULSE_FOUND)
         target_compile_definitions(${PROJECT_NAME} PRIVATE USE_PULSEAUDIO)
-        target_include_directories(${PROJECT_NAME} PRIVATE ${LIBPULSE_INCLUDE_DIRS})
-        target_link_libraries(${PROJECT_NAME} PRIVATE ${LIBPULSE_LIBRARIES})
+        target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::LIBPULSE)
     endif()
 
-    pkg_search_module(LIBZIP libzip)
-    if(LIBZIP_FOUND)
-        target_include_directories(${PROJECT_NAME} PRIVATE ${LIBZIP_INCLUDE_DIRS})
-        target_link_libraries(${PROJECT_NAME} PRIVATE ${LIBZIP_LIBRARIES})
+	if(USE_HOST_LIBZIP)
+		pkg_check_modules(LIBZIP IMPORTED_TARGET libzip)
+		if(LIBZIP_FOUND)
+			target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::LIBZIP)
+		endif()
     endif()
 
     if(ENABLE_OPROFILE)
         target_compile_definitions(${PROJECT_NAME} PRIVATE DYNA_OPROF)
         target_link_libraries(${PROJECT_NAME} PRIVATE opagent)
     endif()
+    
+    find_package(Miniupnpc)
+    if (MINIUPNP_FOUND)
+		target_include_directories(${PROJECT_NAME} PRIVATE ${MINIUPNP_INCLUDE_DIRS})
+		target_link_libraries(${PROJECT_NAME} PRIVATE ${MINIUPNP_LIBRARIES})
+    endif()
 endif()
 
 if(UNIX AND NOT APPLE AND NOT ANDROID)
-    set(OpenGL_GL_PREFERENCE LEGACY)
-    find_package(OpenGL REQUIRED)
-    target_link_libraries(${PROJECT_NAME} PRIVATE OpenGL::GL)
+	if(USE_GLES2)
+		target_compile_definitions(${PROJECT_NAME} PRIVATE GLES GLES2)
+		target_link_libraries(${PROJECT_NAME} PRIVATE GLESv2)
+	elseif(USE_GLES)
+		target_compile_definitions(${PROJECT_NAME} PRIVATE GLES GLES3)
+		if(NOT SDL2_FOUND)
+			target_link_libraries(${PROJECT_NAME} PRIVATE EGL)
+		endif()
+	else()
+	    set(OpenGL_GL_PREFERENCE LEGACY)
+	    find_package(OpenGL REQUIRED)
+	    target_link_libraries(${PROJECT_NAME} PRIVATE OpenGL::GL)
+	endif()
 
     find_package(Threads REQUIRED)
     target_link_libraries(${PROJECT_NAME} PRIVATE Threads::Threads)
@@ -229,6 +264,8 @@ if(UNIX AND NOT APPLE AND NOT ANDROID)
             target_include_directories(${PROJECT_NAME} PRIVATE ${X11_INCLUDE_DIR})
             target_link_libraries(${PROJECT_NAME} PRIVATE ${X11_LIBRARIES})
         endif()
+	else()
+		target_compile_definitions(${PROJECT_NAME} PRIVATE EGL_NO_X11)
     endif()
 
     target_link_libraries(${PROJECT_NAME} PRIVATE ${CMAKE_DL_LIBS} rt)
@@ -239,66 +276,53 @@ if(ASAN)
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=address -static-libasan")
 endif()
 
+if(ANDROID)
+	find_package(oboe REQUIRED CONFIG)
+	target_compile_definitions(${PROJECT_NAME} PRIVATE USE_OBOE)
+	target_link_libraries(${PROJECT_NAME} PRIVATE oboe::oboe)
+endif()
+
 target_sources(${PROJECT_NAME} PRIVATE
         core/deps/chdpsr/cdipsr.cpp
         core/deps/chdpsr/cdipsr.h)
 
-target_compile_definitions(${PROJECT_NAME} PRIVATE CHD5_FLAC CHD5_LZMA)
-target_sources(${PROJECT_NAME} PRIVATE
-        core/deps/chdr/bitstream.c
-        core/deps/chdr/bitstream.h
-        core/deps/chdr/cdrom.c
-        core/deps/chdr/cdrom.h
-        core/deps/chdr/chd.c
-        core/deps/chdr/chd.h
-        core/deps/chdr/coretypes.h
-        core/deps/chdr/flac.c
-        core/deps/chdr/flac.h
-        core/deps/chdr/huffman.c
-        core/deps/chdr/huffman.h)
+target_include_directories(${PROJECT_NAME} PRIVATE core/deps/nowide/include)
 
-target_sources(${PROJECT_NAME} PRIVATE
-        core/deps/coreio/coreio.cpp
-        core/deps/coreio/coreio.h)
-
-target_sources(${PROJECT_NAME} PRIVATE
-        core/deps/crypto/md5.cpp
-        core/deps/crypto/md5.h
-        core/deps/crypto/sha1.cpp
-        core/deps/crypto/sha1.h
-        core/deps/crypto/sha256.cpp
-        core/deps/crypto/sha256.h)
-
-if(NOT FLAC_FOUND)
-    target_compile_definitions(${PROJECT_NAME} PRIVATE HAVE_CONFIG_H $<$<BOOL:MINGW>:HAVE_FSEEKO>)
-    target_include_directories(${PROJECT_NAME} PRIVATE core/deps/flac/include core/deps/flac/src/libFLAC/include)
-    target_sources(${PROJECT_NAME} PRIVATE
-            core/deps/flac/src/libFLAC/bitmath.c
-            core/deps/flac/src/libFLAC/bitreader.c
-            core/deps/flac/src/libFLAC/cpu.c
-            core/deps/flac/src/libFLAC/crc.c
-            core/deps/flac/src/libFLAC/fixed.c
-            core/deps/flac/src/libFLAC/fixed_intrin_sse2.c
-            core/deps/flac/src/libFLAC/fixed_intrin_ssse3.c
-            core/deps/flac/src/libFLAC/float.c
-            core/deps/flac/src/libFLAC/format.c
-            core/deps/flac/src/libFLAC/lpc.c
-            core/deps/flac/src/libFLAC/lpc_intrin_avx2.c
-            core/deps/flac/src/libFLAC/lpc_intrin_sse.c
-            core/deps/flac/src/libFLAC/lpc_intrin_sse2.c
-            core/deps/flac/src/libFLAC/lpc_intrin_sse41.c
-            core/deps/flac/src/libFLAC/md5.c
-            core/deps/flac/src/libFLAC/memory.c
-            core/deps/flac/src/libFLAC/metadata_iterators.c
-            core/deps/flac/src/libFLAC/metadata_object.c
-            core/deps/flac/src/libFLAC/stream_decoder.c
-            core/deps/flac/src/libFLAC/window.c
-            core/deps/flac/src/libFLAC/windows_unicode_filenames.c)
+if(NOT MINIUPNP_FOUND)
+	option(UPNPC_BUILD_SHARED "Build shared library" OFF)
+	option(UPNPC_BUILD_TESTS "Build test executables" OFF)
+	option(UPNPC_BUILD_SAMPLE "Build sample executables" OFF)
+	option(UPNPC_NO_INSTALL "Disable installation" ON)
+	add_subdirectory(core/deps/miniupnpc)
+	target_include_directories(${PROJECT_NAME} PRIVATE core/deps/miniupnpc)
+	target_link_libraries(${PROJECT_NAME} PRIVATE miniupnpc::miniupnpc)
 endif()
 
-if(MSVC)
+if(NOT LIBZIP_FOUND)
+	option(ENABLE_COMMONCRYPTO "Enable use of CommonCrypto" OFF)
+	option(ENABLE_GNUTLS "Enable use of GnuTLS" OFF)
+	option(ENABLE_MBEDTLS "Enable use of mbed TLS" OFF)
+	option(ENABLE_OPENSSL "Enable use of OpenSSL" OFF)
+	option(ENABLE_WINDOWS_CRYPTO "Enable use of Windows cryptography libraries" OFF)
+	option(ENABLE_BZIP2 "Enable use of BZip2" OFF)
+	option(ENABLE_LZMA "Enable use of LZMA" OFF)
+	option(ENABLE_ZSTD "Enable use of Zstandard" OFF)
+	option(BUILD_TOOLS "Build tools in the src directory (zipcmp, zipmerge, ziptool)" OFF)
+	option(BUILD_REGRESS "Build regression tests" OFF)
+	option(BUILD_EXAMPLES "Build examples" OFF)
+	option(BUILD_DOC "Build documentation" OFF)
+	option(BUILD_SHARED_LIBS "Build shared libraries" OFF)
+	option(LIBZIP_DO_INSTALL "Install libzip and the related files" OFF)
+	add_subdirectory(core/deps/libzip)
+	target_include_directories(${PROJECT_NAME} PRIVATE core/deps/libzip/lib)
+	target_link_libraries(${PROJECT_NAME} PRIVATE zip)
+endif()
+
+if(WIN32)
     target_include_directories(${PROJECT_NAME} PRIVATE core/deps/dirent)
-else()
+endif()
+
+if(NOT MSVC)
     target_include_directories(${PROJECT_NAME} PRIVATE core/deps/picotcp/include core/deps/picotcp/modules)
     target_sources(${PROJECT_NAME} PRIVATE
             core/deps/picotcp/include/arch/pico_arm9.h
@@ -335,10 +359,15 @@ else()
             core/deps/picotcp/include/pico_tree.h
             core/deps/picotcp/modules/pico_arp.c
             core/deps/picotcp/modules/pico_dev_ppp.c
+            core/deps/picotcp/modules/pico_dhcp_common.c
+            core/deps/picotcp/modules/pico_dhcp_common.h
+            core/deps/picotcp/modules/pico_dhcp_server.c
+            core/deps/picotcp/modules/pico_dhcp_server.h
             core/deps/picotcp/modules/pico_dns_client.c
             core/deps/picotcp/modules/pico_dns_common.c
             core/deps/picotcp/modules/pico_ethernet.c
             core/deps/picotcp/modules/pico_fragments.c
+            core/deps/picotcp/modules/pico_icmp4.c
             core/deps/picotcp/modules/pico_ipv4.c
             core/deps/picotcp/modules/pico_socket_tcp.c
             core/deps/picotcp/modules/pico_socket_udp.c
@@ -353,68 +382,6 @@ else()
             core/deps/picotcp/stack/pico_socket_multicast.c
             core/deps/picotcp/stack/pico_stack.c
             core/deps/picotcp/stack/pico_tree.c)
-
-    if(NOT LIBZIP_FOUND)
-        target_include_directories(${PROJECT_NAME} PRIVATE core/deps/libzip)
-        target_sources(${PROJECT_NAME} PRIVATE
-                core/deps/libzip/config.h
-                core/deps/libzip/mkstemp.c
-                core/deps/libzip/zip.h
-                core/deps/libzip/zip_add.c
-                core/deps/libzip/zip_add_dir.c
-                core/deps/libzip/zip_close.c
-                core/deps/libzip/zip_delete.c
-                core/deps/libzip/zip_dirent.c
-                core/deps/libzip/zip_entry_free.c
-                core/deps/libzip/zip_entry_new.c
-                core/deps/libzip/zip_error.c
-                core/deps/libzip/zip_error_clear.c
-                core/deps/libzip/zip_error_get.c
-                core/deps/libzip/zip_error_get_sys_type.c
-                core/deps/libzip/zip_error_strerror.c
-                core/deps/libzip/zip_error_to_str.c
-                core/deps/libzip/zip_err_str.c
-                core/deps/libzip/zip_fclose.c
-                core/deps/libzip/zip_file_error_clear.c
-                core/deps/libzip/zip_file_error_get.c
-                core/deps/libzip/zip_file_get_offset.c
-                core/deps/libzip/zip_filerange_crc.c
-                core/deps/libzip/zip_file_strerror.c
-                core/deps/libzip/zip_fopen.c
-                core/deps/libzip/zip_fopen_index.c
-                core/deps/libzip/zip_fread.c
-                core/deps/libzip/zip_free.c
-                core/deps/libzip/zip_get_archive_comment.c
-                core/deps/libzip/zip_get_archive_flag.c
-                core/deps/libzip/zip_get_file_comment.c
-                core/deps/libzip/zip_get_name.c
-                core/deps/libzip/zip_get_num_files.c
-                core/deps/libzip/zip_memdup.c
-                core/deps/libzip/zip_name_locate.c
-                core/deps/libzip/zip_new.c
-                core/deps/libzip/zip_open.c
-                core/deps/libzip/zip_rename.c
-                core/deps/libzip/zip_replace.c
-                core/deps/libzip/zip_set_archive_comment.c
-                core/deps/libzip/zip_set_archive_flag.c
-                core/deps/libzip/zip_set_file_comment.c
-                core/deps/libzip/zip_set_name.c
-                core/deps/libzip/zip_source_buffer.c
-                core/deps/libzip/zip_source_file.c
-                core/deps/libzip/zip_source_filep.c
-                core/deps/libzip/zip_source_free.c
-                core/deps/libzip/zip_source_function.c
-                core/deps/libzip/zip_source_zip.c
-                core/deps/libzip/zip_stat.c
-                core/deps/libzip/zip_stat_index.c
-                core/deps/libzip/zip_stat_init.c
-                core/deps/libzip/zip_strerror.c
-                core/deps/libzip/zip_unchange_all.c
-                core/deps/libzip/zip_unchange_archive.c
-                core/deps/libzip/zip_unchange.c
-                core/deps/libzip/zip_unchange_data.c
-                core/deps/libzip/zipint.h)
-    endif()
 endif()
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE _7ZIP_ST)
@@ -427,54 +394,20 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/archive/7zArchive.cpp
         core/archive/7zArchive.h
         core/archive/archive.cpp
-        core/archive/archive.h)
-if(NOT MSVC)
-    target_sources(${PROJECT_NAME} PRIVATE
-            core/archive/ZipArchive.cpp
-            core/archive/ZipArchive.h)
-endif()
-
-target_sources(${PROJECT_NAME} PRIVATE
-        core/arm_emitter/arm_coding.h
-        core/arm_emitter/arm_disasm.h
-        core/arm_emitter/arm_emitter.h
-        core/arm_emitter/arm_registers.h
-        core/arm_emitter/E_Branches.h
-        core/arm_emitter/E_DataOp.h
-        core/arm_emitter/E_Extend.h
-        core/arm_emitter/E_LoadStore.h
-        core/arm_emitter/E_Misc.h
-        core/arm_emitter/E_Multiply.h
-        core/arm_emitter/E_Parallel.h
-        core/arm_emitter/E_Special.h
-        core/arm_emitter/E_Status.h
-        core/arm_emitter/E_VDataOp.h
-        core/arm_emitter/E_VLoadStore.h
-        core/arm_emitter/E_VRegXfer.h
-        core/arm_emitter/H_Branches.h
-        core/arm_emitter/H_fp.h
-        core/arm_emitter/H_LoadStore.h
-        core/arm_emitter/H_psuedo.h
-        core/arm_emitter/H_state.h)
+        core/archive/archive.h
+        core/archive/rzip.cpp
+        core/archive/rzip.h
+        core/archive/ZipArchive.cpp
+        core/archive/ZipArchive.h)
 
 target_sources(${PROJECT_NAME} PRIVATE
         core/cfg/cfg.cpp
         core/cfg/cfg.h
         core/cfg/cl.cpp
         core/cfg/ini.cpp
-        core/cfg/ini.h)
-
-target_sources(${PROJECT_NAME} PRIVATE
-        core/emitter/generated_class_names.h
-        core/emitter/generated_class_names_string.h
-        core/emitter/generated_descriptors.h
-        core/emitter/generated_indexes.h
-        core/emitter/x86_emitter.cpp
-        core/emitter/x86_emitter.h
-        core/emitter/x86_matcher.h
-        core/emitter/x86_op_classes.h
-        core/emitter/x86_op_encoder.h
-        core/emitter/x86_op_table.h)
+        core/cfg/ini.h
+        core/cfg/option.cpp
+        core/cfg/option.h)
 
 target_sources(${PROJECT_NAME} PRIVATE
         core/hw/aica/aica.cpp
@@ -488,17 +421,24 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/hw/aica/dsp_arm64.cpp
         core/hw/aica/dsp_interp.cpp
         core/hw/aica/dsp_x64.cpp
+        core/hw/aica/dsp_x86.cpp
         core/hw/aica/sgc_if.cpp
         core/hw/aica/sgc_if.h
-        core/hw/arm7/arm64.cpp
         core/hw/arm7/arm7.cpp
         core/hw/arm7/arm7.h
         core/hw/arm7/arm_mem.cpp
         core/hw/arm7/arm_mem.h
+        core/hw/arm7/arm7_rec_arm32.cpp
+        core/hw/arm7/arm7_rec_arm64.cpp
+        core/hw/arm7/arm7_rec_x64.cpp
+        core/hw/arm7/arm7_rec.cpp
+        core/hw/arm7/arm7_rec.h
         core/hw/arm7/arm-new.h
         core/hw/arm7/vbaARM.cpp
-        core/hw/arm7/virt_arm.cpp
-        core/hw/arm7/virt_arm.h
+        core/hw/bba/bba.h
+        core/hw/bba/bba.cpp
+        core/hw/bba/rtl8139c.h
+        core/hw/bba/rtl8139c.cpp
         core/hw/flashrom/flashrom.h
         core/hw/gdrom/gdrom_if.h
         core/hw/gdrom/gdrom_response.cpp
@@ -518,16 +458,12 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/hw/maple/maple_helper.h
         core/hw/maple/maple_if.cpp
         core/hw/maple/maple_if.h
-        core/hw/mem/vmem32.cpp
-        core/hw/mem/vmem32.h
+        core/hw/maple/maple_jvs.cpp
         core/hw/mem/_vmem.cpp
         core/hw/mem/_vmem.h
-        core/hw/modem/dns.cpp
         core/hw/modem/modem.cpp
         core/hw/modem/modem.h
         core/hw/modem/modem_regs.h
-        core/hw/modem/picoppp.cpp
-        core/hw/modem/picoppp.h
         core/hw/naomi/awave_regs.h
         core/hw/naomi/awcartridge.cpp
         core/hw/naomi/awcartridge.h
@@ -548,6 +484,7 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/hw/naomi/naomi.cpp
         core/hw/naomi/naomi.h
         core/hw/naomi/naomi_regs.h
+        core/hw/naomi/naomi_roms.cpp
         core/hw/naomi/naomi_roms.h
         core/hw/naomi/naomi_roms_input.h
         core/hw/pvr/drkPvr.cpp
@@ -577,7 +514,6 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/hw/sh4/dyna/decoder_opcodes.h
         core/hw/sh4/dyna/driver.cpp
         core/hw/sh4/dyna/ngen.h
-        core/hw/sh4/dyna/rec_config.h
         core/hw/sh4/dyna/regalloc.h
         core/hw/sh4/dyna/shil_canonical.h
         core/hw/sh4/dyna/shil.cpp
@@ -602,7 +538,6 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/hw/sh4/modules/intc.cpp
         core/hw/sh4/modules/mmu.cpp
         core/hw/sh4/modules/mmu.h
-        core/hw/sh4/modules/mmu_impl.h
         core/hw/sh4/modules/modules.h
         core/hw/sh4/modules/rtc.cpp
         core/hw/sh4/modules/serial.cpp
@@ -620,7 +555,6 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/hw/sh4/sh4_mem.h
         core/hw/sh4/sh4_mmr.cpp
         core/hw/sh4/sh4_mmr.h
-        core/hw/sh4/sh4_opcode.h
         core/hw/sh4/sh4_opcode_list.cpp
         core/hw/sh4/sh4_opcode_list.h
         core/hw/sh4/sh4_rom.cpp
@@ -634,11 +568,9 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/imgread/common.cpp
         core/imgread/common.h
         core/imgread/cue.cpp
-        core/imgread/gd_driver.h
         core/imgread/gdi.cpp
         core/imgread/ImgReader.cpp
-        core/imgread/ioctl.cpp
-        core/imgread/SCSIDEFS.H)
+        core/imgread/ioctl.cpp)
 
 target_sources(${PROJECT_NAME} PRIVATE
         core/input/gamepad.h
@@ -650,13 +582,11 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/input/mapping.h)
 
 target_sources(${PROJECT_NAME} PRIVATE
-        core/linux/nixprof/nixprof.cpp
         core/linux/common.cpp)
 
 if(NOT WIN32)
     target_sources(${PROJECT_NAME} PRIVATE
             core/linux/context.cpp
-            core/linux/context.h
             core/linux/posix_vmem.cpp)
 endif()
 
@@ -684,9 +614,19 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/log/StringUtil.h)
 
 target_sources(${PROJECT_NAME} PRIVATE
+        core/network/dns.cpp
+        core/network/miniupnp.cpp
+        core/network/miniupnp.h
         core/network/naomi_network.cpp
         core/network/naomi_network.h
-        core/network/net_platform.h)
+        core/network/net_platform.h
+        core/network/picoppp.cpp
+        core/network/picoppp.h)
+
+if(ANDROID)
+    target_sources(${PROJECT_NAME} PRIVATE
+            core/network/ifaddrs.c)
+endif()
 
 target_sources(${PROJECT_NAME} PRIVATE
         core/oslib/audiobackend_alsa.cpp
@@ -694,12 +634,15 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/oslib/audiobackend_directsound.cpp
         core/oslib/audiobackend_libao.cpp
         core/oslib/audiobackend_null.cpp
+        core/oslib/audiobackend_oboe.cpp
         core/oslib/audiobackend_omx.cpp
         core/oslib/audiobackend_oss.cpp
         core/oslib/audiobackend_pulseaudio.cpp
         core/oslib/audiobackend_sdl2.cpp
         core/oslib/audiostream.cpp
         core/oslib/audiostream.h
+        core/oslib/directory.h
+        core/oslib/host_context.h
         core/oslib/oslib.h)
 
 target_sources(${PROJECT_NAME} PRIVATE
@@ -753,7 +696,8 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/serialize.cpp
         core/stdclass.cpp
         core/stdclass.h
-        core/types.h)
+        core/types.h
+        core/debug/gdb_server.h)
 
 target_sources(${PROJECT_NAME} PRIVATE
         core/rend/gles/glcache.h
@@ -763,6 +707,7 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/rend/gles/gltex.cpp
         core/rend/gles/imgui_impl_opengl3.cpp
         core/rend/gles/imgui_impl_opengl3.h
+        core/rend/gles/quad.cpp
         core/rend/CustomTexture.cpp
         core/rend/CustomTexture.h
         core/rend/game_scanner.h
@@ -770,8 +715,10 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/rend/gui.h
         core/rend/gui_android.cpp
         core/rend/gui_android.h
+        core/rend/gui_cheats.cpp
         core/rend/gui_util.cpp
         core/rend/gui_util.h
+        core/rend/mainui.cpp
         core/rend/osd.cpp
         core/rend/osd.h
         core/rend/sorter.cpp
@@ -780,11 +727,15 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/rend/TexCache.cpp
         core/rend/TexCache.h)
 
-if(NOT APPLE AND NOT ANDROID)
-    target_sources(${PROJECT_NAME} PRIVATE core/rend/gl4/abuffer.cpp core/rend/gl4/gl4.h core/rend/gl4/gldraw.cpp core/rend/gl4/gles.cpp core/rend/gl4/gltex.cpp)
+if(NOT (APPLE OR ANDROID OR USE_GLES OR USE_GLES2))
+    target_sources(${PROJECT_NAME} PRIVATE
+    	core/rend/gl4/abuffer.cpp
+    	core/rend/gl4/gl4.h
+    	core/rend/gl4/gldraw.cpp
+    	core/rend/gl4/gles.cpp)
 endif()
 
-if(NOT APPLE)
+if(USE_VULKAN AND NOT APPLE)
     if(ANDROID)
         set(VOLK_STATIC_DEFINES VK_USE_PLATFORM_ANDROID_KHR)
     elseif(X11_FOUND)
@@ -831,8 +782,8 @@ if(NOT APPLE)
             core/rend/vulkan/vk_mem_alloc.h
             core/rend/vulkan/vmallocator.cpp
             core/rend/vulkan/vmallocator.h
-            core/rend/vulkan/vmu.cpp
-            core/rend/vulkan/vmu.h
+            core/rend/vulkan/overlay.cpp
+            core/rend/vulkan/overlay.h
             core/rend/vulkan/vulkan_context.cpp
             core/rend/vulkan/vulkan_context.h
             core/rend/vulkan/vulkan.h
@@ -840,34 +791,110 @@ if(NOT APPLE)
 endif()
 
 if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm.*|ARM.*)")
-    target_sources(${PROJECT_NAME} PRIVATE core/rec-ARM/ngen_arm.S core/rec-ARM/rec_arm.cpp)
+	target_include_directories(${PROJECT_NAME} PRIVATE core/deps/vixl)
+    target_sources(${PROJECT_NAME} PRIVATE
+    	core/rec-ARM/rec_arm.cpp
+    	core/deps/vixl/aarch32/location-aarch32.cc
+    	core/deps/vixl/aarch32/location-aarch32.h
+		core/deps/vixl/aarch32/assembler-aarch32.cc
+		core/deps/vixl/aarch32/assembler-aarch32.h
+		core/deps/vixl/aarch32/instructions-aarch32.cc
+		core/deps/vixl/aarch32/instructions-aarch32.h
+		core/deps/vixl/aarch32/constants-aarch32.cc
+		core/deps/vixl/aarch32/constants-aarch32.h
+		core/deps/vixl/aarch32/macro-assembler-aarch32.cc
+		core/deps/vixl/aarch32/macro-assembler-aarch32.h
+		core/deps/vixl/aarch32/operands-aarch32.cc
+		core/deps/vixl/aarch32/operands-aarch32.h
+		core/deps/vixl/aarch32/disasm-aarch32.cc
+		core/deps/vixl/aarch32/disasm-aarch32.h
+    	core/deps/vixl/assembler-base-vixl.h
+    	core/deps/vixl/code-buffer-vixl.cc
+    	core/deps/vixl/code-buffer-vixl.h
+    	core/deps/vixl/code-generation-scopes-vixl.h
+    	core/deps/vixl/compiler-intrinsics-vixl.cc
+    	core/deps/vixl/compiler-intrinsics-vixl.h
+    	core/deps/vixl/cpu-features.cc
+    	core/deps/vixl/cpu-features.h
+    	core/deps/vixl/globals-vixl.h
+    	core/deps/vixl/invalset-vixl.h
+    	core/deps/vixl/macro-assembler-interface.h
+    	core/deps/vixl/platform-vixl.h
+    	core/deps/vixl/pool-manager.h
+    	core/deps/vixl/pool-manager-impl.h
+    	core/deps/vixl/utils-vixl.cc
+    	core/deps/vixl/utils-vixl.h)
 elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^(aarch64.*|AARCH64.*)")
     target_include_directories(${PROJECT_NAME} PRIVATE core/deps/vixl)
-    target_sources(${PROJECT_NAME} PRIVATE core/deps/vixl/aarch64/abi-aarch64.h core/deps/vixl/aarch64/assembler-aarch64.cc core/deps/vixl/aarch64/assembler-aarch64.h core/deps/vixl/aarch64/constants-aarch64.h core/deps/vixl/aarch64/cpu-aarch64.cc core/deps/vixl/aarch64/cpu-aarch64.h core/deps/vixl/aarch64/cpu-features-auditor-aarch64.cc core/deps/vixl/aarch64/cpu-features-auditor-aarch64.h core/deps/vixl/aarch64/decoder-aarch64.cc core/deps/vixl/aarch64/decoder-aarch64.h core/deps/vixl/aarch64/disasm-aarch64.cc core/deps/vixl/aarch64/disasm-aarch64.h core/deps/vixl/aarch64/instructions-aarch64.cc core/deps/vixl/aarch64/instructions-aarch64.h core/deps/vixl/aarch64/instrument-aarch64.cc core/deps/vixl/aarch64/instrument-aarch64.h core/deps/vixl/aarch64/logic-aarch64.cc core/deps/vixl/aarch64/macro-assembler-aarch64.cc core/deps/vixl/aarch64/macro-assembler-aarch64.h core/deps/vixl/aarch64/operands-aarch64.cc core/deps/vixl/aarch64/operands-aarch64.h core/deps/vixl/aarch64/pointer-auth-aarch64.cc core/deps/vixl/aarch64/simulator-aarch64.cc core/deps/vixl/aarch64/simulator-aarch64.h core/deps/vixl/aarch64/simulator-constants-aarch64.h core/deps/vixl/assembler-base-vixl.h core/deps/vixl/code-buffer-vixl.cc core/deps/vixl/code-buffer-vixl.h core/deps/vixl/code-generation-scopes-vixl.h core/deps/vixl/compiler-intrinsics-vixl.cc core/deps/vixl/compiler-intrinsics-vixl.h core/deps/vixl/cpu-features.cc core/deps/vixl/cpu-features.h core/deps/vixl/globals-vixl.h core/deps/vixl/invalset-vixl.h core/deps/vixl/macro-assembler-interface.h core/deps/vixl/platform-vixl.h core/deps/vixl/pool-manager.h core/deps/vixl/pool-manager-impl.h core/deps/vixl/utils-vixl.cc core/deps/vixl/utils-vixl.h)
+    target_sources(${PROJECT_NAME} PRIVATE
+    	core/deps/vixl/aarch64/abi-aarch64.h
+    	core/deps/vixl/aarch64/assembler-aarch64.cc
+    	core/deps/vixl/aarch64/assembler-aarch64.h
+    	core/deps/vixl/aarch64/constants-aarch64.h
+    	core/deps/vixl/aarch64/cpu-aarch64.cc
+    	core/deps/vixl/aarch64/cpu-aarch64.h
+    	core/deps/vixl/aarch64/cpu-features-auditor-aarch64.cc
+    	core/deps/vixl/aarch64/cpu-features-auditor-aarch64.h
+    	core/deps/vixl/aarch64/decoder-aarch64.cc
+    	core/deps/vixl/aarch64/decoder-aarch64.h
+    	core/deps/vixl/aarch64/disasm-aarch64.cc
+    	core/deps/vixl/aarch64/disasm-aarch64.h
+    	core/deps/vixl/aarch64/instructions-aarch64.cc
+    	core/deps/vixl/aarch64/instructions-aarch64.h
+    	core/deps/vixl/aarch64/instrument-aarch64.cc
+    	core/deps/vixl/aarch64/instrument-aarch64.h
+    	core/deps/vixl/aarch64/logic-aarch64.cc
+    	core/deps/vixl/aarch64/macro-assembler-aarch64.cc
+    	core/deps/vixl/aarch64/macro-assembler-aarch64.h
+    	core/deps/vixl/aarch64/operands-aarch64.cc
+    	core/deps/vixl/aarch64/operands-aarch64.h
+    	core/deps/vixl/aarch64/pointer-auth-aarch64.cc
+    	core/deps/vixl/aarch64/simulator-aarch64.cc
+    	core/deps/vixl/aarch64/simulator-aarch64.h
+    	core/deps/vixl/aarch64/simulator-constants-aarch64.h
+    	core/deps/vixl/assembler-base-vixl.h
+    	core/deps/vixl/code-buffer-vixl.cc
+    	core/deps/vixl/code-buffer-vixl.h
+    	core/deps/vixl/code-generation-scopes-vixl.h
+    	core/deps/vixl/compiler-intrinsics-vixl.cc
+    	core/deps/vixl/compiler-intrinsics-vixl.h
+    	core/deps/vixl/cpu-features.cc
+    	core/deps/vixl/cpu-features.h
+    	core/deps/vixl/globals-vixl.h
+    	core/deps/vixl/invalset-vixl.h
+    	core/deps/vixl/macro-assembler-interface.h
+    	core/deps/vixl/platform-vixl.h
+    	core/deps/vixl/pool-manager.h
+    	core/deps/vixl/pool-manager-impl.h
+    	core/deps/vixl/utils-vixl.cc
+    	core/deps/vixl/utils-vixl.h)
     target_sources(${PROJECT_NAME} PRIVATE core/rec-ARM64/rec_arm64.cpp core/rec-ARM64/arm64_regalloc.h)
 elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "i686.*|i386.*|x86.*|amd64.*|x86_64.*|AMD64.*")
+    add_subdirectory(core/deps/xbyak)
+    target_link_libraries(${PROJECT_NAME} PRIVATE xbyak::xbyak)
     if(CMAKE_SIZEOF_VOID_P EQUAL 4)
-        target_sources(${PROJECT_NAME} PRIVATE core/rec-x86/rec_x86_driver.cpp core/rec-x86/rec_x86_il.cpp core/rec-x86/rec_x86_asm.cpp core/rec-x86/rec_x86_ngen.h)
-        if(UNIX AND NOT APPLE)
-            target_sources(${PROJECT_NAME} PRIVATE core/rec-x86/rec_lin86_asm.S)
-        endif()
+    	target_sources(${PROJECT_NAME} PRIVATE
+    		core/rec-x64/xbyak_base.h
+    		core/rec-x86/rec_x86.h
+    		core/rec-x86/x86_regalloc.h
+    		core/rec-x86/rec_x86.cpp
+    		core/rec-x86/x86_ops.cpp)
     elseif(CMAKE_SIZEOF_VOID_P EQUAL 8)
-        target_sources(${PROJECT_NAME} PRIVATE core/rec-x64/rec_x64.cpp core/rec-x64/x64_regalloc.h)
-        if(MSVC)
-            target_sources(${PROJECT_NAME} PRIVATE core/rec-x64/msvc.asm)
-        else()
-            set_source_files_properties(core/rec-x64/rec_x64.cpp PROPERTIES COMPILE_FLAGS -fno-operator-names)
-            set_source_files_properties(core/hw/aica/dsp_x64.cpp PROPERTIES COMPILE_FLAGS -fno-operator-names)
-        endif()
+        target_sources(${PROJECT_NAME} PRIVATE
+        	core/rec-x64/xbyak_base.h
+        	core/rec-x64/rec_x64.cpp
+        	core/rec-x64/x64_regalloc.h)
     endif()
+else()
+    message(FATAL_ERROR "Unknown target processor: ${CMAKE_SYSTEM_PROCESSOR}")
 endif()
 
 if(ANDROID)
     target_compile_definitions(${PROJECT_NAME} PRIVATE GLES GLES3)
 
     target_sources(${PROJECT_NAME} PRIVATE
-            shell/android-studio/reicast/src/main/jni/src/Android.cpp
-            shell/android-studio/reicast/src/main/jni/src/utils.cpp)
+            shell/android-studio/flycast/src/main/jni/src/Android.cpp
+            shell/android-studio/flycast/src/main/jni/src/utils.cpp)
 
     target_link_libraries(${PROJECT_NAME} PRIVATE android EGL GLESv2 log)
 elseif(APPLE)
@@ -878,35 +905,51 @@ elseif(APPLE)
             shell/apple/emulator-osx/emulator-osx/osx_gamepad.h
             shell/apple/emulator-osx/emulator-osx/osx_keyboard.h)
 
+	set(XIB shell/apple/emulator-osx/emulator-osx/Base.lproj/MainMenu.xib)
+	set(ASSETS shell/apple/emulator-osx/emulator-osx/Images.xcassets)
+	target_sources(${PROJECT_NAME} PRIVATE ${XIB} ${ASSETS})
+	source_group("Resources" FILES ${XIB} ${ASSETS})
+	set_source_files_properties(${ASSETS} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
+
     set_target_properties(${PROJECT_NAME} PROPERTIES
+        OUTPUT_NAME "Flycast"
+        MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/shell/cmake/MacOSXBundleInfo.plist.in
         MACOSX_BUNDLE_EXECUTABLE_NAME "Flycast"
         MACOSX_BUNDLE_INFO_STRING ""
         MACOSX_BUNDLE_ICON_FILE "AppIcon"
-        MACOSX_BUNDLE_GUI_IDENTIFIER "com.reicast.Flycast"
+        MACOSX_BUNDLE_GUI_IDENTIFIER "com.flyinghead.Flycast"
         MACOSX_BUNDLE_LONG_VERSION_STRING ""
         MACOSX_BUNDLE_BUNDLE_NAME "Flycast"
         MACOSX_BUNDLE_SHORT_VERSION_STRING "1.0"
         MACOSX_BUNDLE_BUNDLE_VERSION "1"
-        MACOSX_BUNDLE_COPYRIGHT "Copyright © 2019 reicast contributors. All rights reserved."
+        MACOSX_BUNDLE_COPYRIGHT "Copyright © 2019 Flycast contributors. All rights reserved."
         XCODE_ATTRIBUTE_SWIFT_OBJC_BRIDGING_HEADER "shell/apple/emulator-osx/emulator-osx/emulator-osx-Bridging-Header.h"
+		RESOURCE "${XIB}"
+		XCODE_ATTRIBUTE_ASSETCATALOG_COMPILER_APPICON_NAME "AppIcon"
+        BUILD_WITH_INSTALL_RPATH TRUE
+        INSTALL_RPATH "@loader_path/../Frameworks"
     )
 
     find_library(AUDIO_UNIT_LIBRARY AudioUnit)
     find_library(FOUNDATION_LIBRARY Foundation)
+    find_library(AUDIO_TOOLBOX_LIBRARY AudioToolbox)
 
-    target_link_libraries(${PROJECT_NAME} PRIVATE ${AUDIO_UNIT_LIBRARY} ${FOUNDATION_LIBRARY})
+    target_link_libraries(${PROJECT_NAME} PRIVATE ${AUDIO_UNIT_LIBRARY} ${FOUNDATION_LIBRARY} ${AUDIO_TOOLBOX_LIBRARY})
 elseif(UNIX)
     if(NOT BUILD_TESTING)
         target_sources(${PROJECT_NAME} PRIVATE
                 core/linux-dist/main.cpp)
     endif()
 elseif(WIN32)
-    target_sources(${PROJECT_NAME} PRIVATE
+    if(NOT BUILD_TESTING)
+        target_sources(${PROJECT_NAME} PRIVATE
             core/windows/win_keyboard.h
-            core/windows/win_vmem.cpp
             core/windows/winmain.cpp
-            core/windows/xinput_gamepad.h
-            shell/windows/reicast.rc)
+            core/windows/xinput_gamepad.h)
+    endif()
+    target_sources(${PROJECT_NAME} PRIVATE
+            core/windows/win_vmem.cpp
+            shell/windows/flycast.rc)
 
     target_link_libraries(${PROJECT_NAME} PRIVATE dsound opengl32 winmm ws2_32 wsock32 xinput9_1_0)
 endif()
@@ -919,5 +962,7 @@ if(BUILD_TESTING)
     target_sources(${PROJECT_NAME} PRIVATE
             tests/src/div32_test.cpp
             tests/src/test_stubs.cpp
-            tests/src/serialize_test.cpp)
+            tests/src/serialize_test.cpp
+            tests/src/AicaArmTest.cpp
+            tests/src/Sh4InterpreterTest.cpp)
 endif()
