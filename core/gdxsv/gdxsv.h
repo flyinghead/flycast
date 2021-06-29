@@ -57,7 +57,6 @@ private:
     std::atomic<bool> enabled;
     std::atomic<int> disk;
     std::atomic<u8> maxlag;
-    std::atomic<bool> enable_widescreen_patch;
 
     std::string server;
     std::string loginkey;

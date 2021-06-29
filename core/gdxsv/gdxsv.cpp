@@ -81,14 +81,6 @@ void Gdxsv::Reset() {
     if (disk_num == "1") disk = 1;
     if (disk_num == "2") disk = 2;
 
-    if (config::WidescreenGameHacks.get()) {
-        if (disk == 2) { // disk2 only supported now
-            enable_widescreen_patch = true;
-            gui_display_notification("Widescreen gdxsv cheat activated", 1000);
-            config::ScreenStretching.override(134);	// 4:3 -> 16:9
-        }
-    }
-
     NOTICE_LOG(COMMON, "gdxsv disk:%d server:%s loginkey:%s maxlag:%d", (int) disk, server.c_str(), loginkey.c_str(),
                (int) maxlag);
 }
@@ -821,11 +813,19 @@ void Gdxsv::WritePatchDisk2() {
     WriteMem16_nommu(0x0c11df08, hp_offset);
     WriteMem16_nommu(0x0c11e01a, hp_offset);
 
-    if (enable_widescreen_patch) {
-        u32 ratio = 0x3Faaaaab; // default 4/3
+    // Dirty widescreen cheat
+    if (config::WidescreenGameHacks.get()) {
+        u32 ratio = 0x3faaaaab; // default 4/3
         if (ReadMem8_nommu(0x0c3d16d4) == 2) { // In main game part
             // Changing this value outside the game part will break UI layout.
-            ratio = 0x3fe4b17e; // wide 4/3 * 1.34
+            // ratio = 0x3fe4b17e; // wide 4/3 * 1.34
+            // config::ScreenStretching.override(134);
+
+            // Use a little wider than 16/9 because of a glitch at the edges of the screen.
+            ratio = 0x40155555;
+            config::ScreenStretching.override(175);
+        } else {
+            config::ScreenStretching.override(100);
         }
         WriteMem32_nommu(0x0c1e7948, ratio);
         WriteMem32_nommu(0x0c1e7958, ratio);
