@@ -501,6 +501,8 @@ static void dc_start_game(const char *path)
 	config::Settings::instance().reset();
 	dc_reset(true);
 	config::Settings::instance().load(false);
+
+	GamepadDevice::load_system_mappings();
 	
 	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
 	{
