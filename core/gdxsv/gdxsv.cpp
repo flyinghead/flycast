@@ -38,7 +38,7 @@ void Gdxsv::Reset() {
     if (config::ContentPath.get().empty()) {
         config::ContentPath.get().push_back("./");
     }
-    
+
     auto game_id = std::string(ip_meta.product_number, sizeof(ip_meta.product_number));
     if (game_id != "T13306M   ") {
         enabled = false;
@@ -74,6 +74,7 @@ void Gdxsv::Reset() {
     std::string disk_num(ip_meta.disk_num, 1);
     if (disk_num == "1") disk = 1;
     if (disk_num == "2") disk = 2;
+
     NOTICE_LOG(COMMON, "gdxsv disk:%d server:%s loginkey:%s maxlag:%d", (int) disk, server.c_str(), loginkey.c_str(),
                (int) maxlag);
 }
@@ -726,7 +727,6 @@ void Gdxsv::WritePatchDisk1() {
         }
     }
 
-
     // Ally HP
     u16 hp_offset = 0x0180;
     if (InGame()) {
@@ -806,6 +806,26 @@ void Gdxsv::WritePatchDisk2() {
     WriteMem16_nommu(0x0c11ddd6, hp_offset);
     WriteMem16_nommu(0x0c11df08, hp_offset);
     WriteMem16_nommu(0x0c11e01a, hp_offset);
+
+    // Dirty widescreen cheat
+    if (config::WidescreenGameHacks.get()) {
+        u32 ratio = 0x3faaaaab; // default 4/3
+        if (ReadMem8_nommu(0x0c3d16d4) == 2) { // In main game part
+            // Changing this value outside the game part will break UI layout.
+            // ratio = 0x3fe4b17e; // wide 4/3 * 1.34
+            // config::ScreenStretching.override(134);
+
+            // Use a little wider than 16/9 because of a glitch at the edges of the screen.
+            ratio = 0x40155555;
+            config::ScreenStretching.override(175);
+        } else {
+            config::ScreenStretching.override(100);
+        }
+        WriteMem32_nommu(0x0c1e7948, ratio);
+        WriteMem32_nommu(0x0c1e7958, ratio);
+        WriteMem32_nommu(0x0c1e7968, ratio);
+        WriteMem32_nommu(0x0c1e7978, ratio);
+    }
 }
 
 void Gdxsv::CloseUdpClientWithReason(const char *reason) {
