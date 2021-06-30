@@ -744,6 +744,9 @@ void Gdxsv::WritePatchDisk1() {
     WriteMem16_nommu(0x0c01d56e, hp_offset);
     WriteMem16_nommu(0x0c01d678, hp_offset);
     WriteMem16_nommu(0x0c01d89e, hp_offset);
+
+    // Disable soft reset
+    WriteMem8_nommu(0x0c2f6657, InGame() ? 1 : 0);
 }
 
 void Gdxsv::WritePatchDisk2() {
@@ -806,6 +809,9 @@ void Gdxsv::WritePatchDisk2() {
     WriteMem16_nommu(0x0c11ddd6, hp_offset);
     WriteMem16_nommu(0x0c11df08, hp_offset);
     WriteMem16_nommu(0x0c11e01a, hp_offset);
+
+    // Disable soft reset
+    WriteMem8_nommu(0x0c391d97, InGame() ? 1 : 0);
 
     // Dirty widescreen cheat
     if (config::WidescreenGameHacks.get()) {
