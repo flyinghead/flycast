@@ -461,7 +461,8 @@ void RenderFramebuffer()
 GLuint init_output_framebuffer(int width, int height)
 {
 	if (width != gl.ofbo.width || height != gl.ofbo.height
-		|| (gl.ofbo.tex == 0) == config::Rotate90)
+			// if the rotate90 setting has changed
+		|| (gl.gl_major >= 3 && (gl.ofbo.tex == 0) == config::Rotate90))
 	{
 		free_output_framebuffer();
 		gl.ofbo.width = width;

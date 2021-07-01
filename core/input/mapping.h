@@ -50,6 +50,7 @@ public:
 		else
 			return EMU_BTN_NONE;
 	}
+	void clear_button(u32 port, DreamcastKey id, u32 code);
 	void set_button(u32 port, DreamcastKey id, u32 code);
 	void set_button(DreamcastKey id, u32 code) { set_button(0, id, code); }
 	u32 get_button_code(u32 port, DreamcastKey key);
@@ -71,16 +72,20 @@ public:
 			return false;
 	}
 	u32 get_axis_code(u32 port, DreamcastKey key);
+	void clear_axis(u32 port, DreamcastKey id, u32 code);
 	void set_axis(u32 port, DreamcastKey id, u32 code, bool inverted);
 	void set_axis(DreamcastKey id, u32 code, bool inverted) { set_axis(0, id, code, inverted); }
 
 	void load(FILE* fp);
 	bool save(const char *name);
 
+	void set_dirty();
 	bool is_dirty() const { return dirty; }
 
 	static std::shared_ptr<InputMapping> LoadMapping(const char *name);
 	static void SaveMapping(const char *name, const std::shared_ptr<InputMapping>& mapping);
+
+	void ClearMappings();
 
 protected:
 	bool dirty = false;

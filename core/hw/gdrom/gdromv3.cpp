@@ -1218,4 +1218,26 @@ void gdrom_reg_Reset(bool hard)
 	memcpy(GD_HardwareInfo.system_version, "Rev 6.43", sizeof(GD_HardwareInfo.system_version));
 	memcpy(GD_HardwareInfo.system_date, "990408", sizeof(GD_HardwareInfo.system_date));
 
+	gd_state = gds_waitcmd;
+	sns_asc = 0;
+	sns_ascq = 0;
+	sns_key = 0;
+	set_mode_offset = 0;
+	read_params = {};
+	packet_cmd = {};
+	read_buff = {};
+	pio_buff  = {};
+	ata_cmd  = {};
+	cdda = {};
+	gd_disk_type = NoDisk;
+
+	data_write_mode = 0;
+	DriveSel = 0;
+	Error = {};
+	IntReason = {};
+	Features = {};
+	SecCount = {};
+	SecNumber = {};
+	GDStatus = {};
+	ByteCount = {};
 }

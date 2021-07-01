@@ -1,4 +1,5 @@
-#define _WINSOCKAPI_    // stops windows.h including winsock.h
+#include <winsock2.h>
+
 #include "oslib/oslib.h"
 #include "oslib/audiostream.h"
 #include "imgread/common.h"
@@ -19,7 +20,6 @@
 #include "oslib/host_context.h"
 #include "../shell/windows/resource.h"
 
-#include <winsock2.h>
 #include <ws2ipdef.h>
 #include <iphlpapi.h>
 #include <netioapi.h>
@@ -431,6 +431,11 @@ void os_CreateWindow()
 	CreateMainWindow();
 	InitRenderApi();
 #endif	// !USE_SDL
+	WSADATA wsaData;
+	if (WSAStartup(MAKEWORD(2, 0), &wsaData) != 0) {
+		ERROR_LOG(COMMON, "WSAStartup failed. errno=%d", WSAGetLastError());
+		return;
+	}
 }
 
 void DestroyMainWindow()
@@ -446,6 +451,7 @@ void DestroyMainWindow()
 		DestroyWindow(hWnd);
 		hWnd = NULL;
 	}
+	WSACleanup();
 }
 
 void* libPvr_GetRenderTarget()
