@@ -7,6 +7,7 @@
 #include <xxhash.h>
 
 #include "packet.pb.h"
+#include "lbs_message.h"
 #include "gdx_queue.h"
 #include "version.h"
 #include "rend/gui.h"
@@ -33,6 +34,7 @@ bool Gdxsv::Enabled() const {
 void Gdxsv::Reset() {
     tcp_client.Close();
     CloseUdpClientWithReason("cl_hard_reset");
+    patch_list.clear_patches();
 
     // Automatically add ContentPath if it is empty.
     if (config::ContentPath.get().empty()) {
@@ -205,6 +207,7 @@ void Gdxsv::SyncNetwork(bool write) {
             if (gdx_rpc.request == GDXRPC_TCP_OPEN) {
                 recv_buf_mtx.lock();
                 recv_buf.clear();
+                lbs_msg_reader.Clear();
                 recv_buf_mtx.unlock();
 
                 send_buf_mtx.lock();
@@ -245,6 +248,7 @@ void Gdxsv::SyncNetwork(bool write) {
                         start_udp_session = true;
                         recv_buf_mtx.lock();
                         recv_buf.clear();
+                        lbs_msg_reader.Clear();
                         recv_buf_mtx.unlock();
                     } else {
                         WARN_LOG(COMMON, "Failed to connect with UDP %s:%d", host.c_str(), port);
@@ -258,6 +262,7 @@ void Gdxsv::SyncNetwork(bool write) {
 
                             recv_buf_mtx.lock();
                             recv_buf.clear();
+                            lbs_msg_reader.Clear();
                             recv_buf_mtx.unlock();
                         } else {
                             WARN_LOG(COMMON, "Failed to connect with TCP %s:%d", host.c_str(), port);
@@ -281,6 +286,7 @@ void Gdxsv::SyncNetwork(bool write) {
 
                 recv_buf_mtx.lock();
                 recv_buf.clear();
+                lbs_msg_reader.Clear();
                 recv_buf_mtx.unlock();
 
                 send_buf_mtx.lock();
@@ -302,6 +308,8 @@ void Gdxsv::SyncNetwork(bool write) {
         int n = recv_buf.size();
         recv_buf_mtx.unlock();
         if (0 < n) {
+            recv_buf_mtx.lock();
+
             gdx_queue q;
             u32 gdx_rxq_addr = symbols["gdx_rxq"];
             u32 buf_addr = gdx_rxq_addr + 4;
@@ -309,15 +317,34 @@ void Gdxsv::SyncNetwork(bool write) {
             q.tail = ReadMem16_nommu(gdx_rxq_addr + 2);
 
             u8 buf[GDX_QUEUE_SIZE];
-            recv_buf_mtx.lock();
             n = std::min<int>(recv_buf.size(), gdx_queue_avail(&q));
             for (int i = 0; i < n; ++i) {
                 WriteMem8_nommu(buf_addr + q.tail, recv_buf.front());
                 recv_buf.pop_front();
                 gdx_queue_push(&q, 0);
             }
-            recv_buf_mtx.unlock();
             WriteMem16_nommu(gdx_rxq_addr + 2, q.tail);
+
+            LbsMessage lbs_msg;
+            while (lbs_msg_reader.Read(lbs_msg)) {
+                if (lbs_msg.command == LbsMessage::lbsReadyBattle) {
+                    // Reset current patches for no-patched game
+                    RestoreOnlinePatch();
+                    patch_list.clear_patches();
+                }
+                if (lbs_msg.command == LbsMessage::lbsGamePatch) {
+                    // Reset current patches and update patch_list
+                    RestoreOnlinePatch();
+                    patch_list.clear_patches();
+                    if (patch_list.ParseFromArray(lbs_msg.body.data(), lbs_msg.body.size())) {
+                        ApplyOnlinePatch(true);
+                    } else {
+                        ERROR_LOG(COMMON, "patch_list deserialize error");
+                    }
+                }
+            }
+
+            recv_buf_mtx.unlock();
         }
     }
 }
@@ -626,6 +653,7 @@ void Gdxsv::UpdateNetwork() {
                     for (int i = 0; i < n; ++i) {
                         recv_buf.push_back(buf[i]);
                     }
+                    lbs_msg_reader.Write((char *) buf, n);
                     recv_buf_mtx.unlock();
                     updated = true;
                 }
@@ -690,6 +718,49 @@ void Gdxsv::WritePatch() {
     }
 }
 
+void Gdxsv::ApplyOnlinePatch(bool first_time) {
+    for (int i = 0; i < patch_list.patches_size(); ++i) {
+        auto &patch = patch_list.patches(i);
+        if (patch.write_once() && !first_time) {
+            continue;
+        }
+        if (first_time) {
+            NOTICE_LOG(COMMON, "patch apply: %s", patch.name().c_str());
+        }
+        for (int j = 0; j < patch.codes_size(); ++j) {
+            auto &code = patch.codes(j);
+            if (code.size() == 8) {
+                WriteMem8_nommu(code.address(), (u8) (code.changed() & 0xff));
+            }
+            if (code.size() == 16) {
+                WriteMem16_nommu(code.address(), (u16) (code.changed() & 0xffff));
+            }
+            if (code.size() == 32) {
+                WriteMem32_nommu(code.address(), code.changed());
+            }
+        }
+    }
+}
+
+void Gdxsv::RestoreOnlinePatch() {
+    for (int i = 0; i < patch_list.patches_size(); ++i) {
+        auto &patch = patch_list.patches(i);
+        NOTICE_LOG(COMMON, "patch restore: %s", patch.name().c_str());
+        for (int j = 0; j < patch.codes_size(); ++j) {
+            auto &code = patch.codes(j);
+            if (code.size() == 8) {
+                WriteMem8_nommu(code.address(), (u8) (code.original() & 0xff));
+            }
+            if (code.size() == 16) {
+                WriteMem16_nommu(code.address(), (u16) (code.original() & 0xffff));
+            }
+            if (code.size() == 32) {
+                WriteMem32_nommu(code.address(), code.original());
+            }
+        }
+    }
+}
+
 void Gdxsv::WritePatchDisk1() {
     const u32 offset = 0x8C000000 + 0x00010000;
 
@@ -747,6 +818,9 @@ void Gdxsv::WritePatchDisk1() {
 
     // Disable soft reset
     WriteMem8_nommu(0x0c2f6657, InGame() ? 1 : 0);
+
+    // Online patch
+    ApplyOnlinePatch(false);
 }
 
 void Gdxsv::WritePatchDisk2() {
@@ -812,6 +886,9 @@ void Gdxsv::WritePatchDisk2() {
 
     // Disable soft reset
     WriteMem8_nommu(0x0c391d97, InGame() ? 1 : 0);
+
+    // Online patch
+    ApplyOnlinePatch(false);
 
     // Dirty widescreen cheat
     if (config::WidescreenGameHacks.get()) {

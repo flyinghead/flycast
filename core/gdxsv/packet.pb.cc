@@ -227,7 +227,8 @@ const char descriptor_table_protodef_packet_2eproto[] PROTOBUF_SECTION_VARIABLE(
   "\0132\024.proto.BattleMessage\022#\n\010fin_data\030\016 \001("
   "\0132\021.proto.FinMessage*Q\n\013MessageType\022\010\n\004N"
   "one\020\000\022\017\n\013HelloServer\020\001\022\010\n\004Ping\020\002\022\010\n\004Pong"
-  "\020\003\022\n\n\006Battle\020\004\022\007\n\003Fin\020\005b\006proto3"
+  "\020\003\022\n\n\006Battle\020\004\022\007\n\003Fin\020\005B\rZ\013gdxsv/protob\006"
+  "proto3"
   ;
 static const ::PROTOBUF_NAMESPACE_ID::internal::DescriptorTable*const descriptor_table_packet_2eproto_deps[1] = {
 };
@@ -241,7 +242,7 @@ static ::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase*const descriptor_table_pac
 };
 static ::PROTOBUF_NAMESPACE_ID::internal::once_flag descriptor_table_packet_2eproto_once;
 const ::PROTOBUF_NAMESPACE_ID::internal::DescriptorTable descriptor_table_packet_2eproto = {
-  false, false, descriptor_table_protodef_packet_2eproto, "packet.proto", 711,
+  false, false, descriptor_table_protodef_packet_2eproto, "packet.proto", 726,
   &descriptor_table_packet_2eproto_once, descriptor_table_packet_2eproto_sccs, descriptor_table_packet_2eproto_deps, 6, 0,
   schemas, file_default_instances, TableStruct_packet_2eproto::offsets,
   file_level_metadata_packet_2eproto, 6, file_level_enum_descriptors_packet_2eproto, file_level_service_descriptors_packet_2eproto,
