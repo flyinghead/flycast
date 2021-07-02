@@ -819,8 +819,9 @@ void Gdxsv::WritePatchDisk2() {
         u32 ratio = 0x3faaaaab; // default 4/3
         int stretching = 100;
         bool update = false;
-        if (ReadMem8_nommu(0x0c3d16d4) == 2) { // In main game part
+        if (ReadMem8_nommu(0x0c3d16d4) == 2 && ReadMem8_nommu(0x0c3d16d5) == 7) { // In main game part
             // Changing this value outside the game part will break UI layout.
+            // For 0x0c3d16d5: 4=load briefing, 5=briefing, 7=battle, 0xd=rebattle/end selection
             widescreen_hacked = true;
             if (original_widescreen_hacked != widescreen_hacked){
                 // ratio = 0x3fe4b17e; // wide 4/3 * 1.34
