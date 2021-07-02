@@ -71,7 +71,6 @@ private:
     std::map<std::string, u32> symbols;
 
     proto::GamePatchList patch_list;
-    LbsMessageReader lbs_msg_reader;
 
     std::atomic<bool> net_terminate;
     std::atomic<bool> start_udp_session;
@@ -86,6 +85,9 @@ private:
 
     std::atomic<bool> gcp_ping_test_finished;
     std::map<std::string, int> gcp_ping_test_result;
+
+    LbsMessage lbs_msg;
+    LbsMessageReader lbs_msg_reader;
 
     void handleReleaseJSON(const std::string &json);
 

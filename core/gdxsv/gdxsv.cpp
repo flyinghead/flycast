@@ -325,7 +325,6 @@ void Gdxsv::SyncNetwork(bool write) {
             }
             WriteMem16_nommu(gdx_rxq_addr + 2, q.tail);
 
-            LbsMessage lbs_msg;
             while (lbs_msg_reader.Read(lbs_msg)) {
                 if (lbs_msg.command == LbsMessage::lbsReadyBattle) {
                     // Reset current patches for no-patched game
