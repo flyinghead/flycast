@@ -815,15 +815,13 @@ void Gdxsv::WritePatchDisk2() {
 
     // Dirty widescreen cheat
     if (config::WidescreenGameHacks.get()) {
-        bool original_widescreen_hacked = widescreen_hacked;
         u32 ratio = 0x3faaaaab; // default 4/3
         int stretching = 100;
         bool update = false;
         if (ReadMem8_nommu(0x0c3d16d4) == 2 && ReadMem8_nommu(0x0c3d16d5) == 7) { // In main game part
             // Changing this value outside the game part will break UI layout.
             // For 0x0c3d16d5: 4=load briefing, 5=briefing, 7=battle, 0xd=rebattle/end selection
-            widescreen_hacked = true;
-            if (original_widescreen_hacked != widescreen_hacked){
+            if (config::ScreenStretching == 100){
                 // ratio = 0x3fe4b17e; // wide 4/3 * 1.34
                 // stretching = 134;
                 // Use a little wider than 16/9 because of a glitch at the edges of the screen.
@@ -832,12 +830,11 @@ void Gdxsv::WritePatchDisk2() {
                 update = true;
             }
         } else {
-            widescreen_hacked = false;
-            if (original_widescreen_hacked != widescreen_hacked){
+            if (config::ScreenStretching != 100) {
                 update = true;
             }
         }
-        if(update){
+        if (update) {
             config::ScreenStretching.override(stretching);
             WriteMem32_nommu(0x0c1e7948, ratio);
             WriteMem32_nommu(0x0c1e7958, ratio);
