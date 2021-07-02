@@ -815,22 +815,34 @@ void Gdxsv::WritePatchDisk2() {
 
     // Dirty widescreen cheat
     if (config::WidescreenGameHacks.get()) {
+        bool original_widescreen_hacked = widescreen_hacked;
         u32 ratio = 0x3faaaaab; // default 4/3
+        int stretching = 100;
+        bool update = false;
         if (ReadMem8_nommu(0x0c3d16d4) == 2) { // In main game part
             // Changing this value outside the game part will break UI layout.
-            // ratio = 0x3fe4b17e; // wide 4/3 * 1.34
-            // config::ScreenStretching.override(134);
-
-            // Use a little wider than 16/9 because of a glitch at the edges of the screen.
-            ratio = 0x40155555;
-            config::ScreenStretching.override(175);
+            widescreen_hacked = true;
+            if (original_widescreen_hacked != widescreen_hacked){
+                // ratio = 0x3fe4b17e; // wide 4/3 * 1.34
+                // stretching = 134;
+                // Use a little wider than 16/9 because of a glitch at the edges of the screen.
+                ratio = 0x40155555;
+                stretching = 175;
+                update = true;
+            }
         } else {
-            config::ScreenStretching.override(100);
+            widescreen_hacked = false;
+            if (original_widescreen_hacked != widescreen_hacked){
+                update = true;
+            }
         }
-        WriteMem32_nommu(0x0c1e7948, ratio);
-        WriteMem32_nommu(0x0c1e7958, ratio);
-        WriteMem32_nommu(0x0c1e7968, ratio);
-        WriteMem32_nommu(0x0c1e7978, ratio);
+        if(update){
+            config::ScreenStretching.override(stretching);
+            WriteMem32_nommu(0x0c1e7948, ratio);
+            WriteMem32_nommu(0x0c1e7958, ratio);
+            WriteMem32_nommu(0x0c1e7968, ratio);
+            WriteMem32_nommu(0x0c1e7978, ratio);
+        }
     }
 }
 
