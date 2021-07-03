@@ -9,4 +9,8 @@ SECTIONS
         *(gdx.func*)
         *(.rodata*)
     }
+    . = 0x0C500000;
+    gdx.cheat ALIGN(16) : {
+        *(gdx.cheat*)
+    }
 }
