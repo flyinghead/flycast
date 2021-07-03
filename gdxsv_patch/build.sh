@@ -27,3 +27,9 @@ sh4-linux-gnu-objcopy \
     --only-section gdx.data --only-section gdx.func \
     bin/main.o bin/gdxsv_patch.o
 sh4-linux-gnu-objdump -h -D bin/gdxsv_patch.o > bin/gdxsv_patch.asm
+
+sh4-linux-gnu-gcc-9 -O2 -fno-stack-protector src/cheat.c -c -o bin/cheat.x
+sh4-linux-gnu-ld -T src/ld.script bin/cheat.x -o bin/cheat.o
+sh4-linux-gnu-objdump -h bin/cheat.o
+sh4-linux-gnu-objcopy --only-section gdx.cheat bin/cheat.o bin/gdxsv_cheat.o
+sh4-linux-gnu-objdump -h -D bin/gdxsv_cheat.o > bin/gdxsv_cheat.asm
