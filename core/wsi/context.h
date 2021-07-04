@@ -20,6 +20,7 @@
 */
 #pragma once
 #include "gl_context.h"
+#include "rend/dx9/dxcontext.h"
 #ifdef USE_VULKAN
 #include "rend/vulkan/vulkan_context.h"
 

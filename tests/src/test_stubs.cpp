@@ -12,10 +12,12 @@ void os_DebugBreak()
 #endif
 }
 
-void* libPvr_GetRenderTarget()
+#ifdef _WIN32
+HWND getNativeHwnd()
 {
-	return nullptr;
+	return (HWND)NULL;
 }
+#endif
 
 void os_SetupInput()
 {
@@ -48,8 +50,5 @@ double os_GetSeconds()
 	QueryPerformanceCounter(&time_now);
 	static LARGE_INTEGER time_now_base = time_now;
 	return (time_now.QuadPart - time_now_base.QuadPart)*qpfd;
-}
-void DestroyMainWindow()
-{
 }
 #endif

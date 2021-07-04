@@ -2,14 +2,12 @@
 #include "audiostream.h"
 #include <initguid.h>
 #include <dsound.h>
-#ifdef USE_SDL
-#include "sdl/sdl.h"
-#endif
 #include <vector>
 #include <atomic>
 #include <thread>
 #include "stdclass.h"
 
+HWND getNativeHwnd();
 #define verifyc(x) verify(!FAILED(x))
 
 static IDirectSound8* dsound;
@@ -65,12 +63,8 @@ static void audioThreadMain()
 static void directsound_init()
 {
 	verifyc(DirectSoundCreate8(NULL, &dsound, NULL));
+	verifyc(dsound->SetCooperativeLevel(getNativeHwnd(), DSSCL_PRIORITY));
 
-#ifdef USE_SDL
-	verifyc(dsound->SetCooperativeLevel(sdl_get_native_hwnd(), DSSCL_PRIORITY));
-#else
-	verifyc(dsound->SetCooperativeLevel((HWND)libPvr_GetRenderTarget(), DSSCL_PRIORITY));
-#endif
 	// Set up WAV format structure.
 	WAVEFORMATEX wfx;
 	memset(&wfx, 0, sizeof(WAVEFORMATEX));

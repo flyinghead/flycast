@@ -96,7 +96,7 @@ protected:
 
 	vk::Rect2D baseScissor;
 	vk::Rect2D currentScissor;
-	TransformMatrix<false> matrices;
+	TransformMatrix<COORD_VULKAN> matrices;
 	CommandPool *commandPool = nullptr;
 };
 

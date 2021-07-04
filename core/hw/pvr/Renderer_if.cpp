@@ -247,6 +247,7 @@ Renderer* rend_GL4();
 Renderer* rend_norend();
 Renderer* rend_Vulkan();
 Renderer* rend_OITVulkan();
+Renderer* rend_DirectX9();
 
 static void rend_create_renderer()
 {
@@ -271,6 +272,11 @@ static void rend_create_renderer()
 		break;
 	case RenderType::Vulkan_OIT:
 		renderer = rend_OITVulkan();
+		break;
+#endif
+#ifdef _WIN32
+	case RenderType::DirectX9:
+		renderer = rend_DirectX9();
 		break;
 #endif
 	}

@@ -123,9 +123,7 @@ if(ALSA_FOUND AND NOT ANDROID)
 endif()
 
 if(WIN32)
-	# Patch and build SDL
-	execute_process(COMMAND git apply -p1 ${CMAKE_CURRENT_SOURCE_DIR}/core/deps/patches/SDL.patch
-		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/core/deps/SDL) 
+	# Build SDL
 	file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/core/deps/SDL")
 	if(CMAKE_GENERATOR MATCHES "Visual Studio")
 		set(SDL_CMAKE_ARCH_ARG -A ${CMAKE_GENERATOR_PLATFORM})
@@ -576,7 +574,6 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/input/gamepad.h
         core/input/gamepad_device.cpp
         core/input/gamepad_device.h
-        core/input/keyboard_device.cpp
         core/input/keyboard_device.h
         core/input/mapping.cpp
         core/input/mapping.h)
@@ -790,6 +787,32 @@ if(USE_VULKAN AND NOT APPLE)
             core/rend/vulkan/vulkan_renderer.cpp)
 endif()
 
+if(WIN32)
+	target_sources(${PROJECT_NAME} PRIVATE
+		core/rend/dx9/comptr.h
+		core/rend/dx9/d3d_overlay.h
+		core/rend/dx9/d3d_overlay.cpp
+		core/rend/dx9/d3d_renderer.h
+		core/rend/dx9/d3d_renderer.cpp
+		core/rend/dx9/d3d_shaders.h
+		core/rend/dx9/d3d_shaders.cpp
+		core/rend/dx9/d3d_texture.h
+		core/rend/dx9/d3d_texture.cpp
+		core/rend/dx9/dxcontext.h
+		core/rend/dx9/dxcontext.cpp
+		core/rend/dx9/imgui_impl_dx9.h
+		core/rend/dx9/imgui_impl_dx9.cpp)
+	if(NOT MINGW)
+		target_include_directories(${PROJECT_NAME} PRIVATE "$ENV{DXSDK_DIR}/Include")
+		if (CMAKE_SIZEOF_VOID_P EQUAL 8)
+			target_link_directories(${PROJECT_NAME} PRIVATE "$ENV{DXSDK_DIR}/Lib/x64")
+		else()
+			target_link_directories(${PROJECT_NAME} PRIVATE "$ENV{DXSDK_DIR}/Lib/x86")
+		endif()
+	endif()
+	target_link_libraries(${PROJECT_NAME} PRIVATE d3d9 d3dx9)
+endif()
+
 if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm.*|ARM.*)")
 	target_include_directories(${PROJECT_NAME} PRIVATE core/deps/vixl)
     target_sources(${PROJECT_NAME} PRIVATE
@@ -943,6 +966,8 @@ elseif(UNIX)
 elseif(WIN32)
     if(NOT BUILD_TESTING)
         target_sources(${PROJECT_NAME} PRIVATE
+        	core/windows/rawinput.cpp
+        	core/windows/rawinput.h
             core/windows/win_keyboard.h
             core/windows/winmain.cpp
             core/windows/xinput_gamepad.h)

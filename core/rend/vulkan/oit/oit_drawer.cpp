@@ -36,23 +36,21 @@ void OITDrawer::DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool 
 	float trilinearAlpha = 1.f;
 	if (poly.tsp.FilterMode > 1 && poly.pcw.Texture && listType != ListType_Punch_Through && poly.tcw.MipMapped == 1)
 	{
-		trilinearAlpha = 0.25 * (poly.tsp.MipMapD & 0x3);
+		trilinearAlpha = 0.25f * (poly.tsp.MipMapD & 0x3);
 		if (poly.tsp.FilterMode == 2)
 			// Trilinear pass A
-			trilinearAlpha = 1.0 - trilinearAlpha;
+			trilinearAlpha = 1.f - trilinearAlpha;
 	}
 
 	bool twoVolumes = poly.tsp1.full != (u32)-1 || poly.tcw1.full != (u32)-1;
 
-	bool palette = BaseTextureCacheData::IsGpuHandledPaletted(poly.tsp, poly.tcw);
+	bool gpuPalette = poly.texture != nullptr ? poly.texture->gpuPalette : false;
+
 	float palette_index = 0.f;
-	if (palette)
-	{
-		if (poly.tcw.PixelFmt == PixelPal4)
-			palette_index = float(poly.tcw.PalSelect << 4) / 1023.f;
-		else
-			palette_index = float((poly.tcw.PalSelect >> 4) << 8) / 1023.f;
-	}
+	if (poly.tcw.PixelFmt == PixelPal4)
+		palette_index = float(poly.tcw.PalSelect << 4) / 1023.f;
+	else
+		palette_index = float((poly.tcw.PalSelect >> 4) << 8) / 1023.f;
 
 	OITDescriptorSets::PushConstants pushConstants = {
 			{
@@ -82,12 +80,12 @@ void OITDrawer::DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool 
 
 	bool needTexture = poly.pcw.Texture;
 	if (needTexture)
-		GetCurrentDescSet().SetTexture(poly.texid, poly.tsp, poly.texid1, poly.tsp1);
+		GetCurrentDescSet().SetTexture((Texture *)poly.texture, poly.tsp, (Texture *)poly.texture1, poly.tsp1);
 
-	vk::Pipeline pipeline = pipelineManager->GetPipeline(listType, autosort, poly, pass);
+	vk::Pipeline pipeline = pipelineManager->GetPipeline(listType, autosort, poly, pass, gpuPalette);
 	cmdBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline);
 	if (needTexture)
-		GetCurrentDescSet().BindPerPolyDescriptorSets(cmdBuffer, poly.texid, poly.tsp, poly.texid1, poly.tsp1);
+		GetCurrentDescSet().BindPerPolyDescriptorSets(cmdBuffer, (Texture *)poly.texture, poly.tsp, (Texture *)poly.texture1, poly.tsp1);
 
 	cmdBuffer.drawIndexed(count, 1, first, 0, 0);
 }
@@ -240,8 +238,8 @@ void OITDrawer::UploadMainBuffer(const OITDescriptorSets::VertexShaderUniforms& 
 	}
 	offsets.polyParamsSize = trPolyParams.size() * 4;
 	chunks.push_back(trPolyParams.data());
-	chunkSizes.push_back(offsets.polyParamsSize);
-	u32 totalSize = offsets.polyParamsOffset + offsets.polyParamsSize;
+	chunkSizes.push_back((u32)offsets.polyParamsSize);
+	u32 totalSize = (u32)(offsets.polyParamsOffset + offsets.polyParamsSize);
 
 	BufferData *buffer = GetMainBuffer(totalSize);
 	buffer->upload(chunks.size(), &chunkSizes[0], &chunks[0]);
@@ -278,9 +276,9 @@ bool OITDrawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 
 	// Update per-frame descriptor set and bind it
 	const vk::Buffer mainBuffer = GetMainBuffer(0)->buffer.get();
-	GetCurrentDescSet().UpdateUniforms(mainBuffer, offsets.vertexUniformOffset, offsets.fragmentUniformOffset,
-			fogTexture->GetImageView(), offsets.polyParamsOffset,
-			offsets.polyParamsSize, depthAttachments[0]->GetStencilView(),
+	GetCurrentDescSet().UpdateUniforms(mainBuffer, (u32)offsets.vertexUniformOffset, (u32)offsets.fragmentUniformOffset,
+			fogTexture->GetImageView(), (u32)offsets.polyParamsOffset,
+			(u32)offsets.polyParamsSize, depthAttachments[0]->GetStencilView(),
 			depthAttachments[0]->GetImageView(), paletteTexture->GetImageView());
 	GetCurrentDescSet().BindPerFrameDescriptorSets(cmdBuffer);
 	GetCurrentDescSet().UpdateColorInputDescSet(0, colorAttachments[0]->GetImageView());
@@ -691,7 +689,7 @@ vk::CommandBuffer OITScreenDrawer::NewFrame()
 	SetBaseScissor(viewport.extent);
 
 	commandBuffer.setScissor(0, baseScissor);
-	commandBuffer.setViewport(0, vk::Viewport(viewport.offset.x, viewport.offset.y, viewport.extent.width, viewport.extent.height, 1.0f, 0.0f));
+	commandBuffer.setViewport(0, vk::Viewport((float)viewport.offset.x, (float)viewport.offset.y, (float)viewport.extent.width, (float)viewport.extent.height, 1.0f, 0.0f));
 	currentCommandBuffer = commandBuffer;
 
 	return commandBuffer;

@@ -129,6 +129,8 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_screenDpi(JNIEnv *env
 
 extern int screen_width,screen_height;
 
+std::shared_ptr<AndroidMouse> mouse;
+
 float vjoy_pos[15][8];
 
 static bool game_started;
@@ -536,6 +538,9 @@ JNIEXPORT void JNICALL Java_com_reicast_emulator_periph_InputDeviceManager_init(
 {
     input_device_manager = env->NewGlobalRef(obj);
     input_device_manager_rumble = env->GetMethodID(env->GetObjectClass(obj), "rumble", "(IFFI)Z");
+    // FIXME Don't connect it by default or any screen touch will register as button A press
+    mouse = std::make_shared<AndroidMouse>(-1);
+    GamepadDevice::Register(mouse);
 }
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_periph_InputDeviceManager_joystickAdded(JNIEnv *env, jobject obj, jint id, jstring name, jint maple_port, jstring junique_id)
@@ -589,17 +594,10 @@ JNIEXPORT jboolean JNICALL Java_com_reicast_emulator_periph_InputDeviceManager_j
 
 JNIEXPORT void JNICALL Java_com_reicast_emulator_periph_InputDeviceManager_mouseEvent(JNIEnv *env, jobject obj, jint xpos, jint ypos, jint buttons)
 {
-	SetMousePosition(xpos, ypos, screen_width, screen_height);
-    mo_buttons[0] = 0xFFFF;
-    if (buttons & 1)	// Left
-    	mo_buttons[0] &= ~4;
-    if (buttons & 2)	// Right
-    	mo_buttons[0] &= ~2;
-    if (buttons & 4)	// Middle
-    	mo_buttons[0] &= ~8;
-    mouse_gamepad.gamepad_btn_input(1, (buttons & 1) != 0);
-    mouse_gamepad.gamepad_btn_input(2, (buttons & 2) != 0);
-    mouse_gamepad.gamepad_btn_input(4, (buttons & 4) != 0);
+	mouse->setAbsPos(xpos, ypos, screen_width, screen_height);
+	mouse->setButton(Mouse::LEFT_BUTTON, (buttons & 1) != 0);
+	mouse->setButton(Mouse::RIGHT_BUTTON, (buttons & 2) != 0);
+	mouse->setButton(Mouse::MIDDLE_BUTTON, (buttons & 4) != 0);
 }
 
 static jobject g_activity;

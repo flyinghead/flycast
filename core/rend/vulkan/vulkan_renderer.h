@@ -78,7 +78,7 @@ public:
 		framebufferTextures.clear();
 	}
 
-	u64 GetTexture(TSP tsp, TCW tcw) override
+	BaseTextureCacheData *GetTexture(TSP tsp, TCW tcw) override
 	{
 		Texture* tf = textureCache.getTextureCacheData(tsp, tcw);
 
@@ -107,7 +107,7 @@ public:
 		tf->SetCommandBuffer(nullptr);
 		textureCache.SetInFlight(tf);
 
-		return tf->GetIntId();
+		return tf;
 	}
 
 	bool Process(TA_context* ctx) override
@@ -200,7 +200,7 @@ public:
 				cmdBuffer.draw(4, 1, i, 0);
 			if (clear_screen)
 				GetContext()->EndFrame();
-		} catch (const InvalidVulkanContext& err) {
+		} catch (const InvalidVulkanContext&) {
 		}
 	}
 
@@ -283,8 +283,8 @@ protected:
 		pp->tsp.SrcInstr = 1;
 		pp->tsp1.full = (u32)-1;
 
-		pp->texid = (u64)reinterpret_cast<uintptr_t>(curTexture.get());
-		pp->texid1 = (u64)-1;
+		pp->texture = curTexture.get();
+		pp->texture1 = nullptr;
 		pp->tileclip = 0;
 
 		RenderPass *pass = ctx->rend.render_passes.Append(1);

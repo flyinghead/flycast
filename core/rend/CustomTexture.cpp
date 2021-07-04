@@ -182,50 +182,90 @@ void CustomTexture::DumpTexture(u32 hash, int w, int h, TextureType textype, voi
 
 	for (int y = 0; y < h; y++)
 	{
-		switch (textype)
+		if (!config::RendererType.isDirectX())
 		{
-		case TextureType::_4444:
-			for (int x = 0; x < w; x++)
+			switch (textype)
 			{
-				*dst++ = ((*src >> 12) & 0xF) << 4;
-				*dst++ = ((*src >> 8) & 0xF) << 4;
-				*dst++ = ((*src >> 4) & 0xF) << 4;
-				*dst++ = (*src & 0xF) << 4;
-				src++;
+			case TextureType::_4444:
+				for (int x = 0; x < w; x++)
+				{
+					*dst++ = ((*src >> 12) & 0xF) << 4;
+					*dst++ = ((*src >> 8) & 0xF) << 4;
+					*dst++ = ((*src >> 4) & 0xF) << 4;
+					*dst++ = (*src & 0xF) << 4;
+					src++;
+				}
+				break;
+			case TextureType::_565:
+				for (int x = 0; x < w; x++)
+				{
+					*(u32 *)dst = Unpacker565_32<RGBAPacker>::unpack(*src);
+					dst += 4;
+					src++;
+				}
+				break;
+			case TextureType::_5551:
+				for (int x = 0; x < w; x++)
+				{
+					*dst++ = ((*src >> 11) & 0x1F) << 3;
+					*dst++ = ((*src >> 6) & 0x1F) << 3;
+					*dst++ = ((*src >> 1) & 0x1F) << 3;
+					*dst++ = (*src & 1) ? 255 : 0;
+					src++;
+				}
+				break;
+			case TextureType::_8888:
+				memcpy(dst, src, w * 4);
+				dst += w * 4;
+				src += w * 2;
+				break;
+			default:
+				WARN_LOG(RENDERER, "dumpTexture: unsupported picture format %x", (u32)textype);
+				free(dst_buffer);
+				return;
 			}
-			break;
-		case TextureType::_565:
-			for (int x = 0; x < w; x++)
+		}
+		else
+		{
+			switch (textype)
 			{
-				*dst++ = ((*src >> 11) & 0x1F) << 3;
-				*dst++ = ((*src >> 5) & 0x3F) << 2;
-				*dst++ = (*src & 0x1F) << 3;
-				*dst++ = 255;
-				src++;
+			case TextureType::_4444:
+				for (int x = 0; x < w; x++)
+				{
+					*(u32 *)dst = Unpacker4444_32<RGBAPacker>::unpack(*src);
+					dst += 4;
+					src++;
+				}
+				break;
+			case TextureType::_565:
+				for (int x = 0; x < w; x++)
+				{
+					*(u32 *)dst = Unpacker565_32<RGBAPacker>::unpack(*src);
+					dst += 4;
+					src++;
+				}
+				break;
+			case TextureType::_5551:
+				for (int x = 0; x < w; x++)
+				{
+					*(u32 *)dst = Unpacker1555_32<RGBAPacker>::unpack(*src);
+					dst += 4;
+					src++;
+				}
+				break;
+			case TextureType::_8888:
+				for (int x = 0; x < w; x++)
+				{
+					*(u32 *)dst = Unpacker8888<RGBAPacker>::unpack(*(u32 *)src);
+					dst += 4;
+					src += 2;
+				}
+				break;
+			default:
+				WARN_LOG(RENDERER, "dumpTexture: unsupported picture format %x", (u32)textype);
+				free(dst_buffer);
+				return;
 			}
-			break;
-		case TextureType::_5551:
-			for (int x = 0; x < w; x++)
-			{
-				*dst++ = ((*src >> 11) & 0x1F) << 3;
-				*dst++ = ((*src >> 6) & 0x1F) << 3;
-				*dst++ = ((*src >> 1) & 0x1F) << 3;
-				*dst++ = (*src & 1) ? 255 : 0;
-				src++;
-			}
-			break;
-		case TextureType::_8888:
-			for (int x = 0; x < w; x++)
-			{
-				*(u32 *)dst = *(u32 *)src;
-				dst += 4;
-				src += 2;
-			}
-			break;
-		default:
-			WARN_LOG(RENDERER, "dumpTexture: unsupported picture format %x", (u32)textype);
-			free(dst_buffer);
-			return;
 		}
 	}
 

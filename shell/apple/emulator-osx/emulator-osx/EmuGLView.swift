@@ -97,22 +97,18 @@ class EmuGLView: NSOpenGLView, NSWindowDelegate {
 	}
 	override func mouseDown(with event: NSEvent) {
 		emu_mouse_buttons(1, true)
-		pmo_buttons[0] &= ~(1 << 2)
 		setMousePos(event)
 	}
 	override func mouseUp(with event: NSEvent) {
 		emu_mouse_buttons(1, false)
-		pmo_buttons[0] |= 1 << 2;
 		setMousePos(event)
 	}
 	override func rightMouseDown(with event: NSEvent) {
 		emu_mouse_buttons(2, true)
-		pmo_buttons[0] &= ~(1 << 1)
 		setMousePos(event)
 	}
 	override func rightMouseUp(with event: NSEvent) {
 		emu_mouse_buttons(2, false)
-		pmo_buttons[0] |= 1 << 1
 		setMousePos(event)
 	}
 	// Not dispatched by default. Need to set Window.acceptsMouseMovedEvents to true
@@ -120,30 +116,26 @@ class EmuGLView: NSOpenGLView, NSWindowDelegate {
 		setMousePos(event)
 	}
 	override func mouseDragged(with event: NSEvent) {
-		pmo_buttons[0] &= ~(1 << 2)
+		emu_mouse_buttons(1, true)
 		setMousePos(event)
 	}
 	override func rightMouseDragged(with event: NSEvent) {
-		pmo_buttons[0] &= ~(1 << 1)
+		emu_mouse_buttons(2, true)
 		setMousePos(event)
 	}
 	override func otherMouseDown(with event: NSEvent) {
 		emu_mouse_buttons(3, true)
-		pmo_buttons[0] &= ~(1 << 2)
 		setMousePos(event)
 	}
 	override func otherMouseUp(with event: NSEvent) {
 		emu_mouse_buttons(3, false)
-		pmo_buttons[0] |= 1 << 2
 		setMousePos(event)
 	}
 	override func scrollWheel(with event: NSEvent) {
 		if (event.hasPreciseScrollingDeltas) {
-			// 1 per "line"
-			pmo_wheel_delta[0] -= Float(event.scrollingDeltaY) * 3.2
+            emu_mouse_wheel(-Float(event.scrollingDeltaY) / 5)
 		} else {
-			// 0.1 per wheel notch
-			pmo_wheel_delta[0] -= Float(event.scrollingDeltaY) * 160
+            emu_mouse_wheel(-Float(event.scrollingDeltaY) * 10)
 		}
 	}
 	

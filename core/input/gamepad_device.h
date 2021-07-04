@@ -76,7 +76,15 @@ protected:
 		: _api_name(api_name), _maple_port(maple_port), _input_detected(nullptr), _remappable(remappable)
 	{
 	}
+
 	bool find_mapping(const char *custom_mapping = nullptr);
+	void loadMapping() {
+		if (!find_mapping())
+			input_mapper = getDefaultMapping();
+	}
+	virtual std::shared_ptr<InputMapping> getDefaultMapping() {
+		return std::make_shared<IdentityInputMapping>();
+	}
 
 	virtual void load_axis_min_max(u32 axis) {}
 	bool is_detecting_input() { return _input_detected != nullptr; }
@@ -115,3 +123,73 @@ extern s8 joyx[4], joyy[4];
 extern s8 joyrx[4], joyry[4];
 
 void UpdateVibration(u32 port, float power, float inclination, u32 duration_ms);
+
+class MouseInputMapping : public InputMapping
+{
+public:
+	MouseInputMapping()
+	{
+		name = "Mouse";
+		set_button(DC_BTN_A, 2);		// Left
+		set_button(DC_BTN_B, 1);		// Right
+		set_button(DC_BTN_START, 3);	// Middle
+
+		dirty = false;
+	}
+};
+
+class Mouse : public GamepadDevice
+{
+protected:
+	Mouse(const char *apiName, int maplePort = 0) : GamepadDevice(maplePort, apiName) {
+		this->_name = "Mouse";
+	}
+
+	virtual std::shared_ptr<InputMapping> getDefaultMapping() override {
+		return std::make_shared<MouseInputMapping>();
+	}
+
+public:
+	enum Button {
+		LEFT_BUTTON = 2,
+		RIGHT_BUTTON = 1,
+		MIDDLE_BUTTON = 3,
+		BUTTON_4 = 4,
+		BUTTON_5 = 5
+	};
+
+	virtual const char *get_button_name(u32 code) override
+	{
+		switch((Button)code)
+		{
+		case LEFT_BUTTON:
+			return "Left Button";
+		case RIGHT_BUTTON:
+			return "Right Button";
+		case MIDDLE_BUTTON:
+			return "Middle Button";
+		case BUTTON_4:
+			return "Button 4";
+		case BUTTON_5:
+			return "Button 5";
+		default:
+			return nullptr;
+		}
+	}
+
+	void setAbsPos(int x, int y, int width, int height);
+	void setRelPos(int deltax, int deltay);
+	void setButton(Button button, bool pressed);
+	void setWheel(int delta);
+};
+
+class SystemMouse : public Mouse
+{
+protected:
+	SystemMouse(const char *apiName, int maplePort = 0) : Mouse(apiName, maplePort) {}
+
+public:
+	void setAbsPos(int x, int y, int width, int height);
+	void setButton(Button button, bool pressed);
+	void setWheel(int delta);
+};

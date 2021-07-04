@@ -107,10 +107,10 @@ __forceinline
 {
 	if (gp->pcw.Texture && gp->tsp.FilterMode > 1 && Type != ListType_Punch_Through && gp->tcw.MipMapped == 1)
 	{
-		ShaderUniforms.trilinear_alpha = 0.25 * (gp->tsp.MipMapD & 0x3);
+		ShaderUniforms.trilinear_alpha = 0.25f * (gp->tsp.MipMapD & 0x3);
 		if (gp->tsp.FilterMode == 2)
 			// Trilinear pass A
-			ShaderUniforms.trilinear_alpha = 1.0 - ShaderUniforms.trilinear_alpha;
+			ShaderUniforms.trilinear_alpha = 1.f - ShaderUniforms.trilinear_alpha;
 	}
 	else
 		ShaderUniforms.trilinear_alpha = 1.f;
@@ -120,7 +120,8 @@ __forceinline
 
 	int clip_rect[4] = {};
 	TileClipping clipmode = GetTileClip(gp->tileclip, ViewportMatrix, clip_rect);
-	bool palette = BaseTextureCacheData::IsGpuHandledPaletted(gp->tsp, gp->tcw);
+	TextureCacheData *texture = (TextureCacheData *)gp->texture;
+	bool gpuPalette = texture != nullptr ? texture->gpuPalette : false;
 
 	CurrentShader = GetProgram(Type == ListType_Punch_Through ? true : false,
 								  clipmode == TileClipping::Inside,
@@ -134,12 +135,12 @@ __forceinline
 								  gp->tcw.PixelFmt == PixelBumpMap,
 								  color_clamp,
 								  ShaderUniforms.trilinear_alpha != 1.f,
-								  palette);
+								  gpuPalette);
 	
 	glcache.UseProgram(CurrentShader->program);
 	if (CurrentShader->trilinear_alpha != -1)
 		glUniform1f(CurrentShader->trilinear_alpha, ShaderUniforms.trilinear_alpha);
-	if (palette)
+	if (gpuPalette)
 	{
 		if (gp->tcw.PixelFmt == PixelPal4)
 			ShaderUniforms.palette_index = gp->tcw.PalSelect << 4;
@@ -149,7 +150,8 @@ __forceinline
 	}
 
 	if (clipmode == TileClipping::Inside)
-		glUniform4f(CurrentShader->pp_ClipTest, clip_rect[0], clip_rect[1], clip_rect[0] + clip_rect[2], clip_rect[1] + clip_rect[3]);
+		glUniform4f(CurrentShader->pp_ClipTest, (float)clip_rect[0], (float)clip_rect[1],
+				(float)(clip_rect[0] + clip_rect[2]), (float)(clip_rect[1] + clip_rect[3]));
 	if (clipmode == TileClipping::Outside)
 	{
 		glcache.Enable(GL_SCISSOR_TEST);
@@ -158,35 +160,40 @@ __forceinline
 	else
 		SetBaseClipping();
 
-	//This bit control which pixels are affected
-	//by modvols
-	const u32 stencil=(gp->pcw.Shadow!=0)?0x80:0x0;
-
-	glcache.StencilFunc(GL_ALWAYS,stencil,stencil);
-
-	glcache.BindTexture(GL_TEXTURE_2D, gp->texid == (u64)-1 ? 0 : (GLuint)gp->texid);
-
-	SetTextureRepeatMode(GL_TEXTURE_WRAP_S, gp->tsp.ClampU, gp->tsp.FlipU);
-	SetTextureRepeatMode(GL_TEXTURE_WRAP_T, gp->tsp.ClampV, gp->tsp.FlipV);
-
-	//set texture filter mode
-	if (gp->tsp.FilterMode == 0 || palette)
+	if (config::ModifierVolumes)
 	{
-		//disable filtering, mipmaps
-		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		//This bit control which pixels are affected
+		//by modvols
+		const u32 stencil = gp->pcw.Shadow != 0 ? 0x80 : 0;
+		glcache.StencilFunc(GL_ALWAYS, stencil, stencil);
 	}
-	else
+
+	if (texture != nullptr)
 	{
-		//bilinear filtering
-		//PowerVR supports also trilinear via two passes, but we ignore that for now
-		bool mipmapped = gp->tcw.MipMapped != 0 && gp->tcw.ScanOrder == 0 && config::UseMipmaps;
-		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, mipmapped ? GL_LINEAR_MIPMAP_NEAREST : GL_LINEAR);
-		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glcache.BindTexture(GL_TEXTURE_2D, texture->texID);
+
+		SetTextureRepeatMode(GL_TEXTURE_WRAP_S, gp->tsp.ClampU, gp->tsp.FlipU);
+		SetTextureRepeatMode(GL_TEXTURE_WRAP_T, gp->tsp.ClampV, gp->tsp.FlipV);
+
+		//set texture filter mode
+		if (gp->tsp.FilterMode == 0 || gpuPalette)
+		{
+			//disable filtering, mipmaps
+			glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+			glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		}
+		else
+		{
+			//bilinear filtering
+			//PowerVR supports also trilinear via two passes, but we ignore that for now
+			bool mipmapped = gp->tcw.MipMapped != 0 && gp->tcw.ScanOrder == 0 && config::UseMipmaps;
+			glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, mipmapped ? GL_LINEAR_MIPMAP_NEAREST : GL_LINEAR);
+			glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 #ifdef GL_TEXTURE_LOD_BIAS
-		if (!gl.is_gles && gl.gl_major >= 3 && mipmapped)
-			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_LOD_BIAS, D_Adjust_LoD_Bias[gp->tsp.MipMapD]);
+			if (!gl.is_gles && gl.gl_major >= 3 && mipmapped)
+				glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_LOD_BIAS, D_Adjust_LoD_Bias[gp->tsp.MipMapD]);
 #endif
+		}
 	}
 
 	// Apparently punch-through polys support blending, or at least some combinations

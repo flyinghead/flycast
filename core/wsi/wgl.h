@@ -58,8 +58,6 @@ typedef BOOL (WINAPI * PFNWGLSWAPINTERVALEXTPROC) (int interval);
 class WGLGraphicsContext : public GLGraphicsContext
 {
 public:
-	~WGLGraphicsContext() { Term(); }
-
 	bool Init();
 	void Term();
 	void Swap();

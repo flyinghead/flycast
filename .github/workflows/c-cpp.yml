@@ -31,12 +31,35 @@ jobs:
           echo "CCACHE_DIR=/tmp/ccache" >> $GITHUB_ENV
         if: matrix.config.os == 'ubuntu-latest'
 
+      - name: Set up build environment (windows-latest)
+        run: echo "DXSDK_DIR=${Env:HOMEDRIVE}${Env:HOMEPATH}\ccache\" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf-8 -Append
+        if: matrix.config.os == 'windows-latest' && matrix.config.name != 'x86_64-w64-mingw32'
+
       - uses: actions/cache@v2
         with:
           path: /tmp/ccache
           key: ccache-${{ matrix.config.os }}-${{ github.sha }}
           restore-keys: ccache-${{ matrix.config.os }}-
         if: matrix.config.os != 'windows-latest'
+
+      - uses: actions/cache@v2
+        id: cache
+        with:
+          path: $HOME/ccache
+          key: ccache-${{ matrix.config.os }}-${{ github.sha }}
+          restore-keys: ccache-${{ matrix.config.os }}-
+        if: matrix.config.os == 'windows-latest'
+
+      - name: Download DX2010
+        if: steps.cache.outputs.cache-hit != 'true' && matrix.config.os == 'windows-latest' && matrix.config.name != 'x86_64-w64-mingw32'
+        run:   |
+               curl -L https://download.microsoft.com/download/a/e/7/ae743f1f-632b-4809-87a9-aa1bb3458e31/DXSDK_Jun10.exe -o _DX2010_.exe
+               7z x _DX2010_.exe DXSDK/Include -o_DX2010_
+               7z x _DX2010_.exe DXSDK/Lib/x86 -o_DX2010_
+               7z x _DX2010_.exe DXSDK/Lib/x64 -o_DX2010_
+               mv _DX2010_/DXSDK $HOME/ccache
+               rm -fR _DX*_ _DX*_.exe
+        shell: bash
 
       - uses: actions/checkout@v2
         with:

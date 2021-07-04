@@ -68,10 +68,11 @@ ifdef FOR_LINUX
 endif
 
 ifdef FOR_WINDOWS
+	RZDCY_MODULES += rend/dx9/
 	ifndef UNIT_TESTS
 	    RZDCY_FILES += $(RZDCY_SRC_DIR)/windows/winmain.cpp
 	endif
-    RZDCY_FILES += $(RZDCY_SRC_DIR)/windows/win_vmem.cpp
+    RZDCY_FILES += $(RZDCY_SRC_DIR)/windows/win_vmem.cpp $(RZDCY_SRC_DIR)/windows/rawinput.cpp
     RZDCY_CFLAGS += -I$(RZDCY_SRC_DIR)/deps/dirent
 endif
 

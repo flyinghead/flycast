@@ -3,13 +3,14 @@
 #include "imgread/common.h"
 #include "stdclass.h"
 #include "cfg/cfg.h"
-#include "xinput_gamepad.h"
 #include "win_keyboard.h"
 #include "hw/sh4/dyna/blockmanager.h"
 #include "log/LogManager.h"
 #include "wsi/context.h"
 #if defined(USE_SDL)
 #include "sdl/sdl.h"
+#else
+#include "xinput_gamepad.h"
 #endif
 #include "hw/maple/maple_devs.h"
 #include "emulator.h"
@@ -17,12 +18,13 @@
 #include "hw/sh4/dyna/ngen.h"
 #include "oslib/host_context.h"
 #include "../shell/windows/resource.h"
+#include "rawinput.h"
 
 #include <windows.h>
 #include <windowsx.h>
 
-PCHAR*
-	CommandLineToArgvA(
+static PCHAR*
+	commandLineToArgvA(
 	PCHAR CmdLine,
 	int* _argc
 	)
@@ -118,8 +120,57 @@ PCHAR*
 bool VramLockedWrite(u8* address);
 bool BM_LockedWrite(u8* address);
 
-static std::shared_ptr<WinKbGamepadDevice> kb_gamepad;
-static std::shared_ptr<WinMouseGamepadDevice> mouse_gamepad;
+#ifndef USE_SDL
+
+static std::shared_ptr<WinMouse> mouse;
+static std::shared_ptr<Win32KeyboardDevice> keyboard;
+static bool mouseCaptured;
+static POINT savedMousePos;
+static bool gameRunning;
+
+static void captureMouse(bool);
+
+static void emuEventCallback(Event event)
+{
+	static bool captureOn;
+	switch (event)
+	{
+	case Event::Pause:
+		captureOn = mouseCaptured;
+		captureMouse(false);
+		gameRunning = false;
+		break;
+	case Event::Resume:
+		gameRunning = true;
+		captureMouse(captureOn);
+		break;
+	default:
+		break;
+	}
+}
+
+static void checkRawInput()
+{
+	if ((bool)config::UseRawInput != (bool)keyboard)
+		return;
+	if (config::UseRawInput)
+	{
+		GamepadDevice::Unregister(keyboard);
+		keyboard = nullptr;;
+		GamepadDevice::Unregister(mouse);
+		mouse = nullptr;
+		rawinput::init();
+	}
+	else
+	{
+		rawinput::term();
+		keyboard = std::make_shared<Win32KeyboardDevice>(0);
+		GamepadDevice::Register(keyboard);
+		mouse = std::make_shared<WinMouse>();
+		GamepadDevice::Register(mouse);
+	}
+}
+#endif
 
 void os_SetupInput()
 {
@@ -127,11 +178,12 @@ void os_SetupInput()
 	input_sdl_init();
 #else
 	XInputGamepadDevice::CreateDevices();
-	kb_gamepad = std::make_shared<WinKbGamepadDevice>(0);
-	GamepadDevice::Register(kb_gamepad);
-	mouse_gamepad = std::make_shared<WinMouseGamepadDevice>(0);
-	GamepadDevice::Register(mouse_gamepad);
+	EventManager::listen(Event::Pause, emuEventCallback);
+	EventManager::listen(Event::Resume, emuEventCallback);
+	checkRawInput();
 #endif
+	if (config::UseRawInput)
+		rawinput::init();
 }
 
 static void readContext(const EXCEPTION_POINTERS *ep, host_context_t &context)
@@ -163,7 +215,7 @@ static void writeContext(EXCEPTION_POINTERS *ep, const host_context_t &context)
 	ep->ContextRecord->Rcx = context.rcx;
 #endif
 }
-LONG ExeptionHandler(EXCEPTION_POINTERS *ep)
+static LONG exceptionHandler(EXCEPTION_POINTERS *ep)
 {
 	u32 dwCode = ep->ExceptionRecord->ExceptionCode;
 
@@ -203,7 +255,7 @@ LONG ExeptionHandler(EXCEPTION_POINTERS *ep)
 }
 
 
-void SetupPath()
+static void setupPath()
 {
 	wchar_t fname[512];
 	GetModuleFileNameW(0, fname, ARRAY_SIZE(fname));
@@ -227,11 +279,6 @@ void SetupPath()
 	CreateDirectory(data_path.c_str(), NULL);
 }
 
-static Win32KeyboardDevice keyboard(0);
-
-void ToggleFullscreen();
-
-
 void UpdateInputState()
 {
 #if defined(USE_SDL)
@@ -246,8 +293,12 @@ void UpdateInputState()
 #endif
 }
 
+static HWND hWnd;
+
+#ifndef USE_SDL
 // Windows class name to register
 #define WINDOW_CLASS "nilDC"
+static int window_x, window_y;
 
 // Width and height of the window
 #define DEFAULT_WINDOW_WIDTH  1280
@@ -255,7 +306,42 @@ void UpdateInputState()
 extern int screen_width, screen_height;
 static bool window_maximized = false;
 
-LRESULT CALLBACK WndProc2(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+static void centerMouse()
+{
+	RECT rect;
+	GetWindowRect(hWnd, &rect);
+	SetCursorPos((rect.left + rect.right) / 2, (rect.top + rect.bottom) / 2);
+}
+
+static void captureMouse(bool capture)
+{
+	if (hWnd == nullptr || !gameRunning)
+		return;
+	if (capture == mouseCaptured)
+		return;
+
+	if (!capture)
+	{
+		os_SetWindowText(VER_EMUNAME);
+		mouseCaptured = false;
+		SetCursorPos(savedMousePos.x, savedMousePos.y);
+		while (ShowCursor(true) < 0)
+			;
+	}
+	else
+	{
+		os_SetWindowText("Flycast - mouse capture");
+		mouseCaptured = true;
+		GetCursorPos(&savedMousePos);
+		while (ShowCursor(false) >= 0)
+			;
+		centerMouse();
+	}
+}
+
+static void toggleFullscreen();
+
+static LRESULT CALLBACK WndProc2(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	switch (message)
 	{
@@ -282,6 +368,10 @@ LRESULT CALLBACK WndProc2(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		screen_width = LOWORD(lParam);
 		screen_height = HIWORD(lParam);
 		window_maximized = (wParam & SIZE_MAXIMIZED) != 0;
+#ifdef USE_VULKAN
+		theVulkanContext.SetResized();
+#endif
+		theDXContext.resize();
 		return 0;
 
 	case WM_LBUTTONDOWN:
@@ -290,74 +380,102 @@ LRESULT CALLBACK WndProc2(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_MBUTTONUP:
 	case WM_RBUTTONDOWN:
 	case WM_RBUTTONUP:
+		gui_set_mouse_position(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
+		checkRawInput();
 		switch (message)
 		{
 		case WM_LBUTTONDOWN:
-			mouse_gamepad->gamepad_btn_input(0, true);
-			break;
 		case WM_LBUTTONUP:
-			mouse_gamepad->gamepad_btn_input(0, false);
+			if (!mouseCaptured && !config::UseRawInput)
+				mouse->setButton(Mouse::LEFT_BUTTON, message == WM_LBUTTONDOWN);
+			gui_set_mouse_button(0, message == WM_LBUTTONDOWN);
 			break;
+
 		case WM_MBUTTONDOWN:
-			mouse_gamepad->gamepad_btn_input(1, true);
-			break;
 		case WM_MBUTTONUP:
-			mouse_gamepad->gamepad_btn_input(1, false);
+			if (!mouseCaptured && !config::UseRawInput)
+				mouse->setButton(Mouse::MIDDLE_BUTTON, message == WM_MBUTTONDOWN);
+			gui_set_mouse_button(2, message == WM_MBUTTONDOWN);
 			break;
 		case WM_RBUTTONDOWN:
-			mouse_gamepad->gamepad_btn_input(2, true);
-			break;
 		case WM_RBUTTONUP:
-			mouse_gamepad->gamepad_btn_input(2, false);
+			if (!mouseCaptured && !config::UseRawInput)
+				mouse->setButton(Mouse::RIGHT_BUTTON, message == WM_RBUTTONDOWN);
+			gui_set_mouse_button(1, message == WM_RBUTTONDOWN);
 			break;
 		}
+		if (mouseCaptured)
+			break;
 		/* no break */
 	case WM_MOUSEMOVE:
+		gui_set_mouse_position(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
+		checkRawInput();
+		if (mouseCaptured)
+			// TODO relative mouse move if !rawinput
+			centerMouse();
+		else if (!config::UseRawInput)
 		{
 			int xPos = GET_X_LPARAM(lParam);
 			int yPos = GET_Y_LPARAM(lParam);
-			SetMousePosition(xPos, yPos, screen_width, screen_height);
+			mouse->setAbsPos(xPos, yPos, screen_width, screen_height);
 
-			mo_buttons[0] = 0xffffffff;
 			if (wParam & MK_LBUTTON)
-				mo_buttons[0] &= ~(1 << 2);
+				mouse->setButton(Button::LEFT_BUTTON, true);
 			if (wParam & MK_MBUTTON)
-				mo_buttons[0] &= ~(1 << 3);
+				mouse->setButton(Button::MIDDLE_BUTTON, true);
 			if (wParam & MK_RBUTTON)
-				mo_buttons[0] &= ~(1 << 1);
+				mouse->setButton(Button::RIGHT_BUTTON, true);
 		}
 		if (message != WM_MOUSEMOVE)
 			return 0;
 		break;
 	case WM_MOUSEWHEEL:
-		mo_wheel_delta[0] -= (float)GET_WHEEL_DELTA_WPARAM(wParam)/(float)WHEEL_DELTA * 16;
+		gui_set_mouse_wheel(-(float)GET_WHEEL_DELTA_WPARAM(wParam) / (float)WHEEL_DELTA * 16);
+		checkRawInput();
+		if (!config::UseRawInput)
+			mouse->setWheel(-GET_WHEEL_DELTA_WPARAM(wParam) / WHEEL_DELTA);
 		break;
 
 	case WM_KEYDOWN:
 	case WM_KEYUP:
 		{
-			u8 keycode;
-			// bit 24 indicates whether the key is an extended key, such as the right-hand ALT and CTRL keys that appear on an enhanced 101- or 102-key keyboard.
-			// (It also distinguishes between the main Return key and the numeric keypad Enter key)
-			// The value is 1 if it is an extended key; otherwise, it is 0.
-			if (wParam == VK_RETURN && ((lParam & (1 << 24)) != 0))
-				keycode = VK_NUMPAD_RETURN;
-			else
-				keycode = wParam & 0xff;
-			kb_gamepad->gamepad_btn_input(keycode, message == WM_KEYDOWN);
-			keyboard.keyboard_input(keycode, message == WM_KEYDOWN);
+			if (message == WM_KEYDOWN
+					&& ((wParam == VK_CONTROL && GetAsyncKeyState(VK_LMENU) < 0)
+							|| (wParam == VK_MENU && GetAsyncKeyState(VK_LCONTROL) < 0)))
+			{
+				captureMouse(!mouseCaptured);
+				break;
+			}
+			checkRawInput();
+			if (!config::UseRawInput)
+			{
+				u8 keycode;
+				// bit 24 indicates whether the key is an extended key, such as the right-hand ALT and CTRL keys that appear on an enhanced 101- or 102-key keyboard.
+				// (It also distinguishes between the main Return key and the numeric keypad Enter key)
+				// The value is 1 if it is an extended key; otherwise, it is 0.
+				if (wParam == VK_RETURN && ((lParam & (1 << 24)) != 0))
+					keycode = VK_NUMPAD_RETURN;
+				else
+					keycode = wParam & 0xff;
+				keyboard->keyboard_input(keycode, message == WM_KEYDOWN);
+			}
 		}
 		break;
 	
 	case WM_SYSKEYDOWN:
 		if (wParam == VK_RETURN)
+		{
 			if ((HIWORD(lParam) & KF_ALTDOWN))
-				ToggleFullscreen();
-		
+				toggleFullscreen();
+		}
+		else if (wParam == VK_CONTROL && (lParam & (1 << 24)) == 0 && GetAsyncKeyState(VK_LMENU) < 0)
+		{
+			captureMouse(!mouseCaptured);
+		}
 		break;
 
 	case WM_CHAR:
-		keyboard.keyboard_character((char)wParam);
+		gui_keyboard_input((u16)wParam);
 		return 0;
 
 	default:
@@ -368,10 +486,6 @@ LRESULT CALLBACK WndProc2(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	return DefWindowProc(hWnd, message, wParam, lParam);
 }
 
-static HWND hWnd;
-static int window_x, window_y;
-
-#if !defined(USE_SDL)
 static bool windowClassRegistered;
 
 void CreateMainWindow()
@@ -407,13 +521,14 @@ void CreateMainWindow()
 	SetRect(&sRect, 0, 0, screen_width, screen_height);
 	AdjustWindowRectEx(&sRect, WS_OVERLAPPEDWINDOW, false, 0);
 
-	hWnd = CreateWindow(WINDOW_CLASS, VER_FULLNAME, WS_VISIBLE | WS_OVERLAPPEDWINDOW | (window_maximized ? WS_MAXIMIZE : 0),
+	hWnd = CreateWindow(WINDOW_CLASS, VER_EMUNAME, WS_VISIBLE | WS_OVERLAPPEDWINDOW | (window_maximized ? WS_MAXIMIZE : 0),
 			window_x, window_y, sRect.right - sRect.left, sRect.bottom - sRect.top, NULL, NULL, hInstance, NULL);
 #ifdef USE_VULKAN
 	theVulkanContext.SetWindow((void *)hWnd, (void *)GetDC((HWND)hWnd));
 #endif
 	theGLContext.SetWindow(hWnd);
 	theGLContext.SetDeviceContext(GetDC(hWnd));
+	theDXContext.setNativeWindow(hWnd);
 }
 #endif
 
@@ -427,7 +542,8 @@ void os_CreateWindow()
 #endif	// !USE_SDL
 }
 
-void DestroyMainWindow()
+#ifndef USE_SDL
+static void destroyMainWindow()
 {
 	if (hWnd)
 	{
@@ -442,12 +558,7 @@ void DestroyMainWindow()
 	}
 }
 
-void* libPvr_GetRenderTarget()
-{
-	return (void*)hWnd;
-}
-
-void ToggleFullscreen()
+static void toggleFullscreen()
 {
 	static RECT rSaved;
 	static bool fullscreen=false;
@@ -483,26 +594,11 @@ void ToggleFullscreen()
 
 }
 
-
-BOOL CtrlHandler( DWORD fdwCtrlType )
+HWND getNativeHwnd()
 {
-	switch( fdwCtrlType )
-	{
-		case CTRL_SHUTDOWN_EVENT:
-		case CTRL_LOGOFF_EVENT:
-		// Pass other signals to the next handler.
-		case CTRL_BREAK_EVENT:
-		// CTRL-CLOSE: confirm that the user wants to exit.
-		case CTRL_CLOSE_EVENT:
-		// Handle the CTRL-C signal.
-		case CTRL_C_EVENT:
-			SendMessageA(hWnd, WM_CLOSE, 0, 0); //FIXEM
-			return( TRUE );
-		default:
-			return FALSE;
-	}
+	return hWnd;
 }
-
+#endif
 
 void os_SetWindowText(const char* text)
 {
@@ -516,7 +612,7 @@ void os_SetWindowText(const char* text)
 #endif
 }
 
-void ReserveBottomMemory()
+static void reserveBottomMemory()
 {
 #if defined(_WIN64) && defined(_DEBUG)
     static bool s_initialized = false;
@@ -641,19 +737,6 @@ typedef struct _UNWIND_INFO {
 static RUNTIME_FUNCTION Table[1];
 static _UNWIND_INFO unwind_info[1];
 
-EXCEPTION_DISPOSITION
-__gnat_SEH_error_handler(struct _EXCEPTION_RECORD* ExceptionRecord,
-void *EstablisherFrame,
-struct _CONTEXT* ContextRecord,
-	void *DispatcherContext)
-{
-	EXCEPTION_POINTERS ep;
-	ep.ContextRecord = ContextRecord;
-	ep.ExceptionRecord = ExceptionRecord;
-
-	return (EXCEPTION_DISPOSITION)ExeptionHandler(&ep);
-}
-
 PRUNTIME_FUNCTION
 seh_callback(
 _In_ DWORD64 ControlPc,
@@ -678,8 +761,8 @@ _In_opt_ PVOID Context
 	//for (;;);
 	return Table;
 }
-void setup_seh() {
-#if 1
+static void setup_seh()
+{
 	/* Get the base of the module.  */
 	//u8* __ImageBase = (u8*)GetModuleHandle(NULL);
 	/* Current version is always 1 and we are registering an
@@ -705,7 +788,6 @@ void setup_seh() {
 	Table[0].UnwindData = (DWORD)((u8 *)unwind_info - CodeCache);
 	/* Register the unwind information.  */
 	RtlAddFunctionTable(Table, 1, (DWORD64)CodeCache);
-#endif
 
 	//verify(RtlInstallFunctionTableCallback((unat)CodeCache | 0x3, (DWORD64)CodeCache, CODE_SIZE + TEMP_CODE_SIZE, seh_callback, 0, 0));
 }
@@ -758,7 +840,7 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 {
 	int argc = 0;
 	char* cmd_line = GetCommandLineA();
-	char** argv = CommandLineToArgvA(cmd_line, &argc);
+	char** argv = commandLineToArgvA(cmd_line, &argc);
 
 #endif
 
@@ -767,13 +849,13 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 #endif
 	LogManager::Init();
 
-	ReserveBottomMemory();
-	SetupPath();
+	reserveBottomMemory();
+	setupPath();
 	findKeyboardLayout();
 #ifdef _WIN64
-	AddVectoredExceptionHandler(1, ExeptionHandler);
+	AddVectoredExceptionHandler(1, exceptionHandler);
 #else
-	SetUnhandledExceptionFilter((LPTOP_LEVEL_EXCEPTION_FILTER)&ExeptionHandler);
+	SetUnhandledExceptionFilter((LPTOP_LEVEL_EXCEPTION_FILTER)&exceptionHandler);
 #endif
 	if (reicast_init(argc, argv) != 0)
 		die("Flycast initialization failed");
@@ -790,6 +872,8 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 #ifdef USE_SDL
 	sdl_window_destroy();
 #else
+	TermRenderApi();
+	destroyMainWindow();
 	cfgSaveBool("window", "maximized", window_maximized);
 	if (!window_maximized && screen_width != 0 && screen_height != 0)
 	{

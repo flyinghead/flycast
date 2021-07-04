@@ -128,21 +128,22 @@ public:
 			axis_min_values[DC_AXIS_RT] = 0;
 			axis_ranges[DC_AXIS_RT] = 255;
 		}
-		else if (!find_mapping())
-		{
-			if (_name == "SHIELD Remote")
-				input_mapper = std::make_shared<ShieldRemoteInputMapping>();
-			else
-				input_mapper = std::make_shared<DefaultInputMapping>();
-			save_mapping();
-			INFO_LOG(INPUT, "using default mapping");
-		}
 		else
-			INFO_LOG(INPUT, "using custom mapping '%s'", input_mapper->name.c_str());
+		{
+			loadMapping();
+			save_mapping();
+		}
 	}
 	virtual ~AndroidGamepadDevice() override
 	{
 		INFO_LOG(INPUT, "Android: Joystick '%s' on port %d disconnected", _name.c_str(), maple_port());
+	}
+
+	virtual std::shared_ptr<InputMapping> getDefaultMapping() override {
+		if (_name == "SHIELD Remote")
+			return std::make_shared<ShieldRemoteInputMapping>();
+		else
+			return std::make_shared<DefaultInputMapping>();
 	}
 
 	virtual const char *get_button_name(u32 code) override
@@ -307,65 +308,13 @@ private:
 
 std::map<int, std::shared_ptr<AndroidGamepadDevice>> AndroidGamepadDevice::android_gamepads;
 
-class MouseInputMapping : public InputMapping
+class AndroidMouse : public SystemMouse
 {
 public:
-	MouseInputMapping()
+	AndroidMouse(int maple_port) : SystemMouse("Android", maple_port)
 	{
-		name = "Android Mouse";
-		set_button(DC_BTN_A, 1);
-		set_button(DC_BTN_B, 2);
-		set_button(DC_BTN_START, 4);
-
-		dirty = false;
-	}
-};
-
-class AndroidMouseGamepadDevice : public GamepadDevice
-{
-public:
-	AndroidMouseGamepadDevice(int maple_port) : GamepadDevice(maple_port, "Android")
-	{
-		_name = "Mouse";
 		_unique_id = "android_mouse";
-		if (!find_mapping())
-			input_mapper = std::make_shared<MouseInputMapping>();
-	}
-
-	bool gamepad_btn_input(u32 code, bool pressed) override
-	{
-		if (gui_is_open() && !is_detecting_input())
-			// Don't register mouse clicks as gamepad presses when gui is open
-			// This makes the gamepad presses to be handled first and the mouse position to be ignored
-			// TODO Make this generic
-			return false;
-		else
-			return GamepadDevice::gamepad_btn_input(code, pressed);
-	}
-
-	virtual const char *get_button_name(u32 code) override
-	{
-		switch (code)
-		{
-		case 1:
-			return "Left Button";
-		case 2:
-			return "Right Button";
-		case 4:
-			return "Middle Button";
-		case 8:
-			return "Back Button";
-		case 16:
-			return "Forward Button";
-		case 32:
-			return "Stylus Primary";
-		case 64:
-			return "Stylus Second";
-		default:
-			return nullptr;
-		}
+		loadMapping();
 	}
 };
-// FIXME Don't connect it by default or any screen touch will register as button A press
-AndroidMouseGamepadDevice mouse_gamepad(-1);
 

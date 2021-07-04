@@ -1011,9 +1011,9 @@ struct maple_sega_purupuru : maple_base
 	}
 };
 
-u8 kb_shift; 		// shift keys pressed (bitmask)
-u8 kb_led; 			// leds currently lit
-u8 kb_key[6]={0};	// normal keys pressed
+u8 kb_shift[MAPLE_PORTS];	// shift keys pressed (bitmask)
+u8 kb_led[MAPLE_PORTS]; 	// leds currently lit
+u8 kb_key[MAPLE_PORTS][6];	// normal keys pressed
 
 struct maple_keyboard : maple_base
 {
@@ -1074,14 +1074,12 @@ struct maple_keyboard : maple_base
 			w32(MFID_6_Keyboard);
 			//struct data
 			//int8 shift          ; shift keys pressed (bitmask)	//1
-			w8(kb_shift);
+			w8(kb_shift[bus_id]);
 			//int8 led            ; leds currently lit			//1
-			w8(kb_led);
+			w8(kb_led[bus_id]);
 			//int8 key[6]         ; normal keys pressed			//6
 			for (int i = 0; i < 6; i++)
-			{
-				w8(kb_key[i]);
-			}
+				w8(kb_key[bus_id][i]);
 
 			return MDRS_DataTransfer;
 
@@ -1103,7 +1101,7 @@ struct maple_keyboard : maple_base
 // bit 1: Right button (B)
 // bit 2: Left button (A)
 // bit 3: Wheel button
-u32 mo_buttons[4] = { 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF };
+u8 mo_buttons[4] = { 0xFF, 0xFF, 0xFF, 0xFF };
 // Relative mouse coordinates [-512:511]
 f32 mo_x_delta[4];
 f32 mo_y_delta[4];
@@ -1116,9 +1114,6 @@ s32 mo_y_abs[4];
 // previous mouse coordinates for relative motion
 s32 mo_x_prev[4] = { -1, -1, -1, -1 };
 s32 mo_y_prev[4] = { -1, -1, -1, -1 };
-// physical mouse coordinates (relative to window/screen)
-s32 mo_x_phy;
-s32 mo_y_phy;
 // last known screen/window size
 static s32 mo_width;
 static s32 mo_height;
@@ -1175,14 +1170,13 @@ struct maple_mouse : maple_base
 				config->GetMouseInput(buttons, x, y, wheel);
 
 				w32(MFID_9_Mouse);
-				//struct data
-				//int8 buttons       ; buttons (RLDUSABC, where A is left btn, B is right, and S is middle/scrollwheel)
+				// buttons (RLDUSABC, where A is left btn, B is right, and S is middle/scrollwheel)
 				w8(buttons);
-				//int8 options
+				// options
 				w8(0);
-				//int8 axes overflow
+				// axes overflow
 				w8(0);
-				//int8 reserved
+				// reserved
 				w8(0);
 				//int16 axis1         ; horizontal movement (0-$3FF) (little endian)
 				w16(mo_cvt(x));
@@ -1404,11 +1398,8 @@ static void screenToNative(int& x, int& y, int width, int height)
 
 void SetMousePosition(int x, int y, int width, int height, u32 mouseId)
 {
-	if (mouseId == 0)
-	{
-		mo_x_phy = x;
-		mo_y_phy = y;
-	}
+	if (mouseId >= MAPLE_PORTS)
+		return;
 	mo_width = width;
 	mo_height = height;
 
@@ -1434,6 +1425,8 @@ void SetMousePosition(int x, int y, int width, int height, u32 mouseId)
 
 void SetRelativeMousePosition(int xrel, int yrel, u32 mouseId)
 {
+	if (mouseId >= MAPLE_PORTS)
+		return;
 	int width = mo_width;
 	int height = mo_height;
 	if (config::Rotate90)

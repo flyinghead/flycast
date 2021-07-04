@@ -29,6 +29,12 @@ void gui_open_onboarding();
 void gui_term();
 void gui_refresh_files();
 void gui_cheats();
+void gui_keyboard_input(u16 wc);
+void gui_keyboard_inputUTF8(const std::string& s);
+void gui_set_mouse_position(int x, int y);
+// 0: left, 1: right, 2: middle/wheel, 3: button 4
+void gui_set_mouse_button(int button, bool pressed);
+void gui_set_mouse_wheel(float delta);
 void gui_set_insets(int left, int right, int top, int bottom);
 
 extern int screen_dpi;
