@@ -350,7 +350,8 @@ void GamepadDevice::load_system_mappings(int system)
 	for (int i = 0; i < GetGamepadCount(); i++)
 	{
 		std::shared_ptr<GamepadDevice> gamepad = GetGamepad(i);
-		gamepad->find_mapping(system);
+		if (!gamepad->find_mapping(system))
+			gamepad->input_mapper = gamepad->getDefaultMapping();
 	}
 }
 
