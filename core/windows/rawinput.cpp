@@ -350,8 +350,12 @@ static void findDevices()
 				if (res != (u32)-1)
 				{
 					std::string deviceName(&deviceNameData[0], std::strlen(&deviceNameData[0]));
-					name = (device.dwType == RIM_TYPEMOUSE ? "Mouse " : "Keyboard ") + deviceName;
+					if (deviceName.substr(0, 8) == "\\\\?\\HID#")
+						deviceName = deviceName.substr(8);
 					uniqueId = (device.dwType == RIM_TYPEMOUSE ? "raw_mouse_" : "raw_keyboard_") + deviceName;
+					if (deviceName.length() > 17 && deviceName.substr(0, 4) == "VID_" && deviceName.substr(8, 5) == "&PID_")
+						deviceName = deviceName.substr(0, 17);
+					name = (device.dwType == RIM_TYPEMOUSE ? "Mouse " : "Keyboard ") + deviceName;
 				}
 			}
 			uintptr_t handle = (uintptr_t)device.hDevice;
@@ -359,6 +363,7 @@ static void findDevices()
 				name = (device.dwType == RIM_TYPEMOUSE ? "Mouse " : "Keyboard ") + std::to_string(handle);
 			if (uniqueId.empty())
 				uniqueId = (device.dwType == RIM_TYPEMOUSE ? "raw_mouse_" : "raw_keyboard_") + std::to_string(handle);
+			NOTICE_LOG(INPUT, "Found RawInput %s name \"%s\" id %s", device.dwType == RIM_TYPEMOUSE ? "mouse" : "keyboard", name.c_str(), uniqueId.c_str());
 
 			if (device.dwType == RIM_TYPEMOUSE)
 			{
