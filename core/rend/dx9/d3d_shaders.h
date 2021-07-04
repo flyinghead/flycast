@@ -19,7 +19,7 @@
 #pragma once
 #include <unordered_map>
 #include "dxcontext.h"
-#include <D3DX9Shader.h>
+#include <d3dx9shader.h>
 
 class D3DShaders
 {
