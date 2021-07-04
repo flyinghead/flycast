@@ -21,6 +21,8 @@
 #include "rend/gui.h"
 #include <windows.h>
 
+#include <algorithm>
+
 namespace rawinput {
 
 class RawMouse : public Mouse
