@@ -247,6 +247,9 @@ public:
 
 	static void AddAndroidGamepad(std::shared_ptr<AndroidGamepadDevice> gamepad)
 	{
+		auto it = android_gamepads.find(gamepad->android_id);
+		if (it != android_gamepads.end())
+			GamepadDevice::Unregister(it->second);
 		android_gamepads[gamepad->android_id] = gamepad;
 		GamepadDevice::Register(gamepad);
 	};
