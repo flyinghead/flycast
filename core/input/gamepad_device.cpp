@@ -350,8 +350,7 @@ void GamepadDevice::load_system_mappings(int system)
 	for (int i = 0; i < GetGamepadCount(); i++)
 	{
 		std::shared_ptr<GamepadDevice> gamepad = GetGamepad(i);
-		if (!gamepad->find_mapping(system))
-			gamepad->input_mapper = gamepad->getDefaultMapping();
+		gamepad->find_mapping(system);
 	}
 }
 
@@ -386,20 +385,12 @@ bool GamepadDevice::find_mapping(int system)
 	if (!file_exists(system_mapping_path))
 		mapping_file = make_mapping_filename(false);
 
-	input_mapper = InputMapping::LoadMapping(mapping_file.c_str());
+	std::shared_ptr<InputMapping> mapper = InputMapping::LoadMapping(mapping_file.c_str());
 
-	// fallback to default mapping filename for sdl inputs
-	if (!input_mapper && mapping_file.find("SDL") != std::string::npos)
-	{
-		mapping_file = make_mapping_filename(false);
-		std::string mapping_path = get_readonly_config_path(std::string("mappings/") + mapping_file);
-
-		// create default mapping filename if none exists
-		if (!file_exists(mapping_path))
-			std::ofstream file{ mapping_path.c_str() };
-		input_mapper = InputMapping::LoadMapping(mapping_file.c_str());
-	}
-	return !!input_mapper;
+	if (!mapper)
+		return false;
+	input_mapper = mapper;
+	return true;
 }
 
 bool GamepadDevice::find_mapping(const char *custom_mapping /* = nullptr */)

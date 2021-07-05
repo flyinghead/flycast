@@ -110,7 +110,10 @@ public:
 		_unique_id = "sdl_joystick_" + std::to_string(sdl_joystick_instance);
 		INFO_LOG(INPUT, "SDL: Opened joystick %d on port %d: '%s' unique_id=%s", sdl_joystick_instance, maple_port, _name.c_str(), _unique_id.c_str());
 
-		loadMapping();
+		if (!find_mapping())
+			input_mapper = std::make_shared<DefaultInputMapping>(joystick_idx);
+		else
+			INFO_LOG(INPUT, "using custom mapping '%s'", input_mapper->name.c_str());
 		sdl_haptic = SDL_HapticOpenFromJoystick(sdl_joystick);
 		if (SDL_HapticRumbleInit(sdl_haptic) != 0)
 		{
