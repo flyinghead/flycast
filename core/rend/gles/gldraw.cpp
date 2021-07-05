@@ -2,6 +2,7 @@
 #include "gles.h"
 #include "rend/sorter.h"
 #include "rend/tileclip.h"
+#include "rend/osd.h"
 
 /*
 
@@ -473,22 +474,24 @@ void SetMVS_Mode(ModifierVolumeMode mv_mode, ISP_Modvol ispc)
 }
 
 
-static void SetupMainVBO()
+void SetupMainVBO()
 {
 #ifndef GLES2
 	if (gl.vbo.mainVAO != 0)
 	{
-	   glBindVertexArray(gl.vbo.mainVAO);
-	   return;
+		glBindVertexArray(gl.vbo.mainVAO);
+		glBindBuffer(GL_ARRAY_BUFFER, gl.vbo.geometry);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl.vbo.idxs);
+		return;
 	}
 	if (gl.gl_major >= 3)
 	{
-	   glGenVertexArrays(1, &gl.vbo.mainVAO);
-	   glBindVertexArray(gl.vbo.mainVAO);
+		glGenVertexArrays(1, &gl.vbo.mainVAO);
+		glBindVertexArray(gl.vbo.mainVAO);
 	}
 #endif
-	glBindBuffer(GL_ARRAY_BUFFER, gl.vbo.geometry); glCheck();
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl.vbo.idxs); glCheck();
+	glBindBuffer(GL_ARRAY_BUFFER, gl.vbo.geometry);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl.vbo.idxs);
 
 	//setup vertex buffers attrib pointers
 	glEnableVertexAttribArray(VERTEX_POS_ARRAY);
@@ -510,13 +513,15 @@ static void SetupModvolVBO()
 #ifndef GLES2
 	if (gl.vbo.modvolVAO != 0)
 	{
-	   glBindVertexArray(gl.vbo.modvolVAO);
-	   return;
+		glBindVertexArray(gl.vbo.modvolVAO);
+		glBindBuffer(GL_ARRAY_BUFFER, gl.vbo.modvols);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+		return;
 	}
 	if (gl.gl_major >= 3)
 	{
-	   glGenVertexArrays(1, &gl.vbo.modvolVAO);
-	   glBindVertexArray(gl.vbo.modvolVAO);
+		glGenVertexArrays(1, &gl.vbo.modvolVAO);
+		glBindVertexArray(gl.vbo.modvolVAO);
 	}
 #endif
 	glBindBuffer(GL_ARRAY_BUFFER, gl.vbo.modvols); glCheck();
@@ -722,3 +727,235 @@ bool render_output_framebuffer()
 	}
 	return true;
 }
+
+#ifdef LIBRETRO
+#include "vmu_xhair.h"
+
+GLuint vmuTextureId[4]={0,0,0,0};
+GLuint lightgunTextureId[4]={0,0,0,0};
+
+void UpdateVmuTexture(int vmu_screen_number)
+{
+//	s32 x,y ;
+//	u8 temp_tex_buffer[VMU_SCREEN_HEIGHT*VMU_SCREEN_WIDTH*4];
+//	u8 *dst = temp_tex_buffer;
+//	u8 *src = NULL ;
+//	u8 vmu_pixel_on_R = vmu_screen_params[vmu_screen_number].vmu_pixel_on_R ;
+//	u8 vmu_pixel_on_G = vmu_screen_params[vmu_screen_number].vmu_pixel_on_G ;
+//	u8 vmu_pixel_on_B = vmu_screen_params[vmu_screen_number].vmu_pixel_on_B ;
+//	u8 vmu_pixel_off_R = vmu_screen_params[vmu_screen_number].vmu_pixel_off_R ;
+//	u8 vmu_pixel_off_G = vmu_screen_params[vmu_screen_number].vmu_pixel_off_G ;
+//	u8 vmu_pixel_off_B = vmu_screen_params[vmu_screen_number].vmu_pixel_off_B ;
+//	u8 vmu_screen_opacity = vmu_screen_params[vmu_screen_number].vmu_screen_opacity ;
+
+	if (vmuTextureId[vmu_screen_number] == 0)
+	{
+		vmuTextureId[vmu_screen_number] = glcache.GenTexture();
+		glcache.BindTexture(GL_TEXTURE_2D, vmuTextureId[vmu_screen_number]);
+		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	}
+	else
+		glcache.BindTexture(GL_TEXTURE_2D, vmuTextureId[vmu_screen_number]);
+
+
+	u8 *origsrc = (u8 *)vmu_lcd_data[vmu_screen_number];
+
+	if ( origsrc == NULL )
+		return ;
+/* TODO
+
+	for ( y = VMU_SCREEN_HEIGHT-1 ; y >= 0 ; y--)
+	{
+		src = origsrc + (y*VMU_SCREEN_WIDTH) ;
+
+		for ( x = 0 ; x < VMU_SCREEN_WIDTH ; x++)
+		{
+			if ( *src++ > 0 )
+			{
+				*dst++ = vmu_pixel_on_R ;
+				*dst++ = vmu_pixel_on_G ;
+				*dst++ = vmu_pixel_on_B ;
+				*dst++ = vmu_screen_opacity ;
+			}
+			else
+			{
+				*dst++ = vmu_pixel_off_R ;
+				*dst++ = vmu_pixel_off_G ;
+				*dst++ = vmu_pixel_off_B ;
+				*dst++ = vmu_screen_opacity ;
+			}
+		}
+	}
+*/
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, VMU_SCREEN_WIDTH, VMU_SCREEN_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, origsrc);
+
+	vmu_lcd_changed[vmu_screen_number] = false;
+
+}
+
+void DrawVmuTexture(u8 vmu_screen_number)
+{
+	glActiveTexture(GL_TEXTURE0);
+
+	float x=0 ;
+	float y=0 ;
+	float w=VMU_SCREEN_WIDTH*vmu_screen_params[vmu_screen_number].vmu_screen_size_mult ;
+	float h=VMU_SCREEN_HEIGHT*vmu_screen_params[vmu_screen_number].vmu_screen_size_mult ;
+
+	if (vmu_lcd_changed[vmu_screen_number] || vmuTextureId[vmu_screen_number] == 0)
+		UpdateVmuTexture(vmu_screen_number) ;
+
+	switch ( vmu_screen_params[vmu_screen_number].vmu_screen_position )
+	{
+		case UPPER_LEFT :
+		{
+			x = 0 ;
+			y = 0 ;
+			break ;
+		}
+		case UPPER_RIGHT :
+		{
+			x = 640-w ;
+			y = 0 ;
+			break ;
+		}
+		case LOWER_LEFT :
+		{
+			x = 0 ;
+			y = 480-h ;
+			break ;
+		}
+		case LOWER_RIGHT :
+		{
+			x = 640-w ;
+			y = 480-h ;
+			break ;
+		}
+	}
+
+	glcache.BindTexture(GL_TEXTURE_2D, vmuTextureId[vmu_screen_number]);
+
+	glcache.Disable(GL_SCISSOR_TEST);
+	glcache.Disable(GL_DEPTH_TEST);
+	glcache.Disable(GL_STENCIL_TEST);
+	glcache.Disable(GL_CULL_FACE);
+	glcache.Enable(GL_BLEND);
+	glcache.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	SetupMainVBO();
+	PipelineShader *shader = GetProgram(false, false, true, true, false, 0, false, 2, false, false, false, false, false);
+	glcache.UseProgram(shader->program);
+
+	{
+		struct Vertex vertices[] = {
+				{ x,   y+h, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 0, 0 },
+				{ x,   y,   1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 0, 1 },
+				{ x+w, y+h, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 1, 0 },
+				{ x+w, y,   1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 1, 1 },
+		};
+		GLushort indices[] = { 0, 1, 2, 1, 3 };
+
+		glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STREAM_DRAW);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STREAM_DRAW);
+	}
+
+	glDrawElements(GL_TRIANGLE_STRIP, 5, GL_UNSIGNED_SHORT, (void *)0);
+}
+
+void UpdateLightGunTexture(int port)
+{
+	s32 x,y ;
+	u8 temp_tex_buffer[LIGHTGUN_CROSSHAIR_SIZE*LIGHTGUN_CROSSHAIR_SIZE*4];
+	u8 *dst = temp_tex_buffer;
+	u8 *src = NULL ;
+
+	if (lightgunTextureId[port] == 0)
+	{
+		lightgunTextureId[port] = glcache.GenTexture();
+		glcache.BindTexture(GL_TEXTURE_2D, lightgunTextureId[port]);
+		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	}
+	else
+		glcache.BindTexture(GL_TEXTURE_2D, lightgunTextureId[port]);
+
+	u8* colour = &( lightgun_palette[ lightgun_params[port].colour * 3 ] );
+
+	for ( y = LIGHTGUN_CROSSHAIR_SIZE-1 ; y >= 0 ; y--)
+	{
+		src = lightgun_img_crosshair + (y*LIGHTGUN_CROSSHAIR_SIZE) ;
+
+		for ( x = 0 ; x < LIGHTGUN_CROSSHAIR_SIZE ; x++)
+		{
+			if ( src[x] )
+			{
+				*dst++ = colour[0] ;
+				*dst++ = colour[1] ;
+				*dst++ = colour[2] ;
+				*dst++ = 0xFF ;
+			}
+			else
+			{
+				*dst++ = 0 ;
+				*dst++ = 0 ;
+				*dst++ = 0 ;
+				*dst++ = 0 ;
+			}
+		}
+	}
+
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, LIGHTGUN_CROSSHAIR_SIZE, LIGHTGUN_CROSSHAIR_SIZE, 0, GL_RGBA, GL_UNSIGNED_BYTE, temp_tex_buffer);
+
+	lightgun_params[port].dirty = false;
+}
+
+void DrawGunCrosshair(u8 port)
+{
+	if (lightgun_params[port].offscreen || lightgun_params[port].colour == 0)
+		return;
+
+	glActiveTexture(GL_TEXTURE0);
+
+	float x=0;
+	float y=0;
+	float w=LIGHTGUN_CROSSHAIR_SIZE;
+	float h=LIGHTGUN_CROSSHAIR_SIZE;
+
+	x = lightgun_params[port].x - ( LIGHTGUN_CROSSHAIR_SIZE / 2 );
+	y = lightgun_params[port].y - ( LIGHTGUN_CROSSHAIR_SIZE / 2 );
+
+	if ( lightgun_params[port].dirty || lightgunTextureId[port] == 0)
+		UpdateLightGunTexture(port);
+
+	glcache.BindTexture(GL_TEXTURE_2D, lightgunTextureId[port]);
+
+	glcache.Disable(GL_SCISSOR_TEST);
+	glcache.Disable(GL_DEPTH_TEST);
+	glcache.Disable(GL_STENCIL_TEST);
+	glcache.Disable(GL_CULL_FACE);
+	glcache.Enable(GL_BLEND);
+	glcache.BlendFunc(GL_SRC_ALPHA, GL_ONE);
+
+	SetupMainVBO();
+	PipelineShader *shader = GetProgram(false, false, true, true, false, 0, false, 2, false, false, false, false, false);
+	glcache.UseProgram(shader->program);
+
+	{
+		struct Vertex vertices[] = {
+				{ x,   y+h, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 0, 1 },
+				{ x,   y,   1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 0, 0 },
+				{ x+w, y+h, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 1, 1 },
+				{ x+w, y,   1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 1, 0 },
+		};
+		GLushort indices[] = { 0, 1, 2, 1, 3 };
+
+		glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STREAM_DRAW);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STREAM_DRAW);
+	}
+
+	glDrawElements(GL_TRIANGLE_STRIP, 5, GL_UNSIGNED_SHORT, (void *)0);
+
+	glcache.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+}
+#endif

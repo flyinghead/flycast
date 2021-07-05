@@ -21,7 +21,7 @@
 #include "gl_context.h"
 #include "types.h"
 
-#if defined(_WIN32) && !defined(USE_SDL)
+#if defined(_WIN32) && !defined(USE_SDL) && !defined(LIBRETRO)
 void CreateMainWindow();
 
 WGLGraphicsContext theGLContext;

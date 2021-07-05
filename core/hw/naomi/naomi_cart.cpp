@@ -36,6 +36,7 @@
 #include "emulator.h"
 #include "rend/gui.h"
 #include "cfg/option.h"
+#include "oslib/oslib.h"
 
 Cartridge *CurrentCartridge;
 bool bios_loaded = false;
@@ -61,9 +62,9 @@ static bool loadBios(const char *filename, Archive *child_archive, Archive *pare
 	struct BIOS_t *bios = &BIOS[biosid];
 
 	std::string arch_name(filename);
-	std::string path = get_readonly_data_path(arch_name + ".zip");
+	std::string path = hostfs::findNaomiBios(arch_name + ".zip");
 	if (!file_exists(path))
-		path = get_readonly_data_path(arch_name + ".7z");
+		path = hostfs::findNaomiBios(arch_name + ".7z");
 	DEBUG_LOG(NAOMI, "Loading BIOS from %s", path.c_str());
 	std::unique_ptr<Archive> bios_archive(OpenArchive(path.c_str()));
 

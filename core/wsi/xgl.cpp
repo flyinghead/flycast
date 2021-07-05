@@ -19,7 +19,7 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #include "types.h"
-#if defined(SUPPORT_X11) && !defined(USE_SDL)
+#if defined(SUPPORT_X11) && !defined(USE_SDL) && !defined(LIBRETRO)
 #include "gl_context.h"
 #include "cfg/option.h"
 

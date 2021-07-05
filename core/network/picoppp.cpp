@@ -19,7 +19,7 @@
     along with reicast.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#if !defined(_MSC_VER) && !defined(TARGET_NO_THREADS)
+#if !defined(_MSC_VER)
 
 #include "stdclass.h"
 #include "oslib/oslib.h"

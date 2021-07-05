@@ -81,6 +81,9 @@ static void emuEventCallback(Event event)
 		game_started = true;
 		break;
 	case Event::Start:
+		GamepadDevice::load_system_mappings();
+		if (settings.platform.system == DC_PLATFORM_NAOMI)
+			SetNaomiNetworkConfig(-1);
 		if (config::AutoLoadState && settings.imgread.ImagePath[0] != '\0')
 			dc_loadstate(config::SavestateSlot);
 		break;
@@ -1022,7 +1025,7 @@ static void gui_display_settings()
 			{
 				config::Settings::instance().setPerGameConfig(false);
 				config::Settings::instance().load(false);
-				LoadGameSpecificSettings();
+				loadGameSpecificSettings();
 			}
 		}
 		else
@@ -2265,24 +2268,9 @@ void gui_refresh_files()
 #define VMU_WIDTH (70 * 48 * scaling / 32)
 #define VMU_HEIGHT (70 * scaling)
 #define VMU_PADDING (8 * scaling)
-u32 vmu_lcd_data[8][48 * 32];
-bool vmu_lcd_status[8];
-bool vmu_lcd_changed[8];
 static ImTextureID vmu_lcd_tex_ids[8];
 
 static ImTextureID crosshairTexId;
-
-void push_vmu_screen(int bus_id, int bus_port, u8* buffer)
-{
-	int vmu_id = bus_id * 2 + bus_port;
-	if (vmu_id < 0 || vmu_id >= (int)ARRAY_SIZE(vmu_lcd_data))
-		return;
-	u32 *p = &vmu_lcd_data[vmu_id][0];
-	for (int i = 0; i < (int)ARRAY_SIZE(vmu_lcd_data[vmu_id]); i++, buffer++)
-		*p++ = *buffer != 0 ? 0xFFFFFFFFu : 0xFF000000u;
-	vmu_lcd_status[vmu_id] = true;
-	vmu_lcd_changed[vmu_id] = true;
-}
 
 static const int vmu_coords[8][2] = {
 		{ 0 , 0 },
@@ -2339,31 +2327,6 @@ static void display_vmus()
 		ImGui::GetWindowDrawList()->AddImage(vmu_lcd_tex_ids[i], pos, pos_b, ImVec2(0, 1), ImVec2(1, 0), 0xC0ffffff);
 	}
     ImGui::End();
-}
-
-static const int lightgunCrosshairData[16 * 16] =
-{
-	 0, 0, 0, 0, 0, 0, 0,-1,-1, 0, 0, 0, 0, 0, 0, 0,
-	 0, 0, 0, 0, 0, 0, 0,-1,-1, 0, 0, 0, 0, 0, 0, 0,
-	 0, 0, 0, 0, 0, 0, 0,-1,-1, 0, 0, 0, 0, 0, 0, 0,
-	 0, 0, 0, 0, 0, 0, 0,-1,-1, 0, 0, 0, 0, 0, 0, 0,
-	 0, 0, 0, 0, 0, 0, 0,-1,-1, 0, 0, 0, 0, 0, 0, 0,
-	 0, 0, 0, 0, 0, 0, 0,-1,-1, 0, 0, 0, 0, 0, 0, 0,
-	 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	-1,-1,-1,-1,-1,-1, 0, 0, 0, 0,-1,-1,-1,-1,-1,-1,
-	-1,-1,-1,-1,-1,-1, 0, 0, 0, 0,-1,-1,-1,-1,-1,-1,
-	 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	 0, 0, 0, 0, 0, 0, 0,-1,-1, 0, 0, 0, 0, 0, 0, 0,
-	 0, 0, 0, 0, 0, 0, 0,-1,-1, 0, 0, 0, 0, 0, 0, 0,
-	 0, 0, 0, 0, 0, 0, 0,-1,-1, 0, 0, 0, 0, 0, 0, 0,
-	 0, 0, 0, 0, 0, 0, 0,-1,-1, 0, 0, 0, 0, 0, 0, 0,
-	 0, 0, 0, 0, 0, 0, 0,-1,-1, 0, 0, 0, 0, 0, 0, 0,
-	 0, 0, 0, 0, 0, 0, 0,-1,-1, 0, 0, 0, 0, 0, 0, 0,
-};
-
-const u32 *getCrosshairTextureData()
-{
-	return (u32 *)lightgunCrosshairData;
 }
 
 std::pair<float, float> getCrosshairPosition(int playerNum)

@@ -22,6 +22,9 @@
 #include <array>
 #include "cfg.h"
 #include "hw/maple/maple_cfg.h"
+#ifdef LIBRETRO
+#include <libretro.h>
+#endif
 
 namespace config {
 
@@ -32,6 +35,10 @@ public:
 	virtual void load() = 0;
 	virtual void reset() = 0;
 };
+
+#ifdef LIBRETRO
+#include "option_lr.h"
+#else
 
 class Settings {
 public:
@@ -274,6 +281,7 @@ protected:
 	bool overridden = false;
 	Settings& settings;
 };
+#endif
 
 using OptionString = Option<std::string>;
 

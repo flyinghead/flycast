@@ -258,10 +258,38 @@ private:
 				return;
 			*pCap = value;
 		}
-		if (value)
-			glEnable(cap);
-		else
-			glDisable(cap);
+		switch (cap) {
+		case GL_BLEND:
+			if (value)
+				glEnable(GL_BLEND);
+			else
+				glDisable(GL_BLEND);
+			break;
+		case GL_CULL_FACE:
+			if (value)
+				glEnable(GL_CULL_FACE);
+			else
+				glDisable(GL_CULL_FACE);
+			break;
+		case GL_DEPTH_TEST:
+			if (value)
+				glEnable(GL_DEPTH_TEST);
+			else
+				glDisable(GL_DEPTH_TEST);
+			break;
+		case GL_SCISSOR_TEST:
+			if (value)
+				glEnable(GL_SCISSOR_TEST);
+			else
+				glDisable(GL_SCISSOR_TEST);
+			break;
+		case GL_STENCIL_TEST:
+			if (value)
+				glEnable(GL_STENCIL_TEST);
+			else
+				glDisable(GL_STENCIL_TEST);
+			break;
+		}
 	}
 
 	GLuint _array_buffer;

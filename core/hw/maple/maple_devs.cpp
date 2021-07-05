@@ -2,8 +2,8 @@
 #include "maple_cfg.h"
 #include "maple_helper.h"
 #include "hw/pvr/spg.h"
-#include "stdclass.h"
 #include "oslib/audiostream.h"
+#include "oslib/oslib.h"
 #include "cfg/option.h"
 
 #include <zlib.h>
@@ -343,12 +343,7 @@ struct maple_sega_vmu: maple_base
 	{
 		memset(flash_data, 0, sizeof(flash_data));
 		memset(lcd_data, 0, sizeof(lcd_data));
-		char tempy[512];
-		sprintf(tempy, "vmu_save_%s.bin", logical_port);
-		// VMU saves used to be stored in .reicast, not in .reicast/data
-		std::string apath = get_writable_config_path(tempy);
-		if (!file_exists(apath))
-			apath = get_writable_data_path(tempy);
+		std::string apath = hostfs::getVmuPath(logical_port);
 
 		file = nowide::fopen(apath.c_str(), "rb+");
 		if (file == nullptr)

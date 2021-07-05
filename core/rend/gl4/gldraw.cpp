@@ -340,6 +340,7 @@ static void DrawModVols(int first, int count)
 		return;
 
 	glBindVertexArray(gl4.vbo.modvol_vao);
+	glBindBuffer(GL_ARRAY_BUFFER, gl4.vbo.modvols);
 
 	glcache.Disable(GL_BLEND);
 	SetBaseClipping();
@@ -445,7 +446,7 @@ void gl4DrawStrips(GLuint output_fbo, int width, int height)
 		glGenSamplers(2, texSamplers);
 
 	glcache.DepthMask(GL_TRUE);
-	glClearDepthf(0.0);
+	glClearDepth(0.0);
 	glStencilMask(0xFF);
 	glClear(GL_STENCIL_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); glCheck();
 
@@ -542,7 +543,7 @@ void gl4DrawStrips(GLuint output_fbo, int width, int height)
 			if (render_pass == 0)
 			{
 				glcache.DepthMask(GL_TRUE);
-				glClearDepthf(0.0);
+				glClearDepth(0.0);
 				glClear(GL_DEPTH_BUFFER_BIT);
 			}
 			else

@@ -352,6 +352,9 @@ void ReadRTTBuffer()
 		}
 		gl.rtt.texAddress = ~0;
 	}
+#ifdef LIBRETRO
+	glBindFramebuffer(GL_FRAMEBUFFER, hw_render.get_current_framebuffer());
+#endif
 }
 
 static void readAsyncPixelBuffer(u32 addr)

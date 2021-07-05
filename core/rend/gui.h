@@ -39,9 +39,6 @@ void gui_set_insets(int left, int right, int top, int bottom);
 
 extern int screen_dpi;
 extern float scaling;
-extern u32 vmu_lcd_data[8][48 * 32];
-extern bool vmu_lcd_status[8];
-extern bool vmu_lcd_changed[8];
 
 enum class GuiState {
 	Closed,
@@ -85,5 +82,4 @@ static inline bool crosshairsNeeded()
 		return false;
 	return true;
 }
-const u32 *getCrosshairTextureData();
 std::pair<float, float> getCrosshairPosition(int playerNum);

@@ -26,6 +26,7 @@
 #include "hw/aica/aica_mem.h"
 #include "hw/pvr/pvr_regs.h"
 #include "imgread/common.h"
+#include "oslib/oslib.h"
 
 #include <map>
 
@@ -744,7 +745,7 @@ void reios_reset(u8* rom)
 	// 7078 24 × 24 pixels (72 bytes) characters
 	// 129 32 × 32 pixels (128 bytes) characters
 	memset(pFont, 0, 536496);
-	FILE *font = nowide::fopen(get_readonly_data_path("font.bin").c_str(), "rb");
+	FILE *font = nowide::fopen(hostfs::getBiosFontPath().c_str(), "rb");
 	if (font == NULL)
 	{
 		INFO_LOG(REIOS, "font.bin not found. Using built-in font");

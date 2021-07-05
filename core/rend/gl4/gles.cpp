@@ -714,7 +714,16 @@ static bool RenderFrame(int width, int height)
 	if (is_rtt)
 		output_fbo = BindRTT(false);
 	else
+	{
+#ifdef LIBRETRO
+		gl.ofbo.width = width;
+		gl.ofbo.height = height;
+		glViewport(0, 0, width, height);
+		output_fbo = hw_render.get_current_framebuffer();
+#else
 		output_fbo = init_output_framebuffer(rendering_width, rendering_height);
+#endif
+	}
 	if (output_fbo == 0)
 		return false;
 
@@ -838,8 +847,11 @@ static bool RenderFrame(int width, int height)
 
 	if (is_rtt)
 		ReadRTTBuffer();
+#ifndef LIBRETRO
 	else
 		render_output_framebuffer();
+#endif
+	glBindVertexArray(0);
 
 	return !is_rtt;
 }

@@ -74,6 +74,9 @@ void MapleConfigMap::GetInput(PlainJoystickState* pjs)
 	}
 	else if (settings.platform.system == DC_PLATFORM_ATOMISWAVE)
 	{
+#ifdef LIBRETRO
+		pjs->kcode = kcode[player_num];
+#else
 		const u32* mapping = settings.input.JammaSetup == JVS::LightGun ? awavelg_button_mapping : awave_button_mapping;
 		pjs->kcode = ~0;
 		for (u32 i = 0; i < ARRAY_SIZE(awave_button_mapping); i++)
@@ -81,6 +84,7 @@ void MapleConfigMap::GetInput(PlainJoystickState* pjs)
 			if ((kcode[player_num] & (1 << i)) == 0)
 				pjs->kcode &= ~mapping[i];
 		}
+#endif
 		if (NaomiGameInputs != NULL)
 		{
 			for (u32 axis = 0; axis < PJAI_Count; axis++)

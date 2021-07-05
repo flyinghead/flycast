@@ -23,6 +23,7 @@
 #include "hw/maple/maple_devs.h"
 #include "overlay.h"
 #include "cfg/option.h"
+#include "rend/osd.h"
 
 VulkanOverlay::~VulkanOverlay() = default;
 

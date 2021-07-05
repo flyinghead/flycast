@@ -43,7 +43,11 @@ private:
 	bool isGLES = false;
 };
 
-#if defined(__APPLE__)
+#if defined(LIBRETRO)
+
+#include "libretro.h"
+
+#elif defined(__APPLE__)
 
 #include "osx.h"
 

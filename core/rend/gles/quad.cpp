@@ -181,15 +181,11 @@ void drawQuad(GLuint texId, bool rotate, bool swapY)
 	glcache.BindTexture(GL_TEXTURE_2D, texId);
 
 	glBindBuffer(GL_ARRAY_BUFFER, quadBuffer);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quadIndexBuffer);
 	if (gl.gl_major < 3)
-	{
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quadIndexBuffer);
 		setupVertexAttribs();
-	}
 	else
-	{
 		bindVAO(quadVertexArray);
-	}
 
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STREAM_DRAW);
 	glDrawElements(GL_TRIANGLE_STRIP, 5, GL_UNSIGNED_SHORT, (GLvoid *)0);

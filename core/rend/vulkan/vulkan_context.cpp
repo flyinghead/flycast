@@ -30,11 +30,11 @@
 #include "texture.h"
 #include "utils.h"
 #include "emulator.h"
+#include "oslib/oslib.h"
 
 void ReInitOSD();
 
 VulkanContext *VulkanContext::contextInstance;
-static const char *PipelineCacheFileName = "vulkan_pipeline.cache";
 
 #ifndef __ANDROID__
 VKAPI_ATTR static VkBool32 VKAPI_CALL debugUtilsMessengerCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageTypes,
@@ -462,7 +462,7 @@ bool VulkanContext::InitDevice()
 	    		10000, ARRAY_SIZE(pool_sizes), pool_sizes));
 
 
-	    std::string cachePath = get_readonly_data_path(PipelineCacheFileName);
+	    std::string cachePath = hostfs::getVulkanCachePath();
 	    FILE *f = nowide::fopen(cachePath.c_str(), "rb");
 	    if (f == nullptr)
 	    	pipelineCache = device->createPipelineCacheUnique(vk::PipelineCacheCreateInfo());
@@ -940,7 +940,7 @@ void VulkanContext::Term()
         std::vector<u8> cacheData = device->getPipelineCacheData(*pipelineCache);
         if (!cacheData.empty())
         {
-            std::string cachePath = get_writable_data_path(PipelineCacheFileName);
+            std::string cachePath = hostfs::getVulkanCachePath();
             FILE *f = nowide::fopen(cachePath.c_str(), "wb");
             if (f != nullptr)
             {

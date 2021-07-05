@@ -35,3 +35,13 @@ const std::vector<OSDVertex>& GetOSDVertices();
 extern std::vector<u8> DefaultOSDButtons;
 u8 *loadOSDButtons(int &width, int &height);
 void HideOSD();
+
+// VMUs
+extern u32 vmu_lcd_data[8][48 * 32];
+extern bool vmu_lcd_status[8];
+extern bool vmu_lcd_changed[8];
+
+void push_vmu_screen(int bus_id, int bus_port, u8* buffer);
+
+// Crosshair
+const u32 *getCrosshairTextureData();

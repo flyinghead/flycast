@@ -416,6 +416,8 @@ void reshapeABuffer(int w, int h)
 static void abufferDrawQuad()
 {
 	glBindVertexArray(g_quadVertexArray);
+	glBindBuffer(GL_ARRAY_BUFFER, g_quadBuffer);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, g_quadIndexBuffer);
 	glDrawElements(GL_TRIANGLE_STRIP, 5, GL_UNSIGNED_SHORT, (GLvoid *)0);
 	glBindVertexArray(0);
 	glCheck();
@@ -426,6 +428,7 @@ void DrawTranslucentModVols(int first, int count)
 	if (count == 0 || pvrrc.modtrig.used() == 0)
 		return;
 	glBindVertexArray(gl4.vbo.modvol_vao);
+	glBindBuffer(GL_ARRAY_BUFFER, gl4.vbo.modvols);
 
 	glActiveTexture(GL_TEXTURE2);
 	glBindTexture(GL_TEXTURE_2D, 0);

@@ -2,7 +2,11 @@
 #include "gles.h"
 #include "cfg/cfg.h"
 #include "hw/pvr/ta.h"
+#ifndef LIBRETRO
 #include "rend/gui.h"
+#else
+#include "vmu_xhair.h"
+#endif
 #include "rend/osd.h"
 #include "rend/TexCache.h"
 #include "rend/transform_matrix.h"
@@ -17,6 +21,9 @@
 #endif
 #ifndef GL_MAJOR_VERSION
 #define GL_MAJOR_VERSION                  0x821B
+#endif
+#ifndef GL_MINOR_VERSION
+#define GL_MINOR_VERSION                  0x821C
 #endif
 #endif
 
@@ -433,6 +440,10 @@ void findGLVersion()
 			gl.GL_OES_depth24_supported = true;
 		if (!gl.GL_OES_packed_depth_stencil_supported)
 			INFO_LOG(RENDERER, "Packed depth/stencil not supported: no modifier volumes when rendering to a texture");
+		GLint ranges[2];
+		GLint precision;
+		glGetShaderPrecisionFormat(GL_FRAGMENT_SHADER, GL_HIGH_FLOAT, ranges, &precision);
+		gl.highp_float_supported = (ranges[0] != 0 || ranges[1] != 0) && precision != 0;
 	}
 	else
 	{
@@ -452,11 +463,26 @@ void findGLVersion()
 			gl.glsl_version_header = "#version 120";
 			gl.single_channel_format = GL_ALPHA;
 		}
+    	gl.highp_float_supported = true;
 	}
-	GLint ranges[2];
-	GLint precision;
-	glGetShaderPrecisionFormat(GL_FRAGMENT_SHADER, GL_HIGH_FLOAT, ranges, &precision);
-	gl.highp_float_supported = (ranges[0] != 0 || ranges[1] != 0) && precision != 0;
+	gl.max_anisotropy = 1.f;
+#if !defined(GLES2) && defined(GL_MAX_TEXTURE_MAX_ANISOTROPY)
+	if (gl.gl_major >= 3)
+	{
+		for (u32 i = 0; ; i++)
+		{
+			const char* extension = (const char *)glGetStringi(GL_EXTENSIONS, i);
+			if (extension == nullptr)
+				break;
+			if (!strcmp(extension, "GL_EXT_texture_filter_anisotropic"))
+			{
+				glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY, &gl.max_anisotropy);
+				break;
+			}
+		}
+	}
+#endif
+	NOTICE_LOG(RENDERER, "GL %s version %d.%d", gl.is_gles ? "ES" : "", gl.gl_major, gl.gl_minor);
 }
 
 struct ShaderUniforms_t ShaderUniforms;
@@ -506,7 +532,7 @@ GLuint gl_CompileAndLink(const char* VertexShader, const char* FragmentShader)
 	glBindAttribLocation(program, VERTEX_COL_OFFS1_ARRAY, "in_offs1");
 	glBindAttribLocation(program, VERTEX_UV1_ARRAY,       "in_uv1");
 
-#ifdef glBindFragDataLocation
+#ifndef GLES
 	if (!gl.is_gles && gl.gl_major >= 3)
 		glBindFragDataLocation(program, 0, "FragColor");
 #endif
@@ -669,13 +695,15 @@ static void SetupOSDVBO()
 #ifndef GLES2
 	if (gl.OSD_SHADER.vao != 0)
 	{
-	   glBindVertexArray(gl.OSD_SHADER.vao);
-	   return;
+		glBindVertexArray(gl.OSD_SHADER.vao);
+		glBindBuffer(GL_ARRAY_BUFFER, gl.OSD_SHADER.geometry);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+		return;
 	}
 	if (gl.gl_major >= 3)
 	{
-	   glGenVertexArrays(1, &gl.OSD_SHADER.vao);
-	   glBindVertexArray(gl.OSD_SHADER.vao);
+		glGenVertexArrays(1, &gl.OSD_SHADER.vao);
+		glBindVertexArray(gl.OSD_SHADER.vao);
 	}
 #endif
 	if (gl.OSD_SHADER.geometry == 0)
@@ -907,6 +935,21 @@ void UpdatePaletteTexture(GLenum texture_slot)
 
 void OSD_DRAW(bool clear_screen)
 {
+#ifdef LIBRETRO
+	void DrawVmuTexture(u8 vmu_screen_number);
+	void DrawGunCrosshair(u8 port);
+
+	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
+	{
+		for (int vmu_screen_number = 0 ; vmu_screen_number < 4 ; vmu_screen_number++)
+			if (vmu_lcd_status[vmu_screen_number])
+				DrawVmuTexture(vmu_screen_number);
+	}
+
+//	for (int lightgun_port = 0 ; lightgun_port < 4 ; lightgun_port++)
+//		DrawGunCrosshair(lightgun_port);
+
+#else
 	gui_display_osd();
 #ifdef __ANDROID__
 	if (gl.OSD_SHADER.osd_tex == 0)
@@ -968,6 +1011,11 @@ void OSD_DRAW(bool clear_screen)
 
 		glCheck();
 	}
+#endif
+#endif
+#ifndef GLES2
+	if (gl.gl_major >= 3)
+		glBindVertexArray(0);
 #endif
 }
 
@@ -1101,8 +1149,14 @@ bool RenderFrame(int width, int height)
 	}
 	else
 	{
+#ifdef LIBRETRO
+		gl.ofbo.width = width;
+		gl.ofbo.height = height;
+		glViewport(0, 0, width, height);
+#else
 		if (init_output_framebuffer(width, height) == 0)
 			return false;
+#endif
 	}
 
 	bool wide_screen_on = !is_rtt && config::Widescreen && !matrices.IsClipped() && !config::Rotate90;
@@ -1215,8 +1269,14 @@ bool RenderFrame(int width, int height)
 
 	if (is_rtt)
 		ReadRTTBuffer();
+#ifndef LIBRETRO
 	else
 		render_output_framebuffer();
+#endif
+#ifndef GLES2
+	if (gl.gl_major >= 3)
+		glBindVertexArray(0);
+#endif
 
 	return !is_rtt;
 }
