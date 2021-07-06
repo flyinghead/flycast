@@ -389,12 +389,15 @@ extern Option<int> MaxThreads;
 extern Option<int> AutoSkipFrame;		// 0: none, 1: some, 2: more
 extern Option<int> RenderResolution;
 extern Option<bool> VSync;
+extern Option<u64> PixelBufferSize;
+extern Option<int> AnisotropicFiltering;
 
 // Misc
 
 extern Option<bool> SerialConsole;
 extern Option<bool> SerialPTY;
 extern Option<bool> UseReios;
+extern Option<bool> FastGDRomLoad;
 
 extern Option<bool> OpenGlChecks;
 

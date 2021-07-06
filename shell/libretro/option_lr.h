@@ -189,8 +189,5 @@ protected:
 
 // TODO
 extern Option<bool> ThreadedRendering;
-extern Option<int> AnisotropicFiltering;
 extern Option<bool> UpdateMode;
 extern Option<bool> PowerVR2Filter;
-extern Option<u64> PixelBufferSize;
-extern Option<bool> FastGDRomLoad;

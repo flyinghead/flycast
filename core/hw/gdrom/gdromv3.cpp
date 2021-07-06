@@ -1049,6 +1049,8 @@ static int getGDROMTicks()
 {
 	if (SB_GDST & 1)
 	{
+		if (config::FastGDRomLoad)
+			return 512;
 		u32 len = SB_GDLEN == 0 ? 0x02000000 : SB_GDLEN;
 		if (len - SB_GDLEND > 10240)
 			return 1000000;										// Large transfers: GD-ROM transfer rate 1.8 MB/s

@@ -879,10 +879,11 @@ if(USE_VULKAN AND NOT APPLE)
 	endif()
 endif()
 
-# TODO
 if(WIN32 AND NOT LIBRETRO)
 	target_sources(${PROJECT_NAME} PRIVATE
 		core/rend/dx9/comptr.h
+		core/rend/dx9/d3d_overlay.h
+		core/rend/dx9/d3d_overlay.cpp
 		core/rend/dx9/d3d_renderer.h
 		core/rend/dx9/d3d_renderer.cpp
 		core/rend/dx9/d3d_shaders.h
@@ -890,20 +891,15 @@ if(WIN32 AND NOT LIBRETRO)
 		core/rend/dx9/d3d_texture.h
 		core/rend/dx9/d3d_texture.cpp
 		core/rend/dx9/dxcontext.h
-		core/rend/dx9/dxcontext.cpp)
-	if(NOT LIBRETRO)
-	    target_sources(${PROJECT_NAME} PRIVATE
-			core/rend/dx9/d3d_overlay.h
-			core/rend/dx9/d3d_overlay.cpp
-			core/rend/dx9/imgui_impl_dx9.h
-			core/rend/dx9/imgui_impl_dx9.cpp)
-		if(NOT MINGW)
-			target_include_directories(${PROJECT_NAME} PRIVATE "$ENV{DXSDK_DIR}/Include")
-			if (CMAKE_SIZEOF_VOID_P EQUAL 8)
-				target_link_directories(${PROJECT_NAME} PRIVATE "$ENV{DXSDK_DIR}/Lib/x64")
-			else()
-				target_link_directories(${PROJECT_NAME} PRIVATE "$ENV{DXSDK_DIR}/Lib/x86")
-			endif()
+		core/rend/dx9/dxcontext.cpp
+		core/rend/dx9/imgui_impl_dx9.h
+		core/rend/dx9/imgui_impl_dx9.cpp)
+	if(NOT MINGW)
+		target_include_directories(${PROJECT_NAME} PRIVATE "$ENV{DXSDK_DIR}/Include")
+		if (CMAKE_SIZEOF_VOID_P EQUAL 8)
+			target_link_directories(${PROJECT_NAME} PRIVATE "$ENV{DXSDK_DIR}/Lib/x64")
+		else()
+			target_link_directories(${PROJECT_NAME} PRIVATE "$ENV{DXSDK_DIR}/Lib/x86")
 		endif()
 	endif()
 	target_link_libraries(${PROJECT_NAME} PRIVATE d3d9 d3dx9)

@@ -194,6 +194,19 @@ __forceinline
 			if (!gl.is_gles && gl.gl_major >= 3 && mipmapped)
 				glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_LOD_BIAS, D_Adjust_LoD_Bias[gp->tsp.MipMapD]);
 #endif
+			if (gl.max_anisotropy > 1.f)
+			{
+				if (config::AnisotropicFiltering > 1)
+				{
+					glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY,
+							std::min<float>(config::AnisotropicFiltering, gl.max_anisotropy));
+					// Set the recommended minification filter for best results
+					if (mipmapped)
+						glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+				}
+				else
+					glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY, 1.f);
+			}
 		}
 	}
 

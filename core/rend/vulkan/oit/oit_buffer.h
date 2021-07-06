@@ -24,8 +24,6 @@
 
 #include <memory>
 
-const vk::DeviceSize PixelBufferSize = 512 * 1024 * 1024;
-
 class OITBuffers
 {
 public:
@@ -51,7 +49,7 @@ public:
 
 		if (!pixelBuffer)
 		{
-			pixelBuffer = std::unique_ptr<BufferData>(new BufferData(std::min(PixelBufferSize, context->GetMaxMemoryAllocationSize()),
+			pixelBuffer = std::unique_ptr<BufferData>(new BufferData(std::min<vk::DeviceSize>(config::PixelBufferSize, context->GetMaxMemoryAllocationSize()),
 					vk::BufferUsageFlagBits::eStorageBuffer, vk::MemoryPropertyFlagBits::eDeviceLocal));
 		}
 		if (!pixelCounter)

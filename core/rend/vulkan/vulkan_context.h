@@ -98,6 +98,7 @@ public:
 	static VulkanContext *Instance() { return contextInstance; }
 	bool SupportsFragmentShaderStoresAndAtomics() const { return fragmentStoresAndAtomics; }
 	bool SupportsSamplerAnisotropy() const { return samplerAnisotropy; }
+	float GetMaxSamplerAnisotropy() const { return samplerAnisotropy ? maxSamplerAnisotropy : 1.f; }
 	bool SupportsDedicatedAllocation() const { return dedicatedAllocationSupported; }
 	const VMAllocator& GetAllocator() const { return allocator; }
 	bool IsUnifiedMemory() const { return unifiedMemory; }
@@ -159,6 +160,7 @@ private:
 	bool optimalTilingSupported4444 = false;
 	bool fragmentStoresAndAtomics = false;
 	bool samplerAnisotropy = false;
+	float maxSamplerAnisotropy = 0.f;
 	bool dedicatedAllocationSupported = false;
 	bool unifiedMemory = false;
 	u32 vendorID = 0;

@@ -466,7 +466,7 @@ void findGLVersion()
     	gl.highp_float_supported = true;
 	}
 	gl.max_anisotropy = 1.f;
-#if !defined(GLES2) && defined(GL_MAX_TEXTURE_MAX_ANISOTROPY)
+#if !defined(GLES2)
 	if (gl.gl_major >= 3)
 	{
 		for (u32 i = 0; ; i++)

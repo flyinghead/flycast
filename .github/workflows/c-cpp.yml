@@ -16,6 +16,7 @@ jobs:
           - {name: x86_64-pc-windows-msvc, os: windows-latest, cmakeArgs: -DCMAKE_SYSTEM_VERSION="10.0.18362.0" -G "Visual Studio 16 2019" -A x64}
           - {name: x86_64-w64-mingw32, os: windows-latest, cmakeArgs: -G "MinGW Makefiles", destDir: win}
           - {name: libretro-x86_64-pc-linux-gnu, os: ubuntu-latest, cmakeArgs: -DLIBRETRO=ON -DCMAKE_POSITION_INDEPENDENT_CODE=TRUE -DUSE_VULKAN=OFF}
+          - {name: libretro-x86_64-w64-mingw32, os: windows-latest, cmakeArgs: -DLIBRETRO=ON -DUSE_VULKAN=OFF -G "MinGW Makefiles"}
 
     steps:
       - name: Set up build environment (macos-latest)
@@ -34,7 +35,7 @@ jobs:
 
       - name: Set up build environment (windows-latest)
         run: echo "DXSDK_DIR=${Env:HOMEDRIVE}${Env:HOMEPATH}\ccache\" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf-8 -Append
-        if: matrix.config.os == 'windows-latest' && matrix.config.name != 'x86_64-w64-mingw32'
+        if: matrix.config.os == 'windows-latest' && matrix.config.name != 'x86_64-w64-mingw32' && matrix.config.name != 'libretro-x86_64-w64-mingw32'
 
       - uses: actions/cache@v2
         with:
@@ -52,7 +53,7 @@ jobs:
         if: matrix.config.os == 'windows-latest'
 
       - name: Download DX2010
-        if: steps.cache.outputs.cache-hit != 'true' && matrix.config.os == 'windows-latest' && matrix.config.name != 'x86_64-w64-mingw32'
+        if: steps.cache.outputs.cache-hit != 'true' && matrix.config.os == 'windows-latest' && matrix.config.name != 'x86_64-w64-mingw32' && matrix.config.name != 'libretro-x86_64-w64-mingw32'
         run:   |
                curl -L https://download.microsoft.com/download/a/e/7/ae743f1f-632b-4809-87a9-aa1bb3458e31/DXSDK_Jun10.exe -o _DX2010_.exe
                7z x _DX2010_.exe DXSDK/Include -o_DX2010_

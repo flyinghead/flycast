@@ -222,6 +222,7 @@ bool VulkanContext::InitInstance(const char** extensions, uint32_t extensions_co
 		uniformBufferAlignment = properties->limits.minUniformBufferOffsetAlignment;
 		storageBufferAlignment = properties->limits.minStorageBufferOffsetAlignment;
 		maxStorageBufferRange = properties->limits.maxStorageBufferRange;
+		maxSamplerAnisotropy =  properties->limits.maxSamplerAnisotropy;
 		unifiedMemory = properties->deviceType == vk::PhysicalDeviceType::eIntegratedGpu;
 		vendorID = properties->vendorID;
 		NOTICE_LOG(RENDERER, "Vulkan API %s. Device %s", vulkan11 ? "1.1" : "1.0", properties->deviceName);

@@ -226,6 +226,14 @@ static void SetGPState(const PolyParam* gp)
 					glSamplerParameteri(texSamplers[i], GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 					if (mipmapped)
 						glSamplerParameterf(texSamplers[i], GL_TEXTURE_LOD_BIAS, D_Adjust_LoD_Bias[tsp.MipMapD]);
+					if (gl.max_anisotropy > 1.f)
+					{
+						if (config::AnisotropicFiltering > 1)
+							glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY,
+									std::min<float>(config::AnisotropicFiltering, gl.max_anisotropy));
+						else
+							glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY, 1.f);
+					}
 				}
 			}
 		}

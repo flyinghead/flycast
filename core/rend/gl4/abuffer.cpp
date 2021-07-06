@@ -29,8 +29,6 @@ static GLuint g_quadBuffer;
 static GLuint g_quadIndexBuffer;
 static GLuint g_quadVertexArray;
 
-static GLuint pixel_buffer_size = 512 * 1024 * 1024;	// Initial size 512 MB
-
 #define MAX_PIXELS_PER_FRAGMENT "32"
 
 static const char *final_shader_source = SHADER_HEADER
@@ -277,7 +275,7 @@ void initABuffer()
 		// get the max buffer size
 		GLint64 size;
 		glGetInteger64v(GL_MAX_SHADER_STORAGE_BLOCK_SIZE, &size);
-		pixel_buffer_size = (GLuint)std::min((GLint64)pixel_buffer_size, size);
+		GLsizeiptr pixel_buffer_size = std::min<GLsizeiptr>((u64)config::PixelBufferSize, size);
 
 		// Create the buffer
 		glGenBuffers(1, &pixels_buffer);

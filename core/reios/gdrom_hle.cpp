@@ -74,7 +74,7 @@ static void read_sectors_to(u32 addr, u32 sector, u32 count)
 	gd_hle_state.cur_sector = sector + count - 1;
 	if (virtual_addr)
 		gd_hle_state.xfer_end_time = 0;
-	else if (count > 5)
+	else if (count > 5 && !config::FastGDRomLoad)
 		// Large Transfers: GD-ROM rate (approx. 1.8 MB/s)
 		gd_hle_state.xfer_end_time = sh4_sched_now64() + (u64)count * 2048 * 1000000L / 10240;
 	else
