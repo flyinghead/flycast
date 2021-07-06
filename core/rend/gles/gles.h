@@ -4,6 +4,7 @@
 #include "rend/TexCache.h"
 #include "wsi/gl_context.h"
 #include "glcache.h"
+#include "postprocess.h"
 
 #include <unordered_map>
 #include <glm/glm.hpp>

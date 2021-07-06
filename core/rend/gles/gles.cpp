@@ -376,6 +376,7 @@ static void gl_delete_shaders()
 static void gles_term()
 {
 	termQuad();
+	postProcessor.term();
 #ifndef GLES2
 	glDeleteVertexArrays(1, &gl.vbo.mainVAO);
 	gl.vbo.mainVAO = 0;
@@ -1150,9 +1151,12 @@ bool RenderFrame(int width, int height)
 	else
 	{
 #ifdef LIBRETRO
-		glBindFramebuffer(GL_FRAMEBUFFER, glsm_get_current_framebuffer());
 		gl.ofbo.width = width;
 		gl.ofbo.height = height;
+		if (config::PowerVR2Filter && !pvrrc.isRenderFramebuffer)
+			glBindFramebuffer(GL_FRAMEBUFFER, postProcessor.getFramebuffer(width, height));
+		else
+			glBindFramebuffer(GL_FRAMEBUFFER, glsm_get_current_framebuffer());
 		glViewport(0, 0, width, height);
 #else
 		if (init_output_framebuffer(width, height) == 0)
@@ -1260,6 +1264,10 @@ bool RenderFrame(int width, int height)
 		}
 
 		DrawStrips();
+#ifdef LIBRETRO
+		if (config::PowerVR2Filter && !is_rtt)
+			postProcessor.render(glsm_get_current_framebuffer());
+#endif
 	}
 	else
 	{

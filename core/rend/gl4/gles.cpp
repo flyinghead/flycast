@@ -718,8 +718,11 @@ static bool RenderFrame(int width, int height)
 #ifdef LIBRETRO
 		gl.ofbo.width = width;
 		gl.ofbo.height = height;
+		if (config::PowerVR2Filter && !pvrrc.isRenderFramebuffer)
+			output_fbo = postProcessor.getFramebuffer(width, height);
+		else
+			output_fbo = glsm_get_current_framebuffer();
 		glViewport(0, 0, width, height);
-		output_fbo = hw_render.get_current_framebuffer();
 #else
 		output_fbo = init_output_framebuffer(rendering_width, rendering_height);
 #endif
@@ -833,6 +836,10 @@ static bool RenderFrame(int width, int height)
 		}
 
 		gl4DrawStrips(output_fbo, rendering_width, rendering_height);
+#ifdef LIBRETRO
+		if (config::PowerVR2Filter && !is_rtt)
+			postProcessor.render(glsm_get_current_framebuffer());
+#endif
 	}
 	else
 	{
@@ -873,6 +880,7 @@ struct OpenGL4Renderer : OpenGLRenderer
 	void Term() override
 	{
 		termQuad();
+		postProcessor.term();
 		termABuffer();
 		if (stencilTexId != 0)
 		{

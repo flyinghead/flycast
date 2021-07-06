@@ -310,7 +310,7 @@ void retro_deinit()
 	LogManager::Shutdown();
 }
 
-static bool is_dupe = false;
+bool is_dupe;
 
 static void set_variable_visibility()
 {
@@ -492,7 +492,7 @@ static void update_variables(bool first_startup)
 		{
 			if (config::RendererType == RenderType::Vulkan_OIT)
 				config::RendererType = RenderType::Vulkan;
-			else if (config::RendererType == RenderType::OpenGL_OIT)
+			else
 				config::RendererType = RenderType::OpenGL;
 			config::PerStripSorting = true;
 		}
@@ -500,7 +500,7 @@ static void update_variables(bool first_startup)
 		{
 			if (config::RendererType == RenderType::Vulkan_OIT)
 				config::RendererType = RenderType::Vulkan;
-			else if (config::RendererType == RenderType::OpenGL_OIT)
+			else
 				config::RendererType = RenderType::OpenGL;
 			config::PerStripSorting = false;
 		}
@@ -508,7 +508,7 @@ static void update_variables(bool first_startup)
 		{
 			if (config::RendererType == RenderType::Vulkan)
 				config::RendererType = RenderType::Vulkan_OIT;
-			else if (config::RendererType == RenderType::OpenGL)
+			else
 				config::RendererType = RenderType::OpenGL_OIT;
 			config::PerStripSorting = false;	// Not used
 		}
@@ -517,7 +517,7 @@ static void update_variables(bool first_startup)
 	{
 		if (config::RendererType == RenderType::Vulkan_OIT)
 			config::RendererType = RenderType::Vulkan;
-		else if (config::RendererType == RenderType::OpenGL)
+		else
 			config::RendererType = RenderType::OpenGL;
 		config::PerStripSorting = false;
 	}
@@ -1889,6 +1889,7 @@ unsigned retro_api_version()
 }
 
 //Reicast stuff
+/*
 void os_DoEvents()
 {
 	if (!config::ThreadedRendering)
@@ -1903,6 +1904,7 @@ void os_DoEvents()
 		}
 	}
 }
+*/
 
 static uint32_t get_time_ms()
 {

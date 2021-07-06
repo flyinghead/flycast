@@ -789,6 +789,8 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/rend/gles/gles.h
         core/rend/gles/gltex.cpp
         core/rend/gles/quad.cpp
+        core/rend/gles/postprocess.cpp
+        core/rend/gles/postprocess.h
         core/rend/CustomTexture.cpp
         core/rend/CustomTexture.h
 		core/rend/osd.cpp
