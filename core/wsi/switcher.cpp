@@ -18,6 +18,7 @@
     You should have received a copy of the GNU General Public License
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
+#ifndef LIBRETRO
 #include "context.h"
 #include "rend/gui.h"
 #include "cfg/option.h"
@@ -64,3 +65,4 @@ void TermRenderApi()
 #endif
 	theGLContext.Term();
 }
+#endif

@@ -72,6 +72,9 @@ char* strdup(const char *str)
 #include "rend/osd.h"
 #include "cfg/option.h"
 #include "wsi/gl_context.h"
+#ifdef _WIN32
+#include "windows/fault_handler.h"
+#endif
 
 constexpr char slash = path_default_slash_c();
 
@@ -281,8 +284,13 @@ void retro_init()
 
 	if (!_vmem_reserve())
 		ERROR_LOG(VMEM, "Cannot reserve memory space");
-#ifdef WIN32
-#error TODO
+#ifdef _WIN32
+#ifdef _WIN64
+	AddVectoredExceptionHandler(1, exceptionHandler);
+	setup_seh();
+#else
+	SetUnhandledExceptionFilter((LPTOP_LEVEL_EXCEPTION_FILTER)&exceptionHandler);
+#endif
 #else
 	void install_fault_handler();
 	install_fault_handler();
@@ -776,9 +784,11 @@ void retro_run()
 	{
 		dc_run(nullptr);
 	}
-	// TODO Widescreen
+	int width = config::RenderResolution * 4 / 3;
+	if (config::Widescreen && !config::Rotate90)
+		width = width * 4 / 3;
 #if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES) || defined(HAVE_VULKAN)
-	video_cb(is_dupe ? 0 : RETRO_HW_FRAME_BUFFER_VALID, config::RenderResolution * 4 / 3, config::RenderResolution, 0);
+	video_cb(is_dupe ? 0 : RETRO_HW_FRAME_BUFFER_VALID, width, config::RenderResolution, 0);
 #endif
 	if (!config::ThreadedRendering)
 		is_dupe = true;
@@ -1255,8 +1265,10 @@ static void retro_vk_context_reset()
 		ERROR_LOG(RENDERER, "Get Vulkan HW interface failed");
 		return;
 	}
-	// TODO Widescreen
-	theVulkanContext.SetWindowSize(config::RenderResolution * 4 / 3, config::RenderResolution);
+	int width = config::RenderResolution * 4 / 3;
+	if (config::Widescreen && !config::Rotate90)
+		width = width * 4 / 3;
+	theVulkanContext.SetWindowSize(width, config::RenderResolution);
 	theVulkanContext.Init((retro_hw_render_interface_vulkan *)vulkan);
 }
 
@@ -1343,12 +1355,15 @@ static bool set_opengl_hw_render(u32 preferred)
 		params.context_type          = (retro_hw_context_type)preferred;
 		params.major                 = 3;
 		params.minor                 = 0;
+		config::RendererType = RenderType::OpenGL;
 	}
 #elif defined(HAVE_GL3)
 	params.context_type          = (retro_hw_context_type)preferred;
 	params.major                 = 3;
 	params.minor                 = 0;
+	config::RendererType = RenderType::OpenGL;
 #endif
+	config::RendererType.commit();
 
 	if (glsm_ctl(GLSM_CTL_STATE_CONTEXT_INIT, &params))
 		return true;
@@ -1362,6 +1377,8 @@ static bool set_opengl_hw_render(u32 preferred)
 	params.major              = 0;
 	params.minor              = 0;
 #endif
+	config::RendererType = RenderType::OpenGL;
+	config::RendererType.commit();
 	return glsm_ctl(GLSM_CTL_STATE_CONTEXT_INIT, &params);
 #else
 	return false;

@@ -482,7 +482,7 @@ void findGLVersion()
 		}
 	}
 #endif
-	NOTICE_LOG(RENDERER, "GL %s version %d.%d", gl.is_gles ? "ES" : "", gl.gl_major, gl.gl_minor);
+	NOTICE_LOG(RENDERER, "Open GL%s version %d.%d", gl.is_gles ? "ES" : "", gl.gl_major, gl.gl_minor);
 }
 
 struct ShaderUniforms_t ShaderUniforms;
@@ -1150,6 +1150,7 @@ bool RenderFrame(int width, int height)
 	else
 	{
 #ifdef LIBRETRO
+		glBindFramebuffer(GL_FRAMEBUFFER, glsm_get_current_framebuffer());
 		gl.ofbo.width = width;
 		gl.ofbo.height = height;
 		glViewport(0, 0, width, height);

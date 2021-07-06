@@ -202,41 +202,11 @@ extern "C" {
 },
 
 struct retro_core_option_definition option_defs_tr[] = {
-#if ((FEAT_SHREC == DYNAREC_JIT && HOST_CPU == CPU_X86) || (HOST_CPU == CPU_ARM) || (HOST_CPU == CPU_ARM64) || (HOST_CPU == CPU_X64)) && defined(TARGET_NO_JIT)
-   {
-      CORE_OPTION_NAME "_cpu_mode",
-      "CPU Modu (Yeniden Başlatma Gerektirir)",
-      "",
-      {
-#if (FEAT_SHREC == DYNAREC_JIT && HOST_CPU == CPU_X86) || (HOST_CPU == CPU_ARM) || (HOST_CPU == CPU_ARM64) || (HOST_CPU == CPU_X64)
-         { "dynamic_recompiler", "Dinamik Yeniden Derleyici" },
-#endif
-#ifdef TARGET_NO_JIT
-         { "generic_recompiler", "Jenerik Yeniden Derleyici" },
-#endif
-         { NULL, NULL },
-      },
-      NULL,
-   },
-#endif
    {
       CORE_OPTION_NAME "_boot_to_bios",
       "BIOS'a önyükleme (Yeniden Başlatma Gerektirir)",
       "Doğrudan Dreamcast BIOS menüsüne önyükleme yapın.",
       {
-         { NULL, NULL },
-      },
-      NULL,
-   },
-   {
-      CORE_OPTION_NAME "_system",
-      "Sistem Tipi (Yeniden Başlatma Gerektirir)",
-      "",
-      {
-         { "auto",       "Otomatik" },
-         { "dreamcast",  "Dreamcast" },
-         { "naomi",      "NAOMI" },
-         { "atomiswave", "Atomiswave" },
          { NULL, NULL },
       },
       NULL,
@@ -314,6 +284,15 @@ struct retro_core_option_definition option_defs_tr[] = {
       NULL,
    },
    {
+      CORE_OPTION_NAME "_fog",
+      "Fog Effects",
+      "",
+      {
+         { NULL, NULL },
+      },
+      NULL,
+   },
+   {
       CORE_OPTION_NAME "_volume_modifier_enable",
       "Hacim Değiştirici",
       "Nesne gölgeleri çizmek için genellikle oyunlar tarafından kullanılan bir Dreamcast GPU özelliği. Bu normalde etkinleştirilmelidir - performansın etkisi ihmal edilebilir düzeyde genellikle minimum düzeydedir.",
@@ -332,13 +311,19 @@ struct retro_core_option_definition option_defs_tr[] = {
       NULL,
    },
    {
+      CORE_OPTION_NAME "_widescreen_cheats",
+      "Widescreen Cheats (Restart)",
+      "Activates cheats that allow certain games to display in widescreen format.",
+      {
+         { NULL, NULL },
+      },
+      NULL,
+   },
+   {
       CORE_OPTION_NAME "_cable_type",
       "Kablo Tipi",
       "",
       {
-         { "TV (RGB)",       NULL },
-         { "TV (Composite)", NULL },
-         { "VGA (RGB)",      NULL },
          { NULL, NULL },
       },
       NULL,
@@ -348,11 +333,11 @@ struct retro_core_option_definition option_defs_tr[] = {
       "Yayın",
       "",
       {
-         { "Default", "Varsayılan" },
-         { "PAL_M",   "PAL-M (Brazil)" },
-         { "PAL_N",   "PAL-N (Argentina, Paraguay, Uruguay)" },
          { "NTSC",    NULL },
          { "PAL",     "PAL (World)" },
+         { "PAL_N",   "PAL-N (Argentina, Paraguay, Uruguay)" },
+         { "PAL_M",   "PAL-M (Brazil)" },
+         { "Default", "Varsayılan" },
          { NULL, NULL },
       },
       NULL,
@@ -362,8 +347,8 @@ struct retro_core_option_definition option_defs_tr[] = {
       "Kare Hızı",
       "Emülatörün ön uçla nasıl etkileşimde bulunduğunu etkiler. 'Tam Hız' - emülatör, bir kare oluşturulduğunda, kontrolü RetroArch'a geri döndürür. 'Normal' - emülatör, V-blank kesmesi her üretildiğinde kontrolü RetroArch'a döndürür. Çoğu durumda 'Tam Hız' kullanılmalıdır. 'Normal' bazı sistemlerde kare ilerleme hızını iyileştirebilir, ancak ekran statik olduğunda (örneğin, yükleme/duraklatma ekranları) yanıt vermeyen girişe neden olabilir.",
       {
-         { "fullspeed", "Tam Hız" },
          { "normal",    "Normal" },
+         { "fullspeed", "Tam Hız" },
          { NULL, NULL },
       },
       NULL,
@@ -373,10 +358,10 @@ struct retro_core_option_definition option_defs_tr[] = {
       "Bölge",
       "",
       {
-         { "Default", "Varsayılan" },
          { "Japan",   NULL },
          { "USA",     NULL },
          { "Europe",  NULL },
+         { "Default", "Varsayılan" },
          { NULL, NULL },
       },
       NULL,
@@ -386,13 +371,13 @@ struct retro_core_option_definition option_defs_tr[] = {
       "Dil",
       "",
       {
-         { "Default",  "Varsayılan" },
          { "Japanese", NULL },
          { "English",  NULL },
          { "German",   NULL },
          { "French",   NULL },
          { "Spanish",  NULL },
          { "Italian",  NULL },
+         { "Default",  "Varsayılan" },
          { NULL, NULL },
       },
       NULL,
@@ -402,9 +387,8 @@ struct retro_core_option_definition option_defs_tr[] = {
       "DIV Eşleştirme (performans, daha az doğru)",
       "",
       {
-         { "disabled", NULL },
-         { "enabled",  NULL },
          { "auto",     "Otomatik" },
+         { "disabled", NULL },
          { NULL, NULL },
       },
       NULL,
@@ -451,6 +435,24 @@ struct retro_core_option_definition option_defs_tr[] = {
       CORE_OPTION_NAME "_enable_dsp",
       "DSP'yi Etkinleştir",
       "Dreamcast'in ses DSP'sinin (dijital sinyal işlemcisi) öykünmesini etkinleştirin. Üretilen sesin doğruluğunu arttırır, ancak performans gereksinimlerini artırır.",
+      {
+         { NULL, NULL },
+      },
+      NULL,
+   },
+   {
+      CORE_OPTION_NAME "_anisotropic_filtering",
+      "Anisotropic Filtering",
+      "Enhance the quality of textures on surfaces that are at oblique viewing angles with respect to the camera.",
+      {
+         { NULL, NULL },
+      },
+      NULL,
+   },
+   {
+      CORE_OPTION_NAME "_pvr2_filtering",
+      "PowerVR2 Post-processing Filter",
+      "Post-process the rendered image to simulate effects specific to the PowerVR2 GPU and analog video signals.",
       {
          { NULL, NULL },
       },
@@ -508,9 +510,18 @@ struct retro_core_option_definition option_defs_tr[] = {
       NULL,
    },
    {
-      CORE_OPTION_NAME "_synchronous_rendering",
-      "Senkronize İşleme",
-      "",
+      CORE_OPTION_NAME "_auto_skip_frame",
+      "Auto Skip Frame",
+      "Automatically skip frames when the emulator is running slow. Note: This setting only applies when 'Threaded Rendering' is enabled.",
+      {
+         { NULL, NULL },
+      },
+      NULL
+   },
+   {
+      CORE_OPTION_NAME "_delay_frame_swapping",
+      "Delay Frame Swapping",
+      "Useful to avoid flashing screens or glitchy videos. Not recommended on slow platforms. Note: This setting only applies when 'Threaded Rendering' is enabled.",
       {
          { NULL, NULL },
       },

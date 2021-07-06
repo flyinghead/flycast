@@ -194,27 +194,6 @@ extern "C" {
 },
 
 struct retro_core_option_definition option_defs_us[] = {
-#if ((FEAT_SHREC == DYNAREC_JIT && HOST_CPU == CPU_X86) || (HOST_CPU == CPU_ARM) || (HOST_CPU == CPU_ARM64) || (HOST_CPU == CPU_X64)) && defined(TARGET_NO_JIT)
-   {
-      CORE_OPTION_NAME "_cpu_mode",
-      "CPU Mode (Restart)",
-      "",
-      {
-#if (FEAT_SHREC == DYNAREC_JIT && HOST_CPU == CPU_X86) || (HOST_CPU == CPU_ARM) || (HOST_CPU == CPU_ARM64) || (HOST_CPU == CPU_X64)
-         { "dynamic_recompiler", "Dynamic Recompiler" },
-#endif
-#ifdef TARGET_NO_JIT
-         { "generic_recompiler", "Generic Recompiler" },
-#endif
-         { NULL, NULL },
-      },
-#if (FEAT_SHREC == DYNAREC_JIT && HOST_CPU == CPU_X86) || (HOST_CPU == CPU_ARM) || (HOST_CPU == CPU_ARM64) || (HOST_CPU == CPU_X64)
-      "dynamic_recompiler",
-#elif defined(TARGET_NO_JIT)
-      "generic_recompiler",
-#endif
-   },
-#endif
    {
       CORE_OPTION_NAME "_boot_to_bios",
       "Boot to BIOS (Restart)",
@@ -225,19 +204,6 @@ struct retro_core_option_definition option_defs_us[] = {
          { NULL, NULL },
       },
       "disabled",
-   },
-   {
-      CORE_OPTION_NAME "_system",
-      "System Type (Restart)",
-      "",
-      {
-         { "auto",       "Auto" },
-         { "dreamcast",  "Dreamcast" },
-         { "naomi",      "NAOMI" },
-         { "atomiswave", "Atomiswave" },
-         { NULL, NULL },
-      },
-      "auto",
    },
    {
       CORE_OPTION_NAME "_hle_bios",

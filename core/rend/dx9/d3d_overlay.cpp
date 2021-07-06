@@ -17,6 +17,7 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #include "d3d_overlay.h"
+#include "rend/osd.h"
 #include "rend/gui.h"
 #include <glm/glm.hpp>
 #include <glm/gtx/transform.hpp>

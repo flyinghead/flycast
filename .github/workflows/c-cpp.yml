@@ -79,7 +79,7 @@ jobs:
 
       - name: CMake
         run: |
-          cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE=artifact ${{ matrix.config.cmakeArgs }}
+          cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE=artifact -DCMAKE_LIBRARY_OUTPUT_DIRECTORY=artifact ${{ matrix.config.cmakeArgs }}
           cmake --build build --config Release --parallel 2
 
       - name: Unit Tests

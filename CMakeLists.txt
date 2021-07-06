@@ -55,15 +55,22 @@ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/core/version.h.in" "${CMAKE_CURRENT_
 if(LIBRETRO)
     add_library(${PROJECT_NAME} SHARED core/emulator.cpp)
     set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--no-undefined")
+    set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "flycast_libretro")
+    set(CMAKE_SHARED_LIBRARY_PREFIX "")
     target_compile_definitions(${PROJECT_NAME} PRIVATE LIBRETRO)
     if(ANDROID OR USE_GLES)
 		target_compile_definitions(${PROJECT_NAME} PRIVATE GLES GLES3 HAVE_OPENGLES HAVE_OPENGLES3)
+		target_link_libraries(${PROJECT_NAME} PRIVATE "-lGLESv3")
     elseif(USE_GLES2)
 		target_compile_definitions(${PROJECT_NAME} PRIVATE GLES GLES2 HAVE_OPENGLES HAVE_OPENGLES2)
+		target_link_libraries(${PROJECT_NAME} PRIVATE "-lGLESv2")
     else()
 		target_compile_definitions(${PROJECT_NAME} PRIVATE HAVE_OPENGL)
 	    if(NOT APPLE)
 			target_compile_definitions(${PROJECT_NAME} PRIVATE HAVE_OIT)
+		endif()
+	    if(WIN32)
+			target_link_libraries(${PROJECT_NAME} PRIVATE "-lopengl32")
 		endif()
 	endif()
 elseif(ANDROID)
@@ -641,11 +648,14 @@ if(NOT LIBRETRO)
 	        core/input/mapping.h)
 endif()
 
-target_sources(${PROJECT_NAME} PRIVATE
-        core/linux/common.cpp)
-
-if(NOT WIN32)
+if(WIN32)
+	target_sources(${PROJECT_NAME} PRIVATE
+			core/windows/fault_handler.cpp
+			core/windows/fault_handler.h
+			core/windows/win_vmem.cpp)
+else()
     target_sources(${PROJECT_NAME} PRIVATE
+			core/linux/common.cpp
             core/linux/context.cpp
             core/linux/posix_vmem.cpp)
 endif()
@@ -869,11 +879,10 @@ if(USE_VULKAN AND NOT APPLE)
 	endif()
 endif()
 
-if(WIN32)
+# TODO
+if(WIN32 AND NOT LIBRETRO)
 	target_sources(${PROJECT_NAME} PRIVATE
 		core/rend/dx9/comptr.h
-		core/rend/dx9/d3d_overlay.h
-		core/rend/dx9/d3d_overlay.cpp
 		core/rend/dx9/d3d_renderer.h
 		core/rend/dx9/d3d_renderer.cpp
 		core/rend/dx9/d3d_shaders.h
@@ -881,15 +890,20 @@ if(WIN32)
 		core/rend/dx9/d3d_texture.h
 		core/rend/dx9/d3d_texture.cpp
 		core/rend/dx9/dxcontext.h
-		core/rend/dx9/dxcontext.cpp
-		core/rend/dx9/imgui_impl_dx9.h
-		core/rend/dx9/imgui_impl_dx9.cpp)
-	if(NOT MINGW)
-		target_include_directories(${PROJECT_NAME} PRIVATE "$ENV{DXSDK_DIR}/Include")
-		if (CMAKE_SIZEOF_VOID_P EQUAL 8)
-			target_link_directories(${PROJECT_NAME} PRIVATE "$ENV{DXSDK_DIR}/Lib/x64")
-		else()
-			target_link_directories(${PROJECT_NAME} PRIVATE "$ENV{DXSDK_DIR}/Lib/x86")
+		core/rend/dx9/dxcontext.cpp)
+	if(NOT LIBRETRO)
+	    target_sources(${PROJECT_NAME} PRIVATE
+			core/rend/dx9/d3d_overlay.h
+			core/rend/dx9/d3d_overlay.cpp
+			core/rend/dx9/imgui_impl_dx9.h
+			core/rend/dx9/imgui_impl_dx9.cpp)
+		if(NOT MINGW)
+			target_include_directories(${PROJECT_NAME} PRIVATE "$ENV{DXSDK_DIR}/Include")
+			if (CMAKE_SIZEOF_VOID_P EQUAL 8)
+				target_link_directories(${PROJECT_NAME} PRIVATE "$ENV{DXSDK_DIR}/Lib/x64")
+			else()
+				target_link_directories(${PROJECT_NAME} PRIVATE "$ENV{DXSDK_DIR}/Lib/x86")
+			endif()
 		endif()
 	endif()
 	target_link_libraries(${PROJECT_NAME} PRIVATE d3d9 d3dx9)
@@ -1055,10 +1069,8 @@ if(NOT LIBRETRO)
 	            core/windows/winmain.cpp
 	            core/windows/xinput_gamepad.h)
 	    endif()
-	    target_sources(${PROJECT_NAME} PRIVATE
-	            core/windows/win_vmem.cpp
-	            shell/windows/flycast.rc)
-	
+	    target_sources(${PROJECT_NAME} PRIVATE shell/windows/flycast.rc)
+
 	    target_link_libraries(${PROJECT_NAME} PRIVATE dsound opengl32 winmm ws2_32 wsock32 xinput9_1_0)
 	endif()
 endif()
