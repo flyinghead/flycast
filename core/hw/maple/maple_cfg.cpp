@@ -170,12 +170,16 @@ void MapleConfigMap::GetMouseInput(u8& buttons, int& x, int& y, int& wheel)
 
 bool maple_atomiswave_coin_chute(int slot)
 {
+#ifdef LIBRETRO
+	return kcode[slot] & AWAVE_COIN_KEY;
+#else
 	for (int i = 0; i < 16; i++)
 	{
 		if ((kcode[slot] & (1 << i)) == 0 && awave_button_mapping[i] == AWAVE_COIN_KEY)
 			return true;
 	}
 	return false;
+#endif
 }
 
 void mcfg_Create(MapleDeviceType type, u32 bus, u32 port, s32 player_num = -1)

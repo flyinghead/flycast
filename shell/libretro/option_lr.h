@@ -20,13 +20,12 @@
 
 class Settings {
 public:
-	void reset() {
-//		for (const auto& o : options)
-//			o->reset();
-//		gameId.clear();
-	}
+	void reset() {}
 
-	void load(bool gameSpecific) {
+	void load(bool gameSpecific)
+	{
+		if (gameSpecific)
+			return;
 		for (const auto& o : options)
 			o->load();
 	}

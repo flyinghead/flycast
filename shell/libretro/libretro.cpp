@@ -145,6 +145,8 @@ static double vib_delta[4];
 unsigned per_content_vmus = 0;
 
 static bool first_run = true;
+static bool mute_messages;
+static bool rotate_screen;
 
 static retro_perf_callback perf_cb;
 static retro_get_cpu_features_t perf_get_cpu_features_cb;
@@ -785,7 +787,7 @@ void retro_run()
 		dc_run(nullptr);
 	}
 	int width = config::RenderResolution * 4 / 3;
-	if (config::Widescreen && !config::Rotate90)
+	if (config::Widescreen && !rotate_screen)
 		width = width * 4 / 3;
 #if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES) || defined(HAVE_VULKAN)
 	video_cb(is_dupe ? 0 : RETRO_HW_FRAME_BUFFER_VALID, width, config::RenderResolution, 0);
@@ -1266,7 +1268,7 @@ static void retro_vk_context_reset()
 		return;
 	}
 	int width = config::RenderResolution * 4 / 3;
-	if (config::Widescreen && !config::Rotate90)
+	if (config::Widescreen && !rotate_screen)
 		width = width * 4 / 3;
 	theVulkanContext.SetWindowSize(width, config::RenderResolution);
 	theVulkanContext.Init((retro_hw_render_interface_vulkan *)vulkan);
@@ -1579,10 +1581,17 @@ bool retro_load_game(const struct retro_game_info *game)
 		snprintf(nvmem_file2, sizeof(nvmem_file2), "%s%s.nvmem2", save_dir, g_base_name);
 	}
 
+	mute_messages = true;
 	dc_start_game(boot_to_bios ? nullptr : game->path);
+	mute_messages = false;
 
-	int rotation = config::Rotate90 ? 3 : 0;
+	int rotation = config::Rotate90 ? 1 : 0;
 	environ_cb(RETRO_ENVIRONMENT_SET_ROTATION, &rotation);
+	rotate_screen = config::Rotate90;
+	config::Rotate90 = false;	// actual framebuffer rotation is done by frontend
+	if (rotate_screen)
+		config::Widescreen.override(false);
+
 	if (devices_need_refresh)
 		refresh_devices(true);
 
@@ -1732,60 +1741,58 @@ void retro_get_system_info(struct retro_system_info *info)
 void retro_get_system_av_info(struct retro_system_av_info *info)
 {
 	NOTICE_LOG(RENDERER, "retro_get_system_av_info: Res=%d", (int)config::RenderResolution);
-   /*                        00=VGA    01=NTSC   10=PAL,   11=illegal/undocumented */
-   const int spg_clks[4] = { 26944080, 13458568, 13462800, 26944080 };
-   u32 pixel_clock= spg_clks[(SPG_CONTROL.full >> 6) & 3];
+	/*                        00=VGA    01=NTSC   10=PAL,   11=illegal/undocumented */
+	const int spg_clks[4] = { 26944080, 13458568, 13462800, 26944080 };
+	u32 pixel_clock= spg_clks[(SPG_CONTROL.full >> 6) & 3];
 
-   int width = config::RenderResolution * 4 / 3;
-   cheatManager.reset(config::Settings::instance().getGameId());
-   if (cheatManager.isWidescreen())
-   {
-      info->geometry.aspect_ratio = 16.0 / 9.0;
+	int width = config::RenderResolution * 4 / 3;
+	cheatManager.reset(config::Settings::instance().getGameId());
+	if (cheatManager.isWidescreen())
+	{
+		info->geometry.aspect_ratio = 16.0 / 9.0;
 		struct retro_message msg;
 		msg.msg = "Widescreen cheat activated";
 		msg.frames = 120;
 		environ_cb(RETRO_ENVIRONMENT_SET_MESSAGE, &msg);
-   }
-   else
-   {
-      if (config::Widescreen)
-      {
-    	  width = (int)lround(width * 4.0 / 3.0);
-         info->geometry.aspect_ratio = 16.0 / 9.0;
-      }
-      else
-      	info->geometry.aspect_ratio = 4.0 / 3.0;
-   }
-   if (config::Rotate90)
-      info->geometry.aspect_ratio = 1 / info->geometry.aspect_ratio;
-   int maximum = width > config::RenderResolution ? width : config::RenderResolution;
-   info->geometry.base_width   = width;
-   info->geometry.base_height  = config::RenderResolution;
-   info->geometry.max_width    = maximum;
-   info->geometry.max_height   = maximum;
-   if (config::Rotate90)
-      info->geometry.aspect_ratio = 1 / info->geometry.aspect_ratio;
+	}
+	else
+	{
+		if (config::Widescreen)
+		{
+			width = (int)lround(width * 4.0 / 3.0);
+			info->geometry.aspect_ratio = 16.0 / 9.0;
+		}
+		else
+			info->geometry.aspect_ratio = 4.0 / 3.0;
+	}
+	if (rotate_screen)
+		info->geometry.aspect_ratio = 1 / info->geometry.aspect_ratio;
+	int maximum = width > config::RenderResolution ? width : config::RenderResolution;
+	info->geometry.base_width   = width;
+	info->geometry.base_height  = config::RenderResolution;
+	info->geometry.max_width    = maximum;
+	info->geometry.max_height   = maximum;
 
-   switch (pixel_clock)
-   {
-      case 26944080:
-         info->timing.fps = 60.00; /* (VGA  480 @ 60.00) */
-         break;
-      case 26917135:
-         info->timing.fps = 59.94; /* (NTSC 480 @ 59.94) */
-         break;
-      case 13462800:
-         info->timing.fps = 50.00; /* (PAL 240  @ 50.00) */
-         break;
-      case 13458568:
-         info->timing.fps = 59.94; /* (NTSC 240 @ 59.94) */
-         break;
-      case 25925600:
-         info->timing.fps = 50.00; /* (PAL 480  @ 50.00) */
-         break;
-   }
+	switch (pixel_clock)
+	{
+	case 26944080:
+		info->timing.fps = 60.00; /* (VGA  480 @ 60.00) */
+		break;
+	case 26917135:
+		info->timing.fps = 59.94; /* (NTSC 480 @ 59.94) */
+		break;
+	case 13462800:
+		info->timing.fps = 50.00; /* (PAL 240  @ 50.00) */
+		break;
+	case 13458568:
+		info->timing.fps = 59.94; /* (NTSC 240 @ 59.94) */
+		break;
+	case 25925600:
+		info->timing.fps = 50.00; /* (PAL 480  @ 50.00) */
+		break;
+	}
 
-   info->timing.sample_rate = 44100.0;
+	info->timing.sample_rate = 44100.0;
 }
 
 unsigned retro_get_region()
@@ -2889,6 +2896,8 @@ static bool read_m3u(const char *file)
 
 void gui_display_notification(const char *msg, int duration)
 {
+	if (mute_messages)
+		return;
 	retro_message retromsg;
 	retromsg.msg = msg;
 	retromsg.frames = duration / 17;
