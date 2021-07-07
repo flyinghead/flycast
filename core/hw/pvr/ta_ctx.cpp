@@ -1,6 +1,9 @@
 #include "ta_ctx.h"
 #include "spg.h"
 #include "cfg/option.h"
+#if defined(HAVE_LIBNX)
+#include <malloc.h>
+#endif
 
 extern u32 fskip;
 extern u32 FrameCount;
@@ -19,6 +22,8 @@ void* OS_aligned_malloc(size_t align, size_t size)
 	return __mingw_aligned_malloc(size, align);
 #elif defined(_WIN32)
 	return _aligned_malloc(size, align);
+#elif defined(HAVE_LIBNX)
+   return memalign(align, size);
 #else
 	void *result;
 	if (posix_memalign(&result, align, size))

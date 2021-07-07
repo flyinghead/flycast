@@ -30,9 +30,9 @@ void GenericLog(LogTypes::LOG_LEVELS level, LogTypes::LOG_TYPE type, const char*
 
 static size_t DeterminePathCutOffPoint()
 {
-	constexpr const char* pattern = "core/";
+	constexpr const char* pattern = "shell/";
 #ifdef _WIN32
-	constexpr const char* pattern2 = "core\\";
+	constexpr const char* pattern2 = "shell\\";
 #endif
 	std::string path = __FILE__;
 	std::transform(path.begin(), path.end(), path.begin(),
@@ -43,7 +43,7 @@ static size_t DeterminePathCutOffPoint()
 		pos = path.find(pattern2);
 #endif
 	if (pos != std::string::npos)
-		return pos + strlen(pattern);
+		return pos;
 	return 0;
 }
 

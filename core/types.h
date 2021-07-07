@@ -27,6 +27,9 @@
 #include <cstdint>
 #include <cstddef>
 #include <cstring>
+#ifdef HAVE_LIBNX
+#include <strings.h>
+#endif
 
 //basic types
 typedef int8_t  s8;

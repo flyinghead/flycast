@@ -132,9 +132,17 @@ extern int pico_sem_wait(void *sem, int timeout);
 extern void *pico_thread_create(void *(*routine)(void *), void *arg);
 #endif  /* PICO_SUPPORT_THREADING */
 
+#ifdef HAVE_LIBNX
+#include <switch.h>
+#endif
+
 static inline void PICO_IDLE(void)
 {
+#ifdef HAVE_LIBNX
+    svcSleepThread(5000000);
+#else
     usleep(5000);
+#endif // HAVE_LIBNX
 }
 
 #endif  /* PICO_SUPPORT_POSIX */

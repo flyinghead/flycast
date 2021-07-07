@@ -23,7 +23,14 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#ifdef HAVE_LIBNX
+#include <switch.h>
+#define INADDR_NONE 0xffffffff
+#define INET_ADDRSTRLEN sizeof(struct sockaddr_in)
+#define SOL_TCP 6 // Shrug
+#else
 #include <netinet/ip.h>
+#endif // HAVE_LIBNX
 #include <netinet/tcp.h>
 #include <arpa/inet.h>
 #include <netdb.h>
