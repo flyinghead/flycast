@@ -398,17 +398,6 @@ struct retro_core_option_definition option_defs_us[] = {
       "NTSC",
    },
    {
-      CORE_OPTION_NAME "_framerate",
-      "Framerate",
-      "Affects how emulator interacts with frontend. 'Full Speed' - emulator returns control to RetroArch each time a frame has been rendered. 'Normal' - emulator returns control to RetroArch each time a V-blank interrupt is generated. 'Full Speed' should be used in most cases. 'Normal' may improve frame pacing on some systems, but can cause unresponsive input when screen is static (e.g. loading/pause screens). Note: This setting only applies when 'Threaded Rendering' is disabled.",
-      {
-         { "normal",    "Normal" },
-         { "fullspeed", "Full Speed" },
-         { NULL, NULL },
-      },
-      "fullspeed",
-   },
-   {
       CORE_OPTION_NAME "_region",
       "Region",
       "",
@@ -596,9 +585,9 @@ struct retro_core_option_definition option_defs_us[] = {
       "Auto Skip Frame",
       "Automatically skip frames when the emulator is running slow. Note: This setting only applies when 'Threaded Rendering' is enabled.",
       {
-         { "none", NULL },
-         { "some",  NULL },
-         { "more",  NULL },
+         { "none", "None" },
+         { "some", "Normal" },
+         { "more", "Maximum" },
          { NULL, NULL },
       },
 #ifdef LOW_END
@@ -610,7 +599,7 @@ struct retro_core_option_definition option_defs_us[] = {
    {
       CORE_OPTION_NAME "_delay_frame_swapping",
       "Delay Frame Swapping",
-      "Useful to avoid flashing screens or glitchy videos. Not recommended on slow platforms. Note: This setting only applies when 'Threaded Rendering' is enabled.",
+      "Useful to avoid flashing screens or glitchy videos. Not recommended on slow platforms.",
       {
          { "disabled", NULL },
          { "enabled",  NULL },

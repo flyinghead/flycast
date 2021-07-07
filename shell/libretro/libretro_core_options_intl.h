@@ -343,17 +343,6 @@ struct retro_core_option_definition option_defs_tr[] = {
       NULL,
    },
    {
-      CORE_OPTION_NAME "_framerate",
-      "Kare Hızı",
-      "Emülatörün ön uçla nasıl etkileşimde bulunduğunu etkiler. 'Tam Hız' - emülatör, bir kare oluşturulduğunda, kontrolü RetroArch'a geri döndürür. 'Normal' - emülatör, V-blank kesmesi her üretildiğinde kontrolü RetroArch'a döndürür. Çoğu durumda 'Tam Hız' kullanılmalıdır. 'Normal' bazı sistemlerde kare ilerleme hızını iyileştirebilir, ancak ekran statik olduğunda (örneğin, yükleme/duraklatma ekranları) yanıt vermeyen girişe neden olabilir.",
-      {
-         { "normal",    "Normal" },
-         { "fullspeed", "Tam Hız" },
-         { NULL, NULL },
-      },
-      NULL,
-   },
-   {
       CORE_OPTION_NAME "_region",
       "Bölge",
       "",
@@ -521,7 +510,7 @@ struct retro_core_option_definition option_defs_tr[] = {
    {
       CORE_OPTION_NAME "_delay_frame_swapping",
       "Delay Frame Swapping",
-      "Useful to avoid flashing screens or glitchy videos. Not recommended on slow platforms. Note: This setting only applies when 'Threaded Rendering' is enabled.",
+      "Useful to avoid flashing screens or glitchy videos. Not recommended on slow platforms.",
       {
          { NULL, NULL },
       },

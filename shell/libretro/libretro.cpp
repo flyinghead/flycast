@@ -175,6 +175,8 @@ char content_name[PATH_MAX];
 static char g_roms_dir[PATH_MAX];
 static std::mutex mtx_serialization;
 static bool gl_ctx_resetting = false;
+static bool is_dupe;
+static u64 startTime;
 
 // Disk swapping
 static struct retro_disk_control_callback retro_disk_control_cb;
@@ -312,14 +314,12 @@ void retro_deinit()
 	LogManager::Shutdown();
 }
 
-bool is_dupe;
-
 static void set_variable_visibility()
 {
 	struct retro_core_option_display option_display;
 	struct retro_variable var;
 
-	/* Show/hide NAOMI/Atomiswave options */
+	// Show/hide NAOMI/Atomiswave options
 	option_display.visible = ((settings.platform.system == DC_PLATFORM_NAOMI) ||
 			(settings.platform.system == DC_PLATFORM_ATOMISWAVE));
 
@@ -328,7 +328,7 @@ static void set_variable_visibility()
 	option_display.key = CORE_OPTION_NAME "_enable_naomi_15khz_dipswitch";
 	environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
 
-	/* Show/hide Dreamcast options */
+	// Show/hide Dreamcast options
 	option_display.visible = (settings.platform.system == DC_PLATFORM_DREAMCAST);
 
 	option_display.key = CORE_OPTION_NAME "_boot_to_bios";
@@ -352,18 +352,10 @@ static void set_variable_visibility()
 	option_display.key = CORE_OPTION_NAME "_show_vmu_screen_settings";
 	environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
 
-	/* Show/hide settings-dependent options */
-	option_display.visible = !config::ThreadedRendering;
-
-	option_display.key = CORE_OPTION_NAME "_framerate";
-	environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
-
+	// Show/hide settings-dependent options
 	option_display.visible = config::ThreadedRendering;
 
-	option_display.key = CORE_OPTION_NAME "_synchronous_rendering";
-	environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
-
-	option_display.key = CORE_OPTION_NAME "_delay_frame_swapping";
+	option_display.key = CORE_OPTION_NAME "_auto_skip_frame";
 	environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
 
 	// Only for per-pixel renderers
@@ -376,12 +368,7 @@ static void set_variable_visibility()
 	option_display.key = CORE_OPTION_NAME "_texupscale_max_filtered_texture_size";
 	environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
 
-	// Only for Vulkan. TODO Unfortunately, at startup the graphic context hasn't been determined yet.
-	//option_display.visible = settings.pvr.rend == 4 || settings.pvr.rend == 5;
-	//option_display.key = CORE_OPTION_NAME "_anisotropic_filtering";
-	//environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
-
-	/* Show/hide VMU screen options */
+	// Show/hide VMU screen options
 	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
 	{
 		option_display.visible = true;
@@ -413,7 +400,7 @@ static void set_variable_visibility()
 		environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
 	}
 
-	/* Show/hide light gun options */
+	// Show/hide light gun options
 	option_display.visible = true;
 	var.key = CORE_OPTION_NAME "_show_lightgun_settings";
 
@@ -784,6 +771,7 @@ void retro_run()
 	}
 	else
 	{
+		startTime = sh4_sched_now64();
 		dc_run(nullptr);
 	}
 	int width = config::RenderResolution * 4 / 3;
@@ -1895,23 +1883,21 @@ unsigned retro_api_version()
    return RETRO_API_VERSION;
 }
 
-//Reicast stuff
-/*
-void os_DoEvents()
+void retro_rend_present()
 {
 	if (!config::ThreadedRendering)
 	{
 		is_dupe = false;
-		poll_cb();
-
-		if (config::UpdateMode)
-		{
-			rend_end_render();
-			dc_stop();
-		}
+		sh4_cpu.Stop();
 	}
 }
-*/
+
+void retro_rend_vblank()
+{
+	// Time out if a frame hasn't been rendered for 50 ms
+	if (!config::ThreadedRendering && is_dupe && sh4_sched_now64() - startTime > 10000000)
+		sh4_cpu.Stop();
+}
 
 static uint32_t get_time_ms()
 {

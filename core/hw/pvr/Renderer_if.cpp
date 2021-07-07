@@ -9,6 +9,13 @@
 #include <mutex>
 #include <zlib.h>
 
+void retro_rend_present();
+void retro_rend_vblank();
+#ifndef LIBRETRO
+void retro_rend_present() {}
+void retro_rend_vblank() {}
+#endif
+
 u32 VertexCount=0;
 u32 FrameCount=1;
 
@@ -197,7 +204,7 @@ bool rend_single_frame(const bool& enabled)
 {
 	do
 	{
-		if (!rs.Wait(50))
+		if (config::ThreadedRendering && !rs.Wait(50))
 			return false;
 		if (do_swap)
 		{
@@ -205,6 +212,7 @@ bool rend_single_frame(const bool& enabled)
 			if (renderer->Present())
 			{
 				rs.Set(); // don't miss any render
+				retro_rend_present();
 				return true;
 			}
 		}
@@ -212,8 +220,10 @@ bool rend_single_frame(const bool& enabled)
 			return false;
 
 		_pvrrc = DequeueRender();
+		if (!config::ThreadedRendering && _pvrrc == nullptr)
+			return false;
 	}
-	while (!_pvrrc);
+	while (_pvrrc == nullptr);
 
 	bool frame_rendered = rend_frame(_pvrrc);
 
@@ -229,7 +239,11 @@ bool rend_single_frame(const bool& enabled)
 				do_swap = false;
 		}
 		if (frame_rendered)
+		{
 			frame_rendered = renderer->Present();
+			if (frame_rendered)
+				retro_rend_present();
+		}
 	}
 
 	if (_pvrrc->rend.isRTT)
@@ -366,7 +380,10 @@ void rend_start_render()
 		if (QueueRender(ctx))
 		{
 			palette_update();
-			rs.Set();
+			if (!config::ThreadedRendering)
+				rend_single_frame(true);
+			else
+				rs.Set();
 			pend_rend = true;
 		}
 	}
@@ -374,7 +391,7 @@ void rend_start_render()
 
 void rend_end_render()
 {
-	if (pend_rend)
+	if (pend_rend && config::ThreadedRendering)
 		re.Wait();
 }
 
@@ -398,6 +415,7 @@ void rend_vblank()
 	render_called = false;
 	check_framebuffer_write();
 	cheatManager.apply();
+	retro_rend_vblank();
 }
 
 void check_framebuffer_write()
@@ -409,8 +427,11 @@ void check_framebuffer_write()
 
 void rend_cancel_emu_wait()
 {
-	FinishRender(NULL);
-	re.Set();
+	if (config::ThreadedRendering)
+	{
+		FinishRender(NULL);
+		re.Set();
+	}
 }
 
 void rend_set_fb_write_addr(u32 fb_w_sof1)
@@ -427,6 +448,9 @@ void rend_swap_frame(u32 fb_r_sof1)
 	if (fb_r_sof1 == fb_w_cur)
 	{
 		do_swap = true;
-		rs.Set();
+		if (config::ThreadedRendering)
+			rs.Set();
+		else
+			rend_single_frame(true);
 	}
 }

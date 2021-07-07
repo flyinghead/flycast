@@ -187,7 +187,3 @@ protected:
 };
 
 extern Option<bool> PowerVR2Filter;
-
-// TODO
-extern Option<bool> ThreadedRendering;
-extern Option<bool> UpdateMode;
