@@ -189,10 +189,10 @@ void CustomTexture::DumpTexture(u32 hash, int w, int h, TextureType textype, voi
 			case TextureType::_4444:
 				for (int x = 0; x < w; x++)
 				{
-					*dst++ = ((*src >> 12) & 0xF) << 4;
-					*dst++ = ((*src >> 8) & 0xF) << 4;
-					*dst++ = ((*src >> 4) & 0xF) << 4;
-					*dst++ = (*src & 0xF) << 4;
+					*dst++ = (((*src >> 12) & 0xF) << 4) | ((*src >> 12) & 0xF);
+					*dst++ = (((*src >> 8) & 0xF) << 4) | ((*src >> 8) & 0xF);
+					*dst++ = (((*src >> 4) & 0xF) << 4) | ((*src >> 4) & 0xF);
+					*dst++ = ((*src & 0xF) << 4) | (*src & 0xF);
 					src++;
 				}
 				break;
@@ -207,9 +207,9 @@ void CustomTexture::DumpTexture(u32 hash, int w, int h, TextureType textype, voi
 			case TextureType::_5551:
 				for (int x = 0; x < w; x++)
 				{
-					*dst++ = ((*src >> 11) & 0x1F) << 3;
-					*dst++ = ((*src >> 6) & 0x1F) << 3;
-					*dst++ = ((*src >> 1) & 0x1F) << 3;
+					*dst++ = (((*src >> 11) & 0x1F) << 3) | ((*src >> 13) & 7);
+					*dst++ = (((*src >> 6) & 0x1F) << 3) | ((*src >> 8) & 7);
+					*dst++ = (((*src >> 1) & 0x1F) << 3) | ((*src >> 3) & 7);
 					*dst++ = (*src & 1) ? 255 : 0;
 					src++;
 				}
