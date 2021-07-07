@@ -149,6 +149,8 @@ std::string Gdxsv::GeneratePlatformInfoString() {
         ss << "machine_id=" << std::hex << digest << std::dec << "\n";
     }
     ss << "wireless=" << (int) (os_GetConnectionMedium() == "Wireless") << "\n";
+    ss << "local_ip=" << tcp_client.local_ip() << "\n";
+    ss << "bind_port=" << udp_client.bind_port() << "\n";
 
     if (gcp_ping_test_finished) {
         for (const auto &res : gcp_ping_test_result) {

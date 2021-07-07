@@ -30,11 +30,14 @@ public:
 
     const std::string &host() { return host_; }
 
+    const std::string &local_ip() const { return local_ip_; }
+
     int port() const { return port_; }
 
 private:
     sock_t sock_ = INVALID_SOCKET;
     std::string host_;
+    std::string local_ip_;
     int port_;
 };
 
@@ -108,6 +111,8 @@ public:
     u32 ReadableSize() const;
 
     void Close();
+
+    int bind_port() const { return bind_port_; }
 
 private:
     sock_t sock_ = INVALID_SOCKET;

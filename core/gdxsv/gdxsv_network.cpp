@@ -86,17 +86,31 @@ bool TcpClient::Connect(const char *host, int port) {
         set_blocking_mode(new_sock, true);
     }
 
+
+
     if (sock_ != INVALID_SOCKET) {
         closesocket(sock_);
     }
 
     set_tcp_nodelay(new_sock);
+
     sock_ = new_sock;
     host_ = std::string(host);
     port_ = port;
+
+    {
+        sockaddr_in name{};
+        socklen_t namelen = sizeof(name);
+        if (getsockname(new_sock, reinterpret_cast<sockaddr*>(&name), &namelen) != 0) {
+            WARN_LOG(COMMON, "getsockname failed");
+        } else {
+            char buf[INET_ADDRSTRLEN];
+            local_ip_ = std::string(inet_ntop(AF_INET, &name.sin_addr, buf, INET_ADDRSTRLEN));
+        }
+    }
+
     NOTICE_LOG(COMMON, "TCP Connect: %s:%d ok", host, port);
     return true;
-
 }
 
 int TcpClient::IsConnected() const {
