@@ -373,10 +373,36 @@ static void gl_delete_shaders()
 	gl.modvol_shader.program = 0;
 }
 
-static void gles_term()
+void termGLCommon()
 {
 	termQuad();
 	postProcessor.term();
+
+	// palette, fog
+	glcache.DeleteTextures(1, &fogTextureId);
+	fogTextureId = 0;
+	glcache.DeleteTextures(1, &paletteTextureId);
+	paletteTextureId = 0;
+	// RTT
+	glDeleteBuffers(1, &gl.rtt.pbo);
+	gl.rtt.pbo = 0;
+	gl.rtt.pboSize = 0;
+	glDeleteFramebuffers(1, &gl.rtt.fbo);
+	gl.rtt.fbo = 0;
+	glcache.DeleteTextures(1, &gl.rtt.tex);
+	gl.rtt.tex = 0;
+	glDeleteRenderbuffers(1, &gl.rtt.depthb);
+	gl.rtt.depthb = 0;
+	gl.rtt.texAddress = ~0;
+
+	gl_free_osd_resources();
+	free_output_framebuffer();
+	glcache.DeleteTextures(1, &fbTextureId);
+	fbTextureId = 0;
+}
+
+static void gles_term()
+{
 #ifndef GLES2
 	glDeleteVertexArrays(1, &gl.vbo.mainVAO);
 	gl.vbo.mainVAO = 0;
@@ -388,28 +414,7 @@ static void gles_term()
 	glDeleteBuffers(1, &gl.vbo.modvols);
 	glDeleteBuffers(1, &gl.vbo.idxs);
 	glDeleteBuffers(1, &gl.vbo.idxs2);
-	glcache.DeleteTextures(1, &fbTextureId);
-	fbTextureId = 0;
-	glcache.DeleteTextures(1, &fogTextureId);
-	fogTextureId = 0;
-	glcache.DeleteTextures(1, &paletteTextureId);
-	paletteTextureId = 0;
-	if (gl.rtt.pbo != 0)
-		glDeleteBuffers(1, &gl.rtt.pbo);
-	gl.rtt.pbo = 0;
-	gl.rtt.pboSize = 0;
-	if (gl.rtt.fbo != 0)
-		glDeleteFramebuffers(1, &gl.rtt.fbo);
-	gl.rtt.fbo = 0;
-	if (gl.rtt.tex != 0)
-		glcache.DeleteTextures(1, &gl.rtt.tex);
-	gl.rtt.tex = 0;
-	if (gl.rtt.depthb != 0)
-		glDeleteRenderbuffers(1, &gl.rtt.depthb);
-	gl.rtt.depthb = 0;
-	gl.rtt.texAddress = ~0;
-	gl_free_osd_resources();
-	free_output_framebuffer();
+	termGLCommon();
 
 	gl_delete_shaders();
 }

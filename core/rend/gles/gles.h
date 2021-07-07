@@ -148,6 +148,7 @@ void gl_free_osd_resources();
 bool ProcessFrame(TA_context* ctx);
 void UpdateFogTexture(u8 *fog_table, GLenum texture_slot, GLint fog_image_format);
 void UpdatePaletteTexture(GLenum texture_slot);
+void termGLCommon();
 void findGLVersion();
 void GetFramebufferScaling(float& scale_x, float& scale_y, float& scissoring_scale_x, float& scissoring_scale_y);
 void GetFramebufferSize(float& dc_width, float& dc_height);

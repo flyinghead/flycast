@@ -879,48 +879,24 @@ struct OpenGL4Renderer : OpenGLRenderer
 
 	void Term() override
 	{
-		termQuad();
-		postProcessor.term();
 		termABuffer();
-		if (stencilTexId != 0)
-		{
-			glcache.DeleteTextures(1, &stencilTexId);
-			stencilTexId = 0;
-		}
-		if (depthTexId != 0)
-		{
-			glcache.DeleteTextures(1, &depthTexId);
-			depthTexId = 0;
-		}
-		if (opaqueTexId != 0)
-		{
-			glcache.DeleteTextures(1, &opaqueTexId);
-			opaqueTexId = 0;
-		}
-		if (depthSaveTexId != 0)
-		{
-			glcache.DeleteTextures(1, &depthSaveTexId);
-			depthSaveTexId = 0;
-		}
-		if (geom_fbo != 0)
-		{
-			glDeleteFramebuffers(1, &geom_fbo);
-			geom_fbo = 0;
-		}
-		if (texSamplers[0] != 0)
-		{
-			glDeleteSamplers(2, texSamplers);
-			texSamplers[0] = texSamplers[1] = 0;
-		}
-		if (depth_fbo != 0)
-		{
-			glDeleteFramebuffers(1, &depth_fbo);
-			depth_fbo = 0;
-		}
-		TexCache.Clear();
+		glcache.DeleteTextures(1, &stencilTexId);
+		stencilTexId = 0;
+		glcache.DeleteTextures(1, &depthTexId);
+		depthTexId = 0;
+		glcache.DeleteTextures(1, &opaqueTexId);
+		opaqueTexId = 0;
+		glcache.DeleteTextures(1, &depthSaveTexId);
+		depthSaveTexId = 0;
+		glDeleteFramebuffers(1, &geom_fbo);
+		geom_fbo = 0;
+		glDeleteSamplers(2, texSamplers);
+		texSamplers[0] = texSamplers[1] = 0;
+		glDeleteFramebuffers(1, &depth_fbo);
+		depth_fbo = 0;
 
-		gl_free_osd_resources();
-		free_output_framebuffer();
+		TexCache.Clear();
+		termGLCommon();
 		gl4_term();
 	}
 
