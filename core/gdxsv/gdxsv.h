@@ -6,6 +6,8 @@
 #include <atomic>
 
 #include "gdxsv_network.h"
+#include "lbs_message.h"
+#include "battlelog.pb.h"
 #include "types.h"
 #include "cfg/cfg.h"
 #include "hw/sh4/sh4_mem.h"
@@ -48,6 +50,10 @@ private:
 
     void WritePatch();
 
+    void ApplyOnlinePatch(bool first_time);
+
+    void RestoreOnlinePatch();
+
     void WritePatchDisk1();
 
     void WritePatchDisk2();
@@ -64,6 +70,8 @@ private:
     std::string session_id;
     std::map<std::string, u32> symbols;
 
+    proto::GamePatchList patch_list;
+
     std::atomic<bool> net_terminate;
     std::atomic<bool> start_udp_session;
     std::thread net_thread;
@@ -78,6 +86,9 @@ private:
 
     std::atomic<bool> gcp_ping_test_finished;
     std::map<std::string, int> gcp_ping_test_result;
+
+    LbsMessage lbs_msg;
+    LbsMessageReader lbs_msg_reader;
 
     void handleReleaseJSON(const std::string &json);
 

@@ -899,12 +899,15 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/deps/protobuf-3.13.0/src/google/protobuf/wrappers.pb.h)
 
 target_sources(${PROJECT_NAME} PRIVATE
+        core/gdxsv/battlelog.pb.h
+        core/gdxsv/battlelog.pb.cc
         core/gdxsv/gdxsv.cpp
         core/gdxsv/gdxsv.h
         core/gdxsv/gdxsv_network.cpp
         core/gdxsv/gdxsv_network.h
         core/gdxsv/gdx_queue.h
         core/gdxsv/gdxsv_patch.h
+        core/gdxsv/lbs_message.h
         core/gdxsv/packet.pb.cc
         core/gdxsv/packet.pb.h)
 
