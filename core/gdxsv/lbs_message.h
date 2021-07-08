@@ -27,6 +27,7 @@ public:
 
 
     static const u16 lbsReadyBattle = 0x6910;
+    static const u16 lbsExtPlayerInfo = 0x9955;
     static const u16 lbsGamePatch = 0x9960;
 
     int Serialize(std::deque<u8> &buf) const {

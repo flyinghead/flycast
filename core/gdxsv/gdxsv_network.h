@@ -81,6 +81,8 @@ class UdpRemote {
 public:
     bool Open(const char* host, int port);
 
+    bool Open(const std::string& addr);
+
     void Close();
 
     bool is_open() const;

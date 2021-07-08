@@ -87,7 +87,6 @@ bool TcpClient::Connect(const char *host, int port) {
     }
 
 
-
     if (sock_ != INVALID_SOCKET) {
         closesocket(sock_);
     }
@@ -101,7 +100,7 @@ bool TcpClient::Connect(const char *host, int port) {
     {
         sockaddr_in name{};
         socklen_t namelen = sizeof(name);
-        if (getsockname(new_sock, reinterpret_cast<sockaddr*>(&name), &namelen) != 0) {
+        if (getsockname(new_sock, reinterpret_cast<sockaddr *>(&name), &namelen) != 0) {
             WARN_LOG(COMMON, "getsockname failed");
         } else {
             char buf[INET_ADDRSTRLEN];
@@ -175,6 +174,16 @@ bool UdpRemote::Open(const char *host, int port) {
     return true;
 }
 
+bool UdpRemote::Open(const std::string &addr) {
+    if (std::count(addr.begin(), addr.end(), ':') != 1) {
+        return false;
+    }
+    size_t colon_pos = addr.find_first_of(':');
+    std::string host = addr.substr(0, colon_pos);
+    int port = std::stoi(addr.substr(colon_pos + 1));
+    return Open(host.c_str(), port);
+}
+
 void UdpRemote::Close() {
     is_open_ = false;
     str_addr_.clear();
@@ -240,7 +249,7 @@ bool UdpClient::Initialized() const {
     return sock_ != INVALID_SOCKET;
 }
 
-int UdpClient::RecvFrom(char *buf, int len, std::string& sender) {
+int UdpClient::RecvFrom(char *buf, int len, std::string &sender) {
     sender.clear();
     sockaddr_in from_addr;
     socklen_t addrlen = sizeof(from_addr);

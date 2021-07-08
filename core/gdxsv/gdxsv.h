@@ -7,7 +7,7 @@
 
 #include "gdxsv_network.h"
 #include "lbs_message.h"
-#include "battlelog.pb.h"
+#include "gdxsv.pb.h"
 #include "types.h"
 #include "cfg/cfg.h"
 #include "hw/sh4/sh4_mem.h"
@@ -70,6 +70,7 @@ private:
     std::string session_id;
     std::map<std::string, u32> symbols;
 
+    std::vector<proto::ExtPlayerInfo> ext_player_info;
     proto::GamePatchList patch_list;
 
     std::atomic<bool> net_terminate;
@@ -83,6 +84,7 @@ private:
     TcpClient tcp_client;
     UdpClient udp_client;
     UdpRemote mcs_remote;
+    std::map<std::string, UdpRemote> user_remotes;
 
     std::atomic<bool> gcp_ping_test_finished;
     std::map<std::string, int> gcp_ping_test_result;
