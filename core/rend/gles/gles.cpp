@@ -948,12 +948,12 @@ void OSD_DRAW(bool clear_screen)
 	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
 	{
 		for (int vmu_screen_number = 0 ; vmu_screen_number < 4 ; vmu_screen_number++)
-			if (vmu_lcd_status[vmu_screen_number])
+			if (vmu_lcd_status[vmu_screen_number * 2])
 				DrawVmuTexture(vmu_screen_number);
 	}
 
-//	for (int lightgun_port = 0 ; lightgun_port < 4 ; lightgun_port++)
-//		DrawGunCrosshair(lightgun_port);
+	for (int lightgun_port = 0 ; lightgun_port < 4 ; lightgun_port++)
+		DrawGunCrosshair(lightgun_port);
 
 #else
 	gui_display_osd();

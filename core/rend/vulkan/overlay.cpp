@@ -23,6 +23,9 @@
 #include "overlay.h"
 #include "cfg/option.h"
 #include "rend/osd.h"
+#ifdef LIBRETRO
+#include "vmu_xhair.h"
+#endif
 
 VulkanOverlay::~VulkanOverlay() = default;
 
@@ -93,38 +96,70 @@ void VulkanOverlay::Draw(vk::CommandBuffer commandBuffer, vk::Extent2D viewport,
 	if (vmu)
 	{
 		f32 vmu_padding = 8.f * scaling;
-		f32 vmu_height = 70.f * scaling;
-		f32 vmu_width = 48.f / 32.f * vmu_height;
+		f32 vmu_height = 32.f * scaling;
+		f32 vmu_width = 48.f * scaling;
 
 		pipeline->BindPipeline(commandBuffer);
+#ifndef LIBRETRO
+		vmu_height *= 2.f;
+		vmu_width *= 2.f;
 		float blendConstants[4] = { 0.75f, 0.75f, 0.75f, 0.75f };
 		commandBuffer.setBlendConstants(blendConstants);
+#endif
 
 		for (size_t i = 0; i < vmuTextures.size(); i++)
 		{
 			if (!vmuTextures[i])
 				continue;
-			f32 x;
+			float x;
+			float y;
+			float w = vmu_width;
+			float h = vmu_height;
+#ifdef LIBRETRO
+			if (i & 1)
+				continue;
+			w *= vmu_screen_params[i / 2].vmu_screen_size_mult;
+			h *= vmu_screen_params[i / 2].vmu_screen_size_mult;
+			switch (vmu_screen_params[i / 2].vmu_screen_position)
+			{
+			case UPPER_LEFT:
+				x = vmu_padding;
+				y = vmu_padding;
+				break;
+			case UPPER_RIGHT:
+				x = viewport.width - vmu_padding - w;
+				y = vmu_padding;
+				break;
+			case LOWER_LEFT:
+				x = vmu_padding;
+				y = viewport.height - vmu_padding - h;
+				break;
+			case LOWER_RIGHT:
+				x = viewport.width - vmu_padding - w;
+				y = viewport.height - vmu_padding - h;
+				break;
+			}
+#else
 			if (i & 2)
-				x = viewport.width - vmu_padding - vmu_width;
+				x = viewport.width - vmu_padding - w;
 			else
 				x = vmu_padding;
-			f32 y;
 			if (i & 4)
 			{
-				y = viewport.height - vmu_padding - vmu_height;
+				y = viewport.height - vmu_padding - h;
 				if (i & 1)
-					y -= vmu_padding + vmu_height;
+					y -= vmu_padding + h;
 			}
 			else
 			{
 				y = vmu_padding;
 				if (i & 1)
-					y += vmu_padding + vmu_height;
+					y += vmu_padding + h;
 			}
-			vk::Viewport viewport(x, y, vmu_width, vmu_height);
+#endif
+			vk::Viewport viewport(x, y, w, h);
 			commandBuffer.setViewport(0, 1, &viewport);
-			commandBuffer.setScissor(0, vk::Rect2D(vk::Offset2D(x, y), vk::Extent2D(vmu_width, vmu_height)));
+			commandBuffer.setScissor(0, vk::Rect2D(vk::Offset2D(x, y), vk::Extent2D(w, h)));
 
 			drawers[i]->Draw(commandBuffer, vmuTextures[i]->GetImageView(), vtx, true);
 		}
@@ -141,8 +176,14 @@ void VulkanOverlay::Draw(vk::CommandBuffer commandBuffer, vk::Extent2D viewport,
 
 			float x, y;
 			std::tie(x, y) = getCrosshairPosition(i);
+
+#ifdef LIBRETRO
+			float w = LIGHTGUN_CROSSHAIR_SIZE * scaling;
+			float h = LIGHTGUN_CROSSHAIR_SIZE * scaling;
+#else
 			float w = XHAIR_WIDTH * scaling;
 			float h = XHAIR_HEIGHT * scaling;
+#endif
 			x -= w / 2;
 			y -= h / 2;
 			vk::Viewport viewport(x, y, w, h);

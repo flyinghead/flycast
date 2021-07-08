@@ -19,6 +19,7 @@
 #include "dxcontext.h"
 #include "d3d_renderer.h"
 #include "rend/gui.h"
+#include "rend/osd.h"
 #ifdef USE_SDL
 #include "sdl/sdl.h"
 #endif

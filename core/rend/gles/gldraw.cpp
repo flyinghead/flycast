@@ -749,18 +749,6 @@ GLuint lightgunTextureId[4]={0,0,0,0};
 
 void UpdateVmuTexture(int vmu_screen_number)
 {
-//	s32 x,y ;
-//	u8 temp_tex_buffer[VMU_SCREEN_HEIGHT*VMU_SCREEN_WIDTH*4];
-//	u8 *dst = temp_tex_buffer;
-//	u8 *src = NULL ;
-//	u8 vmu_pixel_on_R = vmu_screen_params[vmu_screen_number].vmu_pixel_on_R ;
-//	u8 vmu_pixel_on_G = vmu_screen_params[vmu_screen_number].vmu_pixel_on_G ;
-//	u8 vmu_pixel_on_B = vmu_screen_params[vmu_screen_number].vmu_pixel_on_B ;
-//	u8 vmu_pixel_off_R = vmu_screen_params[vmu_screen_number].vmu_pixel_off_R ;
-//	u8 vmu_pixel_off_G = vmu_screen_params[vmu_screen_number].vmu_pixel_off_G ;
-//	u8 vmu_pixel_off_B = vmu_screen_params[vmu_screen_number].vmu_pixel_off_B ;
-//	u8 vmu_screen_opacity = vmu_screen_params[vmu_screen_number].vmu_screen_opacity ;
-
 	if (vmuTextureId[vmu_screen_number] == 0)
 	{
 		vmuTextureId[vmu_screen_number] = glcache.GenTexture();
@@ -772,79 +760,39 @@ void UpdateVmuTexture(int vmu_screen_number)
 		glcache.BindTexture(GL_TEXTURE_2D, vmuTextureId[vmu_screen_number]);
 
 
-	u8 *origsrc = (u8 *)vmu_lcd_data[vmu_screen_number];
+	const u32 *data = vmu_lcd_data[vmu_screen_number * 2];
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, VMU_SCREEN_WIDTH, VMU_SCREEN_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
 
-	if ( origsrc == NULL )
-		return ;
-/* TODO
-
-	for ( y = VMU_SCREEN_HEIGHT-1 ; y >= 0 ; y--)
-	{
-		src = origsrc + (y*VMU_SCREEN_WIDTH) ;
-
-		for ( x = 0 ; x < VMU_SCREEN_WIDTH ; x++)
-		{
-			if ( *src++ > 0 )
-			{
-				*dst++ = vmu_pixel_on_R ;
-				*dst++ = vmu_pixel_on_G ;
-				*dst++ = vmu_pixel_on_B ;
-				*dst++ = vmu_screen_opacity ;
-			}
-			else
-			{
-				*dst++ = vmu_pixel_off_R ;
-				*dst++ = vmu_pixel_off_G ;
-				*dst++ = vmu_pixel_off_B ;
-				*dst++ = vmu_screen_opacity ;
-			}
-		}
-	}
-*/
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, VMU_SCREEN_WIDTH, VMU_SCREEN_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, origsrc);
-
-	vmu_lcd_changed[vmu_screen_number] = false;
-
+	vmu_lcd_changed[vmu_screen_number * 2] = false;
 }
 
 void DrawVmuTexture(u8 vmu_screen_number)
 {
 	glActiveTexture(GL_TEXTURE0);
 
-	float x=0 ;
-	float y=0 ;
-	float w=VMU_SCREEN_WIDTH*vmu_screen_params[vmu_screen_number].vmu_screen_size_mult ;
-	float h=VMU_SCREEN_HEIGHT*vmu_screen_params[vmu_screen_number].vmu_screen_size_mult ;
+	const float vmu_padding = 8.f;
+	float x = (config::Widescreen && config::ScreenStretching == 100 ? -(640.f * 4.f / 3.f - 640.f) / 2 : 0) + vmu_padding;
+	float y = vmu_padding;
+	float w = VMU_SCREEN_WIDTH * vmu_screen_params[vmu_screen_number].vmu_screen_size_mult;
+	float h = VMU_SCREEN_HEIGHT * vmu_screen_params[vmu_screen_number].vmu_screen_size_mult;
 
-	if (vmu_lcd_changed[vmu_screen_number] || vmuTextureId[vmu_screen_number] == 0)
-		UpdateVmuTexture(vmu_screen_number) ;
+	if (vmu_lcd_changed[vmu_screen_number * 2] || vmuTextureId[vmu_screen_number] == 0)
+		UpdateVmuTexture(vmu_screen_number);
 
-	switch ( vmu_screen_params[vmu_screen_number].vmu_screen_position )
+	switch (vmu_screen_params[vmu_screen_number].vmu_screen_position)
 	{
-		case UPPER_LEFT :
-		{
-			x = 0 ;
-			y = 0 ;
-			break ;
-		}
-		case UPPER_RIGHT :
-		{
-			x = 640-w ;
-			y = 0 ;
-			break ;
-		}
-		case LOWER_LEFT :
-		{
-			x = 0 ;
-			y = 480-h ;
-			break ;
-		}
-		case LOWER_RIGHT :
-		{
-			x = 640-w ;
-			y = 480-h ;
-			break ;
-		}
+		case UPPER_LEFT:
+			break;
+		case UPPER_RIGHT:
+			x = 640 - x - w;
+			break;
+		case LOWER_LEFT:
+			y = 480 - y - h;
+			break;
+		case LOWER_RIGHT:
+			x = 640 - x - w;
+			y = 480 - y - h;
+			break;
 	}
 
 	glcache.BindTexture(GL_TEXTURE_2D, vmuTextureId[vmu_screen_number]);
@@ -930,15 +878,15 @@ void DrawGunCrosshair(u8 port)
 
 	glActiveTexture(GL_TEXTURE0);
 
-	float x=0;
-	float y=0;
-	float w=LIGHTGUN_CROSSHAIR_SIZE;
-	float h=LIGHTGUN_CROSSHAIR_SIZE;
+	float x = lightgun_params[port].x;
+	float y = lightgun_params[port].y;
 
-	x = lightgun_params[port].x - ( LIGHTGUN_CROSSHAIR_SIZE / 2 );
-	y = lightgun_params[port].y - ( LIGHTGUN_CROSSHAIR_SIZE / 2 );
+	float w = LIGHTGUN_CROSSHAIR_SIZE;
+	float h = LIGHTGUN_CROSSHAIR_SIZE;
+	x -= w / 2;
+	y -= h / 2;
 
-	if ( lightgun_params[port].dirty || lightgunTextureId[port] == 0)
+	if (lightgun_params[port].dirty || lightgunTextureId[port] == 0)
 		UpdateLightGunTexture(port);
 
 	glcache.BindTexture(GL_TEXTURE_2D, lightgunTextureId[port]);

@@ -19,6 +19,7 @@
 #include "gl4.h"
 #include "rend/gles/glcache.h"
 #include "rend/transform_matrix.h"
+#include "rend/osd.h"
 
 //Fragment and vertex shaders code
 
@@ -916,6 +917,24 @@ struct OpenGL4Renderer : OpenGLRenderer
 	{
 		return render_output_framebuffer();
 	}
+
+#ifdef LIBRETRO
+	void DrawOSD(bool clearScreen) override
+	{
+		void gl4DrawVmuTexture(u8 vmu_screen_number);
+		void gl4DrawGunCrosshair(u8 port);
+
+		if (settings.platform.system == DC_PLATFORM_DREAMCAST)
+		{
+			for (int vmu_screen_number = 0 ; vmu_screen_number < 4 ; vmu_screen_number++)
+				if (vmu_lcd_status[vmu_screen_number * 2])
+					gl4DrawVmuTexture(vmu_screen_number);
+		}
+
+		for (int lightgun_port = 0 ; lightgun_port < 4 ; lightgun_port++)
+			gl4DrawGunCrosshair(lightgun_port);
+	}
+#endif
 };
 
 Renderer* rend_GL4()

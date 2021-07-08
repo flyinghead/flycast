@@ -147,6 +147,8 @@ unsigned per_content_vmus = 0;
 static bool first_run = true;
 static bool mute_messages;
 static bool rotate_screen;
+static int framebufferWidth;
+static int framebufferHeight;
 
 static retro_perf_callback perf_cb;
 static retro_get_cpu_features_t perf_get_cpu_features_cb;
@@ -638,27 +640,31 @@ static void update_variables(bool first_startup)
 			else if (!strcmp("Blue", var.value))
 				lightgun_params[i].colour = LIGHTGUN_COLOR_BLUE;
 		}
+		config::CrosshairColor[i] = lightgun_palette[lightgun_params[i].colour * 3]
+									| (lightgun_palette[lightgun_params[i].colour * 3 + 1] << 8)
+									| (lightgun_palette[lightgun_params[i].colour * 3 + 2] << 16)
+									| 0xff000000;
 
 		vmu_lcd_status[i] = false;
 		vmu_lcd_changed[i] = true;
-		vmu_screen_params[i].vmu_screen_position = UPPER_LEFT ;
-		vmu_screen_params[i].vmu_screen_size_mult = 1 ;
-		vmu_screen_params[i].vmu_pixel_on_R = VMU_SCREEN_COLOR_MAP[VMU_DEFAULT_ON].r ;
-		vmu_screen_params[i].vmu_pixel_on_G = VMU_SCREEN_COLOR_MAP[VMU_DEFAULT_ON].g ;
-		vmu_screen_params[i].vmu_pixel_on_B = VMU_SCREEN_COLOR_MAP[VMU_DEFAULT_ON].b ;
-		vmu_screen_params[i].vmu_pixel_off_R = VMU_SCREEN_COLOR_MAP[VMU_DEFAULT_OFF].r ;
-		vmu_screen_params[i].vmu_pixel_off_G = VMU_SCREEN_COLOR_MAP[VMU_DEFAULT_OFF].g ;
-		vmu_screen_params[i].vmu_pixel_off_B = VMU_SCREEN_COLOR_MAP[VMU_DEFAULT_OFF].b ;
-		vmu_screen_params[i].vmu_screen_opacity = 0xFF ;
+		vmu_screen_params[i].vmu_screen_position = UPPER_LEFT;
+		vmu_screen_params[i].vmu_screen_size_mult = 1;
+		vmu_screen_params[i].vmu_pixel_on_R = VMU_SCREEN_COLOR_MAP[VMU_DEFAULT_ON].r;
+		vmu_screen_params[i].vmu_pixel_on_G = VMU_SCREEN_COLOR_MAP[VMU_DEFAULT_ON].g;
+		vmu_screen_params[i].vmu_pixel_on_B = VMU_SCREEN_COLOR_MAP[VMU_DEFAULT_ON].b;
+		vmu_screen_params[i].vmu_pixel_off_R = VMU_SCREEN_COLOR_MAP[VMU_DEFAULT_OFF].r;
+		vmu_screen_params[i].vmu_pixel_off_G = VMU_SCREEN_COLOR_MAP[VMU_DEFAULT_OFF].g;
+		vmu_screen_params[i].vmu_pixel_off_B = VMU_SCREEN_COLOR_MAP[VMU_DEFAULT_OFF].b;
+		vmu_screen_params[i].vmu_screen_opacity = 0xFF;
 
-		snprintf(key, sizeof(key), CORE_OPTION_NAME "_vmu%d_screen_display", i+1) ;
+		snprintf(key, sizeof(key), CORE_OPTION_NAME "_vmu%d_screen_display", i+1);
 
 		if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value && !strcmp("enabled", var.value) )
 			vmu_lcd_status[i] = true;
 
-		snprintf(key, sizeof(key), CORE_OPTION_NAME "_vmu%d_screen_position", i+1) ;
+		snprintf(key, sizeof(key), CORE_OPTION_NAME "_vmu%d_screen_position", i+1);
 
-		if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value  )
+		if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
 		{
 			if (!strcmp("Upper Left", var.value))
 				vmu_screen_params[i].vmu_screen_position = UPPER_LEFT;
@@ -670,9 +676,9 @@ static void update_variables(bool first_startup)
 				vmu_screen_params[i].vmu_screen_position = LOWER_RIGHT;
 		}
 
-		snprintf(key, sizeof(key), CORE_OPTION_NAME "_vmu%d_screen_size_mult", i+1) ;
+		snprintf(key, sizeof(key), CORE_OPTION_NAME "_vmu%d_screen_size_mult", i+1);
 
-		if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value  )
+		if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
 		{
 			if (!strcmp("1x", var.value))
 				vmu_screen_params[i].vmu_screen_size_mult = 1;
@@ -686,9 +692,9 @@ static void update_variables(bool first_startup)
 				vmu_screen_params[i].vmu_screen_size_mult = 5;
 		}
 
-		snprintf(key, sizeof(key), CORE_OPTION_NAME "_vmu%d_screen_opacity", i+1) ;
+		snprintf(key, sizeof(key), CORE_OPTION_NAME "_vmu%d_screen_opacity", i + 1);
 
-		if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value  )
+		if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
 		{
 			if (!strcmp("100%", var.value))
 				vmu_screen_params[i].vmu_screen_opacity = 255;
@@ -712,24 +718,24 @@ static void update_variables(bool first_startup)
 				vmu_screen_params[i].vmu_screen_opacity = 1*25.5;
 		}
 
-		snprintf(key, sizeof(key), CORE_OPTION_NAME "_vmu%d_pixel_on_color", i+1) ;
+		snprintf(key, sizeof(key), CORE_OPTION_NAME "_vmu%d_pixel_on_color", i + 1);
 
-		if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value && strlen(var.value)>1 )
+		if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value && strlen(var.value)>1)
 		{
-			int color_idx = atoi(var.value+(strlen(var.value)-2)) ;
-			vmu_screen_params[i].vmu_pixel_on_R = VMU_SCREEN_COLOR_MAP[color_idx].r ;
-			vmu_screen_params[i].vmu_pixel_on_G = VMU_SCREEN_COLOR_MAP[color_idx].g ;
-			vmu_screen_params[i].vmu_pixel_on_B = VMU_SCREEN_COLOR_MAP[color_idx].b ;
+			int color_idx = atoi(var.value+(strlen(var.value)-2));
+			vmu_screen_params[i].vmu_pixel_on_R = VMU_SCREEN_COLOR_MAP[color_idx].r;
+			vmu_screen_params[i].vmu_pixel_on_G = VMU_SCREEN_COLOR_MAP[color_idx].g;
+			vmu_screen_params[i].vmu_pixel_on_B = VMU_SCREEN_COLOR_MAP[color_idx].b;
 		}
 
-		snprintf(key, sizeof(key), CORE_OPTION_NAME "_vmu%d_pixel_off_color", i+1) ;
+		snprintf(key, sizeof(key), CORE_OPTION_NAME "_vmu%d_pixel_off_color", i+1);
 
-		if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value && strlen(var.value)>1 )
+		if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value && strlen(var.value)>1)
 		{
-			int color_idx = atoi(var.value+(strlen(var.value)-2)) ;
-			vmu_screen_params[i].vmu_pixel_off_R = VMU_SCREEN_COLOR_MAP[color_idx].r ;
-			vmu_screen_params[i].vmu_pixel_off_G = VMU_SCREEN_COLOR_MAP[color_idx].g ;
-			vmu_screen_params[i].vmu_pixel_off_B = VMU_SCREEN_COLOR_MAP[color_idx].b ;
+			int color_idx = atoi(var.value+(strlen(var.value)-2));
+			vmu_screen_params[i].vmu_pixel_off_R = VMU_SCREEN_COLOR_MAP[color_idx].r;
+			vmu_screen_params[i].vmu_pixel_off_G = VMU_SCREEN_COLOR_MAP[color_idx].g;
+			vmu_screen_params[i].vmu_pixel_off_B = VMU_SCREEN_COLOR_MAP[color_idx].b;
 		}
 	}
 
@@ -774,11 +780,8 @@ void retro_run()
 		startTime = sh4_sched_now64();
 		dc_run(nullptr);
 	}
-	int width = config::RenderResolution * 4 / 3;
-	if (config::Widescreen && !rotate_screen)
-		width = width * 4 / 3;
 #if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES) || defined(HAVE_VULKAN)
-	video_cb(is_dupe ? 0 : RETRO_HW_FRAME_BUFFER_VALID, width, config::RenderResolution, 0);
+	video_cb(is_dupe ? 0 : RETRO_HW_FRAME_BUFFER_VALID, framebufferWidth, framebufferHeight, 0);
 #endif
 	if (!config::ThreadedRendering)
 		is_dupe = true;
@@ -1255,10 +1258,7 @@ static void retro_vk_context_reset()
 		ERROR_LOG(RENDERER, "Get Vulkan HW interface failed");
 		return;
 	}
-	int width = config::RenderResolution * 4 / 3;
-	if (config::Widescreen && !rotate_screen)
-		width = width * 4 / 3;
-	theVulkanContext.SetWindowSize(width, config::RenderResolution);
+	theVulkanContext.SetWindowSize(framebufferWidth, framebufferHeight);
 	theVulkanContext.Init((retro_hw_render_interface_vulkan *)vulkan);
 	rend_term_renderer();
 	rend_init_renderer();
@@ -1579,6 +1579,13 @@ bool retro_load_game(const struct retro_game_info *game)
 	config::Rotate90 = false;	// actual framebuffer rotation is done by frontend
 	if (rotate_screen)
 		config::Widescreen.override(false);
+	framebufferHeight = config::RenderResolution;
+	if (config::Widescreen)
+		framebufferWidth = config::RenderResolution * 16.f / 9.f;
+	else if (!rotate_screen)
+		framebufferWidth = config::RenderResolution * 4.f * config::ScreenStretching / 3.f / 100.f;
+	else
+		framebufferWidth = config::RenderResolution * 4.f / 3.f;
 
 	if (devices_need_refresh)
 		refresh_devices(true);
@@ -1733,31 +1740,19 @@ void retro_get_system_av_info(struct retro_system_av_info *info)
 	const int spg_clks[4] = { 26944080, 13458568, 13462800, 26944080 };
 	u32 pixel_clock= spg_clks[(SPG_CONTROL.full >> 6) & 3];
 
-	int width = config::RenderResolution * 4 / 3;
-	cheatManager.reset(config::Settings::instance().getGameId());
 	if (cheatManager.isWidescreen())
 	{
-		info->geometry.aspect_ratio = 16.0 / 9.0;
 		struct retro_message msg;
 		msg.msg = "Widescreen cheat activated";
 		msg.frames = 120;
 		environ_cb(RETRO_ENVIRONMENT_SET_MESSAGE, &msg);
 	}
-	else
-	{
-		if (config::Widescreen)
-		{
-			width = (int)lround(width * 4.0 / 3.0);
-			info->geometry.aspect_ratio = 16.0 / 9.0;
-		}
-		else
-			info->geometry.aspect_ratio = 4.0 / 3.0;
-	}
+	info->geometry.aspect_ratio = (float)framebufferWidth / framebufferHeight;
 	if (rotate_screen)
 		info->geometry.aspect_ratio = 1 / info->geometry.aspect_ratio;
-	int maximum = width > config::RenderResolution ? width : config::RenderResolution;
-	info->geometry.base_width   = width;
-	info->geometry.base_height  = config::RenderResolution;
+	info->geometry.base_width   = framebufferWidth;
+	info->geometry.base_height  = framebufferHeight;
+	int maximum = std::max(framebufferWidth, framebufferHeight);
 	info->geometry.max_width    = maximum;
 	info->geometry.max_height   = maximum;
 
@@ -2065,6 +2060,21 @@ static void updateMouseState(u32 port)
 	  mo_wheel_delta[port] += 10;
 }
 
+static void updateLightgunCoordinates(u32 port)
+{
+	int x = input_cb(port, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_SCREEN_X);
+	int y = input_cb(port, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_SCREEN_Y);
+	if (config::Widescreen && config::ScreenStretching == 100)
+		mo_x_abs[port] = 640.f * ((x + 0x8000) * 4.f / 3.f / 0x10000 - (4.f / 3.f - 1.f) / 2.f);
+	else
+		mo_x_abs[port] = (x + 0x8000) * 640.f / 0x10000;
+	mo_y_abs[port] = (y + 0x8000) * 480.f / 0x10000;
+
+	lightgun_params[port].offscreen = false;
+	lightgun_params[port].x = mo_x_abs[port];
+	lightgun_params[port].y = mo_y_abs[port];
+}
+
 static void UpdateInputStateNaomi(u32 port)
 {
 	switch (config::MapleMainDevices[port])
@@ -2109,14 +2119,7 @@ static void UpdateInputStateNaomi(u32 port)
 			}
 			else
 			{
-				int x = input_cb(port, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_SCREEN_X);
-				int y = input_cb(port, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_SCREEN_Y);
-				mo_x_abs[port] = (x + 0x8000) * 640.f / 0x10000;
-				mo_y_abs[port] = (y + 0x8000) * 480.f / 0x10000;
-
-				lightgun_params[port].offscreen = false;
-				lightgun_params[port].x = mo_x_abs[port];
-				lightgun_params[port].y = mo_y_abs[port];
+				updateLightgunCoordinates(port);
 			}
 		}
 		break;
@@ -2521,12 +2524,7 @@ static void UpdateInputState(u32 port)
 			}
 			else
 			{
-				mo_x_abs[port] = (input_cb(port, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_SCREEN_X) + 0x8000) * 640.f / 0x10000;
-				mo_y_abs[port] = (input_cb(port, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_SCREEN_Y) + 0x8000) * 480.f / 0x10000;
-
-				lightgun_params[port].offscreen = false;
-				lightgun_params[port].x = mo_x_abs[port];
-				lightgun_params[port].y = mo_y_abs[port];
+				updateLightgunCoordinates(port);
 			}
 		}
 		break;

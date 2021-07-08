@@ -19,6 +19,7 @@
 #include "gl4.h"
 #include "rend/gles/glcache.h"
 #include "rend/tileclip.h"
+#include "rend/osd.h"
 
 static gl4PipelineShader* CurrentShader;
 extern u32 gcflip;
@@ -680,3 +681,157 @@ void gl4DrawStrips(GLuint output_fbo, int width, int height)
 	glBindTexture(GL_TEXTURE_2D, opaqueTexId);
 	renderABuffer();
 }
+
+#ifdef LIBRETRO
+#include "vmu_xhair.h"
+
+extern GLuint vmuTextureId[4];
+extern GLuint lightgunTextureId[4];
+
+void UpdateVmuTexture(int vmu_screen_number);
+void UpdateLightGunTexture(int port);
+
+void gl4DrawVmuTexture(u8 vmu_screen_number)
+{
+	glActiveTexture(GL_TEXTURE0);
+
+	const float vmu_padding = 8.f;
+	float x = (config::Widescreen && config::ScreenStretching == 100 ? -(640.f * 4.f / 3.f - 640.f) / 2 : 0) + vmu_padding;
+	float y = vmu_padding;
+	float w = VMU_SCREEN_WIDTH * vmu_screen_params[vmu_screen_number].vmu_screen_size_mult;
+	float h = VMU_SCREEN_HEIGHT * vmu_screen_params[vmu_screen_number].vmu_screen_size_mult;
+
+	if (vmu_lcd_changed[vmu_screen_number * 2] || vmuTextureId[vmu_screen_number] == 0)
+		UpdateVmuTexture(vmu_screen_number);
+
+	switch (vmu_screen_params[vmu_screen_number].vmu_screen_position)
+	{
+		case UPPER_LEFT:
+			break;
+		case UPPER_RIGHT:
+			x = 640 - x - w;
+			break;
+		case LOWER_LEFT:
+			y = 480 - y - h;
+			break;
+		case LOWER_RIGHT:
+			x = 640 - x - w;
+			y = 480 - y - h;
+			break;
+	}
+
+	glcache.BindTexture(GL_TEXTURE_2D, vmuTextureId[vmu_screen_number]);
+
+	glcache.Disable(GL_SCISSOR_TEST);
+	glcache.Disable(GL_DEPTH_TEST);
+	glcache.Disable(GL_STENCIL_TEST);
+	glcache.Disable(GL_CULL_FACE);
+	glcache.Enable(GL_BLEND);
+	glcache.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	gl4SetupMainVBO();
+
+	gl4ShaderUniforms.trilinear_alpha = 1.0;
+
+	CurrentShader = gl4GetProgram(false,
+				0,
+				true,
+				true,
+				false,
+				0,
+				false,
+				2,
+				false,
+				false,
+				false,
+				false,
+				false,
+				Pass::Color);
+	glcache.UseProgram(CurrentShader->program);
+	gl4ShaderUniforms.Set(CurrentShader);
+
+	{
+		struct Vertex vertices[] = {
+				{ x,   y+h, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 0, 0 },
+				{ x,   y,   1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 0, 1 },
+				{ x+w, y+h, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 1, 0 },
+				{ x+w, y,   1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 1, 1 },
+		};
+		GLushort indices[] = { 0, 1, 2, 1, 3 };
+
+		glBindBuffer(GL_ARRAY_BUFFER, gl4.vbo.geometry);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STREAM_DRAW);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl4.vbo.idxs);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STREAM_DRAW);
+	}
+
+	glDrawElements(GL_TRIANGLE_STRIP, 5, GL_UNSIGNED_SHORT, (void *)0);
+}
+
+void gl4DrawGunCrosshair(u8 port)
+{
+	if ( lightgun_params[port].offscreen || (lightgun_params[port].colour==0) )
+		return;
+
+	glActiveTexture(GL_TEXTURE0);
+
+	float x=0;
+	float y=0;
+	float w=LIGHTGUN_CROSSHAIR_SIZE;
+	float h=LIGHTGUN_CROSSHAIR_SIZE;
+
+	x = lightgun_params[port].x - ( LIGHTGUN_CROSSHAIR_SIZE / 2 );
+	y = lightgun_params[port].y - ( LIGHTGUN_CROSSHAIR_SIZE / 2 );
+
+	if (lightgun_params[port].dirty || lightgunTextureId[port] == 0)
+		UpdateLightGunTexture(port);
+
+	glcache.BindTexture(GL_TEXTURE_2D, lightgunTextureId[port]);
+
+	glcache.Disable(GL_SCISSOR_TEST);
+	glcache.Disable(GL_DEPTH_TEST);
+	glcache.Disable(GL_STENCIL_TEST);
+	glcache.Disable(GL_CULL_FACE);
+	glcache.Enable(GL_BLEND);
+	glcache.BlendFunc(GL_SRC_ALPHA, GL_ONE);
+
+	gl4SetupMainVBO();
+
+	gl4ShaderUniforms.trilinear_alpha = 1.0;
+	CurrentShader = gl4GetProgram(false,
+				0,
+				true,
+				true,
+				false,
+				0,
+				false,
+				2,
+				false,
+				false,
+				false,
+				false,
+				false,
+				Pass::Color);
+	glcache.UseProgram(CurrentShader->program);
+	gl4ShaderUniforms.Set(CurrentShader);
+
+	{
+		struct Vertex vertices[] = {
+				{ x,   y+h, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 0, 1 },
+				{ x,   y,   1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 0, 0 },
+				{ x+w, y+h, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 1, 1 },
+				{ x+w, y,   1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 1, 0 },
+		};
+		GLushort indices[] = { 0, 1, 2, 1, 3 };
+
+		glBindBuffer(GL_ARRAY_BUFFER, gl4.vbo.geometry);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STREAM_DRAW);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl4.vbo.idxs);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STREAM_DRAW);
+	}
+
+	glDrawElements(GL_TRIANGLE_STRIP, 5, GL_UNSIGNED_SHORT, (void *)0);
+
+	glcache.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+}
+#endif

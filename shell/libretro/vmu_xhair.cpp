@@ -15,6 +15,7 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
  */
 #include "vmu_xhair.h"
+#include "cfg/option.h"
 
 const char* VMU_SCREEN_COLOR_NAMES[VMU_NUM_COLORS] = {
 		"DEFAULT_ON",
@@ -114,5 +115,10 @@ lightgun_params_t lightgun_params[4];
 
 std::pair<float, float> getCrosshairPosition(int playerNum)
 {
-	return std::make_pair(lightgun_params[playerNum].x, lightgun_params[playerNum].y);
+	float fx = lightgun_params[playerNum].x * config::RenderResolution * config::ScreenStretching / 480.f / 100.f;
+	float fy = lightgun_params[playerNum].y * config::RenderResolution / 480.f;
+	if (config::Widescreen && config::ScreenStretching == 100)
+		fx += (480.f * 16.f / 9.f - 640.f) / 2.f * config::RenderResolution / 480.f;
+
+	return std::make_pair(fx, fy);
 }

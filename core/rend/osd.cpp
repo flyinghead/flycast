@@ -20,6 +20,9 @@
 #include "input/gamepad_device.h"
 #include "TexCache.h"
 #include "hw/maple/maple_devs.h"
+#ifdef LIBRETRO
+#include "vmu_xhair.h"
+#endif
 
 #include <stb_image.h>
 
@@ -179,7 +182,14 @@ void push_vmu_screen(int bus_id, int bus_port, u8* buffer)
 		return;
 	u32 *p = &vmu_lcd_data[vmu_id][0];
 	for (int i = 0; i < (int)ARRAY_SIZE(vmu_lcd_data[vmu_id]); i++, buffer++)
+#ifdef LIBRETRO
+		*p++ = (*buffer != 0
+				? vmu_screen_params[bus_id].vmu_pixel_on_R | (vmu_screen_params[bus_id].vmu_pixel_on_G << 8) | (vmu_screen_params[bus_id].vmu_pixel_on_B << 16)
+				: vmu_screen_params[bus_id].vmu_pixel_off_R | (vmu_screen_params[bus_id].vmu_pixel_off_G << 8) | (vmu_screen_params[bus_id].vmu_pixel_off_B << 16))
+				  | (vmu_screen_params[bus_id].vmu_screen_opacity << 24);
+#else
 		*p++ = *buffer != 0 ? 0xFFFFFFFFu : 0xFF000000u;
+#endif
 #ifndef LIBRETRO
 	vmu_lcd_status[vmu_id] = true;
 #endif
