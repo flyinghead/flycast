@@ -59,8 +59,7 @@ public:
 	void EndFrame()
 	{
 		std::vector<vk::CommandBuffer> commandBuffers = vk::uniqueToRaw(inFlightBuffers[index]);
-		VulkanContext::Instance()->GetGraphicsQueue().submit(
-				vk::SubmitInfo(0, nullptr, nullptr, commandBuffers.size(), commandBuffers.data()), *fences[index]);
+		VulkanContext::Instance()->SubmitCommandBuffers(commandBuffers.size(), commandBuffers.data(), *fences[index]);
 	}
 
 	void BeginFrame()

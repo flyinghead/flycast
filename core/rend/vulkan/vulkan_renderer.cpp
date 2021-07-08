@@ -28,14 +28,14 @@ class VulkanRenderer final : public BaseVulkanRenderer
 public:
 	bool Init() override
 	{
-		DEBUG_LOG(RENDERER, "VulkanRenderer::Init");
-		BaseVulkanRenderer::Init();
+		NOTICE_LOG(RENDERER, "VulkanRenderer::Init");
 
 		textureDrawer.Init(&samplerManager, &shaderManager, &textureCache);
 		textureDrawer.SetCommandPool(&texCommandPool);
 
 		screenDrawer.Init(&samplerManager, &shaderManager, viewport);
 		screenDrawer.SetCommandPool(&texCommandPool);
+		BaseInit(screenDrawer.GetRenderPass());
 
 		return true;
 	}
@@ -65,6 +65,11 @@ public:
 				drawer = &screenDrawer;
 
 			drawer->Draw(fogTexture.get(), paletteTexture.get());
+
+#ifdef LIBRETRO
+			if (!pvrrc.isRTT)
+				overlay->Draw(screenDrawer.GetCurrentCommandBuffer(), viewport, (int)config::RenderResolution / 480.f, true, true);
+#endif
 
 			drawer->EndRenderPass();
 

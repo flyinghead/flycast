@@ -29,16 +29,16 @@ class OITVulkanRenderer final : public BaseVulkanRenderer
 public:
 	bool Init() override
 	{
-		DEBUG_LOG(RENDERER, "OITVulkanRenderer::Init");
+		NOTICE_LOG(RENDERER, "OITVulkanRenderer::Init");
 		try {
-			BaseVulkanRenderer::Init();
-
 			oitBuffers.Init(viewport.width, viewport.height);
 			textureDrawer.Init(&samplerManager, &oitShaderManager, &textureCache, &oitBuffers);
 			textureDrawer.SetCommandPool(&texCommandPool);
 
 			screenDrawer.Init(&samplerManager, &oitShaderManager, &oitBuffers, viewport);
 			screenDrawer.SetCommandPool(&texCommandPool);
+			BaseInit(screenDrawer.GetRenderPass(), 2);
+
 
 			return true;
 		}
@@ -77,6 +77,10 @@ public:
 				drawer = &screenDrawer;
 
 			drawer->Draw(fogTexture.get(), paletteTexture.get());
+#ifdef LIBRETRO
+			if (!pvrrc.isRTT)
+				overlay->Draw(screenDrawer.GetCurrentCommandBuffer(), viewport, (int)config::RenderResolution / 480.f, true, true);
+#endif
 
 			drawer->EndFrame();
 

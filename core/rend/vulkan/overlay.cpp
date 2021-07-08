@@ -19,7 +19,6 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #include "texture.h"
-#include "rend/gui.h"
 #include "hw/maple/maple_devs.h"
 #include "overlay.h"
 #include "cfg/option.h"
@@ -41,15 +40,8 @@ std::unique_ptr<Texture> VulkanOverlay::createTexture(vk::CommandBuffer commandB
 	return texture;
 }
 
-vk::CommandBuffer VulkanOverlay::Prepare(vk::CommandPool commandPool, bool vmu, bool crosshair)
+void VulkanOverlay::Prepare(vk::CommandBuffer cmdBuffer, bool vmu, bool crosshair)
 {
-	VulkanContext *context = VulkanContext::Instance();
-	commandBuffers.resize(context->GetSwapChainSize());
-	commandBuffers[context->GetCurrentImageIndex()] = std::move(
-			VulkanContext::Instance()->GetDevice().allocateCommandBuffersUnique(vk::CommandBufferAllocateInfo(commandPool, vk::CommandBufferLevel::ePrimary, 1))
-			.front());
-	vk::CommandBuffer cmdBuffer = *commandBuffers[context->GetCurrentImageIndex()];
-	cmdBuffer.begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));
 	if (vmu)
 	{
 		for (size_t i = 0; i < vmuTextures.size(); i++)
@@ -72,15 +64,25 @@ vk::CommandBuffer VulkanOverlay::Prepare(vk::CommandPool commandPool, bool vmu, 
 		const u32* texData = getCrosshairTextureData();
 		xhairTexture = createTexture(cmdBuffer, 16, 16, (u8*)texData);
 	}
+}
+
+vk::CommandBuffer VulkanOverlay::Prepare(vk::CommandPool commandPool, bool vmu, bool crosshair)
+{
+	VulkanContext *context = VulkanContext::Instance();
+	commandBuffers.resize(context->GetSwapChainSize());
+	commandBuffers[context->GetCurrentImageIndex()] = std::move(
+			VulkanContext::Instance()->GetDevice().allocateCommandBuffersUnique(vk::CommandBufferAllocateInfo(commandPool, vk::CommandBufferLevel::ePrimary, 1))
+			.front());
+	vk::CommandBuffer cmdBuffer = *commandBuffers[context->GetCurrentImageIndex()];
+	cmdBuffer.begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));
+	Prepare(cmdBuffer, vmu, crosshair);
 	cmdBuffer.end();
 
 	return cmdBuffer;
 }
 
-void VulkanOverlay::Draw(vk::Extent2D viewport, float scaling, bool vmu, bool crosshair)
+void VulkanOverlay::Draw(vk::CommandBuffer commandBuffer, vk::Extent2D viewport, float scaling, bool vmu, bool crosshair)
 {
-	VulkanContext *context = VulkanContext::Instance();
-	vk::CommandBuffer commandBuffer = context->GetCurrentCommandBuffer();
 	QuadVertex vtx[] = {
 		{ { -1.f, -1.f, 0.f }, { 0.f, 1.f } },
 		{ {  1.f, -1.f, 0.f }, { 1.f, 1.f } },
@@ -139,12 +141,14 @@ void VulkanOverlay::Draw(vk::Extent2D viewport, float scaling, bool vmu, bool cr
 
 			float x, y;
 			std::tie(x, y) = getCrosshairPosition(i);
-			x -= XHAIR_WIDTH / 2;
-			y -= XHAIR_HEIGHT / 2;
-			vk::Viewport viewport(x, y, XHAIR_WIDTH, XHAIR_HEIGHT);
+			float w = XHAIR_WIDTH * scaling;
+			float h = XHAIR_HEIGHT * scaling;
+			x -= w / 2;
+			y -= h / 2;
+			vk::Viewport viewport(x, y, w, h);
 			commandBuffer.setViewport(0, 1, &viewport);
 			commandBuffer.setScissor(0, vk::Rect2D(vk::Offset2D(std::max(0.f, x), std::max(0.f, y)),
-					vk::Extent2D(XHAIR_WIDTH, XHAIR_HEIGHT)));
+					vk::Extent2D(w, h)));
 			u32 color = config::CrosshairColor[i];
 			float xhairColor[4] {
 				(color & 0xff) / 255.f,

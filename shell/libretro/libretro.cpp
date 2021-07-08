@@ -481,7 +481,7 @@ static void update_variables(bool first_startup)
 		{
 			if (config::RendererType == RenderType::Vulkan_OIT)
 				config::RendererType = RenderType::Vulkan;
-			else
+			else if (config::RendererType != RenderType::Vulkan)
 				config::RendererType = RenderType::OpenGL;
 			config::PerStripSorting = true;
 		}
@@ -489,7 +489,7 @@ static void update_variables(bool first_startup)
 		{
 			if (config::RendererType == RenderType::Vulkan_OIT)
 				config::RendererType = RenderType::Vulkan;
-			else
+			else if (config::RendererType != RenderType::Vulkan)
 				config::RendererType = RenderType::OpenGL;
 			config::PerStripSorting = false;
 		}
@@ -497,7 +497,7 @@ static void update_variables(bool first_startup)
 		{
 			if (config::RendererType == RenderType::Vulkan)
 				config::RendererType = RenderType::Vulkan_OIT;
-			else
+			else if (config::RendererType != RenderType::Vulkan_OIT)
 				config::RendererType = RenderType::OpenGL_OIT;
 			config::PerStripSorting = false;	// Not used
 		}
@@ -506,7 +506,7 @@ static void update_variables(bool first_startup)
 	{
 		if (config::RendererType == RenderType::Vulkan_OIT)
 			config::RendererType = RenderType::Vulkan;
-		else
+		else if (config::RendererType != RenderType::Vulkan)
 			config::RendererType = RenderType::OpenGL;
 		config::PerStripSorting = false;
 	}
@@ -1260,6 +1260,8 @@ static void retro_vk_context_reset()
 		width = width * 4 / 3;
 	theVulkanContext.SetWindowSize(width, config::RenderResolution);
 	theVulkanContext.Init((retro_hw_render_interface_vulkan *)vulkan);
+	rend_term_renderer();
+	rend_init_renderer();
 }
 
 static void retro_vk_context_destroy()
@@ -1295,8 +1297,6 @@ static bool set_vulkan_hw_render()
 	else if (config::RendererType == RenderType::OpenGL_OIT)
 		config::RendererType = RenderType::Vulkan_OIT;
 	config::RendererType.commit();
-	rend_term_renderer();
-	rend_init_renderer();
 	return true;
 }
 #else

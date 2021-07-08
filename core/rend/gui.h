@@ -66,20 +66,3 @@ static inline bool gui_is_content_browser()
 static inline float gui_get_scaling() {
 	return scaling;
 }
-
-#define XHAIR_WIDTH (40 * scaling)
-#define XHAIR_HEIGHT (40 * scaling)
-static inline bool crosshairsNeeded()
-{
-	if (config::CrosshairColor[0] == 0 && config::CrosshairColor[1] == 0
-			&& config::CrosshairColor[2] == 0 && config::CrosshairColor[3] == 0)
-		return false;
-	if (settings.platform.system != DC_PLATFORM_DREAMCAST
-			&& settings.input.JammaSetup != JVS::LightGun
-			&& settings.input.JammaSetup != JVS::LightGunAsAnalog
-			&& settings.input.JammaSetup != JVS::Mazan)
-		// not a lightgun game
-		return false;
-	return true;
-}
-std::pair<float, float> getCrosshairPosition(int playerNum);

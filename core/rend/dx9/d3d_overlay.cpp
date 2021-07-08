@@ -118,7 +118,7 @@ void D3DOverlay::draw(u32 width, u32 height, bool vmu, bool crosshair)
 
 			float x, y;
 			std::tie(x, y) = getCrosshairPosition(i);
-			float halfWidth = XHAIR_WIDTH / 2.f;
+			float halfWidth = XHAIR_WIDTH * gui_get_scaling() / 2.f;
 			RECT rect { (long) (x - halfWidth), (long) (y - halfWidth), (long) (x + halfWidth), (long) (y + halfWidth) };
 			D3DCOLOR color = (config::CrosshairColor[i] & 0xFF00FF00)
 					| ((config::CrosshairColor[i] >> 16) & 0xFF)

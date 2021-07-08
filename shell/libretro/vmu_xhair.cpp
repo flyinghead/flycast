@@ -79,7 +79,7 @@ const rgb_t VMU_SCREEN_COLOR_MAP[VMU_NUM_COLORS] = {
 		{ 0xFF, 0xFF, 0xFF }
 };
 
-vmu_screen_params_t vmu_screen_params[4] ;
+vmu_screen_params_t vmu_screen_params[4];
 
 u8 lightgun_img_crosshair[LIGHTGUN_CROSSHAIR_SIZE*LIGHTGUN_CROSSHAIR_SIZE] =
 {
@@ -110,5 +110,9 @@ u8 lightgun_palette[LIGHTGUN_COLORS_COUNT*3] =
 	0x10,0x10,0xff, // LIGHTGUN_COLOR_BLUE
 };
 
-lightgun_params_t lightgun_params[4] ;
+lightgun_params_t lightgun_params[4];
 
+std::pair<float, float> getCrosshairPosition(int playerNum)
+{
+	return std::make_pair(lightgun_params[playerNum].x, lightgun_params[playerNum].y);
+}

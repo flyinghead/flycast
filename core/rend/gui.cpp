@@ -2377,9 +2377,9 @@ static void displayCrosshairs()
 
 		ImVec2 pos;
 		std::tie(pos.x, pos.y) = getCrosshairPosition(i);
-		pos.x -= XHAIR_WIDTH / 2.f;
-		pos.y += XHAIR_WIDTH / 2.f;
-		ImVec2 pos_b(pos.x + XHAIR_WIDTH, pos.y - XHAIR_HEIGHT);
+		pos.x -= (XHAIR_WIDTH * scaling) / 2.f;
+		pos.y += (XHAIR_WIDTH * scaling) / 2.f;
+		ImVec2 pos_b(pos.x + XHAIR_WIDTH * scaling, pos.y - XHAIR_HEIGHT * scaling);
 
 		ImGui::GetWindowDrawList()->AddImage(crosshairTexId, pos, pos_b, ImVec2(0, 1), ImVec2(1, 0), config::CrosshairColor[i]);
 	}

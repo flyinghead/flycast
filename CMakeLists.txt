@@ -824,20 +824,22 @@ if(NOT (APPLE OR ANDROID OR USE_GLES OR USE_GLES2))
 endif()
 
 if(USE_VULKAN AND NOT APPLE)
-    if(ANDROID)
-        set(VOLK_STATIC_DEFINES VK_USE_PLATFORM_ANDROID_KHR)
-    elseif(X11_FOUND)
-        set(VOLK_STATIC_DEFINES VK_USE_PLATFORM_XLIB_KHR)
-    elseif(WIN32)
-        set(VOLK_STATIC_DEFINES VK_USE_PLATFORM_WIN32_KHR)
-    endif()
+	if(NOT LIBRETRO)
+	    if(ANDROID)
+	        set(VOLK_STATIC_DEFINES VK_USE_PLATFORM_ANDROID_KHR)
+	    elseif(X11_FOUND)
+	        set(VOLK_STATIC_DEFINES VK_USE_PLATFORM_XLIB_KHR)
+	    elseif(WIN32)
+	        set(VOLK_STATIC_DEFINES VK_USE_PLATFORM_WIN32_KHR)
+	    endif()
+	
+	    set(VOLK_PULL_IN_VULKAN OFF)
+	    add_subdirectory(core/deps/volk)
+	    target_include_directories(volk PRIVATE core/khronos)
+	    target_link_libraries(${PROJECT_NAME} PRIVATE volk)
+	endif()
 
-    set(VOLK_PULL_IN_VULKAN OFF)
-    add_subdirectory(core/deps/volk)
-    target_include_directories(volk PRIVATE core/khronos)
-    target_link_libraries(${PROJECT_NAME} PRIVATE volk)
-
-    target_compile_definitions(${PROJECT_NAME} PRIVATE USE_VULKAN)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE USE_VULKAN HAVE_VULKAN)
     target_sources(${PROJECT_NAME} PRIVATE
             core/rend/vulkan/oit/oit_buffer.h
             core/rend/vulkan/oit/oit_drawer.cpp
@@ -870,12 +872,17 @@ if(USE_VULKAN AND NOT APPLE)
             core/rend/vulkan/vmallocator.h
             core/rend/vulkan/overlay.cpp
             core/rend/vulkan/overlay.h
-            core/rend/vulkan/vulkan_context.cpp
             core/rend/vulkan/vulkan_context.h
             core/rend/vulkan/vulkan.h
             core/rend/vulkan/vulkan_renderer.cpp)
-	if(NOT LIBRETRO)
+	if(LIBRETRO)
 	    target_sources(${PROJECT_NAME} PRIVATE
+	            core/rend/vulkan/vk_context_lr.cpp
+	            core/rend/vulkan/vk_context_lr.h
+	            core/deps/libretro-common/vulkan/vulkan_symbol_wrapper.c)
+	else()
+	    target_sources(${PROJECT_NAME} PRIVATE
+	            core/rend/vulkan/vulkan_context.cpp
 	            core/rend/vulkan/imgui_impl_vulkan.cpp
 	            core/rend/vulkan/imgui_impl_vulkan.h)
 	endif()
