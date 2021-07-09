@@ -34,7 +34,7 @@ bool Gdxsv::Enabled() const {
 void Gdxsv::Reset() {
     tcp_client.Close();
     CloseUdpClientWithReason("cl_hard_reset");
-    patch_list.clear_patches();
+    RestoreOnlinePatch();
 
     // Automatically add ContentPath if it is empty.
     if (config::ContentPath.get().empty()) {
@@ -329,12 +329,10 @@ void Gdxsv::SyncNetwork(bool write) {
                 if (lbs_msg.command == LbsMessage::lbsReadyBattle) {
                     // Reset current patches for no-patched game
                     RestoreOnlinePatch();
-                    patch_list.clear_patches();
                 }
                 if (lbs_msg.command == LbsMessage::lbsGamePatch) {
                     // Reset current patches and update patch_list
                     RestoreOnlinePatch();
-                    patch_list.clear_patches();
                     if (patch_list.ParseFromArray(lbs_msg.body.data(), lbs_msg.body.size())) {
                         ApplyOnlinePatch(true);
                     } else {
@@ -758,6 +756,7 @@ void Gdxsv::RestoreOnlinePatch() {
             }
         }
     }
+    patch_list.clear_patches();
 }
 
 void Gdxsv::WritePatchDisk1() {
