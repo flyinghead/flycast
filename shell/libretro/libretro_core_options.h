@@ -571,7 +571,7 @@ struct retro_core_option_definition option_defs_us[] = {
    },
    {
       CORE_OPTION_NAME "_threaded_rendering",
-      "Threaded Rendering (Restart)",
+      "Threaded Rendering",
       "Runs the GPU and CPU on different threads. Highly recommended.",
       {
          { "disabled", NULL },

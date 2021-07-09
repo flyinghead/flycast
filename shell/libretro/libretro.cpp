@@ -422,6 +422,7 @@ static void set_variable_visibility()
 
 static void update_variables(bool first_startup)
 {
+	bool wasThreadedRendering = config::ThreadedRendering;
 	config::Settings::instance().setRetroEnvironment(environ_cb);
 	config::Settings::instance().setOptionDefinitions(option_defs_us);
 	config::Settings::instance().load(false);
@@ -740,6 +741,18 @@ static void update_variables(bool first_startup)
 	}
 
 	set_variable_visibility();
+
+	if (wasThreadedRendering != config::ThreadedRendering && !first_startup)
+	{
+		if (config::ThreadedRendering)
+			dc_resume();
+		else
+		{
+			config::ThreadedRendering = true;
+			dc_stop();
+			config::ThreadedRendering = false;
+		}
+	}
 }
 
 void retro_run()
@@ -771,6 +784,8 @@ void retro_run()
 
 		// Render
 		is_dupe = !rend_single_frame(true);
+		if (is_dupe)
+			is_dupe = !rend_single_frame(true);
 
 		if (config::RendererType == RenderType::OpenGL || config::RendererType == RenderType::OpenGL_OIT)
 			glsm_ctl(GLSM_CTL_STATE_UNBIND, NULL);

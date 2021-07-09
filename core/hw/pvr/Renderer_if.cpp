@@ -444,13 +444,18 @@ void rend_set_fb_write_addr(u32 fb_w_sof1)
 
 void rend_swap_frame(u32 fb_r_sof1)
 {
-	std::lock_guard<std::mutex> lock(swap_mutex);
+	swap_mutex.lock();
 	if (fb_r_sof1 == fb_w_cur)
 	{
 		do_swap = true;
 		if (config::ThreadedRendering)
 			rs.Set();
 		else
+		{
+			swap_mutex.unlock();
 			rend_single_frame(true);
+			swap_mutex.lock();
+		}
 	}
+	swap_mutex.unlock();
 }

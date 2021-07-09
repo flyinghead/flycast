@@ -548,10 +548,11 @@ void* dc_run(void*)
 
 			sh4_cpu.Run();
 
-			SaveRomFiles();
-
 			if (resetRequested)
+			{
+				SaveRomFiles();
 				dc_reset(false);
+			}
 		} while (resetRequested);
 	}
 
