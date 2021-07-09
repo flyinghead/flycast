@@ -35,8 +35,8 @@ std::string getVmuPath(const std::string& port)
 {
    char filename[PATH_MAX + 8];
 
-   if ((per_content_vmus == 1 && port != "A1") ||
-       (per_content_vmus == 2))
+   if ((per_content_vmus == 1 && port == "A1")
+		   || per_content_vmus == 2)
    {
       sprintf(filename, "%s.%s.bin", content_name, port.c_str());
       return std::string(vmu_dir_no_slash) + std::string(path_default_slash()) + filename;
