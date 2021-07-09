@@ -1330,6 +1330,7 @@ static bool set_opengl_hw_render(u32 preferred)
 			// There are some weirdness with RA's gl context's versioning :
 			// - any value above 3.0 won't provide a valid context, while the GLSM_CTL_STATE_CONTEXT_INIT call returns true...
 			// - the only way to overwrite previously set version with zero values is to set them directly in hw_render, otherwise they are ignored (see glsm_state_ctx_init logic)
+			// FIXME what's the point of this?
 			retro_hw_render_callback hw_render;
 			hw_render.version_major = 3;
 			hw_render.version_minor = 0;
@@ -1341,19 +1342,14 @@ static bool set_opengl_hw_render(u32 preferred)
 		}
 	}
 	else
+#endif
 	{
 		params.context_type          = (retro_hw_context_type)preferred;
 		params.major                 = 3;
-		params.minor                 = 0;
+		params.minor                 = preferred == RETRO_HW_CONTEXT_OPENGL_CORE ? 2 : 0;
 		config::RendererType = RenderType::OpenGL;
+		config::RendererType.commit();
 	}
-#elif defined(HAVE_GL3)
-	params.context_type          = (retro_hw_context_type)preferred;
-	params.major                 = 3;
-	params.minor                 = 0;
-	config::RendererType = RenderType::OpenGL;
-#endif
-	config::RendererType.commit();
 
 	if (glsm_ctl(GLSM_CTL_STATE_CONTEXT_INIT, &params))
 		return true;

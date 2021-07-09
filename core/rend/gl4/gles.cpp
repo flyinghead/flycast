@@ -164,8 +164,8 @@ vec4 fog_clamp(vec4 col)
 vec4 palettePixel(sampler2D tex, vec2 coords)
 {
 	int color_idx = int(floor(texture(tex, coords).r * 255.0 + 0.5)) + palette_index;
-	vec2 c = vec2(float(color_idx % 32) / 31.0, float(color_idx / 32) / 31.0);
-	return texture(palette, c);
+	ivec2 c = ivec2(color_idx % 32, color_idx / 32);
+	return texelFetch(palette, c, 0);
 }
 
 #endif
