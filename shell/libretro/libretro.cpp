@@ -641,10 +641,13 @@ static void update_variables(bool first_startup)
 			else if (!strcmp("Blue", var.value))
 				lightgun_params[i].colour = LIGHTGUN_COLOR_BLUE;
 		}
-		config::CrosshairColor[i] = lightgun_palette[lightgun_params[i].colour * 3]
-									| (lightgun_palette[lightgun_params[i].colour * 3 + 1] << 8)
-									| (lightgun_palette[lightgun_params[i].colour * 3 + 2] << 16)
-									| 0xff000000;
+		if (lightgun_params[i].colour == LIGHTGUN_COLOR_OFF)
+			config::CrosshairColor[i] = 0;
+		else
+			config::CrosshairColor[i] = lightgun_palette[lightgun_params[i].colour * 3]
+										| (lightgun_palette[lightgun_params[i].colour * 3 + 1] << 8)
+										| (lightgun_palette[lightgun_params[i].colour * 3 + 2] << 16)
+										| 0xff000000;
 
 		vmu_lcd_status[i] = false;
 		vmu_lcd_changed[i] = true;
@@ -783,8 +786,8 @@ void retro_run()
 			glsm_ctl(GLSM_CTL_STATE_BIND, NULL);
 
 		// Render
-		is_dupe = !rend_single_frame(true);
-		if (is_dupe)
+		is_dupe = true;
+		for (int i = 0; i < 8 && is_dupe; i++)
 			is_dupe = !rend_single_frame(true);
 
 		if (config::RendererType == RenderType::OpenGL || config::RendererType == RenderType::OpenGL_OIT)
@@ -809,9 +812,7 @@ void retro_reset()
 	if (config::ThreadedRendering)
 		dc_stop();
 
-	config::Cable = 3;
-	update_variables(false);
-	dc_reset(true);
+	dc_start_game(settings.imgread.ImagePath);
 
 	if (config::ThreadedRendering)
 		dc_resume();
@@ -1277,6 +1278,7 @@ static void retro_vk_context_reset()
 	theVulkanContext.Init((retro_hw_render_interface_vulkan *)vulkan);
 	rend_term_renderer();
 	rend_init_renderer();
+	dc_resize_renderer();
 }
 
 static void retro_vk_context_destroy()
