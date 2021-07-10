@@ -368,7 +368,7 @@ int main(int argc, char* argv[])
 	common_linux_setup();
 
 	if (reicast_init(argc, argv))
-		die("Reicast initialization failed\n");
+		die("Flycast initialization failed\n");
 
 	mainui_loop();
 
@@ -394,6 +394,3 @@ void os_DebugBreak()
 {
 	raise(SIGTRAP);
 }
-
-
-

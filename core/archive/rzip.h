@@ -35,7 +35,7 @@ public:
 
 private:
 	FILE *file = nullptr;
-	size_t size = 0;
+	u64 size = 0;
 	u32 maxChunkSize = 0;
 	u8 *chunk = nullptr;
 	u32 chunkSize = 0;

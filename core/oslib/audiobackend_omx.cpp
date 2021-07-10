@@ -1,6 +1,5 @@
-#include "audiostream.h"
 #if USE_OMX
-
+#include "audiostream.h"
 #include <IL/OMX_Broadcom.h>
 #include <unistd.h>
 

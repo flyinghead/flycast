@@ -272,7 +272,7 @@ else ifneq (,$(findstring win32,$(platform)))
     NOT_ARM := 1
     CFLAGS += -fno-builtin-sqrtf -funroll-loops -I /mingw64/include
     LDFLAGS += -static-libgcc -static-libstdc++ -Wl,-subsystem,windows
-    LIBS := -lopengl32 -lwinmm -lgdi32 -lwsock32 -lws2_32 -ldsound -lcomctl32 -lcomdlg32 -lxinput -liphlpapi -Wl,-Bstatic -lgomp
+    LIBS := -lopengl32 -lwinmm -lgdi32 -lwsock32 -lws2_32 -ldsound -lcomctl32 -lcomdlg32 -lxinput -liphlpapi -ld3d9 -ld3dx9 -Wl,-Bstatic -lgomp
     PLATFORM_EXT := exe
     CC = gcc
     CXX = g++
@@ -482,8 +482,8 @@ OBJECTS:=$(OBJECTS:.S=.build_obj)
 OBJECTS:=$(patsubst $(RZDCY_SRC_DIR)/%,$(BUILDDIR)/%,$(OBJECTS))
 
 ifdef FOR_WINDOWS
-OBJECTS += $(BUILDDIR)/reicastres.build_obj
-$(BUILDDIR)/reicastres.build_obj: $(LOCAL_PATH)/../windows/reicast.rc $(LOCAL_PATH)/../windows/flycast.ico $(RZDCY_SRC_DIR)/version.h
+OBJECTS += $(BUILDDIR)/flycastres.build_obj
+$(BUILDDIR)/flycastres.build_obj: $(LOCAL_PATH)/../windows/flycast.rc $(LOCAL_PATH)/../windows/flycast.ico $(RZDCY_SRC_DIR)/version.h
 	$(WINDRES) $< $@
 
 endif
@@ -502,7 +502,6 @@ ifdef USE_SDL
 $(OBJECTS): SDL/lib/libSDL2.a
  
 SDL/lib/libSDL2.a:
-	-patch -p1 --directory=$(RZDCY_SRC_DIR)/deps/SDL --forward < $(RZDCY_SRC_DIR)/deps/patches/SDL.patch
 	mkdir -p SDL && \
 	  cd SDL && \
 	  cmake $(CMAKE_FLAVOR) -DCMAKE_INSTALL_PREFIX=. -DBUILD_SHARED_LIBS=OFF -DCMAKE_SH=SH-NOTFOUND $(RZDCY_SRC_DIR)/deps/SDL && \
@@ -511,7 +510,7 @@ SDL/lib/libSDL2.a:
 
 OBJECTS += SDL/lib/libSDL2.a
 LIBS += -ldinput8  -ldxguid -ldxerr8
-LIBS += -luser32 -lgdi32 -lwinmm -limm32 -lole32 -loleaut32 -lshell32 -lsetupapi -lversion -luuid
+LIBS += -luser32 -limm32 -lole32 -loleaut32 -lshell32 -lsetupapi -lversion -luuid
 	endif
 endif
 

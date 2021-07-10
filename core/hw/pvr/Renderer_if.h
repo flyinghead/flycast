@@ -38,7 +38,7 @@ struct Renderer
 
 	virtual void DrawOSD(bool clear_screen) { }
 
-	virtual u64 GetTexture(TSP tsp, TCW tcw) { return 0; }
+	virtual BaseTextureCacheData *GetTexture(TSP tsp, TCW tcw) { return nullptr; }
 };
 
 extern Renderer* renderer;

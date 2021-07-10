@@ -73,7 +73,7 @@ void fault_handler (int sn, siginfo_t * si, void *segfault_ctx)
 }
 #undef HOST_CTX_READY
 
-void install_fault_handler(void)
+void install_fault_handler()
 {
 	struct sigaction act, segv_oact;
 	memset(&act, 0, sizeof(act));
@@ -91,7 +91,7 @@ void install_fault_handler(void)
 }
 #else  // !defined(TARGET_NO_EXCEPTIONS)
 // No exceptions/nvmem dummy handlers.
-void install_fault_handler(void) {}
+void install_fault_handler() {}
 #endif // !defined(TARGET_NO_EXCEPTIONS)
 
 double os_GetSeconds()

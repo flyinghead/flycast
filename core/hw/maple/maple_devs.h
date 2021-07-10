@@ -116,8 +116,6 @@ enum AWAVE_KEYS
 	AWAVE_TRIGGER_KEY = 1 << 12,
 };
 
-struct IMapleConfigMap;
-
 struct maple_device
 {
 	u8 maple_port;          //raw maple port
@@ -167,15 +165,12 @@ extern u8 EEPROM[0x100];
 void load_naomi_eeprom();
 
 // Mouse position and buttons
-extern u32 mo_buttons[4];
+extern u8 mo_buttons[4];
 extern s32 mo_x_abs[4];
 extern s32 mo_y_abs[4];
 extern f32 mo_x_delta[4];
 extern f32 mo_y_delta[4];
 extern f32 mo_wheel_delta[4];
-
-extern s32 mo_x_phy;
-extern s32 mo_y_phy;
 
 extern s32 mo_x_prev[4];
 extern s32 mo_y_prev[4];
@@ -225,6 +220,10 @@ struct maple_base: maple_device
 	u8 r8() { u8  rv = *(u8*)dma_buffer_in; dma_buffer_in += 1; dma_count_in -= 1; return rv; }
 	u16 r16() { u16 rv = *(u16*)dma_buffer_in; dma_buffer_in += 2; dma_count_in -= 2; return rv; }
 	u32 r32() { u32 rv = *(u32*)dma_buffer_in; dma_buffer_in += 4; dma_count_in -= 4; return rv; }
+	void skip(u32 len) {
+		dma_buffer_in += len;
+		dma_count_in -= len;
+	}
 
 	void rptr(void* dst, u32 len)
 	{

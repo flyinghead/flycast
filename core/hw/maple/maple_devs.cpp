@@ -303,20 +303,6 @@ struct maple_sega_vmu: maple_base
 		return MDT_SegaVMU;
 	}
 
-	// creates an empty VMU
-	bool init_emptyvmu()
-	{
-		INFO_LOG(MAPLE, "Initialising empty VMU...");
-
-		uLongf dec_sz = sizeof(flash_data);
-		int rv = uncompress(flash_data, &dec_sz, vmu_default, sizeof(vmu_default));
-
-		verify(rv == Z_OK);
-		verify(dec_sz == sizeof(flash_data));
-
-		return (rv == Z_OK && dec_sz == sizeof(flash_data));
-	}
-
 	bool serialize(void **data, unsigned int *total_size) override
 	{
 		maple_base::serialize(data, total_size);
@@ -333,6 +319,26 @@ struct maple_sega_vmu: maple_base
 		REICAST_USA(lcd_data_decoded,48*32);
 		return true ;
 	}
+
+	void initializeVmu()
+	{
+		INFO_LOG(MAPLE, "Initialising empty VMU...");
+
+		uLongf dec_sz = sizeof(flash_data);
+		int rv = uncompress(flash_data, &dec_sz, vmu_default, sizeof(vmu_default));
+
+		verify(rv == Z_OK);
+		verify(dec_sz == sizeof(flash_data));
+
+		if (file != nullptr)
+		{
+			if (std::fwrite(flash_data, sizeof(flash_data), 1, file) != 1)
+				WARN_LOG(MAPLE, "Failed to write the VMU to disk");
+			if (std::fseek(file, 0, SEEK_SET) != 0)
+				WARN_LOG(MAPLE, "VMU: I/O error");
+		}
+	}
+
 	void OnSetup() override
 	{
 		memset(flash_data, 0, sizeof(flash_data));
@@ -345,52 +351,34 @@ struct maple_sega_vmu: maple_base
 			apath = get_writable_data_path(tempy);
 
 		file = nowide::fopen(apath.c_str(), "rb+");
-		if (!file)
+		if (file == nullptr)
 		{
 			INFO_LOG(MAPLE, "Unable to open VMU save file \"%s\", creating new file", apath.c_str());
-			file = nowide::fopen(apath.c_str(), "wb");
-			if (file) {
-				if (!init_emptyvmu())
-					WARN_LOG(MAPLE, "Failed to initialize an empty VMU, you should reformat it using the BIOS");
-
-				std::fwrite(flash_data, sizeof(flash_data), 1, file);
-				std::fseek(file, 0, SEEK_SET);
-			}
-			else
-			{
+			file = nowide::fopen(apath.c_str(), "wb+");
+			if (file == nullptr)
 				ERROR_LOG(MAPLE, "Failed to create VMU save file \"%s\"", apath.c_str());
-			}
+			initializeVmu();
 		}
 
 		if (file != nullptr)
-			std::fread(flash_data, 1, sizeof(flash_data), file);
+			if (std::fread(flash_data, sizeof(flash_data), 1, file) != 1)
+				WARN_LOG(MAPLE, "Failed to read the VMU from disk");
 
 		u8 sum = 0;
 		for (u32 i = 0; i < sizeof(flash_data); i++)
 			sum |= flash_data[i];
 
-		if (sum == 0) {
+		if (sum == 0)
 			// This means the existing VMU file is completely empty and needs to be recreated
-
-			if (init_emptyvmu())
-			{
-				if (file != nullptr)
-				{
-					std::fwrite(flash_data, sizeof(flash_data), 1, file);
-					std::fseek(file, 0, SEEK_SET);
-				}
-			}
-			else
-			{
-				WARN_LOG(MAPLE, "Failed to initialize an empty VMU, you should reformat it using the BIOS");
-			}
-		}
-
+			initializeVmu();
 	}
+
 	~maple_sega_vmu() override
 	{
-		if (file) std::fclose(file);
+		if (file != nullptr)
+			std::fclose(file);
 	}
+
 	u32 dma(u32 cmd) override
 	{
 		//printf("maple_sega_vmu::dma Called for port %d:%d, Command %d\n", bus_id, bus_port, cmd);
@@ -579,7 +567,8 @@ struct maple_sega_vmu: maple_base
 
 		case MDCF_BlockWrite:
 			{
-				switch(r32())
+				u32 function = r32();
+				switch (function)
 				{
 					case MFID_1_Storage:
 					{
@@ -592,21 +581,26 @@ struct maple_sega_vmu: maple_base
 						if (write_adr + write_len > sizeof(flash_data))
 						{
 							INFO_LOG(MAPLE, "Failed to write VMU %s: overflow", logical_port);
-							return MDRE_TransmitAgain; //invalid params
+							skip(write_len);
+							return MDRE_FileError; //invalid params
 						}
 						rptr(&flash_data[write_adr],write_len);
 
-						if (file)
+						if (file != nullptr)
 						{
-							std::fseek(file,write_adr,SEEK_SET);
-							std::fwrite(&flash_data[write_adr],1,write_len,file);
+							if (std::fseek(file, write_adr, SEEK_SET) != 0
+									|| std::fwrite(&flash_data[write_adr], write_len, 1, file) != 1)
+							{
+								WARN_LOG(MAPLE, "Failed to save VMU %s: I/O error", logical_port);
+								return MDRE_FileError; // I/O error
+							}
 							std::fflush(file);
 						}
 						else
 						{
 							INFO_LOG(MAPLE, "Failed to save VMU %s data", logical_port);
 						}
-						return MDRS_DeviceReply;//just ko
+						return MDRS_DeviceReply;
 					}
 
 					case MFID_2_LCD:
@@ -652,7 +646,7 @@ struct maple_sega_vmu: maple_base
 						}
 
 					default:
-						INFO_LOG(MAPLE, "VMU: command MDCF_BlockWrite -> Bad function used, returning MDRE_UnknownFunction");
+						INFO_LOG(MAPLE, "VMU: command MDCF_BlockWrite -> Unknown function %x", function);
 						return  MDRE_UnknownFunction;//bad function
 				}
 			}
@@ -1017,9 +1011,9 @@ struct maple_sega_purupuru : maple_base
 	}
 };
 
-u8 kb_shift; 		// shift keys pressed (bitmask)
-u8 kb_led; 			// leds currently lit
-u8 kb_key[6]={0};	// normal keys pressed
+u8 kb_shift[MAPLE_PORTS];	// shift keys pressed (bitmask)
+u8 kb_led[MAPLE_PORTS]; 	// leds currently lit
+u8 kb_key[MAPLE_PORTS][6];	// normal keys pressed
 
 struct maple_keyboard : maple_base
 {
@@ -1080,14 +1074,12 @@ struct maple_keyboard : maple_base
 			w32(MFID_6_Keyboard);
 			//struct data
 			//int8 shift          ; shift keys pressed (bitmask)	//1
-			w8(kb_shift);
+			w8(kb_shift[player_num]);
 			//int8 led            ; leds currently lit			//1
-			w8(kb_led);
+			w8(kb_led[player_num]);
 			//int8 key[6]         ; normal keys pressed			//6
 			for (int i = 0; i < 6; i++)
-			{
-				w8(kb_key[i]);
-			}
+				w8(kb_key[player_num][i]);
 
 			return MDRS_DataTransfer;
 
@@ -1109,7 +1101,7 @@ struct maple_keyboard : maple_base
 // bit 1: Right button (B)
 // bit 2: Left button (A)
 // bit 3: Wheel button
-u32 mo_buttons[4] = { 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF };
+u8 mo_buttons[4] = { 0xFF, 0xFF, 0xFF, 0xFF };
 // Relative mouse coordinates [-512:511]
 f32 mo_x_delta[4];
 f32 mo_y_delta[4];
@@ -1122,9 +1114,6 @@ s32 mo_y_abs[4];
 // previous mouse coordinates for relative motion
 s32 mo_x_prev[4] = { -1, -1, -1, -1 };
 s32 mo_y_prev[4] = { -1, -1, -1, -1 };
-// physical mouse coordinates (relative to window/screen)
-s32 mo_x_phy;
-s32 mo_y_phy;
 // last known screen/window size
 static s32 mo_width;
 static s32 mo_height;
@@ -1181,14 +1170,13 @@ struct maple_mouse : maple_base
 				config->GetMouseInput(buttons, x, y, wheel);
 
 				w32(MFID_9_Mouse);
-				//struct data
-				//int8 buttons       ; buttons (RLDUSABC, where A is left btn, B is right, and S is middle/scrollwheel)
+				// buttons (RLDUSABC, where A is left btn, B is right, and S is middle/scrollwheel)
 				w8(buttons);
-				//int8 options
+				// options
 				w8(0);
-				//int8 axes overflow
+				// axes overflow
 				w8(0);
-				//int8 reserved
+				// reserved
 				w8(0);
 				//int16 axis1         ; horizontal movement (0-$3FF) (little endian)
 				w16(mo_cvt(x));
@@ -1410,11 +1398,8 @@ static void screenToNative(int& x, int& y, int width, int height)
 
 void SetMousePosition(int x, int y, int width, int height, u32 mouseId)
 {
-	if (mouseId == 0)
-	{
-		mo_x_phy = x;
-		mo_y_phy = y;
-	}
+	if (mouseId >= MAPLE_PORTS)
+		return;
 	mo_width = width;
 	mo_height = height;
 
@@ -1440,6 +1425,8 @@ void SetMousePosition(int x, int y, int width, int height, u32 mouseId)
 
 void SetRelativeMousePosition(int xrel, int yrel, u32 mouseId)
 {
+	if (mouseId >= MAPLE_PORTS)
+		return;
 	int width = mo_width;
 	int height = mo_height;
 	if (config::Rotate90)

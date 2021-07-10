@@ -80,18 +80,23 @@ void mainui_loop()
 			if (config::RendererType.isOpenGL())
 				theGLContext.Swap();
 #ifdef USE_VULKAN
-			else
+			else if (config::RendererType.isVulkan())
 				VulkanContext::Instance()->Present();
+#endif
+#ifdef _WIN32
+			else if (config::RendererType.isDirectX())
+				theDXContext.Present();
 #endif
 		}
 
 		if (config::RendererType.pendingChange() || forceReinit)
 		{
-			bool openGl = config::RendererType.isOpenGL();
+			int api = config::RendererType.isOpenGL() ? 0 : config::RendererType.isVulkan() ? 1 : 2;
 			mainui_term();
 			config::RendererType.commit();
-			if (openGl != config::RendererType.isOpenGL() || forceReinit)
-				// Switch between vulkan and opengl (or full reinit)
+			int newApi = config::RendererType.isOpenGL() ? 0 : config::RendererType.isVulkan() ? 1 : 2;
+			if (newApi != api || forceReinit)
+				// Switch between vulkan/opengl/directx (or full reinit)
 				SwitchRenderApi();
 			mainui_init();
 			forceReinit = false;

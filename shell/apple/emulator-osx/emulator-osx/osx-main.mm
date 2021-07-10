@@ -30,11 +30,8 @@
 #include "hw/pvr/Renderer_if.h"
 #include "rend/mainui.h"
 
-OSXKeyboardDevice keyboard(0);
-static std::shared_ptr<OSXKbGamepadDevice> kb_gamepad(0);
-static std::shared_ptr<OSXMouseGamepadDevice> mouse_gamepad(0);
-unsigned int *pmo_buttons;
-float *pmo_wheel_delta;
+static std::shared_ptr<OSXKeyboard> keyboard(0);
+static std::shared_ptr<OSXMouse> mouse;
 static UInt32 keyboardModifiers;
 
 int darw_printf(const char* text, ...)
@@ -85,10 +82,10 @@ void os_SetupInput()
 	input_sdl_init();
 #endif
 
-	kb_gamepad = std::make_shared<OSXKbGamepadDevice>(0);
-	GamepadDevice::Register(kb_gamepad);
-	mouse_gamepad = std::make_shared<OSXMouseGamepadDevice>(0);
-	GamepadDevice::Register(mouse_gamepad);
+	keyboard = std::make_shared<OSXKeyboard>(0);
+	GamepadDevice::Register(keyboard);
+	mouse = std::make_shared<OSXMouse>();
+	GamepadDevice::Register(mouse);
 }
 
 void common_linux_setup();
@@ -141,10 +138,6 @@ int emu_single_frame(int w, int h)
 
 void emu_gles_init(int width, int height)
 {
-	// work around https://bugs.swift.org/browse/SR-12263
-	pmo_buttons = mo_buttons;
-	pmo_wheel_delta = mo_wheel_delta;
-
     char *home = getenv("HOME");
     if (home != NULL)
     {
@@ -261,37 +254,53 @@ int emu_reicast_init()
 
 void emu_key_input(UInt16 keyCode, bool pressed, UInt modifierFlags) {
 	if (keyCode != 0xFF)
-		keyboard.keyboard_input(keyCode, pressed, 0);
+		keyboard->keyboard_input(keyCode, pressed, 0);
 	else
 	{
 		// Modifier keys
 		UInt32 changes = keyboardModifiers ^ modifierFlags;
 		if (changes & NSEventModifierFlagShift)
-			keyboard.keyboard_input(kVK_Shift, modifierFlags & NSEventModifierFlagShift, 0);
+			keyboard->keyboard_input(kVK_Shift, modifierFlags & NSEventModifierFlagShift, 0);
 		if (changes & NSEventModifierFlagControl)
-			keyboard.keyboard_input(kVK_Control, modifierFlags & NSEventModifierFlagControl, 0);
+			keyboard->keyboard_input(kVK_Control, modifierFlags & NSEventModifierFlagControl, 0);
 		if (changes & NSEventModifierFlagOption)
-			keyboard.keyboard_input(kVK_Option, modifierFlags & NSEventModifierFlagOption, 0);
+			keyboard->keyboard_input(kVK_Option, modifierFlags & NSEventModifierFlagOption, 0);
 		keyboardModifiers = modifierFlags;
 	}
-	if ((modifierFlags
-		 & (NSEventModifierFlagShift | NSEventModifierFlagControl | NSEventModifierFlagOption | NSEventModifierFlagCommand)) == 0)
-		kb_gamepad->gamepad_btn_input(keyCode, pressed);
 }
 void emu_character_input(const char *characters) {
 	if (characters != NULL)
-		while (*characters != '\0')
-			keyboard.keyboard_character(*characters++);
+		gui_keyboard_inputUTF8(characters);
 }
 
 void emu_mouse_buttons(int button, bool pressed)
 {
-	mouse_gamepad->gamepad_btn_input(button, pressed);
+    Mouse::Button dcButton;
+    switch (button) {
+    case 1:
+    	dcButton = Mouse::LEFT_BUTTON;
+    	break;
+    case 2:
+    	dcButton = Mouse::RIGHT_BUTTON;
+    	break;
+    case 3:
+    	dcButton = Mouse::MIDDLE_BUTTON;
+    	break;
+    default:
+    	dcButton = Mouse::BUTTON_4;
+    	break;
+    }
+	mouse->setButton(dcButton, pressed);
+}
+
+void emu_mouse_wheel(float v)
+{
+    mouse->setWheel((int)v);
 }
 
 void emu_set_mouse_position(int x, int y, int width, int height)
 {
-	SetMousePosition(x, y, width, height);
+    mouse->setAbsPos(x, y, width, height);
 }
 
 std::string os_Locale(){

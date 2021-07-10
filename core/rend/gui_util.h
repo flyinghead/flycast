@@ -25,6 +25,7 @@
 #include "imgui/imgui_internal.h"
 #include "gles/imgui_impl_opengl3.h"
 #include "vulkan/vulkan_context.h"
+#include "dx9/dxcontext.h"
 #include "gui.h"
 
 extern int screen_width, screen_height;
@@ -37,14 +38,19 @@ void select_file_popup(const char *prompt, StringCallback callback,
 static inline void ImGui_impl_RenderDrawData(ImDrawData *draw_data)
 {
 #ifdef USE_VULKAN
-	if (!config::RendererType.isOpenGL())
+	if (config::RendererType.isVulkan())
 		ImGui_ImplVulkan_RenderDrawData(draw_data);
+	else
+#endif
+#ifdef _WIN32
+		if (config::RendererType.isDirectX())
+			theDXContext.EndImGuiFrame();
 	else
 #endif
 		ImGui_ImplOpenGL3_RenderDrawData(draw_data);
 }
 
-void ScrollWhenDraggingOnVoid(const ImVec2& delta, ImGuiMouseButton mouse_button);
+void scrollWhenDraggingOnVoid(ImGuiMouseButton mouse_button = ImGuiMouseButton_Left);
 
 IMGUI_API const ImWchar*    GetGlyphRangesChineseSimplifiedOfficial();// Default + Half-Width + Japanese Hiragana/Katakana + set of 7800 CJK Unified Ideographs from General Standard Chinese Characters
 IMGUI_API const ImWchar*    GetGlyphRangesChineseTraditionalOfficial();// Default + Half-Width + Japanese Hiragana/Katakana + set of 4700 CJK Unified Ideographs from Hong Kong's List of Graphemes of Commonly-Used Chinese Characters
@@ -58,9 +64,23 @@ template<typename T>
 bool OptionRadioButton(const char *name, config::Option<T>& option, T value, const char *help = nullptr);
 void OptionComboBox(const char *name, config::Option<int>& option, const char *values[], int count,
 			const char *help = nullptr);
+bool OptionArrowButtons(const char *name, config::Option<int>& option, int min, int max, const char *help = nullptr);
 
 static inline void centerNextWindow()
 {
 	ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x / 2.f, ImGui::GetIO().DisplaySize.y / 2.f),
 			ImGuiCond_Always, ImVec2(0.5f, 0.5f));
 }
+
+static inline bool operator==(const ImVec2& l, const ImVec2& r)
+{
+	return l.x == r.x && l.y == r.y;
+}
+
+static inline bool operator!=(const ImVec2& l, const ImVec2& r)
+{
+	return !(l == r);
+}
+
+void fullScreenWindow(bool modal);
+void windowDragScroll();

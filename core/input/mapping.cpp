@@ -97,6 +97,21 @@ axis_list[] =
 
 std::map<std::string, std::shared_ptr<InputMapping>> InputMapping::loaded_mappings;
 
+void InputMapping::clear_button(u32 port, DreamcastKey id, u32 code)
+{
+	if (id != EMU_BTN_NONE)
+	{
+		while (true)
+		{
+			u32 code = get_button_code(port, id);
+			if (code == (u32)-1)
+				break;
+			buttons[port][code] = EMU_BTN_NONE;
+		}
+		dirty = true;
+	}
+}
+
 void InputMapping::set_button(u32 port, DreamcastKey id, u32 code)
 {
 	if (id != EMU_BTN_NONE)
@@ -109,6 +124,21 @@ void InputMapping::set_button(u32 port, DreamcastKey id, u32 code)
 			buttons[port][code] = EMU_BTN_NONE;
 		}
 		buttons[port][code] = id;
+		dirty = true;
+	}
+}
+
+void InputMapping::clear_axis(u32 port, DreamcastKey id, u32 code)
+{
+	if (id != EMU_AXIS_NONE)
+	{
+		while (true)
+		{
+			u32 code = get_axis_code(port, id);
+			if (code == (u32)-1)
+				break;
+			axes[port][code] = EMU_AXIS_NONE;
+		}
 		dirty = true;
 	}
 }
@@ -142,6 +172,7 @@ void InputMapping::load(FILE* fp)
 	int dz = mf.get_int("emulator", "dead_zone", 10);
 	dz = std::min(dz, 100);
 	dz = std::max(dz, 0);
+	version = mf.get_int("emulator", "version", 1);
 
 	this->dead_zone = (float)dz / 100.f;
 
@@ -200,6 +231,11 @@ u32 InputMapping::get_axis_code(u32 port, DreamcastKey key)
 	return -1;
 }
 
+void InputMapping::ClearMappings()
+{
+	loaded_mappings.clear();
+}
+
 std::shared_ptr<InputMapping> InputMapping::LoadMapping(const char *name)
 {
 	auto it = loaded_mappings.find(name);
@@ -216,6 +252,11 @@ std::shared_ptr<InputMapping> InputMapping::LoadMapping(const char *name)
 	loaded_mappings[name] = mapping;
 
 	return mapping;
+}
+
+void InputMapping::set_dirty()
+{
+	dirty = true;
 }
 
 bool InputMapping::save(const char *name)
@@ -236,6 +277,7 @@ bool InputMapping::save(const char *name)
 
 	mf.set("emulator", "mapping_name", this->name);
 	mf.set_int("emulator", "dead_zone", (int)std::round(this->dead_zone * 100.f));
+	mf.set_int("emulator", "version", version);
 
 	for (int port = 0; port < 4; port++)
 	{

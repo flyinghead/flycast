@@ -22,9 +22,12 @@
 #include "oslib/oslib.h"
 #include "rend/gui.h"
 #include "emulator.h"
+#include "hw/maple/maple_devs.h"
+#include "stdclass.h"
 
 #include <algorithm>
 #include <climits>
+#include <fstream>
 
 #define MAPLE_PORT_CFG_PREFIX "maple_"
 
@@ -320,6 +323,76 @@ std::string GamepadDevice::make_mapping_filename(bool instance)
 	return mapping_file;
 }
 
+void GamepadDevice::verify_or_create_system_mappings()
+{
+	std::string dc_name = make_mapping_filename(false, 0);
+	std::string arcade_name = make_mapping_filename(false, 2);
+
+	std::string dc_path = get_readonly_config_path(std::string("mappings/") + dc_name);
+	std::string arcade_path = get_readonly_config_path(std::string("mappings/") + arcade_name);
+
+	if (!file_exists(arcade_path))
+	{
+		save_mapping(2);
+		input_mapper->ClearMappings();
+	}
+	if (!file_exists(dc_path))
+	{
+		save_mapping(0);
+		input_mapper->ClearMappings();
+	}
+
+	find_mapping(DC_PLATFORM_DREAMCAST);
+}
+
+void GamepadDevice::load_system_mappings(int system)
+{
+	for (int i = 0; i < GetGamepadCount(); i++)
+	{
+		std::shared_ptr<GamepadDevice> gamepad = GetGamepad(i);
+		gamepad->find_mapping(system);
+	}
+}
+
+std::string GamepadDevice::make_mapping_filename(bool instance, int system)
+{
+	std::string mapping_file = api_name() + "_" + name();
+	if (instance)
+		mapping_file += "-" + _unique_id;
+	if (system != 0)
+		mapping_file += "_arcade";
+	std::replace(mapping_file.begin(), mapping_file.end(), '/', '-');
+	std::replace(mapping_file.begin(), mapping_file.end(), '\\', '-');
+	std::replace(mapping_file.begin(), mapping_file.end(), ':', '-');
+	std::replace(mapping_file.begin(), mapping_file.end(), '?', '-');
+	std::replace(mapping_file.begin(), mapping_file.end(), '*', '-');
+	std::replace(mapping_file.begin(), mapping_file.end(), '|', '-');
+	std::replace(mapping_file.begin(), mapping_file.end(), '"', '-');
+	std::replace(mapping_file.begin(), mapping_file.end(), '<', '-');
+	std::replace(mapping_file.begin(), mapping_file.end(), '>', '-');
+	mapping_file += ".cfg";
+
+	return mapping_file;
+}
+
+bool GamepadDevice::find_mapping(int system)
+{
+	std::string mapping_file;
+	mapping_file = make_mapping_filename(false, system);
+
+	// fall back on default flycast mapping filename if system profile not found
+	std::string system_mapping_path = get_readonly_config_path(std::string("mappings/") + mapping_file);
+	if (!file_exists(system_mapping_path))
+		mapping_file = make_mapping_filename(false);
+
+	std::shared_ptr<InputMapping> mapper = InputMapping::LoadMapping(mapping_file.c_str());
+
+	if (!mapper)
+		return false;
+	input_mapper = mapper;
+	return true;
+}
+
 bool GamepadDevice::find_mapping(const char *custom_mapping /* = nullptr */)
 {
 	std::string mapping_file;
@@ -362,6 +435,15 @@ void GamepadDevice::save_mapping()
 	if (!input_mapper)
 		return;
 	std::string filename = make_mapping_filename();
+	InputMapping::SaveMapping(filename.c_str(), input_mapper);
+}
+
+void GamepadDevice::save_mapping(int system)
+{
+	if (!input_mapper)
+		return;
+	std::string filename = make_mapping_filename(false, system);
+	input_mapper->set_dirty();
 	InputMapping::SaveMapping(filename.c_str(), input_mapper);
 }
 
@@ -444,6 +526,54 @@ void GamepadDevice::SaveMaplePorts()
 		if (gamepad != NULL && !gamepad->unique_id().empty())
 			cfgSaveInt("input", MAPLE_PORT_CFG_PREFIX + gamepad->unique_id(), gamepad->maple_port());
 	}
+}
+
+void Mouse::setAbsPos(int x, int y, int width, int height) {
+	SetMousePosition(x, y, width, height, maple_port());
+}
+
+void Mouse::setRelPos(int deltax, int deltay) {
+	SetRelativeMousePosition(deltax, deltay, maple_port());
+}
+
+void Mouse::setWheel(int delta) {
+	if (maple_port() >= 0 && maple_port() < ARRAY_SIZE(mo_wheel_delta))
+		mo_wheel_delta[maple_port()] += delta;
+}
+
+void Mouse::setButton(Button button, bool pressed)
+{
+	if (maple_port() >= 0 && maple_port() < ARRAY_SIZE(mo_buttons))
+	{
+		if (pressed)
+			mo_buttons[maple_port()] &= ~(1 << (int)button);
+		else
+			mo_buttons[maple_port()] |= 1 << (int)button;
+	}
+	if (gui_is_open() && !is_detecting_input())
+		// Don't register mouse clicks as gamepad presses when gui is open
+		// This makes the gamepad presses to be handled first and the mouse position to be ignored
+		return;
+	gamepad_btn_input(button, pressed);
+}
+
+
+void SystemMouse::setAbsPos(int x, int y, int width, int height) {
+	gui_set_mouse_position(x, y);
+	Mouse::setAbsPos(x, y, width, height);
+}
+
+void SystemMouse::setButton(Button button, bool pressed) {
+	int uiBtn = (int)button - 1;
+	if (uiBtn < 2)
+		uiBtn ^= 1;
+	gui_set_mouse_button(uiBtn, pressed);
+	Mouse::setButton(button, pressed);
+}
+
+void SystemMouse::setWheel(int delta) {
+	gui_set_mouse_wheel(delta * 35);
+	Mouse::setWheel(delta);
 }
 
 #ifdef TEST_AUTOMATION

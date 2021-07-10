@@ -25,7 +25,6 @@
 #include "hw/aica/aica.h"
 #include "hw/aica/aica_mem.h"
 #include "hw/pvr/pvr_regs.h"
-#include "oslib/oslib.h"
 #include "imgread/common.h"
 
 #include <map>

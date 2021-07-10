@@ -20,11 +20,9 @@
 */
 #include "gl_context.h"
 #include "types.h"
-#include "oslib/oslib.h"
 
 #if defined(_WIN32) && !defined(USE_SDL)
 void CreateMainWindow();
-void DestroyMainWindow();
 
 WGLGraphicsContext theGLContext;
 
@@ -138,7 +136,6 @@ void WGLGraphicsContext::Term()
 		wglMakeCurrent(ourWindowHandleToDeviceContext, NULL);
 		wglDeleteContext(ourOpenGLRenderingContext);
 		ourOpenGLRenderingContext = NULL;
-		DestroyMainWindow();
 	}
 }
 

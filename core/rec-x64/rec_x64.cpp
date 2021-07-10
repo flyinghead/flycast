@@ -17,7 +17,6 @@ using namespace Xbyak::util;
 
 #include "hw/sh4/sh4_core.h"
 #include "hw/sh4/sh4_mem.h"
-#include "oslib/oslib.h"
 #include "x64_regalloc.h"
 #include "xbyak_base.h"
 

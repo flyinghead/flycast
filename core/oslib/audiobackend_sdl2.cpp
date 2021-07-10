@@ -1,4 +1,3 @@
-
 #if defined(USE_SDL_AUDIO)
 
 #include <SDL.h>

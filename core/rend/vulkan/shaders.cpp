@@ -184,6 +184,7 @@ void main()
 			#if cp_AlphaTest == 1
 				if (uniformBuffer.cp_AlphaTestValue > texcol.a)
 					discard;
+				texcol.a = 1.0;
 			#endif 
 		#endif
 		#if pp_ShadInstr == 0
@@ -233,9 +234,6 @@ void main()
 	color *= pushConstants.trilinearAlpha;
 	#endif
 	
-	#if cp_AlphaTest == 1
-		color.a = 1.0;
-	#endif 
 	//color.rgb = vec3(gl_FragCoord.w * uniformBuffer.sp_FOG_DENSITY / 128.0);
 
 	float w = gl_FragCoord.w * 100000.0;

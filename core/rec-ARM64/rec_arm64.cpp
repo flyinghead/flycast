@@ -46,9 +46,9 @@ static void generate_mainloop();
 
 struct DynaRBI : RuntimeBlockInfo
 {
-	virtual u32 Relink() override;
+	u32 Relink() override;
 
-	virtual void Relocate(void* dst) override {
+	void Relocate(void* dst) override {
 		verify(false);
 	}
 };

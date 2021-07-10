@@ -1,5 +1,5 @@
-#include "audiostream.h"
 #ifdef USE_PULSEAUDIO
+#include "audiostream.h"
 
 #ifdef PULSEAUDIO_SIMPLE
 #include <pulse/simple.h>

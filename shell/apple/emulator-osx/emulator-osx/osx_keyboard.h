@@ -8,11 +8,15 @@
 #pragma once
 #include "input/keyboard_device.h"
 
-class OSXKeyboardDevice : public KeyboardDeviceTemplate<UInt16>
+class OSXKeyboard : public KeyboardDeviceTemplate<UInt16>
 {
 public:
-	OSXKeyboardDevice(int maple_port) : KeyboardDeviceTemplate(maple_port)
+	OSXKeyboard(int maple_port) : KeyboardDeviceTemplate(maple_port, "OSX")
 	{
+		_name = "Keyboard";
+		_unique_id = "osx_keyboard";
+		loadMapping();
+
 		//04-1D Letter keys A-Z (in alphabetic order)
 		kb_map[kVK_ANSI_A] = 0x04;
 		kb_map[kVK_ANSI_B] = 0x05;
@@ -160,10 +164,8 @@ public:
 		kb_map[kVK_JIS_Yen] = 0x89;     	// I18n keyboard 3
 	}
 	
-	virtual const char* name() override { return "OSX Keyboard"; }
-	
 protected:
-	virtual u8 convert_keycode(UInt16 keycode) override
+	u8 convert_keycode(UInt16 keycode) override
 	{
 		return kb_map[keycode];
 	}

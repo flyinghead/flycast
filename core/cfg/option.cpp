@@ -34,7 +34,9 @@ Option<int> Broadcast("Dreamcast.Broadcast", 0);	// NTSC
 Option<int> Language("Dreamcast.Language", 1);		// English
 Option<bool> FullMMU("Dreamcast.FullMMU");
 Option<bool> ForceWindowsCE("Dreamcast.ForceWindowsCE");
-Option<bool> AutoSavestate("Dreamcast.AutoSavestate");
+Option<bool> AutoLoadState("Dreamcast.AutoLoadState");
+Option<bool> AutoSaveState("Dreamcast.AutoSaveState");
+Option<int> SavestateSlot("Dreamcast.SavestateSlot");
 
 // Sound
 
@@ -75,7 +77,7 @@ Option<bool> Fog("rend.Fog", true);
 Option<bool> FloatVMUs("rend.FloatVMUs");
 Option<bool> Rotate90("rend.Rotate90");
 Option<bool> PerStripSorting("rend.PerStripSorting");
-Option<bool> DelayFrameSwapping("rend.DelayFrameSwapping");
+Option<bool> DelayFrameSwapping("rend.DelayFrameSwapping", true);
 Option<bool> WidescreenGameHacks("rend.WidescreenGameHacks");
 std::array<Option<int>, 4> CrosshairColor {
 	Option<int>("rend.CrossHairColor1"),
@@ -141,5 +143,8 @@ std::array<std::array<Option<MapleDeviceType>, 2>, 4> MapleExpansionDevices {
 	Option<MapleDeviceType>("device4.1", MDT_None, "input"),
 	Option<MapleDeviceType>("device4.2", MDT_None, "input"),
 };
+#ifdef _WIN32
+Option<bool> UseRawInput("RawInput", false, "input");
+#endif
 
 } // namespace config

@@ -83,27 +83,31 @@ public:
 				input_mapper = std::make_shared<InputMapping>(*input_mapper);
 			}
 			else
-				input_mapper = std::make_shared<DefaultEvdevInputMapping>();
+				input_mapper = getDefaultMapping();
 			input_mapper->name = _name + " mapping";
 			save_mapping();
 		}
 		else
 			INFO_LOG(INPUT, "using custom mapping '%s'", input_mapper->name.c_str());
 	}
-	virtual ~EvdevGamepadDevice() override
+	~EvdevGamepadDevice() override
 	{
 		INFO_LOG(INPUT, "evdev: Device '%s' on port %d disconnected", _name.c_str(), maple_port());
 		close(_fd);
 	}
 
-	virtual void rumble(float power, float inclination, u32 duration_ms) override
+	std::shared_ptr<InputMapping> getDefaultMapping() override {
+		return std::make_shared<DefaultEvdevInputMapping>();
+	}
+
+	void rumble(float power, float inclination, u32 duration_ms) override
 	{
 		vib_inclination = inclination * power;
 		vib_stop_time = os_GetSeconds() + duration_ms / 1000.0;
 
 		do_rumble(power, duration_ms);
 	}
-	virtual void update_rumble() override
+	void update_rumble() override
 	{
 		if (vib_inclination > 0)
 		{
@@ -115,7 +119,7 @@ public:
 		}
 	}
 
-	virtual const char *get_button_name(u32 code) override
+	const char *get_button_name(u32 code) override
 	{
 		switch (code)
 		{
@@ -161,7 +165,7 @@ public:
 			return nullptr;
 		}
 	}
-	virtual const char *get_axis_name(u32 code) override
+	const char *get_axis_name(u32 code) override
 	{
 		switch (code)
 		{
@@ -222,7 +226,7 @@ public:
 	}
 
 protected:
-	virtual void load_axis_min_max(u32 axis) override
+	void load_axis_min_max(u32 axis) override
 	{
 		struct input_absinfo abs;
 		if (ioctl(_fd, EVIOCGABS(axis), &abs))

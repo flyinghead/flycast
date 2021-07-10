@@ -53,11 +53,6 @@ typedef size_t unat;
 typedef u64 unat;
 #endif
 
-#ifndef CDECL
-#define CDECL __cdecl
-#endif
-
-
 //intc function pointer and enums
 enum HollyInterruptType
 {
@@ -285,7 +280,8 @@ enum class RenderType {
 	OpenGL = 0,
 	OpenGL_OIT = 3,
 	Vulkan = 4,
-	Vulkan_OIT = 5
+	Vulkan_OIT = 5,
+	DirectX9 = 1,
 };
 
 enum class KeyboardLayout {
@@ -364,8 +360,6 @@ inline bool is_u16(u32 v) { return (u16)v==(u32)v; }
 s32 libPvr_Init();
 void libPvr_Reset(bool hard);
 void libPvr_Term();
-
-void* libPvr_GetRenderTarget();
 
 // 0x00600000 - 0x006007FF [NAOMI] (modem area for dreamcast)
 u32  libExtDevice_ReadMem_A0_006(u32 addr,u32 size);
@@ -459,5 +453,6 @@ enum serialize_version_enum {
 	V14 = 809,
 	V15 = 810,
 	V16 = 811,
-	VCUR_FLYCAST = V16,
-} ;
+	V17 = 812,
+	VCUR_FLYCAST = V17,
+};

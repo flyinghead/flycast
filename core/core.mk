@@ -68,10 +68,11 @@ ifdef FOR_LINUX
 endif
 
 ifdef FOR_WINDOWS
+	RZDCY_MODULES += rend/dx9/
 	ifndef UNIT_TESTS
 	    RZDCY_FILES += $(RZDCY_SRC_DIR)/windows/winmain.cpp
 	endif
-    RZDCY_FILES += $(RZDCY_SRC_DIR)/windows/win_vmem.cpp
+    RZDCY_FILES += $(RZDCY_SRC_DIR)/windows/win_vmem.cpp $(RZDCY_SRC_DIR)/windows/rawinput.cpp
     RZDCY_CFLAGS += -I$(RZDCY_SRC_DIR)/deps/dirent
 endif
 
@@ -254,7 +255,7 @@ RZDCY_FILES += $(LIBZIP_DIR)/zip_add.c \
 endif
 
 $(VERSION_HEADER):
-	echo "#define REICAST_VERSION \"`git describe --tags --always`\"" > $(VERSION_HEADER)
+	echo "#define GIT_VERSION \"`git describe --tags --always`\"" > $(VERSION_HEADER)
 	echo "#define GIT_HASH \"`git rev-parse --short HEAD`\"" >> $(VERSION_HEADER)
 	echo "#define BUILD_DATE \"`date '+%Y-%m-%d %H:%M:%S %Z'`\"" >> $(VERSION_HEADER)
 

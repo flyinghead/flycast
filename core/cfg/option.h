@@ -277,12 +277,6 @@ protected:
 
 using OptionString = Option<std::string>;
 
-template<typename T, T value = T()>
-class ConstOption {
-public:
-	operator T() const { return value; }
-};
-
 // Dynarec
 
 extern Option<bool> DynarecEnabled;
@@ -297,11 +291,13 @@ extern Option<int> Broadcast;	// 0 -> NTSC, 1 -> PAL, 2 -> PAL/M, 3 -> PAL/N, 4 
 extern Option<int> Language;	// 0 -> JP, 1 -> EN, 2 -> DE, 3 -> FR, 4 -> SP, 5 -> IT, 6 -> default
 extern Option<bool> FullMMU;
 extern Option<bool> ForceWindowsCE;
-extern Option<bool> AutoSavestate;
+extern Option<bool> AutoLoadState;
+extern Option<bool> AutoSaveState;
+extern Option<int> SavestateSlot;
 
 // Sound
 
-constexpr ConstOption<bool, true> LimitFPS;
+constexpr bool LimitFPS = true;
 extern Option<bool> DSPEnabled;
 extern Option<bool> DisableSound;
 extern Option<int> AudioBufferSize;	//In samples ,*4 for bytes
@@ -314,11 +310,22 @@ extern OptionString AudioBackend;
 class RendererOption : public Option<RenderType> {
 public:
 	RendererOption()
+#ifdef _WIN32
+		: Option<RenderType>("pvr.rend", RenderType::DirectX9) {}
+#else
 		: Option<RenderType>("pvr.rend", RenderType::OpenGL) {}
+#endif
 
 	bool isOpenGL() const {
 		return value == RenderType::OpenGL || value == RenderType::OpenGL_OIT;
 	}
+	bool isVulkan() const {
+		return value == RenderType::Vulkan || value == RenderType::Vulkan_OIT;
+	}
+	bool isDirectX() const {
+		return value == RenderType::DirectX9;
+	}
+
 	void set(RenderType v)
 	{
 		newValue = v;
@@ -355,7 +362,7 @@ extern Option<bool> ShowFPS;
 extern Option<bool> RenderToTextureBuffer;
 extern Option<bool> TranslucentPolygonDepthMask;
 extern Option<bool> ModifierVolumes;
-constexpr ConstOption<bool, true> Clipping;
+constexpr bool Clipping = true;
 extern Option<int> TextureUpscale;
 extern Option<int> MaxFilteredTextureSize;
 extern Option<float> ExtraDepthScale;
@@ -409,6 +416,11 @@ extern Option<int> MouseSensitivity;
 extern Option<int> VirtualGamepadVibration;
 extern std::array<Option<MapleDeviceType>, 4> MapleMainDevices;
 extern std::array<std::array<Option<MapleDeviceType>, 2>, 4> MapleExpansionDevices;
+#ifdef _WIN32
+extern Option<bool> UseRawInput;
+#else
+constexpr bool UseRawInput = false;
+#endif
 
 } // namespace config
 

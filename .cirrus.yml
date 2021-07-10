@@ -1,9 +1,14 @@
 freebsd_instance:
   image_family: freebsd-12-2
 
+env:
+  CCACHE_DIR: /tmp/ccache
+  CIRRUS_CLONE_SUBMODULES: true
+
 task:
-  install_script: pkg install -y alsa-lib cmake evdev-proto flac git libao libevdev libudev-devd libzip mesa-libs miniupnpc ninja pkgconf png pulseaudio sdl2
+  install_script: pkg install -y alsa-lib ccache cmake evdev-proto git libao libevdev libudev-devd libzip mesa-libs miniupnpc ninja pkgconf png pulseaudio sdl2
+  ccache_cache:
+    folder: /tmp/ccache
   script:
-    - git submodule update --init --recursive
     - cmake -B build -DCMAKE_BUILD_TYPE=Release -G Ninja
     - cmake --build build --config Release

@@ -161,16 +161,16 @@ GLuint BindRTT(bool withDepthBuffer)
 	DEBUG_LOG(RENDERER, "RTT packmode=%d stride=%d - %d x %d @ %06x", FB_W_CTRL.fb_packmode, FB_W_LINESTRIDE.stride * 8,
 			fbw, fbh, texAddress);
 
+	if (gl.rtt.texAddress != ~0u)
+		readAsyncPixelBuffer(gl.rtt.texAddress);
+	gl.rtt.texAddress = texAddress;
+
 	if (gl.rtt.fbo != 0)
 		glDeleteFramebuffers(1, &gl.rtt.fbo);
 	if (gl.rtt.tex != 0)
 		glcache.DeleteTextures(1, &gl.rtt.tex);
 	if (gl.rtt.depthb != 0)
 		glDeleteRenderbuffers(1, &gl.rtt.depthb);
-
-	if (gl.rtt.texAddress != ~0u)
-		readAsyncPixelBuffer(gl.rtt.texAddress);
-	gl.rtt.texAddress = texAddress;
 
 	// Find the smallest power of two texture that fits the viewport
 	u32 fbh2 = 2;
@@ -191,7 +191,7 @@ GLuint BindRTT(bool withDepthBuffer)
 	{
 		if (gl.rtt.pbo == 0)
 			glGenBuffers(1, &gl.rtt.pbo);
-		u32 glSize = fbw2 * fbh2 * (format == GL_UNSIGNED_BYTE ? 4 : 2);
+		u32 glSize = fbw2 * fbh2 * 4;
 		if (glSize > gl.rtt.pboSize)
 		{
 			glBindBuffer(GL_PIXEL_PACK_BUFFER, gl.rtt.pbo);
@@ -311,6 +311,7 @@ void ReadRTTBuffer()
 				glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, p);
 
 				WriteTextureToVRam(w, h, p, dst);
+				gl.rtt.texAddress = ~0;
 			}
 		}
 		glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
@@ -391,7 +392,7 @@ static int TexCacheLookups;
 static int TexCacheHits;
 //static float LastTexCacheStats;
 
-u64 gl_GetTexture(TSP tsp, TCW tcw)
+BaseTextureCacheData *gl_GetTexture(TSP tsp, TCW tcw)
 {
 	TexCacheLookups++;
 
@@ -428,7 +429,7 @@ u64 gl_GetTexture(TSP tsp, TCW tcw)
 //	}
 
 	//return gl texture
-	return tf->texID;
+	return tf;
 }
 
 GLuint fbTextureId;
@@ -460,7 +461,8 @@ void RenderFramebuffer()
 GLuint init_output_framebuffer(int width, int height)
 {
 	if (width != gl.ofbo.width || height != gl.ofbo.height
-		|| (gl.ofbo.tex == 0) == config::Rotate90)
+			// if the rotate90 setting has changed
+		|| (gl.gl_major >= 3 && (gl.ofbo.tex == 0) == config::Rotate90))
 	{
 		free_output_framebuffer();
 		gl.ofbo.width = width;

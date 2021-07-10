@@ -85,10 +85,10 @@ public:
 		GetContext()->GetDevice().updateDescriptorSets(writeDescriptorSets, nullptr);
 	}
 
-	void SetTexture(u64 textureId, TSP tsp)
+	void SetTexture(Texture *texture, TSP tsp)
 	{
 		auto& inFlight = perPolyDescSetsInFlight;
-		std::pair<u64, u32> index = std::make_pair(textureId, tsp.full & SamplerManager::TSP_Mask);
+		std::pair<Texture *, u32> index = std::make_pair(texture, tsp.full & SamplerManager::TSP_Mask);
 		if (inFlight.find(index) != inFlight.end())
 			return;
 
@@ -98,7 +98,6 @@ public:
 			perPolyDescSets = GetContext()->GetDevice().allocateDescriptorSetsUnique(
 					vk::DescriptorSetAllocateInfo(GetContext()->GetDescriptorPool(), layouts.size(), &layouts[0]));
 		}
-		Texture *texture = reinterpret_cast<Texture *>(textureId);
 		vk::DescriptorImageInfo imageInfo(samplerManager->GetSampler(tsp), texture->GetReadOnlyImageView(), vk::ImageLayout::eShaderReadOnlyOptimal);
 
 		std::vector<vk::WriteDescriptorSet> writeDescriptorSets;
@@ -114,10 +113,10 @@ public:
 		cmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, 1, &perFrameDescSetsInFlight.back().get(), 0, nullptr);
 	}
 
-	void BindPerPolyDescriptorSets(vk::CommandBuffer cmdBuffer, u64 textureId, TSP tsp)
+	void BindPerPolyDescriptorSets(vk::CommandBuffer cmdBuffer, Texture *texture, TSP tsp)
 	{
 		cmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 1, 1,
-				&perPolyDescSetsInFlight[std::make_pair(textureId, tsp.full & SamplerManager::TSP_Mask)].get(), 0, nullptr);
+				&perPolyDescSetsInFlight[std::make_pair(texture, tsp.full & SamplerManager::TSP_Mask)].get(), 0, nullptr);
 	}
 
 	void Reset()
@@ -140,7 +139,7 @@ private:
 	std::vector<vk::UniqueDescriptorSet> perFrameDescSets;
 	std::vector<vk::UniqueDescriptorSet> perFrameDescSetsInFlight;
 	std::vector<vk::UniqueDescriptorSet> perPolyDescSets;
-	std::map<std::pair<u64, u32>, vk::UniqueDescriptorSet> perPolyDescSetsInFlight;
+	std::map<std::pair<Texture *, u32>, vk::UniqueDescriptorSet> perPolyDescSetsInFlight;
 
 	SamplerManager* samplerManager = nullptr;
 };
@@ -183,14 +182,14 @@ public:
 		}
 	}
 
-	vk::Pipeline GetPipeline(u32 listType, bool sortTriangles, const PolyParam& pp)
+	vk::Pipeline GetPipeline(u32 listType, bool sortTriangles, const PolyParam& pp, bool gpuPalette)
 	{
-		u32 pipehash = hash(listType, sortTriangles, &pp);
+		u32 pipehash = hash(listType, sortTriangles, &pp, gpuPalette);
 		const auto &pipeline = pipelines.find(pipehash);
 		if (pipeline != pipelines.end())
 			return pipeline->second.get();
 
-		CreatePipeline(listType, sortTriangles, pp);
+		CreatePipeline(listType, sortTriangles, pp, gpuPalette);
 
 		return *pipelines[pipehash];
 	}
@@ -220,7 +219,7 @@ public:
 private:
 	void CreateModVolPipeline(ModVolMode mode, int cullMode);
 
-	u32 hash(u32 listType, bool sortTriangles, const PolyParam *pp) const
+	u32 hash(u32 listType, bool sortTriangles, const PolyParam *pp, bool gpuPalette) const
 	{
 		u32 hash = pp->pcw.Gouraud | (pp->pcw.Offset << 1) | (pp->pcw.Texture << 2) | (pp->pcw.Shadow << 3)
 			| (((pp->tileclip >> 28) == 3) << 4);
@@ -230,7 +229,7 @@ private:
 			| (pp->tsp.ColorClamp << 11) | ((config::Fog ? pp->tsp.FogCtrl : 2) << 12) | (pp->tsp.SrcInstr << 14)
 			| (pp->tsp.DstInstr << 17);
 		hash |= (pp->isp.ZWriteDis << 20) | (pp->isp.CullMode << 21) | (pp->isp.DepthMode << 23);
-		hash |= ((u32)sortTriangles << 26) | ((u32)BaseTextureCacheData::IsGpuHandledPaletted(pp->tsp, pp->tcw) << 27);
+		hash |= ((u32)sortTriangles << 26) | ((u32)gpuPalette << 27);
 
 		return hash;
 	}
@@ -265,7 +264,7 @@ private:
 				full ? vertexInputAttributeDescriptions : vertexInputLightAttributeDescriptions);
 	}
 
-	void CreatePipeline(u32 listType, bool sortTriangles, const PolyParam& pp);
+	void CreatePipeline(u32 listType, bool sortTriangles, const PolyParam& pp, bool gpuPalette);
 
 	std::map<u32, vk::UniquePipeline> pipelines;
 	std::map<u32, vk::UniquePipeline> modVolPipelines;

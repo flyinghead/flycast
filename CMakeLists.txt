@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10.2 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.10.2)
 
 find_program(CCACHE_FOUND ccache)
 if(CCACHE_FOUND)
@@ -124,9 +124,7 @@ if(ALSA_FOUND AND NOT ANDROID)
 endif()
 
 if(WIN32)
-	# Patch and build SDL
-	execute_process(COMMAND git apply -p1 ${CMAKE_CURRENT_SOURCE_DIR}/core/deps/patches/SDL.patch
-		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/core/deps/SDL) 
+	# Build SDL
 	file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/core/deps/SDL")
 	if(CMAKE_GENERATOR MATCHES "Visual Studio")
 		set(SDL_CMAKE_ARCH_ARG -A ${CMAKE_GENERATOR_PLATFORM})
@@ -218,7 +216,7 @@ if(PKG_CONFIG_FOUND AND NOT ANDROID AND NOT APPLE)
 	if(USE_HOST_LIBZIP)
 		pkg_check_modules(LIBZIP IMPORTED_TARGET libzip)
 		if(LIBZIP_FOUND)
-			target_link_libraries(${PROJECT_NAME} PRIVATE ${LIBZIP_LIBRARIES})
+			target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::LIBZIP)
 		endif()
     endif()
 
@@ -556,7 +554,6 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/hw/sh4/sh4_mem.h
         core/hw/sh4/sh4_mmr.cpp
         core/hw/sh4/sh4_mmr.h
-        core/hw/sh4/sh4_opcode.h
         core/hw/sh4/sh4_opcode_list.cpp
         core/hw/sh4/sh4_opcode_list.h
         core/hw/sh4/sh4_rom.cpp
@@ -578,7 +575,6 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/input/gamepad.h
         core/input/gamepad_device.cpp
         core/input/gamepad_device.h
-        core/input/keyboard_device.cpp
         core/input/keyboard_device.h
         core/input/mapping.cpp
         core/input/mapping.h)
@@ -792,6 +788,32 @@ if(USE_VULKAN AND NOT APPLE)
             core/rend/vulkan/vulkan_renderer.cpp)
 endif()
 
+if(WIN32)
+	target_sources(${PROJECT_NAME} PRIVATE
+		core/rend/dx9/comptr.h
+		core/rend/dx9/d3d_overlay.h
+		core/rend/dx9/d3d_overlay.cpp
+		core/rend/dx9/d3d_renderer.h
+		core/rend/dx9/d3d_renderer.cpp
+		core/rend/dx9/d3d_shaders.h
+		core/rend/dx9/d3d_shaders.cpp
+		core/rend/dx9/d3d_texture.h
+		core/rend/dx9/d3d_texture.cpp
+		core/rend/dx9/dxcontext.h
+		core/rend/dx9/dxcontext.cpp
+		core/rend/dx9/imgui_impl_dx9.h
+		core/rend/dx9/imgui_impl_dx9.cpp)
+	if(NOT MINGW)
+		target_include_directories(${PROJECT_NAME} PRIVATE "$ENV{DXSDK_DIR}/Include")
+		if (CMAKE_SIZEOF_VOID_P EQUAL 8)
+			target_link_directories(${PROJECT_NAME} PRIVATE "$ENV{DXSDK_DIR}/Lib/x64")
+		else()
+			target_link_directories(${PROJECT_NAME} PRIVATE "$ENV{DXSDK_DIR}/Lib/x86")
+		endif()
+	endif()
+	target_link_libraries(${PROJECT_NAME} PRIVATE d3d9 d3dx9)
+endif()
+
 if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm.*|ARM.*)")
 	target_include_directories(${PROJECT_NAME} PRIVATE core/deps/vixl)
     target_sources(${PROJECT_NAME} PRIVATE
@@ -976,6 +998,8 @@ elseif(APPLE)
         XCODE_ATTRIBUTE_SWIFT_OBJC_BRIDGING_HEADER "shell/apple/emulator-osx/emulator-osx/emulator-osx-Bridging-Header.h"
 		RESOURCE "${XIB}"
 		XCODE_ATTRIBUTE_ASSETCATALOG_COMPILER_APPICON_NAME "AppIcon"
+        BUILD_WITH_INSTALL_RPATH TRUE
+        INSTALL_RPATH "@loader_path/../Frameworks"
     )
 
     find_library(AUDIO_UNIT_LIBRARY AudioUnit)
@@ -991,13 +1015,15 @@ elseif(UNIX)
 elseif(WIN32)
     if(NOT BUILD_TESTING)
         target_sources(${PROJECT_NAME} PRIVATE
+        	core/windows/rawinput.cpp
+        	core/windows/rawinput.h
             core/windows/win_keyboard.h
             core/windows/winmain.cpp
             core/windows/xinput_gamepad.h)
     endif()
     target_sources(${PROJECT_NAME} PRIVATE
             core/windows/win_vmem.cpp
-            shell/windows/reicast.rc)
+            shell/windows/flycast.rc)
 
     target_link_libraries(${PROJECT_NAME} PRIVATE dsound opengl32 winmm ws2_32 wsock32 xinput9_1_0)
 endif()
@@ -1011,5 +1037,6 @@ if(BUILD_TESTING)
             tests/src/div32_test.cpp
             tests/src/test_stubs.cpp
             tests/src/serialize_test.cpp
-            tests/src/AicaArmTest.cpp)
+            tests/src/AicaArmTest.cpp
+            tests/src/Sh4InterpreterTest.cpp)
 endif()
