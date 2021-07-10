@@ -1480,7 +1480,9 @@ bool retro_load_game(const struct retro_game_info *game)
 	if (settings.platform.system != DC_PLATFORM_DREAMCAST)
 		boot_to_bios = false;
 
-	if (!boot_to_bios)
+	if (boot_to_bios)
+		game_data = nullptr;
+	else
 	{
 		// if an m3u file was loaded, disk_paths will already be populated so load the game from there
 		if (disk_paths.size() > 0)
@@ -1583,7 +1585,7 @@ bool retro_load_game(const struct retro_game_info *game)
 	}
 
 	mute_messages = true;
-	dc_start_game(boot_to_bios ? nullptr : game->path);
+	dc_start_game(game_data);
 	mute_messages = false;
 
 	int rotation = config::Rotate90 ? 1 : 0;
