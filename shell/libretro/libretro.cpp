@@ -649,8 +649,8 @@ static void update_variables(bool first_startup)
 										| (lightgun_palette[lightgun_params[i].colour * 3 + 2] << 16)
 										| 0xff000000;
 
-		vmu_lcd_status[i] = false;
-		vmu_lcd_changed[i] = true;
+		vmu_lcd_status[i * 2] = false;
+		vmu_lcd_changed[i * 2] = true;
 		vmu_screen_params[i].vmu_screen_position = UPPER_LEFT;
 		vmu_screen_params[i].vmu_screen_size_mult = 1;
 		vmu_screen_params[i].vmu_pixel_on_R = VMU_SCREEN_COLOR_MAP[VMU_DEFAULT_ON].r;
@@ -664,7 +664,7 @@ static void update_variables(bool first_startup)
 		snprintf(key, sizeof(key), CORE_OPTION_NAME "_vmu%d_screen_display", i+1);
 
 		if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value && !strcmp("enabled", var.value) )
-			vmu_lcd_status[i] = true;
+			vmu_lcd_status[i * 2] = true;
 
 		snprintf(key, sizeof(key), CORE_OPTION_NAME "_vmu%d_screen_position", i+1);
 
@@ -787,7 +787,7 @@ void retro_run()
 
 		// Render
 		is_dupe = true;
-		for (int i = 0; i < 8 && is_dupe; i++)
+		for (int i = 0; i < 5 && is_dupe; i++)
 			is_dupe = !rend_single_frame(true);
 
 		if (config::RendererType == RenderType::OpenGL || config::RendererType == RenderType::OpenGL_OIT)
@@ -1697,13 +1697,12 @@ bool retro_unserialize(const void * data, size_t size)
   		dc_stop();
     }
 
-    unsigned int total_size = size;
-    bool result = dc_loadstate(&data, &total_size);
+    bool result = dc_loadstate(&data, size);
 
     for (int i = 0 ; i < 4 ; i++)
     {
-    	vmu_lcd_changed[i] = true;
-       lightgun_params[i].dirty = true ;
+    	vmu_lcd_changed[i * 2] = true;
+    	lightgun_params[i].dirty = true;
     }
 
     if (config::ThreadedRendering)

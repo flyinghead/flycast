@@ -1580,7 +1580,7 @@ bool channel_unserialize(void **data, unsigned int *total_size, serialize_versio
 	int i = 0 ;
 	int addr = 0 ;
 	u32 dum;
-	bool old_format = ver < V7 && ver != VCUR_LIBRETRO;
+	bool old_format = (ver >= V5 && ver < V7) || ver < V8_LIBRETRO;
 
 	for ( i = 0 ; i < 64 ; i++)
 	{

@@ -330,7 +330,7 @@ void spg_Unserialize(void **data, unsigned int *total_size, serialize_version_en
 {
 	REICAST_US(in_vblank);
 	REICAST_US(clc_pvr_scanline);
-	if (version != VCUR_LIBRETRO && version < V5)
+	if (version < V9_LIBRETRO)
 	{
 		u32 i;
 		REICAST_US(pvr_numscanlines);
@@ -341,7 +341,8 @@ void spg_Unserialize(void **data, unsigned int *total_size, serialize_version_en
 		REICAST_SKIP(8);		// speed_load_mspdf
 		REICAST_US(i);			// mips_counter
 		REICAST_SKIP(8);		// full_rps
-		REICAST_US(i);			// fskip
+		if (version <= V4)
+			REICAST_US(i);		// fskip
 	}
 	else if (version >= V12)
 	{

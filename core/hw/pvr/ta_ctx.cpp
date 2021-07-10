@@ -280,7 +280,7 @@ void UnserializeTAContext(void **data, unsigned int *total_size, serialize_versi
 	REICAST_US(size);
 	REICAST_USA(ta_tad.thd_root, size);
 	ta_tad.thd_data = ta_tad.thd_root + size;
-	if (version >= V12)
+	if (version >= V12 || (version >= V12_LIBRETRO && version < V5))
 	{
 		REICAST_US(ta_tad.render_pass_count);
 		for (u32 i = 0; i < ta_tad.render_pass_count; i++)

@@ -211,7 +211,7 @@ void dc_loadstate(int index)
 	}
 
 	const void *data_ptr = data;
-	dc_loadstate(&data_ptr, &total_size);
+	dc_loadstate(&data_ptr, total_size);
 
 	free(data);
 	EventManager::event(Event::LoadState);

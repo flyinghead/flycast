@@ -679,7 +679,7 @@ void dc_step()
 	dc_stop();
 }
 
-bool dc_loadstate(const void **data, u32 *size)
+bool dc_loadstate(const void **data, u32 size)
 {
 	custom_texture.Terminate();
 #if FEAT_AREC == DYNAREC_JIT
@@ -690,8 +690,12 @@ bool dc_loadstate(const void **data, u32 *size)
 	bm_Reset();
 #endif
 
-	if (!dc_unserialize((void **)data, size))
+	u32 usedSize = 0;
+	if (!dc_unserialize((void **)data, &usedSize))
     	return false;
+
+	if (size != usedSize)
+		WARN_LOG(SAVESTATE, "Savestate: loaded %d bytes but used %d", size, usedSize);
 
 	mmu_set_state();
 	sh4_cpu.ResetCache();

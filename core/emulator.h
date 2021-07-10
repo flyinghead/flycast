@@ -42,7 +42,7 @@ void dc_resume();
 void dc_step();
 void dc_savestate(int index = 0);
 void dc_loadstate(int index = 0);
-bool dc_loadstate(const void **data, unsigned *size);
+bool dc_loadstate(const void **data, unsigned size);
 void dc_load_game(const char *path);
 void dc_start_game(const char *path);
 bool dc_is_load_done();

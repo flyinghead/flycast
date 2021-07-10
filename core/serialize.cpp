@@ -473,7 +473,7 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	return true ;
 }
 
-static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
+static bool dc_unserialize_libretro(void **data, unsigned int *total_size, serialize_version_enum version)
 {
 	int i = 0;
 
@@ -488,6 +488,13 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 	REICAST_US(armFiqEnable);
 	REICAST_US(armMode);
 	REICAST_US(Arm7Enabled);
+	if (version < V9_LIBRETRO)
+	{
+		REICAST_SKIP(256);			// cpuBitsSet
+		REICAST_SKIP(1);			// intState
+		REICAST_SKIP(1);			// stopState
+		REICAST_SKIP(1);			// holdState
+	}
 
 	REICAST_US(dsp);
 
@@ -504,12 +511,26 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 
 	REICAST_USA(aica_reg,0x8000);
 
-	channel_unserialize(data, total_size, VCUR_LIBRETRO);
+	if (version < V7_LIBRETRO)
+	{
+		REICAST_SKIP(4 * 16); 			// volume_lut
+		REICAST_SKIP(4 * 256 + 768);	// tl_lut. Due to a previous bug this is not 4 * (256 + 768)
+		REICAST_SKIP(4 * 64);			// AEG_ATT_SPS
+		REICAST_SKIP(4 * 64);			// AEG_DSR_SPS
+		REICAST_SKIP(2);				// pl
+		REICAST_SKIP(2);				// pr
+	}
+	channel_unserialize(data, total_size, version);
 
 	REICAST_USA(cdda_sector,CDDA_SIZE);
 	REICAST_US(cdda_index);
+	if (version < V9_LIBRETRO)
+	{
+		REICAST_SKIP(4 * 64); 			// mxlr
+		REICAST_SKIP(4);				// samples_gen
+	}
 
-	register_unserialize(sb_regs, data, total_size, VCUR_LIBRETRO) ;
+	register_unserialize(sb_regs, data, total_size, version);
 	REICAST_US(SB_ISTNRM);
 	REICAST_US(SB_FFST_rc);
 	REICAST_US(SB_FFST);
@@ -558,7 +579,10 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 	REICAST_US(set_mode_offset);
 	REICAST_US(read_params);
 	REICAST_US(packet_cmd);
+	// read_buff
 	read_buff.cache_size = 0;
+	if (version < V9_LIBRETRO)
+		REICAST_SKIP(4 + 4 + 2352 * 8192);
 	REICAST_US(pio_buff);
 	REICAST_US(set_mode_offset);
 	REICAST_US(ata_cmd);
@@ -580,43 +604,90 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 	REICAST_US(EEPROM_loaded);
 
 	REICAST_US(maple_ddt_pending_reset);
-	mcfg_UnserializeDevices(data, total_size, VCUR_LIBRETRO);
+	mcfg_UnserializeDevices(data, total_size, version);
 
+	if (version < V9_LIBRETRO)
+	{
+		REICAST_SKIP(4);	// FrameCOunt
+		REICAST_SKIP(1); 	// pend_rend
+	}
 	pend_rend = false;
 
-	YUV_unserialize(data, total_size, VCUR_LIBRETRO);
+	YUV_unserialize(data, total_size, version);
 
-	REICAST_USA(pvr_regs,pvr_RegSize);
+	if (version < V9_LIBRETRO)
+		REICAST_SKIP(1);	// fog_needs_update
+	REICAST_USA(pvr_regs, pvr_RegSize);
 	fog_needs_update = true ;
 
-	spg_Unserialize(data, total_size, VCUR_LIBRETRO);
+	spg_Unserialize(data, total_size, version);
 
-	fb_w_cur = 1;
-
+	if (version < V9_LIBRETRO)
+	{
+		REICAST_SKIP(4 * 256);	// ta_type_lut
+		REICAST_SKIP(2048);		// ta_fsm
+	}
+	if (version >= V12_LIBRETRO)
+		REICAST_US(fb_w_cur);
+	else
+		fb_w_cur = 1;
 	REICAST_US(ta_fsm[2048]);
 	REICAST_US(ta_fsm_cl);
-	pal_needs_update = true;
+	if (version < V9_LIBRETRO)
+	{
+		REICAST_SKIP(1);		// pal_needs_update
+		REICAST_SKIP(4 * 4);	// _pal_rev_256
+		REICAST_SKIP(4 * 64);	// _pal_rev_16
+		REICAST_SKIP(4 * 4);	// pal_rev_256
+		REICAST_SKIP(4 * 64);	// pal_rev_16
+		REICAST_SKIP(4 * 65536 * 3); // decoded_colors
+		REICAST_US(i);			// tileclip_val
+		REICAST_SKIP(65536);	// f32_su8_tbl
+		REICAST_US(i);			// FaceBaseColor
+		REICAST_US(i);			// FaceOffsColor
+		REICAST_US(i);			// SFaceBaseColor
+		REICAST_US(i);			// SFaceOffsColor
 
-	UnserializeTAContext(data, total_size, VCUR_LIBRETRO);
+		REICAST_US(i);			// palette_index
+		REICAST_SKIP(1);		// KillTex
+		REICAST_SKIP(4 * 1024); // palette16_ram
+		REICAST_SKIP(4 * 1024); // palette32_ram
+		REICAST_SKIP(4 * 1024 * 8 * 2); // detwiddle
+	}
+
+	pal_needs_update = true;
+	if (version >= V10_LIBRETRO)
+		UnserializeTAContext(data, total_size, version);
 
 	REICAST_USA(vram.data, vram.size);
 
 	REICAST_USA(OnChipRAM.data(), OnChipRAM_SIZE);
 
-	register_unserialize(CCN, data, total_size, VCUR_LIBRETRO) ;
-	register_unserialize(UBC, data, total_size, VCUR_LIBRETRO) ;
-	register_unserialize(BSC, data, total_size, VCUR_LIBRETRO) ;
-	register_unserialize(DMAC, data, total_size, VCUR_LIBRETRO) ;
-	register_unserialize(CPG, data, total_size, VCUR_LIBRETRO) ;
-	register_unserialize(RTC, data, total_size, VCUR_LIBRETRO) ;
-	register_unserialize(INTC, data, total_size, VCUR_LIBRETRO) ;
-	register_unserialize(TMU, data, total_size, VCUR_LIBRETRO) ;
-	register_unserialize(SCI, data, total_size, VCUR_LIBRETRO) ;
-	register_unserialize(SCIF, data, total_size, VCUR_LIBRETRO) ;
-	icache.Reset(true);
-	ocache.Reset(true);
+	register_unserialize(CCN, data, total_size, version);
+	register_unserialize(UBC, data, total_size, version);
+	register_unserialize(BSC, data, total_size, version);
+	register_unserialize(DMAC, data, total_size, version);
+	register_unserialize(CPG, data, total_size, version);
+	register_unserialize(RTC, data, total_size, version);
+	register_unserialize(INTC, data, total_size, version);
+	register_unserialize(TMU, data, total_size, version);
+	register_unserialize(SCI, data, total_size, version);
+	register_unserialize(SCIF, data, total_size, version);
+	if (version >= V11_LIBRETRO)	// FIXME was added in V11 fa49de29 24/12/2020 but ver not updated until V12 (13/4/2021)
+		icache.Unserialize(data, total_size);
+	else
+		icache.Reset(true);
+	if (version >= V11_LIBRETRO)	// FIXME was added in V11 2eb66879 27/12/2020 but ver not updated until V12 (13/4/2021)
+		ocache.Unserialize(data, total_size);
+	else
+		ocache.Reset(true);
 
 	REICAST_USA(mem_b.data, mem_b.size);
+	if (version < V9_LIBRETRO)
+	{
+		u16 dum16;
+		REICAST_US(dum16); // IRLPriority
+	}
 	REICAST_USA(InterruptEnvId,32);
 	REICAST_USA(InterruptBit,32);
 	REICAST_USA(InterruptLevelBit,16);
@@ -638,33 +709,41 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 
 	REICAST_US((*p_sh4rcb).cntx);
 
+	if (version < V9_LIBRETRO)
+	{
+		REICAST_SKIP(4);		// old_rm
+		REICAST_SKIP(4);		// old_dn
+	}
+
 	REICAST_US(sh4_sched_ffb);
+	if (version < V9_LIBRETRO)
+		REICAST_SKIP(4);		// sh4_sched_intr
 
-	REICAST_US(sch_list[aica_schid].tag) ;
-	REICAST_US(sch_list[aica_schid].start) ;
-	REICAST_US(sch_list[aica_schid].end) ;
+	REICAST_US(sch_list[aica_schid].tag);
+	REICAST_US(sch_list[aica_schid].start);
+	REICAST_US(sch_list[aica_schid].end);
 
-	REICAST_US(sch_list[rtc_schid].tag) ;
-	REICAST_US(sch_list[rtc_schid].start) ;
-	REICAST_US(sch_list[rtc_schid].end) ;
+	REICAST_US(sch_list[rtc_schid].tag);
+	REICAST_US(sch_list[rtc_schid].start);
+	REICAST_US(sch_list[rtc_schid].end);
 
-	REICAST_US(sch_list[gdrom_schid].tag) ;
-	REICAST_US(sch_list[gdrom_schid].start) ;
-	REICAST_US(sch_list[gdrom_schid].end) ;
+	REICAST_US(sch_list[gdrom_schid].tag);
+	REICAST_US(sch_list[gdrom_schid].start);
+	REICAST_US(sch_list[gdrom_schid].end);
 
-	REICAST_US(sch_list[maple_schid].tag) ;
-	REICAST_US(sch_list[maple_schid].start) ;
-	REICAST_US(sch_list[maple_schid].end) ;
+	REICAST_US(sch_list[maple_schid].tag);
+	REICAST_US(sch_list[maple_schid].start);
+	REICAST_US(sch_list[maple_schid].end);
 
-	REICAST_US(sch_list[dma_sched_id].tag) ;
-	REICAST_US(sch_list[dma_sched_id].start) ;
-	REICAST_US(sch_list[dma_sched_id].end) ;
+	REICAST_US(sch_list[dma_sched_id].tag);
+	REICAST_US(sch_list[dma_sched_id].start);
+	REICAST_US(sch_list[dma_sched_id].end);
 
 	for (int i = 0; i < 3; i++)
 	{
-		REICAST_US(sch_list[tmu_sched[i]].tag) ;
-		REICAST_US(sch_list[tmu_sched[i]].start) ;
-		REICAST_US(sch_list[tmu_sched[i]].end) ;
+		REICAST_US(sch_list[tmu_sched[i]].tag);
+		REICAST_US(sch_list[tmu_sched[i]].start);
+		REICAST_US(sch_list[tmu_sched[i]].end);
 	}
 
 	REICAST_US(sch_list[render_end_schid].tag) ;
@@ -675,12 +754,28 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 	REICAST_US(sch_list[vblank_schid].start) ;
 	REICAST_US(sch_list[vblank_schid].end) ;
 
+	if (version < V9_LIBRETRO)
+	{
+		REICAST_SKIP(4);		// sch_list[time_sync].tag
+		REICAST_SKIP(4);		// sch_list[time_sync].start
+		REICAST_SKIP(4);		// sch_list[time_sync].end
+	}
+
+	if (version >= V13_LIBRETRO)
+		REICAST_SKIP(1); 		// settings.network.EmulateBBA
+
 	REICAST_US(sch_list[modem_sched].tag) ;
     REICAST_US(sch_list[modem_sched].start) ;
     REICAST_US(sch_list[modem_sched].end) ;
 
 	REICAST_US(SCIF_SCFSR2);
-	REICAST_US(SCIF_SCSCR2);
+	if (version < V9_LIBRETRO)
+	{
+		REICAST_SKIP(1);		// SCIF_SCFRDR2
+		REICAST_SKIP(4);		// SCIF_SCFDR2
+	}
+	else if (version >= V11_LIBRETRO)
+		REICAST_US(SCIF_SCSCR2);
 	REICAST_US(BSC_PDTRA);
 
 	REICAST_USA(tmu_shift,3);
@@ -692,9 +787,26 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 
 	REICAST_USA(CCN_QACR_TR,2);
 
-	REICAST_US(UTLB);
-	REICAST_US(ITLB);
-	REICAST_US(sq_remap);
+	if (version < V6_LIBRETRO)
+	{
+		for (int i = 0; i < 64; i++)
+		{
+			REICAST_US(UTLB[i].Address);
+			REICAST_US(UTLB[i].Data);
+		}
+		for (int i = 0; i < 4; i++)
+		{
+			REICAST_US(ITLB[i].Address);
+			REICAST_US(ITLB[i].Data);
+		}
+	}
+	else
+	{
+		REICAST_US(UTLB);
+		REICAST_US(ITLB);
+	}
+	if (version >= V11_LIBRETRO)
+		REICAST_US(sq_remap);
 	REICAST_US(ITLB_LRU_USE);
 
 	REICAST_US(NullDriveDiscType);
@@ -710,20 +822,49 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size)
 	REICAST_US(i);	// ARAM_MASK
 	REICAST_US(i);	// VRAM_MASK
 
-	naomi_Unserialize(data, total_size, VCUR_LIBRETRO);
+	if (version < V9_LIBRETRO)
+	{
+		REICAST_SKIP(4);		// naomi_updates
+		REICAST_SKIP(4);		// BoardID
+	}
+	naomi_Unserialize(data, total_size, version);
 
+	if (version < V9_LIBRETRO)
+	{
+		REICAST_SKIP(4);		// cycle_counter
+		REICAST_SKIP(4);		// idxnxx
+		REICAST_SKIP(44); 		// sizeof(state_t)
+		REICAST_SKIP(4);		// div_som_reg1
+		REICAST_SKIP(4);		// div_som_reg2
+		REICAST_SKIP(4);		// div_som_reg3
+
+		REICAST_SKIP(4);		// LastAddr
+		REICAST_SKIP(4);		// LastAddr_min
+		REICAST_SKIP(1024);		// block_hash
+
+		// RegisterRead, RegisterWrite
+		for (int i = 0; i < 74; i++)	// sh4_reg_count (changed to 75 on 9/6/2020 (V9), V10 on 22/6/2020)
+		{
+			REICAST_SKIP(4);
+			REICAST_SKIP(4);
+		}
+		REICAST_SKIP(4); // fallback_blocks
+		REICAST_SKIP(4); // total_blocks
+		REICAST_SKIP(4); // REMOVED_OPS
+	}
 	REICAST_US(config::Broadcast.get());
 	REICAST_US(config::Cable.get());
 	REICAST_US(config::Region.get());
 
-	if (CurrentCartridge != NULL)
+	if (CurrentCartridge != nullptr && (settings.platform.system != DC_PLATFORM_ATOMISWAVE || version >= V10_LIBRETRO))
 		CurrentCartridge->Unserialize(data, total_size);
-	gd_hle_state.Unserialize(data, total_size);
+	if (version >= V7_LIBRETRO)
+		gd_hle_state.Unserialize(data, total_size);
 	config::EmulateBBA.override(false);
 
 	DEBUG_LOG(SAVESTATE, "Loaded %d bytes (libretro compat)", *total_size);
 
-	return true ;
+	return true;
 }
 
 bool dc_unserialize(void **data, unsigned int *total_size)
@@ -735,8 +876,8 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 	*total_size = 0 ;
 
 	REICAST_US(version) ;
-	if (version == VCUR_LIBRETRO)
-		return dc_unserialize_libretro(data, total_size);
+	if (version >= V5_LIBRETRO && version <= V13_LIBRETRO)
+		return dc_unserialize_libretro(data, total_size, version);
 	if (version != V4 && version < V5)
 	{
 		WARN_LOG(SAVESTATE, "Save State version not supported: %d", version);
@@ -760,7 +901,7 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 	REICAST_US(armFiqEnable);
 	REICAST_US(armMode);
 	REICAST_US(Arm7Enabled);
-	if (version < 5)
+	if (version < V5)
 		REICAST_SKIP(256 + 3);
 
 	REICAST_US(dsp);
@@ -1030,7 +1171,7 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 
 	REICAST_USA(UTLB,64);
 	REICAST_USA(ITLB,4);
-	if (version >= 11)
+	if (version >= V11)
 		REICAST_USA(sq_remap,64);
 	REICAST_USA(ITLB_LRU_USE,64);
 
@@ -1047,7 +1188,7 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 	if (version < V5)
 	{
 		REICAST_US(i);	// idxnxx
-		REICAST_SKIP(sizeof(state_t));
+		REICAST_SKIP(44);		// sizeof(state_t)
 		REICAST_SKIP(4);
 		REICAST_SKIP(4);
 		REICAST_SKIP(4);
@@ -1055,7 +1196,7 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 		REICAST_SKIP(4);
 		REICAST_SKIP(1024);
 
-		REICAST_SKIP(8 * sh4_reg_count);
+		REICAST_SKIP(8 * 74);	// sh4_reg_count
 		REICAST_SKIP(4);
 		REICAST_SKIP(4);
 		REICAST_SKIP(4);
