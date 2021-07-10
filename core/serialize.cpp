@@ -303,7 +303,7 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	REICAST_S(packet_cmd);
 	REICAST_S(set_mode_offset);
 	REICAST_S(read_params);
-	REICAST_S(packet_cmd);
+	REICAST_S(read_buff);
 	REICAST_S(pio_buff);
 	REICAST_S(set_mode_offset);
 	REICAST_S(ata_cmd);
@@ -760,7 +760,7 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 	REICAST_US(armFiqEnable);
 	REICAST_US(armMode);
 	REICAST_US(Arm7Enabled);
-	if (version < 5)
+	if (version < V5)
 		REICAST_SKIP(256 + 3);
 
 	REICAST_US(dsp);
@@ -825,9 +825,13 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 	REICAST_US(packet_cmd);
 	REICAST_US(set_mode_offset);
 	REICAST_US(read_params);
-	REICAST_US(packet_cmd);
-	// read_buff
-	read_buff.cache_size = 0;
+	if (version >= V17)
+		REICAST_US(read_buff);
+	else
+	{
+		REICAST_US(packet_cmd);
+		read_buff.cache_size = 0;
+	}
 	if (version < V8)
 		REICAST_SKIP(4 + 4 + 2352 * 8192);
 	REICAST_US(pio_buff);
@@ -1030,7 +1034,7 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 
 	REICAST_USA(UTLB,64);
 	REICAST_USA(ITLB,4);
-	if (version >= 11)
+	if (version >= V11)
 		REICAST_USA(sq_remap,64);
 	REICAST_USA(ITLB_LRU_USE,64);
 
@@ -1047,7 +1051,7 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 	if (version < V5)
 	{
 		REICAST_US(i);	// idxnxx
-		REICAST_SKIP(sizeof(state_t));
+		REICAST_SKIP(44);		// sizeof(state_t)
 		REICAST_SKIP(4);
 		REICAST_SKIP(4);
 		REICAST_SKIP(4);
@@ -1055,7 +1059,7 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 		REICAST_SKIP(4);
 		REICAST_SKIP(1024);
 
-		REICAST_SKIP(8 * sh4_reg_count);
+		REICAST_SKIP(8 * 74);	// sh4_reg_count
 		REICAST_SKIP(4);
 		REICAST_SKIP(4);
 		REICAST_SKIP(4);
