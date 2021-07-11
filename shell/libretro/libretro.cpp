@@ -305,6 +305,7 @@ void retro_init()
 
 void retro_deinit()
 {
+	INFO_LOG(COMMON, "retro_deinit");
 	first_run = true;
 
 	//When auto-save states are enabled this is needed to prevent the core from shutting down before
@@ -1642,16 +1643,6 @@ size_t retro_get_memory_size(unsigned type)
    return 0;
 }
 
-size_t retro_serialize_size()
-{
-   unsigned int total_size = 0;
-   void *data = nullptr;
-
-   dc_serialize(&data, &total_size);
-
-   return total_size;
-}
-
 static bool wait_until_dc_running()
 {
 	retro_time_t start_time = perf_cb.get_time_usec();
@@ -1667,8 +1658,32 @@ static bool wait_until_dc_running()
 	return true ;
 }
 
+size_t retro_serialize_size()
+{
+	DEBUG_LOG(SAVESTATE, "retro_serialize_size");
+	std::lock_guard<std::mutex> lock(mtx_serialization);
+	if (config::ThreadedRendering)
+	{
+		if (!wait_until_dc_running())
+			return 0;
+
+		dc_stop();
+	}
+
+	unsigned int total_size = 0;
+	void *data = nullptr;
+
+	dc_serialize(&data, &total_size);
+
+	if (config::ThreadedRendering)
+		dc_resume();
+
+	return total_size;
+}
+
 bool retro_serialize(void *data, size_t size)
 {
+	DEBUG_LOG(SAVESTATE, "retro_serialize %d bytes", (int)size);
 	std::lock_guard<std::mutex> lock(mtx_serialization);
 	if (config::ThreadedRendering)
 	{
@@ -1689,6 +1704,7 @@ bool retro_serialize(void *data, size_t size)
 
 bool retro_unserialize(const void * data, size_t size)
 {
+	DEBUG_LOG(SAVESTATE, "retro_unserialize");
     if (config::ThreadedRendering)
     {
     	mtx_serialization.lock();

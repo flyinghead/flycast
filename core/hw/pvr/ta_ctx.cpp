@@ -260,6 +260,12 @@ void SerializeTAContext(void **data, unsigned int *total_size)
 	REICAST_S(ta_ctx->Address);
 	const u32 taSize = ta_tad.thd_data - ta_tad.thd_root;
 	REICAST_S(taSize);
+	if (*data == nullptr)
+	{
+		// Maximum size
+		REICAST_SKIP(TA_DATA_SIZE + 4 + ARRAY_SIZE(ta_tad.render_passes) * 4);
+		return;
+	}
 	REICAST_SA(ta_tad.thd_root, taSize);
 	REICAST_S(ta_tad.render_pass_count);
 	for (u32 i = 0; i < ta_tad.render_pass_count; i++)

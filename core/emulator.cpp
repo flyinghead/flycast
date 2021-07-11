@@ -335,6 +335,8 @@ static void loadSpecialSettings()
 
 void dc_reset(bool hard)
 {
+	if (hard)
+		_vmem_unprotect_vram(0, VRAM_SIZE);
 	devicesReset(hard);
 	sh4_cpu.Reset(hard);
 	mem_Reset(hard);

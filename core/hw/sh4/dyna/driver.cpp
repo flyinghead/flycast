@@ -388,6 +388,8 @@ static void recSh4_Reset(bool hard)
 {
 	sh4Interp.Reset(hard);
 	recSh4_ClearCache();
+	if (hard)
+		bm_Reset();
 }
 
 static void recSh4_Init()
