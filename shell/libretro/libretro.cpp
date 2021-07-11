@@ -1701,12 +1701,6 @@ bool retro_unserialize(const void * data, size_t size)
 
     bool result = dc_loadstate(&data, size);
 
-    for (int i = 0 ; i < 4 ; i++)
-    {
-    	vmu_lcd_changed[i * 2] = true;
-    	lightgun_params[i].dirty = true;
-    }
-
     if (config::ThreadedRendering)
     {
     	mtx_serialization.unlock();
