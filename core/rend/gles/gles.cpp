@@ -403,6 +403,9 @@ void termGLCommon()
 	free_output_framebuffer();
 	glcache.DeleteTextures(1, &fbTextureId);
 	fbTextureId = 0;
+#ifdef LIBRETRO
+	termVmuLightgun();
+#endif
 }
 
 static void gles_term()

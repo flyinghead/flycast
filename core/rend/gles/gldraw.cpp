@@ -919,4 +919,12 @@ void DrawGunCrosshair(u8 port)
 
 	glcache.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
+
+void termVmuLightgun()
+{
+	glcache.DeleteTextures(ARRAY_SIZE(vmuTextureId), vmuTextureId);
+	memset(vmuTextureId, 0, sizeof(vmuTextureId));
+	glcache.DeleteTextures(ARRAY_SIZE(lightgunTextureId), lightgunTextureId);
+	memset(lightgunTextureId, 0, sizeof(lightgunTextureId));
+}
 #endif
