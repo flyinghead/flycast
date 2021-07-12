@@ -181,11 +181,6 @@
 #define FEAT_DSPREC DYNAREC_NONE
 #endif
 
-#if defined(__APPLE__) && defined(__MACH__) && HOST_CPU == CPU_ARM64
-#define FEAT_AREC DYNAREC_NONE
-#define FEAT_DSPREC DYNAREC_NONE
-#endif
-
 //defaults
 
 #ifndef FEAT_SHREC

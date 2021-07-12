@@ -1564,7 +1564,7 @@ private:
 			BindToOffset(&target_label, offset);
 			if (cond == al)
 				B(&target_label);
-            else
+			else
 				B(&target_label, cond);
 		}
 	}

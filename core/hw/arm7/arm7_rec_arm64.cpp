@@ -107,9 +107,17 @@ class Arm7Compiler : public MacroAssembler
 	void call(void *loc)
 	{
 		ptrdiff_t offset = reinterpret_cast<uintptr_t>(loc) - GetBuffer()->GetStartAddress<uintptr_t>();
-		Label function_label;
-		BindToOffset(&function_label, offset);
-		Bl(&function_label);
+		if (offset < -128 * 1024 * 1024 || offset > 128 * 1024 * 1024)
+		{
+			Mov(x4, reinterpret_cast<uintptr_t>(loc));
+			Blr(x4);
+		}
+		else
+		{
+			Label function_label;
+			BindToOffset(&function_label, offset);
+			Bl(&function_label);
+		}
 	}
 
 	Operand getOperand(const ArmOp::Operand& arg, const Register& scratch_reg)
