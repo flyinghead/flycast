@@ -147,8 +147,11 @@ unsigned per_content_vmus = 0;
 static bool first_run = true;
 static bool mute_messages;
 static bool rotate_screen;
+static bool rotate_game;
 static int framebufferWidth;
 static int framebufferHeight;
+static int maxFramebufferWidth;
+static int maxFramebufferHeight;
 
 static retro_perf_callback perf_cb;
 static retro_get_cpu_features_t perf_get_cpu_features_cb;
@@ -421,9 +424,62 @@ static void set_variable_visibility()
 	}
 }
 
+static void setFramebufferSize()
+{
+	framebufferHeight = config::RenderResolution;
+	if (config::Widescreen)
+		framebufferWidth = config::RenderResolution * 16.f / 9.f;
+	else if (!rotate_screen)
+		framebufferWidth = config::RenderResolution * 4.f * config::ScreenStretching / 3.f / 100.f;
+	else
+		framebufferWidth = config::RenderResolution * 4.f / 3.f;
+	maxFramebufferHeight = std::max(maxFramebufferHeight, framebufferHeight);
+	maxFramebufferWidth = std::max(maxFramebufferWidth, framebufferWidth);
+}
+
+static void setGameGeometry(retro_game_geometry& geometry)
+{
+	geometry.aspect_ratio = (float)framebufferWidth / framebufferHeight;
+	if (rotate_screen)
+		geometry.aspect_ratio = 1 / geometry.aspect_ratio;
+	geometry.max_width = std::max(framebufferHeight * 16 / 9, framebufferWidth);
+	geometry.max_height = geometry.max_width;
+	geometry.base_width = framebufferWidth;
+	geometry.base_height = framebufferHeight;
+}
+
+static void setAVInfo(retro_system_av_info& avinfo)
+{
+	setGameGeometry(avinfo.geometry);
+	avinfo.timing.sample_rate = 44100.0;
+	avinfo.timing.fps = SPG_CONTROL.NTSC ? 59.94 : SPG_CONTROL.PAL ? 50.0 : 60.0;
+}
+
+static void setRotation()
+{
+	int rotation = 0;
+	if (rotate_game)
+	{
+		if (!rotate_screen)
+			rotation = 1;
+		rotate_screen = !rotate_screen;
+	}
+	else
+	{
+		if (rotate_screen)
+			rotation = 3;
+	}
+	environ_cb(RETRO_ENVIRONMENT_SET_ROTATION, &rotation);
+}
+
 static void update_variables(bool first_startup)
 {
 	bool wasThreadedRendering = config::ThreadedRendering;
+	int prevFramebufferHeight = framebufferHeight;
+	int prevFramebufferWidth = framebufferWidth;
+	int prevMaxFramebufferHeight = maxFramebufferHeight;
+	int prevMaxFramebufferWidth = maxFramebufferWidth;
+	bool prevRotateScreen = rotate_screen;
 	config::Settings::instance().setRetroEnvironment(environ_cb);
 	config::Settings::instance().setOptionDefinitions(option_defs_us);
 	config::Settings::instance().load(false);
@@ -449,6 +505,11 @@ static void update_variables(bool first_startup)
 		maple_ReconnectDevices();
 	}
 
+	var.key = CORE_OPTION_NAME "_screen_rotation";
+	rotate_screen = false;
+	if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value && !strcmp("vertical", var.value))
+		rotate_screen = true;
+
 	var.key = CORE_OPTION_NAME "_internal_resolution";
 	if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
 	{
@@ -458,11 +519,12 @@ static void update_variables(bool first_startup)
 
 		pch = strtok(str, "x");
 		pch = strtok(NULL, "x");
-		if (pch) {
+		if (pch)
+		{
 			config::RenderResolution = strtoul(pch, NULL, 0);
+			setFramebufferSize();
 			dc_resize_renderer();
 		}
-
 		DEBUG_LOG(COMMON, "Got height: %u", (int)config::RenderResolution);
 	}
 
@@ -602,19 +664,6 @@ static void update_variables(bool first_startup)
 	else
 		allow_service_buttons = false;
 
-	/* TODO
-   var.key = CORE_OPTION_NAME "_enable_naomi_15khz_dipswitch";
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-   {
-      if (!strcmp("enabled", var.value))
-         enable_naomi_15khz_dipswitch = true;
-      else
-         enable_naomi_15khz_dipswitch = false;
-   }
-   else
-      enable_naomi_15khz_dipswitch = false;
-	 */
-
 	char key[256];
 	key[0] = '\0';
 
@@ -746,15 +795,37 @@ static void update_variables(bool first_startup)
 
 	set_variable_visibility();
 
-	if (wasThreadedRendering != config::ThreadedRendering && !first_startup)
+	if (!first_startup)
 	{
-		if (config::ThreadedRendering)
-			dc_resume();
-		else
+		if (wasThreadedRendering != config::ThreadedRendering)
 		{
-			config::ThreadedRendering = true;
-			dc_stop();
-			config::ThreadedRendering = false;
+			if (config::ThreadedRendering)
+				dc_resume();
+			else
+			{
+				config::ThreadedRendering = true;
+				dc_stop();
+				config::ThreadedRendering = false;
+			}
+		}
+		bool geometryChanged = false;
+		if (rotate_screen != (prevRotateScreen ^ rotate_game))
+		{
+			setRotation();
+			geometryChanged = true;
+		}
+		setFramebufferSize();
+		if (prevMaxFramebufferWidth < maxFramebufferWidth || prevMaxFramebufferHeight < maxFramebufferHeight)
+		{
+			retro_system_av_info avinfo;
+			setAVInfo(avinfo);
+			environ_cb(RETRO_ENVIRONMENT_SET_SYSTEM_AV_INFO, &avinfo);
+		}
+		else if (prevFramebufferWidth != framebufferWidth || prevFramebufferHeight != framebufferHeight || geometryChanged)
+		{
+			retro_game_geometry geometry;
+			setGameGeometry(geometry);
+			environ_cb(RETRO_ENVIRONMENT_SET_GEOMETRY, &geometry);
 		}
 	}
 }
@@ -813,7 +884,13 @@ void retro_reset()
 	if (config::ThreadedRendering)
 		dc_stop();
 
+	config::ScreenStretching = 100;
 	dc_start_game(settings.imgread.ImagePath);
+
+	setFramebufferSize();
+	retro_game_geometry geometry;
+	setGameGeometry(geometry);
+	environ_cb(RETRO_ENVIRONMENT_SET_GEOMETRY, &geometry);
 
 	if (config::ThreadedRendering)
 		dc_resume();
@@ -1275,7 +1352,6 @@ static void retro_vk_context_reset()
 		ERROR_LOG(RENDERER, "Get Vulkan HW interface failed");
 		return;
 	}
-	theVulkanContext.SetWindowSize(framebufferWidth, framebufferHeight);
 	theVulkanContext.Init((retro_hw_render_interface_vulkan *)vulkan);
 	rend_term_renderer();
 	rend_init_renderer();
@@ -1425,7 +1501,6 @@ bool retro_load_game(const struct retro_game_info *game)
 		snprintf(content_name, sizeof(content_name), "vmu_save");
 	// Per-content VMU additions END
 
-	config::Cable = 3;
 	update_variables(true);
 
 	char *ext = strrchr(g_base_name, '.');
@@ -1483,34 +1558,31 @@ bool retro_load_game(const struct retro_game_info *game)
 
 	if (boot_to_bios)
 		game_data = nullptr;
+	// if an m3u file was loaded, disk_paths will already be populated so load the game from there
+	else if (disk_paths.size() > 0)
+	{
+		disk_index = 0;
+
+		// Attempt to set initial disk index
+		if (disk_paths.size() > 1
+				&& disk_initial_index > 0
+				&& disk_initial_index < disk_paths.size()
+				&& disk_paths[disk_initial_index].compare(disk_initial_path) == 0)
+			disk_index = disk_initial_index;
+
+		game_data = strdup(disk_paths[disk_index].c_str());
+	}
 	else
 	{
-		// if an m3u file was loaded, disk_paths will already be populated so load the game from there
-		if (disk_paths.size() > 0)
-		{
-			disk_index = 0;
+		char disk_label[PATH_MAX];
+		disk_label[0] = '\0';
 
-			/* Attempt to set initial disk index */
-			if ((disk_paths.size() > 1) &&
-					(disk_initial_index > 0) &&
-					(disk_initial_index < disk_paths.size()))
-				if (disk_paths[disk_initial_index].compare(disk_initial_path) == 0)
-					disk_index = disk_initial_index;
+		disk_paths.push_back(game->path);
 
-			game_data = strdup(disk_paths[disk_index].c_str());
-		}
-		else
-		{
-			char disk_label[PATH_MAX];
-			disk_label[0] = '\0';
+		fill_short_pathname_representation(disk_label, game->path, sizeof(disk_label));
+		disk_labels.push_back(disk_label);
 
-			disk_paths.push_back(game->path);
-
-			fill_short_pathname_representation(disk_label, game->path, sizeof(disk_label));
-			disk_labels.push_back(disk_label);
-
-			game_data = strdup(game->path);
-		}
+		game_data = strdup(game->path);
 	}
 
 	{
@@ -1585,23 +1657,18 @@ bool retro_load_game(const struct retro_game_info *game)
 		snprintf(nvmem_file2, sizeof(nvmem_file2), "%s%s.nvmem2", save_dir, g_base_name);
 	}
 
+	config::ScreenStretching = 100;
 	mute_messages = true;
 	dc_start_game(game_data);
 	mute_messages = false;
 
-	int rotation = config::Rotate90 ? 1 : 0;
-	environ_cb(RETRO_ENVIRONMENT_SET_ROTATION, &rotation);
-	rotate_screen = config::Rotate90;
-	config::Rotate90 = false;	// actual framebuffer rotation is done by frontend
-	if (rotate_screen)
+	rotate_game = config::Rotate90;
+	if (rotate_game)
 		config::Widescreen.override(false);
-	framebufferHeight = config::RenderResolution;
-	if (config::Widescreen)
-		framebufferWidth = config::RenderResolution * 16.f / 9.f;
-	else if (!rotate_screen)
-		framebufferWidth = config::RenderResolution * 4.f * config::ScreenStretching / 3.f / 100.f;
-	else
-		framebufferWidth = config::RenderResolution * 4.f / 3.f;
+	config::Rotate90 = false;	// actual framebuffer rotation is done by frontend
+
+	setRotation();
+	setFramebufferSize();
 
 	if (devices_need_refresh)
 		refresh_devices(true);
@@ -1617,9 +1684,10 @@ bool retro_load_game_special(unsigned game_type, const struct retro_game_info *i
 void retro_unload_game()
 {
 	INFO_LOG(COMMON, "Flycast unloading game");
-	if (game_data)
-		free(game_data);
+	free(game_data);
 	game_data = nullptr;
+	disk_paths.clear();
+	disk_labels.clear();
 
 	frontend_clear_thread_waits_cb(1, nullptr);
 	dc_stop();
@@ -1757,49 +1825,18 @@ void retro_get_system_info(struct retro_system_info *info)
    info->block_extract = true;
 }
 
-void retro_get_system_av_info(struct retro_system_av_info *info)
+void retro_get_system_av_info(retro_system_av_info *info)
 {
 	NOTICE_LOG(RENDERER, "retro_get_system_av_info: Res=%d", (int)config::RenderResolution);
-	/*                        00=VGA    01=NTSC   10=PAL,   11=illegal/undocumented */
-	const int spg_clks[4] = { 26944080, 13458568, 13462800, 26944080 };
-	u32 pixel_clock= spg_clks[(SPG_CONTROL.full >> 6) & 3];
 
 	if (cheatManager.isWidescreen())
 	{
-		struct retro_message msg;
+		retro_message msg;
 		msg.msg = "Widescreen cheat activated";
 		msg.frames = 120;
 		environ_cb(RETRO_ENVIRONMENT_SET_MESSAGE, &msg);
 	}
-	info->geometry.aspect_ratio = (float)framebufferWidth / framebufferHeight;
-	if (rotate_screen)
-		info->geometry.aspect_ratio = 1 / info->geometry.aspect_ratio;
-	info->geometry.base_width   = framebufferWidth;
-	info->geometry.base_height  = framebufferHeight;
-	int maximum = std::max(framebufferWidth, framebufferHeight);
-	info->geometry.max_width    = maximum;
-	info->geometry.max_height   = maximum;
-
-	switch (pixel_clock)
-	{
-	case 26944080:
-		info->timing.fps = 60.00; /* (VGA  480 @ 60.00) */
-		break;
-	case 26917135:
-		info->timing.fps = 59.94; /* (NTSC 480 @ 59.94) */
-		break;
-	case 13462800:
-		info->timing.fps = 50.00; /* (PAL 240  @ 50.00) */
-		break;
-	case 13458568:
-		info->timing.fps = 59.94; /* (NTSC 240 @ 59.94) */
-		break;
-	case 25925600:
-		info->timing.fps = 50.00; /* (PAL 480  @ 50.00) */
-		break;
-	}
-
-	info->timing.sample_rate = 44100.0;
+	setAVInfo(*info);
 }
 
 unsigned retro_get_region()

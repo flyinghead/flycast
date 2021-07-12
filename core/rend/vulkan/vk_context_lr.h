@@ -25,7 +25,6 @@
 #include "rend/TexCache.h"
 #include "libretro_vulkan.h"
 
-extern int screen_width, screen_height;
 static vk::Format findDepthFormat(vk::PhysicalDevice physicalDevice);
 
 class VulkanContext
@@ -38,14 +37,12 @@ public:
 	void Term();
 
 	u32 GetGraphicsQueueFamilyIndex() const { return retro_render_if->queue_index; }
-	void SetWindowSize(u32 width, u32 height) { this->width = screen_width = width; this->height = screen_height = height; }
 	void PresentFrame(vk::Image image, vk::ImageView imageView, const vk::Extent2D& extent);
 
 	vk::PhysicalDevice GetPhysicalDevice() const { return physicalDevice; }
 	vk::Device GetDevice() const { return device; }
 	vk::PipelineCache GetPipelineCache() const { return *pipelineCache; }
 	vk::DescriptorPool GetDescriptorPool() const { return *descriptorPool; }
-	vk::Extent2D GetViewPort() const { return { width, height }; }
 	int GetSwapChainSize() const { u32 m = retro_render_if->get_sync_index_mask(retro_render_if->handle); u32 n = 1; while (m >>= 1) n++; return n; }
 	int GetCurrentImageIndex() const { return retro_render_if->get_sync_index(retro_render_if->handle); }
 	// FIXME that's not quite correct
@@ -92,8 +89,6 @@ public:
 
 private:
 	VMAllocator allocator;
-	u32 width = 0;
-	u32 height = 0;
 
 	vk::DeviceSize uniformBufferAlignment = 0;
 	vk::DeviceSize storageBufferAlignment = 0;

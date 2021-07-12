@@ -233,8 +233,8 @@ struct retro_core_option_definition option_defs_tr[] = {
 #endif
    {
       CORE_OPTION_NAME "_internal_resolution",
-      "Dahili Çözünürlük (Yeniden Başlat Gerektirir)",
-      "Render çözünürlüğünü değiştirin. Yeniden başlatma gerektirir.",
+      "Dahili Çözünürlük",
+      "Render çözünürlüğünü değiştirin.",
       {
          { NULL, NULL },
       },
@@ -303,7 +303,7 @@ struct retro_core_option_definition option_defs_tr[] = {
    },
    {
       CORE_OPTION_NAME "_widescreen_hack",
-      "Geniş ekran kesmesi (Yeniden Başlatma Gerektirir)",
+      "Geniş ekran kesmesi",
       "",
       {
          { NULL, NULL },
@@ -499,15 +499,6 @@ struct retro_core_option_definition option_defs_tr[] = {
       NULL,
    },
    {
-      CORE_OPTION_NAME "_auto_skip_frame",
-      "Auto Skip Frame",
-      "Automatically skip frames when the emulator is running slow. Note: This setting only applies when 'Threaded Rendering' is enabled.",
-      {
-         { NULL, NULL },
-      },
-      NULL
-   },
-   {
       CORE_OPTION_NAME "_delay_frame_swapping",
       "Delay Frame Swapping",
       "Useful to avoid flashing screens or glitchy videos. Not recommended on slow platforms.",
@@ -515,6 +506,15 @@ struct retro_core_option_definition option_defs_tr[] = {
          { NULL, NULL },
       },
       NULL,
+   },
+   {
+      CORE_OPTION_NAME "_auto_skip_frame",
+      "Auto Skip Frame",
+      "Automatically skip frames when the emulator is running slow. Note: This setting only applies when 'Threaded Rendering' is enabled.",
+      {
+         { NULL, NULL },
+      },
+      NULL
    },
    {
       CORE_OPTION_NAME "_frame_skipping",
@@ -538,15 +538,6 @@ struct retro_core_option_definition option_defs_tr[] = {
       CORE_OPTION_NAME "_allow_service_buttons",
       "Allow NAOMI Service Buttons",
       "Kabin ayarlarına girmek için NAOMI'nin SERVİS düğmesini etkinleştirir.",
-      {
-         { NULL, NULL },
-      },
-      NULL,
-   },
-   {
-      CORE_OPTION_NAME "_enable_naomi_15khz_dipswitch",
-      "NAOMI 15KHz Dipswitch'i etkinleştir",
-      "Bu, 240p, 480i'de gösterimi zorlayabilir veya oyuna bağlı olarak hiçbir etkisi olmayabilir.",
       {
          { NULL, NULL },
       },

@@ -641,6 +641,8 @@ void loadGameSpecificSettings()
 
 void dc_resize_renderer()
 {
+	if (renderer == nullptr)
+		return;
 	int hres;
 	int vres = config::RenderResolution;
 	if (config::Widescreen && !config::Rotate90)
@@ -659,8 +661,7 @@ void dc_resize_renderer()
 	{
 		hres = config::RenderResolution * 4 * config::ScreenStretching / 3 / 100;
 	}
-	if (renderer != nullptr)
-		renderer->Resize(hres, vres);
+	renderer->Resize(hres, vres);
 }
 
 void dc_resume()

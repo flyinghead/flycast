@@ -233,8 +233,8 @@ struct retro_core_option_definition option_defs_us[] = {
 #endif
    {
       CORE_OPTION_NAME "_internal_resolution",
-      "Internal Resolution (Restart)",
-      "Modify rendering resolution. Requires a restart.",
+      "Internal Resolution",
+      "Modify rendering resolution.",
       {
          { "320x240",    NULL },
          { "640x480",    NULL },
@@ -350,8 +350,8 @@ struct retro_core_option_definition option_defs_us[] = {
    },
    {
       CORE_OPTION_NAME "_widescreen_hack",
-      "Widescreen Hack (Restart)",
-      "",
+      "Widescreen Hack",
+      "Draw geometry outside of the normal 4:3 aspect ratio. May produce graphical glitches in the revealed areas",
       {
          { "disabled", NULL },
          { "enabled",  NULL },
@@ -581,22 +581,6 @@ struct retro_core_option_definition option_defs_us[] = {
       "enabled",
    },
    {
-      CORE_OPTION_NAME "_auto_skip_frame",
-      "Auto Skip Frame",
-      "Automatically skip frames when the emulator is running slow. Note: This setting only applies when 'Threaded Rendering' is enabled.",
-      {
-         { "none", "None" },
-         { "some", "Normal" },
-         { "more", "Maximum" },
-         { NULL, NULL },
-      },
-#ifdef LOW_END
-      "some",
-#else
-      "none",
-#endif
-   },
-   {
       CORE_OPTION_NAME "_delay_frame_swapping",
       "Delay Frame Swapping",
       "Useful to avoid flashing screens or glitchy videos. Not recommended on slow platforms.",
@@ -606,6 +590,22 @@ struct retro_core_option_definition option_defs_us[] = {
          { NULL, NULL },
       },
       "disabled",
+   },
+   {
+      CORE_OPTION_NAME "_auto_skip_frame",
+      "Auto Skip Frame",
+      "Automatically skip frames when the emulator is running slow. Note: This setting only applies when 'Threaded Rendering' is enabled.",
+      {
+         { "disabled", NULL },
+         { "some", "Normal" },
+         { "more", "Maximum" },
+         { NULL, NULL },
+      },
+#ifdef LOW_END
+      "some",
+#else
+      "disabled",
+#endif
    },
    {
       CORE_OPTION_NAME "_frame_skipping",
@@ -638,17 +638,6 @@ struct retro_core_option_definition option_defs_us[] = {
       CORE_OPTION_NAME "_allow_service_buttons",
       "Allow NAOMI Service Buttons",
       "Enables SERVICE button for NAOMI, to enter cabinet settings.",
-      {
-         { "disabled", NULL },
-         { "enabled",  NULL },
-         { NULL, NULL },
-      },
-      "disabled",
-   },
-   {
-      CORE_OPTION_NAME "_enable_naomi_15khz_dipswitch",
-      "Enable NAOMI 15KHz Dipswitch",
-      "This can force display in 240p, 480i or no effect at all depending on the game.",
       {
          { "disabled", NULL },
          { "enabled",  NULL },
