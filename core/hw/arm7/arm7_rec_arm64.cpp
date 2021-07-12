@@ -632,6 +632,7 @@ public:
 			verify(arm_compilecode != nullptr);
 			return;
 		}
+		WriteProtect(false);
 		Label arm_dispatch_label;
 		Label arm_dofiq;
 		Label arm_exit;
@@ -686,6 +687,7 @@ public:
 				GetBuffer()->GetStartAddress<void*>(), GetBuffer()->GetEndAddress<void*>(),
 				GetBuffer()->GetStartAddress<void*>(), GetBuffer()->GetEndAddress<void*>());
 		recompiler::advance(GetBuffer()->GetSizeInBytes());
+		WriteProtect(true);
 	}
 };
 

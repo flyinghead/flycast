@@ -721,7 +721,7 @@ void run(u32 samples)
 		if (Arm7Enabled)
 		{
 			arm_Reg[CYCL_CNT].I += ARM_CYCLES_PER_SAMPLE;
-			arm_mainloop(arm_Reg, recompiler::EntryPoints);
+			//arm_mainloop(arm_Reg, recompiler::EntryPoints);
 		}
 		libAICA_TimeStep();
 	}

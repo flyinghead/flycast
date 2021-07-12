@@ -249,11 +249,21 @@ bool vmem_platform_prepare_jit_block(void *code_area, unsigned size, void **code
 	{
 		// Well it failed, use another approach, unmap the memory area and remap it back.
 		// Seems it works well on Darwin according to reicast code :P
+		#ifndef __ARM_MAC__
 		munmap(code_area, size);
 		void *ret_ptr = mmap(code_area, size, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_FIXED | MAP_PRIVATE | MAP_ANON, 0, 0);
 		// Ensure it's the area we requested
 		if (ret_ptr != code_area)
 			return false;   // Couldn't remap it? Perhaps RWX is disabled? This should never happen in any supported Unix platform.
+		#else
+		// MAP_JIT and toggleable write protection is required on Apple Silicon
+		// Cannot use MAP_FIXED with MAP_JIT
+		void *ret_ptr = mmap(NULL, size, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_PRIVATE | MAP_ANON | MAP_JIT, -1, 0);
+		if ( ret_ptr == MAP_FAILED )
+			return false;
+		*code_area_rwx = ret_ptr;
+		return true;
+		#endif
 	}
 
 	// Pointer location should be same:
