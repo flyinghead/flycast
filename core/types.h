@@ -141,6 +141,7 @@ int darw_printf(const char* Text,...);
 
 #if defined(__APPLE__) && defined(__MACH__) && HOST_CPU == CPU_ARM64
 	#define __ARM_MAC__
+	#include "pthread.h"
 	static void WriteProtect(bool enabled) {
 		pthread_jit_write_protect_np(enabled);
 	}
