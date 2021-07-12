@@ -1,4 +1,4 @@
-#if 1// defined(HAVE_LIBNX)
+#if defined(__SWITCH__)
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -7,10 +7,13 @@
 #include <signal.h>
 
 #include "hw/mem/_vmem.h"
+#include "hw/sh4/sh4_if.h"
 #include "stdclass.h"
 
 #include <switch.h>
 #include <malloc.h>
+
+#define siginfo_t switch_siginfo_t
 
 using mem_handle_t = uintptr_t;
 static mem_handle_t vmem_fd = -1;
@@ -19,6 +22,7 @@ static mem_handle_t vmem_fd_codememory = -1;
 
 static void *reserved_base;
 static size_t reserved_size;
+static VirtmemReservation *virtmemReservation;
 
 bool mem_region_lock(void *start, size_t len)
 {
@@ -71,11 +75,23 @@ bool mem_region_set_exec(void *start, size_t len)
 
 void *mem_region_reserve(void *start, size_t len)
 {
-	return virtmemReserve(len);
+	virtmemLock();
+	void *p = virtmemFindAslr(len, 0);
+	if (p != nullptr)
+		virtmemReservation = virtmemAddReservation(p, len);
+	virtmemUnlock();
+	return p;
 }
 
 bool mem_region_release(void *start, size_t len)
 {
+	if (virtmemReservation != nullptr)
+	{
+		virtmemLock();
+		virtmemRemoveReservation(virtmemReservation);
+		virtmemUnlock();
+		virtmemReservation = nullptr;
+	}
 	return true;
 }
 
@@ -98,11 +114,8 @@ bool mem_region_unmap_file(void *start, size_t len)
 // Allocates memory via a fd on shmem/ahmem or even a file on disk
 static mem_handle_t allocate_shared_filemem(unsigned size)
 {
-	int fd = -1;
 	void* mem = memalign(0x1000, size);
 	return (uintptr_t)mem;
-
-	return fd;
 }
 
 // Implement vmem initialization for RAM, ARAM, VRAM and SH4 context, fpcb etc.
@@ -113,6 +126,8 @@ static mem_handle_t allocate_shared_filemem(unsigned size)
 // memory using a fallback (that is, regular mallocs and falling back to slow memory JIT).
 VMemType vmem_platform_init(void **vmem_base_addr, void **sh4rcb_addr)
 {
+	return MemTypeError;
+#if 0
 	const unsigned size_aligned = ((RAM_SIZE_MAX + VRAM_SIZE_MAX + ARAM_SIZE_MAX + PAGE_SIZE) & (~(PAGE_SIZE-1)));
 	vmem_fd_page = allocate_shared_filemem(size_aligned);
 	if (vmem_fd_page < 0)
@@ -147,6 +162,7 @@ VMemType vmem_platform_init(void **vmem_base_addr, void **sh4rcb_addr)
 	mem_region_unlock(sh4rcb_base_ptr, sizeof(Sh4RCB) - fpcb_size);
 
 	return rv;
+#endif
 }
 
 // Just tries to wipe as much as possible in the relevant area.
@@ -205,26 +221,35 @@ bool vmem_platform_prepare_jit_block(void *code_area, unsigned size, void **code
 	if (ptr_rx != code_area)
 		return false;
 
-	void* ptr_rw = virtmemReserve(size_aligned);
-	if (R_FAILED(svcMapProcessMemory(ptr_rw, envGetOwnProcessHandle(), (u64)code_area, size_aligned)))
+	virtmemLock();
+	void* ptr_rw = virtmemFindAslr(size_aligned, 0);
+	bool failure = ptr_rw == nullptr
+			|| R_FAILED(svcMapProcessMemory(ptr_rw, envGetOwnProcessHandle(), (u64)code_area, size_aligned));
+	virtmemUnlock();
+	if (failure)
+	{
 		WARN_LOG(DYNAREC, "Failed to map jit rw block...");
+		return false;
+	}
 
 	*code_area_rw = ptr_rw;
 	*rx_offset = (char*)ptr_rx - (char*)ptr_rw;
 	INFO_LOG(DYNAREC, "Info: Using NO_RWX mode, rx ptr: %p, rw ptr: %p, offset: %lu\n", ptr_rx, ptr_rw, (unsigned long)*rx_offset);
 
-	return (ptr_rw != MAP_FAILED);
+	return true;
 }
 
 #ifndef TARGET_NO_EXCEPTIONS
+
+#include <ucontext.h>
+void fault_handler(int sn, siginfo_t * si, void *segfault_ctx);
+
 extern "C"
 {
-
 alignas(16) u8 __nx_exception_stack[0x1000];
 u64 __nx_exception_stack_size = sizeof(__nx_exception_stack);
 
 void context_switch_aarch64(void* context);
-void fault_handler(int sn, siginfo_t * si, void *segfault_ctx);
 
 void __libnx_exception_handler(ThreadExceptionDump *ctx)
 {
@@ -252,7 +277,7 @@ void __libnx_exception_handler(ThreadExceptionDump *ctx)
 
    sig_info.si_addr = (void*)ctx->far.x;
 
-   signal_handler(0, &sig_info, (void*) &u_ctx);
+   fault_handler(0, &sig_info, (void*) &u_ctx);
 
    uint64_t handle[64] = { 0 };
 
@@ -297,4 +322,4 @@ void __libnx_exception_handler(ThreadExceptionDump *ctx)
 }
 }
 #endif	// TARGET_NO_EXCEPTIONS
-#endif	// HAVE_LIBNX
+#endif	// __SWITCH__

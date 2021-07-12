@@ -51,7 +51,7 @@ void (*EntryPoints[ARAM_SIZE_MAX / 4])();
 
 #ifdef _WIN32
 alignas(4096) static u8 ARM7_TCB[ICacheSize];
-#elif defined(__unix__) || defined(HAVE_LIBNX)
+#elif defined(__unix__) || defined(__SWITCH__)
 alignas(4096) static u8 ARM7_TCB[ICacheSize] __attribute__((section(".text")));
 #elif defined(__APPLE__)
 alignas(4096) static u8 ARM7_TCB[ICacheSize] __attribute__((section("__TEXT, .text")));

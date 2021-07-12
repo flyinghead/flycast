@@ -597,7 +597,7 @@ int64_t retro_vfs_file_truncate_impl(libretro_vfs_implementation_file *stream, i
 #ifdef _WIN32
    if (_chsize(_fileno(stream->fp), length) != 0)
       return -1;
-#elif !defined(VITA) && !defined(PSP) && !defined(PS2) && !defined(ORBIS) && (!defined(SWITCH) || defined(HAVE_LIBNX))
+#elif !defined(VITA) && !defined(PSP) && !defined(PS2) && !defined(ORBIS) && (!defined(SWITCH) || defined(__SWITCH__))
    if (ftruncate(fileno(stream->fp), length) != 0)
       return -1;
 #endif

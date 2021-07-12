@@ -11,7 +11,7 @@ constexpr u32 CODEPAGE_WINDOWS_1252 = 1252;
 #include <locale.h>
 #endif
 
-#if defined(HAVE_LIBNX) || defined(__HAIKU__)
+#if defined(__SWITCH__) || defined(__HAIKU__)
 int vasprintf(char **s, const char *fmt, va_list ap)
 {
     va_list ap2;
@@ -19,12 +19,12 @@ int vasprintf(char **s, const char *fmt, va_list ap)
     int l = vsnprintf(0, 0, fmt, ap2);
     va_end(ap2);
 
-    if (l<0 || !(*s=malloc(l+1U))) return -1;
+    if (l<0 || !(*s=(char *)malloc(l+1U))) return -1;
     return vsnprintf(*s, l+1U, fmt, ap);
 }
 #endif
 
-#if !defined(_WIN32) && !defined(__ANDROID__) && !defined(__HAIKU__) && !defined(__OpenBSD__) && !defined(HAVE_LIBNX)
+#if !defined(_WIN32) && !defined(__ANDROID__) && !defined(__HAIKU__) && !defined(__OpenBSD__) && !defined(__SWITCH__)
 static locale_t GetCLocale()
 {
   static locale_t c_locale = newlocale(LC_ALL_MASK, "C", nullptr);
@@ -69,11 +69,11 @@ bool CharArrayFromFormatV(char* out, int outsize, const char* format, va_list ar
   writtenCount = vsnprintf(out, outsize, format, args);
 #endif
 #else
-#if !defined(__ANDROID__) && !defined(__HAIKU__) && !defined(__OpenBSD__) && !defined(HAVE_LIBNX)
+#if !defined(__ANDROID__) && !defined(__HAIKU__) && !defined(__OpenBSD__) && !defined(__SWITCH__)
   locale_t previousLocale = uselocale(GetCLocale());
 #endif
   writtenCount = vsnprintf(out, outsize, format, args);
-#if !defined(__ANDROID__) && !defined(__HAIKU__) && !defined(__OpenBSD__) && !defined(HAVE_LIBNX)
+#if !defined(__ANDROID__) && !defined(__HAIKU__) && !defined(__OpenBSD__) && !defined(__SWITCH__)
   uselocale(previousLocale);
 #endif
 #endif
@@ -101,7 +101,7 @@ std::string StringFromFormatV(const char* format, va_list args)
   std::string temp = buf;
   delete[] buf;
 #else
-#if !defined(__ANDROID__) && !defined(__HAIKU__) && !defined(__OpenBSD__) && !defined(HAVE_LIBNX)
+#if !defined(__ANDROID__) && !defined(__HAIKU__) && !defined(__OpenBSD__) && !defined(__SWITCH__)
   locale_t previousLocale = uselocale(GetCLocale());
 #endif
   if (vasprintf(&buf, format, args) < 0)
@@ -110,7 +110,7 @@ std::string StringFromFormatV(const char* format, va_list args)
     buf = nullptr;
   }
 
-#if !defined(__ANDROID__) && !defined(__HAIKU__) && !defined(__OpenBSD__) && !defined(HAVE_LIBNX)
+#if !defined(__ANDROID__) && !defined(__HAIKU__) && !defined(__OpenBSD__) && !defined(__SWITCH__)
   uselocale(previousLocale);
 #endif
 

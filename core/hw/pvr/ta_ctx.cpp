@@ -1,7 +1,7 @@
 #include "ta_ctx.h"
 #include "spg.h"
 #include "cfg/option.h"
-#if defined(HAVE_LIBNX)
+#if defined(__SWITCH__)
 #include <malloc.h>
 #endif
 
@@ -22,7 +22,7 @@ void* OS_aligned_malloc(size_t align, size_t size)
 	return __mingw_aligned_malloc(size, align);
 #elif defined(_WIN32)
 	return _aligned_malloc(size, align);
-#elif defined(HAVE_LIBNX)
+#elif defined(__SWITCH__)
    return memalign(align, size);
 #else
 	void *result;

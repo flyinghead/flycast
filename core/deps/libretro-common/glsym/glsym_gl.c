@@ -27,7 +27,7 @@
 #define SYM(x) { "gl" #x, (void*)&(gl##x) }
 
 const struct rglgen_sym_map rglgen_symbol_map[] = {
-#ifdef HAVE_LIBNX
+#ifdef __SWITCH__
     SYM(ClearIndex),
     SYM(ClearColor),
     SYM(Clear),

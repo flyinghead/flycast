@@ -1,6 +1,6 @@
 #include "types.h"
 
-#if defined(__unix__) || defined(__APPLE__) || defined(HAVE_LIBNX)
+#if defined(__unix__) || defined(__APPLE__) || defined(__SWITCH__)
 #if defined(__APPLE__)
 	#define _XOPEN_SOURCE 1
 	#define __USE_GNU 1
@@ -19,9 +19,11 @@
 
 #include "hw/sh4/dyna/ngen.h"
 
-#ifdef HAVE_LIBNX
+#ifdef __SWITCH__
+#include <ucontext.h>
 extern "C" char __start__;
-#endif // HAVE_LIBNX
+#define siginfo_t switch_siginfo_t
+#endif // __SWITCH__
 
 #if !defined(TARGET_NO_EXCEPTIONS)
 bool VramLockedWrite(u8* address);
@@ -72,12 +74,12 @@ void fault_handler (int sn, siginfo_t * si, void *segfault_ctx)
 	}
 #endif
 	ERROR_LOG(COMMON, "SIGSEGV @ %p -> %p was not in vram, dynacode:%d", (void *)ctx.pc, si->si_addr, dyna_cde);
-#ifdef HAVE_LIBNX
+#ifdef __SWITCH__
 	MemoryInfo meminfo;
 	u32 pageinfo;
 	svcQueryMemory(&meminfo, &pageinfo, (u64)&__start__);
 	ERROR_LOG(COMMON, ".text base: %p", meminfo.addr);
-#endif // HAVE_LIBNX
+#endif // __SWITCH__
 	die("segfault");
 	signal(SIGSEGV, SIG_DFL);
 }
@@ -85,7 +87,7 @@ void fault_handler (int sn, siginfo_t * si, void *segfault_ctx)
 
 void install_fault_handler()
 {
-#ifndef HAVE_LIBNX
+#ifndef __SWITCH__
 	struct sigaction act, segv_oact;
 	memset(&act, 0, sizeof(act));
 	act.sa_sigaction = fault_handler;

@@ -37,7 +37,7 @@ protected:
 	{
 		texCommandPool.Init();
 
-#ifdef __ANDROID__
+#if defined(__ANDROID__) && !defined(LIBRETRO)
 		if (!vjoyTexture)
 		{
 			int w, h;
@@ -172,7 +172,7 @@ public:
 	void ReInitOSD()
 	{
 		texCommandPool.Init();
-#ifdef __ANDROID__
+#if defined(__ANDROID__) && !defined(LIBRETRO)
 		osdPipeline.Init(&shaderManager, vjoyTexture->GetImageView(), GetContext()->GetRenderPass());
 #endif
 	}

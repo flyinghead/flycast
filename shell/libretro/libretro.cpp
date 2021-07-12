@@ -22,10 +22,13 @@
 #include <sys/time.h>
 #endif
 
-#ifdef HAVE_LIBNX
+#ifdef __SWITCH__
 #include <stdlib.h>
 #include <string.h>
+// name conflict
+#define Event SwitchEvent
 #include <switch.h>
+#undef Event
 
 // strdup seems to be missing on the dkp toolchain
 // TODO: Investigate more
@@ -34,7 +37,7 @@ char* strdup(const char *str)
 	size_t size = strlen(str) + 1;
 	char *copy;
 
-	if ((copy = malloc(size)) == NULL)
+	if ((copy = (char *)malloc(size)) == NULL)
 		return(NULL);
 	(void)memcpy(copy, str, size);
 	return(copy);
@@ -2720,7 +2723,7 @@ void os_DebugBreak(void)
 {
 	ERROR_LOG(COMMON, "DEBUGBREAK!");
 	//exit(-1);
-#ifdef HAVE_LIBNX
+#ifdef __SWITCH__
 	svcExitProcess();
 #else
 	__builtin_trap();

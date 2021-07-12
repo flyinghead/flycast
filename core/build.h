@@ -207,7 +207,9 @@
 	#endif
 #endif
 
+#ifndef __SWITCH__
 #define USE_MINIUPNPC
+#endif
 
 // Some restrictions on FEAT_NO_RWX_PAGES
 #if defined(FEAT_NO_RWX_PAGES) && FEAT_SHREC == DYNAREC_JIT

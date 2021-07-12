@@ -53,7 +53,14 @@ string(TIMESTAMP BUILD_TIMESTAMP UTC)
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/core/version.h.in" "${CMAKE_CURRENT_SOURCE_DIR}/core/version.h" @ONLY)
 
 if(LIBRETRO)
-    add_library(${PROJECT_NAME} SHARED core/emulator.cpp)
+	if (NINTENDO_SWITCH)
+		add_library(${PROJECT_NAME} STATIC core/emulator.cpp)
+		set(USE_VULKAN OFF)
+		set(USE_GLES ON)
+		enable_language(ASM)
+	else()
+	    add_library(${PROJECT_NAME} SHARED core/emulator.cpp)
+	endif()
     set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--no-undefined")
     set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "flycast_libretro")
     set(CMAKE_SHARED_LIBRARY_PREFIX "")
@@ -109,6 +116,9 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
 target_include_directories(${PROJECT_NAME} PRIVATE core core/deps core/deps/stb core/khronos)
 if(LIBRETRO)
 	target_include_directories(${PROJECT_NAME} PRIVATE shell/libretro)
+	if(NINTENDO_SWITCH)
+		target_include_directories(${PROJECT_NAME} PRIVATE shell/switch)
+	endif()
 endif()
 
 find_package(OpenMP)
@@ -314,7 +324,7 @@ target_sources(${PROJECT_NAME} PRIVATE
 
 target_include_directories(${PROJECT_NAME} PRIVATE core/deps/nowide/include)
 
-if(NOT MINIUPNP_FOUND)
+if(NOT MINIUPNP_FOUND AND NOT NINTENDO_SWITCH)
 	option(UPNPC_BUILD_SHARED "Build shared library" OFF)
 	option(UPNPC_BUILD_TESTS "Build test executables" OFF)
 	option(UPNPC_BUILD_SAMPLE "Build sample executables" OFF)
@@ -658,6 +668,12 @@ else()
 			core/linux/common.cpp
             core/linux/context.cpp
             core/linux/posix_vmem.cpp)
+    if(NINTENDO_SWITCH)
+        target_sources(${PROJECT_NAME} PRIVATE
+        		core/linux/libnx_vmem.cpp
+        		shell/switch/stubs.c
+        		shell/switch/context_switch.S)
+    endif()
 endif()
 
 if(NOT LIBRETRO)

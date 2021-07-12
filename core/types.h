@@ -27,7 +27,7 @@
 #include <cstdint>
 #include <cstddef>
 #include <cstring>
-#ifdef HAVE_LIBNX
+#ifdef __SWITCH__
 #include <strings.h>
 #endif
 

@@ -68,7 +68,7 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #endif
-#ifndef HAVE_LIBNX
+#ifndef __SWITCH__
 #include <GL/gl.h>
 #include <GL/glext.h>
 #else

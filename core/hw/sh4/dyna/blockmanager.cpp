@@ -128,7 +128,7 @@ RuntimeBlockInfoPtr bm_GetBlock(void* dynarec_code)
 	iter--;  // Need to go back to find the potential candidate
 
 	// However it might be out of bounds, check for that
-	if ((u8*)iter->second->code + iter->second->host_code_size <= (u8*)dynarec_code)
+	if ((u8*)iter->second->code + iter->second->host_code_size <= (u8*)dynarecrw)
 		return NULL;
 
 	verify(iter->second->contains_code((u8*)dynarecrw));
@@ -203,7 +203,7 @@ void bm_DiscardBlock(RuntimeBlockInfo* block)
 	block_ptr->Relink();
 
 	// Remove from jump table
-	verify((void*)bm_GetCode(block_ptr->addr) == (void*)block_ptr->code);
+	verify((void*)bm_GetCode(block_ptr->addr) == CC_RW2RX((void*)block_ptr->code));
 	FPCA(block_ptr->addr) = ngen_FailedToFindBlock;
 
 	if (block_ptr->temp_block)
