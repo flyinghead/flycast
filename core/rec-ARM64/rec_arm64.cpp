@@ -1551,12 +1551,21 @@ private:
 		verify((offset & 3) == 0);
 		if (offset < -128 * 1024 * 1024 || offset > 128 * 1024 * 1024)
 		{
-			//if (cond == al)
-			//{
+			if (cond == al)
+			{
 				Mov(x4, reinterpret_cast<uintptr_t>(target));
 				Br(x4);
-			//}
-// FIXME: Branch with condition
+			}
+			else
+			{
+				Label skip_target;
+				Condition inverse_cond = (Condition)((u32)cond ^ 1);
+				
+				B(&skip_target, inverse_cond);
+				Mov(x4, reinterpret_cast<uintptr_t>(target));
+				Br(x4);
+				Bind(&skip_target);
+			}
 		}
 		else
 		{
