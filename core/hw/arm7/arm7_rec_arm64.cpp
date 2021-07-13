@@ -30,7 +30,7 @@ using namespace vixl::aarch64;
 
 namespace aicaarm {
 
-static void (*arm_dispatch)();
+static void (*arm_dispatch)();	// Not an executable address
 
 class Arm7Compiler;
 
@@ -106,7 +106,7 @@ class Arm7Compiler : public MacroAssembler
 
 	void call(void *loc)
 	{
-		ptrdiff_t offset = reinterpret_cast<uintptr_t>(loc) - GetBuffer()->GetStartAddress<uintptr_t>();
+		ptrdiff_t offset = reinterpret_cast<uintptr_t>(loc) - reinterpret_cast<uintptr_t>(recompiler::writeToExec(GetBuffer()->GetStartAddress<void *>()));
 		Label function_label;
 		BindToOffset(&function_label, offset);
 		Bl(&function_label);
@@ -637,12 +637,12 @@ public:
 		Label arm_exit;
 
 		// arm_compilecode:
-		arm_compilecode = GetCursorAddress<void (*)()>();
+		arm_compilecode = (void (*)())recompiler::writeToExec(GetCursorAddress<void *>());
 		call((void*)recompiler::compile);
 		B(&arm_dispatch_label);
 
 		// arm_mainloop(regs, entry points)
-		arm_mainloop = GetCursorAddress<arm_mainloop_t>();
+		arm_mainloop = (arm_mainloop_t)recompiler::writeToExec(GetCursorAddress<void *>());
 		Stp(x25, x26, MemOperand(sp, -96, AddrMode::PreIndex));
 		Stp(x27, x28, MemOperand(sp, 16));
 		Stp(x29, x30, MemOperand(sp, 32));

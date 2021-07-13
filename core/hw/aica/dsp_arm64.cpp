@@ -29,6 +29,7 @@
 using namespace vixl::aarch64;
 
 static u8 *pCodeBuffer;
+static ptrdiff_t rx_offset;
 
 class DSPAssembler : public MacroAssembler
 {
@@ -364,7 +365,7 @@ private:
 	template <typename R, typename... P>
 	void GenCallRuntime(R (*function)(P...))
 	{
-		ptrdiff_t offset = reinterpret_cast<uintptr_t>(function) - GetBuffer()->GetStartAddress<uintptr_t>();
+		ptrdiff_t offset = reinterpret_cast<uintptr_t>(function) - GetBuffer()->GetStartAddress<uintptr_t>() - rx_offset;
 		verify(offset >= -128 * 1024 * 1024 && offset <= 128 * 1024 * 1024);
 		verify((offset & 3) == 0);
 		Label function_label;
@@ -453,12 +454,15 @@ void dsp_recompile()
 
 void dsp_rec_init()
 {
-	if (!vmem_platform_prepare_jit_block(dsp.DynCode, sizeof(dsp.DynCode), (void**)&pCodeBuffer))
-		die("mprotect failed in arm64 dsp");
+#ifdef FEAT_NO_RWX_PAGES
+	verify(vmem_platform_prepare_jit_block(dsp.DynCode, sizeof(dsp.DynCode), (void**)&pCodeBuffer, (uintptr_t *)&rx_offset));
+#else
+	verify(vmem_platform_prepare_jit_block(dsp.DynCode, sizeof(dsp.DynCode), (void**)&pCodeBuffer));
+#endif
 }
 
 void dsp_rec_step()
 {
-	((void (*)())pCodeBuffer)();
+	((void (*)())(pCodeBuffer + rx_offset))();
 }
 #endif

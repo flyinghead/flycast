@@ -59,6 +59,8 @@ alignas(4096) static u8 ARM7_TCB[ICacheSize] __attribute__((section("__TEXT, .te
 #error ARM7_TCB ALLOC
 #endif
 
+ptrdiff_t rx_offset;
+
 #pragma pack(push,1)
 union ArmOpBits
 {
@@ -654,8 +656,11 @@ void flush()
 
 void init()
 {
-	if (!vmem_platform_prepare_jit_block(ARM7_TCB, ICacheSize, (void**)&ICache))
-		die("vmem_platform_prepare_jit_block failed");
+#ifdef FEAT_NO_RWX_PAGES
+	verify(vmem_platform_prepare_jit_block(ARM7_TCB, ICacheSize, (void**)&ICache, (uintptr_t *)&rx_offset));
+#else
+	verify(vmem_platform_prepare_jit_block(ARM7_TCB, ICacheSize, (void**)&ICache));
+#endif
 
 	icPtr = ICache;
 
