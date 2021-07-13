@@ -1116,10 +1116,10 @@ endif()
 
 if(NINTENDO_SWITCH)
 		add_custom_target(combined
-        	COMMAND ar -x $<TARGET_FILE:xxHash::xxhash>
-        	COMMAND ar -x $<TARGET_FILE:chdr-static>
-        	COMMAND ar -x $<TARGET_FILE:zip>
-        	COMMAND ar -rs libflycast_libretro.a *.obj
+        	COMMAND ${CMAKE_AR} -x $<TARGET_FILE:xxHash::xxhash>
+        	COMMAND ${CMAKE_AR} -x $<TARGET_FILE:chdr-static>
+        	COMMAND ${CMAKE_AR} -x $<TARGET_FILE:zip>
+        	COMMAND ${CMAKE_AR} -rs libflycast_libretro.a *.obj
         	COMMAND rm *.obj
         	WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
         	DEPENDS xxHash::xxhash chdr-static zip)
