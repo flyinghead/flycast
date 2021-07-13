@@ -59,6 +59,7 @@ if(LIBRETRO)
 		set(USE_GLES OFF)
 		set(USE_GLES2 OFF)
 		enable_language(ASM)
+		target_compile_definitions(${PROJECT_NAME} PRIVATE HAVE_LIBNX)
 	else()
 	    add_library(${PROJECT_NAME} SHARED core/emulator.cpp)
 	endif()
@@ -1120,6 +1121,7 @@ if(NINTENDO_SWITCH)
         	COMMAND ${CMAKE_AR} -x $<TARGET_FILE:chdr-static>
         	COMMAND ${CMAKE_AR} -x $<TARGET_FILE:zip>
         	COMMAND ${CMAKE_AR} -rs libflycast_libretro.a *.obj
+        	COMMAND mv libflycast_libretro.a flycast_libretro_libnx.a
         	COMMAND rm *.obj
         	WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
         	DEPENDS xxHash::xxhash chdr-static zip)
