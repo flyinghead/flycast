@@ -75,6 +75,7 @@ char* strdup(const char *str)
 #include "rend/osd.h"
 #include "cfg/option.h"
 #include "wsi/gl_context.h"
+#include "version.h"
 #ifdef _WIN32
 #include "windows/fault_handler.h"
 #endif
@@ -516,18 +517,14 @@ static void update_variables(bool first_startup)
 	var.key = CORE_OPTION_NAME "_internal_resolution";
 	if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
 	{
-		char *pch;
 		char str[100];
 		snprintf(str, sizeof(str), "%s", var.value);
 
-		pch = strtok(str, "x");
+		char *pch = strtok(str, "x");
 		pch = strtok(NULL, "x");
-		if (pch)
-		{
+		if (pch != nullptr)
 			config::RenderResolution = strtoul(pch, NULL, 0);
-			setFramebufferSize();
-			dc_resize_renderer();
-		}
+
 		DEBUG_LOG(COMMON, "Got height: %u", (int)config::RenderResolution);
 	}
 
@@ -817,18 +814,24 @@ static void update_variables(bool first_startup)
 			setRotation();
 			geometryChanged = true;
 		}
+		else
+			rotate_screen ^= rotate_game;
+		if (rotate_game)
+			config::Widescreen.override(false);
 		setFramebufferSize();
 		if (prevMaxFramebufferWidth < maxFramebufferWidth || prevMaxFramebufferHeight < maxFramebufferHeight)
 		{
 			retro_system_av_info avinfo;
 			setAVInfo(avinfo);
 			environ_cb(RETRO_ENVIRONMENT_SET_SYSTEM_AV_INFO, &avinfo);
+			dc_resize_renderer();
 		}
 		else if (prevFramebufferWidth != framebufferWidth || prevFramebufferHeight != framebufferHeight || geometryChanged)
 		{
 			retro_game_geometry geometry;
 			setGameGeometry(geometry);
 			environ_cb(RETRO_ENVIRONMENT_SET_GEOMETRY, &geometry);
+			dc_resize_renderer();
 		}
 	}
 }
@@ -1820,10 +1823,10 @@ void retro_get_system_info(struct retro_system_info *info)
 {
    info->library_name = "Flycast";
 #ifndef GIT_VERSION
-#define GIT_VERSION ""
+#define GIT_VERSION "undefined"
 #endif
-   info->library_version = "0.1" GIT_VERSION;
-   info->valid_extensions = "chd|cdi|iso|elf|cue|gdi|lst|bin|dat|zip|7z|m3u";
+   info->library_version = GIT_VERSION;
+   info->valid_extensions = "chd|cdi|elf|cue|gdi|lst|bin|dat|zip|7z|m3u";
    info->need_fullpath = true;
    info->block_extract = true;
 }

@@ -1,11 +1,4 @@
 #if defined(__SWITCH__)
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <errno.h>
-#include <unistd.h>
-#include <signal.h>
-
 #include "hw/mem/_vmem.h"
 #include "hw/sh4/sh4_if.h"
 #include "stdclass.h"
@@ -64,7 +57,7 @@ bool mem_region_unlock(void *start, size_t len)
 	return true;
 }
 
-bool mem_region_set_exec(void *start, size_t len)
+static bool mem_region_set_exec(void *start, size_t len)
 {
 	size_t inpage = (uintptr_t)start & PAGE_MASK;
 
@@ -73,7 +66,7 @@ bool mem_region_set_exec(void *start, size_t len)
 	return true;
 }
 
-void *mem_region_reserve(void *start, size_t len)
+static void *mem_region_reserve(void *start, size_t len)
 {
 	virtmemLock();
 	void *p = virtmemFindAslr(len, 0);
@@ -83,7 +76,7 @@ void *mem_region_reserve(void *start, size_t len)
 	return p;
 }
 
-bool mem_region_release(void *start, size_t len)
+static bool mem_region_release(void *start, size_t len)
 {
 	if (virtmemReservation != nullptr)
 	{
@@ -95,7 +88,7 @@ bool mem_region_release(void *start, size_t len)
 	return true;
 }
 
-void *mem_region_map_file(void *file_handle, void *dest, size_t len, size_t offset, bool readwrite)
+static void *mem_region_map_file(void *file_handle, void *dest, size_t len, size_t offset, bool readwrite)
 {
 	Result rc = svcMapProcessMemory(dest, envGetOwnProcessHandle(), (u64)(vmem_fd_codememory + offset), len);
 	if (R_FAILED(rc))
@@ -106,7 +99,7 @@ void *mem_region_map_file(void *file_handle, void *dest, size_t len, size_t offs
 	return dest;
 }
 
-bool mem_region_unmap_file(void *start, size_t len)
+static bool mem_region_unmap_file(void *start, size_t len)
 {
 	return mem_region_release(start, len);
 }

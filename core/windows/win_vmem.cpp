@@ -24,15 +24,7 @@ bool mem_region_unlock(void *start, size_t len)
 	return true;
 }
 
-bool mem_region_set_exec(void *start, size_t len)
-{
-	DWORD old;
-	if (!VirtualProtect(start, len, PAGE_EXECUTE_READWRITE, &old))
-		die("VirtualProtect failed ..\n");
-	return true;
-}
-
-void *mem_region_reserve(void *start, size_t len)
+static void *mem_region_reserve(void *start, size_t len)
 {
 	DWORD type = MEM_RESERVE;
 	if (start == nullptr)
@@ -40,19 +32,9 @@ void *mem_region_reserve(void *start, size_t len)
 	return VirtualAlloc(start, len, type, PAGE_NOACCESS);
 }
 
-bool mem_region_release(void *start, size_t len)
+static bool mem_region_release(void *start, size_t len)
 {
 	return VirtualFree(start, 0, MEM_RELEASE);
-}
-
-void *mem_region_map_file(void *file_handle, void *dest, size_t len, size_t offset, bool readwrite)
-{
-	return MapViewOfFileEx((HANDLE)file_handle, readwrite ? FILE_MAP_WRITE : FILE_MAP_READ, (DWORD)(offset >> 32), (DWORD)offset, len, dest);
-}
-
-bool mem_region_unmap_file(void *start, size_t len)
-{
-	return UnmapViewOfFile(start);
 }
 
 HANDLE mem_handle = INVALID_HANDLE_VALUE;
@@ -122,7 +104,7 @@ void vmem_platform_create_mappings(const vmem_mapping *vmem_maps, unsigned numma
 
 	// Unmap the whole section
 	for (void *p : mapped_regions)
-		mem_region_unmap_file(p, 0);
+		UnmapViewOfFile(p);
 	mapped_regions.clear();
 	for (void *p : unmapped_regions)
 		mem_region_release(p, 0);

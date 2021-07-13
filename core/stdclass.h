@@ -72,11 +72,6 @@ size_t get_last_slash_pos(const std::string& path);
 
 bool mem_region_lock(void *start, std::size_t len);
 bool mem_region_unlock(void *start, std::size_t len);
-bool mem_region_set_exec(void *start, std::size_t len);
-void *mem_region_reserve(void *start, std::size_t len);
-bool mem_region_release(void *start, std::size_t len);
-void *mem_region_map_file(void *file_handle, void *dest, std::size_t len, std::size_t offset, bool readwrite);
-bool mem_region_unmap_file(void *start, std::size_t len);
 
 class VArray2 {
 public:

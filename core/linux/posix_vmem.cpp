@@ -70,7 +70,7 @@ bool mem_region_unlock(void *start, size_t len)
 	return true;
 }
 
-bool mem_region_set_exec(void *start, size_t len)
+static bool mem_region_set_exec(void *start, size_t len)
 {
 	size_t inpage = (uintptr_t)start & PAGE_MASK;
 	if (mprotect((u8*)start - inpage, len + inpage, PROT_READ | PROT_WRITE | PROT_EXEC))
@@ -81,7 +81,7 @@ bool mem_region_set_exec(void *start, size_t len)
 	return true;
 }
 
-void *mem_region_reserve(void *start, size_t len)
+static void *mem_region_reserve(void *start, size_t len)
 {
 	void *p = mmap(start, len, PROT_NONE, MAP_PRIVATE | MAP_ANON, -1, 0);
 	if (p == MAP_FAILED)
@@ -93,12 +93,12 @@ void *mem_region_reserve(void *start, size_t len)
 		return p;
 }
 
-bool mem_region_release(void *start, size_t len)
+static bool mem_region_release(void *start, size_t len)
 {
 	return munmap(start, len) == 0;
 }
 
-void *mem_region_map_file(void *file_handle, void *dest, size_t len, size_t offset, bool readwrite)
+static void *mem_region_map_file(void *file_handle, void *dest, size_t len, size_t offset, bool readwrite)
 {
 	int flags = MAP_SHARED | MAP_NOSYNC | (dest != NULL ? MAP_FIXED : 0);
 	void *p = mmap(dest, len, PROT_READ | (readwrite ? PROT_WRITE : 0), flags, (int)(uintptr_t)file_handle, offset);
@@ -109,11 +109,6 @@ void *mem_region_map_file(void *file_handle, void *dest, size_t len, size_t offs
 	}
 	else
 		return p;
-}
-
-bool mem_region_unmap_file(void *start, size_t len)
-{
-	return mem_region_release(start, len);
 }
 
 // Allocates memory via a fd on shmem/ahmem or even a file on disk
@@ -237,7 +232,6 @@ void vmem_platform_create_mappings(const vmem_mapping *vmem_maps, unsigned numma
 
 		for (unsigned j = 0; j < num_mirrors; j++) {
 			u64 offset = vmem_maps[i].start_address + j * vmem_maps[i].memsize;
-//			verify(mem_region_unmap_file(&virt_ram_base[offset], vmem_maps[i].memsize));
 			verify(mem_region_map_file((void*)(uintptr_t)vmem_fd, &virt_ram_base[offset],
 					vmem_maps[i].memsize, vmem_maps[i].memoffset, vmem_maps[i].allow_writes) != NULL);
 		}
