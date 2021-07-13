@@ -878,7 +878,7 @@ bool gles_init()
 	glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
 #endif
 
-#ifdef GL_GENERATE_MIPMAP_HINT
+#if defined(GL_GENERATE_MIPMAP_HINT) && !defined(__SWITCH__)
 	if (gl.is_gles)
 		glHint(GL_GENERATE_MIPMAP_HINT, GL_FASTEST);
 #endif

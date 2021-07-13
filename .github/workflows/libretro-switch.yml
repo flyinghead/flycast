@@ -16,4 +16,4 @@ jobs:
       - name: CMake
         run: |
           cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=$DEVKITPRO/cmake/Switch.cmake -DLIBRETRO=ON
-          cmake --build build --config Release --parallel 2
+          cmake --build build --config Release --target combined --parallel 2

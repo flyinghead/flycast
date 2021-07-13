@@ -31,6 +31,14 @@ extern "C" {
 #include "code-buffer-vixl.h"
 #include "utils-vixl.h"
 
+#if defined(__SWITCH__)
+extern "C" char *stpcpy(char *dst, char const *src)
+{
+	size_t src_len = strlen(src);
+	return (char *)memcpy(dst, src, src_len) + src_len;
+}
+#endif
+
 namespace vixl {
 
 

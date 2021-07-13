@@ -1,0 +1,26 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 9842447..725adf6 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -12,7 +12,7 @@ option(INSTALL_STATIC_LIBS "Install static libraries" OFF)
+ option(WITH_SYSTEM_ZLIB "Use system provided zlib library" OFF)
+ 
+ if(CMAKE_C_COMPILER_ID MATCHES "GNU")
+-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fvisibility=hidden -fPIC -O3 -flto")
++  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fvisibility=hidden -fPIC -O3")
+   set(CMAKE_INTERPROCEDURAL_OPTIMIZATION ON)
+ elseif(CMAKE_C_COMPILER_ID MATCHES "Clang")
+   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3")
+diff --git a/include/libchdr/coretypes.h b/include/libchdr/coretypes.h
+index 9fda76d..c8ec622 100644
+--- a/include/libchdr/coretypes.h
++++ b/include/libchdr/coretypes.h
+@@ -37,7 +37,7 @@ typedef int8_t INT8;
+ #elif defined(_LARGEFILE_SOURCE) && defined(_FILE_OFFSET_BITS) && _FILE_OFFSET_BITS == 64
+ 	#define core_fseek fseeko64
+ 	#define core_ftell ftello64
+-#elif defined(__PS3__) && !defined(__PSL1GHT__)
++#elif defined(__PS3__) && !defined(__PSL1GHT__) || defined(__SWITCH__)
+     #define core_fseek(x,y,z) fseek(x,(off_t)y,z)
+     #define core_ftell(x) (off_t)ftell(x)
+ #else

@@ -56,7 +56,8 @@ if(LIBRETRO)
 	if (NINTENDO_SWITCH)
 		add_library(${PROJECT_NAME} STATIC core/emulator.cpp)
 		set(USE_VULKAN OFF)
-		set(USE_GLES ON)
+		set(USE_GLES OFF)
+		set(USE_GLES2 OFF)
 		enable_language(ASM)
 	else()
 	    add_library(${PROJECT_NAME} SHARED core/emulator.cpp)
@@ -117,7 +118,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE core core/deps core/deps/stb 
 if(LIBRETRO)
 	target_include_directories(${PROJECT_NAME} PRIVATE shell/libretro)
 	if(NINTENDO_SWITCH)
-		target_include_directories(${PROJECT_NAME} PRIVATE shell/switch)
+		target_include_directories(${PROJECT_NAME} PRIVATE shell/switch "${DEVKITPRO}/portlibs/switch/include")
 	endif()
 endif()
 
@@ -208,6 +209,8 @@ if(NOT LIBRETRO)
 	endif()
 endif()
 
+execute_process(COMMAND git apply -p1 ${CMAKE_CURRENT_SOURCE_DIR}/core/deps/patches/libchdr.patch
+		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/core/deps/libchdr) 
 add_subdirectory(core/deps/libchdr)
 target_link_libraries(${PROJECT_NAME} PRIVATE chdr-static)
 target_include_directories(${PROJECT_NAME} PRIVATE core/deps/libchdr/include)
@@ -334,7 +337,7 @@ if(NOT MINIUPNP_FOUND AND NOT NINTENDO_SWITCH)
 	target_link_libraries(${PROJECT_NAME} PRIVATE miniupnpc::miniupnpc)
 endif()
 
-if(NOT LIBZIP_FOUND)
+if(NOT LIBZIP_FOUND OR NINTENDO_SWITCH)
 	option(ENABLE_COMMONCRYPTO "Enable use of CommonCrypto" OFF)
 	option(ENABLE_GNUTLS "Enable use of GnuTLS" OFF)
 	option(ENABLE_MBEDTLS "Enable use of mbed TLS" OFF)
@@ -764,7 +767,6 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/wsi/context.h
         core/wsi/egl.cpp
         core/wsi/egl.h
-        core/wsi/gl4funcs.cpp
         core/wsi/gl_context.cpp
         core/wsi/gl_context.h
         core/wsi/libretro.cpp
@@ -783,6 +785,9 @@ if(NOT APPLE AND NOT LIBRETRO)
     target_sources(${PROJECT_NAME} PRIVATE
             core/wsi/gl32funcs.c
             core/wsi/gl32funcs.h)
+endif()
+if(NOT NINTENDO_SWITCH)
+	target_sources(${PROJECT_NAME} PRIVATE core/wsi/gl4funcs.cpp)
 endif()
 
 target_sources(${PROJECT_NAME} PRIVATE
@@ -1108,3 +1113,16 @@ if(BUILD_TESTING)
             tests/src/AicaArmTest.cpp
             tests/src/Sh4InterpreterTest.cpp)
 endif()
+
+if(NINTENDO_SWITCH)
+		add_custom_target(combined
+        	COMMAND ar -x $<TARGET_FILE:xxHash::xxhash>
+        	COMMAND ar -x $<TARGET_FILE:chdr-static>
+        	COMMAND ar -x $<TARGET_FILE:zip>
+        	COMMAND ar -rs libflycast_libretro.a *.obj
+        	COMMAND rm *.obj
+        	WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+        	DEPENDS xxHash::xxhash chdr-static zip)
+        add_dependencies(combined ${PROJECT_NAME})
+endif()
+

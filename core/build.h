@@ -181,6 +181,13 @@
 #define FEAT_DSPREC DYNAREC_NONE
 #endif
 
+#ifdef __SWITCH__
+#define FEAT_NO_RWX_PAGES
+// for now:
+#define FEAT_AREC DYNAREC_NONE
+#define FEAT_DSPREC DYNAREC_NONE
+#endif
+
 //defaults
 
 #ifndef FEAT_SHREC

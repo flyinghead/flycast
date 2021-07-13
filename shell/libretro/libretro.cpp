@@ -845,6 +845,9 @@ void retro_run()
 	if (devices_need_refresh)
 		refresh_devices(false);
 
+	if (config::RendererType.isOpenGL())
+		glsm_ctl(GLSM_CTL_STATE_BIND, nullptr);
+
 	if (config::ThreadedRendering)
 	{
 		bool fastforward = false;
@@ -860,25 +863,22 @@ void retro_run()
 
 		poll_cb();
 
-		if (config::RendererType == RenderType::OpenGL || config::RendererType == RenderType::OpenGL_OIT)
-			glsm_ctl(GLSM_CTL_STATE_BIND, NULL);
-
 		// Render
 		is_dupe = true;
 		for (int i = 0; i < 5 && is_dupe; i++)
 			is_dupe = !rend_single_frame(true);
-
-		if (config::RendererType == RenderType::OpenGL || config::RendererType == RenderType::OpenGL_OIT)
-			glsm_ctl(GLSM_CTL_STATE_UNBIND, NULL);
 	}
 	else
 	{
 		startTime = sh4_sched_now64();
 		dc_run(nullptr);
 	}
-#if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES) || defined(HAVE_VULKAN)
+
+	if (config::RendererType.isOpenGL())
+		glsm_ctl(GLSM_CTL_STATE_UNBIND, nullptr);
+
 	video_cb(is_dupe ? 0 : RETRO_HW_FRAME_BUFFER_VALID, framebufferWidth, framebufferHeight, 0);
-#endif
+
 	if (!config::ThreadedRendering)
 		is_dupe = true;
 }
