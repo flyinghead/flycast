@@ -130,7 +130,10 @@ void common_linux_setup();
 // If no folder exists, $HOME/.config/flycast is created and used.
 std::string find_user_config_dir()
 {
-#ifndef __SWITCH__
+#ifdef __SWITCH__
+	flycast::mkdir("/flycast", 0755);
+	return "/flycast/";
+#else
 	struct stat info;
 	std::string xdg_home;
 	if (nowide::getenv("HOME") != NULL)
@@ -168,9 +171,9 @@ std::string find_user_config_dir()
 
 		return fullpath;
 	}
-#endif
 	// Unable to detect config dir, use the current folder
 	return ".";
+#endif
 }
 
 // Find the user data directory.
@@ -181,7 +184,10 @@ std::string find_user_config_dir()
 // If no folder exists, $HOME/.local/share/flycast is created and used.
 std::string find_user_data_dir()
 {
-#ifndef __SWITCH__
+#ifdef __SWITCH__
+	flycast::mkdir("/flycast/data", 0755);
+	return "/flycast/data/";
+#else
 	struct stat info;
 	std::string xdg_home;
 	if (nowide::getenv("HOME") != NULL)
@@ -219,9 +225,9 @@ std::string find_user_data_dir()
 
 		return fullpath;
 	}
-#endif
 	// Unable to detect data dir, use the current folder
 	return ".";
+#endif
 }
 
 static void addDirectoriesFromPath(std::vector<std::string>& dirs, const std::string& path, const std::string& suffix)
@@ -256,7 +262,9 @@ std::vector<std::string> find_system_config_dirs()
 {
 	std::vector<std::string> dirs;
 
-#ifndef __SWITCH__
+#ifdef __SWITCH__
+	dirs.push_back("/flycast/");
+#else
 	std::string xdg_home;
 	if (nowide::getenv("HOME") != NULL)
 	{
@@ -311,7 +319,9 @@ std::vector<std::string> find_system_data_dirs()
 {
 	std::vector<std::string> dirs;
 
-#ifndef __SWITCH__
+#ifdef __SWITCH__
+	dirs.push_back("/flycast/data/");
+#else
 	std::string xdg_home;
 	if (nowide::getenv("HOME") != NULL)
 	{
