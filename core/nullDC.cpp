@@ -795,6 +795,8 @@ static std::string get_savestate_file_path(int index, bool writable)
 
 void dc_savestate(int index)
 {
+    gdxsv.RestoreOnlinePatch();
+
 	unsigned int total_size = 0 ;
 	void *data = NULL ;
 

@@ -27,6 +27,7 @@ void Gdxsv::Reset() {
     lbs_net.Reset();
     udp_net.Reset();
     patch_list.clear_patches();
+    RestoreOnlinePatch();
 
     // Automatically add ContentPath if it is empty.
     if (config::ContentPath.get().empty()) {
@@ -237,13 +238,11 @@ void Gdxsv::SyncNetwork(bool write) {
                 if (lbs_msg.command == LbsMessage::lbsReadyBattle) {
                     // Reset current patches for no-patched game
                     RestoreOnlinePatch();
-                    patch_list.clear_patches();
                     ext_player_info.clear();
                 }
                 if (lbs_msg.command == LbsMessage::lbsGamePatch) {
                     // Reset current patches and update patch_list
                     RestoreOnlinePatch();
-                    patch_list.clear_patches();
                     if (patch_list.ParseFromArray(lbs_msg.body.data(), lbs_msg.body.size())) {
                         ApplyOnlinePatch(true);
                     } else {
@@ -392,6 +391,7 @@ void Gdxsv::RestoreOnlinePatch() {
             }
         }
     }
+    patch_list.clear_patches();
 }
 
 void Gdxsv::WritePatch() {
