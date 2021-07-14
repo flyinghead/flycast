@@ -71,6 +71,8 @@ void select_file_popup(const char *prompt, StringCallback callback,
 				select_current_directory = home_drive;
 			select_current_directory += nowide::getenv("HOMEPATH");
 		}
+#elif defined(__SWITCH__)
+		select_current_directory = "/";
 #endif
 		if (select_current_directory.empty())
 		{
@@ -188,7 +190,7 @@ void select_file_popup(const char *prompt, StringCallback callback,
                         }
 					}
 					flycast::closedir(dir);
-#if defined(_WIN32) || defined(__ANDROID__)
+#if defined(_WIN32) || defined(__ANDROID__) || defined(__SWITCH__)
 					if (!dotdot_seen)
 						subfolders.emplace_back("..");
 #else
