@@ -8,7 +8,13 @@ jobs:
 
     steps:
       - name: Set up build environment
-        run: echo "y" | sudo ${ANDROID_HOME}/tools/bin/sdkmanager --install "ndk;20.0.5594570"
+        run: sudo apt-get update && sudo apt-get -y install ninja-build
+
+      # Workaround for https://github.com/actions/virtual-environments/issues/3078
+      - name: Downgrade CMake
+        uses: jwlawson/actions-setup-cmake@v1.9
+        with:
+          cmake-version: '3.19.x'
 
       - uses: actions/checkout@v2
         with:
@@ -26,19 +32,19 @@ jobs:
 
       - name: Gradle
         working-directory: shell/android-studio
-        run: ./gradlew assembleDebug --parallel
+        run: ./gradlew assembleRelease --parallel
 
       - uses: actions/upload-artifact@v2
         with:
-          name: flycast-debug.apk
-          path: shell/android-studio/flycast/build/outputs/apk/debug/flycast-debug.apk
+          name: flycast-release.apk
+          path: shell/android-studio/flycast/build/outputs/apk/release/flycast-release.apk
 
       - name: Set up git vars
         run: |
           echo GIT_BUILD=`git describe --all --always | sed 's/remotes\/origin/heads/'`-$GITHUB_SHA >> $GITHUB_ENV
 
       - name: Clean up
-        run: rm -f shell/android-studio/flycast/build/outputs/apk/debug/*.json
+        run: rm -f shell/android-studio/flycast/build/outputs/apk/release/*.json
 
       - uses: jakejarvis/s3-sync-action@master
         with:
@@ -48,6 +54,6 @@ jobs:
           AWS_ACCESS_KEY_ID: AKIAJOZQS4H2PHQWYFCA
           AWS_SECRET_ACCESS_KEY: ${{ secrets.S3_SECRET_KEY }}
           AWS_REGION: 'us-east-2'
-          SOURCE_DIR: 'shell/android-studio/flycast/build/outputs/apk/debug/'
+          SOURCE_DIR: 'shell/android-studio/flycast/build/outputs/apk/release/'
           DEST_DIR: android/${{ env.GIT_BUILD }}
         if: ${{ github.repository == 'flyinghead/flycast' && github.event_name == 'push' }}
