@@ -222,7 +222,7 @@ bool UdpClient::Bind(int port) {
     }
 
     memset(&recv_addr, 0, sizeof(recv_addr));
-    int addr_len = sizeof(recv_addr);
+    socklen_t addr_len = sizeof(recv_addr);
     if (::getsockname(new_sock, (struct sockaddr *) &recv_addr, &addr_len) < 0) {
         ERROR_LOG(COMMON, "gdxsv: getsockname() failed. errno=%d", get_last_error());
         closesocket(new_sock);
