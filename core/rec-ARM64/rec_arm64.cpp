@@ -1295,6 +1295,20 @@ public:
 		verify((void *)arm64_intc_sched == (void *)CodeCache);
 		B(&intc_sched);
 
+		// Not yet compiled block stub
+		// WARNING: this function must be at a fixed address, or transitioning to mmu will fail (switch)
+		ngen_FailedToFindBlock = (void (*)())CC_RW2RX(GetCursorAddress<uintptr_t>());
+		if (mmu_enabled())
+		{
+			GenCallRuntime(rdv_FailedToFindBlock_pc);
+		}
+		else
+		{
+			Mov(w0, w29);
+			GenCallRuntime(rdv_FailedToFindBlock);
+		}
+		Br(x0);
+
 		// void no_update()
 		Bind(&no_update);				// next_pc _MUST_ be on w29
 
@@ -1449,19 +1463,6 @@ public:
 		Bind(&linkBlockShared);
 		Sub(x0, lr, 4);	// go before the call
 		GenCallRuntime(rdv_LinkBlock);	// returns an RX addr
-		Br(x0);
-
-		// Not yet compiled block stub
-		ngen_FailedToFindBlock = (void (*)())CC_RW2RX(GetCursorAddress<uintptr_t>());
-		if (mmu_enabled())
-		{
-			GenCallRuntime(rdv_FailedToFindBlock_pc);
-		}
-		else
-		{
-			Mov(w0, w29);
-			GenCallRuntime(rdv_FailedToFindBlock);
-		}
 		Br(x0);
 
 		// Store Queue write handlers
