@@ -1,6 +1,6 @@
 #include "types.h"
 
-#if defined(__unix__)
+#if defined(__unix__) || defined(__SWITCH__)
 #include "hw/sh4/dyna/blockmanager.h"
 #include "log/LogManager.h"
 #include "emulator.h"
@@ -10,6 +10,13 @@
 #include <cstdarg>
 #include <csignal>
 #include <unistd.h>
+
+#if defined(__SWITCH__)
+// name conflict
+#define Event SwitchEvent
+#include <switch.h>
+#undef Event
+#endif
 
 #if defined(SUPPORT_DISPMANX)
 	#include "dispmanx.h"
@@ -123,6 +130,7 @@ void common_linux_setup();
 // If no folder exists, $HOME/.config/flycast is created and used.
 std::string find_user_config_dir()
 {
+#ifndef __SWITCH__
 	struct stat info;
 	std::string xdg_home;
 	if (nowide::getenv("HOME") != NULL)
@@ -160,7 +168,7 @@ std::string find_user_config_dir()
 
 		return fullpath;
 	}
-
+#endif
 	// Unable to detect config dir, use the current folder
 	return ".";
 }
@@ -173,6 +181,7 @@ std::string find_user_config_dir()
 // If no folder exists, $HOME/.local/share/flycast is created and used.
 std::string find_user_data_dir()
 {
+#ifndef __SWITCH__
 	struct stat info;
 	std::string xdg_home;
 	if (nowide::getenv("HOME") != NULL)
@@ -210,7 +219,7 @@ std::string find_user_data_dir()
 
 		return fullpath;
 	}
-
+#endif
 	// Unable to detect data dir, use the current folder
 	return ".";
 }
@@ -247,6 +256,7 @@ std::vector<std::string> find_system_config_dirs()
 {
 	std::vector<std::string> dirs;
 
+#ifndef __SWITCH__
 	std::string xdg_home;
 	if (nowide::getenv("HOME") != NULL)
 	{
@@ -275,6 +285,7 @@ std::vector<std::string> find_system_config_dirs()
 		dirs.push_back("/etc/flycast/"); // This isn't part of the XDG spec, but much more common than /etc/xdg/
 		dirs.push_back("/etc/xdg/flycast/");
 	}
+#endif
 	dirs.push_back("./");
 
 	return dirs;
@@ -300,6 +311,7 @@ std::vector<std::string> find_system_data_dirs()
 {
 	std::vector<std::string> dirs;
 
+#ifndef __SWITCH__
 	std::string xdg_home;
 	if (nowide::getenv("HOME") != NULL)
 	{
@@ -337,6 +349,7 @@ std::vector<std::string> find_system_data_dirs()
 		std::string path = (std::string)nowide::getenv("FLYCAST_BIOS_PATH");
 		addDirectoriesFromPath(dirs, path, "/");
 	}
+#endif
 	dirs.push_back("./");
 	dirs.push_back("data/");
 
@@ -345,6 +358,15 @@ std::vector<std::string> find_system_data_dirs()
 
 int main(int argc, char* argv[])
 {
+#if defined(__SWITCH__)
+	socketInitializeDefault();
+	nxlinkStdio();
+
+	hidInitializeTouchScreen();
+	hidInitializeMouse();
+	hidInitializeKeyboard();
+#endif // __SWITCH__
+
 	LogManager::Init();
 
 	// Set directories
@@ -365,7 +387,9 @@ int main(int argc, char* argv[])
 	}
 #endif
 
+#if defined(__unix__)
 	common_linux_setup();
+#endif
 
 	if (reicast_init(argc, argv))
 		die("Flycast initialization failed\n");
@@ -388,9 +412,12 @@ int main(int argc, char* argv[])
 
 	return 0;
 }
-#endif
 
+#if defined(__unix__)
 void os_DebugBreak()
 {
 	raise(SIGTRAP);
 }
+#endif
+
+#endif // __unix__ || __SWITCH__

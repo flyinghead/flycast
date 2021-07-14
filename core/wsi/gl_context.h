@@ -55,7 +55,7 @@ private:
 
 #include "sdl.h"
 
-#elif defined(GLES) || defined(__ANDROID__)
+#elif defined(GLES) || defined(__ANDROID__) || defined(__SWITCH__)
 
 #include "egl.h"
 

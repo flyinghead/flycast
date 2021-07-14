@@ -24,7 +24,10 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #ifdef __SWITCH__
+// name conflict
+#define Event SwitchEvent
 #include <switch.h>
+#undef Event
 #ifndef INADDR_NONE
 #define INADDR_NONE 0xffffffff
 #endif

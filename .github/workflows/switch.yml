@@ -1,0 +1,33 @@
+name: Nintendo Switch CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    name: ${{ matrix.config.name }}
+    runs-on: ubuntu-latest
+    container: devkitpro/devkita64:latest
+
+    strategy:
+      matrix:
+        config:
+          - {name: standalone}
+          - {name: libretro, cmakeArgs: -DLIBRETRO=ON}
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+          submodules: recursive
+
+      - name: CMake
+        run: |
+          cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=$DEVKITPRO/cmake/Switch.cmake ${{ matrix.config.cmakeArgs }}
+          cmake --build build --config Release --parallel 2
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: flycast-switch-${{ matrix.config.name }}
+          path: build/artifact
+
+          

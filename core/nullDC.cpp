@@ -52,6 +52,8 @@ int reicast_init(int argc, char* argv[])
 	os_SetupInput();
 
 	// Needed to avoid crash calling dc_is_running() in gui
+	if (!_nvmem_enabled())
+		dc_init();
 	Get_Sh4Interpreter(&sh4_cpu);
 	sh4_cpu.Init();
 	debugger::init();

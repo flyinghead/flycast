@@ -52,17 +52,24 @@ endif()
 string(TIMESTAMP BUILD_TIMESTAMP UTC)
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/core/version.h.in" "${CMAKE_CURRENT_SOURCE_DIR}/core/version.h" @ONLY)
 
-if(LIBRETRO)
-	if (NINTENDO_SWITCH)
-		add_library(${PROJECT_NAME} STATIC core/emulator.cpp)
-		set(USE_VULKAN OFF)
-		set(USE_GLES OFF)
-		set(USE_GLES2 OFF)
-		enable_language(ASM)
-		target_compile_definitions(${PROJECT_NAME} PRIVATE HAVE_LIBNX)
-	else()
-	    add_library(${PROJECT_NAME} SHARED core/emulator.cpp)
-	endif()
+if(NINTENDO_SWITCH)
+    set(USE_VULKAN OFF)
+    set(USE_GLES OFF)
+    set(USE_GLES2 OFF)
+    enable_language(ASM)
+
+    if(LIBRETRO)
+        add_library(${PROJECT_NAME} STATIC core/emulator.cpp)
+        target_compile_definitions(${PROJECT_NAME} PRIVATE LIBRETRO HAVE_LIBNX HAVE_OPENGL HAVE_OIT)
+		set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "flycast_libretro_libnx")
+		set(CMAKE_STATIC_LIBRARY_PREFIX "")
+    else()
+        add_executable(${PROJECT_NAME} core/emulator.cpp)
+        target_compile_definitions(${PROJECT_NAME} PRIVATE EGL_NO_PLATFORM_SPECIFIC_TYPES)
+    endif()
+ 
+elseif(LIBRETRO)
+    add_library(${PROJECT_NAME} SHARED core/emulator.cpp)
     set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--no-undefined")
     set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "flycast_libretro")
     set(CMAKE_SHARED_LIBRARY_PREFIX "")
@@ -118,9 +125,9 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
 target_include_directories(${PROJECT_NAME} PRIVATE core core/deps core/deps/stb core/khronos)
 if(LIBRETRO)
 	target_include_directories(${PROJECT_NAME} PRIVATE shell/libretro)
-	if(NINTENDO_SWITCH)
-		target_include_directories(${PROJECT_NAME} PRIVATE shell/switch "${DEVKITPRO}/portlibs/switch/include")
-	endif()
+endif()
+if(NINTENDO_SWITCH)
+	target_include_directories(${PROJECT_NAME} PRIVATE shell/switch "${DEVKITPRO}/portlibs/switch/include")
 endif()
 
 find_package(OpenMP)
@@ -191,6 +198,8 @@ if(NOT LIBRETRO)
 	    target_sources(${PROJECT_NAME} PRIVATE core/sdl/sdl.cpp core/sdl/sdl.h core/sdl/sdl_gamepad.h core/sdl/sdl_keyboard.h)
 	    if(APPLE)
 	        target_include_directories(${PROJECT_NAME} PRIVATE "${SDL2_INCLUDE_DIRS}/..")
+	    elseif(NINTENDO_SWITCH)
+	        target_include_directories(${PROJECT_NAME} PRIVATE "${DEVKITPRO}/portlibs/switch/include/SDL2")
 	    else()
 	        target_include_directories(${PROJECT_NAME} PRIVATE ${SDL2_INCLUDE_DIRS})
 	    endif()
@@ -787,7 +796,7 @@ if(NOT APPLE AND NOT LIBRETRO)
             core/wsi/gl32funcs.c
             core/wsi/gl32funcs.h)
 endif()
-if(NOT NINTENDO_SWITCH)
+if(NOT (NINTENDO_SWITCH AND LIBRETRO))
 	target_sources(${PROJECT_NAME} PRIVATE core/wsi/gl4funcs.cpp)
 endif()
 
@@ -1082,7 +1091,7 @@ if(NOT LIBRETRO)
 	    find_library(AUDIO_TOOLBOX_LIBRARY AudioToolbox)
 	
 	    target_link_libraries(${PROJECT_NAME} PRIVATE ${AUDIO_UNIT_LIBRARY} ${FOUNDATION_LIBRARY} ${AUDIO_TOOLBOX_LIBRARY})
-	elseif(UNIX)
+	elseif(UNIX OR NINTENDO_SWITCH)
 	    if(NOT BUILD_TESTING)
 	        target_sources(${PROJECT_NAME} PRIVATE
 	                core/linux-dist/main.cpp)
@@ -1116,15 +1125,27 @@ if(BUILD_TESTING)
 endif()
 
 if(NINTENDO_SWITCH)
-		add_custom_target(combined
-        	COMMAND ${CMAKE_AR} -x $<TARGET_FILE:xxHash::xxhash>
-        	COMMAND ${CMAKE_AR} -x $<TARGET_FILE:chdr-static>
-        	COMMAND ${CMAKE_AR} -x $<TARGET_FILE:zip>
-        	COMMAND ${CMAKE_AR} -rs libflycast_libretro.a *.obj
-        	COMMAND mv libflycast_libretro.a flycast_libretro_libnx.a
-        	COMMAND rm *.obj
-        	WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-        	DEPENDS xxHash::xxhash chdr-static zip)
-        add_dependencies(combined ${PROJECT_NAME})
+	if(LIBRETRO)
+		add_custom_target(combined ALL
+	    	COMMAND ${CMAKE_AR} -x $<TARGET_FILE:xxHash::xxhash>
+	    	COMMAND ${CMAKE_AR} -x $<TARGET_FILE:chdr-static>
+	    	COMMAND ${CMAKE_AR} -x $<TARGET_FILE:zip>
+	    	COMMAND ${CMAKE_AR} -rs flycast_libretro_libnx.a *.obj
+	    	COMMAND rm *.obj
+	    	WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+	    	DEPENDS xxHash::xxhash chdr-static zip)
+	    add_dependencies(combined ${PROJECT_NAME})
+	else()
+		add_custom_command(OUTPUT flycast.nacp
+			COMMAND ${DEVKITPRO}/tools/bin/nacptool --create Flycast "flyinghead, M4xw" ${GIT_VERSION} ${CMAKE_BINARY_DIR}/flycast.nacp
+			COMMENT "Generating NACP info")
+	
+		add_custom_command(OUTPUT flycast.nro
+	    	COMMAND mkdir -p ${CMAKE_BINARY_DIR}/artifact
+			COMMAND ${DEVKITPRO}/tools/bin/elf2nro ${CMAKE_BINARY_DIR}/flycast ${CMAKE_BINARY_DIR}/artifact/flycast.nro --icon=${CMAKE_SOURCE_DIR}/shell/linux/flycast.png --nacp=${CMAKE_BINARY_DIR}/flycast.nacp
+			DEPENDS flycast.nacp ${CMAKE_BINARY_DIR}/flycast
+			COMMENT "Generating NRO")
+		add_custom_target(nro ALL DEPENDS flycast.nacp flycast.nro)
+	endif()
 endif()
 
