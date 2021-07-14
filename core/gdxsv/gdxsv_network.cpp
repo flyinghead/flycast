@@ -235,7 +235,7 @@ bool UdpClient::Bind(int port) {
 
     sock_ = new_sock;
     bind_ip_ = std::string(::inet_ntoa(recv_addr.sin_addr));
-    bind_port_ = ::ntohs(recv_addr.sin_port);
+    bind_port_ = ntohs(recv_addr.sin_port);
     NOTICE_LOG(COMMON, "UDP Initialize ok: %s:%d", bind_ip_.c_str(), bind_port_);
     return true;
 }
@@ -255,7 +255,7 @@ int UdpClient::RecvFrom(char *buf, int len, std::string &sender) {
         WARN_LOG(COMMON, "UDP Recv failed. errno=%d", get_last_error());
         return 0;
     }
-    sender = std::string(::inet_ntoa(from_addr.sin_addr)) + ":" + std::to_string(::ntohs(from_addr.sin_port));
+    sender = std::string(::inet_ntoa(from_addr.sin_addr)) + ":" + std::to_string(ntohs(from_addr.sin_port));
     if (n < 0) return 0;
     return n;
 }
