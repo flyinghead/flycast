@@ -1132,6 +1132,8 @@ if(NINTENDO_SWITCH)
 	    	COMMAND ${CMAKE_AR} -x $<TARGET_FILE:zip>
 	    	COMMAND ${CMAKE_AR} -rs flycast_libretro_libnx.a *.obj
 	    	COMMAND rm *.obj
+	    	COMMAND mkdir -p artifact
+	    	COMMAND mv flycast_libretro_libnx.a artifact
 	    	WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
 	    	DEPENDS xxHash::xxhash chdr-static zip)
 	    add_dependencies(combined ${PROJECT_NAME})
