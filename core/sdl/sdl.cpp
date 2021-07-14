@@ -179,6 +179,15 @@ void input_sdl_init()
 
 	checkRawInput();
 #endif
+
+#ifdef __SWITCH
+    // open CONTROLLER_PLAYER_1 and CONTROLLER_PLAYER_2
+    // when railed, both joycons are mapped to joystick #0,
+    // else joycons are individually mapped to joystick #0, joystick #1, ...
+    // https://github.com/devkitPro/SDL/blob/switch-sdl2/src/joystick/switch/SDL_sysjoystick.c#L45
+	sdl_open_joystick(0);
+	sdl_open_joystick(1);
+#endif
 }
 
 inline void SDLMouse::setAbsPos(int x, int y) {
