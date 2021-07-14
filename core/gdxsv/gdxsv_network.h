@@ -6,7 +6,7 @@
 
 #include "types.h"
 #include "network/net_platform.h"
-#include "packet.pb.h"
+#include "gdxsv.pb.h"
 
 class TcpClient {
 public:
@@ -45,7 +45,7 @@ class MessageBuffer {
 public:
     static const int kBufSize = 50;
 
-    MessageBuffer() = default;
+    MessageBuffer();
 
     void SessionId(const std::string &session_id);
 
@@ -72,16 +72,15 @@ public:
     void Clear();
 
 private:
-    std::mutex mtx;
     std::map<std::string, u32> recv_seq;
 };
 
 
 class UdpRemote {
 public:
-    bool Open(const char* host, int port);
+    bool Open(const char *host, int port);
 
-    bool Open(const std::string& addr);
+    bool Open(const std::string &addr);
 
     void Close();
 
@@ -91,13 +90,10 @@ public:
 
     const sockaddr_in &net_addr() const;
 
-    MessageBuffer &msg_buf();
-
 private:
     bool is_open_;
     std::string str_addr_;
     sockaddr_in net_addr_;
-    MessageBuffer msg_buf_;
 };
 
 class UdpClient {
@@ -106,9 +102,9 @@ public:
 
     bool Initialized() const;
 
-    int RecvFrom(char *buf, int len, std::string& sender);
+    int RecvFrom(char *buf, int len, std::string &sender);
 
-    int SendTo(const char *buf, int len, const UdpRemote& remote);
+    int SendTo(const char *buf, int len, const UdpRemote &remote);
 
     u32 ReadableSize() const;
 

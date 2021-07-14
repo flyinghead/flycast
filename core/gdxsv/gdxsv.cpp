@@ -3,28 +3,20 @@
 #include <sstream>
 #include <random>
 #include <regex>
-#include <iomanip>
 #include <xxhash.h>
 
-#include "gdxsv.pb.h"
-#include "lbs_message.h"
-#include "gdx_queue.h"
-#include "version.h"
-#include "rend/gui.h"
-#include "oslib/oslib.h"
 #include "lzma/CpuArch.h"
+#include "oslib/oslib.h"
+#include "version.h"
 
 Gdxsv::~Gdxsv() {
-    tcp_client.Close();
-    net_terminate = true;
-    if (net_thread.joinable()) {
-        net_thread.join();
+    if (gcp_ping_test_thread.joinable()) {
+        gcp_ping_test_thread.join();
     }
-    CloseMcsRemoteWithReason("cl_hard_quit");
 }
 
 bool Gdxsv::InGame() const {
-    return enabled && udp_client.Initialized() && mcs_remote.is_open();
+    return enabled && udp_net.IsConnected();
 }
 
 bool Gdxsv::Enabled() const {
@@ -32,13 +24,17 @@ bool Gdxsv::Enabled() const {
 }
 
 void Gdxsv::Reset() {
-    tcp_client.Close();
-    CloseMcsRemoteWithReason("cl_hard_reset");
+    lbs_net.Reset();
+    udp_net.Reset();
     patch_list.clear_patches();
 
     // Automatically add ContentPath if it is empty.
     if (config::ContentPath.get().empty()) {
         config::ContentPath.get().push_back("./");
+    }
+
+    if (!gcp_ping_test_thread.joinable()) {
+        gcp_ping_test_thread = std::thread([this]() { GcpPingTest(); });
     }
 
     auto game_id = std::string(ip_meta.product_number, sizeof(ip_meta.product_number));
@@ -52,22 +48,8 @@ void Gdxsv::Reset() {
     signal(SIGPIPE, SIG_IGN);
 #endif
 
-    if (!net_thread.joinable()) {
-        NOTICE_LOG(COMMON, "start net thread");
-        net_thread = std::thread([this]() {
-            UpdateNetwork();
-            NOTICE_LOG(COMMON, "end net thread");
-        });
-    }
-
-    if (!udp_client.Initialized()) {
-        udp_client.Bind(0);
-    }
-
     server = cfgLoadStr("gdxsv", "server", "zdxsv.net");
-    maxlag = cfgLoadInt("gdxsv", "maxlag", 8); // Note: This should be not configurable. This is for development.
     loginkey = cfgLoadStr("gdxsv", "loginkey", "");
-    bool overwriteconf = cfgLoadBool("gdxsv", "overwriteconf", true);
 
     if (loginkey.empty()) {
         loginkey = GenerateLoginKey();
@@ -75,14 +57,12 @@ void Gdxsv::Reset() {
 
     cfgSaveStr("gdxsv", "server", server.c_str());
     cfgSaveStr("gdxsv", "loginkey", loginkey.c_str());
-    cfgSaveBool("gdxsv", "overwriteconf", overwriteconf);
 
     std::string disk_num(ip_meta.disk_num, 1);
     if (disk_num == "1") disk = 1;
     if (disk_num == "2") disk = 2;
 
-    NOTICE_LOG(COMMON, "gdxsv disk:%d server:%s loginkey:%s maxlag:%d", (int) disk, server.c_str(), loginkey.c_str(),
-               (int) maxlag);
+    NOTICE_LOG(COMMON, "gdxsv disk:%d server:%s loginkey:%s", (int) disk, server.c_str(), loginkey.c_str());
 }
 
 void Gdxsv::Update() {
@@ -143,7 +123,6 @@ std::string Gdxsv::GeneratePlatformInfoString() {
        #endif
        << "\n";
     ss << "disk=" << (int) disk << "\n";
-    ss << "maxlag=" << (int) maxlag << "\n";
     ss << "patch_id=" << symbols[":patch_id"] << "\n";
     std::string machine_id = os_GetMachineID();
     if (machine_id.length()) {
@@ -151,8 +130,8 @@ std::string Gdxsv::GeneratePlatformInfoString() {
         ss << "machine_id=" << std::hex << digest << std::dec << "\n";
     }
     ss << "wireless=" << (int) (os_GetConnectionMedium() == "Wireless") << "\n";
-    ss << "local_ip=" << tcp_client.local_ip() << "\n";
-    ss << "bind_port=" << udp_client.bind_port() << "\n";
+    ss << "local_ip=" << lbs_net.LocalIP() << "\n";
+    // ss << "bind_port=" << .bind_port() << "\n";
 
     if (gcp_ping_test_finished) {
         for (const auto &res : gcp_ping_test_result) {
@@ -181,158 +160,74 @@ std::vector<u8> Gdxsv::GeneratePlatformInfoPacket() {
 }
 
 void Gdxsv::SyncNetwork(bool write) {
-    if (write) {
-        gdx_queue q;
-        u32 gdx_txq_addr = symbols["gdx_txq"];
-        if (gdx_txq_addr == 0) return;
-        u32 buf_addr = gdx_txq_addr + 4;
-        q.head = ReadMem16_nommu(gdx_txq_addr);
-        q.tail = ReadMem16_nommu(gdx_txq_addr + 2);
-        int n = gdx_queue_size(&q);
-        if (0 < n) {
-            send_buf_mtx.lock();
-            for (int i = 0; i < n; ++i) {
-                send_buf.push_back(ReadMem8_nommu(buf_addr + q.head));
-                gdx_queue_pop(&q);
-            }
-            send_buf_mtx.unlock();
-            WriteMem16_nommu(gdx_txq_addr, q.head);
-        }
-    } else {
-        gdx_rpc_t gdx_rpc;
-        u32 gdx_rpc_addr = symbols["gdx_rpc"];
-        if (gdx_rpc_addr == 0) return;
-        gdx_rpc.request = ReadMem32_nommu(gdx_rpc_addr);
-        if (gdx_rpc.request) {
-            gdx_rpc.response = ReadMem32_nommu(gdx_rpc_addr + 4);
-            gdx_rpc.param1 = ReadMem32_nommu(gdx_rpc_addr + 8);
-            gdx_rpc.param2 = ReadMem32_nommu(gdx_rpc_addr + 12);
-            gdx_rpc.param3 = ReadMem32_nommu(gdx_rpc_addr + 16);
-            gdx_rpc.param4 = ReadMem32_nommu(gdx_rpc_addr + 20);
+    gdx_rpc_t gdx_rpc{};
+    u32 gdx_rpc_addr = symbols["gdx_rpc"];
+    if (gdx_rpc_addr == 0) {
+        return;
+    }
 
-            if (gdx_rpc.request == GDXRPC_TCP_OPEN) {
-                recv_buf_mtx.lock();
-                recv_buf.clear();
-                lbs_msg_reader.Clear();
-                recv_buf_mtx.unlock();
+    gdx_rpc.request = ReadMem32_nommu(gdx_rpc_addr);
+    if (gdx_rpc.request) {
+        gdx_rpc.response = ReadMem32_nommu(gdx_rpc_addr + 4);
+        gdx_rpc.param1 = ReadMem32_nommu(gdx_rpc_addr + 8);
+        gdx_rpc.param2 = ReadMem32_nommu(gdx_rpc_addr + 12);
+        gdx_rpc.param3 = ReadMem32_nommu(gdx_rpc_addr + 16);
+        gdx_rpc.param4 = ReadMem32_nommu(gdx_rpc_addr + 20);
 
-                send_buf_mtx.lock();
-                send_buf.clear();
-                send_buf_mtx.unlock();
+        if (gdx_rpc.request == GDXRPC_TCP_OPEN) {
+            u32 tolobby = gdx_rpc.param1;
+            u32 host_ip = gdx_rpc.param2;
+            u32 port_no = gdx_rpc.param3;
 
-                u32 tolobby = gdx_rpc.param1;
-                u32 host_ip = gdx_rpc.param2;
-                u32 port_no = gdx_rpc.param3;
+            std::string host = server;
+            u16 port = port_no;
 
-                std::string host = server;
-                u16 port = port_no;
-
-                if (tolobby == 1) {
-                    CloseMcsRemoteWithReason("cl_to_lobby");
-                    bool ok = tcp_client.Connect(host.c_str(), port);
-                    if (ok) {
-                        tcp_client.SetNonBlocking();
-                        auto packet = GeneratePlatformInfoPacket();
-                        send_buf_mtx.lock();
-                        send_buf.clear();
-                        std::copy(begin(packet), end(packet), std::back_inserter(send_buf));
-                        send_buf_mtx.unlock();
-                    } else {
-                        WARN_LOG(COMMON, "Failed to connect with TCP %s:%d", host.c_str(), port);
-                    }
-                } else {
-                    tcp_client.Close();
-                    char addr_buf[INET_ADDRSTRLEN];
-                    inet_ntop(AF_INET, &host_ip, addr_buf, INET_ADDRSTRLEN);
-                    host = std::string(addr_buf);
-                    mcs_remote.Close();
-                    bool ok = mcs_remote.Open(host.c_str(), port);
-                    if (ok) {
-                        send_buf_mtx.lock();
-                        send_buf.clear();
-                        send_buf_mtx.unlock();
-
-                        start_udp_session = true;
-                        recv_buf_mtx.lock();
-                        recv_buf.clear();
-                        lbs_msg_reader.Clear();
-                        recv_buf_mtx.unlock();
-                    } else {
-                        WARN_LOG(COMMON, "Failed to connect with UDP %s:%d", host.c_str(), port);
-                        ok = tcp_client.Connect(host.c_str(), port);
-                        if (ok) {
-                            tcp_client.SetNonBlocking();
-
-                            send_buf_mtx.lock();
-                            send_buf.clear();
-                            send_buf_mtx.unlock();
-
-                            recv_buf_mtx.lock();
-                            recv_buf.clear();
-                            lbs_msg_reader.Clear();
-                            recv_buf_mtx.unlock();
-                        } else {
-                            WARN_LOG(COMMON, "Failed to connect with TCP %s:%d", host.c_str(), port);
-                        }
-                    }
+            if (tolobby == 1) {
+                udp_net.CloseMcsRemoteWithReason("cl_to_lobby");
+                if (lbs_net.Connect(host, port)) {
+                    auto packet = GeneratePlatformInfoPacket();
+                    lbs_net.Send(packet);
                 }
+            } else {
+                lbs_net.Close();
+                char addr_buf[INET_ADDRSTRLEN];
+                inet_ntop(AF_INET, &host_ip, addr_buf, INET_ADDRSTRLEN);
+                host = std::string(addr_buf);
+                udp_net.Connect(host, port);
             }
-
-            if (gdx_rpc.request == GDXRPC_TCP_CLOSE) {
-                tcp_client.Close();
-
-                if (gdx_rpc.param2 == 0) {
-                    CloseMcsRemoteWithReason("cl_app_close");
-                } else if (gdx_rpc.param2 == 1) {
-                    CloseMcsRemoteWithReason("cl_ppp_close");
-                } else if (gdx_rpc.param2 == 2) {
-                    CloseMcsRemoteWithReason("cl_soft_reset");
-                } else {
-                    CloseMcsRemoteWithReason("cl_tcp_close");
-                }
-
-                recv_buf_mtx.lock();
-                recv_buf.clear();
-                lbs_msg_reader.Clear();
-                recv_buf_mtx.unlock();
-
-                send_buf_mtx.lock();
-                send_buf.clear();
-                send_buf_mtx.unlock();
-            }
-
-            WriteMem32_nommu(gdx_rpc_addr, 0);
-            WriteMem32_nommu(gdx_rpc_addr + 4, 0);
-            WriteMem32_nommu(gdx_rpc_addr + 8, 0);
-            WriteMem32_nommu(gdx_rpc_addr + 12, 0);
-            WriteMem32_nommu(gdx_rpc_addr + 16, 0);
-            WriteMem32_nommu(gdx_rpc_addr + 20, 0);
         }
 
-        WriteMem32_nommu(symbols["is_online"], tcp_client.IsConnected() || udp_client.Initialized());
+        if (gdx_rpc.request == GDXRPC_TCP_CLOSE) {
+            lbs_net.Close();
 
-        recv_buf_mtx.lock();
-        int n = recv_buf.size();
-        recv_buf_mtx.unlock();
-        if (0 < n) {
-            recv_buf_mtx.lock();
-
-            gdx_queue q;
-            u32 gdx_rxq_addr = symbols["gdx_rxq"];
-            u32 buf_addr = gdx_rxq_addr + 4;
-            q.head = ReadMem16_nommu(gdx_rxq_addr);
-            q.tail = ReadMem16_nommu(gdx_rxq_addr + 2);
-
-            u8 buf[GDX_QUEUE_SIZE];
-            n = std::min<int>(recv_buf.size(), gdx_queue_avail(&q));
-            for (int i = 0; i < n; ++i) {
-                WriteMem8_nommu(buf_addr + q.tail, recv_buf.front());
-                recv_buf.pop_front();
-                gdx_queue_push(&q, 0);
+            if (gdx_rpc.param2 == 0) {
+                udp_net.CloseMcsRemoteWithReason("cl_app_close");
+            } else if (gdx_rpc.param2 == 1) {
+                udp_net.CloseMcsRemoteWithReason("cl_ppp_close");
+            } else if (gdx_rpc.param2 == 2) {
+                udp_net.CloseMcsRemoteWithReason("cl_soft_reset");
+            } else {
+                udp_net.CloseMcsRemoteWithReason("cl_tcp_close");
             }
-            WriteMem16_nommu(gdx_rxq_addr + 2, q.tail);
+        }
 
-            while (lbs_msg_reader.Read(lbs_msg)) {
+        WriteMem32_nommu(gdx_rpc_addr, 0);
+        WriteMem32_nommu(gdx_rpc_addr + 4, 0);
+        WriteMem32_nommu(gdx_rpc_addr + 8, 0);
+        WriteMem32_nommu(gdx_rpc_addr + 12, 0);
+        WriteMem32_nommu(gdx_rpc_addr + 16, 0);
+        WriteMem32_nommu(gdx_rpc_addr + 20, 0);
+    }
+
+    WriteMem32_nommu(symbols["is_online"], lbs_net.IsConnected() || udp_net.IsConnected());
+
+    if (lbs_net.IsConnected()) {
+        if (write) {
+            lbs_net.OnGameWrite();
+        } else {
+            lbs_net.OnGameRead([this](const LbsMessage &lbs_msg) {
+                NOTICE_LOG(COMMON, "RECV cmd:%0x4d size:%d", lbs_msg.command, lbs_msg.body_size);
+
                 if (lbs_msg.command == LbsMessage::lbsExtPlayerInfo) {
                     proto::ExtPlayerInfo player_info;
                     if (player_info.ParseFromArray(lbs_msg.body.data(), lbs_msg.body.size())) {
@@ -343,6 +238,7 @@ void Gdxsv::SyncNetwork(bool write) {
                     // Reset current patches for no-patched game
                     RestoreOnlinePatch();
                     patch_list.clear_patches();
+                    ext_player_info.clear();
                 }
                 if (lbs_msg.command == LbsMessage::lbsGamePatch) {
                     // Reset current patches and update patch_list
@@ -354,9 +250,13 @@ void Gdxsv::SyncNetwork(bool write) {
                         ERROR_LOG(COMMON, "patch_list deserialize error");
                     }
                 }
-            }
-
-            recv_buf_mtx.unlock();
+            });
+        }
+    } else if (udp_net.IsConnected()) {
+        if (write) {
+            udp_net.OnGameWrite();
+        } else {
+            udp_net.OnGameRead();
         }
     }
 }
@@ -438,707 +338,6 @@ void Gdxsv::GcpPingTest() {
     gui_display_notification("Google Cloud latency checked!", 3000);
 }
 
-void Gdxsv::UpdateNetwork() {
-    MessageFilter message_filter;
-    std::vector<UdpRemote> testing_remotes;
-    std::map<std::string, float> relay_user_ping, p2p_user_ping;
-    std::map<std::string, int> relay_user_ping_count, p2p_user_ping_count;
-    std::map<std::string, UdpRemote> p2p_user_remote;
-
-    int udp_retransmit_countdown = 0;
-    u8 buf[16 * 1024];
-    proto::Packet pkt;
-    std::string sender;
-
-    enum class NetState {
-        None,
-        GlobalPingTest,
-        InLobby,
-        LbsToMcsInit,
-        McsJoinRoom,
-        McsPingTest,
-        InBattle,
-        Closing,
-    };
-
-    NetState state = NetState::GlobalPingTest;
-    NetState prev_state = NetState::GlobalPingTest;
-    int state_count = 0;
-
-    // NetworkThread Loop
-    while (!net_terminate) {
-        bool skip_sleep = false;
-        bool skip_send_sync = false;
-        bool skip_recv_sync = false;
-
-        state_count++;
-        if (prev_state != state) {
-            prev_state = state;
-            state_count = 0;
-        }
-
-        switch (state) {
-            case NetState::GlobalPingTest:
-                GcpPingTest();
-                state = NetState::None;
-                break;
-
-            case NetState::None:
-                std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-                if (tcp_client.IsConnected()) {
-                    // TODO: need more better flag
-                    state = NetState::InLobby;
-                }
-                break;
-
-            case NetState::InLobby:
-                if (!tcp_client.IsConnected()) {
-                    state = NetState::Closing;
-                }
-                if (start_udp_session) {
-                    state = NetState::LbsToMcsInit;
-                    start_udp_session = false;
-                }
-                break;
-
-            case NetState::LbsToMcsInit:
-                udp_retransmit_countdown = 0;
-
-                testing_remotes.clear();
-                ping_results.clear();
-                user_ping.clear();
-                user_id.clear();
-                session_id.clear();
-                message_buf.Clear();
-                message_filter.Clear();
-
-                send_buf_mtx.lock();
-                send_buf.clear();
-                send_buf_mtx.unlock();
-
-                // send original server hello packet to the game
-                recv_buf_mtx.lock();
-                recv_buf.assign({0x0e, 0x61, 0x00, 0x22, 0x10, 0x31, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd});
-                recv_buf_mtx.unlock();
-
-                for (auto &p : ext_player_info) {
-                    for (int j = 0; j < p.addr_list_size(); j++) {
-                        UdpRemote remote;
-                        if (remote.Open(p.addr_list(j))) {
-                            testing_remotes.emplace_back(remote);
-                        }
-                    }
-                }
-
-                state = NetState::McsJoinRoom;
-                break;
-
-            case NetState::McsJoinRoom:
-                // waiting the game send session_id
-                if (session_id.empty()) {
-                    break;
-                }
-                if (!user_id.empty()) {
-                    state = NetState::McsPingTest;
-                    break;
-                }
-                if (state_count % 100 == 0) {
-                    NOTICE_LOG(COMMON, "session_id:%s", session_id.c_str());
-                    pkt.Clear();
-                    pkt.set_type(proto::MessageType::HelloServer);
-                    pkt.set_session_id(session_id);
-                    if (!pkt.SerializeToArray((void *) buf, (int) sizeof(buf))) {
-                        ERROR_LOG(COMMON, "packet serialize error");
-                        state = NetState::Closing;
-                        break;
-                    }
-                    udp_client.SendTo((const char *) buf, pkt.GetCachedSize(), mcs_remote);
-                }
-                break;
-
-            case NetState::McsPingTest:
-                // First ping test before battle to determine maxlag
-                if (state_count % 1000 == 0) {
-                    if (p2p_user_ping_count)
-                }
-                if (state_count % 16 == 0) {
-                    pkt.Clear();
-                    pkt.set_type(proto::MessageType::Ping);
-                    pkt.mutable_ping_data()->set_user_id(user_id);
-                    pkt.mutable_ping_data()->set_timestamp(
-                            std::chrono::duration_cast<std::chrono::milliseconds>(
-                                    std::chrono::high_resolution_clock::now().time_since_epoch()).count());
-
-                    if (pkt.SerializePartialToArray((void *) buf, (int) sizeof(buf))) {
-                        udp_client.SendTo((const char *) buf, pkt.GetCachedSize(), mcs_remote);
-                        for (auto &remote : testing_remotes) {
-                            udp_client.SendTo((const char *) buf, pkt.GetCachedSize(), remote);
-                        }
-                    }
-                }
-                break;
-            case NetState::InBattle:
-                break;
-            case NetState::Closing:
-                break;
-        }
-
-        int n = udp_client.RecvFrom((char *) buf, sizeof(buf), sender);
-        if (0 < n && pkt.ParseFromArray(buf, n)) {
-            switch (pkt.type()) {
-                case proto::MessageType::None:
-                    break;
-
-                case proto::MessageType::HelloServer:
-                    if (state == NetState::McsJoinRoom) {
-                        if (sender == mcs_remote.str_addr() && pkt.hello_server_data().ok()) {
-                            user_id = pkt.hello_server_data().user_id();
-                        }
-                    }
-                    break;
-
-                case proto::MessageType::Ping:
-                    break;
-
-                case proto::MessageType::Pong:
-                    auto t2 = std::chrono::duration_cast<std::chrono::milliseconds>(
-                            std::chrono::high_resolution_clock::now().time_since_epoch()).count();
-                    auto rtt = static_cast<float>(t2 - pkt.pong_data().timestamp());
-                    const auto &sender_id = pkt.pong_data().user_id();
-                    if (sender == mcs_remote.str_addr()) {
-                        float w = static_cast<float>(std::min(++relay_user_ping_count[sender_id], 10));
-                        relay_user_ping[sender_id] = (relay_user_ping[sender_id] * w + rtt) / (w + 1.0f);
-                    } else {
-                        if (p2p_user_remote.find(sender_id) == p2p_user_remote.end()) {
-                            auto it = std::find_if(testing_remotes.begin(), testing_remotes.end(),
-                                         [&sender](const UdpRemote &remote) { return remote.str_addr() == sender; });
-                            if (it != testing_remotes.end()) {
-                                p2p_user_remote[sender_id] = *it;
-                            }
-                        }
-                        if (p2p_user_remote[sender_id].str_addr() == sender) {
-                            float w = static_cast<float>(std::min(++p2p_user_ping_count[sender_id], 10));
-                            p2p_user_ping[sender_id] = (p2p_user_ping[sender_id] * w + rtt * 1.0f) / (w + 1.0f);
-                        }
-                    }
-                    break;
-
-                case proto::MessageType::Battle:
-                    if (!skip_recv_sync) {
-                        //TODO
-                    }
-                    break;
-
-                case proto::Fin:
-                    CloseMcsRemoteWithReason("cl_recv_fin");
-                    state = NetState::Closing;
-                    break;
-            }
-        }
-
-        if (!skip_send_sync) {
-            send_buf_mtx.lock();
-            n = send_buf.size();
-            if (n == 0) {
-                send_buf_mtx.unlock();
-            } else if (state == NetState::McsJoinRoom) {
-                // recv session id from the game
-                if (20 <= send_buf.size()) {
-                    for (int i = 12; i < 20; ++i) {
-                        session_id.push_back((char) send_buf[i]);
-                    }
-                    // discard the message
-                    for (int i = 0; i < 20; ++i) {
-                        send_buf.pop_front();
-                    }
-                }
-                send_buf_mtx.unlock();
-            } else {
-                n = std::min<int>(n, sizeof(buf));
-                for (int i = 0; i < n; ++i) {
-                    buf[i] = send_buf.front();
-                    send_buf.pop_front();
-                }
-                send_buf_mtx.unlock();
-
-                if (tcp_client.IsConnected()) {
-                    int m = tcp_client.Send((char *) buf, n);
-                    if (m < n) {
-                        send_buf_mtx.lock();
-                        for (int i = n - 1; m <= i; --i) {
-                            send_buf.push_front(buf[i]);
-                        }
-                        send_buf_mtx.unlock();
-                    }
-                } else if (udp_client.Initialized() && mcs_remote.is_open()) {
-                    if (message_buf.CanPush()) {
-                        message_buf.PushBattleMessage(user_id, buf, n);
-                        if (message_buf.Packet().SerializeToArray((void *) buf, (int) sizeof(buf))) {
-                            if (udp_client.SendTo((const char *) buf, message_buf.Packet().GetCachedSize(),
-                                                  mcs_remote)) {
-                                udp_retransmit_countdown = 16;
-                            } else {
-                                udp_retransmit_countdown = 4;
-                            }
-                        } else {
-                            ERROR_LOG(COMMON, "packet serialize error");
-                        }
-                    } else {
-                        send_buf_mtx.lock();
-                        for (int i = n - 1; 0 <= i; --i) {
-                            send_buf.push_front(buf[i]);
-                        }
-                        send_buf_mtx.unlock();
-                        WARN_LOG(COMMON, "message_buf is full");
-                    }
-                }
-                skip_sleep = true;
-            }
-        }
-
-        if (!skip_sleep) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(1));
-        }
-    }
-
-    auto p2p_remote_test = [&]() {
-        for (int i = 0; i < ext_player_info.size(); i++) {
-            for (int j = 0; j < ext_player_info.size(); j++) {
-                UdpRemote remote;
-                remote.Open(ext_player_info[i].addr_list(j));
-            }
-        }
-    };
-
-// TODO
-    auto mcs_ping_test = [&]() {
-        if (!udp_client.Initialized()) return;
-        if (!mcs_remote.is_open()) return;
-        int ping_cnt = 0;
-        int rtt_sum = 0;
-
-        std::vector<UdpRemote> testing_remotes;
-        std::set<std::string> valid_user_ids;
-
-        for (int i = 0; i < ext_player_info.size(); ++i) {
-            valid_user_ids.insert(ext_player_info[i].user_id());
-            for (int j = 0; j < ext_player_info[i].addr_list_size(); ++j) {
-                UdpRemote remote;
-                if (remote.Open(ext_player_info[i].addr_list(j))) {
-                    testing_remotes.emplace_back(remote);
-                }
-            }
-        }
-
-        for (int i = 0; i < 10; ++i) {
-            pkt.Clear();
-            pkt.set_type(proto::MessageType::Ping);
-            pkt.mutable_ping_data()->set_user_id(user_id);
-            pkt.mutable_ping_data()->set_timestamp(std::chrono::duration_cast<std::chrono::milliseconds>(
-                    std::chrono::high_resolution_clock::now().time_since_epoch()).count());
-            if (pkt.SerializePartialToArray((void *) buf, (int) sizeof(buf))) {
-                udp_client.SendTo((const char *) buf, pkt.GetCachedSize(), mcs_remote);
-                for (auto &remote : testing_remotes) {
-                    udp_client.SendTo((const char *) buf, pkt.GetCachedSize(), remote);
-                }
-            } else {
-                ERROR_LOG(COMMON, "packet serialize error");
-                return;
-            }
-
-            u8 buf2[1024];
-            proto::Packet pkt2;
-            for (int j = 0; j < 100; ++j) {
-                if (!udp_client.Initialized()) break;
-                std::string sender;
-                int n = udp_client.RecvFrom((char *) buf2, sizeof(buf2), sender);
-                if (0 < n) {
-                    auto t2 = std::chrono::duration_cast<std::chrono::milliseconds>(
-                            std::chrono::high_resolution_clock::now().time_since_epoch()).count();
-                    if (pkt2.ParseFromArray(buf2, n)) {
-                        if (pkt2.type() == proto::MessageType::Pong) {
-                            if (sender == mcs_remote.str_addr() ||
-                                valid_user_ids.find(pkt2.pong_data().user_id()) != valid_user_ids.end()) {
-                                auto t1_ = pkt2.pong_data().timestamp();
-                                auto ms = t2 - t1_;
-                                NOTICE_LOG(COMMON, "PING %d ms", ms);
-                                ping_cnt++;
-                                rtt_sum += ms;
-                            }
-                            break;
-                        }
-                    } else {
-                        ERROR_LOG(COMMON, "packet deserialize error");
-                        return;
-                    }
-                } else {
-                    std::this_thread::sleep_for(std::chrono::milliseconds(1));
-                }
-            }
-        }
-
-        auto rtt = double(rtt_sum) / ping_cnt;
-        NOTICE_LOG(COMMON, "PING AVG %.2f ms", rtt);
-        maxlag = std::min<int>(0x7f, std::max(5, 4 + (int) std::floor(rtt / 16)));
-        NOTICE_LOG(COMMON, "set maxlag %d", (int) maxlag);
-
-        char osd_msg[128] = {};
-        sprintf(osd_msg, "PING:%.0fms DELAY:%dfr", rtt, (int) maxlag);
-        gui_display_notification(osd_msg, 3000);
-    };
-
-    while (!net_terminate) {
-        if (!updated) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(1)
-            );
-        }
-        updated = false;
-        if (!tcp_client.
-
-                IsConnected() &&
-
-            !udp_client.
-
-                    Initialized()
-
-                ) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(1000)
-            );
-            continue;
-        }
-
-        if (start_udp_session) {
-            start_udp_session = false;
-            udp_retransmit_countdown = 0;
-            user_id.
-
-                    clear();
-
-            session_id.
-
-                    clear();
-
-            message_buf.
-
-                    Clear();
-
-            message_filter.
-
-                    Clear();
-
-            bool udp_session_ok = false;
-
-            mcs_ping_test();
-
-// get session_id from client
-            recv_buf_mtx.
-
-                    lock();
-
-            recv_buf.assign({
-                                    0x0e, 0x61, 0x00, 0x22, 0x10, 0x31, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc,
-                                    0xdd});
-            recv_buf_mtx.
-
-                    unlock();
-
-            for (
-                    int i = 0;
-                    i < 60; ++i) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(16)
-                );
-                send_buf_mtx.
-
-                        lock();
-
-                int n = send_buf.size();
-                send_buf_mtx.
-
-                        unlock();
-
-                if (n < kFirstMessageSize) {
-                    continue;
-                }
-
-                send_buf_mtx.
-
-                        lock();
-
-                for (
-                        int j = 12;
-                        j < kFirstMessageSize;
-                        ++j) {
-                    session_id.push_back((char) send_buf[j]);
-                }
-                send_buf_mtx.
-
-                        unlock();
-
-                break;
-            }
-
-            NOTICE_LOG(COMMON, "session_id:%s", session_id.c_str());
-
-// send session_id to server
-            if (!session_id.
-
-                    empty()
-
-                    ) {
-                pkt.
-
-                        Clear();
-
-                pkt.
-                        set_type(proto::MessageType::HelloServer);
-                pkt.
-                        set_session_id(session_id);
-                if (!pkt.SerializeToArray((void *) buf, (int) sizeof(buf))) {
-                    ERROR_LOG(COMMON, "packet serialize error");
-                }
-
-                for (
-                        int i = 0;
-                        i < 10; ++i) {
-                    udp_client.SendTo((const char *) buf, pkt.
-
-                            GetCachedSize(), mcs_remote
-
-                    );
-                    std::this_thread::sleep_for(std::chrono::milliseconds(100)
-                    );
-
-                    u8 buf2[1024];
-                    proto::Packet pkt2;
-                    pkt2.
-
-                            Clear();
-
-                    std::string sender;
-                    int n = udp_client.RecvFrom((char *) buf2, sizeof(buf2), sender);
-                    if (0 <
-                        n && sender
-                             == mcs_remote.
-
-                            str_addr()
-
-                            ) {
-                        if (pkt2.
-                                ParseFromArray(buf2, n
-                        )) {
-                            if (pkt2.
-
-                                            hello_server_data()
-
-                                    .
-
-                                            ok()
-
-                                    ) {
-                                NOTICE_LOG(COMMON, "UDP session_id validation OK");
-                                udp_session_ok = true;
-                                user_id = pkt2.hello_server_data().user_id();
-                                message_buf.
-                                        SessionId(session_id);
-                                NOTICE_LOG(COMMON, "user_id:%s", user_id.c_str());
-                                break;
-                            } else {
-                                WARN_LOG(COMMON, "UDP session_id validation NG");
-                            }
-                        } else {
-                            ERROR_LOG(COMMON, "packet deserialize error");
-                        }
-                    }
-                }
-            }
-
-        } else {
-            ERROR_LOG(COMMON, "UDP session failed");
-            CloseMcsRemoteWithReason("cl_session_failed");
-        }
-    }
-
-
-    if (!
-                updated && udp_client
-                .
-
-                        Initialized(), mcs_remote
-
-            .
-
-                    is_open()
-
-            ) {
-        if (udp_retransmit_countdown-- == 0) {
-            if (message_buf.
-
-                            Packet()
-
-                    .SerializeToArray((void *) buf, (int) sizeof(buf))) {
-                if (udp_client.SendTo((const char *) buf, message_buf.
-
-                                Packet()
-
-                        .
-
-                                GetCachedSize(), mcs_remote
-
-                )) {
-                    udp_retransmit_countdown = 16;
-                } else {
-                    udp_retransmit_countdown = 4;
-                }
-            } else {
-                ERROR_LOG(COMMON, "packet serialize error");
-            }
-        }
-    }
-
-    if (tcp_client.
-
-            IsConnected()
-
-            ) {
-        n = tcp_client.ReadableSize();
-        if (0 < n) {
-            n = std::min<int>(n, sizeof(buf));
-            n = tcp_client.Recv((char *) buf, n);
-            if (0 < n) {
-                recv_buf_mtx.
-
-                        lock();
-
-                for (
-                        int i = 0;
-                        i < n;
-                        ++i) {
-                    recv_buf.
-                            push_back(buf[i]);
-                }
-                lbs_msg_reader.Write((char *) buf, n);
-                recv_buf_mtx.
-
-                        unlock();
-
-                updated = true;
-            }
-        }
-    } else if (udp_client.
-
-            Initialized()
-
-            ) {
-        n = udp_client.ReadableSize();
-        if (0 < n) {
-            n = std::min<int>(n, sizeof(buf));
-            std::string sender;
-            n = udp_client.RecvFrom((char *) buf, n, sender);
-            if (0 <
-                n && sender
-                     == mcs_remote.
-
-                    str_addr()
-
-                    ) {
-                pkt.
-
-                        Clear();
-
-                if (pkt.
-                        ParseFromArray(buf, n
-                )) {
-                    if (pkt.
-
-                            type()
-
-                        == proto::MessageType::Battle) {
-                        message_buf.
-                                ApplySeqAck(pkt
-                                                    .
-
-                                                            seq(), pkt
-
-                                                    .
-
-                                                            ack()
-
-                        );
-                        recv_buf_mtx.
-
-                                lock();
-
-                        const auto &msgs = pkt.battle_data();
-                        for (
-                            auto &msg
-                                : pkt.
-
-                                battle_data()
-
-                                ) {
-                            if (message_filter.
-                                    IsNextMessage(msg)
-                                    ) {
-                                for (
-                                    auto c
-                                        : msg.
-
-                                        body()
-
-                                        ) {
-                                    recv_buf.
-                                            push_back(c);
-                                }
-                            }
-                        }
-                        recv_buf_mtx.
-
-                                unlock();
-
-                    } else if (pkt.
-
-                            type()
-
-                               == proto::MessageType::Fin) {
-                        CloseMcsRemoteWithReason("cl_recv_fin");
-                    } else if (pkt.
-
-                            type()
-
-                               == proto::MessageType::Ping) {
-                        pkt.
-
-                                        ping_data()
-
-                                .
-
-                                        user_id(); // TODO
-                    } else if (pkt.
-
-                            type()
-
-                               == proto::MessageType::Pong) {
-                        pkt.
-
-                                        pong_data()
-
-                                .
-
-                                        timestamp(); // TODO
-                    } else {
-                        WARN_LOG(COMMON, "recv unexpected pkt type %d", pkt.type());
-                    }
-                } else {
-                    ERROR_LOG(COMMON, "packet deserialize error");
-                }
-                updated = true;
-            }
-        }
-    }
-}
-
-}
-
 std::string Gdxsv::GenerateLoginKey() {
     const int n = 8;
     uint64_t seed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
@@ -1150,18 +349,6 @@ std::string Gdxsv::GenerateLoginKey() {
         return chars[dist(gen)];
     });
     return key;
-}
-
-void Gdxsv::WritePatch() {
-    if (disk == 1) WritePatchDisk1();
-    if (disk == 2) WritePatchDisk2();
-    if (symbols["patch_id"] == 0 || ReadMem32_nommu(symbols["patch_id"]) != symbols[":patch_id"]) {
-        NOTICE_LOG(COMMON, "patch %d %d", ReadMem32_nommu(symbols["patch_id"]), symbols[":patch_id"]);
-
-#include "gdxsv_patch.h"
-
-        WriteMem32_nommu(symbols["disk"], (int) disk);
-    }
 }
 
 void Gdxsv::ApplyOnlinePatch(bool first_time) {
@@ -1204,6 +391,18 @@ void Gdxsv::RestoreOnlinePatch() {
                 WriteMem32_nommu(code.address(), code.original());
             }
         }
+    }
+}
+
+void Gdxsv::WritePatch() {
+    if (disk == 1) WritePatchDisk1();
+    if (disk == 2) WritePatchDisk2();
+    if (symbols["patch_id"] == 0 || ReadMem32_nommu(symbols["patch_id"]) != symbols[":patch_id"]) {
+        NOTICE_LOG(COMMON, "patch %d %d", ReadMem32_nommu(symbols["patch_id"]), symbols[":patch_id"]);
+
+#include "gdxsv_patch.h"
+
+        WriteMem32_nommu(symbols["disk"], (int) disk);
     }
 }
 
@@ -1364,25 +563,6 @@ void Gdxsv::WritePatchDisk2() {
             WriteMem32_nommu(0x0c1e7968, ratio);
             WriteMem32_nommu(0x0c1e7978, ratio);
         }
-    }
-}
-
-void Gdxsv::CloseMcsRemoteWithReason(const char *reason) {
-    if (udp_client.Initialized() && mcs_remote.is_open()) {
-        proto::Packet pkt;
-        pkt.Clear();
-        pkt.set_type(proto::MessageType::Fin);
-        pkt.set_session_id(session_id);
-        pkt.mutable_fin_data()->set_detail(reason);
-
-        char buf[1024];
-        if (pkt.SerializePartialToArray((void *) buf, (int) sizeof(buf))) {
-            udp_client.SendTo((const char *) buf, pkt.GetCachedSize(), mcs_remote);
-        } else {
-            ERROR_LOG(COMMON, "packet serialize error");
-        }
-
-        mcs_remote.Close();
     }
 }
 

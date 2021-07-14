@@ -27,25 +27,25 @@ struct gdx_queue {
     u8 buf[GDX_QUEUE_SIZE];
 };
 
-void gdx_queue_init(struct gdx_queue *q) {
+static void gdx_queue_init(struct gdx_queue *q) {
     q->head = 0;
     q->tail = 0;
 }
 
-u32 gdx_queue_size(struct gdx_queue *q) {
+static u32 gdx_queue_size(struct gdx_queue *q) {
     return (q->tail + GDX_QUEUE_SIZE - q->head) % GDX_QUEUE_SIZE;
 }
 
-u32 gdx_queue_avail(struct gdx_queue *q) {
+static u32 gdx_queue_avail(struct gdx_queue *q) {
     return GDX_QUEUE_SIZE - gdx_queue_size(q) - 1;
 }
 
-void gdx_queue_push(struct gdx_queue *q, u8 data) {
+static void gdx_queue_push(struct gdx_queue *q, u8 data) {
     q->buf[q->tail] = data;
     q->tail = (q->tail + 1) % GDX_QUEUE_SIZE;
 }
 
-u8 gdx_queue_pop(struct gdx_queue *q) {
+static u8 gdx_queue_pop(struct gdx_queue *q) {
     u8 ret = q->buf[q->head];
     q->head = (q->head + 1) % GDX_QUEUE_SIZE;
     return ret;

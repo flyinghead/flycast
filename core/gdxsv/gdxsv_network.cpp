@@ -188,7 +188,6 @@ void UdpRemote::Close() {
     is_open_ = false;
     str_addr_.clear();
     memset(&net_addr_, 0, sizeof(net_addr_));
-    msg_buf_.Clear();
 }
 
 bool UdpRemote::is_open() const {
@@ -201,10 +200,6 @@ const std::string &UdpRemote::str_addr() const {
 
 const sockaddr_in &UdpRemote::net_addr() const {
     return net_addr_;
-}
-
-MessageBuffer &UdpRemote::msg_buf() {
-    return msg_buf_;
 }
 
 bool UdpClient::Bind(int port) {
@@ -258,7 +253,7 @@ int UdpClient::RecvFrom(char *buf, int len, std::string &sender) {
     int n = ::recvfrom(sock_, buf, len, 0, (struct sockaddr *) &from_addr, &addrlen);
     if (n < 0 && get_last_error() != L_EAGAIN && get_last_error() != L_EWOULDBLOCK) {
         WARN_LOG(COMMON, "UDP Recv failed. errno=%d", get_last_error());
-        Close();
+        return 0;
     }
     sender = std::string(::inet_ntoa(from_addr.sin_addr)) + ":" + std::to_string(::ntohs(from_addr.sin_port));
     if (n < 0) return 0;
@@ -269,7 +264,7 @@ int UdpClient::SendTo(const char *buf, int len, const UdpRemote &remote) {
     int n = ::sendto(sock_, buf, len, 0, (const sockaddr *) &remote.net_addr(), sizeof(remote.net_addr()));
     if (n < 0 && get_last_error() != L_EAGAIN && get_last_error() != L_EWOULDBLOCK) {
         WARN_LOG(COMMON, "UDP Send failed. errno=%d", get_last_error());
-        Close();
+        return 0;
     }
     if (n < 0) return 0;
     return n;
@@ -292,12 +287,15 @@ void UdpClient::Close() {
     }
 }
 
+MessageBuffer::MessageBuffer() {
+    Clear();
+}
+
 bool MessageBuffer::CanPush() const {
     return packet_.battle_data().size() < kBufSize;
 }
 
 void MessageBuffer::SessionId(const std::string &session_id) {
-    NOTICE_LOG(COMMON, "set session id %s", session_id.c_str());
     packet_.set_session_id(session_id.c_str());
 }
 

@@ -25,7 +25,7 @@ public:
     static const u32 StatusError = 0xFFFFFFFFu;
     static const u32 StatusSuccess = 0x00FFFFFFu;
 
-
+    static const u16 lbsShutdown = 0x6003;
     static const u16 lbsReadyBattle = 0x6910;
     static const u16 lbsExtPlayerInfo = 0x9955;
     static const u16 lbsGamePatch = 0x9960;

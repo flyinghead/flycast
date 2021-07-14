@@ -5,17 +5,18 @@
 #include <chrono>
 #include <atomic>
 
-#include "gdxsv_network.h"
-#include "lbs_message.h"
-#include "gdxsv.pb.h"
 #include "types.h"
 #include "cfg/cfg.h"
 #include "hw/sh4/sh4_mem.h"
 #include "reios/reios.h"
 
+#include "gdxsv.pb.h"
+#include "gdxsv_backend_tcp.h"
+#include "gdxsv_backend_udp.h"
+
 class Gdxsv {
 public:
-    Gdxsv() = default;
+    Gdxsv() : lbs_net(symbols), udp_net(symbols, maxlag) {};
 
     ~Gdxsv();
 
@@ -40,8 +41,6 @@ public:
 private:
     void GcpPingTest(); // run on network thread
 
-    void UpdateNetwork(); // run on network thread
-
     static std::string GenerateLoginKey();
 
     std::vector<u8> GeneratePlatformInfoPacket();
@@ -58,39 +57,23 @@ private:
 
     void WritePatchDisk2();
 
-    void CloseMcsRemoteWithReason(const char *reason);
-
     std::atomic<bool> enabled;
     std::atomic<int> disk;
-    std::atomic<u8> maxlag;
+    std::atomic<int> maxlag;
 
     std::string server;
     std::string loginkey;
-    std::string user_id;
-    std::string session_id;
     std::map<std::string, u32> symbols;
 
-    std::vector<proto::ExtPlayerInfo> ext_player_info;
     proto::GamePatchList patch_list;
+    std::vector<proto::ExtPlayerInfo> ext_player_info;
 
-    std::atomic<bool> net_terminate;
-    std::atomic<bool> start_udp_session;
-    std::thread net_thread;
-    std::mutex send_buf_mtx;
-    std::deque<u8> send_buf;
-    std::mutex recv_buf_mtx;
-    std::deque<u8> recv_buf;
+    GdxsvBackendTcp lbs_net;
+    GdxsvBackendUdp udp_net;
 
-    TcpClient tcp_client;
-    UdpClient udp_client;
-    UdpRemote mcs_remote;
-    std::map<std::string, UdpRemote> user_remotes;
-
+    std::thread gcp_ping_test_thread;
     std::atomic<bool> gcp_ping_test_finished;
     std::map<std::string, int> gcp_ping_test_result;
-
-    LbsMessage lbs_msg;
-    LbsMessageReader lbs_msg_reader;
 
     void handleReleaseJSON(const std::string &json);
 
