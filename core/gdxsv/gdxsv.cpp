@@ -34,10 +34,6 @@ void Gdxsv::Reset() {
         config::ContentPath.get().push_back("./");
     }
 
-    if (!gcp_ping_test_thread.joinable()) {
-        gcp_ping_test_thread = std::thread([this]() { GcpPingTest(); });
-    }
-
     auto game_id = std::string(ip_meta.product_number, sizeof(ip_meta.product_number));
     if (game_id != "T13306M   ") {
         enabled = false;
@@ -48,6 +44,10 @@ void Gdxsv::Reset() {
 #ifdef __APPLE__
     signal(SIGPIPE, SIG_IGN);
 #endif
+
+    if (!gcp_ping_test_thread.joinable()) {
+        gcp_ping_test_thread = std::thread([this]() { GcpPingTest(); });
+    }
 
     server = cfgLoadStr("gdxsv", "server", "zdxsv.net");
     loginkey = cfgLoadStr("gdxsv", "loginkey", "");
