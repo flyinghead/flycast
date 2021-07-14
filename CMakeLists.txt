@@ -1142,7 +1142,7 @@ if(NINTENDO_SWITCH)
 	
 		add_custom_command(OUTPUT flycast.nro
 	    	COMMAND mkdir -p ${CMAKE_BINARY_DIR}/artifact
-			COMMAND ${DEVKITPRO}/tools/bin/elf2nro ${CMAKE_BINARY_DIR}/flycast ${CMAKE_BINARY_DIR}/artifact/flycast.nro --icon=${CMAKE_SOURCE_DIR}/shell/linux/flycast.png --nacp=${CMAKE_BINARY_DIR}/flycast.nacp
+			COMMAND ${DEVKITPRO}/tools/bin/elf2nro ${CMAKE_BINARY_DIR}/flycast ${CMAKE_BINARY_DIR}/artifact/flycast.nro --icon=${CMAKE_SOURCE_DIR}/shell/switch/flycast.jpeg --nacp=${CMAKE_BINARY_DIR}/flycast.nacp
 			DEPENDS flycast.nacp ${CMAKE_BINARY_DIR}/flycast
 			COMMENT "Generating NRO")
 		add_custom_target(nro ALL DEPENDS flycast.nacp flycast.nro)
