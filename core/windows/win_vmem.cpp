@@ -206,7 +206,7 @@ static void* mem_file_map(void *addr, unsigned size) {
 }
 
 // Use two addr spaces: need to remap something twice, therefore use CreateFileMapping()
-bool vmem_platform_prepare_jit_block(void *code_area, unsigned size, void **code_area_rw, uintptr_t *rx_offset) {
+bool vmem_platform_prepare_jit_block(void *code_area, unsigned size, void **code_area_rw, ptrdiff_t *rx_offset) {
 	mem_handle2 = CreateFileMapping(INVALID_HANDLE_VALUE, 0, PAGE_EXECUTE_READWRITE, 0, size, 0);
 
 	// Get the RX page close to the code_area

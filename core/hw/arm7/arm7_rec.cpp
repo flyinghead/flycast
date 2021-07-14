@@ -562,7 +562,7 @@ void compile()
 	// also the size of the EntryPoints table. This way the dynarec
 	// main loop doesn't have to worry about the actual aica
 	// ram size. The aica ram always wraps to 8 MB anyway.
-	EntryPoints[(pc & (ARAM_SIZE_MAX - 1)) / 4] = (void (*)())rv;
+	EntryPoints[(pc & (ARAM_SIZE_MAX - 1)) / 4] = (void (*)())writeToExec(rv);
 
 	block_ops.clear();
 
@@ -657,7 +657,7 @@ void flush()
 void init()
 {
 #ifdef FEAT_NO_RWX_PAGES
-	verify(vmem_platform_prepare_jit_block(ARM7_TCB, ICacheSize, (void**)&ICache, (uintptr_t *)&rx_offset));
+	verify(vmem_platform_prepare_jit_block(ARM7_TCB, ICacheSize, (void**)&ICache, &rx_offset));
 #else
 	verify(vmem_platform_prepare_jit_block(ARM7_TCB, ICacheSize, (void**)&ICache));
 #endif

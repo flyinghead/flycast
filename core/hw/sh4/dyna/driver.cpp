@@ -33,7 +33,7 @@ u8 SH4_TCB[CODE_SIZE + TEMP_CODE_SIZE + 4096]
 
 u8* CodeCache;
 u8* TempCodeCache;
-uintptr_t cc_rx_offset;
+ptrdiff_t cc_rx_offset;
 
 u32 LastAddr;
 u32 LastAddr_min;

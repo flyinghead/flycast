@@ -602,7 +602,7 @@ public:
 		FinalizeCode();
 		verify(GetBuffer()->GetCursorOffset() <= GetBuffer()->GetCapacity());
 		vmem_platform_flush_cache(
-				GetBuffer()->GetStartAddress<void*>(), GetBuffer()->GetEndAddress<void*>(),
+				recompiler::writeToExec(GetBuffer()->GetStartAddress<void*>()), recompiler::writeToExec(GetBuffer()->GetEndAddress<void*>()),
 				GetBuffer()->GetStartAddress<void*>(), GetBuffer()->GetEndAddress<void*>());
 		recompiler::advance(GetBuffer()->GetSizeInBytes());
 
@@ -683,7 +683,7 @@ public:
 
 		FinalizeCode();
 		vmem_platform_flush_cache(
-				GetBuffer()->GetStartAddress<void*>(), GetBuffer()->GetEndAddress<void*>(),
+				recompiler::writeToExec(GetBuffer()->GetStartAddress<void*>()), recompiler::writeToExec(GetBuffer()->GetEndAddress<void*>()),
 				GetBuffer()->GetStartAddress<void*>(), GetBuffer()->GetEndAddress<void*>());
 		recompiler::advance(GetBuffer()->GetSizeInBytes());
 	}

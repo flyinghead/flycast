@@ -206,13 +206,9 @@ bool vmem_platform_prepare_jit_block(void *code_area, unsigned size, void **code
 }
 
 // Use two addr spaces: need to remap something twice, therefore use allocate_shared_filemem()
-bool vmem_platform_prepare_jit_block(void *code_area, unsigned size, void **code_area_rw, uintptr_t *rx_offset)
+bool vmem_platform_prepare_jit_block(void *code_area, unsigned size, void **code_area_rw, ptrdiff_t *rx_offset)
 {
 	const unsigned size_aligned = ((size + PAGE_SIZE) & (~(PAGE_SIZE-1)));
-	void *ptr_rx = code_area;
-
-	if (ptr_rx != code_area)
-		return false;
 
 	virtmemLock();
 	void* ptr_rw = virtmemFindAslr(size_aligned, 0);
@@ -226,8 +222,8 @@ bool vmem_platform_prepare_jit_block(void *code_area, unsigned size, void **code
 	}
 
 	*code_area_rw = ptr_rw;
-	*rx_offset = (char*)ptr_rx - (char*)ptr_rw;
-	INFO_LOG(DYNAREC, "Info: Using NO_RWX mode, rx ptr: %p, rw ptr: %p, offset: %lu\n", ptr_rx, ptr_rw, (unsigned long)*rx_offset);
+	*rx_offset = (char*)code_area - (char*)ptr_rw;
+	INFO_LOG(DYNAREC, "Info: Using NO_RWX mode, rx ptr: %p, rw ptr: %p, offset: %ld\n", code_area, ptr_rw, (long)*rx_offset);
 
 	return true;
 }

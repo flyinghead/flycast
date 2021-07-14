@@ -328,7 +328,7 @@ public:
 		FinalizeCode();
 
 		vmem_platform_flush_cache(
-			GetBuffer()->GetStartAddress<void*>(), GetBuffer()->GetEndAddress<void*>(),
+			GetBuffer()->GetStartAddress<char*>() + rx_offset, GetBuffer()->GetEndAddress<char*>() + rx_offset,
 			GetBuffer()->GetStartAddress<void*>(), GetBuffer()->GetEndAddress<void*>());
 	}
 
@@ -455,7 +455,7 @@ void dsp_recompile()
 void dsp_rec_init()
 {
 #ifdef FEAT_NO_RWX_PAGES
-	verify(vmem_platform_prepare_jit_block(dsp.DynCode, sizeof(dsp.DynCode), (void**)&pCodeBuffer, (uintptr_t *)&rx_offset));
+	verify(vmem_platform_prepare_jit_block(dsp.DynCode, sizeof(dsp.DynCode), (void**)&pCodeBuffer, &rx_offset));
 #else
 	verify(vmem_platform_prepare_jit_block(dsp.DynCode, sizeof(dsp.DynCode), (void**)&pCodeBuffer));
 #endif
