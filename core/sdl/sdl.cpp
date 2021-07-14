@@ -180,7 +180,7 @@ void input_sdl_init()
 	checkRawInput();
 #endif
 
-#ifdef __SWITCH
+#ifdef __SWITCH__
     // open CONTROLLER_PLAYER_1 and CONTROLLER_PLAYER_2
     // when railed, both joycons are mapped to joystick #0,
     // else joycons are individually mapped to joystick #0, joystick #1, ...
