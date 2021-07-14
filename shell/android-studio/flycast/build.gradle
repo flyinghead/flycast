@@ -50,12 +50,6 @@ android {
         debug {
             storeFile file("../debug.keystore")
         }
-        release {
-            storeFile file("../reicast-beta-cd.jks")
-            storePassword "notasecret"
-            keyAlias "reicast-upload-key"
-            keyPassword "notasecret"
-        }
     }
 
     buildTypes {
@@ -70,7 +64,7 @@ android {
             minifyEnabled true
             zipAlignEnabled true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
-            signingConfig signingConfigs.release
+            signingConfig signingConfigs.debug
         }
     }
 
