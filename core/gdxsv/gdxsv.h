@@ -38,6 +38,7 @@ public:
 
     std::string LatestVersion();
 
+    void RestoreOnlinePatch();
 private:
     void GcpPingTest(); // run on network thread
 
@@ -50,8 +51,6 @@ private:
     void WritePatch();
 
     void ApplyOnlinePatch(bool first_time);
-
-    void RestoreOnlinePatch();
 
     void WritePatchDisk1();
 
