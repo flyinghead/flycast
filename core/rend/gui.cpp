@@ -163,7 +163,7 @@ void gui_init()
     //io.Fonts->AddFontFromFileTTF("../../misc/fonts/ProggyTiny.ttf", 10.0f);
     //ImFont* font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f, NULL, io.Fonts->GetGlyphRangesJapanese());
     //IM_ASSERT(font != NULL);
-#if !(defined(_WIN32) || defined(__APPLE__))
+#if !(defined(_WIN32) || defined(__APPLE__) || defined(__SWITCH__))
     scaling = std::max(1.f, screen_dpi / 100.f * 0.75f);
 #endif
     if (scaling > 1)

@@ -407,6 +407,9 @@ void sdl_window_set_text(const char* text)
 }
 
 #if !defined(__APPLE__)
+
+static float hdpiScaling = 1.f;
+
 static void get_window_state()
 {
 	u32 flags = SDL_GetWindowFlags(window);
@@ -414,8 +417,8 @@ static void get_window_state()
 	window_maximized = flags & SDL_WINDOW_MAXIMIZED;
     if (!window_fullscreen && !window_maximized){
         SDL_GetWindowSize(window, &window_width, &window_height);
-        window_width /= scaling;
-        window_height /= scaling;
+        window_width /= hdpiScaling;
+        window_height /= hdpiScaling;
     }
 		
 }
@@ -453,6 +456,7 @@ bool sdl_recreate_window(u32 flags)
             if (SDL_GetDisplayDPI(0, &ddpi, NULL, NULL) != -1){ //SDL_WINDOWPOS_UNDEFINED is Display 0
                 //When using HiDPI mode, set correct DPI scaling
                 scaling = ddpi/96.f;
+                hdpiScaling = scaling;
             }
         }
     }
@@ -466,11 +470,13 @@ bool sdl_recreate_window(u32 flags)
 	{
 		window_width  = 1280;
 		window_height = 720;
+		scaling = 1.5f;
 	}
 	else
 	{
 		window_width  = 1920;
 		window_height = 1080;
+		scaling = 1.0f;
 	}
 #else
 	window_width  = cfgLoadInt("window", "width", window_width);
@@ -496,14 +502,14 @@ bool sdl_recreate_window(u32 flags)
 	flags |= SDL_WINDOW_FULLSCREEN;
 #endif
 
-	window = SDL_CreateWindow("Flycast", x, y, window_width * scaling, window_height * scaling, flags);
+	window = SDL_CreateWindow("Flycast", x, y, window_width * hdpiScaling, window_height * hdpiScaling, flags);
 	if (window == nullptr)
 	{
 		ERROR_LOG(COMMON, "Window creation failed: %s", SDL_GetError());
 		return false;
 	}
-	screen_width = window_width * scaling;
-	screen_height = window_height * scaling;
+	screen_width = window_width * hdpiScaling;
+	screen_height = window_height * hdpiScaling;
 
 #if !defined(GLES) && !defined(_WIN32) && !defined(__SWITCH__)
 	// Set the window icon

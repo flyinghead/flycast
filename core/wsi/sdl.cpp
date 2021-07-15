@@ -114,8 +114,18 @@ void SDLGLGraphicsContext::Swap()
 #endif
 	SDL_GL_SwapWindow(window);
 
-	/* Check if drawable has been resized */
+	// Check if drawable has been resized
 	SDL_GL_GetDrawableSize(window, &screen_width, &screen_height);
+#ifdef __SWITCH__
+	float newScaling = screen_height == 720 ? 1.5f : 1.0f;
+	if (newScaling != scaling)
+	{
+		// Restart the UI to take the new scaling factor into account
+		scaling = newScaling;
+		gui_term();
+		gui_init();
+	}
+#endif
 }
 
 void SDLGLGraphicsContext::Term()
