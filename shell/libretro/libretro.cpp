@@ -2607,8 +2607,8 @@ void UpdateVibration(u32 port, float power, float inclination, u32 durationMs)
 	vib_delta[port] = inclination;
 }
 
-extern u8 kb_shift; 		// shift keys pressed (bitmask)
-extern u8 kb_key[6];		// normal keys pressed (up to 6)
+extern u8 kb_key[4][6];	// normal keys pressed
+extern u8 kb_shift[4];	// modifier keys pressed (bitmask)
 static int kb_used;
 
 static void release_key(unsigned dc_keycode)
@@ -2620,12 +2620,12 @@ static void release_key(unsigned dc_keycode)
 	{
 		for (int i = 0; i < 6; i++)
 		{
-			if (kb_key[i] == dc_keycode)
+			if (kb_key[0][i] == dc_keycode)
 			{
 				kb_used--;
 				for (int j = i; j < 5; j++)
-					kb_key[j] = kb_key[j + 1];
-				kb_key[5] = 0;
+					kb_key[0][j] = kb_key[0][j + 1];
+				kb_key[0][5] = 0;
 			}
 		}
 	}
@@ -2636,14 +2636,14 @@ static void retro_keyboard_event(bool down, unsigned keycode, uint32_t character
 	// Dreamcast keyboard emulation
 	if (keycode == RETROK_LSHIFT || keycode == RETROK_RSHIFT)
 		if (!down)
-			kb_shift &= ~(0x02 | 0x20);
+			kb_shift[0] &= ~(0x02 | 0x20);
 		else
-			kb_shift |= (0x02 | 0x20);
+			kb_shift[0] |= (0x02 | 0x20);
 	if (keycode == RETROK_LCTRL || keycode == RETROK_RCTRL)
 		if (!down)
-			kb_shift &= ~(0x01 | 0x10);
+			kb_shift[0] &= ~(0x01 | 0x10);
 		else
-			kb_shift |= (0x01 | 0x10);
+			kb_shift[0] |= (0x01 | 0x10);
 
 	// Make sure modifier keys are released
 	if ((key_modifiers & RETROKMOD_SHIFT) == 0)
@@ -2667,12 +2667,12 @@ static void retro_keyboard_event(bool down, unsigned keycode, uint32_t character
 				bool found = false;
 				for (int i = 0; !found && i < 6; i++)
 				{
-					if (kb_key[i] == dc_keycode)
+					if (kb_key[0][i] == dc_keycode)
 						found = true;
 				}
 				if (!found)
 				{
-					kb_key[kb_used] = dc_keycode;
+					kb_key[0][kb_used] = dc_keycode;
 					kb_used++;
 				}
 			}
