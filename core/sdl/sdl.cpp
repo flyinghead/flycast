@@ -18,6 +18,9 @@
 #ifdef _WIN32
 #include "windows/rawinput.h"
 #endif
+#ifdef __SWITCH__
+#include "nswitch.h"
+#endif
 
 static SDL_Window* window = NULL;
 
@@ -457,6 +460,19 @@ bool sdl_recreate_window(u32 flags)
     
 	int x = SDL_WINDOWPOS_UNDEFINED;
 	int y = SDL_WINDOWPOS_UNDEFINED;
+#ifdef __SWITCH__
+	AppletOperationMode om = appletGetOperationMode();
+	if (om == AppletOperationMode_Handheld)
+	{
+		window_width  = 1280;
+		window_height = 720;
+	}
+	else
+	{
+		window_width  = 1920;
+		window_height = 1080;
+	}
+#else
 	window_width  = cfgLoadInt("window", "width", window_width);
 	window_height = cfgLoadInt("window", "height", window_height);
 	window_fullscreen = cfgLoadBool("window", "fullscreen", window_fullscreen);
@@ -465,8 +481,11 @@ bool sdl_recreate_window(u32 flags)
 	{
 		SDL_GetWindowPosition(window, &x, &y);
 		get_window_state();
-		SDL_DestroyWindow(window);
 	}
+#endif
+	if (window != nullptr)
+		SDL_DestroyWindow(window);
+
 #if !defined(GLES)
 	flags |= SDL_WINDOW_RESIZABLE;
 	if (window_fullscreen)
@@ -486,7 +505,7 @@ bool sdl_recreate_window(u32 flags)
 	screen_width = window_width * scaling;
 	screen_height = window_height * scaling;
 
-#if !defined(GLES) && !defined(_WIN32)
+#if !defined(GLES) && !defined(_WIN32) && !defined(__SWITCH__)
 	// Set the window icon
 	u32 pixels[48 * 48];
 	for (int i = 0; i < 48 * 48; i++)
@@ -526,11 +545,13 @@ void sdl_window_create()
 
 void sdl_window_destroy()
 {
+#ifndef __SWITCH__
 	get_window_state();
 	cfgSaveInt("window", "width", window_width);
 	cfgSaveInt("window", "height", window_height);
 	cfgSaveBool("window", "maximized", window_maximized);
 	cfgSaveBool("window", "fullscreen", window_fullscreen);
+#endif
 	TermRenderApi();
 	SDL_DestroyWindow(window);
 }

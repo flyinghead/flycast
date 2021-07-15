@@ -12,10 +12,7 @@
 #include <unistd.h>
 
 #if defined(__SWITCH__)
-// name conflict
-#define Event SwitchEvent
-#include <switch.h>
-#undef Event
+#include "nswitch.h"
 #endif
 
 #if defined(SUPPORT_DISPMANX)

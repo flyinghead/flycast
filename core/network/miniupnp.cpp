@@ -17,7 +17,7 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #include "build.h"
-#ifdef USE_MINIUPNPC
+#ifndef FEAT_NO_MINIUPNPC
 #include <miniupnpc.h>
 #include <upnpcommands.h>
 #include "types.h"

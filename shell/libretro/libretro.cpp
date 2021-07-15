@@ -25,24 +25,7 @@
 #ifdef __SWITCH__
 #include <stdlib.h>
 #include <string.h>
-// name conflict
-#define Event SwitchEvent
-#include <switch.h>
-#undef Event
-
-// strdup seems to be missing on the dkp toolchain
-// TODO: Investigate more
-char* strdup(const char *str)
-{
-	size_t size = strlen(str) + 1;
-	char *copy;
-
-	if ((copy = (char *)malloc(size)) == NULL)
-		return(NULL);
-	(void)memcpy(copy, str, size);
-	return(copy);
-}
-
+#include "nswitch.h"
 #endif
 
 #include <sys/stat.h>
@@ -2722,7 +2705,7 @@ int msgboxf(const char* text, unsigned int type, ...)
 	return 0;
 }
 
-void os_DebugBreak(void)
+void os_DebugBreak()
 {
 	ERROR_LOG(COMMON, "DEBUGBREAK!");
 	//exit(-1);

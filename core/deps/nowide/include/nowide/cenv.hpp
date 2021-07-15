@@ -19,16 +19,6 @@
 #include <nowide/windows.hpp>
 #endif
 
-#ifdef __SWITCH__
-extern "C"
-{
-	// Missing prototypes..
-	int setenv (const char *__string, const char *__value, int __overwrite);
-	char* getenv (const char *__string);
-	int unsetenv (const char *__string);
-	int putenv (char *__string);
-}
-#endif // __SWITCH__
 
 namespace nowide {
     #if !defined(NOWIDE_WINDOWS) && !defined(NOWIDE_DOXYGEN)
