@@ -42,7 +42,6 @@ android {
 
         ndk {
             moduleName 'flycast'
-            abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86'
         }
     }
 
