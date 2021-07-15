@@ -28,6 +28,16 @@
 #include <aarch64/macro-assembler-aarch64.h>
 using namespace vixl::aarch64;
 
+constexpr size_t CodeSize = 4096 * 8;	//32 kb, 8 pages
+
+#if defined(__unix__) || defined(__SWITCH__)
+alignas(4096) static u8 DynCode[CodeSize] __attribute__((section(".text")));
+#elif defined(__APPLE__)
+alignas(4096) static u8 DynCode[CodeSize] __attribute__((section("__TEXT, .text")));
+#else
+#error "Unsupported platform for arm64 DSP dynarec"
+#endif
+
 static u8 *pCodeBuffer;
 static ptrdiff_t rx_offset;
 
@@ -448,21 +458,21 @@ void dsp_recompile()
 			break;
 		}
 	}
-	DSPAssembler assembler(pCodeBuffer, sizeof(dsp.DynCode));
+	DSPAssembler assembler(pCodeBuffer, sizeof(DynCode));
 	assembler.Compile(&dsp);
 }
 
 void dsp_rec_init()
 {
 #ifdef FEAT_NO_RWX_PAGES
-	verify(vmem_platform_prepare_jit_block(dsp.DynCode, sizeof(dsp.DynCode), (void**)&pCodeBuffer, &rx_offset));
+	verify(vmem_platform_prepare_jit_block(DynCode, sizeof(DynCode), (void**)&pCodeBuffer, &rx_offset));
 #else
-	verify(vmem_platform_prepare_jit_block(dsp.DynCode, sizeof(dsp.DynCode), (void**)&pCodeBuffer));
+	verify(vmem_platform_prepare_jit_block(DynCode, sizeof(DynCode), (void**)&pCodeBuffer));
 #endif
 }
 
 void dsp_rec_step()
 {
-	((void (*)())(pCodeBuffer + rx_offset))();
+	((void (*)())(DynCode))();
 }
 #endif
