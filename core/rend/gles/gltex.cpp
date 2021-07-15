@@ -187,6 +187,7 @@ GLuint BindRTT(bool withDepthBuffer)
 		fbh2 *= config::RenderResolution / 480.f;
 	}
 
+#ifdef GL_PIXEL_PACK_BUFFER
 	if (gl.gl_major >= 3 && config::RenderToTextureBuffer)
 	{
 		if (gl.rtt.pbo == 0)
@@ -200,6 +201,7 @@ GLuint BindRTT(bool withDepthBuffer)
 			glCheck();
 		}
 	}
+#endif
 
 	// Create a texture for rendering to
 	gl.rtt.tex = glcache.GenTexture();
@@ -232,8 +234,10 @@ GLuint BindRTT(bool withDepthBuffer)
 #endif
 				glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, fbw2, fbh2);
 		}
+#ifdef GL_DEPTH24_STENCIL8
 		else
 			glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, fbw2, fbh2);
+#endif
 
 		// Attach the depth buffer we just created to our FBO.
 		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, gl.rtt.depthb);
@@ -273,8 +277,10 @@ void ReadRTTBuffer()
 			VramLockedWriteOffset(page);
 #endif
 
+#ifdef GL_PIXEL_PACK_BUFFER
 		if (gl.gl_major >= 3)
 			glBindBuffer(GL_PIXEL_PACK_BUFFER, gl.rtt.pbo);
+#endif
 
 		glPixelStorei(GL_PACK_ALIGNMENT, 1);
 		gl.rtt.width = w;
@@ -314,7 +320,9 @@ void ReadRTTBuffer()
 				gl.rtt.texAddress = ~0;
 			}
 		}
+#ifdef GL_PIXEL_PACK_BUFFER
 		glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
+#endif
 		glCheck();
 	}
 	else
@@ -359,6 +367,7 @@ void ReadRTTBuffer()
 
 static void readAsyncPixelBuffer(u32 addr)
 {
+#ifndef GLES2
 	if (!config::RenderToTextureBuffer || gl.rtt.pbo == 0)
 		return;
 
@@ -368,12 +377,7 @@ static void readAsyncPixelBuffer(u32 addr)
 	gl.rtt.texAddress = ~0;
 
 	glBindBuffer(GL_PIXEL_PACK_BUFFER, gl.rtt.pbo);
-#ifndef GLES2
 	u8 *ptr = (u8 *)glMapBufferRange(GL_PIXEL_PACK_BUFFER, 0, gl.rtt.pboSize, GL_MAP_READ_BIT);
-#else
-	die("Invalid code path");
-	u8 *ptr = nullptr;
-#endif
 	if (ptr == nullptr)
 	{
 		WARN_LOG(RENDERER, "glMapBuffer failed");
@@ -389,6 +393,7 @@ static void readAsyncPixelBuffer(u32 addr)
 
 	glUnmapBuffer(GL_PIXEL_PACK_BUFFER);
 	glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
+#endif
 }
 
 static int TexCacheLookups;
@@ -488,8 +493,10 @@ GLuint init_output_framebuffer(int width, int height)
 #endif
 				glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, width, height);
 		}
+#ifdef GL_DEPTH24_STENCIL8
 		else
 			glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
+#endif
 
 		if (gl.gl_major < 3 || config::Rotate90)
 		{
@@ -508,7 +515,9 @@ GLuint init_output_framebuffer(int width, int height)
 			// Use a renderbuffer and glBlitFramebuffer
 			glGenRenderbuffers(1, &gl.ofbo.colorb);
 			glBindRenderbuffer(GL_RENDERBUFFER, gl.ofbo.colorb);
+#ifdef GL_RGBA8
 			glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA8, width, height);
+#endif
 		}
 
 		// Create the framebuffer
