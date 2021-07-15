@@ -182,7 +182,7 @@ bool maple_atomiswave_coin_chute(int slot)
 #endif
 }
 
-void mcfg_Create(MapleDeviceType type, u32 bus, u32 port, s32 player_num = -1)
+static void mcfg_Create(MapleDeviceType type, u32 bus, u32 port, s32 player_num = -1)
 {
 	delete MapleDevices[bus][port];
 	maple_device* dev = maple_Create(type);
@@ -197,7 +197,7 @@ void mcfg_CreateNAOMIJamma()
 	mcfg_DestroyDevices();
 	mcfg_Create(MDT_NaomiJamma, 0, 5);
 	if (settings.input.JammaSetup == JVS::Keyboard)
-		mcfg_Create(MDT_Keyboard, 1, 5);
+		mcfg_Create(MDT_Keyboard, 1, 5, 0);
 	else
 	{
 		// Connect VMU B1

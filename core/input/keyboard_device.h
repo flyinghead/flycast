@@ -470,6 +470,8 @@ void KeyboardDeviceTemplate<Keycode>::keyboard_input(Keycode keycode, bool press
 	// or the corresponding maple device (if any) isn't a keyboard
 	if (gui_is_open()
 			|| port == (int)ARRAY_SIZE(kb_key)
-			|| config::MapleMainDevices[port] != MDT_Keyboard)
+			|| (settings.platform.system == DC_PLATFORM_DREAMCAST && config::MapleMainDevices[port] != MDT_Keyboard)
+			|| (settings.platform.system == DC_PLATFORM_NAOMI && settings.input.JammaSetup != JVS::Keyboard)
+			|| settings.platform.system == DC_PLATFORM_ATOMISWAVE)
 		gamepad_btn_input(dc_keycode, pressed);
 }

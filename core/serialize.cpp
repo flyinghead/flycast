@@ -303,7 +303,7 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	REICAST_S(packet_cmd);
 	REICAST_S(set_mode_offset);
 	REICAST_S(read_params);
-	REICAST_S(packet_cmd);
+	REICAST_S(read_buff);
 	REICAST_S(pio_buff);
 	REICAST_S(set_mode_offset);
 	REICAST_S(ata_cmd);
@@ -966,9 +966,13 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 	REICAST_US(packet_cmd);
 	REICAST_US(set_mode_offset);
 	REICAST_US(read_params);
-	REICAST_US(packet_cmd);
-	// read_buff
-	read_buff.cache_size = 0;
+	if (version >= V17)
+		REICAST_US(read_buff);
+	else
+	{
+		REICAST_US(packet_cmd);
+		read_buff.cache_size = 0;
+	}
 	if (version < V8)
 		REICAST_SKIP(4 + 4 + 2352 * 8192);
 	REICAST_US(pio_buff);

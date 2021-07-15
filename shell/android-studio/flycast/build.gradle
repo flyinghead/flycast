@@ -42,19 +42,12 @@ android {
 
         ndk {
             moduleName 'flycast'
-            abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86'
         }
     }
 
     signingConfigs {
         debug {
             storeFile file("../debug.keystore")
-        }
-        release {
-            storeFile file("../reicast-beta-cd.jks")
-            storePassword "notasecret"
-            keyAlias "reicast-upload-key"
-            keyPassword "notasecret"
         }
     }
 
@@ -70,7 +63,7 @@ android {
             minifyEnabled true
             zipAlignEnabled true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
-            signingConfig signingConfigs.release
+            signingConfig signingConfigs.debug
         }
     }
 

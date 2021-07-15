@@ -1075,12 +1075,12 @@ struct maple_keyboard : maple_base
 			w32(MFID_6_Keyboard);
 			//struct data
 			//int8 shift          ; shift keys pressed (bitmask)	//1
-			w8(kb_shift[bus_id]);
+			w8(kb_shift[player_num]);
 			//int8 led            ; leds currently lit			//1
-			w8(kb_led[bus_id]);
+			w8(kb_led[player_num]);
 			//int8 key[6]         ; normal keys pressed			//6
 			for (int i = 0; i < 6; i++)
-				w8(kb_key[bus_id][i]);
+				w8(kb_key[player_num][i]);
 
 			return MDRS_DataTransfer;
 
