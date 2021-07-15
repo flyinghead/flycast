@@ -368,10 +368,6 @@ int main(int argc, char* argv[])
 #if defined(__SWITCH__)
 	socketInitializeDefault();
 	nxlinkStdio();
-
-	hidInitializeTouchScreen();
-	hidInitializeMouse();
-	hidInitializeKeyboard();
 #endif // __SWITCH__
 
 	LogManager::Init();
@@ -415,6 +411,9 @@ int main(int argc, char* argv[])
 
 #if defined(USE_SDL)
 	sdl_window_destroy();
+#endif
+#if defined(__SWITCH__)
+	socketExit();
 #endif
 
 	return 0;

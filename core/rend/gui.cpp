@@ -1779,6 +1779,8 @@ static void gui_display_settings()
 #endif
 #elif defined(_WIN32)
 					"Windows"
+#elif defined(__SWITCH__)
+					"Switch"
 #else
 					"Unknown"
 #endif
