@@ -80,7 +80,6 @@ uniform sampler2D Texture;
 #define Source Texture
 #define TextureSize textureSize(Texture, 0)
 #define vTexCoord (gl_FragCoord.xy / vec2(textureSize(Texture, 0)))
-#define texture(c, d) COMPAT_TEXTURE(c, d)
 
 float dithertable[16] = float[](
 	16.,4.,13.,1.,   

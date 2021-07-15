@@ -24,7 +24,7 @@
 #ifdef LIBRETRO
 #include <vulkan/vulkan_symbol_wrapper.h>
 
-static inline PFN_vkVoidFunction vkGetInstanceProcAddr(VkInstance instance, const char *name) {
+static inline VKAPI_ATTR PFN_vkVoidFunction VKAPI_CALL vkGetInstanceProcAddr(VkInstance instance, const char *name) {
 	return (*vulkan_symbol_wrapper_instance_proc_addr())(instance, name);
 }
 
