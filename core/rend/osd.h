@@ -64,3 +64,9 @@ static inline bool crosshairsNeeded()
 		return false;
 	return true;
 }
+
+static inline void blankVmus()
+{
+	memset(vmu_lcd_data, 0, sizeof(vmu_lcd_data));
+	memset(vmu_lcd_changed, true, sizeof(vmu_lcd_changed));
+}

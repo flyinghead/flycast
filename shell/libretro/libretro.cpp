@@ -880,6 +880,7 @@ void retro_reset()
 	retro_game_geometry geometry;
 	setGameGeometry(geometry);
 	environ_cb(RETRO_ENVIRONMENT_SET_GEOMETRY, &geometry);
+	blankVmus();
 
 	if (config::ThreadedRendering)
 		dc_resume();
@@ -1677,6 +1678,7 @@ void retro_unload_game()
 	game_data = nullptr;
 	disk_paths.clear();
 	disk_labels.clear();
+	blankVmus();
 
 	frontend_clear_thread_waits_cb(1, nullptr);
 	dc_stop();
