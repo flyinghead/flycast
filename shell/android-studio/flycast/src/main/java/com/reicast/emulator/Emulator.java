@@ -4,8 +4,9 @@ import android.app.Application;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
-import android.support.v7.app.AppCompatDelegate;
 import android.util.Log;
+
+import androidx.appcompat.app.AppCompatDelegate;
 
 import com.reicast.emulator.config.Config;
 import com.reicast.emulator.emu.JNIdc;

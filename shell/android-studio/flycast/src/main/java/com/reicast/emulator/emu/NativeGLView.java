@@ -15,8 +15,6 @@ import android.view.View;
 import android.view.WindowInsets;
 
 import com.reicast.emulator.Emulator;
-import com.reicast.emulator.NativeGLActivity;
-import com.reicast.emulator.config.Config;
 
 public class NativeGLView extends SurfaceView implements SurfaceHolder.Callback {
     private boolean surfaceReady = false;
