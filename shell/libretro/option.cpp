@@ -29,7 +29,7 @@ Option<bool> DynarecSafeMode(CORE_OPTION_NAME "_div_matching");
 
 // General
 
-Option<int> Cable(CORE_OPTION_NAME "_cable_type", 3);			// TV Composite
+Option<int> Cable("", 3);									// TV Composite
 Option<int> Region(CORE_OPTION_NAME "_region", 1);			// USA
 Option<int> Broadcast(CORE_OPTION_NAME "_broadcast", 0);	// NTSC
 Option<int> Language(CORE_OPTION_NAME "_language", 1);		// English

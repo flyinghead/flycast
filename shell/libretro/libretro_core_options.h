@@ -376,7 +376,6 @@ struct retro_core_option_definition option_defs_us[] = {
       "",
       {
          { "VGA",	    	 NULL },
-         { "VGA",			 NULL },	// FIXME
          { "TV (RGB)",       NULL },
          { "TV (Composite)", NULL },
          { NULL, NULL },

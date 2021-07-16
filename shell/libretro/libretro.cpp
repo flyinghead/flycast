@@ -594,6 +594,16 @@ static void update_variables(bool first_startup)
 			environ_cb(RETRO_ENVIRONMENT_SET_SAVE_STATE_IN_BACKGROUND, &save_state_in_background);
 			environ_cb(RETRO_ENVIRONMENT_POLL_TYPE_OVERRIDE, &poll_type_early);
 		}
+
+		config::Cable = 3;
+		var.key = CORE_OPTION_NAME "_cable_type";
+		if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+		{
+			if (!strcmp("VGA", var.value))
+				config::Cable = 0;
+			else if (!strcmp("TV (RGB)", var.value))
+				config::Cable = 2;
+		}
 	}
 
 	var.key = CORE_OPTION_NAME "_enable_purupuru";
@@ -1508,9 +1518,6 @@ bool retro_load_game(const struct retro_game_info *game)
 					|| !strcmp(".7z", ext) || !strcmp(".7Z", ext))
 			{
 				settings.platform.system = naomi_cart_GetPlatform(game->path);
-				/* System may have changed - have to update
-				 * hidden core options */
-				set_variable_visibility();
 				// Users should use the superior format instead, let's warn them
 				if (!strcmp(".lst", ext)
 						|| !strcmp(".bin", ext) || !strcmp(".BIN", ext)
@@ -1535,6 +1542,8 @@ bool retro_load_game(const struct retro_game_info *game)
 			}
 		}
 	}
+	// System may have changed - have to update hidden core options
+	set_variable_visibility();
 
 	if (game->path[0] == '\0')
 	{
