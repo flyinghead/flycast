@@ -159,12 +159,12 @@ static void* vmem_platform_prepare_jit_block_template(void *code_area, unsigned 
 		uintptr_t try_addr_below = base_addr - i;
 
 		// We need to make sure there's no address wrap around the end of the addrspace (meaning: int overflow).
-		if (try_addr_above > base_addr) {
+		if (try_addr_above != 0 && try_addr_above > base_addr) {
 			void *ptr = mapper((void*)try_addr_above, size);
 			if (ptr)
 				return ptr;
 		}
-		if (try_addr_below < base_addr) {
+		if (try_addr_below != 0 && try_addr_below < base_addr) {
 			void *ptr = mapper((void*)try_addr_below, size);
 			if (ptr)
 				return ptr;
