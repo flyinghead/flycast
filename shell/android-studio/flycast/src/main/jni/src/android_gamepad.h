@@ -16,6 +16,7 @@
     You should have received a copy of the GNU General Public License
     along with reicast.  If not, see <https://www.gnu.org/licenses/>.
  */
+#pragma once
 
 #include "input/gamepad_device.h"
 
