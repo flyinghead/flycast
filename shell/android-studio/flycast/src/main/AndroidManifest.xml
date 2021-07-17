@@ -42,7 +42,8 @@
         android:banner="@drawable/ic_banner"
         android:logo="@drawable/ic_banner"
         android:hardwareAccelerated="true"
-        android:isGame="true">
+        android:isGame="true"
+		android:requestLegacyExternalStorage="true">
 
         <meta-data android:name="android.max_aspect" android:value="2.1" />
         <activity
