@@ -96,6 +96,7 @@ R"(
 #define FogClamping %d
 #define pp_TriLinear %d
 #define pp_Palette %d
+#define SWITCH %d
 
 #if TARGET_GL == GL3 || TARGET_GL == GLES3
 #if pp_Gouraud == 0
@@ -160,7 +161,7 @@ highp vec4 fog_clamp(lowp vec4 col)
 lowp vec4 palettePixel(highp vec2 coords)
 {
 	highp int color_idx = int(floor(texture(tex, coords).FOG_CHANNEL * 255.0 + 0.5)) + palette_index;
-#if TARGET_GL == GLES2 || TARGET_GL == GL2
+#if TARGET_GL == GLES2 || TARGET_GL == GL2 || SWITCH == 1
     highp vec2 c = vec2((mod(float(color_idx), 32.0) * 2.0 + 1.0) / 64.0, (float(color_idx / 32) * 2.0 + 1.0) / 64.0);
 	return texture(palette, c);
 #else
@@ -495,7 +496,10 @@ void findGLVersion()
 		}
 	}
 #endif
+	gl.mesa_nouveau = strstr((const char *)glGetString(GL_VERSION), "Mesa") != nullptr && !strcmp((const char *)glGetString(GL_VENDOR), "nouveau");
 	NOTICE_LOG(RENDERER, "Open GL%s version %d.%d", gl.is_gles ? "ES" : "", gl.gl_major, gl.gl_minor);
+	while (glGetError() != GL_NO_ERROR)
+		;
 }
 
 struct ShaderUniforms_t ShaderUniforms;
@@ -641,7 +645,7 @@ bool CompilePipelineShader(	PipelineShader* s)
 	rc = sprintf(pshader,PixelPipelineShader, gl.glsl_version_header, gl.gl_version,
                 s->cp_AlphaTest,s->pp_InsideClipping,s->pp_UseAlpha,
                 s->pp_Texture,s->pp_IgnoreTexA,s->pp_ShadInstr,s->pp_Offset,s->pp_FogCtrl, s->pp_Gouraud, s->pp_BumpMap,
-				s->fog_clamping, s->trilinear, s->palette);
+				s->fog_clamping, s->trilinear, s->palette, GL_SWITCH);
 	verify(rc + 1 <= (int)sizeof(pshader));
 
 	s->program=gl_CompileAndLink(vshader, pshader);
@@ -833,7 +837,7 @@ bool gl_create_resources();
 //setup
 
 #ifndef __APPLE__
-static void gl_DebugOutput(GLenum source,
+void gl_DebugOutput(GLenum source,
         GLenum type,
         GLuint id,
         GLenum severity,

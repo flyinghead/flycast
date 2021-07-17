@@ -92,12 +92,23 @@ void mainui_loop()
 		if (config::RendererType.pendingChange() || forceReinit)
 		{
 			int api = config::RendererType.isOpenGL() ? 0 : config::RendererType.isVulkan() ? 1 : 2;
+			RenderType oldRender = config::RendererType;
 			mainui_term();
 			config::RendererType.commit();
 			int newApi = config::RendererType.isOpenGL() ? 0 : config::RendererType.isVulkan() ? 1 : 2;
 			if (newApi != api || forceReinit)
+			{
 				// Switch between vulkan/opengl/directx (or full reinit)
-				SwitchRenderApi();
+				RenderType newRender = config::RendererType;
+				// restore current render mode to terminate
+				config::RendererType = oldRender;
+				config::RendererType.commit();
+				TermRenderApi();
+				// set the new render mode and init
+				config::RendererType = newRender;
+				config::RendererType.commit();
+				InitRenderApi();
+			}
 			mainui_init();
 			forceReinit = false;
 		}

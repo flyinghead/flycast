@@ -132,6 +132,7 @@ struct gl_ctx
 	bool GL_OES_depth24_supported;
 	bool highp_float_supported;
 	float max_anisotropy;
+	bool mesa_nouveau;
 
 	size_t get_index_size() { return index_type == GL_UNSIGNED_INT ? sizeof(u32) : sizeof(u16); }
 };
@@ -339,4 +340,11 @@ out highp vec4 FragColor;					\n\
 #ifdef LIBRETRO
 extern "C" struct retro_hw_render_callback hw_render;
 void termVmuLightgun();
+#endif
+
+constexpr int GL_SWITCH =
+#ifdef __SWITCH__
+							1;
+#else
+							0;
 #endif

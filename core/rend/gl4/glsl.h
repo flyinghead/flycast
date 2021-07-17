@@ -139,6 +139,6 @@ uint packColors(vec4 v) \n\
  \n\
 vec4 unpackColors(uint u) \n\
 { \n\
-	return vec4(float((u >> 24) & 255) / 255.0, float((u >> 16) & 255) / 255.0, float((u >> 8) & 255) / 255.0, float(u & 255) / 255.0); \n\
+	return vec4(float((u >> 24) & 255u) / 255.0, float((u >> 16) & 255u) / 255.0, float((u >> 8) & 255u) / 255.0, float(u & 255u) / 255.0); \n\
 } \n\
 "

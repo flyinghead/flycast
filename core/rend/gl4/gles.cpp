@@ -82,14 +82,17 @@ R"(
 #define pp_BumpMap %d
 #define FogClamping %d
 #define pp_Palette %d
+#define SWITCH %d
+#define NOUVEAU %d
 #define PASS %d
+
 #define PI 3.1415926
 
 #define PASS_DEPTH 0
 #define PASS_COLOR 1
 #define PASS_OIT 2
 
-#if PASS == PASS_DEPTH || PASS == PASS_COLOR
+#if PASS == PASS_DEPTH || PASS == PASS_COLOR || NOUVEAU == 1
 out vec4 FragColor;
 #endif
 
@@ -164,8 +167,13 @@ vec4 fog_clamp(vec4 col)
 vec4 palettePixel(sampler2D tex, vec2 coords)
 {
 	int color_idx = int(floor(texture(tex, coords).r * 255.0 + 0.5)) + palette_index;
+#if SWITCH == 1
+	vec2 c = vec2((mod(float(color_idx), 32.0) * 2.0 + 1.0) / 64.0, (float(color_idx / 32) * 2.0 + 1.0) / 64.0);
+	return texture(palette, c);
+#else
 	ivec2 c = ivec2(color_idx % 32, color_idx / 32);
 	return texelFetch(palette, c, 0);
+#endif
 }
 
 #endif
@@ -380,7 +388,12 @@ void main()
 		pixel.next = imageAtomicExchange(abufferPointerImg, coords, idx);
 		pixels[idx] = pixel;
 		
+#if NOUVEAU == 0
 		discard;
+#else
+		// nouveau may be optimizing a bit too aggressively here
+		FragColor = vec4(0.0);
+#endif
 		
 	#endif
 }
@@ -412,6 +425,7 @@ bool gl4CompilePipelineShader(	gl4PipelineShader* s, const char *pixel_source /*
                 s->cp_AlphaTest, s->pp_InsideClipping, s->pp_UseAlpha,
                 s->pp_Texture, s->pp_IgnoreTexA, s->pp_ShadInstr, s->pp_Offset, s->pp_FogCtrl,
 				s->pp_TwoVolumes, s->pp_Gouraud, s->pp_BumpMap, s->fog_clamping, s->palette,
+				GL_SWITCH, gl.mesa_nouveau,
 				(int)s->pass);
 
 	s->program = gl_CompileAndLink(vshader, pshader);
@@ -557,6 +571,8 @@ static bool gl_create_resources()
 }
 
 //setup
+void gl_DebugOutput(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length,
+		const GLchar *message, const void *userParam);
 
 static bool gl4_init()
 {
@@ -570,13 +586,13 @@ static bool gl4_init()
 
 	glcache.DisableCache();
 
+    //glEnable(GL_DEBUG_OUTPUT);
+    //glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+    //glDebugMessageCallback(gl_DebugOutput, NULL);
+    //glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
+
 	if (!gl_create_resources())
 		return false;
-
-//    glEnable(GL_DEBUG_OUTPUT);
-//    glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
-//    glDebugMessageCallback(gl_DebugOutput, NULL);
-//    glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
 
 	initABuffer();
 
@@ -631,8 +647,6 @@ static void resize(int w, int h)
 
 static bool RenderFrame(int width, int height)
 {
-	create_modvol_shader();
-
 	const bool is_rtt = pvrrc.isRTT;
 
 	TransformMatrix<COORD_OPENGL> matrices(pvrrc, width, height);
