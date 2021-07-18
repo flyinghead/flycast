@@ -52,7 +52,7 @@ public:
             return 0;
         }
 
-        int pkt_size = HeaderSize + (int(buf[4] << 8) | int(buf[5]));
+        int pkt_size = HeaderSize + ((int(buf[4]) << 8) | int(buf[5]));
         if (buf.size() < pkt_size) {
             return 0;
         }
@@ -110,8 +110,8 @@ public:
     }
 
     LbsMessage *Write16(u16 v) {
-        body.push_back(u8(v >> 8));
-        body.push_back(u8(v & 0xff));
+        body.push_back(u8((v >> 8) & 0xffu));
+        body.push_back(u8(v & 0xffu));
         return this;
     }
 

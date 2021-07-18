@@ -4,6 +4,7 @@
 
 #include <atomic>
 #include <mutex>
+#include <utility>
 #include "gdx_queue.h"
 #include "gdxsv_network.h"
 #include "lbs_message.h"
@@ -15,6 +16,8 @@ public:
 
     void Reset() {
         tcp_client_.Close();
+        lbs_msg_reader_.Clear();
+        callback_lbs_packet_ = nullptr;
     }
 
     bool Connect(const std::string &host, u16 port) {
@@ -69,35 +72,39 @@ public:
         }
     }
 
-    void OnGameRead(std::function<void(const LbsMessage &)> on_lbs_message) {
-        int n = tcp_client_.ReadableSize();
-        if (n <= 0) {
-            return;
-        }
-
+    void OnGameRead() {
+        u8 buf[GDX_QUEUE_SIZE];
         u32 gdx_rxq_addr = symbols_.at("gdx_rxq");
         gdx_queue q{};
         q.head = ReadMem16_nommu(gdx_rxq_addr);
         q.tail = ReadMem16_nommu(gdx_rxq_addr + 2);
         u32 buf_addr = gdx_rxq_addr + 4;
 
-        u8 buf[GDX_QUEUE_SIZE];
+        int n = tcp_client_.ReadableSize();
+        if (n <= 0) {
+            return;
+        }
         n = std::min<int>(n, static_cast<int>(gdx_queue_avail(&q)));
         n = tcp_client_.Recv((char *) buf, n);
 
         if (0 < n) {
-            lbs_msg_reader_.Write((char *) buf, n);
             for (int i = 0; i < n; ++i) {
                 WriteMem8_nommu(buf_addr + q.tail, buf[i]);
                 gdx_queue_push(&q, 0); // dummy push
             }
-        }
+            WriteMem16_nommu(gdx_rxq_addr + 2, q.tail);
 
-        WriteMem16_nommu(gdx_rxq_addr + 2, q.tail);
-
-        while (lbs_msg_reader_.Read(lbs_msg_)) {
-            on_lbs_message(lbs_msg_);
+            if (callback_lbs_packet_) {
+                lbs_msg_reader_.Write((char *) buf, n);
+                while (lbs_msg_reader_.Read(lbs_msg_)) {
+                    callback_lbs_packet_(lbs_msg_);
+                }
+            }
         }
+    }
+
+    void callback_lbs_packet(std::function<void(const LbsMessage &)> callback) {
+        callback_lbs_packet_ = std::move(callback);
     }
 
 private:
@@ -105,4 +112,5 @@ private:
     TcpClient tcp_client_;
     LbsMessage lbs_msg_;
     LbsMessageReader lbs_msg_reader_;
+    std::function<void(const LbsMessage &)> callback_lbs_packet_;
 };

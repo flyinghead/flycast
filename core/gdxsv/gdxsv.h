@@ -16,9 +16,13 @@
 
 class Gdxsv {
 public:
-    Gdxsv() : lbs_net(symbols), udp_net(symbols, maxlag) {};
+    enum class NetMode {
+        Offline,
+        Lbs,
+        McsUdp,
+    };
 
-    ~Gdxsv();
+    Gdxsv() : lbs_net(symbols), udp_net(symbols, maxlag) {};
 
     bool Enabled() const;
 
@@ -39,6 +43,7 @@ public:
     std::string LatestVersion();
 
     void RestoreOnlinePatch();
+
 private:
     void GcpPingTest(); // run on network thread
 
@@ -56,6 +61,7 @@ private:
 
     void WritePatchDisk2();
 
+    NetMode netmode = NetMode::Offline;
     std::atomic<bool> enabled;
     std::atomic<int> disk;
     std::atomic<int> maxlag;

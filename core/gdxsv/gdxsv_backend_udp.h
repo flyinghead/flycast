@@ -18,9 +18,6 @@ public:
     ~GdxsvBackendUdp() {
         CloseMcsRemoteWithReason("cl_hard_quit");
         net_terminate_ = true;
-        if (net_thread_.joinable()) {
-            net_thread_.join();
-        }
     }
 
     void Reset() {
@@ -45,14 +42,8 @@ public:
             return false;
         }
 
-        if (net_thread_.joinable()) {
-            net_terminate_ = true;
-            net_thread_.join();
-        }
-
         net_terminate_ = false;
-        net_thread_ = std::thread([this]() { NetThreadLoop(); });
-
+        std::thread([this]() { NetThreadLoop(); }).detach();
         return true;
     }
 
@@ -191,6 +182,8 @@ private:
                             udp_client_.SendTo((const char *) buf, pkt.GetCachedSize(), mcs_remote_);
                         } else {
                             ERROR_LOG(COMMON, "packet serialize error");
+                            CloseMcsRemoteWithReason("cl_error");
+                            state = State::End;
                         }
                     }
                 } else {
@@ -212,6 +205,8 @@ private:
                             udp_client_.SendTo((const char *) buf, pkt.GetCachedSize(), mcs_remote_);
                         } else {
                             ERROR_LOG(COMMON, "packet serialize error");
+                            CloseMcsRemoteWithReason("cl_error");
+                            state = State::End;
                         }
                     }
                 } else {
@@ -243,8 +238,6 @@ private:
                     if (msg_buf.Packet().SerializeToArray((void *) buf, (int) sizeof(buf))) {
                         if (udp_client_.SendTo((const char *) buf, msg_buf.Packet().GetCachedSize(), mcs_remote_)) {
                             udp_retransmit_countdown = 16;
-                        } else {
-                            udp_retransmit_countdown = 4;
                         }
                     }
                 }
@@ -338,7 +331,6 @@ private:
 
     std::string session_id_;
     std::atomic<int> &maxlag_;
-    std::thread net_thread_;
     std::atomic<bool> net_terminate_;
     std::mutex send_buf_mtx_;
     std::mutex recv_buf_mtx_;

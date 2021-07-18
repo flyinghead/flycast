@@ -9,12 +9,6 @@
 #include "oslib/oslib.h"
 #include "version.h"
 
-Gdxsv::~Gdxsv() {
-    if (gcp_ping_test_thread.joinable()) {
-        gcp_ping_test_thread.join();
-    }
-}
-
 bool Gdxsv::InGame() const {
     return enabled && udp_net.IsConnected();
 }
@@ -26,7 +20,6 @@ bool Gdxsv::Enabled() const {
 void Gdxsv::Reset() {
     lbs_net.Reset();
     udp_net.Reset();
-    patch_list.clear_patches();
     RestoreOnlinePatch();
 
     // Automatically add ContentPath if it is empty.
@@ -45,9 +38,30 @@ void Gdxsv::Reset() {
     signal(SIGPIPE, SIG_IGN);
 #endif
 
-    if (!gcp_ping_test_thread.joinable()) {
-        gcp_ping_test_thread = std::thread([this]() { GcpPingTest(); });
-    }
+    lbs_net.callback_lbs_packet([this](const LbsMessage &lbs_msg) {
+        if (lbs_msg.command == LbsMessage::lbsExtPlayerInfo) {
+            proto::ExtPlayerInfo player_info;
+            if (player_info.ParseFromArray(lbs_msg.body.data(), lbs_msg.body.size())) {
+                ext_player_info.push_back(player_info);
+            }
+        }
+        if (lbs_msg.command == LbsMessage::lbsReadyBattle) {
+            // Reset current patches for no-patched game
+            RestoreOnlinePatch();
+            ext_player_info.clear();
+        }
+        if (lbs_msg.command == LbsMessage::lbsGamePatch) {
+            // Reset current patches and update patch_list
+            RestoreOnlinePatch();
+            if (patch_list.ParseFromArray(lbs_msg.body.data(), lbs_msg.body.size())) {
+                ApplyOnlinePatch(true);
+            } else {
+                ERROR_LOG(COMMON, "patch_list deserialize error");
+            }
+        }
+    });
+
+    std::thread([this]() { GcpPingTest(); }).detach();
 
     server = cfgLoadStr("gdxsv", "server", "zdxsv.net");
     loginkey = cfgLoadStr("gdxsv", "loginkey", "");
@@ -186,15 +200,22 @@ void Gdxsv::SyncNetwork(bool write) {
             if (tolobby == 1) {
                 udp_net.CloseMcsRemoteWithReason("cl_to_lobby");
                 if (lbs_net.Connect(host, port)) {
+                    netmode = NetMode::Lbs;
                     auto packet = GeneratePlatformInfoPacket();
                     lbs_net.Send(packet);
+                } else {
+                    netmode = NetMode::Offline;
                 }
             } else {
                 lbs_net.Close();
                 char addr_buf[INET_ADDRSTRLEN];
                 inet_ntop(AF_INET, &host_ip, addr_buf, INET_ADDRSTRLEN);
                 host = std::string(addr_buf);
-                udp_net.Connect(host, port);
+                if (udp_net.Connect(host, port)) {
+                    netmode = NetMode::McsUdp;
+                } else {
+                    netmode = NetMode::Offline;
+                }
             }
         }
 
@@ -210,6 +231,8 @@ void Gdxsv::SyncNetwork(bool write) {
             } else {
                 udp_net.CloseMcsRemoteWithReason("cl_tcp_close");
             }
+
+            netmode = NetMode::Offline;
         }
 
         WriteMem32_nommu(gdx_rpc_addr, 0);
@@ -220,44 +243,29 @@ void Gdxsv::SyncNetwork(bool write) {
         WriteMem32_nommu(gdx_rpc_addr + 20, 0);
     }
 
-    WriteMem32_nommu(symbols["is_online"], lbs_net.IsConnected() || udp_net.IsConnected());
+    WriteMem32_nommu(symbols["is_online"], netmode != NetMode::Offline);
 
-    if (lbs_net.IsConnected()) {
-        if (write) {
-            lbs_net.OnGameWrite();
-        } else {
-            lbs_net.OnGameRead([this](const LbsMessage &lbs_msg) {
-                NOTICE_LOG(COMMON, "RECV cmd:%0x4d size:%d", lbs_msg.command, lbs_msg.body_size);
+    switch (netmode) {
+        case NetMode::Offline:
+            break;
 
-                if (lbs_msg.command == LbsMessage::lbsExtPlayerInfo) {
-                    proto::ExtPlayerInfo player_info;
-                    if (player_info.ParseFromArray(lbs_msg.body.data(), lbs_msg.body.size())) {
-                        ext_player_info.push_back(player_info);
-                    }
-                }
-                if (lbs_msg.command == LbsMessage::lbsReadyBattle) {
-                    // Reset current patches for no-patched game
-                    RestoreOnlinePatch();
-                    ext_player_info.clear();
-                }
-                if (lbs_msg.command == LbsMessage::lbsGamePatch) {
-                    // Reset current patches and update patch_list
-                    RestoreOnlinePatch();
-                    if (patch_list.ParseFromArray(lbs_msg.body.data(), lbs_msg.body.size())) {
-                        ApplyOnlinePatch(true);
-                    } else {
-                        ERROR_LOG(COMMON, "patch_list deserialize error");
-                    }
-                }
-            });
-        }
-    } else if (udp_net.IsConnected()) {
-        if (write) {
-            udp_net.OnGameWrite();
-        } else {
-            udp_net.OnGameRead();
-        }
+        case NetMode::Lbs:
+            if (write) {
+                lbs_net.OnGameWrite();
+            } else {
+                lbs_net.OnGameRead();
+            }
+            break;
+
+        case NetMode::McsUdp:
+            if (write) {
+                udp_net.OnGameWrite();
+            } else {
+                udp_net.OnGameRead();
+            }
+            break;
     }
+
 }
 
 void Gdxsv::GcpPingTest() {
