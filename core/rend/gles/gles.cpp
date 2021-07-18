@@ -96,7 +96,6 @@ R"(
 #define FogClamping %d
 #define pp_TriLinear %d
 #define pp_Palette %d
-#define SWITCH %d
 
 #if TARGET_GL == GL3 || TARGET_GL == GLES3
 #if pp_Gouraud == 0
@@ -161,11 +160,11 @@ highp vec4 fog_clamp(lowp vec4 col)
 lowp vec4 palettePixel(highp vec2 coords)
 {
 	highp int color_idx = int(floor(texture(tex, coords).FOG_CHANNEL * 255.0 + 0.5)) + palette_index;
-#if TARGET_GL == GLES2 || TARGET_GL == GL2 || SWITCH == 1
+#if TARGET_GL == GLES2 || TARGET_GL == GL2
     highp vec2 c = vec2((mod(float(color_idx), 32.0) * 2.0 + 1.0) / 64.0, (float(color_idx / 32) * 2.0 + 1.0) / 64.0);
 	return texture(palette, c);
 #else
-    highp ivec2 c = ivec2(color_idx % 32, color_idx / 32);
+    highp ivec2 c = ivec2(color_idx %% 32, color_idx / 32);
 	return texelFetch(palette, c, 0);
 #endif
 }
@@ -645,7 +644,7 @@ bool CompilePipelineShader(	PipelineShader* s)
 	rc = sprintf(pshader,PixelPipelineShader, gl.glsl_version_header, gl.gl_version,
                 s->cp_AlphaTest,s->pp_InsideClipping,s->pp_UseAlpha,
                 s->pp_Texture,s->pp_IgnoreTexA,s->pp_ShadInstr,s->pp_Offset,s->pp_FogCtrl, s->pp_Gouraud, s->pp_BumpMap,
-				s->fog_clamping, s->trilinear, s->palette, GL_SWITCH);
+				s->fog_clamping, s->trilinear, s->palette);
 	verify(rc + 1 <= (int)sizeof(pshader));
 
 	s->program=gl_CompileAndLink(vshader, pshader);

@@ -82,7 +82,6 @@ R"(
 #define pp_BumpMap %d
 #define FogClamping %d
 #define pp_Palette %d
-#define SWITCH %d
 #define NOUVEAU %d
 #define PASS %d
 
@@ -167,13 +166,8 @@ vec4 fog_clamp(vec4 col)
 vec4 palettePixel(sampler2D tex, vec2 coords)
 {
 	int color_idx = int(floor(texture(tex, coords).r * 255.0 + 0.5)) + palette_index;
-#if SWITCH == 1
-	vec2 c = vec2((mod(float(color_idx), 32.0) * 2.0 + 1.0) / 64.0, (float(color_idx / 32) * 2.0 + 1.0) / 64.0);
-	return texture(palette, c);
-#else
-	ivec2 c = ivec2(color_idx % 32, color_idx / 32);
+	ivec2 c = ivec2(color_idx %% 32, color_idx / 32);
 	return texelFetch(palette, c, 0);
-#endif
 }
 
 #endif
@@ -425,7 +419,7 @@ bool gl4CompilePipelineShader(	gl4PipelineShader* s, const char *pixel_source /*
                 s->cp_AlphaTest, s->pp_InsideClipping, s->pp_UseAlpha,
                 s->pp_Texture, s->pp_IgnoreTexA, s->pp_ShadInstr, s->pp_Offset, s->pp_FogCtrl,
 				s->pp_TwoVolumes, s->pp_Gouraud, s->pp_BumpMap, s->fog_clamping, s->palette,
-				GL_SWITCH, gl.mesa_nouveau,
+				gl.mesa_nouveau,
 				(int)s->pass);
 
 	s->program = gl_CompileAndLink(vshader, pshader);

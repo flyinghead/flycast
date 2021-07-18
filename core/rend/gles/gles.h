@@ -341,10 +341,3 @@ out highp vec4 FragColor;					\n\
 extern "C" struct retro_hw_render_callback hw_render;
 void termVmuLightgun();
 #endif
-
-constexpr int GL_SWITCH =
-#ifdef __SWITCH__
-							1;
-#else
-							0;
-#endif

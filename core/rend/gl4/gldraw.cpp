@@ -495,10 +495,12 @@ void gl4DrawStrips(GLuint output_fbo, int width, int height)
 			previous_pass = current_pass;
 			continue;
 		}
-        DEBUG_LOG(RENDERER, "Render pass %d/%d OP %d PT %d TR %d autosort %d", render_pass + 1, render_pass_count,
+        DEBUG_LOG(RENDERER, "Render pass %d/%d OP %d PT %d TR %d MV %d TMV %d autosort %d", render_pass + 1, render_pass_count,
         		current_pass.op_count - previous_pass.op_count,
 				current_pass.pt_count - previous_pass.pt_count,
 				current_pass.tr_count - previous_pass.tr_count,
+				current_pass.mvo_count - previous_pass.mvo_count,
+				current_pass.mvo_tr_count - previous_pass.mvo_tr_count,
 				current_pass.autosort);
 
 		glBindVertexArray(gl4.vbo.main_vao);
