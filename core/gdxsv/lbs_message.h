@@ -25,8 +25,9 @@ public:
     static const u32 StatusError = 0xFFFFFFFFu;
     static const u32 StatusSuccess = 0x00FFFFFFu;
 
-
+    static const u16 lbsShutdown = 0x6003;
     static const u16 lbsReadyBattle = 0x6910;
+    static const u16 lbsExtPlayerInfo = 0x9955;
     static const u16 lbsGamePatch = 0x9960;
 
     int Serialize(std::deque<u8> &buf) const {
@@ -51,7 +52,7 @@ public:
             return 0;
         }
 
-        int pkt_size = HeaderSize + (int(buf[4] << 8) | int(buf[5]));
+        int pkt_size = HeaderSize + ((int(buf[4]) << 8) | int(buf[5]));
         if (buf.size() < pkt_size) {
             return 0;
         }
@@ -109,8 +110,8 @@ public:
     }
 
     LbsMessage *Write16(u16 v) {
-        body.push_back(u8(v >> 8));
-        body.push_back(u8(v & 0xff));
+        body.push_back(u8((v >> 8) & 0xffu));
+        body.push_back(u8(v & 0xffu));
         return this;
     }
 
