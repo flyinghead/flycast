@@ -250,6 +250,8 @@ private:
 			u32 target = NaomiGameInputs->buttons[i].target;
 			if (target != 0)
 				cur_mapping[keyIdx] = target;
+			else if (p1_mapping[keyIdx] != 0 || p2_mapping[keyIdx] != 0)
+				cur_mapping[keyIdx] = 0;
 		}
 	}
 
