@@ -22,16 +22,7 @@
 #include "../compiler.h"
 #include "rend/gl4/glsl.h"
 
-static const char OITVertexShaderSource[] = R"(#version 450
-
-#define pp_Gouraud %d
-
-#if pp_Gouraud == 0
-#define INTERPOLATION flat
-#else
-#define INTERPOLATION smooth
-#endif
-
+static const char OITVertexShaderSource[] = R"(
 layout (std140, set = 0, binding = 0) uniform VertexShaderUniforms
 {
 	mat4 normal_matrix;
@@ -68,8 +59,7 @@ void main()
 }
 )";
 
-static const char OITShaderHeader[] = R"(#version 450
-
+static const char OITShaderHeader[] = R"(
 layout (std140, set = 0, binding = 1) uniform FragmentShaderUniforms
 {
 	vec4 colorClampMin;
@@ -111,20 +101,6 @@ layout (set = 0, binding = 3, std430) readonly buffer TrPolyParamBuffer {
 )";
 
 static const char OITFragmentShaderSource[] = R"(
-#define cp_AlphaTest %d
-#define pp_ClipInside %d
-#define pp_UseAlpha %d
-#define pp_Texture %d
-#define pp_IgnoreTexA %d
-#define pp_ShadInstr %d
-#define pp_Offset %d
-#define pp_FogCtrl %d
-#define pp_TwoVolumes %d
-#define pp_Gouraud %d
-#define pp_BumpMap %d
-#define ColorClamping %d
-#define pp_Palette %d
-#define PASS %d
 #define PI 3.1415926
 
 #define PASS_DEPTH 0
@@ -140,12 +116,6 @@ layout (location = 0) out vec4 FragColor;
 #define IF(x) if (x)
 #else
 #define IF(x)
-#endif
-
-#if pp_Gouraud == 0
-#define INTERPOLATION flat
-#else
-#define INTERPOLATION smooth
 #endif
 
 layout (push_constant) uniform pushBlock
@@ -444,18 +414,15 @@ void main()
 )";
 
 static const char OITModifierVolumeShader[] = R"(
-
 void main()
 {
 	setFragDepth();
 }
 )";
 
-#define MAX_PIXELS_PER_FRAGMENT "32"
+constexpr int MAX_PIXELS_PER_FRAGMENT = 32;
 
-static const char OITFinalShaderSource[] =
-"#define MAX_PIXELS_PER_FRAGMENT " MAX_PIXELS_PER_FRAGMENT
-R"(
+static const char OITFinalShaderSource[] = R"(
 layout (input_attachment_index = 0, set = 2, binding = 0) uniform subpassInput tex;
 
 layout (location = 0) out vec4 FragColor;
@@ -609,11 +576,7 @@ void main(void)
 }
 )";
 
-static const char OITTranslucentModvolShaderSource[] =
-"#define MAX_PIXELS_PER_FRAGMENT " MAX_PIXELS_PER_FRAGMENT
-R"(
-#define MV_MODE %d
-
+static const char OITTranslucentModvolShaderSource[] = R"(
 // Must match ModifierVolumeMode enum values
 #define MV_XOR		 0
 #define MV_OR		 1
@@ -657,8 +620,7 @@ void main()
 }
 )";
 
-static const char OITFinalVertexShaderSource[] = R"(#version 430
-
+static const char OITFinalVertexShaderSource[] = R"(
 layout (location = 0) in vec3 in_pos;
 
 void main()
@@ -671,57 +633,75 @@ extern const char ModVolVertexShaderSource[];
 
 vk::UniqueShaderModule OITShaderManager::compileShader(const VertexShaderParams& params)
 {
-	char buf[sizeof(OITVertexShaderSource) * 2];
-
-	sprintf(buf, OITVertexShaderSource, (int)params.gouraud);
-	return ShaderCompiler::Compile(vk::ShaderStageFlagBits::eVertex, buf);
+	VulkanSource src;
+	src.addConstant("pp_Gouraud", (int)params.gouraud)
+			.addSource(GouraudSource)
+			.addSource(OITVertexShaderSource);
+	return ShaderCompiler::Compile(vk::ShaderStageFlagBits::eVertex, src.generate());
 }
 
 vk::UniqueShaderModule OITShaderManager::compileShader(const FragmentShaderParams& params)
 {
-	char buf[(sizeof(OITShaderHeader) + sizeof(OITFragmentShaderSource)) * 2];
-
-	strcpy(buf, OITShaderHeader);
-	sprintf(buf + strlen(buf), OITFragmentShaderSource, (int)params.alphaTest, (int)params.insideClipTest, (int)params.useAlpha,
-			(int)params.texture, (int)params.ignoreTexAlpha, params.shaderInstr, (int)params.offset, params.fog,
-			(int)params.twoVolume, (int)params.gouraud, (int)params.bumpmap, (int)params.clamping, (int)params.palette,
-			(int)params.pass);
-	return ShaderCompiler::Compile(vk::ShaderStageFlagBits::eFragment, buf);
+	VulkanSource src;
+	src.addConstant("cp_AlphaTest", (int)params.alphaTest)
+		.addConstant("pp_ClipInside", (int)params.insideClipTest)
+		.addConstant("pp_UseAlpha", (int)params.useAlpha)
+		.addConstant("pp_Texture", (int)params.texture)
+		.addConstant("pp_IgnoreTexA", (int)params.ignoreTexAlpha)
+		.addConstant("pp_ShadInstr", params.shaderInstr)
+		.addConstant("pp_Offset", (int)params.offset)
+		.addConstant("pp_FogCtrl", params.fog)
+		.addConstant("pp_TwoVolumes", (int)params.twoVolume)
+		.addConstant("pp_Gouraud", (int)params.gouraud)
+		.addConstant("pp_BumpMap", (int)params.bumpmap)
+		.addConstant("ColorClamping", (int)params.clamping)
+		.addConstant("pp_Palette", (int)params.palette)
+		.addConstant("PASS", (int)params.pass)
+		.addSource(GouraudSource)
+		.addSource(OITShaderHeader)
+		.addSource(OITFragmentShaderSource);
+	return ShaderCompiler::Compile(vk::ShaderStageFlagBits::eFragment, src.generate());
 }
 
 vk::UniqueShaderModule OITShaderManager::compileFinalShader()
 {
-	std::string source = OITShaderHeader;
-	source += OITFinalShaderSource;
-	return ShaderCompiler::Compile(vk::ShaderStageFlagBits::eFragment, source);
+	VulkanSource src;
+	src.addConstant("MAX_PIXELS_PER_FRAGMENT", MAX_PIXELS_PER_FRAGMENT)
+		.addSource(OITShaderHeader)
+		.addSource(OITFinalShaderSource);
+
+	return ShaderCompiler::Compile(vk::ShaderStageFlagBits::eFragment, src.generate());
 }
 vk::UniqueShaderModule OITShaderManager::compileFinalVertexShader()
 {
-	return ShaderCompiler::Compile(vk::ShaderStageFlagBits::eVertex, OITFinalVertexShaderSource);
+	return ShaderCompiler::Compile(vk::ShaderStageFlagBits::eVertex, VulkanSource().addSource(OITFinalVertexShaderSource).generate());
 }
 vk::UniqueShaderModule OITShaderManager::compileClearShader()
 {
-	std::string source = OITShaderHeader;
-	source += OITClearShaderSource;
-	return ShaderCompiler::Compile(vk::ShaderStageFlagBits::eFragment, source);
+	VulkanSource src;
+	src.addSource(OITShaderHeader)
+		.addSource(OITClearShaderSource);
+	return ShaderCompiler::Compile(vk::ShaderStageFlagBits::eFragment, src.generate());
 }
 vk::UniqueShaderModule OITShaderManager::compileModVolVertexShader()
 {
-	return ShaderCompiler::Compile(vk::ShaderStageFlagBits::eVertex, ModVolVertexShaderSource);
+	return ShaderCompiler::Compile(vk::ShaderStageFlagBits::eVertex, VulkanSource().addSource(ModVolVertexShaderSource).generate());
 }
 vk::UniqueShaderModule OITShaderManager::compileModVolFragmentShader()
 {
-	std::string source = OITShaderHeader;
-	source += OITModifierVolumeShader;
-	return ShaderCompiler::Compile(vk::ShaderStageFlagBits::eFragment, source);
+	VulkanSource src;
+	src.addSource(OITShaderHeader)
+		.addSource(OITModifierVolumeShader);
+	return ShaderCompiler::Compile(vk::ShaderStageFlagBits::eFragment, src.generate());
 }
 void OITShaderManager::compileTrModVolFragmentShader(ModVolMode mode)
 {
 	if (trModVolShaders.empty())
 		trModVolShaders.resize((size_t)ModVolMode::Final);
-	char buf[(sizeof(OITShaderHeader) + sizeof(OITTranslucentModvolShaderSource)) * 2];
-
-	strcpy(buf, OITShaderHeader);
-	sprintf(buf + strlen(buf), OITTranslucentModvolShaderSource, (int)mode);
-	trModVolShaders[(size_t)mode] = ShaderCompiler::Compile(vk::ShaderStageFlagBits::eFragment, buf);
+	VulkanSource src;
+	src.addConstant("MAX_PIXELS_PER_FRAGMENT", MAX_PIXELS_PER_FRAGMENT)
+		.addConstant("MV_MODE", (int)mode)
+		.addSource(OITShaderHeader)
+		.addSource(OITTranslucentModvolShaderSource);
+	trModVolShaders[(size_t)mode] = ShaderCompiler::Compile(vk::ShaderStageFlagBits::eFragment, src.generate());
 }

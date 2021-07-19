@@ -23,21 +23,8 @@
 
 PostProcessor postProcessor;
 
-static const char* VertexShaderSource = R"(%s
-#define TARGET_GL %s
-
-#define GLES2 0
-#define GLES3 1
-#define GL2 2
-#define GL3 3
-
-#if TARGET_GL == GL3 || TARGET_GL == GLES3
-#define COMPAT_VARYING in
-#else
-#define COMPAT_VARYING attribute
-#endif
-
-COMPAT_VARYING vec3 in_pos;
+static const char* VertexShaderSource = R"(
+in vec3 in_pos;
 
 void main()
 {
@@ -45,32 +32,11 @@ void main()
 }
 )";
 
-static const char* FragmentShaderSource = R"(%s
-#define TARGET_GL %s
-#define DITHERING %d
-#define INTERLACED %d
-#define VGASIGNAL %d
+static const char* FragmentShaderSource = R"(
 #define LUMBOOST 0
 
-#define GLES2 0
-#define GLES3 1
-#define GL2 2
-#define GL3 3
-
 #if TARGET_GL == GLES2 || TARGET_GL == GLES3
-#ifdef GL_FRAGMENT_PRECISION_HIGH
 precision highp float;
-#else
-precision mediump float;
-#endif
-#endif
-
-#if TARGET_GL == GL3 || TARGET_GL == GLES3
-#define COMPAT_TEXTURE texture
-out vec4 FragColor;
-#else
-#define FragColor gl_FragColor
-#define COMPAT_TEXTURE texture2D
 #endif
 
 uniform int FrameCount;
@@ -102,7 +68,7 @@ void main()
 	vec2 texcoord2 = vTexCoord;
 	texcoord2.x *= float(TextureSize.x);
 	texcoord2.y *= float(TextureSize.y);
-	vec4 color = COMPAT_TEXTURE(Source, texcoord);
+	vec4 color = texture(Source, texcoord);
 	float fc = mod(float(FrameCount), 2.0);
 
 #if INTERLACED == 1
@@ -117,7 +83,7 @@ void main()
 	for (bl=0;bl<taps;bl++)
 	{
 		texcoord4.y += tap;
-		ble.rgb += (COMPAT_TEXTURE(Source, texcoord4).rgb / float(taps+1));
+		ble.rgb += (texture(Source, texcoord4).rgb / float(taps+1));
 	}
 	color.rgb = (color.rgb / float(taps+1)) + ( ble.rgb );
 #endif
@@ -170,7 +136,7 @@ void main()
 	vec2 texcoord4  = vTexCoord;
 	texcoord4.x = texcoord4.x + (2.0/640.0);
 	texcoord4.y = texcoord4.y;
-	vec4 blur1 = COMPAT_TEXTURE(Source, texcoord4);
+	vec4 blur1 = texture(Source, texcoord4);
 	int bl;
 	vec4 ble;
 	for (bl=0;bl<taps;bl++)
@@ -179,7 +145,7 @@ void main()
 		if (bl>=3)
 		e=0.35;
 		texcoord4.x -= (tap  / 640);
-		ble.rgb += (COMPAT_TEXTURE(Source, texcoord4).rgb * e) / (taps/(bl+1));
+		ble.rgb += (texture(Source, texcoord4).rgb * e) / (taps/(bl+1));
 	}
 
 	color.rgb += ble.rgb * 0.015;
@@ -217,13 +183,18 @@ public:
 private:
 	void compile(bool dither, bool interlaced, bool vga)
 	{
-		char vshader[16384];
-		sprintf(vshader, VertexShaderSource, gl.glsl_version_header, gl.gl_version);
+		OpenGlSource vertexShader;
+		vertexShader.addSource(VertexCompatShader)
+				.addSource(VertexShaderSource);
 
-		char pshader[16384];
-		sprintf(pshader, FragmentShaderSource, gl.glsl_version_header, gl.gl_version, (int)dither, (int)interlaced, (int)vga);
+		OpenGlSource fragmentShader;
+		fragmentShader.addConstant("DITHERING", dither)
+				.addConstant("INTERLACED", interlaced)
+				.addConstant("VGASIGNAL", vga)
+				.addSource(PixelCompatShader)
+				.addSource(FragmentShaderSource);
 
-		program = gl_CompileAndLink(vshader, pshader);
+		program = gl_CompileAndLink(vertexShader.generate().c_str(), fragmentShader.generate().c_str());
 
 		//setup texture 0 as the input for the shader
 		GLint gu = glGetUniformLocation(program, "Texture");

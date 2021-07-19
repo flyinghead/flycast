@@ -5,6 +5,7 @@
 #include "wsi/gl_context.h"
 #include "glcache.h"
 #include "postprocess.h"
+#include "rend/shader_util.h"
 
 #include <unordered_map>
 #include <glm/glm.hpp>
@@ -297,46 +298,53 @@ void initQuad();
 void termQuad();
 void drawQuad(GLuint texId, bool rotate = false, bool swapY = false);
 
-#define SHADER_COMPAT "						\n\
-#define TARGET_GL %s						\n\
-											\n\
-#define GLES2 0 							\n\
-#define GLES3 1 							\n\
-#define GL2 2								\n\
-#define GL3 3								\n\
-											\n\
-#if TARGET_GL == GL2 						\n\
-#define highp								\n\
-#define lowp								\n\
-#define mediump								\n\
-#endif										\n\
-#if TARGET_GL == GLES3						\n\
-out highp vec4 FragColor;					\n\
-#define gl_FragColor FragColor				\n\
-#define FOG_CHANNEL a						\n\
-#elif TARGET_GL == GL3						\n\
-out highp vec4 FragColor;					\n\
-#define gl_FragColor FragColor				\n\
-#define FOG_CHANNEL r						\n\
-#else										\n\
-#define texture texture2D					\n\
-#define FOG_CHANNEL a						\n\
-#endif										\n\
-											\n\
-"
+static const char* ShaderCompatSource = R"(
+#define GLES2 0 							
+#define GLES3 1 							
+#define GL2 2								
+#define GL3 3								
+											
+#if TARGET_GL == GL2 						
+#define highp								
+#define lowp								
+#define mediump								
+#endif										
+#if TARGET_GL == GLES3						
+out highp vec4 FragColor;					
+#define gl_FragColor FragColor				
+#define FOG_CHANNEL a						
+#elif TARGET_GL == GL3						
+out highp vec4 FragColor;					
+#define gl_FragColor FragColor				
+#define FOG_CHANNEL r						
+#else										
+#define texture texture2D					
+#define FOG_CHANNEL a						
+#endif										
+)";
 
-#define VTX_SHADER_COMPAT SHADER_COMPAT \
-"#if TARGET_GL == GLES2 || TARGET_GL == GL2 \n\
-#define in attribute						\n\
-#define out varying							\n\
-#endif										\n\
-"
+static const char *VertexCompatShader = R"(
+#if TARGET_GL == GLES2 || TARGET_GL == GL2
+#define in attribute
+#define out varying
+#endif
+)";
 
-#define PIX_SHADER_COMPAT SHADER_COMPAT \
-"#if TARGET_GL == GLES2 || TARGET_GL == GL2 \n\
-#define in varying							\n\
-#endif										\n\
-"
+static const char *PixelCompatShader = R"(
+#if TARGET_GL == GLES2 || TARGET_GL == GL2
+#define in varying
+#endif
+)";
+
+class OpenGlSource : public ShaderSource
+{
+public:
+	OpenGlSource() : ShaderSource(gl.glsl_version_header) {
+		addConstant("TARGET_GL", gl.gl_version);
+		addSource(ShaderCompatSource);
+	}
+};
+
 #ifdef LIBRETRO
 extern "C" struct retro_hw_render_callback hw_render;
 void termVmuLightgun();

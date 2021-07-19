@@ -29,11 +29,7 @@
 
 //Fragment and vertex shaders code
 
-static const char* VertexShaderSource = "%s"
-VTX_SHADER_COMPAT
-R"(
-#define pp_Gouraud %d
-
+static const char* GouraudSource = R"(
 #if TARGET_GL == GL3 || TARGET_GL == GLES3
 #if pp_Gouraud == 0
 #define INTERPOLATION flat
@@ -43,7 +39,9 @@ R"(
 #else
 #define INTERPOLATION
 #endif
+)";
 
+static const char* VertexShaderSource = R"(
 /* Vertex constants*/ 
 uniform highp vec4      depth_scale;
 uniform highp mat4 normal_matrix;
@@ -80,33 +78,7 @@ void main()
 }
 )";
 
-const char* PixelPipelineShader = "%s"
-PIX_SHADER_COMPAT
-R"(
-#define cp_AlphaTest %d
-#define pp_ClipInside %d
-#define pp_UseAlpha %d
-#define pp_Texture %d
-#define pp_IgnoreTexA %d
-#define pp_ShadInstr %d
-#define pp_Offset %d
-#define pp_FogCtrl %d
-#define pp_Gouraud %d
-#define pp_BumpMap %d
-#define FogClamping %d
-#define pp_TriLinear %d
-#define pp_Palette %d
-
-#if TARGET_GL == GL3 || TARGET_GL == GLES3
-#if pp_Gouraud == 0
-#define INTERPOLATION flat
-#else
-#define INTERPOLATION smooth
-#endif
-#else
-#define INTERPOLATION
-#endif
-
+const char* PixelPipelineShader = R"(
 #define PI 3.1415926
 
 /* Shader program params*/
@@ -164,7 +136,7 @@ lowp vec4 palettePixel(highp vec2 coords)
     highp vec2 c = vec2((mod(float(color_idx), 32.0) * 2.0 + 1.0) / 64.0, (float(color_idx / 32) * 2.0 + 1.0) / 64.0);
 	return texture(palette, c);
 #else
-    highp ivec2 c = ivec2(color_idx %% 32, color_idx / 32);
+    highp ivec2 c = ivec2(color_idx % 32, color_idx / 32);
 	return texelFetch(palette, c, 0);
 #endif
 }
@@ -267,10 +239,9 @@ void main()
 }
 )";
 
-static const char* ModifierVolumeShader = "%s"
-PIX_SHADER_COMPAT
-R"(
+static const char* ModifierVolumeShader = R"(
 uniform lowp float sp_ShaderColor;
+
 /* Vertex input*/
 void main()
 {
@@ -282,9 +253,7 @@ void main()
 }
 )";
 
-const char* OSD_VertexShader = "%s"
-VTX_SHADER_COMPAT
-R"(
+const char* OSD_VertexShader = R"(
 uniform highp vec4      scale;
 
 in highp vec4    in_pos;
@@ -307,9 +276,7 @@ void main()
 }
 )";
 
-const char* OSD_Shader = "%s"
-PIX_SHADER_COMPAT
-R"(
+const char* OSD_Shader = R"(
 in lowp vec4 vtx_base;
 in mediump vec2 vtx_uv;
 
@@ -632,23 +599,49 @@ PipelineShader *GetProgram(bool cp_AlphaTest, bool pp_InsideClipping,
 	return shader;
 }
 
-bool CompilePipelineShader(	PipelineShader* s)
+class VertexSource : public OpenGlSource
 {
-	char vshader[8192];
+public:
+	VertexSource(bool gouraud) : OpenGlSource() {
+		addConstant("pp_Gouraud", gouraud);
 
-	int rc = sprintf(vshader, VertexShaderSource, gl.glsl_version_header, gl.gl_version, s->pp_Gouraud);
-	verify(rc + 1 <= (int)sizeof(vshader));
+		addSource(VertexCompatShader);
+		addSource(GouraudSource);
+		addSource(VertexShaderSource);
+	}
+};
 
-	char pshader[8192];
+class FragmentShaderSource : public OpenGlSource
+{
+public:
+	FragmentShaderSource(const PipelineShader* s) : OpenGlSource()
+	{
+		addConstant("cp_AlphaTest", s->cp_AlphaTest);
+		addConstant("pp_ClipInside", s->pp_InsideClipping);
+		addConstant("pp_UseAlpha", s->pp_UseAlpha);
+		addConstant("pp_Texture", s->pp_Texture);
+		addConstant("pp_IgnoreTexA", s->pp_IgnoreTexA);
+		addConstant("pp_ShadInstr", s->pp_ShadInstr);
+		addConstant("pp_Offset", s->pp_Offset);
+		addConstant("pp_FogCtrl", s->pp_FogCtrl);
+		addConstant("pp_Gouraud", s->pp_Gouraud);
+		addConstant("pp_BumpMap", s->pp_BumpMap);
+		addConstant("FogClamping", s->fog_clamping);
+		addConstant("pp_TriLinear", s->trilinear);
+		addConstant("pp_Palette", s->palette);
 
-	rc = sprintf(pshader,PixelPipelineShader, gl.glsl_version_header, gl.gl_version,
-                s->cp_AlphaTest,s->pp_InsideClipping,s->pp_UseAlpha,
-                s->pp_Texture,s->pp_IgnoreTexA,s->pp_ShadInstr,s->pp_Offset,s->pp_FogCtrl, s->pp_Gouraud, s->pp_BumpMap,
-				s->fog_clamping, s->trilinear, s->palette);
-	verify(rc + 1 <= (int)sizeof(pshader));
+		addSource(PixelCompatShader);
+		addSource(GouraudSource);
+		addSource(PixelPipelineShader);
+	}
+};
 
-	s->program=gl_CompileAndLink(vshader, pshader);
+bool CompilePipelineShader(PipelineShader* s)
+{
+	VertexSource vertexSource(s->pp_Gouraud);
+	FragmentShaderSource fragmentSource(s);
 
+	s->program = gl_CompileAndLink(vertexSource.generate().c_str(), fragmentSource.generate().c_str());
 
 	//setup texture 0 as the input for the shader
 	GLint gu = glGetUniformLocation(s->program, "tex");
@@ -743,13 +736,14 @@ static void SetupOSDVBO()
 
 void gl_load_osd_resources()
 {
-	char vshader[8192];
-	char fshader[8192];
+	OpenGlSource vertexSource;
+	vertexSource.addSource(VertexCompatShader)
+			.addSource(OSD_VertexShader);
+	OpenGlSource fragmentSource;
+	fragmentSource.addSource(PixelCompatShader)
+			.addSource(OSD_Shader);
 
-	sprintf(vshader, OSD_VertexShader, gl.glsl_version_header, gl.gl_version);
-	sprintf(fshader, OSD_Shader, gl.glsl_version_header, gl.gl_version);
-
-	gl.OSD_SHADER.program = gl_CompileAndLink(vshader, fshader);
+	gl.OSD_SHADER.program = gl_CompileAndLink(vertexSource.generate().c_str(), fragmentSource.generate().c_str());
 	gl.OSD_SHADER.scale = glGetUniformLocation(gl.OSD_SHADER.program, "scale");
 	glUniform1i(glGetUniformLocation(gl.OSD_SHADER.program, "tex"), 0);		//bind osd texture to slot 0
 
@@ -794,12 +788,13 @@ static void create_modvol_shader()
 {
 	if (gl.modvol_shader.program != 0)
 		return;
-	char vshader[8192];
-	sprintf(vshader, VertexShaderSource, gl.glsl_version_header, gl.gl_version, 1);
-	char fshader[8192];
-	sprintf(fshader, ModifierVolumeShader, gl.glsl_version_header, gl.gl_version);
+	VertexSource vertexShader(true);
 
-	gl.modvol_shader.program = gl_CompileAndLink(vshader, fshader);
+	OpenGlSource fragmentShader;
+	fragmentShader.addSource(PixelCompatShader)
+			.addSource(ModifierVolumeShader);
+
+	gl.modvol_shader.program = gl_CompileAndLink(vertexShader.generate().c_str(), fragmentShader.generate().c_str());
 	gl.modvol_shader.normal_matrix  = glGetUniformLocation(gl.modvol_shader.program, "normal_matrix");
 	gl.modvol_shader.sp_ShaderColor = glGetUniformLocation(gl.modvol_shader.program, "sp_ShaderColor");
 	gl.modvol_shader.depth_scale    = glGetUniformLocation(gl.modvol_shader.program, "depth_scale");

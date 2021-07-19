@@ -23,9 +23,7 @@
 
 //Fragment and vertex shaders code
 
-static const char* VertexShaderSource = R"(#version 140
-#define pp_Gouraud %d
-
+static const char* VertexShaderSource = R"(
 #if pp_Gouraud == 0
 #define INTERPOLATION flat
 #else
@@ -67,24 +65,7 @@ void main()
 }
 )";
 
-const char* gl4PixelPipelineShader = SHADER_HEADER
-R"(
-#define cp_AlphaTest %d
-#define pp_ClipInside %d
-#define pp_UseAlpha %d
-#define pp_Texture %d
-#define pp_IgnoreTexA %d
-#define pp_ShadInstr %d
-#define pp_Offset %d
-#define pp_FogCtrl %d
-#define pp_TwoVolumes %d
-#define pp_Gouraud %d
-#define pp_BumpMap %d
-#define FogClamping %d
-#define pp_Palette %d
-#define NOUVEAU %d
-#define PASS %d
-
+const char* gl4PixelPipelineShader = R"(
 #define PI 3.1415926
 
 #define PASS_DEPTH 0
@@ -166,7 +147,7 @@ vec4 fog_clamp(vec4 col)
 vec4 palettePixel(sampler2D tex, vec2 coords)
 {
 	int color_idx = int(floor(texture(tex, coords).r * 255.0 + 0.5)) + palette_index;
-	ivec2 c = ivec2(color_idx %% 32, color_idx / 32);
+	ivec2 c = ivec2(color_idx % 32, color_idx / 32);
 	return texelFetch(palette, c, 0);
 }
 
@@ -393,13 +374,48 @@ void main()
 }
 )";
 
-static const char* ModifierVolumeShader = SHADER_HEADER
-R"(
+static const char* ModifierVolumeShader = R"(
 void main()
 {
 	setFragDepth();
 }
 )";
+
+class Vertex4Source : public OpenGl4Source
+{
+public:
+	Vertex4Source(bool gouraud) : OpenGl4Source() {
+		addConstant("pp_Gouraud", gouraud);
+
+		addSource(VertexShaderSource);
+	}
+};
+
+class Fragment4ShaderSource : public OpenGl4Source
+{
+public:
+	Fragment4ShaderSource(const gl4PipelineShader* s) : OpenGl4Source()
+	{
+		addConstant("cp_AlphaTest", s->cp_AlphaTest);
+		addConstant("pp_ClipInside", s->pp_InsideClipping);
+		addConstant("pp_UseAlpha", s->pp_UseAlpha);
+		addConstant("pp_Texture", s->pp_Texture);
+		addConstant("pp_IgnoreTexA", s->pp_IgnoreTexA);
+		addConstant("pp_ShadInstr", s->pp_ShadInstr);
+		addConstant("pp_Offset", s->pp_Offset);
+		addConstant("pp_FogCtrl", s->pp_FogCtrl);
+		addConstant("pp_TwoVolumes", s->pp_TwoVolumes);
+		addConstant("pp_Gouraud", s->pp_Gouraud);
+		addConstant("pp_BumpMap", s->pp_BumpMap);
+		addConstant("FogClamping", s->fog_clamping);
+		addConstant("pp_Palette", s->palette);
+		addConstant("NOUVEAU", gl.mesa_nouveau);
+		addConstant("PASS", (int)s->pass);
+
+		addSource(ShaderHeader);
+		addSource(gl4PixelPipelineShader);
+	}
+};
 
 gl4_ctx gl4;
 
@@ -407,22 +423,13 @@ struct gl4ShaderUniforms_t gl4ShaderUniforms;
 int max_image_width;
 int max_image_height;
 
-bool gl4CompilePipelineShader(	gl4PipelineShader* s, const char *pixel_source /* = PixelPipelineShader */, const char *vertex_source /* = NULL */)
+bool gl4CompilePipelineShader(gl4PipelineShader* s, const char *fragment_source /* = nullptr */, const char *vertex_source /* = nullptr */)
 {
-	char vshader[16384];
+	Vertex4Source vertexSource(s->pp_Gouraud);
+	Fragment4ShaderSource fragmentSource(s);
 
-	sprintf(vshader, vertex_source == NULL ? VertexShaderSource : vertex_source, s->pp_Gouraud);
-
-	char pshader[16384];
-
-	sprintf(pshader, pixel_source,
-                s->cp_AlphaTest, s->pp_InsideClipping, s->pp_UseAlpha,
-                s->pp_Texture, s->pp_IgnoreTexA, s->pp_ShadInstr, s->pp_Offset, s->pp_FogCtrl,
-				s->pp_TwoVolumes, s->pp_Gouraud, s->pp_BumpMap, s->fog_clamping, s->palette,
-				gl.mesa_nouveau,
-				(int)s->pass);
-
-	s->program = gl_CompileAndLink(vshader, pshader);
+	s->program = gl_CompileAndLink(vertex_source != nullptr ? vertex_source : vertexSource.generate().c_str(),
+			fragment_source != nullptr ? fragment_source : fragmentSource.generate().c_str());
 
 	//setup texture 0 as the input for the shader
 	GLint gu = glGetUniformLocation(s->program, "tex0");
@@ -524,11 +531,13 @@ static void create_modvol_shader()
 {
 	if (gl4.modvol_shader.program != 0)
 		return;
-	char vshader[16384];
-	sprintf(vshader, VertexShaderSource, 1);
+	Vertex4Source vertexShader(true);
+	OpenGl4Source fragmentShader;
+	fragmentShader.addSource(ShaderHeader)
+		.addSource(ModifierVolumeShader);
 
-	gl4.modvol_shader.program=gl_CompileAndLink(vshader, ModifierVolumeShader);
-	gl4.modvol_shader.normal_matrix  = glGetUniformLocation(gl4.modvol_shader.program, "normal_matrix");
+	gl4.modvol_shader.program = gl_CompileAndLink(vertexShader.generate().c_str(), fragmentShader.generate().c_str());
+	gl4.modvol_shader.normal_matrix = glGetUniformLocation(gl4.modvol_shader.program, "normal_matrix");
 }
 
 static bool gl_create_resources()
