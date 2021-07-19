@@ -904,6 +904,7 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/gdxsv/gdxsv.h
         core/gdxsv/gdxsv.pb.cc
         core/gdxsv/gdxsv.pb.h
+        core/gdxsv/gdxsv_backend_replay.h
         core/gdxsv/gdxsv_backend_tcp.h
         core/gdxsv/gdxsv_backend_udp.h
         core/gdxsv/gdxsv_network.cpp

@@ -61,7 +61,8 @@ void Gdxsv::Reset() {
         }
     });
 
-    std::thread([this]() { GcpPingTest(); }).detach();
+    // TODO:
+    // std::thread([this]() { GcpPingTest(); }).detach();
 
     server = cfgLoadStr("gdxsv", "server", "zdxsv.net");
     loginkey = cfgLoadStr("gdxsv", "loginkey", "");
@@ -197,7 +198,9 @@ void Gdxsv::SyncNetwork(bool write) {
             std::string host = server;
             u16 port = port_no;
 
-            if (tolobby == 1) {
+            if (netmode == NetMode::Replay) {
+                replay_net.Open();
+            } else if (tolobby == 1) {
                 udp_net.CloseMcsRemoteWithReason("cl_to_lobby");
                 if (lbs_net.Connect(host, port)) {
                     netmode = NetMode::Lbs;
@@ -220,19 +223,23 @@ void Gdxsv::SyncNetwork(bool write) {
         }
 
         if (gdx_rpc.request == GDXRPC_TCP_CLOSE) {
-            lbs_net.Close();
-
-            if (gdx_rpc.param2 == 0) {
-                udp_net.CloseMcsRemoteWithReason("cl_app_close");
-            } else if (gdx_rpc.param2 == 1) {
-                udp_net.CloseMcsRemoteWithReason("cl_ppp_close");
-            } else if (gdx_rpc.param2 == 2) {
-                udp_net.CloseMcsRemoteWithReason("cl_soft_reset");
+            if (netmode == NetMode::Replay) {
+                replay_net.Close();
             } else {
-                udp_net.CloseMcsRemoteWithReason("cl_tcp_close");
-            }
+                lbs_net.Close();
 
-            netmode = NetMode::Offline;
+                if (gdx_rpc.param2 == 0) {
+                    udp_net.CloseMcsRemoteWithReason("cl_app_close");
+                } else if (gdx_rpc.param2 == 1) {
+                    udp_net.CloseMcsRemoteWithReason("cl_ppp_close");
+                } else if (gdx_rpc.param2 == 2) {
+                    udp_net.CloseMcsRemoteWithReason("cl_soft_reset");
+                } else {
+                    udp_net.CloseMcsRemoteWithReason("cl_tcp_close");
+                }
+
+                netmode = NetMode::Offline;
+            }
         }
 
         WriteMem32_nommu(gdx_rpc_addr, 0);
@@ -264,8 +271,15 @@ void Gdxsv::SyncNetwork(bool write) {
                 udp_net.OnGameRead();
             }
             break;
-    }
 
+        case NetMode::Replay:
+            if (write) {
+                replay_net.OnGameWrite();
+            } else {
+                replay_net.OnGameRead();
+            }
+            break;
+    }
 }
 
 void Gdxsv::GcpPingTest() {
@@ -638,6 +652,14 @@ void Gdxsv::DismissUpdateDialog() {
 
 std::string Gdxsv::LatestVersion() {
     return latest_version_tag;
+}
+
+bool Gdxsv::StartReplayFile(const char *path) {
+    if (replay_net.StartFile(path)) {
+        netmode = NetMode::Replay;
+        return true;
+    }
+    return false;
 }
 
 Gdxsv gdxsv;

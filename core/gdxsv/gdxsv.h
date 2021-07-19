@@ -13,6 +13,7 @@
 #include "gdxsv.pb.h"
 #include "gdxsv_backend_tcp.h"
 #include "gdxsv_backend_udp.h"
+#include "gdxsv_backend_replay.h"
 
 class Gdxsv {
 public:
@@ -20,9 +21,12 @@ public:
         Offline,
         Lbs,
         McsUdp,
+        Replay,
     };
 
-    Gdxsv() : lbs_net(symbols), udp_net(symbols, maxlag) {};
+    Gdxsv() : lbs_net(symbols),
+              udp_net(symbols, maxlag),
+              replay_net(symbols) {};
 
     bool Enabled() const;
 
@@ -43,6 +47,8 @@ public:
     std::string LatestVersion();
 
     void RestoreOnlinePatch();
+
+    bool StartReplayFile(const char *path);
 
 private:
     void GcpPingTest(); // run on network thread
@@ -75,6 +81,7 @@ private:
 
     GdxsvBackendTcp lbs_net;
     GdxsvBackendUdp udp_net;
+    GdxsvBackendReplay replay_net;
 
     std::thread gcp_ping_test_thread;
     std::atomic<bool> gcp_ping_test_finished;
