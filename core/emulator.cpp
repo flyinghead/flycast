@@ -598,6 +598,7 @@ void dc_stop()
 	sh4_cpu.Stop();
 	rend_cancel_emu_wait();
 	emuThread.WaitToEnd();
+	SaveRomFiles();
 	if (running)
 		EventManager::event(Event::Pause);
 }
