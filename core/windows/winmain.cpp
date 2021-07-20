@@ -32,7 +32,6 @@
 #include "rend/mainui.h"
 #include "../shell/windows/resource.h"
 #include "rawinput.h"
-#include "fault_handler.h"
 
 #include <windows.h>
 #include <windowsx.h>
@@ -707,23 +706,18 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 	reserveBottomMemory();
 	setupPath();
 	findKeyboardLayout();
-#ifdef _WIN64
-	AddVectoredExceptionHandler(1, exceptionHandler);
-#else
-	SetUnhandledExceptionFilter((LPTOP_LEVEL_EXCEPTION_FILTER)&exceptionHandler);
-#endif
+
 	if (reicast_init(argc, argv) != 0)
 		die("Flycast initialization failed");
 
-#ifdef _WIN64
-	setup_seh();
-#endif
+	os_InstallFaultHandler();
 
 	mainui_loop();
 
 	dc_term();
 
-	SetUnhandledExceptionFilter(0);
+	os_UninstallFaultHandler();
+
 #ifdef USE_SDL
 	sdl_window_destroy();
 #else

@@ -14,12 +14,15 @@
     You should have received a copy of the GNU General Public License
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
-#include "fault_handler.h"
+#include "oslib/oslib.h"
 #include "hw/sh4/dyna/blockmanager.h"
 #include "hw/sh4/dyna/ngen.h"
+#include <windows.h>
 
 bool VramLockedWrite(u8* address);
 bool BM_LockedWrite(u8* address);
+
+static PVOID vectoredHandler;
 
 static void readContext(const EXCEPTION_POINTERS *ep, host_context_t &context)
 {
@@ -177,6 +180,26 @@ void setup_seh()
 	//verify(RtlInstallFunctionTableCallback((unat)CodeCache | 0x3, (DWORD64)CodeCache, CODE_SIZE + TEMP_CODE_SIZE, seh_callback, 0, 0));
 }
 #endif
+
+void os_InstallFaultHandler()
+{
+#ifdef _WIN64
+	vectoredHandler = AddVectoredExceptionHandler(1, exceptionHandler);
+	setup_seh();
+#else
+	SetUnhandledExceptionFilter((LPTOP_LEVEL_EXCEPTION_FILTER)&exceptionHandler);
+#endif
+}
+
+void os_UninstallFaultHandler()
+{
+#ifdef _WIN64
+	RemoveVectoredExceptionHandler(vectoredHandler);
+	RtlDeleteFunctionTable(Table);
+#else
+	SetUnhandledExceptionFilter(0);
+#endif
+}
 
 double os_GetSeconds()
 {

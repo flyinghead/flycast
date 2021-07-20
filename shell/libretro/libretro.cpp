@@ -59,9 +59,6 @@
 #include "cfg/option.h"
 #include "wsi/gl_context.h"
 #include "version.h"
-#ifdef _WIN32
-#include "windows/fault_handler.h"
-#endif
 
 constexpr char slash = path_default_slash_c();
 
@@ -277,17 +274,8 @@ void retro_init()
 
 	if (!_vmem_reserve())
 		ERROR_LOG(VMEM, "Cannot reserve memory space");
-#ifdef _WIN32
-#ifdef _WIN64
-	AddVectoredExceptionHandler(1, exceptionHandler);
-	setup_seh();
-#else
-	SetUnhandledExceptionFilter((LPTOP_LEVEL_EXCEPTION_FILTER)&exceptionHandler);
-#endif
-#else
-	void install_fault_handler();
-	install_fault_handler();
-#endif
+
+	os_InstallFaultHandler();
 }
 
 void retro_deinit()
@@ -300,6 +288,7 @@ void retro_deinit()
 	{
 		std::lock_guard<std::mutex> lock(mtx_serialization);
 	}
+	os_UninstallFaultHandler();
 	libretro_supports_bitmasks = false;
 	LogManager::Shutdown();
 }

@@ -85,7 +85,7 @@ void fault_handler (int sn, siginfo_t * si, void *segfault_ctx)
 }
 #undef HOST_CTX_READY
 
-void install_fault_handler()
+void os_InstallFaultHandler()
 {
 #ifndef __SWITCH__
 	struct sigaction act, segv_oact;
@@ -103,9 +103,29 @@ void install_fault_handler()
     sigaction(SIGILL, &act, &segv_oact);
 #endif
 }
+
+void os_UninstallFaultHandler()
+{
+#ifndef __SWITCH__
+	struct sigaction act{};
+	act.sa_handler = SIG_DFL;
+	sigemptyset(&act.sa_mask);
+	sigaction(SIGSEGV, &act, nullptr);
+#endif
+#if defined(__APPLE__)
+    sigaction(SIGBUS, &act, nullptr);
+    sigaction(SIGILL, &act, nullptr);
+#endif
+}
+
 #else  // !defined(TARGET_NO_EXCEPTIONS)
-// No exceptions/nvmem dummy handlers.
-void install_fault_handler() {}
+
+void os_InstallFaultHandler()
+{
+}
+void os_UninstallFaultHandler()
+{
+}
 #endif // !defined(TARGET_NO_EXCEPTIONS)
 
 double os_GetSeconds()
@@ -178,7 +198,7 @@ void common_linux_setup()
 	linux_rpi2_init();
 
 	enable_runfast();
-	install_fault_handler();
+	os_InstallFaultHandler();
 	signal(SIGINT, exit);
 	
 	DEBUG_LOG(BOOT, "Linux paging: %ld %08X %08X", sysconf(_SC_PAGESIZE), PAGE_SIZE, PAGE_MASK);

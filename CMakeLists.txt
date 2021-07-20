@@ -54,8 +54,6 @@ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/core/version.h.in" "${CMAKE_CURRENT_
 
 if(NINTENDO_SWITCH)
     set(USE_VULKAN OFF)
-    set(USE_GLES OFF)
-    set(USE_GLES2 OFF)
     enable_language(ASM)
 
     if(LIBRETRO)
@@ -67,6 +65,9 @@ if(NINTENDO_SWITCH)
         add_executable(${PROJECT_NAME} core/emulator.cpp)
         target_compile_definitions(${PROJECT_NAME} PRIVATE EGL_NO_PLATFORM_SPECIFIC_TYPES)
     endif()
+	if(USE_GLES)
+        target_compile_definitions(${PROJECT_NAME} PRIVATE GLES)
+	endif()
  
 elseif(LIBRETRO)
     add_library(${PROJECT_NAME} SHARED core/emulator.cpp)
@@ -283,6 +284,11 @@ if(PKG_CONFIG_FOUND AND NOT ANDROID AND NOT APPLE AND NOT LIBRETRO)
 		target_include_directories(${PROJECT_NAME} PRIVATE ${MINIUPNP_INCLUDE_DIRS})
 		target_link_libraries(${PROJECT_NAME} PRIVATE ${MINIUPNP_LIBRARIES})
     endif()
+endif()
+
+if(NINTENDO_SWITCH AND USE_GLES)
+	pkg_check_modules(GLESV2 IMPORTED_TARGET glesv2)
+	target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::GLESV2)
 endif()
 
 if(UNIX AND NOT APPLE AND NOT ANDROID)
@@ -681,7 +687,6 @@ endif()
 if(WIN32)
 	target_sources(${PROJECT_NAME} PRIVATE
 			core/windows/fault_handler.cpp
-			core/windows/fault_handler.h
 			core/windows/win_vmem.cpp)
 else()
     target_sources(${PROJECT_NAME} PRIVATE

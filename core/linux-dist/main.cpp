@@ -6,6 +6,7 @@
 #include "emulator.h"
 #include "rend/mainui.h"
 #include "oslib/directory.h"
+#include "oslib/oslib.h"
 
 #include <cstdarg>
 #include <csignal>
@@ -368,6 +369,7 @@ int main(int argc, char* argv[])
 #if defined(__SWITCH__)
 	socketInitializeDefault();
 	nxlinkStdio();
+	//appletSetFocusHandlingMode(AppletFocusHandlingMode_NoSuspend);
 #endif // __SWITCH__
 
 	LogManager::Init();
@@ -400,6 +402,8 @@ int main(int argc, char* argv[])
 	mainui_loop();
 
 	dc_term();
+
+	os_UninstallFaultHandler();
 
 #if defined(USE_EVDEV)
 	input_evdev_close();
