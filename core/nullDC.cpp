@@ -17,7 +17,7 @@
 
 static std::future<void> loadingDone;
 
-int reicast_init(int argc, char* argv[])
+int flycast_init(int argc, char* argv[])
 {
 #if defined(TEST_AUTOMATION)
 	setbuf(stdout, 0);

@@ -289,7 +289,8 @@ struct RawTrackFile : TrackFile
 		}
 
 		std::fseek(file, offset + FAD * fmt, SEEK_SET);
-		std::fread(dst, 1, fmt, file);
+		if (std::fread(dst, 1, fmt, file) != fmt)
+			WARN_LOG(GDROM, "Failed or truncated GD-Rom read");
 	}
 	~RawTrackFile() override
 	{

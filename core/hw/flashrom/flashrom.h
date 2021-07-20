@@ -470,6 +470,8 @@ struct DCFlashChip : MemChip
 			*size = 64 * 1024;
 			break;
 		default:
+			*offset = 0;
+			*size = 0;
 			die("unknown partition");
 			break;
 		}

@@ -78,7 +78,7 @@ void fault_handler (int sn, siginfo_t * si, void *segfault_ctx)
 	MemoryInfo meminfo;
 	u32 pageinfo;
 	svcQueryMemory(&meminfo, &pageinfo, (u64)&__start__);
-	ERROR_LOG(COMMON, ".text base: %p", meminfo.addr);
+	ERROR_LOG(COMMON, ".text base: %p", (void*)meminfo.addr);
 #endif // __SWITCH__
 	die("segfault");
 	signal(SIGSEGV, SIG_DFL);

@@ -396,7 +396,7 @@ int main(int argc, char* argv[])
 	common_linux_setup();
 #endif
 
-	if (reicast_init(argc, argv))
+	if (flycast_init(argc, argv))
 		die("Flycast initialization failed\n");
 
 	mainui_loop();

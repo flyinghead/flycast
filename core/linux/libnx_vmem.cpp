@@ -10,7 +10,7 @@
 
 using mem_handle_t = uintptr_t;
 static mem_handle_t vmem_fd = -1;
-static mem_handle_t vmem_fd_page = -1;
+//static mem_handle_t vmem_fd_page = -1;
 static mem_handle_t vmem_fd_codememory = -1;
 
 static void *reserved_base;
@@ -20,10 +20,10 @@ static VirtmemReservation *virtmemReservation;
 bool mem_region_lock(void *start, size_t len)
 {
 	size_t inpage = (uintptr_t)start & PAGE_MASK;
-    len += inpage;
-    size_t inlen = len & PAGE_MASK;
-    if (inlen)
-        len = (len + PAGE_SIZE) & ~(PAGE_SIZE-1);
+	len += inpage;
+	size_t inlen = len & PAGE_MASK;
+	if (inlen)
+		len = (len + PAGE_SIZE) & ~(PAGE_SIZE-1);
 
 	Result rc;
 	uintptr_t start_addr = (uintptr_t)start - inpage;
@@ -40,10 +40,10 @@ bool mem_region_lock(void *start, size_t len)
 bool mem_region_unlock(void *start, size_t len)
 {
 	size_t inpage = (uintptr_t)start & PAGE_MASK;
-    len += inpage;
-    size_t inlen = len & PAGE_MASK;
-    if(inlen)
-        len = (len + PAGE_SIZE) & ~(PAGE_SIZE-1);
+	len += inpage;
+	size_t inlen = len & PAGE_MASK;
+	if (inlen)
+		len = (len + PAGE_SIZE) & ~(PAGE_SIZE-1);
 
 	Result rc;
 	uintptr_t start_addr = (uintptr_t)start - inpage;
@@ -57,6 +57,7 @@ bool mem_region_unlock(void *start, size_t len)
 	return true;
 }
 
+/*
 static bool mem_region_set_exec(void *start, size_t len)
 {
 	size_t inpage = (uintptr_t)start & PAGE_MASK;
@@ -75,6 +76,7 @@ static void *mem_region_reserve(void *start, size_t len)
 	virtmemUnlock();
 	return p;
 }
+*/
 
 static bool mem_region_release(void *start, size_t len)
 {
@@ -92,9 +94,11 @@ static void *mem_region_map_file(void *file_handle, void *dest, size_t len, size
 {
 	Result rc = svcMapProcessMemory(dest, envGetOwnProcessHandle(), (u64)(vmem_fd_codememory + offset), len);
 	if (R_FAILED(rc))
-		WARN_LOG(VMEM, "Fatal error creating the view... base: %p offset: 0x%x size: 0x%x src: %p err: 0x%x", vmem_fd, offset, len, vmem_fd_codememory + offset, rc);
+		WARN_LOG(VMEM, "Fatal error creating the view... base: %p offset: 0x%zx size: 0x%zx src: %p err: 0x%x",
+				(void*)vmem_fd, offset, len, (void*)(vmem_fd_codememory + offset), rc);
 	else
-		INFO_LOG(VMEM, "Created the view... base: %p offset: 0x%x size: 0x%x src: %p err: 0x%x", vmem_fd, offset, len, vmem_fd_codememory + offset, rc);
+		INFO_LOG(VMEM, "Created the view... base: %p offset: 0x%zx size: 0x%zx src: %p err: 0x%x",
+				(void*)vmem_fd, offset, len, (void*)(vmem_fd_codememory + offset), rc);
 
 	return dest;
 }
@@ -104,12 +108,14 @@ static bool mem_region_unmap_file(void *start, size_t len)
 	return mem_region_release(start, len);
 }
 
+/*
 // Allocates memory via a fd on shmem/ahmem or even a file on disk
 static mem_handle_t allocate_shared_filemem(unsigned size)
 {
 	void* mem = memalign(0x1000, size);
 	return (uintptr_t)mem;
 }
+*/
 
 // Implement vmem initialization for RAM, ARAM, VRAM and SH4 context, fpcb etc.
 // The function supports allocating 512MB or 4GB addr spaces.

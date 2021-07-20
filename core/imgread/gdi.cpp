@@ -76,7 +76,8 @@ Disc* load_gdi(const char* file)
 		return nullptr;
 	}
 
-	std::fread(gdi_data, 1, gdi_len, t);
+	if (std::fread(gdi_data, 1, gdi_len, t) != gdi_len)
+		WARN_LOG(GDROM, "Failed or truncated read of gdi file '%s'", file);
 	std::fclose(t);
 
 	std::istringstream gdi(gdi_data);

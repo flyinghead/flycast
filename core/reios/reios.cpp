@@ -150,7 +150,7 @@ static bool reios_locate_bootfile(const char* bootfile)
 				data[8 + j] = _vmem_ReadMem8(0x0021a000 + j);
 
 			// system settings
-			flash_syscfg_block syscfg;
+			flash_syscfg_block syscfg{};
 			verify(static_cast<DCFlashChip*>(flashrom)->ReadBlock(FLASH_PT_USER, FLASH_USER_SYSCFG, &syscfg));
 			memcpy(&data[16], &syscfg.time_lo, 8);
 
@@ -210,7 +210,7 @@ static void reios_sys_system() {
 				data[8 + i] = flashrom->Read8(0x1a000 + i);
 
 			// system settings
-			flash_syscfg_block syscfg;
+			flash_syscfg_block syscfg{};
 			verify(static_cast<DCFlashChip*>(flashrom)->ReadBlock(FLASH_PT_USER, FLASH_USER_SYSCFG, &syscfg));
 			memcpy(&data[16], &syscfg.time_lo, 8);
 

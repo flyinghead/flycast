@@ -425,12 +425,10 @@ struct OnLoad
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 #endif
 
-class ReicastException
+class FlycastException : public std::runtime_error
 {
 public:
-	ReicastException(std::string reason) : reason(reason) {}
-
-	std::string reason;
+	FlycastException(const std::string& reason) : std::runtime_error(reason) {}
 };
 
 enum serialize_version_enum {

@@ -455,7 +455,7 @@ void dc_start_game(const char *path)
 		{
 			// Boot BIOS
 			if (!LoadRomFiles())
-				throw ReicastException("No BIOS file found in " + get_writable_data_path(""));
+				throw FlycastException("No BIOS file found in " + get_writable_data_path(""));
 			TermDrive();
 			InitDrive();
 		}
@@ -478,7 +478,7 @@ void dc_start_game(const char *path)
 					// Content load failed. Boot the BIOS
 					settings.imgread.ImagePath[0] = '\0';
 					if (!LoadRomFiles())
-						throw ReicastException("This media cannot be loaded");
+						throw FlycastException("This media cannot be loaded");
 					InitDrive();
 				}
 			}
@@ -598,7 +598,8 @@ void dc_stop()
 	sh4_cpu.Stop();
 	rend_cancel_emu_wait();
 	emuThread.WaitToEnd();
-	SaveRomFiles();
+	if (settings.gameStarted)
+		SaveRomFiles();
 	if (running)
 		EventManager::event(Event::Pause);
 }

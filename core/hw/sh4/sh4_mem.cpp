@@ -336,6 +336,8 @@ void SetMemoryHandlers()
 		return;
 	}
 	interpreterRunning = false;
+#else
+	(void)interpreterRunning;
 #endif
 	if (CCN_MMUCR.AT == 1 && config::FullMMU)
 	{

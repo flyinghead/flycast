@@ -537,13 +537,13 @@ void Mouse::setRelPos(int deltax, int deltay) {
 }
 
 void Mouse::setWheel(int delta) {
-	if (maple_port() >= 0 && maple_port() < ARRAY_SIZE(mo_wheel_delta))
+	if (maple_port() >= 0 && maple_port() < (int)ARRAY_SIZE(mo_wheel_delta))
 		mo_wheel_delta[maple_port()] += delta;
 }
 
 void Mouse::setButton(Button button, bool pressed)
 {
-	if (maple_port() >= 0 && maple_port() < ARRAY_SIZE(mo_buttons))
+	if (maple_port() >= 0 && maple_port() < (int)ARRAY_SIZE(mo_buttons))
 	{
 		if (pressed)
 			mo_buttons[maple_port()] &= ~(1 << (int)button);

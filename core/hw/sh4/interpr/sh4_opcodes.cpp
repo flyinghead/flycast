@@ -13,14 +13,6 @@
 #include "hw/sh4/sh4_cache.h"
 #include "debug/gdb_server.h"
 
-#define GetN(str) ((str>>8) & 0xf)
-#define GetM(str) ((str>>4) & 0xf)
-#define GetImm4(str) ((str>>0) & 0xf)
-#define GetImm8(str) ((str>>0) & 0xff)
-#define GetSImm8(str) ((s8)((str>>0) & 0xff))
-#define GetImm12(str) ((str>>0) & 0xfff)
-#define GetSImm12(str) (((s16)((GetImm12(str))<<4))>>4)
-
 #define iNimp cpu_iNimp
 
 //Read Mem macros

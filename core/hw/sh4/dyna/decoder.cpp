@@ -128,12 +128,6 @@ static void dec_End(u32 dst, BlockEndType flags, bool delaySlot)
 		verify(state.JumpAddr != NullAddress);
 }
 
-#define GetN(str) ((str>>8) & 0xf)
-#define GetM(str) ((str>>4) & 0xf)
-#define GetImm4(str) ((str>>0) & 0xf)
-#define GetImm8(str) ((str>>0) & 0xff)
-#define GetSImm8(str) ((s8)((str>>0) & 0xff))
-
 #define SR_STATUS_MASK 0x700083F2
 #define SR_T_MASK 1
 

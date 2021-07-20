@@ -75,5 +75,11 @@ struct state_t
 };
 
 const u32 NullAddress = 0xFFFFFFFF;
+
+#define GetN(str) ((str>>8) & 0xf)
+#define GetM(str) ((str>>4) & 0xf)
+#define GetImm4(str) ((str>>0) & 0xf)
+#define GetImm8(str) ((str>>0) & 0xff)
+#define GetSImm8(str) ((s8)((str>>0) & 0xff))
 #define GetImm12(str) ((str>>0) & 0xfff)
 #define GetSImm12(str) (((short)((GetImm12(str))<<4))>>4)

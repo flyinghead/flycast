@@ -67,7 +67,8 @@ Disc* cue_parse(const char* file)
 		return nullptr;
 	}
 
-	std::fread(cue_data, 1, cue_len, fsource);
+	if (std::fread(cue_data, 1, cue_len, fsource) != cue_len)
+		WARN_LOG(GDROM, "Failed or truncated read of cue file '%s'", file);
 	std::fclose(fsource);
 
 	std::istringstream cuesheet(cue_data);

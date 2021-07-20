@@ -29,6 +29,44 @@
 
 //Fragment and vertex shaders code
 
+const char* ShaderCompatSource = R"(
+#define GLES2 0 							
+#define GLES3 1 							
+#define GL2 2								
+#define GL3 3								
+											
+#if TARGET_GL == GL2 						
+#define highp								
+#define lowp								
+#define mediump								
+#endif										
+#if TARGET_GL == GLES3						
+out highp vec4 FragColor;					
+#define gl_FragColor FragColor				
+#define FOG_CHANNEL a						
+#elif TARGET_GL == GL3						
+out highp vec4 FragColor;					
+#define gl_FragColor FragColor				
+#define FOG_CHANNEL r						
+#else										
+#define texture texture2D					
+#define FOG_CHANNEL a						
+#endif										
+)";
+
+const char *VertexCompatShader = R"(
+#if TARGET_GL == GLES2 || TARGET_GL == GL2
+#define in attribute
+#define out varying
+#endif
+)";
+
+const char *PixelCompatShader = R"(
+#if TARGET_GL == GLES2 || TARGET_GL == GL2
+#define in varying
+#endif
+)";
+
 static const char* GouraudSource = R"(
 #if TARGET_GL == GL3 || TARGET_GL == GLES3
 #if pp_Gouraud == 0

@@ -1004,7 +1004,7 @@ public:
 		// Args are pushed in reverse order by shil_canonical
 		for (int i = CC_pars.size(); i-- > 0;)
 		{
-			verify(fregused < call_fregs.size() && regused < call_regs.size());
+			verify(fregused < (int)call_fregs.size() && regused < (int)call_regs.size());
 			shil_param& prm = *CC_pars[i].prm;
 			switch (CC_pars[i].type)
 			{
@@ -1629,6 +1629,7 @@ private:
 				rv = mmu_data_translation<MMU_TT_DREAD, u32>(addr, paddr);
 				break;
 			default:
+				rv = 0;
 				die("Invalid immediate size");
 				break;
 			}
@@ -1839,6 +1840,7 @@ private:
 				rv = mmu_data_translation<MMU_TT_DWRITE, u32>(addr, paddr);
 				break;
 			default:
+				rv = 0;
 				die("Invalid immediate size");
 				break;
 			}
@@ -2192,11 +2194,11 @@ bool ngen_Rewrite(host_context_t &context, void *faultAddress)
 	//LOGI("ngen_Rewrite pc %zx\n", context.pc);
 	u32 *code_ptr = (u32 *)CC_RX2RW(context.pc);
 	u32 armv8_op = *code_ptr;
-	bool is_read;
-	u32 size;
+	bool is_read = false;
+	u32 size = 0;
 	bool found = false;
 	u32 masked = armv8_op & STR_LDR_MASK;
-	for (int i = 0; i < ARRAY_SIZE(armv8_mem_ops); i++)
+	for (u32 i = 0; i < ARRAY_SIZE(armv8_mem_ops); i++)
 	{
 		if (masked == armv8_mem_ops[i])
 		{

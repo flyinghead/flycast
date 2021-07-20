@@ -557,7 +557,7 @@ public:
 			set_flags = op.flags & ArmOp::OP_SETS_FLAGS;
 			logical_op_set_flags = op.isLogicalOp() && set_flags;
 			set_carry_bit = false;
-			bool save_v_flag = true;	// FIXME is this needed?
+			//bool save_v_flag = true;	// FIXME is this needed?
 
 			Label *condLabel = nullptr;
 
@@ -600,7 +600,7 @@ public:
 		B(&arm_dispatch_label);
 
 		FinalizeCode();
-		verify(GetBuffer()->GetCursorOffset() <= GetBuffer()->GetCapacity());
+		verify((size_t)GetBuffer()->GetCursorOffset() <= GetBuffer()->GetCapacity());
 		vmem_platform_flush_cache(
 				recompiler::writeToExec(GetBuffer()->GetStartAddress<void*>()), recompiler::writeToExec(GetBuffer()->GetEndAddress<void*>()),
 				GetBuffer()->GetStartAddress<void*>(), GetBuffer()->GetEndAddress<void*>());

@@ -234,7 +234,7 @@ JNIEXPORT jstring JNICALL Java_com_reicast_emulator_emu_JNIdc_initEnvironment(JN
     	EventManager::listen(Event::Pause, emuEventCallback);
     	EventManager::listen(Event::Resume, emuEventCallback);
         jstring msg = NULL;
-        int rc = reicast_init(0, NULL);
+        int rc = flycast_init(0, NULL);
         if (rc == -4)
             msg = env->NewStringUTF("Cannot find configuration");
         else if (rc == 69)

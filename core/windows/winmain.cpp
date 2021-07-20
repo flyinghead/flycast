@@ -707,7 +707,7 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 	setupPath();
 	findKeyboardLayout();
 
-	if (reicast_init(argc, argv) != 0)
+	if (flycast_init(argc, argv) != 0)
 		die("Flycast initialization failed");
 
 	os_InstallFaultHandler();

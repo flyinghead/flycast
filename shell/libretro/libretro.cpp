@@ -1229,6 +1229,9 @@ static void set_input_descriptors()
 				if (name != NULL && name[0] != '\0')
 					desc[descriptor_index++] = { i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L2, name };
 				break;
+
+			default:
+				break;
 			}
 		}
 	}
@@ -1293,6 +1296,9 @@ static void set_input_descriptors()
 				desc[descriptor_index++] = { i, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_TRIGGER,	   "A" };
 				desc[descriptor_index++] = { i, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_START,      "Start" };
 				desc[descriptor_index++] = { i, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_AUX_A,      "B" };
+				break;
+
+			default:
 				break;
 			}
 		}
@@ -1831,7 +1837,7 @@ unsigned retro_get_region()
 // Controller
 void retro_set_controller_port_device(unsigned in_port, unsigned device)
 {
-	if (device_type[in_port] != device && in_port < MAPLE_PORTS)
+	if (device_type[in_port] != (int)device && in_port < MAPLE_PORTS)
 	{
 		devices_need_refresh = true;
 		device_type[in_port] = device;
@@ -2577,6 +2583,9 @@ static void UpdateInputState(u32 port)
 	case MDT_Mouse:
 		updateMouseState(port);
 		break;
+
+	default:
+		break;
 	}
 }
 
@@ -2628,16 +2637,19 @@ static void retro_keyboard_event(bool down, unsigned keycode, uint32_t character
 {
 	// Dreamcast keyboard emulation
 	if (keycode == RETROK_LSHIFT || keycode == RETROK_RSHIFT)
+	{
 		if (!down)
 			kb_shift[0] &= ~(0x02 | 0x20);
 		else
 			kb_shift[0] |= (0x02 | 0x20);
+	}
 	if (keycode == RETROK_LCTRL || keycode == RETROK_RCTRL)
+	{
 		if (!down)
 			kb_shift[0] &= ~(0x01 | 0x10);
 		else
 			kb_shift[0] |= (0x01 | 0x10);
-
+	}
 	// Make sure modifier keys are released
 	if ((key_modifiers & RETROKMOD_SHIFT) == 0)
 	{
@@ -2930,7 +2942,7 @@ void gui_display_notification(const char *msg, int duration)
 	retro_message retromsg;
 	retromsg.msg = msg;
 	retromsg.frames = duration / 17;
-	environ_cb(RETRO_ENVIRONMENT_SET_MESSAGE, &msg);
+	environ_cb(RETRO_ENVIRONMENT_SET_MESSAGE, &retromsg);
 }
 
 void gui_init() {

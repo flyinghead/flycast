@@ -20,8 +20,35 @@
 #include "rend/gles/glcache.h"
 #include "rend/transform_matrix.h"
 #include "rend/osd.h"
+#include "glsl.h"
 
 //Fragment and vertex shaders code
+
+const char* ShaderHeader = R"(
+layout(r32ui, binding = 4) uniform coherent restrict uimage2D abufferPointerImg;
+
+layout(binding = 0, offset = 0) uniform atomic_uint buffer_index;
+)"
+OIT_POLY_PARAM
+R"(
+layout (binding = 0, std430) coherent restrict buffer PixelBuffer {
+	Pixel pixels[];
+};
+
+uint getNextPixelIndex()
+{
+	uint index = atomicCounterIncrement(buffer_index);
+	if (index >= pixels.length())
+		// Buffer overflow
+		discard;
+
+	return index;
+}
+
+layout (binding = 1, std430) readonly buffer TrPolyParamBuffer {
+	PolyParam tr_poly_params[];
+};
+)";
 
 static const char* VertexShaderSource = R"(
 #if pp_Gouraud == 0

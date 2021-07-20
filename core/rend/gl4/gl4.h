@@ -18,7 +18,6 @@
 */
 #pragma once
 #include "rend/gles/gles.h"
-#include "glsl.h"
 #include <unordered_map>
 
 void gl4DrawStrips(GLuint output_fbo, int width, int height);
@@ -106,31 +105,7 @@ extern GLuint geom_fbo;
 extern GLuint texSamplers[2];
 extern GLuint depth_fbo;
 
-static const char* ShaderHeader = R"(
-layout(r32ui, binding = 4) uniform coherent restrict uimage2D abufferPointerImg;
-
-layout(binding = 0, offset = 0) uniform atomic_uint buffer_index;
-)"
-OIT_POLY_PARAM
-R"(
-layout (binding = 0, std430) coherent restrict buffer PixelBuffer {
-	Pixel pixels[];
-};
-
-uint getNextPixelIndex()
-{
-	uint index = atomicCounterIncrement(buffer_index);
-	if (index >= pixels.length())
-		// Buffer overflow
-		discard;
-
-	return index;
-}
-
-layout (binding = 1, std430) readonly buffer TrPolyParamBuffer {
-	PolyParam tr_poly_params[];
-};
-)";
+extern const char* ShaderHeader;
 
 class OpenGl4Source : public ShaderSource
 {

@@ -28,7 +28,7 @@ void SaveSettings();
 
 extern std::atomic<bool> loading_canceled;
 
-int reicast_init(int argc, char* argv[]);
+int flycast_init(int argc, char* argv[]);
 void dc_reset(bool hard);
 void dc_init();
 void* dc_run(void*);

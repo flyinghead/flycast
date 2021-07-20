@@ -243,7 +243,7 @@ int emu_reicast_init()
 		argv[paramCount++] = strdup(arg);
 	}
 	
-	int rc = reicast_init(paramCount, argv);
+	int rc = flycast_init(paramCount, argv);
 	
 	for (unsigned long i = 0; i < paramCount; i++)
 		free(argv[i]);

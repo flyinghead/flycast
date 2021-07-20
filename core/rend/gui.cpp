@@ -746,13 +746,12 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 			- ImGui::GetStyle().FramePadding.x * 3.0f - ImGui::GetStyle().ItemSpacing.x * 3.0f);
 
 		ImGui::AlignTextToFramePadding();
-		static ImGuiComboFlags flags = 0;
+
 		const char* items[] = { "Dreamcast Controls", "Arcade Controls" };
 		static int item_current_map_idx = 0;
 		static int last_item_current_map_idx = 2;
 
 		// Here our selection data is an index.
-		const char* combo_label = items[item_current_map_idx];  // Label to preview before opening the combo (technically it could be anything)
 
 		ImGui::PushItemWidth(ImGui::CalcTextSize("Dreamcast Controls").x + ImGui::GetStyle().ItemSpacing.x * 2.0f * 3);
 
@@ -2072,9 +2071,9 @@ static void gui_display_loadscreen()
 				gui_state = GuiState::Closed;
 				ImGui::Text("STARTING...");
 			}
-		} catch (const ReicastException& ex) {
-			ERROR_LOG(BOOT, "%s", ex.reason.c_str());
-			error_msg = ex.reason;
+		} catch (const FlycastException& ex) {
+			ERROR_LOG(BOOT, "%s", ex.what());
+			error_msg = ex.what();
 #ifdef TEST_AUTOMATION
 			die("Game load failed");
 #endif

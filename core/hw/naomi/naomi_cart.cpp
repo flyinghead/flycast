@@ -366,7 +366,7 @@ static void naomi_cart_LoadZip(const char *filename)
 			strcpy(naomi_game_id, game->name);
 		NOTICE_LOG(NAOMI, "NAOMI GAME ID [%s]", naomi_game_id);
 
-	} catch (const ReicastException& ex) {
+	} catch (const FlycastException& ex) {
 		delete CurrentCartridge;
 		CurrentCartridge = NULL;
 
@@ -393,7 +393,7 @@ void naomi_cart_LoadRom(const char* file)
 		if (!loadBios("naomi", NULL, NULL, -1))
 		{
 			if (!bios_loaded)
-				throw new ReicastException("Error: cannot load BIOS from naomi.zip");
+				throw FlycastException("Error: cannot load BIOS from naomi.zip");
 		}
 	}
 
@@ -412,14 +412,14 @@ void naomi_cart_LoadRom(const char* file)
 
 		FILE *fl = nowide::fopen(file, "r");
 		if (!fl)
-			throw new ReicastException("Error: can't open " + std::string(file));
+			throw FlycastException("Error: can't open " + std::string(file));
 
 		char t[512];
 		char* line = std::fgets(t, sizeof(t), fl);
 		if (!line)
 		{
 			std::fclose(fl);
-			throw new ReicastException("Error: Invalid LST file");
+			throw FlycastException("Error: Invalid LST file");
 		}
 
 		char* eon = strstr(line, "\n");
@@ -435,7 +435,7 @@ void naomi_cart_LoadRom(const char* file)
 		if (!line)
 		{
 			std::fclose(fl);
-			throw new ReicastException("Error: Invalid LST file");
+			throw FlycastException("Error: Invalid LST file");
 		}
 
 		while (line)
@@ -461,7 +461,7 @@ void naomi_cart_LoadRom(const char* file)
 		// BIN loading
 		FILE* fp = nowide::fopen(file, "rb");
 		if (fp == NULL)
-			throw new ReicastException("Error: can't open " + std::string(file));
+			throw FlycastException("Error: can't open " + std::string(file));
 
 		std::fseek(fp, 0, SEEK_END);
 		u32 file_size = (u32)std::ftell(fp);
@@ -521,7 +521,7 @@ void naomi_cart_LoadRom(const char* file)
 	if (load_error)
 	{
 		free(romBase);
-		throw new ReicastException("Error: Failed to load BIN/DAT file");
+		throw FlycastException("Error: Failed to load BIN/DAT file");
 	}
 
 	DEBUG_LOG(NAOMI, "Legacy ROM loaded successfully");
