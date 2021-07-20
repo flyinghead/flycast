@@ -34,7 +34,7 @@ void load_naomi_eeprom()
 	if (!EEPROM_loaded)
 	{
 		EEPROM_loaded = true;
-		std::string eeprom_file = hostfs::getJvsEepromPath();
+		std::string eeprom_file = hostfs::getArcadeFlashPath() + ".eeprom";
 		FILE* f = nowide::fopen(eeprom_file.c_str(), "rb");
 		if (f)
 		{
@@ -974,7 +974,7 @@ void maple_naomi_jamma::handle_86_subcommand()
 			//printState(Command,buffer_in,buffer_in_len);
 			memcpy(EEPROM + address, dma_buffer_in + 4, size);
 
-			std::string eeprom_file = hostfs::getJvsEepromPath();
+			std::string eeprom_file = hostfs::getArcadeFlashPath() + ".eeprom";
 			FILE* f = nowide::fopen(eeprom_file.c_str(), "wb");
 			if (f)
 			{

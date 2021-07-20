@@ -22,11 +22,11 @@
 
 const char *retro_get_system_directory();
 
-extern char eeprom_file[PATH_MAX];
 extern char game_dir_no_slash[1024];
 extern char vmu_dir_no_slash[PATH_MAX];
 extern char content_name[PATH_MAX];
 extern unsigned per_content_vmus;
+extern std::string arcadeFlashPath;
 
 namespace hostfs
 {
@@ -48,9 +48,9 @@ std::string getVmuPath(const std::string& port)
    }
 }
 
-std::string getJvsEepromPath()
+std::string getArcadeFlashPath()
 {
-	return eeprom_file;
+	return arcadeFlashPath;
 }
 
 std::string findFlash(const std::string& prefix, const std::string& names_ro)

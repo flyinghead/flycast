@@ -34,10 +34,10 @@ std::string getVmuPath(const std::string& port)
 	return apath;
 }
 
-std::string getJvsEepromPath()
+std::string getArcadeFlashPath()
 {
 	std::string nvmemSuffix = cfgLoadStr("net", "nvmem", "");
-	return get_game_save_prefix() + nvmemSuffix + ".eeprom";
+	return get_game_save_prefix() + nvmemSuffix;
 }
 
 std::string findFlash(const std::string& prefix, const std::string& names)

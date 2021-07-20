@@ -26,7 +26,8 @@ u32 static INLINE bitscanrev(u32 v)
 namespace hostfs
 {
 	std::string getVmuPath(const std::string& port);
-	std::string getJvsEepromPath();
+
+	std::string getArcadeFlashPath();
 
 	std::string findFlash(const std::string& prefix, const std::string& names);
 	std::string getFlashSavePath(const std::string& prefix, const std::string& name);

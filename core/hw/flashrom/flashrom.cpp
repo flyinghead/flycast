@@ -37,11 +37,14 @@ bool MemChip::Load(const std::string& file)
 void MemChip::Save(const std::string& file)
 {
 	FILE *f = nowide::fopen(file.c_str(), "wb");
-	if (f)
+	if (f == nullptr)
 	{
-		std::fwrite(data + write_protect_size, 1, size - write_protect_size, f);
-		std::fclose(f);
+		ERROR_LOG(FLASHROM, "Cannot save flash/nvmem to file '%s'", file.c_str());
+		return;
 	}
+	if (std::fwrite(data + write_protect_size, 1, size - write_protect_size, f) != size - write_protect_size)
+		ERROR_LOG(FLASHROM, "Failed or truncated write to flash file '%s'", file.c_str());
+	std::fclose(f);
 }
 
 bool MemChip::Load(const std::string &prefix, const std::string &names_ro, const std::string &title)

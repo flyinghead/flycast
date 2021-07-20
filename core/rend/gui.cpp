@@ -434,7 +434,8 @@ static void gui_start_game(const std::string& path)
 
 static void gui_display_commands()
 {
-	dc_stop();
+	if (dc_is_running())
+		dc_stop();
 
    	display_vmus();
 

@@ -102,10 +102,7 @@ constexpr char slash = path_default_slash_c();
 #include "libretro_core_options.h"
 #include "vmu_xhair.h"
 
-static char save_dir[PATH_MAX];
-char eeprom_file[PATH_MAX];
-char nvmem_file[PATH_MAX];		// TODO
-char nvmem_file2[PATH_MAX];		// AtomisWave
+std::string arcadeFlashPath;
 static bool boot_to_bios;
 
 static bool devices_need_refresh = false;
@@ -1634,26 +1631,24 @@ bool retro_load_game(const struct retro_game_info *game)
 
 	if (settings.platform.system != DC_PLATFORM_DREAMCAST)
 	{
-		if (environ_cb(RETRO_ENVIRONMENT_GET_SAVE_DIRECTORY, &dir) && dir) {
-			char g_save_dir[PATH_MAX];
-			strncpy(g_save_dir, dir, sizeof(g_save_dir));
-			if(strcmp(g_save_dir,g_roms_dir) != 0)
-				snprintf(save_dir, sizeof(save_dir), "%s%creicast%c", g_save_dir, slash, slash);
-			else
-				strncpy(save_dir, g_roms_dir, sizeof(save_dir));
+		if (environ_cb(RETRO_ENVIRONMENT_GET_SAVE_DIRECTORY, &dir)
+				&& dir != nullptr
+				&& strcmp(dir, g_roms_dir) != 0)
+		{
+			static char save_dir[PATH_MAX];
+			snprintf(save_dir, sizeof(save_dir), "%s%creicast%c", dir, slash, slash);
+
 			struct stat buf;
 			if (stat(save_dir, &buf) < 0)
 			{
 				DEBUG_LOG(BOOT, "Creating dir: %s", save_dir);
 				path_mkdir(save_dir);
 			}
+			arcadeFlashPath = std::string(save_dir) + g_base_name;
 		} else {
-			strncpy(save_dir, g_roms_dir, sizeof(save_dir));
+			arcadeFlashPath = std::string(g_roms_dir) + g_base_name;
 		}
-		INFO_LOG(BOOT, "Setting save dir to %s", save_dir);
-		snprintf(eeprom_file, sizeof(eeprom_file), "%s%s.eeprom", save_dir, g_base_name);
-		snprintf(nvmem_file, sizeof(nvmem_file), "%s%s.nvmem", save_dir, g_base_name);
-		snprintf(nvmem_file2, sizeof(nvmem_file2), "%s%s.nvmem2", save_dir, g_base_name);
+		INFO_LOG(BOOT, "Setting flash base path to %s", arcadeFlashPath.c_str());
 	}
 
 	config::ScreenStretching = 100;
@@ -1683,15 +1678,15 @@ bool retro_load_game_special(unsigned game_type, const struct retro_game_info *i
 void retro_unload_game()
 {
 	INFO_LOG(COMMON, "Flycast unloading game");
+	frontend_clear_thread_waits_cb(1, nullptr);
+	dc_stop();
+	frontend_clear_thread_waits_cb(0, nullptr);
 	free(game_data);
 	game_data = nullptr;
 	disk_paths.clear();
 	disk_labels.clear();
 	blankVmus();
 
-	frontend_clear_thread_waits_cb(1, nullptr);
-	dc_stop();
-	frontend_clear_thread_waits_cb(0, nullptr);
 	dc_term_emulator();
 }
 
