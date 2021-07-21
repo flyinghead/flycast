@@ -862,6 +862,22 @@ void retro_run()
 		is_dupe = true;
 }
 
+static bool loadGame(const char *path)
+{
+	mute_messages = true;
+	try {
+		dc_start_game(path);
+	} catch (const FlycastException& e) {
+		ERROR_LOG(BOOT, "%s", e.what());
+		mute_messages = false;
+		gui_display_notification(e.what(), 2000);
+		return false;
+	}
+	mute_messages = false;
+
+	return true;
+}
+
 void retro_reset()
 {
 	std::lock_guard<std::mutex> lock(mtx_serialization);
@@ -870,7 +886,10 @@ void retro_reset()
 		dc_stop();
 
 	config::ScreenStretching = 100;
-	dc_start_game(settings.imgread.ImagePath);
+	loadGame(settings.imgread.ImagePath);
+	if (rotate_game)
+		config::Widescreen.override(false);
+	config::Rotate90 = false;
 
 	setFramebufferSize();
 	retro_game_geometry geometry;
@@ -1647,9 +1666,8 @@ bool retro_load_game(const struct retro_game_info *game)
 	}
 
 	config::ScreenStretching = 100;
-	mute_messages = true;
-	dc_start_game(game_data);
-	mute_messages = false;
+	if (!loadGame(game_data))
+		return false;
 
 	rotate_game = config::Rotate90;
 	if (rotate_game)

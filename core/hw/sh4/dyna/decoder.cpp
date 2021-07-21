@@ -301,7 +301,6 @@ sh4dec(i1111_1011_1111_1101)
 	Emit(shop_frswap,regv_xmtrx,regv_fmtrx,regv_xmtrx,0,rmn,regv_fmtrx);
 }
 
-//not-so-elegant, but avoids extra opcodes and temporalities ..
 //rotcl
 sh4dec(i0100_nnnn_0010_0100)
 {
@@ -309,13 +308,6 @@ sh4dec(i0100_nnnn_0010_0100)
 	Sh4RegType rn=(Sh4RegType)(reg_r0+n);
 	
 	Emit(shop_rocl,rn,rn,reg_sr_T,0,shil_param(),reg_sr_T);
-	/*
-	Emit(shop_ror,rn,rn,mk_imm(31));
-	Emit(shop_xor,rn,rn,reg_sr_T);              //Only affects last bit (swap part a)
-	Emit(shop_xor,reg_sr_T,reg_sr_T,rn);        //srT -> rn
-	Emit(shop_and,reg_sr_T,reg_sr_T,mk_imm(1)); //Keep only last bit
-	Emit(shop_xor,rn,rn,reg_sr_T);              //Only affects last bit (swap part b)
-	*/
 }
 
 //rotcr
@@ -325,14 +317,6 @@ sh4dec(i0100_nnnn_0010_0101)
 	Sh4RegType rn=(Sh4RegType)(reg_r0+n);
 
 	Emit(shop_rocr,rn,rn,reg_sr_T,0,shil_param(),reg_sr_T);
-	/*
-	Emit(shop_xor,rn,rn,reg_sr_T);              //Only affects last bit (swap part a)
-	Emit(shop_xor,reg_sr_T,reg_sr_T,rn);        //srT -> rn
-	Emit(shop_and,reg_sr_T,reg_sr_T,mk_imm(1)); //Keep only last bit
-	Emit(shop_xor,rn,rn,reg_sr_T);              //Only affects last bit (swap part b)
-
-	Emit(shop_ror,rn,rn,mk_imm(1));
-	*/
 }
 
 static const Sh4RegType SREGS[] =
@@ -619,21 +603,13 @@ static bool MatchDiv32u(u32 op,u32 pc)
 	if (config::DynarecSafeMode)
 		return false;
 
-	div_som_reg1=NoReg;
-	div_som_reg2=NoReg;
-	div_som_reg3=NoReg;
+	div_som_reg1 = NoReg;
+	div_som_reg2 = NoReg;
+	div_som_reg3 = NoReg;
 
-	u32 match=MatchDiv32(pc+2,div_som_reg1,div_som_reg2,div_som_reg3);
+	u32 match = MatchDiv32(pc + 2, div_som_reg1, div_som_reg2, div_som_reg3);
 
-
-	//log("DIV32U matched %d%% @ 0x%X\n",match*100/65,pc);
-	if (match==65)
-	{
-		//DIV32U was perfectly matched :)
-		return true;
-	}
-	else //no match ...
-		return false;
+	return match == 65;
 }
 
 static bool MatchDiv32s(u32 op,u32 pc)
@@ -644,29 +620,13 @@ static bool MatchDiv32s(u32 op,u32 pc)
 	u32 n = GetN(op);
 	u32 m = GetM(op);
 
-	div_som_reg1=NoReg;
-	div_som_reg2=(Sh4RegType)m;
-	div_som_reg3=(Sh4RegType)n;
+	div_som_reg1 = NoReg;
+	div_som_reg2 = (Sh4RegType)m;
+	div_som_reg3 = (Sh4RegType)n;
 
-	u32 match=MatchDiv32(pc+2,div_som_reg1,div_som_reg2,div_som_reg3);
-	//printf("DIV32S matched %d%% @ 0x%X\n",match*100/65,pc);
+	u32 match = MatchDiv32(pc + 2, div_som_reg1, div_som_reg2, div_som_reg3);
 	
-	if (match==65)
-	{
-		//DIV32S was perfectly matched :)
-		//printf("div32s %d/%d/%d\n",div_som_reg1,div_som_reg2,div_som_reg3);
-		return true;
-	}
-	else //no match ...
-	{
-		/*
-		printf("%04X\n",IReadMem16(pc-2));
-		printf("%04X\n",IReadMem16(pc-0));
-		printf("%04X\n",IReadMem16(pc+2));
-		printf("%04X\n",IReadMem16(pc+4));
-		printf("%04X\n",IReadMem16(pc+6));*/
-		return false;
-	}
+	return match == 65;
 }
 
 /*

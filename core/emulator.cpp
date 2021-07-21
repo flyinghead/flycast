@@ -455,7 +455,7 @@ void dc_start_game(const char *path)
 		{
 			// Boot BIOS
 			if (!LoadRomFiles())
-				throw FlycastException("No BIOS file found in " + get_writable_data_path(""));
+				throw FlycastException("No BIOS file found in " + hostfs::getFlashSavePath("", ""));
 			TermDrive();
 			InitDrive();
 		}
