@@ -955,7 +955,9 @@ void dc_loadstate(int index)
     cleanup_serialize(data) ;
 	EventManager::event(Event::LoadState);
 
-	gdxsv.StartReplayFile("diskdc2-1626358029063.pb"); // TODO move
+	// gdxsv.StartReplayFile("diskdc2-1626358029063.pb"); // TODO move
+    // gdxsv.StartReplayFile("diskdc2-1626797891506.pb"); // TODO move
+    gdxsv.StartReplayFile("diskdc2-1626791369507.pb"); // TODO move
     INFO_LOG(SAVESTATE, "Loaded state from %s size %d", filename.c_str(), total_size) ;
 }
 

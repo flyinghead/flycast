@@ -26,7 +26,7 @@ public:
 
     Gdxsv() : lbs_net(symbols),
               udp_net(symbols, maxlag),
-              replay_net(symbols) {};
+              replay_net(symbols, maxlag) {};
 
     bool Enabled() const;
 

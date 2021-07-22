@@ -1,12 +1,16 @@
 // Mock network implementation to replay local battle log
 
+#include <array>
+#include <vector>
+#include <queue>
 #include "gdxsv.pb.h"
 #include "lbs_message.h"
 #include "mcs_message.h"
 
 class GdxsvBackendReplay {
 public:
-    GdxsvBackendReplay(const std::map<std::string, u32> &symbols) : symbols_(symbols) {
+    GdxsvBackendReplay(const std::map<std::string, u32> &symbols, std::atomic<int> &maxlag)
+            : symbols_(symbols), maxlag_(maxlag) {
     }
 
     enum class State {
@@ -37,29 +41,34 @@ public:
         }
 
         NOTICE_LOG(COMMON, "game_disk = %s", log_file_.game_disk().c_str());
-        if (fp != nullptr) {
-            fclose(fp);
-        }
+        fclose(fp);
 
-        replay_data_.clear();
+        msg_list_.clear();
+        McsMessageReader r;
+        McsMessage msg;
         for (int i = 0; i < log_file_.battle_data_size(); ++i) {
             const auto &data = log_file_.battle_data(i);
-            replay_data_.push_back(data);
+            r.Write(data.body().data(), data.body().size());
+            while (r.Read(msg)) {
+                msg_list_.emplace_back(msg);
+            }
         }
 
-        NOTICE_LOG(COMMON, "log size = %d", replay_data_.size());
+        std::fill(start_index_.begin(), start_index_.end(), 0);
 
         state_ = State::Start;
+        maxlag_ = 2;
         return true;
     }
 
     void Open() {
-        recv_buf_.assign({0x0e, 0x61, 0x00, 0x22, 0x10, 0x31, 0x66,
-                          0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd});
+        recv_buf_.assign({0x0e, 0x61, 0x00, 0x22, 0x10, 0x31, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd});
         state_ = State::McsSessionExchange;
+        ApplyPatch(true);
     }
 
     void Close() {
+        RestorePatch();
     }
 
     void OnGameWrite() {
@@ -84,6 +93,8 @@ public:
                 mcs_tx_reader_.Write((const char *) buf, n);
             }
         }
+
+        ApplyPatch(false);
     }
 
     void OnGameRead() {
@@ -115,14 +126,17 @@ public:
         q.tail = ReadMem16_nommu(gdx_rxq_addr + 2);
         u32 buf_addr = gdx_rxq_addr + 4;
 
+        if (gdx_queue_avail(&q) < GDX_QUEUE_SIZE / 2) {
+            recv_delay_ = 1;
+            return;
+        }
+
         int n = std::min<int>(recv_buf_.size(), static_cast<int>(gdx_queue_avail(&q)));
-        /*
         std::string hexstr(n * 2, ' ');
         for (int i = 0; i < n; ++i) {
             std::sprintf(&hexstr[0] + i * 2, "%02x", recv_buf_[i]);
         }
-        NOTICE_LOG(COMMON, "%s", hexstr.c_str());
-         */
+        NOTICE_LOG(COMMON, "write %s", hexstr.c_str());
         if (0 < n) {
             for (int i = 0; i < n; ++i) {
                 WriteMem8_nommu(buf_addr + q.tail, recv_buf_.front());
@@ -134,6 +148,28 @@ public:
     }
 
 private:
+    void PrepareKeyMsgIndex() {
+        for (int p = 0; p < log_file_.users_size(); ++p) {
+            key_msg_index_[p].clear();
+
+            for (int i = start_index_[p]; i < msg_list_.size(); ++i) {
+                const auto &msg = msg_list_[i];
+                if (msg.sender == p) {
+                    if (!key_msg_index_[p].empty()) {
+                        if (msg.type == McsMessage::MsgType::StartMsg) {
+                            start_index_[p] = i + 1;
+                            break;
+                        }
+                    }
+
+                    if (msg.type == McsMessage::MsgType::KeyMsg) {
+                        key_msg_index_[p].emplace_back(i);
+                    }
+                }
+            }
+        }
+    }
+
     void ProcessLbsMessage() {
         LbsMessage msg;
         if (lbs_tx_reader_.Read(msg)) {
@@ -151,19 +187,20 @@ private:
 
             if (msg.command == LbsMessage::lbsAskPlayerSide) {
                 // camera player id
-                int me = 0;
+                me = 0;
                 LbsMessage::SvAnswer(msg).Write8(me + 1)->Serialize(recv_buf_);
             }
 
             if (msg.command == LbsMessage::lbsAskPlayerInfo) {
                 int pos = msg.Read8();
-                NOTICE_LOG(COMMON, "pos=%d", pos);
                 const auto &user = log_file_.users(pos - 1);
+                NOTICE_LOG(COMMON, "pos=%d game_param.size=%d", pos, user.game_param().size());
                 LbsMessage::SvAnswer(msg).
                         Write8(pos)->
                         WriteString(user.user_id())->
-                        WriteString(user.user_name())-> // TODO: need UTF8 -> SJIS
-                        WriteString(user.game_param())->
+                        WriteString(user.user_id())->
+                        // WriteString(user.user_name())-> // TODO: need UTF8 -> SJIS
+                        WriteBytes(user.game_param().data(), user.game_param().size())->
                         Write16(0)-> // grade
                         Write16(user.win_count())->
                         Write16(user.lose_count())->
@@ -209,12 +246,72 @@ private:
     void ProcessMcsMessage() {
         McsMessage msg;
         if (mcs_tx_reader_.Read(msg)) {
+            NOTICE_LOG(COMMON, "Read %s %s", McsMessage::MsgTypeName(msg.type), msg.to_hex().c_str());
             switch (msg.type) {
                 case McsMessage::MsgType::ConnectionIdMsg:
                     state_ = State::McsInBattle;
                     break;
                 case McsMessage::MsgType::IntroMsg:
-                    //TODO
+                    for (int i = 0; i < log_file_.users_size(); ++i) {
+                        if (i != me) {
+                            auto intro_msg = McsMessage::Create(McsMessage::MsgType::IntroMsg, i);
+                            std::copy(intro_msg.body.begin(), intro_msg.body.end(), std::back_inserter(recv_buf_));
+                        }
+                    }
+                    break;
+                case McsMessage::MsgType::IntroMsgReturn:
+                    for (int i = 0; i < log_file_.users_size(); ++i) {
+                        if (i != me) {
+                            auto intro_msg = McsMessage::Create(McsMessage::MsgType::IntroMsgReturn, i);
+                            std::copy(intro_msg.body.begin(), intro_msg.body.end(), std::back_inserter(recv_buf_));
+                        }
+                    }
+                    break;
+                case McsMessage::MsgType::PingMsg:
+                    for (int i = 0; i < log_file_.users_size(); ++i) {
+                        if (i != me) {
+                            auto pong_msg = McsMessage::Create(McsMessage::MsgType::PongMsg, i);
+                            pong_msg.SetPongTo(me);
+                            pong_msg.SetPongCount(msg.PingCount());
+                            std::copy(pong_msg.body.begin(), pong_msg.body.end(), std::back_inserter(recv_buf_));
+                        }
+                    }
+                    break;
+                case McsMessage::MsgType::PongMsg:
+                    break;
+                case McsMessage::MsgType::StartMsg:
+                    for (int i = 0; i < log_file_.users_size(); ++i) {
+                        auto start_msg = McsMessage::Create(McsMessage::MsgType::StartMsg, i);
+                        std::copy(start_msg.body.begin(), start_msg.body.end(), std::back_inserter(recv_buf_));
+                    }
+                    PrepareKeyMsgIndex();
+                    break;
+                case McsMessage::MsgType::ForceMsg:
+                    break;
+                case McsMessage::MsgType::KeyMsg:
+                    for (int i = 0; i < log_file_.users_size(); ++i) {
+                        auto key_msg = msg_list_[key_msg_index_[i][msg.HeadFrame() / 2]];
+                        std::copy(key_msg.body.begin(), key_msg.body.end(), std::back_inserter(recv_buf_));
+                        verify(key_msg.HeadFrame() == msg.HeadFrame());
+                    }
+                    break;
+                case McsMessage::MsgType::LoadStartMsg:
+                    for (int i = 0; i < log_file_.users_size(); ++i) {
+                        if (i != me) {
+                            auto load_start_msg = McsMessage::Create(McsMessage::MsgType::LoadStartMsg, i);
+                            std::copy(load_start_msg.body.begin(), load_start_msg.body.end(),
+                                      std::back_inserter(recv_buf_));
+                        }
+                    }
+                    break;
+                case McsMessage::MsgType::LoadEndMsg:
+                    for (int i = 0; i < log_file_.users_size(); ++i) {
+                        if (i != me) {
+                            auto load_end_msg = McsMessage::Create(McsMessage::MsgType::LoadEndMsg, i);
+                            std::copy(load_end_msg.body.begin(), load_end_msg.body.end(),
+                                      std::back_inserter(recv_buf_));
+                        }
+                    }
                     break;
                 default:
                     WARN_LOG(COMMON, "unhandled mcs msg: %s", McsMessage::MsgTypeName(msg.type));
@@ -224,13 +321,60 @@ private:
         }
     }
 
+    void ApplyPatch(bool first_time) {
+        // Skip MsgPush
+        // TODO: Restore the patch
+        WriteMem16_nommu(0x8c045f64, 9);
+        // WriteMem16_nommu(0x8c045e70, 9);
+
+        for (int i = 0; i < log_file_.patches_size(); ++i) {
+            if (log_file_.patches(i).write_once() && !first_time) {
+                continue;
+            }
+
+            for (int j = 0; j < log_file_.patches(i).codes_size(); ++j) {
+                const auto &code = log_file_.patches(i).codes(j);
+                if (code.size() == 8) {
+                    WriteMem8_nommu(code.address(), code.changed());
+                }
+                if (code.size() == 16) {
+                    WriteMem16_nommu(code.address(), code.changed());
+                }
+                if (code.size() == 32) {
+                    WriteMem32_nommu(code.address(), code.changed());
+                }
+            }
+        }
+    }
+
+    void RestorePatch() {
+        for (int i = 0; i < log_file_.patches_size(); ++i) {
+            for (int j = 0; j < log_file_.patches(i).codes_size(); ++j) {
+                const auto &code = log_file_.patches(i).codes(j);
+                if (code.size() == 8) {
+                    WriteMem8_nommu(code.address(), code.original());
+                }
+                if (code.size() == 16) {
+                    WriteMem16_nommu(code.address(), code.original());
+                }
+                if (code.size() == 32) {
+                    WriteMem32_nommu(code.address(), code.original());
+                }
+            }
+        }
+    }
+
     const std::map<std::string, u32> &symbols_;
+    std::atomic<int> &maxlag_;
     State state_;
     LbsMessageReader lbs_tx_reader_;
     McsMessageReader mcs_tx_reader_;
     proto::BattleLogFile log_file_;
     std::deque<u8> recv_buf_;
     int recv_delay_;
-    std::vector<proto::BattleLogMessage> replay_data_;
+    int me = 0;
+    std::vector<McsMessage> msg_list_;
+    std::array<int, 4> start_index_;
+    std::array<std::vector<int>, 4> key_msg_index_;
 };
 
