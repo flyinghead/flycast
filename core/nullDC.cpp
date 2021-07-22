@@ -503,7 +503,7 @@ static void dc_start_game(const char *path)
 	config::Settings::instance().load(false);
 
 	GamepadDevice::load_system_mappings();
-	
+
 	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
 	{
 		if (path == NULL)
@@ -958,6 +958,7 @@ void dc_loadstate(int index)
 	// gdxsv.StartReplayFile("diskdc2-1626358029063.pb"); // TODO move
     // gdxsv.StartReplayFile("diskdc2-1626797891506.pb"); // TODO move
     gdxsv.StartReplayFile("diskdc2-1626791369507.pb"); // TODO move
+    // gdxsv.StartReplayFile("diskdc2-1626710970883.pb"); // TODO move
     INFO_LOG(SAVESTATE, "Loaded state from %s size %d", filename.c_str(), total_size) ;
 }
 

@@ -33,11 +33,13 @@ public:
         FILE *fp = nowide::fopen(path, "rb");
         if (fp == nullptr) {
             NOTICE_LOG(COMMON, "fopen failed");
+            return false;
         }
 
         bool ok = log_file_.ParseFromFileDescriptor(fp->_file);
         if (!ok) {
             NOTICE_LOG(COMMON, "ParseFromFileDescriptor failed");
+            return false;
         }
 
         NOTICE_LOG(COMMON, "game_disk = %s", log_file_.game_disk().c_str());
@@ -53,6 +55,37 @@ public:
                 msg_list_.emplace_back(msg);
             }
         }
+
+        // Guess player position
+        std::map<std::string, int> player_position;
+        for (int i = 0; i < log_file_.battle_data_size(); ++i) {
+            const auto &data = log_file_.battle_data(i);
+            if (player_position.find(data.user_id()) == player_position.end()) {
+                r.Write(data.body().data(), data.body().size());
+                while (r.Read(msg)) {
+                    if (msg.type == McsMessage::MsgType::PingMsg) {
+                        player_position[data.user_id()] = msg.sender;
+                        break;
+                    }
+                }
+            }
+            if (log_file_.users_size() == player_position.size()) {
+                break;
+            }
+        }
+
+        for (auto &p : player_position) {
+            NOTICE_LOG(COMMON, "player_positions: %s = %d", p.first.c_str(), p.second);
+        }
+
+        // sort log users by player position
+        std::sort(log_file_.mutable_users()->begin(), log_file_.mutable_users()->end(),
+                  [&player_position](const proto::BattleLogUser &a, const proto::BattleLogUser &b) {
+                      return player_position[a.user_id()] < player_position[b.user_id()];
+                  });
+
+        NOTICE_LOG(COMMON, "patch_size = %d", log_file_.patches_size());
+        NOTICE_LOG(COMMON, "users = %d", log_file_.users_size());
 
         std::fill(start_index_.begin(), start_index_.end(), 0);
 
@@ -214,13 +247,13 @@ private:
 
             if (msg.command == LbsMessage::lbsAskRuleData) {
                 LbsMessage::SvAnswer(msg).
-                        WriteBytes(log_file_.rule_bin())->
+                        WriteBytes(log_file_.rule_bin().data(), log_file_.rule_bin().size())->
                         Serialize(recv_buf_);
             }
 
             if (msg.command == LbsMessage::lbsAskBattleCode) {
                 LbsMessage::SvAnswer(msg).
-                        WriteString(log_file_.battle_code())->
+                        WriteBytes(log_file_.battle_code().data(), log_file_.battle_code().size())->
                         Serialize(recv_buf_);
             }
 

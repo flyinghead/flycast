@@ -10,7 +10,7 @@
 #include "version.h"
 
 bool Gdxsv::InGame() const {
-    return enabled && udp_net.IsConnected();
+    return enabled && netmode == NetMode::McsUdp;
 }
 
 bool Gdxsv::Enabled() const {
