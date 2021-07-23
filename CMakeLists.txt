@@ -54,8 +54,6 @@ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/core/version.h.in" "${CMAKE_CURRENT_
 
 if(ANDROID)
     add_library(${PROJECT_NAME} SHARED core/nullDC.cpp)
-    set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_RELEASE} -O3")
-    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_RELEASE} -O3")
     target_compile_options(${PROJECT_NAME} PRIVATE -fno-stack-protector)
     set(CMAKE_ANDROID_STL_TYPE "c++_static")
 elseif(MSVC)
@@ -92,11 +90,12 @@ if(OpenMP_CXX_FOUND AND NOT APPLE AND USE_OPENMP)
     if(MINGW)
         target_link_libraries(${PROJECT_NAME} PRIVATE "-static -lgomp -lpthread")
         target_compile_options(${PROJECT_NAME} PRIVATE -fopenmp)
+    elseif(ANDROID)
+        # Reference: https://android.googlesource.com/platform/ndk/+/refs/heads/master/tests/device/openmp/CMakeLists.txt
+        set_target_properties(${PROJECT_NAME} PROPERTIES COMPILE_OPTIONS -fopenmp)
+        target_link_libraries(${PROJECT_NAME} PRIVATE -fopenmp -static-openmp)
     else()
         target_link_libraries(${PROJECT_NAME} PRIVATE OpenMP::OpenMP_CXX)
-        if(ANDROID_NDK_MAJOR VERSION_GREATER_EQUAL 21)
-            target_link_libraries(${PROJECT_NAME} PRIVATE -static-openmp)
-        endif()
     endif()
 else()
     target_compile_definitions(${PROJECT_NAME} PRIVATE TARGET_NO_OPENMP)
@@ -112,6 +111,7 @@ add_subdirectory(core/deps/glm)
 target_link_libraries(${PROJECT_NAME} PRIVATE glm::glm)
 
 if(NOT APPLE)
+	option(BUILD_EXTERNAL "Build external dependencies in /External" OFF)
 	add_subdirectory(core/deps/glslang)
 	target_link_libraries(${PROJECT_NAME} PRIVATE SPIRV)
 endif()
@@ -964,9 +964,7 @@ endif()
 if(ANDROID)
     target_compile_definitions(${PROJECT_NAME} PRIVATE GLES GLES3)
 
-    target_sources(${PROJECT_NAME} PRIVATE
-            shell/android-studio/flycast/src/main/jni/src/Android.cpp
-            shell/android-studio/flycast/src/main/jni/src/utils.cpp)
+    target_sources(${PROJECT_NAME} PRIVATE shell/android-studio/flycast/src/main/jni/src/Android.cpp)
 
     target_link_libraries(${PROJECT_NAME} PRIVATE android EGL GLESv2 log)
 elseif(APPLE)

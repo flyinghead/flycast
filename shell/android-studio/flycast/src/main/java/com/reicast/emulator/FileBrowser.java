@@ -6,7 +6,7 @@ import java.io.InputStream;
 import java.util.HashSet;
 
 public class FileBrowser {
-	android.support.v4.content.FileProvider provider;	// To avoid ClassNotFoundException at runtime
+	androidx.core.content.FileProvider provider;	// To avoid ClassNotFoundException at runtime
 
 	public static HashSet<String> getExternalMounts() {
 		final HashSet<String> out = new HashSet<>();

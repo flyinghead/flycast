@@ -19,7 +19,7 @@ public final class JNIdc
 
 	public static native void rendinitNative(Surface surface, int w, int h);
 
-	public static native void vjoy(int id,float x, float y, float w, float h);
+	public static native void vjoy(int id, float x, float y, float w, float h);
 
 	public static native void getControllers(int[] controllers, int[][] peripherals);
 
@@ -37,5 +37,5 @@ public final class JNIdc
 	}
 	public static native void hideOsd();
 
-	public static native void setButtons(byte data[]);
+	public static native void setButtons(byte[] data);
 }
