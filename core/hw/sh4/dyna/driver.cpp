@@ -423,7 +423,6 @@ static void recSh4_Init()
 	// Ensure the pointer returned is non-null
 	verify(CodeCache != NULL);
 
-	memset(CodeCache, 0xFF, CODE_SIZE + TEMP_CODE_SIZE);
 	TempCodeCache = CodeCache + CODE_SIZE;
 	ngen_init();
 	bm_ResetCache();

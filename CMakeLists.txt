@@ -21,6 +21,7 @@ set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/shell/cmake")
 
 if(APPLE)
 	set(CMAKE_OSX_DEPLOYMENT_TARGET "10.9" CACHE STRING "Minimum macOS deployment version")
+	set(CMAKE_OSX_ARCHITECTURES "x86_64;arm64")
 endif()
 
 project(flycast)
@@ -813,7 +814,7 @@ if(WIN32)
 	target_link_libraries(${PROJECT_NAME} PRIVATE d3d9 d3dx9)
 endif()
 
-if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm.*|ARM.*)")
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm.*|ARM.*)" AND NOT APPLE)
 	target_include_directories(${PROJECT_NAME} PRIVATE core/deps/vixl)
     target_sources(${PROJECT_NAME} PRIVATE
     	core/rec-ARM/rec_arm.cpp
@@ -847,7 +848,9 @@ if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm.*|ARM.*)")
     	core/deps/vixl/pool-manager-impl.h
     	core/deps/vixl/utils-vixl.cc
     	core/deps/vixl/utils-vixl.h)
-elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^(aarch64.*|AARCH64.*)")
+     set(KNOWN_ARCHITECTURE_DETECTED ON)
+endif()
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(aarch64.*|AARCH64.*|arm64.*)" OR CMAKE_OSX_ARCHITECTURES MATCHES "arm64")
     target_include_directories(${PROJECT_NAME} PRIVATE core/deps/vixl)
     target_sources(${PROJECT_NAME} PRIVATE
     	core/deps/vixl/aarch64/abi-aarch64.h
@@ -892,7 +895,9 @@ elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^(aarch64.*|AARCH64.*)")
     	core/deps/vixl/utils-vixl.cc
     	core/deps/vixl/utils-vixl.h)
     target_sources(${PROJECT_NAME} PRIVATE core/rec-ARM64/rec_arm64.cpp core/rec-ARM64/arm64_regalloc.h)
-elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "i686.*|i386.*|x86.*|amd64.*|x86_64.*|AMD64.*")
+    set(KNOWN_ARCHITECTURE_DETECTED ON)
+endif()
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "i686.*|i386.*|x86.*|amd64.*|x86_64.*|AMD64.*" OR CMAKE_OSX_ARCHITECTURES MATCHES "x86_64")
     add_subdirectory(core/deps/xbyak)
     target_link_libraries(${PROJECT_NAME} PRIVATE xbyak::xbyak)
     if(CMAKE_SIZEOF_VOID_P EQUAL 4)
@@ -908,7 +913,9 @@ elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "i686.*|i386.*|x86.*|amd64.*|x86_64.*|AMD6
         	core/rec-x64/rec_x64.cpp
         	core/rec-x64/x64_regalloc.h)
     endif()
-else()
+    set(KNOWN_ARCHITECTURE_DETECTED ON)
+endif()
+if(NOT KNOWN_ARCHITECTURE_DETECTED)
     message(FATAL_ERROR "Unknown target processor: ${CMAKE_SYSTEM_PROCESSOR}")
 endif()
 

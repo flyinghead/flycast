@@ -1,10 +1,28 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Scheme
    LastUpgradeVersion = "1240"
-   version = "1.3">
+   version = "1.7">
    <BuildAction
       parallelizeBuildables = "YES"
       buildImplicitDependencies = "YES">
+      <PreActions>
+         <ExecutionAction
+            ActionType = "Xcode.IDEStandardExecutionActionsCore.ExecutionActionType.ShellScriptAction">
+            <ActionContent
+               title = "Run Script"
+               scriptText = "if [[ `uname -m` == &apos;arm64&apos; ]]; then&#10;    sdl2path=&apos;/opt/homebrew/lib/libSDL2.a&apos;&#10;else&#10;    sdl2path=&apos;/usr/local/lib/libSDL2.a&apos;&#10;fi&#10;sed -i &apos;&apos; &quot;s|LIBSDL.*|LIBSDL = $sdl2path|&quot; $SRCROOT/emulator-osx/DreamcastConfig.xcconfig&#10;">
+               <EnvironmentBuildable>
+                  <BuildableReference
+                     BuildableIdentifier = "primary"
+                     BlueprintIdentifier = "84A388B21B1CDD3E000166C0"
+                     BuildableName = "Flycast.app"
+                     BlueprintName = "reicast-osx"
+                     ReferencedContainer = "container:reicast-osx.xcodeproj">
+                  </BuildableReference>
+               </EnvironmentBuildable>
+            </ActionContent>
+         </ExecutionAction>
+      </PreActions>
       <BuildActionEntries>
          <BuildActionEntry
             buildForTesting = "YES"

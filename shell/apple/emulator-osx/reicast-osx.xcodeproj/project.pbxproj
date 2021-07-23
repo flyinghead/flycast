@@ -306,7 +306,6 @@
 		AEE6278822131BB500EC7E89 /* mapping.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AEE6278522131BB500EC7E89 /* mapping.cpp */; };
 		AEE6278E2224762000EC7E89 /* imgui_impl_opengl3.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AEE6278B2224762000EC7E89 /* imgui_impl_opengl3.cpp */; };
 		AEE6279422247C0A00EC7E89 /* gui_util.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AEE6279222247C0A00EC7E89 /* gui_util.cpp */; };
-		AEE6279622247C2B00EC7E89 /* keyboard_device.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AEE6279522247C2B00EC7E89 /* keyboard_device.cpp */; };
 		AEF25646227C442F00348550 /* fastmmu.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AEF25644227C442F00348550 /* fastmmu.cpp */; };
 		AEF2564822886A2E00348550 /* posix_vmem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AEF2564722886A2E00348550 /* posix_vmem.cpp */; };
 		AEF256502294060400348550 /* ZipArchive.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AEF2564A2294060300348550 /* ZipArchive.cpp */; };
@@ -943,7 +942,6 @@
 		AEE6278D2224762000EC7E89 /* imgui_impl_opengl3.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = imgui_impl_opengl3.h; sourceTree = "<group>"; };
 		AEE6279222247C0A00EC7E89 /* gui_util.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = gui_util.cpp; sourceTree = "<group>"; };
 		AEE6279322247C0A00EC7E89 /* gui_util.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = gui_util.h; sourceTree = "<group>"; };
-		AEE6279522247C2B00EC7E89 /* keyboard_device.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = keyboard_device.cpp; sourceTree = "<group>"; };
 		AEF25644227C442F00348550 /* fastmmu.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = fastmmu.cpp; sourceTree = "<group>"; };
 		AEF25645227C442F00348550 /* wince.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = wince.h; sourceTree = "<group>"; };
 		AEF2564722886A2E00348550 /* posix_vmem.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = posix_vmem.cpp; sourceTree = "<group>"; };
@@ -1530,6 +1528,7 @@
 				84B7BDCF1B72720100F9733F /* dsp.h */,
 				AE8C27332111A31100D4D8F4 /* dsp_interp.cpp */,
 				AE7BCB512406EDB0007285F8 /* dsp_x64.cpp */,
+				F2D7C89E265B304F002812E2 /* dsp_arm64.cpp */,
 				84B7BDD01B72720100F9733F /* sgc_if.cpp */,
 				84B7BDD11B72720100F9733F /* sgc_if.h */,
 			);
@@ -1540,6 +1539,7 @@
 			isa = PBXGroup;
 			children = (
 				AE7BCB562415515B007285F8 /* arm7_rec_x64.cpp */,
+				F2D7C8A2265B3082002812E2 /* arm7_rec_arm64.cpp */,
 				AE7BCB572415515B007285F8 /* arm7_rec.cpp */,
 				AE7BCB552415515B007285F8 /* arm7_rec.h */,
 				84B7BDD31B72720100F9733F /* arm-new.h */,
@@ -2747,6 +2747,7 @@
 				84B7BF2A1B72720200F9733F /* arm7.cpp in Sources */,
 				AE90679D235DF80400CE473C /* osd.cpp in Sources */,
 				AE82C67D25B64AE200C79BC2 /* zip_get_name.c in Sources */,
+				F2D7C8A3265B3082002812E2 /* arm7_rec_arm64.cpp in Sources */,
 				84B7BF551B72720200F9733F /* sh4_mem.cpp in Sources */,
 				AE82C69F25B64AE200C79BC2 /* zip_open.c in Sources */,
 				AE649C2C218C553A00EF4A81 /* Lzma86Enc.c in Sources */,
@@ -2914,6 +2915,7 @@
 				84B7BF771B72720200F9733F /* reios_elf.cpp in Sources */,
 				AE9125CC25E3BBDC00ED4594 /* option.cpp in Sources */,
 				84B7BF5C1B72720200F9733F /* common.cpp in Sources */,
+				F2D7C89F265B304F002812E2 /* dsp_arm64.cpp in Sources */,
 				AE82C6BE25B64AE200C79BC2 /* zip_source_crc.c in Sources */,
 				84B7BF681B72720200F9733F /* audiobackend_directsound.cpp in Sources */,
 				AE2A2D5C21D68470004B308D /* awcartridge.cpp in Sources */,
@@ -3165,7 +3167,7 @@
 				);
 				INFOPLIST_FILE = "emulator-osx/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
-				OTHER_LDFLAGS = /usr/local/lib/libSDL2.a;
+				OTHER_LDFLAGS = "$(LIBSDL)";
 				OTHER_LIBTOOLFLAGS = "";
 				PRODUCT_BUNDLE_IDENTIFIER = com.flyinghead.Flycast;
 				PRODUCT_NAME = "$(REI_APP_NAME)";
@@ -3217,7 +3219,7 @@
 				);
 				INFOPLIST_FILE = "emulator-osx/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
-				OTHER_LDFLAGS = /usr/local/lib/libSDL2.a;
+				OTHER_LDFLAGS = "$(LIBSDL)";
 				OTHER_LIBTOOLFLAGS = "";
 				PRODUCT_BUNDLE_IDENTIFIER = com.flyinghead.Flycast;
 				PRODUCT_NAME = "$(REI_APP_NAME)";
