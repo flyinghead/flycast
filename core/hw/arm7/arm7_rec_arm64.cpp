@@ -551,7 +551,7 @@ public:
 
 	void compile(const std::vector<ArmOp>& block_ops, u32 cycles)
 	{
-        JITWriteProtect(false);
+		JITWriteProtect(false);
 		Ldr(w1, arm_reg_operand(CYCL_CNT));
 		Sub(w1, w1, cycles);
 		Str(w1, arm_reg_operand(CYCL_CNT));
@@ -631,7 +631,7 @@ public:
 #endif
 		delete regalloc;
 		regalloc = nullptr;
-        JITWriteProtect(true);
+		JITWriteProtect(true);
 	}
 
 	void generateMainLoop()
