@@ -9,6 +9,7 @@
 #include "cfg/cfg.h"
 #include "hw/sh4/sh4_mem.h"
 #include "reios/reios.h"
+#include "emulator.h"
 
 #include "gdxsv.pb.h"
 #include "gdxsv_backend_tcp.h"

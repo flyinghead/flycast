@@ -16,7 +16,6 @@ public:
     enum class State {
         None,
         Start,
-        LoadState,
         LbsStartBattleFlow,
         McsWaitJoin,
         McsSessionExchange,
@@ -25,8 +24,19 @@ public:
     };
 
     void Reset() {
+        RestorePatch();
         state_ = State::None;
         lbs_tx_reader_.Clear();
+        mcs_tx_reader_.Clear();
+        log_file_.Clear();
+        recv_buf_.clear();
+        recv_delay_ = 0;
+        me_ = 0;
+        msg_list_.clear();
+        for (int i = 0; i < 4; ++i) {
+            start_index_[i] = 0;
+            key_msg_index_[i].clear();
+        }
     }
 
     bool StartFile(const char *path) {
@@ -36,7 +46,8 @@ public:
             return false;
         }
 
-        bool ok = log_file_.ParseFromFileDescriptor(fp->_file);
+
+        bool ok = log_file_.ParseFromFileDescriptor(fileno(fp));
         if (!ok) {
             NOTICE_LOG(COMMON, "ParseFromFileDescriptor failed");
             return false;
@@ -102,6 +113,7 @@ public:
 
     void Close() {
         RestorePatch();
+        state_ = State::End;
     }
 
     void OnGameWrite() {
@@ -131,13 +143,6 @@ public:
     }
 
     void OnGameRead() {
-        static int connection_status = 0;
-        int new_connection_status = ReadMem8_nommu(0x0c3abb88);
-        if (connection_status != new_connection_status) {
-            NOTICE_LOG(COMMON, "CON_ST: %x -> %x", connection_status, new_connection_status);
-            connection_status = new_connection_status;
-        }
-
         if (state_ <= State::LbsStartBattleFlow) {
             ProcessLbsMessage();
         } else {
@@ -165,11 +170,13 @@ public:
         }
 
         int n = std::min<int>(recv_buf_.size(), static_cast<int>(gdx_queue_avail(&q)));
+        /*
         std::string hexstr(n * 2, ' ');
         for (int i = 0; i < n; ++i) {
             std::sprintf(&hexstr[0] + i * 2, "%02x", recv_buf_[i]);
         }
         NOTICE_LOG(COMMON, "write %s", hexstr.c_str());
+         */
         if (0 < n) {
             for (int i = 0; i < n; ++i) {
                 WriteMem8_nommu(buf_addr + q.tail, recv_buf_.front());
@@ -185,7 +192,9 @@ private:
         for (int p = 0; p < log_file_.users_size(); ++p) {
             key_msg_index_[p].clear();
 
-            for (int i = start_index_[p]; i < msg_list_.size(); ++i) {
+            int start_index = start_index_[p];
+            start_index_[p] = -1;
+            for (int i = start_index; i < msg_list_.size(); ++i) {
                 const auto &msg = msg_list_[i];
                 if (msg.sender == p) {
                     if (!key_msg_index_[p].empty()) {
@@ -206,11 +215,12 @@ private:
     void ProcessLbsMessage() {
         LbsMessage msg;
         if (lbs_tx_reader_.Read(msg)) {
-            NOTICE_LOG(COMMON, "RECV cmd=%04x seq=%d", msg.command, msg.seq);
+            // NOTICE_LOG(COMMON, "RECV cmd=%04x seq=%d", msg.command, msg.seq);
 
             if (msg.command == LbsMessage::lbsLobbyMatchingEntry) {
                 LbsMessage::SvAnswer(msg).Serialize(recv_buf_);
                 LbsMessage::SvNotice(LbsMessage::lbsReadyBattle).Serialize(recv_buf_);
+                state_ = State::LbsStartBattleFlow;
             }
 
             if (msg.command == LbsMessage::lbsAskMatchingJoin) {
@@ -220,8 +230,8 @@ private:
 
             if (msg.command == LbsMessage::lbsAskPlayerSide) {
                 // camera player id
-                me = 0;
-                LbsMessage::SvAnswer(msg).Write8(me + 1)->Serialize(recv_buf_);
+                me_ = 0;
+                LbsMessage::SvAnswer(msg).Write8(me_ + 1)->Serialize(recv_buf_);
             }
 
             if (msg.command == LbsMessage::lbsAskPlayerInfo) {
@@ -285,8 +295,10 @@ private:
                     state_ = State::McsInBattle;
                     break;
                 case McsMessage::MsgType::IntroMsg:
+                    NOTICE_LOG(COMMON, "switch intro msg %d", log_file_.users_size());
                     for (int i = 0; i < log_file_.users_size(); ++i) {
-                        if (i != me) {
+                        if (i != me_) {
+                            NOTICE_LOG(COMMON, "Write recv buf %d", i);
                             auto intro_msg = McsMessage::Create(McsMessage::MsgType::IntroMsg, i);
                             std::copy(intro_msg.body.begin(), intro_msg.body.end(), std::back_inserter(recv_buf_));
                         }
@@ -294,7 +306,7 @@ private:
                     break;
                 case McsMessage::MsgType::IntroMsgReturn:
                     for (int i = 0; i < log_file_.users_size(); ++i) {
-                        if (i != me) {
+                        if (i != me_) {
                             auto intro_msg = McsMessage::Create(McsMessage::MsgType::IntroMsgReturn, i);
                             std::copy(intro_msg.body.begin(), intro_msg.body.end(), std::back_inserter(recv_buf_));
                         }
@@ -302,9 +314,9 @@ private:
                     break;
                 case McsMessage::MsgType::PingMsg:
                     for (int i = 0; i < log_file_.users_size(); ++i) {
-                        if (i != me) {
+                        if (i != me_) {
                             auto pong_msg = McsMessage::Create(McsMessage::MsgType::PongMsg, i);
-                            pong_msg.SetPongTo(me);
+                            pong_msg.SetPongTo(me_);
                             pong_msg.SetPongCount(msg.PingCount());
                             std::copy(pong_msg.body.begin(), pong_msg.body.end(), std::back_inserter(recv_buf_));
                         }
@@ -330,7 +342,7 @@ private:
                     break;
                 case McsMessage::MsgType::LoadStartMsg:
                     for (int i = 0; i < log_file_.users_size(); ++i) {
-                        if (i != me) {
+                        if (i != me_) {
                             auto load_start_msg = McsMessage::Create(McsMessage::MsgType::LoadStartMsg, i);
                             std::copy(load_start_msg.body.begin(), load_start_msg.body.end(),
                                       std::back_inserter(recv_buf_));
@@ -339,7 +351,7 @@ private:
                     break;
                 case McsMessage::MsgType::LoadEndMsg:
                     for (int i = 0; i < log_file_.users_size(); ++i) {
-                        if (i != me) {
+                        if (i != me_) {
                             auto load_end_msg = McsMessage::Create(McsMessage::MsgType::LoadEndMsg, i);
                             std::copy(load_end_msg.body.begin(), load_end_msg.body.end(),
                                       std::back_inserter(recv_buf_));
@@ -355,11 +367,17 @@ private:
     }
 
     void ApplyPatch(bool first_time) {
-        // Skip MsgPush
-        // TODO: Restore the patch
-        WriteMem16_nommu(0x8c045f64, 9);
-        // WriteMem16_nommu(0x8c045e70, 9);
+        if (state_ == State::None || state_ == State::End) {
+            return;
+        }
 
+        // Skip Key MsgPush
+        // TODO: disk1
+        if (log_file_.game_disk() == "dc2") {
+            WriteMem16_nommu(0x8c045f64, 9);
+        }
+
+        // Online Patch
         for (int i = 0; i < log_file_.patches_size(); ++i) {
             if (log_file_.patches(i).write_once() && !first_time) {
                 continue;
@@ -381,6 +399,11 @@ private:
     }
 
     void RestorePatch() {
+        if (log_file_.game_disk() == "dc2") {
+            WriteMem16_nommu(0x8c045f64, 0x410b);
+        }
+
+        // Online Patch
         for (int i = 0; i < log_file_.patches_size(); ++i) {
             for (int j = 0; j < log_file_.patches(i).codes_size(); ++j) {
                 const auto &code = log_file_.patches(i).codes(j);
@@ -405,7 +428,7 @@ private:
     proto::BattleLogFile log_file_;
     std::deque<u8> recv_buf_;
     int recv_delay_;
-    int me = 0;
+    int me_;
     std::vector<McsMessage> msg_list_;
     std::array<int, 4> start_index_;
     std::array<std::vector<int>, 4> key_msg_index_;

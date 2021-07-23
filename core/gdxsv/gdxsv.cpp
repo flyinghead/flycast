@@ -8,6 +8,28 @@
 #include "lzma/CpuArch.h"
 #include "oslib/oslib.h"
 #include "version.h"
+#include "emulator.h"
+
+static void gdxsv_emuEventCallback(Event e) {
+    switch (e) {
+        case Event::Start: {
+            auto replay = cfgLoadStr("gdxsv", "replay", "");
+            if (!replay.empty()) {
+                dc_loadstate(99);
+                gdxsv.StartReplayFile(replay.c_str());
+            }
+            break;
+        }
+        case Event::Pause:
+            break;
+        case Event::Resume:
+            break;
+        case Event::Terminate:
+            break;
+        case Event::LoadState:
+            break;
+    }
+}
 
 bool Gdxsv::InGame() const {
     return enabled && netmode == NetMode::McsUdp;
@@ -37,6 +59,15 @@ void Gdxsv::Reset() {
 #ifdef __APPLE__
     signal(SIGPIPE, SIG_IGN);
 #endif
+
+    static std::once_flag once;
+    std::call_once(once, [this] {
+        EventManager::listen(Event::Start, gdxsv_emuEventCallback);
+        EventManager::listen(Event::Pause, gdxsv_emuEventCallback);
+        EventManager::listen(Event::Resume, gdxsv_emuEventCallback);
+        EventManager::listen(Event::Terminate, gdxsv_emuEventCallback);
+        EventManager::listen(Event::LoadState, gdxsv_emuEventCallback);
+    });
 
     lbs_net.callback_lbs_packet([this](const LbsMessage &lbs_msg) {
         if (lbs_msg.command == LbsMessage::lbsExtPlayerInfo) {
@@ -655,6 +686,7 @@ std::string Gdxsv::LatestVersion() {
 }
 
 bool Gdxsv::StartReplayFile(const char *path) {
+    replay_net.Reset();
     if (replay_net.StartFile(path)) {
         netmode = NetMode::Replay;
         return true;
