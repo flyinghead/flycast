@@ -551,6 +551,7 @@ public:
 
 	void compile(const std::vector<ArmOp>& block_ops, u32 cycles)
 	{
+        JITWriteProtect(false);
 		Ldr(w1, arm_reg_operand(CYCL_CNT));
 		Sub(w1, w1, cycles);
 		Str(w1, arm_reg_operand(CYCL_CNT));
@@ -630,6 +631,7 @@ public:
 #endif
 		delete regalloc;
 		regalloc = nullptr;
+        JITWriteProtect(true);
 	}
 
 	void generateMainLoop()
@@ -640,7 +642,7 @@ public:
 			verify(arm_compilecode != nullptr);
 			return;
 		}
-		WriteProtect(false);
+		JITWriteProtect(false);
 		Label arm_dispatch_label;
 		Label arm_dofiq;
 		Label arm_exit;
@@ -695,7 +697,7 @@ public:
 				GetBuffer()->GetStartAddress<void*>(), GetBuffer()->GetEndAddress<void*>(),
 				GetBuffer()->GetStartAddress<void*>(), GetBuffer()->GetEndAddress<void*>());
 		recompiler::advance(GetBuffer()->GetSizeInBytes());
-		WriteProtect(true);
+		JITWriteProtect(true);
 	}
 };
 

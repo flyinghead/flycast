@@ -278,7 +278,7 @@ public:
 	void ngen_Compile(RuntimeBlockInfo* block, bool force_checks, bool reset, bool staging, bool optimise)
 	{
 		//printf("REC-ARM64 compiling %08x\n", block->addr);
-		WriteProtect(false);
+		JITWriteProtect(false);
 		this->block = block;
 		CheckBlock(force_checks, block);
 		
@@ -960,7 +960,7 @@ public:
 		RelinkBlock(block);
 
 		Finalize();
-		WriteProtect(true);
+		JITWriteProtect(true);
 	}
 
 	void ngen_CC_Start(shil_opcode* op)
@@ -2217,7 +2217,7 @@ static const u32 op_sizes[] = {
 };
 bool ngen_Rewrite(host_context_t &context, void *faultAddress)
 {
-	WriteProtect(false);
+	JITWriteProtect(false);
 	//LOGI("ngen_Rewrite pc %zx\n", context.pc);
 	u32 *code_ptr = (u32 *)CC_RX2RW(context.pc);
 	u32 armv8_op = *code_ptr;
@@ -2249,7 +2249,7 @@ bool ngen_Rewrite(host_context_t &context, void *faultAddress)
 	assembler->Finalize(true);
 	delete assembler;
 	context.pc = (unat)CC_RW2RX(code_rewrite);
-	WriteProtect(true);
+	JITWriteProtect(true);
 
 	return true;
 }
@@ -2258,14 +2258,14 @@ static void generate_mainloop()
 {
 	if (mainloop != nullptr)
 		return;
-	WriteProtect(false);
+	JITWriteProtect(false);
 	compiler = new Arm64Assembler();
 
 	compiler->GenMainloop();
 
 	delete compiler;
 	compiler = nullptr;
-	WriteProtect(true);
+	JITWriteProtect(true);
 }
 
 RuntimeBlockInfo* ngen_AllocateBlock()
@@ -2283,13 +2283,13 @@ u32 DynaRBI::Relink()
 {
 #ifndef NO_BLOCK_LINKING
 	//printf("DynaRBI::Relink %08x\n", this->addr);
-	WriteProtect(false);
+	JITWriteProtect(false);
 	Arm64Assembler *compiler = new Arm64Assembler((u8 *)this->code + this->relink_offset);
 
 	u32 code_size = compiler->RelinkBlock(this);
 	compiler->Finalize(true);
 	delete compiler;
-	WriteProtect(true);
+	JITWriteProtect(true);
 
 	return code_size;
 #else
