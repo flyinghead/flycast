@@ -306,7 +306,6 @@
 		AEE6278822131BB500EC7E89 /* mapping.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AEE6278522131BB500EC7E89 /* mapping.cpp */; };
 		AEE6278E2224762000EC7E89 /* imgui_impl_opengl3.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AEE6278B2224762000EC7E89 /* imgui_impl_opengl3.cpp */; };
 		AEE6279422247C0A00EC7E89 /* gui_util.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AEE6279222247C0A00EC7E89 /* gui_util.cpp */; };
-		AEE6279622247C2B00EC7E89 /* keyboard_device.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AEE6279522247C2B00EC7E89 /* keyboard_device.cpp */; };
 		AEF25646227C442F00348550 /* fastmmu.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AEF25644227C442F00348550 /* fastmmu.cpp */; };
 		AEF2564822886A2E00348550 /* posix_vmem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AEF2564722886A2E00348550 /* posix_vmem.cpp */; };
 		AEF256502294060400348550 /* ZipArchive.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AEF2564A2294060300348550 /* ZipArchive.cpp */; };
@@ -943,7 +942,6 @@
 		AEE6278D2224762000EC7E89 /* imgui_impl_opengl3.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = imgui_impl_opengl3.h; sourceTree = "<group>"; };
 		AEE6279222247C0A00EC7E89 /* gui_util.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = gui_util.cpp; sourceTree = "<group>"; };
 		AEE6279322247C0A00EC7E89 /* gui_util.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = gui_util.h; sourceTree = "<group>"; };
-		AEE6279522247C2B00EC7E89 /* keyboard_device.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = keyboard_device.cpp; sourceTree = "<group>"; };
 		AEF25644227C442F00348550 /* fastmmu.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = fastmmu.cpp; sourceTree = "<group>"; };
 		AEF25645227C442F00348550 /* wince.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = wince.h; sourceTree = "<group>"; };
 		AEF2564722886A2E00348550 /* posix_vmem.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = posix_vmem.cpp; sourceTree = "<group>"; };
