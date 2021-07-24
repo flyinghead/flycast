@@ -23,7 +23,7 @@ bool VramLockedWrite(u8* address);
 bool BM_LockedWrite(u8* address);
 
 static PVOID vectoredHandler;
-static LONG (*prevExceptionHandler)(EXCEPTION_POINTERS *ep);
+static LONG (WINAPI *prevExceptionHandler)(EXCEPTION_POINTERS *ep);
 
 static void readContext(const EXCEPTION_POINTERS *ep, host_context_t &context)
 {
@@ -55,7 +55,7 @@ static void writeContext(EXCEPTION_POINTERS *ep, const host_context_t &context)
 #endif
 }
 
-LONG exceptionHandler(EXCEPTION_POINTERS *ep)
+static LONG WINAPI exceptionHandler(EXCEPTION_POINTERS *ep)
 {
 	u32 dwCode = ep->ExceptionRecord->ExceptionCode;
 
@@ -114,7 +114,7 @@ void os_InstallFaultHandler()
 	prevExceptionHandler = SetUnhandledExceptionFilter(nullptr);
 	vectoredHandler = AddVectoredExceptionHandler(1, exceptionHandler);
 #else
-	prevExceptionHandler = SetUnhandledExceptionFilter((LPTOP_LEVEL_EXCEPTION_FILTER)&exceptionHandler);
+	prevExceptionHandler = SetUnhandledExceptionFilter(exceptionHandler);
 	(void)vectoredHandler;
 #endif
 }
