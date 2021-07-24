@@ -66,7 +66,7 @@ private:
 	std::vector<_RUNTIME_FUNCTION *> tables;
 	std::vector<u16> codes;
 #endif
-#if defined(__unix__) || defined(APPLE)
+#if defined(__unix__) || defined(__APPLE__)
 	int stackOffset = 0;
 	u64 lastOffset = 0;
 	std::vector<u8> cieInstructions;
@@ -75,7 +75,7 @@ private:
 #endif
 };
 
-#if !defined(_WIN64) && !defined(__unix__) && !defined(APPLE)
+#if !defined(_WIN64) && !defined(__unix__) && !defined(__APPLE__)
 inline void UnwindInfo::start(void *address) {
 }
 inline void UnwindInfo::pushReg(u32 offset, int reg) {
