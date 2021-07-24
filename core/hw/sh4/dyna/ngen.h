@@ -62,11 +62,8 @@
 	#define CC_RX2RW(ptr) (ptr)
 #endif
 
-//alternative emit ptr, set to 0 to use the main buffer
-extern u32* emit_ptr;
 extern u8* CodeCache;
 
-void emit_Write32(u32 data);
 void emit_Skip(u32 sz);
 u32 emit_FreeSpace();
 void* emit_GetCCPtr();

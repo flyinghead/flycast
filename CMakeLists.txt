@@ -107,12 +107,13 @@ target_compile_features(${PROJECT_NAME} PRIVATE c_std_11 cxx_std_11)
 set_target_properties(${PROJECT_NAME} PROPERTIES
 	CXX_EXTENSIONS OFF
 	LINK_FLAGS_RELEASE -s)
-if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    target_compile_options(${PROJECT_NAME} PRIVATE
-        $<$<COMPILE_LANGUAGE:CXX>:-fno-rtti>
-        -fno-strict-aliasing -Wall)
-elseif(MSVC)
+if(MSVC)
 	target_compile_options(${PROJECT_NAME} PRIVATE /GR- /GS-)
+else()
+	target_compile_options(${PROJECT_NAME} PRIVATE
+		$<$<COMPILE_LANGUAGE:CXX>:-fno-rtti>
+		$<$<COMPILE_LANGUAGE:CXX>:-fno-strict-aliasing>
+		$<$<COMPILE_LANGUAGE:CXX>:-Wall>)
 endif()
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE
@@ -687,12 +688,14 @@ endif()
 if(WIN32)
 	target_sources(${PROJECT_NAME} PRIVATE
 			core/windows/fault_handler.cpp
+			core/windows/unwind_info.cpp
 			core/windows/win_vmem.cpp)
 else()
     target_sources(${PROJECT_NAME} PRIVATE
 			core/linux/common.cpp
             core/linux/context.cpp
-            core/linux/posix_vmem.cpp)
+            core/linux/posix_vmem.cpp
+            core/linux/unwind_info.cpp)
     if(NINTENDO_SWITCH)
         target_sources(${PROJECT_NAME} PRIVATE
         		core/linux/libnx_vmem.cpp

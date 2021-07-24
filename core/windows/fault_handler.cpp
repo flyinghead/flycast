@@ -23,6 +23,7 @@ bool VramLockedWrite(u8* address);
 bool BM_LockedWrite(u8* address);
 
 static PVOID vectoredHandler;
+static LONG (*prevExceptionHandler)(EXCEPTION_POINTERS *ep);
 
 static void readContext(const EXCEPTION_POINTERS *ep, host_context_t &context)
 {
@@ -58,13 +59,25 @@ LONG exceptionHandler(EXCEPTION_POINTERS *ep)
 {
 	u32 dwCode = ep->ExceptionRecord->ExceptionCode;
 
-	if (dwCode != EXCEPTION_ACCESS_VIOLATION)
+	if (dwCode < 0x80000000u)
+		// software exceptions, debug messages
 		return EXCEPTION_CONTINUE_SEARCH;
+
+	if (dwCode != EXCEPTION_ACCESS_VIOLATION)
+	{
+		// Call the previous unhandled exception handler (presumably Breakpad) if any and terminate
+	    if (prevExceptionHandler != nullptr)
+	    {
+	    	LONG action = prevExceptionHandler(ep);
+	    	if (action != EXCEPTION_EXECUTE_HANDLER)
+	    		return action;
+	    }
+		RaiseFailFastException(ep->ExceptionRecord, ep->ContextRecord, 0);
+    	return EXCEPTION_CONTINUE_SEARCH;
+	}
 
 	EXCEPTION_RECORD* pExceptionRecord = ep->ExceptionRecord;
 	u8* address = (u8 *)pExceptionRecord->ExceptionInformation[1];
-
-	//printf("[EXC] During access to : 0x%X\n", address);
 
 	// code protection in RAM
 	if (bm_RamWriteAccess(address))
@@ -87,107 +100,22 @@ LONG exceptionHandler(EXCEPTION_POINTERS *ep)
 	}
 #endif
 
-    ERROR_LOG(COMMON, "[GPF] PC %p unhandled access to %p", (void *)context.pc, address);
-    os_DebugBreak();
+	ERROR_LOG(COMMON, "[GPF] PC %p unhandled access to %p", (void *)context.pc, address);
+	if (prevExceptionHandler != nullptr)
+		prevExceptionHandler(ep);
 
+	RaiseFailFastException(ep->ExceptionRecord, ep->ContextRecord, 0);
 	return EXCEPTION_CONTINUE_SEARCH;
 }
-
-#ifdef _WIN64
-
-typedef union _UNWIND_CODE {
-	struct {
-		u8 CodeOffset;
-		u8 UnwindOp : 4;
-		u8 OpInfo : 4;
-	};
-	USHORT FrameOffset;
-} UNWIND_CODE, *PUNWIND_CODE;
-
-typedef struct _UNWIND_INFO {
-	u8 Version : 3;
-	u8 Flags : 5;
-	u8 SizeOfProlog;
-	u8 CountOfCodes;
-	u8 FrameRegister : 4;
-	u8 FrameOffset : 4;
-	//ULONG ExceptionHandler;
-	UNWIND_CODE UnwindCode[1];
-	/*  UNWIND_CODE MoreUnwindCode[((CountOfCodes + 1) & ~1) - 1];
-	*   union {
-	*       OPTIONAL ULONG ExceptionHandler;
-	*       OPTIONAL ULONG FunctionEntry;
-	*   };
-	*   OPTIONAL ULONG ExceptionData[]; */
-} UNWIND_INFO, *PUNWIND_INFO;
-
-static RUNTIME_FUNCTION Table[1];
-static _UNWIND_INFO unwind_info[1];
-
-PRUNTIME_FUNCTION
-seh_callback(
-_In_ DWORD64 ControlPc,
-_In_opt_ PVOID Context
-) {
-	unwind_info[0].Version = 1;
-	unwind_info[0].Flags = UNW_FLAG_UHANDLER;
-	/* We don't use the unwinding info so fill the structure with 0 values.  */
-	unwind_info[0].SizeOfProlog = 0;
-	unwind_info[0].CountOfCodes = 0;
-	unwind_info[0].FrameOffset = 0;
-	unwind_info[0].FrameRegister = 0;
-	/* Add the exception handler.  */
-
-//		unwind_info[0].ExceptionHandler =
-	//	(DWORD)((u8 *)__gnat_SEH_error_handler - CodeCache);
-	/* Set its scope to the entire program.  */
-	Table[0].BeginAddress = 0;// (CodeCache - (u8*)__ImageBase);
-	Table[0].EndAddress = /*(CodeCache - (u8*)__ImageBase) +*/ CODE_SIZE + TEMP_CODE_SIZE;
-	Table[0].UnwindData = (DWORD)((u8 *)unwind_info - CodeCache);
-    INFO_LOG(COMMON, "TABLE CALLBACK");
-	//for (;;);
-	return Table;
-}
-
-void setup_seh()
-{
-	/* Get the base of the module.  */
-	//u8* __ImageBase = (u8*)GetModuleHandle(NULL);
-	/* Current version is always 1 and we are registering an
-	exception handler.  */
-	unwind_info[0].Version = 1;
-	unwind_info[0].Flags = UNW_FLAG_NHANDLER;
-	/* We don't use the unwinding info so fill the structure with 0 values.  */
-	unwind_info[0].SizeOfProlog = 0;
-	unwind_info[0].CountOfCodes = 1;
-	unwind_info[0].FrameOffset = 0;
-	unwind_info[0].FrameRegister = 0;
-	/* Add the exception handler.  */
-
-	unwind_info[0].UnwindCode[0].CodeOffset = 0;
-	unwind_info[0].UnwindCode[0].UnwindOp = 2;// UWOP_ALLOC_SMALL;
-	unwind_info[0].UnwindCode[0].OpInfo = 0x20 / 8;
-
-	//unwind_info[0].ExceptionHandler =
-		//(DWORD)((u8 *)__gnat_SEH_error_handler - CodeCache);
-	/* Set its scope to the entire program.  */
-	Table[0].BeginAddress = 0;// (CodeCache - (u8*)__ImageBase);
-	Table[0].EndAddress = /*(CodeCache - (u8*)__ImageBase) +*/ CODE_SIZE + TEMP_CODE_SIZE;
-	Table[0].UnwindData = (DWORD)((u8 *)unwind_info - CodeCache);
-	/* Register the unwind information.  */
-	RtlAddFunctionTable(Table, 1, (DWORD64)CodeCache);
-
-	//verify(RtlInstallFunctionTableCallback((unat)CodeCache | 0x3, (DWORD64)CodeCache, CODE_SIZE + TEMP_CODE_SIZE, seh_callback, 0, 0));
-}
-#endif
 
 void os_InstallFaultHandler()
 {
 #ifdef _WIN64
+	prevExceptionHandler = SetUnhandledExceptionFilter(nullptr);
 	vectoredHandler = AddVectoredExceptionHandler(1, exceptionHandler);
-	setup_seh();
 #else
-	SetUnhandledExceptionFilter((LPTOP_LEVEL_EXCEPTION_FILTER)&exceptionHandler);
+	prevExceptionHandler = SetUnhandledExceptionFilter((LPTOP_LEVEL_EXCEPTION_FILTER)&exceptionHandler);
+	(void)vectoredHandler;
 #endif
 }
 
@@ -195,10 +123,8 @@ void os_UninstallFaultHandler()
 {
 #ifdef _WIN64
 	RemoveVectoredExceptionHandler(vectoredHandler);
-	RtlDeleteFunctionTable(Table);
-#else
-	SetUnhandledExceptionFilter(0);
 #endif
+	SetUnhandledExceptionFilter(prevExceptionHandler);
 }
 
 double os_GetSeconds()

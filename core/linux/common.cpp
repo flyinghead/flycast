@@ -32,24 +32,14 @@ bool BM_LockedWrite(u8* address);
 void context_from_segfault(host_context_t* hctx, void* segfault_ctx);
 void context_to_segfault(host_context_t* hctx, void* segfault_ctx);
 
+#ifndef __SWITCH__
+static struct sigaction next_segv_handler;
+#endif
 #if defined(__APPLE__)
-void sigill_handler(int sn, siginfo_t * si, void *segfault_ctx) {
-	
-	host_context_t ctx;
-    
-    context_from_segfault(&ctx, segfault_ctx);
-
-	unat pc = (unat)ctx.pc;
-	bool dyna_cde = (pc>(unat)CodeCache) && (pc<(unat)(CodeCache + CODE_SIZE + TEMP_CODE_SIZE));
-	
-	ERROR_LOG(COMMON, "SIGILL @ %lx -> %p was not in vram, dynacode:%d", pc, si->si_addr, dyna_cde);
-	
-	//printf("PC is used here %08X\n", pc);
-    kill(getpid(), SIGABRT);
-}
+static struct sigaction next_bus_handler;
 #endif
 
-void fault_handler (int sn, siginfo_t * si, void *segfault_ctx)
+void fault_handler(int sn, siginfo_t * si, void *segfault_ctx)
 {
 	// code protection in RAM
 	if (bm_RamWriteAccess(si->si_addr))
@@ -79,42 +69,38 @@ void fault_handler (int sn, siginfo_t * si, void *segfault_ctx)
 	u32 pageinfo;
 	svcQueryMemory(&meminfo, &pageinfo, (u64)&__start__);
 	ERROR_LOG(COMMON, ".text base: %p", (void*)meminfo.addr);
-#endif // __SWITCH__
-	die("segfault");
-	signal(SIGSEGV, SIG_DFL);
+#else
+	if (next_segv_handler.sa_sigaction != nullptr)
+		next_segv_handler.sa_sigaction(sn, si, segfault_ctx);
+	else
+#endif // !__SWITCH__
+		die("segfault");
 }
 #undef HOST_CTX_READY
 
 void os_InstallFaultHandler()
 {
 #ifndef __SWITCH__
-	struct sigaction act, segv_oact;
+	struct sigaction act;
 	memset(&act, 0, sizeof(act));
 	act.sa_sigaction = fault_handler;
 	sigemptyset(&act.sa_mask);
 	act.sa_flags = SA_SIGINFO;
-	sigaction(SIGSEGV, &act, &segv_oact);
+	sigaction(SIGSEGV, &act, &next_segv_handler);
 #endif
 #if defined(__APPLE__)
     //this is broken on osx/ios/mach in general
-    sigaction(SIGBUS, &act, &segv_oact);
-    
-    act.sa_sigaction = sigill_handler;
-    sigaction(SIGILL, &act, &segv_oact);
+    sigaction(SIGBUS, &act, &next_bus_handler);
 #endif
 }
 
 void os_UninstallFaultHandler()
 {
 #ifndef __SWITCH__
-	struct sigaction act{};
-	act.sa_handler = SIG_DFL;
-	sigemptyset(&act.sa_mask);
-	sigaction(SIGSEGV, &act, nullptr);
+	sigaction(SIGSEGV, &next_segv_handler, nullptr);
 #endif
 #if defined(__APPLE__)
-    sigaction(SIGBUS, &act, nullptr);
-    sigaction(SIGILL, &act, nullptr);
+	sigaction(SIGBUS, &next_bus_handler, nullptr);
 #endif
 }
 

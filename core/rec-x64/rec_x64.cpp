@@ -19,6 +19,7 @@ using namespace Xbyak::util;
 #include "hw/sh4/sh4_mem.h"
 #include "x64_regalloc.h"
 #include "xbyak_base.h"
+#include "oslib/oslib.h"
 
 struct DynaRBI : RuntimeBlockInfo
 {
@@ -66,6 +67,7 @@ namespace MemType {
 
 static const void *MemHandlers[MemType::Count][MemSize::Count][MemOp::Count];
 static const u8 *MemHandlerStart, *MemHandlerEnd;
+static UnwindInfo unwinder;
 
 void ngen_mainloop(void *)
 {
@@ -74,8 +76,8 @@ void ngen_mainloop(void *)
 		mainloop();
 	} catch (const SH4ThrownException&) {
 		ERROR_LOG(DYNAREC, "SH4ThrownException in mainloop");
-	} catch (...) {
-		ERROR_LOG(DYNAREC, "Uncaught unknown exception in mainloop");
+//	} catch (...) {
+//		ERROR_LOG(DYNAREC, "Uncaught unknown exception in mainloop");
 	}
 }
 
@@ -628,21 +630,34 @@ public:
 
 	void genMainloop()
 	{
+		unwinder.start((void *)getCurr());
+
 		push(rbx);
+		unwinder.pushReg(getSize(), Xbyak::Operand::RBX);
 		push(rbp);
+		unwinder.pushReg(getSize(), Xbyak::Operand::RBP);
 #ifdef _WIN32
 		push(rdi);
+		unwinder.pushReg(getSize(), Xbyak::Operand::RDI);
 		push(rsi);
+		unwinder.pushReg(getSize(), Xbyak::Operand::RSI);
 #endif
 		push(r12);
+		unwinder.pushReg(getSize(), Xbyak::Operand::R12);
 		push(r13);
+		unwinder.pushReg(getSize(), Xbyak::Operand::R13);
 		push(r14);
+		unwinder.pushReg(getSize(), Xbyak::Operand::R14);
 		push(r15);
+		unwinder.pushReg(getSize(), Xbyak::Operand::R15);
 #ifdef _WIN32
 		sub(rsp, 40);				// 32-byte shadow space + 8 for stack 16-byte alignment
+		unwinder.allocStack(getSize(), 40);
 #else
 		sub(rsp, 8);				// stack 16-byte alignment
+		unwinder.allocStack(getSize(), 8);
 #endif
+		unwinder.endProlog(getSize());
 
 		mov(dword[rip + &cycle_counter], SH4_TIMESLICE);
 		mov(qword[rip + &jmp_rsp], rsp);
@@ -691,6 +706,12 @@ public:
 		pop(rbp);
 		pop(rbx);
 		ret();
+		size_t unwindSize = unwinder.end(getSize());
+		setSize(getSize() + unwindSize);
+
+		unwinder.start((void *)getCurr());
+		size_t startOffset = getSize();
+		unwinder.endProlog(0);
 
 	//handleException:
 		Xbyak::Label handleExceptionLabel;
@@ -699,6 +720,12 @@ public:
 		jmp(run_loop);
 
 		genMemHandlers();
+
+		size_t savedSize = getSize();
+		setSize(CODE_SIZE - 128 - startOffset); // FIXME size of unwind record unknown
+		unwindSize = unwinder.end(getSize());
+		verify(unwindSize <= 128);
+		setSize(savedSize);
 
 		ready();
 		mainloop = (void (*)())getCode();
@@ -1401,6 +1428,7 @@ void ngen_HandleException(host_context_t &context)
 
 void ngen_ResetBlocks()
 {
+	unwinder.clear();
 	// Avoid generating the main loop more than once
 	if (mainloop != nullptr && mainloop != emit_GetCCPtr())
 		return;

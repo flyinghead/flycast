@@ -361,7 +361,11 @@ static void CacheFlush(void* code, void* pEnd)
 static void CacheFlush(void* code, void* pEnd)
 {
 #if !defined(__ANDROID__)
+#ifdef __GNUC__
+	__builtin___clear_cache((char *)code, (char *)pEnd);
+#else
 	__clear_cache((void*)code, pEnd);
+#endif
 #else // defined(__ANDROID__)
 	void* start=code;
 	size_t size=(u8*)pEnd-(u8*)start+4;

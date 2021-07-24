@@ -20,35 +20,37 @@
 
 #if FEAT_SHREC != DYNAREC_NONE
 
-u8 SH4_TCB[CODE_SIZE + TEMP_CODE_SIZE + 4096]
 #if defined(_WIN32) || FEAT_SHREC != DYNAREC_JIT
-	;
-#elif defined(__unix__) || defined(__SWITCH__)
+static u8 *SH4_TCB;
+#else
+static u8 SH4_TCB[CODE_SIZE + TEMP_CODE_SIZE + 4096]
+#if defined(__unix__) || defined(__SWITCH__)
 	__attribute__((section(".text")));
 #elif defined(__APPLE__)
 	__attribute__((section("__TEXT,.text")));
 #else
 	#error SH4_TCB ALLOC
 #endif
+#endif
 
 u8* CodeCache;
-u8* TempCodeCache;
+static u8* TempCodeCache;
 ptrdiff_t cc_rx_offset;
 
-u32 LastAddr;
-u32 LastAddr_min;
-u32 TempLastAddr;
-u32* emit_ptr=0;
-u32* emit_ptr_limit;
+static u32 LastAddr;
+static u32 LastAddr_min;
+static u32 TempLastAddr;
+static u32 *emit_ptr;
+static u32 *emit_ptr_limit;
 
-std::unordered_set<u32> smc_hotspots;
+static std::unordered_set<u32> smc_hotspots;
 
 static sh4_if sh4Interp;
 
 void* emit_GetCCPtr() { return emit_ptr==0?(void*)&CodeCache[LastAddr]:(void*)emit_ptr; }
 void emit_SetBaseAddr() { LastAddr_min = LastAddr; }
 
-void clear_temp_cache(bool full)
+static void clear_temp_cache(bool full)
 {
 	//printf("recSh4:Temp Code Cache clear at %08X\n", curr_pc);
 	TempLastAddr = 0;
@@ -77,20 +79,6 @@ static void recSh4_Run()
 	sh4_int_bCpuRun = false;
 }
 
-void emit_Write32(u32 data)
-{
-	if (emit_ptr)
-	{
-		*emit_ptr=data;
-		emit_ptr++;
-	}
-	else
-	{
-		*(u32*)&CodeCache[LastAddr]=data;
-		LastAddr+=4;
-	}
-}
-
 void emit_Skip(u32 sz)
 {
 	if (emit_ptr)
@@ -108,8 +96,6 @@ u32 emit_FreeSpace()
 }
 
 void AnalyseBlock(RuntimeBlockInfo* blk);
-
-static char block_hash[1024];
 
 const char* RuntimeBlockInfo::hash()
 {
@@ -133,7 +119,7 @@ const char* RuntimeBlockInfo::hash()
 		hash = XXH32_digest(state);
 		XXH32_freeState(state);
 	}
-
+	static char block_hash[20];
 	sprintf(block_hash, ">:1:%02X:%08X", this->guest_opcodes, hash);
 
 	return block_hash;
