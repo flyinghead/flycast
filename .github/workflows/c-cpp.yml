@@ -10,13 +10,13 @@ jobs:
     strategy:
       matrix:
         config:
-          - {name: i686-pc-windows-msvc, os: windows-latest, cmakeArgs: -DCMAKE_SYSTEM_VERSION="10.0.18362.0" -G "Visual Studio 16 2019" -A Win32, shell: msys2, buildType: Release}
-          - {name: x86_64-apple-darwin, os: macos-latest, cmakeArgs: -G "Xcode", destDir: osx, shell: bash, buildType: Release}
-          - {name: x86_64-pc-linux-gnu, os: ubuntu-latest, shell: bash, buildType: Release}
-          - {name: x86_64-pc-windows-msvc, os: windows-latest, cmakeArgs: -DCMAKE_SYSTEM_VERSION="10.0.18362.0" -G "Visual Studio 16 2019" -A x64, shell: msys2, buildType: Release}
-          - {name: x86_64-w64-mingw32, os: windows-latest, cmakeArgs: -G "MinGW Makefiles", destDir: win, shell: msys2, buildType: RelWithDebInfo}
-          - {name: libretro-x86_64-pc-linux-gnu, os: ubuntu-latest, cmakeArgs: -DLIBRETRO=ON -DCMAKE_POSITION_INDEPENDENT_CODE=TRUE, shell: bash, buildType: Release}
-          - {name: libretro-x86_64-w64-mingw32, os: windows-latest, cmakeArgs: -DLIBRETRO=ON -G "MinGW Makefiles", shell: msys2, buildType: Release}
+          - {name: i686-pc-windows-msvc, os: windows-latest, cmakeArgs: -DCMAKE_SYSTEM_VERSION="10.0.18362.0" -G "Visual Studio 16 2019" -A Win32, buildType: Release}
+          - {name: x86_64-apple-darwin, os: macos-latest, cmakeArgs: -G "Xcode", destDir: osx, buildType: Release}
+          - {name: x86_64-pc-linux-gnu, os: ubuntu-latest, buildType: Release}
+          - {name: x86_64-pc-windows-msvc, os: windows-latest, cmakeArgs: -DCMAKE_SYSTEM_VERSION="10.0.18362.0" -G "Visual Studio 16 2019" -A x64, buildType: Release}
+          - {name: x86_64-w64-mingw32, os: windows-latest, cmakeArgs: -G "MinGW Makefiles", destDir: win, buildType: RelWithDebInfo}
+          - {name: libretro-x86_64-pc-linux-gnu, os: ubuntu-latest, cmakeArgs: -DLIBRETRO=ON -DCMAKE_POSITION_INDEPENDENT_CODE=TRUE, buildType: Release}
+          - {name: libretro-x86_64-w64-mingw32, os: windows-latest, cmakeArgs: -DLIBRETRO=ON -G "MinGW Makefiles", buildType: Release}
 
     steps:
       - name: Set up build environment (macos-latest)
@@ -86,10 +86,17 @@ jobs:
         if: matrix.config.os == 'macos-latest'
 
       - name: CMake
-        shell: ${{ matrix.config.shell }} {0}
         run: |
           cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.config.buildType }} -DCMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE=artifact -DCMAKE_LIBRARY_OUTPUT_DIRECTORY=artifact ${{ matrix.config.cmakeArgs }}
           cmake --build build --config Release --parallel 2
+        if: matrix.config.os != 'windows-latest'
+
+      - name: CMake (windows)
+        shell: msys2 {0}
+        run: |
+          cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.config.buildType }} -DCMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE=artifact -DCMAKE_LIBRARY_OUTPUT_DIRECTORY=artifact ${{ matrix.config.cmakeArgs }}
+          cmake --build build --config Release --parallel 2
+        if: matrix.config.os == 'windows-latest'
 
       - name: Unit Tests
         run: |
@@ -100,7 +107,7 @@ jobs:
         if: matrix.config.name == 'x86_64-pc-linux-gnu'
 
       - name: Dump symbols
-        shell: msys {0}
+        shell: msys2 {0}
         run: |
           dump_syms build/artifact/flycast.exe > flycast.exe.sym 2>/dev/null
           BUILD_ID=`head -1 flycast.exe.sym | awk '{ print $4 }'`
