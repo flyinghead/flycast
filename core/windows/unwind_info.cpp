@@ -65,7 +65,7 @@ void UnwindInfo::endProlog(u32 offset)
 	codes.push_back(0);
 	std::reverse(codes.begin(), codes.end());
 	codes[0] = 1 | (offset  << 8);
-	codes[1] = codes.size() - 2;
+	codes[1] = (u8)codes.size() - 2;
 	if (codes.size() & 1)
 		codes.push_back(0);
 }

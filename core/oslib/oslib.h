@@ -46,8 +46,15 @@ namespace hostfs
 }
 
 #ifdef _WIN64
+#ifdef __MINGW64__
 struct _RUNTIME_FUNCTION;
+typedef struct _RUNTIME_FUNCTION RUNTIME_FUNCTION;
+#else
+struct _IMAGE_RUNTIME_FUNCTION_ENTRY;
+typedef struct _IMAGE_RUNTIME_FUNCTION_ENTRY RUNTIME_FUNCTION;
 #endif
+#endif
+
 class UnwindInfo
 {
 public:
@@ -63,7 +70,7 @@ public:
 private:
 	u8 *startAddr;
 #ifdef _WIN64
-	std::vector<_RUNTIME_FUNCTION *> tables;
+	std::vector<RUNTIME_FUNCTION *> tables;
 	std::vector<u16> codes;
 #endif
 #if defined(__unix__) || defined(__APPLE__)
