@@ -1,3 +1,6 @@
+#ifndef __STDC_FORMAT_MACROS
+#define __STDC_FORMAT_MACROS 1
+#endif
 #include "types.h"
 
 #if defined(__unix__) || defined(__SWITCH__)
@@ -40,6 +43,10 @@
 #if defined(USE_JOYSTICK)
 	/* legacy joystick input */
 	static int joystick_fd = -1; // Joystick file descriptor
+#endif
+
+#ifdef USE_BREAKPAD
+#include "client/linux/handler/exception_handler.h"
 #endif
 
 void os_SetupInput()
@@ -364,13 +371,25 @@ std::vector<std::string> find_system_data_dirs()
 	return dirs;
 }
 
+#if defined(USE_BREAKPAD)
+static bool dumpCallback(const google_breakpad::MinidumpDescriptor& descriptor, void* context, bool succeeded)
+{
+	printf("Minidump saved to '%s'\n", descriptor.path());
+	return succeeded;
+}
+#endif
+
 int main(int argc, char* argv[])
 {
 #if defined(__SWITCH__)
 	socketInitializeDefault();
 	nxlinkStdio();
 	//appletSetFocusHandlingMode(AppletFocusHandlingMode_NoSuspend);
-#endif // __SWITCH__
+#endif
+#if defined(USE_BREAKPAD)
+	google_breakpad::MinidumpDescriptor descriptor("/tmp");
+	google_breakpad::ExceptionHandler eh(descriptor, NULL, dumpCallback, NULL, true, -1);
+#endif
 
 	LogManager::Init();
 

@@ -14,6 +14,9 @@
     You should have received a copy of the GNU General Public License
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
+#ifndef __STDC_FORMAT_MACROS
+#define __STDC_FORMAT_MACROS 1
+#endif
 #include "oslib/oslib.h"
 #include "oslib/audiostream.h"
 #include "imgread/common.h"
@@ -32,6 +35,10 @@
 #include "rend/mainui.h"
 #include "../shell/windows/resource.h"
 #include "rawinput.h"
+#ifdef USE_BREAKPAD
+#include "breakpad/client/windows/handler/exception_handler.h"
+#include "version.h"
+#endif
 
 #include <windows.h>
 #include <windowsx.h>
@@ -678,6 +685,23 @@ static void findKeyboardLayout()
 	}
 }
 
+#if defined(USE_BREAKPAD)
+static bool dumpCallback(const wchar_t* dump_path,
+		const wchar_t* minidump_id,
+		void* context,
+		EXCEPTION_POINTERS* exinfo,
+		MDRawAssertionInfo* assertion,
+		bool succeeded)
+{
+	if (succeeded)
+	{
+		wchar_t s[MAX_PATH + 32];
+		_snwprintf(s, ARRAY_SIZE(s), L"Minidump saved to '%s\\%s.dmp'", dump_path, minidump_id);
+		::OutputDebugStringW(s);
+	}
+	return succeeded;
+}
+#endif
 
 // DEF_CONSOLE allows you to override linker subsystem and therefore default console //
 //	: pragma isn't pretty but def's are configurable 
@@ -695,7 +719,28 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 	int argc = 0;
 	char* cmd_line = GetCommandLineA();
 	char** argv = commandLineToArgvA(cmd_line, &argc);
+#endif
 
+#ifdef USE_BREAKPAD
+	wchar_t tempDir[MAX_PATH + 1];
+	GetTempPathW(MAX_PATH + 1, tempDir);
+
+	static google_breakpad::CustomInfoEntry custom_entries[] = {
+			google_breakpad::CustomInfoEntry(L"prod", L"Flycast"),
+			google_breakpad::CustomInfoEntry(L"ver", L"" GIT_VERSION),
+	};
+	google_breakpad::CustomClientInfo custom_info = { custom_entries, ARRAY_SIZE(custom_entries) };
+
+	google_breakpad::ExceptionHandler handler(tempDir,
+			nullptr,
+			dumpCallback,
+			nullptr,
+			google_breakpad::ExceptionHandler::HANDLER_ALL,
+			MiniDumpNormal,
+			INVALID_HANDLE_VALUE,
+			&custom_info);
+	// crash on die() and failing verify()
+	handler.set_handle_debug_exceptions(true);
 #endif
 
 #if defined(_WIN32) && defined(LOG_TO_PTY)

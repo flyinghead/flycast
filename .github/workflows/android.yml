@@ -57,3 +57,34 @@ jobs:
           SOURCE_DIR: 'shell/android-studio/flycast/build/outputs/apk/release/'
           DEST_DIR: android/${{ env.GIT_BUILD }}
         if: ${{ github.repository == 'flyinghead/flycast' && github.event_name == 'push' }}
+
+      - name: Build dump_syms
+        working-directory: core/deps/breakpad
+        run: |
+          mkdir build
+          cmake -B build -DCMAKE_BUILD_TYPE=Release
+          cmake --build build --config Release
+
+      - name: Extract symbols
+        run: |
+          DUMP_SYMS=./core/deps/breakpad/build/dump_syms
+          SO_DIR=shell/android-studio/flycast/build/intermediates/cmake/release/obj
+          for arch in arm64-v8a armeabi-v7a x86 x86_64 ; do
+            $DUMP_SYMS $SO_DIR/$arch/libflycast.so > libflycast.so.sym
+            BUILD_ID=`head -1 libflycast.so.sym | awk '{ print $4 }'`
+            mkdir -p symbols/libflycast.so/$BUILD_ID
+            mv libflycast.so.sym symbols/libflycast.so/$BUILD_ID
+          done
+
+      - uses: jakejarvis/s3-sync-action@master
+        with:
+          args: --follow-symlinks
+        env:
+          AWS_S3_BUCKET: flycast-symbols
+          AWS_ACCESS_KEY_ID: AKIAJOZQS4H2PHQWYFCA
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.S3_SECRET_KEY }}
+          AWS_REGION: 'us-east-2'
+          SOURCE_DIR: symbols
+          DEST_DIR: android
+        if: ${{ github.repository == 'flyinghead/flycast' && github.event_name == 'push' }}
+          
