@@ -10,18 +10,30 @@ import Cocoa
 
 class EmuGLView: NSOpenGLView, NSWindowDelegate {
 
+    var backingRect:NSRect?
+    
     override var acceptsFirstResponder: Bool {
         return true;
     }
     
     override func draw(_ dirtyRect: NSRect) {
         super.draw(dirtyRect)
-
-        openGLContext!.makeCurrentContext()
+        backingRect = convertToBacking(dirtyRect)
         
-        let rect = convertToBacking(dirtyRect)
-        if (emu_single_frame(Int32(rect.width), Int32(rect.height)) != 0) {
-            openGLContext!.flushBuffer()
+        if emu_fast_forward() == false {
+            draw()
+        }
+    }
+    
+    func draw() {
+        var sync: GLint = emu_fast_forward() ? 0 : 1
+        CGLSetParameter(openGLContext!.cglContextObj!, kCGLCPSwapInterval, &sync)
+        
+        if let backingRect = backingRect {
+            openGLContext!.makeCurrentContext()
+            if (emu_single_frame(Int32(backingRect.width), Int32(backingRect.height)) != 0) {
+                openGLContext!.flushBuffer()
+            }
         }
     }
     
@@ -69,7 +81,11 @@ class EmuGLView: NSOpenGLView, NSWindowDelegate {
 			NSApplication.shared.terminate(self)
 		}
         else if (emu_frame_pending()) {
-            self.needsDisplay = true
+            if emu_fast_forward() {
+                self.draw()
+            } else {
+                self.needsDisplay = true
+            }
         }
     }
     
