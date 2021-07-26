@@ -910,7 +910,8 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/gdxsv/gdxsv_network.cpp
         core/gdxsv/gdxsv_network.h
         core/gdxsv/gdxsv_patch.h
-        core/gdxsv/lbs_message.h)
+        core/gdxsv/lbs_message.h
+        core/gdxsv/mcs_message.h)
 
 target_sources(${PROJECT_NAME} PRIVATE
         core/rend/gles/glcache.h

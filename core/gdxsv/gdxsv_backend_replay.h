@@ -34,9 +34,10 @@ public:
         me_ = 0;
         msg_list_.clear();
         for (int i = 0; i < 4; ++i) {
-            start_index_[i] = 0;
             key_msg_index_[i].clear();
         }
+        std::fill(start_index_.begin(), start_index_.end(), 0);
+        std::fill(last_keycode_.begin(), last_keycode_.end(), 0);
     }
 
     bool StartFile(const char *path) {
@@ -74,8 +75,8 @@ public:
             if (player_position.find(data.user_id()) == player_position.end()) {
                 r.Write(data.body().data(), data.body().size());
                 while (r.Read(msg)) {
-                    if (msg.type == McsMessage::MsgType::PingMsg) {
-                        player_position[data.user_id()] = msg.sender;
+                    if (msg.Type() == McsMessage::MsgType::PingMsg) {
+                        player_position[data.user_id()] = msg.Sender();
                         break;
                     }
                 }
@@ -99,6 +100,7 @@ public:
         NOTICE_LOG(COMMON, "users = %d", log_file_.users_size());
 
         std::fill(start_index_.begin(), start_index_.end(), 0);
+        std::fill(last_keycode_.begin(), last_keycode_.end(), 0);
 
         state_ = State::Start;
         maxlag_ = 2;
@@ -176,7 +178,7 @@ public:
             std::sprintf(&hexstr[0] + i * 2, "%02x", recv_buf_[i]);
         }
         NOTICE_LOG(COMMON, "write %s", hexstr.c_str());
-         */
+        */
         if (0 < n) {
             for (int i = 0; i < n; ++i) {
                 WriteMem8_nommu(buf_addr + q.tail, recv_buf_.front());
@@ -196,15 +198,15 @@ private:
             start_index_[p] = -1;
             for (int i = start_index; i < msg_list_.size(); ++i) {
                 const auto &msg = msg_list_[i];
-                if (msg.sender == p) {
+                if (msg.Sender() == p) {
                     if (!key_msg_index_[p].empty()) {
-                        if (msg.type == McsMessage::MsgType::StartMsg) {
+                        if (msg.Type() == McsMessage::MsgType::StartMsg) {
                             start_index_[p] = i + 1;
                             break;
                         }
                     }
 
-                    if (msg.type == McsMessage::MsgType::KeyMsg) {
+                    if (msg.Type() == McsMessage::MsgType::KeyMsg) {
                         key_msg_index_[p].emplace_back(i);
                     }
                 }
@@ -289,8 +291,8 @@ private:
     void ProcessMcsMessage() {
         McsMessage msg;
         if (mcs_tx_reader_.Read(msg)) {
-            NOTICE_LOG(COMMON, "Read %s %s", McsMessage::MsgTypeName(msg.type), msg.to_hex().c_str());
-            switch (msg.type) {
+            NOTICE_LOG(COMMON, "Read %s %s", McsMessage::MsgTypeName(msg.Type()), msg.ToHex().c_str());
+            switch (msg.Type()) {
                 case McsMessage::MsgType::ConnectionIdMsg:
                     state_ = State::McsInBattle;
                     break;
@@ -317,7 +319,7 @@ private:
                         if (i != me_) {
                             auto pong_msg = McsMessage::Create(McsMessage::MsgType::PongMsg, i);
                             pong_msg.SetPongTo(me_);
-                            pong_msg.SetPongCount(msg.PingCount());
+                            pong_msg.PongCount(msg.PingCount());
                             std::copy(pong_msg.body.begin(), pong_msg.body.end(), std::back_inserter(recv_buf_));
                         }
                     }
@@ -335,9 +337,10 @@ private:
                     break;
                 case McsMessage::MsgType::KeyMsg:
                     for (int i = 0; i < log_file_.users_size(); ++i) {
-                        auto key_msg = msg_list_[key_msg_index_[i][msg.HeadFrame() / 2]];
+                        auto key_msg = msg_list_[key_msg_index_[i][msg.FirstFrame() / 2]];
+                        last_keycode_[i] = key_msg.SecondKey();
                         std::copy(key_msg.body.begin(), key_msg.body.end(), std::back_inserter(recv_buf_));
-                        verify(key_msg.HeadFrame() == msg.HeadFrame());
+                        verify(key_msg.FirstFrame() == msg.FirstFrame());
                     }
                     break;
                 case McsMessage::MsgType::LoadStartMsg:
@@ -359,8 +362,8 @@ private:
                     }
                     break;
                 default:
-                    WARN_LOG(COMMON, "unhandled mcs msg: %s", McsMessage::MsgTypeName(msg.type));
-                    WARN_LOG(COMMON, "%s", msg.to_hex().c_str());
+                    WARN_LOG(COMMON, "unhandled mcs msg: %s", McsMessage::MsgTypeName(msg.Type()));
+                    WARN_LOG(COMMON, "%s", msg.ToHex().c_str());
                     break;
             }
         }
@@ -431,6 +434,7 @@ private:
     int me_;
     std::vector<McsMessage> msg_list_;
     std::array<int, 4> start_index_;
+    std::array<u16, 4> last_keycode_;
     std::array<std::vector<int>, 4> key_msg_index_;
 };
 
