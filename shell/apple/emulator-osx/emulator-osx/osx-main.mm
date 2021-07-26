@@ -126,6 +126,11 @@ bool emu_renderer_enabled()
 	return mainui_loop_enabled();
 }
 
+bool emu_fast_forward()
+{
+    return settings.input.fastForwardMode;
+}
+
 int emu_single_frame(int w, int h)
 {
     if (!emu_frame_pending())
