@@ -37,7 +37,6 @@ public:
             key_msg_index_[i].clear();
         }
         std::fill(start_index_.begin(), start_index_.end(), 0);
-        std::fill(last_keycode_.begin(), last_keycode_.end(), 0);
     }
 
     bool StartFile(const char *path) {
@@ -100,10 +99,9 @@ public:
         NOTICE_LOG(COMMON, "users = %d", log_file_.users_size());
 
         std::fill(start_index_.begin(), start_index_.end(), 0);
-        std::fill(last_keycode_.begin(), last_keycode_.end(), 0);
 
         state_ = State::Start;
-        maxlag_ = 2;
+        maxlag_ = 4;
         return true;
     }
 
@@ -161,6 +159,7 @@ public:
         }
 
         u32 gdx_rxq_addr = symbols_.at("gdx_rxq");
+        if (gdx_rxq_addr == 0) return;
         gdx_queue q{};
         q.head = ReadMem16_nommu(gdx_rxq_addr);
         q.tail = ReadMem16_nommu(gdx_rxq_addr + 2);
@@ -215,14 +214,22 @@ private:
     }
 
     void ProcessLbsMessage() {
+        if (state_ == State::Start) {
+            LbsMessage::SvNotice(LbsMessage::lbsReadyBattle).Serialize(recv_buf_);
+            recv_delay_ = 1;
+        }
+
         LbsMessage msg;
         if (lbs_tx_reader_.Read(msg)) {
             // NOTICE_LOG(COMMON, "RECV cmd=%04x seq=%d", msg.command, msg.seq);
 
+            if (state_ == State::Start) {
+                state_ = State::LbsStartBattleFlow;
+            }
+
             if (msg.command == LbsMessage::lbsLobbyMatchingEntry) {
                 LbsMessage::SvAnswer(msg).Serialize(recv_buf_);
                 LbsMessage::SvNotice(LbsMessage::lbsReadyBattle).Serialize(recv_buf_);
-                state_ = State::LbsStartBattleFlow;
             }
 
             if (msg.command == LbsMessage::lbsAskMatchingJoin) {
@@ -291,16 +298,14 @@ private:
     void ProcessMcsMessage() {
         McsMessage msg;
         if (mcs_tx_reader_.Read(msg)) {
-            NOTICE_LOG(COMMON, "Read %s %s", McsMessage::MsgTypeName(msg.Type()), msg.ToHex().c_str());
+            // NOTICE_LOG(COMMON, "Read %s %s", McsMessage::MsgTypeName(msg.Type()), msg.ToHex().c_str());
             switch (msg.Type()) {
                 case McsMessage::MsgType::ConnectionIdMsg:
                     state_ = State::McsInBattle;
                     break;
                 case McsMessage::MsgType::IntroMsg:
-                    NOTICE_LOG(COMMON, "switch intro msg %d", log_file_.users_size());
                     for (int i = 0; i < log_file_.users_size(); ++i) {
                         if (i != me_) {
-                            NOTICE_LOG(COMMON, "Write recv buf %d", i);
                             auto intro_msg = McsMessage::Create(McsMessage::MsgType::IntroMsg, i);
                             std::copy(intro_msg.body.begin(), intro_msg.body.end(), std::back_inserter(recv_buf_));
                         }
@@ -328,8 +333,10 @@ private:
                     break;
                 case McsMessage::MsgType::StartMsg:
                     for (int i = 0; i < log_file_.users_size(); ++i) {
-                        auto start_msg = McsMessage::Create(McsMessage::MsgType::StartMsg, i);
-                        std::copy(start_msg.body.begin(), start_msg.body.end(), std::back_inserter(recv_buf_));
+                        if (i != me_) {
+                            auto start_msg = McsMessage::Create(McsMessage::MsgType::StartMsg, i);
+                            std::copy(start_msg.body.begin(), start_msg.body.end(), std::back_inserter(recv_buf_));
+                        }
                     }
                     PrepareKeyMsgIndex();
                     break;
@@ -338,7 +345,6 @@ private:
                 case McsMessage::MsgType::KeyMsg:
                     for (int i = 0; i < log_file_.users_size(); ++i) {
                         auto key_msg = msg_list_[key_msg_index_[i][msg.FirstFrame() / 2]];
-                        last_keycode_[i] = key_msg.SecondKey();
                         std::copy(key_msg.body.begin(), key_msg.body.end(), std::back_inserter(recv_buf_));
                         verify(key_msg.FirstFrame() == msg.FirstFrame());
                     }
@@ -434,7 +440,6 @@ private:
     int me_;
     std::vector<McsMessage> msg_list_;
     std::array<int, 4> start_index_;
-    std::array<u16, 4> last_keycode_;
     std::array<std::vector<int>, 4> key_msg_index_;
 };
 
