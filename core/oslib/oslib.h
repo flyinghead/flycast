@@ -60,10 +60,11 @@ class UnwindInfo
 public:
 	void start(void *address);
 	void pushReg(u32 offset, int reg);
-	void pushFPReg(u32 offset, int reg);
+	void saveReg(u32 offset, int reg, int stackOffset);
+	void saveExtReg(u32 offset, int reg, int stackOffset);
 	void allocStack(u32 offset, int size);
 	void endProlog(u32 offset);
-	size_t end(u32 offset);
+	size_t end(u32 offset, ptrdiff_t rwRxOffset = 0);
 
 	void clear();
 
@@ -73,7 +74,7 @@ private:
 	std::vector<RUNTIME_FUNCTION *> tables;
 	std::vector<u16> codes;
 #endif
-#if defined(__unix__) || defined(__APPLE__)
+#if defined(__unix__) || defined(__APPLE__) || defined(__SWITCH__)
 	int stackOffset = 0;
 	u64 lastOffset = 0;
 	std::vector<u8> cieInstructions;
@@ -82,18 +83,20 @@ private:
 #endif
 };
 
-#if !defined(_WIN64) && !defined(__unix__) && !defined(__APPLE__)
+#if HOST_CPU != CPU_X64 && HOST_CPU != CPU_ARM64
 inline void UnwindInfo::start(void *address) {
 }
 inline void UnwindInfo::pushReg(u32 offset, int reg) {
 }
-inline void UnwindInfo::pushFPReg(u32 offset, int reg) {
+inline void UnwindInfo::saveReg(u32 offset, int reg, int stackOffset) {
+}
+inline void UnwindInfo::saveExtReg(u32 offset, int reg, int stackOffset) {
 }
 inline void UnwindInfo::allocStack(u32 offset, int size) {
 }
 inline void UnwindInfo::endProlog(u32 offset) {
 }
-inline size_t UnwindInfo::end(u32 offset) {
+inline size_t UnwindInfo::end(u32 offset, ptrdiff_t rwRxOffset) {
 	return 0;
 }
 inline void UnwindInfo::clear() {

@@ -50,7 +50,7 @@ u8* ICache;
 void (*EntryPoints[ARAM_SIZE_MAX / 4])();
 
 #ifdef _WIN32
-alignas(4096) static u8 ARM7_TCB[ICacheSize];
+static u8 *ARM7_TCB;
 #elif defined(__unix__) || defined(__SWITCH__)
 alignas(4096) static u8 ARM7_TCB[ICacheSize] __attribute__((section(".text")));
 #elif defined(__APPLE__)

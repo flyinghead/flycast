@@ -357,9 +357,15 @@ if(ASAN)
 endif()
 
 if(ANDROID AND NOT LIBRETRO)
-	find_package(oboe REQUIRED CONFIG)
+	find_package(oboe CONFIG)
+	if(OBOE_FOUND)
+		target_link_libraries(${PROJECT_NAME} PRIVATE oboe::oboe)
+	else()
+		include("core/deps/oboe/gamesdk.cmake")
+		add_gamesdk_target(PACKAGE_DIR core/deps/oboe ANDROID_API_LEVEL 28 ANDROID_NDK_VERSION 21.0.0)
+		target_link_libraries(${PROJECT_NAME} PRIVATE oboe OpenSLES) 
+	endif()
 	target_compile_definitions(${PROJECT_NAME} PRIVATE USE_OBOE)
-	target_link_libraries(${PROJECT_NAME} PRIVATE oboe::oboe)
 endif()
 
 target_sources(${PROJECT_NAME} PRIVATE
@@ -638,7 +644,6 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/hw/sh4/dyna/decoder_opcodes.h
         core/hw/sh4/dyna/driver.cpp
         core/hw/sh4/dyna/ngen.h
-        core/hw/sh4/dyna/regalloc.h
         core/hw/sh4/dyna/shil_canonical.h
         core/hw/sh4/dyna/shil.cpp
         core/hw/sh4/dyna/shil.h

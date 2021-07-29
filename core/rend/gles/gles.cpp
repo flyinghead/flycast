@@ -349,6 +349,7 @@ void do_swap_automation()
 		glBindFramebuffer(GL_READ_FRAMEBUFFER, gl.ofbo.fbo);
 		glReadPixels(0, 0, gl.ofbo.width, gl.ofbo.height, GL_RGB, GL_UNSIGNED_BYTE, img);
 		fwrite(img, 1, bytesz, video_file);
+		delete[] img;
 		fflush(video_file);
 	}
 

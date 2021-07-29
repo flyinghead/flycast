@@ -46,12 +46,6 @@ void UnwindInfo::pushReg(u32 offset, int reg)
 	codes.push_back(offset | (UWOP_PUSH_NONVOL << 8) | (reg << 12));
 }
 
-void UnwindInfo::pushFPReg(u32 offset, int reg)
-{
-	//codes.push_back(offset | (UWOP_SAVE_XMM128 << 8) | (reg << 12));
-	die("not implemented");
-}
-
 void UnwindInfo::allocStack(u32 offset, int size)
 {
 	verify(size <= 128);
@@ -70,7 +64,7 @@ void UnwindInfo::endProlog(u32 offset)
 		codes.push_back(0);
 }
 
-size_t UnwindInfo::end(u32 offset)
+size_t UnwindInfo::end(u32 offset, ptrdiff_t rwRxOffset)
 {
 	u8 *endAddr = startAddr + offset;
 	if ((uintptr_t)endAddr & 3)

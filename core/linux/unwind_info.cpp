@@ -20,10 +20,6 @@
 // Based on Asmjit unwind info registration and stack walking code for Windows, Linux and macOS
 // https://gist.github.com/dpjudas/925d5c4ffef90bd8114be3b465069fff
 #include "build.h"
-
-#if HOST_CPU == CPU_X64
-
-#include <xbyak/xbyak.h>
 #include "oslib/oslib.h"
 
 extern "C"
@@ -31,6 +27,8 @@ extern "C"
 	void __register_frame(const void*);
 	void __deregister_frame(const void*);
 }
+
+#if HOST_CPU == CPU_X64
 
 constexpr int dwarfRegId[16] = {
 	0,		// RAX
@@ -50,8 +48,30 @@ constexpr int dwarfRegId[16] = {
 	14,		// R14
 	15,		// R15
 };
+inline static int registerId(int x64Id) {
+	return dwarfRegId[x64Id];
+}
 constexpr int dwarfRegRAId = 16;
 constexpr int dwarfRegXmmId = 17;
+constexpr int dwarfRegSP = dwarfRegId[4];	// RSP
+
+#elif HOST_CPU == CPU_ARM64
+// https://developer.arm.com/documentation/ihi0057/latest
+//
+// register codes:
+// x0-x30		0 - 30
+// SP			31
+// d0-d31		64 - 95
+
+inline static int registerId(int armId) {
+	return armId;
+}
+constexpr int dwarfRegRAId = 30;
+constexpr int dwarfRegSP = 31;
+
+#endif
+
+#if HOST_CPU == CPU_X64 || HOST_CPU == CPU_ARM64
 
 using ByteStream = std::vector<u8>;
 
@@ -86,26 +106,16 @@ static void writeULEB128(ByteStream &stream, u32 v)
 
 static void writeSLEB128(ByteStream &stream, int32_t v)
 {
-	if (v >= 0)
-	{
-		writeULEB128(stream, v);
-	}
-	else
-	{
-		while (true)
-		{
-			if (v > -128)
-			{
-				write<u8>(stream, v & 0x7f);
-				break;
-			}
-			else
-			{
-				write<u8>(stream, v);
-				v >>= 7;
-			}
-		}
-	}
+	bool more;
+	do {
+		u8 byte = v & 0x7f;
+		v >>= 7;
+		more = !(((v == 0 && (byte & 0x40) == 0) ||
+	               (v == -1 && (byte & 0x40) != 0)));
+		if (more)
+			byte |= 0x80; // Mark this byte to show that more bytes will follow.
+		write<u8>(stream, byte);
+	} while (more);
 }
 
 static void writePadding(ByteStream &stream)
@@ -122,19 +132,19 @@ static void writePadding(ByteStream &stream)
 static void writeCIE(ByteStream &stream, const ByteStream &cieInstructions, u8 returnAddressReg)
 {
 	u32 lengthPos = stream.size();
-	write<u32>(stream, 0); // Length
-	write<u32>(stream, 0); // CIE ID
+	write<u32>(stream, 0);		// Length
+	write<u32>(stream, 0);		// CIE ID
 
-	write<u8>(stream, 1); // CIE Version
+	write<u8>(stream, 1);		// CIE Version
 	write<u8>(stream, 'z');
-	write<u8>(stream, 'R'); // fde encoding
+	write<u8>(stream, 'R');		// fde encoding
 	write<u8>(stream, 0);
-	writeULEB128(stream, 1);
-	writeSLEB128(stream, -1);
+	writeULEB128(stream, 1);	// code alignment. Loc multiplier
+	writeSLEB128(stream, -1);	// data alignment. Stack offset multiplier.
 	writeULEB128(stream, returnAddressReg);
 
-	writeULEB128(stream, 1); // LEB128 augmentation size
-	write<u8>(stream, 0); // DW_EH_PE_absptr (FDE uses absolute pointers)
+	writeULEB128(stream, 1);	// LEB128 augmentation size
+	write<u8>(stream, 0);		// DW_EH_PE_absptr (FDE uses absolute pointers)
 
 	stream.insert(stream.end(), cieInstructions.begin(), cieInstructions.end());
 
@@ -164,6 +174,8 @@ static void writeFDE(ByteStream &stream, const ByteStream &fdeInstructions, u32 
 static void writeAdvanceLoc(ByteStream &fdeInstructions, u64 offset, u64 &lastOffset)
 {
 	u64 delta = offset - lastOffset;
+	if (delta == 0)
+		return;
 	if (delta < (1 << 6))
 	{
 		write<u8>(fdeInstructions, (1 << 6) | delta);	// DW_CFA_advance_loc
@@ -205,14 +217,28 @@ static void writeRegisterStackLocation(ByteStream &instructions, int dwarfRegId,
 	writeULEB128(instructions, stackLocation);
 }
 
-void UnwindInfo::start(void *address) {
+static void writeRegisterStackLocationExtended(ByteStream &instructions, int dwarfRegId, int stackLocation)
+{
+	write<u8>(instructions, 5);							// DW_CFA_offset_extended
+	writeULEB128(instructions, dwarfRegId);
+	writeULEB128(instructions, stackLocation);
+}
+
+void UnwindInfo::start(void *address)
+{
 	startAddr = (u8 *)address;
+#if HOST_CPU == CPU_X64
 	stackOffset = 8;
+#else
+	stackOffset = 0;
+#endif
 	lastOffset = 0;
 	cieInstructions.clear();
 	fdeInstructions.clear();
-	writeDefineCFA(cieInstructions, dwarfRegId[Xbyak::Operand::RSP], stackOffset);
-	writeRegisterStackLocation(cieInstructions, dwarfRegRAId, stackOffset);
+	writeDefineCFA(cieInstructions, dwarfRegSP, stackOffset);
+	if (stackOffset > 0)
+		// Return address pushed on stack
+		writeRegisterStackLocation(cieInstructions, dwarfRegRAId, stackOffset);
 }
 
 void UnwindInfo::pushReg(u32 offset, int reg)
@@ -220,12 +246,19 @@ void UnwindInfo::pushReg(u32 offset, int reg)
 	stackOffset += 8;
 	writeAdvanceLoc(fdeInstructions, offset, lastOffset);
 	writeDefineStackOffset(fdeInstructions, stackOffset);
-	writeRegisterStackLocation(fdeInstructions, dwarfRegId[reg], stackOffset);
+	writeRegisterStackLocation(fdeInstructions, registerId(reg), stackOffset);
 }
 
-void UnwindInfo::pushFPReg(u32 offset, int reg)
+void UnwindInfo::saveReg(u32 offset, int reg, int stackOffset)
 {
-	// TODO
+	writeAdvanceLoc(fdeInstructions, offset, lastOffset);
+	writeRegisterStackLocation(fdeInstructions, registerId(reg), stackOffset);
+}
+
+void UnwindInfo::saveExtReg(u32 offset, int reg, int stackOffset)
+{
+	writeAdvanceLoc(fdeInstructions, offset, lastOffset);
+	writeRegisterStackLocationExtended(fdeInstructions, registerId(reg), stackOffset);
 }
 
 void UnwindInfo::allocStack(u32 offset, int size)
@@ -239,7 +272,7 @@ void UnwindInfo::endProlog(u32 offset)
 {
 }
 
-size_t UnwindInfo::end(u32 offset)
+size_t UnwindInfo::end(u32 offset, ptrdiff_t rwRxOffset)
 {
 	ByteStream unwindInfo;
 	writeCIE(unwindInfo, cieInstructions, dwarfRegRAId);
@@ -257,7 +290,7 @@ size_t UnwindInfo::end(u32 offset)
 	if (!unwindInfo.empty())
 	{
 		u64 *unwindfuncaddr = (u64 *)(unwindInfoDest + functionStart);
-		unwindfuncaddr[0] = (ptrdiff_t)startAddr;
+		unwindfuncaddr[0] = (uintptr_t)startAddr + rwRxOffset;
 		unwindfuncaddr[1] = (ptrdiff_t)(endAddr - startAddr);
 
 #ifdef __APPLE__
@@ -313,5 +346,4 @@ void UnwindInfo::clear()
 	registeredFrames.clear();
 }
 
-#endif // HOST_CPU == CPU_X64
-
+#endif

@@ -27,6 +27,7 @@
 #include <aarch64/macro-assembler-aarch64.h>
 using namespace vixl::aarch64;
 //#include <aarch32/disasm-aarch32.h>
+#include "rec-ARM64/arm64_unwind.h"
 
 namespace aicaarm {
 
@@ -35,6 +36,8 @@ static void (*arm_dispatch)();	// Not an executable address
 class Arm7Compiler;
 
 #define MAX_REGS 8
+
+static Arm64UnwindInfo unwinder;
 
 class AArch64ArmRegAlloc : public ArmRegAlloc<MAX_REGS, AArch64ArmRegAlloc>
 {
@@ -636,6 +639,9 @@ public:
 		Label arm_dofiq;
 		Label arm_exit;
 
+		// For stack unwinding purposes, we pretend that the entire code block is a single function
+		unwinder.start(GetCursorAddress<void *>());
+
 		// arm_compilecode:
 		arm_compilecode = (void (*)())recompiler::writeToExec(GetCursorAddress<void *>());
 		call((void*)recompiler::compile);
@@ -643,12 +649,26 @@ public:
 
 		// arm_mainloop(regs, entry points)
 		arm_mainloop = (arm_mainloop_t)recompiler::writeToExec(GetCursorAddress<void *>());
+
 		Stp(x25, x26, MemOperand(sp, -96, AddrMode::PreIndex));
+		unwinder.allocStack(0, 96);
+		unwinder.saveReg(0, x25, 96);
+		unwinder.saveReg(0, x26, 88);
 		Stp(x27, x28, MemOperand(sp, 16));
+		unwinder.saveReg(0, x27, 80);
+		unwinder.saveReg(0, x28, 72);
 		Stp(x29, x30, MemOperand(sp, 32));
+		unwinder.saveReg(0, x29, 64);
+		unwinder.saveReg(0, x30, 56);
 		Stp(x19, x20, MemOperand(sp, 48));
+		unwinder.saveReg(0, x19, 48);
+		unwinder.saveReg(0, x20, 40);
 		Stp(x21, x22, MemOperand(sp, 64));
+		unwinder.saveReg(0, x21, 32);
+		unwinder.saveReg(0, x22, 24);
 		Stp(x23, x24, MemOperand(sp, 80));
+		unwinder.saveReg(0, x23, 16);
+		unwinder.saveReg(0, x24, 8);
 
 		Mov(x28, x0);		// arm7 registers
 		Mov(x26, x1);		// lookup base
@@ -682,6 +702,10 @@ public:
 		Ret();
 
 		FinalizeCode();
+
+		size_t unwindSize = unwinder.end(recompiler::spaceLeft() - 128, (ptrdiff_t)recompiler::writeToExec(nullptr));
+		verify(unwindSize <= 128);
+
 		vmem_platform_flush_cache(
 				recompiler::writeToExec(GetBuffer()->GetStartAddress<void*>()), recompiler::writeToExec(GetBuffer()->GetEndAddress<void*>()),
 				GetBuffer()->GetStartAddress<void*>(), GetBuffer()->GetEndAddress<void*>());
@@ -707,6 +731,7 @@ void arm7backend_compile(const std::vector<ArmOp>& block_ops, u32 cycles)
 
 void arm7backend_flush()
 {
+	unwinder.clear();
 	Arm7Compiler assembler;
 	assembler.generateMainLoop();
 }

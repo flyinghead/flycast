@@ -39,6 +39,7 @@ using namespace vixl::aarch64;
 #include "hw/sh4/sh4_rom.h"
 #include "arm64_regalloc.h"
 #include "hw/mem/_vmem.h"
+#include "arm64_unwind.h"
 
 #undef do_sqw_nommu
 
@@ -55,6 +56,7 @@ struct DynaRBI : RuntimeBlockInfo
 
 static u32 cycle_counter;
 static u64 jmp_stack;
+static Arm64UnwindInfo unwinder;
 
 static void (*mainloop)(void *context);
 static void (*handleException)();
@@ -91,6 +93,7 @@ void ngen_init()
 
 void ngen_ResetBlocks()
 {
+	unwinder.clear();
 	mainloop = nullptr;
 
 	if (p_sh4rcb->cntx.CpuRunning)
@@ -1334,18 +1337,43 @@ public:
 
 		// void mainloop(void *context)
 		mainloop = (void (*)(void *))CC_RW2RX(GetCursorAddress<uintptr_t>());
+		// For stack unwinding purposes, we pretend that the entire code block is just one function, with the same
+		// unwinding instructions everywhere. This isn't true until the end of the following prolog, but exceptions
+		// can only be thrown by called functions so this is good enough.
+		unwinder.start(CodeCache);
 
 		// Save registers
 		Stp(x19, x20, MemOperand(sp, -160, PreIndex));
+		unwinder.allocStack(0, 160);
+		unwinder.saveReg(0, x19, 160);
+		unwinder.saveReg(0, x20, 152);
 		Stp(x21, x22, MemOperand(sp, 16));
+		unwinder.saveReg(0, x21, 144);
+		unwinder.saveReg(0, x22, 136);
 		Stp(x23, x24, MemOperand(sp, 32));
+		unwinder.saveReg(0, x23, 128);
+		unwinder.saveReg(0, x24, 120);
 		Stp(x25, x26, MemOperand(sp, 48));
+		unwinder.saveReg(0, x25, 112);
+		unwinder.saveReg(0, x26, 104);
 		Stp(x27, x28, MemOperand(sp, 64));
-		Stp(s14, s15, MemOperand(sp, 80));
-		Stp(vixl::aarch64::s8, s9, MemOperand(sp, 96));
-		Stp(s10, s11, MemOperand(sp, 112));
-		Stp(s12, s13, MemOperand(sp, 128));
+		unwinder.saveReg(0, x27, 96);
+		unwinder.saveReg(0, x28, 88);
+		Stp(d14, d15, MemOperand(sp, 80));
+		unwinder.saveReg(0, d14, 80);
+		unwinder.saveReg(0, d15, 72);
+		Stp(d8, d9, MemOperand(sp, 96));
+		unwinder.saveReg(0, d8, 64);
+		unwinder.saveReg(0, d9, 56);
+		Stp(d10, d11, MemOperand(sp, 112));
+		unwinder.saveReg(0, d10, 48);
+		unwinder.saveReg(0, d11, 40);
+		Stp(d12, d13, MemOperand(sp, 128));
+		unwinder.saveReg(0, d12, 32);
+		unwinder.saveReg(0, d13, 24);
 		Stp(x29, x30, MemOperand(sp, 144));
+		unwinder.saveReg(0, x29, 16);
+		unwinder.saveReg(0, x30, 8);
 
 		Sub(x0, x0, sizeof(Sh4Context));
 		Label reenterLabel;
@@ -1354,6 +1382,7 @@ public:
 			Ldr(x1, reinterpret_cast<uintptr_t>(&cycle_counter));
 			// Push context, cycle_counter address
 			Stp(x0, x1, MemOperand(sp, -16, PreIndex));
+			unwinder.allocStack(0, 16);
 			Mov(w0, SH4_TIMESLICE);
 			Str(w0, MemOperand(x1));
 
@@ -1412,10 +1441,10 @@ public:
 			Add(sp, sp, 16);
 		// Restore registers
 		Ldp(x29, x30, MemOperand(sp, 144));
-		Ldp(s12, s13, MemOperand(sp, 128));
-		Ldp(s10, s11, MemOperand(sp, 112));
-		Ldp(vixl::aarch64::s8, s9, MemOperand(sp, 96));
-		Ldp(s14, s15, MemOperand(sp, 80));
+		Ldp(d12, d13, MemOperand(sp, 128));
+		Ldp(d10, d11, MemOperand(sp, 112));
+		Ldp(d8, d9, MemOperand(sp, 96));
+		Ldp(d14, d15, MemOperand(sp, 80));
 		Ldp(x27, x28, MemOperand(sp, 64));
 		Ldp(x25, x26, MemOperand(sp, 48));
 		Ldp(x23, x24, MemOperand(sp, 32));
@@ -1488,6 +1517,9 @@ public:
 
 		FinalizeCode();
 		emit_Skip(GetBuffer()->GetSizeInBytes());
+
+		size_t unwindSize = unwinder.end(CODE_SIZE - 128, (ptrdiff_t)CC_RW2RX(0));
+		verify(unwindSize <= 128);
 
 		arm64_no_update = GetLabelAddress<DynaCode *>(&no_update);
 		handleException = (void (*)())CC_RW2RX(GetLabelAddress<uintptr_t>(&handleExceptionLabel));
