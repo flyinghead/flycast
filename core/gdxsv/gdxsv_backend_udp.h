@@ -78,18 +78,18 @@ public:
         }
 
         gdx_queue q{};
-        q.head = ReadMem16_nommu(gdx_txq_addr);
-        q.tail = ReadMem16_nommu(gdx_txq_addr + 2);
-        u32 buf_addr = gdx_txq_addr + 4;
+        q.head = gdxsv_ReadMem32(gdx_txq_addr);
+        q.tail = gdxsv_ReadMem32(gdx_txq_addr + 4);
+        u32 buf_addr = gdx_txq_addr + 8;
 
         int n = gdx_queue_size(&q);
         if (0 < n) {
             std::lock_guard<std::mutex> lock(send_buf_mtx_);
             for (int i = 0; i < n; ++i) {
-                send_buf_.push_back(ReadMem8_nommu(buf_addr + q.head));
+                send_buf_.push_back(gdxsv_ReadMem8(buf_addr + q.head));
                 gdx_queue_pop(&q); // dummy pop
             }
-            WriteMem16_nommu(gdx_txq_addr, q.head);
+            gdxsv_WriteMem32(gdx_txq_addr, q.head);
         }
     }
 
@@ -106,17 +106,17 @@ public:
         }
 
         gdx_queue q{};
-        q.head = ReadMem16_nommu(gdx_rxq_addr);
-        q.tail = ReadMem16_nommu(gdx_rxq_addr + 2);
-        u32 buf_addr = gdx_rxq_addr + 4;
+        q.head = gdxsv_ReadMem32(gdx_rxq_addr);
+        q.tail = gdxsv_ReadMem32(gdx_rxq_addr + 4);
+        u32 buf_addr = gdx_rxq_addr + 8;
 
         n = std::min<int>(n, gdx_queue_avail(&q));
         for (int i = 0; i < n; ++i) {
-            WriteMem8_nommu(buf_addr + q.tail, recv_buf_.front());
+            gdxsv_WriteMem8(buf_addr + q.tail, recv_buf_.front());
             recv_buf_.pop_front();
             gdx_queue_push(&q, 0); // dummy push
         }
-        WriteMem16_nommu(gdx_rxq_addr + 2, q.tail);
+        gdxsv_WriteMem32(gdx_rxq_addr + 4, q.tail);
     }
 
 private:

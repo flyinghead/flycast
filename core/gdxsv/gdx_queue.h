@@ -22,8 +22,8 @@ struct gdx_rpc_t {
 };
 
 struct gdx_queue {
-    u16 head;
-    u16 tail;
+    u32 head;
+    u32 tail;
     u8 buf[GDX_QUEUE_SIZE];
 };
 

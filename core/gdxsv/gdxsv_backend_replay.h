@@ -3,6 +3,10 @@
 #include <array>
 #include <vector>
 #include <queue>
+#include <string>
+#include <map>
+
+#include "libs.h"
 #include "gdxsv.pb.h"
 #include "lbs_message.h"
 #include "mcs_message.h"
@@ -63,7 +67,12 @@ public:
             const auto &data = log_file_.battle_data(i);
             r.Write(data.body().data(), data.body().size());
             while (r.Read(msg)) {
-                msg_list_.emplace_back(msg);
+                if (msg.Type() == McsMessage::KeyMsg2) {
+                    msg_list_.emplace_back(msg.FirstKeyMsg());
+                    msg_list_.emplace_back(msg.SecondKeyMsg());
+                } else {
+                    msg_list_.emplace_back(msg);
+                }
             }
         }
 
@@ -102,6 +111,7 @@ public:
 
         state_ = State::Start;
         maxlag_ = 4;
+        NOTICE_LOG(COMMON, "Replay Start");
         return true;
     }
 
@@ -120,23 +130,29 @@ public:
         gdx_queue q{};
         u32 gdx_txq_addr = symbols_.at("gdx_txq");
         if (gdx_txq_addr == 0) return;
-        q.head = ReadMem16_nommu(gdx_txq_addr);
-        q.tail = ReadMem16_nommu(gdx_txq_addr + 2);
-        u32 buf_addr = gdx_txq_addr + 4;
+        q.head = gdxsv_ReadMem32(gdx_txq_addr);
+        q.tail = gdxsv_ReadMem32(gdx_txq_addr + 4);
+        u32 buf_addr = gdx_txq_addr + 8;
 
         int n = gdx_queue_size(&q);
         if (0 < n) {
             u8 buf[GDX_QUEUE_SIZE] = {};
             for (int i = 0; i < n; ++i) {
-                buf[i] = ReadMem8_nommu(buf_addr + q.head);
+                buf[i] = gdxsv_ReadMem8(buf_addr + q.head);
                 gdx_queue_pop(&q); // dummy pop
             }
-            WriteMem16_nommu(gdx_txq_addr, q.head);
+            gdxsv_WriteMem32(gdx_txq_addr, q.head);
             if (state_ <= State::LbsStartBattleFlow) {
                 lbs_tx_reader_.Write((const char *) buf, n);
             } else {
                 mcs_tx_reader_.Write((const char *) buf, n);
             }
+        }
+
+        if (state_ <= State::LbsStartBattleFlow) {
+            ProcessLbsMessage();
+        } else {
+            ProcessMcsMessage();
         }
 
         ApplyPatch(false);
@@ -145,8 +161,6 @@ public:
     void OnGameRead() {
         if (state_ <= State::LbsStartBattleFlow) {
             ProcessLbsMessage();
-        } else {
-            ProcessMcsMessage();
         }
 
         if (recv_buf_.empty()) {
@@ -161,9 +175,9 @@ public:
         u32 gdx_rxq_addr = symbols_.at("gdx_rxq");
         if (gdx_rxq_addr == 0) return;
         gdx_queue q{};
-        q.head = ReadMem16_nommu(gdx_rxq_addr);
-        q.tail = ReadMem16_nommu(gdx_rxq_addr + 2);
-        u32 buf_addr = gdx_rxq_addr + 4;
+        q.head = gdxsv_ReadMem32(gdx_rxq_addr);
+        q.tail = gdxsv_ReadMem32(gdx_rxq_addr + 4);
+        u32 buf_addr = gdx_rxq_addr + 8;
 
         if (gdx_queue_avail(&q) < GDX_QUEUE_SIZE / 2) {
             recv_delay_ = 1;
@@ -171,20 +185,13 @@ public:
         }
 
         int n = std::min<int>(recv_buf_.size(), static_cast<int>(gdx_queue_avail(&q)));
-        /*
-        std::string hexstr(n * 2, ' ');
-        for (int i = 0; i < n; ++i) {
-            std::sprintf(&hexstr[0] + i * 2, "%02x", recv_buf_[i]);
-        }
-        NOTICE_LOG(COMMON, "write %s", hexstr.c_str());
-        */
         if (0 < n) {
             for (int i = 0; i < n; ++i) {
-                WriteMem8_nommu(buf_addr + q.tail, recv_buf_.front());
+                gdxsv_WriteMem8(buf_addr + q.tail, recv_buf_.front());
                 recv_buf_.pop_front();
                 gdx_queue_push(&q, 0); // dummy push
             }
-            WriteMem16_nommu(gdx_rxq_addr + 2, q.tail);
+            gdxsv_WriteMem32(gdx_rxq_addr + 4, q.tail);
         }
     }
 
@@ -205,9 +212,10 @@ private:
                         }
                     }
 
-                    if (msg.Type() == McsMessage::MsgType::KeyMsg) {
+                    if (msg.Type() == McsMessage::MsgType::KeyMsg1) {
                         key_msg_index_[p].emplace_back(i);
                     }
+                    verify(msg.Type() != McsMessage::KeyMsg2);
                 }
             }
         }
@@ -342,12 +350,28 @@ private:
                     break;
                 case McsMessage::MsgType::ForceMsg:
                     break;
-                case McsMessage::MsgType::KeyMsg:
+                case McsMessage::MsgType::KeyMsg1: {
+                    // printf("KeyMsg1:%s\n", msg.ToHex().c_str());
                     for (int i = 0; i < log_file_.users_size(); ++i) {
-                        auto key_msg = msg_list_[key_msg_index_[i][msg.FirstFrame() / 2]];
+                        auto key_msg = msg_list_[key_msg_index_[i][msg.FirstFrame()]];
+                        printf("KeyMsg:%s\n", key_msg.ToHex().c_str());
                         std::copy(key_msg.body.begin(), key_msg.body.end(), std::back_inserter(recv_buf_));
-                        verify(key_msg.FirstFrame() == msg.FirstFrame());
                     }
+                    break;
+                }
+                case McsMessage::MsgType::KeyMsg2: {
+                    // printf("KeyMsg2:%s\n", msg.ToHex().c_str());
+                    for (int i = 0; i < log_file_.users_size(); ++i) {
+                        auto key_msg = msg_list_[key_msg_index_[i][msg.FirstFrame()]];
+                        printf("KeyMsg:%s\n", key_msg.ToHex().c_str());
+                        std::copy(key_msg.body.begin(), key_msg.body.end(), std::back_inserter(recv_buf_));
+                    }
+                    for (int i = 0; i < log_file_.users_size(); ++i) {
+                        auto key_msg = msg_list_[key_msg_index_[i][msg.SecondFrame()]];
+                        printf("KeyMsg:%s\n", key_msg.ToHex().c_str());
+                        std::copy(key_msg.body.begin(), key_msg.body.end(), std::back_inserter(recv_buf_));
+                    }
+                }
                     break;
                 case McsMessage::MsgType::LoadStartMsg:
                     for (int i = 0; i < log_file_.users_size(); ++i) {
@@ -383,7 +407,11 @@ private:
         // Skip Key MsgPush
         // TODO: disk1
         if (log_file_.game_disk() == "dc2") {
-            WriteMem16_nommu(0x8c045f64, 9);
+            gdxsv_WriteMem16(0x8c045f64, 9);
+        }
+        if (log_file_.game_disk() == "ps2") {
+            gdxsv_WriteMem32(0x0037f5a0, 0);
+            gdxsv_WriteMem8(0x00580340, 1);
         }
 
         // Online Patch
@@ -395,13 +423,13 @@ private:
             for (int j = 0; j < log_file_.patches(i).codes_size(); ++j) {
                 const auto &code = log_file_.patches(i).codes(j);
                 if (code.size() == 8) {
-                    WriteMem8_nommu(code.address(), code.changed());
+                    gdxsv_WriteMem8(code.address(), code.changed());
                 }
                 if (code.size() == 16) {
-                    WriteMem16_nommu(code.address(), code.changed());
+                    gdxsv_WriteMem16(code.address(), code.changed());
                 }
                 if (code.size() == 32) {
-                    WriteMem32_nommu(code.address(), code.changed());
+                    gdxsv_WriteMem32(code.address(), code.changed());
                 }
             }
         }
@@ -409,7 +437,12 @@ private:
 
     void RestorePatch() {
         if (log_file_.game_disk() == "dc2") {
-            WriteMem16_nommu(0x8c045f64, 0x410b);
+            gdxsv_WriteMem16(0x8c045f64, 0x410b);
+        }
+
+        if (log_file_.game_disk() == "ps2") {
+            gdxsv_WriteMem32(0x0037f5a0, 0x0c0e0be4);
+            gdxsv_WriteMem8(0x00580340, 2);
         }
 
         // Online Patch
@@ -417,13 +450,13 @@ private:
             for (int j = 0; j < log_file_.patches(i).codes_size(); ++j) {
                 const auto &code = log_file_.patches(i).codes(j);
                 if (code.size() == 8) {
-                    WriteMem8_nommu(code.address(), code.original());
+                    gdxsv_WriteMem8(code.address(), code.original());
                 }
                 if (code.size() == 16) {
-                    WriteMem16_nommu(code.address(), code.original());
+                    gdxsv_WriteMem16(code.address(), code.original());
                 }
                 if (code.size() == 32) {
-                    WriteMem32_nommu(code.address(), code.original());
+                    gdxsv_WriteMem32(code.address(), code.original());
                 }
             }
         }
@@ -442,4 +475,3 @@ private:
     std::array<int, 4> start_index_;
     std::array<std::vector<int>, 4> key_msg_index_;
 };
-

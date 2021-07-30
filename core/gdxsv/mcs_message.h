@@ -15,7 +15,8 @@ public:
         PongMsg,
         StartMsg,
         ForceMsg,
-        KeyMsg,
+        KeyMsg1,
+        KeyMsg2,
         LoadStartMsg,
         LoadEndMsg,
         LagControlTestMsg,
@@ -27,7 +28,8 @@ public:
         if (m == StartMsg) return "StartMsg";
         if (m == IntroMsg) return "IntroMsg";
         if (m == IntroMsgReturn) return "IntroMsgReturn";
-        if (m == KeyMsg) return "KeyMsg";
+        if (m == KeyMsg1) return "KeyMsg1";
+        if (m == KeyMsg2) return "KeyMsg2";
         if (m == PingMsg) return "PingMsg";
         if (m == PongMsg) return "PongMsg";
         if (m == LoadStartMsg) return "LoadStartMsg";
@@ -42,12 +44,14 @@ public:
         if (body.size() < 4) return UnknownMsg;
         if (body[0] == 0x82 && body[1] == 0x02) return ConnectionIdMsg;
 
+        const int n = body[0];
         const int k = (body[1] & 0xf0) >> 4;
         const int p = body[2];
 
         if (k == 1 && p == 0) return IntroMsg;
         if (k == 1 && p == 1) return IntroMsgReturn;
-        if (k == 2) return KeyMsg;
+        if (n == 0x0a && k == 2) return KeyMsg1;
+        if (n == 0x12 && k == 2) return KeyMsg2;
         if (k == 3 && p == 0) return PingMsg;
         if (k == 3 && p == 1) return PongMsg;
         if (k == 4) return StartMsg;
@@ -89,7 +93,11 @@ public:
             msg.body.assign({0x04, 0x10, 0x01, 0x00});
         } else if (type == StartMsg) {
             msg.body.assign({0x04, 0x40, 0x00, 0x00});
-        } else if (type == KeyMsg) {
+        } else if (type == KeyMsg1) {
+            msg.body.assign(
+                    {0x0a, 0x20,
+                     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00});
+        } else if (type == KeyMsg2) {
             msg.body.assign(
                     {0x12, 0x20,
                      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -150,45 +158,63 @@ public:
     }
 
     int FirstFrame() const {
-        verify(Type() == MsgType::KeyMsg);
+        verify(Type() == MsgType::KeyMsg1 || Type() == MsgType::KeyMsg2);
         return int(body[9]) << 8 | int(body[8]);
     }
 
     void FirstFrame(u16 frame) {
-        verify(Type() == MsgType::KeyMsg);
+        verify(Type() == MsgType::KeyMsg1 || Type() == MsgType::KeyMsg2);
         body[8] = u8((frame >> 8) & 0xff);
         body[9] = u8(frame & 0xff);
     }
 
     int SecondFrame() const {
-        verify(Type() == MsgType::KeyMsg);
+        verify(Type() == MsgType::KeyMsg2);
         return int(body[17]) << 8 | int(body[16]);
     }
 
     void SecondFrame(u16 frame) {
-        verify(Type() == MsgType::KeyMsg);
+        verify(Type() == MsgType::KeyMsg2);
         body[16] = u8((frame >> 8) & 0xff);
         body[17] = u8(frame & 0xff);
     }
 
+    McsMessage FirstKeyMsg() const {
+        verify(Type() == MsgType::KeyMsg2);
+        auto ret = McsMessage::Create(MsgType::KeyMsg1, Sender());
+        for (int i = 0; i < 8; ++i) {
+            ret.body[2 + i] = body[2 + i];
+        }
+        return ret;
+    }
+
+    McsMessage SecondKeyMsg() const {
+        verify(Type() == MsgType::KeyMsg2);
+        auto ret = McsMessage::Create(MsgType::KeyMsg1, Sender());
+        for (int i = 0; i < 8; ++i) {
+            ret.body[2 + i] = body[10 + i];
+        }
+        return ret;
+    }
+
     u16 FirstKey() const {
-        verify(Type() == MsgType::KeyMsg);
+        verify(Type() == MsgType::KeyMsg1 || Type() == MsgType::KeyMsg2);
         return u16(body[2]) << 8 | u16(body[3]);
     }
 
     void FirstKey(u16 code) {
-        verify(Type() == MsgType::KeyMsg);
+        verify(Type() == MsgType::KeyMsg1 || Type() == MsgType::KeyMsg2);
         body[2] = u8((code >> 8) & 0xff);
         body[3] = u8(code & 0xff);
     }
 
     u16 SecondKey() const {
-        verify(Type() == MsgType::KeyMsg);
+        verify(Type() == MsgType::KeyMsg2);
         return u16(body[10]) << 8 | u16(body[11]);
     }
 
     void SecondKey(u16 code) {
-        verify(Type() == MsgType::KeyMsg);
+        verify(Type() == MsgType::KeyMsg2);
         body[10] = u8((code >> 8) & 0xff);
         body[11] = u8(code & 0xff);
     }

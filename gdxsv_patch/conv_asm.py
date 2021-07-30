@@ -4,6 +4,7 @@
 Convert asm into c++ (flycast codes).
 """
 
+import sys
 import re
 import time
 from typing import NamedTuple
@@ -83,6 +84,8 @@ with open('bin/gdxsv_patch.h', 'w') as f:
     f.write(f'WriteMem32_nommu(symbols["patch_id"], symbols[":patch_id"]);\n')
     f.write(f"#endif\n")
 
+sys.exit(0)
+# skip
 for line in open('bin/gdxsv_cheat.asm'):
     line = line.rstrip()
     if 'Disassembly' in line:
