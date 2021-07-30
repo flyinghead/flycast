@@ -76,14 +76,14 @@ private:
 #endif
 #if defined(__unix__) || defined(__APPLE__) || defined(__SWITCH__)
 	int stackOffset = 0;
-	u64 lastOffset = 0;
+	uintptr_t lastOffset = 0;
 	std::vector<u8> cieInstructions;
 	std::vector<u8> fdeInstructions;
 	std::vector<u8 *> registeredFrames;
 #endif
 };
 
-#if HOST_CPU != CPU_X64 && HOST_CPU != CPU_ARM64
+#if HOST_CPU != CPU_X64 && HOST_CPU != CPU_ARM64 && (HOST_CPU != CPU_X86 || defined(_WIN32))
 inline void UnwindInfo::start(void *address) {
 }
 inline void UnwindInfo::pushReg(u32 offset, int reg) {

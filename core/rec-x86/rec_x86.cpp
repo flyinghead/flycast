@@ -26,6 +26,7 @@
 #include "hw/sh4/sh4_interrupts.h"
 #include "hw/sh4/sh4_mem.h"
 #include "hw/mem/_vmem.h"
+#include "oslib/oslib.h"
 
 static int cycle_counter;
 static void (*mainloop)();
@@ -43,6 +44,7 @@ static X86Compiler* compiler;
 static Xbyak::Operand::Code alloc_regs[] {  Xbyak::Operand::EBX,  Xbyak::Operand::EBP,  Xbyak::Operand::ESI,  Xbyak::Operand::EDI, (Xbyak::Operand::Code)-1 };
 static s8 alloc_fregs[] = { 7, 6, 5, 4, -1 };
 alignas(16) static f32 thaw_regs[4];
+static UnwindInfo unwinder;
 
 void X86RegAlloc::doAlloc(RuntimeBlockInfo* block)
 {
@@ -359,14 +361,21 @@ void X86Compiler::thawXMM()
 
 void X86Compiler::genMainloop()
 {
+	unwinder.start((void *)getCurr());
 	push(esi);
+	unwinder.pushReg(getSize(), Xbyak::Operand::ESI);
 	push(edi);
+	unwinder.pushReg(getSize(), Xbyak::Operand::EDI);
 	push(ebp);
+	unwinder.pushReg(getSize(), Xbyak::Operand::EBP);
 	push(ebx);
+	unwinder.pushReg(getSize(), Xbyak::Operand::EBX);
 #ifndef _WIN32
 	// 16-byte alignment
 	sub(esp, 12);
+	unwinder.allocStack(getSize(), 12);
 #endif
+	unwinder.endProlog(getSize());
 
 	mov(ecx, dword[&Sh4cntx.pc]);
 
@@ -374,7 +383,6 @@ void X86Compiler::genMainloop()
 
 	mov(eax, 0);
 	//next_pc _MUST_ be on ecx
-	Xbyak::Label do_iter;
 	Xbyak::Label cleanup;
 //no_update:
 	Xbyak::Label no_updateLabel;
@@ -383,25 +391,6 @@ void X86Compiler::genMainloop()
 	mov(eax, (size_t)&p_sh4rcb->fpcb[0]);
 	and_(ecx, RAM_SIZE_MAX - 2);
 	jmp(dword[eax + ecx * 2]);
-
-//intc_sched:
-	Xbyak::Label intc_schedLabel;
-	L(intc_schedLabel);
-	add(dword[&cycle_counter], SH4_TIMESLICE);
-	call((void *)UpdateSystem);
-	cmp(eax, 0);
-	jnz(do_iter);
-	ret();
-
-//do_iter:
-	L(do_iter);
-	pop(ecx);
-	call((void *)rdv_DoInterrupts);
-	mov(ecx, eax);
-	mov(edx, dword[&Sh4cntx.CpuRunning]);
-	cmp(edx, 0);
-	jz(cleanup);
-	jmp(no_updateLabel);
 
 //cleanup:
 	L(cleanup);
@@ -416,6 +405,17 @@ void X86Compiler::genMainloop()
 
 	ret();
 
+//do_iter:
+	Xbyak::Label do_iter;
+	L(do_iter);
+	pop(ecx);
+	call((void *)rdv_DoInterrupts);
+	mov(ecx, eax);
+	mov(edx, dword[&Sh4cntx.CpuRunning]);
+	cmp(edx, 0);
+	jz(cleanup);
+	jmp(no_updateLabel);
+
 //ngen_LinkBlock_Shared_stub:
 	Xbyak::Label ngen_LinkBlock_Shared_stub;
 	L(ngen_LinkBlock_Shared_stub);
@@ -423,6 +423,23 @@ void X86Compiler::genMainloop()
 	sub(ecx, 5);
 	call((void *)rdv_LinkBlock);
 	jmp(eax);
+
+	size_t unwindSize = unwinder.end(getSize());
+	setSize(getSize() + unwindSize);
+
+	// Functions called by blocks
+
+//intc_sched:
+	unwinder.start((void *)getCurr());
+	size_t startOffset = getSize();
+	unwinder.endProlog(0);
+	Xbyak::Label intc_schedLabel;
+	L(intc_schedLabel);
+	add(dword[&cycle_counter], SH4_TIMESLICE);
+	call((void *)UpdateSystem);
+	cmp(eax, 0);
+	jnz(do_iter);
+	ret();
 
 //ngen_LinkBlock_cond_Next_stub:
 	Xbyak::Label ngen_LinkBlock_cond_Next_label;
@@ -442,6 +459,25 @@ void X86Compiler::genMainloop()
 	mov(edx, dword[&Sh4cntx.jdyn]);
 	jmp(ngen_LinkBlock_Shared_stub);
 
+	genMemHandlers();
+
+	unwindSize = unwinder.end(getSize() - startOffset);
+	setSize(getSize() + unwindSize);
+
+	// The following code and all code blocks use the same stack frame as mainloop()
+	// (direct jump from there or from a block)
+	unwinder.start((void *)getCurr());
+	startOffset = getSize();
+	unwinder.pushReg(0, Xbyak::Operand::ESI);
+	unwinder.pushReg(0, Xbyak::Operand::EDI);
+	unwinder.pushReg(0, Xbyak::Operand::EBP);
+	unwinder.pushReg(0, Xbyak::Operand::EBX);
+#ifndef _WIN32
+	// 16-byte alignment
+	unwinder.allocStack(0, 12);
+#endif
+	unwinder.endProlog(0);
+
 //ngen_FailedToFindBlock_:
 	Xbyak::Label failedToFindBlock;
 	L(failedToFindBlock);
@@ -455,7 +491,8 @@ void X86Compiler::genMainloop()
 	call((void *)rdv_BlockCheckFail);
 	jmp(eax);
 
-	genMemHandlers();
+	unwindSize = unwinder.end(CODE_SIZE - 128 - startOffset);
+	verify(unwindSize <= 128);
 
 	ready();
 
@@ -711,6 +748,7 @@ void ngen_ResetBlocks()
 	if (mainloop != nullptr)
 		return;
 
+	unwinder.clear();
 	compiler = new X86Compiler();
 
 	try {
@@ -732,8 +770,6 @@ void ngen_mainloop(void* v_cntx)
 		mainloop();
 	} catch (const SH4ThrownException&) {
 		ERROR_LOG(DYNAREC, "SH4ThrownException in mainloop");
-	} catch (...) {
-		ERROR_LOG(DYNAREC, "Uncaught unknown exception in mainloop");
 	}
 }
 

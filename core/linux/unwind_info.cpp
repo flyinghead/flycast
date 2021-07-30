@@ -55,6 +55,14 @@ constexpr int dwarfRegRAId = 16;
 constexpr int dwarfRegXmmId = 17;
 constexpr int dwarfRegSP = dwarfRegId[4];	// RSP
 
+#elif HOST_CPU == CPU_X86
+
+inline static int registerId(int x86Id) {
+	return x86Id;
+}
+constexpr int dwarfRegRAId = 8;
+constexpr int dwarfRegSP = 4;	// ESP
+
 #elif HOST_CPU == CPU_ARM64
 // https://developer.arm.com/documentation/ihi0057/latest
 //
@@ -71,7 +79,7 @@ constexpr int dwarfRegSP = 31;
 
 #endif
 
-#if HOST_CPU == CPU_X64 || HOST_CPU == CPU_ARM64
+#if HOST_CPU == CPU_X64 || HOST_CPU == CPU_ARM64 || HOST_CPU == CPU_X86
 
 using ByteStream = std::vector<u8>;
 
@@ -120,10 +128,10 @@ static void writeSLEB128(ByteStream &stream, int32_t v)
 
 static void writePadding(ByteStream &stream)
 {
-	int padding = stream.size() % 8;
+	int padding = stream.size() % sizeof(uintptr_t);
 	if (padding != 0)
 	{
-		padding = 8 - padding;
+		padding = sizeof(uintptr_t) - padding;
 		for (int i = 0; i < padding; i++)
 			write<u8>(stream, 0);
 	}
@@ -160,8 +168,8 @@ static void writeFDE(ByteStream &stream, const ByteStream &fdeInstructions, u32 
 	write<u32>(stream, offsetToCIE);
 
 	functionStart = stream.size();
-	write<u64>(stream, 0); // func start
-	write<u64>(stream, 0); // func size
+	write<uintptr_t>(stream, 0); // func start
+	write<uintptr_t>(stream, 0); // func size
 
 	writeULEB128(stream, 0); // LEB128 augmentation size
 
@@ -171,9 +179,9 @@ static void writeFDE(ByteStream &stream, const ByteStream &fdeInstructions, u32 
 	writeLength(stream, lengthPos, stream.size() - lengthPos - 4);
 }
 
-static void writeAdvanceLoc(ByteStream &fdeInstructions, u64 offset, u64 &lastOffset)
+static void writeAdvanceLoc(ByteStream &fdeInstructions, uintptr_t offset, uintptr_t &lastOffset)
 {
-	u64 delta = offset - lastOffset;
+	uintptr_t delta = offset - lastOffset;
 	if (delta == 0)
 		return;
 	if (delta < (1 << 6))
@@ -227,8 +235,8 @@ static void writeRegisterStackLocationExtended(ByteStream &instructions, int dwa
 void UnwindInfo::start(void *address)
 {
 	startAddr = (u8 *)address;
-#if HOST_CPU == CPU_X64
-	stackOffset = 8;
+#if HOST_CPU == CPU_X64 || HOST_CPU == CPU_X86
+	stackOffset = sizeof(uintptr_t);
 #else
 	stackOffset = 0;
 #endif
@@ -243,7 +251,7 @@ void UnwindInfo::start(void *address)
 
 void UnwindInfo::pushReg(u32 offset, int reg)
 {
-	stackOffset += 8;
+	stackOffset += sizeof(uintptr_t);
 	writeAdvanceLoc(fdeInstructions, offset, lastOffset);
 	writeDefineStackOffset(fdeInstructions, stackOffset);
 	writeRegisterStackLocation(fdeInstructions, registerId(reg), stackOffset);
@@ -289,7 +297,7 @@ size_t UnwindInfo::end(u32 offset, ptrdiff_t rwRxOffset)
 
 	if (!unwindInfo.empty())
 	{
-		u64 *unwindfuncaddr = (u64 *)(unwindInfoDest + functionStart);
+		uintptr_t *unwindfuncaddr = (uintptr_t *)(unwindInfoDest + functionStart);
 		unwindfuncaddr[0] = (uintptr_t)startAddr + rwRxOffset;
 		unwindfuncaddr[1] = (ptrdiff_t)(endAddr - startAddr);
 
