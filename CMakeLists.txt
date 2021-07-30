@@ -899,6 +899,7 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/deps/protobuf-3.13.0/src/google/protobuf/wrappers.pb.h)
 
 target_sources(${PROJECT_NAME} PRIVATE
+        core/gdxsv/libs.h
         core/gdxsv/gdx_queue.h
         core/gdxsv/gdxsv.cpp
         core/gdxsv/gdxsv.h

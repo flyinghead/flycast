@@ -212,6 +212,16 @@ private:
                         }
                     }
 
+                    //
+                    /*
+                    if (msg.Type() == McsMessage::MsgType::KeyMsg1) {
+                        if (key_msg_index_[p].empty() ||
+                            msg.FirstSwCrnt() == ((msg_list_[key_msg_index_[p].back()].FirstSwCrnt() + 1) & 0x3f)) {
+                            key_msg_index_[p].emplace_back(i);
+                        }
+                        // ??
+                    }
+                     */
                     if (msg.Type() == McsMessage::MsgType::KeyMsg1) {
                         key_msg_index_[p].emplace_back(i);
                     }
@@ -351,24 +361,23 @@ private:
                 case McsMessage::MsgType::ForceMsg:
                     break;
                 case McsMessage::MsgType::KeyMsg1: {
-                    // printf("KeyMsg1:%s\n", msg.ToHex().c_str());
+                    // NOTICE_LOG(COMMON, "KeyMsg1:%s", msg.ToHex().c_str());
                     for (int i = 0; i < log_file_.users_size(); ++i) {
-                        auto key_msg = msg_list_[key_msg_index_[i][msg.FirstFrame()]];
-                        printf("KeyMsg:%s\n", key_msg.ToHex().c_str());
+                        auto key_msg = msg_list_[key_msg_index_[i][msg.FirstSeq()]];
+                        NOTICE_LOG(COMMON, "KeyMsg:%s\n", key_msg.ToHex().c_str());
                         std::copy(key_msg.body.begin(), key_msg.body.end(), std::back_inserter(recv_buf_));
                     }
                     break;
                 }
                 case McsMessage::MsgType::KeyMsg2: {
-                    // printf("KeyMsg2:%s\n", msg.ToHex().c_str());
                     for (int i = 0; i < log_file_.users_size(); ++i) {
-                        auto key_msg = msg_list_[key_msg_index_[i][msg.FirstFrame()]];
-                        printf("KeyMsg:%s\n", key_msg.ToHex().c_str());
+                        auto key_msg = msg_list_[key_msg_index_[i][msg.FirstSeq()]];
+                        NOTICE_LOG(COMMON, "KeyMsg:%s\n", key_msg.ToHex().c_str());
                         std::copy(key_msg.body.begin(), key_msg.body.end(), std::back_inserter(recv_buf_));
                     }
                     for (int i = 0; i < log_file_.users_size(); ++i) {
-                        auto key_msg = msg_list_[key_msg_index_[i][msg.SecondFrame()]];
-                        printf("KeyMsg:%s\n", key_msg.ToHex().c_str());
+                        auto key_msg = msg_list_[key_msg_index_[i][msg.SecondSeq()]];
+                        NOTICE_LOG(COMMON, "KeyMsg:%s\n", key_msg.ToHex().c_str());
                         std::copy(key_msg.body.begin(), key_msg.body.end(), std::back_inserter(recv_buf_));
                     }
                 }
@@ -408,6 +417,7 @@ private:
         // TODO: disk1
         if (log_file_.game_disk() == "dc2") {
             gdxsv_WriteMem16(0x8c045f64, 9);
+            gdxsv_WriteMem8(0x0c3abb90, 1);
         }
         if (log_file_.game_disk() == "ps2") {
             gdxsv_WriteMem32(0x0037f5a0, 0);
@@ -438,6 +448,7 @@ private:
     void RestorePatch() {
         if (log_file_.game_disk() == "dc2") {
             gdxsv_WriteMem16(0x8c045f64, 0x410b);
+            gdxsv_WriteMem8(0x0c3abb90, 2);
         }
 
         if (log_file_.game_disk() == "ps2") {

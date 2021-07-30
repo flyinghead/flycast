@@ -157,26 +157,24 @@ public:
         body[3] = n;
     }
 
-    int FirstFrame() const {
+    int FirstSwCrnt() const {
+        verify(Type() == MsgType::KeyMsg1 || Type() == MsgType::KeyMsg2);
+        return int(body[7]) << 8 | int(body[6]);
+    }
+
+    int SecondSwCrnt() const {
+        verify(Type() == MsgType::KeyMsg2);
+        return int(body[15]) << 8 | int(body[14]);
+    }
+
+    int FirstSeq() const {
         verify(Type() == MsgType::KeyMsg1 || Type() == MsgType::KeyMsg2);
         return int(body[9]) << 8 | int(body[8]);
     }
 
-    void FirstFrame(u16 frame) {
-        verify(Type() == MsgType::KeyMsg1 || Type() == MsgType::KeyMsg2);
-        body[8] = u8((frame >> 8) & 0xff);
-        body[9] = u8(frame & 0xff);
-    }
-
-    int SecondFrame() const {
+    int SecondSeq() const {
         verify(Type() == MsgType::KeyMsg2);
         return int(body[17]) << 8 | int(body[16]);
-    }
-
-    void SecondFrame(u16 frame) {
-        verify(Type() == MsgType::KeyMsg2);
-        body[16] = u8((frame >> 8) & 0xff);
-        body[17] = u8(frame & 0xff);
     }
 
     McsMessage FirstKeyMsg() const {
@@ -195,28 +193,6 @@ public:
             ret.body[2 + i] = body[10 + i];
         }
         return ret;
-    }
-
-    u16 FirstKey() const {
-        verify(Type() == MsgType::KeyMsg1 || Type() == MsgType::KeyMsg2);
-        return u16(body[2]) << 8 | u16(body[3]);
-    }
-
-    void FirstKey(u16 code) {
-        verify(Type() == MsgType::KeyMsg1 || Type() == MsgType::KeyMsg2);
-        body[2] = u8((code >> 8) & 0xff);
-        body[3] = u8(code & 0xff);
-    }
-
-    u16 SecondKey() const {
-        verify(Type() == MsgType::KeyMsg2);
-        return u16(body[10]) << 8 | u16(body[11]);
-    }
-
-    void SecondKey(u16 code) {
-        verify(Type() == MsgType::KeyMsg2);
-        body[10] = u8((code >> 8) & 0xff);
-        body[11] = u8(code & 0xff);
     }
 
     int Sender() const {
