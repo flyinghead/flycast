@@ -285,11 +285,7 @@ void Gdxsv::HandleRPC() {
 }
 
 void Gdxsv::StartPingTest() {
-    std::thread([this]() {
-        gui_display_notification("Ping testing...", 3000);
-        GcpPingTest();
-        gui_display_notification("Ping test finished", 3000);
-    }).detach();
+    std::thread([this]() { GcpPingTest(); }).detach();
 }
 
 void Gdxsv::GcpPingTest() {
@@ -321,6 +317,7 @@ void Gdxsv::GcpPingTest() {
     };
 
     for (const auto &region_host : gcp_region_hosts) {
+        gui_display_notification("Ping testing...", 1000);
         TcpClient client;
         std::stringstream ss;
         ss << "HEAD " << get_path << " HTTP/1.1" << "\r\n";
@@ -365,6 +362,7 @@ void Gdxsv::GcpPingTest() {
         client.Close();
     }
     gcp_ping_test_finished = true;
+    gui_display_notification("Ping test finished", 3000);
 }
 
 std::string Gdxsv::GenerateLoginKey() {
