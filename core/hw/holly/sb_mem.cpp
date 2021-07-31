@@ -17,7 +17,7 @@
 #include "hw/bba/bba.h"
 #include "cfg/option.h"
 
-#include "gdxsv/gdxsv.h"
+#include "gdxsv/gdxsv_emu_hooks.h"
 
 MemChip *sys_rom;
 MemChip *sys_nvmem;
@@ -343,8 +343,8 @@ T DYNACALL ReadMem_area0(u32 addr)
 		else
 			return (T)0;
 	}
-	if (gdxsv.Enabled() && (addr == 0x00400000 || addr == 0x00400001)) {
-	    gdxsv.SyncNetwork(addr & 1);
+	if (addr == 0x00400000) {
+	    gdxsv_emu_rpc();
 	}
     INFO_LOG(MEMORY, "Read from area0<%d> not implemented [Unassigned], addr=%x", sz, addr);
 	return 0;

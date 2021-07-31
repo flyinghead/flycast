@@ -126,27 +126,16 @@ public:
         state_ = State::End;
     }
 
-    void OnGameWrite() {
-        gdx_queue q{};
-        u32 gdx_txq_addr = symbols_.at("gdx_txq");
-        if (gdx_txq_addr == 0) return;
-        q.head = gdxsv_ReadMem32(gdx_txq_addr);
-        q.tail = gdxsv_ReadMem32(gdx_txq_addr + 4);
-        u32 buf_addr = gdx_txq_addr + 8;
+    u32 OnSockWrite(u32 addr, u32 size) {
+        u8 buf[InetBufSize];
+        for (int i = 0; i < size; ++i) {
+            buf[i] = gdxsv_ReadMem8(addr + i);
+        }
 
-        int n = gdx_queue_size(&q);
-        if (0 < n) {
-            u8 buf[GDX_QUEUE_SIZE] = {};
-            for (int i = 0; i < n; ++i) {
-                buf[i] = gdxsv_ReadMem8(buf_addr + q.head);
-                gdx_queue_pop(&q); // dummy pop
-            }
-            gdxsv_WriteMem32(gdx_txq_addr, q.head);
-            if (state_ <= State::LbsStartBattleFlow) {
-                lbs_tx_reader_.Write((const char *) buf, n);
-            } else {
-                mcs_tx_reader_.Write((const char *) buf, n);
-            }
+        if (state_ <= State::LbsStartBattleFlow) {
+            lbs_tx_reader_.Write((const char *) buf, size);
+        } else {
+            mcs_tx_reader_.Write((const char *) buf, size);
         }
 
         if (state_ <= State::LbsStartBattleFlow) {
@@ -156,43 +145,36 @@ public:
         }
 
         ApplyPatch(false);
+
+        return size;
     }
 
-    void OnGameRead() {
+    u32 OnSockRead(u32 addr, u32 size) {
         if (state_ <= State::LbsStartBattleFlow) {
             ProcessLbsMessage();
         }
 
         if (recv_buf_.empty()) {
-            return;
+            return 0;
         }
 
+        int n = std::min<int>(recv_buf_.size(), size);
+        for (int i = 0; i < n; ++i) {
+            gdxsv_WriteMem8(addr + i, recv_buf_.front());
+            recv_buf_.pop_front();
+        }
+        return n;
+    }
+
+    u32 OnSockPoll() {
+        if (state_ <= State::LbsStartBattleFlow) {
+            ProcessLbsMessage();
+        }
         if (0 < recv_delay_) {
             recv_delay_--;
-            return;
+            return 0;
         }
-
-        u32 gdx_rxq_addr = symbols_.at("gdx_rxq");
-        if (gdx_rxq_addr == 0) return;
-        gdx_queue q{};
-        q.head = gdxsv_ReadMem32(gdx_rxq_addr);
-        q.tail = gdxsv_ReadMem32(gdx_rxq_addr + 4);
-        u32 buf_addr = gdx_rxq_addr + 8;
-
-        if (gdx_queue_avail(&q) < GDX_QUEUE_SIZE / 2) {
-            recv_delay_ = 1;
-            return;
-        }
-
-        int n = std::min<int>(recv_buf_.size(), static_cast<int>(gdx_queue_avail(&q)));
-        if (0 < n) {
-            for (int i = 0; i < n; ++i) {
-                gdxsv_WriteMem8(buf_addr + q.tail, recv_buf_.front());
-                recv_buf_.pop_front();
-                gdx_queue_push(&q, 0); // dummy push
-            }
-            gdxsv_WriteMem32(gdx_rxq_addr + 4, q.tail);
-        }
+        return recv_buf_.size();
     }
 
 private:
@@ -235,6 +217,7 @@ private:
         if (state_ == State::Start) {
             LbsMessage::SvNotice(LbsMessage::lbsReadyBattle).Serialize(recv_buf_);
             recv_delay_ = 1;
+            state_ = State::LbsStartBattleFlow;
         }
 
         LbsMessage msg;
@@ -364,7 +347,7 @@ private:
                     // NOTICE_LOG(COMMON, "KeyMsg1:%s", msg.ToHex().c_str());
                     for (int i = 0; i < log_file_.users_size(); ++i) {
                         auto key_msg = msg_list_[key_msg_index_[i][msg.FirstSeq()]];
-                        NOTICE_LOG(COMMON, "KeyMsg:%s\n", key_msg.ToHex().c_str());
+                        // NOTICE_LOG(COMMON, "KeyMsg:%s\n", key_msg.ToHex().c_str());
                         std::copy(key_msg.body.begin(), key_msg.body.end(), std::back_inserter(recv_buf_));
                     }
                     break;
@@ -372,12 +355,12 @@ private:
                 case McsMessage::MsgType::KeyMsg2: {
                     for (int i = 0; i < log_file_.users_size(); ++i) {
                         auto key_msg = msg_list_[key_msg_index_[i][msg.FirstSeq()]];
-                        NOTICE_LOG(COMMON, "KeyMsg:%s\n", key_msg.ToHex().c_str());
+                        // NOTICE_LOG(COMMON, "KeyMsg:%s\n", key_msg.ToHex().c_str());
                         std::copy(key_msg.body.begin(), key_msg.body.end(), std::back_inserter(recv_buf_));
                     }
                     for (int i = 0; i < log_file_.users_size(); ++i) {
                         auto key_msg = msg_list_[key_msg_index_[i][msg.SecondSeq()]];
-                        NOTICE_LOG(COMMON, "KeyMsg:%s\n", key_msg.ToHex().c_str());
+                        // NOTICE_LOG(COMMON, "KeyMsg:%s\n", key_msg.ToHex().c_str());
                         std::copy(key_msg.body.begin(), key_msg.body.end(), std::back_inserter(recv_buf_));
                     }
                 }

@@ -7,7 +7,7 @@
 #include <string>
 #include "rend/gui.h"
 #include "gdxsv_network.h"
-#include "gdx_queue.h"
+#include "gdx_rpc.h"
 
 class GdxsvBackendUdp {
 public:
@@ -71,52 +71,27 @@ public:
         net_terminate_ = true;
     }
 
-    void OnGameWrite() {
-        u32 gdx_txq_addr = symbols_.at("gdx_txq");
-        if (gdx_txq_addr == 0) {
-            return;
+    u32 OnSockRead(u32 addr, u32 size) {
+        std::lock_guard<std::mutex> lock(recv_buf_mtx_);
+        u32 n = std::min<u32>(recv_buf_.size(), size);
+        for (int i = 0; i < n; ++i) {
+            gdxsv_WriteMem8(addr + i, recv_buf_.front());
+            recv_buf_.pop_front();
         }
-
-        gdx_queue q{};
-        q.head = gdxsv_ReadMem32(gdx_txq_addr);
-        q.tail = gdxsv_ReadMem32(gdx_txq_addr + 4);
-        u32 buf_addr = gdx_txq_addr + 8;
-
-        int n = gdx_queue_size(&q);
-        if (0 < n) {
-            std::lock_guard<std::mutex> lock(send_buf_mtx_);
-            for (int i = 0; i < n; ++i) {
-                send_buf_.push_back(gdxsv_ReadMem8(buf_addr + q.head));
-                gdx_queue_pop(&q); // dummy pop
-            }
-            gdxsv_WriteMem32(gdx_txq_addr, q.head);
-        }
+        return n;
     }
 
-    void OnGameRead() {
+    u32 OnSockWrite(u32 addr, u32 size) {
+        std::lock_guard<std::mutex> lock(send_buf_mtx_);
+        for (int i = 0; i < size; ++i) {
+            send_buf_.push_back(gdxsv_ReadMem8(addr + i));
+        }
+        return size;
+    }
+
+    u32 OnSockPoll() {
         std::lock_guard<std::mutex> lock(recv_buf_mtx_);
-        int n = recv_buf_.size();
-        if (n <= 0) {
-            return;
-        }
-
-        u32 gdx_rxq_addr = symbols_.at("gdx_rxq");
-        if (gdx_rxq_addr == 0) {
-            return;
-        }
-
-        gdx_queue q{};
-        q.head = gdxsv_ReadMem32(gdx_rxq_addr);
-        q.tail = gdxsv_ReadMem32(gdx_rxq_addr + 4);
-        u32 buf_addr = gdx_rxq_addr + 8;
-
-        n = std::min<int>(n, gdx_queue_avail(&q));
-        for (int i = 0; i < n; ++i) {
-            gdxsv_WriteMem8(buf_addr + q.tail, recv_buf_.front());
-            recv_buf_.pop_front();
-            gdx_queue_push(&q, 0); // dummy push
-        }
-        gdxsv_WriteMem32(gdx_rxq_addr + 4, q.tail);
+        return recv_buf_.size();
     }
 
 private:
@@ -237,7 +212,7 @@ private:
 
                     if (msg_buf.Packet().SerializeToArray((void *) buf, (int) sizeof(buf))) {
                         if (udp_client_.SendTo((const char *) buf, msg_buf.Packet().GetCachedSize(), mcs_remote_)) {
-                            udp_retransmit_countdown = 16;
+                            udp_retransmit_countdown = 22;
                         }
                     }
                 }

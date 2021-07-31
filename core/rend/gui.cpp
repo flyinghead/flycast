@@ -42,7 +42,7 @@
 #include "emulator.h"
 #include "rend/mainui.h"
 
-#include "gdxsv/gdxsv.h"
+#include "gdxsv/gdxsv_emu_hooks.h"
 
 extern void UpdateInputState();
 static bool game_started;
@@ -905,38 +905,6 @@ static void error_popup()
         ImGui::SetCursorPosX((currentwidth - 80.f * scaling) / 2.f + ImGui::GetStyle().WindowPadding.x);
         if (ImGui::Button("OK", ImVec2(80.f * scaling, 0.f)))
         {
-            ImGui::CloseCurrentPopup();
-        }
-        ImGui::SetItemDefaultFocus();
-        ImGui::PopStyleVar();
-        ImGui::EndPopup();
-    }
-}
-
-static void update_popup()
-{
-    if (gdxsv.UpdateAvailable() && no_popup_opened())
-    {
-        ImGui::OpenPopup("New version");
-        gdxsv.DismissUpdateDialog();
-    }
-    if (ImGui::BeginPopupModal("New version", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
-    {
-        ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + 400.f * scaling);
-        ImGui::TextWrapped("  %s is available for download!  ", gdxsv.LatestVersion().c_str());
-        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(16 * scaling, 3 * scaling));
-        float currentwidth = ImGui::GetContentRegionAvail().x;
-        ImGui::SetCursorPosX((currentwidth - 100.f * scaling) / 2.f + ImGui::GetStyle().WindowPadding.x - 55.f * scaling);
-        if (ImGui::Button("Download", ImVec2(100.f * scaling, 0.f)))
-        {
-            gdxsv.OpenDownloadPage();
-            ImGui::CloseCurrentPopup();
-        }
-        ImGui::SameLine();
-        ImGui::SetCursorPosX((currentwidth - 100.f * scaling) / 2.f + ImGui::GetStyle().WindowPadding.x + 55.f * scaling);
-        if (ImGui::Button("Cancel", ImVec2(100.f * scaling, 0.f)))
-        {
-            gdxsv.DismissUpdateDialog();
             ImGui::CloseCurrentPopup();
         }
         ImGui::SetItemDefaultFocus();
@@ -1932,7 +1900,7 @@ static void gui_display_content()
     ImGui::PopStyleVar();
 
 	error_popup();
-    update_popup();
+    gdxsv_update_popup();
     contentpath_warning_popup();
     wireless_warning_popup();
 }

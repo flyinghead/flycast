@@ -10,15 +10,25 @@ typedef unsigned int u32;
 #define GDXMAIN1 __attribute__((section("gdx.main1")))
 #define GDXMAIN2 __attribute__((section("gdx.main2")))
 
+#if DEBUG_PRINT
 #include "mini-printf.h"
+#endif
+
+#define read8(a) *((u8*)(a))
+#define read16(a) *((u16*)(a))
+#define read32(a) *((u32*)(a))
+#define write8(a, b) *((u8*)(a)) = (b)
+#define write16(a, b) *((u16*)(a)) = (b)
+#define write32(a, b) *((u32*)(a)) = (b)
 
 #define BIN_OFFSET 0x80000000
-#define GDX_QUEUE_SIZE 1024
-
 
 enum {
-    RPC_TCP_OPEN = 1,
-    RPC_TCP_CLOSE = 2,
+    GDX_RPC_SOCK_OPEN = 1,
+    GDX_RPC_SOCK_CLOSE = 2,
+    GDX_RPC_SOCK_READ = 3,
+    GDX_RPC_SOCK_WRITE = 4,
+    GDX_RPC_SOCK_POLL = 5,
 };
 
 struct gdx_rpc_t {
@@ -28,8 +38,6 @@ struct gdx_rpc_t {
     u32 param2;
     u32 param3;
     u32 param4;
-    u8 name1[128];
-    u8 name2[128];
 };
 
 struct hostent {
@@ -48,36 +56,6 @@ struct sockaddr_t {
     u8 sin_zero[8];
 };
 
-struct gdx_queue {
-    u32 head;
-    u32 tail;
-    u8 buf[GDX_QUEUE_SIZE];
-};
-
-void GDXFUNC gdx_queue_init(struct gdx_queue *q) {
-    q->head = 0;
-    q->tail = 0;
-}
-
-u32 GDXFUNC gdx_queue_size(struct gdx_queue *q) {
-    return (q->tail + GDX_QUEUE_SIZE - q->head) % GDX_QUEUE_SIZE;
-}
-
-u32 GDXFUNC gdx_queue_avail(struct gdx_queue *q) {
-    return GDX_QUEUE_SIZE - gdx_queue_size(q) - 1;
-}
-
-void GDXFUNC gdx_queue_push(struct gdx_queue *q, u8 data) {
-    q->buf[q->tail] = data;
-    q->tail = (q->tail + 1) % GDX_QUEUE_SIZE;
-}
-
-u8 GDXFUNC gdx_queue_pop(struct gdx_queue *q) {
-    u8 ret = q->buf[q->head];
-    q->head = (q->head + 1) % GDX_QUEUE_SIZE;
-    return ret;
-}
-
 GDXDATA u32 patch_id = 0;
 GDXDATA u32 disk = 0;
 GDXDATA u32 is_online = 0;
@@ -91,9 +69,7 @@ struct hostent host_entry GDXDATA = {0};
 u8 *host_addr_list[1] GDXDATA = {0};
 u8 host_addr_0[4] GDXDATA = {0};
 volatile GDXDATA u8 dummy = 0;
-struct gdx_rpc_t gdx_rpc GDXDATA = {0};
-struct gdx_queue gdx_rxq GDXDATA = {0};
-struct gdx_queue gdx_txq GDXDATA = {0};
+volatile struct gdx_rpc_t gdx_rpc GDXDATA = {0};
 
 void GDXFUNC gdx_printf(const char *format, ...) {
 #if DEBUG_PRINT
@@ -106,42 +82,15 @@ void GDXFUNC gdx_printf(const char *format, ...) {
 
 #define PRINT_RETURN_ADDR do{ gdx_printf("RETURN ADDR: 0x%08x\n", __builtin_extract_return_addr (__builtin_return_address (0))); } while(0);
 
-u32 GDXFUNC read32(u32 addr) {
-    u32 *p = addr;
-    return *p;
-}
-
-u16 GDXFUNC read16(u32 addr) {
-    u16 *p = addr;
-    return *p;
-}
-
-u8 GDXFUNC read8(u32 addr) {
-    u8 *p = addr;
-    return *p;
-}
-
-void GDXFUNC write32(u32 addr, u32 value) {
-    u32 *p = addr;
-    *p = value;
-}
-
-void GDXFUNC write16(u32 addr, u16 value) {
-    u16 *p = addr;
-    *p = value;
-}
-
-void GDXFUNC write8(u32 addr, u8 value) {
-    u8 *p = addr;
-    *p = value;
-}
-
-void GDXFUNC gdx_read_sync() {
+u32 GDXFUNC gdx_rpc_call(u32 request, u32 param1, u32 param2, u32 param3, u32 param4) {
+    gdx_rpc.request = request;
+    gdx_rpc.response = 0;
+    gdx_rpc.param1 = param1;
+    gdx_rpc.param2 = param2;
+    gdx_rpc.param3 = param3;
+    gdx_rpc.param4 = param4;
     dummy = read8(0x00400000);
-}
-
-void GDXFUNC gdx_write_sync() {
-    dummy = read8(0x00400001);
+    return gdx_rpc.response;
 }
 
 int GDXFUNC gdx_sock_create(int param1, int param2, int param3) {
@@ -162,13 +111,8 @@ int GDXFUNC gdx_sock_close(int param1) {
     int org_ret = ((int (*)(int)) 0x0c1a87a0)(param1);
     return org_ret;
 #else
-    gdx_queue_init(&gdx_rxq);
-    gdx_queue_init(&gdx_txq);
-    gdx_rpc.request = RPC_TCP_CLOSE;
-    gdx_rpc.param1 = param1;
-    gdx_rpc.param2 = 0;
     is_online = 0;
-    gdx_read_sync();
+    gdx_rpc_call(GDX_RPC_SOCK_CLOSE, param1, 0, 0, 0);
     return 0;
 #endif
 }
@@ -213,17 +157,10 @@ int GDXFUNC gdx_connect_sock(int sock, struct sockaddr_t *sock_addr, int len) {
     return org_ret;
 #else
     is_online = 1;
-    gdx_queue_init(&gdx_rxq);
-    gdx_queue_init(&gdx_txq);
     u32 addr = sock_addr->sin_addr;
     u16 port = sock_addr->sin_port;
     port = port >> 8 | (port & 0xff) << 8;
-    gdx_rpc.request = RPC_TCP_OPEN;
-    gdx_rpc.param1 = addr == 0x0707;
-    gdx_rpc.param2 = addr;
-    gdx_rpc.param3 = port;
-    gdx_read_sync();
-
+    gdx_rpc_call(GDX_RPC_SOCK_OPEN, addr == 0x0707, addr, port, 0);
     if (addr == 0x0707) {
         return 1;
     } else {
@@ -257,12 +194,7 @@ int GDXFUNC gdx_ppp_get_status(int param1, int param2, u8 *param3) {
     return org_ret;
 #else
     if (param1 == 0 || param1 == 1) {
-        gdx_queue_init(&gdx_rxq);
-        gdx_queue_init(&gdx_txq);
-        gdx_rpc.request = RPC_TCP_CLOSE;
-        gdx_rpc.param1 = param1;
-        gdx_rpc.param2 = 1;
-        gdx_read_sync();
+        gdx_rpc_call(GDX_RPC_SOCK_CLOSE, param1, 1, 0, 0);
     } else if (param1 == 2 || param1 == 3) {
         for (int i = 0; i < sizeof(ppp_status_ok); ++i) {
             param3[i] = ppp_status_ok[i];
@@ -304,8 +236,7 @@ int GDXFUNC gdx_select(u32 param1, void *param2, u32 param3, void *param4, u32 p
     return org_ret;
 #else
     if (is_online) {
-        gdx_read_sync();
-        return 0 < gdx_queue_size(&gdx_rxq);
+        return 0 < gdx_rpc_call(GDX_RPC_SOCK_POLL, 0, 0, 0, 0);
     } else {
         return -1;
     }
@@ -322,13 +253,7 @@ int GDXFUNC gdx_lbs_sock_write(u32 sock, u8 *buf, u32 size) {
     int org_ret = ((int (*)(u32, u8 *, u32)) 0x0c1a8ad4)(sock, buf, size); // call original sock_write function
     return org_ret;
 #else
-    int n = gdx_queue_avail(&gdx_txq);
-    if (size < n) n = size;
-    for (int i = 0; i < n; ++i) {
-        gdx_queue_push(&gdx_txq, buf[i]);
-    }
-    gdx_write_sync();
-    return n;
+    return gdx_rpc_call(GDX_RPC_SOCK_WRITE, buf, size, 0, 0);
 #endif
 }
 
@@ -344,16 +269,8 @@ int GDXFUNC gdx_lbs_sock_read(u32 sock, u8 *buf, u32 size) {
     return org_ret;
 #else
     if (is_online) {
-        gdx_read_sync();
-        int n = gdx_queue_size(&gdx_rxq);
-        if (size < n) n = size;
-        for (int i = 0; i < n; ++i) {
-            write8(buf + i, gdx_queue_pop(&gdx_rxq));
-        }
-        for (int i = 0; i < n; ++i) {
-            gdx_printf("%02x", buf[i]);
-        }
-        gdx_printf("\n");
+        int n = gdx_rpc_call(GDX_RPC_SOCK_READ, buf, size, 0, 0);
+        gdx_printf("write %d", n);
         return n;
     } else {
         return -1;
@@ -372,17 +289,7 @@ int GDXFUNC gdx_mcs_sock_read(u32 sock, u8 *buf, u32 size) {
     return org_ret;
 #else
     if (is_online) {
-        gdx_read_sync();
-        int n = gdx_queue_size(&gdx_rxq);
-        if (size < n) n = size;
-        for (int i = 0; i < n; ++i) {
-            write8(buf + i, gdx_queue_pop(&gdx_rxq));
-        }
-        for (int i = 0; i < n; i++) {
-            gdx_printf("%02x", buf[i]);
-        }
-        gdx_printf("\n");
-        return n;
+        return gdx_rpc_call(GDX_RPC_SOCK_READ, buf, size, 0, 0);
     } else {
         return -1;
     }
@@ -399,16 +306,7 @@ int GDXFUNC gdx_mcs_sock_write(u32 sock, u8 *buf, u32 size, int unk) {
     gdx_printf("\n");
     return org_ret;
 #else
-    int n = gdx_queue_avail(&gdx_txq);
-    if (size < n) n = size;
-    for (int i = 0; i < n; ++i) {
-        gdx_queue_push(&gdx_txq, buf[i]);
-    }
-    for (int i = 0; i < n; ++i) {
-        gdx_printf("%02x", buf[i]);
-    }
-    gdx_write_sync();
-    return n;
+    return gdx_rpc_call(GDX_RPC_SOCK_WRITE, buf, size, 0, 0);
 #endif
 }
 
@@ -425,12 +323,7 @@ int GDXFUNC gdx_softreset_disconnect() {
     gdx_printf("ret = %d\n", ret);
 
     if (ret == 1 && is_online) {
-        gdx_queue_init(&gdx_rxq);
-        gdx_queue_init(&gdx_txq);
-        gdx_rpc.request = RPC_TCP_CLOSE;
-        gdx_rpc.param1 = 0;
-        gdx_rpc.param2 = 2;
-        gdx_read_sync();
+        return gdx_rpc_call(GDX_RPC_SOCK_CLOSE, 0, 2, 0, 0);
     }
     return ret;
 }
@@ -441,8 +334,6 @@ void GDXFUNC gdx_initialize() {
         return;
     }
 
-    gdx_queue_init(&gdx_rxq);
-    gdx_queue_init(&gdx_txq);
     is_online = 0;
 
     if (disk == 1) {

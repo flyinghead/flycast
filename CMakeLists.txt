@@ -900,7 +900,7 @@ target_sources(${PROJECT_NAME} PRIVATE
 
 target_sources(${PROJECT_NAME} PRIVATE
         core/gdxsv/libs.h
-        core/gdxsv/gdx_queue.h
+        core/gdxsv/gdx_rpc.h
         core/gdxsv/gdxsv.cpp
         core/gdxsv/gdxsv.h
         core/gdxsv/gdxsv.pb.cc
@@ -910,7 +910,9 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/gdxsv/gdxsv_backend_udp.h
         core/gdxsv/gdxsv_network.cpp
         core/gdxsv/gdxsv_network.h
-        core/gdxsv/gdxsv_patch.h
+        core/gdxsv/gdxsv_patch.inc
+        core/gdxsv/gdxsv_emu_hooks.cpp
+        core/gdxsv/gdxsv_emu_hooks.h
         core/gdxsv/lbs_message.h
         core/gdxsv/mcs_message.h)
 

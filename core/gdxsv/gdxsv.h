@@ -37,7 +37,7 @@ public:
 
     void Update();
 
-    void SyncNetwork(bool write);
+    void HandleRPC();
 
     bool UpdateAvailable();
 

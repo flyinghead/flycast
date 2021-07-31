@@ -7,7 +7,7 @@
 #include <utility>
 
 #include "libs.h"
-#include "gdx_queue.h"
+#include "gdx_rpc.h"
 #include "gdxsv_network.h"
 #include "lbs_message.h"
 
@@ -49,54 +49,17 @@ public:
         return tcp_client_.local_ip();
     }
 
-    void OnGameWrite() {
-        gdx_queue q{};
-        u32 gdx_txq_addr = symbols_.at("gdx_txq");
-        if (gdx_txq_addr == 0) return;
-        q.head = gdxsv_ReadMem32(gdx_txq_addr);
-        q.tail = gdxsv_ReadMem32(gdx_txq_addr + 4);
-        u32 buf_addr = gdx_txq_addr + 8;
-
-        int n = gdx_queue_size(&q);
-        if (0 < n) {
-            u8 buf[GDX_QUEUE_SIZE] = {};
-            for (int i = 0; i < n; ++i) {
-                buf[i] = gdxsv_ReadMem8(buf_addr + q.head);
-                gdx_queue_pop(&q); // dummy pop
-            }
-            gdxsv_WriteMem32(gdx_txq_addr, q.head);
-
-            int m = tcp_client_.Send((char *) buf, n);
-            if (n != m) {
-                WARN_LOG(COMMON, "TcpSend failed\n");
-                tcp_client_.Close();
-            }
-        }
-    }
-
-    void OnGameRead() {
-        u8 buf[GDX_QUEUE_SIZE];
-        u32 gdx_rxq_addr = symbols_.at("gdx_rxq");
-        if (gdx_rxq_addr == 0) return;
-        gdx_queue q{};
-        q.head = gdxsv_ReadMem32(gdx_rxq_addr);
-        q.tail = gdxsv_ReadMem32(gdx_rxq_addr + 4);
-        u32 buf_addr = gdx_rxq_addr + 8;
-
-        int n = tcp_client_.ReadableSize();
+    u32 OnSockRead(u32 addr, u32 size) {
+        u8 buf[InetBufSize];
+        u32 n = std::min(tcp_client_.ReadableSize(), size);
         if (n <= 0) {
-            return;
+            return 0;
         }
-        n = std::min<int>(n, static_cast<int>(gdx_queue_avail(&q)));
         n = tcp_client_.Recv((char *) buf, n);
-
         if (0 < n) {
             for (int i = 0; i < n; ++i) {
-                gdxsv_WriteMem8(buf_addr + q.tail, buf[i]);
-                gdx_queue_push(&q, 0); // dummy push
+                gdxsv_WriteMem8(addr + i, buf[i]);
             }
-            gdxsv_WriteMem32(gdx_rxq_addr + 4, q.tail);
-
             if (callback_lbs_packet_) {
                 lbs_msg_reader_.Write((char *) buf, n);
                 while (lbs_msg_reader_.Read(lbs_msg_)) {
@@ -104,6 +67,20 @@ public:
                 }
             }
         }
+        return n;
+    }
+
+    u32 OnSockWrite(u32 addr, u32 size) {
+        u8 buf[InetBufSize];
+        u32 n = std::min<u32>(InetBufSize, size);
+        for (int i = 0; i < n; ++i) {
+            buf[i] = gdxsv_ReadMem8(addr + i);
+        }
+        return tcp_client_.Send((char *) buf, n);
+    }
+
+    u32 OnSockPoll() {
+        return tcp_client_.ReadableSize();
     }
 
     void callback_lbs_packet(std::function<void(const LbsMessage &)> callback) {
