@@ -81,6 +81,10 @@ void Gdxsv::Reset() {
 
 void Gdxsv::Update() {
     if (!enabled) return;
+    if (InGame()) {
+        settings.input.fastForwardMode = false;
+    }
+
     WritePatch();
 
     u8 dump_buf[1024];
