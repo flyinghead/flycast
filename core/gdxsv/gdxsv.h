@@ -49,6 +49,8 @@ public:
 
     void RestoreOnlinePatch();
 
+    void StartPingTest();
+
     bool StartReplayFile(const char *path);
 
 private:

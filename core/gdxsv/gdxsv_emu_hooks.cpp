@@ -6,6 +6,8 @@ void gdxsv_emu_start() {
     gdxsv.Reset();
 
     if (gdxsv.Enabled()) {
+        gdxsv.StartPingTest();
+
         auto replay = cfgLoadStr("gdxsv", "replay", "");
         if (!replay.empty()) {
             dc_loadstate(99);

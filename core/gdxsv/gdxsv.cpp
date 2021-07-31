@@ -62,9 +62,6 @@ void Gdxsv::Reset() {
         }
     });
 
-    // TODO:
-    // std::thread([this]() { GcpPingTest(); }).detach();
-
     server = cfgLoadStr("gdxsv", "server", "zdxsv.net");
     loginkey = cfgLoadStr("gdxsv", "loginkey", "");
 
@@ -283,6 +280,14 @@ void Gdxsv::HandleRPC() {
     WriteMem32_nommu(symbols["is_online"], netmode != NetMode::Offline);
 }
 
+void Gdxsv::StartPingTest() {
+    std::thread([this]() {
+        gui_display_notification("Ping testing...", 3000);
+        GcpPingTest();
+        gui_display_notification("Ping test finished", 3000);
+    }).detach();
+}
+
 void Gdxsv::GcpPingTest() {
     // powered by https://github.com/cloudharmony/network
     static const std::string get_path = "/probe/ping.js";
@@ -350,14 +355,12 @@ void Gdxsv::GcpPingTest() {
             char latency_str[256];
             snprintf(latency_str, 256, "%s : %d[ms]", region_host.first.c_str(), rtt);
             NOTICE_LOG(COMMON, "%s", latency_str);
-            gui_display_notification(latency_str, 3000);
         } else {
             ERROR_LOG(COMMON, "error response : %s", response_header.c_str());
         }
         client.Close();
     }
     gcp_ping_test_finished = true;
-    gui_display_notification("Google Cloud latency checked!", 3000);
 }
 
 std::string Gdxsv::GenerateLoginKey() {
