@@ -187,7 +187,7 @@ private:
                 } else {
                     auto rtt = float(rtt_sum) / ping_recv_count;
                     NOTICE_LOG(COMMON, "PING AVG %.2f ms", rtt);
-                    maxlag_ = std::min<int>(0x7f, std::max(5, 4 + (int) std::floor(rtt / 16)));
+                    maxlag_ = std::min<int>(0x7f, 4 + (int) std::floor(rtt / 16));
                     NOTICE_LOG(COMMON, "set maxlag %d", (int) maxlag_);
 
                     char osd_msg[128] = {};
