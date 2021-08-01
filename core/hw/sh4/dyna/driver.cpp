@@ -38,7 +38,6 @@ static u8* TempCodeCache;
 ptrdiff_t cc_rx_offset;
 
 static u32 LastAddr;
-static u32 LastAddr_min;
 static u32 TempLastAddr;
 static u32 *emit_ptr;
 static u32 *emit_ptr_limit;
@@ -48,7 +47,6 @@ static std::unordered_set<u32> smc_hotspots;
 static sh4_if sh4Interp;
 
 void* emit_GetCCPtr() { return emit_ptr==0?(void*)&CodeCache[LastAddr]:(void*)emit_ptr; }
-void emit_SetBaseAddr() { LastAddr_min = LastAddr; }
 
 static void clear_temp_cache(bool full)
 {
@@ -60,7 +58,7 @@ static void clear_temp_cache(bool full)
 static void recSh4_ClearCache()
 {
 	INFO_LOG(DYNAREC, "recSh4:Dynarec Cache clear at %08X free space %d", next_pc, emit_FreeSpace());
-	LastAddr=LastAddr_min;
+	LastAddr = 0;
 	bm_ResetCache();
 	smc_hotspots.clear();
 	clear_temp_cache(true);

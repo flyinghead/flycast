@@ -67,7 +67,6 @@ extern u8* CodeCache;
 void emit_Skip(u32 sz);
 u32 emit_FreeSpace();
 void* emit_GetCCPtr();
-void emit_SetBaseAddr();
 
 //Called from ngen_FailedToFindBlock
 DynarecCodeEntryPtr DYNACALL rdv_FailedToFindBlock(u32 pc);
