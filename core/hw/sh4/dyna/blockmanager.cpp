@@ -128,10 +128,9 @@ RuntimeBlockInfoPtr bm_GetBlock(void* dynarec_code)
 	iter--;  // Need to go back to find the potential candidate
 
 	// However it might be out of bounds, check for that
-	if ((u8*)iter->second->code + iter->second->host_code_size <= (u8*)dynarecrw)
+	if (!iter->second->containsCode(dynarecrw))
 		return NULL;
 
-	verify(iter->second->contains_code((u8*)dynarecrw));
 	return iter->second;
 }
 
@@ -151,7 +150,7 @@ RuntimeBlockInfoPtr bm_GetStaleBlock(void* dynarec_code)
 	do
 	{
 		--it;
-		if ((*it)->contains_code((u8*)dynarecrw))
+		if ((*it)->containsCode(dynarecrw))
 			return *it;
 	} while (it != del_blocks.begin());
 

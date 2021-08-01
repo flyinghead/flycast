@@ -154,6 +154,7 @@ void X86Compiler::genMemHandlers()
 						alignStack(-12);
 #else
 						sub(esp, 8);
+						unwinder.allocStackPtr(getCurr(), 8);
 #endif
 						movss(dword[esp], xmm0);
 						movss(dword[esp + 4], xmm1);
@@ -232,6 +233,7 @@ void X86Compiler::genMemHandlers()
 							alignStack(-12);
 #else
 							sub(esp, 8);
+							unwinder.allocStackPtr(getCurr(), 8);
 #endif
 							movss(dword[esp], xmm0);
 							movss(dword[esp + 4], xmm1);

@@ -67,6 +67,9 @@ public:
 	size_t end(u32 offset, ptrdiff_t rwRxOffset = 0);
 
 	void clear();
+	void allocStackPtr(const void *address, int size) {
+		allocStack((u32)((const u8 *)address - startAddr), size);
+	}
 
 private:
 	u8 *startAddr;

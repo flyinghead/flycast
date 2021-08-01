@@ -87,10 +87,32 @@ RuntimeBlockInfo* ngen_AllocateBlock()
 	return new DynaRBI();
 }
 
+void X86Compiler::alignStack(int amount)
+{
+#ifndef _WIN32
+	if (amount > 0)
+		add(esp, amount);
+	else
+		sub(esp, -amount);
+	unwinder.allocStackPtr(getCurr(), -amount);
+#endif
+}
+
 void X86Compiler::compile(RuntimeBlockInfo* block, bool force_checks, bool optimise)
 {
 	DEBUG_LOG(DYNAREC, "X86 compiling %08x to %p", block->addr, emit_GetCCPtr());
 	current_opid = -1;
+
+	unwinder.start((void *)getCurr());
+	unwinder.pushReg(0, Xbyak::Operand::ESI);
+	unwinder.pushReg(0, Xbyak::Operand::EDI);
+	unwinder.pushReg(0, Xbyak::Operand::EBP);
+	unwinder.pushReg(0, Xbyak::Operand::EBX);
+#ifndef _WIN32
+	// 16-byte alignment
+	unwinder.allocStack(0, 12);
+#endif
+	unwinder.endProlog(0);
 
 	checkBlock(force_checks, block);
 
@@ -121,6 +143,9 @@ void X86Compiler::compile(RuntimeBlockInfo* block, bool force_checks, bool optim
 
 	block->code = (DynarecCodeEntryPtr)getCode();
 	block->host_code_size = getSize();
+
+	size_t unwindSize = unwinder.end(getSize());
+	setSize(getSize() + unwindSize);
 
 	emit_Skip(getSize());
 }
@@ -282,65 +307,62 @@ void X86Compiler::ngen_CC_param(const shil_opcode& op, const shil_param& param, 
 			{
 				if (regalloc.IsAllocg(param))
 					push(regalloc.MapRegister(param));
-				else if (regalloc.IsAllocf(param))
+				else
 				{
 					sub(esp, 4);
 					movss(dword[esp], regalloc.MapXRegister(param));
 				}
-				else
-					die("Must not happen!");
 			}
 			else if (param.is_imm())
 				push(param.imm_value());
 			else
 				die("invalid combination");
 			CC_stackSize += 4;
+			unwinder.allocStackPtr(getCurr(), 4);
 			break;
 
 		//push the ptr itself
 		case CPT_ptr:
 			verify(param.is_reg());
-
 			push((unat)param.reg_ptr());
 			CC_stackSize += 4;
+			unwinder.allocStackPtr(getCurr(), 4);
 			break;
 
 		// store from EAX
 		case CPT_u64rvL:
 		case CPT_u32rv:
-			if (regalloc.IsAllocg(param))
-				mov(regalloc.MapRegister(param), eax);
-			/*else if (regalloc.IsAllocf(param))
-				mov(regalloc.MapXRegister(param), eax); */
-			else
-				die("Must not happen!");
+			mov(regalloc.MapRegister(param), eax);
 			break;
 
 		// store from EDX
 		case CPT_u64rvH:
-			if (regalloc.IsAllocg(param))
-				mov(regalloc.MapRegister(param), edx);
-			else
-				die("Must not happen!");
+			mov(regalloc.MapRegister(param), edx);
 			break;
 
 		// store from ST(0)
 		case CPT_f32rv:
-			verify(regalloc.IsAllocf(param));
 			fstp(dword[param.reg_ptr()]);
 			movss(regalloc.MapXRegister(param), dword[param.reg_ptr()]);
 			break;
 	}
 }
 
+void X86Compiler::ngen_CC_Finish(const shil_opcode &op)
+{
+	add(esp, CC_stackSize);
+	unwinder.allocStackPtr(getCurr(), -CC_stackSize);
+}
+
 void X86Compiler::freezeXMM()
 {
+	if (current_opid == (size_t)-1)
+		return;
 	s8 *fpreg = alloc_fregs;
 	f32 *slpc = thaw_regs;
 	while (*fpreg != -1)
 	{
-		//if (regalloc.SpanNRegfIntr(current_opid, *fpreg))
-		if (current_opid != (size_t)-1 && regalloc.IsMapped(Xbyak::Xmm(*fpreg), current_opid))
+		if (regalloc.IsMapped(Xbyak::Xmm(*fpreg), current_opid))
 			movss(dword[slpc++], Xbyak::Xmm(*fpreg));
 		fpreg++;
 	}
@@ -348,12 +370,13 @@ void X86Compiler::freezeXMM()
 
 void X86Compiler::thawXMM()
 {
+	if (current_opid == (size_t)-1)
+		return;
 	s8* fpreg = alloc_fregs;
 	f32* slpc = thaw_regs;
 	while (*fpreg != -1)
 	{
-		//if (regalloc.SpanNRegfIntr(current_opid, *fpreg))
-		if (current_opid != (size_t)-1 && regalloc.IsMapped(Xbyak::Xmm(*fpreg), current_opid))
+		if (regalloc.IsMapped(Xbyak::Xmm(*fpreg), current_opid))
 			movss(Xbyak::Xmm(*fpreg), dword[slpc++]);
 		fpreg++;
 	}
@@ -491,8 +514,8 @@ void X86Compiler::genMainloop()
 	call((void *)rdv_BlockCheckFail);
 	jmp(eax);
 
-	unwindSize = unwinder.end(CODE_SIZE - 128 - startOffset);
-	verify(unwindSize <= 128);
+	unwindSize = unwinder.end(getSize() - startOffset);
+	setSize(getSize() + unwindSize);
 
 	ready();
 
@@ -744,11 +767,8 @@ void ngen_init()
 
 void ngen_ResetBlocks()
 {
-	// Avoid generating the main loop more than once
-	if (mainloop != nullptr)
-		return;
-
 	unwinder.clear();
+
 	compiler = new X86Compiler();
 
 	try {
@@ -759,7 +779,6 @@ void ngen_ResetBlocks()
 
 	delete compiler;
 	compiler = nullptr;
-	emit_SetBaseAddr();
 
 	ngen_FailedToFindBlock = ngen_FailedToFindBlock_;
 }
