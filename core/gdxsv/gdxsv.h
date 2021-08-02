@@ -9,10 +9,12 @@
 #include "cfg/cfg.h"
 #include "hw/sh4/sh4_mem.h"
 #include "reios/reios.h"
+#include "emulator.h"
 
 #include "gdxsv.pb.h"
 #include "gdxsv_backend_tcp.h"
 #include "gdxsv_backend_udp.h"
+#include "gdxsv_backend_replay.h"
 
 class Gdxsv {
 public:
@@ -20,9 +22,12 @@ public:
         Offline,
         Lbs,
         McsUdp,
+        Replay,
     };
 
-    Gdxsv() : lbs_net(symbols), udp_net(symbols, maxlag) {};
+    Gdxsv() : lbs_net(symbols),
+              udp_net(symbols, maxlag),
+              replay_net(symbols, maxlag) {};
 
     bool Enabled() const;
 
@@ -32,7 +37,7 @@ public:
 
     void Update();
 
-    void SyncNetwork(bool write);
+    void HandleRPC();
 
     bool UpdateAvailable();
 
@@ -43,6 +48,10 @@ public:
     std::string LatestVersion();
 
     void RestoreOnlinePatch();
+
+    void StartPingTest();
+
+    bool StartReplayFile(const char *path);
 
 private:
     void GcpPingTest(); // run on network thread
@@ -75,6 +84,7 @@ private:
 
     GdxsvBackendTcp lbs_net;
     GdxsvBackendUdp udp_net;
+    GdxsvBackendReplay replay_net;
 
     std::thread gcp_ping_test_thread;
     std::atomic<bool> gcp_ping_test_finished;

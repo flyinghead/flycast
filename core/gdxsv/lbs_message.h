@@ -25,8 +25,17 @@ public:
     static const u32 StatusError = 0xFFFFFFFFu;
     static const u32 StatusSuccess = 0x00FFFFFFu;
 
-    static const u16 lbsShutdown = 0x6003;
+    static const u16 lbsLobbyMatchingEntry = 0x640e;
     static const u16 lbsReadyBattle = 0x6910;
+    static const u16 lbsAskMatchingJoin = 0x6911;
+    static const u16 lbsAskPlayerSide = 0x6912;
+    static const u16 lbsAskPlayerInfo = 0x6913;
+    static const u16 lbsAskRuleData = 0x6914;
+    static const u16 lbsAskBattleCode = 0x6915;
+    static const u16 lbsAskMcsAddress = 0x6916;
+    static const u16 lbsAskMcsVersion = 0x6917;
+    static const u16 lbsLogout = 0x6002;
+    static const u16 lbsShutdown = 0x6003;
     static const u16 lbsExtPlayerInfo = 0x9955;
     static const u16 lbsGamePatch = 0x9960;
 
@@ -157,6 +166,17 @@ public:
         u32 v = u32(body[reading]) << 24 | u32(body[reading]) << 16 | u32(body[reading]) << 8 | body[reading];
         reading += 4;
         return v;
+    }
+
+    std::string to_hex() const {
+        std::deque<u8> tmp;
+        Serialize(tmp);
+
+        std::string ret(tmp.size() * 2, ' ');
+        for (int i = 0; i < tmp.size(); i++) {
+            std::sprintf(&ret[0] + i * 2, "%02x", tmp[i]);
+        }
+        return ret;
     }
 };
 

@@ -38,7 +38,7 @@
 #include "archive/rzip.h"
 #include "debug/gdb_server.h"
 
-#include "gdxsv/gdxsv.h"
+#include "gdxsv/gdxsv_emu_hooks.h"
 
 settings_t settings;
 extern int screen_width, screen_height;
@@ -345,7 +345,7 @@ void dc_reset(bool hard)
 	plugins_Reset(hard);
 	sh4_cpu.Reset(hard);
 	mem_Reset(hard);
-    gdxsv.Reset();
+	gdxsv_emu_reset();
 }
 
 static bool reset_requested;
@@ -463,7 +463,7 @@ void dc_init()
 		INFO_LOG(INTERPRETER, "Using Interpreter");
 	}
 
-	gdxsv.Reset();
+	gdxsv_emu_reset();
 	init_done = true;
 }
 
@@ -503,7 +503,7 @@ static void dc_start_game(const char *path)
 	config::Settings::instance().load(false);
 
 	GamepadDevice::load_system_mappings();
-	
+
 	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
 	{
 		if (path == NULL)
@@ -569,9 +569,9 @@ static void dc_start_game(const char *path)
 		gui_display_notification("Widescreen cheat activated", 1000);
 		config::ScreenStretching.override(134);	// 4:3 -> 16:9
 	}
-	gdxsv.Reset();
 	settings.input.fastForwardMode = false;
 	EventManager::event(Event::Start);
+    gdxsv_emu_start();
 	settings.gameStarted = true;
 }
 
@@ -795,7 +795,7 @@ static std::string get_savestate_file_path(int index, bool writable)
 
 void dc_savestate(int index)
 {
-    gdxsv.RestoreOnlinePatch();
+    gdxsv_emu_savestate(index);
 
 	unsigned int total_size = 0 ;
 	void *data = NULL ;
@@ -946,7 +946,7 @@ void dc_loadstate(int index)
 	if (unserialized_size != total_size)
 		WARN_LOG(SAVESTATE, "Save state error: read %d bytes but used %d", total_size, unserialized_size);
 
-    gdxsv.Reset();
+    gdxsv_emu_reset();
 	mmu_set_state();
 	sh4_cpu.ResetCache();
     dsp.dyndirty = true;
@@ -954,6 +954,8 @@ void dc_loadstate(int index)
 
     cleanup_serialize(data) ;
 	EventManager::event(Event::LoadState);
+    gdxsv_emu_loadstate(index);
+
     INFO_LOG(SAVESTATE, "Loaded state from %s size %d", filename.c_str(), total_size) ;
 }
 

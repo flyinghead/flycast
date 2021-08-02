@@ -899,17 +899,22 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/deps/protobuf-3.13.0/src/google/protobuf/wrappers.pb.h)
 
 target_sources(${PROJECT_NAME} PRIVATE
-        core/gdxsv/gdx_queue.h
+        core/gdxsv/libs.h
+        core/gdxsv/gdx_rpc.h
         core/gdxsv/gdxsv.cpp
         core/gdxsv/gdxsv.h
         core/gdxsv/gdxsv.pb.cc
         core/gdxsv/gdxsv.pb.h
+        core/gdxsv/gdxsv_backend_replay.h
         core/gdxsv/gdxsv_backend_tcp.h
         core/gdxsv/gdxsv_backend_udp.h
         core/gdxsv/gdxsv_network.cpp
         core/gdxsv/gdxsv_network.h
-        core/gdxsv/gdxsv_patch.h
-        core/gdxsv/lbs_message.h)
+        core/gdxsv/gdxsv_patch.inc
+        core/gdxsv/gdxsv_emu_hooks.cpp
+        core/gdxsv/gdxsv_emu_hooks.h
+        core/gdxsv/lbs_message.h
+        core/gdxsv/mcs_message.h)
 
 target_sources(${PROJECT_NAME} PRIVATE
         core/rend/gles/glcache.h

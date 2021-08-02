@@ -4,7 +4,7 @@
 #include "hw/mem/_vmem.h"
 #include "hw/pvr/pvr_mem.h"
 #include "rend/TexCache.h"
-#include "gdxsv/gdxsv.h"
+#include "gdxsv/gdxsv_emu_hooks.h"
 #include "cfg/option.h"
 
 #include <mutex>
@@ -393,7 +393,7 @@ void rend_vblank()
 	render_called = false;
 	check_framebuffer_write();
     cheatManager.apply();
-	gdxsv.Update();
+    gdxsv_emu_update();
 }
 
 void check_framebuffer_write()

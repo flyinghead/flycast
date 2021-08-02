@@ -48,7 +48,7 @@ struct TableStruct_gdxsv_2eproto {
     PROTOBUF_SECTION_VARIABLE(protodesc_cold);
   static const ::PROTOBUF_NAMESPACE_ID::internal::AuxiliaryParseTableField aux[]
     PROTOBUF_SECTION_VARIABLE(protodesc_cold);
-  static const ::PROTOBUF_NAMESPACE_ID::internal::ParseTable schema[13]
+  static const ::PROTOBUF_NAMESPACE_ID::internal::ParseTable schema[12]
     PROTOBUF_SECTION_VARIABLE(protodesc_cold);
   static const ::PROTOBUF_NAMESPACE_ID::internal::FieldMetadata field_metadata[];
   static const ::PROTOBUF_NAMESPACE_ID::internal::SerializationTable serialization_table[];
@@ -59,9 +59,6 @@ namespace proto {
 class BattleLogFile;
 class BattleLogFileDefaultTypeInternal;
 extern BattleLogFileDefaultTypeInternal _BattleLogFile_default_instance_;
-class BattleLogMessage;
-class BattleLogMessageDefaultTypeInternal;
-extern BattleLogMessageDefaultTypeInternal _BattleLogMessage_default_instance_;
 class BattleLogUser;
 class BattleLogUserDefaultTypeInternal;
 extern BattleLogUserDefaultTypeInternal _BattleLogUser_default_instance_;
@@ -98,7 +95,6 @@ extern PongMessageDefaultTypeInternal _PongMessage_default_instance_;
 }  // namespace proto
 PROTOBUF_NAMESPACE_OPEN
 template<> ::proto::BattleLogFile* Arena::CreateMaybeMessage<::proto::BattleLogFile>(Arena*);
-template<> ::proto::BattleLogMessage* Arena::CreateMaybeMessage<::proto::BattleLogMessage>(Arena*);
 template<> ::proto::BattleLogUser* Arena::CreateMaybeMessage<::proto::BattleLogUser>(Arena*);
 template<> ::proto::BattleMessage* Arena::CreateMaybeMessage<::proto::BattleMessage>(Arena*);
 template<> ::proto::ExtPlayerInfo* Arena::CreateMaybeMessage<::proto::ExtPlayerInfo>(Arena*);
@@ -959,9 +955,13 @@ class BattleLogUser PROTOBUF_FINAL :
     kPilotNameFieldNumber = 3,
     kGameParamFieldNumber = 4,
     kPlatformFieldNumber = 10,
+    kUserNameSjisFieldNumber = 11,
     kBattleCountFieldNumber = 5,
     kWinCountFieldNumber = 6,
     kLoseCountFieldNumber = 7,
+    kGradeFieldNumber = 8,
+    kTeamFieldNumber = 9,
+    kPosFieldNumber = 12,
   };
   // string user_id = 1;
   void clear_user_id();
@@ -1043,6 +1043,22 @@ class BattleLogUser PROTOBUF_FINAL :
   std::string* _internal_mutable_platform();
   public:
 
+  // bytes user_name_sjis = 11;
+  void clear_user_name_sjis();
+  const std::string& user_name_sjis() const;
+  void set_user_name_sjis(const std::string& value);
+  void set_user_name_sjis(std::string&& value);
+  void set_user_name_sjis(const char* value);
+  void set_user_name_sjis(const void* value, size_t size);
+  std::string* mutable_user_name_sjis();
+  std::string* release_user_name_sjis();
+  void set_allocated_user_name_sjis(std::string* user_name_sjis);
+  private:
+  const std::string& _internal_user_name_sjis() const;
+  void _internal_set_user_name_sjis(const std::string& value);
+  std::string* _internal_mutable_user_name_sjis();
+  public:
+
   // int32 battle_count = 5;
   void clear_battle_count();
   ::PROTOBUF_NAMESPACE_ID::int32 battle_count() const;
@@ -1070,6 +1086,33 @@ class BattleLogUser PROTOBUF_FINAL :
   void _internal_set_lose_count(::PROTOBUF_NAMESPACE_ID::int32 value);
   public:
 
+  // int32 grade = 8;
+  void clear_grade();
+  ::PROTOBUF_NAMESPACE_ID::int32 grade() const;
+  void set_grade(::PROTOBUF_NAMESPACE_ID::int32 value);
+  private:
+  ::PROTOBUF_NAMESPACE_ID::int32 _internal_grade() const;
+  void _internal_set_grade(::PROTOBUF_NAMESPACE_ID::int32 value);
+  public:
+
+  // int32 team = 9;
+  void clear_team();
+  ::PROTOBUF_NAMESPACE_ID::int32 team() const;
+  void set_team(::PROTOBUF_NAMESPACE_ID::int32 value);
+  private:
+  ::PROTOBUF_NAMESPACE_ID::int32 _internal_team() const;
+  void _internal_set_team(::PROTOBUF_NAMESPACE_ID::int32 value);
+  public:
+
+  // int32 pos = 12;
+  void clear_pos();
+  ::PROTOBUF_NAMESPACE_ID::int32 pos() const;
+  void set_pos(::PROTOBUF_NAMESPACE_ID::int32 value);
+  private:
+  ::PROTOBUF_NAMESPACE_ID::int32 _internal_pos() const;
+  void _internal_set_pos(::PROTOBUF_NAMESPACE_ID::int32 value);
+  public:
+
   // @@protoc_insertion_point(class_scope:proto.BattleLogUser)
  private:
   class _Internal;
@@ -1082,193 +1125,13 @@ class BattleLogUser PROTOBUF_FINAL :
   ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr pilot_name_;
   ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr game_param_;
   ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr platform_;
+  ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr user_name_sjis_;
   ::PROTOBUF_NAMESPACE_ID::int32 battle_count_;
   ::PROTOBUF_NAMESPACE_ID::int32 win_count_;
   ::PROTOBUF_NAMESPACE_ID::int32 lose_count_;
-  mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
-  friend struct ::TableStruct_gdxsv_2eproto;
-};
-// -------------------------------------------------------------------
-
-class BattleLogMessage PROTOBUF_FINAL :
-    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:proto.BattleLogMessage) */ {
- public:
-  inline BattleLogMessage() : BattleLogMessage(nullptr) {}
-  virtual ~BattleLogMessage();
-
-  BattleLogMessage(const BattleLogMessage& from);
-  BattleLogMessage(BattleLogMessage&& from) noexcept
-    : BattleLogMessage() {
-    *this = ::std::move(from);
-  }
-
-  inline BattleLogMessage& operator=(const BattleLogMessage& from) {
-    CopyFrom(from);
-    return *this;
-  }
-  inline BattleLogMessage& operator=(BattleLogMessage&& from) noexcept {
-    if (GetArena() == from.GetArena()) {
-      if (this != &from) InternalSwap(&from);
-    } else {
-      CopyFrom(from);
-    }
-    return *this;
-  }
-
-  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* descriptor() {
-    return GetDescriptor();
-  }
-  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* GetDescriptor() {
-    return GetMetadataStatic().descriptor;
-  }
-  static const ::PROTOBUF_NAMESPACE_ID::Reflection* GetReflection() {
-    return GetMetadataStatic().reflection;
-  }
-  static const BattleLogMessage& default_instance();
-
-  static void InitAsDefaultInstance();  // FOR INTERNAL USE ONLY
-  static inline const BattleLogMessage* internal_default_instance() {
-    return reinterpret_cast<const BattleLogMessage*>(
-               &_BattleLogMessage_default_instance_);
-  }
-  static constexpr int kIndexInFileMessages =
-    5;
-
-  friend void swap(BattleLogMessage& a, BattleLogMessage& b) {
-    a.Swap(&b);
-  }
-  inline void Swap(BattleLogMessage* other) {
-    if (other == this) return;
-    if (GetArena() == other->GetArena()) {
-      InternalSwap(other);
-    } else {
-      ::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
-    }
-  }
-  void UnsafeArenaSwap(BattleLogMessage* other) {
-    if (other == this) return;
-    GOOGLE_DCHECK(GetArena() == other->GetArena());
-    InternalSwap(other);
-  }
-
-  // implements Message ----------------------------------------------
-
-  inline BattleLogMessage* New() const final {
-    return CreateMaybeMessage<BattleLogMessage>(nullptr);
-  }
-
-  BattleLogMessage* New(::PROTOBUF_NAMESPACE_ID::Arena* arena) const final {
-    return CreateMaybeMessage<BattleLogMessage>(arena);
-  }
-  void CopyFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) final;
-  void MergeFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) final;
-  void CopyFrom(const BattleLogMessage& from);
-  void MergeFrom(const BattleLogMessage& from);
-  PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
-  bool IsInitialized() const final;
-
-  size_t ByteSizeLong() const final;
-  const char* _InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) final;
-  ::PROTOBUF_NAMESPACE_ID::uint8* _InternalSerialize(
-      ::PROTOBUF_NAMESPACE_ID::uint8* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const final;
-  int GetCachedSize() const final { return _cached_size_.Get(); }
-
-  private:
-  inline void SharedCtor();
-  inline void SharedDtor();
-  void SetCachedSize(int size) const final;
-  void InternalSwap(BattleLogMessage* other);
-  friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
-  static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
-    return "proto.BattleLogMessage";
-  }
-  protected:
-  explicit BattleLogMessage(::PROTOBUF_NAMESPACE_ID::Arena* arena);
-  private:
-  static void ArenaDtor(void* object);
-  inline void RegisterArenaDtor(::PROTOBUF_NAMESPACE_ID::Arena* arena);
-  public:
-
-  ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadata() const final;
-  private:
-  static ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadataStatic() {
-    ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&::descriptor_table_gdxsv_2eproto);
-    return ::descriptor_table_gdxsv_2eproto.file_level_metadata[kIndexInFileMessages];
-  }
-
-  public:
-
-  // nested types ----------------------------------------------------
-
-  // accessors -------------------------------------------------------
-
-  enum : int {
-    kUserIdFieldNumber = 1,
-    kBodyFieldNumber = 2,
-    kSeqFieldNumber = 3,
-    kTimestampFieldNumber = 10,
-  };
-  // string user_id = 1;
-  void clear_user_id();
-  const std::string& user_id() const;
-  void set_user_id(const std::string& value);
-  void set_user_id(std::string&& value);
-  void set_user_id(const char* value);
-  void set_user_id(const char* value, size_t size);
-  std::string* mutable_user_id();
-  std::string* release_user_id();
-  void set_allocated_user_id(std::string* user_id);
-  private:
-  const std::string& _internal_user_id() const;
-  void _internal_set_user_id(const std::string& value);
-  std::string* _internal_mutable_user_id();
-  public:
-
-  // bytes body = 2;
-  void clear_body();
-  const std::string& body() const;
-  void set_body(const std::string& value);
-  void set_body(std::string&& value);
-  void set_body(const char* value);
-  void set_body(const void* value, size_t size);
-  std::string* mutable_body();
-  std::string* release_body();
-  void set_allocated_body(std::string* body);
-  private:
-  const std::string& _internal_body() const;
-  void _internal_set_body(const std::string& value);
-  std::string* _internal_mutable_body();
-  public:
-
-  // uint32 seq = 3;
-  void clear_seq();
-  ::PROTOBUF_NAMESPACE_ID::uint32 seq() const;
-  void set_seq(::PROTOBUF_NAMESPACE_ID::uint32 value);
-  private:
-  ::PROTOBUF_NAMESPACE_ID::uint32 _internal_seq() const;
-  void _internal_set_seq(::PROTOBUF_NAMESPACE_ID::uint32 value);
-  public:
-
-  // int64 timestamp = 10;
-  void clear_timestamp();
-  ::PROTOBUF_NAMESPACE_ID::int64 timestamp() const;
-  void set_timestamp(::PROTOBUF_NAMESPACE_ID::int64 value);
-  private:
-  ::PROTOBUF_NAMESPACE_ID::int64 _internal_timestamp() const;
-  void _internal_set_timestamp(::PROTOBUF_NAMESPACE_ID::int64 value);
-  public:
-
-  // @@protoc_insertion_point(class_scope:proto.BattleLogMessage)
- private:
-  class _Internal;
-
-  template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
-  typedef void InternalArenaConstructable_;
-  typedef void DestructorSkippable_;
-  ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr user_id_;
-  ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr body_;
-  ::PROTOBUF_NAMESPACE_ID::uint32 seq_;
-  ::PROTOBUF_NAMESPACE_ID::int64 timestamp_;
+  ::PROTOBUF_NAMESPACE_ID::int32 grade_;
+  ::PROTOBUF_NAMESPACE_ID::int32 team_;
+  ::PROTOBUF_NAMESPACE_ID::int32 pos_;
   mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   friend struct ::TableStruct_gdxsv_2eproto;
 };
@@ -1316,7 +1179,7 @@ class BattleLogFile PROTOBUF_FINAL :
                &_BattleLogFile_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    6;
+    5;
 
   friend void swap(BattleLogFile& a, BattleLogFile& b) {
     a.Swap(&b);
@@ -1434,22 +1297,22 @@ class BattleLogFile PROTOBUF_FINAL :
   const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::proto::BattleLogUser >&
       users() const;
 
-  // repeated .proto.BattleLogMessage battle_data = 12;
+  // repeated .proto.BattleMessage battle_data = 12;
   int battle_data_size() const;
   private:
   int _internal_battle_data_size() const;
   public:
   void clear_battle_data();
-  ::proto::BattleLogMessage* mutable_battle_data(int index);
-  ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::proto::BattleLogMessage >*
+  ::proto::BattleMessage* mutable_battle_data(int index);
+  ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::proto::BattleMessage >*
       mutable_battle_data();
   private:
-  const ::proto::BattleLogMessage& _internal_battle_data(int index) const;
-  ::proto::BattleLogMessage* _internal_add_battle_data();
+  const ::proto::BattleMessage& _internal_battle_data(int index) const;
+  ::proto::BattleMessage* _internal_add_battle_data();
   public:
-  const ::proto::BattleLogMessage& battle_data(int index) const;
-  ::proto::BattleLogMessage* add_battle_data();
-  const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::proto::BattleLogMessage >&
+  const ::proto::BattleMessage& battle_data(int index) const;
+  ::proto::BattleMessage* add_battle_data();
+  const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::proto::BattleMessage >&
       battle_data() const;
 
   // string gdxsv_version = 2;
@@ -1552,7 +1415,7 @@ class BattleLogFile PROTOBUF_FINAL :
   typedef void DestructorSkippable_;
   ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::proto::GamePatch > patches_;
   ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::proto::BattleLogUser > users_;
-  ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::proto::BattleLogMessage > battle_data_;
+  ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::proto::BattleMessage > battle_data_;
   ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr gdxsv_version_;
   ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr battle_code_;
   ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr game_disk_;
@@ -1607,7 +1470,7 @@ class BattleMessage PROTOBUF_FINAL :
                &_BattleMessage_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    7;
+    6;
 
   friend void swap(BattleMessage& a, BattleMessage& b) {
     a.Swap(&b);
@@ -1780,7 +1643,7 @@ class PingMessage PROTOBUF_FINAL :
                &_PingMessage_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    8;
+    7;
 
   friend void swap(PingMessage& a, PingMessage& b) {
     a.Swap(&b);
@@ -1935,7 +1798,7 @@ class PongMessage PROTOBUF_FINAL :
                &_PongMessage_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    9;
+    8;
 
   friend void swap(PongMessage& a, PongMessage& b) {
     a.Swap(&b);
@@ -2108,7 +1971,7 @@ class HelloServerMessage PROTOBUF_FINAL :
                &_HelloServerMessage_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    10;
+    9;
 
   friend void swap(HelloServerMessage& a, HelloServerMessage& b) {
     a.Swap(&b);
@@ -2281,7 +2144,7 @@ class FinMessage PROTOBUF_FINAL :
                &_FinMessage_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    11;
+    10;
 
   friend void swap(FinMessage& a, FinMessage& b) {
     a.Swap(&b);
@@ -2425,7 +2288,7 @@ class Packet PROTOBUF_FINAL :
                &_Packet_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    12;
+    11;
 
   friend void swap(Packet& a, Packet& b) {
     a.Swap(&b);
@@ -3493,6 +3356,46 @@ inline void BattleLogUser::set_lose_count(::PROTOBUF_NAMESPACE_ID::int32 value) 
   // @@protoc_insertion_point(field_set:proto.BattleLogUser.lose_count)
 }
 
+// int32 grade = 8;
+inline void BattleLogUser::clear_grade() {
+  grade_ = 0;
+}
+inline ::PROTOBUF_NAMESPACE_ID::int32 BattleLogUser::_internal_grade() const {
+  return grade_;
+}
+inline ::PROTOBUF_NAMESPACE_ID::int32 BattleLogUser::grade() const {
+  // @@protoc_insertion_point(field_get:proto.BattleLogUser.grade)
+  return _internal_grade();
+}
+inline void BattleLogUser::_internal_set_grade(::PROTOBUF_NAMESPACE_ID::int32 value) {
+  
+  grade_ = value;
+}
+inline void BattleLogUser::set_grade(::PROTOBUF_NAMESPACE_ID::int32 value) {
+  _internal_set_grade(value);
+  // @@protoc_insertion_point(field_set:proto.BattleLogUser.grade)
+}
+
+// int32 team = 9;
+inline void BattleLogUser::clear_team() {
+  team_ = 0;
+}
+inline ::PROTOBUF_NAMESPACE_ID::int32 BattleLogUser::_internal_team() const {
+  return team_;
+}
+inline ::PROTOBUF_NAMESPACE_ID::int32 BattleLogUser::team() const {
+  // @@protoc_insertion_point(field_get:proto.BattleLogUser.team)
+  return _internal_team();
+}
+inline void BattleLogUser::_internal_set_team(::PROTOBUF_NAMESPACE_ID::int32 value) {
+  
+  team_ = value;
+}
+inline void BattleLogUser::set_team(::PROTOBUF_NAMESPACE_ID::int32 value) {
+  _internal_set_team(value);
+  // @@protoc_insertion_point(field_set:proto.BattleLogUser.team)
+}
+
 // string platform = 10;
 inline void BattleLogUser::clear_platform() {
   platform_.ClearToEmpty(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
@@ -3555,172 +3458,86 @@ inline void BattleLogUser::set_allocated_platform(std::string* platform) {
   // @@protoc_insertion_point(field_set_allocated:proto.BattleLogUser.platform)
 }
 
-// -------------------------------------------------------------------
-
-// BattleLogMessage
-
-// string user_id = 1;
-inline void BattleLogMessage::clear_user_id() {
-  user_id_.ClearToEmpty(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
+// bytes user_name_sjis = 11;
+inline void BattleLogUser::clear_user_name_sjis() {
+  user_name_sjis_.ClearToEmpty(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
 }
-inline const std::string& BattleLogMessage::user_id() const {
-  // @@protoc_insertion_point(field_get:proto.BattleLogMessage.user_id)
-  return _internal_user_id();
+inline const std::string& BattleLogUser::user_name_sjis() const {
+  // @@protoc_insertion_point(field_get:proto.BattleLogUser.user_name_sjis)
+  return _internal_user_name_sjis();
 }
-inline void BattleLogMessage::set_user_id(const std::string& value) {
-  _internal_set_user_id(value);
-  // @@protoc_insertion_point(field_set:proto.BattleLogMessage.user_id)
+inline void BattleLogUser::set_user_name_sjis(const std::string& value) {
+  _internal_set_user_name_sjis(value);
+  // @@protoc_insertion_point(field_set:proto.BattleLogUser.user_name_sjis)
 }
-inline std::string* BattleLogMessage::mutable_user_id() {
-  // @@protoc_insertion_point(field_mutable:proto.BattleLogMessage.user_id)
-  return _internal_mutable_user_id();
+inline std::string* BattleLogUser::mutable_user_name_sjis() {
+  // @@protoc_insertion_point(field_mutable:proto.BattleLogUser.user_name_sjis)
+  return _internal_mutable_user_name_sjis();
 }
-inline const std::string& BattleLogMessage::_internal_user_id() const {
-  return user_id_.Get();
+inline const std::string& BattleLogUser::_internal_user_name_sjis() const {
+  return user_name_sjis_.Get();
 }
-inline void BattleLogMessage::_internal_set_user_id(const std::string& value) {
+inline void BattleLogUser::_internal_set_user_name_sjis(const std::string& value) {
   
-  user_id_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), value, GetArena());
+  user_name_sjis_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), value, GetArena());
 }
-inline void BattleLogMessage::set_user_id(std::string&& value) {
+inline void BattleLogUser::set_user_name_sjis(std::string&& value) {
   
-  user_id_.Set(
+  user_name_sjis_.Set(
     &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::move(value), GetArena());
-  // @@protoc_insertion_point(field_set_rvalue:proto.BattleLogMessage.user_id)
+  // @@protoc_insertion_point(field_set_rvalue:proto.BattleLogUser.user_name_sjis)
 }
-inline void BattleLogMessage::set_user_id(const char* value) {
+inline void BattleLogUser::set_user_name_sjis(const char* value) {
   GOOGLE_DCHECK(value != nullptr);
   
-  user_id_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::string(value),
+  user_name_sjis_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::string(value),
               GetArena());
-  // @@protoc_insertion_point(field_set_char:proto.BattleLogMessage.user_id)
+  // @@protoc_insertion_point(field_set_char:proto.BattleLogUser.user_name_sjis)
 }
-inline void BattleLogMessage::set_user_id(const char* value,
+inline void BattleLogUser::set_user_name_sjis(const void* value,
     size_t size) {
   
-  user_id_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::string(
+  user_name_sjis_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::string(
       reinterpret_cast<const char*>(value), size), GetArena());
-  // @@protoc_insertion_point(field_set_pointer:proto.BattleLogMessage.user_id)
+  // @@protoc_insertion_point(field_set_pointer:proto.BattleLogUser.user_name_sjis)
 }
-inline std::string* BattleLogMessage::_internal_mutable_user_id() {
+inline std::string* BattleLogUser::_internal_mutable_user_name_sjis() {
   
-  return user_id_.Mutable(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
+  return user_name_sjis_.Mutable(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
 }
-inline std::string* BattleLogMessage::release_user_id() {
-  // @@protoc_insertion_point(field_release:proto.BattleLogMessage.user_id)
-  return user_id_.Release(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
+inline std::string* BattleLogUser::release_user_name_sjis() {
+  // @@protoc_insertion_point(field_release:proto.BattleLogUser.user_name_sjis)
+  return user_name_sjis_.Release(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
 }
-inline void BattleLogMessage::set_allocated_user_id(std::string* user_id) {
-  if (user_id != nullptr) {
+inline void BattleLogUser::set_allocated_user_name_sjis(std::string* user_name_sjis) {
+  if (user_name_sjis != nullptr) {
     
   } else {
     
   }
-  user_id_.SetAllocated(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), user_id,
+  user_name_sjis_.SetAllocated(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), user_name_sjis,
       GetArena());
-  // @@protoc_insertion_point(field_set_allocated:proto.BattleLogMessage.user_id)
+  // @@protoc_insertion_point(field_set_allocated:proto.BattleLogUser.user_name_sjis)
 }
 
-// bytes body = 2;
-inline void BattleLogMessage::clear_body() {
-  body_.ClearToEmpty(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
+// int32 pos = 12;
+inline void BattleLogUser::clear_pos() {
+  pos_ = 0;
 }
-inline const std::string& BattleLogMessage::body() const {
-  // @@protoc_insertion_point(field_get:proto.BattleLogMessage.body)
-  return _internal_body();
+inline ::PROTOBUF_NAMESPACE_ID::int32 BattleLogUser::_internal_pos() const {
+  return pos_;
 }
-inline void BattleLogMessage::set_body(const std::string& value) {
-  _internal_set_body(value);
-  // @@protoc_insertion_point(field_set:proto.BattleLogMessage.body)
+inline ::PROTOBUF_NAMESPACE_ID::int32 BattleLogUser::pos() const {
+  // @@protoc_insertion_point(field_get:proto.BattleLogUser.pos)
+  return _internal_pos();
 }
-inline std::string* BattleLogMessage::mutable_body() {
-  // @@protoc_insertion_point(field_mutable:proto.BattleLogMessage.body)
-  return _internal_mutable_body();
-}
-inline const std::string& BattleLogMessage::_internal_body() const {
-  return body_.Get();
-}
-inline void BattleLogMessage::_internal_set_body(const std::string& value) {
+inline void BattleLogUser::_internal_set_pos(::PROTOBUF_NAMESPACE_ID::int32 value) {
   
-  body_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), value, GetArena());
+  pos_ = value;
 }
-inline void BattleLogMessage::set_body(std::string&& value) {
-  
-  body_.Set(
-    &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::move(value), GetArena());
-  // @@protoc_insertion_point(field_set_rvalue:proto.BattleLogMessage.body)
-}
-inline void BattleLogMessage::set_body(const char* value) {
-  GOOGLE_DCHECK(value != nullptr);
-  
-  body_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::string(value),
-              GetArena());
-  // @@protoc_insertion_point(field_set_char:proto.BattleLogMessage.body)
-}
-inline void BattleLogMessage::set_body(const void* value,
-    size_t size) {
-  
-  body_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), ::std::string(
-      reinterpret_cast<const char*>(value), size), GetArena());
-  // @@protoc_insertion_point(field_set_pointer:proto.BattleLogMessage.body)
-}
-inline std::string* BattleLogMessage::_internal_mutable_body() {
-  
-  return body_.Mutable(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
-}
-inline std::string* BattleLogMessage::release_body() {
-  // @@protoc_insertion_point(field_release:proto.BattleLogMessage.body)
-  return body_.Release(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
-}
-inline void BattleLogMessage::set_allocated_body(std::string* body) {
-  if (body != nullptr) {
-    
-  } else {
-    
-  }
-  body_.SetAllocated(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), body,
-      GetArena());
-  // @@protoc_insertion_point(field_set_allocated:proto.BattleLogMessage.body)
-}
-
-// uint32 seq = 3;
-inline void BattleLogMessage::clear_seq() {
-  seq_ = 0u;
-}
-inline ::PROTOBUF_NAMESPACE_ID::uint32 BattleLogMessage::_internal_seq() const {
-  return seq_;
-}
-inline ::PROTOBUF_NAMESPACE_ID::uint32 BattleLogMessage::seq() const {
-  // @@protoc_insertion_point(field_get:proto.BattleLogMessage.seq)
-  return _internal_seq();
-}
-inline void BattleLogMessage::_internal_set_seq(::PROTOBUF_NAMESPACE_ID::uint32 value) {
-  
-  seq_ = value;
-}
-inline void BattleLogMessage::set_seq(::PROTOBUF_NAMESPACE_ID::uint32 value) {
-  _internal_set_seq(value);
-  // @@protoc_insertion_point(field_set:proto.BattleLogMessage.seq)
-}
-
-// int64 timestamp = 10;
-inline void BattleLogMessage::clear_timestamp() {
-  timestamp_ = PROTOBUF_LONGLONG(0);
-}
-inline ::PROTOBUF_NAMESPACE_ID::int64 BattleLogMessage::_internal_timestamp() const {
-  return timestamp_;
-}
-inline ::PROTOBUF_NAMESPACE_ID::int64 BattleLogMessage::timestamp() const {
-  // @@protoc_insertion_point(field_get:proto.BattleLogMessage.timestamp)
-  return _internal_timestamp();
-}
-inline void BattleLogMessage::_internal_set_timestamp(::PROTOBUF_NAMESPACE_ID::int64 value) {
-  
-  timestamp_ = value;
-}
-inline void BattleLogMessage::set_timestamp(::PROTOBUF_NAMESPACE_ID::int64 value) {
-  _internal_set_timestamp(value);
-  // @@protoc_insertion_point(field_set:proto.BattleLogMessage.timestamp)
+inline void BattleLogUser::set_pos(::PROTOBUF_NAMESPACE_ID::int32 value) {
+  _internal_set_pos(value);
+  // @@protoc_insertion_point(field_set:proto.BattleLogUser.pos)
 }
 
 // -------------------------------------------------------------------
@@ -4073,7 +3890,7 @@ BattleLogFile::users() const {
   return users_;
 }
 
-// repeated .proto.BattleLogMessage battle_data = 12;
+// repeated .proto.BattleMessage battle_data = 12;
 inline int BattleLogFile::_internal_battle_data_size() const {
   return battle_data_.size();
 }
@@ -4083,30 +3900,30 @@ inline int BattleLogFile::battle_data_size() const {
 inline void BattleLogFile::clear_battle_data() {
   battle_data_.Clear();
 }
-inline ::proto::BattleLogMessage* BattleLogFile::mutable_battle_data(int index) {
+inline ::proto::BattleMessage* BattleLogFile::mutable_battle_data(int index) {
   // @@protoc_insertion_point(field_mutable:proto.BattleLogFile.battle_data)
   return battle_data_.Mutable(index);
 }
-inline ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::proto::BattleLogMessage >*
+inline ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::proto::BattleMessage >*
 BattleLogFile::mutable_battle_data() {
   // @@protoc_insertion_point(field_mutable_list:proto.BattleLogFile.battle_data)
   return &battle_data_;
 }
-inline const ::proto::BattleLogMessage& BattleLogFile::_internal_battle_data(int index) const {
+inline const ::proto::BattleMessage& BattleLogFile::_internal_battle_data(int index) const {
   return battle_data_.Get(index);
 }
-inline const ::proto::BattleLogMessage& BattleLogFile::battle_data(int index) const {
+inline const ::proto::BattleMessage& BattleLogFile::battle_data(int index) const {
   // @@protoc_insertion_point(field_get:proto.BattleLogFile.battle_data)
   return _internal_battle_data(index);
 }
-inline ::proto::BattleLogMessage* BattleLogFile::_internal_add_battle_data() {
+inline ::proto::BattleMessage* BattleLogFile::_internal_add_battle_data() {
   return battle_data_.Add();
 }
-inline ::proto::BattleLogMessage* BattleLogFile::add_battle_data() {
+inline ::proto::BattleMessage* BattleLogFile::add_battle_data() {
   // @@protoc_insertion_point(field_add:proto.BattleLogFile.battle_data)
   return _internal_add_battle_data();
 }
-inline const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::proto::BattleLogMessage >&
+inline const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::proto::BattleMessage >&
 BattleLogFile::battle_data() const {
   // @@protoc_insertion_point(field_list:proto.BattleLogFile.battle_data)
   return battle_data_;
@@ -5248,8 +5065,6 @@ inline void Packet::set_allocated_fin_data(::proto::FinMessage* fin_data) {
 #ifdef __GNUC__
   #pragma GCC diagnostic pop
 #endif  // __GNUC__
-// -------------------------------------------------------------------
-
 // -------------------------------------------------------------------
 
 // -------------------------------------------------------------------

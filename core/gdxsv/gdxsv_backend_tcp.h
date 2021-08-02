@@ -5,7 +5,9 @@
 #include <atomic>
 #include <mutex>
 #include <utility>
-#include "gdx_queue.h"
+
+#include "libs.h"
+#include "gdx_rpc.h"
 #include "gdxsv_network.h"
 #include "lbs_message.h"
 
@@ -23,7 +25,7 @@ public:
     bool Connect(const std::string &host, u16 port) {
         bool ok = tcp_client_.Connect(host.c_str(), port);
         if (!ok) {
-            WARN_LOG(COMMON, "Failed to connect with TCP %s:%d", host.c_str(), port);
+            WARN_LOG(COMMON, "Failed to connect with TCP %s:%d\n", host.c_str(), port);
             return false;
         }
 
@@ -47,53 +49,17 @@ public:
         return tcp_client_.local_ip();
     }
 
-    void OnGameWrite() {
-        gdx_queue q{};
-        u32 gdx_txq_addr = symbols_.at("gdx_txq");
-        if (gdx_txq_addr == 0) return;
-        q.head = ReadMem16_nommu(gdx_txq_addr);
-        q.tail = ReadMem16_nommu(gdx_txq_addr + 2);
-        u32 buf_addr = gdx_txq_addr + 4;
-
-        int n = gdx_queue_size(&q);
-        if (0 < n) {
-            u8 buf[GDX_QUEUE_SIZE] = {};
-            for (int i = 0; i < n; ++i) {
-                buf[i] = ReadMem8_nommu(buf_addr + q.head);
-                gdx_queue_pop(&q); // dummy pop
-            }
-            WriteMem16_nommu(gdx_txq_addr, q.head);
-
-            int m = tcp_client_.Send((char *) buf, n);
-            if (n != m) {
-                WARN_LOG(COMMON, "TcpSend failed");
-                tcp_client_.Close();
-            }
-        }
-    }
-
-    void OnGameRead() {
-        u8 buf[GDX_QUEUE_SIZE];
-        u32 gdx_rxq_addr = symbols_.at("gdx_rxq");
-        gdx_queue q{};
-        q.head = ReadMem16_nommu(gdx_rxq_addr);
-        q.tail = ReadMem16_nommu(gdx_rxq_addr + 2);
-        u32 buf_addr = gdx_rxq_addr + 4;
-
-        int n = tcp_client_.ReadableSize();
+    u32 OnSockRead(u32 addr, u32 size) {
+        u8 buf[InetBufSize];
+        u32 n = std::min(tcp_client_.ReadableSize(), size);
         if (n <= 0) {
-            return;
+            return 0;
         }
-        n = std::min<int>(n, static_cast<int>(gdx_queue_avail(&q)));
         n = tcp_client_.Recv((char *) buf, n);
-
         if (0 < n) {
             for (int i = 0; i < n; ++i) {
-                WriteMem8_nommu(buf_addr + q.tail, buf[i]);
-                gdx_queue_push(&q, 0); // dummy push
+                gdxsv_WriteMem8(addr + i, buf[i]);
             }
-            WriteMem16_nommu(gdx_rxq_addr + 2, q.tail);
-
             if (callback_lbs_packet_) {
                 lbs_msg_reader_.Write((char *) buf, n);
                 while (lbs_msg_reader_.Read(lbs_msg_)) {
@@ -101,6 +67,20 @@ public:
                 }
             }
         }
+        return n;
+    }
+
+    u32 OnSockWrite(u32 addr, u32 size) {
+        u8 buf[InetBufSize];
+        u32 n = std::min<u32>(InetBufSize, size);
+        for (int i = 0; i < n; ++i) {
+            buf[i] = gdxsv_ReadMem8(addr + i);
+        }
+        return tcp_client_.Send((char *) buf, n);
+    }
+
+    u32 OnSockPoll() {
+        return tcp_client_.ReadableSize();
     }
 
     void callback_lbs_packet(std::function<void(const LbsMessage &)> callback) {
