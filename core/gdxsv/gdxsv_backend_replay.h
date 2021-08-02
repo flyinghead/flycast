@@ -50,7 +50,6 @@ public:
             return false;
         }
 
-
         bool ok = log_file_.ParseFromFileDescriptor(fileno(fp));
         if (!ok) {
             NOTICE_LOG(COMMON, "ParseFromFileDescriptor failed");
@@ -110,7 +109,7 @@ public:
         std::fill(start_index_.begin(), start_index_.end(), 0);
 
         state_ = State::Start;
-        maxlag_ = 4;
+        maxlag_ = 1;
         NOTICE_LOG(COMMON, "Replay Start");
         return true;
     }
@@ -194,17 +193,10 @@ private:
                         }
                     }
 
-                    //
-                    /*
                     if (msg.Type() == McsMessage::MsgType::KeyMsg1) {
-                        if (key_msg_index_[p].empty() ||
-                            msg.FirstSwCrnt() == ((msg_list_[key_msg_index_[p].back()].FirstSwCrnt() + 1) & 0x3f)) {
-                            key_msg_index_[p].emplace_back(i);
+                        if (!key_msg_index_[p].empty()) {
+                            verify(msg_list_[key_msg_index_[p].back()].FirstSeq() + 1 == msg.FirstSeq());
                         }
-                        // ??
-                    }
-                     */
-                    if (msg.Type() == McsMessage::MsgType::KeyMsg1) {
                         key_msg_index_[p].emplace_back(i);
                     }
                     verify(msg.Type() != McsMessage::KeyMsg2);
@@ -251,16 +243,15 @@ private:
                 LbsMessage::SvAnswer(msg).
                         Write8(pos)->
                         WriteString(user.user_id())->
-                        WriteString(user.user_id())->
-                        // WriteString(user.user_name())-> // TODO: need UTF8 -> SJIS
+                        WriteBytes(user.user_name_sjis())->
                         WriteBytes(user.game_param().data(), user.game_param().size())->
-                        Write16(0)-> // grade
+                        Write16(user.grade())->
                         Write16(user.win_count())->
                         Write16(user.lose_count())->
                         Write16(0)->
                         Write16(user.battle_count() - user.win_count() - user.lose_count())->
                         Write16(0)->
-                        Write16(1 + (pos - 1) / 2)-> // TODO TEAM
+                        Write16(user.team())->
                         Write16(0)->
                         Serialize(recv_buf_);
             }
@@ -299,7 +290,7 @@ private:
     void ProcessMcsMessage() {
         McsMessage msg;
         if (mcs_tx_reader_.Read(msg)) {
-            // NOTICE_LOG(COMMON, "Read %s %s", McsMessage::MsgTypeName(msg.Type()), msg.ToHex().c_str());
+            NOTICE_LOG(COMMON, "Read %s %s", McsMessage::MsgTypeName(msg.Type()), msg.ToHex().c_str());
             switch (msg.Type()) {
                 case McsMessage::MsgType::ConnectionIdMsg:
                     state_ = State::McsInBattle;
@@ -346,24 +337,16 @@ private:
                 case McsMessage::MsgType::KeyMsg1: {
                     // NOTICE_LOG(COMMON, "KeyMsg1:%s", msg.ToHex().c_str());
                     for (int i = 0; i < log_file_.users_size(); ++i) {
-                        auto key_msg = msg_list_[key_msg_index_[i][msg.FirstSeq()]];
-                        // NOTICE_LOG(COMMON, "KeyMsg:%s\n", key_msg.ToHex().c_str());
-                        std::copy(key_msg.body.begin(), key_msg.body.end(), std::back_inserter(recv_buf_));
+                        if (msg.FirstSeq() < key_msg_index_[i].size()) {
+                            auto key_msg = msg_list_[key_msg_index_[i][msg.FirstSeq()]];
+                            NOTICE_LOG(COMMON, "KeyMsg:%s", key_msg.ToHex().c_str());
+                            std::copy(key_msg.body.begin(), key_msg.body.end(), std::back_inserter(recv_buf_));
+                        }
                     }
                     break;
                 }
-                case McsMessage::MsgType::KeyMsg2: {
-                    for (int i = 0; i < log_file_.users_size(); ++i) {
-                        auto key_msg = msg_list_[key_msg_index_[i][msg.FirstSeq()]];
-                        // NOTICE_LOG(COMMON, "KeyMsg:%s\n", key_msg.ToHex().c_str());
-                        std::copy(key_msg.body.begin(), key_msg.body.end(), std::back_inserter(recv_buf_));
-                    }
-                    for (int i = 0; i < log_file_.users_size(); ++i) {
-                        auto key_msg = msg_list_[key_msg_index_[i][msg.SecondSeq()]];
-                        // NOTICE_LOG(COMMON, "KeyMsg:%s\n", key_msg.ToHex().c_str());
-                        std::copy(key_msg.body.begin(), key_msg.body.end(), std::back_inserter(recv_buf_));
-                    }
-                }
+                case McsMessage::MsgType::KeyMsg2:
+                    verify(false);
                     break;
                 case McsMessage::MsgType::LoadStartMsg:
                     for (int i = 0; i < log_file_.users_size(); ++i) {
