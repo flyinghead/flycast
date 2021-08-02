@@ -585,6 +585,7 @@ void dc_term_emulator()
 	sh4_cpu.Term();
 	if (settings.platform.system != DC_PLATFORM_DREAMCAST)
 		naomi_cart_Close();
+	custom_texture.Terminate();	// lr: avoid deadlock on exit (win32)
 	devicesTerm();
 	mem_Term();
 	_vmem_release();

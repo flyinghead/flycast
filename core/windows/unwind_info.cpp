@@ -82,14 +82,14 @@ size_t UnwindInfo::end(u32 offset, ptrdiff_t rwRxOffset)
 #endif
 	bool result = RtlAddFunctionTable(table, 1, (DWORD64)startAddr);
 	tables.push_back(table);
-	NOTICE_LOG(DYNAREC, "RtlAddFunctionTable %p sz %d rc %d tables: %d", startAddr, table[0].EndAddress, result, (u32)tables.size());
+	DEBUG_LOG(DYNAREC, "RtlAddFunctionTable %p sz %d rc %d tables: %d", startAddr, table[0].EndAddress, result, (u32)tables.size());
 
 	return (unwindInfo + codes.size() * sizeof(u16) + sizeof(RUNTIME_FUNCTION)) - endAddr;
 }
 
 void UnwindInfo::clear()
 {
-	NOTICE_LOG(DYNAREC, "UnwindInfo::clear");
+	DEBUG_LOG(DYNAREC, "UnwindInfo::clear");
 	for (RUNTIME_FUNCTION *table : tables)
 		RtlDeleteFunctionTable(table);
 	tables.clear();
