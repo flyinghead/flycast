@@ -67,7 +67,17 @@
 #ifndef __BYTE_ORDER
 #define __BYTE_ORDER __BYTE_ORDER__
 #endif  // __BYTE_ORDER
-#endif  // __APPLE__
+#else // BSD
+#ifndef __LITTLE_ENDIAN
+#define __LITTLE_ENDIAN _LITTLE_ENDIAN
+#endif  // __LITTLE_ENDIAN
+#ifndef __BIG_ENDIAN
+#define __BIG_ENDIAN _BIG_ENDIAN
+#endif  // __BIG_ENDIAN
+#ifndef __BYTE_ORDER
+#define __BYTE_ORDER _BYTE_ORDER
+#endif  // __BYTE_ORDER
+#endif  // !__APPLE__
 
 // TODO(dthomson): Can be removed once all Java code is using the Google3
 // launcher. We need to avoid processing PLT functions as it causes memory
