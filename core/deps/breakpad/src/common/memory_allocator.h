@@ -42,7 +42,7 @@
 #include <sanitizer/msan_interface.h>
 #endif
 
-#ifdef __APPLE__
+#if defined(__APPLE__) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || defined(__DragonFly__)
 #define sys_mmap mmap
 #define sys_munmap munmap
 #define MAP_ANONYMOUS MAP_ANON
