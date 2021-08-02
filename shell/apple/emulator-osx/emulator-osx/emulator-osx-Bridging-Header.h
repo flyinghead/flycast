@@ -18,6 +18,7 @@ void emu_dc_exit();
 void emu_dc_term();
 void emu_gui_open_settings();
 bool emu_renderer_enabled();
+bool emu_fast_forward();
 int emu_single_frame(int w, int h);
 void emu_gles_init(int width, int height);
 int emu_reicast_init();
@@ -25,10 +26,9 @@ void emu_key_input(UInt16 keyCode, bool pressed, UInt32 modifierFlags);
 void emu_character_input(const char *characters);
 void emu_mouse_buttons(int button, bool pressed);
 void emu_set_mouse_position(int x, int y, int width, int height);
+void emu_mouse_wheel(float v);
 
 bool emu_frame_pending();
-extern unsigned int *pmo_buttons;
-extern float *pmo_wheel_delta;
 
 #ifdef __cplusplus
 }

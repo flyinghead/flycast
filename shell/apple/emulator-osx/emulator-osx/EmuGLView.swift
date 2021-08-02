@@ -10,18 +10,30 @@ import Cocoa
 
 class EmuGLView: NSOpenGLView, NSWindowDelegate {
 
+    var backingRect:NSRect?
+    
     override var acceptsFirstResponder: Bool {
         return true;
     }
     
     override func draw(_ dirtyRect: NSRect) {
         super.draw(dirtyRect)
-
-        openGLContext!.makeCurrentContext()
+        backingRect = convertToBacking(dirtyRect)
         
-        let rect = convertToBacking(dirtyRect)
-        if (emu_single_frame(Int32(rect.width), Int32(rect.height)) != 0) {
-            openGLContext!.flushBuffer()
+        if emu_fast_forward() == false {
+            draw()
+        }
+    }
+    
+    func draw() {
+        var sync: GLint = emu_fast_forward() ? 0 : 1
+        CGLSetParameter(openGLContext!.cglContextObj!, kCGLCPSwapInterval, &sync)
+        
+        if let backingRect = backingRect {
+            openGLContext!.makeCurrentContext()
+            if (emu_single_frame(Int32(backingRect.width), Int32(backingRect.height)) != 0) {
+                openGLContext!.flushBuffer()
+            }
         }
     }
     
@@ -69,7 +81,11 @@ class EmuGLView: NSOpenGLView, NSWindowDelegate {
 			NSApplication.shared.terminate(self)
 		}
         else if (emu_frame_pending()) {
-            self.needsDisplay = true
+            if emu_fast_forward() {
+                self.draw()
+            } else {
+                self.needsDisplay = true
+            }
         }
     }
     
@@ -97,22 +113,18 @@ class EmuGLView: NSOpenGLView, NSWindowDelegate {
 	}
 	override func mouseDown(with event: NSEvent) {
 		emu_mouse_buttons(1, true)
-		pmo_buttons[0] &= ~(1 << 2)
 		setMousePos(event)
 	}
 	override func mouseUp(with event: NSEvent) {
 		emu_mouse_buttons(1, false)
-		pmo_buttons[0] |= 1 << 2;
 		setMousePos(event)
 	}
 	override func rightMouseDown(with event: NSEvent) {
 		emu_mouse_buttons(2, true)
-		pmo_buttons[0] &= ~(1 << 1)
 		setMousePos(event)
 	}
 	override func rightMouseUp(with event: NSEvent) {
 		emu_mouse_buttons(2, false)
-		pmo_buttons[0] |= 1 << 1
 		setMousePos(event)
 	}
 	// Not dispatched by default. Need to set Window.acceptsMouseMovedEvents to true
@@ -120,30 +132,26 @@ class EmuGLView: NSOpenGLView, NSWindowDelegate {
 		setMousePos(event)
 	}
 	override func mouseDragged(with event: NSEvent) {
-		pmo_buttons[0] &= ~(1 << 2)
+		emu_mouse_buttons(1, true)
 		setMousePos(event)
 	}
 	override func rightMouseDragged(with event: NSEvent) {
-		pmo_buttons[0] &= ~(1 << 1)
+		emu_mouse_buttons(2, true)
 		setMousePos(event)
 	}
 	override func otherMouseDown(with event: NSEvent) {
 		emu_mouse_buttons(3, true)
-		pmo_buttons[0] &= ~(1 << 2)
 		setMousePos(event)
 	}
 	override func otherMouseUp(with event: NSEvent) {
 		emu_mouse_buttons(3, false)
-		pmo_buttons[0] |= 1 << 2
 		setMousePos(event)
 	}
 	override func scrollWheel(with event: NSEvent) {
 		if (event.hasPreciseScrollingDeltas) {
-			// 1 per "line"
-			pmo_wheel_delta[0] -= Float(event.scrollingDeltaY) * 3.2
+            emu_mouse_wheel(-Float(event.scrollingDeltaY) / 5)
 		} else {
-			// 0.1 per wheel notch
-			pmo_wheel_delta[0] -= Float(event.scrollingDeltaY) * 160
+            emu_mouse_wheel(-Float(event.scrollingDeltaY) * 10)
 		}
 	}
 	

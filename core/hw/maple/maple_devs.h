@@ -165,15 +165,12 @@ extern u8 EEPROM[0x100];
 void load_naomi_eeprom();
 
 // Mouse position and buttons
-extern u32 mo_buttons[4];
+extern u8 mo_buttons[4];
 extern s32 mo_x_abs[4];
 extern s32 mo_y_abs[4];
 extern f32 mo_x_delta[4];
 extern f32 mo_y_delta[4];
 extern f32 mo_wheel_delta[4];
-
-extern s32 mo_x_phy;
-extern s32 mo_y_phy;
 
 extern s32 mo_x_prev[4];
 extern s32 mo_y_prev[4];

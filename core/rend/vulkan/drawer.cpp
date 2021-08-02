@@ -144,14 +144,14 @@ void Drawer::DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sor
 	float trilinearAlpha = 1.f;
 	if (poly.tsp.FilterMode > 1 && poly.pcw.Texture && listType != ListType_Punch_Through && poly.tcw.MipMapped == 1)
 	{
-		trilinearAlpha = 0.25 * (poly.tsp.MipMapD & 0x3);
+		trilinearAlpha = 0.25f * (poly.tsp.MipMapD & 0x3);
 		if (poly.tsp.FilterMode == 2)
 			// Trilinear pass A
-			trilinearAlpha = 1.0 - trilinearAlpha;
+			trilinearAlpha = 1.f - trilinearAlpha;
 	}
-	bool palette = BaseTextureCacheData::IsGpuHandledPaletted(poly.tsp, poly.tcw);
+	bool gpuPalette = poly.texture != nullptr ? poly.texture->gpuPalette : false;
 	float palette_index = 0.f;
-	if (palette)
+	if (gpuPalette)
 	{
 		if (poly.tcw.PixelFmt == PixelPal4)
 			palette_index = float(poly.tcw.PalSelect << 4) / 1023.f;
@@ -159,7 +159,7 @@ void Drawer::DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sor
 			palette_index = float((poly.tcw.PalSelect >> 4) << 8) / 1023.f;
 	}
 
-	if (tileClip == TileClipping::Inside || trilinearAlpha != 1.f || palette)
+	if (tileClip == TileClipping::Inside || trilinearAlpha != 1.f || gpuPalette)
 	{
 		std::array<float, 6> pushConstants = {
 				(float)scissorRect.offset.x,
@@ -173,12 +173,12 @@ void Drawer::DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sor
 	}
 
 	if (poly.pcw.Texture)
-		GetCurrentDescSet().SetTexture(poly.texid, poly.tsp);
+		GetCurrentDescSet().SetTexture((Texture *)poly.texture, poly.tsp);
 
-	vk::Pipeline pipeline = pipelineManager->GetPipeline(listType, sortTriangles, poly);
+	vk::Pipeline pipeline = pipelineManager->GetPipeline(listType, sortTriangles, poly, gpuPalette);
 	cmdBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline);
 	if (poly.pcw.Texture)
-		GetCurrentDescSet().BindPerPolyDescriptorSets(cmdBuffer, poly.texid, poly.tsp);
+		GetCurrentDescSet().BindPerPolyDescriptorSets(cmdBuffer, (Texture *)poly.texture, poly.tsp);
 
 	cmdBuffer.drawIndexed(count, 1, first, 0, 0);
 }
@@ -300,7 +300,7 @@ void Drawer::UploadMainBuffer(const VertexShaderUniforms& vertexUniforms, const 
 
 	chunks.push_back(&fragmentUniforms);
 	chunkSizes.push_back(sizeof(fragmentUniforms));
-	u32 totalSize = offsets.fragmentUniformOffset + sizeof(FragmentShaderUniforms);
+	u32 totalSize = (u32)(offsets.fragmentUniformOffset + sizeof(FragmentShaderUniforms));
 
 	BufferData *buffer = GetMainBuffer(totalSize);
 	buffer->upload(chunks.size(), &chunkSizes[0], &chunks[0]);
@@ -324,7 +324,7 @@ bool Drawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 	UploadMainBuffer(vtxUniforms, fragUniforms);
 
 	// Update per-frame descriptor set and bind it
-	GetCurrentDescSet().UpdateUniforms(GetMainBuffer(0)->buffer.get(), offsets.vertexUniformOffset, offsets.fragmentUniformOffset,
+	GetCurrentDescSet().UpdateUniforms(GetMainBuffer(0)->buffer.get(), (u32)offsets.vertexUniformOffset, (u32)offsets.fragmentUniformOffset,
 			fogTexture->GetImageView(), paletteTexture->GetImageView());
 	GetCurrentDescSet().BindPerFrameDescriptorSets(cmdBuffer);
 
@@ -683,7 +683,7 @@ vk::CommandBuffer ScreenDrawer::BeginRenderPass()
 	const vk::ClearValue clear_colors[] = { vk::ClearColorValue(std::array<float, 4> { 0.f, 0.f, 0.f, 1.f }), vk::ClearDepthStencilValue { 0.f, 0 } };
 	commandBuffer.beginRenderPass(vk::RenderPassBeginInfo(renderPass, *framebuffers[GetCurrentImage()],
 			vk::Rect2D( { 0, 0 }, viewport), 2, clear_colors), vk::SubpassContents::eInline);
-	commandBuffer.setViewport(0, vk::Viewport(0.0f, 0.0f, viewport.width, viewport.height, 1.0f, 0.0f));
+	commandBuffer.setViewport(0, vk::Viewport(0.0f, 0.0f, (float)viewport.width, (float)viewport.height, 1.0f, 0.0f));
 
 	matrices.CalcMatrices(&pvrrc, viewport.width, viewport.height);
 

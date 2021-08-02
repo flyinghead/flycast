@@ -7,5 +7,4 @@
 REI_APP_NAME = Flycast
 PRODUCT_NAME = Flycast
 CFLAGS =
-
-
+LIBSDL = /usr/local/lib/libSDL2.a

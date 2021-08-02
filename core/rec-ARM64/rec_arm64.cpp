@@ -278,6 +278,7 @@ public:
 	void ngen_Compile(RuntimeBlockInfo* block, bool force_checks, bool reset, bool staging, bool optimise)
 	{
 		//printf("REC-ARM64 compiling %08x\n", block->addr);
+		JITWriteProtect(false);
 		this->block = block;
 		CheckBlock(force_checks, block);
 		
@@ -959,6 +960,7 @@ public:
 		RelinkBlock(block);
 
 		Finalize();
+		JITWriteProtect(true);
 	}
 
 	void ngen_CC_Start(shil_opcode* op)
@@ -1518,11 +1520,18 @@ private:
 	void GenCallRuntime(R (*function)(P...))
 	{
 		ptrdiff_t offset = reinterpret_cast<uintptr_t>(function) - reinterpret_cast<uintptr_t>(CC_RW2RX(GetBuffer()->GetStartAddress<void*>()));
-		verify(offset >= -128 * 1024 * 1024 && offset <= 128 * 1024 * 1024);
 		verify((offset & 3) == 0);
-		Label function_label;
-		BindToOffset(&function_label, offset);
-		Bl(&function_label);
+		if (offset < -128 * 1024 * 1024 || offset > 128 * 1024 * 1024)
+		{
+			Mov(x4, reinterpret_cast<uintptr_t>(function));
+			Blr(x4);
+		}
+		else
+		{
+			Label function_label;
+			BindToOffset(&function_label, offset);
+			Bl(&function_label);
+		}
 	}
 
 	void GenCall(DynaCode *function)
@@ -1539,14 +1548,34 @@ private:
 	void GenBranchRuntime(R (*target)(P...), Condition cond = al)
 	{
 		ptrdiff_t offset = reinterpret_cast<uintptr_t>(target) - reinterpret_cast<uintptr_t>(CC_RW2RX(GetBuffer()->GetStartAddress<void*>()));
-		verify(offset >= -128 * 1024 * 1024 && offset <= 128 * 1024 * 1024);
 		verify((offset & 3) == 0);
-		Label target_label;
-		BindToOffset(&target_label, offset);
-		if (cond == al)
-			B(&target_label);
+		if (offset < -128 * 1024 * 1024 || offset > 128 * 1024 * 1024)
+		{
+			if (cond == al)
+			{
+				Mov(x4, reinterpret_cast<uintptr_t>(target));
+				Br(x4);
+			}
+			else
+			{
+				Label skip_target;
+				Condition inverse_cond = (Condition)((u32)cond ^ 1);
+				
+				B(&skip_target, inverse_cond);
+				Mov(x4, reinterpret_cast<uintptr_t>(target));
+				Br(x4);
+				Bind(&skip_target);
+			}
+		}
 		else
-			B(&target_label, cond);
+		{
+			Label target_label;
+			BindToOffset(&target_label, offset);
+			if (cond == al)
+				B(&target_label);
+			else
+				B(&target_label, cond);
+		}
 	}
 
 	void GenBranch(DynaCode *code, Condition cond = al)
@@ -2116,8 +2145,8 @@ private:
 	std::vector<const VRegister*> call_fregs;
 	Arm64RegAlloc regalloc;
 	RuntimeBlockInfo* block = NULL;
-	const int read_memory_rewrite_size = 3;	// ubfx, add, ldr
-	const int write_memory_rewrite_size = 3; // ubfx, add, str
+	const int read_memory_rewrite_size = 5;	// ubfx, add, ldr
+	const int write_memory_rewrite_size = 5; // ubfx, add, str
 };
 
 static Arm64Assembler* compiler;
@@ -2188,6 +2217,7 @@ static const u32 op_sizes[] = {
 };
 bool ngen_Rewrite(host_context_t &context, void *faultAddress)
 {
+	JITWriteProtect(false);
 	//LOGI("ngen_Rewrite pc %zx\n", context.pc);
 	u32 *code_ptr = (u32 *)CC_RX2RW(context.pc);
 	u32 armv8_op = *code_ptr;
@@ -2219,6 +2249,7 @@ bool ngen_Rewrite(host_context_t &context, void *faultAddress)
 	assembler->Finalize(true);
 	delete assembler;
 	context.pc = (unat)CC_RW2RX(code_rewrite);
+	JITWriteProtect(true);
 
 	return true;
 }
@@ -2227,12 +2258,14 @@ static void generate_mainloop()
 {
 	if (mainloop != nullptr)
 		return;
+	JITWriteProtect(false);
 	compiler = new Arm64Assembler();
 
 	compiler->GenMainloop();
 
 	delete compiler;
 	compiler = nullptr;
+	JITWriteProtect(true);
 }
 
 RuntimeBlockInfo* ngen_AllocateBlock()
@@ -2250,11 +2283,13 @@ u32 DynaRBI::Relink()
 {
 #ifndef NO_BLOCK_LINKING
 	//printf("DynaRBI::Relink %08x\n", this->addr);
+	JITWriteProtect(false);
 	Arm64Assembler *compiler = new Arm64Assembler((u8 *)this->code + this->relink_offset);
 
 	u32 code_size = compiler->RelinkBlock(this);
 	compiler->Finalize(true);
 	delete compiler;
+	JITWriteProtect(true);
 
 	return code_size;
 #else

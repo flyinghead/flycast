@@ -12,7 +12,7 @@ void ta_vtx_SoftReset();
 void DYNACALL ta_vtx_data32(const SQBuffer *data);
 void ta_vtx_data(const SQBuffer *data, u32 size);
 
-bool ta_parse_vdrc(TA_context* ctx);
+bool ta_parse_vdrc(TA_context *ctx, bool bgraColors = false);
 
 class TaTypeLut
 {

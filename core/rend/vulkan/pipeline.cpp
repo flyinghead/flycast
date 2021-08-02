@@ -168,7 +168,7 @@ void PipelineManager::CreateModVolPipeline(ModVolMode mode, int cullMode)
 					graphicsPipelineCreateInfo);
 }
 
-void PipelineManager::CreatePipeline(u32 listType, bool sortTriangles, const PolyParam& pp)
+void PipelineManager::CreatePipeline(u32 listType, bool sortTriangles, const PolyParam& pp, bool gpuPalette)
 {
 	vk::PipelineVertexInputStateCreateInfo pipelineVertexInputStateCreateInfo = GetMainVertexInputStateCreateInfo();
 
@@ -303,7 +303,7 @@ void PipelineManager::CreatePipeline(u32 listType, bool sortTriangles, const Pol
 	params.texture = pp.pcw.Texture;
 	params.trilinear = pp.pcw.Texture && pp.tsp.FilterMode > 1 && listType != ListType_Punch_Through && pp.tcw.MipMapped == 1;
 	params.useAlpha = pp.tsp.UseAlpha;
-	params.palette = BaseTextureCacheData::IsGpuHandledPaletted(pp.tsp, pp.tcw);
+	params.palette = gpuPalette;
 	vk::ShaderModule fragment_module = shaderManager->GetFragmentShader(params);
 
 	vk::PipelineShaderStageCreateInfo stages[] = {
@@ -328,7 +328,7 @@ void PipelineManager::CreatePipeline(u32 listType, bool sortTriangles, const Pol
 	  renderPass                                  // renderPass
 	);
 
-	pipelines[hash(listType, sortTriangles, &pp)] = GetContext()->GetDevice().createGraphicsPipelineUnique(GetContext()->GetPipelineCache(),
+	pipelines[hash(listType, sortTriangles, &pp, gpuPalette)] = GetContext()->GetDevice().createGraphicsPipelineUnique(GetContext()->GetPipelineCache(),
 			graphicsPipelineCreateInfo);
 }
 

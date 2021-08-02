@@ -982,10 +982,6 @@ void VulkanContext::Term()
 #endif
 #endif
 	instance.reset();
-#ifdef _WIN32
-	extern void DestroyMainWindow();
-	DestroyMainWindow();
-#endif
 }
 
 void VulkanContext::DoSwapAutomation()

@@ -10,7 +10,6 @@ import android.view.ScaleGestureDetector;
 import android.view.View;
 
 import com.reicast.emulator.Emulator;
-import com.reicast.emulator.R;
 import com.reicast.emulator.periph.InputDeviceManager;
 import com.reicast.emulator.periph.VJoy;
 
