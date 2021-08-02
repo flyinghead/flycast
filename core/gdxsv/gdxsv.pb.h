@@ -961,6 +961,7 @@ class BattleLogUser PROTOBUF_FINAL :
     kLoseCountFieldNumber = 7,
     kGradeFieldNumber = 8,
     kTeamFieldNumber = 9,
+    kPosFieldNumber = 12,
   };
   // string user_id = 1;
   void clear_user_id();
@@ -1103,6 +1104,15 @@ class BattleLogUser PROTOBUF_FINAL :
   void _internal_set_team(::PROTOBUF_NAMESPACE_ID::int32 value);
   public:
 
+  // int32 pos = 12;
+  void clear_pos();
+  ::PROTOBUF_NAMESPACE_ID::int32 pos() const;
+  void set_pos(::PROTOBUF_NAMESPACE_ID::int32 value);
+  private:
+  ::PROTOBUF_NAMESPACE_ID::int32 _internal_pos() const;
+  void _internal_set_pos(::PROTOBUF_NAMESPACE_ID::int32 value);
+  public:
+
   // @@protoc_insertion_point(class_scope:proto.BattleLogUser)
  private:
   class _Internal;
@@ -1121,6 +1131,7 @@ class BattleLogUser PROTOBUF_FINAL :
   ::PROTOBUF_NAMESPACE_ID::int32 lose_count_;
   ::PROTOBUF_NAMESPACE_ID::int32 grade_;
   ::PROTOBUF_NAMESPACE_ID::int32 team_;
+  ::PROTOBUF_NAMESPACE_ID::int32 pos_;
   mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   friend struct ::TableStruct_gdxsv_2eproto;
 };
@@ -3507,6 +3518,26 @@ inline void BattleLogUser::set_allocated_user_name_sjis(std::string* user_name_s
   user_name_sjis_.SetAllocated(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), user_name_sjis,
       GetArena());
   // @@protoc_insertion_point(field_set_allocated:proto.BattleLogUser.user_name_sjis)
+}
+
+// int32 pos = 12;
+inline void BattleLogUser::clear_pos() {
+  pos_ = 0;
+}
+inline ::PROTOBUF_NAMESPACE_ID::int32 BattleLogUser::_internal_pos() const {
+  return pos_;
+}
+inline ::PROTOBUF_NAMESPACE_ID::int32 BattleLogUser::pos() const {
+  // @@protoc_insertion_point(field_get:proto.BattleLogUser.pos)
+  return _internal_pos();
+}
+inline void BattleLogUser::_internal_set_pos(::PROTOBUF_NAMESPACE_ID::int32 value) {
+  
+  pos_ = value;
+}
+inline void BattleLogUser::set_pos(::PROTOBUF_NAMESPACE_ID::int32 value) {
+  _internal_set_pos(value);
+  // @@protoc_insertion_point(field_set:proto.BattleLogUser.pos)
 }
 
 // -------------------------------------------------------------------
