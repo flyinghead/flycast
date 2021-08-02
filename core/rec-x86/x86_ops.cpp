@@ -26,6 +26,9 @@
 #include "hw/sh4/sh4_opcode_list.h"
 #include "hw/sh4/sh4_core.h"
 #include "hw/mem/_vmem.h"
+#include "oslib/oslib.h"
+
+extern UnwindInfo unwinder;
 
 namespace MemSize {
 enum {

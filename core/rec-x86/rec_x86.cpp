@@ -44,7 +44,7 @@ static X86Compiler* compiler;
 static Xbyak::Operand::Code alloc_regs[] {  Xbyak::Operand::EBX,  Xbyak::Operand::EBP,  Xbyak::Operand::ESI,  Xbyak::Operand::EDI, (Xbyak::Operand::Code)-1 };
 static s8 alloc_fregs[] = { 7, 6, 5, 4, -1 };
 alignas(16) static f32 thaw_regs[4];
-static UnwindInfo unwinder;
+UnwindInfo unwinder;
 
 void X86RegAlloc::doAlloc(RuntimeBlockInfo* block)
 {
