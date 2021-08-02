@@ -87,6 +87,15 @@ void Gdxsv::Update() {
 
     WritePatch();
 
+    /*
+    static int framecount = 0;
+    if (disk == 2 && framecount % 60 == 0) {
+        char osd_msg[128] = {};
+        sprintf(osd_msg, "DELAY: %d/%d", gdxsv_ReadMem8(0x0c3ab954), gdxsv_ReadMem8(0x0c3abb91));
+        gui_display_notification(osd_msg, 1000);
+    }
+     */
+
     u8 dump_buf[1024];
     if (ReadMem32_nommu(symbols["print_buf_pos"])) {
         int n = ReadMem32_nommu(symbols["print_buf_pos"]);
