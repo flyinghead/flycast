@@ -59,13 +59,64 @@ public:
         NOTICE_LOG(COMMON, "game_disk = %s", log_file_.game_disk().c_str());
         fclose(fp);
 
-        msg_list_.clear();
         McsMessageReader r;
         McsMessage msg;
+
+        if (log_file_.log_file_version() < 20210802) {
+            for (int i = 0; i < log_file_.battle_data_size(); ++i) {
+                auto data = log_file_.mutable_battle_data(i);
+                const auto &fields = proto::BattleLogFile::GetReflection()->GetUnknownFields(*data);
+                if (!fields.empty()) {
+                    for (int j = 0; j < fields.field_count(); ++j) {
+                        const auto &field = fields.field(j);
+                        if (j == 0 && field.type() == google::protobuf::UnknownField::TYPE_LENGTH_DELIMITED) {
+                            const auto &body = field.length_delimited();
+                            data->set_body(body.data(), body.size());
+                        }
+                        if (j == 1 && field.type() == google::protobuf::UnknownField::TYPE_VARINT) {
+                            data->set_seq(field.varint());
+                        }
+                    }
+                }
+            }
+
+            std::map<std::string, int> player_position;
+            for (int i = 0; i < log_file_.battle_data_size(); ++i) {
+                const auto &data = log_file_.battle_data(i);
+                if (player_position.find(data.user_id()) == player_position.end()) {
+                    r.Write(data.body().data(), data.body().size());
+                    while (r.Read(msg)) {
+                        if (msg.Type() == McsMessage::MsgType::PingMsg) {
+                            player_position[data.user_id()] = msg.Sender();
+                            break;
+                        }
+                    }
+                }
+                if (log_file_.users_size() == player_position.size()) {
+                    break;
+                }
+            }
+
+            for (int i = 0; i < log_file_.users_size(); ++i) {
+                int pos = player_position[log_file_.users(i).user_id()];
+                log_file_.mutable_users(i)->set_pos(pos + 1);
+                log_file_.mutable_users(i)->set_team(1 + pos / 2);
+                // NOTE: Surprisingly, player's grade seems to affect the game.
+                log_file_.mutable_users(i)->set_grade(std::min(14, log_file_.users(i).win_count() / 100));
+                log_file_.mutable_users(i)->set_user_name_sjis(log_file_.users(i).user_id());
+            }
+
+            std::sort(log_file_.mutable_users()->begin(), log_file_.mutable_users()->end(),
+                      [](const proto::BattleLogUser &a, const proto::BattleLogUser &b) { return a.pos() < b.pos(); });
+        }
+
+        msg_list_.clear();
+        r.Clear();
         for (int i = 0; i < log_file_.battle_data_size(); ++i) {
             const auto &data = log_file_.battle_data(i);
             r.Write(data.body().data(), data.body().size());
             while (r.Read(msg)) {
+                // NOTICE_LOG(COMMON, "MSG:%s", msg.ToHex().c_str());
                 if (msg.Type() == McsMessage::KeyMsg2) {
                     msg_list_.emplace_back(msg.FirstKeyMsg());
                     msg_list_.emplace_back(msg.SecondKeyMsg());
@@ -75,15 +126,11 @@ public:
             }
         }
 
-        // sort log users by player position
-        std::sort(log_file_.mutable_users()->begin(), log_file_.mutable_users()->end(),
-                  [](const proto::BattleLogUser &a, const proto::BattleLogUser &b) { return a.pos() < b.pos(); });
-
-        NOTICE_LOG(COMMON, "patch_size = %d", log_file_.patches_size());
         NOTICE_LOG(COMMON, "users = %d", log_file_.users_size());
+        NOTICE_LOG(COMMON, "patch_size = %d", log_file_.patches_size());
+        NOTICE_LOG(COMMON, "msg_list.size = %d", msg_list_.size());
 
         std::fill(start_index_.begin(), start_index_.end(), 0);
-
         state_ = State::Start;
         maxlag_ = 1;
         NOTICE_LOG(COMMON, "Replay Start");
@@ -157,9 +204,7 @@ private:
         for (int p = 0; p < log_file_.users_size(); ++p) {
             key_msg_index_[p].clear();
 
-            int start_index = start_index_[p];
-            start_index_[p] = -1;
-            for (int i = start_index; i < msg_list_.size(); ++i) {
+            for (int i = start_index_[p]; i < msg_list_.size(); ++i) {
                 const auto &msg = msg_list_[i];
                 if (msg.Sender() == p) {
                     if (!key_msg_index_[p].empty()) {
@@ -219,7 +264,7 @@ private:
                 LbsMessage::SvAnswer(msg).
                         Write8(pos)->
                         WriteString(user.user_id())->
-                        WriteBytes(user.user_name_sjis())->
+                        WriteBytes(user.user_name_sjis().data(), user.user_name_sjis().size())->
                         WriteBytes(user.game_param().data(), user.game_param().size())->
                         Write16(user.grade())->
                         Write16(user.win_count())->
