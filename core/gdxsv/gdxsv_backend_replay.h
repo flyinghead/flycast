@@ -75,33 +75,9 @@ public:
             }
         }
 
-        // Guess player position
-        std::map<std::string, int> player_position;
-        for (int i = 0; i < log_file_.battle_data_size(); ++i) {
-            const auto &data = log_file_.battle_data(i);
-            if (player_position.find(data.user_id()) == player_position.end()) {
-                r.Write(data.body().data(), data.body().size());
-                while (r.Read(msg)) {
-                    if (msg.Type() == McsMessage::MsgType::PingMsg) {
-                        player_position[data.user_id()] = msg.Sender();
-                        break;
-                    }
-                }
-            }
-            if (log_file_.users_size() == player_position.size()) {
-                break;
-            }
-        }
-
-        for (auto &p : player_position) {
-            NOTICE_LOG(COMMON, "player_positions: %s = %d", p.first.c_str(), p.second);
-        }
-
         // sort log users by player position
         std::sort(log_file_.mutable_users()->begin(), log_file_.mutable_users()->end(),
-                  [&player_position](const proto::BattleLogUser &a, const proto::BattleLogUser &b) {
-                      return player_position[a.user_id()] < player_position[b.user_id()];
-                  });
+                  [](const proto::BattleLogUser &a, const proto::BattleLogUser &b) { return a.pos() < b.pos(); });
 
         NOTICE_LOG(COMMON, "patch_size = %d", log_file_.patches_size());
         NOTICE_LOG(COMMON, "users = %d", log_file_.users_size());
