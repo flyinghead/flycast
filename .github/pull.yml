@@ -1,0 +1,5 @@
+version: "1"
+rules:
+  - base: gdxsv-master
+    upstream: flyinghead:master
+    mergeMethod: merge
