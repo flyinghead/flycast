@@ -24,48 +24,6 @@
 	#define DYNACALL
 #endif
 
-#ifdef _MSC_VER
-#ifdef _CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES
-#undef _CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES
-#endif
-
-#define _CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES 1
-
-#ifdef _CRT_SECURE_NO_DEPRECATE
-#undef _CRT_SECURE_NO_DEPRECATE
-#endif
-
-#define _CRT_SECURE_NO_DEPRECATE
-//unnamed struncts/unions
-#pragma warning( disable : 4201)
-
-//unused parameters
-#pragma warning( disable : 4100)
-
-//SHUT UP M$ COMPILER !@#!@$#
-#ifdef _CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES
-#undef _CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES
-#endif
-
-#define _CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES 1
-
-#ifdef _CRT_SECURE_NO_DEPRECATE
-#undef _CRT_SECURE_NO_DEPRECATE
-#endif
-#define _CRT_SECURE_NO_DEPRECATE
-
-#define NOMINMAX
-
-//Do not complain when i use enum::member
-#pragma warning( disable : 4482)
-
-//unnamed struncts/unions
-#pragma warning( disable : 4201)
-
-//unused parameters
-#pragma warning( disable : 4100)
-#endif
-
 #include <cstdint>
 #include <cstddef>
 #include <cstring>
@@ -94,11 +52,6 @@ typedef size_t unat;
 #ifdef X64
 typedef u64 unat;
 #endif
-
-#ifndef CDECL
-#define CDECL __cdecl
-#endif
-
 
 //intc function pointer and enums
 enum HollyInterruptType
@@ -151,26 +104,26 @@ enum HollyInterruptID
 		//bit 0 = RENDER : ISP out of Cache(Buffer over flow)
 		//bit 1 = RENDER : Hazard Processing of Strip Buffer
 		holly_PRIM_NOMEM = holly_err | 0x02,	//bit 2 = TA : ISP/TSP Parameter Overflow
-		holly_MATR_NOMEM = holly_err | 0x03		//bit 3 = TA : Object List Pointer Overflow
+		holly_MATR_NOMEM = holly_err | 0x03,	//bit 3 = TA : Object List Pointer Overflow
 		//bit 4 = TA : Illegal Parameter
 		//bit 5 = TA : FIFO Overflow
 		//bit 6 = PVRIF : Illegal Address set
 		//bit 7 = PVRIF : DMA over run
-		//bit 8 = MAPLE : Illegal Address set
-		//bit 9 = MAPLE : DMA over run
-		//bit 10 = MAPLE : Write FIFO over flow
-		//bit 11 = MAPLE : Illegal command
+		holly_MAPLE_ILLADDR = holly_err | 0x08,  //bit 8 = MAPLE : Illegal Address set
+		holly_MAPLE_OVERRUN = holly_err | 0x09,  //bit 9 = MAPLE : DMA over run
+		holly_MAPLE_FIFO = holly_err | 0x0a,     //bit 10 = MAPLE : Write FIFO overflow
+		holly_MAPLE_ILLCMD = holly_err | 0x0b,   //bit 11 = MAPLE : Illegal command
 		//bit 12 = G1 : Illegal Address set
 		//bit 13 = G1 : GD-DMA over run
 		//bit 14 = G1 : ROM/FLASH access at GD-DMA
-		//bit 15 = G2 : AICA-DMA Illegal Address set
-		//bit 16 = G2 : Ext-DMA1 Illegal Address set
-		//bit 17 = G2 : Ext-DMA2 Illegal Address set
-		//bit 18 = G2 : Dev-DMA Illegal Address set
-		//bit 19 = G2 : AICA-DMA over run
-		//bit 20 = G2 : Ext-DMA1 over run
-		//bit 21 = G2 : Ext-DMA2 over run
-		//bit 22 = G2 : Dev-DMA over run
+		holly_AICA_ILLADDR = holly_err | 0x0f,   //bit 15 = G2 : AICA-DMA Illegal Address set
+		holly_EXT1_ILLADDR = holly_err | 0x10,   //bit 16 = G2 : Ext-DMA1 Illegal Address set
+		holly_EXT2_ILLADDR = holly_err | 0x11,   //bit 17 = G2 : Ext-DMA2 Illegal Address set
+		holly_DEV_ILLADDR = holly_err | 0x12,    //bit 18 = G2 : Dev-DMA Illegal Address set
+		holly_AICA_OVERRUN = holly_err | 0x13,   //bit 19 = G2 : AICA-DMA over run
+		holly_EXT1_OVERRUN = holly_err | 0x14,   //bit 20 = G2 : Ext-DMA1 over run
+		holly_EXT2_OVERRUN = holly_err | 0x15,   //bit 21 = G2 : Ext-DMA2 over run
+		holly_DEV_OVERRUN = holly_err | 0x16,    //bit 22 = G2 : Dev-DMA over run
 		//bit 23 = G2 : AICA-DMA Time out
 		//bit 24 = G2 : Ext-DMA1 Time out
 		//bit 25 = G2 : Ext-DMA2 Time out
@@ -179,80 +132,25 @@ enum HollyInterruptID
 };
 
 
+#include "nowide/cstdlib.hpp"
+#include "nowide/cstdio.hpp"
 
-struct vram_block
-{
-	u32 start;
-	u32 end;
-	u32 len;
-	u32 type;
-
-	void* userdata;
-};
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-//******************************************************
-//*********************** PowerVR **********************
-//******************************************************
-
-void libCore_vramlock_Unlock_block  (vram_block* block);
-void libCore_vramlock_Unlock_block_wb  (vram_block* block);
-vram_block* libCore_vramlock_Lock(u32 start_offset,u32 end_offset,void* userdata);
-
-
-
-//******************************************************
-//************************ GDRom ***********************
-//******************************************************
-enum DiscType
-{
-	CdDA=0x00,
-	CdRom=0x10,
-	CdRom_XA=0x20,
-	CdRom_Extra=0x30,
-	CdRom_CDI=0x40,
-	GdRom=0x80,
-
-	NoDisk=0x1,			//These are a bit hacky .. but work for now ...
-	Open=0x2,			//tray is open :)
-	Busy=0x3			//busy -> needs to be automatically done by gdhost
-};
-
-enum DiskArea
-{
-	SingleDensity,
-	DoubleDensity
-};
-
-//******************************************************
-//************************ AICA ************************
-//******************************************************
-void libARM_InterruptChange(u32 bits,u32 L);
-void libCore_CDDA_Sector(s16* sector);
-
-
-//includes from CRT
-#include <cstdlib>
-#include <cstdio>
-
-#if HOST_OS == OS_DARWIN
+#if defined(__APPLE__)
 int darw_printf(const char* Text,...);
-#define printf darw_printf
-#define puts(X) printf("%s\n", X)
+#endif
+
+#if defined(__APPLE__) && defined(__MACH__) && HOST_CPU == CPU_ARM64
+	#define __ARM_MAC__
+	#include "pthread.h"
+	static void JITWriteProtect(bool enabled) { if (__builtin_available(macOS 11.0, *)) pthread_jit_write_protect_np(enabled); }
+#else
+	__forceinline static void JITWriteProtect(bool enabled) {}
 #endif
 
 //includes from c++rt
 #include <vector>
 #include <string>
 #include <map>
-
-//used for asm-olny functions
-#ifdef _M_IX86
-#define naked __declspec(naked)
-#else
-#define naked __attribute__((naked))
-#endif
 
 #define INLINE __forceinline
 
@@ -266,25 +164,18 @@ int darw_printf(const char* Text,...);
 #ifdef _MSC_VER
 #define likely(x) x
 #define unlikely(x) x
+#define expected(x, y) x
 #else
-#define likely(x)       __builtin_expect((x),1)
-#define unlikely(x)       __builtin_expect((x),0)
+#define likely(x)      __builtin_expect(!!(x), 1)
+#define unlikely(x)    __builtin_expect(!!(x), 0)
+#define expected(x, y) __builtin_expect((x), (y))
 #endif
 
 #include "log/Log.h"
 
-#ifndef NO_MMU
-#define _X_x_X_MMU_VER_STR "/mmu"
-#else
-#define _X_x_X_MMU_VER_STR ""
-#endif
-
-
 #define VER_EMUNAME		"Flycast"
-
-#define VER_FULLNAME	VER_EMUNAME " git" _X_x_X_MMU_VER_STR " (built " __DATE__ "@" __TIME__ ")"
-#define VER_SHORTNAME	VER_EMUNAME " git" _X_x_X_MMU_VER_STR
-
+#define VER_FULLNAME	VER_EMUNAME " (built " __DATE__ "@" __TIME__ ")"
+#define VER_SHORTNAME	VER_EMUNAME
 
 void os_DebugBreak();
 #define dbgbreak os_DebugBreak()
@@ -300,10 +191,9 @@ bool dc_unserialize(void **data, unsigned int *total_size);
 #define REICAST_SA(v_arr,num) rc_serialize((v_arr), sizeof((v_arr)[0])*(num), data, total_size)
 #define REICAST_USA(v_arr,num) rc_unserialize((v_arr), sizeof((v_arr)[0])*(num), data, total_size)
 
+#define REICAST_SKIP(size) do { if (*data) *(u8**)data += (size); *total_size += (size); } while (false)
 
-#if COMPILER_VC_OR_CLANG_WIN32
-#pragma warning( disable : 4127 4996 /*4244*/)
-#else
+#ifndef _MSC_VER
 #define stricmp strcasecmp
 #endif
 
@@ -313,8 +203,8 @@ int msgboxf(const char* text, unsigned int type, ...);
 #define MBX_ICONEXCLAMATION          0
 #define MBX_ICONERROR                0
 
-#define verify(x) do { if ((x) == false){ msgboxf("Verify Failed  : " #x "\n in %s -> %s : %d \n", MBX_ICONERROR, (__FUNCTION__), (__FILE__), __LINE__); dbgbreak;}} while (false)
-#define die(reason) do { msgboxf("Fatal error : %s\n in %s -> %s : %d \n", MBX_ICONERROR,(reason), (__FUNCTION__), (__FILE__), __LINE__); dbgbreak;} while (false)
+#define verify(x) do { if ((x) == false){ msgboxf("Verify Failed  : " #x "\n in %s -> %s : %d", MBX_ICONERROR, (__FUNCTION__), (__FILE__), __LINE__); dbgbreak;}} while (false)
+#define die(reason) do { msgboxf("Fatal error : %s\n in %s -> %s : %d", MBX_ICONERROR,(reason), (__FUNCTION__), (__FILE__), __LINE__); dbgbreak;} while (false)
 
 
 //will be removed sometime soon
@@ -389,7 +279,36 @@ enum class JVS {
 	WorldKicks,
 	WorldKicksPCB,
 	Keyboard,
-	OutTrigger
+	OutTrigger,
+	LightGunAsAnalog,
+	WaveRunnerGP,
+};
+
+enum class RenderType {
+	OpenGL = 0,
+	OpenGL_OIT = 3,
+	Vulkan = 4,
+	Vulkan_OIT = 5,
+	DirectX9 = 1,
+};
+
+enum class KeyboardLayout {
+	JP = 1,
+	US,
+	UK,
+	GE,
+	FR,
+	IT,
+	SP,
+	SW,
+	CH,
+	NL,
+	PT,
+	LATAM,
+	FR_CA,
+	RU,
+	CN,
+	KO
 };
 
 struct settings_t
@@ -404,135 +323,30 @@ struct settings_t
 		u32 aram_mask;
 		u32 bios_size;
 		u32 flash_size;
-		u32 bbsram_size;
 	} platform;
 
-	struct {
-		bool UseReios;
-	} bios;
-
 	struct
 	{
-		bool UseMipmaps;
-		bool WideScreen;
-		bool ShowFPS;
-		bool RenderToTextureBuffer;
-		int RenderToTextureUpscale;
-		bool TranslucentPolygonDepthMask;
-		bool ModifierVolumes;
-		bool Clipping;
-		int TextureUpscale;
-		int MaxFilteredTextureSize;
-		f32 ExtraDepthScale;
-		bool CustomTextures;
-		bool DumpTextures;
-		int ScreenScaling;		// in percent. 50 means half the native resolution
-		int ScreenStretching;	// in percent. 150 means stretch from 4/3 to 6/3
-		bool Fog;
-		bool FloatVMUs;
-		bool Rotate90;			// Rotate the screen 90 deg CC
-		bool PerStripSorting;
-		bool DelayFrameSwapping; // Delay swapping frame until FB_R_SOF matches FB_W_SOF
-		bool WidescreenGameHacks;
-	} rend;
-
-	struct
-	{
-		bool Enable;
-		bool idleskip;
-		bool unstable_opt;
-		bool safemode;
 		bool disable_nvmem;
-		bool disable_vmem32;
 	} dynarec;
 
 	struct
 	{
-		u32 run_counts;
-	} profile;
-
-	struct
-	{
-		u32 cable;			// 0 -> VGA, 1 -> VGA, 2 -> RGB, 3 -> TV
-		u32 region;			// 0 -> JP, 1 -> USA, 2 -> EU, 3 -> default
-		u32 broadcast;		// 0 -> NTSC, 1 -> PAL, 2 -> PAL/M, 3 -> PAL/N, 4 -> default
-		u32 language;		// 0 -> JP, 1 -> EN, 2 -> DE, 3 -> FR, 4 -> SP, 5 -> IT, 6 -> default
-		std::vector<std::string> ContentPath;
-		bool FullMMU;
-		bool ForceWindowsCE;
-		bool HideLegacyNaomiRoms;
-	} dreamcast;
-
-	struct
-	{
-		u32 HW_mixing;		//(0) -> SW , 1 -> HW , 2 -> Auto
-		u32 BufferSize;		//In samples ,*4 for bytes (1024)
-		bool LimitFPS;
-		u32 GlobalFocus;	//0 -> only hwnd , (1) -> Global
-		u32 CDDAMute;
-		bool DSPEnabled;
 		bool NoBatch;
-		bool NoSound;
 	} aica;
 
-	struct{
-		std::string backend;
-
-		// slug<<key, value>>
-		std::map<std::string, std::map<std::string, std::string>> options;
-	} audio;
-
-
-#if USE_OMX
 	struct
 	{
-		u32 Audio_Latency;
-		bool Audio_HDMI;
-	} omx;
-#endif
-
-#if SUPPORT_DISPMANX
-	struct
-	{
-		u32 Width;
-		u32 Height;
-		bool Keep_Aspect;
-	} dispmanx;
-#endif
-
-	struct
-	{
-		bool PatchRegion;
 		char ImagePath[512];
 	} imgread;
 
-	struct
-	{
-		u32 ta_skip;
-		u32 rend;	// 0: GLES, GL3, 3: OIT/GL4.3, 4: Vulkan
-
-		u32 MaxThreads;
-		bool SynchronousRender;
-
-		bool IsOpenGL() { return rend == 0 || rend == 3; }
-	} pvr;
-
 	struct {
-		bool SerialConsole;
-		bool SerialPTY;
-	} debug;
-
-	struct {
-		bool OpenGlChecks;
-	} validate;
-
-	struct {
-		u32 MouseSensitivity;
 		JVS JammaSetup;
-		int maple_devices[4];
-		int maple_expansion_devices[4][2];
-		int VirtualGamepadVibration;
+		KeyboardLayout keyboardLangId = KeyboardLayout::US;
+		bool fastForwardMode;
 	} input;
+
+	bool gameStarted;
 };
 
 extern settings_t settings;
@@ -544,61 +358,16 @@ extern settings_t settings;
 #define VRAM_SIZE settings.platform.vram_size
 #define VRAM_MASK settings.platform.vram_mask
 #define BIOS_SIZE settings.platform.bios_size
-#define FLASH_SIZE settings.platform.flash_size
-#define BBSRAM_SIZE settings.platform.bbsram_size
-
-void InitSettings();
-void LoadSettings(bool game_specific);
-void SaveSettings();
-u32 GetRTC_now();
 
 inline bool is_s8(u32 v) { return (s8)v==(s32)v; }
 inline bool is_u8(u32 v) { return (u8)v==(s32)v; }
 inline bool is_s16(u32 v) { return (s16)v==(s32)v; }
 inline bool is_u16(u32 v) { return (u16)v==(u32)v; }
 
-//more to come
-
-//sh4 thread
-s32 plugins_Init();
-void plugins_Term();
-void plugins_Reset(bool Manual);
-
 //PVR
 s32 libPvr_Init();
-void libPvr_Reset(bool Manual);
+void libPvr_Reset(bool hard);
 void libPvr_Term();
-
-void libPvr_LockedBlockWrite(vram_block* block,u32 addr);	//set to 0 if not used
-
-void* libPvr_GetRenderTarget();
-
-//AICA
-s32 libAICA_Init();
-void libAICA_Reset(bool hard);
-void libAICA_Term();
-
-u32  libAICA_ReadReg(u32 addr,u32 size);
-void libAICA_WriteReg(u32 addr,u32 data,u32 size);
-
-void libAICA_Update(u32 cycles);				//called every ~1800 cycles, set to 0 if not used
-
-
-//GDR
-s32 libGDR_Init();
-void libGDR_Reset(bool hard);
-void libGDR_Term();
-
-void libCore_gdrom_disc_change();
-
-//IO
-void libGDR_ReadSector(u8 * buff,u32 StartSector,u32 SectorCount,u32 secsz);
-void libGDR_ReadSubChannel(u8 * buff, u32 format, u32 len);
-void libGDR_GetToc(u32* toc,u32 area);
-u32 libGDR_GetDiscType();
-void libGDR_GetSessionInfo(u8* pout,u8 session);
-u32 libGDR_GetTrackNumber(u32 sector, u32& elapsed);
-bool libGDR_GetTrack(u32 track_num, u32& start_fad, u32& end_fad);
 
 // 0x00600000 - 0x006007FF [NAOMI] (modem area for dreamcast)
 u32  libExtDevice_ReadMem_A0_006(u32 addr,u32 size);
@@ -614,28 +383,45 @@ static inline void libExtDevice_WriteMem_A5(u32 addr,u32 data,u32 size) { }
 
 //ARM
 s32 libARM_Init();
-void libARM_Reset(bool M);
+void libARM_Reset(bool hard);
 void libARM_Term();
 
-void libARM_SetResetState(u32 State);
-void libARM_Update(u32 cycles);
+template<u32 sz>
+u32 ReadMemArr(const u8 *array, u32 addr)
+{
+	switch(sz)
+	{
+	case 1:
+		return array[addr];
+	case 2:
+		return *(const u16 *)&array[addr];
+	case 4:
+		return *(const u32 *)&array[addr];
+	default:
+		die("invalid size");
+		return 0;
+	}
+}
 
-
-#define 	ReadMemArrRet(arr,addr,sz)				\
-			{if (sz==1)								\
-				return arr[addr];					\
-			else if (sz==2)							\
-				return *(u16*)&arr[addr];			\
-			else if (sz==4)							\
-				return *(u32*)&arr[addr];}
-
-#define WriteMemArr(arr,addr,data,sz)				\
-			{if(sz==1)								\
-				{arr[addr]=(u8)data;}				\
-			else if (sz==2)							\
-				{*(u16*)&arr[addr]=(u16)data;}		\
-			else if (sz==4)							\
-			{*(u32*)&arr[addr]=data;}}
+template<u32 sz>
+void WriteMemArr(u8 *array, u32 addr, u32 data)
+{
+	switch(sz)
+	{
+	case 1:
+		array[addr] = data;
+		break;
+	case 2:
+		*(u16 *)&array[addr] = data;
+		break;
+	case 4:
+		*(u32 *)&array[addr] = data;
+		break;
+	default:
+		die("invalid size");
+		break;
+	}
+}
 
 struct OnLoad
 {
@@ -660,14 +446,21 @@ enum serialize_version_enum {
 	V2,
 	V3,
 	V4,
-	V5_LIBRETRO_UNSUPPORTED,
-	V6_LIBRETRO_UNSUPPORTED,
-	V7_LIBRETRO_UNSUPPORTED,
-	V8_LIBRETRO_UNSUPPORTED,
-	V9_LIBRETRO,
+	V11_LIBRETRO = 10,
+	VCUR_LIBRETRO = V11_LIBRETRO,
 
 	V5 = 800,
 	V6 = 801,
 	V7 = 802,
 	V8 = 803,
-} ;
+	V9 = 804,
+	V10 = 805,
+	V11 = 806,
+	V12 = 807,
+	V13 = 808,
+	V14 = 809,
+	V15 = 810,
+	V16 = 811,
+	V17 = 812,
+	VCUR_FLYCAST = V17,
+};

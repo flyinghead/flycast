@@ -218,7 +218,7 @@ void check(int x, int y)
 	}
 }
 
-void verify(const Xbyak::uint8 *f, int pNum)
+void verify(const Xbyak::uint8_t *f, int pNum)
 {
 	switch (pNum) {
 	case 0:
@@ -264,7 +264,7 @@ void testAll()
 				}
 				for (int tNum = 0; tNum < maxNum; tNum++) {
 //					printf("pNum=%d, tNum=%d, stackSize=%d\n", pNum, tNum | opt, stackSize);
-					const Xbyak::uint8 *f = code.getCurr();
+					const Xbyak::uint8_t *f = code.getCurr();
 					code.gen(pNum, tNum | opt, stackSize);
 					verify(f, pNum);
 					/*

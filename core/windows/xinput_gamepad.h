@@ -1,6 +1,8 @@
-#include <xinput.h>
 #include "input/gamepad_device.h"
 #include "rend/gui.h"
+
+#include <windows.h>
+#include <xinput.h>
 
 class XInputMapping : public InputMapping
 {
@@ -39,6 +41,10 @@ public:
 		char buf[32];
 		sprintf(buf, "xinput-%d", xinput_port + 1);
 		_unique_id = buf;
+	}
+
+	virtual std::shared_ptr<InputMapping> getDefaultMapping() override {
+		return std::make_shared<XInputMapping>();
 	}
 
 	void ReadInput()
@@ -104,18 +110,18 @@ public:
 			last_right_thumb_y = 0;
 		}
 	}
-	virtual void rumble(float power, float inclination, u32 duration_ms) override
+	void rumble(float power, float inclination, u32 duration_ms) override
 	{
 		vib_inclination = inclination * power;
 		vib_stop_time = os_GetSeconds() + duration_ms / 1000.0;
 
 		do_rumble(power);
 	}
-	virtual void update_rumble() override
+	void update_rumble() override
 	{
 		if (vib_stop_time > 0)
 		{
-			int rem_time = (vib_stop_time - os_GetSeconds()) * 1000;
+			int rem_time = (int)((vib_stop_time - os_GetSeconds()) * 1000.0);
 			if (rem_time <= 0)
 			{
 				vib_stop_time = 0;
@@ -135,15 +141,8 @@ public:
 		else
 			_name = joycaps.szPname;
 		INFO_LOG(INPUT, "xinput: Opened controller '%s' on port %d", _name.c_str(), _xinput_port);
-		if (!find_mapping())
-		{
-			input_mapper = std::make_shared<XInputMapping>();
-			input_mapper->name = _name + " mapping";
-			save_mapping();
-			INFO_LOG(INPUT, "using default mapping");
-		}
-		else
-			INFO_LOG(INPUT, "using custom mapping '%s'n", input_mapper->name.c_str());
+		loadMapping();
+
 		GamepadDevice::Register(xinput_gamepads[_xinput_port]);
 	}
 
@@ -164,7 +163,7 @@ public:
 	}
 
 protected:
-	virtual void load_axis_min_max(u32 axis) override
+	void load_axis_min_max(u32 axis) override
 	{
 		if (axis == 0 || axis == 1)
 		{
@@ -204,77 +203,13 @@ private:
 
 std::vector<std::shared_ptr<XInputGamepadDevice>> XInputGamepadDevice::xinput_gamepads(XUSER_MAX_COUNT);
 
-class KbInputMapping : public InputMapping
+class WinMouse : public Mouse
 {
 public:
-	KbInputMapping()
+	WinMouse() : Mouse("win32")
 	{
-		name = "Windows Keyboard";
-		set_button(DC_BTN_A, 'X');
-		set_button(DC_BTN_B, 'C');
-		set_button(DC_BTN_X, 'S');
-		set_button(DC_BTN_Y, 'D');
-		set_button(DC_DPAD_UP, VK_UP);
-		set_button(DC_DPAD_DOWN, VK_DOWN);
-		set_button(DC_DPAD_LEFT, VK_LEFT);
-		set_button(DC_DPAD_RIGHT, VK_RIGHT);
-		set_button(DC_BTN_START, VK_RETURN);
-		set_button(EMU_BTN_TRIGGER_LEFT, 'F');
-		set_button(EMU_BTN_TRIGGER_RIGHT, 'V');
-		set_button(EMU_BTN_MENU, VK_TAB);
-		set_button(EMU_BTN_FFORWARD, VK_SPACE);
-
-		dirty = false;
-	}
-};
-
-class WinKbGamepadDevice : public GamepadDevice
-{
-public:
-	WinKbGamepadDevice(int maple_port) : GamepadDevice(maple_port, "win32")
-	{
-		_name = "Keyboard";
-		_unique_id = "win_keyboard";
-		if (!find_mapping())
-			input_mapper = std::make_shared<KbInputMapping>();
-	}
-	virtual ~WinKbGamepadDevice() {}
-};
-
-class MouseInputMapping : public InputMapping
-{
-public:
-	MouseInputMapping()
-	{
-		name = "Mouse";
-		set_button(DC_BTN_A, 0);	// Left
-		set_button(DC_BTN_B, 2);	// Right
-		set_button(DC_BTN_START, 1);// Middle
-
-		dirty = false;
-	}
-};
-
-class WinMouseGamepadDevice : public GamepadDevice
-{
-public:
-	WinMouseGamepadDevice(int maple_port) : GamepadDevice(maple_port, "win32")
-	{
-		_name = "Mouse";
 		_unique_id = "win_mouse";
-		if (!find_mapping())
-			input_mapper = std::make_shared<MouseInputMapping>();
-	}
-	virtual ~WinMouseGamepadDevice() {}
-	bool gamepad_btn_input(u32 code, bool pressed) override
-	{
-		if (gui_is_open())
-			// Don't register mouse clicks as gamepad presses when gui is open
-			// This makes the gamepad presses to be handled first and the mouse position to be ignored
-			// TODO Make this generic
-			return false;
-		else
-			return GamepadDevice::gamepad_btn_input(code, pressed);
+		loadMapping();
 	}
 };
 

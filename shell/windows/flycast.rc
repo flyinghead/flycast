@@ -1,0 +1,39 @@
+// Microsoft Visual C++ generated resource script.
+//
+#include "resource.h"
+#include "../../core/version.h"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDI_ICON1               ICON                    "flycast.ico"
+
+/////////////////////////////////////////////////////////////////////////////
+
+1 VERSIONINFO
+FILEVERSION     1,0,0,0
+PRODUCTVERSION  1,0,0,0
+BEGIN
+  BLOCK "StringFileInfo"
+  BEGIN
+    BLOCK "040904E4"
+    BEGIN
+      VALUE "CompanyName", "Flycast Team"
+      VALUE "FileDescription", "Flycast is a multiplatform Sega Dreamcast, Naomi and Atomiswave emulator"
+      VALUE "FileVersion", GIT_VERSION
+      VALUE "InternalName", "flycast"
+      VALUE "LegalCopyright", "Copyright various authors. Released under the GNU General Public License."
+      VALUE "OriginalFilename", "flycast.exe"
+      VALUE "ProductName", "Flycast"
+      VALUE "ProductVersion", GIT_VERSION
+    END
+  END
+  BLOCK "VarFileInfo"
+  BEGIN
+    VALUE "Translation", 0x409, 1252
+  END
+END

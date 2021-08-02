@@ -20,6 +20,7 @@
 */
 #include "oit_shaders.h"
 #include "../compiler.h"
+#include "rend/gl4/glsl.h"
 
 static const char OITVertexShaderSource[] = R"(#version 450
 
@@ -81,28 +82,17 @@ layout (std140, set = 0, binding = 1) uniform FragmentShaderUniforms
 } uniformBuffer;
 
 layout(set = 3, binding = 2, r32ui) uniform coherent restrict uimage2D abufferPointerImg;
-struct Pixel {
-	uint color;
-	float depth;
-	uint seq_num;
-	uint next;
-};
-#define EOL 0xFFFFFFFFu
-layout (set = 3, binding = 0, std430) coherent restrict buffer PixelBuffer_ {
-	Pixel pixels[];
-} PixelBuffer;
+
 layout(set = 3, binding = 1) buffer PixelCounter_ {
 	uint buffer_index;
 } PixelCounter;
+)"
+OIT_POLY_PARAM
+R"(
 
-#define ZERO				0
-#define ONE					1
-#define OTHER_COLOR			2
-#define INVERSE_OTHER_COLOR	3
-#define SRC_ALPHA			4
-#define INVERSE_SRC_ALPHA	5
-#define DST_ALPHA			6
-#define INVERSE_DST_ALPHA	7
+layout (set = 3, binding = 0, std430) coherent restrict buffer PixelBuffer_ {
+	Pixel pixels[];
+} PixelBuffer;
 
 uint getNextPixelIndex()
 {
@@ -114,111 +104,10 @@ uint getNextPixelIndex()
 	return index;
 }
 
-void setFragDepth(void)
-{
-	float w = 100000.0 * gl_FragCoord.w;
-	gl_FragDepth = log2(1.0 + w) / 34.0;
-}
-struct PolyParam {
-	int tsp_isp_pcw;
-	int tsp1;
-};
 layout (set = 0, binding = 3, std430) readonly buffer TrPolyParamBuffer {
 	PolyParam tr_poly_params[];
 } TrPolyParam;
 
-#define GET_TSP_FOR_AREA int tsp = area1 ? pp.tsp1 : pp.tsp_isp_pcw;
-
-int getSrcBlendFunc(const PolyParam pp, bool area1)
-{
-	GET_TSP_FOR_AREA
-	return (tsp >> 29) & 7;
-}
-
-int getDstBlendFunc(const PolyParam pp, bool area1)
-{
-	GET_TSP_FOR_AREA
-	return (tsp >> 26) & 7;
-}
-
-bool getSrcSelect(const PolyParam pp, bool area1)
-{
-	GET_TSP_FOR_AREA
-	return ((tsp >> 25) & 1) != 0;
-}
-
-bool getDstSelect(const PolyParam pp, bool area1)
-{
-	GET_TSP_FOR_AREA
-	return ((tsp >> 24) & 1) != 0;
-}
-
-int getFogControl(const PolyParam pp, bool area1)
-{
-	GET_TSP_FOR_AREA
-	return (tsp >> 22) & 3;
-}
-
-bool getUseAlpha(const PolyParam pp, bool area1)
-{
-	GET_TSP_FOR_AREA
-	return ((tsp >> 20) & 1) != 0;
-}
-
-bool getIgnoreTexAlpha(const PolyParam pp, bool area1)
-{
-	GET_TSP_FOR_AREA
-	return ((tsp >> 19) & 1) != 0;
-}
-
-int getShadingInstruction(const PolyParam pp, bool area1)
-{
-	GET_TSP_FOR_AREA
-	return (tsp >> 6) & 3;
-}
-
-int getDepthFunc(const PolyParam pp)
-{
-	return (pp.tsp_isp_pcw >> 13) & 7;
-}
-
-bool getDepthMask(const PolyParam pp)
-{
-	return ((pp.tsp_isp_pcw >> 10) & 1) != 1;
-}
-
-bool getShadowEnable(const PolyParam pp)
-{
-	return (pp.tsp_isp_pcw & 1) != 0;
-}
-
-uint getPolyNumber(const Pixel pixel)
-{
-	return pixel.seq_num & 0x3FFFFFFFu;
-}
-
-#define SHADOW_STENCIL 0x40000000u
-#define SHADOW_ACC	   0x80000000u
-
-bool isShadowed(const Pixel pixel)
-{
-	return (pixel.seq_num & SHADOW_ACC) == SHADOW_ACC;
-}
-
-bool isTwoVolumes(const PolyParam pp)
-{
-	return pp.tsp1 != -1;
-}
-
-uint packColors(vec4 v)
-{
-	return (uint(round(v.r * 255.0)) << 24) | (uint(round(v.g * 255.0)) << 16) | (uint(round(v.b * 255.0)) << 8) | uint(round(v.a * 255.0));
-}
-
-vec4 unpackColors(uint u)
-{
-	return vec4(float((u >> 24) & 255) / 255.0, float((u >> 16) & 255) / 255.0, float((u >> 8) & 255) / 255.0, float(u & 255) / 255.0);
-}
 )";
 
 static const char OITFragmentShaderSource[] = R"(
@@ -234,6 +123,7 @@ static const char OITFragmentShaderSource[] = R"(
 #define pp_Gouraud %d
 #define pp_BumpMap %d
 #define ColorClamping %d
+#define pp_Palette %d
 #define PASS %d
 #define PI 3.1415926
 
@@ -264,6 +154,7 @@ layout (push_constant) uniform pushBlock
 	ivec4 blend_mode0;
 	float trilinearAlpha;
 	int pp_Number;
+	float palette_index;
 
 	// two volume mode
 	ivec4 blend_mode1;
@@ -282,6 +173,9 @@ layout (set = 1, binding = 0) uniform sampler2D tex0;
 #if pp_TwoVolumes == 1
 layout (set = 1, binding = 1) uniform sampler2D tex1;
 #endif
+#endif
+#if pp_Palette == 1
+layout (set = 0, binding = 6) uniform sampler2D palette;
 #endif
 
 #if PASS == PASS_COLOR
@@ -322,6 +216,16 @@ vec4 colorClamp(vec4 col)
 	return col;
 #endif
 }
+
+#if pp_Palette == 1
+
+vec4 palettePixel(sampler2D tex, vec2 coords)
+{
+	vec4 c = vec4(texture(tex, coords).r * 255.0 / 1023.0 + pushConstants.palette_index, 0.5, 0.0, 0.0);
+	return texture(palette, c.xy);
+}
+
+#endif
 
 void main()
 {
@@ -381,10 +285,18 @@ void main()
 		highp vec4 texcol;
 		#if pp_TwoVolumes == 1
 			if (area1)
-				texcol = texture(tex1, uv);
+				#if pp_Palette == 0
+					texcol = texture(tex1, uv);
+				#else
+					texcol = palettePixel(tex1, uv);
+				#endif
 			else
 		#endif
-			texcol = texture(tex0, uv);
+		#if pp_Palette == 0
+				texcol = texture(tex0, uv);
+		#else
+				texcol = palettePixel(tex0, uv);
+		#endif
 		#if pp_BumpMap == 1
 			highp float s = PI / 2.0 * (texcol.a * 15.0 * 16.0 + texcol.r * 15.0) / 255.0;
 			highp float r = 2.0 * PI * (texcol.g * 15.0 * 16.0 + texcol.b * 15.0) / 255.0;
@@ -399,6 +311,7 @@ void main()
 			#if cp_AlphaTest == 1
 				if (uniformBuffer.cp_AlphaTestValue > texcol.a)
 					discard;
+				texcol.a = 1.0;
 			#endif 
 		#endif
 		#if pp_ShadInstr == 0 || pp_TwoVolumes == 1 // DECAL
@@ -456,10 +369,6 @@ void main()
 	#endif
 	
 	color *= pushConstants.trilinearAlpha;
-	
-	#if cp_AlphaTest == 1
-		color.a = 1.0;
-	#endif 
 	
 	//color.rgb=vec3(gl_FragCoord.w * uniformBuffer.sp_FOG_DENSITY / 128.0);
 	
@@ -775,7 +684,8 @@ vk::UniqueShaderModule OITShaderManager::compileShader(const FragmentShaderParam
 	strcpy(buf, OITShaderHeader);
 	sprintf(buf + strlen(buf), OITFragmentShaderSource, (int)params.alphaTest, (int)params.insideClipTest, (int)params.useAlpha,
 			(int)params.texture, (int)params.ignoreTexAlpha, params.shaderInstr, (int)params.offset, params.fog,
-			(int)params.twoVolume, (int)params.gouraud, (int)params.bumpmap, (int)params.clamping, (int)params.pass);
+			(int)params.twoVolume, (int)params.gouraud, (int)params.bumpmap, (int)params.clamping, (int)params.palette,
+			(int)params.pass);
 	return ShaderCompiler::Compile(vk::ShaderStageFlagBits::eFragment, buf);
 }
 

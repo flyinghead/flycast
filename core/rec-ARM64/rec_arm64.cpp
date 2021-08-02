@@ -19,16 +19,14 @@
 
 #include "types.h"
 
-#if FEAT_SHREC == DYNAREC_JIT
+#if FEAT_SHREC == DYNAREC_JIT && HOST_CPU == CPU_ARM64
 
 #include <unistd.h>
 #include <map>
-#include <setjmp.h>
 
-#include "deps/vixl/aarch64/macro-assembler-aarch64.h"
+#include <aarch64/macro-assembler-aarch64.h>
 using namespace vixl::aarch64;
 
-//#define EXPLODE_SPANS
 //#define NO_BLOCK_LINKING
 
 #include "hw/sh4/sh4_opcode_list.h"
@@ -39,105 +37,38 @@ using namespace vixl::aarch64;
 #include "hw/sh4/dyna/ngen.h"
 #include "hw/sh4/sh4_mem.h"
 #include "hw/sh4/sh4_rom.h"
-#include "hw/mem/vmem32.h"
 #include "arm64_regalloc.h"
+#include "hw/mem/_vmem.h"
 
 #undef do_sqw_nommu
 
-extern "C" void ngen_blockcheckfail(u32 pc);
-extern "C" void ngen_LinkBlock_Generic_stub();
-extern "C" void ngen_LinkBlock_cond_Branch_stub();
-extern "C" void ngen_LinkBlock_cond_Next_stub();
-extern "C" void ngen_FailedToFindBlock_mmu();
-extern "C" void ngen_FailedToFindBlock_nommu();
-extern void vmem_platform_flush_cache(void *icache_start, void *icache_end, void *dcache_start, void *dcache_end);
 static void generate_mainloop();
-
-u32 mem_writes, mem_reads;
-u32 mem_rewrites_w, mem_rewrites_r;
 
 struct DynaRBI : RuntimeBlockInfo
 {
-	virtual u32 Relink() override;
+	u32 Relink() override;
 
-	virtual void Relocate(void* dst) override {
+	void Relocate(void* dst) override {
 		verify(false);
 	}
 };
 
-double host_cpu_time;
-u64 guest_cpu_cycles;
-static jmp_buf jmp_env;
 static u32 cycle_counter;
+static u64 jmp_stack;
 
 static void (*mainloop)(void *context);
-static void (*arm64_intc_sched)();
-static void (*arm64_no_update)();
+static void (*handleException)();
 
-#ifdef PROFILING
-#include <time.h>
+struct DynaCode;
 
-static clock_t slice_start;
-extern "C"
-{
-static __attribute((used)) void start_slice()
-{
-	slice_start = clock();
-}
-static __attribute((used)) void end_slice()
-{
-	host_cpu_time += (double)(clock() - slice_start) / CLOCKS_PER_SEC;
-}
-}
-#endif
-
-__asm__
-(
-		".hidden ngen_LinkBlock_cond_Branch_stub	\n\t"
-		".globl ngen_LinkBlock_cond_Branch_stub		\n\t"
-	"ngen_LinkBlock_cond_Branch_stub:		\n\t"
-		"mov w1, #1							\n\t"
-		"b ngen_LinkBlock_Shared_stub		\n"
-
-		".hidden ngen_LinkBlock_cond_Next_stub	\n\t"
-		".globl ngen_LinkBlock_cond_Next_stub	\n\t"
-	"ngen_LinkBlock_cond_Next_stub:			\n\t"
-		"mov w1, #0							\n\t"
-		"b ngen_LinkBlock_Shared_stub		\n"
-
-		".hidden ngen_LinkBlock_Generic_stub	\n\t"
-		".globl ngen_LinkBlock_Generic_stub	\n\t"
-	"ngen_LinkBlock_Generic_stub:			\n\t"
-		"mov w1, w29						\n\t"	// djump/pc -> in case we need it ..
-		//"b ngen_LinkBlock_Shared_stub		\n"
-
-		".hidden ngen_LinkBlock_Shared_stub	\n\t"
-		".globl ngen_LinkBlock_Shared_stub	\n\t"
-	"ngen_LinkBlock_Shared_stub:			\n\t"
-		"mov x0, lr							\n\t"
-		"sub x0, x0, #4						\n\t"	// go before the call
-		"bl rdv_LinkBlock					\n\t"   // returns an RX addr
-		"br x0								\n"
-
-		".hidden ngen_FailedToFindBlock_nommu	\n\t"
-		".globl ngen_FailedToFindBlock_nommu	\n\t"
-	"ngen_FailedToFindBlock_nommu:			\n\t"
-		"mov w0, w29						\n\t"
-		"bl rdv_FailedToFindBlock			\n\t"
-		"br x0								\n"
-
-		".hidden ngen_FailedToFindBlock_mmu	\n\t"
-		".globl ngen_FailedToFindBlock_mmu	\n\t"
-	"ngen_FailedToFindBlock_mmu:			\n\t"
-		"bl rdv_FailedToFindBlock_pc		\n\t"
-		"br x0								\n"
-
-		".hidden ngen_blockcheckfail		\n\t"
-		".globl ngen_blockcheckfail			\n\t"
-	"ngen_blockcheckfail:					\n\t"
-		"bl rdv_BlockCheckFail				\n\t"
-		"br x0								\n"
-);
+static DynaCode *arm64_intc_sched;
+static DynaCode *arm64_no_update;
+static DynaCode *blockCheckFail;
+static DynaCode *linkBlockGenericStub;
+static DynaCode *linkBlockBranchStub;
+static DynaCode *linkBlockNextStub;
+static DynaCode *writeStoreQueue32;
+static DynaCode *writeStoreQueue64;
 
 static bool restarting;
 
@@ -156,58 +87,26 @@ void ngen_mainloop(void* v_cntx)
 void ngen_init()
 {
 	INFO_LOG(DYNAREC, "Initializing the ARM64 dynarec");
-	ngen_FailedToFindBlock = &ngen_FailedToFindBlock_nommu;
 }
 
 void ngen_ResetBlocks()
 {
-	mainloop = NULL;
-	if (mmu_enabled())
-		ngen_FailedToFindBlock = &ngen_FailedToFindBlock_mmu;
-	else
-		ngen_FailedToFindBlock = &ngen_FailedToFindBlock_nommu;
+	mainloop = nullptr;
+
 	if (p_sh4rcb->cntx.CpuRunning)
 	{
 		// Force the dynarec out of mainloop() to regenerate it
 		p_sh4rcb->cntx.CpuRunning = 0;
 		restarting = true;
 	}
+	else
+		generate_mainloop();
 }
 
 void ngen_GetFeatures(ngen_features* dst)
 {
 	dst->InterpreterFallback = false;
 	dst->OnlyDynamicEnds = false;
-}
-
-template<typename T>
-static T ReadMemNoEx(u32 addr, u32, u32 pc)
-{
-#ifndef NO_MMU
-	u32 ex;
-	T rv = mmu_ReadMemNoEx<T>(addr, &ex);
-	if (ex)
-	{
-		spc = pc;
-		longjmp(jmp_env, 1);
-	}
-	return rv;
-#else
-	return (T)0;	// not used
-#endif
-}
-
-template<typename T>
-static void WriteMemNoEx(u32 addr, T data, u32 pc)
-{
-#ifndef NO_MMU
-	u32 ex = mmu_WriteMemNoEx<T>(addr, data);
-	if (ex)
-	{
-		spc = pc;
-		longjmp(jmp_env, 1);
-	}
-#endif
 }
 
 static void interpreter_fallback(u16 op, OpCallFP *oph, u32 pc)
@@ -222,7 +121,7 @@ static void interpreter_fallback(u16 op, OpCallFP *oph, u32 pc)
 			pc--;
 		}
 		Do_Exception(pc, ex.expEvn, ex.callVect);
-		longjmp(jmp_env, 1);
+		handleException();
 	}
 }
 
@@ -238,7 +137,7 @@ static void do_sqw_mmu_no_ex(u32 addr, u32 pc)
 			pc--;
 		}
 		Do_Exception(pc, ex.expEvn, ex.callVect);
-		longjmp(jmp_env, 1);
+		handleException();
 	}
 }
 
@@ -379,9 +278,7 @@ public:
 	void ngen_Compile(RuntimeBlockInfo* block, bool force_checks, bool reset, bool staging, bool optimise)
 	{
 		//printf("REC-ARM64 compiling %08x\n", block->addr);
-#ifdef PROFILING
-		SaveFramePointer();
-#endif
+		JITWriteProtect(false);
 		this->block = block;
 		CheckBlock(force_checks, block);
 		
@@ -402,15 +299,15 @@ public:
 		}
 		Label cycles_remaining;
 		B(&cycles_remaining, pl);
-		GenCall(*arm64_intc_sched);
+		GenCall(arm64_intc_sched);
+		Label cpu_running;
+		Cbnz(w0, &cpu_running);
+		Mov(w29, block->vaddr);
+		Str(w29, sh4_context_mem_operand(&next_pc));
+		GenBranch(arm64_no_update);
+		Bind(&cpu_running);
 		Bind(&cycles_remaining);
 
-#ifdef PROFILING
-		Ldr(x11, (uintptr_t)&guest_cpu_cycles);
-		Ldr(x0, MemOperand(x11));
-		Add(x0, x0, block->guest_cycles);
-		Str(x0, MemOperand(x11));
-#endif
 		for (size_t i = 0; i < block->oplist.size(); i++)
 		{
 			shil_opcode& op  = block->oplist[i];
@@ -424,7 +321,7 @@ public:
 					Mov(w10, op.rs2._imm);
 					Str(w10, sh4_context_mem_operand(&next_pc));
 				}
-				Mov(*call_regs[0], op.rs3._imm);
+				Mov(w0, op.rs3._imm);
 
 				if (!mmu_enabled())
 				{
@@ -432,8 +329,8 @@ public:
 				}
 				else
 				{
-					Mov(*call_regs64[1], reinterpret_cast<uintptr_t>(*OpDesc[op.rs3._imm]->oph));	// op handler
-					Mov(*call_regs[2], block->vaddr + op.guest_offs - (op.delay_slot ? 1 : 0));	// pc
+					Mov(x1, reinterpret_cast<uintptr_t>(*OpDesc[op.rs3._imm]->oph));	// op handler
+					Mov(w2, block->vaddr + op.guest_offs - (op.delay_slot ? 1 : 0));	// pc
 
 					GenCallRuntime(interpreter_fallback);
 				}
@@ -483,13 +380,8 @@ public:
 				verify(op.rd.is_reg());
 				verify(op.rs1.is_reg() || op.rs1.is_imm());
 
-#ifdef EXPLODE_SPANS
-				Fmov(regalloc.MapVRegister(op.rd, 0), regalloc.MapVRegister(op.rs1, 0));
-				Fmov(regalloc.MapVRegister(op.rd, 1), regalloc.MapVRegister(op.rs1, 1));
-#else
 				shil_param_to_host_reg(op.rs1, x15);
 				host_reg_to_shil_param(op.rd, x15);
-#endif
 				break;
 
 			case shop_readm:
@@ -886,7 +778,7 @@ public:
 				{
 					Label not_sqw;
 					if (op.rs1.is_imm())
-						Mov(*call_regs[0], op.rs1._imm);
+						Mov(w0, op.rs1._imm);
 					else
 					{
 						if (regalloc.IsAllocg(op.rs1))
@@ -904,7 +796,7 @@ public:
 
 					if (mmu_enabled())
 					{
-						Mov(*call_regs[1], block->vaddr + op.guest_offs - (op.delay_slot ? 1 : 0));	// pc
+						Mov(w1, block->vaddr + op.guest_offs - (op.delay_slot ? 1 : 0));	// pc
 
 						GenCallRuntime(do_sqw_mmu_no_ex);
 					}
@@ -1002,13 +894,8 @@ public:
 					Add(x1, x1, Operand(regalloc.MapRegister(op.rs1), UXTH, 3));
 				else
 					Add(x1, x1, Operand(op.rs1.imm_value() << 3));
-#ifdef EXPLODE_SPANS
-				Ldr(regalloc.MapVRegister(op.rd, 0), MemOperand(x1, 4, PostIndex));
-				Ldr(regalloc.MapVRegister(op.rd, 1), MemOperand(x1));
-#else
 				Ldr(x2, MemOperand(x1));
 				Str(x2, sh4_context_mem_operand(op.rd.reg_ptr()));
-#endif
 				break;
 
 			case shop_fipr:
@@ -1073,6 +960,7 @@ public:
 		RelinkBlock(block);
 
 		Finalize();
+		JITWriteProtect(true);
 	}
 
 	void ngen_CC_Start(shil_opcode* op)
@@ -1170,33 +1058,21 @@ public:
 		switch (size)
 		{
 		case 1:
-			if (!mmu_enabled())
-				GenCallRuntime(ReadMem8);
-			else
-				GenCallRuntime(ReadMemNoEx<u8>);
+			GenCallRuntime(_vmem_ReadMem8);
 			Sxtb(w0, w0);
 			break;
 
 		case 2:
-			if (!mmu_enabled())
-				GenCallRuntime(ReadMem16);
-			else
-				GenCallRuntime(ReadMemNoEx<u16>);
+			GenCallRuntime(_vmem_ReadMem16);
 			Sxth(w0, w0);
 			break;
 
 		case 4:
-			if (!mmu_enabled())
-				GenCallRuntime(ReadMem32);
-			else
-				GenCallRuntime(ReadMemNoEx<u32>);
+			GenCallRuntime(_vmem_ReadMem32);
 			break;
 
 		case 8:
-			if (!mmu_enabled())
-				GenCallRuntime(ReadMem64);
-			else
-				GenCallRuntime(ReadMemNoEx<u64>);
+			GenCallRuntime(_vmem_ReadMem64);
 			break;
 
 		default:
@@ -1213,31 +1089,19 @@ public:
 		switch (size)
 		{
 		case 1:
-			if (!mmu_enabled())
-				GenCallRuntime(WriteMem8);
-			else
-				GenCallRuntime(WriteMemNoEx<u8>);
+			GenCallRuntime(_vmem_WriteMem8);
 			break;
 
 		case 2:
-			if (!mmu_enabled())
-				GenCallRuntime(WriteMem16);
-			else
-				GenCallRuntime(WriteMemNoEx<u16>);
+			GenCallRuntime(_vmem_WriteMem16);
 			break;
 
 		case 4:
-			if (!mmu_enabled())
-				GenCallRuntime(WriteMem32);
-			else
-				GenCallRuntime(WriteMemNoEx<u32>);
+			GenCallRuntime(_vmem_WriteMem32);
 			break;
 
 		case 8:
-			if (!mmu_enabled())
-				GenCallRuntime(WriteMem64);
-			else
-				GenCallRuntime(WriteMemNoEx<u64>);
+			GenCallRuntime(_vmem_WriteMem64);
 			break;
 
 		default:
@@ -1259,11 +1123,11 @@ public:
 			// next_pc = block->BranchBlock;
 #ifndef NO_BLOCK_LINKING
 			if (block->pBranchBlock != NULL)
-				GenBranch(block->pBranchBlock->code);
+				GenBranch((DynaCode *)block->pBranchBlock->code);
 			else
 			{
 				if (!mmu_enabled())
-					GenCallRuntime(ngen_LinkBlock_Generic_stub);
+					GenCall(linkBlockGenericStub);
 				else
 #else
 			{
@@ -1271,7 +1135,7 @@ public:
 				{
 					Mov(w29, block->BranchBlock);
 					Str(w29, sh4_context_mem_operand(&next_pc));
-					GenBranch(*arm64_no_update);
+					GenBranch(arm64_no_update);
 				}
 			}
 			break;
@@ -1295,11 +1159,11 @@ public:
 				B(ne, &branch_not_taken);
 #ifndef NO_BLOCK_LINKING
 				if (block->pBranchBlock != NULL)
-					GenBranch(block->pBranchBlock->code);
+					GenBranch((DynaCode *)block->pBranchBlock->code);
 				else
 				{
 					if (!mmu_enabled())
-						GenCallRuntime(ngen_LinkBlock_cond_Branch_stub);
+						GenCall(linkBlockBranchStub);
 					else
 #else
 				{
@@ -1307,7 +1171,7 @@ public:
 					{
 						Mov(w29, block->BranchBlock);
 						Str(w29, sh4_context_mem_operand(&next_pc));
-						GenBranch(*arm64_no_update);
+						GenBranch(arm64_no_update);
 					}
 				}
 
@@ -1315,11 +1179,11 @@ public:
 
 #ifndef NO_BLOCK_LINKING
 				if (block->pNextBlock != NULL)
-					GenBranch(block->pNextBlock->code);
+					GenBranch((DynaCode *)block->pNextBlock->code);
 				else
 				{
 					if (!mmu_enabled())
-						GenCallRuntime(ngen_LinkBlock_cond_Next_stub);
+						GenCall(linkBlockNextStub);
 					else
 #else
 				{
@@ -1327,7 +1191,7 @@ public:
 					{
 						Mov(w29, block->NextBlock);
 						Str(w29, sh4_context_mem_operand(&next_pc));
-						GenBranch(*arm64_no_update);
+						GenBranch(arm64_no_update);
 					}
 				}
 			}
@@ -1342,9 +1206,7 @@ public:
 			if (!mmu_enabled())
 			{
 				// TODO Call no_update instead (and check CpuRunning less frequently?)
-				Mov(x2, sizeof(Sh4RCB));
-				Sub(x2, x28, x2);
-				Add(x2, x2, sizeof(Sh4Context));		// x2 now points to FPCB
+				Sub(x2, x28, offsetof(Sh4RCB, cntx));
 #if RAM_SIZE_MAX == 33554432
 				Ubfx(w1, w29, 1, 24);
 #else
@@ -1355,7 +1217,7 @@ public:
 			}
 			else
 			{
-				GenBranch(*arm64_no_update);
+				GenBranch(arm64_no_update);
 			}
 
 			break;
@@ -1372,7 +1234,7 @@ public:
 			GenCallRuntime(UpdateINTC);
 
 			Ldr(w29, sh4_context_mem_operand(&next_pc));
-			GenBranch(*arm64_no_update);
+			GenBranch(arm64_no_update);
 
 			break;
 
@@ -1430,8 +1292,9 @@ public:
 		Label intc_sched;
 		Label end_mainloop;
 
-		// void intc_sched()
-		arm64_intc_sched = GetCursorAddress<void (*)()>();
+		// int intc_sched()
+		arm64_intc_sched = GetCursorAddress<DynaCode *>();
+		verify((void *)arm64_intc_sched == (void *)CodeCache);
 		B(&intc_sched);
 
 		// void no_update()
@@ -1473,6 +1336,7 @@ public:
 		Stp(x29, x30, MemOperand(sp, 144));
 
 		Sub(x0, x0, sizeof(Sh4Context));
+		Label reenterLabel;
 		if (mmu_enabled())
 		{
 			Ldr(x1, reinterpret_cast<uintptr_t>(&cycle_counter));
@@ -1481,11 +1345,13 @@ public:
 			Mov(w0, SH4_TIMESLICE);
 			Str(w0, MemOperand(x1));
 
-			Ldr(x0, reinterpret_cast<uintptr_t>(jmp_env));
-			Ldr(x1, reinterpret_cast<uintptr_t>(&setjmp));
-			Blr(x1);
+			Ldr(x0, reinterpret_cast<uintptr_t>(&jmp_stack));
+			Mov(x1, sp);
+			Str(x1, MemOperand(x0));
 
+			Bind(&reenterLabel);
 			Ldr(x28, MemOperand(sp));	// Set context
+			Mov(x27, reinterpret_cast<uintptr_t>(mmuAddressLUT));
 		}
 		else
 		{
@@ -1518,6 +1384,7 @@ public:
 		GenCallRuntime(UpdateSystem);
 		Mov(lr, x29);
 		Cbnz(w0, &do_interrupts);
+		Ldr(w0, MemOperand(x28, offsetof(Sh4Context, CpuRunning)));
 		Ret();
 
 		Bind(&do_interrupts);
@@ -1544,10 +1411,89 @@ public:
 		Ldp(x19, x20, MemOperand(sp, 160, PostIndex));
 		Ret();
 
+		// Exception handler
+		Label handleExceptionLabel;
+		Bind(&handleExceptionLabel);
+		if (mmu_enabled())
+		{
+			Ldr(x0, reinterpret_cast<uintptr_t>(&jmp_stack));
+			Ldr(x1, MemOperand(x0));
+			Mov(sp, x1);
+			B(&reenterLabel);
+		}
+
+		// Block check fail
+		blockCheckFail = GetCursorAddress<DynaCode *>();
+		GenCallRuntime(rdv_BlockCheckFail);
+		if (mmu_enabled())
+		{
+			Label jumpblockLabel;
+			Cbnz(x0, &jumpblockLabel);
+			Ldr(w0, MemOperand(x28, offsetof(Sh4Context, pc)));
+			GenCallRuntime(bm_GetCodeByVAddr);
+			Bind(&jumpblockLabel);
+		}
+		Br(x0);
+
+		// Block linking stubs
+		linkBlockBranchStub = GetCursorAddress<DynaCode *>();
+		Label linkBlockShared;
+		Mov(w1, 1);
+		B(&linkBlockShared);
+
+		linkBlockNextStub = GetCursorAddress<DynaCode *>();
+		Mov(w1, 0);
+		B(&linkBlockShared);
+
+		linkBlockGenericStub = GetCursorAddress<DynaCode *>();
+		Mov(w1, w29);	// djump/pc -> in case we need it ..
+
+		Bind(&linkBlockShared);
+		Sub(x0, lr, 4);	// go before the call
+		GenCallRuntime(rdv_LinkBlock);	// returns an RX addr
+		Br(x0);
+
+		// Not yet compiled block stub
+		ngen_FailedToFindBlock = (void (*)())CC_RW2RX(GetCursorAddress<uintptr_t>());
+		if (mmu_enabled())
+		{
+			GenCallRuntime(rdv_FailedToFindBlock_pc);
+		}
+		else
+		{
+			Mov(w0, w29);
+			GenCallRuntime(rdv_FailedToFindBlock);
+		}
+		Br(x0);
+
+		// Store Queue write handlers
+		Label writeStoreQueue32Label;
+		Bind(&writeStoreQueue32Label);
+		Lsr(x7, x0, 26);
+		Cmp(x7, 0x38);
+		GenBranchRuntime(_vmem_WriteMem32, Condition::ne);
+		And(x0, x0, 0x3f);
+		Sub(x7, x0, sizeof(Sh4RCB::sq_buffer), LeaveFlags);
+		Str(w1, MemOperand(x28, x7));
+		Ret();
+
+		Label writeStoreQueue64Label;
+		Bind(&writeStoreQueue64Label);
+		Lsr(x7, x0, 26);
+		Cmp(x7, 0x38);
+		GenBranchRuntime(_vmem_WriteMem64, Condition::ne);
+		And(x0, x0, 0x3f);
+		Sub(x7, x0, sizeof(Sh4RCB::sq_buffer), LeaveFlags);
+		Str(x1, MemOperand(x28, x7));
+		Ret();
+
 		FinalizeCode();
 		emit_Skip(GetBuffer()->GetSizeInBytes());
 
-		arm64_no_update = GetLabelAddress<void (*)()>(&no_update);
+		arm64_no_update = GetLabelAddress<DynaCode *>(&no_update);
+		handleException = (void (*)())CC_RW2RX(GetLabelAddress<uintptr_t>(&handleExceptionLabel));
+		writeStoreQueue32 = GetLabelAddress<DynaCode *>(&writeStoreQueue32Label);
+		writeStoreQueue64 = GetLabelAddress<DynaCode *>(&writeStoreQueue64Label);
 
 		// Flush and invalidate caches
 		vmem_platform_flush_cache(
@@ -1555,6 +1501,16 @@ public:
 			GetBuffer()->GetStartAddress<void*>(), GetBuffer()->GetEndAddress<void*>());
 	}
 
+	void GenWriteStoreQueue(u32 size)
+	{
+		Instruction *start_instruction = GetCursorAddress<Instruction *>();
+
+		if (size == 4)
+			GenCall(writeStoreQueue32);
+		else
+			GenCall(writeStoreQueue64);
+		EnsureCodeSize(start_instruction, write_memory_rewrite_size);
+	}
 
 private:
 	// Runtime branches/calls need to be adjusted if rx space is different to rw space.
@@ -1564,15 +1520,21 @@ private:
 	void GenCallRuntime(R (*function)(P...))
 	{
 		ptrdiff_t offset = reinterpret_cast<uintptr_t>(function) - reinterpret_cast<uintptr_t>(CC_RW2RX(GetBuffer()->GetStartAddress<void*>()));
-		verify(offset >= -128 * 1024 * 1024 && offset <= 128 * 1024 * 1024);
 		verify((offset & 3) == 0);
-		Label function_label;
-		BindToOffset(&function_label, offset);
-		Bl(&function_label);
+		if (offset < -128 * 1024 * 1024 || offset > 128 * 1024 * 1024)
+		{
+			Mov(x4, reinterpret_cast<uintptr_t>(function));
+			Blr(x4);
+		}
+		else
+		{
+			Label function_label;
+			BindToOffset(&function_label, offset);
+			Bl(&function_label);
+		}
 	}
 
-	template <typename R, typename... P>
-	void GenCall(R (*function)(P...))
+	void GenCall(DynaCode *function)
 	{
 		ptrdiff_t offset = reinterpret_cast<uintptr_t>(function) - GetBuffer()->GetStartAddress<uintptr_t>();
 		verify(offset >= -128 * 1024 * 1024 && offset <= 128 * 1024 * 1024);
@@ -1583,18 +1545,40 @@ private:
 	}
 
    template <typename R, typename... P>
-	void GenBranchRuntime(R (*target)(P...))
+	void GenBranchRuntime(R (*target)(P...), Condition cond = al)
 	{
 		ptrdiff_t offset = reinterpret_cast<uintptr_t>(target) - reinterpret_cast<uintptr_t>(CC_RW2RX(GetBuffer()->GetStartAddress<void*>()));
-		verify(offset >= -128 * 1024 * 1024 && offset <= 128 * 1024 * 1024);
 		verify((offset & 3) == 0);
-		Label target_label;
-		BindToOffset(&target_label, offset);
-		B(&target_label);
+		if (offset < -128 * 1024 * 1024 || offset > 128 * 1024 * 1024)
+		{
+			if (cond == al)
+			{
+				Mov(x4, reinterpret_cast<uintptr_t>(target));
+				Br(x4);
+			}
+			else
+			{
+				Label skip_target;
+				Condition inverse_cond = (Condition)((u32)cond ^ 1);
+				
+				B(&skip_target, inverse_cond);
+				Mov(x4, reinterpret_cast<uintptr_t>(target));
+				Br(x4);
+				Bind(&skip_target);
+			}
+		}
+		else
+		{
+			Label target_label;
+			BindToOffset(&target_label, offset);
+			if (cond == al)
+				B(&target_label);
+			else
+				B(&target_label, cond);
+		}
 	}
 
-	template <typename R, typename... P>
-	void GenBranch(R (*code)(P...), Condition cond = al)
+	void GenBranch(DynaCode *code, Condition cond = al)
 	{
 		ptrdiff_t offset = reinterpret_cast<uintptr_t>(code) - GetBuffer()->GetStartAddress<uintptr_t>();
 		verify(offset >= -128 * 1024 * 1024 && offset < 128 * 1024 * 1024);
@@ -1607,14 +1591,34 @@ private:
 			B(&code_label, cond);
 	}
 
+	void genMmuLookup(const shil_opcode& op, u32 write)
+	{
+		if (mmu_enabled())
+		{
+			Label inCache;
+			Label done;
+
+			Lsr(w1, w0, 12);
+			Ldr(w1, MemOperand(x27, x1, LSL, 2));
+			Cbnz(w1, &inCache);
+			Mov(w1, write);
+			Mov(w2, block->vaddr + op.guest_offs - (op.delay_slot ? 2 : 0));	// pc
+			GenCallRuntime(mmuDynarecLookup);
+			B(&done);
+			Bind(&inCache);
+			And(w0, w0, 0xFFF);
+			Orr(w0, w0, w1);
+			Bind(&done);
+		}
+	}
+
 	void GenReadMemory(const shil_opcode& op, size_t opid, bool optimise)
 	{
 		if (GenReadMemoryImmediate(op))
 			return;
 
-		GenMemAddr(op, call_regs[0]);
-		if (mmu_enabled())
-			Mov(*call_regs[2], block->vaddr + op.guest_offs - (op.delay_slot ? 2 : 0));	// pc
+		GenMemAddr(op, &w0);
+		genMmuLookup(op, 0);
 
 		u32 size = op.flags & 0x7f;
 		if (!optimise || !GenReadMemoryFast(op, opid))
@@ -1623,16 +1627,7 @@ private:
 		if (size < 8)
 			host_reg_to_shil_param(op.rd, w0);
 		else
-		{
-#ifdef EXPLODE_SPANS
-			verify(op.rd.count() == 2 && regalloc.IsAllocf(op.rd, 0) && regalloc.IsAllocf(op.rd, 1));
-			Fmov(regalloc.MapVRegister(op.rd, 0), w0);
-			Lsr(x0, x0, 32);
-			Fmov(regalloc.MapVRegister(op.rd, 1), w0);
-#else
 			Str(x0, sh4_context_mem_operand(op.rd.reg_ptr()));
-#endif
-		}
 	}
 
 	bool GenReadMemoryImmediate(const shil_opcode& op)
@@ -1642,9 +1637,9 @@ private:
 
 		u32 size = op.flags & 0x7f;
 		u32 addr = op.rs1._imm;
-		if (mmu_enabled())
+		if (mmu_enabled() && mmu_is_translated(addr, size))
 		{
-			if ((addr >> 12) != (block->vaddr >> 12))
+			if ((addr >> 12) != (block->vaddr >> 12) && ((addr >> 12) != ((block->vaddr + block->guest_opcodes * 2 - 1) >> 12)))
 				// When full mmu is on, only consider addresses in the same 4k page
 				return false;
 			u32 paddr;
@@ -1785,9 +1780,8 @@ private:
 	bool GenReadMemoryFast(const shil_opcode& op, size_t opid)
 	{
 		// Direct memory access. Need to handle SIGSEGV and rewrite block as needed. See ngen_Rewrite()
-		if (!_nvmem_enabled() || (mmu_enabled() && !vmem32_enabled()))
+		if (!_nvmem_enabled())
 			return false;
-		mem_reads++;
 
 		Instruction *start_instruction = GetCursorAddress<Instruction *>();
 
@@ -1795,12 +1789,12 @@ private:
 		// Update ngen_Rewrite (and perhaps read_memory_rewrite_size) if adding or removing code
 		if (!_nvmem_4gb_space())
 		{
-			Ubfx(x1, *call_regs64[0], 0, 29);
+			Ubfx(x1, x0, 0, 29);
 			Add(x1, x1, sizeof(Sh4Context), LeaveFlags);
 		}
 		else
 		{
-			Add(x1, *call_regs64[0], sizeof(Sh4Context), LeaveFlags);
+			Add(x1, x0, sizeof(Sh4Context), LeaveFlags);
 		}
 
 		u32 size = op.flags & 0x7f;
@@ -1832,25 +1826,14 @@ private:
 		if (GenWriteMemoryImmediate(op))
 			return;
 
-		GenMemAddr(op, call_regs[0]);
-		if (mmu_enabled())
-			Mov(*call_regs[2], block->vaddr + op.guest_offs - (op.delay_slot ? 2 : 0));	// pc
+		GenMemAddr(op, &w0);
+		genMmuLookup(op, 1);
 
 		u32 size = op.flags & 0x7f;
 		if (size != 8)
-			shil_param_to_host_reg(op.rs2, *call_regs[1]);
+			shil_param_to_host_reg(op.rs2, w1);
 		else
-		{
-#ifdef EXPLODE_SPANS
-			verify(op.rs2.count() == 2 && regalloc.IsAllocf(op.rs2, 0) && regalloc.IsAllocf(op.rs2, 1));
-			Fmov(*call_regs[1], regalloc.MapVRegister(op.rs2, 1));
-			Lsl(*call_regs64[1], *call_regs64[1], 32);
-			Fmov(w2, regalloc.MapVRegister(op.rs2, 0));
-			Orr(*call_regs64[1], *call_regs64[1], x2);
-#else
-			shil_param_to_host_reg(op.rs2, *call_regs64[1]);
-#endif
-		}
+			shil_param_to_host_reg(op.rs2, x1);
 		if (optimise && GenWriteMemoryFast(op, opid))
 			return;
 
@@ -1864,7 +1847,7 @@ private:
 
 		u32 size = op.flags & 0x7f;
 		u32 addr = op.rs1._imm;
-		if (mmu_enabled())
+		if (mmu_enabled() && mmu_is_translated(addr, size))
 		{
 			if ((addr >> 12) != (block->vaddr >> 12) && ((addr >> 12) != ((block->vaddr + block->guest_opcodes * 2 - 1) >> 12)))
 				// When full mmu is on, only consider addresses in the same 4k page
@@ -1932,14 +1915,8 @@ private:
 				break;
 
 			case 8:
-#ifdef EXPLODE_SPANS
-				verify(op.rs2.count() == 2 && regalloc.IsAllocf(op.rs2, 0) && regalloc.IsAllocf(op.rs2, 1));
-				Str(regalloc.MapVRegister(op.rs2, 0),  MemOperand(x1));
-				Str(regalloc.MapVRegister(op.rs2, 1),  MemOperand(x1, 4));
-#else
 				shil_param_to_host_reg(op.rs2, x1);
 				Str(x1, MemOperand(x0));
-#endif
 				break;
 
 			default:
@@ -1965,25 +1942,7 @@ private:
 			else
 			{
 				Mov(w1, reg2);
-
-				switch(size)
-				{
-				case 1:
-					GenCallRuntime((void (*)())ptr);
-					break;
-
-				case 2:
-					GenCallRuntime((void (*)())ptr);
-					break;
-
-				case 4:
-					GenCallRuntime((void (*)())ptr);
-					break;
-
-				default:
-					die("Invalid size");
-					break;
-				}
+				GenCallRuntime((void (*)())ptr);
 			}
 		}
 
@@ -1993,9 +1952,8 @@ private:
 	bool GenWriteMemoryFast(const shil_opcode& op, size_t opid)
 	{
 		// Direct memory access. Need to handle SIGSEGV and rewrite block as needed. See ngen_Rewrite()
-		if (!_nvmem_enabled() || (mmu_enabled() && !vmem32_enabled()))
+		if (!_nvmem_enabled())
 			return false;
-		mem_writes++;
 
 		Instruction *start_instruction = GetCursorAddress<Instruction *>();
 
@@ -2003,12 +1961,12 @@ private:
 		// Update ngen_Rewrite (and perhaps write_memory_rewrite_size) if adding or removing code
 		if (!_nvmem_4gb_space())
 		{
-			Ubfx(x7, *call_regs64[0], 0, 29);
+			Ubfx(x7, x0, 0, 29);
 			Add(x7, x7, sizeof(Sh4Context), LeaveFlags);
 		}
 		else
 		{
-			Add(x7, *call_regs64[0], sizeof(Sh4Context), LeaveFlags);
+			Add(x7, x0, sizeof(Sh4Context), LeaveFlags);
 		}
 
 		u32 size = op.flags & 0x7f;
@@ -2097,8 +2055,8 @@ private:
 		Label blockcheck_success;
 		B(&blockcheck_success);
 		Bind(&blockcheck_fail);
-		Ldr(w0, block->addr);
-		TailCallRuntime(ngen_blockcheckfail);
+		Mov(w0, block->addr);
+		GenBranch(blockCheckFail);
 
 		Bind(&blockcheck_success);
 
@@ -2108,12 +2066,12 @@ private:
 			Ldr(w10, sh4_context_mem_operand(&sr));
 			Tbz(w10, 15, &fpu_enabled);			// test SR.FD bit
 
-			Mov(*call_regs[0], block->vaddr);	// pc
-			Mov(*call_regs[1], 0x800);			// event
-			Mov(*call_regs[2], 0x100);			// vector
+			Mov(w0, block->vaddr);	// pc
+			Mov(w1, 0x800);			// event
+			Mov(w2, 0x100);			// vector
 			CallRuntime(Do_Exception);
 			Ldr(w29, sh4_context_mem_operand(&next_pc));
-			GenBranch(*arm64_no_update);
+			GenBranch(arm64_no_update);
 
 			Bind(&fpu_enabled);
 		}
@@ -2187,8 +2145,8 @@ private:
 	std::vector<const VRegister*> call_fregs;
 	Arm64RegAlloc regalloc;
 	RuntimeBlockInfo* block = NULL;
-	const int read_memory_rewrite_size = 3;	// ubfx, add, ldr
-	const int write_memory_rewrite_size = 3; // ubfx, add, str
+	const int read_memory_rewrite_size = 5;	// ubfx, add, ldr
+	const int write_memory_rewrite_size = 5; // ubfx, add, str
 };
 
 static Arm64Assembler* compiler;
@@ -2257,10 +2215,11 @@ static const u32 op_sizes[] = {
 		4,
 		8,
 };
-bool ngen_Rewrite(unat& host_pc, unat, unat)
+bool ngen_Rewrite(host_context_t &context, void *faultAddress)
 {
-	//LOGI("ngen_Rewrite pc %zx\n", host_pc);
-	u32 *code_ptr = (u32 *)CC_RX2RW(host_pc);
+	JITWriteProtect(false);
+	//LOGI("ngen_Rewrite pc %zx\n", context.pc);
+	u32 *code_ptr = (u32 *)CC_RX2RW(context.pc);
 	u32 armv8_op = *code_ptr;
 	bool is_read;
 	u32 size;
@@ -2282,32 +2241,31 @@ bool ngen_Rewrite(unat& host_pc, unat, unat)
 	u32 *code_rewrite = code_ptr - 1 - (!_nvmem_4gb_space() ? 1 : 0);
 	Arm64Assembler *assembler = new Arm64Assembler(code_rewrite);
 	if (is_read)
-	{
-		mem_rewrites_r++;
 		assembler->GenReadMemorySlow(size);
-	}
+	else if (!is_read && size >= 4 && (((u8 *)faultAddress - virt_ram_base) >> 26) == 0x38)
+		assembler->GenWriteStoreQueue(size);
 	else
-	{
-		mem_rewrites_w++;
 		assembler->GenWriteMemorySlow(size);
-	}
 	assembler->Finalize(true);
 	delete assembler;
-	host_pc = (unat)CC_RW2RX(code_rewrite);
+	context.pc = (unat)CC_RW2RX(code_rewrite);
+	JITWriteProtect(true);
 
 	return true;
 }
 
 static void generate_mainloop()
 {
-	if (mainloop != NULL)
+	if (mainloop != nullptr)
 		return;
+	JITWriteProtect(false);
 	compiler = new Arm64Assembler();
 
 	compiler->GenMainloop();
 
 	delete compiler;
-	compiler = NULL;
+	compiler = nullptr;
+	JITWriteProtect(true);
 }
 
 RuntimeBlockInfo* ngen_AllocateBlock()
@@ -2316,20 +2274,22 @@ RuntimeBlockInfo* ngen_AllocateBlock()
 	return new DynaRBI();
 }
 
-void ngen_HandleException()
+void ngen_HandleException(host_context_t &context)
 {
-	longjmp(jmp_env, 1);
+	context.pc = (uintptr_t)handleException;
 }
 
 u32 DynaRBI::Relink()
 {
 #ifndef NO_BLOCK_LINKING
 	//printf("DynaRBI::Relink %08x\n", this->addr);
+	JITWriteProtect(false);
 	Arm64Assembler *compiler = new Arm64Assembler((u8 *)this->code + this->relink_offset);
 
 	u32 code_size = compiler->RelinkBlock(this);
 	compiler->Finalize(true);
 	delete compiler;
+	JITWriteProtect(true);
 
 	return code_size;
 #else
@@ -2352,25 +2312,5 @@ void Arm64RegAlloc::Preload_FPU(u32 reg, eFReg nreg)
 void Arm64RegAlloc::Writeback_FPU(u32 reg, eFReg nreg)
 {
 	assembler->Str(VRegister(nreg, 32), assembler->sh4_context_mem_operand(GetRegPtr(reg)));
-}
-
-
-extern "C" naked void do_sqw_nommu_area_3(u32 dst, u8* sqb)
-{
-	__asm__
-	(
-		"and x12, x0, #0x20			\n\t"	// SQ# selection, isolate
-		"add x12, x12, x1			\n\t"	// SQ# selection, add to SQ ptr
-		"ld2 { v0.2D, v1.2D }, [x12]\n\t"
-		"movz x11, #0x0C00, lsl #16 \n\t"
-		"add x11, x1, x11			\n\t"	// get ram ptr from x1, part 1
-		"ubfx x0, x0, #5, #20		\n\t"	// get ram offset
-		"add x11, x11, #512			\n\t"	// get ram ptr from x1, part 2
-		"add x11, x11, x0, lsl #5	\n\t"	// ram + offset
-		"st2 { v0.2D, v1.2D }, [x11] \n\t"
-		"ret						\n"
-
-		: : : "memory"
-	);
 }
 #endif	// FEAT_SHREC == DYNAREC_JIT

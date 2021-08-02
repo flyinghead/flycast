@@ -33,7 +33,7 @@
 
 void setImageLayout(vk::CommandBuffer const& commandBuffer, vk::Image image, vk::Format format, u32 mipmapLevels, vk::ImageLayout oldImageLayout, vk::ImageLayout newImageLayout);
 
-class Texture : public BaseTextureCacheData
+class Texture final : public BaseTextureCacheData
 {
 public:
 	void UploadToGPU(int width, int height, u8 *data, bool mipmapped, bool mipmapsIncluded = false) override;
@@ -43,7 +43,7 @@ public:
 	vk::ImageView GetImageView() const { return *imageView; }
 	vk::ImageView GetReadOnlyImageView() const { return readOnlyImageView ? readOnlyImageView : *imageView; }
 	void SetCommandBuffer(vk::CommandBuffer commandBuffer) { this->commandBuffer = commandBuffer; }
-	virtual bool Force32BitTexture(TextureType type) const override { return !VulkanContext::Instance()->IsFormatSupported(type); }
+	bool Force32BitTexture(TextureType type) const override { return !VulkanContext::Instance()->IsFormatSupported(type); }
 
 	void SetPhysicalDevice(vk::PhysicalDevice physicalDevice) { this->physicalDevice = physicalDevice; }
 	void SetDevice(vk::Device device) { this->device = device; }
@@ -51,8 +51,8 @@ public:
 private:
 	void Init(u32 width, u32 height, vk::Format format ,u32 dataSize, bool mipmapped, bool mipmapsIncluded);
 	void SetImage(u32 size, void *data, bool isNew, bool genMipmaps);
-	void CreateImage(vk::ImageTiling tiling, vk::ImageUsageFlags usage, vk::ImageLayout initialLayout,
-			vk::MemoryPropertyFlags memoryProperties, vk::ImageAspectFlags aspectMask);
+	void CreateImage(vk::ImageTiling tiling, const vk::ImageUsageFlags& usage, vk::ImageLayout initialLayout,
+			const vk::ImageAspectFlags& aspectMask);
 	void GenerateMipmaps();
 
 	vk::Format format = vk::Format::eUndefined;
@@ -111,7 +111,7 @@ public:
 	FramebufferAttachment(vk::PhysicalDevice physicalDevice, vk::Device device)
 		: format(vk::Format::eUndefined), physicalDevice(physicalDevice), device(device)
 		{}
-	void Init(u32 width, u32 height, vk::Format format, vk::ImageUsageFlags usage);
+	void Init(u32 width, u32 height, vk::Format format, const vk::ImageUsageFlags& usage);
 	void Reset() { image.reset(); imageView.reset(); }
 
 	vk::ImageView GetImageView() const { return *imageView; }
@@ -134,16 +134,12 @@ private:
 	vk::Device device;
 };
 
-class TextureCache : public BaseTextureCache<Texture>
+class TextureCache final : public BaseTextureCache<Texture>
 {
 public:
-	Texture *getTextureCacheData(TSP tsp, TCW tcw)
-	{
-		Texture *texture = BaseTextureCache<Texture>::getTextureCacheData(tsp, tcw);
-		inFlightTextures[currentIndex].insert(texture);
-		return texture;
+	TextureCache() {
+		Texture::SetDirectXColorOrder(false);
 	}
-
 	void SetCurrentIndex(int index) {
 		if (currentIndex < inFlightTextures.size())
 			std::for_each(inFlightTextures[currentIndex].begin(), inFlightTextures[currentIndex].end(),
@@ -158,8 +154,15 @@ public:
 
 	bool IsInFlight(Texture *texture)
 	{
-		return std::any_of(inFlightTextures.begin(), inFlightTextures.end(),
-				[texture](const std::unordered_set<Texture *>& set) { return set.find(texture) != set.end(); });
+		for (u32 i = 0; i < inFlightTextures.size(); i++)
+			if (i != currentIndex && inFlightTextures[i].find(texture) != inFlightTextures[i].end())
+				return true;
+		return false;
+	}
+
+	void SetInFlight(Texture *texture)
+	{
+		inFlightTextures[currentIndex].insert(texture);
 	}
 
 	void DestroyLater(Texture *texture)
@@ -173,7 +176,32 @@ public:
 		texture->format = vk::Format::eUndefined;
 	}
 
+	void Cleanup();
+
+	void Clear()
+	{
+		BaseTextureCache::Clear();
+		for (auto& set : inFlightTextures)
+			set.clear();
+		for (auto& v : trashedImageViews)
+			v.clear();
+		for (auto& v : trashedImages)
+			v.clear();
+		for (auto& v : trashedMem)
+			v.clear();
+		for (auto& v : trashedBuffers)
+			v.clear();
+	}
+
 private:
+	bool clearTexture(Texture *tex)
+	{
+		for (auto& set : inFlightTextures)
+			set.erase(tex);
+
+		return tex->Delete();
+	}
+
 	template<typename T>
 	void EmptyTrash(T& v)
 	{

@@ -58,12 +58,9 @@ typedef BOOL (WINAPI * PFNWGLSWAPINTERVALEXTPROC) (int interval);
 class WGLGraphicsContext : public GLGraphicsContext
 {
 public:
-	~WGLGraphicsContext() { Term(); }
-
 	bool Init();
 	void Term();
 	void Swap();
-	bool IsSwapBufferPreserved() const { return true; }
 	void SetWindow(HWND hwnd) { this->ourWindow = hwnd; }
 	void SetDeviceContext(HDC hdc) { this->ourWindowHandleToDeviceContext = hdc; }
 

@@ -51,24 +51,24 @@ Disc* cue_parse(const char* file)
 	if (len > 4 && stricmp( &file[len - 4], ".cue"))
 		return nullptr;
 
-	core_file* fsource = core_fopen(file);
+	FILE *fsource = nowide::fopen(file, "rb");
 
 	if (fsource == nullptr)
 		return nullptr;
 
-	size_t cue_len = core_fsize(fsource);
+	size_t cue_len = flycast::fsize(fsource);
 
 	char cue_data[64 * 1024] = { 0 };
 
 	if (cue_len >= sizeof(cue_data))
 	{
 		WARN_LOG(GDROM, "CUE parse error: CUE file too big");
-		core_fclose(fsource);
+		std::fclose(fsource);
 		return nullptr;
 	}
 
-	core_fread(fsource, cue_data, cue_len);
-	core_fclose(fsource);
+	std::fread(cue_data, 1, cue_len, fsource);
+	std::fclose(fsource);
 
 	std::istringstream cuesheet(cue_data);
 
@@ -166,7 +166,7 @@ Disc* cue_parse(const char* file)
 				t.StartFAD = current_fad;
 				t.CTRL = (track_type == "AUDIO" || track_type == "CDG") ? 0 : 4;
 				std::string path = basepath + normalize_path_separator(track_filename);
-				core_file* track_file = core_fopen(path.c_str());
+				FILE *track_file = nowide::fopen(path.c_str(), "rb");
 				if (track_file == nullptr)
 				{
 					WARN_LOG(GDROM, "CUE file: cannot open track %d: %s", track_number, path.c_str());
@@ -177,12 +177,13 @@ Disc* cue_parse(const char* file)
 				if (sector_size == 0)
 				{
 					WARN_LOG(GDROM, "CUE file: track %d has unknown sector type: %s", track_number, track_type.c_str());
+					std::fclose(track_file);
 					delete disc;
 					return nullptr;
 				}
-				if (core_fsize(track_file) % sector_size != 0)
+				if (flycast::fsize(track_file) % sector_size != 0)
 					WARN_LOG(GDROM, "Warning: Size of track %s is not multiple of sector size %d", track_filename.c_str(), sector_size);
-				current_fad = t.StartFAD + (u32)core_fsize(track_file) / sector_size;
+				current_fad = t.StartFAD + (u32)flycast::fsize(track_file) / sector_size;
 				t.EndFAD = current_fad - 1;
 				DEBUG_LOG(GDROM, "file[%zd] \"%s\": session %d type %s FAD:%d -> %d", disc->tracks.size() + 1, track_filename.c_str(), session_number, track_type.c_str(), t.StartFAD, t.EndFAD);
 				

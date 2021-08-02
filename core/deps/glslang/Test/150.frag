@@ -49,3 +49,33 @@ int primitiveID()
    return gl_PrimitiveID;
    gl_PerFragment; // ERROR, block name can't get reused
 }
+
+in double type1;    // ERROR
+#extension GL_ARB_gpu_shader_fp64 : enable
+double type2;
+double type3 = 2.0;
+int absTest = sqrt(type3);
+double absTest2 = sqrt(type3);
+double absTest3 = sqrt(2);
+float dk = sqrt(11);
+
+#extension GL_ARB_shader_bit_encoding: enable
+
+float f;
+vec4 v4;
+ivec4 iv4a;
+uvec2 uv2c;
+void bitEncodingPass()
+{
+    int i = floatBitsToInt(f);
+    uvec4 uv11 = floatBitsToUint(v4);
+    vec4 v14 = intBitsToFloat(iv4a);
+    vec2 v15 = uintBitsToFloat(uv2c);
+}
+
+#extension GL_ARB_shader_bit_encoding: disable
+
+void bitEncodingFail()
+{
+    int i = floatBitsToInt(f); // Error, extention GL_ARB_bit_encoding is diabled
+}

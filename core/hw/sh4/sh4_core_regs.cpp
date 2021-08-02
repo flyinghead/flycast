@@ -9,59 +9,43 @@
 
 Sh4RCB* p_sh4rcb;
 sh4_if  sh4_cpu;
-u8* sh4_dyna_rcb;
 
 static INLINE void ChangeGPR()
 {
-	u32 temp;
-	for (int i=0;i<8;i++)
-	{
-		temp=r[i];
-		r[i]=r_bank[i];
-		r_bank[i]=temp;
-	}
+	std::swap((u32 (&)[8])r, r_bank);
 }
 
 static INLINE void ChangeFP()
 {
-	u32 temp;
-	for (int i=0;i<16;i++)
-	{
-		temp=fr_hex[i];
-		fr_hex[i]=xf_hex[i];
-		xf_hex[i]=temp;
-	}
+	std::swap((f32 (&)[16])Sh4cntx.xffr, *(f32 (*)[16])&Sh4cntx.xffr[16]);
 }
 
-//called when sr is changed and we must check for reg banks etc.. , returns true if interrupts got
+//called when sr is changed and we must check for reg banks etc.
+//returns true if interrupt pending
 bool UpdateSR()
 {
 	if (sr.MD)
 	{
-		if (old_sr.RB !=sr.RB)
+		if (old_sr.RB != sr.RB)
 			ChangeGPR();//bank change
 	}
 	else
 	{
-		if (sr.RB)
-		{
-			WARN_LOG(SH4, "UpdateSR MD=0;RB=1 , this must not happen");
-			sr.RB =0;//error - must always be 0
-		}
 		if (old_sr.RB)
 			ChangeGPR();//switch
 	}
 
-	old_sr.status=sr.status;
+	old_sr.status = sr.status;
+	old_sr.RB &= sr.MD;
 
 	return SRdecode();
 }
 
-//make x86 and sh4 float status registers match ;)
-u32 old_rm=0xFF;
-u32 old_dn=0xFF;
+// make host and sh4 rounding and denormal modes match
+static u32 old_rm = 0xFF;
+static u32 old_dn = 0xFF;
 
-void SetFloatStatusReg()
+static void setHostRoundingMode()
 {
 	if ((old_rm!=fpscr.RM) || (old_dn!=fpscr.DN))
 	{
@@ -132,7 +116,7 @@ void SetFloatStatusReg()
                 : "r"(off_mask), "r"(on_mask)
             );
     #else
-        printf("SetFloatStatusReg: Unsupported platform\n");
+	#error "SetFloatStatusReg: Unsupported platform"
     #endif
 #endif
 
@@ -146,11 +130,17 @@ void UpdateFPSCR()
 		ChangeFP(); // FPU bank change
 
 	old_fpscr=fpscr;
-	SetFloatStatusReg(); // Ensure they are in sync :)
+	setHostRoundingMode();
 }
 
+void RestoreHostRoundingMode()
+{
+	old_rm = 0xFF;
+	old_dn = 0xFF;
+	setHostRoundingMode();
+}
 
-u32* Sh4_int_GetRegisterPtr(Sh4RegType reg)
+static u32* Sh4_int_GetRegisterPtr(Sh4RegType reg)
 {
 	if ((reg>=reg_r0) && (reg<=reg_r15))
 	{
@@ -239,6 +229,9 @@ u32* Sh4_int_GetRegisterPtr(Sh4RegType reg)
 		case reg_pc_dyn:
 			return &Sh4cntx.jdyn;
 
+		case reg_temp:
+			return &Sh4cntx.temp_reg;
+
 		default:
 			ERROR_LOG(SH4, "Unknown register ID %d", reg);
 			die("Invalid reg");
@@ -246,19 +239,6 @@ u32* Sh4_int_GetRegisterPtr(Sh4RegType reg)
 			break;
 		}
 	}
-}
-
-u32 sh4context_offset_u32(u32 sh4_reg)
-{
-	void* addr=Sh4_int_GetRegisterPtr((Sh4RegType)sh4_reg);
-	u32 offs=(u8*)addr-(u8*)&Sh4cntx;
-	verify(offs<sizeof(Sh4cntx));
-
-	return offs;
-}
-u32 sh4context_offset_regtype(Sh4RegType sh4_reg)
-{
-	return sh4context_offset_u32(sh4_reg);
 }
 
 u32* GetRegPtr(u32 reg)

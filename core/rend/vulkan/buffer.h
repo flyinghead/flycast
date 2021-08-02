@@ -24,8 +24,8 @@
 
 struct BufferData
 {
-	BufferData(vk::DeviceSize size, vk::BufferUsageFlags usage,
-			vk::MemoryPropertyFlags propertyFlags = vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
+	BufferData(vk::DeviceSize size, const vk::BufferUsageFlags& usage,
+			const vk::MemoryPropertyFlags& propertyFlags = vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
 	~BufferData()
 	{
 		buffer.reset();
@@ -40,7 +40,7 @@ struct BufferData
 		memcpy(dataPtr, data, size);
 	}
 
-	void upload(size_t count, u32 *sizes, const void **data, u32 bufOffset = 0) const
+	void upload(size_t count, const u32 *sizes, const void * const *data, u32 bufOffset = 0) const
 	{
 		verify((m_propertyFlags & vk::MemoryPropertyFlagBits::eHostCoherent) && (m_propertyFlags & vk::MemoryPropertyFlagBits::eHostVisible));
 

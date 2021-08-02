@@ -24,10 +24,11 @@
 #include "dsp.h"
 #include "aica.h"
 #include "aica_if.h"
-#include "deps/vixl/aarch64/macro-assembler-aarch64.h"
+#include "hw/mem/_vmem.h"
+#include <aarch64/macro-assembler-aarch64.h>
 using namespace vixl::aarch64;
 
-extern void vmem_platform_flush_cache(void *icache_start, void *icache_end, void *dcache_start, void *dcache_end);
+static u8 *pCodeBuffer;
 
 class DSPAssembler : public MacroAssembler
 {
@@ -38,28 +39,6 @@ public:
 	{
 		this->DSP = DSP;
 		DEBUG_LOG(AICA_ARM, "DSPAssembler::DSPCompile recompiling for arm64 at %p", GetBuffer()->GetStartAddress<void*>());
-
-		if (DSP->Stopped)
-		{
-			// Clear EFREG
-			Mov(x1, (uintptr_t)DSPData);
-			MemOperand efreg_op = dspdata_operand(DSPData->EFREG);	// just for the offset
-			if (efreg_op.IsRegisterOffset())
-				Add(x0, x1, efreg_op.GetRegisterOffset());
-			else
-				Add(x0, x1, efreg_op.GetOffset());
-			Stp(xzr, xzr, MemOperand(x0, 0));
-			Stp(xzr, xzr, MemOperand(x0, 16));
-			Stp(xzr, xzr, MemOperand(x0, 32));
-			Stp(xzr, xzr, MemOperand(x0, 48));
-			Ret();
-			FinalizeCode();
-			vmem_platform_flush_cache(
-				GetBuffer()->GetStartAddress<void*>(), GetBuffer()->GetEndAddress<void*>(),
-				GetBuffer()->GetStartAddress<void*>(), GetBuffer()->GetEndAddress<void*>());
-
-			return;
-		}
 
 		Instruction* instr_start = GetBuffer()->GetStartAddress<Instruction*>();
 
@@ -81,17 +60,6 @@ public:
 		const Register& SHIFTED = w24;	// 24 bits
 		const Register& ADRS_REG = w22;	// 13 bits unsigned - saved
 		const Register& MDEC_CT = w23;	// saved
-
-		//memset(DSPData->EFREG, 0, sizeof(DSPData->EFREG));
-		MemOperand efreg_op = dspdata_operand(DSPData->EFREG);
-		if (efreg_op.IsRegisterOffset())
-			Add(x0, x27, efreg_op.GetRegisterOffset());
-		else
-			Add(x0, x27, efreg_op.GetOffset());
-		Stp(xzr, xzr, MemOperand(x0, 0));
-		Stp(xzr, xzr, MemOperand(x0, 16));
-		Stp(xzr, xzr, MemOperand(x0, 32));
-		Stp(xzr, xzr, MemOperand(x0, 48));
 
 		Mov(ACC, 0);
 		Mov(B, 0);
@@ -115,7 +83,6 @@ public:
 
 			if (op.XSEL || op.YRL || (op.ADRL && op.SHIFT != 3))
 			{
-				verify(op.IRA < 0x38);
 				if (op.IRA <= 0x1f)
 					//INPUTS = DSP->MEMS[op.IRA];
 					Ldr(INPUTS, dsp_operand(DSP->MEMS, op.IRA));
@@ -174,7 +141,7 @@ public:
 			else
 			{
 				//X = DSP->TEMP[(TRA + DSP->regs.MDEC_CT) & 0x7F];
-				if (!op.ZERO && !op.BSEL)
+				if (!op.ZERO && !op.BSEL && !op.NEGB)
 					X_alias = &B;
 				else
 				{
@@ -204,7 +171,7 @@ public:
 				Asr(Y, Y_REG, 11);
 			else if (op.YSEL == 3)
 				//Y = (Y_REG >> 4) & 0x0FFF;
-				Sbfx(Y, Y_REG, 4, 12);
+				Ubfx(Y, Y_REG, 4, 12);
 
 			if (op.YRL)
 				//Y_REG = INPUTS;
@@ -324,9 +291,9 @@ public:
 
 			if (op.EWT)
 			{
-				//DSPData->EFREG[op.EWA] = SHIFTED >> 4;
+				//DSPData->EFREG[op.EWA] = SHIFTED >> 8;
 				MemOperand mem_operand = dspdata_operand(DSPData->EFREG, op.EWA);
-				Asr(w1, SHIFTED, 4);
+				Asr(w1, SHIFTED, 8);
 				Str(w1, mem_operand);
 			}
 #if 0
@@ -480,55 +447,18 @@ void dsp_recompile()
 			break;
 		}
 	}
-	DSPAssembler assembler(&dsp.DynCode[0], sizeof(dsp.DynCode));
+	DSPAssembler assembler(pCodeBuffer, sizeof(dsp.DynCode));
 	assembler.Compile(&dsp);
 }
 
-void dsp_init()
+void dsp_rec_init()
 {
-	memset(&dsp, 0, sizeof(dsp));
-	dsp.RBL = 0x8000 - 1;
-	dsp.RBP=0;
-	dsp.regs.MDEC_CT = 1;
-	dsp.dyndirty = true;
-
-	if (!mem_region_set_exec(dsp.DynCode, sizeof(dsp.DynCode)))
-	{
-		perror("Couldn’t mprotect DSP code");
+	if (!vmem_platform_prepare_jit_block(dsp.DynCode, sizeof(dsp.DynCode), (void**)&pCodeBuffer))
 		die("mprotect failed in arm64 dsp");
-	}
 }
 
-void dsp_step()
+void dsp_rec_step()
 {
-	if (dsp.dyndirty)
-	{
-		dsp.dyndirty = false;
-		dsp_recompile();
-	}
-
-	((void (*)())&dsp.DynCode)();
-}
-
-void dsp_writenmem(u32 addr)
-{
-	if (addr >= 0x3400 && addr < 0x3C00)
-	{
-		dsp.dyndirty = true;
-	}
-	else if (addr >= 0x4000 && addr < 0x4400)
-	{
-		// TODO proper sharing of memory with sh4 through DSPData
-		memset(dsp.TEMP, 0, sizeof(dsp.TEMP));
-	}
-	else if (addr >= 0x4400 && addr < 0x4500)
-	{
-		// TODO proper sharing of memory with sh4 through DSPData
-		memset(dsp.MEMS, 0, sizeof(dsp.MEMS));
-	}
-}
-
-void dsp_term()
-{
+	((void (*)())pCodeBuffer)();
 }
 #endif

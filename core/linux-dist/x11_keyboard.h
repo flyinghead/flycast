@@ -3,10 +3,10 @@
 #include "input/keyboard_device.h"
 #include "x11.h"
 
-class X11KeyboardDevice : public KeyboardDeviceTemplate<int>
+class X11Keyboard : public KeyboardDeviceTemplate<int>
 {
 public:
-	X11KeyboardDevice(int maple_port) : KeyboardDeviceTemplate(maple_port)
+	X11Keyboard(int maple_port) : KeyboardDeviceTemplate(maple_port, "X11")
 	{
 		//04-1D Letter keys A-Z (in alphabetic order)
 		kb_map[KEY_A] = 0x04;
@@ -125,65 +125,35 @@ public:
 		kb_map[90] = 0x62;
 		//63 "." (Numeric keypad)
 		kb_map[91] = 0x63;
-		//64 #| (non-US)
-		//kb_map[94] = 0x64;
 		//65 S3 key
 		//66-A4 Not used
 		//A5-DF Reserved
 		kb_map[KEY_LCTRL] = 0xE0;  // Left Control
 		kb_map[KEY_LSHIFT] = 0xE1; // Left Shift
-		//E2 Left Alt
+		kb_map[KEY_LALT] = 0xE2;   // Left Alt
 		//E3 Left S1
 		kb_map[KEY_RCTRL] = 0xE4;  // Right Control
 		kb_map[KEY_RSHIFT] = 0xE5; // Right Shift
-		//E6 Right Alt
+		// AltGr
+		kb_map[108] = 0xE6;        // Right Alt
+		kb_map[135] = 0x65;        // Menu / S3
 		//E7 Right S3
 		//E8-FF Reserved
+
+		_unique_id = "x11_keyboard";
+		loadMapping();
 	}
-	virtual const char* name() override { return "X11 Keyboard"; }
 
 protected:
-	virtual u8 convert_keycode(int keycode) override
+	u8 convert_keycode(int keycode) override
 	{
+		if (kb_map.find(keycode) == kb_map.end()) {
+			DEBUG_LOG(INPUT, "Unknown key %x", keycode);
+			return 0;
+		}
 		return kb_map[keycode];
 	}
 
 private:
 	std::map<int, u8> kb_map;
-};
-
-class KbInputMapping : public InputMapping
-{
-public:
-	KbInputMapping()
-	{
-		name = "X11 Keyboard";
-		set_button(DC_BTN_A, KEY_X);
-		set_button(DC_BTN_B, KEY_C);
-		set_button(DC_BTN_X, KEY_S);
-		set_button(DC_BTN_Y, KEY_D);
-		set_button(DC_DPAD_UP, KEY_UP);
-		set_button(DC_DPAD_DOWN, KEY_DOWN);
-		set_button(DC_DPAD_LEFT, KEY_LEFT);
-		set_button(DC_DPAD_RIGHT, KEY_RIGHT);
-		set_button(DC_BTN_START, KEY_RETURN);
-		set_button(EMU_BTN_TRIGGER_LEFT, KEY_F);
-		set_button(EMU_BTN_TRIGGER_RIGHT, KEY_V);
-		set_button(EMU_BTN_MENU, KEY_TAB);
-		set_button(EMU_BTN_FFORWARD, KEY_SPACE);
-
-		dirty = false;
-	}
-};
-
-class X11KbGamepadDevice : public GamepadDevice
-{
-public:
-	X11KbGamepadDevice(int maple_port) : GamepadDevice(maple_port, "X11")
-	{
-		_name = "Keyboard";
-		_unique_id = "x11_keyboard";
-		if (!find_mapping())
-			input_mapper = std::make_shared<KbInputMapping>();
-	}
 };

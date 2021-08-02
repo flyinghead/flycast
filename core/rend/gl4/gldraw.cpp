@@ -1,15 +1,24 @@
+/*
+	Copyright 2018 flyinghead
+
+	This file is part of Flycast.
+
+    Flycast is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 2 of the License, or
+    (at your option) any later version.
+
+    Flycast is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
+*/
 #include "gl4.h"
 #include "rend/gles/glcache.h"
-
-/*
-
-Drawing and related state management
-Takes vertex, textures and renders to the currently set up target
-
-
-
-
-*/
+#include "rend/tileclip.h"
 
 static gl4PipelineShader* CurrentShader;
 extern u32 gcflip;
@@ -21,31 +30,33 @@ GLuint texSamplers[2];
 GLuint depth_fbo;
 GLuint depthSaveTexId;
 
-static gl4PipelineShader *gl4GetProgram(u32 cp_AlphaTest, s32 pp_ClipTestMode,
-							u32 pp_Texture, u32 pp_UseAlpha, u32 pp_IgnoreTexA, u32 pp_ShadInstr, u32 pp_Offset,
-							u32 pp_FogCtrl, bool pp_TwoVolumes, bool pp_Gouraud, bool pp_BumpMap, bool fog_clamping, Pass pass)
+static gl4PipelineShader *gl4GetProgram(bool cp_AlphaTest, bool pp_InsideClipping,
+							bool pp_Texture, bool pp_UseAlpha, bool pp_IgnoreTexA, u32 pp_ShadInstr, bool pp_Offset,
+							u32 pp_FogCtrl, bool pp_TwoVolumes, bool pp_Gouraud, bool pp_BumpMap, bool fog_clamping,
+							bool palette, Pass pass)
 {
 	u32 rv=0;
 
-	rv |= (pp_ClipTestMode + 1);
-	rv<<=1; rv|=cp_AlphaTest;
-	rv<<=1; rv|=pp_Texture;
-	rv<<=1; rv|=pp_UseAlpha;
-	rv<<=1; rv|=pp_IgnoreTexA;
-	rv<<=2; rv|=pp_ShadInstr;
-	rv<<=1; rv|=pp_Offset;
-	rv<<=2; rv|=pp_FogCtrl;
+	rv |= (int)pp_InsideClipping;
+	rv <<= 1; rv |= (int)cp_AlphaTest;
+	rv <<= 1; rv |= (int)pp_Texture;
+	rv <<= 1; rv |= (int)pp_UseAlpha;
+	rv <<= 1; rv |= (int)pp_IgnoreTexA;
+	rv <<= 2; rv |= pp_ShadInstr;
+	rv <<= 1; rv |= (int)pp_Offset;
+	rv <<= 2; rv |= pp_FogCtrl;
 	rv <<= 1; rv |= (int)pp_TwoVolumes;
 	rv <<= 1; rv |= (int)pp_Gouraud;
-	rv <<= 1; rv |= pp_BumpMap;
-	rv <<= 1; rv |= fog_clamping;
+	rv <<= 1; rv |= (int)pp_BumpMap;
+	rv <<= 1; rv |= (int)fog_clamping;
+	rv <<= 1; rv |= (int)palette;
 	rv <<= 2; rv |= (int)pass;
 
 	gl4PipelineShader *shader = &gl4.shaders[rv];
 	if (shader->program == 0)
 	{
 		shader->cp_AlphaTest = cp_AlphaTest;
-		shader->pp_ClipTestMode = pp_ClipTestMode;
+		shader->pp_InsideClipping = pp_InsideClipping;
 		shader->pp_Texture = pp_Texture;
 		shader->pp_UseAlpha = pp_UseAlpha;
 		shader->pp_IgnoreTexA = pp_IgnoreTexA;
@@ -56,6 +67,7 @@ static gl4PipelineShader *gl4GetProgram(u32 cp_AlphaTest, s32 pp_ClipTestMode,
 		shader->pp_Gouraud = pp_Gouraud;
 		shader->pp_BumpMap = pp_BumpMap;
 		shader->fog_clamping = fog_clamping;
+		shader->palette = palette;
 		shader->pass = pass;
 		gl4CompilePipelineShader(shader);
 	}
@@ -71,33 +83,47 @@ static void SetTextureRepeatMode(int index, GLuint dir, u32 clamp, u32 mirror)
 		glSamplerParameteri(texSamplers[index], dir, mirror ? GL_MIRRORED_REPEAT : GL_REPEAT);
 }
 
+static void SetBaseClipping()
+{
+	if (gl4ShaderUniforms.base_clipping.enabled)
+	{
+		glcache.Enable(GL_SCISSOR_TEST);
+		glcache.Scissor(gl4ShaderUniforms.base_clipping.x, gl4ShaderUniforms.base_clipping.y, gl4ShaderUniforms.base_clipping.width, gl4ShaderUniforms.base_clipping.height);
+	}
+	else
+		glcache.Disable(GL_SCISSOR_TEST);
+}
+
 template <u32 Type, bool SortingEnabled, Pass pass>
 static void SetGPState(const PolyParam* gp)
 {
 	// Trilinear filtering. Ignore if texture isn't mipmapped (shenmue snowflakes)
 	if (gp->pcw.Texture && gp->tsp.FilterMode > 1 && Type != ListType_Punch_Through && gp->tcw.MipMapped == 1)
 	{
-		gl4ShaderUniforms.trilinear_alpha = 0.25 * (gp->tsp.MipMapD & 0x3);
+		gl4ShaderUniforms.trilinear_alpha = 0.25f * (gp->tsp.MipMapD & 0x3);
 		if (gp->tsp.FilterMode == 2)
 			// Trilinear pass A
-			gl4ShaderUniforms.trilinear_alpha = 1.0 - gl4ShaderUniforms.trilinear_alpha;
+			gl4ShaderUniforms.trilinear_alpha = 1.0f - gl4ShaderUniforms.trilinear_alpha;
 	}
 	else
 		gl4ShaderUniforms.trilinear_alpha = 1.0;
 
-	s32 clipping = SetTileClip(gp->tileclip, -1);
+	int clip_rect[4] = {};
+	TileClipping clipmode = GetTileClip(gp->tileclip, ViewportMatrix, clip_rect);
+	bool gpuPalette = false;
 
 	if (pass == Pass::Depth)
 	{
-		CurrentShader = gl4GetProgram(Type == ListType_Punch_Through ? 1 : 0,
-				clipping,
-				Type == ListType_Punch_Through ? gp->pcw.Texture : 0,
-				1,
+		CurrentShader = gl4GetProgram(Type == ListType_Punch_Through ? true : false,
+				clipmode == TileClipping::Inside,
+				Type == ListType_Punch_Through ? gp->pcw.Texture : false,
+				true,
 				gp->tsp.IgnoreTexA,
 				0,
-				0,
+				false,
 				2,
 				false,	// TODO Can PT have two different textures for area 0 and 1 ??
+				false,
 				false,
 				false,
 				false,
@@ -106,13 +132,14 @@ static void SetGPState(const PolyParam* gp)
 	else
 	{
 		// Two volumes mode only supported for OP and PT
-		bool two_volumes_mode = (gp->tsp1.full != -1) && Type != ListType_Translucent;
+		bool two_volumes_mode = (gp->tsp1.full != (u32)-1) && Type != ListType_Translucent;
 		bool color_clamp = gp->tsp.ColorClamp && (pvrrc.fog_clamp_min != 0 || pvrrc.fog_clamp_max != 0xffffffff);
 
-		int fog_ctrl = settings.rend.Fog ? gp->tsp.FogCtrl : 2;
+		int fog_ctrl = config::Fog ? gp->tsp.FogCtrl : 2;
+		gpuPalette = gp->texture != nullptr ? gp->texture->gpuPalette : false;
 
-		CurrentShader = gl4GetProgram(Type == ListType_Punch_Through ? 1 : 0,
-				clipping,
+		CurrentShader = gl4GetProgram(Type == ListType_Punch_Through ? true : false,
+				clipmode == TileClipping::Inside,
 				gp->pcw.Texture,
 				gp->tsp.UseAlpha,
 				gp->tsp.IgnoreTexA,
@@ -123,9 +150,18 @@ static void SetGPState(const PolyParam* gp)
 				gp->pcw.Gouraud,
 				gp->tcw.PixelFmt == PixelBumpMap,
 				color_clamp,
+				gpuPalette,
 				pass);
 	}
 	glcache.UseProgram(CurrentShader->program);
+
+	if (gpuPalette)
+	{
+		if (gp->tcw.PixelFmt == PixelPal4)
+			gl4ShaderUniforms.palette_index = gp->tcw.PalSelect << 4;
+		else
+			gl4ShaderUniforms.palette_index = (gp->tcw.PalSelect >> 4) << 8;
+	}
 
 	gl4ShaderUniforms.tsp0 = gp->tsp;
 	gl4ShaderUniforms.tsp1 = gp->tsp1;
@@ -141,7 +177,16 @@ static void SetGPState(const PolyParam* gp)
 	else
 		glcache.Disable(GL_BLEND);
 
-	SetTileClip(gp->tileclip, CurrentShader->pp_ClipTest);
+	if (clipmode == TileClipping::Inside)
+		glUniform4f(CurrentShader->pp_ClipTest, (float)clip_rect[0], (float)clip_rect[1],
+				(float)(clip_rect[0] + clip_rect[2]), (float)(clip_rect[1] + clip_rect[3]));
+	if (clipmode == TileClipping::Outside)
+	{
+		glcache.Enable(GL_SCISSOR_TEST);
+		glcache.Scissor(clip_rect[0], clip_rect[1], clip_rect[2], clip_rect[3]);
+	}
+	else
+		SetBaseClipping();
 
 	// This bit controls which pixels are affected by modvols
 	const u32 stencil = gp->pcw.Shadow != 0 ? 0x80 : 0x0;
@@ -153,14 +198,13 @@ static void SetGPState(const PolyParam* gp)
 		for (int i = 0; i < 2; i++)
 		{
 			glActiveTexture(GL_TEXTURE0 + i);
-			GLuint texid = (GLuint)(i == 0 ? gp->texid : gp->texid1);
+			TextureCacheData *texture = (TextureCacheData *)(i == 0 ? gp->texture : gp->texture1);
 
-			glBindTexture(GL_TEXTURE_2D, texid == -1 ? 0 : texid);
+			glBindTexture(GL_TEXTURE_2D, texture == nullptr ? 0 : texture->texID);
 
-			if (texid != -1)
+			if (texture != nullptr)
 			{
 				TSP tsp = i == 0 ? gp->tsp : gp->tsp1;
-				TCW tcw = i == 0 ? gp->tcw : gp->tcw1;
 
 				glBindSampler(i, texSamplers[i]);
 				SetTextureRepeatMode(i, GL_TEXTURE_WRAP_S, tsp.ClampU, tsp.FlipU);
@@ -177,7 +221,7 @@ static void SetGPState(const PolyParam* gp)
 				{
 					//bilinear filtering
 					//PowerVR supports also trilinear via two passes, but we ignore that for now
-					bool mipmapped = gp->tcw.MipMapped != 0 && gp->tcw.ScanOrder == 0 && settings.rend.UseMipmaps;
+					bool mipmapped = gp->tcw.MipMapped != 0 && gp->tcw.ScanOrder == 0 && config::UseMipmaps;
 					glSamplerParameteri(texSamplers[i], GL_TEXTURE_MIN_FILTER, mipmapped ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR);
 					glSamplerParameteri(texSamplers[i], GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 					if (mipmapped)
@@ -298,6 +342,7 @@ static void DrawModVols(int first, int count)
 	glBindVertexArray(gl4.vbo.modvol_vao);
 
 	glcache.Disable(GL_BLEND);
+	SetBaseClipping();
 
 	glcache.UseProgram(gl4.modvol_shader.program);
 
@@ -344,10 +389,6 @@ static void DrawModVols(int first, int count)
 	glcache.Enable(GL_DEPTH_TEST);
 	glcache.DepthMask(GL_TRUE);
 }
-
-void renderABuffer();
-void DrawTranslucentModVols(int first, int count);
-void checkOverflowAndReset();
 
 static GLuint CreateColorFBOTexture(int width, int height)
 {
@@ -492,7 +533,7 @@ void gl4DrawStrips(GLuint output_fbo, int width, int height)
 			DrawList<ListType_Punch_Through, false, Pass::Depth>(pvrrc.global_param_pt, previous_pass.pt_count, current_pass.pt_count - previous_pass.pt_count);
 
 			// Modifier volumes
-			if (settings.rend.ModifierVolumes)
+			if (config::ModifierVolumes)
 				DrawModVols(previous_pass.mvo_count, current_pass.mvo_count - previous_pass.mvo_count);
 
 			//
@@ -555,8 +596,11 @@ void gl4DrawStrips(GLuint output_fbo, int width, int height)
 				DrawList<ListType_Translucent, true, Pass::OIT>(pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);
 
 				// Translucent modifier volumes
-				if (settings.rend.ModifierVolumes)
+				if (config::ModifierVolumes)
+				{
+					SetBaseClipping();
 					DrawTranslucentModVols(previous_pass.mvo_tr_count, current_pass.mvo_tr_count - previous_pass.mvo_tr_count);
+				}
 
 				// Rebind the depth/stencil texture to the framebuffer
 				glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, stencilTexId, 0);
@@ -626,73 +670,4 @@ void gl4DrawStrips(GLuint output_fbo, int width, int height)
 	glBindSampler(0, 0);
 	glBindTexture(GL_TEXTURE_2D, opaqueTexId);
 	renderABuffer();
-}
-
-static void gl4_draw_quad_texture(GLuint texture, float w, float h)
-{
-	glcache.Disable(GL_SCISSOR_TEST);
-	glcache.Disable(GL_DEPTH_TEST);
-	glcache.Disable(GL_STENCIL_TEST);
-	glcache.Disable(GL_CULL_FACE);
-	glcache.Disable(GL_BLEND);
-
-	gl4ShaderUniforms.trilinear_alpha = 1.0;
-
-	CurrentShader = gl4GetProgram(0,
-				0,
-				1,
-				0,
-				1,
-				0,
-				0,
-				2,
-				false,
-				false,
-				false,
-				false,
-				Pass::Color);
-	glcache.UseProgram(CurrentShader->program);
-	gl4ShaderUniforms.Set(CurrentShader);
-
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, texture);
-
-	struct Vertex vertices[] = {
-		{ 0,     0 + h, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 0, 1 },
-		{ 0,     0,     1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 0, 0 },
-		{ 0 + w, 0 + h, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 1, 1 },
-		{ 0 + w, 0,     1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 1, 0 },
-	};
-	GLushort indices[] = { 0, 1, 2, 1, 3 };
-
-	glBindVertexArray(gl4.vbo.main_vao);
-	glBindBuffer(GL_ARRAY_BUFFER, gl4.vbo.geometry);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl4.vbo.idxs);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STREAM_DRAW);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STREAM_DRAW);
-
-	glDrawElements(GL_TRIANGLE_STRIP, 5, GL_UNSIGNED_SHORT, (void *)0);
-	glCheck();
-}
-
-void gl4DrawFramebuffer(float w, float h)
-{
-	gl4_draw_quad_texture(fbTextureId, w, h);
-	glcache.DeleteTextures(1, &fbTextureId);
-	fbTextureId = 0;
-}
-
-bool gl4_render_output_framebuffer()
-{
-	glViewport(0, 0, screen_width, screen_height);
-	glcache.Disable(GL_SCISSOR_TEST);
-	if (gl.ofbo.fbo == 0)
-		return false;
-	glBindFramebuffer(GL_READ_FRAMEBUFFER, gl.ofbo.fbo);
-	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-	glBlitFramebuffer(0, 0, gl.ofbo.width, gl.ofbo.height,
-			0, 0, screen_width, screen_height,
-			GL_COLOR_BUFFER_BIT, GL_LINEAR);
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	return true;
 }

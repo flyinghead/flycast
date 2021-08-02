@@ -86,10 +86,6 @@ void MakeCurrentThreadRealTime()
 
 -(void)emuThread
 {
-//    #if !TARGET_OS_SIMULATOR
-    install_prof_handler(1);
- //   #endif
-    
 	char *Args[3];
 	const char *P;
 

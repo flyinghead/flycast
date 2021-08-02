@@ -1,10 +1,7 @@
-
-#define _WIN32_WINNT 0x0500
-#include <windows.h>
-#include <windowsx.h>
-
 #include "hw/mem/_vmem.h"
 #include "hw/sh4/sh4_if.h"
+
+#include <windows.h>
 
 // Implementation of the vmem related function for Windows platforms.
 // For now this probably does some assumptions on the CPU/platform.
@@ -37,7 +34,10 @@ bool mem_region_set_exec(void *start, size_t len)
 
 void *mem_region_reserve(void *start, size_t len)
 {
-	return VirtualAlloc(start, len, MEM_RESERVE, PAGE_NOACCESS);
+	DWORD type = MEM_RESERVE;
+	if (start == nullptr)
+		type |= MEM_TOP_DOWN;
+	return VirtualAlloc(start, len, type, PAGE_NOACCESS);
 }
 
 bool mem_region_release(void *start, size_t len)
@@ -65,14 +65,14 @@ static std::vector<void *> mapped_regions;
 // Implement vmem initialization for RAM, ARAM, VRAM and SH4 context, fpcb etc.
 // The function supports allocating 512MB or 4GB addr spaces.
 
-// Plase read the POSIX implementation for more information. On Windows this is
+// Please read the POSIX implementation for more information. On Windows this is
 // rather straightforward.
 VMemType vmem_platform_init(void **vmem_base_addr, void **sh4rcb_addr)
 {
 	unmapped_regions.reserve(32);
 	mapped_regions.reserve(32);
 
-	// Firt let's try to allocate the in-memory file
+	// First let's try to allocate the in-memory file
 	mem_handle = CreateFileMapping(INVALID_HANDLE_VALUE, 0, PAGE_READWRITE, 0, RAM_SIZE_MAX + VRAM_SIZE_MAX + ARAM_SIZE_MAX, 0);
 
 	// Now allocate the actual address space (it will be 64KB aligned on windows).
@@ -158,7 +158,7 @@ void vmem_platform_create_mappings(const vmem_mapping *vmem_maps, unsigned numma
 
 typedef void* (*mapper_fn) (void *addr, unsigned size);
 
-// This is a tempalted function since it's used twice
+// This is a templated function since it's used twice
 static void* vmem_platform_prepare_jit_block_template(void *code_area, unsigned size, mapper_fn mapper) {
 	// Several issues on Windows: can't protect arbitrary pages due to (I guess) the way
 	// kernel tracks mappings, so only stuff that has been allocated with VirtualAlloc can be
@@ -172,7 +172,7 @@ static void* vmem_platform_prepare_jit_block_template(void *code_area, unsigned 
 	uintptr_t base_addr = reinterpret_cast<uintptr_t>(&vmem_platform_init) & ~0xFFFFF;
 
 	// Probably safe to assume reicast code is <200MB (today seems to be <16MB on every platform I've seen).
-	for (unsigned i = 0; i < 1800*1024*1024; i += 8*1024*1024) {  // Some arbitrary step size.
+	for (unsigned i = 0; i < 1800*1024*1024; i += 1024 * 1024) {  // Some arbitrary step size.
 		uintptr_t try_addr_above = base_addr + i;
 		uintptr_t try_addr_below = base_addr - i;
 

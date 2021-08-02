@@ -37,13 +37,22 @@ vk::UniqueRenderPass RenderPasses::MakeRenderPass(bool initial, bool last)
 					last ? vk::AttachmentStoreOp::eDontCare : vk::AttachmentStoreOp::eStore,
 					vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eDontCare,
 					initial ? vk::ImageLayout::eUndefined : vk::ImageLayout::eDepthStencilReadOnlyOptimal, vk::ImageLayout::eDepthStencilReadOnlyOptimal),
+			// OP+PT depth attachment for subpass 1
+			vk::AttachmentDescription(vk::AttachmentDescriptionFlags(), GetContext()->GetDepthFormat(), vk::SampleCountFlagBits::e1,
+					initial ? vk::AttachmentLoadOp::eClear : vk::AttachmentLoadOp::eLoad,
+					last ? vk::AttachmentStoreOp::eDontCare : vk::AttachmentStoreOp::eStore,
+					vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eDontCare,
+					initial ? vk::ImageLayout::eUndefined : vk::ImageLayout::eDepthStencilReadOnlyOptimal, vk::ImageLayout::eDepthStencilReadOnlyOptimal),
     };
     vk::AttachmentReference swapChainReference(0, vk::ImageLayout::eColorAttachmentOptimal);
     vk::AttachmentReference colorReference(1, vk::ImageLayout::eColorAttachmentOptimal);
     vk::AttachmentReference depthReference(2, vk::ImageLayout::eDepthStencilAttachmentOptimal);
 
     vk::AttachmentReference depthReadOnlyRef(2, vk::ImageLayout::eDepthStencilReadOnlyOptimal);
+    vk::AttachmentReference depthReference2(3, vk::ImageLayout::eDepthStencilAttachmentOptimal);
     vk::AttachmentReference colorInput(1, vk::ImageLayout::eShaderReadOnlyOptimal);
+    // vk 1.2 sdk wants this layout for subpass 2
+    vk::AttachmentReference depthRefStencilReadOnly(2, vk::ImageLayout::eDepthAttachmentStencilReadOnlyOptimal);
 
     vk::SubpassDescription subpasses[] = {
     	// Depth and modvol pass	FIXME subpass 0 shouldn't reference the color attachment
@@ -57,13 +66,13 @@ vk::UniqueRenderPass RenderPasses::MakeRenderPass(bool initial, bool last)
     			1, &depthReadOnlyRef,
 				1, &colorReference,
 				nullptr,
-				&depthReadOnlyRef),
+				&depthReference2),
     	// Final pass
     	vk::SubpassDescription(vk::SubpassDescriptionFlags(), vk::PipelineBindPoint::eGraphics,
     			1, &colorInput,
 				1, &swapChainReference,
 				nullptr,
-				&depthReference),	// depth-only Tr pass when continuation
+				&depthRefStencilReadOnly),	// depth-only Tr pass when continuation
     };
 
     std::vector<vk::SubpassDependency> dependencies = GetSubpassDependencies();

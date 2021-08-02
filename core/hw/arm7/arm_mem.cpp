@@ -1,4 +1,5 @@
 #include "arm_mem.h"
+#include "hw/aica/aica_mem.h"
 
 #define REG_L (0x2D00)
 #define REG_M (0x2D04)
@@ -17,7 +18,7 @@ void update_e68k()
 	{
 		//Set the pending signal
 		//Is L register held here too ?
-		e68k_out=1;
+		e68k_out=true;
 		e68k_reg_L=aica_reg_L;
 
 		update_armintc();

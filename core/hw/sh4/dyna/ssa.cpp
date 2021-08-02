@@ -249,7 +249,7 @@ bool SSAOptimizer::ExecuteConstOp(shil_opcode* op)
 					block->BranchBlock = block->NextBlock;
 				}
 				block->BlockType = BET_StaticJump;
-				block->NextBlock = 0xFFFFFFFF;
+				block->NextBlock = NullAddress;
 				block->has_jcond = false;
 				// same remark regarding jdyn as in the previous case
 				block->oplist.erase(block->oplist.begin() + opnum);

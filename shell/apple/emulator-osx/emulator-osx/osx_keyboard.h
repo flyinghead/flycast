@@ -8,11 +8,15 @@
 #pragma once
 #include "input/keyboard_device.h"
 
-class OSXKeyboardDevice : public KeyboardDeviceTemplate<UInt16>
+class OSXKeyboard : public KeyboardDeviceTemplate<UInt16>
 {
 public:
-	OSXKeyboardDevice(int maple_port) : KeyboardDeviceTemplate(maple_port)
+	OSXKeyboard(int maple_port) : KeyboardDeviceTemplate(maple_port, "OSX")
 	{
+		_name = "Keyboard";
+		_unique_id = "osx_keyboard";
+		loadMapping();
+
 		//04-1D Letter keys A-Z (in alphabetic order)
 		kb_map[kVK_ANSI_A] = 0x04;
 		kb_map[kVK_ANSI_B] = 0x05;
@@ -143,31 +147,25 @@ public:
 		//65 S3 key
 		//66-A4 Not used
 		//A5-DF Reserved
-		//E0 Left Control
-		//E1 Left Shift
-		//E2 Left Alt
+		kb_map[kVK_Control] = 0xE0;
+		kb_map[kVK_Shift] = 0xE1;
+		kb_map[kVK_Option] = 0xE2;	// Left Alt
 		//E3 Left S1
-		//E4 Right Control
-		//E5 Right Shift
-		//E6 Right Alt
+		kb_map[kVK_RightControl] = 0xE4;
+		kb_map[kVK_RightShift] = 0xE5;
+		kb_map[kVK_RightOption] = 0xE6;	// Right Alt
 		//E7 Right S3
 		//E8-FF Reserved
-	}
-	
-	virtual const char* name() override { return "OSX Keyboard"; }
-	
-	int convert_modifier_keys(UInt modifierFlags)
-	{
-		int kb_shift = 0;
-		if (modifierFlags & NSEventModifierFlagShift)
-			kb_shift |= 0x02 | 0x20;
-		if (modifierFlags & NSEventModifierFlagControl)
-			kb_shift |= 0x01 | 0x10;
-		return kb_shift;
+
+		kb_map[kVK_ISO_Section] = 0x32;	// #, Tilde
+
+		// Japanese keyboards
+		kb_map[kVK_JIS_Underscore] = 0x87;	// I18n keyboard 1
+		kb_map[kVK_JIS_Yen] = 0x89;     	// I18n keyboard 3
 	}
 	
 protected:
-	virtual u8 convert_keycode(UInt16 keycode) override
+	u8 convert_keycode(UInt16 keycode) override
 	{
 		return kb_map[keycode];
 	}

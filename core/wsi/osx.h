@@ -19,6 +19,7 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #pragma once
+#if defined(__APPLE__)
 #if defined(TARGET_IPHONE) //apple-specific ogles2 headers
 #include <OpenGLES/ES2/gl.h>
 #include <OpenGLES/ES2/glext.h>
@@ -33,7 +34,7 @@ public:
 	bool Init() { PostInit(); return true; }
 	void Term() { PreTerm(); }
 	void Swap();
-	bool IsSwapBufferPreserved() const { return true; }
 };
 
 extern OSXGraphicsContext theGLContext;
+#endif

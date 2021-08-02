@@ -97,10 +97,40 @@ CYBOZU_TEST_AUTO(align)
 				CYBOZU_TEST_EQUAL(size_t(getCurr()) % alignSize, 0u);
 			}
 			align(alignSize);
-			const uint8 *p = getCurr();
+			const uint8_t *p = getCurr();
 			// do nothing if aligned
 			align(alignSize);
 			CYBOZU_TEST_EQUAL(p, getCurr());
+		}
+	} c;
+}
+CYBOZU_TEST_AUTO(kmask)
+{
+	struct Code : Xbyak::CodeGenerator {
+		Code()
+		{
+			CYBOZU_TEST_EXCEPTION(kmovb(k1, ax), std::exception);
+			CYBOZU_TEST_EXCEPTION(kmovw(k1, ax), std::exception);
+			CYBOZU_TEST_EXCEPTION(kmovd(k1, ax), std::exception);
+			CYBOZU_TEST_EXCEPTION(kmovq(k1, eax), std::exception);
+#ifdef XBYAK64
+			CYBOZU_TEST_EXCEPTION(kmovb(k1, rax), std::exception);
+			CYBOZU_TEST_EXCEPTION(kmovw(k1, rax), std::exception);
+			CYBOZU_TEST_EXCEPTION(kmovd(k1, rax), std::exception);
+			CYBOZU_TEST_NO_EXCEPTION(kmovq(k1, rax));
+#endif
+			CYBOZU_TEST_NO_EXCEPTION(vmovaps(xm0|k0, ptr[eax]));
+			checkT_z();
+		}
+		void checkT_z()
+		{
+			const uint8_t *p1 = getCurr();
+			vmovaps(zm0, ptr[eax]);
+			const uint8_t *p2 = getCurr();
+			vmovaps(zm0|T_z, ptr[eax]);
+			const uint8_t *end = getCurr();
+			CYBOZU_TEST_EQUAL(p2 - p1, end - p2);
+			CYBOZU_TEST_EQUAL_ARRAY(p1, p2, end - p2);
 		}
 	} c;
 }
@@ -721,4 +751,96 @@ CYBOZU_TEST_AUTO(bf16)
 	CYBOZU_TEST_EQUAL(c.getSize(), n);
 	CYBOZU_TEST_EQUAL_ARRAY(c.getCode(), tbl, n);
 }
+
+CYBOZU_TEST_AUTO(AMX)
+{
+	struct Code : Xbyak::CodeGenerator {
+		Code()
+		{
+			ldtilecfg(ptr[rax + rcx * 4 + 64]);
+			sttilecfg(ptr[rsp + rax * 8 + 128]);
+			tileloadd(tmm3, ptr[rdi + rdx * 2 + 8]);
+			tileloaddt1(tmm4, ptr[r8 + r9 + 32]);
+			tilerelease();
+			tilestored(ptr[r10 + r11 * 2 + 32], tmm2);
+			tilezero(tmm7);
+			tdpbssd(tmm1, tmm2, tmm3);
+			tdpbsud(tmm2, tmm3, tmm4);
+			tdpbusd(tmm3, tmm4, tmm5);
+			tdpbuud(tmm4, tmm5, tmm6);
+			tdpbf16ps(tmm5, tmm6, tmm7);
+		}
+	} c;
+	// generated code by patch
+	const uint8_t tbl[] = {
+		0xc4, 0xe2, 0x78, 0x49, 0x44, 0x88, 0x40, 0xc4, 0xe2, 0x79, 0x49, 0x84, 0xc4, 0x80, 0x00, 0x00,
+		0x00, 0xc4, 0xe2, 0x7b, 0x4b, 0x5c, 0x57, 0x08, 0xc4, 0x82, 0x79, 0x4b, 0x64, 0x08, 0x20, 0xc4,
+		0xe2, 0x78, 0x49, 0xc0, 0xc4, 0x82, 0x7a, 0x4b, 0x54, 0x5a, 0x20, 0xc4, 0xe2, 0x7b, 0x49, 0xf8,
+		0xc4, 0xe2, 0x63, 0x5e, 0xca, 0xc4, 0xe2, 0x5a, 0x5e, 0xd3, 0xc4, 0xe2, 0x51, 0x5e, 0xdc, 0xc4,
+		0xe2, 0x48, 0x5e, 0xe5, 0xc4, 0xe2, 0x42, 0x5c, 0xee,
+	};
+	const size_t n = sizeof(tbl) / sizeof(tbl[0]);
+	CYBOZU_TEST_EQUAL(c.getSize(), n);
+	CYBOZU_TEST_EQUAL_ARRAY(c.getCode(), tbl, n);
+}
+
+CYBOZU_TEST_AUTO(tileloadd)
+{
+	struct Code : Xbyak::CodeGenerator {
+		Code()
+		{
+			tileloadd(tmm1, ptr[r8+r8]);
+			tileloadd(tmm1, ptr[rax+rcx*4]);
+			tileloadd(tmm1, ptr[r8+r9*1+0x40]);
+		}
+		void notSupported()
+		{
+			tileloadd(tmm1, ptr[r8]);
+		}
+		void notSupported2()
+		{
+			tileloadd(tmm1, ptr[r8*2]);
+		}
+	} c;
+	const uint8_t tbl[] = {
+		0xC4, 0x82, 0x7B, 0x4B, 0x0C, 0x00,
+		0xC4, 0xE2, 0x7B, 0x4B, 0x0C, 0x88,
+		0xC4, 0x82, 0x7B, 0x4B, 0x4C, 0x08, 0x40,
+	};
+	const size_t n = sizeof(tbl) / sizeof(tbl[0]);
+	CYBOZU_TEST_EQUAL(c.getSize(), n);
+	CYBOZU_TEST_EQUAL_ARRAY(c.getCode(), tbl, n);
+
+	// current version does not support this sibmem format
+	CYBOZU_TEST_EXCEPTION(c.notSupported(), std::exception);
+	CYBOZU_TEST_EXCEPTION(c.notSupported2(), std::exception);
+}
+
+CYBOZU_TEST_AUTO(vnni)
+{
+	struct Code : Xbyak::CodeGenerator {
+		Code()
+		{
+			// default encoding is EVEX
+			vpdpbusd(xm0, xm1, xm2);
+			vpdpbusd(xm0, xm1, xm2, EvexEncoding); // EVEX
+			vpdpbusd(xm0, xm1, xm2, VexEncoding); // VEX
+		}
+		void badVex()
+		{
+			vpdpbusd(xm0, xm1, xm31, VexEncoding);
+		}
+	} c;
+	const uint8_t tbl[] = {
+		0x62, 0xF2, 0x75, 0x08, 0x50, 0xC2,
+		0x62, 0xF2, 0x75, 0x08, 0x50, 0xC2,
+		0xC4, 0xE2, 0x71, 0x50, 0xC2,
+	};
+	const size_t n = sizeof(tbl) / sizeof(tbl[0]);
+	CYBOZU_TEST_EQUAL(c.getSize(), n);
+	CYBOZU_TEST_EQUAL_ARRAY(c.getCode(), tbl, n);
+
+	CYBOZU_TEST_EXCEPTION(c.badVex(), std::exception);
+}
+
 #endif

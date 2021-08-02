@@ -20,12 +20,17 @@
 */
 #pragma once
 #include "gl_context.h"
+#include "rend/dx9/dxcontext.h"
 #ifdef USE_VULKAN
 #include "rend/vulkan/vulkan_context.h"
 
 extern VulkanContext theVulkanContext;
 #endif
 void InitRenderApi();
-void SwitchRenderApi(int newApi);
 void TermRenderApi();
 
+static inline void SwitchRenderApi()
+{
+	TermRenderApi();
+	InitRenderApi();
+}

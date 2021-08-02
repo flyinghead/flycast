@@ -19,22 +19,33 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #pragma once
+#include "TexCache.h"
 #include "hw/pvr/ta_ctx.h"
+#include "cfg/option.h"
 
 #include <glm/glm.hpp>
 #include <glm/gtx/transform.hpp>
 
-extern float fb_scale_x, fb_scale_y;
 extern int screen_width, screen_height;
 
-template<bool invertY>
+// Dreamcast:
+// +Y is down
+// Open GL:
+// +Y is up in clip, NDC and framebuffer coordinates
+// Vulkan:
+// +Y is down in clip, NDC and framebuffer coordinates
+// DirectX9:
+// +Y is up in clip and NDC coordinates, but down in framebuffer coordinates
+// Y must also be flipped for render-to-texture so that the top of the texture comes first
+enum CoordSystem { COORD_OPENGL, COORD_VULKAN, COORD_DIRECTX };
+template<CoordSystem System>
 class TransformMatrix
 {
 public:
 	TransformMatrix() = default;
-	TransformMatrix(const rend_context& renderingContext)
+	TransformMatrix(const rend_context& renderingContext, int width = 0, int height = 0)
 	{
-		CalcMatrices(&renderingContext);
+		CalcMatrices(&renderingContext, width, height);
 	}
 
 	bool IsClipped() const
@@ -55,6 +66,8 @@ public:
 		return viewportMatrix;
 	}
 
+	// Return the width of the black bars when the screen is wider than 4:3. Returns a negative number when the screen is taller than 4:3,
+	// whose inverse is the height of the top and bottom bars.
 	float GetSidebarWidth() const {
 		return sidebarWidth;
 	}
@@ -63,8 +76,13 @@ public:
 		return dcViewport;
 	}
 
-	void CalcMatrices(const rend_context *renderingContext)
+	void CalcMatrices(const rend_context *renderingContext, int width = 0, int height = 0)
 	{
+		constexpr int screenFlipY = System == COORD_OPENGL || System == COORD_DIRECTX ? -1 : 1;
+		constexpr int rttFlipY = System == COORD_DIRECTX ? -1 : 1;
+		constexpr int framebufferFlipY = System == COORD_DIRECTX ? -1 : 1;
+
+		renderViewport = { width == 0 ? screen_width : width, height == 0 ? screen_height : height };
 		this->renderingContext = renderingContext;
 
 		GetFramebufferScaling(false, scale_x, scale_y);
@@ -73,8 +91,8 @@ public:
 		{
 			dcViewport.x = renderingContext->fb_X_CLIP.max - renderingContext->fb_X_CLIP.min + 1;
 			dcViewport.y = renderingContext->fb_Y_CLIP.max - renderingContext->fb_Y_CLIP.min + 1;
-			normalMatrix = glm::translate(glm::vec3(-1, -1, 0))
-				* glm::scale(glm::vec3(2.0f / dcViewport.x, 2.0f / dcViewport.y, 1.f));
+			normalMatrix = glm::translate(glm::vec3(-1, -rttFlipY, 0))
+				* glm::scale(glm::vec3(2.0f / dcViewport.x, 2.0f / dcViewport.y * rttFlipY, 1.f));
 			scissorMatrix = normalMatrix;
 			sidebarWidth = 0;
 		}
@@ -120,56 +138,56 @@ public:
 			// some heuristic...
 			startx *= 0.8;
 			starty *= 1.1;
+			// TODO need to adjust lightgun coordinates
 #endif
 			normalMatrix = glm::translate(glm::vec3(startx, starty, 0));
 			scissorMatrix = normalMatrix;
 
-			const float screen_stretching = settings.rend.ScreenStretching / 100.f;
+			const float screen_stretching = config::ScreenStretching / 100.f;
 			float scissoring_scale_x, scissoring_scale_y;
 			GetFramebufferScaling(true, scissoring_scale_x, scissoring_scale_y);
 
-			if (settings.rend.Rotate90)
+			float x_coef;
+			float y_coef;
+			glm::mat4 trans_rot;
+
+			if (config::Rotate90)
 			{
-				float dc2s_scale_h = screen_height / 640.0f;
-				sidebarWidth =  (screen_width - dc2s_scale_h * 480.0f * screen_stretching) / 2;
-				float y_coef = -2.0f / (screen_width / dc2s_scale_h * scale_y) * screen_stretching;
-				float x_coef = -2.0f / dcViewport.x * (invertY ? -1 : 1);
-				glm::mat4 trans_rot = glm::rotate((float)M_PI_2, glm::vec3(0, 0, 1))
-					* glm::translate(glm::vec3(invertY ? -1.f : 1.f, 1 - 2 * sidebarWidth / screen_width, 0));
-				normalMatrix = trans_rot
-					* glm::scale(glm::vec3(x_coef, y_coef, 1.f))
-					* normalMatrix;
-				scissorMatrix = trans_rot
-					* glm::scale(glm::vec3(x_coef * scissoring_scale_x, y_coef * scissoring_scale_y, 1.f))
-					* scissorMatrix;
+				float dc2s_scale_h = renderViewport.x / 640.0f;
+
+				sidebarWidth = 0;
+				y_coef = 2.0f / (renderViewport.y / dc2s_scale_h * scale_y) * screen_stretching * screenFlipY;
+				x_coef = 2.0f / dcViewport.x;
 			}
 			else
 			{
-				float dc2s_scale_h = screen_height / 480.0f;
-				sidebarWidth =  (screen_width - dc2s_scale_h * 640.0f * screen_stretching) / 2;
-				float x_coef = 2.0f / (screen_width / dc2s_scale_h * scale_x) * screen_stretching;
-				float y_coef = 2.0f / dcViewport.y * (invertY ? -1 : 1);
-				normalMatrix = glm::translate(glm::vec3(-1 + 2 * sidebarWidth / screen_width, invertY ? 1 : -1, 0))
-					* glm::scale(glm::vec3(x_coef, y_coef, 1.f))
-					* normalMatrix;
-				scissorMatrix = glm::translate(glm::vec3(-1 + 2 * sidebarWidth / screen_width, invertY ? 1 : -1, 0))
-					* glm::scale(glm::vec3(x_coef * scissoring_scale_x, y_coef * scissoring_scale_y, 1.f))
-					* scissorMatrix;
+				float dc2s_scale_h = renderViewport.y / 480.0f;
+
+				sidebarWidth =  (renderViewport.x - dc2s_scale_h * 640.0f * screen_stretching) / 2;
+				x_coef = 2.0f / (renderViewport.x / dc2s_scale_h * scale_x) * screen_stretching;
+				y_coef = 2.0f / dcViewport.y * screenFlipY;
 			}
+			trans_rot = glm::translate(glm::vec3(-1 + 2 * sidebarWidth / renderViewport.x, -screenFlipY, 0));
+
+			normalMatrix = trans_rot
+				* glm::scale(glm::vec3(x_coef, y_coef, 1.f))
+				* normalMatrix;
+			scissorMatrix = trans_rot
+				* glm::scale(glm::vec3(x_coef * scissoring_scale_x, y_coef * scissoring_scale_y, 1.f))
+				* scissorMatrix;
 		}
-		normalMatrix = glm::scale(glm::vec3(1, 1, 1 / settings.rend.ExtraDepthScale))
+		normalMatrix = glm::scale(glm::vec3(1, 1, 1 / config::ExtraDepthScale))
 				* normalMatrix;
 
-		glm::mat4 vp_trans = glm::translate(glm::vec3(1, 1, 0));
+		glm::mat4 vp_trans = glm::translate(glm::vec3(1, framebufferFlipY, 0));
 		if (renderingContext->isRTT)
 		{
-			vp_trans = glm::scale(glm::vec3(dcViewport.x / 2, dcViewport.y / 2, 1.f))
+			vp_trans = glm::scale(glm::vec3(dcViewport.x / 2, dcViewport.y / 2 * framebufferFlipY, 1.f))
 				* vp_trans;
 		}
 		else
 		{
-			float screen_scaling = settings.rend.ScreenScaling / 100.f;
-			vp_trans = glm::scale(glm::vec3(screen_width * screen_scaling / 2, screen_height * screen_scaling / 2, 1.f))
+			vp_trans = glm::scale(glm::vec3(renderViewport.x / 2, renderViewport.y / 2 * framebufferFlipY, 1.f))
 				* vp_trans;
 		}
 		viewportMatrix = vp_trans * normalMatrix;
@@ -217,6 +235,7 @@ private:
 	glm::mat4 scissorMatrix;
 	glm::mat4 viewportMatrix;
 	glm::vec2 dcViewport;
+	glm::vec2 renderViewport;
 	float scale_x = 0;
 	float scale_y = 0;
 	float sidebarWidth = 0;

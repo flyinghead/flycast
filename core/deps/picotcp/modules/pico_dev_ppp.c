@@ -1338,6 +1338,8 @@ static void ppp_ipv4_conf(struct pico_device_ppp *ppp)
 
 static void ipcp_send_nack(struct pico_device_ppp *ppp);
 
+int dont_reject_opt_vj_hack = 0;	// Hack to not reject the VJ option. Makes Web TV happy.
+
 static void ipcp_process_in(struct pico_device_ppp *ppp, uint8_t *pkt, uint32_t len)
 {
     struct pico_ipcp_hdr *ih = (struct pico_ipcp_hdr *)pkt;
@@ -1345,7 +1347,7 @@ static void ipcp_process_in(struct pico_device_ppp *ppp, uint8_t *pkt, uint32_t 
     int reject = 0;
     int nak = 0;
     while (p < pkt + len) {
-        if (p[0] == IPCP_OPT_VJ) {
+        if (p[0] == IPCP_OPT_VJ && dont_reject_opt_vj_hack == 0) {
             reject++;
         }
 

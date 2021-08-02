@@ -110,7 +110,7 @@ union TSP
 		u32 SrcInstr    : 3;
 	};
 	u32 full;
-} ;
+};
 
 
 //// END TSP Instruction Word
@@ -128,12 +128,12 @@ union TCW
 		u32 PixelFmt  : 3;
 		u32 VQ_Comp   : 1;
 		u32 MipMapped : 1;
-	} ;
+	};
 	struct
 	{
 		u32 pading_0  :21;
 		u32 PalSelect : 6;
-	} ;
+	};
 	u32 full;
 };
 

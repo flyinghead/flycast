@@ -10,7 +10,7 @@ class ConsoleListener : public LogListener
 {
 public:
   ConsoleListener();
-  ~ConsoleListener();
+  ~ConsoleListener() override;
 
   void Log(LogTypes::LOG_LEVELS, const char* text) override;
 

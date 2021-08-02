@@ -1,10 +1,7 @@
-
 #include "types.h"
 #include "sh4_interrupts.h"
 #include "sh4_core.h"
 #include "sh4_sched.h"
-#include "oslib/oslib.h"
-
 
 //sh4 scheduler
 

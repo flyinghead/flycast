@@ -47,13 +47,15 @@ struct FragmentShaderParams
 	bool bumpmap;
 	bool clamping;
 	bool trilinear;
+	bool palette;
 
 	u32 hash()
 	{
 		return ((u32)alphaTest) | ((u32)insideClipTest << 1) | ((u32)useAlpha << 2)
 			| ((u32)texture << 3) | ((u32)ignoreTexAlpha << 4) | (shaderInstr << 5)
 			| ((u32)offset << 7) | ((u32)fog << 8) | ((u32)gouraud << 10)
-			| ((u32)bumpmap << 11) | ((u32)clamping << 12) | ((u32)trilinear << 13);
+			| ((u32)bumpmap << 11) | ((u32)clamping << 12) | ((u32)trilinear << 13)
+			| ((u32)palette << 14);
 	}
 };
 
@@ -91,11 +93,20 @@ public:
 			modVolShader = compileModVolFragmentShader();
 		return *modVolShader;
 	}
-	vk::ShaderModule GetQuadVertexShader()
+	vk::ShaderModule GetQuadVertexShader(bool rotate = false)
 	{
-		if (!quadVertexShader)
-			quadVertexShader = compileQuadVertexShader();
-		return *quadVertexShader;
+		if (rotate)
+		{
+			if (!quadRotateVertexShader)
+				quadRotateVertexShader = compileQuadVertexShader(rotate);
+			return *quadRotateVertexShader;
+		}
+		else
+		{
+			if (!quadVertexShader)
+				quadVertexShader = compileQuadVertexShader(rotate);
+			return *quadVertexShader;
+		}
 	}
 	vk::ShaderModule GetQuadFragmentShader()
 	{
@@ -130,7 +141,7 @@ private:
 	vk::UniqueShaderModule compileShader(const FragmentShaderParams& params);
 	vk::UniqueShaderModule compileModVolVertexShader();
 	vk::UniqueShaderModule compileModVolFragmentShader();
-	vk::UniqueShaderModule compileQuadVertexShader();
+	vk::UniqueShaderModule compileQuadVertexShader(bool rotate);
 	vk::UniqueShaderModule compileQuadFragmentShader();
 	vk::UniqueShaderModule compileOSDVertexShader();
 	vk::UniqueShaderModule compileOSDFragmentShader();
@@ -140,6 +151,7 @@ private:
 	vk::UniqueShaderModule modVolVertexShader;
 	vk::UniqueShaderModule modVolShader;
 	vk::UniqueShaderModule quadVertexShader;
+	vk::UniqueShaderModule quadRotateVertexShader;
 	vk::UniqueShaderModule quadFragmentShader;
 	vk::UniqueShaderModule osdVertexShader;
 	vk::UniqueShaderModule osdFragmentShader;

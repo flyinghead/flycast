@@ -48,9 +48,6 @@
 	#pragma warning(disable : 4996) // scanf
 #endif
 
-typedef Xbyak::uint64 uint64;
-typedef Xbyak::uint32 uint32;
-
 const int N = 64;
 
 class Quantize : public Xbyak::CodeGenerator {
@@ -66,7 +63,7 @@ public:
 		output : eax = [esi+offset] / dividend
 		destroy : edx
 	*/
-	void udiv(uint32 dividend, int offset)
+	void udiv(uint32_t dividend, int offset)
 	{
 		mov(eax, ptr[esi + offset]);
 
@@ -83,11 +80,11 @@ public:
 			return;
 		}
 
-		uint64 mLow, mHigh;
+		uint64_t mLow, mHigh;
 		int len = ilog2(odd) + 1;
 		{
-			uint64 roundUp = uint64(1) << (32 + len);
-			uint64 k = roundUp / (0xFFFFFFFFL - (0xFFFFFFFFL % odd));
+			uint64_t roundUp = uint64_t(1) << (32 + len);
+			uint64_t k = roundUp / (0xFFFFFFFFL - (0xFFFFFFFFL % odd));
 			mLow = roundUp / odd;
 			mHigh = (roundUp + k) / odd;
 		}
@@ -96,12 +93,12 @@ public:
 			mLow >>= 1; mHigh >>= 1; len--;
 		}
 
-		uint64 m; int a;
+		uint64_t m; int a;
 		if ((mHigh >> 32) == 0) {
 			m = mHigh; a = 0;
 		} else {
 			len = ilog2(odd);
-			uint64 roundDown = uint64(1) << (32 + len);
+			uint64_t roundDown = uint64_t(1) << (32 + len);
 			mLow = roundDown / odd;
 			int r = (int)(roundDown % odd);
 			m = (r <= (odd >> 1)) ? mLow : mLow + 1;
@@ -124,9 +121,9 @@ public:
 		mov(eax, edx);
 	}
 	/*
-		quantize(uint32 dest[64], const uint32 src[64]);
+		quantize(uint32_t dest[64], const uint32_t src[64]);
 	*/
-	Quantize(const uint32 qTbl[64])
+	Quantize(const uint32_t qTbl[64])
 	{
 		push(esi);
 		push(edi);
@@ -143,7 +140,7 @@ public:
 	}
 };
 
-void quantize(uint32 dest[64], const uint32 src[64], const uint32 qTbl[64])
+void quantize(uint32_t dest[64], const uint32_t src[64], const uint32_t qTbl[64])
 {
 	for (int i = 0; i < N; i++) {
 		dest[i] = src[i] / qTbl[i];
@@ -170,7 +167,7 @@ int main(int argc, char *argv[])
 		}
 	}
 	printf("q=%d\n", q);
-	uint32 qTbl[] = {
+	uint32_t qTbl[] = {
 		16, 11, 10, 16, 24, 40, 51, 61,
 		12, 12, 14, 19, 26, 58, 60, 55,
 		14, 13, 16, 24, 40, 57, 69, 56,
@@ -187,16 +184,16 @@ int main(int argc, char *argv[])
 	}
 
 	try {
-		uint32 src[N];
-		uint32 dest[N];
-		uint32 dest2[N];
+		uint32_t src[N];
+		uint32_t dest[N];
+		uint32_t dest2[N];
 		for (int i = 0; i < N; i++) {
 			src[i] = rand() % 2048;
 		}
 
 		Quantize jit(qTbl);
 //printf("jit size=%d, ptr=%p\n", jit.getSize(), jit.getCode());
-		void (*quantize2)(uint32*, const uint32*, const uint32 *) = jit.getCode<void (*)(uint32*, const uint32*, const uint32 *)>();
+		void (*quantize2)(uint32_t*, const uint32_t*, const uint32_t *) = jit.getCode<void (*)(uint32_t*, const uint32_t*, const uint32_t *)>();
 
 		quantize(dest, src, qTbl);
 		quantize2(dest2, src, qTbl);

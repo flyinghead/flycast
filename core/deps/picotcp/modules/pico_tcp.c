@@ -24,7 +24,7 @@
 
 #define TCP_TIME (pico_time)(PICO_TIME_MS())
 
-#define PICO_TCP_RTO_MIN (70)
+#define PICO_TCP_RTO_MIN (1000)
 #define PICO_TCP_RTO_MAX (120000)
 #define PICO_TCP_IW          2
 #define PICO_TCP_SYN_TO  2000u
@@ -596,11 +596,11 @@ static void tcp_add_options(struct pico_socket_tcp *ts, struct pico_frame *f, ui
         f->start[i++] = PICO_TCP_OPTION_SACK_OK;
         f->start[i++] = PICO_TCPOPTLEN_SACK_OK;
     }
-
+#ifdef PICO_USE_WSCALE
     f->start[i++] = PICO_TCP_OPTION_WS;
     f->start[i++] = PICO_TCPOPTLEN_WS;
     f->start[i++] = (uint8_t)(ts->wnd_scale);
-
+#endif
     if ((flags & PICO_TCP_SYN) || ts->ts_ok) {
         f->start[i++] = PICO_TCP_OPTION_TIMESTAMP;
         f->start[i++] = PICO_TCPOPTLEN_TIMESTAMP;
@@ -620,13 +620,18 @@ static uint16_t tcp_options_size_frame(struct pico_frame *f)
 {
     uint16_t size = 0;
 
+#ifdef PICO_USE_WSCALE
     /* Always update window scale. */
     size = (uint16_t)(size + PICO_TCPOPTLEN_WS);
+#endif
     if (f->transport_flags_saved)
         size = (uint16_t)(size + PICO_TCPOPTLEN_TIMESTAMP);
+    if (size != 0)
+    {
+    	size = (uint16_t)(size + PICO_TCPOPTLEN_END);
+    	size = (uint16_t)(((uint16_t)(size + 3u) >> 2u) << 2u);
+    }
 
-    size = (uint16_t)(size + PICO_TCPOPTLEN_END);
-    size = (uint16_t)(((uint16_t)(size + 3u) >> 2u) << 2u);
     return size;
 }
 
@@ -641,10 +646,11 @@ static void tcp_add_options_frame(struct pico_socket_tcp *ts, struct pico_frame 
 
     memset(f->start, PICO_TCP_OPTION_NOOP, optsiz); /* fill blanks with noop */
 
-
+#ifdef PICO_USE_WSCALE
     f->start[i++] = PICO_TCP_OPTION_WS;
     f->start[i++] = PICO_TCPOPTLEN_WS;
     f->start[i++] = (uint8_t)(ts->wnd_scale);
+#endif
 
     if (f->transport_flags_saved) {
         f->start[i++] = PICO_TCP_OPTION_TIMESTAMP;
@@ -692,10 +698,15 @@ static void tcp_set_space(struct pico_socket_tcp *t)
     if (space < 0)
         space = 0;
 
+#ifdef PICO_USE_WSCALE
     while(space > 0xFFFF) {
         space = (int32_t)(((uint32_t)space >> 1u));
         shift++;
     }
+#else
+    if (space > 0xFFFF)
+    	space = 0xFFFF;
+#endif
     tcp_set_space_check_winupdate(t, space, shift);
 }
 
@@ -706,17 +717,15 @@ static uint16_t tcp_options_size(struct pico_socket_tcp *t, uint16_t flags)
     struct tcp_sack_block *sb = t->sacks;
 
     if (flags & PICO_TCP_SYN) { /* Full options */
-        size = PICO_TCPOPTLEN_MSS + PICO_TCP_OPTION_SACK_OK + PICO_TCPOPTLEN_WS + PICO_TCPOPTLEN_TIMESTAMP;
+        size = PICO_TCPOPTLEN_MSS + PICO_TCP_OPTION_SACK_OK + PICO_TCPOPTLEN_TIMESTAMP;
     } else {
-
-        /* Always update window scale. */
-        size = (uint16_t)(size + PICO_TCPOPTLEN_WS);
-
         if (t->ts_ok)
-            size = (uint16_t)(size + PICO_TCPOPTLEN_TIMESTAMP);
-
-        size = (uint16_t)(size + PICO_TCPOPTLEN_END);
+        	size = (uint16_t)(size + PICO_TCPOPTLEN_TIMESTAMP);
     }
+#ifdef PICO_USE_WSCALE
+    /* Always update window scale. */
+    size = (uint16_t)(size + PICO_TCPOPTLEN_WS);
+#endif
 
     if ((flags & PICO_TCP_ACK) && (t->sack_ok && sb)) {
         size = (uint16_t)(size + 2);
@@ -725,8 +734,11 @@ static uint16_t tcp_options_size(struct pico_socket_tcp *t, uint16_t flags)
             sb = sb->next;
         }
     }
-
-    size = (uint16_t)(((size + 3u) >> 2u) << 2u);
+    if (size != 0)
+    {
+    	size = (uint16_t)(size + PICO_TCPOPTLEN_END);
+    	size = (uint16_t)(((size + 3u) >> 2u) << 2u);
+    }
     return size;
 }
 
@@ -1444,6 +1456,7 @@ static inline void tcp_fill_rst_header(struct pico_frame *fr, struct pico_tcp_hd
     if(!(hdr1->flags & PICO_TCP_ACK))
         hdr->ack = long_be(long_be(((struct pico_tcp_hdr *)(fr->transport_hdr))->seq) + fr->payload_len);
 
+    hdr->crc = 0;
     hdr->crc = short_be(pico_tcp_checksum(f));
 }
 
@@ -1477,6 +1490,7 @@ int pico_tcp_reply_rst(struct pico_frame *fr)
     if (0) {
 #ifdef PICO_SUPPORT_IPV4
     } else if (IS_IPV4(f)) {
+    	f->local_ip.addr = fr->sock->local_addr.ip4.addr;	// Masqueraded
         tcp_dbg("Pushing IPv4 reset frame...\n");
         pico_ipv4_frame_push(f, &(((struct pico_ipv4_hdr *)(f->net_hdr))->dst), PICO_PROTO_TCP);
 #endif
@@ -1866,7 +1880,7 @@ static int tcp_rto_xmit(struct pico_socket_tcp *t, struct pico_frame *f)
         t->snd_last_out = SEQN(cpy);
         add_retransmission_timer(t, (t->rto << (++t->backoff)) + TCP_TIME);
         tcp_dbg("TCP_CWND, %lu, %u, %u, %u\n", TCP_TIME, t->cwnd, t->ssthresh, t->in_flight);
-        tcp_dbg("Sending RTO!\n");
+        tcp_dbg("Sending RTO! port %d\n", short_be(t->sock.remote_port));
         return 1;
     } else {
         tcp_dbg("RTO fail, retry!\n");
@@ -1939,7 +1953,7 @@ static void tcp_retrans_timeout(pico_time val, void *sock)
         return;
     }
 
-    tcp_dbg("TIMEOUT! backoff = %d, rto: %d\n", t->backoff, t->rto);
+    tcp_dbg("TIMEOUT! backoff = %d, rto: %d, port: %d\n", t->backoff, t->rto, short_be(t->sock.remote_port));
     t->retrans_tmr_due = 0ull;
 
     if (tcp_is_allowed_to_send(t)) {
@@ -1986,11 +2000,17 @@ static void add_retransmission_timer(struct pico_socket_tcp *t, pico_time next_t
                 val = next_ts + (t->rto << t->backoff);
             }
         }
+        if (next_ts == 0)
+        {
+        	t->retrans_tmr_due = 0;
+        	return;
+        }
+        tcp_dbg("add_retransmission_timer: timestamp %d, timeout %d, rto %d\n", (uint32_t)(next_ts - now), (uint32_t)(val - now), t->rto << t->backoff);
     } else {
         val = next_ts;
     }
 
-    if ((val > 0) || (val > now)) {
+    if (val > now) {
         t->retrans_tmr_due = val;
     } else {
         t->retrans_tmr_due = now + 1;
@@ -2169,6 +2189,8 @@ static int tcp_ack(struct pico_socket *s, struct pico_frame *f)
                (ACKN(f) != t->snd_nxt))              /* There is something in flight awaiting to be acked... */
     {
         /* Process incoming duplicate ack. */
+    	if (t->x_mode == PICO_TCP_WINDOW_FULL)
+    		t->x_mode = PICO_TCP_LOOKAHEAD;
         if (t->x_mode < PICO_TCP_RECOVER) {
             t->x_mode++;
             tcp_dbg("Mode: DUPACK %d, due to PURE ACK %0x, len = %d\n", t->x_mode, SEQN(f), f->payload_len);
@@ -2189,7 +2211,7 @@ static int tcp_ack(struct pico_socket *s, struct pico_frame *f)
                     t->ssthresh = 2;
             }
         } else if (t->x_mode == PICO_TCP_RECOVER) {
-            /* tcp_dbg("TCP RECOVER> DUPACK! snd_una: %08x, snd_nxt: %08x, acked now: %08x\n", SEQN(first_segment(&t->tcpq_out)), t->snd_nxt, ACKN(f)); */
+            tcp_dbg("TCP RECOVER> DUPACK! snd_una: %08x, snd_nxt: %08x, acked now: %08x\n", SEQN((struct pico_frame *)first_segment(&t->tcpq_out)), t->snd_nxt, ACKN(f));
             if (t->in_flight <= t->cwnd) {
                 struct pico_frame *nxt = peek_segment(&t->tcpq_out, t->snd_retry);
                 if (!nxt)
@@ -2209,7 +2231,7 @@ static int tcp_ack(struct pico_socket *s, struct pico_frame *f)
                     nxt = first_segment(&t->tcpq_out);
 
                 if (nxt) {
-                    tcp_retrans(t, peek_segment(&t->tcpq_out, t->snd_retry));
+                    tcp_retrans(t, nxt);
                     t->snd_retry = SEQN(nxt);
                 }
             }
@@ -2837,10 +2859,10 @@ int pico_tcp_input(struct pico_socket *s, struct pico_frame *f)
     f->payload = (f->transport_hdr + ((hdr->len & 0xf0u) >> 2u));
     f->payload_len = (uint16_t)(f->transport_len - ((hdr->len & 0xf0u) >> 2u));
 
-    tcp_dbg("[sam] TCP> [tcp input] t_len: %u\n", f->transport_len);
-    tcp_dbg("[sam] TCP> flags = 0x%02x\n", hdr->flags);
-    tcp_dbg("[sam] TCP> s->state >> 8 = %u\n", s->state >> 8);
-    tcp_dbg("[sam] TCP> [tcp input] socket: %p state: %d <-- local port:%u remote port: %u seq: 0x%08x ack: 0x%08x flags: 0x%02x t_len: %u, hdr: %u payload: %d\n", s, s->state >> 8, short_be(hdr->trans.dport), short_be(hdr->trans.sport), SEQN(f), ACKN(f), hdr->flags, f->transport_len, (hdr->len & 0xf0) >> 2, f->payload_len );
+//    tcp_dbg("[sam] TCP> [tcp input] t_len: %u\n", f->transport_len);
+//    tcp_dbg("[sam] TCP> flags = 0x%02x\n", hdr->flags);
+//    tcp_dbg("[sam] TCP> s->state >> 8 = %u\n", s->state >> 8);
+    tcp_dbg("[tcp input] socket: %p state: %d <-- local port:%u remote port: %u seq: 0x%08x ack: 0x%08x flags: 0x%02x t_len: %u, hdr: %u payload: %d\n", s, s->state >> 8, short_be(hdr->trans.dport), short_be(hdr->trans.sport), SEQN(f), ACKN(f), hdr->flags, f->transport_len, (hdr->len & 0xf0) >> 2, f->payload_len );
 
     /* This copy of the frame has the current socket as owner */
     f->sock = s;
@@ -2927,6 +2949,15 @@ static struct pico_frame *tcp_split_segment(struct pico_socket_tcp *t, struct pi
     if (pico_enqueue_segment(&t->tcpq_out, f2) < 0) {
         tcp_dbg("Discarding invalid segment\n");
         pico_frame_discard(f2);
+        f2 = NULL;
+    }
+    /* Enqueue f1 */
+    if (pico_enqueue_segment(&t->tcpq_out, f1) < 0) {
+        tcp_dbg("Discarding invalid segment f1\n");
+        pico_frame_discard(f1);
+        if (f2)
+	        pico_discard_segment(&t->tcpq_out, f2);
+        return NULL;
     }
 
     /* Return the partial frame */
@@ -2947,7 +2978,6 @@ int pico_tcp_output(struct pico_socket *s, int loop_score)
 
     while((f) && (t->cwnd >= t->in_flight)) {
         f->timestamp = TCP_TIME;
-        add_retransmission_timer(t, t->rto + TCP_TIME);
         tcp_add_options_frame(t, f);
         seq_diff = pico_seq_compare(SEQN(f), SEQN(una));
         if (seq_diff < 0) {
@@ -2957,22 +2987,22 @@ int pico_tcp_output(struct pico_socket *s, int loop_score)
 
         /* Check if advertised window is full */
         if ((uint32_t)seq_diff >= (uint32_t)(t->recv_wnd << t->recv_wnd_scale)) {
-            if (t->x_mode != PICO_TCP_WINDOW_FULL) {
+            if (t->x_mode == PICO_TCP_LOOKAHEAD) {
                 tcp_dbg("TCP> RIGHT SIZING (rwnd: %d, frame len: %d\n", t->recv_wnd << t->recv_wnd_scale, f->payload_len);
                 tcp_dbg("In window full...\n");
-                t->snd_nxt = SEQN(una);
-                t->snd_retry = SEQN(una);
+                t->snd_nxt = SEQN(f);
                 t->x_mode = PICO_TCP_WINDOW_FULL;
             }
-
             break;
         }
 
         /* Check if the advertised window is too small to receive the current frame */
         if ((uint32_t)(seq_diff + f->payload_len) > (uint32_t)(t->recv_wnd << t->recv_wnd_scale)) {
-            f = tcp_split_segment(t, f, (uint16_t)(t->recv_wnd << t->recv_wnd_scale));
+            f = tcp_split_segment(t, f, (uint16_t)((t->recv_wnd << t->recv_wnd_scale) - seq_diff));
             if (!f)
                 break;
+            /* if we split the first segment, it has changed */
+            una = first_segment(&t->tcpq_out);
 
             /* Limit sending window to packets in flight (right sizing) */
             t->cwnd = (uint16_t)t->in_flight;
@@ -3000,6 +3030,8 @@ int pico_tcp_output(struct pico_socket *s, int loop_score)
     } else {
         /* Nothing to transmit. */
     }
+    if (sent > 0)
+        add_retransmission_timer(t, 0);
 
     if ((t->tcpq_out.frames == 0) && (s->state & PICO_SOCKET_STATE_SHUT_LOCAL)) {              /* if no more packets in queue, XXX replaced !f by tcpq check */
         if(!checkLocalClosing(&t->sock))              /* check if local closing started and send fin */

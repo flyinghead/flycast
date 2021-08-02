@@ -24,6 +24,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <mutex>
 
 class CustomTexture {
 public:
@@ -31,7 +32,7 @@ public:
 	~CustomTexture() { Terminate(); }
 	u8* LoadCustomTexture(u32 hash, int& width, int& height);
 	void LoadCustomTextureAsync(BaseTextureCacheData *texture_data);
-	void DumpTexture(u32 hash, int w, int h, TextureType textype, void *temp_tex_buffer);
+	void DumpTexture(u32 hash, int w, int h, TextureType textype, void *src_buffer);
 	void Terminate();
 
 private:

@@ -1,0 +1,11 @@
+*.db
+*.opendb
+.vs
+Debug/
+Debug Dll/
+Release/
+Release Dll/
+*.user
+*.suo
+*.sdf
+ipch/

@@ -143,7 +143,7 @@ sh4_opcodelistentry opcodes[]=
 	{0                          ,i0000_0000_0001_1001   ,Mask_none      ,0x0019 ,Normal         ,"div0u"                                ,1,1,EX,fix_none    ,dec_Fill(DM_DIV0,PRM_RN,PRM_RM,shop_or,1)},//div0u
 	{0                          ,i0000_nnnn_0010_1001   ,Mask_n         ,0x0029 ,Normal         ,"movt <REG_N>"                         ,1,1,EX,fix_none    ,dec_Fill(DM_UnaryOp,PRM_RN,PRM_SR_T,shop_mov32)},  //movt <REG_N>
 	{dec_i0000_0000_0000_1001   ,i0000_0000_0000_1001   ,Mask_none      ,0x0009 ,Normal         ,"nop"                                  ,1,0,MT,fix_none}   ,//nop
-
+	{dec_i0000_0000_0000_1001   ,i0000_0000_0000_1001   ,Mask_none      ,0x0000 ,Normal         ,"nop0"                                 ,1,0,MT,fix_none}   ,//nop0 Looney Tunes: Space Race, Samba de Amigo 2000
 
 
 	{dec_i0000_0000_0010_1011   ,i0000_0000_0010_1011   ,Mask_none      ,0x002B ,Branch_dir_d   ,"rte"                                  ,5,5,CO,fix_none},  //rte
@@ -441,6 +441,7 @@ void BuildOpcodeTables()
 				break;
 			default:
 				die("Error");
+				return;
 		}
 		for (u32 i=0;i<count;i++)
 		{

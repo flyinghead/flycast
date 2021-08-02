@@ -26,13 +26,7 @@
 #include "hw/holly/holly_intc.h"
 #include "hw/sh4/sh4_sched.h"
 #include "oslib/oslib.h"
-#include "picoppp.h"
-
-#define start_pppd start_pico
-#define stop_pppd stop_pico
-#define write_pppd write_pico
-#define read_pppd read_pico
-
+#include "network/picoppp.h"
 
 #define MODEM_COUNTRY_RES 0
 #define MODEM_COUNTRY_JAP 1
@@ -122,7 +116,7 @@ static void DSPTestStart();
 static void DSPTestEnd();
 
 static u64 last_dial_time;
-static u64 connected_time;
+static bool data_sent;
 
 #ifndef NDEBUG
 static double last_comm_stats;
@@ -167,7 +161,7 @@ static int modem_sched_func(int tag, int cycles, int jitter)
 		switch (connect_state)
 		{
 		case DIALING:
-			if (last_dial_time != 0 && sh4_sched_now64() - last_dial_time >= SH4_MAIN_CLOCK + jitter)
+			if (last_dial_time != 0 && sh4_sched_now64() - last_dial_time >= (u64)(SH4_MAIN_CLOCK + jitter))
 			{
 				LOG("Switching to RINGING state");
 				connect_state = RINGING;
@@ -264,10 +258,10 @@ static int modem_sched_func(int tag, int cycles, int jitter)
 			dspram[0x208] = 0xff;	// 2.4 - 19.2 kpbs supported
 			dspram[0x209] = 0xbf;	// 21.6 - 33.6 kpbs supported, asymmetric supported
 
-			start_pppd();
+			start_pico();
 			connect_state = CONNECTED;
 			callback_cycles = SH4_MAIN_CLOCK / 1000000 * 238;	// 238 us
-			connected_time = 0;
+			data_sent = false;
 
 			break;
 
@@ -281,13 +275,17 @@ static int modem_sched_func(int tag, int cycles, int jitter)
 					LOG("modem_regs %02x == %02x", i, modem_regs.ptr[i]);
 			}
 #endif
-			if (connected_time == 0)
-				connected_time = sh4_sched_now64();
-			if (!modem_regs.reg1e.RDBF)
+			// This value is critical. Setting it too low will cause some sockets to stall.
+			// Check Sonic Adventure 2 and Samba de Amigo (PAL) integrated browsers.
+			// 143 us/bytes corresponds to 56K
+			callback_cycles = SH4_MAIN_CLOCK / 1000000 * 143;
+			modem_regs.reg1e.TDBE = 1;
+
+			// Let WinCE send data first to avoid choking it
+			if (!modem_regs.reg1e.RDBF && data_sent)
 			{
-				int c = read_pppd();
-				// Delay reading from ppp to avoid choking WinCE
-				if (c >= 0 && sh4_sched_now64() - connected_time >= SH4_MAIN_CLOCK / 4)
+				int c = read_pico();
+				if (c >= 0)
 				{
 					//LOG("pppd received %02x", c);
 #ifndef NDEBUG
@@ -300,8 +298,6 @@ static int modem_sched_func(int tag, int cycles, int jitter)
 					SET_STATUS_BIT(0x01, modem_regs.reg01.RXHF, 1);
 				}
 			}
-			modem_regs.reg1e.TDBE = 1;
-			callback_cycles = SH4_MAIN_CLOCK / 1000000 * 238;	// 238 us
 
 			break;
 
@@ -325,7 +321,7 @@ void ModemInit()
 
 void ModemTerm()
 {
-	stop_pppd();
+	stop_pico();
 }
 
 static void schedule_callback(int ms)
@@ -424,20 +420,23 @@ static void ControllerTestStart()
 
 static void modem_reset(u32 v)
 {
-	if (v==0)
+	if (v == 0)
 	{
-		memset(&modem_regs,0,sizeof(modem_regs));
-		state=MS_RESET;
+		memset(&modem_regs, 0, sizeof(modem_regs));
+		state = MS_RESET;
 		LOG("Modem reset start ...");
 	}
 	else
 	{
-		stop_pppd();
-		memset(&modem_regs,0,sizeof(modem_regs));
-		state=MS_RESETING;
-		modem_regs.ptr[0x20]=1;
-		ControllerTestStart();
-		INFO_LOG(MODEM, "MODEM Reset");
+		if (state == MS_RESET)
+		{
+			stop_pico();
+			memset(&modem_regs, 0, sizeof(modem_regs));
+			state = MS_RESETING;
+			ControllerTestStart();
+			INFO_LOG(MODEM, "MODEM Reset");
+		}
+		modem_regs.ptr[0x20] = v;
 	}
 }
 
@@ -512,12 +511,13 @@ static void ModemNormalWrite(u32 reg, u32 data)
 		else if (connect_state == CONNECTED && modem_regs.reg08.RTS)
 		{
 			//LOG("ModemNormalWrite : TBUFFER = %X", data);
+			data_sent = true;
 #ifndef NDEBUG
 			sent_bytes++;
 			if (sent_fp)
 				fputc(data, sent_fp);
 #endif
-			write_pppd(data);
+			write_pico(data);
 			modem_regs.reg1e.TDBE = 0;
 		}
 		break;
@@ -642,21 +642,17 @@ static void ModemNormalWrite(u32 reg, u32 data)
 
 u32 ModemReadMem_A0_006(u32 addr, u32 size)
 {
-	u32 reg=addr&0x7FF;
-	verify((reg&3)==0);
-	reg>>=2;
+	u32 reg = (addr & 0x7FF) >> 2;
 
-	if (reg<0x100)
+	if (reg < 0x100)
+		return MODEM_ID[reg & 1];
+
+	reg -= 0x100;
+	if (reg < 0x21)
 	{
-		verify(reg<=1);
-		return MODEM_ID[reg];
-	}
-	else
-	{
-		reg-=0x100;
-		if (reg<0x21)
+		switch (state)
 		{
-			if (state==MS_NORMAL)
+		case MS_NORMAL:
 			{
 				// Dial tone is detected if TONEA, TONEB and TONEC are set
 				//if (reg==0xF)
@@ -691,73 +687,56 @@ u32 ModemReadMem_A0_006(u32 addr, u32 size)
 
 				return data;
 			}
-			else if (state==MS_ST_CONTROLER || state==MS_ST_DSP)
+
+		case MS_ST_CONTROLER:
+		case MS_ST_DSP:
+			if (reg==0x10)
 			{
-				if (reg==0x10)
-				{
-					modem_regs.reg1e.TDBE=0;
-					return 0;
-				}
-				else
-				{
-					return modem_regs.ptr[reg];
-				}
-			}
-			else if (state==MS_RESETING)
-			{
-				return 0; //still reset
+				modem_regs.reg1e.TDBE=0;
+				return 0;
 			}
 			else
 			{
-				//LOG("Read (reset) reg %03x == %x", reg, modem_regs.ptr[reg]);
-				return 0;
+				return modem_regs.ptr[reg];
 			}
-		}
-		else
-		{
-			LOG("modem reg %03X read -- wtf is it ?",reg);
+
+		case MS_RESETING:
+			return 0; //still reset
+
+		default:
+			//LOG("Read (reset) reg %03x == %x", reg, modem_regs.ptr[reg]);
 			return 0;
 		}
 	}
+
+	LOG("modem reg %03X read -- wtf is it ?",reg);
+	return 0;
 }
 
 void ModemWriteMem_A0_006(u32 addr, u32 data, u32 size)
 {
-	u32 reg=addr&0x7FF;
-	verify((reg&3)==0);
-	reg>>=2;
-
-
-
-	if (reg<0x100)
+	u32 reg = (addr & 0x7FF) >> 2;
+	if (reg < 0x100)
 	{
-		verify(reg<=1);
 		LOG("modem reg %03X write -- MODEM ID?!",reg);
+		return;
 	}
-	else
+
+	reg -= 0x100;
+	if (reg < 0x20)
 	{
-		reg-=0x100;
-		if (reg<0x20)
-		{
-			if (state==MS_NORMAL)
-			{
-				ModemNormalWrite(reg,data);
-			}
-			else
-			{
-				LOG("modem reg %03X write %X -- undef state?",reg,data);
-			}
-			return;
-		}
-		else if (reg==0x20)
-		{
-			//Hard reset
-			modem_reset(data);
-		}
+		if (state == MS_NORMAL)
+			ModemNormalWrite(reg,data);
 		else
-		{
-			LOG("modem reg %03X write %X -- wtf is it?",reg,data);
-			return;
-		}
+			LOG("modem reg %03X write %X -- undef state?", reg, data);
+		return;
 	}
+	if (reg == 0x20)
+	{
+		//Hard reset
+		modem_reset(data);
+		return;
+	}
+
+	LOG("modem reg %03X write %X -- wtf is it?",reg,data);
 }

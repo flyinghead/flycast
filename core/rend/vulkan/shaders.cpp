@@ -73,6 +73,7 @@ static const char FragmentShaderSource[] = R"(#version 450
 #define pp_BumpMap %d
 #define ColorClamping %d
 #define pp_TriLinear %d
+#define pp_Palette %d
 #define PI 3.1415926
 
 layout (location = 0) out vec4 FragColor;
@@ -98,10 +99,14 @@ layout (push_constant) uniform pushBlock
 {
 	vec4 clipTest;
 	float trilinearAlpha;
+	float palette_index;
 } pushConstants;
 
 #if pp_Texture == 1
 layout (set = 1, binding = 0) uniform sampler2D tex;
+#endif
+#if pp_Palette == 1
+layout (set = 0, binding = 3) uniform sampler2D palette;
 #endif
 
 // Vertex input
@@ -132,6 +137,16 @@ vec4 colorClamp(vec4 col)
 #endif
 }
 
+#if pp_Palette == 1
+
+vec4 palettePixel(sampler2D tex, vec2 coords)
+{
+	vec4 c = vec4(texture(tex, coords).r * 255.0 / 1023.0 + pushConstants.palette_index, 0.5, 0.0, 0.0);
+	return texture(palette, c.xy);
+}
+
+#endif
+
 void main()
 {
 	// Clip inside the box
@@ -150,7 +165,11 @@ void main()
 	#endif
 	#if pp_Texture == 1
 	{
-		vec4 texcol = texture(tex, vtx_uv);
+		#if pp_Palette == 0
+			vec4 texcol = texture(tex, vtx_uv);
+		#else
+			vec4 texcol = palettePixel(tex, vtx_uv);
+		#endif
 		
 		#if pp_BumpMap == 1
 			float s = PI / 2.0 * (texcol.a * 15.0 * 16.0 + texcol.r * 15.0) / 255.0;
@@ -165,6 +184,7 @@ void main()
 			#if cp_AlphaTest == 1
 				if (uniformBuffer.cp_AlphaTestValue > texcol.a)
 					discard;
+				texcol.a = 1.0;
 			#endif 
 		#endif
 		#if pp_ShadInstr == 0
@@ -214,9 +234,6 @@ void main()
 	color *= pushConstants.trilinearAlpha;
 	#endif
 	
-	#if cp_AlphaTest == 1
-		color.a = 1.0;
-	#endif 
 	//color.rgb = vec3(gl_FragCoord.w * uniformBuffer.sp_FOG_DENSITY / 128.0);
 
 	float w = gl_FragCoord.w * 100000.0;
@@ -271,6 +288,8 @@ void main()
 
 static const char QuadVertexShaderSource[] = R"(#version 450
 
+#define ROTATE %d
+
 layout (location = 0) in vec3 in_pos;
 layout (location = 1) in vec2 in_uv;
 
@@ -278,20 +297,30 @@ layout (location = 0) out vec2 outUV;
 
 void main()
 {
+#if ROTATE == 0
 	gl_Position = vec4(in_pos, 1.0);
+#else
+	gl_Position = vec4(in_pos.y, -in_pos.x, in_pos.z, 1.0);
+#endif
 	outUV = in_uv;
 }
 )";
 
 static const char QuadFragmentShaderSource[] = R"(#version 450 
 
-layout (binding = 0) uniform sampler2D tex;
+layout (set = 0, binding = 0) uniform sampler2D tex;
+
+layout (push_constant) uniform pushBlock
+{
+	vec4 color;
+} pushConstants;
+
 layout (location = 0) in vec2 inUV;
 layout (location = 0) out vec4 FragColor;
 
 void main() 
 {
-	FragColor = texture(tex, inUV);
+	FragColor = pushConstants.color * texture(tex, inUV);
 }
 )";
 
@@ -338,7 +367,7 @@ vk::UniqueShaderModule ShaderManager::compileShader(const FragmentShaderParams& 
 
 	sprintf(buf, FragmentShaderSource, (int)params.alphaTest, (int)params.insideClipTest, (int)params.useAlpha, (int)params.texture,
 			(int)params.ignoreTexAlpha, params.shaderInstr, (int)params.offset, params.fog, (int)params.gouraud,
-			(int)params.bumpmap, (int)params.clamping, (int)params.trilinear);
+			(int)params.bumpmap, (int)params.clamping, (int)params.trilinear, (int)params.palette);
 	return ShaderCompiler::Compile(vk::ShaderStageFlagBits::eFragment, buf);
 }
 
@@ -352,9 +381,12 @@ vk::UniqueShaderModule ShaderManager::compileModVolFragmentShader()
 	return ShaderCompiler::Compile(vk::ShaderStageFlagBits::eFragment, ModVolFragmentShaderSource);
 }
 
-vk::UniqueShaderModule ShaderManager::compileQuadVertexShader()
+vk::UniqueShaderModule ShaderManager::compileQuadVertexShader(bool rotate)
 {
-	return ShaderCompiler::Compile(vk::ShaderStageFlagBits::eVertex, QuadVertexShaderSource);
+	char buf[sizeof(QuadVertexShaderSource) * 2];
+
+	sprintf(buf, QuadVertexShaderSource, (int)rotate);
+	return ShaderCompiler::Compile(vk::ShaderStageFlagBits::eVertex, buf);
 }
 
 vk::UniqueShaderModule ShaderManager::compileQuadFragmentShader()

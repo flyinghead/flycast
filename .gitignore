@@ -10,7 +10,6 @@ Workdir/emu.cfg
 Workdir/lib*ant.properties
 
 # iOS General
-.DS_Store
 */build/*
 **/build/*
 *.pbxuser
@@ -33,43 +32,19 @@ build/*
 *Karen_angelXwind*
 local.properties
 ant.properties
-*build_obj
 *.d
-Workdir/data
-Workdir/reicast*
-Workdir/vmu*
-Workdir/webui*
-Workdir/emu.cfg
-Workdir/lib*ant.properties
 reicast-ios.xccheckout
 
 # Linux General
 shell/linux/.map
-shell/linux/nosym-reicast.elf
-shell/linux/reicast.elf
-shell/linux/reicast_naomi.elf
-shell/linux/reicast_awave.elf
+shell/linux/flycast.elf.map
+shell/linux/nosym-flycast.elf
+shell/linux/flycast.elf
 shell/linux/dispframe.elf
 
 # Visual Studio
 generated
 .vs
-
-# Android General
-bin/
-gen/
-obj/
-build/*
-*.so
-local.properties
-ant.properties
-
-# Android Studio
-.gradle
-*.iml
-.externalNativeBuild
-gradle.properties
-shell/android-studio/reicast/src/main/assets/build
 
 # JetBrains IDES
 .idea/

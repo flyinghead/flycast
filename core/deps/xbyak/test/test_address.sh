@@ -12,7 +12,7 @@ g++ $CFLAGS address.cpp -o address
 ./address $1 > a.asm
 echo "asm"
 $EXE -f$OPT3 a.asm -l a.lst
-awk '{if (index($3, "-")) { conti=substr($3, 0, length($3) - 1) } else { conti = conti $3; print conti; conti = "" }} ' < a.lst | $FILTER > ok.lst
+awk '{printf "%s", sub(/-$/, "", $3) ? $3 : $3 ORS}' a.lst | $FILTER > ok.lst
 
 echo "xbyak"
 ./address $1 jit > nm.cpp

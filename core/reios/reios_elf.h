@@ -1,8 +1,5 @@
-#ifndef REIOS_ELF_H
-#define REIOS_ELF_H
+#pragma once
 
-#include "types.h"
+#include <string>
 
 bool reios_loadElf(const std::string& elf);
-
-#endif //REIOS_ELF_H

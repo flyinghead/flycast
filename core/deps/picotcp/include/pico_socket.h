@@ -11,7 +11,7 @@
 #include "pico_protocol.h"
 #include "pico_tree.h"
 
-#ifdef __linux__
+#if 0 // __linux__
     #define PICO_DEFAULT_SOCKETQ (16 * 1024) /* Linux host, so we want full throttle */
 #else
     #define PICO_DEFAULT_SOCKETQ (6 * 1024) /* seems like an acceptable default for small embedded systems */

@@ -1,7 +1,7 @@
 #pragma once
 #include "maple_devs.h"
 
-extern maple_device* MapleDevices[4][6];
+extern maple_device* MapleDevices[MAPLE_PORTS][6];
 
 void maple_Init();
 void maple_Reset(bool Manual);

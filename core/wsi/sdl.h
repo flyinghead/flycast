@@ -19,9 +19,19 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #pragma once
-#include <SDL2/SDL.h>
+#include <SDL.h>
 #include "types.h"
+#ifndef GLES
 #include <GL4/gl3w.h>
+#else
+#include <GLES32/gl32.h>
+#include <GLES32/gl2ext.h>
+#ifndef GLES2
+#include "gl32funcs.h"
+#else
+extern "C" void load_gles_symbols();
+#endif
+#endif
 #include "gl_context.h"
 
 class SDLGLGraphicsContext : public GLGraphicsContext
@@ -30,12 +40,12 @@ public:
 	bool Init();
 	void Term();
 	void Swap();
-	bool IsSwapBufferPreserved() const { return true; }
 	void SetWindow(SDL_Window *window) { this->window = window; }
 
 private:
 	SDL_Window* window = nullptr;
 	SDL_GLContext glcontext = nullptr;
+	bool swapOnVSync = false;
 };
 
 extern SDLGLGraphicsContext theGLContext;

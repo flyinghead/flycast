@@ -1,12 +1,11 @@
-#ifndef REIOS_H
-#define REIOS_H
+#pragma once
 
 #include "types.h"
 #include "hw/flashrom/flashrom.h"
 
 bool reios_init();
-
-void reios_reset(u8* rom, MemChip *flash);
+void reios_set_flash(MemChip* flash);
+void reios_reset(u8* rom);
 
 void reios_term();
 
@@ -41,5 +40,3 @@ struct ip_meta_t
 extern ip_meta_t ip_meta;
 
 #define REIOS_OPCODE 0x085B
-
-#endif //REIOS_H

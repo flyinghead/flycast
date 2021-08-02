@@ -29,7 +29,7 @@ VKAPI_ATTR static void VKAPI_CALL vmaAllocateDeviceMemoryCallback(
     VkDeviceMemory    memory,
     VkDeviceSize      size)
 {
-	DEBUG_LOG(RENDERER, "VMAAllocator: %llu bytes allocated (type %d)", (unsigned long long)size, memoryType);
+	DEBUG_LOG(RENDERER, "VMAAllocator: %" PRIu64 " bytes allocated (type %d)", size, memoryType);
 }
 
 VKAPI_ATTR static void VKAPI_CALL vmaFreeDeviceMemoryCallback(
@@ -38,7 +38,7 @@ VKAPI_ATTR static void VKAPI_CALL vmaFreeDeviceMemoryCallback(
     VkDeviceMemory    memory,
     VkDeviceSize      size)
 {
-	DEBUG_LOG(RENDERER, "VMAAllocator: %llu bytes freed (type %d)", (unsigned long long)size, memoryType);
+	DEBUG_LOG(RENDERER, "VMAAllocator: %" PRIu64 " bytes freed (type %d)", size, memoryType);
 }
 
 static const VmaDeviceMemoryCallbacks memoryCallbacks = { vmaAllocateDeviceMemoryCallback, vmaFreeDeviceMemoryCallback };

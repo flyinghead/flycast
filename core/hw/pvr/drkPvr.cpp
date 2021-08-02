@@ -11,19 +11,18 @@
 
 #include "spg.h"
 #include "pvr_regs.h"
+#include "Renderer_if.h"
+#include "ta_ctx.h"
 #include "rend/TexCache.h"
-
-void libPvr_LockedBlockWrite (vram_block* block,u32 addr)
-{
-	rend_text_invl(block);
-}
-
 
 void libPvr_Reset(bool hard)
 {
 	KillTex = true;
 	Regs_Reset(hard);
 	spg_Reset(hard);
+	if (hard)
+		rend_reset();
+	tactx_Term();
 }
 
 s32 libPvr_Init()
@@ -40,5 +39,6 @@ s32 libPvr_Init()
 //called when exiting from sh4 thread , from the new thread context (for any thread specific de init) :P
 void libPvr_Term()
 {
+	tactx_Term();
 	spg_Term();
 }

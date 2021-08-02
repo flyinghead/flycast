@@ -28,12 +28,12 @@
 
 #define ssa_printf(...) DEBUG_LOG(DYNAREC, __VA_ARGS__)
 
-template<typename nreg_t, typename nregf_t, bool explode_spans = true>
+template<typename nreg_t, typename nregf_t>
 class RegAlloc
 {
 public:
-	RegAlloc() {}
-	virtual ~RegAlloc() {}
+	RegAlloc() = default;
+	virtual ~RegAlloc() = default;
 
 	void DoAlloc(RuntimeBlockInfo* block, const nreg_t* regs_avail, const nregf_t* regsf_avail)
 	{
@@ -244,7 +244,7 @@ public:
 	}
 
 	void Cleanup() {
-		verify(final_opend || block->oplist.size() == 0);
+		verify(final_opend || block->oplist.empty());
 		final_opend = false;
 		FlushAllRegs(true);
 		verify(reg_alloced.empty());

@@ -16,7 +16,7 @@ u32 pvr_ReadReg(u32 addr)
 
 void pvr_WriteReg(u32 paddr,u32 data)
 {
-	u32 addr=paddr&pvr_RegMask;
+	u32 addr = paddr & pvr_RegMask;
 
 	switch (addr)
 	{
@@ -34,18 +34,14 @@ void pvr_WriteReg(u32 paddr,u32 data)
 		if (data >> 31)
 		{
 			ta_vtx_ListInit();
-			data=0;
 			TA_NEXT_OPB = TA_NEXT_OPB_INIT;
 			TA_ITP_CURRENT = TA_ISP_BASE;
 		}
-		break;
+		return;
 
 	case SOFTRESET_addr:
-		if (data != 0)
-		{
-			if (data & 1)
-				ta_vtx_SoftReset();
-		}
+		if (data & 1)
+			ta_vtx_SoftReset();
 		return;
 
 	case TA_LIST_CONT_addr:
@@ -92,13 +88,18 @@ void pvr_WriteReg(u32 paddr,u32 data)
 
 	case FB_R_SOF1_addr:
 		data &= 0x00fffffc;
-		if (data == FB_W_SOF1)
-		{
-			rend_swap_frame();
-		}
+		rend_swap_frame(data);
+		break;
+
+	case FB_R_SOF2_addr:
+		data &= 0x00fffffc;
 		break;
 
 	case FB_W_SOF1_addr:
+		data &= 0x01fffffc;
+		rend_set_fb_write_addr(data);
+		break;
+
 	case FB_W_SOF2_addr:
 		data &= 0x01fffffc;
 		break;
@@ -109,16 +110,12 @@ void pvr_WriteReg(u32 paddr,u32 data)
 
 	default:
 		if (addr >= PALETTE_RAM_START_addr && PvrReg(addr,u32) != data)
-		{
 			pal_needs_update = true;
-		}
 		else if (addr >= FOG_TABLE_START_addr && addr <= FOG_TABLE_END_addr && PvrReg(addr,u32) != data)
-		{
 			fog_needs_update = true;
-		}
 		break;
 	}
-	PvrReg(addr,u32)=data;
+	PvrReg(addr, u32) = data;
 }
 
 void Regs_Reset(bool hard)

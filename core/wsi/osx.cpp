@@ -18,9 +18,7 @@
     You should have received a copy of the GNU General Public License
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
-#include "build.h"
-
-#if HOST_OS == OS_DARWIN
+#if defined(__APPLE__)
 #include "gl_context.h"
 
 OSXGraphicsContext theGLContext;

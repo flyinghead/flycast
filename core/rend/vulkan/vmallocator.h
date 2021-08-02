@@ -19,8 +19,13 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #pragma once
+#include <cinttypes>
 #include "vulkan.h"
 #include "vk_mem_alloc.h"
+
+#if !defined(PRIu64) && defined(_WIN32)
+#define PRIu64 "I64u"
+#endif
 
 class VMAllocator;
 
@@ -122,8 +127,8 @@ public:
 	{
 		VmaStats stats;
 		vmaCalculateStats(allocator, &stats);
-		NOTICE_LOG(RENDERER, "Vma stats: %d chunks, %d allocs, %llu bytes used, %llu free", stats.total.blockCount,
-				stats.total.allocationCount, (unsigned long long)stats.total.usedBytes, (unsigned long long)stats.total.unusedBytes);
+		NOTICE_LOG(RENDERER, "Vma stats: %d chunks, %d allocs, %" PRIu64 " bytes used, %" PRIu64 " free", stats.total.blockCount,
+				stats.total.allocationCount, stats.total.usedBytes, stats.total.unusedBytes);
 	}
 
 private:

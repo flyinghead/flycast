@@ -9,111 +9,111 @@ using namespace Xbyak;
 
 const int bitEnd = 64;
 
-const uint64 YMM_SAE = 1ULL << 0;
-const uint64 _XMM = 1ULL << 1;
-const uint64 _MEM = 1ULL << 2;
-const uint64 _REG32 = 1ULL << 3;
-const uint64 EAX = 1ULL << 4;
-const uint64 IMM32 = 1ULL << 5;
-const uint64 IMM8 = 1ULL << 6;
-const uint64 _REG8 = 1ULL << 7;
-const uint64 _REG16 = 1ULL << 8;
-const uint64 XMM_K = 1ULL << 9;
-const uint64 YMM_K = 1ULL << 10;
-const uint64 ZMM_K = 1ULL << 11;
-const uint64 AX = 1ULL << 12;
-const uint64 AL = 1ULL << 13;
-const uint64 IMM_1 = 1ULL << 14;
-const uint64 MEM8 = 1ULL << 15;
-const uint64 MEM16 = 1ULL << 16;
-const uint64 MEM32 = 1ULL << 17;
-const uint64 VM32Z = 1ULL << 19;
-const uint64 K_K = 1ULL << 20;
-const uint64 MEM_ONLY_DISP = 1ULL << 21;
-const uint64 VM32X_K = 1ULL << 23;
-const uint64 _YMM = 1ULL << 24;
-const uint64 VM32X_32 = 1ULL << 39;
-const uint64 VM32X_64 = 1ULL << 40;
-const uint64 VM32Y_32 = 1ULL << 41;
-const uint64 VM32Y_64 = 1ULL << 42;
-const uint64 VM32Z_K = 1ULL << 32;
+const uint64_t YMM_SAE = 1ULL << 0;
+const uint64_t _XMM = 1ULL << 1;
+const uint64_t _MEM = 1ULL << 2;
+const uint64_t _REG32 = 1ULL << 3;
+const uint64_t EAX = 1ULL << 4;
+const uint64_t IMM32 = 1ULL << 5;
+const uint64_t IMM8 = 1ULL << 6;
+const uint64_t _REG8 = 1ULL << 7;
+const uint64_t _REG16 = 1ULL << 8;
+const uint64_t XMM_K = 1ULL << 9;
+const uint64_t YMM_K = 1ULL << 10;
+const uint64_t ZMM_K = 1ULL << 11;
+const uint64_t AX = 1ULL << 12;
+const uint64_t AL = 1ULL << 13;
+const uint64_t IMM_1 = 1ULL << 14;
+const uint64_t MEM8 = 1ULL << 15;
+const uint64_t MEM16 = 1ULL << 16;
+const uint64_t MEM32 = 1ULL << 17;
+const uint64_t VM32Z = 1ULL << 19;
+const uint64_t K_K = 1ULL << 20;
+const uint64_t MEM_ONLY_DISP = 1ULL << 21;
+const uint64_t VM32X_K = 1ULL << 23;
+const uint64_t _YMM = 1ULL << 24;
+const uint64_t VM32X_32 = 1ULL << 39;
+const uint64_t VM32X_64 = 1ULL << 40;
+const uint64_t VM32Y_32 = 1ULL << 41;
+const uint64_t VM32Y_64 = 1ULL << 42;
+const uint64_t VM32Z_K = 1ULL << 32;
 #ifdef XBYAK64
-const uint64 _MEMe = 1ULL << 25;
-const uint64 REG32_2 = 1ULL << 26; // r8d, ...
-const uint64 REG16_2 = 1ULL << 27; // r8w, ...
-const uint64 REG8_2 = 1ULL << 28; // r8b, ...
-const uint64 REG8_3 = 1ULL << 29; // spl, ...
-const uint64 _REG64 = 1ULL << 30; // rax, ...
-const uint64 _REG64_2 = 1ULL << 31; // r8, ...
-const uint64 _XMM2 = 1ULL << 33;
-const uint64 _YMM2 = 1ULL << 34;
-const uint64 VM32X = VM32X_32 | VM32X_64;
-const uint64 VM32Y = VM32Y_32 | VM32Y_64;
+const uint64_t _MEMe = 1ULL << 25;
+const uint64_t REG32_2 = 1ULL << 26; // r8d, ...
+const uint64_t REG16_2 = 1ULL << 27; // r8w, ...
+const uint64_t REG8_2 = 1ULL << 28; // r8b, ...
+const uint64_t REG8_3 = 1ULL << 29; // spl, ...
+const uint64_t _REG64 = 1ULL << 30; // rax, ...
+const uint64_t _REG64_2 = 1ULL << 31; // r8, ...
+const uint64_t _XMM2 = 1ULL << 33;
+const uint64_t _YMM2 = 1ULL << 34;
+const uint64_t VM32X = VM32X_32 | VM32X_64;
+const uint64_t VM32Y = VM32Y_32 | VM32Y_64;
 #else
-const uint64 _MEMe = 0;
-const uint64 REG32_2 = 0;
-const uint64 REG16_2 = 0;
-const uint64 REG8_2 = 0;
-const uint64 REG8_3 = 0;
-const uint64 _REG64 = 0;
-const uint64 _REG64_2 = 0;
-const uint64 _XMM2 = 0;
-const uint64 _YMM2 = 0;
-const uint64 VM32X = VM32X_32;
-const uint64 VM32Y = VM32Y_32;
+const uint64_t _MEMe = 0;
+const uint64_t REG32_2 = 0;
+const uint64_t REG16_2 = 0;
+const uint64_t REG8_2 = 0;
+const uint64_t REG8_3 = 0;
+const uint64_t _REG64 = 0;
+const uint64_t _REG64_2 = 0;
+const uint64_t _XMM2 = 0;
+const uint64_t _YMM2 = 0;
+const uint64_t VM32X = VM32X_32;
+const uint64_t VM32Y = VM32Y_32;
 #endif
-const uint64 REG64 = _REG64 | _REG64_2;
-const uint64 REG32 = _REG32 | REG32_2 | EAX;
-const uint64 REG16 = _REG16 | REG16_2 | AX;
-const uint64 REG32e = REG32 | REG64;
-const uint64 REG8 = _REG8 | REG8_2|AL;
-const uint64 MEM = _MEM | _MEMe;
-const uint64 MEM64 = 1ULL << 35;
-const uint64 YMM_ER = 1ULL << 36;
-const uint64 VM32Y_K = 1ULL << 37;
-const uint64 IMM_2 = 1ULL << 38;
-const uint64 IMM = IMM_1 | IMM_2;
-const uint64 YMM = _YMM | _YMM2;
-const uint64 K = 1ULL << 43;
-const uint64 _ZMM = 1ULL << 44;
-const uint64 _ZMM2 = 1ULL << 45;
+const uint64_t REG64 = _REG64 | _REG64_2;
+const uint64_t REG32 = _REG32 | REG32_2 | EAX;
+const uint64_t REG16 = _REG16 | REG16_2 | AX;
+const uint64_t REG32e = REG32 | REG64;
+const uint64_t REG8 = _REG8 | REG8_2|AL;
+const uint64_t MEM = _MEM | _MEMe;
+const uint64_t MEM64 = 1ULL << 35;
+const uint64_t YMM_ER = 1ULL << 36;
+const uint64_t VM32Y_K = 1ULL << 37;
+const uint64_t IMM_2 = 1ULL << 38;
+const uint64_t IMM = IMM_1 | IMM_2;
+const uint64_t YMM = _YMM | _YMM2;
+const uint64_t K = 1ULL << 43;
+const uint64_t _ZMM = 1ULL << 44;
+const uint64_t _ZMM2 = 1ULL << 45;
 #ifdef XBYAK64
-const uint64 ZMM = _ZMM | _ZMM2;
-const uint64 _YMM3 = 1ULL << 46;
+const uint64_t ZMM = _ZMM | _ZMM2;
+const uint64_t _YMM3 = 1ULL << 46;
 #else
-const uint64 ZMM = _ZMM;
-const uint64 _YMM3 = 0;
+const uint64_t ZMM = _ZMM;
+const uint64_t _YMM3 = 0;
 #endif
-const uint64 K2 = 1ULL << 47;
-const uint64 ZMM_SAE = 1ULL << 48;
-const uint64 ZMM_ER = 1ULL << 49;
+const uint64_t K2 = 1ULL << 47;
+const uint64_t ZMM_SAE = 1ULL << 48;
+const uint64_t ZMM_ER = 1ULL << 49;
 #ifdef XBYAK64
-const uint64 _XMM3 = 1ULL << 50;
+const uint64_t _XMM3 = 1ULL << 50;
 #else
-const uint64 _XMM3 = 0;
+const uint64_t _XMM3 = 0;
 #endif
-const uint64 XMM = _XMM | _XMM2 | _XMM3;
-const uint64 XMM_SAE = 1ULL << 51;
+const uint64_t XMM = _XMM | _XMM2 | _XMM3;
+const uint64_t XMM_SAE = 1ULL << 51;
 #ifdef XBYAK64
-const uint64 XMM_KZ = 1ULL << 52;
-const uint64 YMM_KZ = 1ULL << 53;
-const uint64 ZMM_KZ = 1ULL << 54;
+const uint64_t XMM_KZ = 1ULL << 52;
+const uint64_t YMM_KZ = 1ULL << 53;
+const uint64_t ZMM_KZ = 1ULL << 54;
 #else
-const uint64 XMM_KZ = 0;
-const uint64 YMM_KZ = 0;
-const uint64 ZMM_KZ = 0;
+const uint64_t XMM_KZ = 0;
+const uint64_t YMM_KZ = 0;
+const uint64_t ZMM_KZ = 0;
 #endif
-const uint64 MEM_K = 1ULL << 55;
-const uint64 M_1to2 = 1ULL << 56;
-const uint64 M_1to4 = 1ULL << 57;
-const uint64 M_1to8 = 1ULL << 58;
-const uint64 M_1to16 = 1ULL << 59;
-const uint64 XMM_ER = 1ULL << 60;
-const uint64 M_xword = 1ULL << 61;
-const uint64 M_yword = 1ULL << 62;
-const uint64 MY_1to4 = 1ULL << 18;
+const uint64_t MEM_K = 1ULL << 55;
+const uint64_t M_1to2 = 1ULL << 56;
+const uint64_t M_1to4 = 1ULL << 57;
+const uint64_t M_1to8 = 1ULL << 58;
+const uint64_t M_1to16 = 1ULL << 59;
+const uint64_t XMM_ER = 1ULL << 60;
+const uint64_t M_xword = 1ULL << 61;
+const uint64_t M_yword = 1ULL << 62;
+const uint64_t MY_1to4 = 1ULL << 18;
 
-const uint64 NOPARA = 1ULL << (bitEnd - 1);
+const uint64_t NOPARA = 1ULL << (bitEnd - 1);
 
 class Test {
 	Test(const Test&);
@@ -121,7 +121,7 @@ class Test {
 	const bool isXbyak_;
 	int funcNum_;
 	// check all op1, op2, op3
-	void put(const std::string& nm, uint64 op1 = NOPARA, uint64 op2 = NOPARA, uint64 op3 = NOPARA, uint64 op4 = NOPARA) const
+	void put(const std::string& nm, uint64_t op1 = NOPARA, uint64_t op2 = NOPARA, uint64_t op3 = NOPARA, uint64_t op4 = NOPARA) const
 	{
 		for (int i = 0; i < bitEnd; i++) {
 			if ((op1 & (1ULL << i)) == 0) continue;
@@ -144,7 +144,7 @@ class Test {
 			}
 		}
 	}
-	void put(const char *nm, uint64 op, const char *xbyak, const char *nasm) const
+	void put(const char *nm, uint64_t op, const char *xbyak, const char *nasm) const
 	{
 		for (int i = 0; i < bitEnd; i++) {
 			if ((op & (1ULL << i)) == 0) continue;
@@ -156,7 +156,7 @@ class Test {
 			printf("\n");
 		}
 	}
-	void put(const char *nm, const char *xbyak, const char *nasm = 0, uint64 op = NOPARA) const
+	void put(const char *nm, const char *xbyak, const char *nasm = 0, uint64_t op = NOPARA) const
 	{
 		if (nasm == 0) nasm = xbyak;
 		for (int i = 0; i < bitEnd; i++) {
@@ -169,7 +169,7 @@ class Test {
 			printf("\n");
 		}
 	}
-	const char *get(uint64 type) const
+	const char *get(uint64_t type) const
 	{
 		int idx = (rand() / 31) & 7;
 		switch (type) {
@@ -537,7 +537,7 @@ public:
 			printf("vaddpd(%s%s%s, %s, %s%s); dump();\n", r1, pk, pz, r2, r3, saeTblXbyak[sae]);
 		} else {
 			if (kIdx) CYBOZU_SNPRINTF(pk, sizeof(pk), "{k%d}", kIdx);
-			if (z) pz = "{z}";
+			if (z && kIdx) pz = "{z}";
 			printf("vaddpd %s%s%s, %s, %s%s\n", r1, pk, pz, r2, r3, saeTblNASM[sae]);
 		}
 	}

@@ -1,5 +1,5 @@
 
-    C++用x86(IA-32), x64(AMD64, x86-64) JITアセンブラ Xbyak 5.891
+    C++用x86(IA-32), x64(AMD64, x86-64) JITアセンブラ Xbyak 5.992
 
 -----------------------------------------------------------------------------
 ◎概要
@@ -29,12 +29,14 @@ and, orなどを使いたい場合は-fno-operator-namesをgcc/clangに指定し
 ◎準備
 xbyak.h
 xbyak_bin2hex.h
-xbyak_mnemonic.h
 これらを同一のパスに入れてインクルードパスに追加してください。
 
 Linuxではmake installで/usr/local/include/xbyakにコピーされます。
 -----------------------------------------------------------------------------
 ◎下位互換性の破れ
+* push byte, immまたはpush word, immが下位8bit, 16bitにキャストした値を使うように変更。
+* (Windows) `<winsock2.h>`をincludeしなくなったので必要なら明示的にincludeしてください。
+* XBYAK_USE_MMAP_ALLOCATORがデフォルトで有効になりました。従来の方式にする場合はXBYAK_DONT_USE_MMAP_ALLOCATORを定義してください。
 * Xbyak::Errorの型をenumからclassに変更
 ** 従来のenumの値をとるにはintにキャストしてください。
 * (古い)Reg32eクラスを(新しい)Reg32eとRegExpに分ける。
@@ -44,6 +46,13 @@ Linuxではmake installで/usr/local/include/xbyakにコピーされます。
 -----------------------------------------------------------------------------
 ◎新機能
 
+例外なしモード追加
+XBYAK_NO_EXCEPTIONを定義してコンパイルするとgcc/clangで-fno-exceptionsオプションでコンパイルできます。
+エラーは例外の代わりに`Xbyak::GetError()`で通達されます。
+この値が0でなければ何か問題が発生しています。
+この値は自動的に変更されないので`Xbyak::ClearError()`でリセットしてください。
+`CodeGenerator::reset()`は`ClearError()`を呼びます。
+
 MmapAllocator追加
 これはUnix系OSでのみの仕様です。XBYAK_USE_MMAP_ALLOCATORを使うと利用できます。
 デフォルトのAllocatorはメモリ確保時にposix_memalignを使います。
@@ -52,7 +61,6 @@ map countの最大値は/proc/sys/vm/max_map_countに書かれています。
 デフォルトでは3万個ほどのXbyak::CodeGeneratorインスタンスを生成するとエラーになります。
 test/mprotect_test.cppで確認できます。
 これを避けるためにはmmapを使うMmapAllocatorを使ってください。
-将来この挙動がデフォルトになるかもしれません。
 
 
 AutoGrowモード追加
@@ -155,6 +163,9 @@ vfpclassps k5{k3}, zword [rax+64], 5    --> vfpclassps(k5|k3, zword [rax+64], 5)
 vfpclasspd k5{k3}, [rax+64]{1to2}, 5    --> vfpclasspd(k5|k3, xword_b [rax+64], 5); // broadcast 64-bit to 128-bit
 vfpclassps k5{k3}, [rax+64]{1to4}, 5    --> vfpclassps(k5|k3, xword_b [rax+64], 5); // broadcast 64-bit to 256-bit
 
+vpdpbusd(xm0, xm1, xm2); // default encoding is EVEX
+vpdpbusd(xm0, xm1, xm2, EvexEncoding); // same as the above
+vpdpbusd(xm0, xm1, xm2, VexEncoding); // VEX encoding
 
 注意
 * k1, ..., k7 は新しいopmaskレジスタです。
@@ -371,6 +382,21 @@ sample/{echo,hello}.bfは http://www.kmonos.net/alang/etc/brainfuck.php から
 -----------------------------------------------------------------------------
 ◎履歴
 
+2021/05/09 ver 5.992 endbr32とendbr64のサポート
+2020/11/16 ver 5.991 g++-5のC++14でconstexpr機能の抑制
+2020/10/19 ver 5.99 VNNI命令サポート(Thanks to akharito)
+2020/10/17 ver 5.98 [scale * reg]のサポート
+2020/09/08 ver 5.97 uint32などをuint32_tに置換
+2020/08/28 ver 5.95 レジスタクラスのコンストラクタがconstexprに対応(C++14以降)
+2020/08/04 ver 5.941 `CodeGenerator::reset()`が`ClearError()`を呼ぶように変更
+2020/07/28 ver 5.94 #include <winsock2.h>の削除 (only windows)
+2020/07/21 ver 5.93 例外なしモード追加
+2020/06/30 ver 5.92 Intel AMX命令サポート (Thanks to nshustrov)
+2020/06/19 ver 5.913 32ビット環境でXBYAK64を定義したときのmov(r64, imm64)を修正
+2020/06/19 ver 5.912 macOSの古いXcodeでもMAP_JITを有効にする(Thanks to rsdubtso)
+2020/05/10 ver 5.911 Linux/macOSでXBYAK_USE_MMAP_ALLOCATORがデフォルト有効になる
+2020/04/20 ver 5.91 マスクレジスタk0を受け入れる(マスクをしない)
+2020/04/09 ver 5.90 kmov{b,w,d,q}がサポートされないレジスタを受けると例外を投げる
 2020/02/26 ver 5.891 zm0のtype修正
 2020/01/03 ver 5.89 vfpclasspdの処理エラー修正
 2019/12/20 ver 5.88 Windowsでのコンパイルエラー修正

@@ -144,10 +144,3 @@ struct profiler_cfg
 };
 
 extern profiler_cfg prof;
-
-
-void install_prof_handler(int id);
-void sample_Start(int freq);
-void sample_Stop();
-bool sample_Switch(int freq);
-void sample_Syms(u8* data,u32 len);

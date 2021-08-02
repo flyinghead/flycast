@@ -3,12 +3,12 @@
 #include "hw/pvr/ta_ctx.h"
 #include "rend/TexCache.h"
 #include "wsi/gl_context.h"
+#include "glcache.h"
 
 #include <unordered_map>
 #include <glm/glm.hpp>
 
-#define glCheck() do { if (unlikely(settings.validate.OpenGlChecks)) { verify(glGetError()==GL_NO_ERROR); } } while(0)
-#define eglCheck() false
+#define glCheck() do { if (unlikely(config::OpenGlChecks)) { verify(glGetError()==GL_NO_ERROR); } } while(0)
 
 #define VERTEX_POS_ARRAY 0
 #define VERTEX_COL_BASE_ARRAY 1
@@ -30,19 +30,31 @@ struct PipelineShader
 {
 	GLuint program;
 
-	GLuint depth_scale;
-	GLuint pp_ClipTest,cp_AlphaTestValue;
-	GLuint sp_FOG_COL_RAM,sp_FOG_COL_VERT,sp_FOG_DENSITY;
-	GLuint trilinear_alpha;
-	GLuint fog_clamp_min, fog_clamp_max;
-	GLuint normal_matrix;
+	GLint depth_scale;
+	GLint pp_ClipTest;
+	GLint cp_AlphaTestValue;
+	GLint sp_FOG_COL_RAM;
+	GLint sp_FOG_COL_VERT;
+	GLint sp_FOG_DENSITY;
+	GLint trilinear_alpha;
+	GLint fog_clamp_min, fog_clamp_max;
+	GLint normal_matrix;
+	GLint palette_index;
 
 	//
-	u32 cp_AlphaTest; s32 pp_ClipTestMode;
-	u32 pp_Texture, pp_UseAlpha, pp_IgnoreTexA, pp_ShadInstr, pp_Offset, pp_FogCtrl;
-	bool pp_Gouraud, pp_BumpMap;
+	bool cp_AlphaTest;
+	bool pp_InsideClipping;
+	bool pp_Texture;
+	bool pp_UseAlpha;
+	bool pp_IgnoreTexA;
+	u32 pp_ShadInstr;
+	bool pp_Offset;
+	u32 pp_FogCtrl;
+	bool pp_Gouraud;
+	bool pp_BumpMap;
 	bool fog_clamping;
 	bool trilinear;
+	bool palette;
 };
 
 
@@ -52,9 +64,9 @@ struct gl_ctx
 	{
 		GLuint program;
 
-		GLuint depth_scale;
-		GLuint sp_ShaderColor;
-		GLuint normal_matrix;
+		GLint depth_scale;
+		GLint sp_ShaderColor;
+		GLint normal_matrix;
 
 	} modvol_shader;
 
@@ -63,7 +75,7 @@ struct gl_ctx
 	struct
 	{
 		GLuint program;
-		GLuint scale;
+		GLint scale;
 		GLuint vao;
 		GLuint geometry;
 		GLuint osd_tex;
@@ -72,15 +84,23 @@ struct gl_ctx
 	struct
 	{
 		GLuint geometry,modvols,idxs,idxs2;
-		GLuint vao;
+		GLuint mainVAO;
+		GLuint modvolVAO;
 	} vbo;
 
 	struct
 	{
-		u32 TexAddr;
+		u32 texAddress = ~0;
 		GLuint depthb;
 		GLuint tex;
 		GLuint fbo;
+		GLuint pbo;
+		u32 pboSize;
+		bool directXfer;
+		u32 width;
+		u32 height;
+		u32 fb_w_ctrl;
+		u32 linestride;
 	} rtt;
 
 	struct
@@ -98,7 +118,7 @@ struct gl_ctx
 	int gl_major;
 	int gl_minor;
 	bool is_gles;
-	GLuint fog_image_format;
+	GLuint single_channel_format;
 	GLenum index_type;
 	bool GL_OES_packed_depth_stencil_supported;
 	bool GL_OES_depth24_supported;
@@ -110,19 +130,15 @@ struct gl_ctx
 extern gl_ctx gl;
 extern GLuint fbTextureId;
 
-u64 gl_GetTexture(TSP tsp,TCW tcw);
-struct text_info {
-	u16* pdata;
-	u32 width;
-	u32 height;
-	u32 textype; // 0 565, 1 1555, 2 4444
-};
+BaseTextureCacheData *gl_GetTexture(TSP tsp, TCW tcw);
+
 enum ModifierVolumeMode { Xor, Or, Inclusion, Exclusion, ModeCount };
 
 void gl_load_osd_resources();
 void gl_free_osd_resources();
 bool ProcessFrame(TA_context* ctx);
 void UpdateFogTexture(u8 *fog_table, GLenum texture_slot, GLint fog_image_format);
+void UpdatePaletteTexture(GLenum texture_slot);
 void findGLVersion();
 void GetFramebufferScaling(float& scale_x, float& scale_y, float& scissoring_scale_x, float& scissoring_scale_y);
 void GetFramebufferSize(float& dc_width, float& dc_height);
@@ -130,13 +146,11 @@ void SetupMatrices(float dc_width, float dc_height,
 				   float scale_x, float scale_y, float scissoring_scale_x, float scissoring_scale_y,
 				   float &ds2s_offs_x, glm::mat4& normal_mat, glm::mat4& scissor_mat);
 
-text_info raw_GetTexture(TSP tsp, TCW tcw);
-void DoCleanup();
 void SetCull(u32 CullMode);
 s32 SetTileClip(u32 val, GLint uniform);
 void SetMVS_Mode(ModifierVolumeMode mv_mode, ISP_Modvol ispc);
 
-void BindRTT(u32 addy, u32 fbw, u32 fbh, u32 channels, u32 fmt);
+GLuint BindRTT(bool withDepthBuffer = true);
 void ReadRTTBuffer();
 void RenderFramebuffer();
 void DrawFramebuffer();
@@ -144,11 +158,11 @@ GLuint init_output_framebuffer(int width, int height);
 bool render_output_framebuffer();
 void free_output_framebuffer();
 
-void HideOSD();
 void OSD_DRAW(bool clear_screen);
-PipelineShader *GetProgram(u32 cp_AlphaTest, u32 pp_ClipTestMode,
-							u32 pp_Texture, u32 pp_UseAlpha, u32 pp_IgnoreTexA, u32 pp_ShadInstr, u32 pp_Offset,
-							u32 pp_FogCtrl, bool pp_Gouraud, bool pp_BumpMap, bool fog_clamping, bool trilinear);
+PipelineShader *GetProgram(bool cp_AlphaTest, bool pp_InsideClipping,
+		bool pp_Texture, bool pp_UseAlpha, bool pp_IgnoreTexA, u32 pp_ShadInstr, bool pp_Offset,
+		u32 pp_FogCtrl, bool pp_Gouraud, bool pp_BumpMap, bool fog_clamping, bool trilinear,
+		bool palette);
 
 GLuint gl_CompileShader(const char* shader, GLuint type);
 GLuint gl_CompileAndLink(const char* VertexShader, const char* FragmentShader);
@@ -165,6 +179,14 @@ extern struct ShaderUniforms_t
 	float fog_clamp_min[4];
 	float fog_clamp_max[4];
 	glm::mat4 normal_mat;
+	struct {
+		bool enabled;
+		int x;
+		int y;
+		int width;
+		int height;
+	} base_clipping;
+	int palette_index;
 
 	void Set(const PipelineShader* s)
 	{
@@ -190,23 +212,117 @@ extern struct ShaderUniforms_t
 
 		if (s->normal_matrix != -1)
 			glUniformMatrix4fv(s->normal_matrix, 1, GL_FALSE, &normal_mat[0][0]);
+
+		if (s->palette_index != -1)
+			glUniform1i(s->palette_index, palette_index);
 	}
 
 } ShaderUniforms;
 
-class TextureCacheData : public BaseTextureCacheData
+class TextureCacheData final : public BaseTextureCacheData
 {
 public:
 	GLuint texID;   //gl texture
-	virtual std::string GetId() override { return std::to_string(texID); }
-	virtual void UploadToGPU(int width, int height, u8 *temp_tex_buffer, bool mipmapped, bool mipmapsIncluded = false) override;
-	virtual bool Delete() override;
+	std::string GetId() override { return std::to_string(texID); }
+	void UploadToGPU(int width, int height, u8 *temp_tex_buffer, bool mipmapped, bool mipmapsIncluded = false) override;
+	bool Delete() override;
 };
 
-class TextureCache : public BaseTextureCache<TextureCacheData>
+class GlTextureCache final : public BaseTextureCache<TextureCacheData>
 {
+public:
+	void Cleanup()
+	{
+		if (!texturesToDelete.empty())
+		{
+			glcache.DeleteTextures((GLsizei)texturesToDelete.size(), &texturesToDelete[0]);
+			texturesToDelete.clear();
+		}
+		CollectCleanup();
+	}
+	void DeleteLater(GLuint texId) { texturesToDelete.push_back(texId); }
+
+private:
+	std::vector<GLuint> texturesToDelete;
 };
-extern TextureCache TexCache;
+extern GlTextureCache TexCache;
 
 extern const u32 Zfunction[8];
 extern const u32 SrcBlendGL[], DstBlendGL[];
+
+struct OpenGLRenderer : Renderer
+{
+	bool Init() override;
+	void Resize(int w, int h) override { width = w; height = h; }
+	void Term() override;
+
+	bool Process(TA_context* ctx) override { return ProcessFrame(ctx); }
+
+	bool Render() override;
+
+	bool RenderLastFrame() override;
+
+	void DrawOSD(bool clear_screen) override { OSD_DRAW(clear_screen); }
+
+	BaseTextureCacheData *GetTexture(TSP tsp, TCW tcw) override
+	{
+		return gl_GetTexture(tsp, tcw);
+	}
+
+	bool Present() override
+	{
+		if (!frameRendered)
+			return false;
+		frameRendered = false;
+		return true;
+	}
+
+	bool frameRendered = false;
+	int width;
+	int height;
+};
+
+void initQuad();
+void termQuad();
+void drawQuad(GLuint texId, bool rotate = false, bool swapY = false);
+
+#define SHADER_COMPAT "						\n\
+#define TARGET_GL %s						\n\
+											\n\
+#define GLES2 0 							\n\
+#define GLES3 1 							\n\
+#define GL2 2								\n\
+#define GL3 3								\n\
+											\n\
+#if TARGET_GL == GL2 						\n\
+#define highp								\n\
+#define lowp								\n\
+#define mediump								\n\
+#endif										\n\
+#if TARGET_GL == GLES3						\n\
+out highp vec4 FragColor;					\n\
+#define gl_FragColor FragColor				\n\
+#define FOG_CHANNEL a						\n\
+#elif TARGET_GL == GL3						\n\
+out highp vec4 FragColor;					\n\
+#define gl_FragColor FragColor				\n\
+#define FOG_CHANNEL r						\n\
+#else										\n\
+#define texture texture2D					\n\
+#define FOG_CHANNEL a						\n\
+#endif										\n\
+											\n\
+"
+
+#define VTX_SHADER_COMPAT SHADER_COMPAT \
+"#if TARGET_GL == GLES2 || TARGET_GL == GL2 \n\
+#define in attribute						\n\
+#define out varying							\n\
+#endif										\n\
+"
+
+#define PIX_SHADER_COMPAT SHADER_COMPAT \
+"#if TARGET_GL == GLES2 || TARGET_GL == GL2 \n\
+#define in varying							\n\
+#endif										\n\
+"

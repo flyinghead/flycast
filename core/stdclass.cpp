@@ -1,5 +1,6 @@
 #include "types.h"
 #include "stdclass.h"
+#include "oslib/directory.h"
 
 #include <chrono>
 #include <cstring>
@@ -7,29 +8,18 @@
 #include <sys/types.h>
 #include <vector>
 
-#if HOST_OS == OS_DARWIN
-#include <mach/clock.h>
-#include <mach/mach.h>
-#endif
-
-#if COMPILER_VC_OR_CLANG_WIN32
+#ifdef _WIN32
 	#include <algorithm>
-	#include <io.h>
-	#include <direct.h>
-	#define access _access
-	#define R_OK   4
-#else
-	#include <unistd.h>
 #endif
 
-std::string user_config_dir;
-std::string user_data_dir;
-std::vector<std::string> system_config_dirs;
-std::vector<std::string> system_data_dirs;
+static std::string user_config_dir;
+static std::string user_data_dir;
+static std::vector<std::string> system_config_dirs;
+static std::vector<std::string> system_data_dirs;
 
 bool file_exists(const std::string& filename)
 {
-	return (access(filename.c_str(), R_OK) == 0);
+	return (flycast::access(filename.c_str(), R_OK) == 0);
 }
 
 void set_user_config_dir(const std::string& dir)
@@ -57,24 +47,20 @@ std::string get_writable_config_path(const std::string& filename)
 	/* Only stuff in the user_config_dir is supposed to be writable,
 	 * so we always return that.
 	 */
-	return (user_config_dir + filename);
+	return user_config_dir + filename;
 }
 
 std::string get_readonly_config_path(const std::string& filename)
 {
 	std::string user_filepath = get_writable_config_path(filename);
-	if(file_exists(user_filepath))
-	{
+	if (file_exists(user_filepath))
 		return user_filepath;
-	}
 
-	std::string filepath;
-	for (size_t i = 0; i < system_config_dirs.size(); i++) {
-		filepath = system_config_dirs[i] + filename;
+	for (const auto& config_dir : system_config_dirs)
+	{
+		std::string filepath = config_dir + filename;
 		if (file_exists(filepath))
-		{
 			return filepath;
-		}
 	}
 
 	// Not found, so we return the user variant
@@ -86,41 +72,50 @@ std::string get_writable_data_path(const std::string& filename)
 	/* Only stuff in the user_data_dir is supposed to be writable,
 	 * so we always return that.
 	 */
-	return (user_data_dir + filename);
+	return user_data_dir + filename;
 }
 
 std::string get_readonly_data_path(const std::string& filename)
 {
 	std::string user_filepath = get_writable_data_path(filename);
-	if(file_exists(user_filepath))
-	{
+	if (file_exists(user_filepath))
 		return user_filepath;
-	}
 
-	std::string filepath;
-	for (size_t i = 0; i < system_data_dirs.size(); i++) {
-		filepath = system_data_dirs[i] + filename;
+	for (const auto& data_dir : system_data_dirs)
+	{
+		std::string filepath = data_dir + filename;
 		if (file_exists(filepath))
-		{
 			return filepath;
-		}
 	}
+	// Try the game directory
+	std::string filepath = get_game_dir() + filename;
+	if (file_exists(filepath))
+		return filepath;
 
 	// Not found, so we return the user variant
 	return user_filepath;
 }
 
+size_t get_last_slash_pos(const std::string& path)
+{
+	size_t lastindex = path.find_last_of('/');
+#ifdef _WIN32
+	size_t lastindex2 = path.find_last_of('\\');
+	if (lastindex == std::string::npos)
+		lastindex = lastindex2;
+	else if (lastindex2 != std::string::npos)
+		lastindex = std::max(lastindex, lastindex2);
+#endif
+	return lastindex;
+}
+
 std::string get_game_save_prefix()
 {
 	std::string save_file = settings.imgread.ImagePath;
-	size_t lastindex = save_file.find_last_of('/');
-#ifdef _WIN32
-	size_t lastindex2 = save_file.find_last_of('\\');
-	lastindex = std::max(lastindex, lastindex2);
-#endif
+	size_t lastindex = get_last_slash_pos(save_file);
 	if (lastindex != std::string::npos)
 		save_file = save_file.substr(lastindex + 1);
-	return get_writable_data_path(DATA_PATH) + save_file;
+	return get_writable_data_path(save_file);
 }
 
 std::string get_game_basename()
@@ -135,71 +130,37 @@ std::string get_game_basename()
 std::string get_game_dir()
 {
 	std::string game_dir = settings.imgread.ImagePath;
-	size_t lastindex = game_dir.find_last_of('/');
-#ifdef _WIN32
-	size_t lastindex2 = game_dir.find_last_of('\\');
-	lastindex = std::max(lastindex, lastindex2);
-#endif
+	size_t lastindex = get_last_slash_pos(game_dir);
 	if (lastindex != std::string::npos)
 		game_dir = game_dir.substr(0, lastindex + 1);
+	else
+		game_dir = "./";
 	return game_dir;
 }
 
 bool make_directory(const std::string& path)
 {
-#if COMPILER_VC_OR_CLANG_WIN32
-#define mkdir _mkdir
-#endif
-
-#ifdef _WIN32
-	return mkdir(path.c_str()) == 0;
-#else
-	return mkdir(path.c_str(), 0755) == 0;
-#endif
+	return flycast::mkdir(path.c_str(), 0755) == 0;
 }
 
-// Thread & related platform dependant code
-#if !defined(HOST_NO_THREADS)
+void cThread::Start()
+{
+	verify(!thread.joinable());
+	thread = std::thread(entry, param);
+}
 
-#ifdef _WIN32
-void cThread::Start() {
-	verify(hThread == NULL);
-	hThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)entry, param, 0, NULL);
-	ResumeThread(hThread);
+void cThread::WaitToEnd()
+{
+	if (thread.joinable() && thread.get_id() != std::this_thread::get_id())
+		thread.join();
 }
-void cThread::WaitToEnd() {
-	if (GetCurrentThreadId() != GetThreadId(hThread))
-		WaitForSingleObject(hThread, INFINITE);
-	CloseHandle(hThread);
-	hThread = NULL;
-}
-#else
-void cThread::Start() {
-	verify(hThread == NULL);
-	hThread = new pthread_t;
-	if (pthread_create( hThread, NULL, entry, param))
-		die("Thread creation failed");
-}
-void cThread::WaitToEnd() {
-	if (hThread) {
-		pthread_join(*hThread,0);
-		delete hThread;
-		hThread = NULL;
-	}
-}
-#endif
-
-#endif
 
 cResetEvent::cResetEvent() : state(false)
 {
 
 }
 
-cResetEvent::~cResetEvent()
-{
-
-}
+cResetEvent::~cResetEvent() = default;
 
 void cResetEvent::Set()//Signal
 {
@@ -218,14 +179,12 @@ void cResetEvent::Reset()
 
 bool cResetEvent::Wait(u32 msec)
 {
-    bool rc = true;
+	std::unique_lock<std::mutex> lock(mutx);
 
-    std::unique_lock<std::mutex> lock(mutx);
+	if (!state)
+		cond.wait_for(lock, std::chrono::milliseconds(msec));
 
-    if (!state) {
-        rc = (cond.wait_for(lock, std::chrono::milliseconds(msec)) == std::cv_status::no_timeout);
-    }
-
+	bool rc = state;
     state = false;
 
     return rc;

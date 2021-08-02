@@ -11,10 +11,8 @@
 #include "icon.h"
 #include "wsi/context.h"
 #include "hw/maple/maple_devs.h"
+#include "emulator.h"
 
-#if FEAT_HAS_NIXPROF
-#include "profiler/profiler.h"
-#endif
 #include "x11_keyboard.h"
 
 #if defined(TARGET_PANDORA)
@@ -29,46 +27,18 @@
 static Window x11_win;
 Display *x11_disp;
 
-class MouseInputMapping : public InputMapping
+class X11Mouse : public SystemMouse
 {
 public:
-	MouseInputMapping()
+	X11Mouse() : SystemMouse("X11")
 	{
-		name = "X11 Mouse";
-		set_button(DC_BTN_A, Button1);
-		set_button(DC_BTN_B, Button3);
-		set_button(DC_BTN_START, Button2);
-
-		dirty = false;
-	}
-};
-
-class X11MouseGamepadDevice : public GamepadDevice
-{
-public:
-	X11MouseGamepadDevice(int maple_port) : GamepadDevice(maple_port, "X11")
-	{
-		_name = "Mouse";
 		_unique_id = "x11_mouse";
-		if (!find_mapping())
-			input_mapper = std::make_shared<MouseInputMapping>();
-	}
-	bool gamepad_btn_input(u32 code, bool pressed) override
-	{
-		if (gui_is_open())
-			// Don't register mouse clicks as gamepad presses when gui is open
-			// This makes the gamepad presses to be handled first and the mouse position to be ignored
-			// TODO Make this generic
-			return false;
-		else
-			return GamepadDevice::gamepad_btn_input(code, pressed);
+		loadMapping();
 	}
 };
 
-static int x11_keyboard_input = 0;
-static std::shared_ptr<X11KeyboardDevice> x11_keyboard;
-static std::shared_ptr<X11KbGamepadDevice> kb_gamepad;
-static std::shared_ptr<X11MouseGamepadDevice> mouse_gamepad;
+static std::shared_ptr<X11Keyboard> x11Keyboard;
+static std::shared_ptr<X11Mouse> x11Mouse;
 
 int x11_width;
 int x11_height;
@@ -77,8 +47,6 @@ static bool x11_fullscreen = false;
 static Atom wmDeleteMessage;
 
 extern bool dump_frame_switch;
-
-void dc_exit();
 
 enum
 {
@@ -177,8 +145,6 @@ static void x11_uncapture_mouse()
 void input_x11_handle()
 {
 	//Handle X11
-	static int prev_x = -1;
-	static int prev_y = -1;
 	bool mouse_moved = false;
 	XEvent e;
 
@@ -195,7 +161,14 @@ void input_x11_handle()
 					KeySym keysym_return;
 					int len = XLookupString(&e.xkey, buf, 1, &keysym_return, NULL);
 					if (len > 0)
-						x11_keyboard->keyboard_character(buf[0]);
+					{
+						// Cheap ISO Latin-1 to UTF-8 conversion
+						u16 b = (u8)buf[0];
+						if (b < 0x80)
+							gui_keyboard_input(b);
+						else
+							gui_keyboard_input((u16)((0xc2 + (b > 0xbf)) | ((b & 0x3f) + 0x80) << 8));
+					}
 				}
 				/* no break */
 			case KeyRelease:
@@ -210,10 +183,7 @@ void input_x11_handle()
 							// Key wasn’t actually released: auto repeat
 							continue;
 					}
-					// Dreamcast keyboard emulation
-					x11_keyboard->keyboard_input(e.xkey.keycode, e.type == KeyPress);
-					// keyboard-based emulated gamepad
-					kb_gamepad->gamepad_btn_input(e.xkey.keycode, e.type == KeyPress);
+					x11Keyboard->keyboard_input(e.xkey.keycode, e.type == KeyPress);
 
 					// Start/stop mouse capture with Left Ctrl + Left Alt
 					if (e.type == KeyPress
@@ -227,117 +197,79 @@ void input_x11_handle()
 							x11_uncapture_mouse();
 					}
 					// TODO Move this to bindable keys or in the gui menu
-					if (x11_keyboard_input)
+#if 0
+					if (e.xkey.keycode == KEY_F10)
 					{
-#if 1
-						if (e.xkey.keycode == KEY_F10)
-						{
-							// Dump the next frame into a file
-							dump_frame_switch = e.type == KeyPress;
-						}
-						else
-#elif FEAT_HAS_NIXPROF
-						if (e.type == KeyRelease && e.xkey.keycode == KEY_F10)
-						{
-							if (sample_Switch(3000)) {
-								INFO_LOG(COMMON, "Starting profiling");
-							} else {
-								INFO_LOG(COMMON, "Stopping profiling");
-							}
-						}
-						else
+						// Dump the next frame into a file
+						dump_frame_switch = e.type == KeyPress;
+					}
+					else
 #endif
-						if (e.type == KeyRelease && e.xkey.keycode == KEY_F11)
-						{
-							x11_fullscreen = !x11_fullscreen;
-							x11_window_set_fullscreen(x11_fullscreen);
-						}
+					if (e.type == KeyPress && e.xkey.keycode == KEY_F11)
+					{
+						x11_fullscreen = !x11_fullscreen;
+						x11_window_set_fullscreen(x11_fullscreen);
 					}
 				}
 				break;
 
 			case FocusOut:
-				{
-					if (capturing_mouse)
-						x11_uncapture_mouse();
-					capturing_mouse = false;
-				}
+				if (capturing_mouse)
+					x11_uncapture_mouse();
+				capturing_mouse = false;
 				break;
 
 			case ButtonPress:
 			case ButtonRelease:
-				mouse_gamepad->gamepad_btn_input(e.xbutton.button, e.type == ButtonPress);
+				switch (e.xbutton.button)
 				{
-					u32 button_mask = 0;
-					switch (e.xbutton.button)
-					{
-					case Button1:		// Left button
-						button_mask = 1 << 2;
-						break;
-					case Button2:		// Middle button
-						button_mask = 1 << 3;
-						break;
-					case Button3:		// Right button
-						button_mask = 1 << 1;
-						break;
-					case Button4: 		// Mouse wheel up
-						mo_wheel_delta -= 16;
-						break;
-					case Button5: 		// Mouse wheel down
-						mo_wheel_delta += 16;
-						break;
-					default:
-						break;
-					}
-
-					if (button_mask)
-					{
-						if (e.type == ButtonPress)
-							mo_buttons &= ~button_mask;
-						else
-							mo_buttons |= button_mask;
-					}
+				case Button1:		// Left button
+					x11Mouse->setButton(Mouse::LEFT_BUTTON, e.type == ButtonPress);
+					break;
+				case Button2:		// Middle button
+					x11Mouse->setButton(Mouse::MIDDLE_BUTTON, e.type == ButtonPress);
+					break;
+				case Button3:		// Right button
+					x11Mouse->setButton(Mouse::RIGHT_BUTTON, e.type == ButtonPress);
+					break;
+				case Button4: 		// Mouse wheel up
+					x11Mouse->setWheel(-1);
+					break;
+				case Button5: 		// Mouse wheel down
+					x11Mouse->setWheel(1);
+					break;
+				default:
+					break;
 				}
 				/* no break */
 
 			case MotionNotify:
-				// For Light gun
-				mo_x_abs = (e.xmotion.x - (x11_width - x11_height * 640 / 480) / 2) * 480 / x11_height;
-				mo_y_abs = e.xmotion.y * 480 / x11_height;
-
-				// For mouse
+				x11Mouse->setAbsPos(e.xmotion.x, e.xmotion.y, x11_width, x11_height);
 				mouse_moved = true;
-				if (prev_x != -1)
-					mo_x_delta += (f32)(e.xmotion.x - prev_x) * settings.input.MouseSensitivity / 100.f;
-				if (prev_y != -1)
-					mo_y_delta += (f32)(e.xmotion.y - prev_y) * settings.input.MouseSensitivity / 100.f;
-				prev_x = e.xmotion.x;
-				prev_y = e.xmotion.y;
-
 				break;
 		}
 	}
+	if (gui_is_open() && capturing_mouse)
+	{
+		x11_uncapture_mouse();
+		capturing_mouse = false;
+	}
 	if (capturing_mouse && mouse_moved)
 	{
-		prev_x = x11_width / 2;
-		prev_y = x11_height / 2;
+		mo_x_prev[0] = x11_width / 2;
+		mo_y_prev[0] = x11_height / 2;
 		XWarpPointer(x11_disp, None, x11_win, 0, 0, 0, 0,
-				prev_x, prev_y);
+				mo_x_prev[0], mo_y_prev[0]);
 		XSync(x11_disp, true);
 	}
 }
 
 void input_x11_init()
 {
-	x11_keyboard = std::make_shared<X11KeyboardDevice>(0);
-	kb_gamepad = std::make_shared<X11KbGamepadDevice>(0);
-	GamepadDevice::Register(kb_gamepad);
-	mouse_gamepad = std::make_shared<X11MouseGamepadDevice>(0);
-	GamepadDevice::Register(mouse_gamepad);
-
-	x11_keyboard_input = (cfgLoadInt("input", "enable_x11_keyboard", 1) >= 1);
-	if (!x11_keyboard_input)
-		INFO_LOG(INPUT, "X11 Keyboard input disabled by config.");
+	x11Keyboard = std::make_shared<X11Keyboard>(0);
+	GamepadDevice::Register(x11Keyboard);
+	x11Mouse = std::make_shared<X11Mouse>();
+	GamepadDevice::Register(x11Mouse);
 }
 
 void x11_window_create()
@@ -388,9 +320,16 @@ void x11_window_create()
 		sWA.event_mask |= PointerMotionMask | FocusChangeMask;
 		unsigned long ui32Mask = CWBackPixel | CWBorderPixel | CWEventMask | CWColormap;
 
-		x11_width = cfgLoadInt("x11", "width", DEFAULT_WINDOW_WIDTH);
-		x11_height = cfgLoadInt("x11", "height", DEFAULT_WINDOW_HEIGHT);
-		x11_fullscreen = cfgLoadBool("x11", "fullscreen", DEFAULT_FULLSCREEN);
+		x11_width = cfgLoadInt("window", "width", 0);
+		if (x11_width == 0)
+			x11_width = cfgLoadInt("x11", "width", DEFAULT_WINDOW_WIDTH);
+		x11_height = cfgLoadInt("window", "height", 0);
+		x11_fullscreen = cfgLoadBool("window", "fullscreen", DEFAULT_FULLSCREEN);
+		if (x11_height == 0)
+		{
+			x11_height = cfgLoadInt("x11", "height", DEFAULT_WINDOW_HEIGHT);
+			x11_fullscreen = cfgLoadBool("x11", "fullscreen", DEFAULT_FULLSCREEN);
+		}
 
 		if (x11_width < 0 || x11_height < 0)
 		{
@@ -412,7 +351,7 @@ void x11_window_create()
 		Atom net_wm_icon = XInternAtom(x11_disp, "_NET_WM_ICON", False);
 		Atom cardinal = XInternAtom(x11_disp, "CARDINAL", False);
 		XChangeProperty(x11_disp, x11_win, net_wm_icon, cardinal, 32, PropModeReplace,
-				(const unsigned char*)reicast_icon, sizeof(reicast_icon) / sizeof(*reicast_icon));
+				(const unsigned char*)window_icon, sizeof(window_icon) / sizeof(*window_icon));
 
 		// Capture the close window event
 		wmDeleteMessage = XInternAtom(x11_disp, "WM_DELETE_WINDOW", False);
@@ -468,10 +407,10 @@ void x11_window_destroy()
 	{
 		if (!x11_fullscreen)
 		{
-			cfgSaveInt("x11", "width", x11_width);
-			cfgSaveInt("x11", "height", x11_height);
+			cfgSaveInt("window", "width", x11_width);
+			cfgSaveInt("window", "height", x11_height);
 		}
-		cfgSaveBool("x11", "fullscreen", x11_fullscreen);
+		cfgSaveBool("window", "fullscreen", x11_fullscreen);
 		XDestroyWindow(x11_disp, x11_win);
 		x11_win = (Window)0;
 	}

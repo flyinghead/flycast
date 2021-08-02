@@ -5,6 +5,7 @@
 #pragma once
 #include <cmath>
 #include "types.h"
+#include "stdclass.h"
 
 struct MemChip
 {
@@ -16,14 +17,14 @@ struct MemChip
 
 	MemChip(u32 size, u32 write_protect_size = 0)
 	{
-		this->data=new u8[size];
-		this->size=size;
-		this->mask=size-1;//must be power of 2
+		this->data = new u8[size]();
+		this->size = size;
+		this->mask = size - 1; // must be power of 2
 		this->write_protect_size = write_protect_size;
 	}
 	virtual ~MemChip() { delete[] data; }
 
-	u8 Read8(u32 addr)
+	virtual u8 Read8(u32 addr)
 	{
 		return data[addr & mask];
 	}
@@ -47,11 +48,11 @@ struct MemChip
 
 	bool Load(const std::string& file)
 	{
-		FILE* f=fopen(file.c_str(),"rb");
+		FILE *f = nowide::fopen(file.c_str(), "rb");
 		if (f)
 		{
-			bool rv = fread(data + write_protect_size, 1, size - write_protect_size, f) == size - write_protect_size;
-			fclose(f);
+			bool rv = std::fread(data + write_protect_size, 1, size - write_protect_size, f) == size - write_protect_size;
+			std::fclose(f);
 			if (rv)
 				this->load_filename = file;
 
@@ -67,62 +68,49 @@ struct MemChip
 
 	void Save(const std::string& file)
 	{
-		FILE* f=fopen(file.c_str(),"wb");
+		FILE *f = nowide::fopen(file.c_str(), "wb");
 		if (f)
 		{
-			fwrite(data + write_protect_size, 1, size - write_protect_size, f);
-			fclose(f);
+			std::fwrite(data + write_protect_size, 1, size - write_protect_size, f);
+			std::fclose(f);
 		}
 	}
 
-	bool Load(const std::string& root, const std::string& prefix, const std::string& names_ro, const std::string& title)
+	bool Load(const std::string& prefix, const std::string& names_ro, const std::string& title)
 	{
-		char base[512];
-		char temp[512];
-		char names[512];
-
-		// FIXME: Data loss if buffer is too small
-		strncpy(names,names_ro.c_str(), sizeof(names));
-		names[sizeof(names) - 1] = '\0';
-
-		sprintf(base,"%s",root.c_str());
-
-		char* curr=names;
-		char* next;
-		do
+		const size_t npos = std::string::npos;
+		size_t start = 0;
+		while (start < names_ro.size())
 		{
-			next=strstr(curr,";");
-			if(next) *next=0;
-			if (curr[0]=='%')
-			{
-				sprintf(temp,"%s%s%s",base,prefix.c_str(),curr+1);
-			}
-			else
-			{
-				sprintf(temp,"%s%s",base,curr);
-			}
-			
-			curr=next+1;
+			size_t semicolon = names_ro.find(';', start);
+			std::string name = names_ro.substr(start, semicolon == npos ? semicolon : semicolon - start);
 
-			if (Load(temp))
+			size_t percent = name.find('%');
+			if (percent != npos)
+				name = name.replace(percent, 1, prefix);
+
+			std::string fullpath = get_readonly_data_path(name);
+			if (file_exists(fullpath) && Load(fullpath))
 			{
-				INFO_LOG(FLASHROM, "Loaded %s as %s", temp, title.c_str());
+				INFO_LOG(FLASHROM, "Loaded %s as %s", fullpath.c_str(), title.c_str());
 				return true;
 			}
-		} while(next);
 
-
+			start = semicolon;
+			if (start != npos)
+				start++;
+		}
 		return false;
 	}
-	void Save(const std::string& root, const std::string& prefix, const std::string& name_ro, const std::string& title)
-	{
-		char path[512];
 
-		sprintf(path,"%s%s%s",root.c_str(),prefix.c_str(),name_ro.c_str());
+	void Save(const std::string& prefix, const std::string& name_ro, const std::string& title)
+	{
+		std::string path = get_writable_data_path(prefix + name_ro);
 		Save(path);
 
-		INFO_LOG(FLASHROM, "Saved %s as %s", path, title.c_str());
+		INFO_LOG(FLASHROM, "Saved %s as %s", path.c_str(), title.c_str());
 	}
+
 	virtual void Reset() {}
 	virtual bool Serialize(void **data, unsigned int *total_size) { return true; }
 	virtual bool Unserialize(void **data, unsigned int *total_size) { return true; }
@@ -158,13 +146,13 @@ struct SRamChip : MemChip
 		}
 	}
 
-	virtual bool Serialize(void **data, unsigned int *total_size) override
+	bool Serialize(void **data, unsigned int *total_size) override
 	{
 		REICAST_SA(&this->data[write_protect_size], size - write_protect_size);
 		return true;
 	}
 
-	virtual bool Unserialize(void **data, unsigned int *total_size) override
+	bool Unserialize(void **data, unsigned int *total_size) override
 	{
 		REICAST_USA(&this->data[write_protect_size], size - write_protect_size);
 		return true;
@@ -262,11 +250,12 @@ struct DCFlashChip : MemChip
 		FS_ByteProgram,
 		FS_EraseAMD1,
 		FS_EraseAMD2,
-		FS_EraseAMD3
+		FS_EraseAMD3,
+		FS_SelectMode,
 	};
 
 	FlashState state;
-	virtual void Reset() override
+	void Reset() override
 	{
 		//reset the flash chip state
 		state = FS_Normal;
@@ -276,7 +265,7 @@ struct DCFlashChip : MemChip
 	{
 		if (sz != 1)
 		{
-			INFO_LOG(FLASHROM, "invalid access size %d", sz);
+			INFO_LOG(FLASHROM, "invalid access size %d addr %x", sz, addr);
 			return;
 		}
 
@@ -296,7 +285,7 @@ struct DCFlashChip : MemChip
 					state = FS_ReadAMDID1;
 				break;
 			default:
-				INFO_LOG(FLASHROM, "Unknown FlashWrite mode: %x\n", val);
+				INFO_LOG(FLASHROM, "Unknown FlashWrite mode: %x", val);
 				break;
 			}
 			break;
@@ -310,7 +299,8 @@ struct DCFlashChip : MemChip
 				state = FS_ReadAMDID2;
 			else
 			{
-				WARN_LOG(FLASHROM, "FlashRom: ReadAMDID1 unexpected write @ %x: %x", addr, val);
+				if (val != 0xf0)
+					WARN_LOG(FLASHROM, "FlashRom: ReadAMDID1 unexpected write @ %x: %x", addr, val);
 				state = FS_Normal;
 			}
 			break;
@@ -328,14 +318,17 @@ struct DCFlashChip : MemChip
 				state = FS_ByteProgram;
 			else if ((addr & 0xfff) == 0xaaa && (val & 0xff) == 0xa0)
 				state = FS_ByteProgram;
+			else if ((addr & 0xffff) == 0x5555 && (val & 0xff) == 0x90)
+				state = FS_SelectMode;
 			else
 			{
-				WARN_LOG(FLASHROM, "FlashRom: ReadAMDID2 unexpected write @ %x: %x", addr, val);
+				if (val != 0xf0)
+					WARN_LOG(FLASHROM, "FlashRom: ReadAMDID2 unexpected write @ %x: %x", addr, val);
 				state = FS_Normal;
 			}
 			break;
 		case FS_ByteProgram:
-			if (addr >= write_protect_size)
+			if ((addr & 0x1e000) != 0x1a000 && addr >= write_protect_size)
 				data[addr] &= val;
 			state = FS_Normal;
 			break;
@@ -347,7 +340,9 @@ struct DCFlashChip : MemChip
 				state = FS_EraseAMD2;
 			else
 			{
-				WARN_LOG(FLASHROM, "FlashRom: EraseAMD1 unexpected write @ %x: %x", addr, val);
+				if (val != 0xf0)
+					WARN_LOG(FLASHROM, "FlashRom: EraseAMD1 unexpected write @ %x: %x", addr, val);
+				state = FS_Normal;
 			}
 			break;
 
@@ -360,7 +355,9 @@ struct DCFlashChip : MemChip
 				state = FS_EraseAMD3;
 			else
 			{
-				WARN_LOG(FLASHROM, "FlashRom: EraseAMD2 unexpected write @ %x: %x", addr, val);
+				if (val != 0xf0)
+					WARN_LOG(FLASHROM, "FlashRom: EraseAMD2 unexpected write @ %x: %x", addr, val);
+				state = FS_Normal;
 			}
 			break;
 
@@ -371,36 +368,82 @@ struct DCFlashChip : MemChip
 				// chip erase
 				INFO_LOG(FLASHROM, "Erasing Chip!");
 				u8 save[0x2000];
-				if (settings.platform.system == DC_PLATFORM_ATOMISWAVE)
-					// this area is write-protected on AW
-					memcpy(save, data + 0x1a000, 0x2000);
+				// this area is write-protected
+				memcpy(save, data + 0x1a000, 0x2000);
 				memset(data + write_protect_size, 0xff, size - write_protect_size);
-				if (settings.platform.system == DC_PLATFORM_ATOMISWAVE)
-					memcpy(data + 0x1a000, save, 0x2000);
-				state = FS_Normal;
+				memcpy(data + 0x1a000, save, 0x2000);
 			}
 			else if ((val & 0xff) == 0x30)
 			{
 				// sector erase
 				if (addr >= write_protect_size)
 				{
-					u8 save[0x2000];
-					if (settings.platform.system == DC_PLATFORM_ATOMISWAVE)
-						// this area is write-protected on AW
-						memcpy(save, data + 0x1a000, 0x2000);
-					INFO_LOG(FLASHROM, "Erase Sector %08X! (%08X)", addr, addr & ~0x3FFF);
-					memset(&data[addr&(~0x3FFF)],0xFF,0x4000);
-					if (settings.platform.system == DC_PLATFORM_ATOMISWAVE)
-						memcpy(data + 0x1a000, save, 0x2000);
+					void *start;
+					u32 len;
+					switch (addr & ~0x1FFF)
+					{
+					case 0x00000:	// SA0
+						start = &data[0];
+						len = 0x10000;
+						break;
+					case 0x10000:	// SA1
+						start = &data[0x10000];
+						len = 0x8000;
+						break;
+					case 0x18000:	// SA2
+						start = &data[0x18000];
+						len = 0x2000;
+						break;
+					case 0x1a000:	// SA3
+						start = nullptr;
+						len = 0;
+						break;
+					case 0x1c000:	// SA4
+						start = &data[0x1c000];
+						len = 0x4000;
+						break;
+					default:
+						start = nullptr;
+						len = 0;
+						break;
+					}
+					INFO_LOG(FLASHROM, "Erase Sector %08X!", addr);
+					if (start != nullptr)
+						memset(start, 0xFF, len);
 				}
-				state = FS_Normal;
 			}
-			else
-			{
+			else if (val != 0xf0)
 				WARN_LOG(FLASHROM, "FlashRom: EraseAMD3 unexpected write @ %x: %x", addr, val);
-			}
+			state = FS_Normal;
+			break;
+		default:
+			WARN_LOG(FLASHROM, "FlashRom: invalid state. write @ %x: %x", addr, val);
+			state = FS_Normal;
 			break;
 		}
+	}
+
+	u8 Read8(u32 addr) override
+	{
+		if (state == FS_SelectMode)
+		{
+			state = FS_Normal;
+			switch (addr & 0x43)
+			{
+			case 0:	// manufacturer's code
+				return 4;		// or 0x20 or 1
+			case 1:	// device code
+				return 0xb0;	// or 0x40 or 0x3e
+			case 2:	// sector protection verification
+				// sector protection
+				DEBUG_LOG(FLASHROM, "Sector protection address %x", addr);
+				return (addr & 0x1e000) == 0x1a000;
+			default:
+				WARN_LOG(FLASHROM, "SelectMode unknown address %x", addr);
+				return 0;
+			}
+		}
+		return MemChip::Read8(addr);
 	}
 
 	int WriteBlock(u32 part_id, u32 block_id, const void *data)
@@ -584,7 +627,7 @@ private:
 		return num_physical_blocks(size) - num_bitmap_blocks(size) - 1;
 	}
 
-	inline int is_allocated(u8 *bitmap, u32 phys_id)
+	inline int is_allocated(const u8 *bitmap, u32 phys_id)
 	{
 		int index = (phys_id - 1) % FLASH_BITMAP_BLOCKS;
 		return (bitmap[index / 8] & (0x80 >> (index % 8))) == 0x0;
@@ -707,14 +750,14 @@ private:
 		return result;
 	}
 
-	virtual bool Serialize(void **data, unsigned int *total_size) override
+	bool Serialize(void **data, unsigned int *total_size) override
 	{
 		REICAST_S(state);
 		REICAST_SA(&this->data[write_protect_size], size - write_protect_size);
 		return true;
 	}
 
-	virtual bool Unserialize(void **data, unsigned int *total_size) override
+	bool Unserialize(void **data, unsigned int *total_size) override
 	{
 		REICAST_US(state);
 		REICAST_USA(&this->data[write_protect_size], size - write_protect_size);

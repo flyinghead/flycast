@@ -1,0 +1,127 @@
+name: C/C++ CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    name: ${{ matrix.config.name }}
+    runs-on: ${{ matrix.config.os }}
+
+    strategy:
+      matrix:
+        config:
+          - {name: i686-pc-windows-msvc, os: windows-latest, cmakeArgs: -DCMAKE_SYSTEM_VERSION="10.0.18362.0" -G "Visual Studio 16 2019" -A Win32}
+          - {name: x86_64-apple-darwin, os: macos-latest, cmakeArgs: -G "Xcode", destDir: osx}
+          - {name: x86_64-pc-linux-gnu, os: ubuntu-latest}
+          - {name: x86_64-pc-windows-msvc, os: windows-latest, cmakeArgs: -DCMAKE_SYSTEM_VERSION="10.0.18362.0" -G "Visual Studio 16 2019" -A x64}
+          - {name: x86_64-w64-mingw32, os: windows-latest, cmakeArgs: -G "MinGW Makefiles", destDir: win}
+
+    steps:
+      - name: Set up build environment (macos-latest)
+        run: |
+          brew install ccache libao libomp pulseaudio zlib
+          echo "/usr/local/opt/ccache/libexec" >> $GITHUB_PATH
+          echo "CCACHE_DIR=/tmp/ccache" >> $GITHUB_ENV
+        if: matrix.config.os == 'macos-latest'
+
+      - name: Set up build environment (ubuntu-latest)
+        run: |
+          sudo apt-get update
+          sudo apt-get -y install ccache libao-dev libasound2-dev libevdev-dev libgl1-mesa-dev libpulse-dev libsdl2-dev libudev-dev libzip-dev libminiupnpc-dev
+          echo "CCACHE_DIR=/tmp/ccache" >> $GITHUB_ENV
+        if: matrix.config.os == 'ubuntu-latest'
+
+      - name: Set up build environment (windows-latest)
+        run: echo "DXSDK_DIR=${Env:HOMEDRIVE}${Env:HOMEPATH}\ccache\" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf-8 -Append
+        if: matrix.config.os == 'windows-latest' && matrix.config.name != 'x86_64-w64-mingw32'
+
+      - uses: actions/cache@v2
+        with:
+          path: /tmp/ccache
+          key: ccache-${{ matrix.config.os }}-${{ github.sha }}
+          restore-keys: ccache-${{ matrix.config.os }}-
+        if: matrix.config.os != 'windows-latest'
+
+      - uses: actions/cache@v2
+        id: cache
+        with:
+          path: $HOME/ccache
+          key: ccache-${{ matrix.config.os }}-${{ github.sha }}
+          restore-keys: ccache-${{ matrix.config.os }}-
+        if: matrix.config.os == 'windows-latest'
+
+      - name: Download DX2010
+        if: steps.cache.outputs.cache-hit != 'true' && matrix.config.os == 'windows-latest' && matrix.config.name != 'x86_64-w64-mingw32'
+        run:   |
+               curl -L https://download.microsoft.com/download/a/e/7/ae743f1f-632b-4809-87a9-aa1bb3458e31/DXSDK_Jun10.exe -o _DX2010_.exe
+               7z x _DX2010_.exe DXSDK/Include -o_DX2010_
+               7z x _DX2010_.exe DXSDK/Lib/x86 -o_DX2010_
+               7z x _DX2010_.exe DXSDK/Lib/x64 -o_DX2010_
+               mv _DX2010_/DXSDK $HOME/ccache
+               rm -fR _DX*_ _DX*_.exe
+        shell: bash
+
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+          submodules: recursive
+
+      - name: Create artifact directory
+        run: mkdir -p build/artifact
+
+      - name: Build SDL (macos-latest)
+        run: |
+          cd shell/apple
+          mkdir artifacts
+          brew install --build-from-source ./sdl2.rb
+        if: matrix.config.os == 'macos-latest'
+
+      - name: CMake
+        run: |
+          cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE=artifact ${{ matrix.config.cmakeArgs }}
+          cmake --build build --config Release --parallel 2
+
+      - name: Unit Tests
+        run: |
+          mkdir -p build/tests
+          cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE=tests -DENABLE_CTEST=ON ${{ matrix.config.cmakeArgs }}
+          cmake --build build --config Release --parallel 2
+          ./build/tests/flycast
+        if: matrix.config.name == 'x86_64-pc-linux-gnu'
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: flycast-${{ matrix.config.name }}
+          path: build/artifact
+
+      - name: Package app (macos)
+        run: |
+          cd build/artifact
+          rm -rf Flycast.swiftmodule
+          zip -r flycast.app.zip Flycast.app
+          rm -rf Flycast.app
+        if: matrix.config.os == 'macos-latest'
+
+      - name: Package app (windows)
+        run: |
+          powershell Compress-Archive build/artifact/flycast.exe build/artifact/flycast.zip 
+          rm build/artifact/flycast.exe
+        if: matrix.config.name == 'x86_64-w64-mingw32'
+
+      - name: Set up git vars
+        run: |
+          echo GIT_BUILD=`git describe --all --always | sed 's/remotes\/origin/heads/'`-$GITHUB_SHA >> $GITHUB_ENV
+        shell: bash
+
+      - name: Configure AWS Credentials
+        id: aws-credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: AKIAJOZQS4H2PHQWYFCA
+          aws-secret-access-key: ${{ secrets.S3_SECRET_KEY }}
+          aws-region: us-east-2
+        if: github.repository == 'flyinghead/flycast' && github.event_name == 'push' && matrix.config.destDir != ''
+
+      - name: Upload to S3
+        run: aws s3 sync build/artifact s3://flycast-builds/${{ matrix.config.destDir }}/${{ env.GIT_BUILD }} --acl public-read --follow-symlinks
+        if: ${{ steps.aws-credentials.outputs.aws-account-id != '' }}

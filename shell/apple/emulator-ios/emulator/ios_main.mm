@@ -58,8 +58,6 @@ extern "C" int reicast_main(int argc, char* argv[])
 
     common_linux_setup();
 
-    settings.profile.run_counts=0;
-
     dc_init(argc,argv);
 
     dc_run();
@@ -87,10 +85,6 @@ void os_CreateWindow() {
 void os_SetupInput() {
 }
 
-void UpdateInputState(u32 port) {
-
-}
-
-void get_mic_data(u8* ) {
+void UpdateInputState() {
 
 }

@@ -13,17 +13,21 @@
 #include "naomi.h"
 #include "naomi_cart.h"
 #include "naomi_regs.h"
+#include "naomi_m3comm.h"
+#include "network/naomi_network.h"
 
 //#define NAOMI_COMM
 
-static const u32 BoardID=0x980055AA;
-u32 GSerialBuffer=0,BSerialBuffer=0;
-int GBufPos=0,BBufPos=0;
-int GState=0,BState=0;
-int GOldClk=0,BOldClk=0;
-int BControl=0,BCmd=0,BLastCmd=0;
-int GControl=0,GCmd=0,GLastCmd=0;
-int SerStep=0,SerStep2=0;
+static NaomiM3Comm m3comm;
+
+static const u32 BoardID = 0x980055AA;
+static u32 GSerialBuffer, BSerialBuffer;
+static int GBufPos, BBufPos;
+static int GState, BState;
+static int GOldClk, BOldClk;
+static int BControl, BCmd, BLastCmd;
+static int GControl, GCmd, GLastCmd;
+static int SerStep, SerStep2;
 
 #ifdef NAOMI_COMM
 	u32 CommOffset;
@@ -38,10 +42,10 @@ A-H		(0x41-0x48)
 J-N		(0x4A-0x4E)
 P-Z		(0x50-0x5A)
 */
-unsigned char BSerial[]="\xB7"/*CRC1*/"\x19"/*CRC2*/"0123234437897584372973927387463782196719782697849162342198671923649";
-unsigned char GSerial[]="\xB7"/*CRC1*/"\x19"/*CRC2*/"0123234437897584372973927387463782196719782697849162342198671923649";
+static u8 BSerial[]="\xB7"/*CRC1*/"\x19"/*CRC2*/"0123234437897584372973927387463782196719782697849162342198671923649";
+static u8 GSerial[]="\xB7"/*CRC1*/"\x19"/*CRC2*/"0123234437897584372973927387463782196719782697849162342198671923649";
 
-unsigned int ShiftCRC(unsigned int CRC,unsigned int rounds)
+static unsigned int ShiftCRC(unsigned int CRC,unsigned int rounds)
 {
 	const unsigned int Magic=0x10210000;
 	unsigned int i;
@@ -55,7 +59,7 @@ unsigned int ShiftCRC(unsigned int CRC,unsigned int rounds)
 	return CRC;
 }
 
-unsigned short CRCSerial(const u8 *Serial,unsigned int len)
+static unsigned short CRCSerial(const u8 *Serial,unsigned int len)
 {
 	unsigned int CRC=0xDEBDEB00;
 	unsigned int i;
@@ -71,7 +75,6 @@ unsigned short CRCSerial(const u8 *Serial,unsigned int len)
 	return (u16)(CRC>>16);
 }
 
-
 void NaomiInit()
 {
 	u16 CRC;
@@ -84,9 +87,6 @@ void NaomiInit()
 	GSerial[1]=(u8)(CRC);
 }
 
-
-
-
 void NaomiBoardIDWrite(const u16 Data)
 {
 	int Dat=Data&8;
@@ -94,13 +94,11 @@ void NaomiBoardIDWrite(const u16 Data)
 	int Rst=Data&0x20;
 	int Sta=Data&0x10;
 	
-
 	if(Rst)
 	{
 		BState=0;
 		BBufPos=0;
 	}
-
 	
 	if(Clk!=BOldClk && !Clk)	//Falling Edge clock
 	{
@@ -209,7 +207,7 @@ void NaomiBoardIDWriteControl(const u16 Data)
 	BControl=Data;
 }
 
-void NaomiGameIDProcessCmd()
+static void NaomiGameIDProcessCmd()
 {
 	if(GCmd!=GLastCmd)
 	{
@@ -281,13 +279,11 @@ void NaomiGameIDWrite(const u16 Data)
 	int Sta=Data&0x08;
 	int Cmd=Data&0x10;
 	
-
 	if(Rst)
 	{
 		GState=0;
 		GBufPos=0;
 	}
-
 	
 	if(Clk!=GOldClk && !Clk)	//Falling Edge clock
 	{
@@ -296,10 +292,6 @@ void NaomiGameIDWrite(const u16 Data)
 			GState=1;		
 		if(GState==1 && !Sta)
 			GState=2;
-		
-		
-		
-		
 
 		//State processing
 		if(GState==1)		//LoadBoardID
@@ -327,11 +319,8 @@ void NaomiGameIDWrite(const u16 Data)
 				GCmd&=0xfffffffe;
 			GControl=Cmd;
 		}
-		
 	}
-
 	GOldClk=Clk;
-
 }
 
 u16 NaomiGameIDRead()
@@ -395,25 +384,31 @@ void naomi_process(u32 command, u32 offsetl, u32 parameterl, u32 parameterh)
 	}
 }
 
-u32 ReadMem_naomi(u32 Addr, u32 sz)
+u32 ReadMem_naomi(u32 address, u32 size)
 {
-	verify(sz!=1);
+	verify(size != 1);
 	if (unlikely(CurrentCartridge == NULL))
 	{
 		INFO_LOG(NAOMI, "called without cartridge");
 		return 0xFFFF;
 	}
-	return CurrentCartridge->ReadMem(Addr, sz);
+	if (address >= NAOMI_COMM2_CTRL_addr && address <= NAOMI_COMM2_STATUS1_addr)
+		return m3comm.ReadMem(address, size);
+	else
+		return CurrentCartridge->ReadMem(address, size);
 }
 
-void WriteMem_naomi(u32 Addr, u32 data, u32 sz)
+void WriteMem_naomi(u32 address, u32 data, u32 size)
 {
 	if (unlikely(CurrentCartridge == NULL))
 	{
 		INFO_LOG(NAOMI, "called without cartridge");
 		return;
 	}
-	CurrentCartridge->WriteMem(Addr, data, sz);
+	if (address >= NAOMI_COMM2_CTRL_addr && address <= NAOMI_COMM2_STATUS1_addr && settings.platform.system == DC_PLATFORM_NAOMI)
+		m3comm.WriteMem(address, data, size);
+	else
+		CurrentCartridge->WriteMem(address, data, size);
 }
 
 //Dma Start
@@ -425,39 +420,42 @@ void Naomi_DmaStart(u32 addr, u32 data)
 		return;
 	}
 	
-	SB_GDST|=data&1;
+	SB_GDST |= data & 1;
 
-	if (SB_GDST==1)
+	if (SB_GDST == 0)
+		return;
+
+	if (!m3comm.DmaStart(addr, data) && CurrentCartridge != NULL)
 	{
-		verify(1 == SB_GDDIR );
 		DEBUG_LOG(NAOMI, "NAOMI-DMA start addr %08X len %d", SB_GDSTAR, SB_GDLEN);
-
-		SB_GDSTARD = SB_GDSTAR + SB_GDLEN;
-		
-		SB_GDLEND = SB_GDLEN;
-		SB_GDST = 0;
-		if (CurrentCartridge != NULL)
+		verify(1 == SB_GDDIR);
+		u32 start = SB_GDSTAR & 0x1FFFFFE0;
+		u32 len = (SB_GDLEN + 31) & ~31;
+		SB_GDLEND = 0;
+		while (len > 0)
 		{
-			u32 len = SB_GDLEN;
-			u32 offset = 0;
-			while (len > 0)
+			u32 block_len = len;
+			void* ptr = CurrentCartridge->GetDmaPtr(block_len);
+			if (block_len == 0)
 			{
-				u32 block_len = len;
-				void* ptr = CurrentCartridge->GetDmaPtr(block_len);
-				if (block_len == 0)
-				{
-					INFO_LOG(NAOMI, "Aborted DMA transfer. Read past end of cart?");
-					break;
-				}
-				WriteMemBlock_nommu_ptr(SB_GDSTAR + offset, (u32*)ptr, block_len);
-				CurrentCartridge->AdvancePtr(block_len);
-				len -= block_len;
-				offset += block_len;
+				INFO_LOG(NAOMI, "Aborted DMA transfer. Read past end of cart?");
+				break;
 			}
+			WriteMemBlock_nommu_ptr(start, (u32*)ptr, block_len);
+			CurrentCartridge->AdvancePtr(block_len);
+			len -= block_len;
+			start += block_len;
+			SB_GDLEND += block_len;
 		}
-
-		asic_RaiseInterrupt(holly_GDROM_DMA);
+		SB_GDSTARD = start;
 	}
+	else
+	{
+		SB_GDSTARD = SB_GDSTAR + SB_GDLEN;
+		SB_GDLEND = SB_GDLEN;
+	}
+	SB_GDST = 0;
+	asic_RaiseInterrupt(holly_GDROM_DMA);
 }
 
 
@@ -522,7 +520,7 @@ void naomi_reg_Init()
 
 void naomi_reg_Term()
 {
-	#ifdef NAOMI_COMM
+#ifdef NAOMI_COMM
 	if (CommSharedMem)
 	{
 		UnmapViewOfFile(CommSharedMem);
@@ -531,8 +529,11 @@ void naomi_reg_Term()
 	{
 		CloseHandle(CommMapFile);
 	}
-	#endif
+#endif
+	m3comm.closeNetwork();
+	naomiNetwork.terminate();
 }
+
 void naomi_reg_Reset(bool hard)
 {
 	sb_rio_register(SB_GDST_addr, RIO_WF, 0, &Naomi_DmaStart);
@@ -562,6 +563,8 @@ void naomi_reg_Reset(bool hard)
 	reg_dimm_parameterl = 0;
 	reg_dimm_parameterh = 0;
 	reg_dimm_status = 0x11;
+	m3comm.closeNetwork();
+	naomiNetwork.terminate();
 }
 
 static u8 aw_maple_devs;
@@ -645,4 +648,64 @@ void libExtDevice_WriteMem_A0_006(u32 addr,u32 data,u32 size) {
 		break;
 	}
 	INFO_LOG(NAOMI, "Unhandled write @ %x (%d): %x", addr, size, data);
+}
+
+void naomi_Serialize(void **data, unsigned int *total_size)
+{
+	REICAST_S(GSerialBuffer);
+	REICAST_S(BSerialBuffer);
+	REICAST_S(GBufPos);
+	REICAST_S(BBufPos);
+	REICAST_S(GState);
+	REICAST_S(BState);
+	REICAST_S(GOldClk);
+	REICAST_S(BOldClk);
+	REICAST_S(BControl);
+	REICAST_S(BCmd);
+	REICAST_S(BLastCmd);
+	REICAST_S(GControl);
+	REICAST_S(GCmd);
+	REICAST_S(GLastCmd);
+	REICAST_S(SerStep);
+	REICAST_S(SerStep2);
+	REICAST_SA(BSerial,69);
+	REICAST_SA(GSerial,69);
+	REICAST_S(reg_dimm_command);
+	REICAST_S(reg_dimm_offsetl);
+	REICAST_S(reg_dimm_parameterl);
+	REICAST_S(reg_dimm_parameterh);
+	REICAST_S(reg_dimm_status);
+	REICAST_S(aw_maple_devs);
+}
+
+void naomi_Unserialize(void **data, unsigned int *total_size, serialize_version_enum version)
+{
+	REICAST_US(GSerialBuffer);
+	REICAST_US(BSerialBuffer);
+	REICAST_US(GBufPos);
+	REICAST_US(BBufPos);
+	REICAST_US(GState);
+	REICAST_US(BState);
+	REICAST_US(GOldClk);
+	REICAST_US(BOldClk);
+	REICAST_US(BControl);
+	REICAST_US(BCmd);
+	REICAST_US(BLastCmd);
+	REICAST_US(GControl);
+	REICAST_US(GCmd);
+	REICAST_US(GLastCmd);
+	REICAST_US(SerStep);
+	REICAST_US(SerStep2);
+	REICAST_USA(BSerial,69);
+	REICAST_USA(GSerial,69);
+	REICAST_US(reg_dimm_command);
+	REICAST_US(reg_dimm_offsetl);
+	REICAST_US(reg_dimm_parameterl);
+	REICAST_US(reg_dimm_parameterh);
+	REICAST_US(reg_dimm_status);
+	if (version < V11)
+		REICAST_SKIP(1); // NaomiDataRead
+	else if (version >= V14)
+		REICAST_US(aw_maple_devs);
+
 }

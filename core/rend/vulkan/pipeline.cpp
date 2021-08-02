@@ -168,13 +168,13 @@ void PipelineManager::CreateModVolPipeline(ModVolMode mode, int cullMode)
 					graphicsPipelineCreateInfo);
 }
 
-void PipelineManager::CreatePipeline(u32 listType, bool sortTriangles, const PolyParam& pp)
+void PipelineManager::CreatePipeline(u32 listType, bool sortTriangles, const PolyParam& pp, bool gpuPalette)
 {
 	vk::PipelineVertexInputStateCreateInfo pipelineVertexInputStateCreateInfo = GetMainVertexInputStateCreateInfo();
 
 	// Input assembly state
 	vk::PipelineInputAssemblyStateCreateInfo pipelineInputAssemblyStateCreateInfo(vk::PipelineInputAssemblyStateCreateFlags(),
-			sortTriangles && !settings.rend.PerStripSorting ? vk::PrimitiveTopology::eTriangleList : vk::PrimitiveTopology::eTriangleStrip);
+			sortTriangles && !config::PerStripSorting ? vk::PrimitiveTopology::eTriangleList : vk::PrimitiveTopology::eTriangleStrip);
 
 	// Viewport and scissor states
 	vk::PipelineViewportStateCreateInfo pipelineViewportStateCreateInfo(vk::PipelineViewportStateCreateFlags(), 1, nullptr, 1, nullptr);
@@ -205,7 +205,7 @@ void PipelineManager::CreatePipeline(u32 listType, bool sortTriangles, const Pol
 	else
 		depthOp = depthOps[pp.isp.DepthMode];
 	bool depthWriteEnable;
-	if (sortTriangles && !settings.rend.PerStripSorting)
+	if (sortTriangles && !config::PerStripSorting)
 		// FIXME temporary work-around for intel driver bug
 		depthWriteEnable = GetContext()->GetVendorID() == VENDOR_INTEL;
 	else
@@ -295,14 +295,15 @@ void PipelineManager::CreatePipeline(u32 listType, bool sortTriangles, const Pol
 	params.bumpmap = pp.tcw.PixelFmt == PixelBumpMap;
 	params.clamping = pp.tsp.ColorClamp && (pvrrc.fog_clamp_min != 0 || pvrrc.fog_clamp_max != 0xffffffff);
 	params.insideClipTest = (pp.tileclip >> 28) == 3;
-	params.fog = settings.rend.Fog ? pp.tsp.FogCtrl : 2;
+	params.fog = config::Fog ? pp.tsp.FogCtrl : 2;
 	params.gouraud = pp.pcw.Gouraud;
-	params.ignoreTexAlpha = pp.tsp.IgnoreTexA;
+	params.ignoreTexAlpha = pp.tsp.IgnoreTexA || pp.tcw.PixelFmt == Pixel565;
 	params.offset = pp.pcw.Offset;
 	params.shaderInstr = pp.tsp.ShadInstr;
 	params.texture = pp.pcw.Texture;
 	params.trilinear = pp.pcw.Texture && pp.tsp.FilterMode > 1 && listType != ListType_Punch_Through && pp.tcw.MipMapped == 1;
 	params.useAlpha = pp.tsp.UseAlpha;
+	params.palette = gpuPalette;
 	vk::ShaderModule fragment_module = shaderManager->GetFragmentShader(params);
 
 	vk::PipelineShaderStageCreateInfo stages[] = {
@@ -327,7 +328,7 @@ void PipelineManager::CreatePipeline(u32 listType, bool sortTriangles, const Pol
 	  renderPass                                  // renderPass
 	);
 
-	pipelines[hash(listType, sortTriangles, &pp)] = GetContext()->GetDevice().createGraphicsPipelineUnique(GetContext()->GetPipelineCache(),
+	pipelines[hash(listType, sortTriangles, &pp, gpuPalette)] = GetContext()->GetDevice().createGraphicsPipelineUnique(GetContext()->GetPipelineCache(),
 			graphicsPipelineCreateInfo);
 }
 

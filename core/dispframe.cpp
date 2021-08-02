@@ -1,5 +1,6 @@
 #include "cfg/cfg.h"
 #include "rend/TexCache.h"
+#include "emulator.h"
 
 #include <csignal>
 
@@ -12,7 +13,7 @@ TA_context* read_frame(const char* file, u8* vram_ref = NULL);
 void rend_set_fb_scale(float x,float y);
 
 #ifdef TARGET_DISPFRAME
-void dc_run()
+void *dc_run(void*)
 {
 	struct sigaction act, segv_oact;
 	memset(&act, 0, sizeof(act));
@@ -23,7 +24,8 @@ void dc_run()
     rend_set_fb_scale(1.0, 1.0);
 
     char frame_path[512];
-    cfgLoadStr("config", "image", frame_path, "null");
+    std::string s = cfgLoadStr("config", "image", "null");
+    strcpy(frame_path, s.c_str());
 
     printf("Loading %s\n", frame_path);
 
@@ -46,11 +48,7 @@ void dc_run()
 			frame_finished.Wait();
 		if (QueueRender(ctx))  {
 			palette_update();
-#if !defined(TARGET_NO_THREADS)
 			rs.Set();
-#else
-			rend_single_frame();
-#endif
 		}
 		else
 			SetREP(NULL);	// Sched end of render interrupt
@@ -60,5 +58,6 @@ void dc_run()
 
 		os_DoEvents();
 	}
+	return nullptr;
 }
 #endif

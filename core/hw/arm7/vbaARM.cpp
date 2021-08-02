@@ -6,7 +6,7 @@
 //called when plugin is used by emu (you should do first time init here)
 s32 libARM_Init()
 {
-	arm_Init();
+	aicaarm::init();
 
 	return 0;
 }
@@ -20,17 +20,6 @@ void libARM_Term()
 //It's supposed to reset anything
 void libARM_Reset(bool hard)
 {
-	arm_Reset();
-	arm_SetEnabled(false);
-}
-
-void libARM_SetResetState(u32 state)
-{
-	arm_SetEnabled(state==0);
-}
-
-//Mainloop
-void libARM_Update(u32 Cycles)
-{
-	arm_Run(Cycles/arm_sh4_bias);
+	aicaarm::reset();
+	aicaarm::enable(false);
 }

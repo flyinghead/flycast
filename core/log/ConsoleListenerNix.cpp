@@ -52,7 +52,7 @@ void ConsoleListener::Log(LogTypes::LOG_LEVELS level, const char* text)
       break;
     }
   }
-#if HOST_OS != OS_DARWIN
+#if !defined(__APPLE__)
   fprintf(stderr, "%s%s%s", color_attr, text, reset_attr);
 #else
   // Skip the time

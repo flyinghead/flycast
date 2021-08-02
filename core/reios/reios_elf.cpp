@@ -6,24 +6,24 @@
 
 bool reios_loadElf(const std::string& elf) {
 
-	FILE* f = fopen(elf.c_str(), "rb");
-	if (!f) {
+	FILE* f = nowide::fopen(elf.c_str(), "rb");
+	if (!f)
 		return false;
-	}
-	fseek(f, 0, SEEK_END);
-	size_t size = ftell(f);
+
+	std::fseek(f, 0, SEEK_END);
+	size_t size = std::ftell(f);
 
 	if (size > 16 * 1024 * 1024) {
-		fclose(f);
+		std::fclose(f);
 		return false;
 	}
 
 	void* elfFile = malloc(size);
 	memset(elfFile, 0, size);
 
-	fseek(f, 0, SEEK_SET);
-	size_t nread = fread(elfFile, 1, size, f);
-	fclose(f);
+	std::fseek(f, 0, SEEK_SET);
+	size_t nread = std::fread(elfFile, 1, size, f);
+	std::fclose(f);
 
 	if (nread != size || elf_checkFile(elfFile) != 0)
 	{

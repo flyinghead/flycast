@@ -7,5 +7,5 @@ void libAICA_WriteReg(u32 addr,u32 data,u32 size);
 void init_mem();
 void term_mem();
 
-extern u8 aica_reg[0x8000];
+alignas(4) extern u8 aica_reg[0x8000];
 
