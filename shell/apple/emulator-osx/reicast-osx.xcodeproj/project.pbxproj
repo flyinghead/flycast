@@ -457,9 +457,10 @@
 		F247152D25C12B80004E13FE /* generated_enum_util.cc in Sources */ = {isa = PBXBuildFile; fileRef = F24714CF25C12B80004E13FE /* generated_enum_util.cc */; };
 		F247152E25C12B80004E13FE /* generated_message_table_driven.cc in Sources */ = {isa = PBXBuildFile; fileRef = F24714D025C12B80004E13FE /* generated_message_table_driven.cc */; };
 		F252BB9726652AB600806876 /* SystemConfiguration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F252BB9626652AB600806876 /* SystemConfiguration.framework */; };
-		F2E5596F25C12886006B0421 /* gdxsv.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F2E5596925C12886006B0421 /* gdxsv.cpp */; };
-		F2E5597025C12886006B0421 /* packet.pb.cc in Sources */ = {isa = PBXBuildFile; fileRef = F2E5596C25C12886006B0421 /* packet.pb.cc */; };
-		F2E5597125C12886006B0421 /* gdxsv_network.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F2E5596D25C12886006B0421 /* gdxsv_network.cpp */; };
+		F29C0AE826B9839E003FDE49 /* gdxsv.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F29C0ADB26B9837A003FDE49 /* gdxsv.cpp */; };
+		F29C0AEA26B983A3003FDE49 /* gdxsv.pb.cc in Sources */ = {isa = PBXBuildFile; fileRef = F29C0ADD26B9837A003FDE49 /* gdxsv.pb.cc */; };
+		F29C0AEC26B983A6003FDE49 /* gdxsv_network.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F29C0ADF26B9838F003FDE49 /* gdxsv_network.cpp */; };
+		F29C0AEE26B983B5003FDE49 /* gdxsv_emu_hooks.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F29C0AE426B9839B003FDE49 /* gdxsv_emu_hooks.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -1428,16 +1429,22 @@
 		F24714D025C12B80004E13FE /* generated_message_table_driven.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = generated_message_table_driven.cc; sourceTree = "<group>"; };
 		F24714D125C12B80004E13FE /* wire_format_lite.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = wire_format_lite.h; sourceTree = "<group>"; };
 		F252BB9626652AB600806876 /* SystemConfiguration.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SystemConfiguration.framework; path = System/Library/Frameworks/SystemConfiguration.framework; sourceTree = SDKROOT; };
-		F2E5596725C12886006B0421 /* packet.pb.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = packet.pb.h; sourceTree = "<group>"; };
-		F2E5596825C12886006B0421 /* gdxsv.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = gdxsv.h; sourceTree = "<group>"; };
-		F2E5596925C12886006B0421 /* gdxsv.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = gdxsv.cpp; sourceTree = "<group>"; };
-		F2E5596A25C12886006B0421 /* gdxsv_network.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = gdxsv_network.h; sourceTree = "<group>"; };
-		F2E5596B25C12886006B0421 /* gdx_queue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = gdx_queue.h; sourceTree = "<group>"; };
-		F2E5596C25C12886006B0421 /* packet.pb.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = packet.pb.cc; sourceTree = "<group>"; };
-		F2E5596D25C12886006B0421 /* gdxsv_network.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = gdxsv_network.cpp; sourceTree = "<group>"; };
-		F2E5596E25C12886006B0421 /* gdxsv_patch.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = gdxsv_patch.h; sourceTree = "<group>"; };
-		F2E7578925C5E0DB0021FAFD /* LICENSE.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = LICENSE.md; sourceTree = "<group>"; };
-		F2E7578C25C5E0DB0021FAFD /* version.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = version.txt; sourceTree = "<group>"; };
+		F29C0AD826B9834D003FDE49 /* libs.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = libs.h; sourceTree = "<group>"; };
+		F29C0AD926B9835B003FDE49 /* gdx_rpc.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = gdx_rpc.h; sourceTree = "<group>"; };
+		F29C0ADA26B9837A003FDE49 /* gdxsv.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = gdxsv.h; sourceTree = "<group>"; };
+		F29C0ADB26B9837A003FDE49 /* gdxsv.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = gdxsv.cpp; sourceTree = "<group>"; };
+		F29C0ADC26B9837A003FDE49 /* gdxsv.pb.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = gdxsv.pb.h; sourceTree = "<group>"; };
+		F29C0ADD26B9837A003FDE49 /* gdxsv.pb.cc */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = gdxsv.pb.cc; sourceTree = "<group>"; };
+		F29C0ADE26B9838F003FDE49 /* gdxsv_patch.inc */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.pascal; path = gdxsv_patch.inc; sourceTree = "<group>"; };
+		F29C0ADF26B9838F003FDE49 /* gdxsv_network.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = gdxsv_network.cpp; sourceTree = "<group>"; };
+		F29C0AE026B9838F003FDE49 /* gdxsv_backend_udp.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = gdxsv_backend_udp.h; sourceTree = "<group>"; };
+		F29C0AE126B9838F003FDE49 /* gdxsv_backend_replay.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = gdxsv_backend_replay.h; sourceTree = "<group>"; };
+		F29C0AE226B9838F003FDE49 /* gdxsv_backend_tcp.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = gdxsv_backend_tcp.h; sourceTree = "<group>"; };
+		F29C0AE326B98390003FDE49 /* gdxsv_network.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = gdxsv_network.h; sourceTree = "<group>"; };
+		F29C0AE426B9839B003FDE49 /* gdxsv_emu_hooks.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = gdxsv_emu_hooks.cpp; sourceTree = "<group>"; };
+		F29C0AE526B9839B003FDE49 /* lbs_message.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = lbs_message.h; sourceTree = "<group>"; };
+		F29C0AE626B9839B003FDE49 /* gdxsv_emu_hooks.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = gdxsv_emu_hooks.h; sourceTree = "<group>"; };
+		F29C0AE726B9839B003FDE49 /* mcs_message.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = mcs_message.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -3079,14 +3086,22 @@
 		F2E5596625C12886006B0421 /* gdxsv */ = {
 			isa = PBXGroup;
 			children = (
-				F2E5596725C12886006B0421 /* packet.pb.h */,
-				F2E5596825C12886006B0421 /* gdxsv.h */,
-				F2E5596925C12886006B0421 /* gdxsv.cpp */,
-				F2E5596A25C12886006B0421 /* gdxsv_network.h */,
-				F2E5596B25C12886006B0421 /* gdx_queue.h */,
-				F2E5596C25C12886006B0421 /* packet.pb.cc */,
-				F2E5596D25C12886006B0421 /* gdxsv_network.cpp */,
-				F2E5596E25C12886006B0421 /* gdxsv_patch.h */,
+				F29C0AD826B9834D003FDE49 /* libs.h */,
+				F29C0AD926B9835B003FDE49 /* gdx_rpc.h */,
+				F29C0ADB26B9837A003FDE49 /* gdxsv.cpp */,
+				F29C0ADA26B9837A003FDE49 /* gdxsv.h */,
+				F29C0ADD26B9837A003FDE49 /* gdxsv.pb.cc */,
+				F29C0ADC26B9837A003FDE49 /* gdxsv.pb.h */,
+				F29C0AE126B9838F003FDE49 /* gdxsv_backend_replay.h */,
+				F29C0AE226B9838F003FDE49 /* gdxsv_backend_tcp.h */,
+				F29C0AE026B9838F003FDE49 /* gdxsv_backend_udp.h */,
+				F29C0ADF26B9838F003FDE49 /* gdxsv_network.cpp */,
+				F29C0AE326B98390003FDE49 /* gdxsv_network.h */,
+				F29C0ADE26B9838F003FDE49 /* gdxsv_patch.inc */,
+				F29C0AE426B9839B003FDE49 /* gdxsv_emu_hooks.cpp */,
+				F29C0AE626B9839B003FDE49 /* gdxsv_emu_hooks.h */,
+				F29C0AE526B9839B003FDE49 /* lbs_message.h */,
+				F29C0AE726B9839B003FDE49 /* mcs_message.h */,
 			);
 			path = gdxsv;
 			sourceTree = "<group>";
@@ -3422,6 +3437,7 @@
 				84B7BF6A1B72720200F9733F /* audiobackend_pulseaudio.cpp in Sources */,
 				AE82C6DE25B64AE200C79BC2 /* zip_source_pkware_encode.c in Sources */,
 				84B7BF3F1B72720200F9733F /* ta.cpp in Sources */,
+				F29C0AEE26B983B5003FDE49 /* gdxsv_emu_hooks.cpp in Sources */,
 				AE2A24DA22AE7EB600DD3034 /* ssa.cpp in Sources */,
 				AE82C6CB25B64AE200C79BC2 /* zip_file_replace.c in Sources */,
 				AE82C68F25B64AE200C79BC2 /* zip_fdopen.c in Sources */,
@@ -3458,6 +3474,7 @@
 				AEFF7F5D214D9D590068CE11 /* pico_strings.c in Sources */,
 				AEFF7ECC214AEC810068CE11 /* modem.cpp in Sources */,
 				84B7BF2E1B72720200F9733F /* gdrom_response.cpp in Sources */,
+				F29C0AE826B9839E003FDE49 /* gdxsv.cpp in Sources */,
 				AEF9984B2598900A0038E0B8 /* minisoap.c in Sources */,
 				AE82C6C825B64AE200C79BC2 /* zip_get_file_comment.c in Sources */,
 				AE82C6D225B64AE200C79BC2 /* zip_buffer.c in Sources */,
@@ -3507,6 +3524,7 @@
 				559E933D25FCBFCA001B0F40 /* simulator-aarch64.cc in Sources */,
 				AEFF7F5F214D9D590068CE11 /* pico_udp.c in Sources */,
 				AEFF7F70214D9D590068CE11 /* pico_frame.c in Sources */,
+				F29C0AEC26B983A6003FDE49 /* gdxsv_network.cpp in Sources */,
 				559E933E25FCBFCA001B0F40 /* macro-assembler-aarch64.cc in Sources */,
 				AEF998652598900A0038E0B8 /* receivedata.c in Sources */,
 				AE8C274321122E2500D4D8F4 /* xbrz.cpp in Sources */,
@@ -3581,13 +3599,13 @@
 				F24714F225C12B80004E13FE /* json_stream_parser.cc in Sources */,
 				F24714DB25C12B80004E13FE /* strutil.cc in Sources */,
 				F24714EC25C12B80004E13FE /* field_comparator.cc in Sources */,
-				F2E5597025C12886006B0421 /* packet.pb.cc in Sources */,
 				F247152425C12B80004E13FE /* wire_format.cc in Sources */,
 				F247152B25C12B80004E13FE /* port_def.inc in Sources */,
 				F24714FE25C12B80004E13FE /* type_resolver_util.cc in Sources */,
 				F24714F425C12B80004E13FE /* proto_writer.cc in Sources */,
 				F24714FA25C12B80004E13FE /* type_info.cc in Sources */,
 				F24714E325C12B80004E13FE /* generated_message_table_driven_lite.cc in Sources */,
+				F29C0AEA26B983A3003FDE49 /* gdxsv.pb.cc in Sources */,
 				F247152825C12B80004E13FE /* field_mask.pb.cc in Sources */,
 				F247150425C12B80004E13FE /* zero_copy_stream_impl_lite.cc in Sources */,
 				F24714F125C12B80004E13FE /* object_writer.cc in Sources */,
@@ -3623,7 +3641,6 @@
 				F24714D825C12B80004E13FE /* common.cc in Sources */,
 				F247151325C12B80004E13FE /* any.pb.cc in Sources */,
 				F247151B25C12B80004E13FE /* struct.pb.cc in Sources */,
-				F2E5597125C12886006B0421 /* gdxsv_network.cpp in Sources */,
 				F24714E525C12B80004E13FE /* descriptor_database.cc in Sources */,
 				F247150A25C12B80004E13FE /* zero_copy_stream.cc in Sources */,
 				F247150C25C12B80004E13FE /* io_win32.cc in Sources */,
@@ -3637,7 +3654,6 @@
 				F24714E625C12B80004E13FE /* port_undef.inc in Sources */,
 				F24714DA25C12B80004E13FE /* statusor.cc in Sources */,
 				F24714DD25C12B80004E13FE /* time.cc in Sources */,
-				F2E5596F25C12886006B0421 /* gdxsv.cpp in Sources */,
 				F247152A25C12B80004E13FE /* text_format.cc in Sources */,
 				F247150725C12B80004E13FE /* printer.cc in Sources */,
 				F24714E725C12B80004E13FE /* reflection_ops.cc in Sources */,
