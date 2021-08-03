@@ -1,9 +1,10 @@
 #include "common.h"
+#include "stdclass.h"
 
 #include <libchdr/chd.h>
 
 /* tracks are padded to a multiple of this many frames */
-const uint32_t CD_TRACK_PADDING = 4;
+constexpr uint32_t CD_TRACK_PADDING = 4;
 
 struct CHDDisc : Disc
 {
@@ -15,7 +16,7 @@ struct CHDDisc : Disc
 	u32 hunkbytes = 0;
 	u32 sph = 0;
 
-	bool TryOpen(const char* file);
+	void tryOpen(const char* file);
 
 	~CHDDisc() override
 	{
@@ -38,20 +39,21 @@ struct CHDTrack : TrackFile
 
 	CHDTrack(CHDDisc* disc, u32 StartFAD, s32 Offset, u32 fmt, bool swap_bytes)
 	{
-		this->disc=disc;
-		this->StartFAD=StartFAD;
+		this->disc = disc;
+		this->StartFAD = StartFAD;
 		this->Offset = Offset;
-		this->fmt=fmt;
+		this->fmt = fmt;
 		this->swap_bytes = swap_bytes;
 	}
 
-	void Read(u32 FAD, u8* dst, SectorFormat* sector_type, u8* subcode, SubcodeFormat* subcode_type) override
+	bool Read(u32 FAD, u8* dst, SectorFormat* sector_type, u8* subcode, SubcodeFormat* subcode_type) override
 	{
 		u32 fad_offs = FAD + Offset;
 		u32 hunk=(fad_offs)/disc->sph;
 		if (disc->old_hunk!=hunk)
 		{
-			chd_read(disc->chd,hunk,disc->hunk_mem); //CHDERR_NONE
+			if (chd_read(disc->chd,hunk,disc->hunk_mem) != CHDERR_NONE)
+				return false;
 			disc->old_hunk = hunk;
 		}
 
@@ -73,24 +75,21 @@ struct CHDTrack : TrackFile
 		//While space is reserved for it, the images contain no actual subcodes
 		//memcpy(subcode,disc->hunk_mem+hunk_ofs*(2352+96)+2352,96);
 		*subcode_type=SUBFMT_NONE;
+
+		return true;
 	}
 };
 
-bool CHDDisc::TryOpen(const char* file)
+void CHDDisc::tryOpen(const char* file)
 {
 	fp = nowide::fopen(file, "rb");
 	if (fp == nullptr)
-	{
-		INFO_LOG(GDROM, "chd: fopen failed for file %s: %d", file, errno);
-		return false;
-	}
+		throw FlycastException(std::string("Cannot open CHD file ") + file);
+
 	chd_error err = chd_open_file(fp, CHD_OPEN_READ, 0, &chd);
 
 	if (err != CHDERR_NONE)
-	{
-		INFO_LOG(GDROM, "chd: chd_open_file failed for file %s: %d", file, err);
-		return false;
-	}
+		throw FlycastException(std::string("Invalid CHD file ") + file);
 
 	INFO_LOG(GDROM, "chd: parsing file %s", file);
 
@@ -102,11 +101,8 @@ bool CHDDisc::TryOpen(const char* file)
 
 	sph = hunkbytes/(2352+96);
 
-	if (hunkbytes%(2352+96)!=0)
-	{
-		INFO_LOG(GDROM, "chd: hunkbytes is invalid, %d\n",hunkbytes);
-		return false;
-	}
+	if (hunkbytes % (2352 + 96) != 0)
+		throw FlycastException(std::string("Invalid hunkbytes for CHD file ") + file);
 
 	u32 tag;
 	u8 flags;
@@ -156,15 +152,13 @@ bool CHDDisc::TryOpen(const char* file)
 				|| pregap != 0
 				|| postgap != 0)
 		{
-			INFO_LOG(GDROM, "chd: track type %s is not supported", type);
-			return false;
+			throw FlycastException((std::string("chd: track type ") + type) + " is not supported");
 		}
 		DEBUG_LOG(GDROM, "%s", temp);
 		Track t;
 		t.StartFAD = total_frames;
 		total_frames += frames;
 		t.EndFAD = total_frames - 1;
-		t.ADDR = 0;
 		t.CTRL = strcmp(type,"AUDIO") == 0 ? 0 : 4;
 
 		t.file = new CHDTrack(this, t.StartFAD, Offset - t.StartFAD, strcmp(type, "MODE1") ? 2352 : 2048,
@@ -182,25 +176,21 @@ bool CHDDisc::TryOpen(const char* file)
 		WARN_LOG(GDROM, "WARNING: chd: Total frames is wrong: %u frames (549300 expected) in %zu tracks", total_frames, tracks.size());
 
 	FillGDSession();
-
-	return true;
 }
 
 
 Disc* chd_parse(const char* file)
 {
-	// Only try to open .chd files
-	size_t len = strlen(file);
-	if (len > 4 && stricmp( &file[len - 4], ".chd"))
+	if (get_file_extension(file) != "chd")
 		return nullptr;
 
 	CHDDisc* rv = new CHDDisc();
 
-	if (rv->TryOpen(file))
+	try {
+		rv->tryOpen(file);
 		return rv;
-	else
-	{
+	} catch (...) {
 		delete rv;
-		return 0;
+		throw;
 	}
 }

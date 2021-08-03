@@ -49,6 +49,11 @@ bool mainui_rend_frame()
 		if (!rend_single_frame(mainui_enabled))
 		{
 			UpdateInputState();
+			if (!dc_is_running())
+			{
+				dc_stop();
+				gui_stop_game(dc_get_last_error());
+			}
 			return false;
 		}
 	}

@@ -394,6 +394,7 @@ static void reios_sys_misc()
 
 	case 1:	// Exit to BIOS menu
 		WARN_LOG(REIOS, "SYS_MISC 1");
+		throw FlycastException("Reboot to BIOS");
 		break;
 
 	case 2:	// check disk
@@ -645,9 +646,8 @@ static void reios_boot()
 	std::string extension = get_file_extension(settings.imgread.ImagePath);
 	if (extension == "elf")
 	{
-		if (!reios_loadElf(settings.imgread.ImagePath)) {
-			msgboxf("Failed to open %s", MBX_ICONERROR, settings.imgread.ImagePath);
-		}
+		if (!reios_loadElf(settings.imgread.ImagePath))
+			throw FlycastException(std::string("Failed to open ELF ") + settings.imgread.ImagePath);
 		reios_setup_state(0x8C010000);
 	}
 	else {
@@ -656,7 +656,7 @@ static void reios_boot()
 			char bootfile[sizeof(ip_meta.boot_filename) + 1] = {0};
 			memcpy(bootfile, ip_meta.boot_filename, sizeof(ip_meta.boot_filename));
 			if (bootfile[0] == '\0' || !reios_locate_bootfile(bootfile))
-				msgboxf("Failed to locate bootfile %s", MBX_ICONERROR, bootfile);
+				throw FlycastException(std::string("Failed to locate bootfile ") + bootfile);
 			reios_setup_state(0xac008300);
 		}
 		else {
@@ -668,14 +668,14 @@ static void reios_boot()
 			}
 			u32 data_size = 4;
 			u32* sz = (u32*)CurrentCartridge->GetPtr(0x368, data_size);
-			if (!sz || data_size != 4) {
-				msgboxf("Naomi boot failure", MBX_ICONERROR);
-			}
+			if (sz == nullptr || data_size != 4)
+				throw FlycastException("Naomi boot failure");
 
 			const u32 size = *sz;
 
 			data_size = 1;
-			verify(size < RAM_SIZE && CurrentCartridge->GetPtr(size - 1, data_size) && "Invalid cart size");
+			if (size > RAM_SIZE || CurrentCartridge->GetPtr(size - 1, data_size) == nullptr)
+				throw FlycastException("Invalid cart size");
 
 			data_size = size;
 			WriteMemBlock_nommu_ptr(0x0c020000, (u32*)CurrentCartridge->GetPtr(0, data_size), size);

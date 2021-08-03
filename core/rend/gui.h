@@ -36,6 +36,7 @@ void gui_set_mouse_position(int x, int y);
 void gui_set_mouse_button(int button, bool pressed);
 void gui_set_mouse_wheel(float delta);
 void gui_set_insets(int left, int right, int top, int bottom);
+void gui_stop_game(const std::string& message = "");
 
 extern int screen_dpi;
 extern float scaling;

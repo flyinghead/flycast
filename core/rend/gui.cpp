@@ -432,6 +432,26 @@ static void gui_start_game(const std::string& path)
 	dc_load_game(path.empty() ? NULL : path_copy.c_str());
 }
 
+void gui_stop_game(const std::string& message)
+{
+	if (!commandLineStart)
+	{
+		// Exit to main menu
+		dc_term_game();
+		gui_state = GuiState::Main;
+		game_started = false;
+		settings.imgread.ImagePath[0] = '\0';
+		reset_vmus();
+		if (!message.empty())
+			error_msg = "Flycast has stopped.\n\n" + message;
+	}
+	else
+	{
+		// Exit emulator
+		dc_exit();
+	}
+}
+
 static void gui_display_commands()
 {
 	if (dc_is_running())
@@ -515,20 +535,7 @@ static void gui_display_commands()
 	if (ImGui::Button("Exit", ImVec2(300 * scaling + ImGui::GetStyle().ColumnsMinSpacing + ImGui::GetStyle().FramePadding.x * 2 - 1,
 			50 * scaling)))
 	{
-		if (!commandLineStart)
-		{
-			// Exit to main menu
-			dc_term_game();
-			gui_state = GuiState::Main;
-			game_started = false;
-			settings.imgread.ImagePath[0] = '\0';
-			reset_vmus();
-		}
-		else
-		{
-			// Exit emulator
-			dc_exit();
-		}
+		gui_stop_game();
 	}
 
 	ImGui::End();
@@ -909,6 +916,9 @@ static void error_popup()
 {
 	if (!error_msg.empty())
 	{
+		ImVec2 padding = ImVec2(20 * scaling, 20 * scaling);
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, padding);
+		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, padding);
 		ImGui::OpenPopup("Error");
 		if (ImGui::BeginPopupModal("Error", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
 		{
@@ -924,8 +934,11 @@ static void error_popup()
 			}
 			ImGui::SetItemDefaultFocus();
 			ImGui::PopStyleVar();
+			ImGui::PopTextWrapPos();
 			ImGui::EndPopup();
 		}
+		ImGui::PopStyleVar();
+		ImGui::PopStyleVar();
 	}
 }
 
@@ -1918,8 +1931,12 @@ static void gui_display_content()
 						if (gui_state == GuiState::SelectDisk)
 						{
 							strcpy(settings.imgread.ImagePath, game.path.c_str());
-							DiscSwap();
-							gui_state = GuiState::Closed;
+							try {
+								DiscSwap();
+								gui_state = GuiState::Closed;
+							} catch (const FlycastException& e) {
+								error_msg = e.what();
+							}
 						}
 						else
 						{

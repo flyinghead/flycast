@@ -31,7 +31,7 @@ extern std::atomic<bool> loading_canceled;
 int flycast_init(int argc, char* argv[]);
 void dc_reset(bool hard);
 void dc_init();
-void* dc_run(void*);
+void dc_run();
 void dc_term();
 void dc_stop();
 void dc_term_game();
@@ -50,6 +50,7 @@ void dc_cancel_load();
 void dc_get_load_status();
 bool dc_is_running();
 void dc_resize_renderer();
+std::string dc_get_last_error();
 
 enum class Event {
 	Start,

@@ -42,8 +42,10 @@ extern int screen_width, screen_height;
 std::atomic<bool> loading_canceled;
 settings_t settings;
 
-static cThread emuThread(&dc_run, nullptr);
+static void *dc_run_thread(void *);
+static cThread emuThread(&dc_run_thread, nullptr);
 static bool initDone;
+static std::string lastError;
 
 static s32 devicesInit()
 {
@@ -521,11 +523,27 @@ bool dc_is_running()
 	return sh4_cpu.IsCpuRunning();
 }
 
-#ifndef TARGET_DISPFRAME
-void* dc_run(void*)
+static void *dc_run_thread(void*)
 {
 	InitAudio();
 
+	try {
+		dc_run();
+	} catch (const FlycastException& e) {
+		ERROR_LOG(COMMON, "%s", e.what());
+		sh4_cpu.Stop();
+		lastError = e.what();
+	}
+
+    TermAudio();
+
+    return nullptr;
+}
+
+#ifndef TARGET_DISPFRAME
+
+void dc_run()
+{
 #if FEAT_SHREC != DYNAREC_NONE
 	if (config::DynarecEnabled)
 	{
@@ -557,10 +575,6 @@ void* dc_run(void*)
 			}
 		} while (resetRequested);
 	}
-
-    TermAudio();
-
-    return NULL;
 }
 #endif
 
@@ -583,8 +597,6 @@ void dc_term_emulator()
 	dc_term_game();
 	debugger::term();
 	sh4_cpu.Term();
-	if (settings.platform.system != DC_PLATFORM_DREAMCAST)
-		naomi_cart_Close();
 	custom_texture.Terminate();	// lr: avoid deadlock on exit (win32)
 	devicesTerm();
 	mem_Term();
@@ -709,6 +721,13 @@ bool dc_loadstate(const void **data, u32 size)
 	sh4_sched_ffts();
 
 	return true;
+}
+
+std::string dc_get_last_error()
+{
+	std::string error(lastError);
+	lastError.clear();
+	return error;
 }
 
 EventManager EventManager::Instance;

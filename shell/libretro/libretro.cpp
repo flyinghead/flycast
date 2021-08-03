@@ -845,12 +845,26 @@ void retro_run()
 		// Render
 		is_dupe = true;
 		for (int i = 0; i < 5 && is_dupe; i++)
+		{
 			is_dupe = !rend_single_frame(true);
+			if (!dc_is_running()) {
+				std::string error = dc_get_last_error();
+				if (!error.empty())
+					gui_display_notification(error.c_str(), 5000);
+				environ_cb(RETRO_ENVIRONMENT_SHUTDOWN, NULL);
+			}
+		}
 	}
 	else
 	{
 		startTime = sh4_sched_now64();
-		dc_run(nullptr);
+		try {
+			dc_run();
+		} catch (const FlycastException& e) {
+			ERROR_LOG(COMMON, "%s", e.what());
+			gui_display_notification(e.what(), 5000);
+			environ_cb(RETRO_ENVIRONMENT_SHUTDOWN, NULL);
+		}
 	}
 
 	if (config::RendererType.isOpenGL())
@@ -870,7 +884,7 @@ static bool loadGame(const char *path)
 	} catch (const FlycastException& e) {
 		ERROR_LOG(BOOT, "%s", e.what());
 		mute_messages = false;
-		gui_display_notification(e.what(), 2000);
+		gui_display_notification(e.what(), 5000);
 		return false;
 	}
 	mute_messages = false;
@@ -2751,7 +2765,12 @@ static bool retro_set_eject_state(bool ejected)
 	}
 	else
 	{
-		return DiscSwap();
+		try {
+			return DiscSwap();
+		} catch (const FlycastException& e) {
+			ERROR_LOG(GDROM, "%s", e.what());
+			return false;
+		}
 	}
 }
 
@@ -2779,8 +2798,13 @@ static bool retro_set_image_index(unsigned index)
 
 	if (disc_tray_open)
 		return true;
-	else
+
+	try {
 		return DiscSwap();
+	} catch (const FlycastException& e) {
+		ERROR_LOG(GDROM, "%s", e.what());
+		return false;
+	}
 }
 
 static unsigned retro_get_num_images()
