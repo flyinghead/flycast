@@ -5,6 +5,7 @@ class Sdl2 < Formula
   sha256 "d8215b571a581be1332d2106f8036fcb03d12a70bae01e20f424976d275432bc"
   license "Zlib"
   revision 1
+  env :std
 
   livecheck do
     url "https://www.libsdl.org/download-2.0.php"
@@ -31,6 +32,20 @@ class Sdl2 < Formula
   end
 
   def install
+    # Delete default flags for cross compiling
+    ENV.delete('CFLAGS')
+    ENV.delete('CXXFLAGS')
+    ENV.delete('CPPFLAGS')
+    ENV.delete('LDFLAGS')
+    ENV.delete('CMAKE_PREFIX_PATH')
+    ENV.delete('CMAKE_FRAMEWORK_PATH')
+    ENV.delete('CPATH')
+    sdkpath = %x[xcode-select -p]
+    sdkpath = sdkpath.chomp + "/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk"
+    ENV['SDKROOT'] = sdkpath
+    ENV['CPP'] = "/usr/bin/cpp"
+    ENV['CXXCPP'] = "/usr/bin/cpp"
+    
     # we have to do this because most build scripts assume that all SDL modules
     # are installed to the same prefix. Consequently SDL stuff cannot be
     # keg-only but I doubt that will be needed.
@@ -41,6 +56,8 @@ class Sdl2 < Formula
     args = %W[--prefix=#{prefix} --without-x --enable-hidapi]
     args << "CFLAGS=-mmacosx-version-min=10.9"
     args << "CXXFLAGS=-mmacosx-version-min=10.9"
+    args << "CC=gcc -isysroot #{sdkpath} -arch arm64 -arch x86_64"
+    args << "CXX=g++ -isysroot #{sdkpath} -arch arm64 -arch x86_64"
     system "./configure", *args
     system "make", "install"
   end

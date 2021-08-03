@@ -29,12 +29,23 @@ VulkanContext theVulkanContext;
 void InitRenderApi()
 {
 #ifdef USE_VULKAN
-	if (!config::RendererType.isOpenGL())
+	if (config::RendererType.isVulkan())
 	{
 		if (theVulkanContext.Init())
 			return;
 		// Fall back to Open GL
 		WARN_LOG(RENDERER, "Vulkan init failed. Falling back to Open GL.");
+		config::RendererType = RenderType::OpenGL;
+		config::RendererType.commit();
+	}
+#endif
+#ifdef _WIN32
+	if (config::RendererType.isDirectX())
+	{
+		if (theDXContext.Init())
+			return;
+		// Fall back to Open GL
+		WARN_LOG(RENDERER, "DirectX init failed. Falling back to Open GL.");
 		config::RendererType = RenderType::OpenGL;
 		config::RendererType.commit();
 	}
@@ -47,6 +58,9 @@ void TermRenderApi()
 {
 #ifdef USE_VULKAN
 	theVulkanContext.Term();
+#endif
+#ifdef _WIN32
+	theDXContext.Term();
 #endif
 	theGLContext.Term();
 }

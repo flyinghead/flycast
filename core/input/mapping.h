@@ -41,6 +41,7 @@ public:
 
 	std::string name;
 	float dead_zone = 0.1f;
+	int version = 2;
 
 	DreamcastKey get_button_id(u32 port, u32 code)
 	{

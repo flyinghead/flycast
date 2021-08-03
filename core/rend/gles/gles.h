@@ -130,13 +130,8 @@ struct gl_ctx
 extern gl_ctx gl;
 extern GLuint fbTextureId;
 
-u64 gl_GetTexture(TSP tsp,TCW tcw);
-struct text_info {
-	u16* pdata;
-	u32 width;
-	u32 height;
-	u32 textype; // 0 565, 1 1555, 2 4444
-};
+BaseTextureCacheData *gl_GetTexture(TSP tsp, TCW tcw);
+
 enum ModifierVolumeMode { Xor, Or, Inclusion, Exclusion, ModeCount };
 
 void gl_load_osd_resources();
@@ -151,7 +146,6 @@ void SetupMatrices(float dc_width, float dc_height,
 				   float scale_x, float scale_y, float scissoring_scale_x, float scissoring_scale_y,
 				   float &ds2s_offs_x, glm::mat4& normal_mat, glm::mat4& scissor_mat);
 
-text_info raw_GetTexture(TSP tsp, TCW tcw);
 void SetCull(u32 CullMode);
 s32 SetTileClip(u32 val, GLint uniform);
 void SetMVS_Mode(ModifierVolumeMode mv_mode, ISP_Modvol ispc);
@@ -270,7 +264,7 @@ struct OpenGLRenderer : Renderer
 
 	void DrawOSD(bool clear_screen) override { OSD_DRAW(clear_screen); }
 
-	u64 GetTexture(TSP tsp, TCW tcw) override
+	BaseTextureCacheData *GetTexture(TSP tsp, TCW tcw) override
 	{
 		return gl_GetTexture(tsp, tcw);
 	}

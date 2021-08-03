@@ -107,9 +107,17 @@ class Arm7Compiler : public MacroAssembler
 	void call(void *loc)
 	{
 		ptrdiff_t offset = reinterpret_cast<uintptr_t>(loc) - GetBuffer()->GetStartAddress<uintptr_t>();
-		Label function_label;
-		BindToOffset(&function_label, offset);
-		Bl(&function_label);
+		if (offset < -128 * 1024 * 1024 || offset > 128 * 1024 * 1024)
+		{
+			Mov(x4, reinterpret_cast<uintptr_t>(loc));
+			Blr(x4);
+		}
+		else
+		{
+			Label function_label;
+			BindToOffset(&function_label, offset);
+			Bl(&function_label);
+		}
 	}
 
 	Operand getOperand(const ArmOp::Operand& arg, const Register& scratch_reg)
@@ -543,6 +551,7 @@ public:
 
 	void compile(const std::vector<ArmOp>& block_ops, u32 cycles)
 	{
+		JITWriteProtect(false);
 		Ldr(w1, arm_reg_operand(CYCL_CNT));
 		Sub(w1, w1, cycles);
 		Str(w1, arm_reg_operand(CYCL_CNT));
@@ -622,6 +631,7 @@ public:
 #endif
 		delete regalloc;
 		regalloc = nullptr;
+		JITWriteProtect(true);
 	}
 
 	void generateMainLoop()
@@ -632,6 +642,7 @@ public:
 			verify(arm_compilecode != nullptr);
 			return;
 		}
+		JITWriteProtect(false);
 		Label arm_dispatch_label;
 		Label arm_dofiq;
 		Label arm_exit;
@@ -686,6 +697,7 @@ public:
 				GetBuffer()->GetStartAddress<void*>(), GetBuffer()->GetEndAddress<void*>(),
 				GetBuffer()->GetStartAddress<void*>(), GetBuffer()->GetEndAddress<void*>());
 		recompiler::advance(GetBuffer()->GetSizeInBytes());
+		JITWriteProtect(true);
 	}
 };
 

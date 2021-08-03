@@ -139,6 +139,14 @@ enum HollyInterruptID
 int darw_printf(const char* Text,...);
 #endif
 
+#if defined(__APPLE__) && defined(__MACH__) && HOST_CPU == CPU_ARM64
+	#define __ARM_MAC__
+	#include "pthread.h"
+	static void JITWriteProtect(bool enabled) { if (__builtin_available(macOS 11.0, *)) pthread_jit_write_protect_np(enabled); }
+#else
+	__forceinline static void JITWriteProtect(bool enabled) {}
+#endif
+
 //includes from c++rt
 #include <vector>
 #include <string>
@@ -280,7 +288,8 @@ enum class RenderType {
 	OpenGL = 0,
 	OpenGL_OIT = 3,
 	Vulkan = 4,
-	Vulkan_OIT = 5
+	Vulkan_OIT = 5,
+	DirectX9 = 1,
 };
 
 enum class KeyboardLayout {
@@ -359,8 +368,6 @@ inline bool is_u16(u32 v) { return (u16)v==(u32)v; }
 s32 libPvr_Init();
 void libPvr_Reset(bool hard);
 void libPvr_Term();
-
-void* libPvr_GetRenderTarget();
 
 // 0x00600000 - 0x006007FF [NAOMI] (modem area for dreamcast)
 u32  libExtDevice_ReadMem_A0_006(u32 addr,u32 size);
@@ -454,5 +461,6 @@ enum serialize_version_enum {
 	V14 = 809,
 	V15 = 810,
 	V16 = 811,
-	VCUR_FLYCAST = V16,
+	V17 = 812,
+	VCUR_FLYCAST = V17,
 };

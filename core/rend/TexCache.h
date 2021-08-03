@@ -21,6 +21,8 @@ extern bool palette_updated;
 
 extern u32 detwiddle[2][11][1024];
 
+void palette_update();
+
 template<class pixel_type>
 class PixelBuffer
 {
@@ -120,407 +122,276 @@ public:
 	}
 };
 
-void palette_update();
-
 #define clamp(minv, maxv, x) ((x) < (minv) ? (minv) : (x) > (maxv) ? (maxv) : (x))
 
-// Unpack to 16-bit word
+// Open GL
+struct RGBAPacker {
+	static u32 pack(u8 r, u8 g, u8 b, u8 a) {
+		return r | (g << 8) | (b << 16) | (a << 24);
+	}
+};
+// DirectX
+struct BGRAPacker {
+	static u32 pack(u8 r, u8 g, u8 b, u8 a) {
+		return b | (g << 8) | (r << 16) | (a << 24);
+	}
+};
 
-#define ARGB1555( word )	( ((word>>15)&1) | (((word>>10) & 0x1F)<<11)  | (((word>>5) & 0x1F)<<6)  | (((word>>0) & 0x1F)<<1) )
-
-#define ARGB565( word )	( (((word>>0)&0x1F)<<0) | (((word>>5)&0x3F)<<5) | (((word>>11)&0x1F)<<11) )
-	
-#define ARGB4444( word ) ( (((word>>0)&0xF)<<4) | (((word>>4)&0xF)<<8) | (((word>>8)&0xF)<<12) | (((word>>12)&0xF)<<0) )
-
-#define ARGB8888( word ) ( (((word>>4)&0xF)<<4) | (((word>>12)&0xF)<<8) | (((word>>20)&0xF)<<12) | (((word>>28)&0xF)<<0) )
-
-// Unpack to 32-bit word
-
-#define ARGB1555_32( word )    ( ((word & 0x8000) ? 0xFF000000 : 0) | \
-								(((word >> 10) & 0x1F) << 3) | (((word >> 12) & 0x7) << 0) | \
-								(((word >> 5) & 0x1F) << 11) | (((word >> 7) & 0x7) << 8) | \
-								(((word >> 0) & 0x1F) << 19) | (((word >> 2) & 0x7) << 16) )
-
-#define ARGB565_32( word )     ( (((word >> 11) & 0x1F) << 3) | (((word >> 13) & 0x7) << 0) | \
-								(((word >> 5) & 0x3F) << 10) | (((word >> 9) & 0x3) << 8) | \
-								(((word >> 0) & 0x1F) << 19) | (((word >> 2) & 0x7) << 16) | \
-								0xFF000000 )
-
-#define ARGB4444_32( word ) ( (((word >> 12) & 0xF) << 28) | (((word >> 12) & 0xF) << 24) | \
-								(((word >> 8) & 0xF) << 4) | (((word >> 8) & 0xF) << 0) | \
-								(((word >> 4) & 0xF) << 12) | (((word >> 4) & 0xF) << 8) | \
-								(((word >> 0) & 0xF) << 20) | (((word >> 0) & 0xF) << 16) )
-
-#define ARGB8888_32( word ) ( ((word >> 0) & 0xFF000000) | (((word >> 16) & 0xFF) << 0) | (((word >> 8) & 0xFF) << 8) | ((word & 0xFF) << 16) )
-
-inline static u32 YUV422(s32 Y,s32 Yu,s32 Yv)
+template<typename Packer>
+inline static u32 YUV422(s32 Y, s32 Yu, s32 Yv)
 {
-	Yu-=128;
-	Yv-=128;
+	Yu -= 128;
+	Yv -= 128;
 
-	s32 R = Y + Yv*11/8;            // Y + (Yv-128) * (11/8) ?
-	s32 G = Y - (Yu*11 + Yv*22)/32; // Y - (Yu-128) * (11/8) * 0.25 - (Yv-128) * (11/8) * 0.5 ?
-	s32 B = Y + Yu*110/64;          // Y + (Yu-128) * (11/8) * 1.25 ?
+	s32 R = Y + Yv * 11 / 8;				// Y + (Yv-128) * (11/8) ?
+	s32 G = Y - (Yu * 11 + Yv * 22) / 32;	// Y - (Yu-128) * (11/8) * 0.25 - (Yv-128) * (11/8) * 0.5 ?
+	s32 B = Y + Yu * 110 / 64;				// Y + (Yu-128) * (11/8) * 1.25 ?
 
-	return clamp(0, 255, R) | (clamp(0, 255, G) << 8) | (clamp(0, 255, B) << 16) | 0xFF000000;
+	return Packer::pack(clamp(0, 255, R), clamp(0, 255, G), clamp(0, 255, B), 0xFF);
 }
 
 #define twop(x,y,bcx,bcy) (detwiddle[0][bcy][x]+detwiddle[1][bcx][y])
 
-//pixel convertors !
-#define pixelcvt_start_base(name,x,y,type) \
-		struct name \
-		{ \
-			static const u32 xpp=x;\
-			static const u32 ypp=y;	\
-			__forceinline static void Convert(PixelBuffer<type>* pb,u8* data) \
-		{
+template<typename Pixel>
+struct UnpackerNop {
+	using unpacked_type = Pixel;
+	static Pixel unpack(Pixel word) {
+		return word;
+	}
+};
+// ARGB1555 to RGBA5551
+struct Unpacker1555 {
+	using unpacked_type = u16;
+	static u16 unpack(u16 word) {
+		return ((word >> 15) & 1) | (((word >> 10) & 0x1F) << 11)  | (((word >> 5) & 0x1F) << 6)  | (((word >> 0) & 0x1F) << 1);
+	}
+};
+// ARGB4444 to RGBA4444
+struct Unpacker4444 {
+	using unpacked_type = u16;
+	static u16 unpack(u16 word) {
+		return (((word >> 0) & 0xF) << 4) | (((word >> 4) & 0xF) << 8) | (((word >> 8) & 0xF) << 12) | (((word >> 12) & 0xF) << 0);
+	}
+};
 
-#define pixelcvt_start(name,x,y) pixelcvt_start_base(name, x, y, u16)
-#define pixelcvt32_start(name,x,y) pixelcvt_start_base(name, x, y, u32)
+template <typename Packer>
+struct Unpacker1555_32 {
+	using unpacked_type = u32;
+	static u32 unpack(u16 word) {
+		return Packer::pack(
+				(((word >> 10) & 0x1F) << 3) | ((word >> 12) & 7),
+				(((word >> 5) & 0x1F) << 3) | ((word >> 7) & 7),
+				(((word >> 0) & 0x1F) << 3) | ((word >> 2) & 7),
+				(word & 0x8000) ? 0xFF : 0);
+	}
+};
+template <typename Packer>
+struct Unpacker565_32 {
+	using unpacked_type = u32;
+	static u32 unpack(u16 word) {
+		return Packer::pack(
+				(((word >> 11) & 0x1F) << 3) | ((word >> 13) & 7),
+				(((word >> 5) & 0x3F) << 2) | ((word >> 9) & 3),
+				(((word >> 0) & 0x1F) << 3) | ((word >> 2) & 7),
+				0xFF);
+	}
+};
+template <typename Packer>
+struct Unpacker4444_32 {
+	using unpacked_type = u32;
+	static u32 unpack(u16 word) {
+		return Packer::pack(
+				(((word >> 8) & 0xF) << 4) | ((word >> 8) & 0xF),
+				(((word >> 4) & 0xF) << 4) | ((word >> 4) & 0xF),
+				(((word >> 0) & 0xF) << 4) | ((word >> 0) & 0xF),
+				(((word >> 12) & 0xF) << 4) | ((word >> 12) & 0xF));
+	}
+};
+// ARGB8888 to whatever
+template <typename Packer>
+struct Unpacker8888 {
+	using unpacked_type = u32;
+	static u32 unpack(u32 word) {
+		return Packer::pack(
+				(word >> 16) & 0xFF,
+				(word >> 8) & 0xFF,
+				(word >> 0) & 0xFF,
+				(word >> 24) & 0xFF);
+	}
+};
 
-#define pixelcvt_size_start(name, x, y) template<class pixel_size> \
-struct name \
-{ \
-	static const u32 xpp=x;\
-	static const u32 ypp=y;	\
-	__forceinline static void Convert(PixelBuffer<pixel_size>* pb,u8* data) \
+template<typename Unpacker>
+struct ConvertPlanar
 {
+	using unpacked_type = typename Unpacker::unpacked_type;
+	static constexpr u32 xpp = 4;
+	static constexpr u32 ypp = 1;
+	static void Convert(PixelBuffer<unpacked_type> *pb, u8 *data)
+	{
+		u16 *p_in = (u16 *)data;
+		pb->prel(0, Unpacker::unpack(p_in[0]));
+		pb->prel(1, Unpacker::unpack(p_in[1]));
+		pb->prel(2, Unpacker::unpack(p_in[2]));
+		pb->prel(3, Unpacker::unpack(p_in[3]));
+	}
+};
 
-#define pixelcvt_end } }
-#define pixelcvt_next(name,x,y) pixelcvt_end;  pixelcvt_start(name,x,y)
-//
-//Non twiddled
-//
-// 16-bit pixel buffer
-pixelcvt_start(conv565_PL,4,1)
+template<typename Packer>
+struct ConvertPlanarYUV
 {
-	//convert 4x1
-	u16* p_in=(u16*)data;
-	//0,0
-	pb->prel(0,ARGB565(p_in[0]));
-	//1,0
-	pb->prel(1,ARGB565(p_in[1]));
-	//2,0
-	pb->prel(2,ARGB565(p_in[2]));
-	//3,0
-	pb->prel(3,ARGB565(p_in[3]));
-}
-pixelcvt_next(conv1555_PL,4,1)
+	using unpacked_type = u32;
+	static constexpr u32 xpp = 4;
+	static constexpr u32 ypp = 1;
+	static void Convert(PixelBuffer<u32> *pb, u8 *data)
+	{
+		//convert 4x1 4444 to 4x1 8888
+		u32 *p_in = (u32 *)data;
+
+
+		s32 Y0 = (p_in[0] >> 8) & 255; //
+		s32 Yu = (p_in[0] >> 0) & 255; //p_in[0]
+		s32 Y1 = (p_in[0] >> 24) & 255; //p_in[3]
+		s32 Yv = (p_in[0] >> 16) & 255; //p_in[2]
+
+		//0,0
+		pb->prel(0, YUV422<Packer>(Y0, Yu, Yv));
+		//1,0
+		pb->prel(1, YUV422<Packer>(Y1, Yu, Yv));
+
+		//next 4 bytes
+		p_in += 1;
+
+		Y0 = (p_in[0] >> 8) & 255; //
+		Yu = (p_in[0] >> 0) & 255; //p_in[0]
+		Y1 = (p_in[0] >> 24) & 255; //p_in[3]
+		Yv = (p_in[0] >> 16) & 255; //p_in[2]
+
+		//0,0
+		pb->prel(2, YUV422<Packer>(Y0, Yu, Yv));
+		//1,0
+		pb->prel(3, YUV422<Packer>(Y1, Yu, Yv));
+	}
+};
+
+template<typename Unpacker>
+struct ConvertTwiddle
 {
-	//convert 4x1
-	u16* p_in=(u16*)data;
-	//0,0
-	pb->prel(0,ARGB1555(p_in[0]));
-	//1,0
-	pb->prel(1,ARGB1555(p_in[1]));
-	//2,0
-	pb->prel(2,ARGB1555(p_in[2]));
-	//3,0
-	pb->prel(3,ARGB1555(p_in[3]));
-}
-pixelcvt_next(conv4444_PL,4,1)
+	using unpacked_type = typename Unpacker::unpacked_type;
+	static constexpr u32 xpp = 2;
+	static constexpr u32 ypp = 2;
+	static void Convert(PixelBuffer<unpacked_type> *pb, u8 *data)
+	{
+		u16 *p_in = (u16 *)data;
+		pb->prel(0, 0, Unpacker::unpack(p_in[0]));
+		pb->prel(0, 1, Unpacker::unpack(p_in[1]));
+		pb->prel(1, 0, Unpacker::unpack(p_in[2]));
+		pb->prel(1, 1, Unpacker::unpack(p_in[3]));
+	}
+};
+
+template<typename Packer>
+struct ConvertTwiddleYUV
 {
-	//convert 4x1
-	u16* p_in=(u16*)data;
-	//0,0
-	pb->prel(0,ARGB4444(p_in[0]));
-	//1,0
-	pb->prel(1,ARGB4444(p_in[1]));
-	//2,0
-	pb->prel(2,ARGB4444(p_in[2]));
-	//3,0
-	pb->prel(3,ARGB4444(p_in[3]));
-}
-pixelcvt_end;
+	using unpacked_type = u32;
+	static constexpr u32 xpp = 2;
+	static constexpr u32 ypp = 2;
+	static void Convert(PixelBuffer<u32> *pb, u8 *data)
+	{
+		//convert 4x1 4444 to 4x1 8888
+		u16* p_in = (u16 *)data;
 
-// 32-bit pixel buffer
-pixelcvt32_start(conv565_PL32,4,1)
+		s32 Y0 = (p_in[0] >> 8) & 255; //
+		s32 Yu = (p_in[0] >> 0) & 255; //p_in[0]
+		s32 Y1 = (p_in[2] >> 8) & 255; //p_in[3]
+		s32 Yv = (p_in[2] >> 0) & 255; //p_in[2]
+
+		//0,0
+		pb->prel(0, 0, YUV422<Packer>(Y0, Yu, Yv));
+		//1,0
+		pb->prel(1, 0, YUV422<Packer>(Y1, Yu, Yv));
+
+		//next 4 bytes
+		//p_in+=2;
+
+		Y0 = (p_in[1] >> 8) & 255; //
+		Yu = (p_in[1] >> 0) & 255; //p_in[0]
+		Y1 = (p_in[3] >> 8) & 255; //p_in[3]
+		Yv = (p_in[3] >> 0) & 255; //p_in[2]
+
+		//0,1
+		pb->prel(0, 1, YUV422<Packer>(Y0, Yu, Yv));
+		//1,1
+		pb->prel(1, 1, YUV422<Packer>(Y1, Yu, Yv));
+	}
+};
+
+template<typename Pixel>
+struct UnpackerPalToRgb {
+	using unpacked_type = Pixel;
+	static Pixel unpack(u8 col)
+	{
+		u32 *pal = sizeof(Pixel) == 2 ? &palette16_ram[palette_index] : &palette32_ram[palette_index];
+		return pal[col];
+	}
+};
+
+template<typename Unpacker>
+struct ConvertTwiddlePal4
 {
-	//convert 4x1
-	u16* p_in=(u16*)data;
-	//0,0
-	pb->prel(0,ARGB565_32(p_in[0]));
-	//1,0
-	pb->prel(1,ARGB565_32(p_in[1]));
-	//2,0
-	pb->prel(2,ARGB565_32(p_in[2]));
-	//3,0
-	pb->prel(3,ARGB565_32(p_in[3]));
-}
-pixelcvt_end;
-pixelcvt32_start(conv1555_PL32,4,1)
+	using unpacked_type = typename Unpacker::unpacked_type;
+	static constexpr u32 xpp = 4;
+	static constexpr u32 ypp = 4;
+	static void Convert(PixelBuffer<unpacked_type> *pb, u8 *data)
+	{
+		u8 *p_in = (u8 *)data;
+
+		pb->prel(0, 0, Unpacker::unpack(p_in[0] & 0xF));
+		pb->prel(0, 1, Unpacker::unpack((p_in[0] >> 4) & 0xF)); p_in++;
+		pb->prel(1, 0, Unpacker::unpack(p_in[0] & 0xF));
+		pb->prel(1, 1, Unpacker::unpack((p_in[0] >> 4) & 0xF)); p_in++;
+
+		pb->prel(0, 2, Unpacker::unpack(p_in[0] & 0xF));
+		pb->prel(0, 3, Unpacker::unpack((p_in[0] >> 4) & 0xF)); p_in++;
+		pb->prel(1, 2, Unpacker::unpack(p_in[0] & 0xF));
+		pb->prel(1, 3, Unpacker::unpack((p_in[0] >> 4) & 0xF)); p_in++;
+
+		pb->prel(2, 0, Unpacker::unpack(p_in[0] & 0xF));
+		pb->prel(2, 1, Unpacker::unpack((p_in[0] >> 4) & 0xF)); p_in++;
+		pb->prel(3, 0, Unpacker::unpack(p_in[0] & 0xF));
+		pb->prel(3, 1, Unpacker::unpack((p_in[0] >> 4) & 0xF)); p_in++;
+
+		pb->prel(2, 2, Unpacker::unpack(p_in[0] & 0xF));
+		pb->prel(2, 3, Unpacker::unpack((p_in[0] >> 4) & 0xF)); p_in++;
+		pb->prel(3, 2, Unpacker::unpack(p_in[0] & 0xF));
+		pb->prel(3, 3, Unpacker::unpack((p_in[0] >> 4) & 0xF)); p_in++;
+	}
+};
+
+template <typename Unpacker>
+struct ConvertTwiddlePal8
 {
-	//convert 4x1
-	u16* p_in=(u16*)data;
-	//0,0
-	pb->prel(0,ARGB1555_32(p_in[0]));
-	//1,0
-	pb->prel(1,ARGB1555_32(p_in[1]));
-	//2,0
-	pb->prel(2,ARGB1555_32(p_in[2]));
-	//3,0
-	pb->prel(3,ARGB1555_32(p_in[3]));
-}
-pixelcvt_end;
-pixelcvt32_start(conv4444_PL32,4,1)
-{
-	//convert 4x1
-	u16* p_in=(u16*)data;
-	//0,0
-	pb->prel(0,ARGB4444_32(p_in[0]));
-	//1,0
-	pb->prel(1,ARGB4444_32(p_in[1]));
-	//2,0
-	pb->prel(2,ARGB4444_32(p_in[2]));
-	//3,0
-	pb->prel(3,ARGB4444_32(p_in[3]));
-}
-pixelcvt_end;
-pixelcvt32_start(convYUV_PL,4,1)
-{
-	//convert 4x1 4444 to 4x1 8888
-	u32* p_in=(u32*)data;
+	using unpacked_type = typename Unpacker::unpacked_type;
+	static constexpr u32 xpp = 2;
+	static constexpr u32 ypp = 4;
+	static void Convert(PixelBuffer<unpacked_type> *pb, u8 *data)
+	{
+		u8* p_in = (u8 *)data;
 
+		pb->prel(0, 0, Unpacker::unpack(p_in[0])); p_in++;
+		pb->prel(0, 1, Unpacker::unpack(p_in[0])); p_in++;
+		pb->prel(1, 0, Unpacker::unpack(p_in[0])); p_in++;
+		pb->prel(1, 1, Unpacker::unpack(p_in[0])); p_in++;
 
-	s32 Y0 = (p_in[0]>>8) &255; //
-	s32 Yu = (p_in[0]>>0) &255; //p_in[0]
-	s32 Y1 = (p_in[0]>>24) &255; //p_in[3]
-	s32 Yv = (p_in[0]>>16) &255; //p_in[2]
-
-	//0,0
-	pb->prel(0,YUV422(Y0,Yu,Yv));
-	//1,0
-	pb->prel(1,YUV422(Y1,Yu,Yv));
-
-	//next 4 bytes
-	p_in+=1;
-
-	Y0 = (p_in[0]>>8) &255; //
-	Yu = (p_in[0]>>0) &255; //p_in[0]
-	Y1 = (p_in[0]>>24) &255; //p_in[3]
-	Yv = (p_in[0]>>16) &255; //p_in[2]
-
-	//0,0
-	pb->prel(2,YUV422(Y0,Yu,Yv));
-	//1,0
-	pb->prel(3,YUV422(Y1,Yu,Yv));
-}
-pixelcvt_end;
-
-//
-//twiddled
-//
-// 16-bit pixel buffer
-pixelcvt_start(conv565_TW,2,2)
-{
-	//convert 4x1 565 to 4x1 8888
-	u16* p_in=(u16*)data;
-	//0,0
-	pb->prel(0,0,ARGB565(p_in[0]));
-	//0,1
-	pb->prel(0,1,ARGB565(p_in[1]));
-	//1,0
-	pb->prel(1,0,ARGB565(p_in[2]));
-	//1,1
-	pb->prel(1,1,ARGB565(p_in[3]));
-}
-pixelcvt_next(conv1555_TW,2,2)
-{
-	//convert 4x1 565 to 4x1 8888
-	u16* p_in=(u16*)data;
-	//0,0
-	pb->prel(0,0,ARGB1555(p_in[0]));
-	//0,1
-	pb->prel(0,1,ARGB1555(p_in[1]));
-	//1,0
-	pb->prel(1,0,ARGB1555(p_in[2]));
-	//1,1
-	pb->prel(1,1,ARGB1555(p_in[3]));
-}
-pixelcvt_next(conv4444_TW,2,2)
-{
-	//convert 4x1 565 to 4x1 8888
-	u16* p_in=(u16*)data;
-	//0,0
-	pb->prel(0,0,ARGB4444(p_in[0]));
-	//0,1
-	pb->prel(0,1,ARGB4444(p_in[1]));
-	//1,0
-	pb->prel(1,0,ARGB4444(p_in[2]));
-	//1,1
-	pb->prel(1,1,ARGB4444(p_in[3]));
-}
-pixelcvt_end;
-
-// 32-bit pixel buffer
-pixelcvt32_start(conv565_TW32,2,2)
-{
-	//convert 4x1 565 to 4x1 8888
-	u16* p_in=(u16*)data;
-	//0,0
-	pb->prel(0,0,ARGB565_32(p_in[0]));
-	//0,1
-	pb->prel(0,1,ARGB565_32(p_in[1]));
-	//1,0
-	pb->prel(1,0,ARGB565_32(p_in[2]));
-	//1,1
-	pb->prel(1,1,ARGB565_32(p_in[3]));
-}
-pixelcvt_end;
-pixelcvt32_start(conv1555_TW32,2,2)
-{
-	//convert 4x1 565 to 4x1 8888
-	u16* p_in=(u16*)data;
-	//0,0
-	pb->prel(0,0,ARGB1555_32(p_in[0]));
-	//0,1
-	pb->prel(0,1,ARGB1555_32(p_in[1]));
-	//1,0
-	pb->prel(1,0,ARGB1555_32(p_in[2]));
-	//1,1
-	pb->prel(1,1,ARGB1555_32(p_in[3]));
-}
-pixelcvt_end;
-pixelcvt32_start(conv4444_TW32,2,2)
-{
-	//convert 4x1 565 to 4x1 8888
-	u16* p_in=(u16*)data;
-	//0,0
-	pb->prel(0,0,ARGB4444_32(p_in[0]));
-	//0,1
-	pb->prel(0,1,ARGB4444_32(p_in[1]));
-	//1,0
-	pb->prel(1,0,ARGB4444_32(p_in[2]));
-	//1,1
-	pb->prel(1,1,ARGB4444_32(p_in[3]));
-}
-pixelcvt_end;
-
-pixelcvt32_start(convYUV_TW,2,2)
-{
-	//convert 4x1 4444 to 4x1 8888
-	u16* p_in=(u16*)data;
-
-
-	s32 Y0 = (p_in[0]>>8) &255; //
-	s32 Yu = (p_in[0]>>0) &255; //p_in[0]
-	s32 Y1 = (p_in[2]>>8) &255; //p_in[3]
-	s32 Yv = (p_in[2]>>0) &255; //p_in[2]
-
-	//0,0
-	pb->prel(0,0,YUV422(Y0,Yu,Yv));
-	//1,0
-	pb->prel(1,0,YUV422(Y1,Yu,Yv));
-
-	//next 4 bytes
-	//p_in+=2;
-
-	Y0 = (p_in[1]>>8) &255; //
-	Yu = (p_in[1]>>0) &255; //p_in[0]
-	Y1 = (p_in[3]>>8) &255; //p_in[3]
-	Yv = (p_in[3]>>0) &255; //p_in[2]
-
-	//0,1
-	pb->prel(0,1,YUV422(Y0,Yu,Yv));
-	//1,1
-	pb->prel(1,1,YUV422(Y1,Yu,Yv));
-}
-pixelcvt_end;
-
-// 16-bit && 32-bit pixel buffers
-pixelcvt_size_start(convPAL4_TW,4,4)
-{
-	u8* p_in=(u8*)data;
-	u32* pal= sizeof(pixel_size) == 2 ? &palette16_ram[palette_index] : &palette32_ram[palette_index];
-
-	pb->prel(0,0,pal[p_in[0]&0xF]);
-	pb->prel(0,1,pal[(p_in[0]>>4)&0xF]);p_in++;
-	pb->prel(1,0,pal[p_in[0]&0xF]);
-	pb->prel(1,1,pal[(p_in[0]>>4)&0xF]);p_in++;
-
-	pb->prel(0,2,pal[p_in[0]&0xF]);
-	pb->prel(0,3,pal[(p_in[0]>>4)&0xF]);p_in++;
-	pb->prel(1,2,pal[p_in[0]&0xF]);
-	pb->prel(1,3,pal[(p_in[0]>>4)&0xF]);p_in++;
-
-	pb->prel(2,0,pal[p_in[0]&0xF]);
-	pb->prel(2,1,pal[(p_in[0]>>4)&0xF]);p_in++;
-	pb->prel(3,0,pal[p_in[0]&0xF]);
-	pb->prel(3,1,pal[(p_in[0]>>4)&0xF]);p_in++;
-
-	pb->prel(2,2,pal[p_in[0]&0xF]);
-	pb->prel(2,3,pal[(p_in[0]>>4)&0xF]);p_in++;
-	pb->prel(3,2,pal[p_in[0]&0xF]);
-	pb->prel(3,3,pal[(p_in[0]>>4)&0xF]);p_in++;
-}
-pixelcvt_end;
-
-// Palette 4bpp -> 8bpp
-pixelcvt_size_start(convPAL4PT_TW, 4, 4)
-{
-	u8* p_in = (u8 *)data;
-
-	pb->prel(0, 0, p_in[0] & 0xF);
-	pb->prel(0, 1, (p_in[0] >> 4) & 0xF); p_in++;
-	pb->prel(1, 0, p_in[0] & 0xF);
-	pb->prel(1, 1, (p_in[0] >> 4) & 0xF); p_in++;
-
-	pb->prel(0, 2, p_in[0] & 0xF);
-	pb->prel(0, 3, (p_in[0] >> 4) & 0xF); p_in++;
-	pb->prel(1, 2, p_in[0] & 0xF);
-	pb->prel(1, 3, (p_in[0] >> 4) & 0xF); p_in++;
-
-	pb->prel(2, 0, p_in[0] & 0xF);
-	pb->prel(2, 1, (p_in[0] >> 4) & 0xF); p_in++;
-	pb->prel(3, 0, p_in[0] & 0xF);
-	pb->prel(3, 1, (p_in[0] >> 4) & 0xF); p_in++;
-
-	pb->prel(2, 2, p_in[0] & 0xF);
-	pb->prel(2, 3, (p_in[0] >> 4) & 0xF); p_in++;
-	pb->prel(3, 2, p_in[0] & 0xF);
-	pb->prel(3, 3, (p_in[0] >> 4) & 0xF); p_in++;
-}
-pixelcvt_end;
-
-pixelcvt_size_start(convPAL8_TW,2,4)
-{
-	u8* p_in=(u8*)data;
-	u32* pal= sizeof(pixel_size) == 2 ? &palette16_ram[palette_index] : &palette32_ram[palette_index];
-
-	pb->prel(0,0,pal[p_in[0]]);p_in++;
-	pb->prel(0,1,pal[p_in[0]]);p_in++;
-	pb->prel(1,0,pal[p_in[0]]);p_in++;
-	pb->prel(1,1,pal[p_in[0]]);p_in++;
-
-	pb->prel(0,2,pal[p_in[0]]);p_in++;
-	pb->prel(0,3,pal[p_in[0]]);p_in++;
-	pb->prel(1,2,pal[p_in[0]]);p_in++;
-	pb->prel(1,3,pal[p_in[0]]);p_in++;
-}
-pixelcvt_end;
-
-// Palette 8bpp -> 8bpp (untwiddle only)
-pixelcvt_size_start(convPAL8PT_TW, 2, 4)
-{
-	u8* p_in = (u8 *)data;
-
-	pb->prel(0, 0, p_in[0]); p_in++;
-	pb->prel(0, 1, p_in[0]); p_in++;
-	pb->prel(1, 0, p_in[0]); p_in++;
-	pb->prel(1, 1, p_in[0]); p_in++;
-
-	pb->prel(0, 2, p_in[0]); p_in++;
-	pb->prel(0, 3, p_in[0]); p_in++;
-	pb->prel(1, 2, p_in[0]); p_in++;
-	pb->prel(1, 3, p_in[0]); p_in++;
-}
-pixelcvt_end;
-
+		pb->prel(0, 2, Unpacker::unpack(p_in[0])); p_in++;
+		pb->prel(0, 3, Unpacker::unpack(p_in[0])); p_in++;
+		pb->prel(1, 2, Unpacker::unpack(p_in[0])); p_in++;
+		pb->prel(1, 3, Unpacker::unpack(p_in[0])); p_in++;
+	}
+};
 
 //handler functions
-template<class PixelConvertor, class pixel_type>
-void texture_PL(PixelBuffer<pixel_type>* pb,u8* p_in,u32 Width,u32 Height)
+template<class PixelConvertor>
+void texture_PL(PixelBuffer<typename PixelConvertor::unpacked_type>* pb,u8* p_in,u32 Width,u32 Height)
 {
 	pb->amove(0,0);
 
@@ -541,8 +412,8 @@ void texture_PL(PixelBuffer<pixel_type>* pb,u8* p_in,u32 Width,u32 Height)
 	}
 }
 
-template<class PixelConvertor, class pixel_type>
-void texture_TW(PixelBuffer<pixel_type>* pb,u8* p_in,u32 Width,u32 Height)
+template<class PixelConvertor>
+void texture_TW(PixelBuffer<typename PixelConvertor::unpacked_type>* pb,u8* p_in,u32 Width,u32 Height)
 {
 	pb->amove(0, 0);
 
@@ -564,8 +435,8 @@ void texture_TW(PixelBuffer<pixel_type>* pb,u8* p_in,u32 Width,u32 Height)
 	}
 }
 
-template<class PixelConvertor, class pixel_type>
-void texture_VQ(PixelBuffer<pixel_type>* pb,u8* p_in,u32 Width,u32 Height)
+template<class PixelConvertor>
+void texture_VQ(PixelBuffer<typename PixelConvertor::unpacked_type>* pb,u8* p_in,u32 Width,u32 Height)
 {
 	p_in += 256 * 4 * 2;	// Skip VQ codebook
 	pb->amove(0, 0);
@@ -587,51 +458,98 @@ void texture_VQ(PixelBuffer<pixel_type>* pb,u8* p_in,u32 Width,u32 Height)
 	}
 }
 
+typedef void (*TexConvFP)(PixelBuffer<u16> *pb, u8 *p_in, u32 width, u32 height);
+typedef void (*TexConvFP8)(PixelBuffer<u8> *pb, u8 *p_in, u32 width, u32 height);
+typedef void (*TexConvFP32)(PixelBuffer<u32> *pb, u8 *p_in, u32 width, u32 height);
+
 //Planar
-#define tex565_PL texture_PL<conv565_PL, u16>
-#define tex1555_PL texture_PL<conv1555_PL, u16>
-#define tex4444_PL texture_PL<conv4444_PL, u16>
-#define texYUV422_PL texture_PL<convYUV_PL, u32>
-#define texBMP_PL tex4444_PL
-
-#define tex565_PL32 texture_PL<conv565_PL32, u32>
-#define tex1555_PL32 texture_PL<conv1555_PL32, u32>
-#define tex4444_PL32 texture_PL<conv4444_PL32, u32>
-
+constexpr TexConvFP tex565_PL = texture_PL<ConvertPlanar<UnpackerNop<u16>>>;
 //Twiddle
-#define tex565_TW texture_TW<conv565_TW, u16>
-#define tex1555_TW texture_TW<conv1555_TW, u16>
-#define tex4444_TW texture_TW<conv4444_TW, u16>
-#define texYUV422_TW texture_TW<convYUV_TW, u32>
-#define texBMP_TW tex4444_TW
-#define texPAL4_TW texture_TW<convPAL4_TW<u16>, u16>
-#define texPAL8_TW texture_TW<convPAL8_TW<u16>, u16>
-#define texPAL4_TW32 texture_TW<convPAL4_TW<u32>, u32>
-#define texPAL8_TW32  texture_TW<convPAL8_TW<u32>, u32>
-#define texPAL4PT_TW texture_TW<convPAL4PT_TW<u8>, u8>
-#define texPAL8PT_TW texture_TW<convPAL8PT_TW<u8>, u8>
-
-#define tex565_TW32 texture_TW<conv565_TW32, u32>
-#define tex1555_TW32 texture_TW<conv1555_TW32, u32>
-#define tex4444_TW32 texture_TW<conv4444_TW32, u32>
-
+constexpr TexConvFP tex565_TW = texture_TW<ConvertTwiddle<UnpackerNop<u16>>>;
+// Palette
+constexpr TexConvFP texPAL4_TW = texture_TW<ConvertTwiddlePal4<UnpackerPalToRgb<u16>>>;
+constexpr TexConvFP texPAL8_TW = texture_TW<ConvertTwiddlePal8<UnpackerPalToRgb<u16>>>;
+constexpr TexConvFP32 texPAL4_TW32 = texture_TW<ConvertTwiddlePal4<UnpackerPalToRgb<u32>>>;
+constexpr TexConvFP32 texPAL8_TW32 = texture_TW<ConvertTwiddlePal8<UnpackerPalToRgb<u32>>>;
+constexpr TexConvFP8 texPAL4PT_TW = texture_TW<ConvertTwiddlePal4<UnpackerNop<u8>>>;
+constexpr TexConvFP8 texPAL8PT_TW = texture_TW<ConvertTwiddlePal8<UnpackerNop<u8>>>;
 //VQ
-#define tex565_VQ texture_VQ<conv565_TW, u16>
-#define tex1555_VQ texture_VQ<conv1555_TW, u16>
-#define tex4444_VQ texture_VQ<conv4444_TW, u16>
-#define texYUV422_VQ texture_VQ<convYUV_TW, u32>
-#define texBMP_VQ tex4444_VQ
+constexpr TexConvFP tex565_VQ = texture_VQ<ConvertTwiddle<UnpackerNop<u16>>>;
 // According to the documentation, a texture cannot be compressed and use
 // a palette at the same time. However the hardware displays them
 // just fine.
-#define texPAL4_VQ texture_VQ<convPAL4_TW<u16>, u16>
-#define texPAL8_VQ texture_VQ<convPAL8_TW<u16>, u16>
+constexpr TexConvFP texPAL4_VQ = texture_VQ<ConvertTwiddlePal4<UnpackerPalToRgb<u16>>>;
+constexpr TexConvFP texPAL8_VQ = texture_VQ<ConvertTwiddlePal8<UnpackerPalToRgb<u16>>>;
+constexpr TexConvFP32 texPAL4_VQ32 = texture_VQ<ConvertTwiddlePal4<UnpackerPalToRgb<u32>>>;
+constexpr TexConvFP32 texPAL8_VQ32 = texture_VQ<ConvertTwiddlePal8<UnpackerPalToRgb<u32>>>;
 
-#define tex565_VQ32 texture_VQ<conv565_TW32, u32>
-#define tex1555_VQ32 texture_VQ<conv1555_TW32, u32>
-#define tex4444_VQ32 texture_VQ<conv4444_TW32, u32>
-#define texPAL4_VQ32 texture_VQ<convPAL4_TW<u32>, u32>
-#define texPAL8_VQ32 texture_VQ<convPAL8_TW<u32>, u32>
+namespace opengl {
+// Open GL
+
+//Planar
+constexpr TexConvFP tex1555_PL = texture_PL<ConvertPlanar<Unpacker1555>>;
+constexpr TexConvFP tex4444_PL = texture_PL<ConvertPlanar<Unpacker4444>>;
+constexpr TexConvFP texBMP_PL = tex4444_PL;
+constexpr TexConvFP32 texYUV422_PL = texture_PL<ConvertPlanarYUV<RGBAPacker>>;
+
+constexpr TexConvFP32 tex565_PL32 = texture_PL<ConvertPlanar<Unpacker565_32<RGBAPacker>>>;
+constexpr TexConvFP32 tex1555_PL32 = texture_PL<ConvertPlanar<Unpacker1555_32<RGBAPacker>>>;
+constexpr TexConvFP32 tex4444_PL32 = texture_PL<ConvertPlanar<Unpacker4444_32<RGBAPacker>>>;
+
+//Twiddle
+constexpr TexConvFP tex1555_TW = texture_TW<ConvertTwiddle<Unpacker1555>>;
+constexpr TexConvFP tex4444_TW = texture_TW<ConvertTwiddle<Unpacker4444>>;
+constexpr TexConvFP texBMP_TW = tex4444_TW;
+constexpr TexConvFP32 texYUV422_TW = texture_TW<ConvertTwiddleYUV<RGBAPacker>>;
+
+constexpr TexConvFP32 tex565_TW32 = texture_TW<ConvertTwiddle<Unpacker565_32<RGBAPacker>>>;
+constexpr TexConvFP32 tex1555_TW32 = texture_TW<ConvertTwiddle<Unpacker1555_32<RGBAPacker>>>;
+constexpr TexConvFP32 tex4444_TW32 = texture_TW<ConvertTwiddle<Unpacker4444_32<RGBAPacker>>>;
+
+//VQ
+constexpr TexConvFP tex1555_VQ = texture_VQ<ConvertTwiddle<Unpacker1555>>;
+constexpr TexConvFP tex4444_VQ = texture_VQ<ConvertTwiddle<Unpacker4444>>;
+constexpr TexConvFP texBMP_VQ = tex4444_VQ;
+constexpr TexConvFP32 texYUV422_VQ = texture_VQ<ConvertTwiddleYUV<RGBAPacker>>;
+
+constexpr TexConvFP32 tex565_VQ32 = texture_VQ<ConvertTwiddle<Unpacker565_32<RGBAPacker>>>;
+constexpr TexConvFP32 tex1555_VQ32 = texture_VQ<ConvertTwiddle<Unpacker1555_32<RGBAPacker>>>;
+constexpr TexConvFP32 tex4444_VQ32 = texture_VQ<ConvertTwiddle<Unpacker4444_32<RGBAPacker>>>;
+}
+
+namespace directx {
+// DirectX
+
+//Planar
+constexpr TexConvFP tex1555_PL = texture_PL<ConvertPlanar<UnpackerNop<u16>>>;
+constexpr TexConvFP tex4444_PL = texture_PL<ConvertPlanar<UnpackerNop<u16>>>;
+constexpr TexConvFP texBMP_PL = tex4444_PL;
+constexpr TexConvFP32 texYUV422_PL = texture_PL<ConvertPlanarYUV<BGRAPacker>>;
+
+constexpr TexConvFP32 tex565_PL32 = texture_PL<ConvertPlanar<Unpacker565_32<BGRAPacker>>>;
+constexpr TexConvFP32 tex1555_PL32 = texture_PL<ConvertPlanar<Unpacker1555_32<BGRAPacker>>>;
+constexpr TexConvFP32 tex4444_PL32 = texture_PL<ConvertPlanar<Unpacker4444_32<BGRAPacker>>>;
+
+//Twiddle
+constexpr TexConvFP tex1555_TW = texture_TW<ConvertTwiddle<UnpackerNop<u16>>>;
+constexpr TexConvFP tex4444_TW = texture_TW<ConvertTwiddle<UnpackerNop<u16>>>;
+constexpr TexConvFP texBMP_TW = tex4444_TW;
+constexpr TexConvFP32 texYUV422_TW = texture_TW<ConvertTwiddleYUV<BGRAPacker>>;
+
+constexpr TexConvFP32 tex565_TW32 = texture_TW<ConvertTwiddle<Unpacker565_32<BGRAPacker>>>;
+constexpr TexConvFP32 tex1555_TW32 = texture_TW<ConvertTwiddle<Unpacker1555_32<BGRAPacker>>>;
+constexpr TexConvFP32 tex4444_TW32 = texture_TW<ConvertTwiddle<Unpacker4444_32<BGRAPacker>>>;
+
+//VQ
+constexpr TexConvFP tex1555_VQ = texture_VQ<ConvertTwiddle<UnpackerNop<u16>>>;
+constexpr TexConvFP tex4444_VQ = texture_VQ<ConvertTwiddle<UnpackerNop<u16>>>;
+constexpr TexConvFP texBMP_VQ = tex4444_VQ;
+constexpr TexConvFP32 texYUV422_VQ = texture_VQ<ConvertTwiddleYUV<BGRAPacker>>;
+
+constexpr TexConvFP32 tex565_VQ32 = texture_VQ<ConvertTwiddle<Unpacker565_32<BGRAPacker>>>;
+constexpr TexConvFP32 tex1555_VQ32 = texture_VQ<ConvertTwiddle<Unpacker1555_32<BGRAPacker>>>;
+constexpr TexConvFP32 tex4444_VQ32 = texture_VQ<ConvertTwiddle<Unpacker4444_32<BGRAPacker>>>;
+}
 
 struct vram_block
 {
@@ -646,52 +564,46 @@ struct vram_block
 class BaseTextureCacheData;
 
 bool VramLockedWriteOffset(size_t offset);
-void libCore_vramlock_Unlock_block(vram_block *block);
 void libCore_vramlock_Lock(u32 start_offset, u32 end_offset, BaseTextureCacheData *texture);
 
 void UpscalexBRZ(int factor, u32* source, u32* dest, int width, int height, bool has_alpha);
 
 struct PvrTexInfo;
-template <class pixel_type> class PixelBuffer;
-typedef void TexConvFP(PixelBuffer<u16>* pb,u8* p_in,u32 Width,u32 Height);
-typedef void TexConvFP8(PixelBuffer<u8>* pb, u8* p_in, u32 Width, u32 Height);
-typedef void TexConvFP32(PixelBuffer<u32>* pb,u8* p_in,u32 Width,u32 Height);
 enum class TextureType { _565, _5551, _4444, _8888, _8 };
 
 class BaseTextureCacheData
 {
 public:
-	TSP tsp;        //dreamcast texture parameters
+	TSP tsp;        	//dreamcast texture parameters
 	TCW tcw;
 
 	// Decoded/filtered texture format
 	TextureType tex_type;
+	u32 sa_tex;			// texture data start address in vram
 
-	u32 sa;         //pixel data start address in vram (might be offset for mipmaps/etc)
-	u32 sa_tex;		//texture data start address in vram
-	u32 w,h;        //width & height of the texture
-	u32 size;       //size, in bytes, in vram
+	u32 dirty;			// frame number at which texture was overwritten
+	vram_block* lock_block;
+
+	u32 sa;         	// pixel data start address of max level mipmap
+	u16 width, height;	// width & height of the texture
+	u32 size;       	// size in bytes of max level mipmap in vram
 
 	const PvrTexInfo* tex;
-	TexConvFP *texconv;
-	TexConvFP32 *texconv32;
-	TexConvFP8 *texconv8;
-
-	u32 dirty;
-	vram_block* lock_block;
+	TexConvFP texconv;
+	TexConvFP32 texconv32;
+	TexConvFP8 texconv8;
 
 	u32 Updates;
 
-	u32 palette_index;
 	//used for palette updates
 	u32 palette_hash;			// Palette hash at time of last update
-	u32 vq_codebook;            // VQ quantizers table for compressed textures
 	u32 texture_hash;			// xxhash of texture data, used for custom textures
 	u32 old_texture_hash;		// legacy hash
 	u8* custom_image_data;		// loaded custom image data
 	u32 custom_width;
 	u32 custom_height;
 	std::atomic_int custom_load_in_progress;
+	bool gpuPalette;
 
 	void PrintTextureName();
 	virtual std::string GetId() = 0;
@@ -748,6 +660,7 @@ public:
 				&& !tcw.MipMapped
 				&& !tcw.VQ_Comp;
 	}
+	static void SetDirectXColorOrder(bool enabled);
 };
 
 template<typename Texture>
@@ -829,7 +742,9 @@ protected:
 	const TCW TCWTextureCacheMask = { { 0x1FFFFF, 0, 0, 1, 7, 1, 1 } };
 };
 
+template<typename Packer = RGBAPacker>
 void ReadFramebuffer(PixelBuffer<u32>& pb, int& width, int& height);
+template<int Red = 0, int Green = 1, int Blue = 2, int Alpha = 3>
 void WriteTextureToVRam(u32 width, u32 height, u8 *data, u16 *dst, u32 fb_w_ctrl = -1, u32 linestride = -1);
 
 static inline void MakeFogTexture(u8 *tex_data)

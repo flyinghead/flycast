@@ -122,7 +122,7 @@ std::string Gdxsv::GeneratePlatformInfoString() {
        "ARM"
        #elif HOST_CPU == CPU_MIPS
        "MIPS"
-       #elif HOST_CPU == CPU_X64
+       #elif HOST_CPU == CPU_X64 || defined(__ARM_MAC__)
        "x86/64"
        #elif HOST_CPU == CPU_GENERIC
        "Generic"
@@ -137,6 +137,8 @@ std::string Gdxsv::GeneratePlatformInfoString() {
        "Android"
        #elif defined(__unix__)
        "Linux"
+       #elif defined(__ARM_MAC__)
+       "macOS-ARM"
        #elif defined(__APPLE__)
        #ifdef TARGET_IPHONE
        "iOS"

@@ -83,7 +83,7 @@ public:
 				input_mapper = std::make_shared<InputMapping>(*input_mapper);
 			}
 			else
-				input_mapper = std::make_shared<DefaultEvdevInputMapping>();
+				input_mapper = getDefaultMapping();
 			input_mapper->name = _name + " mapping";
 			save_mapping();
 		}
@@ -94,6 +94,10 @@ public:
 	{
 		INFO_LOG(INPUT, "evdev: Device '%s' on port %d disconnected", _name.c_str(), maple_port());
 		close(_fd);
+	}
+
+	std::shared_ptr<InputMapping> getDefaultMapping() override {
+		return std::make_shared<DefaultEvdevInputMapping>();
 	}
 
 	void rumble(float power, float inclination, u32 duration_ms) override

@@ -21,6 +21,7 @@ set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/shell/cmake")
 
 if(APPLE)
 	set(CMAKE_OSX_DEPLOYMENT_TARGET "10.9" CACHE STRING "Minimum macOS deployment version")
+	set(CMAKE_OSX_ARCHITECTURES "x86_64;arm64" CACHE STRING "")
 endif()
 
 project(flycast)
@@ -54,8 +55,6 @@ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/core/version.h.in" "${CMAKE_CURRENT_
 
 if(ANDROID)
     add_library(${PROJECT_NAME} SHARED core/nullDC.cpp)
-    set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_RELEASE} -O3")
-    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_RELEASE} -O3")
     target_compile_options(${PROJECT_NAME} PRIVATE -fno-stack-protector)
     set(CMAKE_ANDROID_STL_TYPE "c++_static")
 elseif(MSVC)
@@ -93,11 +92,12 @@ if(OpenMP_CXX_FOUND AND NOT APPLE AND USE_OPENMP)
     if(MINGW)
         target_link_libraries(${PROJECT_NAME} PRIVATE "-static -lgomp -lpthread")
         target_compile_options(${PROJECT_NAME} PRIVATE -fopenmp)
+    elseif(ANDROID)
+        # Reference: https://android.googlesource.com/platform/ndk/+/refs/heads/master/tests/device/openmp/CMakeLists.txt
+        set_target_properties(${PROJECT_NAME} PROPERTIES COMPILE_OPTIONS -fopenmp)
+        target_link_libraries(${PROJECT_NAME} PRIVATE -fopenmp -static-openmp)
     else()
         target_link_libraries(${PROJECT_NAME} PRIVATE OpenMP::OpenMP_CXX)
-        if(ANDROID_NDK_MAJOR VERSION_GREATER_EQUAL 21)
-            target_link_libraries(${PROJECT_NAME} PRIVATE -static-openmp)
-        endif()
     endif()
 else()
     target_compile_definitions(${PROJECT_NAME} PRIVATE TARGET_NO_OPENMP)
@@ -113,6 +113,7 @@ add_subdirectory(core/deps/glm)
 target_link_libraries(${PROJECT_NAME} PRIVATE glm::glm)
 
 if(NOT APPLE)
+	option(BUILD_EXTERNAL "Build external dependencies in /External" OFF)
 	add_subdirectory(core/deps/glslang)
 	target_link_libraries(${PROJECT_NAME} PRIVATE SPIRV)
 endif()
@@ -125,9 +126,7 @@ if(ALSA_FOUND AND NOT ANDROID)
 endif()
 
 if(WIN32)
-	# Patch and build SDL
-	execute_process(COMMAND git apply -p1 ${CMAKE_CURRENT_SOURCE_DIR}/core/deps/patches/SDL.patch
-		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/core/deps/SDL) 
+	# Build SDL
 	file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/core/deps/SDL")
 	if(CMAKE_GENERATOR MATCHES "Visual Studio")
 		set(SDL_CMAKE_ARCH_ARG -A ${CMAKE_GENERATOR_PLATFORM})
@@ -578,7 +577,6 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/input/gamepad.h
         core/input/gamepad_device.cpp
         core/input/gamepad_device.h
-        core/input/keyboard_device.cpp
         core/input/keyboard_device.h
         core/input/mapping.cpp
         core/input/mapping.h)
@@ -1007,7 +1005,33 @@ if(USE_VULKAN AND NOT APPLE)
             core/rend/vulkan/vulkan_renderer.cpp)
 endif()
 
-if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm.*|ARM.*)")
+if(WIN32)
+	target_sources(${PROJECT_NAME} PRIVATE
+		core/rend/dx9/comptr.h
+		core/rend/dx9/d3d_overlay.h
+		core/rend/dx9/d3d_overlay.cpp
+		core/rend/dx9/d3d_renderer.h
+		core/rend/dx9/d3d_renderer.cpp
+		core/rend/dx9/d3d_shaders.h
+		core/rend/dx9/d3d_shaders.cpp
+		core/rend/dx9/d3d_texture.h
+		core/rend/dx9/d3d_texture.cpp
+		core/rend/dx9/dxcontext.h
+		core/rend/dx9/dxcontext.cpp
+		core/rend/dx9/imgui_impl_dx9.h
+		core/rend/dx9/imgui_impl_dx9.cpp)
+	if(NOT MINGW)
+		target_include_directories(${PROJECT_NAME} PRIVATE "$ENV{DXSDK_DIR}/Include")
+		if (CMAKE_SIZEOF_VOID_P EQUAL 8)
+			target_link_directories(${PROJECT_NAME} PRIVATE "$ENV{DXSDK_DIR}/Lib/x64")
+		else()
+			target_link_directories(${PROJECT_NAME} PRIVATE "$ENV{DXSDK_DIR}/Lib/x86")
+		endif()
+	endif()
+	target_link_libraries(${PROJECT_NAME} PRIVATE d3d9 d3dx9)
+endif()
+
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm.*|ARM.*)" AND NOT APPLE)
 	target_include_directories(${PROJECT_NAME} PRIVATE core/deps/vixl)
     target_sources(${PROJECT_NAME} PRIVATE
     	core/rec-ARM/rec_arm.cpp
@@ -1041,7 +1065,9 @@ if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm.*|ARM.*)")
     	core/deps/vixl/pool-manager-impl.h
     	core/deps/vixl/utils-vixl.cc
     	core/deps/vixl/utils-vixl.h)
-elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^(aarch64.*|AARCH64.*)")
+     set(KNOWN_ARCHITECTURE_DETECTED ON)
+endif()
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(aarch64.*|AARCH64.*|arm64.*)" OR CMAKE_OSX_ARCHITECTURES MATCHES "arm64")
     target_include_directories(${PROJECT_NAME} PRIVATE core/deps/vixl)
     target_sources(${PROJECT_NAME} PRIVATE
     	core/deps/vixl/aarch64/abi-aarch64.h
@@ -1086,7 +1112,9 @@ elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^(aarch64.*|AARCH64.*)")
     	core/deps/vixl/utils-vixl.cc
     	core/deps/vixl/utils-vixl.h)
     target_sources(${PROJECT_NAME} PRIVATE core/rec-ARM64/rec_arm64.cpp core/rec-ARM64/arm64_regalloc.h)
-elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "i686.*|i386.*|x86.*|amd64.*|x86_64.*|AMD64.*")
+    set(KNOWN_ARCHITECTURE_DETECTED ON)
+endif()
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "i686.*|i386.*|x86.*|amd64.*|x86_64.*|AMD64.*" OR CMAKE_OSX_ARCHITECTURES MATCHES "x86_64")
     add_subdirectory(core/deps/xbyak)
     target_link_libraries(${PROJECT_NAME} PRIVATE xbyak::xbyak)
     if(CMAKE_SIZEOF_VOID_P EQUAL 4)
@@ -1102,16 +1130,16 @@ elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "i686.*|i386.*|x86.*|amd64.*|x86_64.*|AMD6
         	core/rec-x64/rec_x64.cpp
         	core/rec-x64/x64_regalloc.h)
     endif()
-else()
+    set(KNOWN_ARCHITECTURE_DETECTED ON)
+endif()
+if(NOT KNOWN_ARCHITECTURE_DETECTED)
     message(FATAL_ERROR "Unknown target processor: ${CMAKE_SYSTEM_PROCESSOR}")
 endif()
 
 if(ANDROID)
     target_compile_definitions(${PROJECT_NAME} PRIVATE GLES GLES3)
 
-    target_sources(${PROJECT_NAME} PRIVATE
-            shell/android-studio/flycast/src/main/jni/src/Android.cpp
-            shell/android-studio/flycast/src/main/jni/src/utils.cpp)
+    target_sources(${PROJECT_NAME} PRIVATE shell/android-studio/flycast/src/main/jni/src/Android.cpp)
 
     target_link_libraries(${PROJECT_NAME} PRIVATE android EGL GLESv2 log)
 elseif(APPLE)
@@ -1161,6 +1189,8 @@ elseif(UNIX)
 elseif(WIN32)
     if(NOT BUILD_TESTING)
         target_sources(${PROJECT_NAME} PRIVATE
+        	core/windows/rawinput.cpp
+        	core/windows/rawinput.h
             core/windows/win_keyboard.h
             core/windows/winmain.cpp
             core/windows/xinput_gamepad.h)

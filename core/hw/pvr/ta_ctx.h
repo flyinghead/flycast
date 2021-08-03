@@ -13,6 +13,8 @@ void* OS_aligned_malloc(size_t align, size_t size);
 // helper for 32 byte aligned memory de-allocation
 void OS_aligned_free(void *ptr);
 
+class BaseTextureCacheData;
+
 //Vertex storage types
 struct Vertex
 {
@@ -35,7 +37,10 @@ struct PolyParam
 	u32 first;		//entry index , holds vertex/pos data
 	u32 count;
 
-	u64 texid;
+	BaseTextureCacheData *texture;
+#if !defined(HOST_64BIT_CPU)
+	u32 _pad0;
+#endif
 
 	TSP tsp;
 	TCW tcw;
@@ -46,7 +51,10 @@ struct PolyParam
 	//float zMin,zMax;
 	TSP tsp1;
 	TCW tcw1;
-	u64 texid1;
+	BaseTextureCacheData *texture1;
+#if !defined(HOST_64BIT_CPU)
+	u32 _pad1;
+#endif
 };
 
 struct ModifierVolumeParam

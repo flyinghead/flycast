@@ -137,6 +137,9 @@ private:
 class TextureCache final : public BaseTextureCache<Texture>
 {
 public:
+	TextureCache() {
+		Texture::SetDirectXColorOrder(false);
+	}
 	void SetCurrentIndex(int index) {
 		if (currentIndex < inFlightTextures.size())
 			std::for_each(inFlightTextures[currentIndex].begin(), inFlightTextures[currentIndex].end(),

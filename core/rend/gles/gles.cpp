@@ -852,6 +852,7 @@ bool gles_init()
 	}
 	fog_needs_update = true;
 	palette_updated = true;
+	TextureCacheData::SetDirectXColorOrder(false);
 
 	return true;
 }
@@ -1025,7 +1026,7 @@ bool RenderFrame(int width, int height)
 	vtx_min_fZ *= 0.98f;
 	vtx_max_fZ *= 1.001f;
 
-	TransformMatrix<true> matrices(pvrrc, width, height);
+	TransformMatrix<COORD_OPENGL> matrices(pvrrc, width, height);
 	ShaderUniforms.normal_mat = matrices.GetNormalMatrix();
 	const glm::mat4& scissor_mat = matrices.GetScissorMatrix();
 	ViewportMatrix = matrices.GetViewportMatrix();

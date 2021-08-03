@@ -15,8 +15,7 @@ import android.view.View;
 import android.view.WindowInsets;
 
 import com.reicast.emulator.Emulator;
-import com.reicast.emulator.NativeGLActivity;
-import com.reicast.emulator.config.Config;
+import com.reicast.emulator.periph.InputDeviceManager;
 
 public class NativeGLView extends SurfaceView implements SurfaceHolder.Callback {
     private boolean surfaceReady = false;
@@ -87,7 +86,13 @@ public class NativeGLView extends SurfaceView implements SurfaceHolder.Callback 
     @Override
     public boolean onTouchEvent(final MotionEvent event)
     {
-        return vjoyDelegate.onTouchEvent(event, getWidth(), getHeight());
+        if (event.getToolType(0) == MotionEvent.TOOL_TYPE_MOUSE) {
+            // Mouse motion events are reported by onTouchEvent when mouse button is down. Go figure...
+            InputDeviceManager.getInstance().mouseEvent(Math.round(event.getX()), Math.round(event.getY()), event.getButtonState());
+            return true;
+        }
+        else
+            return vjoyDelegate.onTouchEvent(event, getWidth(), getHeight());
     }
 
     @Override

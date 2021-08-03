@@ -810,8 +810,7 @@ void windowDragScroll()
 				window->DragScrolling = false;
 				// FIXME we should really move the mouse off-screen after a touch up and this wouldn't be necessary
 				// the only problem is tool tips
-				mo_x_phy = -1;
-				mo_y_phy = -1;
+				gui_set_mouse_position(-1, -1);
 			}
 		}
 		else

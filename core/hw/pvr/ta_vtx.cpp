@@ -86,8 +86,7 @@ static f32 f16(u16 v)
 
 #define vdrc vd_rc
 
-//Splitter function (normally ta_dma_main , modified for split dma's)
-
+template<int Red = 0, int Green = 1, int Blue = 2, int Alpha = 3>
 class FifoSplitter
 {
 	static const u32 *ta_type_lut;
@@ -706,23 +705,23 @@ private:
 		d_pp->pcw = pp->pcw;
 		d_pp->tileclip = tileclip_val;
 
-		d_pp->texid = -1;
-
 		if (d_pp->pcw.Texture)
-			d_pp->texid = renderer->GetTexture(d_pp->tsp,d_pp->tcw);
+			d_pp->texture = renderer->GetTexture(d_pp->tsp, d_pp->tcw);
+		else
+			d_pp->texture = nullptr;
 
 		d_pp->tsp1.full = -1;
 		d_pp->tcw1.full = -1;
-		d_pp->texid1 = -1;
+		d_pp->texture1 = nullptr;
 	}
 
 	#define glob_param_bdc(pp) glob_param_bdc_( (TA_PolyParam0*)pp)
 
 	#define poly_float_color_(to,a,r,g,b) \
-		to[0] = float_to_satu8(r);	\
-		to[1] = float_to_satu8(g);	\
-		to[2] = float_to_satu8(b);	\
-		to[3] = float_to_satu8(a);
+		to[Red] = float_to_satu8(r);	\
+		to[Green] = float_to_satu8(g);	\
+		to[Blue] = float_to_satu8(b);	\
+		to[Alpha] = float_to_satu8(a);
 
 
 	#define poly_float_color(to,src) \
@@ -778,7 +777,7 @@ private:
 		CurrentPP->tsp1.full = pp->tsp1.full;
 		CurrentPP->tcw1.full = pp->tcw1.full;
 		if (pp->pcw.Texture)
-			CurrentPP->texid1 = renderer->GetTexture(pp->tsp1, pp->tcw1);
+			CurrentPP->texture1 = renderer->GetTexture(pp->tsp1, pp->tcw1);
 	}
 
 	// Intensity, with Two Volumes
@@ -792,7 +791,7 @@ private:
 		CurrentPP->tsp1.full = pp->tsp1.full;
 		CurrentPP->tcw1.full = pp->tcw1.full;
 		if (pp->pcw.Texture)
-			CurrentPP->texid1 = renderer->GetTexture(pp->tsp1, pp->tcw1);
+			CurrentPP->texture1 = renderer->GetTexture(pp->tsp1, pp->tcw1);
 	}
 
 	__forceinline
@@ -869,17 +868,17 @@ private:
 	#define vert_packed_color_(to,src) \
 		{ \
 		u32 t=src; \
-		to[2] = (u8)(t);t>>=8;\
-		to[1] = (u8)(t);t>>=8;\
-		to[0] = (u8)(t);t>>=8;\
-		to[3] = (u8)(t);      \
+		to[Blue] = (u8)(t);t>>=8;\
+		to[Green] = (u8)(t);t>>=8;\
+		to[Red] = (u8)(t);t>>=8;\
+		to[Alpha] = (u8)(t);      \
 		}
 
 	#define vert_float_color_(to,a,r,g,b) \
-		to[0] = float_to_satu8(r); \
-		to[1] = float_to_satu8(g); \
-		to[2] = float_to_satu8(b); \
-		to[3] = float_to_satu8(a);
+		to[Red] = float_to_satu8(r); \
+		to[Green] = float_to_satu8(g); \
+		to[Blue] = float_to_satu8(b); \
+		to[Alpha] = float_to_satu8(a);
 
 		//Macros to make thins easier ;)
 	#define vert_packed_color(to,src) \
@@ -895,34 +894,32 @@ private:
 		//Intensity is clamped before the mul, as well as on face color to work the same as the hardware. [Fixes red dog]
 
 	#define vert_face_base_color(baseint) \
-		{ u32 satint=float_to_satu8(vtx->baseint); \
-		cv->col[0] = FaceBaseColor[0]*satint/256;  \
-		cv->col[1] = FaceBaseColor[1]*satint/256;  \
-		cv->col[2] = FaceBaseColor[2]*satint/256;  \
-		cv->col[3] = FaceBaseColor[3]; }
+		{ u32 satint = float_to_satu8(vtx->baseint); \
+		cv->col[Red] = FaceBaseColor[Red] * satint / 256;  \
+		cv->col[Green] = FaceBaseColor[Green] * satint / 256;  \
+		cv->col[Blue] = FaceBaseColor[Blue] * satint / 256;  \
+		cv->col[Alpha] = FaceBaseColor[Alpha]; }
 
 	#define vert_face_offs_color(offsint) \
-		{ u32 satint=float_to_satu8(vtx->offsint); \
-		cv->spc[0] = FaceOffsColor[0]*satint/256;  \
-		cv->spc[1] = FaceOffsColor[1]*satint/256;  \
-		cv->spc[2] = FaceOffsColor[2]*satint/256;  \
-		cv->spc[3] = FaceOffsColor[3]; }
+		{ u32 satint = float_to_satu8(vtx->offsint); \
+		cv->spc[Red] = FaceOffsColor[Red] * satint / 256;  \
+		cv->spc[Green] = FaceOffsColor[Green] * satint / 256;  \
+		cv->spc[Blue] = FaceOffsColor[Blue] * satint / 256;  \
+		cv->spc[Alpha] = FaceOffsColor[Alpha]; }
 
 	#define vert_face_base_color1(baseint) \
-		{ u32 satint=float_to_satu8(vtx->baseint); \
-		cv->col1[0] = FaceBaseColor1[0]*satint/256;  \
-		cv->col1[1] = FaceBaseColor1[1]*satint/256;  \
-		cv->col1[2] = FaceBaseColor1[2]*satint/256;  \
-		cv->col1[3] = FaceBaseColor1[3]; }
+		{ u32 satint = float_to_satu8(vtx->baseint); \
+		cv->col1[Red] = FaceBaseColor1[Red] * satint / 256;  \
+		cv->col1[Green] = FaceBaseColor1[Green] * satint / 256;  \
+		cv->col1[Blue] = FaceBaseColor1[Blue] * satint / 256;  \
+		cv->col1[Alpha] = FaceBaseColor1[Alpha]; }
 
 	#define vert_face_offs_color1(offsint) \
-		{ u32 satint=float_to_satu8(vtx->offsint); \
-		cv->spc1[0] = FaceOffsColor1[0]*satint/256;  \
-		cv->spc1[1] = FaceOffsColor1[1]*satint/256;  \
-		cv->spc1[2] = FaceOffsColor1[2]*satint/256;  \
-		cv->spc1[3] = FaceOffsColor1[3]; }
-
-	//vert_float_color_(cv->spc,FaceOffsColor[3],FaceOffsColor[0]*satint/256,FaceOffsColor[1]*satint/256,FaceOffsColor[2]*satint/256); }
+		{ u32 satint = float_to_satu8(vtx->offsint); \
+		cv->spc1[Red] = FaceOffsColor1[Red] * satint / 256;  \
+		cv->spc1[Green] = FaceOffsColor1[Green] * satint / 256;  \
+		cv->spc1[Blue] = FaceOffsColor1[Blue] * satint / 256;  \
+		cv->spc1[Alpha] = FaceOffsColor1[Alpha]; }
 
 
 	//(Non-Textured, Packed Color)
@@ -1170,14 +1167,14 @@ private:
 		d_pp->pcw=spr->pcw; 
 		d_pp->tileclip=tileclip_val;
 
-		d_pp->texid = -1;
-		
-		if (d_pp->pcw.Texture) {
-			d_pp->texid = renderer->GetTexture(d_pp->tsp,d_pp->tcw);
-		}
+		if (d_pp->pcw.Texture)
+			d_pp->texture = renderer->GetTexture(d_pp->tsp, d_pp->tcw);
+		else
+			d_pp->texture = nullptr;
+
 		d_pp->tcw1.full = -1;
 		d_pp->tsp1.full = -1;
-		d_pp->texid1 = -1;
+		d_pp->texture1 = nullptr;
 
 		SFaceBaseColor=spr->BaseCol;
 		SFaceOffsColor=spr->OffsCol;
@@ -1374,7 +1371,8 @@ private:
 	}
 };
 
-const u32 *FifoSplitter::ta_type_lut;
+template<int Red, int Green, int Blue, int Alpha>
+const u32 *FifoSplitter<Red, Green, Blue, Alpha>::ta_type_lut;
 
 TaTypeLut::TaTypeLut()
 {
@@ -1382,8 +1380,8 @@ TaTypeLut::TaTypeLut()
 	{
 		PCW pcw;
 		pcw.obj_ctrl = i;
-		u32 rv = FifoSplitter::poly_data_type_id(pcw);
-		u32 type = FifoSplitter::poly_header_type_size(pcw);
+		u32 rv = FifoSplitter<>::poly_data_type_id(pcw);
+		u32 type = FifoSplitter<>::poly_header_type_size(pcw);
 
 		if (type & 0x80)
 			rv |= SZ64 << 30;
@@ -1399,7 +1397,8 @@ TaTypeLut::TaTypeLut()
 static bool ClearZBeforePass(int pass_number);
 static void getRegionTileClipping(u32& xmin, u32& xmax, u32& ymin, u32& ymax);
 
-FifoSplitter TAFifo0;
+FifoSplitter<> TAParser;
+FifoSplitter<2, 1, 0, 3> TAParserDX;
 
 //
 // Check if a vertex has huge x,y,z values or negative z
@@ -1540,7 +1539,7 @@ static void fix_texture_bleeding(const List<PolyParam> *list)
 	}
 }
 
-bool ta_parse_vdrc(TA_context* ctx)
+bool ta_parse_vdrc(TA_context* ctx, bool bgraColors)
 {
 	ctx->rend_inuse.lock();
 	bool rv=false;
@@ -1548,7 +1547,10 @@ bool ta_parse_vdrc(TA_context* ctx)
 	vd_ctx = ctx;
 	vd_rc = vd_ctx->rend;
 
-	TAFifo0.vdec_init();
+	if (bgraColors)
+		TAParserDX.vdec_init();
+	else
+		TAParser.vdec_init();
 
 	bool empty_context = true;
 	int op_poly_count = 0;
@@ -1558,7 +1560,7 @@ bool ta_parse_vdrc(TA_context* ctx)
 	PolyParam *bgpp = vd_rc.global_param_op.head();
 	if (bgpp->pcw.Texture)
 	{
-		bgpp->texid = renderer->GetTexture(bgpp->tsp, bgpp->tcw);
+		bgpp->texture = renderer->GetTexture(bgpp->tsp, bgpp->tcw);
 		empty_context = false;
 	}
 
@@ -1636,7 +1638,8 @@ bool ta_parse_vdrc(TA_context* ctx)
 
 //decode a vertex in the native pvr format
 //used for bg poly
-static void decode_pvr_vertex(u32 base,u32 ptr,Vertex* cv)
+template<int Red, int Green, int Blue, int Alpha>
+void decode_pvr_vertex(u32 base, u32 ptr, Vertex* cv)
 {
 	//ISP
 	//TSP
@@ -1749,14 +1752,14 @@ void FillBGP(TA_context* ctx)
 	u32 vertex_ptr=strip_vert_num*strip_vs+strip_base +3*4;
 	//now , all the info is ready :p
 
-	bgpp->texid = -1;
+	bgpp->texture = nullptr;
 
 	bgpp->isp.full = pvr_read32p<u32>(strip_base);
 	bgpp->tsp.full = pvr_read32p<u32>(strip_base + 4);
 	bgpp->tcw.full = pvr_read32p<u32>(strip_base + 8);
 	bgpp->tcw1.full = -1;
 	bgpp->tsp1.full = -1;
-	bgpp->texid1 = -1;
+	bgpp->texture1 = nullptr;
 	bgpp->count=4;
 	bgpp->first=0;
 	bgpp->tileclip=0;//disabled ! HA ~
@@ -1773,7 +1776,10 @@ void FillBGP(TA_context* ctx)
 	float scale_x= (SCALER_CTL.hscale) ? 2.f:1.f;	//if AA hack the hacked pos value hacks
 	for (int i=0;i<3;i++)
 	{
-		decode_pvr_vertex(strip_base,vertex_ptr,&cv[i]);
+		if (config::RendererType.isDirectX())
+			decode_pvr_vertex<2, 1, 0, 3>(strip_base,vertex_ptr,&cv[i]);
+		else
+			decode_pvr_vertex<0, 1, 2, 3>(strip_base,vertex_ptr,&cv[i]);
 		vertex_ptr+=strip_vs;
 	}
 
