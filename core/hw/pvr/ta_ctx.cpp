@@ -74,10 +74,11 @@ cResetEvent frame_finished;
 bool QueueRender(TA_context* ctx)
 {
 	verify(ctx != 0);
-	
+
 	bool skipFrame = false;
 	RenderCount++;
-	if (RenderCount % (config::SkipFrame + 1) != 0)
+
+	if (RenderCount % (1 + config::SkipFrame + (int)(config::AutoSkipFrame && settings.input.fastForwardMode)) != 0)
 		skipFrame = true;
 	else if (rqueue && (config::AutoSkipFrame == 0
 				|| (config::AutoSkipFrame == 1 && SH4FastEnough)))
