@@ -2378,12 +2378,6 @@ void ngen_HandleException(host_context_t &context)
 	context.pc = (uintptr_t)handleException;
 }
 
-void ngen_GetFeatures(ngen_features* dst)
-{
-	dst->InterpreterFallback=false;
-	dst->OnlyDynamicEnds=false;
-}
-
 RuntimeBlockInfo* ngen_AllocateBlock()
 {
 	generate_mainloop(); // FIXME why is this needed?

@@ -157,7 +157,7 @@ bool RuntimeBlockInfo::Setup(u32 rpc,fpscr_t rfpu_cfg)
 		if (!dec_DecodeBlock(this, SH4_TIMESLICE / 2))
 			return false;
 	}
-	catch (SH4ThrownException& ex) {
+	catch (const SH4ThrownException& ex) {
 		Do_Exception(rpc, ex.expEvn, ex.callVect);
 		return false;
 	}

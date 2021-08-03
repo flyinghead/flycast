@@ -140,7 +140,7 @@ void ExecuteDelayslot_RTE()
 	try {
 		ExecuteDelayslot();
 	} catch (const SH4ThrownException& ex) {
-		ERROR_LOG(INTERPRETER, "Exception in RTE delay slot");
+		throw FlycastException("Fatal: SH4 exception in RTE delay slot");
 	}
 }
 

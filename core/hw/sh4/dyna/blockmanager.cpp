@@ -164,8 +164,8 @@ void bm_AddBlock(RuntimeBlockInfo* blk)
 		all_temp_blocks.insert(block);
 	auto iter = blkmap.find((void*)blk->code);
 	if (iter != blkmap.end()) {
-		INFO_LOG(DYNAREC, "DUP: %08X %p %08X %p", iter->second->addr, iter->second->code, block->addr, block->code);
-		verify(false);
+		ERROR_LOG(DYNAREC, "DUP: %08X %p %08X %p", iter->second->addr, iter->second->code, block->addr, block->code);
+		die("Duplicated block");
 	}
 	blkmap[(void*)block->code] = block;
 
@@ -715,7 +715,7 @@ void print_blocks()
 						OpDesc[op]->Disassemble(temp,rpc,op);
 
 						fprintf(f,"//g: %04X %s\n", op, temp);
-					} catch (SH4ThrownException& ex) {
+					} catch (const SH4ThrownException& ex) {
 						fprintf(f,"//g: ???? (page fault)\n");
 					}
 				}

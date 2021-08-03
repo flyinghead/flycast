@@ -36,7 +36,6 @@ static u32 sh4io_read_noacc(u32 addr)
 static void sh4io_write_noacc(u32 addr, u32 data)
 { 
 	INFO_LOG(SH4, "sh4io: Invalid write access @@ %08X %08X", addr, data);
-	//verify(false); 
 }
 static void sh4io_write_const(u32 addr, u32 data)
 { 

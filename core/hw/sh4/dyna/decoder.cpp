@@ -105,19 +105,6 @@ static void dec_DynamicSet(u32 regbase,u32 offs=0)
 
 static void dec_End(u32 dst, BlockEndType flags, bool delaySlot)
 {
-	if (state.ngen.OnlyDynamicEnds && flags == BET_StaticJump)
-	{
-		Emit(shop_mov32, mk_reg(reg_nextpc), mk_imm(dst));
-		dec_DynamicSet(reg_nextpc);
-		dec_End(NullAddress, BET_DynamicJump, delaySlot);
-		return;
-	}
-
-	if (state.ngen.OnlyDynamicEnds)
-	{
-		verify(flags == BET_DynamicJump);
-	}
-
 	state.BlockType = flags;
 	state.NextOp = delaySlot ? NDO_Delayslot : NDO_End;
 	state.DelayOp = NDO_End;
@@ -955,7 +942,6 @@ bool dec_DecodeBlock(RuntimeBlockInfo* rbi,u32 max_cycles)
 {
 	blk=rbi;
 	state_Setup(blk->vaddr, blk->fpu_cfg);
-	ngen_GetFeatures(&state.ngen);
 	
 	blk->guest_opcodes=0;
 	// If full MMU, don't allow the block to extend past the end of the current 4K page
@@ -995,10 +981,11 @@ bool dec_DecodeBlock(RuntimeBlockInfo* rbi,u32 max_cycles)
 						blk->has_fpu_op = true;
 					}
 
-					verify(!(state.cpu.is_delayslot && OpDesc[op]->SetPC()));
-					if (state.ngen.OnlyDynamicEnds || !OpDesc[op]->rec_oph)
+					if (state.cpu.is_delayslot && OpDesc[op]->SetPC())
+						throw FlycastException("Fatal: SH4 branch instuction in delay slot");
+					if (!OpDesc[op]->rec_oph)
 					{
-						if (state.ngen.InterpreterFallback || !dec_generic(op))
+						if (!dec_generic(op))
 						{
 							dec_fallback(op);
 							if (OpDesc[op]->SetPC())

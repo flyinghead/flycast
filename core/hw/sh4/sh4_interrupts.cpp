@@ -206,7 +206,8 @@ static bool Do_Interrupt(u32 intEvn)
 
 bool Do_Exception(u32 epc, u32 expEvn, u32 CallVect)
 {
-	verify(sr.BL == 0);
+	if (sr.BL != 0)
+		throw FlycastException("Fatal: SH4 exception when blocked");
 	CCN_EXPEVT = expEvn;
 
 	ssr = sh4_sr_GetFull();

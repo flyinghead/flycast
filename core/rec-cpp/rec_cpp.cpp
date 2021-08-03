@@ -53,12 +53,6 @@ void ngen_init()
 {
 }
 
-void ngen_GetFeatures(ngen_features* dst)
-{
-	dst->InterpreterFallback = false;
-	dst->OnlyDynamicEnds = false;
-}
-
 RuntimeBlockInfo* ngen_AllocateBlock()
 {
 	return new DynaRBI();

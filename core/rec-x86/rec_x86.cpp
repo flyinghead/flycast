@@ -76,12 +76,6 @@ struct DynaRBI : RuntimeBlockInfo
 	}
 };
 
-void ngen_GetFeatures(ngen_features* dst)
-{
-	dst->InterpreterFallback = false;
-	dst->OnlyDynamicEnds = false;
-}
-
 RuntimeBlockInfo* ngen_AllocateBlock()
 {
 	return new DynaRBI();
@@ -789,6 +783,7 @@ void ngen_mainloop(void* v_cntx)
 		mainloop();
 	} catch (const SH4ThrownException&) {
 		ERROR_LOG(DYNAREC, "SH4ThrownException in mainloop");
+		throw FlycastException("Fatal: Unhandled SH4 exception");
 	}
 }
 

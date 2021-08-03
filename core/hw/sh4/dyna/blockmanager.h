@@ -7,6 +7,7 @@
 #include <memory>
 
 typedef void (*DynarecCodeEntryPtr)();
+struct RuntimeBlockInfo;
 typedef std::shared_ptr<RuntimeBlockInfo> RuntimeBlockInfoPtr;
 
 struct RuntimeBlockInfo_Core

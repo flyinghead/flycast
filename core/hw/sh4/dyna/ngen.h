@@ -41,7 +41,6 @@
 */
 
 #pragma once
-#include "decoder.h"
 #include "blockmanager.h"
 #include "oslib/host_context.h"
 
@@ -101,7 +100,6 @@ extern void (*ngen_FailedToFindBlock)();
 // which corresponds to the start of the 512 MB or 4 GB virtual address space if enabled.
 void ngen_mainloop(void* cntx);
 
-void ngen_GetFeatures(ngen_features* dst);
 void ngen_HandleException(host_context_t &context);
 bool ngen_Rewrite(host_context_t &context, void *faultAddress);
 

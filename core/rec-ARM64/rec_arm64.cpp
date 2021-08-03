@@ -76,14 +76,19 @@ static bool restarting;
 
 void ngen_mainloop(void* v_cntx)
 {
-	do {
-		restarting = false;
-		generate_mainloop();
+	try {
+		do {
+			restarting = false;
+			generate_mainloop();
 
-		mainloop(v_cntx);
-		if (restarting)
-			p_sh4rcb->cntx.CpuRunning = 1;
-	} while (restarting);
+			mainloop(v_cntx);
+			if (restarting)
+				p_sh4rcb->cntx.CpuRunning = 1;
+		} while (restarting);
+	} catch (const SH4ThrownException&) {
+		ERROR_LOG(DYNAREC, "SH4ThrownException in mainloop");
+		throw FlycastException("Fatal: Unhandled SH4 exception");
+	}
 }
 
 void ngen_init()
@@ -104,12 +109,6 @@ void ngen_ResetBlocks()
 	}
 	else
 		generate_mainloop();
-}
-
-void ngen_GetFeatures(ngen_features* dst)
-{
-	dst->InterpreterFallback = false;
-	dst->OnlyDynamicEnds = false;
 }
 
 static void interpreter_fallback(u16 op, OpCallFP *oph, u32 pc)

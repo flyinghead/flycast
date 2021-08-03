@@ -533,11 +533,9 @@ void naomi_cart_LoadRom(const char* file)
 
 void naomi_cart_Close()
 {
-	if (CurrentCartridge != NULL)
-	{
-		delete CurrentCartridge;
-		CurrentCartridge = NULL;
-	}
+	delete CurrentCartridge;
+	CurrentCartridge = nullptr;
+	NaomiGameInputs = nullptr;
 	bios_loaded = false;
 }
 
