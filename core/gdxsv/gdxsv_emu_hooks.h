@@ -15,3 +15,5 @@ void gdxsv_emu_loadstate(int slot);
 bool gdxsv_emu_ingame();
 
 void gdxsv_update_popup();
+
+void gdxsv_emu_settings();
