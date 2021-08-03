@@ -10,7 +10,8 @@ import Cocoa
 
 class EmuGLView: NSOpenGLView, NSWindowDelegate {
 
-    var backingRect:NSRect?
+    var backingRect: NSRect?
+    var swapOnVSync = emu_vsync_enabled()
     
     override var acceptsFirstResponder: Bool {
         return true;
@@ -20,14 +21,17 @@ class EmuGLView: NSOpenGLView, NSWindowDelegate {
         super.draw(dirtyRect)
         backingRect = convertToBacking(dirtyRect)
         
-        if emu_fast_forward() == false {
+        if swapOnVSync {
             draw()
         }
     }
     
     func draw() {
-        var sync: GLint = emu_fast_forward() ? 0 : 1
-        CGLSetParameter(openGLContext!.cglContextObj!, kCGLCPSwapInterval, &sync)
+        if swapOnVSync == (emu_fast_forward() || !emu_vsync_enabled()) {
+            swapOnVSync = (!emu_fast_forward() && emu_vsync_enabled())
+            var sync: GLint = swapOnVSync ? 1 : 0
+            CGLSetParameter(openGLContext!.cglContextObj!, kCGLCPSwapInterval, &sync)
+        }
         
         if let backingRect = backingRect {
             openGLContext!.makeCurrentContext()
@@ -82,10 +86,10 @@ class EmuGLView: NSOpenGLView, NSWindowDelegate {
 			NSApplication.shared.terminate(self)
 		}
         else if (emu_frame_pending()) {
-            if emu_fast_forward() {
-                self.draw()
-            } else {
+            if swapOnVSync {
                 self.needsDisplay = true
+            } else {
+                self.draw()
             }
         }
     }

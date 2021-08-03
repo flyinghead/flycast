@@ -19,6 +19,7 @@ void emu_dc_term();
 void emu_gui_open_settings();
 bool emu_renderer_enabled();
 bool emu_fast_forward();
+bool emu_vsync_enabled();
 int emu_single_frame(int w, int h);
 void emu_gles_init(int width, int height);
 int emu_reicast_init();

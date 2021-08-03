@@ -131,6 +131,11 @@ bool emu_fast_forward()
     return settings.input.fastForwardMode;
 }
 
+bool emu_vsync_enabled()
+{
+    return config::VSync;
+}
+
 int emu_single_frame(int w, int h)
 {
     if (!emu_frame_pending())
