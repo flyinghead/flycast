@@ -32,11 +32,6 @@
 
 #import <SystemConfiguration/SystemConfiguration.h>
 
-OSXKeyboardDevice keyboard(0);
-static std::shared_ptr<OSXKbGamepadDevice> kb_gamepad(0);
-static std::shared_ptr<OSXMouseGamepadDevice> mouse_gamepad(0);
-unsigned int *pmo_buttons;
-float *pmo_wheel_delta;
 static std::shared_ptr<OSXKeyboard> keyboard(0);
 static std::shared_ptr<OSXMouse> mouse;
 static UInt32 keyboardModifiers;

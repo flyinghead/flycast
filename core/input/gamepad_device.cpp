@@ -154,15 +154,19 @@ bool GamepadDevice::gamepad_btn_input(u32 code, bool pressed)
 	};
 
 	bool rc = false;
-	if (_maple_port == 4) {
-        for (int port = 0; port < 4; port++) {
-            DreamcastKey key = input_mapper->get_button_id(port, code);
-            rc = handle_key(port, key) || rc;
-        }
-    } else {
-        DreamcastKey key = input_mapper->get_button_id(0, code);
-        rc = handle_key(_maple_port, key);
-    }
+	if (_maple_port == 4)
+	{
+		for (int port = 0; port < 4; port++)
+		{
+			DreamcastKey key = input_mapper->get_button_id(port, code);
+			rc = handle_key(port, key) || rc;
+		}
+	}
+	else
+	{
+		DreamcastKey key = input_mapper->get_button_id(0, code);
+		rc = handle_key(_maple_port, key);
+	}
 
 	return rc;
 }
