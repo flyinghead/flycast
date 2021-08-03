@@ -22,6 +22,7 @@
 #include <atomic>
 #include <map>
 #include <vector>
+#include <string>
 
 void loadGameSpecificSettings();
 void SaveSettings();
