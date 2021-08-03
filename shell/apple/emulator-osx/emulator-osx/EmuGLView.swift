@@ -31,9 +31,10 @@ class EmuGLView: NSOpenGLView, NSWindowDelegate {
         
         if let backingRect = backingRect {
             openGLContext!.makeCurrentContext()
-            if (emu_single_frame(Int32(backingRect.width), Int32(backingRect.height)) != 0) {
-                openGLContext!.flushBuffer()
+            while emu_single_frame(Int32(backingRect.width), Int32(backingRect.height)) == 0 {
+                //For DelayFrameSwapping: use while loop to call multple rend_single_frame() until rend_swap_frame(u32 fb_r_sof1)
             }
+            openGLContext!.flushBuffer() //Swap for macOS
         }
     }
     
