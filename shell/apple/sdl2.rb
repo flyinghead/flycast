@@ -56,8 +56,8 @@ class Sdl2 < Formula
     args = %W[--prefix=#{prefix} --without-x --enable-hidapi]
     args << "CFLAGS=-mmacosx-version-min=10.9"
     args << "CXXFLAGS=-mmacosx-version-min=10.9"
-    args << "CC=gcc -isysroot #{sdkpath} -arch arm64 -arch x86_64"
-    args << "CXX=g++ -isysroot #{sdkpath} -arch arm64 -arch x86_64"
+    args << "CC=gcc -isysroot #{sdkpath} -arch x86_64"
+    args << "CXX=g++ -isysroot #{sdkpath} -arch x86_64"
     system "./configure", *args
     system "make", "install"
   end
