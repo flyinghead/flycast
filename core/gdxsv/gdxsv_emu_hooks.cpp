@@ -54,8 +54,8 @@ bool gdxsv_emu_ingame() {
 }
 
 void gdxsv_update_popup() {
-    bool no_popup_opend = !ImGui::IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopupId);
-    if (gdxsv.UpdateAvailable() && no_popup_opend) {
+    bool no_popup_opened = !ImGui::IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopupId);
+    if (gdxsv.UpdateAvailable() && no_popup_opened) {
         ImGui::OpenPopup("New version");
         gdxsv.DismissUpdateDialog();
     }
@@ -83,8 +83,7 @@ void gdxsv_update_popup() {
     }
 }
 
-inline static void gui_header(const char *title)
-{
+inline static void gui_header(const char *title) {
     ImGui::PushStyleVar(ImGuiStyleVar_ButtonTextAlign, ImVec2(0.f, 0.5f)); // Left
     ImGui::ButtonEx(title, ImVec2(-1, 0), ImGuiButtonFlags_Disabled);
     ImGui::PopStyleVar();
@@ -126,10 +125,10 @@ void gdxsv_emu_settings() {
     DynarecIdleSkip=yes
     DynarecSafeMode=no
     DSPEnabled=no)");
-    
+
     bool widescreen = config::Widescreen.get() && config::WidescreenGameHacks.get();
     bool pressed = ImGui::Checkbox("Enable 16:9 Widescreen Hack", &widescreen);
-    if (pressed){
+    if (pressed) {
         config::Widescreen.set(widescreen);
         config::WidescreenGameHacks.set(widescreen);
     }
