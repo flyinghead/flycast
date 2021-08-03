@@ -488,17 +488,28 @@ void findGLVersion()
 #if !defined(GLES2)
 	if (gl.gl_major >= 3)
 	{
-		for (u32 i = 0; ; i++)
+		bool anisotropicExtension = false;
+		const char *extensions = (const char *)glGetString(GL_EXTENSIONS);
+		// glGetString(GL_EXTENSIONS) is deprecated and might return NULL in core contexts.
+		// In that case, use glGetStringi instead
+		if (extensions == nullptr)
 		{
-			const char* extension = (const char *)glGetStringi(GL_EXTENSIONS, i);
-			if (extension == nullptr)
-				break;
-			if (!strcmp(extension, "GL_EXT_texture_filter_anisotropic"))
+			GLint n = 0;
+			glGetIntegerv(GL_NUM_EXTENSIONS, &n);
+			for (GLint i = 0; i < n; i++)
 			{
-				glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY, &gl.max_anisotropy);
-				break;
+				const char* extension = (const char *)glGetStringi(GL_EXTENSIONS, i);
+				if (!strcmp(extension, "GL_EXT_texture_filter_anisotropic"))
+				{
+					anisotropicExtension = true;
+					break;
+				}
 			}
 		}
+		else if (strstr(extensions, "GL_EXT_texture_filter_anisotropic") != nullptr)
+			anisotropicExtension = true;
+		if (anisotropicExtension)
+			glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY, &gl.max_anisotropy);
 	}
 #endif
 	gl.mesa_nouveau = strstr((const char *)glGetString(GL_VERSION), "Mesa") != nullptr && !strcmp((const char *)glGetString(GL_VENDOR), "nouveau");
