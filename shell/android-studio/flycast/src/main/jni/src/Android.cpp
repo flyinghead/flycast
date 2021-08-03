@@ -556,6 +556,11 @@ extern "C" JNIEXPORT void JNICALL Java_com_reicast_emulator_periph_InputDeviceMa
 	mouse->setButton(Mouse::MIDDLE_BUTTON, (buttons & 4) != 0);
 }
 
+extern "C" JNIEXPORT void JNICALL Java_com_reicast_emulator_periph_InputDeviceManager_mouseScrollEvent(JNIEnv *env, jobject obj, jint scrollValue)
+{
+    mouse->setWheel(scrollValue);
+}
+
 static jobject g_activity;
 static jmethodID VJoyStartEditingMID;
 static jmethodID VJoyStopEditingMID;

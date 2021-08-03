@@ -236,7 +236,15 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
                 return true;
         }
         else if ((event.getSource() & InputDevice.SOURCE_CLASS_POINTER) == InputDevice.SOURCE_CLASS_POINTER) {
-            InputDeviceManager.getInstance().mouseEvent(Math.round(event.getX()), Math.round(event.getY()), event.getButtonState());
+            switch (event.getAction()) {
+                case MotionEvent.ACTION_SCROLL:
+                    InputDeviceManager.getInstance().mouseScrollEvent(Math.round(-event.getAxisValue(MotionEvent.AXIS_VSCROLL)));
+                    break;
+                default:
+                    InputDeviceManager.getInstance().mouseEvent(Math.round(event.getX()), Math.round(event.getY()), event.getButtonState());
+                    break;
+            }
+            return true;
         }
         return super.onGenericMotionEvent(event);
     }
