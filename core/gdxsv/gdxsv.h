@@ -63,8 +63,6 @@ private:
 
     void WritePatchDisk2();
 
-    void WritePatchPs2();
-
     NetMode netmode = NetMode::Offline;
     std::atomic<bool> enabled;
     std::atomic<int> disk;

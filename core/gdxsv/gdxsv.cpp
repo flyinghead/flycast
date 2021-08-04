@@ -606,29 +606,6 @@ void Gdxsv::WritePatchDisk2() {
     }
 }
 
-void Gdxsv::WritePatchPs2() {
-    // Reduce max lag-frame
-    // InetClntParam
-    gdxsv_WriteMem8(0x00580340, 1);
-    gdxsv_WriteMem8(0x00580341, maxlag);
-
-    // replace modem_recognition with network_battle.
-    gdxsv_WriteMem32(0x003c4f58, 0x0015f110);
-
-    // skip form validation
-    gdxsv_WriteMem32(0x003551c0, 0);
-
-    // Write LoginKey
-    if (gdxsv_ReadMem8(0x00a88370) == 0) {
-        int n = loginkey.length();
-        for (int i = 0; i < n; ++i) {
-            gdxsv_WriteMem8(0x00a88370 + i, loginkey[i]);
-        }
-    }
-    // Online patch
-    ApplyOnlinePatch(false);
-}
-
 bool Gdxsv::StartReplayFile(const char *path) {
     replay_net.Reset();
     if (replay_net.StartFile(path)) {
