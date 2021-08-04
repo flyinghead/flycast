@@ -96,15 +96,15 @@ void Gdxsv::Update() {
      */
 
     u8 dump_buf[1024];
-    if (ReadMem32_nommu(symbols["print_buf_pos"])) {
-        int n = ReadMem32_nommu(symbols["print_buf_pos"]);
+    if (gdxsv_ReadMem32(symbols["print_buf_pos"])) {
+        int n = gdxsv_ReadMem32(symbols["print_buf_pos"]);
         n = std::min(n, (int) sizeof(dump_buf));
         for (int i = 0; i < n; i++) {
-            dump_buf[i] = ReadMem8_nommu(symbols["print_buf"] + i);
+            dump_buf[i] = gdxsv_ReadMem8(symbols["print_buf"] + i);
         }
         dump_buf[n] = 0;
-        WriteMem32_nommu(symbols["print_buf_pos"], 0);
-        WriteMem32_nommu(symbols["print_buf"], 0);
+        gdxsv_WriteMem32(symbols["print_buf_pos"], 0);
+        gdxsv_WriteMem32(symbols["print_buf"], 0);
         NOTICE_LOG(COMMON, "%s", dump_buf);
     }
 }
@@ -398,13 +398,13 @@ void Gdxsv::ApplyOnlinePatch(bool first_time) {
         for (int j = 0; j < patch.codes_size(); ++j) {
             auto &code = patch.codes(j);
             if (code.size() == 8) {
-                WriteMem8_nommu(code.address(), (u8) (code.changed() & 0xff));
+                gdxsv_WriteMem8(code.address(), (u8) (code.changed() & 0xff));
             }
             if (code.size() == 16) {
-                WriteMem16_nommu(code.address(), (u16) (code.changed() & 0xffff));
+                gdxsv_WriteMem16(code.address(), (u16) (code.changed() & 0xffff));
             }
             if (code.size() == 32) {
-                WriteMem32_nommu(code.address(), code.changed());
+                gdxsv_WriteMem32(code.address(), code.changed());
             }
         }
     }
@@ -417,13 +417,13 @@ void Gdxsv::RestoreOnlinePatch() {
         for (int j = 0; j < patch.codes_size(); ++j) {
             auto &code = patch.codes(j);
             if (code.size() == 8) {
-                WriteMem8_nommu(code.address(), (u8) (code.original() & 0xff));
+                gdxsv_WriteMem8(code.address(), (u8) (code.original() & 0xff));
             }
             if (code.size() == 16) {
-                WriteMem16_nommu(code.address(), (u16) (code.original() & 0xffff));
+                gdxsv_WriteMem16(code.address(), (u16) (code.original() & 0xffff));
             }
             if (code.size() == 32) {
-                WriteMem32_nommu(code.address(), code.original());
+                gdxsv_WriteMem32(code.address(), code.original());
             }
         }
     }
@@ -433,12 +433,12 @@ void Gdxsv::RestoreOnlinePatch() {
 void Gdxsv::WritePatch() {
     if (disk == 1) WritePatchDisk1();
     if (disk == 2) WritePatchDisk2();
-    if (symbols["patch_id"] == 0 || ReadMem32_nommu(symbols["patch_id"]) != symbols[":patch_id"]) {
-        NOTICE_LOG(COMMON, "patch %d %d", ReadMem32_nommu(symbols["patch_id"]), symbols[":patch_id"]);
+    if (symbols["patch_id"] == 0 || gdxsv_ReadMem32(symbols["patch_id"]) != symbols[":patch_id"]) {
+        NOTICE_LOG(COMMON, "patch %d %d", gdxsv_ReadMem32(symbols["patch_id"]), symbols[":patch_id"]);
 
 #include "gdxsv_patch.inc"
 
-        WriteMem32_nommu(symbols["disk"], (int) disk);
+        gdxsv_WriteMem32(symbols["disk"], (int) disk);
     }
 }
 
@@ -446,38 +446,38 @@ void Gdxsv::WritePatchDisk1() {
     const u32 offset = 0x8C000000 + 0x00010000;
 
     // Max Rebattle Patch
-    WriteMem8_nommu(0x0c0345b0, 5);
+    gdxsv_WriteMem8(0x0c0345b0, 5);
 
     // Fix cost 300 to 295
-    WriteMem16_nommu(0x0c1b0fd0, 295);
+    gdxsv_WriteMem16(0x0c1b0fd0, 295);
 
     // Send key message every frame
-    WriteMem8_nommu(0x0c310450, 1);
+    gdxsv_WriteMem8(0x0c310450, 1);
 
     // Reduce max lag-frame
-    WriteMem8_nommu(0x0c310451, maxlag);
+    gdxsv_WriteMem8(0x0c310451, maxlag);
 
     // Modem connection fix
     const char *atm1 = "ATM1\r                                ";
     for (int i = 0; i < strlen(atm1); ++i) {
-        WriteMem8_nommu(offset + 0x0015e703 + i, u8(atm1[i]));
+        gdxsv_WriteMem8(offset + 0x0015e703 + i, u8(atm1[i]));
     }
 
     // Overwrite serve address (max 20 chars)
     for (int i = 0; i < 20; ++i) {
-        WriteMem8_nommu(offset + 0x0015e788 + i, (i < server.length()) ? u8(server[i]) : u8(0));
+        gdxsv_WriteMem8(offset + 0x0015e788 + i, (i < server.length()) ? u8(server[i]) : u8(0));
     }
 
     // Skip form validation
-    WriteMem16_nommu(offset + 0x0003b0c4, u16(9)); // nop
-    WriteMem16_nommu(offset + 0x0003b0cc, u16(9)); // nop
-    WriteMem16_nommu(offset + 0x0003b0d4, u16(9)); // nop
-    WriteMem16_nommu(offset + 0x0003b0dc, u16(9)); // nop
+    gdxsv_WriteMem16(offset + 0x0003b0c4, u16(9)); // nop
+    gdxsv_WriteMem16(offset + 0x0003b0cc, u16(9)); // nop
+    gdxsv_WriteMem16(offset + 0x0003b0d4, u16(9)); // nop
+    gdxsv_WriteMem16(offset + 0x0003b0dc, u16(9)); // nop
 
     // Write LoginKey
-    if (ReadMem8_nommu(offset - 0x10000 + 0x002f6924) == 0) {
+    if (gdxsv_ReadMem8(offset - 0x10000 + 0x002f6924) == 0) {
         for (int i = 0; i < std::min(loginkey.length(), size_t(8)) + 1; ++i) {
-            WriteMem8_nommu(offset - 0x10000 + 0x002f6924 + i,
+            gdxsv_WriteMem8(offset - 0x10000 + 0x002f6924 + i,
                             (i < loginkey.length()) ? u8(loginkey[i]) : u8(0));
         }
     }
@@ -485,23 +485,23 @@ void Gdxsv::WritePatchDisk1() {
     // Ally HP
     u16 hp_offset = 0x0180;
     if (InGame()) {
-        u8 player_index = ReadMem8_nommu(0x0c2f6652);
+        u8 player_index = gdxsv_ReadMem8(0x0c2f6652);
         if (player_index) {
             player_index--;
             // depend on 4 player battle
             u8 ally_index = player_index - (player_index & 1) + !(player_index & 1);
-            u16 ally_hp = ReadMem16_nommu(0x0c3369d6 + ally_index * 0x2000);
-            WriteMem16_nommu(0x0c3369d2 + player_index * 0x2000, ally_hp);
+            u16 ally_hp = gdxsv_ReadMem16(0x0c3369d6 + ally_index * 0x2000);
+            gdxsv_WriteMem16(0x0c3369d2 + player_index * 0x2000, ally_hp);
         }
         hp_offset -= 2;
     }
-    WriteMem16_nommu(0x0c01d336, hp_offset);
-    WriteMem16_nommu(0x0c01d56e, hp_offset);
-    WriteMem16_nommu(0x0c01d678, hp_offset);
-    WriteMem16_nommu(0x0c01d89e, hp_offset);
+    gdxsv_WriteMem16(0x0c01d336, hp_offset);
+    gdxsv_WriteMem16(0x0c01d56e, hp_offset);
+    gdxsv_WriteMem16(0x0c01d678, hp_offset);
+    gdxsv_WriteMem16(0x0c01d89e, hp_offset);
 
     // Disable soft reset
-    WriteMem8_nommu(0x0c2f6657, InGame() ? 1 : 0);
+    gdxsv_WriteMem8(0x0c2f6657, InGame() ? 1 : 0);
 
     // Online patch
     ApplyOnlinePatch(false);
@@ -511,40 +511,40 @@ void Gdxsv::WritePatchDisk2() {
     const u32 offset = 0x8C000000 + 0x00010000;
 
     // Max Rebattle Patch
-    WriteMem8_nommu(0x0c0219ec, 5);
+    gdxsv_WriteMem8(0x0c0219ec, 5);
 
     // Fix cost 300 to 295
-    WriteMem16_nommu(0x0c21bfec, 295);
-    WriteMem16_nommu(0x0c21bff4, 295);
-    WriteMem16_nommu(0x0c21c034, 295);
+    gdxsv_WriteMem16(0x0c21bfec, 295);
+    gdxsv_WriteMem16(0x0c21bff4, 295);
+    gdxsv_WriteMem16(0x0c21c034, 295);
 
     // Send key message every frame
-    WriteMem8_nommu(0x0c3abb90, 1);
+    gdxsv_WriteMem8(0x0c3abb90, 1);
 
     // Reduce max lag-frame
-    WriteMem8_nommu(0x0c3abb91, maxlag);
+    gdxsv_WriteMem8(0x0c3abb91, maxlag);
 
     // Modem connection fix
     const char *atm1 = "ATM1\r                                ";
     for (int i = 0; i < strlen(atm1); ++i) {
-        WriteMem8_nommu(offset + 0x001be7c7 + i, u8(atm1[i]));
+        gdxsv_WriteMem8(offset + 0x001be7c7 + i, u8(atm1[i]));
     }
 
     // Overwrite serve address (max 20 chars)
     for (int i = 0; i < 20; ++i) {
-        WriteMem8_nommu(offset + 0x001be84c + i, (i < server.length()) ? u8(server[i]) : u8(0));
+        gdxsv_WriteMem8(offset + 0x001be84c + i, (i < server.length()) ? u8(server[i]) : u8(0));
     }
 
     // Skip form validation
-    WriteMem16_nommu(offset + 0x000284f0, u16(9)); // nop
-    WriteMem16_nommu(offset + 0x000284f8, u16(9)); // nop
-    WriteMem16_nommu(offset + 0x00028500, u16(9)); // nop
-    WriteMem16_nommu(offset + 0x00028508, u16(9)); // nop
+    gdxsv_WriteMem16(offset + 0x000284f0, u16(9)); // nop
+    gdxsv_WriteMem16(offset + 0x000284f8, u16(9)); // nop
+    gdxsv_WriteMem16(offset + 0x00028500, u16(9)); // nop
+    gdxsv_WriteMem16(offset + 0x00028508, u16(9)); // nop
 
     // Write LoginKey
-    if (ReadMem8_nommu(offset - 0x10000 + 0x00392064) == 0) {
+    if (gdxsv_ReadMem8(offset - 0x10000 + 0x00392064) == 0) {
         for (int i = 0; i < std::min(loginkey.length(), size_t(8)) + 1; ++i) {
-            WriteMem8_nommu(offset - 0x10000 + 0x00392064 + i,
+            gdxsv_WriteMem8(offset - 0x10000 + 0x00392064 + i,
                             (i < loginkey.length()) ? u8(loginkey[i]) : u8(0));
         }
     }
@@ -552,25 +552,25 @@ void Gdxsv::WritePatchDisk2() {
     // Ally HP
     u16 hp_offset = 0x0180;
     if (InGame()) {
-        u8 player_index = ReadMem8_nommu(0x0c391d92);
+        u8 player_index = gdxsv_ReadMem8(0x0c391d92);
         if (player_index) {
             player_index--;
             // depend on 4 player battle
             u8 ally_index = player_index - (player_index & 1) + !(player_index & 1);
-            u16 ally_hp = ReadMem16_nommu(0x0c3d1e56 + ally_index * 0x2000);
-            WriteMem16_nommu(0x0c3d1e52 + player_index * 0x2000, ally_hp);
+            u16 ally_hp = gdxsv_ReadMem16(0x0c3d1e56 + ally_index * 0x2000);
+            gdxsv_WriteMem16(0x0c3d1e52 + player_index * 0x2000, ally_hp);
         }
         hp_offset -= 2;
     }
-    WriteMem16_nommu(0x0c11da88, hp_offset);
-    WriteMem16_nommu(0x0c11dbbc, hp_offset);
-    WriteMem16_nommu(0x0c11dcc0, hp_offset);
-    WriteMem16_nommu(0x0c11ddd6, hp_offset);
-    WriteMem16_nommu(0x0c11df08, hp_offset);
-    WriteMem16_nommu(0x0c11e01a, hp_offset);
+    gdxsv_WriteMem16(0x0c11da88, hp_offset);
+    gdxsv_WriteMem16(0x0c11dbbc, hp_offset);
+    gdxsv_WriteMem16(0x0c11dcc0, hp_offset);
+    gdxsv_WriteMem16(0x0c11ddd6, hp_offset);
+    gdxsv_WriteMem16(0x0c11df08, hp_offset);
+    gdxsv_WriteMem16(0x0c11e01a, hp_offset);
 
     // Disable soft reset
-    WriteMem8_nommu(0x0c391d97, InGame() ? 1 : 0);
+    gdxsv_WriteMem8(0x0c391d97, InGame() ? 1 : 0);
 
     // Online patch
     ApplyOnlinePatch(false);
@@ -580,7 +580,7 @@ void Gdxsv::WritePatchDisk2() {
         u32 ratio = 0x3faaaaab; // default 4/3
         int stretching = 100;
         bool update = false;
-        if (ReadMem8_nommu(0x0c3d16d4) == 2 && ReadMem8_nommu(0x0c3d16d5) == 7) { // In main game part
+        if (gdxsv_ReadMem8(0x0c3d16d4) == 2 && gdxsv_ReadMem8(0x0c3d16d5) == 7) { // In main game part
             // Changing this value outside the game part will break UI layout.
             // For 0x0c3d16d5: 4=load briefing, 5=briefing, 7=battle, 0xd=rebattle/end selection
             if (config::ScreenStretching == 100) {
@@ -598,10 +598,10 @@ void Gdxsv::WritePatchDisk2() {
         }
         if (update) {
             config::ScreenStretching.override(stretching);
-            WriteMem32_nommu(0x0c1e7948, ratio);
-            WriteMem32_nommu(0x0c1e7958, ratio);
-            WriteMem32_nommu(0x0c1e7968, ratio);
-            WriteMem32_nommu(0x0c1e7978, ratio);
+            gdxsv_WriteMem32(0x0c1e7948, ratio);
+            gdxsv_WriteMem32(0x0c1e7958, ratio);
+            gdxsv_WriteMem32(0x0c1e7968, ratio);
+            gdxsv_WriteMem32(0x0c1e7978, ratio);
         }
     }
 }
