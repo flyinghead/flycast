@@ -48,7 +48,7 @@ void Gdxsv::Reset() {
     if (disk_num == "2") disk = 2;
 
 #ifdef __APPLE__
-        signal(SIGPIPE, SIG_IGN);
+    signal(SIGPIPE, SIG_IGN);
 #endif
 
     NOTICE_LOG(COMMON, "gdxsv disk:%d server:%s loginkey:%s", (int) disk, server.c_str(), loginkey.c_str());
