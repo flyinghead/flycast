@@ -1,14 +1,12 @@
 #include "gdxsv.h"
-
 #include <sstream>
 #include <random>
-#include <regex>
-#include <xxhash.h>
 
 #include "lzma/CpuArch.h"
 #include "oslib/oslib.h"
 #include "version.h"
 #include "emulator.h"
+#include <xxhash.h>
 
 bool Gdxsv::InGame() const {
     return enabled && netmode == NetMode::McsUdp;
@@ -35,9 +33,25 @@ void Gdxsv::Reset() {
     }
     enabled = true;
 
+    server = cfgLoadStr("gdxsv", "server", "zdxsv.net");
+    loginkey = cfgLoadStr("gdxsv", "loginkey", "");
+
+    if (loginkey.empty()) {
+        loginkey = GenerateLoginKey();
+    }
+
+    cfgSaveStr("gdxsv", "server", server.c_str());
+    cfgSaveStr("gdxsv", "loginkey", loginkey.c_str());
+
+    std::string disk_num(ip_meta.disk_num, 1);
+    if (disk_num == "1") disk = 1;
+    if (disk_num == "2") disk = 2;
+
 #ifdef __APPLE__
-    signal(SIGPIPE, SIG_IGN);
+        signal(SIGPIPE, SIG_IGN);
 #endif
+
+    NOTICE_LOG(COMMON, "gdxsv disk:%d server:%s loginkey:%s", (int) disk, server.c_str(), loginkey.c_str());
 
     lbs_net.callback_lbs_packet([this](const LbsMessage &lbs_msg) {
         if (lbs_msg.command == LbsMessage::lbsExtPlayerInfo) {
@@ -61,26 +75,11 @@ void Gdxsv::Reset() {
             }
         }
     });
-
-    server = cfgLoadStr("gdxsv", "server", "zdxsv.net");
-    loginkey = cfgLoadStr("gdxsv", "loginkey", "");
-
-    if (loginkey.empty()) {
-        loginkey = GenerateLoginKey();
-    }
-
-    cfgSaveStr("gdxsv", "server", server.c_str());
-    cfgSaveStr("gdxsv", "loginkey", loginkey.c_str());
-
-    std::string disk_num(ip_meta.disk_num, 1);
-    if (disk_num == "1") disk = 1;
-    if (disk_num == "2") disk = 2;
-
-    NOTICE_LOG(COMMON, "gdxsv disk:%d server:%s loginkey:%s", (int) disk, server.c_str(), loginkey.c_str());
 }
 
 void Gdxsv::Update() {
     if (!enabled) return;
+
     if (InGame()) {
         settings.input.fastForwardMode = false;
     }
@@ -112,9 +111,6 @@ void Gdxsv::Update() {
 
 std::string Gdxsv::GeneratePlatformInfoString() {
     std::stringstream ss;
-    ss << "flycast=" << GIT_VERSION << "\n";
-    ss << "git_hash=" << GIT_HASH << "\n";
-    ss << "build_date=" << BUILD_DATE << "\n";
     ss << "cpu=" <<
        #if HOST_CPU == CPU_X86
        "x86"
@@ -149,16 +145,19 @@ std::string Gdxsv::GeneratePlatformInfoString() {
        "Unknown"
        #endif
        << "\n";
+    ss << "flycast=" << GIT_VERSION << "\n";
+    ss << "git_hash=" << GIT_HASH << "\n";
+    ss << "build_date=" << BUILD_DATE << "\n";
     ss << "disk=" << (int) disk << "\n";
+    ss << "wireless=" << (int) (os_GetConnectionMedium() == "Wireless") << "\n";
     ss << "patch_id=" << symbols[":patch_id"] << "\n";
+    ss << "local_ip=" << lbs_net.LocalIP() << "\n";
+    // ss << "bind_port=" << .bind_port() << "\n";
     std::string machine_id = os_GetMachineID();
     if (machine_id.length()) {
         auto digest = XXH64(machine_id.c_str(), machine_id.size(), 37);
         ss << "machine_id=" << std::hex << digest << std::dec << "\n";
     }
-    ss << "wireless=" << (int) (os_GetConnectionMedium() == "Wireless") << "\n";
-    ss << "local_ip=" << lbs_net.LocalIP() << "\n";
-    // ss << "bind_port=" << .bind_port() << "\n";
 
     if (gcp_ping_test_finished) {
         for (const auto &res : gcp_ping_test_result) {
@@ -194,12 +193,12 @@ void Gdxsv::HandleRPC() {
 
     u32 response = 0;
     gdx_rpc_t gdx_rpc{};
-    gdx_rpc.request = ReadMem32_nommu(gdx_rpc_addr);
-    gdx_rpc.response = ReadMem32_nommu(gdx_rpc_addr + 4);
-    gdx_rpc.param1 = ReadMem32_nommu(gdx_rpc_addr + 8);
-    gdx_rpc.param2 = ReadMem32_nommu(gdx_rpc_addr + 12);
-    gdx_rpc.param3 = ReadMem32_nommu(gdx_rpc_addr + 16);
-    gdx_rpc.param4 = ReadMem32_nommu(gdx_rpc_addr + 20);
+    gdx_rpc.request = gdxsv_ReadMem32(gdx_rpc_addr);
+    gdx_rpc.response = gdxsv_ReadMem32(gdx_rpc_addr + 4);
+    gdx_rpc.param1 = gdxsv_ReadMem32(gdx_rpc_addr + 8);
+    gdx_rpc.param2 = gdxsv_ReadMem32(gdx_rpc_addr + 12);
+    gdx_rpc.param3 = gdxsv_ReadMem32(gdx_rpc_addr + 16);
+    gdx_rpc.param4 = gdxsv_ReadMem32(gdx_rpc_addr + 20);
 
     if (gdx_rpc.request == GDX_RPC_SOCK_OPEN) {
         u32 tolobby = gdx_rpc.param1;
@@ -283,14 +282,14 @@ void Gdxsv::HandleRPC() {
         }
     }
 
-    WriteMem32_nommu(gdx_rpc_addr, 0);
-    WriteMem32_nommu(gdx_rpc_addr + 4, response);
-    WriteMem32_nommu(gdx_rpc_addr + 8, 0);
-    WriteMem32_nommu(gdx_rpc_addr + 12, 0);
-    WriteMem32_nommu(gdx_rpc_addr + 16, 0);
-    WriteMem32_nommu(gdx_rpc_addr + 20, 0);
+    gdxsv_WriteMem32(gdx_rpc_addr, 0);
+    gdxsv_WriteMem32(gdx_rpc_addr + 4, response);
+    gdxsv_WriteMem32(gdx_rpc_addr + 8, 0);
+    gdxsv_WriteMem32(gdx_rpc_addr + 12, 0);
+    gdxsv_WriteMem32(gdx_rpc_addr + 16, 0);
+    gdxsv_WriteMem32(gdx_rpc_addr + 20, 0);
 
-    WriteMem32_nommu(symbols["is_online"], netmode != NetMode::Offline);
+    gdxsv_WriteMem32(symbols["is_online"], netmode != NetMode::Offline);
 }
 
 void Gdxsv::StartPingTest() {
@@ -607,70 +606,27 @@ void Gdxsv::WritePatchDisk2() {
     }
 }
 
-void Gdxsv::handleReleaseJSON(const std::string &json) {
-    const std::string version_prefix = "gdxsv-";
-    const std::regex tag_name_regex(R"|#|("tag_name":"(.*?)")|#|");
-    const std::regex semver_regex(
-            R"|#|(^([0-9]+)\.([0-9]+)\.([0-9]+)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+[0-9A-Za-z-]+)?$)|#|");
+void Gdxsv::WritePatchPs2() {
+    // Reduce max lag-frame
+    // InetClntParam
+    gdxsv_WriteMem8(0x00580340, 1);
+    gdxsv_WriteMem8(0x00580341, maxlag);
 
-    auto trim_prefix = [&version_prefix](const std::string &s) {
-        if (s.size() < version_prefix.size())
-            return s;
-        if (version_prefix == s.substr(0, version_prefix.size()))
-            return s.substr(version_prefix.size());
-        return s;
-    };
+    // replace modem_recognition with network_battle.
+    gdxsv_WriteMem32(0x003c4f58, 0x0015f110);
 
-    std::smatch match;
+    // skip form validation
+    gdxsv_WriteMem32(0x003551c0, 0);
 
-    auto current_version_str = trim_prefix(std::string(GIT_VERSION));
-    if (!std::regex_match(current_version_str, match, semver_regex)) return;
-
-    if (match.size() < 4) return;
-    auto current_version = std::tuple<int, int, int>(
-            std::stoi(match.str(1)), std::stoi(match.str(2)), std::stoi(match.str(3)));
-
-    if (!std::regex_search(json, match, tag_name_regex)) return;
-    if (match.size() < 2) return;
-    auto tag_name = match.str(1);
-    auto latest_version_str = trim_prefix(tag_name);
-
-    if (!std::regex_match(latest_version_str, match, semver_regex)) return;
-    if (match.size() < 4) return;
-    auto latest_version = std::tuple<int, int, int>(
-            std::stoi(match.str(1)), std::stoi(match.str(2)), std::stoi(match.str(3)));
-
-    latest_version_tag = tag_name;
-
-    if (current_version < latest_version) {
-        update_available = true;
+    // Write LoginKey
+    if (gdxsv_ReadMem8(0x00a88370) == 0) {
+        int n = loginkey.length();
+        for (int i = 0; i < n; ++i) {
+            gdxsv_WriteMem8(0x00a88370 + i, loginkey[i]);
+        }
     }
-}
-
-bool Gdxsv::UpdateAvailable() {
-    static std::once_flag once;
-    std::call_once(once, [this] {
-        std::thread([this]() {
-            const std::string json = os_FetchStringFromURL(
-                    "https://api.github.com/repos/inada-s/flycast/releases/latest");
-            if (json.empty()) return;
-            handleReleaseJSON(json);
-        }).detach();
-    });
-    return update_available;
-}
-
-void Gdxsv::OpenDownloadPage() {
-    os_LaunchFromURL("https://github.com/inada-s/flycast/releases/latest/");
-    update_available = false;
-}
-
-void Gdxsv::DismissUpdateDialog() {
-    update_available = false;
-}
-
-std::string Gdxsv::LatestVersion() {
-    return latest_version_tag;
+    // Online patch
+    ApplyOnlinePatch(false);
 }
 
 bool Gdxsv::StartReplayFile(const char *path) {

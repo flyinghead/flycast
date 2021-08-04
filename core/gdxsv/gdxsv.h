@@ -5,16 +5,17 @@
 #include <chrono>
 #include <atomic>
 
+#include "gdxsv.pb.h"
+#include "gdxsv_backend_tcp.h"
+#include "gdxsv_backend_udp.h"
+#include "gdxsv_backend_replay.h"
 #include "types.h"
+
 #include "cfg/cfg.h"
 #include "hw/sh4/sh4_mem.h"
 #include "reios/reios.h"
 #include "emulator.h"
 
-#include "gdxsv.pb.h"
-#include "gdxsv_backend_tcp.h"
-#include "gdxsv_backend_udp.h"
-#include "gdxsv_backend_replay.h"
 
 class Gdxsv {
 public:
@@ -39,14 +40,6 @@ public:
 
     void HandleRPC();
 
-    bool UpdateAvailable();
-
-    void OpenDownloadPage();
-
-    void DismissUpdateDialog();
-
-    std::string LatestVersion();
-
     void RestoreOnlinePatch();
 
     void StartPingTest();
@@ -54,7 +47,7 @@ public:
     bool StartReplayFile(const char *path);
 
 private:
-    void GcpPingTest(); // run on network thread
+    void GcpPingTest();
 
     static std::string GenerateLoginKey();
 
@@ -69,6 +62,8 @@ private:
     void WritePatchDisk1();
 
     void WritePatchDisk2();
+
+    void WritePatchPs2();
 
     NetMode netmode = NetMode::Offline;
     std::atomic<bool> enabled;
@@ -86,14 +81,8 @@ private:
     GdxsvBackendUdp udp_net;
     GdxsvBackendReplay replay_net;
 
-    std::thread gcp_ping_test_thread;
     std::atomic<bool> gcp_ping_test_finished;
     std::map<std::string, int> gcp_ping_test_result;
-
-    void handleReleaseJSON(const std::string &json);
-
-    bool update_available = false;
-    std::string latest_version_tag;
 };
 
 extern Gdxsv gdxsv;
