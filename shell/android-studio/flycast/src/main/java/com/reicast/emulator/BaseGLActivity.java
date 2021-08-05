@@ -13,17 +13,17 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.preference.PreferenceManager;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.v4.app.ActivityCompat;
 import android.util.Log;
 import android.view.InputDevice;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
-import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.Window;
 import android.view.WindowManager;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.core.app.ActivityCompat;
 
 import com.reicast.emulator.config.Config;
 import com.reicast.emulator.debug.GenerateLogs;
@@ -236,7 +236,15 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
                 return true;
         }
         else if ((event.getSource() & InputDevice.SOURCE_CLASS_POINTER) == InputDevice.SOURCE_CLASS_POINTER) {
-            InputDeviceManager.getInstance().mouseEvent(Math.round(event.getX()), Math.round(event.getY()), event.getButtonState());
+            switch (event.getAction()) {
+                case MotionEvent.ACTION_SCROLL:
+                    InputDeviceManager.getInstance().mouseScrollEvent(Math.round(-event.getAxisValue(MotionEvent.AXIS_VSCROLL)));
+                    break;
+                default:
+                    InputDeviceManager.getInstance().mouseEvent(Math.round(event.getX()), Math.round(event.getY()), event.getButtonState());
+                    break;
+            }
+            return true;
         }
         return super.onGenericMotionEvent(event);
     }
