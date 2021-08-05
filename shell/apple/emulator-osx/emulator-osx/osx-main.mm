@@ -118,7 +118,7 @@ extern bool rend_framePending();
 
 bool emu_frame_pending()
 {
-	return rend_framePending() || gui_is_open();
+	return rend_framePending() || !dc_is_running() || gui_is_open();
 }
 
 bool emu_renderer_enabled()

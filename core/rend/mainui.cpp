@@ -51,8 +51,12 @@ bool mainui_rend_frame()
 			UpdateInputState();
 			if (!dc_is_running())
 			{
-				dc_stop();
-				gui_stop_game(dc_get_last_error());
+				std::string error = dc_get_last_error();
+				if (!error.empty())
+				{
+					dc_stop();
+					gui_stop_game(error);
+				}
 			}
 			return false;
 		}

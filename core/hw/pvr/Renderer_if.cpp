@@ -380,11 +380,11 @@ void rend_start_render()
 		if (QueueRender(ctx))
 		{
 			palette_update();
+			pend_rend = true;
 			if (!config::ThreadedRendering)
 				rend_single_frame(true);
 			else
 				rs.Set();
-			pend_rend = true;
 		}
 	}
 }
