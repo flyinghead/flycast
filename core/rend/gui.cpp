@@ -54,9 +54,6 @@ static bool inited = false;
 float scaling = 1;
 GuiState gui_state = GuiState::Main;
 static bool commandLineStart;
-#ifdef __ANDROID__
-static bool touch_up;
-#endif
 static u32 mouseButtons;
 static int mouseX, mouseY;
 static float mouseWheel;
@@ -141,7 +138,7 @@ void gui_init()
     ImGui::GetStyle().ItemSpacing = ImVec2(8, 8);		// from 8,4
     ImGui::GetStyle().ItemInnerSpacing = ImVec2(4, 6);	// from 4,4
     //ImGui::GetStyle().WindowRounding = 0;
-#ifdef __ANDROID__
+#if defined(__ANDROID__) || defined(TARGET_IPHONE)
     ImGui::GetStyle().TouchExtraPadding = ImVec2(1, 1);	// from 0,0
 #endif
 
@@ -163,7 +160,7 @@ void gui_init()
     //io.Fonts->AddFontFromFileTTF("../../misc/fonts/ProggyTiny.ttf", 10.0f);
     //ImFont* font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f, NULL, io.Fonts->GetGlyphRangesJapanese());
     //IM_ASSERT(font != NULL);
-#if !(defined(_WIN32) || defined(__APPLE__) || defined(__SWITCH__))
+#if !(defined(_WIN32) || defined(__APPLE__) || defined(__SWITCH__)) || defined(TARGET_IPHONE)
     scaling = std::max(1.f, screen_dpi / 100.f * 0.75f);
 #endif
     if (scaling > 1)
@@ -217,7 +214,7 @@ void gui_init()
     default:
     	break;
     }
-#elif __APPLE__
+#elif defined(__APPLE__) && !defined(TARGET_IPHONE)
     std::string fontDir = std::string("/System/Library/Fonts/");
     
     extern std::string os_Locale();
@@ -258,7 +255,7 @@ void gui_init()
         	io.Fonts->AddFontFromFileTTF("/system/fonts/NotoSansCJK-Regular.ttc", 17.f * scaling, &font_cfg, glyphRanges);
     }
 
-    // TODO Linux...
+    // TODO Linux, iOS, ...
 #endif
     INFO_LOG(RENDERER, "Screen DPI is %d, size %d x %d. Scaling by %.2f", screen_dpi, screen_width, screen_height, scaling);
 
@@ -332,7 +329,7 @@ static void ImGui_Impl_NewFrame()
 	else
 		io.MousePos = ImVec2(mouseX, mouseY);
 	static bool delayTouch;
-#ifdef __ANDROID__
+#if defined(__ANDROID__) || defined(TARGET_IPHONE)
 	// Delay touch by one frame to allow widgets to be hovered before click
 	// This is required for widgets using ImGuiButtonFlags_AllowItemOverlap such as TabItem's
 	if (!delayTouch && (mouseButtons & (1 << 0)) != 0 && !io.MouseDown[ImGuiMouseButton_Left])
@@ -1884,7 +1881,7 @@ static void gui_display_content()
     ImGui::Unindent(10 * scaling);
 
     static ImGuiTextFilter filter;
-#ifndef __ANDROID__
+#if !defined(__ANDROID__) && !defined(TARGET_IPHONE)
 	ImGui::SameLine(0, 32 * scaling);
 	filter.Draw("Filter");
 #endif

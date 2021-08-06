@@ -1,7 +1,4 @@
 //
-//  PadViewController.h
-//  reicast-ios
-//
 //  Created by Lounge Katt on 8/25/15.
 //  Copyright (c) 2015 reicast. All rights reserved.
 //

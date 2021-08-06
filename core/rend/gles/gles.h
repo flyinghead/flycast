@@ -120,6 +120,7 @@ struct gl_ctx
 		GLuint fbo;
 		int width;
 		int height;
+		GLuint origFbo;
 	} ofbo;
 
 	const char *gl_version;

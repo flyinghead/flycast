@@ -68,12 +68,8 @@ const char *PixelCompatShader = R"(
 )";
 
 static const char* GouraudSource = R"(
-#if TARGET_GL == GL3 || TARGET_GL == GLES3
-#if pp_Gouraud == 0
+#if (TARGET_GL == GL3 || TARGET_GL == GLES3) && pp_Gouraud == 0
 #define INTERPOLATION flat
-#else
-#define INTERPOLATION smooth
-#endif
 #else
 #define INTERPOLATION
 #endif
@@ -1052,7 +1048,7 @@ void OSD_DRAW(bool clear_screen)
 		glActiveTexture(GL_TEXTURE0);
 		glcache.BindTexture(GL_TEXTURE_2D, gl.OSD_SHADER.osd_tex);
 
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		glBindFramebuffer(GL_FRAMEBUFFER, gl.ofbo.origFbo);
 
 		const std::vector<OSDVertex>& osdVertices = GetOSDVertices();
 		glBufferData(GL_ARRAY_BUFFER, osdVertices.size() * sizeof(OSDVertex), osdVertices.data(), GL_STREAM_DRAW); glCheck();
@@ -1119,8 +1115,6 @@ static void upload_vertex_indices()
 
 bool RenderFrame(int width, int height)
 {
-	create_modvol_shader();
-
 	bool is_rtt = pvrrc.isRTT;
 
 	float vtx_min_fZ = 0.f;	//pvrrc.fZ_min;

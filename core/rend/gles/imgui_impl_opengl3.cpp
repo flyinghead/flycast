@@ -488,7 +488,9 @@ void ImGui_ImplOpenGL3_DestroyDeviceObjects()
 
 void ImGui_ImplOpenGL3_DrawBackground()
 {
+#ifndef TARGET_IPHONE
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+#endif
 	glcache.Disable(GL_SCISSOR_TEST);
 	glcache.ClearColor(0, 0, 0, 0);
 	glClear(GL_COLOR_BUFFER_BIT);

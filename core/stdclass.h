@@ -10,15 +10,12 @@
 #ifdef __ANDROID__
 #include <sys/mman.h>
 #undef PAGE_MASK
-#define PAGE_MASK (PAGE_SIZE-1)
-#else
-#if defined(__APPLE__) && defined(__aarch64__)
+#elif defined(__APPLE__) && defined(__aarch64__)
 #define PAGE_SIZE 16384
 #else
 #define PAGE_SIZE 4096
 #endif
 #define PAGE_MASK (PAGE_SIZE-1)
-#endif
 
 class cThread
 {
@@ -76,6 +73,7 @@ size_t get_last_slash_pos(const std::string& path);
 
 bool mem_region_lock(void *start, std::size_t len);
 bool mem_region_unlock(void *start, std::size_t len);
+bool mem_region_set_exec(void *start, std::size_t len);
 
 class VArray2 {
 public:

@@ -718,7 +718,7 @@ bool render_output_framebuffer()
 			glViewport(-fx, 0, screen_width + fx * 2, screen_height);
 		if (gl.ofbo.tex == 0)
 			return false;
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		glBindFramebuffer(GL_FRAMEBUFFER, gl.ofbo.origFbo);
 		glcache.ClearColor(0.f, 0.f, 0.f, 0.f);
 		glClear(GL_COLOR_BUFFER_BIT);
 		drawQuad(gl.ofbo.tex, config::Rotate90);
@@ -729,13 +729,13 @@ bool render_output_framebuffer()
 		if (gl.ofbo.fbo == 0)
 			return false;
 		glBindFramebuffer(GL_READ_FRAMEBUFFER, gl.ofbo.fbo);
-		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, gl.ofbo.origFbo);
 		glcache.ClearColor(0.f, 0.f, 0.f, 0.f);
 		glClear(GL_COLOR_BUFFER_BIT);
 		glBlitFramebuffer(fx, 0, gl.ofbo.width - fx, gl.ofbo.height,
 				sx, 0, screen_width - sx, screen_height,
 				GL_COLOR_BUFFER_BIT, GL_LINEAR);
-    	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    	glBindFramebuffer(GL_FRAMEBUFFER, gl.ofbo.origFbo);
 #endif
 	}
 	return true;

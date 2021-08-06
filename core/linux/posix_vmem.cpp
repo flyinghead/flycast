@@ -70,10 +70,14 @@ bool mem_region_unlock(void *start, size_t len)
 	return true;
 }
 
-static bool mem_region_set_exec(void *start, size_t len)
+bool mem_region_set_exec(void *start, size_t len)
 {
 	size_t inpage = (uintptr_t)start & PAGE_MASK;
-	if (mprotect((u8*)start - inpage, len + inpage, PROT_READ | PROT_WRITE | PROT_EXEC))
+    int protFlags = PROT_READ | PROT_EXEC;
+#ifndef TARGET_IPHONE
+    protFlags |= PROT_WRITE;
+#endif
+	if (mprotect((u8*)start - inpage, len + inpage, protFlags))
 	{
 		WARN_LOG(VMEM, "mem_region_set_exec: mprotect failed. errno %d", errno);
 		return false;
@@ -239,32 +243,40 @@ void vmem_platform_create_mappings(const vmem_mapping *vmem_maps, unsigned numma
 }
 
 // Prepares the code region for JIT operations, thus marking it as RWX
-bool vmem_platform_prepare_jit_block(void *code_area, unsigned size, void **code_area_rwx) {
-	// Try to map is as RWX, this fails apparently on OSX (and perhaps other systems?)
-	if (!mem_region_set_exec(code_area, size))
-	{
+bool vmem_platform_prepare_jit_block(void *code_area, unsigned size, void **code_area_rwx)
+{
+    // Try to map is as RWX, this fails apparently on OSX (and perhaps other systems?)
+	if (code_area != nullptr && mem_region_set_exec(code_area, size))
+    {
+        // Pointer location should be same:
+        *code_area_rwx = code_area;
+        return true;
+    }
+#ifndef TARGET_ARM_MAC
+    void *ret_ptr = MAP_FAILED;
+    if (code_area != nullptr)
+    {
 		// Well it failed, use another approach, unmap the memory area and remap it back.
 		// Seems it works well on Darwin according to reicast code :P
-		#ifndef __ARM_MAC__
-		munmap(code_area, size);
-		void *ret_ptr = mmap(code_area, size, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_FIXED | MAP_PRIVATE | MAP_ANON, 0, 0);
-		// Ensure it's the area we requested
-		if (ret_ptr != code_area)
-			return false;   // Couldn't remap it? Perhaps RWX is disabled? This should never happen in any supported Unix platform.
-		#else
-		// MAP_JIT and toggleable write protection is required on Apple Silicon
-		// Cannot use MAP_FIXED with MAP_JIT
-		void *ret_ptr = mmap(NULL, size, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_PRIVATE | MAP_ANON | MAP_JIT, -1, 0);
-		if ( ret_ptr == MAP_FAILED )
-			return false;
-		*code_area_rwx = ret_ptr;
-		return true;
-		#endif
-	}
-
-	// Pointer location should be same:
-	*code_area_rwx = code_area;
-	return true;
+        munmap(code_area, size);
+        ret_ptr = mmap(code_area, size, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_FIXED | MAP_PRIVATE | MAP_ANON, 0, 0);
+    }
+    if (ret_ptr == MAP_FAILED)
+    {
+        // mmap at the requested code_area location failed, so let the OS pick one for us
+        ret_ptr = mmap(nullptr, size, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_PRIVATE | MAP_ANON, -1, 0);
+        if (ret_ptr == MAP_FAILED)
+            return false;
+    }
+#else
+    // MAP_JIT and toggleable write protection is required on Apple Silicon
+    // Cannot use MAP_FIXED with MAP_JIT
+    void *ret_ptr = mmap(NULL, size, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_PRIVATE | MAP_ANON | MAP_JIT, -1, 0);
+    if ( ret_ptr == MAP_FAILED )
+        return false;
+#endif
+    *code_area_rwx = ret_ptr;
+    return true;
 }
 
 // Use two addr spaces: need to remap something twice, therefore use allocate_shared_filemem()

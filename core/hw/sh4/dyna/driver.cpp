@@ -20,7 +20,7 @@
 
 #if FEAT_SHREC != DYNAREC_NONE
 
-#if defined(_WIN32) || FEAT_SHREC != DYNAREC_JIT
+#if defined(_WIN32) || FEAT_SHREC != DYNAREC_JIT || defined(TARGET_IPHONE) || defined(TARGET_ARM_MAC)
 static u8 *SH4_TCB;
 #else
 static u8 SH4_TCB[CODE_SIZE + TEMP_CODE_SIZE + 4096]

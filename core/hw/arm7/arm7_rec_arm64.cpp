@@ -28,6 +28,7 @@
 using namespace vixl::aarch64;
 //#include <aarch32/disasm-aarch32.h>
 #include "rec-ARM64/arm64_unwind.h"
+#include "stdclass.h"
 
 namespace aicaarm {
 
@@ -38,6 +39,16 @@ class Arm7Compiler;
 #define MAX_REGS 8
 
 static Arm64UnwindInfo unwinder;
+
+#ifdef TARGET_IPHONE
+static void JITWriteProtect(bool enable)
+{
+    if (enable)
+        mem_region_set_exec(recompiler::ICache, recompiler::ICacheSize);
+    else
+        mem_region_unlock(recompiler::ICache, recompiler::ICacheSize);
+}
+#endif
 
 class AArch64ArmRegAlloc : public ArmRegAlloc<MAX_REGS, AArch64ArmRegAlloc>
 {

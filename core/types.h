@@ -139,12 +139,18 @@ enum HollyInterruptID
 int darw_printf(const char* Text,...);
 #endif
 
+#ifndef TARGET_IPHONE
 #if defined(__APPLE__) && defined(__MACH__) && HOST_CPU == CPU_ARM64
-	#define __ARM_MAC__
-	#include "pthread.h"
-	static void JITWriteProtect(bool enabled) { if (__builtin_available(macOS 11.0, *)) pthread_jit_write_protect_np(enabled); }
+#define TARGET_ARM_MAC
+#include "pthread.h"
+inline static void JITWriteProtect(bool enabled) {
+	if (__builtin_available(macOS 11.0, *))
+		pthread_jit_write_protect_np(enabled);
+}
 #else
-	__forceinline static void JITWriteProtect(bool enabled) {}
+inline static void JITWriteProtect(bool enabled) {
+}
+#endif
 #endif
 
 //includes from c++rt

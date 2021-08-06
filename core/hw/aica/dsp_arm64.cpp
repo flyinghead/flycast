@@ -33,13 +33,29 @@ constexpr size_t CodeSize = 4096 * 8;	//32 kb, 8 pages
 #if defined(__unix__) || defined(__SWITCH__)
 alignas(4096) static u8 DynCode[CodeSize] __attribute__((section(".text")));
 #elif defined(__APPLE__)
+#if defined(TARGET_IPHONE) || defined(TARGET_ARM_MAC)
+static u8 *DynCode;
+#else
 alignas(4096) static u8 DynCode[CodeSize] __attribute__((section("__TEXT, .text")));
+#endif
 #else
 #error "Unsupported platform for arm64 DSP dynarec"
 #endif
 
 static u8 *pCodeBuffer;
 static ptrdiff_t rx_offset;
+
+#ifdef TARGET_IPHONE
+#include "stdclass.h"
+
+static void JITWriteProtect(bool enable)
+{
+    if (enable)
+        mem_region_set_exec(pCodeBuffer, CodeSize);
+    else
+        mem_region_unlock(pCodeBuffer, CodeSize);
+}
+#endif
 
 class DSPAssembler : public MacroAssembler
 {

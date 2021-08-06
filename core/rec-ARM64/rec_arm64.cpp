@@ -91,6 +91,16 @@ void ngen_mainloop(void* v_cntx)
 	}
 }
 
+#ifdef TARGET_IPHONE
+static void JITWriteProtect(bool enable)
+{
+    if (enable)
+        mem_region_set_exec(CodeCache, CODE_SIZE + TEMP_CODE_SIZE);
+    else
+        mem_region_unlock(CodeCache, CODE_SIZE + TEMP_CODE_SIZE);
+}
+#endif
+
 void ngen_init()
 {
 	INFO_LOG(DYNAREC, "Initializing the ARM64 dynarec");

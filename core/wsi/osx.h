@@ -20,9 +20,9 @@
 */
 #pragma once
 #if defined(__APPLE__)
-#if defined(TARGET_IPHONE) //apple-specific ogles2 headers
-#include <OpenGLES/ES2/gl.h>
-#include <OpenGLES/ES2/glext.h>
+#if defined(TARGET_IPHONE) //apple-specific ogles3 headers
+#include <OpenGLES/ES3/gl.h>
+#include <OpenGLES/ES3/glext.h>
 #else
 #include <OpenGL/gl3.h>
 #endif
