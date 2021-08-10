@@ -11,7 +11,8 @@ jobs:
       matrix:
         config:
           - {name: i686-pc-windows-msvc, os: windows-latest, cmakeArgs: -DCMAKE_SYSTEM_VERSION="10.0.18362.0" -G "Visual Studio 16 2019" -A Win32, buildType: Release}
-          - {name: x86_64-apple-darwin, os: macos-latest, cmakeArgs: -G "Xcode", destDir: osx, buildType: Release}
+          - {name: apple-darwin, os: macos-latest, cmakeArgs: -G "Xcode", destDir: osx, buildType: Release}
+          - {name: apple-ios, os: macos-latest, cmakeArgs: -DCMAKE_SYSTEM_NAME=iOS -G "Xcode", buildType: Release}
           - {name: x86_64-pc-linux-gnu, os: ubuntu-latest, buildType: Release}
           - {name: x86_64-pc-windows-msvc, os: windows-latest, cmakeArgs: -DCMAKE_SYSTEM_VERSION="10.0.18362.0" -G "Visual Studio 16 2019" -A x64, buildType: Release}
           - {name: x86_64-w64-mingw32, os: windows-latest, cmakeArgs: -G "MinGW Makefiles", destDir: win, buildType: RelWithDebInfo}
@@ -78,12 +79,12 @@ jobs:
       - name: Create artifact directory
         run: mkdir -p build/artifact
 
-      - name: Build SDL (macos-latest)
+      - name: Build SDL (macos)
         run: |
           cd shell/apple
           mkdir artifacts
           brew install --build-from-source ./sdl2.rb
-        if: matrix.config.os == 'macos-latest'
+        if: matrix.config.name == 'apple-darwin'
 
       - name: CMake
         run: |
@@ -128,7 +129,7 @@ jobs:
           rm -rf Flycast.swiftmodule
           zip -r flycast.app.zip Flycast.app
           rm -rf Flycast.app
-        if: matrix.config.os == 'macos-latest'
+        if: matrix.config.name == 'apple-darwin'
 
       - name: Package app (windows)
         run: |

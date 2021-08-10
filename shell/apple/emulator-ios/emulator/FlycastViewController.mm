@@ -18,9 +18,10 @@
 #include "ios_mouse.h"
 #include "rend/gui.h"
 
-@import AltKit;
-//#import "AltKit/AltKit-Swift.h"
+//@import AltKit;
+#import "AltKit/AltKit-Swift.h"
 
+std::string iosJitStatus;
 static std::shared_ptr<IOSMouse> mouse;
 
 void common_linux_setup();
@@ -173,7 +174,7 @@ static void MakeCurrentThreadRealTime()
 	[swipe setDirection:UISwipeGestureRecognizerDirectionRight];
 	[self.view addGestureRecognizer:swipe];
 	
-	// FIXME [self altKitStart];
+	[self altKitStart];
 }
 
 - (void)handleSwipe:(UISwipeGestureRecognizer *)swipe {
@@ -190,11 +191,13 @@ static void MakeCurrentThreadRealTime()
 - (void)altKitStart
 {
 	NSLog(@"Starting AltKit discovery");
+	iosJitStatus = "Connecting...";
 	[[ALTServerManager sharedManager] startDiscovering];
 
 	[[ALTServerManager sharedManager] autoconnectWithCompletionHandler:^(ALTServerConnection *connection, NSError *error) {
 		if (error)
 		{
+			iosJitStatus = "Failed: " + std::string([error.description UTF8String]);
 			return NSLog(@"Could not auto-connect to server. %@", error);
 		}
 		
@@ -202,17 +205,18 @@ static void MakeCurrentThreadRealTime()
 			if (success)
 			{
 				NSLog(@"Successfully enabled JIT compilation!");
+				iosJitStatus = "OK";
 				[[ALTServerManager sharedManager] stopDiscovering];
 			}
 			else
 			{
+				iosJitStatus = "Failed: " + std::string([error.description UTF8String]);
 				NSLog(@"Could not enable JIT compilation. %@", error);
 			}
 			
 			[connection disconnect];
 		}];
 	}];
-
 }
 
 #pragma mark - GLKView and GLKViewController delegate methods

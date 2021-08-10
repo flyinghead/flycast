@@ -117,6 +117,7 @@ NSInteger start_button = 11;
 	[self touchLocation:touch];
 	if (gui_is_open())
 		_mouse->setButton(Mouse::LEFT_BUTTON, true);
+	[super touchesBegan:touches withEvent:event];
 }
 
 - (void)touchesEnded:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event;
@@ -125,12 +126,14 @@ NSInteger start_button = 11;
 	[self touchLocation:touch];
 	if (gui_is_open())
 		_mouse->setButton(Mouse::LEFT_BUTTON, false);
+	[super touchesEnded:touches withEvent:event];
 }
 
 - (void)touchesMoved:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event;
 {
 	UITouch *touch = [touches anyObject];
 	[self touchLocation:touch];
+	[super touchesMoved:touches withEvent:event];
 }
 
 @end

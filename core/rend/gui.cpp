@@ -1795,6 +1795,10 @@ static void gui_display_settings()
 					"Unknown"
 #endif
 						);
+#ifdef TARGET_IPHONE
+				extern std::string iosJitStatus;
+				ImGui::Text("JIT Status: %s", iosJitStatus.c_str());
+#endif
 		    }
 	    	ImGui::Spacing();
 	    	if (config::RendererType.isOpenGL())

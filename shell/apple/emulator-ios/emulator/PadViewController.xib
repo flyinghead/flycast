@@ -32,12 +32,8 @@
             <rect key="frame" x="0.0" y="0.0" width="568" height="340"/>
             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
             <subviews>
-                <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" image="LTrigger" translatesAutoresizingMaskIntoConstraints="NO" id="H57-MD-elm">
-                    <rect key="frame" x="0.0" y="0.0" width="80" height="40"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                </imageView>
                 <button opaque="NO" multipleTouchEnabled="YES" tag="9" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="8Gl-Iv-u8L" userLabel="LT-Button">
-                    <rect key="frame" x="0.0" y="0.0" width="80" height="40"/>
+                    <rect key="frame" x="398" y="111" width="80" height="40"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                     <state key="normal">
                         <color key="titleShadowColor" red="0.5" green="0.5" blue="0.5" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
@@ -48,11 +44,11 @@
                     </connections>
                 </button>
                 <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" image="RTrigger" translatesAutoresizingMaskIntoConstraints="NO" id="Cjn-zx-eSs">
-                    <rect key="frame" x="488" y="0.0" width="80" height="40"/>
+                    <rect key="frame" x="488" y="111" width="80" height="40"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                 </imageView>
                 <button opaque="NO" multipleTouchEnabled="YES" tag="10" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="V8J-vG-dlF" userLabel="RT-Button">
-                    <rect key="frame" x="488" y="0.0" width="80" height="40"/>
+                    <rect key="frame" x="488" y="104" width="80" height="40"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                     <state key="normal">
                         <color key="titleShadowColor" red="0.5" green="0.5" blue="0.5" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
@@ -183,6 +179,10 @@
                         <action selector="keycodeUp:" destination="-1" eventType="touchUpInside" id="gHx-tA-QlF"/>
                     </connections>
                 </button>
+                <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" image="LTrigger" translatesAutoresizingMaskIntoConstraints="NO" id="H57-MD-elm">
+                    <rect key="frame" x="400" y="111" width="80" height="40"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                </imageView>
             </subviews>
             <color key="backgroundColor" red="0.0" green="0.0" blue="0.0" alpha="0.0" colorSpace="custom" customColorSpace="sRGB"/>
             <constraints>
