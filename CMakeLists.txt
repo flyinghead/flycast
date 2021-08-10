@@ -129,11 +129,14 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
         $<$<BOOL:MSVC>:_USE_MATH_DEFINES>
         $<$<BOOL:MSVC>:NOMINMAX>
         $<$<BOOL:${TEST_AUTOMATION}>:TEST_AUTOMATION>
-        $<$<BOOL:${ENABLE_LOG}>:DEBUGFAST>
-		$<$<BOOL:IOS>:TARGET_IPHONE>
-		$<$<BOOL:IOS>:GLES>
-		$<$<BOOL:IOS>:GLES3>
-		$<$<BOOL:IOS>:GLES_SILENCE_DEPRECATION>)
+        $<$<BOOL:${ENABLE_LOG}>:DEBUGFAST>)
+if(IOS)
+	target_compile_definitions(${PROJECT_NAME} PRIVATE
+		TARGET_IPHONE
+		GLES
+		GLES3
+		GLES_SILENCE_DEPRECATION)
+endif()
 
 target_include_directories(${PROJECT_NAME} PRIVATE core core/deps core/deps/stb core/khronos)
 if(LIBRETRO)
