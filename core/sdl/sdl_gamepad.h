@@ -67,7 +67,8 @@ public:
 			map_button(SDL_CONTROLLER_BUTTON_DPAD_LEFT, DC_DPAD_LEFT);
 			map_button(SDL_CONTROLLER_BUTTON_DPAD_RIGHT, DC_DPAD_RIGHT);
 			map_button(SDL_CONTROLLER_BUTTON_BACK, EMU_BTN_MENU);
-			map_button(SDL_CONTROLLER_BUTTON_LEFTSHOULDER, DC_BTN_C); // service
+			map_button(SDL_CONTROLLER_BUTTON_LEFTSHOULDER, DC_BTN_C);  // service
+			map_button(SDL_CONTROLLER_BUTTON_START, DC_BTN_D);         // coin
 			map_button(SDL_CONTROLLER_BUTTON_RIGHTSHOULDER, DC_BTN_Z); // test
 
 			auto map_axis = [&](SDL_GameControllerAxis sdl_axis, DreamcastKey dc_axis) {
