@@ -18,6 +18,9 @@
 #include "ios_mouse.h"
 #include "rend/gui.h"
 
+@import AltKit;
+//#import "AltKit/AltKit-Swift.h"
+
 static std::shared_ptr<IOSMouse> mouse;
 
 void common_linux_setup();
@@ -26,8 +29,6 @@ void common_linux_setup();
 }
 
 @property (strong, nonatomic) EAGLContext *context;
-
-- (void)setupGL;
 
 @end
 
@@ -105,23 +106,21 @@ static void MakeCurrentThreadRealTime()
 #endif
 	
     self.context = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES3];
-
-	// Not sure what this effects in our case without making 2 contexts and swapping
-//	[self.context setMultiThreaded:YES];
-
-    if (!self.context) {
-        NSLog(@"Failed to create ES context");
-    }
+	if (!self.context) {
+		self.context = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES2];
+		if (!self.context) {
+			NSLog(@"Failed to create ES context");
+		}
+	}
     
-    self.emuView = (EmulatorView *)self.view;
-//	self.emuView.opaque = YES;
-    self.emuView.context = self.context;
-    self.emuView.drawableDepthFormat = GLKViewDrawableDepthFormat24;
+    EmulatorView *emuView = (EmulatorView *)self.view;
+    emuView.context = self.context;
 
 	// Set preferred refresh rate
 	[self setPreferredFramesPerSecond:60];
+	[EAGLContext setCurrentContext:self.context];
 
-	[self.padController setControlOutput:self.emuView];
+	[self.padController setControlOutput:emuView];
     
     self.connectObserver = [[NSNotificationCenter defaultCenter] addObserverForName:GCControllerDidConnectNotification object:nil queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification *note) {
         if ( GCController.controllers.count ){
@@ -152,9 +151,8 @@ static void MakeCurrentThreadRealTime()
     [self.view addSubview:self.iCadeReader];
     self.iCadeReader.delegate = self;
     self.iCadeReader.active = YES;
+	// TODO iCade handlers
 	
-    [self setupGL];
-
 	screen_width = roundf([[UIScreen mainScreen] nativeBounds].size.width);
     screen_height = roundf([[UIScreen mainScreen] nativeBounds].size.height);
 	if (screen_width < screen_height)
@@ -168,12 +166,14 @@ static void MakeCurrentThreadRealTime()
 	mainui_init();
 	mainui_enabled = true;
 	
-	self.emuView.mouse = ::mouse.get();
+	emuView.mouse = ::mouse.get();
 	
 	// Swipe right to open the menu in-game
 	UISwipeGestureRecognizer *swipe = [[UISwipeGestureRecognizer alloc] initWithTarget:self action:@selector(handleSwipe:)];
 	[swipe setDirection:UISwipeGestureRecognizerDirectionRight];
 	[self.view addGestureRecognizer:swipe];
+	
+	// FIXME [self altKitStart];
 }
 
 - (void)handleSwipe:(UISwipeGestureRecognizer *)swipe {
@@ -187,9 +187,32 @@ static void MakeCurrentThreadRealTime()
     }
 }
 
-- (void)setupGL
+- (void)altKitStart
 {
-    [EAGLContext setCurrentContext:self.context];
+	NSLog(@"Starting AltKit discovery");
+	[[ALTServerManager sharedManager] startDiscovering];
+
+	[[ALTServerManager sharedManager] autoconnectWithCompletionHandler:^(ALTServerConnection *connection, NSError *error) {
+		if (error)
+		{
+			return NSLog(@"Could not auto-connect to server. %@", error);
+		}
+		
+		[connection enableUnsignedCodeExecutionWithCompletionHandler:^(BOOL success, NSError *error) {
+			if (success)
+			{
+				NSLog(@"Successfully enabled JIT compilation!");
+				[[ALTServerManager sharedManager] stopDiscovering];
+			}
+			else
+			{
+				NSLog(@"Could not enable JIT compilation. %@", error);
+			}
+			
+			[connection disconnect];
+		}];
+	}];
+
 }
 
 #pragma mark - GLKView and GLKViewController delegate methods
@@ -301,95 +324,94 @@ static void MakeCurrentThreadRealTime()
 			[self.gController.extendedGamepad.leftThumbstick.xAxis setValueChangedHandler:^(GCControllerAxisInput *axis, float value){
 				s8 v=(s8)(value*127); //-127 ... + 127 range
 
-				NSLog(@"Joy X: %i", v);
+				//NSLog(@"Joy X: %i", v);
 				joyx[0] = v;
 			}];
 			[self.gController.extendedGamepad.leftThumbstick.yAxis setValueChangedHandler:^(GCControllerAxisInput *axis, float value){
 				s8 v=(s8)(value*127 * - 1); //-127 ... + 127 range
 
-				NSLog(@"Joy Y: %i", v);
+				//NSLog(@"Joy Y: %i", v);
 				joyy[0] = v;
 			}];
+			[self.gController.extendedGamepad.rightThumbstick.xAxis setValueChangedHandler:^(GCControllerAxisInput *axis, float value){
+				s8 v=(s8)(value*127); //-127 ... + 127 range
 
-			// TODO: Right dpad
-//			[self.gController.extendedGamepad.rightThumbstick.xAxis setValueChangedHandler:^(GCControllerAxisInput *axis, float value){
-//				s8 v=(s8)(value*127); //-127 ... + 127 range
-//
-//				NSLog(@"Joy X: %i", v);
-//				joyx[0] = v;
-//			}];
-//			[self.gController.extendedGamepad.rightThumbstick.yAxis setValueChangedHandler:^(GCControllerAxisInput *axis, float value){
-//				s8 v=(s8)(value*127 * - 1); //-127 ... + 127 range
-//
-//				NSLog(@"Joy Y: %i", v);
-//				joyy[0] = v;
-//			}];
+				//NSLog(@"RJoy X: %i", v);
+				joyrx[0] = v;
+			}];
+			[self.gController.extendedGamepad.rightThumbstick.yAxis setValueChangedHandler:^(GCControllerAxisInput *axis, float value){
+				s8 v=(s8)(value*127 * - 1); //-127 ... + 127 range
+
+				//NSLog(@"RJoy Y: %i", v);
+				joyry[0] = v;
+			}];
 		}
         else if (self.gController.gamepad) {
+			EmulatorView *emuView = (EmulatorView *)self.view;
             [self.gController.gamepad.buttonA setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
 				if (pressed && value >= 0.1) {
-					[self.emuView handleKeyDown:self.padController.img_abxy_a];
+					[emuView handleKeyDown:self.padController.img_abxy_a];
 				} else {
-					[self.emuView handleKeyUp:self.padController.img_abxy_a];
+					[emuView handleKeyUp:self.padController.img_abxy_a];
 				}
             }];
             [self.gController.gamepad.buttonB setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
 				if (pressed && value >= 0.1) {
-					[self.emuView handleKeyDown:self.padController.img_abxy_b];
+					[emuView handleKeyDown:self.padController.img_abxy_b];
 				} else {
-					[self.emuView handleKeyUp:self.padController.img_abxy_b];
+					[emuView handleKeyUp:self.padController.img_abxy_b];
 				}
             }];
             [self.gController.gamepad.buttonX setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
 				if (pressed && value >= 0.1) {
-					[self.emuView handleKeyDown:self.padController.img_abxy_x];
+					[emuView handleKeyDown:self.padController.img_abxy_x];
 				} else {
-					[self.emuView handleKeyUp:self.padController.img_abxy_x];
+					[emuView handleKeyUp:self.padController.img_abxy_x];
 				}
             }];
             [self.gController.gamepad.buttonY setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
 				if (pressed && value >= 0.1) {
-					[self.emuView handleKeyDown:self.padController.img_abxy_y];
+					[emuView handleKeyDown:self.padController.img_abxy_y];
 				} else {
-					[self.emuView handleKeyUp:self.padController.img_abxy_y];
+					[emuView handleKeyUp:self.padController.img_abxy_y];
 				}
             }];
             [self.gController.gamepad.dpad setValueChangedHandler:^(GCControllerDirectionPad *dpad, float xValue, float yValue){
 				if (dpad.right.isPressed) {
-					[self.emuView handleKeyDown:self.padController.img_dpad_r];
+					[emuView handleKeyDown:self.padController.img_dpad_r];
 				} else {
-					[self.emuView handleKeyUp:self.padController.img_dpad_r];
+					[emuView handleKeyUp:self.padController.img_dpad_r];
 				}
 				if (dpad.left.isPressed) {
-					[self.emuView handleKeyDown:self.padController.img_dpad_l];
+					[emuView handleKeyDown:self.padController.img_dpad_l];
 				} else {
-					[self.emuView handleKeyUp:self.padController.img_dpad_l];
+					[emuView handleKeyUp:self.padController.img_dpad_l];
 				}
 				if (dpad.up.isPressed) {
-					[self.emuView handleKeyDown:self.padController.img_dpad_u];
+					[emuView handleKeyDown:self.padController.img_dpad_u];
 				} else {
-					[self.emuView handleKeyUp:self.padController.img_dpad_u];
+					[emuView handleKeyUp:self.padController.img_dpad_u];
 				}
 				if (dpad.down.isPressed) {
-					[self.emuView handleKeyDown:self.padController.img_dpad_d];
+					[emuView handleKeyDown:self.padController.img_dpad_d];
 				} else {
-					[self.emuView handleKeyUp:self.padController.img_dpad_d];
+					[emuView handleKeyUp:self.padController.img_dpad_d];
 				}
             }];
 
 			[self.gController.gamepad.rightShoulder setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
 				if (pressed) {
-					[self.emuView handleKeyDown:self.padController.img_rt];
+					[emuView handleKeyDown:self.padController.img_rt];
 				} else {
-					[self.emuView handleKeyUp:self.padController.img_rt];
+					[emuView handleKeyUp:self.padController.img_rt];
 				}
 			}];
 
 			[self.gController.gamepad.leftShoulder setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
 				if (pressed) {
-					[self.emuView handleKeyDown:self.padController.img_lt];
+					[emuView handleKeyDown:self.padController.img_lt];
 				} else {
-					[self.emuView handleKeyUp:self.padController.img_lt];
+					[emuView handleKeyUp:self.padController.img_lt];
 				}
 			}];
 

@@ -86,7 +86,7 @@ private:
 #endif
 };
 
-#if HOST_CPU != CPU_X64 && HOST_CPU != CPU_ARM64 && (HOST_CPU != CPU_X86 || defined(_WIN32)) || defined(TARGET_IPHONE)
+#if HOST_CPU != CPU_X64 && HOST_CPU != CPU_ARM64 && (HOST_CPU != CPU_X86 || defined(_WIN32))
 inline void UnwindInfo::start(void *address) {
 }
 inline void UnwindInfo::pushReg(u32 offset, int reg) {

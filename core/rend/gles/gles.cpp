@@ -82,14 +82,14 @@ uniform highp mat4 normal_matrix;
 uniform highp float sp_FOG_DENSITY;
 
 /* Vertex input */
-in highp vec4    in_pos;
-in lowp vec4     in_base;
-in lowp vec4     in_offs;
-in mediump vec2  in_uv;
+in highp vec4 in_pos;
+in lowp vec4 in_base;
+in lowp vec4 in_offs;
+in highp vec2 in_uv;
 /* output */
 INTERPOLATION out lowp vec4 vtx_base;
 INTERPOLATION out lowp vec4 vtx_offs;
-              out mediump vec2 vtx_uv;
+              out highp vec2 vtx_uv;
 #if TARGET_GL == GLES2
 			  out highp float fog_depth;
 #endif
@@ -133,7 +133,7 @@ uniform mediump int palette_index;
 /* Vertex input*/
 INTERPOLATION in lowp vec4 vtx_base;
 INTERPOLATION in lowp vec4 vtx_offs;
-			  in mediump vec2 vtx_uv;
+			  in highp vec2 vtx_uv;
 #if TARGET_GL == GLES2
 			  in highp float fog_depth;
 #endif

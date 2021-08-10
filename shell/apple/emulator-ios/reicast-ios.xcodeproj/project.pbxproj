@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 46;
+	objectVersion = 52;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -55,7 +55,6 @@
 		AE327C4826BAA91300B2F53C /* sh4_rom.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE32588026BAA8E000B2F53C /* sh4_rom.cpp */; };
 		AE327C4926BAA91300B2F53C /* gdrom_response.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE32588426BAA8E000B2F53C /* gdrom_response.cpp */; };
 		AE327C4A26BAA91300B2F53C /* gdromv3.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE32588526BAA8E000B2F53C /* gdromv3.cpp */; };
-		AE327C4B26BAA91300B2F53C /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = AE32588626BAA8E000B2F53C /* README.md */; };
 		AE327C4C26BAA91300B2F53C /* ta_ctx.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE32588B26BAA8E000B2F53C /* ta_ctx.cpp */; };
 		AE327C4D26BAA91300B2F53C /* pvr_mem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE32588C26BAA8E000B2F53C /* pvr_mem.cpp */; };
 		AE327C4E26BAA91300B2F53C /* spg.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE32588F26BAA8E100B2F53C /* spg.cpp */; };
@@ -212,9 +211,7 @@
 		AE327DB526BAA91400B2F53C /* pico_ethernet.c in Sources */ = {isa = PBXBuildFile; fileRef = AE325B3026BAA8E300B2F53C /* pico_ethernet.c */; };
 		AE327DB626BAA91400B2F53C /* pico_udp.c in Sources */ = {isa = PBXBuildFile; fileRef = AE325B3326BAA8E300B2F53C /* pico_udp.c */; };
 		AE327DB726BAA91400B2F53C /* pico_dhcp_server.c in Sources */ = {isa = PBXBuildFile; fileRef = AE325B3426BAA8E300B2F53C /* pico_dhcp_server.c */; };
-		AE327DB826BAA91400B2F53C /* pico_dhcp_server.c.orig in Resources */ = {isa = PBXBuildFile; fileRef = AE325B3626BAA8E300B2F53C /* pico_dhcp_server.c.orig */; };
 		AE327DB926BAA91400B2F53C /* pico_ipv4.c in Sources */ = {isa = PBXBuildFile; fileRef = AE325B3726BAA8E300B2F53C /* pico_ipv4.c */; };
-		AE327DBA26BAA91400B2F53C /* pico_icmp4.c.orig in Resources */ = {isa = PBXBuildFile; fileRef = AE325B3826BAA8E300B2F53C /* pico_icmp4.c.orig */; };
 		AE327DBB26BAA91400B2F53C /* pico_socket_tcp.c in Sources */ = {isa = PBXBuildFile; fileRef = AE325B3926BAA8E300B2F53C /* pico_socket_tcp.c */; };
 		AE327DBC26BAA91400B2F53C /* pico_dns_client.c in Sources */ = {isa = PBXBuildFile; fileRef = AE325B3B26BAA8E300B2F53C /* pico_dns_client.c */; };
 		AE327DBD26BAA91400B2F53C /* pico_icmp4.c in Sources */ = {isa = PBXBuildFile; fileRef = AE325B3E26BAA8E300B2F53C /* pico_icmp4.c */; };
@@ -406,6 +403,8 @@
 		AE32949126BAE14600B2F53C /* EmulatorView.mm in Sources */ = {isa = PBXBuildFile; fileRef = 87C208CC1B7A4BFA00638BDD /* EmulatorView.mm */; };
 		AE32949326BAE58F00B2F53C /* FlycastViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = AE32949226BAE58F00B2F53C /* FlycastViewController.mm */; settings = {COMPILER_FLAGS = "-fcxx-modules"; }; };
 		AE32949826BAEF4300B2F53C /* FlycastStoryboard.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AE32949726BAEF4300B2F53C /* FlycastStoryboard.storyboard */; };
+		AE49B4D826C1BAC300FA182B /* unwind_info.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE49B4D726C1BAC300FA182B /* unwind_info.cpp */; };
+		AE6AA6FF26BF2E91004B9D5F /* AltKit in Frameworks */ = {isa = PBXBuildFile; productRef = AE6AA6FE26BF2E91004B9D5F /* AltKit */; };
 		AE9F17E326BC800F00B8C6D0 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AE9F17E226BC800F00B8C6D0 /* LaunchScreen.storyboard */; };
 		EBDF375A1BB96ECD001191B5 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EBDF37591BB96ECD001191B5 /* AudioToolbox.framework */; };
 /* End PBXBuildFile section */
@@ -422,7 +421,7 @@
 		87078A9818A47FE90034C7A0 /* flycast-ios-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "flycast-ios-Prefix.pch"; path = "emulator/flycast-ios-Prefix.pch"; sourceTree = "<group>"; };
 		87078A9918A47FE90034C7A0 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
 		87078A9A18A47FE90034C7A0 /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
-		878B0CFB1B8BB5B400A8D1C5 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = "../reicast-ios/Images.xcassets"; sourceTree = "<group>"; };
+		878B0CFB1B8BB5B400A8D1C5 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
 		87C208CB1B7A4BFA00638BDD /* EmulatorView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = EmulatorView.h; path = emulator/EmulatorView.h; sourceTree = "<group>"; };
 		87C208CC1B7A4BFA00638BDD /* EmulatorView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = EmulatorView.mm; path = emulator/EmulatorView.mm; sourceTree = "<group>"; };
 		87C4AA551A4414070048DBF4 /* AssetsLibrary.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AssetsLibrary.framework; path = System/Library/Frameworks/AssetsLibrary.framework; sourceTree = SDKROOT; };
@@ -500,7 +499,6 @@
 		AE32588226BAA8E000B2F53C /* sh4_sched.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = sh4_sched.h; sourceTree = "<group>"; };
 		AE32588426BAA8E000B2F53C /* gdrom_response.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = gdrom_response.cpp; sourceTree = "<group>"; };
 		AE32588526BAA8E000B2F53C /* gdromv3.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = gdromv3.cpp; sourceTree = "<group>"; };
-		AE32588626BAA8E000B2F53C /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		AE32588726BAA8E000B2F53C /* gdromv3.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = gdromv3.h; sourceTree = "<group>"; };
 		AE32588826BAA8E000B2F53C /* gdrom_if.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = gdrom_if.h; sourceTree = "<group>"; };
 		AE32588A26BAA8E000B2F53C /* ta_structs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ta_structs.h; sourceTree = "<group>"; };
@@ -878,9 +876,7 @@
 		AE325B3326BAA8E300B2F53C /* pico_udp.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pico_udp.c; sourceTree = "<group>"; };
 		AE325B3426BAA8E300B2F53C /* pico_dhcp_server.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pico_dhcp_server.c; sourceTree = "<group>"; };
 		AE325B3526BAA8E300B2F53C /* pico_mm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pico_mm.h; sourceTree = "<group>"; };
-		AE325B3626BAA8E300B2F53C /* pico_dhcp_server.c.orig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = pico_dhcp_server.c.orig; sourceTree = "<group>"; };
 		AE325B3726BAA8E300B2F53C /* pico_ipv4.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pico_ipv4.c; sourceTree = "<group>"; };
-		AE325B3826BAA8E300B2F53C /* pico_icmp4.c.orig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = pico_icmp4.c.orig; sourceTree = "<group>"; };
 		AE325B3926BAA8E300B2F53C /* pico_socket_tcp.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pico_socket_tcp.c; sourceTree = "<group>"; };
 		AE325B3A26BAA8E300B2F53C /* pico_ipv6.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pico_ipv6.h; sourceTree = "<group>"; };
 		AE325B3B26BAA8E300B2F53C /* pico_dns_client.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pico_dns_client.c; sourceTree = "<group>"; };
@@ -1419,6 +1415,7 @@
 		AE32949426BAE5B900B2F53C /* FlycastViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = FlycastViewController.h; path = emulator/FlycastViewController.h; sourceTree = "<group>"; };
 		AE32949726BAEF4300B2F53C /* FlycastStoryboard.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = FlycastStoryboard.storyboard; sourceTree = "<group>"; };
 		AE32949926BAFA3000B2F53C /* ios_mouse.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ios_mouse.h; sourceTree = "<group>"; };
+		AE49B4D726C1BAC300FA182B /* unwind_info.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = unwind_info.cpp; sourceTree = "<group>"; };
 		AE9F17E226BC800F00B8C6D0 /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
 		EBDF37571BB96E75001191B5 /* AudioUnit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioUnit.framework; path = System/Library/Frameworks/AudioUnit.framework; sourceTree = SDKROOT; };
 		EBDF37591BB96ECD001191B5 /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
@@ -1431,6 +1428,7 @@
 			files = (
 				EBDF375A1BB96ECD001191B5 /* AudioToolbox.framework in Frameworks */,
 				87D92F4E1B7A1B5700D8FD9E /* GameController.framework in Frameworks */,
+				AE6AA6FF26BF2E91004B9D5F /* AltKit in Frameworks */,
 				87C4AA561A4414070048DBF4 /* AssetsLibrary.framework in Frameworks */,
 				87078A8F18A47FE90034C7A0 /* OpenGLES.framework in Frameworks */,
 				87078A8918A47FE90034C7A0 /* CoreGraphics.framework in Frameworks */,
@@ -1704,7 +1702,6 @@
 			children = (
 				AE32588426BAA8E000B2F53C /* gdrom_response.cpp */,
 				AE32588526BAA8E000B2F53C /* gdromv3.cpp */,
-				AE32588626BAA8E000B2F53C /* README.md */,
 				AE32588726BAA8E000B2F53C /* gdromv3.h */,
 				AE32588826BAA8E000B2F53C /* gdrom_if.h */,
 			);
@@ -1749,30 +1746,30 @@
 		AE3258A026BAA8E100B2F53C /* naomi */ = {
 			isa = PBXGroup;
 			children = (
-				AE3258A126BAA8E100B2F53C /* awcartridge.cpp */,
-				AE3258A226BAA8E100B2F53C /* naomi_roms_input.h */,
-				AE3258A326BAA8E100B2F53C /* decrypt.h */,
-				AE3258A426BAA8E100B2F53C /* naomi_regs.h */,
-				AE3258A526BAA8E100B2F53C /* decrypt.cpp */,
-				AE3258A626BAA8E100B2F53C /* naomi_flashrom.h */,
-				AE3258A726BAA8E100B2F53C /* m1cartridge.h */,
-				AE3258A826BAA8E100B2F53C /* m4cartridge.h */,
-				AE3258A926BAA8E100B2F53C /* naomi_cart.h */,
-				AE3258AA26BAA8E100B2F53C /* m1cartridge.cpp */,
-				AE3258AB26BAA8E100B2F53C /* gdcartridge.cpp */,
-				AE3258AC26BAA8E100B2F53C /* m4cartridge.cpp */,
-				AE3258AD26BAA8E100B2F53C /* naomi_flashrom.cpp */,
-				AE3258AE26BAA8E100B2F53C /* naomi_roms.h */,
-				AE3258AF26BAA8E100B2F53C /* naomi_cart.cpp */,
-				AE3258B026BAA8E100B2F53C /* awcartridge.h */,
-				AE3258B126BAA8E100B2F53C /* naomi_m3comm.cpp */,
-				AE3258B226BAA8E100B2F53C /* naomi.h */,
-				AE3258B326BAA8E100B2F53C /* naomi_roms_eeprom.h */,
-				AE3258B426BAA8E100B2F53C /* naomi_roms.cpp */,
-				AE3258B526BAA8E100B2F53C /* naomi.cpp */,
 				AE3258B626BAA8E100B2F53C /* awave_regs.h */,
-				AE3258B726BAA8E100B2F53C /* naomi_m3comm.h */,
+				AE3258A126BAA8E100B2F53C /* awcartridge.cpp */,
+				AE3258B026BAA8E100B2F53C /* awcartridge.h */,
+				AE3258A526BAA8E100B2F53C /* decrypt.cpp */,
+				AE3258A326BAA8E100B2F53C /* decrypt.h */,
+				AE3258AB26BAA8E100B2F53C /* gdcartridge.cpp */,
 				AE3258B826BAA8E100B2F53C /* gdcartridge.h */,
+				AE3258AA26BAA8E100B2F53C /* m1cartridge.cpp */,
+				AE3258A726BAA8E100B2F53C /* m1cartridge.h */,
+				AE3258AC26BAA8E100B2F53C /* m4cartridge.cpp */,
+				AE3258A826BAA8E100B2F53C /* m4cartridge.h */,
+				AE3258AF26BAA8E100B2F53C /* naomi_cart.cpp */,
+				AE3258A926BAA8E100B2F53C /* naomi_cart.h */,
+				AE3258AD26BAA8E100B2F53C /* naomi_flashrom.cpp */,
+				AE3258A626BAA8E100B2F53C /* naomi_flashrom.h */,
+				AE3258B126BAA8E100B2F53C /* naomi_m3comm.cpp */,
+				AE3258B726BAA8E100B2F53C /* naomi_m3comm.h */,
+				AE3258A426BAA8E100B2F53C /* naomi_regs.h */,
+				AE3258B326BAA8E100B2F53C /* naomi_roms_eeprom.h */,
+				AE3258A226BAA8E100B2F53C /* naomi_roms_input.h */,
+				AE3258B426BAA8E100B2F53C /* naomi_roms.cpp */,
+				AE3258AE26BAA8E100B2F53C /* naomi_roms.h */,
+				AE3258B526BAA8E100B2F53C /* naomi.cpp */,
+				AE3258B226BAA8E100B2F53C /* naomi.h */,
 			);
 			path = naomi;
 			sourceTree = "<group>";
@@ -1991,6 +1988,7 @@
 				AE32594026BAA8E100B2F53C /* common.cpp */,
 				AE32594126BAA8E100B2F53C /* posix_vmem.cpp */,
 				AE32594226BAA8E100B2F53C /* context.cpp */,
+				AE49B4D726C1BAC300FA182B /* unwind_info.cpp */,
 			);
 			path = linux;
 			sourceTree = "<group>";
@@ -2406,9 +2404,7 @@
 				AE325B3326BAA8E300B2F53C /* pico_udp.c */,
 				AE325B3426BAA8E300B2F53C /* pico_dhcp_server.c */,
 				AE325B3526BAA8E300B2F53C /* pico_mm.h */,
-				AE325B3626BAA8E300B2F53C /* pico_dhcp_server.c.orig */,
 				AE325B3726BAA8E300B2F53C /* pico_ipv4.c */,
-				AE325B3826BAA8E300B2F53C /* pico_icmp4.c.orig */,
 				AE325B3926BAA8E300B2F53C /* pico_socket_tcp.c */,
 				AE325B3A26BAA8E300B2F53C /* pico_ipv6.h */,
 				AE325B3B26BAA8E300B2F53C /* pico_dns_client.c */,
@@ -3139,6 +3135,7 @@
 			);
 			name = "reicast-ios";
 			packageProductDependencies = (
+				AE6AA6FE26BF2E91004B9D5F /* AltKit */,
 			);
 			productName = emulator;
 			productReference = 87078A8318A47FE90034C7A0 /* Flycast.app */;
@@ -3154,7 +3151,6 @@
 				ORGANIZATIONNAME = reicast;
 				TargetAttributes = {
 					87078A8218A47FE90034C7A0 = {
-						DevelopmentTeam = C6JHP2HS9Q;
 						LastSwiftMigration = 1130;
 					};
 				};
@@ -3181,6 +3177,9 @@
 				nl,
 			);
 			mainGroup = 87078A7A18A47FE90034C7A0;
+			packageReferences = (
+				AE6AA6FD26BF2E91004B9D5F /* XCRemoteSwiftPackageReference "AltKit" */,
+			);
 			productRefGroup = 87078A8418A47FE90034C7A0 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -3198,10 +3197,7 @@
 				AE32949826BAEF4300B2F53C /* FlycastStoryboard.storyboard in Resources */,
 				9C7A393318C804A80070BB5F /* flycast.entitlements in Resources */,
 				878B0CFC1B8BB5B400A8D1C5 /* Images.xcassets in Resources */,
-				AE327DBA26BAA91400B2F53C /* pico_icmp4.c.orig in Resources */,
-				AE327DB826BAA91400B2F53C /* pico_dhcp_server.c.orig in Resources */,
 				87FA52EA1B8CE18600CEFC32 /* PadViewController.xib in Resources */,
-				AE327C4B26BAA91300B2F53C /* README.md in Resources */,
 				AE9F17E326BC800F00B8C6D0 /* LaunchScreen.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -3373,6 +3369,7 @@
 				AE328CBF26BAA91E00B2F53C /* zip_set_name.c in Sources */,
 				AE328D0D26BAA91E00B2F53C /* zip_source_begin_write_cloning.c in Sources */,
 				AE328CFE26BAA91E00B2F53C /* zip_source_function.c in Sources */,
+				AE49B4D826C1BAC300FA182B /* unwind_info.cpp in Sources */,
 				AE327C8D26BAA91300B2F53C /* cfg.cpp in Sources */,
 				AE327DB926BAA91400B2F53C /* pico_ipv4.c in Sources */,
 				AE32943B26BAA92700B2F53C /* audiobackend_null.cpp in Sources */,
@@ -3752,6 +3749,7 @@
 					"TARGET_IPHONE=1",
 					"TARGET_NO_OPENMP=1",
 					"_7ZIP_ST=1",
+					"GLES_SILENCE_DEPRECATION=1",
 					"$(inherited)",
 				);
 				HEADER_SEARCH_PATHS = (
@@ -3776,11 +3774,14 @@
 					"\"$(SRCROOT)/../../../core/deps/xxHash\"",
 				);
 				INFOPLIST_FILE = "$(SRCROOT)/emulator/flycast-ios-Info.plist";
-				IPHONEOS_DEPLOYMENT_TARGET = 11.2;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
 				ONLY_ACTIVE_ARCH = NO;
 				OTHER_CFLAGS = "";
-				PRODUCT_BUNDLE_IDENTIFIER = "com.flyinghead.$(PRODUCT_NAME:rfc1034identifier)";
+				PRODUCT_BUNDLE_IDENTIFIER = com.flyinghead.Flycast;
 				PRODUCT_NAME = Flycast;
 				PROVISIONING_PROFILE = "";
 				SWIFT_OBJC_BRIDGING_HEADER = "";
@@ -3810,6 +3811,7 @@
 					"TARGET_NO_OPENMP=1",
 					"_7ZIP_ST=1",
 					"NDEBUG=1",
+					"GLES_SILENCE_DEPRECATION=1",
 					"$(inherited)",
 				);
 				HEADER_SEARCH_PATHS = (
@@ -3834,11 +3836,14 @@
 					"\"$(SRCROOT)/../../../core/deps/xxHash\"",
 				);
 				INFOPLIST_FILE = "$(SRCROOT)/emulator/flycast-ios-Info.plist";
-				IPHONEOS_DEPLOYMENT_TARGET = 11.2;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
 				ONLY_ACTIVE_ARCH = NO;
 				OTHER_CFLAGS = "";
-				PRODUCT_BUNDLE_IDENTIFIER = "com.flyinghead.$(PRODUCT_NAME:rfc1034identifier)";
+				PRODUCT_BUNDLE_IDENTIFIER = com.flyinghead.Flycast;
 				PRODUCT_NAME = Flycast;
 				PROVISIONING_PROFILE = "";
 				SWIFT_OBJC_BRIDGING_HEADER = "";
@@ -3871,6 +3876,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		AE6AA6FD26BF2E91004B9D5F /* XCRemoteSwiftPackageReference "AltKit" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/rileytestut/AltKit.git";
+			requirement = {
+				kind = revision;
+				revision = 23bee561948f7ede8c499a0bd2ba3a2ae1ba1112;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		AE6AA6FE26BF2E91004B9D5F /* AltKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AE6AA6FD26BF2E91004B9D5F /* XCRemoteSwiftPackageReference "AltKit" */;
+			productName = AltKit;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 87078A7B18A47FE90034C7A0 /* Project object */;
 }

@@ -187,7 +187,7 @@ __forceinline
 		{
 			//bilinear filtering
 			//PowerVR supports also trilinear via two passes, but we ignore that for now
-			bool mipmapped = gp->tcw.MipMapped != 0 && gp->tcw.ScanOrder == 0 && config::UseMipmaps;
+			bool mipmapped = texture->IsMipmapped();
 			glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, mipmapped ? GL_LINEAR_MIPMAP_NEAREST : GL_LINEAR);
 			glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 #ifdef GL_TEXTURE_LOD_BIAS
@@ -252,34 +252,21 @@ void DrawList(const List<PolyParam>& gply, int first, int count)
 {
 	PolyParam* params = &gply.head()[first];
 
-
-	if (count==0)
-		return;
-	//we want at least 1 PParam
-
-
-	//set some 'global' modes for all primitives
-
 	glcache.Enable(GL_STENCIL_TEST);
 	glcache.StencilFunc(GL_ALWAYS,0,0);
 	glcache.StencilOp(GL_KEEP,GL_KEEP,GL_REPLACE);
 
-	while(count-->0)
+	for (; count > 0; count--, params++)
 	{
-		if (params->count>2) //this actually happens for some games. No idea why ..
-		{
-			if ((Type == ListType_Opaque || (Type == ListType_Translucent && !SortingEnabled)) && params->isp.DepthMode == 0)
-			{
-				// depthFunc = never
-				params++;
-				continue;
-			}
-			SetGPState<Type,SortingEnabled>(params);
-			glDrawElements(GL_TRIANGLE_STRIP, params->count, gl.index_type,
-					(GLvoid*)(gl.get_index_size() * params->first)); glCheck();
-		}
-
-		params++;
+		if (params->count < 3)
+			continue;
+		if ((Type == ListType_Opaque || (Type == ListType_Translucent && !SortingEnabled))
+				&& params->isp.DepthMode == 0)
+			// depthFunc = never
+			continue;
+		SetGPState<Type,SortingEnabled>(params);
+		glDrawElements(GL_TRIANGLE_STRIP, params->count, gl.index_type,
+				(GLvoid*)(gl.get_index_size() * params->first)); glCheck();
 	}
 }
 
@@ -712,12 +699,12 @@ bool render_output_framebuffer()
 
 	if (gl.gl_major < 3 || config::Rotate90)
 	{
+		if (gl.ofbo.tex == 0)
+			return false;
 		if (sx != 0)
 			glViewport(sx, 0, screen_width - sx * 2, screen_height);
 		else
 			glViewport(-fx, 0, screen_width + fx * 2, screen_height);
-		if (gl.ofbo.tex == 0)
-			return false;
 		glBindFramebuffer(GL_FRAMEBUFFER, gl.ofbo.origFbo);
 		glcache.ClearColor(0.f, 0.f, 0.f, 0.f);
 		glClear(GL_COLOR_BUFFER_BIT);

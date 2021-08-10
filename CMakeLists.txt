@@ -21,8 +21,13 @@ option(LIBRETRO "Build libretro core" OFF)
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/shell/cmake")
 
 if(APPLE)
-	set(CMAKE_OSX_DEPLOYMENT_TARGET "10.9" CACHE STRING "Minimum macOS deployment version")
-	set(CMAKE_OSX_ARCHITECTURES "x86_64;arm64" CACHE STRING "")
+	if(IOS)
+		set(CMAKE_OSX_DEPLOYMENT_TARGET "12.0" CACHE STRING "Minimum iOS deployment version")
+		set(CMAKE_OSX_ARCHITECTURES "arm64")
+	else()
+		set(CMAKE_OSX_DEPLOYMENT_TARGET "10.9" CACHE STRING "Minimum macOS deployment version")
+		set(CMAKE_OSX_ARCHITECTURES "x86_64;arm64" CACHE STRING "")
+	endif()
 endif()
 
 project(flycast)
@@ -33,7 +38,7 @@ endif()
 
 if(APPLE AND NOT LIBRETRO)
     set(CMAKE_Swift_LANGUAGE_VERSION 5.0)
-    enable_language(Swift)
+    enable_language(Swift OBJC OBJCXX)
 endif()
 
 find_package(Git)
@@ -124,7 +129,11 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
         $<$<BOOL:MSVC>:_USE_MATH_DEFINES>
         $<$<BOOL:MSVC>:NOMINMAX>
         $<$<BOOL:${TEST_AUTOMATION}>:TEST_AUTOMATION>
-        $<$<BOOL:${ENABLE_LOG}>:DEBUGFAST>)
+        $<$<BOOL:${ENABLE_LOG}>:DEBUGFAST>
+		$<$<BOOL:IOS>:TARGET_IPHONE>
+		$<$<BOOL:IOS>:GLES>
+		$<$<BOOL:IOS>:GLES3>
+		$<$<BOOL:IOS>:GLES_SILENCE_DEPRECATION>)
 
 target_include_directories(${PROJECT_NAME} PRIVATE core core/deps core/deps/stb core/khronos)
 if(LIBRETRO)
@@ -147,7 +156,7 @@ if(NOT LIBRETRO)
 #			core/deps/breakpad/src/client/mac/Framework)
 ##		target_include_directories(${PROJECT_NAME} PRIVATE $<INSTALL_INTERFACE:${CMAKE_INSTALL_LIBDIR}/Breakpad.framework>)
 #		target_compile_definitions(${PROJECT_NAME} PRIVATE USE_BREAKPAD)
-	elseif(UNIX AND NOT CMAKE_SYSTEM_NAME MATCHES "(FreeBSD|OpenBSD|NetBSD)")
+	elseif(UNIX AND NOT CMAKE_SYSTEM_NAME MATCHES "(FreeBSD|OpenBSD|NetBSD)" AND NOT IOS)
 		add_subdirectory(core/deps/breakpad)
 		target_link_libraries(${PROJECT_NAME} PRIVATE breakpad_client)
 		target_include_directories(${PROJECT_NAME} PRIVATE core/deps/breakpad/src)
@@ -215,9 +224,9 @@ if(NOT LIBRETRO)
 		target_link_libraries(${PROJECT_NAME} PRIVATE "-static-libgcc -static-libstdc++")
 	endif()
 	
-	if(APPLE OR WIN32)
+	if((APPLE AND NOT IOS) OR WIN32)
 	    find_package(SDL2 HINTS "${CMAKE_CURRENT_BINARY_DIR}/core/deps/SDL/cmake")
-	elseif(NOT ANDROID)
+	elseif(NOT ANDROID AND NOT IOS)
 	    find_package(SDL2)
 	endif()
 	if(SDL2_FOUND)
@@ -248,6 +257,9 @@ endif()
 
 execute_process(COMMAND git apply -p1 ${CMAKE_CURRENT_SOURCE_DIR}/core/deps/patches/libchdr.patch
 		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/core/deps/libchdr) 
+if(IOS)
+	set(CMAKE_SYSTEM_PROCESSOR aarch64)
+endif()
 add_subdirectory(core/deps/libchdr)
 target_link_libraries(${PROJECT_NAME} PRIVATE chdr-static)
 target_include_directories(${PROJECT_NAME} PRIVATE core/deps/libchdr/include)
@@ -1100,43 +1112,126 @@ if(NOT LIBRETRO)
 	
 	    target_link_libraries(${PROJECT_NAME} PRIVATE android EGL GLESv2 log)
 	elseif(APPLE)
-	    target_sources(${PROJECT_NAME} PRIVATE
-	            shell/apple/emulator-osx/emulator-osx/AppDelegate.swift
-	            shell/apple/emulator-osx/emulator-osx/EmuGLView.swift
-	            shell/apple/emulator-osx/emulator-osx/osx-main.mm
-	            shell/apple/emulator-osx/emulator-osx/osx_gamepad.h
-	            shell/apple/emulator-osx/emulator-osx/osx_keyboard.h)
-	
-		set(XIB shell/apple/emulator-osx/emulator-osx/Base.lproj/MainMenu.xib)
-		set(ASSETS shell/apple/emulator-osx/emulator-osx/Images.xcassets)
-		target_sources(${PROJECT_NAME} PRIVATE ${XIB} ${ASSETS})
-		source_group("Resources" FILES ${XIB} ${ASSETS})
-		set_source_files_properties(${ASSETS} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
-	
-	    set_target_properties(${PROJECT_NAME} PROPERTIES
-	        OUTPUT_NAME "Flycast"
-	        MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/shell/cmake/MacOSXBundleInfo.plist.in
-	        MACOSX_BUNDLE_EXECUTABLE_NAME "Flycast"
-	        MACOSX_BUNDLE_INFO_STRING ""
-	        MACOSX_BUNDLE_ICON_FILE "AppIcon"
-	        MACOSX_BUNDLE_GUI_IDENTIFIER "com.flyinghead.Flycast"
-	        MACOSX_BUNDLE_LONG_VERSION_STRING ""
-	        MACOSX_BUNDLE_BUNDLE_NAME "Flycast"
-	        MACOSX_BUNDLE_SHORT_VERSION_STRING "1.0"
-	        MACOSX_BUNDLE_BUNDLE_VERSION "1"
-	        MACOSX_BUNDLE_COPYRIGHT "Copyright © 2019 Flycast contributors. All rights reserved."
-	        XCODE_ATTRIBUTE_SWIFT_OBJC_BRIDGING_HEADER "shell/apple/emulator-osx/emulator-osx/emulator-osx-Bridging-Header.h"
-			RESOURCE "${XIB}"
-			XCODE_ATTRIBUTE_ASSETCATALOG_COMPILER_APPICON_NAME "AppIcon"
-	        BUILD_WITH_INSTALL_RPATH TRUE
-	        INSTALL_RPATH "@loader_path/../Frameworks"
-	    )
-	
-	    find_library(AUDIO_UNIT_LIBRARY AudioUnit)
-	    find_library(FOUNDATION_LIBRARY Foundation)
-	    find_library(AUDIO_TOOLBOX_LIBRARY AudioToolbox)
-	
-	    target_link_libraries(${PROJECT_NAME} PRIVATE ${AUDIO_UNIT_LIBRARY} ${FOUNDATION_LIBRARY} ${AUDIO_TOOLBOX_LIBRARY})
+		set_property(TARGET ${PROJECT_NAME} PROPERTY XCODE_ATTRIBUTE_SWIFT_VERSION "5.0")
+		if(IOS)
+			add_subdirectory(shell/apple/emulator-ios/AltKit)
+			target_include_directories(${PROJECT_NAME} PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/shell/apple/emulator-ios")
+			target_link_libraries(${PROJECT_NAME} PRIVATE AltKit)
+
+			target_sources(${PROJECT_NAME} PRIVATE
+					shell/apple/emulator-ios/emulator/AppDelegate.h
+					shell/apple/emulator-ios/emulator/AppDelegate.m
+					shell/apple/emulator-ios/emulator/ios_main.mm
+					shell/apple/emulator-ios/emulator/ios_mouse.h
+					shell/apple/emulator-ios/emulator/FlycastViewController.h
+					shell/apple/emulator-ios/emulator/FlycastViewController.mm
+					shell/apple/emulator-ios/emulator/PadViewController.h
+					shell/apple/emulator-ios/emulator/PadViewController.mm
+					shell/apple/emulator-ios/emulator/EmulatorView.h
+					shell/apple/emulator-ios/emulator/EmulatorView.mm
+					shell/apple/emulator-ios/emulator/main.m
+					shell/apple/emulator-ios/emulator/iCade-iOS/iCadeReaderView.h
+					shell/apple/emulator-ios/emulator/iCade-iOS/iCadeReaderView.m
+					shell/apple/emulator-ios/emulator/iCade-iOS/iCadeState.h)
+			set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fobjc-arc -fmodules")
+			set_source_files_properties(shell/apple/emulator-ios/emulator/FlycastViewController.mm PROPERTIES COMPILE_OPTIONS -fcxx-modules)
+			set_source_files_properties(shell/apple/emulator-ios/emulator/iCade-iOS/iCadeReaderView.m PROPERTIES COMPILE_OPTIONS -fno-objc-arc)
+
+			set(IOS_RESOURCES
+				shell/apple/emulator-ios/emulator/Images.xcassets
+				shell/apple/emulator-ios/emulator/FlycastStoryboard.storyboard
+				shell/apple/emulator-ios/emulator/LaunchScreen.storyboard
+				shell/apple/emulator-ios/emulator/PadViewController.xib)
+			target_sources(${PROJECT_NAME} PRIVATE ${IOS_RESOURCES})
+
+			set_target_properties(${PROJECT_NAME} PROPERTIES
+				OUTPUT_NAME "Flycast"
+				MACOSX_BUNDLE YES
+				MACOSX_BUNDLE_EXECUTABLE_NAME "Flycast"
+				MACOSX_BUNDLE_INFO_STRING ""
+				MACOSX_BUNDLE_GUI_IDENTIFIER "com.flyinghead.Flycast"
+				MACOSX_BUNDLE_BUNDLE_NAME "com.flyinghead.Flycast"
+				MACOSX_BUNDLE_LONG_VERSION_STRING "1.0"
+				MACOSX_BUNDLE_SHORT_VERSION_STRING "1.0"
+				MACOSX_BUNDLE_BUNDLE_VERSION "1"
+				MACOSX_BUNDLE_COPYRIGHT "Copyright © 2021 Flycast contributors. All rights reserved."
+				MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/shell/apple/emulator-ios/plist.in
+
+				XCODE_ATTRIBUTE_DEBUG_INFORMATION_FORMAT "dwarf-with-dsym"
+				XCODE_ATTRIBUTE_GCC_PREFIX_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/shell/apple/emulator-ios/emulator/flycast-ios-Prefix.pch"
+				RESOURCE "${IOS_RESOURCES}"
+				XCODE_ATTRIBUTE_GCC_PRECOMPILE_PREFIX_HEADER "YES"
+				XCODE_ATTRIBUTE_IPHONEOS_DEPLOYMENT_TARGET "12.0"
+				XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED "NO"
+				XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY ""
+				XCODE_ATTRIBUTE_TARGETED_DEVICE_FAMILY "1,2"
+				XCODE_ATTRIBUTE_CLANG_ENABLE_OBJC_ARC YES
+				XCODE_ATTRIBUTE_COMBINE_HIDPI_IMAGES NO
+				XCODE_ATTRIBUTE_ASSETCATALOG_COMPILER_APPICON_NAME "AppIcon")
+				
+			find_library(UIKIT UIKit)
+			find_library(FOUNDATION Foundation)
+			find_library(OPENGLES OpenGLES)
+			find_library(GLKIT GLKit)
+			find_library(GAMECONTROLLER GameController)
+			find_library(AUDIOTOOLBOX AudioToolbox)
+			target_link_libraries(${PROJECT_NAME} PRIVATE
+				${UIKIT}
+				${FOUNDATION}
+				${OPENGLES}
+				${GLKIT}
+				${GAMECONTROLLER}
+				${AUDIOTOOLBOX})
+
+			add_custom_target(Flycast.IPA ALL
+				DEPENDS ${PROJECT_NAME}
+				COMMENT "Building IPA"
+				COMMAND mkdir -p ${CMAKE_CURRENT_BINARY_DIR}/Payload
+				COMMAND rm -rf ${CMAKE_CURRENT_BINARY_DIR}/Payload/*
+				COMMAND cp -r ${CMAKE_CURRENT_BINARY_DIR}/Release-iphoneos/Flycast.app ${CMAKE_CURRENT_BINARY_DIR}/Payload
+				COMMAND for lib in ${CMAKE_CURRENT_BINARY_DIR}/Payload/Flycast.app/Frameworks/*.dylib
+				COMMAND do xcrun bitcode_strip -r $lib -o $lib
+				COMMAND done
+				COMMAND ${CMAKE_COMMAND} -E tar "cfv" "Flycast.ipa" --format=zip ${CMAKE_CURRENT_BINARY_DIR}/Payload)
+		else()
+			target_sources(${PROJECT_NAME} PRIVATE
+					shell/apple/emulator-osx/emulator-osx/AppDelegate.swift
+					shell/apple/emulator-osx/emulator-osx/EmuGLView.swift
+					shell/apple/emulator-osx/emulator-osx/osx-main.mm
+					shell/apple/emulator-osx/emulator-osx/osx_gamepad.h
+					shell/apple/emulator-osx/emulator-osx/osx_keyboard.h)
+		
+			set(XIB shell/apple/emulator-osx/emulator-osx/Base.lproj/MainMenu.xib)
+			set(ASSETS shell/apple/emulator-osx/emulator-osx/Images.xcassets)
+			target_sources(${PROJECT_NAME} PRIVATE ${XIB} ${ASSETS})
+			source_group("Resources" FILES ${XIB} ${ASSETS})
+			set_source_files_properties(${ASSETS} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
+		
+			set_target_properties(${PROJECT_NAME} PROPERTIES
+				OUTPUT_NAME "Flycast"
+				MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/shell/cmake/MacOSXBundleInfo.plist.in
+				MACOSX_BUNDLE_EXECUTABLE_NAME "Flycast"
+				MACOSX_BUNDLE_INFO_STRING ""
+				MACOSX_BUNDLE_ICON_FILE "AppIcon"
+				MACOSX_BUNDLE_GUI_IDENTIFIER "com.flyinghead.Flycast"
+				MACOSX_BUNDLE_LONG_VERSION_STRING ""
+				MACOSX_BUNDLE_BUNDLE_NAME "Flycast"
+				MACOSX_BUNDLE_SHORT_VERSION_STRING "1.0"
+				MACOSX_BUNDLE_BUNDLE_VERSION "1"
+				MACOSX_BUNDLE_COPYRIGHT "Copyright © 2019 Flycast contributors. All rights reserved."
+				XCODE_ATTRIBUTE_SWIFT_OBJC_BRIDGING_HEADER "shell/apple/emulator-osx/emulator-osx/emulator-osx-Bridging-Header.h"
+				RESOURCE "${XIB}"
+				XCODE_ATTRIBUTE_ASSETCATALOG_COMPILER_APPICON_NAME "AppIcon"
+				BUILD_WITH_INSTALL_RPATH TRUE
+				INSTALL_RPATH "@loader_path/../Frameworks"
+			)
+		
+			find_library(AUDIO_UNIT_LIBRARY AudioUnit)
+			find_library(FOUNDATION_LIBRARY Foundation)
+			find_library(AUDIO_TOOLBOX_LIBRARY AudioToolbox)
+		
+			target_link_libraries(${PROJECT_NAME} PRIVATE ${AUDIO_UNIT_LIBRARY} ${FOUNDATION_LIBRARY} ${AUDIO_TOOLBOX_LIBRARY})
+		endif()
 	elseif(UNIX OR NINTENDO_SWITCH)
 	    if(NOT BUILD_TESTING)
 	        target_sources(${PROJECT_NAME} PRIVATE
