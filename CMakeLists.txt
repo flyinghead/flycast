@@ -1283,16 +1283,13 @@ if(NINTENDO_SWITCH)
 	    	DEPENDS xxHash::xxhash chdr-static zip)
 	    add_dependencies(combined ${PROJECT_NAME})
 	else()
-		add_custom_command(OUTPUT flycast.nacp
-			COMMAND ${DEVKITPRO}/tools/bin/nacptool --create Flycast "flyinghead, M4xw" ${GIT_VERSION} ${CMAKE_BINARY_DIR}/flycast.nacp
-			COMMENT "Generating NACP info")
-	
-		add_custom_command(OUTPUT flycast.nro
-	    	COMMAND mkdir -p ${CMAKE_BINARY_DIR}/artifact
-			COMMAND ${DEVKITPRO}/tools/bin/elf2nro ${CMAKE_BINARY_DIR}/flycast ${CMAKE_BINARY_DIR}/artifact/flycast.nro --icon=${CMAKE_SOURCE_DIR}/shell/switch/flycast.jpeg --nacp=${CMAKE_BINARY_DIR}/flycast.nacp
-			DEPENDS flycast.nacp ${CMAKE_BINARY_DIR}/flycast
-			COMMENT "Generating NRO")
-		add_custom_target(nro ALL DEPENDS flycast.nacp flycast.nro)
+		nx_generate_nacp(flycast.nacp NAME "Flycast" AUTHOR "flyinghead, M4xw" VERSION "${GIT_VERSION}")
+		nx_create_nro(flycast NACP flycast.nacp ICON "${CMAKE_SOURCE_DIR}/shell/switch/flycast.jpeg")
+		add_custom_target(combined ALL
+			COMMAND mkdir -p artifact
+			COMMAND mv flycast.nro artifact
+			DEPENDS flycast_nro
+			WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
 	endif()
 endif()
 
