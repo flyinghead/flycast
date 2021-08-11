@@ -22,7 +22,7 @@ jobs:
 
       - name: CMake
         run: |
-          cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=$DEVKITPRO/cmake/Switch.cmake ${{ matrix.config.cmakeArgs }}
+          $DEVKITPRO/portlibs/switch/bin/aarch64-none-elf-cmake -B build -DCMAKE_BUILD_TYPE=Release ${{ matrix.config.cmakeArgs }}
           cmake --build build --config Release --parallel 2
 
       - uses: actions/upload-artifact@v2
