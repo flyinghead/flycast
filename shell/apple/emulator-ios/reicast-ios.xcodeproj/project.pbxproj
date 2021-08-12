@@ -13,7 +13,7 @@
 		87078A8D18A47FE90034C7A0 /* GLKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 87078A8C18A47FE90034C7A0 /* GLKit.framework */; };
 		87078A8F18A47FE90034C7A0 /* OpenGLES.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 87078A8E18A47FE90034C7A0 /* OpenGLES.framework */; };
 		87078A9718A47FE90034C7A0 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 87078A9618A47FE90034C7A0 /* main.m */; };
-		87078A9B18A47FE90034C7A0 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 87078A9A18A47FE90034C7A0 /* AppDelegate.m */; };
+		87078A9B18A47FE90034C7A0 /* AppDelegate.mm in Sources */ = {isa = PBXBuildFile; fileRef = 87078A9A18A47FE90034C7A0 /* AppDelegate.mm */; };
 		878B0CFC1B8BB5B400A8D1C5 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 878B0CFB1B8BB5B400A8D1C5 /* Images.xcassets */; };
 		87C4AA561A4414070048DBF4 /* AssetsLibrary.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 87C4AA551A4414070048DBF4 /* AssetsLibrary.framework */; };
 		87D92EA81B7839E600D8FD9E /* ios_main.mm in Sources */ = {isa = PBXBuildFile; fileRef = 87D92EA71B7839E600D8FD9E /* ios_main.mm */; };
@@ -420,7 +420,7 @@
 		87078A9618A47FE90034C7A0 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = main.m; path = emulator/main.m; sourceTree = "<group>"; };
 		87078A9818A47FE90034C7A0 /* flycast-ios-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "flycast-ios-Prefix.pch"; path = "emulator/flycast-ios-Prefix.pch"; sourceTree = "<group>"; };
 		87078A9918A47FE90034C7A0 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
-		87078A9A18A47FE90034C7A0 /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
+		87078A9A18A47FE90034C7A0 /* AppDelegate.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = AppDelegate.mm; sourceTree = "<group>"; };
 		878B0CFB1B8BB5B400A8D1C5 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
 		87C208CB1B7A4BFA00638BDD /* EmulatorView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = EmulatorView.h; path = emulator/EmulatorView.h; sourceTree = "<group>"; };
 		87C208CC1B7A4BFA00638BDD /* EmulatorView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = EmulatorView.mm; path = emulator/EmulatorView.mm; sourceTree = "<group>"; };
@@ -1416,6 +1416,10 @@
 		AE32949726BAEF4300B2F53C /* FlycastStoryboard.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = FlycastStoryboard.storyboard; sourceTree = "<group>"; };
 		AE32949926BAFA3000B2F53C /* ios_mouse.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ios_mouse.h; sourceTree = "<group>"; };
 		AE49B4D726C1BAC300FA182B /* unwind_info.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = unwind_info.cpp; sourceTree = "<group>"; };
+		AE49B51626C2E8FC00FA182B /* xbyak_mnemonic.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = xbyak_mnemonic.h; sourceTree = "<group>"; };
+		AE49B51726C2E8FC00FA182B /* xbyak_bin2hex.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = xbyak_bin2hex.h; sourceTree = "<group>"; };
+		AE49B51826C2E8FC00FA182B /* xbyak.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = xbyak.h; sourceTree = "<group>"; };
+		AE49B51926C2E8FC00FA182B /* xbyak_util.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = xbyak_util.h; sourceTree = "<group>"; };
 		AE9F17E226BC800F00B8C6D0 /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
 		EBDF37571BB96E75001191B5 /* AudioUnit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioUnit.framework; path = System/Library/Frameworks/AudioUnit.framework; sourceTree = SDKROOT; };
 		EBDF37591BB96ECD001191B5 /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
@@ -1484,7 +1488,7 @@
 				AE32949726BAEF4300B2F53C /* FlycastStoryboard.storyboard */,
 				AE9F17E226BC800F00B8C6D0 /* LaunchScreen.storyboard */,
 				87078A9918A47FE90034C7A0 /* AppDelegate.h */,
-				87078A9A18A47FE90034C7A0 /* AppDelegate.m */,
+				87078A9A18A47FE90034C7A0 /* AppDelegate.mm */,
 				9C7A393218C804A80070BB5F /* flycast.entitlements */,
 				9C7A393618C805F70070BB5F /* iOS UI */,
 				87D92F4F1B7A1BB100D8FD9E /* iCade-iOS */,
@@ -2009,6 +2013,7 @@
 				AE32649B26BAA8F300B2F53C /* stb */,
 				AE32597326BAA8E100B2F53C /* vixl */,
 				AE3259AD26BAA8E100B2F53C /* xbrz */,
+				AE49B4DC26C2E8FB00FA182B /* xbyak */,
 				AE326D2B26BAA8FB00B2F53C /* xxHash */,
 			);
 			path = deps;
@@ -3117,6 +3122,25 @@
 			path = reios;
 			sourceTree = "<group>";
 		};
+		AE49B4DC26C2E8FB00FA182B /* xbyak */ = {
+			isa = PBXGroup;
+			children = (
+				AE49B51526C2E8FC00FA182B /* xbyak */,
+			);
+			path = xbyak;
+			sourceTree = "<group>";
+		};
+		AE49B51526C2E8FC00FA182B /* xbyak */ = {
+			isa = PBXGroup;
+			children = (
+				AE49B51626C2E8FC00FA182B /* xbyak_mnemonic.h */,
+				AE49B51726C2E8FC00FA182B /* xbyak_bin2hex.h */,
+				AE49B51826C2E8FC00FA182B /* xbyak.h */,
+				AE49B51926C2E8FC00FA182B /* xbyak_util.h */,
+			);
+			path = xbyak;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -3496,7 +3520,7 @@
 				AE327C2D26BAA91300B2F53C /* holly_intc.cpp in Sources */,
 				AE328CAE26BAA91E00B2F53C /* zip_memdup.c in Sources */,
 				AE32947E26BAA92800B2F53C /* gdb_server.cpp in Sources */,
-				87078A9B18A47FE90034C7A0 /* AppDelegate.m in Sources */,
+				87078A9B18A47FE90034C7A0 /* AppDelegate.mm in Sources */,
 				AE327C3226BAA91300B2F53C /* blockmanager.cpp in Sources */,
 				AE327CCF26BAA91400B2F53C /* code-buffer-vixl.cc in Sources */,
 				AE32944026BAA92700B2F53C /* LogManager.cpp in Sources */,
@@ -3772,6 +3796,7 @@
 					"\"$(SRCROOT)/../../../core/deps/vixl\"",
 					"\"$(SRCROOT)/../../../core/deps/xbrz\"",
 					"\"$(SRCROOT)/../../../core/deps/xxHash\"",
+					"\"$(SRCROOT)/../../../core/deps/xbyak",
 				);
 				INFOPLIST_FILE = "$(SRCROOT)/emulator/flycast-ios-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
@@ -3788,7 +3813,7 @@
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				VALID_ARCHS = arm64;
+				VALID_ARCHS = "arm64 x86_64";
 				WRAPPER_EXTENSION = app;
 			};
 			name = Debug;
@@ -3834,6 +3859,7 @@
 					"\"$(SRCROOT)/../../../core/deps/vixl\"",
 					"\"$(SRCROOT)/../../../core/deps/xbrz\"",
 					"\"$(SRCROOT)/../../../core/deps/xxHash\"",
+					"\"$(SRCROOT)/../../../core/deps/xbyak",
 				);
 				INFOPLIST_FILE = "$(SRCROOT)/emulator/flycast-ios-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
@@ -3849,7 +3875,7 @@
 				SWIFT_OBJC_BRIDGING_HEADER = "";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				VALID_ARCHS = arm64;
+				VALID_ARCHS = "arm64 x86_64";
 				WRAPPER_EXTENSION = app;
 			};
 			name = Release;

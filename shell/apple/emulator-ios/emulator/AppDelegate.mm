@@ -4,9 +4,11 @@
 //
 
 #import "AppDelegate.h"
+#include "emulator.h"
+#include "log/LogManager.h"
+#include "cfg/option.h"
 
-void emu_dc_term(void);
-void emu_gui_open(void);
+static bool emulatorRunning;
 
 @implementation AppDelegate
 
@@ -24,13 +26,17 @@ void emu_gui_open(void);
 {
     // Sent when the application is about to move from active to inactive state. This can occur for certain types of temporary interruptions (such as an incoming phone call or SMS message) or when the user quits the application and it begins the transition to the background state.
     // Use this method to pause ongoing tasks, disable timers, and throttle down OpenGL ES frame rates. Games should use this method to pause the game.
-	emu_gui_open();
+	emulatorRunning = dc_is_running();
+	if (emulatorRunning)
+		dc_stop();
 }
 
 - (void)applicationDidEnterBackground:(UIApplication *)application
 {
     // Use this method to release shared resources, save user data, invalidate timers, and store enough application state information to restore your application to its current state in case it is terminated later. 
     // If your application supports background execution, this method is called instead of applicationWillTerminate: when the user quits.
+	if (config::AutoSaveState && settings.imgread.ImagePath[0] != '\0')
+		dc_savestate(config::SavestateSlot);
 }
 
 - (void)applicationWillEnterForeground:(UIApplication *)application
@@ -41,12 +47,18 @@ void emu_gui_open(void);
 - (void)applicationDidBecomeActive:(UIApplication *)application
 {
     // Restart any tasks that were paused (or not yet started) while the application was inactive. If the application was previously in the background, optionally refresh the user interface.
+	if (emulatorRunning)
+	{
+		dc_resume();
+		emulatorRunning = false;
+	}
 }
 
 - (void)applicationWillTerminate:(UIApplication *)application
 {
     // Called when the application is about to terminate. Save data if appropriate. See also applicationDidEnterBackground:.
-	emu_dc_term();
+	dc_term();
+	LogManager::Shutdown();
 }
 
 @end

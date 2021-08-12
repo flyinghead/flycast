@@ -1123,7 +1123,7 @@ if(NOT LIBRETRO)
 
 			target_sources(${PROJECT_NAME} PRIVATE
 					shell/apple/emulator-ios/emulator/AppDelegate.h
-					shell/apple/emulator-ios/emulator/AppDelegate.m
+					shell/apple/emulator-ios/emulator/AppDelegate.mm
 					shell/apple/emulator-ios/emulator/ios_main.mm
 					shell/apple/emulator-ios/emulator/ios_mouse.h
 					shell/apple/emulator-ios/emulator/FlycastViewController.h

@@ -4,9 +4,7 @@
 
 #import <Foundation/Foundation.h>
 
-#include "emulator.h"
-#include "log/LogManager.h"
-#include "rend/gui.h"
+#include <string>
 
 int darw_printf(const char* text,...)
 {
@@ -40,18 +38,4 @@ std::string os_Locale(){
 
 std::string os_PrecomposedString(std::string string){
     return [[[NSString stringWithUTF8String:string.c_str()] precomposedStringWithCanonicalMapping] UTF8String];
-}
-
-extern "C" void emu_dc_term(void)
-{
-	if (dc_is_running())
-		dc_exit();
-	dc_term();
-	LogManager::Shutdown();
-}
-
-extern "C" void emu_gui_open(void)
-{
-	if (!gui_is_open())
-		gui_open_settings();
 }

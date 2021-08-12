@@ -6,20 +6,14 @@
 #import "PadViewController.h"
 #import "EmulatorView.h"
 
-@interface PadViewController ()
+@interface PadViewController () {
+	UITouch *joyTouch;
+	CGPoint joyBias;
+}
 
 @end
 
 @implementation PadViewController
-
-- (void)viewDidLoad {
-    [super viewDidLoad];
-}
-
-- (void)didReceiveMemoryWarning {
-    [super didReceiveMemoryWarning];
-    // Dispose of any resources that can be recreated.
-}
 
 - (void)showController:(UIView *)parentView
 {
@@ -35,28 +29,14 @@
 	return self.view.window != nil;
 }
 
-- (void)setControlOutput:(EmulatorView *)output
-{
-	self.handler = output;
-}
-
 - (IBAction)keycodeDown:(id)sender
 {
-	[self.handler handleKeyDown:(UIButton*)sender];
+	[self.handler handleKeyDown:(enum IOSButton)((UIButton *)sender).tag];
 }
 
 - (IBAction)keycodeUp:(id)sender
 {
-	[self.handler handleKeyUp:(UIButton*)sender];
-}
-
-- (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
-{
-	self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
-	if (self) {
-		// Custom initialization
-	}
-	return self;
+	[self.handler handleKeyUp:(enum IOSButton)((UIButton *)sender).tag];
 }
 
 - (void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event;
@@ -69,9 +49,6 @@
 				joyBias = loc;
 				joyx[0] = 0;
 				joyy[0] = 0;
-				// don't let any gesture recognizer steal our touch
-				for (UIGestureRecognizer *gesture in touch.gestureRecognizers)
-					[gesture ignoreTouch:touch forEvent:event];
 				break;
 			}
 		}
