@@ -122,7 +122,7 @@ double os_GetSeconds()
 	return a.tv_sec-tvs_base+a.tv_usec/1000000.0;
 }
 
-#if !defined(__unix__)
+#if !defined(__unix__) && !defined(LIBRETRO)
 void os_DebugBreak()
 {
 	__builtin_trap();

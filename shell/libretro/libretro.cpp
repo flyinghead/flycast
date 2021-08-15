@@ -417,8 +417,9 @@ static void setGameGeometry(retro_game_geometry& geometry)
 		geometry.aspect_ratio = 1 / geometry.aspect_ratio;
 	geometry.max_width = std::max(framebufferHeight * 16 / 9, framebufferWidth);
 	geometry.max_height = geometry.max_width;
-	geometry.base_width = framebufferWidth;
-	geometry.base_height = framebufferHeight;
+	// Avoid gigantic window size at startup
+	geometry.base_width = 640;
+	geometry.base_height = 480;
 }
 
 static void setAVInfo(retro_system_av_info& avinfo)
@@ -1440,6 +1441,9 @@ static bool set_opengl_hw_render(u32 preferred)
 #endif
 	params.imm_vbo_draw          = NULL;
 	params.imm_vbo_disable       = NULL;
+#if defined(__APPLE__) && defined(HAVE_OPENGL)
+	preferred = RETRO_HW_CONTEXT_OPENGL_CORE;
+#endif
 #ifdef HAVE_OIT
 	if (config::RendererType == RenderType::OpenGL_OIT)
 	{

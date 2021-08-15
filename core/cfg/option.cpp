@@ -77,7 +77,11 @@ Option<bool> Fog("rend.Fog", true);
 Option<bool> FloatVMUs("rend.FloatVMUs");
 Option<bool> Rotate90("rend.Rotate90");
 Option<bool> PerStripSorting("rend.PerStripSorting");
+#ifdef __APPLE__
+Option<bool> DelayFrameSwapping("rend.DelayFrameSwapping", false);
+#else
 Option<bool> DelayFrameSwapping("rend.DelayFrameSwapping", true);
+#endif
 Option<bool> WidescreenGameHacks("rend.WidescreenGameHacks");
 std::array<Option<int>, 4> CrosshairColor {
 	Option<int>("rend.CrossHairColor1"),
