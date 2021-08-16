@@ -201,9 +201,9 @@ bool rend_single_frame(const bool& enabled)
 			return false;
 		if (do_swap)
 		{
-			do_swap = false;
 			if (renderer->Present())
 			{
+                do_swap = false;
 				rs.Set(); // don't miss any render
 				return true;
 			}
