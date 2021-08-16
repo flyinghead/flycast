@@ -113,11 +113,15 @@ extern int screen_dpi;
 	[EAGLContext setCurrentContext:self.context];
 
     self.connectObserver = [[NSNotificationCenter defaultCenter] addObserverForName:GCControllerDidConnectNotification object:nil queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification *note) {
+		// GCController *controller = (GCController *)note.object;
+		// IOSGame::addController(controller);
         if (GCController.controllers.count > 0) {
 			[self toggleHardwareController:YES];
         }
     }];
     self.disconnectObserver = [[NSNotificationCenter defaultCenter] addObserverForName:GCControllerDidDisconnectNotification object:nil queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification *note) {
+		// GCController *controller = (GCController *)note.object;
+		// IOSGame::removeController(controller);
         if (GCController.controllers.count == 0) {
             [self toggleHardwareController:NO];
         }
@@ -156,17 +160,7 @@ extern int screen_dpi;
 	mainui_enabled = true;
 	
 	emuView.mouse = ::mouse.get();
-	
-	// Swipe right to open the menu in-game
-//	UISwipeGestureRecognizer *swipe = [[UISwipeGestureRecognizer alloc] initWithTarget:self action:@selector(handleSwipe:)];
-//	[swipe setDirection:UISwipeGestureRecognizerDirectionRight];
-//	[self.view addGestureRecognizer:swipe];
-	
 	[self altKitStart];
-}
-
-- (void)handleSwipe:(UISwipeGestureRecognizer *)swipe {
-	gui_open_settings();
 }
 
 -(UIRectEdge)preferredScreenEdgesDeferringSystemGestures
@@ -259,174 +253,189 @@ extern int screen_dpi;
 #endif
 		// TODO: Add multi player  using gController.playerIndex and iterate all controllers
 
-		if (self.gController.extendedGamepad) {
+		if (self.gController.extendedGamepad)
+		{
 			[self.gController.extendedGamepad.buttonA setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
-				if (pressed && value >= 0.1) {
-					kcode[0] &= ~DC_BTN_A;
-				} else {
-					kcode[0] |= DC_BTN_A;
-				}
+				if (pressed)
+					[self handleKeyDown:IOS_BTN_A];
+				else
+					[self handleKeyUp:IOS_BTN_A];
 			}];
 			[self.gController.extendedGamepad.buttonB setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
-				if (pressed && value >= 0.1) {
-					kcode[0] &= ~DC_BTN_B;
-				} else {
-					kcode[0] |= DC_BTN_B;
-				}
+				if (pressed)
+					[self handleKeyDown:IOS_BTN_B];
+				else
+					[self handleKeyUp:IOS_BTN_B];
 			}];
 			[self.gController.extendedGamepad.buttonX setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
-				if (pressed && value >= 0.1) {
-					kcode[0] &= ~DC_BTN_X;
-				} else {
-					kcode[0] |= DC_BTN_X;
-				}
+				if (pressed)
+					[self handleKeyDown:IOS_BTN_X];
+				else
+					[self handleKeyUp:IOS_BTN_X];
 			}];
 			[self.gController.extendedGamepad.buttonY setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
-				if (pressed && value >= 0.1) {
-					kcode[0] &= ~DC_BTN_Y;
-				} else {
-					kcode[0] |= DC_BTN_Y;
-				}
+				if (pressed)
+					[self handleKeyDown:IOS_BTN_Y];
+				else
+					[self handleKeyUp:IOS_BTN_Y];
 			}];
 			[self.gController.extendedGamepad.rightTrigger setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
-				if (pressed) {
-					rt[0] = 255;
-				} else {
-					rt[0] = 0;
-				}
+				rt[0] = (int)std::roundf(255.f * value);
 			}];
 			[self.gController.extendedGamepad.leftTrigger setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
-				if (pressed) {
-					lt[0] = 255;
-				} else {
-					lt[0] = 0;
-				}
+				lt[0] = (int)std::roundf(255.f * value);
 			}];
 			
-			// Either trigger for start
-			[self.gController.extendedGamepad.rightShoulder setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
-				if (pressed && value >= 0.1) {
-					kcode[0] &= ~DC_BTN_START;
-				} else {
-					kcode[0] |= DC_BTN_START;
-				}
+			if (@available(iOS 13.0, *)) {
+				[self.gController.extendedGamepad.buttonOptions setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
+					if (pressed)
+						[self handleKeyDown:IOS_BTN_OPTIONS];
+					else
+						[self handleKeyUp:IOS_BTN_OPTIONS];
+				}];
+				[self.gController.extendedGamepad.leftShoulder setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
+					if (pressed)
+						[self handleKeyDown:IOS_BTN_L1];
+					else
+						[self handleKeyUp:IOS_BTN_L1];
+				}];
+			} else {
+				// Left shoulder for options/menu
+				[self.gController.extendedGamepad.leftShoulder setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
+					if (pressed)
+						[self handleKeyDown:IOS_BTN_OPTIONS];
+					else
+						[self handleKeyUp:IOS_BTN_OPTIONS];
+				}];
+			}
+			if (@available(iOS 13.0, *)) {
+				[self.gController.extendedGamepad.buttonMenu setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
+					if (pressed)
+						[self handleKeyDown:IOS_BTN_MENU];
+					else
+						[self handleKeyUp:IOS_BTN_MENU];
+				}];
+				[self.gController.extendedGamepad.rightShoulder setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
+					if (pressed)
+						[self handleKeyDown:IOS_BTN_R1];
+					else
+						[self handleKeyUp:IOS_BTN_R1];
+				}];
+			} else {
+				// Right shoulder for menu/start
+				[self.gController.extendedGamepad.rightShoulder setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
+					if (pressed)
+						[self handleKeyDown:IOS_BTN_MENU];
+					else
+						[self handleKeyUp:IOS_BTN_MENU];
+				}];
+			}
+
+			[self.gController.extendedGamepad.dpad setValueChangedHandler:^(GCControllerDirectionPad *dpad, float xValue, float yValue) {
+				if (dpad.right.isPressed)
+					[self handleKeyDown:IOS_BTN_RIGHT];
+				else
+					[self handleKeyUp:IOS_BTN_RIGHT];
+				if (dpad.left.isPressed)
+					[self handleKeyDown:IOS_BTN_LEFT];
+				else
+					[self handleKeyUp:IOS_BTN_LEFT];
+				if (dpad.up.isPressed)
+					[self handleKeyDown:IOS_BTN_UP];
+				else
+					[self handleKeyUp:IOS_BTN_UP];
+				if (dpad.down.isPressed)
+					[self handleKeyDown:IOS_BTN_DOWN];
+				else
+					[self handleKeyUp:IOS_BTN_DOWN];
 			}];
-			[self.gController.extendedGamepad.leftShoulder setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
-				if (pressed && value >= 0.1) {
-					kcode[0] &= ~DC_BTN_START;
-				} else {
-					kcode[0] |= DC_BTN_START;
-				}
-			}];
-			[self.gController.extendedGamepad.dpad setValueChangedHandler:^(GCControllerDirectionPad *dpad, float xValue, float yValue){
-				if (dpad.right.isPressed) {
-					kcode[0] &= ~DC_DPAD_RIGHT;
-				} else {
-					kcode[0] |= DC_DPAD_RIGHT;
-				}
-				if (dpad.left.isPressed) {
-					kcode[0] &= ~DC_DPAD_LEFT;
-				} else {
-					kcode[0] |= DC_DPAD_LEFT;
-				}
-				if (dpad.up.isPressed) {
-					kcode[0] &= ~DC_DPAD_UP;
-				} else {
-					kcode[0] |= DC_DPAD_UP;
-				}
-				if (dpad.down.isPressed) {
-					kcode[0] &= ~DC_DPAD_DOWN;
-				} else {
-					kcode[0] |= DC_DPAD_DOWN;
-				}
-			}];
-			[self.gController.extendedGamepad.leftThumbstick.xAxis setValueChangedHandler:^(GCControllerAxisInput *axis, float value){
-				s8 v=(s8)(value*127); //-127 ... + 127 range
+			[self.gController.extendedGamepad.leftThumbstick.xAxis setValueChangedHandler:^(GCControllerAxisInput *axis, float value) {
+				s8 v = (s8)(value * 127); //-127 ... + 127 range
 
 				joyx[0] = v;
 			}];
-			[self.gController.extendedGamepad.leftThumbstick.yAxis setValueChangedHandler:^(GCControllerAxisInput *axis, float value){
-				s8 v=(s8)(value*127 * - 1); //-127 ... + 127 range
+			[self.gController.extendedGamepad.leftThumbstick.yAxis setValueChangedHandler:^(GCControllerAxisInput *axis, float value) {
+				s8 v = (s8)(value * 127 * -1); //-127 ... + 127 range
 
 				joyy[0] = v;
 			}];
-			[self.gController.extendedGamepad.rightThumbstick.xAxis setValueChangedHandler:^(GCControllerAxisInput *axis, float value){
-				s8 v=(s8)(value*127); //-127 ... + 127 range
+			[self.gController.extendedGamepad.rightThumbstick.xAxis setValueChangedHandler:^(GCControllerAxisInput *axis, float value) {
+				s8 v = (s8)(value * 127); //-127 ... + 127 range
 
 				joyrx[0] = v;
 			}];
-			[self.gController.extendedGamepad.rightThumbstick.yAxis setValueChangedHandler:^(GCControllerAxisInput *axis, float value){
-				s8 v=(s8)(value*127 * - 1); //-127 ... + 127 range
+			[self.gController.extendedGamepad.rightThumbstick.yAxis setValueChangedHandler:^(GCControllerAxisInput *axis, float value) {
+				s8 v = (s8)(value * 127 * -1); //-127 ... + 127 range
 
 				joyry[0] = v;
 			}];
 		}
         else if (self.gController.gamepad) {
-			EmulatorView *emuView = (EmulatorView *)self.view;
             [self.gController.gamepad.buttonA setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
-				if (pressed && value >= 0.1) {
+				if (pressed)
 					[self handleKeyDown:IOS_BTN_A];
-				} else {
+				else
 					[self handleKeyUp:IOS_BTN_A];
-				}
             }];
             [self.gController.gamepad.buttonB setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
-				if (pressed && value >= 0.1) {
+				if (pressed)
 					[self handleKeyDown:IOS_BTN_B];
-				} else {
+				else
 					[self handleKeyUp:IOS_BTN_B];
-				}
             }];
             [self.gController.gamepad.buttonX setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
-				if (pressed && value >= 0.1) {
+				if (pressed)
 					[self handleKeyDown:IOS_BTN_X];
-				} else {
+				else
 					[self handleKeyUp:IOS_BTN_X];
-				}
             }];
             [self.gController.gamepad.buttonY setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
-				if (pressed && value >= 0.1) {
+				if (pressed)
 					[self handleKeyDown:IOS_BTN_Y];
-				} else {
+				else
 					[self handleKeyUp:IOS_BTN_Y];
-				}
             }];
             [self.gController.gamepad.dpad setValueChangedHandler:^(GCControllerDirectionPad *dpad, float xValue, float yValue){
-				if (dpad.right.isPressed) {
+				if (dpad.right.isPressed)
 					[self handleKeyDown:IOS_BTN_RIGHT];
-				} else {
+				else
 					[self handleKeyUp:IOS_BTN_RIGHT];
-				}
-				if (dpad.left.isPressed) {
+				if (dpad.left.isPressed)
 					[self handleKeyDown:IOS_BTN_LEFT];
-				} else {
+				else
 					[self handleKeyUp:IOS_BTN_LEFT];
-				}
-				if (dpad.up.isPressed) {
+				if (dpad.up.isPressed)
 					[self handleKeyDown:IOS_BTN_UP];
-				} else {
+				else
 					[self handleKeyUp:IOS_BTN_UP];
-				}
-				if (dpad.down.isPressed) {
+				if (dpad.down.isPressed)
 					[self handleKeyDown:IOS_BTN_DOWN];
-				} else {
+				else
 					[self handleKeyUp:IOS_BTN_DOWN];
-				}
             }];
 
 			[self.gController.gamepad.rightShoulder setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
 				if (pressed) {
-					[self handleKeyDown:IOS_BTN_R2];
-				} else {
+					if (self.gController.gamepad.leftShoulder.pressed)
+						[self handleKeyDown:IOS_BTN_MENU];
+					else
+						[self handleKeyDown:IOS_BTN_R2];
+				}
+				else {
 					[self handleKeyUp:IOS_BTN_R2];
+					[self handleKeyUp:IOS_BTN_MENU];
 				}
 			}];
-
 			[self.gController.gamepad.leftShoulder setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
 				if (pressed) {
-					[self handleKeyDown:IOS_BTN_L2];
-				} else {
+					if (self.gController.gamepad.rightShoulder.pressed)
+						[self handleKeyDown:IOS_BTN_MENU];
+					else
+						[self handleKeyDown:IOS_BTN_L2];
+				}
+				else {
 					[self handleKeyUp:IOS_BTN_L2];
+					[self handleKeyUp:IOS_BTN_MENU];
 				}
 			}];
 
@@ -462,8 +471,8 @@ static DreamcastKey IosToDCKey[IOS_BTN_MAX] {
 	DC_DPAD_LEFT,
 	DC_DPAD_RIGHT,
 	DC_BTN_START,	// menu
-	EMU_BTN_NONE,	// options
-	EMU_BTN_MENU,	// home
+	EMU_BTN_MENU,	// options
+	EMU_BTN_NONE,	// home
 	EMU_BTN_NONE,	// L1
 	EMU_BTN_NONE,	// R1
 	EMU_BTN_NONE,	// L3
