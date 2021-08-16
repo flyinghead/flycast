@@ -280,6 +280,5 @@ void FinishRender(TA_context* ctx);
 //must be moved to proper header
 void FillBGP(TA_context* ctx);
 bool UsingAutoSort(int pass_number);
-bool rend_framePending();
 void SerializeTAContext(void **data, unsigned int *total_size);
 void UnserializeTAContext(void **data, unsigned int *total_size, serialize_version_enum version);
