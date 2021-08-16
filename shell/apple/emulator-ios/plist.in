@@ -32,6 +32,10 @@
 	<true/>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>Flycast uses the local network to find and communicate with AltServer.</string>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key><true/>
+	</dict>
 	<key>UIFileSharingEnabled</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>
@@ -64,5 +68,7 @@
 	<true/>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Flycast requires microphone access to emulate the Dreamcast microphone</string>
+	<key>UISupportsDocumentBrowser</key>
+	<true/>
 </dict>
 </plist>
