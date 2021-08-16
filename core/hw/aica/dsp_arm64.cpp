@@ -37,6 +37,7 @@ public:
 
 	void Compile(struct dsp_t *DSP)
 	{
+		JITWriteProtect(false);
 		this->DSP = DSP;
 		DEBUG_LOG(AICA_ARM, "DSPAssembler::DSPCompile recompiling for arm64 at %p", GetBuffer()->GetStartAddress<void*>());
 
@@ -329,6 +330,7 @@ public:
 		vmem_platform_flush_cache(
 			GetBuffer()->GetStartAddress<void*>(), GetBuffer()->GetEndAddress<void*>(),
 			GetBuffer()->GetStartAddress<void*>(), GetBuffer()->GetEndAddress<void*>());
+		JITWriteProtect(true);
 	}
 
 private:

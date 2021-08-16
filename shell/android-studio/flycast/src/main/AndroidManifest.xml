@@ -50,7 +50,8 @@
             android:name="com.reicast.emulator.NativeGLActivity"
             android:configChanges="orientation|navigation|screenSize|screenLayout|uiMode|keyboard|keyboardHidden"
             android:screenOrientation="sensorLandscape"
-            android:exported="true"/>
+            android:exported="true"
+            android:theme="@style/Theme.AppCompat.NoActionBar"/>
         <activity-alias
             android:name="com.reicast.emulator.MainActivity"
             android:targetActivity="com.reicast.emulator.NativeGLActivity">
