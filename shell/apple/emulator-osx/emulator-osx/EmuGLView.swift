@@ -12,6 +12,8 @@ class EmuGLView: NSOpenGLView, NSWindowDelegate {
 
     var backingRect: NSRect?
     var swapOnVSync = emu_vsync_enabled()
+    var displayLink: CVDisplayLink?
+    var displayLinkDrawing = false
     
     override var acceptsFirstResponder: Bool {
         return true;
@@ -77,19 +79,36 @@ class EmuGLView: NSOpenGLView, NSWindowDelegate {
 			alert.messageText = "Flycast initialization failed"
 			alert.runModal()
 		}
+        let displayLinkOutputCallback: CVDisplayLinkOutputCallback = {(displayLink: CVDisplayLink, inNow: UnsafePointer<CVTimeStamp>, inOutputTime: UnsafePointer<CVTimeStamp>, flagsIn: CVOptionFlags, flagsOut: UnsafeMutablePointer<CVOptionFlags>, displayLinkContext: UnsafeMutableRawPointer?) -> CVReturn in
+
+            let glView = unsafeBitCast(displayLinkContext, to: EmuGLView.self)
+            if glView.swapOnVSync {
+                glView.displayLinkDrawing = true
+                glView.draw()
+                glView.displayLinkDrawing = false
+            }
+
+            return kCVReturnSuccess
+        }
+
+        CVDisplayLinkCreateWithActiveCGDisplays(&displayLink)
+        CVDisplayLinkSetOutputCallback(displayLink!, displayLinkOutputCallback, UnsafeMutableRawPointer(Unmanaged.passUnretained(self).toOpaque()))
+        CVDisplayLinkSetCurrentCGDisplayFromOpenGLContext(displayLink!, context!.cglContextObj!, pf!.cglPixelFormatObj!)
+        
+        DispatchQueue.main.async { [weak self] in
+            CVDisplayLinkStart(self!.displayLink!)
+        }
     }
     
+    func windowWillClose(_ notification: Notification) {
+        CVDisplayLinkStop(displayLink!)
+    }
    
     @objc func timerTick() {
 		if (!emu_renderer_enabled()) {
 			NSApplication.shared.terminate(self)
-		}
-        else {
-            if swapOnVSync {
-                self.needsDisplay = true
-            } else {
-                self.draw()
-            }
+		} else if swapOnVSync == false && displayLinkDrawing == false {
+            draw()
         }
     }
     
