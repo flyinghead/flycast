@@ -84,7 +84,7 @@ class EmuGLView: NSOpenGLView, NSWindowDelegate {
 		if (!emu_renderer_enabled()) {
 			NSApplication.shared.terminate(self)
 		}
-        else {
+        else if emu_frame_pending() {
             if swapOnVSync {
                 self.needsDisplay = true
             } else {

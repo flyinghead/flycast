@@ -114,7 +114,12 @@ void emu_dc_resume()
 }
 
 extern int screen_width,screen_height;
+extern bool rend_framePending();
 
+bool emu_frame_pending()
+{
+	return rend_framePending() || gui_is_open();
+}
 
 bool emu_renderer_enabled()
 {
