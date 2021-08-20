@@ -494,8 +494,10 @@ void dsp_rec_init()
 #else
 	verify(vmem_platform_prepare_jit_block(DynCode, CodeSize, (void**)&pCodeBuffer));
 #endif
+#if defined(TARGET_IPHONE) || defined(TARGET_ARM_MAC)
 	if (DynCode == nullptr)
 		DynCode = pCodeBuffer;
+#endif
 }
 
 void dsp_rec_step()
