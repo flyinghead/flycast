@@ -392,11 +392,18 @@ private:
 	void GenCallRuntime(R (*function)(P...))
 	{
 		ptrdiff_t offset = reinterpret_cast<uintptr_t>(function) - GetBuffer()->GetStartAddress<uintptr_t>() - rx_offset;
-		verify(offset >= -128 * 1024 * 1024 && offset <= 128 * 1024 * 1024);
 		verify((offset & 3) == 0);
-		Label function_label;
-		BindToOffset(&function_label, offset);
-		Bl(&function_label);
+		if (offset >= -128 * 1024 * 1024 && offset <= 128 * 1024 * 1024)
+		{
+			Label function_label;
+			BindToOffset(&function_label, offset);
+			Bl(&function_label);
+		}
+		else
+		{
+			Mov(x4, reinterpret_cast<uintptr_t>(function));
+			Blr(x4);
+		}
 	}
 
 	void CalculateADDR(const Register& ADDR, const _INST& op, const Register& ADRS_REG, const Register& MDEC_CT)
@@ -474,17 +481,21 @@ void dsp_recompile()
 			break;
 		}
 	}
-	DSPAssembler assembler(pCodeBuffer, sizeof(DynCode));
+	JITWriteProtect(false);
+	DSPAssembler assembler(pCodeBuffer, CodeSize);
 	assembler.Compile(&dsp);
+	JITWriteProtect(true);
 }
 
 void dsp_rec_init()
 {
 #ifdef FEAT_NO_RWX_PAGES
-	verify(vmem_platform_prepare_jit_block(DynCode, sizeof(DynCode), (void**)&pCodeBuffer, &rx_offset));
+	verify(vmem_platform_prepare_jit_block(DynCode, CodeSize, (void**)&pCodeBuffer, &rx_offset));
 #else
-	verify(vmem_platform_prepare_jit_block(DynCode, sizeof(DynCode), (void**)&pCodeBuffer));
+	verify(vmem_platform_prepare_jit_block(DynCode, CodeSize, (void**)&pCodeBuffer));
 #endif
+	if (DynCode == nullptr)
+		DynCode = pCodeBuffer;
 }
 
 void dsp_rec_step()
