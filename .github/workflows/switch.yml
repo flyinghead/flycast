@@ -15,6 +15,11 @@ jobs:
           - {name: libretro, cmakeArgs: -DLIBRETRO=ON}
 
     steps:
+      - name: Set up build environment
+        run: |
+          sudo apt-get update
+          sudo apt-get -y install awscli
+
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0
