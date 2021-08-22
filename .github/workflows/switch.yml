@@ -37,6 +37,11 @@ jobs:
           rm -f flycast.nro
         if: matrix.config.destDir != ''
 
+      - name: Set up git vars
+        run: |
+          echo GIT_BUILD=`git describe --all --always | sed 's/remotes\/origin/heads/'`-$GITHUB_SHA >> $GITHUB_ENV
+        shell: bash
+
       - name: Configure AWS Credentials
         id: aws-credentials
         uses: aws-actions/configure-aws-credentials@v1
