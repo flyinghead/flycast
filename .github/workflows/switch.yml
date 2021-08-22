@@ -35,6 +35,7 @@ jobs:
           cd build/artifact
           zip flycast.nro.zip flycast.nro
           rm -f flycast.nro
+        if: matrix.config.destDir != ''
 
       - name: Configure AWS Credentials
         id: aws-credentials

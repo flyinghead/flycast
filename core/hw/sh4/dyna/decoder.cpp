@@ -982,7 +982,7 @@ bool dec_DecodeBlock(RuntimeBlockInfo* rbi,u32 max_cycles)
 					}
 
 					if (state.cpu.is_delayslot && OpDesc[op]->SetPC())
-						throw FlycastException("Fatal: SH4 branch instuction in delay slot");
+						throw FlycastException("Fatal: SH4 branch instruction in delay slot");
 					if (!OpDesc[op]->rec_oph)
 					{
 						if (!dec_generic(op))

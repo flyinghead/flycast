@@ -846,14 +846,13 @@ void retro_run()
 		// Render
 		is_dupe = true;
 		for (int i = 0; i < 5 && is_dupe; i++)
-		{
 			is_dupe = !rend_single_frame(true);
-			if (!dc_is_running()) {
-				std::string error = dc_get_last_error();
-				if (!error.empty())
-					gui_display_notification(error.c_str(), 5000);
-				environ_cb(RETRO_ENVIRONMENT_SHUTDOWN, NULL);
-			}
+		// If emulator still isn't running, something's wrong
+		if (!dc_is_running()) {
+			std::string error = dc_get_last_error();
+			if (!error.empty())
+				gui_display_notification(error.c_str(), 5000);
+			environ_cb(RETRO_ENVIRONMENT_SHUTDOWN, NULL);
 		}
 	}
 	else
