@@ -1147,7 +1147,7 @@ static void gui_display_settings()
             }
             ImGui::SameLine();
             ShowHelpMarker("The directory containing BIOS files, as well as saved VMUs and states");
-#elseif !defined(TARGET_IPHONE)
+#elif !defined(TARGET_IPHONE)
             if (ImGui::ListBoxHeader("Home Directory", 1))
             {
             	ImGui::AlignTextToFramePadding();
