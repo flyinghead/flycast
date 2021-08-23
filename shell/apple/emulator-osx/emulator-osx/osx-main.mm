@@ -142,8 +142,10 @@ bool emu_single_frame(int w, int h)
     screen_height = h;
     
     //For DelayFrameSwapping: use while loop to call multple mainui_rend_frame() until rend_swap_frame(u32 fb_r_sof1)
-    while (mainui_enabled)
+    int counter = 0;
+    while (mainui_enabled && counter < 5)
     {
+        counter++;
         if (mainui_rend_frame())
         {
             return true;
