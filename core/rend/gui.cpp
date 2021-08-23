@@ -419,8 +419,11 @@ void gui_open_settings()
 	}
 }
 
-static void gui_start_game(const std::string& path)
+void gui_start_game(const std::string& path)
 {
+	dc_term_game();
+	reset_vmus();
+
 	scanner.stop();
 	gui_state = GuiState::Loading;
 	static std::string path_copy;
@@ -1144,7 +1147,7 @@ static void gui_display_settings()
             }
             ImGui::SameLine();
             ShowHelpMarker("The directory containing BIOS files, as well as saved VMUs and states");
-#else
+#elseif !defined(TARGET_IPHONE)
             if (ImGui::ListBoxHeader("Home Directory", 1))
             {
             	ImGui::AlignTextToFramePadding();
