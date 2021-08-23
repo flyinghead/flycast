@@ -34,7 +34,7 @@ public:
 	const std::string& api_name() { return _api_name; }
 	const std::string& name() { return _name; }
 	int maple_port() const { return _maple_port; }
-	void set_maple_port(int port) { _maple_port = port; }
+	virtual void set_maple_port(int port) { _maple_port = port; }
 	const std::string& unique_id() { return _unique_id; }
 	virtual bool gamepad_btn_input(u32 code, bool pressed);
 	bool gamepad_axis_input(u32 code, int value);

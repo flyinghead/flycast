@@ -1131,7 +1131,7 @@ if(NOT LIBRETRO)
 					shell/apple/emulator-ios/emulator/AppDelegate.h
 					shell/apple/emulator-ios/emulator/AppDelegate.mm
 					shell/apple/emulator-ios/emulator/ios_main.mm
-					shell/apple/emulator-ios/emulator/ios_mouse.h
+					shell/apple/emulator-ios/emulator/ios_gamepad.h
 					shell/apple/emulator-ios/emulator/FlycastViewController.h
 					shell/apple/emulator-ios/emulator/FlycastViewController.mm
 					shell/apple/emulator-ios/emulator/PadViewController.h
@@ -1184,13 +1184,15 @@ if(NOT LIBRETRO)
 			find_library(GLKIT GLKit)
 			find_library(GAMECONTROLLER GameController)
 			find_library(AUDIOTOOLBOX AudioToolbox)
+			find_library(AVFOUNDATION AVFoundation)
 			target_link_libraries(${PROJECT_NAME} PRIVATE
 				${UIKIT}
 				${FOUNDATION}
 				${OPENGLES}
 				${GLKIT}
 				${GAMECONTROLLER}
-				${AUDIOTOOLBOX})
+				${AUDIOTOOLBOX}
+				${AVFOUNDATION})
 
 			add_custom_target(Flycast.IPA ALL
 				DEPENDS ${PROJECT_NAME}

@@ -671,7 +671,7 @@ static void resize(int w, int h)
 		}
 		gl4CreateTextures(max_image_width, max_image_height);
 		reshapeABuffer(max_image_width, max_image_height);
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		glBindFramebuffer(GL_FRAMEBUFFER, gl.ofbo.origFbo);
 	}
 }
 
@@ -684,6 +684,12 @@ static bool RenderFrame(int width, int height)
 	const glm::mat4& scissor_mat = matrices.GetScissorMatrix();
 	ViewportMatrix = matrices.GetViewportMatrix();
 
+#ifdef LIBRETRO
+	gl.ofbo.origFbo = glsm_get_current_framebuffer();
+#else
+	gl.ofbo.origFbo = 0;
+	glGetIntegerv(GL_FRAMEBUFFER_BINDING, (GLint *)&gl.ofbo.origFbo);
+#endif
 	if (!is_rtt)
 		gcflip = 0;
 	else

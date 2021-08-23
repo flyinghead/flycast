@@ -1,10 +1,25 @@
-//
-//  Copyright (c) 2014 Karen Tsai (angelXwind). All rights reserved.
-//
+/*
+	Copyright 2021 flyinghead
+	Copyright (c) 2014 Karen Tsai (angelXwind). All rights reserved.
+
+	This file is part of Flycast.
+
+	Flycast is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 2 of the License, or
+	(at your option) any later version.
+
+	Flycast is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+
+	You should have received a copy of the GNU General Public License
+	along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
+*/
 #import "FlycastViewController.h"
-#import <GameController/GameController.h>
 #import <Network/Network.h>
-//#import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
+#import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 
 #import <OpenGLES/ES3/gl.h>
 #import <OpenGLES/ES3/glext.h>
@@ -14,23 +29,22 @@
 #import "EmulatorView.h"
 
 #include "types.h"
-#include "input/gamepad_device.h"
 #include "wsi/context.h"
 #include "rend/mainui.h"
 #include "emulator.h"
 #include "log/LogManager.h"
 #include "stdclass.h"
 #include "cfg/option.h"
-#include "ios_mouse.h"
-#include "rend/gui.h"
+#include "ios_gamepad.h"
 
 //@import AltKit;
 #import "AltKit/AltKit-Swift.h"
 
 std::string iosJitStatus;
 static bool iosJitAuthorized;
-static std::shared_ptr<IOSMouse> mouse;
 static __unsafe_unretained FlycastViewController *flycastViewController;
+
+std::map<GCController *, std::shared_ptr<IOSGamepad>> IOSGamepad::controllers;
 
 void common_linux_setup();
 
@@ -40,7 +54,6 @@ void common_linux_setup();
 @property (strong, nonatomic) PadViewController *padController;
 
 @property (nonatomic) iCadeReaderView* iCadeReader;
-@property (nonatomic) GCController *gController __attribute__((weak_import));
 @property (nonatomic, strong) id connectObserver;
 @property (nonatomic, strong) id disconnectObserver;
 
@@ -113,31 +126,32 @@ extern int screen_dpi;
 	[EAGLContext setCurrentContext:self.context];
 
     self.connectObserver = [[NSNotificationCenter defaultCenter] addObserverForName:GCControllerDidConnectNotification object:nil queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification *note) {
-		// GCController *controller = (GCController *)note.object;
-		// IOSGame::addController(controller);
-        if (GCController.controllers.count > 0) {
-			[self toggleHardwareController:YES];
-        }
+		GCController *controller = note.object;
+		IOSGamepad::addController(controller);
+#if !TARGET_OS_TV
+		if (IOSGamepad::controllerConnected())
+			[self.padController hideController];
+#endif
     }];
     self.disconnectObserver = [[NSNotificationCenter defaultCenter] addObserverForName:GCControllerDidDisconnectNotification object:nil queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification *note) {
-		// GCController *controller = (GCController *)note.object;
-		// IOSGame::removeController(controller);
-        if (GCController.controllers.count == 0) {
-            [self toggleHardwareController:NO];
-        }
+		GCController *controller = note.object;
+		IOSGamepad::removeController(controller);
+#if !TARGET_OS_TV
+		if (!IOSGamepad::controllerConnected())
+			[self.padController showController:self.view];
+#endif
     }];
-    
-    if ([[GCController controllers] count]) {
-        [self toggleHardwareController:YES];
-	}
+
+	for (GCController *controller in [GCController controllers])
+		IOSGamepad::addController(controller);
 
 #if !TARGET_OS_TV
 	[self addChildViewController:self.padController];
 	self.padController.view.frame = self.view.bounds;
 	self.padController.view.translatesAutoresizingMaskIntoConstraints = YES;
-	self.padController.view.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleWidth;
-	self.padController.handler = self;
-	[self.padController hideController];
+	self.padController.view.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+	if (IOSGamepad::controllerConnected())
+		[self.padController hideController];
 #endif
 
     self.iCadeReader = [[iCadeReaderView alloc] init];
@@ -158,9 +172,18 @@ extern int screen_dpi;
 	InitRenderApi();
 	mainui_init();
 	mainui_enabled = true;
-	
-	emuView.mouse = ::mouse.get();
+
 	[self altKitStart];
+}
+
+- (BOOL)prefersStatusBarHidden
+{
+	return YES;
+}
+
+- (UIStatusBarStyle)preferredStatusBarStyle
+{
+	return UIStatusBarStyleLightContent;
 }
 
 -(UIRectEdge)preferredScreenEdgesDeferringSystemGestures
@@ -228,6 +251,14 @@ extern int screen_dpi;
 	nw_path_monitor_start(self.monitor);
 }
 
+- (void)viewSafeAreaInsetsDidChange
+{
+	[super viewSafeAreaInsetsDidChange];
+	float scale = self.view.contentScaleFactor;
+	gui_set_insets(self.view.safeAreaInsets.left * scale, self.view.safeAreaInsets.right * scale,
+				   self.view.safeAreaInsets.top * scale, self.view.safeAreaInsets.bottom * scale);
+}
+
 #pragma mark - GLKView and GLKViewController delegate methods
 
 - (void)update
@@ -235,323 +266,29 @@ extern int screen_dpi;
 
 }
 
-- (void)toggleHardwareController:(BOOL)useHardware
-{
-    if (useHardware)
-	{
-		[self.padController hideController];
-
-#if TARGET_OS_TV
-		for (GCController*c in GCController.controllers) {
-			if ((c.gamepad != nil || c.extendedGamepad != nil) && c != _gController) {
-				self.gController = c;
-				break;
-			}
-		}
-#else
-		self.gController = [GCController controllers].firstObject;
-#endif
-		// TODO: Add multi player  using gController.playerIndex and iterate all controllers
-
-		if (self.gController.extendedGamepad)
-		{
-			[self.gController.extendedGamepad.buttonA setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
-				if (pressed)
-					[self handleKeyDown:IOS_BTN_A];
-				else
-					[self handleKeyUp:IOS_BTN_A];
-			}];
-			[self.gController.extendedGamepad.buttonB setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
-				if (pressed)
-					[self handleKeyDown:IOS_BTN_B];
-				else
-					[self handleKeyUp:IOS_BTN_B];
-			}];
-			[self.gController.extendedGamepad.buttonX setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
-				if (pressed)
-					[self handleKeyDown:IOS_BTN_X];
-				else
-					[self handleKeyUp:IOS_BTN_X];
-			}];
-			[self.gController.extendedGamepad.buttonY setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
-				if (pressed)
-					[self handleKeyDown:IOS_BTN_Y];
-				else
-					[self handleKeyUp:IOS_BTN_Y];
-			}];
-			[self.gController.extendedGamepad.rightTrigger setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
-				rt[0] = (int)std::roundf(255.f * value);
-			}];
-			[self.gController.extendedGamepad.leftTrigger setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
-				lt[0] = (int)std::roundf(255.f * value);
-			}];
-			
-			if (@available(iOS 13.0, *)) {
-				[self.gController.extendedGamepad.buttonOptions setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
-					if (pressed)
-						[self handleKeyDown:IOS_BTN_OPTIONS];
-					else
-						[self handleKeyUp:IOS_BTN_OPTIONS];
-				}];
-				[self.gController.extendedGamepad.leftShoulder setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
-					if (pressed)
-						[self handleKeyDown:IOS_BTN_L1];
-					else
-						[self handleKeyUp:IOS_BTN_L1];
-				}];
-			} else {
-				// Left shoulder for options/menu
-				[self.gController.extendedGamepad.leftShoulder setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
-					if (pressed)
-						[self handleKeyDown:IOS_BTN_OPTIONS];
-					else
-						[self handleKeyUp:IOS_BTN_OPTIONS];
-				}];
-			}
-			if (@available(iOS 13.0, *)) {
-				[self.gController.extendedGamepad.buttonMenu setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
-					if (pressed)
-						[self handleKeyDown:IOS_BTN_MENU];
-					else
-						[self handleKeyUp:IOS_BTN_MENU];
-				}];
-				[self.gController.extendedGamepad.rightShoulder setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
-					if (pressed)
-						[self handleKeyDown:IOS_BTN_R1];
-					else
-						[self handleKeyUp:IOS_BTN_R1];
-				}];
-			} else {
-				// Right shoulder for menu/start
-				[self.gController.extendedGamepad.rightShoulder setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
-					if (pressed)
-						[self handleKeyDown:IOS_BTN_MENU];
-					else
-						[self handleKeyUp:IOS_BTN_MENU];
-				}];
-			}
-
-			[self.gController.extendedGamepad.dpad setValueChangedHandler:^(GCControllerDirectionPad *dpad, float xValue, float yValue) {
-				if (dpad.right.isPressed)
-					[self handleKeyDown:IOS_BTN_RIGHT];
-				else
-					[self handleKeyUp:IOS_BTN_RIGHT];
-				if (dpad.left.isPressed)
-					[self handleKeyDown:IOS_BTN_LEFT];
-				else
-					[self handleKeyUp:IOS_BTN_LEFT];
-				if (dpad.up.isPressed)
-					[self handleKeyDown:IOS_BTN_UP];
-				else
-					[self handleKeyUp:IOS_BTN_UP];
-				if (dpad.down.isPressed)
-					[self handleKeyDown:IOS_BTN_DOWN];
-				else
-					[self handleKeyUp:IOS_BTN_DOWN];
-			}];
-			[self.gController.extendedGamepad.leftThumbstick.xAxis setValueChangedHandler:^(GCControllerAxisInput *axis, float value) {
-				s8 v = (s8)(value * 127); //-127 ... + 127 range
-
-				joyx[0] = v;
-			}];
-			[self.gController.extendedGamepad.leftThumbstick.yAxis setValueChangedHandler:^(GCControllerAxisInput *axis, float value) {
-				s8 v = (s8)(value * 127 * -1); //-127 ... + 127 range
-
-				joyy[0] = v;
-			}];
-			[self.gController.extendedGamepad.rightThumbstick.xAxis setValueChangedHandler:^(GCControllerAxisInput *axis, float value) {
-				s8 v = (s8)(value * 127); //-127 ... + 127 range
-
-				joyrx[0] = v;
-			}];
-			[self.gController.extendedGamepad.rightThumbstick.yAxis setValueChangedHandler:^(GCControllerAxisInput *axis, float value) {
-				s8 v = (s8)(value * 127 * -1); //-127 ... + 127 range
-
-				joyry[0] = v;
-			}];
-		}
-        else if (self.gController.gamepad) {
-            [self.gController.gamepad.buttonA setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
-				if (pressed)
-					[self handleKeyDown:IOS_BTN_A];
-				else
-					[self handleKeyUp:IOS_BTN_A];
-            }];
-            [self.gController.gamepad.buttonB setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
-				if (pressed)
-					[self handleKeyDown:IOS_BTN_B];
-				else
-					[self handleKeyUp:IOS_BTN_B];
-            }];
-            [self.gController.gamepad.buttonX setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
-				if (pressed)
-					[self handleKeyDown:IOS_BTN_X];
-				else
-					[self handleKeyUp:IOS_BTN_X];
-            }];
-            [self.gController.gamepad.buttonY setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
-				if (pressed)
-					[self handleKeyDown:IOS_BTN_Y];
-				else
-					[self handleKeyUp:IOS_BTN_Y];
-            }];
-            [self.gController.gamepad.dpad setValueChangedHandler:^(GCControllerDirectionPad *dpad, float xValue, float yValue){
-				if (dpad.right.isPressed)
-					[self handleKeyDown:IOS_BTN_RIGHT];
-				else
-					[self handleKeyUp:IOS_BTN_RIGHT];
-				if (dpad.left.isPressed)
-					[self handleKeyDown:IOS_BTN_LEFT];
-				else
-					[self handleKeyUp:IOS_BTN_LEFT];
-				if (dpad.up.isPressed)
-					[self handleKeyDown:IOS_BTN_UP];
-				else
-					[self handleKeyUp:IOS_BTN_UP];
-				if (dpad.down.isPressed)
-					[self handleKeyDown:IOS_BTN_DOWN];
-				else
-					[self handleKeyUp:IOS_BTN_DOWN];
-            }];
-
-			[self.gController.gamepad.rightShoulder setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
-				if (pressed) {
-					if (self.gController.gamepad.leftShoulder.pressed)
-						[self handleKeyDown:IOS_BTN_MENU];
-					else
-						[self handleKeyDown:IOS_BTN_R2];
-				}
-				else {
-					[self handleKeyUp:IOS_BTN_R2];
-					[self handleKeyUp:IOS_BTN_MENU];
-				}
-			}];
-			[self.gController.gamepad.leftShoulder setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
-				if (pressed) {
-					if (self.gController.gamepad.rightShoulder.pressed)
-						[self handleKeyDown:IOS_BTN_MENU];
-					else
-						[self handleKeyDown:IOS_BTN_L2];
-				}
-				else {
-					[self handleKeyUp:IOS_BTN_L2];
-					[self handleKeyUp:IOS_BTN_MENU];
-				}
-			}];
-
-            //Add controller pause handler here
-        }
-    } else {
-        self.gController = nil;
-		[self.padController showController:self.view];
-    }
-}
-
-
 - (void)glkView:(GLKView *)view drawInRect:(CGRect)rect
 {
-	if (dc_is_running() != [self.padController isControllerVisible] && self.gController == nil)
+#if !TARGET_OS_TV
+	if (dc_is_running() != [self.padController isControllerVisible] && !IOSGamepad::controllerConnected())
 	{
 		if (dc_is_running())
 			[self.padController showController:self.view];
 		else
 			[self.padController hideController];
 	}
+#endif
 	mainui_rend_frame();
 }
-
-static DreamcastKey IosToDCKey[IOS_BTN_MAX] {
-	EMU_BTN_NONE,	// none
-	DC_BTN_A,
-	DC_BTN_B,
-	DC_BTN_X,
-	DC_BTN_Y,
-	DC_DPAD_UP,
-	DC_DPAD_DOWN,
-	DC_DPAD_LEFT,
-	DC_DPAD_RIGHT,
-	DC_BTN_START,	// menu
-	EMU_BTN_MENU,	// options
-	EMU_BTN_NONE,	// home
-	EMU_BTN_NONE,	// L1
-	EMU_BTN_NONE,	// R1
-	EMU_BTN_NONE,	// L3
-	EMU_BTN_NONE,	// R3
-	EMU_BTN_TRIGGER_LEFT,	// L2
-	EMU_BTN_TRIGGER_RIGHT,	// R2
-};
-
-- (void)handleKeyDown:(enum IOSButton)button;
-{
-	DreamcastKey dcKey = IosToDCKey[button];
-	switch (dcKey) {
-		case EMU_BTN_NONE:
-			break;
-		case EMU_BTN_MENU:
-			gui_open_settings();
-			break;
-		case EMU_BTN_TRIGGER_LEFT:
-			lt[0] = 0xff;
-			break;
-		case EMU_BTN_TRIGGER_RIGHT:
-			rt[0] = 0xff;
-			break;
-		default:
-			if (dcKey < EMU_BTN_TRIGGER_LEFT)
-				kcode[0] &= ~dcKey;
-			break;
-	}
-	// Open menu with UP + DOWN or LEFT + RIGHT
-	if ((kcode[0] & (DC_DPAD_UP | DC_DPAD_DOWN)) == 0
-		|| (kcode[0] & (DC_DPAD_LEFT | DC_DPAD_RIGHT)) == 0) {
-		kcode[0] = ~0;
-		gui_open_settings();
-	}
-	// Arcade shortcuts
-	if (rt[0] > 0)
-	{
-		if ((kcode[0] & DC_BTN_A) == 0)
-			// RT + A -> D (coin)
-			kcode[0] &= ~DC_BTN_D;
-		if ((kcode[0] & DC_BTN_B) == 0)
-			// RT + B -> C (service)
-			kcode[0] &= ~DC_BTN_C;
-		if ((kcode[0] & DC_BTN_X) == 0)
-			// RT + X -> Z (test)
-			kcode[0] &= ~DC_BTN_Z;
-	}
-}
-
-- (void)handleKeyUp:(enum IOSButton)button;
-{
-	DreamcastKey dcKey = IosToDCKey[button];
-	switch (dcKey) {
-		case EMU_BTN_NONE:
-			break;
-		case EMU_BTN_TRIGGER_LEFT:
-			lt[0] = 0;
-			break;
-		case EMU_BTN_TRIGGER_RIGHT:
-			rt[0] = 0;
-			break;
-		default:
-			if (dcKey < EMU_BTN_TRIGGER_LEFT)
-				kcode[0] |= dcKey;
-			break;
-	}
-	if (rt[0] == 0)
-		kcode[0] |= DC_BTN_D | DC_BTN_C | DC_BTN_Z;
-	else
-	{
-		if ((kcode[0] & DC_BTN_A) != 0)
-			kcode[0] |= DC_BTN_D;
-		if ((kcode[0] & DC_BTN_B) != 0)
-			kcode[0] |= DC_BTN_C;
-		if ((kcode[0] & DC_BTN_X) != 0)
-			kcode[0] |= DC_BTN_Z;
-	}
-}
 /*
+- (void)pickIosFile
+{
+	UIDocumentPickerViewController *picker = [[UIDocumentPickerViewController alloc] initWithDocumentTypes:@[@"com.flyinghead.flycast.disk-image", @"com.pkware.zip-archive"] inMode:UIDocumentPickerModeOpen];
+	picker.delegate = self;
+	picker.allowsMultipleSelection = true;
+	
+	[self presentViewController:picker animated:YES completion:nil];
+}
+
 - (void)pickIosFolder
 {
 	if (@available(iOS 14.0, *)) {
@@ -559,31 +296,29 @@ static DreamcastKey IosToDCKey[IOS_BTN_MAX] {
 		picker.delegate = self;
 		
 		[self presentViewController:picker animated:YES completion:nil];
-	} else {
-		// Fallback on earlier versions
-		NSLog(@"UIDocumentPickerViewController no iOS 14 :(");
 	}
 }
 
 - (void)documentPicker:(UIDocumentPickerViewController *)controller didPickDocumentsAtURLs:(NSArray<NSURL *> *)urls
 {
 	for (NSURL *url in urls) {
-		std::string path { url.absoluteString.UTF8String };
-		if (path.substr(0, 8) == "file:///")
-			config::ContentPath.get().push_back(path.substr(7));
+		if (url.fileURL)
+		{
+			[url startAccessingSecurityScopedResource];
+			gui_add_content_path(url.fileSystemRepresentation);
+		}
 	}
 }
 */
 
 @end
 
-void os_SetupInput()
-{
-	mouse = std::make_shared<IOSMouse>();
-	GamepadDevice::Register(mouse);
-}
-
 void pickIosFolder()
 {
 //	[flycastViewController pickIosFolder];
+}
+
+void pickIosFile()
+{
+//	[flycastViewController pickIosFile];
 }

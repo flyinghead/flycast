@@ -22,7 +22,7 @@
                             </imageView>
                         </subviews>
                         <viewLayoutGuide key="safeArea" id="hPj-CF-OCp"/>
-                        <color key="backgroundColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                        <color key="backgroundColor" white="0.75086514261744963" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                     </view>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="38V-np-Q7Z" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>

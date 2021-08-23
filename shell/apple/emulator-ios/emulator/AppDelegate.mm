@@ -1,24 +1,48 @@
+/*
+	Copyright 2021 flyinghead
+	Copyright (c) 2014 Lounge Katt. All rights reserved.
+
+	This file is part of Flycast.
+
+	Flycast is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 2 of the License, or
+	(at your option) any later version.
+
+	Flycast is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+
+	You should have received a copy of the GNU General Public License
+	along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
+*/
 //
 //  Created by Lounge Katt on 2/6/14.
-//  Copyright (c) 2014 Lounge Katt. All rights reserved.
 //
-
 #import "AppDelegate.h"
+#import <AVFoundation/AVFoundation.h>
+
 #include "emulator.h"
 #include "log/LogManager.h"
 #include "cfg/option.h"
+#include "rend/gui.h"
 
 static bool emulatorRunning;
 
-@implementation AppDelegate
+@implementation AppDelegate {
+	NSURL *openedURL;
+}
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
-    if ([UIDevice currentDevice].systemVersion.floatValue >= 7.0f) // TODO: consider using the black variant for iOS 5.
-        [[UIApplication sharedApplication] setStatusBarStyle:UIStatusBarStyleLightContent];
-    else
-        [[UIApplication sharedApplication] setStatusBarStyle:UIStatusBarStyleDefault];
-    // Override point for customization after application launch.
+	// Allow audio playing AND recording
+	AVAudioSession *session = [AVAudioSession sharedInstance];
+	NSError *error = nil;
+	[session setCategory:AVAudioSessionCategoryPlayAndRecord
+			 withOptions:AVAudioSessionCategoryOptionMixWithOthers
+				   error:&error];
+
     return YES;
 }
 							
@@ -59,6 +83,23 @@ static bool emulatorRunning;
     // Called when the application is about to terminate. Save data if appropriate. See also applicationDidEnterBackground:.
 	dc_term();
 	LogManager::Shutdown();
+}
+
+- (BOOL)application:(UIApplication *)application openURL:(nonnull NSURL *)url options:(nonnull NSDictionary<UIApplicationOpenURLOptionsKey,id> *)options
+{
+	if (!url.fileURL)
+		return false;
+	if (openedURL != nil)
+	{
+		[openedURL stopAccessingSecurityScopedResource];
+		openedURL = nil;
+	}
+	if ([url startAccessingSecurityScopedResource])
+		openedURL = url;
+	gui_state = GuiState::Closed;
+	gui_start_game(url.fileSystemRepresentation);
+
+	return true;
 }
 
 @end

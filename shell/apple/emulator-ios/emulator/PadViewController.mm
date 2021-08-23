@@ -1,19 +1,44 @@
+/*
+	Copyright 2021 flyinghead
+	Copyright (c) 2015 reicast. All rights reserved.
+
+	This file is part of Flycast.
+
+	Flycast is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 2 of the License, or
+	(at your option) any later version.
+
+	Flycast is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+
+	You should have received a copy of the GNU General Public License
+	along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
+*/
 //
 //  Created by Lounge Katt on 8/25/15.
-//  Copyright (c) 2015 reicast. All rights reserved.
 //
-
 #import "PadViewController.h"
-#import "EmulatorView.h"
+#include "ios_gamepad.h"
 
 @interface PadViewController () {
 	UITouch *joyTouch;
 	CGPoint joyBias;
+	std::shared_ptr<IOSVirtualGamepad> virtualGamepad;
 }
 
 @end
 
 @implementation PadViewController
+
+- (void)viewDidLoad
+{
+	[super viewDidLoad];
+	virtualGamepad = std::make_shared<IOSVirtualGamepad>();
+	GamepadDevice::Register(virtualGamepad);
+}
 
 - (void)showController:(UIView *)parentView
 {
@@ -22,6 +47,7 @@
 
 - (void)hideController
 {
+	[self resetTouch];
 	[self.view removeFromSuperview];
 }
 
@@ -31,12 +57,21 @@
 
 - (IBAction)keycodeDown:(id)sender
 {
-	[self.handler handleKeyDown:(enum IOSButton)((UIButton *)sender).tag];
+	virtualGamepad->gamepad_btn_input((u32)((UIButton *)sender).tag, true);
 }
 
 - (IBAction)keycodeUp:(id)sender
 {
-	[self.handler handleKeyUp:(enum IOSButton)((UIButton *)sender).tag];
+	virtualGamepad->gamepad_btn_input((u32)((UIButton *)sender).tag, false);
+}
+
+- (void)resetTouch
+{
+	joyTouch = nil;
+	self.joyXConstraint.constant = 0;
+	self.joyYConstraint.constant = 0;
+	virtualGamepad->gamepad_axis_input(IOS_AXIS_LX, 0);
+	virtualGamepad->gamepad_axis_input(IOS_AXIS_LY, 0);
 }
 
 - (void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event;
@@ -47,8 +82,8 @@
 			if ([self.joystickBackground pointInside:loc withEvent:event]) {
 				joyTouch = touch;
 				joyBias = loc;
-				joyx[0] = 0;
-				joyy[0] = 0;
+				virtualGamepad->gamepad_axis_input(IOS_AXIS_LX, 0);
+				virtualGamepad->gamepad_axis_input(IOS_AXIS_LY, 0);
 				break;
 			}
 		}
@@ -61,11 +96,7 @@
 	if (joyTouch != nil) {
 		for (UITouch *touch in touches) {
 			if (touch == joyTouch) {
-				joyTouch = nil;
-				self.joyXConstraint.constant = 0;
-				self.joyYConstraint.constant = 0;
-				joyx[0] = 0;
-				joyy[0] = 0;
+				[self resetTouch];
 				break;
 			}
 		}
@@ -83,15 +114,10 @@
 				pos.y -= joyBias.y;
 				pos.x = std::max<CGFloat>(std::min<CGFloat>(25.0, pos.x), -25.0);
 				pos.y = std::max<CGFloat>(std::min<CGFloat>(25.0, pos.y), -25.0);
-				// 10% dead zone
-				if (pos.x * pos.x + pos.y * pos.y < 2.5 * 2.5) {
-					pos.x = 0;
-					pos.y = 0;
-				}
 				self.joyXConstraint.constant = pos.x;
 				self.joyYConstraint.constant = pos.y;
-				joyx[0] = (s8)round(pos.x * 127.0 / 25.0);
-				joyy[0] = (s8)round(pos.y * 127.0 / 25.0);
+				virtualGamepad->gamepad_axis_input(IOS_AXIS_LX, (s8)std::round(pos.x * 127.0 / 25.0));
+				virtualGamepad->gamepad_axis_input(IOS_AXIS_LY, (s8)std::round(pos.y * 127.0 / 25.0));
 				break;
 			}
 		}
@@ -104,11 +130,7 @@
 	if (joyTouch != nil) {
 		for (UITouch *touch in touches) {
 			if (touch == joyTouch) {
-				joyTouch = nil;
-				self.joyXConstraint.constant = 0;
-				self.joyYConstraint.constant = 0;
-				joyx[0] = 0;
-				joyy[0] = 0;
+				[self resetTouch];
 				break;
 			}
 		}

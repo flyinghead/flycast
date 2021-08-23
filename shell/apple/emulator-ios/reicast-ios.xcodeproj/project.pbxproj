@@ -405,6 +405,7 @@
 		AE32949826BAEF4300B2F53C /* FlycastStoryboard.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AE32949726BAEF4300B2F53C /* FlycastStoryboard.storyboard */; };
 		AE49B4D826C1BAC300FA182B /* unwind_info.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AE49B4D726C1BAC300FA182B /* unwind_info.cpp */; };
 		AE6AA6FF26BF2E91004B9D5F /* AltKit in Frameworks */ = {isa = PBXBuildFile; productRef = AE6AA6FE26BF2E91004B9D5F /* AltKit */; };
+		AE837B8026D164BD00BC7A2E /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AE837B7F26D164BD00BC7A2E /* AVFoundation.framework */; };
 		AE9F17E326BC800F00B8C6D0 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AE9F17E226BC800F00B8C6D0 /* LaunchScreen.storyboard */; };
 		EBDF375A1BB96ECD001191B5 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EBDF37591BB96ECD001191B5 /* AudioToolbox.framework */; };
 /* End PBXBuildFile section */
@@ -1414,12 +1415,13 @@
 		AE32949226BAE58F00B2F53C /* FlycastViewController.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; name = FlycastViewController.mm; path = emulator/FlycastViewController.mm; sourceTree = "<group>"; };
 		AE32949426BAE5B900B2F53C /* FlycastViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = FlycastViewController.h; path = emulator/FlycastViewController.h; sourceTree = "<group>"; };
 		AE32949726BAEF4300B2F53C /* FlycastStoryboard.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = FlycastStoryboard.storyboard; sourceTree = "<group>"; };
-		AE32949926BAFA3000B2F53C /* ios_mouse.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ios_mouse.h; sourceTree = "<group>"; };
+		AE32949926BAFA3000B2F53C /* ios_gamepad.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ios_gamepad.h; sourceTree = "<group>"; };
 		AE49B4D726C1BAC300FA182B /* unwind_info.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = unwind_info.cpp; sourceTree = "<group>"; };
 		AE49B51626C2E8FC00FA182B /* xbyak_mnemonic.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = xbyak_mnemonic.h; sourceTree = "<group>"; };
 		AE49B51726C2E8FC00FA182B /* xbyak_bin2hex.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = xbyak_bin2hex.h; sourceTree = "<group>"; };
 		AE49B51826C2E8FC00FA182B /* xbyak.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = xbyak.h; sourceTree = "<group>"; };
 		AE49B51926C2E8FC00FA182B /* xbyak_util.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = xbyak_util.h; sourceTree = "<group>"; };
+		AE837B7F26D164BD00BC7A2E /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = System/Library/Frameworks/AVFoundation.framework; sourceTree = SDKROOT; };
 		AE9F17E226BC800F00B8C6D0 /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
 		EBDF37571BB96E75001191B5 /* AudioUnit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioUnit.framework; path = System/Library/Frameworks/AudioUnit.framework; sourceTree = SDKROOT; };
 		EBDF37591BB96ECD001191B5 /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
@@ -1432,6 +1434,7 @@
 			files = (
 				EBDF375A1BB96ECD001191B5 /* AudioToolbox.framework in Frameworks */,
 				87D92F4E1B7A1B5700D8FD9E /* GameController.framework in Frameworks */,
+				AE837B8026D164BD00BC7A2E /* AVFoundation.framework in Frameworks */,
 				AE6AA6FF26BF2E91004B9D5F /* AltKit in Frameworks */,
 				87C4AA561A4414070048DBF4 /* AssetsLibrary.framework in Frameworks */,
 				87078A8F18A47FE90034C7A0 /* OpenGLES.framework in Frameworks */,
@@ -1466,6 +1469,7 @@
 		87078A8518A47FE90034C7A0 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				AE837B7F26D164BD00BC7A2E /* AVFoundation.framework */,
 				EBDF37591BB96ECD001191B5 /* AudioToolbox.framework */,
 				EBDF37571BB96E75001191B5 /* AudioUnit.framework */,
 				87D92F4D1B7A1B5700D8FD9E /* GameController.framework */,
@@ -1484,7 +1488,7 @@
 			children = (
 				878B0CFB1B8BB5B400A8D1C5 /* Images.xcassets */,
 				87D92EA71B7839E600D8FD9E /* ios_main.mm */,
-				AE32949926BAFA3000B2F53C /* ios_mouse.h */,
+				AE32949926BAFA3000B2F53C /* ios_gamepad.h */,
 				AE32949726BAEF4300B2F53C /* FlycastStoryboard.storyboard */,
 				AE9F17E226BC800F00B8C6D0 /* LaunchScreen.storyboard */,
 				87078A9918A47FE90034C7A0 /* AppDelegate.h */,
@@ -1781,15 +1785,15 @@
 		AE3258B926BAA8E100B2F53C /* maple */ = {
 			isa = PBXGroup;
 			children = (
+				AE3258BF26BAA8E100B2F53C /* maple_cfg.cpp */,
+				AE3258BE26BAA8E100B2F53C /* maple_cfg.h */,
+				AE3258C226BAA8E100B2F53C /* maple_devs.cpp */,
+				AE3258C026BAA8E100B2F53C /* maple_devs.h */,
+				AE3258BD26BAA8E100B2F53C /* maple_helper.cpp */,
 				AE3258BA26BAA8E100B2F53C /* maple_helper.h */,
 				AE3258BB26BAA8E100B2F53C /* maple_if.cpp */,
-				AE3258BC26BAA8E100B2F53C /* maple_jvs.cpp */,
-				AE3258BD26BAA8E100B2F53C /* maple_helper.cpp */,
-				AE3258BE26BAA8E100B2F53C /* maple_cfg.h */,
-				AE3258BF26BAA8E100B2F53C /* maple_cfg.cpp */,
-				AE3258C026BAA8E100B2F53C /* maple_devs.h */,
 				AE3258C126BAA8E100B2F53C /* maple_if.h */,
-				AE3258C226BAA8E100B2F53C /* maple_devs.cpp */,
+				AE3258BC26BAA8E100B2F53C /* maple_jvs.cpp */,
 			);
 			path = maple;
 			sourceTree = "<group>";
@@ -2966,22 +2970,22 @@
 		AE32797E26BAA90900B2F53C /* oslib */ = {
 			isa = PBXGroup;
 			children = (
+				AE32798E26BAA90A00B2F53C /* audiobackend_alsa.cpp */,
+				AE32798326BAA90A00B2F53C /* audiobackend_coreaudio.cpp */,
+				AE32798C26BAA90A00B2F53C /* audiobackend_directsound.cpp */,
+				AE32798B26BAA90A00B2F53C /* audiobackend_libao.cpp */,
+				AE32798D26BAA90A00B2F53C /* audiobackend_null.cpp */,
+				AE32798826BAA90A00B2F53C /* audiobackend_oboe.cpp */,
+				AE32798126BAA90900B2F53C /* audiobackend_omx.cpp */,
+				AE32798A26BAA90A00B2F53C /* audiobackend_oss.cpp */,
 				AE32797F26BAA90900B2F53C /* audiobackend_pulseaudio.cpp */,
 				AE32798026BAA90900B2F53C /* audiobackend_sdl2.cpp */,
-				AE32798126BAA90900B2F53C /* audiobackend_omx.cpp */,
-				AE32798226BAA90A00B2F53C /* oslib.h */,
-				AE32798326BAA90A00B2F53C /* audiobackend_coreaudio.cpp */,
 				AE32798426BAA90A00B2F53C /* audiostream.cpp */,
-				AE32798526BAA90A00B2F53C /* host_context.h */,
 				AE32798626BAA90A00B2F53C /* audiostream.h */,
-				AE32798726BAA90A00B2F53C /* oslib.cpp */,
-				AE32798826BAA90A00B2F53C /* audiobackend_oboe.cpp */,
 				AE32798926BAA90A00B2F53C /* directory.h */,
-				AE32798A26BAA90A00B2F53C /* audiobackend_oss.cpp */,
-				AE32798B26BAA90A00B2F53C /* audiobackend_libao.cpp */,
-				AE32798C26BAA90A00B2F53C /* audiobackend_directsound.cpp */,
-				AE32798D26BAA90A00B2F53C /* audiobackend_null.cpp */,
-				AE32798E26BAA90A00B2F53C /* audiobackend_alsa.cpp */,
+				AE32798526BAA90A00B2F53C /* host_context.h */,
+				AE32798726BAA90A00B2F53C /* oslib.cpp */,
+				AE32798226BAA90A00B2F53C /* oslib.h */,
 			);
 			path = oslib;
 			sourceTree = "<group>";

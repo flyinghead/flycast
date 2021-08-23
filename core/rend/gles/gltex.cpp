@@ -368,9 +368,7 @@ void ReadRTTBuffer()
 		}
 		gl.rtt.texAddress = ~0;
 	}
-#ifdef LIBRETRO
-	glBindFramebuffer(GL_FRAMEBUFFER, hw_render.get_current_framebuffer());
-#endif
+	glBindFramebuffer(GL_FRAMEBUFFER, gl.ofbo.origFbo);
 }
 
 static void readAsyncPixelBuffer(u32 addr)
@@ -484,8 +482,6 @@ GLuint init_output_framebuffer(int width, int height)
 		gl.ofbo.width = width;
 		gl.ofbo.height = height;
 	}
-	gl.ofbo.origFbo = 0;
-	glGetIntegerv(GL_FRAMEBUFFER_BINDING, (GLint *)&gl.ofbo.origFbo);
 
 	if (gl.ofbo.fbo == 0)
 	{

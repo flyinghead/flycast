@@ -1197,6 +1197,12 @@ bool RenderFrame(int width, int height)
 	}
 
 	//setup render target first
+#ifdef LIBRETRO
+	gl.ofbo.origFbo = glsm_get_current_framebuffer();
+#else
+	gl.ofbo.origFbo = 0;
+	glGetIntegerv(GL_FRAMEBUFFER_BINDING, (GLint *)&gl.ofbo.origFbo);
+#endif
 	if (is_rtt)
 	{
 		if (BindRTT() == 0)
