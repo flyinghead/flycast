@@ -85,7 +85,21 @@ bool SDLGLGraphicsContext::Init()
 	// Swap immediately
 	swapOnVSync = false;
 #endif
-	SDL_GL_SetSwapInterval((int)swapOnVSync);
+	swapInterval = 1;
+	int displayIndex = SDL_GetWindowDisplayIndex(window);
+	if (displayIndex < 0)
+		WARN_LOG(RENDERER, "Cannot get the window display index: %s", SDL_GetError());
+	else
+	{
+		SDL_DisplayMode mode{};
+		if (SDL_GetDesktopDisplayMode(displayIndex, &mode) == 0) {
+			INFO_LOG(RENDERER, "Monitor refresh rate: %d Hz", mode.refresh_rate);
+			if (mode.refresh_rate > 100)
+				swapInterval = 2;
+		}
+	}
+
+	SDL_GL_SetSwapInterval(swapOnVSync ? swapInterval : 0);
 
 #ifdef GLES
 	load_gles_symbols();
@@ -109,7 +123,7 @@ void SDLGLGraphicsContext::Swap()
 	if (swapOnVSync == (settings.input.fastForwardMode || !config::VSync))
 	{
 		swapOnVSync = (!settings.input.fastForwardMode && config::VSync);
-		SDL_GL_SetSwapInterval((int)swapOnVSync);
+		SDL_GL_SetSwapInterval(swapOnVSync ? swapInterval : 0);
 	}
 #endif
 	SDL_GL_SwapWindow(window);
