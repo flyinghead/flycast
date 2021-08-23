@@ -322,8 +322,8 @@ if(PKG_CONFIG_FOUND AND NOT ANDROID AND NOT APPLE AND NOT LIBRETRO)
         target_compile_definitions(${PROJECT_NAME} PRIVATE DYNA_OPROF)
         target_link_libraries(${PROJECT_NAME} PRIVATE opagent)
     endif()
-    
-    find_package(Miniupnpc)
+
+    find_package(MiniUPnPc)
     if (MINIUPNP_FOUND)
 		target_include_directories(${PROJECT_NAME} PRIVATE ${MINIUPNP_INCLUDE_DIRS})
 		target_link_libraries(${PROJECT_NAME} PRIVATE ${MINIUPNP_LIBRARIES})
