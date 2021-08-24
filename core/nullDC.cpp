@@ -729,6 +729,8 @@ void dc_resize_renderer()
 	{
 		hres = config::RenderResolution * 4 * config::ScreenStretching / 3 / 100;
 	}
+	if (!config::Rotate90)
+		hres = std::roundf(hres / 2.f) * 2.f;
 	if (renderer != nullptr)
 		renderer->Resize(hres, vres);
 }

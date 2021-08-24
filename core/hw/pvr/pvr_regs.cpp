@@ -87,12 +87,9 @@ void pvr_WriteReg(u32 paddr,u32 data)
 		return;
 
 	case FB_R_SOF1_addr:
-		data &= 0x00fffffc;
-		rend_swap_frame(data);
-		break;
-
 	case FB_R_SOF2_addr:
 		data &= 0x00fffffc;
+		rend_swap_frame(data);
 		break;
 
 	case FB_W_SOF1_addr:
