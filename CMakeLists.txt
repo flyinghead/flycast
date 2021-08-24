@@ -569,6 +569,7 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/hw/aica/aica_mem.h
         core/hw/aica/dsp.cpp
         core/hw/aica/dsp.h
+        core/hw/aica/dsp_arm32.cpp
         core/hw/aica/dsp_arm64.cpp
         core/hw/aica/dsp_interp.cpp
         core/hw/aica/dsp_x64.cpp
