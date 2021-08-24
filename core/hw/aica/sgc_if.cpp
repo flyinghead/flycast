@@ -1363,7 +1363,6 @@ void AICA_Sample32()
 
 	//Generate 32 samples for each channel, before moving to next channel
 	//much more cache efficient !
-	u32 sg=0;
 	for (int ch = 0; ch < 64; ch++)
 	{
 		for (int i=0;i<32;i++)
@@ -1373,10 +1372,8 @@ void AICA_Sample32()
 			if (!Chans[ch].Step(oLeft, oRight, oDsp))
 				break;
 
-			sg++;
-
 			if (oLeft + oRight == 0)
-				oLeft = oRight = oDsp;
+				oLeft = oRight = oDsp >> 4;
 
 			mxlr[i*2+0] += oLeft;
 			mxlr[i*2+1] += oRight;
