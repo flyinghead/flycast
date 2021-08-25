@@ -304,6 +304,7 @@ extern Option<int> AudioBufferSize;	//In samples ,*4 for bytes
 extern Option<bool> AutoLatency;
 
 extern OptionString AudioBackend;
+extern Option<int> AudioVolume;
 
 // Rendering
 
