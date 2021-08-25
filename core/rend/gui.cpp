@@ -1558,7 +1558,10 @@ static void gui_display_settings()
 			OptionCheckbox("Disable Sound", config::DisableSound, "Disable the emulator sound output");
 			OptionCheckbox("Enable DSP", config::DSPEnabled,
 					"Enable the Dreamcast Digital Sound Processor. Only recommended on fast platforms");
-			OptionSlider("Volume Level", config::AudioVolume, 0, 100, "Adjust the emulator's audio level");
+			if (OptionSlider("Volume Level", config::AudioVolume, 0, 100, "Adjust the emulator's audio level"))
+			{
+				config::AudioVolume.calcDbPower();
+			};
 #ifdef __ANDROID__
 			if (config::AudioBackend.get() == "auto" || config::AudioBackend.get() == "android")
 				OptionCheckbox("Automatic Latency", config::AutoLatency,
