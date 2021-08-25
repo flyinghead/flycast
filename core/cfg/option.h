@@ -20,6 +20,7 @@
 #include <string>
 #include <vector>
 #include <array>
+#include <cmath>
 #include "cfg.h"
 #include "hw/maple/maple_cfg.h"
 
