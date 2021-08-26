@@ -711,28 +711,29 @@ void SaveSettings()
 
 void dc_resize_renderer()
 {
-	int hres;
+	float hres;
 	int vres = config::RenderResolution;
 	if (config::Widescreen && !config::Rotate90)
 	{
 		if (config::SuperWidescreen)
-			hres = config::RenderResolution * screen_width / screen_height	;
+			hres = (float)config::RenderResolution * screen_width / screen_height	;
 		else
-			hres = config::RenderResolution * 16 / 9;
+			hres = config::RenderResolution * 16.f / 9.f;
+
 	}
 	else if (config::Rotate90)
 	{
 		vres = vres * config::ScreenStretching / 100;
-		hres = config::RenderResolution * 4 / 3;
+		hres = config::RenderResolution * 4.f / 3.f;
 	}
 	else
 	{
-		hres = config::RenderResolution * 4 * config::ScreenStretching / 3 / 100;
+		hres = config::RenderResolution * 4.f * config::ScreenStretching / 3.f / 100.f;
 	}
 	if (!config::Rotate90)
 		hres = std::roundf(hres / 2.f) * 2.f;
-	if (renderer != nullptr)
-		renderer->Resize(hres, vres);
+	DEBUG_LOG(RENDERER, "dc_resize_renderer: %d x %d", (int)hres, vres);
+	renderer->Resize((int)hres, vres);
 }
 
 void dc_resume()
