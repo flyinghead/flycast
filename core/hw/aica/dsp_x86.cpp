@@ -385,7 +385,7 @@ void recInit()
 
 void runStep()
 {
-	((void (*)())CodeBuffer)();
+	((void (*)())&CodeBuffer[0])();
 }
 
 }
