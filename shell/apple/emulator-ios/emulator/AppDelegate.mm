@@ -40,8 +40,15 @@ static bool emulatorRunning;
 	AVAudioSession *session = [AVAudioSession sharedInstance];
 	NSError *error = nil;
 	[session setCategory:AVAudioSessionCategoryPlayAndRecord
-			 withOptions:AVAudioSessionCategoryOptionMixWithOthers
+			 withOptions:AVAudioSessionCategoryOptionMixWithOthers | AVAudioSessionCategoryOptionDefaultToSpeaker
+						| AVAudioSessionCategoryOptionAllowBluetooth | AVAudioSessionCategoryOptionAllowBluetoothA2DP
+						| AVAudioSessionCategoryOptionAllowAirPlay
 				   error:&error];
+	if (error != nil)
+		NSLog(@"AVAudioSession.setCategory:  %@", error);
+	[session setActive:YES error:&error];
+	if (error != nil)
+		NSLog(@"AVAudioSession.setActive:  %@", error);
 
     return YES;
 }
