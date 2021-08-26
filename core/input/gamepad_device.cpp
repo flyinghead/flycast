@@ -377,6 +377,8 @@ std::string GamepadDevice::make_mapping_filename(bool instance, int system)
 
 bool GamepadDevice::find_mapping(int system)
 {
+	if (!_remappable)
+		return true;
 	std::string mapping_file;
 	mapping_file = make_mapping_filename(false, system);
 
@@ -395,6 +397,8 @@ bool GamepadDevice::find_mapping(int system)
 
 bool GamepadDevice::find_mapping(const char *custom_mapping /* = nullptr */)
 {
+	if (!_remappable)
+		return true;
 	std::string mapping_file;
 	if (custom_mapping != nullptr)
 		mapping_file = custom_mapping;
