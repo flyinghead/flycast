@@ -51,7 +51,6 @@
 #include "hw/pvr/spg.h"
 #include "hw/naomi/naomi_cart.h"
 #include "imgread/common.h"
-#include "hw/aica/dsp.h"
 #include "LogManager.h"
 #include "cheats.h"
 #include "rend/CustomTexture.h"

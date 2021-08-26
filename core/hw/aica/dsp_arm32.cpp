@@ -27,6 +27,9 @@
 #include <aarch32/macro-assembler-aarch32.h>
 using namespace vixl::aarch32;
 
+namespace dsp
+{
+
 constexpr size_t CodeSize = 4096 * 8;	//32 kb, 8 pages
 
 #if defined(__unix__)
@@ -40,7 +43,7 @@ class DSPAssembler : public MacroAssembler
 public:
 	DSPAssembler(u8 *code_buffer, size_t size) : MacroAssembler(code_buffer, size, A32) {}
 
-	void compile(dsp_t *DSP)
+	void compile(DSPState *DSP)
 	{
 		this->DSP = DSP;
 		DEBUG_LOG(AICA_ARM, "DSPAssembler::compile recompiling for arm32 at %p", GetBuffer()->GetStartAddress<void*>());
@@ -66,7 +69,7 @@ public:
 		for (int step = 0; step < 128; ++step)
 		{
 			u32 *mpro = &DSPData->MPRO[step * 4];
-			_INST op;
+			Instruction op;
 			DecodeInst(mpro, &op);
 			const u32 COEF = step;
 
@@ -109,8 +112,8 @@ public:
 					Mov(B, ACC);
 				else
 				{
-					//B = DSP->TEMP[(TRA + DSP->regs.MDEC_CT) & 0x7F];
-					Ldr(r1, dsp_operand(&DSP->regs.MDEC_CT));
+					//B = DSP->TEMP[(TRA + DSP->MDEC_CT) & 0x7F];
+					Ldr(r1, dsp_operand(&DSP->MDEC_CT));
 					if (op.TRA)
 						Add(r1, r1, op.TRA);
 					Bfc(r1, 7, 25);
@@ -128,12 +131,12 @@ public:
 				X_alias = &INPUTS;
 			else
 			{
-				//X = DSP->TEMP[(TRA + DSP->regs.MDEC_CT) & 0x7F];
+				//X = DSP->TEMP[(TRA + DSP->MDEC_CT) & 0x7F];
 				if (!op.ZERO && !op.BSEL && !op.NEGB)
 					X_alias = &B;
 				else
 				{
-					Ldr(r1, dsp_operand(&DSP->regs.MDEC_CT));
+					Ldr(r1, dsp_operand(&DSP->MDEC_CT));
 					if (op.TRA)
 						Add(r1, r1, op.TRA);
 					Bfc(r1, 7, 25);
@@ -208,9 +211,9 @@ public:
 
 			if (op.TWT)
 			{
-				//DSP->TEMP[(op.TWA + DSP->regs.MDEC_CT) & 0x7F] = SHIFTED;
+				//DSP->TEMP[(op.TWA + DSP->MDEC_CT) & 0x7F] = SHIFTED;
 				Ldr(r2, dsp_operand(&DSP->SHIFTED));
-				Ldr(r1, dsp_operand(&DSP->regs.MDEC_CT));
+				Ldr(r1, dsp_operand(&DSP->MDEC_CT));
 				if (op.TWA)
 					Add(r1, r1, op.TWA);
 				Bfc(r1, 7, 25);
@@ -279,13 +282,13 @@ public:
 				Str(r1, dspdata_operand(DSPData->EFREG, op.EWA));
 			}
 		}
-		Ldr(r1, dsp_operand(&DSP->regs.MDEC_CT));
-		// DSP->regs.MDEC_CT--
+		Ldr(r1, dsp_operand(&DSP->MDEC_CT));
+		// DSP->MDEC_CT--
 		Subs(r1, r1, 1);
-		//if (dsp.regs.MDEC_CT == 0)
-		//	dsp.regs.MDEC_CT = dsp.RBL + 1;			// RBL is ring buffer length - 1
-		Mov(eq, r1, dsp.RBL + 1);
-		Str(r1, dsp_operand(&DSP->regs.MDEC_CT));
+		//if (dsp.MDEC_CT == 0)
+		//	dsp.MDEC_CT = dsp.RBL + 1;			// RBL is ring buffer length - 1
+		Mov(eq, r1, DSP->RBL + 1);
+		Str(r1, dsp_operand(&DSP->MDEC_CT));
 
 		Pop(regList);
 		Mov(pc, lr);
@@ -300,7 +303,7 @@ public:
 private:
 	MemOperand dsp_operand(void *data, int index = 0, u32 element_size = 4)
 	{
-		ptrdiff_t offset = ((u8*)data - (u8*)DSP) - offsetof(dsp_t, TEMP) + index  * element_size;
+		ptrdiff_t offset = ((u8*)data - (u8*)DSP) - offsetof(DSPState, TEMP) + index  * element_size;
 		if (offset <= 4095)
 			return MemOperand(r8, offset);
 		Mov(r0, offset);
@@ -309,7 +312,7 @@ private:
 
 	MemOperand dsp_operand(void *data, const Register& offset_reg, u32 element_size = 4)
 	{
-		ptrdiff_t offset = ((u8*)data - (u8*)DSP) - offsetof(dsp_t, TEMP);
+		ptrdiff_t offset = ((u8*)data - (u8*)DSP) - offsetof(DSPState, TEMP);
 		if (offset == 0)
 			return MemOperand(r8, offset_reg, LSL, element_size == 4 ? 2 : element_size == 2 ? 1 : 0);
 
@@ -344,7 +347,7 @@ private:
 		}
 	}
 
-	void calculateADDR(const Register& ADDR, const _INST& op)
+	void calculateADDR(const Register& ADDR, const Instruction& op)
 	{
 		//u32 ADDR = DSPData->MADRS[op.MASA];
 		Ldr(ADDR, dspdata_operand(DSPData->MADRS, op.MASA));
@@ -360,8 +363,8 @@ private:
 			Add(ADDR, ADDR, 1);
 		if (!op.TABLE)
 		{
-			//ADDR += DSP->regs.MDEC_CT;
-			Ldr(r1, dsp_operand(&DSP->regs.MDEC_CT));
+			//ADDR += DSP->MDEC_CT;
+			Ldr(r1, dsp_operand(&DSP->MDEC_CT));
 			Add(ADDR, ADDR, r1);
 			//ADDR &= DSP->RBL;
 			// RBL is constant for this program
@@ -387,40 +390,30 @@ private:
 
 	uintptr_t getAicaRam()
 	{
-		return (uintptr_t)&aica_ram[0];
+		return reinterpret_cast<uintptr_t>(&aica_ram[0]);
 	}
 
-	dsp_t *DSP = nullptr;
+	DSPState *DSP = nullptr;
 };
 
-void dsp_recompile()
+void recompile()
 {
-	dsp.Stopped = true;
-	for (int i = 127; i >= 0; --i)
-	{
-		u32 *IPtr = DSPData->MPRO + i * 4;
-
-		if (IPtr[0] != 0 || IPtr[1] != 0 || IPtr[2 ]!= 0 || IPtr[3] != 0)
-		{
-			dsp.Stopped = false;
-			break;
-		}
-	}
 	JITWriteProtect(false);
 	DSPAssembler assembler(DynCode, CodeSize);
-	assembler.compile(&dsp);
+	assembler.compile(&state);
 	JITWriteProtect(true);
 }
 
-void dsp_rec_init()
+void recInit()
 {
 	u8 *pCodeBuffer;
 	verify(vmem_platform_prepare_jit_block(DynCode, CodeSize, (void**)&pCodeBuffer));
 }
 
-void dsp_rec_step()
+void runStep()
 {
-	((void (*)())(DynCode))();
+	((void (*)())DynCode)();
 }
 
+}
 #endif

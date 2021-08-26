@@ -35,7 +35,6 @@
 #include "hw/pvr/Renderer_if.h"
 #include "rend/CustomTexture.h"
 #include "hw/arm7/arm7_rec.h"
-#include "hw/aica/dsp.h"
 
 extern int screen_width, screen_height;
 
@@ -721,7 +720,6 @@ bool dc_loadstate(const void **data, u32 size)
 
 	mmu_set_state();
 	sh4_cpu.ResetCache();
-	dsp.dyndirty = true;
 	sh4_sched_ffts();
 
 	return true;

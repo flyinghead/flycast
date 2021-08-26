@@ -711,7 +711,7 @@ struct ChannelEx
 	//ISEL
 	void UpdateDSPMIX()
 	{
-		VolMix.DSPOut = &dsp.MIXS[ccd->ISEL];
+		VolMix.DSPOut = &dsp::state.MIXS[ccd->ISEL];
 	}
 	//TL,DISDL,DIPAN,IMXL
 	void UpdateAtts()
@@ -1286,12 +1286,12 @@ void sgc_Init()
 			PLFO_Scales[s][i + 128] = (u32)((1 << 10) * powf(2.0f, limit * i / 128.0f / 1200.0f));
 	}
 
-	dsp_init();
+	dsp::init();
 }
 
 void sgc_Term()
 {
-	dsp_term();
+	dsp::term();
 }
 
 void WriteChannelReg(u32 channel, u32 reg, int size)
@@ -1343,11 +1343,12 @@ void ReadCommonReg(u32 reg,bool byte)
 void WriteCommonReg8(u32 reg,u32 data)
 {
 	WriteMemArr<1>(aica_reg, reg, data);
-	if (reg==0x2804 || reg==0x2805)
+	if (reg == 0x2804 || reg == 0x2805)
 	{
-		dsp.RBL = (8192 << CommonData->RBL) - 1;
-		dsp.RBP = (CommonData->RBP * 2048) & ARAM_MASK;
-		dsp.dyndirty=true;
+		using namespace dsp;
+		state.RBL = (8192 << CommonData->RBL) - 1;
+		state.RBP = (CommonData->RBP * 2048) & ARAM_MASK;
+		state.dirty = true;
 	}
 }
 
@@ -1409,7 +1410,7 @@ void AICA_Sample32()
 		no dsp for now -- needs special handling of oDSP for ch paraller version ...
 		if (config::DSPEnabled)
 		{
-			dsp_step();
+			dsp::step();
 
 			for (int i=0;i<16;i++)
 			{
@@ -1463,7 +1464,7 @@ void AICA_Sample()
 	SampleType mixl,mixr;
 	mixl = 0;
 	mixr = 0;
-	memset(dsp.MIXS,0,sizeof(dsp.MIXS));
+	memset(dsp::state.MIXS, 0, sizeof(dsp::state.MIXS));
 
 	ChannelEx::StepAll(mixl,mixr);
 	
@@ -1491,7 +1492,7 @@ void AICA_Sample()
 
 	if (config::DSPEnabled)
 	{
-		dsp_step();
+		dsp::step();
 
 		for (int i=0;i<16;i++)
 			VOLPAN(*(s16*)&DSPData->EFREG[i], dsp_out_vol[i].EFSDL, dsp_out_vol[i].EFPAN, mixl, mixr);

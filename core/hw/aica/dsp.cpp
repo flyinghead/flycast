@@ -1,5 +1,5 @@
 #include "dsp.h"
-
+#include "aica.h"
 /*
 	DSP rec_v1
 
@@ -17,7 +17,10 @@
 	See LICENSE & COPYRIGHT files further details
 */
 
-alignas(4096) dsp_t dsp;
+namespace dsp
+{
+
+DSPState state;
 
 //float format is ?
 u16 DYNACALL PACK(s32 val)
@@ -62,7 +65,7 @@ s32 DYNACALL UNPACK(u16 val)
 	return uval;
 }
 
-void DecodeInst(const u32 *IPtr, _INST *i)
+void DecodeInst(const u32 *IPtr, Instruction *i)
 {
 	i->TRA = (IPtr[0] >> 9) & 0x7F;
 	i->TWT = IPtr[0] & 0x100;
@@ -93,51 +96,54 @@ void DecodeInst(const u32 *IPtr, _INST *i)
 	i->NXADR = IPtr[3] & 0x80;
 }
 
-#if FEAT_DSPREC != DYNAREC_NONE
-
-void dsp_init()
-{
-	memset(&dsp, 0, sizeof(dsp));
-	dsp.RBL = 0x8000 - 1;
-	dsp.RBP = 0;
-	dsp.regs.MDEC_CT = 1;
-	dsp.dyndirty = true;
-
-	dsp_rec_init();
+#if FEAT_DSPREC == DYNAREC_NONE
+void recInit() {
 }
 
-void dsp_step()
+void recompile() {
+}
+#endif
+
+void init()
 {
-	if (dsp.dyndirty)
-	{
-		dsp.dyndirty = false;
-		dsp_recompile();
-	}
-	if (dsp.Stopped)
-		return;
-	dsp_rec_step();
+	memset(&state, 0, sizeof(state));
+	state.RBL = 0x8000 - 1;
+	state.RBP = 0;
+	state.MDEC_CT = 1;
+	state.dirty = true;
+
+	recInit();
 }
 
-void dsp_writenmem(u32 addr)
+void writeProg(u32 addr)
 {
 	if (addr >= 0x3400 && addr < 0x3C00)
-	{
-		dsp.dyndirty = true;
-	}
-	else if (addr >= 0x4000 && addr < 0x4400)
-	{
-		// TODO proper sharing of memory with sh4 through DSPData
-		memset(dsp.TEMP, 0, sizeof(dsp.TEMP));
-	}
-	else if (addr >= 0x4400 && addr < 0x4500)
-	{
-		// TODO proper sharing of memory with sh4 through DSPData
-		memset(dsp.MEMS, 0, sizeof(dsp.MEMS));
-	}
+		state.dirty = true;
 }
 
-void dsp_term()
+void term()
 {
+	state.stopped = true;
 }
 
-#endif
+void step()
+{
+	if (state.dirty)
+	{
+		state.dirty = false;
+		state.stopped = true;
+		for (u32 instr : DSPData->MPRO)
+			if (instr != 0)
+			{
+				state.stopped = false;
+				break;
+			}
+		if (!state.stopped)
+			recompile();
+	}
+	if (state.stopped)
+		return;
+	runStep();
+}
+
+}

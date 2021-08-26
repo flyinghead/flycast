@@ -13,21 +13,14 @@
 #include "aica.h"
 #include "aica_if.h"
 
-#ifdef NDEBUG
-#undef verify
-#define verify(...)
-#endif
-
-void AICADSP_Init(struct dsp_t *DSP)
+namespace dsp
 {
-	memset(DSP, 0, sizeof(*DSP));
-	DSP->RBL = 0x8000 - 1;
-	DSP->Stopped = 1;
-	dsp.regs.MDEC_CT = 1;
-}
 
-void AICADSP_Step(struct dsp_t *DSP)
+void runStep()
 {
+	if (state.stopped)
+		return;
+
 	s32 ACC = 0;		//26 bit
 	s32 SHIFTED = 0;	//24 bit
 	s32 X = 0;			//24 bit
@@ -39,16 +32,6 @@ void AICADSP_Step(struct dsp_t *DSP)
 	s32 Y_REG = 0;		//24 bit
 	u32 ADRS_REG = 0;	//13 bit
 
-	if (DSP->Stopped)
-		return;
-
-#if 0
-	int dump = 0;
-	FILE *f = NULL;
-	if (dump)
-		f = fopen("dsp.txt", "wt");
-#endif
-
 	for (int step = 0; step < 128; ++step)
 	{
 		u32 *IPtr = DSPData->MPRO + step * 4;
@@ -56,7 +39,7 @@ void AICADSP_Step(struct dsp_t *DSP)
 		if (IPtr[0] == 0 && IPtr[1] == 0 && IPtr[2] == 0 && IPtr[3] == 0)
 		{
 			// Empty instruction shortcut
-			X = DSP->TEMP[DSP->regs.MDEC_CT & 0x7F];
+			X = state.TEMP[state.MDEC_CT & 0x7F];
 			Y = FRC_REG;
 
 			ACC = (((s64)X * (s64)Y) >> 12) + X;
@@ -84,29 +67,12 @@ void AICADSP_Step(struct dsp_t *DSP)
 		u32 COEF = step;
 
 		// operations are done at 24 bit precision
-#if 0
-#define DUMP(v)	printf(" " #v ": %04X",v);
-
-		printf("%d: ",step);
-		DUMP(ACC);
-		DUMP(SHIFTED);
-		DUMP(X);
-		DUMP(Y);
-		DUMP(B);
-		DUMP(INPUTS);
-		DUMP(MEMVAL);
-		DUMP(FRC_REG);
-		DUMP(Y_REG);
-		DUMP(ADDR);
-		DUMP(ADRS_REG);
-		printf("\n");
-#endif
 
 		// INPUTS RW
 		if (IRA <= 0x1f)
-			INPUTS = DSP->MEMS[IRA];
+			INPUTS = state.MEMS[IRA];
 		else if (IRA <= 0x2F)
-			INPUTS = DSP->MIXS[IRA - 0x20] << 4;		// MIXS is 20 bit
+			INPUTS = state.MIXS[IRA - 0x20] << 4;		// MIXS is 20 bit
 		else if (IRA <= 0x31)
 			INPUTS = DSPData->EXTS[IRA - 0x30] << 8;	// EXTS is 16 bits
 		else
@@ -115,7 +81,7 @@ void AICADSP_Step(struct dsp_t *DSP)
 		if (IWT)
 		{
 			u32 IWA = (IPtr[1] >> 1) & 0x1F;
-			DSP->MEMS[IWA] = MEMVAL[step & 3];	// MEMVAL was selected in previous MRD
+			state.MEMS[IWA] = MEMVAL[step & 3];	// MEMVAL was selected in previous MRD
 		}
 
 		// Operand sel
@@ -125,7 +91,7 @@ void AICADSP_Step(struct dsp_t *DSP)
 			if (BSEL)
 				B = ACC;
 			else
-				B = DSP->TEMP[(TRA + DSP->regs.MDEC_CT) & 0x7F];
+				B = state.TEMP[(TRA + state.MDEC_CT) & 0x7F];
 			if (NEGB)
 				B = -B;
 		}
@@ -138,7 +104,7 @@ void AICADSP_Step(struct dsp_t *DSP)
 		if (XSEL)
 			X = INPUTS;
 		else
-			X = DSP->TEMP[(TRA + DSP->regs.MDEC_CT) & 0x7F];
+			X = state.TEMP[(TRA + state.MDEC_CT) & 0x7F];
 
 		// Y
 		if (YSEL == 0)
@@ -169,7 +135,7 @@ void AICADSP_Step(struct dsp_t *DSP)
 		if (TWT)
 		{
 			u32 TWA = (IPtr[0] >> 1) & 0x7F;
-			DSP->TEMP[(TWA + DSP->regs.MDEC_CT) & 0x7F] = SHIFTED;
+			state.TEMP[(TWA + state.MDEC_CT) & 0x7F] = SHIFTED;
 		}
 
 		if (FRCL)
@@ -202,14 +168,14 @@ void AICADSP_Step(struct dsp_t *DSP)
 					ADDR++;
 				if (!TABLE)
 				{
-					ADDR += DSP->regs.MDEC_CT;
-					ADDR &= DSP->RBL;		// RBL is ring buffer length - 1
+					ADDR += state.MDEC_CT;
+					ADDR &= state.RBL;		// RBL is ring buffer length - 1
 				}
 				else
 					ADDR &= 0xFFFF;
 
 				ADDR <<= 1;					// Word -> byte address
-				ADDR += DSP->RBP;			// RBP is already a byte address
+				ADDR += state.RBP;			// RBP is already a byte address
 				if (MRD)			// memory only allowed on odd. DoA inserts NOPs on even
 				{
 					//if (NOFL)
@@ -243,64 +209,10 @@ void AICADSP_Step(struct dsp_t *DSP)
 		}
 
 	}
-	--DSP->regs.MDEC_CT;
-	if (dsp.regs.MDEC_CT == 0)
-		dsp.regs.MDEC_CT = dsp.RBL + 1;			// RBL is ring buffer length - 1
-
-//	memset(DSP->MIXS, 0, sizeof(DSP->MIXS));
-//  if(f)
-//      fclose(f);
+	--state.MDEC_CT;
+	if (state.MDEC_CT == 0)
+		state.MDEC_CT = state.RBL + 1;		// RBL is ring buffer length - 1
 }
 
-void AICADSP_Start(struct dsp_t *DSP)
-{
-	dsp.Stopped = 1;
-	for (int i = 127; i >= 0; --i)
-	{
-		u32 *IPtr = DSPData->MPRO + i * 4;
-
-		if (IPtr[0] != 0 || IPtr[1] != 0 || IPtr[2 ]!= 0 || IPtr[3] != 0)
-		{
-			DSP->Stopped = 0;
-			//printf("DSP: starting %d steps\n", i + 1);
-
-			break;
-		}
-	}
 }
-
-void dsp_init()
-{
-	AICADSP_Init(&dsp);
-	AICADSP_Start(&dsp);
-}
-
-void dsp_term()
-{
-	dsp.Stopped = 1;
-}
-
-void dsp_step()
-{
-	AICADSP_Step(&dsp);
-}
-
-void dsp_writenmem(u32 addr)
-{
-	if (addr >= 0x3400 && addr < 0x3C00)
-	{
-		AICADSP_Start(&dsp);
-	}
-	else if (addr >= 0x4000 && addr < 0x4400)
-	{
-		// TODO proper sharing of memory with sh4 through DSPData
-		memset(dsp.TEMP, 0, sizeof(dsp.TEMP));
-	}
-	else if (addr >= 0x4400 && addr < 0x4500)
-	{
-		// TODO proper sharing of memory with sh4 through DSPData
-		memset(dsp.MEMS, 0, sizeof(dsp.MEMS));
-	}
-}
-
 #endif

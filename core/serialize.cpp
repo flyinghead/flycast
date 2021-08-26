@@ -36,9 +36,7 @@ extern bool armFiqEnable;
 extern int armMode;
 extern bool Arm7Enabled;
 
-//./core/hw/aica/dsp.o
-alignas(4096) extern dsp_t dsp;
-
+//./core/hw/aica/aica.o
 extern AicaTimer timers[3];
 
 //./core/hw/aica/aica_if.o
@@ -263,7 +261,7 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	REICAST_S(armMode);
 	REICAST_S(Arm7Enabled);
 
-	REICAST_S(dsp);	// FIXME could save 32KB
+	dsp::state.serialize(data, total_size);
 
 	for ( i = 0 ; i < 3 ; i++)
 	{
@@ -496,7 +494,7 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size, seria
 		REICAST_SKIP(1);			// holdState
 	}
 
-	REICAST_US(dsp);
+	dsp::state.deserialize(data, total_size, version);
 
 	for ( i = 0 ; i < 3 ; i++)
 	{
@@ -904,7 +902,7 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 	if (version < V5)
 		REICAST_SKIP(256 + 3);
 
-	REICAST_US(dsp);
+	dsp::state.deserialize(data, total_size, version);
 
 	for ( i = 0 ; i < 3 ; i++)
 	{
