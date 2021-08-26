@@ -79,8 +79,8 @@ audiobackend_t* GetAudioBackend(const std::string& slug)
 
 void WriteSample(s16 r, s16 l)
 {
-	Buffer[writePtr].r = r;
-	Buffer[writePtr].l = l;
+	Buffer[writePtr].r = r * config::AudioVolume.dbPower();
+	Buffer[writePtr].l = l * config::AudioVolume.dbPower();
 
 	if (++writePtr == SAMPLE_COUNT)
 	{
