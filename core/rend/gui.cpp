@@ -1094,6 +1094,7 @@ static void gui_display_settings()
             ImGui::SameLine();
             ShowHelpMarker("Video connection type");
 
+#if !defined(TARGET_IPHONE)
             ImVec2 size;
             size.x = 0.0f;
             size.y = (ImGui::GetTextLineHeightWithSpacing() + ImGui::GetStyle().FramePadding.y * 2.f)
@@ -1138,7 +1139,7 @@ static void gui_display_settings()
             ImGui::SameLine();
             ShowHelpMarker("The directories where your games are stored");
 
-#ifdef __linux__
+#if defined(__linux__) && !defined(__ANDROID__)
             if (ImGui::ListBoxHeader("Data Directory", 1))
             {
             	ImGui::AlignTextToFramePadding();
@@ -1147,7 +1148,7 @@ static void gui_display_settings()
             }
             ImGui::SameLine();
             ShowHelpMarker("The directory containing BIOS files, as well as saved VMUs and states");
-#elif !defined(TARGET_IPHONE)
+#else
             if (ImGui::ListBoxHeader("Home Directory", 1))
             {
             	ImGui::AlignTextToFramePadding();
@@ -1161,7 +1162,9 @@ static void gui_display_settings()
             }
             ImGui::SameLine();
             ShowHelpMarker("The directory where Flycast saves configuration files and VMUs. BIOS files should be in a subfolder named \"data\"");
-#endif
+#endif // !linux
+#endif // !TARGET_IPHONE
+
 			if (OptionCheckbox("Hide Legacy Naomi Roms", config::HideLegacyNaomiRoms,
 					"Hide .bin, .dat and .lst files from the content browser"))
 				scanner.refresh();
