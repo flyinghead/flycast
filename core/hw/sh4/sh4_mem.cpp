@@ -198,7 +198,7 @@ void mem_Reset(bool hard)
 
 	//Reset registers
 	sh4_area0_Reset(hard);
-	sh4_mmr_reset(hard);
+	sh4_mmr_reset(true);
 	MMU_reset();
 }
 

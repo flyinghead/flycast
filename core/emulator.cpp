@@ -339,7 +339,7 @@ void dc_reset(bool hard)
 	if (hard)
 		_vmem_unprotect_vram(0, VRAM_SIZE);
 	devicesReset(hard);
-	sh4_cpu.Reset(hard);
+	sh4_cpu.Reset(true);
 	mem_Reset(hard);
 }
 
