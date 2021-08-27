@@ -33,6 +33,9 @@ bool ConvertSector(u8* in_buff , u8* out_buff , int from , int to,int sector)
 		memcpy(q_subchannel, in_buff + 2352, 96);
 		from -= 96;
 	}
+	else
+		memset(q_subchannel, 0, sizeof(q_subchannel));
+
 	//if no conversion
 	if (to == from)
 	{
