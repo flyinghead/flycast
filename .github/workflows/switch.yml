@@ -12,23 +12,29 @@ jobs:
       matrix:
         config:
           - {name: standalone, destDir: switch}
-          - {name: libretro, cmakeArgs: -DLIBRETRO=ON}
+          - {name: libretro, cmakeArgs: -DCMAKE_ARCHIVE_OUTPUT_DIRECTORY=artifact -DLIBRETRO=ON}
 
     steps:
       - name: Set up build environment
         run: |
           sudo apt-get update
-          sudo apt-get -y install awscli
+          sudo apt-get -y install awscli ninja-build
 
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0
-          submodules: recursive
+          submodules: true
 
       - name: CMake
         run: |
-          $DEVKITPRO/portlibs/switch/bin/aarch64-none-elf-cmake -B build -DCMAKE_BUILD_TYPE=Release ${{ matrix.config.cmakeArgs }}
-          cmake --build build --config Release --parallel 2
+          $DEVKITPRO/portlibs/switch/bin/aarch64-none-elf-cmake -B build -DCMAKE_BUILD_TYPE=Release -G Ninja ${{ matrix.config.cmakeArgs }}
+          cmake --build build --config Release
+
+      - name: Prepare upload
+        run: |
+          mkdir build/artifact
+          mv build/flycast.nro build/artifact/flycast.nro
+        if: hashFiles('build/flycast.nro') != ''
 
       - uses: actions/upload-artifact@v2
         with:
@@ -36,16 +42,8 @@ jobs:
           path: build/artifact
 
       - name: Package app
-        run: |
-          cd build/artifact
-          zip flycast.nro.zip flycast.nro
-          rm -f flycast.nro
-        if: matrix.config.destDir != ''
-
-      - name: Set up git vars
-        run: |
-          echo GIT_BUILD=`git describe --all --always | sed 's/remotes\/origin/heads/'`-$GITHUB_SHA >> $GITHUB_ENV
-        shell: bash
+        run: zip -m build/artifact/flycast.nro.zip build/artifact/flycast.nro
+        if: hashFiles('build/artifact/flycast.nro') != ''
 
       - name: Configure AWS Credentials
         id: aws-credentials
@@ -57,5 +55,5 @@ jobs:
         if: github.repository == 'flyinghead/flycast' && github.event_name == 'push' && matrix.config.destDir != ''
 
       - name: Upload to S3
-        run: aws s3 sync build/artifact s3://flycast-builds/${{ matrix.config.destDir }}/${{ env.GIT_BUILD }} --acl public-read --follow-symlinks
+        run: aws s3 sync build/artifact s3://flycast-builds/${{ matrix.config.destDir }}/${GITHUB_REF#refs/}-$GITHUB_SHA --acl public-read --follow-symlinks
         if: ${{ steps.aws-credentials.outputs.aws-account-id != '' }}

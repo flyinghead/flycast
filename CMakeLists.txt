@@ -1288,19 +1288,10 @@ if(NINTENDO_SWITCH)
 	    	COMMAND ${CMAKE_AR} -x $<TARGET_FILE:zip>
 	    	COMMAND ${CMAKE_AR} -rs flycast_libretro_libnx.a *.obj
 	    	COMMAND rm *.obj
-	    	COMMAND mkdir -p artifact
-	    	COMMAND mv flycast_libretro_libnx.a artifact
-	    	WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-	    	DEPENDS xxHash::xxhash chdr-static zip)
-	    add_dependencies(combined ${PROJECT_NAME})
+	    	WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}
+	    	DEPENDS xxHash::xxhash chdr-static zip ${PROJECT_NAME})
 	else()
 		nx_generate_nacp(flycast.nacp NAME "Flycast" AUTHOR "flyinghead, M4xw" VERSION "${GIT_VERSION}")
 		nx_create_nro(flycast NACP flycast.nacp ICON "${CMAKE_SOURCE_DIR}/shell/switch/flycast.jpeg")
-		add_custom_target(combined ALL
-			COMMAND mkdir -p artifact
-			COMMAND mv flycast.nro artifact
-			DEPENDS flycast_nro
-			WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
 	endif()
 endif()
-
