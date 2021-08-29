@@ -233,7 +233,8 @@ static int sched_tmu_cb(int ch, int sch_cycl, int jitter)
 
 			//schedule next trigger by writing the TCNT register
 			u32 tcor = TMU_TCOR(ch);
-			write_TMU_TCNTch(ch, std::max((s32)(tcor + tcnt), 0));
+			// Don't miss an underflow if tcor is less than -tcnt
+			write_TMU_TCNTch(ch, (u32)std::max<s64>((u64)tcor + (s32)tcnt, 0));
 		}
 		else {
 			
