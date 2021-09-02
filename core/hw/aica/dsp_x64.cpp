@@ -30,15 +30,18 @@
 namespace dsp
 {
 
-alignas(4096) static u8 CodeBuffer[32 * 1024]
+constexpr size_t CodeBufferSize = 32 * 1024;
 #if defined(_WIN32)
-	;
-#elif defined(__unix__)
-	__attribute__((section(".text")));
-#elif defined(__APPLE__)
-	__attribute__((section("__TEXT,.text")));
+static u8 *CodeBuffer;
 #else
-	#error CodeBuffer code section unknown
+alignas(4096) static u8 CodeBuffer[CodeBufferSize]
+	#if defined(__unix__)
+		__attribute__((section(".text")));
+	#elif defined(__APPLE__)
+		__attribute__((section("__TEXT,.text")));
+	#else
+		#error CodeBuffer code section unknown
+	#endif
 #endif
 static u8 *pCodeBuffer;
 static ptrdiff_t rx_offset;
@@ -409,23 +412,23 @@ private:
 
 void recompile()
 {
-	X64DSPAssembler assembler(pCodeBuffer, sizeof(CodeBuffer));
+	X64DSPAssembler assembler(pCodeBuffer, CodeBufferSize);
 	assembler.Compile(&state);
 }
 
 void recInit()
 {
 #ifdef FEAT_NO_RWX_PAGES
-	if (!vmem_platform_prepare_jit_block(CodeBuffer, sizeof(CodeBuffer), (void**)&pCodeBuffer, &rx_offset))
+	if (!vmem_platform_prepare_jit_block(CodeBuffer, CodeBufferSize, (void**)&pCodeBuffer, &rx_offset))
 #else
-	if (!vmem_platform_prepare_jit_block(CodeBuffer, sizeof(CodeBuffer), (void**)&pCodeBuffer))
+	if (!vmem_platform_prepare_jit_block(CodeBuffer, CodeBufferSize, (void**)&pCodeBuffer))
 #endif
 		die("vmem_platform_prepare_jit_block failed in x64 dsp");
 }
 
 void runStep()
 {
-	((void (*)())&CodeBuffer[0])();
+	((void (*)())&pCodeBuffer[0])();
 }
 
 }
