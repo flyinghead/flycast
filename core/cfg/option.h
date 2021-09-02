@@ -307,7 +307,6 @@ extern Option<int> SavestateSlot;
 
 constexpr bool LimitFPS = true;
 extern Option<bool> DSPEnabled;
-extern Option<bool> DisableSound;
 extern Option<int> AudioBufferSize;	//In samples ,*4 for bytes
 extern Option<bool> AutoLatency;
 
@@ -412,6 +411,7 @@ extern Option<bool> ActAsServer;
 extern OptionString DNS;
 extern OptionString NetworkServer;
 extern Option<bool> EmulateBBA;
+extern Option<bool> GGPOEnable;
 
 #ifdef SUPPORT_DISPMANX
 extern Option<bool> DispmanxMaintainAspect;

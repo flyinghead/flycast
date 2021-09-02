@@ -17,10 +17,10 @@
 #include "oslib/oslib.h"
 #include "hw/sh4/dyna/blockmanager.h"
 #include "hw/sh4/dyna/ngen.h"
+#include "rend/TexCache.h"
+#include "hw/mem/_vmem.h"
+#include "hw/mem/mem_watch.h"
 #include <windows.h>
-
-bool VramLockedWrite(u8* address);
-bool BM_LockedWrite(u8* address);
 
 static PVOID vectoredHandler;
 static LONG (WINAPI *prevExceptionHandler)(EXCEPTION_POINTERS *ep);
@@ -79,6 +79,9 @@ static LONG WINAPI exceptionHandler(EXCEPTION_POINTERS *ep)
 	EXCEPTION_RECORD* pExceptionRecord = ep->ExceptionRecord;
 	u8* address = (u8 *)pExceptionRecord->ExceptionInformation[1];
 
+	// Ram watcher for net rollback
+	if (memwatch::writeAccess(address))
+		return EXCEPTION_CONTINUE_EXECUTION;
 	// code protection in RAM
 	if (bm_RamWriteAccess(address))
 		return EXCEPTION_CONTINUE_EXECUTION;

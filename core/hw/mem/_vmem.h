@@ -115,3 +115,5 @@ void _vmem_bm_reset();
 void _vmem_protect_vram(u32 addr, u32 size);
 void _vmem_unprotect_vram(u32 addr, u32 size);
 u32 _vmem_get_vram_offset(void *addr);
+bool BM_LockedWrite(u8* address);
+

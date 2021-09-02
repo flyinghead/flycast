@@ -5,6 +5,7 @@
 #include "hw/pvr/pvr_mem.h"
 #include "rend/TexCache.h"
 #include "cfg/option.h"
+#include "network/ggpo.h"
 
 #include <mutex>
 #include <zlib.h>
@@ -386,6 +387,11 @@ void rend_start_render()
 			else
 				rs.Set();
 		}
+        if (ggpo::active() && !config::DelayFrameSwapping)
+        {
+            settings.endOfFrame = true;
+            sh4_cpu.Stop();
+        }
 	}
 }
 
@@ -455,6 +461,11 @@ void rend_swap_frame(u32 fb_r_sof1)
 			swap_mutex.unlock();
 			rend_single_frame(true);
 			swap_mutex.lock();
+		}
+		if (ggpo::active() && config::DelayFrameSwapping)
+		{
+			settings.endOfFrame = true;
+			sh4_cpu.Stop();
 		}
 	}
 	swap_mutex.unlock();

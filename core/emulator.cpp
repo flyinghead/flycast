@@ -35,6 +35,8 @@
 #include "hw/pvr/Renderer_if.h"
 #include "rend/CustomTexture.h"
 #include "hw/arm7/arm7_rec.h"
+#include "network/ggpo.h"
+#include "hw/mem/mem_watch.h"
 
 extern int screen_width, screen_height;
 
@@ -527,13 +529,23 @@ static void *dc_run_thread(void*)
 	InitAudio();
 
 	try {
-		dc_run();
+		memwatch::protect();
+		while (true)
+		{
+			dc_run();
+			if (settings.endOfFrame)
+				settings.endOfFrame = false;
+			else
+				break;
+			ggpo::nextFrame();
+		}
 	} catch (const FlycastException& e) {
 		ERROR_LOG(COMMON, "%s", e.what());
 		sh4_cpu.Stop();
 		lastError = e.what();
 	}
 
+	ggpo::stopSession();
     TermAudio();
 
     return nullptr;
@@ -589,6 +601,7 @@ void dc_term_game()
 
 	config::Settings::instance().reset();
 	config::Settings::instance().load(false);
+	ggpo::stopSession();
 }
 
 void dc_term_emulator()

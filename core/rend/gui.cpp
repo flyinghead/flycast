@@ -28,6 +28,7 @@
 #include "gles/imgui_impl_opengl3.h"
 #include "imgui/roboto_medium.h"
 #include "network/naomi_network.h"
+#include "network/ggpo.h"
 #include "wsi/context.h"
 #include "input/gamepad_device.h"
 #include "gui_util.h"
@@ -41,7 +42,6 @@
 #include "emulator.h"
 #include "rend/mainui.h"
 
-extern void UpdateInputState();
 static bool game_started;
 
 extern u8 kb_shift[MAPLE_PORTS]; // shift keys pressed (bitmask)
@@ -309,8 +309,6 @@ static void ImGui_Impl_NewFrame()
 	ImGui::GetIO().DisplaySize.y = screen_height;
 
 	ImGuiIO& io = ImGui::GetIO();
-
-	UpdateInputState();
 
 	// Read keyboard modifiers inputs
 	io.KeyCtrl = (kb_shift[0] & (0x01 | 0x10)) != 0;
@@ -1576,7 +1574,6 @@ static void gui_display_settings()
 		if (ImGui::BeginTabItem("Audio"))
 		{
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
-			OptionCheckbox("Disable Sound", config::DisableSound, "Disable the emulator sound output");
 			OptionCheckbox("Enable DSP", config::DSPEnabled,
 					"Enable the Dreamcast Digital Sound Processor. Only recommended on fast platforms");
 #ifdef __ANDROID__
@@ -1708,9 +1705,22 @@ static void gui_display_settings()
 		    {
 		    	OptionCheckbox("Broadband Adapter Emulation", config::EmulateBBA,
 		    			"Emulate the Ethernet Broadband Adapter (BBA) instead of the Modem");
+		    	OptionCheckbox("Enable GGPO Networking", config::GGPOEnable,
+		    			"Enable networking using GGPO");
 		    	OptionCheckbox("Enable Naomi Networking", config::NetworkEnable,
 		    			"Enable networking for supported Naomi games");
-		    	if (config::NetworkEnable)
+		    	if (config::GGPOEnable)
+		    	{
+					OptionCheckbox("Play as player 1", config::ActAsServer,
+							"Deselect to play as player 2");
+					char server_name[256];
+					strcpy(server_name, config::NetworkServer.get().c_str());
+					ImGui::InputText("Peer", server_name, sizeof(server_name), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
+					ImGui::SameLine();
+					ShowHelpMarker("Your peer IP address and optional port");
+					config::NetworkServer.set(server_name);
+		    	}
+		    	else if (config::NetworkEnable)
 		    	{
 					OptionCheckbox("Act as Server", config::ActAsServer,
 							"Create a local server for Naomi network games");
@@ -2059,7 +2069,10 @@ static void gui_network_start()
 	ImGui::SetCursorPosY(126.f * scaling);
 	if (ImGui::Button("Cancel", ImVec2(100.f * scaling, 0.f)))
 	{
-		naomiNetwork.terminate();
+		if (config::GGPOEnable)
+			ggpo::stopSession();
+		else
+			naomiNetwork.terminate();
 		networkStatus.get();
 		gui_state = GuiState::Main;
 		settings.imgread.ImagePath[0] = '\0';
@@ -2086,7 +2099,12 @@ static void gui_display_loadscreen()
 	{
 		try {
 			dc_get_load_status();
-			if (NaomiNetworkSupported())
+			if (config::GGPOEnable)
+			{
+				networkStatus = ggpo::startNetwork();
+				gui_state = GuiState::NetworkStart;
+			}
+			else if (NaomiNetworkSupported())
 			{
 				start_network();
 			}

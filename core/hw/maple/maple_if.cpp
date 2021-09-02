@@ -5,6 +5,7 @@
 #include "hw/holly/sb.h"
 #include "hw/sh4/sh4_mem.h"
 #include "hw/sh4/sh4_sched.h"
+#include "network/ggpo.h"
 
 enum MaplePattern
 {
@@ -19,7 +20,6 @@ maple_device* MapleDevices[MAPLE_PORTS][6];
 
 int maple_schid;
 
-void UpdateInputState();
 /*
 	Maple host controller
 	Direct processing, async interrupt handling
@@ -147,7 +147,7 @@ static void maple_DoDma()
 	}
 #endif
 
-	UpdateInputState();
+	ggpo::getInput(maple_kcode);
 
 	const bool swap_msb = (SB_MMSEL == 0);
 	u32 xfer_count=0;

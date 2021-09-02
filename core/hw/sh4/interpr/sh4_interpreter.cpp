@@ -19,14 +19,14 @@
 sh4_icache icache;
 sh4_ocache ocache;
 
-static s32 l;
+s32 sh4InterpCycles;
 
 static void ExecuteOpcode(u16 op)
 {
 	if (sr.FD == 1 && OpDesc[op]->IsFloatingPoint())
 		RaiseFPUDisableException();
 	OpPtr[op](op);
-	l -= CPU_RATIO;
+	sh4InterpCycles -= CPU_RATIO;
 }
 
 static u16 ReadNexOp()
@@ -42,7 +42,7 @@ static void Sh4_int_Run()
 	sh4_int_bCpuRun = true;
 	RestoreHostRoundingMode();
 
-	l += SH4_TIMESLICE;
+	sh4InterpCycles += SH4_TIMESLICE;
 
 	try {
 		do
@@ -53,12 +53,12 @@ static void Sh4_int_Run()
 					u32 op = ReadNexOp();
 
 					ExecuteOpcode(op);
-				} while (l > 0);
-				l += SH4_TIMESLICE;
+				} while (sh4InterpCycles > 0);
+				sh4InterpCycles += SH4_TIMESLICE;
 				UpdateSystem_INTC();
 			} catch (const SH4ThrownException& ex) {
 				Do_Exception(ex.epc, ex.expEvn, ex.callVect);
-				l -= CPU_RATIO * 5;	// an exception requires the instruction pipeline to drain, so approx 5 cycles
+				sh4InterpCycles -= CPU_RATIO * 5;	// an exception requires the instruction pipeline to drain, so approx 5 cycles
 			}
 		} while (sh4_int_bCpuRun);
 	} catch (const debugger::Stop& e) {
@@ -82,7 +82,7 @@ static void Sh4_int_Step()
 		ExecuteOpcode(op);
 	} catch (const SH4ThrownException& ex) {
 		Do_Exception(ex.epc, ex.expEvn, ex.callVect);
-		l -= CPU_RATIO * 5;	// an exception requires the instruction pipeline to drain, so approx 5 cycles
+		sh4InterpCycles -= CPU_RATIO * 5;	// an exception requires the instruction pipeline to drain, so approx 5 cycles
 	} catch (const debugger::Stop& e) {
 	}
 }
@@ -110,6 +110,7 @@ static void Sh4_int_Reset(bool hard)
 	UpdateFPSCR();
 	icache.Reset(hard);
 	ocache.Reset(hard);
+	sh4InterpCycles = 0;
 
 	INFO_LOG(INTERPRETER, "Sh4 Reset");
 }

@@ -45,3 +45,5 @@ void ExecuteDelayslot_RTE();
 
 int UpdateSystem();
 int UpdateSystem_INTC();
+
+extern s32 sh4InterpCycles;

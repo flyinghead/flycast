@@ -41,7 +41,6 @@ Option<int> SavestateSlot("Dreamcast.SavestateSlot");
 // Sound
 
 Option<bool> DSPEnabled("aica.DSPEnabled", false);
-Option<bool> DisableSound("aica.NoSound");
 #if HOST_CPU == CPU_ARM
 Option<int> AudioBufferSize("aica.BufferSize", 5644);	// 128 ms
 #else
@@ -117,6 +116,7 @@ Option<bool> ActAsServer("ActAsServer", false, "network");
 OptionString DNS("DNS", "46.101.91.123", "network");
 OptionString NetworkServer("server", "", "network");
 Option<bool> EmulateBBA("EmulateBBA", false, "network");
+Option<bool> GGPOEnable("GGPO", false, "network");
 
 #ifdef SUPPORT_DISPMANX
 Option<bool> DispmanxMaintainAspect("maintain_aspect", true, "dispmanx");

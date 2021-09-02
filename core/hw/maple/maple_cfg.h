@@ -70,6 +70,8 @@ private:
 	maple_device* dev;
 };
 
+extern u32 maple_kcode[4];
+
 void mcfg_CreateDevices();
 void mcfg_CreateNAOMIJamma();
 void mcfg_CreateAtomisWaveControllers();

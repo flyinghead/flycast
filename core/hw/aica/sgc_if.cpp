@@ -423,7 +423,7 @@ struct ChannelEx
 		void (* plfo_calc)(ChannelEx* ch);
 		__forceinline void Step(ChannelEx* ch) { counter--;if (counter==0) { state++; counter=start_value; alfo_calc(ch);plfo_calc(ch); } }
 		void Reset(ChannelEx* ch) { state=0; counter=start_value; alfo_calc(ch); plfo_calc(ch); }
-		void SetStartValue(u32 nv) { start_value=nv;counter=start_value; }
+		void SetStartValue(u32 nv) { start_value = nv;}
 	} lfo;
 
 	bool enabled;	//set to false to 'freeze' the channel
@@ -679,7 +679,7 @@ struct ChannelEx
 	}
 
 	//LFORE,LFOF,PLFOWS,PLFOS,ALFOWS,ALFOS
-	void UpdateLFO()
+	void UpdateLFO(bool derivedState)
 	{
 		{
 			int N=ccd->LFOF;
@@ -689,6 +689,8 @@ struct ChannelEx
 			int L = (G-1)<<2;
 			int O = L + G * (M+1);
 			lfo.SetStartValue(O);
+			if (!derivedState)
+				lfo.counter = O;
 		}
 
 		lfo.alfo_shft=8-ccd->ALFOS;
@@ -697,7 +699,7 @@ struct ChannelEx
 		lfo.plfo_calc=PLFOWS_CALC[ccd->PLFOWS];
 		lfo.plfo_scale = PLFO_Scales[ccd->PLFOS];
 
-		if (ccd->LFORE)
+		if (ccd->LFORE && !derivedState)
 		{
 			lfo.Reset(this);
 		}
@@ -809,7 +811,7 @@ struct ChannelEx
 
 		case 0x1C://ALFOS,ALFOWS,PLFOS
 		case 0x1D://PLFOWS,LFOF,LFORE
-			UpdateLFO();
+			UpdateLFO(false);
 			break;
 
 		case 0x20://ISEL,IMXL
@@ -1454,7 +1456,7 @@ void AICA_Sample32()
 		clip16(mixl);
 		clip16(mixr);
 
-		if (!settings.input.fastForwardMode && !config::DisableSound)
+		if (!settings.input.fastForwardMode && !settings.aica.muteAudio)
 			WriteSample(mixr,mixl);
 	}
 }
@@ -1498,7 +1500,7 @@ void AICA_Sample()
 			VOLPAN(*(s16*)&DSPData->EFREG[i], dsp_out_vol[i].EFSDL, dsp_out_vol[i].EFPAN, mixl, mixr);
 	}
 
-	if (settings.input.fastForwardMode || config::DisableSound)
+	if (settings.input.fastForwardMode || settings.aica.muteAudio)
 		return;
 
 	//Mono !
@@ -1673,7 +1675,7 @@ bool channel_unserialize(void **data, unsigned int *total_size, serialize_versio
 			REICAST_US(dumu8);	// Chans[i].lfo.alfo_calc_lut
 			REICAST_US(dumu8);	// Chans[i].lfo.plfo_calc_lut
 		}
-		Chans[i].UpdateLFO();
+		Chans[i].UpdateLFO(true);
 		REICAST_US(Chans[i].enabled) ;
 		if (old_format)
 			REICAST_US(dum); // Chans[i].ChannelNumber

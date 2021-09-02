@@ -80,21 +80,25 @@ bool QueueRender(TA_context* ctx)
 {
 	verify(ctx != 0);
 	
-	bool skipFrame = false;
-	RenderCount++;
-	if (RenderCount % (config::SkipFrame + 1) != 0)
-		skipFrame = true;
-	else if (config::ThreadedRendering && rqueue != nullptr
-			&& (config::AutoSkipFrame == 0 || (config::AutoSkipFrame == 1 && SH4FastEnough)))
-		// The previous render hasn't completed yet so we wait.
-		// If autoskipframe is enabled (normal level), we only do so if the CPU is running
-		// fast enough over the last frames
-		frame_finished.Wait();
+	bool skipFrame = settings.disableRenderer;
+	if (!skipFrame)
+	{
+		RenderCount++;
+		if (RenderCount % (config::SkipFrame + 1) != 0)
+			skipFrame = true;
+		else if (config::ThreadedRendering && rqueue != nullptr
+				&& (config::AutoSkipFrame == 0 || (config::AutoSkipFrame == 1 && SH4FastEnough)))
+			// The previous render hasn't completed yet so we wait.
+			// If autoskipframe is enabled (normal level), we only do so if the CPU is running
+			// fast enough over the last frames
+			frame_finished.Wait();
+	}
 
 	if (skipFrame || rqueue)
 	{
 		tactx_Recycle(ctx);
-		fskip++;
+		if (!settings.disableRenderer)
+			fskip++;
 		return false;
 	}
 

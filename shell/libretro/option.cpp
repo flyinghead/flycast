@@ -42,7 +42,6 @@ Option<int> SavestateSlot("");
 // Sound
 
 Option<bool> DSPEnabled(CORE_OPTION_NAME "_enable_dsp", false);
-Option<bool> DisableSound("");
 #if HOST_CPU == CPU_ARM
 Option<int> AudioBufferSize("", 5644);	// 128 ms
 #else
@@ -109,6 +108,7 @@ Option<bool> ActAsServer("", false);
 OptionString DNS("", "46.101.91.123");
 OptionString NetworkServer("", "");
 Option<bool> EmulateBBA("", false); // TODO
+Option<bool> GGPOEnable("", false);
 
 // Maple
 

@@ -209,27 +209,22 @@ std::mutex vramlist_lock;
 
 void libCore_vramlock_Lock(u32 start_offset64, u32 end_offset64, BaseTextureCacheData *texture)
 {
-	vram_block* block=(vram_block* )malloc(sizeof(vram_block));
- 
-	if (end_offset64>(VRAM_SIZE-1))
+	if (end_offset64 > VRAM_SIZE - 1)
 	{
 		WARN_LOG(PVR, "vramlock_Lock_64: end_offset64>(VRAM_SIZE-1) \n Tried to lock area out of vram , possibly bug on the pvr plugin");
-		end_offset64=(VRAM_SIZE-1);
+		end_offset64 = VRAM_SIZE - 1;
 	}
 
-	if (start_offset64>end_offset64)
+	if (start_offset64 > end_offset64)
 	{
 		WARN_LOG(PVR, "vramlock_Lock_64: start_offset64>end_offset64 \n Tried to lock negative block , possibly bug on the pvr plugin");
-		start_offset64=0;
+		return;
 	}
 
-	
-
-	block->end=end_offset64;
-	block->start=start_offset64;
-	block->len=end_offset64-start_offset64+1;
-	block->userdata = texture;
-	block->type=64;
+	vram_block *block = new vram_block();
+	block->end = end_offset64;
+	block->start = start_offset64;
+	block->texture = texture;
 
 	{
 		std::lock_guard<std::mutex> lock(vramlist_lock);
@@ -979,9 +974,9 @@ template void WriteTextureToVRam<2, 1, 0, 3>(u32 width, u32 height, u8 *data, u1
 
 static void rend_text_invl(vram_block* bl)
 {
-	BaseTextureCacheData* tcd = (BaseTextureCacheData*)bl->userdata;
-	tcd->dirty = FrameCount;
-	tcd->lock_block = nullptr;
+	BaseTextureCacheData* texture = bl->texture;
+	texture->dirty = FrameCount;
+	texture->lock_block = nullptr;
 
 	libCore_vramlock_Unlock_block_wb(bl);
 }

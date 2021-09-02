@@ -551,19 +551,18 @@ constexpr TexConvFP32 tex1555_VQ32 = texture_VQ<ConvertTwiddle<Unpacker1555_32<B
 constexpr TexConvFP32 tex4444_VQ32 = texture_VQ<ConvertTwiddle<Unpacker4444_32<BGRAPacker>>>;
 }
 
+class BaseTextureCacheData;
+
 struct vram_block
 {
 	u32 start;
 	u32 end;
-	u32 len;
-	u32 type;
 
-	void* userdata;
+	BaseTextureCacheData *texture;
 };
 
-class BaseTextureCacheData;
-
 bool VramLockedWriteOffset(size_t offset);
+bool VramLockedWrite(u8* address);
 void libCore_vramlock_Lock(u32 start_offset, u32 end_offset, BaseTextureCacheData *texture);
 
 void UpscalexBRZ(int factor, u32* source, u32* dest, int width, int height, bool has_alpha);

@@ -106,7 +106,7 @@ void dc_savestate(int index)
 	}
 
 	void *data_ptr = data;
-
+	total_size = 0;
 	if (!dc_serialize(&data_ptr, &total_size))
 	{
 		WARN_LOG(SAVESTATE, "Failed to save state - could not serialize data") ;

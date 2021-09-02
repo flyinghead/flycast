@@ -20,6 +20,7 @@
 #include "hw/naomi/naomi.h"
 #include "hw/naomi/naomi_cart.h"
 #include "hw/sh4/sh4_cache.h"
+#include "hw/sh4/sh4_interpreter.h"
 #include "hw/bba/bba.h"
 #include "cfg/option.h"
 
@@ -152,6 +153,7 @@ extern Sh4RCB* p_sh4rcb;
 //./core/hw/sh4/sh4_sched.o
 extern u64 sh4_sched_ffb;
 extern std::vector<sched_list> sch_list;
+extern int sh4_sched_next_id;
 
 //./core/hw/sh4/interpr/sh4_interpreter.o
 extern int aica_schid;
@@ -236,13 +238,17 @@ bool register_unserialize(T& regs,void **data, unsigned int *total_size, seriali
 	return true;
 }
 
-bool dc_serialize(void **data, unsigned int *total_size)
+static const std::array<int, 11> getSchedulerIds() {
+	return { aica_schid, rtc_schid, gdrom_schid, maple_schid, dma_sched_id,
+		tmu_sched[0], tmu_sched[1], tmu_sched[2], render_end_schid, vblank_schid,
+		modem_sched };
+}
+
+bool dc_serialize(void **data, unsigned int *total_size, bool rollback)
 {
 	int i = 0;
 
 	serialize_version_enum version = VCUR_FLYCAST;
-
-	*total_size = 0 ;
 
 	//dc not initialized yet
 	if ( p_sh4rcb == NULL )
@@ -260,6 +266,7 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	REICAST_S(armFiqEnable);
 	REICAST_S(armMode);
 	REICAST_S(Arm7Enabled);
+	REICAST_S(arm7ClockTicks);
 
 	dsp::state.serialize(data, total_size);
 
@@ -269,7 +276,8 @@ bool dc_serialize(void **data, unsigned int *total_size)
 		REICAST_S(timers[i].m_step);
 	}
 
-	REICAST_SA(aica_ram.data,aica_ram.size) ;
+	if (!rollback)
+		REICAST_SA(aica_ram.data,aica_ram.size) ;
 	REICAST_S(VREG);
 	REICAST_S(ARMRST);
 	REICAST_S(rtc_EN);
@@ -341,7 +349,8 @@ bool dc_serialize(void **data, unsigned int *total_size)
 
 	SerializeTAContext(data, total_size);
 
-	REICAST_SA(vram.data, vram.size);
+	if (!rollback)
+		REICAST_SA(vram.data, vram.size);
 
 	REICAST_SA(OnChipRAM.data(), OnChipRAM_SIZE);
 
@@ -358,7 +367,8 @@ bool dc_serialize(void **data, unsigned int *total_size)
 	icache.Serialize(data, total_size);
 	ocache.Serialize(data, total_size);
 
-	REICAST_SA(mem_b.data, mem_b.size);
+	if (!rollback)
+		REICAST_SA(mem_b.data, mem_b.size);
 
 	REICAST_SA(InterruptEnvId,32);
 	REICAST_SA(InterruptBit,32);
@@ -385,42 +395,22 @@ bool dc_serialize(void **data, unsigned int *total_size)
 
 	REICAST_S((*p_sh4rcb).cntx);
 
+	REICAST_S(sh4InterpCycles);
 	REICAST_S(sh4_sched_ffb);
+	std::array<int, 11> schedIds = getSchedulerIds();
+	if (sh4_sched_next_id == -1)
+		REICAST_S(sh4_sched_next_id);
+	else
+		for (u32 i = 0; i < schedIds.size(); i++)
+			if (schedIds[i] == sh4_sched_next_id)
+				REICAST_S(i);
 
-	REICAST_S(sch_list[aica_schid].tag) ;
-	REICAST_S(sch_list[aica_schid].start) ;
-	REICAST_S(sch_list[aica_schid].end) ;
-
-	REICAST_S(sch_list[rtc_schid].tag) ;
-	REICAST_S(sch_list[rtc_schid].start) ;
-	REICAST_S(sch_list[rtc_schid].end) ;
-
-	REICAST_S(sch_list[gdrom_schid].tag) ;
-	REICAST_S(sch_list[gdrom_schid].start) ;
-	REICAST_S(sch_list[gdrom_schid].end) ;
-
-	REICAST_S(sch_list[maple_schid].tag) ;
-	REICAST_S(sch_list[maple_schid].start) ;
-	REICAST_S(sch_list[maple_schid].end) ;
-
-	REICAST_S(sch_list[dma_sched_id].tag) ;
-	REICAST_S(sch_list[dma_sched_id].start) ;
-	REICAST_S(sch_list[dma_sched_id].end) ;
-
-	for (int i = 0; i < 3; i++)
+	for (u32 i = 0; i < schedIds.size() - 1; i++)
 	{
-		REICAST_S(sch_list[tmu_sched[i]].tag) ;
-		REICAST_S(sch_list[tmu_sched[i]].start) ;
-		REICAST_S(sch_list[tmu_sched[i]].end) ;
+		REICAST_S(sch_list[schedIds[i]].tag);
+		REICAST_S(sch_list[schedIds[i]].start);
+		REICAST_S(sch_list[schedIds[i]].end);
 	}
-
-	REICAST_S(sch_list[render_end_schid].tag) ;
-	REICAST_S(sch_list[render_end_schid].start) ;
-	REICAST_S(sch_list[render_end_schid].end) ;
-
-	REICAST_S(sch_list[vblank_schid].tag) ;
-	REICAST_S(sch_list[vblank_schid].start) ;
-	REICAST_S(sch_list[vblank_schid].end) ;
 
 	REICAST_S(config::EmulateBBA.get());
 	if (config::EmulateBBA)
@@ -493,6 +483,7 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size, seria
 		REICAST_SKIP(1);			// stopState
 		REICAST_SKIP(1);			// holdState
 	}
+	arm7ClockTicks = 0;
 
 	dsp::state.deserialize(data, total_size, version);
 
@@ -713,6 +704,7 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size, seria
 		REICAST_SKIP(4);		// old_dn
 	}
 
+	sh4InterpCycles = 0;
 	REICAST_US(sh4_sched_ffb);
 	if (version < V9_LIBRETRO)
 		REICAST_SKIP(4);		// sh4_sched_intr
@@ -865,13 +857,11 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size, seria
 	return true;
 }
 
-bool dc_unserialize(void **data, unsigned int *total_size)
+bool dc_unserialize(void **data, unsigned int *total_size, bool rollback)
 {
 	int i = 0;
 
 	serialize_version_enum version = V1 ;
-
-	*total_size = 0 ;
 
 	REICAST_US(version) ;
 	if (version >= V5_LIBRETRO && version <= V13_LIBRETRO)
@@ -901,6 +891,10 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 	REICAST_US(Arm7Enabled);
 	if (version < V5)
 		REICAST_SKIP(256 + 3);
+	if (version >= V19)
+		REICAST_US(arm7ClockTicks);
+	else
+		arm7ClockTicks = 0;
 
 	dsp::state.deserialize(data, total_size, version);
 
@@ -910,7 +904,8 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 		REICAST_US(timers[i].m_step);
 	}
 
-	REICAST_USA(aica_ram.data,aica_ram.size) ;
+	if (!rollback)
+		REICAST_USA(aica_ram.data,aica_ram.size) ;
 	REICAST_US(VREG);
 	REICAST_US(ARMRST);
 	REICAST_US(rtc_EN);
@@ -1036,7 +1031,8 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 	if (version >= V11)
 		UnserializeTAContext(data, total_size, version);
 
-	REICAST_USA(vram.data, vram.size);
+	if (!rollback)
+		REICAST_USA(vram.data, vram.size);
 	pal_needs_update = true;
 
 	REICAST_USA(OnChipRAM.data(), OnChipRAM_SIZE);
@@ -1060,7 +1056,8 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 	else
 		ocache.Reset(true);
 
-	REICAST_USA(mem_b.data, mem_b.size);
+	if (!rollback)
+		REICAST_USA(mem_b.data, mem_b.size);
 
 	if (version < V5)
 		REICAST_SKIP(2);
@@ -1089,45 +1086,29 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 		REICAST_SKIP(4);
 		REICAST_SKIP(4);
 	}
+	if (version >= V19)
+		REICAST_US(sh4InterpCycles);
+	else
+		sh4InterpCycles = 0;
 
 	REICAST_US(sh4_sched_ffb);
+	std::array<int, 11> schedIds = getSchedulerIds();
+
+	if (version >= V19)
+	{
+		REICAST_US(sh4_sched_next_id);
+		if (sh4_sched_next_id != -1)
+			sh4_sched_next_id = schedIds[sh4_sched_next_id];
+	}
 	if (version < V8)
 		REICAST_US(i);		// sh4_sched_intr
 
-	REICAST_US(sch_list[aica_schid].tag) ;
-	REICAST_US(sch_list[aica_schid].start) ;
-	REICAST_US(sch_list[aica_schid].end) ;
-
-	REICAST_US(sch_list[rtc_schid].tag) ;
-	REICAST_US(sch_list[rtc_schid].start) ;
-	REICAST_US(sch_list[rtc_schid].end) ;
-
-	REICAST_US(sch_list[gdrom_schid].tag) ;
-	REICAST_US(sch_list[gdrom_schid].start) ;
-	REICAST_US(sch_list[gdrom_schid].end) ;
-
-	REICAST_US(sch_list[maple_schid].tag) ;
-	REICAST_US(sch_list[maple_schid].start) ;
-	REICAST_US(sch_list[maple_schid].end) ;
-
-	REICAST_US(sch_list[dma_sched_id].tag) ;
-	REICAST_US(sch_list[dma_sched_id].start) ;
-	REICAST_US(sch_list[dma_sched_id].end) ;
-
-	for (int i = 0; i < 3; i++)
+	for (u32 i = 0; i < schedIds.size() - 1; i++)
 	{
-		REICAST_US(sch_list[tmu_sched[i]].tag) ;
-		REICAST_US(sch_list[tmu_sched[i]].start) ;
-		REICAST_US(sch_list[tmu_sched[i]].end) ;
+		REICAST_US(sch_list[schedIds[i]].tag);
+		REICAST_US(sch_list[schedIds[i]].start);
+		REICAST_US(sch_list[schedIds[i]].end);
 	}
-
-	REICAST_US(sch_list[render_end_schid].tag) ;
-	REICAST_US(sch_list[render_end_schid].start) ;
-	REICAST_US(sch_list[render_end_schid].end) ;
-
-	REICAST_US(sch_list[vblank_schid].tag) ;
-	REICAST_US(sch_list[vblank_schid].start) ;
-	REICAST_US(sch_list[vblank_schid].end) ;
 
 	if (version < V8)
 	{
@@ -1174,7 +1155,7 @@ bool dc_unserialize(void **data, unsigned int *total_size)
 	REICAST_USA(UTLB,64);
 	REICAST_USA(ITLB,4);
 	if (version >= V11)
-		REICAST_USA(sq_remap,64);
+		REICAST_US(sq_remap);
 	REICAST_USA(ITLB_LRU_USE,64);
 
 	REICAST_US(NullDriveDiscType);

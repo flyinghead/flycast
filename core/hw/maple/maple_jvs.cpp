@@ -1417,11 +1417,11 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 			u32 buttons[4] {};
 #ifdef LIBRETRO
 			for (int p = 0; p < 4; p++)
-				buttons[p] = ~kcode[p];
+				buttons[p] = ~maple_kcode[p];
 #else
 			for (u32 i = 0; i < ARRAY_SIZE(naomi_button_mapping); i++)
 				for (int p = 0; p < 4; p++)
-					if ((kcode[p] & (1 << i)) == 0)
+					if ((maple_kcode[p] & (1 << i)) == 0)
 						buttons[p] |= naomi_button_mapping[i];
 #endif
 

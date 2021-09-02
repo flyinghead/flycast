@@ -614,6 +614,8 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/hw/maple/maple_jvs.cpp
         core/hw/mem/_vmem.cpp
         core/hw/mem/_vmem.h
+        core/hw/mem/mem_watch.cpp
+        core/hw/mem/mem_watch.h
         core/hw/modem/modem.cpp
         core/hw/modem/modem.h
         core/hw/modem/modem_regs.h
@@ -783,6 +785,8 @@ endif()
 
 target_sources(${PROJECT_NAME} PRIVATE
         core/network/dns.cpp
+        core/network/ggpo.cpp
+        core/network/ggpo.h
         core/network/miniupnp.cpp
         core/network/miniupnp.h
         core/network/naomi_network.cpp
@@ -1115,6 +1119,45 @@ if(NOT KNOWN_ARCHITECTURE_DETECTED)
 endif()
 
 if(NOT LIBRETRO)
+	target_include_directories(${PROJECT_NAME} PRIVATE core/deps/ggpo/include core/deps/ggpo/lib/ggpo)
+	target_sources(${PROJECT_NAME} PRIVATE
+		core/deps/ggpo/lib/ggpo/bitvector.cpp
+		core/deps/ggpo/lib/ggpo/bitvector.h
+		core/deps/ggpo/lib/ggpo/game_input.cpp
+		core/deps/ggpo/lib/ggpo/game_input.h
+		core/deps/ggpo/lib/ggpo/input_queue.cpp
+		core/deps/ggpo/lib/ggpo/input_queue.h
+		core/deps/ggpo/lib/ggpo/log.cpp
+		core/deps/ggpo/lib/ggpo/log.h
+		core/deps/ggpo/lib/ggpo/main.cpp
+		core/deps/ggpo/lib/ggpo/platform_linux.cpp
+		core/deps/ggpo/lib/ggpo/platform_linux.h
+		core/deps/ggpo/lib/ggpo/platform_windows.cpp
+		core/deps/ggpo/lib/ggpo/platform_windows.h
+		core/deps/ggpo/lib/ggpo/poll.cpp
+		core/deps/ggpo/lib/ggpo/ggpo_poll.h
+		core/deps/ggpo/lib/ggpo/ring_buffer.h
+		core/deps/ggpo/lib/ggpo/static_buffer.h
+		core/deps/ggpo/lib/ggpo/sync.cpp
+		core/deps/ggpo/lib/ggpo/sync.h
+		core/deps/ggpo/lib/ggpo/timesync.cpp
+		core/deps/ggpo/lib/ggpo/timesync.h
+		core/deps/ggpo/lib/ggpo/ggpo_types.h
+		
+		core/deps/ggpo/lib/ggpo/backends/backend.h
+		core/deps/ggpo/lib/ggpo/backends/p2p.cpp
+		core/deps/ggpo/lib/ggpo/backends/p2p.h
+		core/deps/ggpo/lib/ggpo/backends/spectator.cpp
+		core/deps/ggpo/lib/ggpo/backends/spectator.h
+		core/deps/ggpo/lib/ggpo/backends/synctest.cpp
+		core/deps/ggpo/lib/ggpo/backends/synctest.h
+		
+		core/deps/ggpo/lib/ggpo/network/udp_msg.h
+		core/deps/ggpo/lib/ggpo/network/udp_proto.cpp
+		core/deps/ggpo/lib/ggpo/network/udp_proto.h
+		core/deps/ggpo/lib/ggpo/network/udp.cpp
+		core/deps/ggpo/lib/ggpo/network/udp.h)
+
 	if(ANDROID)
 	    target_compile_definitions(${PROJECT_NAME} PRIVATE GLES GLES3)
 	

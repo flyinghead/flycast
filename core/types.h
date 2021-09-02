@@ -188,8 +188,8 @@ void os_DebugBreak();
 
 bool rc_serialize(const void *src, unsigned int src_size, void **dest, unsigned int *total_size) ;
 bool rc_unserialize(void *src, unsigned int src_size, void **dest, unsigned int *total_size);
-bool dc_serialize(void **data, unsigned int *total_size);
-bool dc_unserialize(void **data, unsigned int *total_size);
+bool dc_serialize(void **data, unsigned int *total_size, bool rollback = false);
+bool dc_unserialize(void **data, unsigned int *total_size, bool rollback = false);
 
 #define REICAST_S(v) rc_serialize(&(v), sizeof(v), data, total_size)
 #define REICAST_US(v) rc_unserialize(&(v), sizeof(v), data, total_size)
@@ -339,6 +339,7 @@ struct settings_t
 	struct
 	{
 		bool NoBatch;
+		bool muteAudio;
 	} aica;
 
 	struct
@@ -353,6 +354,8 @@ struct settings_t
 	} input;
 
 	bool gameStarted;
+	bool endOfFrame;
+	bool disableRenderer;
 };
 
 extern settings_t settings;
@@ -474,5 +477,6 @@ enum serialize_version_enum {
 	V16 = 811,
 	V17 = 812,
 	V18 = 813,
-	VCUR_FLYCAST = V18,
+	V19 = 814,
+	VCUR_FLYCAST = V19,
 };
