@@ -742,17 +742,6 @@ static bool RenderFrame(int width, int height)
 	gl4ShaderUniforms.fog_clamp_max[2] = ((pvrrc.fog_clamp_max >> 0) & 0xFF) / 255.0f;
 	gl4ShaderUniforms.fog_clamp_max[3] = ((pvrrc.fog_clamp_max >> 24) & 0xFF) / 255.0f;
 	
-	if (fog_needs_update && config::Fog)
-	{
-		fog_needs_update = false;
-		UpdateFogTexture((u8 *)FOG_TABLE, GL_TEXTURE5, GL_RED);
-	}
-	if (palette_updated)
-	{
-		UpdatePaletteTexture(GL_TEXTURE6);
-		palette_updated = false;
-	}
-
 	glcache.UseProgram(gl4.modvol_shader.program);
 
 	glUniformMatrix4fv(gl4.modvol_shader.normal_matrix, 1, GL_FALSE, &gl4ShaderUniforms.normal_mat[0][0]);
@@ -966,6 +955,13 @@ struct OpenGL4Renderer : OpenGLRenderer
 	bool RenderLastFrame() override
 	{
 		return render_output_framebuffer();
+	}
+
+	GLenum getFogTextureSlot() const override {
+		return GL_TEXTURE5;
+	}
+	GLenum getPaletteTextureSlot() const override {
+		return GL_TEXTURE6;
 	}
 
 #ifdef LIBRETRO

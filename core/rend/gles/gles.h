@@ -269,7 +269,7 @@ struct OpenGLRenderer : Renderer
 	void Resize(int w, int h) override { width = w; height = h; }
 	void Term() override;
 
-	bool Process(TA_context* ctx) override { return ProcessFrame(ctx); }
+	bool Process(TA_context* ctx) override;
 
 	bool Render() override;
 
@@ -288,6 +288,13 @@ struct OpenGLRenderer : Renderer
 			return false;
 		frameRendered = false;
 		return true;
+	}
+
+	virtual GLenum getFogTextureSlot() const {
+		return GL_TEXTURE1;
+	}
+	virtual GLenum getPaletteTextureSlot() const {
+		return GL_TEXTURE2;
 	}
 
 	bool frameRendered = false;

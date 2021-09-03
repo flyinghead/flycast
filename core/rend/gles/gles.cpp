@@ -1076,7 +1076,7 @@ void OSD_DRAW(bool clear_screen)
 #endif
 }
 
-bool ProcessFrame(TA_context* ctx)
+bool OpenGLRenderer::Process(TA_context* ctx)
 {
 	if (KillTex)
 		TexCache.Clear();
@@ -1088,6 +1088,17 @@ bool ProcessFrame(TA_context* ctx)
 	}
 	else
 	{
+		if (fog_needs_update && config::Fog)
+		{
+			fog_needs_update = false;
+			UpdateFogTexture((u8 *)FOG_TABLE, getFogTextureSlot(), gl.single_channel_format);
+		}
+		if (palette_updated)
+		{
+			UpdatePaletteTexture(getPaletteTextureSlot());
+			palette_updated = false;
+		}
+
 		if (!ta_parse_vdrc(ctx))
 			return false;
 	}
@@ -1171,17 +1182,6 @@ bool RenderFrame(int width, int height)
 	ShaderUniforms.fog_clamp_max[2] = ((pvrrc.fog_clamp_max >> 0) & 0xFF) / 255.0f;
 	ShaderUniforms.fog_clamp_max[3] = ((pvrrc.fog_clamp_max >> 24) & 0xFF) / 255.0f;
 	
-	if (fog_needs_update && config::Fog)
-	{
-		fog_needs_update = false;
-		UpdateFogTexture((u8 *)FOG_TABLE, GL_TEXTURE1, gl.single_channel_format);
-	}
-	if (palette_updated)
-	{
-		UpdatePaletteTexture(GL_TEXTURE2);
-		palette_updated = false;
-	}
-
 	glcache.UseProgram(gl.modvol_shader.program);
 
 	if (gl.modvol_shader.depth_scale != -1)
