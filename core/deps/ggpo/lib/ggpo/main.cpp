@@ -15,6 +15,10 @@ struct Init
 {
 	Init() {
 		srand(Platform::GetCurrentTimeMS() + Platform::GetProcessID());
+#ifdef _WIN32
+		WSADATA wsaData;
+		WSAStartup(MAKEWORD(2, 0), &wsaData);
+#endif
 	}
 };
 static Init init;

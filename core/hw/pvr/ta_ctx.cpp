@@ -4,6 +4,7 @@
 #if defined(__SWITCH__)
 #include <malloc.h>
 #endif
+#include "Renderer_if.h"
 
 extern u32 fskip;
 extern u32 FrameCount;
@@ -101,7 +102,8 @@ bool QueueRender(TA_context* ctx)
 			fskip++;
 		return false;
 	}
-
+	// disable net rollbacks until the render thread has processed the frame
+	rend_disable_rollback();
 	frame_finished.Reset();
 	mtx_rqueue.lock();
 	TA_context* old = rqueue;

@@ -529,6 +529,7 @@ Peer2PeerBackend::GetNetworkStats(GGPONetworkStats *stats, GGPOPlayerHandle play
 
    memset(stats, 0, sizeof *stats);
    _endpoints[queue].GetNetworkStats(stats);
+   stats->sync.predicted_frames = _sync.GetPredictedFrames();
 
    return GGPO_OK;
 }

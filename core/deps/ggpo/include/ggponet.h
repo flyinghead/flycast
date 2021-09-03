@@ -303,6 +303,9 @@ typedef struct GGPONetworkStats {
       int   local_frames_behind;
       int   remote_frames_behind;
    } timesync;
+   struct {
+	   int predicted_frames;
+   } sync;
 } GGPONetworkStats;
 
 /*

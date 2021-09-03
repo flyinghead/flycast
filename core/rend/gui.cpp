@@ -2242,7 +2242,7 @@ void gui_display_osd()
 	if (message.empty())
 		message = getFPSNotification();
 
-	if (!message.empty() || config::FloatVMUs || crosshairsNeeded())
+	if (!message.empty() || config::FloatVMUs || crosshairsNeeded() || ggpo::active())
 	{
 		ImGui_Impl_NewFrame();
 		ImGui::NewFrame();
@@ -2263,6 +2263,7 @@ void gui_display_osd()
 		if (config::FloatVMUs)
 			display_vmus();
 //		gui_plot_render_time(screen_width, screen_height);
+		ggpo::displayStats();
 
 		ImGui::Render();
 		ImGui_impl_RenderDrawData(ImGui::GetDrawData());

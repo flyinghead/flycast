@@ -27,6 +27,7 @@ cResetEvent rs, re;
 static bool do_swap;
 std::mutex swap_mutex;
 u32 fb_w_cur = 1;
+static cResetEvent vramRollback;
 
 // direct framebuffer write detection
 static bool render_called = false;
@@ -197,6 +198,7 @@ static bool rend_frame(TA_context* ctx)
 	if (!proc || (!ctx->rend.isRTT && !ctx->rend.isRenderFramebuffer))
 		// If rendering to texture, continue locking until the frame is rendered
 		re.Set();
+	rend_allow_rollback();
 
 	return proc && renderer->Render();
 }
@@ -437,6 +439,7 @@ void rend_cancel_emu_wait()
 	{
 		FinishRender(NULL);
 		re.Set();
+		rend_allow_rollback();
 	}
 }
 
@@ -469,4 +472,19 @@ void rend_swap_frame(u32 fb_r_sof1)
 		}
 	}
 	swap_mutex.unlock();
+}
+
+void rend_disable_rollback()
+{
+	vramRollback.Reset();
+}
+
+void rend_allow_rollback()
+{
+	vramRollback.Set();
+}
+
+void rend_start_rollback()
+{
+	vramRollback.Wait();
 }

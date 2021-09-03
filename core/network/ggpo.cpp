@@ -30,6 +30,7 @@
 #include <mutex>
 #include <unordered_map>
 #include <xxhash.h>
+#include "imgui/imgui.h"
 
 //#define SYNC_TEST 1
 
@@ -58,6 +59,8 @@ struct MemPages
 };
 static std::unordered_map<int, MemPages> deltaStates;
 static int lastSavedFrame = -1;
+
+static int timesyncOccurred;
 
 /*
  * begin_game callback - This callback has been deprecated.  You must
@@ -99,6 +102,7 @@ static bool on_event(GGPOEvent *info)
 		break;
 	case GGPO_EVENTCODE_TIMESYNC:
 		INFO_LOG(NETWORK, "Timesync: %d frames ahead", info->u.timesync.frames_ahead);
+		timesyncOccurred += 5;
 		std::this_thread::sleep_for(std::chrono::milliseconds(1000 * info->u.timesync.frames_ahead / 60));	// FIXME assumes 60 FPS
 		break;
 	case GGPO_EVENTCODE_CONNECTION_INTERRUPTED:
@@ -149,6 +153,7 @@ static bool load_game_state(unsigned char *buffer, int len)
 {
 	INFO_LOG(NETWORK, "load_game_state");
 
+	rend_start_rollback();
 	// FIXME will invalidate too much stuff: palette/fog textures, maple stuff
 	// FIXME dynarecs
 	int frame = *(u32 *)buffer;
@@ -172,6 +177,7 @@ static bool load_game_state(unsigned char *buffer, int len)
 		DEBUG_LOG(NETWORK, "Restored frame %d pages: %d ram, %d vram, %d aica ram", f, (u32)pages.ram.size(),
 					(u32)pages.vram.size(), (u32)pages.aram.size());
 	}
+	rend_allow_rollback();	// ggpo might load another state right after this one
 	memwatch::reset();
 	memwatch::protect();
 	return true;
@@ -468,6 +474,59 @@ std::future<bool> startNetwork()
 	});
 }
 
+void displayStats()
+{
+	if (!active())
+		return;
+	GGPONetworkStats stats;
+	ggpo_get_network_stats(ggpoSession, remotePlayer, &stats);
+
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0);
+	ImGui::SetNextWindowPos(ImVec2(10, 10));
+	ImGui::SetNextWindowSize(ImVec2(95 * scaling, 0));
+	ImGui::SetNextWindowBgAlpha(0.7f);
+    ImGui::Begin("", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration);
+
+    ImGui::Columns(2, "cols", false);
+    ImGui::SetColumnWidth(0, 55 * scaling);
+    ImGui::SetColumnWidth(1, 40 * scaling);
+    ImGui::Text("Send Q");
+    ImGui::NextColumn();
+    ImGui::Text("%d", stats.network.send_queue_len);
+    ImGui::NextColumn();
+
+    ImGui::Text("Ping");
+    ImGui::NextColumn();
+    ImGui::Text("%d", stats.network.ping);
+    ImGui::NextColumn();
+
+	if (stats.sync.predicted_frames == 7)
+		ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1, 0, 0, 1));
+    ImGui::Text("Predicted");
+    ImGui::NextColumn();
+    ImGui::Text("%d", stats.sync.predicted_frames);
+    ImGui::NextColumn();
+	if (stats.sync.predicted_frames == 7)
+		ImGui::PopStyleColor();
+
+    int timesync = timesyncOccurred;
+	if (timesync > 0)
+		ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1, 0, 0, 1));
+    ImGui::Text("Behind");
+    ImGui::NextColumn();
+    ImGui::Text("%d", stats.timesync.local_frames_behind);
+	if (timesync > 0)
+	{
+		ImGui::PopStyleColor();
+    	timesyncOccurred--;
+    }
+    ImGui::Columns(1);
+
+    ImGui::End();
+    ImGui::PopStyleVar(2);
+}
+
 }
 
 #else // LIBRETRO
@@ -494,6 +553,9 @@ bool active() {
 
 std::future<bool> startNetwork() {
 	return std::async(std::launch::deferred, []{ return false; });;
+}
+
+void displayStats() {
 }
 
 }
