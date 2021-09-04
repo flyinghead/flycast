@@ -109,6 +109,7 @@ OptionString DNS("", "46.101.91.123");
 OptionString NetworkServer("", "");
 Option<bool> EmulateBBA("", false); // TODO
 Option<bool> GGPOEnable("", false);
+Option<bool> GGPODelay("", 0);
 
 // Maple
 
