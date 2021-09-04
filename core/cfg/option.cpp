@@ -117,6 +117,7 @@ OptionString DNS("DNS", "46.101.91.123", "network");
 OptionString NetworkServer("server", "", "network");
 Option<bool> EmulateBBA("EmulateBBA", false, "network");
 Option<bool> GGPOEnable("GGPO", false, "network");
+Option<int> GGPODelay("GGPODelay", 0, "network");
 
 #ifdef SUPPORT_DISPMANX
 Option<bool> DispmanxMaintainAspect("maintain_aspect", true, "dispmanx");
