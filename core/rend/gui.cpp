@@ -1719,6 +1719,9 @@ static void gui_display_settings()
 					ImGui::SameLine();
 					ShowHelpMarker("Your peer IP address and optional port");
 					config::NetworkServer.set(server_name);
+					OptionSlider("Frame Delay", config::GGPODelay, 0, 20,
+						"Sets Frame Delay, advisable for sessions with ping >100 ms");
+
 		    	}
 		    	else if (config::NetworkEnable)
 		    	{

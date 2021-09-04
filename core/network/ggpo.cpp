@@ -361,7 +361,7 @@ void startSession(int localPort, int localPlayerNum)
 		ggpoSession = nullptr;
 		return;
 	}
-//	ggpo_set_frame_delay(ggpoSession, localPlayer, FRAME_DELAY);
+	ggpo_set_frame_delay(ggpoSession, localPlayer, config::GGPODelay.get());
 
 	size_t colon = config::NetworkServer.get().find(':');
 	std::string peerIp = config::NetworkServer.get().substr(0, colon);
@@ -511,6 +511,12 @@ void displayStats()
 	// Send Queue
 	ImGui::Text("Send Q");
 	ImGui::ProgressBar(stats.network.send_queue_len / 10.f, ImVec2(-1, 10.f * scaling), "");
+
+	// Frame Delay
+	ImGui::Text("Delay");
+	std::string delay = std::to_string(config::GGPODelay.get());
+	ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(delay.c_str()).x);
+	ImGui::Text("%s", delay.c_str());
 
 	// Ping
 	ImGui::Text("Ping");
