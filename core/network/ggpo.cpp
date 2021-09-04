@@ -226,7 +226,18 @@ static bool save_game_state(unsigned char **buffer, int *len, int *checksum, int
 			MemPages memPages;
 			memPages.load();
 			const MemPages& savedPages = deltaStates[frame - 1];
-			verify(memPages.ram.size() == savedPages.ram.size());
+			//verify(memPages.ram.size() == savedPages.ram.size());
+			if (memPages.ram.size() != savedPages.ram.size())
+			{
+				ERROR_LOG(NETWORK, "old ram size %d new %d", (u32)savedPages.ram.size(), (u32)memPages.ram.size());
+				if (memPages.ram.size() > savedPages.ram.size())
+					for (const auto& pair : memPages.ram)
+						if (savedPages.ram.count(pair.first) == 0)
+							ERROR_LOG(NETWORK, "new page @ %x", pair.first);
+						else
+							DEBUG_LOG(NETWORK, "page ok @ %x", pair.first);
+				die("fatal");
+			}
 			for (const auto& pair : memPages.ram)
 			{
 				verify(savedPages.ram.count(pair.first) == 1);
@@ -238,7 +249,12 @@ static bool save_game_state(unsigned char **buffer, int *len, int *checksum, int
 				verify(savedPages.vram.count(pair.first) == 1);
 				verify(memcmp(&pair.second[0], &savedPages.vram.find(pair.first)->second[0], PAGE_SIZE) == 0);
 			}
-			verify(memPages.aram.size() == savedPages.aram.size());
+			//verify(memPages.aram.size() == savedPages.aram.size());
+			if (memPages.aram.size() != savedPages.aram.size())
+			{
+				ERROR_LOG(NETWORK, "old aram size %d new %d", (u32)savedPages.aram.size(), (u32)memPages.aram.size());
+				die("fatal");
+			}
 			for (const auto& pair : memPages.aram)
 			{
 				verify(savedPages.aram.count(pair.first) == 1);
@@ -430,7 +446,7 @@ void nextFrame()
 	} while (active());
 #ifdef SYNC_TEST
 	u32 input = ~kcode[1 - localPlayerNum];
-	result = ggpo_add_local_input(ggpoSession, remotePlayer, &input, sizeof(input));
+	GGPOErrorCode result = ggpo_add_local_input(ggpoSession, remotePlayer, &input, sizeof(input));
 	if (result != GGPO_OK)
 		WARN_LOG(NETWORK, "ggpo_add_local_input(2) failed %d", result);
 #endif
@@ -468,7 +484,10 @@ std::future<bool> startNetwork()
 #ifdef SYNC_TEST
 		// save initial state (frame 0)
 		if (active())
-			getInput();
+		{
+			u32 k[4];
+			getInput(k);
+		}
 #endif
 		return active();
 	});
@@ -486,45 +505,46 @@ void displayStats()
 	ImGui::SetNextWindowPos(ImVec2(10, 10));
 	ImGui::SetNextWindowSize(ImVec2(95 * scaling, 0));
 	ImGui::SetNextWindowBgAlpha(0.7f);
-    ImGui::Begin("", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration);
+	ImGui::Begin("", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoInputs);
+	ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(0.557f, 0.268f, 0.965f, 1.f));
 
-    ImGui::Columns(2, "cols", false);
-    ImGui::SetColumnWidth(0, 55 * scaling);
-    ImGui::SetColumnWidth(1, 40 * scaling);
-    ImGui::Text("Send Q");
-    ImGui::NextColumn();
-    ImGui::Text("%d", stats.network.send_queue_len);
-    ImGui::NextColumn();
+	// Send Queue
+	ImGui::Text("Send Q");
+	ImGui::ProgressBar(stats.network.send_queue_len / 10.f, ImVec2(-1, 10.f * scaling), "");
 
-    ImGui::Text("Ping");
-    ImGui::NextColumn();
-    ImGui::Text("%d", stats.network.ping);
-    ImGui::NextColumn();
+	// Ping
+	ImGui::Text("Ping");
+	std::string ping = std::to_string(stats.network.ping);
+	ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(ping.c_str()).x);
+	ImGui::Text("%s", ping.c_str());
 
-	if (stats.sync.predicted_frames == 7)
-		ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1, 0, 0, 1));
-    ImGui::Text("Predicted");
-    ImGui::NextColumn();
-    ImGui::Text("%d", stats.sync.predicted_frames);
-    ImGui::NextColumn();
-	if (stats.sync.predicted_frames == 7)
+	// Predicted Frames
+	if (stats.sync.predicted_frames >= 7)
+		// red
+	    ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(1, 0, 0, 1));
+	else if (stats.sync.predicted_frames >= 5)
+		// yellow
+	    ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(.9f, .9f, .1f, 1));
+	ImGui::Text("Predicted");
+	ImGui::ProgressBar(stats.sync.predicted_frames / 7.f, ImVec2(-1, 10.f * scaling), "");
+	if (stats.sync.predicted_frames >= 5)
 		ImGui::PopStyleColor();
 
-    int timesync = timesyncOccurred;
+	// Frames behind
+	int timesync = timesyncOccurred;
 	if (timesync > 0)
 		ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1, 0, 0, 1));
-    ImGui::Text("Behind");
-    ImGui::NextColumn();
-    ImGui::Text("%d", stats.timesync.local_frames_behind);
+	ImGui::Text("Behind");
+	ImGui::ProgressBar(0.5f + stats.timesync.local_frames_behind / 16.f, ImVec2(-1, 10.f * scaling), "");
 	if (timesync > 0)
 	{
 		ImGui::PopStyleColor();
-    	timesyncOccurred--;
-    }
-    ImGui::Columns(1);
+		timesyncOccurred--;
+	}
 
-    ImGui::End();
-    ImGui::PopStyleVar(2);
+	ImGui::PopStyleColor();
+	ImGui::End();
+	ImGui::PopStyleVar(2);
 }
 
 }
