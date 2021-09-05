@@ -311,17 +311,20 @@ static void ImGui_Impl_NewFrame()
 	ImGuiIO& io = ImGui::GetIO();
 
 	// Read keyboard modifiers inputs
-	io.KeyCtrl = (kb_shift[0] & (0x01 | 0x10)) != 0;
-	io.KeyShift = (kb_shift[0] & (0x02 | 0x20)) != 0;
+	io.KeyCtrl = 0;
+	io.KeyShift = 0;
 	io.KeyAlt = false;
 	io.KeySuper = false;
-
 	memset(&io.KeysDown[0], 0, sizeof(io.KeysDown));
-	for (int i = 0; i < IM_ARRAYSIZE(kb_key[0]); i++)
-		if (kb_key[0][i] != 0)
-			io.KeysDown[kb_key[0][i]] = true;
-		else
-			break;
+	for (int port = 0; port < 4; port++)
+	{
+		io.KeyCtrl |= (kb_shift[port] & (0x01 | 0x10)) != 0;
+		io.KeyShift |= (kb_shift[port] & (0x02 | 0x20)) != 0;
+
+		for (int i = 0; i < IM_ARRAYSIZE(kb_key[0]); i++)
+			if (kb_key[port][i] != 0)
+				io.KeysDown[kb_key[port][i]] = true;
+	}
 	if (mouseX < 0 || mouseX >= screen_width || mouseY < 0 || mouseY >= screen_height)
 		io.MousePos = ImVec2(-FLT_MAX, -FLT_MAX);
 	else

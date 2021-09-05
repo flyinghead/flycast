@@ -215,14 +215,50 @@ protected:
 		std::vector<std::string> newValue;
 		while (true)
 		{
-			std::string::size_type end = paths.find(';', start);
-			if (end == std::string::npos)
-				end = paths.size();
-			if (start != end)
-				newValue.push_back(paths.substr(start, end - start));
-			if (end == paths.size())
-				break;
-			start = end + 1;
+			if (paths[start] == '"')
+			{
+				std::string v;
+				start++;
+				while (true)
+				{
+					if (paths[start] == '"')
+					{
+						if (start + 1 >= paths.size())
+						{
+							newValue.push_back(v);
+							return newValue;
+						}
+						if (paths[start + 1] == '"')
+						{
+							v += paths[start++];
+							start++;
+						}
+						else if (paths[start + 1] == ';')
+						{
+							newValue.push_back(v);
+							start += 2;
+							break;
+						}
+						else
+						{
+							v += paths[start++];
+						}
+					}
+					else
+						v += paths[start++];
+				}
+			}
+			else
+			{
+				std::string::size_type end = paths.find(';', start);
+				if (end == std::string::npos)
+					end = paths.size();
+				if (start != end)
+					newValue.push_back(paths.substr(start, end - start));
+				if (end == paths.size())
+					break;
+				start = end + 1;
+			}
 		}
 		return newValue;
 	}
@@ -263,12 +299,32 @@ protected:
 	doSave(const std::string& section, const std::string& name) const
 	{
 		std::string s;
-		for (auto& v : value)
+		for (const auto& v : value)
 		{
-			if (s.empty())
-				s = v;
+			if (!s.empty())
+				s += ';';
+			if (v.find(';') != std::string::npos || (!v.empty() && v[0] == '"'))
+			{
+				s += '"';
+				std::string v2 = v;
+				while (true)
+				{
+					auto pos = v2.find('"');
+					if (pos != std::string::npos)
+					{
+						s += v2.substr(0, pos + 1) + '"';
+						v2 = v2.substr(pos + 1);
+					}
+					else
+					{
+						s += v2;
+						break;
+					}
+				}
+				s += '"';
+			}
 			else
-				s += ";" + v;
+				s += v;
 		}
 		cfgSaveStr(section, name, s);
 	}
