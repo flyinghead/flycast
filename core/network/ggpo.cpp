@@ -29,6 +29,7 @@
 #include <thread>
 #include <mutex>
 #include <unordered_map>
+#include <numeric>
 #include <xxhash.h>
 #include "imgui/imgui.h"
 
@@ -36,6 +37,7 @@
 
 namespace ggpo
 {
+using namespace std::chrono;
 
 constexpr int FRAME_DELAY = 2;
 static GGPOSession *ggpoSession;
@@ -44,6 +46,10 @@ static GGPOPlayerHandle localPlayer;
 static GGPOPlayerHandle remotePlayer;
 static bool synchronized;
 static std::mutex ggpoMutex;
+static std::array<int, 5> msPerFrame;
+static int msPerFrameIndex;
+static time_point<steady_clock> lastFrameTime;
+static int msPerFrameAvg;
 
 struct MemPages
 {
@@ -103,7 +109,7 @@ static bool on_event(GGPOEvent *info)
 	case GGPO_EVENTCODE_TIMESYNC:
 		INFO_LOG(NETWORK, "Timesync: %d frames ahead", info->u.timesync.frames_ahead);
 		timesyncOccurred += 5;
-		std::this_thread::sleep_for(std::chrono::milliseconds(1000 * info->u.timesync.frames_ahead / 60));	// FIXME assumes 60 FPS
+		std::this_thread::sleep_for(std::chrono::milliseconds(1000 * info->u.timesync.frames_ahead / (msPerFrameAvg >= 25 ? 30 : 60)));
 		break;
 	case GGPO_EVENTCODE_CONNECTION_INTERRUPTED:
 		INFO_LOG(NETWORK, "Connection interrupted with player %d", info->u.connection_interrupted.player);
@@ -232,10 +238,12 @@ static bool save_game_state(unsigned char **buffer, int *len, int *checksum, int
 				ERROR_LOG(NETWORK, "old ram size %d new %d", (u32)savedPages.ram.size(), (u32)memPages.ram.size());
 				if (memPages.ram.size() > savedPages.ram.size())
 					for (const auto& pair : memPages.ram)
+					{
 						if (savedPages.ram.count(pair.first) == 0)
 							ERROR_LOG(NETWORK, "new page @ %x", pair.first);
 						else
 							DEBUG_LOG(NETWORK, "page ok @ %x", pair.first);
+					}
 				die("fatal");
 			}
 			for (const auto& pair : memPages.ram)
@@ -420,6 +428,16 @@ void getInput(u32 out_kcode[4])
 
 void nextFrame()
 {
+	auto now = std::chrono::steady_clock::now();
+	if (lastFrameTime != time_point<steady_clock>())
+	{
+		msPerFrame[msPerFrameIndex++] = duration_cast<milliseconds>(now - lastFrameTime).count();
+		if (msPerFrameIndex >= (int)msPerFrame.size())
+			msPerFrameIndex = 0;
+		msPerFrameAvg = std::accumulate(msPerFrame.begin(), msPerFrame.end(), 0) / msPerFrame.size();
+	}
+	lastFrameTime = now;
+
 	std::lock_guard<std::mutex> lock(ggpoMutex);
 	if (ggpoSession == nullptr)
 		return;
