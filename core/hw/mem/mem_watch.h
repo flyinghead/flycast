@@ -112,12 +112,12 @@ class RamWatcher : public Watcher<RamWatcher>
 protected:
 	void protectMem(u32 addr, u32 size)
 	{
-		bm_LockPage(addr, std::min(VRAM_SIZE - addr, size) & ~PAGE_MASK);
+		bm_LockPage(addr, std::min(RAM_SIZE - addr, size) & ~PAGE_MASK);
 	}
 
 	void unprotectMem(u32 addr, u32 size)
 	{
-		bm_UnlockPage(addr, std::min(VRAM_SIZE - addr, size) & ~PAGE_MASK);
+		bm_UnlockPage(addr, std::min(RAM_SIZE - addr, size) & ~PAGE_MASK);
 	}
 
 	u32 getMemOffset(void *p)
@@ -154,14 +154,14 @@ extern AicaRamWatcher aramWatcher;
 
 inline static bool writeAccess(void *p)
 {
-	if (vramWatcher.hit(p))
-	{
-		VramLockedWrite((u8 *)p);
-		return true;
-	}
 	if (ramWatcher.hit(p))
 	{
 		bm_RamWriteAccess(p);
+		return true;
+	}
+	if (vramWatcher.hit(p))
+	{
+		VramLockedWrite((u8 *)p);
 		return true;
 	}
 	return aramWatcher.hit(p);
