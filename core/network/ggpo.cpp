@@ -424,6 +424,13 @@ void getInput(u32 out_kcode[4])
 	out_kcode[1] = ~inputs[1];
 	//out_kcode[2] = ~inputs[2];
 	//out_kcode[3] = ~inputs[3];
+	if (settings.platform.system != DC_PLATFORM_NAOMI)
+	{
+		rt[0] = (inputs[0] & EMU_BTN_TRIGGER_RIGHT) != 0 ? 255 : 0;
+		lt[0] = (inputs[0] & EMU_BTN_TRIGGER_LEFT) != 0 ? 255 : 0;
+		rt[1] = (inputs[1] & EMU_BTN_TRIGGER_RIGHT) != 0 ? 255 : 0;
+		lt[1] = (inputs[1] & EMU_BTN_TRIGGER_LEFT) != 0 ? 255 : 0;
+	}
 }
 
 void nextFrame()
@@ -449,6 +456,17 @@ void nextFrame()
 	// may call save_game_state
 	do {
 		u32 input = ~kcode[localPlayerNum];
+		if (settings.platform.system != DC_PLATFORM_NAOMI)
+		{
+			if (rt[localPlayerNum] >= 64)
+				input |= EMU_BTN_TRIGGER_RIGHT;
+			else
+				input &= ~EMU_BTN_TRIGGER_RIGHT;
+			if (lt[localPlayerNum] >= 64)
+				input |= EMU_BTN_TRIGGER_LEFT;
+			else
+				input &= ~EMU_BTN_TRIGGER_LEFT;
+		}
 		GGPOErrorCode result = ggpo_add_local_input(ggpoSession, localPlayer, &input, sizeof(input));
 		if (result == GGPO_OK)
 			break;
