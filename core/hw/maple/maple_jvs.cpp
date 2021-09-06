@@ -23,6 +23,7 @@
 #include "input/gamepad_device.h"
 #include <xxhash.h>
 #include "oslib/oslib.h"
+#include "cfg/option.h"
 
 #define LOGJVS(...) DEBUG_LOG(JVS, __VA_ARGS__)
 
@@ -35,6 +36,10 @@ void load_naomi_eeprom()
 	{
 		EEPROM_loaded = true;
 		std::string eeprom_file = hostfs::getArcadeFlashPath() + ".eeprom";
+
+		if(config::GGPOEnable && !config::ActAsServer)
+			eeprom_file.append("_client");
+		
 		FILE* f = nowide::fopen(eeprom_file.c_str(), "rb");
 		if (f)
 		{
@@ -976,6 +981,9 @@ void maple_naomi_jamma::handle_86_subcommand()
 			memcpy(EEPROM + address, dma_buffer_in + 4, size);
 
 			std::string eeprom_file = hostfs::getArcadeFlashPath() + ".eeprom";
+			if(config::GGPOEnable && !config::ActAsServer)
+				eeprom_file.append("_client");
+
 			FILE* f = nowide::fopen(eeprom_file.c_str(), "wb");
 			if (f)
 			{

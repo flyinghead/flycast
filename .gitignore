@@ -49,3 +49,4 @@ generated
 # JetBrains IDES
 .idea/
 cmake-build-*/
+.vscode

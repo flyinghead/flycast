@@ -309,6 +309,8 @@ constexpr bool LimitFPS = true;
 extern Option<bool> DSPEnabled;
 extern Option<int> AudioBufferSize;	//In samples ,*4 for bytes
 extern Option<bool> AutoLatency;
+extern Option<bool> ForceMono;
+extern Option<int> AudioVolume;
 
 extern OptionString AudioBackend;
 

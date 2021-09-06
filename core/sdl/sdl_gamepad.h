@@ -102,11 +102,11 @@ public:
 class SDLGamepad : public GamepadDevice
 {
 public:
-	SDLGamepad(int maple_port, int joystick_idx, SDL_Joystick* sdl_joystick)
+	SDLGamepad(int maple_port, int joystick_idx, SDL_GameController* sdl_joystick)
 		: GamepadDevice(maple_port, "SDL"), sdl_joystick(sdl_joystick)
 	{
-		_name = SDL_JoystickName(sdl_joystick);
-		sdl_joystick_instance = SDL_JoystickInstanceID(sdl_joystick);
+		_name = SDL_JoystickName(SDL_GameControllerGetJoystick(sdl_joystick));
+		sdl_joystick_instance = SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(sdl_joystick));
 		_unique_id = "sdl_joystick_" + std::to_string(sdl_joystick_instance);
 		INFO_LOG(INPUT, "SDL: Opened joystick %d on port %d: '%s' unique_id=%s", sdl_joystick_instance, maple_port, _name.c_str(), _unique_id.c_str());
 
@@ -114,7 +114,8 @@ public:
 			input_mapper = std::make_shared<DefaultInputMapping>(joystick_idx);
 		else
 			INFO_LOG(INPUT, "using custom mapping '%s'", input_mapper->name.c_str());
-		sdl_haptic = SDL_HapticOpenFromJoystick(sdl_joystick);
+		sdl_haptic = SDL_HapticOpenFromJoystick(SDL_GameControllerGetJoystick(sdl_joystick));
+		
 		if (SDL_HapticRumbleInit(sdl_haptic) != 0)
 		{
 			SDL_HapticClose(sdl_haptic);
@@ -151,7 +152,7 @@ public:
 		INFO_LOG(INPUT, "SDL: Joystick '%s' on port %d disconnected", _name.c_str(), maple_port());
 		if (sdl_haptic != NULL)
 			SDL_HapticClose(sdl_haptic);
-		SDL_JoystickClose(sdl_joystick);
+		SDL_GameControllerClose(sdl_joystick);
 		GamepadDevice::Unregister(sdl_gamepads[sdl_joystick_instance]);
 		sdl_gamepads.erase(sdl_joystick_instance);
 	}
@@ -183,7 +184,7 @@ protected:
 	}
 
 private:
-	SDL_Joystick* sdl_joystick;
+	SDL_GameController* sdl_joystick;
 	SDL_JoystickID sdl_joystick_instance;
 	SDL_Haptic *sdl_haptic;
 	float vib_inclination = 0;

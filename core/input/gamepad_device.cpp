@@ -172,11 +172,11 @@ bool GamepadDevice::gamepad_btn_input(u32 code, bool pressed)
 
 bool GamepadDevice::gamepad_axis_input(u32 code, int value)
 {
-	s32 v;
-	if (input_mapper->get_axis_inverted(0, code))
-		v = (get_axis_min_value(code) + get_axis_range(code) - value) * 255 / get_axis_range(code) - 128;
-	else
-		v = (value - get_axis_min_value(code)) * 255 / get_axis_range(code) - 128; //-128 ... +127 range
+	s32 v = value / 256;
+	if (input_mapper->get_axis_inverted(0, code)) {
+		v = (v * -1)-1;
+	}
+
 	if (_input_detected != NULL && !_detecting_button
 			&& os_GetSeconds() >= _detection_start_time && (v >= 64 || v <= -64))
 	{
@@ -203,13 +203,16 @@ bool GamepadDevice::gamepad_axis_input(u32 code, int value)
 		else if (((int)key >> 16) == 1)	// Triggers
 		{
 			//printf("T-AXIS %d Mapped to %d -> %d\n",key, value, v + 128);
-
-			if (key == DC_AXIS_LT)
-				lt[port] = (u8)(v + 128);
-			else if (key == DC_AXIS_RT)
-				rt[port] = (u8)(v + 128);
-			else
+			v -= 128; //0 ... +255 range
+			if (key == DC_AXIS_LT){
+				lt[port] = (u8)v;
+				NOTICE_LOG(INPUT, "LT: %d", lt[port]);
+			}else if (key == DC_AXIS_RT){
+				rt[port] = (u8)v;
+				NOTICE_LOG(INPUT, "RT: %d", rt[port]);
+			}else{
 				return false;
+			}
 		}
 		else if (((int)key >> 16) == 2) // Analog axes
 		{
@@ -243,13 +246,17 @@ bool GamepadDevice::gamepad_axis_input(u32 code, int value)
 			}
 			// Radial dead zone
 			// FIXME compute both axes at the same time
+			/**/
 			if ((float)(v * v + *other_axis * *other_axis) < input_mapper->dead_zone * input_mapper->dead_zone * 128.f * 128.f)
 			{
 				*this_axis = 0;
 				*other_axis = 0;
 			}
-			else
+			else{
 				*this_axis = (s8)v;
+				NOTICE_LOG(INPUT, "Axis: %d", v);
+			}
+			/**/
 		}
 		else if (((int)key >> 16) == 4) // Map triggers to digital buttons
 		{

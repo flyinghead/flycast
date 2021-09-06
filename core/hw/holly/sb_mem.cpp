@@ -169,6 +169,8 @@ void FixUpFlash()
 
 static bool nvmem_load()
 {
+	// We don't fuck with nvmem when we're playing online
+	if (!config::GGPOEnable){
 	bool rc;
 	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
 		rc = sys_nvmem->Load(getRomPrefix(), "%nvmem.bin", "nvram");
@@ -179,7 +181,7 @@ static bool nvmem_load()
 	
 	if (settings.platform.system == DC_PLATFORM_ATOMISWAVE)
 		sys_rom->Load(hostfs::getArcadeFlashPath() + ".nvmem2");
-	
+	}
 	return true;
 }
 
@@ -199,12 +201,15 @@ bool LoadRomFiles()
 
 void SaveRomFiles()
 {
+	// We don't fuck with nvmem files when playing online
+	if (!config::GGPOEnable){
 	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
 		sys_nvmem->Save(getRomPrefix(), "nvmem.bin", "nvmem");
 	else
 		sys_nvmem->Save(hostfs::getArcadeFlashPath() + ".nvmem");
 	if (settings.platform.system == DC_PLATFORM_ATOMISWAVE)
 		sys_rom->Save(hostfs::getArcadeFlashPath() + ".nvmem2");
+	}
 }
 
 bool LoadHle()

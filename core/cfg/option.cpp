@@ -41,6 +41,9 @@ Option<int> SavestateSlot("Dreamcast.SavestateSlot");
 // Sound
 
 Option<bool> DSPEnabled("aica.DSPEnabled", false);
+Option<bool> ForceMono("aica.ForceMono",false);
+Option<int> AudioVolume("aica.AudioVolume", 50);
+
 #if HOST_CPU == CPU_ARM
 Option<int> AudioBufferSize("aica.BufferSize", 5644);	// 128 ms
 #else

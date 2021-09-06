@@ -398,9 +398,9 @@ void D3DRenderer::setGPState(const PolyParam *gp)
 		else
 		{
 			//bilinear filtering
-			devCache.SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_LINEAR);
-			devCache.SetSamplerState(0, D3DSAMP_MAGFILTER, D3DTEXF_LINEAR);
-			devCache.SetSamplerState(0, D3DSAMP_MIPFILTER, D3DTEXF_LINEAR);		// LINEAR for Trilinear filtering
+			devCache.SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_POINT);
+			devCache.SetSamplerState(0, D3DSAMP_MAGFILTER, D3DTEXF_POINT);
+			devCache.SetSamplerState(0, D3DSAMP_MIPFILTER, D3DTEXF_POINT);		// LINEAR for Trilinear filtering
 		}
 	}
 

@@ -1,4 +1,3 @@
-
 #if defined(USE_SDL)
 #include "types.h"
 #include "cfg/cfg.h"
@@ -42,7 +41,8 @@ static bool mouseCaptured;
 
 static void sdl_open_joystick(int index)
 {
-	SDL_Joystick *pJoystick = SDL_JoystickOpen(index);
+	//SDL_Joystick *pJoystick = SDL_JoystickOpen(index);
+	SDL_GameController* pJoystick = SDL_GameControllerOpen(index);
 
 	if (pJoystick == NULL)
 	{
@@ -70,7 +70,7 @@ static void captureMouse(bool capture)
 			SDL_SetRelativeMouseMode(SDL_FALSE);
 		else
 			SDL_ShowCursor(SDL_ENABLE);
-		SDL_SetWindowTitle(window, "Flycast");
+		SDL_SetWindowTitle(window, "Flycast BEAR");
 		mouseCaptured = false;
 	}
 	else
@@ -95,7 +95,7 @@ static void emuEventCallback(Event event)
 		if (!config::UseRawInput)
 			SDL_SetRelativeMouseMode(SDL_FALSE);
 		SDL_ShowCursor(SDL_ENABLE);
-		SDL_SetWindowTitle(window, "Flycast");
+		SDL_SetWindowTitle(window, "Flycast BEAR");
 		break;
 	case Event::Resume:
 		gameRunning = true;
@@ -146,7 +146,7 @@ static void checkRawInput()
 
 void input_sdl_init()
 {
-	if (SDL_WasInit(SDL_INIT_JOYSTICK) == 0)
+	if (SDL_WasInit(SDL_INIT_GAMECONTROLLER) == 0)
 	{
 		// We want joystick events even if we loose focus
 		SDL_SetHint(SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS, "1");
@@ -158,9 +158,10 @@ void input_sdl_init()
 			SDL_SetHint(SDL_HINT_XINPUT_ENABLED, "0");
 		}
 #endif
-		if (SDL_InitSubSystem(SDL_INIT_JOYSTICK) < 0)
+		if (SDL_InitSubSystem(SDL_INIT_GAMECONTROLLER) < 0)
 			die("SDL: error initializing Joystick subsystem");
-
+		
+		/**
 		std::string db = get_readonly_data_path("gamecontrollerdb.txt");
 		int rv = SDL_GameControllerAddMappingsFromFile(db.c_str());
 		if (rv < 0)
@@ -168,8 +169,15 @@ void input_sdl_init()
 			db = get_readonly_config_path("gamecontrollerdb.txt");
 			rv = SDL_GameControllerAddMappingsFromFile(db.c_str());
 		}
-		if (rv > 0)
-			DEBUG_LOG(INPUT ,"%d mappings loaded from %s", rv, db.c_str());
+		if (rv > 0){
+			DEBUG_LOG(INPUT, "%d mappings loaded from %s", rv, db.c_str());
+		}
+		/**/
+		// Load any database that exist inthe same folder as flycast
+		SDL_GameControllerAddMappingsFromFile("gamecontrollerdb.txt");
+		SDL_GameControllerAddMappingsFromFile("bearcontrollerdb.txt");
+		NOTICE_LOG(INPUT,"Loaded BEAR Mapping File: %d", SDL_GameControllerNumMappings());
+
 	}
 	if (SDL_WasInit(SDL_INIT_HAPTIC) == 0)
 		SDL_InitSubSystem(SDL_INIT_HAPTIC);
@@ -179,7 +187,6 @@ void input_sdl_init()
 
 	EventManager::listen(Event::Pause, emuEventCallback);
 	EventManager::listen(Event::Resume, emuEventCallback);
-
 	checkRawInput();
 #endif
 
@@ -202,6 +209,7 @@ inline void SDLMouse::setAbsPos(int x, int y) {
 
 void input_sdl_handle()
 {
+	//NOTICE_LOG(INPUT, "Input Polled");
 	SDLGamepad::UpdateRumble();
 
 	SDL_Event event;
@@ -270,61 +278,29 @@ void input_sdl_handle()
 				}
 				break;
 #endif
-			case SDL_JOYBUTTONDOWN:
-			case SDL_JOYBUTTONUP:
+			case SDL_CONTROLLERBUTTONDOWN:
 				{
-					std::shared_ptr<SDLGamepad> device = SDLGamepad::GetSDLGamepad((SDL_JoystickID)event.jbutton.which);
+					std::shared_ptr<SDLGamepad> device = SDLGamepad::GetSDLGamepad((SDL_JoystickID)event.cbutton.which);
 					if (device != NULL)
-						device->gamepad_btn_input(event.jbutton.button, event.type == SDL_JOYBUTTONDOWN);
+						device->gamepad_btn_input(event.cbutton.button, true);
 				}
 				break;
-			case SDL_JOYAXISMOTION:
+			case SDL_CONTROLLERBUTTONUP:
 				{
-					std::shared_ptr<SDLGamepad> device = SDLGamepad::GetSDLGamepad((SDL_JoystickID)event.jaxis.which);
+					std::shared_ptr<SDLGamepad> device = SDLGamepad::GetSDLGamepad((SDL_JoystickID)event.cbutton.which);
 					if (device != NULL)
-						device->gamepad_axis_input(event.jaxis.axis, event.jaxis.value);
+						device->gamepad_btn_input(event.cbutton.button, false);
 				}
 				break;
-			case SDL_JOYHATMOTION:
+			case SDL_CONTROLLERAXISMOTION:
 				{
-					std::shared_ptr<SDLGamepad> device = SDLGamepad::GetSDLGamepad((SDL_JoystickID)event.jhat.which);
+					std::shared_ptr<SDLGamepad> device = SDLGamepad::GetSDLGamepad((SDL_JoystickID)event.caxis.which);
 					if (device != NULL)
-					{
-						u32 hatid = (event.jhat.hat + 1) << 8;
-						if (event.jhat.value & SDL_HAT_UP)
-						{
-							device->gamepad_btn_input(hatid + 0, true);
-							device->gamepad_btn_input(hatid + 1, false);
-						}
-						else if (event.jhat.value & SDL_HAT_DOWN)
-						{
-							device->gamepad_btn_input(hatid + 0, false);
-							device->gamepad_btn_input(hatid + 1, true);
-						}
-						else
-						{
-							device->gamepad_btn_input(hatid + 0, false);
-							device->gamepad_btn_input(hatid + 1, false);
-						}
-						if (event.jhat.value & SDL_HAT_LEFT)
-						{
-							device->gamepad_btn_input(hatid + 2, true);
-							device->gamepad_btn_input(hatid + 3, false);
-						}
-						else if (event.jhat.value & SDL_HAT_RIGHT)
-						{
-							device->gamepad_btn_input(hatid + 2, false);
-							device->gamepad_btn_input(hatid + 3, true);
-						}
-						else
-						{
-							device->gamepad_btn_input(hatid + 2, false);
-							device->gamepad_btn_input(hatid + 3, false);
-						}
-					}
+						device->gamepad_axis_input(event.caxis.axis, event.caxis.value);
+					
+					NOTICE_LOG(INPUT,"Controller Axis Motion: %d %d", event.caxis.axis, event.caxis.value);
 				}
 				break;
-
 #if !defined(__APPLE__)
 			case SDL_MOUSEMOTION:
 				gui_set_mouse_position(event.motion.x, event.motion.y);
@@ -502,7 +478,7 @@ bool sdl_recreate_window(u32 flags)
 	flags |= SDL_WINDOW_FULLSCREEN;
 #endif
 
-	window = SDL_CreateWindow("Flycast", x, y, window_width * hdpiScaling, window_height * hdpiScaling, flags);
+	window = SDL_CreateWindow("Flycast BEAR", x, y, window_width * hdpiScaling, window_height * hdpiScaling, flags);
 	if (window == nullptr)
 	{
 		ERROR_LOG(COMMON, "Window creation failed: %s", SDL_GetError());

@@ -1576,6 +1576,10 @@ static void gui_display_settings()
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
 			OptionCheckbox("Enable DSP", config::DSPEnabled,
 					"Enable the Dreamcast Digital Sound Processor. Only recommended on fast platforms");
+			OptionCheckbox("Force Mono", config::ForceMono,
+				"Force audio to MONO.");
+			OptionSlider("Volume", config::AudioVolume, 0, 100,
+				"Guess...");
 #ifdef __ANDROID__
 			if (config::AudioBackend.get() == "auto" || config::AudioBackend.get() == "android")
 				OptionCheckbox("Automatic Latency", config::AutoLatency,
@@ -1769,7 +1773,7 @@ static void gui_display_settings()
 		if (ImGui::BeginTabItem("About"))
 		{
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
-		    header("Flycast");
+		    header("Flycast BEAR");
 		    {
 				ImGui::Text("Version: %s", GIT_VERSION);
 				ImGui::Text("Git Hash: %s", GIT_HASH);

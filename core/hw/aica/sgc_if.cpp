@@ -1422,7 +1422,7 @@ void AICA_Sample32()
 		*/
 
 		//Mono !
-		if (CommonData->Mono)
+		if (CommonData->Mono || config::ForceMono.get())
 		{
 			//Yay for mono =P
 			mixl+=mixr;
@@ -1432,7 +1432,7 @@ void AICA_Sample32()
 		//MVOL !
 		//we want to make sure mix* is *At least* 23 bits wide here, so 64 bit mul !
 		u32 mvol=CommonData->MVOL;
-		s32 val=volume_lut[mvol];
+		s32 val=volume_lut[mvol] * (config::AudioVolume.get() / 100.0f);
 		mixl=(s32)FPMul((s64)mixl,val,15);
 		mixr=(s32)FPMul((s64)mixr,val,15);
 
