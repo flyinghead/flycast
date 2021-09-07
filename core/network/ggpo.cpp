@@ -608,8 +608,11 @@ namespace ggpo
 void stopSession() {
 }
 
-void getInput(u32 out_kcode[4]) {
+void getInput(u32 out_kcode[4], u8 out_lt[4], u8 out_rt[4])
+{
 	memcpy(out_kcode, kcode, sizeof(kcode));
+	memcpy(out_lt, lt, sizeof(lt));
+	memcpy(out_rt, rt, sizeof(rt));
 }
 
 void nextFrame() {
