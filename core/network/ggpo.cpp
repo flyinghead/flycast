@@ -411,25 +411,31 @@ void stopSession()
 	ggpoSession = nullptr;
 }
 
-void getInput(u32 out_kcode[4])
+void getInput(u32 out_kcode[4], u8 out_lt[4], u8 out_rt[4])
 {
 	// TODO need a std::recursive_mutex to use a lock here
-	memcpy(out_kcode, kcode, sizeof(kcode));
 	if (ggpoSession == nullptr)
+	{
+		memcpy(out_kcode, kcode, sizeof(kcode));
+		memcpy(out_lt, lt, sizeof(lt));
+		memcpy(out_rt, rt, sizeof(rt));
 		return;
+	}
+	memset(out_lt, 0, sizeof(out_lt));
+	memset(out_rt, 0, sizeof(out_rt));
 	// should not call any callback
 	u32 inputs[4];
 	ggpo_synchronize_input(ggpoSession, (void *)&inputs[0], sizeof(inputs[0]) * 2, nullptr);	// FIXME numPlayers
 	out_kcode[0] = ~inputs[0];
 	out_kcode[1] = ~inputs[1];
-	//out_kcode[2] = ~inputs[2];
-	//out_kcode[3] = ~inputs[3];
+	out_kcode[2] = ~0;
+	out_kcode[3] = ~0;
 	if (settings.platform.system != DC_PLATFORM_NAOMI)
 	{
-		rt[0] = (inputs[0] & EMU_BTN_TRIGGER_RIGHT) != 0 ? 255 : 0;
-		lt[0] = (inputs[0] & EMU_BTN_TRIGGER_LEFT) != 0 ? 255 : 0;
-		rt[1] = (inputs[1] & EMU_BTN_TRIGGER_RIGHT) != 0 ? 255 : 0;
-		lt[1] = (inputs[1] & EMU_BTN_TRIGGER_LEFT) != 0 ? 255 : 0;
+		out_lt[0] = (inputs[0] & EMU_BTN_TRIGGER_RIGHT) != 0 ? 255 : 0;
+		out_lt[0] = (inputs[0] & EMU_BTN_TRIGGER_LEFT) != 0 ? 255 : 0;
+		out_lt[1] = (inputs[1] & EMU_BTN_TRIGGER_RIGHT) != 0 ? 255 : 0;
+		out_lt[1] = (inputs[1] & EMU_BTN_TRIGGER_LEFT) != 0 ? 255 : 0;
 	}
 }
 

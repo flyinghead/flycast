@@ -561,13 +561,13 @@ protected:
 		case 7:
 			return read_joystick_y(3);
 		case 8:
-			return rt[0] << 8;
+			return maple_rt[0] << 8;
 		case 9:
-			return rt[1] << 8;
+			return maple_rt[1] << 8;
 		case 10:
-			return rt[2] << 8;
+			return maple_rt[2] << 8;
 		case 11:
-			return rt[3] << 8;
+			return maple_rt[3] << 8;
 		default:
 			return 0x8000;
 		}
@@ -598,7 +598,7 @@ protected:
 		jvs_io_board::read_digital_in(buttons, v);
 		for (u32 player = 0; player < player_count; player++)
 		{
-			u8 trigger = rt[player] >> 2;
+			u8 trigger = maple_rt[player] >> 2;
 					// Ball button
 			v[player] = ((trigger & 0x20) << 3) | ((trigger & 0x10) << 5) | ((trigger & 0x08) << 7)
 					| ((trigger & 0x04) << 9) | ((trigger & 0x02) << 11) | ((trigger & 0x01) << 13)
@@ -1537,9 +1537,9 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 									if (axisDesc.type == Half)
 									{
 										if (axisDesc.axis == 4)
-											axis_value = rt[player_num] << 8;
+											axis_value = maple_rt[player_num] << 8;
 										else if (axisDesc.axis == 5)
-											axis_value = lt[player_num] << 8;
+											axis_value = maple_lt[player_num] << 8;
 										else
 											axis_value = 0;
 										if (axisDesc.inverted)

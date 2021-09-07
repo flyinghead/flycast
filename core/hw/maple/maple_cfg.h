@@ -71,6 +71,8 @@ private:
 };
 
 extern u32 maple_kcode[4];
+extern u8 maple_rt[4];
+extern u8 maple_lt[4];
 
 void mcfg_CreateDevices();
 void mcfg_CreateNAOMIJamma();

@@ -6,6 +6,7 @@
 #include "hw/sh4/sh4_mem.h"
 #include "hw/sh4/sh4_sched.h"
 #include "network/ggpo.h"
+#include "input/gamepad_device.h"
 
 enum MaplePattern
 {
@@ -147,7 +148,14 @@ static void maple_DoDma()
 	}
 #endif
 
-	ggpo::getInput(maple_kcode);
+	ggpo::getInput(maple_kcode, maple_lt, maple_rt);
+	if (ggpo::active())
+	{
+		memset(&joyx[0], 0, sizeof(joyx));
+		memset(&joyy[0], 0, sizeof(joyy));
+		memset(&joyrx[0], 0, sizeof(joyrx));
+		memset(&joyry[0], 0, sizeof(joyry));
+	}
 
 	const bool swap_msb = (SB_MMSEL == 0);
 	u32 xfer_count=0;
