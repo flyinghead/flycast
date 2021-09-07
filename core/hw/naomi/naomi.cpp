@@ -678,6 +678,9 @@ void naomi_Serialize(void **data, unsigned int *total_size)
 	REICAST_S(reg_dimm_parameterh);
 	REICAST_S(reg_dimm_status);
 	REICAST_S(aw_maple_devs);
+	REICAST_S(coin_chute_time);
+	REICAST_S(aw_ram_test_skipped);
+	// TODO serialize m3comm?
 }
 
 void naomi_Unserialize(void **data, unsigned int *total_size, serialize_version_enum version)
@@ -709,5 +712,9 @@ void naomi_Unserialize(void **data, unsigned int *total_size, serialize_version_
 		REICAST_SKIP(1); // NaomiDataRead
 	else if (version >= V14)
 		REICAST_US(aw_maple_devs);
-
+	if (version >= V20)
+	{
+		REICAST_US(coin_chute_time);
+		REICAST_US(aw_ram_test_skipped);
+	}
 }

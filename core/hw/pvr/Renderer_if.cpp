@@ -380,9 +380,9 @@ void rend_start_render()
 			ctx->rend.fog_clamp_max = FOG_CLAMP_MAX;
 		}
 
+		palette_update();
 		if (QueueRender(ctx))
 		{
-			palette_update();
 			pend_rend = true;
 			if (!config::ThreadedRendering)
 				rend_single_frame(true);
@@ -487,4 +487,28 @@ void rend_allow_rollback()
 void rend_start_rollback()
 {
 	vramRollback.Wait();
+}
+
+void rend_serialize(void **data, unsigned int *total_size)
+{
+	REICAST_S(fb_w_cur);
+	REICAST_S(render_called);
+	REICAST_S(fb_dirty);
+	REICAST_S(fb_watch_addr_start);
+	REICAST_S(fb_watch_addr_end);
+}
+
+void rend_deserialize(void **data, unsigned int *total_size, serialize_version_enum version)
+{
+	if ((version >= V12_LIBRETRO && version < V5) || version >= V12)
+		REICAST_US(fb_w_cur);
+	else
+		fb_w_cur = 1;
+	if (version >= V20)
+	{
+		REICAST_US(render_called);
+		REICAST_US(fb_dirty);
+		REICAST_US(fb_watch_addr_start);
+		REICAST_US(fb_watch_addr_end);
+	}
 }

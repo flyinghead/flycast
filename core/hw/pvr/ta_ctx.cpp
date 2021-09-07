@@ -73,7 +73,6 @@ void SetCurrentTARC(u32 addr)
 	}
 }
 
-static std::mutex mtx_rqueue;
 TA_context* rqueue;
 cResetEvent frame_finished;
 
@@ -105,45 +104,31 @@ bool QueueRender(TA_context* ctx)
 	// disable net rollbacks until the render thread has processed the frame
 	rend_disable_rollback();
 	frame_finished.Reset();
-	mtx_rqueue.lock();
-	TA_context* old = rqueue;
-	rqueue=ctx;
-	mtx_rqueue.unlock();
+	verify(rqueue == nullptr);
+	rqueue = ctx;
 
-	verify(!old);
 
 	return true;
 }
 
 TA_context* DequeueRender()
 {
-	mtx_rqueue.lock();
-	TA_context* rv = rqueue;
-	mtx_rqueue.unlock();
-
-	if (rv)
+	if (rqueue != nullptr)
 		FrameCount++;
 
-	return rv;
+	return rqueue;
 }
 
 bool rend_framePending() {
-	mtx_rqueue.lock();
-	TA_context* rv = rqueue;
-	mtx_rqueue.unlock();
-
-	return rv != 0;
+	return rqueue != nullptr;
 }
 
 void FinishRender(TA_context* ctx)
 {
-	if (ctx != NULL)
+	if (ctx != nullptr)
 	{
 		verify(rqueue == ctx);
-		mtx_rqueue.lock();
-		rqueue = NULL;
-		mtx_rqueue.unlock();
-
+		rqueue = nullptr;
 		tactx_Recycle(ctx);
 	}
 	frame_finished.Set();
@@ -256,54 +241,80 @@ void tactx_Term()
 
 const u32 NULL_CONTEXT = ~0u;
 
-void SerializeTAContext(void **data, unsigned int *total_size)
+static void serializeContext(void **data, unsigned int *total_size, const TA_context *ctx)
 {
-	if (ta_ctx == nullptr)
+	if (ctx == nullptr)
 	{
 		REICAST_S(NULL_CONTEXT);
 		return;
 	}
-	REICAST_S(ta_ctx->Address);
-	const u32 taSize = ta_tad.thd_data - ta_tad.thd_root;
+	REICAST_S(ctx->Address);
+	const tad_context& tad = ctx == ::ta_ctx ? ta_tad : ctx->tad;
+	const u32 taSize = tad.thd_data - tad.thd_root;
 	REICAST_S(taSize);
 	if (*data == nullptr)
 	{
 		// Maximum size
-		REICAST_SKIP(TA_DATA_SIZE + 4 + ARRAY_SIZE(ta_tad.render_passes) * 4);
+		REICAST_SKIP(TA_DATA_SIZE + 4 + ARRAY_SIZE(tad.render_passes) * 4);
 		return;
 	}
-	REICAST_SA(ta_tad.thd_root, taSize);
-	REICAST_S(ta_tad.render_pass_count);
-	for (u32 i = 0; i < ta_tad.render_pass_count; i++)
+	REICAST_SA(tad.thd_root, taSize);
+	REICAST_S(tad.render_pass_count);
+	for (u32 i = 0; i < tad.render_pass_count; i++)
 	{
-		u32 offset = (u32)(ta_tad.render_passes[i] - ta_tad.thd_root);
+		u32 offset = (u32)(tad.render_passes[i] - tad.thd_root);
 		REICAST_S(offset);
 	}
 }
 
-void UnserializeTAContext(void **data, unsigned int *total_size, serialize_version_enum version)
+static void deserializeContext(void **data, unsigned int *total_size, serialize_version_enum version, TA_context **pctx)
 {
 	u32 address;
 	REICAST_US(address);
 	if (address == NULL_CONTEXT)
+	{
+		*pctx = nullptr;
 		return;
-	SetCurrentTARC(address);
+	}
+	*pctx = tactx_Find(address, true);
 	u32 size;
 	REICAST_US(size);
-	REICAST_USA(ta_tad.thd_root, size);
-	ta_tad.thd_data = ta_tad.thd_root + size;
+	tad_context& tad = (*pctx)->tad;
+	REICAST_USA(tad.thd_root, size);
+	tad.thd_data = tad.thd_root + size;
 	if (version >= V12 || (version >= V12_LIBRETRO && version < V5))
 	{
-		REICAST_US(ta_tad.render_pass_count);
-		for (u32 i = 0; i < ta_tad.render_pass_count; i++)
+		REICAST_US(tad.render_pass_count);
+		for (u32 i = 0; i < tad.render_pass_count; i++)
 		{
 			u32 offset;
 			REICAST_US(offset);
-			ta_tad.render_passes[i] = ta_tad.thd_root + offset;
+			tad.render_passes[i] = tad.thd_root + offset;
 		}
 	}
 	else
 	{
-		ta_tad.render_pass_count = 0;
+		tad.render_pass_count = 0;
 	}
+}
+
+void SerializeTAContext(void **data, unsigned int *total_size)
+{
+	serializeContext(data, total_size, ta_ctx);
+	if (TA_CURRENT_CTX != CORE_CURRENT_CTX)
+		serializeContext(data, total_size, tactx_Find(TA_CURRENT_CTX, false));
+	else
+		serializeContext(data, total_size, nullptr);
+}
+
+void UnserializeTAContext(void **data, unsigned int *total_size, serialize_version_enum version)
+{
+	if (::ta_ctx != nullptr)
+		SetCurrentTARC(TACTX_NONE);
+	TA_context *ta_cur_ctx;
+	deserializeContext(data, total_size, version, &ta_cur_ctx);
+	if (ta_cur_ctx != nullptr)
+		SetCurrentTARC(ta_cur_ctx->Address);
+	if (version >= V20)
+		deserializeContext(data, total_size, version, &ta_cur_ctx);
 }

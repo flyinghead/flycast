@@ -740,3 +740,26 @@ void ModemWriteMem_A0_006(u32 addr, u32 data, u32 size)
 
 	LOG("modem reg %03X write %X -- wtf is it?",reg,data);
 }
+
+void ModemSerialize(void **data, unsigned int *total_size)
+{
+	REICAST_S(modem_regs);
+	REICAST_S(dspram);
+	REICAST_S(state);
+	REICAST_S(connect_state);
+	REICAST_S(last_dial_time);
+	REICAST_S(data_sent);
+}
+
+void ModemDeserialize(void **data, unsigned int *total_size, serialize_version_enum version)
+{
+	if (version >= V20)
+	{
+		REICAST_US(modem_regs);
+		REICAST_US(dspram);
+		REICAST_US(state);
+		REICAST_US(connect_state);
+		REICAST_US(last_dial_time);
+		REICAST_US(data_sent);
+	}
+}

@@ -18,6 +18,8 @@ void rend_reset();
 void rend_disable_rollback();
 void rend_start_rollback();
 void rend_allow_rollback();
+void rend_serialize(void **data, unsigned int *total_size);
+void rend_deserialize(void **data, unsigned int *total_size, serialize_version_enum version);
 
 ///////
 extern TA_context* _pvrrc;

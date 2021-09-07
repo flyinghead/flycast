@@ -9,6 +9,7 @@
 #include "hw/gdrom/gdromv3.h"
 #include "hw/gdrom/gdrom_if.h"
 #include "hw/maple/maple_cfg.h"
+#include "hw/modem/modem.h"
 #include "hw/pvr/Renderer_if.h"
 #include "hw/pvr/pvr_mem.h"
 #include "hw/pvr/spg.h"
@@ -341,8 +342,7 @@ bool dc_serialize(void **data, unsigned int *total_size, bool rollback)
 	REICAST_SA(pvr_regs,pvr_RegSize);
 
 	spg_Serialize(data, total_size);
-
-	REICAST_S(fb_w_cur);
+	rend_serialize(data, total_size);
 
 	REICAST_S(ta_fsm[2048]);
 	REICAST_S(ta_fsm_cl);
@@ -423,6 +423,7 @@ bool dc_serialize(void **data, unsigned int *total_size, bool rollback)
 		REICAST_S(sch_list[modem_sched].start);
 		REICAST_S(sch_list[modem_sched].end);
 	}
+	ModemSerialize(data, total_size);
 
 	REICAST_S(SCIF_SCFSR2);
 	REICAST_S(SCIF_SCSCR2);
@@ -616,10 +617,8 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size, seria
 		REICAST_SKIP(4 * 256);	// ta_type_lut
 		REICAST_SKIP(2048);		// ta_fsm
 	}
-	if (version >= V12_LIBRETRO)
-		REICAST_US(fb_w_cur);
-	else
-		fb_w_cur = 1;
+	rend_deserialize(data, total_size, version);
+
 	REICAST_US(ta_fsm[2048]);
 	REICAST_US(ta_fsm_cl);
 	if (version < V9_LIBRETRO)
@@ -1012,10 +1011,8 @@ bool dc_unserialize(void **data, unsigned int *total_size, bool rollback)
 		REICAST_SKIP(4 * 256);
 		REICAST_SKIP(2048);		// ta_fsm
 	}
-	if (version >= V12)
-		REICAST_US(fb_w_cur);
-	else
-		fb_w_cur = 1;
+	rend_deserialize(data, total_size, version);
+
 	REICAST_US(ta_fsm[2048]);
 	REICAST_US(ta_fsm_cl);
 
@@ -1131,6 +1128,7 @@ bool dc_unserialize(void **data, unsigned int *total_size, bool rollback)
 		REICAST_US(sch_list[modem_sched].start);
 		REICAST_US(sch_list[modem_sched].end);
 	}
+	ModemDeserialize(data, total_size, version);
 
 	REICAST_US(SCIF_SCFSR2);
 	if (version < V8)
