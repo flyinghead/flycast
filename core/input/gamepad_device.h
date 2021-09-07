@@ -73,7 +73,8 @@ public:
 	bool find_mapping(int system);
 protected:
 	GamepadDevice(int maple_port, const char *api_name, bool remappable = true)
-		: _api_name(api_name), _maple_port(maple_port), _input_detected(nullptr), _remappable(remappable)
+		: _api_name(api_name), _maple_port(maple_port), _input_detected(nullptr), _remappable(remappable),
+		  digitalToAnalogState{}
 	{
 	}
 
@@ -108,6 +109,7 @@ private:
 	double _detection_start_time = 0.0;
 	input_detected_cb _input_detected;
 	bool _remappable;
+	u32 digitalToAnalogState[4];
 
 	static std::vector<std::shared_ptr<GamepadDevice>> _gamepads;
 	static std::mutex _gamepads_mutex;

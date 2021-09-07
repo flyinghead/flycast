@@ -202,6 +202,7 @@ void D3DRenderer::Term()
 {
 	preReset();
 	resetting = false;
+	devCache.reset();
 	shaders.term();
 	device.reset();
 }

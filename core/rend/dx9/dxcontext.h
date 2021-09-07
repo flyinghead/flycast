@@ -28,7 +28,7 @@
 class DXContext
 {
 public:
-	bool Init();
+	bool Init(bool keepCurrentWindow = false);
 	void Term();
 	void EndImGuiFrame();
 	void Present();
@@ -60,6 +60,7 @@ private:
 	bool overlayOnly = false;
 	HWND hWnd = nullptr;
 	D3DOverlay overlay;
+	bool swapOnVSync = false;
 };
 extern DXContext theDXContext;
 #endif
