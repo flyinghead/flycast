@@ -1424,6 +1424,13 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 					if ((kcode[p] & (1 << i)) == 0)
 						buttons[p] |= naomi_button_mapping[i];
 #endif
+			for (u32& button : buttons)
+			{
+				if ((button & (NAOMI_UP_KEY | NAOMI_DOWN_KEY)) == (NAOMI_UP_KEY | NAOMI_DOWN_KEY))
+					button &= ~(NAOMI_UP_KEY | NAOMI_DOWN_KEY);
+				if ((button & (NAOMI_LEFT_KEY | NAOMI_RIGHT_KEY)) == (NAOMI_LEFT_KEY | NAOMI_RIGHT_KEY))
+					button &= ~(NAOMI_LEFT_KEY | NAOMI_RIGHT_KEY);
+			}
 
 			JVS_STATUS1();	// status
 			for (u32 cmdi = 0; cmdi < length_in; )

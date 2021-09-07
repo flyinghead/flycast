@@ -217,29 +217,32 @@ void input_sdl_handle()
 			case SDL_KEYDOWN:
 			case SDL_KEYUP:
 				checkRawInput();
-				if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_RETURN && (event.key.keysym.mod & KMOD_ALT))
+				if (event.key.repeat == 0)
 				{
-					if (window_fullscreen)
+					if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_RETURN && (event.key.keysym.mod & KMOD_ALT))
 					{
-						SDL_SetWindowFullscreen(window, 0);
-						if (!gameRunning || !mouseCaptured)
-							SDL_ShowCursor(SDL_ENABLE);
+						if (window_fullscreen)
+						{
+							SDL_SetWindowFullscreen(window, 0);
+							if (!gameRunning || !mouseCaptured)
+								SDL_ShowCursor(SDL_ENABLE);
+						}
+						else
+						{
+							SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN_DESKTOP);
+							if (gameRunning)
+								SDL_ShowCursor(SDL_DISABLE);
+						}
+						window_fullscreen = !window_fullscreen;
 					}
-					else
+					else if (event.type == SDL_KEYDOWN && (event.key.keysym.mod & KMOD_LALT) && (event.key.keysym.mod & KMOD_LCTRL))
 					{
-						SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN_DESKTOP);
-						if (gameRunning)
-							SDL_ShowCursor(SDL_DISABLE);
+						captureMouse(!mouseCaptured);
 					}
-					window_fullscreen = !window_fullscreen;
-				}
-				else if (event.type == SDL_KEYDOWN && (event.key.keysym.mod & KMOD_LALT) && (event.key.keysym.mod & KMOD_LCTRL))
-				{
-					captureMouse(!mouseCaptured);
-				}
-				else if (!config::UseRawInput)
-				{
-					sdl_keyboard->keyboard_input(event.key.keysym.scancode, event.type == SDL_KEYDOWN);
+					else if (!config::UseRawInput)
+					{
+						sdl_keyboard->keyboard_input(event.key.keysym.scancode, event.type == SDL_KEYDOWN);
+					}
 				}
 				break;
 			case SDL_TEXTINPUT:
