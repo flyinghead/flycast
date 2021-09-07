@@ -24,14 +24,15 @@
 #include "sdl/sdl.h"
 #endif
 #include "hw/pvr/Renderer_if.h"
+#include "emulator.h"
 
 DXContext theDXContext;
 extern int screen_width, screen_height; // FIXME
 
-bool DXContext::Init()
+bool DXContext::Init(bool keepCurrentWindow)
 {
 #ifdef USE_SDL
-	if (!sdl_recreate_window(0))
+	if (!keepCurrentWindow && !sdl_recreate_window(0))
 		return false;
 #endif
 
@@ -45,7 +46,10 @@ bool DXContext::Init()
 	d3dpp.BackBufferFormat = D3DFMT_UNKNOWN;
 	d3dpp.EnableAutoDepthStencil = FALSE;						// No need for depth/stencil buffer for the backbuffer
 #ifndef TEST_AUTOMATION
-	d3dpp.PresentationInterval = D3DPRESENT_INTERVAL_ONE;		// Present with vsync
+	swapOnVSync = !settings.input.fastForwardMode && config::VSync;
+	d3dpp.PresentationInterval = swapOnVSync ? D3DPRESENT_INTERVAL_ONE : D3DPRESENT_INTERVAL_IMMEDIATE;
+	// TODO should be 0 in windowed mode
+	//d3dpp.FullScreen_RefreshRateInHz = swapOnVSync ? 60 : 0;
 #else
 	d3dpp.PresentationInterval = D3DPRESENT_INTERVAL_IMMEDIATE;	// Present without vsync, maximum unthrottled framerate
 #endif
@@ -77,6 +81,28 @@ void DXContext::Present()
 	}
 	else if (FAILED(result))
 		WARN_LOG(RENDERER, "Present failed %x", result);
+	else
+	{
+#ifndef TEST_AUTOMATION
+		if (swapOnVSync != (!settings.input.fastForwardMode && config::VSync))
+		{
+			DEBUG_LOG(RENDERER, "Switch vsync %d", !swapOnVSync);
+			if (renderer != nullptr)
+			{
+				renderer->Term();
+				delete renderer;
+			}
+			Term();
+			Init(true);
+			if (renderer != nullptr)
+			{
+				renderer = new D3DRenderer();
+				renderer->Init();
+				dc_resize_renderer();
+			}
+		}
+#endif
+	}
 }
 
 void DXContext::EndImGuiFrame()
