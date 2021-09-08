@@ -47,6 +47,7 @@ extern "C" {
 #include "reios/reios.h"
 #include "hw/naomi/naomi_cart.h"
 #include "cfg/option.h"
+#include "emulator.h"
 
 #include <map>
 #include <mutex>
@@ -1065,6 +1066,7 @@ static cThread pico_thread(pico_thread_func, NULL);
 
 bool start_pico()
 {
+	dc_set_network_state(true);
 	if (pico_thread_running)
 		return false;
 	pico_thread_running = true;
@@ -1075,13 +1077,9 @@ bool start_pico()
 
 void stop_pico()
 {
+	dc_set_network_state(false);
 	pico_thread_running = false;
 	pico_thread.WaitToEnd();
-}
-
-bool networkStarted()
-{
-	return pico_thread_running;
 }
 
 #else
@@ -1093,8 +1091,5 @@ void stop_pico() { }
 void write_pico(u8 b) { }
 int read_pico() { return -1; }
 void pico_receive_eth_frame(const u8* frame, u32 size) {}
-bool networkStarted()
-{
-	return false;
-}
+
 #endif

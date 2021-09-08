@@ -23,7 +23,6 @@
 #include "cheats.h"
 #include "hw/sh4/sh4_mem.h"
 #include "reios/reios.h"
-#include "network/picoppp.h"
 #include "cfg/cfg.h"
 
 const WidescreenCheat CheatManager::widescreen_cheats[] =
@@ -464,7 +463,7 @@ void CheatManager::apply()
 		for (size_t i = 0; i < ARRAY_SIZE(widescreen_cheat->addresses) && widescreen_cheat->addresses[i] != 0; i++)
 			writeRam(widescreen_cheat->addresses[i], widescreen_cheat->values[i], 32);
 	}
-	if (active && !networkStarted())
+	if (active && !settings.online)
 	{
 		bool skipCheat = false;
 		for (const Cheat& cheat : cheats)

@@ -543,6 +543,7 @@ static void *dc_run_thread(void*)
 		ERROR_LOG(COMMON, "%s", e.what());
 		sh4_cpu.Stop();
 		lastError = e.what();
+		dc_set_network_state(false);
 	}
 
 	ggpo::stopSession();
@@ -743,6 +744,13 @@ std::string dc_get_last_error()
 	std::string error(lastError);
 	lastError.clear();
 	return error;
+}
+
+void dc_set_network_state(bool online)
+{
+	DEBUG_LOG(NETWORK, "Network state %d", online);
+	settings.online = online;
+	settings.input.fastForwardMode &= !online;
 }
 
 EventManager EventManager::Instance;

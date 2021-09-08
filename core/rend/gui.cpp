@@ -465,17 +465,22 @@ static void gui_display_commands()
 
     ImGui::Begin("##commands", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize);
 
-	if (settings.imgread.ImagePath[0] == '\0')
+    bool loadSaveStateDisabled = settings.imgread.ImagePath[0] == '\0' || settings.online;
+	if (loadSaveStateDisabled)
 	{
         ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
         ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
 	}
-	if (ImGui::Button("Load State", ImVec2(110 * scaling, 50 * scaling)))
+
+	// Load State
+	if (ImGui::Button("Load State", ImVec2(110 * scaling, 50 * scaling)) && !loadSaveStateDisabled)
 	{
 		gui_state = GuiState::Closed;
 		dc_loadstate(config::SavestateSlot);
 	}
 	ImGui::SameLine();
+
+	// Slot #
 	std::string slot = "Slot " + std::to_string((int)config::SavestateSlot + 1);
 	if (ImGui::Button(slot.c_str(), ImVec2(80 * scaling - ImGui::GetStyle().FramePadding.x, 50 * scaling)))
 		ImGui::OpenPopup("slot_select_popup");
@@ -490,18 +495,22 @@ static void gui_display_commands()
         ImGui::EndPopup();
     }
 	ImGui::SameLine();
-	if (ImGui::Button("Save State", ImVec2(110 * scaling, 50 * scaling)))
+
+	// Save State
+	if (ImGui::Button("Save State", ImVec2(110 * scaling, 50 * scaling)) && !loadSaveStateDisabled)
 	{
 		gui_state = GuiState::Closed;
 		dc_savestate(config::SavestateSlot);
 	}
-	if (settings.imgread.ImagePath[0] == '\0')
+	if (loadSaveStateDisabled)
 	{
         ImGui::PopItemFlag();
         ImGui::PopStyleVar();
 	}
 
 	ImGui::Columns(2, "buttons", false);
+
+	// Settings
 	if (ImGui::Button("Settings", ImVec2(150 * scaling, 50 * scaling)))
 	{
 		gui_state = GuiState::Settings;
@@ -514,6 +523,8 @@ static void gui_display_commands()
 	}
 
 	ImGui::NextColumn();
+
+	// Insert/Eject Disk
 	const char *disk_label = libGDR_GetDiscType() == Open ? "Insert Disk" : "Eject Disk";
 	if (ImGui::Button(disk_label, ImVec2(150 * scaling, 50 * scaling)))
 	{
@@ -528,11 +539,25 @@ static void gui_display_commands()
 		}
 	}
 	ImGui::NextColumn();
-	if (ImGui::Button("Cheats", ImVec2(150 * scaling, 50 * scaling)))
+
+	// Cheats
+	if (settings.online)
+	{
+        ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
+        ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
+	}
+	if (ImGui::Button("Cheats", ImVec2(150 * scaling, 50 * scaling)) && !settings.online)
 	{
 		gui_state = GuiState::Cheats;
 	}
+	if (settings.online)
+	{
+        ImGui::PopItemFlag();
+        ImGui::PopStyleVar();
+	}
 	ImGui::Columns(1, nullptr, false);
+
+	// Exit
 	if (ImGui::Button("Exit", ImVec2(300 * scaling + ImGui::GetStyle().ColumnsMinSpacing + ImGui::GetStyle().FramePadding.x * 2 - 1,
 			50 * scaling)))
 	{

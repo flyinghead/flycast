@@ -219,15 +219,8 @@ static bool save_game_state(unsigned char **buffer, int *len, int *checksum, int
 #endif
 	if (frame > 0)
 	{
-		// Save the delta to frame-1
-		if (deltaStates.count(frame - 1) == 0)
-		{
-			deltaStates[frame - 1].load();
-			DEBUG_LOG(NETWORK, "Saved frame %d pages: %d ram, %d vram, %d aica ram", frame - 1, (u32)deltaStates[frame - 1].ram.size(),
-				(u32)deltaStates[frame - 1].vram.size(), (u32)deltaStates[frame - 1].aram.size());
-		}
 #ifdef SYNC_TEST
-		else
+		if (deltaStates.count(frame - 1) != 0)
 		{
 			MemPages memPages;
 			memPages.load();
@@ -270,6 +263,10 @@ static bool save_game_state(unsigned char **buffer, int *len, int *checksum, int
 			}
 		}
 #endif
+		// Save the delta to frame-1
+		deltaStates[frame - 1].load();
+		DEBUG_LOG(NETWORK, "Saved frame %d pages: %d ram, %d vram, %d aica ram", frame - 1, (u32)deltaStates[frame - 1].ram.size(),
+				(u32)deltaStates[frame - 1].vram.size(), (u32)deltaStates[frame - 1].aram.size());
 	}
 	memwatch::protect();
 
@@ -409,6 +406,7 @@ void stopSession()
 		return;
 	ggpo_close_session(ggpoSession);
 	ggpoSession = nullptr;
+	dc_set_network_state(false);
 }
 
 void getInput(u32 out_kcode[4], u8 out_lt[4], u8 out_rt[4])
@@ -421,8 +419,8 @@ void getInput(u32 out_kcode[4], u8 out_lt[4], u8 out_rt[4])
 		memcpy(out_rt, rt, sizeof(rt));
 		return;
 	}
-	memset(out_lt, 0, sizeof(out_lt));
-	memset(out_rt, 0, sizeof(out_rt));
+	memset(out_lt, 0, sizeof(lt));
+	memset(out_rt, 0, sizeof(rt));
 	// should not call any callback
 	u32 inputs[4];
 	ggpo_synchronize_input(ggpoSession, (void *)&inputs[0], sizeof(inputs[0]) * 2, nullptr);	// FIXME numPlayers
@@ -531,6 +529,7 @@ std::future<bool> startNetwork()
 			getInput(k);
 		}
 #endif
+		dc_set_network_state(active());
 		return active();
 	});
 }

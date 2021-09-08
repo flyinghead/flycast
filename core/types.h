@@ -356,6 +356,7 @@ struct settings_t
 	bool gameStarted;
 	bool endOfFrame;
 	bool disableRenderer;
+	bool online;
 };
 
 extern settings_t settings;
