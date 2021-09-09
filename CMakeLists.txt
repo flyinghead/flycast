@@ -791,6 +791,8 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/network/miniupnp.h
         core/network/naomi_network.cpp
         core/network/naomi_network.h
+        core/network/net_handshake.cpp
+        core/network/net_handshake.h
         core/network/net_platform.h
         core/network/picoppp.cpp
         core/network/picoppp.h)
