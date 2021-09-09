@@ -37,6 +37,7 @@
 #include "hw/arm7/arm7_rec.h"
 #include "network/ggpo.h"
 #include "hw/mem/mem_watch.h"
+#include "network/net_handshake.h"
 
 extern int screen_width, screen_height;
 
@@ -46,6 +47,8 @@ settings_t settings;
 static void *dc_run_thread(void *);
 static cThread emuThread(&dc_run_thread, nullptr);
 static bool initDone;
+static bool gameStarted;
+static bool gameRunning;
 static std::string lastError;
 
 static s32 devicesInit()
@@ -338,6 +341,9 @@ static void loadSpecialSettings()
 
 void dc_reset(bool hard)
 {
+	if (!initDone)
+		return;
+	NetworkHandshake::term();
 	if (hard)
 		_vmem_unprotect_vram(0, VRAM_SIZE);
 	devicesReset(hard);
@@ -514,30 +520,30 @@ void dc_start_game(const char *path)
 		gui_display_notification("Widescreen cheat activated", 1000);
 		config::ScreenStretching.override(134);	// 4:3 -> 16:9
 	}
+	NetworkHandshake::init();
 	settings.input.fastForwardMode = false;
 	EventManager::event(Event::Start);
-	settings.gameStarted = true;
+	gameStarted = true;
 }
 
 bool dc_is_running()
 {
-	return sh4_cpu.IsCpuRunning();
+	// the lr core in !threaded mode will not set gameRunning
+	return gameRunning || sh4_cpu.IsCpuRunning();
 }
 
 static void *dc_run_thread(void*)
 {
 	InitAudio();
 
+	gameRunning = true;
 	try {
 		memwatch::protect();
-		while (true)
+		while (gameRunning)
 		{
 			dc_run();
-			if (settings.endOfFrame)
-				settings.endOfFrame = false;
-			else
+			if (!ggpo::nextFrame())
 				break;
-			ggpo::nextFrame();
 		}
 	} catch (const FlycastException& e) {
 		ERROR_LOG(COMMON, "%s", e.what());
@@ -545,8 +551,8 @@ static void *dc_run_thread(void*)
 		lastError = e.what();
 		dc_set_network_state(false);
 	}
+	gameRunning = false;
 
-	ggpo::stopSession();
     TermAudio();
 
     return nullptr;
@@ -592,17 +598,15 @@ void dc_run()
 
 void dc_term_game()
 {
-	if (settings.gameStarted)
+	if (gameStarted)
 	{
-		settings.gameStarted = false;
+		gameStarted = false;
 		EventManager::event(Event::Terminate);
 	}
-	if (initDone)
-		dc_reset(true);
+	dc_reset(true);
 
 	config::Settings::instance().reset();
 	config::Settings::instance().load(false);
-	ggpo::stopSession();
 }
 
 void dc_term_emulator()
@@ -620,11 +624,12 @@ void dc_term_emulator()
 
 void dc_stop()
 {
-	bool running = dc_is_running();
+	bool running = gameRunning;
+	gameRunning = false;
 	sh4_cpu.Stop();
 	rend_cancel_emu_wait();
 	emuThread.WaitToEnd();
-	if (settings.gameStarted)
+	if (gameStarted)
 		SaveRomFiles();
 	if (running)
 		EventManager::event(Event::Pause);

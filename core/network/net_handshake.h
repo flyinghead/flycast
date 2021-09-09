@@ -15,20 +15,22 @@
 
     You should have received a copy of the GNU General Public License
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
-*/
-#include "types.h"
+ */
+#pragma once
 #include <future>
 
-namespace ggpo
+class NetworkHandshake
 {
+public:
+	virtual ~NetworkHandshake() {}
 
-std::future<bool> startNetwork();
-void startSession(int localPort, int localPlayerNum);
-void stopSession();
-void getInput(u32 out_kcode[4], u8 out_lt[4], u8 out_rt[4]);
-bool nextFrame();
-bool active();
-void displayStats();
-void endOfFrame();
+	virtual std::future<bool> start() = 0;
+	virtual void stop() = 0;
+	virtual bool canStartNow() = 0;
+	virtual void startNow() = 0;
 
-}
+	static void init();
+	static void term();
+
+	static NetworkHandshake *instance;
+};

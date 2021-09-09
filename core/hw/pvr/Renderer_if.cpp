@@ -389,11 +389,8 @@ void rend_start_render()
 			else
 				rs.Set();
 		}
-        if (ggpo::active() && !config::DelayFrameSwapping)
-        {
-            settings.endOfFrame = true;
-            sh4_cpu.Stop();
-        }
+        if (!config::DelayFrameSwapping)
+        	ggpo::endOfFrame();
 	}
 }
 
@@ -465,11 +462,8 @@ void rend_swap_frame(u32 fb_r_sof1)
 			rend_single_frame(true);
 			swap_mutex.lock();
 		}
-		if (ggpo::active() && config::DelayFrameSwapping)
-		{
-			settings.endOfFrame = true;
-			sh4_cpu.Stop();
-		}
+		if (config::DelayFrameSwapping)
+        	ggpo::endOfFrame();
 	}
 	swap_mutex.unlock();
 }

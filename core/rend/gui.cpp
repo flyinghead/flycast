@@ -27,7 +27,7 @@
 #include "imgui/imgui.h"
 #include "gles/imgui_impl_opengl3.h"
 #include "imgui/roboto_medium.h"
-#include "network/naomi_network.h"
+#include "network/net_handshake.h"
 #include "network/ggpo.h"
 #include "wsi/context.h"
 #include "input/gamepad_device.h"
@@ -79,9 +79,8 @@ static void emuEventCallback(Event event)
 		break;
 	case Event::Start:
 		GamepadDevice::load_system_mappings();
-		if (settings.platform.system == DC_PLATFORM_NAOMI)
-			SetNaomiNetworkConfig(-1);
 		if (config::AutoLoadState && settings.imgread.ImagePath[0] != '\0')
+			// TODO don't load state if using naomi networking
 			dc_loadstate(config::SavestateSlot);
 		break;
 	case Event::Terminate:
@@ -2057,12 +2056,6 @@ static void gui_display_onboarding()
 
 static std::future<bool> networkStatus;
 
-static void start_network()
-{
-	networkStatus = naomiNetwork.startNetworkAsync();
-	gui_state = GuiState::NetworkStart;
-}
-
 static void gui_network_start()
 {
 	centerNextWindow();
@@ -2090,7 +2083,7 @@ static void gui_network_start()
 	else
 	{
 		ImGui::Text("STARTING NETWORK...");
-		if (config::ActAsServer)
+		if (NetworkHandshake::instance->canStartNow())
 			ImGui::Text("Press Start to start the game now.");
 	}
 	ImGui::Text("%s", get_notification().c_str());
@@ -2100,10 +2093,7 @@ static void gui_network_start()
 	ImGui::SetCursorPosY(126.f * scaling);
 	if (ImGui::Button("Cancel", ImVec2(100.f * scaling, 0.f)))
 	{
-		if (config::GGPOEnable)
-			ggpo::stopSession();
-		else
-			naomiNetwork.terminate();
+		NetworkHandshake::instance->stop();
 		networkStatus.get();
 		gui_state = GuiState::Main;
 		settings.imgread.ImagePath[0] = '\0';
@@ -2113,7 +2103,7 @@ static void gui_network_start()
 	ImGui::End();
 
 	if ((kcode[0] & DC_BTN_START) == 0)
-		naomiNetwork.startNow();
+		NetworkHandshake::instance->startNow();
 }
 
 static void gui_display_loadscreen()
@@ -2130,14 +2120,10 @@ static void gui_display_loadscreen()
 	{
 		try {
 			dc_get_load_status();
-			if (config::GGPOEnable)
+			if (NetworkHandshake::instance != nullptr)
 			{
-				networkStatus = ggpo::startNetwork();
+				networkStatus = NetworkHandshake::instance->start();
 				gui_state = GuiState::NetworkStart;
-			}
-			else if (NaomiNetworkSupported())
-			{
-				start_network();
 			}
 			else
 			{
