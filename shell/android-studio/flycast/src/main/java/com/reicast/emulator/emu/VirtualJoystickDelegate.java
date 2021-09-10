@@ -358,7 +358,8 @@ public class VirtualJoystickDelegate {
         int joyy = get_anal(11, 1);
         InputDeviceManager.getInstance().virtualGamepadEvent(rv, joyx, joyy, left_trigger, right_trigger);
         // Only register the mouse event if no virtual gamepad button is down
-        if ((!editVjoyMode && rv == 0xFFFFFFFF) || JNIdc.guiIsOpen())
+        if ((!editVjoyMode && rv == 0xFFFFFFFF && left_trigger == 0 && right_trigger == 0 && joyx == 0 && joyy == 0)
+		|| JNIdc.guiIsOpen())
             InputDeviceManager.getInstance().mouseEvent(mouse_pos[0], mouse_pos[1], mouse_btns);
         return(true);
     }
