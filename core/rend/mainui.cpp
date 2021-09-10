@@ -55,6 +55,7 @@ bool mainui_rend_frame()
 				if (!error.empty())
 				{
 					dc_stop();
+					EventManager::event(Event::Pause);
 					gui_stop_game(error);
 				}
 			}
