@@ -75,8 +75,8 @@ struct MapleInputState
 	MapleInputState() : halfAxes{}, fullAxes{} {}
 
 	u32 kcode = ~0;
-	u8 halfAxes[PJTI_Count];	// LT, RT
-	s8 fullAxes[PJAI_Count];	// Left X, Y, Right X, Y
+	u8 halfAxes[PJTI_Count];		// LT, RT
+	int8_t fullAxes[PJAI_Count];	// Left X, Y, Right X, Y
 };
 extern MapleInputState mapleInputState[4];
 
