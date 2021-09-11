@@ -200,5 +200,5 @@ protected:
 private:
     GCKeyboard * __weak gcKeyboard = nullptr;
     static std::map<GCKeyboard *, std::shared_ptr<IOSKeyboard>> keyboards;
-    std::map<long, u8> kb_map;
+    std::map<UInt16, u8> kb_map;
 };
