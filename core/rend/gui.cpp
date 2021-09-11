@@ -1476,7 +1476,7 @@ static void gui_display_settings()
 		    	}
 		    	OptionCheckbox("Widescreen Game Cheats", config::WidescreenGameHacks,
 		    			"Modify the game so that it displays in 16:9 anamorphic format and use horizontal screen stretching. Only some games are supported.");
-#ifndef __APPLE__
+#ifndef TARGET_IPHONE
 		    	OptionCheckbox("VSync", config::VSync, "Synchronizes the frame rate with the screen refresh rate. Recommended");
 #endif
 		    	OptionCheckbox("Show FPS Counter", config::ShowFPS, "Show on-screen frame/sec counter");
@@ -1603,6 +1603,10 @@ static void gui_display_settings()
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
 			OptionCheckbox("Enable DSP", config::DSPEnabled,
 					"Enable the Dreamcast Digital Sound Processor. Only recommended on fast platforms");
+			if (OptionSlider("Volume Level", config::AudioVolume, 0, 100, "Adjust the emulator's audio level"))
+			{
+				config::AudioVolume.calcDbPower();
+			};
 #ifdef __ANDROID__
 			if (config::AudioBackend.get() == "auto" || config::AudioBackend.get() == "android")
 				OptionCheckbox("Automatic Latency", config::AutoLatency,

@@ -1178,6 +1178,7 @@ if(NOT LIBRETRO)
 					shell/apple/emulator-ios/emulator/AppDelegate.mm
 					shell/apple/emulator-ios/emulator/ios_main.mm
 					shell/apple/emulator-ios/emulator/ios_gamepad.h
+					shell/apple/emulator-ios/emulator/ios_keyboard.h
 					shell/apple/emulator-ios/emulator/FlycastViewController.h
 					shell/apple/emulator-ios/emulator/FlycastViewController.mm
 					shell/apple/emulator-ios/emulator/PadViewController.h

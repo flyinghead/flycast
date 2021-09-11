@@ -1394,7 +1394,7 @@ static void retro_vk_context_destroy()
 
 static bool set_vulkan_hw_render()
 {
-	retro_hw_render_callback hw_render;
+	retro_hw_render_callback hw_render{};
 	hw_render.context_type = RETRO_HW_CONTEXT_VULKAN;
 	hw_render.version_major = VK_API_VERSION_1_0;
 	hw_render.version_minor = 0;

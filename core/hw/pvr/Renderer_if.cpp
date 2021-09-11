@@ -448,10 +448,10 @@ void rend_set_fb_write_addr(u32 fb_w_sof1)
 	fb_w_cur = fb_w_sof1;
 }
 
-void rend_swap_frame(u32 fb_r_sof1)
+void rend_swap_frame(u32 fb_r_sof)
 {
 	swap_mutex.lock();
-	if (fb_r_sof1 == fb_w_cur)
+	if (fb_r_sof == fb_w_cur)
 	{
 		do_swap = true;
 		if (config::ThreadedRendering)

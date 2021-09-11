@@ -36,6 +36,7 @@
 #include "stdclass.h"
 #include "cfg/option.h"
 #include "ios_gamepad.h"
+#include "ios_keyboard.h"
 
 //@import AltKit;
 #import "AltKit/AltKit-Swift.h"
@@ -45,6 +46,7 @@ static bool iosJitAuthorized;
 static __unsafe_unretained FlycastViewController *flycastViewController;
 
 std::map<GCController *, std::shared_ptr<IOSGamepad>> IOSGamepad::controllers;
+std::map<GCKeyboard *, std::shared_ptr<IOSKeyboard>> IOSKeyboard::keyboards;
 
 void common_linux_setup();
 
@@ -54,8 +56,10 @@ void common_linux_setup();
 @property (strong, nonatomic) PadViewController *padController;
 
 @property (nonatomic) iCadeReaderView* iCadeReader;
-@property (nonatomic, strong) id connectObserver;
-@property (nonatomic, strong) id disconnectObserver;
+@property (nonatomic, strong) id gamePadConnectObserver;
+@property (nonatomic, strong) id gamePadDisconnectObserver;
+@property (nonatomic, strong) id keyboardConnectObserver;
+@property (nonatomic, strong) id keyboardDisconnectObserver;
 
 @property (nonatomic, strong) nw_path_monitor_t monitor;
 @property (nonatomic, strong) dispatch_queue_t monitorQueue;
@@ -125,7 +129,23 @@ extern int screen_dpi;
 	[self setPreferredFramesPerSecond:60];
 	[EAGLContext setCurrentContext:self.context];
 
-    self.connectObserver = [[NSNotificationCenter defaultCenter] addObserverForName:GCControllerDidConnectNotification object:nil queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification *note) {
+    if (@available(iOS 14.0, *)) {
+        self.keyboardConnectObserver = [[NSNotificationCenter defaultCenter]
+            addObserverForName:GCKeyboardDidConnectNotification object:nil queue:[NSOperationQueue mainQueue]
+            usingBlock:^(NSNotification *note) {
+            GCKeyboard *keyboard = note.object;
+            IOSKeyboard::addKeyboard(keyboard);
+        }];
+        
+        self.keyboardDisconnectObserver = [[NSNotificationCenter defaultCenter]
+            addObserverForName:GCKeyboardDidDisconnectNotification object:nil queue:[NSOperationQueue mainQueue]
+            usingBlock:^(NSNotification *note) {
+            GCKeyboard *keyboard = note.object;
+            IOSKeyboard::removeKeyboard(keyboard);
+        }];
+    }
+
+    self.gamePadConnectObserver = [[NSNotificationCenter defaultCenter] addObserverForName:GCControllerDidConnectNotification object:nil queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification *note) {
 		GCController *controller = note.object;
 		IOSGamepad::addController(controller);
 #if !TARGET_OS_TV
@@ -133,7 +153,7 @@ extern int screen_dpi;
 			[self.padController hideController];
 #endif
     }];
-    self.disconnectObserver = [[NSNotificationCenter defaultCenter] addObserverForName:GCControllerDidDisconnectNotification object:nil queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification *note) {
+    self.gamePadDisconnectObserver = [[NSNotificationCenter defaultCenter] addObserverForName:GCControllerDidDisconnectNotification object:nil queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification *note) {
 		GCController *controller = note.object;
 		IOSGamepad::removeController(controller);
 #if !TARGET_OS_TV
