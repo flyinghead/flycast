@@ -148,14 +148,7 @@ static void maple_DoDma()
 	}
 #endif
 
-	ggpo::getInput(maple_kcode, maple_lt, maple_rt);
-	if (ggpo::active())
-	{
-		memset(&joyx[0], 0, sizeof(joyx));
-		memset(&joyy[0], 0, sizeof(joyy));
-		memset(&joyrx[0], 0, sizeof(joyrx));
-		memset(&joyry[0], 0, sizeof(joyry));
-	}
+	ggpo::getInput(mapleInputState);
 
 	const bool swap_msb = (SB_MMSEL == 0);
 	u32 xfer_count=0;

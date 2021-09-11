@@ -5,9 +5,7 @@
 #include "input/gamepad_device.h"
 #include "cfg/option.h"
 
-u32 maple_kcode[4];
-u8 maple_rt[4];
-u8 maple_lt[4];
+MapleInputState mapleInputState[4];
 
 static u8 GetBtFromSgn(s8 val)
 {
@@ -67,25 +65,26 @@ void MapleConfigMap::SetVibration(float power, float inclination, u32 duration_m
 void MapleConfigMap::GetInput(PlainJoystickState* pjs)
 {
 	u32 player_num = playerNum();
+	const MapleInputState& inputState = mapleInputState[player_num];
 
 	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
 	{
-		pjs->kcode = maple_kcode[player_num];
-		pjs->joy[PJAI_X1] = GetBtFromSgn(joyx[player_num]);
-		pjs->joy[PJAI_Y1] = GetBtFromSgn(joyy[player_num]);
-		pjs->trigger[PJTI_R] = maple_rt[player_num];
-		pjs->trigger[PJTI_L] = maple_lt[player_num];
+		pjs->kcode = inputState.kcode;
+		pjs->joy[PJAI_X1] = GetBtFromSgn(inputState.fullAxes[PJAI_X1]);
+		pjs->joy[PJAI_Y1] = GetBtFromSgn(inputState.fullAxes[PJAI_Y1]);
+		pjs->trigger[PJTI_R] = inputState.halfAxes[PJTI_R];
+		pjs->trigger[PJTI_L] = inputState.halfAxes[PJTI_L];
 	}
 	else if (settings.platform.system == DC_PLATFORM_ATOMISWAVE)
 	{
 #ifdef LIBRETRO
-		pjs->kcode = maple_kcode[player_num];
+		pjs->kcode = inputState.kcode;
 #else
 		const u32* mapping = settings.input.JammaSetup == JVS::LightGun ? awavelg_button_mapping : awave_button_mapping;
 		pjs->kcode = ~0;
 		for (u32 i = 0; i < ARRAY_SIZE(awave_button_mapping); i++)
 		{
-			if ((maple_kcode[player_num] & (1 << i)) == 0)
+			if ((inputState.kcode & (1 << i)) == 0)
 				pjs->kcode &= ~mapping[i];
 		}
 #endif
@@ -100,16 +99,16 @@ void MapleConfigMap::GetInput(PlainJoystickState* pjs)
 						switch (NaomiGameInputs->axes[axis].axis)
 						{
 						case 0:
-							pjs->joy[axis] = GetBtFromSgn(joyx[player_num]);
+							pjs->joy[axis] = GetBtFromSgn(inputState.fullAxes[PJAI_X1]);
 							break;
 						case 1:
-							pjs->joy[axis] = GetBtFromSgn(joyy[player_num]);
+							pjs->joy[axis] = GetBtFromSgn(inputState.fullAxes[PJAI_Y1]);
 							break;
 						case 2:
-							pjs->joy[axis] = GetBtFromSgn(joyrx[player_num]);
+							pjs->joy[axis] = GetBtFromSgn(inputState.fullAxes[PJAI_X2]);
 							break;
 						case 3:
-							pjs->joy[axis] = GetBtFromSgn(joyry[player_num]);
+							pjs->joy[axis] = GetBtFromSgn(inputState.fullAxes[PJAI_Y2]);
 							break;
 						default:
 							pjs->joy[axis] = 0x80;
@@ -121,10 +120,10 @@ void MapleConfigMap::GetInput(PlainJoystickState* pjs)
 						switch (NaomiGameInputs->axes[axis].axis)
 						{
 						case 4:
-							pjs->joy[axis] = maple_rt[player_num];
+							pjs->joy[axis] = inputState.halfAxes[PJTI_R];
 							break;
 						case 5:
-							pjs->joy[axis] = maple_lt[player_num];
+							pjs->joy[axis] = inputState.halfAxes[PJTI_L];
 							break;
 						default:
 							pjs->joy[axis] = 0x80;
@@ -142,10 +141,10 @@ void MapleConfigMap::GetInput(PlainJoystickState* pjs)
 		}
 		else
 		{
-			pjs->joy[PJAI_X1] = GetBtFromSgn(joyx[player_num]);
-			pjs->joy[PJAI_Y1] = GetBtFromSgn(joyy[player_num]);
-			pjs->joy[PJAI_X2] = maple_rt[player_num];
-			pjs->joy[PJAI_Y2] = maple_lt[player_num];
+			pjs->joy[PJAI_X1] = GetBtFromSgn(inputState.fullAxes[PJAI_X1]);
+			pjs->joy[PJAI_Y1] = GetBtFromSgn(inputState.fullAxes[PJAI_Y1]);
+			pjs->joy[PJAI_X2] = inputState.halfAxes[PJTI_R];
+			pjs->joy[PJAI_Y2] = inputState.halfAxes[PJTI_L];
 		}
 	}
 }
@@ -175,11 +174,11 @@ void MapleConfigMap::GetMouseInput(u8& buttons, int& x, int& y, int& wheel)
 bool maple_atomiswave_coin_chute(int slot)
 {
 #ifdef LIBRETRO
-	return maple_kcode[slot] & AWAVE_COIN_KEY;
+	return mapleInputState[slot].kcode & AWAVE_COIN_KEY;
 #else
 	for (int i = 0; i < 16; i++)
 	{
-		if ((maple_kcode[slot] & (1 << i)) == 0 && awave_button_mapping[i] == AWAVE_COIN_KEY)
+		if ((mapleInputState[slot].kcode & (1 << i)) == 0 && awave_button_mapping[i] == AWAVE_COIN_KEY)
 			return true;
 	}
 	return false;

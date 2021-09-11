@@ -19,13 +19,15 @@
 #include "types.h"
 #include <future>
 
+struct MapleInputState;
+
 namespace ggpo
 {
 
 std::future<bool> startNetwork();
 void startSession(int localPort, int localPlayerNum);
 void stopSession();
-void getInput(u32 out_kcode[4], u8 out_lt[4], u8 out_rt[4]);
+void getInput(MapleInputState inputState[4]);
 bool nextFrame();
 bool active();
 void displayStats();

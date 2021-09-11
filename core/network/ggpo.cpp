@@ -16,10 +16,32 @@
     You should have received a copy of the GNU General Public License
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
+#include "ggpo.h"
+#include "hw/maple/maple_cfg.h"
+#include "input/gamepad_device.h"
+
+namespace ggpo
+{
+
+static void getLocalInput(MapleInputState inputState[4])
+{
+	for (int player = 0; player < 4; player++)
+	{
+		MapleInputState& state = inputState[player];
+		state.kcode = kcode[player];
+		state.halfAxes[PJTI_L] = lt[player];
+		state.halfAxes[PJTI_R] = rt[player];
+		state.fullAxes[PJAI_X1] = joyx[player];
+		state.fullAxes[PJAI_Y1] = joyy[player];
+		state.fullAxes[PJAI_X2] = joyrx[player];
+		state.fullAxes[PJAI_Y2] = joyry[player];
+	}
+}
+
+}
+
 #ifndef LIBRETRO
 #include "ggponet.h"
-#include "ggpo.h"
-#include "input/gamepad_device.h"
 #include "emulator.h"
 #include "rend/gui.h"
 #include "hw/mem/mem_watch.h"
@@ -32,6 +54,7 @@
 #include <numeric>
 #include <xxhash.h>
 #include "imgui/imgui.h"
+#include "miniupnp.h"
 
 //#define SYNC_TEST 1
 
@@ -39,18 +62,22 @@ namespace ggpo
 {
 using namespace std::chrono;
 
-constexpr int FRAME_DELAY = 2;
+constexpr int MAX_PLAYERS = 2;
+constexpr int SERVER_PORT = 19713;
+
 static GGPOSession *ggpoSession;
 static int localPlayerNum;
 static GGPOPlayerHandle localPlayer;
 static GGPOPlayerHandle remotePlayer;
 static bool synchronized;
-static std::mutex ggpoMutex;
+static std::recursive_mutex ggpoMutex;
 static std::array<int, 5> msPerFrame;
 static int msPerFrameIndex;
 static time_point<steady_clock> lastFrameTime;
 static int msPerFrameAvg;
 static bool _endOfFrame;
+static MiniUPnP miniupnp;
+static int analogInputs = 0;
 
 struct MemPages
 {
@@ -327,7 +354,7 @@ void startSession(int localPort, int localPlayerNum)
 	cb.log_game_state  = log_game_state;
 
 #ifdef SYNC_TEST
-	GGPOErrorCode result = ggpo_start_synctest(&ggpoSession, &cb, config::Settings::instance().getGameId().c_str(), 2, sizeof(kcode[0]), 1);
+	GGPOErrorCode result = ggpo_start_synctest(&ggpoSession, &cb, config::Settings::instance().getGameId().c_str(), MAX_PLAYERS, sizeof(kcode[0]), 1);
 	if (result != GGPO_OK)
 	{
 		WARN_LOG(NETWORK, "GGPO start sync session failed: %d", result);
@@ -343,7 +370,8 @@ void startSession(int localPort, int localPlayerNum)
 	synchronized = true;
 	NOTICE_LOG(NETWORK, "GGPO synctest session started");
 #else
-	GGPOErrorCode result = ggpo_start_session(&ggpoSession, &cb, config::Settings::instance().getGameId().c_str(), 2, sizeof(kcode[0]), localPort);
+	u32 inputSize = sizeof(kcode[0]) + analogInputs;
+	GGPOErrorCode result = ggpo_start_session(&ggpoSession, &cb, config::Settings::instance().getGameId().c_str(), MAX_PLAYERS, inputSize, localPort);
 	if (result != GGPO_OK)
 	{
 		WARN_LOG(NETWORK, "GGPO start session failed: %d", result);
@@ -363,8 +391,7 @@ void startSession(int localPort, int localPlayerNum)
 	if (result != GGPO_OK)
 	{
 		WARN_LOG(NETWORK, "GGPO cannot add local player: %d", result);
-		ggpo_close_session(ggpoSession);
-		ggpoSession = nullptr;
+		stopSession();
 		return;
 	}
 	ggpo_set_frame_delay(ggpoSession, localPlayer, config::GGPODelay.get());
@@ -379,7 +406,7 @@ void startSession(int localPort, int localPlayerNum)
 		if (peerIp == "127.0.0.1")
 			peerPort = localPort ^ 1;
 		else
-			peerPort = 19713;
+			peerPort = SERVER_PORT;
 	}
 	else
 	{
@@ -393,8 +420,7 @@ void startSession(int localPort, int localPlayerNum)
 	if (result != GGPO_OK)
 	{
 		WARN_LOG(NETWORK, "GGPO cannot add remote player: %d", result);
-		ggpo_close_session(ggpoSession);
-		ggpoSession = nullptr;
+		stopSession();
 	}
 	DEBUG_LOG(NETWORK, "GGPO session started");
 #endif
@@ -402,39 +428,43 @@ void startSession(int localPort, int localPlayerNum)
 
 void stopSession()
 {
-	std::lock_guard<std::mutex> lock(ggpoMutex);
+	std::lock_guard<std::recursive_mutex> lock(ggpoMutex);
 	if (ggpoSession == nullptr)
 		return;
 	ggpo_close_session(ggpoSession);
 	ggpoSession = nullptr;
+	miniupnp.Term();
 	dc_set_network_state(false);
 }
 
-void getInput(u32 out_kcode[4], u8 out_lt[4], u8 out_rt[4])
+void getInput(MapleInputState inputState[4])
 {
-	// TODO need a std::recursive_mutex to use a lock here
+	std::lock_guard<std::recursive_mutex> lock(ggpoMutex);
 	if (ggpoSession == nullptr)
 	{
-		memcpy(out_kcode, kcode, sizeof(kcode));
-		memcpy(out_lt, lt, sizeof(lt));
-		memcpy(out_rt, rt, sizeof(rt));
+		getLocalInput(inputState);
 		return;
 	}
-	memset(out_lt, 0, sizeof(lt));
-	memset(out_rt, 0, sizeof(rt));
+	for (int player = 0; player < 4; player++)
+		inputState[player] = {};
+
+	u32 inputSize = sizeof(u32) + analogInputs;
+	std::vector<u8> inputs(inputSize * MAX_PLAYERS);
 	// should not call any callback
-	u32 inputs[4];
-	ggpo_synchronize_input(ggpoSession, (void *)&inputs[0], sizeof(inputs[0]) * 2, nullptr);	// FIXME numPlayers
-	out_kcode[0] = ~inputs[0];
-	out_kcode[1] = ~inputs[1];
-	out_kcode[2] = ~0;
-	out_kcode[3] = ~0;
-	if (settings.platform.system != DC_PLATFORM_NAOMI)
+	ggpo_synchronize_input(ggpoSession, (void *)&inputs[0], inputs.size(), nullptr);
+
+	for (int player = 0; player < MAX_PLAYERS; player++)
 	{
-		out_lt[0] = (inputs[0] & EMU_BTN_TRIGGER_RIGHT) != 0 ? 255 : 0;
-		out_lt[0] = (inputs[0] & EMU_BTN_TRIGGER_LEFT) != 0 ? 255 : 0;
-		out_lt[1] = (inputs[1] & EMU_BTN_TRIGGER_RIGHT) != 0 ? 255 : 0;
-		out_lt[1] = (inputs[1] & EMU_BTN_TRIGGER_LEFT) != 0 ? 255 : 0;
+		MapleInputState& state = inputState[player];
+		state.kcode = ~(*(u32 *)&inputs[player * inputSize]);
+		if (analogInputs > 0)
+		{
+			state.fullAxes[PJAI_X1] = inputs[player * inputSize + 4];
+			if (analogInputs == 2)
+				state.fullAxes[PJAI_Y1] = inputs[player * inputSize + 5];
+		}
+		state.halfAxes[PJTI_R] = (state.kcode & EMU_BTN_TRIGGER_RIGHT) == 0 ? 255 : 0;
+		state.halfAxes[PJTI_L] = (state.kcode & EMU_BTN_TRIGGER_LEFT) == 0 ? 255 : 0;
 	}
 }
 
@@ -453,7 +483,7 @@ bool nextFrame()
 	}
 	lastFrameTime = now;
 
-	std::lock_guard<std::mutex> lock(ggpoMutex);
+	std::lock_guard<std::recursive_mutex> lock(ggpoMutex);
 	if (ggpoSession == nullptr)
 		return false;
 	// will call save_game_state
@@ -475,7 +505,16 @@ bool nextFrame()
 			else
 				input &= ~EMU_BTN_TRIGGER_LEFT;
 		}
-		GGPOErrorCode result = ggpo_add_local_input(ggpoSession, localPlayer, &input, sizeof(input));
+		u32 inputSize = sizeof(input) + analogInputs;
+		std::vector<u8> allInput(inputSize);
+		*(u32 *)&allInput[0] = input;
+		if (analogInputs > 0)
+		{
+			allInput[4] = joyx[localPlayerNum];
+			if (analogInputs == 2)
+				allInput[5] = joyy[localPlayerNum];
+		}
+		GGPOErrorCode result = ggpo_add_local_input(ggpoSession, localPlayer, &allInput[0], inputSize);
 		if (result == GGPO_OK)
 			break;
 		WARN_LOG(NETWORK, "ggpo_add_local_input failed %d", result);
@@ -507,19 +546,24 @@ std::future<bool> startNetwork()
 	synchronized = false;
 	return std::async(std::launch::async, []{
 		{
-			std::lock_guard<std::mutex> lock(ggpoMutex);
+			std::lock_guard<std::recursive_mutex> lock(ggpoMutex);
 #ifdef SYNC_TEST
 			startSession(0, 0);
 #else
+			miniupnp.Init();
+			miniupnp.AddPortMapping(SERVER_PORT, false);
+
 			if (config::ActAsServer)
-				startSession(19713, 0);
+				startSession(SERVER_PORT, 0);
 			else
-				startSession(config::NetworkServer.get().empty() || config::NetworkServer.get() == "127.0.0.1" ? 19712 : 19713, 1);
+				// Use SERVER_PORT-1 as local port if connecting to ourselves
+				startSession(config::NetworkServer.get().empty() || config::NetworkServer.get() == "127.0.0.1" ? SERVER_PORT - 1 : SERVER_PORT, 1);
 #endif
 		}
-		while (!synchronized && active()) {
+		while (!synchronized && active())
+		{
 			{
-				std::lock_guard<std::mutex> lock(ggpoMutex);
+				std::lock_guard<std::recursive_mutex> lock(ggpoMutex);
 				if (ggpoSession == nullptr)
 					break;
 				ggpo_idle(ggpoSession, 0);
@@ -611,9 +655,6 @@ void endOfFrame()
 }
 
 #else // LIBRETRO
-#include "types.h"
-#include "ggpo.h"
-#include "input/gamepad_device.h"
 
 namespace ggpo
 {
@@ -621,11 +662,9 @@ namespace ggpo
 void stopSession() {
 }
 
-void getInput(u32 out_kcode[4], u8 out_lt[4], u8 out_rt[4])
+void getInput(MapleInputState inputState[4])
 {
-	memcpy(out_kcode, kcode, sizeof(kcode));
-	memcpy(out_lt, lt, sizeof(lt));
-	memcpy(out_rt, rt, sizeof(rt));
+	getLocalInput(inputState);
 }
 
 bool nextFrame() {

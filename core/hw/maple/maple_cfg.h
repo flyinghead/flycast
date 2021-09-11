@@ -70,9 +70,15 @@ private:
 	maple_device* dev;
 };
 
-extern u32 maple_kcode[4];
-extern u8 maple_rt[4];
-extern u8 maple_lt[4];
+struct MapleInputState
+{
+	MapleInputState() : halfAxes{}, fullAxes{} {}
+
+	u32 kcode = ~0;
+	u8 halfAxes[PJTI_Count];	// LT, RT
+	s8 fullAxes[PJAI_Count];	// Left X, Y, Right X, Y
+};
+extern MapleInputState mapleInputState[4];
 
 void mcfg_CreateDevices();
 void mcfg_CreateNAOMIJamma();
