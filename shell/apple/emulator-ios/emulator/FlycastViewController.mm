@@ -128,9 +128,7 @@ extern int screen_dpi;
 	// Set preferred refresh rate
 	[self setPreferredFramesPerSecond:60];
 	[EAGLContext setCurrentContext:self.context];
-    
-//    @property (nonatomic, strong) id gamePadDisconnectObserver;
-    
+
     if (@available(iOS 14.0, *)) {
         self.keyboardConnectObserver = [[NSNotificationCenter defaultCenter]
             addObserverForName:GCKeyboardDidConnectNotification object:nil queue:[NSOperationQueue mainQueue]
