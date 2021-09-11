@@ -49,21 +49,23 @@ void gdrom_hle_op();
 typedef enum { BIOS_ERROR = -1, BIOS_INACTIVE, BIOS_ACTIVE, BIOS_COMPLETED, BIOS_DATA_AVAIL } gd_bios_status;
 struct gdrom_hle_state_t
 {
-	u32 last_request_id;
-	u32 next_request_id;
-	gd_bios_status status;
-	u32 command;
+	gdrom_hle_state_t() : params{}, result{} {}
+
+	u32 last_request_id = 0xFFFFFFFF;
+	u32 next_request_id = 2;
+	gd_bios_status status = BIOS_INACTIVE;
+	u32 command = 0;
 	u32 params[4];
 	u32 result[4];
-	u32 cur_sector;
-	u32 multi_read_sector;
-	u32 multi_read_offset;
-	u32 multi_read_count;
-	u32 multi_read_total;
-	u32 multi_callback;
-	u32 multi_callback_arg;
-	bool dma_trans_ended;
-	u64 xfer_end_time;
+	u32 cur_sector = 0;
+	u32 multi_read_sector = 0;
+	u32 multi_read_offset = 0;
+	u32 multi_read_count = 0;
+	u32 multi_read_total = 0;
+	u32 multi_callback = 0;
+	u32 multi_callback_arg = 0;
+	bool dma_trans_ended = false;
+	u64 xfer_end_time = 0;
 	
 	bool Serialize(void **data, unsigned int *total_size)
 	{

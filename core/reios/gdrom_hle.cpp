@@ -23,7 +23,7 @@
 
 #define debugf(...) DEBUG_LOG(REIOS, __VA_ARGS__)
 
-gdrom_hle_state_t gd_hle_state = { 0xffffffff, 2, BIOS_INACTIVE };
+gdrom_hle_state_t gd_hle_state;
 
 static void GDROM_HLE_ReadSES()
 {
@@ -644,9 +644,7 @@ void gdrom_hle_op()
 		case GDROM_INIT:
 			// Initialize the GDROM subsystem. Should be called before any requests are enqueued.
 			DEBUG_LOG(REIOS, "GDROM: HLE GDROM_INIT");
-			gd_hle_state.last_request_id = 0xFFFFFFFF;
-			gd_hle_state.next_request_id = 2;
-			gd_hle_state.status = BIOS_INACTIVE;
+			gd_hle_state = {};
 			break;
 
 		case GDROM_RESET:

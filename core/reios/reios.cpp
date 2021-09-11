@@ -763,6 +763,7 @@ void reios_reset(u8* rom)
 		else
 			INFO_LOG(REIOS, "font.bin: loaded %zd bytes", size);
 	}
+	gd_hle_state = {};
 }
 
 void reios_term() {
