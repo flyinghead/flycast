@@ -119,6 +119,8 @@ OptionString NetworkServer("server", "", "network");
 Option<bool> EmulateBBA("EmulateBBA", false, "network");
 Option<bool> GGPOEnable("GGPO", false, "network");
 Option<int> GGPODelay("GGPODelay", 0, "network");
+Option<bool> NetworkStats("Stats", true, "network");
+Option<int> GGPOAnalogAxes("GGPOAnalogAxes", 0, "network");
 
 #ifdef SUPPORT_DISPMANX
 Option<bool> DispmanxMaintainAspect("maintain_aspect", true, "dispmanx");

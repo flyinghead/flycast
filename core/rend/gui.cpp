@@ -1742,7 +1742,7 @@ static void gui_display_settings()
 		    			"Enable networking for supported Naomi games");
 		    	if (config::GGPOEnable)
 		    	{
-					OptionCheckbox("Play as player 1", config::ActAsServer,
+					OptionCheckbox("Play as Player 1", config::ActAsServer,
 							"Deselect to play as player 2");
 					char server_name[256];
 					strcpy(server_name, config::NetworkServer.get().c_str());
@@ -1753,6 +1753,15 @@ static void gui_display_settings()
 					OptionSlider("Frame Delay", config::GGPODelay, 0, 20,
 						"Sets Frame Delay, advisable for sessions with ping >100 ms");
 
+					ImGui::Text("Left Thumbstick:");
+					OptionRadioButton<int>("Disabled", config::GGPOAnalogAxes, 0, "Left thumbstick not used");
+					ImGui::SameLine();
+					OptionRadioButton<int>("Horizontal", config::GGPOAnalogAxes, 1, "Use the left thumbstick horizontal axis only");
+					ImGui::SameLine();
+					OptionRadioButton<int>("Full", config::GGPOAnalogAxes, 2, "Use the left thumbstick horizontal and vertical axes");
+
+					OptionCheckbox("Network Statistics", config::NetworkStats,
+			    			"Display network statistics on screen");
 		    	}
 		    	else if (config::NetworkEnable)
 		    	{
@@ -2263,7 +2272,7 @@ void gui_display_osd()
 	if (message.empty())
 		message = getFPSNotification();
 
-	if (!message.empty() || config::FloatVMUs || crosshairsNeeded() || ggpo::active())
+	if (!message.empty() || config::FloatVMUs || crosshairsNeeded() || (ggpo::active() && config::NetworkStats))
 	{
 		ImGui_Impl_NewFrame();
 		ImGui::NewFrame();
@@ -2284,7 +2293,8 @@ void gui_display_osd()
 		if (config::FloatVMUs)
 			display_vmus();
 //		gui_plot_render_time(screen_width, screen_height);
-		ggpo::displayStats();
+		if (ggpo::active() && config::NetworkStats)
+			ggpo::displayStats();
 
 		ImGui::Render();
 		ImGui_impl_RenderDrawData(ImGui::GetDrawData());

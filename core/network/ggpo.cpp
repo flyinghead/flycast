@@ -77,7 +77,6 @@ static time_point<steady_clock> lastFrameTime;
 static int msPerFrameAvg;
 static bool _endOfFrame;
 static MiniUPnP miniupnp;
-static int analogInputs = 0;
 
 struct MemPages
 {
@@ -370,7 +369,7 @@ void startSession(int localPort, int localPlayerNum)
 	synchronized = true;
 	NOTICE_LOG(NETWORK, "GGPO synctest session started");
 #else
-	u32 inputSize = sizeof(kcode[0]) + analogInputs;
+	u32 inputSize = sizeof(kcode[0]) + config::GGPOAnalogAxes;
 	GGPOErrorCode result = ggpo_start_session(&ggpoSession, &cb, config::Settings::instance().getGameId().c_str(), MAX_PLAYERS, inputSize, localPort);
 	if (result != GGPO_OK)
 	{
@@ -448,7 +447,7 @@ void getInput(MapleInputState inputState[4])
 	for (int player = 0; player < 4; player++)
 		inputState[player] = {};
 
-	u32 inputSize = sizeof(u32) + analogInputs;
+	u32 inputSize = sizeof(u32) + config::GGPOAnalogAxes;
 	std::vector<u8> inputs(inputSize * MAX_PLAYERS);
 	// should not call any callback
 	ggpo_synchronize_input(ggpoSession, (void *)&inputs[0], inputs.size(), nullptr);
@@ -457,10 +456,10 @@ void getInput(MapleInputState inputState[4])
 	{
 		MapleInputState& state = inputState[player];
 		state.kcode = ~(*(u32 *)&inputs[player * inputSize]);
-		if (analogInputs > 0)
+		if (config::GGPOAnalogAxes > 0)
 		{
 			state.fullAxes[PJAI_X1] = inputs[player * inputSize + 4];
-			if (analogInputs == 2)
+			if (config::GGPOAnalogAxes == 2)
 				state.fullAxes[PJAI_Y1] = inputs[player * inputSize + 5];
 		}
 		state.halfAxes[PJTI_R] = (state.kcode & EMU_BTN_TRIGGER_RIGHT) == 0 ? 255 : 0;
@@ -505,13 +504,13 @@ bool nextFrame()
 			else
 				input &= ~EMU_BTN_TRIGGER_LEFT;
 		}
-		u32 inputSize = sizeof(input) + analogInputs;
+		u32 inputSize = sizeof(input) + config::GGPOAnalogAxes;
 		std::vector<u8> allInput(inputSize);
 		*(u32 *)&allInput[0] = input;
-		if (analogInputs > 0)
+		if (config::GGPOAnalogAxes > 0)
 		{
 			allInput[4] = joyx[localPlayerNum];
-			if (analogInputs == 2)
+			if (config::GGPOAnalogAxes == 2)
 				allInput[5] = joyy[localPlayerNum];
 		}
 		GGPOErrorCode result = ggpo_add_local_input(ggpoSession, localPlayer, &allInput[0], inputSize);
