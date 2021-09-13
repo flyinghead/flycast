@@ -533,6 +533,7 @@ public:
     IOSTouchMouse() : SystemMouse("iOS")
     {
         _unique_id = "ios_mouse";
+        _name = "Touchscreen (Mouse)";
         loadMapping();
     }
 };
