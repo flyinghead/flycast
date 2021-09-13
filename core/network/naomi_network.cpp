@@ -131,7 +131,7 @@ void NaomiNetwork::processBeacon()
 		}
 		else
 		{
-			DEBUG_LOG(NETWORK, "NaomiServer: beacon received %ld bytes", n);
+			DEBUG_LOG(NETWORK, "NaomiServer: beacon received %ld bytes", (long)n);
 			if (n == sizeof(buf) && !strncmp(buf, "flycast", n))
 				sendto(beacon_sock, buf, n, 0, (const struct sockaddr *)&addr, addrlen);
 		}

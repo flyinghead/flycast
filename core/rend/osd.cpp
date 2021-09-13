@@ -19,10 +19,14 @@
 #include "input/gamepad.h"
 #include "input/gamepad_device.h"
 #include "TexCache.h"
+#include "hw/maple/maple_devs.h"
+#ifdef LIBRETRO
+#include "vmu_xhair.h"
+#endif
 
 #include <stb_image.h>
 
-#if defined(__ANDROID__)
+#if defined(__ANDROID__) && !defined(LIBRETRO)
 extern float vjoy_pos[15][8];
 #else
 
@@ -165,4 +169,54 @@ u8 *loadOSDButtons(int &width, int &height)
 		image_data = stbi_load_from_memory(DefaultOSDButtons.data(), DefaultOSDButtons.size(), &width, &height, &n, STBI_rgb_alpha);
 	}
 	return image_data;
+}
+
+u32 vmu_lcd_data[8][48 * 32];
+bool vmu_lcd_status[8];
+bool vmu_lcd_changed[8];
+
+void push_vmu_screen(int bus_id, int bus_port, u8* buffer)
+{
+	int vmu_id = bus_id * 2 + bus_port;
+	if (vmu_id < 0 || vmu_id >= (int)ARRAY_SIZE(vmu_lcd_data))
+		return;
+	u32 *p = &vmu_lcd_data[vmu_id][0];
+	for (int i = 0; i < (int)ARRAY_SIZE(vmu_lcd_data[vmu_id]); i++, buffer++)
+#ifdef LIBRETRO
+		*p++ = (*buffer != 0
+				? vmu_screen_params[bus_id].vmu_pixel_on_R | (vmu_screen_params[bus_id].vmu_pixel_on_G << 8) | (vmu_screen_params[bus_id].vmu_pixel_on_B << 16)
+				: vmu_screen_params[bus_id].vmu_pixel_off_R | (vmu_screen_params[bus_id].vmu_pixel_off_G << 8) | (vmu_screen_params[bus_id].vmu_pixel_off_B << 16))
+				  | (vmu_screen_params[bus_id].vmu_screen_opacity << 24);
+#else
+		*p++ = *buffer != 0 ? 0xFFFFFFFFu : 0xFF000000u;
+#endif
+#ifndef LIBRETRO
+	vmu_lcd_status[vmu_id] = true;
+#endif
+	vmu_lcd_changed[vmu_id] = true;
+}
+
+static const int lightgunCrosshairData[16 * 16] =
+{
+	 0, 0, 0, 0, 0, 0, 0,-1,-1, 0, 0, 0, 0, 0, 0, 0,
+	 0, 0, 0, 0, 0, 0, 0,-1,-1, 0, 0, 0, 0, 0, 0, 0,
+	 0, 0, 0, 0, 0, 0, 0,-1,-1, 0, 0, 0, 0, 0, 0, 0,
+	 0, 0, 0, 0, 0, 0, 0,-1,-1, 0, 0, 0, 0, 0, 0, 0,
+	 0, 0, 0, 0, 0, 0, 0,-1,-1, 0, 0, 0, 0, 0, 0, 0,
+	 0, 0, 0, 0, 0, 0, 0,-1,-1, 0, 0, 0, 0, 0, 0, 0,
+	 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	-1,-1,-1,-1,-1,-1, 0, 0, 0, 0,-1,-1,-1,-1,-1,-1,
+	-1,-1,-1,-1,-1,-1, 0, 0, 0, 0,-1,-1,-1,-1,-1,-1,
+	 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	 0, 0, 0, 0, 0, 0, 0,-1,-1, 0, 0, 0, 0, 0, 0, 0,
+	 0, 0, 0, 0, 0, 0, 0,-1,-1, 0, 0, 0, 0, 0, 0, 0,
+	 0, 0, 0, 0, 0, 0, 0,-1,-1, 0, 0, 0, 0, 0, 0, 0,
+	 0, 0, 0, 0, 0, 0, 0,-1,-1, 0, 0, 0, 0, 0, 0, 0,
+	 0, 0, 0, 0, 0, 0, 0,-1,-1, 0, 0, 0, 0, 0, 0, 0,
+	 0, 0, 0, 0, 0, 0, 0,-1,-1, 0, 0, 0, 0, 0, 0, 0,
+};
+
+const u32 *getCrosshairTextureData()
+{
+	return (u32 *)lightgunCrosshairData;
 }

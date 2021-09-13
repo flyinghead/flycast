@@ -26,6 +26,7 @@
 using namespace Xbyak::util;
 
 #include "arm7_rec.h"
+#include "oslib/oslib.h"
 
 namespace aicaarm {
 
@@ -37,6 +38,7 @@ static const Xbyak::Reg32 call_regs[] = { ecx, edx, r8d, r9d };
 static const Xbyak::Reg32 call_regs[] = { edi, esi, edx, ecx  };
 #endif
 static void (**entry_points)();
+static UnwindInfo unwinder;
 
 class Arm7Compiler;
 
@@ -893,21 +895,35 @@ public:
 
 		// arm_mainloop:
 		L(arm_mainloop_label);
+		unwinder.start((void *)getCurr());
+		size_t startOffset = getSize();
 #ifdef _WIN32
 		push(rdi);
+		unwinder.pushReg(getSize(), Xbyak::Operand::RDI);
 		push(rsi);
+		unwinder.pushReg(getSize(), Xbyak::Operand::RSI);
 #endif
 		push(r12);
+		unwinder.pushReg(getSize(), Xbyak::Operand::R12);
 		push(r13);
+		unwinder.pushReg(getSize(), Xbyak::Operand::R13);
 		push(r14);
+		unwinder.pushReg(getSize(), Xbyak::Operand::R14);
 		push(r15);
+		unwinder.pushReg(getSize(), Xbyak::Operand::R15);
 		push(rbx);
+		unwinder.pushReg(getSize(), Xbyak::Operand::RBX);
 		push(rbp);
+		unwinder.pushReg(getSize(), Xbyak::Operand::RBP);
 #ifdef _WIN32
 		sub(rsp, 40);	// 32-byte shadow space + 16-byte stack alignment
+		unwinder.allocStack(getSize(), 40);
 #else
 		sub(rsp, 8);		// 16-byte stack alignment
+		unwinder.allocStack(getSize(), 8);
 #endif
+		unwinder.endProlog(getSize());
+
 		mov(qword[rip + &entry_points], call_regs[1].cvt64());
 
 		// arm_dispatch:
@@ -949,6 +965,12 @@ public:
 #endif
 		ret();
 
+		size_t savedSize = getSize();
+		setSize(recompiler::spaceLeft() - 128 - startOffset); // FIXME size of unwind record unknown
+		size_t unwindSize = unwinder.end(getSize());
+		verify(unwindSize <= 128);
+		setSize(savedSize);
+
 		ready();
 		arm_compilecode = (void (*)())getCode();
 		arm_mainloop = (arm_mainloop_t)arm_mainloop_label.getAddress();
@@ -979,6 +1001,7 @@ void arm7backend_compile(const std::vector<ArmOp>& block_ops, u32 cycles)
 
 void arm7backend_flush()
 {
+	unwinder.clear();
 	Arm7Compiler assembler;
 	assembler.generateMainLoop();
 }

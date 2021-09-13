@@ -56,7 +56,8 @@ public:
 	}
 
 	vk::CommandBuffer Prepare(vk::CommandPool commandPool, bool vmu, bool crosshair);
-	void Draw(vk::Extent2D viewport, float scaling, bool vmu, bool crosshair);
+	void Prepare(vk::CommandBuffer commandBuffer, bool vmu, bool crosshair);
+	void Draw(vk::CommandBuffer commandBuffer, vk::Extent2D viewport, float scaling, bool vmu, bool crosshair);
 
 private:
 	std::unique_ptr<Texture> createTexture(vk::CommandBuffer commandBuffer, int width, int height, u8 *data);

@@ -86,7 +86,7 @@ static void sdl2_audio_init() {
 	wav_spec.freq = 44100;
 	wav_spec.format = AUDIO_S16;
 	wav_spec.channels = 2;
-	wav_spec.samples = SAMPLE_COUNT;  // Must be power of two
+	wav_spec.samples = SAMPLE_COUNT * 2;  // Must be power of two
 	wav_spec.callback = sdl2_audiocb;
 	
 	// Try 44.1KHz which should be faster since it's native.

@@ -51,7 +51,7 @@ void TextureCacheData::UploadToGPU(int width, int height, u8 *temp_tex_buffer, b
 			mipmapLevels++;
 			dim >>= 1;
 		}
-#if !defined(GLES2) && !defined(__APPLE__)
+#if !defined(GLES2) && (!defined(__APPLE__) || defined(TARGET_IPHONE))
 		// Open GL 4.2 or GLES 3.0 min
 		if (gl.gl_major > 4 || (gl.gl_major == 4 && gl.gl_minor >= 2)
 				|| (gl.is_gles && gl.gl_major >= 3))
@@ -187,6 +187,7 @@ GLuint BindRTT(bool withDepthBuffer)
 		fbh2 *= config::RenderResolution / 480.f;
 	}
 
+#ifdef GL_PIXEL_PACK_BUFFER
 	if (gl.gl_major >= 3 && config::RenderToTextureBuffer)
 	{
 		if (gl.rtt.pbo == 0)
@@ -200,6 +201,7 @@ GLuint BindRTT(bool withDepthBuffer)
 			glCheck();
 		}
 	}
+#endif
 
 	// Create a texture for rendering to
 	gl.rtt.tex = glcache.GenTexture();
@@ -223,22 +225,32 @@ GLuint BindRTT(bool withDepthBuffer)
 		// glRenderbufferStorage will fix this and will allocate a depth buffer
 		if (gl.is_gles)
 		{
-#if defined(GL_DEPTH24_STENCIL8_OES) && defined(GL_DEPTH_COMPONENT24_OES)
-			if (gl.GL_OES_packed_depth_stencil_supported)
-				glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8_OES, fbw2, fbh2);
-			else if (gl.GL_OES_depth24_supported)
-				glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24_OES, fbw2, fbh2);
-			else
+#if defined(GL_DEPTH24_STENCIL8)
+            if (gl.gl_major >= 3)
+                glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, fbw2, fbh2);
+            else
+#endif
+#if defined(GL_DEPTH24_STENCIL8_OES)
+            if (gl.GL_OES_packed_depth_stencil_supported)
+                glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8_OES, fbw2, fbh2);
+            else
+#endif
+#if defined(GL_DEPTH_COMPONENT24_OES)
+            if (gl.GL_OES_depth24_supported)
+                glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24_OES, fbw2, fbh2);
+            else
 #endif
 				glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, fbw2, fbh2);
 		}
+#ifdef GL_DEPTH24_STENCIL8
 		else
 			glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, fbw2, fbh2);
+#endif
 
 		// Attach the depth buffer we just created to our FBO.
 		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, gl.rtt.depthb);
 
-		if (!gl.is_gles || gl.GL_OES_packed_depth_stencil_supported)
+		if (!gl.is_gles || gl.gl_major >= 3 || gl.GL_OES_packed_depth_stencil_supported)
 			glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, gl.rtt.depthb);
 	}
 
@@ -273,8 +285,10 @@ void ReadRTTBuffer()
 			VramLockedWriteOffset(page);
 #endif
 
+#ifdef GL_PIXEL_PACK_BUFFER
 		if (gl.gl_major >= 3)
 			glBindBuffer(GL_PIXEL_PACK_BUFFER, gl.rtt.pbo);
+#endif
 
 		glPixelStorei(GL_PACK_ALIGNMENT, 1);
 		gl.rtt.width = w;
@@ -314,7 +328,9 @@ void ReadRTTBuffer()
 				gl.rtt.texAddress = ~0;
 			}
 		}
+#ifdef GL_PIXEL_PACK_BUFFER
 		glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
+#endif
 		glCheck();
 	}
 	else
@@ -352,10 +368,12 @@ void ReadRTTBuffer()
 		}
 		gl.rtt.texAddress = ~0;
 	}
+	glBindFramebuffer(GL_FRAMEBUFFER, gl.ofbo.origFbo);
 }
 
 static void readAsyncPixelBuffer(u32 addr)
 {
+#ifndef GLES2
 	if (!config::RenderToTextureBuffer || gl.rtt.pbo == 0)
 		return;
 
@@ -365,12 +383,7 @@ static void readAsyncPixelBuffer(u32 addr)
 	gl.rtt.texAddress = ~0;
 
 	glBindBuffer(GL_PIXEL_PACK_BUFFER, gl.rtt.pbo);
-#ifndef GLES2
 	u8 *ptr = (u8 *)glMapBufferRange(GL_PIXEL_PACK_BUFFER, 0, gl.rtt.pboSize, GL_MAP_READ_BIT);
-#else
-	die("Invalid code path");
-	u8 *ptr = nullptr;
-#endif
 	if (ptr == nullptr)
 	{
 		WARN_LOG(RENDERER, "glMapBuffer failed");
@@ -386,6 +399,7 @@ static void readAsyncPixelBuffer(u32 addr)
 
 	glUnmapBuffer(GL_PIXEL_PACK_BUFFER);
 	glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
+#endif
 }
 
 static int TexCacheLookups;
@@ -468,6 +482,7 @@ GLuint init_output_framebuffer(int width, int height)
 		gl.ofbo.width = width;
 		gl.ofbo.height = height;
 	}
+
 	if (gl.ofbo.fbo == 0)
 	{
 		// Create the depth+stencil renderbuffer
@@ -476,17 +491,27 @@ GLuint init_output_framebuffer(int width, int height)
 
 		if (gl.is_gles)
 		{
-#if defined(GL_DEPTH24_STENCIL8_OES) && defined(GL_DEPTH_COMPONENT24_OES)
+#if defined(GL_DEPTH24_STENCIL8)
+            if (gl.gl_major >= 3)
+                glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
+            else
+#endif
+#if defined(GL_DEPTH24_STENCIL8_OES)
 			if (gl.GL_OES_packed_depth_stencil_supported)
 				glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8_OES, width, height);
-			else if (gl.GL_OES_depth24_supported)
+			else
+#endif
+#if defined(GL_DEPTH_COMPONENT24_OES)
+            if (gl.GL_OES_depth24_supported)
 				glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24_OES, width, height);
 			else
 #endif
 				glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, width, height);
 		}
+#ifdef GL_DEPTH24_STENCIL8
 		else
 			glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
+#endif
 
 		if (gl.gl_major < 3 || config::Rotate90)
 		{
@@ -505,7 +530,9 @@ GLuint init_output_framebuffer(int width, int height)
 			// Use a renderbuffer and glBlitFramebuffer
 			glGenRenderbuffers(1, &gl.ofbo.colorb);
 			glBindRenderbuffer(GL_RENDERBUFFER, gl.ofbo.colorb);
+#ifdef GL_RGBA8
 			glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA8, width, height);
+#endif
 		}
 
 		// Create the framebuffer
@@ -515,7 +542,7 @@ GLuint init_output_framebuffer(int width, int height)
 		// Attach the depth buffer to our FBO.
 		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, gl.ofbo.depthb);
 
-		if (!gl.is_gles || gl.GL_OES_packed_depth_stencil_supported)
+		if (!gl.is_gles || gl.gl_major >= 3 || gl.GL_OES_packed_depth_stencil_supported)
 			glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, gl.ofbo.depthb);
 
 		// Attach the texture/renderbuffer to the FBO

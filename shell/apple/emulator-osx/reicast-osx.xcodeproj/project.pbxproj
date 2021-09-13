@@ -519,7 +519,6 @@
 		84B7BE131B72720100F9733F /* decoder_opcodes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = decoder_opcodes.h; sourceTree = "<group>"; };
 		84B7BE141B72720100F9733F /* driver.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = driver.cpp; sourceTree = "<group>"; };
 		84B7BE151B72720100F9733F /* ngen.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ngen.h; sourceTree = "<group>"; };
-		84B7BE171B72720100F9733F /* regalloc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = regalloc.h; sourceTree = "<group>"; };
 		84B7BE181B72720100F9733F /* shil.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = shil.cpp; sourceTree = "<group>"; };
 		84B7BE191B72720100F9733F /* shil.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = shil.h; sourceTree = "<group>"; };
 		84B7BE1A1B72720100F9733F /* shil_canonical.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = shil_canonical.h; sourceTree = "<group>"; };
@@ -1675,7 +1674,6 @@
 				84B7BE131B72720100F9733F /* decoder_opcodes.h */,
 				84B7BE141B72720100F9733F /* driver.cpp */,
 				84B7BE151B72720100F9733F /* ngen.h */,
-				84B7BE171B72720100F9733F /* regalloc.h */,
 				84B7BE181B72720100F9733F /* shil.cpp */,
 				84B7BE191B72720100F9733F /* shil.h */,
 				84B7BE1A1B72720100F9733F /* shil_canonical.h */,

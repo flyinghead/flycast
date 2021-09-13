@@ -88,7 +88,7 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
         OuyaController.init(this);
 
         String home_directory = prefs.getString(Config.pref_home, "");
-        String result = JNIdc.initEnvironment((Emulator)getApplicationContext(), home_directory,
+        String result = JNIdc.initEnvironment((Emulator)getApplicationContext(), getFilesDir().getAbsolutePath(), home_directory,
                 Locale.getDefault().toString());
         if (result != null) {
             AlertDialog.Builder dlgAlert  = new AlertDialog.Builder(this);

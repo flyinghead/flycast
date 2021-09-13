@@ -41,7 +41,6 @@
 */
 
 #pragma once
-#include "decoder.h"
 #include "blockmanager.h"
 #include "oslib/host_context.h"
 
@@ -54,7 +53,7 @@
 // (ie. exceptions) are RX pointers. These two macros convert between them by
 // sub/add the pointer offset. CodeCache will point to the RW pointer for simplicity.
 #ifdef FEAT_NO_RWX_PAGES
-	extern uintptr_t cc_rx_offset;
+	extern ptrdiff_t cc_rx_offset;
 	#define CC_RW2RX(ptr) (void*)(((uintptr_t)(ptr)) + cc_rx_offset)
 	#define CC_RX2RW(ptr) (void*)(((uintptr_t)(ptr)) - cc_rx_offset)
 #else
@@ -62,15 +61,11 @@
 	#define CC_RX2RW(ptr) (ptr)
 #endif
 
-//alternative emit ptr, set to 0 to use the main buffer
-extern u32* emit_ptr;
 extern u8* CodeCache;
 
-void emit_Write32(u32 data);
 void emit_Skip(u32 sz);
 u32 emit_FreeSpace();
 void* emit_GetCCPtr();
-void emit_SetBaseAddr();
 
 //Called from ngen_FailedToFindBlock
 DynarecCodeEntryPtr DYNACALL rdv_FailedToFindBlock(u32 pc);
@@ -105,7 +100,6 @@ extern void (*ngen_FailedToFindBlock)();
 // which corresponds to the start of the 512 MB or 4 GB virtual address space if enabled.
 void ngen_mainloop(void* cntx);
 
-void ngen_GetFeatures(ngen_features* dst);
 void ngen_HandleException(host_context_t &context);
 bool ngen_Rewrite(host_context_t &context, void *faultAddress);
 

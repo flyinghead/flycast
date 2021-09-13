@@ -13,7 +13,7 @@ TA_context* read_frame(const char* file, u8* vram_ref = NULL);
 void rend_set_fb_scale(float x,float y);
 
 #ifdef TARGET_DISPFRAME
-void *dc_run(void*)
+void dc_run()
 {
 	struct sigaction act, segv_oact;
 	memset(&act, 0, sizeof(act));
@@ -58,6 +58,5 @@ void *dc_run(void*)
 
 		os_DoEvents();
 	}
-	return nullptr;
 }
 #endif

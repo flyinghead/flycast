@@ -14,6 +14,9 @@
 #include "emulator.h"
 #include "rend/mainui.h"
 #include "cfg/option.h"
+#ifdef USE_BREAKPAD
+#include "client/linux/handler/exception_handler.h"
+#endif
 
 #include <android/log.h>
 #include <android/native_window.h>
@@ -132,8 +135,30 @@ void os_SetWindowText(char const *Text)
 {
 }
 
-extern "C" JNIEXPORT jstring JNICALL Java_com_reicast_emulator_emu_JNIdc_initEnvironment(JNIEnv *env, jobject obj, jobject emulator, jstring homeDirectory, jstring locale)
+#if defined(USE_BREAKPAD)
+static bool dumpCallback(const google_breakpad::MinidumpDescriptor& descriptor, void* context, bool succeeded)
 {
+    if (succeeded)
+    	__android_log_print(ANDROID_LOG_ERROR, "Flycast", "Minidump saved to '%s'\n", descriptor.path());
+	return succeeded;
+}
+
+static google_breakpad::ExceptionHandler *exceptionHandler;
+#endif
+
+extern "C" JNIEXPORT jstring JNICALL Java_com_reicast_emulator_emu_JNIdc_initEnvironment(JNIEnv *env, jobject obj, jobject emulator, jstring filesDirectory, jstring homeDirectory, jstring locale)
+{
+#if defined(USE_BREAKPAD)
+    if (exceptionHandler == nullptr)
+    {
+        jstring directory = homeDirectory != NULL && env->GetStringLength(homeDirectory) > 0 ? homeDirectory : filesDirectory;
+    	const char *jchar = env->GetStringUTFChars(directory, 0);
+    	std::string path(jchar);
+        env->ReleaseStringUTFChars(directory, jchar);
+        google_breakpad::MinidumpDescriptor descriptor(path);
+        exceptionHandler = new google_breakpad::ExceptionHandler(descriptor, nullptr, dumpCallback, nullptr, true, -1);
+    }
+#endif
     // Initialize platform-specific stuff
     common_linux_setup();
 
@@ -189,7 +214,7 @@ extern "C" JNIEXPORT jstring JNICALL Java_com_reicast_emulator_emu_JNIdc_initEnv
     	EventManager::listen(Event::Pause, emuEventCallback);
     	EventManager::listen(Event::Resume, emuEventCallback);
         jstring msg = NULL;
-        int rc = reicast_init(0, NULL);
+        int rc = flycast_init(0, NULL);
         if (rc == -4)
             msg = env->NewStringUTF("Cannot find configuration");
         else if (rc == 69)

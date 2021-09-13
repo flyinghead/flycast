@@ -43,7 +43,11 @@ private:
 	bool isGLES = false;
 };
 
-#if defined(__APPLE__)
+#if defined(LIBRETRO)
+
+#include "libretro.h"
+
+#elif defined(__APPLE__)
 
 #include "osx.h"
 
@@ -51,7 +55,7 @@ private:
 
 #include "sdl.h"
 
-#elif defined(GLES) || defined(__ANDROID__)
+#elif defined(GLES) || defined(__ANDROID__) || defined(__SWITCH__)
 
 #include "egl.h"
 

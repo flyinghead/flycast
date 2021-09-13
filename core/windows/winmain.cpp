@@ -1,10 +1,28 @@
+/*
+	This file is part of Flycast.
+
+    Flycast is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 2 of the License, or
+    (at your option) any later version.
+
+    Flycast is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
+*/
+#ifndef __STDC_FORMAT_MACROS
+#define __STDC_FORMAT_MACROS 1
+#endif
 #include "oslib/oslib.h"
 #include "oslib/audiostream.h"
 #include "imgread/common.h"
 #include "stdclass.h"
 #include "cfg/cfg.h"
 #include "win_keyboard.h"
-#include "hw/sh4/dyna/blockmanager.h"
 #include "log/LogManager.h"
 #include "wsi/context.h"
 #if defined(USE_SDL)
@@ -15,10 +33,12 @@
 #include "hw/maple/maple_devs.h"
 #include "emulator.h"
 #include "rend/mainui.h"
-#include "hw/sh4/dyna/ngen.h"
-#include "oslib/host_context.h"
 #include "../shell/windows/resource.h"
 #include "rawinput.h"
+#ifdef USE_BREAKPAD
+#include "breakpad/client/windows/handler/exception_handler.h"
+#include "version.h"
+#endif
 
 #include <windows.h>
 #include <windowsx.h>
@@ -117,9 +137,6 @@ static PCHAR*
 	return argv;
 }
 
-bool VramLockedWrite(u8* address);
-bool BM_LockedWrite(u8* address);
-
 #ifndef USE_SDL
 
 static std::shared_ptr<WinMouse> mouse;
@@ -184,74 +201,6 @@ void os_SetupInput()
 #endif
 	if (config::UseRawInput)
 		rawinput::init();
-}
-
-static void readContext(const EXCEPTION_POINTERS *ep, host_context_t &context)
-{
-#if HOST_CPU == CPU_X86
-	context.pc = ep->ContextRecord->Eip;
-	context.esp = ep->ContextRecord->Esp;
-	context.eax = ep->ContextRecord->Eax;
-	context.ecx = ep->ContextRecord->Ecx;
-#elif HOST_CPU == CPU_X64
-	context.pc = ep->ContextRecord->Rip;
-	context.rsp = ep->ContextRecord->Rsp;
-	context.r9 = ep->ContextRecord->R9;
-	context.rcx = ep->ContextRecord->Rcx;
-#endif
-}
-
-static void writeContext(EXCEPTION_POINTERS *ep, const host_context_t &context)
-{
-#if HOST_CPU == CPU_X86
-	ep->ContextRecord->Eip = context.pc;
-	ep->ContextRecord->Esp = context.esp;
-	ep->ContextRecord->Eax = context.eax;
-	ep->ContextRecord->Ecx = context.ecx;
-#elif HOST_CPU == CPU_X64
-	ep->ContextRecord->Rip = context.pc;
-	ep->ContextRecord->Rsp = context.rsp;
-	ep->ContextRecord->R9 = context.r9;
-	ep->ContextRecord->Rcx = context.rcx;
-#endif
-}
-static LONG exceptionHandler(EXCEPTION_POINTERS *ep)
-{
-	u32 dwCode = ep->ExceptionRecord->ExceptionCode;
-
-	if (dwCode != EXCEPTION_ACCESS_VIOLATION)
-		return EXCEPTION_CONTINUE_SEARCH;
-
-	EXCEPTION_RECORD* pExceptionRecord = ep->ExceptionRecord;
-	u8* address = (u8 *)pExceptionRecord->ExceptionInformation[1];
-
-	//printf("[EXC] During access to : 0x%X\n", address);
-
-	// code protection in RAM
-	if (bm_RamWriteAccess(address))
-		return EXCEPTION_CONTINUE_EXECUTION;
-	// texture protection in VRAM
-	if (VramLockedWrite(address))
-		return EXCEPTION_CONTINUE_EXECUTION;
-	// FPCB jump table protection
-	if (BM_LockedWrite(address))
-		return EXCEPTION_CONTINUE_EXECUTION;
-
-	host_context_t context;
-	readContext(ep, context);
-#if FEAT_SHREC == DYNAREC_JIT
-	// fast mem access rewriting
-	if (ngen_Rewrite(context, address))
-	{
-		writeContext(ep, context);
-		return EXCEPTION_CONTINUE_EXECUTION;
-	}
-#endif
-
-    ERROR_LOG(COMMON, "[GPF] PC %p unhandled access to %p", (void *)context.pc, address);
-    os_DebugBreak();
-
-	return EXCEPTION_CONTINUE_SEARCH;
 }
 
 
@@ -705,94 +654,6 @@ static void reserveBottomMemory()
     OutputDebugStringA(buffer);
 #endif
 }
-
-#ifdef _WIN64
-
-typedef union _UNWIND_CODE {
-	struct {
-		u8 CodeOffset;
-		u8 UnwindOp : 4;
-		u8 OpInfo : 4;
-	};
-	USHORT FrameOffset;
-} UNWIND_CODE, *PUNWIND_CODE;
-
-typedef struct _UNWIND_INFO {
-	u8 Version : 3;
-	u8 Flags : 5;
-	u8 SizeOfProlog;
-	u8 CountOfCodes;
-	u8 FrameRegister : 4;
-	u8 FrameOffset : 4;
-	//ULONG ExceptionHandler;
-	UNWIND_CODE UnwindCode[1];
-	/*  UNWIND_CODE MoreUnwindCode[((CountOfCodes + 1) & ~1) - 1];
-	*   union {
-	*       OPTIONAL ULONG ExceptionHandler;
-	*       OPTIONAL ULONG FunctionEntry;
-	*   };
-	*   OPTIONAL ULONG ExceptionData[]; */
-} UNWIND_INFO, *PUNWIND_INFO;
-
-static RUNTIME_FUNCTION Table[1];
-static _UNWIND_INFO unwind_info[1];
-
-PRUNTIME_FUNCTION
-seh_callback(
-_In_ DWORD64 ControlPc,
-_In_opt_ PVOID Context
-) {
-	unwind_info[0].Version = 1;
-	unwind_info[0].Flags = UNW_FLAG_UHANDLER;
-	/* We don't use the unwinding info so fill the structure with 0 values.  */
-	unwind_info[0].SizeOfProlog = 0;
-	unwind_info[0].CountOfCodes = 0;
-	unwind_info[0].FrameOffset = 0;
-	unwind_info[0].FrameRegister = 0;
-	/* Add the exception handler.  */
-
-//		unwind_info[0].ExceptionHandler =
-	//	(DWORD)((u8 *)__gnat_SEH_error_handler - CodeCache);
-	/* Set its scope to the entire program.  */
-	Table[0].BeginAddress = 0;// (CodeCache - (u8*)__ImageBase);
-	Table[0].EndAddress = /*(CodeCache - (u8*)__ImageBase) +*/ CODE_SIZE + TEMP_CODE_SIZE;
-	Table[0].UnwindData = (DWORD)((u8 *)unwind_info - CodeCache);
-    INFO_LOG(COMMON, "TABLE CALLBACK");
-	//for (;;);
-	return Table;
-}
-static void setup_seh()
-{
-	/* Get the base of the module.  */
-	//u8* __ImageBase = (u8*)GetModuleHandle(NULL);
-	/* Current version is always 1 and we are registering an
-	exception handler.  */
-	unwind_info[0].Version = 1;
-	unwind_info[0].Flags = UNW_FLAG_NHANDLER;
-	/* We don't use the unwinding info so fill the structure with 0 values.  */
-	unwind_info[0].SizeOfProlog = 0;
-	unwind_info[0].CountOfCodes = 1;
-	unwind_info[0].FrameOffset = 0;
-	unwind_info[0].FrameRegister = 0;
-	/* Add the exception handler.  */
-
-	unwind_info[0].UnwindCode[0].CodeOffset = 0;
-	unwind_info[0].UnwindCode[0].UnwindOp = 2;// UWOP_ALLOC_SMALL;
-	unwind_info[0].UnwindCode[0].OpInfo = 0x20 / 8;
-
-	//unwind_info[0].ExceptionHandler =
-		//(DWORD)((u8 *)__gnat_SEH_error_handler - CodeCache);
-	/* Set its scope to the entire program.  */
-	Table[0].BeginAddress = 0;// (CodeCache - (u8*)__ImageBase);
-	Table[0].EndAddress = /*(CodeCache - (u8*)__ImageBase) +*/ CODE_SIZE + TEMP_CODE_SIZE;
-	Table[0].UnwindData = (DWORD)((u8 *)unwind_info - CodeCache);
-	/* Register the unwind information.  */
-	RtlAddFunctionTable(Table, 1, (DWORD64)CodeCache);
-
-	//verify(RtlInstallFunctionTableCallback((unat)CodeCache | 0x3, (DWORD64)CodeCache, CODE_SIZE + TEMP_CODE_SIZE, seh_callback, 0, 0));
-}
-#endif
-
 static void findKeyboardLayout()
 {
 	HKL keyboardLayout = GetKeyboardLayout(0);
@@ -824,6 +685,23 @@ static void findKeyboardLayout()
 	}
 }
 
+#if defined(USE_BREAKPAD)
+static bool dumpCallback(const wchar_t* dump_path,
+		const wchar_t* minidump_id,
+		void* context,
+		EXCEPTION_POINTERS* exinfo,
+		MDRawAssertionInfo* assertion,
+		bool succeeded)
+{
+	if (succeeded)
+	{
+		wchar_t s[MAX_PATH + 32];
+		_snwprintf(s, ARRAY_SIZE(s), L"Minidump saved to '%s\\%s.dmp'", dump_path, minidump_id);
+		::OutputDebugStringW(s);
+	}
+	return succeeded;
+}
+#endif
 
 // DEF_CONSOLE allows you to override linker subsystem and therefore default console //
 //	: pragma isn't pretty but def's are configurable 
@@ -841,7 +719,28 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 	int argc = 0;
 	char* cmd_line = GetCommandLineA();
 	char** argv = commandLineToArgvA(cmd_line, &argc);
+#endif
 
+#ifdef USE_BREAKPAD
+	wchar_t tempDir[MAX_PATH + 1];
+	GetTempPathW(MAX_PATH + 1, tempDir);
+
+	static google_breakpad::CustomInfoEntry custom_entries[] = {
+			google_breakpad::CustomInfoEntry(L"prod", L"Flycast"),
+			google_breakpad::CustomInfoEntry(L"ver", L"" GIT_VERSION),
+	};
+	google_breakpad::CustomClientInfo custom_info = { custom_entries, ARRAY_SIZE(custom_entries) };
+
+	google_breakpad::ExceptionHandler handler(tempDir,
+			nullptr,
+			dumpCallback,
+			nullptr,
+			google_breakpad::ExceptionHandler::HANDLER_ALL,
+			MiniDumpNormal,
+			INVALID_HANDLE_VALUE,
+			&custom_info);
+	// crash on die() and failing verify()
+	handler.set_handle_debug_exceptions(true);
 #endif
 
 #if defined(_WIN32) && defined(LOG_TO_PTY)
@@ -852,23 +751,18 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 	reserveBottomMemory();
 	setupPath();
 	findKeyboardLayout();
-#ifdef _WIN64
-	AddVectoredExceptionHandler(1, exceptionHandler);
-#else
-	SetUnhandledExceptionFilter((LPTOP_LEVEL_EXCEPTION_FILTER)&exceptionHandler);
-#endif
-	if (reicast_init(argc, argv) != 0)
+
+	if (flycast_init(argc, argv) != 0)
 		die("Flycast initialization failed");
 
-#ifdef _WIN64
-	setup_seh();
-#endif
+	os_InstallFaultHandler();
 
 	mainui_loop();
 
 	dc_term();
 
-	SetUnhandledExceptionFilter(0);
+	os_UninstallFaultHandler();
+
 #ifdef USE_SDL
 	sdl_window_destroy();
 #else
@@ -883,21 +777,6 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 #endif
 
 	return 0;
-}
-
-double os_GetSeconds()
-{
-	static double qpfd = []() {
-		LARGE_INTEGER qpf;
-		QueryPerformanceFrequency(&qpf);
-		return 1.0 / qpf.QuadPart; }();
-
-	LARGE_INTEGER time_now;
-
-	QueryPerformanceCounter(&time_now);
-	static LARGE_INTEGER time_now_base = time_now;
-
-	return (time_now.QuadPart - time_now_base.QuadPart) * qpfd;
 }
 
 void os_DebugBreak()

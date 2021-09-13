@@ -306,6 +306,7 @@ CheatManager cheatManager;
 
 void CheatManager::loadCheatFile(const std::string& filename)
 {
+#ifndef LIBRETRO
 	FILE* cheatfile = nowide::fopen(filename.c_str(), "r");
 	if (cheatfile == nullptr)
 	{
@@ -369,6 +370,7 @@ void CheatManager::loadCheatFile(const std::string& filename)
 	active = !cheats.empty();
 	INFO_LOG(COMMON, "%d cheats loaded", (int)cheats.size());
 	cfgSaveStr("cheats", gameId, filename);
+#endif
 }
 
 void CheatManager::reset(const std::string& gameId)
@@ -378,9 +380,11 @@ void CheatManager::reset(const std::string& gameId)
 		cheats.clear();
 		active = false;
 		this->gameId = gameId;
+#ifndef LIBRETRO
 		std::string cheatFile = cfgLoadStr("cheats", gameId, "");
 		if (!cheatFile.empty())
 			loadCheatFile(cheatFile);
+#endif
 	}
 	widescreen_cheat = nullptr;
 	if (!config::WidescreenGameHacks)

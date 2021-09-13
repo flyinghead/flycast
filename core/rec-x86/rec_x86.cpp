@@ -26,6 +26,7 @@
 #include "hw/sh4/sh4_interrupts.h"
 #include "hw/sh4/sh4_mem.h"
 #include "hw/mem/_vmem.h"
+#include "oslib/oslib.h"
 
 static int cycle_counter;
 static void (*mainloop)();
@@ -43,6 +44,7 @@ static X86Compiler* compiler;
 static Xbyak::Operand::Code alloc_regs[] {  Xbyak::Operand::EBX,  Xbyak::Operand::EBP,  Xbyak::Operand::ESI,  Xbyak::Operand::EDI, (Xbyak::Operand::Code)-1 };
 static s8 alloc_fregs[] = { 7, 6, 5, 4, -1 };
 alignas(16) static f32 thaw_regs[4];
+UnwindInfo unwinder;
 
 void X86RegAlloc::doAlloc(RuntimeBlockInfo* block)
 {
@@ -74,21 +76,37 @@ struct DynaRBI : RuntimeBlockInfo
 	}
 };
 
-void ngen_GetFeatures(ngen_features* dst)
-{
-	dst->InterpreterFallback = false;
-	dst->OnlyDynamicEnds = false;
-}
-
 RuntimeBlockInfo* ngen_AllocateBlock()
 {
 	return new DynaRBI();
+}
+
+void X86Compiler::alignStack(int amount)
+{
+#ifndef _WIN32
+	if (amount > 0)
+		add(esp, amount);
+	else
+		sub(esp, -amount);
+	unwinder.allocStackPtr(getCurr(), -amount);
+#endif
 }
 
 void X86Compiler::compile(RuntimeBlockInfo* block, bool force_checks, bool optimise)
 {
 	DEBUG_LOG(DYNAREC, "X86 compiling %08x to %p", block->addr, emit_GetCCPtr());
 	current_opid = -1;
+
+	unwinder.start((void *)getCurr());
+	unwinder.pushReg(0, Xbyak::Operand::ESI);
+	unwinder.pushReg(0, Xbyak::Operand::EDI);
+	unwinder.pushReg(0, Xbyak::Operand::EBP);
+	unwinder.pushReg(0, Xbyak::Operand::EBX);
+#ifndef _WIN32
+	// 16-byte alignment
+	unwinder.allocStack(0, 12);
+#endif
+	unwinder.endProlog(0);
 
 	checkBlock(force_checks, block);
 
@@ -119,6 +137,9 @@ void X86Compiler::compile(RuntimeBlockInfo* block, bool force_checks, bool optim
 
 	block->code = (DynarecCodeEntryPtr)getCode();
 	block->host_code_size = getSize();
+
+	size_t unwindSize = unwinder.end(getSize());
+	setSize(getSize() + unwindSize);
 
 	emit_Skip(getSize());
 }
@@ -280,65 +301,62 @@ void X86Compiler::ngen_CC_param(const shil_opcode& op, const shil_param& param, 
 			{
 				if (regalloc.IsAllocg(param))
 					push(regalloc.MapRegister(param));
-				else if (regalloc.IsAllocf(param))
+				else
 				{
 					sub(esp, 4);
 					movss(dword[esp], regalloc.MapXRegister(param));
 				}
-				else
-					die("Must not happen!");
 			}
 			else if (param.is_imm())
 				push(param.imm_value());
 			else
 				die("invalid combination");
 			CC_stackSize += 4;
+			unwinder.allocStackPtr(getCurr(), 4);
 			break;
 
 		//push the ptr itself
 		case CPT_ptr:
 			verify(param.is_reg());
-
 			push((unat)param.reg_ptr());
 			CC_stackSize += 4;
+			unwinder.allocStackPtr(getCurr(), 4);
 			break;
 
 		// store from EAX
 		case CPT_u64rvL:
 		case CPT_u32rv:
-			if (regalloc.IsAllocg(param))
-				mov(regalloc.MapRegister(param), eax);
-			/*else if (regalloc.IsAllocf(param))
-				mov(regalloc.MapXRegister(param), eax); */
-			else
-				die("Must not happen!");
+			mov(regalloc.MapRegister(param), eax);
 			break;
 
 		// store from EDX
 		case CPT_u64rvH:
-			if (regalloc.IsAllocg(param))
-				mov(regalloc.MapRegister(param), edx);
-			else
-				die("Must not happen!");
+			mov(regalloc.MapRegister(param), edx);
 			break;
 
 		// store from ST(0)
 		case CPT_f32rv:
-			verify(regalloc.IsAllocf(param));
 			fstp(dword[param.reg_ptr()]);
 			movss(regalloc.MapXRegister(param), dword[param.reg_ptr()]);
 			break;
 	}
 }
 
+void X86Compiler::ngen_CC_Finish(const shil_opcode &op)
+{
+	add(esp, CC_stackSize);
+	unwinder.allocStackPtr(getCurr(), -CC_stackSize);
+}
+
 void X86Compiler::freezeXMM()
 {
+	if (current_opid == (size_t)-1)
+		return;
 	s8 *fpreg = alloc_fregs;
 	f32 *slpc = thaw_regs;
 	while (*fpreg != -1)
 	{
-		//if (regalloc.SpanNRegfIntr(current_opid, *fpreg))
-		if (current_opid != (size_t)-1 && regalloc.IsMapped(Xbyak::Xmm(*fpreg), current_opid))
+		if (regalloc.IsMapped(Xbyak::Xmm(*fpreg), current_opid))
 			movss(dword[slpc++], Xbyak::Xmm(*fpreg));
 		fpreg++;
 	}
@@ -346,12 +364,13 @@ void X86Compiler::freezeXMM()
 
 void X86Compiler::thawXMM()
 {
+	if (current_opid == (size_t)-1)
+		return;
 	s8* fpreg = alloc_fregs;
 	f32* slpc = thaw_regs;
 	while (*fpreg != -1)
 	{
-		//if (regalloc.SpanNRegfIntr(current_opid, *fpreg))
-		if (current_opid != (size_t)-1 && regalloc.IsMapped(Xbyak::Xmm(*fpreg), current_opid))
+		if (regalloc.IsMapped(Xbyak::Xmm(*fpreg), current_opid))
 			movss(Xbyak::Xmm(*fpreg), dword[slpc++]);
 		fpreg++;
 	}
@@ -359,14 +378,21 @@ void X86Compiler::thawXMM()
 
 void X86Compiler::genMainloop()
 {
+	unwinder.start((void *)getCurr());
 	push(esi);
+	unwinder.pushReg(getSize(), Xbyak::Operand::ESI);
 	push(edi);
+	unwinder.pushReg(getSize(), Xbyak::Operand::EDI);
 	push(ebp);
+	unwinder.pushReg(getSize(), Xbyak::Operand::EBP);
 	push(ebx);
+	unwinder.pushReg(getSize(), Xbyak::Operand::EBX);
 #ifndef _WIN32
 	// 16-byte alignment
 	sub(esp, 12);
+	unwinder.allocStack(getSize(), 12);
 #endif
+	unwinder.endProlog(getSize());
 
 	mov(ecx, dword[&Sh4cntx.pc]);
 
@@ -374,7 +400,6 @@ void X86Compiler::genMainloop()
 
 	mov(eax, 0);
 	//next_pc _MUST_ be on ecx
-	Xbyak::Label do_iter;
 	Xbyak::Label cleanup;
 //no_update:
 	Xbyak::Label no_updateLabel;
@@ -383,25 +408,6 @@ void X86Compiler::genMainloop()
 	mov(eax, (size_t)&p_sh4rcb->fpcb[0]);
 	and_(ecx, RAM_SIZE_MAX - 2);
 	jmp(dword[eax + ecx * 2]);
-
-//intc_sched:
-	Xbyak::Label intc_schedLabel;
-	L(intc_schedLabel);
-	add(dword[&cycle_counter], SH4_TIMESLICE);
-	call((void *)UpdateSystem);
-	cmp(eax, 0);
-	jnz(do_iter);
-	ret();
-
-//do_iter:
-	L(do_iter);
-	pop(ecx);
-	call((void *)rdv_DoInterrupts);
-	mov(ecx, eax);
-	mov(edx, dword[&Sh4cntx.CpuRunning]);
-	cmp(edx, 0);
-	jz(cleanup);
-	jmp(no_updateLabel);
 
 //cleanup:
 	L(cleanup);
@@ -416,6 +422,17 @@ void X86Compiler::genMainloop()
 
 	ret();
 
+//do_iter:
+	Xbyak::Label do_iter;
+	L(do_iter);
+	pop(ecx);
+	call((void *)rdv_DoInterrupts);
+	mov(ecx, eax);
+	mov(edx, dword[&Sh4cntx.CpuRunning]);
+	cmp(edx, 0);
+	jz(cleanup);
+	jmp(no_updateLabel);
+
 //ngen_LinkBlock_Shared_stub:
 	Xbyak::Label ngen_LinkBlock_Shared_stub;
 	L(ngen_LinkBlock_Shared_stub);
@@ -423,6 +440,23 @@ void X86Compiler::genMainloop()
 	sub(ecx, 5);
 	call((void *)rdv_LinkBlock);
 	jmp(eax);
+
+	size_t unwindSize = unwinder.end(getSize());
+	setSize(getSize() + unwindSize);
+
+	// Functions called by blocks
+
+//intc_sched:
+	unwinder.start((void *)getCurr());
+	size_t startOffset = getSize();
+	unwinder.endProlog(0);
+	Xbyak::Label intc_schedLabel;
+	L(intc_schedLabel);
+	add(dword[&cycle_counter], SH4_TIMESLICE);
+	call((void *)UpdateSystem);
+	cmp(eax, 0);
+	jnz(do_iter);
+	ret();
 
 //ngen_LinkBlock_cond_Next_stub:
 	Xbyak::Label ngen_LinkBlock_cond_Next_label;
@@ -442,6 +476,25 @@ void X86Compiler::genMainloop()
 	mov(edx, dword[&Sh4cntx.jdyn]);
 	jmp(ngen_LinkBlock_Shared_stub);
 
+	genMemHandlers();
+
+	unwindSize = unwinder.end(getSize() - startOffset);
+	setSize(getSize() + unwindSize);
+
+	// The following code and all code blocks use the same stack frame as mainloop()
+	// (direct jump from there or from a block)
+	unwinder.start((void *)getCurr());
+	startOffset = getSize();
+	unwinder.pushReg(0, Xbyak::Operand::ESI);
+	unwinder.pushReg(0, Xbyak::Operand::EDI);
+	unwinder.pushReg(0, Xbyak::Operand::EBP);
+	unwinder.pushReg(0, Xbyak::Operand::EBX);
+#ifndef _WIN32
+	// 16-byte alignment
+	unwinder.allocStack(0, 12);
+#endif
+	unwinder.endProlog(0);
+
 //ngen_FailedToFindBlock_:
 	Xbyak::Label failedToFindBlock;
 	L(failedToFindBlock);
@@ -455,7 +508,8 @@ void X86Compiler::genMainloop()
 	call((void *)rdv_BlockCheckFail);
 	jmp(eax);
 
-	genMemHandlers();
+	unwindSize = unwinder.end(getSize() - startOffset);
+	setSize(getSize() + unwindSize);
 
 	ready();
 
@@ -707,9 +761,7 @@ void ngen_init()
 
 void ngen_ResetBlocks()
 {
-	// Avoid generating the main loop more than once
-	if (mainloop != nullptr)
-		return;
+	unwinder.clear();
 
 	compiler = new X86Compiler();
 
@@ -721,7 +773,6 @@ void ngen_ResetBlocks()
 
 	delete compiler;
 	compiler = nullptr;
-	emit_SetBaseAddr();
 
 	ngen_FailedToFindBlock = ngen_FailedToFindBlock_;
 }
@@ -732,8 +783,7 @@ void ngen_mainloop(void* v_cntx)
 		mainloop();
 	} catch (const SH4ThrownException&) {
 		ERROR_LOG(DYNAREC, "SH4ThrownException in mainloop");
-	} catch (...) {
-		ERROR_LOG(DYNAREC, "Uncaught unknown exception in mainloop");
+		throw FlycastException("Fatal: Unhandled SH4 exception");
 	}
 }
 

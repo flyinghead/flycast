@@ -17,7 +17,7 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #include "build.h"
-#ifdef USE_MINIUPNPC
+#ifndef FEAT_NO_MINIUPNPC
 #include <miniupnpc.h>
 #include <upnpcommands.h>
 #include "types.h"
@@ -37,19 +37,19 @@ bool MiniUPnP::Init()
 #endif
 	if (devlist == nullptr)
 	{
-		INFO_LOG(MODEM, "UPnP discover failed: error %d", error);
+		WARN_LOG(MODEM, "UPnP discover failed: error %d", error);
 		return false;
 	}
 	error = UPNP_GetValidIGD(devlist, &urls, &data, lanAddress, sizeof(lanAddress));
 	freeUPNPDevlist(devlist);
 	if (error != 1)
 	{
-		INFO_LOG(MODEM, "Internet Gateway not found: error %d", error);
+		WARN_LOG(MODEM, "Internet Gateway not found: error %d", error);
 		return false;
 	}
 	wanAddress[0] = 0;
 	if (UPNP_GetExternalIPAddress(urls.controlURL, data.first.servicetype, wanAddress) != 0)
-		INFO_LOG(MODEM, "Cannot determine external IP address");
+		WARN_LOG(MODEM, "Cannot determine external IP address");
 	return true;
 }
 
@@ -75,7 +75,7 @@ bool MiniUPnP::AddPortMapping(int port, bool tcp)
 								"86400");  // port map lease duration (in seconds) or zero for "as long as possible"
 	if (error != 0)
 	{
-		INFO_LOG(MODEM, "Port %d redirection failed: error %d", port, error);
+		WARN_LOG(MODEM, "Port %d redirection failed: error %d", port, error);
 		return false;
 	}
 	mappedPorts.emplace_back(portStr, tcp);

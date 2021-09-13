@@ -46,6 +46,7 @@ private:
 	SDL_Window* window = nullptr;
 	SDL_GLContext glcontext = nullptr;
 	bool swapOnVSync = false;
+	int swapInterval = 1;
 };
 
 extern SDLGLGraphicsContext theGLContext;

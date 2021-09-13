@@ -1,4 +1,5 @@
 #include "common.h"
+#include "stdclass.h"
 #include <algorithm>
 #include <sstream>
 
@@ -62,8 +63,8 @@ namespace {
 Disc* load_gdi(const char* file)
 {
 	FILE *t = nowide::fopen(file, "rb");
-	if (!t)
-		return nullptr;
+	if (t == nullptr)
+		throw FlycastException(std::string("Cannot open GDI file ") + file);
 
 	size_t gdi_len = flycast::fsize(t);
 
@@ -71,12 +72,12 @@ Disc* load_gdi(const char* file)
 
 	if (gdi_len >= sizeof(gdi_data))
 	{
-		WARN_LOG(GDROM, "GDI: file too big");
 		std::fclose(t);
-		return nullptr;
+		throw FlycastException("GDI file too big");
 	}
 
-	std::fread(gdi_data, 1, gdi_len, t);
+	if (std::fread(gdi_data, 1, gdi_len, t) != gdi_len)
+		WARN_LOG(GDROM, "Failed or truncated read of gdi file '%s'", file);
 	std::fclose(t);
 
 	std::istringstream gdi(gdi_data);
@@ -84,10 +85,8 @@ Disc* load_gdi(const char* file)
 	u32 iso_tc = 0;
 	gdi >> iso_tc;
 	if (iso_tc == 0)
-	{
-		WARN_LOG(GDROM, "GDI: empty or invalid GDI file");
-		return nullptr;
-	}
+		throw FlycastException("GDI: empty or invalid GDI file");
+
 	INFO_LOG(GDROM, "GDI : %d tracks", iso_tc);
 
 	std::string basepath = OS_dirname(file);
@@ -133,16 +132,19 @@ Disc* load_gdi(const char* file)
 		DEBUG_LOG(GDROM, "file[%d] \"%s\": FAD:%d, CTRL:%d, SSIZE:%d, OFFSET:%d", TRACK, track_filename.c_str(), FADS, CTRL, SSIZE, OFFSET);
 
 		Track t;
-		t.ADDR=0;
-		t.StartFAD=FADS+150;
-		t.EndFAD=0;		//fill it in
-		t.file=0;
+		t.StartFAD = FADS + 150;
 		t.CTRL = CTRL;
 
 		if (SSIZE!=0)
 		{
 			std::string path = basepath + normalize_path_separator(track_filename);
-			t.file = new RawTrackFile(nowide::fopen(path.c_str(), "rb"), OFFSET, t.StartFAD,SSIZE);
+			FILE *file = nowide::fopen(path.c_str(), "rb");
+			if (file == nullptr)
+			{
+				delete disc;
+				throw FlycastException("GDI file: Cannot open track " + path);
+			}
+			t.file = new RawTrackFile(file, OFFSET, t.StartFAD, SSIZE);
 		}
 		if (!disc->tracks.empty())
 			disc->tracks.back().EndFAD = t.StartFAD - 1;
@@ -157,13 +159,8 @@ Disc* load_gdi(const char* file)
 
 Disc* gdi_parse(const char* file)
 {
-	size_t len=strlen(file);
-	if (len>4)
-	{
-		if (stricmp( &file[len-4],".gdi")==0)
-		{
-			return load_gdi(file);
-		}
-	}
-	return 0;
+	if (get_file_extension(file) != "gdi")
+		return nullptr;
+
+	return load_gdi(file);
 }

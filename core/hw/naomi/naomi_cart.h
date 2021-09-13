@@ -77,10 +77,10 @@ private:
 	u8 naomi_cart_ram[64 * 1024];
 };
 
-class NaomiCartException : public ReicastException
+class NaomiCartException : public FlycastException
 {
 public:
-	NaomiCartException(std::string reason) : ReicastException(reason) {}
+	NaomiCartException(const std::string& reason) : FlycastException(reason) {}
 };
 
 void naomi_cart_LoadRom(const char* file);

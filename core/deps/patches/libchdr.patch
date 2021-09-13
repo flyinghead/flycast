@@ -1,0 +1,15 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 9842447..f1b3c43 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -12,8 +12,8 @@ option(INSTALL_STATIC_LIBS "Install static libraries" OFF)
+ option(WITH_SYSTEM_ZLIB "Use system provided zlib library" OFF)
+ 
+ if(CMAKE_C_COMPILER_ID MATCHES "GNU")
+-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fvisibility=hidden -fPIC -O3 -flto")
+-  set(CMAKE_INTERPROCEDURAL_OPTIMIZATION ON)
++  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fvisibility=hidden -fPIC -O3")
++  set(CMAKE_INTERPROCEDURAL_OPTIMIZATION OFF)
+ elseif(CMAKE_C_COMPILER_ID MATCHES "Clang")
+   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3")
+   set(CMAKE_INTERPROCEDURAL_OPTIMIZATION OFF)

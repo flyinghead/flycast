@@ -21,7 +21,17 @@
 #pragma once
 #include "types.h"
 
+#ifdef LIBRETRO
+#include <vulkan/vulkan_symbol_wrapper.h>
+
+static inline VKAPI_ATTR PFN_vkVoidFunction VKAPI_CALL vkGetInstanceProcAddr(VkInstance instance, const char *name) {
+	return (*vulkan_symbol_wrapper_instance_proc_addr())(instance, name);
+}
+
+#else
 #include "volk/volk.h"
+#endif
+
 #undef VK_NO_PROTOTYPES
 #include "vulkan/vulkan.hpp"
 

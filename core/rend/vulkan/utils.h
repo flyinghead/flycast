@@ -20,6 +20,7 @@
 */
 #pragma once
 #include "vulkan.h"
+#include "rend/shader_util.h"
 
 enum class ModVolMode { Xor, Or, Inclusion, Exclusion, Final };
 
@@ -75,3 +76,17 @@ static inline u32 findMemoryType(vk::PhysicalDeviceMemoryProperties const& memor
 	verify(typeIndex != u32(~0));
 	return typeIndex;
 }
+
+static const char GouraudSource[] = R"(
+#if pp_Gouraud == 0
+#define INTERPOLATION flat
+#else
+#define INTERPOLATION smooth
+#endif
+)";
+
+class VulkanSource : public ShaderSource
+{
+public:
+	VulkanSource() : ShaderSource("#version 450") {}
+};

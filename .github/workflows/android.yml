@@ -8,7 +8,10 @@ jobs:
 
     steps:
       - name: Set up build environment
-        run: sudo apt-get update && sudo apt-get -y install ninja-build
+        run: |
+          sudo apt-get update
+          sudo apt-get -y install ccache ninja-build
+          echo "CCACHE_DIR=/tmp/ccache" >> $GITHUB_ENV
 
       # Workaround for https://github.com/actions/virtual-environments/issues/3078
       - name: Downgrade CMake
@@ -19,16 +22,21 @@ jobs:
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0
-          submodules: recursive
+          submodules: true
+
+      - uses: actions/cache@v2
+        with:
+          path: /tmp/ccache
+          key: android-ccache-${{ github.sha }}
+          restore-keys: android-ccache-
 
       - uses: actions/cache@v2
         with:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
+          key: android-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: android-gradle-
 
       - name: Gradle
         working-directory: shell/android-studio
@@ -39,21 +47,36 @@ jobs:
           name: flycast-release.apk
           path: shell/android-studio/flycast/build/outputs/apk/release/flycast-release.apk
 
-      - name: Set up git vars
-        run: |
-          echo GIT_BUILD=`git describe --all --always | sed 's/remotes\/origin/heads/'`-$GITHUB_SHA >> $GITHUB_ENV
-
-      - name: Clean up
-        run: rm -f shell/android-studio/flycast/build/outputs/apk/release/*.json
-
-      - uses: jakejarvis/s3-sync-action@master
+      - name: Configure AWS Credentials
+        id: aws-credentials
+        uses: aws-actions/configure-aws-credentials@v1
         with:
-          args: --acl public-read --follow-symlinks
-        env:
-          AWS_S3_BUCKET: flycast-builds
-          AWS_ACCESS_KEY_ID: AKIAJOZQS4H2PHQWYFCA
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.S3_SECRET_KEY }}
-          AWS_REGION: 'us-east-2'
-          SOURCE_DIR: 'shell/android-studio/flycast/build/outputs/apk/release/'
-          DEST_DIR: android/${{ env.GIT_BUILD }}
-        if: ${{ github.repository == 'flyinghead/flycast' && github.event_name == 'push' }}
+          aws-access-key-id: AKIAJOZQS4H2PHQWYFCA
+          aws-secret-access-key: ${{ secrets.S3_SECRET_KEY }}
+          aws-region: us-east-2
+        if: github.repository == 'flyinghead/flycast' && github.event_name == 'push'
+
+      - name: Upload to S3
+        run: aws s3 sync shell/android-studio/flycast/build/outputs/apk/release s3://flycast-builds/android/${GITHUB_REF#refs/}-$GITHUB_SHA --acl public-read --exclude='*.json' --follow-symlinks
+        if: ${{ steps.aws-credentials.outputs.aws-account-id != '' }}
+
+      - name: Build dump_syms
+        working-directory: core/deps/breakpad
+        run: |
+          cmake -B build -DCMAKE_BUILD_TYPE=Release -G Ninja
+          cmake --build build --config Release --target dump_syms
+
+      - name: Extract symbols
+        run: |
+          DUMP_SYMS=./core/deps/breakpad/build/dump_syms
+          SO_DIR=shell/android-studio/flycast/build/intermediates/cmake/release/obj
+          for arch in arm64-v8a armeabi-v7a x86 x86_64 ; do
+            $DUMP_SYMS $SO_DIR/$arch/libflycast.so > libflycast.so.sym
+            BUILD_ID=`head -1 libflycast.so.sym | awk '{ print $4 }'`
+            mkdir -p symbols/libflycast.so/$BUILD_ID
+            mv libflycast.so.sym symbols/libflycast.so/$BUILD_ID
+          done
+
+      - name: Upload to S3 (symbols)
+        run: aws s3 sync symbols s3://flycast-symbols/android --follow-symlinks
+        if: ${{ steps.aws-credentials.outputs.aws-account-id != '' }}

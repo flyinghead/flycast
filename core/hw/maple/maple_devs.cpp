@@ -2,8 +2,8 @@
 #include "maple_cfg.h"
 #include "maple_helper.h"
 #include "hw/pvr/spg.h"
-#include "stdclass.h"
 #include "oslib/audiostream.h"
+#include "oslib/oslib.h"
 #include "cfg/option.h"
 
 #include <zlib.h>
@@ -38,6 +38,12 @@ maple_device::~maple_device()
     delete config;
 }
 
+static inline void mutualExclusion(u32& keycode, u32 mask)
+{
+	if ((keycode & mask) == 0)
+		keycode |= mask;
+}
+
 /*
 	Sega Dreamcast Controller
 	No error checking of any kind, but works just fine
@@ -53,7 +59,10 @@ struct maple_sega_controller: maple_base
 		return 0xfe060f00;	// 4 analog axes (0-3) X Y A B Start U D L R
 	}
 
-	virtual u32 transform_kcode(u32 kcode) {
+	virtual u32 transform_kcode(u32 kcode)
+	{
+		mutualExclusion(kcode, DC_DPAD_UP | DC_DPAD_DOWN);
+		mutualExclusion(kcode, DC_DPAD_LEFT | DC_DPAD_RIGHT);
 		return kcode | 0xF901;		// mask off DPad2, C, D and Z;
 	}
 
@@ -189,7 +198,10 @@ struct maple_atomiswave_controller: maple_sega_controller
 		return 0xff663f00;	// 6 analog axes, X Y L2/D2(?) A B C Start U D L R
 	}
 
-	u32 transform_kcode(u32 kcode) override {
+	u32 transform_kcode(u32 kcode) override
+	{
+		mutualExclusion(kcode, AWAVE_UP_KEY | AWAVE_DOWN_KEY);
+		mutualExclusion(kcode, AWAVE_LEFT_KEY | AWAVE_RIGHT_KEY);
 		return kcode | AWAVE_TRIGGER_KEY;
 	}
 
@@ -215,7 +227,12 @@ struct maple_sega_twinstick: maple_sega_controller
 		return 0xfefe0000;	// no analog axes, X Y A B D Start U/D/L/R U2/D2/L2/R2
 	}
 
-	u32 transform_kcode(u32 kcode) override {
+	u32 transform_kcode(u32 kcode) override
+	{
+		mutualExclusion(kcode, DC_DPAD_UP | DC_DPAD_DOWN);
+		mutualExclusion(kcode, DC_DPAD_LEFT | DC_DPAD_RIGHT);
+		mutualExclusion(kcode, DC_DPAD2_UP | DC_DPAD2_DOWN);
+		mutualExclusion(kcode, DC_DPAD2_LEFT | DC_DPAD2_RIGHT);
 		return kcode | 0x0101;
 	}
 
@@ -247,7 +264,10 @@ struct maple_ascii_stick: maple_sega_controller
 		return 0xff070000;	// no analog axes, X Y Z A B C Start U/D/L/R
 	}
 
-	u32 transform_kcode(u32 kcode) override {
+	u32 transform_kcode(u32 kcode) override
+	{
+		mutualExclusion(kcode, DC_DPAD_UP | DC_DPAD_DOWN);
+		mutualExclusion(kcode, DC_DPAD_LEFT | DC_DPAD_RIGHT);
 		return kcode | 0xF800;
 	}
 
@@ -306,17 +326,23 @@ struct maple_sega_vmu: maple_base
 	bool serialize(void **data, unsigned int *total_size) override
 	{
 		maple_base::serialize(data, total_size);
-		REICAST_SA(flash_data,128*1024);
-		REICAST_SA(lcd_data,192);
-		REICAST_SA(lcd_data_decoded,48*32);
+		REICAST_S(flash_data);
+		REICAST_S(lcd_data);
+		REICAST_S(lcd_data_decoded);
 		return true ;
 	}
 	bool unserialize(void **data, unsigned int *total_size, serialize_version_enum version) override
 	{
 		maple_base::unserialize(data, total_size, version);
-		REICAST_USA(flash_data,128*1024);
-		REICAST_USA(lcd_data,192);
-		REICAST_USA(lcd_data_decoded,48*32);
+		REICAST_US(flash_data);
+		REICAST_US(lcd_data);
+		REICAST_US(lcd_data_decoded);
+		for (u8 b : lcd_data)
+			if (b != 0)
+			{
+				config->SetImage(lcd_data_decoded);
+				break;
+			}
 		return true ;
 	}
 
@@ -343,12 +369,7 @@ struct maple_sega_vmu: maple_base
 	{
 		memset(flash_data, 0, sizeof(flash_data));
 		memset(lcd_data, 0, sizeof(lcd_data));
-		char tempy[512];
-		sprintf(tempy, "vmu_save_%s.bin", logical_port);
-		// VMU saves used to be stored in .reicast, not in .reicast/data
-		std::string apath = get_writable_config_path(tempy);
-		if (!file_exists(apath))
-			apath = get_writable_data_path(tempy);
+		std::string apath = hostfs::getVmuPath(logical_port);
 
 		file = nowide::fopen(apath.c_str(), "rb+");
 		if (file == nullptr)
@@ -1213,7 +1234,10 @@ struct maple_mouse : maple_base
 
 struct maple_lightgun : maple_base
 {
-	virtual u32 transform_kcode(u32 kcode) {
+	virtual u32 transform_kcode(u32 kcode)
+	{
+		mutualExclusion(kcode, DC_DPAD_UP | DC_DPAD_DOWN);
+		mutualExclusion(kcode, DC_DPAD_LEFT | DC_DPAD_RIGHT);
 		if ((kcode & DC_BTN_RELOAD) == 0)
 			kcode &= ~DC_BTN_A;	// trigger
 		return kcode | 0xFF01;
@@ -1310,6 +1334,8 @@ struct maple_lightgun : maple_base
 struct atomiswave_lightgun : maple_lightgun
 {
 	u32 transform_kcode(u32 kcode) override {
+		mutualExclusion(kcode, AWAVE_UP_KEY | AWAVE_DOWN_KEY);
+		mutualExclusion(kcode, AWAVE_LEFT_KEY | AWAVE_RIGHT_KEY);
 		// No need for reload on AW
 		return (kcode & AWAVE_TRIGGER_KEY) == 0 ? ~AWAVE_BTN0_KEY : ~0;
 	}

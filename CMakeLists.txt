@@ -16,12 +16,18 @@ option(USE_GLES2 "Use GLES2 API" OFF)
 option(USE_HOST_LIBZIP "Use host libzip" ON)
 option(USE_OPENMP "Use OpenMP if available" ON)
 option(USE_VULKAN "Build with Vulkan support" ON)
+option(LIBRETRO "Build libretro core" OFF)
 
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/shell/cmake")
 
 if(APPLE)
-	set(CMAKE_OSX_DEPLOYMENT_TARGET "10.9" CACHE STRING "Minimum macOS deployment version")
-	set(CMAKE_OSX_ARCHITECTURES "x86_64;arm64" CACHE STRING "")
+	if(IOS)
+		set(CMAKE_OSX_DEPLOYMENT_TARGET "12.0" CACHE STRING "Minimum iOS deployment version")
+		set(CMAKE_OSX_ARCHITECTURES "arm64")
+	else()
+		set(CMAKE_OSX_DEPLOYMENT_TARGET "10.9" CACHE STRING "Minimum macOS deployment version")
+		set(CMAKE_OSX_ARCHITECTURES "x86_64;arm64" CACHE STRING "")
+	endif()
 endif()
 
 project(flycast)
@@ -30,9 +36,9 @@ if(ENABLE_CTEST)
     include(CTest)
 endif()
 
-if(APPLE)
+if(APPLE AND NOT LIBRETRO)
     set(CMAKE_Swift_LANGUAGE_VERSION 5.0)
-    enable_language(Swift)
+    enable_language(Swift OBJC OBJCXX)
 endif()
 
 find_package(Git)
@@ -52,26 +58,74 @@ endif()
 string(TIMESTAMP BUILD_TIMESTAMP UTC)
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/core/version.h.in" "${CMAKE_CURRENT_SOURCE_DIR}/core/version.h" @ONLY)
 
-if(ANDROID)
-    add_library(${PROJECT_NAME} SHARED core/nullDC.cpp)
+if(NINTENDO_SWITCH)
+    set(USE_VULKAN OFF)
+    enable_language(ASM)
+
+    if(LIBRETRO)
+        add_library(${PROJECT_NAME} STATIC core/emulator.cpp)
+        target_compile_definitions(${PROJECT_NAME} PRIVATE LIBRETRO HAVE_LIBNX HAVE_OPENGL HAVE_OIT)
+		set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "flycast_libretro_libnx")
+		set(CMAKE_STATIC_LIBRARY_PREFIX "")
+    else()
+        add_executable(${PROJECT_NAME} core/emulator.cpp)
+        target_compile_definitions(${PROJECT_NAME} PRIVATE EGL_NO_PLATFORM_SPECIFIC_TYPES)
+    endif()
+	if(USE_GLES)
+        target_compile_definitions(${PROJECT_NAME} PRIVATE GLES)
+	endif()
+ 
+elseif(LIBRETRO)
+    add_library(${PROJECT_NAME} SHARED core/emulator.cpp)
+    if(APPLE)
+		set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-undefined,error")
+	else()
+		set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--no-undefined")
+	endif()
+    set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "flycast_libretro")
+    set(CMAKE_SHARED_LIBRARY_PREFIX "")
+    set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE LIBRETRO)
+    if(ANDROID OR USE_GLES)
+		target_compile_definitions(${PROJECT_NAME} PRIVATE GLES GLES3 HAVE_OPENGLES HAVE_OPENGLES3)
+		target_link_libraries(${PROJECT_NAME} PRIVATE "-lGLESv3")
+    elseif(USE_GLES2)
+		target_compile_definitions(${PROJECT_NAME} PRIVATE GLES GLES2 HAVE_OPENGLES HAVE_OPENGLES2)
+		target_link_libraries(${PROJECT_NAME} PRIVATE "-lGLESv2")
+    else()
+		target_compile_definitions(${PROJECT_NAME} PRIVATE HAVE_OPENGL)
+	    if(APPLE)
+			set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-framework,OpenGL")
+	    else()
+			target_compile_definitions(${PROJECT_NAME} PRIVATE HAVE_OIT)
+		endif()
+	    if(WIN32)
+			target_link_libraries(${PROJECT_NAME} PRIVATE "-lopengl32")
+		endif()
+	endif()
+elseif(ANDROID)
+    add_library(${PROJECT_NAME} SHARED core/emulator.cpp)
+    set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_RELEASE} -O3")
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_RELEASE} -O3")
     target_compile_options(${PROJECT_NAME} PRIVATE -fno-stack-protector)
     set(CMAKE_ANDROID_STL_TYPE "c++_static")
 elseif(MSVC)
-    add_executable(${PROJECT_NAME} WIN32 core/nullDC.cpp)
+    add_executable(${PROJECT_NAME} WIN32 core/emulator.cpp)
 else()
-    add_executable(${PROJECT_NAME} MACOSX_BUNDLE core/nullDC.cpp)
+    add_executable(${PROJECT_NAME} MACOSX_BUNDLE core/emulator.cpp)
 endif()
 
 target_compile_features(${PROJECT_NAME} PRIVATE c_std_11 cxx_std_11)
 set_target_properties(${PROJECT_NAME} PROPERTIES
 	CXX_EXTENSIONS OFF
 	LINK_FLAGS_RELEASE -s)
-if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    target_compile_options(${PROJECT_NAME} PRIVATE
-        $<$<COMPILE_LANGUAGE:CXX>:-fno-rtti>
-        -fno-strict-aliasing)
-elseif(MSVC)
+if(MSVC)
 	target_compile_options(${PROJECT_NAME} PRIVATE /GR- /GS-)
+else()
+	target_compile_options(${PROJECT_NAME} PRIVATE
+		$<$<COMPILE_LANGUAGE:CXX>:-fno-rtti>
+		$<$<COMPILE_LANGUAGE:CXX>:-fno-strict-aliasing>
+		$<$<COMPILE_LANGUAGE:CXX>:-Wall>)
 endif()
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE
@@ -82,8 +136,42 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
         $<$<BOOL:MSVC>:NOMINMAX>
         $<$<BOOL:${TEST_AUTOMATION}>:TEST_AUTOMATION>
         $<$<BOOL:${ENABLE_LOG}>:DEBUGFAST>)
+if(IOS)
+	target_compile_definitions(${PROJECT_NAME} PRIVATE
+		TARGET_IPHONE
+		GLES
+		GLES3
+		GLES_SILENCE_DEPRECATION)
+endif()
 
 target_include_directories(${PROJECT_NAME} PRIVATE core core/deps core/deps/stb core/khronos)
+if(LIBRETRO)
+	target_include_directories(${PROJECT_NAME} PRIVATE shell/libretro)
+endif()
+if(NINTENDO_SWITCH)
+	target_include_directories(${PROJECT_NAME} PRIVATE shell/switch "${DEVKITPRO}/portlibs/switch/include")
+endif()
+
+if(NOT LIBRETRO)
+	if(WIN32 AND NOT MSVC)
+		target_link_options(${PROJECT_NAME} PRIVATE "-Wl,--build-id")
+		target_link_libraries(${PROJECT_NAME} PRIVATE breakpad_client)
+		target_compile_definitions(${PROJECT_NAME} PRIVATE USE_BREAKPAD)
+#	elseif(APPLE)
+#		add_subdirectory(core/deps/breakpad)
+#		target_link_libraries(${PROJECT_NAME} PRIVATE breakpad_client)
+#		target_include_directories(${PROJECT_NAME} PRIVATE
+#			core/deps/breakpad/src/client/apple/Framework
+#			core/deps/breakpad/src/client/mac/Framework)
+##		target_include_directories(${PROJECT_NAME} PRIVATE $<INSTALL_INTERFACE:${CMAKE_INSTALL_LIBDIR}/Breakpad.framework>)
+#		target_compile_definitions(${PROJECT_NAME} PRIVATE USE_BREAKPAD)
+	elseif(UNIX AND NOT CMAKE_SYSTEM_NAME MATCHES "(FreeBSD|OpenBSD|NetBSD)" AND NOT IOS)
+		add_subdirectory(core/deps/breakpad)
+		target_link_libraries(${PROJECT_NAME} PRIVATE breakpad_client)
+		target_include_directories(${PROJECT_NAME} PRIVATE core/deps/breakpad/src)
+		target_compile_definitions(${PROJECT_NAME} PRIVATE USE_BREAKPAD)
+	endif()
+endif()
 
 find_package(OpenMP)
 if(OpenMP_CXX_FOUND AND NOT APPLE AND USE_OPENMP)
@@ -110,66 +198,76 @@ option(BUILD_SHARED_LIBS "Build shared library" OFF)
 add_subdirectory(core/deps/glm)
 target_link_libraries(${PROJECT_NAME} PRIVATE glm::glm)
 
-if(NOT APPLE)
+if(NOT APPLE AND USE_VULKAN)
 	option(BUILD_EXTERNAL "Build external dependencies in /External" OFF)
 	add_subdirectory(core/deps/glslang)
 	target_link_libraries(${PROJECT_NAME} PRIVATE SPIRV)
 endif()
 
-find_package(ALSA)
-if(ALSA_FOUND AND NOT ANDROID)
-    target_compile_definitions(${PROJECT_NAME} PRIVATE USE_ALSA)
-    target_include_directories(${PROJECT_NAME} PRIVATE ${ALSA_INCLUDE_DIRS})
-    target_link_libraries(${PROJECT_NAME} PRIVATE ${ALSA_LIBRARIES})
-endif()
-
-if(WIN32)
-	# Build SDL
-	file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/core/deps/SDL")
-	if(CMAKE_GENERATOR MATCHES "Visual Studio")
-		set(SDL_CMAKE_ARCH_ARG -A ${CMAKE_GENERATOR_PLATFORM})
+if(NOT LIBRETRO)
+	find_package(ALSA)
+	if(ALSA_FOUND AND NOT ANDROID)
+	    target_compile_definitions(${PROJECT_NAME} PRIVATE USE_ALSA)
+	    target_include_directories(${PROJECT_NAME} PRIVATE ${ALSA_INCLUDE_DIRS})
+	    target_link_libraries(${PROJECT_NAME} PRIVATE ${ALSA_LIBRARIES})
 	endif()
-	execute_process(COMMAND ${CMAKE_COMMAND}
-		"-DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/core/deps/SDL"
-		-DLIBC=ON
-		-DBUILD_SHARED_LIBS=OFF
-		-G "${CMAKE_GENERATOR}"
-		${SDL_CMAKE_ARCH_ARG}
-		"${CMAKE_CURRENT_SOURCE_DIR}/core/deps/SDL"
-    	WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/core/deps/SDL")
-	execute_process(COMMAND ${CMAKE_COMMAND} --build "${CMAKE_CURRENT_BINARY_DIR}/core/deps/SDL" --config Release --target install)
+	
+	if(WIN32)
+		# Build SDL
+		file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/core/deps/SDL")
+		if(CMAKE_GENERATOR MATCHES "Visual Studio")
+			set(SDL_CMAKE_ARCH_ARG -A ${CMAKE_GENERATOR_PLATFORM})
+		endif()
+		execute_process(COMMAND ${CMAKE_COMMAND}
+			"-DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/core/deps/SDL"
+			-DLIBC=ON
+			-DBUILD_SHARED_LIBS=OFF
+			-G "${CMAKE_GENERATOR}"
+			${SDL_CMAKE_ARCH_ARG}
+			"${CMAKE_CURRENT_SOURCE_DIR}/core/deps/SDL"
+	    	WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/core/deps/SDL")
+		execute_process(COMMAND ${CMAKE_COMMAND} --build "${CMAKE_CURRENT_BINARY_DIR}/core/deps/SDL" --config Release --target install)
+	endif()
+	
+	if(MINGW)
+		target_link_libraries(${PROJECT_NAME} PRIVATE "-static-libgcc -static-libstdc++")
+	endif()
+	
+	if((APPLE AND NOT IOS) OR WIN32)
+	    find_package(SDL2 HINTS "${CMAKE_CURRENT_BINARY_DIR}/core/deps/SDL/cmake")
+	elseif(NOT ANDROID AND NOT IOS)
+	    find_package(SDL2)
+	endif()
+	if(SDL2_FOUND)
+	    target_compile_definitions(${PROJECT_NAME} PRIVATE USE_SDL USE_SDL_AUDIO)
+	    target_sources(${PROJECT_NAME} PRIVATE core/sdl/sdl.cpp core/sdl/sdl.h core/sdl/sdl_gamepad.h core/sdl/sdl_keyboard.h)
+	    if(APPLE)
+	        target_include_directories(${PROJECT_NAME} PRIVATE "${SDL2_INCLUDE_DIRS}/..")
+	    elseif(NINTENDO_SWITCH)
+	        target_include_directories(${PROJECT_NAME} PRIVATE "${DEVKITPRO}/portlibs/switch/include/SDL2")
+	    else()
+	        target_include_directories(${PROJECT_NAME} PRIVATE ${SDL2_INCLUDE_DIRS})
+	    endif()
+	    if((APPLE OR WIN32) AND TARGET SDL2::SDL2-static)
+	        target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2-static)
+	    elseif(TARGET SDL2::SDL2)
+	        target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2)
+	    else()
+	        target_link_libraries(${PROJECT_NAME} PRIVATE ${SDL2_LIBRARIES})
+	    endif()
+	endif()
+	
+	find_package(ZLIB)
+	if(TARGET ZLIB::ZLIB AND NOT ANDROID AND NOT WIN32)
+	    set(WITH_SYSTEM_ZLIB ON CACHE BOOL "Use system provided zlib library")
+	    target_link_libraries(${PROJECT_NAME} PRIVATE ZLIB::ZLIB)
+	endif()
 endif()
 
-if(MINGW)
-	target_link_libraries(${PROJECT_NAME} PRIVATE "-static-libgcc -static-libstdc++")
-endif()
-
-if(APPLE OR WIN32)
-    find_package(SDL2 HINTS "${CMAKE_CURRENT_BINARY_DIR}/core/deps/SDL/cmake")
-elseif(NOT ANDROID)
-    find_package(SDL2)
-endif()
-if(SDL2_FOUND)
-    target_compile_definitions(${PROJECT_NAME} PRIVATE USE_SDL USE_SDL_AUDIO)
-    target_sources(${PROJECT_NAME} PRIVATE core/sdl/sdl.cpp core/sdl/sdl.h core/sdl/sdl_gamepad.h core/sdl/sdl_keyboard.h)
-    if(APPLE)
-        target_include_directories(${PROJECT_NAME} PRIVATE "${SDL2_INCLUDE_DIRS}/..")
-    else()
-        target_include_directories(${PROJECT_NAME} PRIVATE ${SDL2_INCLUDE_DIRS})
-    endif()
-    if((APPLE OR WIN32) AND TARGET SDL2::SDL2-static)
-        target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2-static)
-    elseif(TARGET SDL2::SDL2)
-        target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2)
-    else()
-        target_link_libraries(${PROJECT_NAME} PRIVATE ${SDL2_LIBRARIES})
-    endif()
-endif()
-
-find_package(ZLIB)
-if(TARGET ZLIB::ZLIB AND NOT ANDROID AND NOT WIN32)
-    set(WITH_SYSTEM_ZLIB ON CACHE BOOL "Use system provided zlib library")
-    target_link_libraries(${PROJECT_NAME} PRIVATE ZLIB::ZLIB)
+execute_process(COMMAND git apply -p1 ${CMAKE_CURRENT_SOURCE_DIR}/core/deps/patches/libchdr.patch
+		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/core/deps/libchdr) 
+if(IOS)
+	set(CMAKE_SYSTEM_PROCESSOR aarch64)
 endif()
 add_subdirectory(core/deps/libchdr)
 target_link_libraries(${PROJECT_NAME} PRIVATE chdr-static)
@@ -186,7 +284,7 @@ if(NOT WITH_SYSTEM_ZLIB)
 endif()
 
 find_package(PkgConfig)
-if(PKG_CONFIG_FOUND AND NOT ANDROID AND NOT APPLE)
+if(PKG_CONFIG_FOUND AND NOT ANDROID AND NOT APPLE AND NOT LIBRETRO)
     pkg_check_modules(AO IMPORTED_TARGET ao)
     if(AO_FOUND)
         target_compile_definitions(${PROJECT_NAME} PRIVATE USE_LIBAO)
@@ -224,12 +322,17 @@ if(PKG_CONFIG_FOUND AND NOT ANDROID AND NOT APPLE)
         target_compile_definitions(${PROJECT_NAME} PRIVATE DYNA_OPROF)
         target_link_libraries(${PROJECT_NAME} PRIVATE opagent)
     endif()
-    
-    find_package(Miniupnpc)
+
+    find_package(MiniUPnPc)
     if (MINIUPNP_FOUND)
 		target_include_directories(${PROJECT_NAME} PRIVATE ${MINIUPNP_INCLUDE_DIRS})
 		target_link_libraries(${PROJECT_NAME} PRIVATE ${MINIUPNP_LIBRARIES})
     endif()
+endif()
+
+if(NINTENDO_SWITCH AND USE_GLES)
+	pkg_check_modules(GLESV2 IMPORTED_TARGET glesv2)
+	target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::GLESV2)
 endif()
 
 if(UNIX AND NOT APPLE AND NOT ANDROID)
@@ -249,14 +352,14 @@ if(UNIX AND NOT APPLE AND NOT ANDROID)
 
     find_package(Threads REQUIRED)
     target_link_libraries(${PROJECT_NAME} PRIVATE Threads::Threads)
-    if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_SYSTEM_PROCESSOR MATCHES "amd64.*|x86_64.*|AMD64.*")
+    if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_SYSTEM_PROCESSOR MATCHES "amd64.*|x86_64.*|AMD64.*" AND NOT LIBRETRO)
         set_target_properties(${PROJECT_NAME} PROPERTIES POSITION_INDEPENDENT_CODE False)
         if(${CMAKE_VERSION} VERSION_LESS "3.14.0")
             set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -no-pie")
         endif()
     endif()
 
-    if(NOT SDL2_FOUND)
+    if(NOT SDL2_FOUND AND NOT LIBRETRO)
         find_package(X11 REQUIRED)
         if(X11_FOUND)
             target_compile_definitions(${PROJECT_NAME} PRIVATE SUPPORT_X11)
@@ -275,10 +378,16 @@ if(ASAN)
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=address -static-libasan")
 endif()
 
-if(ANDROID)
-	find_package(oboe REQUIRED CONFIG)
+if(ANDROID AND NOT LIBRETRO)
+	find_package(oboe CONFIG)
+	if(OBOE_FOUND)
+		target_link_libraries(${PROJECT_NAME} PRIVATE oboe::oboe)
+	else()
+		include("core/deps/oboe/gamesdk.cmake")
+		add_gamesdk_target(PACKAGE_DIR core/deps/oboe ANDROID_API_LEVEL 28 ANDROID_NDK_VERSION 21.0.0)
+		target_link_libraries(${PROJECT_NAME} PRIVATE oboe OpenSLES) 
+	endif()
 	target_compile_definitions(${PROJECT_NAME} PRIVATE USE_OBOE)
-	target_link_libraries(${PROJECT_NAME} PRIVATE oboe::oboe)
 endif()
 
 target_sources(${PROJECT_NAME} PRIVATE
@@ -288,16 +397,20 @@ target_sources(${PROJECT_NAME} PRIVATE
 target_include_directories(${PROJECT_NAME} PRIVATE core/deps/nowide/include)
 
 if(NOT MINIUPNP_FOUND)
-	option(UPNPC_BUILD_SHARED "Build shared library" OFF)
-	option(UPNPC_BUILD_TESTS "Build test executables" OFF)
-	option(UPNPC_BUILD_SAMPLE "Build sample executables" OFF)
-	option(UPNPC_NO_INSTALL "Disable installation" ON)
-	add_subdirectory(core/deps/miniupnpc)
-	target_include_directories(${PROJECT_NAME} PRIVATE core/deps/miniupnpc)
-	target_link_libraries(${PROJECT_NAME} PRIVATE miniupnpc::miniupnpc)
+	if(NINTENDO_SWITCH)
+		target_compile_definitions(${PROJECT_NAME} PRIVATE FEAT_NO_MINIUPNPC)
+	else()
+		option(UPNPC_BUILD_SHARED "Build shared library" OFF)
+		option(UPNPC_BUILD_TESTS "Build test executables" OFF)
+		option(UPNPC_BUILD_SAMPLE "Build sample executables" OFF)
+		option(UPNPC_NO_INSTALL "Disable installation" ON)
+		add_subdirectory(core/deps/miniupnpc)
+		target_include_directories(${PROJECT_NAME} PRIVATE core/deps/miniupnpc)
+		target_link_libraries(${PROJECT_NAME} PRIVATE miniupnpc::miniupnpc)
+	endif()
 endif()
 
-if(NOT LIBZIP_FOUND)
+if(NOT LIBZIP_FOUND OR NINTENDO_SWITCH)
 	option(ENABLE_COMMONCRYPTO "Enable use of CommonCrypto" OFF)
 	option(ENABLE_GNUTLS "Enable use of GnuTLS" OFF)
 	option(ENABLE_MBEDTLS "Enable use of mbed TLS" OFF)
@@ -386,8 +499,45 @@ endif()
 target_compile_definitions(${PROJECT_NAME} PRIVATE _7ZIP_ST)
 target_sources(${PROJECT_NAME} PRIVATE core/deps/lzma/7zArcIn.c core/deps/lzma/7zBuf.c core/deps/lzma/7zCrc.c core/deps/lzma/7zCrcOpt.c core/deps/lzma/7zDec.c core/deps/lzma/7zFile.c core/deps/lzma/7zStream.c core/deps/lzma/Alloc.c core/deps/lzma/Bcj2.c core/deps/lzma/Bra86.c core/deps/lzma/Bra.c core/deps/lzma/BraIA64.c core/deps/lzma/CpuArch.c core/deps/lzma/Delta.c core/deps/lzma/LzFind.c core/deps/lzma/Lzma2Dec.c core/deps/lzma/Lzma86Dec.c core/deps/lzma/Lzma86Enc.c core/deps/lzma/LzmaDec.c core/deps/lzma/LzmaEnc.c core/deps/lzma/LzmaLib.c core/deps/lzma/Sort.c)
 target_sources(${PROJECT_NAME} PRIVATE core/deps/libelf/elf32.cpp core/deps/libelf/elf64.cpp core/deps/libelf/elf.cpp)
-target_sources(${PROJECT_NAME} PRIVATE core/deps/imgui/imgui.cpp core/deps/imgui/imgui_demo.cpp core/deps/imgui/imgui_draw.cpp core/deps/imgui/imgui_widgets.cpp)
+if(NOT LIBRETRO)
+	target_sources(${PROJECT_NAME} PRIVATE core/deps/imgui/imgui.cpp core/deps/imgui/imgui_demo.cpp core/deps/imgui/imgui_draw.cpp core/deps/imgui/imgui_widgets.cpp)
+endif()
 target_sources(${PROJECT_NAME} PRIVATE core/deps/xbrz/xbrz.cpp)
+
+if(LIBRETRO)
+    target_include_directories(${PROJECT_NAME} PRIVATE core/deps/libretro-common/include)
+	target_sources(${PROJECT_NAME} PRIVATE 
+		core/deps/libretro-common/memmap/memalign.c
+		core/deps/libretro-common/file/file_path.c
+		core/deps/libretro-common/vfs/vfs_implementation.c
+		core/deps/libretro-common/encodings/encoding_utf.c
+		core/deps/libretro-common/compat/compat_strl.c
+		core/deps/libretro-common/compat/fopen_utf8.c
+		core/deps/libretro-common/compat/compat_strcasestr.c
+		core/deps/libretro-common/file/retro_dirent.c
+		core/deps/libretro-common/string/stdstring.c
+		core/deps/libretro-common/glsm/glsm.c
+		core/deps/libretro-common/glsym/rglgen.c)
+	if(ANDROID OR USE_GLES)
+		target_sources(${PROJECT_NAME} PRIVATE core/deps/libretro-common/glsym/glsym_es3.c) 
+	elseif(USE_GLES2)
+		target_sources(${PROJECT_NAME} PRIVATE core/deps/libretro-common/glsym/glsym_es2.c) 
+	else()
+		target_sources(${PROJECT_NAME} PRIVATE core/deps/libretro-common/glsym/glsym_gl.c) 
+	endif()
+	target_sources(${PROJECT_NAME} PRIVATE
+		shell/libretro/audiostream.cpp
+		shell/libretro/keyboard_map.h
+		shell/libretro/libretro_core_option_defines.h
+		shell/libretro/libretro_core_options_intl.h
+		shell/libretro/libretro_core_options.h
+		shell/libretro/libretro.cpp
+		shell/libretro/LogManager.cpp
+		shell/libretro/LogManager.h
+		shell/libretro/option.cpp
+		shell/libretro/oslib.cpp
+		shell/libretro/vmu_xhair.cpp) 
+endif()
 
 target_sources(${PROJECT_NAME} PRIVATE
         core/archive/7zArchive.cpp
@@ -397,16 +547,18 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/archive/rzip.cpp
         core/archive/rzip.h
         core/archive/ZipArchive.cpp
-        core/archive/ZipArchive.h)
-
-target_sources(${PROJECT_NAME} PRIVATE
-        core/cfg/cfg.cpp
-        core/cfg/cfg.h
-        core/cfg/cl.cpp
-        core/cfg/ini.cpp
-        core/cfg/ini.h
-        core/cfg/option.cpp
+        core/archive/ZipArchive.h
         core/cfg/option.h)
+
+if(NOT LIBRETRO)
+	target_sources(${PROJECT_NAME} PRIVATE
+	        core/cfg/cfg.cpp
+	        core/cfg/cfg.h
+	        core/cfg/cl.cpp
+	        core/cfg/ini.cpp
+	        core/cfg/ini.h
+	        core/cfg/option.cpp)
+endif()
 
 target_sources(${PROJECT_NAME} PRIVATE
         core/hw/aica/aica.cpp
@@ -417,6 +569,7 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/hw/aica/aica_mem.h
         core/hw/aica/dsp.cpp
         core/hw/aica/dsp.h
+        core/hw/aica/dsp_arm32.cpp
         core/hw/aica/dsp_arm64.cpp
         core/hw/aica/dsp_interp.cpp
         core/hw/aica/dsp_x64.cpp
@@ -438,6 +591,7 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/hw/bba/bba.cpp
         core/hw/bba/rtl8139c.h
         core/hw/bba/rtl8139c.cpp
+        core/hw/flashrom/flashrom.cpp
         core/hw/flashrom/flashrom.h
         core/hw/gdrom/gdrom_if.h
         core/hw/gdrom/gdrom_response.cpp
@@ -513,7 +667,6 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/hw/sh4/dyna/decoder_opcodes.h
         core/hw/sh4/dyna/driver.cpp
         core/hw/sh4/dyna/ngen.h
-        core/hw/sh4/dyna/regalloc.h
         core/hw/sh4/dyna/shil_canonical.h
         core/hw/sh4/dyna/shil.cpp
         core/hw/sh4/dyna/shil.h
@@ -571,45 +724,62 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/imgread/ImgReader.cpp
         core/imgread/ioctl.cpp)
 
-target_sources(${PROJECT_NAME} PRIVATE
-        core/input/gamepad.h
-        core/input/gamepad_device.cpp
-        core/input/gamepad_device.h
-        core/input/keyboard_device.h
-        core/input/mapping.cpp
-        core/input/mapping.h)
+if(NOT LIBRETRO)
+	target_sources(${PROJECT_NAME} PRIVATE
+	        core/input/gamepad.h
+	        core/input/gamepad_device.cpp
+	        core/input/gamepad_device.h
+	        core/input/keyboard_device.h
+	        core/input/mapping.cpp
+	        core/input/mapping.h)
+endif()
 
-target_sources(${PROJECT_NAME} PRIVATE
-        core/linux/common.cpp)
-
-if(NOT WIN32)
+if(WIN32)
+	target_sources(${PROJECT_NAME} PRIVATE
+			core/windows/fault_handler.cpp
+			core/windows/unwind_info.cpp
+			core/windows/win_vmem.cpp)
+else()
     target_sources(${PROJECT_NAME} PRIVATE
+			core/linux/common.cpp
             core/linux/context.cpp
-            core/linux/posix_vmem.cpp)
+            core/linux/posix_vmem.cpp
+            core/linux/unwind_info.cpp)
+    if(NINTENDO_SWITCH)
+        target_sources(${PROJECT_NAME} PRIVATE
+        		core/linux/libnx_vmem.cpp
+        		shell/switch/stubs.c
+        		shell/switch/context_switch.S)
+    endif()
+endif()
+
+if(NOT LIBRETRO)
+	target_sources(${PROJECT_NAME} PRIVATE
+	        core/linux-dist/dispmanx.cpp
+	        core/linux-dist/dispmanx.h
+	        core/linux-dist/evdev.cpp
+	        core/linux-dist/evdev.h
+	        core/linux-dist/icon.h
+	        core/linux-dist/joystick.cpp
+	        core/linux-dist/joystick.h
+	        core/linux-dist/x11.cpp
+	        core/linux-dist/x11.h
+	        core/linux-dist/x11_keyboard.h)
 endif()
 
 target_sources(${PROJECT_NAME} PRIVATE
-        core/linux-dist/dispmanx.cpp
-        core/linux-dist/dispmanx.h
-        core/linux-dist/evdev.cpp
-        core/linux-dist/evdev.h
-        core/linux-dist/icon.h
-        core/linux-dist/joystick.cpp
-        core/linux-dist/joystick.h
-        core/linux-dist/x11.cpp
-        core/linux-dist/x11.h
-        core/linux-dist/x11_keyboard.h)
-
-target_sources(${PROJECT_NAME} PRIVATE
         core/log/BitSet.h
-        core/log/ConsoleListener.h
-        core/log/ConsoleListenerDroid.cpp
-        core/log/ConsoleListenerNix.cpp
-        core/log/ConsoleListenerWin.cpp
         core/log/Log.h
-        core/log/LogManager.cpp
-        core/log/LogManager.h
         core/log/StringUtil.h)
+if(NOT LIBRETRO)
+	target_sources(${PROJECT_NAME} PRIVATE
+	        core/log/ConsoleListener.h
+	        core/log/ConsoleListenerDroid.cpp
+	        core/log/ConsoleListenerNix.cpp
+	        core/log/ConsoleListenerWin.cpp
+	        core/log/LogManager.cpp
+	        core/log/LogManager.h)
+endif()
 
 target_sources(${PROJECT_NAME} PRIVATE
         core/network/dns.cpp
@@ -626,18 +796,23 @@ if(ANDROID)
             core/network/ifaddrs.c)
 endif()
 
+if(NOT LIBRETRO)
+	target_sources(${PROJECT_NAME} PRIVATE
+	        core/oslib/audiobackend_alsa.cpp
+	        core/oslib/audiobackend_coreaudio.cpp
+	        core/oslib/audiobackend_directsound.cpp
+	        core/oslib/audiobackend_libao.cpp
+	        core/oslib/audiobackend_null.cpp
+	        core/oslib/audiobackend_oboe.cpp
+	        core/oslib/audiobackend_omx.cpp
+	        core/oslib/audiobackend_oss.cpp
+	        core/oslib/audiobackend_pulseaudio.cpp
+	        core/oslib/audiobackend_sdl2.cpp
+	        core/oslib/audiostream.cpp
+	        core/oslib/oslib.cpp)
+endif()
+
 target_sources(${PROJECT_NAME} PRIVATE
-        core/oslib/audiobackend_alsa.cpp
-        core/oslib/audiobackend_coreaudio.cpp
-        core/oslib/audiobackend_directsound.cpp
-        core/oslib/audiobackend_libao.cpp
-        core/oslib/audiobackend_null.cpp
-        core/oslib/audiobackend_oboe.cpp
-        core/oslib/audiobackend_omx.cpp
-        core/oslib/audiobackend_oss.cpp
-        core/oslib/audiobackend_pulseaudio.cpp
-        core/oslib/audiobackend_sdl2.cpp
-        core/oslib/audiostream.cpp
         core/oslib/audiostream.h
         core/oslib/directory.h
         core/oslib/host_context.h
@@ -666,9 +841,10 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/wsi/context.h
         core/wsi/egl.cpp
         core/wsi/egl.h
-        core/wsi/gl4funcs.cpp
         core/wsi/gl_context.cpp
         core/wsi/gl_context.h
+        core/wsi/libretro.cpp
+        core/wsi/libretro.h
         core/wsi/osx.cpp
         core/wsi/osx.h
         core/wsi/sdl.cpp
@@ -679,10 +855,13 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/wsi/xgl.cpp
         core/wsi/xgl.h)
 
-if(NOT APPLE)
+if(NOT APPLE AND NOT LIBRETRO)
     target_sources(${PROJECT_NAME} PRIVATE
             core/wsi/gl32funcs.c
             core/wsi/gl32funcs.h)
+endif()
+if(NOT (NINTENDO_SWITCH AND LIBRETRO))
+	target_sources(${PROJECT_NAME} PRIVATE core/wsi/gl4funcs.cpp)
 endif()
 
 target_sources(${PROJECT_NAME} PRIVATE
@@ -691,6 +870,7 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/cheats.h
         core/dispframe.cpp
         core/emulator.h
+        core/nullDC.cpp
         core/serialize.cpp
         core/stdclass.cpp
         core/stdclass.h
@@ -703,27 +883,32 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/rend/gles/gles.cpp
         core/rend/gles/gles.h
         core/rend/gles/gltex.cpp
-        core/rend/gles/imgui_impl_opengl3.cpp
-        core/rend/gles/imgui_impl_opengl3.h
         core/rend/gles/quad.cpp
+        core/rend/gles/postprocess.cpp
+        core/rend/gles/postprocess.h
         core/rend/CustomTexture.cpp
         core/rend/CustomTexture.h
-        core/rend/game_scanner.h
-        core/rend/gui.cpp
-        core/rend/gui.h
-        core/rend/gui_android.cpp
-        core/rend/gui_android.h
-        core/rend/gui_cheats.cpp
-        core/rend/gui_util.cpp
-        core/rend/gui_util.h
-        core/rend/mainui.cpp
-        core/rend/osd.cpp
-        core/rend/osd.h
+		core/rend/osd.cpp
+		core/rend/osd.h
         core/rend/sorter.cpp
         core/rend/sorter.h
         core/rend/tileclip.h
         core/rend/TexCache.cpp
         core/rend/TexCache.h)
+if(NOT LIBRETRO)
+	target_sources(${PROJECT_NAME} PRIVATE
+	        core/rend/gles/imgui_impl_opengl3.cpp
+	        core/rend/gles/imgui_impl_opengl3.h
+	        core/rend/game_scanner.h
+	        core/rend/gui.cpp
+	        core/rend/gui.h
+	        core/rend/gui_android.cpp
+	        core/rend/gui_android.h
+	        core/rend/gui_cheats.cpp
+	        core/rend/gui_util.cpp
+	        core/rend/gui_util.h
+	        core/rend/mainui.cpp)
+endif()
 
 if(NOT (APPLE OR ANDROID OR USE_GLES OR USE_GLES2))
     target_sources(${PROJECT_NAME} PRIVATE
@@ -734,20 +919,22 @@ if(NOT (APPLE OR ANDROID OR USE_GLES OR USE_GLES2))
 endif()
 
 if(USE_VULKAN AND NOT APPLE)
-    if(ANDROID)
-        set(VOLK_STATIC_DEFINES VK_USE_PLATFORM_ANDROID_KHR)
-    elseif(X11_FOUND)
-        set(VOLK_STATIC_DEFINES VK_USE_PLATFORM_XLIB_KHR)
-    elseif(WIN32)
-        set(VOLK_STATIC_DEFINES VK_USE_PLATFORM_WIN32_KHR)
-    endif()
+	if(NOT LIBRETRO)
+	    if(ANDROID)
+	        set(VOLK_STATIC_DEFINES VK_USE_PLATFORM_ANDROID_KHR)
+	    elseif(X11_FOUND)
+	        set(VOLK_STATIC_DEFINES VK_USE_PLATFORM_XLIB_KHR)
+	    elseif(WIN32)
+	        set(VOLK_STATIC_DEFINES VK_USE_PLATFORM_WIN32_KHR)
+	    endif()
+	
+	    set(VOLK_PULL_IN_VULKAN OFF)
+	    add_subdirectory(core/deps/volk)
+	    target_include_directories(volk PRIVATE core/khronos)
+	    target_link_libraries(${PROJECT_NAME} PRIVATE volk)
+	endif()
 
-    set(VOLK_PULL_IN_VULKAN OFF)
-    add_subdirectory(core/deps/volk)
-    target_include_directories(volk PRIVATE core/khronos)
-    target_link_libraries(${PROJECT_NAME} PRIVATE volk)
-
-    target_compile_definitions(${PROJECT_NAME} PRIVATE USE_VULKAN)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE USE_VULKAN HAVE_VULKAN)
     target_sources(${PROJECT_NAME} PRIVATE
             core/rend/vulkan/oit/oit_buffer.h
             core/rend/vulkan/oit/oit_drawer.cpp
@@ -766,8 +953,6 @@ if(USE_VULKAN AND NOT APPLE)
             core/rend/vulkan/compiler.h
             core/rend/vulkan/drawer.cpp
             core/rend/vulkan/drawer.h
-            core/rend/vulkan/imgui_impl_vulkan.cpp
-            core/rend/vulkan/imgui_impl_vulkan.h
             core/rend/vulkan/pipeline.cpp
             core/rend/vulkan/pipeline.h
             core/rend/vulkan/quad.cpp
@@ -782,13 +967,23 @@ if(USE_VULKAN AND NOT APPLE)
             core/rend/vulkan/vmallocator.h
             core/rend/vulkan/overlay.cpp
             core/rend/vulkan/overlay.h
-            core/rend/vulkan/vulkan_context.cpp
             core/rend/vulkan/vulkan_context.h
             core/rend/vulkan/vulkan.h
             core/rend/vulkan/vulkan_renderer.cpp)
+	if(LIBRETRO)
+	    target_sources(${PROJECT_NAME} PRIVATE
+	            core/rend/vulkan/vk_context_lr.cpp
+	            core/rend/vulkan/vk_context_lr.h
+	            core/deps/libretro-common/vulkan/vulkan_symbol_wrapper.c)
+	else()
+	    target_sources(${PROJECT_NAME} PRIVATE
+	            core/rend/vulkan/vulkan_context.cpp
+	            core/rend/vulkan/imgui_impl_vulkan.cpp
+	            core/rend/vulkan/imgui_impl_vulkan.h)
+	endif()
 endif()
 
-if(WIN32)
+if(WIN32 AND NOT LIBRETRO)
 	target_sources(${PROJECT_NAME} PRIVATE
 		core/rend/dx9/comptr.h
 		core/rend/dx9/d3d_overlay.h
@@ -919,69 +1114,159 @@ if(NOT KNOWN_ARCHITECTURE_DETECTED)
     message(FATAL_ERROR "Unknown target processor: ${CMAKE_SYSTEM_PROCESSOR}")
 endif()
 
-if(ANDROID)
-    target_compile_definitions(${PROJECT_NAME} PRIVATE GLES GLES3)
+if(NOT LIBRETRO)
+	if(ANDROID)
+	    target_compile_definitions(${PROJECT_NAME} PRIVATE GLES GLES3)
+	
+	    target_sources(${PROJECT_NAME} PRIVATE shell/android-studio/flycast/src/main/jni/src/Android.cpp)
+	
+	    target_link_libraries(${PROJECT_NAME} PRIVATE android EGL GLESv2 log)
+	elseif(APPLE)
+		set_property(TARGET ${PROJECT_NAME} PROPERTY XCODE_ATTRIBUTE_SWIFT_VERSION "5.0")
+		if(IOS)
+			add_subdirectory(shell/apple/emulator-ios/AltKit)
+			target_include_directories(${PROJECT_NAME} PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/shell/apple/emulator-ios")
+			target_link_libraries(${PROJECT_NAME} PRIVATE AltKit)
 
-    target_sources(${PROJECT_NAME} PRIVATE shell/android-studio/flycast/src/main/jni/src/Android.cpp)
+			target_sources(${PROJECT_NAME} PRIVATE
+					shell/apple/emulator-ios/emulator/AppDelegate.h
+					shell/apple/emulator-ios/emulator/AppDelegate.mm
+					shell/apple/emulator-ios/emulator/ios_main.mm
+					shell/apple/emulator-ios/emulator/ios_gamepad.h
+					shell/apple/emulator-ios/emulator/ios_keyboard.h
+					shell/apple/emulator-ios/emulator/FlycastViewController.h
+					shell/apple/emulator-ios/emulator/FlycastViewController.mm
+					shell/apple/emulator-ios/emulator/PadViewController.h
+					shell/apple/emulator-ios/emulator/PadViewController.mm
+					shell/apple/emulator-ios/emulator/EmulatorView.h
+					shell/apple/emulator-ios/emulator/EmulatorView.mm
+					shell/apple/emulator-ios/emulator/main.m
+					shell/apple/emulator-ios/emulator/iCade-iOS/iCadeReaderView.h
+					shell/apple/emulator-ios/emulator/iCade-iOS/iCadeReaderView.m
+					shell/apple/emulator-ios/emulator/iCade-iOS/iCadeState.h)
+			set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fobjc-arc -fmodules")
+			set_source_files_properties(shell/apple/emulator-ios/emulator/FlycastViewController.mm PROPERTIES COMPILE_OPTIONS -fcxx-modules)
+			set_source_files_properties(shell/apple/emulator-ios/emulator/iCade-iOS/iCadeReaderView.m PROPERTIES COMPILE_OPTIONS -fno-objc-arc)
 
-    target_link_libraries(${PROJECT_NAME} PRIVATE android EGL GLESv2 log)
-elseif(APPLE)
-    target_sources(${PROJECT_NAME} PRIVATE
-            shell/apple/emulator-osx/emulator-osx/AppDelegate.swift
-            shell/apple/emulator-osx/emulator-osx/EmuGLView.swift
-            shell/apple/emulator-osx/emulator-osx/osx-main.mm
-            shell/apple/emulator-osx/emulator-osx/osx_gamepad.h
-            shell/apple/emulator-osx/emulator-osx/osx_keyboard.h)
+			set(IOS_RESOURCES
+				shell/apple/emulator-ios/emulator/Images.xcassets
+				shell/apple/emulator-ios/emulator/FlycastStoryboard.storyboard
+				shell/apple/emulator-ios/emulator/LaunchScreen.storyboard
+				shell/apple/emulator-ios/emulator/PadViewController.xib)
+			target_sources(${PROJECT_NAME} PRIVATE ${IOS_RESOURCES})
 
-	set(XIB shell/apple/emulator-osx/emulator-osx/Base.lproj/MainMenu.xib)
-	set(ASSETS shell/apple/emulator-osx/emulator-osx/Images.xcassets)
-	target_sources(${PROJECT_NAME} PRIVATE ${XIB} ${ASSETS})
-	source_group("Resources" FILES ${XIB} ${ASSETS})
-	set_source_files_properties(${ASSETS} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
+			set_target_properties(${PROJECT_NAME} PROPERTIES
+				OUTPUT_NAME "Flycast"
+				MACOSX_BUNDLE YES
+				MACOSX_BUNDLE_EXECUTABLE_NAME "Flycast"
+				MACOSX_BUNDLE_INFO_STRING ""
+				MACOSX_BUNDLE_GUI_IDENTIFIER "com.flyinghead.Flycast"
+				MACOSX_BUNDLE_BUNDLE_NAME "com.flyinghead.Flycast"
+				MACOSX_BUNDLE_LONG_VERSION_STRING "${GIT_VERSION}"
+				MACOSX_BUNDLE_SHORT_VERSION_STRING "${GIT_VERSION}"
+				MACOSX_BUNDLE_BUNDLE_VERSION "1"
+				MACOSX_BUNDLE_COPYRIGHT "Copyright © 2021 Flycast contributors. All rights reserved."
+				MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/shell/apple/emulator-ios/plist.in
 
-    set_target_properties(${PROJECT_NAME} PROPERTIES
-        OUTPUT_NAME "Flycast"
-        MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/shell/cmake/MacOSXBundleInfo.plist.in
-        MACOSX_BUNDLE_EXECUTABLE_NAME "Flycast"
-        MACOSX_BUNDLE_INFO_STRING ""
-        MACOSX_BUNDLE_ICON_FILE "AppIcon"
-        MACOSX_BUNDLE_GUI_IDENTIFIER "com.flyinghead.Flycast"
-        MACOSX_BUNDLE_LONG_VERSION_STRING ""
-        MACOSX_BUNDLE_BUNDLE_NAME "Flycast"
-        MACOSX_BUNDLE_SHORT_VERSION_STRING "1.0"
-        MACOSX_BUNDLE_BUNDLE_VERSION "1"
-        MACOSX_BUNDLE_COPYRIGHT "Copyright © 2019 Flycast contributors. All rights reserved."
-        XCODE_ATTRIBUTE_SWIFT_OBJC_BRIDGING_HEADER "shell/apple/emulator-osx/emulator-osx/emulator-osx-Bridging-Header.h"
-		RESOURCE "${XIB}"
-		XCODE_ATTRIBUTE_ASSETCATALOG_COMPILER_APPICON_NAME "AppIcon"
-        BUILD_WITH_INSTALL_RPATH TRUE
-        INSTALL_RPATH "@loader_path/../Frameworks"
-    )
+				XCODE_ATTRIBUTE_DEBUG_INFORMATION_FORMAT "dwarf-with-dsym"
+				XCODE_ATTRIBUTE_GCC_PREFIX_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/shell/apple/emulator-ios/emulator/flycast-ios-Prefix.pch"
+				RESOURCE "${IOS_RESOURCES}"
+				XCODE_ATTRIBUTE_GCC_PRECOMPILE_PREFIX_HEADER "YES"
+				XCODE_ATTRIBUTE_IPHONEOS_DEPLOYMENT_TARGET "12.0"
+				XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED "NO"
+				XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY ""
+				XCODE_ATTRIBUTE_TARGETED_DEVICE_FAMILY "1,2"
+				XCODE_ATTRIBUTE_CLANG_ENABLE_OBJC_ARC YES
+				XCODE_ATTRIBUTE_COMBINE_HIDPI_IMAGES NO
+				XCODE_ATTRIBUTE_ASSETCATALOG_COMPILER_APPICON_NAME "AppIcon")
+				
+			find_library(UIKIT UIKit)
+			find_library(FOUNDATION Foundation)
+			find_library(OPENGLES OpenGLES)
+			find_library(GLKIT GLKit)
+			find_library(GAMECONTROLLER GameController)
+			find_library(AUDIOTOOLBOX AudioToolbox)
+			find_library(AVFOUNDATION AVFoundation)
+			target_link_libraries(${PROJECT_NAME} PRIVATE
+				${UIKIT}
+				${FOUNDATION}
+				${OPENGLES}
+				${GLKIT}
+				${GAMECONTROLLER}
+				${AUDIOTOOLBOX}
+				${AVFOUNDATION})
 
-    find_library(AUDIO_UNIT_LIBRARY AudioUnit)
-    find_library(FOUNDATION_LIBRARY Foundation)
-    find_library(AUDIO_TOOLBOX_LIBRARY AudioToolbox)
+			add_custom_target(Flycast.IPA ALL
+				DEPENDS ${PROJECT_NAME}
+				COMMENT "Building IPA"
+				COMMAND mkdir -p ${CMAKE_CURRENT_BINARY_DIR}/Payload
+				COMMAND rm -rf ${CMAKE_CURRENT_BINARY_DIR}/Payload/*
+				COMMAND cp -r ${CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE}/Flycast.app ${CMAKE_CURRENT_BINARY_DIR}/Payload
+				COMMAND for lib in ${CMAKE_CURRENT_BINARY_DIR}/Payload/Flycast.app/Frameworks/*.dylib
+				COMMAND do xcrun bitcode_strip -r $lib -o $lib
+				COMMAND done
+				COMMAND ldid -S${CMAKE_CURRENT_SOURCE_DIR}/shell/apple/emulator-ios/emulator/flycast.entitlements ${CMAKE_CURRENT_BINARY_DIR}/Payload/Flycast.app/Flycast
+				COMMAND ${CMAKE_COMMAND} -E tar "cfv" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE}/Flycast.ipa" --format=zip ${CMAKE_CURRENT_BINARY_DIR}/Payload
+				COMMAND rm -rf ${CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE}/Flycast.app ${CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE}/Flycast.swiftmodule)
+		else()
+			target_sources(${PROJECT_NAME} PRIVATE
+					shell/apple/emulator-osx/emulator-osx/AppDelegate.swift
+					shell/apple/emulator-osx/emulator-osx/EmuGLView.swift
+					shell/apple/emulator-osx/emulator-osx/osx-main.mm
+					shell/apple/emulator-osx/emulator-osx/osx_gamepad.h
+					shell/apple/emulator-osx/emulator-osx/osx_keyboard.h)
+		
+			set(XIB shell/apple/emulator-osx/emulator-osx/Base.lproj/MainMenu.xib)
+			set(ASSETS shell/apple/emulator-osx/emulator-osx/Images.xcassets)
+			target_sources(${PROJECT_NAME} PRIVATE ${XIB} ${ASSETS})
+			source_group("Resources" FILES ${XIB} ${ASSETS})
+			set_source_files_properties(${ASSETS} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
+		
+			set_target_properties(${PROJECT_NAME} PROPERTIES
+				OUTPUT_NAME "Flycast"
+				MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/shell/cmake/MacOSXBundleInfo.plist.in
+				MACOSX_BUNDLE_EXECUTABLE_NAME "Flycast"
+				MACOSX_BUNDLE_INFO_STRING ""
+				MACOSX_BUNDLE_ICON_FILE "AppIcon"
+				MACOSX_BUNDLE_GUI_IDENTIFIER "com.flyinghead.Flycast"
+				MACOSX_BUNDLE_LONG_VERSION_STRING "${GIT_VERSION}"
+				MACOSX_BUNDLE_SHORT_VERSION_STRING "${GIT_VERSION}"
+				MACOSX_BUNDLE_BUNDLE_VERSION "1"
+				MACOSX_BUNDLE_BUNDLE_NAME "Flycast"
+				MACOSX_BUNDLE_SHORT_VERSION_STRING "1.0"
+				MACOSX_BUNDLE_BUNDLE_VERSION "1"
+				MACOSX_BUNDLE_COPYRIGHT "Copyright © 2019 Flycast contributors. All rights reserved."
+				XCODE_ATTRIBUTE_SWIFT_OBJC_BRIDGING_HEADER "shell/apple/emulator-osx/emulator-osx/emulator-osx-Bridging-Header.h"
+				RESOURCE "${XIB}"
+				XCODE_ATTRIBUTE_ASSETCATALOG_COMPILER_APPICON_NAME "AppIcon"
+				BUILD_WITH_INSTALL_RPATH TRUE
+				INSTALL_RPATH "@loader_path/../Frameworks"
+			)
+		
+			find_library(AUDIO_UNIT_LIBRARY AudioUnit)
+			find_library(FOUNDATION_LIBRARY Foundation)
+			find_library(AUDIO_TOOLBOX_LIBRARY AudioToolbox)
+		
+			target_link_libraries(${PROJECT_NAME} PRIVATE ${AUDIO_UNIT_LIBRARY} ${FOUNDATION_LIBRARY} ${AUDIO_TOOLBOX_LIBRARY})
+		endif()
+	elseif(UNIX OR NINTENDO_SWITCH)
+	    if(NOT BUILD_TESTING)
+	        target_sources(${PROJECT_NAME} PRIVATE
+	                core/linux-dist/main.cpp)
+	    endif()
+	elseif(WIN32)
+	    if(NOT BUILD_TESTING)
+	        target_sources(${PROJECT_NAME} PRIVATE
+	        	core/windows/rawinput.cpp
+	        	core/windows/rawinput.h
+	            core/windows/win_keyboard.h
+	            core/windows/winmain.cpp
+	            core/windows/xinput_gamepad.h)
+	    endif()
+	    target_sources(${PROJECT_NAME} PRIVATE shell/windows/flycast.rc)
 
-    target_link_libraries(${PROJECT_NAME} PRIVATE ${AUDIO_UNIT_LIBRARY} ${FOUNDATION_LIBRARY} ${AUDIO_TOOLBOX_LIBRARY})
-elseif(UNIX)
-    if(NOT BUILD_TESTING)
-        target_sources(${PROJECT_NAME} PRIVATE
-                core/linux-dist/main.cpp)
-    endif()
-elseif(WIN32)
-    if(NOT BUILD_TESTING)
-        target_sources(${PROJECT_NAME} PRIVATE
-        	core/windows/rawinput.cpp
-        	core/windows/rawinput.h
-            core/windows/win_keyboard.h
-            core/windows/winmain.cpp
-            core/windows/xinput_gamepad.h)
-    endif()
-    target_sources(${PROJECT_NAME} PRIVATE
-            core/windows/win_vmem.cpp
-            shell/windows/flycast.rc)
-
-    target_link_libraries(${PROJECT_NAME} PRIVATE dsound opengl32 winmm ws2_32 wsock32 xinput9_1_0)
+	    target_link_libraries(${PROJECT_NAME} PRIVATE dsound opengl32 winmm ws2_32 wsock32 xinput9_1_0)
+	endif()
 endif()
 
 if(BUILD_TESTING)
@@ -995,4 +1280,20 @@ if(BUILD_TESTING)
             tests/src/serialize_test.cpp
             tests/src/AicaArmTest.cpp
             tests/src/Sh4InterpreterTest.cpp)
+endif()
+
+if(NINTENDO_SWITCH)
+	if(LIBRETRO)
+		add_custom_target(combined ALL
+	    	COMMAND ${CMAKE_AR} -x $<TARGET_FILE:xxHash::xxhash>
+	    	COMMAND ${CMAKE_AR} -x $<TARGET_FILE:chdr-static>
+	    	COMMAND ${CMAKE_AR} -x $<TARGET_FILE:zip>
+	    	COMMAND ${CMAKE_AR} -rs flycast_libretro_libnx.a *.obj
+	    	COMMAND rm *.obj
+	    	WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}
+	    	DEPENDS xxHash::xxhash chdr-static zip ${PROJECT_NAME})
+	else()
+		nx_generate_nacp(flycast.nacp NAME "Flycast" AUTHOR "flyinghead, M4xw" VERSION "${GIT_VERSION}")
+		nx_create_nro(flycast NACP flycast.nacp ICON "${CMAKE_SOURCE_DIR}/shell/switch/flycast.jpeg")
+	endif()
 endif()

@@ -139,12 +139,18 @@ enum HollyInterruptID
 int darw_printf(const char* Text,...);
 #endif
 
+#ifndef TARGET_IPHONE
 #if defined(__APPLE__) && defined(__MACH__) && HOST_CPU == CPU_ARM64
-	#define __ARM_MAC__
-	#include "pthread.h"
-	static void JITWriteProtect(bool enabled) { if (__builtin_available(macOS 11.0, *)) pthread_jit_write_protect_np(enabled); }
+#define TARGET_ARM_MAC
+#include "pthread.h"
+inline static void JITWriteProtect(bool enabled) {
+	if (__builtin_available(macOS 11.0, *))
+		pthread_jit_write_protect_np(enabled);
+}
 #else
-	__forceinline static void JITWriteProtect(bool enabled) {}
+inline static void JITWriteProtect(bool enabled) {
+}
+#endif
 #endif
 
 //includes from c++rt
@@ -433,12 +439,10 @@ struct OnLoad
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 #endif
 
-class ReicastException
+class FlycastException : public std::runtime_error
 {
 public:
-	ReicastException(std::string reason) : reason(reason) {}
-
-	std::string reason;
+	FlycastException(const std::string& reason) : std::runtime_error(reason) {}
 };
 
 enum serialize_version_enum {
@@ -446,8 +450,15 @@ enum serialize_version_enum {
 	V2,
 	V3,
 	V4,
-	V11_LIBRETRO = 10,
-	VCUR_LIBRETRO = V11_LIBRETRO,
+	V5_LIBRETRO,
+	V6_LIBRETRO,
+	V7_LIBRETRO,
+	V8_LIBRETRO,
+	V9_LIBRETRO,
+	V10_LIBRETRO,
+	V11_LIBRETRO,
+	V12_LIBRETRO,
+	V13_LIBRETRO,
 
 	V5 = 800,
 	V6 = 801,
@@ -462,5 +473,6 @@ enum serialize_version_enum {
 	V15 = 810,
 	V16 = 811,
 	V17 = 812,
-	VCUR_FLYCAST = V17,
+	V18 = 813,
+	VCUR_FLYCAST = V18,
 };

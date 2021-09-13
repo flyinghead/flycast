@@ -284,7 +284,7 @@ void NaomiM3Comm::startThread()
 				auto duration = the_clock::now() - token_time;
 				if (duration < target_duration)
 				{
-					DEBUG_LOG(NAOMI, "Sleeping for %ld ms", std::chrono::duration_cast<std::chrono::milliseconds>(target_duration - duration).count());
+					DEBUG_LOG(NAOMI, "Sleeping for %ld ms", (long)std::chrono::duration_cast<std::chrono::milliseconds>(target_duration - duration).count());
 					std::this_thread::sleep_for(target_duration - duration);
 				}
 				token_time = the_clock::now();

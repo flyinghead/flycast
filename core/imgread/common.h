@@ -87,37 +87,29 @@ struct Session
 
 struct TrackFile
 {
-	virtual void Read(u32 FAD,u8* dst,SectorFormat* sector_type,u8* subcode,SubcodeFormat* subcode_type)=0;
-	virtual ~TrackFile() = default;;
+	virtual bool Read(u32 FAD, u8 *dst, SectorFormat *sector_type, u8 *subcode, SubcodeFormat *subcode_type) = 0;
+	virtual ~TrackFile() = default;
 };
 
 struct Track
 {
-	TrackFile* file;	//handler for actual IO
-	u32 StartFAD;		//Start FAD
-	u32 EndFAD;			//End FAD
-	u8 CTRL;
-	u8 ADDR;
+	TrackFile* file = nullptr;	// handler for actual IO
+	u32 StartFAD = 0;			// Start FAD
+	u32 EndFAD = 0;				// End FAD
+	u8 CTRL = 0;
+	u8 ADDR = 0;
 
-	Track()
+	bool Read(u32 FAD, u8 *dst, SectorFormat *sector_type, u8 *subcode, SubcodeFormat *subcode_type)
 	{
-		file = 0;
-		StartFAD = 0;
-		EndFAD = 0;
-		CTRL = 0;
-		ADDR = 0;
-	}
-	bool Read(u32 FAD,u8* dst,SectorFormat* sector_type,u8* subcode,SubcodeFormat* subcode_type)
-	{
-		if (FAD>=StartFAD && (FAD<=EndFAD || EndFAD==0) && file)
-		{
-			file->Read(FAD,dst,sector_type,subcode,subcode_type);
-			return true;
-		}
+		if (FAD >= StartFAD && (FAD <= EndFAD || EndFAD == 0) && file != nullptr)
+			return file->Read(FAD, dst, sector_type, subcode, subcode_type);
 		else
 			return false;
 	}
-	void Destroy() { delete file; file=0; }
+	void Destroy() {
+		delete file;
+		file = nullptr;
+	}
 };
 
 struct Disc
@@ -196,7 +188,7 @@ struct Disc
 			}
 			else
 			{
-				INFO_LOG(GDROM, "Sector Read miss FAD: %d", FAD);
+				WARN_LOG(GDROM, "Sector Read miss FAD: %d", FAD);
 			}
 			dst+=fmt;
 			FAD++;
@@ -261,18 +253,16 @@ struct RawTrackFile : TrackFile
 	FILE *file;
 	s32 offset;
 	u32 fmt;
-	bool cleanup;
 
 	RawTrackFile(FILE *file, u32 file_offs, u32 first_fad, u32 secfmt)
 	{
-		verify(file!=0);
-		this->file=file;
-		this->offset=file_offs-first_fad*secfmt;
-		this->fmt=secfmt;
-		this->cleanup=true;
+		verify(file != nullptr);
+		this->file = file;
+		this->offset = file_offs - first_fad * secfmt;
+		this->fmt = secfmt;
 	}
 
-	void Read(u32 FAD,u8* dst,SectorFormat* sector_type,u8* subcode,SubcodeFormat* subcode_type) override
+	bool Read(u32 FAD,u8* dst,SectorFormat* sector_type,u8* subcode,SubcodeFormat* subcode_type) override
 	{
 		//for now hackish
 		if (fmt==2352)
@@ -289,12 +279,17 @@ struct RawTrackFile : TrackFile
 		}
 
 		std::fseek(file, offset + FAD * fmt, SEEK_SET);
-		std::fread(dst, 1, fmt, file);
+		if (std::fread(dst, 1, fmt, file) != fmt)
+		{
+			WARN_LOG(GDROM, "Failed or truncated GD-Rom read");
+			return false;
+		}
+		return true;
 	}
+
 	~RawTrackFile() override
 	{
-		if (cleanup && file)
-			std::fclose(file);
+		std::fclose(file);
 	}
 };
 

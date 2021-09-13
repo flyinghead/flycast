@@ -7,6 +7,7 @@
 #include <memory>
 
 typedef void (*DynarecCodeEntryPtr)();
+struct RuntimeBlockInfo;
 typedef std::shared_ptr<RuntimeBlockInfo> RuntimeBlockInfoPtr;
 
 struct RuntimeBlockInfo_Core
@@ -52,9 +53,9 @@ struct RuntimeBlockInfo: RuntimeBlockInfo_Core
 
 	std::vector<shil_opcode> oplist;
 
-	bool contains_code(const u8* ptr)
+	bool containsCode(const void *ptr)
 	{
-		return ((unat)(ptr-(u8*)code))<host_code_size;
+		return (u32)((const u8 *)ptr - (const u8 *)code) < host_code_size;
 	}
 
 	virtual ~RuntimeBlockInfo();

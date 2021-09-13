@@ -21,20 +21,23 @@
 #include "hw/pvr/ta.h"
 #include "commandpool.h"
 #include "pipeline.h"
-#include "rend/gui.h"
 #include "rend/osd.h"
+#include "overlay.h"
+#ifndef LIBRETRO
+#include "rend/gui.h"
+#endif
 
 #include <memory>
 #include <vector>
 
 class BaseVulkanRenderer : public Renderer
 {
-public:
-	bool Init() override
+protected:
+	bool BaseInit(vk::RenderPass renderPass, int subpass = 0)
 	{
 		texCommandPool.Init();
 
-#ifdef __ANDROID__
+#if defined(__ANDROID__) && !defined(LIBRETRO)
 		if (!vjoyTexture)
 		{
 			int w, h;
@@ -62,13 +65,24 @@ public:
 									vk::BufferUsageFlagBits::eVertexBuffer));
 		}
 #endif
-
+#ifdef LIBRETRO
+		quadPipeline = std::unique_ptr<QuadPipeline>(new QuadPipeline(true));
+		quadPipeline->Init(&shaderManager, renderPass);
+		overlay = std::unique_ptr<VulkanOverlay>(new VulkanOverlay());
+		overlay->Init(quadPipeline.get());
+#endif
 		return true;
 	}
 
+public:
 	void Term() override
 	{
-		GetContext()->PresentFrame(nullptr, vk::Extent2D());
+		GetContext()->PresentFrame(nullptr, nullptr, vk::Extent2D());
+#ifdef LIBRETRO
+		overlay->Term();
+		overlay.reset();
+		quadPipeline.reset();
+#endif
 		osdBuffer.reset();
 		vjoyTexture.reset();
 		textureCache.Clear();
@@ -130,6 +144,10 @@ public:
 
 		if (result)
 		{
+#ifdef LIBRETRO
+			if (!ctx->rend.isRTT)
+				overlay->Prepare(texCommandBuffer, true, true);
+#endif
 			CheckFogTexture();
 			CheckPaletteTexture();
 			texCommandBuffer.end();
@@ -154,13 +172,14 @@ public:
 	void ReInitOSD()
 	{
 		texCommandPool.Init();
-#ifdef __ANDROID__
+#if defined(__ANDROID__) && !defined(LIBRETRO)
 		osdPipeline.Init(&shaderManager, vjoyTexture->GetImageView(), GetContext()->GetRenderPass());
 #endif
 	}
 
 	void DrawOSD(bool clear_screen) override
 	{
+#ifndef LIBRETRO
 		gui_display_osd();
 		if (!vjoyTexture)
 			return;
@@ -202,6 +221,7 @@ public:
 				GetContext()->EndFrame();
 		} catch (const InvalidVulkanContext&) {
 		}
+#endif
 	}
 
 protected:
@@ -352,4 +372,8 @@ protected:
 	TextureCache textureCache;
 	vk::Extent2D viewport;
 	vk::CommandBuffer texCommandBuffer;
+#ifdef LIBRETRO
+	std::unique_ptr<VulkanOverlay> overlay;
+	std::unique_ptr<QuadPipeline> quadPipeline;
+#endif
 };

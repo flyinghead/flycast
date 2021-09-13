@@ -19,7 +19,7 @@
 #pragma once
 #include <vector>
 #include <utility>
-#ifdef USE_MINIUPNPC
+#ifndef FEAT_NO_MINIUPNPC
 #include <miniupnpc/miniupnpc.h>
 
 class MiniUPnP

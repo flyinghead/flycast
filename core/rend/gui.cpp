@@ -54,9 +54,6 @@ static bool inited = false;
 float scaling = 1;
 GuiState gui_state = GuiState::Main;
 static bool commandLineStart;
-#ifdef __ANDROID__
-static bool touch_up;
-#endif
 static u32 mouseButtons;
 static int mouseX, mouseY;
 static float mouseWheel;
@@ -81,6 +78,9 @@ static void emuEventCallback(Event event)
 		game_started = true;
 		break;
 	case Event::Start:
+		GamepadDevice::load_system_mappings();
+		if (settings.platform.system == DC_PLATFORM_NAOMI)
+			SetNaomiNetworkConfig(-1);
 		if (config::AutoLoadState && settings.imgread.ImagePath[0] != '\0')
 			dc_loadstate(config::SavestateSlot);
 		break;
@@ -138,7 +138,7 @@ void gui_init()
     ImGui::GetStyle().ItemSpacing = ImVec2(8, 8);		// from 8,4
     ImGui::GetStyle().ItemInnerSpacing = ImVec2(4, 6);	// from 4,4
     //ImGui::GetStyle().WindowRounding = 0;
-#ifdef __ANDROID__
+#if defined(__ANDROID__) || defined(TARGET_IPHONE)
     ImGui::GetStyle().TouchExtraPadding = ImVec2(1, 1);	// from 0,0
 #endif
 
@@ -160,7 +160,7 @@ void gui_init()
     //io.Fonts->AddFontFromFileTTF("../../misc/fonts/ProggyTiny.ttf", 10.0f);
     //ImFont* font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f, NULL, io.Fonts->GetGlyphRangesJapanese());
     //IM_ASSERT(font != NULL);
-#if !(defined(_WIN32) || defined(__APPLE__))
+#if !(defined(_WIN32) || defined(__APPLE__) || defined(__SWITCH__)) || defined(TARGET_IPHONE)
     scaling = std::max(1.f, screen_dpi / 100.f * 0.75f);
 #endif
     if (scaling > 1)
@@ -214,7 +214,7 @@ void gui_init()
     default:
     	break;
     }
-#elif __APPLE__
+#elif defined(__APPLE__) && !defined(TARGET_IPHONE)
     std::string fontDir = std::string("/System/Library/Fonts/");
     
     extern std::string os_Locale();
@@ -255,7 +255,7 @@ void gui_init()
         	io.Fonts->AddFontFromFileTTF("/system/fonts/NotoSansCJK-Regular.ttc", 17.f * scaling, &font_cfg, glyphRanges);
     }
 
-    // TODO Linux...
+    // TODO Linux, iOS, ...
 #endif
     INFO_LOG(RENDERER, "Screen DPI is %d, size %d x %d. Scaling by %.2f", screen_dpi, screen_width, screen_height, scaling);
 
@@ -313,23 +313,26 @@ static void ImGui_Impl_NewFrame()
 	UpdateInputState();
 
 	// Read keyboard modifiers inputs
-	io.KeyCtrl = (kb_shift[0] & (0x01 | 0x10)) != 0;
-	io.KeyShift = (kb_shift[0] & (0x02 | 0x20)) != 0;
+	io.KeyCtrl = 0;
+	io.KeyShift = 0;
 	io.KeyAlt = false;
 	io.KeySuper = false;
-
 	memset(&io.KeysDown[0], 0, sizeof(io.KeysDown));
-	for (int i = 0; i < IM_ARRAYSIZE(kb_key[0]); i++)
-		if (kb_key[0][i] != 0)
-			io.KeysDown[kb_key[0][i]] = true;
-		else
-			break;
+	for (int port = 0; port < 4; port++)
+	{
+		io.KeyCtrl |= (kb_shift[port] & (0x01 | 0x10)) != 0;
+		io.KeyShift |= (kb_shift[port] & (0x02 | 0x20)) != 0;
+
+		for (int i = 0; i < IM_ARRAYSIZE(kb_key[0]); i++)
+			if (kb_key[port][i] != 0)
+				io.KeysDown[kb_key[port][i]] = true;
+	}
 	if (mouseX < 0 || mouseX >= screen_width || mouseY < 0 || mouseY >= screen_height)
 		io.MousePos = ImVec2(-FLT_MAX, -FLT_MAX);
 	else
 		io.MousePos = ImVec2(mouseX, mouseY);
 	static bool delayTouch;
-#ifdef __ANDROID__
+#if defined(__ANDROID__) || defined(TARGET_IPHONE)
 	// Delay touch by one frame to allow widgets to be hovered before click
 	// This is required for widgets using ImGuiButtonFlags_AllowItemOverlap such as TabItem's
 	if (!delayTouch && (mouseButtons & (1 << 0)) != 0 && !io.MouseDown[ImGuiMouseButton_Left])
@@ -419,8 +422,11 @@ void gui_open_settings()
 	}
 }
 
-static void gui_start_game(const std::string& path)
+void gui_start_game(const std::string& path)
 {
+	dc_term_game();
+	reset_vmus();
+
 	scanner.stop();
 	gui_state = GuiState::Loading;
 	static std::string path_copy;
@@ -429,9 +435,30 @@ static void gui_start_game(const std::string& path)
 	dc_load_game(path.empty() ? NULL : path_copy.c_str());
 }
 
+void gui_stop_game(const std::string& message)
+{
+	if (!commandLineStart)
+	{
+		// Exit to main menu
+		dc_term_game();
+		gui_state = GuiState::Main;
+		game_started = false;
+		settings.imgread.ImagePath[0] = '\0';
+		reset_vmus();
+		if (!message.empty())
+			error_msg = "Flycast has stopped.\n\n" + message;
+	}
+	else
+	{
+		// Exit emulator
+		dc_exit();
+	}
+}
+
 static void gui_display_commands()
 {
-	dc_stop();
+	if (dc_is_running())
+		dc_stop();
 
    	display_vmus();
 
@@ -511,20 +538,7 @@ static void gui_display_commands()
 	if (ImGui::Button("Exit", ImVec2(300 * scaling + ImGui::GetStyle().ColumnsMinSpacing + ImGui::GetStyle().FramePadding.x * 2 - 1,
 			50 * scaling)))
 	{
-		if (!commandLineStart)
-		{
-			// Exit to main menu
-			dc_term_game();
-			gui_state = GuiState::Main;
-			game_started = false;
-			settings.imgread.ImagePath[0] = '\0';
-			reset_vmus();
-		}
-		else
-		{
-			// Exit emulator
-			dc_exit();
-		}
+		gui_stop_game();
 	}
 
 	ImGui::End();
@@ -742,13 +756,12 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 			- ImGui::GetStyle().FramePadding.x * 3.0f - ImGui::GetStyle().ItemSpacing.x * 3.0f);
 
 		ImGui::AlignTextToFramePadding();
-		static ImGuiComboFlags flags = 0;
+
 		const char* items[] = { "Dreamcast Controls", "Arcade Controls" };
 		static int item_current_map_idx = 0;
 		static int last_item_current_map_idx = 2;
 
 		// Here our selection data is an index.
-		const char* combo_label = items[item_current_map_idx];  // Label to preview before opening the combo (technically it could be anything)
 
 		ImGui::PushItemWidth(ImGui::CalcTextSize("Dreamcast Controls").x + ImGui::GetStyle().ItemSpacing.x * 2.0f * 3);
 
@@ -906,6 +919,9 @@ static void error_popup()
 {
 	if (!error_msg.empty())
 	{
+		ImVec2 padding = ImVec2(20 * scaling, 20 * scaling);
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, padding);
+		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, padding);
 		ImGui::OpenPopup("Error");
 		if (ImGui::BeginPopupModal("Error", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
 		{
@@ -921,8 +937,11 @@ static void error_popup()
 			}
 			ImGui::SetItemDefaultFocus();
 			ImGui::PopStyleVar();
+			ImGui::PopTextWrapPos();
 			ImGui::EndPopup();
 		}
+		ImGui::PopStyleVar();
+		ImGui::PopStyleVar();
 	}
 }
 
@@ -1022,7 +1041,7 @@ static void gui_display_settings()
 			{
 				config::Settings::instance().setPerGameConfig(false);
 				config::Settings::instance().load(false);
-				LoadGameSpecificSettings();
+				loadGameSpecificSettings();
 			}
 		}
 		else
@@ -1078,6 +1097,7 @@ static void gui_display_settings()
             ImGui::SameLine();
             ShowHelpMarker("Video connection type");
 
+#if !defined(TARGET_IPHONE)
             ImVec2 size;
             size.x = 0.0f;
             size.y = (ImGui::GetTextLineHeightWithSpacing() + ImGui::GetStyle().FramePadding.y * 2.f)
@@ -1122,7 +1142,7 @@ static void gui_display_settings()
             ImGui::SameLine();
             ShowHelpMarker("The directories where your games are stored");
 
-#ifdef __linux__
+#if defined(__linux__) && !defined(__ANDROID__)
             if (ImGui::ListBoxHeader("Data Directory", 1))
             {
             	ImGui::AlignTextToFramePadding();
@@ -1145,7 +1165,9 @@ static void gui_display_settings()
             }
             ImGui::SameLine();
             ShowHelpMarker("The directory where Flycast saves configuration files and VMUs. BIOS files should be in a subfolder named \"data\"");
-#endif
+#endif // !linux
+#endif // !TARGET_IPHONE
+
 			if (OptionCheckbox("Hide Legacy Naomi Roms", config::HideLegacyNaomiRoms,
 					"Hide .bin, .dat and .lst files from the content browser"))
 				scanner.refresh();
@@ -1432,7 +1454,9 @@ static void gui_display_settings()
 		    	}
 		    	OptionCheckbox("Widescreen Game Cheats", config::WidescreenGameHacks,
 		    			"Modify the game so that it displays in 16:9 anamorphic format and use horizontal screen stretching. Only some games are supported.");
+#ifndef TARGET_IPHONE
 		    	OptionCheckbox("VSync", config::VSync, "Synchronizes the frame rate with the screen refresh rate. Recommended");
+#endif
 		    	OptionCheckbox("Show FPS Counter", config::ShowFPS, "Show on-screen frame/sec counter");
 		    	OptionCheckbox("Show VMU In-game", config::FloatVMUs, "Show the VMU LCD screens while in-game");
 		    	OptionCheckbox("Rotate Screen 90°", config::Rotate90, "Rotate the screen 90° counterclockwise");
@@ -1778,10 +1802,16 @@ static void gui_display_settings()
 #endif
 #elif defined(_WIN32)
 					"Windows"
+#elif defined(__SWITCH__)
+					"Switch"
 #else
 					"Unknown"
 #endif
 						);
+#ifdef TARGET_IPHONE
+				extern std::string iosJitStatus;
+				ImGui::Text("JIT Status: %s", iosJitStatus.c_str());
+#endif
 		    }
 	    	ImGui::Spacing();
 	    	if (config::RendererType.isOpenGL())
@@ -1868,7 +1898,7 @@ static void gui_display_content()
     ImGui::Unindent(10 * scaling);
 
     static ImGuiTextFilter filter;
-#ifndef __ANDROID__
+#if !defined(__ANDROID__) && !defined(TARGET_IPHONE)
 	ImGui::SameLine(0, 32 * scaling);
 	filter.Draw("Filter");
 #endif
@@ -1915,8 +1945,12 @@ static void gui_display_content()
 						if (gui_state == GuiState::SelectDisk)
 						{
 							strcpy(settings.imgread.ImagePath, game.path.c_str());
-							DiscSwap();
-							gui_state = GuiState::Closed;
+							try {
+								DiscSwap();
+								gui_state = GuiState::Closed;
+							} catch (const FlycastException& e) {
+								error_msg = e.what();
+							}
 						}
 						else
 						{
@@ -2068,9 +2102,9 @@ static void gui_display_loadscreen()
 				gui_state = GuiState::Closed;
 				ImGui::Text("STARTING...");
 			}
-		} catch (const ReicastException& ex) {
-			ERROR_LOG(BOOT, "%s", ex.reason.c_str());
-			error_msg = ex.reason;
+		} catch (const FlycastException& ex) {
+			ERROR_LOG(BOOT, "%s", ex.what());
+			error_msg = ex.what();
 #ifdef TEST_AUTOMATION
 			die("Game load failed");
 #endif
@@ -2267,24 +2301,9 @@ void gui_refresh_files()
 #define VMU_WIDTH (70 * 48 * scaling / 32)
 #define VMU_HEIGHT (70 * scaling)
 #define VMU_PADDING (8 * scaling)
-u32 vmu_lcd_data[8][48 * 32];
-bool vmu_lcd_status[8];
-bool vmu_lcd_changed[8];
 static ImTextureID vmu_lcd_tex_ids[8];
 
 static ImTextureID crosshairTexId;
-
-void push_vmu_screen(int bus_id, int bus_port, u8* buffer)
-{
-	int vmu_id = bus_id * 2 + bus_port;
-	if (vmu_id < 0 || vmu_id >= (int)ARRAY_SIZE(vmu_lcd_data))
-		return;
-	u32 *p = &vmu_lcd_data[vmu_id][0];
-	for (int i = 0; i < (int)ARRAY_SIZE(vmu_lcd_data[vmu_id]); i++, buffer++)
-		*p++ = *buffer != 0 ? 0xFFFFFFFFu : 0xFF000000u;
-	vmu_lcd_status[vmu_id] = true;
-	vmu_lcd_changed[vmu_id] = true;
-}
 
 static const int vmu_coords[8][2] = {
 		{ 0 , 0 },
@@ -2343,31 +2362,6 @@ static void display_vmus()
     ImGui::End();
 }
 
-static const int lightgunCrosshairData[16 * 16] =
-{
-	 0, 0, 0, 0, 0, 0, 0,-1,-1, 0, 0, 0, 0, 0, 0, 0,
-	 0, 0, 0, 0, 0, 0, 0,-1,-1, 0, 0, 0, 0, 0, 0, 0,
-	 0, 0, 0, 0, 0, 0, 0,-1,-1, 0, 0, 0, 0, 0, 0, 0,
-	 0, 0, 0, 0, 0, 0, 0,-1,-1, 0, 0, 0, 0, 0, 0, 0,
-	 0, 0, 0, 0, 0, 0, 0,-1,-1, 0, 0, 0, 0, 0, 0, 0,
-	 0, 0, 0, 0, 0, 0, 0,-1,-1, 0, 0, 0, 0, 0, 0, 0,
-	 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	-1,-1,-1,-1,-1,-1, 0, 0, 0, 0,-1,-1,-1,-1,-1,-1,
-	-1,-1,-1,-1,-1,-1, 0, 0, 0, 0,-1,-1,-1,-1,-1,-1,
-	 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	 0, 0, 0, 0, 0, 0, 0,-1,-1, 0, 0, 0, 0, 0, 0, 0,
-	 0, 0, 0, 0, 0, 0, 0,-1,-1, 0, 0, 0, 0, 0, 0, 0,
-	 0, 0, 0, 0, 0, 0, 0,-1,-1, 0, 0, 0, 0, 0, 0, 0,
-	 0, 0, 0, 0, 0, 0, 0,-1,-1, 0, 0, 0, 0, 0, 0, 0,
-	 0, 0, 0, 0, 0, 0, 0,-1,-1, 0, 0, 0, 0, 0, 0, 0,
-	 0, 0, 0, 0, 0, 0, 0,-1,-1, 0, 0, 0, 0, 0, 0, 0,
-};
-
-const u32 *getCrosshairTextureData()
-{
-	return (u32 *)lightgunCrosshairData;
-}
-
 std::pair<float, float> getCrosshairPosition(int playerNum)
 {
 	float fx = mo_x_abs[playerNum];
@@ -2416,9 +2410,9 @@ static void displayCrosshairs()
 
 		ImVec2 pos;
 		std::tie(pos.x, pos.y) = getCrosshairPosition(i);
-		pos.x -= XHAIR_WIDTH / 2.f;
-		pos.y += XHAIR_WIDTH / 2.f;
-		ImVec2 pos_b(pos.x + XHAIR_WIDTH, pos.y - XHAIR_HEIGHT);
+		pos.x -= (XHAIR_WIDTH * scaling) / 2.f;
+		pos.y += (XHAIR_WIDTH * scaling) / 2.f;
+		ImVec2 pos_b(pos.x + XHAIR_WIDTH * scaling, pos.y - XHAIR_HEIGHT * scaling);
 
 		ImGui::GetWindowDrawList()->AddImage(crosshairTexId, pos, pos_b, ImVec2(0, 1), ImVec2(1, 0), config::CrosshairColor[i]);
 	}

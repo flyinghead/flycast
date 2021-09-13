@@ -21,17 +21,9 @@
 #include "vulkan.h"
 #include "shaders.h"
 #include "compiler.h"
+#include "utils.h"
 
-static const char VertexShaderSource[] = R"(#version 450
-
-#define pp_Gouraud %d
-
-#if pp_Gouraud == 0
-#define INTERPOLATION flat
-#else
-#define INTERPOLATION smooth
-#endif
-
+static const char VertexShaderSource[] = R"(
 layout (std140, set = 0, binding = 0) uniform VertexShaderUniforms
 {
 	mat4 normal_matrix;
@@ -59,31 +51,11 @@ void main()
 }
 )";
 
-static const char FragmentShaderSource[] = R"(#version 450
-
-#define cp_AlphaTest %d
-#define pp_ClipInside %d
-#define pp_UseAlpha %d
-#define pp_Texture %d
-#define pp_IgnoreTexA %d
-#define pp_ShadInstr %d
-#define pp_Offset %d
-#define pp_FogCtrl %d
-#define pp_Gouraud %d
-#define pp_BumpMap %d
-#define ColorClamping %d
-#define pp_TriLinear %d
-#define pp_Palette %d
+static const char FragmentShaderSource[] = R"(
 #define PI 3.1415926
 
 layout (location = 0) out vec4 FragColor;
 #define gl_FragColor FragColor
-
-#if pp_Gouraud == 0
-#define INTERPOLATION flat
-#else
-#define INTERPOLATION smooth
-#endif
 
 layout (std140, set = 0, binding = 1) uniform FragmentShaderUniforms
 {
@@ -243,8 +215,7 @@ void main()
 }
 )";
 
-extern const char ModVolVertexShaderSource[] = R"(#version 450
-
+extern const char ModVolVertexShaderSource[] = R"(
 layout (std140, set = 0, binding = 0) uniform VertexShaderUniforms
 {
 	mat4 normal_matrix;
@@ -269,8 +240,7 @@ void main()
 }
 )";
 
-static const char ModVolFragmentShaderSource[] = R"(#version 450
-
+static const char ModVolFragmentShaderSource[] = R"(
 layout (location = 0) out vec4 FragColor;
 
 layout (push_constant) uniform pushBlock
@@ -286,10 +256,7 @@ void main()
 }
 )";
 
-static const char QuadVertexShaderSource[] = R"(#version 450
-
-#define ROTATE %d
-
+static const char QuadVertexShaderSource[] = R"(
 layout (location = 0) in vec3 in_pos;
 layout (location = 1) in vec2 in_uv;
 
@@ -306,8 +273,7 @@ void main()
 }
 )";
 
-static const char QuadFragmentShaderSource[] = R"(#version 450 
-
+static const char QuadFragmentShaderSource[] = R"(
 layout (set = 0, binding = 0) uniform sampler2D tex;
 
 layout (push_constant) uniform pushBlock
@@ -324,8 +290,7 @@ void main()
 }
 )";
 
-static const char OSDVertexShaderSource[] = R"(#version 450 
-
+static const char OSDVertexShaderSource[] = R"(
 layout (location = 0) in vec4 inPos;
 layout (location = 1) in uvec4 inColor;
 layout (location = 2) in vec2 inUV;
@@ -340,8 +305,7 @@ void main()
 }
 )";
 
-static const char OSDFragmentShaderSource[] = R"(#version 450 
-
+static const char OSDFragmentShaderSource[] = R"(
 layout (binding = 0) uniform sampler2D tex;
 layout (location = 0) in lowp vec4 inColor;
 layout (location = 1) in mediump vec2 inUV;
@@ -355,51 +319,63 @@ void main()
 
 vk::UniqueShaderModule ShaderManager::compileShader(const VertexShaderParams& params)
 {
-	char buf[sizeof(VertexShaderSource) * 2];
-
-	sprintf(buf, VertexShaderSource, (int)params.gouraud);
-	return ShaderCompiler::Compile(vk::ShaderStageFlagBits::eVertex, buf);
+	VulkanSource src;
+	src.addConstant("pp_Gouraud", (int)params.gouraud)
+			.addSource(GouraudSource)
+			.addSource(VertexShaderSource);
+	return ShaderCompiler::Compile(vk::ShaderStageFlagBits::eVertex, src.generate());
 }
 
 vk::UniqueShaderModule ShaderManager::compileShader(const FragmentShaderParams& params)
 {
-	char buf[sizeof(FragmentShaderSource) * 2];
-
-	sprintf(buf, FragmentShaderSource, (int)params.alphaTest, (int)params.insideClipTest, (int)params.useAlpha, (int)params.texture,
-			(int)params.ignoreTexAlpha, params.shaderInstr, (int)params.offset, params.fog, (int)params.gouraud,
-			(int)params.bumpmap, (int)params.clamping, (int)params.trilinear, (int)params.palette);
-	return ShaderCompiler::Compile(vk::ShaderStageFlagBits::eFragment, buf);
+	VulkanSource src;
+	src.addConstant("cp_AlphaTest", (int)params.alphaTest)
+		.addConstant("pp_ClipInside", (int)params.insideClipTest)
+		.addConstant("pp_UseAlpha", (int)params.useAlpha)
+		.addConstant("pp_Texture", (int)params.texture)
+		.addConstant("pp_IgnoreTexA", (int)params.ignoreTexAlpha)
+		.addConstant("pp_ShadInstr", params.shaderInstr)
+		.addConstant("pp_Offset", (int)params.offset)
+		.addConstant("pp_FogCtrl", params.fog)
+		.addConstant("pp_Gouraud", (int)params.gouraud)
+		.addConstant("pp_BumpMap", (int)params.bumpmap)
+		.addConstant("ColorClamping", (int)params.clamping)
+		.addConstant("pp_TriLinear", (int)params.trilinear)
+		.addConstant("pp_Palette", (int)params.palette)
+		.addSource(GouraudSource)
+		.addSource(FragmentShaderSource);
+	return ShaderCompiler::Compile(vk::ShaderStageFlagBits::eFragment, src.generate());
 }
 
 vk::UniqueShaderModule ShaderManager::compileModVolVertexShader()
 {
-	return ShaderCompiler::Compile(vk::ShaderStageFlagBits::eVertex, ModVolVertexShaderSource);
+	return ShaderCompiler::Compile(vk::ShaderStageFlagBits::eVertex, VulkanSource().addSource(ModVolVertexShaderSource).generate());
 }
 
 vk::UniqueShaderModule ShaderManager::compileModVolFragmentShader()
 {
-	return ShaderCompiler::Compile(vk::ShaderStageFlagBits::eFragment, ModVolFragmentShaderSource);
+	return ShaderCompiler::Compile(vk::ShaderStageFlagBits::eFragment, VulkanSource().addSource(ModVolFragmentShaderSource).generate());
 }
 
 vk::UniqueShaderModule ShaderManager::compileQuadVertexShader(bool rotate)
 {
-	char buf[sizeof(QuadVertexShaderSource) * 2];
-
-	sprintf(buf, QuadVertexShaderSource, (int)rotate);
-	return ShaderCompiler::Compile(vk::ShaderStageFlagBits::eVertex, buf);
+	VulkanSource src;
+	src.addConstant("ROTATE", (int)rotate)
+			.addSource(QuadVertexShaderSource);
+	return ShaderCompiler::Compile(vk::ShaderStageFlagBits::eVertex, src.generate());
 }
 
 vk::UniqueShaderModule ShaderManager::compileQuadFragmentShader()
 {
-	return ShaderCompiler::Compile(vk::ShaderStageFlagBits::eFragment, QuadFragmentShaderSource);
+	return ShaderCompiler::Compile(vk::ShaderStageFlagBits::eFragment, VulkanSource().addSource(QuadFragmentShaderSource).generate());
 }
 
 vk::UniqueShaderModule ShaderManager::compileOSDVertexShader()
 {
-	return ShaderCompiler::Compile(vk::ShaderStageFlagBits::eVertex, OSDVertexShaderSource);
+	return ShaderCompiler::Compile(vk::ShaderStageFlagBits::eVertex, VulkanSource().addSource(OSDVertexShaderSource).generate());
 }
 
 vk::UniqueShaderModule ShaderManager::compileOSDFragmentShader()
 {
-	return ShaderCompiler::Compile(vk::ShaderStageFlagBits::eFragment, OSDFragmentShaderSource);
+	return ShaderCompiler::Compile(vk::ShaderStageFlagBits::eFragment, VulkanSource().addSource(OSDFragmentShaderSource).generate());
 }

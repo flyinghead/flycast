@@ -530,7 +530,7 @@ void MMU_init()
 	}
 	mmu_set_state();
 	// pre-fill kernel memory
-	for (int vpn = ARRAY_SIZE(mmuAddressLUT) / 2; vpn < ARRAY_SIZE(mmuAddressLUT); vpn++)
+	for (u32 vpn = ARRAY_SIZE(mmuAddressLUT) / 2; vpn < ARRAY_SIZE(mmuAddressLUT); vpn++)
 		mmuAddressLUT[vpn] = vpn << 12;
 }
 

@@ -78,7 +78,11 @@ Option<bool> Fog("rend.Fog", true);
 Option<bool> FloatVMUs("rend.FloatVMUs");
 Option<bool> Rotate90("rend.Rotate90");
 Option<bool> PerStripSorting("rend.PerStripSorting");
+#ifdef __APPLE__
+Option<bool> DelayFrameSwapping("rend.DelayFrameSwapping", false);
+#else
 Option<bool> DelayFrameSwapping("rend.DelayFrameSwapping", true);
+#endif
 Option<bool> WidescreenGameHacks("rend.WidescreenGameHacks");
 std::array<Option<int>, 4> CrosshairColor {
 	Option<int>("rend.CrossHairColor1"),
@@ -91,12 +95,16 @@ Option<int> MaxThreads("pvr.MaxThreads", 3);
 Option<int> AutoSkipFrame("pvr.AutoSkipFrame", 0);
 Option<int> RenderResolution("rend.Resolution", 480);
 Option<bool> VSync("rend.vsync", true);
+Option<u64> PixelBufferSize("rend.PixelBufferSize", 512 * 1024 * 1024);
+Option<int> AnisotropicFiltering("rend.AnisotropicFiltering", 1);
+Option<bool> ThreadedRendering("rend.ThreadedRendering", true);
 
 // Misc
 
 Option<bool> SerialConsole("Debug.SerialConsoleEnabled");
 Option<bool> SerialPTY("Debug.SerialPTY");
 Option<bool> UseReios("UseReios");
+Option<bool> FastGDRomLoad("FastGDRomLoad", false);
 
 Option<bool> OpenGlChecks("OpenGlChecks", false, "validate");
 

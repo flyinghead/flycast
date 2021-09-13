@@ -4,9 +4,18 @@
 #include "rend/TexCache.h"
 #include "wsi/gl_context.h"
 #include "glcache.h"
+#include "postprocess.h"
+#include "rend/shader_util.h"
 
 #include <unordered_map>
 #include <glm/glm.hpp>
+
+#ifndef GL_TEXTURE_MAX_ANISOTROPY
+#define GL_TEXTURE_MAX_ANISOTROPY         0x84FE
+#endif
+#ifndef GL_MAX_TEXTURE_MAX_ANISOTROPY
+#define GL_MAX_TEXTURE_MAX_ANISOTROPY     0x84FF
+#endif
 
 #define glCheck() do { if (unlikely(config::OpenGlChecks)) { verify(glGetError()==GL_NO_ERROR); } } while(0)
 
@@ -111,6 +120,7 @@ struct gl_ctx
 		GLuint fbo;
 		int width;
 		int height;
+		GLuint origFbo;
 	} ofbo;
 
 	const char *gl_version;
@@ -123,6 +133,8 @@ struct gl_ctx
 	bool GL_OES_packed_depth_stencil_supported;
 	bool GL_OES_depth24_supported;
 	bool highp_float_supported;
+	float max_anisotropy;
+	bool mesa_nouveau;
 
 	size_t get_index_size() { return index_type == GL_UNSIGNED_INT ? sizeof(u32) : sizeof(u16); }
 };
@@ -139,6 +151,7 @@ void gl_free_osd_resources();
 bool ProcessFrame(TA_context* ctx);
 void UpdateFogTexture(u8 *fog_table, GLenum texture_slot, GLint fog_image_format);
 void UpdatePaletteTexture(GLenum texture_slot);
+void termGLCommon();
 void findGLVersion();
 void GetFramebufferScaling(float& scale_x, float& scale_y, float& scissoring_scale_x, float& scissoring_scale_y);
 void GetFramebufferSize(float& dc_width, float& dc_height);
@@ -286,43 +299,20 @@ void initQuad();
 void termQuad();
 void drawQuad(GLuint texId, bool rotate = false, bool swapY = false);
 
-#define SHADER_COMPAT "						\n\
-#define TARGET_GL %s						\n\
-											\n\
-#define GLES2 0 							\n\
-#define GLES3 1 							\n\
-#define GL2 2								\n\
-#define GL3 3								\n\
-											\n\
-#if TARGET_GL == GL2 						\n\
-#define highp								\n\
-#define lowp								\n\
-#define mediump								\n\
-#endif										\n\
-#if TARGET_GL == GLES3						\n\
-out highp vec4 FragColor;					\n\
-#define gl_FragColor FragColor				\n\
-#define FOG_CHANNEL a						\n\
-#elif TARGET_GL == GL3						\n\
-out highp vec4 FragColor;					\n\
-#define gl_FragColor FragColor				\n\
-#define FOG_CHANNEL r						\n\
-#else										\n\
-#define texture texture2D					\n\
-#define FOG_CHANNEL a						\n\
-#endif										\n\
-											\n\
-"
+extern const char* ShaderCompatSource;
+extern const char *VertexCompatShader;
+extern const char *PixelCompatShader;
 
-#define VTX_SHADER_COMPAT SHADER_COMPAT \
-"#if TARGET_GL == GLES2 || TARGET_GL == GL2 \n\
-#define in attribute						\n\
-#define out varying							\n\
-#endif										\n\
-"
+class OpenGlSource : public ShaderSource
+{
+public:
+	OpenGlSource() : ShaderSource(gl.glsl_version_header) {
+		addConstant("TARGET_GL", gl.gl_version);
+		addSource(ShaderCompatSource);
+	}
+};
 
-#define PIX_SHADER_COMPAT SHADER_COMPAT \
-"#if TARGET_GL == GLES2 || TARGET_GL == GL2 \n\
-#define in varying							\n\
-#endif										\n\
-"
+#ifdef LIBRETRO
+extern "C" struct retro_hw_render_callback hw_render;
+void termVmuLightgun();
+#endif

@@ -36,12 +36,11 @@ void gui_set_mouse_position(int x, int y);
 void gui_set_mouse_button(int button, bool pressed);
 void gui_set_mouse_wheel(float delta);
 void gui_set_insets(int left, int right, int top, int bottom);
+void gui_stop_game(const std::string& message = "");
+void gui_start_game(const std::string& path);
 
 extern int screen_dpi;
 extern float scaling;
-extern u32 vmu_lcd_data[8][48 * 32];
-extern bool vmu_lcd_status[8];
-extern bool vmu_lcd_changed[8];
 
 enum class GuiState {
 	Closed,
@@ -69,21 +68,3 @@ static inline bool gui_is_content_browser()
 static inline float gui_get_scaling() {
 	return scaling;
 }
-
-#define XHAIR_WIDTH (40 * scaling)
-#define XHAIR_HEIGHT (40 * scaling)
-static inline bool crosshairsNeeded()
-{
-	if (config::CrosshairColor[0] == 0 && config::CrosshairColor[1] == 0
-			&& config::CrosshairColor[2] == 0 && config::CrosshairColor[3] == 0)
-		return false;
-	if (settings.platform.system != DC_PLATFORM_DREAMCAST
-			&& settings.input.JammaSetup != JVS::LightGun
-			&& settings.input.JammaSetup != JVS::LightGunAsAnalog
-			&& settings.input.JammaSetup != JVS::Mazan)
-		// not a lightgun game
-		return false;
-	return true;
-}
-const u32 *getCrosshairTextureData();
-std::pair<float, float> getCrosshairPosition(int playerNum);

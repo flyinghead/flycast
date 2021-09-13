@@ -19,6 +19,7 @@ using namespace Xbyak::util;
 #include "hw/sh4/sh4_mem.h"
 #include "x64_regalloc.h"
 #include "xbyak_base.h"
+#include "oslib/oslib.h"
 
 struct DynaRBI : RuntimeBlockInfo
 {
@@ -66,6 +67,10 @@ namespace MemType {
 
 static const void *MemHandlers[MemType::Count][MemSize::Count][MemOp::Count];
 static const u8 *MemHandlerStart, *MemHandlerEnd;
+static UnwindInfo unwinder;
+#ifndef _WIN32
+static float xmmSave[4];
+#endif
 
 void ngen_mainloop(void *)
 {
@@ -74,19 +79,12 @@ void ngen_mainloop(void *)
 		mainloop();
 	} catch (const SH4ThrownException&) {
 		ERROR_LOG(DYNAREC, "SH4ThrownException in mainloop");
-	} catch (...) {
-		ERROR_LOG(DYNAREC, "Uncaught unknown exception in mainloop");
+		throw FlycastException("Fatal: Unhandled SH4 exception");
 	}
 }
 
 void ngen_init()
 {
-}
-
-void ngen_GetFeatures(ngen_features* dst)
-{
-	dst->InterpreterFallback = false;
-	dst->OnlyDynamicEnds = false;
 }
 
 RuntimeBlockInfo* ngen_AllocateBlock()
@@ -628,21 +626,34 @@ public:
 
 	void genMainloop()
 	{
+		unwinder.start((void *)getCurr());
+
 		push(rbx);
+		unwinder.pushReg(getSize(), Xbyak::Operand::RBX);
 		push(rbp);
+		unwinder.pushReg(getSize(), Xbyak::Operand::RBP);
 #ifdef _WIN32
 		push(rdi);
+		unwinder.pushReg(getSize(), Xbyak::Operand::RDI);
 		push(rsi);
+		unwinder.pushReg(getSize(), Xbyak::Operand::RSI);
 #endif
 		push(r12);
+		unwinder.pushReg(getSize(), Xbyak::Operand::R12);
 		push(r13);
+		unwinder.pushReg(getSize(), Xbyak::Operand::R13);
 		push(r14);
+		unwinder.pushReg(getSize(), Xbyak::Operand::R14);
 		push(r15);
+		unwinder.pushReg(getSize(), Xbyak::Operand::R15);
 #ifdef _WIN32
 		sub(rsp, 40);				// 32-byte shadow space + 8 for stack 16-byte alignment
+		unwinder.allocStack(getSize(), 40);
 #else
 		sub(rsp, 8);				// stack 16-byte alignment
+		unwinder.allocStack(getSize(), 8);
 #endif
+		unwinder.endProlog(getSize());
 
 		mov(dword[rip + &cycle_counter], SH4_TIMESLICE);
 		mov(qword[rip + &jmp_rsp], rsp);
@@ -691,6 +702,19 @@ public:
 		pop(rbp);
 		pop(rbx);
 		ret();
+		size_t unwindSize = unwinder.end(getSize());
+		setSize(getSize() + unwindSize);
+
+		unwinder.start((void *)getCurr());
+		size_t startOffset = getSize();
+#ifdef _WIN32
+		// 32-byte shadow space + 8 for stack 16-byte alignment
+		unwinder.allocStack(0, 40);
+#else
+		// stack 16-byte alignment
+		unwinder.allocStack(0, 8);
+#endif
+		unwinder.endProlog(0);
 
 	//handleException:
 		Xbyak::Label handleExceptionLabel;
@@ -699,6 +723,12 @@ public:
 		jmp(run_loop);
 
 		genMemHandlers();
+
+		size_t savedSize = getSize();
+		setSize(CODE_SIZE - 128 - startOffset);
+		unwindSize = unwinder.end(getSize());
+		verify(unwindSize <= 128);
+		setSize(savedSize);
 
 		ready();
 		mainloop = (void (*)())getCode();
@@ -1233,36 +1263,14 @@ private:
 		if (current_opid == (size_t)-1)
 			return;
 
-		bool xmm8_mapped = regalloc.IsMapped(xmm8, current_opid);
-		bool xmm9_mapped = regalloc.IsMapped(xmm9, current_opid);
-		bool xmm10_mapped = regalloc.IsMapped(xmm10, current_opid);
-		bool xmm11_mapped = regalloc.IsMapped(xmm11, current_opid);
-
-		// Need to save xmm registers as they are not preserved in linux/mach
-		if (xmm8_mapped || xmm9_mapped || xmm10_mapped || xmm11_mapped)
-		{
-			u32 stack_size = 4 * (xmm8_mapped + xmm9_mapped + xmm10_mapped + xmm11_mapped);
-			stack_size = (((stack_size + 15) >> 4) << 4); // Stack needs to be 16-byte aligned before the call
-			sub(rsp, stack_size);
-			int offset = 0;
-			if (xmm8_mapped)
-			{
-				movd(ptr[rsp + offset], xmm8);
-				offset += 4;
-			}
-			if (xmm9_mapped)
-			{
-				movd(ptr[rsp + offset], xmm9);
-				offset += 4;
-			}
-			if (xmm10_mapped)
-			{
-				movd(ptr[rsp + offset], xmm10);
-				offset += 4;
-			}
-			if (xmm11_mapped)
-				movd(ptr[rsp + offset], xmm11);
-		}
+		if (regalloc.IsMapped(xmm8, current_opid))
+			movd(ptr[rip + &xmmSave[0]], xmm8);
+		if (regalloc.IsMapped(xmm9, current_opid))
+			movd(ptr[rip + &xmmSave[1]], xmm9);
+		if (regalloc.IsMapped(xmm10, current_opid))
+			movd(ptr[rip + &xmmSave[2]], xmm10);
+		if (regalloc.IsMapped(xmm11, current_opid))
+			movd(ptr[rip + &xmmSave[3]], xmm11);
 #endif
 	}
 
@@ -1272,38 +1280,14 @@ private:
 		if (current_opid == (size_t)-1)
 			return;
 
-		bool xmm8_mapped = regalloc.IsMapped(xmm8, current_opid);
-		bool xmm9_mapped = regalloc.IsMapped(xmm9, current_opid);
-		bool xmm10_mapped = regalloc.IsMapped(xmm10, current_opid);
-		bool xmm11_mapped = regalloc.IsMapped(xmm11, current_opid);
-		if (xmm8_mapped || xmm9_mapped || xmm10_mapped || xmm11_mapped)
-		{
-			u32 stack_size = 4 * (xmm8_mapped + xmm9_mapped + xmm10_mapped + xmm11_mapped);
-			int offset = stack_size - 4;
-			stack_size = (((stack_size + 15) >> 4) << 4); // Stack needs to be 16-byte aligned before the call
-			if (xmm11_mapped)
-			{
-				movd(xmm11, ptr[rsp + offset]);
-				offset -= 4;
-			}
-			if (xmm10_mapped)
-			{
-				movd(xmm10, ptr[rsp + offset]);
-				offset -= 4;
-			}
-			if (xmm9_mapped)
-			{
-				movd(xmm9, ptr[rsp + offset]);
-				offset -= 4;
-			}
-			if (xmm8_mapped)
-			{
-				movd(xmm8, ptr[rsp + offset]);
-				offset -= 4;
-			}
-			verify(offset == -4);
-			add(rsp, stack_size);
-		}
+		if (regalloc.IsMapped(xmm8, current_opid))
+			movd(xmm8, ptr[rip + &xmmSave[0]]);
+		if (regalloc.IsMapped(xmm9, current_opid))
+			movd(xmm9, ptr[rip + &xmmSave[1]]);
+		if (regalloc.IsMapped(xmm10, current_opid))
+			movd(xmm10, ptr[rip + &xmmSave[2]]);
+		if (regalloc.IsMapped(xmm11, current_opid))
+			movd(xmm11, ptr[rip + &xmmSave[3]]);
 #endif
 	}
 
@@ -1401,6 +1385,7 @@ void ngen_HandleException(host_context_t &context)
 
 void ngen_ResetBlocks()
 {
+	unwinder.clear();
 	// Avoid generating the main loop more than once
 	if (mainloop != nullptr && mainloop != emit_GetCCPtr())
 		return;

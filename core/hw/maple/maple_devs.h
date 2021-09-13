@@ -91,6 +91,7 @@ enum NAOMI_KEYS
 
 	// Not an actual button
 	NAOMI_COIN_KEY = 1 << 0,
+	NAOMI_RELOAD_KEY = 1 << 17,
 };
 
 enum AWAVE_KEYS

@@ -5,7 +5,6 @@
 #pragma once
 #include <cmath>
 #include "types.h"
-#include "stdclass.h"
 
 struct MemChip
 {
@@ -46,70 +45,16 @@ struct MemChip
 		die("Method not supported");
 	}
 
-	bool Load(const std::string& file)
-	{
-		FILE *f = nowide::fopen(file.c_str(), "rb");
-		if (f)
-		{
-			bool rv = std::fread(data + write_protect_size, 1, size - write_protect_size, f) == size - write_protect_size;
-			std::fclose(f);
-			if (rv)
-				this->load_filename = file;
-
-			return rv;
-		}
-		return false;
-	}
-
+	bool Load(const std::string& file);
 	bool Reload()
 	{
 		return Load(this->load_filename);
 	}
-
-	void Save(const std::string& file)
-	{
-		FILE *f = nowide::fopen(file.c_str(), "wb");
-		if (f)
-		{
-			std::fwrite(data + write_protect_size, 1, size - write_protect_size, f);
-			std::fclose(f);
-		}
-	}
-
-	bool Load(const std::string& prefix, const std::string& names_ro, const std::string& title)
-	{
-		const size_t npos = std::string::npos;
-		size_t start = 0;
-		while (start < names_ro.size())
-		{
-			size_t semicolon = names_ro.find(';', start);
-			std::string name = names_ro.substr(start, semicolon == npos ? semicolon : semicolon - start);
-
-			size_t percent = name.find('%');
-			if (percent != npos)
-				name = name.replace(percent, 1, prefix);
-
-			std::string fullpath = get_readonly_data_path(name);
-			if (file_exists(fullpath) && Load(fullpath))
-			{
-				INFO_LOG(FLASHROM, "Loaded %s as %s", fullpath.c_str(), title.c_str());
-				return true;
-			}
-
-			start = semicolon;
-			if (start != npos)
-				start++;
-		}
-		return false;
-	}
-
-	void Save(const std::string& prefix, const std::string& name_ro, const std::string& title)
-	{
-		std::string path = get_writable_data_path(prefix + name_ro);
-		Save(path);
-
-		INFO_LOG(FLASHROM, "Saved %s as %s", path.c_str(), title.c_str());
-	}
+	void Save(const std::string& file);
+	bool Load(const std::string &prefix, const std::string &names_ro,
+			const std::string &title);
+	void Save(const std::string &prefix, const std::string &name_ro,
+			const std::string &title);
 
 	virtual void Reset() {}
 	virtual bool Serialize(void **data, unsigned int *total_size) { return true; }
@@ -525,6 +470,8 @@ struct DCFlashChip : MemChip
 			*size = 64 * 1024;
 			break;
 		default:
+			*offset = 0;
+			*size = 0;
 			die("unknown partition");
 			break;
 		}

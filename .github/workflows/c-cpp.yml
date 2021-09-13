@@ -10,16 +10,19 @@ jobs:
     strategy:
       matrix:
         config:
-          - {name: i686-pc-windows-msvc, os: windows-latest, cmakeArgs: -DCMAKE_SYSTEM_VERSION="10.0.18362.0" -G "Visual Studio 16 2019" -A Win32}
-          - {name: x86_64-apple-darwin, os: macos-latest, cmakeArgs: -G "Xcode", destDir: osx}
-          - {name: x86_64-pc-linux-gnu, os: ubuntu-latest}
-          - {name: x86_64-pc-windows-msvc, os: windows-latest, cmakeArgs: -DCMAKE_SYSTEM_VERSION="10.0.18362.0" -G "Visual Studio 16 2019" -A x64}
-          - {name: x86_64-w64-mingw32, os: windows-latest, cmakeArgs: -G "MinGW Makefiles", destDir: win}
+          - {name: i686-pc-windows-msvc, os: windows-latest, cmakeArgs: -DCMAKE_SYSTEM_VERSION="10.0.18362.0" -G "Visual Studio 16 2019" -A Win32, buildType: Release}
+          - {name: apple-darwin, os: macos-latest, cmakeArgs: -G "Xcode", destDir: osx, buildType: Release}
+          - {name: apple-ios, os: macos-latest, cmakeArgs: -DCMAKE_SYSTEM_NAME=iOS -G "Xcode", destDir: ios, buildType: Release}
+          - {name: x86_64-pc-linux-gnu, os: ubuntu-latest, buildType: Release}
+          - {name: x86_64-pc-windows-msvc, os: windows-latest, cmakeArgs: -DCMAKE_SYSTEM_VERSION="10.0.18362.0" -G "Visual Studio 16 2019" -A x64, buildType: Release}
+          - {name: x86_64-w64-mingw32, os: windows-latest, cmakeArgs: -G "MinGW Makefiles", destDir: win, buildType: RelWithDebInfo}
+          - {name: libretro-x86_64-pc-linux-gnu, os: ubuntu-latest, cmakeArgs: -DLIBRETRO=ON -DCMAKE_POSITION_INDEPENDENT_CODE=TRUE, buildType: Release}
+          - {name: libretro-x86_64-w64-mingw32, os: windows-latest, cmakeArgs: -DLIBRETRO=ON -G "MinGW Makefiles", buildType: Release}
 
     steps:
       - name: Set up build environment (macos-latest)
         run: |
-          brew install ccache libao libomp pulseaudio zlib
+          brew install ccache libao libomp pulseaudio zlib ldid
           echo "/usr/local/opt/ccache/libexec" >> $GITHUB_PATH
           echo "CCACHE_DIR=/tmp/ccache" >> $GITHUB_ENV
         if: matrix.config.os == 'macos-latest'
@@ -33,7 +36,7 @@ jobs:
 
       - name: Set up build environment (windows-latest)
         run: echo "DXSDK_DIR=${Env:HOMEDRIVE}${Env:HOMEPATH}\ccache\" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf-8 -Append
-        if: matrix.config.os == 'windows-latest' && matrix.config.name != 'x86_64-w64-mingw32'
+        if: matrix.config.os == 'windows-latest' && matrix.config.name != 'x86_64-w64-mingw32' && matrix.config.name != 'libretro-x86_64-w64-mingw32'
 
       - uses: actions/cache@v2
         with:
@@ -51,7 +54,7 @@ jobs:
         if: matrix.config.os == 'windows-latest'
 
       - name: Download DX2010
-        if: matrix.config.os == 'windows-latest' && matrix.config.name != 'x86_64-w64-mingw32'
+        if: matrix.config.os == 'windows-latest' && matrix.config.name != 'x86_64-w64-mingw32' && matrix.config.name != 'libretro-x86_64-w64-mingw32'
         run:   |
                curl -L https://download.microsoft.com/download/a/e/7/ae743f1f-632b-4809-87a9-aa1bb3458e31/DXSDK_Jun10.exe -o _DX2010_.exe
                7z x _DX2010_.exe DXSDK/Include -o_DX2010_
@@ -61,6 +64,13 @@ jobs:
                rm -fR _DX*_ _DX*_.exe
         shell: bash
 
+      - name: Install MSYS2
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          install: git base-devel mingw-w64-x86_64-toolchain mingw-w64-x86_64-cmake mingw-w64-x86_64-breakpad-git
+        if: matrix.config.os == 'windows-latest'
+
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0
@@ -69,25 +79,44 @@ jobs:
       - name: Create artifact directory
         run: mkdir -p build/artifact
 
-      - name: Build SDL (macos-latest)
+      - name: Build SDL (macos)
         run: |
           cd shell/apple
           mkdir artifacts
           brew install --build-from-source ./sdl2.rb
-        if: matrix.config.os == 'macos-latest'
+        if: matrix.config.name == 'apple-darwin'
 
       - name: CMake
         run: |
-          cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE=artifact ${{ matrix.config.cmakeArgs }}
+          cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.config.buildType }} -DCMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE=artifact -DCMAKE_LIBRARY_OUTPUT_DIRECTORY=artifact ${{ matrix.config.cmakeArgs }}
           cmake --build build --config Release --parallel 2
+        if: matrix.config.os != 'windows-latest'
+
+      - name: CMake (windows)
+        shell: msys2 {0}
+        run: |
+          unset temp tmp
+          cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.config.buildType }} -DCMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE=artifact -DCMAKE_RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO=artifact -DCMAKE_LIBRARY_OUTPUT_DIRECTORY=artifact ${{ matrix.config.cmakeArgs }}
+          cmake --build build --config Release --parallel 2
+        if: matrix.config.os == 'windows-latest'
 
       - name: Unit Tests
         run: |
           mkdir -p build/tests
-          cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE=tests -DENABLE_CTEST=ON ${{ matrix.config.cmakeArgs }}
+          cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.config.buildType }} -DCMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE=tests -DENABLE_CTEST=ON ${{ matrix.config.cmakeArgs }}
           cmake --build build --config Release --parallel 2
           ./build/tests/flycast
         if: matrix.config.name == 'x86_64-pc-linux-gnu'
+
+      - name: Dump symbols
+        shell: msys2 {0}
+        run: |
+          dump_syms build/artifact/flycast.exe > flycast.exe.sym 2>/dev/null
+          BUILD_ID=`head -1 flycast.exe.sym | awk '{ print $4 }'`
+          mkdir -p symbols/flycast.exe/$BUILD_ID
+          mv flycast.exe.sym symbols/flycast.exe/$BUILD_ID
+          strip build/artifact/flycast.exe
+        if: matrix.config.name == 'x86_64-w64-mingw32'
 
       - uses: actions/upload-artifact@v2
         with:
@@ -100,7 +129,7 @@ jobs:
           rm -rf Flycast.swiftmodule
           zip -r flycast.app.zip Flycast.app
           rm -rf Flycast.app
-        if: matrix.config.os == 'macos-latest'
+        if: matrix.config.name == 'apple-darwin'
 
       - name: Package app (windows)
         run: |
@@ -125,3 +154,8 @@ jobs:
       - name: Upload to S3
         run: aws s3 sync build/artifact s3://flycast-builds/${{ matrix.config.destDir }}/${{ env.GIT_BUILD }} --acl public-read --follow-symlinks
         if: ${{ steps.aws-credentials.outputs.aws-account-id != '' }}
+
+      - name: Upload symbols to S3
+        run: aws s3 sync symbols s3://flycast-symbols/${{ matrix.config.destDir }} --follow-symlinks
+        if: ${{ steps.aws-credentials.outputs.aws-account-id != '' && matrix.config.os == 'windows-latest' }}
+        

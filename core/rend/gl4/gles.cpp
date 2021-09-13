@@ -19,12 +19,38 @@
 #include "gl4.h"
 #include "rend/gles/glcache.h"
 #include "rend/transform_matrix.h"
+#include "rend/osd.h"
+#include "glsl.h"
 
 //Fragment and vertex shaders code
 
-static const char* VertexShaderSource = R"(#version 140
-#define pp_Gouraud %d
+const char* ShaderHeader = R"(
+layout(r32ui, binding = 4) uniform coherent restrict uimage2D abufferPointerImg;
 
+layout(binding = 0, offset = 0) uniform atomic_uint buffer_index;
+)"
+OIT_POLY_PARAM
+R"(
+layout (binding = 0, std430) coherent restrict buffer PixelBuffer {
+	Pixel pixels[];
+};
+
+uint getNextPixelIndex()
+{
+	uint index = atomicCounterIncrement(buffer_index);
+	if (index >= pixels.length())
+		// Buffer overflow
+		discard;
+
+	return index;
+}
+
+layout (binding = 1, std430) readonly buffer TrPolyParamBuffer {
+	PolyParam tr_poly_params[];
+};
+)";
+
+static const char* VertexShaderSource = R"(
 #if pp_Gouraud == 0
 #define INTERPOLATION flat
 #else
@@ -66,29 +92,14 @@ void main()
 }
 )";
 
-const char* gl4PixelPipelineShader = SHADER_HEADER
-R"(
-#define cp_AlphaTest %d
-#define pp_ClipInside %d
-#define pp_UseAlpha %d
-#define pp_Texture %d
-#define pp_IgnoreTexA %d
-#define pp_ShadInstr %d
-#define pp_Offset %d
-#define pp_FogCtrl %d
-#define pp_TwoVolumes %d
-#define pp_Gouraud %d
-#define pp_BumpMap %d
-#define FogClamping %d
-#define pp_Palette %d
-#define PASS %d
+const char* gl4PixelPipelineShader = R"(
 #define PI 3.1415926
 
 #define PASS_DEPTH 0
 #define PASS_COLOR 1
 #define PASS_OIT 2
 
-#if PASS == PASS_DEPTH || PASS == PASS_COLOR
+#if PASS == PASS_DEPTH || PASS == PASS_COLOR || NOUVEAU == 1
 out vec4 FragColor;
 #endif
 
@@ -163,8 +174,8 @@ vec4 fog_clamp(vec4 col)
 vec4 palettePixel(sampler2D tex, vec2 coords)
 {
 	int color_idx = int(floor(texture(tex, coords).r * 255.0 + 0.5)) + palette_index;
-	vec2 c = vec2(float(color_idx % 32) / 31.0, float(color_idx / 32) / 31.0);
-	return texture(palette, c);
+	ivec2 c = ivec2(color_idx % 32, color_idx / 32);
+	return texelFetch(palette, c, 0);
 }
 
 #endif
@@ -379,19 +390,59 @@ void main()
 		pixel.next = imageAtomicExchange(abufferPointerImg, coords, idx);
 		pixels[idx] = pixel;
 		
+#if NOUVEAU == 0
 		discard;
+#else
+		// nouveau may be optimizing a bit too aggressively here
+		FragColor = vec4(0.0);
+#endif
 		
 	#endif
 }
 )";
 
-static const char* ModifierVolumeShader = SHADER_HEADER
-R"(
+static const char* ModifierVolumeShader = R"(
 void main()
 {
 	setFragDepth();
 }
 )";
+
+class Vertex4Source : public OpenGl4Source
+{
+public:
+	Vertex4Source(bool gouraud) : OpenGl4Source() {
+		addConstant("pp_Gouraud", gouraud);
+
+		addSource(VertexShaderSource);
+	}
+};
+
+class Fragment4ShaderSource : public OpenGl4Source
+{
+public:
+	Fragment4ShaderSource(const gl4PipelineShader* s) : OpenGl4Source()
+	{
+		addConstant("cp_AlphaTest", s->cp_AlphaTest);
+		addConstant("pp_ClipInside", s->pp_InsideClipping);
+		addConstant("pp_UseAlpha", s->pp_UseAlpha);
+		addConstant("pp_Texture", s->pp_Texture);
+		addConstant("pp_IgnoreTexA", s->pp_IgnoreTexA);
+		addConstant("pp_ShadInstr", s->pp_ShadInstr);
+		addConstant("pp_Offset", s->pp_Offset);
+		addConstant("pp_FogCtrl", s->pp_FogCtrl);
+		addConstant("pp_TwoVolumes", s->pp_TwoVolumes);
+		addConstant("pp_Gouraud", s->pp_Gouraud);
+		addConstant("pp_BumpMap", s->pp_BumpMap);
+		addConstant("FogClamping", s->fog_clamping);
+		addConstant("pp_Palette", s->palette);
+		addConstant("NOUVEAU", gl.mesa_nouveau);
+		addConstant("PASS", (int)s->pass);
+
+		addSource(ShaderHeader);
+		addSource(gl4PixelPipelineShader);
+	}
+};
 
 gl4_ctx gl4;
 
@@ -399,21 +450,13 @@ struct gl4ShaderUniforms_t gl4ShaderUniforms;
 int max_image_width;
 int max_image_height;
 
-bool gl4CompilePipelineShader(	gl4PipelineShader* s, const char *pixel_source /* = PixelPipelineShader */, const char *vertex_source /* = NULL */)
+bool gl4CompilePipelineShader(gl4PipelineShader* s, const char *fragment_source /* = nullptr */, const char *vertex_source /* = nullptr */)
 {
-	char vshader[16384];
+	Vertex4Source vertexSource(s->pp_Gouraud);
+	Fragment4ShaderSource fragmentSource(s);
 
-	sprintf(vshader, vertex_source == NULL ? VertexShaderSource : vertex_source, s->pp_Gouraud);
-
-	char pshader[16384];
-
-	sprintf(pshader, pixel_source,
-                s->cp_AlphaTest, s->pp_InsideClipping, s->pp_UseAlpha,
-                s->pp_Texture, s->pp_IgnoreTexA, s->pp_ShadInstr, s->pp_Offset, s->pp_FogCtrl,
-				s->pp_TwoVolumes, s->pp_Gouraud, s->pp_BumpMap, s->fog_clamping, s->palette,
-				(int)s->pass);
-
-	s->program = gl_CompileAndLink(vshader, pshader);
+	s->program = gl_CompileAndLink(vertex_source != nullptr ? vertex_source : vertexSource.generate().c_str(),
+			fragment_source != nullptr ? fragment_source : fragmentSource.generate().c_str());
 
 	//setup texture 0 as the input for the shader
 	GLint gu = glGetUniformLocation(s->program, "tex0");
@@ -515,11 +558,13 @@ static void create_modvol_shader()
 {
 	if (gl4.modvol_shader.program != 0)
 		return;
-	char vshader[16384];
-	sprintf(vshader, VertexShaderSource, 1);
+	Vertex4Source vertexShader(true);
+	OpenGl4Source fragmentShader;
+	fragmentShader.addSource(ShaderHeader)
+		.addSource(ModifierVolumeShader);
 
-	gl4.modvol_shader.program=gl_CompileAndLink(vshader, ModifierVolumeShader);
-	gl4.modvol_shader.normal_matrix  = glGetUniformLocation(gl4.modvol_shader.program, "normal_matrix");
+	gl4.modvol_shader.program = gl_CompileAndLink(vertexShader.generate().c_str(), fragmentShader.generate().c_str());
+	gl4.modvol_shader.normal_matrix = glGetUniformLocation(gl4.modvol_shader.program, "normal_matrix");
 }
 
 static bool gl_create_resources()
@@ -556,6 +601,8 @@ static bool gl_create_resources()
 }
 
 //setup
+void gl_DebugOutput(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length,
+		const GLchar *message, const void *userParam);
 
 static bool gl4_init()
 {
@@ -569,13 +616,13 @@ static bool gl4_init()
 
 	glcache.DisableCache();
 
+    //glEnable(GL_DEBUG_OUTPUT);
+    //glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+    //glDebugMessageCallback(gl_DebugOutput, NULL);
+    //glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
+
 	if (!gl_create_resources())
 		return false;
-
-//    glEnable(GL_DEBUG_OUTPUT);
-//    glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
-//    glDebugMessageCallback(gl_DebugOutput, NULL);
-//    glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
 
 	initABuffer();
 
@@ -624,14 +671,12 @@ static void resize(int w, int h)
 		}
 		gl4CreateTextures(max_image_width, max_image_height);
 		reshapeABuffer(max_image_width, max_image_height);
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		glBindFramebuffer(GL_FRAMEBUFFER, gl.ofbo.origFbo);
 	}
 }
 
 static bool RenderFrame(int width, int height)
 {
-	create_modvol_shader();
-
 	const bool is_rtt = pvrrc.isRTT;
 
 	TransformMatrix<COORD_OPENGL> matrices(pvrrc, width, height);
@@ -639,6 +684,12 @@ static bool RenderFrame(int width, int height)
 	const glm::mat4& scissor_mat = matrices.GetScissorMatrix();
 	ViewportMatrix = matrices.GetViewportMatrix();
 
+#ifdef LIBRETRO
+	gl.ofbo.origFbo = glsm_get_current_framebuffer();
+#else
+	gl.ofbo.origFbo = 0;
+	glGetIntegerv(GL_FRAMEBUFFER_BINDING, (GLint *)&gl.ofbo.origFbo);
+#endif
 	if (!is_rtt)
 		gcflip = 0;
 	else
@@ -714,7 +765,19 @@ static bool RenderFrame(int width, int height)
 	if (is_rtt)
 		output_fbo = BindRTT(false);
 	else
+	{
+#ifdef LIBRETRO
+		gl.ofbo.width = width;
+		gl.ofbo.height = height;
+		if (config::PowerVR2Filter && !pvrrc.isRenderFramebuffer)
+			output_fbo = postProcessor.getFramebuffer(width, height);
+		else
+			output_fbo = glsm_get_current_framebuffer();
+		glViewport(0, 0, width, height);
+#else
 		output_fbo = init_output_framebuffer(rendering_width, rendering_height);
+#endif
+	}
 	if (output_fbo == 0)
 		return false;
 
@@ -824,6 +887,10 @@ static bool RenderFrame(int width, int height)
 		}
 
 		gl4DrawStrips(output_fbo, rendering_width, rendering_height);
+#ifdef LIBRETRO
+		if (config::PowerVR2Filter && !is_rtt)
+			postProcessor.render(glsm_get_current_framebuffer());
+#endif
 	}
 	else
 	{
@@ -838,8 +905,11 @@ static bool RenderFrame(int width, int height)
 
 	if (is_rtt)
 		ReadRTTBuffer();
+#ifndef LIBRETRO
 	else
 		render_output_framebuffer();
+#endif
+	glBindVertexArray(0);
 
 	return !is_rtt;
 }
@@ -860,47 +930,24 @@ struct OpenGL4Renderer : OpenGLRenderer
 
 	void Term() override
 	{
-		termQuad();
 		termABuffer();
-		if (stencilTexId != 0)
-		{
-			glcache.DeleteTextures(1, &stencilTexId);
-			stencilTexId = 0;
-		}
-		if (depthTexId != 0)
-		{
-			glcache.DeleteTextures(1, &depthTexId);
-			depthTexId = 0;
-		}
-		if (opaqueTexId != 0)
-		{
-			glcache.DeleteTextures(1, &opaqueTexId);
-			opaqueTexId = 0;
-		}
-		if (depthSaveTexId != 0)
-		{
-			glcache.DeleteTextures(1, &depthSaveTexId);
-			depthSaveTexId = 0;
-		}
-		if (geom_fbo != 0)
-		{
-			glDeleteFramebuffers(1, &geom_fbo);
-			geom_fbo = 0;
-		}
-		if (texSamplers[0] != 0)
-		{
-			glDeleteSamplers(2, texSamplers);
-			texSamplers[0] = texSamplers[1] = 0;
-		}
-		if (depth_fbo != 0)
-		{
-			glDeleteFramebuffers(1, &depth_fbo);
-			depth_fbo = 0;
-		}
-		TexCache.Clear();
+		glcache.DeleteTextures(1, &stencilTexId);
+		stencilTexId = 0;
+		glcache.DeleteTextures(1, &depthTexId);
+		depthTexId = 0;
+		glcache.DeleteTextures(1, &opaqueTexId);
+		opaqueTexId = 0;
+		glcache.DeleteTextures(1, &depthSaveTexId);
+		depthSaveTexId = 0;
+		glDeleteFramebuffers(1, &geom_fbo);
+		geom_fbo = 0;
+		glDeleteSamplers(2, texSamplers);
+		texSamplers[0] = texSamplers[1] = 0;
+		glDeleteFramebuffers(1, &depth_fbo);
+		depth_fbo = 0;
 
-		gl_free_osd_resources();
-		free_output_framebuffer();
+		TexCache.Clear();
+		termGLCommon();
 		gl4_term();
 	}
 
@@ -920,6 +967,24 @@ struct OpenGL4Renderer : OpenGLRenderer
 	{
 		return render_output_framebuffer();
 	}
+
+#ifdef LIBRETRO
+	void DrawOSD(bool clearScreen) override
+	{
+		void gl4DrawVmuTexture(u8 vmu_screen_number);
+		void gl4DrawGunCrosshair(u8 port);
+
+		if (settings.platform.system == DC_PLATFORM_DREAMCAST)
+		{
+			for (int vmu_screen_number = 0 ; vmu_screen_number < 4 ; vmu_screen_number++)
+				if (vmu_lcd_status[vmu_screen_number * 2])
+					gl4DrawVmuTexture(vmu_screen_number);
+		}
+
+		for (int lightgun_port = 0 ; lightgun_port < 4 ; lightgun_port++)
+			gl4DrawGunCrosshair(lightgun_port);
+	}
+#endif
 };
 
 Renderer* rend_GL4()

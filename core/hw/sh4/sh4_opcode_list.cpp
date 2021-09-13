@@ -1,6 +1,7 @@
 #include "types.h"
 #include "interpr/sh4_opcodes.h"
 #include "sh4_opcode_list.h"
+#include "dyna/decoder.h"
 #include "dyna/decoder_opcodes.h"
 #include "hw/sh4/dyna/shil.h"
 #include "reios/reios.h"
@@ -21,16 +22,6 @@ sh4_opcodelistentry* OpDesc[0x10000];
 #define Mask_n_ml3bit 0xF08F
 #define Mask_nh3bit 0xF1FF
 #define Mask_nh2bit 0xF3FF
-
-#define GetN(str) ((str>>8) & 0xf)
-#define GetM(str) ((str>>4) & 0xf)
-#define GetImm4(str) ((str>>0) & 0xf)
-#define GetImm8(str) ((str>>0) & 0xff)
-#define GetSImm8(str) ((s8)((str>>0) & 0xff))
-#define GetImm12(str) ((str>>0) & 0xfff)
-#define GetSImm12(str) (((s16)((GetImm12(str))<<4))>>4)
-
-
 
 //,DEC_D_RN|DEC_S_RM|DEC_OP(shop_and)
 u64 dec_Fill(DecMode mode,DecParam d,DecParam s,shilop op,u32 extra=0)

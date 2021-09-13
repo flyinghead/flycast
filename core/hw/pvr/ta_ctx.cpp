@@ -1,6 +1,9 @@
 #include "ta_ctx.h"
 #include "spg.h"
 #include "cfg/option.h"
+#if defined(__SWITCH__)
+#include <malloc.h>
+#endif
 
 extern u32 fskip;
 extern u32 FrameCount;
@@ -19,6 +22,8 @@ void* OS_aligned_malloc(size_t align, size_t size)
 	return __mingw_aligned_malloc(size, align);
 #elif defined(_WIN32)
 	return _aligned_malloc(size, align);
+#elif defined(__SWITCH__)
+   return memalign(align, size);
 #else
 	void *result;
 	if (posix_memalign(&result, align, size))
@@ -79,8 +84,8 @@ bool QueueRender(TA_context* ctx)
 	RenderCount++;
 	if (RenderCount % (config::SkipFrame + 1) != 0)
 		skipFrame = true;
-	else if (rqueue && (config::AutoSkipFrame == 0
-				|| (config::AutoSkipFrame == 1 && SH4FastEnough)))
+	else if (config::ThreadedRendering && rqueue != nullptr
+			&& (config::AutoSkipFrame == 0 || (config::AutoSkipFrame == 1 && SH4FastEnough)))
 		// The previous render hasn't completed yet so we wait.
 		// If autoskipframe is enabled (normal level), we only do so if the CPU is running
 		// fast enough over the last frames
@@ -255,6 +260,12 @@ void SerializeTAContext(void **data, unsigned int *total_size)
 	REICAST_S(ta_ctx->Address);
 	const u32 taSize = ta_tad.thd_data - ta_tad.thd_root;
 	REICAST_S(taSize);
+	if (*data == nullptr)
+	{
+		// Maximum size
+		REICAST_SKIP(TA_DATA_SIZE + 4 + ARRAY_SIZE(ta_tad.render_passes) * 4);
+		return;
+	}
 	REICAST_SA(ta_tad.thd_root, taSize);
 	REICAST_S(ta_tad.render_pass_count);
 	for (u32 i = 0; i < ta_tad.render_pass_count; i++)
@@ -275,7 +286,7 @@ void UnserializeTAContext(void **data, unsigned int *total_size, serialize_versi
 	REICAST_US(size);
 	REICAST_USA(ta_tad.thd_root, size);
 	ta_tad.thd_data = ta_tad.thd_root + size;
-	if (version >= V12)
+	if (version >= V12 || (version >= V12_LIBRETRO && version < V5))
 	{
 		REICAST_US(ta_tad.render_pass_count);
 		for (u32 i = 0; i < ta_tad.render_pass_count; i++)

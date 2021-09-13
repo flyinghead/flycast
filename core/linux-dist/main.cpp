@@ -1,15 +1,23 @@
+#ifndef __STDC_FORMAT_MACROS
+#define __STDC_FORMAT_MACROS 1
+#endif
 #include "types.h"
 
-#if defined(__unix__)
+#if defined(__unix__) || defined(__SWITCH__)
 #include "hw/sh4/dyna/blockmanager.h"
 #include "log/LogManager.h"
 #include "emulator.h"
 #include "rend/mainui.h"
 #include "oslib/directory.h"
+#include "oslib/oslib.h"
 
 #include <cstdarg>
 #include <csignal>
 #include <unistd.h>
+
+#if defined(__SWITCH__)
+#include "nswitch.h"
+#endif
 
 #if defined(SUPPORT_DISPMANX)
 	#include "dispmanx.h"
@@ -35,6 +43,10 @@
 #if defined(USE_JOYSTICK)
 	/* legacy joystick input */
 	static int joystick_fd = -1; // Joystick file descriptor
+#endif
+
+#ifdef USE_BREAKPAD
+#include "client/linux/handler/exception_handler.h"
 #endif
 
 void os_SetupInput()
@@ -123,6 +135,10 @@ void common_linux_setup();
 // If no folder exists, $HOME/.config/flycast is created and used.
 std::string find_user_config_dir()
 {
+#ifdef __SWITCH__
+	flycast::mkdir("/flycast", 0755);
+	return "/flycast/";
+#else
 	struct stat info;
 	std::string xdg_home;
 	if (nowide::getenv("HOME") != NULL)
@@ -160,9 +176,9 @@ std::string find_user_config_dir()
 
 		return fullpath;
 	}
-
 	// Unable to detect config dir, use the current folder
 	return ".";
+#endif
 }
 
 // Find the user data directory.
@@ -173,6 +189,10 @@ std::string find_user_config_dir()
 // If no folder exists, $HOME/.local/share/flycast is created and used.
 std::string find_user_data_dir()
 {
+#ifdef __SWITCH__
+	flycast::mkdir("/flycast/data", 0755);
+	return "/flycast/data/";
+#else
 	struct stat info;
 	std::string xdg_home;
 	if (nowide::getenv("HOME") != NULL)
@@ -210,9 +230,9 @@ std::string find_user_data_dir()
 
 		return fullpath;
 	}
-
 	// Unable to detect data dir, use the current folder
 	return ".";
+#endif
 }
 
 static void addDirectoriesFromPath(std::vector<std::string>& dirs, const std::string& path, const std::string& suffix)
@@ -247,6 +267,9 @@ std::vector<std::string> find_system_config_dirs()
 {
 	std::vector<std::string> dirs;
 
+#ifdef __SWITCH__
+	dirs.push_back("/flycast/");
+#else
 	std::string xdg_home;
 	if (nowide::getenv("HOME") != NULL)
 	{
@@ -275,6 +298,7 @@ std::vector<std::string> find_system_config_dirs()
 		dirs.push_back("/etc/flycast/"); // This isn't part of the XDG spec, but much more common than /etc/xdg/
 		dirs.push_back("/etc/xdg/flycast/");
 	}
+#endif
 	dirs.push_back("./");
 
 	return dirs;
@@ -300,6 +324,9 @@ std::vector<std::string> find_system_data_dirs()
 {
 	std::vector<std::string> dirs;
 
+#ifdef __SWITCH__
+	dirs.push_back("/flycast/data/");
+#else
 	std::string xdg_home;
 	if (nowide::getenv("HOME") != NULL)
 	{
@@ -337,14 +364,33 @@ std::vector<std::string> find_system_data_dirs()
 		std::string path = (std::string)nowide::getenv("FLYCAST_BIOS_PATH");
 		addDirectoriesFromPath(dirs, path, "/");
 	}
+#endif
 	dirs.push_back("./");
 	dirs.push_back("data/");
 
 	return dirs;
 }
 
+#if defined(USE_BREAKPAD)
+static bool dumpCallback(const google_breakpad::MinidumpDescriptor& descriptor, void* context, bool succeeded)
+{
+	printf("Minidump saved to '%s'\n", descriptor.path());
+	return succeeded;
+}
+#endif
+
 int main(int argc, char* argv[])
 {
+#if defined(__SWITCH__)
+	socketInitializeDefault();
+	nxlinkStdio();
+	//appletSetFocusHandlingMode(AppletFocusHandlingMode_NoSuspend);
+#endif
+#if defined(USE_BREAKPAD)
+	google_breakpad::MinidumpDescriptor descriptor("/tmp");
+	google_breakpad::ExceptionHandler eh(descriptor, NULL, dumpCallback, NULL, true, -1);
+#endif
+
 	LogManager::Init();
 
 	// Set directories
@@ -365,14 +411,18 @@ int main(int argc, char* argv[])
 	}
 #endif
 
+#if defined(__unix__)
 	common_linux_setup();
+#endif
 
-	if (reicast_init(argc, argv))
+	if (flycast_init(argc, argv))
 		die("Flycast initialization failed\n");
 
 	mainui_loop();
 
 	dc_term();
+
+	os_UninstallFaultHandler();
 
 #if defined(USE_EVDEV)
 	input_evdev_close();
@@ -385,12 +435,18 @@ int main(int argc, char* argv[])
 #if defined(USE_SDL)
 	sdl_window_destroy();
 #endif
+#if defined(__SWITCH__)
+	socketExit();
+#endif
 
 	return 0;
 }
-#endif
 
+#if defined(__unix__)
 void os_DebugBreak()
 {
 	raise(SIGTRAP);
 }
+#endif
+
+#endif // __unix__ || __SWITCH__

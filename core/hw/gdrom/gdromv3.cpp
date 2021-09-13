@@ -434,10 +434,10 @@ void gd_process_ata_cmd()
 		break;
 
     case ATA_IDENTIFY:
-        printf_ata("ATA_IDENTIFY\n");
+        printf_ata("ATA_IDENTIFY");
 
         // Set Signature
-        DriveSel &= 0xf0;
+        DriveSel = 0xa0;
 
         SecCount.full = 1;
         SecNumber.full = 1;
@@ -456,7 +456,14 @@ void gd_process_ata_cmd()
         break;
 
 	default:
-		ERROR_LOG(GDROM, "Unknown ATA command %x", ata_cmd.command);
+		WARN_LOG(GDROM, "Unknown ATA command %x", ata_cmd.command);
+		Error.ABRT = 1;
+		Error.Sense = 5;	// illegal request
+		GDStatus.BSY = 0;
+		GDStatus.CHECK = 1;
+		asic_RaiseInterrupt(holly_GDROM_CMD);
+		gd_set_state(gds_waitcmd);
+
 		break;
 	};
 }
@@ -887,6 +894,9 @@ u32 ReadMem_gdrom(u32 Addr, u32 sz)
 		//cancel interrupt
 	case GD_STATUS_Read :
 		asic_CancelInterrupt(holly_GDROM_CMD);	//Clear INTRQ signal
+		if (DriveSel & 0x10)
+			// slave drive doesn't exist
+			return 0;
 		printf_rm("GDROM: STATUS [cancel int](v=%X)",GDStatus.full);
 		return GDStatus.full;
 
@@ -1006,10 +1016,9 @@ void WriteMem_gdrom(u32 Addr, u32 data, u32 sz)
 
 	//ATA_IOPORT_WR_DEVICE_HEAD
 	case GD_DRVSEL: 
-		if (data != 0) {
-			INFO_LOG(GDROM, "GDROM: Write to GD_DRVSEL, !=0. Value is: %02X", data);
-		}
-		DriveSel = data; 
+		DriveSel = (DriveSel & 0xe0) | (data & 0x1f);
+		if (DriveSel & 0x10)
+			INFO_LOG(GDROM, "GD_DRVSEL: slave drive selected");
 		break;
 
 		// By writing "3" as Feature Number and issuing the Set Feature command,
@@ -1031,12 +1040,16 @@ void WriteMem_gdrom(u32 Addr, u32 data, u32 sz)
 		break;
 
 	case GD_COMMAND_Write:
-		verify(sz==1);
-		if ((data !=ATA_NOP) && (data != ATA_SOFT_RESET))
-			verify(gd_state==gds_waitcmd);
-		//printf("\nGDROM:\tCOMMAND: %X !\n", data);
-		ata_cmd.command=(u8)data;
-		gd_set_state(gds_procata);
+		verify(sz == 1);
+		if ((DriveSel & 0x10) == 0)
+		{
+			if (data != ATA_NOP && data != ATA_SOFT_RESET)
+				verify(gd_state == gds_waitcmd);
+			ata_cmd.command = (u8)data;
+			gd_set_state(gds_procata);
+		}
+		else
+			DEBUG_LOG(GDROM, "ATA command to slave drive ignored: %x", data);
 		break;
 
 	default:
@@ -1049,6 +1062,8 @@ static int getGDROMTicks()
 {
 	if (SB_GDST & 1)
 	{
+		if (config::FastGDRomLoad)
+			return 512;
 		u32 len = SB_GDLEN == 0 ? 0x02000000 : SB_GDLEN;
 		if (len - SB_GDLEND > 10240)
 			return 1000000;										// Large transfers: GD-ROM transfer rate 1.8 MB/s
@@ -1203,20 +1218,24 @@ void gdrom_reg_Term()
 
 void gdrom_reg_Reset(bool hard)
 {
-	sb_rio_register(SB_GDST_addr, RIO_WF, 0, &GDROM_DmaStart);
-	sb_rio_register(SB_GDEN_addr, RIO_WF, 0, &GDROM_DmaEnable);
+	if (hard)
+	{
+		sb_rio_register(SB_GDST_addr, RIO_WF, 0, &GDROM_DmaStart);
+		sb_rio_register(SB_GDEN_addr, RIO_WF, 0, &GDROM_DmaEnable);
+
+		// set default hardware information
+		memset(&GD_HardwareInfo, 0, sizeof(GD_HardwareInfo));
+		GD_HardwareInfo.speed = 0x0;
+		GD_HardwareInfo.standby_hi = 0x00;
+		GD_HardwareInfo.standby_lo = 0xb4;
+		GD_HardwareInfo.read_flags = 0x19;
+		GD_HardwareInfo.read_retry = 0x08;
+		memcpy(GD_HardwareInfo.drive_info, "SE      ", sizeof(GD_HardwareInfo.drive_info));
+		memcpy(GD_HardwareInfo.system_version, "Rev 6.43", sizeof(GD_HardwareInfo.system_version));
+		memcpy(GD_HardwareInfo.system_date, "990408", sizeof(GD_HardwareInfo.system_date));
+	}
 	SB_GDST = 0;
 	SB_GDEN = 0;
-	// set default hardware information
-	memset(&GD_HardwareInfo, 0, sizeof(GD_HardwareInfo));
-	GD_HardwareInfo.speed = 0x0;
-	GD_HardwareInfo.standby_hi = 0x00;
-	GD_HardwareInfo.standby_lo = 0xb4;
-	GD_HardwareInfo.read_flags = 0x19;
-	GD_HardwareInfo.read_retry = 0x08;
-	memcpy(GD_HardwareInfo.drive_info, "SE      ", sizeof(GD_HardwareInfo.drive_info));
-	memcpy(GD_HardwareInfo.system_version, "Rev 6.43", sizeof(GD_HardwareInfo.system_version));
-	memcpy(GD_HardwareInfo.system_date, "990408", sizeof(GD_HardwareInfo.system_date));
 
 	gd_state = gds_waitcmd;
 	sns_asc = 0;
@@ -1232,7 +1251,7 @@ void gdrom_reg_Reset(bool hard)
 	gd_disk_type = NoDisk;
 
 	data_write_mode = 0;
-	DriveSel = 0;
+	DriveSel = 0xa0;
 	Error = {};
 	IntReason = {};
 	Features = {};
@@ -1240,4 +1259,6 @@ void gdrom_reg_Reset(bool hard)
 	SecNumber = {};
 	GDStatus = {};
 	ByteCount = {};
+
+	gd_setdisc();
 }

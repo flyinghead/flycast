@@ -49,6 +49,16 @@ bool mainui_rend_frame()
 		if (!rend_single_frame(mainui_enabled))
 		{
 			UpdateInputState();
+			if (!dc_is_running())
+			{
+				std::string error = dc_get_last_error();
+				if (!error.empty())
+				{
+					dc_stop();
+					EventManager::event(Event::Pause);
+					gui_stop_game(error);
+				}
+			}
 			return false;
 		}
 	}
@@ -92,12 +102,23 @@ void mainui_loop()
 		if (config::RendererType.pendingChange() || forceReinit)
 		{
 			int api = config::RendererType.isOpenGL() ? 0 : config::RendererType.isVulkan() ? 1 : 2;
+			RenderType oldRender = config::RendererType;
 			mainui_term();
 			config::RendererType.commit();
 			int newApi = config::RendererType.isOpenGL() ? 0 : config::RendererType.isVulkan() ? 1 : 2;
 			if (newApi != api || forceReinit)
+			{
 				// Switch between vulkan/opengl/directx (or full reinit)
-				SwitchRenderApi();
+				RenderType newRender = config::RendererType;
+				// restore current render mode to terminate
+				config::RendererType = oldRender;
+				config::RendererType.commit();
+				TermRenderApi();
+				// set the new render mode and init
+				config::RendererType = newRender;
+				config::RendererType.commit();
+				InitRenderApi();
+			}
 			mainui_init();
 			forceReinit = false;
 		}

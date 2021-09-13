@@ -19,7 +19,7 @@
     along with reicast.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#if !defined(_MSC_VER) && !defined(TARGET_NO_THREADS)
+#if !defined(_MSC_VER)
 
 #include "stdclass.h"
 #include "oslib/oslib.h"
@@ -274,7 +274,7 @@ static int modem_write(pico_device *dev, const void *data, int len)
 			in_buffer_lock.unlock();
 			if (!pico_thread_running)
 				return 0;
-			usleep(5000);
+			PICO_IDLE();
 			in_buffer_lock.lock();
 		}
 		in_buffer.push(*p++);
@@ -1031,7 +1031,7 @@ static void *pico_thread_func(void *)
     	read_native_sockets();
     	pico_stack_tick();
     	check_dns_entries();
-    	usleep(5000);
+		PICO_IDLE();
     }
 
     for (auto it = tcp_listening_sockets.begin(); it != tcp_listening_sockets.end(); it++)

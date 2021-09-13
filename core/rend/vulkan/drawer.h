@@ -106,6 +106,7 @@ public:
 	virtual ~Drawer() = default;
 	bool Draw(const Texture *fogTexture, const Texture *paletteTexture);
 	virtual void EndRenderPass() { renderPass++; }
+	vk::CommandBuffer GetCurrentCommandBuffer() const { return currentCommandBuffer; }
 
 protected:
 	virtual size_t GetSwapChainSize() { return GetContext()->GetSwapChainSize(); }
@@ -194,13 +195,15 @@ class ScreenDrawer : public Drawer
 {
 public:
 	void Init(SamplerManager *samplerManager, ShaderManager *shaderManager, const vk::Extent2D& viewport);
+	vk::RenderPass GetRenderPass() const { return *renderPassClear; }
 	void EndRenderPass() override;
 	bool PresentFrame()
 	{
 		if (!frameRendered)
 			return false;
 		frameRendered = false;
-		GetContext()->PresentFrame(colorAttachments[GetCurrentImage()]->GetImageView(), viewport);
+		GetContext()->PresentFrame(colorAttachments[GetCurrentImage()]->GetImage(),
+				colorAttachments[GetCurrentImage()]->GetImageView(), viewport);
 		NewImage();
 
 		return true;

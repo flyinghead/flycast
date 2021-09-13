@@ -198,7 +198,7 @@ void mem_Reset(bool hard)
 
 	//Reset registers
 	sh4_area0_Reset(hard);
-	sh4_mmr_reset(hard);
+	sh4_mmr_reset(true);
 	MMU_reset();
 }
 
@@ -286,25 +286,15 @@ void WriteMemBlock_nommu_sq(u32 dst, const SQBuffer *src)
 
 //Get pointer to ram area , 0 if error
 //For debugger(gdb) - dynarec
-u8* GetMemPtr(u32 Addr,u32 size)
+u8* GetMemPtr(u32 Addr, u32 size)
 {
-	verify((((Addr>>29) &0x7)!=7));
-	switch ((Addr>>26)&0x7)
-	{
-		case 3:
-			return &mem_b[Addr & RAM_MASK];
-		
-		case 0:
-		case 1:
-		case 2:
-		case 4:
-		case 5:
-		case 6:
-		case 7:
-		default:
-//			INFO_LOG(COMMON, "unsupported area : addr=0x%X", Addr);
-			return 0;
-	}
+	if (((Addr >> 29) & 7) == 7)
+		// P4
+		return nullptr;
+	if (((Addr >> 26) & 7) == 3)
+		// Area 3
+		return &mem_b[Addr & RAM_MASK];
+	return nullptr;
 }
 
 static bool interpreterRunning = false;
@@ -336,6 +326,8 @@ void SetMemoryHandlers()
 		return;
 	}
 	interpreterRunning = false;
+#else
+	(void)interpreterRunning;
 #endif
 	if (CCN_MMUCR.AT == 1 && config::FullMMU)
 	{

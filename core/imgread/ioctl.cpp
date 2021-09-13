@@ -152,7 +152,7 @@ struct PhysicalTrack:TrackFile
 	PhysicalDrive* disc;
 	PhysicalTrack(PhysicalDrive* disc) { this->disc=disc; }
 
-	void Read(u32 FAD,u8* dst,SectorFormat* sector_type,u8* subcode,SubcodeFormat* subcode_type) override;
+	bool Read(u32 FAD,u8* dst,SectorFormat* sector_type,u8* subcode,SubcodeFormat* subcode_type) override;
 };
 
 struct PhysicalDrive:Disc
@@ -257,7 +257,7 @@ struct PhysicalDrive:Disc
 	}
 };
 
-void PhysicalTrack::Read(u32 FAD,u8* dst,SectorFormat* sector_type,u8* subcode,SubcodeFormat* subcode_type)
+bool PhysicalTrack::Read(u32 FAD,u8* dst,SectorFormat* sector_type,u8* subcode,SubcodeFormat* subcode_type)
 {
 	u32 fmt=0;
 	static u8 temp[2500];
@@ -272,7 +272,7 @@ void PhysicalTrack::Read(u32 FAD,u8* dst,SectorFormat* sector_type,u8* subcode,S
 			{
 				//sector read success, just user data
 				*sector_type=SECFMT_2048_MODE2_FORM1; //m2f1 seems more common ? is there some way to detect it properly here?
-				return;
+				return true;
 			}
 		}
 		else
@@ -283,7 +283,7 @@ void PhysicalTrack::Read(u32 FAD,u8* dst,SectorFormat* sector_type,u8* subcode,S
 
 			*sector_type=SECFMT_2352;
 			*subcode_type=SUBFMT_96;
-			return;
+			return true;
 		}
 	}
 
@@ -310,7 +310,7 @@ void PhysicalTrack::Read(u32 FAD,u8* dst,SectorFormat* sector_type,u8* subcode,S
 		{
 			//sector read success
 			*sector_type=SECFMT_2352;
-			return;
+			return true;
 		}
 	}
 
@@ -322,11 +322,12 @@ void PhysicalTrack::Read(u32 FAD,u8* dst,SectorFormat* sector_type,u8* subcode,S
 		{
 			//sector read success, just user data
 			*sector_type=SECFMT_2048_MODE2_FORM1; //m2f1 seems more common ? is there some way to detect it properly here?
-			return;
+			return true;
 		}
 	}
 
 	printf("IOCTL: Totally failed to read sector @LBA %d\n", LBA);
+	return false;
 }
 
 

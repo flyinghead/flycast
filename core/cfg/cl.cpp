@@ -81,9 +81,9 @@ int setconfig(char** arg,int cl)
 		const char* constval = value;
 		if (constval==0)
 			constval="";
-		INFO_LOG(COMMON, "Virtual cfg %s:%s=%s", sect, key, value);
+		INFO_LOG(COMMON, "Virtual cfg %s:%s=%s", sect, key, constval);
 
-		cfgSetVirtual(sect,key,value);
+		cfgSetVirtual(sect, key, constval);
 		rv++;
 
 		if (cl>=3 && stricmp(arg[2],",")==0)

@@ -168,7 +168,7 @@ public:
 		OITDrawer::Init(samplerManager, screenPipelineManager.get(), oitBuffers);
 
 		MakeFramebuffers(viewport);
-		GetContext()->PresentFrame(vk::ImageView(), viewport);
+		GetContext()->PresentFrame(vk::Image(), vk::ImageView(), viewport);
 	}
 	void Term()
 	{
@@ -194,11 +194,14 @@ public:
 		if (!frameRendered)
 			return false;
 		frameRendered = false;
-		GetContext()->PresentFrame(finalColorAttachments[GetCurrentImage()]->GetImageView(), viewport.extent);
+		GetContext()->PresentFrame(finalColorAttachments[GetCurrentImage()]->GetImage(),
+				finalColorAttachments[GetCurrentImage()]->GetImageView(), viewport.extent);
 		NewImage();
 
 		return true;
 	}
+	vk::RenderPass GetRenderPass() const { return screenPipelineManager->GetRenderPass(false, true); }
+	vk::CommandBuffer GetCurrentCommandBuffer() const { return currentCommandBuffer; }
 
 protected:
 	vk::Framebuffer GetFinalFramebuffer() const override { return *framebuffers[GetCurrentImage()]; }

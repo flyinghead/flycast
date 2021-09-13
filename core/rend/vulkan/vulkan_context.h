@@ -22,6 +22,25 @@
 
 #ifdef USE_VULKAN
 #include <stdexcept>
+
+class InvalidVulkanContext : public std::runtime_error {
+public:
+	InvalidVulkanContext() : std::runtime_error("Invalid Vulkan context") {}
+};
+
+#define VENDOR_AMD 0x1022
+// AMD GPU products use the ATI vendor Id
+#define VENDOR_ATI 0x1002
+#define VENDOR_ARM 0x13B5
+#define VENDOR_INTEL 0x8086
+#define VENDOR_NVIDIA 0x10DE
+#define VENDOR_QUALCOMM 0x5143
+#define VENDOR_MESA 0x10005
+
+#ifdef LIBRETRO
+#include "vk_context_lr.h"
+#else
+
 #include "vulkan.h"
 #include "vmallocator.h"
 #include "quad.h"
@@ -32,15 +51,7 @@ extern int screen_width, screen_height;
 
 struct ImDrawData;
 void ImGui_ImplVulkan_RenderDrawData(ImDrawData *draw_data);
-
-#define VENDOR_AMD 0x1022
-// AMD GPU products use the ATI vendor Id
-#define VENDOR_ATI 0x1002
-#define VENDOR_ARM 0x13B5
-#define VENDOR_INTEL 0x8086
-#define VENDOR_NVIDIA 0x10DE
-#define VENDOR_QUALCOMM 0x5143
-#define VENDOR_MESA 0x10005
+static vk::Format findDepthFormat(vk::PhysicalDevice physicalDevice);
 
 class VulkanContext
 {
@@ -60,7 +71,7 @@ public:
 	void BeginRenderPass();
 	void EndFrame(vk::CommandBuffer cmdBuffer = vk::CommandBuffer());
 	void Present() noexcept;
-	void PresentFrame(vk::ImageView imageView, const vk::Extent2D& extent) noexcept;
+	void PresentFrame(vk::Image image, vk::ImageView imageView, const vk::Extent2D& extent) noexcept;
 	void PresentLastFrame();
 
 	vk::PhysicalDevice GetPhysicalDevice() const { return physicalDevice; }
@@ -74,7 +85,6 @@ public:
 	int GetCurrentImageIndex() const { return currentImage; }
 	void WaitIdle() const;
 	bool IsRendering() const { return rendering; }
-	vk::Queue GetGraphicsQueue() const { return graphicsQueue; }
 	vk::DeviceSize GetUniformBufferAlignment() const { return uniformBufferAlignment; }
 	vk::DeviceSize GetStorageBufferAlignment() const { return storageBufferAlignment; }
 	bool IsFormatSupported(TextureType textureType)
@@ -98,6 +108,7 @@ public:
 	static VulkanContext *Instance() { return contextInstance; }
 	bool SupportsFragmentShaderStoresAndAtomics() const { return fragmentStoresAndAtomics; }
 	bool SupportsSamplerAnisotropy() const { return samplerAnisotropy; }
+	float GetMaxSamplerAnisotropy() const { return samplerAnisotropy ? maxSamplerAnisotropy : 1.f; }
 	bool SupportsDedicatedAllocation() const { return dedicatedAllocationSupported; }
 	const VMAllocator& GetAllocator() const { return allocator; }
 	bool IsUnifiedMemory() const { return unifiedMemory; }
@@ -106,6 +117,10 @@ public:
 	u32 GetVendorID() const { return vendorID; }
 	vk::CommandBuffer PrepareOverlay(bool vmu, bool crosshair);
 	void DrawOverlay(float scaling, bool vmu, bool crosshair);
+	void SubmitCommandBuffers(u32 bufferCount, vk::CommandBuffer *buffers, vk::Fence fence) {
+		graphicsQueue.submit(
+				vk::SubmitInfo(0, nullptr, nullptr, bufferCount, buffers), fence);
+	}
 
 #ifdef VK_DEBUG
 	void setObjectName(u64 object, VkDebugReportObjectTypeEXT objectType, const std::string& name)
@@ -123,7 +138,6 @@ private:
 	void CreateSwapChain();
 	bool InitDevice();
 	bool InitInstance(const char** extensions, uint32_t extensions_count);
-	vk::Format FindDepthFormat();
 	void InitImgui();
 	void DoSwapAutomation();
 	void DrawFrame(vk::ImageView imageView, const vk::Extent2D& extent);
@@ -159,6 +173,7 @@ private:
 	bool optimalTilingSupported4444 = false;
 	bool fragmentStoresAndAtomics = false;
 	bool samplerAnisotropy = false;
+	float maxSamplerAnisotropy = 0.f;
 	bool dedicatedAllocationSupported = false;
 	bool unifiedMemory = false;
 	u32 vendorID = 0;
@@ -211,10 +226,44 @@ private:
 #endif
 	static VulkanContext *contextInstance;
 };
+#endif // !LIBRETRO
 
-class InvalidVulkanContext : public std::runtime_error {
-public:
-	InvalidVulkanContext() : std::runtime_error("Invalid Vulkan context") {}
-};
+static inline vk::Format findDepthFormat(vk::PhysicalDevice physicalDevice)
+{
+	const vk::Format depthFormats[] = { vk::Format::eD32SfloatS8Uint, vk::Format::eD24UnormS8Uint, vk::Format::eD16UnormS8Uint };
+	vk::ImageTiling tiling;
+	vk::Format depthFormat = vk::Format::eUndefined;
+	for (size_t i = 0; i < ARRAY_SIZE(depthFormats); i++)
+	{
+		vk::FormatProperties formatProperties = physicalDevice.getFormatProperties(depthFormats[i]);
+
+		if (formatProperties.optimalTilingFeatures & vk::FormatFeatureFlagBits::eDepthStencilAttachment)
+		{
+			tiling = vk::ImageTiling::eOptimal;
+			depthFormat = depthFormats[i];
+			break;
+		}
+	}
+	if (depthFormat == vk::Format::eUndefined)
+	{
+		// Try to find a linear format
+		for (size_t i = 0; i < ARRAY_SIZE(depthFormats); i++)
+		{
+			vk::FormatProperties formatProperties = physicalDevice.getFormatProperties(depthFormats[i]);
+
+			if (formatProperties.linearTilingFeatures & vk::FormatFeatureFlagBits::eDepthStencilAttachment)
+			{
+				tiling = vk::ImageTiling::eLinear;
+				depthFormat = depthFormats[i];
+				break;
+			}
+		}
+		if (depthFormat == vk::Format::eUndefined)
+			die("No supported depth/stencil format found");
+	}
+	NOTICE_LOG(RENDERER, "Using depth format %s tiling %s", vk::to_string(depthFormat).c_str(), vk::to_string(tiling).c_str());
+
+	return depthFormat;
+}
 
 #endif // USE_VULKAN

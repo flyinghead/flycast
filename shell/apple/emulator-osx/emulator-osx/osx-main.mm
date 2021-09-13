@@ -118,7 +118,7 @@ extern bool rend_framePending();
 
 bool emu_frame_pending()
 {
-	return rend_framePending() || gui_is_open();
+	return rend_framePending() || !dc_is_running() || gui_is_open();
 }
 
 bool emu_renderer_enabled()
@@ -261,7 +261,7 @@ int emu_reicast_init()
 		argv[paramCount++] = strdup(arg);
 	}
 	
-	int rc = reicast_init(paramCount, argv);
+	int rc = flycast_init(paramCount, argv);
 	
 	for (unsigned long i = 0; i < paramCount; i++)
 		free(argv[i]);
