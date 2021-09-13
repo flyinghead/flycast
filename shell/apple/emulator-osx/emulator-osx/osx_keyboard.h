@@ -7,6 +7,20 @@
 //
 #pragma once
 #include "input/keyboard_device.h"
+#include "oslib/oslib.h"
+
+// Rumbling Taptic Engine by Private MultitouchSupport.framework
+extern "C" {
+typedef void *MTDeviceRef;
+bool MTDeviceIsAvailable(void);
+MTDeviceRef MTDeviceCreateDefault(void);
+OSStatus MTDeviceGetDeviceID(MTDeviceRef, uint64_t*) __attribute__ ((weak_import));
+CFTypeRef MTActuatorCreateFromDeviceID(UInt64 deviceID);
+IOReturn MTActuatorOpen(CFTypeRef actuatorRef);
+IOReturn MTActuatorClose(CFTypeRef actuatorRef);
+IOReturn MTActuatorActuate(CFTypeRef actuatorRef, SInt32 actuationID, UInt32 unknown1, Float32 unknown2, Float32 unknown3);
+bool MTActuatorIsOpen(CFTypeRef actuatorRef);
+}
 
 class OSXKeyboard : public KeyboardDeviceTemplate<UInt16>
 {
@@ -164,6 +178,45 @@ public:
 		kb_map[kVK_JIS_Yen] = 0x89;     	// I18n keyboard 3
 	}
 	
+	void rumble(float power, float inclination, u32 duration_ms) override
+	{
+		NOTICE_LOG(INPUT, "rumble %.1f inc %f duration %d", power, inclination, duration_ms);
+
+		uint64_t deviceID;
+		if ( MTDeviceIsAvailable() && MTDeviceGetDeviceID(MTDeviceCreateDefault(), &deviceID) == 0 )
+		{
+			if ( power == 0 && vib_timer )
+			{
+				dispatch_source_cancel(vib_timer);
+				return;
+			}
+
+			__block CFTypeRef actuatorRef = MTActuatorCreateFromDeviceID(deviceID);
+			if (!actuatorRef) return;
+			MTActuatorOpen(actuatorRef);
+
+			__block double vib_stop_time = os_GetSeconds() + duration_ms / 1000.0;
+			vib_timer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_LOW, 0));
+			// Vibration interval: Power 1.0 = 10ms, Power 0.1 = 100ms
+			dispatch_source_set_timer(vib_timer, DISPATCH_TIME_NOW, 10 + (1.0-power)*100 * NSEC_PER_MSEC, 0);
+
+			dispatch_source_set_event_handler(vib_timer, ^{
+				if ( vib_stop_time - os_GetSeconds() < 0 )
+				{
+					dispatch_source_cancel(vib_timer);
+					return;
+				}
+				MTActuatorActuate(actuatorRef, 6, 0, 0.0, 0.0);
+			});
+
+			dispatch_source_set_cancel_handler(vib_timer, ^{
+				MTActuatorClose(actuatorRef);
+			});
+
+			dispatch_resume(vib_timer);
+		}
+	}
+
 protected:
 	u8 convert_keycode(UInt16 keycode) override
 	{
@@ -172,5 +225,6 @@ protected:
 	
 private:
 	std::map<UInt16, u8> kb_map;
+	dispatch_source_t vib_timer;
 };
 
