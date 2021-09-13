@@ -37,6 +37,7 @@
 #include "cfg/option.h"
 #include "ios_gamepad.h"
 #include "ios_keyboard.h"
+#include "ios_mouse.h"
 
 //@import AltKit;
 #import "AltKit/AltKit-Swift.h"
@@ -47,6 +48,7 @@ static __unsafe_unretained FlycastViewController *flycastViewController;
 
 std::map<GCController *, std::shared_ptr<IOSGamepad>> IOSGamepad::controllers;
 std::map<GCKeyboard *, std::shared_ptr<IOSKeyboard>> IOSKeyboard::keyboards;
+std::map<GCMouse *, std::shared_ptr<IOSMouse>> IOSMouse::mice;
 
 void common_linux_setup();
 
@@ -60,6 +62,9 @@ void common_linux_setup();
 @property (nonatomic, strong) id gamePadDisconnectObserver;
 @property (nonatomic, strong) id keyboardConnectObserver;
 @property (nonatomic, strong) id keyboardDisconnectObserver;
+@property (nonatomic, strong) id mouseConnectObserver;
+@property (nonatomic, strong) id mouseDisconnectObserver;
+
 
 @property (nonatomic, strong) nw_path_monitor_t monitor;
 @property (nonatomic, strong) dispatch_queue_t monitorQueue;
@@ -142,6 +147,20 @@ extern int screen_dpi;
             usingBlock:^(NSNotification *note) {
             GCKeyboard *keyboard = note.object;
             IOSKeyboard::removeKeyboard(keyboard);
+        }];
+        
+        self.mouseConnectObserver = [[NSNotificationCenter defaultCenter]
+            addObserverForName:GCMouseDidConnectNotification object:nil queue:[NSOperationQueue mainQueue]
+            usingBlock:^(NSNotification *note) {
+            GCMouse *mouse = note.object;
+            IOSMouse::addMouse(moue);
+        }];
+        
+        self.mouseDisconnectObserver = [[NSNotificationCenter defaultCenter]
+            addObserverForName:GCMouseDidDisconnectNotification object:nil queue:[NSOperationQueue mainQueue]
+            usingBlock:^(NSNotification *note) {
+            GCMouse *mouse = note.object;
+            IOSMouse::removeMouse(mouse);
         }];
     }
 
