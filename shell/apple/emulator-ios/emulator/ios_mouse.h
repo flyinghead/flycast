@@ -1,5 +1,5 @@
 //
-//  ios.h
+//  ios_mouse.h
 //  flycast
 //
 //  Created by Cameron Bates on 9/6/21.
@@ -17,8 +17,8 @@ public:
         set_maple_port(port);
         loadMapping();
 
-        [gcMouse.mouseInput setMouseMovedHandler:^(GCMouseInput * _Nonnull mouse, float deltaX, float deltaY) {
-            setRelPos(deltaX, deltaY);
+        [gcMouse.mouseInput setMouseMovedHandler:^(GCMouseInput * _Nonnull mouse, float deltaX, float deltaY) { 
+            setRelPos(deltaX, deltaY * (config::MouseInvert ? -1 : 1));
         }];
 
         [gcMouse.mouseInput.leftButton setValueChangedHandler:

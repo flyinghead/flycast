@@ -506,7 +506,9 @@ extern Option<bool> OmxAudioHdmi;
 // Maple
 
 extern Option<int> MouseSensitivity;
+#ifdef __APPLE__
 extern Option<bool> MouseInvert;
+#endif
 extern Option<int> VirtualGamepadVibration;
 extern std::array<Option<MapleDeviceType>, 4> MapleMainDevices;
 extern std::array<std::array<Option<MapleDeviceType>, 2>, 4> MapleExpansionDevices;
