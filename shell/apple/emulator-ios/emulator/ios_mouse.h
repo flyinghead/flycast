@@ -19,7 +19,7 @@ public:
         loadMapping();
 
         [gcMouse.mouseInput setMouseMovedHandler:^(GCMouseInput * _Nonnull mouse, float deltaX, float deltaY) {
-            setRelPos(roundf(deltaX), roundf(deltaY));
+            setRelPos(deltaX, deltaY);
         }];
 
         [gcMouse.mouseInput.leftButton setValueChangedHandler:

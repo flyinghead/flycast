@@ -1449,7 +1449,7 @@ void SetMousePosition(int x, int y, int width, int height, u32 mouseId)
 	mo_y_prev[mouseId] = y;
 }
 
-void SetRelativeMousePosition(int xrel, int yrel, u32 mouseId)
+void SetRelativeMousePosition(float xrel, float yrel, u32 mouseId)
 {
 	if (mouseId >= MAPLE_PORTS)
 		return;
@@ -1461,8 +1461,8 @@ void SetRelativeMousePosition(int xrel, int yrel, u32 mouseId)
 		xrel = -xrel;
 		std::swap(width, height);
 	}
-	float dx = (float)xrel * config::MouseSensitivity / 100.f;
-	float dy = (float)yrel * config::MouseSensitivity / 100.f;
+	float dx = xrel * config::MouseSensitivity / 100.f;
+	float dy = yrel * config::MouseSensitivity / 100.f;
 	mo_x_delta[mouseId] += dx;
 	mo_y_delta[mouseId] += dy;
 	int minX = -width / 32;
