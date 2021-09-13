@@ -526,3 +526,13 @@ protected:
 private:
 	u32 buttonState = 0;
 };
+
+class IOSTouchMouse : public SystemMouse
+{
+public:
+    IOSTouchMouse() : SystemMouse("iOS")
+    {
+        _unique_id = "ios_mouse";
+        loadMapping();
+    }
+};

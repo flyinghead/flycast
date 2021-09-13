@@ -24,13 +24,13 @@
 #include "ios_gamepad.h"
 
 @implementation EmulatorView {
-	std::shared_ptr<IOSMouse> mouse;
+	std::shared_ptr<IOSTouchMouse> mouse;
 }
 
 - (void)didMoveToSuperview
 {
 	[super didMoveToSuperview];
-	mouse = std::make_shared<IOSMouse>();
+	mouse = std::make_shared<IOSTouchMouse>();
 	GamepadDevice::Register(mouse);
 }
 

@@ -153,7 +153,7 @@ extern int screen_dpi;
             addObserverForName:GCMouseDidConnectNotification object:nil queue:[NSOperationQueue mainQueue]
             usingBlock:^(NSNotification *note) {
             GCMouse *mouse = note.object;
-            IOSMouse::addMouse(moue);
+            IOSMouse::addMouse(mouse);
         }];
         
         self.mouseDisconnectObserver = [[NSNotificationCenter defaultCenter]
