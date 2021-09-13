@@ -704,7 +704,7 @@ void dc_resize_renderer()
 void dc_resume()
 {
 	SetMemoryHandlers();
-	settings.aica.NoBatch = config::ForceWindowsCE || config::DSPEnabled;
+	settings.aica.NoBatch = config::ForceWindowsCE || config::DSPEnabled || config::GGPOEnable;
 	dc_resize_renderer();
 
 	EventManager::event(Event::Resume);
