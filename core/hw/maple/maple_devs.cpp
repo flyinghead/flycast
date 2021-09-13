@@ -1428,10 +1428,6 @@ void SetMousePosition(int x, int y, int width, int height, u32 mouseId)
 		return;
 	mo_width = width;
 	mo_height = height;
-    
-    if (config::MouseInvert) {
-        y = y * -1;
-    }
 
 	if (config::Rotate90)
 	{
@@ -1466,7 +1462,7 @@ void SetRelativeMousePosition(float xrel, float yrel, u32 mouseId)
 		std::swap(width, height);
 	}
 	float dx = xrel * config::MouseSensitivity / 100.f;
-	float dy = (yrel * config::MouseSensitivity / 100.f) * (config::MouseInvert ? -1 : 1);
+	float dy = yrel * config::MouseSensitivity / 100.f;
 	mo_x_delta[mouseId] += dx;
 	mo_y_delta[mouseId] += dy;
 	int minX = -width / 32;
