@@ -8,7 +8,6 @@
 #import <GameController/GameController.h>
 
 #include "input/gamepad_device.h"
-#include "rend/gui.h"
 
 class API_AVAILABLE(ios(14.0)) IOSMouse : public SystemMouse
 {
@@ -41,12 +40,12 @@ public:
             setWheel(yValue);
         }];
     }
-    
+
     void set_maple_port(int port) override
     {
-        GamepadDevice::set_maple_port(port);
+        SystemMouse::set_maple_port(port);
     }
-    
+
     static void addMouse(GCMouse *mouse)
     {
         if (mice.count(mouse) > 0)
@@ -54,15 +53,15 @@ public:
         
         int port = std::min((int)mice.size(), 3);
         mice[mouse] = std::make_shared<IOSMouse>(port, mouse);
-        GamepadDevice::Register(mice[mouse]);
+        SystemMouse::Register(mice[mouse]);
     }
-    
+
     static void removeMouse(GCMouse *mouse)
     {
         auto it = mice.find(mouse);
         if (it == mice.end())
             return;
-        GamepadDevice::Unregister(it->second);
+        SystemMouse::Unregister(it->second);
         mice.erase(it);
     }
 
