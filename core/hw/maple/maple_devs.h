@@ -177,7 +177,7 @@ extern s32 mo_x_prev[4];
 extern s32 mo_y_prev[4];
 
 void SetMousePosition(int x, int y, int width, int height, u32 mouseId = 0);
-void SetRelativeMousePosition(int xrel, int yrel, u32 mouseId = 0);
+void SetRelativeMousePosition(float xrel, float yrel, u32 mouseId = 0);
 
 #define SWAP32(a) ((((a) & 0xff) << 24)  | (((a) & 0xff00) << 8) | (((a) >> 8) & 0xff00) | (((a) >> 24) & 0xff))
 

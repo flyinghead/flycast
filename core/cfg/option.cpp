@@ -131,6 +131,9 @@ Option<bool> OmxAudioHdmi("audio_hdmi", true, "omx");
 // Maple
 
 Option<int> MouseSensitivity("MouseSensitivity", 100, "input");
+#ifdef __APPLE__
+Option<bool> MouseInvert("MouseInvert", false, "input");
+#endif
 Option<int> VirtualGamepadVibration("VirtualGamepadVibration", 20, "input");
 
 std::array<Option<MapleDeviceType>, 4> MapleMainDevices {
