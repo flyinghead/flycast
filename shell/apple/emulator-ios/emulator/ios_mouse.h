@@ -36,8 +36,8 @@ public:
             setButton(Mouse::MIDDLE_BUTTON, pressed);
         }];
         
-        [gcMouse.mouseInput.scroll setValueChangedHandler:^(GCControllerDirectionPad * _Nonnull dpad, float xValue, float yValue) {
-            setWheel(yValue);
+        [gcMouse.mouseInput.scroll.yAxis setValueChangedHandler:^(GCControllerAxisInput * _Nonnull axis, float value) {
+            setWheel(value);
         }];
     }
 
