@@ -1252,9 +1252,6 @@ static void gui_display_settings()
 
 	    	ImGui::Spacing();
 	    	OptionSlider("Mouse sensitivity", config::MouseSensitivity, 1, 500);
-#ifdef __APPLE__
-            OptionCheckbox("Invert mouse", config::MouseInvert, "If your vertical mouse input feels wrong try enabling. Only applies to external iOS mice.");
-#endif
 #ifdef _WIN32
 	    	OptionCheckbox("Use Raw Input", config::UseRawInput, "Supports multiple pointing devices (mice, light guns) and keyboards");
 #endif

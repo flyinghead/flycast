@@ -18,7 +18,7 @@ public:
         loadMapping();
 
         [gcMouse.mouseInput setMouseMovedHandler:^(GCMouseInput * _Nonnull mouse, float deltaX, float deltaY) { 
-            setRelPos(deltaX, deltaY * (config::MouseInvert ? -1 : 1));
+            setRelPos(deltaX, -deltaY);
         }];
 
         [gcMouse.mouseInput.leftButton setValueChangedHandler:
