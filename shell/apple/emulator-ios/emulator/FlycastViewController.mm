@@ -64,6 +64,8 @@ void common_linux_setup();
 @property (nonatomic, strong) id keyboardDisconnectObserver;
 @property (nonatomic, strong) id mouseConnectObserver;
 @property (nonatomic, strong) id mouseDisconnectObserver;
+@property EventManager::Callback updateCursorLock;
+@property (nonatomic) bool lockedPointer;
 
 
 @property (nonatomic, strong) nw_path_monitor_t monitor;
@@ -162,6 +164,12 @@ extern int screen_dpi;
             GCMouse *mouse = note.object;
             IOSMouse::removeMouse(mouse);
         }];
+
+//        This isn't working :(
+//        EventManager::listen(Event::Start, self.updateCursorLock);
+//        EventManager::listen(Event::Resume, self.updateCursorLock);
+//        EventManager::listen(Event::Pause, self.updateCursorLock);
+//        EventManager::listen(Event::Terminate, self.updateCursorLock);
     }
 
     self.gamePadConnectObserver = [[NSNotificationCenter defaultCenter] addObserverForName:GCControllerDidConnectNotification object:nil queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification *note) {
@@ -218,6 +226,32 @@ extern int screen_dpi;
 - (BOOL)prefersStatusBarHidden
 {
 	return YES;
+}
+
+- (BOOL)prefersPointerLocked
+{
+    return self.lockedPointer;
+}
+
+- (void)updateCursorLock:(Event) event
+{
+    INFO_LOG(INPUT, "UPDATE CURSOR LOCK??? %d", event);
+    if (@available(iOS 14.0, *)) {
+        switch (event) {
+            case Event::Resume:
+            case Event::Start:
+            case Event::LoadState:
+                [self setLockedPointer:YES];
+                break;
+            case Event::Pause:
+            case Event::Terminate:
+            default:
+                [self setLockedPointer:NO];
+                break;
+                
+            [self setNeedsUpdateOfPrefersPointerLocked];
+        }
+    }
 }
 
 - (UIStatusBarStyle)preferredStatusBarStyle
