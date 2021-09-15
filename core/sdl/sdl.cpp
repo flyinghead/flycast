@@ -158,11 +158,13 @@ void input_sdl_init()
 			SDL_SetHint(SDL_HINT_XINPUT_ENABLED, "0");
 		}
 #endif
-		if (SDL_InitSubSystem(SDL_INIT_JOYSTICK) < 0)
-			die("SDL: error initializing Joystick subsystem");
-
-		std::string db = get_readonly_data_path("gamecontrollerdb.txt");
+		std::string db = (std::string) nowide::getenv("SDL_GAMECONTROLLERCONFIG_FILE");
 		int rv = SDL_GameControllerAddMappingsFromFile(db.c_str());
+		if (rv < 0)
+		{
+			db = get_readonly_data_path("gamecontrollerdb.txt");
+			rv = SDL_GameControllerAddMappingsFromFile(db.c_str());
+		}		
 		if (rv < 0)
 		{
 			db = get_readonly_config_path("gamecontrollerdb.txt");
@@ -170,6 +172,10 @@ void input_sdl_init()
 		}
 		if (rv > 0)
 			DEBUG_LOG(INPUT ,"%d mappings loaded from %s", rv, db.c_str());
+
+		if (SDL_InitSubSystem(SDL_INIT_JOYSTICK) < 0)
+			die("SDL: error initializing Joystick subsystem");
+			
 	}
 	if (SDL_WasInit(SDL_INIT_HAPTIC) == 0)
 		SDL_InitSubSystem(SDL_INIT_HAPTIC);
