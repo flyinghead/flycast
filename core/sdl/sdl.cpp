@@ -161,8 +161,11 @@ void input_sdl_init()
 		std::string db = get_readonly_data_path("gamecontrollerdb.txt");
 		int rv = SDL_GameControllerAddMappingsFromFile(db.c_str());
 #ifdef _ENABLE_EMUELEC
-		db = (std::string) nowide::getenv("SDL_GAMECONTROLLERCONFIG_FILE");
-		rv = SDL_GameControllerAddMappingsFromFile(db.c_str());
+		if (rv < 0)
+		{
+			db = (std::string) nowide::getenv("SDL_GAMECONTROLLERCONFIG_FILE");
+			rv = SDL_GameControllerAddMappingsFromFile(db.c_str());
+		}
 #endif
 		if (rv < 0)
 		{

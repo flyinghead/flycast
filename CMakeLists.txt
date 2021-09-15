@@ -32,6 +32,14 @@ endif()
 
 project(flycast)
 
+# emuelec
+option(ENABLE_EMUELEC "Set to 1 to enable EmuELEC changes" ${ENABLE_EMUELEC})
+
+# emuelec
+if("${ENABLE_EMUELEC}" STREQUAL "1")
+  add_definitions(-D_ENABLEEMUELEC)
+endif()
+
 if(ENABLE_CTEST)
     include(CTest)
 endif()
