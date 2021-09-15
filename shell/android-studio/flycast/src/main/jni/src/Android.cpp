@@ -524,11 +524,20 @@ extern "C" JNIEXPORT void JNICALL Java_com_reicast_emulator_periph_InputDeviceMa
     GamepadDevice::Register(mouse);
 }
 
-extern "C" JNIEXPORT void JNICALL Java_com_reicast_emulator_periph_InputDeviceManager_joystickAdded(JNIEnv *env, jobject obj, jint id, jstring name, jint maple_port, jstring junique_id)
+extern "C" JNIEXPORT void JNICALL Java_com_reicast_emulator_periph_InputDeviceManager_joystickAdded(JNIEnv *env, jobject obj, jint id, jstring name,
+		jint maple_port, jstring junique_id, jintArray fullAxes, jintArray halfAxes)
 {
     const char* joyname = env->GetStringUTFChars(name,0);
     const char* unique_id = env->GetStringUTFChars(junique_id, 0);
-    std::shared_ptr<AndroidGamepadDevice> gamepad = std::make_shared<AndroidGamepadDevice>(maple_port, id, joyname, unique_id);
+
+    jsize size = jvm_attacher.getEnv()->GetArrayLength(fullAxes);
+    std::vector<int> full(size);
+    jvm_attacher.getEnv()->GetIntArrayRegion(fullAxes, 0, size, (jint*)&full[0]);
+    size = jvm_attacher.getEnv()->GetArrayLength(halfAxes);
+    std::vector<int> half(size);
+    jvm_attacher.getEnv()->GetIntArrayRegion(halfAxes, 0, size, (jint*)&half[0]);
+
+    std::shared_ptr<AndroidGamepadDevice> gamepad = std::make_shared<AndroidGamepadDevice>(maple_port, id, joyname, unique_id, full, half);
     AndroidGamepadDevice::AddAndroidGamepad(gamepad);
     env->ReleaseStringUTFChars(name, joyname);
     env->ReleaseStringUTFChars(name, unique_id);
@@ -562,13 +571,8 @@ static std::map<std::pair<jint, jint>, jint> previous_axis_values;
 extern "C" JNIEXPORT jboolean JNICALL Java_com_reicast_emulator_periph_InputDeviceManager_joystickAxisEvent(JNIEnv *env, jobject obj, jint id, jint key, jint value)
 {
     std::shared_ptr<AndroidGamepadDevice> device = AndroidGamepadDevice::GetAndroidGamepad(id);
-    // Only handle Left Stick on an Xbox 360 controller if there was actual
-    // motion on the stick, otherwise event can be handled as a DPAD event
-    if (device != NULL && previous_axis_values[std::make_pair(id, key)] != value)
-    {
-    	previous_axis_values[std::make_pair(id, key)] = value;
+    if (device != nullptr)
     	return device->gamepad_axis_input(key, value);
-    }
     else
     	return false;
 }

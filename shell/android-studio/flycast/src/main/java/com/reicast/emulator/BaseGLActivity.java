@@ -227,12 +227,39 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
     @Override
     public boolean onGenericMotionEvent(MotionEvent event) {
         if ((event.getSource() & InputDevice.SOURCE_CLASS_JOYSTICK) == InputDevice.SOURCE_CLASS_JOYSTICK && event.getAction() == MotionEvent.ACTION_MOVE) {
-            boolean rc = processJoystickInput(event, MotionEvent.AXIS_X);
-            rc |= processJoystickInput(event, MotionEvent.AXIS_Y);
-            rc |= processJoystickInput(event, MotionEvent.AXIS_LTRIGGER);
-            rc |= processJoystickInput(event, MotionEvent.AXIS_RTRIGGER);
-            rc |= processJoystickInput(event, MotionEvent.AXIS_RX);
-            rc |= processJoystickInput(event, MotionEvent.AXIS_RY);
+            List<InputDevice.MotionRange> axes = event.getDevice().getMotionRanges();
+            boolean rc = false;
+            for (InputDevice.MotionRange range : axes)
+                if (range.getAxis() == MotionEvent.AXIS_HAT_X) {
+                    float v = event.getAxisValue(MotionEvent.AXIS_HAT_X);
+                    if (v == -1.0) {
+                        rc |= InputDeviceManager.getInstance().joystickButtonEvent(event.getDeviceId(), KeyEvent.KEYCODE_DPAD_LEFT, true);
+                        InputDeviceManager.getInstance().joystickButtonEvent(event.getDeviceId(), KeyEvent.KEYCODE_DPAD_RIGHT, false);
+                    }
+                    else if (v == 1.0) {
+                        InputDeviceManager.getInstance().joystickButtonEvent(event.getDeviceId(), KeyEvent.KEYCODE_DPAD_LEFT, false);
+                        rc |= InputDeviceManager.getInstance().joystickButtonEvent(event.getDeviceId(), KeyEvent.KEYCODE_DPAD_RIGHT, true);
+                    } else {
+                        InputDeviceManager.getInstance().joystickButtonEvent(event.getDeviceId(), KeyEvent.KEYCODE_DPAD_LEFT, false);
+                        InputDeviceManager.getInstance().joystickButtonEvent(event.getDeviceId(), KeyEvent.KEYCODE_DPAD_RIGHT, false);
+                    }
+                }
+                else if (range.getAxis() == MotionEvent.AXIS_HAT_Y) {
+                    float v = event.getAxisValue(MotionEvent.AXIS_HAT_Y);
+                    if (v == -1.0) {
+                        rc |= InputDeviceManager.getInstance().joystickButtonEvent(event.getDeviceId(), KeyEvent.KEYCODE_DPAD_UP, true);
+                        InputDeviceManager.getInstance().joystickButtonEvent(event.getDeviceId(), KeyEvent.KEYCODE_DPAD_DOWN, false);
+                    }
+                    else if (v == 1.0) {
+                        InputDeviceManager.getInstance().joystickButtonEvent(event.getDeviceId(), KeyEvent.KEYCODE_DPAD_UP, false);
+                        rc |= InputDeviceManager.getInstance().joystickButtonEvent(event.getDeviceId(), KeyEvent.KEYCODE_DPAD_DOWN, true);
+                    } else {
+                        InputDeviceManager.getInstance().joystickButtonEvent(event.getDeviceId(), KeyEvent.KEYCODE_DPAD_UP, false);
+                        InputDeviceManager.getInstance().joystickButtonEvent(event.getDeviceId(), KeyEvent.KEYCODE_DPAD_DOWN, false);
+                    }
+                }
+                else
+                    rc |= processJoystickInput(event, range.getAxis());
             if (rc)
                 return true;
         }

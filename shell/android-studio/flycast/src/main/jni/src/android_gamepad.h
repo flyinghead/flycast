@@ -19,6 +19,7 @@
 #pragma once
 
 #include "input/gamepad_device.h"
+#include <algorithm>
 
 static jobject input_device_manager;
 static jmethodID input_device_manager_rumble;
@@ -84,8 +85,8 @@ public:
 		set_axis(DC_AXIS_Y, AXIS_Y, false);
 		set_axis(DC_AXIS_LT, AXIS_LTRIGGER, false);
 		set_axis(DC_AXIS_RT, AXIS_RTRIGGER, false);
-		set_axis(DC_AXIS_X2, AXIS_RX, false);
-		set_axis(DC_AXIS_Y2, AXIS_RY, false);
+		set_axis(DC_AXIS_X2, AXIS_Z, false);
+		set_axis(DC_AXIS_Y2, AXIS_RZ, false);
 
 		dirty = false;
 	}
@@ -111,8 +112,10 @@ public:
 class AndroidGamepadDevice : public GamepadDevice
 {
 public:
-	AndroidGamepadDevice(int maple_port, int id, const char *name, const char *unique_id)
-		: GamepadDevice(maple_port, "Android", id != VIRTUAL_GAMEPAD_ID), android_id(id)
+	AndroidGamepadDevice(int maple_port, int id, const char *name, const char *unique_id,
+			const std::vector<int>& fullAxes, const std::vector<int>& halfAxes)
+		: GamepadDevice(maple_port, "Android", id != VIRTUAL_GAMEPAD_ID), android_id(id),
+		  fullAxes(fullAxes), halfAxes(halfAxes)
 	{
 		_name = name;
 		_unique_id = unique_id;
@@ -143,8 +146,34 @@ public:
 	virtual std::shared_ptr<InputMapping> getDefaultMapping() override {
 		if (_name == "SHIELD Remote")
 			return std::make_shared<ShieldRemoteInputMapping>();
+		std::shared_ptr<InputMapping> mapping = std::make_shared<DefaultInputMapping>();
+		auto ltAxis = std::find(halfAxes.begin(), halfAxes.end(), AXIS_LTRIGGER);
+		auto rtAxis = std::find(halfAxes.begin(), halfAxes.end(), AXIS_RTRIGGER);
+		if (ltAxis != halfAxes.end() && rtAxis != halfAxes.end())
+		{
+			mapping->set_axis(DC_AXIS_LT, *ltAxis, false);
+			mapping->set_axis(DC_AXIS_RT, *rtAxis, false);
+		}
 		else
-			return std::make_shared<DefaultInputMapping>();
+		{
+			ltAxis = std::find(halfAxes.begin(), halfAxes.end(), AXIS_BRAKE);
+			rtAxis = std::find(halfAxes.begin(), halfAxes.end(), AXIS_GAS);
+			if (ltAxis != halfAxes.end() && rtAxis != halfAxes.end())
+			{
+				mapping->set_axis(DC_AXIS_LT, *ltAxis, false);
+				mapping->set_axis(DC_AXIS_RT, *rtAxis, false);
+			}
+			else
+			{
+				// Xbox controller?
+				mapping->set_axis(DC_AXIS_LT, AXIS_Z, false);
+				mapping->set_axis(DC_AXIS_RT, AXIS_RZ, false);
+				mapping->set_axis(DC_AXIS_X2, AXIS_RX, false);
+				mapping->set_axis(DC_AXIS_Y2, AXIS_RY, false);
+				
+			}
+		}
+		return mapping;
 	}
 
 	virtual const char *get_button_name(u32 code) override
@@ -304,7 +333,8 @@ public:
 protected:
 	virtual void load_axis_min_max(u32 axis) override
 	{
-		if (axis == AXIS_LTRIGGER || axis == AXIS_RTRIGGER)
+		auto axisIt = std::find(halfAxes.begin(), halfAxes.end(), axis);
+		if (axisIt != halfAxes.end())
 		{
 			axis_min_values[axis] = 0;
 			axis_ranges[axis] = 32767;
@@ -320,6 +350,8 @@ private:
 	int android_id;
 	static std::map<int, std::shared_ptr<AndroidGamepadDevice>> android_gamepads;
 	u32 previous_kcode = 0xffffffff;
+	std::vector<int> fullAxes;
+	std::vector<int> halfAxes;
 };
 
 std::map<int, std::shared_ptr<AndroidGamepadDevice>> AndroidGamepadDevice::android_gamepads;

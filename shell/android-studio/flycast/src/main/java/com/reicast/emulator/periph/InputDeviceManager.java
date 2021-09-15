@@ -7,6 +7,9 @@ import android.view.InputDevice;
 
 import com.reicast.emulator.Emulator;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public final class InputDeviceManager implements InputManager.InputDeviceListener {
     public static final int VIRTUAL_GAMEPAD_ID = 0x12345678;
 
@@ -24,7 +27,7 @@ public final class InputDeviceManager implements InputManager.InputDeviceListene
     {
         maple_port = 0;
         if (applicationContext.getPackageManager().hasSystemFeature("android.hardware.touchscreen"))
-            joystickAdded(VIRTUAL_GAMEPAD_ID, "Virtual Gamepad", maple_port == 3 ? 3 : maple_port++, "virtual_gamepad_uid");
+            joystickAdded(VIRTUAL_GAMEPAD_ID, "Virtual Gamepad", maple_port == 3 ? 3 : maple_port++, "virtual_gamepad_uid", new int[0], new int[0]);
         int[] ids = InputDevice.getDeviceIds();
         for (int id : ids)
             onInputDeviceAdded(id);
@@ -49,7 +52,17 @@ public final class InputDeviceManager implements InputManager.InputDeviceListene
             if ((device.getSources() & InputDevice.SOURCE_CLASS_JOYSTICK) == InputDevice.SOURCE_CLASS_JOYSTICK) {
                 port = this.maple_port == 3 ? 3 : this.maple_port++;
             }
-            joystickAdded(i, device.getName(), port, device.getDescriptor());
+            List<InputDevice.MotionRange> axes = device.getMotionRanges();
+            List<Integer> fullAxes = new ArrayList<>();
+            List<Integer> halfAxes = new ArrayList<>();
+            for (InputDevice.MotionRange range : axes) {
+                if (range.getMin() == 0)
+                    halfAxes.add(range.getAxis());
+                else
+                    fullAxes.add(range.getAxis());
+            }
+            joystickAdded(i, device.getName(), port, device.getDescriptor(),
+                    fullAxes.stream().mapToInt(n->n).toArray(), halfAxes.stream().mapToInt(n->n).toArray());
         }
     }
 
@@ -97,6 +110,6 @@ public final class InputDeviceManager implements InputManager.InputDeviceListene
     public native boolean joystickAxisEvent(int id, int button, int value);
     public native void mouseEvent(int xpos, int ypos, int buttons);
     public native void mouseScrollEvent(int scrollValue);
-    private native void joystickAdded(int id, String name, int maple_port, String uniqueId);
+    private native void joystickAdded(int id, String name, int maple_port, String uniqueId, int fullAxes[], int halfAxes[]);
     private native void joystickRemoved(int id);
 }
