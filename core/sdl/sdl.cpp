@@ -160,7 +160,6 @@ void input_sdl_init()
 #endif
 		std::string db = get_readonly_data_path("gamecontrollerdb.txt");
 		int rv = SDL_GameControllerAddMappingsFromFile(db.c_str());
-
 		if (rv < 0)
 		{
 			db = get_readonly_config_path("gamecontrollerdb.txt");

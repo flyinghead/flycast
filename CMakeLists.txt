@@ -238,7 +238,6 @@ if(NOT LIBRETRO)
 	elseif(NOT ANDROID AND NOT IOS)
 	    find_package(SDL2)
 	endif()
-
 	if(SDL2_FOUND)
 	    target_compile_definitions(${PROJECT_NAME} PRIVATE USE_SDL USE_SDL_AUDIO)
 	    target_sources(${PROJECT_NAME} PRIVATE core/sdl/sdl.cpp core/sdl/sdl.h core/sdl/sdl_gamepad.h core/sdl/sdl_keyboard.h)
