@@ -148,6 +148,8 @@ bool D3DRenderer::Init()
 		WARN_LOG(RENDERER, "DirectX9 renderer initialization failed");
 		Term();
 	}
+	frameRendered = false;
+	frameRenderedOnce = false;
 
 	return success;
 }
@@ -176,6 +178,8 @@ void D3DRenderer::preReset()
 	framebufferSurface.reset();
 	framebufferTexture.reset();
 	resetting = true;
+	frameRendered = false;
+	frameRenderedOnce = false;
 }
 
 void D3DRenderer::postReset()
@@ -195,7 +199,6 @@ void D3DRenderer::postReset()
 	verifyWin(device->CreateTexture(128, 2, 1, D3DUSAGE_DYNAMIC, D3DFMT_A8, D3DPOOL_DEFAULT, &fogTexture.get(), 0));
 	fog_needs_update = true;
 	palette_updated = true;
-	frameRendered = false;
 }
 
 void D3DRenderer::Term()
@@ -1126,6 +1129,7 @@ bool D3DRenderer::Render()
 		renderFramebuffer();
 		DrawOSD(false);
 		frameRendered = true;
+		frameRenderedOnce = true;
 	}
 
 	return !is_rtt;
@@ -1143,6 +1147,8 @@ void D3DRenderer::Resize(int w, int h)
 	verifyWin(framebufferTexture->GetSurfaceLevel(0, &framebufferSurface.get()));
 	depthSurface.reset();
 	verifyWin(device->CreateDepthStencilSurface(width, height, D3DFMT_D24S8, D3DMULTISAMPLE_NONE, 0, TRUE, &depthSurface.get(), nullptr));
+	frameRendered = false;
+	frameRenderedOnce = false;
 }
 
 void D3DRenderer::renderFramebuffer()
@@ -1219,7 +1225,7 @@ void D3DRenderer::renderFramebuffer()
 
 bool D3DRenderer::RenderLastFrame()
 {
-	if (resetting || !frameRendered)
+	if (!frameRenderedOnce)
 		return false;
 	backbuffer.reset();
 	verifyWin(device->GetRenderTarget(0, &backbuffer.get()));
