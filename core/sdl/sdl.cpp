@@ -158,18 +158,20 @@ void input_sdl_init()
 			SDL_SetHint(SDL_HINT_XINPUT_ENABLED, "0");
 		}
 #endif
-		std::string db = (std::string) nowide::getenv("SDL_GAMECONTROLLERCONFIG_FILE");
+		std::string db = get_readonly_data_path("gamecontrollerdb.txt");
 		int rv = SDL_GameControllerAddMappingsFromFile(db.c_str());
-		if (rv < 0)
-		{
-			db = get_readonly_data_path("gamecontrollerdb.txt");
-			rv = SDL_GameControllerAddMappingsFromFile(db.c_str());
-		}		
 		if (rv < 0)
 		{
 			db = get_readonly_config_path("gamecontrollerdb.txt");
 			rv = SDL_GameControllerAddMappingsFromFile(db.c_str());
 		}
+#ifdef ENABLE_EMUELEC
+		if (rv < 0)
+		{
+			db = (std::string) nowide::getenv("SDL_GAMECONTROLLERCONFIG_FILE");
+			rv = SDL_GameControllerAddMappingsFromFile(db.c_str());
+		}		
+#endif
 		if (rv > 0)
 			DEBUG_LOG(INPUT ,"%d mappings loaded from %s", rv, db.c_str());
 
