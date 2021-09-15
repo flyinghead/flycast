@@ -160,7 +160,7 @@ void input_sdl_init()
 #endif
 		std::string db = get_readonly_data_path("gamecontrollerdb.txt");
 		int rv = SDL_GameControllerAddMappingsFromFile(db.c_str());
-#ifdef ENABLE_EMUELEC
+#ifdef _ENABLE_EMUELEC
 		db = (std::string) nowide::getenv("SDL_GAMECONTROLLERCONFIG_FILE");
 		rv = SDL_GameControllerAddMappingsFromFile(db.c_str());
 #endif
