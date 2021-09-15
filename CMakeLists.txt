@@ -17,7 +17,6 @@ option(USE_HOST_LIBZIP "Use host libzip" ON)
 option(USE_OPENMP "Use OpenMP if available" ON)
 option(USE_VULKAN "Build with Vulkan support" ON)
 option(LIBRETRO "Build libretro core" OFF)
-option(ENABLE_EMUELEC "Set to 1 to enable EmuELEC changes" ${ENABLE_EMUELEC})
 
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/shell/cmake")
 
@@ -239,12 +238,7 @@ if(NOT LIBRETRO)
 	elseif(NOT ANDROID AND NOT IOS)
 	    find_package(SDL2)
 	endif()
-  
-  # emuelec
-  if("${ENABLE_EMUELEC}" STREQUAL "1")
-    target_compile_definitions(${PROJECT_NAME} PRIVATE _ENABLEEMUELEC)
-  endif()
-  
+
 	if(SDL2_FOUND)
 	    target_compile_definitions(${PROJECT_NAME} PRIVATE USE_SDL USE_SDL_AUDIO)
 	    target_sources(${PROJECT_NAME} PRIVATE core/sdl/sdl.cpp core/sdl/sdl.h core/sdl/sdl_gamepad.h core/sdl/sdl_keyboard.h)
