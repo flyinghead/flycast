@@ -40,7 +40,7 @@ typedef int int32;
 
 class GGPOException : public std::runtime_error {
 public:
-	GGPOException(const std::string& what, GGPOErrorCode ggpoError)
+	GGPOException(const char *what, GGPOErrorCode ggpoError)
 		: std::runtime_error(what), ggpoError(ggpoError) {}
 
 	GGPOErrorCode ggpoError;
