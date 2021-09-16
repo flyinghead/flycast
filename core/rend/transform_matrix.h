@@ -210,7 +210,7 @@ private:
 			if (SCALER_CTL.vscalefactor > 0x400)
 			{
 				// Interlace mode A (single framebuffer)
-				if (SCALER_CTL.interlace == 0 && !scissor)
+				if (SCALER_CTL.interlace == 0)
 					scale_y *= roundf((float)SCALER_CTL.vscalefactor / 0x400);
 				else if (SCALER_CTL.interlace == 1 && scissor)
 					// Interlace mode B (alternating framebuffers)
