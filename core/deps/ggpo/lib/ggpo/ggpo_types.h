@@ -35,6 +35,17 @@ typedef char int8;
 typedef short int16;
 typedef int int32;
 
+#include "ggponet.h"
+#include <stdexcept>
+
+class GGPOException : public std::runtime_error {
+public:
+	GGPOException(const std::string& what, GGPOErrorCode ggpoError)
+		: std::runtime_error(what), ggpoError(ggpoError) {}
+
+	GGPOErrorCode ggpoError;
+};
+
 /*
  * Additional headers
  */
@@ -47,8 +58,6 @@ typedef int int32;
 #endif
 
 #include "log.h"
-
-
 
 /*
  * Macros

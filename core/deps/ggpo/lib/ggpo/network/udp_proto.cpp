@@ -478,7 +478,6 @@ UdpProtocol::OnSyncRequest(UdpMsg *msg, int len)
       return false;
    }
    // FIXME
-   //bool requeueSyncRequest = _last_send_time && _last_send_time + 20 < Platform::GetCurrentTimeMS();
    if (_state.sync.roundtrips_remaining == NUM_SYNC_PACKETS && msg->hdr.sequence_number == 0) {
       Log("Sync request 0 received... Re-queueing sync packet.\n");
       SendSyncRequest();

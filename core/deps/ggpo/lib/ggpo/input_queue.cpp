@@ -218,7 +218,8 @@ InputQueue::AddDelayedInputToQueue(GameInput &input, int frame_number)
 {
    Log("adding delayed input frame number %d to queue.\n", frame_number);
 
-   ASSERT(input.size == _prediction.size);
+   if (input.size != _prediction.size)
+	   throw GGPOException("Input size differs from peer", GGPO_ERRORCODE_INPUT_SIZE_DIFF);
 
    ASSERT(_last_added_frame == GameInput::NullFrame || frame_number == _last_added_frame + 1);
 
