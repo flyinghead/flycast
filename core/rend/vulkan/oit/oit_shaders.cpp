@@ -69,6 +69,7 @@ layout (std140, set = 0, binding = 1) uniform FragmentShaderUniforms
 	float cp_AlphaTestValue;
 	float sp_FOG_DENSITY;
 	float shade_scale_factor;
+	uint pixelBufferSize;
 } uniformBuffer;
 
 layout(set = 3, binding = 2, r32ui) uniform coherent restrict uimage2D abufferPointerImg;
@@ -87,7 +88,10 @@ layout (set = 3, binding = 0, std430) coherent restrict buffer PixelBuffer_ {
 uint getNextPixelIndex()
 {
 	uint index = atomicAdd(PixelCounter.buffer_index, 1);
-	if (index >= PixelBuffer.pixels.length())
+	// we should be able to simply use PixelBuffer.pixels.length()
+	// but a regression in the adreno 600 driver (v502) forces us
+	// to use a uniform.
+	if (index >= uniformBuffer.pixelBufferSize)
 		// Buffer overflow
 		discard;
 	
