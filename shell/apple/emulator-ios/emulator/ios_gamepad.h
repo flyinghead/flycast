@@ -97,7 +97,7 @@ public:
 				set_button(DC_BTN_X, IOS_BTN_A);
 				set_button(DC_BTN_Y, IOS_BTN_B);
 				set_axis(DC_BTN_Z, IOS_AXIS_R2, true);
-				set_button(DC_DPAD2_LEFT, KEYCODE_BUTTON_L1);	// L1 (Naomi button 7)
+				set_button(DC_DPAD2_LEFT, IOS_BTN_L1);			// L1 (Naomi button 7)
 				set_axis(DC_DPAD2_RIGHT, IOS_AXIS_L2, true);	// L2 (Naomi button 8)
 			}
 		}
@@ -108,9 +108,9 @@ public:
 			set_button(DC_BTN_X, IOS_BTN_X);
 			set_button(DC_BTN_Y, IOS_BTN_Y);
 			set_axis(DC_AXIS_RT, IOS_AXIS_R2, true);
-			set_button(DC_BTN_C, KEYCODE_BUTTON_R1);
+			set_button(DC_BTN_C, IOS_BTN_R1);
 			set_axis(DC_AXIS_LT, IOS_AXIS_L2, true);
-			set_button(DC_BTN_Z, KEYCODE_BUTTON_L1);
+			set_button(DC_BTN_Z, IOS_BTN_L1);
 		}
 		set_button(DC_DPAD_UP, IOS_BTN_UP);
 		set_button(DC_DPAD_DOWN, IOS_BTN_DOWN);
