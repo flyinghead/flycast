@@ -206,8 +206,7 @@ Game Games[] =
             { NULL, 0, 0 },
         },
 		nullptr,
-        // ATACK, HOLD, THROW, MOVE
-        // same as ggram2
+		&giant_gram_inputs,
     },
     // Kick '4' Cash (Export)
     {
@@ -959,7 +958,7 @@ Game Games[] =
             { NULL, 0, 0 },
         },
         NULL,
-        &capsnk_inputs
+        &capcom_4btn_inputs
     },
     // Capcom Vs. SNK Millennium Fight 2000 (Rev A)
     {
@@ -984,7 +983,7 @@ Game Games[] =
             { NULL, 0, 0 },
         },
         NULL,
-        &capsnk_inputs
+        &capcom_4btn_inputs
     },
     // Capcom Vs. SNK Millennium Fight 2000
     {
@@ -1009,7 +1008,7 @@ Game Games[] =
             { NULL, 0, 0 },
         },
         NULL,
-        &capsnk_inputs
+        &capcom_4btn_inputs
     },
     // Crackin' DJ
     {
@@ -1810,8 +1809,9 @@ Game Games[] =
             { "mpr-21830.ic10", 0x5000000, 0x0800000 },
             { "mpr-21831.ic11", 0x5800000, 0x0800000 },
             { NULL, 0, 0 },
-        }
-        // same as gram2000
+        },
+		nullptr,
+        &giant_gram_inputs,
     },
     // Guilty Gear X (JPN)
     {
@@ -1988,7 +1988,7 @@ Game Games[] =
             { NULL, 0, 0 },
         },
         NULL,
-		&shot1234_inputs,
+		&hmgeo_input,
         hmgeo_eeprom_dump
     },
     // House of the Dead 2
@@ -2596,7 +2596,7 @@ Game Games[] =
             { NULL, 0, 0 },
         },
 		nullptr,
-		&pjustic_inputs,
+		&capcom_4btn_inputs,
     },
     // Power Stone
     {
@@ -2623,7 +2623,7 @@ Game Games[] =
             { NULL, 0, 0 },
         },
 		nullptr,
-		&shot123_inputs,
+		&pstone_inputs,
     },
     // Power Stone 2
     {
@@ -2650,7 +2650,7 @@ Game Games[] =
             { NULL, 0, 0 },
         },
 		nullptr,
-		&shot123_inputs,
+		&pstone2_inputs,
         pstone2_eeprom_dump
     },
     // Power Stone 2 (bootleg)
@@ -2678,7 +2678,7 @@ Game Games[] =
             { NULL, 0, 0 },
         },
 		nullptr,
-		&shot123_inputs,
+		&pstone2_inputs,
         pstone2_eeprom_dump
     },
     // Puyo Puyo Da! (Japan)
@@ -3588,7 +3588,9 @@ Game Games[] =
             { "trf1ma14.6m", 0xe000000, 0x1000000 },
             { "trf1ma15.6l", 0xf000000, 0x1000000 },
             { NULL, 0, 0 },
-        }
+        },
+		nullptr,
+		&toukon4_input,
     },
     // Toy Fighter
     {
@@ -4360,8 +4362,9 @@ Game Games[] =
             { "ic13.bin",      0x14000000, 0x4000000 },
             { "317-5133-jpn.ic3", 0, 0x800,  0x0000000, Key }, // pic_readout
             { NULL, 0, 0 },
-        }
-        // BUTTON A/B/C/D/E
+        },
+        nullptr,
+		&meltyb_input,
     },
     // Melty Blood Actress Again (Japan) (Clone)
     {
@@ -4383,7 +4386,9 @@ Game Games[] =
             { "ic13.bin",      0x14000000, 0x4000000 },
             { "317-5133-jpn.ic3", 0, 0x800,  0x0000000, Key }, // pic_readout
             { NULL, 0, 0 },
-        }
+        },
+        nullptr,
+		&meltyb_input,
     },
     // Mushiking The King Of Beetles - Mushiking II / III / III+ (Ver. 1.001) (World)
     {
@@ -4704,7 +4709,7 @@ Game Games[] =
             { NULL, 0, 0 },
         },
         "gdl-0004",
-		// SHOT1/2/na/4/5
+		&capcom_4btn_inputs,
     },
     // Capcom Vs. SNK 2 Mark Of The Millennium 2001 (GDL-0008)
     // ver 010804
@@ -4724,7 +4729,7 @@ Game Games[] =
             { NULL, 0, 0 },
         },
         "gdl-0008",
-        &cvs2_inputs,
+        &capcom_6btn_inputs,
     },
     // Capcom Vs. SNK 2 Millionaire Fighting 2001 (Rev A) (GDL-0007A)
     // ver 010705
@@ -4743,7 +4748,7 @@ Game Games[] =
             { NULL, 0, 0 },
         },
         "gdl-0007a",
-        &cvs2_inputs,
+        &capcom_6btn_inputs,
     },
     // Dragon Treasure (Rev B) (GDS-0030B)
     {
@@ -4850,7 +4855,7 @@ Game Games[] =
             { NULL, 0, 0 },
         },
         "gdl-0011",
-		// KICK, SLASH, HIGH SLASH, PUNCH, DUST ATTACK
+		&guilty_gear_input,
     },
     // Guilty Gear XX Accent Core (Japan) (GDL-0041)
     {
@@ -4868,7 +4873,7 @@ Game Games[] =
             { NULL, 0, 0 },
         },
         "gdl-0041",
-		// same KICK, SLASH, HIGH SLASH, PUNCH, DUST ATTACK
+		&guilty_gear_input,
     },
     // Guilty Gear XX #Reload (Japan, Rev A) (GDL-0019A)
     {
@@ -4886,7 +4891,7 @@ Game Games[] =
             { NULL, 0, 0 },
         },
         "gdl-0019a",
-		// same KICK, SLASH, HIGH SLASH, PUNCH, DUST ATTACK
+		&guilty_gear_input,
     },
     // Guilty Gear XX #Reload (Japan) (GDL-0019)
     {
@@ -4904,6 +4909,7 @@ Game Games[] =
             { NULL, 0, 0 },
         },
         "gdl-0019",
+		&guilty_gear_input,
     },
     // Guilty Gear XX Slash (Japan, Rev A) (GDL-0033A)
     {
@@ -4921,7 +4927,7 @@ Game Games[] =
             { NULL, 0, 0 },
         },
         "gdl-0033a",
-		// same KICK, SLASH, HIGH SLASH, PUNCH, DUST ATTACK
+		&guilty_gear_input,
     },
     // Mobile Suit Gundam: Federation Vs. Zeon (GDL-0001)
     {
@@ -5120,7 +5126,7 @@ Game Games[] =
             { NULL, 0, 0 },
         },
         "gdl-0039a",
-		// BUTTON A/B/C/D/E
+		&meltyb_input,
     },
     // Melty Blood Act Cadenza Ver. A (Japan) (GDL-0028C)
     {
@@ -5138,6 +5144,7 @@ Game Games[] =
             { NULL, 0, 0 },
         },
         "gdl-0028c",
+		&meltyb_input,
     },
     // Melty Blood Act Cadenza (Japan) (GDL-0028)
     {
@@ -5155,6 +5162,7 @@ Game Games[] =
             { NULL, 0, 0 },
         },
         "gdl-0028",
+		&meltyb_input,
     },
     // Melty Blood Act Cadenza Version B (Japan) (GDL-0039)
     {
@@ -5172,6 +5180,7 @@ Game Games[] =
             { NULL, 0, 0 },
         },
         "gdl-0039",
+		&meltyb_input,
     },
     // Moeru Casinyo (Japan) (GDL-0013)
     {
@@ -5427,6 +5436,7 @@ Game Games[] =
             { NULL, 0, 0 },
         },
         "gdl-0038",
+		&senkosp_input,
     },
     // Street Fighter Zero 3 Upper (Japan) (GDL-0002)
     {
@@ -5445,7 +5455,7 @@ Game Games[] =
             { NULL, 0, 0 },
         },
         "gdl-0002",
-        &sfz3ugd_inputs
+        &capcom_6btn_inputs,
     },
     // Shakatto Tambourine (Rev B) (GDS-0002B)
     {
@@ -6063,7 +6073,9 @@ Game Games[] =
             { "ax1906m01.ic16", 0x6000000, 0x1000000 },
             { "ax1907m01.ic17", 0x7000000, 0x1000000 },
             { NULL, 0, 0 },
-        }
+        },
+		nullptr,
+		&fotns_input,
     },
     // Faster Than Speed
     {
@@ -6111,7 +6123,9 @@ Game Games[] =
             { "ax1207m01.ic16", 0x6000000, 0x1000000 },
             { "ax1208m01.ic17", 0x7000000, 0x1000000 },
             { NULL, 0, 0 },
-        }
+        },
+        nullptr,
+		&guilty_gear_aw_input,
     },
     // Guilty Gear X ver. 1.5
     {
@@ -6158,7 +6172,7 @@ Game Games[] =
             { NULL, 0, 0 },
         },
         NULL,
-        &kofnw_inputs
+        &kofnw_input,
     },
     // The King of Fighters Neowave (Japan)
     {
@@ -6183,7 +6197,7 @@ Game Games[] =
             { NULL, 0, 0 },
         },
         NULL,
-        &kofnw_inputs
+        &kofnw_input,
     },
     // The King of Fighters XI
     {
@@ -6208,7 +6222,7 @@ Game Games[] =
             { NULL, 0, 0 },
         },
         NULL,
-        &kofxi_inputs
+        &kofxi_input,
     },
     // Knights of Valour - The Seven Spirits
     {
@@ -6274,7 +6288,9 @@ Game Games[] =
             { "ax3003m01.mrom3", 0x6000000, 0x2000000 },
             { "ax3004m01.mrom4", 0xa000000, 0x2000000 },
             { NULL, 0, 0 },
-        }
+        },
+		nullptr,
+		&mslug6_input,
     },
     // NeoGeo Battle Coliseum
     {
@@ -6368,7 +6384,9 @@ Game Games[] =
             { "ax1806m01.ic16", 0x6000000, 0x1000000 },
             { "ax1807m01.ic17", 0x7000000, 0x1000000 },
             { NULL, 0, 0 },
-        }
+        },
+		nullptr,
+		&rumblef_input,
     },
     // The Rumble Fish (prototype)
     {
@@ -6399,7 +6417,9 @@ Game Games[] =
             { "ic26", 0x07000000, 0x00800000 },
             // IC27 populated, empty
             { NULL, 0, 0 },
-        }
+        },
+		nullptr,
+		&rumblef_input,
     },
     // The Rumble Fish 2
     {
@@ -6420,7 +6440,9 @@ Game Games[] =
             { "ax3404m01.mrom4", 0xa000000, 0x2000000 },
             { "ax3405m01.mrom5", 0xc000000, 0x2000000 },
             { NULL, 0, 0 },
-        }
+        },
+		nullptr,
+		&rumblef_input,
     },
     // The Rumble Fish 2 (prototype)
     {
@@ -6451,7 +6473,9 @@ Game Games[] =
             { "ic26", 0x07000000, 0x00800000 },
             // IC27 populated, empty
             { NULL, 0, 0 },
-        }
+        },
+		nullptr,
+		&rumblef_input,
     },
     // Net Select: Salaryman Kintaro
     {

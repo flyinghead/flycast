@@ -37,8 +37,8 @@ public:
 		set_button(DC_DPAD_LEFT, 80);
 		set_button(DC_DPAD_RIGHT, 79);
 		set_button(DC_BTN_START, 40);			// Return
-		set_button(EMU_BTN_TRIGGER_LEFT, 9);	// F
-		set_button(EMU_BTN_TRIGGER_RIGHT, 25);	// V
+		set_button(DC_AXIS_LT, 9);				// F
+		set_button(DC_AXIS_RT, 25);				// V
 		set_button(EMU_BTN_MENU, 43);			// TAB
 		set_button(EMU_BTN_FFORWARD, 44);		// Space
 

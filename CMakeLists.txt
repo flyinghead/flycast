@@ -762,8 +762,6 @@ if(NOT LIBRETRO)
 	        core/linux-dist/evdev.cpp
 	        core/linux-dist/evdev.h
 	        core/linux-dist/icon.h
-	        core/linux-dist/joystick.cpp
-	        core/linux-dist/joystick.h
 	        core/linux-dist/x11.cpp
 	        core/linux-dist/x11.h
 	        core/linux-dist/x11_keyboard.h)

@@ -35,16 +35,6 @@
 	#include "evdev.h"
 #endif
 
-#if defined(USE_JOYSTICK)
-    #include "cfg/cfg.h"
-	#include "joystick.h"
-#endif
-
-#if defined(USE_JOYSTICK)
-	/* legacy joystick input */
-	static int joystick_fd = -1; // Joystick file descriptor
-#endif
-
 #ifdef USE_BREAKPAD
 #include "client/linux/handler/exception_handler.h"
 #endif
@@ -53,21 +43,6 @@ void os_SetupInput()
 {
 #if defined(USE_EVDEV)
 	input_evdev_init();
-#endif
-
-#if defined(USE_JOYSTICK)
-	int joystick_device_id = cfgLoadInt("input", "joystick_device_id", JOYSTICK_DEFAULT_DEVICE_ID);
-	if (joystick_device_id < 0) {
-		INFO_LOG(INPUT, "Legacy Joystick input disabled by config.");
-	}
-	else
-	{
-		int joystick_device_length = snprintf(NULL, 0, JOYSTICK_DEVICE_STRING, joystick_device_id);
-		char* joystick_device = (char*)malloc(joystick_device_length + 1);
-		sprintf(joystick_device, JOYSTICK_DEVICE_STRING, joystick_device_id);
-		joystick_fd = input_joystick_init(joystick_device);
-		free(joystick_device);
-	}
 #endif
 
 #if defined(SUPPORT_X11)
@@ -81,10 +56,6 @@ void os_SetupInput()
 
 void UpdateInputState()
 {
-	#if defined(USE_JOYSTICK)
-		input_joystick_handle(joystick_fd, 0);
-	#endif
-
 	#if defined(USE_EVDEV)
 		input_evdev_handle();
 	#endif

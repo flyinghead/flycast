@@ -566,6 +566,13 @@ static void gui_display_commands()
 	ImGui::End();
 }
 
+inline static void header(const char *title)
+{
+	ImGui::PushStyleVar(ImGuiStyleVar_ButtonTextAlign, ImVec2(0.f, 0.5f)); // Left
+	ImGui::ButtonEx(title, ImVec2(-1, 0), ImGuiButtonFlags_Disabled);
+	ImGui::PopStyleVar();
+}
+
 const char *maple_device_types[] = { "None", "Sega Controller", "Light Gun", "Keyboard", "Mouse", "Twin Stick", "Ascii Stick" };
 const char *maple_expansion_device_types[] = { "None", "Sega VMU", "Purupuru", "Microphone" };
 
@@ -630,46 +637,100 @@ static const char *maple_expansion_device_name(MapleDeviceType type)
 }
 
 const char *maple_ports[] = { "None", "A", "B", "C", "D", "All" };
-const DreamcastKey button_keys[] = {
-		DC_BTN_START, DC_BTN_A, DC_BTN_B, DC_BTN_X, DC_BTN_Y, DC_DPAD_UP, DC_DPAD_DOWN, DC_DPAD_LEFT, DC_DPAD_RIGHT,
-		EMU_BTN_MENU, EMU_BTN_ESCAPE, EMU_BTN_FFORWARD, EMU_BTN_TRIGGER_LEFT, EMU_BTN_TRIGGER_RIGHT,
-		DC_BTN_C, DC_BTN_D, DC_BTN_Z, DC_DPAD2_UP, DC_DPAD2_DOWN, DC_DPAD2_LEFT, DC_DPAD2_RIGHT,
-		DC_BTN_RELOAD,
-		EMU_BTN_ANA_UP, EMU_BTN_ANA_DOWN, EMU_BTN_ANA_LEFT, EMU_BTN_ANA_RIGHT
+
+struct Mapping {
+	DreamcastKey key;
+	const char *name;
 };
-const char *button_names[] = {
-		"Start", "A", "B", "X", "Y", "DPad Up", "DPad Down", "DPad Left", "DPad Right",
-		"Menu", "Exit", "Fast-forward", "Left Trigger", "Right Trigger",
-		"C", "D", "Z", "Right Dpad Up", "Right DPad Down", "Right DPad Left", "Right DPad Right",
-		"Reload",
-		"Left Stick Up", "Left Stick Down", "Left Stick Left", "Left Stick Right"
+
+const Mapping dcButtons[] = {
+	{ EMU_BTN_NONE, "Directions" },
+	{ DC_DPAD_UP, "Up" },
+	{ DC_DPAD_DOWN, "Down" },
+	{ DC_DPAD_LEFT, "Left" },
+	{ DC_DPAD_RIGHT, "Right" },
+
+	{ DC_AXIS_UP, "Thumbstick Up" },
+	{ DC_AXIS_DOWN, "Thumbstick Down" },
+	{ DC_AXIS_LEFT, "Thumbstick Left" },
+	{ DC_AXIS_RIGHT, "Thumbstick Right" },
+
+	{ DC_DPAD2_UP, "DPad2 Up" },
+	{ DC_DPAD2_DOWN, "DPad2 Down" },
+	{ DC_DPAD2_LEFT, "DPad2 Left" },
+	{ DC_DPAD2_RIGHT, "DPad2 Right" },
+
+	{ EMU_BTN_NONE, "Buttons" },
+	{ DC_BTN_A, "A" },
+	{ DC_BTN_B, "B" },
+	{ DC_BTN_X, "X" },
+	{ DC_BTN_Y, "Y" },
+	{ DC_BTN_C, "C" },
+	{ DC_BTN_D, "D" },
+	{ DC_BTN_Z, "Z" },
+
+	{ EMU_BTN_NONE, "Triggers" },
+	{ DC_AXIS_LT, "Left Trigger" },
+	{ DC_AXIS_RT, "Right Trigger" },
+
+	{ EMU_BTN_NONE, "System Buttons" },
+	{ DC_BTN_START, "Start" },
+	{ DC_BTN_RELOAD, "Reload" },
+
+	{ EMU_BTN_NONE, "Emulator" },
+	{ EMU_BTN_MENU, "Menu" },
+	{ EMU_BTN_ESCAPE, "Exit" },
+	{ EMU_BTN_FFORWARD, "Fast-forward" },
+
+	{ EMU_BTN_NONE, nullptr }
 };
-const char *arcade_button_names[] = {
-		"Start", "Button 1", "Button 2", "Button 3", "Button 4", "Up", "Down", "Left", "Right",
-		"Menu", "Exit", "Fast-forward", "N/A", "N/A",
-		"Service", "Coin", "Test", "Button 5", "Button 6", "Button 7", "Button 8",
-		"Reload",
-		"N/A", "N/A", "N/A", "N/A"
+
+const Mapping arcadeButtons[] = {
+	{ EMU_BTN_NONE, "Directions" },
+	{ DC_DPAD_UP, "Up" },
+	{ DC_DPAD_DOWN, "Down" },
+	{ DC_DPAD_LEFT, "Left" },
+	{ DC_DPAD_RIGHT, "Right" },
+
+	{ DC_AXIS_UP, "Thumbstick Up" },
+	{ DC_AXIS_DOWN, "Thumbstick Down" },
+	{ DC_AXIS_LEFT, "Thumbstick Left" },
+	{ DC_AXIS_RIGHT, "Thumbstick Right" },
+
+	{ DC_AXIS2_UP, "R.Thumbstick Up" },
+	{ DC_AXIS2_DOWN, "R.Thumbstick Down" },
+	{ DC_AXIS2_LEFT, "R.Thumbstick Left" },
+	{ DC_AXIS2_RIGHT, "R.Thumbstick Right" },
+
+	{ EMU_BTN_NONE, "Buttons" },
+	{ DC_BTN_A, "Button 1" },
+	{ DC_BTN_B, "Button 2" },
+	{ DC_BTN_C, "Button 3" },
+	{ DC_BTN_X, "Button 4" },
+	{ DC_BTN_Y, "Button 5" },
+	{ DC_BTN_Z, "Button 6" },
+	{ DC_DPAD2_LEFT, "Button 7" },
+	{ DC_DPAD2_RIGHT, "Button 8" },
+//	{ DC_DPAD2_RIGHT, "Button 9" }, // TODO
+
+	{ EMU_BTN_NONE, "Triggers" },
+	{ DC_AXIS_LT, "Left Trigger" },
+	{ DC_AXIS_RT, "Right Trigger" },
+
+	{ EMU_BTN_NONE, "System Buttons" },
+	{ DC_BTN_START, "Start" },
+	{ DC_BTN_RELOAD, "Reload" },
+	{ DC_BTN_D, "Coin" },
+	{ DC_DPAD2_UP, "Service" },
+	{ DC_DPAD2_DOWN, "Test" },
+
+	{ EMU_BTN_NONE, "Emulator" },
+	{ EMU_BTN_MENU, "Menu" },
+	{ EMU_BTN_ESCAPE, "Exit" },
+	{ EMU_BTN_FFORWARD, "Fast-forward" },
+
+	{ EMU_BTN_NONE, nullptr }
 };
-const DreamcastKey axis_keys[] = {
-		DC_AXIS_X, DC_AXIS_Y, DC_AXIS_LT, DC_AXIS_RT, DC_AXIS_X2, DC_AXIS_Y2, EMU_AXIS_DPAD1_X, EMU_AXIS_DPAD1_Y,
-		EMU_AXIS_DPAD2_X, EMU_AXIS_DPAD2_Y, EMU_AXIS_BTN_START, EMU_AXIS_BTN_A, EMU_AXIS_BTN_B, EMU_AXIS_BTN_X, EMU_AXIS_BTN_Y,
-		EMU_AXIS_BTN_C, EMU_AXIS_BTN_D, EMU_AXIS_BTN_Z, EMU_AXIS_DPAD2_UP, EMU_AXIS_DPAD2_DOWN, EMU_AXIS_DPAD2_LEFT, EMU_AXIS_DPAD2_RIGHT
-};
-const char *axis_names[] = {
-		"Left Stick X", "Left Stick Y", "Left Trigger", "Right Trigger", "Right Stick X", "Right Stick Y", "DPad X", "DPad Y",
-		"Right DPad X", "Right DPad Y", "Start", "A", "B", "X", "Y",
-		"C", "D", "Z", "N/A", "N/A", "N/A", "N/A"
-};
-const char *arcade_axis_names[] = {
-		"Left Stick X", "Left Stick Y", "Left Trigger", "Right Trigger", "Right Stick X", "Right Stick Y", "DPad X", "DPad Y",
-		"Right DPad X", "Right DPad Y", "Start", "Button 1", "Button 2", "Button 3", "Button 4",
-		"Service", "Coin", "Test", "Button 5", "Button 6", "Button 7", "Button 8"
-};
-static_assert(ARRAY_SIZE(button_keys) == ARRAY_SIZE(button_names), "invalid size");
-static_assert(ARRAY_SIZE(button_keys) == ARRAY_SIZE(arcade_button_names), "invalid size");
-static_assert(ARRAY_SIZE(axis_keys) == ARRAY_SIZE(axis_names), "invalid size");
-static_assert(ARRAY_SIZE(axis_keys) == ARRAY_SIZE(arcade_axis_names), "invalid size");
 
 static MapleDeviceType maple_expansion_device_type_from_index(int idx)
 {
@@ -689,20 +750,66 @@ static MapleDeviceType maple_expansion_device_type_from_index(int idx)
 
 static std::shared_ptr<GamepadDevice> mapped_device;
 static u32 mapped_code;
+static bool analogAxis;
+static bool positiveDirection;
 static double map_start_time;
 static bool arcade_button_mode;
 static u32 gamepad_port;
 
-static void detect_input_popup(int index, bool analog)
+static void unmapControl(const std::shared_ptr<InputMapping>& mapping, u32 gamepad_port, DreamcastKey key)
+{
+	mapping->clear_button(gamepad_port, key);
+	mapping->clear_axis(gamepad_port, key);
+}
+
+static DreamcastKey getOppositeDirectionKey(DreamcastKey key)
+{
+	switch (key)
+	{
+	case DC_DPAD_UP:
+		return DC_DPAD_DOWN;
+	case DC_DPAD_DOWN:
+		return DC_DPAD_UP;
+	case DC_DPAD_LEFT:
+		return DC_DPAD_RIGHT;
+	case DC_DPAD_RIGHT:
+		return DC_DPAD_LEFT;
+	case DC_DPAD2_UP:
+		return DC_DPAD2_DOWN;
+	case DC_DPAD2_DOWN:
+		return DC_DPAD2_UP;
+	case DC_DPAD2_LEFT:
+		return DC_DPAD2_RIGHT;
+	case DC_DPAD2_RIGHT:
+		return DC_DPAD2_LEFT;
+	case DC_AXIS_UP:
+		return DC_AXIS_DOWN;
+	case DC_AXIS_DOWN:
+		return DC_AXIS_UP;
+	case DC_AXIS_LEFT:
+		return DC_AXIS_RIGHT;
+	case DC_AXIS_RIGHT:
+		return DC_AXIS_LEFT;
+	case DC_AXIS2_UP:
+		return DC_AXIS2_DOWN;
+	case DC_AXIS2_DOWN:
+		return DC_AXIS2_UP;
+	case DC_AXIS2_LEFT:
+		return DC_AXIS2_RIGHT;
+	case DC_AXIS2_RIGHT:
+		return DC_AXIS2_LEFT;
+	default:
+		return EMU_BTN_NONE;
+	}
+}
+static void detect_input_popup(const Mapping *mapping)
 {
 	ImVec2 padding = ImVec2(20 * scaling, 20 * scaling);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, padding);
 	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, padding);
-	if (ImGui::BeginPopupModal(analog ? "Map Axis" : "Map Button", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
+	if (ImGui::BeginPopupModal("Map Control", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
 	{
-		ImGui::Text("Waiting for %s '%s'...", analog ? "axis" : "button",
-				analog ? arcade_button_mode ? arcade_axis_names[index] : axis_names[index]
-						: arcade_button_mode ? arcade_button_names[index] : button_names[index]);
+		ImGui::Text("Waiting for control '%s'...", mapping->name);
 		double now = os_GetSeconds();
 		ImGui::Text("Time out in %d s", (int)(5 - (now - map_start_time)));
 		if (mapped_code != (u32)-1)
@@ -710,17 +817,21 @@ static void detect_input_popup(int index, bool analog)
 			std::shared_ptr<InputMapping> input_mapping = mapped_device->get_input_mapping();
 			if (input_mapping != NULL)
 			{
-				if (analog)
+				unmapControl(input_mapping, gamepad_port, mapping->key);
+				if (analogAxis)
 				{
-					u32 previous_mapping = input_mapping->get_axis_code(gamepad_port, axis_keys[index]);
-					bool inverted = false;
-					if (previous_mapping != (u32)-1)
-						inverted = input_mapping->get_axis_inverted(gamepad_port, previous_mapping);
-					// FIXME Allow inverted to be set
-					input_mapping->set_axis(gamepad_port, axis_keys[index], mapped_code, inverted);
+					input_mapping->set_axis(gamepad_port, mapping->key, mapped_code, positiveDirection);
+					DreamcastKey opposite = getOppositeDirectionKey(mapping->key);
+					// Map the axis opposite direction to the corresponding opposite dc button or axis,
+					// but only if the opposite direction axis isn't used and the dc button or axis isn't mapped.
+					if (opposite != EMU_BTN_NONE
+							&& input_mapping->get_axis_id(gamepad_port, mapped_code, !positiveDirection) == EMU_BTN_NONE
+							&& input_mapping->get_axis_code(gamepad_port, opposite).first == (u32)-1
+							&& input_mapping->get_button_code(gamepad_port, opposite) == (u32)-1)
+						input_mapping->set_axis(gamepad_port, opposite, mapped_code, !positiveDirection);
 				}
 				else
-					input_mapping->set_button(gamepad_port, button_keys[index], mapped_code);
+					input_mapping->set_button(gamepad_port, mapping->key, mapped_code);
 			}
 			mapped_device = NULL;
 			ImGui::CloseCurrentPopup();
@@ -735,6 +846,32 @@ static void detect_input_popup(int index, bool analog)
 	ImGui::PopStyleVar(2);
 }
 
+static void displayLabelOrCode(const char *label, u32 code, const char *suffix = "")
+{
+	if (label != nullptr)
+		ImGui::Text("%s%s", label, suffix);
+	else
+		ImGui::Text("[%d]%s", code, suffix);
+}
+
+static void displayMappedControl(const std::shared_ptr<GamepadDevice>& gamepad, DreamcastKey key)
+{
+	std::shared_ptr<InputMapping> input_mapping = gamepad->get_input_mapping();
+	u32 code = input_mapping->get_button_code(gamepad_port, key);
+	if (code != (u32)-1)
+	{
+		displayLabelOrCode(gamepad->get_button_name(code), code);
+		return;
+	}
+	std::pair<u32, bool> pair = input_mapping->get_axis_code(gamepad_port, key);
+	code = pair.first;
+	if (code != (u32)-1)
+	{
+		displayLabelOrCode(gamepad->get_axis_name(code), code, pair.second ? "+" : "-");
+		return;
+	}
+}
+
 static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamepad)
 {
 	fullScreenWindow(true);
@@ -742,7 +879,7 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 	if (ImGui::BeginPopupModal("Controller Mapping", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove))
 	{
 		const ImGuiStyle& style = ImGui::GetStyle();
-		const float width = (ImGui::GetIO().DisplaySize.x - insetLeft - insetRight - style.ItemSpacing.x) / 2 - style.WindowBorderSize - style.WindowPadding.x;
+		const float width = ImGui::GetIO().DisplaySize.x - insetLeft - insetRight - (style.WindowBorderSize + style.WindowPadding.x) * 2;
 		const float col_width = (width - style.GrabMinSize - style.ItemSpacing.x
 				- (ImGui::CalcTextSize("Map").x + style.FramePadding.x * 2.0f + style.ItemSpacing.x)
 				- (ImGui::CalcTextSize("Unmap").x + style.FramePadding.x * 2.0f + style.ItemSpacing.x)) / 2;
@@ -774,10 +911,47 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 			}
 			ImGui::PopItemWidth();
 		}
-		ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Dreamcast Controls").x
-			- ImGui::GetStyle().FramePadding.x * 3.0f - ImGui::GetStyle().ItemSpacing.x * 3.0f);
+		float comboWidth = ImGui::CalcTextSize("Dreamcast Controls").x + ImGui::GetStyle().ItemSpacing.x * 3.0f + ImGui::GetFontSize();
+		ImGui::SameLine(0, ImGui::GetContentRegionAvail().x - comboWidth - ImGui::GetStyle().ItemSpacing.x - 100 * scaling * 2);
 
 		ImGui::AlignTextToFramePadding();
+
+		if (ImGui::Button("Reset...", ImVec2(100 * scaling, 30 * scaling)))
+			ImGui::OpenPopup("Confirm Reset");
+
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(20 * scaling, 20 * scaling));
+		if (ImGui::BeginPopupModal("Confirm Reset", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
+		{
+			ImGui::Text("Are you sure you want to reset the mappings to default?");
+			static bool hitbox;
+			if (arcade_button_mode)
+			{
+				ImGui::Text("Controller Type:");
+				if (ImGui::RadioButton("Gamepad", !hitbox))
+					hitbox = false;
+				ImGui::SameLine();
+				if (ImGui::RadioButton("Arcade / Hit Box", hitbox))
+					hitbox = true;
+			}
+			ImGui::NewLine();
+			ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(20 * scaling, ImGui::GetStyle().ItemSpacing.y));
+			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(10 * scaling, 10 * scaling));
+			if (ImGui::Button("Yes"))
+			{
+				gamepad->resetMappingToDefault(arcade_button_mode, !hitbox);
+				gamepad->save_mapping(map_system);
+				ImGui::CloseCurrentPopup();
+			}
+			ImGui::SameLine();
+			if (ImGui::Button("No"))
+				ImGui::CloseCurrentPopup();
+			ImGui::PopStyleVar(2);;
+
+			ImGui::EndPopup();
+		}
+		ImGui::PopStyleVar(1);;
+
+		ImGui::SameLine();
 
 		const char* items[] = { "Dreamcast Controls", "Arcade Controls" };
 		static int item_current_map_idx = 0;
@@ -785,24 +959,28 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 
 		// Here our selection data is an index.
 
-		ImGui::PushItemWidth(ImGui::CalcTextSize("Dreamcast Controls").x + ImGui::GetStyle().ItemSpacing.x * 2.0f * 3);
-
-		ImGui::Combo("", &item_current_map_idx, items, IM_ARRAYSIZE(items));
-
+		ImGui::PushItemWidth(comboWidth);
+		// Make the combo height the same as the Done and Reset buttons
+		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(ImGui::GetStyle().FramePadding.x, (30 * scaling - ImGui::GetFontSize()) / 2));
+		ImGui::Combo("##arcadeMode", &item_current_map_idx, items, IM_ARRAYSIZE(items));
+		ImGui::PopStyleVar();
+		ImGui::PopItemWidth();
 		if (item_current_map_idx != last_item_current_map_idx)
 		{
 			gamepad->save_mapping(map_system);
 		}
-
+		const Mapping *systemMapping = dcButtons;
 		if (item_current_map_idx == 0)
 		{
 			arcade_button_mode = false;
 			map_system = DC_PLATFORM_DREAMCAST;
+			systemMapping = dcButtons;
 		}
 		else if (item_current_map_idx == 1)
 		{
 			arcade_button_mode = true;
 			map_system = DC_PLATFORM_NAOMI;
+			systemMapping = arcadeButtons;
 		}
 
 		if (item_current_map_idx != last_item_current_map_idx)
@@ -814,55 +992,55 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 		}
 
 		char key_id[32];
-		ImGui::BeginGroup();
-		ImGui::Text("  Buttons  ");
 
-		ImGui::BeginChildFrame(ImGui::GetID("buttons"), ImVec2(width, 0), ImGuiWindowFlags_None);
-		ImGui::Columns(3, "bindings", false);
-		ImGui::SetColumnWidth(0, col_width);
-		ImGui::SetColumnWidth(1, col_width);
+		ImGui::BeginChildFrame(ImGui::GetID("buttons"), ImVec2(0, 0), ImGuiWindowFlags_None);
 
 		gamepad->find_mapping(map_system);
-		for (u32 j = 0; j < ARRAY_SIZE(button_keys); j++)
+		for (; systemMapping->name != nullptr; systemMapping++)
 		{
-			sprintf(key_id, "key_id%d", j);
+			if (systemMapping->key == EMU_BTN_NONE)
+			{
+				ImGui::Columns(1, nullptr, false);
+				header(systemMapping->name);
+				ImGui::Columns(3, "bindings", false);
+				ImGui::SetColumnWidth(0, col_width);
+				ImGui::SetColumnWidth(1, col_width);
+				continue;
+			}
+			sprintf(key_id, "key_id%d", systemMapping->key);
 			ImGui::PushID(key_id);
 
-			const char *btn_name = arcade_button_mode ? arcade_button_names[j] : button_names[j];
-			const char *game_btn_name = GetCurrentGameButtonName(button_keys[j]);
-			if (game_btn_name != nullptr)
-				ImGui::Text("%s - %s", btn_name, game_btn_name);
+			const char *game_btn_name = GetCurrentGameButtonName(systemMapping->key);
+			if (game_btn_name == nullptr)
+				game_btn_name = GetCurrentGameAxisName(systemMapping->key);
+			if (game_btn_name != nullptr && game_btn_name[0] != '\0')
+				ImGui::Text("%s - %s", systemMapping->name, game_btn_name);
 			else
-				ImGui::Text("%s", btn_name);
+				ImGui::Text("%s", systemMapping->name);
 
 			ImGui::NextColumn();
-			u32 code = input_mapping->get_button_code(gamepad_port, button_keys[j]);
-			if (code != (u32)-1)
-			{
-				const char *label = gamepad->get_button_name(code);
-				if (label != nullptr)
-					ImGui::Text("%s", label);
-				else
-					ImGui::Text("[%d]", code);
-			}
+			displayMappedControl(gamepad, systemMapping->key);
+
 			ImGui::NextColumn();
 			if (ImGui::Button("Map"))
 			{
 				map_start_time = os_GetSeconds();
-				ImGui::OpenPopup("Map Button");
+				ImGui::OpenPopup("Map Control");
 				mapped_device = gamepad;
 				mapped_code = -1;
-				gamepad->detect_btn_input([](u32 code)
+				gamepad->detectButtonOrAxisInput([](u32 code, bool analog, bool positive)
 						{
 							mapped_code = code;
+							analogAxis = analog;
+							positiveDirection = positive;
 						});
 			}
-			detect_input_popup(j, false);
+			detect_input_popup(systemMapping);
 			ImGui::SameLine();
 			if (ImGui::Button("Unmap"))
 			{
 				input_mapping = gamepad->get_input_mapping();
-				input_mapping->clear_button(gamepad_port, button_keys[j], j);
+				unmapControl(input_mapping, gamepad_port, systemMapping->key);
 			}
 			ImGui::NextColumn();
 			ImGui::PopID();
@@ -872,66 +1050,6 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 	    windowDragScroll();
 
 		ImGui::EndChildFrame();
-		ImGui::EndGroup();
-
-		ImGui::SameLine();
-
-		ImGui::BeginGroup();
-		ImGui::Text("  Analog Axes  ");
-		ImGui::BeginChildFrame(ImGui::GetID("analog"), ImVec2(width, 0), ImGuiWindowFlags_None);
-		ImGui::Columns(3, "anabindings", false);
-		ImGui::SetColumnWidth(0, col_width);
-		ImGui::SetColumnWidth(1, col_width);
-
-		for (u32 j = 0; j < ARRAY_SIZE(axis_keys); j++)
-		{
-			sprintf(key_id, "axis_id%d", j);
-			ImGui::PushID(key_id);
-
-			const char *axis_name = arcade_button_mode ? arcade_axis_names[j] : axis_names[j];
-			const char *game_axis_name = GetCurrentGameAxisName(axis_keys[j]);
-			if (game_axis_name != nullptr)
-				ImGui::Text("%s - %s", axis_name, game_axis_name);
-			else
-				ImGui::Text("%s", axis_name);
-
-			ImGui::NextColumn();
-			u32 code = input_mapping->get_axis_code(gamepad_port, axis_keys[j]);
-			if (code != (u32)-1)
-			{
-				const char *label = gamepad->get_axis_name(code);
-				if (label != nullptr)
-					ImGui::Text("%s", label);
-				else
-					ImGui::Text("[%d]", code);
-			}
-			ImGui::NextColumn();
-			if (ImGui::Button("Map"))
-			{
-				map_start_time = os_GetSeconds();
-				ImGui::OpenPopup("Map Axis");
-				mapped_device = gamepad;
-				mapped_code = -1;
-				gamepad->detect_axis_input([](u32 code)
-						{
-							mapped_code = code;
-						});
-			}
-			detect_input_popup(j, true);
-			ImGui::SameLine();
-			if (ImGui::Button("Unmap"))
-			{
-				input_mapping = gamepad->get_input_mapping();
-				input_mapping->clear_axis(gamepad_port, axis_keys[j], j);
-			}
-			ImGui::NextColumn();
-			ImGui::PopID();
-		}
-		ImGui::Columns(1, nullptr, false);
-	    scrollWhenDraggingOnVoid();
-	    windowDragScroll();
-		ImGui::EndChildFrame();
-		ImGui::EndGroup();
 		ImGui::EndPopup();
 	}
 	ImGui::PopStyleVar();
@@ -1017,13 +1135,6 @@ static void contentpath_warning_popup()
             scanner.refresh();
         });
     }
-}
-
-inline static void header(const char *title)
-{
-	ImGui::PushStyleVar(ImGuiStyleVar_ButtonTextAlign, ImVec2(0.f, 0.5f)); // Left
-	ImGui::ButtonEx(title, ImVec2(-1, 0), ImGuiButtonFlags_Disabled);
-	ImGui::PopStyleVar();
 }
 
 static void gui_display_settings()

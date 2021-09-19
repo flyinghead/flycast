@@ -23,6 +23,9 @@
 namespace ggpo
 {
 
+constexpr u32 BTN_TRIGGER_LEFT	= DC_BTN_RELOAD << 1;
+constexpr u32 BTN_TRIGGER_RIGHT	= DC_BTN_RELOAD << 2;
+
 static void getLocalInput(MapleInputState inputState[4])
 {
 	for (int player = 0; player < 4; player++)
@@ -55,6 +58,7 @@ static void getLocalInput(MapleInputState inputState[4])
 #include <xxhash.h>
 #include "imgui/imgui.h"
 #include "miniupnp.h"
+#include "hw/naomi/naomi_cart.h"
 
 //#define SYNC_TEST 1
 
@@ -77,6 +81,7 @@ static time_point<steady_clock> lastFrameTime;
 static int msPerFrameAvg;
 static bool _endOfFrame;
 static MiniUPnP miniupnp;
+static int analogAxes;
 
 struct MemPages
 {
@@ -367,9 +372,27 @@ void startSession(int localPort, int localPlayerNum)
 	player.player_num = (1 - localPlayerNum) + 1;
 	result = ggpo_add_player(ggpoSession, &player, &remotePlayer);
 	synchronized = true;
+	analogAxes = 0;
 	NOTICE_LOG(NETWORK, "GGPO synctest session started");
 #else
-	u32 inputSize = sizeof(kcode[0]) + config::GGPOAnalogAxes;
+	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
+		analogAxes = config::GGPOAnalogAxes;
+	else
+	{
+		analogAxes = 0;
+		if (NaomiGameInputs != nullptr)
+		{
+			for (const auto& axis : NaomiGameInputs->axes)
+			{
+				if (axis.name == nullptr)
+					break;
+				if (axis.type == Full)
+					analogAxes = std::max(analogAxes, (int)axis.axis + 1);
+			}
+		}
+		NOTICE_LOG(NETWORK, "GGPO: Using %d full analog axes", analogAxes);
+	}
+	u32 inputSize = sizeof(kcode[0]) + analogAxes;
 	GGPOErrorCode result = ggpo_start_session(&ggpoSession, &cb, config::Settings::instance().getGameId().c_str(), MAX_PLAYERS, inputSize, localPort);
 	if (result != GGPO_OK)
 	{
@@ -447,7 +470,7 @@ void getInput(MapleInputState inputState[4])
 	for (int player = 0; player < 4; player++)
 		inputState[player] = {};
 
-	u32 inputSize = sizeof(u32) + config::GGPOAnalogAxes;
+	u32 inputSize = sizeof(u32) + analogAxes;
 	std::vector<u8> inputs(inputSize * MAX_PLAYERS);
 	// should not call any callback
 	GGPOErrorCode error = ggpo_synchronize_input(ggpoSession, (void *)&inputs[0], inputs.size(), nullptr);
@@ -461,14 +484,14 @@ void getInput(MapleInputState inputState[4])
 	{
 		MapleInputState& state = inputState[player];
 		state.kcode = ~(*(u32 *)&inputs[player * inputSize]);
-		if (config::GGPOAnalogAxes > 0)
+		if (analogAxes > 0)
 		{
 			state.fullAxes[PJAI_X1] = inputs[player * inputSize + 4];
-			if (config::GGPOAnalogAxes == 2)
+			if (analogAxes >= 2)
 				state.fullAxes[PJAI_Y1] = inputs[player * inputSize + 5];
 		}
-		state.halfAxes[PJTI_R] = (state.kcode & EMU_BTN_TRIGGER_RIGHT) == 0 ? 255 : 0;
-		state.halfAxes[PJTI_L] = (state.kcode & EMU_BTN_TRIGGER_LEFT) == 0 ? 255 : 0;
+		state.halfAxes[PJTI_R] = (state.kcode & BTN_TRIGGER_RIGHT) == 0 ? 255 : 0;
+		state.halfAxes[PJTI_L] = (state.kcode & BTN_TRIGGER_LEFT) == 0 ? 255 : 0;
 	}
 }
 
@@ -508,24 +531,21 @@ bool nextFrame()
 	// may call save_game_state
 	do {
 		u32 input = ~kcode[localPlayerNum];
-		if (settings.platform.system != DC_PLATFORM_NAOMI)
-		{
-			if (rt[localPlayerNum] >= 64)
-				input |= EMU_BTN_TRIGGER_RIGHT;
-			else
-				input &= ~EMU_BTN_TRIGGER_RIGHT;
-			if (lt[localPlayerNum] >= 64)
-				input |= EMU_BTN_TRIGGER_LEFT;
-			else
-				input &= ~EMU_BTN_TRIGGER_LEFT;
-		}
-		u32 inputSize = sizeof(input) + config::GGPOAnalogAxes;
+		if (rt[localPlayerNum] >= 64)
+			input |= BTN_TRIGGER_RIGHT;
+		else
+			input &= ~BTN_TRIGGER_RIGHT;
+		if (lt[localPlayerNum] >= 64)
+			input |= BTN_TRIGGER_LEFT;
+		else
+			input &= ~BTN_TRIGGER_LEFT;
+		u32 inputSize = sizeof(input) + analogAxes;
 		std::vector<u8> allInput(inputSize);
 		*(u32 *)&allInput[0] = input;
-		if (config::GGPOAnalogAxes > 0)
+		if (analogAxes > 0)
 		{
 			allInput[4] = joyx[localPlayerNum];
-			if (config::GGPOAnalogAxes == 2)
+			if (analogAxes >= 2)
 				allInput[5] = joyy[localPlayerNum];
 		}
 		GGPOErrorCode result = ggpo_add_local_input(ggpoSession, localPlayer, &allInput[0], inputSize);

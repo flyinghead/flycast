@@ -64,16 +64,54 @@ enum IOSAxis {
 
 static NSString *GCInputXboxShareButton = @"Button Share";
 
+template<bool Arcade = false, bool Gamepad = false>
 class DefaultIOSMapping : public InputMapping
 {
 public:
 	DefaultIOSMapping()
 	{
-		name = "Default";
-		set_button(DC_BTN_A, IOS_BTN_A);
-		set_button(DC_BTN_B, IOS_BTN_B);
-		set_button(DC_BTN_X, IOS_BTN_X);
-		set_button(DC_BTN_Y, IOS_BTN_Y);
+		name = Arcade ? Gamepad ? "Arcade Gamepad" : "Arcade Hitbox" : "Default";
+		if (Arcade)
+		{
+			if (Gamepad)
+			{
+				// 1  2  3  4  5  6
+				// A  B  X  Y  L  R
+				set_button(DC_BTN_A, IOS_BTN_A);
+				set_button(DC_BTN_B, IOS_BTN_B);
+				set_button(DC_BTN_C, IOS_BTN_X);
+				set_button(DC_BTN_X, IOS_BTN_Y);
+				set_button(DC_BTN_Y, IOS_BTN_L1);
+				set_button(DC_BTN_Z, IOS_BTN_R1);
+				set_axis(DC_AXIS_LT, IOS_AXIS_L2, true);
+				set_axis(DC_AXIS_RT, IOS_AXIS_R2, true);
+			}
+			else
+			{
+				// Hitbox
+				// 1  2  3  4  5  6  7  8
+				// X  Y  R1 A  B  R2 L1 L2
+				set_button(DC_BTN_A, IOS_BTN_X);
+				set_button(DC_BTN_B, IOS_BTN_Y);
+				set_button(DC_BTN_C, IOS_BTN_R1);
+				set_button(DC_BTN_X, IOS_BTN_A);
+				set_button(DC_BTN_Y, IOS_BTN_B);
+				set_axis(DC_BTN_Z, IOS_AXIS_R2, true);
+				set_button(DC_DPAD2_LEFT, KEYCODE_BUTTON_L1);	// L1 (Naomi button 7)
+				set_axis(DC_DPAD2_RIGHT, IOS_AXIS_L2, true);	// L2 (Naomi button 8)
+			}
+		}
+		else
+		{
+			set_button(DC_BTN_A, IOS_BTN_A);
+			set_button(DC_BTN_B, IOS_BTN_B);
+			set_button(DC_BTN_X, IOS_BTN_X);
+			set_button(DC_BTN_Y, IOS_BTN_Y);
+			set_axis(DC_AXIS_RT, IOS_AXIS_R2, true);
+			set_button(DC_BTN_C, KEYCODE_BUTTON_R1);
+			set_axis(DC_AXIS_LT, IOS_AXIS_L2, true);
+			set_button(DC_BTN_Z, KEYCODE_BUTTON_L1);
+		}
 		set_button(DC_DPAD_UP, IOS_BTN_UP);
 		set_button(DC_DPAD_DOWN, IOS_BTN_DOWN);
 		set_button(DC_DPAD_LEFT, IOS_BTN_LEFT);
@@ -81,12 +119,14 @@ public:
 		set_button(DC_BTN_START, IOS_BTN_MENU);
 		set_button(EMU_BTN_MENU, IOS_BTN_OPTIONS);
 
-		set_axis(DC_AXIS_X, IOS_AXIS_LX, false);
-		set_axis(DC_AXIS_Y, IOS_AXIS_LY, false);
-		set_axis(DC_AXIS_X2, IOS_AXIS_RX, false);
-		set_axis(DC_AXIS_Y2, IOS_AXIS_RY, false);
-		set_axis(DC_AXIS_LT, IOS_AXIS_L2, false);
-		set_axis(DC_AXIS_RT, IOS_AXIS_R2, false);
+		set_axis(DC_AXIS_LEFT, IOS_AXIS_LX, false);
+		set_axis(DC_AXIS_RIGHT, IOS_AXIS_LX, true);
+		set_axis(DC_AXIS_UP, IOS_AXIS_LY, false);
+		set_axis(DC_AXIS_DOWN, IOS_AXIS_LY, true);
+		set_axis(DC_AXIS2_LEFT, IOS_AXIS_RX, false);
+		set_axis(DC_AXIS2_RIGHT, IOS_AXIS_RX, true);
+		set_axis(DC_AXIS2_UP, IOS_AXIS_RY, false);
+		set_axis(DC_AXIS2_DOWN, IOS_AXIS_RY, true);
 		dirty = false;
 	}
 };
@@ -166,23 +206,23 @@ public:
 			
 			[gcController.extendedGamepad.rightTrigger setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
 				gamepad_btn_input(IOS_BTN_R2, pressed);
-				gamepad_axis_input(IOS_AXIS_R2, (int)std::roundf(255.f * value));
+				gamepad_axis_input(IOS_AXIS_R2, (int)std::roundf(32767.f * value));
 			}];
 			[gcController.extendedGamepad.leftTrigger setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
 				gamepad_btn_input(IOS_BTN_L2, pressed);
-				gamepad_axis_input(IOS_AXIS_L2, (int)std::roundf(255.f * value));
+				gamepad_axis_input(IOS_AXIS_L2, (int)std::roundf(32767.f * value));
 			}];
 			[gcController.extendedGamepad.leftThumbstick.xAxis setValueChangedHandler:^(GCControllerAxisInput *axis, float value) {
-				gamepad_axis_input(IOS_AXIS_LX, (int)std::roundf(127.f * value));
+				gamepad_axis_input(IOS_AXIS_LX, (int)std::roundf(32767.f * value));
 			}];
 			[gcController.extendedGamepad.leftThumbstick.yAxis setValueChangedHandler:^(GCControllerAxisInput *axis, float value) {
-				gamepad_axis_input(IOS_AXIS_LY, (int)std::roundf(-127.f * value));
+				gamepad_axis_input(IOS_AXIS_LY, (int)std::roundf(-32767.f * value));
 			}];
 			[gcController.extendedGamepad.rightThumbstick.xAxis setValueChangedHandler:^(GCControllerAxisInput *axis, float value) {
-				gamepad_axis_input(IOS_AXIS_RX, (int)std::roundf(127.f * value));
+				gamepad_axis_input(IOS_AXIS_RX, (int)std::roundf(32767.f * value));
 			}];
 			[gcController.extendedGamepad.rightThumbstick.yAxis setValueChangedHandler:^(GCControllerAxisInput *axis, float value) {
-				gamepad_axis_input(IOS_AXIS_RY, (int)std::roundf(-127.f * value));
+				gamepad_axis_input(IOS_AXIS_RY, (int)std::roundf(-32767.f * value));
 			}];
 
 		}
@@ -369,7 +409,7 @@ public:
 	}
 	
 	std::shared_ptr<InputMapping> getDefaultMapping() override {
-		return std::make_shared<DefaultIOSMapping>();
+		return std::make_shared<DefaultIOSMapping<>>();
 	}
 
 	void rumble(float power, float inclination, u32 duration_ms) override
@@ -392,6 +432,20 @@ public:
 				return;
 			[hapticPlayer startAtTime:0 error:&error];
 		}
+	}
+
+	void resetMappingToDefault(bool arcade, bool gamepad) override
+	{
+		NOTICE_LOG(INPUT, "Resetting iOS gamepad to default: %d %d", arcade, gamepad);
+		if (arcade)
+		{
+			if (gamepad)
+				input_mapper = std::make_shared<DefaultIOSMapping<true, true>>();
+			else
+				input_mapper = std::make_shared<DefaultIOSMapping<true, false>>();
+		}
+		else
+			input_mapper = std::make_shared<DefaultIOSMapping<false, false>>();
 	}
 
 	static void addController(GCController *controller)
@@ -418,21 +472,6 @@ public:
 		return !controllers.empty();
 	}
 
-protected:
-	void load_axis_min_max(u32 axis) override
-	{
-		if (axis == IOS_AXIS_L1 || axis == IOS_AXIS_R1 || axis == IOS_AXIS_L2 || axis == IOS_AXIS_R2)
-		{
-			axis_min_values[axis] = 0;
-			axis_ranges[axis] = 0xff;
-		}
-		else
-		{
-			axis_min_values[axis] = -127;
-			axis_ranges[axis] = 254;
-		}
-	}
-
 private:
 	GCController * __weak gcController = nullptr;
 	CHHapticEngine *hapticEngine = nullptr;
@@ -452,7 +491,7 @@ public:
 	bool is_virtual_gamepad() override { return true; }
 
 	std::shared_ptr<InputMapping> getDefaultMapping() override {
-		return std::make_shared<DefaultIOSMapping>();
+		return std::make_shared<DefaultIOSMapping<>>();
 	}
 
 	bool gamepad_btn_input(u32 code, bool pressed) override
@@ -464,12 +503,12 @@ public:
 		switch (code)
 		{
 			case IOS_BTN_L2:
-				gamepad_axis_input(IOS_AXIS_L2, pressed ? 0xff : 0);
+				gamepad_axis_input(IOS_AXIS_L2, pressed ? 0x7fff : 0);
 				return true;
 			case IOS_BTN_R2:
 				if (!pressed && maple_port() >= 0 && maple_port() <= 3)
 					kcode[maple_port()] |= DC_BTN_C | DC_BTN_D | DC_BTN_Z;
-				gamepad_axis_input(IOS_AXIS_R2, pressed ? 0xff : 0);
+				gamepad_axis_input(IOS_AXIS_R2, pressed ? 0x7fff : 0);
 				return true;
 			default:
 				if ((buttonState & ((1 << IOS_BTN_UP) | (1 << IOS_BTN_DOWN))) == ((1 << IOS_BTN_UP) | (1 << IOS_BTN_DOWN))
@@ -493,12 +532,12 @@ public:
 							keycode = pressed ? keycode & ~DC_BTN_D : keycode | DC_BTN_D;
 							break;
 						case IOS_BTN_B:
-							// RT + B -> C (service)
-							keycode = pressed ? keycode & ~DC_BTN_C : keycode | DC_BTN_C;
+							// RT + B -> Service
+							keycode = pressed ? keycode & ~DC_DPAD2_UP : keycode | DC_DPAD2_UP;
 							break;
 						case IOS_BTN_X:
-							// RT + X -> Z (test)
-							keycode = pressed ? keycode & ~DC_BTN_Z : keycode | DC_BTN_Z;
+							// RT + X -> Test
+							keycode = pressed ? keycode & ~DC_DPAD2_DOWN : keycode | DC_DPAD2_DOWN;
 							break;
 						default:
 							break;
@@ -506,20 +545,6 @@ public:
 				}
 
 				return GamepadDevice::gamepad_btn_input(code, pressed);
-		}
-	}
-protected:
-	void load_axis_min_max(u32 axis) override
-	{
-		if (axis == IOS_AXIS_L1 || axis == IOS_AXIS_R1 || axis == IOS_AXIS_L2 || axis == IOS_AXIS_R2)
-		{
-			axis_min_values[axis] = 0;
-			axis_ranges[axis] = 0xff;
-		}
-		else
-		{
-			axis_min_values[axis] = -127;
-			axis_ranges[axis] = 254;
 		}
 	}
 

@@ -13,7 +13,7 @@ static u8 GetBtFromSgn(s8 val)
 }
 
 u32 awave_button_mapping[32] = {
-		AWAVE_SERVICE_KEY,	// DC_BTN_C
+		AWAVE_BTN2_KEY,		// DC_BTN_C
 		AWAVE_BTN1_KEY,		// DC_BTN_B
 		AWAVE_BTN0_KEY,		// DC_BTN_A
 		AWAVE_START_KEY,	// DC_BTN_START
@@ -21,18 +21,18 @@ u32 awave_button_mapping[32] = {
 		AWAVE_DOWN_KEY,		// DC_DPAD_DOWN
 		AWAVE_LEFT_KEY,		// DC_DPAD_LEFT
 		AWAVE_RIGHT_KEY,	// DC_DPAD_RIGHT
-		AWAVE_TEST_KEY,		// DC_BTN_Z
-		AWAVE_BTN3_KEY,		// DC_BTN_Y
-		AWAVE_BTN2_KEY,		// DC_BTN_X
+		AWAVE_BTN4_KEY,		// DC_BTN_Z (duplicated)
+		AWAVE_BTN4_KEY,		// DC_BTN_Y
+		AWAVE_BTN3_KEY,		// DC_BTN_X
 		AWAVE_COIN_KEY,		// DC_BTN_D
-		AWAVE_BTN4_KEY,		// DC_DPAD2_UP
-		0,					// DC_DPAD2_DOWN
+		AWAVE_SERVICE_KEY,	// DC_DPAD2_UP
+		AWAVE_TEST_KEY,		// DC_DPAD2_DOWN
 		0,					// DC_DPAD2_LEFT
 		0,					// DC_DPAD2_RIGHT
 };
 
 u32 awavelg_button_mapping[32] = {
-		AWAVE_SERVICE_KEY,	// DC_BTN_C
+		AWAVE_BTN1_KEY,		// DC_BTN_C
 		AWAVE_BTN0_KEY,		// DC_BTN_B
 		AWAVE_TRIGGER_KEY,	// DC_BTN_A
 		AWAVE_START_KEY,	// DC_BTN_START
@@ -40,12 +40,12 @@ u32 awavelg_button_mapping[32] = {
 		AWAVE_DOWN_KEY,		// DC_DPAD_DOWN
 		AWAVE_LEFT_KEY,		// DC_DPAD_LEFT
 		AWAVE_RIGHT_KEY,	// DC_DPAD_RIGHT
-		AWAVE_TEST_KEY,		// DC_BTN_Z
-		AWAVE_BTN2_KEY,		// DC_BTN_Y
-		AWAVE_BTN1_KEY,		// DC_BTN_X
+		AWAVE_BTN4_KEY,		// DC_BTN_Z
+		AWAVE_BTN3_KEY,		// DC_BTN_Y
+		AWAVE_BTN2_KEY,		// DC_BTN_X
 		AWAVE_COIN_KEY,		// DC_BTN_D
-		AWAVE_BTN3_KEY,		// DC_DPAD2_UP
-		AWAVE_BTN4_KEY,		// DC_DPAD2_DOWN
+		AWAVE_SERVICE_KEY,	// DC_DPAD2_UP
+		AWAVE_TEST_KEY,		// DC_DPAD2_DOWN
 		0,					// DC_DPAD2_LEFT
 		0,					// DC_DPAD2_RIGHT
 
@@ -64,8 +64,7 @@ void MapleConfigMap::SetVibration(float power, float inclination, u32 duration_m
 
 void MapleConfigMap::GetInput(PlainJoystickState* pjs)
 {
-	u32 player_num = playerNum();
-	const MapleInputState& inputState = mapleInputState[player_num];
+	const MapleInputState& inputState = mapleInputState[playerNum()];
 
 	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
 	{
@@ -126,7 +125,7 @@ void MapleConfigMap::GetInput(PlainJoystickState* pjs)
 							pjs->joy[axis] = inputState.halfAxes[PJTI_L];
 							break;
 						default:
-							pjs->joy[axis] = 0x80;
+							pjs->joy[axis] = 0;
 							break;
 						}
 					}

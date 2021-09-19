@@ -64,32 +64,13 @@ enum {
 	KEYCODE_BUTTON_MODE = 110,
 };
 
+class AndroidGamepadDevice;
+
+template<bool Arcade = false, bool Gamepad = false>
 class DefaultInputMapping : public InputMapping
 {
 public:
-	DefaultInputMapping()
-	{
-		name = "Default";
-		set_button(DC_BTN_Y, KEYCODE_BUTTON_Y);
-		set_button(DC_BTN_B, KEYCODE_BUTTON_B);
-		set_button(DC_BTN_A, KEYCODE_BUTTON_A);
-		set_button(DC_BTN_X, KEYCODE_BUTTON_X);
-		set_button(DC_BTN_START, KEYCODE_BUTTON_START);
-		set_button(DC_DPAD_UP, KEYCODE_DPAD_UP);
-		set_button(DC_DPAD_DOWN, KEYCODE_DPAD_DOWN);
-		set_button(DC_DPAD_LEFT, KEYCODE_DPAD_LEFT);
-		set_button(DC_DPAD_RIGHT, KEYCODE_DPAD_RIGHT);
-		set_button(EMU_BTN_MENU, KEYCODE_BACK);
-
-		set_axis(DC_AXIS_X, AXIS_X, false);
-		set_axis(DC_AXIS_Y, AXIS_Y, false);
-		set_axis(DC_AXIS_LT, AXIS_LTRIGGER, false);
-		set_axis(DC_AXIS_RT, AXIS_RTRIGGER, false);
-		set_axis(DC_AXIS_X2, AXIS_Z, false);
-		set_axis(DC_AXIS_Y2, AXIS_RZ, false);
-
-		dirty = false;
-	}
+	DefaultInputMapping(const AndroidGamepadDevice& gamepad);
 };
 
 class ShieldRemoteInputMapping : public InputMapping
@@ -123,14 +104,6 @@ public:
 		if (id == VIRTUAL_GAMEPAD_ID)
 		{
 			input_mapper = std::make_shared<IdentityInputMapping>();
-			axis_min_values[DC_AXIS_X] = -128;
-			axis_ranges[DC_AXIS_X] = 255;
-			axis_min_values[DC_AXIS_Y] = -128;
-			axis_ranges[DC_AXIS_Y] = 255;
-			axis_min_values[DC_AXIS_LT] = 0;
-			axis_ranges[DC_AXIS_LT] = 255;
-			axis_min_values[DC_AXIS_RT] = 0;
-			axis_ranges[DC_AXIS_RT] = 255;
 		}
 		else
 		{
@@ -146,34 +119,8 @@ public:
 	virtual std::shared_ptr<InputMapping> getDefaultMapping() override {
 		if (_name == "SHIELD Remote")
 			return std::make_shared<ShieldRemoteInputMapping>();
-		std::shared_ptr<InputMapping> mapping = std::make_shared<DefaultInputMapping>();
-		auto ltAxis = std::find(halfAxes.begin(), halfAxes.end(), AXIS_LTRIGGER);
-		auto rtAxis = std::find(halfAxes.begin(), halfAxes.end(), AXIS_RTRIGGER);
-		if (ltAxis != halfAxes.end() && rtAxis != halfAxes.end())
-		{
-			mapping->set_axis(DC_AXIS_LT, *ltAxis, false);
-			mapping->set_axis(DC_AXIS_RT, *rtAxis, false);
-		}
 		else
-		{
-			ltAxis = std::find(halfAxes.begin(), halfAxes.end(), AXIS_BRAKE);
-			rtAxis = std::find(halfAxes.begin(), halfAxes.end(), AXIS_GAS);
-			if (ltAxis != halfAxes.end() && rtAxis != halfAxes.end())
-			{
-				mapping->set_axis(DC_AXIS_LT, *ltAxis, false);
-				mapping->set_axis(DC_AXIS_RT, *rtAxis, false);
-			}
-			else
-			{
-				// Xbox controller?
-				mapping->set_axis(DC_AXIS_LT, AXIS_Z, false);
-				mapping->set_axis(DC_AXIS_RT, AXIS_RZ, false);
-				mapping->set_axis(DC_AXIS_X2, AXIS_RX, false);
-				mapping->set_axis(DC_AXIS_Y2, AXIS_RY, false);
-				
-			}
-		}
-		return mapping;
+			return std::make_shared<DefaultInputMapping<>>(*this);
 	}
 
 	virtual const char *get_button_name(u32 code) override
@@ -304,20 +251,26 @@ public:
 				// RT + A -> D (coin)
 				kcode &= ~DC_BTN_D;
 			if ((kcode & DC_BTN_B) == 0)
-				// RT + B -> C (service)
-				kcode &= ~DC_BTN_C;
+				// RT + B -> Service
+				kcode &= ~DC_DPAD2_UP;
 			if ((kcode & DC_BTN_X) == 0)
-				// RT + X -> Z (test)
-				kcode &= ~DC_BTN_Z;
+				// RT + X -> Test
+				kcode &= ~DC_DPAD2_DOWN;
 		}
 		u32 changes = kcode ^ previous_kcode;
 		for (int i = 0; i < 32; i++)
 			if (changes & (1 << i))
 				gamepad_btn_input(1 << i, (kcode & (1 << i)) == 0);
-		gamepad_axis_input(DC_AXIS_X, joyx);
-		gamepad_axis_input(DC_AXIS_Y, joyy);
-		gamepad_axis_input(DC_AXIS_LT, lt);
-		gamepad_axis_input(DC_AXIS_RT, rt);
+		if (joyx >= 0)
+			gamepad_axis_input(DC_AXIS_RIGHT, joyx | (joyx << 8));
+		else
+			gamepad_axis_input(DC_AXIS_LEFT, -joyx | (-joyx << 8));
+		if (joyy >= 0)
+			gamepad_axis_input(DC_AXIS_DOWN, joyy | (joyy << 8));
+		else
+			gamepad_axis_input(DC_AXIS_UP, -joyy | (-joyy << 8));
+		gamepad_axis_input(DC_AXIS_LT, lt == 0 ? 0 : 0x7fff);
+		gamepad_axis_input(DC_AXIS_RT, rt == 0 ? 0 : 0x7fff);
 		previous_kcode = kcode;
 	}
 
@@ -328,23 +281,24 @@ public:
     }
 	bool is_virtual_gamepad() override { return android_id == VIRTUAL_GAMEPAD_ID; }
 
-	static const int VIRTUAL_GAMEPAD_ID = 0x12345678;	// must match the Java definition
+	bool hasHalfAxis(int axis) const { return std::find(halfAxes.begin(), halfAxes.end(), axis) != halfAxes.end(); }
+	bool hasFullAxis(int axis) const { return std::find(fullAxes.begin(), fullAxes.end(), axis) != fullAxes.end(); }
 
-protected:
-	virtual void load_axis_min_max(u32 axis) override
+	void resetMappingToDefault(bool arcade, bool gamepad) override
 	{
-		auto axisIt = std::find(halfAxes.begin(), halfAxes.end(), axis);
-		if (axisIt != halfAxes.end())
+		NOTICE_LOG(INPUT, "Resetting Android gamepad to default: %d %d", arcade, gamepad);
+		if (arcade)
 		{
-			axis_min_values[axis] = 0;
-			axis_ranges[axis] = 32767;
+			if (gamepad)
+				input_mapper = std::make_shared<DefaultInputMapping<true, true>>(*this);
+			else
+				input_mapper = std::make_shared<DefaultInputMapping<true, false>>(*this);
 		}
 		else
-		{
-			axis_min_values[axis] = -32768;
-			axis_ranges[axis] = 65535;
-		}
+			input_mapper = std::make_shared<DefaultInputMapping<false, false>>(*this);
 	}
+
+	static const int VIRTUAL_GAMEPAD_ID = 0x12345678;	// must match the Java definition
 
 private:
 	int android_id;
@@ -355,6 +309,126 @@ private:
 };
 
 std::map<int, std::shared_ptr<AndroidGamepadDevice>> AndroidGamepadDevice::android_gamepads;
+
+template<bool Arcade, bool Gamepad>
+inline DefaultInputMapping<Arcade, Gamepad>::DefaultInputMapping(const AndroidGamepadDevice& gamepad)
+{
+	name = Arcade ? Gamepad ? "Arcade Gamepad" : "Arcade Hitbox" : "Default";
+	int ltAxis = AXIS_LTRIGGER;
+	int rtAxis = AXIS_RTRIGGER;
+	int rightStickX = AXIS_Z;
+	int rightStickY = AXIS_RZ;
+	if (!gamepad.hasHalfAxis(AXIS_LTRIGGER) || !gamepad.hasHalfAxis(AXIS_RTRIGGER))
+	{
+		if (gamepad.hasHalfAxis(AXIS_BRAKE) && gamepad.hasHalfAxis(AXIS_GAS))
+		{
+			ltAxis = AXIS_BRAKE;
+			rtAxis = AXIS_GAS;
+		}
+		else if (gamepad.hasHalfAxis(AXIS_Z) && gamepad.hasHalfAxis(AXIS_RZ))
+		{
+			ltAxis = AXIS_Z;
+			rtAxis = AXIS_RZ;
+			rightStickX = AXIS_RX;
+			rightStickY = AXIS_RY;
+		}
+		else
+		{
+			ltAxis = -1;
+			rtAxis = -1;
+		}
+	}
+	if (!gamepad.hasFullAxis(rightStickX) || !gamepad.hasFullAxis(rightStickY))
+	{
+		rightStickX = -1;
+		rightStickY = -1;
+	}
+	else
+	{
+		set_axis(DC_AXIS2_LEFT, rightStickX, false);
+		set_axis(DC_AXIS2_RIGHT, rightStickX, true);
+		set_axis(DC_AXIS2_UP, rightStickY, false);
+		set_axis(DC_AXIS2_DOWN, rightStickY, true);
+	}
+
+	if (Arcade)
+	{
+		if (Gamepad)
+		{
+			// 1  2  3  4  5  6
+			// A  B  X  Y  L  R
+			set_button(DC_BTN_A, KEYCODE_BUTTON_A);
+			set_button(DC_BTN_B, KEYCODE_BUTTON_B);
+			set_button(DC_BTN_C, KEYCODE_BUTTON_X);
+			set_button(DC_BTN_X, KEYCODE_BUTTON_Y);
+			if (ltAxis != -1)
+			{
+				set_axis(DC_AXIS_LT, ltAxis, true);
+				set_button(DC_BTN_Y, KEYCODE_BUTTON_L1);
+			}
+			else
+				set_button(DC_AXIS_LT, KEYCODE_BUTTON_L1);
+			if (rtAxis != -1)
+			{
+				set_axis(DC_AXIS_RT, rtAxis, true);
+				set_button(DC_BTN_Z, KEYCODE_BUTTON_R1);
+			}
+			else
+				set_button(DC_AXIS_RT, KEYCODE_BUTTON_R1);
+		}
+		else
+		{
+			// Hitbox
+			// 1  2  3  4  5  6  7  8
+			// X  Y  R1 A  B  R2 L1 L2
+			set_button(DC_BTN_A, KEYCODE_BUTTON_X);
+			set_button(DC_BTN_B, KEYCODE_BUTTON_Y);
+			set_button(DC_BTN_C, KEYCODE_BUTTON_R1);
+			set_button(DC_BTN_X, KEYCODE_BUTTON_A);
+			set_button(DC_BTN_Y, KEYCODE_BUTTON_B);
+			if (rtAxis != -1)
+				set_axis(DC_BTN_Z, rtAxis, true);
+			set_button(DC_DPAD2_LEFT, KEYCODE_BUTTON_L1);	// L1 (Naomi button 7)
+			if (ltAxis != -1)
+				set_axis(DC_DPAD2_RIGHT, ltAxis, true);		// L2 (Naomi button 8)
+		}
+	}
+	else
+	{
+		set_button(DC_BTN_A, KEYCODE_BUTTON_A);
+		set_button(DC_BTN_B, KEYCODE_BUTTON_B);
+		set_button(DC_BTN_X, KEYCODE_BUTTON_X);
+		set_button(DC_BTN_Y, KEYCODE_BUTTON_Y);
+		if (rtAxis != -1)
+		{
+			set_axis(DC_AXIS_RT, rtAxis, true);
+			set_button(DC_BTN_C, KEYCODE_BUTTON_R1);
+		}
+		else
+			set_button(DC_AXIS_RT, KEYCODE_BUTTON_R1);
+		if (ltAxis != -1)
+		{
+			set_axis(DC_AXIS_LT, ltAxis, true);
+			set_button(DC_BTN_Z, KEYCODE_BUTTON_L1);
+		}
+		else
+			set_button(DC_AXIS_LT, KEYCODE_BUTTON_L1);
+
+	}
+	set_button(DC_BTN_START, KEYCODE_BUTTON_START);
+	set_button(DC_DPAD_UP, KEYCODE_DPAD_UP);
+	set_button(DC_DPAD_DOWN, KEYCODE_DPAD_DOWN);
+	set_button(DC_DPAD_LEFT, KEYCODE_DPAD_LEFT);
+	set_button(DC_DPAD_RIGHT, KEYCODE_DPAD_RIGHT);
+	set_button(EMU_BTN_MENU, KEYCODE_BUTTON_SELECT);
+
+	set_axis(DC_AXIS_LEFT, AXIS_X, false);
+	set_axis(DC_AXIS_RIGHT, AXIS_X, true);
+	set_axis(DC_AXIS_UP, AXIS_Y, false);
+	set_axis(DC_AXIS_DOWN, AXIS_Y, true);
+
+	dirty = false;
+}
 
 class AndroidMouse : public SystemMouse
 {

@@ -19,15 +19,19 @@ public:
 		set_button(DC_DPAD_LEFT, XINPUT_GAMEPAD_DPAD_LEFT);
 		set_button(DC_DPAD_RIGHT, XINPUT_GAMEPAD_DPAD_RIGHT);
 		set_button(DC_BTN_START, XINPUT_GAMEPAD_START);
-		set_button(EMU_BTN_TRIGGER_LEFT, XINPUT_GAMEPAD_LEFT_SHOULDER);
-		set_button(EMU_BTN_TRIGGER_RIGHT, XINPUT_GAMEPAD_RIGHT_SHOULDER);
+		set_button(DC_AXIS_LT, XINPUT_GAMEPAD_LEFT_SHOULDER);
+		set_button(DC_AXIS_RT, XINPUT_GAMEPAD_RIGHT_SHOULDER);
 		set_button(EMU_BTN_MENU, XINPUT_GAMEPAD_BACK);
 		set_axis(DC_AXIS_LT, 0, false);
 		set_axis(DC_AXIS_RT, 1, false);
-		set_axis(DC_AXIS_X, 2, false);
-		set_axis(DC_AXIS_Y, 3, true);
-		set_axis(DC_AXIS_X2, 4, false);
-		set_axis(DC_AXIS_Y2, 5, true);
+		set_axis(DC_AXIS_LEFT, 2, false);
+		set_axis(DC_AXIS_RIGHT, 2, true);
+		set_axis(DC_AXIS_UP, 3, true);
+		set_axis(DC_AXIS_DOWN, 3, false);
+		set_axis(DC_AXIS2_LEFT, 4, false);
+		set_axis(DC_AXIS2_RIGHT, 4, true);
+		set_axis(DC_AXIS2_UP, 5, true);
+		set_axis(DC_AXIS2_DOWN, 5, false);
 		dirty = false;
 	}
 };
@@ -67,12 +71,12 @@ public:
 
 			if (state.Gamepad.bLeftTrigger != last_left_trigger)
 			{
-				gamepad_axis_input(0, state.Gamepad.bLeftTrigger);
+				gamepad_axis_input(0, (state.Gamepad.bLeftTrigger << 7) + (state.Gamepad.bLeftTrigger >> 1));
 				last_left_trigger = state.Gamepad.bLeftTrigger;
 			}
 			if (state.Gamepad.bRightTrigger != last_right_trigger)
 			{
-				gamepad_axis_input(1, state.Gamepad.bRightTrigger);
+				gamepad_axis_input(1, (state.Gamepad.bRightTrigger << 7) + (state.Gamepad.bRightTrigger >> 1));
 				last_right_trigger = state.Gamepad.bRightTrigger;
 			}
 			if (state.Gamepad.sThumbLX != last_left_thumb_x)

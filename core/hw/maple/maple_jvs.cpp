@@ -54,7 +54,7 @@ void load_naomi_eeprom()
 }
 
 const u32 naomi_button_mapping[32] = {
-		NAOMI_SERVICE_KEY,	// DC_BTN_C
+		NAOMI_BTN2_KEY,		// DC_BTN_C
 		NAOMI_BTN1_KEY,		// DC_BTN_B
 		NAOMI_BTN0_KEY,		// DC_BTN_A
 		NAOMI_START_KEY,	// DC_BTN_START
@@ -62,12 +62,12 @@ const u32 naomi_button_mapping[32] = {
 		NAOMI_DOWN_KEY,		// DC_DPAD_DOWN
 		NAOMI_LEFT_KEY,		// DC_DPAD_LEFT
 		NAOMI_RIGHT_KEY,	// DC_DPAD_RIGHT
-		NAOMI_TEST_KEY,		// DC_BTN_Z
-		NAOMI_BTN3_KEY,		// DC_BTN_Y
-		NAOMI_BTN2_KEY,		// DC_BTN_X
+		NAOMI_BTN5_KEY,		// DC_BTN_Z
+		NAOMI_BTN4_KEY,		// DC_BTN_Y
+		NAOMI_BTN3_KEY,		// DC_BTN_X
 		NAOMI_COIN_KEY,		// DC_BTN_D
-		NAOMI_BTN4_KEY,		// DC_DPAD2_UP
-		NAOMI_BTN5_KEY,		// DC_DPAD2_DOWN
+		NAOMI_SERVICE_KEY,	// DC_DPAD2_UP
+		NAOMI_TEST_KEY,		// DC_DPAD2_DOWN
 		NAOMI_BTN6_KEY,		// DC_DPAD2_LEFT
 		NAOMI_BTN7_KEY,		// DC_DPAD2_RIGHT
 
@@ -79,7 +79,7 @@ extern u32 awavelg_button_mapping[32];
 
 const char *GetCurrentGameButtonName(DreamcastKey key)
 {
-	if (NaomiGameInputs == nullptr || key == EMU_BTN_NONE)
+	if (NaomiGameInputs == nullptr || key == EMU_BTN_NONE || key > DC_BTN_RELOAD)
 		return nullptr;
 	u32 pos = 0;
 	u32 val = (u32)key;
@@ -116,33 +116,36 @@ const char *GetCurrentGameAxisName(DreamcastKey axis)
 
 	for (int i = 0; NaomiGameInputs->axes[i].name != nullptr; i++)
 	{
-		DreamcastKey cur_axis;
 		switch (NaomiGameInputs->axes[i].axis)
 		{
 		case 0:
-			cur_axis = DC_AXIS_X;
+			if (axis != DC_AXIS_LEFT && axis != DC_AXIS_RIGHT)
+				continue;
 			break;
 		case 1:
-			cur_axis = DC_AXIS_Y;
+			if (axis != DC_AXIS_UP && axis != DC_AXIS_DOWN)
+				continue;
 			break;
 		case 2:
-			cur_axis = DC_AXIS_X2;
+			if (axis != DC_AXIS2_LEFT && axis != DC_AXIS2_RIGHT)
+				continue;
 			break;
 		case 3:
-			cur_axis = DC_AXIS_Y2;
+			if (axis != DC_AXIS2_UP && axis != DC_AXIS2_DOWN)
+				continue;
 			break;
 		case 4:
-			cur_axis = DC_AXIS_RT;
+			if (axis != DC_AXIS_RT)
+				continue;
 			break;
 		case 5:
-			cur_axis = DC_AXIS_LT;
+			if (axis != DC_AXIS_LT)
+				continue;
 			break;
 		default:
-			cur_axis = EMU_BTN_NONE;
-			break;
+			continue;
 		}
-		if (cur_axis == axis)
-			return NaomiGameInputs->axes[i].name;
+		return NaomiGameInputs->axes[i].name;
 	}
 
 	return nullptr;
