@@ -269,19 +269,33 @@ public:
 			}
 			if (bind.bindType == SDL_CONTROLLER_BINDTYPE_HAT && (code >> 8) - 1 == (u32)bind.value.hat.hat)
 			{
-				switch (bind.value.hat.hat_mask)
+				int hat;
+				const char *name;
+				switch (code & 0xff)
 				{
-				case SDL_HAT_UP:
-					return "DPad Up";
-				case SDL_HAT_DOWN:
-					return "DPad Down";
-				case SDL_HAT_LEFT:
-					return "DPad Left";
-				case SDL_HAT_RIGHT:
-					return "DPad Right";
+				case 0:
+					hat = SDL_HAT_UP;
+					name =  "DPad Up";
+					break;
+				case 1:
+					hat = SDL_HAT_DOWN;
+					name =  "DPad Down";
+					break;
+				case 2:
+					hat = SDL_HAT_LEFT;
+					name =  "DPad Left";
+					break;
+				case 3:
+					hat = SDL_HAT_RIGHT;
+					name =  "DPad Right";
+					break;
 				default:
+					hat = 0;
+					name = nullptr;
 					break;
 				}
+				if (hat == bind.value.hat.hat_mask)
+					return name;
 			}
 		}
 		return nullptr;
