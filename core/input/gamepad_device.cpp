@@ -48,6 +48,71 @@ std::mutex GamepadDevice::_gamepads_mutex;
 static FILE *record_input;
 #endif
 
+bool GamepadDevice::handleButtonInput(int port, DreamcastKey key, bool pressed)
+{
+	if (key == EMU_BTN_NONE)
+		return false;
+
+	if (key <= DC_BTN_RELOAD)
+	{
+		if (pressed)
+			kcode[port] &= ~key;
+		else
+			kcode[port] |= key;
+#ifdef TEST_AUTOMATION
+		if (record_input != NULL)
+			fprintf(record_input, "%ld button %x %04x\n", sh4_sched_now64(), port, kcode[port]);
+#endif
+	}
+	else
+	{
+		switch (key)
+		{
+		case EMU_BTN_ESCAPE:
+			if (pressed)
+				dc_exit();
+			break;
+		case EMU_BTN_MENU:
+			if (pressed)
+				gui_open_settings();
+			break;
+		case EMU_BTN_FFORWARD:
+			if (pressed && !gui_is_open())
+				settings.input.fastForwardMode = !settings.input.fastForwardMode && !settings.online;
+			break;
+		case DC_AXIS_LT:
+			lt[port] = pressed ? 255 : 0;
+			break;
+		case DC_AXIS_RT:
+			rt[port] = pressed ? 255 : 0;
+			break;
+
+		case DC_AXIS_UP:
+		case DC_AXIS_DOWN:
+			buttonToAnalogInput<DC_AXIS_UP, DIGANA_UP, DIGANA_DOWN>(port, key, pressed, joyy[port]);
+			break;
+		case DC_AXIS_LEFT:
+		case DC_AXIS_RIGHT:
+			buttonToAnalogInput<DC_AXIS_LEFT, DIGANA_LEFT, DIGANA_RIGHT>(port, key, pressed, joyx[port]);
+			break;
+		case DC_AXIS2_UP:
+		case DC_AXIS2_DOWN:
+			buttonToAnalogInput<DC_AXIS2_UP, DIGANA2_UP, DIGANA2_DOWN>(port, key, pressed, joyry[port]);
+			break;
+		case DC_AXIS2_LEFT:
+		case DC_AXIS2_RIGHT:
+			buttonToAnalogInput<DC_AXIS2_LEFT, DIGANA2_LEFT, DIGANA2_RIGHT>(port, key, pressed, joyrx[port]);
+			break;
+
+		default:
+			return false;
+		}
+	}
+	DEBUG_LOG(INPUT, "%d: BUTTON %s %d. kcode=%x", port, pressed ? "down" : "up", key, kcode[port]);
+
+	return true;
+}
+
 bool GamepadDevice::gamepad_btn_input(u32 code, bool pressed)
 {
 	if (_input_detected != nullptr && _detecting_button
@@ -60,85 +125,19 @@ bool GamepadDevice::gamepad_btn_input(u32 code, bool pressed)
 	if (!input_mapper || _maple_port < 0 || _maple_port > (int)ARRAY_SIZE(kcode))
 		return false;
 
-	auto handle_key = [&](u32 port, DreamcastKey key)
-	{
-		if (key == EMU_BTN_NONE)
-			return false;
-
-		if (key <= DC_BTN_RELOAD)
-		{
-			if (pressed)
-				kcode[port] &= ~key;
-			else
-				kcode[port] |= key;
-#ifdef TEST_AUTOMATION
-			if (record_input != NULL)
-				fprintf(record_input, "%ld button %x %04x\n", sh4_sched_now64(), port, kcode[port]);
-#endif
-		}
-		else
-		{
-			switch (key)
-			{
-			case EMU_BTN_ESCAPE:
-				if (pressed)
-					dc_exit();
-				break;
-			case EMU_BTN_MENU:
-				if (pressed)
-					gui_open_settings();
-				break;
-			case EMU_BTN_FFORWARD:
-				if (pressed && !gui_is_open())
-					settings.input.fastForwardMode = !settings.input.fastForwardMode && !settings.online;
-				break;
-			case DC_AXIS_LT:
-				lt[port] = pressed ? 255 : 0;
-				break;
-			case DC_AXIS_RT:
-				rt[port] = pressed ? 255 : 0;
-				break;
-
-			case DC_AXIS_UP:
-			case DC_AXIS_DOWN:
-				buttonToAnalogInput<DC_AXIS_UP, DIGANA_UP, DIGANA_DOWN>(port, key, pressed, joyy[port]);
-				break;
-			case DC_AXIS_LEFT:
-			case DC_AXIS_RIGHT:
-				buttonToAnalogInput<DC_AXIS_LEFT, DIGANA_LEFT, DIGANA_RIGHT>(port, key, pressed, joyx[port]);
-				break;
-			case DC_AXIS2_UP:
-			case DC_AXIS2_DOWN:
-				buttonToAnalogInput<DC_AXIS2_UP, DIGANA2_UP, DIGANA2_DOWN>(port, key, pressed, joyry[port]);
-				break;
-			case DC_AXIS2_LEFT:
-			case DC_AXIS2_RIGHT:
-				buttonToAnalogInput<DC_AXIS2_LEFT, DIGANA2_LEFT, DIGANA2_RIGHT>(port, key, pressed, joyrx[port]);
-				break;
-
-			default:
-				return false;
-			}
-		}
-
-		DEBUG_LOG(INPUT, "%d: BUTTON %s %x -> %d. kcode=%x", port, pressed ? "down" : "up", code, key, kcode[port]);
-
-		return true;
-	};
-
 	bool rc = false;
 	if (_maple_port == 4)
 	{
 		for (int port = 0; port < 4; port++)
 		{
 			DreamcastKey key = input_mapper->get_button_id(port, code);
-			rc = handle_key(port, key) || rc;
+			rc = handleButtonInput(port, key, pressed) || rc;
 		}
 	}
 	else
 	{
 		DreamcastKey key = input_mapper->get_button_id(0, code);
-		rc = handle_key(_maple_port, key);
+		rc = handleButtonInput(_maple_port, key, pressed);
 	}
 
 	return rc;
@@ -239,10 +238,7 @@ bool GamepadDevice::gamepad_axis_input(u32 code, int value)
 		else if ((key & DC_BTN_GROUP_MASK) == EMU_BUTTONS) // Map triggers to emu buttons
 		{
 			// TODO hysteresis?
-			if (std::abs(v) < 16384)
-				gamepad_btn_input(key, false); // button released
-			else
-				gamepad_btn_input(key, true); // button pressed
+			handleButtonInput(port, key, std::abs(v) >= 16384);
 		}
 		else
 			return false;
