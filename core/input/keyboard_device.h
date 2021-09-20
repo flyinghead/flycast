@@ -41,6 +41,11 @@ public:
 		set_button(DC_AXIS_RT, 25);				// V
 		set_button(EMU_BTN_MENU, 43);			// TAB
 		set_button(EMU_BTN_FFORWARD, 44);		// Space
+		set_button(DC_AXIS_UP, 12);				// I
+		set_button(DC_AXIS_DOWN, 14);			// K
+		set_button(DC_AXIS_LEFT, 13);			// J
+		set_button(DC_AXIS_RIGHT, 15);			// L
+		set_button(DC_BTN_D, 4);				// Q (Coin)
 
 		dirty = false;
 	}

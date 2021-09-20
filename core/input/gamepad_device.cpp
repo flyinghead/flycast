@@ -237,8 +237,11 @@ bool GamepadDevice::gamepad_axis_input(u32 code, int value)
 		}
 		else if ((key & DC_BTN_GROUP_MASK) == EMU_BUTTONS) // Map triggers to emu buttons
 		{
-			// TODO hysteresis?
-			handleButtonInput(port, key, std::abs(v) >= 16384);
+			int lastValue = lastAxisValue[key];
+			int newValue = std::abs(v);
+			if ((lastValue < 16384 && newValue >= 16384) || (lastValue >= 16384 && newValue < 16384))
+				handleButtonInput(port, key, newValue >= 16384);
+			lastAxisValue[key] = newValue;
 		}
 		else
 			return false;
