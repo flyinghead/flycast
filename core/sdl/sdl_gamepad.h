@@ -79,7 +79,7 @@ public:
 				if (Gamepad)
 				{
 					// 1  2  3  4  5  6
-					// A  B  X  Y  L  R
+					// A  B  X  Y  R  L
 					map_button(SDL_CONTROLLER_BUTTON_A, DC_BTN_A);
 					map_button(SDL_CONTROLLER_BUTTON_B, DC_BTN_B);
 					map_button(SDL_CONTROLLER_BUTTON_X, DC_BTN_C);
@@ -88,11 +88,11 @@ public:
 					if (!map_axis(SDL_CONTROLLER_AXIS_TRIGGERLEFT, DC_AXIS_LT, true))
 						map_button(SDL_CONTROLLER_BUTTON_LEFTSHOULDER, DC_AXIS_LT);
 					else
-						map_button(SDL_CONTROLLER_BUTTON_LEFTSHOULDER, DC_BTN_Y);
+						map_button(SDL_CONTROLLER_BUTTON_LEFTSHOULDER, DC_BTN_Z);
 					if (!map_axis(SDL_CONTROLLER_AXIS_TRIGGERRIGHT, DC_AXIS_RT, true))
 						map_button(SDL_CONTROLLER_BUTTON_RIGHTSHOULDER, DC_AXIS_RT);
 					else
-						map_button(SDL_CONTROLLER_BUTTON_RIGHTSHOULDER, DC_BTN_Z);
+						map_button(SDL_CONTROLLER_BUTTON_RIGHTSHOULDER, DC_BTN_Y);
 				}
 				else
 				{

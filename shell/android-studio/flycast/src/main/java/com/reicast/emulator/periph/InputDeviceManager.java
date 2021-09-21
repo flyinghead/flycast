@@ -105,7 +105,7 @@ public final class InputDeviceManager implements InputManager.InputDeviceListene
     }
 
     public native void init();
-    public native void virtualGamepadEvent(int kcode, int joyx, int joyy, int lt, int rt);
+    public native void virtualGamepadEvent(int kcode, int joyx, int joyy, int lt, int rt, boolean fastForward);
     public native boolean joystickButtonEvent(int id, int button, boolean pressed);
     public native boolean joystickAxisEvent(int id, int button, int value);
     public native void mouseEvent(int xpos, int ypos, int buttons);

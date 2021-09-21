@@ -30,7 +30,6 @@ public:
 						if (scancodes[port][i] != 0)
 							input_mapper->set_button(port, key, (u32)scancodes[port][i]);
 				}
-				input_mapper->version = 2;
 				save_mapping();
 			}
 		}

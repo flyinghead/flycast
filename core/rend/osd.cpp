@@ -106,8 +106,8 @@ const std::vector<OSDVertex>& GetOSDVertices()
 	DrawButton2(vjoy_pos[2], kcode[0] & DC_DPAD_RIGHT);
 	DrawButton2(vjoy_pos[3], kcode[0] & DC_DPAD_DOWN);
 
-	DrawButton2(vjoy_pos[4], kcode[0] & DC_BTN_X);
-	DrawButton2(vjoy_pos[5], kcode[0] & DC_BTN_Y);
+	DrawButton2(vjoy_pos[4], kcode[0] & (settings.platform.system == DC_PLATFORM_DREAMCAST ? DC_BTN_X : DC_BTN_C));
+	DrawButton2(vjoy_pos[5], kcode[0] & (settings.platform.system == DC_PLATFORM_DREAMCAST ? DC_BTN_Y : DC_BTN_X));
 	DrawButton2(vjoy_pos[6], kcode[0] & DC_BTN_B);
 	DrawButton2(vjoy_pos[7], kcode[0] & DC_BTN_A);
 

@@ -105,6 +105,9 @@ public:
 		
 		for (int i = 0; i < 32; i++)
 			set_button(0, (DreamcastKey)(1 << i), 1 << i);
+		set_button(0, EMU_BTN_FFORWARD, EMU_BTN_FFORWARD);
+		set_button(0, EMU_BTN_MENU, EMU_BTN_MENU);
+		set_button(0, EMU_BTN_ESCAPE, EMU_BTN_ESCAPE);
 		set_axis(0, DC_AXIS_LEFT, DC_AXIS_LEFT, true);
 		set_axis(0, DC_AXIS_RIGHT, DC_AXIS_RIGHT, true);
 		set_axis(0, DC_AXIS_UP, DC_AXIS_UP, true);

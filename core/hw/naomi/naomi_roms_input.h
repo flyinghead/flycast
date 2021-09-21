@@ -110,9 +110,9 @@ static InputDescriptors _18wheelr_inputs = {
 static InputDescriptors alienfnt_inputs = {
 	  {
 			{ NAOMI_BTN0_KEY, "LEFT SHOT" },
-			{ NAOMI_BTN5_KEY, "ROTATION R", NAOMI_BTN1_KEY },
-			{ NAOMI_BTN1_KEY, "RIGHT SHOT", NAOMI_BTN2_KEY },
-			{ NAOMI_BTN4_KEY, "ROTATION L", NAOMI_BTN3_KEY },
+			{ NAOMI_BTN1_KEY, "ROTATION R" },
+			{ NAOMI_BTN2_KEY, "RIGHT SHOT" },
+			{ NAOMI_BTN3_KEY, "ROTATION L" },
 			NAO_START_DESC
 			NAO_BASE_BTN_DESC
 	  },

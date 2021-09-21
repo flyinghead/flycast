@@ -237,7 +237,7 @@ public:
 		GamepadDevice::Unregister(gamepad);
 	};
 
-	void virtual_gamepad_event(int kcode, int joyx, int joyy, int lt, int rt)
+	void virtual_gamepad_event(int kcode, int joyx, int joyy, int lt, int rt, bool fastForward)
 	{
 		// No virtual gamepad when the GUI is open: touch events only
 		if (gui_is_open())
@@ -245,17 +245,37 @@ public:
 			kcode = 0xffffffff;
 			joyx = joyy = rt = lt = 0;
 		}
-		if (rt > 0)
+		if (settings.platform.system != DC_PLATFORM_DREAMCAST)
 		{
-			if ((kcode & DC_BTN_A) == 0)
-				// RT + A -> D (coin)
-				kcode &= ~DC_BTN_D;
-			if ((kcode & DC_BTN_B) == 0)
-				// RT + B -> Service
-				kcode &= ~DC_DPAD2_UP;
+			if (rt > 0)
+			{
+				if ((kcode & DC_BTN_A) == 0)
+					// RT + A -> D (coin)
+					kcode &= ~DC_BTN_D;
+				if ((kcode & DC_BTN_B) == 0)
+					// RT + B -> Service
+					kcode &= ~DC_DPAD2_UP;
+				if ((kcode & DC_BTN_X) == 0)
+					// RT + X -> Test
+					kcode &= ~DC_DPAD2_DOWN;
+			}
+			// arcade mapping: X -> btn2, Y -> btn3
 			if ((kcode & DC_BTN_X) == 0)
-				// RT + X -> Test
-				kcode &= ~DC_DPAD2_DOWN;
+			{
+				kcode &= ~DC_BTN_C;
+				kcode |= DC_BTN_X;
+			}
+			if ((kcode & DC_BTN_Y) == 0)
+			{
+				kcode &= ~DC_BTN_X;
+				kcode |= DC_BTN_Y;
+			}
+			if (rt > 0)
+				// naomi btn4
+				kcode &= ~DC_BTN_Y;
+			if (lt > 0)
+				// naomi btn5
+				kcode &= ~DC_BTN_Z;
 		}
 		u32 changes = kcode ^ previous_kcode;
 		for (int i = 0; i < 32; i++)
@@ -272,6 +292,9 @@ public:
 		gamepad_axis_input(DC_AXIS_LT, lt == 0 ? 0 : 0x7fff);
 		gamepad_axis_input(DC_AXIS_RT, rt == 0 ? 0 : 0x7fff);
 		previous_kcode = kcode;
+		if (fastForward != previousFastForward)
+			gamepad_btn_input(EMU_BTN_FFORWARD, fastForward);
+		previousFastForward = fastForward;
 	}
 
 	void rumble(float power, float inclination, u32 duration_ms) override
@@ -304,6 +327,7 @@ private:
 	int android_id;
 	static std::map<int, std::shared_ptr<AndroidGamepadDevice>> android_gamepads;
 	u32 previous_kcode = 0xffffffff;
+	bool previousFastForward = false;
 	std::vector<int> fullAxes;
 	std::vector<int> halfAxes;
 };

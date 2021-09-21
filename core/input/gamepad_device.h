@@ -140,7 +140,7 @@ private:
 	input_detected_cb _input_detected;
 	bool _remappable;
 	u32 digitalToAnalogState[4];
-	std::map<DreamcastKey, int> lastAxisValue;
+	std::map<DreamcastKey, int> lastAxisValue[4];
 
 	static std::vector<std::shared_ptr<GamepadDevice>> _gamepads;
 	static std::mutex _gamepads_mutex;
