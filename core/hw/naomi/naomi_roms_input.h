@@ -26,10 +26,10 @@
 // NAOMI Games
 //
 
-#define NAO_BASE_BTN_DESC { NAOMI_COIN_KEY, "COIN" }, \
-						 { NAOMI_TEST_KEY, "TEST" }, \
-						 { NAOMI_SERVICE_KEY, "SERVICE" },
-#define NAO_START_DESC { NAOMI_START_KEY, "START" },
+#define NAO_BASE_BTN_DESC { NAOMI_COIN_KEY, "" }, \
+						 { NAOMI_TEST_KEY, "" }, \
+						 { NAOMI_SERVICE_KEY, "" },
+#define NAO_START_DESC { NAOMI_START_KEY, "" },
 
 #define INPUT_2_BUTTONS(btn0, btn1) {	\
 	{									\
@@ -189,6 +189,12 @@ static InputDescriptors crzytaxi_inputs = {
 
 static InputDescriptors cspike_inputs = INPUT_3_BUTTONS("Shoot", "Attack", "Mark");
 
+static InputDescriptors doa2_inputs = INPUT_3_BUTTONS("Free", "Punch", "Kick");
+
+static InputDescriptors toyfight_inputs = INPUT_3_BUTTONS("Punch", "Kick", "Dodge");
+
+static InputDescriptors ausfache_inputs = INPUT_3_BUTTONS("Weak Attack", "Medium Attack", "Strong Attack");
+
 static InputDescriptors trigger_inputs = {
 	  {
 			{ NAOMI_BTN0_KEY, "TRIGGER" },
@@ -249,7 +255,7 @@ static InputDescriptors mvsc2_inputs = {
 static InputDescriptors ninjaslt_inputs = {
 	  {
 			{ NAOMI_BTN2_KEY, "ENTER", NAOMI_BTN0_KEY },
-			{ NAOMI_START_KEY, "START", NAOMI_BTN2_KEY, 0, NAOMI_BTN3_KEY },
+			{ NAOMI_START_KEY, "", NAOMI_BTN2_KEY, 0, NAOMI_BTN3_KEY },
 			{ NAOMI_BTN0_KEY, "TRIGGER", NAOMI_BTN4_KEY, 0, NAOMI_BTN5_KEY },
 			{ NAOMI_UP_KEY, "SELECT UP" },
 			{ NAOMI_DOWN_KEY, "SELECT DOWN" },
@@ -449,6 +455,8 @@ static InputDescriptors sstrkfgt_inputs = {
 
 static InputDescriptors guilty_gear_input = INPUT_5_BUTTONS("KICK", "SLASH", "HSLASH", "PUNCH", "DUST ATTACK");
 
+static InputDescriptors ggx_input = INPUT_4_BUTTONS("PUNCH", "KICK", "SLASH", "HSLASH");
+
 static InputDescriptors senkosp_input = INPUT_5_BUTTONS("MAIN", "SUB", "MAIN+SUB", "ACTION", "OVER DRIVE");
 
 static InputDescriptors meltyb_input = INPUT_5_BUTTONS("LAttack", "MAttack", "HAttack", "Guard", "Quick Action");
@@ -474,10 +482,10 @@ static InputDescriptors hmgeo_input = {
 // AtomisWave games
 //
 
-#define AW_BASE_BTN_DESC { AWAVE_COIN_KEY, "COIN" }, \
-						 { AWAVE_TEST_KEY, "TEST" }, \
-						 { AWAVE_SERVICE_KEY, "SERVICE" },
-#define AW_START_DESC { AWAVE_START_KEY, "START" },
+#define AW_BASE_BTN_DESC { AWAVE_COIN_KEY, "" }, \
+						 { AWAVE_TEST_KEY, "" }, \
+						 { AWAVE_SERVICE_KEY, "" },
+#define AW_START_DESC { AWAVE_START_KEY, "" },
 
 #define AW_5_BUTTONS(btn0, btn1, btn2, btn3, btn4) {	\
 	{									\
