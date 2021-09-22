@@ -551,12 +551,13 @@ bool nextFrame()
 		GGPOErrorCode result = ggpo_add_local_input(ggpoSession, localPlayer, &allInput[0], inputSize);
 		if (result == GGPO_OK)
 			break;
-		WARN_LOG(NETWORK, "ggpo_add_local_input failed %d", result);
 		if (result != GGPO_ERRORCODE_PREDICTION_THRESHOLD)
 		{
+			WARN_LOG(NETWORK, "ggpo_add_local_input failed %d", result);
 			stopSession();
 			throw FlycastException("GGPO error");
 		}
+		DEBUG_LOG(NETWORK, "ggpo_add_local_input prediction barrier reached");
 		std::this_thread::sleep_for(std::chrono::milliseconds(5));
 		ggpo_idle(ggpoSession, 0);
 	} while (active());
