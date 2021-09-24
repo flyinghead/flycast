@@ -21,9 +21,9 @@ option(LIBRETRO "Build libretro core" OFF)
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/shell/cmake")
 
 if(APPLE)
-	if(IOS)
+	if(CMAKE_SYSTEM_NAME STREQUAL iOS)
 		set(CMAKE_OSX_DEPLOYMENT_TARGET "12.0" CACHE STRING "Minimum iOS deployment version")
-		set(CMAKE_OSX_ARCHITECTURES "arm64")
+		set(CMAKE_OSX_ARCHITECTURES "arm64" CACHE STRING "")
 	else()
 		set(CMAKE_OSX_DEPLOYMENT_TARGET "10.9" CACHE STRING "Minimum macOS deployment version")
 		set(CMAKE_OSX_ARCHITECTURES "x86_64;arm64" CACHE STRING "")
@@ -265,10 +265,7 @@ if(NOT LIBRETRO)
 endif()
 
 execute_process(COMMAND git apply -p1 ${CMAKE_CURRENT_SOURCE_DIR}/core/deps/patches/libchdr.patch
-		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/core/deps/libchdr) 
-if(IOS)
-	set(CMAKE_SYSTEM_PROCESSOR aarch64)
-endif()
+		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/core/deps/libchdr)
 add_subdirectory(core/deps/libchdr)
 target_link_libraries(${PROJECT_NAME} PRIVATE chdr-static)
 target_include_directories(${PROJECT_NAME} PRIVATE core/deps/libchdr/include)
@@ -1173,7 +1170,6 @@ if(NOT LIBRETRO)
 				XCODE_ATTRIBUTE_GCC_PREFIX_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/shell/apple/emulator-ios/emulator/flycast-ios-Prefix.pch"
 				RESOURCE "${IOS_RESOURCES}"
 				XCODE_ATTRIBUTE_GCC_PRECOMPILE_PREFIX_HEADER "YES"
-				XCODE_ATTRIBUTE_IPHONEOS_DEPLOYMENT_TARGET "12.0"
 				XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED "NO"
 				XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY ""
 				XCODE_ATTRIBUTE_TARGETED_DEVICE_FAMILY "1,2"
