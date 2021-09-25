@@ -74,7 +74,7 @@ if(NINTENDO_SWITCH)
 	if(USE_GLES)
         target_compile_definitions(${PROJECT_NAME} PRIVATE GLES)
 	endif()
- 
+
 elseif(LIBRETRO)
     add_library(${PROJECT_NAME} SHARED core/emulator.cpp)
     if(APPLE)
@@ -382,7 +382,7 @@ if(ANDROID AND NOT LIBRETRO)
 	else()
 		include("core/deps/oboe/gamesdk.cmake")
 		add_gamesdk_target(PACKAGE_DIR core/deps/oboe ANDROID_API_LEVEL 28 ANDROID_NDK_VERSION 21.0.0)
-		target_link_libraries(${PROJECT_NAME} PRIVATE oboe OpenSLES) 
+		target_link_libraries(${PROJECT_NAME} PRIVATE oboe OpenSLES)
 	endif()
 	target_compile_definitions(${PROJECT_NAME} PRIVATE USE_OBOE)
 endif()
@@ -503,7 +503,7 @@ target_sources(${PROJECT_NAME} PRIVATE core/deps/xbrz/xbrz.cpp)
 
 if(LIBRETRO)
     target_include_directories(${PROJECT_NAME} PRIVATE core/deps/libretro-common/include)
-	target_sources(${PROJECT_NAME} PRIVATE 
+	target_sources(${PROJECT_NAME} PRIVATE
 		core/deps/libretro-common/memmap/memalign.c
 		core/deps/libretro-common/file/file_path.c
 		core/deps/libretro-common/vfs/vfs_implementation.c
@@ -516,11 +516,11 @@ if(LIBRETRO)
 		core/deps/libretro-common/glsm/glsm.c
 		core/deps/libretro-common/glsym/rglgen.c)
 	if(ANDROID OR USE_GLES)
-		target_sources(${PROJECT_NAME} PRIVATE core/deps/libretro-common/glsym/glsym_es3.c) 
+		target_sources(${PROJECT_NAME} PRIVATE core/deps/libretro-common/glsym/glsym_es3.c)
 	elseif(USE_GLES2)
-		target_sources(${PROJECT_NAME} PRIVATE core/deps/libretro-common/glsym/glsym_es2.c) 
+		target_sources(${PROJECT_NAME} PRIVATE core/deps/libretro-common/glsym/glsym_es2.c)
 	else()
-		target_sources(${PROJECT_NAME} PRIVATE core/deps/libretro-common/glsym/glsym_gl.c) 
+		target_sources(${PROJECT_NAME} PRIVATE core/deps/libretro-common/glsym/glsym_gl.c)
 	endif()
 	target_sources(${PROJECT_NAME} PRIVATE
 		shell/libretro/audiostream.cpp
@@ -533,7 +533,7 @@ if(LIBRETRO)
 		shell/libretro/LogManager.h
 		shell/libretro/option.cpp
 		shell/libretro/oslib.cpp
-		shell/libretro/vmu_xhair.cpp) 
+		shell/libretro/vmu_xhair.cpp)
 endif()
 
 target_sources(${PROJECT_NAME} PRIVATE
@@ -1221,7 +1221,7 @@ if(NOT LIBRETRO)
 		
 			set_target_properties(${PROJECT_NAME} PROPERTIES
 				OUTPUT_NAME "Flycast"
-				MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/shell/cmake/MacOSXBundleInfo.plist.in
+				MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/shell/apple/emulator-osx/MacOSXBundleInfo.plist.in
 				MACOSX_BUNDLE_EXECUTABLE_NAME "Flycast"
 				MACOSX_BUNDLE_INFO_STRING ""
 				MACOSX_BUNDLE_ICON_FILE "AppIcon"
