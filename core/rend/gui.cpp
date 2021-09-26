@@ -1010,9 +1010,13 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 			sprintf(key_id, "key_id%d", systemMapping->key);
 			ImGui::PushID(key_id);
 
-			const char *game_btn_name = GetCurrentGameButtonName(systemMapping->key);
-			if (game_btn_name == nullptr)
-				game_btn_name = GetCurrentGameAxisName(systemMapping->key);
+			const char *game_btn_name = nullptr;
+			if (arcade_button_mode)
+			{
+				game_btn_name = GetCurrentGameButtonName(systemMapping->key);
+				if (game_btn_name == nullptr)
+					game_btn_name = GetCurrentGameAxisName(systemMapping->key);
+			}
 			if (game_btn_name != nullptr && game_btn_name[0] != '\0')
 				ImGui::Text("%s - %s", systemMapping->name, game_btn_name);
 			else

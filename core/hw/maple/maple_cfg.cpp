@@ -154,8 +154,9 @@ void MapleConfigMap::SetImage(u8 *img)
 
 void MapleConfigMap::GetAbsCoordinates(int& x, int& y)
 {
-	x = mo_x_abs[playerNum()];
-	y = mo_y_abs[playerNum()];
+	const MapleInputState& inputState = mapleInputState[playerNum()];
+	x = inputState.absPointerX;
+	y = inputState.absPointerY;
 }
 
 void MapleConfigMap::GetMouseInput(u8& buttons, int& x, int& y, int& wheel)

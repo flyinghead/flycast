@@ -475,8 +475,8 @@ protected:
 	u16 read_analog_axis(int player_num, int player_axis, bool inverted) override {
 		if (init_in_progress)
 			return 0;
-		player_num = std::min(player_num, (int)ARRAY_SIZE(mo_x_abs));
-		if (mo_x_abs[player_num] < 0 || mo_x_abs[player_num] > 639 || mo_y_abs[player_num] < 0 || mo_y_abs[player_num] > 479)
+		const MapleInputState& inputState = mapleInputState[std::min(player_num, (int)ARRAY_SIZE(mapleInputState) - 1)];
+		if (inputState.absPointerX < 0 || inputState.absPointerX > 639 || inputState.absPointerY < 0 || inputState.absPointerY > 479)
 			return 0;
 		else
 			return 0x8000;
@@ -1485,10 +1485,11 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 							for (; axis / 2 < player_count && axis < buffer_in[cmdi + 1]; axis += 2)
 							{
 								int playerNum = first_player + axis / 2;
+								const MapleInputState& inputState = mapleInputState[std::min(playerNum, (int)ARRAY_SIZE(mapleInputState) - 1)];
 								u16 x;
 								u16 y;
-								if (mo_x_abs[playerNum] < 0 || mo_x_abs[playerNum] > 639
-										|| mo_y_abs[playerNum] < 0 || mo_y_abs[playerNum] > 479
+								if (inputState.absPointerX < 0 || inputState.absPointerX > 639
+										|| inputState.absPointerY < 0 || inputState.absPointerY > 479
 										|| (buttons[playerNum] & NAOMI_RELOAD_KEY) != 0)
 								{
 									x = 0;
@@ -1496,8 +1497,8 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 								}
 								else
 								{
-									x = mo_x_abs[playerNum] * 0xFFFF / 639;
-									y = mo_y_abs[playerNum] * 0xFFFF / 479;
+									x = inputState.absPointerX * 0xFFFF / 639;
+									y = inputState.absPointerY * 0xFFFF / 479;
 								}
 								LOGJVS("x,y:%4x,%4x ", x, y);
 								JVS_OUT(x >> 8);		// X, MSB
@@ -1615,8 +1616,8 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 							// Ninja Assault:
 							u32 xr = 0x19d - 0x37;
 							u32 yr = 0x1fe - 0x40;
-							x = mo_x_abs[playerNum] * xr / 639 + 0x37;
-							y = mo_y_abs[playerNum] * yr / 479 + 0x40;
+							x = mapleInputState[playerNum].absPointerX * xr / 639 + 0x37;
+							y = mapleInputState[playerNum].absPointerY * yr / 479 + 0x40;
 						}
 						LOGJVS("lightgun %4x,%4x ", x, y);
 						JVS_OUT(x >> 8);		// X, MSB

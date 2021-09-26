@@ -18,6 +18,7 @@
 */
 #include "ggpo.h"
 #include "hw/maple/maple_cfg.h"
+#include "hw/maple/maple_devs.h"
 #include "input/gamepad_device.h"
 
 namespace ggpo
@@ -38,6 +39,8 @@ static void getLocalInput(MapleInputState inputState[4])
 		state.fullAxes[PJAI_Y1] = joyy[player];
 		state.fullAxes[PJAI_X2] = joyrx[player];
 		state.fullAxes[PJAI_Y2] = joyry[player];
+		state.absPointerX = mo_x_abs[player];
+		state.absPointerY = mo_y_abs[player];
 	}
 }
 
@@ -82,6 +85,7 @@ static int msPerFrameAvg;
 static bool _endOfFrame;
 static MiniUPnP miniupnp;
 static int analogAxes;
+static bool absPointerPos;
 
 struct MemPages
 {
@@ -380,7 +384,10 @@ void startSession(int localPort, int localPlayerNum)
 	else
 	{
 		analogAxes = 0;
-		if (NaomiGameInputs != nullptr)
+		absPointerPos = false;
+		if (settings.input.JammaSetup == JVS::LightGun || settings.input.JammaSetup == JVS::LightGunAsAnalog)
+			absPointerPos = true;
+		else if (NaomiGameInputs != nullptr)
 		{
 			for (const auto& axis : NaomiGameInputs->axes)
 			{
@@ -392,7 +399,7 @@ void startSession(int localPort, int localPlayerNum)
 		}
 		NOTICE_LOG(NETWORK, "GGPO: Using %d full analog axes", analogAxes);
 	}
-	u32 inputSize = sizeof(kcode[0]) + analogAxes;
+	u32 inputSize = sizeof(kcode[0]) + analogAxes + (int)absPointerPos * 4;
 	GGPOErrorCode result = ggpo_start_session(&ggpoSession, &cb, config::Settings::instance().getGameId().c_str(), MAX_PLAYERS, inputSize, localPort);
 	if (result != GGPO_OK)
 	{
@@ -470,7 +477,7 @@ void getInput(MapleInputState inputState[4])
 	for (int player = 0; player < 4; player++)
 		inputState[player] = {};
 
-	u32 inputSize = sizeof(u32) + analogAxes;
+	u32 inputSize = sizeof(u32) + analogAxes + (int)absPointerPos * 4;
 	std::vector<u8> inputs(inputSize * MAX_PLAYERS);
 	// should not call any callback
 	GGPOErrorCode error = ggpo_synchronize_input(ggpoSession, (void *)&inputs[0], inputs.size(), nullptr);
@@ -489,6 +496,11 @@ void getInput(MapleInputState inputState[4])
 			state.fullAxes[PJAI_X1] = inputs[player * inputSize + 4];
 			if (analogAxes >= 2)
 				state.fullAxes[PJAI_Y1] = inputs[player * inputSize + 5];
+		}
+		else if (absPointerPos)
+		{
+			state.absPointerX = *(s16 *)&inputs[player * inputSize + 4];
+			state.absPointerY = *(s16 *)&inputs[player * inputSize + 6];
 		}
 		state.halfAxes[PJTI_R] = (state.kcode & BTN_TRIGGER_RIGHT) == 0 ? 255 : 0;
 		state.halfAxes[PJTI_L] = (state.kcode & BTN_TRIGGER_LEFT) == 0 ? 255 : 0;
@@ -539,7 +551,7 @@ bool nextFrame()
 			input |= BTN_TRIGGER_LEFT;
 		else
 			input &= ~BTN_TRIGGER_LEFT;
-		u32 inputSize = sizeof(input) + analogAxes;
+		u32 inputSize = sizeof(input) + analogAxes + (int)absPointerPos * 4;
 		std::vector<u8> allInput(inputSize);
 		*(u32 *)&allInput[0] = input;
 		if (analogAxes > 0)
@@ -547,6 +559,11 @@ bool nextFrame()
 			allInput[4] = joyx[localPlayerNum];
 			if (analogAxes >= 2)
 				allInput[5] = joyy[localPlayerNum];
+		}
+		else if (absPointerPos)
+		{
+			*(s16 *)&allInput[4] = mo_x_abs[localPlayerNum];
+			*(s16 *)&allInput[6] = mo_y_abs[localPlayerNum];
 		}
 		GGPOErrorCode result = ggpo_add_local_input(ggpoSession, localPlayer, &allInput[0], inputSize);
 		if (result == GGPO_OK)
