@@ -50,7 +50,6 @@ bool dc_is_load_done();
 void dc_cancel_load();
 void dc_get_load_status();
 bool dc_is_running();
-void dc_resize_renderer();
 std::string dc_get_last_error();
 void dc_set_network_state(bool online);
 

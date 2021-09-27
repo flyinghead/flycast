@@ -26,8 +26,6 @@
 #include <glm/glm.hpp>
 #include <glm/gtx/transform.hpp>
 
-extern int screen_width, screen_height;
-
 // Dreamcast:
 // +Y is down
 // Open GL:
@@ -82,7 +80,7 @@ public:
 		constexpr int rttFlipY = System == COORD_DIRECTX ? -1 : 1;
 		constexpr int framebufferFlipY = System == COORD_DIRECTX ? -1 : 1;
 
-		renderViewport = { width == 0 ? screen_width : width, height == 0 ? screen_height : height };
+		renderViewport = { width == 0 ? settings.display.width : width, height == 0 ? settings.display.height : height };
 		this->renderingContext = renderingContext;
 
 		GetFramebufferScaling(false, scale_x, scale_y);

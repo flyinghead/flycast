@@ -28,8 +28,6 @@
 #include "dx9/dxcontext.h"
 #include "gui.h"
 
-extern int screen_width, screen_height;
-
 typedef void (*StringCallback)(bool cancelled, std::string selection);
 
 void select_file_popup(const char *prompt, StringCallback callback,

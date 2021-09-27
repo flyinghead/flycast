@@ -85,8 +85,6 @@ extern "C" JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_screenDpi(
     screen_dpi = screenDpi;
 }
 
-extern int screen_width,screen_height;
-
 std::shared_ptr<AndroidMouse> mouse;
 
 float vjoy_pos[15][8];
@@ -348,8 +346,8 @@ extern "C" JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_rendinitNa
 		}
 		else
 		{
-		    screen_width = width;
-		    screen_height = height;
+			settings.display.width = width;
+			settings.display.height = height;
 		    mainui_reinit();
 		}
 	}
@@ -579,7 +577,7 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_reicast_emulator_periph_InputDevi
 
 extern "C" JNIEXPORT void JNICALL Java_com_reicast_emulator_periph_InputDeviceManager_mouseEvent(JNIEnv *env, jobject obj, jint xpos, jint ypos, jint buttons)
 {
-	mouse->setAbsPos(xpos, ypos, screen_width, screen_height);
+	mouse->setAbsPos(xpos, ypos, settings.display.width, settings.display.height);
 	mouse->setButton(Mouse::LEFT_BUTTON, (buttons & 1) != 0);
 	mouse->setButton(Mouse::RIGHT_BUTTON, (buttons & 2) != 0);
 	mouse->setButton(Mouse::MIDDLE_BUTTON, (buttons & 4) != 0);

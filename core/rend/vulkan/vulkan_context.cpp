@@ -1029,7 +1029,7 @@ void VulkanContext::DoSwapAutomation()
 			u8* img = (u8*)device->mapMemory(*deviceMemory, 0, VK_WHOLE_SIZE);
 			img += subresourceLayout.offset;
 
-			u8 *end = img + screen_width * screen_height * 4;
+			u8 *end = img + settings.display.width * settings.display.height * 4;
 			if (!supportsBlit && colorFormat == vk::Format::eB8G8R8A8Unorm)
 			{
 				for (u8 *p = img; p < end; p += 4)
@@ -1045,7 +1045,7 @@ void VulkanContext::DoSwapAutomation()
 				for (u8 *p = img; p < end; p += 4)
 					p[3] = 0xff;
 			}
-			dump_screenshot(img, screen_width, screen_height, true, subresourceLayout.rowPitch, false);
+			dump_screenshot(img, settings.display.width, settings.display.height, true, subresourceLayout.rowPitch, false);
 
 			device->unmapMemory(*deviceMemory);
 		}
@@ -1089,10 +1089,10 @@ void VulkanContext::SetWindowSize(u32 width, u32 height)
 		// In this case, the context becomes invalid but we keep the previous
 		// dimensions to not confuse the renderer and imgui
 		if (width != 0)
-			screen_width = width;
+			settings.display.width = width;
 
 		if (height != 0)
-			screen_height = height;
+			settings.display.height = height;
 
 		SetResized();
 	}

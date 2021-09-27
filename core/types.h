@@ -331,6 +331,11 @@ struct settings_t
 		u32 flash_size;
 	} platform;
 
+	struct {
+		int width = 640;
+		int height = 480;
+	} display;
+
 	struct
 	{
 		bool disable_nvmem;

@@ -324,8 +324,6 @@ void main()
 GLCache glcache;
 gl_ctx gl;
 
-int screen_width;
-int screen_height;
 GLuint fogTextureId;
 GLuint paletteTextureId;
 
@@ -1014,14 +1012,14 @@ void OSD_DRAW(bool clear_screen)
 	if (gl.OSD_SHADER.osd_tex != 0)
 	{
 		glcache.Disable(GL_SCISSOR_TEST);
-		glViewport(0, 0, screen_width, screen_height);
+		glViewport(0, 0, settings.display.width, settings.display.height);
 
 		if (clear_screen)
 		{
 			glcache.ClearColor(0.7f, 0.7f, 0.7f, 1.f);
 			glClear(GL_COLOR_BUFFER_BIT);
 			render_output_framebuffer();
-			glViewport(0, 0, screen_width, screen_height);
+			glViewport(0, 0, settings.display.width, settings.display.height);
 		}
 
 #ifndef GLES2
@@ -1036,12 +1034,12 @@ void OSD_DRAW(bool clear_screen)
 		verify(glIsProgram(gl.OSD_SHADER.program));
 		glcache.UseProgram(gl.OSD_SHADER.program);
 
-		float scale_h = screen_height / 480.f;
-		float offs_x = (screen_width - scale_h * 640.f) / 2.f;
+		float scale_h = settings.display.height / 480.f;
+		float offs_x = (settings.display.width - scale_h * 640.f) / 2.f;
 		float scale[4];
-		scale[0] = 2.f / (screen_width / scale_h);
+		scale[0] = 2.f / (settings.display.width / scale_h);
 		scale[1]= -2.f / 480.f;
-		scale[2]= 1.f - 2.f * offs_x / screen_width;
+		scale[2]= 1.f - 2.f * offs_x / settings.display.width;
 		scale[3]= -1.f;
 		glUniform4fv(gl.OSD_SHADER.scale, 1, scale);
 

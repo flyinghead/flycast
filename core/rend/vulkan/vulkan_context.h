@@ -47,8 +47,6 @@ public:
 #include "rend/TexCache.h"
 #include "overlay.h"
 
-extern int screen_width, screen_height;
-
 struct ImDrawData;
 void ImGui_ImplVulkan_RenderDrawData(ImDrawData *draw_data);
 static vk::Format findDepthFormat(vk::PhysicalDevice physicalDevice);
@@ -80,7 +78,7 @@ public:
 	vk::RenderPass GetRenderPass() const { return *renderPass; }
 	vk::CommandBuffer GetCurrentCommandBuffer() const { return *commandBuffers[GetCurrentImageIndex()]; }
 	vk::DescriptorPool GetDescriptorPool() const { return *descriptorPool; }
-	vk::Extent2D GetViewPort() const { return { (u32)screen_width, (u32)screen_height }; }
+	vk::Extent2D GetViewPort() const { return { (u32)settings.display.width, (u32)settings.display.height }; }
 	size_t GetSwapChainSize() const { return imageViews.size(); }
 	int GetCurrentImageIndex() const { return currentImage; }
 	void WaitIdle() const;

@@ -549,7 +549,7 @@ static void update_variables(bool first_startup)
 	if (!first_startup && previous_renderer != config::RendererType) {
 		rend_term_renderer();
 		rend_init_renderer();
-		dc_resize_renderer();
+		rend_resize_renderer();
 	}
 
 	if (first_startup)
@@ -803,14 +803,14 @@ static void update_variables(bool first_startup)
 			retro_system_av_info avinfo;
 			setAVInfo(avinfo);
 			environ_cb(RETRO_ENVIRONMENT_SET_SYSTEM_AV_INFO, &avinfo);
-			dc_resize_renderer();
+			rend_resize_renderer();
 		}
 		else if (prevFramebufferWidth != framebufferWidth || prevFramebufferHeight != framebufferHeight || geometryChanged)
 		{
 			retro_game_geometry geometry;
 			setGameGeometry(geometry);
 			environ_cb(RETRO_ENVIRONMENT_SET_GEOMETRY, &geometry);
-			dc_resize_renderer();
+			rend_resize_renderer();
 		}
 	}
 }
@@ -928,7 +928,7 @@ static void context_reset()
 	rend_term_renderer();
 	theGLContext.Init();
 	rend_init_renderer();
-	dc_resize_renderer();
+	rend_resize_renderer();
 }
 
 static void context_destroy()
@@ -1383,7 +1383,7 @@ static void retro_vk_context_reset()
 	theVulkanContext.Init((retro_hw_render_interface_vulkan *)vulkan);
 	rend_term_renderer();
 	rend_init_renderer();
-	dc_resize_renderer();
+	rend_resize_renderer();
 }
 
 static void retro_vk_context_destroy()

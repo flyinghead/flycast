@@ -25,7 +25,6 @@
 #define CALLBACK
 #endif
 
-extern int screen_width, screen_height;
 HWND getNativeHwnd();
 
 namespace rawinput {
@@ -206,7 +205,7 @@ RawMouse::RawMouse(int maple_port, const std::string& name, const std::string& u
 	std::replace(this->_unique_id.begin(), this->_unique_id.end(), ']', '_');
 	loadMapping();
 
-	setAbsPos(screen_width / 2, screen_height / 2, screen_width, screen_height);
+	setAbsPos(settings.display.width / 2, settings.display.height / 2, settings.display.width, settings.display.height);
 }
 
 void RawMouse::buttonInput(Button button, u16 flags, u16 downFlag, u16 upFlag)
@@ -225,7 +224,7 @@ void RawMouse::updateState(RAWMOUSE* state)
 
 		POINT pt { long(state->lLastX / 65535.0f * width), long(state->lLastY / 65535.0f * height) };
 		ScreenToClient(getNativeHwnd(), &pt);
-		setAbsPos(pt.x, pt.y, screen_width, screen_height);
+		setAbsPos(pt.x, pt.y, settings.display.width, settings.display.height);
 	}
 	else if (state->lLastX != 0 || state->lLastY != 0)
 		setRelPos(state->lLastX, state->lLastY);

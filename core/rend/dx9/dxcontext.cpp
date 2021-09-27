@@ -27,7 +27,6 @@
 #include "emulator.h"
 
 DXContext theDXContext;
-extern int screen_width, screen_height; // FIXME
 
 bool DXContext::Init(bool keepCurrentWindow)
 {
@@ -98,7 +97,7 @@ void DXContext::Present()
 			{
 				renderer = new D3DRenderer();
 				renderer->Init();
-				dc_resize_renderer();
+				rend_resize_renderer();
 			}
 		}
 #endif
@@ -122,11 +121,11 @@ void DXContext::EndImGuiFrame()
 		if (overlayOnly)
 		{
 			if (crosshairsNeeded() || config::FloatVMUs)
-				overlay.draw(screen_width, screen_height, config::FloatVMUs, true);
+				overlay.draw(settings.display.width, settings.display.height, config::FloatVMUs, true);
 		}
 		else
 		{
-			overlay.draw(screen_width, screen_height, true, false);
+			overlay.draw(settings.display.width, settings.display.height, true, false);
 		}
 		ImGui_ImplDX9_RenderDrawData(ImGui::GetDrawData());
 		pDevice->EndScene();
@@ -139,9 +138,9 @@ void DXContext::resize()
 		return;
 	RECT rect;
 	GetClientRect(hWnd, &rect);
-	d3dpp.BackBufferWidth = screen_width = rect.right;
-	d3dpp.BackBufferHeight = screen_height = rect.bottom;
-	if (screen_width == 0 || screen_height == 0)
+	d3dpp.BackBufferWidth = settings.display.width = rect.right;
+	d3dpp.BackBufferHeight = settings.display.height = rect.bottom;
+	if (settings.display.width == 0 || settings.display.height == 0)
 		// window minimized
 		return;
 	resetDevice();

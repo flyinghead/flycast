@@ -111,8 +111,8 @@ bool WGLGraphicsContext::Init()
 
 	RECT r;
 	GetClientRect(ourWindow, &r);
-	screen_width = r.right - r.left;
-	screen_height = r.bottom - r.top;
+	settings.display.width = r.right - r.left;
+	settings.display.height = r.bottom - r.top;
 
 	if (rv)
 		PostInit();

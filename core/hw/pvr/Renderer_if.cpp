@@ -506,3 +506,31 @@ void rend_deserialize(void **data, unsigned int *total_size, serialize_version_e
 		REICAST_US(fb_watch_addr_end);
 	}
 }
+
+void rend_resize_renderer()
+{
+	if (renderer == nullptr)
+		return;
+	float hres;
+	int vres = config::RenderResolution;
+	if (config::Widescreen && !config::Rotate90)
+	{
+		if (config::SuperWidescreen)
+			hres = (float)config::RenderResolution * settings.display.width / settings.display.height;
+		else
+			hres = config::RenderResolution * 16.f / 9.f;
+	}
+	else if (config::Rotate90)
+	{
+		vres = vres * config::ScreenStretching / 100;
+		hres = config::RenderResolution * 4.f / 3.f;
+	}
+	else
+	{
+		hres = config::RenderResolution * 4.f * config::ScreenStretching / 3.f / 100.f;
+	}
+	if (!config::Rotate90)
+		hres = std::roundf(hres / 2.f) * 2.f;
+	DEBUG_LOG(RENDERER, "rend_resize_renderer: %d x %d", (int)hres, vres);
+	renderer->Resize((int)hres, vres);
+}

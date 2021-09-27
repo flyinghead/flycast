@@ -1151,7 +1151,7 @@ void D3DRenderer::renderFramebuffer()
 	device->ColorFill(backbuffer, 0, D3DCOLOR_ARGB(255, VO_BORDER_COL.Red, VO_BORDER_COL.Green, VO_BORDER_COL.Blue));
 	int fx = 0;
 	int sx = 0;
-	float screenAR = (float)screen_width / screen_height;
+	float screenAR = (float)settings.display.width / settings.display.height;
 	int fbwidth = width;
 	int fbheight = height;
 	if (config::Rotate90)
@@ -1160,16 +1160,16 @@ void D3DRenderer::renderFramebuffer()
 	if (renderAR > screenAR)
 		fx = (int)roundf((fbwidth - screenAR * fbheight) / 2.f);
 	else
-		sx = (int)roundf((screen_width - renderAR * screen_height) / 2.f);
+		sx = (int)roundf((settings.display.width - renderAR * settings.display.height) / 2.f);
 
 	if (!config::Rotate90)
 	{
 		RECT rs { 0, 0, (long)width, (long)height };
-		RECT rd { 0, 0, screen_width, screen_height };
+		RECT rd { 0, 0, settings.display.width, settings.display.height };
 		if (sx != 0)
 		{
 			rd.left = sx;
-			rd.right = screen_width - sx;
+			rd.right = settings.display.width - sx;
 		}
 		else
 		{
@@ -1190,7 +1190,7 @@ void D3DRenderer::renderFramebuffer()
 		device->SetSamplerState(0, D3DSAMP_MAGFILTER, D3DTEXF_LINEAR);
 
 		glm::mat4 identity = glm::identity<glm::mat4>();
-		glm::mat4 projection = glm::translate(glm::vec3(-1.f / screen_width, 1.f / screen_height, 0))
+		glm::mat4 projection = glm::translate(glm::vec3(-1.f / settings.display.width, 1.f / settings.display.height, 0))
 			* glm::rotate((float)M_PI_2, glm::vec3(0, 0, 1));
 
 		device->SetTransform(D3DTS_WORLD, (const D3DMATRIX *)&identity[0][0]);
@@ -1200,9 +1200,9 @@ void D3DRenderer::renderFramebuffer()
 		device->SetFVF(D3DFVF_XYZ | D3DFVF_TEX1);
 		D3DVIEWPORT9 viewport;
 		viewport.X = sx;
-		viewport.Y = fx * screen_width / height;
-		viewport.Width = screen_width - sx * 2;
-		viewport.Height = screen_height - 2 * fx * screen_width / height;
+		viewport.Y = fx * settings.display.width / height;
+		viewport.Width = settings.display.width - sx * 2;
+		viewport.Height = settings.display.height - 2 * fx * settings.display.width / height;
 		viewport.MinZ = 0;
 		viewport.MaxZ = 1;
 		verifyWin(device->SetViewport(&viewport));

@@ -113,7 +113,6 @@ void emu_dc_resume()
 	dc_resume();
 }
 
-extern int screen_width,screen_height;
 extern bool rend_framePending();
 
 bool emu_frame_pending()
@@ -138,8 +137,8 @@ bool emu_vsync_enabled()
 
 bool emu_single_frame(int w, int h)
 {
-    screen_width = w;
-    screen_height = h;
+    settings.display.width = w;
+    settings.display.height = h;
     
     //For DelayFrameSwapping: use while loop to call multple mainui_rend_frame() until rend_swap_frame(u32 fb_r_sof1)
     int counter = 0;
@@ -236,8 +235,8 @@ void emu_gles_init(int width, int height)
     displayResolution.height = CGDisplayPixelsHigh(displayID);
     scaling = displayNativeSize.width / displayResolution.width;
     
-	screen_width = width;
-	screen_height = height;
+	settings.display.width = width;
+	settings.display.height = height;
 
 	InitRenderApi();
 	mainui_init();

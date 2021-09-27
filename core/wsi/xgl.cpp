@@ -81,7 +81,7 @@ bool XGLGraphicsContext::Init()
 	Window win;
 	int temp;
 	unsigned int tempu;
-	XGetGeometry(display, window, &win, &temp, &temp, (u32 *)&screen_width, (u32 *)&screen_height, &tempu, &tempu);
+	XGetGeometry(display, window, &win, &temp, &temp, (u32 *)&settings.display.width, (u32 *)&settings.display.height, &tempu, &tempu);
 
 #ifndef TEST_AUTOMATION
 	swapOnVSync = config::VSync;
@@ -173,7 +173,7 @@ void XGLGraphicsContext::Swap()
 	Window win;
 	int temp;
 	unsigned int tempu;
-	XGetGeometry(display, window, &win, &temp, &temp, (u32 *)&screen_width, (u32 *)&screen_height, &tempu, &tempu);
+	XGetGeometry(display, window, &win, &temp, &temp, (u32 *)&settings.display.width, (u32 *)&settings.display.height, &tempu, &tempu);
 }
 
 void XGLGraphicsContext::Term()

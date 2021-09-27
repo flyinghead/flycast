@@ -511,8 +511,8 @@ bool sdl_recreate_window(u32 flags)
 		ERROR_LOG(COMMON, "Window creation failed: %s", SDL_GetError());
 		return false;
 	}
-	screen_width = window_width * hdpiScaling;
-	screen_height = window_height * hdpiScaling;
+	settings.display.width = window_width * hdpiScaling;
+	settings.display.height = window_height * hdpiScaling;
 
 #if !defined(GLES) && !defined(_WIN32) && !defined(__SWITCH__)
 	// Set the window icon

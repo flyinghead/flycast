@@ -70,7 +70,7 @@ bool mainui_rend_frame()
 void mainui_init()
 {
 	rend_init_renderer();
-	dc_resize_renderer();
+	rend_resize_renderer();
 }
 
 void mainui_term()

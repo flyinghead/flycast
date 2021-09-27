@@ -252,7 +252,6 @@ static int window_x, window_y;
 // Width and height of the window
 #define DEFAULT_WINDOW_WIDTH  1280
 #define DEFAULT_WINDOW_HEIGHT 720
-extern int screen_width, screen_height;
 static bool window_maximized = false;
 
 static void centerMouse()
@@ -314,8 +313,8 @@ static LRESULT CALLBACK WndProc2(HWND hWnd, UINT message, WPARAM wParam, LPARAM 
 		return 1;
 
 	case WM_SIZE:
-		screen_width = LOWORD(lParam);
-		screen_height = HIWORD(lParam);
+		settings.display.width = LOWORD(lParam);
+		settings.display.height = HIWORD(lParam);
 		window_maximized = (wParam & SIZE_MAXIMIZED) != 0;
 #ifdef USE_VULKAN
 		theVulkanContext.SetResized();
@@ -366,7 +365,7 @@ static LRESULT CALLBACK WndProc2(HWND hWnd, UINT message, WPARAM wParam, LPARAM 
 		{
 			int xPos = GET_X_LPARAM(lParam);
 			int yPos = GET_Y_LPARAM(lParam);
-			mouse->setAbsPos(xPos, yPos, screen_width, screen_height);
+			mouse->setAbsPos(xPos, yPos, settings.display.width, settings.display.height);
 
 			if (wParam & MK_LBUTTON)
 				mouse->setButton(Button::LEFT_BUTTON, true);
@@ -460,14 +459,14 @@ void CreateMainWindow()
 			MessageBox(0, "Failed to register the window class", "Error", MB_OK | MB_ICONEXCLAMATION);
 		else
 			windowClassRegistered = true;
-		screen_width = cfgLoadInt("window", "width", DEFAULT_WINDOW_WIDTH);
-		screen_height = cfgLoadInt("window", "height", DEFAULT_WINDOW_HEIGHT);
+		settings.display.width = cfgLoadInt("window", "width", DEFAULT_WINDOW_WIDTH);
+		settings.display.height = cfgLoadInt("window", "height", DEFAULT_WINDOW_HEIGHT);
 		window_maximized = cfgLoadBool("window", "maximized", false);
 	}
 
 	// Create the eglWindow
 	RECT sRect;
-	SetRect(&sRect, 0, 0, screen_width, screen_height);
+	SetRect(&sRect, 0, 0, settings.display.width, settings.display.height);
 	AdjustWindowRectEx(&sRect, WS_OVERLAPPEDWINDOW, false, 0);
 
 	hWnd = CreateWindow(WINDOW_CLASS, VER_EMUNAME, WS_VISIBLE | WS_OVERLAPPEDWINDOW | (window_maximized ? WS_MAXIMIZE : 0),
@@ -769,10 +768,10 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 	TermRenderApi();
 	destroyMainWindow();
 	cfgSaveBool("window", "maximized", window_maximized);
-	if (!window_maximized && screen_width != 0 && screen_height != 0)
+	if (!window_maximized && settings.display.width != 0 && settings.display.height != 0)
 	{
-		cfgSaveInt("window", "width", screen_width);
-		cfgSaveInt("window", "height", screen_height);
+		cfgSaveInt("window", "width", settings.display.width);
+		cfgSaveInt("window", "height", settings.display.height);
 	}
 #endif
 

@@ -169,8 +169,8 @@ bool EGLGraphicsContext::Init()
 	eglQuerySurface(display, surface, EGL_HEIGHT, &h);
 	NOTICE_LOG(RENDERER, "eglQuerySurface: %d - %d", w, h);
 
-	screen_width = w;
-	screen_height = h;
+	settings.display.width = w;
+	settings.display.height = h;
 
 #ifdef TARGET_PANDORA
 	fbdev = open("/dev/fb0", O_RDONLY);

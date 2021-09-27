@@ -22,8 +22,6 @@
 #include "types.h"
 
 void do_swap_automation();
-// FIXME
-extern int screen_width, screen_height;
 
 class GLGraphicsContext
 {
