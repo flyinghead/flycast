@@ -35,6 +35,7 @@ void UpdateInputState();
 bool mainui_rend_frame()
 {
 	os_DoEvents();
+	UpdateInputState();
 
 	if (gui_is_open() || gui_state == GuiState::VJoyEdit)
 	{
@@ -48,7 +49,6 @@ bool mainui_rend_frame()
 	{
 		if (!rend_single_frame(mainui_enabled))
 		{
-			UpdateInputState();
 			if (!dc_is_running())
 			{
 				std::string error = dc_get_last_error();

@@ -41,7 +41,6 @@
 #include "emulator.h"
 #include "rend/mainui.h"
 
-extern void UpdateInputState();
 static bool game_started;
 
 extern u8 kb_shift[MAPLE_PORTS]; // shift keys pressed (bitmask)
@@ -309,8 +308,6 @@ static void ImGui_Impl_NewFrame()
 	ImGui::GetIO().DisplaySize.y = screen_height;
 
 	ImGuiIO& io = ImGui::GetIO();
-
-	UpdateInputState();
 
 	// Read keyboard modifiers inputs
 	io.KeyCtrl = 0;

@@ -19,7 +19,6 @@ maple_device* MapleDevices[MAPLE_PORTS][6];
 
 int maple_schid;
 
-void UpdateInputState();
 /*
 	Maple host controller
 	Direct processing, async interrupt handling
@@ -146,8 +145,6 @@ static void maple_DoDma()
 		return;
 	}
 #endif
-
-	UpdateInputState();
 
 	const bool swap_msb = (SB_MMSEL == 0);
 	u32 xfer_count=0;

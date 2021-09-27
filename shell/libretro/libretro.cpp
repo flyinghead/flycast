@@ -173,6 +173,8 @@ static std::vector<std::string> disk_paths;
 static std::vector<std::string> disk_labels;
 static bool disc_tray_open = false;
 
+void UpdateInputState();
+
 void retro_set_video_refresh(retro_video_refresh_t cb)
 {
 	video_cb = cb;
@@ -827,6 +829,9 @@ void retro_run()
 	if (config::RendererType.isOpenGL())
 		glsm_ctl(GLSM_CTL_STATE_BIND, nullptr);
 
+	poll_cb();
+	UpdateInputState();
+
 	if (config::ThreadedRendering)
 	{
 		bool fastforward = false;
@@ -839,8 +844,6 @@ void retro_run()
 			dc_resume();
 			first_run = false;
 		}
-
-		poll_cb();
 
 		// Render
 		is_dupe = true;
