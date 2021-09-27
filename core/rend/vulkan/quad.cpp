@@ -153,9 +153,9 @@ void QuadPipeline::Init(ShaderManager *shaderManager, vk::RenderPass renderPass)
 				vk::SamplerCreateInfo(vk::SamplerCreateFlags(),
 						vk::Filter::eLinear, vk::Filter::eLinear,
 						vk::SamplerMipmapMode::eLinear,
-						vk::SamplerAddressMode::eClampToBorder,
-						vk::SamplerAddressMode::eClampToBorder,
-						vk::SamplerAddressMode::eClampToBorder, 0.0f, false,
+						vk::SamplerAddressMode::eClampToEdge,
+						vk::SamplerAddressMode::eClampToEdge,
+						vk::SamplerAddressMode::eClampToEdge, 0.0f, false,
 						16.0f, false, vk::CompareOp::eNever, 0.0f, 0.0f,
 						vk::BorderColor::eFloatOpaqueBlack));
 	}
@@ -165,9 +165,9 @@ void QuadPipeline::Init(ShaderManager *shaderManager, vk::RenderPass renderPass)
 				vk::SamplerCreateInfo(vk::SamplerCreateFlags(),
 						vk::Filter::eNearest, vk::Filter::eNearest,
 						vk::SamplerMipmapMode::eNearest,
-						vk::SamplerAddressMode::eClampToBorder,
-						vk::SamplerAddressMode::eClampToBorder,
-						vk::SamplerAddressMode::eClampToBorder, 0.0f, false,
+						vk::SamplerAddressMode::eClampToEdge,
+						vk::SamplerAddressMode::eClampToEdge,
+						vk::SamplerAddressMode::eClampToEdge, 0.0f, false,
 						16.0f, false, vk::CompareOp::eNever, 0.0f, 0.0f,
 						vk::BorderColor::eFloatOpaqueBlack));
 	}

@@ -295,8 +295,8 @@ bool OITDrawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 	cmdBuffer.pushConstants<OITDescriptorSets::PushConstants>(pipelineManager->GetPipelineLayout(), vk::ShaderStageFlagBits::eFragment, 0, pushConstants);
 
 	const std::array<vk::ClearValue, 4> clear_colors = {
-			vk::ClearColorValue(std::array<float, 4>{0.f, 0.f, 0.f, 1.f}),
-			vk::ClearColorValue(std::array<float, 4>{0.f, 0.f, 0.f, 1.f}),
+			pvrrc.isRTT ? vk::ClearColorValue(std::array<float, 4>{0.f, 0.f, 0.f, 1.f}) : getBorderColor(),
+			pvrrc.isRTT ? vk::ClearColorValue(std::array<float, 4>{0.f, 0.f, 0.f, 1.f}) : getBorderColor(),
 			vk::ClearDepthStencilValue{ 0.f, 0 },
 			vk::ClearDepthStencilValue{ 0.f, 0 },
 	};

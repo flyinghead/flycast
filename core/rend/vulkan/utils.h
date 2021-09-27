@@ -21,6 +21,7 @@
 #pragma once
 #include "vulkan.h"
 #include "rend/shader_util.h"
+#include "hw/pvr/pvr_regs.h"
 
 enum class ModVolMode { Xor, Or, Inclusion, Exclusion, Final };
 
@@ -90,3 +91,8 @@ class VulkanSource : public ShaderSource
 public:
 	VulkanSource() : ShaderSource("#version 450") {}
 };
+
+
+static inline vk::ClearColorValue getBorderColor() {
+	return vk::ClearColorValue(std::array<float, 4>{ VO_BORDER_COL.Red / 255.f, VO_BORDER_COL.Green / 255.f, VO_BORDER_COL.Blue / 255.f, 1.f });
+}

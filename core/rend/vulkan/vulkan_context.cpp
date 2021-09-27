@@ -723,7 +723,7 @@ void VulkanContext::BeginRenderPass()
 {
 	if (!IsValid())
 		return;
-	const vk::ClearValue clear_colors[] = { vk::ClearColorValue(std::array<float, 4>{0.f, 0.f, 0.f, 1.f}), vk::ClearDepthStencilValue{ 0.f, 0 } };
+	const vk::ClearValue clear_colors[] = { getBorderColor(), vk::ClearDepthStencilValue{ 0.f, 0 } };
 	vk::CommandBuffer commandBuffer = *commandBuffers[currentImage];
 	commandBuffer.beginRenderPass(vk::RenderPassBeginInfo(*renderPass, *framebuffers[currentImage], vk::Rect2D({0, 0}, {width, height}), 2, clear_colors),
 			vk::SubpassContents::eInline);
@@ -787,22 +787,6 @@ void VulkanContext::DrawFrame(vk::ImageView imageView, const vk::Extent2D& exten
 		{ { -1,  1, 0 }, { 0, 1 } },
 		{ {  1,  1, 0 }, { 1, 1 } },
 	};
-	if (config::Rotate90)
-	{
-		float marginWidth = ((float)extent.width / extent.height * width / height - 1.f) / 2.f;
-		vtx[0].uv[1] = 0 - marginWidth;
-		vtx[1].uv[1] = 0 - marginWidth;
-		vtx[2].uv[1] = 1 + marginWidth;
-		vtx[3].uv[1] = 1 + marginWidth;
-	}
-	else
-	{
-		float marginWidth = ((float)extent.height / extent.width * width / height - 1.f) / 2.f;
-		vtx[0].uv[0] = 0 - marginWidth;
-		vtx[1].uv[0] = 1 + marginWidth;
-		vtx[2].uv[0] = 0 - marginWidth;
-		vtx[3].uv[0] = 1 + marginWidth;
-	}
 
 	vk::CommandBuffer commandBuffer = GetCurrentCommandBuffer();
 	if (config::Rotate90)
@@ -813,9 +797,14 @@ void VulkanContext::DrawFrame(vk::ImageView imageView, const vk::Extent2D& exten
 	float blendConstants[4] = { 1.0, 1.0, 1.0, 1.0 };
 	commandBuffer.setBlendConstants(blendConstants);
 
-	vk::Viewport viewport(0, 0, width, height);
+	float marginWidth;
+	if (config::Rotate90)
+		marginWidth = ((float)width - (float)extent.height / extent.width * height) / 2.f;
+	else
+		marginWidth = ((float)width - (float)extent.width / extent.height * height) / 2.f;
+	vk::Viewport viewport(marginWidth, 0, width - marginWidth * 2.f, height);
 	commandBuffer.setViewport(0, 1, &viewport);
-	commandBuffer.setScissor(0, vk::Rect2D(vk::Offset2D(0, 0), vk::Extent2D(width, height)));
+	commandBuffer.setScissor(0, vk::Rect2D(vk::Offset2D(marginWidth, 0), vk::Extent2D(width - marginWidth * 2.f, height)));
 	if (config::Rotate90)
 		quadRotateDrawer->Draw(commandBuffer, imageView, vtx);
 	else

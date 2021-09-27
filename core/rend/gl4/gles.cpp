@@ -771,6 +771,8 @@ static bool RenderFrame(int width, int height)
 		return false;
 
 	glcache.Disable(GL_SCISSOR_TEST);
+	if (!is_rtt)
+		glcache.ClearColor(VO_BORDER_COL.Red / 255.f, VO_BORDER_COL.Green / 255.f, VO_BORDER_COL.Blue / 255.f, 1.f);
 
 	if (!pvrrc.isRenderFramebuffer)
 	{
@@ -838,7 +840,6 @@ static bool RenderFrame(int width, int height)
 				{
 					float scaled_offs_x = matrices.GetSidebarWidth();
 
-					glcache.ClearColor(0.f, 0.f, 0.f, 0.f);
 					glcache.Enable(GL_SCISSOR_TEST);
 					glcache.Scissor(0, 0, (GLsizei)lroundf(scaled_offs_x), rendering_height);
 					glClear(GL_COLOR_BUFFER_BIT);
@@ -886,7 +887,6 @@ static bool RenderFrame(int width, int height)
 		glBindFramebuffer(GL_FRAMEBUFFER, output_fbo);
 
 		glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-		glcache.ClearColor(0.f, 0.f, 0.f, 0.f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
 		DrawFramebuffer();
