@@ -97,7 +97,7 @@ void emu_dc_exit()
 
 void emu_dc_term()
 {
-	if (dc_is_running())
+	if (emu.running())
 		dc_exit();
 	dc_term();
 	LogManager::Shutdown();
@@ -108,16 +108,11 @@ void emu_gui_open_settings()
 	gui_open_settings();
 }
 
-void emu_dc_resume()
-{
-	dc_resume();
-}
-
 extern bool rend_framePending();
 
 bool emu_frame_pending()
 {
-	return rend_framePending() || !dc_is_running() || gui_is_open();
+	return rend_framePending() || !emu.running() || gui_is_open();
 }
 
 bool emu_renderer_enabled()

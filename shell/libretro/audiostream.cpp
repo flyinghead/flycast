@@ -35,7 +35,7 @@ void WriteSample(s16 r, s16 l)
 
    if (++writePtr == SAMPLE_COUNT)
    {
-      if (dc_is_running() && (!config::ThreadedRendering || config::LimitFPS))
+      if (emu.running() && (!config::ThreadedRendering || config::LimitFPS))
          audio_batch_cb((const int16_t*)Buffer, SAMPLE_COUNT);
       writePtr = 0;
    }

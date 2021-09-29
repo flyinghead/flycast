@@ -391,7 +391,7 @@ int main(int argc, char* argv[])
 
 	mainui_loop();
 
-	dc_term();
+	emu.term();
 
 	os_UninstallFaultHandler();
 

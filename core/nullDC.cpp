@@ -51,11 +51,6 @@ int flycast_init(int argc, char* argv[])
 	os_CreateWindow();
 	os_SetupInput();
 
-	// Needed to avoid crash calling dc_is_running() in gui
-	if (!_nvmem_enabled())
-		dc_init();
-	Get_Sh4Interpreter(&sh4_cpu);
-	sh4_cpu.Init();
 	debugger::init();
 
 	return 0;
@@ -63,7 +58,7 @@ int flycast_init(int argc, char* argv[])
 
 void dc_exit()
 {
-	dc_stop();
+	emu.term();
 	mainui_stop();
 }
 
@@ -81,7 +76,7 @@ void SaveSettings()
 void dc_term()
 {
 	dc_cancel_load();
-	dc_term_emulator();
+	emu.term();
 	SaveSettings();
 }
 
@@ -159,7 +154,7 @@ void dc_loadstate(int index)
 	u32 total_size = 0;
 	FILE *f = nullptr;
 
-	dc_stop();
+	emu.stop();
 
 	std::string filename = hostfs::getSavestatePath(index, false);
 	RZipFile zipFile;
@@ -225,7 +220,7 @@ void dc_load_game(const char *path)
 	loading_canceled = false;
 
 	loadingDone = std::async(std::launch::async, [path] {
-		dc_start_game(path);
+		emu.loadGame(path);
 	});
 }
 

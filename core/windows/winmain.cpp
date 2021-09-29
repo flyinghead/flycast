@@ -758,7 +758,7 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 
 	mainui_loop();
 
-	dc_term();
+	emu.term();
 
 	os_UninstallFaultHandler();
 

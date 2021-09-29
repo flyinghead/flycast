@@ -47,18 +47,12 @@ bool mainui_rend_frame()
 	}
 	else
 	{
-		if (!rend_single_frame(mainui_enabled))
-		{
-			if (!dc_is_running())
-			{
-				std::string error = dc_get_last_error();
-				if (!error.empty())
-				{
-					dc_stop();
-					EventManager::event(Event::Pause);
-					gui_stop_game(error);
-				}
-			}
+		try {
+			if (!emu.render())
+				return false;
+		} catch (const FlycastException& e) {
+			emu.unloadGame();
+			gui_stop_game(e.what());
 			return false;
 		}
 	}

@@ -13,7 +13,11 @@
 void retro_rend_present();
 void retro_rend_vblank();
 #ifndef LIBRETRO
-void retro_rend_present() {}
+void retro_rend_present()
+{
+	if (!config::ThreadedRendering)
+		sh4_cpu.Stop();
+}
 void retro_rend_vblank() {}
 #endif
 
@@ -21,7 +25,6 @@ u32 VertexCount=0;
 u32 FrameCount=1;
 
 Renderer* renderer;
-static Renderer* fallback_renderer;
 
 cResetEvent rs, re;
 static bool do_swap;
@@ -280,7 +283,6 @@ static void rend_create_renderer()
 #if !defined(GLES) && !defined(__APPLE__)
 	case RenderType::OpenGL_OIT:
 		renderer = rend_GL4();
-		fallback_renderer = rend_GLES2();
 		break;
 #endif
 #ifdef USE_VULKAN
@@ -302,34 +304,19 @@ static void rend_create_renderer()
 
 void rend_init_renderer()
 {
-	if (renderer == NULL)
+	if (renderer == nullptr)
 		rend_create_renderer();
 	if (!renderer->Init())
-    {
-		delete renderer;
-    	if (fallback_renderer == NULL || !fallback_renderer->Init())
-    	{
-            delete fallback_renderer;
-    		die("Renderer initialization failed\n");
-    	}
-    	INFO_LOG(PVR, "Selected renderer initialization failed. Falling back to default renderer.");
-    	renderer  = fallback_renderer;
-    	fallback_renderer = NULL;	// avoid double-free
-    }
+   		die("Renderer initialization failed\n");
 }
 
 void rend_term_renderer()
 {
-	if (renderer != NULL)
+	if (renderer != nullptr)
 	{
 		renderer->Term();
 		delete renderer;
-		renderer = NULL;
-	}
-	if (fallback_renderer != NULL)
-	{
-		delete fallback_renderer;
-		fallback_renderer = NULL;
+		renderer = nullptr;
 	}
 }
 
@@ -380,6 +367,8 @@ void rend_start_render()
 			ctx->rend.fog_clamp_max = FOG_CLAMP_MAX;
 		}
 
+		if (!config::DelayFrameSwapping)
+			ggpo::endOfFrame();
 		palette_update();
 		if (QueueRender(ctx))
 		{
@@ -389,8 +378,6 @@ void rend_start_render()
 			else
 				rs.Set();
 		}
-        if (!config::DelayFrameSwapping)
-        	ggpo::endOfFrame();
 	}
 }
 

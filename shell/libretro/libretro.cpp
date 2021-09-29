@@ -150,6 +150,7 @@ static retro_rumble_interface rumble;
 static void refresh_devices(bool first_startup);
 static void init_disk_control_interface();
 static bool read_m3u(const char *file);
+void UpdateInputState();
 
 static char *game_data;
 static char g_base_name[128];
@@ -778,14 +779,10 @@ static void update_variables(bool first_startup)
 	{
 		if (wasThreadedRendering != config::ThreadedRendering)
 		{
-			if (config::ThreadedRendering)
-				dc_resume();
-			else
-			{
-				config::ThreadedRendering = true;
-				dc_stop();
-				config::ThreadedRendering = false;
-			}
+			config::ThreadedRendering = wasThreadedRendering;
+			emu.stop();
+			config::ThreadedRendering = !wasThreadedRendering;
+			emu.start();
 		}
 		bool geometryChanged = false;
 		if (rotate_screen != (prevRotateScreen ^ rotate_game))
@@ -827,47 +824,36 @@ void retro_run()
 	if (config::RendererType.isOpenGL())
 		glsm_ctl(GLSM_CTL_STATE_BIND, nullptr);
 
-	if (config::ThreadedRendering)
+	// On the first call, we start the emulator
+	if (first_run)
 	{
-		bool fastforward = false;
-		if (environ_cb(RETRO_ENVIRONMENT_GET_FASTFORWARDING, &fastforward))
-			settings.input.fastForwardMode = fastforward;
-
-		// On the first call, we start the emulator thread
-		if (first_run)
-		{
-			dc_resume();
-			first_run = false;
-		}
-
-		poll_cb();
-
-		// Render
-		is_dupe = true;
-		for (int i = 0; i < 5 && is_dupe; i++)
-			is_dupe = !rend_single_frame(true);
-		// If emulator still isn't running, something's wrong
-		if (is_dupe && !dc_is_running())
-		{
-			std::string error = dc_get_last_error();
-			if (!error.empty())
-			{
-				gui_display_notification(error.c_str(), 5000);
-				WARN_LOG(COMMON, "Emulator thread has stopped: %s", error.c_str());
-				environ_cb(RETRO_ENVIRONMENT_SHUTDOWN, NULL);
-			}
-		}
+		emu.start();
+		first_run = false;
 	}
-	else
-	{
-		startTime = sh4_sched_now64();
-		try {
-			dc_run();
-		} catch (const FlycastException& e) {
-			ERROR_LOG(COMMON, "%s", e.what());
-			gui_display_notification(e.what(), 5000);
-			environ_cb(RETRO_ENVIRONMENT_SHUTDOWN, NULL);
+
+	poll_cb();
+	UpdateInputState();
+	bool fastforward = false;
+	if (environ_cb(RETRO_ENVIRONMENT_GET_FASTFORWARDING, &fastforward))
+		settings.input.fastForwardMode = fastforward;
+
+	try {
+		if (config::ThreadedRendering)
+		{
+			// Render
+			is_dupe = true;
+			for (int i = 0; i < 5 && is_dupe; i++)
+				is_dupe = !emu.render();
 		}
+		else
+		{
+			startTime = sh4_sched_now64();
+			emu.render();
+		}
+	} catch (const FlycastException& e) {
+		ERROR_LOG(COMMON, "%s", e.what());
+		gui_display_notification(e.what(), 5000);
+		environ_cb(RETRO_ENVIRONMENT_SHUTDOWN, NULL);
 	}
 
 	if (config::RendererType.isOpenGL())
@@ -883,7 +869,7 @@ static bool loadGame(const char *path)
 {
 	mute_messages = true;
 	try {
-		dc_start_game(path);
+		emu.loadGame(path);
 	} catch (const FlycastException& e) {
 		ERROR_LOG(BOOT, "%s", e.what());
 		mute_messages = false;
@@ -899,8 +885,7 @@ void retro_reset()
 {
 	std::lock_guard<std::mutex> lock(mtx_serialization);
 
-	if (config::ThreadedRendering)
-		dc_stop();
+	emu.unloadGame();
 
 	config::ScreenStretching = 100;
 	loadGame(settings.imgread.ImagePath);
@@ -914,8 +899,7 @@ void retro_reset()
 	environ_cb(RETRO_ENVIRONMENT_SET_GEOMETRY, &geometry);
 	blankVmus();
 
-	if (config::ThreadedRendering)
-		dc_resume();
+	emu.start();
 }
 
 #if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES)
@@ -1712,7 +1696,7 @@ void retro_unload_game()
 {
 	INFO_LOG(COMMON, "Flycast unloading game");
 	frontend_clear_thread_waits_cb(1, nullptr);
-	dc_stop();
+	emu.stop();
 	frontend_clear_thread_waits_cb(0, nullptr);
 	free(game_data);
 	game_data = nullptr;
@@ -1720,7 +1704,7 @@ void retro_unload_game()
 	disk_labels.clear();
 	blankVmus();
 
-	dc_term_emulator();
+	emu.term();
 }
 
 
@@ -1739,40 +1723,19 @@ size_t retro_get_memory_size(unsigned type)
    return 0;
 }
 
-static bool wait_until_dc_running()
-{
-	retro_time_t start_time = perf_cb.get_time_usec();
-	const retro_time_t FIVE_SECONDS = 5*1000000 ;
-	while(!dc_is_running())
-	{
-		if ( start_time+FIVE_SECONDS < perf_cb.get_time_usec() )
-		{
-			//timeout elapsed - dc not getting a chance to run - just bail
-			return false ;
-		}
-	}
-	return true ;
-}
-
 size_t retro_serialize_size()
 {
 	DEBUG_LOG(SAVESTATE, "retro_serialize_size");
 	std::lock_guard<std::mutex> lock(mtx_serialization);
-	if (config::ThreadedRendering)
-	{
-		if (!wait_until_dc_running())
-			return 0;
 
-		dc_stop();
-	}
+	emu.stop();
 
 	unsigned int total_size = 0;
 	void *data = nullptr;
 
 	dc_serialize(&data, &total_size);
 
-	if (config::ThreadedRendering)
-		dc_resume();
+	emu.start();
 
 	return total_size;
 }
@@ -1781,19 +1744,13 @@ bool retro_serialize(void *data, size_t size)
 {
 	DEBUG_LOG(SAVESTATE, "retro_serialize %d bytes", (int)size);
 	std::lock_guard<std::mutex> lock(mtx_serialization);
-	if (config::ThreadedRendering)
-	{
-		if ( !wait_until_dc_running())
-			return false;
 
-		dc_stop();
-	}
+	emu.stop();
 
 	unsigned int total_size = 0;
 	bool result = dc_serialize(&data, &total_size);
 
-	if (config::ThreadedRendering)
-		dc_resume();
+	emu.start();
 
 	return result;
 }
@@ -1801,23 +1758,13 @@ bool retro_serialize(void *data, size_t size)
 bool retro_unserialize(const void * data, size_t size)
 {
 	DEBUG_LOG(SAVESTATE, "retro_unserialize");
-    if (config::ThreadedRendering)
-    {
-    	mtx_serialization.lock();
-    	if ( !wait_until_dc_running()) {
-        	mtx_serialization.unlock();
-        	return false;
-    	}
-  		dc_stop();
-    }
+	std::lock_guard<std::mutex> lock(mtx_serialization);
+
+	emu.stop();
 
     bool result = dc_loadstate(&data, size);
 
-    if (config::ThreadedRendering)
-    {
-    	mtx_serialization.unlock();
-    	dc_resume();
-    }
+	emu.start();
 
     return result;
 }

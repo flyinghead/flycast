@@ -619,7 +619,7 @@ void NaomiNetwork::shutdown()
 	}
 	if (VALID(client_sock))
 		closeSocket(client_sock);
-	dc_set_network_state(false);
+	emu.setNetworkState(false);
 }
 
 void NaomiNetwork::terminate()
@@ -639,7 +639,7 @@ std::future<bool> NaomiNetwork::startNetworkAsync()
 	start_now = false;
 	return std::async(std::launch::async, [this] {
 		bool res = startNetwork();
-		dc_set_network_state(res);
+		emu.setNetworkState(res);
 		return res;
 	});
 }

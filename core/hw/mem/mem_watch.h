@@ -154,6 +154,8 @@ extern AicaRamWatcher aramWatcher;
 
 inline static bool writeAccess(void *p)
 {
+	if (!config::GGPOEnable)
+		return false;
 	if (ramWatcher.hit(p))
 	{
 		bm_RamWriteAccess(p);
@@ -169,6 +171,8 @@ inline static bool writeAccess(void *p)
 
 inline static void protect()
 {
+	if (!config::GGPOEnable)
+		return;
 	vramWatcher.protect();
 	ramWatcher.protect();
 	aramWatcher.protect();

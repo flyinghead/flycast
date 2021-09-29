@@ -109,7 +109,7 @@ protected:
 	void SetUp() override {
 		if (!_vmem_reserve())
 			die("_vmem_reserve failed");
-		dc_init();
+		emu.init();
 		dc_reset(true);
 	}
 

@@ -415,13 +415,13 @@ void gui_open_settings()
 	{
 		gui_state = GuiState::Closed;
 		GamepadDevice::load_system_mappings();
-		dc_resume();
+		emu.start();
 	}
 }
 
 void gui_start_game(const std::string& path)
 {
-	dc_term_game();
+	emu.unloadGame();
 	reset_vmus();
 
 	scanner.stop();
@@ -437,7 +437,7 @@ void gui_stop_game(const std::string& message)
 	if (!commandLineStart)
 	{
 		// Exit to main menu
-		dc_term_game();
+		emu.unloadGame();
 		gui_state = GuiState::Main;
 		game_started = false;
 		settings.imgread.ImagePath[0] = '\0';
@@ -454,8 +454,7 @@ void gui_stop_game(const std::string& message)
 
 static void gui_display_commands()
 {
-	if (dc_is_running())
-		dc_stop();
+	emu.stop();
 
    	display_vmus();
 
@@ -1899,6 +1898,8 @@ static void gui_display_settings()
 		    	OptionCheckbox("HLE BIOS", config::UseReios, "Force high-level BIOS emulation");
 	            OptionCheckbox("Force Windows CE", config::ForceWindowsCE,
 	            		"Enable full MMU emulation and other Windows CE settings. Do not enable unless necessary");
+	            OptionCheckbox("Multi-threaded emulation", config::ThreadedRendering,
+	            		"Run the emulated CPU and GPU on different threads");
 #ifndef __ANDROID
 	            OptionCheckbox("Serial Console", config::SerialConsole,
 	            		"Dump the Dreamcast serial console to stdout");
@@ -2352,7 +2353,7 @@ void gui_display_ui()
     ImGui_impl_RenderDrawData(ImGui::GetDrawData());
 
 	if (gui_state == GuiState::Closed)
-		dc_resume();
+		emu.start();
 }
 
 static float LastFPSTime;

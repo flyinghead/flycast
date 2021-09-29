@@ -288,9 +288,9 @@ extern int screen_dpi;
 - (void)glkView:(GLKView *)view drawInRect:(CGRect)rect
 {
 #if !TARGET_OS_TV
-	if (dc_is_running() != [self.padController isControllerVisible] && !IOSGamepad::controllerConnected())
+	if (emu.running() != [self.padController isControllerVisible] && !IOSGamepad::controllerConnected())
 	{
-		if (dc_is_running())
+		if (emu.running())
 			[self.padController showController:self.view];
 		else
 			[self.padController hideController];

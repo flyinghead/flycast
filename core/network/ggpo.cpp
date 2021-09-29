@@ -21,6 +21,8 @@
 #include "hw/maple/maple_devs.h"
 #include "input/gamepad_device.h"
 
+void UpdateInputState();
+
 namespace ggpo
 {
 
@@ -86,6 +88,7 @@ static bool _endOfFrame;
 static MiniUPnP miniupnp;
 static int analogAxes;
 static bool absPointerPos;
+static bool inRollback;
 
 struct MemPages
 {
@@ -173,12 +176,14 @@ static bool advance_frame(int)
 	INFO_LOG(NETWORK, "advance_frame");
 	settings.aica.muteAudio = true;
 	settings.disableRenderer = true;
+	inRollback = true;
 
-	dc_run();
+	emu.run();
 	ggpo_advance_frame(ggpoSession);
 
 	settings.aica.muteAudio = false;
 	settings.disableRenderer = false;
+	inRollback = false;
 	_endOfFrame = false;
 
 	return true;
@@ -463,7 +468,7 @@ void stopSession()
 	ggpo_close_session(ggpoSession);
 	ggpoSession = nullptr;
 	miniupnp.Term();
-	dc_set_network_state(false);
+	emu.setNetworkState(false);
 }
 
 void getInput(MapleInputState inputState[4])
@@ -512,6 +517,8 @@ bool nextFrame()
 	if (!_endOfFrame)
 		return false;
 	_endOfFrame = false;
+	if (inRollback)
+		return true;
 	auto now = std::chrono::steady_clock::now();
 	if (lastFrameTime != time_point<steady_clock>())
 	{
@@ -542,6 +549,8 @@ bool nextFrame()
 
 	// may call save_game_state
 	do {
+		if (!config::ThreadedRendering)
+			UpdateInputState();
 		u32 input = ~kcode[localPlayerNum];
 		if (rt[localPlayerNum] >= 64)
 			input |= BTN_TRIGGER_RIGHT;
@@ -629,7 +638,7 @@ std::future<bool> startNetwork()
 			getInput(k);
 		}
 #endif
-		dc_set_network_state(active());
+		emu.setNetworkState(active());
 		return active();
 	});
 }

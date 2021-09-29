@@ -1066,7 +1066,7 @@ static cThread pico_thread(pico_thread_func, NULL);
 
 bool start_pico()
 {
-	dc_set_network_state(true);
+	emu.setNetworkState(true);
 	if (pico_thread_running)
 		return false;
 	pico_thread_running = true;
@@ -1077,7 +1077,7 @@ bool start_pico()
 
 void stop_pico()
 {
-	dc_set_network_state(false);
+	emu.setNetworkState(false);
 	pico_thread_running = false;
 	pico_thread.WaitToEnd();
 }

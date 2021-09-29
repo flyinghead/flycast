@@ -148,7 +148,7 @@ static void sb_write_SB_SFRES(u32 addr, u32 data)
 	if ((u16)data==0x7611)
 	{
 		NOTICE_LOG(SH4, "SB/HOLLY: System reset requested");
-		dc_request_reset();
+		emu.requestReset();
 	}
 }
 
