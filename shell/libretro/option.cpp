@@ -25,7 +25,6 @@ namespace config {
 
 Option<bool> DynarecEnabled("", true);
 Option<bool> DynarecIdleSkip("", true);
-Option<bool> DynarecSafeMode(CORE_OPTION_NAME "_div_matching");
 
 // General
 

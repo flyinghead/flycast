@@ -372,17 +372,6 @@ struct retro_core_option_definition option_defs_tr[] = {
       NULL,
    },
    {
-      CORE_OPTION_NAME "_div_matching",
-      "DIV Eşleştirme (performans, daha az doğru)",
-      "",
-      {
-         { "auto",     "Otomatik" },
-         { "disabled", NULL },
-         { NULL, NULL },
-      },
-      NULL,
-   },
-   {
       CORE_OPTION_NAME "_force_wince",
       "Force Windows CE Mode",
       "Enable full MMU emulation and other settings for Windows CE games",

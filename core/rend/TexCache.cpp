@@ -236,7 +236,7 @@ void libCore_vramlock_Lock(u32 start_offset64, u32 end_offset64, BaseTextureCach
 			texture->lock_block = block;
 		}
 		else
-			free(block);
+			delete block;
 	}
 }
 
@@ -285,7 +285,7 @@ bool VramLockedWrite(u8* address)
 static void libCore_vramlock_Unlock_block_wb(vram_block* block)
 {
 	vramlock_list_remove(block);
-	free(block);
+	delete block;
 }
 
 #ifndef TARGET_NO_OPENMP

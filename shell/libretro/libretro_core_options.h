@@ -426,17 +426,6 @@ struct retro_core_option_definition option_defs_us[] = {
       "Default",
    },
    {
-      CORE_OPTION_NAME "_div_matching",
-      "DIV Matching",
-      "Optimize integer division",
-      {
-         { "auto",     "Auto" },
-         { "disabled", NULL },
-         { NULL, NULL },
-      },
-      "auto",
-   },
-   {
       CORE_OPTION_NAME "_force_wince",
       "Force Windows CE Mode",
       "Enable full MMU emulation and other settings for Windows CE games",

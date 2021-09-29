@@ -1841,8 +1841,6 @@ static void gui_display_settings()
 		    {
 		    	ImGui::Spacing();
 		    	header("Dynarec Options");
-		    	OptionCheckbox("Safe Mode", config::DynarecSafeMode,
-		    			"Do not optimize integer division. Not recommended");
 		    	OptionCheckbox("Idle Skip", config::DynarecIdleSkip, "Skip wait loops. Recommended");
 		    }
 	    	ImGui::Spacing();
