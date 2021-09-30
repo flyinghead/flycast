@@ -112,7 +112,7 @@ extern bool rend_framePending();
 
 bool emu_frame_pending()
 {
-	return rend_framePending() || !emu.running() || gui_is_open();
+	return rend_framePending() || !emu.running() || gui_is_open() || !config::ThreadedRendering;
 }
 
 bool emu_renderer_enabled()
