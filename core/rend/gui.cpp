@@ -2194,15 +2194,22 @@ static void gui_network_start()
 
 	if (networkStatus.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready)
 	{
-		if (networkStatus.get())
-		{
-			gui_state = GuiState::Closed;
-			ImGui::Text("STARTING...");
-		}
-		else
-		{
+		try {
+			if (networkStatus.get())
+			{
+				gui_state = GuiState::Closed;
+				ImGui::Text("STARTING...");
+			}
+			else
+			{
+				gui_state = GuiState::Main;
+				emu.unloadGame();
+			}
+		} catch (const FlycastException& e) {
+			NetworkHandshake::instance->stop();
 			gui_state = GuiState::Main;
-			settings.content.path.clear();
+			emu.unloadGame();
+			error_msg = e.what();
 		}
 	}
 	else
@@ -2219,9 +2226,12 @@ static void gui_network_start()
 	if (ImGui::Button("Cancel", ImVec2(100.f * scaling, 0.f)))
 	{
 		NetworkHandshake::instance->stop();
-		networkStatus.get();
+		try {
+			networkStatus.get();
+		} catch (const FlycastException& e) {
+		}
 		gui_state = GuiState::Main;
-		settings.content.path.clear();
+		emu.unloadGame();
 	}
 	ImGui::PopStyleVar();
 

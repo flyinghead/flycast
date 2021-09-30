@@ -43,6 +43,7 @@ private:
 	char lanAddress[32];
 	char wanAddress[32];
 	std::vector<std::pair<std::string, bool>> mappedPorts;
+	bool initialized = false;
 };
 
 #else

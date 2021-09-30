@@ -18,13 +18,14 @@ Peer2PeerBackend::Peer2PeerBackend(GGPOSessionCallbacks *cb,
                                    uint16 localport,
                                    int num_players,
                                    int input_size) :
-    _num_players(num_players),
-    _input_size(input_size),
     _sync(_local_connect_status),
-    _disconnect_timeout(DEFAULT_DISCONNECT_TIMEOUT),
-    _disconnect_notify_start(DEFAULT_DISCONNECT_NOTIFY_START),
+	_endpoints(nullptr),
     _num_spectators(0),
-    _next_spectator_frame(0)
+    _input_size(input_size),
+    _num_players(num_players),
+    _next_spectator_frame(0),
+    _disconnect_timeout(DEFAULT_DISCONNECT_TIMEOUT),
+    _disconnect_notify_start(DEFAULT_DISCONNECT_NOTIFY_START)
 {
    _callbacks = *cb;
    _synchronizing = true;
@@ -47,7 +48,7 @@ Peer2PeerBackend::Peer2PeerBackend(GGPOSessionCallbacks *cb,
 
    _endpoints = new UdpProtocol[_num_players];
    memset(_local_connect_status, 0, sizeof(_local_connect_status));
-   for (int i = 0; i < ARRAY_SIZE(_local_connect_status); i++) {
+   for (unsigned i = 0; i < ARRAY_SIZE(_local_connect_status); i++) {
       _local_connect_status[i].last_frame = -1;
    }
 
@@ -386,6 +387,9 @@ Peer2PeerBackend::OnUdpProtocolPeerEvent(UdpProtocol::Event &evt, int queue)
    case UdpProtocol::Event::Disconnected:
       DisconnectPlayer(QueueToPlayerHandle(queue));
       break;
+
+   default:
+	  break;
    }
 }
 
@@ -396,17 +400,14 @@ Peer2PeerBackend::OnUdpProtocolSpectatorEvent(UdpProtocol::Event &evt, int queue
    GGPOPlayerHandle handle = QueueToSpectatorHandle(queue);
    OnUdpProtocolEvent(evt, handle);
 
-   GGPOEvent info;
-
-   switch (evt.type) {
-   case UdpProtocol::Event::Disconnected:
+   if (evt.type == UdpProtocol::Event::Disconnected)
+   {
       _spectators[queue].Disconnect();
 
+      GGPOEvent info;
       info.code = GGPO_EVENTCODE_DISCONNECTED_FROM_PEER;
       info.u.disconnected.player = handle;
       _callbacks.on_event(&info);
-
-      break;
    }
 }
 
@@ -448,6 +449,9 @@ Peer2PeerBackend::OnUdpProtocolEvent(UdpProtocol::Event &evt, GGPOPlayerHandle h
       info.u.connection_resumed.player = handle;
       _callbacks.on_event(&info);
       break;
+
+   default:
+	  break;
    }
 }
 

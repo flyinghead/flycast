@@ -53,7 +53,6 @@ protected:
 
    // state management
    Callbacks      *_callbacks;
-   Poll           *_poll;
 };
 
 #endif

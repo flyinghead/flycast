@@ -375,7 +375,7 @@ void startSession(int localPort, int localPlayerNum)
 	{
 		WARN_LOG(NETWORK, "GGPO start sync session failed: %d", result);
 		ggpoSession = nullptr;
-		return;
+		throw FlycastException("GGPO start sync session failed");
 	}
 	ggpo_idle(ggpoSession, 0);
 	ggpo::localPlayerNum = localPlayerNum;
@@ -413,7 +413,7 @@ void startSession(int localPort, int localPlayerNum)
 	{
 		WARN_LOG(NETWORK, "GGPO start session failed: %d", result);
 		ggpoSession = nullptr;
-		return;
+		throw FlycastException("GGPO network initialization failed");
 	}
 
 	// automatically disconnect clients after 3000 ms and start our count-down timer
@@ -429,7 +429,7 @@ void startSession(int localPort, int localPlayerNum)
 	{
 		WARN_LOG(NETWORK, "GGPO cannot add local player: %d", result);
 		stopSession();
-		return;
+		throw FlycastException("GGPO cannot add local player");
 	}
 	ggpo_set_frame_delay(ggpoSession, localPlayer, config::GGPODelay.get());
 
@@ -458,6 +458,7 @@ void startSession(int localPort, int localPlayerNum)
 	{
 		WARN_LOG(NETWORK, "GGPO cannot add remote player: %d", result);
 		stopSession();
+		throw FlycastException("GGPO cannot add remote player");
 	}
 	DEBUG_LOG(NETWORK, "GGPO session started");
 #endif
@@ -616,11 +617,16 @@ std::future<bool> startNetwork()
 			miniupnp.Init();
 			miniupnp.AddPortMapping(SERVER_PORT, false);
 
-			if (config::ActAsServer)
-				startSession(SERVER_PORT, 0);
-			else
-				// Use SERVER_PORT-1 as local port if connecting to ourselves
-				startSession(config::NetworkServer.get().empty() || config::NetworkServer.get() == "127.0.0.1" ? SERVER_PORT - 1 : SERVER_PORT, 1);
+			try {
+				if (config::ActAsServer)
+					startSession(SERVER_PORT, 0);
+				else
+					// Use SERVER_PORT-1 as local port if connecting to ourselves
+					startSession(config::NetworkServer.get().empty() || config::NetworkServer.get() == "127.0.0.1" ? SERVER_PORT - 1 : SERVER_PORT, 1);
+			} catch (...) {
+				miniupnp.Term();
+				throw;
+			}
 #endif
 		}
 		while (!synchronized && active())

@@ -22,24 +22,24 @@ static const int UDP_SHUTDOWN_TIMER = 5000;
 static const int MAX_SEQ_DISTANCE = (1 << 15);
 
 UdpProtocol::UdpProtocol() :
-   _local_frame_advantage(0),
-   _remote_frame_advantage(0),
-   _queue(-1),
+   _udp(NULL),
    _magic_number(0),
+   _queue(-1),
    _remote_magic_number(0),
+   _connected(false),
    _packets_sent(0),
    _bytes_sent(0),
    _stats_start_time(0),
+   _local_frame_advantage(0),
+   _remote_frame_advantage(0),
    _last_send_time(0),
    _shutdown_timeout(0),
+   _disconnect_event_sent(false),
    _disconnect_timeout(0),
    _disconnect_notify_start(0),
    _disconnect_notify_sent(false),
-   _disconnect_event_sent(false),
-   _connected(false),
    _next_send_seq(0),
-   _next_recv_seq(0),
-   _udp(NULL)
+   _next_recv_seq(0)
 {
    _last_sent_input.init(-1, NULL, 1);
    _last_received_input.init(-1, NULL, 1);
@@ -47,7 +47,7 @@ UdpProtocol::UdpProtocol() :
 
    memset(&_state, 0, sizeof _state);
    memset(_peer_connect_status, 0, sizeof(_peer_connect_status));
-   for (int i = 0; i < ARRAY_SIZE(_peer_connect_status); i++) {
+   for (unsigned i = 0; i < ARRAY_SIZE(_peer_connect_status); i++) {
       _peer_connect_status[i].last_frame = -1;
    }
    memset(&_peer_addr, 0, sizeof _peer_addr);
@@ -123,7 +123,7 @@ UdpProtocol::SendPendingOutput()
       msg->u.input.start_frame = _pending_output.front().frame;
       msg->u.input.input_size = (uint8)_pending_output.front().size;
 
-      ASSERT(last.frame == -1 || last.frame + 1 == msg->u.input.start_frame);
+      ASSERT(last.frame == -1 || last.frame + 1 == (int)msg->u.input.start_frame);
       for (j = 0; j < _pending_output.size(); j++) {
          GameInput &current = _pending_output.item(j);
          if (memcmp(current.bits, last.bits, current.size) != 0) {
@@ -249,7 +249,10 @@ UdpProtocol::OnLoopPoll(void *cookie)
          _udp = NULL;
          _shutdown_timeout = 0;
       }
+      break;
 
+   default:
+	  break;
    }
 
 
@@ -455,11 +458,8 @@ UdpProtocol::LogMsg(const char *prefix, UdpMsg *msg)
 void
 UdpProtocol::LogEvent(const char *prefix, const UdpProtocol::Event &evt)
 {
-   switch (evt.type) {
-   case UdpProtocol::Event::Synchronzied:
+   if (evt.type == UdpProtocol::Event::Synchronzied)
       Log("%s (event: Synchronzied).\n", prefix);
-      break;
-   }
 }
 
 bool
@@ -545,7 +545,7 @@ UdpProtocol::OnInput(UdpMsg *msg, int len)
        * of the network.
        */
       UdpMsg::connect_status* remote_status = msg->u.input.peer_connect_status;
-      for (int i = 0; i < ARRAY_SIZE(_peer_connect_status); i++) {
+      for (unsigned i = 0; i < ARRAY_SIZE(_peer_connect_status); i++) {
          ASSERT(remote_status[i].last_frame >= _peer_connect_status[i].last_frame);
          _peer_connect_status[i].disconnected = _peer_connect_status[i].disconnected || remote_status[i].disconnected;
          _peer_connect_status[i].last_frame = MAX(_peer_connect_status[i].last_frame, remote_status[i].last_frame);
@@ -734,7 +734,7 @@ UdpProtocol::PumpSendQueue()
          // should really come up with a gaussian distributation based on the configured
          // value, but this will do for now.
          int jitter = (_send_latency * 2 / 3) + ((rand() % _send_latency) / 3);
-         if (Platform::GetCurrentTimeMS() < _send_queue.front().queue_time + jitter) {
+         if ((int)Platform::GetCurrentTimeMS() < _send_queue.front().queue_time + jitter) {
             break;
          }
       }
@@ -754,7 +754,7 @@ UdpProtocol::PumpSendQueue()
       }
       _send_queue.pop();
    }
-   if (_oo_packet.msg && _oo_packet.send_time < Platform::GetCurrentTimeMS()) {
+   if (_oo_packet.msg && _oo_packet.send_time < (int)Platform::GetCurrentTimeMS()) {
       Log("sending rogue oop!");
       _udp->SendTo((char *)_oo_packet.msg, _oo_packet.msg->PacketSize(), 0,
                      (struct sockaddr *)&_oo_packet.dest_addr, sizeof _oo_packet.dest_addr);

@@ -155,12 +155,17 @@ SpectatorBackend::OnUdpProtocolEvent(UdpProtocol::Event &evt)
       break;
 
    case UdpProtocol::Event::Input:
-      GameInput& input = evt.u.input.input;
+   	  {
+   		  GameInput& input = evt.u.input.input;
 
-      _host.SetLocalFrameNumber(input.frame);
-      _host.SendInputAck();
-      _inputs[input.frame % SPECTATOR_FRAME_BUFFER_SIZE] = input;
+   		  _host.SetLocalFrameNumber(input.frame);
+   		  _host.SendInputAck();
+   		  _inputs[input.frame % SPECTATOR_FRAME_BUFFER_SIZE] = input;
+   	  }
       break;
+
+   default:
+	  break;
    }
 }
  

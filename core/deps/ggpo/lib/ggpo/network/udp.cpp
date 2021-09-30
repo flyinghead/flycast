@@ -60,12 +60,12 @@ void
 Udp::Init(uint16 port, Poll *poll, Callbacks *callbacks)
 {
    _callbacks = callbacks;
-
-   _poll = poll;
-   _poll->RegisterLoop(this);
+   poll->RegisterLoop(this);
 
    Log("binding udp socket to port %d.\n", port);
    _socket = CreateSocket(port, 0);
+   if (_socket == INVALID_SOCKET)
+	   throw GGPOException("Socket creation or bind failed", GGPO_ERRORCODE_NETWORK_ERROR);
 }
 
 void

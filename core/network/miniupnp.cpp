@@ -49,6 +49,7 @@ bool MiniUPnP::Init()
 		return false;
 	}
 	wanAddress[0] = 0;
+	initialized = true;
 	if (UPNP_GetExternalIPAddress(urls.controlURL, data.first.servicetype, wanAddress) != 0)
 		WARN_LOG(NETWORK, "Cannot determine external IP address");
 	DEBUG_LOG(NETWORK, "MiniUPnP: public IP is %s", wanAddress);
@@ -57,12 +58,15 @@ bool MiniUPnP::Init()
 
 void MiniUPnP::Term()
 {
+	if (!initialized)
+		return;
 	DEBUG_LOG(NETWORK, "MiniUPnP::Term");
 	for (const auto& port : mappedPorts)
 		UPNP_DeletePortMapping(urls.controlURL, data.first.servicetype, port.first.c_str(),
 							   port.second ? "TCP" : "UDP", nullptr);
 	mappedPorts.clear();
 	FreeUPNPUrls(&urls);
+	initialized = false;
 	DEBUG_LOG(NETWORK, "MiniUPnP: terminated");
 }
 
