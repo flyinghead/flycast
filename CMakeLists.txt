@@ -21,9 +21,9 @@ option(LIBRETRO "Build libretro core" OFF)
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/shell/cmake")
 
 if(APPLE)
-	if(IOS)
+	if(CMAKE_SYSTEM_NAME STREQUAL iOS)
 		set(CMAKE_OSX_DEPLOYMENT_TARGET "12.0" CACHE STRING "Minimum iOS deployment version")
-		set(CMAKE_OSX_ARCHITECTURES "arm64")
+		set(CMAKE_OSX_ARCHITECTURES "arm64" CACHE STRING "")
 	else()
 		set(CMAKE_OSX_DEPLOYMENT_TARGET "10.9" CACHE STRING "Minimum macOS deployment version")
 		set(CMAKE_OSX_ARCHITECTURES "x86_64;arm64" CACHE STRING "")
@@ -74,7 +74,7 @@ if(NINTENDO_SWITCH)
 	if(USE_GLES)
         target_compile_definitions(${PROJECT_NAME} PRIVATE GLES)
 	endif()
- 
+
 elseif(LIBRETRO)
     add_library(${PROJECT_NAME} SHARED core/emulator.cpp)
     if(APPLE)
@@ -265,10 +265,7 @@ if(NOT LIBRETRO)
 endif()
 
 execute_process(COMMAND git apply -p1 ${CMAKE_CURRENT_SOURCE_DIR}/core/deps/patches/libchdr.patch
-		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/core/deps/libchdr) 
-if(IOS)
-	set(CMAKE_SYSTEM_PROCESSOR aarch64)
-endif()
+		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/core/deps/libchdr)
 add_subdirectory(core/deps/libchdr)
 target_link_libraries(${PROJECT_NAME} PRIVATE chdr-static)
 target_include_directories(${PROJECT_NAME} PRIVATE core/deps/libchdr/include)
@@ -385,7 +382,7 @@ if(ANDROID AND NOT LIBRETRO)
 	else()
 		include("core/deps/oboe/gamesdk.cmake")
 		add_gamesdk_target(PACKAGE_DIR core/deps/oboe ANDROID_API_LEVEL 28 ANDROID_NDK_VERSION 21.0.0)
-		target_link_libraries(${PROJECT_NAME} PRIVATE oboe OpenSLES) 
+		target_link_libraries(${PROJECT_NAME} PRIVATE oboe OpenSLES)
 	endif()
 	target_compile_definitions(${PROJECT_NAME} PRIVATE USE_OBOE)
 endif()
@@ -506,7 +503,7 @@ target_sources(${PROJECT_NAME} PRIVATE core/deps/xbrz/xbrz.cpp)
 
 if(LIBRETRO)
     target_include_directories(${PROJECT_NAME} PRIVATE core/deps/libretro-common/include)
-	target_sources(${PROJECT_NAME} PRIVATE 
+	target_sources(${PROJECT_NAME} PRIVATE
 		core/deps/libretro-common/memmap/memalign.c
 		core/deps/libretro-common/file/file_path.c
 		core/deps/libretro-common/vfs/vfs_implementation.c
@@ -519,11 +516,11 @@ if(LIBRETRO)
 		core/deps/libretro-common/glsm/glsm.c
 		core/deps/libretro-common/glsym/rglgen.c)
 	if(ANDROID OR USE_GLES)
-		target_sources(${PROJECT_NAME} PRIVATE core/deps/libretro-common/glsym/glsym_es3.c) 
+		target_sources(${PROJECT_NAME} PRIVATE core/deps/libretro-common/glsym/glsym_es3.c)
 	elseif(USE_GLES2)
-		target_sources(${PROJECT_NAME} PRIVATE core/deps/libretro-common/glsym/glsym_es2.c) 
+		target_sources(${PROJECT_NAME} PRIVATE core/deps/libretro-common/glsym/glsym_es2.c)
 	else()
-		target_sources(${PROJECT_NAME} PRIVATE core/deps/libretro-common/glsym/glsym_gl.c) 
+		target_sources(${PROJECT_NAME} PRIVATE core/deps/libretro-common/glsym/glsym_gl.c)
 	endif()
 	target_sources(${PROJECT_NAME} PRIVATE
 		shell/libretro/audiostream.cpp
@@ -536,7 +533,7 @@ if(LIBRETRO)
 		shell/libretro/LogManager.h
 		shell/libretro/option.cpp
 		shell/libretro/oslib.cpp
-		shell/libretro/vmu_xhair.cpp) 
+		shell/libretro/vmu_xhair.cpp)
 endif()
 
 target_sources(${PROJECT_NAME} PRIVATE
@@ -1177,6 +1174,7 @@ if(NOT LIBRETRO)
 					shell/apple/emulator-ios/emulator/ios_main.mm
 					shell/apple/emulator-ios/emulator/ios_gamepad.h
 					shell/apple/emulator-ios/emulator/ios_keyboard.h
+					shell/apple/emulator-ios/emulator/ios_mouse.h
 					shell/apple/emulator-ios/emulator/FlycastViewController.h
 					shell/apple/emulator-ios/emulator/FlycastViewController.mm
 					shell/apple/emulator-ios/emulator/PadViewController.h
@@ -1215,7 +1213,6 @@ if(NOT LIBRETRO)
 				XCODE_ATTRIBUTE_GCC_PREFIX_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/shell/apple/emulator-ios/emulator/flycast-ios-Prefix.pch"
 				RESOURCE "${IOS_RESOURCES}"
 				XCODE_ATTRIBUTE_GCC_PRECOMPILE_PREFIX_HEADER "YES"
-				XCODE_ATTRIBUTE_IPHONEOS_DEPLOYMENT_TARGET "12.0"
 				XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED "NO"
 				XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY ""
 				XCODE_ATTRIBUTE_TARGETED_DEVICE_FAMILY "1,2"
@@ -1267,7 +1264,7 @@ if(NOT LIBRETRO)
 		
 			set_target_properties(${PROJECT_NAME} PROPERTIES
 				OUTPUT_NAME "Flycast"
-				MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/shell/cmake/MacOSXBundleInfo.plist.in
+				MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/shell/apple/emulator-osx/MacOSXBundleInfo.plist.in
 				MACOSX_BUNDLE_EXECUTABLE_NAME "Flycast"
 				MACOSX_BUNDLE_INFO_STRING ""
 				MACOSX_BUNDLE_ICON_FILE "AppIcon"
@@ -1289,8 +1286,9 @@ if(NOT LIBRETRO)
 			find_library(AUDIO_UNIT_LIBRARY AudioUnit)
 			find_library(FOUNDATION_LIBRARY Foundation)
 			find_library(AUDIO_TOOLBOX_LIBRARY AudioToolbox)
+			find_library(MULTITOUCH_SUPPORT_LIBRARY MultitouchSupport /System/Library/PrivateFrameworks)
 		
-			target_link_libraries(${PROJECT_NAME} PRIVATE ${AUDIO_UNIT_LIBRARY} ${FOUNDATION_LIBRARY} ${AUDIO_TOOLBOX_LIBRARY})
+			target_link_libraries(${PROJECT_NAME} PRIVATE ${AUDIO_UNIT_LIBRARY} ${FOUNDATION_LIBRARY} ${AUDIO_TOOLBOX_LIBRARY} ${MULTITOUCH_SUPPORT_LIBRARY})
 		endif()
 	elseif(UNIX OR NINTENDO_SWITCH)
 	    if(NOT BUILD_TESTING)

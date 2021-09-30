@@ -1,3 +1,12 @@
+---
+name: Bug report
+about: Create a report to help us improve
+title: ''
+labels: bug
+assignees: ''
+
+---
+
 **Please Note: This form is the minimum required information for submitting bugs.**  
 **Removing this form may lead to your issue being closed until it is completed.**
 

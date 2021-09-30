@@ -1,5 +1,5 @@
 //
-//  ios.h
+//  ios_keyboard.h
 //  flycast
 //
 //  Created by Cameron Bates on 9/6/21.
@@ -43,7 +43,7 @@ public:
         kb_map[GCKeyCodeKeyY] = 0x1C;
         kb_map[GCKeyCodeKeyZ] = 0x1D;
         
-        //1E-27 Number keys 1-0
+        // Number keys 1-0
         kb_map[GCKeyCodeOne] = 0x1E;
         kb_map[GCKeyCodeTwo] = 0x1F;
         kb_map[GCKeyCodeThree] = 0x20;
@@ -65,26 +65,23 @@ public:
         kb_map[GCKeyCodeEqualSign] = 0x2E;     // =
         kb_map[GCKeyCodeOpenBracket] = 0x2F;        // [
         kb_map[GCKeyCodeCloseBracket] = 0x30;       // ]
+        kb_map[GCKeyCodeBackslash] = 0x31;  // "\"
 
-        kb_map[GCKeyCodeBackslash] = 0x31;  // \ (US) unsure of keycode
-
-        //32-34 "]", ";" and ":" (the 3 keys right of L)
-        //kb_map[?] = 0x32;   // ~ (non-US) *,µ in FR layout
+        // "]", ";" and ":" (the 3 keys right of L)
+        // kb_map[?] = 0x32;   // ~ (non-US) *,µ in FR layout
         kb_map[GCKeyCodeSemicolon] = 0x33;  // ;
         kb_map[GCKeyCodeQuote] = 0x34;      // '
-
-        //35 hankaku/zenkaku / kanji (top left)
         kb_map[GCKeyCodeGraveAccentAndTilde] = 0x35;  // `~ (US)
 
-        //36-38 ",", "." and "/" (the 3 keys right of M)
+        // ",", "." and "/" (the 3 keys right of M)
         kb_map[GCKeyCodeComma] = 0x36;
         kb_map[GCKeyCodePeriod] = 0x37;
         kb_map[GCKeyCodeSlash] = 0x38;
 
-        // CAPSLOCK
+        // Capslock
         kb_map[GCKeyCodeCapsLock] = 0x39;
 
-        //3A-45 Function keys F1-F12
+        // Function keys F1-F12
         kb_map[GCKeyCodeF1] = 0x3A;
         kb_map[GCKeyCodeF2] = 0x3B;
         kb_map[GCKeyCodeF3] = 0x3C;
@@ -98,7 +95,7 @@ public:
         kb_map[GCKeyCodeF11] = 0x44;
         kb_map[GCKeyCodeF12] = 0x45;
 
-        //46-4E Control keys above cursor keys
+        // Control keys above cursor keys
         kb_map[GCKeyCodePrintScreen] = 0x46;         // Print Screen
         kb_map[GCKeyCodeScrollLock] = 0x47;         // Scroll Lock
         kb_map[GCKeyCodePause] = 0x48;         // Pause
@@ -109,25 +106,19 @@ public:
         kb_map[GCKeyCodeEnd] = 0x4D;
         kb_map[GCKeyCodePageDown] = 0x4E;
 
-        //4F-52 Cursor keys
+        // Cursor keys
         kb_map[GCKeyCodeRightArrow] = 0x4F;
         kb_map[GCKeyCodeLeftArrow] = 0x50;
         kb_map[GCKeyCodeDownArrow] = 0x51;
         kb_map[GCKeyCodeUpArrow] = 0x52;
 
-        //53 Num Lock (Numeric keypad)
-        kb_map[GCKeyCodeKeypadNumLock] = 0x53;
-        //54 "/" (Numeric keypad)
-        kb_map[GCKeyCodeKeypadSlash] = 0x54;
-        //55 "*" (Numeric keypad)
-        kb_map[GCKeyCodeKeypadAsterisk] = 0x55;
-        //56 "-" (Numeric keypad)
-        kb_map[GCKeyCodeKeypadHyphen] = 0x56;
-        //57 "+" (Numeric keypad)
-        kb_map[GCKeyCodeKeypadPlus] = 0x57;
-        //58 Enter (Numeric keypad)
-        kb_map[GCKeyCodeKeypadEnter] = 0x58;
-        //59-62 Number keys 1-0 (Numeric keypad)
+        // Keypad
+        kb_map[GCKeyCodeKeypadNumLock] = 0x53; // Num Lock
+        kb_map[GCKeyCodeKeypadSlash] = 0x54; // "/"
+        kb_map[GCKeyCodeKeypadAsterisk] = 0x55; // "*"
+        kb_map[GCKeyCodeKeypadHyphen] = 0x56; // "-"
+        kb_map[GCKeyCodeKeypadPlus] = 0x57; // "+"
+        kb_map[GCKeyCodeKeypadEnter] = 0x58; // Enter
         kb_map[GCKeyCodeKeypad1] = 0x59;
         kb_map[GCKeyCodeKeypad2] = 0x5A;
         kb_map[GCKeyCodeKeypad3] = 0x5B;
@@ -138,33 +129,60 @@ public:
         kb_map[GCKeyCodeKeypad8] = 0x60;
         kb_map[GCKeyCodeKeypad9] = 0x61;
         kb_map[GCKeyCodeKeypad0] = 0x62;
-        //63 "." (Numeric keypad)
-        kb_map[GCKeyCodeKeypadPeriod] = 0x63;
+        kb_map[GCKeyCodeKeypadPeriod] = 0x63; // "."
+
         //64 #| (non-US)
         //kb_map[94] = 0x64;
         //65 S3 key
         //66-A4 Not used
         //A5-DF Reserved
+
         kb_map[GCKeyCodeLeftControl] = 0xE0;
         kb_map[GCKeyCodeLeftShift] = 0xE1;
         kb_map[GCKeyCodeLeftAlt] = 0xE2;    // Left Alt
-        //E3 Left S1
+        kb_map[GCKeyCodeLeftGUI] = 0xE3; // Left Command/Meta
         kb_map[GCKeyCodeRightControl] = 0xE4;
         kb_map[GCKeyCodeRightShift] = 0xE5;
         kb_map[GCKeyCodeRightAlt] = 0xE6;    // Right Alt
-        //E7 Right S3
-        //E8-FF Reserved
-
-//        kb_map[kVK_ISO_Section] = 0x32;    // #, Tilde
-
-        // Japanese keyboards
-//        kb_map[kVK_JIS_Underscore] = 0x87;    // I18n keyboard 1
-//        kb_map[kVK_JIS_Yen] = 0x89;         // I18n keyboard 3
+        kb_map[GCKeyCodeRightGUI] = 0xE7;    // Right Command/Meta
+        
+        // International keys
+        kb_map[GCKeyCodeInternational1] = 0x87;
+        kb_map[GCKeyCodeInternational2] = 0x88;
+        kb_map[GCKeyCodeInternational3] = 0x89; // Yen
+        kb_map[GCKeyCodeInternational4] = 0x8A;
+        kb_map[GCKeyCodeInternational5] = 0x8B;
+        kb_map[GCKeyCodeInternational6] = 0x8C;
+        kb_map[GCKeyCodeInternational7] = 0x8D;
+        kb_map[GCKeyCodeInternational8] = 0x8E;
+        kb_map[GCKeyCodeInternational9] = 0x8F;
+        
+        // Language keys
+        kb_map[GCKeyCodeLANG1] = 0x90; // Hangul
+        kb_map[GCKeyCodeLANG2] = 0x91; // Hanja
+        kb_map[GCKeyCodeLANG3] = 0x92; // Katakana
+        kb_map[GCKeyCodeLANG4] = 0x93; // Hiragana
+        kb_map[GCKeyCodeLANG5] = 0x94; // Zekaku/Hankaku
+        kb_map[GCKeyCodeLANG6] = 0x95;
+        kb_map[GCKeyCodeLANG7] = 0x96;
+        kb_map[GCKeyCodeLANG8] = 0x97;
+        kb_map[GCKeyCodeLANG9] = 0x98;
 
         [gcKeyboard.keyboardInput setKeyChangedHandler:^(GCKeyboardInput *keyboard, GCDeviceButtonInput *key, GCKeyCode keyCode, BOOL pressed) {
+            if (pressed) {
+                if (keyCode == GCKeyCodeLeftAlt || keyCode == GCKeyCodeLeftGUI) {
+                    GCKeyCode otherModifierCode = keyCode == GCKeyCodeLeftAlt ? GCKeyCodeLeftGUI : GCKeyCodeLeftAlt;
+                
+                    GCControllerButtonInput *otherModifier = [keyboard buttonForKeyCode:otherModifierCode];
+                
+                    if (otherModifier.isPressed && !gui_is_open()) {
+                        gui_open_settings();
+                    }
+                }
+            }
+
             keyboard_input(keyCode, pressed);
         }];
-        
     }
     
     void set_maple_port(int port) override

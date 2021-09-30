@@ -197,7 +197,7 @@ void VulkanOverlay::Draw(vk::CommandBuffer commandBuffer, vk::Extent2D viewport,
 				((color >> 16) & 0xff) / 255.f,
 				((color >> 24) & 0xff) / 255.f
 			};
-			xhairDrawer->Draw(commandBuffer, xhairTexture->GetImageView(), vtx, true, xhairColor);
+			xhairDrawer->Draw(commandBuffer, i == 0 ? xhairTexture->GetImageView() : vk::ImageView(), vtx, true, xhairColor);
 		}
 	}
 }

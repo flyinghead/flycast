@@ -516,7 +516,7 @@ void Mouse::setAbsPos(int x, int y, int width, int height) {
 	SetMousePosition(x, y, width, height, maple_port());
 }
 
-void Mouse::setRelPos(int deltax, int deltay) {
+void Mouse::setRelPos(float deltax, float deltay) {
 	SetRelativeMousePosition(deltax, deltay, maple_port());
 }
 

@@ -2086,9 +2086,9 @@ static void updateMouseState(u32 port)
 	  mo_buttons[port] |= 1 << 1;
    btn_state = input_cb(port, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_MIDDLE);
    if (btn_state)
-	  mo_buttons[port] &= ~(1 << 0);
+	  mo_buttons[port] &= ~(1 << 3);
    else
-	  mo_buttons[port] |= 1 << 0;
+	  mo_buttons[port] |= 1 << 3;
    if (input_cb(port, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_WHEELDOWN))
 	  mo_wheel_delta[port] -= 10;
    else if (input_cb(port, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_WHEELUP))

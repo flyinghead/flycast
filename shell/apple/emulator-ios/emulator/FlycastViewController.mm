@@ -37,6 +37,7 @@
 #include "cfg/option.h"
 #include "ios_gamepad.h"
 #include "ios_keyboard.h"
+#include "ios_mouse.h"
 
 //@import AltKit;
 #import "AltKit/AltKit-Swift.h"
@@ -47,8 +48,34 @@ static __unsafe_unretained FlycastViewController *flycastViewController;
 
 std::map<GCController *, std::shared_ptr<IOSGamepad>> IOSGamepad::controllers;
 std::map<GCKeyboard *, std::shared_ptr<IOSKeyboard>> IOSKeyboard::keyboards;
+std::map<GCMouse *, std::shared_ptr<IOSMouse>> IOSMouse::mice;
 
 void common_linux_setup();
+
+static bool lockedPointer;
+static void updatePointerLock(Event event)
+{
+    if (@available(iOS 14.0, *)) {
+        bool hasChanged = NO;
+        switch (event) {
+            case Event::Resume:
+                lockedPointer = YES;
+                hasChanged = YES;
+                break;
+            case Event::Pause:
+            case Event::Terminate:
+                lockedPointer = NO;
+                hasChanged = YES;
+                break;
+            default:
+                break;
+        }
+        
+        if (hasChanged) {
+            [flycastViewController setNeedsUpdateOfPrefersPointerLocked];
+        }
+    }
+}
 
 @interface FlycastViewController () <UIDocumentPickerDelegate>
 
@@ -60,6 +87,8 @@ void common_linux_setup();
 @property (nonatomic, strong) id gamePadDisconnectObserver;
 @property (nonatomic, strong) id keyboardConnectObserver;
 @property (nonatomic, strong) id keyboardDisconnectObserver;
+@property (nonatomic, strong) id mouseConnectObserver;
+@property (nonatomic, strong) id mouseDisconnectObserver;
 
 @property (nonatomic, strong) nw_path_monitor_t monitor;
 @property (nonatomic, strong) dispatch_queue_t monitorQueue;
@@ -142,6 +171,24 @@ extern int screen_dpi;
             GCKeyboard *keyboard = note.object;
             IOSKeyboard::removeKeyboard(keyboard);
         }];
+        
+        self.mouseConnectObserver = [[NSNotificationCenter defaultCenter]
+            addObserverForName:GCMouseDidConnectNotification object:nil queue:[NSOperationQueue mainQueue]
+            usingBlock:^(NSNotification *note) {
+            GCMouse *mouse = note.object;
+            IOSMouse::addMouse(mouse);
+        }];
+        
+        self.mouseDisconnectObserver = [[NSNotificationCenter defaultCenter]
+            addObserverForName:GCMouseDidDisconnectNotification object:nil queue:[NSOperationQueue mainQueue]
+            usingBlock:^(NSNotification *note) {
+            GCMouse *mouse = note.object;
+            IOSMouse::removeMouse(mouse);
+        }];
+
+        EventManager::listen(Event::Resume, updatePointerLock);
+        EventManager::listen(Event::Pause, updatePointerLock);
+        EventManager::listen(Event::Terminate, updatePointerLock);
     }
 
     self.gamePadConnectObserver = [[NSNotificationCenter defaultCenter] addObserverForName:GCControllerDidConnectNotification object:nil queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification *note) {
@@ -198,6 +245,11 @@ extern int screen_dpi;
 - (BOOL)prefersStatusBarHidden
 {
 	return YES;
+}
+
+- (BOOL)prefersPointerLocked
+{
+    return lockedPointer;
 }
 
 - (UIStatusBarStyle)preferredStatusBarStyle

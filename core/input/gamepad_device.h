@@ -211,7 +211,7 @@ public:
 	}
 
 	void setAbsPos(int x, int y, int width, int height);
-	void setRelPos(int deltax, int deltay);
+	void setRelPos(float deltax, float deltay);
 	void setButton(Button button, bool pressed);
 	void setWheel(int delta);
 };

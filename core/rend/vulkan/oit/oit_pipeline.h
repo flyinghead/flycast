@@ -53,6 +53,7 @@ public:
 		float cp_AlphaTestValue;
 		float sp_FOG_DENSITY;
 		float shade_scale_factor;	// new for OIT
+		u32 pixelBufferSize;
 	};
 
 	struct PushConstants

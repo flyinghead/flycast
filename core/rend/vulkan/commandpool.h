@@ -26,26 +26,24 @@ class CommandPool
 public:
 	void Init()
 	{
-		size_t size = VulkanContext::Instance()->GetSwapChainSize();
-
-		if (commandPools.size() > size)
+		if (commandPools.size() > chainSize)
 		{
-			commandPools.resize(size);
-			fences.resize(size);
+			commandPools.resize(chainSize);
+			fences.resize(chainSize);
 		}
 		else
 		{
-			while (commandPools.size() < size)
+			while (commandPools.size() < chainSize)
 			{
 				commandPools.push_back(VulkanContext::Instance()->GetDevice().createCommandPoolUnique(
 						vk::CommandPoolCreateInfo(vk::CommandPoolCreateFlagBits::eTransient, VulkanContext::Instance()->GetGraphicsQueueFamilyIndex())));
 				fences.push_back(VulkanContext::Instance()->GetDevice().createFenceUnique(vk::FenceCreateInfo(vk::FenceCreateFlagBits::eSignaled)));
 			}
 		}
-		if (freeBuffers.size() != size)
-			freeBuffers.resize(size);
-		if (inFlightBuffers.size() != size)
-			inFlightBuffers.resize(size);
+		if (freeBuffers.size() != chainSize)
+			freeBuffers.resize(chainSize);
+		if (inFlightBuffers.size() != chainSize)
+			inFlightBuffers.resize(chainSize);
 	}
 
 	void Term()
@@ -64,7 +62,7 @@ public:
 
 	void BeginFrame()
 	{
-		index = (index + 1) % VulkanContext::Instance()->GetSwapChainSize();
+		index = (index + 1) % chainSize;
 		VulkanContext::Instance()->GetDevice().waitForFences(1, &fences[index].get(), true, UINT64_MAX);
 		VulkanContext::Instance()->GetDevice().resetFences(1, &fences[index].get());
 		std::vector<vk::UniqueCommandBuffer>& inFlight = inFlightBuffers[index];
@@ -106,4 +104,6 @@ private:
 	std::vector<std::vector<vk::UniqueCommandBuffer>> inFlightBuffers;
 	std::vector<vk::UniqueCommandPool> commandPools;
 	std::vector<vk::UniqueFence> fences;
+	// size should be the same as used by client: 2 for renderer (texCommandPool)
+	static constexpr size_t chainSize = 2;
 };

@@ -176,5 +176,6 @@ private:
 	bool scissorEnable = false;
 	bool resetting = false;
 	bool frameRendered = false;
+	bool frameRenderedOnce = false;
 };
 
