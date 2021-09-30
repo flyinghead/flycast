@@ -77,7 +77,7 @@ std::string findNaomiBios(const std::string& name)
 
 std::string getSavestatePath(int index, bool writable)
 {
-	std::string state_file = settings.imgread.ImagePath;
+	std::string state_file = settings.content.path;
 	size_t lastindex = state_file.find_last_of('/');
 #ifdef _WIN32
 	size_t lastindex2 = state_file.find_last_of('\\');

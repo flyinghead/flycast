@@ -301,7 +301,6 @@ void dc_reset(bool hard)
 	if (hard)
 		_vmem_unprotect_vram(0, VRAM_SIZE);
 	libPvr_Reset(hard);
-	libGDR_Reset(hard);
 	libAICA_Reset(hard);
 	libARM_Reset(hard);
 	sh4_cpu.Reset(true);
@@ -357,7 +356,6 @@ void Emulator::init()
 	setPlatform(DC_PLATFORM_DREAMCAST);
 
 	libPvr_Init();
-	libGDR_Init();
 	libAICA_Init();
 	libARM_Init();
 	mem_Init();
@@ -405,9 +403,9 @@ void Emulator::loadGame(const char *path)
 		DEBUG_LOG(BOOT, "Loading game %s", path == nullptr ? "(nil)" : path);
 
 		if (path != nullptr)
-			strcpy(settings.imgread.ImagePath, path);
+			settings.content.path = path;
 		else
-			settings.imgread.ImagePath[0] = '\0';
+			settings.content.path.clear();
 
 		setPlatform(getGamePlatform(path));
 		mem_map_default();
@@ -423,15 +421,14 @@ void Emulator::loadGame(const char *path)
 				// Boot BIOS
 				if (!LoadRomFiles())
 					throw FlycastException("No BIOS file found in " + hostfs::getFlashSavePath("", ""));
-				TermDrive();
-				InitDrive();
+				InitDrive("");
 			}
 			else
 			{
-				std::string extension = get_file_extension(settings.imgread.ImagePath);
+				std::string extension = get_file_extension(settings.content.path);
 				if (extension != "elf")
 				{
-					if (InitDrive())
+					if (InitDrive(settings.content.path))
 					{
 						loadGameSpecificSettings();
 						if (config::UseReios || !LoadRomFiles())
@@ -443,10 +440,10 @@ void Emulator::loadGame(const char *path)
 					else
 					{
 						// Content load failed. Boot the BIOS
-						settings.imgread.ImagePath[0] = '\0';
+						settings.content.path.clear();
 						if (!LoadRomFiles())
 							throw FlycastException("This media cannot be loaded");
-						InitDrive();
+						InitDrive("");
 					}
 				}
 				else
@@ -472,7 +469,7 @@ void Emulator::loadGame(const char *path)
 			else if (settings.platform.system == DC_PLATFORM_ATOMISWAVE)
 				mcfg_CreateAtomisWaveControllers();
 		}
-		cheatManager.reset(config::Settings::instance().getGameId());
+		cheatManager.reset(settings.content.gameId);
 		if (cheatManager.isWidescreen())
 		{
 			gui_display_notification("Widescreen cheat activated", 1000);
@@ -521,6 +518,8 @@ void Emulator::unloadGame()
 
 		config::Settings::instance().reset();
 		config::Settings::instance().load(false);
+		settings.content.path.clear();
+		settings.content.gameId.clear();
 		state = Init;
 	}
 }
@@ -535,7 +534,6 @@ void Emulator::term()
 		custom_texture.Terminate();	// lr: avoid deadlock on exit (win32)
 		libARM_Term();
 		libAICA_Term();
-		libGDR_Term();
 		libPvr_Term();
 		mem_Term();
 		_vmem_release();
@@ -601,6 +599,7 @@ void loadGameSpecificSettings()
 	// Default per-game settings
 	loadSpecialSettings();
 
+	settings.content.gameId = reios_id;
 	config::Settings::instance().setGameId(reios_id);
 
 	// Reload per-game settings

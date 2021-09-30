@@ -249,8 +249,7 @@ extern "C" JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_setGameUri
         // Get filename string from Java
         const char* file_path = env->GetStringUTFChars(fileName, 0);
         NOTICE_LOG(BOOT, "Game Disk URI: '%s'", file_path);
-        strncpy(settings.imgread.ImagePath, strlen(file_path) >= 7 && !memcmp(file_path, "file://", 7) ? file_path + 7 : file_path, sizeof(settings.imgread.ImagePath));
-        settings.imgread.ImagePath[sizeof(settings.imgread.ImagePath) - 1] = '\0';
+        settings.content.path = strlen(file_path) >= 7 && !memcmp(file_path, "file://", 7) ? file_path + 7 : file_path;
         env->ReleaseStringUTFChars(fileName, file_path);
         // TODO game paused/settings/...
         if (game_started) {
@@ -307,7 +306,7 @@ extern "C" JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_stop(JNIEn
     }
     emu.unloadGame();
     gui_state = GuiState::Main;
-    settings.imgread.ImagePath[0] = '\0';
+    settings.content.path.clear();
 }
 
 static void *render_thread_func(void *)

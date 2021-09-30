@@ -16,9 +16,9 @@
 int gdrom_schid;
 
 //Sense: ASC - ASCQ - Key
-signed int sns_asc=0;
-signed int sns_ascq=0;
-signed int sns_key=0;
+int sns_asc;
+int sns_ascq;
+int sns_key;
 
 u32 set_mode_offset;
 read_params_t read_params ;
@@ -265,14 +265,8 @@ void gd_setdisc()
 		GDStatus.DRDY=1;
 		break;
 
-	case Busy:
-		SecNumber.Status = GD_BUSY;
-		GDStatus.BSY=1;
-		GDStatus.DRDY=0;
-		break;
-
 	default :
-		if (SecNumber.Status==GD_BUSY)
+		if (SecNumber.Status == GD_BUSY)
 			SecNumber.Status = GD_PAUSE;
 		else
 			SecNumber.Status = GD_STANDBY;
@@ -281,15 +275,8 @@ void gd_setdisc()
 		break;
 	}
 
-	if (gd_disk_type==Busy && newd!=Busy)
-	{
-		GDStatus.BSY=0;
-		GDStatus.DRDY=1;
-	}
-
-	gd_disk_type=newd;
-
-	SecNumber.DiscFormat=gd_disk_type>>4;
+	gd_disk_type = newd;
+	SecNumber.DiscFormat = gd_disk_type >> 4;
 }
 
 void gd_reset()
@@ -493,7 +480,7 @@ u32 gd_get_subcode(u32 format, u32 fad, u8 *subc_info)
 	case 0:	// Raw subcode
 		subc_info[2] = 0;
 		subc_info[3] = 100;
-		libGDR_ReadSubChannel(subc_info + 4, 0, 100 - 4);
+		libGDR_ReadSubChannel(subc_info + 4, 100 - 4);
 		break;
 
 	case 1:	// Q data only
@@ -637,7 +624,7 @@ void gd_process_spi_cmd()
 			u32 toc_gd[102];
 			
 			//toc - dd/sd
-			libGDR_GetToc(&toc_gd[0],packet_cmd.data_8[1]&0x1);
+			libGDR_GetToc(&toc_gd[0], (DiskArea)(packet_cmd.data_8[1] & 1));
 			 
 			gd_spi_pio_end((u8*)&toc_gd[0], std::min((u32)packet_cmd.data_8[4] | (packet_cmd.data_8[3] << 8), (u32)sizeof(toc_gd)));
 		}
@@ -1209,6 +1196,7 @@ void GDROM_DmaEnable(u32 addr, u32 data)
 void gdrom_reg_Init()
 {
 	gdrom_schid = sh4_sched_register(0, &GDRomschd);
+	libCore_gdrom_disc_change();
 }
 
 void gdrom_reg_Term()
@@ -1260,5 +1248,5 @@ void gdrom_reg_Reset(bool hard)
 	GDStatus = {};
 	ByteCount = {};
 
-	gd_setdisc();
+	libCore_gdrom_disc_change();
 }

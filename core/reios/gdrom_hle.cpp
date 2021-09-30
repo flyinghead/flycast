@@ -49,7 +49,7 @@ static void GDROM_HLE_ReadTOC()
 	}
 
 	u32 toc[102];
-	libGDR_GetToc(toc, area);
+	libGDR_GetToc(toc, (DiskArea)area);
 
 	// Swap results to LE
 	for (int i = 0; i < 102; i++) {

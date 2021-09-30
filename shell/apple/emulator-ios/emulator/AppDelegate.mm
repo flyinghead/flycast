@@ -66,7 +66,7 @@ static bool emulatorRunning;
 {
     // Use this method to release shared resources, save user data, invalidate timers, and store enough application state information to restore your application to its current state in case it is terminated later. 
     // If your application supports background execution, this method is called instead of applicationWillTerminate: when the user quits.
-	if (config::AutoSaveState && settings.imgread.ImagePath[0] != '\0')
+	if (config::AutoSaveState && !settings.content.path.empty())
 		dc_savestate(config::SavestateSlot);
 }
 

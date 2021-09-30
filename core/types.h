@@ -349,8 +349,9 @@ struct settings_t
 
 	struct
 	{
-		char ImagePath[512];
-	} imgread;
+		std::string path;
+		std::string gameId;
+	} content;
 
 	struct {
 		JVS JammaSetup;

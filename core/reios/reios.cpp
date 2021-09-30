@@ -643,11 +643,11 @@ static void reios_boot()
 	//Infinite loop for arm !
 	WriteMem32(0x80800000, 0xEAFFFFFE);
 
-	std::string extension = get_file_extension(settings.imgread.ImagePath);
+	std::string extension = get_file_extension(settings.content.path);
 	if (extension == "elf")
 	{
-		if (!reios_loadElf(settings.imgread.ImagePath))
-			throw FlycastException(std::string("Failed to open ELF ") + settings.imgread.ImagePath);
+		if (!reios_loadElf(settings.content.path))
+			throw FlycastException(std::string("Failed to open ELF ") + settings.content.path);
 		reios_setup_state(0x8C010000);
 	}
 	else {

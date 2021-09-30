@@ -84,7 +84,7 @@ void CustomTexture::LoaderThread()
 
 std::string CustomTexture::GetGameId()
 {
-   std::string game_id(config::Settings::instance().getGameId());
+   std::string game_id(settings.content.gameId);
    const size_t str_end = game_id.find_last_not_of(' ');
    if (str_end == std::string::npos)
 	  return "";

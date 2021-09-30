@@ -6,8 +6,6 @@
 #include "hw/gdrom/gdrom_if.h"
 #include "rend/gui.h"
 
-extern u32 NullDriveDiscType;
-
 /*
 Mode2 Subheader:
 
@@ -63,21 +61,10 @@ enum DiskArea
 	DoubleDensity
 };
 
-bool ConvertSector(u8* in_buff , u8* out_buff , int from , int to,int sector);
-
-bool InitDrive();
+bool InitDrive(const std::string& path);
 void TermDrive();
-bool DiscSwap();
+bool DiscSwap(const std::string& path);
 void DiscOpenLid();
-extern signed int sns_asc;
-extern signed int sns_ascq;
-extern signed int sns_key;
-
-void GetDriveToc(u32* to,DiskArea area);
-void GetDriveSector(u8 * buff,u32 StartSector,u32 SectorCount,u32 secsz);
-
-void GetDriveSessionInfo(u8* to,u8 session);
-extern u8 q_subchannel[96];
 
 struct Session
 {
@@ -114,14 +101,12 @@ struct Track
 
 struct Disc
 {
-	std::wstring path;
 	std::vector<Session> sessions;	//info for sessions
 	std::vector<Track> tracks;		//info for tracks
 	Track LeadOut;				//info for lead out track (can't read from here)
 	u32 EndFAD;					//Last valid disc sector
 	DiscType type;
 
-	//functions !
 	bool ReadSector(u32 FAD,u8* dst,SectorFormat* sector_type,u8* subcode,SubcodeFormat* subcode_type)
 	{
 		for (size_t i=tracks.size();i-->0;)
@@ -134,66 +119,8 @@ struct Disc
 		return false;
 	}
 
-	void ReadSectors(u32 FAD,u32 count,u8* dst,u32 fmt)
-	{
-		u8 temp[2448];
-		SectorFormat secfmt;
-		SubcodeFormat subfmt;
+	void ReadSectors(u32 FAD,u32 count,u8* dst,u32 fmt);
 
-		u32 progress = ~0;
-		for (u32 i = 1; i <= count; i++)
-		{
-			if (count >= 1000)
-			{
-				if (loading_canceled)
-					break;
-				// Progress report when loading naomi gd-rom games
-				const u32 new_progress = i * 100 / count;
-				if (progress != new_progress)
-				{
-					progress = new_progress;
-					char status_str[16];
-					sprintf(status_str, "%d%%", progress);
-					gui_display_notification(status_str, 2000);
-				}
-			}
-			if (ReadSector(FAD,temp,&secfmt,q_subchannel,&subfmt))
-			{
-				//TODO: Proper sector conversions
-				if (secfmt==SECFMT_2352)
-				{
-					ConvertSector(temp,dst,2352,fmt,FAD);
-				}
-				else if (fmt == 2048 && secfmt==SECFMT_2336_MODE2)
-					memcpy(dst,temp+8,2048);
-				else if (fmt==2048 && (secfmt==SECFMT_2048_MODE1 || secfmt==SECFMT_2048_MODE2_FORM1 ))
-				{
-					memcpy(dst,temp,2048);
-				}
-				else if (fmt==2352 && (secfmt==SECFMT_2048_MODE1 || secfmt==SECFMT_2048_MODE2_FORM1 ))
-				{
-					INFO_LOG(GDROM, "GDR:fmt=2352;secfmt=2048");
-					memcpy(dst,temp,2048);
-				}
-				else if (fmt==2048 && secfmt==SECFMT_2448_MODE2)
-				{
-					// Pier Solar and the Great Architects
-					ConvertSector(temp, dst, 2448, fmt, FAD);
-				}
-				else
-				{
-					WARN_LOG(GDROM, "ERROR: UNABLE TO CONVERT SECTOR. THIS IS FATAL. Format: %d Sector format: %d", fmt, secfmt);
-					//verify(false);
-				}
-			}
-			else
-			{
-				WARN_LOG(GDROM, "Sector Read miss FAD: %d", FAD);
-			}
-			dst+=fmt;
-			FAD++;
-		}
-	}
 	virtual ~Disc() 
 	{
 		for (auto& track : tracks)
@@ -244,9 +171,7 @@ struct Disc
 	}
 };
 
-extern Disc* disc;
-
-Disc* OpenDisc(const char* fn);
+Disc* OpenDisc(const std::string& path);
 
 struct RawTrackFile : TrackFile
 {
@@ -294,17 +219,11 @@ struct RawTrackFile : TrackFile
 };
 
 DiscType GuessDiscType(bool m1, bool m2, bool da);
-void gd_setdisc();
-
-//GDR
-s32 libGDR_Init();
-void libGDR_Reset(bool hard);
-void libGDR_Term();
 
 //IO
 void libGDR_ReadSector(u8 * buff,u32 StartSector,u32 SectorCount,u32 secsz);
-void libGDR_ReadSubChannel(u8 * buff, u32 format, u32 len);
-void libGDR_GetToc(u32* toc,u32 area);
+void libGDR_ReadSubChannel(u8 * buff, u32 len);
+void libGDR_GetToc(u32 *toc, DiskArea area);
 u32 libGDR_GetDiscType();
 void libGDR_GetSessionInfo(u8* pout,u8 session);
 u32 libGDR_GetTrackNumber(u32 sector, u32& elapsed);

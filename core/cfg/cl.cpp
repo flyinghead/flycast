@@ -114,7 +114,7 @@ static int showhelp()
 
 bool ParseCommandLine(int argc,char* argv[])
 {
-	settings.imgread.ImagePath[0] = '\0';
+	settings.content.path.clear();
 	int cl=argc-2;
 	char** arg=argv+1;
 	while(cl>=0)
@@ -145,18 +145,18 @@ bool ParseCommandLine(int argc,char* argv[])
 					|| stricmp(extension, ".gdi") == 0 || stricmp(extension, ".cue") == 0))
 			{
 				INFO_LOG(COMMON, "Using '%s' as cd image", *arg);
-				strcpy(settings.imgread.ImagePath, *arg);
+				settings.content.path = *arg;
 			}
 			else if (extension && stricmp(extension, ".elf") == 0)
 			{
 				INFO_LOG(COMMON, "Using '%s' as reios elf file", *arg);
 				cfgSetVirtual("config", "bios.UseReios", "yes");
-				strcpy(settings.imgread.ImagePath, *arg);
+				settings.content.path = *arg;
 			}
 			else
 			{
 				INFO_LOG(COMMON, "Using '%s' as rom", *arg);
-				strcpy(settings.imgread.ImagePath, *arg);
+				settings.content.path = *arg;
 			}
 		}
 		arg++;

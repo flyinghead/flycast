@@ -74,9 +74,6 @@ extern MemChip *sys_nvmem;
 
 //./core/hw/gdrom/gdromv3.o
 extern int gdrom_schid;
-extern signed int sns_asc;
-extern signed int sns_ascq;
-extern signed int sns_key;
 extern packet_cmd_t packet_cmd;
 extern u32 set_mode_offset;
 extern read_params_t read_params ;

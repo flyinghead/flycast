@@ -401,7 +401,7 @@ void GDCartridge::find_file(const char *name, const u8 *dir_sector, u32 &file_st
 		int fnlen = 0;
 		if(!(dir_sector[pos+25] & 2)) {
 			int len = dir_sector[pos+32];
-//          printf("file: [%s]\n", &dir_sector[pos+33+fnlen]);
+			//printf("file: [%s]\n", &dir_sector[pos+33+fnlen]);
 			for(fnlen=0; fnlen < FILENAME_LENGTH; fnlen++) {
 				if((dir_sector[pos+33+fnlen] == ';') && (name[fnlen] == 0)) {
 					fnlen = FILENAME_LENGTH+1;
@@ -494,15 +494,15 @@ void GDCartridge::device_start()
 
 		u8 buffer[2048];
 		std::string gdrom_path = get_game_basename() + "/" + gdrom_name;
-		Disc *gdrom = OpenDisc((gdrom_path + ".chd").c_str());
+		Disc *gdrom = OpenDisc(gdrom_path + ".chd");
 		if (gdrom == nullptr)
-			gdrom = OpenDisc((gdrom_path + ".gdi").c_str());
+			gdrom = OpenDisc(gdrom_path + ".gdi");
 		if (gdrom_parent_name != nullptr && gdrom == nullptr)
 		{
 			std::string gdrom_parent_path = get_game_dir() + "/" + gdrom_parent_name + "/" + gdrom_name;
-			gdrom = OpenDisc((gdrom_parent_path + ".chd").c_str());
+			gdrom = OpenDisc(gdrom_parent_path + ".chd");
 			if (gdrom == nullptr)
-				gdrom = OpenDisc((gdrom_parent_path + ".gdi").c_str());
+				gdrom = OpenDisc(gdrom_parent_path + ".gdi");
 		}
 		if (gdrom == nullptr)
 			throw NaomiCartException("Naomi GDROM: Cannot open " + gdrom_path + ".chd or " + gdrom_path + ".gdi");

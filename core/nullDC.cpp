@@ -240,7 +240,7 @@ void dc_cancel_load()
 		loading_canceled = true;
 		loadingDone.get();
 	}
-	settings.imgread.ImagePath[0] = '\0';
+	settings.content.path.clear();
 }
 
 void dc_get_load_status()

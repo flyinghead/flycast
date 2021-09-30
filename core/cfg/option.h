@@ -70,10 +70,6 @@ public:
 		cfgSetAutoSave(true);
 	}
 
-	const std::string& getGameId() const {
-		return gameId;
-	}
-
 	void setGameId(const std::string& gameId) {
 		this->gameId = gameId;
 	}
@@ -125,7 +121,7 @@ public:
 
 	void load() override {
 		if (PerGameOption && settings.hasPerGameConfig())
-			set(doLoad(settings.getGameId(), section + "." + name));
+			set(doLoad(settings.gameId, section + "." + name));
 		else
 		{
 			set(doLoad(section, name));
@@ -149,7 +145,7 @@ public:
 				return;
 		}
 		if (PerGameOption && settings.hasPerGameConfig())
-			doSave(settings.getGameId(), section + "." + name);
+			doSave(settings.gameId, section + "." + name);
 		else
 			doSave(section, name);
 	}

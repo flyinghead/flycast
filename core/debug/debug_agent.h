@@ -247,7 +247,7 @@ public:
 	void restart()
 	{
 		emu.unloadGame();
-		emu.loadGame(settings.imgread.ImagePath);
+		emu.loadGame(settings.content.path);
 		emu.start();
 	}
 

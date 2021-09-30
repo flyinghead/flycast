@@ -20,6 +20,7 @@
 #include "hw/maple/maple_cfg.h"
 #include "hw/maple/maple_devs.h"
 #include "input/gamepad_device.h"
+#include "cfg/option.h"
 
 void UpdateInputState();
 
@@ -31,6 +32,8 @@ constexpr u32 BTN_TRIGGER_RIGHT	= DC_BTN_RELOAD << 2;
 
 static void getLocalInput(MapleInputState inputState[4])
 {
+	if (!config::ThreadedRendering)
+		UpdateInputState();
 	for (int player = 0; player < 4; player++)
 	{
 		MapleInputState& state = inputState[player];
@@ -367,7 +370,7 @@ void startSession(int localPort, int localPlayerNum)
 	cb.log_game_state  = log_game_state;
 
 #ifdef SYNC_TEST
-	GGPOErrorCode result = ggpo_start_synctest(&ggpoSession, &cb, config::Settings::instance().getGameId().c_str(), MAX_PLAYERS, sizeof(kcode[0]), 1);
+	GGPOErrorCode result = ggpo_start_synctest(&ggpoSession, &cb, settings.content.gameId.c_str(), MAX_PLAYERS, sizeof(kcode[0]), 1);
 	if (result != GGPO_OK)
 	{
 		WARN_LOG(NETWORK, "GGPO start sync session failed: %d", result);
@@ -405,7 +408,7 @@ void startSession(int localPort, int localPlayerNum)
 		NOTICE_LOG(NETWORK, "GGPO: Using %d full analog axes", analogAxes);
 	}
 	u32 inputSize = sizeof(kcode[0]) + analogAxes + (int)absPointerPos * 4;
-	GGPOErrorCode result = ggpo_start_session(&ggpoSession, &cb, config::Settings::instance().getGameId().c_str(), MAX_PLAYERS, inputSize, localPort);
+	GGPOErrorCode result = ggpo_start_session(&ggpoSession, &cb, settings.content.gameId.c_str(), MAX_PLAYERS, inputSize, localPort);
 	if (result != GGPO_OK)
 	{
 		WARN_LOG(NETWORK, "GGPO start session failed: %d", result);

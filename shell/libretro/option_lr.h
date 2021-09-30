@@ -32,10 +32,6 @@ public:
 
 	void save() {}
 
-	const std::string& getGameId() const {
-		return gameId;
-	}
-
 	void setGameId(const std::string& gameId) {
 		this->gameId = gameId;
 	}
