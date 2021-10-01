@@ -427,10 +427,7 @@ void gui_start_game(const std::string& path)
 
 	scanner.stop();
 	gui_state = GuiState::Loading;
-	static std::string path_copy;
-	path_copy = path;	// path may be a local var
-
-	dc_load_game(path.empty() ? NULL : path_copy.c_str());
+	dc_load_game(path);
 }
 
 void gui_stop_game(const std::string& message)
@@ -447,6 +444,8 @@ void gui_stop_game(const std::string& message)
 	}
 	else
 	{
+		if (!message.empty())
+			ERROR_LOG(COMMON, "Flycast has stopped: %s", message.c_str());
 		// Exit emulator
 		dc_exit();
 	}

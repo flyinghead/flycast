@@ -215,12 +215,12 @@ void dc_loadstate(int index)
     INFO_LOG(SAVESTATE, "Loaded state from %s size %d", filename.c_str(), total_size) ;
 }
 
-void dc_load_game(const char *path)
+void dc_load_game(const std::string& path)
 {
 	loading_canceled = false;
 
 	loadingDone = std::async(std::launch::async, [path] {
-		emu.loadGame(path);
+		emu.loadGame(path.c_str());
 	});
 }
 

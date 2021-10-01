@@ -1922,13 +1922,6 @@ void retro_rend_present()
 	}
 }
 
-void retro_rend_vblank()
-{
-	// Time out if a frame hasn't been rendered for 50 ms
-	if (!config::ThreadedRendering && is_dupe && sh4_sched_now64() - startTime > 10000000)
-		sh4_cpu.Stop();
-}
-
 static uint32_t get_time_ms()
 {
    return (uint32_t)(os_GetSeconds() * 1000.0);

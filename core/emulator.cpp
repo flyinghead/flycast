@@ -679,8 +679,11 @@ void EventManager::broadcastEvent(Event event) {
 		callback(event);
 }
 
-void Emulator::run() {
+void Emulator::run()
+{
 	verify(state == Running);
+	startTime = sh4_sched_now64();
+	renderTimeout = false;
 	try {
 		runInternal();
 		if (ggpo::active())
@@ -724,6 +727,8 @@ void Emulator::start()
 				try {
 					while (state == Running)
 					{
+						startTime = sh4_sched_now64();
+						renderTimeout = false;
 						runInternal();
 						if (!ggpo::nextFrame())
 							break;
@@ -744,7 +749,8 @@ void Emulator::start()
 	}
 }
 
-bool Emulator::checkStatus() {
+bool Emulator::checkStatus()
+{
 	try {
 		if (threadResult.wait_for(std::chrono::seconds(0)) == std::future_status::timeout)
 			return true;
@@ -756,19 +762,30 @@ bool Emulator::checkStatus() {
 	}
 }
 
-bool Emulator::render() {
+bool Emulator::render()
+{
 	if (!config::ThreadedRendering)
 	{
 		if (state != Running)
 			return false;
-		// FIXME used to timeout in retro_rend_vblank()
-		//startTime = sh4_sched_now64();
 		run();
-		return true; // FIXME need something like is_dupe
+		// TODO if stopping due to a user request, no frame has been rendered
+		return !renderTimeout;
 	}
 	if (!checkStatus())
 		return false;
 	return rend_single_frame(true); // FIXME stop flag?
 }
 
+void Emulator::vblank()
+{
+	// Time out if a frame hasn't been rendered for 50 ms
+	if (sh4_sched_now64() - startTime <= 10000000)
+		return;
+	renderTimeout = true;
+	if (ggpo::active())
+		ggpo::endOfFrame();
+	else if (!config::ThreadedRendering)
+		sh4_cpu.Stop();
+}
 Emulator emu;

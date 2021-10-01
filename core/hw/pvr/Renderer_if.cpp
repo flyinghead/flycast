@@ -6,19 +6,18 @@
 #include "rend/TexCache.h"
 #include "cfg/option.h"
 #include "network/ggpo.h"
+#include "emulator.h"
 
 #include <mutex>
 #include <zlib.h>
 
 void retro_rend_present();
-void retro_rend_vblank();
 #ifndef LIBRETRO
 void retro_rend_present()
 {
 	if (!config::ThreadedRendering)
 		sh4_cpu.Stop();
 }
-void retro_rend_vblank() {}
 #endif
 
 u32 VertexCount=0;
@@ -407,7 +406,7 @@ void rend_vblank()
 	render_called = false;
 	check_framebuffer_write();
 	cheatManager.apply();
-	retro_rend_vblank();
+	emu.vblank();
 }
 
 void check_framebuffer_write()
