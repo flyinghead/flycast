@@ -242,8 +242,6 @@ void bba_Serialize(void **data, unsigned int *total_size)
 
 void bba_Unserialize(void **data, unsigned int *total_size)
 {
-	if (rtl8139device == nullptr)
-		bba_Init();
 	REICAST_US(GAPS_regs);
 	REICAST_US(GAPS_ram);
 	REICAST_US(dmaOffset);

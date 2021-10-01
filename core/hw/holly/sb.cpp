@@ -13,7 +13,6 @@
 #include "hw/pvr/pvr_sb_regs.h"
 #include "emulator.h"
 #include "hw/bba/bba.h"
-#include "cfg/option.h"
 
 std::array<RegisterStruct, 0x540> sb_regs;
 
@@ -582,10 +581,8 @@ void sb_Init()
 	maple_Init();
 	aica_sb_Init();
 
-	if (config::EmulateBBA)
-		bba_Init();
-	else
-		ModemInit();
+	bba_Init();
+	ModemInit();
 }
 
 void sb_Reset(bool hard)
@@ -599,10 +596,8 @@ void sb_Reset(bool hard)
 	SB_FFST_rc = 0;
 	SB_FFST = 0;
 
-	if (config::EmulateBBA)
-		bba_Reset(hard);
-	else
-		ModemTerm();
+	bba_Reset(hard);
+	ModemTerm();
 
 	asic_reg_Reset(hard);
 	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
@@ -616,10 +611,8 @@ void sb_Reset(bool hard)
 
 void sb_Term()
 {
-	if (config::EmulateBBA)
-		bba_Term();
-	else
-		ModemTerm();
+	bba_Term();
+	ModemTerm();
 	aica_sb_Term();
 	maple_Term();
 	pvr_sb_Term();
