@@ -13,7 +13,9 @@ SpectatorBackend::SpectatorBackend(GGPOSessionCallbacks *cb,
                                    int num_players,
                                    int input_size,
                                    char *hostip,
-                                   u_short hostport) :
+                                   u_short hostport,
+								   const void *verification,
+								   int verification_size) :
    _input_size(input_size),
    _num_players(num_players),
    _next_input_to_send(0)
@@ -33,6 +35,7 @@ SpectatorBackend::SpectatorBackend(GGPOSessionCallbacks *cb,
    /*
     * Init the host endpoint
     */
+   _host.SetVerificationData(verification, verification_size);
    _host.Init(&_udp, _poll, 0, hostip, hostport, NULL);
    _host.Synchronize();
 

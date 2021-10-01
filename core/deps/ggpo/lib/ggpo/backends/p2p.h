@@ -17,7 +17,8 @@
 
 class Peer2PeerBackend : public IQuarkBackend, IPollSink, Udp::Callbacks {
 public:
-   Peer2PeerBackend(GGPOSessionCallbacks *cb, const char *gamename, uint16 localport, int num_players, int input_size);
+   Peer2PeerBackend(GGPOSessionCallbacks *cb, const char *gamename, uint16 localport, int num_players, int input_size,
+		   const void *verification, int verification_size);
    virtual ~Peer2PeerBackend();
 
 

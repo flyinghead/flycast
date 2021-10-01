@@ -17,7 +17,9 @@ Peer2PeerBackend::Peer2PeerBackend(GGPOSessionCallbacks *cb,
                                    const char *gamename,
                                    uint16 localport,
                                    int num_players,
-                                   int input_size) :
+                                   int input_size,
+								   const void *verification,
+								   int verification_size) :
     _sync(_local_connect_status),
 	_endpoints(nullptr),
     _num_spectators(0),
@@ -47,6 +49,8 @@ Peer2PeerBackend::Peer2PeerBackend(GGPOSessionCallbacks *cb,
    _udp.Init(localport, &_poll, this);
 
    _endpoints = new UdpProtocol[_num_players];
+   for (int i = 0; i < _num_players; i++)
+	   _endpoints[i].SetVerificationData(verification, verification_size);
    memset(_local_connect_status, 0, sizeof(_local_connect_status));
    for (unsigned i = 0; i < ARRAY_SIZE(_local_connect_status); i++) {
       _local_connect_status[i].last_frame = -1;

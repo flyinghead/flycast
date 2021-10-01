@@ -10,6 +10,7 @@
 
 #define MAX_COMPRESSED_BITS       4096
 #define UDP_MSG_MAX_PLAYERS          4
+#define MAX_VERIFICATION_SIZE      256
 
 #pragma pack(push, 1)
 
@@ -41,10 +42,12 @@ struct UdpMsg
          uint32      random_request;  /* please reply back with this random data */
          uint16      remote_magic;
          uint8       remote_endpoint;
+         uint8       verification[MAX_VERIFICATION_SIZE];
       } sync_request;
       
       struct {
          uint32      random_reply;    /* OK, here's your random data back */
+         uint8       verification_failure; /* set to one by peer if verification failed */
       } sync_reply;
       
       struct {
@@ -75,6 +78,8 @@ struct UdpMsg
 
    } u;
 
+   int verification_size = 0;
+
 public:
    int PacketSize() {
       return sizeof(hdr) + PayloadSize();
@@ -84,7 +89,7 @@ public:
       int size;
 
       switch (hdr.type) {
-      case SyncRequest:   return sizeof(u.sync_request);
+      case SyncRequest:   return (int)(&u.sync_request.verification[0] - (uint8 *)&u) + verification_size;
       case SyncReply:     return sizeof(u.sync_reply);
       case QualityReport: return sizeof(u.quality_report);
       case QualityReply:  return sizeof(u.quality_reply);

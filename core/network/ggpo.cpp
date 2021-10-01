@@ -27,9 +27,6 @@ void UpdateInputState();
 namespace ggpo
 {
 
-constexpr u32 BTN_TRIGGER_LEFT	= DC_BTN_RELOAD << 1;
-constexpr u32 BTN_TRIGGER_RIGHT	= DC_BTN_RELOAD << 2;
-
 static void getLocalInput(MapleInputState inputState[4])
 {
 	if (!config::ThreadedRendering)
@@ -74,8 +71,12 @@ namespace ggpo
 {
 using namespace std::chrono;
 
+constexpr int ProtocolVersion = 1;
 constexpr int MAX_PLAYERS = 2;
 constexpr int SERVER_PORT = 19713;
+
+constexpr u32 BTN_TRIGGER_LEFT	= DC_BTN_RELOAD << 1;
+constexpr u32 BTN_TRIGGER_RIGHT	= DC_BTN_RELOAD << 2;
 
 static GGPOSession *ggpoSession;
 static int localPlayerNum;
@@ -408,7 +409,8 @@ void startSession(int localPort, int localPlayerNum)
 		NOTICE_LOG(NETWORK, "GGPO: Using %d full analog axes", analogAxes);
 	}
 	u32 inputSize = sizeof(kcode[0]) + analogAxes + (int)absPointerPos * 4;
-	GGPOErrorCode result = ggpo_start_session(&ggpoSession, &cb, settings.content.gameId.c_str(), MAX_PLAYERS, inputSize, localPort);
+	GGPOErrorCode result = ggpo_start_session(&ggpoSession, &cb, settings.content.gameId.c_str(), MAX_PLAYERS, inputSize, localPort,
+			&ProtocolVersion, sizeof(ProtocolVersion));
 	if (result != GGPO_OK)
 	{
 		WARN_LOG(NETWORK, "GGPO start session failed: %d", result);
@@ -635,7 +637,14 @@ std::future<bool> startNetwork()
 				std::lock_guard<std::recursive_mutex> lock(ggpoMutex);
 				if (ggpoSession == nullptr)
 					break;
-				ggpo_idle(ggpoSession, 0);
+				GGPOErrorCode result = ggpo_idle(ggpoSession, 0);
+				if (result == GGPO_ERRORCODE_VERIFICATION_ERROR)
+					throw FlycastException("Peer verification failed");
+				else if (result != GGPO_OK)
+				{
+					WARN_LOG(NETWORK, "ggpo_idle failed %d", result);
+					throw FlycastException("GGPO error");
+				}
 			}
 			std::this_thread::sleep_for(std::chrono::milliseconds(20));
 		}
@@ -643,8 +652,8 @@ std::future<bool> startNetwork()
 		// save initial state (frame 0)
 		if (active())
 		{
-			u32 k[4];
-			getInput(k);
+			MapleInputState state[4];
+			getInput(state);
 		}
 #endif
 		emu.setNetworkState(active());

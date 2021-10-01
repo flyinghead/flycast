@@ -15,6 +15,7 @@
 #include "timesync.h"
 #include "ggponet.h"
 #include "ring_buffer.h"
+#include <vector>
 
 class UdpProtocol : public IPollSink
 {
@@ -81,6 +82,11 @@ public:
    void GGPONetworkStats(Stats *stats);
    void SetLocalFrameNumber(int num);
    int RecommendFrameDelay();
+   void SetVerificationData(const void *verification, int verification_size) {
+	   ASSERT(verification_size <= MAX_VERIFICATION_SIZE);
+	   this->verification.resize(verification_size);
+	   memcpy(&this->verification[0], verification, verification_size);
+   }
 
    void SetDisconnectTimeout(int timeout);
    void SetDisconnectNotifyStart(int timeout);
@@ -140,6 +146,8 @@ protected:
       UdpMsg*     msg;
    }              _oo_packet;
    RingBuffer<QueueEntry, 64> _send_queue;
+
+   std::vector<uint8> verification;
 
    /*
     * Stats

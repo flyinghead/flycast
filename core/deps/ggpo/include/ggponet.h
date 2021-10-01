@@ -114,7 +114,8 @@ typedef struct GGPOLocalEndpoint {
    GGPO_ERRORLIST_ENTRY(GGPO_ERRORCODE_TOO_MANY_SPECTATORS,   10)    \
    GGPO_ERRORLIST_ENTRY(GGPO_ERRORCODE_INVALID_REQUEST,       11)    \
    GGPO_ERRORLIST_ENTRY(GGPO_ERRORCODE_INPUT_SIZE_DIFF,       12)    \
-   GGPO_ERRORLIST_ENTRY(GGPO_ERRORCODE_NETWORK_ERROR,         13)
+   GGPO_ERRORLIST_ENTRY(GGPO_ERRORCODE_NETWORK_ERROR,         13)    \
+   GGPO_ERRORLIST_ENTRY(GGPO_ERRORCODE_VERIFICATION_ERROR,    14)
 
 #define GGPO_ERRORLIST_ENTRY(name, value)       name = value,
 typedef enum {
@@ -332,13 +333,22 @@ typedef struct GGPONetworkStats {
  * input_size - The size of the game inputs which will be passsed to ggpo_add_local_input.
  *
  * local_port - The port GGPO should bind to for UDP traffic.
+ *
+ * verification - Some optional data that will be matched with the peers during initial sync.
+ * Can be set to null if verification_size is zero. This can be used to check that all peers are
+ * running the same version of the application and of the game, are using the same settings, etc.
+ *
+ * verification_size - Size of the verification data. Can be set to zero to not exchange verification data.
+ * Maximum size is 256 bytes.
  */
 GGPO_API GGPOErrorCode __cdecl ggpo_start_session(GGPOSession **session,
                                                   GGPOSessionCallbacks *cb,
                                                   const char *game,
                                                   int num_players,
                                                   int input_size,
-                                                  unsigned short localport);
+                                                  unsigned short localport,
+												  const void *verification,
+												  int verification_size);
 
 
 /*
@@ -412,6 +422,13 @@ GGPO_API GGPOErrorCode __cdecl ggpo_start_synctest(GGPOSession **session,
  * player partcipating in the session can serve as a host.
  *
  * host_port - The port of the session on the host
+ *
+ * verification - Some optional data that will be matched with the peers during initial sync.
+ * Can be set to null if verification_size is zero. This can be used to check that all peers are
+ * running the same version of the application and of the game, are using the same settings, etc.
+ *
+ * verification_size - Size of the verification data. Can be set to zero to not exchange verification data.
+ * Maximum size is 256 bytes.
  */
 GGPO_API GGPOErrorCode __cdecl ggpo_start_spectating(GGPOSession **session,
                                                      GGPOSessionCallbacks *cb,
@@ -420,7 +437,9 @@ GGPO_API GGPOErrorCode __cdecl ggpo_start_spectating(GGPOSession **session,
                                                      int input_size,
                                                      unsigned short local_port,
                                                      char *host_ip,
-                                                     unsigned short host_port);
+                                                     unsigned short host_port,
+													 const void *verification,
+													 int verification_size);
 
 /*
  * ggpo_close_session --

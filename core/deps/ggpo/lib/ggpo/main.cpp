@@ -45,14 +45,18 @@ ggpo_start_session(GGPOSession **session,
                    const char *game,
                    int num_players,
                    int input_size,
-                   unsigned short localport)
+                   unsigned short localport,
+				   const void *verification,
+				   int verification_size)
 {
 	try {
 	   *session= (GGPOSession *)new Peer2PeerBackend(cb,
 													 game,
 													 localport,
 													 num_players,
-													 input_size);
+													 input_size,
+													 verification,
+													 verification_size);
 	   return GGPO_OK;
 	} catch (const GGPOException& e) {
 	   Log("GGPOException in ggpo_start_session: %s", e.what());
@@ -252,7 +256,9 @@ GGPOErrorCode ggpo_start_spectating(GGPOSession **session,
                                     int input_size,
                                     unsigned short local_port,
                                     char *host_ip,
-                                    unsigned short host_port)
+                                    unsigned short host_port,
+									const void *verification,
+									int verification_size)
 {
 	try {
 	   *session= (GGPOSession *)new SpectatorBackend(cb,
@@ -261,7 +267,9 @@ GGPOErrorCode ggpo_start_spectating(GGPOSession **session,
 													 num_players,
 													 input_size,
 													 host_ip,
-													 host_port);
+													 host_port,
+													 verification,
+													 verification_size);
 	   return GGPO_OK;
 	} catch (const GGPOException& e) {
 	   Log("GGPOException in ggpo_start_spectating: %s", e.what());

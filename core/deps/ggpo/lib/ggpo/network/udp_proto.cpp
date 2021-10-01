@@ -272,6 +272,9 @@ UdpProtocol::SendSyncRequest()
    _state.sync.random = rand() & 0xFFFF;
    UdpMsg *msg = new UdpMsg(UdpMsg::SyncRequest);
    msg->u.sync_request.random_request = _state.sync.random;
+   msg->verification_size = verification.size();
+   if (!verification.empty())
+	   memcpy(&msg->u.sync_request.verification[0], &verification[0], verification.size());
    SendMsg(msg);
 }
 
@@ -477,14 +480,25 @@ UdpProtocol::OnSyncRequest(UdpMsg *msg, int len)
            msg->hdr.magic, _remote_magic_number);
       return false;
    }
+   UdpMsg *reply = new UdpMsg(UdpMsg::SyncReply);
+   reply->u.sync_reply.random_reply = msg->u.sync_request.random_request;
+
+   int msgVerifSize = len - msg->PacketSize();
+   if (msgVerifSize != (int)verification.size()
+		   || (msgVerifSize != 0 && memcmp(&msg->u.sync_request.verification[0], &verification[0], msgVerifSize)))
+   {
+	   Log("Verification mismatch: size received %d expected %d", msgVerifSize, (int)verification.size());
+	   reply->u.sync_reply.verification_failure = 1;
+	   SendMsg(reply);
+	   throw GGPOException("Verification mismatch", GGPO_ERRORCODE_VERIFICATION_ERROR);
+   }
    // FIXME
    if (_state.sync.roundtrips_remaining == NUM_SYNC_PACKETS && msg->hdr.sequence_number == 0) {
       Log("Sync request 0 received... Re-queueing sync packet.\n");
       SendSyncRequest();
    }
 
-   UdpMsg *reply = new UdpMsg(UdpMsg::SyncReply);
-   reply->u.sync_reply.random_reply = msg->u.sync_request.random_request;
+   reply->u.sync_reply.verification_failure = 0;
    SendMsg(reply);
 
    return true;
@@ -503,6 +517,8 @@ UdpProtocol::OnSyncReply(UdpMsg *msg, int len)
           msg->u.sync_reply.random_reply, _state.sync.random);
       return false;
    }
+   if (msg->u.sync_reply.verification_failure == 1)
+	   throw GGPOException("Peer reported verification failure", GGPO_ERRORCODE_VERIFICATION_ERROR);
 
    if (!_connected) {
       QueueEvent(Event(Event::Connected));
