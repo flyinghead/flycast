@@ -90,16 +90,9 @@ void os_SetupInput()
 
 void common_linux_setup();
 
-void emu_dc_exit()
+void emu_flycast_term()
 {
-    dc_exit();
-}
-
-void emu_dc_term()
-{
-	if (emu.running())
-		dc_exit();
-	dc_term();
+	flycast_term();
 	LogManager::Shutdown();
 }
 
@@ -238,7 +231,7 @@ void emu_gles_init(int width, int height)
 	mainui_enabled = true;
 }
 
-int emu_reicast_init()
+int emu_flycast_init()
 {
 	LogManager::Init();
 	common_linux_setup();

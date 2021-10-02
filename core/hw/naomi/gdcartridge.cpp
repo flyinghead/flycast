@@ -13,7 +13,6 @@
 #include "gdcartridge.h"
 #include "stdclass.h"
 #include "emulator.h"
-#include "rend/gui.h"
 
 /*
 
@@ -436,12 +435,12 @@ void GDCartridge::find_file(const char *name, const u8 *dir_sector, u32 &file_st
 	}
 }
 
-void GDCartridge::read_gdrom(Disc *gdrom, u32 sector, u8* dst, u32 count)
+void GDCartridge::read_gdrom(Disc *gdrom, u32 sector, u8* dst, u32 count, LoadProgress *progress)
 {
-	gdrom->ReadSectors(sector + 150, count, dst, 2048);
+	gdrom->ReadSectors(sector + 150, count, dst, 2048, progress);
 }
 
-void GDCartridge::device_start()
+void GDCartridge::device_start(LoadProgress *progress)
 {
 	if (dimm_data != NULL)
 	{
@@ -494,15 +493,15 @@ void GDCartridge::device_start()
 
 		u8 buffer[2048];
 		std::string gdrom_path = get_game_basename() + "/" + gdrom_name;
-		Disc *gdrom = OpenDisc(gdrom_path + ".chd");
+		std::unique_ptr<Disc> gdrom = std::unique_ptr<Disc>(OpenDisc(gdrom_path + ".chd"));
 		if (gdrom == nullptr)
-			gdrom = OpenDisc(gdrom_path + ".gdi");
+			gdrom = std::unique_ptr<Disc>(OpenDisc(gdrom_path + ".gdi"));
 		if (gdrom_parent_name != nullptr && gdrom == nullptr)
 		{
 			std::string gdrom_parent_path = get_game_dir() + "/" + gdrom_parent_name + "/" + gdrom_name;
-			gdrom = OpenDisc(gdrom_parent_path + ".chd");
+			gdrom = std::unique_ptr<Disc>(OpenDisc(gdrom_parent_path + ".chd"));
 			if (gdrom == nullptr)
-				gdrom = OpenDisc(gdrom_parent_path + ".gdi");
+				gdrom = std::unique_ptr<Disc>(OpenDisc(gdrom_parent_path + ".gdi"));
 		}
 		if (gdrom == nullptr)
 			throw NaomiCartException("Naomi GDROM: Cannot open " + gdrom_path + ".chd or " + gdrom_path + ".gdi");
@@ -510,13 +509,13 @@ void GDCartridge::device_start()
 		// primary volume descriptor
 		// read frame 0xb06e (frame=sector+150)
 		// dimm board firmware starts straight from this frame
-		read_gdrom(gdrom, (netpic ? 0 : 45000) + 16, buffer);
+		read_gdrom(gdrom.get(), (netpic ? 0 : 45000) + 16, buffer);
 		u32 path_table = ((buffer[0x8c+0] << 0) |
 								(buffer[0x8c+1] << 8) |
 								(buffer[0x8c+2] << 16) |
 								(buffer[0x8c+3] << 24));
 		// path table
-		read_gdrom(gdrom, path_table, buffer);
+		read_gdrom(gdrom.get(), path_table, buffer);
 
 		// directory
 		u8 dir_sector[2048];
@@ -529,12 +528,12 @@ void GDCartridge::device_start()
 				(buffer[0x2 + 2] << 16) |
 				(buffer[0x2 + 3] << 24));
 
-			read_gdrom(gdrom, dir, dir_sector);
+			read_gdrom(gdrom.get(), dir, dir_sector);
 			find_file(name, dir_sector, file_start, file_size);
 
 			if (file_start && (file_size == 0x100)) {
 				// read file
-				read_gdrom(gdrom, file_start, buffer);
+				read_gdrom(gdrom.get(), file_start, buffer);
 				// get "rom" file name
 				memset(name, '\0', 128);
 				memcpy(name, buffer + 0xc0, FILENAME_LENGTH - 1);
@@ -550,7 +549,7 @@ void GDCartridge::device_start()
 						(buffer[i + 4] << 16) |
 						(buffer[i + 5] << 24));
 					memcpy(name, "ROM.BIN", 7);
-					read_gdrom(gdrom, dir, dir_sector);
+					read_gdrom(gdrom.get(), dir, dir_sector);
 					break;
 				}
 				i += buffer[i] + 8 + (buffer[i] & 1);
@@ -570,30 +569,24 @@ void GDCartridge::device_start()
 
 			// read encrypted data into dimm_data
 			u32 sectors = file_rounded_size / 2048;
-			read_gdrom(gdrom, file_start, dimm_data, sectors);
+			read_gdrom(gdrom.get(), file_start, dimm_data, sectors, progress);
 
 			// decrypt loaded data
 			u32 des_subkeys[32];
 			des_generate_subkeys(rev64(key), des_subkeys);
 
-			u32 progress = ~0;
 			for (u32 i = 0; i < file_rounded_size; i += 8)
 			{
-				const u32 new_progress = (u32)(((u64)i + 8) * 100 / file_rounded_size);
-				if (progress != new_progress)
+				if (progress != nullptr)
 				{
-					if (loading_canceled)
-						break;
-					progress = new_progress;
-					char status_str[16];
-					sprintf(status_str, "Decrypting %d%%", progress);
-					gui_display_notification(status_str, 2000);
+					if (progress->cancelled)
+						throw LoadCancelledException();
+					progress->label = "Decrypting...";
+					progress->progress = (float)(i + 8) / file_rounded_size;
 				}
 				*(u64 *)(dimm_data + i) = des_encrypt_decrypt<true>(*(u64 *)(dimm_data + i), des_subkeys);
 			}
 		}
-
-		delete gdrom;
 
 		if (!dimm_data)
 			throw NaomiCartException("Naomi GDROM: Could not find the file to decrypt.");

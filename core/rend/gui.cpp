@@ -69,6 +69,7 @@ static void term_vmus();
 static void displayCrosshairs();
 
 GameScanner scanner;
+static BackgroundGameLoader gameLoader;
 
 static void emuEventCallback(Event event)
 {
@@ -409,7 +410,7 @@ void gui_open_settings()
 	}
 	else if (gui_state == GuiState::Loading)
 	{
-		dc_cancel_load();
+		gameLoader.cancel();
 		gui_state = GuiState::Main;
 	}
 	else if (gui_state == GuiState::Commands)
@@ -427,7 +428,7 @@ void gui_start_game(const std::string& path)
 
 	scanner.stop();
 	gui_state = GuiState::Loading;
-	dc_load_game(path);
+	gameLoader.load(path);
 }
 
 void gui_stop_game(const std::string& message)
@@ -2076,10 +2077,7 @@ static void gui_display_content()
 
 		ImGui::PushID("bios");
 		if (ImGui::Selectable("Dreamcast BIOS"))
-		{
-			gui_state = GuiState::Closed;
 			gui_start_game("");
-		}
 		ImGui::PopID();
 
 		{
@@ -2113,7 +2111,6 @@ static void gui_display_content()
 						{
 							std::string gamePath(game.path);
 							scanner.get_mutex().unlock();
-							gui_state = GuiState::Closed;
 							gui_start_game(gamePath);
 							scanner.get_mutex().lock();
 							ImGui::PopID();
@@ -2197,7 +2194,7 @@ static void gui_network_start()
 			if (networkStatus.get())
 			{
 				gui_state = GuiState::Closed;
-				ImGui::Text("STARTING...");
+				ImGui::Text("Starting...");
 			}
 			else
 			{
@@ -2213,7 +2210,7 @@ static void gui_network_start()
 	}
 	else
 	{
-		ImGui::Text("STARTING NETWORK...");
+		ImGui::Text("Starting Network...");
 		if (NetworkHandshake::instance->canStartNow())
 			ImGui::Text("Press Start to start the game now.");
 	}
@@ -2250,10 +2247,9 @@ static void gui_display_loadscreen()
     ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(20 * scaling, 10 * scaling));
     ImGui::AlignTextToFramePadding();
     ImGui::SetCursorPosX(20.f * scaling);
-	if (dc_is_load_done())
-	{
-		try {
-			dc_get_load_status();
+	try {
+		if (gameLoader.ready())
+		{
 			if (NetworkHandshake::instance != nullptr)
 			{
 				networkStatus = NetworkHandshake::instance->start();
@@ -2262,32 +2258,36 @@ static void gui_display_loadscreen()
 			else
 			{
 				gui_state = GuiState::Closed;
-				ImGui::Text("STARTING...");
+				ImGui::Text("Starting...");
 			}
-		} catch (const FlycastException& ex) {
-			ERROR_LOG(BOOT, "%s", ex.what());
-			error_msg = ex.what();
-#ifdef TEST_AUTOMATION
-			die("Game load failed");
-#endif
-			emu.unloadGame();
-			gui_state = GuiState::Main;
 		}
-	}
-	else
-	{
-		ImGui::Text("LOADING... ");
-		ImGui::SameLine();
-		ImGui::Text("%s", get_notification().c_str());
-
-		float currentwidth = ImGui::GetContentRegionAvail().x;
-		ImGui::SetCursorPosX((currentwidth - 100.f * scaling) / 2.f + ImGui::GetStyle().WindowPadding.x);
-		ImGui::SetCursorPosY(126.f * scaling);
-		if (ImGui::Button("Cancel", ImVec2(100.f * scaling, 0.f)))
+		else
 		{
-			dc_cancel_load();
-			gui_state = GuiState::Main;
+			const char *label = gameLoader.getProgress().label;
+			if (label == nullptr)
+				label = "Loading...";
+			ImGui::Text("%s", label);
+			ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(0.557f, 0.268f, 0.965f, 1.f));
+			ImGui::ProgressBar(gameLoader.getProgress().progress, ImVec2(-1, 20.f * scaling), "");
+			ImGui::PopStyleColor();
+
+			float currentwidth = ImGui::GetContentRegionAvail().x;
+			ImGui::SetCursorPosX((currentwidth - 100.f * scaling) / 2.f + ImGui::GetStyle().WindowPadding.x);
+			ImGui::SetCursorPosY(126.f * scaling);
+			if (ImGui::Button("Cancel", ImVec2(100.f * scaling, 0.f)))
+			{
+				gameLoader.cancel();
+				gui_state = GuiState::Main;
+			}
 		}
+	} catch (const FlycastException& ex) {
+		ERROR_LOG(BOOT, "%s", ex.what());
+		error_msg = ex.what();
+#ifdef TEST_AUTOMATION
+		die("Game load failed");
+#endif
+		emu.unloadGame();
+		gui_state = GuiState::Main;
 	}
 	ImGui::PopStyleVar();
 
@@ -2426,6 +2426,11 @@ void gui_open_onboarding()
 	gui_state = GuiState::Onboarding;
 }
 
+void gui_cancel_load()
+{
+	gameLoader.cancel();
+}
+
 void gui_term()
 {
 	if (inited)
@@ -2436,6 +2441,8 @@ void gui_term()
 			ImGui_ImplOpenGL3_Shutdown();
 		ImGui::DestroyContext();
 	    EventManager::unlisten(Event::Resume, emuEventCallback);
+	    EventManager::unlisten(Event::Start, emuEventCallback);
+	    EventManager::unlisten(Event::Terminate, emuEventCallback);
 	}
 }
 

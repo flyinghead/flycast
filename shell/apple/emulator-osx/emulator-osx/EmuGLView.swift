@@ -71,7 +71,7 @@ class EmuGLView: NSOpenGLView, NSWindowDelegate {
 		let rect = convertToBacking(frame)
         emu_gles_init(Int32(rect.width), Int32(rect.height))
 		
-		if (emu_reicast_init() != 0) {
+		if (emu_flycast_init() != 0) {
 			let alert = NSAlert()
 			alert.alertStyle = .critical
 			alert.messageText = "Flycast initialization failed"

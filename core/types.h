@@ -453,6 +453,12 @@ public:
 	FlycastException(const std::string& reason) : std::runtime_error(reason) {}
 };
 
+class LoadCancelledException : public FlycastException
+{
+public:
+	LoadCancelledException() : FlycastException("") {}
+};
+
 enum serialize_version_enum {
 	V1,
 	V2,

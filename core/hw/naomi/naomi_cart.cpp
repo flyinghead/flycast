@@ -34,7 +34,6 @@
 #include "archive/archive.h"
 #include "stdclass.h"
 #include "emulator.h"
-#include "rend/gui.h"
 #include "cfg/option.h"
 #include "oslib/oslib.h"
 
@@ -197,7 +196,7 @@ void naomi_cart_LoadBios(const char *filename)
 	bios_loaded = true;
 }
 
-static void naomi_cart_LoadZip(const char *filename)
+static void naomi_cart_LoadZip(const char *filename, LoadProgress *progress)
 {
 	Game *game = FindGame(filename);
 	if (game == NULL)
@@ -257,12 +256,22 @@ static void naomi_cart_LoadZip(const char *filename)
 		CurrentCartridge->SetKey(game->key);
 		NaomiGameInputs = game->inputs;
 
-		for (int romid = 0; game->blobs[romid].filename != NULL && !loading_canceled; romid++)
+		int romCount = 0;
+		while (game->blobs[romCount].filename != nullptr)
+			romCount++;
+		for (int romid = 0; romid < romCount; romid++)
 		{
-			if (game->cart_type != GD)
+			if (progress != nullptr)
 			{
-				std::string progress = "ROM " + std::to_string(romid + 1);
-				gui_display_notification(progress.c_str(), 1000);
+				if (progress->cancelled)
+					throw LoadCancelledException();
+				if (game->cart_type != GD)
+				{
+					static std::string label;
+					label = "ROM " + std::to_string(romid + 1);
+					progress->label = label.c_str();
+					progress->progress = (float)(romid + 1) / romCount;
+				}
 			}
 
 			u32 len = game->blobs[romid].length;
@@ -350,31 +359,26 @@ static void naomi_cart_LoadZip(const char *filename)
 				}
 			}
 		}
-		if (loading_canceled)
-			return;
 		if (naomi_default_eeprom == NULL && game->eeprom_dump != NULL)
 			naomi_default_eeprom = game->eeprom_dump;
 		if (game->rotation_flag == ROT270)
 			config::Rotate90.override(true);
 
-		CurrentCartridge->Init();
-		if (loading_canceled)
-			return;
+		CurrentCartridge->Init(progress);
 
 		strcpy(naomi_game_id, CurrentCartridge->GetGameId().c_str());
 		if (naomi_game_id[0] == '\0')
 			strcpy(naomi_game_id, game->name);
 		NOTICE_LOG(NAOMI, "NAOMI GAME ID [%s]", naomi_game_id);
 
-	} catch (const FlycastException& ex) {
+	} catch (...) {
 		delete CurrentCartridge;
 		CurrentCartridge = NULL;
-
-		throw ex;
+		throw;
 	}
 }
 
-void naomi_cart_LoadRom(const char* file)
+void naomi_cart_LoadRom(const char* file, LoadProgress *progress)
 {
 	naomi_cart_Close();
 
@@ -382,7 +386,7 @@ void naomi_cart_LoadRom(const char* file)
 
 	if (extension == "zip" || extension == "7z")
 	{
-		naomi_cart_LoadZip(file);
+		naomi_cart_LoadZip(file, progress);
 		return;
 	}
 
@@ -609,6 +613,11 @@ std::string Cartridge::GetGameId() {
 	}
 	while (!game_id.empty() && game_id.back() == ' ')
 		game_id.pop_back();
+	if (RomSize < 0x138)
+		printf("GAME EEPROM ID: (ROM too small)\n");
+	else
+		printf("GAME EEPROM ID: %c%c%c%c\n", RomPtr[0x134], RomPtr[0x135], RomPtr[0x136], RomPtr[0x137]);
+
 	return game_id;
 }
 
@@ -918,6 +927,10 @@ std::string M2Cartridge::GetGameId()
 		game_id = std::string((char *)RomPtr + 0x800030, 0x20);
 		while (!game_id.empty() && game_id.back() == ' ')
 			game_id.pop_back();
+		if (RomSize < 0x800138)
+			printf("m2 GAME EEPROM ID: (ROM too small)\n");
+		else
+			printf("m2 GAME EEPROM ID: %c%c%c%c\n", RomPtr[0x800134], RomPtr[0x800135], RomPtr[0x800136], RomPtr[0x800137]);
 	}
 	return game_id;
 }

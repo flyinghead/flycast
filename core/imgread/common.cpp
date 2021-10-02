@@ -275,28 +275,20 @@ DiscType GuessDiscType(bool m1, bool m2, bool da)
 		return CdRom;
 }
 
-void Disc::ReadSectors(u32 FAD, u32 count, u8* dst, u32 fmt)
+void Disc::ReadSectors(u32 FAD, u32 count, u8* dst, u32 fmt, LoadProgress *progress)
 {
 	u8 temp[2448];
 	SectorFormat secfmt;
 	SubcodeFormat subfmt;
 
-	u32 progress = ~0;
 	for (u32 i = 1; i <= count; i++)
 	{
-		if (count >= 1000)
+		if (progress != nullptr)
 		{
-			if (loading_canceled)
-				break;
-			// Progress report when loading naomi gd-rom games
-			const u32 new_progress = i * 100 / count;
-			if (progress != new_progress)
-			{
-				progress = new_progress;
-				char status_str[16];
-				sprintf(status_str, "%d%%", progress);
-				gui_display_notification(status_str, 2000);
-			}
+			if (progress->cancelled)
+				throw LoadCancelledException();
+			progress->label = "Loading...";
+			progress->progress = (float)i / count;
 		}
 		if (ReadSector(FAD,temp,&secfmt,q_subchannel,&subfmt))
 		{

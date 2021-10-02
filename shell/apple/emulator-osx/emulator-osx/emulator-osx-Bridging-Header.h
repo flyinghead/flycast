@@ -14,15 +14,14 @@
 extern "C" {
 #endif
 
-void emu_dc_exit();
-void emu_dc_term();
+void emu_flycast_term();
 void emu_gui_open_settings();
 bool emu_renderer_enabled();
 bool emu_fast_forward();
 bool emu_vsync_enabled();
 bool emu_single_frame(int w, int h);
 void emu_gles_init(int width, int height);
-int emu_reicast_init();
+int emu_flycast_init();
 void emu_key_input(UInt16 keyCode, bool pressed, UInt32 modifierFlags);
 void emu_character_input(const char *characters);
 void emu_mouse_buttons(int button, bool pressed);

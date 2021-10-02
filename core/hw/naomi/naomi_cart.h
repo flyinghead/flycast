@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <string>
 #include "types.h"
+#include "emulator.h"
 
 class Cartridge
 {
@@ -10,7 +11,7 @@ public:
 	Cartridge(u32 size);
 	virtual ~Cartridge();
 
-	virtual void Init() {}
+	virtual void Init(LoadProgress *progress = nullptr) {}
 	virtual u32 ReadMem(u32 address, u32 size) = 0;
 	virtual void WriteMem(u32 address, u32 data, u32 size) = 0;
 
@@ -83,7 +84,7 @@ public:
 	NaomiCartException(const std::string& reason) : FlycastException(reason) {}
 };
 
-void naomi_cart_LoadRom(const char* file);
+void naomi_cart_LoadRom(const char* file, LoadProgress *progress);
 void naomi_cart_Close();
 int naomi_cart_GetPlatform(const char *path);
 void naomi_cart_LoadBios(const char *filename);

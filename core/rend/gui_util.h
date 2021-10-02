@@ -27,6 +27,7 @@
 #include "vulkan/vulkan_context.h"
 #include "dx9/dxcontext.h"
 #include "gui.h"
+#include "emulator.h"
 
 typedef void (*StringCallback)(bool cancelled, std::string selection);
 
@@ -82,3 +83,46 @@ static inline bool operator!=(const ImVec2& l, const ImVec2& r)
 
 void fullScreenWindow(bool modal);
 void windowDragScroll();
+
+class BackgroundGameLoader
+{
+public:
+	void load(const std::string& path)
+	{
+		progress.reset();
+		future = std::async(std::launch::async, [this, path] {
+			emu.loadGame(path.c_str(), &progress);
+		});
+	}
+
+	void cancel()
+	{
+		progress.cancelled = true;
+		if (future.valid())
+			try {
+				future.get();
+			} catch (const FlycastException& e) {
+			}
+		emu.unloadGame();
+	}
+
+	bool ready()
+	{
+		if (!future.valid())
+			return true;
+		if (future.wait_for(std::chrono::seconds(0)) == std::future_status::ready)
+		{
+			future.get();
+			return true;
+		}
+		return false;
+	}
+
+	const LoadProgress& getProgress() const {
+		return progress;
+	}
+
+private:
+	LoadProgress progress;
+	std::future<void> future;
+};

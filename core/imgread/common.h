@@ -4,7 +4,6 @@
 
 #include "emulator.h"
 #include "hw/gdrom/gdrom_if.h"
-#include "rend/gui.h"
 
 /*
 Mode2 Subheader:
@@ -119,7 +118,7 @@ struct Disc
 		return false;
 	}
 
-	void ReadSectors(u32 FAD,u32 count,u8* dst,u32 fmt);
+	void ReadSectors(u32 FAD, u32 count, u8 *dst, u32 fmt, LoadProgress *progress = nullptr);
 
 	virtual ~Disc() 
 	{

@@ -25,24 +25,18 @@
 #include <vector>
 #include <future>
 #include <string>
+#include <memory>
 
 void loadGameSpecificSettings();
 void SaveSettings();
 
-extern std::atomic<bool> loading_canceled;
-
 int flycast_init(int argc, char* argv[]);
 void dc_reset(bool hard);
-void dc_term();
+void flycast_term();
 void dc_exit();
 void dc_savestate(int index = 0);
 void dc_loadstate(int index = 0);
 bool dc_loadstate(const void **data, unsigned size);
-
-void dc_load_game(const std::string& path);
-bool dc_is_load_done();
-void dc_cancel_load();
-void dc_get_load_status();
 
 enum class Event {
 	Start,
@@ -80,6 +74,19 @@ private:
 	std::map<Event, std::vector<Callback>> callbacks;
 };
 
+struct LoadProgress
+{
+	void reset()
+	{
+		cancelled = false;
+		label = nullptr;
+		progress = 0.f;
+	}
+	std::atomic<bool> cancelled;
+	std::atomic<const char *> label;
+	std::atomic<float> progress;
+};
+
 class Emulator
 {
 public:
@@ -96,7 +103,7 @@ public:
 	 * May throw if the game cannot be loaded.
 	 * If a game is already loaded, or the emulator is in the error state, unloadGame() must be called first.
 	 */
-	void loadGame(const char *path);
+	void loadGame(const char *path, LoadProgress *progress = nullptr);
 	/**
 	 * Reset the emulator in order to load another game. After calling this method, only loadGame() and term() can be called.
 	 * Does nothing if no game is loaded.

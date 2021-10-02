@@ -125,7 +125,6 @@ static double vib_delta[4];
 unsigned per_content_vmus = 0;
 
 static bool first_run = true;
-static bool mute_messages;
 static bool rotate_screen;
 static bool rotate_game;
 static int framebufferWidth;
@@ -151,6 +150,7 @@ static void refresh_devices(bool first_startup);
 static void init_disk_control_interface();
 static bool read_m3u(const char *file);
 void UpdateInputState();
+void gui_display_notification(const char *msg, int duration);
 
 static std::string game_data;
 static char g_base_name[128];
@@ -867,16 +867,13 @@ void retro_run()
 
 static bool loadGame()
 {
-	mute_messages = true;
 	try {
 		emu.loadGame(game_data.c_str());
 	} catch (const FlycastException& e) {
 		ERROR_LOG(BOOT, "%s", e.what());
-		mute_messages = false;
 		gui_display_notification(e.what(), 5000);
 		return false;
 	}
-	mute_messages = false;
 
 	return true;
 }
@@ -2923,8 +2920,6 @@ static bool read_m3u(const char *file)
 
 void gui_display_notification(const char *msg, int duration)
 {
-	if (mute_messages)
-		return;
 	retro_message retromsg;
 	retromsg.msg = msg;
 	retromsg.frames = duration / 17;

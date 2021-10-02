@@ -20,7 +20,7 @@ public:
 	M4Cartridge(u32 size) : NaomiCartridge(size) { }
 	~M4Cartridge() override;
 
-	void Init() override
+	void Init(LoadProgress *progress = nullptr) override
 	{
 		device_start();
 		device_reset();
