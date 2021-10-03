@@ -11,6 +11,7 @@
 #include "archive/rzip.h"
 #include "rend/mainui.h"
 #include "input/gamepad_device.h"
+#include "lua/lua.h"
 
 int flycast_init(int argc, char* argv[])
 {
@@ -47,6 +48,7 @@ int flycast_init(int argc, char* argv[])
 	os_SetupInput();
 
 	debugger::init();
+	lua::init();
 
 	return 0;
 }
@@ -71,6 +73,7 @@ void SaveSettings()
 void flycast_term()
 {
 	gui_cancel_load();
+	lua::term();
 	emu.term();
 }
 

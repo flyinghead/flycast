@@ -123,7 +123,6 @@ if(MSVC)
 	target_compile_options(${PROJECT_NAME} PRIVATE /GR- /GS-)
 else()
 	target_compile_options(${PROJECT_NAME} PRIVATE
-		$<$<COMPILE_LANGUAGE:CXX>:-fno-rtti>
 		$<$<COMPILE_LANGUAGE:CXX>:-fno-strict-aliasing>
 		$<$<COMPILE_LANGUAGE:CXX>:-Wall>)
 endif()
@@ -261,6 +260,13 @@ if(NOT LIBRETRO)
 	if(TARGET ZLIB::ZLIB AND NOT ANDROID AND NOT WIN32)
 	    set(WITH_SYSTEM_ZLIB ON CACHE BOOL "Use system provided zlib library")
 	    target_link_libraries(${PROJECT_NAME} PRIVATE ZLIB::ZLIB)
+	endif()
+	
+	find_package(Lua)
+	if(LUA_FOUND)
+		target_compile_definitions(${PROJECT_NAME} PRIVATE USE_LUA)
+	    target_include_directories(${PROJECT_NAME} PRIVATE ${LUA_INCLUDE_DIR} core/deps/luabridge/Source)
+	    target_link_libraries(${PROJECT_NAME} PRIVATE ${LUA_LIBRARIES})
 	endif()
 endif()
 
@@ -817,7 +823,9 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/oslib/audiostream.h
         core/oslib/directory.h
         core/oslib/host_context.h
-        core/oslib/oslib.h)
+        core/oslib/oslib.h
+        core/lua/lua.cpp
+        core/lua/lua.h)
 
 target_sources(${PROJECT_NAME} PRIVATE
         core/profiler/profiler.cpp

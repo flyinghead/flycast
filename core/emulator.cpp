@@ -38,6 +38,7 @@
 #include "hw/mem/mem_watch.h"
 #include "network/net_handshake.h"
 #include "rend/gui.h"
+#include "lua/lua.h"
 #include <chrono>
 
 settings_t settings;
@@ -778,6 +779,7 @@ bool Emulator::render()
 
 void Emulator::vblank()
 {
+	lua::vblank();
 	// Time out if a frame hasn't been rendered for 50 ms
 	if (sh4_sched_now64() - startTime <= 10000000)
 		return;

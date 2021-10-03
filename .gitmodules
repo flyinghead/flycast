@@ -4,3 +4,6 @@
 [submodule "core/deps/libchdr"]
 	path = core/deps/libchdr
 	url = https://github.com/rtissera/libchdr.git
+[submodule "core/deps/luabridge"]
+	path = core/deps/luabridge
+	url = https://github.com/vinniefalco/LuaBridge.git
