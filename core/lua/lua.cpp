@@ -179,7 +179,6 @@ CONFIG_ACCESSORS(GGPOEnable)
 CONFIG_ACCESSORS(GGPODelay)
 CONFIG_ACCESSORS(NetworkStats)
 CONFIG_ACCESSORS(GGPOAnalogAxes)
-CONFIG_ACCESSORS(GGPOPlayerNum)
 
 // Maple devices
 
@@ -458,7 +457,6 @@ static void luaRegister(lua_State *L)
 					CONFIG_PROPERTY(GGPODelay, int)
 					CONFIG_PROPERTY(NetworkStats, bool)
 					CONFIG_PROPERTY(GGPOAnalogAxes, int)
-					CONFIG_PROPERTY(GGPOPlayerNum, int)
 				.endNamespace()
 
 				.beginNamespace("maple")

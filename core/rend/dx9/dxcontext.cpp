@@ -63,8 +63,8 @@ bool DXContext::Init(bool keepCurrentWindow)
 void DXContext::Term()
 {
 	overlay.term();
-	gui_term();
 	ImGui_ImplDX9_Shutdown();
+	gui_term();
 	pDevice.reset();
 	pD3D.reset();
 }
