@@ -27,6 +27,7 @@ void init();
 void term();
 void exec(const std::string& path);
 void vblank();
+void overlay();
 
 #else
 
@@ -34,6 +35,7 @@ inline static void init() {}
 inline static void term() {}
 inline static void exec(const std::string& path) {}
 inline static void vblank() {}
+inline static void overlay() {}
 
 #endif
 }

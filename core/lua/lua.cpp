@@ -29,6 +29,7 @@
 #include "hw/maple/maple_devs.h"
 #include "hw/maple/maple_if.h"
 #include "stdclass.h"
+#include "imgui/imgui.h"
 
 namespace lua
 {
@@ -70,17 +71,30 @@ static void emuEventCallback(Event event)
 	}
 }
 
-void vblank()
+template<const char *Tag>
+void eventCallback()
 {
 	if (L == nullptr)
 		return;
 	try {
 		LuaRef v = LuaRef::getGlobal(L, CallbackTable);
-		if (v.isTable() && v["vblank"].isFunction())
-			v["vblank"]();
+		if (v.isTable() && v[Tag].isFunction())
+			v[Tag]();
 	} catch (const LuaException& e) {
-		WARN_LOG(COMMON, "Lua exception: %s", e.what());
+		WARN_LOG(COMMON, "Lua exception[%s]: %s", Tag, e.what());
 	}
+}
+
+const char VBlankEvent[] { "vblank" };
+void vblank()
+{
+	eventCallback<VBlankEvent>();
+}
+
+const char OverlayEvent[] { "overlay" };
+void overlay()
+{
+	eventCallback<OverlayEvent>();
 }
 
 template<typename T>
@@ -343,6 +357,58 @@ static void setRelCoordinates(int player, float x, float y, lua_State *L)
 	SetRelativeMousePosition(x, y, player - 1);
 }
 
+// UI
+
+static void beginWindow(const char *title, int x, int y, int w, int h)
+{
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0);
+	ImGui::SetNextWindowPos(ImVec2(x, y));
+	ImGui::SetNextWindowSize(ImVec2(w * scaling, h * scaling));
+	ImGui::SetNextWindowBgAlpha(0.7f);
+	ImGui::Begin(title, NULL, ImGuiWindowFlags_AlwaysAutoResize |  ImGuiWindowFlags_NoNavInputs | ImGuiWindowFlags_NoNavFocus);
+	ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(0.557f, 0.268f, 0.965f, 1.f));
+}
+
+static void endWindow()
+{
+	ImGui::PopStyleColor();
+	ImGui::End();
+	ImGui::PopStyleVar(2);
+}
+
+static void uiText(const char *text)
+{
+	ImGui::Text("%s", text);
+}
+
+static void uiTextRightAligned(const char *text)
+{
+	ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(text).x);
+	uiText(text);
+}
+
+static void uiBargraph(float v)
+{
+	ImGui::ProgressBar(v, ImVec2(-1, 10.f * scaling), "");
+}
+
+static int uiButton(lua_State *L)
+{
+	const char *label = luaL_checkstring(L, 1);
+	if (ImGui::Button(label))
+	{
+		try {
+			LuaRef callback = LuaRef::fromStack(L, 2);
+			if (callback.isFunction())
+				callback();
+		} catch (const LuaException& e) {
+			WARN_LOG(COMMON, "Lua exception: %s", e.what());
+		}
+	}
+	return 0;
+}
+
 static void luaRegister(lua_State *L)
 {
 	getGlobalNamespace(L)
@@ -389,8 +455,6 @@ static void luaRegister(lua_State *L)
 					CONFIG_PROPERTY(Region, int)
 					CONFIG_PROPERTY(Broadcast, int)
 					CONFIG_PROPERTY(Language, int)
-					CONFIG_PROPERTY(FullMMU, bool)
-					CONFIG_PROPERTY(ForceWindowsCE, bool)
 					CONFIG_PROPERTY(AutoLoadState, bool)
 					CONFIG_PROPERTY(AutoSaveState, bool)
 					CONFIG_PROPERTY(SavestateSlot, int)
@@ -445,6 +509,8 @@ static void luaRegister(lua_State *L)
 					CONFIG_PROPERTY(UseReios, bool)
 					CONFIG_PROPERTY(FastGDRomLoad, bool)
 					CONFIG_PROPERTY(OpenGlChecks, bool)
+					CONFIG_PROPERTY(FullMMU, bool)
+					CONFIG_PROPERTY(ForceWindowsCE, bool)
 				.endNamespace()
 
 				.beginNamespace("network")
@@ -502,6 +568,15 @@ static void luaRegister(lua_State *L)
 					.addProperty("width", &settings.display.width, false)
 					.addProperty("height", &settings.display.height, false)
 				.endNamespace()
+			.endNamespace()
+
+			.beginNamespace("ui")
+				.addFunction("beginWindow", beginWindow)
+				.addFunction("endWindow", endWindow)
+				.addFunction("text", uiText)
+				.addFunction("rightText", uiTextRightAligned)
+				.addFunction("bargraph", uiBargraph)
+				.addFunction("button", uiButton)
 			.endNamespace()
 		.endNamespace();
 }

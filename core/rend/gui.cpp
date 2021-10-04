@@ -41,6 +41,7 @@
 #include "log/LogManager.h"
 #include "emulator.h"
 #include "rend/mainui.h"
+#include "lua/lua.h"
 
 static bool game_started;
 
@@ -2392,7 +2393,7 @@ void gui_display_osd()
 	if (message.empty())
 		message = getFPSNotification();
 
-	if (!message.empty() || config::FloatVMUs || crosshairsNeeded() || (ggpo::active() && config::NetworkStats))
+//	if (!message.empty() || config::FloatVMUs || crosshairsNeeded() || (ggpo::active() && config::NetworkStats))
 	{
 		ImGui_Impl_NewFrame();
 		ImGui::NewFrame();
@@ -2415,6 +2416,7 @@ void gui_display_osd()
 //		gui_plot_render_time(settings.display.width, settings.display.height);
 		if (ggpo::active() && config::NetworkStats)
 			ggpo::displayStats();
+		lua::overlay();
 
 		ImGui::Render();
 		ImGui_impl_RenderDrawData(ImGui::GetDrawData());
