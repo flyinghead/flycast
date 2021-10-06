@@ -9,6 +9,7 @@ import com.reicast.emulator.Emulator;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.apache.commons.lang3.ArrayUtils;
 
 public final class InputDeviceManager implements InputManager.InputDeviceListener {
     public static final int VIRTUAL_GAMEPAD_ID = 0x12345678;
@@ -62,7 +63,7 @@ public final class InputDeviceManager implements InputManager.InputDeviceListene
                     fullAxes.add(range.getAxis());
             }
             joystickAdded(i, device.getName(), port, device.getDescriptor(),
-                    fullAxes.stream().mapToInt(n->n).toArray(), halfAxes.stream().mapToInt(n->n).toArray());
+                    ArrayUtils.toPrimitive(fullAxes.toArray(new Integer[0])), ArrayUtils.toPrimitive(halfAxes.toArray(new Integer[0])));
         }
     }
 

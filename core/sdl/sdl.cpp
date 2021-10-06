@@ -12,7 +12,7 @@
 #include "wsi/context.h"
 #include "emulator.h"
 #include "stdclass.h"
-#if !defined(_WIN32) && !defined(__APPLE__)
+#if !defined(_WIN32) && !defined(__APPLE__) && !defined(__SWITCH__)
 #include "linux-dist/icon.h"
 #endif
 #ifdef _WIN32
@@ -185,12 +185,11 @@ void input_sdl_init()
 #endif
 
 #ifdef __SWITCH__
-    // open CONTROLLER_PLAYER_1 and CONTROLLER_PLAYER_2
     // when railed, both joycons are mapped to joystick #0,
     // else joycons are individually mapped to joystick #0, joystick #1, ...
     // https://github.com/devkitPro/SDL/blob/switch-sdl2/src/joystick/switch/SDL_sysjoystick.c#L45
-	sdl_open_joystick(0);
-	sdl_open_joystick(1);
+	for (int joy = 0; joy < 4; joy++)
+		sdl_open_joystick(joy);
 #endif
 }
 
@@ -414,7 +413,7 @@ void sdl_window_set_text(const char* text)
 
 static float hdpiScaling = 1.f;
 
-static void get_window_state()
+static inline void get_window_state()
 {
 	u32 flags = SDL_GetWindowFlags(window);
 	window_fullscreen = flags & SDL_WINDOW_FULLSCREEN_DESKTOP;
