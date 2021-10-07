@@ -74,6 +74,7 @@ void CalculateSync()
 	
 	Frame_Cycles = pvr_numscanlines * Line_Cycles;
 	prv_cur_scanline = 0;
+	clc_pvr_scanline = 0;
 
 	sh4_sched_request(vblank_schid, Line_Cycles);
 }
@@ -293,6 +294,10 @@ bool spg_Init()
 
 void spg_Term()
 {
+	sh4_sched_unregister(render_end_schid);
+	render_end_schid = -1;
+	sh4_sched_unregister(vblank_schid);
+	vblank_schid = -1;
 }
 
 void spg_Reset(bool hard)

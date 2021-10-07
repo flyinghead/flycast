@@ -53,7 +53,6 @@ typedef u32 _vmem_handler;
 
 //init/reset/term
 void _vmem_init();
-void _vmem_reset();
 void _vmem_term();
 void _vmem_init_mappings();
 

@@ -301,6 +301,7 @@ void dc_reset(bool hard)
 	NetworkHandshake::term();
 	if (hard)
 		_vmem_unprotect_vram(0, VRAM_SIZE);
+	sh4_sched_reset(hard);
 	libPvr_Reset(hard);
 	libAICA_Reset(hard);
 	libARM_Reset(hard);
@@ -531,13 +532,13 @@ void Emulator::term()
 		debugger::term();
 		sh4_cpu.Term();
 		custom_texture.Terminate();	// lr: avoid deadlock on exit (win32)
+		reios_term();
 		libARM_Term();
 		libAICA_Term();
 		libPvr_Term();
 		mem_Term();
-		_vmem_release();
 
-		mcfg_DestroyDevices();
+		_vmem_release();
 		state = Terminated;
 	}
 }
@@ -633,7 +634,6 @@ bool dc_loadstate(const void **data, u32 size)
 
 	mmu_set_state();
 	sh4_cpu.ResetCache();
-	sh4_sched_ffts();
 
 	return true;
 }

@@ -332,11 +332,6 @@ void _vmem_mirror_mapping(u32 new_region,u32 start,u32 size)
 //init/reset/term
 void _vmem_init()
 {
-	_vmem_reset();
-}
-
-void _vmem_reset()
-{
 	//clear read tables
 	memset(_vmem_RF8,0,sizeof(_vmem_RF8));
 	memset(_vmem_RF16,0,sizeof(_vmem_RF16));
@@ -363,7 +358,7 @@ void _vmem_term()
 
 u8* virt_ram_base;
 bool vmem_4gb_space;
-static VMemType vmemstatus;
+static VMemType vmemstatus = MemTypeError;
 
 static void* malloc_pages(size_t size) {
 #ifdef _WIN32
@@ -441,7 +436,8 @@ bool _vmem_reserve()
 {
 	static_assert((sizeof(Sh4RCB) % PAGE_SIZE) == 0, "sizeof(Sh4RCB) not multiple of PAGE_SIZE");
 
-	vmemstatus = MemTypeError;
+	if (vmemstatus != MemTypeError)
+		return true;
 
 	// Use vmem only if settings mandate so, and if we have proper exception handlers.
 #if !defined(TARGET_NO_EXCEPTIONS)
@@ -595,16 +591,22 @@ void _vmem_init_mappings()
 #define freedefptr(x) \
 	if (x) { free(x); x = NULL; }
 
-void _vmem_release() {
+void _vmem_release()
+{
 	if (virt_ram_base)
+	{
 		vmem_platform_destroy();
-	else {
+		virt_ram_base = nullptr;
+	}
+	else
+	{
 		_vmem_unprotect_vram(0, VRAM_SIZE);
 		freedefptr(p_sh4rcb);
 		freedefptr(vram.data);
 		freedefptr(aica_ram.data);
 		freedefptr(mem_b.data);
 	}
+	vmemstatus = MemTypeError;
 }
 
 void _vmem_protect_vram(u32 addr, u32 size)

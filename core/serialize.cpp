@@ -392,7 +392,6 @@ bool dc_serialize(void **data, unsigned int *total_size, bool rollback)
 
 	REICAST_S((*p_sh4rcb).cntx);
 
-	REICAST_S(sh4InterpCycles);
 	REICAST_S(sh4_sched_ffb);
 	std::array<int, 11> schedIds = getSchedulerIds();
 	if (sh4_sched_next_id == -1)
@@ -693,6 +692,7 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size, seria
 	REICAST_US((*p_sh4rcb).sq_buffer);
 
 	REICAST_US((*p_sh4rcb).cntx);
+	p_sh4rcb->cntx.cycle_counter = SH4_TIMESLICE;
 
 	if (version < V9_LIBRETRO)
 	{
@@ -700,7 +700,6 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size, seria
 		REICAST_SKIP(4);		// old_dn
 	}
 
-	sh4InterpCycles = 0;
 	REICAST_US(sh4_sched_ffb);
 	if (version < V9_LIBRETRO)
 		REICAST_SKIP(4);		// sh4_sched_intr
@@ -1080,10 +1079,10 @@ bool dc_unserialize(void **data, unsigned int *total_size, bool rollback)
 		REICAST_SKIP(4);
 		REICAST_SKIP(4);
 	}
-	if (version >= V19)
-		REICAST_US(sh4InterpCycles);
-	else
-		sh4InterpCycles = 0;
+	if (version >= V19 && version < V21)
+		REICAST_SKIP(4); // sh4InterpCycles
+	if (version < V21)
+		p_sh4rcb->cntx.cycle_counter = SH4_TIMESLICE;
 
 	REICAST_US(sh4_sched_ffb);
 	std::array<int, 11> schedIds = getSchedulerIds();
@@ -1125,6 +1124,8 @@ bool dc_unserialize(void **data, unsigned int *total_size, bool rollback)
 		REICAST_US(sch_list[modem_sched].start);
 		REICAST_US(sch_list[modem_sched].end);
 	}
+	if (version < V19)
+		sh4_sched_ffts();
 	ModemDeserialize(data, total_size, version);
 
 	REICAST_US(SCIF_SCFSR2);

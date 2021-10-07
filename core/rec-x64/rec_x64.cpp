@@ -32,7 +32,6 @@ struct DynaRBI : RuntimeBlockInfo
 	}
 };
 
-static int cycle_counter;
 static void (*mainloop)();
 static void (*handleException)();
 
@@ -106,7 +105,7 @@ static void handle_sh4_exception(SH4ThrownException& ex, u32 pc)
 		pc--;
 	}
 	Do_Exception(pc, ex.expEvn, ex.callVect);
-	cycle_counter += 4;	// probably more is needed
+	p_sh4rcb->cntx.cycle_counter += 4;	// probably more is needed
 	handleException();
 }
 
@@ -176,14 +175,9 @@ public:
 			jmp(exit_block, T_NEAR);
 			L(fpu_enabled);
 		}
-#ifdef FEAT_NO_RWX_PAGES
-		// Use absolute addressing for this one
-		// TODO(davidgfnet) remove the ifsef using CC_RX2RW/CC_RW2RX
-		mov(rax, (uintptr_t)&cycle_counter);
+		mov(rax, (uintptr_t)&p_sh4rcb->cntx.cycle_counter);
 		sub(dword[rax], block->guest_cycles);
-#else
-		sub(dword[rip + &cycle_counter], block->guest_cycles);
-#endif
+
 		regalloc.DoAlloc(block);
 
 		for (current_opid = 0; current_opid < block->oplist.size(); current_opid++)
@@ -655,7 +649,6 @@ public:
 #endif
 		unwinder.endProlog(getSize());
 
-		mov(dword[rip + &cycle_counter], SH4_TIMESLICE);
 		mov(qword[rip + &jmp_rsp], rsp);
 
 	//run_loop:
@@ -675,12 +668,13 @@ public:
 		mov(call_regs[0], dword[rax]);
 		call(bm_GetCodeByVAddr);
 		call(rax);
-		mov(ecx, dword[rip + &cycle_counter]);
+		mov(rax, (uintptr_t)&p_sh4rcb->cntx.cycle_counter);
+		mov(ecx, dword[rax]);
 		test(ecx, ecx);
 		jg(slice_loop);
 
 		add(ecx, SH4_TIMESLICE);
-		mov(dword[rip + &cycle_counter], ecx);
+		mov(dword[rax], ecx);
 		call(UpdateSystem_INTC);
 		jmp(run_loop);
 

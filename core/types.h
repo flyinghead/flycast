@@ -490,5 +490,6 @@ enum serialize_version_enum {
 	V18 = 813,
 	V19 = 814,
 	V20 = 815,
-	VCUR_FLYCAST = V20,
+	V21 = 816,
+	VCUR_FLYCAST = V21,
 };

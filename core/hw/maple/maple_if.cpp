@@ -333,7 +333,9 @@ void maple_Reset(bool hard)
 
 void maple_Term()
 {
-	
+	mcfg_DestroyDevices();
+	sh4_sched_unregister(maple_schid);
+	maple_schid = -1;
 }
 
 static u64 reconnect_time;

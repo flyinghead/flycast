@@ -1201,7 +1201,8 @@ void gdrom_reg_Init()
 
 void gdrom_reg_Term()
 {
-	
+	sh4_sched_unregister(gdrom_schid);
+	gdrom_schid = -1;
 }
 
 void gdrom_reg_Reset(bool hard)

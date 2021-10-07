@@ -597,7 +597,7 @@ void sb_Reset(bool hard)
 	SB_FFST = 0;
 
 	bba_Reset(hard);
-	ModemTerm();
+	ModemReset();
 
 	asic_reg_Reset(hard);
 	if (settings.platform.system == DC_PLATFORM_DREAMCAST)

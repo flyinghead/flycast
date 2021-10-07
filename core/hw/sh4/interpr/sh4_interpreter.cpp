@@ -19,14 +19,12 @@
 sh4_icache icache;
 sh4_ocache ocache;
 
-s32 sh4InterpCycles;
-
 static void ExecuteOpcode(u16 op)
 {
 	if (sr.FD == 1 && OpDesc[op]->IsFloatingPoint())
 		RaiseFPUDisableException();
 	OpPtr[op](op);
-	sh4InterpCycles -= CPU_RATIO;
+	p_sh4rcb->cntx.cycle_counter -= CPU_RATIO;
 }
 
 static u16 ReadNexOp()
@@ -42,8 +40,6 @@ static void Sh4_int_Run()
 	sh4_int_bCpuRun = true;
 	RestoreHostRoundingMode();
 
-	sh4InterpCycles += SH4_TIMESLICE;
-
 	try {
 		do
 		{
@@ -53,12 +49,12 @@ static void Sh4_int_Run()
 					u32 op = ReadNexOp();
 
 					ExecuteOpcode(op);
-				} while (sh4InterpCycles > 0);
-				sh4InterpCycles += SH4_TIMESLICE;
+				} while (p_sh4rcb->cntx.cycle_counter > 0);
+				p_sh4rcb->cntx.cycle_counter += SH4_TIMESLICE;
 				UpdateSystem_INTC();
 			} catch (const SH4ThrownException& ex) {
 				Do_Exception(ex.epc, ex.expEvn, ex.callVect);
-				sh4InterpCycles -= CPU_RATIO * 5;	// an exception requires the instruction pipeline to drain, so approx 5 cycles
+				p_sh4rcb->cntx.cycle_counter -= CPU_RATIO * 5;	// an exception requires the instruction pipeline to drain, so approx 5 cycles
 			}
 		} while (sh4_int_bCpuRun);
 	} catch (const debugger::Stop& e) {
@@ -82,7 +78,7 @@ static void Sh4_int_Step()
 		ExecuteOpcode(op);
 	} catch (const SH4ThrownException& ex) {
 		Do_Exception(ex.epc, ex.expEvn, ex.callVect);
-		sh4InterpCycles -= CPU_RATIO * 5;	// an exception requires the instruction pipeline to drain, so approx 5 cycles
+		p_sh4rcb->cntx.cycle_counter -= CPU_RATIO * 5;	// an exception requires the instruction pipeline to drain, so approx 5 cycles
 	} catch (const debugger::Stop& e) {
 	}
 }
@@ -92,7 +88,11 @@ static void Sh4_int_Reset(bool hard)
 	verify(!sh4_int_bCpuRun);
 
 	if (hard)
+	{
+		int schedNext = p_sh4rcb->cntx.sh4_sched_next;
 		memset(&p_sh4rcb->cntx, 0, sizeof(p_sh4rcb->cntx));
+		p_sh4rcb->cntx.sh4_sched_next = schedNext;
+	}
 	next_pc = 0xA0000000;
 
 	memset(r,0,sizeof(r));
@@ -110,7 +110,7 @@ static void Sh4_int_Reset(bool hard)
 	UpdateFPSCR();
 	icache.Reset(hard);
 	ocache.Reset(hard);
-	sh4InterpCycles = 0;
+	p_sh4rcb->cntx.cycle_counter = SH4_TIMESLICE;
 
 	INFO_LOG(INTERPRETER, "Sh4 Reset");
 }

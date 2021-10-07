@@ -319,9 +319,16 @@ void ModemInit()
 	modem_sched = sh4_sched_register(0, &modem_sched_func);
 }
 
-void ModemTerm()
+void ModemReset()
 {
 	stop_pico();
+}
+
+void ModemTerm()
+{
+	ModemReset();
+	sh4_sched_unregister(modem_sched);
+	modem_sched = -1;
 }
 
 static void schedule_callback(int ms)
