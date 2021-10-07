@@ -12,6 +12,7 @@
 #include "wsi/context.h"
 #include "emulator.h"
 #include "stdclass.h"
+#include "imgui/imgui.h"
 #if !defined(_WIN32) && !defined(__APPLE__) && !defined(__SWITCH__)
 #include "linux-dist/icon.h"
 #endif
@@ -39,6 +40,7 @@ static int window_width = WINDOW_WIDTH;
 static int window_height = WINDOW_HEIGHT;
 static bool gameRunning;
 static bool mouseCaptured;
+static std::string clipboardText;
 
 static void sdl_open_joystick(int index)
 {
@@ -540,6 +542,23 @@ bool sdl_recreate_window(u32 flags)
 	return true;
 }
 
+static const char *getClipboardText(void *)
+{
+	clipboardText.clear();
+	if (SDL_HasClipboardText())
+	{
+		char *text = SDL_GetClipboardText();
+		clipboardText = text;
+		SDL_free(text);
+	}
+	return clipboardText.c_str();
+}
+
+static void setClipboardText(void *, const char *text)
+{
+	SDL_SetClipboardText(text);
+}
+
 void sdl_window_create()
 {
 	if (SDL_WasInit(SDL_INIT_VIDEO) == 0)
@@ -550,6 +569,9 @@ void sdl_window_create()
 		}
 	}
 	InitRenderApi();
+	// ImGui copy & paste
+	ImGui::GetIO().GetClipboardTextFn = getClipboardText;
+	ImGui::GetIO().SetClipboardTextFn = setClipboardText;
 }
 
 void sdl_window_destroy()
