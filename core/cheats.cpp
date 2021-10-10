@@ -24,6 +24,7 @@
 #include "hw/sh4/sh4_mem.h"
 #include "reios/reios.h"
 #include "cfg/cfg.h"
+#include "cfg/ini.h"
 
 const WidescreenCheat CheatManager::widescreen_cheats[] =
 {
@@ -312,60 +313,39 @@ void CheatManager::loadCheatFile(const std::string& filename)
 		WARN_LOG(COMMON, "Cannot open cheat file '%s'", filename.c_str());
 		return;
 	}
-	cheats.clear();
-	Cheat cheat;
-	int cheatNumber = 0;
-	char buffer[512];
-	while (fgets(buffer, sizeof(buffer), cheatfile) != nullptr)
-	{
-		std::string l = buffer;
-		auto equalPos = l.find('=');
-		if (equalPos == std::string::npos)
-			continue;
-		auto quotePos = l.find('"', equalPos);
-		if (quotePos == std::string::npos)
-			continue;
-		auto quote2Pos = l.find('"', quotePos + 1);
-		if (quote2Pos == std::string::npos)
-			continue;
-		if (l.substr(0, 5) != "cheat" || l[5] < '0' || l[5] > '9')
-			continue;
-		char *p;
-		int number = strtol(&l[5], &p, 10);
-		if (number != cheatNumber && cheat.type != Cheat::Type::disabled)
-		{
-			cheatNumber = number;
-			cheats.push_back(cheat);
-			cheat = Cheat();
-		}
-		std::string param = trim_trailing_ws(l.substr(p - &l[0], equalPos - (p - &l[0])));
-		std::string value = l.substr(quotePos + 1, quote2Pos - quotePos - 1);
+	emucfg::ConfigFile cfg;
+	cfg.parse(cheatfile);
+	fclose(cheatfile);
 
-		if (param == "_address")
+	int count = cfg.get_int("", "cheats", 0);
+	cheats.clear();
+	for (int i = 0; i < count; i++)
+	{
+		std::string prefix = "cheat" + std::to_string(i) + "_";
+		Cheat cheat{};
+		cheat.description = cfg.get("", prefix + "desc", "Cheat " + std::to_string(i + 1));
+		cheat.address = cfg.get_int("", prefix + "address", -1);
+		if (cheat.address >= RAM_SIZE)
 		{
-			cheat.address = strtol(value.c_str(), nullptr, 10);
-			verify(cheat.address < RAM_SIZE);
+			WARN_LOG(COMMON, "Invalid address %x", cheat.address);
+			continue;
 		}
-		else if (param == "_cheat_type")
-			cheat.type = (Cheat::Type)strtol(value.c_str(), nullptr, 10);
-		else if (param == "_desc")
-			cheat.description = value;
-		else if (param == "_memory_search_size")
-			cheat.size = 1 << strtol(value.c_str(), nullptr, 10);
-		else if (param == "_value")
-			cheat.value = strtol(value.c_str(), nullptr, 10);
-		else if (param == "_repeat_count")
-			cheat.repeatCount = strtol(value.c_str(), nullptr, 10);
-		else if (param == "_repeat_add_to_value")
-			cheat.repeatValueIncrement = strtol(value.c_str(), nullptr, 10);
-		else if (param == "_repeat_add_to_address")
-			cheat.repeatAddressIncrement = strtol(value.c_str(), nullptr, 10);
-		else if (param == "_enable")
-			cheat.enabled = value == "true";
+		cheat.type = (Cheat::Type)cfg.get_int("", prefix + "cheat_type", (int)Cheat::Type::disabled);
+		cheat.size = 1 << cfg.get_int("", prefix + "memory_search_size", 0);
+		cheat.value = cfg.get_int("", prefix + "value", cheat.value);
+		cheat.repeatCount = cfg.get_int("", prefix + "repeat_count", cheat.repeatCount);
+		cheat.repeatValueIncrement = cfg.get_int("", prefix + "repeat_add_to_value", cheat.repeatValueIncrement);
+		cheat.repeatAddressIncrement = cfg.get_int("", prefix + "repeat_add_to_address", cheat.repeatAddressIncrement);
+		cheat.enabled = cfg.get_bool("", prefix + "enable", false);
+		cheat.destAddress = cfg.get_int("", prefix + "dest_address", 0);
+		if (cheat.destAddress >= RAM_SIZE)
+		{
+			WARN_LOG(COMMON, "Invalid address %x", cheat.destAddress);
+			continue;
+		}
+		if (cheat.type != Cheat::Type::disabled)
+			cheats.push_back(cheat);
 	}
-	std::fclose(cheatfile);
-	if (cheat.type != Cheat::Type::disabled)
-		cheats.push_back(cheat);
 	active = !cheats.empty();
 	INFO_LOG(COMMON, "%d cheats loaded", (int)cheats.size());
 	cfgSaveStr("cheats", gameId, filename);
@@ -506,6 +486,10 @@ void CheatManager::apply()
 			case Cheat::Type::runNextIfLt:
 				skipCheat = readRam(cheat.address, cheat.size) >= cheat.value;
 				break;
+			case Cheat::Type::copy:
+				for (u32 i = 0; i < cheat.repeatCount; i++)
+					writeRam(cheat.destAddress + i, readRam(cheat.address + i, cheat.size), cheat.size);
+				break;
 			}
 			if (setValue)
 			{
@@ -519,4 +503,290 @@ void CheatManager::apply()
 			}
 		}
 	}
+}
+
+static std::vector<u32> parseCodes(const std::string& s)
+{
+	std::vector<u32> codes;
+	std::string curCode;
+	for (u8 c : s)
+	{
+		if (std::isxdigit(c))
+		{
+			curCode += c;
+			if (curCode.length() == 8)
+			{
+				codes.push_back(strtol(curCode.c_str(), nullptr, 16));
+				curCode.clear();
+			}
+		}
+		else if (!curCode.empty())
+			throw FlycastException("Invalid cheat code");
+	}
+	if (!curCode.empty())
+	{
+		if (curCode.length() != 8)
+			throw FlycastException("Invalid cheat code");
+		codes.push_back(strtol(curCode.c_str(), nullptr, 16));
+	}
+
+	return codes;
+}
+
+void CheatManager::addGameSharkCheat(const std::string& name, const std::string& s)
+{
+	std::vector<u32> codes = parseCodes(s);
+	Cheat conditionCheat;
+	unsigned conditionLimit = 0;
+
+	for (unsigned i = 0; i < codes.size(); i++)
+	{
+		if (i < conditionLimit)
+			cheats.push_back(conditionCheat);
+		Cheat cheat{};
+		cheat.description = name;
+		u32 code = (codes[i] & 0xff000000) >> 24;
+		switch (code)
+		{
+		case 0:
+		case 1:
+		case 2:
+			{
+				// 8/16/32-bit write
+				if (i + 1 >= codes.size())
+					throw FlycastException("Missing value");
+				cheat.type = Cheat::Type::setValue;
+				cheat.size = code == 0 ? 8 : code == 1 ? 16 : 32;
+				cheat.address = codes[i] & 0x00ffffff;
+				cheat.value = codes[++i];
+				cheats.push_back(cheat);
+			}
+			break;
+		case 3:
+			{
+				u32 subcode = (codes[i] & 0x00ff0000) >> 16;
+				switch (subcode)
+				{
+				case 0:
+					{
+						// Group write
+						int count = codes[i] & 0xffff;
+						if (i + count + 1 >= codes.size())
+							throw FlycastException("Missing values");
+						cheat.type = Cheat::Type::setValue;
+						cheat.size = 32;
+						cheat.address = codes[++i] & 0x00ffffff;
+						for (int j = 0; j < count; j++)
+						{
+							if (j == 1)
+								cheat.description += " (cont'd)";
+							cheat.value = codes[++i];
+							cheats.push_back(cheat);
+							cheat.address += 4;
+							if (j < count - 1 && i < conditionLimit)
+								cheats.push_back(conditionCheat);
+						}
+					}
+					break;
+				case 1:
+				case 2:
+					{
+						// 8-bit inc/decrement
+						if (i + 1 >= codes.size())
+							throw FlycastException("Missing value");
+						cheat.type = subcode == 1 ? Cheat::Type::increase : Cheat::Type::decrease;
+						cheat.size = 8;
+						cheat.value = codes[i] & 0xff;
+						cheat.address = codes[++i] & 0x00ffffff;
+						cheats.push_back(cheat);
+					}
+					break;
+				case 3:
+				case 4:
+					{
+						// 16-bit inc/decrement
+						if (i + 1 >= codes.size())
+							throw FlycastException("Missing value");
+						cheat.type = subcode == 3 ? Cheat::Type::increase : Cheat::Type::decrease;
+						cheat.size = 16;
+						cheat.value = codes[i] & 0xffff;
+						cheat.address = codes[++i] & 0x00ffffff;
+						cheats.push_back(cheat);
+					}
+					break;
+				case 5:
+				case 6:
+					{
+						// 32-bit inc/decrement
+						if (i + 2 >= codes.size())
+							throw FlycastException("Missing address or value");
+						cheat.type = subcode == 5 ? Cheat::Type::increase : Cheat::Type::decrease;
+						cheat.size = 32;
+						cheat.address = codes[++i] & 0x00ffffff;
+						cheat.value = codes[++i];
+						cheats.push_back(cheat);
+					}
+					break;
+				default:
+					throw FlycastException("Unsupported cheat type");
+				}
+			}
+			break;
+		case 4:
+			{
+				// 32-bit repeat write
+				if (i + 2 >= codes.size())
+					throw FlycastException("Missing count or value");
+				cheat.type = Cheat::Type::setValue;
+				cheat.size = 32;
+				cheat.address = codes[i] & 0x00ffffff;
+				cheat.repeatCount = codes[++i] >> 16;
+				cheat.repeatAddressIncrement = codes[i] & 0xffff;
+				cheat.value = codes[++i];
+				cheats.push_back(cheat);
+			}
+			break;
+		case 5:
+			{
+				// copy bytes
+				if (i + 2 >= codes.size())
+					throw FlycastException("Missing count or destination address");
+				cheat.type = Cheat::Type::copy;
+				cheat.size = 8;
+				cheat.address = codes[i] & 0x00ffffff;
+				cheat.destAddress = codes[++i] & 0x00ffffff;
+				cheat.repeatCount = codes[++i];
+				cheats.push_back(cheat);
+			}
+			break;
+		// TODO 7 change decryption type
+		// TODO 0xb delay applying codes
+		// TODO 0xc global enable test
+		case 0xd:
+			{
+				// enable next code if eq/neq/lt/gt
+				if (i + 1 >= codes.size())
+					throw FlycastException("Missing count or destination address");
+				cheat.size = 16;
+				cheat.address = codes[i] & 0x00ffffff;
+				switch (codes[++i] >> 16)
+				{
+				case 0:
+					cheat.type = Cheat::Type::runNextIfEq;
+					break;
+				case 1:
+					cheat.type = Cheat::Type::runNextIfNeq;
+					break;
+				case 2:
+					cheat.type = Cheat::Type::runNextIfLt;
+					break;
+				case 3:
+					cheat.type = Cheat::Type::runNextIfGt;
+					break;
+				default:
+					throw FlycastException("Unsupported conditional code");
+				}
+				cheat.value = codes[i] & 0xffff;
+				cheats.push_back(cheat);
+			}
+			break;
+		case 0xe:
+			{
+				// multiline enable codes if eq/neq/lt/gt
+				if (i + 1 >= codes.size())
+					throw FlycastException("Missing test address");
+				cheat.size = 16;
+				cheat.value = codes[i] & 0xffff;
+				conditionLimit = i + 1 + ((codes[i] >> 16) & 0xff);
+				switch (codes[++i] >> 24)
+				{
+				case 0:
+					cheat.type = Cheat::Type::runNextIfEq;
+					break;
+				case 1:
+					cheat.type = Cheat::Type::runNextIfNeq;
+					break;
+				case 2:
+					cheat.type = Cheat::Type::runNextIfLt;
+					break;
+				case 3:
+					cheat.type = Cheat::Type::runNextIfGt;
+					break;
+				default:
+					throw FlycastException("Unsupported conditional code");
+				}
+				cheat.address = codes[i] & 0x00ffffff;
+				conditionCheat = cheat;
+			}
+			break;
+		default:
+			throw FlycastException("Unsupported cheat type");
+		}
+	}
+	active = !cheats.empty();
+#ifndef LIBRETRO
+	std::string path = cfgLoadStr("cheats", gameId, "");
+	if (path == "")
+	{
+		path = get_game_save_prefix() + ".cht";
+		cfgSaveStr("cheats", gameId, path);
+	}
+	saveCheatFile(path);
+#endif
+}
+
+void CheatManager::saveCheatFile(const std::string& filename)
+{
+#ifndef LIBRETRO
+	emucfg::ConfigFile cfg;
+
+	cfg.set_int("", "cheats", cheats.size());
+	int i = 0;
+	for (const Cheat& cheat : cheats)
+	{
+		std::string prefix = "cheat" + std::to_string(i) + "_";
+		cfg.set_int("", prefix + "address", cheat.address);
+		cfg.set_int("", prefix + "address_bit_position", 0);	// FIXME
+		cfg.set_bool("", prefix + "big_endian", false);
+		cfg.set_int("", prefix + "cheat_type", (int)cheat.type);
+		cfg.set("", prefix + "code", "");
+		cfg.set("", prefix + "desc", cheat.description);
+		cfg.set_int("", prefix + "dest_address", cheat.destAddress);
+		cfg.set_bool("", prefix + "enable", false);	// force all cheats disabled at start
+		cfg.set_int("", prefix + "handler", 1);
+		int memSize;
+		switch (cheat.size) {
+		case 1:
+			memSize = 0;
+			break;
+		case 2:
+			memSize = 1;
+			break;
+		case 4:
+			memSize = 2;
+			break;
+		case 8:
+			memSize = 3;
+			break;
+		case 16:
+			memSize = 4;
+			break;
+		case 32:
+		default:
+			memSize = 5;
+			break;
+		}
+		cfg.set_int("", prefix + "memory_search_size", memSize);
+		cfg.set_int("", prefix + "value", cheat.value);
+		cfg.set_int("", prefix + "repeat_count", cheat.repeatCount);
+		cfg.set_int("", prefix + "repeat_add_to_value", cheat.repeatValueIncrement);
+		cfg.set_int("", prefix + "repeat_add_to_address", cheat.repeatAddressIncrement);
+		i++;
+	}
+	FILE *fp = nowide::fopen(filename.c_str(), "w");
+	if (fp == nullptr)
+		throw FlycastException("Can't save cheat file");
+	cfg.save(fp);
+	fclose(fp);
+#endif
 }

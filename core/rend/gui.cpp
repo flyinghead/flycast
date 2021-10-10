@@ -442,7 +442,7 @@ void gui_stop_game(const std::string& message)
 		game_started = false;
 		reset_vmus();
 		if (!message.empty())
-			error_msg = "Flycast has stopped.\n\n" + message;
+			gui_error("Flycast has stopped.\n\n" + message);
 	}
 	else
 	{
@@ -2105,7 +2105,7 @@ static void gui_display_content()
 								DiscSwap(game.path);
 								gui_state = GuiState::Closed;
 							} catch (const FlycastException& e) {
-								error_msg = e.what();
+								gui_error(e.what());
 							}
 						}
 						else
@@ -2131,7 +2131,6 @@ static void gui_display_content()
     ImGui::PopStyleVar();
     ImGui::PopStyleVar();
 
-	error_popup();
     contentpath_warning_popup();
 }
 
@@ -2206,7 +2205,7 @@ static void gui_network_start()
 			NetworkHandshake::instance->stop();
 			gui_state = GuiState::Main;
 			emu.unloadGame();
-			error_msg = e.what();
+			gui_error(e.what());
 		}
 	}
 	else
@@ -2283,7 +2282,7 @@ static void gui_display_loadscreen()
 		}
 	} catch (const FlycastException& ex) {
 		ERROR_LOG(BOOT, "%s", ex.what());
-		error_msg = ex.what();
+		gui_error(ex.what());
 #ifdef TEST_AUTOMATION
 		die("Game load failed");
 #endif
@@ -2354,6 +2353,7 @@ void gui_display_ui()
 		die("Unknown UI state");
 		break;
 	}
+	error_popup();
     ImGui::Render();
     ImGui_impl_RenderDrawData(ImGui::GetDrawData());
 
@@ -2614,4 +2614,9 @@ static void term_vmus()
 		ImGui_ImplOpenGL3_DeleteTexture(crosshairTexId);
 		crosshairTexId = ImTextureID();
 	}
+}
+
+void gui_error(const std::string& what)
+{
+	error_msg = what;
 }

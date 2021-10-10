@@ -1325,6 +1325,8 @@ if(BUILD_TESTING)
             core/deps/gtest/src/gtest_main.cc)
 
     target_sources(${PROJECT_NAME} PRIVATE
+            tests/src/CheatManagerTest.cpp
+            tests/src/ConfigFileTest.cpp
             tests/src/div32_test.cpp
             tests/src/test_stubs.cpp
             tests/src/serialize_test.cpp

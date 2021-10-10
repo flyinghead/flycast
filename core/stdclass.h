@@ -128,3 +128,13 @@ static inline std::string trim_trailing_ws(const std::string& str,
 
     return str.substr(0, strEnd + 1);
 }
+
+static inline std::string trim_ws(const std::string& str,
+                 const std::string& whitespace = " ")
+{
+    const auto strStart = str.find_first_not_of(whitespace);
+	if (strStart == std::string::npos)
+		return "";
+
+    return str.substr(strStart, str.find_last_not_of(whitespace) + 1 - strStart);
+}
