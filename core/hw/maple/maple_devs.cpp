@@ -5,7 +5,7 @@
 #include "oslib/audiostream.h"
 #include "oslib/oslib.h"
 #include "cfg/option.h"
-
+#include "hw/aica/sgc_if.h"
 #include <zlib.h>
 
 const char* maple_sega_controller_name = "Dreamcast Controller";
@@ -682,11 +682,13 @@ struct maple_sega_vmu: maple_base
 				{
 				case MFID_3_Clock:
 					{
-						u32 bp = r32();
-						if (bp)
-							INFO_LOG(MAPLE, "BEEP : %08X", bp);
+						u8 on = r8();
+						u8 period = r8();
+						r16(); // Alarm 2
+						INFO_LOG(MAPLE, "BEEP: %d/%d", on, period);
+						vmuBeep(on, period);
 					}
-					return MDRS_DeviceReply; //just ko
+					return MDRS_DeviceReply;
 
 				default:
 					INFO_LOG(MAPLE, "VMU: command MDCF_SetCondition -> Bad function used, returning MDRE_UnknownFunction");
@@ -696,9 +698,11 @@ struct maple_sega_vmu: maple_base
 			break;
 
 		case MDC_DeviceReset:
+			vmuBeep(0, 0);
 			return MDRS_DeviceReply;
 
 		case MDC_DeviceKill:
+			vmuBeep(0, 0);
 			return MDRS_DeviceReply;
 
 		default:

@@ -127,30 +127,36 @@ static const s32 qtable[32] = {
 };
 
 //Remove the fractional part by chopping..
-#define FPChop(a, bits) ((a) >> (bits))
+static SampleType FPs(SampleType a, int bits) {
+	return a >> bits;
+}
 
-#define FPs FPChop
 //Fixed point mul w/ rounding :)
-#define FPMul(a, b, bits) FPs((a) * (b), bits)
+template<typename T>
+static T FPMul(T a, T b, int bits) {
+	return (a * b) >> bits;
+}
 
-#define VOLPAN(value,vol,pan,outl,outr) \
-{\
-	s32 temp=FPMul((value),volume_lut[(vol)],15);\
-	u32 t_pan=(pan);\
-	SampleType Sc=FPMul(temp,volume_lut[0xF-(t_pan&0xF)],15);\
-	if (t_pan& 0x10)\
-	{\
-		(outl)+=temp;\
-		(outr)+=Sc ;\
-	}\
-	else\
-	{\
-		(outl)+=Sc;\
-		(outr)+=temp;\
-	}\
+static void VolumePan(SampleType value, u32 vol, u32 pan, SampleType& outl, SampleType& outr)
+{
+	SampleType temp = FPMul(value, volume_lut[vol], 15);
+	SampleType Sc = FPMul(temp, volume_lut[0xF - (pan & 0xF)], 15);
+	if (pan & 0x10)
+	{
+		outl += temp;
+		outr += Sc;
+	}
+	else
+	{
+		outl += Sc;
+		outr += temp;
+	}
 }
 
 DSP_OUT_VOL_REG* dsp_out_vol;
+static int beepOn;
+static int beepPeriod;
+static int beepCounter;
 
 #pragma pack(push, 1)
 //All regs are 16b , aligned to 32b (upper bits 0?)
@@ -427,14 +433,17 @@ struct ChannelEx
 	} lfo;
 
 	bool enabled;	//set to false to 'freeze' the channel
+	bool quiet;
 	int ChannelNumber;
 
 	void Init(int cn,u8* ccd_raw)
 	{
 		ccd=(ChannelCommonData*)&ccd_raw[cn*0x80];
 		ChannelNumber = cn;
+		quiet = true;
 		for (u32 i = 0; i < 0x80; i += 2)
 			RegWrite(i, 2);
+		quiet = false;
 		disable();
 	}
 	void disable()
@@ -746,10 +755,11 @@ struct ChannelEx
 						|| ccd->FLV4 < 0x1ff7);
 		if (!FEG.active)
 			return;
-		feg_printf("FEG active channel %d Q %d FLV: %05x %05x %05x %05x %05x AR %02x FD1R %02x FD2R %02x FRR %02x",
-				ChannelNumber, ccd->Q,
-				ccd->FLV0, ccd->FLV1, ccd->FLV2, ccd->FLV3, ccd->FLV4,
-				ccd->FAR, ccd->FD1R, ccd->FD2R, ccd->FRR);
+		if (!quiet)
+			feg_printf("FEG active channel %d Q %d FLV: %05x %05x %05x %05x %05x AR %02x FD1R %02x FD2R %02x FRR %02x",
+					ChannelNumber, ccd->Q,
+					ccd->FLV0, ccd->FLV1, ccd->FLV2, ccd->FLV3, ccd->FLV4,
+					ccd->FAR, ccd->FD1R, ccd->FD2R, ccd->FRR);
 		FEG.q = qtable[ccd->Q];
 		s32 base_rate = EG_BaseRate();
 		FEG.AttackRate = FEG_SPS[EG_EffRate(base_rate, ccd->FAR)];
@@ -1287,6 +1297,9 @@ void sgc_Init()
 		for (int i = -128; i < 128; i++)
 			PLFO_Scales[s][i + 128] = (u32)((1 << 10) * powf(2.0f, limit * i / 128.0f / 1200.0f));
 	}
+	beepOn = 0;
+	beepPeriod = 0;
+	beepCounter = 0;
 
 	dsp::init();
 }
@@ -1354,9 +1367,41 @@ void WriteCommonReg8(u32 reg,u32 data)
 	}
 }
 
-#define CDDA_SIZE  (2352/2)
-s16 cdda_sector[CDDA_SIZE]={0};
-u32 cdda_index=CDDA_SIZE<<1;
+void vmuBeep(int on, int period)
+{
+	if (on == 0 || period == 0 || on < period)
+	{
+		beepOn = 0;
+		beepPeriod = 0;
+	}
+	else
+	{
+		// The maple doc may be wrong on this. It looks like the raw values of T1LR and T1LC are set.
+		// So the period is (256 - T1LR) / (32768 / 6)
+		// and the duty cycle is (T1LC - T1LR) / (32768 / 6)
+		beepOn = (on - period) * 8;
+		beepPeriod = (256 - period) * 8;
+		beepCounter = 0;
+	}
+}
+
+static SampleType vmuBeepSample()
+{
+	if (beepPeriod == 0)
+		return 0;
+	SampleType s;
+	if (beepCounter <= beepOn)
+		s = 16383;
+	else
+		s = -16384;
+	beepCounter = (beepCounter + 1) % beepPeriod;
+
+	return s;
+}
+
+constexpr int CDDA_SIZE = 2352 / 2;
+s16 cdda_sector[CDDA_SIZE];
+u32 cdda_index = CDDA_SIZE;
 
 //no DSP for now in this version
 void AICA_Sample32()
@@ -1405,8 +1450,8 @@ void AICA_Sample32()
 		//Add CDDA / DSP effect(s)
 
 		//CDDA
-		VOLPAN(EXTS0L, dsp_out_vol[16].EFSDL, dsp_out_vol[16].EFPAN, mixl, mixr);
-		VOLPAN(EXTS0R, dsp_out_vol[17].EFSDL, dsp_out_vol[17].EFPAN, mixl, mixr);
+		VolumePan(EXTS0L, dsp_out_vol[16].EFSDL, dsp_out_vol[16].EFPAN, mixl, mixr);
+		VolumePan(EXTS0R, dsp_out_vol[17].EFSDL, dsp_out_vol[17].EFPAN, mixl, mixr);
 
 		/*
 		no dsp for now -- needs special handling of oDSP for ch paraller version ...
@@ -1416,7 +1461,7 @@ void AICA_Sample32()
 
 			for (int i=0;i<16;i++)
 			{
-				VOLPAN( (*(s16*)&DSPData->EFREG[i]) ,dsp_out_vol[i].EFSDL,dsp_out_vol[i].EFPAN,mixl,mixr);
+				VolumePan( (*(s16*)&DSPData->EFREG[i]) ,dsp_out_vol[i].EFSDL,dsp_out_vol[i].EFPAN,mixl,mixr);
 			}
 		}
 		*/
@@ -1433,8 +1478,8 @@ void AICA_Sample32()
 		//we want to make sure mix* is *At least* 23 bits wide here, so 64 bit mul !
 		u32 mvol=CommonData->MVOL;
 		s32 val=volume_lut[mvol];
-		mixl=(s32)FPMul((s64)mixl,val,15);
-		mixr=(s32)FPMul((s64)mixr,val,15);
+		mixl = (s32)FPMul<s64>(mixl, val, 15);
+		mixr = (s32)FPMul<s64>(mixr, val, 15);
 
 
 		if (CommonData->DAC18B)
@@ -1486,8 +1531,8 @@ void AICA_Sample()
 	//Add CDDA / DSP effect(s)
 
 	//CDDA
-	VOLPAN(EXTS0L, dsp_out_vol[16].EFSDL, dsp_out_vol[16].EFPAN, mixl, mixr);
-	VOLPAN(EXTS0R, dsp_out_vol[17].EFSDL, dsp_out_vol[17].EFPAN, mixl, mixr);
+	VolumePan(EXTS0L, dsp_out_vol[16].EFSDL, dsp_out_vol[16].EFPAN, mixl, mixr);
+	VolumePan(EXTS0R, dsp_out_vol[17].EFSDL, dsp_out_vol[17].EFPAN, mixl, mixr);
 
 	DSPData->EXTS[0] = EXTS0L;
 	DSPData->EXTS[1] = EXTS0R;
@@ -1497,11 +1542,15 @@ void AICA_Sample()
 		dsp::step();
 
 		for (int i=0;i<16;i++)
-			VOLPAN(*(s16*)&DSPData->EFREG[i], dsp_out_vol[i].EFSDL, dsp_out_vol[i].EFPAN, mixl, mixr);
+			VolumePan(*(s16*)&DSPData->EFREG[i], dsp_out_vol[i].EFSDL, dsp_out_vol[i].EFPAN, mixl, mixr);
 	}
 
 	if (settings.input.fastForwardMode || settings.aica.muteAudio)
 		return;
+
+	SampleType beep = vmuBeepSample();
+	mixl += beep;
+	mixr += beep;
 
 	//Mono !
 	if (CommonData->Mono)
@@ -1515,9 +1564,8 @@ void AICA_Sample()
 	//we want to make sure mix* is *At least* 23 bits wide here, so 64 bit mul !
 	u32 mvol=CommonData->MVOL;
 	s32 val=volume_lut[mvol];
-	mixl=(s32)FPMul((s64)mixl,val,15);
-	mixr=(s32)FPMul((s64)mixr,val,15);
-
+	mixl = (s32)FPMul<s64>(mixl, val, 15);
+	mixr = (s32)FPMul<s64>(mixr, val, 15);
 
 	if (CommonData->DAC18B)
 	{
@@ -1571,6 +1619,9 @@ bool channel_serialize(void **data, unsigned int *total_size)
 		REICAST_S(Chans[i].lfo.state) ;
 		REICAST_S(Chans[i].enabled) ;
 	}
+	REICAST_S(beepOn);
+	REICAST_S(beepPeriod);
+	REICAST_S(beepCounter);
 
 	return true;
 }
@@ -1584,6 +1635,7 @@ bool channel_unserialize(void **data, unsigned int *total_size, serialize_versio
 
 	for ( i = 0 ; i < 64 ; i++)
 	{
+		Chans[i].quiet = true;
 		REICAST_US(addr);
 		Chans[i].SA = addr + (&(aica_ram[0])) ;
 
@@ -1679,6 +1731,19 @@ bool channel_unserialize(void **data, unsigned int *total_size, serialize_versio
 		REICAST_US(Chans[i].enabled) ;
 		if (old_format)
 			REICAST_US(dum); // Chans[i].ChannelNumber
+		Chans[i].quiet = false;
+	}
+	if (ver >= V22)
+	{
+		REICAST_US(beepOn);
+		REICAST_US(beepPeriod);
+		REICAST_US(beepCounter);
+	}
+	else
+	{
+		beepOn = 0;
+		beepPeriod = 0;
+		beepCounter = 0;
 	}
 
 	return true;

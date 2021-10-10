@@ -64,7 +64,6 @@ extern s16 cdda_sector[CDDA_SIZE];
 extern u32 cdda_index;
 
 //./core/hw/holly/sb.o
-extern u32 SB_ISTNRM;
 extern u32 SB_FFST_rc;
 extern u32 SB_FFST;
 

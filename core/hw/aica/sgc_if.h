@@ -59,3 +59,4 @@ void WriteCommonReg8(u32 reg,u32 data);
 #define clip16(x) clip(x,-32768,32767)
 bool channel_serialize(void **data, unsigned int *total_size);
 bool channel_unserialize(void **data, unsigned int *total_size, serialize_version_enum version);
+void vmuBeep(int on, int period);
