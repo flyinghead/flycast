@@ -78,13 +78,8 @@ bool SDLGLGraphicsContext::Init()
 	INFO_LOG(RENDERER, "Created SDL Window and GL Context successfully");
 
 	SDL_GL_MakeCurrent(window, glcontext);
-#ifndef TEST_AUTOMATION
 	// Swap at vsync
 	swapOnVSync = config::VSync;
-#else
-	// Swap immediately
-	swapOnVSync = false;
-#endif
 	swapInterval = 1;
 	int displayIndex = SDL_GetWindowDisplayIndex(window);
 	if (displayIndex < 0)
@@ -117,15 +112,12 @@ bool SDLGLGraphicsContext::Init()
 
 void SDLGLGraphicsContext::Swap()
 {
-#ifdef TEST_AUTOMATION
 	do_swap_automation();
-#else
 	if (swapOnVSync == (settings.input.fastForwardMode || !config::VSync))
 	{
 		swapOnVSync = (!settings.input.fastForwardMode && config::VSync);
 		SDL_GL_SetSwapInterval(swapOnVSync ? swapInterval : 0);
 	}
-#endif
 	SDL_GL_SwapWindow(window);
 
 	// Check if drawable has been resized

@@ -21,7 +21,11 @@
 #pragma once
 #include "types.h"
 
+#ifdef TEST_AUTOMATION
 void do_swap_automation();
+#else
+static inline void do_swap_automation() {}
+#endif
 
 class GLGraphicsContext
 {

@@ -83,11 +83,7 @@ bool XGLGraphicsContext::Init()
 	unsigned int tempu;
 	XGetGeometry(display, window, &win, &temp, &temp, (u32 *)&settings.display.width, (u32 *)&settings.display.height, &tempu, &tempu);
 
-#ifndef TEST_AUTOMATION
 	swapOnVSync = config::VSync;
-#else
-	swapOnVSync = false;
-#endif
 	glXSwapIntervalMESA = (int (*)(unsigned))glXGetProcAddress((const GLubyte*)"glXSwapIntervalMESA");
 	if (glXSwapIntervalMESA != nullptr)
 		glXSwapIntervalMESA((unsigned)swapOnVSync);
@@ -156,9 +152,7 @@ bool XGLGraphicsContext::ChooseVisual(Display* x11Display, XVisualInfo** visual,
 
 void XGLGraphicsContext::Swap()
 {
-#ifdef TEST_AUTOMATION
 	do_swap_automation();
-#else
 	if (swapOnVSync == (settings.input.fastForwardMode || !config::VSync))
 	{
 		swapOnVSync = (!settings.input.fastForwardMode && config::VSync);
@@ -167,7 +161,6 @@ void XGLGraphicsContext::Swap()
 		else if (glXSwapIntervalEXT != nullptr)
 			glXSwapIntervalEXT(display, window, (int)swapOnVSync);
 	}
-#endif
 	glXSwapBuffers(display, window);
 
 	Window win;

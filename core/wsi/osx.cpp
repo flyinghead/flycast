@@ -25,9 +25,7 @@ OSXGraphicsContext theGLContext;
 
 void OSXGraphicsContext::Swap()
 {
-#ifdef TEST_AUTOMATION
 	do_swap_automation();
-#endif
 }
 
 #endif

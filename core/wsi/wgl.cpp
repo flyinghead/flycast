@@ -122,9 +122,7 @@ bool WGLGraphicsContext::Init()
 
 void WGLGraphicsContext::Swap()
 {
-#ifdef TEST_AUTOMATION
 	do_swap_automation();
-#endif
 	wglSwapLayerBuffers(ourWindowHandleToDeviceContext, WGL_SWAP_MAIN_PLANE);
 }
 

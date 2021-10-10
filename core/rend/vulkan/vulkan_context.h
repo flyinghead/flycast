@@ -152,11 +152,7 @@ private:
 	u32 width = 0;
 	u32 height = 0;
 	bool resized = false;
-#ifndef TEST_AUTOMATION
 	bool swapOnVSync = true;
-#else
-	bool swapOnVSync = false;
-#endif
 	vk::UniqueInstance instance;
 	vk::PhysicalDevice physicalDevice;
 

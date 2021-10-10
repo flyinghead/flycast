@@ -613,10 +613,6 @@ std::string Cartridge::GetGameId() {
 	}
 	while (!game_id.empty() && game_id.back() == ' ')
 		game_id.pop_back();
-	if (RomSize < 0x138)
-		printf("GAME EEPROM ID: (ROM too small)\n");
-	else
-		printf("GAME EEPROM ID: %c%c%c%c\n", RomPtr[0x134], RomPtr[0x135], RomPtr[0x136], RomPtr[0x137]);
 
 	return game_id;
 }
@@ -927,10 +923,6 @@ std::string M2Cartridge::GetGameId()
 		game_id = std::string((char *)RomPtr + 0x800030, 0x20);
 		while (!game_id.empty() && game_id.back() == ' ')
 			game_id.pop_back();
-		if (RomSize < 0x800138)
-			printf("m2 GAME EEPROM ID: (ROM too small)\n");
-		else
-			printf("m2 GAME EEPROM ID: %c%c%c%c\n", RomPtr[0x800134], RomPtr[0x800135], RomPtr[0x800136], RomPtr[0x800137]);
 	}
 	return game_id;
 }

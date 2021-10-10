@@ -18,6 +18,7 @@ int flycast_init(int argc, char* argv[])
 #if defined(TEST_AUTOMATION)
 	setbuf(stdout, 0);
 	setbuf(stderr, 0);
+	settings.aica.muteAudio = true;
 #endif
 	if (!_vmem_reserve())
 	{

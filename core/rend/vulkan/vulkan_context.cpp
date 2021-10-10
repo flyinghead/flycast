@@ -764,13 +764,11 @@ void VulkanContext::Present() noexcept
 		}
 		renderDone = false;
 	}
-#ifndef TEST_AUTOMATION
 	if (swapOnVSync == (settings.input.fastForwardMode || !config::VSync))
 	{
 		swapOnVSync = (!settings.input.fastForwardMode && config::VSync);
 		resized = true;
 	}
-#endif
 	if (resized)
 		try {
 			CreateSwapChain();
