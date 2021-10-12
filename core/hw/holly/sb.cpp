@@ -91,8 +91,8 @@ static void sb_write_zero(u32 addr, u32 data)
 static void sb_write_gdrom_unlock(u32 addr, u32 data)
 {
 	/* CS writes 0x42fe, AtomisWave 0xa677, Naomi Dev BIOS 0x3ff */
-	verify(data==0 || data==0x001fffff || data==0x42fe || data == 0xa677
-			|| data == 0x3ff);
+	if (data != 0 && data != 0x001fffff && data != 0x42fe && data != 0xa677 && data != 0x3ff)
+		WARN_LOG(HOLLY, "ERROR: Unexpected GD-ROM unlock code: %x", data);
 }
 
 void sb_rio_register(u32 reg_addr, RegIO flags, RegReadAddrFP* rf, RegWriteAddrFP* wf)

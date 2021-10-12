@@ -343,6 +343,7 @@ void CheatManager::loadCheatFile(const std::string& filename)
 			WARN_LOG(COMMON, "Invalid address %x", cheat.destAddress);
 			continue;
 		}
+		cheat.valueMask = cfg.get_int("", prefix + "address_bit_position", 0);
 		if (cheat.type != Cheat::Type::disabled)
 			cheats.push_back(cheat);
 	}
@@ -406,14 +407,12 @@ u32 CheatManager::readRam(u32 addr, u32 bits)
 	switch (bits)
 	{
 	case 8:
+	default:
 		return ReadMem8_nommu(0x8C000000 + addr);
 	case 16:
 		return ReadMem16_nommu(0x8C000000 + addr);
 	case 32:
 		return ReadMem32_nommu(0x8C000000 + addr);
-	default:
-		die("invalid size");
-		return 0;
 	}
 }
 
@@ -422,6 +421,7 @@ void CheatManager::writeRam(u32 addr, u32 value, u32 bits)
 	switch (bits)
 	{
 	case 8:
+	default:
 		WriteMem8_nommu(0x8C000000 + addr, (u8)value);
 		break;
 	case 16:
@@ -429,9 +429,6 @@ void CheatManager::writeRam(u32 addr, u32 value, u32 bits)
 		break;
 	case 32:
 		WriteMem32_nommu(0x8C000000 + addr, value);
-		break;
-	default:
-		die("invalid size");
 		break;
 	}
 }
@@ -496,6 +493,17 @@ void CheatManager::apply()
 				u32 address = cheat.address;
 				for (u32 repeat = 0; repeat < cheat.repeatCount; repeat++)
 				{
+					if (cheat.size < 8)
+					{
+						u8 curVal = readRam(address, 8);
+						for (int i = 0; i < 8; i++)
+						{
+							int bitmask = 1 << i;
+							if ((cheat.valueMask & bitmask) == 0)
+								// keep current bit value
+								valueToSet = (valueToSet & ~bitmask) | (curVal & bitmask);
+						}
+					}
 					writeRam(address, valueToSet, cheat.size);
 					address += cheat.repeatAddressIncrement * cheat.size / 8;
 					valueToSet += cheat.repeatValueIncrement;
@@ -746,7 +754,7 @@ void CheatManager::saveCheatFile(const std::string& filename)
 	{
 		std::string prefix = "cheat" + std::to_string(i) + "_";
 		cfg.set_int("", prefix + "address", cheat.address);
-		cfg.set_int("", prefix + "address_bit_position", 0);	// FIXME
+		cfg.set_int("", prefix + "address_bit_position", cheat.valueMask);
 		cfg.set_bool("", prefix + "big_endian", false);
 		cfg.set_int("", prefix + "cheat_type", (int)cheat.type);
 		cfg.set("", prefix + "code", "");

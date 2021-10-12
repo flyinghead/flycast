@@ -48,6 +48,7 @@ struct Cheat
 	u32 size = 0;
 	u32 address = 0;
 	u32 value = 0;
+	u8 valueMask = 0;
 	u32 repeatCount = 1;
 	u32 repeatValueIncrement = 0;
 	u32 repeatAddressIncrement = 0;

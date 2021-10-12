@@ -4,13 +4,14 @@
 #include "cfg/cfg.h"
 #include "cheats.h"
 #include "emulator.h"
-#include "log/LogManager.h"
+#include "hw/sh4/sh4_mem.h"
 
 class CheatManagerTest : public ::testing::Test {
 protected:
 	void SetUp() override {
+		if (!_vmem_reserve())
+			die("_vmem_reserve failed");
 		emu.init();
-		LogManager::Init();
 	}
 };
 
@@ -252,4 +253,55 @@ TEST_F(CheatManagerTest, TestSave)
 	ASSERT_EQ(0x060000u, mgr.cheats[8].address);
 	ASSERT_EQ(0xffffu, mgr.cheats[8].value);
 	ASSERT_EQ(16u, mgr.cheats[8].size);
+}
+
+TEST_F(CheatManagerTest, TestSubBytePatch)
+{
+	FILE *fp = fopen("test.cht", "w");
+	const char *s = R"(
+cheat0_address = "0x10000"
+cheat0_address_bit_position = "0xF0"
+cheat0_big_endian = "false"
+cheat0_cheat_type = "1"
+cheat0_desc = "patch 4 MSB bits"
+cheat0_handler = "1"
+cheat0_memory_search_size = "2"
+cheat0_repeat_count = "1"
+cheat0_value = "0xCF"
+cheat1_address = "0x10001"
+cheat1_address_bit_position = "0x03"
+cheat1_big_endian = "false"
+cheat1_cheat_type = "1"
+cheat1_desc = "patch 2 LSB bits"
+cheat1_handler = "1"
+cheat1_memory_search_size = "1"
+cheat1_repeat_count = "1"
+cheat1_value = "0xFE"
+cheats = "2"
+)";
+	fputs(s, fp);
+	fclose(fp);
+
+	CheatManager mgr;
+	mgr.reset("TESTSUB8");
+	mgr.loadCheatFile("test.cht");
+	mem_map_default();
+	dc_reset(true);
+
+	mgr.enableCheat(0, true);
+	WriteMem8_nommu(0x8c010000, 0xFA);
+	mgr.apply();
+	ASSERT_EQ(0xCA, ReadMem8_nommu(0x8c010000));
+	WriteMem8_nommu(0x8c010000, 0);
+	mgr.apply();
+	ASSERT_EQ(0xC0, ReadMem8_nommu(0x8c010000));
+
+	mgr.enableCheat(1, true);
+	WriteMem8_nommu(0x8c010001, 0xC8);
+	mgr.apply();
+	ASSERT_EQ(0xCA, ReadMem8_nommu(0x8c010001));
+	WriteMem8_nommu(0x8c010001, 0);
+	mgr.apply();
+	ASSERT_EQ(2, ReadMem8_nommu(0x8c010001));
+
 }

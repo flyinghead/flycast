@@ -586,6 +586,11 @@ void _vmem_init_mappings()
 	aica_ram.Zero();
 	vram.Zero();
 	mem_b.Zero();
+	NOTICE_LOG(VMEM, "BASE %p RAM(%d MB) %p VRAM64(%d MB) %p ARAM(%d MB) %p",
+			virt_ram_base,
+			RAM_SIZE / 1024 / 1024, mem_b.data,
+			VRAM_SIZE / 1024 / 1024, vram.data,
+			ARAM_SIZE / 1024 / 1024, aica_ram.data);
 }
 
 #define freedefptr(x) \

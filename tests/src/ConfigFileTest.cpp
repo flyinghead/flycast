@@ -88,7 +88,7 @@ TEST_F(ConfigFileTest, TestLoadSaveSection)
 	int l = fread(buf, 1, sizeof(buf) - 1, fp);
 	buf[l] = '\0';
 	fclose(fp);
-	ASSERT_EQ("[sect1]\nprop1 = value1\n[sect2]\nprop2 = 2\nprop3 = yes\n", std::string(buf));
+	ASSERT_EQ("[sect1]\nprop1 = value1\n\n[sect2]\nprop2 = 2\nprop3 = yes\n\n", std::string(buf));
 
 	fp = fopen("test.cfg", "r");
 	file = {};

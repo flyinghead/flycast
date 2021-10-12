@@ -246,6 +246,8 @@ void ConfigFile::save(FILE* file)
 			const ConfigEntry& entry = entry_it.second;
 			std::fprintf(file, "%s = %s\n", entry_name.c_str(), entry.get_string().c_str());
 		}
+		if (!section_name.empty())
+			std::fputc('\n', file);
 	}
 }
 

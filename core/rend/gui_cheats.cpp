@@ -61,8 +61,7 @@ static void addCheat()
 	ImGui::BeginChild(ImGui::GetID("input"), ImVec2(0, 0), true);
     {
 		ImGui::InputText("Name", cheatName, sizeof(cheatName), 0, nullptr, nullptr);
-		ImGui::Text("Code:");
-		ImGui::InputTextMultiline("Code", cheatCode, sizeof(cheatCode), ImVec2(-FLT_MIN, ImGui::GetTextLineHeight() * 8), 0, nullptr, nullptr);
+		ImGui::InputTextMultiline("Code", cheatCode, sizeof(cheatCode), ImVec2(0, ImGui::GetTextLineHeight() * 8), 0, nullptr, nullptr);
     }
 	ImGui::EndChild();
 	ImGui::End();
