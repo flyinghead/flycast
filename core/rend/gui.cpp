@@ -163,6 +163,9 @@ void gui_init()
     //IM_ASSERT(font != NULL);
 #if !(defined(_WIN32) || defined(__APPLE__) || defined(__SWITCH__)) || defined(TARGET_IPHONE)
     scaling = std::max(1.f, screen_dpi / 100.f * 0.75f);
+   	// Limit scaling on small low-res screens
+    if (settings.display.width <= 640 || settings.display.height <= 480)
+    	scaling = std::min(1.5f, scaling);
 #endif
     if (scaling > 1)
 		ImGui::GetStyle().ScaleAllSizes(scaling);
@@ -258,7 +261,7 @@ void gui_init()
 
     // TODO Linux, iOS, ...
 #endif
-    INFO_LOG(RENDERER, "Screen DPI is %d, size %d x %d. Scaling by %.2f", screen_dpi, settings.display.width, settings.display.height, scaling);
+    NOTICE_LOG(RENDERER, "Screen DPI is %d, size %d x %d. Scaling by %.2f", screen_dpi, settings.display.width, settings.display.height, scaling);
 
     EventManager::listen(Event::Resume, emuEventCallback);
     EventManager::listen(Event::Start, emuEventCallback);
