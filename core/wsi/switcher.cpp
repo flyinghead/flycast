@@ -51,6 +51,11 @@ void InitRenderApi()
 		config::RendererType.commit();
 	}
 #endif
+	if (!config::RendererType.isOpenGL())
+	{
+		config::RendererType = RenderType::OpenGL;
+		config::RendererType.commit();
+	}
 	if (!theGLContext.Init())
 		exit(1);
 }
