@@ -29,7 +29,7 @@
 #include "gui.h"
 #include "emulator.h"
 
-typedef void (*StringCallback)(bool cancelled, std::string selection);
+typedef bool (*StringCallback)(bool cancelled, std::string selection);
 
 void select_file_popup(const char *prompt, StringCallback callback,
 		bool selectFile = false, const std::string& extension = "");

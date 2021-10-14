@@ -94,9 +94,9 @@ void gui_cheats()
     	ImGui::OpenPopup("Select cheat file");
 	select_file_popup("Select cheat file", [](bool cancelled, std::string selection)
 		{
-			if (cancelled)
-				return;
-			cheatManager.loadCheatFile(selection);
+			if (!cancelled)
+				cheatManager.loadCheatFile(selection);
+			return true;
 		}, true, "cht");
 
 	ImGui::SameLine();

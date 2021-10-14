@@ -59,6 +59,7 @@ static u32 mouseButtons;
 static int mouseX, mouseY;
 static float mouseWheel;
 static std::string error_msg;
+static bool error_msg_shown;
 static std::string osd_message;
 static double osd_message_end;
 static std::mutex osd_message_mutex;
@@ -68,8 +69,9 @@ static void display_vmus();
 static void reset_vmus();
 static void term_vmus();
 static void displayCrosshairs();
+void error_popup();
 
-GameScanner scanner;
+static GameScanner scanner;
 static BackgroundGameLoader gameLoader;
 
 static void emuEventCallback(Event event)
@@ -165,7 +167,7 @@ void gui_init()
     scaling = std::max(1.f, screen_dpi / 100.f * 0.75f);
    	// Limit scaling on small low-res screens
     if (settings.display.width <= 640 || settings.display.height <= 480)
-    	scaling = std::min(1.5f, scaling);
+    	scaling = std::min(1.4f, scaling);
 #endif
     if (scaling > 1)
 		ImGui::GetStyle().ScaleAllSizes(scaling);
@@ -893,11 +895,13 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 		}
 		ImGui::SetItemDefaultFocus();
 
+		float portWidth = 0;
 		if (gamepad->maple_port() == MAPLE_PORTS)
 		{
 			ImGui::SameLine();
-			float w = ImGui::CalcItemWidth();
-			ImGui::PushItemWidth(w / 2);
+			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(ImGui::GetStyle().FramePadding.x, (30 * scaling - ImGui::GetFontSize()) / 2));
+			portWidth = ImGui::CalcTextSize("AA").x + ImGui::GetStyle().ItemSpacing.x * 2.0f + ImGui::GetFontSize();
+			ImGui::SetNextItemWidth(portWidth);
 			if (ImGui::BeginCombo("Port", maple_ports[gamepad_port + 1]))
 			{
 				for (u32 j = 0; j < MAPLE_PORTS; j++)
@@ -910,10 +914,11 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 				}
 				ImGui::EndCombo();
 			}
-			ImGui::PopItemWidth();
+			portWidth += ImGui::CalcTextSize("Port").x + ImGui::GetStyle().ItemSpacing.x + ImGui::GetStyle().FramePadding.x;
+			ImGui::PopStyleVar();
 		}
 		float comboWidth = ImGui::CalcTextSize("Dreamcast Controls").x + ImGui::GetStyle().ItemSpacing.x * 3.0f + ImGui::GetFontSize();
-		ImGui::SameLine(0, ImGui::GetContentRegionAvail().x - comboWidth - ImGui::GetStyle().ItemSpacing.x - 100 * scaling * 2);
+		ImGui::SameLine(0, ImGui::GetContentRegionAvail().x - comboWidth - ImGui::GetStyle().ItemSpacing.x - 100 * scaling * 2 - portWidth);
 
 		ImGui::AlignTextToFramePadding();
 
@@ -960,12 +965,11 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 
 		// Here our selection data is an index.
 
-		ImGui::PushItemWidth(comboWidth);
+		ImGui::SetNextItemWidth(comboWidth);
 		// Make the combo height the same as the Done and Reset buttons
 		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(ImGui::GetStyle().FramePadding.x, (30 * scaling - ImGui::GetFontSize()) / 2));
 		ImGui::Combo("##arcadeMode", &item_current_map_idx, items, IM_ARRAYSIZE(items));
 		ImGui::PopStyleVar();
-		ImGui::PopItemWidth();
 		if (item_current_map_idx != last_item_current_map_idx)
 		{
 			gamepad->save_mapping(map_system);
@@ -1055,14 +1059,15 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 	    windowDragScroll();
 
 		ImGui::EndChildFrame();
+		error_popup();
 		ImGui::EndPopup();
 	}
 	ImGui::PopStyleVar();
 }
 
-static void error_popup()
+void error_popup()
 {
-	if (!error_msg.empty())
+	if (!error_msg_shown && !error_msg.empty())
 	{
 		ImVec2 padding = ImVec2(20 * scaling, 20 * scaling);
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, padding);
@@ -1087,6 +1092,7 @@ static void error_popup()
 		}
 		ImGui::PopStyleVar();
 		ImGui::PopStyleVar();
+		error_msg_shown = true;
 	}
 }
 
@@ -1138,6 +1144,7 @@ static void contentpath_warning_popup()
                 config::ContentPath.get().push_back(selection);
             }
             scanner.refresh();
+            return true;
         });
     }
 }
@@ -1265,6 +1272,7 @@ static void gui_display_settings()
                 				config::ContentPath.get().push_back(selection);
                 				scanner.refresh();
                 			}
+                			return true;
                 		});
                 ImGui::PopStyleVar();
                 scrollWhenDraggingOnVoid();
@@ -2137,39 +2145,57 @@ static void gui_display_content()
     contentpath_warning_popup();
 }
 
-static void systemdir_selected_callback(bool cancelled, std::string selection)
+static bool systemdir_selected_callback(bool cancelled, std::string selection)
 {
-	if (!cancelled)
+	if (cancelled)
 	{
-		selection += "/";
-		set_user_config_dir(selection);
-		add_system_data_dir(selection);
+		gui_state = GuiState::Main;
+		return true;
+	}
+	selection += "/";
 
-		std::string data_path = selection + "data/";
-		set_user_data_dir(data_path);
-		if (!file_exists(data_path))
+	std::string data_path = selection + "data/";
+	if (!file_exists(data_path))
+	{
+		if (!make_directory(data_path))
 		{
-			if (!make_directory(data_path))
-			{
-				WARN_LOG(BOOT, "Cannot create 'data' directory");
-				set_user_data_dir(selection);
-			}
-		}
-
-		if (cfgOpen())
-		{
-			config::Settings::instance().load(false);
-			// Make sure the renderer type doesn't change mid-flight
-			config::RendererType = RenderType::OpenGL;
-			gui_state = GuiState::Main;
-			if (config::ContentPath.get().empty())
-			{
-				scanner.stop();
-				config::ContentPath.get().push_back(selection);
-			}
-			SaveSettings();
+			WARN_LOG(BOOT, "Cannot create 'data' directory: %s", data_path.c_str());
+			gui_error("Invalid selection:\nFlycast cannot write to this directory.");
+			return false;
 		}
 	}
+	else
+	{
+		// Test
+		std::string testPath = data_path + "writetest.txt";
+		FILE *file = fopen(testPath.c_str(), "w");
+		if (file == nullptr)
+		{
+			WARN_LOG(BOOT, "Cannot write in the 'data' directory");
+			gui_error("Invalid selection:\nFlycast cannot write to this directory.");
+			return false;
+		}
+		fclose(file);
+		unlink(testPath.c_str());
+	}
+	set_user_config_dir(selection);
+	add_system_data_dir(selection);
+	set_user_data_dir(data_path);
+
+	if (cfgOpen())
+	{
+		config::Settings::instance().load(false);
+		// Make sure the renderer type doesn't change mid-flight
+		config::RendererType = RenderType::OpenGL;
+		gui_state = GuiState::Main;
+		if (config::ContentPath.get().empty())
+		{
+			scanner.stop();
+			config::ContentPath.get().push_back(selection);
+		}
+		SaveSettings();
+	}
+	return true;
 }
 
 static void gui_display_onboarding()
@@ -2315,6 +2341,7 @@ void gui_display_ui()
 
 	ImGui_Impl_NewFrame();
 	ImGui::NewFrame();
+	error_msg_shown = false;
 
 	switch (gui_state)
 	{

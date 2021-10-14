@@ -3,6 +3,7 @@ package com.reicast.emulator;
 import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -32,6 +33,7 @@ import com.reicast.emulator.emu.JNIdc;
 import com.reicast.emulator.periph.InputDeviceManager;
 import com.reicast.emulator.periph.SipEmulator;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -156,6 +158,10 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
         List<String> pathList = new ArrayList<>();
         pathList.add(android_home_directory);
         pathList.addAll(FileBrowser.getExternalMounts());
+        pathList.add(getApplicationContext().getFilesDir().getAbsolutePath());
+        File dir= getApplicationContext().getExternalFilesDir(null);
+        if (dir != null)
+            pathList.add(dir.getAbsolutePath());
         Log.i("flycast", "External storage dirs: " + pathList);
         JNIdc.setExternalStorageDirectories(pathList.toArray());
     }

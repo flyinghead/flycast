@@ -43,6 +43,7 @@ static const std::string native_separator = "/";
 #define PSEUDO_ROOT ":"
 
 extern int insetLeft, insetRight, insetTop, insetBottom;
+void error_popup();
 
 void select_file_popup(const char *prompt, StringCallback callback,
 		bool selectFile, const std::string& selectExtension)
@@ -85,7 +86,7 @@ void select_file_popup(const char *prompt, StringCallback callback,
 	fullScreenWindow(true);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
 
-	if (ImGui::BeginPopupModal(prompt, NULL, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize ))
+	if (ImGui::BeginPopup(prompt, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize ))
 	{
 		std::string path = select_current_directory;
 		std::string::size_type last_sep = path.find_last_of(separators);
@@ -273,8 +274,8 @@ void select_file_popup(const char *prompt, StringCallback callback,
     			if (ImGui::Selectable(name.c_str()))
     			{
     				subfolders_read = false;
-    				callback(false, select_current_directory + native_separator + name);
-    				ImGui::CloseCurrentPopup();
+    				if (callback(false, select_current_directory + native_separator + name))
+    					ImGui::CloseCurrentPopup();
     			}
         	}
         	else
@@ -293,9 +294,11 @@ void select_file_popup(const char *prompt, StringCallback callback,
 		{
 			if (ImGui::Button("Select Current Directory", ImVec2(0, 30 * gui_get_scaling())))
 			{
-				subfolders_read = false;
-				callback(false, select_current_directory);
-				ImGui::CloseCurrentPopup();
+				if (callback(false, select_current_directory))
+				{
+					subfolders_read = false;
+					ImGui::CloseCurrentPopup();
+				}
 			}
 			ImGui::SameLine();
 		}
@@ -305,7 +308,7 @@ void select_file_popup(const char *prompt, StringCallback callback,
 			callback(true, "");
 			ImGui::CloseCurrentPopup();
 		}
-
+		error_popup();
 		ImGui::EndPopup();
 	}
 	ImGui::PopStyleVar();
