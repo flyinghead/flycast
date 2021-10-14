@@ -1,9 +1,6 @@
 #include "ta_ctx.h"
 #include "spg.h"
 #include "cfg/option.h"
-#if defined(__SWITCH__)
-#include <malloc.h>
-#endif
 #include "Renderer_if.h"
 
 extern u32 fskip;
@@ -15,37 +12,6 @@ tad_context ta_tad;
 
 TA_context*  vd_ctx;
 rend_context vd_rc;
-
-// helper for 32 byte aligned memory allocation
-void* OS_aligned_malloc(size_t align, size_t size)
-{
-#ifdef __MINGW32__
-	return __mingw_aligned_malloc(size, align);
-#elif defined(_WIN32)
-	return _aligned_malloc(size, align);
-#elif defined(__SWITCH__)
-   return memalign(align, size);
-#else
-	void *result;
-	if (posix_memalign(&result, align, size))
-		return NULL;
-	else
-		return result;
-#endif
-}
-
-// helper for 32 byte aligned memory de-allocation
-void OS_aligned_free(void *ptr)
-{
-#ifdef __MINGW32__
-	__mingw_aligned_free(ptr);
-#elif defined(_WIN32)
-	_aligned_free(ptr);
-#else
-	free(ptr);
-#endif
-}
-
 
 void SetCurrentTARC(u32 addr)
 {

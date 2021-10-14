@@ -9,6 +9,9 @@ void os_CreateWindow();
 void os_SetupInput();
 void os_InstallFaultHandler();
 void os_UninstallFaultHandler();
+void *allocAligned(size_t alignment, size_t size);
+void freeAligned(void *p);
+
 
 #ifdef _MSC_VER
 #include <intrin.h>

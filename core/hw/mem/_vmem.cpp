@@ -3,9 +3,7 @@
 #include "hw/pvr/pvr_mem.h"
 #include "hw/sh4/dyna/blockmanager.h"
 #include "hw/sh4/sh4_mem.h"
-#if defined(__SWITCH__)
-#include <malloc.h>
-#endif
+#include "oslib/oslib.h"
 
 #define HANDLER_MAX 0x1F
 #define HANDLER_COUNT (HANDLER_MAX+1)
@@ -360,20 +358,14 @@ u8* virt_ram_base;
 bool vmem_4gb_space;
 static VMemType vmemstatus = MemTypeError;
 
-static void* malloc_pages(size_t size) {
-#ifdef _WIN32
-	return _aligned_malloc(size, PAGE_SIZE);
-#elif defined(_ISOC11_SOURCE)
-	return aligned_alloc(PAGE_SIZE, size);
-#elif defined(__SWITCH__)
-   return memalign(PAGE_SIZE, size);
-#else
-	void *data;
-	if (posix_memalign(&data, PAGE_SIZE, size) != 0)
-		return NULL;
-	else
-		return data;
-#endif
+static void *malloc_pages(size_t size)
+{
+	return allocAligned(PAGE_SIZE, size);
+}
+
+static void free_pages(void *p)
+{
+	freeAligned(p);
 }
 
 #if FEAT_SHREC != DYNAREC_NONE
@@ -449,27 +441,16 @@ bool _vmem_reserve()
 
 static void _vmem_term_mappings()
 {
-	if (vmemstatus == MemTypeError) {
-		if (p_sh4rcb != NULL)
-		{
-			free(p_sh4rcb);
-			p_sh4rcb = NULL;
-		}
-		if (mem_b.data != NULL)
-		{
-			free(mem_b.data);
-			mem_b.data = NULL;
-		}
-		if (vram.data != NULL)
-		{
-			free(vram.data);
-			vram.data = NULL;
-		}
-		if (aica_ram.data != NULL)
-		{
-			free(aica_ram.data);
-			aica_ram.data = NULL;
-		}
+	if (vmemstatus == MemTypeError)
+	{
+		free_pages(p_sh4rcb);
+		p_sh4rcb = nullptr;
+		free_pages(mem_b.data);
+		mem_b.data = nullptr;
+		free_pages(vram.data);
+		vram.data = nullptr;
+		free_pages(aica_ram.data);
+		aica_ram.data = nullptr;
 	}
 }
 
@@ -593,9 +574,6 @@ void _vmem_init_mappings()
 			ARAM_SIZE / 1024 / 1024, aica_ram.data);
 }
 
-#define freedefptr(x) \
-	if (x) { free(x); x = NULL; }
-
 void _vmem_release()
 {
 	if (virt_ram_base)
@@ -606,10 +584,7 @@ void _vmem_release()
 	else
 	{
 		_vmem_unprotect_vram(0, VRAM_SIZE);
-		freedefptr(p_sh4rcb);
-		freedefptr(vram.data);
-		freedefptr(aica_ram.data);
-		freedefptr(mem_b.data);
+		_vmem_term_mappings();
 	}
 	vmemstatus = MemTypeError;
 }

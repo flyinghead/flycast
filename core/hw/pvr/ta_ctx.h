@@ -4,14 +4,9 @@
 #include "pvr_regs.h"
 #include "helper_classes.h"
 #include "stdclass.h"
+#include "oslib/oslib.h"
 
 #include <mutex>
-
-// helper for 32 byte aligned memory allocation
-void* OS_aligned_malloc(size_t align, size_t size);
-
-// helper for 32 byte aligned memory de-allocation
-void OS_aligned_free(void *ptr);
 
 class BaseTextureCacheData;
 
@@ -208,7 +203,7 @@ struct TA_context
 
 	void Alloc()
 	{
-		tad.Reset((u8*)OS_aligned_malloc(32, TA_DATA_SIZE));
+		tad.Reset((u8*)allocAligned(32, TA_DATA_SIZE));
 
 		rend.verts.InitBytes(4 * 1024 * 1024, &rend.Overrun, "verts");	//up to 4 mb of vtx data/frame = ~ 96k vtx/frame
 		rend.idx.Init(120 * 1024, &rend.Overrun, "idx");				//up to 120K indexes ( idx have stripification overhead )
@@ -238,7 +233,7 @@ struct TA_context
 	void Free()
 	{
 		verify(tad.End() - tad.thd_root <= TA_DATA_SIZE);
-		OS_aligned_free(tad.thd_root);
+		freeAligned(tad.thd_root);
 		rend.verts.Free();
 		rend.idx.Free();
 		rend.global_param_op.Free();
