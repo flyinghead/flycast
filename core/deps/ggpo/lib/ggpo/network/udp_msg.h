@@ -69,7 +69,7 @@ struct UdpMsg
 
          uint16            num_bits;
          uint8             input_size; // XXX: shouldn't be in every single packet!
-         uint8             bits[MAX_COMPRESSED_BITS]; /* must be last */
+         uint8             bits[MAX_COMPRESSED_BITS / 8]; /* must be last */
       } input;
 
       struct {

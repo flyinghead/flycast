@@ -487,7 +487,8 @@ UdpProtocol::OnSyncRequest(UdpMsg *msg, int len)
    }
    UdpMsg *reply = new UdpMsg(UdpMsg::SyncReply);
    reply->u.sync_reply.random_reply = msg->u.sync_request.random_request;
-
+   // Calculate incoming verif data size
+   msg->verification_size = 0;
    int msgVerifSize = len - msg->PacketSize();
    if (msgVerifSize != (int)verification.size()
 		   || (msgVerifSize != 0 && memcmp(&msg->u.sync_request.verification[0], &verification[0], msgVerifSize)))

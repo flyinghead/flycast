@@ -15,7 +15,7 @@
 
 #define MAX_UDP_ENDPOINTS     16
 
-static const int MAX_UDP_PACKET_SIZE = 4096;
+constexpr size_t MAX_UDP_PACKET_SIZE = sizeof(UdpMsg);
 
 class Udp : public IPollSink
 {
