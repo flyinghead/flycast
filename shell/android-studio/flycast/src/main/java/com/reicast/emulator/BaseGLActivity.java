@@ -110,11 +110,13 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
 
             return;
         }
+        Log.i("flycast", "Environment initialized");
         installButtons();
 
         setStorageDirectories();
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !storagePermissionGranted) {
+            Log.i("flycast", "Asking for external storage permission");
             ActivityCompat.requestPermissions(this,
                     new String[]{
                             Manifest.permission.READ_EXTERNAL_STORAGE,
@@ -125,7 +127,7 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
         else
             storagePermissionGranted = true;
 
-
+        Log.i("flycast", "Initializing input devices");
         InputDeviceManager.getInstance().startListening(getApplicationContext());
         register(this);
 
@@ -150,6 +152,7 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
                         pendingIntentUrl = gameUri.toString();
             }
         }
+        Log.i("flycast", "BaseGLActivity.onCreate done");
     }
 
     private void setStorageDirectories()
@@ -162,7 +165,7 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
         File dir= getApplicationContext().getExternalFilesDir(null);
         if (dir != null)
             pathList.add(dir.getAbsolutePath());
-        Log.i("flycast", "External storage dirs: " + pathList);
+        Log.i("flycast", "Storage dirs: " + pathList);
         JNIdc.setExternalStorageDirectories(pathList.toArray());
     }
 
@@ -327,6 +330,7 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
             handler.post(new Runnable() {
                 @Override
                 public void run() {
+                    Log.i("flycast", "Requesting Record audio permission");
                     ActivityCompat.requestPermissions(BaseGLActivity.this,
                             new String[]{
                                     Manifest.permission.RECORD_AUDIO
@@ -349,10 +353,12 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
             super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == AUDIO_PERM_REQUEST && permissions.length > 0
                 && Manifest.permission.RECORD_AUDIO .equals(permissions[0]) && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            Log.i("flycast", "Record audio permission granted");
             SipEmulator sip = new SipEmulator();
             JNIdc.setupMic(sip);
         }
         else if (requestCode == STORAGE_PERM_REQUEST) {
+            Log.i("flycast", "External storage permission granted");
             storagePermissionGranted = true;
             setStorageDirectories();
             if (pendingIntentUrl != null) {
