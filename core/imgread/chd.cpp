@@ -179,7 +179,7 @@ void CHDDisc::tryOpen(const char* file)
 }
 
 
-Disc* chd_parse(const char* file)
+Disc* chd_parse(const char* file, std::vector<u8> *digest)
 {
 	if (get_file_extension(file) != "chd")
 		return nullptr;
@@ -188,6 +188,11 @@ Disc* chd_parse(const char* file)
 
 	try {
 		rv->tryOpen(file);
+		if (digest != nullptr)
+		{
+			digest->resize(sizeof(chd_get_header(rv->chd)->sha1));
+			memcpy(digest->data(), chd_get_header(rv->chd)->sha1, digest->size());
+		}
 		return rv;
 	} catch (...) {
 		delete rv;

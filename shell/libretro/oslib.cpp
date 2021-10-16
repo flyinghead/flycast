@@ -130,3 +130,13 @@ std::string getBiosFontPath()
 }
 
 }
+
+void dc_savestate(int index = 0)
+{
+	die("unsupported");
+}
+
+void dc_loadstate(int index = 0)
+{
+	die("unsupported");
+}

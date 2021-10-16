@@ -21,6 +21,7 @@
 #include "hw/maple/maple_devs.h"
 #include "input/gamepad_device.h"
 #include "cfg/option.h"
+#include <algorithm>
 
 void UpdateInputState();
 
@@ -71,12 +72,20 @@ namespace ggpo
 {
 using namespace std::chrono;
 
-constexpr int ProtocolVersion = 1;
 constexpr int MAX_PLAYERS = 2;
 constexpr int SERVER_PORT = 19713;
 
 constexpr u32 BTN_TRIGGER_LEFT	= DC_BTN_RELOAD << 1;
 constexpr u32 BTN_TRIGGER_RIGHT	= DC_BTN_RELOAD << 2;
+
+#pragma pack(push, 1)
+struct VerificationData
+{
+	const int protocol = 2;
+	u8 gameMD5[16] { };
+	u8 stateMD5[16] { };
+} ;
+#pragma pack(pop)
 
 static GGPOSession *ggpoSession;
 static int localPlayerNum;
@@ -208,7 +217,7 @@ static bool load_game_state(unsigned char *buffer, int len)
 	// FIXME will invalidate too much stuff: palette/fog textures, maple stuff
 	// FIXME dynarecs
 	int frame = *(u32 *)buffer;
-	unsigned usedLen = sizeof(frame);
+	unsigned usedLen = sizeof(u32);
 	buffer += usedLen;
 	dc_unserialize((void **)&buffer, &usedLen, true);
 	if (len != (int)usedLen)
@@ -408,9 +417,26 @@ void startSession(int localPort, int localPlayerNum)
 		}
 		NOTICE_LOG(NETWORK, "GGPO: Using %d full analog axes", analogAxes);
 	}
-	u32 inputSize = sizeof(kcode[0]) + analogAxes + (int)absPointerPos * 4;
+	const u32 inputSize = sizeof(kcode[0]) + analogAxes + (int)absPointerPos * 4;
+
+	VerificationData verif;
+	MD5Sum().add(settings.network.md5.bios)
+			.add(settings.network.md5.game)
+			.getDigest(verif.gameMD5);
+	auto& digest = settings.network.md5.savestate;
+	if (std::find_if(std::begin(digest), std::end(digest), [](u8 b) { return b != 0; }) != std::end(digest))
+		memcpy(verif.stateMD5, digest, sizeof(digest));
+	else
+	{
+		MD5Sum().add(settings.network.md5.nvmem)
+				.add(settings.network.md5.nvmem2)
+				.add(settings.network.md5.eeprom)
+				.add(settings.network.md5.vmu)
+				.getDigest(verif.stateMD5);
+	}
+
 	GGPOErrorCode result = ggpo_start_session(&ggpoSession, &cb, settings.content.gameId.c_str(), MAX_PLAYERS, inputSize, localPort,
-			&ProtocolVersion, sizeof(ProtocolVersion));
+			&verif, sizeof(verif));
 	if (result != GGPO_OK)
 	{
 		WARN_LOG(NETWORK, "GGPO start session failed: %d", result);

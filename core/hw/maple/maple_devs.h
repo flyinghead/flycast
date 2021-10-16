@@ -144,6 +144,7 @@ struct maple_device
 	}
 	virtual MapleDeviceType get_device_type() = 0;
 	virtual bool get_lightgun_pos() { return false; }
+	virtual const void *getData(size_t& size) const { size = 0; return nullptr; }
 };
 
 maple_device* maple_Create(MapleDeviceType type);

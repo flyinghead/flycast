@@ -3,7 +3,7 @@
 
 #include "deps/chdpsr/cdipsr.h"
 
-Disc* cdi_parse(const char* file)
+Disc* cdi_parse(const char* file, std::vector<u8> *digest)
 {
 	if (get_file_extension(file) != "cdi")
 		return nullptr;
@@ -129,6 +129,8 @@ Disc* cdi_parse(const char* file)
 
 		image.remaining_sessions--;
 	}
+	if (digest != nullptr)
+		*digest = MD5Sum().add(fsource).getDigest();
 	std::fclose(fsource);
 
 	rv->type=GuessDiscType(CD_M1,CD_M2,CD_DA);

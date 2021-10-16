@@ -1,18 +1,20 @@
 #include "common.h"
 #include "hw/gdrom/gdromv3.h"
+#include "cfg/option.h"
+#include "stdclass.h"
 
-Disc* chd_parse(const char* file);
-Disc* gdi_parse(const char* file);
-Disc* cdi_parse(const char* file);
-Disc* cue_parse(const char* file);
+Disc* chd_parse(const char* file, std::vector<u8> *digest);
+Disc* gdi_parse(const char* file, std::vector<u8> *digest);
+Disc* cdi_parse(const char* file, std::vector<u8> *digest);
+Disc* cue_parse(const char* file, std::vector<u8> *digest);
 #ifdef _WIN32
-Disc* ioctl_parse(const char* file);
+Disc* ioctl_parse(const char* file, std::vector<u8> *digest);
 #endif
 
 u32 NullDriveDiscType;
 Disc* disc;
 
-constexpr Disc* (*drivers[])(const char* path)
+constexpr Disc* (*drivers[])(const char* path, std::vector<u8> *digest)
 {
 	chd_parse,
 	gdi_parse,
@@ -80,11 +82,11 @@ static bool convertSector(u8* in_buff , u8* out_buff , int from , int to,int sec
 	return true;
 }
 
-Disc* OpenDisc(const std::string& path)
+Disc* OpenDisc(const std::string& path, std::vector<u8> *digest)
 {
 	for (auto driver : drivers)
 	{
-		Disc *disc = driver(path.c_str());
+		Disc *disc = driver(path.c_str(), digest);
 
 		if (disc != nullptr)
 		{
@@ -105,10 +107,14 @@ static bool loadDisk(const std::string& path)
 	TermDrive();
 
 	//try all drivers
-	disc = OpenDisc(path);
+	std::vector<u8> digest;
+	disc = OpenDisc(path, config::GGPOEnable ? &digest : nullptr);
 
 	if (disc != NULL)
 	{
+		if (config::GGPOEnable)
+			MD5Sum().add(digest)
+					.getDigest(settings.network.md5.game);
 		INFO_LOG(GDROM, "gdrom: Opened image \"%s\"", path.c_str());
 	}
 	else

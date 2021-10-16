@@ -45,7 +45,7 @@ static u32 getSectorSize(const std::string& type) {
 			return 0;
 }
 
-Disc* cue_parse(const char* file)
+Disc* cue_parse(const char* file, std::vector<u8> *digest)
 {
 	if (get_file_extension(file) != "cue")
 		return nullptr;
@@ -72,6 +72,8 @@ Disc* cue_parse(const char* file)
 	std::istringstream cuesheet(cue_data);
 
 	std::string basepath = OS_dirname(file);
+
+	MD5Sum md5;
 
 	Disc* disc = new Disc();
 	u32 current_fad = 150;
@@ -183,6 +185,8 @@ Disc* cue_parse(const char* file)
 				t.EndFAD = current_fad - 1;
 				DEBUG_LOG(GDROM, "file[%zd] \"%s\": session %d type %s FAD:%d -> %d", disc->tracks.size() + 1, track_filename.c_str(), session_number, track_type.c_str(), t.StartFAD, t.EndFAD);
 				
+				if (digest != nullptr)
+					md5.add(track_file);
 				t.file = new RawTrackFile(track_file, 0, t.StartFAD, sector_size);
 				disc->tracks.push_back(t);
 				
@@ -212,6 +216,8 @@ Disc* cue_parse(const char* file)
 	for (Track& t : disc->tracks)
 		if (t.CTRL == 0)
 			t.StartFAD += 150;
+	if (digest != nullptr)
+		*digest = md5.getDigest();
 
 	return disc;
 }

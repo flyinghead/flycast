@@ -27,6 +27,11 @@ u32 SB_ADST;
 
 u32 GetRTC_now()
 {
+	// rtc kept static for netplay when savestate is not loaded
+	if (config::GGPOEnable)
+		// 1/1/70 00:00:00
+		return (20 * 365 + 5) * 24 * 60 * 60;
+
 	// The Dreamcast Epoch time is 1/1/50 00:00 but without support for time zone or DST.
 	// We compute the TZ/DST current time offset and add it to the result
 	// as if we were in the UTC time zone (as well as the DC Epoch)
@@ -37,12 +42,7 @@ u32 GetRTC_now()
 	gmtm.tm_isdst = -1;
 	time_t time_offset = mktime(&localtm) - mktime(&gmtm);
 	// 1/1/50 to 1/1/70 is 20 years and 5 leap days
-
-	// rtc kept static for netplay when savestate is not loaded
-	if (config::GGPOEnable)
-		return (20 * 365 + 5) * 24 * 60 * 60;
-	else
-		return (20 * 365 + 5) * 24 * 60 * 60 + rawtime + time_offset;
+	return (20 * 365 + 5) * 24 * 60 * 60 + rawtime + time_offset;
 }
 
 u32 ReadMem_aica_rtc(u32 addr, u32 sz)

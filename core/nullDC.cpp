@@ -12,6 +12,7 @@
 #include "rend/mainui.h"
 #include "input/gamepad_device.h"
 #include "lua/lua.h"
+#include "stdclass.h"
 
 int flycast_init(int argc, char* argv[])
 {
@@ -170,6 +171,9 @@ void dc_loadstate(int index)
 			gui_display_notification("Save state not found", 2000);
 			return;
 		}
+		if (index == -1 && config::GGPOEnable)
+			MD5Sum().add(f)
+					.getDigest(settings.network.md5.savestate);
 		std::fseek(f, 0, SEEK_END);
 		total_size = (u32)std::ftell(f);
 		std::fseek(f, 0, SEEK_SET);

@@ -18,6 +18,7 @@
  */
 #include "flashrom.h"
 #include "oslib/oslib.h"
+#include "stdclass.h"
 
 bool MemChip::Load(const std::string& file)
 {
@@ -34,7 +35,7 @@ bool MemChip::Load(const std::string& file)
 	return false;
 }
 
-void MemChip::Save(const std::string& file)
+void WritableChip::Save(const std::string& file)
 {
 	FILE *f = nowide::fopen(file.c_str(), "wb");
 	if (f == nullptr)
@@ -59,9 +60,15 @@ bool MemChip::Load(const std::string &prefix, const std::string &names_ro, const
 	return false;
 }
 
-void MemChip::Save(const std::string &prefix, const std::string &name_ro, const std::string &title)
+void WritableChip::Save(const std::string &prefix, const std::string &name_ro, const std::string &title)
 {
 	std::string path = hostfs::getFlashSavePath(prefix, name_ro);
 	Save(path);
 	INFO_LOG(FLASHROM, "Saved %s as %s", path.c_str(), title.c_str());
+}
+
+void MemChip::digest(u8 md5Digest[16])
+{
+	MD5Sum().add(data + write_protect_size, size - write_protect_size)
+			.getDigest(md5Digest);
 }

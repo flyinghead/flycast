@@ -23,6 +23,8 @@
 #include "input/gamepad_device.h"
 #include <xxhash.h>
 #include "oslib/oslib.h"
+#include "stdclass.h"
+#include "cfg/option.h"
 
 #define LOGJVS(...) DEBUG_LOG(JVS, __VA_ARGS__)
 
@@ -50,6 +52,10 @@ void load_naomi_eeprom()
 		}
 		else
 			DEBUG_LOG(MAPLE, "EEPROM file not found at %s and no default found", eeprom_file.c_str());
+		if (config::GGPOEnable)
+			MD5Sum().add(EEPROM, sizeof(EEPROM))
+					.getDigest(settings.network.md5.eeprom);
+
 	}
 }
 

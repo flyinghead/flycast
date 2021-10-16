@@ -39,6 +39,7 @@
 #include "network/net_handshake.h"
 #include "rend/gui.h"
 #include "lua/lua.h"
+#include "network/naomi_network.h"
 #include <chrono>
 
 settings_t settings;
@@ -182,6 +183,30 @@ static void loadSpecialSettings()
 		{
 			NOTICE_LOG(BOOT, "Game doesn't support RGB. Using TV Composite instead");
 			config::Cable.override(3);
+		}
+		if (prod_id == "T9512N"			// The Grinch (US)
+			|| prod_id == "T9503D"		// The Grinch (EU)
+			|| prod_id == "T0000M"		// Hell Gate FIXME
+			|| prod_id == "MK-51012"	// Metropolis Street Racer (US)
+			|| prod_id == "MK-5102250"	// Metropolis Street Racer (EU)
+			|| prod_id == "T-31101N"	// Psychic Force 2012 (US)
+			|| prod_id == "T1101M"		// Psychic Force 2012 (JP)
+			|| prod_id == "T-8106D-50"	// Psychic Force 2012 (EU)
+			|| prod_id == "T-9707N"		// San Francisco Rush 2049 (US)
+			|| prod_id == "T-9709D-50"	// San Francisco Rush 2049 (EU)
+			|| prod_id == "MK-51146"	// Sega Smashpack vol.1 (Sega Swirl)
+			|| prod_id == "MK-51152"	// World Series Baseball 2K2
+			|| prod_id == "T20401M"		// Zero Gunner
+			|| prod_id == "12502D-50"	// Caesar's palace 2000 (EU)
+			|| prod_id == "T7001D  50"	// Jimmy White's 2 Cueball
+			|| prod_id == "T17717D 50"	// The Next Tetris (EU)
+			|| prod_id == "T40506D 50"	// KISS (EU)
+			|| prod_id == "T40505D 50"	// Railroad Tycoon 2 (EU)
+			|| prod_id == "T18702M"		// Miss Moonlight
+			|| prod_id == "T0019M")		// KenJu Atomiswave DC Conversion
+		{
+			NOTICE_LOG(BOOT, "Forcing real BIOS");
+			config::UseReios.override(false);
 		}
 	}
 	else if (settings.platform.system == DC_PLATFORM_NAOMI || settings.platform.system == DC_PLATFORM_ATOMISWAVE)
@@ -415,6 +440,7 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 		config::Settings::instance().reset();
 		dc_reset(true);
 		config::Settings::instance().load(false);
+		memset(&settings.network.md5, 0, sizeof(settings.network.md5));
 
 		if (settings.platform.system == DC_PLATFORM_DREAMCAST)
 		{
@@ -437,6 +463,8 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 						{
 							LoadHle();
 							NOTICE_LOG(BOOT, "Did not load BIOS, using reios");
+							if (!config::UseReios && config::UseReios.isReadOnly())
+								gui_display_notification("This game requires a real BIOS", 15000);
 						}
 					}
 					else
@@ -454,8 +482,6 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 					LoadHle();
 				}
 			}
-			mcfg_CreateDevices();
-			FixUpFlash();
 		}
 		else if (settings.platform.system == DC_PLATFORM_NAOMI || settings.platform.system == DC_PLATFORM_ATOMISWAVE)
 		{
@@ -464,11 +490,8 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 			loadGameSpecificSettings();
 			// Reload the BIOS in case a game-specific region is set
 			naomi_cart_LoadBios(path);
-			if (settings.platform.system == DC_PLATFORM_NAOMI)
-				mcfg_CreateNAOMIJamma();
-			else if (settings.platform.system == DC_PLATFORM_ATOMISWAVE)
-				mcfg_CreateAtomisWaveControllers();
 		}
+		mcfg_CreateDevices();
 		cheatManager.reset(settings.content.gameId);
 		if (cheatManager.isWidescreen())
 		{
@@ -477,6 +500,13 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 		}
 		NetworkHandshake::init();
 		settings.input.fastForwardMode = false;
+		if (!settings.content.path.empty())
+		{
+			if (config::GGPOEnable)
+				dc_loadstate(-1);
+			else if (config::AutoLoadState && !NaomiNetworkSupported())
+				dc_loadstate(config::SavestateSlot);
+		}
 		EventManager::event(Event::Start);
 		state = Loaded;
 	} catch (...) {
@@ -513,6 +543,8 @@ void Emulator::unloadGame()
 	stop();
 	if (state == Loaded || state == Error)
 	{
+		if (state == Loaded && config::AutoSaveState && !settings.content.path.empty())
+			dc_savestate(config::SavestateSlot);
 		EventManager::event(Event::Terminate);
 		dc_reset(true);
 
@@ -640,9 +672,9 @@ bool dc_loadstate(const void **data, u32 size)
 
 void Emulator::setNetworkState(bool online)
 {
-	if (settings.online != online)
+	if (settings.network.online != online)
 		DEBUG_LOG(NETWORK, "Network state %d", online);
-	settings.online = online;
+	settings.network.online = online;
 	settings.input.fastForwardMode &= !online;
 }
 
