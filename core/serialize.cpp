@@ -69,7 +69,7 @@ extern u32 SB_FFST;
 
 //./core/hw/holly/sb_mem.o
 extern MemChip *sys_rom;
-extern MemChip *sys_nvmem;
+extern WritableChip *sys_nvmem;
 
 //./core/hw/gdrom/gdromv3.o
 extern int gdrom_schid;

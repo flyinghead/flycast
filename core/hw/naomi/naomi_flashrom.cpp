@@ -23,7 +23,7 @@
 #include "hw/holly/sb_mem.h"
 #include "hw/maple/maple_devs.h"
 
-extern MemChip *sys_nvmem;
+extern WritableChip *sys_nvmem;
 
 static u16 eeprom_crc(const u8 *buf, int size)
 {
