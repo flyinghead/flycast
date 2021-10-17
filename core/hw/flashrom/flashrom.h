@@ -11,6 +11,8 @@ struct MemChip
 	u8* data;
 	u32 size;
 	u32 mask;
+
+protected:
 	u32 write_protect_size;
 	std::string load_filename;
 
@@ -21,7 +23,12 @@ struct MemChip
 		this->mask = size - 1; // must be power of 2
 		this->write_protect_size = write_protect_size;
 	}
-	virtual ~MemChip() { delete[] data; }
+
+public:
+	virtual ~MemChip()
+	{
+		delete[] data;
+	}
 
 	virtual u8 Read8(u32 addr)
 	{
@@ -40,35 +47,43 @@ struct MemChip
 		return rv;
 	}
 
-	virtual void Write(u32 addr, u32 data, u32 size)
-	{
-		die("Method not supported");
-	}
-
 	bool Load(const std::string& file);
-	bool Reload()
-	{
-		return Load(this->load_filename);
-	}
-	void Save(const std::string& file);
+	virtual bool Reload() { return true; }
 	bool Load(const std::string &prefix, const std::string &names_ro,
 			const std::string &title);
-	void Save(const std::string &prefix, const std::string &name_ro,
-			const std::string &title);
+	void digest(u8 md5Digest[16]);
 
 	virtual void Reset() {}
 	virtual bool Serialize(void **data, unsigned int *total_size) { return true; }
 	virtual bool Unserialize(void **data, unsigned int *total_size) { return true; }
 };
 
-struct RomChip : MemChip
+struct WritableChip : MemChip
 {
-	RomChip(u32 sz, u32 write_protect_size = 0) : MemChip(sz, write_protect_size) {}
+protected:
+	WritableChip(u32 size, u32 write_protect_size = 0)
+		: MemChip(size, write_protect_size) {}
+
+public:
+	virtual void Write(u32 addr, u32 data, u32 size) = 0;
+
+	bool Reload() override
+	{
+		return Load(this->load_filename);
+	}
+	void Save(const std::string& file);
+	void Save(const std::string &prefix, const std::string &name_ro,
+			const std::string &title);
 };
 
-struct SRamChip : MemChip
+struct RomChip : MemChip
 {
-	SRamChip(u32 sz, u32 write_protect_size = 0) : MemChip(sz, write_protect_size) {}
+	RomChip(u32 sz) : MemChip(sz) {}
+};
+
+struct SRamChip : WritableChip
+{
+	SRamChip(u32 sz, u32 write_protect_size = 0) : WritableChip(sz, write_protect_size) {}
 
 	void Write(u32 addr,u32 val,u32 sz) override
 	{
@@ -183,9 +198,9 @@ struct flash_user_block {
 
 // Macronix 29LV160TMC
 // AtomisWave uses a custom 29L001mc model
-struct DCFlashChip : MemChip
+struct DCFlashChip : WritableChip
 {
-	DCFlashChip(u32 sz, u32 write_protect_size = 0): MemChip(sz, write_protect_size), state(FS_Normal) { }
+	DCFlashChip(u32 sz, u32 write_protect_size = 0): WritableChip(sz, write_protect_size), state(FS_Normal) { }
 
 	enum FlashState
 	{

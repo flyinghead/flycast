@@ -440,7 +440,7 @@ void GDCartridge::read_gdrom(Disc *gdrom, u32 sector, u8* dst, u32 count, LoadPr
 	gdrom->ReadSectors(sector + 150, count, dst, 2048, progress);
 }
 
-void GDCartridge::device_start(LoadProgress *progress)
+void GDCartridge::device_start(LoadProgress *progress, std::vector<u8> *digest)
 {
 	if (dimm_data != NULL)
 	{
@@ -493,15 +493,15 @@ void GDCartridge::device_start(LoadProgress *progress)
 
 		u8 buffer[2048];
 		std::string gdrom_path = get_game_basename() + "/" + gdrom_name;
-		std::unique_ptr<Disc> gdrom = std::unique_ptr<Disc>(OpenDisc(gdrom_path + ".chd"));
+		std::unique_ptr<Disc> gdrom = std::unique_ptr<Disc>(OpenDisc(gdrom_path + ".chd", digest));
 		if (gdrom == nullptr)
-			gdrom = std::unique_ptr<Disc>(OpenDisc(gdrom_path + ".gdi"));
+			gdrom = std::unique_ptr<Disc>(OpenDisc(gdrom_path + ".gdi", digest));
 		if (gdrom_parent_name != nullptr && gdrom == nullptr)
 		{
 			std::string gdrom_parent_path = get_game_dir() + "/" + gdrom_parent_name + "/" + gdrom_name;
-			gdrom = std::unique_ptr<Disc>(OpenDisc(gdrom_parent_path + ".chd"));
+			gdrom = std::unique_ptr<Disc>(OpenDisc(gdrom_parent_path + ".chd", digest));
 			if (gdrom == nullptr)
-				gdrom = std::unique_ptr<Disc>(OpenDisc(gdrom_parent_path + ".gdi"));
+				gdrom = std::unique_ptr<Disc>(OpenDisc(gdrom_parent_path + ".gdi", digest));
 		}
 		if (gdrom == nullptr)
 			throw NaomiCartException("Naomi GDROM: Cannot open " + gdrom_path + ".chd or " + gdrom_path + ".gdi");

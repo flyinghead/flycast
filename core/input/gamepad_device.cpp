@@ -78,7 +78,7 @@ bool GamepadDevice::handleButtonInput(int port, DreamcastKey key, bool pressed)
 			break;
 		case EMU_BTN_FFORWARD:
 			if (pressed && !gui_is_open())
-				settings.input.fastForwardMode = !settings.input.fastForwardMode && !settings.online;
+				settings.input.fastForwardMode = !settings.input.fastForwardMode && !settings.network.online;
 			break;
 		case DC_AXIS_LT:
 			lt[port] = pressed ? 255 : 0;

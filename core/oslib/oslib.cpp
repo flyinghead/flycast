@@ -93,10 +93,12 @@ std::string getSavestatePath(int index, bool writable)
 		state_file = state_file.substr(0, lastindex);
 
 	char index_str[4] = "";
-	if (index != 0) // When index is 0, use same name before multiple states is added
-		sprintf(index_str, "_%d", index);
+	if (index > 0) // When index is 0, use same name before multiple states is added
+		sprintf(index_str, "_%d", std::min(99, index));
 
 	state_file = state_file + index_str + ".state";
+	if (index == -1)
+		state_file += ".net";
 	if (writable)
 		return get_writable_data_path(state_file);
 	else

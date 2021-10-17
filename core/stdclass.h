@@ -1,5 +1,6 @@
 #pragma once
 #include "types.h"
+#include "md5/md5.h"
 
 #include <condition_variable>
 #include <mutex>
@@ -138,3 +139,49 @@ static inline std::string trim_ws(const std::string& str,
 
     return str.substr(strStart, str.find_last_not_of(whitespace) + 1 - strStart);
 }
+
+class MD5Sum
+{
+	MD5_CTX ctx;
+
+public:
+	MD5Sum() {
+		MD5_Init(&ctx);
+	}
+
+	MD5Sum& add(const void *data, size_t len) {
+		MD5_Update(&ctx, data, len);
+		return *this;
+	}
+
+	MD5Sum& add(std::FILE *file) {
+		std::fseek(file, 0, SEEK_SET);
+		char buf[4096];
+		size_t len = 0;
+		while ((len = std::fread(buf, 1, sizeof(buf), file)) > 0)
+			MD5_Update(&ctx, buf, len);
+		return *this;
+	}
+
+	template<typename T>
+	MD5Sum& add(const T& v) {
+		MD5_Update(&ctx, &v, sizeof(T));
+		return *this;
+	}
+
+	template<typename T>
+	MD5Sum& add(const std::vector<T>& v) {
+		MD5_Update(&ctx, &v[0], v.size() * sizeof(T));
+		return *this;
+	}
+
+	void getDigest(u8 digest[16]) {
+		MD5_Final(digest, &ctx);
+	}
+
+	std::vector<u8> getDigest() {
+		std::vector<u8> v(16);
+		MD5_Final(v.data(), &ctx);
+		return v;
+	}
+};

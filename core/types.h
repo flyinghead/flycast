@@ -359,8 +359,21 @@ struct settings_t
 		bool fastForwardMode;
 	} input;
 
+	struct
+	{
+		bool online;
+		struct
+		{
+			u8 game[16];
+			u8 bios[16];
+			u8 savestate[16];
+			u8 nvmem[16];
+			u8 nvmem2[16];
+			u8 eeprom[16];
+			u8 vmu[16];
+		} md5;
+	} network;
 	bool disableRenderer;
-	bool online;
 };
 
 extern settings_t settings;

@@ -507,6 +507,7 @@ if(NOT LIBRETRO)
 	target_sources(${PROJECT_NAME} PRIVATE core/deps/imgui/imgui.cpp core/deps/imgui/imgui_demo.cpp core/deps/imgui/imgui_draw.cpp core/deps/imgui/imgui_widgets.cpp)
 endif()
 target_sources(${PROJECT_NAME} PRIVATE core/deps/xbrz/xbrz.cpp)
+target_sources(${PROJECT_NAME} PRIVATE core/deps/md5/md5.cpp)
 
 if(LIBRETRO)
     target_include_directories(${PROJECT_NAME} PRIVATE core/deps/libretro-common/include)

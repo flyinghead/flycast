@@ -83,13 +83,6 @@ static void emuEventCallback(Event event)
 		break;
 	case Event::Start:
 		GamepadDevice::load_system_mappings();
-		if (config::AutoLoadState && !settings.content.path.empty())
-			// TODO don't load state if using naomi networking
-			dc_loadstate(config::SavestateSlot);
-		break;
-	case Event::Terminate:
-		if (config::AutoSaveState && !settings.content.path.empty())
-			dc_savestate(config::SavestateSlot);
 		break;
 	default:
 		break;
@@ -267,7 +260,6 @@ void gui_init()
 
     EventManager::listen(Event::Resume, emuEventCallback);
     EventManager::listen(Event::Start, emuEventCallback);
-    EventManager::listen(Event::Terminate, emuEventCallback);
 }
 
 void gui_keyboard_input(u16 wc)
@@ -467,7 +459,7 @@ static void gui_display_commands()
 
     ImGui::Begin("##commands", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize);
 
-    bool loadSaveStateDisabled = settings.content.path.empty() || settings.online;
+    bool loadSaveStateDisabled = settings.content.path.empty() || settings.network.online;
 	if (loadSaveStateDisabled)
 	{
         ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
@@ -543,16 +535,16 @@ static void gui_display_commands()
 	ImGui::NextColumn();
 
 	// Cheats
-	if (settings.online)
+	if (settings.network.online)
 	{
         ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
         ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
 	}
-	if (ImGui::Button("Cheats", ImVec2(150 * scaling, 50 * scaling)) && !settings.online)
+	if (ImGui::Button("Cheats", ImVec2(150 * scaling, 50 * scaling)) && !settings.network.online)
 	{
 		gui_state = GuiState::Cheats;
 	}
-	if (settings.online)
+	if (settings.network.online)
 	{
         ImGui::PopItemFlag();
         ImGui::PopStyleVar();
@@ -2474,7 +2466,6 @@ void gui_term()
 		ImGui::DestroyContext();
 	    EventManager::unlisten(Event::Resume, emuEventCallback);
 	    EventManager::unlisten(Event::Start, emuEventCallback);
-	    EventManager::unlisten(Event::Terminate, emuEventCallback);
 	}
 }
 

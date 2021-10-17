@@ -19,7 +19,7 @@ class AWCartridge: public Cartridge
 public:
 	AWCartridge(u32 size) : Cartridge(size) {}
 
-	void Init(LoadProgress *progress = nullptr) override;
+	void Init(LoadProgress *progress = nullptr, std::vector<u8> *digest = nullptr) override;
 	u32 ReadMem(u32 address, u32 size) override;
 	void WriteMem(u32 address, u32 data, u32 size) override;
 

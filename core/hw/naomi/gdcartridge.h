@@ -25,9 +25,9 @@ public:
 	{
 		free(dimm_data);
 	}
-	void Init(LoadProgress *progress = nullptr) override
+	void Init(LoadProgress *progress = nullptr, std::vector<u8> *digest = nullptr) override
 	{
-		device_start(progress);
+		device_start(progress, digest);
 		device_reset();
 	}
 	void* GetDmaPtr(u32 &size) override;
@@ -61,7 +61,7 @@ private:
 	static const u32 DES_MASK_TABLE[];
 	static const u8 DES_ROTATE_TABLE[16];
 
-	void device_start(LoadProgress *progress);
+	void device_start(LoadProgress *progress, std::vector<u8> *digest);
 	void device_reset();
 	void find_file(const char *name, const u8 *dir_sector, u32 &file_start, u32 &file_size);
 

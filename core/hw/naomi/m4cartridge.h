@@ -20,7 +20,7 @@ public:
 	M4Cartridge(u32 size) : NaomiCartridge(size) { }
 	~M4Cartridge() override;
 
-	void Init(LoadProgress *progress = nullptr) override
+	void Init(LoadProgress *progress = nullptr, std::vector<u8> *digest = nullptr) override
 	{
 		device_start();
 		device_reset();

@@ -11,7 +11,10 @@ public:
 	Cartridge(u32 size);
 	virtual ~Cartridge();
 
-	virtual void Init(LoadProgress *progress = nullptr) {}
+	virtual void Init(LoadProgress *progress = nullptr, std::vector<u8> *digest = nullptr) {
+		if (digest != nullptr)
+			digest->clear();
+	}
 	virtual u32 ReadMem(u32 address, u32 size) = 0;
 	virtual void WriteMem(u32 address, u32 data, u32 size) = 0;
 

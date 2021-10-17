@@ -440,7 +440,7 @@ void CheatManager::apply()
 		for (size_t i = 0; i < ARRAY_SIZE(widescreen_cheat->addresses) && widescreen_cheat->addresses[i] != 0; i++)
 			writeRam(widescreen_cheat->addresses[i], widescreen_cheat->values[i], 32);
 	}
-	if (active && !settings.online)
+	if (active && !settings.network.online)
 	{
 		bool skipCheat = false;
 		for (const Cheat& cheat : cheats)

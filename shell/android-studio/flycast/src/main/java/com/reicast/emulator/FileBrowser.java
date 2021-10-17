@@ -18,12 +18,12 @@ public class FileBrowser {
 			final Process process = new ProcessBuilder().command("mount")
 					.redirectErrorStream(true).start();
 			process.getOutputStream().close();
-			process.waitFor();
 			InputStream is = process.getInputStream();
 			byte[] buffer = new byte[1024];
 			while (is.read(buffer) != -1) {
 				s.append(new String(buffer));
 			}
+			process.waitFor();
 			is.close();
 
 			String[] lines = s.toString().split("\n");

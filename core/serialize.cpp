@@ -69,7 +69,7 @@ extern u32 SB_FFST;
 
 //./core/hw/holly/sb_mem.o
 extern MemChip *sys_rom;
-extern MemChip *sys_nvmem;
+extern WritableChip *sys_nvmem;
 
 //./core/hw/gdrom/gdromv3.o
 extern int gdrom_schid;
@@ -521,36 +521,24 @@ static bool dc_unserialize_libretro(void **data, unsigned int *total_size, seria
 	REICAST_US(SB_FFST);
 	SB_ADST = 0;
 
+	REICAST_SKIP(4); // sys_nvmem->size
+	REICAST_SKIP(4); // sys_nvmem->mask
 	if (settings.platform.system == DC_PLATFORM_NAOMI || settings.platform.system == DC_PLATFORM_ATOMISWAVE)
-	{
-		REICAST_US(sys_nvmem->size);
-		REICAST_US(sys_nvmem->mask);
-		REICAST_USA(sys_nvmem->data, sys_nvmem->size);
-	}
-	else
-	{
-		REICAST_US(i);
-		REICAST_US(i);
-	}
+		sys_nvmem->Unserialize(data, total_size);
 
+	REICAST_SKIP(4); // sys_nvmem/sys_rom->size
+	REICAST_SKIP(4); // sys_nvmem/sys_rom->mask
 	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
 	{
-		REICAST_US(sys_nvmem->size);
-		REICAST_US(sys_nvmem->mask);
-		REICAST_US(static_cast<DCFlashChip*>(sys_nvmem)->state);
-		REICAST_USA(sys_nvmem->data, sys_nvmem->size);
+		sys_nvmem->Unserialize(data, total_size);
 	}
 	else if (settings.platform.system == DC_PLATFORM_ATOMISWAVE)
 	{
-		REICAST_US(sys_rom->size);
-		REICAST_US(sys_rom->mask);
 		REICAST_US(static_cast<DCFlashChip*>(sys_rom)->state);
 		REICAST_USA(sys_rom->data, sys_rom->size);
 	}
 	else
 	{
-		REICAST_US(i);
-		REICAST_US(i);
 		REICAST_US(i);
 	}
 

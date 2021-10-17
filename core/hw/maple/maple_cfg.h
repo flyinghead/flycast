@@ -83,9 +83,6 @@ struct MapleInputState
 extern MapleInputState mapleInputState[4];
 
 void mcfg_CreateDevices();
-void mcfg_CreateNAOMIJamma();
-void mcfg_CreateAtomisWaveControllers();
-
 void mcfg_DestroyDevices();
 void mcfg_SerializeDevices(void **data, unsigned int *total_size);
 void mcfg_UnserializeDevices(void **data, unsigned int *total_size, serialize_version_enum version);

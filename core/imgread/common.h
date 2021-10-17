@@ -170,7 +170,7 @@ struct Disc
 	}
 };
 
-Disc* OpenDisc(const std::string& path);
+Disc* OpenDisc(const std::string& path, std::vector<u8> *digest = nullptr);
 
 struct RawTrackFile : TrackFile
 {
