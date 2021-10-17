@@ -453,17 +453,17 @@ static InputDescriptors sstrkfgt_inputs = {
 	},
 };
 
-static InputDescriptors guilty_gear_input = INPUT_5_BUTTONS("KICK", "SLASH", "HSLASH", "PUNCH", "DUST ATTACK");
+static InputDescriptors guilty_gear_inputs = INPUT_5_BUTTONS("KICK", "SLASH", "HSLASH", "PUNCH", "DUST ATTACK");
 
-static InputDescriptors ggx_input = INPUT_4_BUTTONS("PUNCH", "KICK", "SLASH", "HSLASH");
+static InputDescriptors ggx_inputs = INPUT_4_BUTTONS("PUNCH", "KICK", "SLASH", "HSLASH");
 
-static InputDescriptors senkosp_input = INPUT_5_BUTTONS("MAIN", "SUB", "MAIN+SUB", "ACTION", "OVER DRIVE");
+static InputDescriptors senkosp_inputs = INPUT_5_BUTTONS("MAIN", "SUB", "MAIN+SUB", "ACTION", "OVER DRIVE");
 
-static InputDescriptors meltyb_input = INPUT_5_BUTTONS("LAttack", "MAttack", "HAttack", "Guard", "Quick Action");
+static InputDescriptors meltyb_inputs = INPUT_5_BUTTONS("LAttack", "MAttack", "HAttack", "Guard", "Quick Action");
 
-static InputDescriptors toukon4_input = INPUT_5_BUTTONS("X", "Y", "R", "A", "B");
+static InputDescriptors toukon4_inputs = INPUT_5_BUTTONS("X", "Y", "R", "A", "B");
 
-static InputDescriptors hmgeo_input = {
+static InputDescriptors hmgeo_inputs = {
 	{
 		{ NAOMI_BTN0_KEY, "Fire" },
 		{ NAOMI_BTN1_KEY, "Attack" },
@@ -503,7 +503,17 @@ static InputDescriptors hmgeo_input = {
 	}									\
 }
 
-static InputDescriptors guilty_gear_aw_input = AW_5_BUTTONS("KICK", "SLASH", "HSLASH", "PUNCH", "DUST ATTACK");
+static InputDescriptors kov7sprt_inputs = {
+      {
+            { AWAVE_BTN0_KEY, "LIGHT ATTACK" },
+            { AWAVE_BTN1_KEY, "HEAVY ATTACK" },
+            { AWAVE_BTN2_KEY, "JUMP" },
+            AW_START_DESC
+            AW_BASE_BTN_DESC
+      },
+};
+
+static InputDescriptors guilty_gear_aw_inputs = AW_5_BUTTONS("KICK", "SLASH", "HSLASH", "PUNCH", "DUST ATTACK");
 
 static InputDescriptors ftspeed_inputs = {
 	  {
@@ -520,9 +530,9 @@ static InputDescriptors ftspeed_inputs = {
 	  },
 };
 
-static InputDescriptors kofnw_input = AW_5_BUTTONS("LP", "SP", "Heat mode", "LK", "SK");
+static InputDescriptors kofnw_inputs = AW_5_BUTTONS("LP", "SP", "Heat mode", "LK", "SK");
 
-static InputDescriptors kofxi_input = AW_5_BUTTONS("LP", "SP", "Blow-off", "LK", "SK");
+static InputDescriptors kofxi_inputs = AW_5_BUTTONS("LP", "SP", "Blow-off", "LK", "SK");
 
 static InputDescriptors maxspeed_inputs = {
 	  {
@@ -555,8 +565,8 @@ static InputDescriptors blockpong_inputs = {
 	  },
 };
 
-static InputDescriptors fotns_input = AW_5_BUTTONS("LP", "HP", "BOOST", "LK", "HK");
+static InputDescriptors fotns_inputs = AW_5_BUTTONS("LP", "HP", "BOOST", "LK", "HK");
 
-static InputDescriptors mslug6_input = AW_5_BUTTONS("Shoot", "Jump", "Switch", "Grenade", "Mslug Attack");
+static InputDescriptors mslug6_inputs = AW_5_BUTTONS("Shoot", "Jump", "Switch", "Grenade", "Mslug Attack");
 
-static InputDescriptors rumblef_input = AW_5_BUTTONS("LP", "SP", "Dodge", "LK", "SK");
+static InputDescriptors rumblef_inputs = AW_5_BUTTONS("LP", "SP", "Dodge", "LK", "SK");
