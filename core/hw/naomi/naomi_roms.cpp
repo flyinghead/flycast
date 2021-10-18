@@ -1862,7 +1862,7 @@ Game Games[] =
             { NULL, 0, 0 },
         },
 		nullptr,
-		&ggx_input,
+		&ggx_inputs,
 		// error message at boot with free play eeprom
     },
     // Mobile Suit Gundam: Federation Vs. Zeon
@@ -2011,7 +2011,7 @@ Game Games[] =
             { NULL, 0, 0 },
         },
         NULL,
-		&hmgeo_input,
+		&hmgeo_inputs,
         hmgeo_eeprom_dump,
     },
     // House of the Dead 2
@@ -3645,7 +3645,7 @@ Game Games[] =
             { NULL, 0, 0 },
         },
 		nullptr,
-		&toukon4_input,
+		&toukon4_inputs,
     },
     // Toy Fighter
     {
@@ -4426,7 +4426,7 @@ Game Games[] =
             { NULL, 0, 0 },
         },
         nullptr,
-		&meltyb_input,
+		&meltyb_inputs,
 		mbaa_eeprom_dump,
     },
     // Melty Blood Actress Again (Japan) (Clone)
@@ -4451,7 +4451,7 @@ Game Games[] =
             { NULL, 0, 0 },
         },
         nullptr,
-		&meltyb_input,
+		&meltyb_inputs,
 		mbaa_eeprom_dump,
     },
     // Mushiking The King Of Beetles - Mushiking II / III / III+ (Ver. 1.001) (World)
@@ -4924,7 +4924,7 @@ Game Games[] =
             { NULL, 0, 0 },
         },
         "gdl-0011",
-		&guilty_gear_input,
+		&guilty_gear_inputs,
     },
     // Guilty Gear XX Accent Core (Japan) (GDL-0041)
     {
@@ -4942,7 +4942,7 @@ Game Games[] =
             { NULL, 0, 0 },
         },
         "gdl-0041",
-		&guilty_gear_input,
+		&guilty_gear_inputs,
 		ggxxac_eeprom_dump,
     },
     // Guilty Gear XX #Reload (Japan, Rev A) (GDL-0019A)
@@ -4961,7 +4961,7 @@ Game Games[] =
             { NULL, 0, 0 },
         },
         "gdl-0019a",
-		&guilty_gear_input,
+		&guilty_gear_inputs,
     },
     // Guilty Gear XX #Reload (Japan) (GDL-0019)
     {
@@ -4979,7 +4979,7 @@ Game Games[] =
             { NULL, 0, 0 },
         },
         "gdl-0019",
-		&guilty_gear_input,
+		&guilty_gear_inputs,
     },
     // Guilty Gear XX Slash (Japan, Rev A) (GDL-0033A)
     {
@@ -4997,7 +4997,7 @@ Game Games[] =
             { NULL, 0, 0 },
         },
         "gdl-0033a",
-		&guilty_gear_input,
+		&guilty_gear_inputs,
 		ggxxsla_eeprom_dump,
     },
     // Mobile Suit Gundam: Federation Vs. Zeon (GDL-0001)
@@ -5207,7 +5207,7 @@ Game Games[] =
             { NULL, 0, 0 },
         },
         "gdl-0039a",
-		&meltyb_input,
+		&meltyb_inputs,
 		meltyb_eeprom_dump,
     },
     // Melty Blood Act Cadenza Ver. A (Japan) (GDL-0028C)
@@ -5226,7 +5226,7 @@ Game Games[] =
             { NULL, 0, 0 },
         },
         "gdl-0028c",
-		&meltyb_input,
+		&meltyb_inputs,
 		meltybld_eeprom_dump,
     },
     // Melty Blood Act Cadenza (Japan) (GDL-0028)
@@ -5245,7 +5245,7 @@ Game Games[] =
             { NULL, 0, 0 },
         },
         "gdl-0028",
-		&meltyb_input,
+		&meltyb_inputs,
 		meltybld_eeprom_dump,
     },
     // Melty Blood Act Cadenza Version B (Japan) (GDL-0039)
@@ -5264,7 +5264,7 @@ Game Games[] =
             { NULL, 0, 0 },
         },
         "gdl-0039",
-		&meltyb_input,
+		&meltyb_inputs,
 		meltyb_eeprom_dump,
     },
     // Moeru Casinyo (Japan) (GDL-0013)
@@ -5537,7 +5537,7 @@ Game Games[] =
             { NULL, 0, 0 },
         },
         "gdl-0038",
-		&senkosp_input,
+		&senkosp_inputs,
 		senkosp_eeprom_dump,
     },
     // Street Fighter Zero 3 Upper (Japan) (GDL-0002)
@@ -6189,7 +6189,7 @@ Game Games[] =
             { NULL, 0, 0 },
         },
 		nullptr,
-		&fotns_input,
+		&fotns_inputs,
     },
     // Faster Than Speed
     {
@@ -6239,7 +6239,7 @@ Game Games[] =
             { NULL, 0, 0 },
         },
         nullptr,
-		&guilty_gear_aw_input,
+		&guilty_gear_aw_inputs,
     },
     // Guilty Gear X ver. 1.5
     {
@@ -6286,7 +6286,7 @@ Game Games[] =
             { NULL, 0, 0 },
         },
         NULL,
-        &kofnw_input,
+        &kofnw_inputs,
     },
     // The King of Fighters Neowave (Japan)
     {
@@ -6311,7 +6311,7 @@ Game Games[] =
             { NULL, 0, 0 },
         },
         NULL,
-        &kofnw_input,
+        &kofnw_inputs,
     },
     // The King of Fighters XI
     {
@@ -6336,7 +6336,7 @@ Game Games[] =
             { NULL, 0, 0 },
         },
         NULL,
-        &kofxi_input,
+        &kofxi_inputs,
     },
     // Knights of Valour - The Seven Spirits
     {
@@ -6359,7 +6359,9 @@ Game Games[] =
             { "ax1301m06.ic16", 0x6000000, 0x1000000 },
             { "ax1301m07.ic17", 0x7000000, 0x1000000 },
             { NULL, 0, 0 },
-        }
+        },
+        NULL,
+        &kov7sprt_inputs,
     },
     // Maximum Speed
     {
@@ -6404,7 +6406,7 @@ Game Games[] =
             { NULL, 0, 0 },
         },
 		nullptr,
-		&mslug6_input,
+		&mslug6_inputs,
     },
     // NeoGeo Battle Coliseum
     {
@@ -6500,7 +6502,7 @@ Game Games[] =
             { NULL, 0, 0 },
         },
 		nullptr,
-		&rumblef_input,
+		&rumblef_inputs,
     },
     // The Rumble Fish (prototype)
     {
@@ -6533,7 +6535,7 @@ Game Games[] =
             { NULL, 0, 0 },
         },
 		nullptr,
-		&rumblef_input,
+		&rumblef_inputs,
     },
     // The Rumble Fish 2
     {
@@ -6556,7 +6558,7 @@ Game Games[] =
             { NULL, 0, 0 },
         },
 		nullptr,
-		&rumblef_input,
+		&rumblef_inputs,
     },
     // The Rumble Fish 2 (prototype)
     {
@@ -6589,7 +6591,7 @@ Game Games[] =
             { NULL, 0, 0 },
         },
 		nullptr,
-		&rumblef_input,
+		&rumblef_inputs,
     },
     // Net Select: Salaryman Kintaro
     {
