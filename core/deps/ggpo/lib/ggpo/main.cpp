@@ -277,3 +277,13 @@ GGPOErrorCode ggpo_start_spectating(GGPOSession **session,
 	}
 }
 
+GGPOErrorCode ggpo_send_message(GGPOSession *ggpo,
+                                const void *msg,
+                                int len,
+								bool spectators)
+{
+	if (ggpo == nullptr)
+		return GGPO_ERRORCODE_INVALID_SESSION;
+	return ggpo->SendMessage(msg, len, spectators);
+}
+

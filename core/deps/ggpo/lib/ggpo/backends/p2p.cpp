@@ -392,6 +392,16 @@ Peer2PeerBackend::OnUdpProtocolPeerEvent(UdpProtocol::Event &evt, int queue)
       DisconnectPlayer(QueueToPlayerHandle(queue));
       break;
 
+   case UdpProtocol::Event::AppData:
+	   if (evt.u.app_data.spectators)
+		   for (int i = 0; i < _num_spectators; i++)
+			   if (_spectators[i].IsInitialized())
+				   _spectators[i].SendAppData(evt.u.app_data.data, evt.u.app_data.size, true);
+	   Log("calling on_message callback with %d bytes", evt.u.app_data.size);
+	   if (_callbacks.on_message != nullptr)
+		   _callbacks.on_message(evt.u.app_data.data, evt.u.app_data.size);
+	  break;
+
    default:
 	  break;
    }
@@ -634,4 +644,21 @@ Peer2PeerBackend::CheckInitialSync()
       _callbacks.on_event(&info);
       _synchronizing = false;
    }
+}
+
+GGPOErrorCode Peer2PeerBackend::SendMessage(const void *msg, int len, bool spectators)
+{
+	if (_synchronizing)
+		return GGPO_ERRORCODE_NOT_SYNCHRONIZED;
+	if (len > MAX_APPDATA_SIZE)
+		return GGPO_ERRORCODE_INVALID_REQUEST;
+	for (int i = 0; i < _num_players; i++)
+        if (_endpoints[i].IsInitialized())
+           _endpoints[i].SendAppData(msg, len, spectators);
+	if (spectators)
+		for (int i = 0; i < _num_spectators; i++)
+	        if (_spectators[i].IsInitialized())
+	        	_spectators[i].SendAppData(msg, len, spectators);
+
+	return GGPO_ERRORCODE_SUCCESS;
 }

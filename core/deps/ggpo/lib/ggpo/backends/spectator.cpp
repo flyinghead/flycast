@@ -167,6 +167,13 @@ SpectatorBackend::OnUdpProtocolEvent(UdpProtocol::Event &evt)
    	  }
       break;
 
+   case UdpProtocol::Event::AppData:
+	  Log("calling on_message callback with %d bytes", evt.u.app_data.size);
+	  if (_callbacks.on_message != nullptr)
+		  _callbacks.on_message(evt.u.app_data.data, evt.u.app_data.size);
+	  break;
+
+
    default:
 	  break;
    }
