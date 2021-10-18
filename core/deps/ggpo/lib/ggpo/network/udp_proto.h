@@ -124,7 +124,6 @@ protected:
    void SendSyncRequest();
    void SendMsg(UdpMsg *msg);
    void PumpSendQueue();
-//   void DispatchMsg(uint8 *buffer, int len);
    void SendPendingOutput();
    bool OnInvalid(UdpMsg *msg, int len);
    bool OnSyncRequest(UdpMsg *msg, int len);
