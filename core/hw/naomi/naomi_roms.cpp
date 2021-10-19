@@ -6120,7 +6120,9 @@ Game Games[] =
             { "ax0606m01.ic16", 0x6000000, 0x1000000 },
             { "ax0607m01.ic17", 0x7000000, 0x1000000 },
             { NULL, 0, 0 },
-        }
+        },
+        NULL,
+        &demofist_inputs,
     },
     // Dirty Pigskin Football
     {
@@ -6164,7 +6166,9 @@ Game Games[] =
             { "ax0404m01.ic14", 0x4000000, 0x1000000 },
             { "ax0405m01.ic15", 0x5000000, 0x1000000 },
             { NULL, 0, 0 },
-        }
+        },
+        NULL,
+        &dolphin_inputs,
     },
     // Fist Of The North Star
     {
@@ -6262,7 +6266,9 @@ Game Games[] =
             { "ax0806m01.ic16", 0x6000000, 0x1000000 },
             { "ax0807m01.ic17", 0x7000000, 0x1000000 },
             { NULL, 0, 0 },
-        }
+        },
+        NULL,
+        &ggx15_inputs,
     },
     // The King of Fighters Neowave
     {

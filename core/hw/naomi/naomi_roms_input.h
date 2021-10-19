@@ -503,17 +503,44 @@ static InputDescriptors hmgeo_inputs = {
 	}									\
 }
 
-static InputDescriptors kov7sprt_inputs = {
-      {
-            { AWAVE_BTN0_KEY, "LIGHT ATTACK" },
-            { AWAVE_BTN1_KEY, "HEAVY ATTACK" },
-            { AWAVE_BTN2_KEY, "JUMP" },
-            AW_START_DESC
-            AW_BASE_BTN_DESC
-      },
-};
+#define AW_4_BUTTONS(btn0, btn1, btn2, btn3) {	\
+	{									\
+		{ AWAVE_BTN0_KEY, btn0 },		\
+		{ AWAVE_BTN1_KEY, btn1 },		\
+		{ AWAVE_BTN2_KEY, btn2 },		\
+		{ AWAVE_BTN3_KEY, btn3 },		\
+		{ AWAVE_UP_KEY, "" },			\
+		{ AWAVE_DOWN_KEY, "" },		\
+		{ AWAVE_LEFT_KEY, "" },		\
+		{ AWAVE_RIGHT_KEY, "" },	\
+		AW_START_DESC					\
+		AW_BASE_BTN_DESC				\
+	}									\
+}
+
+#define AW_3_BUTTONS(btn0, btn1, btn2) {	\
+	{									\
+		{ AWAVE_BTN0_KEY, btn0 },		\
+		{ AWAVE_BTN1_KEY, btn1 },		\
+		{ AWAVE_BTN2_KEY, btn2 },		\
+		{ AWAVE_UP_KEY, "" },			\
+		{ AWAVE_DOWN_KEY, "" },		\
+		{ AWAVE_LEFT_KEY, "" },		\
+		{ AWAVE_RIGHT_KEY, "" },	\
+		AW_START_DESC					\
+		AW_BASE_BTN_DESC				\
+	}									\
+}
+
+static InputDescriptors kov7sprt_inputs = AW_3_BUTTONS("LIGHT ATTACK","HEAVY ATTACK","JUMP");
+
+static InputDescriptors dolphin_inputs = AW_3_BUTTONS("SHOOT","JUMP","SPECIAL");
+
+static InputDescriptors demofist_inputs = AW_3_BUTTONS("GUARD","ATTACK","JUMP");
 
 static InputDescriptors guilty_gear_aw_inputs = AW_5_BUTTONS("KICK", "SLASH", "HSLASH", "PUNCH", "DUST ATTACK");
+
+static InputDescriptors ggx15_inputs = AW_4_BUTTONS("KICK", "SLASH", "HSLASH", "PUNCH");
 
 static InputDescriptors ftspeed_inputs = {
 	  {
