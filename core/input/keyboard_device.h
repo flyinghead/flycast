@@ -471,9 +471,17 @@ void KeyboardDeviceTemplate<Keycode>::keyboard_input(Keycode keycode, bool press
 			kb_shift[port] |= modifier_keys;
 		}
 	}
+	if (gui_keyboard_captured())
+	{
+		// chat: disable the keyboard controller. Only accept emu keys (menu, escape...)
+		const int port = maple_port();
+		set_maple_port(-1);
+		gamepad_btn_input(dc_keycode, pressed);
+		set_maple_port(port);
+	}
 	// Do not map keyboard keys to gamepad buttons unless the GUI is open
 	// or the corresponding maple device (if any) isn't a keyboard
-	if (gui_is_open()
+	else if (gui_is_open()
 			|| port == (int)ARRAY_SIZE(kb_key)
 			|| (settings.platform.system == DC_PLATFORM_DREAMCAST && config::MapleMainDevices[port] != MDT_Keyboard)
 			|| (settings.platform.system == DC_PLATFORM_NAOMI && settings.input.JammaSetup != JVS::Keyboard)

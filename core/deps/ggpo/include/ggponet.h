@@ -259,6 +259,12 @@ typedef struct {
     * structure above for more information.
     */
    bool (__cdecl *on_event)(GGPOEvent *info);
+
+   /*
+    * on_message - Delivers an application message. Allows arbitrary data to be
+    * exchanged with peers. This callback is optional.
+    */
+   void (__cdecl *on_message)(unsigned char *msg, int len);
 } GGPOSessionCallbacks;
 
 /*
@@ -592,6 +598,18 @@ GGPO_API void __cdecl ggpo_log(GGPOSession *,
 GGPO_API void __cdecl ggpo_logv(GGPOSession *,
                                 const char *fmt,
                                 va_list args);
+
+/*
+ * ggpo_send_message --
+ *
+ * Sends application-specific data to other peers. The message is
+ * delivered by the on_user_message callback.
+ * If spectators is true, the message is also sent to spectators.
+ */
+GGPO_API GGPOErrorCode __cdecl ggpo_send_message(GGPOSession *,
+                                                 const void *msg,
+                                                 int len,
+												 bool spectators);
 
 #ifdef __cplusplus
 };

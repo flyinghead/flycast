@@ -328,6 +328,7 @@ UdpProtocol::OnMsg(UdpMsg *msg, int len)
       &UdpProtocol::OnQualityReply,        /* QualityReply */
       &UdpProtocol::OnKeepAlive,           /* KeepAlive */
       &UdpProtocol::OnInputAck,            /* InputAck */
+      &UdpProtocol::OnAppData,             /* AppData */
    };
 
    // filter out messages that don't match what we expect
@@ -457,6 +458,9 @@ UdpProtocol::LogMsg(const char *prefix, UdpMsg *msg)
       break;
    case UdpMsg::InputAck:
       Log("%s input ack.\n", prefix);
+      break;
+   case UdpMsg::AppData:
+      Log("%s app data (%d bytes).\n", prefix, msg->u.app_data.size);
       break;
    default:
       ASSERT(false && "Unknown UdpMsg type.");
@@ -793,4 +797,29 @@ UdpProtocol::ClearSendQueue()
       delete _send_queue.front().msg;
       _send_queue.pop();
    }
+}
+
+void UdpProtocol::SendAppData(const void *data, int len, bool spectators)
+{
+	if (_udp == nullptr)
+		return;
+	if (_current_state != Synchronzied && _current_state != Running)
+		return;
+
+	UdpMsg *msg = new UdpMsg(UdpMsg::AppData);
+	msg->u.app_data.spectators = spectators;
+	msg->u.app_data.size = len;
+	memcpy(msg->u.app_data.data, data, len);
+
+	SendMsg(msg);
+}
+
+bool UdpProtocol::OnAppData(UdpMsg *msg, int len)
+{
+    UdpProtocol::Event evt(UdpProtocol::Event::AppData);
+    evt.u.app_data.spectators = msg->u.app_data.spectators != 0;
+    evt.u.app_data.size = msg->u.app_data.size;
+    memcpy(evt.u.app_data.data, msg->u.app_data.data, msg->u.app_data.size);
+    QueueEvent(evt);
+	return true;
 }

@@ -102,6 +102,7 @@ static MiniUPnP miniupnp;
 static int analogAxes;
 static bool absPointerPos;
 static bool inRollback;
+static void (*chatCallback)(int playerNum, const std::string& msg);
 
 struct MemPages
 {
@@ -119,6 +120,23 @@ static std::unordered_map<int, MemPages> deltaStates;
 static int lastSavedFrame = -1;
 
 static int timesyncOccurred;
+
+#pragma pack(push, 1)
+struct GameEvent
+{
+	enum : char {
+		Chat
+	} type;
+	union {
+		struct {
+			u8 playerNum;
+			char message[512 - sizeof(playerNum) - sizeof(type)];
+		} chat;
+	} u;
+
+	constexpr static int chatMessageLen(int len) { return len - sizeof(u.chat.playerNum) - sizeof(type); }
+};
+#pragma pack(pop)
 
 /*
  * begin_game callback - This callback has been deprecated.  You must
@@ -368,6 +386,24 @@ static void free_buffer(void *buffer)
 	}
 }
 
+static void on_message(u8 *msg, int len)
+{
+	if (len == 0)
+		return;
+	GameEvent *event = (GameEvent *)msg;
+	switch (event->type)
+	{
+	case GameEvent::Chat:
+		if (chatCallback != nullptr && GameEvent::chatMessageLen(len) > 0)
+			chatCallback(event->u.chat.playerNum, std::string(event->u.chat.message, GameEvent::chatMessageLen(len)));
+		break;
+
+	default:
+		WARN_LOG(NETWORK, "Unknown app message type %d", event->type);
+		break;
+	}
+}
+
 void startSession(int localPort, int localPlayerNum)
 {
 	GGPOSessionCallbacks cb{};
@@ -378,6 +414,7 @@ void startSession(int localPort, int localPlayerNum)
 	cb.free_buffer     = free_buffer;
 	cb.on_event        = on_event;
 	cb.log_game_state  = log_game_state;
+	cb.on_message      = on_message;
 
 #ifdef SYNC_TEST
 	GGPOErrorCode result = ggpo_start_synctest(&ggpoSession, &cb, settings.content.gameId.c_str(), MAX_PLAYERS, sizeof(kcode[0]), 1);
@@ -756,6 +793,22 @@ void endOfFrame()
 	}
 }
 
+void sendChatMessage(int playerNum, const std::string& msg) {
+	if (!active())
+		return;
+	GameEvent event;
+	event.type = GameEvent::Chat;
+	event.u.chat.playerNum = playerNum;
+	size_t msgLen = std::min(msg.length(), sizeof(event.u.chat.message));
+	memcpy(event.u.chat.message, msg.c_str(), msgLen);
+	ggpo_send_message(ggpoSession, &event, sizeof(GameEvent) - sizeof(event.u.chat.message) + msgLen, true);
+}
+
+void receiveChatMessages(void (*callback)(int playerNum, const std::string& msg))
+{
+	chatCallback = callback;
+}
+
 }
 
 #else // LIBRETRO
@@ -787,6 +840,12 @@ void displayStats() {
 }
 
 void endOfFrame() {
+}
+
+void sendChatMessage(int playerNum, const std::string& msg) {
+}
+
+void receiveChatMessages(void (*callback)(int playerNum, const std::string& msg)) {
 }
 
 }
