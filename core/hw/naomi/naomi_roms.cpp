@@ -6164,9 +6164,7 @@ Game Games[] =
             { "ax0404m01.ic14", 0x4000000, 0x1000000 },
             { "ax0405m01.ic15", 0x5000000, 0x1000000 },
             { NULL, 0, 0 },
-        },
-        NULL,
-        &dolphin_inputs,
+        }
     },
     // Fist Of The North Star
     {
