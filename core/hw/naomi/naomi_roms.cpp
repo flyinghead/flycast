@@ -6266,7 +6266,9 @@ Game Games[] =
             { "ax0806m01.ic16", 0x6000000, 0x1000000 },
             { "ax0807m01.ic17", 0x7000000, 0x1000000 },
             { NULL, 0, 0 },
-        }
+        },
+        NULL,
+        &ggx15_inputs,
     },
     // The King of Fighters Neowave
     {
