@@ -38,6 +38,7 @@ public:
          Disconnected,
          NetworkInterrupted,
          NetworkResumed,
+		 AppData,
       };
 
       Type      type;
@@ -52,6 +53,11 @@ public:
          struct {
             int         disconnect_timeout;
          } network_interrupted;
+         struct {
+        	 bool spectators;
+        	 int size;
+        	 uint8 data[MAX_APPDATA_SIZE];
+         } app_data;
       } u;
 
       Event(Type t = Unknown) : type(t) { }
@@ -76,6 +82,7 @@ public:
    bool HandlesMsg(sockaddr_in &from, UdpMsg *msg);
    void OnMsg(UdpMsg *msg, int len);
    void Disconnect();
+   void SendAppData(const void *data, int len, bool spectators);
   
    void GetNetworkStats(struct GGPONetworkStats *stats);
    bool GetEvent(UdpProtocol::Event &e);
@@ -117,7 +124,6 @@ protected:
    void SendSyncRequest();
    void SendMsg(UdpMsg *msg);
    void PumpSendQueue();
-   void DispatchMsg(uint8 *buffer, int len);
    void SendPendingOutput();
    bool OnInvalid(UdpMsg *msg, int len);
    bool OnSyncRequest(UdpMsg *msg, int len);
@@ -127,6 +133,7 @@ protected:
    bool OnQualityReport(UdpMsg *msg, int len);
    bool OnQualityReply(UdpMsg *msg, int len);
    bool OnKeepAlive(UdpMsg *msg, int len);
+   bool OnAppData(UdpMsg *msg, int len);
 
 protected:
    /*

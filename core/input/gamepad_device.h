@@ -115,8 +115,10 @@ private:
 	};
 
 	template<DreamcastKey DcNegDir, DigAnalog NegDir, DigAnalog PosDir>
-	void buttonToAnalogInput(u32 port, DreamcastKey key, bool pressed, s8& joystick)
+	void buttonToAnalogInput(int port, DreamcastKey key, bool pressed, s8& joystick)
 	{
+		if (port < 0)
+			return;
 		DigAnalog axis = key == DcNegDir ? NegDir : PosDir;
 		if (pressed)
 			digitalToAnalogState[port] |= axis;

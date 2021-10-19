@@ -11,6 +11,7 @@
 #define MAX_COMPRESSED_BITS       4096
 #define UDP_MSG_MAX_PLAYERS          4
 #define MAX_VERIFICATION_SIZE      256
+#define MAX_APPDATA_SIZE           512
 
 #pragma pack(push, 1)
 
@@ -25,6 +26,7 @@ struct UdpMsg
       QualityReply  = 5,
       KeepAlive     = 6,
       InputAck      = 7,
+	  AppData       = 8
    };
 
    struct connect_status {
@@ -76,6 +78,12 @@ struct UdpMsg
          int               ack_frame:31;
       } input_ack;
 
+      struct {
+    	  uint16 size;
+    	  uint8 spectators;
+    	  uint8 data[MAX_APPDATA_SIZE];
+      } app_data;
+
    } u;
 
    int verification_size = 0;
@@ -86,8 +94,6 @@ public:
    }
 
    int PayloadSize() {
-      int size;
-
       switch (hdr.type) {
       case SyncRequest:   return (int)(&u.sync_request.verification[0] - (uint8 *)&u) + verification_size;
       case SyncReply:     return sizeof(u.sync_reply);
@@ -96,9 +102,12 @@ public:
       case InputAck:      return sizeof(u.input_ack);
       case KeepAlive:     return 0;
       case Input:
-         size = (int)((char *)&u.input.bits - (char *)&u.input);
-         size += (u.input.num_bits + 7) / 8;
-         return size;
+		  {
+			 int size = (int)((char *)&u.input.bits - (char *)&u.input);
+			 size += (u.input.num_bits + 7) / 8;
+			 return size;
+		  }
+      case AppData:       return sizeof(u.app_data) - sizeof(u.app_data.data) + u.app_data.size;
       }
       ASSERT(false);
       return 0;

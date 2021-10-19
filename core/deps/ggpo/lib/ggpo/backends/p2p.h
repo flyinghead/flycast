@@ -33,6 +33,7 @@ public:
    virtual GGPOErrorCode SetFrameDelay(GGPOPlayerHandle player, int delay);
    virtual GGPOErrorCode SetDisconnectTimeout(int timeout);
    virtual GGPOErrorCode SetDisconnectNotifyStart(int timeout);
+   GGPOErrorCode SendMessage(const void *msg, int len, bool spectators) override;
 
 public:
    virtual void OnMsg(sockaddr_in &from, UdpMsg *msg, int len);
