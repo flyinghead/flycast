@@ -20,7 +20,6 @@
 #include <memory>
 #include "maple_devs.h"
 #include "hw/naomi/naomi_cart.h"
-#include "input/gamepad_device.h"
 #include <xxhash.h>
 #include "oslib/oslib.h"
 #include "stdclass.h"
@@ -482,7 +481,7 @@ protected:
 		if (init_in_progress)
 			return 0;
 		const MapleInputState& inputState = mapleInputState[std::min(player_num, (int)ARRAY_SIZE(mapleInputState) - 1)];
-		if (inputState.absPointerX < 0 || inputState.absPointerX > 639 || inputState.absPointerY < 0 || inputState.absPointerY > 479)
+		if (inputState.absPos.x < 0 || inputState.absPos.x > 639 || inputState.absPos.y < 0 || inputState.absPos.y > 479)
 			return 0;
 		else
 			return 0x8000;
@@ -1494,8 +1493,8 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 								const MapleInputState& inputState = mapleInputState[std::min(playerNum, (int)ARRAY_SIZE(mapleInputState) - 1)];
 								u16 x;
 								u16 y;
-								if (inputState.absPointerX < 0 || inputState.absPointerX > 639
-										|| inputState.absPointerY < 0 || inputState.absPointerY > 479
+								if (inputState.absPos.x < 0 || inputState.absPos.x > 639
+										|| inputState.absPos.y < 0 || inputState.absPos.y > 479
 										|| (buttons[playerNum] & NAOMI_RELOAD_KEY) != 0)
 								{
 									x = 0;
@@ -1503,8 +1502,8 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 								}
 								else
 								{
-									x = inputState.absPointerX * 0xFFFF / 639;
-									y = inputState.absPointerY * 0xFFFF / 479;
+									x = inputState.absPos.x * 0xFFFF / 639;
+									y = inputState.absPos.y * 0xFFFF / 479;
 								}
 								LOGJVS("x,y:%4x,%4x ", x, y);
 								JVS_OUT(x >> 8);		// X, MSB
@@ -1571,10 +1570,8 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 						static s16 roty = 0;
 						// TODO Add more players.
 						// I can't think of any naomi multiplayer game that uses rotary encoders
-						rotx += mo_x_delta[first_player] * 5;
-						roty -= mo_y_delta[first_player] * 5;
-						mo_x_delta[first_player] = 0;
-						mo_y_delta[first_player] = 0;
+						rotx += mapleInputState[first_player].relPos.x * 5;
+						roty -= mapleInputState[first_player].relPos.y * 5;
 						LOGJVS("rotenc ");
 						for (int chan = 0; chan < buffer_in[cmdi + 1]; chan++)
 						{
@@ -1622,8 +1619,8 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 							// Ninja Assault:
 							u32 xr = 0x19d - 0x37;
 							u32 yr = 0x1fe - 0x40;
-							x = mapleInputState[playerNum].absPointerX * xr / 639 + 0x37;
-							y = mapleInputState[playerNum].absPointerY * yr / 479 + 0x40;
+							x = mapleInputState[playerNum].absPos.x * xr / 639 + 0x37;
+							y = mapleInputState[playerNum].absPos.y * yr / 479 + 0x40;
 						}
 						LOGJVS("lightgun %4x,%4x ", x, y);
 						JVS_OUT(x >> 8);		// X, MSB

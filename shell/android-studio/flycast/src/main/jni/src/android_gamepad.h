@@ -19,6 +19,7 @@
 #pragma once
 
 #include "input/gamepad_device.h"
+#include "input/mouse.h"
 #include <algorithm>
 
 static jobject input_device_manager;

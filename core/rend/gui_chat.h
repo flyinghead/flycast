@@ -100,7 +100,8 @@ public:
 
 	void receive(int playerNum, const std::string& msg)
 	{
-		visible = true;
+		if (config::GGPOChat)
+			visible = true;
 		std::string line = "<" + playerName(true) + "> " + msg;
 		lines.push_back(std::make_pair(YELLOW, line));
 		newMessage = true;

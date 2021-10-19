@@ -738,7 +738,9 @@ if(NOT LIBRETRO)
 	        core/input/gamepad_device.h
 	        core/input/keyboard_device.h
 	        core/input/mapping.cpp
-	        core/input/mapping.h)
+	        core/input/mapping.h
+	        core/input/mouse.cpp
+	        core/input/mouse.h)
 endif()
 
 if(WIN32)
