@@ -513,6 +513,17 @@ static InputDescriptors kov7sprt_inputs = {
       },
 };
 
+static InputDescriptors dolphin_inputs = {
+      {
+            { AWAVE_BTN0_KEY, "SHOOT" },
+            { AWAVE_BTN1_KEY, "JUMP" },
+            { AWAVE_BTN2_KEY, "SPECIAL" },
+            AW_START_DESC
+            AW_BASE_BTN_DESC
+      },
+};
+
+
 static InputDescriptors guilty_gear_aw_inputs = AW_5_BUTTONS("KICK", "SLASH", "HSLASH", "PUNCH", "DUST ATTACK");
 
 static InputDescriptors ftspeed_inputs = {
