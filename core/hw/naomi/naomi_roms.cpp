@@ -6120,7 +6120,9 @@ Game Games[] =
             { "ax0606m01.ic16", 0x6000000, 0x1000000 },
             { "ax0607m01.ic17", 0x7000000, 0x1000000 },
             { NULL, 0, 0 },
-        }
+        },
+        NULL,
+        &demofist_inputs,
     },
     // Dirty Pigskin Football
     {

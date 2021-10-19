@@ -523,6 +523,15 @@ static InputDescriptors dolphin_inputs = {
       },
 };
 
+static InputDescriptors demofist_inputs = {
+      {
+            { AWAVE_BTN0_KEY, "GUARD" },
+            { AWAVE_BTN1_KEY, "ATTACK" },
+            { AWAVE_BTN2_KEY, "JUMP" },
+            AW_START_DESC
+            AW_BASE_BTN_DESC
+      },
+};
 
 static InputDescriptors guilty_gear_aw_inputs = AW_5_BUTTONS("KICK", "SLASH", "HSLASH", "PUNCH", "DUST ATTACK");
 
