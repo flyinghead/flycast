@@ -6074,7 +6074,7 @@ Game Games[] =
             { NULL, 0, 0 },
         },
         NULL,
-        &blockpong_inputs,
+        &blokpong_inputs,
     },
     // Sega Clay Challenge
     {
@@ -6437,7 +6437,7 @@ Game Games[] =
             { NULL, 0, 0 },
         },
         NULL,
-        &ngbc_inputs
+        &ngbc_inputs,
     },
     // NeoGeo Battle Coliseum (Japan)
     {
@@ -6462,7 +6462,7 @@ Game Games[] =
             { NULL, 0, 0 },
         },
         NULL,
-        &ngbc_inputs
+        &ngbc_inputs,
     },
     // Ranger Mission
     {
@@ -6645,7 +6645,7 @@ Game Games[] =
             { NULL, 0, 0 },
         },
         NULL,
-        &samsptk_inputs
+        &samsptk_inputs,
     },
     // Sports Shooting USA
     {
