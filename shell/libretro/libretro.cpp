@@ -116,6 +116,21 @@ u8 lt[4];
 u32 vks[4];
 s8 joyx[4], joyy[4];
 s8 joyrx[4], joyry[4];
+// Mouse buttons
+// bit 0: Button C
+// bit 1: Right button (B)
+// bit 2: Left button (A)
+// bit 3: Wheel button
+u8 mo_buttons[4] = { 0xFF, 0xFF, 0xFF, 0xFF };
+// Relative mouse coordinates [-512:511]
+f32 mo_x_delta[4];
+f32 mo_y_delta[4];
+f32 mo_wheel_delta[4];
+// Absolute mouse coordinates
+// Range [0:639] [0:479]
+// but may be outside this range if the pointer is offscreen or outside the 4:3 window.
+s32 mo_x_abs[4];
+s32 mo_y_abs[4];
 
 static bool enable_purupuru = true;
 static u32 vib_stop_time[4];
@@ -151,6 +166,7 @@ static void init_disk_control_interface();
 static bool read_m3u(const char *file);
 void UpdateInputState();
 void gui_display_notification(const char *msg, int duration);
+static void updateVibration(u32 port, float power, float inclination, u32 durationMs);
 
 static std::string game_data;
 static char g_base_name[128];
@@ -276,6 +292,7 @@ void retro_init()
 		ERROR_LOG(VMEM, "Cannot reserve memory space");
 
 	os_InstallFaultHandler();
+	MapleConfigMap::UpdateVibration = updateVibration;
 }
 
 void retro_deinit()
@@ -2571,7 +2588,7 @@ void UpdateInputState()
 	UpdateInputState(3);
 }
 
-void UpdateVibration(u32 port, float power, float inclination, u32 durationMs)
+static void updateVibration(u32 port, float power, float inclination, u32 durationMs)
 {
 	if (!rumble.set_rumble_state)
 		return;
@@ -2583,8 +2600,8 @@ void UpdateVibration(u32 port, float power, float inclination, u32 durationMs)
 	vib_delta[port] = inclination;
 }
 
-extern u8 kb_key[4][6];	// normal keys pressed
-extern u8 kb_shift[4];	// modifier keys pressed (bitmask)
+u8 kb_key[4][6];	// normal keys pressed
+u8 kb_shift[4];	// modifier keys pressed (bitmask)
 static int kb_used;
 
 static void release_key(unsigned dc_keycode)

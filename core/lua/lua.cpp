@@ -26,6 +26,7 @@
 #include "cfg/option.h"
 #include "emulator.h"
 #include "input/gamepad_device.h"
+#include "input/mouse.h"
 #include "hw/maple/maple_devs.h"
 #include "hw/maple/maple_if.h"
 #include "stdclass.h"

@@ -22,6 +22,7 @@
 
 #include <cmath>
 #include "input/gamepad_device.h"
+#include "input/mouse.h"
 #include "rend/gui.h"
 
 enum IOSButton {

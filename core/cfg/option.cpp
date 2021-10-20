@@ -120,6 +120,7 @@ Option<bool> GGPOEnable("GGPO", false, "network");
 Option<int> GGPODelay("GGPODelay", 0, "network");
 Option<bool> NetworkStats("Stats", true, "network");
 Option<int> GGPOAnalogAxes("GGPOAnalogAxes", 0, "network");
+Option<bool> GGPOChat("GGPOChat", true, "network");
 
 #ifdef SUPPORT_DISPMANX
 Option<bool> DispmanxMaintainAspect("maintain_aspect", true, "dispmanx");

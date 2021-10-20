@@ -20,6 +20,8 @@
 #include "hw/maple/maple_cfg.h"
 #include "hw/maple/maple_devs.h"
 #include "input/gamepad_device.h"
+#include "input/keyboard_device.h"
+#include "input/mouse.h"
 #include "cfg/option.h"
 #include <algorithm>
 
@@ -42,8 +44,17 @@ static void getLocalInput(MapleInputState inputState[4])
 		state.fullAxes[PJAI_Y1] = joyy[player];
 		state.fullAxes[PJAI_X2] = joyrx[player];
 		state.fullAxes[PJAI_Y2] = joyry[player];
-		state.absPointerX = mo_x_abs[player];
-		state.absPointerY = mo_y_abs[player];
+		state.mouseButtons = mo_buttons[player];
+		state.absPos.x = mo_x_abs[player];
+		state.absPos.y = mo_y_abs[player];
+		state.keyboard.shift = kb_shift[player];
+		memcpy(state.keyboard.key, kb_key[player], sizeof(kb_key[player]));
+		state.relPos.x = std::round(mo_x_delta[player]);
+		state.relPos.y = std::round(mo_y_delta[player]);
+		state.relPos.wheel = std::round(mo_wheel_delta[player]);
+		mo_x_delta[player] -= state.relPos.x;
+		mo_y_delta[player] -= state.relPos.y;
+		mo_wheel_delta[player] -= state.relPos.wheel;
 	}
 }
 
@@ -101,6 +112,9 @@ static bool _endOfFrame;
 static MiniUPnP miniupnp;
 static int analogAxes;
 static bool absPointerPos;
+static bool keyboardGame;
+static bool mouseGame;
+static int inputSize;
 static bool inRollback;
 static void (*chatCallback)(int playerNum, const std::string& msg);
 
@@ -122,6 +136,30 @@ static int lastSavedFrame = -1;
 static int timesyncOccurred;
 
 #pragma pack(push, 1)
+struct Inputs
+{
+	u32 kcode:20;
+	u32 mouseButtons:4;
+	u8 kbModifiers;
+
+	union {
+		struct {
+			u8 x;
+			u8 y;
+		} analog;
+		struct {
+			s16 x;
+			s16 y;
+		} absPos;
+		struct {
+			s16 x;
+			s16 y;
+			s16 wheel;
+		} relPos;
+		u8 keys[6];
+	} u;
+};
+
 struct GameEvent
 {
 	enum : char {
@@ -440,8 +478,14 @@ void startSession(int localPort, int localPlayerNum)
 	{
 		analogAxes = 0;
 		absPointerPos = false;
+		keyboardGame = false;
+		mouseGame = false;
 		if (settings.input.JammaSetup == JVS::LightGun || settings.input.JammaSetup == JVS::LightGunAsAnalog)
 			absPointerPos = true;
+		else if (settings.input.JammaSetup == JVS::Keyboard)
+			keyboardGame = true;
+		else if (settings.input.JammaSetup == JVS::RotaryEncoders)
+			mouseGame = true;
 		else if (NaomiGameInputs != nullptr)
 		{
 			for (const auto& axis : NaomiGameInputs->axes)
@@ -454,7 +498,8 @@ void startSession(int localPort, int localPlayerNum)
 		}
 		NOTICE_LOG(NETWORK, "GGPO: Using %d full analog axes", analogAxes);
 	}
-	const u32 inputSize = sizeof(kcode[0]) + analogAxes + (int)absPointerPos * 4;
+	inputSize = sizeof(kcode[0]) + analogAxes + (int)absPointerPos * sizeof(Inputs::u.absPos)
+		+ (int)keyboardGame * sizeof(Inputs::u.keys) + (int)mouseGame * sizeof(Inputs::u.relPos);
 
 	VerificationData verif;
 	MD5Sum().add(settings.network.md5.bios)
@@ -551,10 +596,9 @@ void getInput(MapleInputState inputState[4])
 	for (int player = 0; player < 4; player++)
 		inputState[player] = {};
 
-	u32 inputSize = sizeof(u32) + analogAxes + (int)absPointerPos * 4;
-	std::vector<u8> inputs(inputSize * MAX_PLAYERS);
+	std::vector<u8> inputData(inputSize * MAX_PLAYERS);
 	// should not call any callback
-	GGPOErrorCode error = ggpo_synchronize_input(ggpoSession, (void *)&inputs[0], inputs.size(), nullptr);
+	GGPOErrorCode error = ggpo_synchronize_input(ggpoSession, (void *)&inputData[0], inputData.size(), nullptr);
 	if (error != GGPO_OK)
 	{
 		stopSession();
@@ -564,17 +608,30 @@ void getInput(MapleInputState inputState[4])
 	for (int player = 0; player < MAX_PLAYERS; player++)
 	{
 		MapleInputState& state = inputState[player];
-		state.kcode = ~(*(u32 *)&inputs[player * inputSize]);
+		const Inputs *inputs = (Inputs *)&inputData[player * inputSize];
+		state.kcode = ~inputs->kcode;
 		if (analogAxes > 0)
 		{
-			state.fullAxes[PJAI_X1] = inputs[player * inputSize + 4];
+			state.fullAxes[PJAI_X1] = inputs->u.analog.x;
 			if (analogAxes >= 2)
-				state.fullAxes[PJAI_Y1] = inputs[player * inputSize + 5];
+				state.fullAxes[PJAI_Y1] = inputs->u.analog.y;
 		}
 		else if (absPointerPos)
 		{
-			state.absPointerX = *(s16 *)&inputs[player * inputSize + 4];
-			state.absPointerY = *(s16 *)&inputs[player * inputSize + 6];
+			state.absPos.x = inputs->u.absPos.x;
+			state.absPos.y = inputs->u.absPos.y;
+		}
+		else if (keyboardGame)
+		{
+			memcpy(state.keyboard.key, inputs->u.keys, sizeof(state.keyboard.key));
+			state.keyboard.shift = inputs->kbModifiers;
+		}
+		else if (mouseGame)
+		{
+			state.relPos.x = inputs->u.relPos.x;
+			state.relPos.y = inputs->u.relPos.y;
+			state.relPos.wheel = inputs->u.relPos.wheel;
+			state.mouseButtons = ~inputs->mouseButtons;
 		}
 		state.halfAxes[PJTI_R] = (state.kcode & BTN_TRIGGER_RIGHT) == 0 ? 255 : 0;
 		state.halfAxes[PJTI_L] = (state.kcode & BTN_TRIGGER_LEFT) == 0 ? 255 : 0;
@@ -620,30 +677,43 @@ bool nextFrame()
 	do {
 		if (!config::ThreadedRendering)
 			UpdateInputState();
-		u32 input = ~kcode[localPlayerNum];
+		Inputs inputs;
+		inputs.kcode = ~kcode[localPlayerNum];
 		if (rt[localPlayerNum] >= 64)
-			input |= BTN_TRIGGER_RIGHT;
+			inputs.kcode |= BTN_TRIGGER_RIGHT;
 		else
-			input &= ~BTN_TRIGGER_RIGHT;
+			inputs.kcode &= ~BTN_TRIGGER_RIGHT;
 		if (lt[localPlayerNum] >= 64)
-			input |= BTN_TRIGGER_LEFT;
+			inputs.kcode |= BTN_TRIGGER_LEFT;
 		else
-			input &= ~BTN_TRIGGER_LEFT;
-		u32 inputSize = sizeof(input) + analogAxes + (int)absPointerPos * 4;
-		std::vector<u8> allInput(inputSize);
-		*(u32 *)&allInput[0] = input;
+			inputs.kcode &= ~BTN_TRIGGER_LEFT;
 		if (analogAxes > 0)
 		{
-			allInput[4] = joyx[localPlayerNum];
+			inputs.u.analog.x = joyx[localPlayerNum];
 			if (analogAxes >= 2)
-				allInput[5] = joyy[localPlayerNum];
+				inputs.u.analog.y = joyy[localPlayerNum];
 		}
 		else if (absPointerPos)
 		{
-			*(s16 *)&allInput[4] = mo_x_abs[localPlayerNum];
-			*(s16 *)&allInput[6] = mo_y_abs[localPlayerNum];
+			inputs.u.absPos.x = mo_x_abs[localPlayerNum];
+			inputs.u.absPos.y = mo_y_abs[localPlayerNum];
 		}
-		GGPOErrorCode result = ggpo_add_local_input(ggpoSession, localPlayer, &allInput[0], inputSize);
+		else if (keyboardGame)
+		{
+			inputs.kbModifiers = kb_shift[localPlayerNum];
+			memcpy(inputs.u.keys, kb_key[localPlayerNum], sizeof(kb_key[localPlayerNum]));
+		}
+		else if (mouseGame)
+		{
+			inputs.mouseButtons = ~mo_buttons[localPlayerNum];
+			inputs.u.relPos.x = std::round(mo_x_delta[localPlayerNum]);
+			inputs.u.relPos.y = std::round(mo_y_delta[localPlayerNum]);
+			inputs.u.relPos.wheel = std::round(mo_wheel_delta[localPlayerNum]);
+			mo_x_delta[localPlayerNum] -= inputs.u.relPos.x;
+			mo_y_delta[localPlayerNum] -= inputs.u.relPos.y;
+			mo_wheel_delta[localPlayerNum] -= inputs.u.relPos.wheel;
+		}
+		GGPOErrorCode result = ggpo_add_local_input(ggpoSession, localPlayer, &inputs, inputSize);
 		if (result == GGPO_OK)
 			break;
 		if (result != GGPO_ERRORCODE_PREDICTION_THRESHOLD)
