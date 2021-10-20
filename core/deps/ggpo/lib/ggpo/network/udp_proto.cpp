@@ -286,14 +286,17 @@ UdpProtocol::SendMsg(UdpMsg *msg)
 {
    LogMsg("send", msg);
 
-   _packets_sent++;
-   _last_send_time = Platform::GetCurrentTimeMS();
-   _bytes_sent += msg->PacketSize();
+   {
+	   std::lock_guard<std::mutex> lock(_send_mutex);
+	   _packets_sent++;
+	   _last_send_time = Platform::GetCurrentTimeMS();
+	   _bytes_sent += msg->PacketSize();
 
-   msg->hdr.magic = _magic_number;
-   msg->hdr.sequence_number = _next_send_seq++;
+	   msg->hdr.magic = _magic_number;
+	   msg->hdr.sequence_number = _next_send_seq++;
 
-   _send_queue.push(QueueEntry(Platform::GetCurrentTimeMS(), _peer_addr, msg));
+	   _send_queue.push(QueueEntry(Platform::GetCurrentTimeMS(), _peer_addr, msg));
+   }
    PumpSendQueue();
 }
 
@@ -753,6 +756,7 @@ UdpProtocol::SetDisconnectNotifyStart(int timeout)
 void
 UdpProtocol::PumpSendQueue()
 {
+   std::lock_guard<std::mutex> lock(_send_mutex);
    while (!_send_queue.empty()) {
       QueueEntry &entry = _send_queue.front();
 
@@ -793,6 +797,7 @@ UdpProtocol::PumpSendQueue()
 void
 UdpProtocol::ClearSendQueue()
 {
+   std::lock_guard<std::mutex> lock(_send_mutex);
    while (!_send_queue.empty()) {
       delete _send_queue.front().msg;
       _send_queue.pop();

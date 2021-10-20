@@ -159,6 +159,7 @@ struct Inputs
 		u8 keys[6];
 	} u;
 };
+static_assert(sizeof(Inputs) == 10, "wrong Inputs size");
 
 struct GameEvent
 {
@@ -183,6 +184,7 @@ struct GameEvent
 static bool begin_game(const char *)
 {
 	DEBUG_LOG(NETWORK, "Game begin");
+	rend_allow_rollback();
 	return true;
 }
 
