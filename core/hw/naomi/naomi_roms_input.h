@@ -579,7 +579,7 @@ static InputDescriptors ngbc_inputs = AW_5_BUTTONS("LP", "SP", "SWAP", "LK", "SK
 
 static InputDescriptors samsptk_inputs = AW_5_BUTTONS("LIGHT SLASH", "MEDIUM SLASH", "STRONG SLASH", "KICK", "SPECIAL EVASION");
 
-static InputDescriptors blockpong_inputs = {
+static InputDescriptors blokpong_inputs = {
 	  {
 			AW_START_DESC
 			AW_BASE_BTN_DESC
@@ -594,6 +594,6 @@ static InputDescriptors blockpong_inputs = {
 
 static InputDescriptors fotns_inputs = AW_5_BUTTONS("LP", "HP", "BOOST", "LK", "HK");
 
-static InputDescriptors mslug6_inputs = AW_5_BUTTONS("Shoot", "Jump", "Switch", "Grenade", "Mslug Attack");
+static InputDescriptors mslug6_inputs = AW_5_BUTTONS("SHOOT", "JUMP", "GRENADE", "METAL SLUG ATTACK", "SWITCH WEAPONS");
 
 static InputDescriptors rumblef_inputs = AW_5_BUTTONS("LP", "SP", "Dodge", "LK", "SK");
