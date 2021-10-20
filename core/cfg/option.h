@@ -492,6 +492,7 @@ extern Option<bool> GGPOEnable;
 extern Option<int> GGPODelay;
 extern Option<bool> NetworkStats;
 extern Option<int> GGPOAnalogAxes;
+extern Option<bool> GGPOChat;
 
 #ifdef SUPPORT_DISPMANX
 extern Option<bool> DispmanxMaintainAspect;

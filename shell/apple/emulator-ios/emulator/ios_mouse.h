@@ -7,7 +7,7 @@
 #pragma once
 #import <GameController/GameController.h>
 
-#include "input/gamepad_device.h"
+#include "input/mouse.h"
 
 class API_AVAILABLE(ios(14.0)) IOSMouse : public SystemMouse
 {

@@ -2,11 +2,12 @@
 #include "maple_helper.h"
 #include "maple_if.h"
 #include "hw/naomi/naomi_cart.h"
-#include "input/gamepad_device.h"
 #include "cfg/option.h"
 #include "stdclass.h"
 
 MapleInputState mapleInputState[4];
+
+void (*MapleConfigMap::UpdateVibration)(u32 port, float power, float inclination, u32 duration_ms);
 
 static u8 GetBtFromSgn(s8 val)
 {
@@ -156,20 +157,24 @@ void MapleConfigMap::SetImage(u8 *img)
 void MapleConfigMap::GetAbsCoordinates(int& x, int& y)
 {
 	const MapleInputState& inputState = mapleInputState[playerNum()];
-	x = inputState.absPointerX;
-	y = inputState.absPointerY;
+	x = inputState.absPos.x;
+	y = inputState.absPos.y;
 }
 
 void MapleConfigMap::GetMouseInput(u8& buttons, int& x, int& y, int& wheel)
 {
-	u32 playerNum = this->playerNum();
-	buttons = mo_buttons[playerNum] & 0xff;
-	x = (int)std::round(mo_x_delta[playerNum]);
-	y = (int)std::round(mo_y_delta[playerNum]);
-	wheel = (int)std::round(mo_wheel_delta[playerNum]);
-	mo_x_delta[playerNum] = 0;
-	mo_y_delta[playerNum] = 0;
-	mo_wheel_delta[playerNum] = 0;
+	const MapleInputState& inputState = mapleInputState[playerNum()];
+	buttons = inputState.mouseButtons;
+	x = inputState.relPos.x;
+	y = inputState.relPos.y * (invertMouseY ? -1 : 1);
+	wheel = inputState.relPos.wheel;
+}
+
+void MapleConfigMap::GetKeyboardInput(u8& shift, u8 keys[6])
+{
+	const MapleInputState& inputState = mapleInputState[playerNum()];
+	shift = inputState.keyboard.shift;
+	memcpy(keys, inputState.keyboard.key, sizeof(inputState.keyboard.key));
 }
 
 bool maple_atomiswave_coin_chute(int slot)
@@ -201,7 +206,10 @@ static void createNaomiDevices()
 	mcfg_DestroyDevices();
 	mcfg_Create(MDT_NaomiJamma, 0, 5);
 	if (settings.input.JammaSetup == JVS::Keyboard)
+	{
 		mcfg_Create(MDT_Keyboard, 1, 5, 0);
+		mcfg_Create(MDT_Keyboard, 2, 5, 1);
+	}
 	else
 	{
 		// Connect VMU B1
@@ -247,6 +255,11 @@ static void createAtomiswaveDevices()
 		// Waiwai drive needs two track-balls
 		mcfg_Create(MDT_Mouse, 2, 5, 0);
 		mcfg_Create(MDT_Mouse, 3, 5, 1);
+		if (settings.content.gameId == "DRIVE")
+		{
+			MapleDevices[2][5]->config->invertMouseY = true;
+			MapleDevices[3][5]->config->invertMouseY = true;
+		}
 	}
 }
 

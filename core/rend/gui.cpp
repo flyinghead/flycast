@@ -31,6 +31,7 @@
 #include "network/ggpo.h"
 #include "wsi/context.h"
 #include "input/gamepad_device.h"
+#include "input/mouse.h"
 #include "gui_util.h"
 #include "gui_android.h"
 #include "game_scanner.h"
@@ -45,9 +46,6 @@
 #include "gui_chat.h"
 
 static bool game_started;
-
-extern u8 kb_shift[MAPLE_PORTS]; // shift keys pressed (bitmask)
-extern u8 kb_key[MAPLE_PORTS][6];		// normal keys pressed
 
 int screen_dpi = 96;
 int insetLeft, insetRight, insetTop, insetBottom;
@@ -279,6 +277,16 @@ void gui_keyboard_inputUTF8(const std::string& s)
 		io.AddInputCharactersUTF8(s.c_str());
 }
 
+void gui_keyboard_key(u8 keyCode, bool pressed, u8 modifiers)
+{
+	if (!inited)
+		return;
+	ImGuiIO& io = ImGui::GetIO();
+	io.KeyCtrl = (modifiers & (0x01 | 0x10)) != 0;
+	io.KeyShift = (modifiers & (0x02 | 0x20)) != 0;
+	io.KeysDown[keyCode] = pressed;
+}
+
 bool gui_keyboard_captured()
 {
 	ImGuiIO& io = ImGui::GetIO();
@@ -323,21 +331,6 @@ static void ImGui_Impl_NewFrame()
 
 	ImGuiIO& io = ImGui::GetIO();
 
-	// Read keyboard modifiers inputs
-	io.KeyCtrl = 0;
-	io.KeyShift = 0;
-	io.KeyAlt = false;
-	io.KeySuper = false;
-	memset(&io.KeysDown[0], 0, sizeof(io.KeysDown));
-	for (int port = 0; port < 4; port++)
-	{
-		io.KeyCtrl |= (kb_shift[port] & (0x01 | 0x10)) != 0;
-		io.KeyShift |= (kb_shift[port] & (0x02 | 0x20)) != 0;
-
-		for (int i = 0; i < IM_ARRAYSIZE(kb_key[0]); i++)
-			if (kb_key[port][i] != 0)
-				io.KeysDown[kb_key[port][i]] = true;
-	}
 	if (mouseX < 0 || mouseX >= settings.display.width || mouseY < 0 || mouseY >= settings.display.height)
 		io.MousePos = ImVec2(-FLT_MAX, -FLT_MAX);
 	else
@@ -1895,6 +1888,7 @@ static void gui_display_settings()
 					ImGui::SameLine();
 					OptionRadioButton<int>("Full", config::GGPOAnalogAxes, 2, "Use the left thumbstick horizontal and vertical axes");
 
+					OptionCheckbox("Enable Chat", config::GGPOChat, "Open the chat window when a chat message is received");
 					OptionCheckbox("Network Statistics", config::NetworkStats,
 			    			"Display network statistics on screen");
 		    	}

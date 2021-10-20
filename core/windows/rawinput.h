@@ -18,6 +18,7 @@
 */
 #include "input/gamepad_device.h"
 #include "input/keyboard_device.h"
+#include "input/mouse.h"
 #include "rend/gui.h"
 #include <windows.h>
 

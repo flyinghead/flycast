@@ -404,41 +404,40 @@ static inline void setFlag(int& v, u32 bitmask, bool set)
 template <typename Keycode>
 void KeyboardDeviceTemplate<Keycode>::keyboard_input(Keycode keycode, bool pressed, int modifier_keys)
 {
-	const int port = maple_port();
-	if (port < 0 || port > (int)ARRAY_SIZE(kb_key))
-		return;
-
 	u8 dc_keycode = convert_keycode(keycode);
-	if (port < (int)ARRAY_SIZE(kb_key))
+	// Some OSes (Mac OS) don't distinguish left and right modifier keys to we set them both.
+	// But not for Alt since Right Alt is used as a special modifier keys on some international
+	// keyboards.
+	switch (dc_keycode)
 	{
-		// Some OSes (Mac OS) don't distinguish left and right modifier keys to we set them both.
-		// But not for Alt since Right Alt is used as a special modifier keys on some international
-		// keyboards.
-		switch (dc_keycode)
-		{
-			case 0xE1: // Left Shift
-			case 0xE5: // Right Shift
-				setFlag(_modifier_keys, DC_KBMOD_LEFTSHIFT | DC_KBMOD_RIGHTSHIFT, pressed);
-				break;
-			case 0xE0: // Left Ctrl
-			case 0xE4: // Right Ctrl
-				setFlag(_modifier_keys, DC_KBMOD_LEFTCTRL | DC_KBMOD_RIGHTCTRL, pressed);
-				break;
-			case 0xE2: // Left Alt
-				setFlag(_modifier_keys, DC_KBMOD_LEFTALT, pressed);
-				break;
-			case 0xE6: // Right Alt
-				setFlag(_modifier_keys, DC_KBMOD_RIGHTALT, pressed);
-				break;
-			case 0xE7: // S2 special key
-				setFlag(_modifier_keys, DC_KBMOD_S2, pressed);
-				break;
-			default:
-				break;
-		}
+		case 0xE1: // Left Shift
+		case 0xE5: // Right Shift
+			setFlag(_modifier_keys, DC_KBMOD_LEFTSHIFT | DC_KBMOD_RIGHTSHIFT, pressed);
+			break;
+		case 0xE0: // Left Ctrl
+		case 0xE4: // Right Ctrl
+			setFlag(_modifier_keys, DC_KBMOD_LEFTCTRL | DC_KBMOD_RIGHTCTRL, pressed);
+			break;
+		case 0xE2: // Left Alt
+			setFlag(_modifier_keys, DC_KBMOD_LEFTALT, pressed);
+			break;
+		case 0xE6: // Right Alt
+			setFlag(_modifier_keys, DC_KBMOD_RIGHTALT, pressed);
+			break;
+		case 0xE7: // S2 special key
+			setFlag(_modifier_keys, DC_KBMOD_S2, pressed);
+			break;
+		default:
+			break;
+	}
+	const int port = maple_port();
+	if (port >= 0 && port < (int)ARRAY_SIZE(kb_shift))
 		kb_shift[port] = _modifier_keys;
 
-		if (dc_keycode != 0 && dc_keycode < 0xE0)
+	if (dc_keycode != 0 && dc_keycode < 0xE0)
+	{
+		gui_keyboard_key(dc_keycode, pressed, _modifier_keys);
+		if (port >= 0 && port < (int)ARRAY_SIZE(kb_key))
 		{
 			if (pressed)
 			{
@@ -474,7 +473,6 @@ void KeyboardDeviceTemplate<Keycode>::keyboard_input(Keycode keycode, bool press
 	if (gui_keyboard_captured())
 	{
 		// chat: disable the keyboard controller. Only accept emu keys (menu, escape...)
-		const int port = maple_port();
 		set_maple_port(-1);
 		gamepad_btn_input(dc_keycode, pressed);
 		set_maple_port(port);

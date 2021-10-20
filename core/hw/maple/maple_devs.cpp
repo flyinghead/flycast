@@ -1042,10 +1042,6 @@ struct maple_sega_purupuru : maple_base
 	}
 };
 
-u8 kb_shift[MAPLE_PORTS];	// shift keys pressed (bitmask)
-u8 kb_led[MAPLE_PORTS]; 	// leds currently lit
-u8 kb_key[MAPLE_PORTS][6];	// normal keys pressed
-
 struct maple_keyboard : maple_base
 {
 	MapleDeviceType get_device_type() override
@@ -1102,16 +1098,21 @@ struct maple_keyboard : maple_base
 			return cmd == MDC_DeviceRequest ? MDRS_DeviceStatus : MDRS_DeviceStatusAll;
 
 		case MDCF_GetCondition:
-			w32(MFID_6_Keyboard);
-			//struct data
-			//int8 shift          ; shift keys pressed (bitmask)	//1
-			w8(kb_shift[player_num]);
-			//int8 led            ; leds currently lit			//1
-			w8(kb_led[player_num]);
-			//int8 key[6]         ; normal keys pressed			//6
-			for (int i = 0; i < 6; i++)
-				w8(kb_key[player_num][i]);
+			{
+				u8 shift;
+				u8 keys[6];
+				config->GetKeyboardInput(shift, keys);
 
+				w32(MFID_6_Keyboard);
+				//struct data
+				//int8 shift          ; shift keys pressed (bitmask)	//1
+				w8(shift);
+				//int8 led            ; leds currently lit			//1
+				w8(0);
+				//int8 key[6]         ; normal keys pressed			//6
+				for (int i = 0; i < 6; i++)
+					w8(keys[i]);
+			}
 			return MDRS_DataTransfer;
 
 		case MDC_DeviceReset:
@@ -1126,28 +1127,6 @@ struct maple_keyboard : maple_base
 		}
 	}
 };
-
-// Mouse buttons
-// bit 0: Button C
-// bit 1: Right button (B)
-// bit 2: Left button (A)
-// bit 3: Wheel button
-u8 mo_buttons[4] = { 0xFF, 0xFF, 0xFF, 0xFF };
-// Relative mouse coordinates [-512:511]
-f32 mo_x_delta[4];
-f32 mo_y_delta[4];
-f32 mo_wheel_delta[4];
-// Absolute mouse coordinates
-// Range [0:639] [0:479]
-// but may be outside this range if the pointer is offscreen or outside the 4:3 window.
-s32 mo_x_abs[4];
-s32 mo_y_abs[4];
-// previous mouse coordinates for relative motion
-s32 mo_x_prev[4] = { -1, -1, -1, -1 };
-s32 mo_y_prev[4] = { -1, -1, -1, -1 };
-// last known screen/window size
-static s32 mo_width;
-static s32 mo_height;
 
 struct maple_mouse : maple_base
 {
@@ -1411,78 +1390,3 @@ maple_device* maple_Create(MapleDeviceType type)
 	return rv;
 }
 
-static void screenToNative(int& x, int& y, int width, int height)
-{
-	float fx, fy;
-	if (!config::Rotate90)
-	{
-		float scale = 480.f / height;
-		fy = y * scale;
-		scale /= config::ScreenStretching / 100.f;
-		fx = (x - (width - 640.f / scale) / 2.f) * scale;
-	}
-	else
-	{
-		float scale = 640.f / width;
-		fx = x * scale;
-		scale /= config::ScreenStretching / 100.f;
-		fy = (y - (height - 480.f / scale) / 2.f) * scale;
-	}
-	x = (int)std::round(fx);
-	y = (int)std::round(fy);
-}
-
-void SetMousePosition(int x, int y, int width, int height, u32 mouseId)
-{
-	if (mouseId >= MAPLE_PORTS)
-		return;
-	mo_width = width;
-	mo_height = height;
-
-	if (config::Rotate90)
-	{
-		int t = y;
-		y = x;
-		x = height - 1 - t;
-		std::swap(width, height);
-	}
-	screenToNative(x, y, width, height);
-	mo_x_abs[mouseId] = x;
-	mo_y_abs[mouseId] = y;
-
-	if (mo_x_prev[mouseId] != -1)
-	{
-		mo_x_delta[mouseId] += (f32)(x - mo_x_prev[mouseId]) * config::MouseSensitivity / 100.f;
-		mo_y_delta[mouseId] += (f32)(y - mo_y_prev[mouseId]) * config::MouseSensitivity / 100.f;
-	}
-	mo_x_prev[mouseId] = x;
-	mo_y_prev[mouseId] = y;
-}
-
-void SetRelativeMousePosition(float xrel, float yrel, u32 mouseId)
-{
-	if (mouseId >= MAPLE_PORTS)
-		return;
-	int width = mo_width;
-	int height = mo_height;
-	if (config::Rotate90)
-	{
-		std::swap(xrel, yrel);
-		xrel = -xrel;
-		std::swap(width, height);
-	}
-	float dx = xrel * config::MouseSensitivity / 100.f;
-	float dy = yrel * config::MouseSensitivity / 100.f;
-	mo_x_delta[mouseId] += dx;
-	mo_y_delta[mouseId] += dy;
-	int minX = -width / 32;
-	int minY = -height / 32;
-	int maxX = width + width / 32;
-	int maxY = height + height / 32;
-	screenToNative(minX, minY, width, height);
-	screenToNative(maxX, maxY, width, height);
-	mo_x_abs[mouseId] += (int)std::round(dx);
-	mo_y_abs[mouseId] += (int)std::round(dy);
-	mo_x_abs[mouseId] = std::min(std::max(mo_x_abs[mouseId], minX), maxX);
-	mo_y_abs[mouseId] = std::min(std::max(mo_y_abs[mouseId], minY), maxY);
-}
