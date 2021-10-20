@@ -140,7 +140,7 @@ struct Inputs
 {
 	u32 kcode:20;
 	u32 mouseButtons:4;
-	u8 kbModifiers;
+	u32 kbModifiers:8;
 
 	union {
 		struct {
