@@ -594,6 +594,6 @@ static InputDescriptors blokpong_inputs = {
 
 static InputDescriptors fotns_inputs = AW_5_BUTTONS("LP", "HP", "BOOST", "LK", "HK");
 
-static InputDescriptors mslug6_inputs = AW_5_BUTTONS("Shoot", "Jump", "Switch", "Grenade", "Mslug Attack");
+static InputDescriptors mslug6_inputs = AW_5_BUTTONS("SHOOT", "JUMP", "GRENADE", "METAL SLUG ATTACK", "SWITCH WEAPONS");
 
 static InputDescriptors rumblef_inputs = AW_5_BUTTONS("LP", "SP", "Dodge", "LK", "SK");
