@@ -16,6 +16,7 @@
 #include "ggponet.h"
 #include "ring_buffer.h"
 #include <vector>
+#include <mutex>
 
 class UdpProtocol : public IPollSink
 {
@@ -153,6 +154,7 @@ protected:
       UdpMsg*     msg;
    }              _oo_packet;
    RingBuffer<QueueEntry, 64> _send_queue;
+   std::mutex     _send_mutex;
 
    std::vector<uint8> verification;
 

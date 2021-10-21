@@ -466,7 +466,8 @@ void rend_allow_rollback()
 
 void rend_start_rollback()
 {
-	vramRollback.Wait();
+	if (config::ThreadedRendering)
+		vramRollback.Wait();
 }
 
 void rend_serialize(void **data, unsigned int *total_size)
