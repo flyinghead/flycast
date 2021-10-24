@@ -4400,7 +4400,7 @@ Game Games[] =
             { NULL, 0, 0 },
         },
         NULL,
-        NULL, // SHOT(A)/(B)
+        &mamonoro_inputs, // SHOT(A)/(B)
         mamonoro_eeprom_dump
     },
     // Melty Blood Actress Again Version A (Japan, Rev A)
@@ -4562,7 +4562,9 @@ Game Games[] =
             { "ic9.bin", 0x4000000, 0x4000000 },
             { "317-5138-jpn.ic3", 0, 0x800,  0x0000000, Key },
             { NULL, 0, 0 },
-        }
+        },
+        NULL,
+        &radirgyn_inputs,
         // SHOT (A)/(B)/(C)
     },
     // Rhythm Tengoku
