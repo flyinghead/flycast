@@ -295,6 +295,8 @@ static InputDescriptors shot1234_inputs = INPUT_4_BUTTONS("SHOT1", "SHOT2", "SHO
 
 static InputDescriptors radirgyn_inputs = INPUT_3_BUTTONS("SHOOT", "SWORD", "SHIELD/SPECIAL");
 
+static InputDescriptors mamonoro_inputs = INPUT_2_BUTTONS("SHOOT", "SPECIAL");
+
 static InputDescriptors monkeyba_inputs = {
 	  {
 			NAO_START_DESC

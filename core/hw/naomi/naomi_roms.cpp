@@ -4400,7 +4400,7 @@ Game Games[] =
             { NULL, 0, 0 },
         },
         NULL,
-        NULL, // SHOT(A)/(B)
+        &mamonoro_inputs, // SHOT(A)/(B)
         mamonoro_eeprom_dump
     },
     // Melty Blood Actress Again Version A (Japan, Rev A)
