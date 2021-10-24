@@ -160,6 +160,15 @@ void dc_loadstate(int index)
 	if (zipFile.Open(filename, false))
 	{
 		total_size = (u32)zipFile.Size();
+		if (index == -1 && config::GGPOEnable)
+		{
+			f = zipFile.rawFile();
+			long pos = std::ftell(f);
+			MD5Sum().add(f)
+					.getDigest(settings.network.md5.savestate);
+			std::fseek(f, pos, SEEK_SET);
+			f = nullptr;
+		}
 	}
 	else
 	{
