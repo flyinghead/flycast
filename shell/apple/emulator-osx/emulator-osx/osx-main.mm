@@ -149,6 +149,8 @@ void emu_gles_init(int width, int height)
         std::string config_dir = std::string(home) + "/.reicast/";
         if (!file_exists(config_dir))
         	config_dir = std::string(home) + "/.flycast/";
+		if (!file_exists(config_dir))
+			config_dir = std::string(home) + "/Library/Application Support/Flycast/";
         int instanceNumber = (int)[[NSRunningApplication runningApplicationsWithBundleIdentifier:@"com.flyinghead.Flycast"] count];
         if (instanceNumber > 1){
             config_dir += std::to_string(instanceNumber) + "/";
