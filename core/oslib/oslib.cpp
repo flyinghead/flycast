@@ -19,6 +19,7 @@
 #include "oslib.h"
 #include "stdclass.h"
 #include "cfg/cfg.h"
+#include "cfg/option.h"
 
 namespace hostfs
 {
@@ -56,6 +57,12 @@ std::string findFlash(const std::string& prefix, const std::string& names)
 		std::string fullpath = get_readonly_data_path(name);
 		if (file_exists(fullpath))
 			return fullpath;
+		for (const auto& path : config::ContentPath.get())
+		{
+			fullpath = path + "/" + name;
+			if (file_exists(fullpath))
+				return fullpath;
+		}
 
 		start = semicolon;
 		if (start != npos)
@@ -72,7 +79,16 @@ std::string getFlashSavePath(const std::string& prefix, const std::string& name)
 
 std::string findNaomiBios(const std::string& name)
 {
-	return get_readonly_data_path(name);
+	std::string fullpath = get_readonly_data_path(name);
+	if (file_exists(fullpath))
+		return fullpath;
+	for (const auto& path : config::ContentPath.get())
+	{
+		fullpath = path + "/" + name;
+		if (file_exists(fullpath))
+			return fullpath;
+	}
+	return "";
 }
 
 std::string getSavestatePath(int index, bool writable)
