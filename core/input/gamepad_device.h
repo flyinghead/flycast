@@ -47,10 +47,7 @@ public:
 		_input_detected = nullptr;
 	}
 	std::shared_ptr<InputMapping> get_input_mapping() { return input_mapper; }
-	void save_mapping();
-	void save_mapping(int system);
-
-	void verify_or_create_system_mappings();
+	void save_mapping(int system = settings.platform.system);
 
 	virtual const char *get_button_name(u32 code) { return nullptr; }
 	virtual const char *get_axis_name(u32 code) { return nullptr; }
@@ -69,11 +66,14 @@ public:
 	static std::shared_ptr<GamepadDevice> GetGamepad(int index);
 	static void SaveMaplePorts();
 
-	static void load_system_mappings(int system = settings.platform.system);
-	bool find_mapping(int system);
+	static void load_system_mappings();
+	bool find_mapping(int system = settings.platform.system);
 	virtual void resetMappingToDefault(bool arcade, bool gamepad) {
 		input_mapper = getDefaultMapping();
 	}
+
+	void setPerGameMapping(bool enabled);
+	bool isPerGameMapping() const { return perGameMapping; }
 
 protected:
 	GamepadDevice(int maple_port, const char *api_name, bool remappable = true)
@@ -82,7 +82,6 @@ protected:
 	{
 	}
 
-	bool find_mapping(const char *custom_mapping = nullptr);
 	void loadMapping() {
 		if (!find_mapping())
 			input_mapper = getDefaultMapping();
@@ -100,8 +99,7 @@ protected:
 
 private:
 	bool handleButtonInput(int port, DreamcastKey key, bool pressed);
-	std::string make_mapping_filename(bool instance = false);
-	std::string make_mapping_filename(bool instance, int system);
+	std::string make_mapping_filename(bool instance, int system, bool perGame = false);
 
 	enum DigAnalog {
 		DIGANA_LEFT   = 1 << 0,
@@ -143,7 +141,9 @@ private:
 	bool _remappable;
 	u32 digitalToAnalogState[4];
 	std::map<DreamcastKey, int> lastAxisValue[4];
-
+	bool perGameMapping = false;
+	bool instanceMapping = false;
+	
 	static std::vector<std::shared_ptr<GamepadDevice>> _gamepads;
 	static std::mutex _gamepads_mutex;
 };

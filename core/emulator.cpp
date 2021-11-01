@@ -545,7 +545,6 @@ void Emulator::unloadGame()
 	{
 		if (state == Loaded && config::AutoSaveState && !settings.content.path.empty())
 			dc_savestate(config::SavestateSlot);
-		EventManager::event(Event::Terminate);
 		dc_reset(true);
 
 		config::Settings::instance().reset();
@@ -553,6 +552,7 @@ void Emulator::unloadGame()
 		settings.content.path.clear();
 		settings.content.gameId.clear();
 		state = Init;
+		EventManager::event(Event::Terminate);
 	}
 }
 

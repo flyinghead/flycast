@@ -280,64 +280,24 @@ bool GamepadDevice::gamepad_axis_input(u32 code, int value)
 	return rc;
 }
 
-std::string GamepadDevice::make_mapping_filename(bool instance)
-{
-	std::string mapping_file = api_name() + "_" + name();
-	if (instance)
-		mapping_file += "-" + _unique_id;
-	std::replace(mapping_file.begin(), mapping_file.end(), '/', '-');
-	std::replace(mapping_file.begin(), mapping_file.end(), '\\', '-');
-	std::replace(mapping_file.begin(), mapping_file.end(), ':', '-');
-	std::replace(mapping_file.begin(), mapping_file.end(), '?', '-');
-	std::replace(mapping_file.begin(), mapping_file.end(), '*', '-');
-	std::replace(mapping_file.begin(), mapping_file.end(), '|', '-');
-	std::replace(mapping_file.begin(), mapping_file.end(), '"', '-');
-	std::replace(mapping_file.begin(), mapping_file.end(), '<', '-');
-	std::replace(mapping_file.begin(), mapping_file.end(), '>', '-');
-	mapping_file += ".cfg";
-
-	return mapping_file;
-}
-
-void GamepadDevice::verify_or_create_system_mappings()
-{
-	std::string dc_name = make_mapping_filename(false, 0);
-	std::string arcade_name = make_mapping_filename(false, 2);
-
-	std::string dc_path = get_readonly_config_path(std::string("mappings/") + dc_name);
-	std::string arcade_path = get_readonly_config_path(std::string("mappings/") + arcade_name);
-
-	if (!file_exists(arcade_path))
-	{
-		resetMappingToDefault(true, true);
-		save_mapping(2);
-		input_mapper->ClearMappings();
-	}
-	if (!file_exists(dc_path))
-	{
-		resetMappingToDefault(false, false);
-		save_mapping(0);
-		input_mapper->ClearMappings();
-	}
-
-	find_mapping(DC_PLATFORM_DREAMCAST);
-}
-
-void GamepadDevice::load_system_mappings(int system)
+void GamepadDevice::load_system_mappings()
 {
 	for (int i = 0; i < GetGamepadCount(); i++)
 	{
 		std::shared_ptr<GamepadDevice> gamepad = GetGamepad(i);
-		gamepad->find_mapping(system);
+		if (!gamepad->find_mapping())
+			gamepad->resetMappingToDefault(settings.platform.system != DC_PLATFORM_DREAMCAST, true);
 	}
 }
 
-std::string GamepadDevice::make_mapping_filename(bool instance, int system)
+std::string GamepadDevice::make_mapping_filename(bool instance, int system, bool perGame /* = false */)
 {
 	std::string mapping_file = api_name() + "_" + name();
 	if (instance)
 		mapping_file += "-" + _unique_id;
-	if (system != 0)
+	if (perGame && !settings.content.gameId.empty())
+		mapping_file += "_" + settings.content.gameId;
+	if (system != DC_PLATFORM_DREAMCAST)
 		mapping_file += "_arcade";
 	std::replace(mapping_file.begin(), mapping_file.end(), '/', '-');
 	std::replace(mapping_file.begin(), mapping_file.end(), '\\', '-');
@@ -353,43 +313,45 @@ std::string GamepadDevice::make_mapping_filename(bool instance, int system)
 	return mapping_file;
 }
 
-bool GamepadDevice::find_mapping(int system)
+bool GamepadDevice::find_mapping(int system /* = settings.platform.system */)
 {
 	if (!_remappable)
 		return true;
-	std::string mapping_file;
-	mapping_file = make_mapping_filename(false, system);
-
-	// fall back on default flycast mapping filename if system profile not found
-	std::string system_mapping_path = get_readonly_config_path(std::string("mappings/") + mapping_file);
-	if (!file_exists(system_mapping_path))
-		mapping_file = make_mapping_filename(false);
-
-	std::shared_ptr<InputMapping> mapper = InputMapping::LoadMapping(mapping_file.c_str());
-
-	if (!mapper)
-		return false;
-	input_mapper = mapper;
-	return true;
-}
-
-bool GamepadDevice::find_mapping(const char *custom_mapping /* = nullptr */)
-{
-	if (!_remappable)
-		return true;
-	std::string mapping_file;
-	if (custom_mapping != nullptr)
-		mapping_file = custom_mapping;
-	else
-		mapping_file = make_mapping_filename(true);
-
-	input_mapper = InputMapping::LoadMapping(mapping_file.c_str());
-	if (!input_mapper && custom_mapping == nullptr)
+	instanceMapping = false;
+	bool cloneMapping = false;
+	while (true)
 	{
-		mapping_file = make_mapping_filename(false);
-		input_mapper = InputMapping::LoadMapping(mapping_file.c_str());
+		bool perGame = !settings.content.gameId.empty();
+		while (true)
+		{
+			std::string mapping_file = make_mapping_filename(true, system, perGame);
+			input_mapper = InputMapping::LoadMapping(mapping_file);
+			if (!input_mapper)
+			{
+				mapping_file = make_mapping_filename(false, system, perGame);
+				input_mapper = InputMapping::LoadMapping(mapping_file);
+			}
+			else
+			{
+				instanceMapping = true;
+			}
+			if (!!input_mapper)
+			{
+				if (cloneMapping)
+					input_mapper = std::make_shared<InputMapping>(*input_mapper);
+				perGameMapping = perGame;
+				return true;
+			}
+			if (!perGame)
+				break;
+			perGame = false;
+		}
+		if (system == DC_PLATFORM_DREAMCAST)
+			break;
+		system = DC_PLATFORM_DREAMCAST;
+		cloneMapping = true;
 	}
-	return !!input_mapper;
+	return false;
 }
 
 int GamepadDevice::GetGamepadCount()
@@ -412,21 +374,30 @@ std::shared_ptr<GamepadDevice> GamepadDevice::GetGamepad(int index)
 	return dev;
 }
 
-void GamepadDevice::save_mapping()
+void GamepadDevice::save_mapping(int system /* = settings.platform.system */)
 {
 	if (!input_mapper)
 		return;
-	std::string filename = make_mapping_filename();
-	InputMapping::SaveMapping(filename.c_str(), input_mapper);
+	std::string filename = make_mapping_filename(instanceMapping, system, perGameMapping);
+	InputMapping::SaveMapping(filename, input_mapper);
 }
 
-void GamepadDevice::save_mapping(int system)
+void GamepadDevice::setPerGameMapping(bool enabled)
 {
-	if (!input_mapper)
-		return;
-	std::string filename = make_mapping_filename(false, system);
-	input_mapper->set_dirty();
-	InputMapping::SaveMapping(filename.c_str(), input_mapper);
+	perGameMapping = enabled;
+	if (enabled)
+		input_mapper = std::make_shared<InputMapping>(*input_mapper);
+	else
+	{
+		auto deleteMapping = [this](bool instance, int system) {
+			std::string filename = make_mapping_filename(instance, system, true);
+			InputMapping::DeleteMapping(filename);
+		};
+		deleteMapping(false, DC_PLATFORM_DREAMCAST);
+		deleteMapping(false, DC_PLATFORM_NAOMI);
+		deleteMapping(true, DC_PLATFORM_DREAMCAST);
+		deleteMapping(true, DC_PLATFORM_NAOMI);
+	}
 }
 
 static void updateVibration(u32 port, float power, float inclination, u32 duration_ms)
@@ -501,7 +472,6 @@ void GamepadDevice::Register(const std::shared_ptr<GamepadDevice>& gamepad)
 
 void GamepadDevice::Unregister(const std::shared_ptr<GamepadDevice>& gamepad)
 {
-	gamepad->save_mapping();
 	_gamepads_mutex.lock();
 	for (auto it = _gamepads.begin(); it != _gamepads.end(); it++)
 		if (*it == gamepad) {

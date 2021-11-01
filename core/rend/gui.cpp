@@ -82,6 +82,7 @@ static void emuEventCallback(Event event)
 		game_started = true;
 		break;
 	case Event::Start:
+	case Event::Terminate:
 		GamepadDevice::load_system_mappings();
 		break;
 	default:
@@ -260,6 +261,7 @@ void gui_init()
 
     EventManager::listen(Event::Resume, emuEventCallback);
     EventManager::listen(Event::Start, emuEventCallback);
+	EventManager::listen(Event::Terminate, emuEventCallback);
     ggpo::receiveChatMessages([](int playerNum, const std::string& msg) { chat.receive(playerNum, msg); });
 }
 
@@ -301,8 +303,8 @@ bool gui_mouse_captured()
 
 void gui_set_mouse_position(int x, int y)
 {
-	mouseX = x;
-	mouseY = y;
+	mouseX = std::round(x * settings.display.pointScale);
+	mouseY = std::round(y * settings.display.pointScale);
 }
 
 void gui_set_mouse_button(int button, bool pressed)
@@ -888,16 +890,23 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 	if (ImGui::BeginPopupModal("Controller Mapping", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove))
 	{
 		const ImGuiStyle& style = ImGui::GetStyle();
-		const float width = ImGui::GetIO().DisplaySize.x - insetLeft - insetRight - (style.WindowBorderSize + style.WindowPadding.x) * 2;
-		const float col_width = (width - style.GrabMinSize - style.ItemSpacing.x
+		const float winWidth = ImGui::GetIO().DisplaySize.x - insetLeft - insetRight - (style.WindowBorderSize + style.WindowPadding.x) * 2;
+		const float col_width = (winWidth - style.GrabMinSize - style.ItemSpacing.x
 				- (ImGui::CalcTextSize("Map").x + style.FramePadding.x * 2.0f + style.ItemSpacing.x)
 				- (ImGui::CalcTextSize("Unmap").x + style.FramePadding.x * 2.0f + style.ItemSpacing.x)) / 2;
+
+		static int item_current_map_idx = 0;
+		static int last_item_current_map_idx = 2;
 
 		std::shared_ptr<InputMapping> input_mapping = gamepad->get_input_mapping();
 		if (input_mapping == NULL || ImGui::Button("Done", ImVec2(100 * scaling, 30 * scaling)))
 		{
 			ImGui::CloseCurrentPopup();
 			gamepad->save_mapping(map_system);
+			last_item_current_map_idx = 2;
+			ImGui::EndPopup();
+			ImGui::PopStyleVar();
+			return;
 		}
 		ImGui::SetItemDefaultFocus();
 
@@ -923,11 +932,32 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 			portWidth += ImGui::CalcTextSize("Port").x + ImGui::GetStyle().ItemSpacing.x + ImGui::GetStyle().FramePadding.x;
 			ImGui::PopStyleVar();
 		}
-		float comboWidth = ImGui::CalcTextSize("Dreamcast Controls").x + ImGui::GetStyle().ItemSpacing.x * 3.0f + ImGui::GetFontSize();
-		ImGui::SameLine(0, ImGui::GetContentRegionAvail().x - comboWidth - ImGui::GetStyle().ItemSpacing.x - 100 * scaling * 2 - portWidth);
+		float comboWidth = ImGui::CalcTextSize("Dreamcast Controls").x + ImGui::GetStyle().ItemSpacing.x + ImGui::GetFontSize() + ImGui::GetStyle().FramePadding.x * 4;
+		float gameConfigWidth = 0;
+		if (!settings.content.gameId.empty())
+			gameConfigWidth = ImGui::CalcTextSize(gamepad->isPerGameMapping() ? "Delete Game Config" : "Make Game Config").x + ImGui::GetStyle().ItemSpacing.x + ImGui::GetStyle().FramePadding.x * 2;
+		ImGui::SameLine(0, ImGui::GetContentRegionAvail().x - comboWidth - gameConfigWidth - ImGui::GetStyle().ItemSpacing.x - 100 * scaling * 2 - portWidth);
 
 		ImGui::AlignTextToFramePadding();
 
+		if (!settings.content.gameId.empty())
+		{
+			if (gamepad->isPerGameMapping())
+			{
+				if (ImGui::Button("Delete Game Config", ImVec2(0, 30 * scaling)))
+				{
+					gamepad->setPerGameMapping(false);
+					if (!gamepad->find_mapping(map_system))
+						gamepad->resetMappingToDefault(arcade_button_mode, true);
+				}
+			}
+			else
+			{
+				if (ImGui::Button("Make Game Config", ImVec2(0, 30 * scaling)))
+					gamepad->setPerGameMapping(true);
+			}
+			ImGui::SameLine();
+		}
 		if (ImGui::Button("Reset...", ImVec2(100 * scaling, 30 * scaling)))
 			ImGui::OpenPopup("Confirm Reset");
 
@@ -966,8 +996,6 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 		ImGui::SameLine();
 
 		const char* items[] = { "Dreamcast Controls", "Arcade Controls" };
-		static int item_current_map_idx = 0;
-		static int last_item_current_map_idx = 2;
 
 		// Here our selection data is an index.
 
@@ -976,7 +1004,7 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(ImGui::GetStyle().FramePadding.x, (30 * scaling - ImGui::GetFontSize()) / 2));
 		ImGui::Combo("##arcadeMode", &item_current_map_idx, items, IM_ARRAYSIZE(items));
 		ImGui::PopStyleVar();
-		if (item_current_map_idx != last_item_current_map_idx)
+		if (last_item_current_map_idx != 2 && item_current_map_idx != last_item_current_map_idx)
 		{
 			gamepad->save_mapping(map_system);
 		}
@@ -996,7 +1024,9 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 
 		if (item_current_map_idx != last_item_current_map_idx)
 		{
-			gamepad->find_mapping(map_system);
+			if (!gamepad->find_mapping(map_system))
+				if (map_system == DC_PLATFORM_DREAMCAST || !gamepad->find_mapping(DC_PLATFORM_DREAMCAST))
+					gamepad->resetMappingToDefault(arcade_button_mode, true);
 			input_mapping = gamepad->get_input_mapping();
 
 			last_item_current_map_idx = item_current_map_idx;
@@ -1006,7 +1036,6 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 
 		ImGui::BeginChildFrame(ImGui::GetID("buttons"), ImVec2(0, 0), ImGuiWindowFlags_None);
 
-		gamepad->find_mapping(map_system);
 		for (; systemMapping->name != nullptr; systemMapping++)
 		{
 			if (systemMapping->key == EMU_BTN_NONE)
@@ -1378,7 +1407,6 @@ static void gui_display_settings()
 					if (gamepad->remappable() && ImGui::Button("Map"))
 					{
 						gamepad_port = 0;
-						gamepad->verify_or_create_system_mappings();
 						ImGui::OpenPopup("Controller Mapping");
 					}
 
@@ -1528,16 +1556,14 @@ static void gui_display_settings()
 			}
 
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
-#if !defined(__APPLE__)
 			bool has_per_pixel = false;
 			if (renderApi == 0)
-				has_per_pixel = !theGLContext.IsGLES() && theGLContext.GetMajorVersion() >= 4;
+				has_per_pixel = !theGLContext.IsGLES()
+					&& (theGLContext.GetMajorVersion() > 4
+							|| (theGLContext.GetMajorVersion() == 4 && theGLContext.GetMinorVersion() >= 3));
 #ifdef USE_VULKAN
-			else
+			else if (renderApi == 1)
 				has_per_pixel = VulkanContext::Instance()->SupportsFragmentShaderStoresAndAtomics();
-#endif
-#else
-			bool has_per_pixel = false;
 #endif
 		    header("Transparent Sorting");
 		    {

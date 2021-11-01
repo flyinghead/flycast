@@ -74,13 +74,14 @@ public:
 	void set_axis(DreamcastKey id, u32 code, bool positive) { set_axis(0, id, code, positive); }
 
 	void load(FILE* fp);
-	bool save(const char *name);
+	bool save(const std::string& name);
 
 	void set_dirty();
 	bool is_dirty() const { return dirty; }
 
-	static std::shared_ptr<InputMapping> LoadMapping(const char *name);
-	static void SaveMapping(const char *name, const std::shared_ptr<InputMapping>& mapping);
+	static std::shared_ptr<InputMapping> LoadMapping(const std::string& name);
+	static void SaveMapping(const std::string& name, const std::shared_ptr<InputMapping>& mapping);
+	static void DeleteMapping(const std::string& name);
 
 	void ClearMappings();
 

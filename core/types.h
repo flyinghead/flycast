@@ -334,6 +334,7 @@ struct settings_t
 	struct {
 		int width = 640;
 		int height = 480;
+		float pointScale = 1.f;
 	} display;
 
 	struct

@@ -333,7 +333,7 @@ void InputMapping::ClearMappings()
 	loaded_mappings.clear();
 }
 
-std::shared_ptr<InputMapping> InputMapping::LoadMapping(const char *name)
+std::shared_ptr<InputMapping> InputMapping::LoadMapping(const std::string& name)
 {
 	auto it = loaded_mappings.find(name);
 	if (it != loaded_mappings.end())
@@ -394,7 +394,7 @@ static const char *getKeyName(DreamcastKey key)
 	return nullptr;
 }
 
-bool InputMapping::save(const char *name)
+bool InputMapping::save(const std::string& name)
 {
 	if (!dirty)
 		return true;
@@ -460,8 +460,14 @@ bool InputMapping::save(const char *name)
 	return true;
 }
 
-void InputMapping::SaveMapping(const char *name, const std::shared_ptr<InputMapping>& mapping)
+void InputMapping::SaveMapping(const std::string& name, const std::shared_ptr<InputMapping>& mapping)
 {
 	mapping->save(name);
 	InputMapping::loaded_mappings[name] = mapping;
+}
+
+void InputMapping::DeleteMapping(const std::string& name)
+{
+	loaded_mappings.erase(name);
+	std::remove(get_writable_config_path(std::string("mappings/") + name).c_str());
 }
