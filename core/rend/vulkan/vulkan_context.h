@@ -200,6 +200,7 @@ private:
 
 	vk::UniquePipelineCache pipelineCache;
 
+	std::unique_ptr<QuadPipeline> quadPipelineWithAlpha;
 	std::unique_ptr<QuadPipeline> quadPipeline;
 	std::unique_ptr<QuadPipeline> quadRotatePipeline;
 	std::unique_ptr<QuadDrawer> quadDrawer;

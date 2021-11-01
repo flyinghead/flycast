@@ -442,7 +442,7 @@ vk::CommandBuffer TextureDrawer::BeginRenderPass()
 			break;
 		}
 
-		TSP tsp = { 0 };
+		TSP tsp = { { 0 } };
 		for (tsp.TexU = 0; tsp.TexU <= 7 && (8u << tsp.TexU) < origWidth; tsp.TexU++);
 		for (tsp.TexV = 0; tsp.TexV <= 7 && (8u << tsp.TexV) < origHeight; tsp.TexV++);
 

@@ -70,9 +70,12 @@ layout (std140, set = 0, binding = 1) uniform FragmentShaderUniforms
 	float sp_FOG_DENSITY;
 	float shade_scale_factor;
 	uint pixelBufferSize;
+	uint viewportWidth;
 } uniformBuffer;
 
-layout(set = 3, binding = 2, r32ui) uniform coherent restrict uimage2D abufferPointerImg;
+layout(set = 3, binding = 2) buffer abufferPointer_ {
+	uint pointers[];
+} abufferPointer;
 
 layout(set = 3, binding = 1) buffer PixelCounter_ {
 	uint buffer_index;
@@ -410,7 +413,7 @@ void main()
 		pixel.color = packColors(clamp(color, vec4(0.0), vec4(1.0)));
 		pixel.depth = gl_FragDepth;
 		pixel.seq_num = uint(pushConstants.pp_Number);
-		pixel.next = imageAtomicExchange(abufferPointerImg, coords, idx);
+		pixel.next = atomicExchange(abufferPointer.pointers[coords.x + coords.y * uniformBuffer.viewportWidth], idx);
 		PixelBuffer.pixels[idx] = pixel;
 		
 	#endif
@@ -437,7 +440,7 @@ uint pixel_list[MAX_PIXELS_PER_FRAGMENT];
 int fillAndSortFragmentArray(ivec2 coords)
 {
 	// Load fragments into a local memory array for sorting
-	uint idx = imageLoad(abufferPointerImg, coords).x;
+	uint idx = abufferPointer.pointers[coords.x + coords.y * uniformBuffer.viewportWidth];
 	int count = 0;
 	for (; idx != EOL && count < MAX_PIXELS_PER_FRAGMENT; count++)
 	{
@@ -555,7 +558,7 @@ vec4 resolveAlphaBlend(ivec2 coords) {
 		else
 			finalColor = result;
 	}
-	
+
 	return finalColor;
 	
 }
@@ -576,7 +579,7 @@ void main(void)
 	ivec2 coords = ivec2(gl_FragCoord.xy);
 
 	// Reset pointers
-	imageStore(abufferPointerImg, coords, uvec4(EOL));
+	abufferPointer.pointers[coords.x + coords.y * uniformBuffer.viewportWidth] = EOL;
 }
 )";
 
@@ -594,7 +597,7 @@ void main()
 #endif
 	ivec2 coords = ivec2(gl_FragCoord.xy);
 	
-	uint idx = imageLoad(abufferPointerImg, coords).x;
+	uint idx = abufferPointer.pointers[coords.x + coords.y * uniformBuffer.viewportWidth];
 	int list_len = 0;
 	while (idx != EOL && list_len < MAX_PIXELS_PER_FRAGMENT)
 	{

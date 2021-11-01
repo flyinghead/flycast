@@ -264,6 +264,7 @@ bool OITDrawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 	fragUniforms.shade_scale_factor = FPU_SHAD_SCALE.scale_factor / 256.f;
 	// sizeof(Pixel) == 16
 	fragUniforms.pixelBufferSize = std::min<u64>(config::PixelBufferSize, GetContext()->GetMaxMemoryAllocationSize()) / 16;
+	fragUniforms.viewportWidth = maxWidth;
 
 	currentScissor = vk::Rect2D();
 

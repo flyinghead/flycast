@@ -151,9 +151,10 @@ bool VulkanContext::InitInstance(const char** extensions, uint32_t extensions_co
 #ifdef VK_DEBUG
 #ifndef __ANDROID__
 		vext.push_back("VK_EXT_debug_utils");
+		vext.push_back("VK_EXT_debug_report");
 //		layer_names.push_back("VK_LAYER_KHRONOS_validation");
-		layer_names.push_back("VK_LAYER_LUNARG_standard_validation");
-		layer_names.push_back("VK_LAYER_LUNARG_assistant_layer");
+//		layer_names.push_back("VK_LAYER_LUNARG_standard_validation");
+//		layer_names.push_back("VK_LAYER_LUNARG_assistant_layer");
 #else
 		vext.push_back("VK_EXT_debug_report");	// NDK <= 19?
 		layer_names.push_back("VK_LAYER_GOOGLE_threading");
@@ -375,13 +376,23 @@ bool VulkanContext::InitDevice()
 				deviceExtensions.push_back(VK_KHR_DEDICATED_ALLOCATION_EXTENSION_NAME);
 				dedicatedAllocationSupported = true;
 			}
+			else if (!strcmp(property.extensionName, "VK_KHR_portability_subset"))
+				deviceExtensions.push_back("VK_KHR_portability_subset");
 #ifdef VK_DEBUG
-			else if (!strcmp(property.extensionName, VK_EXT_DEBUG_MARKER_EXTENSION_NAME)
-					|| !strcmp(property.extensionName, VK_EXT_DEBUG_REPORT_EXTENSION_NAME)
-					|| !strcmp(property.extensionName, VK_EXT_DEBUG_UTILS_EXTENSION_NAME))
+			else if (!strcmp(property.extensionName, VK_EXT_DEBUG_MARKER_EXTENSION_NAME))
 			{
 				NOTICE_LOG(RENDERER, "Debug extension %s available", property.extensionName);
-				deviceExtensions.push_back(property.extensionName);
+				deviceExtensions.push_back(VK_EXT_DEBUG_MARKER_EXTENSION_NAME);
+			}
+			else if(!strcmp(property.extensionName, VK_EXT_DEBUG_REPORT_EXTENSION_NAME))
+			{
+				NOTICE_LOG(RENDERER, "Debug extension %s available", property.extensionName);
+				deviceExtensions.push_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
+			}
+			else if (!strcmp(property.extensionName, VK_EXT_DEBUG_UTILS_EXTENSION_NAME))
+			{
+				NOTICE_LOG(RENDERER, "Debug extension %s available", property.extensionName);
+				deviceExtensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 			}
 #endif
 		}
@@ -445,9 +456,10 @@ bool VulkanContext::InitDevice()
 	    allocator.Init(physicalDevice, *device);
 
 	    shaderManager = std::unique_ptr<ShaderManager>(new ShaderManager());
-	    quadPipeline = std::unique_ptr<QuadPipeline>(new QuadPipeline());
+	    quadPipeline = std::unique_ptr<QuadPipeline>(new QuadPipeline(true, false));
+	    quadPipelineWithAlpha = std::unique_ptr<QuadPipeline>(new QuadPipeline(false, false));
 	    quadDrawer = std::unique_ptr<QuadDrawer>(new QuadDrawer());
-	    quadRotatePipeline = std::unique_ptr<QuadPipeline>(new QuadPipeline(false, true));
+	    quadRotatePipeline = std::unique_ptr<QuadPipeline>(new QuadPipeline(true, true));
 	    quadRotateDrawer = std::unique_ptr<QuadDrawer>(new QuadDrawer());
 
 		CreateSwapChain();
@@ -548,10 +560,6 @@ void VulkanContext::CreateSwapChain()
 
 			vk::SurfaceTransformFlagBitsKHR preTransform = (surfaceCapabilities.supportedTransforms & vk::SurfaceTransformFlagBitsKHR::eIdentity) ? vk::SurfaceTransformFlagBitsKHR::eIdentity : surfaceCapabilities.currentTransform;
 
-			vk::CompositeAlphaFlagBitsKHR compositeAlpha =
-					(surfaceCapabilities.supportedCompositeAlpha & vk::CompositeAlphaFlagBitsKHR::ePreMultiplied) ? vk::CompositeAlphaFlagBitsKHR::ePreMultiplied :
-					(surfaceCapabilities.supportedCompositeAlpha & vk::CompositeAlphaFlagBitsKHR::ePostMultiplied) ? vk::CompositeAlphaFlagBitsKHR::ePostMultiplied :
-					(surfaceCapabilities.supportedCompositeAlpha & vk::CompositeAlphaFlagBitsKHR::eInherit) ? vk::CompositeAlphaFlagBitsKHR::eInherit : vk::CompositeAlphaFlagBitsKHR::eOpaque;
 			u32 imageCount = std::max(3u, surfaceCapabilities.minImageCount);
 			if (surfaceCapabilities.maxImageCount != 0)
 				imageCount = std::min(imageCount, surfaceCapabilities.maxImageCount);
@@ -561,7 +569,7 @@ void VulkanContext::CreateSwapChain()
 			usage |= vk::ImageUsageFlagBits::eTransferSrc;
 #endif
 			vk::SwapchainCreateInfoKHR swapChainCreateInfo(vk::SwapchainCreateFlagsKHR(), GetSurface(), imageCount, colorFormat, vk::ColorSpaceKHR::eSrgbNonlinear,
-					swapchainExtent, 1, usage, vk::SharingMode::eExclusive, 0, nullptr, preTransform, compositeAlpha, swapchainPresentMode, true, nullptr);
+					swapchainExtent, 1, usage, vk::SharingMode::eExclusive, 0, nullptr, preTransform, vk::CompositeAlphaFlagBitsKHR::eOpaque, swapchainPresentMode, true, nullptr);
 
 			u32 queueFamilyIndices[2] = { graphicsQueueIndex, presentQueueIndex };
 			if (graphicsQueueIndex != presentQueueIndex)
@@ -635,10 +643,11 @@ void VulkanContext::CreateSwapChain()
 	    	imageAcquiredSemaphores.push_back(device->createSemaphoreUnique(vk::SemaphoreCreateInfo()));
 	    }
 	    quadPipeline->Init(shaderManager.get(), *renderPass);
+	    quadPipelineWithAlpha->Init(shaderManager.get(), *renderPass);
 	    quadDrawer->Init(quadPipeline.get());
 	    quadRotatePipeline->Init(shaderManager.get(), *renderPass);
 	    quadRotateDrawer->Init(quadRotatePipeline.get());
-	    overlay->Init(quadPipeline.get());
+	    overlay->Init(quadPipelineWithAlpha.get());
 
 	    InitImgui();
 
@@ -664,8 +673,8 @@ bool VulkanContext::Init()
 		return false;
     uint32_t extensionsCount = 0;
     SDL_Vulkan_GetInstanceExtensions((SDL_Window *)window, &extensionsCount, NULL);
-    extensions.resize(extensionsCount + 1);
-    SDL_Vulkan_GetInstanceExtensions((SDL_Window *)window, &extensionsCount, &extensions[1]);
+    extensions.resize(extensionsCount + extensions.size());
+    SDL_Vulkan_GetInstanceExtensions((SDL_Window *)window, &extensionsCount, &extensions[extensions.size() - extensionsCount]);
 #elif defined(_WIN32)
     extern void CreateMainWindow();
     CreateMainWindow();
@@ -685,6 +694,14 @@ bool VulkanContext::Init()
     if (SDL_Vulkan_CreateSurface((SDL_Window *)window, (VkInstance)*instance, &surface) == 0)
     	return false;
     this->surface.reset(vk::SurfaceKHR(surface));
+    SDL_Window *sdlWin = (SDL_Window *)window;
+    int w, h;
+    SDL_GetWindowSize(sdlWin, &w, &h);
+    SDL_Vulkan_GetDrawableSize(sdlWin, &settings.display.width, &settings.display.height);
+    settings.display.pointScale = (float)settings.display.width / w;
+	float hdpi, vdpi;
+	if (!SDL_GetDisplayDPI(SDL_GetWindowDisplayIndex(sdlWin), nullptr, &hdpi, &vdpi))
+		screen_dpi = (int)roundf(std::max(hdpi, vdpi));
 #elif defined(_WIN32)
 	vk::Win32SurfaceCreateInfoKHR createInfo(vk::Win32SurfaceCreateFlagsKHR(), GetModuleHandle(NULL), (HWND)window);
 	surface = instance->createWin32SurfaceKHRUnique(createInfo);
@@ -694,6 +711,11 @@ bool VulkanContext::Init()
 #elif defined(__ANDROID__)
 	vk::AndroidSurfaceCreateInfoKHR createInfo(vk::AndroidSurfaceCreateFlagsKHR(), (struct ANativeWindow*)window);
 	surface = instance->createAndroidSurfaceKHRUnique(createInfo);
+#elif defined(__APPLE__)
+	vk::MacOSSurfaceCreateInfoMVK createInfo(vk::MacOSSurfaceCreateFlagsMVK(), window);
+	surface = instance->createMacOSSurfaceMVKUnique(createInfo);
+#else
+#error "Unknown Vulkan platform"
 #endif
 	overlay = std::unique_ptr<VulkanOverlay>(new VulkanOverlay());
 
@@ -792,9 +814,6 @@ void VulkanContext::DrawFrame(vk::ImageView imageView, const vk::Extent2D& exten
 	else
 		quadPipeline->BindPipeline(commandBuffer);
 
-	float blendConstants[4] = { 1.0, 1.0, 1.0, 1.0 };
-	commandBuffer.setBlendConstants(blendConstants);
-
 	float marginWidth;
 	if (config::Rotate90)
 		marginWidth = ((float)width - (float)extent.height / extent.width * height) / 2.f;
@@ -802,7 +821,7 @@ void VulkanContext::DrawFrame(vk::ImageView imageView, const vk::Extent2D& exten
 		marginWidth = ((float)width - (float)extent.width / extent.height * height) / 2.f;
 	vk::Viewport viewport(marginWidth, 0, width - marginWidth * 2.f, height);
 	commandBuffer.setViewport(0, 1, &viewport);
-	commandBuffer.setScissor(0, vk::Rect2D(vk::Offset2D(marginWidth, 0), vk::Extent2D(width - marginWidth * 2.f, height)));
+	commandBuffer.setScissor(0, vk::Rect2D(vk::Offset2D(std::max(0.f, marginWidth), 0), vk::Extent2D(width - marginWidth * 2.f, height)));
 	if (config::Rotate90)
 		quadRotateDrawer->Draw(commandBuffer, imageView, vtx);
 	else
@@ -907,6 +926,7 @@ void VulkanContext::Term()
 	renderPass.reset();
 	quadDrawer.reset();
 	quadPipeline.reset();
+	quadPipelineWithAlpha.reset();
 	quadRotateDrawer.reset();
 	quadRotatePipeline.reset();
 	shaderManager.reset();

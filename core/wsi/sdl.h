@@ -21,7 +21,9 @@
 #pragma once
 #include <SDL.h>
 #include "types.h"
-#ifndef GLES
+#if defined(__APPLE__) && !defined(TARGET_IPHONE)
+#include <OpenGL/gl3.h>
+#elif !defined(GLES)
 #include <GL4/gl3w.h>
 #else
 #include <GLES32/gl32.h>

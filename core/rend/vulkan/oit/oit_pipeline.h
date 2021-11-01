@@ -54,6 +54,7 @@ public:
 		float sp_FOG_DENSITY;
 		float shade_scale_factor;	// new for OIT
 		u32 pixelBufferSize;
+		u32 viewportWidth;
 	};
 
 	struct PushConstants
@@ -93,8 +94,8 @@ public:
 	{
 		if (perFrameDescSets.empty())
 		{
-			perFrameDescSets = std::move(GetContext()->GetDevice().allocateDescriptorSetsUnique(
-					vk::DescriptorSetAllocateInfo(GetContext()->GetDescriptorPool(), 1, &perFrameLayout)));
+			perFrameDescSets = GetContext()->GetDevice().allocateDescriptorSetsUnique(
+					vk::DescriptorSetAllocateInfo(GetContext()->GetDescriptorPool(), 1, &perFrameLayout));
 		}
 		perFrameDescSetsInFlight.emplace_back(std::move(perFrameDescSets.back()));
 		perFrameDescSets.pop_back();

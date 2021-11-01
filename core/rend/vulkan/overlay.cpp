@@ -100,11 +100,12 @@ void VulkanOverlay::Draw(vk::CommandBuffer commandBuffer, vk::Extent2D viewport,
 		f32 vmu_width = 48.f * scaling;
 
 		pipeline->BindPipeline(commandBuffer);
+		const float *color = nullptr;
 #ifndef LIBRETRO
 		vmu_height *= 2.f;
 		vmu_width *= 2.f;
 		float blendConstants[4] = { 0.75f, 0.75f, 0.75f, 0.75f };
-		commandBuffer.setBlendConstants(blendConstants);
+		color = blendConstants;
 #endif
 
 		for (size_t i = 0; i < vmuTextures.size(); i++)
@@ -161,12 +162,12 @@ void VulkanOverlay::Draw(vk::CommandBuffer commandBuffer, vk::Extent2D viewport,
 			commandBuffer.setViewport(0, 1, &viewport);
 			commandBuffer.setScissor(0, vk::Rect2D(vk::Offset2D(x, y), vk::Extent2D(w, h)));
 
-			drawers[i]->Draw(commandBuffer, vmuTextures[i]->GetImageView(), vtx, true);
+			drawers[i]->Draw(commandBuffer, vmuTextures[i]->GetImageView(), vtx, true, color);
 		}
 	}
 	if (crosshair && crosshairsNeeded())
 	{
-		alphaPipeline->BindPipeline(commandBuffer);
+		pipeline->BindPipeline(commandBuffer);
 		for (size_t i = 0; i < config::CrosshairColor.size(); i++)
 		{
 			if (config::CrosshairColor[i] == 0)

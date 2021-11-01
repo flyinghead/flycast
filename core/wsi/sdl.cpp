@@ -18,7 +18,7 @@
     You should have received a copy of the GNU General Public License
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
-#if defined(USE_SDL) && !defined(__APPLE__)
+#if defined(USE_SDL)
 #include <math.h>
 #include <algorithm>
 #include "gl_context.h"
@@ -43,8 +43,6 @@ bool SDLGLGraphicsContext::Init()
 	SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
 	SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
 	SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
-	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
-	SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
 	if (!sdl_recreate_window(SDL_WINDOW_OPENGL))
@@ -54,9 +52,14 @@ bool SDLGLGraphicsContext::Init()
 #ifndef GLES
 	if (glcontext == SDL_GLContext())
 	{
-		SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, 0);
 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+#ifdef __APPLE__
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2);
+#else
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, 0);
 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
+#endif
 		glcontext = SDL_GL_CreateContext(window);
 	}
 #endif
@@ -69,10 +72,13 @@ bool SDLGLGraphicsContext::Init()
 	}
 	SDL_GL_MakeCurrent(window, NULL);
 
+	int w, h;
+	SDL_GetWindowSize(window, &w, &h);
 	SDL_GL_GetDrawableSize(window, &settings.display.width, &settings.display.height);
+	settings.display.pointScale = (float)settings.display.width / w;
 
-	float ddpi, hdpi, vdpi;
-	if (!SDL_GetDisplayDPI(SDL_GetWindowDisplayIndex(window), &ddpi, &hdpi, &vdpi))
+	float hdpi, vdpi;
+	if (!SDL_GetDisplayDPI(SDL_GetWindowDisplayIndex(window), nullptr, &hdpi, &vdpi))
 		screen_dpi = (int)roundf(std::max(hdpi, vdpi));
 
 	INFO_LOG(RENDERER, "Created SDL Window and GL Context successfully");
@@ -98,7 +104,7 @@ bool SDLGLGraphicsContext::Init()
 
 #ifdef GLES
 	load_gles_symbols();
-#else
+#elif !defined(__APPLE__)
 	if (gl3wInit() == -1 || !gl3wIsSupported(3, 0))
 	{
 		ERROR_LOG(RENDERER, "gl3wInit failed or GL 3.0 not supported");

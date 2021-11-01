@@ -235,8 +235,10 @@ void Texture::CreateImage(vk::ImageTiling tiling, const vk::ImageUsageFlags& usa
 	image = device.createImageUnique(imageCreateInfo);
 
 	VmaAllocationCreateInfo allocCreateInfo = { VmaAllocationCreateFlags(), needsStaging ? VmaMemoryUsage::VMA_MEMORY_USAGE_GPU_ONLY : VmaMemoryUsage::VMA_MEMORY_USAGE_CPU_TO_GPU };
+#ifndef __APPLE__
 	if (!needsStaging)
 		allocCreateInfo.flags = VmaAllocationCreateFlagBits::VMA_ALLOCATION_CREATE_MAPPED_BIT;
+#endif
 	allocation = VulkanContext::Instance()->GetAllocator().AllocateForImage(*image, allocCreateInfo);
 
 	vk::ImageViewCreateInfo imageViewCreateInfo(vk::ImageViewCreateFlags(), image.get(), vk::ImageViewType::e2D, format, vk::ComponentMapping(),
@@ -294,6 +296,7 @@ void Texture::SetImage(u32 srcSize, void *srcData, bool isNew, bool genMipmaps)
 		}
 		else
 			memcpy(data, srcData, srcSize);
+		allocation.UnmapMemory();
 	}
 	else
 		memcpy(data, srcData, srcSize);

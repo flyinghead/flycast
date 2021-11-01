@@ -23,6 +23,12 @@ jobs:
       - name: Set up build environment (macos-latest)
         run: |
           brew install ccache libao libomp pulseaudio zlib ldid
+          curl https://sdk.lunarg.com/sdk/download/1.2.189.0/mac/vulkansdk-macos-1.2.189.0.dmg --output vulkansdk-macos-1.2.189.0.dmg
+          hdiutil attach ./vulkansdk-macos-1.2.189.0.dmg
+          pushd /Volumes/vulkansdk-macos-1.2.189.0
+          sudo ./InstallVulkan.app/Contents/MacOS/InstallVulkan --root ~/VulkanSDK/1.2.189.0 --accept-licenses --default-answer --confirm-command install
+          popd
+          echo "VULKAN_SDK=$HOME/VulkanSDK/1.2.189.0/macOS" >> $GITHUB_ENV
           echo "/usr/local/opt/ccache/libexec" >> $GITHUB_PATH
           echo "CCACHE_DIR=/tmp/ccache" >> $GITHUB_ENV
         if: matrix.config.os == 'macos-latest'

@@ -124,7 +124,8 @@ if(MSVC)
 else()
 	target_compile_options(${PROJECT_NAME} PRIVATE
 		$<$<COMPILE_LANGUAGE:CXX>:-fno-strict-aliasing>
-		$<$<COMPILE_LANGUAGE:CXX>:-Wall>)
+		$<$<COMPILE_LANGUAGE:CXX>:-Wall>
+		$<$<COMPILE_LANGUAGE:CXX>:-Wno-nullability-completeness>)
 endif()
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE
@@ -197,7 +198,7 @@ option(BUILD_SHARED_LIBS "Build shared library" OFF)
 add_subdirectory(core/deps/glm)
 target_link_libraries(${PROJECT_NAME} PRIVATE glm::glm)
 
-if(NOT APPLE AND USE_VULKAN)
+if(USE_VULKAN)
 	option(BUILD_EXTERNAL "Build external dependencies in /External" OFF)
 	add_subdirectory(core/deps/glslang)
 	target_link_libraries(${PROJECT_NAME} PRIVATE SPIRV)
@@ -263,7 +264,7 @@ if(NOT LIBRETRO)
 	endif()
 	
 	find_package(Lua)
-	if(LUA_FOUND)
+	if(NOT APPLE AND LUA_FOUND)
 		target_compile_definitions(${PROJECT_NAME} PRIVATE USE_LUA)
 	    target_include_directories(${PROJECT_NAME} PRIVATE ${LUA_INCLUDE_DIR} core/deps/luabridge/Source)
 	    list(TRANSFORM LUA_LIBRARIES REPLACE "\.dll" "")
@@ -933,7 +934,7 @@ if(NOT (APPLE OR ANDROID OR USE_GLES OR USE_GLES2))
     	core/rend/gl4/gles.cpp)
 endif()
 
-if(USE_VULKAN AND NOT APPLE)
+if(USE_VULKAN)
 	if(NOT LIBRETRO)
 	    if(ANDROID)
 	        set(VOLK_STATIC_DEFINES VK_USE_PLATFORM_ANDROID_KHR)
@@ -941,6 +942,8 @@ if(USE_VULKAN AND NOT APPLE)
 	        set(VOLK_STATIC_DEFINES VK_USE_PLATFORM_XLIB_KHR)
 	    elseif(WIN32)
 	        set(VOLK_STATIC_DEFINES VK_USE_PLATFORM_WIN32_KHR)
+		elseif(APPLE)
+	        set(VOLK_STATIC_DEFINES VK_USE_PLATFORM_MACOS_MVK)
 	    endif()
 	
 	    set(VOLK_PULL_IN_VULKAN OFF)
@@ -1264,13 +1267,9 @@ if(NOT LIBRETRO)
 				COMMAND rm -rf ${CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE}/Flycast.app ${CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE}/Flycast.swiftmodule)
 		else()
 			target_sources(${PROJECT_NAME} PRIVATE
-					shell/apple/emulator-osx/emulator-osx/AppDelegate.swift
-					shell/apple/emulator-osx/emulator-osx/EmuGLView.swift
-					shell/apple/emulator-osx/emulator-osx/osx-main.mm
-					shell/apple/emulator-osx/emulator-osx/osx_gamepad.h
-					shell/apple/emulator-osx/emulator-osx/osx_keyboard.h)
-		
-			set(XIB shell/apple/emulator-osx/emulator-osx/Base.lproj/MainMenu.xib)
+					shell/apple/emulator-osx/emulator-osx/SDLMain.h
+					shell/apple/emulator-osx/emulator-osx/SDLMain.mm
+					shell/apple/emulator-osx/emulator-osx/osx-main.mm)
 			set(ASSETS shell/apple/emulator-osx/emulator-osx/Images.xcassets)
 			target_sources(${PROJECT_NAME} PRIVATE ${XIB} ${ASSETS})
 			source_group("Resources" FILES ${XIB} ${ASSETS})
@@ -1290,8 +1289,6 @@ if(NOT LIBRETRO)
 				MACOSX_BUNDLE_SHORT_VERSION_STRING "1.0"
 				MACOSX_BUNDLE_BUNDLE_VERSION "1"
 				MACOSX_BUNDLE_COPYRIGHT "Copyright © 2019 Flycast contributors. All rights reserved."
-				XCODE_ATTRIBUTE_SWIFT_OBJC_BRIDGING_HEADER "shell/apple/emulator-osx/emulator-osx/emulator-osx-Bridging-Header.h"
-				RESOURCE "${XIB}"
 				XCODE_ATTRIBUTE_ASSETCATALOG_COMPILER_APPICON_NAME "AppIcon"
 				BUILD_WITH_INSTALL_RPATH TRUE
 				INSTALL_RPATH "@loader_path/../Frameworks"
@@ -1301,8 +1298,19 @@ if(NOT LIBRETRO)
 			find_library(FOUNDATION_LIBRARY Foundation)
 			find_library(AUDIO_TOOLBOX_LIBRARY AudioToolbox)
 			find_library(MULTITOUCH_SUPPORT_LIBRARY MultitouchSupport /System/Library/PrivateFrameworks)
-		
-			target_link_libraries(${PROJECT_NAME} PRIVATE ${AUDIO_UNIT_LIBRARY} ${FOUNDATION_LIBRARY} ${AUDIO_TOOLBOX_LIBRARY} ${MULTITOUCH_SUPPORT_LIBRARY})
+			find_library(OPENGL_LIBRARY OpenGL)
+			find_library(IOSURFACE_LIBRARY IOSurface)
+
+			target_link_libraries(${PROJECT_NAME} PRIVATE
+				${AUDIO_UNIT_LIBRARY}
+				${FOUNDATION_LIBRARY}
+				${AUDIO_TOOLBOX_LIBRARY}
+				${MULTITOUCH_SUPPORT_LIBRARY}
+				${OPENGL_LIBRARY}
+				${IOSURFACE_LIBRARY})
+			add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+            	COMMAND ${CMAKE_COMMAND} -E copy "$ENV{VULKAN_SDK}/lib/libMoltenVK.dylib"
+                	${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/Flycast.app/Contents/Frameworks/libvulkan.dylib)
 		endif()
 	elseif(UNIX OR NINTENDO_SWITCH)
 	    if(NOT BUILD_TESTING)

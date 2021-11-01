@@ -46,8 +46,8 @@ public:
 	{
 		if (perFrameDescSets.empty())
 		{
-			perFrameDescSets = std::move(GetContext()->GetDevice().allocateDescriptorSetsUnique(
-					vk::DescriptorSetAllocateInfo(GetContext()->GetDescriptorPool(), 1, &perFrameLayout)));
+			perFrameDescSets = GetContext()->GetDevice().allocateDescriptorSetsUnique(
+					vk::DescriptorSetAllocateInfo(GetContext()->GetDescriptorPool(), 1, &perFrameLayout));
 		}
 		perFrameDescSetsInFlight.emplace_back(std::move(perFrameDescSets.back()));
 		perFrameDescSets.pop_back();

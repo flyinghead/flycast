@@ -65,35 +65,18 @@ void QuadPipeline::CreatePipeline()
 	vk::PipelineDepthStencilStateCreateInfo pipelineDepthStencilStateCreateInfo;
 
 	// Color flags and blending
-	vk::PipelineColorBlendAttachmentState pipelineColorBlendAttachmentState;
-	if (withAlpha)
-	{
-		pipelineColorBlendAttachmentState = vk::PipelineColorBlendAttachmentState(
-				true,								// blendEnable
-				vk::BlendFactor::eSrcAlpha,			// srcColorBlendFactor
-				vk::BlendFactor::eOneMinusSrcAlpha, // dstColorBlendFactor
-				vk::BlendOp::eAdd,					// colorBlendOp
-				vk::BlendFactor::eSrcAlpha,			// srcAlphaBlendFactor
-				vk::BlendFactor::eOneMinusSrcAlpha, // dstAlphaBlendFactor
-				vk::BlendOp::eAdd,					// alphaBlendOp
-				vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG
-							| vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA
-		);
-	}
-	else
-	{
-		pipelineColorBlendAttachmentState = vk::PipelineColorBlendAttachmentState(
-				true,								// blendEnable
-				vk::BlendFactor::eConstantAlpha,	// srcColorBlendFactor
-				vk::BlendFactor::eOneMinusConstantAlpha, // dstColorBlendFactor
-				vk::BlendOp::eAdd,					// colorBlendOp
-				vk::BlendFactor::eConstantAlpha,	// srcAlphaBlendFactor
-				vk::BlendFactor::eOneMinusConstantAlpha, // dstAlphaBlendFactor
-				vk::BlendOp::eAdd,					// alphaBlendOp
-				vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG
-							| vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA
-		);
-	}
+	vk::PipelineColorBlendAttachmentState pipelineColorBlendAttachmentState
+	(
+		true,								// blendEnable
+		vk::BlendFactor::eSrcAlpha,			// srcColorBlendFactor
+		vk::BlendFactor::eOneMinusSrcAlpha, // dstColorBlendFactor
+		vk::BlendOp::eAdd,					// colorBlendOp
+		vk::BlendFactor::eSrcAlpha,			// srcAlphaBlendFactor
+		vk::BlendFactor::eOneMinusSrcAlpha, // dstAlphaBlendFactor
+		vk::BlendOp::eAdd,					// alphaBlendOp
+		vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG
+					| vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA
+	);
 	vk::PipelineColorBlendStateCreateInfo pipelineColorBlendStateCreateInfo
 	(
 	  vk::PipelineColorBlendStateCreateFlags(),   // flags
@@ -104,13 +87,12 @@ void QuadPipeline::CreatePipeline()
 	  { { 1.0f, 1.0f, 1.0f, 1.0f } }              // blendConstants
 	);
 
-	vk::DynamicState dynamicStates[] = { vk::DynamicState::eViewport, vk::DynamicState::eScissor, vk::DynamicState::eBlendConstants };
-	vk::PipelineDynamicStateCreateInfo pipelineDynamicStateCreateInfo(vk::PipelineDynamicStateCreateFlags(), ARRAY_SIZE(dynamicStates) - (withAlpha ? 1 : 0),
-			dynamicStates);
+	vk::DynamicState dynamicStates[] = { vk::DynamicState::eViewport, vk::DynamicState::eScissor };
+	vk::PipelineDynamicStateCreateInfo pipelineDynamicStateCreateInfo(vk::PipelineDynamicStateCreateFlags(), ARRAY_SIZE(dynamicStates), dynamicStates);
 
 	vk::PipelineShaderStageCreateInfo stages[] = {
 			{ vk::PipelineShaderStageCreateFlags(), vk::ShaderStageFlagBits::eVertex, shaderManager->GetQuadVertexShader(rotate), "main" },
-			{ vk::PipelineShaderStageCreateFlags(), vk::ShaderStageFlagBits::eFragment, shaderManager->GetQuadFragmentShader(), "main" },
+			{ vk::PipelineShaderStageCreateFlags(), vk::ShaderStageFlagBits::eFragment, shaderManager->GetQuadFragmentShader(ignoreTexAlpha), "main" },
 	};
 	vk::GraphicsPipelineCreateInfo graphicsPipelineCreateInfo
 	(

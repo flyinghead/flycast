@@ -27,7 +27,8 @@ VKAPI_ATTR static void VKAPI_CALL vmaAllocateDeviceMemoryCallback(
     VmaAllocator      allocator,
     uint32_t          memoryType,
     VkDeviceMemory    memory,
-    VkDeviceSize      size)
+    VkDeviceSize      size,
+	void *            userData)
 {
 	DEBUG_LOG(RENDERER, "VMAAllocator: %" PRIu64 " bytes allocated (type %d)", size, memoryType);
 }
@@ -36,7 +37,8 @@ VKAPI_ATTR static void VKAPI_CALL vmaFreeDeviceMemoryCallback(
     VmaAllocator      allocator,
     uint32_t          memoryType,
     VkDeviceMemory    memory,
-    VkDeviceSize      size)
+    VkDeviceSize      size,
+	void *            userData)
 {
 	DEBUG_LOG(RENDERER, "VMAAllocator: %" PRIu64 " bytes freed (type %d)", size, memoryType);
 }

@@ -220,6 +220,10 @@ void ImGui_ImplVulkan_RenderDrawData(ImDrawData* draw_data, VkCommandBuffer comm
 
     // Upload Vertex and index Data:
     {
+		if (vertex_size != 0)
+			vertex_size = ((vertex_size - 1) / g_BufferMemoryAlignment + 1) * g_BufferMemoryAlignment;
+		if (index_size != 0)
+			index_size = ((index_size - 1) / g_BufferMemoryAlignment + 1) * g_BufferMemoryAlignment;
         ImDrawVert* vtx_dst = NULL;
         ImDrawIdx* idx_dst = NULL;
         err = vkMapMemory(g_Device, fd->VertexBufferMemory, 0, vertex_size, 0, (void**)(&vtx_dst));

@@ -77,6 +77,7 @@ protected:
 public:
 	void Term() override
 	{
+		GetContext()->WaitIdle();
 		GetContext()->PresentFrame(nullptr, nullptr, vk::Extent2D());
 #ifdef LIBRETRO
 		overlay->Term();

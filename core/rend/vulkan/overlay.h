@@ -35,21 +35,18 @@ public:
 	void Init(QuadPipeline *pipeline)
 	{
 		this->pipeline = pipeline;
-		alphaPipeline = std::unique_ptr<QuadPipeline>(new QuadPipeline(true));
-		alphaPipeline->Init(*pipeline);
 		for (auto& drawer : drawers)
 		{
 			drawer = std::unique_ptr<QuadDrawer>(new QuadDrawer());
 			drawer->Init(pipeline);
 		}
 		xhairDrawer = std::unique_ptr<QuadDrawer>(new QuadDrawer());
-		xhairDrawer->Init(alphaPipeline.get());
+		xhairDrawer->Init(pipeline);
 	}
 
 	void Term()
 	{
 		commandBuffers.clear();
-		alphaPipeline.reset();
 		for (auto& drawer : drawers)
 			drawer.reset();
 		xhairDrawer.reset();
@@ -67,7 +64,6 @@ private:
 	std::array<std::unique_ptr<QuadDrawer>, 8> drawers;
 	QuadPipeline *pipeline = nullptr;
 
-	std::unique_ptr<QuadPipeline> alphaPipeline;
 	std::unique_ptr<Texture> xhairTexture;
 	std::unique_ptr<QuadDrawer> xhairDrawer;
 };

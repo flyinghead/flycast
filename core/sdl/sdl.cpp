@@ -5,6 +5,9 @@
 #include "sdl/sdl.h"
 #include <SDL_syswm.h>
 #include <SDL_video.h>
+#ifdef USE_VULKAN
+#include <SDL_vulkan.h>
+#endif
 #endif
 #include "hw/maple/maple_devs.h"
 #include "sdl_gamepad.h"
@@ -36,8 +39,7 @@ static std::shared_ptr<SDLMouse> sdl_mouse;
 static std::shared_ptr<SDLKeyboardDevice> sdl_keyboard;
 static bool window_fullscreen;
 static bool window_maximized;
-static int window_width = WINDOW_WIDTH;
-static int window_height = WINDOW_HEIGHT;
+static SDL_Rect windowPos { SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, WINDOW_WIDTH, WINDOW_HEIGHT };
 static bool gameRunning;
 static bool mouseCaptured;
 static std::string clipboardText;
@@ -177,14 +179,12 @@ void input_sdl_init()
 	if (SDL_WasInit(SDL_INIT_HAPTIC) == 0)
 		SDL_InitSubSystem(SDL_INIT_HAPTIC);
 
-#if !defined(__APPLE__)
 	SDL_SetRelativeMouseMode(SDL_FALSE);
 
 	EventManager::listen(Event::Pause, emuEventCallback);
 	EventManager::listen(Event::Resume, emuEventCallback);
 
 	checkRawInput();
-#endif
 
 #ifdef __SWITCH__
     // when railed, both joycons are mapped to joystick #0,
@@ -211,7 +211,6 @@ void input_sdl_handle()
 	{
 		switch (event.type)
 		{
-#if !defined(__APPLE__)
 			case SDL_QUIT:
 				dc_exit();
 				break;
@@ -274,7 +273,7 @@ void input_sdl_handle()
 						SDL_ShowCursor(SDL_ENABLE);
 				}
 				break;
-#endif
+
 			case SDL_JOYBUTTONDOWN:
 			case SDL_JOYBUTTONUP:
 				{
@@ -330,7 +329,6 @@ void input_sdl_handle()
 				}
 				break;
 
-#if !defined(__APPLE__)
 			case SDL_MOUSEMOTION:
 				gui_set_mouse_position(event.motion.x, event.motion.y);
 				checkRawInput();
@@ -393,7 +391,7 @@ void input_sdl_handle()
 				if (!config::UseRawInput)
 					sdl_mouse->setWheel(-event.wheel.y);
 				break;
-#endif
+
 			case SDL_JOYDEVICEADDED:
 				sdl_open_joystick(event.jdevice.which);
 				break;
@@ -411,8 +409,6 @@ void sdl_window_set_text(const char* text)
 		SDL_SetWindowTitle(window, text);
 }
 
-#if !defined(__APPLE__)
-
 static float hdpiScaling = 1.f;
 
 static inline void get_window_state()
@@ -421,9 +417,10 @@ static inline void get_window_state()
 	window_fullscreen = flags & SDL_WINDOW_FULLSCREEN_DESKTOP;
 	window_maximized = flags & SDL_WINDOW_MAXIMIZED;
     if (!window_fullscreen && !window_maximized){
-        SDL_GetWindowSize(window, &window_width, &window_height);
-        window_width /= hdpiScaling;
-        window_height /= hdpiScaling;
+        SDL_GetWindowSize(window, &windowPos.w, &windowPos.h);
+        windowPos.w /= hdpiScaling;
+        windowPos.h /= hdpiScaling;
+        SDL_GetWindowPosition(window, &windowPos.x, &windowPos.y);
     }
 		
 }
@@ -464,41 +461,39 @@ bool sdl_recreate_window(u32 flags)
                 hdpiScaling = scaling;
             }
         }
+        SDL_UnloadObject(shcoreDLL);
     }
 #endif
     
-	int x = SDL_WINDOWPOS_UNDEFINED;
-	int y = SDL_WINDOWPOS_UNDEFINED;
 #ifdef __SWITCH__
 	AppletOperationMode om = appletGetOperationMode();
 	if (om == AppletOperationMode_Handheld)
 	{
-		window_width  = 1280;
-		window_height = 720;
+		windowPos.w  = 1280;
+		windowPos.h = 720;
 		scaling = 1.5f;
 	}
 	else
 	{
-		window_width  = 1920;
-		window_height = 1080;
+		windowPos.w  = 1920;
+		windowPos.h = 1080;
 		scaling = 1.0f;
 	}
 #else
-	window_width  = cfgLoadInt("window", "width", window_width);
-	window_height = cfgLoadInt("window", "height", window_height);
+	windowPos.x = cfgLoadInt("window", "left", windowPos.x);
+	windowPos.y = cfgLoadInt("window", "top", windowPos.y);
+	windowPos.w = cfgLoadInt("window", "width", windowPos.w);
+	windowPos.h = cfgLoadInt("window", "height", windowPos.h);
 	window_fullscreen = cfgLoadBool("window", "fullscreen", window_fullscreen);
 	window_maximized = cfgLoadBool("window", "maximized", window_maximized);
 	if (window != nullptr)
-	{
-		SDL_GetWindowPosition(window, &x, &y);
 		get_window_state();
-	}
 #endif
 	if (window != nullptr)
 		SDL_DestroyWindow(window);
 
 #if !defined(GLES)
-	flags |= SDL_WINDOW_RESIZABLE;
+	flags |= SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI;
 	if (window_fullscreen)
 		flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
 	else if (window_maximized)
@@ -507,16 +502,17 @@ bool sdl_recreate_window(u32 flags)
 	flags |= SDL_WINDOW_FULLSCREEN;
 #endif
 
-	window = SDL_CreateWindow("Flycast", x, y, window_width * hdpiScaling, window_height * hdpiScaling, flags);
+	window = SDL_CreateWindow("Flycast", windowPos.x, windowPos.y,
+			windowPos.w * hdpiScaling, windowPos.h * hdpiScaling, flags);
 	if (window == nullptr)
 	{
 		ERROR_LOG(COMMON, "Window creation failed: %s", SDL_GetError());
 		return false;
 	}
-	settings.display.width = window_width * hdpiScaling;
-	settings.display.height = window_height * hdpiScaling;
+	settings.display.width = windowPos.w * hdpiScaling;
+	settings.display.height = windowPos.h * hdpiScaling;
 
-#if !defined(GLES) && !defined(_WIN32) && !defined(__SWITCH__)
+#if !defined(GLES) && !defined(_WIN32) && !defined(__SWITCH__) && !defined(__APPLE__)
 	// Set the window icon
 	u32 pixels[48 * 48];
 	for (int i = 0; i < 48 * 48; i++)
@@ -567,6 +563,9 @@ void sdl_window_create()
 		{
 			die("error initializing SDL Video subsystem");
 		}
+#if defined(__APPLE__) && defined(USE_VULKAN)
+		SDL_Vulkan_LoadLibrary("libvulkan.dylib");
+#endif
 	}
 	InitRenderApi();
 	// ImGui copy & paste
@@ -578,13 +577,13 @@ void sdl_window_destroy()
 {
 #ifndef __SWITCH__
 	get_window_state();
-	cfgSaveInt("window", "width", window_width);
-	cfgSaveInt("window", "height", window_height);
+	cfgSaveInt("window", "left", windowPos.x);
+	cfgSaveInt("window", "top", windowPos.y);
+	cfgSaveInt("window", "width", windowPos.w);
+	cfgSaveInt("window", "height", windowPos.h);
 	cfgSaveBool("window", "maximized", window_maximized);
 	cfgSaveBool("window", "fullscreen", window_fullscreen);
 #endif
 	TermRenderApi();
 	SDL_DestroyWindow(window);
 }
-
-#endif // !defined(__APPLE__)

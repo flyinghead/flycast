@@ -49,7 +49,7 @@ private:
 
 #include "libretro.h"
 
-#elif defined(__APPLE__)
+#elif defined(TARGET_IPHONE)
 
 #include "osx.h"
 

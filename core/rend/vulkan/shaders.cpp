@@ -286,7 +286,12 @@ layout (location = 0) out vec4 FragColor;
 
 void main() 
 {
+#if IGNORE_TEX_ALPHA == 1
+	FragColor.rgb = pushConstants.color.rgb * texture(tex, inUV).rgb;
+	FragColor.a = pushConstants.color.a;
+#else
 	FragColor = pushConstants.color * texture(tex, inUV);
+#endif
 }
 )";
 
@@ -365,9 +370,12 @@ vk::UniqueShaderModule ShaderManager::compileQuadVertexShader(bool rotate)
 	return ShaderCompiler::Compile(vk::ShaderStageFlagBits::eVertex, src.generate());
 }
 
-vk::UniqueShaderModule ShaderManager::compileQuadFragmentShader()
+vk::UniqueShaderModule ShaderManager::compileQuadFragmentShader(bool ignoreTexAlpha)
 {
-	return ShaderCompiler::Compile(vk::ShaderStageFlagBits::eFragment, VulkanSource().addSource(QuadFragmentShaderSource).generate());
+	VulkanSource src;
+	src.addConstant("IGNORE_TEX_ALPHA", (int)ignoreTexAlpha)
+			.addSource(QuadFragmentShaderSource);
+	return ShaderCompiler::Compile(vk::ShaderStageFlagBits::eFragment,src.generate());
 }
 
 vk::UniqueShaderModule ShaderManager::compileOSDVertexShader()
