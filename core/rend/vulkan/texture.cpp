@@ -202,11 +202,14 @@ void Texture::Init(u32 width, u32 height, vk::Format format, u32 dataSize, bool 
 			== vk::FormatFeatureFlagBits::eSampledImage
 			? vk::ImageTiling::eOptimal
 			: vk::ImageTiling::eLinear;
+#ifndef __APPLE__
+	// Texture corruption with moltenvk. Perf improvement on other platforms
 	if (height <= 32
 			&& dataSize / height <= 64
 			&& !mipmapped
 			&& (formatProperties.linearTilingFeatures & vk::FormatFeatureFlagBits::eSampledImage) == vk::FormatFeatureFlagBits::eSampledImage)
 		imageTiling = vk::ImageTiling::eLinear;
+#endif
 	needsStaging = imageTiling != vk::ImageTiling::eLinear;
 	vk::ImageLayout initialLayout;
 	vk::ImageUsageFlags usageFlags = vk::ImageUsageFlagBits::eSampled;
