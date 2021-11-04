@@ -45,7 +45,7 @@ VKAPI_ATTR static void VKAPI_CALL vmaFreeDeviceMemoryCallback(
 
 static const VmaDeviceMemoryCallbacks memoryCallbacks = { vmaAllocateDeviceMemoryCallback, vmaFreeDeviceMemoryCallback };
 
-void VMAllocator::Init(vk::PhysicalDevice physicalDevice, vk::Device device)
+void VMAllocator::Init(vk::PhysicalDevice physicalDevice, vk::Device device, vk::Instance instance)
 {
 	verify(allocator == VK_NULL_HANDLE);
 	VmaAllocatorCreateInfo allocatorInfo = { VMA_ALLOCATOR_CREATE_EXTERNALLY_SYNCHRONIZED_BIT };
@@ -54,6 +54,7 @@ void VMAllocator::Init(vk::PhysicalDevice physicalDevice, vk::Device device)
 
 	allocatorInfo.physicalDevice = (VkPhysicalDevice)physicalDevice;
 	allocatorInfo.device = (VkDevice)device;
+	allocatorInfo.instance = (VkInstance)instance;
 #if !defined(NDEBUG) || defined(DEBUGFAST)
 	allocatorInfo.pDeviceMemoryCallbacks = &memoryCallbacks;
 #endif

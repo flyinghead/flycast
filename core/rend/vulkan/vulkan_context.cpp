@@ -126,11 +126,13 @@ static void CheckImGuiResult(VkResult err)
 
 bool VulkanContext::InitInstance(const char** extensions, uint32_t extensions_count)
 {
+#ifndef TARGET_IPHONE
 	if (volkInitialize() != VK_SUCCESS)
 	{
 		ERROR_LOG(RENDERER, "Cannot load Vulkan libraries");
 		return false;
 	}
+#endif
 	try
 	{
 		bool vulkan11 = false;
@@ -168,7 +170,9 @@ bool VulkanContext::InitInstance(const char** extensions, uint32_t extensions_co
 		// create a UniqueInstance
 		instance = vk::createInstanceUnique(instanceCreateInfo);
 
+#ifndef TARGET_IPHONE
 		volkLoadInstance(static_cast<VkInstance>(*instance));
+#endif
 
 #ifdef VK_DEBUG
 #ifndef __ANDROID__
@@ -253,6 +257,8 @@ bool VulkanContext::InitInstance(const char** extensions, uint32_t extensions_co
 		physicalDevice.getFeatures(&features);
 		fragmentStoresAndAtomics = features.fragmentStoresAndAtomics;
 		samplerAnisotropy = features.samplerAnisotropy;
+		if (!fragmentStoresAndAtomics)
+			NOTICE_LOG(RENDERER, "Fragment stores & atomic not supported: no per-pixel sorting");
 
 		ShaderCompiler::Init();
 
@@ -410,8 +416,10 @@ bool VulkanContext::InitDevice()
 		device = physicalDevice.createDeviceUnique(vk::DeviceCreateInfo(vk::DeviceCreateFlags(), 1, &deviceQueueCreateInfo,
 				0, layers, deviceExtensions.size(), &deviceExtensions[0], &features));
 
+#ifndef TARGET_IPHONE
 		// This links entry points directly from the driver and isn't absolutely necessary
 		volkLoadDevice(static_cast<VkDevice>(*device));
+#endif
 
 	    // Queues
 	    graphicsQueue = device->getQueue(graphicsQueueIndex, 0);
@@ -453,7 +461,7 @@ bool VulkanContext::InitDevice()
     		delete [] cacheData;
     		INFO_LOG(RENDERER, "Vulkan pipeline cache loaded from %s: %zd bytes", cachePath.c_str(), cacheSize);
 	    }
-	    allocator.Init(physicalDevice, *device);
+	    allocator.Init(physicalDevice, *device, *instance);
 
 	    shaderManager = std::unique_ptr<ShaderManager>(new ShaderManager());
 	    quadPipeline = std::unique_ptr<QuadPipeline>(new QuadPipeline(true, false));
@@ -679,8 +687,10 @@ bool VulkanContext::Init()
     extern void CreateMainWindow();
     CreateMainWindow();
 	extensions.push_back(VK_KHR_WIN32_SURFACE_EXTENSION_NAME);
-#elif defined(__APPLE__)
-	extensions.push_back(VK_MVK_MACOS_SURFACE_EXTENSION_NAME);
+#elif defined(VK_USE_PLATFORM_IOS_MVK)
+	extensions.push_back(VK_MVK_IOS_SURFACE_EXTENSION_NAME);
+#elif defined(VK_USE_PLATFORM_METAL_EXT)
+	extensions.push_back(VK_EXT_METAL_SURFACE_EXTENSION_NAME);
 #elif defined(SUPPORT_X11)
 	extensions.push_back(VK_KHR_XLIB_SURFACE_EXTENSION_NAME);
 #elif defined(__ANDROID__)
@@ -711,9 +721,12 @@ bool VulkanContext::Init()
 #elif defined(__ANDROID__)
 	vk::AndroidSurfaceCreateInfoKHR createInfo(vk::AndroidSurfaceCreateFlagsKHR(), (struct ANativeWindow*)window);
 	surface = instance->createAndroidSurfaceKHRUnique(createInfo);
-#elif defined(__APPLE__)
-	vk::MacOSSurfaceCreateInfoMVK createInfo(vk::MacOSSurfaceCreateFlagsMVK(), window);
-	surface = instance->createMacOSSurfaceMVKUnique(createInfo);
+#elif defined(VK_USE_PLATFORM_IOS_MVK)
+	vk::IOSSurfaceCreateInfoMVK createInfo(vk::IOSSurfaceCreateFlagsMVK(), window);
+	surface = instance->createIOSSurfaceMVKUnique(createInfo);
+#elif defined(VK_USE_PLATFORM_METAL_EXT)
+	vk::MetalSurfaceCreateInfoEXT createInfo(vk::MetalSurfaceCreateFlagsEXT(), window);
+	surface = instance->createMetalSurfaceEXTUnique(createInfo);
 #else
 #error "Unknown Vulkan platform"
 #endif

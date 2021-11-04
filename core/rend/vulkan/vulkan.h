@@ -28,11 +28,13 @@ static inline VKAPI_ATTR PFN_vkVoidFunction VKAPI_CALL vkGetInstanceProcAddr(VkI
 	return (*vulkan_symbol_wrapper_instance_proc_addr())(instance, name);
 }
 
-#else
+#elif !defined(TARGET_IPHONE)
 #include "volk/volk.h"
 #endif
 
+#if !defined(TARGET_IPHONE)
 #undef VK_NO_PROTOTYPES
+#endif
 #include "vulkan/vulkan.hpp"
 
 //#define VK_DEBUG

@@ -168,6 +168,109 @@ void PipelineManager::CreateModVolPipeline(ModVolMode mode, int cullMode)
 					graphicsPipelineCreateInfo);
 }
 
+void PipelineManager::CreateDepthPassPipeline(int cullMode)
+{
+	// Vertex input state
+	vk::PipelineVertexInputStateCreateInfo pipelineVertexInputStateCreateInfo = GetMainVertexInputStateCreateInfo(false);
+	// Input assembly state
+	vk::PipelineInputAssemblyStateCreateInfo pipelineInputAssemblyStateCreateInfo
+	(
+			vk::PipelineInputAssemblyStateCreateFlags(),
+			vk::PrimitiveTopology::eTriangleList
+	);
+
+	// Viewport and scissor states
+	vk::PipelineViewportStateCreateInfo pipelineViewportStateCreateInfo(vk::PipelineViewportStateCreateFlags(), 1, nullptr, 1, nullptr);
+
+	// Rasterization and multisample states
+	vk::PipelineRasterizationStateCreateInfo pipelineRasterizationStateCreateInfo
+	(
+	  vk::PipelineRasterizationStateCreateFlags(),  // flags
+	  false,                                        // depthClampEnable
+	  false,                                        // rasterizerDiscardEnable
+	  vk::PolygonMode::eFill,                       // polygonMode
+	  cullMode == 3 ? vk::CullModeFlagBits::eBack
+			  : cullMode == 2 ? vk::CullModeFlagBits::eFront
+			  : vk::CullModeFlagBits::eNone,        // cullMode
+	  vk::FrontFace::eCounterClockwise,             // frontFace
+	  false,                                        // depthBiasEnable
+	  0.0f,                                         // depthBiasConstantFactor
+	  0.0f,                                         // depthBiasClamp
+	  0.0f,                                         // depthBiasSlopeFactor
+	  1.0f                                          // lineWidth
+	);
+	vk::PipelineMultisampleStateCreateInfo pipelineMultisampleStateCreateInfo;
+
+	// Depth and stencil
+	vk::StencilOpState stencilOpState;
+	vk::PipelineDepthStencilStateCreateInfo pipelineDepthStencilStateCreateInfo
+	(
+	  vk::PipelineDepthStencilStateCreateFlags(), // flags
+	  true,                                       // depthTestEnable
+	  true,                                       // depthWriteEnable
+	  vk::CompareOp::eGreaterOrEqual,             // depthCompareOp
+	  false,                                      // depthBoundTestEnable
+	  false,                                      // stencilTestEnable
+	  stencilOpState,                             // front
+	  stencilOpState                              // back
+	);
+
+	// Color flags and blending
+	vk::ColorComponentFlags colorComponentFlags((vk::ColorComponentFlagBits)0);
+	vk::PipelineColorBlendAttachmentState pipelineColorBlendAttachmentState(
+		false,                              // blendEnable
+		vk::BlendFactor::eZero,             // srcColorBlendFactor
+		vk::BlendFactor::eZero,             // dstColorBlendFactor
+		vk::BlendOp::eAdd,                  // colorBlendOp
+		vk::BlendFactor::eZero,             // srcAlphaBlendFactor
+		vk::BlendFactor::eZero,             // dstAlphaBlendFactor
+		vk::BlendOp::eAdd,                  // alphaBlendOp
+		colorComponentFlags                 // colorWriteMask
+	);
+
+	vk::PipelineColorBlendStateCreateInfo pipelineColorBlendStateCreateInfo
+	(
+		vk::PipelineColorBlendStateCreateFlags(),   // flags
+		false,                                      // logicOpEnable
+		vk::LogicOp::eNoOp,                         // logicOp
+		1,                                          // attachmentCount
+		&pipelineColorBlendAttachmentState,         // pAttachments
+		{ { 1.0f, 1.0f, 1.0f, 1.0f } }              // blendConstants
+	);
+
+	vk::DynamicState dynamicStates[2] = { vk::DynamicState::eViewport, vk::DynamicState::eScissor };
+	vk::PipelineDynamicStateCreateInfo pipelineDynamicStateCreateInfo(vk::PipelineDynamicStateCreateFlags(), 2, dynamicStates);
+
+	vk::ShaderModule vertex_module = shaderManager->GetModVolVertexShader();
+	vk::ShaderModule fragment_module = shaderManager->GetModVolShader();
+
+	vk::PipelineShaderStageCreateInfo stages[] = {
+			{ vk::PipelineShaderStageCreateFlags(), vk::ShaderStageFlagBits::eVertex, vertex_module, "main" },
+			{ vk::PipelineShaderStageCreateFlags(), vk::ShaderStageFlagBits::eFragment, fragment_module, "main" },
+	};
+	vk::GraphicsPipelineCreateInfo graphicsPipelineCreateInfo
+	(
+	  vk::PipelineCreateFlags(),                  // flags
+	  2,                                          // stageCount
+	  stages,                                     // pStages
+	  &pipelineVertexInputStateCreateInfo,        // pVertexInputState
+	  &pipelineInputAssemblyStateCreateInfo,      // pInputAssemblyState
+	  nullptr,                                    // pTessellationState
+	  &pipelineViewportStateCreateInfo,           // pViewportState
+	  &pipelineRasterizationStateCreateInfo,      // pRasterizationState
+	  &pipelineMultisampleStateCreateInfo,        // pMultisampleState
+	  &pipelineDepthStencilStateCreateInfo,       // pDepthStencilState
+	  &pipelineColorBlendStateCreateInfo,         // pColorBlendState
+	  &pipelineDynamicStateCreateInfo,            // pDynamicState
+	  *pipelineLayout,                            // layout
+	  renderPass                                  // renderPass
+	);
+
+	depthPassPipelines[cullMode] =
+			GetContext()->GetDevice().createGraphicsPipelineUnique(GetContext()->GetPipelineCache(),
+					graphicsPipelineCreateInfo);
+}
+
 void PipelineManager::CreatePipeline(u32 listType, bool sortTriangles, const PolyParam& pp, bool gpuPalette)
 {
 	vk::PipelineVertexInputStateCreateInfo pipelineVertexInputStateCreateInfo = GetMainVertexInputStateCreateInfo();

@@ -91,7 +91,7 @@ private:
 class VMAllocator
 {
 public:
-	void Init(vk::PhysicalDevice physicalDevice, vk::Device device);
+	void Init(vk::PhysicalDevice physicalDevice, vk::Device device, vk::Instance instance);
 
 	void Term()
 	{

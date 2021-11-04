@@ -24,6 +24,7 @@
 #include "texture.h"
 #include "utils.h"
 #include "vulkan_context.h"
+#include <array>
 
 class DescriptorSets
 {
@@ -205,6 +206,16 @@ public:
 		return *modVolPipelines[pipehash];
 	}
 
+	vk::Pipeline GetDepthPassPipeline(int cullMode)
+	{
+		cullMode = std::max(std::min(cullMode, (int)depthPassPipelines.size() - 1), 0);
+		const auto &pipeline = depthPassPipelines[cullMode];
+		if (!pipeline)
+			CreateDepthPassPipeline(cullMode);
+
+		return *pipeline;
+	}
+
 	void Reset()
 	{
 		pipelines.clear();
@@ -218,6 +229,7 @@ public:
 
 private:
 	void CreateModVolPipeline(ModVolMode mode, int cullMode);
+	void CreateDepthPassPipeline(int cullMode);
 
 	u32 hash(u32 listType, bool sortTriangles, const PolyParam *pp, bool gpuPalette) const
 	{
@@ -268,6 +280,7 @@ private:
 
 	std::map<u32, vk::UniquePipeline> pipelines;
 	std::map<u32, vk::UniquePipeline> modVolPipelines;
+	std::array<vk::UniquePipeline, 4> depthPassPipelines;
 
 	vk::UniquePipelineLayout pipelineLayout;
 	vk::UniqueDescriptorSetLayout perFrameLayout;
