@@ -157,6 +157,7 @@ bool DiscSwap(const std::string& path)
 
 	if (path.empty())
 	{
+		TermDrive();
 		NullDriveDiscType = NoDisk;
 		gd_setdisc();
 		return true;

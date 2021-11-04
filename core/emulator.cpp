@@ -444,7 +444,7 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 
 		if (settings.platform.system == DC_PLATFORM_DREAMCAST)
 		{
-			if (path == NULL)
+			if (settings.content.path.empty())
 			{
 				// Boot BIOS
 				if (!LoadRomFiles())
