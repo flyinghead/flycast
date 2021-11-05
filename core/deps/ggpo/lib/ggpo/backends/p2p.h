@@ -23,20 +23,20 @@ public:
 
 
 public:
-   virtual GGPOErrorCode DoPoll(int timeout);
-   virtual GGPOErrorCode AddPlayer(GGPOPlayer *player, GGPOPlayerHandle *handle);
-   virtual GGPOErrorCode AddLocalInput(GGPOPlayerHandle player, void *values, int size);
-   virtual GGPOErrorCode SyncInput(void *values, int size, int *disconnect_flags);
-   virtual GGPOErrorCode IncrementFrame(void);
-   virtual GGPOErrorCode DisconnectPlayer(GGPOPlayerHandle handle);
-   virtual GGPOErrorCode GetNetworkStats(GGPONetworkStats *stats, GGPOPlayerHandle handle);
-   virtual GGPOErrorCode SetFrameDelay(GGPOPlayerHandle player, int delay);
-   virtual GGPOErrorCode SetDisconnectTimeout(int timeout);
-   virtual GGPOErrorCode SetDisconnectNotifyStart(int timeout);
+   GGPOErrorCode DoPoll(int timeout) override;
+   GGPOErrorCode AddPlayer(GGPOPlayer *player, GGPOPlayerHandle *handle) override;
+   GGPOErrorCode AddLocalInput(GGPOPlayerHandle player, void *values, int size) override;
+   GGPOErrorCode SyncInput(void *values, int size, int *disconnect_flags) override;
+   GGPOErrorCode IncrementFrame(void) override;
+   GGPOErrorCode DisconnectPlayer(GGPOPlayerHandle handle) override;
+   GGPOErrorCode GetNetworkStats(GGPONetworkStats *stats, GGPOPlayerHandle handle) override;
+   GGPOErrorCode SetFrameDelay(GGPOPlayerHandle player, int delay) override;
+   GGPOErrorCode SetDisconnectTimeout(int timeout) override;
+   GGPOErrorCode SetDisconnectNotifyStart(int timeout) override;
    GGPOErrorCode SendMessage(const void *msg, int len, bool spectators) override;
 
 public:
-   virtual void OnMsg(sockaddr_in &from, UdpMsg *msg, int len);
+   void OnMsg(sockaddr_in &from, UdpMsg *msg, int len) override;
 
 protected:
    GGPOErrorCode PlayerHandleToQueue(GGPOPlayerHandle player, int *queue);

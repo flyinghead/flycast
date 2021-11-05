@@ -185,19 +185,6 @@ ggpo_advance_frame(GGPOSession *ggpo)
 }
 
 GGPOErrorCode
-ggpo_client_chat(GGPOSession *ggpo, char *text)
-{
-   if (!ggpo)
-      return GGPO_ERRORCODE_INVALID_SESSION;
-   try {
-	   return ggpo->Chat(text);
-   } catch (const GGPOException& e) {
-	   Log("GGPOException in ggpo_client_chat: %s", e.what());
-	   return e.ggpoError;
-   }
-}
-
-GGPOErrorCode
 ggpo_get_network_stats(GGPOSession *ggpo,
                        GGPOPlayerHandle player,
                        GGPONetworkStats *stats)

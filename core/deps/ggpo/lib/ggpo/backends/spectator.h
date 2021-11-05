@@ -25,19 +25,19 @@ public:
 
 
 public:
-   virtual GGPOErrorCode DoPoll(int timeout);
-   virtual GGPOErrorCode AddPlayer(GGPOPlayer *player, GGPOPlayerHandle *handle) { return GGPO_ERRORCODE_UNSUPPORTED; }
-   virtual GGPOErrorCode AddLocalInput(GGPOPlayerHandle player, void *values, int size) { return GGPO_OK; }
-   virtual GGPOErrorCode SyncInput(void *values, int size, int *disconnect_flags);
-   virtual GGPOErrorCode IncrementFrame(void);
-   virtual GGPOErrorCode DisconnectPlayer(GGPOPlayerHandle handle) { return GGPO_ERRORCODE_UNSUPPORTED; }
-   virtual GGPOErrorCode GetNetworkStats(GGPONetworkStats *stats, GGPOPlayerHandle handle) { return GGPO_ERRORCODE_UNSUPPORTED; }
-   virtual GGPOErrorCode SetFrameDelay(GGPOPlayerHandle player, int delay) { return GGPO_ERRORCODE_UNSUPPORTED; }
-   virtual GGPOErrorCode SetDisconnectTimeout(int timeout) { return GGPO_ERRORCODE_UNSUPPORTED; }
-   virtual GGPOErrorCode SetDisconnectNotifyStart(int timeout) { return GGPO_ERRORCODE_UNSUPPORTED; }
+   GGPOErrorCode DoPoll(int timeout) override;
+   GGPOErrorCode AddPlayer(GGPOPlayer *player, GGPOPlayerHandle *handle) override { return GGPO_ERRORCODE_UNSUPPORTED; }
+   GGPOErrorCode AddLocalInput(GGPOPlayerHandle player, void *values, int size) override { return GGPO_OK; }
+   GGPOErrorCode SyncInput(void *values, int size, int *disconnect_flags) override;
+   GGPOErrorCode IncrementFrame(void) override;
+   GGPOErrorCode DisconnectPlayer(GGPOPlayerHandle handle) override { return GGPO_ERRORCODE_UNSUPPORTED; }
+   GGPOErrorCode GetNetworkStats(GGPONetworkStats *stats, GGPOPlayerHandle handle) override { return GGPO_ERRORCODE_UNSUPPORTED; }
+   GGPOErrorCode SetFrameDelay(GGPOPlayerHandle player, int delay) override { return GGPO_ERRORCODE_UNSUPPORTED; }
+   GGPOErrorCode SetDisconnectTimeout(int timeout) override { return GGPO_ERRORCODE_UNSUPPORTED; }
+   GGPOErrorCode SetDisconnectNotifyStart(int timeout) override { return GGPO_ERRORCODE_UNSUPPORTED; }
 
 public:
-   virtual void OnMsg(sockaddr_in &from, UdpMsg *msg, int len);
+   void OnMsg(sockaddr_in &from, UdpMsg *msg, int len) override;
 
 protected:
    void PollUdpProtocolEvents(void);
