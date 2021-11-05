@@ -69,7 +69,7 @@ Disc* cue_parse(const char* file, std::vector<u8> *digest)
 		WARN_LOG(GDROM, "Failed or truncated read of cue file '%s'", file);
 	std::fclose(fsource);
 
-	std::istringstream cuesheet(cue_data);
+	std::istringstream istream(cue_data);
 
 	std::string basepath = OS_dirname(file);
 
@@ -81,9 +81,11 @@ Disc* cue_parse(const char* file, std::vector<u8> *digest)
 	u32 track_number = -1;
 	std::string track_type;
 	u32 session_number = 0;
+	std::string line;
 
-	while (!cuesheet.eof())
+	while (std::getline(istream, line))
 	{
+		std::stringstream cuesheet(line);
 		std::string token;
 		cuesheet >> token;
 
@@ -117,7 +119,10 @@ Disc* cue_parse(const char* file, std::vector<u8> *digest)
 				if (token == "HIGH-DENSITY")
 					current_fad = 45000 + 150;
 				else if (token != "SINGLE-DENSITY")
-					WARN_LOG(GDROM, "CUE parse error: unrecognized REM token %s. Expected SINGLE-DENSITY, HIGH-DENSITY or SESSION", token.c_str());
+				{
+					INFO_LOG(GDROM, "CUE parse: unrecognized REM token %s. Expected SINGLE-DENSITY, HIGH-DENSITY or SESSION", token.c_str());
+					continue;
+				}
 				cuesheet >> token;
 				if (token != "AREA")
 					WARN_LOG(GDROM, "CUE parse error: unrecognized REM token %s. Expected AREA", token.c_str());
