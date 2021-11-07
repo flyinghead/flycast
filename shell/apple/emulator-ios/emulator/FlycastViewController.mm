@@ -40,7 +40,7 @@
 #include "ios_mouse.h"
 
 //@import AltKit;
-#import "AltKit/AltKit-Swift.h"
+#import "AltKit-Swift.h"
 
 std::string iosJitStatus;
 static bool iosJitAuthorized;
