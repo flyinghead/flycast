@@ -68,16 +68,22 @@ const char *PixelCompatShader = R"(
 )";
 
 static const char* GouraudSource = R"(
-#if (TARGET_GL == GL3 || TARGET_GL == GLES3) && pp_Gouraud == 0
+#if TARGET_GL == GL3 || TARGET_GL == GLES3
+#define NOPERSPECTIVE noperspective
+#if pp_Gouraud == 0
 #define INTERPOLATION flat
 #else
+#define INTERPOLATION noperspective
+#endif
+#else
+#define NOPERSPECTIVE
 #define INTERPOLATION
 #endif
 )";
 
 static const char* VertexShaderSource = R"(
 /* Vertex constants*/ 
-uniform highp vec4      depth_scale;
+uniform highp vec4 depth_scale;
 uniform highp mat4 normal_matrix;
 uniform highp float sp_FOG_DENSITY;
 
@@ -89,25 +95,27 @@ in highp vec2 in_uv;
 /* output */
 INTERPOLATION out lowp vec4 vtx_base;
 INTERPOLATION out lowp vec4 vtx_offs;
-              out highp vec2 vtx_uv;
-#if TARGET_GL == GLES2
-			  out highp float fog_depth;
-#endif
+NOPERSPECTIVE out highp vec3 vtx_uv;
+
 void main()
 {
+	highp vec4 vpos = normal_matrix * in_pos;
 	vtx_base = in_base;
 	vtx_offs = in_offs;
-	vtx_uv = in_uv;
-	highp vec4 vpos = normal_matrix * in_pos;
-	
+#if TARGET_GL == GLES2
+	vtx_uv = vec3(in_uv, vpos.z * sp_FOG_DENSITY);
 	vpos.w = 1.0 / vpos.z;
-#if TARGET_GL != GLES2
-	vpos.z = vpos.w;
-#else
-	fog_depth = vpos.z * sp_FOG_DENSITY;
 	vpos.z = depth_scale.x + depth_scale.y * vpos.w;
-#endif
 	vpos.xy *= vpos.w;
+#else
+#if pp_Gouraud == 1
+	vtx_base *= vpos.z;
+	vtx_offs *= vpos.z;
+#endif
+	vtx_uv = vec3(in_uv * vpos.z, vpos.z);
+	vpos.w = 1.0;
+	vpos.z = 0.0;
+#endif
 	gl_Position = vpos;
 }
 )";
@@ -133,15 +141,12 @@ uniform mediump int palette_index;
 /* Vertex input*/
 INTERPOLATION in lowp vec4 vtx_base;
 INTERPOLATION in lowp vec4 vtx_offs;
-			  in highp vec2 vtx_uv;
-#if TARGET_GL == GLES2
-			  in highp float fog_depth;
-#endif
+NOPERSPECTIVE in highp vec3 vtx_uv;
 
 lowp float fog_mode2(highp float w)
 {
 #if TARGET_GL == GLES2
-	highp float z = clamp(fog_depth, 1.0, 255.9999);
+	highp float z = clamp(vtx_uv.z, 1.0, 255.9999);
 #else
 	highp float z = clamp(w * sp_FOG_DENSITY, 1.0, 255.9999);
 #endif
@@ -163,18 +168,25 @@ highp vec4 fog_clamp(lowp vec4 col)
 
 #if pp_Palette == 1
 
-lowp vec4 palettePixel(highp vec2 coords)
+lowp vec4 palettePixel(highp vec3 coords)
 {
-	highp int color_idx = int(floor(texture(tex, coords).FOG_CHANNEL * 255.0 + 0.5)) + palette_index;
 #if TARGET_GL == GLES2 || TARGET_GL == GL2
+	highp int color_idx = int(floor(texture(tex, coords.xy).FOG_CHANNEL * 255.0 + 0.5)) + palette_index;
     highp vec2 c = vec2((mod(float(color_idx), 32.0) * 2.0 + 1.0) / 64.0, (float(color_idx / 32) * 2.0 + 1.0) / 64.0);
 	return texture(palette, c);
 #else
+	highp int color_idx = int(floor(textureProj(tex, coords).FOG_CHANNEL * 255.0 + 0.5)) + palette_index;
     highp ivec2 c = ivec2(color_idx % 32, color_idx / 32);
 	return texelFetch(palette, c, 0);
 #endif
 }
 
+#endif
+
+#if TARGET_GL == GLES2
+#define depth gl_FragCoord.w
+#else
+#define depth vtx_uv.z
 #endif
 
 void main()
@@ -186,17 +198,26 @@ void main()
 			discard;
 	#endif
 	
-	lowp vec4 color=vtx_base;
+	lowp vec4 color = vtx_base;
+	lowp vec4 offset = vtx_offs;
+	#if pp_Gouraud == 1 && TARGET_GL != GLES2
+		color /= vtx_uv.z;
+		offset /= vtx_uv.z;
+	#endif
 	#if pp_UseAlpha==0
 		color.a=1.0;
 	#endif
 	#if pp_FogCtrl==3
-		color=vec4(sp_FOG_COL_RAM.rgb,fog_mode2(gl_FragCoord.w));
+		color = vec4(sp_FOG_COL_RAM.rgb, fog_mode2(depth));
 	#endif
 	#if pp_Texture==1
 	{
 		#if pp_Palette == 0
-			lowp vec4 texcol = texture(tex, vtx_uv);
+		  #if TARGET_GL == GLES2 || TARGET_GL == GL2
+			lowp vec4 texcol = texture(tex, vtx_uv.xy);
+		  #else
+			lowp vec4 texcol = textureProj(tex, vtx_uv);
+		  #endif
 		#else
 			lowp vec4 texcol = palettePixel(vtx_uv);
 		#endif
@@ -204,7 +225,7 @@ void main()
 		#if pp_BumpMap == 1
 			highp float s = PI / 2.0 * (texcol.a * 15.0 * 16.0 + texcol.r * 15.0) / 255.0;
 			highp float r = 2.0 * PI * (texcol.g * 15.0 * 16.0 + texcol.b * 15.0) / 255.0;
-			texcol.a = clamp(vtx_offs.a + vtx_offs.r * sin(s) + vtx_offs.g * cos(s) * cos(r - 2.0 * PI * vtx_offs.b), 0.0, 1.0);
+			texcol.a = clamp(offset.a + offset.r * sin(s) + offset.g * cos(s) * cos(r - 2.0 * PI * offset.b), 0.0, 1.0);
 			texcol.rgb = vec3(1.0, 1.0, 1.0);	
 		#else
 			#if pp_IgnoreTexA==1
@@ -240,9 +261,7 @@ void main()
 		#endif
 		
 		#if pp_Offset==1 && pp_BumpMap == 0
-		{
-			color.rgb+=vtx_offs.rgb;
-		}
+			color.rgb += offset.rgb;
 		#endif
 	}
 	#endif
@@ -250,26 +269,22 @@ void main()
 	color = fog_clamp(color);
 	
 	#if pp_FogCtrl == 0
-	{
-		color.rgb=mix(color.rgb,sp_FOG_COL_RAM.rgb,fog_mode2(gl_FragCoord.w)); 
-	}
+		color.rgb = mix(color.rgb, sp_FOG_COL_RAM.rgb, fog_mode2(depth)); 
 	#endif
 	#if pp_FogCtrl == 1 && pp_Offset==1 && pp_BumpMap == 0
-	{
-		color.rgb=mix(color.rgb,sp_FOG_COL_VERT.rgb,vtx_offs.a);
-	}
+		color.rgb = mix(color.rgb, sp_FOG_COL_VERT.rgb, offset.a);
 	#endif
 	
 	#if pp_TriLinear == 1
 	color *= trilinear_alpha;
 	#endif
 	
-	//color.rgb=vec3(gl_FragCoord.w * sp_FOG_DENSITY / 128.0);
+	//color.rgb = vec3(vtx_uv.z * sp_FOG_DENSITY / 128.0);
 #if TARGET_GL != GLES2
-	highp float w = gl_FragCoord.w * 100000.0;
+	highp float w = vtx_uv.z * 100000.0;
 	gl_FragDepth = log2(1.0 + w) / 34.0;
 #endif
-	gl_FragColor =color;
+	gl_FragColor = color;
 }
 )";
 
@@ -277,10 +292,12 @@ static const char* ModifierVolumeShader = R"(
 uniform lowp float sp_ShaderColor;
 
 /* Vertex input*/
+NOPERSPECTIVE in highp vec3 vtx_uv;
+
 void main()
 {
 #if TARGET_GL != GLES2
-	highp float w = gl_FragCoord.w * 100000.0;
+	highp float w = vtx_uv.z * 100000.0;
 	gl_FragDepth = log2(1.0 + w) / 34.0;
 #endif
 	gl_FragColor=vec4(0.0, 0.0, 0.0, sp_ShaderColor);
@@ -832,10 +849,11 @@ static void create_modvol_shader()
 {
 	if (gl.modvol_shader.program != 0)
 		return;
-	VertexSource vertexShader(true);
+	VertexSource vertexShader(false);
 
 	OpenGlSource fragmentShader;
 	fragmentShader.addSource(PixelCompatShader)
+			.addSource(GouraudSource)
 			.addSource(ModifierVolumeShader);
 
 	gl.modvol_shader.program = gl_CompileAndLink(vertexShader.generate().c_str(), fragmentShader.generate().c_str());
@@ -1236,10 +1254,14 @@ bool RenderFrame(int width, int height)
 	if (!is_rtt)
 		glcache.ClearColor(VO_BORDER_COL.Red / 255.f, VO_BORDER_COL.Green / 255.f, VO_BORDER_COL.Blue / 255.f, 1.f);
 
-	//move vertex to gpu
-
-	if (!pvrrc.isRenderFramebuffer)
+	if (!is_rtt && (FB_R_CTRL.fb_enable == 0 || VO_CONTROL.blank_video == 1))
 	{
+		// Video output disabled
+		glClear(GL_COLOR_BUFFER_BIT);
+	}
+	else if (!pvrrc.isRenderFramebuffer)
+	{
+		//move vertex to gpu
 		//Main VBO
 		glBindBuffer(GL_ARRAY_BUFFER, gl.vbo.geometry); glCheck();
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl.vbo.idxs); glCheck();

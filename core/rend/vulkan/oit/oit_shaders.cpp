@@ -38,23 +38,28 @@ layout (location = 6) in mediump vec2 in_uv1;
 
 layout (location = 0) INTERPOLATION out lowp vec4 vtx_base;
 layout (location = 1) INTERPOLATION out lowp vec4 vtx_offs;
-layout (location = 2)               out mediump vec2 vtx_uv;
+layout (location = 2) noperspective out mediump vec3 vtx_uv;
 layout (location = 3) INTERPOLATION out lowp vec4 vtx_base1;		// New for OIT, only for OP/PT with 2-volume
 layout (location = 4) INTERPOLATION out lowp vec4 vtx_offs1;
-layout (location = 5)               out mediump vec2 vtx_uv1;
+layout (location = 5) noperspective out mediump vec2 vtx_uv1;
 
 void main()
 {
+	vec4 vpos = uniformBuffer.normal_matrix * in_pos;
 	vtx_base = vec4(in_base) / 255.0;
 	vtx_offs = vec4(in_offs) / 255.0;
-	vtx_uv = in_uv;
-	vtx_base1 = vec4(in_base1) / 255.0;								// New for OIT, only for OP/PT with 2-volume
+	vtx_uv = vec3(in_uv * vpos.z, vpos.z);
+	vtx_base1 = vec4(in_base1) / 255.0;
 	vtx_offs1 = vec4(in_offs1) / 255.0;
-	vtx_uv1 = in_uv1;
-	vec4 vpos = uniformBuffer.normal_matrix * in_pos;
-	vpos.w = 1.0 / vpos.z;
-	vpos.z = vpos.w;
-	vpos.xy *= vpos.w; 
+	vtx_uv1 = in_uv1 * vpos.z;
+#if pp_Gouraud == 1
+	vtx_base *= vpos.z;
+	vtx_offs *= vpos.z;
+	vtx_base1 *= vpos.z;
+	vtx_offs1 *= vpos.z;
+#endif
+	vpos.w = 1.0;
+	vpos.z = 0.0;
 	gl_Position = vpos;
 }
 )";
@@ -165,10 +170,10 @@ layout (input_attachment_index = 0, set = 0, binding = 5) uniform subpassInput D
 // Vertex input
 layout (location = 0) INTERPOLATION in lowp vec4 vtx_base;
 layout (location = 1) INTERPOLATION in lowp vec4 vtx_offs;
-layout (location = 2)               in mediump vec2 vtx_uv;
+layout (location = 2) noperspective in mediump vec3 vtx_uv;
 layout (location = 3) INTERPOLATION in lowp vec4 vtx_base1;			// new for OIT. Only if 2 vol
 layout (location = 4) INTERPOLATION in lowp vec4 vtx_offs1;
-layout (location = 5)               in mediump vec2 vtx_uv1;
+layout (location = 5) noperspective in mediump vec2 vtx_uv1;
 
 #if pp_FogCtrl != 2 || pp_TwoVolumes == 1
 layout (set = 0, binding = 2) uniform sampler2D fog_table;
@@ -196,9 +201,9 @@ vec4 colorClamp(vec4 col)
 
 #if pp_Palette == 1
 
-vec4 palettePixel(sampler2D tex, vec2 coords)
+vec4 palettePixel(sampler2D tex, vec3 coords)
 {
-	vec4 c = vec4(texture(tex, coords).r * 255.0 / 1023.0 + pushConstants.palette_index, 0.5, 0.0, 0.0);
+	vec4 c = vec4(textureProj(tex, coords).r * 255.0 / 1023.0 + pushConstants.palette_index, 0.5, 0.0, 0.0);
 	return texture(palette, c.xy);
 }
 
@@ -206,7 +211,7 @@ vec4 palettePixel(sampler2D tex, vec2 coords)
 
 void main()
 {
-	setFragDepth();
+	setFragDepth(vtx_uv.z);
 
 	#if PASS == PASS_OIT
 		// Manual depth testing
@@ -224,7 +229,6 @@ void main()
 	
 	highp vec4 color = vtx_base;
 	lowp vec4 offset = vtx_offs;
-	mediump vec2 uv = vtx_uv;
 	bool area1 = false;
 	ivec2 cur_blend_mode = pushConstants.blend_mode0.xy;
 	
@@ -238,7 +242,6 @@ void main()
 			if (stencil.r == 0x81u) {
 				color = vtx_base1;
 				offset = vtx_offs1;
-				uv = vtx_uv1;
 				area1 = true;
 				cur_blend_mode = pushConstants.blend_mode1.xy;
 				cur_use_alpha = pushConstants.use_alpha1 != 0;
@@ -248,6 +251,10 @@ void main()
 			}
 		#endif
 	#endif
+	#if pp_Gouraud == 1
+		color /= vtx_uv.z;
+		offset /= vtx_uv.z;
+	#endif
 
 	#if pp_UseAlpha == 0 || pp_TwoVolumes == 1
 		IF (!cur_use_alpha)
@@ -255,7 +262,7 @@ void main()
 	#endif
 	#if pp_FogCtrl == 3 || pp_TwoVolumes == 1 // LUT Mode 2
 		IF (cur_fog_control == 3)
-			color = vec4(uniformBuffer.sp_FOG_COL_RAM.rgb, fog_mode2(gl_FragCoord.w));
+			color = vec4(uniformBuffer.sp_FOG_COL_RAM.rgb, fog_mode2(vtx_uv.z));
 	#endif
 	#if pp_Texture==1
 	{
@@ -263,21 +270,21 @@ void main()
 		#if pp_TwoVolumes == 1
 			if (area1)
 				#if pp_Palette == 0
-					texcol = texture(tex1, uv);
+					texcol = textureProj(tex1, vec3(vtx_uv1, vtx_uv.z));
 				#else
-					texcol = palettePixel(tex1, uv);
+					texcol = palettePixel(tex1, vec3(vtx_uv1, vtx_uv.z));
 				#endif
 			else
 		#endif
 		#if pp_Palette == 0
-				texcol = texture(tex0, uv);
+				texcol = textureProj(tex0, vtx_uv);
 		#else
-				texcol = palettePixel(tex0, uv);
+				texcol = palettePixel(tex0, vtx_uv);
 		#endif
 		#if pp_BumpMap == 1
 			highp float s = PI / 2.0 * (texcol.a * 15.0 * 16.0 + texcol.r * 15.0) / 255.0;
 			highp float r = 2.0 * PI * (texcol.g * 15.0 * 16.0 + texcol.b * 15.0) / 255.0;
-			texcol.a = clamp(vtx_offs.a + vtx_offs.r * sin(s) + vtx_offs.g * cos(s) * cos(r - 2.0 * PI * vtx_offs.b), 0.0, 1.0);
+			texcol.a = clamp(offset.a + offset.r * sin(s) + offset.g * cos(s) * cos(r - 2.0 * PI * offset.b), 0.0, 1.0);
 			texcol.rgb = vec3(1.0, 1.0, 1.0);	
 		#else
 			#if pp_IgnoreTexA==1 || pp_TwoVolumes == 1
@@ -335,7 +342,7 @@ void main()
 	#if pp_FogCtrl == 0 || pp_TwoVolumes == 1 // LUT
 		IF(cur_fog_control == 0)
 		{
-			color.rgb = mix(color.rgb, uniformBuffer.sp_FOG_COL_RAM.rgb, fog_mode2(gl_FragCoord.w)); 
+			color.rgb = mix(color.rgb, uniformBuffer.sp_FOG_COL_RAM.rgb, fog_mode2(vtx_uv.z)); 
 		}
 	#endif
 	#if pp_Offset==1 && pp_BumpMap == 0 && (pp_FogCtrl == 1 || pp_TwoVolumes == 1)  // Per vertex
@@ -347,7 +354,7 @@ void main()
 	
 	color *= pushConstants.trilinearAlpha;
 	
-	//color.rgb=vec3(gl_FragCoord.w * uniformBuffer.sp_FOG_DENSITY / 128.0);
+	//color.rgb = vec3(vtx_uv.z * uniformBuffer.sp_FOG_DENSITY / 128.0);
 	
 	#if PASS == PASS_COLOR 
 		FragColor = color;
@@ -411,7 +418,7 @@ void main()
 		
 		Pixel pixel;
 		pixel.color = packColors(clamp(color, vec4(0.0), vec4(1.0)));
-		pixel.depth = gl_FragDepth;
+		pixel.depth = vtx_uv.z;
 		pixel.seq_num = uint(pushConstants.pp_Number);
 		pixel.next = atomicExchange(abufferPointer.pointers[coords.x + coords.y * uniformBuffer.viewportWidth], idx);
 		PixelBuffer.pixels[idx] = pixel;
@@ -421,9 +428,11 @@ void main()
 )";
 
 static const char OITModifierVolumeShader[] = R"(
+layout (location = 0) noperspective in float depth;
+
 void main()
 {
-	setFragDepth();
+	setFragDepth(depth);
 }
 )";
 
@@ -584,6 +593,8 @@ void main(void)
 )";
 
 static const char OITTranslucentModvolShaderSource[] = R"(
+layout (location = 0) noperspective in float depth;
+
 // Must match ModifierVolumeMode enum values
 #define MV_XOR		 0
 #define MV_OR		 1
@@ -592,9 +603,6 @@ static const char OITTranslucentModvolShaderSource[] = R"(
 
 void main()
 {
-#if MV_MODE == MV_XOR || MV_MODE == MV_OR
-	setFragDepth();
-#endif
 	ivec2 coords = ivec2(gl_FragCoord.xy);
 	
 	uint idx = abufferPointer.pointers[coords.x + coords.y * uniformBuffer.viewportWidth];
@@ -606,10 +614,10 @@ void main()
 		if (getShadowEnable(pp))
 		{
 #if MV_MODE == MV_XOR
-			if (gl_FragDepth >= pixel.depth)
+			if (depth >= pixel.depth)
 				atomicXor(PixelBuffer.pixels[idx].seq_num, SHADOW_STENCIL);
 #elif MV_MODE == MV_OR
-			if (gl_FragDepth >= pixel.depth)
+			if (depth >= pixel.depth)
 				atomicOr(PixelBuffer.pixels[idx].seq_num, SHADOW_STENCIL);
 #elif MV_MODE == MV_INCLUSION
 			uint prev_val = atomicAnd(PixelBuffer.pixels[idx].seq_num, ~(SHADOW_STENCIL));

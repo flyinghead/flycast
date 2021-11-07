@@ -38,9 +38,9 @@ struct Pixel { \n\
 #define DST_ALPHA			6 \n\
 #define INVERSE_DST_ALPHA	7 \n\
  \n\
-void setFragDepth(void) \n\
+void setFragDepth(float z) \n\
 { \n\
-	float w = 100000.0 * gl_FragCoord.w; \n\
+	float w = 100000.0 * z; \n\
 	gl_FragDepth = log2(1.0 + w) / 34.0; \n\
 } \n\
 \n\

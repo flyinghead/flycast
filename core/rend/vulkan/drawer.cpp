@@ -332,6 +332,11 @@ bool Drawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 	currentScissor = vk::Rect2D();
 
 	vk::CommandBuffer cmdBuffer = BeginRenderPass();
+	if (!pvrrc.isRTT && (FB_R_CTRL.fb_enable == 0 || VO_CONTROL.blank_video == 1))
+	{
+		// Video output disabled
+		return true;
+	}
 
 	SetProvokingVertices();
 

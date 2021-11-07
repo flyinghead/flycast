@@ -54,13 +54,13 @@ static const char* VertexShaderSource = R"(
 #if pp_Gouraud == 0
 #define INTERPOLATION flat
 #else
-#define INTERPOLATION smooth
+#define INTERPOLATION noperspective
 #endif
 
-/* Vertex constants*/ 
-uniform vec4 scale;
+// Uniforms 
 uniform mat4 normal_matrix;
-/* Vertex input */
+
+// Input
 in vec4 in_pos;
 in vec4 in_base;
 in vec4 in_offs;
@@ -68,26 +68,33 @@ in vec2 in_uv;
 in vec4 in_base1;
 in vec4 in_offs1;
 in vec2 in_uv1;
-/* output */
+
+// Output
 INTERPOLATION out vec4 vtx_base;
 INTERPOLATION out vec4 vtx_offs;
-			  out vec2 vtx_uv;
+noperspective out vec3 vtx_uv;
 INTERPOLATION out vec4 vtx_base1;
 INTERPOLATION out vec4 vtx_offs1;
-			  out vec2 vtx_uv1;
+noperspective out vec2 vtx_uv1;
+
 void main()
 {
+	vec4 vpos = normal_matrix * in_pos;
 	vtx_base = in_base;
 	vtx_offs = in_offs;
-	vtx_uv = in_uv;
+	vtx_uv = vec3(in_uv * vpos.z, vpos.z);
 	vtx_base1 = in_base1;
 	vtx_offs1 = in_offs1;
-	vtx_uv1 = in_uv1;
-	vec4 vpos = normal_matrix * in_pos;
+	vtx_uv1 = in_uv1 * vpos.z;
+#if pp_Gouraud == 1
+	vtx_base *= vpos.z;
+	vtx_offs *= vpos.z;
+	vtx_base1 *= vpos.z;
+	vtx_offs1 *= vpos.z;
+#endif
 	
-	vpos.w = 1.0 / vpos.z;
-	vpos.z = vpos.w;
-	vpos.xy *= vpos.w; 
+	vpos.w = 1.0;
+	vpos.z = 0.0;
 	gl_Position = vpos;
 }
 )";
@@ -112,10 +119,10 @@ out vec4 FragColor;
 #if pp_Gouraud == 0
 #define INTERPOLATION flat
 #else
-#define INTERPOLATION smooth
+#define INTERPOLATION noperspective
 #endif
 
-/* Shader program params*/
+// Uniforms
 uniform float cp_AlphaTestValue;
 uniform vec4 pp_ClipTest;
 uniform vec3 sp_FOG_COL_RAM,sp_FOG_COL_VERT;
@@ -142,13 +149,13 @@ uniform int shading_instr[2];
 uniform int fog_control[2];
 #endif
 
-/* Vertex input*/
+// Input
 INTERPOLATION in vec4 vtx_base;
 INTERPOLATION in vec4 vtx_offs;
-			  in vec2 vtx_uv;
+noperspective in vec3 vtx_uv;
 INTERPOLATION in vec4 vtx_base1;
 INTERPOLATION in vec4 vtx_offs1;
-			  in vec2 vtx_uv1;
+noperspective in vec2 vtx_uv1;
 
 float fog_mode2(float w)
 {
@@ -171,9 +178,9 @@ vec4 fog_clamp(vec4 col)
 
 #if pp_Palette == 1
 
-vec4 palettePixel(sampler2D tex, vec2 coords)
+vec4 palettePixel(sampler2D tex, vec3 coords)
 {
-	int color_idx = int(floor(texture(tex, coords).r * 255.0 + 0.5)) + palette_index;
+	int color_idx = int(floor(textureProj(tex, coords).r * 255.0 + 0.5)) + palette_index;
 	ivec2 c = ivec2(color_idx % 32, color_idx / 32);
 	return texelFetch(palette, c, 0);
 }
@@ -182,7 +189,7 @@ vec4 palettePixel(sampler2D tex, vec2 coords)
 
 void main()
 {
-	setFragDepth();
+	setFragDepth(vtx_uv.z);
 	
 	#if PASS == PASS_OIT
 		// Manual depth testing
@@ -200,7 +207,6 @@ void main()
 	
 	vec4 color = vtx_base;
 	vec4 offset = vtx_offs;
-	vec2 uv = vtx_uv;
 	bool area1 = false;
 	ivec2 cur_blend_mode = blend_mode[0];
 	
@@ -214,7 +220,6 @@ void main()
 			if (stencil.r == 0x81u) {
 				color = vtx_base1;
 				offset = vtx_offs1;
-				uv = vtx_uv1;
 				area1 = true;
 				cur_blend_mode = blend_mode[1];
 				cur_use_alpha = use_alpha[1];
@@ -224,6 +229,10 @@ void main()
 			}
 		#endif
 	#endif
+	#if pp_Gouraud == 1
+		color /= vtx_uv.z;
+		offset /= vtx_uv.z;
+	#endif
 	
 	#if pp_UseAlpha==0 || pp_TwoVolumes == 1
 		IF(!cur_use_alpha)
@@ -231,27 +240,27 @@ void main()
 	#endif
 	#if pp_FogCtrl==3 || pp_TwoVolumes == 1 // LUT Mode 2
 		IF(cur_fog_control == 3)
-			color=vec4(sp_FOG_COL_RAM.rgb,fog_mode2(gl_FragCoord.w));
+			color = vec4(sp_FOG_COL_RAM.rgb, fog_mode2(vtx_uv.z));
 	#endif
 	#if pp_Texture==1
 	{
 		vec4 texcol;
 		#if pp_Palette == 0
 			if (area1)
-				texcol = texture(tex1, uv);
+				texcol = textureProj(tex1, vec3(vtx_uv1.xy, vtx_uv.z));
 			else
-				texcol = texture(tex0, uv);
+				texcol = textureProj(tex0, vtx_uv);
 		#else
 			if (area1)
-				texcol = palettePixel(tex1, uv);
+				texcol = palettePixel(tex1, vec3(vtx_uv1.xy, vtx_uv.z));
 			else
-				texcol = palettePixel(tex0, uv);
+				texcol = palettePixel(tex0, vtx_uv);
 		#endif
 
 		#if pp_BumpMap == 1
 			float s = PI / 2.0 * (texcol.a * 15.0 * 16.0 + texcol.r * 15.0) / 255.0;
 			float r = 2.0 * PI * (texcol.g * 15.0 * 16.0 + texcol.b * 15.0) / 255.0;
-			texcol.a = clamp(vtx_offs.a + vtx_offs.r * sin(s) + vtx_offs.g * cos(s) * cos(r - 2.0 * PI * vtx_offs.b), 0.0, 1.0);
+			texcol.a = clamp(offset.a + offset.r * sin(s) + offset.g * cos(s) * cos(r - 2.0 * PI * offset.b), 0.0, 1.0);
 			texcol.rgb = vec3(1.0, 1.0, 1.0);	
 		#else
 			#if pp_IgnoreTexA==1 || pp_TwoVolumes == 1
@@ -309,7 +318,7 @@ void main()
 	#if pp_FogCtrl==0 || pp_TwoVolumes == 1 // LUT
 		IF(cur_fog_control == 0)
 		{
-			color.rgb=mix(color.rgb,sp_FOG_COL_RAM.rgb,fog_mode2(gl_FragCoord.w)); 
+			color.rgb = mix(color.rgb, sp_FOG_COL_RAM.rgb, fog_mode2(vtx_uv.z)); 
 		}
 	#endif
 	#if pp_Offset==1 && pp_BumpMap == 0 && (pp_FogCtrl == 1 || pp_TwoVolumes == 1)  // Per vertex
@@ -385,7 +394,7 @@ void main()
 		
 		Pixel pixel;
 		pixel.color = packColors(clamp(color, vec4(0.0), vec4(1.0)));
-		pixel.depth = gl_FragDepth;
+		pixel.depth = vtx_uv.z;
 		pixel.seq_num = uint(pp_Number);
 		pixel.next = imageAtomicExchange(abufferPointerImg, coords, idx);
 		pixels[idx] = pixel;
@@ -402,9 +411,11 @@ void main()
 )";
 
 static const char* ModifierVolumeShader = R"(
+noperspective in vec3 vtx_uv;
+
 void main()
 {
-	setFragDepth();
+	setFragDepth(vtx_uv.z);
 }
 )";
 
@@ -558,7 +569,7 @@ static void create_modvol_shader()
 {
 	if (gl4.modvol_shader.program != 0)
 		return;
-	Vertex4Source vertexShader(true);
+	Vertex4Source vertexShader(false);
 	OpenGl4Source fragmentShader;
 	fragmentShader.addSource(ShaderHeader)
 		.addSource(ModifierVolumeShader);
@@ -713,8 +724,6 @@ static bool RenderFrame(int width, int height)
 	}
 	resize(rendering_width, rendering_height);
 	
-	//DEBUG_LOG(RENDERER, "scale: %f, %f, %f, %f", gl4ShaderUniforms.scale_coefs[0], gl4ShaderUniforms.scale_coefs[1], gl4ShaderUniforms.scale_coefs[2], gl4ShaderUniforms.scale_coefs[3]);
-
 	//VERT and RAM fog color constants
 	u8* fog_colvert_bgra=(u8*)&FOG_COL_VERT;
 	u8* fog_colram_bgra=(u8*)&FOG_COL_RAM;
@@ -774,7 +783,14 @@ static bool RenderFrame(int width, int height)
 	if (!is_rtt)
 		glcache.ClearColor(VO_BORDER_COL.Red / 255.f, VO_BORDER_COL.Green / 255.f, VO_BORDER_COL.Blue / 255.f, 1.f);
 
-	if (!pvrrc.isRenderFramebuffer)
+	if (!is_rtt && (FB_R_CTRL.fb_enable == 0 || VO_CONTROL.blank_video == 1))
+	{
+		// Video output disabled
+		glBindFramebuffer(GL_FRAMEBUFFER, output_fbo);
+		glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+		glClear(GL_COLOR_BUFFER_BIT);
+	}
+	else if (!pvrrc.isRenderFramebuffer)
 	{
 		//Main VBO
 		glBindBuffer(GL_ARRAY_BUFFER, gl4.vbo.geometry); glCheck();
