@@ -75,7 +75,7 @@ jobs:
         with:
           msystem: MINGW64
           install: git base-devel mingw-w64-x86_64-toolchain mingw-w64-x86_64-cmake mingw-w64-x86_64-breakpad-git mingw-w64-x86_64-lua
-        if: matrix.config.os == 'windows-latest'
+        if: endsWith(matrix.config.name, 'w64-mingw32')
 
       - uses: actions/checkout@v2
         with:
@@ -96,7 +96,7 @@ jobs:
         run: |
           cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.config.buildType }} -DCMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE=artifact -DCMAKE_LIBRARY_OUTPUT_DIRECTORY=artifact ${{ matrix.config.cmakeArgs }}
           cmake --build build --config Release --parallel 2
-        if: matrix.config.os != 'windows-latest'
+        if: endsWith(matrix.config.name, 'w64-mingw32') != true
 
       - name: CMake (windows)
         shell: msys2 {0}
@@ -104,7 +104,7 @@ jobs:
           unset temp tmp
           cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.config.buildType }} -DCMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE=artifact -DCMAKE_RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO=artifact -DCMAKE_LIBRARY_OUTPUT_DIRECTORY=artifact ${{ matrix.config.cmakeArgs }}
           cmake --build build --config Release --parallel 2
-        if: matrix.config.os == 'windows-latest'
+        if: endsWith(matrix.config.name, 'w64-mingw32')
 
       - name: Unit Tests
         run: |
