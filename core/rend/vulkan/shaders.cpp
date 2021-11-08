@@ -34,9 +34,9 @@ layout (location = 1) in uvec4        in_base;
 layout (location = 2) in uvec4        in_offs;
 layout (location = 3) in mediump vec2 in_uv;
 
-layout (location = 0) INTERPOLATION out lowp vec4 vtx_base;
-layout (location = 1) INTERPOLATION out lowp vec4 vtx_offs;
-layout (location = 2) noperspective out mediump vec3 vtx_uv;
+layout (location = 0) INTERPOLATION out highp vec4 vtx_base;
+layout (location = 1) INTERPOLATION out highp vec4 vtx_offs;
+layout (location = 2) noperspective out highp vec3 vtx_uv;
 
 void main()
 {
@@ -85,9 +85,9 @@ layout (set = 0, binding = 3) uniform sampler2D palette;
 #endif
 
 // Vertex input
-layout (location = 0) INTERPOLATION in lowp vec4 vtx_base;
-layout (location = 1) INTERPOLATION in lowp vec4 vtx_offs;
-layout (location = 2) noperspective in mediump vec3 vtx_uv;
+layout (location = 0) INTERPOLATION in highp vec4 vtx_base;
+layout (location = 1) INTERPOLATION in highp vec4 vtx_offs;
+layout (location = 2) noperspective in highp vec3 vtx_uv;
 
 #if pp_FogCtrl != 2
 layout (set = 0, binding = 2) uniform sampler2D fog_table;
@@ -131,8 +131,8 @@ void main()
 			discard;
 	#endif
 	
-	vec4 color = vtx_base;
-	vec4 offset = vtx_offs;
+	highp vec4 color = vtx_base;
+	highp vec4 offset = vtx_offs;
 	#if pp_Gouraud == 1
 		color /= vtx_uv.z;
 		offset /= vtx_uv.z;
@@ -216,7 +216,7 @@ void main()
 	
 	//color.rgb = vec3(gl_FragCoord.w * uniformBuffer.sp_FOG_DENSITY / 128.0);
 
-	float w = vtx_uv.z * 100000.0;
+	highp float w = vtx_uv.z * 100000.0;
 	gl_FragDepth = log2(1.0 + w) / 34.0;
 
 	gl_FragColor = color;
@@ -230,18 +230,11 @@ layout (std140, set = 0, binding = 0) uniform VertexShaderUniforms
 } uniformBuffer;
 
 layout (location = 0) in vec4 in_pos;
-layout (location = 0) noperspective out float depth;
+layout (location = 0) noperspective out highp float depth;
 
 void main()
 {
-	vec4 vpos = in_pos;
-	if (vpos.z < 0.0 || vpos.z > 3.4e37)
-	{
-		gl_Position = vec4(0.0, 0.0, 1.0, 1.0 / vpos.z);
-		return;
-	}
-
-	vpos = uniformBuffer.normal_matrix * vpos;
+	vec4 vpos = uniformBuffer.normal_matrix * in_pos;
 	depth = vpos.z;
 	vpos.w = 1.0;
 	vpos.z = 0.0;
@@ -250,7 +243,7 @@ void main()
 )";
 
 static const char ModVolFragmentShaderSource[] = R"(
-layout (location = 0) noperspective in float depth;
+layout (location = 0) noperspective in highp float depth;
 layout (location = 0) out vec4 FragColor;
 
 layout (push_constant) uniform pushBlock
@@ -260,7 +253,7 @@ layout (push_constant) uniform pushBlock
 
 void main()
 {
-	float w = depth * 100000.0;
+	highp float w = depth * 100000.0;
 	gl_FragDepth = log2(1.0 + w) / 34.0;
 	FragColor = vec4(0.0, 0.0, 0.0, pushConstants.sp_ShaderColor);
 }

@@ -68,16 +68,23 @@ const char *PixelCompatShader = R"(
 )";
 
 static const char* GouraudSource = R"(
-#if TARGET_GL == GL3 || TARGET_GL == GLES3
-#define NOPERSPECTIVE noperspective
-#if pp_Gouraud == 0
-#define INTERPOLATION flat
+#if TARGET_GL == GL3 || defined(GL_NV_shader_noperspective_interpolation)
+	#define NOPERSPECTIVE noperspective
+	#if pp_Gouraud == 0
+		#define INTERPOLATION flat
+	#else
+		#define INTERPOLATION noperspective
+	#endif
+#elif TARGET_GL == GLES3
+	#define NOPERSPECTIVE smooth
+	#if pp_Gouraud == 0
+		#define INTERPOLATION flat
+	#else
+		#define INTERPOLATION smooth
+	#endif
 #else
-#define INTERPOLATION noperspective
-#endif
-#else
-#define NOPERSPECTIVE
-#define INTERPOLATION
+	#define NOPERSPECTIVE
+	#define INTERPOLATION
 #endif
 )";
 
@@ -852,7 +859,8 @@ static void create_modvol_shader()
 	VertexSource vertexShader(false);
 
 	OpenGlSource fragmentShader;
-	fragmentShader.addSource(PixelCompatShader)
+	fragmentShader.addConstant("pp_Gouraud", 0)
+			.addSource(PixelCompatShader)
 			.addSource(GouraudSource)
 			.addSource(ModifierVolumeShader);
 

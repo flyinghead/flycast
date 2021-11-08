@@ -36,12 +36,12 @@ layout (location = 4) in uvec4        in_base1;						// New for OIT, only for OP
 layout (location = 5) in uvec4        in_offs1;
 layout (location = 6) in mediump vec2 in_uv1;
 
-layout (location = 0) INTERPOLATION out lowp vec4 vtx_base;
-layout (location = 1) INTERPOLATION out lowp vec4 vtx_offs;
-layout (location = 2) noperspective out mediump vec3 vtx_uv;
-layout (location = 3) INTERPOLATION out lowp vec4 vtx_base1;		// New for OIT, only for OP/PT with 2-volume
-layout (location = 4) INTERPOLATION out lowp vec4 vtx_offs1;
-layout (location = 5) noperspective out mediump vec2 vtx_uv1;
+layout (location = 0) INTERPOLATION out highp vec4 vtx_base;
+layout (location = 1) INTERPOLATION out highp vec4 vtx_offs;
+layout (location = 2) noperspective out highp vec3 vtx_uv;
+layout (location = 3) INTERPOLATION out highp vec4 vtx_base1;		// New for OIT, only for OP/PT with 2-volume
+layout (location = 4) INTERPOLATION out highp vec4 vtx_offs1;
+layout (location = 5) noperspective out highp vec2 vtx_uv1;
 
 void main()
 {
@@ -65,6 +65,8 @@ void main()
 )";
 
 static const char OITShaderHeader[] = R"(
+precision highp float;
+
 layout (std140, set = 0, binding = 1) uniform FragmentShaderUniforms
 {
 	vec4 colorClampMin;
@@ -168,12 +170,12 @@ layout (input_attachment_index = 0, set = 0, binding = 5) uniform subpassInput D
 #endif
 
 // Vertex input
-layout (location = 0) INTERPOLATION in lowp vec4 vtx_base;
-layout (location = 1) INTERPOLATION in lowp vec4 vtx_offs;
-layout (location = 2) noperspective in mediump vec3 vtx_uv;
-layout (location = 3) INTERPOLATION in lowp vec4 vtx_base1;			// new for OIT. Only if 2 vol
-layout (location = 4) INTERPOLATION in lowp vec4 vtx_offs1;
-layout (location = 5) noperspective in mediump vec2 vtx_uv1;
+layout (location = 0) INTERPOLATION in highp vec4 vtx_base;
+layout (location = 1) INTERPOLATION in highp vec4 vtx_offs;
+layout (location = 2) noperspective in highp vec3 vtx_uv;
+layout (location = 3) INTERPOLATION in highp vec4 vtx_base1;			// new for OIT. Only if 2 vol
+layout (location = 4) INTERPOLATION in highp vec4 vtx_offs1;
+layout (location = 5) noperspective in highp vec2 vtx_uv1;
 
 #if pp_FogCtrl != 2 || pp_TwoVolumes == 1
 layout (set = 0, binding = 2) uniform sampler2D fog_table;
@@ -215,7 +217,7 @@ void main()
 
 	#if PASS == PASS_OIT
 		// Manual depth testing
-		highp float frontDepth = subpassLoad(DepthTex).r;
+		float frontDepth = subpassLoad(DepthTex).r;
 		if (gl_FragDepth < frontDepth)
 			discard;
 	#endif
@@ -227,8 +229,8 @@ void main()
 			discard;
 	#endif
 	
-	highp vec4 color = vtx_base;
-	lowp vec4 offset = vtx_offs;
+	vec4 color = vtx_base;
+	vec4 offset = vtx_offs;
 	bool area1 = false;
 	ivec2 cur_blend_mode = pushConstants.blend_mode0.xy;
 	
@@ -266,7 +268,7 @@ void main()
 	#endif
 	#if pp_Texture==1
 	{
-		highp vec4 texcol;
+		vec4 texcol;
 		#if pp_TwoVolumes == 1
 			if (area1)
 				#if pp_Palette == 0
@@ -282,8 +284,8 @@ void main()
 				texcol = palettePixel(tex0, vtx_uv);
 		#endif
 		#if pp_BumpMap == 1
-			highp float s = PI / 2.0 * (texcol.a * 15.0 * 16.0 + texcol.r * 15.0) / 255.0;
-			highp float r = 2.0 * PI * (texcol.g * 15.0 * 16.0 + texcol.b * 15.0) / 255.0;
+			float s = PI / 2.0 * (texcol.a * 15.0 * 16.0 + texcol.r * 15.0) / 255.0;
+			float r = 2.0 * PI * (texcol.g * 15.0 * 16.0 + texcol.b * 15.0) / 255.0;
 			texcol.a = clamp(offset.a + offset.r * sin(s) + offset.g * cos(s) * cos(r - 2.0 * PI * offset.b), 0.0, 1.0);
 			texcol.rgb = vec3(1.0, 1.0, 1.0);	
 		#else
@@ -428,7 +430,7 @@ void main()
 )";
 
 static const char OITModifierVolumeShader[] = R"(
-layout (location = 0) noperspective in float depth;
+layout (location = 0) noperspective in highp float depth;
 
 void main()
 {
@@ -593,7 +595,7 @@ void main(void)
 )";
 
 static const char OITTranslucentModvolShaderSource[] = R"(
-layout (location = 0) noperspective in float depth;
+layout (location = 0) noperspective in highp float depth;
 
 // Must match ModifierVolumeMode enum values
 #define MV_XOR		 0
