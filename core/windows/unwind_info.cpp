@@ -22,7 +22,7 @@
 #ifdef _WIN64
 #include "oslib/oslib.h"
 #include <windows.h>
-#include <DbgHelp.h>
+#include <dbghelp.h>
 #include <algorithm>
 
 #define UWOP_PUSH_NONVOL 0
