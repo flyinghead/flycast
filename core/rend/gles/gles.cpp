@@ -76,11 +76,11 @@ static const char* GouraudSource = R"(
 		#define INTERPOLATION noperspective
 	#endif
 #elif TARGET_GL == GLES3
-	#define NOPERSPECTIVE smooth
+	#define NOPERSPECTIVE
 	#if pp_Gouraud == 0
 		#define INTERPOLATION flat
 	#else
-		#define INTERPOLATION smooth
+		#define INTERPOLATION
 	#endif
 #else
 	#define NOPERSPECTIVE
@@ -100,8 +100,8 @@ in lowp vec4 in_base;
 in lowp vec4 in_offs;
 in highp vec2 in_uv;
 /* output */
-INTERPOLATION out lowp vec4 vtx_base;
-INTERPOLATION out lowp vec4 vtx_offs;
+INTERPOLATION out highp vec4 vtx_base;
+INTERPOLATION out highp vec4 vtx_offs;
 NOPERSPECTIVE out highp vec3 vtx_uv;
 
 void main()
@@ -146,8 +146,8 @@ uniform mediump int palette_index;
 #endif
 
 /* Vertex input*/
-INTERPOLATION in lowp vec4 vtx_base;
-INTERPOLATION in lowp vec4 vtx_offs;
+INTERPOLATION in highp vec4 vtx_base;
+INTERPOLATION in highp vec4 vtx_offs;
 NOPERSPECTIVE in highp vec3 vtx_uv;
 
 lowp float fog_mode2(highp float w)
@@ -205,8 +205,8 @@ void main()
 			discard;
 	#endif
 	
-	lowp vec4 color = vtx_base;
-	lowp vec4 offset = vtx_offs;
+	highp vec4 color = vtx_base;
+	highp vec4 offset = vtx_offs;
 	#if pp_Gouraud == 1 && TARGET_GL != GLES2
 		color /= vtx_uv.z;
 		offset /= vtx_uv.z;
