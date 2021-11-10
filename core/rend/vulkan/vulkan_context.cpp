@@ -567,12 +567,9 @@ void VulkanContext::CreateSwapChain()
 					break;
 				}
 			}
-			/*
-			if (swapOnVSync && settings.display.refreshRate > 60.f)
-				// TODO config option to enable duped frames
+			if (swapOnVSync && config::DupeFrames && settings.display.refreshRate > 60.f)
 				swapInterval = settings.display.refreshRate / 60.f;
 			else
-			*/
 				swapInterval = 1;
 
 			vk::SurfaceTransformFlagBitsKHR preTransform = (surfaceCapabilities.supportedTransforms & vk::SurfaceTransformFlagBitsKHR::eIdentity) ? vk::SurfaceTransformFlagBitsKHR::eIdentity : surfaceCapabilities.currentTransform;

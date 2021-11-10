@@ -436,6 +436,7 @@ extern Option<bool> VSync;
 extern Option<u64> PixelBufferSize;
 extern Option<int> AnisotropicFiltering;
 extern Option<bool> ThreadedRendering;
+extern Option<bool> DupeFrames;
 
 // Misc
 
