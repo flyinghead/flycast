@@ -66,7 +66,7 @@ protected:
 		}
 #endif
 #ifdef LIBRETRO
-		quadPipeline = std::unique_ptr<QuadPipeline>(new QuadPipeline(true));
+		quadPipeline = std::unique_ptr<QuadPipeline>(new QuadPipeline(false, false));
 		quadPipeline->Init(&shaderManager, renderPass);
 		overlay = std::unique_ptr<VulkanOverlay>(new VulkanOverlay());
 		overlay->Init(quadPipeline.get());
