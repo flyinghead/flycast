@@ -23,9 +23,6 @@
 #include "types.h"
 #include "imgui/imgui.h"
 #include "imgui/imgui_internal.h"
-#include "gles/imgui_impl_opengl3.h"
-#include "vulkan/vulkan_context.h"
-#include "dx9/dxcontext.h"
 #include "gui.h"
 #include "emulator.h"
 
@@ -33,21 +30,6 @@ typedef bool (*StringCallback)(bool cancelled, std::string selection);
 
 void select_file_popup(const char *prompt, StringCallback callback,
 		bool selectFile = false, const std::string& extension = "");
-
-static inline void ImGui_impl_RenderDrawData(ImDrawData *draw_data)
-{
-#ifdef USE_VULKAN
-	if (config::RendererType.isVulkan())
-		ImGui_ImplVulkan_RenderDrawData(draw_data);
-	else
-#endif
-#ifdef _WIN32
-		if (config::RendererType.isDirectX())
-			theDXContext.EndImGuiFrame();
-	else
-#endif
-		ImGui_ImplOpenGL3_RenderDrawData(draw_data);
-}
 
 void scrollWhenDraggingOnVoid(ImGuiMouseButton mouse_button = ImGuiMouseButton_Left);
 

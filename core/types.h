@@ -298,6 +298,13 @@ enum class RenderType {
 	DirectX9 = 1,
 };
 
+static inline bool isOpenGL(RenderType renderType)  {
+	return renderType == RenderType::OpenGL || renderType == RenderType::OpenGL_OIT;
+}
+static inline bool isVulkan(RenderType renderType) {
+	return renderType == RenderType::Vulkan || renderType == RenderType::Vulkan_OIT;
+}
+
 enum class KeyboardLayout {
 	JP = 1,
 	US,
@@ -335,6 +342,7 @@ struct settings_t
 		int width = 640;
 		int height = 480;
 		float pointScale = 1.f;
+		float refreshRate = 0;
 	} display;
 
 	struct

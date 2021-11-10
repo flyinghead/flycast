@@ -124,6 +124,7 @@ void VulkanOverlay::Draw(vk::CommandBuffer commandBuffer, vk::Extent2D viewport,
 			switch (vmu_screen_params[i / 2].vmu_screen_position)
 			{
 			case UPPER_LEFT:
+			default:
 				x = vmu_padding;
 				y = vmu_padding;
 				break;

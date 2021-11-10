@@ -90,7 +90,7 @@ static void captureMouse(bool capture)
 	}
 }
 
-static void emuEventCallback(Event event)
+static void emuEventCallback(Event event, void *)
 {
 	switch (event)
 	{
@@ -255,12 +255,7 @@ void input_sdl_handle()
 						|| event.window.event == SDL_WINDOWEVENT_MINIMIZED
 						|| event.window.event == SDL_WINDOWEVENT_MAXIMIZED)
 				{
-#ifdef USE_VULKAN
-                	theVulkanContext.SetResized();
-#endif
-#ifdef _WIN32
-               		theDXContext.resize();
-#endif
+					GraphicsContext::Instance()->resize();
 				}
 				else if (event.window.event == SDL_WINDOWEVENT_FOCUS_GAINED)
 				{
@@ -527,13 +522,24 @@ bool sdl_recreate_window(u32 flags)
 	}
 #endif
 
-#ifdef USE_VULKAN
-	theVulkanContext.SetWindow(window, nullptr);
-#endif
-	theGLContext.SetWindow(window);
 #ifdef _WIN32
-	theDXContext.setNativeWindow(getNativeHwnd());
+	if (config::RendererType == RenderType::DirectX9)
+		GraphicsContext::Instance()->setWindow(getNativeHwnd());
+	else
 #endif
+	GraphicsContext::Instance()->setWindow(window);
+
+	int displayIndex = SDL_GetWindowDisplayIndex(window);
+	if (displayIndex < 0)
+		WARN_LOG(RENDERER, "Cannot get the window display index: %s", SDL_GetError());
+	else
+	{
+		SDL_DisplayMode mode{};
+		if (SDL_GetDesktopDisplayMode(displayIndex, &mode) == 0) {
+			INFO_LOG(RENDERER, "Monitor refresh rate: %d Hz", mode.refresh_rate);
+			settings.display.refreshRate = mode.refresh_rate;
+		}
+	}
 
 	return true;
 }
@@ -567,7 +573,7 @@ void sdl_window_create()
 		SDL_Vulkan_LoadLibrary("libvulkan.dylib");
 #endif
 	}
-	InitRenderApi();
+	initRenderApi();
 	// ImGui copy & paste
 	ImGui::GetIO().GetClipboardTextFn = getClipboardText;
 	ImGui::GetIO().SetClipboardTextFn = setClipboardText;
@@ -584,6 +590,6 @@ void sdl_window_destroy()
 	cfgSaveBool("window", "maximized", window_maximized);
 	cfgSaveBool("window", "fullscreen", window_fullscreen);
 #endif
-	TermRenderApi();
+	termRenderApi();
 	SDL_DestroyWindow(window);
 }

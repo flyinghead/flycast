@@ -40,17 +40,17 @@
 
 EGLGraphicsContext theGLContext;
 
-bool EGLGraphicsContext::MakeCurrent()
+bool EGLGraphicsContext::makeCurrent()
 {
 	if (surface == EGL_NO_SURFACE || context == EGL_NO_CONTEXT)
 		return false;
 	return eglMakeCurrent(display, surface, surface, context);
 }
 
-bool EGLGraphicsContext::Init()
+bool EGLGraphicsContext::init()
 {
 	//try to get a display
-	display = eglGetDisplay(nativeDisplay);
+	display = eglGetDisplay((EGLNativeDisplayType)display);
 
 	//if failed, get the default display (this will not happen in win32)
 	if (display == EGL_NO_DISPLAY)
@@ -92,9 +92,9 @@ bool EGLGraphicsContext::Init()
 			ERROR_LOG(RENDERER, "eglGetConfigAttrib() returned error %x", eglGetError());
 			return false;
 		}
-		ANativeWindow_setBuffersGeometry((ANativeWindow *)nativeWindow, 0, 0, format);
+		ANativeWindow_setBuffersGeometry((ANativeWindow *)window, 0, 0, format);
 #endif
-		surface = eglCreateWindowSurface(display, config, nativeWindow, NULL);
+		surface = eglCreateWindowSurface(display, config, (EGLNativeWindowType)window, NULL);
 
 		if (surface == EGL_NO_SURFACE)
 		{
@@ -117,7 +117,7 @@ bool EGLGraphicsContext::Init()
 			context = eglCreateContext(display, config, NULL, contextAttrs);
 			if (context != EGL_NO_CONTEXT)
 			{
-				MakeCurrent();
+				makeCurrent();
 				if (gl3wInit())
 					ERROR_LOG(RENDERER, "gl3wInit() failed");
 			}
@@ -145,7 +145,7 @@ bool EGLGraphicsContext::Init()
 // EGL only supports runtime loading with android? TDB
 			load_gles_symbols();
 #else
-			MakeCurrent();
+			makeCurrent();
 			if (gl3wInit())
 				INFO_LOG(RENDERER, "gl3wInit() failed");
 #endif
@@ -158,7 +158,7 @@ bool EGLGraphicsContext::Init()
 		load_gles_symbols();
 	}
 
-	if (!MakeCurrent())
+	if (!makeCurrent())
 	{
 		ERROR_LOG(RENDERER, "eglMakeCurrent() failed: %x", eglGetError());
 		return false;
@@ -179,15 +179,15 @@ bool EGLGraphicsContext::Init()
 	eglSwapInterval(display, (int)swapOnVSync);
 #endif
 
-	PostInit();
+	postInit();
 
 	INFO_LOG(RENDERER, "EGL config: %p, %p, %p %dx%d", context, display, surface, w, h);
 	return true;
 }
 
-void EGLGraphicsContext::Term()
+void EGLGraphicsContext::term()
 {
-	PreTerm();
+	preTerm();
 	eglMakeCurrent(display, NULL, NULL, EGL_NO_CONTEXT);
 	if (context != EGL_NO_CONTEXT)
 		eglDestroyContext(display, context);
@@ -206,7 +206,7 @@ void EGLGraphicsContext::Term()
 	display = EGL_NO_DISPLAY;
 }
 
-void EGLGraphicsContext::Swap()
+void EGLGraphicsContext::swap()
 {
 	do_swap_automation();
 	if (swapOnVSync == (settings.input.fastForwardMode || !config::VSync))

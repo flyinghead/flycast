@@ -25,11 +25,13 @@
 #endif
 #include "hw/pvr/Renderer_if.h"
 #include "emulator.h"
+#include "dx9_driver.h"
 
 DXContext theDXContext;
 
-bool DXContext::Init(bool keepCurrentWindow)
+bool DXContext::init(bool keepCurrentWindow)
 {
+	GraphicsContext::instance = this;
 #ifdef USE_SDL
 	if (!keepCurrentWindow && !sdl_recreate_window(0))
 		return false;
@@ -39,26 +41,50 @@ bool DXContext::Init(bool keepCurrentWindow)
 	if (!pD3D)
 		return false;
 	memset(&d3dpp, 0, sizeof(d3dpp));
-	d3dpp.hDeviceWindow = hWnd;
+	d3dpp.hDeviceWindow = (HWND)window;
 	d3dpp.Windowed = true;
 	d3dpp.SwapEffect = D3DSWAPEFFECT_DISCARD;
 	d3dpp.BackBufferFormat = D3DFMT_UNKNOWN;
 	d3dpp.EnableAutoDepthStencil = FALSE;						// No need for depth/stencil buffer for the backbuffer
 	swapOnVSync = !settings.input.fastForwardMode && config::VSync;
-	d3dpp.PresentationInterval = swapOnVSync ? D3DPRESENT_INTERVAL_ONE : D3DPRESENT_INTERVAL_IMMEDIATE;
+	if (swapOnVSync)
+	{
+		switch ((int)(settings.display.refreshRate / 60))
+		{
+		case 0:
+		case 1:
+			d3dpp.PresentationInterval = D3DPRESENT_INTERVAL_ONE;
+			break;
+		case 2:
+			d3dpp.PresentationInterval = D3DPRESENT_INTERVAL_TWO;
+			break;
+		case 3:
+			d3dpp.PresentationInterval = D3DPRESENT_INTERVAL_THREE;
+			break;
+		case 4:
+		default:
+			d3dpp.PresentationInterval = D3DPRESENT_INTERVAL_FOUR;
+			break;
+		}
+	}
+	else
+		d3dpp.PresentationInterval = D3DPRESENT_INTERVAL_IMMEDIATE;
 	// TODO should be 0 in windowed mode
 	//d3dpp.FullScreen_RefreshRateInHz = swapOnVSync ? 60 : 0;
-	if (FAILED(pD3D->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, hWnd,
+	if (FAILED(pD3D->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, (HWND)window,
 			D3DCREATE_HARDWARE_VERTEXPROCESSING, &d3dpp, &pDevice.get())))
 	    return false;
+	imguiDriver = std::unique_ptr<ImGuiDriver>(new DX9Driver());
 	gui_init();
 	overlay.init(pDevice);
 	return ImGui_ImplDX9_Init(pDevice.get());
 }
 
-void DXContext::Term()
+void DXContext::term()
 {
+	GraphicsContext::instance = nullptr;
 	overlay.term();
+	imguiDriver.reset();
 	ImGui_ImplDX9_Shutdown();
 	gui_term();
 	pDevice.reset();
@@ -87,8 +113,8 @@ void DXContext::Present()
 				renderer->Term();
 				delete renderer;
 			}
-			Term();
-			Init(true);
+			term();
+			init(true);
 			if (renderer != nullptr)
 			{
 				renderer = new D3DRenderer();
@@ -132,7 +158,7 @@ void DXContext::resize()
 	if (!pDevice)
 		return;
 	RECT rect;
-	GetClientRect(hWnd, &rect);
+	GetClientRect((HWND)window, &rect);
 	d3dpp.BackBufferWidth = settings.display.width = rect.right;
 	d3dpp.BackBufferHeight = settings.display.height = rect.bottom;
 	if (settings.display.width == 0 || settings.display.height == 0)

@@ -125,8 +125,11 @@ if(MSVC)
 else()
 	target_compile_options(${PROJECT_NAME} PRIVATE
 		$<$<COMPILE_LANGUAGE:CXX>:-fno-strict-aliasing>
-		$<$<COMPILE_LANGUAGE:CXX>:-Wall>
-		$<$<COMPILE_LANGUAGE:CXX>:-Wno-nullability-completeness>)
+		$<$<COMPILE_LANGUAGE:CXX>:-Wall>)
+	if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+		target_compile_options(${PROJECT_NAME} PRIVATE
+			$<$<COMPILE_LANGUAGE:CXX>:-Wno-nullability-completeness>)
+	endif()
 endif()
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE
@@ -914,7 +917,10 @@ if(NOT LIBRETRO)
 	target_sources(${PROJECT_NAME} PRIVATE
 	        core/rend/gles/imgui_impl_opengl3.cpp
 	        core/rend/gles/imgui_impl_opengl3.h
+	        core/rend/gles/opengl_driver.cpp
+	        core/rend/gles/opengl_driver.h
 	        core/rend/game_scanner.h
+	        core/rend/imgui_driver.h
 	        core/rend/gui.cpp
 	        core/rend/gui.h
 	        core/rend/gui_android.cpp
@@ -996,6 +1002,7 @@ if(USE_VULKAN)
 	            core/deps/libretro-common/vulkan/vulkan_symbol_wrapper.c)
 	else()
 	    target_sources(${PROJECT_NAME} PRIVATE
+	            core/rend/vulkan/vulkan_driver.h
 	            core/rend/vulkan/vulkan_context.cpp
 	            core/rend/vulkan/imgui_impl_vulkan.cpp
 	            core/rend/vulkan/imgui_impl_vulkan.h)
@@ -1013,6 +1020,7 @@ if(WIN32 AND NOT LIBRETRO)
 		core/rend/dx9/d3d_shaders.cpp
 		core/rend/dx9/d3d_texture.h
 		core/rend/dx9/d3d_texture.cpp
+		core/rend/dx9/dx9_driver.h
 		core/rend/dx9/dxcontext.h
 		core/rend/dx9/dxcontext.cpp
 		core/rend/dx9/imgui_impl_dx9.h

@@ -1,7 +1,5 @@
 /*
-    Created on: Oct 18, 2019
-
-	Copyright 2019 flyinghead
+	Copyright 2021 flyinghead
 
 	This file is part of Flycast.
 
@@ -19,38 +17,22 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #pragma once
-#include <GLES32/gl32.h>
-#include <GLES32/gl2ext.h>
-#ifndef GLES2
-#include "gl32funcs.h"
-#else
-extern "C" void load_gles_symbols();
-#endif
-#include "gl_context.h"
+#include "imgui/imgui.h"
+#include <memory>
 
-#define USE_EGL
-#include <EGL/egl.h>
-#include <EGL/eglext.h>
-
-class EGLGraphicsContext : public GLGraphicsContext
+class ImGuiDriver
 {
 public:
-	~EGLGraphicsContext() { term(); }
+	virtual ~ImGuiDriver() = default;
 
-	bool init();
-	void term() override;
-	void swap();
+	virtual void newFrame() = 0;
+	virtual void renderDrawData(ImDrawData* drawData) = 0;
 
-private:
-	bool makeCurrent();
+	virtual void displayVmus() {}
+	virtual void displayCrosshairs() {}
 
-	EGLDisplay display = EGL_NO_DISPLAY;
-	EGLSurface surface = EGL_NO_SURFACE;
-	EGLContext context = EGL_NO_CONTEXT;
-#ifdef TARGET_PANDORA
-	int fbdev = -1;
-#endif
-	bool swapOnVSync = false;
+	virtual void present() = 0;
 };
 
-extern EGLGraphicsContext theGLContext;
+extern std::unique_ptr<ImGuiDriver> imguiDriver;
+

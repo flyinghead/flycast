@@ -25,7 +25,6 @@
 #include "hw/maple/maple_devs.h"
 #include "hw/naomi/naomi_cart.h"
 #include "imgui/imgui.h"
-#include "gles/imgui_impl_opengl3.h"
 #include "imgui/roboto_medium.h"
 #include "network/net_handshake.h"
 #include "network/ggpo.h"
@@ -44,11 +43,13 @@
 #include "rend/mainui.h"
 #include "lua/lua.h"
 #include "gui_chat.h"
+#include "imgui_driver.h"
 
 static bool game_started;
 
 int screen_dpi = 96;
 int insetLeft, insetRight, insetTop, insetBottom;
+std::unique_ptr<ImGuiDriver> imguiDriver;
 
 static bool inited = false;
 float scaling = 1;
@@ -64,17 +65,14 @@ static double osd_message_end;
 static std::mutex osd_message_mutex;
 
 static int map_system = 0;
-static void display_vmus();
 static void reset_vmus();
-static void term_vmus();
-static void displayCrosshairs();
 void error_popup();
 
 static GameScanner scanner;
 static BackgroundGameLoader gameLoader;
 static Chat chat;
 
-static void emuEventCallback(Event event)
+static void emuEventCallback(Event event, void *)
 {
 	switch (event)
 	{
@@ -138,10 +136,6 @@ void gui_init()
 #if defined(__ANDROID__) || defined(TARGET_IPHONE)
     ImGui::GetStyle().TouchExtraPadding = ImVec2(1, 1);	// from 0,0
 #endif
-
-    // Setup Platform/Renderer bindings
-    if (config::RendererType.isOpenGL())
-    	ImGui_ImplOpenGL3_Init();
 
     // Load Fonts
     // - If no fonts are loaded, dear imgui will use the default font. You can also load multiple fonts and use ImGui::PushFont()/PopFont() to select them.
@@ -322,12 +316,7 @@ void gui_set_mouse_wheel(float delta)
 
 static void ImGui_Impl_NewFrame()
 {
-	if (config::RendererType.isOpenGL())
-		ImGui_ImplOpenGL3_NewFrame();
-#ifdef _WIN32
-	else if (config::RendererType.isDirectX())
-		ImGui_ImplDX9_NewFrame();
-#endif
+	imguiDriver->newFrame();
 	ImGui::GetIO().DisplaySize.x = settings.display.width;
 	ImGui::GetIO().DisplaySize.y = settings.display.height;
 
@@ -468,7 +457,7 @@ void gui_stop_game(const std::string& message)
 
 static void gui_display_commands()
 {
-   	display_vmus();
+   	imguiDriver->displayVmus();
 
     centerNextWindow();
     ImGui::SetNextWindowSize(ImVec2(330 * scaling, 0));
@@ -1556,15 +1545,7 @@ static void gui_display_settings()
 			}
 
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
-			bool has_per_pixel = false;
-			if (renderApi == 0)
-				has_per_pixel = !theGLContext.IsGLES()
-					&& (theGLContext.GetMajorVersion() > 4
-							|| (theGLContext.GetMajorVersion() == 4 && theGLContext.GetMinorVersion() >= 3));
-#ifdef USE_VULKAN
-			else if (renderApi == 1)
-				has_per_pixel = VulkanContext::Instance()->SupportsFragmentShaderStoresAndAtomics();
-#endif
+			const bool has_per_pixel = GraphicsContext::Instance()->hasPerPixel();
 		    header("Transparent Sorting");
 		    {
 		    	int renderer = perPixel ? 2 : config::PerStripSorting ? 1 : 0;
@@ -2017,34 +1998,18 @@ static void gui_display_settings()
 #endif
 		    }
 	    	ImGui::Spacing();
-	    	if (config::RendererType.isOpenGL())
-	    	{
+	    	if (isOpenGL(config::RendererType))
 				header("Open GL");
-	    		ImGui::Text("Renderer: %s", (const char *)glGetString(GL_RENDERER));
-	    		ImGui::Text("Version: %s", (const char *)glGetString(GL_VERSION));
-	    	}
 #ifdef USE_VULKAN
-	    	else if (config::RendererType.isVulkan())
-	    	{
+	    	else if (isVulkan(config::RendererType))
 				header("Vulkan");
-				std::string name = VulkanContext::Instance()->GetDriverName();
-				ImGui::Text("Driver Name: %s", name.c_str());
-				std::string version = VulkanContext::Instance()->GetDriverVersion();
-				ImGui::Text("Version: %s", version.c_str());
-	    	}
 #endif
 #ifdef _WIN32
-	    	else if (config::RendererType.isDirectX())
-	    	{
-				if (ImGui::CollapsingHeader("DirectX", ImGuiTreeNodeFlags_DefaultOpen))
-				{
-		    		std::string name = theDXContext.getDriverName();
-		    		ImGui::Text("Driver Name: %s", name.c_str());
-		    		std::string version = theDXContext.getDriverVersion();
-		    		ImGui::Text("Version: %s", version.c_str());
-				}
-	    	}
+	    	else if (config::RendererType == RenderType::DirectX9)
+				header("DirectX");
 #endif
+			ImGui::Text("Driver Name: %s", GraphicsContext::Instance()->getDriverName().c_str());
+			ImGui::Text("Version: %s", GraphicsContext::Instance()->getDriverVersion().c_str());
 
 #ifdef __ANDROID__
 		    ImGui::Separator();
@@ -2418,7 +2383,7 @@ void gui_display_ui()
 	}
 	error_popup();
     ImGui::Render();
-    ImGui_impl_RenderDrawData(ImGui::GetDrawData());
+    imguiDriver->renderDrawData(ImGui::GetDrawData());
 
 	if (gui_state == GuiState::Closed)
 		emu.start();
@@ -2473,9 +2438,9 @@ void gui_display_osd()
 			ImGui::TextColored(ImVec4(1, 1, 0, 0.7), "%s", message.c_str());
 			ImGui::End();
 		}
-		displayCrosshairs();
+		imguiDriver->displayCrosshairs();
 		if (config::FloatVMUs)
-			display_vmus();
+			imguiDriver->displayVmus();
 //		gui_plot_render_time(settings.display.width, settings.display.height);
 		if (ggpo::active())
 		{
@@ -2486,7 +2451,7 @@ void gui_display_osd()
 		lua::overlay();
 
 		ImGui::Render();
-		ImGui_impl_RenderDrawData(ImGui::GetDrawData());
+		imguiDriver->renderDrawData(ImGui::GetDrawData());
 	}
 }
 
@@ -2505,12 +2470,10 @@ void gui_term()
 	if (inited)
 	{
 		inited = false;
-		term_vmus();
-		if (config::RendererType.isOpenGL())
-			ImGui_ImplOpenGL3_Shutdown();
 		ImGui::DestroyContext();
 	    EventManager::unlisten(Event::Resume, emuEventCallback);
 	    EventManager::unlisten(Event::Start, emuEventCallback);
+	    EventManager::unlisten(Event::Terminate, emuEventCallback);
 	}
 }
 
@@ -2536,150 +2499,10 @@ void gui_refresh_files()
 	subfolders_read = false;
 }
 
-#define VMU_WIDTH (70 * 48 * scaling / 32)
-#define VMU_HEIGHT (70 * scaling)
-#define VMU_PADDING (8 * scaling)
-static ImTextureID vmu_lcd_tex_ids[8];
-
-static ImTextureID crosshairTexId;
-
-static const int vmu_coords[8][2] = {
-		{ 0 , 0 },
-		{ 0 , 0 },
-		{ 1 , 0 },
-		{ 1 , 0 },
-		{ 0 , 1 },
-		{ 0 , 1 },
-		{ 1 , 1 },
-		{ 1 , 1 },
-};
-
-static void display_vmus()
-{
-	if (!game_started)
-		return;
-	if (!config::RendererType.isOpenGL())
-		return;
-    ImGui::SetNextWindowBgAlpha(0);
-    ImGui::SetNextWindowPos(ImVec2(0, 0));
-    ImGui::SetNextWindowSize(ImGui::GetIO().DisplaySize);
-
-    ImGui::Begin("vmu-window", NULL, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoInputs
-    		| ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoFocusOnAppearing);
-	for (int i = 0; i < 8; i++)
-	{
-		if (!vmu_lcd_status[i])
-			continue;
-
-		if (vmu_lcd_tex_ids[i] != (ImTextureID)0)
-			ImGui_ImplOpenGL3_DeleteTexture(vmu_lcd_tex_ids[i]);
-		vmu_lcd_tex_ids[i] = ImGui_ImplOpenGL3_CreateVmuTexture(vmu_lcd_data[i]);
-
-	    int x = vmu_coords[i][0];
-	    int y = vmu_coords[i][1];
-	    ImVec2 pos;
-	    if (x == 0)
-	    	pos.x = VMU_PADDING;
-	    else
-	    	pos.x = ImGui::GetIO().DisplaySize.x - VMU_WIDTH - VMU_PADDING;
-	    if (y == 0)
-	    {
-	    	pos.y = VMU_PADDING;
-	    	if (i & 1)
-	    		pos.y += VMU_HEIGHT + VMU_PADDING;
-	    }
-	    else
-	    {
-	    	pos.y = ImGui::GetIO().DisplaySize.y - VMU_HEIGHT - VMU_PADDING;
-	    	if (i & 1)
-	    		pos.y -= VMU_HEIGHT + VMU_PADDING;
-	    }
-	    ImVec2 pos_b(pos.x + VMU_WIDTH, pos.y + VMU_HEIGHT);
-		ImGui::GetWindowDrawList()->AddImage(vmu_lcd_tex_ids[i], pos, pos_b, ImVec2(0, 1), ImVec2(1, 0), 0xC0ffffff);
-	}
-    ImGui::End();
-}
-
-std::pair<float, float> getCrosshairPosition(int playerNum)
-{
-	float fx = mo_x_abs[playerNum];
-	float fy = mo_y_abs[playerNum];
-	float width = 640.f;
-	float height = 480.f;
-
-	if (config::Rotate90)
-	{
-		float t = fy;
-		fy = 639.f - fx;
-		fx = t;
-		std::swap(width, height);
-	}
-	float scale = height / settings.display.height;
-	fy /= scale;
-	scale /= config::ScreenStretching / 100.f;
-	fx = fx / scale + (settings.display.width - width / scale) / 2.f;
-
-	return std::make_pair(fx, fy);
-}
-
-static void displayCrosshairs()
-{
-	if (!game_started)
-		return;
-	if (!config::RendererType.isOpenGL())
-		return;
-	if (!crosshairsNeeded())
-		return;
-
-	if (crosshairTexId == ImTextureID())
-		crosshairTexId = ImGui_ImplOpenGL3_CreateCrosshairTexture(getCrosshairTextureData());
-    ImGui::SetNextWindowBgAlpha(0);
-    ImGui::SetNextWindowPos(ImVec2(0, 0));
-    ImGui::SetNextWindowSize(ImGui::GetIO().DisplaySize);
-
-    ImGui::Begin("xhair-window", NULL, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoInputs
-    		| ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoFocusOnAppearing);
-	for (u32 i = 0; i < config::CrosshairColor.size(); i++)
-	{
-		if (config::CrosshairColor[i] == 0)
-			continue;
-		if (settings.platform.system == DC_PLATFORM_DREAMCAST && config::MapleMainDevices[i] != MDT_LightGun)
-			continue;
-
-		ImVec2 pos;
-		std::tie(pos.x, pos.y) = getCrosshairPosition(i);
-		pos.x -= (XHAIR_WIDTH * scaling) / 2.f;
-		pos.y += (XHAIR_WIDTH * scaling) / 2.f;
-		ImVec2 pos_b(pos.x + XHAIR_WIDTH * scaling, pos.y - XHAIR_HEIGHT * scaling);
-
-		ImGui::GetWindowDrawList()->AddImage(crosshairTexId, pos, pos_b, ImVec2(0, 1), ImVec2(1, 0), config::CrosshairColor[i]);
-	}
-	ImGui::End();
-}
-
 static void reset_vmus()
 {
 	for (u32 i = 0; i < ARRAY_SIZE(vmu_lcd_status); i++)
 		vmu_lcd_status[i] = false;
-}
-
-static void term_vmus()
-{
-	if (!config::RendererType.isOpenGL())
-		return;
-	for (u32 i = 0; i < ARRAY_SIZE(vmu_lcd_status); i++)
-	{
-		if (vmu_lcd_tex_ids[i] != ImTextureID())
-		{
-			ImGui_ImplOpenGL3_DeleteTexture(vmu_lcd_tex_ids[i]);
-			vmu_lcd_tex_ids[i] = ImTextureID();
-		}
-	}
-	if (crosshairTexId != ImTextureID())
-	{
-		ImGui_ImplOpenGL3_DeleteTexture(crosshairTexId);
-		crosshairTexId = ImTextureID();
-	}
 }
 
 void gui_error(const std::string& what)

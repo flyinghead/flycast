@@ -382,7 +382,7 @@ void do_swap_automation()
 		dump_screenshot(img, gl.ofbo.width, gl.ofbo.height);
 		delete[] img;
 		dc_exit();
-		theGLContext.Term();
+		theGLContext.term();
 		exit(0);
 	}
 }
@@ -453,9 +453,9 @@ static void gles_term()
 void findGLVersion()
 {
 	gl.index_type = GL_UNSIGNED_INT;
-	gl.gl_major = theGLContext.GetMajorVersion();
-	gl.gl_minor = theGLContext.GetMinorVersion();
-	gl.is_gles = theGLContext.IsGLES();
+	gl.gl_major = theGLContext.getMajorVersion();
+	gl.gl_minor = theGLContext.getMinorVersion();
+	gl.is_gles = theGLContext.isGLES();
 	if (gl.is_gles)
 	{
 		if (gl.gl_major >= 3)

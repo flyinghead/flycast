@@ -38,7 +38,7 @@ const char *CallbackTable = "flycast_callbacks";
 static lua_State *L;
 using namespace luabridge;
 
-static void emuEventCallback(Event event)
+static void emuEventCallback(Event event, void *)
 {
 	if (L == nullptr)
 		return;
@@ -378,14 +378,14 @@ static void endWindow()
 	ImGui::PopStyleVar(2);
 }
 
-static void uiText(const char *text)
+static void uiText(const std::string& text)
 {
-	ImGui::Text("%s", text);
+	ImGui::Text("%s", text.c_str());
 }
 
-static void uiTextRightAligned(const char *text)
+static void uiTextRightAligned(const std::string& text)
 {
-	ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(text).x);
+	ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(text.c_str()).x);
 	uiText(text);
 }
 
@@ -399,13 +399,9 @@ static int uiButton(lua_State *L)
 	const char *label = luaL_checkstring(L, 1);
 	if (ImGui::Button(label))
 	{
-		try {
-			LuaRef callback = LuaRef::fromStack(L, 2);
-			if (callback.isFunction())
-				callback();
-		} catch (const LuaException& e) {
-			WARN_LOG(COMMON, "Lua exception: %s", e.what());
-		}
+		LuaRef callback = LuaRef::fromStack(L, 2);
+		if (callback.isFunction())
+			callback();
 	}
 	return 0;
 }

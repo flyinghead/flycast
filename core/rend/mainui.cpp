@@ -25,6 +25,7 @@
 #include "wsi/context.h"
 #include "cfg/option.h"
 #include "emulator.h"
+#include "imgui_driver.h"
 
 bool mainui_enabled;
 u32 MainFrameCount;
@@ -78,45 +79,23 @@ void mainui_loop()
 {
 	mainui_enabled = true;
 	mainui_init();
+	RenderType currentRenderer = config::RendererType;
 
 	while (mainui_enabled)
 	{
 		if (mainui_rend_frame())
-		{
-			if (config::RendererType.isOpenGL())
-				theGLContext.Swap();
-#ifdef USE_VULKAN
-			else if (config::RendererType.isVulkan())
-				VulkanContext::Instance()->Present();
-#endif
-#ifdef _WIN32
-			else if (config::RendererType.isDirectX())
-				theDXContext.Present();
-#endif
-		}
+			imguiDriver->present();
 
-		if (config::RendererType.pendingChange() || forceReinit)
+		if (config::RendererType != currentRenderer || forceReinit)
 		{
-			int api = config::RendererType.isOpenGL() ? 0 : config::RendererType.isVulkan() ? 1 : 2;
-			RenderType oldRender = config::RendererType;
 			mainui_term();
-			config::RendererType.commit();
-			int newApi = config::RendererType.isOpenGL() ? 0 : config::RendererType.isVulkan() ? 1 : 2;
-			if (newApi != api || forceReinit)
-			{
-				// Switch between vulkan/opengl/directx (or full reinit)
-				RenderType newRender = config::RendererType;
-				// restore current render mode to terminate
-				config::RendererType = oldRender;
-				config::RendererType.commit();
-				TermRenderApi();
-				// set the new render mode and init
-				config::RendererType = newRender;
-				config::RendererType.commit();
-				InitRenderApi();
-			}
+			int prevApi = isOpenGL(currentRenderer) ? 0 : isVulkan(currentRenderer) ? 1 : 2;
+			int newApi = isOpenGL(config::RendererType) ? 0 : isVulkan(config::RendererType) ? 1 : 2;
+			if (newApi != prevApi || forceReinit)
+				switchRenderApi();
 			mainui_init();
 			forceReinit = false;
+			currentRenderer = config::RendererType;
 		}
 	}
 

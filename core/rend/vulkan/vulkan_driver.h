@@ -1,7 +1,5 @@
 /*
-    Created on: Oct 18, 2019
-
-	Copyright 2019 flyinghead
+	Copyright 2021 flyinghead
 
 	This file is part of Flycast.
 
@@ -19,38 +17,20 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #pragma once
-#include <GLES32/gl32.h>
-#include <GLES32/gl2ext.h>
-#ifndef GLES2
-#include "gl32funcs.h"
-#else
-extern "C" void load_gles_symbols();
-#endif
-#include "gl_context.h"
+#include "rend/imgui_driver.h"
+#include "imgui_impl_vulkan.h"
+#include "vulkan_context.h"
 
-#define USE_EGL
-#include <EGL/egl.h>
-#include <EGL/eglext.h>
-
-class EGLGraphicsContext : public GLGraphicsContext
+class VulkanDriver final : public ImGuiDriver
 {
 public:
-	~EGLGraphicsContext() { term(); }
+	void newFrame() override {
+	}
 
-	bool init();
-	void term() override;
-	void swap();
-
-private:
-	bool makeCurrent();
-
-	EGLDisplay display = EGL_NO_DISPLAY;
-	EGLSurface surface = EGL_NO_SURFACE;
-	EGLContext context = EGL_NO_CONTEXT;
-#ifdef TARGET_PANDORA
-	int fbdev = -1;
-#endif
-	bool swapOnVSync = false;
+	void renderDrawData(ImDrawData *drawData) override {
+		ImGui_ImplVulkan_RenderDrawData(drawData);
+	}
+	void present() override {
+		VulkanContext::Instance()->Present();
+	}
 };
-
-extern EGLGraphicsContext theGLContext;

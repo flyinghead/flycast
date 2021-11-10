@@ -57,7 +57,7 @@ public:
 		if (_unique_id.empty())
 			_unique_id = devnode;
 
-		if (!find_mapping(mapping_file))
+		if (!find_mapping())
 		{
 #if defined(TARGET_PANDORA)
 			mapping_file = "controller_pandora.cfg";
@@ -82,7 +82,7 @@ public:
 				mapping_file = "controller_generic.cfg";
 			}
 #endif
-			if (find_mapping(mapping_file))
+			if (find_mapping())
 			{
 				INFO_LOG(INPUT, "using default mapping '%s'", input_mapper->name.c_str());
 				input_mapper = std::make_shared<InputMapping>(*input_mapper);

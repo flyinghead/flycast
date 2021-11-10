@@ -49,14 +49,14 @@ enum class Event {
 class EventManager
 {
 public:
-	using Callback = void (*)(Event);
+	using Callback = void (*)(Event, void *);
 
-	static void listen(Event event, Callback callback) {
-		Instance.registerEvent(event, callback);
+	static void listen(Event event, Callback callback, void *param = nullptr) {
+		Instance.registerEvent(event, callback, param);
 	}
 
-	static void unlisten(Event event, Callback callback) {
-		Instance.unregisterEvent(event, callback);
+	static void unlisten(Event event, Callback callback, void *param = nullptr) {
+		Instance.unregisterEvent(event, callback, param);
 	}
 
 	static void event(Event event) {
@@ -66,12 +66,12 @@ public:
 private:
 	EventManager() = default;
 
-	void registerEvent(Event event, Callback callback);
-	void unregisterEvent(Event event, Callback callback);
+	void registerEvent(Event event, Callback callback, void *param);
+	void unregisterEvent(Event event, Callback callback, void *param);
 	void broadcastEvent(Event event);
 
 	static EventManager Instance;
-	std::map<Event, std::vector<Callback>> callbacks;
+	std::map<Event, std::vector<std::pair<Callback, void *>>> callbacks;
 };
 
 struct LoadProgress

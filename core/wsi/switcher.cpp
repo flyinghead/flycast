@@ -23,51 +23,61 @@
 #include "rend/gui.h"
 #include "cfg/option.h"
 
+#include "gl_context.h"
+#include "rend/dx9/dxcontext.h"
 #ifdef USE_VULKAN
+#include "rend/vulkan/vulkan_context.h"
+
 VulkanContext theVulkanContext;
 #endif
 
-void InitRenderApi()
+GraphicsContext *GraphicsContext::instance;
+
+void initRenderApi(void *window, void *display)
 {
 #ifdef USE_VULKAN
-	if (config::RendererType.isVulkan())
+	if (isVulkan(config::RendererType))
 	{
-		if (theVulkanContext.Init())
+		theVulkanContext.setWindow(window, display);
+		if (theVulkanContext.init())
 			return;
 		// Fall back to Open GL
 		WARN_LOG(RENDERER, "Vulkan init failed. Falling back to Open GL.");
 		config::RendererType = RenderType::OpenGL;
-		config::RendererType.commit();
 	}
 #endif
 #ifdef _WIN32
-	if (config::RendererType.isDirectX())
+	if (config::RendererType == RenderType::DirectX9)
 	{
-		if (theDXContext.Init())
+		theDXContext.setWindow(window, display);
+		if (theDXContext.init())
 			return;
 		// Fall back to Open GL
 		WARN_LOG(RENDERER, "DirectX init failed. Falling back to Open GL.");
 		config::RendererType = RenderType::OpenGL;
-		config::RendererType.commit();
 	}
 #endif
-	if (!config::RendererType.isOpenGL())
-	{
+	if (!isOpenGL(config::RendererType))
 		config::RendererType = RenderType::OpenGL;
-		config::RendererType.commit();
-	}
-	if (!theGLContext.Init())
+	theGLContext.setWindow(window, display);
+	if (!theGLContext.init())
 		exit(1);
 }
 
-void TermRenderApi()
+void termRenderApi()
 {
-#ifdef USE_VULKAN
-	theVulkanContext.Term();
-#endif
-#ifdef _WIN32
-	theDXContext.Term();
-#endif
-	theGLContext.Term();
+	if (GraphicsContext::Instance() != nullptr)
+		GraphicsContext::Instance()->term();
+	verify(GraphicsContext::Instance() == nullptr);
+}
+
+void switchRenderApi()
+{
+	void *window = nullptr;
+	void *display = nullptr;
+	if (GraphicsContext::Instance() != nullptr)
+		GraphicsContext::Instance()->getWindow(&window,  &display);
+	termRenderApi();
+	initRenderApi(window, display);
 }
 #endif

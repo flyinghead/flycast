@@ -27,9 +27,9 @@
 class OSXGraphicsContext : public GLGraphicsContext
 {
 public:
-	bool Init() { PostInit(); return true; }
-	void Term() { PreTerm(); }
-	void Swap();
+	bool init() { postInit(); return true; }
+	void term() override { preTerm(); }
+	void swap();
 };
 
 extern OSXGraphicsContext theGLContext;

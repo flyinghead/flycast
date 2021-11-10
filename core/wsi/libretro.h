@@ -46,9 +46,9 @@
 class LibretroGraphicsContext : public GLGraphicsContext
 {
 public:
-	bool Init() { findGLVersion(); return true; }
-	void Term() {}
-	void Swap() {}
+	bool init() { findGLVersion(); return true; }
+	void term() override {}
+	void swap() {}
 };
 
 extern LibretroGraphicsContext theGLContext;

@@ -316,10 +316,7 @@ static LRESULT CALLBACK WndProc2(HWND hWnd, UINT message, WPARAM wParam, LPARAM 
 		settings.display.width = LOWORD(lParam);
 		settings.display.height = HIWORD(lParam);
 		window_maximized = (wParam & SIZE_MAXIMIZED) != 0;
-#ifdef USE_VULKAN
-		theVulkanContext.SetResized();
-#endif
-		theDXContext.resize();
+		GraphicsContext::Instance()->resize();
 		return 0;
 
 	case WM_LBUTTONDOWN:
@@ -471,12 +468,8 @@ void CreateMainWindow()
 
 	hWnd = CreateWindow(WINDOW_CLASS, VER_EMUNAME, WS_VISIBLE | WS_OVERLAPPEDWINDOW | (window_maximized ? WS_MAXIMIZE : 0),
 			window_x, window_y, sRect.right - sRect.left, sRect.bottom - sRect.top, NULL, NULL, hInstance, NULL);
-#ifdef USE_VULKAN
-	theVulkanContext.SetWindow((void *)hWnd, (void *)GetDC((HWND)hWnd));
-#endif
-	theGLContext.SetWindow(hWnd);
-	theGLContext.SetDeviceContext(GetDC(hWnd));
-	theDXContext.setNativeWindow(hWnd);
+	if (GraphicsContext::Instance() != nullptr)
+		GraphicsContext::Instance()->setWindow((void *)hWnd, (void *)GetDC((HWND)hWnd));
 }
 #endif
 
@@ -486,7 +479,7 @@ void os_CreateWindow()
 	sdl_window_create();
 #else
 	CreateMainWindow();
-	InitRenderApi();
+	initRenderApi((void *)hWnd, (void *)GetDC((HWND)hWnd));
 #endif	// !USE_SDL
 }
 
@@ -765,7 +758,7 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 #ifdef USE_SDL
 	sdl_window_destroy();
 #else
-	TermRenderApi();
+	termRenderApi();
 	destroyMainWindow();
 	cfgSaveBool("window", "maximized", window_maximized);
 	if (!window_maximized && settings.display.width != 0 && settings.display.height != 0)

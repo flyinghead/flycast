@@ -43,8 +43,6 @@ int flycast_init(int argc, char* argv[])
 		LogManager::Init();
 		config::Settings::instance().load(false);
 	}
-	// Force the renderer type now since we're not switching
-	config::RendererType.commit();
 
 	os_CreateWindow();
 	os_SetupInput();

@@ -14,6 +14,7 @@
 #include "emulator.h"
 #include "rend/mainui.h"
 #include "cfg/option.h"
+#include "stdclass.h"
 #ifdef USE_BREAKPAD
 #include "client/linux/handler/exception_handler.h"
 #endif
@@ -96,7 +97,7 @@ jobject g_emulator;
 jmethodID saveAndroidSettingsMid;
 static ANativeWindow *g_window = 0;
 
-static void emuEventCallback(Event event)
+static void emuEventCallback(Event event, void *)
 {
 	switch (event)
 	{
@@ -311,15 +312,11 @@ extern "C" JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_stop(JNIEn
 
 static void *render_thread_func(void *)
 {
-#ifdef USE_VULKAN
-	theVulkanContext.SetWindow((void *)g_window, nullptr);
-#endif
-	theGLContext.SetNativeWindow((EGLNativeWindowType)g_window);
-	InitRenderApi();
+	initRenderApi(g_window);
 
 	mainui_loop();
 
-	TermRenderApi();
+	termRenderApi();
 	ANativeWindow_release(g_window);
     g_window = NULL;
 

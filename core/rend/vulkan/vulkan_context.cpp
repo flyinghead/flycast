@@ -31,11 +31,13 @@
 #include "utils.h"
 #include "emulator.h"
 #include "oslib/oslib.h"
+#include "vulkan_driver.h"
 
 void ReInitOSD();
 
 VulkanContext *VulkanContext::contextInstance;
 
+#ifdef VK_DEBUG
 #ifndef __ANDROID__
 VKAPI_ATTR static VkBool32 VKAPI_CALL debugUtilsMessengerCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageTypes,
 									 VkDebugUtilsMessengerCallbackDataEXT const * pCallbackData, void * /*pUserData*/)
@@ -123,6 +125,7 @@ static void CheckImGuiResult(VkResult err)
 	if (err != VK_SUCCESS)
 		WARN_LOG(RENDERER, "ImGui Vulkan error %d", err);
 }
+#endif
 
 bool VulkanContext::InitInstance(const char** extensions, uint32_t extensions_count)
 {
@@ -154,9 +157,7 @@ bool VulkanContext::InitInstance(const char** extensions, uint32_t extensions_co
 #ifndef __ANDROID__
 		vext.push_back("VK_EXT_debug_utils");
 		vext.push_back("VK_EXT_debug_report");
-//		layer_names.push_back("VK_LAYER_KHRONOS_validation");
-//		layer_names.push_back("VK_LAYER_LUNARG_standard_validation");
-//		layer_names.push_back("VK_LAYER_LUNARG_assistant_layer");
+		layer_names.push_back("VK_LAYER_KHRONOS_validation");
 #else
 		vext.push_back("VK_EXT_debug_report");	// NDK <= 19?
 		layer_names.push_back("VK_LAYER_GOOGLE_threading");
@@ -277,6 +278,7 @@ bool VulkanContext::InitInstance(const char** extensions, uint32_t extensions_co
 
 void VulkanContext::InitImgui()
 {
+	imguiDriver = std::unique_ptr<ImGuiDriver>(new VulkanDriver());
 	gui_init();
 	ImGui_ImplVulkan_InitInfo initInfo = {};
 	initInfo.Instance = (VkInstance)*instance;
@@ -565,10 +567,17 @@ void VulkanContext::CreateSwapChain()
 					break;
 				}
 			}
+			/*
+			if (swapOnVSync && settings.display.refreshRate > 60.f)
+				// TODO config option to enable duped frames
+				swapInterval = settings.display.refreshRate / 60.f;
+			else
+			*/
+				swapInterval = 1;
 
 			vk::SurfaceTransformFlagBitsKHR preTransform = (surfaceCapabilities.supportedTransforms & vk::SurfaceTransformFlagBitsKHR::eIdentity) ? vk::SurfaceTransformFlagBitsKHR::eIdentity : surfaceCapabilities.currentTransform;
 
-			u32 imageCount = std::max(3u, surfaceCapabilities.minImageCount);
+			u32 imageCount = std::max(3u * swapInterval, surfaceCapabilities.minImageCount);
 			if (surfaceCapabilities.maxImageCount != 0)
 				imageCount = std::min(imageCount, surfaceCapabilities.maxImageCount);
 			vk::ImageUsageFlags usage = vk::ImageUsageFlagBits::eColorAttachment;
@@ -672,8 +681,10 @@ void VulkanContext::CreateSwapChain()
 	}
 }
 
-bool VulkanContext::Init()
+bool VulkanContext::init()
 {
+	GraphicsContext::instance = this;
+
 	std::vector<const char *> extensions;
 	extensions.push_back(VK_KHR_SURFACE_EXTENSION_NAME);
 #if defined(USE_SDL)
@@ -792,6 +803,14 @@ void VulkanContext::Present() noexcept
 			DoSwapAutomation();
 			presentQueue.presentKHR(vk::PresentInfoKHR(1, &(*renderCompleteSemaphores[currentSemaphore]), 1, &(*swapChain), &currentImage));
 			currentSemaphore = (currentSemaphore + 1) % imageViews.size();
+
+			if (lastFrameView && IsValid() && !gui_is_open())
+				for (int i = 1; i < swapInterval; i++)
+				{
+					PresentFrame(vk::Image(), lastFrameView, lastFrameExtent);
+					presentQueue.presentKHR(vk::PresentInfoKHR(1, &(*renderCompleteSemaphores[currentSemaphore]), 1, &(*swapChain), &currentImage));
+					currentSemaphore = (currentSemaphore + 1) % imageViews.size();
+				}
 		} catch (const vk::SystemError& e) {
 			// Happens when resizing the window
 			INFO_LOG(RENDERER, "vk::SystemError %s", e.what());
@@ -850,14 +869,14 @@ void VulkanContext::WaitIdle() const
 	}
 }
 
-std::string VulkanContext::GetDriverName() const
+std::string VulkanContext::getDriverName()
 {
 	vk::PhysicalDeviceProperties props;
 	physicalDevice.getProperties(&props);
 	return std::string(props.deviceName);
 }
 
-std::string VulkanContext::GetDriverVersion() const
+std::string VulkanContext::getDriverVersion()
 {
 	vk::PhysicalDeviceProperties props;
 	physicalDevice.getProperties(&props);
@@ -909,12 +928,14 @@ void VulkanContext::PresentLastFrame()
 		DrawFrame(lastFrameView, lastFrameExtent);
 }
 
-void VulkanContext::Term()
+void VulkanContext::term()
 {
+	GraphicsContext::instance = nullptr;
 	lastFrameView = nullptr;
 	if (!device)
 		return;
 	WaitIdle();
+	imguiDriver.reset();
 	ImGui_ImplVulkan_Shutdown();
 	gui_term();
 	if (device && pipelineCache)
@@ -1125,7 +1146,7 @@ void VulkanContext::SetWindowSize(u32 width, u32 height)
 		if (height != 0)
 			settings.display.height = height;
 
-		SetResized();
+		resize();
 	}
 }
 

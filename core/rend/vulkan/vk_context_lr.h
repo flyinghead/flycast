@@ -24,17 +24,18 @@
 #include "quad.h"
 #include "rend/TexCache.h"
 #include "libretro_vulkan.h"
+#include "wsi/context.h"
 
 static vk::Format findDepthFormat(vk::PhysicalDevice physicalDevice);
 
-class VulkanContext
+class VulkanContext : public GraphicsContext
 {
 public:
 	VulkanContext() { verify(contextInstance == nullptr); contextInstance = this; }
 	~VulkanContext() { verify(contextInstance == this); contextInstance = nullptr; }
 
-	bool Init(retro_hw_render_interface_vulkan *render_if);
-	void Term();
+	bool init(retro_hw_render_interface_vulkan *render_if);
+	void term() override;
 
 	u32 GetGraphicsQueueFamilyIndex() const { return retro_render_if->queue_index; }
 	void PresentFrame(vk::Image image, vk::ImageView imageView, const vk::Extent2D& extent);
@@ -68,8 +69,8 @@ public:
 			return true;
 		}
 	}
-	std::string GetDriverName() const { vk::PhysicalDeviceProperties props; physicalDevice.getProperties(&props); return props.deviceName; }
-	std::string GetDriverVersion() const {
+	std::string getDriverName() override { vk::PhysicalDeviceProperties props; physicalDevice.getProperties(&props); return props.deviceName; }
+	std::string getDriverVersion() override {
 		vk::PhysicalDeviceProperties props;
 		physicalDevice.getProperties(&props);
 

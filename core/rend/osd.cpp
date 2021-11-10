@@ -220,3 +220,30 @@ const u32 *getCrosshairTextureData()
 {
 	return (u32 *)lightgunCrosshairData;
 }
+
+#ifndef LIBRETRO
+#include "input/mouse.h"
+
+std::pair<float, float> getCrosshairPosition(int playerNum)
+{
+	float fx = mo_x_abs[playerNum];
+	float fy = mo_y_abs[playerNum];
+	float width = 640.f;
+	float height = 480.f;
+
+	if (config::Rotate90)
+	{
+		float t = fy;
+		fy = 639.f - fx;
+		fx = t;
+		std::swap(width, height);
+	}
+	float scale = height / settings.display.height;
+	fy /= scale;
+	scale /= config::ScreenStretching / 100.f;
+	fx = fx / scale + (settings.display.width - width / scale) / 2.f;
+
+	return std::make_pair(fx, fy);
+}
+
+#endif

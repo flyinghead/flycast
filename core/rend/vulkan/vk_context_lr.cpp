@@ -168,7 +168,7 @@ bool VkCreateDevice(retro_vulkan_context* context, VkInstance instance, VkPhysic
 	return true;
 }
 
-bool VulkanContext::Init(retro_hw_render_interface_vulkan *retro_render_if)
+bool VulkanContext::init(retro_hw_render_interface_vulkan *retro_render_if)
 {
 	if (retro_render_if->interface_type != RETRO_HW_RENDER_INTERFACE_VULKAN
 			|| retro_render_if->interface_version != RETRO_HW_RENDER_INTERFACE_VULKAN_VERSION)
@@ -297,7 +297,7 @@ void VulkanContext::PresentFrame(vk::Image image, vk::ImageView imageView, const
 	retro_render_if->set_image(retro_render_if->handle, &retro_image, 0, nullptr, VK_QUEUE_FAMILY_IGNORED);
 }
 
-void VulkanContext::Term()
+void VulkanContext::term()
 {
 	if (device)
 	{

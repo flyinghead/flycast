@@ -28,8 +28,9 @@
 
 SDLGLGraphicsContext theGLContext;
 
-bool SDLGLGraphicsContext::Init()
+bool SDLGLGraphicsContext::init()
 {
+	instance = this;
 #ifdef GLES
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
@@ -48,7 +49,8 @@ bool SDLGLGraphicsContext::Init()
 	if (!sdl_recreate_window(SDL_WINDOW_OPENGL))
 		return false;
 
-	glcontext = SDL_GL_CreateContext(window);
+	SDL_Window * const sdlWindow = (SDL_Window *)window;
+	glcontext = SDL_GL_CreateContext(sdlWindow);
 #ifndef GLES
 	if (glcontext == SDL_GLContext())
 	{
@@ -60,45 +62,36 @@ bool SDLGLGraphicsContext::Init()
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, 0);
 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
 #endif
-		glcontext = SDL_GL_CreateContext(window);
+		glcontext = SDL_GL_CreateContext(sdlWindow);
 	}
 #endif
 	if (glcontext == SDL_GLContext())
 	{
 		ERROR_LOG(RENDERER, "Error creating SDL GL context");
-		SDL_DestroyWindow(window);
+		SDL_DestroyWindow(sdlWindow);
 		window = nullptr;
 		return false;
 	}
-	SDL_GL_MakeCurrent(window, NULL);
+	SDL_GL_MakeCurrent(sdlWindow, NULL);
 
 	int w, h;
-	SDL_GetWindowSize(window, &w, &h);
-	SDL_GL_GetDrawableSize(window, &settings.display.width, &settings.display.height);
+	SDL_GetWindowSize(sdlWindow, &w, &h);
+	SDL_GL_GetDrawableSize(sdlWindow, &settings.display.width, &settings.display.height);
 	settings.display.pointScale = (float)settings.display.width / w;
 
 	float hdpi, vdpi;
-	if (!SDL_GetDisplayDPI(SDL_GetWindowDisplayIndex(window), nullptr, &hdpi, &vdpi))
+	if (!SDL_GetDisplayDPI(SDL_GetWindowDisplayIndex(sdlWindow), nullptr, &hdpi, &vdpi))
 		screen_dpi = (int)roundf(std::max(hdpi, vdpi));
 
 	INFO_LOG(RENDERER, "Created SDL Window and GL Context successfully");
 
-	SDL_GL_MakeCurrent(window, glcontext);
+	SDL_GL_MakeCurrent(sdlWindow, glcontext);
 	// Swap at vsync
 	swapOnVSync = config::VSync;
-	swapInterval = 1;
-	int displayIndex = SDL_GetWindowDisplayIndex(window);
-	if (displayIndex < 0)
-		WARN_LOG(RENDERER, "Cannot get the window display index: %s", SDL_GetError());
+	if (settings.display.refreshRate > 60.f)
+		swapInterval = settings.display.refreshRate / 60.f;
 	else
-	{
-		SDL_DisplayMode mode{};
-		if (SDL_GetDesktopDisplayMode(displayIndex, &mode) == 0) {
-			INFO_LOG(RENDERER, "Monitor refresh rate: %d Hz", mode.refresh_rate);
-			if (mode.refresh_rate > 100)
-				swapInterval = 2;
-		}
-	}
+		swapInterval = 1;
 
 	SDL_GL_SetSwapInterval(swapOnVSync ? swapInterval : 0);
 
@@ -111,23 +104,27 @@ bool SDLGLGraphicsContext::Init()
 		return false;
 	}
 #endif
-	PostInit();
+	postInit();
 
 	return true;
 }
 
-void SDLGLGraphicsContext::Swap()
+void SDLGLGraphicsContext::swap()
 {
 	do_swap_automation();
 	if (swapOnVSync == (settings.input.fastForwardMode || !config::VSync))
 	{
 		swapOnVSync = (!settings.input.fastForwardMode && config::VSync);
+		if (settings.display.refreshRate > 60.f)
+			swapInterval = settings.display.refreshRate / 60.f;
+		else
+			swapInterval = 1;
 		SDL_GL_SetSwapInterval(swapOnVSync ? swapInterval : 0);
 	}
-	SDL_GL_SwapWindow(window);
+	SDL_GL_SwapWindow((SDL_Window *)window);
 
 	// Check if drawable has been resized
-	SDL_GL_GetDrawableSize(window, &settings.display.width, &settings.display.height);
+	SDL_GL_GetDrawableSize((SDL_Window *)window, &settings.display.width, &settings.display.height);
 #ifdef __SWITCH__
 	float newScaling = settings.display.height == 720 ? 1.5f : 1.0f;
 	if (newScaling != scaling)
@@ -140,9 +137,9 @@ void SDLGLGraphicsContext::Swap()
 #endif
 }
 
-void SDLGLGraphicsContext::Term()
+void SDLGLGraphicsContext::term()
 {
-	PreTerm();
+	preTerm();
 	if (glcontext != nullptr)
 	{
 		SDL_GL_DeleteContext(glcontext);

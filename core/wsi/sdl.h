@@ -39,13 +39,11 @@ extern "C" void load_gles_symbols();
 class SDLGLGraphicsContext : public GLGraphicsContext
 {
 public:
-	bool Init();
-	void Term();
-	void Swap();
-	void SetWindow(SDL_Window *window) { this->window = window; }
+	bool init();
+	void term() override;
+	void swap();
 
 private:
-	SDL_Window* window = nullptr;
 	SDL_GLContext glcontext = nullptr;
 	bool swapOnVSync = false;
 	int swapInterval = 1;

@@ -400,43 +400,11 @@ public:
 		: Option<RenderType>("pvr.rend", RenderType::OpenGL) {}
 #endif
 
-	bool isOpenGL() const {
-		return value == RenderType::OpenGL || value == RenderType::OpenGL_OIT;
-	}
-	bool isVulkan() const {
-		return value == RenderType::Vulkan || value == RenderType::Vulkan_OIT;
-	}
 	bool isDirectX() const {
 		return value == RenderType::DirectX9;
 	}
 
-	void set(RenderType v)
-	{
-		newValue = v;
-	}
 	RenderType& operator=(const RenderType& v) { set(v); return value; }
-
-	void load() override {
-		RenderType current = value;
-		Option<RenderType>::load();
-		newValue = value;
-		value = current;
-	}
-
-	void reset() override {
-		// don't reset the value to avoid vk -> gl -> vk quick switching
-		overridden = false;
-	}
-
-	bool pendingChange() {
-		return newValue != value;
-	}
-	void commit() {
-		value = newValue;
-	}
-
-private:
-	RenderType newValue = RenderType();
 };
 extern RendererOption RendererType;
 extern Option<bool> UseMipmaps;
