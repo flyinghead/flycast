@@ -23,7 +23,7 @@
 
 OSXGraphicsContext theGLContext;
 
-void OSXGraphicsContext::Swap()
+void OSXGraphicsContext::swap()
 {
 	do_swap_automation();
 }
