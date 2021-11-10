@@ -30,7 +30,11 @@ if(APPLE)
 	endif()
 endif()
 
-project(flycast)
+if(LIBRETRO)
+    project(flycast_libretro)
+else()
+    project(flycast)
+endif()
 
 if(ENABLE_CTEST)
     include(CTest)
