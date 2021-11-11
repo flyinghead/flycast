@@ -88,4 +88,7 @@ TEST_F(Sh4InterpreterTest, CmpTest)
 {
 	Sh4OpTest::CmpTest();
 }
-
+TEST_F(Sh4InterpreterTest, StatusRegTest)
+{
+	Sh4OpTest::StatusRegTest();
+}
