@@ -55,4 +55,5 @@ private:
 	ImTextureID vmu_lcd_tex_ids[8];
 	ImTextureID crosshairTexId = ImTextureID();
 	bool gameStarted = false;
+	bool frameRendered = false;
 };

@@ -93,6 +93,9 @@ void DXContext::term()
 
 void DXContext::Present()
 {
+	if (!frameRendered)
+		return;
+	frameRendered = false;
 	HRESULT result = pDevice->Present(NULL, NULL, NULL, NULL);
 	// Handle loss of D3D9 device
 	if (result == D3DERR_DEVICELOST)
@@ -151,6 +154,7 @@ void DXContext::EndImGuiFrame()
 		ImGui_ImplDX9_RenderDrawData(ImGui::GetDrawData());
 		pDevice->EndScene();
 	}
+	frameRendered = true;
 }
 
 void DXContext::resize()

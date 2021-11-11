@@ -237,7 +237,6 @@ extern int screen_dpi;
 	screen_dpi = roundf(160 * scale);
 	initRenderApi();
 	mainui_init();
-	mainui_enabled = true;
 
 	[self altKitStart];
 }

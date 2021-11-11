@@ -154,9 +154,13 @@ void OpenGLDriver::newFrame()
 void OpenGLDriver::renderDrawData(ImDrawData* drawData)
 {
 	ImGui_ImplOpenGL3_RenderDrawData(drawData);
+	frameRendered = true;
 }
 
 void OpenGLDriver::present()
 {
-	theGLContext.swap();
+	// FIXME we only rely on whether some imgui stuff has been rendered, which is kinda weak
+	if (frameRendered)
+		theGLContext.swap();
+	frameRendered = false;
 }

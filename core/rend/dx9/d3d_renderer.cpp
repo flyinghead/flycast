@@ -1130,6 +1130,7 @@ bool D3DRenderer::Render()
 		DrawOSD(false);
 		frameRendered = true;
 		frameRenderedOnce = true;
+		theDXContext.setFrameRendered();
 	}
 
 	return !is_rtt;

@@ -48,6 +48,9 @@ public:
 		return std::to_string(id.DriverVersion.HighPart >> 16) + "." + std::to_string((u16)id.DriverVersion.HighPart)
 			+ "." + std::to_string(id.DriverVersion.LowPart >> 16) + "." + std::to_string((u16)id.DriverVersion.LowPart);
 	}
+	void setFrameRendered() {
+		frameRendered = true;
+	}
 
 private:
 	void resetDevice();
@@ -58,6 +61,7 @@ private:
 	bool overlayOnly = false;
 	D3DOverlay overlay;
 	bool swapOnVSync = false;
+	bool frameRendered = false;
 };
 extern DXContext theDXContext;
 #endif

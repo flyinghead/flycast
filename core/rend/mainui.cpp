@@ -27,7 +27,7 @@
 #include "emulator.h"
 #include "imgui_driver.h"
 
-bool mainui_enabled;
+static bool mainui_enabled;
 u32 MainFrameCount;
 static bool forceReinit;
 
@@ -83,8 +83,8 @@ void mainui_loop()
 
 	while (mainui_enabled)
 	{
-		if (mainui_rend_frame())
-			imguiDriver->present();
+		mainui_rend_frame();
+		imguiDriver->present();
 
 		if (config::RendererType != currentRenderer || forceReinit)
 		{
