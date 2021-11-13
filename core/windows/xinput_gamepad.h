@@ -1,4 +1,5 @@
 #include "input/gamepad_device.h"
+#include "input/mouse.h"
 #include "rend/gui.h"
 
 #include <windows.h>
@@ -167,7 +168,7 @@ public:
 	}
 
 protected:
-	void load_axis_min_max(u32 axis) override
+	void load_axis_min_max(u32 axis)
 	{
 		if (axis == 0 || axis == 1)
 		{
@@ -202,6 +203,8 @@ private:
 	s16 last_right_thumb_y = 0;
 	double vib_stop_time;
 	float vib_inclination;
+	std::map<u32, int> axis_min_values;
+	std::map<u32, unsigned int> axis_ranges;
 	static std::vector<std::shared_ptr<XInputGamepadDevice>> xinput_gamepads;
 };
 
