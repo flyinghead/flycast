@@ -12,6 +12,7 @@
 #include "hw/sh4/sh4_mem.h"
 #include "hw/sh4/sh4_sched.h"
 #include "imgread/common.h"
+#include "serialize.h"
 
 int gdrom_schid;
 
@@ -1250,4 +1251,83 @@ void gdrom_reg_Reset(bool hard)
 	ByteCount = {};
 
 	libCore_gdrom_disc_change();
+}
+
+namespace gdrom
+{
+
+void serialize(Serializer& ser)
+{
+	ser << GD_HardwareInfo;
+
+	ser << sns_asc;
+	ser << sns_ascq;
+	ser << sns_key;
+
+	ser << packet_cmd;
+	ser << set_mode_offset;
+	ser << read_params;
+	ser << read_buff;
+	ser << pio_buff;
+	ser << set_mode_offset;
+	ser << ata_cmd;
+	ser << cdda;
+	ser << gd_state;
+	ser << gd_disk_type;
+	ser << data_write_mode;
+	ser << DriveSel;
+	ser << Error;
+
+	ser << IntReason;
+	ser << Features;
+	ser << SecCount;
+	ser << SecNumber;
+	ser << GDStatus;
+	ser << ByteCount;
+}
+
+void deserialize(Deserializer& deser)
+{
+	deser >> GD_HardwareInfo;
+
+	deser >> sns_asc;
+	deser >> sns_ascq;
+	deser >> sns_key;
+
+	deser >> packet_cmd;
+	deser >> set_mode_offset;
+	deser >> read_params;
+	if (deser.version() >= Deserializer::V17)
+		deser >> read_buff;
+	else
+	{
+		deser >> packet_cmd;
+		read_buff.cache_size = 0;
+		// read_buff (old)
+		if (deser.version() < Deserializer::V9_LIBRETRO
+				|| (deser.version() >= Deserializer::V5 && deser.version() < Deserializer::V8))
+			deser.skip(4 + 4 + 2352 * 8192);
+	}
+	deser >> pio_buff;
+	deser >> set_mode_offset;
+	deser >> ata_cmd;
+	deser >> cdda;
+	if (deser.version() < Deserializer::V10)
+		cdda.status = (bool)cdda.status ? cdda_t::Playing : cdda_t::NoInfo;
+	deser >> gd_state;
+	deser >> gd_disk_type;
+	deser >> data_write_mode;
+	deser >> DriveSel;
+	deser >> Error;
+
+	deser >> IntReason;
+	deser >> Features;
+	deser >> SecCount;
+	deser >> SecNumber;
+	deser >> GDStatus;
+	deser >> ByteCount;
+	if (deser.version() >= Deserializer::V5_LIBRETRO && deser.version() <= Deserializer::VLAST_LIBRETRO)
+		deser.skip<u32>(); 			// GDROM_TICK
+}
+
 }

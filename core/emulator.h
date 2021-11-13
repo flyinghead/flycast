@@ -26,17 +26,18 @@
 #include <future>
 #include <string>
 #include <memory>
+#include <utility>
 
 void loadGameSpecificSettings();
 void SaveSettings();
 
 int flycast_init(int argc, char* argv[]);
-void dc_reset(bool hard);
+void dc_reset(bool hard); // for tests only
 void flycast_term();
 void dc_exit();
 void dc_savestate(int index = 0);
 void dc_loadstate(int index = 0);
-bool dc_loadstate(const void **data, unsigned size);
+void dc_loadstate(Deserializer& deser);
 
 enum class Event {
 	Start,

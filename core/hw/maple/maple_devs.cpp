@@ -323,27 +323,25 @@ struct maple_sega_vmu: maple_base
 		return MDT_SegaVMU;
 	}
 
-	bool serialize(void **data, unsigned int *total_size) override
+	void serialize(Serializer& ser) const override
 	{
-		maple_base::serialize(data, total_size);
-		REICAST_S(flash_data);
-		REICAST_S(lcd_data);
-		REICAST_S(lcd_data_decoded);
-		return true ;
+		maple_base::serialize(ser);
+		ser << flash_data;
+		ser << lcd_data;
+		ser << lcd_data_decoded;
 	}
-	bool unserialize(void **data, unsigned int *total_size, serialize_version_enum version) override
+	void deserialize(Deserializer& deser) override
 	{
-		maple_base::unserialize(data, total_size, version);
-		REICAST_US(flash_data);
-		REICAST_US(lcd_data);
-		REICAST_US(lcd_data_decoded);
+		maple_base::deserialize(deser);
+		deser >> flash_data;
+		deser >> lcd_data;
+		deser >> lcd_data_decoded;
 		for (u8 b : lcd_data)
 			if (b != 0)
 			{
 				config->SetImage(lcd_data_decoded);
 				break;
 			}
-		return true ;
 	}
 
 	void initializeVmu()
@@ -735,28 +733,26 @@ struct maple_microphone: maple_base
 		return MDT_Microphone;
 	}
 
-	bool serialize(void **data, unsigned int *total_size) override
+	void serialize(Serializer& ser) const override
 	{
-		maple_base::serialize(data, total_size);
-		REICAST_S(gain);
-		REICAST_S(sampling);
-		REICAST_S(eight_khz);
-		REICAST_SKIP(480 - sizeof(u32) - sizeof(bool) * 2);
-		return true;
+		maple_base::serialize(ser);
+		ser << gain;
+		ser << sampling;
+		ser << eight_khz;
 	}
-	bool unserialize(void **data, unsigned int *total_size, serialize_version_enum version) override
+	void deserialize(Deserializer& deser) override
 	{
 		if (sampling)
 			StopAudioRecording();
-		maple_base::unserialize(data, total_size, version);
-		REICAST_US(gain);
-		REICAST_US(sampling);
-		REICAST_US(eight_khz);
-		REICAST_SKIP(480 - sizeof(u32) - sizeof(bool) * 2);
+		maple_base::deserialize(deser);
+		deser >> gain;
+		deser >> sampling;
+		deser >> eight_khz;
+		deser.skip(480 - sizeof(u32) - sizeof(bool) * 2, Deserializer::V23);
 		if (sampling)
 			StartAudioRecording(eight_khz);
-		return true;
 	}
+
 	void OnSetup() override
 	{
 		gain = 0xf;
@@ -909,22 +905,21 @@ struct maple_sega_purupuru : maple_base
 		return MDT_PurupuruPack;
 	}
 
-   bool serialize(void **data, unsigned int *total_size) override
-   {
-	  maple_base::serialize(data, total_size);
-      REICAST_S(AST);
-      REICAST_S(AST_ms);
-      REICAST_S(VIBSET);
-      return true ;
-   }
-   bool unserialize(void **data, unsigned int *total_size, serialize_version_enum version) override
-   {
-	  maple_base::unserialize(data, total_size, version);
-      REICAST_US(AST);
-      REICAST_US(AST_ms);
-      REICAST_US(VIBSET);
-      return true ;
-   }
+	void serialize(Serializer& ser) const override
+	{
+		maple_base::serialize(ser);
+		ser << AST;
+		ser << AST_ms;
+		ser << VIBSET;
+	}
+	void deserialize(Deserializer& deser) override
+	{
+		maple_base::deserialize(deser);
+		deser >> AST;
+		deser >> AST_ms;
+		deser >> VIBSET;
+	}
+
 	u32 dma(u32 cmd) override
 	{
 		switch (cmd)
@@ -1166,10 +1161,10 @@ struct maple_mouse : maple_base
 			wstr(maple_sega_brand, 60);
 
 			// Low-consumption standby current (2)
-			w16(0x0069);	// 10.5 mA
+			w16(0x0190);	// 40 mA
 
 			// Maximum current consumption (2)
-			w16(0x0120);	// 28.8 mA
+			w16(0x01f4);	// 50 mA
 
 			return cmd == MDC_DeviceRequest ? MDRS_DeviceStatus : MDRS_DeviceStatusAll;
 

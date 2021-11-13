@@ -27,6 +27,7 @@
 #include "hw/sh4/sh4_sched.h"
 #include "oslib/oslib.h"
 #include "network/picoppp.h"
+#include "serialize.h"
 
 #define MODEM_COUNTRY_RES 0
 #define MODEM_COUNTRY_JAP 1
@@ -748,25 +749,24 @@ void ModemWriteMem_A0_006(u32 addr, u32 data, u32 size)
 	LOG("modem reg %03X write %X -- wtf is it?",reg,data);
 }
 
-void ModemSerialize(void **data, unsigned int *total_size)
+void ModemSerialize(Serializer& ser)
 {
-	REICAST_S(modem_regs);
-	REICAST_S(dspram);
-	REICAST_S(state);
-	REICAST_S(connect_state);
-	REICAST_S(last_dial_time);
-	REICAST_S(data_sent);
+	ser << modem_regs;
+	ser << dspram;
+	ser << state;
+	ser << connect_state;
+	ser << last_dial_time;
+	ser << data_sent;
 }
-
-void ModemDeserialize(void **data, unsigned int *total_size, serialize_version_enum version)
+void ModemDeserialize(Deserializer& deser)
 {
-	if (version >= V20)
+	if (deser.version() >= Deserializer::V20)
 	{
-		REICAST_US(modem_regs);
-		REICAST_US(dspram);
-		REICAST_US(state);
-		REICAST_US(connect_state);
-		REICAST_US(last_dial_time);
-		REICAST_US(data_sent);
+		deser >> modem_regs;
+		deser >> dspram;
+		deser >> state;
+		deser >> connect_state;
+		deser >> last_dial_time;
+		deser >> data_sent;
 	}
 }

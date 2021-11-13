@@ -186,19 +186,6 @@ inline static void JITWriteProtect(bool enabled) {
 void os_DebugBreak();
 #define dbgbreak os_DebugBreak()
 
-bool rc_serialize(const void *src, unsigned int src_size, void **dest, unsigned int *total_size) ;
-bool rc_unserialize(void *src, unsigned int src_size, void **dest, unsigned int *total_size);
-bool dc_serialize(void **data, unsigned int *total_size, bool rollback = false);
-bool dc_unserialize(void **data, unsigned int *total_size, bool rollback = false);
-
-#define REICAST_S(v) rc_serialize(&(v), sizeof(v), data, total_size)
-#define REICAST_US(v) rc_unserialize(&(v), sizeof(v), data, total_size)
-
-#define REICAST_SA(v_arr,num) rc_serialize((v_arr), sizeof((v_arr)[0])*(num), data, total_size)
-#define REICAST_USA(v_arr,num) rc_unserialize((v_arr), sizeof((v_arr)[0])*(num), data, total_size)
-
-#define REICAST_SKIP(size) do { if (*data) *(u8**)data += (size); *total_size += (size); } while (false)
-
 #ifndef _MSC_VER
 #define stricmp strcasecmp
 #endif
@@ -400,11 +387,6 @@ inline bool is_u8(u32 v) { return (u8)v==(s32)v; }
 inline bool is_s16(u32 v) { return (s16)v==(s32)v; }
 inline bool is_u16(u32 v) { return (u16)v==(u32)v; }
 
-//PVR
-s32 libPvr_Init();
-void libPvr_Reset(bool hard);
-void libPvr_Term();
-
 // 0x00600000 - 0x006007FF [NAOMI] (modem area for dreamcast)
 u32  libExtDevice_ReadMem_A0_006(u32 addr,u32 size);
 void libExtDevice_WriteMem_A0_006(u32 addr,u32 data,u32 size);
@@ -481,38 +463,5 @@ public:
 	LoadCancelledException() : FlycastException("") {}
 };
 
-enum serialize_version_enum {
-	V1,
-	V2,
-	V3,
-	V4,
-	V5_LIBRETRO,
-	V6_LIBRETRO,
-	V7_LIBRETRO,
-	V8_LIBRETRO,
-	V9_LIBRETRO,
-	V10_LIBRETRO,
-	V11_LIBRETRO,
-	V12_LIBRETRO,
-	V13_LIBRETRO,
-
-	V5 = 800,
-	V6 = 801,
-	V7 = 802,
-	V8 = 803,
-	V9 = 804,
-	V10 = 805,
-	V11 = 806,
-	V12 = 807,
-	V13 = 808,
-	V14 = 809,
-	V15 = 810,
-	V16 = 811,
-	V17 = 812,
-	V18 = 813,
-	V19 = 814,
-	V20 = 815,
-	V21 = 816,
-	V22 = 817,
-	VCUR_FLYCAST = V22,
-};
+class Serializer;
+class Deserializer;

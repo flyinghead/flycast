@@ -6,7 +6,7 @@
 
 TLB_Entry UTLB[64];
 TLB_Entry ITLB[4];
-u32 ITLB_LRU_USE[64];
+static u32 ITLB_LRU_USE[64];
 
 //SQ fast remap , mainly hackish , assumes 1MB pages
 //max 64MB can be remapped on SQ

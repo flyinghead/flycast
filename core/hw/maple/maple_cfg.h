@@ -102,8 +102,8 @@ extern MapleInputState mapleInputState[4];
 
 void mcfg_CreateDevices();
 void mcfg_DestroyDevices();
-void mcfg_SerializeDevices(void **data, unsigned int *total_size);
-void mcfg_UnserializeDevices(void **data, unsigned int *total_size, serialize_version_enum version);
+void mcfg_SerializeDevices(Serializer& ser);
+void mcfg_DeserializeDevices(Deserializer& deser);
 
 bool maple_atomiswave_coin_chute(int slot);
 void push_vmu_screen(int bus_id, int bus_port, u8* buffer);

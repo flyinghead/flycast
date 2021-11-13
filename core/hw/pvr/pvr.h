@@ -15,14 +15,18 @@
 
     You should have received a copy of the GNU General Public License
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
-*/
+ */
 #pragma once
 #include "types.h"
 
-void bba_Init();
-void bba_Term();
-void bba_Reset(bool hard);
-u32 bba_ReadMem(u32 addr, u32 sz);
-void bba_WriteMem(u32 addr, u32 data, u32 sz);
-void bba_Serialize(Serializer& ser);
-void bba_Deserialize(Deserializer& deser);
+namespace pvr
+{
+
+void init();
+void term();
+void reset(bool hard);
+
+void serialize(Serializer& ser);
+void deserialize(Deserializer& deser);
+
+}

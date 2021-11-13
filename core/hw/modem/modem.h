@@ -29,5 +29,5 @@ void ModemReset();
 void ModemTerm();
 u32 ModemReadMem_A0_006(u32 addr,u32 size);
 void ModemWriteMem_A0_006(u32 addr,u32 data,u32 size);
-void ModemSerialize(void **data, unsigned int *total_size);
-void ModemDeserialize(void **data, unsigned int *total_size, serialize_version_enum version);
+void ModemSerialize(Serializer& ser);
+void ModemDeserialize(Deserializer& deser);

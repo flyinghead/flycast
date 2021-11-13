@@ -25,3 +25,8 @@ enum DiscType
 	Open=0x2,			//tray is open :)
 };
 
+namespace gdrom
+{
+void serialize(Serializer& ser);
+void deserialize(Deserializer& deser);
+}

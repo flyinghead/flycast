@@ -5,6 +5,7 @@
 #pragma once
 #include <cmath>
 #include "types.h"
+#include "serialize.h"
 
 struct MemChip
 {
@@ -54,8 +55,8 @@ public:
 	void digest(u8 md5Digest[16]);
 
 	virtual void Reset() {}
-	virtual bool Serialize(void **data, unsigned int *total_size) { return true; }
-	virtual bool Unserialize(void **data, unsigned int *total_size) { return true; }
+	virtual void Serialize(Serializer& ser) const { }
+	virtual void Deserialize(Deserializer& deser) { }
 };
 
 struct WritableChip : MemChip
@@ -106,16 +107,13 @@ struct SRamChip : WritableChip
 		}
 	}
 
-	bool Serialize(void **data, unsigned int *total_size) override
+	void Serialize(Serializer& ser) const override
 	{
-		REICAST_SA(&this->data[write_protect_size], size - write_protect_size);
-		return true;
+		ser.serialize(&this->data[write_protect_size], size - write_protect_size);
 	}
-
-	bool Unserialize(void **data, unsigned int *total_size) override
+	void Deserialize(Deserializer& deser) override
 	{
-		REICAST_USA(&this->data[write_protect_size], size - write_protect_size);
-		return true;
+		deser.deserialize(&this->data[write_protect_size], size - write_protect_size);
 	}
 };
 
@@ -712,18 +710,16 @@ private:
 		return result;
 	}
 
-	bool Serialize(void **data, unsigned int *total_size) override
+	void Serialize(Serializer& ser) const override
 	{
-		REICAST_S(state);
-		REICAST_SA(&this->data[write_protect_size], size - write_protect_size);
-		return true;
+		ser << state;
+		ser.serialize(&this->data[write_protect_size], size - write_protect_size);
 	}
 
-	bool Unserialize(void **data, unsigned int *total_size) override
+	void Deserialize(Deserializer& deser) override
 	{
-		REICAST_US(state);
-		REICAST_USA(&this->data[write_protect_size], size - write_protect_size);
-		return true;
+		deser >> state;
+		deser.deserialize(&this->data[write_protect_size], size - write_protect_size);
 	}
 
 	void erase_partition(u32 part_id)

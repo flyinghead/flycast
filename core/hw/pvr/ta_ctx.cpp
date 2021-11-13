@@ -2,6 +2,7 @@
 #include "spg.h"
 #include "cfg/option.h"
 #include "Renderer_if.h"
+#include "serialize.h"
 
 extern u32 fskip;
 extern u32 FrameCount;
@@ -207,36 +208,36 @@ void tactx_Term()
 
 const u32 NULL_CONTEXT = ~0u;
 
-static void serializeContext(void **data, unsigned int *total_size, const TA_context *ctx)
+static void serializeContext(Serializer& ser, const TA_context *ctx)
 {
+	if (ser.dryrun())
+	{
+		// Maximum size: address, size, data, render pass count, render passes
+		ser.skip(4 + 4 + TA_DATA_SIZE + 4 + ARRAY_SIZE(tad_context::render_passes) * 4);
+		return;
+	}
 	if (ctx == nullptr)
 	{
-		REICAST_S(NULL_CONTEXT);
+		ser << NULL_CONTEXT;
 		return;
 	}
-	REICAST_S(ctx->Address);
+	ser << ctx->Address;
 	const tad_context& tad = ctx == ::ta_ctx ? ta_tad : ctx->tad;
 	const u32 taSize = tad.thd_data - tad.thd_root;
-	REICAST_S(taSize);
-	if (*data == nullptr)
-	{
-		// Maximum size
-		REICAST_SKIP(TA_DATA_SIZE + 4 + ARRAY_SIZE(tad.render_passes) * 4);
-		return;
-	}
-	REICAST_SA(tad.thd_root, taSize);
-	REICAST_S(tad.render_pass_count);
+	ser << taSize;
+	ser.serialize(tad.thd_root, taSize);
+	ser << tad.render_pass_count;
 	for (u32 i = 0; i < tad.render_pass_count; i++)
 	{
 		u32 offset = (u32)(tad.render_passes[i] - tad.thd_root);
-		REICAST_S(offset);
+		ser << offset;
 	}
 }
 
-static void deserializeContext(void **data, unsigned int *total_size, serialize_version_enum version, TA_context **pctx)
+static void deserializeContext(Deserializer& deser, TA_context **pctx)
 {
 	u32 address;
-	REICAST_US(address);
+	deser >> address;
 	if (address == NULL_CONTEXT)
 	{
 		*pctx = nullptr;
@@ -244,17 +245,17 @@ static void deserializeContext(void **data, unsigned int *total_size, serialize_
 	}
 	*pctx = tactx_Find(address, true);
 	u32 size;
-	REICAST_US(size);
+	deser >> size;
 	tad_context& tad = (*pctx)->tad;
-	REICAST_USA(tad.thd_root, size);
+	deser.deserialize(tad.thd_root, size);
 	tad.thd_data = tad.thd_root + size;
-	if (version >= V12 || (version >= V12_LIBRETRO && version < V5))
+	if (deser.version() >= Deserializer::V12 || (deser.version() >= Deserializer::V12_LIBRETRO && deser.version() < Deserializer::V5))
 	{
-		REICAST_US(tad.render_pass_count);
+		deser >> tad.render_pass_count;
 		for (u32 i = 0; i < tad.render_pass_count; i++)
 		{
 			u32 offset;
-			REICAST_US(offset);
+			deser >> offset;
 			tad.render_passes[i] = tad.thd_root + offset;
 		}
 	}
@@ -264,23 +265,23 @@ static void deserializeContext(void **data, unsigned int *total_size, serialize_
 	}
 }
 
-void SerializeTAContext(void **data, unsigned int *total_size)
+void SerializeTAContext(Serializer& ser)
 {
-	serializeContext(data, total_size, ta_ctx);
+	serializeContext(ser, ta_ctx);
 	if (TA_CURRENT_CTX != CORE_CURRENT_CTX)
-		serializeContext(data, total_size, tactx_Find(TA_CURRENT_CTX, false));
+		serializeContext(ser, tactx_Find(TA_CURRENT_CTX, false));
 	else
-		serializeContext(data, total_size, nullptr);
-}
+		serializeContext(ser, nullptr);
 
-void UnserializeTAContext(void **data, unsigned int *total_size, serialize_version_enum version)
+}
+void DeserializeTAContext(Deserializer& deser)
 {
 	if (::ta_ctx != nullptr)
 		SetCurrentTARC(TACTX_NONE);
 	TA_context *ta_cur_ctx;
-	deserializeContext(data, total_size, version, &ta_cur_ctx);
+	deserializeContext(deser, &ta_cur_ctx);
 	if (ta_cur_ctx != nullptr)
 		SetCurrentTARC(ta_cur_ctx->Address);
-	if (version >= V20)
-		deserializeContext(data, total_size, version, &ta_cur_ctx);
+	if (deser.version() >= Deserializer::V20)
+		deserializeContext(deser, &ta_cur_ctx);
 }

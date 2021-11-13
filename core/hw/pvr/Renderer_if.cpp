@@ -7,6 +7,7 @@
 #include "cfg/option.h"
 #include "network/ggpo.h"
 #include "emulator.h"
+#include "serialize.h"
 
 #include <mutex>
 #include <zlib.h>
@@ -37,7 +38,7 @@ u32 fb_watch_addr_start;
 u32 fb_watch_addr_end;
 bool fb_dirty;
 
-bool pend_rend = false;
+static bool pend_rend;
 
 TA_context* _pvrrc;
 
@@ -470,28 +471,28 @@ void rend_start_rollback()
 		vramRollback.Wait();
 }
 
-void rend_serialize(void **data, unsigned int *total_size)
+void rend_serialize(Serializer& ser)
 {
-	REICAST_S(fb_w_cur);
-	REICAST_S(render_called);
-	REICAST_S(fb_dirty);
-	REICAST_S(fb_watch_addr_start);
-	REICAST_S(fb_watch_addr_end);
+	ser << fb_w_cur;
+	ser << render_called;
+	ser << fb_dirty;
+	ser << fb_watch_addr_start;
+	ser << fb_watch_addr_end;
 }
-
-void rend_deserialize(void **data, unsigned int *total_size, serialize_version_enum version)
+void rend_deserialize(Deserializer& deser)
 {
-	if ((version >= V12_LIBRETRO && version < V5) || version >= V12)
-		REICAST_US(fb_w_cur);
+	if ((deser.version() >= Deserializer::V12_LIBRETRO && deser.version() < Deserializer::V5) || deser.version() >= Deserializer::V12)
+		deser >> fb_w_cur;
 	else
 		fb_w_cur = 1;
-	if (version >= V20)
+	if (deser.version() >= Deserializer::V20)
 	{
-		REICAST_US(render_called);
-		REICAST_US(fb_dirty);
-		REICAST_US(fb_watch_addr_start);
-		REICAST_US(fb_watch_addr_end);
+		deser >> render_called;
+		deser >> fb_dirty;
+		deser >> fb_watch_addr_start;
+		deser >> fb_watch_addr_end;
 	}
+	pend_rend = false;
 }
 
 void rend_resize_renderer()

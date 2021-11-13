@@ -652,8 +652,9 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/hw/naomi/naomi_roms.cpp
         core/hw/naomi/naomi_roms.h
         core/hw/naomi/naomi_roms_input.h
-        core/hw/pvr/drkPvr.cpp
         core/hw/pvr/helper_classes.h
+        core/hw/pvr/pvr.cpp
+        core/hw/pvr/pvr.h
         core/hw/pvr/pvr_mem.cpp
         core/hw/pvr/pvr_mem.h
         core/hw/pvr/pvr_regs.cpp
@@ -890,6 +891,7 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/emulator.h
         core/nullDC.cpp
         core/serialize.cpp
+        core/serialize.h
         core/stdclass.cpp
         core/stdclass.h
         core/types.h

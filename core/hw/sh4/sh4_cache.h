@@ -22,6 +22,7 @@
 #include "sh4_mem.h"
 #include "modules/mmu.h"
 #include "hw/sh4/sh4_core.h"
+#include "serialize.h"
 
 static bool cachedArea(u32 area)
 {
@@ -101,18 +102,11 @@ public:
 			memset(&lines[0], 0, sizeof(lines));
 	}
 
-	bool Serialize(void **data, unsigned int *total_size)
-	{
-		REICAST_S(lines);
-
-		return true;
+	void Serialize(Serializer& ser) {
+		ser << lines;
 	}
-
-	bool Unserialize(void **data, unsigned int *total_size)
-	{
-		REICAST_US(lines);
-
-		return true;
+	void Deserialize(Deserializer& deser) {
+		deser >> lines;
 	}
 
 	u32 ReadAddressArray(u32 addr)
@@ -373,18 +367,11 @@ public:
 			memset(&lines[0], 0, sizeof(lines));
 	}
 
-	bool Serialize(void **data, unsigned int *total_size)
-	{
-		REICAST_S(lines);
-
-		return true;
+	void Serialize(Serializer& ser) {
+		ser << lines;
 	}
-
-	bool Unserialize(void **data, unsigned int *total_size)
-	{
-		REICAST_US(lines);
-
-		return true;
+	void Deserialize(Deserializer& deser) {
+		deser >> lines;
 	}
 
 	u32 ReadAddressArray(u32 addr)

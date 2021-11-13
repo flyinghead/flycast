@@ -45,8 +45,8 @@ public:
 	void* GetDmaPtr(u32 &size) override;
 	void AdvancePtr(u32 size) override;
 	std::string GetGameId() override;
-	void Serialize(void** data, unsigned int* total_size) override;
-	void Unserialize(void** data, unsigned int* total_size) override;
+	void Serialize(Serializer& ser) const override;
+	void Deserialize(Deserializer& deser) override;
 
 	void SetKey(u32 key) override { this->m4id = key; }
 	void SetKeyData(u8 *key_data) override { this->m_key_data = key_data; }

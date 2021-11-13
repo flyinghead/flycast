@@ -27,36 +27,7 @@
 
 #define LOGJVS(...) DEBUG_LOG(JVS, __VA_ARGS__)
 
-u8 EEPROM[0x100];
-bool EEPROM_loaded = false;
-
-void load_naomi_eeprom()
-{
-	if (!EEPROM_loaded)
-	{
-		EEPROM_loaded = true;
-		std::string eeprom_file = hostfs::getArcadeFlashPath() + ".eeprom";
-		FILE* f = nowide::fopen(eeprom_file.c_str(), "rb");
-		if (f)
-		{
-			if (std::fread(EEPROM, 1, 0x80, f) != 0x80)
-				WARN_LOG(MAPLE, "Failed or truncated read of EEPROM '%s'", eeprom_file.c_str());
-			std::fclose(f);
-			DEBUG_LOG(MAPLE, "Loaded EEPROM from %s", eeprom_file.c_str());
-		}
-		else if (naomi_default_eeprom != NULL)
-		{
-			DEBUG_LOG(MAPLE, "Using default EEPROM file");
-			memcpy(EEPROM, naomi_default_eeprom, 0x80);
-		}
-		else
-			DEBUG_LOG(MAPLE, "EEPROM file not found at %s and no default found", eeprom_file.c_str());
-		if (config::GGPOEnable)
-			MD5Sum().add(EEPROM, sizeof(EEPROM))
-					.getDigest(settings.network.md5.eeprom);
-
-	}
-}
+u8 *EEPROM;
 
 const u32 naomi_button_mapping[32] = {
 		NAOMI_BTN2_KEY,		// DC_BTN_C
@@ -175,8 +146,8 @@ public:
 	virtual ~jvs_io_board() = default;
 
 	u32 handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_out);
-	bool serialize(void **data, unsigned int *total_size);
-	bool unserialize(void **data, unsigned int *total_size, serialize_version_enum version);
+	void serialize(Serializer& ser) const;
+	void deserialize(Deserializer& deser);
 
 	bool lightgun_as_analog = false;
 
@@ -706,11 +677,32 @@ maple_naomi_jamma::maple_naomi_jamma()
 		io_boards.push_back(std::unique_ptr<jvs_837_13844_wrungp>(new jvs_837_13844_wrungp(1, this)));
 		break;
 	}
+
+	std::string eeprom_file = hostfs::getArcadeFlashPath() + ".eeprom";
+	FILE* f = nowide::fopen(eeprom_file.c_str(), "rb");
+	if (f)
+	{
+		if (std::fread(eeprom, 1, 0x80, f) != 0x80)
+			WARN_LOG(MAPLE, "Failed or truncated read of EEPROM '%s'", eeprom_file.c_str());
+		std::fclose(f);
+		DEBUG_LOG(MAPLE, "Loaded EEPROM from %s", eeprom_file.c_str());
+	}
+	else if (naomi_default_eeprom != NULL)
+	{
+		DEBUG_LOG(MAPLE, "Using default EEPROM file");
+		memcpy(eeprom, naomi_default_eeprom, 0x80);
+	}
+	else
+		DEBUG_LOG(MAPLE, "EEPROM file not found at %s and no default found", eeprom_file.c_str());
+	if (config::GGPOEnable)
+		MD5Sum().add(eeprom, sizeof(eeprom))
+				.getDigest(settings.network.md5.eeprom);
+	EEPROM = eeprom;
 }
 
 maple_naomi_jamma::~maple_naomi_jamma()
 {
-	EEPROM_loaded = false;
+	EEPROM = nullptr;
 }
 
 void maple_naomi_jamma::send_jvs_message(u32 node_id, u32 channel, u32 length, u8 *data)
@@ -976,18 +968,19 @@ void maple_naomi_jamma::handle_86_subcommand()
 
 		case 0x0B:	//EEPROM write
 		{
-			load_naomi_eeprom();
 			int address = dma_buffer_in[1];
 			int size = dma_buffer_in[2];
 			DEBUG_LOG(MAPLE, "EEprom write %08X %08X\n", address, size);
 			//printState(Command,buffer_in,buffer_in_len);
-			memcpy(EEPROM + address, dma_buffer_in + 4, size);
+			address = address % sizeof(eeprom);
+			size = std::min((int)sizeof(eeprom) - address, size);
+			memcpy(eeprom + address, dma_buffer_in + 4, size);
 
 			std::string eeprom_file = hostfs::getArcadeFlashPath() + ".eeprom";
 			FILE* f = nowide::fopen(eeprom_file.c_str(), "wb");
 			if (f)
 			{
-				std::fwrite(EEPROM, 1, 0x80, f);
+				std::fwrite(eeprom, 1, sizeof(eeprom), f);
 				std::fclose(f);
 				INFO_LOG(MAPLE, "Saved EEPROM to %s", eeprom_file.c_str());
 			}
@@ -998,7 +991,7 @@ void maple_naomi_jamma::handle_86_subcommand()
 			w8(0x00);
 			w8(0x20);
 			w8(0x01);
-			memcpy(dma_buffer_out, EEPROM, 4);
+			memcpy(dma_buffer_out, eeprom, 4);
 			dma_buffer_out += 4;
 			*dma_count_out += 4;
 		}
@@ -1006,17 +999,17 @@ void maple_naomi_jamma::handle_86_subcommand()
 
 		case 0x3:	//EEPROM read
 		{
-			load_naomi_eeprom();
 			//printf("EEprom READ\n");
-			int address = dma_buffer_in[1];
+			int address = dma_buffer_in[1] % sizeof(eeprom);
 			//printState(Command,buffer_in,buffer_in_len);
 			w8(MDRS_JVSReply);
 			w8(0x00);
 			w8(0x20);
 			w8(0x20);
-			memcpy(dma_buffer_out, EEPROM + address, 0x80);
-			dma_buffer_out += 0x80;
-			*dma_count_out += 0x80;
+			int size = sizeof(eeprom) - address;
+			memcpy(dma_buffer_out, eeprom + address, size);
+			dma_buffer_out += size;
+			*dma_count_out += size;
 		}
 		break;
 
@@ -1237,34 +1230,33 @@ u32 maple_naomi_jamma::RawDma(u32* buffer_in, u32 buffer_in_len, u32* buffer_out
 	return out_len;
 }
 
-bool maple_naomi_jamma::serialize(void **data, unsigned int *total_size)
+void maple_naomi_jamma::serialize(Serializer& ser) const
 {
-	maple_base::serialize(data, total_size);
-	REICAST_S(crazy_mode);
-	REICAST_S(jvs_repeat_request);
-	REICAST_S(jvs_receive_length);
-	REICAST_S(jvs_receive_buffer);
-	size_t board_count = io_boards.size();
-	REICAST_S(board_count);
+	maple_base::serialize(ser);
+	ser << crazy_mode;
+	ser << jvs_repeat_request;
+	ser << jvs_receive_length;
+	ser << jvs_receive_buffer;
+	ser << eeprom;
+	u32 board_count = io_boards.size();
+	ser << board_count;
 	for (u32 i = 0; i < io_boards.size(); i++)
-		io_boards[i]->serialize(data, total_size);
-
-	return true ;
+		io_boards[i]->serialize(ser);
 }
-
-bool maple_naomi_jamma::unserialize(void **data, unsigned int *total_size, serialize_version_enum version)
+void maple_naomi_jamma::deserialize(Deserializer& deser)
 {
-	maple_base::unserialize(data, total_size, version);
-	REICAST_US(crazy_mode);
-	REICAST_US(jvs_repeat_request);
-	REICAST_US(jvs_receive_length);
-	REICAST_US(jvs_receive_buffer);
-	size_t board_count;
-	REICAST_US(board_count);
+	maple_base::deserialize(deser);
+	deser >> crazy_mode;
+	deser >> jvs_repeat_request;
+	deser >> jvs_receive_length;
+	deser >> jvs_receive_buffer;
+	if (deser.version() >= Deserializer::V23)
+		deser >> eeprom;
+	u32 board_count;
+	deser >> board_count;
+	deser.skip(sizeof(size_t) - sizeof(u32), Deserializer::V23);
 	for (u32 i = 0; i < board_count; i++)
-		io_boards[i]->unserialize(data, total_size, version);
-
-	return true ;
+		io_boards[i]->deserialize(deser);
 }
 
 u16 jvs_io_board::read_analog_axis(int player_num, int player_axis, bool inverted)
@@ -1675,18 +1667,13 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 	return length;
 }
 
-bool jvs_io_board::serialize(void **data, unsigned int *total_size)
+void jvs_io_board::serialize(Serializer& ser) const
 {
-	REICAST_S(node_id);
-	REICAST_S(lightgun_as_analog);
-
-	return true ;
+	ser << node_id;
+	ser << lightgun_as_analog;
 }
-
-bool jvs_io_board::unserialize(void **data, unsigned int *total_size, serialize_version_enum version)
+void jvs_io_board::deserialize(Deserializer& deser)
 {
-	REICAST_US(node_id);
-	REICAST_US(lightgun_as_analog);
-
-	return true ;
+	deser >> node_id;
+	deser >> lightgun_as_analog;
 }

@@ -1,4 +1,5 @@
 #pragma once
+#include "serialize.h"
 
 #define SYSCALL_GDROM			0x00
 
@@ -44,6 +45,8 @@
 #define MISC_INIT				0x00
 #define MISC_SETVECTOR			0x01
 
+void gdrom_hle_init();
+void gdrom_hle_term();
 void gdrom_hle_op();
 
 typedef enum { BIOS_ERROR = -1, BIOS_INACTIVE, BIOS_ACTIVE, BIOS_COMPLETED, BIOS_DATA_AVAIL } gd_bios_status;
@@ -67,45 +70,42 @@ struct gdrom_hle_state_t
 	bool dma_trans_ended = false;
 	u64 xfer_end_time = 0;
 	
-	bool Serialize(void **data, unsigned int *total_size)
+	void Serialize(Serializer& ser)
 	{
-		REICAST_S(last_request_id);
-		REICAST_S(next_request_id);
-		REICAST_S(status);
-		REICAST_S(command);
-		REICAST_S(params);
-		REICAST_S(result);
-		REICAST_S(cur_sector);
-		REICAST_S(multi_read_sector);
-		REICAST_S(multi_read_offset);
-		REICAST_S(multi_read_count);
-		REICAST_S(multi_read_total);
-		REICAST_S(multi_callback);
-		REICAST_S(multi_callback_arg);
-		REICAST_S(dma_trans_ended);
-		REICAST_S(xfer_end_time);
-		
-		return true;
+		ser << last_request_id;
+		ser << next_request_id;
+		ser << status;
+		ser << command;
+		ser << params;
+		ser << result;
+		ser << cur_sector;
+		ser << multi_read_sector;
+		ser << multi_read_offset;
+		ser << multi_read_count;
+		ser << multi_read_total;
+		ser << multi_callback;
+		ser << multi_callback_arg;
+		ser << dma_trans_ended;
+		ser << xfer_end_time;
+
 	}
-	bool Unserialize(void **data, unsigned int *total_size)
+	void Deserialize(Deserializer& deser)
 	{
-		REICAST_US(last_request_id);
-		REICAST_US(next_request_id);
-		REICAST_US(status);
-		REICAST_US(command);
-		REICAST_US(params);
-		REICAST_US(result);
-		REICAST_US(cur_sector);
-		REICAST_US(multi_read_sector);
-		REICAST_US(multi_read_offset);
-		REICAST_US(multi_read_count);
-		REICAST_US(multi_read_total);
-		REICAST_US(multi_callback);
-		REICAST_US(multi_callback_arg);
-		REICAST_US(dma_trans_ended);
-		REICAST_US(xfer_end_time);
-		
-		return true;
+		deser >> last_request_id;
+		deser >> next_request_id;
+		deser >> status;
+		deser >> command;
+		deser >> params;
+		deser >> result;
+		deser >> cur_sector;
+		deser >> multi_read_sector;
+		deser >> multi_read_offset;
+		deser >> multi_read_count;
+		deser >> multi_read_total;
+		deser >> multi_callback;
+		deser >> multi_callback_arg;
+		deser >> dma_trans_ended;
+		deser >> xfer_end_time;
 	}
 };
 extern gdrom_hle_state_t gd_hle_state;

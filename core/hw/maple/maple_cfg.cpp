@@ -4,8 +4,11 @@
 #include "hw/naomi/naomi_cart.h"
 #include "cfg/option.h"
 #include "stdclass.h"
+#include "serialize.h"
 
 MapleInputState mapleInputState[4];
+extern bool maple_ddt_pending_reset;
+extern std::vector<std::pair<u32, std::vector<u32>>> mapleDmaOut;
 
 void (*MapleConfigMap::UpdateVibration)(u32 port, float power, float inclination, u32 duration_ms);
 
@@ -366,8 +369,16 @@ void mcfg_DestroyDevices()
 		}
 }
 
-void mcfg_SerializeDevices(void **data, unsigned int *total_size)
+void mcfg_SerializeDevices(Serializer& ser)
 {
+	ser << maple_ddt_pending_reset;
+	ser << (u32)mapleDmaOut.size();
+	for (const auto& pair : mapleDmaOut)
+	{
+		ser << pair.first;	// u32 address
+		ser << (u32)pair.second.size();
+		ser.serialize(pair.second.data(), pair.second.size());
+	}
 	for (int i = 0; i < MAPLE_PORTS; i++)
 		for (int j = 0; j < 6; j++)
 		{
@@ -375,25 +386,50 @@ void mcfg_SerializeDevices(void **data, unsigned int *total_size)
 			maple_device* device = MapleDevices[i][j];
 			if (device != nullptr)
 				deviceType =  device->get_device_type();
-			REICAST_S(deviceType);
+			ser << deviceType;
 			if (device != nullptr)
-				device->serialize(data, total_size);
+				device->serialize(ser);
 		}
 }
 
-void mcfg_UnserializeDevices(void **data, unsigned int *total_size, serialize_version_enum version)
+void mcfg_DeserializeDevices(Deserializer& deser)
 {
 	mcfg_DestroyDevices();
+	u8 eeprom[sizeof(maple_naomi_jamma::eeprom)];
+	if (deser.version() < Deserializer::V23)
+	{
+		deser >> eeprom;
+		deser.skip(128);	// Unused eeprom space
+		deser.skip<bool>(); // EEPROM_loaded
+	}
+	deser >> maple_ddt_pending_reset;
+	mapleDmaOut.clear();
+	if (deser.version() >= Deserializer::V23)
+	{
+		u32 size;
+		deser >> size;
+		for (u32 i = 0; i < size; i++)
+		{
+			u32 address;
+			deser >> address;
+			u32 dataSize;
+			deser >> dataSize;
+			mapleDmaOut.emplace_back(address, std::vector<u32>(dataSize));
+			deser.deserialize(mapleDmaOut.back().second.data(), dataSize);
+		}
+	}
 
 	for (int i = 0; i < MAPLE_PORTS; i++)
 		for (int j = 0; j < 6; j++)
 		{
 			u8 deviceType;
-			REICAST_US(deviceType);
+			deser >> deviceType;
 			if (deviceType != MDT_None)
 			{
 				mcfg_Create((MapleDeviceType)deviceType, i, j);
-				MapleDevices[i][j]->unserialize(data, total_size, version);
+				MapleDevices[i][j]->deserialize(deser);
 			}
 		}
+	if (deser.version() < Deserializer::V23 && EEPROM != nullptr)
+		memcpy(EEPROM, eeprom, sizeof(eeprom));
 }

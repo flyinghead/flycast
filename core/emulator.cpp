@@ -40,6 +40,8 @@
 #include "rend/gui.h"
 #include "lua/lua.h"
 #include "network/naomi_network.h"
+#include "serialize.h"
+#include "hw/pvr/pvr.h"
 #include <chrono>
 
 settings_t settings;
@@ -327,7 +329,7 @@ void dc_reset(bool hard)
 	if (hard)
 		_vmem_unprotect_vram(0, VRAM_SIZE);
 	sh4_sched_reset(hard);
-	libPvr_Reset(hard);
+	pvr::reset(hard);
 	libAICA_Reset(hard);
 	libARM_Reset(hard);
 	sh4_cpu.Reset(true);
@@ -382,7 +384,7 @@ void Emulator::init()
 	// Default platform
 	setPlatform(DC_PLATFORM_DREAMCAST);
 
-	libPvr_Init();
+	pvr::init();
 	libAICA_Init();
 	libARM_Init();
 	mem_Init();
@@ -567,7 +569,7 @@ void Emulator::term()
 		reios_term();
 		libARM_Term();
 		libAICA_Term();
-		libPvr_Term();
+		pvr::term();
 		mem_Term();
 
 		_vmem_release();
@@ -646,7 +648,7 @@ void Emulator::step()
 	stop();
 }
 
-bool dc_loadstate(const void **data, u32 size)
+void dc_loadstate(Deserializer& deser)
 {
 	custom_texture.Terminate();
 #if FEAT_AREC == DYNAREC_JIT
@@ -657,17 +659,10 @@ bool dc_loadstate(const void **data, u32 size)
 	bm_Reset();
 #endif
 
-	u32 usedSize = 0;
-	if (!dc_unserialize((void **)data, &usedSize))
-    	return false;
-
-	if (size != usedSize)
-		WARN_LOG(SAVESTATE, "Savestate: loaded %d bytes but used %d", size, usedSize);
+	dc_deserialize(deser);
 
 	mmu_set_state();
 	sh4_cpu.ResetCache();
-
-	return true;
 }
 
 void Emulator::setNetworkState(bool online)
@@ -821,4 +816,5 @@ void Emulator::vblank()
 	else if (!config::ThreadedRendering)
 		sh4_cpu.Stop();
 }
+
 Emulator emu;

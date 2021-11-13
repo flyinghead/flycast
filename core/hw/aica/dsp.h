@@ -1,5 +1,6 @@
 #pragma once
 #include "types.h"
+#include "serialize.h"
 
 namespace dsp
 {
@@ -28,35 +29,28 @@ struct DSPState
 	bool stopped;	// DSP program is a no-op
 	bool dirty;		// DSP program has changed
 
-	bool serialize(void **data, unsigned int *total_size)
+	void serialize(Serializer& ser)
 	{
-		REICAST_S(TEMP);
-		REICAST_S(MEMS);
-		REICAST_S(MIXS);
-		REICAST_S(RBP);
-		REICAST_S(RBL);
-		REICAST_S(MDEC_CT);
-
-		return true;
+		ser << TEMP;
+		ser << MEMS;
+		ser << MIXS;
+		ser << RBP;
+		ser << RBL;
+		ser << MDEC_CT;
 	}
 
-	bool deserialize(void **data, unsigned int *total_size, serialize_version_enum version)
+	void deserialize(Deserializer& deser)
 	{
-		if (version < V18)
-			REICAST_SKIP(4096 * 8);	// DynCode
-		REICAST_US(TEMP);
-		REICAST_US(MEMS);
-		REICAST_US(MIXS);
-		REICAST_US(RBP);
-		REICAST_US(RBL);
-		if (version < V18)
-			REICAST_SKIP(44);
-		REICAST_US(MDEC_CT);
-		if (version < V18)
-			REICAST_SKIP(33596 - 4096 * 8 - sizeof(TEMP) - sizeof(MEMS) - sizeof(MIXS) - 4 * 3 - 44);	// other dsp stuff
-		dirty = true;
-
-		return true;
+		deser.skip(4096 * 8, Deserializer::V18);	// DynCode
+		deser >> TEMP;
+		deser >> MEMS;
+		deser >> MIXS;
+		deser >> RBP;
+		deser >> RBL;
+		deser.skip(44, Deserializer::V18);
+		deser >> MDEC_CT;
+		deser.skip(33596 - 4096 * 8 - sizeof(TEMP) - sizeof(MEMS) - sizeof(MIXS) - 4 * 3 - 44,
+				Deserializer::V18);	// other dsp stuff
 	}
 };
 

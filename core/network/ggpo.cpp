@@ -272,15 +272,14 @@ static bool load_game_state(unsigned char *buffer, int len)
 	INFO_LOG(NETWORK, "load_game_state");
 
 	rend_start_rollback();
-	// FIXME will invalidate too much stuff: palette/fog textures, maple stuff
 	// FIXME dynarecs
-	int frame = *(u32 *)buffer;
-	unsigned usedLen = sizeof(u32);
-	buffer += usedLen;
-	dc_unserialize((void **)&buffer, &usedLen, true);
-	if (len != (int)usedLen)
+	Deserializer deser(buffer, len, true);
+	int frame;
+	deser >> frame;
+	dc_deserialize(deser);
+	if (deser.size() != (u32)len)
 	{
-		ERROR_LOG(NETWORK, "load_game_state len %d used %d", len, usedLen);
+		ERROR_LOG(NETWORK, "load_game_state len %d used %d", len, (int)deser.size());
 		die("fatal");
 	}
 	for (int f = lastSavedFrame - 1; f >= frame; f--)
@@ -319,13 +318,11 @@ static bool save_game_state(unsigned char **buffer, int *len, int *checksum, int
 		*len = 0;
 		return false;
 	}
-	u8 *data = *buffer;
-	*(u32 *)data = frame;
-	unsigned usedSize = sizeof(frame);
-	data += usedSize;
-	dc_serialize((void **)&data, &usedSize, true);
-	verify(usedSize < allocSize);
-	*len = usedSize;
+	Serializer ser(*buffer, allocSize, true);
+	ser << frame;
+	dc_serialize(ser);
+	verify(ser.size() < allocSize);
+	*len = ser.size();
 #ifdef SYNC_TEST
 	*checksum = XXH32(*buffer, usedSize, 7);
 #endif

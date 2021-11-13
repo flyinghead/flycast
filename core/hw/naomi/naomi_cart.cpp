@@ -36,6 +36,7 @@
 #include "emulator.h"
 #include "cfg/option.h"
 #include "oslib/oslib.h"
+#include "serialize.h"
 
 Cartridge *CurrentCartridge;
 bool bios_loaded = false;
@@ -857,22 +858,22 @@ void NaomiCartridge::WriteMem(u32 address, u32 data, u32 size)
 	DEBUG_LOG(NAOMI, "naomi?WTF? WriteMem: %X <= %X, %d", address, data, size);
 }
 
-void NaomiCartridge::Serialize(void** data, unsigned int* total_size)
+void NaomiCartridge::Serialize(Serializer& ser) const
 {
-	REICAST_S(RomPioOffset);
-	REICAST_S(RomPioAutoIncrement);
-	REICAST_S(DmaOffset);
-	REICAST_S(DmaCount);
-	Cartridge::Serialize(data, total_size);
+	ser << RomPioOffset;
+	ser << RomPioAutoIncrement;
+	ser << DmaOffset;
+	ser << DmaCount;
+	Cartridge::Serialize(ser);
 }
 
-void NaomiCartridge::Unserialize(void** data, unsigned int* total_size)
+void NaomiCartridge::Deserialize(Deserializer& deser)
 {
-	REICAST_US(RomPioOffset);
-	REICAST_US(RomPioAutoIncrement);
-	REICAST_US(DmaOffset);
-	REICAST_US(DmaCount);
-	Cartridge::Unserialize(data, total_size);
+	deser >> RomPioOffset;
+	deser >> RomPioAutoIncrement;
+	deser >> DmaOffset;
+	deser >> DmaCount;
+	Cartridge::Deserialize(deser);
 }
 
 bool M2Cartridge::Read(u32 offset, u32 size, void* dst)
@@ -962,12 +963,12 @@ std::string M2Cartridge::GetGameId()
 	return game_id;
 }
 
-void M2Cartridge::Serialize(void** data, unsigned int* total_size) {
-	REICAST_S(naomi_cart_ram);
-	NaomiCartridge::Serialize(data, total_size);
+void M2Cartridge::Serialize(Serializer& ser) const {
+	ser << naomi_cart_ram;
+	NaomiCartridge::Serialize(ser);
 }
 
-void M2Cartridge::Unserialize(void** data, unsigned int* total_size) {
-	REICAST_US(naomi_cart_ram);
-	NaomiCartridge::Unserialize(data, total_size);
+void M2Cartridge::Deserialize(Deserializer& deser) {
+	deser >> naomi_cart_ram;
+	NaomiCartridge::Deserialize(deser);
 }

@@ -1739,14 +1739,11 @@ size_t retro_serialize_size()
 
 	emu.stop();
 
-	unsigned int total_size = 0;
-	void *data = nullptr;
-
-	dc_serialize(&data, &total_size);
-
+	Serializer ser;
+	dc_serialize(ser);
 	emu.start();
 
-	return total_size;
+	return ser.size();
 }
 
 bool retro_serialize(void *data, size_t size)
@@ -1756,12 +1753,11 @@ bool retro_serialize(void *data, size_t size)
 
 	emu.stop();
 
-	unsigned int total_size = 0;
-	bool result = dc_serialize(&data, &total_size);
-
+	Serializer ser(data, size);
+	dc_serialize(ser);
 	emu.start();
 
-	return result;
+	return true;
 }
 
 bool retro_unserialize(const void * data, size_t size)
@@ -1771,11 +1767,16 @@ bool retro_unserialize(const void * data, size_t size)
 
 	emu.stop();
 
-    bool result = dc_loadstate(&data, size);
+	try {
+		Deserializer deser(data, size);
+		dc_loadstate(deser);
+		emu.start();
 
-	emu.start();
-
-    return result;
+		return true;
+	} catch (const Deserializer::Exception& e) {
+		ERROR_LOG(SAVESTATE, "Loading state failed: %s", e.what());
+		return false;
+	}
 }
 
 // Cheats
