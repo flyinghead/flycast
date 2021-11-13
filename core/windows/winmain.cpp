@@ -147,7 +147,7 @@ static bool gameRunning;
 
 static void captureMouse(bool);
 
-static void emuEventCallback(Event event)
+static void emuEventCallback(Event event, void *)
 {
 	static bool captureOn;
 	switch (event)
@@ -365,11 +365,11 @@ static LRESULT CALLBACK WndProc2(HWND hWnd, UINT message, WPARAM wParam, LPARAM 
 			mouse->setAbsPos(xPos, yPos, settings.display.width, settings.display.height);
 
 			if (wParam & MK_LBUTTON)
-				mouse->setButton(Button::LEFT_BUTTON, true);
+				mouse->setButton(Mouse::LEFT_BUTTON, true);
 			if (wParam & MK_MBUTTON)
-				mouse->setButton(Button::MIDDLE_BUTTON, true);
+				mouse->setButton(Mouse::MIDDLE_BUTTON, true);
 			if (wParam & MK_RBUTTON)
-				mouse->setButton(Button::RIGHT_BUTTON, true);
+				mouse->setButton(Mouse::RIGHT_BUTTON, true);
 		}
 		if (message != WM_MOUSEMOVE)
 			return 0;
