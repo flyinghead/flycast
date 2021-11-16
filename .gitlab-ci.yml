@@ -25,7 +25,7 @@
 .core-defs-android:
   extends: .core-defs
   script:
-    - cmake $CORE_ARGS -DANDROID_PLATFORM=android-$API_LEVEL -DCMAKE_TOOLCHAIN_FILE=$NDK_ROOT/build/cmake/android.toolchain.cmake -DANDROID_STL=c++_static -DANDROID_ABI=$ANDROID_ABI "$CMAKE_SOURCE_ROOT" -B$BUILD_DIR
+    - cmake $CORE_ARGS -DANDROID_PLATFORM=android-$API_LEVEL -DCMAKE_TOOLCHAIN_FILE=$NDK_ROOT/build/cmake/android.toolchain.cmake -DANDROID_STL=c++_static -DANDROID_ABI=$ANDROID_ABI -DANDROID_ARM_MODE=arm "$CMAKE_SOURCE_ROOT" -B$BUILD_DIR
     - cmake --build $BUILD_DIR --target ${CORENAME}_libretro --config Release -- -j $NUMPROC
     - mv $BUILD_DIR/${CORENAME}_libretro.so $LIBNAME
     - if [ $STRIP_CORE_LIB -eq 1 ]; then $NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-strip $LIBNAME; fi
