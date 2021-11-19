@@ -11,7 +11,7 @@
 #include <strings.h>
 #include <chrono>
 
-uint32_t Platform::GetCurrentTimeMS()
+uint32_t GGPOPlatform::GetCurrentTimeMS()
 {
 	using namespace std::chrono;
 	static steady_clock::time_point startTime = steady_clock::now();
@@ -19,7 +19,7 @@ uint32_t Platform::GetCurrentTimeMS()
 	return (uint32_t)duration_cast<milliseconds>(steady_clock::now() - startTime).count();
 }
 
-int Platform::GetConfigInt(const char* name)
+int GGPOPlatform::GetConfigInt(const char* name)
 {
    char *buf = getenv(name);
    if (buf == nullptr)
@@ -27,7 +27,7 @@ int Platform::GetConfigInt(const char* name)
    return atoi(buf);
 }
 
-bool Platform::GetConfigBool(const char* name)
+bool GGPOPlatform::GetConfigBool(const char* name)
 {
 	char *buf = getenv(name);
 	if (buf == nullptr)

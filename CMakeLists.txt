@@ -1367,6 +1367,7 @@ if(NOT LIBRETRO)
 				${ResourceFiles}
 				core/deps/SDL/src/main/winrt/SDL_winrt_main_NonXAML.cpp)
 			set_target_properties(${PROJECT_NAME} PROPERTIES RESOURCE "${ResourceFiles}")
+		else()
 			target_sources(${PROJECT_NAME} PRIVATE shell/windows/flycast.rc)
 			target_link_libraries(${PROJECT_NAME} PRIVATE dsound opengl32 winmm ws2_32 wsock32 xinput9_1_0)
 		endif()
