@@ -1957,8 +1957,8 @@ static void gui_display_settings()
 			ImGui::PopStyleVar();
 			ImGui::EndTabItem();
 
+			#ifdef USE_LUA
 			header("Lua Scripting");
-			// Begin Lua File Override
 			{
 				OptionCheckbox("Override Default Lua File", config::OverrideLuaFile);
 				ImGui::SameLine();
@@ -1975,7 +1975,7 @@ static void gui_display_settings()
 
 				}
 			}
-			// End Lua File Override
+			#endif
 		}
 		if (ImGui::BeginTabItem("About"))
 		{

@@ -160,9 +160,9 @@ std::array<std::array<Option<MapleDeviceType>, 2>, 4> MapleExpansionDevices {
 Option<bool> UseRawInput("RawInput", false, "input");
 #endif
 
-// Lua
-
+#ifdef USE_LUA
 OptionString LuaFileName("LuaFileName", "flycast.lua");
 Option<bool> OverrideLuaFile("OverrideLuaFile", false);
+#endif
 
 } // namespace config

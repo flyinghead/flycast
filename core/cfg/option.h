@@ -484,10 +484,10 @@ extern Option<bool> UseRawInput;
 constexpr bool UseRawInput = false;
 #endif
 
-// Lua
-
+#ifdef USE_LUA
 extern OptionString LuaFileName;
 extern Option<bool> OverrideLuaFile;
+#endif 
 
 } // namespace config
 
