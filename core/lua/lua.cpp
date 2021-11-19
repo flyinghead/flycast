@@ -36,6 +36,8 @@ namespace lua
 {
 const char *CallbackTable = "flycast_callbacks";
 static lua_State *L;
+bool isLuaRunning;
+
 using namespace luabridge;
 
 static void emuEventCallback(Event event, void *)
@@ -609,6 +611,7 @@ void init()
     EventManager::listen(Event::Pause, emuEventCallback);
     EventManager::listen(Event::Terminate, emuEventCallback);
     EventManager::listen(Event::LoadState, emuEventCallback);
+	isLuaRunning = true;
 
 	doExec(initFile);
 }
@@ -622,8 +625,14 @@ void term()
     EventManager::unlisten(Event::Pause, emuEventCallback);
     EventManager::unlisten(Event::Terminate, emuEventCallback);
     EventManager::unlisten(Event::LoadState, emuEventCallback);
+	isLuaRunning = false;
+
 	lua_close(L);
 	L = nullptr;
+}
+
+bool running(){
+	return isLuaRunning;
 }
 
 }

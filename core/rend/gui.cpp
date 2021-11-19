@@ -554,6 +554,34 @@ static void gui_display_commands()
         ImGui::PopItemFlag();
         ImGui::PopStyleVar();
 	}
+	#ifdef USE_LUA
+	ImGui::NextColumn();
+	// Lua Load / Reload
+	if(lua::running())
+	{
+		if (ImGui::Button("Reload Lua", ImVec2(150 * scaling, 50 * scaling)))
+		{
+			lua::term();
+			lua::init();
+			gui_state = GuiState::Closed;
+		}
+	} 
+	else 
+	{
+		if (ImGui::Button("Start Lua", ImVec2(150 * scaling, 50 * scaling)))
+		{
+			lua::init();
+			gui_state = GuiState::Closed;
+		}
+	}
+	
+	ImGui::NextColumn();
+	
+	if (ImGui::Button("Stop Lua", ImVec2(150 * scaling, 50 * scaling)))
+		lua::term(); 
+
+	#endif
+
 	ImGui::Columns(1, nullptr, false);
 
 	// Exit
