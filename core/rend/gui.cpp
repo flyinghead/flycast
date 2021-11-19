@@ -1421,7 +1421,7 @@ static void gui_display_settings()
 
 	    	ImGui::Spacing();
 	    	OptionSlider("Mouse sensitivity", config::MouseSensitivity, 1, 500);
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(TARGET_UWP)
 	    	OptionCheckbox("Use Raw Input", config::UseRawInput, "Supports multiple pointing devices (mice, light guns) and keyboards");
 #endif
 
@@ -1634,9 +1634,9 @@ static void gui_display_settings()
 		    	OptionCheckbox("Rotate Screen 90°", config::Rotate90, "Rotate the screen 90° counterclockwise");
 		    	OptionCheckbox("Delay Frame Swapping", config::DelayFrameSwapping,
 		    			"Useful to avoid flashing screen or glitchy videos. Not recommended on slow platforms");
-#if defined(USE_VULKAN) || defined(_WIN32)
+#if defined(USE_VULKAN) || defined(USE_DX9)
 		    	ImGui::Text("Graphics API:");
-#if defined(USE_VULKAN) && defined(_WIN32)
+#if defined(USE_VULKAN) && defined(USE_DX9)
 	            constexpr u32 columns = 3;
 #else
 	            constexpr u32 columns = 2;
@@ -1648,7 +1648,7 @@ static void gui_display_settings()
 		    	ImGui::RadioButton("Vulkan", &renderApi, 1);
             	ImGui::NextColumn();
 #endif
-#ifdef _WIN32
+#ifdef USE_DX9
 		    	ImGui::RadioButton("DirectX", &renderApi, 2);
             	ImGui::NextColumn();
 #endif
@@ -2013,14 +2013,10 @@ static void gui_display_settings()
 	    	ImGui::Spacing();
 	    	if (isOpenGL(config::RendererType))
 				header("Open GL");
-#ifdef USE_VULKAN
 	    	else if (isVulkan(config::RendererType))
 				header("Vulkan");
-#endif
-#ifdef _WIN32
 	    	else if (config::RendererType == RenderType::DirectX9)
 				header("DirectX");
-#endif
 			ImGui::Text("Driver Name: %s", GraphicsContext::Instance()->getDriverName().c_str());
 			ImGui::Text("Version: %s", GraphicsContext::Instance()->getDriverVersion().c_str());
 

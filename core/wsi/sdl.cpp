@@ -26,6 +26,8 @@
 #include "sdl/sdl.h"
 #include "cfg/option.h"
 
+extern "C" int eglGetError();
+
 SDLGLGraphicsContext theGLContext;
 
 bool SDLGLGraphicsContext::init()
@@ -105,6 +107,13 @@ bool SDLGLGraphicsContext::init()
 	}
 #endif
 	postInit();
+
+#ifdef TARGET_UWP
+	// Force link with libGLESv2.dll and libEGL.dll
+#undef glGetError
+	glGetError();
+	eglGetError();
+#endif
 
 	return true;
 }

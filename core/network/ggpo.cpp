@@ -60,7 +60,7 @@ static void getLocalInput(MapleInputState inputState[4])
 
 }
 
-#ifndef LIBRETRO
+#ifdef USE_GGPO
 #include "ggponet.h"
 #include "emulator.h"
 #include "rend/gui.h"

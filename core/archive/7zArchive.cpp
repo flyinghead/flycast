@@ -37,9 +37,14 @@ bool SzArchive::Open(const char* path)
 	nowide::wstackstring wpath;
 	if (!wpath.convert(path))
 		return false;
+#if (_WIN32_WINNT >= 0x0602 /*_WIN32_WINNT_WIN8*/)
+	archiveStream.file.handle = CreateFile2(wpath.c_str(),
+		GENERIC_READ, FILE_SHARE_READ, OPEN_EXISTING, NULL);
+#else
 	archiveStream.file.handle = CreateFileW(wpath.c_str(),
 			GENERIC_READ, FILE_SHARE_READ, NULL,
 			OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+#endif
 	if (archiveStream.file.handle == INVALID_HANDLE_VALUE)
 		return false;
 #else

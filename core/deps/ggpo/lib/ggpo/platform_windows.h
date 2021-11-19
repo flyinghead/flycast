@@ -12,17 +12,31 @@
 #include <ws2tcpip.h>
 #include <windows.h>
 #include <stdio.h>
+#include <chrono>
 
 #include "ggpo_types.h"
 
-class Platform {
+class GGPOPlatform {
 public:  // types
    typedef DWORD ProcessID;
 
 public:  // functions
    static ProcessID GetProcessID() { return GetCurrentProcessId(); }
-   static void AssertFailed(char *msg) { MessageBoxA(NULL, msg, "GGPO Assertion Failed", MB_OK | MB_ICONEXCLAMATION); }
-   static uint32 GetCurrentTimeMS() { return timeGetTime(); }
+   static void AssertFailed(char *msg) { 
+#ifndef TARGET_UWP
+	   MessageBoxA(NULL, msg, "GGPO Assertion Failed", MB_OK | MB_ICONEXCLAMATION);
+#endif
+   }
+   static uint32 GetCurrentTimeMS() {
+#ifdef TARGET_UWP
+	   using namespace std::chrono;
+	   static steady_clock::time_point startTime = steady_clock::now();
+
+	   return (uint32_t)duration_cast<milliseconds>(steady_clock::now() - startTime).count();
+#else
+	   return timeGetTime();
+#endif
+   }
    static int GetConfigInt(const char* name);
    static bool GetConfigBool(const char* name);
 };

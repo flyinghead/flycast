@@ -7,9 +7,7 @@ Disc* chd_parse(const char* file, std::vector<u8> *digest);
 Disc* gdi_parse(const char* file, std::vector<u8> *digest);
 Disc* cdi_parse(const char* file, std::vector<u8> *digest);
 Disc* cue_parse(const char* file, std::vector<u8> *digest);
-#ifdef _WIN32
 Disc* ioctl_parse(const char* file, std::vector<u8> *digest);
-#endif
 
 u32 NullDriveDiscType;
 Disc* disc;
@@ -20,7 +18,7 @@ constexpr Disc* (*drivers[])(const char* path, std::vector<u8> *digest)
 	gdi_parse,
 	cdi_parse,
 	cue_parse,
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(TARGET_UWP)
 	ioctl_parse,
 #endif
 };

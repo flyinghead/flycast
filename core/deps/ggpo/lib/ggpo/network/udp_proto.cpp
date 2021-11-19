@@ -53,8 +53,8 @@ UdpProtocol::UdpProtocol() :
    memset(&_peer_addr, 0, sizeof _peer_addr);
    _oo_packet.msg = NULL;
 
-   _send_latency = Platform::GetConfigInt("GGPO_NETWORK_DELAY");
-   _oop_percent = Platform::GetConfigInt("GGPO_OOP_PERCENT");
+   _send_latency = GGPOPlatform::GetConfigInt("GGPO_NETWORK_DELAY");
+   _oop_percent = GGPOPlatform::GetConfigInt("GGPO_OOP_PERCENT");
 }
 
 UdpProtocol::~UdpProtocol()
@@ -189,7 +189,7 @@ UdpProtocol::OnLoopPoll(void *cookie)
       return true;
    }
 
-   unsigned int now = Platform::GetCurrentTimeMS();
+   unsigned int now = GGPOPlatform::GetCurrentTimeMS();
    unsigned int next_interval;
 
    PumpSendQueue();
@@ -212,7 +212,7 @@ UdpProtocol::OnLoopPoll(void *cookie)
 
       if (!_state.running.last_quality_report_time || _state.running.last_quality_report_time + QUALITY_REPORT_INTERVAL < now) {
          UdpMsg *msg = new UdpMsg(UdpMsg::QualityReport);
-         msg->u.quality_report.ping = Platform::GetCurrentTimeMS();
+         msg->u.quality_report.ping = GGPOPlatform::GetCurrentTimeMS();
          msg->u.quality_report.frame_advantage = (uint8)_local_frame_advantage;
          SendMsg(msg);
          _state.running.last_quality_report_time = now;
@@ -266,7 +266,7 @@ void
 UdpProtocol::Disconnect()
 {
    _current_state = Disconnected;
-   _shutdown_timeout = Platform::GetCurrentTimeMS() + UDP_SHUTDOWN_TIMER;
+   _shutdown_timeout = GGPOPlatform::GetCurrentTimeMS() + UDP_SHUTDOWN_TIMER;
 }
 
 void
@@ -289,13 +289,13 @@ UdpProtocol::SendMsg(UdpMsg *msg)
    {
 	   std::lock_guard<std::mutex> lock(_send_mutex);
 	   _packets_sent++;
-	   _last_send_time = Platform::GetCurrentTimeMS();
+	   _last_send_time = GGPOPlatform::GetCurrentTimeMS();
 	   _bytes_sent += msg->PacketSize();
 
 	   msg->hdr.magic = _magic_number;
 	   msg->hdr.sequence_number = _next_send_seq++;
 
-	   _send_queue.push(QueueEntry(Platform::GetCurrentTimeMS(), _peer_addr, msg));
+	   _send_queue.push(QueueEntry(GGPOPlatform::GetCurrentTimeMS(), _peer_addr, msg));
    }
    PumpSendQueue();
 }
@@ -360,7 +360,7 @@ UdpProtocol::OnMsg(UdpMsg *msg, int len)
       handled = (this->*(table[msg->hdr.type]))(msg, len);
    }
    if (handled) {
-      _last_recv_time = Platform::GetCurrentTimeMS();
+      _last_recv_time = GGPOPlatform::GetCurrentTimeMS();
       if (_disconnect_notify_sent && _current_state == Running) {
          QueueEvent(Event(Event::NetworkResumed));   
          _disconnect_notify_sent = false;
@@ -371,7 +371,7 @@ UdpProtocol::OnMsg(UdpMsg *msg, int len)
 void
 UdpProtocol::UpdateNetworkStats(void)
 {
-   int now = Platform::GetCurrentTimeMS();
+   int now = GGPOPlatform::GetCurrentTimeMS();
 
    if (_stats_start_time == 0) {
       _stats_start_time = now;
@@ -636,7 +636,7 @@ UdpProtocol::OnInput(UdpMsg *msg, int len)
 
             _last_received_input.desc(desc, ARRAY_SIZE(desc));
 
-            _state.running.last_input_packet_recv_time = Platform::GetCurrentTimeMS();
+            _state.running.last_input_packet_recv_time = GGPOPlatform::GetCurrentTimeMS();
 
             Log("Sending frame %d to emu queue %d (%s).\n", _last_received_input.frame, _queue, desc);
             QueueEvent(evt);
@@ -694,7 +694,7 @@ UdpProtocol::OnQualityReport(UdpMsg *msg, int len)
 bool
 UdpProtocol::OnQualityReply(UdpMsg *msg, int len)
 {
-   _round_trip_time = Platform::GetCurrentTimeMS() - msg->u.quality_reply.pong;
+   _round_trip_time = GGPOPlatform::GetCurrentTimeMS() - msg->u.quality_reply.pong;
    return true;
 }
 
@@ -764,14 +764,14 @@ UdpProtocol::PumpSendQueue()
          // should really come up with a gaussian distributation based on the configured
          // value, but this will do for now.
          int jitter = (_send_latency * 2 / 3) + ((rand() % _send_latency) / 3);
-         if ((int)Platform::GetCurrentTimeMS() < _send_queue.front().queue_time + jitter) {
+         if ((int)GGPOPlatform::GetCurrentTimeMS() < _send_queue.front().queue_time + jitter) {
             break;
          }
       }
       if (_oop_percent && !_oo_packet.msg && ((rand() % 100) < _oop_percent)) {
          int delay = rand() % (_send_latency * 10 + 1000);
          Log("creating rogue oop (seq: %d  delay: %d)\n", entry.msg->hdr.sequence_number, delay);
-         _oo_packet.send_time = Platform::GetCurrentTimeMS() + delay;
+         _oo_packet.send_time = GGPOPlatform::GetCurrentTimeMS() + delay;
          _oo_packet.msg = entry.msg;
          _oo_packet.dest_addr = entry.dest_addr;
       } else {
@@ -784,7 +784,7 @@ UdpProtocol::PumpSendQueue()
       }
       _send_queue.pop();
    }
-   if (_oo_packet.msg && _oo_packet.send_time < (int)Platform::GetCurrentTimeMS()) {
+   if (_oo_packet.msg && _oo_packet.send_time < (int)GGPOPlatform::GetCurrentTimeMS()) {
       Log("sending rogue oop!");
       _udp->SendTo((char *)_oo_packet.msg, _oo_packet.msg->PacketSize(), 0,
                      (struct sockaddr *)&_oo_packet.dest_addr, sizeof _oo_packet.dest_addr);

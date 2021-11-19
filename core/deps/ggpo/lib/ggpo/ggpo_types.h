@@ -24,6 +24,10 @@
 #pragma warning(disable: 4018 4100 4127 4201 4389 4800)
 #endif
 
+#if defined(WINAPI_FAMILY) && (WINAPI_FAMILY == WINAPI_FAMILY_APP)
+#define TARGET_UWP 1
+#endif
+
 /*
  * Simple types
  */
@@ -66,12 +70,12 @@ public:
    do {                                                     \
       if (!(x)) {                                           \
          char assert_buf[1024];                             \
-         snprintf(assert_buf, sizeof(assert_buf) - 1, "Assertion: %s @ %s:%d (pid:%ld)", #x, __FILE__, __LINE__, (long)Platform::GetProcessID()); \
+         snprintf(assert_buf, sizeof(assert_buf) - 1, "Assertion: %s @ %s:%d (pid:%ld)", #x, __FILE__, __LINE__, (long)GGPOPlatform::GetProcessID()); \
          Log("%s\n", assert_buf);                           \
          Log("\n");                                         \
          Log("\n");                                         \
          Log("\n");                                         \
-         Platform::AssertFailed(assert_buf);                \
+         GGPOPlatform::AssertFailed(assert_buf);                \
          exit(0);                                           \
       }                                                     \
    } while (false)

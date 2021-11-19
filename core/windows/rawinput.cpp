@@ -17,6 +17,7 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #include "rawinput.h"
+#ifndef TARGET_UWP
 #include <hidusage.h>
 #include <map>
 #include "hw/maple/maple_devs.h"
@@ -422,3 +423,4 @@ void term()
 }
 
 }
+#endif

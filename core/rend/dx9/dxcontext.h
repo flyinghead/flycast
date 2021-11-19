@@ -17,7 +17,8 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #pragma once
-#ifdef _WIN32
+#include "build.h"
+#if defined(_WIN32) && !defined(TARGET_UWP)
 #include "types.h"
 #include <windows.h>
 #include <d3d9.h>

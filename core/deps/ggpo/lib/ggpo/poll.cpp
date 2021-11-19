@@ -70,9 +70,9 @@ Poll::Pump(int timeout)
    bool finished = false;
 
    if (_start_time == 0) {
-      _start_time = Platform::GetCurrentTimeMS();
+      _start_time = GGPOPlatform::GetCurrentTimeMS();
    }
-   int elapsed = Platform::GetCurrentTimeMS() - _start_time;
+   int elapsed = GGPOPlatform::GetCurrentTimeMS() - _start_time;
    int maxwait = ComputeWaitTime(elapsed);
    if (maxwait != INFINITE) {
       timeout = MIN(timeout, maxwait);

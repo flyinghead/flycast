@@ -113,7 +113,7 @@ static LONG WINAPI exceptionHandler(EXCEPTION_POINTERS *ep)
 
 void os_InstallFaultHandler()
 {
-#ifdef _WIN64
+#if defined(_WIN64) && !defined(TARGET_UWP)
 	prevExceptionHandler = SetUnhandledExceptionFilter(nullptr);
 	vectoredHandler = AddVectoredExceptionHandler(1, exceptionHandler);
 #else
@@ -124,7 +124,7 @@ void os_InstallFaultHandler()
 
 void os_UninstallFaultHandler()
 {
-#ifdef _WIN64
+#if defined(_WIN64) && !defined(TARGET_UWP)
 	RemoveVectoredExceptionHandler(vectoredHandler);
 #endif
 	SetUnhandledExceptionFilter(prevExceptionHandler);

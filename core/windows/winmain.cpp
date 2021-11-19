@@ -17,6 +17,12 @@
 #ifndef __STDC_FORMAT_MACROS
 #define __STDC_FORMAT_MACROS 1
 #endif
+#include "build.h"
+#ifdef TARGET_UWP
+#include <winrt/Windows.Globalization.h>
+#include <winrt/Windows.Globalization.DateTimeFormatting.h>
+#include <winrt/Windows.Storage.h>
+#endif
 #include "oslib/oslib.h"
 #include "oslib/audiostream.h"
 #include "imgread/common.h"
@@ -35,6 +41,7 @@
 #include "rend/mainui.h"
 #include "../shell/windows/resource.h"
 #include "rawinput.h"
+#include "oslib/directory.h"
 #ifdef USE_BREAKPAD
 #include "breakpad/client/windows/handler/exception_handler.h"
 #include "version.h"
@@ -199,13 +206,16 @@ void os_SetupInput()
 	EventManager::listen(Event::Resume, emuEventCallback);
 	checkRawInput();
 #endif
+#ifndef TARGET_UWP
 	if (config::UseRawInput)
 		rawinput::init();
+#endif
 }
 
 
 static void setupPath()
 {
+#ifndef TARGET_UWP
 	wchar_t fname[512];
 	GetModuleFileNameW(0, fname, ARRAY_SIZE(fname));
 
@@ -225,7 +235,21 @@ static void setupPath()
 
 	std::string data_path = fn + "data\\";
 	set_user_data_dir(data_path);
-	CreateDirectory(data_path.c_str(), NULL);
+	flycast::mkdir(data_path.c_str(), 0755);
+#else
+	using namespace Windows::Storage;
+	StorageFolder^ localFolder = Windows::Storage::ApplicationData::Current->LocalFolder;
+	nowide::stackstring path;
+	path.convert(localFolder->Path->Data());
+	std::string homePath(path.c_str());
+	homePath += '\\';
+	set_user_config_dir(homePath);
+	homePath += "data\\";
+	set_user_data_dir(homePath);
+	flycast::mkdir(homePath.c_str(), 0755);
+	SetEnvironmentVariable(L"HOMEPATH", localFolder->Path->Data());
+	SetEnvironmentVariable(L"HOMEDRIVE", nullptr);
+#endif
 }
 
 void UpdateInputState()
@@ -648,6 +672,7 @@ static void reserveBottomMemory()
 }
 static void findKeyboardLayout()
 {
+#ifndef TARGET_UWP
 	HKL keyboardLayout = GetKeyboardLayout(0);
 	WORD lcid = HIWORD(keyboardLayout);
 	switch (PRIMARYLANGID(lcid)) {
@@ -675,6 +700,7 @@ static void findKeyboardLayout()
 	default:
 		break;
 	}
+#endif
 }
 
 #if defined(USE_BREAKPAD)
@@ -695,12 +721,16 @@ static bool dumpCallback(const wchar_t* dump_path,
 }
 #endif
 
-// DEF_CONSOLE allows you to override linker subsystem and therefore default console //
-//	: pragma isn't pretty but def's are configurable 
-#ifdef DEF_CONSOLE
+#ifdef TARGET_UWP
+extern "C" int SDL_main(int argc, char* argv[])
+{
+
+	// DEF_CONSOLE allows you to override linker subsystem and therefore default console //
+	//	: pragma isn't pretty but def's are configurable 
+#elif defined(DEF_CONSOLE)
 #pragma comment(linker, "/subsystem:console")
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
 
 #else
@@ -724,19 +754,19 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 	google_breakpad::CustomClientInfo custom_info = { custom_entries, ARRAY_SIZE(custom_entries) };
 
 	google_breakpad::ExceptionHandler handler(tempDir,
-			nullptr,
-			dumpCallback,
-			nullptr,
-			google_breakpad::ExceptionHandler::HANDLER_ALL,
-			MiniDumpNormal,
-			INVALID_HANDLE_VALUE,
-			&custom_info);
+		nullptr,
+		dumpCallback,
+		nullptr,
+		google_breakpad::ExceptionHandler::HANDLER_ALL,
+		MiniDumpNormal,
+		INVALID_HANDLE_VALUE,
+		&custom_info);
 	// crash on die() and failing verify()
 	handler.set_handle_debug_exceptions(true);
 #endif
 
 #if defined(_WIN32) && defined(LOG_TO_PTY)
-    setbuf(stderr,NULL);
+	setbuf(stderr, NULL);
 #endif
 	LogManager::Init();
 
@@ -747,6 +777,10 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 	if (flycast_init(argc, argv) != 0)
 		die("Flycast initialization failed");
 
+#ifdef TARGET_UWP
+	if (config::ContentPath.get().empty())
+		config::ContentPath.get().push_back(get_writable_config_path(""));
+#endif
 	os_InstallFaultHandler();
 
 	mainui_loop();
@@ -778,6 +812,7 @@ void os_DebugBreak()
 
 void os_DoEvents()
 {
+#ifndef TARGET_UWP
 	MSG msg;
 	while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
 	{
@@ -791,4 +826,5 @@ void os_DoEvents()
 		TranslateMessage(&msg);
 		DispatchMessage(&msg);
 	}
+#endif
 }

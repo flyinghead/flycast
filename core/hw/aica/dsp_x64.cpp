@@ -412,8 +412,10 @@ private:
 
 void recompile()
 {
+	vmem_platform_jit_set_exec(pCodeBuffer, CodeBufferSize, false);
 	X64DSPAssembler assembler(pCodeBuffer, CodeBufferSize);
 	assembler.Compile(&state);
+	vmem_platform_jit_set_exec(pCodeBuffer, CodeBufferSize, true);
 }
 
 void recInit()

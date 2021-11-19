@@ -306,6 +306,9 @@ bool vmem_platform_prepare_jit_block(void *code_area, unsigned size, void **code
 }
 #endif // !__SWITCH__
 
+void vmem_platform_jit_set_exec(void* code, size_t size, bool enable) {
+}
+
 // Some OSes restrict cache flushing, cause why not right? :D
 
 #if HOST_CPU == CPU_ARM64

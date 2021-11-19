@@ -46,7 +46,7 @@ void initRenderApi(void *window, void *display)
 		config::RendererType = RenderType::OpenGL;
 	}
 #endif
-#ifdef _WIN32
+#ifdef USE_DX9
 	if (config::RendererType == RenderType::DirectX9)
 	{
 		theDXContext.setWindow(window, display);

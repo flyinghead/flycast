@@ -123,6 +123,7 @@ if(WIN32)
     zip_source_file_win32_utf8.c
     )
   if(CMAKE_SYSTEM_NAME MATCHES WindowsPhone OR CMAKE_SYSTEM_NAME MATCHES WindowsStore)
+    target_compile_definitions(zip PRIVATE _WIN32_WINNT=0x0A00)
     target_sources(zip PRIVATE zip_random_uwp.c)
   else()
     target_sources(zip PRIVATE zip_source_file_win32_ansi.c zip_random_win32.c)

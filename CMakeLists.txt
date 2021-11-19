@@ -116,12 +116,20 @@ else()
     add_executable(${PROJECT_NAME} MACOSX_BUNDLE core/emulator.cpp)
 endif()
 
-target_compile_features(${PROJECT_NAME} PRIVATE c_std_11 cxx_std_11)
+if(WINDOWS_STORE)
+    target_compile_features(${PROJECT_NAME} PRIVATE c_std_11 cxx_std_17)
+else()
+    target_compile_features(${PROJECT_NAME} PRIVATE c_std_11 cxx_std_11)
+endif()
 set_target_properties(${PROJECT_NAME} PROPERTIES
 	CXX_EXTENSIONS OFF
 	LINK_FLAGS_RELEASE -s)
 if(MSVC)
 	target_compile_options(${PROJECT_NAME} PRIVATE /GR- /GS-)
+	if(WINDOWS_STORE)
+		target_compile_definitions(${PROJECT_NAME} PRIVATE _WIN32_WINNT=0x0A00)
+		target_compile_options(${PROJECT_NAME} PRIVATE /ZW)
+	endif()
 else()
 	target_compile_options(${PROJECT_NAME} PRIVATE
 		$<$<COMPILE_LANGUAGE:CXX>:-fno-strict-aliasing>
@@ -216,7 +224,7 @@ if(NOT LIBRETRO)
 	    target_link_libraries(${PROJECT_NAME} PRIVATE ${ALSA_LIBRARIES})
 	endif()
 	
-	if(WIN32)
+	if(WIN32 AND NOT WINDOWS_STORE)
 		# Build SDL
 		file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/core/deps/SDL")
 		if(CMAKE_GENERATOR MATCHES "Visual Studio")
@@ -237,7 +245,9 @@ if(NOT LIBRETRO)
 		target_link_libraries(${PROJECT_NAME} PRIVATE "-static-libgcc -static-libstdc++")
 	endif()
 	
-	if((APPLE AND NOT IOS) OR WIN32)
+	if(WINDOWS_STORE)
+		find_package(SDL2 CONFIG REQUIRED)
+	elseif((APPLE AND NOT IOS) OR WIN32)
 	    find_package(SDL2 HINTS "${CMAKE_CURRENT_BINARY_DIR}/core/deps/SDL/cmake")
 	elseif(NOT ANDROID AND NOT IOS)
 	    find_package(SDL2)
@@ -262,7 +272,7 @@ if(NOT LIBRETRO)
 	endif()
 	
 	find_package(ZLIB)
-	if(TARGET ZLIB::ZLIB AND NOT ANDROID AND NOT WIN32)
+	if(TARGET ZLIB::ZLIB AND NOT ANDROID AND (NOT WIN32 OR WINDOWS_STORE))
 	    set(WITH_SYSTEM_ZLIB ON CACHE BOOL "Use system provided zlib library")
 	    target_link_libraries(${PROJECT_NAME} PRIVATE ZLIB::ZLIB)
 	endif()
@@ -380,6 +390,12 @@ if(UNIX AND NOT APPLE AND NOT ANDROID)
     endif()
 
     target_link_libraries(${PROJECT_NAME} PRIVATE ${CMAKE_DL_LIBS} rt)
+endif()
+
+if(WINDOWS_STORE)
+	find_package(unofficial-angle CONFIG REQUIRED)
+	target_compile_definitions(${PROJECT_NAME} PRIVATE GLES GLES3)
+	target_link_libraries(${PROJECT_NAME} PRIVATE unofficial::angle::libEGL unofficial::angle::libGLESv2)
 endif()
 
 if(ASAN)
@@ -1011,7 +1027,7 @@ if(USE_VULKAN)
 	endif()
 endif()
 
-if(WIN32 AND NOT LIBRETRO)
+if(WIN32 AND NOT LIBRETRO AND NOT WINDOWS_STORE)
 	target_sources(${PROJECT_NAME} PRIVATE
 		core/rend/dx9/comptr.h
 		core/rend/dx9/d3d_overlay.h
@@ -1338,9 +1354,22 @@ if(NOT LIBRETRO)
 	            core/windows/winmain.cpp
 	            core/windows/xinput_gamepad.h)
 	    endif()
-	    target_sources(${PROJECT_NAME} PRIVATE shell/windows/flycast.rc)
-
-	    target_link_libraries(${PROJECT_NAME} PRIVATE dsound opengl32 winmm ws2_32 wsock32 xinput9_1_0)
+		if(WINDOWS_STORE)
+			set(ResourceFiles shell/uwp/Package.appxmanifest
+					shell/uwp/flycast150.png
+					shell/uwp/flycast50.png
+					shell/uwp/flycast44.png
+					shell/uwp/flycast44.targetsize-48_altform-unplated.png
+					shell/uwp/flycast44.targetsize-48_altform-lightunplated.png
+					core/deps/SDL/src/main/winrt/SDL2-WinRTResource_BlankCursor.cur
+					core/deps/SDL/src/main/winrt/SDL2-WinRTResources.rc)
+			target_sources(${PROJECT_NAME} PRIVATE
+				${ResourceFiles}
+				core/deps/SDL/src/main/winrt/SDL_winrt_main_NonXAML.cpp)
+			set_target_properties(${PROJECT_NAME} PROPERTIES RESOURCE "${ResourceFiles}")
+			target_sources(${PROJECT_NAME} PRIVATE shell/windows/flycast.rc)
+			target_link_libraries(${PROJECT_NAME} PRIVATE dsound opengl32 winmm ws2_32 wsock32 xinput9_1_0)
+		endif()
 	endif()
 endif()
 

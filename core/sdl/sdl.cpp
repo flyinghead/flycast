@@ -115,7 +115,7 @@ static void emuEventCallback(Event event, void *)
 
 static void checkRawInput()
 {
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(TARGET_UWP)
 	if ((bool)config::UseRawInput != (bool)sdl_mouse)
 		return;
 	if (config::UseRawInput)
@@ -420,7 +420,7 @@ static inline void get_window_state()
 		
 }
 
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(TARGET_UWP)
 #include <windows.h>
 
 HWND getNativeHwnd()
@@ -522,7 +522,7 @@ bool sdl_recreate_window(u32 flags)
 	}
 #endif
 
-#ifdef _WIN32
+#ifdef USE_DX9
 	if (config::RendererType == RenderType::DirectX9)
 		GraphicsContext::Instance()->setWindow(getNativeHwnd());
 	else

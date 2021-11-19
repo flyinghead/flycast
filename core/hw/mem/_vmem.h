@@ -32,6 +32,8 @@ bool vmem_platform_prepare_jit_block(void *code_area, unsigned size, void **code
 bool vmem_platform_prepare_jit_block(void *code_area, unsigned size, void **code_area_rw, ptrdiff_t *rx_offset);
 // This might not need an implementation (ie x86/64 cpus).
 void vmem_platform_flush_cache(void *icache_start, void *icache_end, void *dcache_start, void *dcache_end);
+// Change a code buffer permissions from r-x to/from rw-
+void vmem_platform_jit_set_exec(void* code, size_t size, bool enable);
 
 // Note: if you want to disable vmem magic in any given platform, implement the
 // above functions as empty functions and make vmem_platform_init return MemTypeError.

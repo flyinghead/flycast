@@ -293,7 +293,7 @@ static void rend_create_renderer()
 		renderer = rend_OITVulkan();
 		break;
 #endif
-#if defined(_WIN32) && !defined(LIBRETRO)
+#ifdef USE_DX9
 	case RenderType::DirectX9:
 		renderer = rend_DirectX9();
 		break;

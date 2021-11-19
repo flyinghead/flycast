@@ -1330,6 +1330,9 @@ static BlockCompiler* ccCompiler;
 void ngen_Compile(RuntimeBlockInfo* block, bool smc_checks, bool reset, bool staging, bool optimise)
 {
 	verify(emit_FreeSpace() >= 16 * 1024);
+	void* protStart = emit_GetCCPtr();
+	size_t protSize = emit_FreeSpace();
+	vmem_platform_jit_set_exec(protStart, protSize, false);
 
 	BlockCompiler compiler;
 	::ccCompiler = &compiler;
@@ -1339,6 +1342,7 @@ void ngen_Compile(RuntimeBlockInfo* block, bool smc_checks, bool reset, bool sta
 		ERROR_LOG(DYNAREC, "Fatal xbyak error: %s", e.what());
 	}
 	::ccCompiler = nullptr;
+	vmem_platform_jit_set_exec(protStart, protSize, true);
 }
 
 void ngen_CC_Start(shil_opcode* op)
@@ -1362,14 +1366,20 @@ void ngen_CC_Finish(shil_opcode* op)
 
 bool ngen_Rewrite(host_context_t &context, void *faultAddress)
 {
+	void* protStart = emit_GetCCPtr();
+	size_t protSize = emit_FreeSpace();
+	vmem_platform_jit_set_exec(protStart, protSize, false);
+
 	u8 *retAddr = *(u8 **)context.rsp - 5;
 	BlockCompiler compiler(retAddr);
+	bool rc = false;
 	try {
-		return compiler.rewriteMemAccess(context);
+		rc = compiler.rewriteMemAccess(context);
+		vmem_platform_jit_set_exec(protStart, protSize, true);
 	} catch (const Xbyak::Error& e) {
 		ERROR_LOG(DYNAREC, "Fatal xbyak error: %s", e.what());
-		return false;
 	}
+	return rc;
 }
 
 void ngen_HandleException(host_context_t &context)
@@ -1384,12 +1394,17 @@ void ngen_ResetBlocks()
 	if (mainloop != nullptr && mainloop != emit_GetCCPtr())
 		return;
 
+	void* protStart = emit_GetCCPtr();
+	size_t protSize = emit_FreeSpace();
+	vmem_platform_jit_set_exec(protStart, protSize, false);
+
 	BlockCompiler compiler;
 	try {
 		compiler.genMainloop();
 	} catch (const Xbyak::Error& e) {
 		ERROR_LOG(DYNAREC, "Fatal xbyak error: %s", e.what());
 	}
+	vmem_platform_jit_set_exec(protStart, protSize, true);
 }
 
 #endif

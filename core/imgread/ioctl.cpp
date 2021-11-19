@@ -1,4 +1,5 @@
-#ifdef _WIN32
+#include "build.h"
+#if defined(_WIN32) && !defined(TARGET_UWP)
 #include "types.h"
 #include "common.h"
 
@@ -357,5 +358,4 @@ Disc* ioctl_parse(const char* file, std::vector<u8> *digest)
 		return 0;
 	}
 }
-
 #endif

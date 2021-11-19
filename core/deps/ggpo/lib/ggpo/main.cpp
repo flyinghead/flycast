@@ -14,7 +14,7 @@
 struct Init
 {
 	Init() {
-		srand(Platform::GetCurrentTimeMS() + Platform::GetProcessID());
+		srand(GGPOPlatform::GetCurrentTimeMS() + GGPOPlatform::GetProcessID());
 #ifdef _WIN32
 		WSADATA wsaData;
 		WSAStartup(MAKEWORD(2, 0), &wsaData);

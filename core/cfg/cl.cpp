@@ -98,6 +98,10 @@ bool ParseCommandLine(int argc,char* argv[])
 			cl--;
 		}
 #endif
+		else if ((*arg)[0] == '-')
+		{
+			WARN_LOG(COMMON, "Ignoring unknown command line option '%s'", *arg);
+		}
 		else
 		{
 			char* extension = strrchr(*arg, '.');

@@ -41,7 +41,7 @@ constexpr size_t MAX_PATH = 4096;
 #endif
 constexpr int INT_MAX = std::numeric_limits<int>::max();
 
-class Platform {
+class GGPOPlatform {
 public:  // types
    typedef pid_t ProcessID;
 
