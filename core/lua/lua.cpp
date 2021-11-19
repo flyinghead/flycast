@@ -578,6 +578,20 @@ static void luaRegister(lua_State *L)
 		.endNamespace();
 }
 
+static std::string getLuaFile()
+{
+	std::string initFile;
+
+	if(config::OverrideLuaFile == true){
+		initFile = get_readonly_config_path(config::LuaFileName.get());
+	} else {
+		initFile = get_readonly_config_path("flycast.lua");
+	}
+
+	return initFile;
+
+} 
+
 static void doExec(const std::string& path)
 {
 	if (L == nullptr)
@@ -598,7 +612,7 @@ void exec(const std::string& path)
 
 void init()
 {
-	std::string initFile = get_readonly_config_path("flycast.lua");
+	std::string initFile = getLuaFile();
 	if (!file_exists(initFile))
 		return;
 	L = luaL_newstate();
