@@ -1473,8 +1473,10 @@ static bool set_opengl_hw_render(u32 preferred)
 #endif
 	{
 		params.context_type          = (retro_hw_context_type)preferred;
+#ifndef HAVE_OPENGLES
 		params.major                 = 3;
 		params.minor                 = preferred == RETRO_HW_CONTEXT_OPENGL_CORE ? 2 : 0;
+#endif
 		config::RendererType = RenderType::OpenGL;
 		config::RendererType.commit();
 	}
