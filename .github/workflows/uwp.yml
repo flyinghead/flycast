@@ -8,24 +8,25 @@ jobs:
 
     env:
       VCPKG_ROOT: ${{ github.workspace }}/vcpkg
+      VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}/vcpkg/bincache
 
     steps:
-      - uses: actions/cache@v2
-        id: cache
-        with:
-          path: $HOME/ccache
-          key: ccache-${{ github.sha }}
-          restore-keys: ccache-
-
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0
           submodules: true
 
       - name: bootstrap vcpkg
-        run: | 
+        run: |
           git clone https://github.com/microsoft/vcpkg
-          vcpkg/bootstrap-vcpkg.bat
+          mkdir vcpkg\bincache
+          vcpkg\bootstrap-vcpkg.bat
+
+      - uses: actions/cache@v2
+        id: cache
+        with:
+          path: ${{ env.VCPKG_DEFAULT_BINARY_CACHE }}
+          key: vcpkg-${{ hashFiles( 'vcpkg.json' ) }}
 
       - name: CMake
         run: |

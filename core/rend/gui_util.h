@@ -95,7 +95,7 @@ public:
 				emu.unloadGame();
 				gui_state = GuiState::Main;
 			});
-			return
+			return;
 		}
 #else
 		if (future.valid())
