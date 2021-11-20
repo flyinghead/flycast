@@ -1189,9 +1189,9 @@ Game Games[] =
     },
     // Death Crimson OX (JPN, USA, EXP, KOR, AUS)
     {
-        "deathcox",
-        NULL,
-        "Death Crimson OX (Rev A)",
+        "deathcoxj",
+		"deathcox",
+        "Death Crimson OX (Japan, Rev A)",
         0x05800000,
         0x000b64d0,
         NULL,
@@ -1215,11 +1215,39 @@ Game Games[] =
         NULL,
         &trigger_inputs
     },
+    // Death Crimson OX (USA)
+    {
+        "deathcox",
+        NULL,
+        "Death Crimson OX (USA)",
+        0x05800000,
+        0x000b64d0,
+        NULL,
+        M2,
+        REGION_AUSTRALIA,
+        ROT0,
+        {
+            { "dcox_us.ic22",  0x0000000, 0x0400000, 0x0580a27e },
+			{ "mpr-23514.ic1", 0x0800000, 0x0800000, 0x1f2b090e },
+			{ "mpr-23515.ic2", 0x1000000, 0x0800000, 0xdc8557eb },
+			{ "mpr-23516.ic3", 0x1800000, 0x0800000, 0x94494cbb },
+			{ "mpr-23517.ic4", 0x2000000, 0x0800000, 0x69ba6a41 },
+			{ "mpr-23518.ic5", 0x2800000, 0x0800000, 0x49882766 },
+			{ "mpr-23519.ic6", 0x3000000, 0x0800000, 0xcdc82805 },
+			{ "mpr-23520.ic7", 0x3800000, 0x0800000, 0x1a268360 },
+			{ "mpr-23521.ic8", 0x4000000, 0x0800000, 0xcf8674b8 },
+			{ "mpr-23522.ic9", 0x4800000, 0x0800000, 0x7ae6716e },
+			{ "mpr-23523.ic10",0x5000000, 0x0800000, 0xc91efb67 },
+
+        },
+        NULL,
+        &trigger_inputs
+    },
     // Death Crimson OX
     {
         "deathcoxo",
         "deathcox",
-        "Death Crimson OX",
+        "Death Crimson OX (Japan)",
         0x05800000,
         0x000b64d0,
         NULL,
