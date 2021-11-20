@@ -34,12 +34,14 @@ jobs:
           cmake --build build --config Release --parallel 2
         shell: cmd
 
+      - uses: ilammy/msvc-dev-cmd@v1
+
       - name: Package app
         run: |
           mkdir build\artifact
           cd build\AppPackages\flycast\flycast_1.0.0.0_x64_Test
           mkdir tmp
-          makeappx.exe unpack /v /p .\flycast_1.0.0.0_x64.msix /d tmp
+          makeappx.exe unpack /p .\flycast_1.0.0.0_x64.msix /d tmp
           copy ..\..\..\Release\*.dll tmp
           makeappx pack /d tmp /p ..\..\..\artifact\flycast.appx
 
