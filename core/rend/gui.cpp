@@ -1960,20 +1960,14 @@ static void gui_display_settings()
 			#ifdef USE_LUA
 			header("Lua Scripting");
 			{
-				OptionCheckbox("Override Default Lua File", config::OverrideLuaFile);
+				char LuaFileName[256];
+
+				strcpy(LuaFileName, config::LuaFileName.get().c_str());
+				ImGui::InputText("Lua Filename", LuaFileName, sizeof(LuaFileName), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
 				ImGui::SameLine();
-				ShowHelpMarker("Override flycast's default lua file (flycast.lua). This file should be in Flycast's root directory");
-				if(config::OverrideLuaFile)
-				{
-					char LuaFileName[256];
+				ShowHelpMarker("Specify lua filename to use. Should be located in Flycasts root directory. Defaults to flycast.lua when empty.");
+				config::LuaFileName = LuaFileName;
 
-					strcpy(LuaFileName, config::LuaFileName.get().c_str());
-					ImGui::InputText("Lua Filename", LuaFileName, sizeof(LuaFileName), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
-					ImGui::SameLine();
-					ShowHelpMarker("Specify lua filename to use. Should be located in Flycasts root directory.");
-					config::LuaFileName = LuaFileName;
-
-				}
 			}
 			#endif
 		}

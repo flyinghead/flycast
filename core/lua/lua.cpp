@@ -581,8 +581,7 @@ static void luaRegister(lua_State *L)
 static std::string getLuaFile()
 {
 	std::string initFile;
-
-	if(config::OverrideLuaFile == true){
+	if( !config::LuaFileName.get().empty()){
 		initFile = get_readonly_config_path(config::LuaFileName.get());
 	} else {
 		initFile = get_readonly_config_path("flycast.lua");

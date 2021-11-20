@@ -162,7 +162,6 @@ Option<bool> UseRawInput("RawInput", false, "input");
 
 #ifdef USE_LUA
 OptionString LuaFileName("LuaFileName", "flycast.lua");
-Option<bool> OverrideLuaFile("OverrideLuaFile", false);
 #endif
 
 } // namespace config
