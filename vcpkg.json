@@ -1,0 +1,9 @@
+{
+  "name": "flycast",
+  "version-string": "1.2.0-dev",
+  "dependencies": [
+    "angle",
+    "sdl2",
+    "zlib"
+  ]
+}

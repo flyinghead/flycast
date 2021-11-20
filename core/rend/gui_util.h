@@ -80,12 +80,32 @@ public:
 	void cancel()
 	{
 		progress.cancelled = true;
+#ifdef TARGET_UWP
+		if (future.valid())
+		{
+			if (progress.cancelled)
+				return;
+			static std::future<void> f;
+			f = std::async(std::launch::async, [this] {
+				try {
+					future.get();
+				}
+				catch (const FlycastException& e) {
+				}
+				emu.unloadGame();
+				gui_state = GuiState::Main;
+			});
+			return
+		}
+#else
 		if (future.valid())
 			try {
 				future.get();
 			} catch (const FlycastException& e) {
 			}
+#endif
 		emu.unloadGame();
+		gui_state = GuiState::Main;
 	}
 
 	bool ready()

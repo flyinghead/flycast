@@ -62,6 +62,8 @@ typedef SOCKET sock_t;
 #define L_EAGAIN WSAEWOULDBLOCK
 #define get_last_error() (WSAGetLastError())
 #define perror(s) do { INFO_LOG(MODEM, "%s: Winsock error: %d\n", (s) != NULL ? (s) : "", WSAGetLastError()); } while (false)
+#define SHUT_WR SD_SEND
+#define SHUT_RD SD_RECEIVE
 #endif
 
 bool is_local_address(u32 addr);

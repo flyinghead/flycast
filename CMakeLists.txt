@@ -1359,6 +1359,7 @@ if(NOT LIBRETRO)
 					shell/uwp/flycast150.png
 					shell/uwp/flycast50.png
 					shell/uwp/flycast44.png
+					shell/uwp/splash.png
 					shell/uwp/flycast44.targetsize-48_altform-unplated.png
 					shell/uwp/flycast44.targetsize-48_altform-lightunplated.png
 					core/deps/SDL/src/main/winrt/SDL2-WinRTResource_BlankCursor.cur

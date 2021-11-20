@@ -1,0 +1,48 @@
+name: Windows UWP CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    env:
+      VCPKG_ROOT: ${{ github.workspace }}/vcpkg
+
+    steps:
+      - uses: actions/cache@v2
+        id: cache
+        with:
+          path: $HOME/ccache
+          key: ccache-${{ github.sha }}
+          restore-keys: ccache-
+
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+          submodules: true
+
+      - name: bootstrap vcpkg
+        run: | 
+          git clone https://github.com/microsoft/vcpkg
+          vcpkg/bootstrap-vcpkg.bat
+
+      - name: CMake
+        run: |
+          cmake -B build -DCMAKE_BUILD_TYPE=Release  -G "Visual Studio 16 2019" -A x64 -DCMAKE_SYSTEM_NAME=WindowsStore -DCMAKE_SYSTEM_VERSION="10.0" -DCMAKE_SYSTEM_PROCESSOR=AMD64 -DCMAKE_CROSSCOMPILING=OFF -DUSE_VULKAN=OFF -DUSE_GLES=ON -DCMAKE_TOOLCHAIN_FILE=%VCPKG_DIR%\scripts\buildsystems\vcpkg.cmake
+          cmake --build build --config Release --parallel 2
+        shell: cmd
+
+      - name: Package app
+        run: |
+          mkdir build\artifact
+          cd build\AppPackages\flycast\flycast_1.0.0.0_x64_Test
+          mkdir tmp
+          makeappx.exe unpack /v /p .\flycast_1.0.0.0_x64.msix /d tmp
+          copy ..\..\..\Release\*.dll tmp
+          makeappx pack /d tmp /p ..\..\..\artifact\flycast.appx
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: flycast-uwp
+          path: build/artifact

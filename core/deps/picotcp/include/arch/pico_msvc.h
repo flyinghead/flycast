@@ -1,9 +1,11 @@
 #ifndef PICO_SUPPORT_MSVC
 #define PICO_SUPPORT_MSVC
 
+#pragma pack(push, 8)
 #include <stdio.h>
 #include <time.h>
 #include <windows.h>
+#pragma pack(pop)
 
 #if defined(_MSC_VER) || defined(_MSC_EXTENSIONS)
   #define DELTA_EPOCH_IN_MICROSECS  11644473600000000Ui64

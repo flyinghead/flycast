@@ -25,7 +25,7 @@
 #endif
 
 #if defined(WINAPI_FAMILY) && (WINAPI_FAMILY == WINAPI_FAMILY_APP)
-#define TARGET_UWP 1
+#define TARGET_UWP
 #endif
 
 /*

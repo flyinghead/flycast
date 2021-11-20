@@ -401,7 +401,17 @@ void gui_open_settings()
 		{
 			gui_state = GuiState::Commands;
 			HideOSD();
-			emu.stop();
+#ifdef TARGET_UWP
+			if (config::ThreadedRendering)
+			{
+				static std::future<void> f;
+				f = std::async(std::launch::async, [] {
+					emu.stop();
+				});
+			}
+			else
+#endif
+				emu.stop();
 		}
 		else
 			chat.toggle();
@@ -413,7 +423,6 @@ void gui_open_settings()
 	else if (gui_state == GuiState::Loading)
 	{
 		gameLoader.cancel();
-		gui_state = GuiState::Main;
 	}
 	else if (gui_state == GuiState::Commands)
 	{
@@ -2258,12 +2267,25 @@ static void gui_network_start()
 	if (ImGui::Button("Cancel", ImVec2(100.f * scaling, 0.f)))
 	{
 		NetworkHandshake::instance->stop();
+#ifdef TARGET_UWP
+		static std::future<void> f;
+		f = std::async(std::launch::async, [] {
+			try {
+				networkStatus.get();
+			}
+			catch (const FlycastException& e) {
+			}
+			emu.unloadGame();
+			gui_state = GuiState::Main;
+		});
+#else
 		try {
 			networkStatus.get();
 		} catch (const FlycastException& e) {
 		}
 		gui_state = GuiState::Main;
 		emu.unloadGame();
+#endif
 	}
 	ImGui::PopStyleVar();
 
@@ -2311,10 +2333,7 @@ static void gui_display_loadscreen()
 			ImGui::SetCursorPosX((currentwidth - 100.f * scaling) / 2.f + ImGui::GetStyle().WindowPadding.x);
 			ImGui::SetCursorPosY(126.f * scaling);
 			if (ImGui::Button("Cancel", ImVec2(100.f * scaling, 0.f)))
-			{
 				gameLoader.cancel();
-				gui_state = GuiState::Main;
-			}
 		}
 	} catch (const FlycastException& ex) {
 		ERROR_LOG(BOOT, "%s", ex.what());
