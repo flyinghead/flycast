@@ -1965,6 +1965,20 @@ static void gui_display_settings()
 		    }
 			ImGui::PopStyleVar();
 			ImGui::EndTabItem();
+
+			#ifdef USE_LUA
+			header("Lua Scripting");
+			{
+				char LuaFileName[256];
+
+				strcpy(LuaFileName, config::LuaFileName.get().c_str());
+				ImGui::InputText("Lua Filename", LuaFileName, sizeof(LuaFileName), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
+				ImGui::SameLine();
+				ShowHelpMarker("Specify lua filename to use. Should be located in Flycasts root directory. Defaults to flycast.lua when empty.");
+				config::LuaFileName = LuaFileName;
+
+			}
+			#endif
 		}
 		if (ImGui::BeginTabItem("About"))
 		{
