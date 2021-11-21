@@ -44,7 +44,7 @@ jobs:
           makeappx.exe unpack /p .\flycast_1.0.0.0_x64.msix /d tmp
           copy ..\..\..\Release\*.dll tmp
           makeappx pack /d tmp /p ..\..\..\artifact\flycast.appx
-          signtool sign /f ..\..\..\..\shell\uwp\sign_cert.pfx /p ' ${{ secrets.SIGN_CERT_PWD }}' /v /fd SHA256 ..\..\..\artifact\flycast.appx
+          signtool sign /f ..\..\..\..\shell\uwp\sign_cert.pfx /p '${{ secrets.SIGN_CERT_PWD }}' /v /fd SHA256 ..\..\..\artifact\flycast.appx
 
       - uses: actions/upload-artifact@v2
         with:
