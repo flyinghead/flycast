@@ -1472,8 +1472,8 @@ static bool set_opengl_hw_render(u32 preferred)
 	else
 #endif
 	{
-		params.context_type          = (retro_hw_context_type)preferred;
 #ifndef HAVE_OPENGLES
+		params.context_type          = (retro_hw_context_type)preferred;
 		params.major                 = 3;
 		params.minor                 = preferred == RETRO_HW_CONTEXT_OPENGL_CORE ? 2 : 0;
 #endif
