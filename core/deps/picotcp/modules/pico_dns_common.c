@@ -1255,7 +1255,7 @@ pico_dns_qtree_del_name( struct pico_tree *qtree,
     /* Iterate over tree and delete every node with given name */
     pico_tree_foreach_safe(node, qtree, next) {
         question = (struct pico_dns_question *)node->keyValue;
-        if ((question) && (stricmp(question->qname, name) == 0)) {
+        if ((question) && (strcasecmp(question->qname, name) == 0)) {
             question = pico_tree_delete(qtree, (void *)question);
             pico_dns_question_delete((void **)&question);
         }
@@ -1287,7 +1287,7 @@ pico_dns_qtree_find_name( struct pico_tree *qtree,
     /* Iterate over tree and compare names */
     pico_tree_foreach(node, qtree) {
         question = (struct pico_dns_question *)node->keyValue;
-        if ((question) && (stricmp(question->qname, name) == 0))
+        if ((question) && (strcasecmp(question->qname, name) == 0))
             return 1;
     }
 

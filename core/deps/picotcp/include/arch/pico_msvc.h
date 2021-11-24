@@ -22,6 +22,8 @@
 #define pico_zalloc(x) calloc(x, 1)
 #define pico_free(x) free(x)
 
+#define strcasecmp stricmp
+
 static inline uint32_t PICO_TIME_MS(void)
 {
 	FILETIME ft;

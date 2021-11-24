@@ -288,7 +288,7 @@ static int pico_dns_client_check_url(struct pico_dns_header *resp, struct pico_d
 {
     char *recv_name = (char*)(resp) + sizeof(struct pico_dns_header) + PICO_DNS_LABEL_INITIAL;
     char *exp_name = (char *)(q->query) + sizeof(struct pico_dns_header) + PICO_DNS_LABEL_INITIAL;
-    if (stricmp(recv_name,  exp_name) != 0)
+    if (strcasecmp(recv_name,  exp_name) != 0)
         return -1;
 
     return 0;
