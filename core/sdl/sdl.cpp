@@ -161,6 +161,8 @@ void input_sdl_init()
 			NOTICE_LOG(INPUT, "Disabling XInput, using DirectInput");
 			SDL_SetHint(SDL_HINT_XINPUT_ENABLED, "0");
 		}
+		// Don't close the app when pressing the B button
+		SDL_SetHint(SDL_HINT_WINRT_HANDLE_BACK_BUTTON, "1");
 #endif
 		std::string db = get_readonly_data_path("gamecontrollerdb.txt");
 		int rv = SDL_GameControllerAddMappingsFromFile(db.c_str());
