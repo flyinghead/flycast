@@ -10,6 +10,8 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/time.h>
+// Note: alloca is not part of POSIX
+#include <alloca.h>
 
 /*
    #define MEMORY_MEASURE
