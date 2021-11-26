@@ -297,9 +297,7 @@ if(NOT LIBRETRO)
 	endif()
 endif()
 
-execute_process(COMMAND git apply -p1 ${CMAKE_CURRENT_SOURCE_DIR}/core/deps/patches/libchdr.patch
-		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/core/deps/libchdr)
-add_subdirectory(core/deps/libchdr)
+add_subdirectory(core/deps/libchdr EXCLUDE_FROM_ALL)
 target_link_libraries(${PROJECT_NAME} PRIVATE chdr-static)
 target_include_directories(${PROJECT_NAME} PRIVATE core/deps/libchdr/include)
 
