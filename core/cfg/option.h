@@ -396,13 +396,11 @@ public:
 	RendererOption()
 #ifdef USE_DX9
 		: Option<RenderType>("pvr.rend", RenderType::DirectX9) {}
+#elif defined(TARGET_UWP)
+		: Option<RenderType>("pvr.rend", RenderType::DirectX11) {}
 #else
 		: Option<RenderType>("pvr.rend", RenderType::OpenGL) {}
 #endif
-
-	bool isDirectX() const {
-		return value == RenderType::DirectX9;
-	}
 
 	RenderType& operator=(const RenderType& v) { set(v); return value; }
 };

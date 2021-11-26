@@ -89,8 +89,8 @@ void mainui_loop()
 		if (config::RendererType != currentRenderer || forceReinit)
 		{
 			mainui_term();
-			int prevApi = isOpenGL(currentRenderer) ? 0 : isVulkan(currentRenderer) ? 1 : 2;
-			int newApi = isOpenGL(config::RendererType) ? 0 : isVulkan(config::RendererType) ? 1 : 2;
+			int prevApi = isOpenGL(currentRenderer) ? 0 : isVulkan(currentRenderer) ? 1 : currentRenderer == RenderType::DirectX9 ? 2 : 3;
+			int newApi = isOpenGL(config::RendererType) ? 0 : isVulkan(config::RendererType) ? 1 : config::RendererType == RenderType::DirectX9 ? 2 : 3;
 			if (newApi != prevApi || forceReinit)
 				switchRenderApi();
 			mainui_init();

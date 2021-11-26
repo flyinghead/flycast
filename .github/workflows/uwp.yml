@@ -39,9 +39,10 @@ jobs:
       - name: Package app
         run: |
           mkdir build\artifact
-          cd build\AppPackages\flycast\flycast_1.0.0.0_x64_Test
+          cd build\AppPackages\flycast\flycast_*_x64_Test
           mkdir tmp
-          makeappx.exe unpack /p .\flycast_1.0.0.0_x64.msix /d tmp
+          ren *.msix flycast.msix
+          makeappx.exe unpack /p .\flycast.msix /d tmp
           copy ..\..\..\Release\*.dll tmp
           makeappx pack /d tmp /p ..\..\..\artifact\flycast.appx
           signtool sign /f ..\..\..\..\shell\uwp\sign_cert.pfx /p '${{ secrets.SIGN_CERT_PWD }}' /v /fd SHA256 ..\..\..\artifact\flycast.appx

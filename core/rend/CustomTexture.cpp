@@ -186,7 +186,7 @@ void CustomTexture::DumpTexture(u32 hash, int w, int h, TextureType textype, voi
 
 	for (int y = 0; y < h; y++)
 	{
-		if (!config::RendererType.isDirectX())
+		if (!isDirectX(config::RendererType))
 		{
 			switch (textype)
 			{

@@ -1,5 +1,6 @@
 #pragma once
 #include "types.h"
+#include <cmath>
 
 #define pvr_RegSize (0x8000)
 #define pvr_RegMask (pvr_RegSize-1)
@@ -387,6 +388,20 @@ union TA_YUV_TEX_CTRL_type
 	u32 full;
 };
 
+union FOG_DENSITY_type
+{
+	struct
+	{
+		s8 exponent;
+		u8 mantissa;
+	};
+	u32 full;
+
+	float get() {
+		return mantissa / 128.f * std::pow(2.0f, (float)exponent);
+	}
+};
+
 // TA REGS
 #define TA_OL_BASE_addr         0x00000124 // RW  Object list write start address
 #define TA_ISP_BASE_addr        0x00000128 // RW  ISP/TSP Parameter write start address
@@ -461,7 +476,7 @@ union TA_YUV_TEX_CTRL_type
 
 #define FOG_COL_RAM       PvrReg(FOG_COL_RAM_addr,u32)                    // RW  Color for Look Up table Fog
 #define FOG_COL_VERT      PvrReg(FOG_COL_VERT_addr,u32)                   // RW  Color for vertex Fog
-#define FOG_DENSITY       PvrReg(FOG_DENSITY_addr,u32)                    // RW  Fog scale value
+#define FOG_DENSITY       PvrReg(FOG_DENSITY_addr, FOG_DENSITY_type)      // RW  Fog scale value
 #define FOG_CLAMP_MAX     PvrReg(FOG_CLAMP_MAX_addr,u32)                  // RW  Color clamping maximum value
 #define FOG_CLAMP_MIN     PvrReg(FOG_CLAMP_MIN_addr,u32)                  // RW  Color clamping minimum value
 #define SPG_TRIGGER_POS   PvrReg(SPG_TRIGGER_POS_addr,u32)                // RW  External trigger signal HV counter value

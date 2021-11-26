@@ -642,6 +642,7 @@ void D3DRenderer::drawModVols(int first, int count)
 	device->SetVertexDeclaration(modVolVtxDecl);
 	device->SetStreamSource(0, modvolBuffer, 0, 3 * sizeof(float));
 
+	devCache.SetRenderState(D3DRS_ZFUNC, D3DCMP_GREATER);
 	devCache.SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
 	devCache.SetRenderState(D3DRS_STENCILENABLE, TRUE);
 	devCache.SetRenderState(D3DRS_ZWRITEENABLE, D3DZB_FALSE);
@@ -1066,10 +1067,7 @@ bool D3DRenderer::Render()
 		device->SetPixelShaderConstantF(2, ps_FOG_COL_RAM, 1);
 
 		// Fog density and scale constants
-		u8* fog_density = (u8*)&FOG_DENSITY;
-		float fog_den_mant = fog_density[1] / 128.0f;  //bit 7 -> x. bit, so [6:0] -> fraction -> /128
-		s32 fog_den_exp = (s8)fog_density[0];
-		float fog_den_float = fog_den_mant * powf(2.0f, (float)fog_den_exp) * config::ExtraDepthScale;
+		float fog_den_float = FOG_DENSITY.get() * config::ExtraDepthScale;
 		float fogDensityAndScale[4]= { fog_den_float, 1.f - FPU_SHAD_SCALE.scale_factor / 256.f, 0, 1 };
 		device->SetPixelShaderConstantF(3, fogDensityAndScale, 1);
 

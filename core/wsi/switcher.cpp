@@ -25,6 +25,7 @@
 
 #include "gl_context.h"
 #include "rend/dx9/dxcontext.h"
+#include "rend/dx11/dx11context.h"
 #ifdef USE_VULKAN
 #include "rend/vulkan/vulkan_context.h"
 
@@ -46,6 +47,16 @@ void initRenderApi(void *window, void *display)
 		config::RendererType = RenderType::OpenGL;
 	}
 #endif
+#ifdef _WIN32
+	if (config::RendererType == RenderType::DirectX11)
+	{
+		theDX11Context.setWindow(window, display);
+		if (theDX11Context.init())
+			return;
+		WARN_LOG(RENDERER, "DirectX 11 init failed. Falling back to DirectX 9.");
+		config::RendererType = RenderType::DirectX9;
+	}
+#endif
 #ifdef USE_DX9
 	if (config::RendererType == RenderType::DirectX9)
 	{
@@ -53,7 +64,7 @@ void initRenderApi(void *window, void *display)
 		if (theDXContext.init())
 			return;
 		// Fall back to Open GL
-		WARN_LOG(RENDERER, "DirectX init failed. Falling back to Open GL.");
+		WARN_LOG(RENDERER, "DirectX 9 init failed. Falling back to Open GL.");
 		config::RendererType = RenderType::OpenGL;
 	}
 #endif

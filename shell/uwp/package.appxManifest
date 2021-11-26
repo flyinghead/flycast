@@ -4,7 +4,7 @@
 	xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
 	IgnorableNamespaces="uap mp">
 
-	<Identity Name="AF75D068-D5AC-3D3C-B52A-2791C2F3491A" Publisher="CN=Flyinghead" Version="1.0.0.0" />
+	<Identity Name="AF75D068-D5AC-3D3C-B52A-2791C2F3491A" Publisher="CN=Flyinghead" Version="9.9.9.9" />
 	<mp:PhoneIdentity PhoneProductId="AF75D068-D5AC-3D3C-B52A-2791C2F3491A" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 	<Properties>
 		<DisplayName>Flycast</DisplayName>

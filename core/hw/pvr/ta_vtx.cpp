@@ -1776,7 +1776,7 @@ void FillBGP(TA_context* ctx)
 	float scale_x= (SCALER_CTL.hscale) ? 2.f:1.f;	//if AA hack the hacked pos value hacks
 	for (int i=0;i<3;i++)
 	{
-		if (config::RendererType.isDirectX())
+		if (isDirectX(config::RendererType))
 			decode_pvr_vertex<2, 1, 0, 3>(strip_base,vertex_ptr,&cv[i]);
 		else
 			decode_pvr_vertex<0, 1, 2, 3>(strip_base,vertex_ptr,&cv[i]);

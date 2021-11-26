@@ -54,6 +54,17 @@ if(GIT_FOUND AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/.git")
         OUTPUT_VARIABLE GIT_HASH
         OUTPUT_STRIP_TRAILING_WHITESPACE
     )
+    if(WINDOWS_STORE)
+	    string(REPLACE "v" "" MS_VERSION ${GIT_VERSION})
+	    string(REPLACE "-" "." MS_VERSION  ${MS_VERSION})
+	    string(REGEX REPLACE "\.g[0-9a-f]+" "" MS_VERSION  ${MS_VERSION})
+	    string(REGEX MATCH "[0-9]+\.[0-9]+\.[0-9]+" VERSION_3PARTS ${MS_VERSION})
+	    if (VERSION_3PARTS STREQUAL "")
+	    	string(APPEND MS_VERSION ".0.0")
+	    else()
+	    	string(APPEND MS_VERSION ".0")
+	    endif()
+    endif()
 endif()
 
 string(TIMESTAMP BUILD_TIMESTAMP UTC)
@@ -1026,30 +1037,25 @@ if(USE_VULKAN)
 endif()
 
 if(WIN32 AND NOT LIBRETRO AND NOT WINDOWS_STORE)
+	add_subdirectory(core/rend/dx9)
+	target_link_libraries(${PROJECT_NAME} PRIVATE dx9renderer)
+endif()
+
+if(WIN32 AND NOT LIBRETRO)
 	target_sources(${PROJECT_NAME} PRIVATE
-		core/rend/dx9/comptr.h
-		core/rend/dx9/d3d_overlay.h
-		core/rend/dx9/d3d_overlay.cpp
-		core/rend/dx9/d3d_renderer.h
-		core/rend/dx9/d3d_renderer.cpp
-		core/rend/dx9/d3d_shaders.h
-		core/rend/dx9/d3d_shaders.cpp
-		core/rend/dx9/d3d_texture.h
-		core/rend/dx9/d3d_texture.cpp
-		core/rend/dx9/dx9_driver.h
-		core/rend/dx9/dxcontext.h
-		core/rend/dx9/dxcontext.cpp
-		core/rend/dx9/imgui_impl_dx9.h
-		core/rend/dx9/imgui_impl_dx9.cpp)
-	if(NOT MINGW)
-		target_include_directories(${PROJECT_NAME} PRIVATE "$ENV{DXSDK_DIR}/Include")
-		if (CMAKE_SIZEOF_VOID_P EQUAL 8)
-			target_link_directories(${PROJECT_NAME} PRIVATE "$ENV{DXSDK_DIR}/Lib/x64")
-		else()
-			target_link_directories(${PROJECT_NAME} PRIVATE "$ENV{DXSDK_DIR}/Lib/x86")
-		endif()
-	endif()
-	target_link_libraries(${PROJECT_NAME} PRIVATE d3d9 d3dx9)
+		core/rend/dx11/dx11_driver.h
+		core/rend/dx11/dx11_renderer.cpp
+		core/rend/dx11/dx11_renderer.h
+		core/rend/dx11/dx11_shaders.cpp
+		core/rend/dx11/dx11_shaders.h
+		core/rend/dx11/dx11_texture.cpp
+		core/rend/dx11/dx11_texture.h
+		core/rend/dx11/dx11context.cpp
+		core/rend/dx11/dx11context.h
+		core/rend/dx11/imgui_impl_dx11.cpp
+		core/rend/dx11/imgui_impl_dx11.h
+		core/rend/dx11/dx11_driver.h)
+	target_link_libraries(${PROJECT_NAME} PRIVATE d3d11 d3dcompiler)
 endif()
 
 if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm.*|ARM.*)" AND NOT APPLE)
@@ -1353,7 +1359,10 @@ if(NOT LIBRETRO)
 	            core/windows/xinput_gamepad.h)
 	    endif()
 		if(WINDOWS_STORE)
-			set(ResourceFiles shell/uwp/Package.appxmanifest
+			file(READ shell/uwp/Package.appxmanifest MANIFEST)
+			string(REPLACE "9.9.9.9" ${MS_VERSION} MANIFEST ${MANIFEST})
+			file(WRITE ${CMAKE_BINARY_DIR}/Package.appxmanifest ${MANIFEST})
+			set(ResourceFiles ${CMAKE_BINARY_DIR}/Package.appxmanifest
 					shell/uwp/flycast150.png
 					shell/uwp/flycast50.png
 					shell/uwp/flycast44.png

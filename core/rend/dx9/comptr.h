@@ -66,6 +66,11 @@ public:
 			ptr->Release();
 	}
 
+	template<typename I>
+	HRESULT as(ComPtr<I>& p) const {
+		return ptr->QueryInterface(IID_PPV_ARGS(&p.get()));
+	}
+
 private:
 	T *ptr = nullptr;
 };

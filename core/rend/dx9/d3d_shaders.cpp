@@ -20,7 +20,7 @@
 
 #define SHADER_DEBUG 0 // D3DXSHADER_DEBUG|D3DXSHADER_SKIPOPTIMIZATION
 
-const char *VertexShader = R"(
+const char * const VertexShader = R"(
 struct vertex_in
 {
 	float4 pos : POSITION;
@@ -61,7 +61,7 @@ vertex_out main(in vertex_in vin)
 
 )";
 
-const char *PixelShader = R"(
+const char * const PixelShader = R"(
 
 #define PI 3.1415926f
 
@@ -69,7 +69,7 @@ struct pixel
 {
 	float4 uv : TEXCOORD0;
 	float4 col : COLOR0;
-#if pp_Texture == 1 && (pp_BumpMap == 1 || pp_Offset == 1)
+#if pp_BumpMap == 1 || pp_Offset == 1
 	float4 offs : COLOR1;
 #endif
 	
@@ -137,12 +137,12 @@ PSO main(in pixel inpix)
 
 #if pp_Gouraud == 1
 	float4 color = inpix.col / inpix.uv.w;
-	#if pp_Texture == 1 && (pp_BumpMap == 1 || pp_Offset == 1)
+	#if pp_BumpMap == 1 || pp_Offset == 1
 		float4 offset = inpix.offs / inpix.uv.w;
 	#endif
 #else
 	float4 color = inpix.col;
-	#if pp_Texture == 1 && (pp_BumpMap == 1 || pp_Offset == 1)
+	#if pp_BumpMap == 1 || pp_Offset == 1
 		float4 offset = inpix.offs;
 	#endif
 #endif
@@ -223,7 +223,7 @@ PSO modifierVolume(float4 uv : TEXCOORD0)
 }
 )";
 
-const char *MacroValues[] { "0", "1", "2", "3" };
+const char * const MacroValues[] { "0", "1", "2", "3" };
 
 static D3DXMACRO VertexMacros[]
 {

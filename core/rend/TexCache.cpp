@@ -91,7 +91,7 @@ void palette_update()
 	pal_needs_update = false;
 	palette_updated = true;
 
-	if (!config::RendererType.isDirectX())
+	if (!isDirectX(config::RendererType))
 	{
 		switch(PAL_RAM_CTRL&3)
 		{

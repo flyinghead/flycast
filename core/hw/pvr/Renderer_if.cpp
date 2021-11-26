@@ -268,6 +268,7 @@ Renderer* rend_norend();
 Renderer* rend_Vulkan();
 Renderer* rend_OITVulkan();
 Renderer* rend_DirectX9();
+Renderer* rend_DirectX11();
 
 static void rend_create_renderer()
 {
@@ -296,6 +297,11 @@ static void rend_create_renderer()
 #ifdef USE_DX9
 	case RenderType::DirectX9:
 		renderer = rend_DirectX9();
+		break;
+#endif
+#if defined(_WIN32) && !defined(LIBRETRO)
+	case RenderType::DirectX11:
+		renderer = rend_DirectX11();
 		break;
 #endif
 	}

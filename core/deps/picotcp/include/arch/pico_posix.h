@@ -11,7 +11,11 @@
 #include <unistd.h>
 #include <sys/time.h>
 // Note: alloca is not part of POSIX
+#if defined(_MSC_VER) || defined(__MINGW32__)
+#include <malloc.h>
+#else
 #include <alloca.h>
+#endif
 
 /*
    #define MEMORY_MEASURE
