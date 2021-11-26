@@ -204,7 +204,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE glm::glm)
 
 if(NOT APPLE AND USE_VULKAN)
 	option(BUILD_EXTERNAL "Build external dependencies in /External" OFF)
-	add_subdirectory(core/deps/glslang)
+	add_subdirectory(core/deps/glslang EXCLUDE_FROM_ALL)
 	target_link_libraries(${PROJECT_NAME} PRIVATE SPIRV)
 endif()
 
@@ -1094,7 +1094,7 @@ if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(aarch64.*|AARCH64.*|arm64.*)" OR CMAKE_OSX_
     set(KNOWN_ARCHITECTURE_DETECTED ON)
 endif()
 if(CMAKE_SYSTEM_PROCESSOR MATCHES "i686.*|i386.*|x86.*|amd64.*|x86_64.*|AMD64.*" OR CMAKE_OSX_ARCHITECTURES MATCHES "x86_64")
-    add_subdirectory(core/deps/xbyak)
+    add_subdirectory(core/deps/xbyak EXCLUDE_FROM_ALL)
     target_link_libraries(${PROJECT_NAME} PRIVATE xbyak::xbyak)
     if(CMAKE_SIZEOF_VOID_P EQUAL 4)
     	target_sources(${PROJECT_NAME} PRIVATE
