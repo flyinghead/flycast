@@ -586,7 +586,7 @@ static void read_native_sockets()
 	{
 		timeval tv{};
 		int rc = select(max_fd + 1, nullptr, &write_fds, &error_fds, &tv);
-		if (rc == SOCKET_ERROR)
+		if (rc == -1)
 			perror("select");
 		else if (rc > 0)
 		{
