@@ -36,6 +36,8 @@ else()
     project(flycast)
 endif()
 
+include(GNUInstallDirs)
+
 if(ENABLE_CTEST)
     include(CTest)
 endif()
@@ -204,7 +206,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE glm::glm)
 
 if(NOT APPLE AND USE_VULKAN)
 	option(BUILD_EXTERNAL "Build external dependencies in /External" OFF)
-	add_subdirectory(core/deps/glslang)
+	add_subdirectory(core/deps/glslang EXCLUDE_FROM_ALL)
 	target_link_libraries(${PROJECT_NAME} PRIVATE SPIRV)
 endif()
 
@@ -337,6 +339,11 @@ if(NINTENDO_SWITCH AND USE_GLES)
 endif()
 
 if(UNIX AND NOT APPLE AND NOT ANDROID)
+	add_definitions(
+		-DFLYCAST_DATADIR="${CMAKE_INSTALL_FULL_DATADIR}/${PROJECT_NAME}/"
+		-DFLYCAST_SYSCONFDIR="${CMAKE_INSTALL_FULL_SYSCONFDIR}/${PROJECT_NAME}/"
+	)
+
 	if(USE_GLES2)
 		target_compile_definitions(${PROJECT_NAME} PRIVATE GLES GLES2)
 		target_link_libraries(${PROJECT_NAME} PRIVATE GLESv2)
@@ -1094,7 +1101,7 @@ if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(aarch64.*|AARCH64.*|arm64.*)" OR CMAKE_OSX_
     set(KNOWN_ARCHITECTURE_DETECTED ON)
 endif()
 if(CMAKE_SYSTEM_PROCESSOR MATCHES "i686.*|i386.*|x86.*|amd64.*|x86_64.*|AMD64.*" OR CMAKE_OSX_ARCHITECTURES MATCHES "x86_64")
-    add_subdirectory(core/deps/xbyak)
+    add_subdirectory(core/deps/xbyak EXCLUDE_FROM_ALL)
     target_link_libraries(${PROJECT_NAME} PRIVATE xbyak::xbyak)
     if(CMAKE_SIZEOF_VOID_P EQUAL 4)
     	target_sources(${PROJECT_NAME} PRIVATE
@@ -1298,4 +1305,30 @@ if(NINTENDO_SWITCH)
 		nx_generate_nacp(flycast.nacp NAME "Flycast" AUTHOR "flyinghead, M4xw" VERSION "${GIT_VERSION}")
 		nx_create_nro(flycast NACP flycast.nacp ICON "${CMAKE_SOURCE_DIR}/shell/switch/flycast.jpeg")
 	endif()
+endif()
+
+if(UNIX AND NOT APPLE AND NOT ANDROID)
+	install(TARGETS ${PROJECT_NAME}
+		DESTINATION "${CMAKE_INSTALL_BINDIR}"
+	)
+	install(FILES shell/linux/man/${PROJECT_NAME}.1
+		DESTINATION "${CMAKE_INSTALL_MANDIR}/man1"
+	)
+	install(FILES shell/linux/${PROJECT_NAME}.desktop
+		DESTINATION "${CMAKE_INSTALL_DATAROOTDIR}/applications"
+	)
+	install(FILES shell/linux/${PROJECT_NAME}.png
+		DESTINATION "${CMAKE_INSTALL_DATAROOTDIR}/pixmaps"
+	)
+	install(FILES shell/linux/org.${PROJECT_NAME}.Flycast.metainfo.xml
+		DESTINATION "${CMAKE_INSTALL_DATAROOTDIR}/metainfo"
+	)
+	foreach(size 16 32 64 128 256 512)
+		install(FILES
+			shell/apple/emulator-osx/emulator-osx/Images.xcassets/AppIcon.appiconset/Icon-${size}.png
+			DESTINATION
+			"${CMAKE_INSTALL_DATAROOTDIR}/icons/hicolor/${size}x${size}/apps"
+			RENAME ${PROJECT_NAME}.png
+		)
+	endforeach()
 endif()
