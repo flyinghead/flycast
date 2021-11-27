@@ -1716,9 +1716,11 @@ bool retro_load_game_special(unsigned game_type, const struct retro_game_info *i
 void retro_unload_game()
 {
 	INFO_LOG(COMMON, "Flycast unloading game");
-	frontend_clear_thread_waits_cb(1, nullptr);
+	if (frontend_clear_thread_waits_cb != nullptr)
+		frontend_clear_thread_waits_cb(1, nullptr);
 	dc_stop();
-	frontend_clear_thread_waits_cb(0, nullptr);
+	if (frontend_clear_thread_waits_cb != nullptr)
+		frontend_clear_thread_waits_cb(0, nullptr);
 	free(game_data);
 	game_data = nullptr;
 	disk_paths.clear();
