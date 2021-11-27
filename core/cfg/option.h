@@ -403,6 +403,11 @@ public:
 #endif
 
 	RenderType& operator=(const RenderType& v) { set(v); return value; }
+
+	void reset() override {
+		// don't reset the value to avoid quick switching when starting a game
+		overridden = false;
+	}
 };
 extern RendererOption RendererType;
 extern Option<bool> UseMipmaps;
