@@ -19,7 +19,9 @@
     along with reicast.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#if !defined(_MSC_VER)
+#ifdef _WIN32
+#include <ws2tcpip.h>
+#endif
 
 #include "stdclass.h"
 #include "oslib/oslib.h"
@@ -569,51 +571,59 @@ static void read_native_sockets()
 	}
 
 	// Check connecting outbound TCP sockets
-	fd_set write_fds;
+	fd_set write_fds{};
+	fd_set error_fds{};
 	FD_ZERO(&write_fds);
+	FD_ZERO(&error_fds);
 	int max_fd = -1;
 	for (auto it = tcp_connecting_sockets.begin(); it != tcp_connecting_sockets.end(); it++)
 	{
 		FD_SET(it->second, &write_fds);
+		FD_SET(it->second, &error_fds);
 		max_fd = std::max(max_fd, (int)it->second);
 	}
-	timeval tv;
-	tv.tv_sec = 0;
-	tv.tv_usec = 0;
-	if (select(max_fd + 1, NULL, &write_fds, NULL, &tv) > 0)
+	if (max_fd > -1)
 	{
-		for (auto it = tcp_connecting_sockets.begin(); it != tcp_connecting_sockets.end(); )
+		timeval tv{};
+		int rc = select(max_fd + 1, nullptr, &write_fds, &error_fds, &tv);
+		if (rc == SOCKET_ERROR)
+			perror("select");
+		else if (rc > 0)
 		{
-			if (!FD_ISSET(it->second, &write_fds))
+			for (auto it = tcp_connecting_sockets.begin(); it != tcp_connecting_sockets.end(); )
 			{
-				it++;
-				continue;
-			}
+				if (!FD_ISSET(it->second, &write_fds) && !FD_ISSET(it->second, &error_fds))
+				{
+					it++;
+					continue;
+				}
+				int error;
 #ifdef _WIN32
-			char value;
+				char *value = (char *)&error;
 #else
-			int value;
+				int *value = &error;
 #endif
-			socklen_t l = sizeof(int);
-			if (getsockopt(it->second, SOL_SOCKET, SO_ERROR, &value, &l) < 0 || value)
-			{
-				char peer[30];
-				pico_ipv4_to_string(peer, it->first->local_addr.ip4.addr);
-				INFO_LOG(MODEM, "TCP connection to %s:%d failed: %s", peer, short_be(it->first->local_port), strerror(get_last_error()));
-				pico_socket_close(it->first);
-				closesocket(it->second);
-			}
-			else
-			{
-				set_tcp_nodelay(it->second);
+				socklen_t l = sizeof(int);
+				if (getsockopt(it->second, SOL_SOCKET, SO_ERROR, value, &l) < 0 || error != 0)
+				{
+					char peer[30];
+					pico_ipv4_to_string(peer, it->first->local_addr.ip4.addr);
+					INFO_LOG(MODEM, "TCP connection to %s:%d failed: %s", peer, short_be(it->first->local_port), strerror(get_last_error()));
+					pico_socket_close(it->first);
+					closesocket(it->second);
+				}
+				else
+				{
+					set_tcp_nodelay(it->second);
 
-				tcp_sockets.emplace(std::piecewise_construct,
+					tcp_sockets.emplace(std::piecewise_construct,
 				              std::forward_as_tuple(it->first),
 				              std::forward_as_tuple(it->first, it->second));
 
-				read_from_dc_socket(it->first, it->second);
+					read_from_dc_socket(it->first, it->second);
+				}
+				it = tcp_connecting_sockets.erase(it);
 			}
-			it = tcp_connecting_sockets.erase(it);
 		}
 	}
 
@@ -822,7 +832,7 @@ static void *pico_thread_func(void *)
     {
     	pico_stack_init();
     	pico_stack_inited = true;
-#if _WIN32
+#ifdef _WIN32
 		static WSADATA wsaData;
 		if (WSAStartup(MAKEWORD(2, 0), &wsaData) != 0)
 			WARN_LOG(MODEM, "WSAStartup failed");
@@ -1081,15 +1091,3 @@ void stop_pico()
 	pico_thread_running = false;
 	pico_thread.WaitToEnd();
 }
-
-#else
-
-#include "types.h"
-
-bool start_pico() { return false; }
-void stop_pico() { }
-void write_pico(u8 b) { }
-int read_pico() { return -1; }
-void pico_receive_eth_frame(const u8* frame, u32 size) {}
-
-#endif

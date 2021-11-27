@@ -22,6 +22,11 @@
 #include <winrt/Windows.Globalization.h>
 #include <winrt/Windows.Globalization.DateTimeFormatting.h>
 #include <winrt/Windows.Storage.h>
+#include <io.h>
+#include <fcntl.h>
+#include <nowide/config.hpp>
+#include <nowide/convert.hpp>
+#include <nowide/stackstring.hpp>
 #endif
 #include "oslib/oslib.h"
 #include "oslib/audiostream.h"
@@ -722,12 +727,99 @@ static bool dumpCallback(const wchar_t* dump_path,
 #endif
 
 #ifdef TARGET_UWP
+
+void gui_load_game()
+{
+	using namespace Windows::Storage;
+	using namespace Concurrency;
+
+	auto picker = ref new Pickers::FileOpenPicker();
+	picker->ViewMode = Pickers::PickerViewMode::List;
+
+	picker->FileTypeFilter->Append(".chd");
+	picker->FileTypeFilter->Append(".gdi");
+	picker->FileTypeFilter->Append(".cue");
+	picker->FileTypeFilter->Append(".cdi");
+	picker->FileTypeFilter->Append(".zip");
+	picker->FileTypeFilter->Append(".7z");
+	picker->FileTypeFilter->Append(".elf");
+	if (!config::HideLegacyNaomiRoms)
+	{
+		picker->FileTypeFilter->Append(".bin");
+		picker->FileTypeFilter->Append(".lst");
+		picker->FileTypeFilter->Append(".dat");
+	}
+	picker->SuggestedStartLocation = Pickers::PickerLocationId::DocumentsLibrary;
+
+	create_task(picker->PickSingleFileAsync()).then([](StorageFile ^file) {
+		if (file)
+		{
+			NOTICE_LOG(COMMON, "Picked file: %S", file->Path->Data());
+			nowide::stackstring path;
+			if (path.convert(file->Path->Data()))
+				gui_start_game(path.c_str());
+		}
+	});
+}
+
+namespace nowide {
+
+FILE *fopen(char const *file_name, char const *mode)
+{
+	wstackstring wname;
+	if (!wname.convert(file_name))
+	{
+		errno = EINVAL;
+		return nullptr;
+	}
+	DWORD dwDesiredAccess;
+	DWORD dwCreationDisposition;
+	int openFlags = 0;
+	if (strchr(mode, '+') != nullptr)
+		dwDesiredAccess = GENERIC_READ | GENERIC_WRITE;
+	else if (strchr(mode, 'r') != nullptr)
+	{
+		openFlags |= _O_RDONLY;
+		dwDesiredAccess = GENERIC_READ;
+	}
+	else
+		dwDesiredAccess = GENERIC_WRITE;
+	if (strchr(mode, 'w') != nullptr)
+		dwCreationDisposition = CREATE_ALWAYS;
+	else if (strchr(mode, 'a') != nullptr)
+	{
+		dwCreationDisposition = OPEN_ALWAYS;
+		openFlags |= _O_APPEND;
+	}
+	else
+		dwCreationDisposition = OPEN_EXISTING;
+	if (strchr(mode, 'b') == nullptr)
+		openFlags |= _O_TEXT;
+
+	HANDLE fileh = CreateFile2FromAppW(wname.c_str(), dwDesiredAccess, FILE_SHARE_READ, dwCreationDisposition, nullptr);
+	if (fileh == INVALID_HANDLE_VALUE)
+		return nullptr;
+
+	int fd = _open_osfhandle((intptr_t)fileh, openFlags);
+	if (fd == -1)
+	{
+		WARN_LOG(COMMON, "_open_osfhandle failed");
+		CloseHandle(fileh);
+		return nullptr;
+	}
+
+	return _fdopen(fd, mode);
+}
+
+}
+
 extern "C" int SDL_main(int argc, char* argv[])
 {
 
-	// DEF_CONSOLE allows you to override linker subsystem and therefore default console //
-	//	: pragma isn't pretty but def's are configurable 
+
 #elif defined(DEF_CONSOLE)
+// DEF_CONSOLE allows you to override linker subsystem and therefore default console
+//	: pragma isn't pretty but def's are configurable
 #pragma comment(linker, "/subsystem:console")
 
 int main(int argc, char** argv)

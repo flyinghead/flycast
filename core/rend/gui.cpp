@@ -2122,12 +2122,15 @@ static void gui_display_content()
 #endif
     if (gui_state != GuiState::SelectDisk)
     {
-#if 0 //defined(TARGET_UWP)
+#ifdef TARGET_UWP
     	void gui_load_game();
+		ImGui::SameLine(ImGui::GetContentRegionMax().x - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 4.0f  - ImGui::GetStyle().ItemSpacing.x - ImGui::CalcTextSize("Load...").x);
 		if (ImGui::Button("Load..."))
 			gui_load_game();
-#endif
+		ImGui::SameLine();
+#else
 		ImGui::SameLine(ImGui::GetContentRegionMax().x - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f);
+#endif
 		if (ImGui::Button("Settings"))
 			gui_state = GuiState::Settings;
     }
