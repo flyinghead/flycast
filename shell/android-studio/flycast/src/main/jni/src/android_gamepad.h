@@ -112,19 +112,19 @@ public:
 			save_mapping();
 		}
 	}
-	virtual ~AndroidGamepadDevice() override
+	~AndroidGamepadDevice() override
 	{
 		INFO_LOG(INPUT, "Android: Joystick '%s' on port %d disconnected", _name.c_str(), maple_port());
 	}
 
-	virtual std::shared_ptr<InputMapping> getDefaultMapping() override {
+	std::shared_ptr<InputMapping> getDefaultMapping() override {
 		if (_name == "SHIELD Remote")
 			return std::make_shared<ShieldRemoteInputMapping>();
 		else
 			return std::make_shared<DefaultInputMapping<>>(*this);
 	}
 
-	virtual const char *get_button_name(u32 code) override
+	const char *get_button_name(u32 code) override
 	{
 		switch(code)
 		{
@@ -175,7 +175,7 @@ public:
 		}
 	}
 
-	virtual const char *get_axis_name(u32 code) override
+	const char *get_axis_name(u32 code) override
 	{
 		switch(code)
 		{

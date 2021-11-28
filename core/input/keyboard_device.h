@@ -366,8 +366,7 @@ template <typename Keycode>
 class KeyboardDeviceTemplate : public KeyboardDevice
 {
 public:
-	virtual void keyboard_input(Keycode keycode, bool pressed, int modifier_keys = 0);
-	virtual ~KeyboardDeviceTemplate() = default;
+	void keyboard_input(Keycode keycode, bool pressed, int modifier_keys = 0);
 
 protected:
 	KeyboardDeviceTemplate(int maple_port, const char *apiName, bool remappable = true)

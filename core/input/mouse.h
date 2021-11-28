@@ -54,7 +54,7 @@ protected:
 		this->_name = "Mouse";
 	}
 
-	virtual std::shared_ptr<InputMapping> getDefaultMapping() override {
+	std::shared_ptr<InputMapping> getDefaultMapping() override {
 		return std::make_shared<MouseInputMapping>();
 	}
 
@@ -67,7 +67,7 @@ public:
 		BUTTON_5 = 5
 	};
 
-	virtual const char *get_button_name(u32 code) override
+	const char *get_button_name(u32 code) override
 	{
 		switch((Button)code)
 		{
