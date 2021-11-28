@@ -320,7 +320,7 @@ public:
 		}
 	}
 	
-	~IOSGamepad() {
+	~IOSGamepad() override {
 		if (hapticEngine != nullptr)
 			[hapticEngine stopWithCompletionHandler:^(NSError * _Nullable error) {}];
 	}

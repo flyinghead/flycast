@@ -48,7 +48,7 @@ public:
 		_unique_id = buf;
 	}
 
-	virtual std::shared_ptr<InputMapping> getDefaultMapping() override {
+	std::shared_ptr<InputMapping> getDefaultMapping() override {
 		return std::make_shared<XInputMapping>();
 	}
 
