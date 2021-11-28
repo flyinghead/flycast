@@ -25,6 +25,7 @@
 #include "imgui/imgui_internal.h"
 #include "gui.h"
 #include "emulator.h"
+#include "stdclass.h"
 
 typedef bool (*StringCallback)(bool cancelled, std::string selection);
 
@@ -66,6 +67,30 @@ static inline bool operator!=(const ImVec2& l, const ImVec2& r)
 void fullScreenWindow(bool modal);
 void windowDragScroll();
 
+// UWP doesn't allow the UI thread to wait on a future
+template<typename F>
+void gui_deAsync(F f)
+{
+#ifdef TARGET_UWP
+	static cResetEvent event;
+	static std::future<void> future;
+
+	event.Reset();
+	future = std::async(std::launch::async, [&f] {
+		try {
+			f();
+			event.Set();
+		} catch (...) {
+			event.Set();
+			throw;
+		}
+	});
+	event.Wait();
+#else
+	f();
+#endif
+}
+
 class BackgroundGameLoader
 {
 public:
@@ -80,30 +105,13 @@ public:
 	void cancel()
 	{
 		progress.cancelled = true;
-#ifdef TARGET_UWP
-		if (future.valid())
-		{
-			if (progress.cancelled)
-				return;
-			static std::future<void> f;
-			f = std::async(std::launch::async, [this] {
+		gui_deAsync([this] {
+			if (future.valid())
 				try {
 					future.get();
+				} catch (const FlycastException& e) {
 				}
-				catch (const FlycastException& e) {
-				}
-				emu.unloadGame();
-				gui_state = GuiState::Main;
-			});
-			return;
-		}
-#else
-		if (future.valid())
-			try {
-				future.get();
-			} catch (const FlycastException& e) {
-			}
-#endif
+		});
 		emu.unloadGame();
 		gui_state = GuiState::Main;
 	}
@@ -114,7 +122,9 @@ public:
 			return true;
 		if (future.wait_for(std::chrono::seconds(0)) == std::future_status::ready)
 		{
-			future.get();
+			gui_deAsync([this] {
+				future.get();
+			});
 			return true;
 		}
 		return false;

@@ -287,7 +287,7 @@ VertexOut main(in VertexIn vin)
 #if ROTATE == 0
 	vo.pos = float4(vin.pos, 0.f, 1.f);
 #else
-	vo.pos = float4(vin.pos.y, -vin.pos.x, 0.f, 1.f);
+	vo.pos = float4(-vin.pos.y, vin.pos.x, 0.f, 1.f);
 #endif
 	vo.uv = vin.uv;
 

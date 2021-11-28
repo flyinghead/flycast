@@ -179,13 +179,13 @@ void DX11Context::Present()
 		return;
 	frameRendered = false;
 	bool swapOnVSync = !settings.input.fastForwardMode && config::VSync;
-	HRESULT hr = swapchain->Present(swapOnVSync ? 1 : 0, 0);
+	HRESULT hr = swapchain->Present(swapOnVSync ? 1 : 0, !swapOnVSync ? DXGI_PRESENT_DO_NOT_WAIT : 0);
 	if (hr == DXGI_ERROR_DEVICE_REMOVED || hr == DXGI_ERROR_DEVICE_RESET)
 	{
 		WARN_LOG(RENDERER, "Present failed: device removed/reset");
 		handleDeviceLost();
 	}
-	else if (FAILED(hr))
+	else if (hr != DXGI_ERROR_WAS_STILL_DRAWING && FAILED(hr))
 		WARN_LOG(RENDERER, "Present failed %x", hr);
 }
 

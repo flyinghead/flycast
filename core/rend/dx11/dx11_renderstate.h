@@ -72,11 +72,11 @@ public:
 			desc.DepthWriteMask = depthWrite ? D3D11_DEPTH_WRITE_MASK_ALL : D3D11_DEPTH_WRITE_MASK_ZERO;
 			desc.DepthFunc = Zfunction[depthFunc];
 			desc.StencilEnable = stencil;
-			desc.FrontFace.StencilFailOp = desc.FrontFace.StencilDepthFailOp = desc.FrontFace.StencilPassOp = D3D11_STENCIL_OP_KEEP;
+			desc.FrontFace.StencilFailOp = desc.FrontFace.StencilDepthFailOp = D3D11_STENCIL_OP_KEEP;
+			desc.FrontFace.StencilPassOp = D3D11_STENCIL_OP_REPLACE;
 			desc.FrontFace.StencilFunc = D3D11_COMPARISON_ALWAYS;
 			desc.BackFace = desc.FrontFace;
 			desc.StencilWriteMask = 0xFF;
-			desc.FrontFace.StencilPassOp = D3D11_STENCIL_OP_REPLACE;
 			theDX11Context.getDevice()->CreateDepthStencilState(&desc, &state.get());
 		}
 		return state;

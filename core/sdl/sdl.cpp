@@ -195,6 +195,22 @@ void input_sdl_init()
 	for (int joy = 0; joy < 4; joy++)
 		sdl_open_joystick(joy);
 #endif
+	if (SDL_HasScreenKeyboardSupport())
+	{
+		NOTICE_LOG(INPUT, "On-screen keyboard supported");
+		gui_setOnScreenKeyboardCallback([](bool show) {
+			// We should be able to use SDL_IsScreenKeyboardShown() but it doesn't seem to work on Xbox
+			static bool visible;
+			if (window != nullptr && visible != show)
+			{
+				visible = show;
+				if (show)
+					SDL_StartTextInput();
+				else
+					SDL_StopTextInput();
+			}
+		});
+	}
 }
 
 inline void SDLMouse::setAbsPos(int x, int y) {
@@ -248,9 +264,11 @@ void input_sdl_handle()
 					}
 				}
 				break;
+
 			case SDL_TEXTINPUT:
 				gui_keyboard_inputUTF8(event.text.text);
 				break;
+
 			case SDL_WINDOWEVENT:
 				if (event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED
 						|| event.window.event == SDL_WINDOWEVENT_RESTORED
