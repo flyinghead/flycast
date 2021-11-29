@@ -17,7 +17,7 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #pragma once
-#include "dx11context.h"
+#include <d3d11.h>
 #include "dx11_shaders.h"
 
 class Quad
@@ -52,12 +52,6 @@ public:
 			desc.DepthClipEnable = true;
 			device->CreateRasterizerState(&desc, &rasterizerState.get());
 		}
-		// Blend state
-		{
-			D3D11_BLEND_DESC desc{};
-			desc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
-			device->CreateBlendState(&desc, &blendState.get());
-		}
 		// Depth-stencil state
 		{
 			D3D11_DEPTH_STENCIL_DESC desc{};
@@ -77,12 +71,21 @@ public:
 			desc.Usage = D3D11_USAGE_DYNAMIC;
 			desc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 			desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-			desc.MiscFlags = 0;
 		    device->CreateBuffer(&desc, nullptr, &vertexBuffer.get());
+		}
+		// Constant buffer
+		{
+			D3D11_BUFFER_DESC desc{};
+			desc.ByteWidth = sizeof(float) * 4;
+			desc.Usage = D3D11_USAGE_DYNAMIC;
+			desc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+			desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+		    device->CreateBuffer(&desc, nullptr, &constantBuffer.get());
 		}
 	}
 
-	void draw(ComPtr<ID3D11ShaderResourceView>& texView, ComPtr<ID3D11SamplerState> sampler, float x = -1.f, float y = -1.f, float w = 2.f, float h = 2.f, bool rotate = false)
+	void draw(ComPtr<ID3D11ShaderResourceView>& texView, ComPtr<ID3D11SamplerState> sampler, const float *color = nullptr,
+			float x = -1.f, float y = -1.f, float w = 2.f, float h = 2.f, bool rotate = false)
 	{
 		// Vertex buffer
 		Vertex vertices[4] {
@@ -101,8 +104,6 @@ public:
 		deviceContext->IASetVertexBuffers(0, 1, &vertexBuffer.get(), &stride, &offset);
 
 		// Render states
-		const float blend_factor[4] = { 0.f, 0.f, 0.f, 0.f };
-		deviceContext->OMSetBlendState(blendState, blend_factor, 0xffffffff);
 		deviceContext->OMSetDepthStencilState(depthStencilState, 0);
 		deviceContext->RSSetState(rasterizerState);
 		deviceContext->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
@@ -112,6 +113,15 @@ public:
 		// TODO Scissor?
 		//const D3D11_RECT r = { (LONG)(pcmd->ClipRect.x - clip_off.x), (LONG)(pcmd->ClipRect.y - clip_off.y), (LONG)(pcmd->ClipRect.z - clip_off.x), (LONG)(pcmd->ClipRect.w - clip_off.y) };
 		//deviceContext->RSSetScissorRects(1, &r);
+
+		static const float white[] = { 1.f, 1.f, 1.f, 1.f };
+		if (color == nullptr)
+			color = white;
+		D3D11_MAPPED_SUBRESOURCE mappedSubres;
+		deviceContext->Map(constantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedSubres);
+		memcpy(mappedSubres.pData, color, sizeof(float) * 4);
+		deviceContext->Unmap(constantBuffer, 0);
+		deviceContext->PSSetConstantBuffers(0, 1, &constantBuffer.get());
 
 		// Bind texture and draw
         deviceContext->PSSetShaderResources(0, 1, &texView.get());
@@ -129,8 +139,8 @@ private:
 	ComPtr<ID3D11DeviceContext> deviceContext;
 	ComPtr<ID3D11InputLayout> inputLayout;
 	ComPtr<ID3D11Buffer> vertexBuffer;
+	ComPtr<ID3D11Buffer> constantBuffer;
 	ComPtr<ID3D11RasterizerState> rasterizerState;
-	ComPtr<ID3D11BlendState> blendState;
 	ComPtr<ID3D11DepthStencilState> depthStencilState;
 	ComPtr<ID3D11VertexShader> vertexShader;
 	ComPtr<ID3D11VertexShader> rotateVertexShader;

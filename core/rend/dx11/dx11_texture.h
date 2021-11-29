@@ -19,8 +19,8 @@
 #pragma once
 #include "rend/TexCache.h"
 #include <d3d11.h>
-#include "dx11context.h"
 #include <unordered_map>
+#include "../dx9/comptr.h"
 
 class DX11Texture final : public BaseTextureCacheData
 {
@@ -58,25 +58,7 @@ private:
 class Samplers
 {
 public:
-	ComPtr<ID3D11SamplerState> getSampler(bool linear, bool clampU = true, bool clampV = true, bool flipU = false, bool flipV = false)
-	{
-		int hash = clampU | (clampV << 1) | (flipU << 2) | (flipV << 3) | (linear << 4);
-		auto& sampler = samplers[hash];
-		if (!sampler)
-		{
-			// Create texture sampler
-			D3D11_SAMPLER_DESC desc{};
-			desc.Filter = linear ? D3D11_FILTER_MIN_MAG_MIP_LINEAR : D3D11_FILTER_MIN_MAG_MIP_POINT;
-			desc.AddressU = flipU ? D3D11_TEXTURE_ADDRESS_MIRROR : clampU ?  D3D11_TEXTURE_ADDRESS_CLAMP : D3D11_TEXTURE_ADDRESS_WRAP;
-			desc.AddressV = flipV ? D3D11_TEXTURE_ADDRESS_MIRROR : clampV ?  D3D11_TEXTURE_ADDRESS_CLAMP : D3D11_TEXTURE_ADDRESS_WRAP;
-			desc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
-			desc.ComparisonFunc = D3D11_COMPARISON_NEVER;
-			desc.MaxAnisotropy = 1;
-			desc.MaxLOD = D3D11_FLOAT32_MAX;
-			theDX11Context.getDevice()->CreateSamplerState(&desc, &sampler.get());
-		}
-		return sampler;
-	}
+	ComPtr<ID3D11SamplerState> getSampler(bool linear, bool clampU = true, bool clampV = true, bool flipU = false, bool flipV = false);
 
 	void term() {
 		samplers.clear();

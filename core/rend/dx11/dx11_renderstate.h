@@ -17,7 +17,10 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #pragma once
-#include "dx11context.h"
+#include "types.h"
+#include <d3d11.h>
+#include "../dx9/comptr.h"
+#include <array>
 #include <unordered_map>
 
 const D3D11_COMPARISON_FUNC Zfunction[]
@@ -41,7 +44,8 @@ const D3D11_BLEND DestBlend[]
 	D3D11_BLEND_SRC_ALPHA,
 	D3D11_BLEND_INV_SRC_ALPHA,
 	D3D11_BLEND_DEST_ALPHA,
-	D3D11_BLEND_INV_DEST_ALPHA
+	D3D11_BLEND_INV_DEST_ALPHA,
+	D3D11_BLEND_INV_BLEND_FACTOR
 };
 
 const D3D11_BLEND SrcBlend[]
@@ -53,7 +57,8 @@ const D3D11_BLEND SrcBlend[]
 	D3D11_BLEND_SRC_ALPHA,
 	D3D11_BLEND_INV_SRC_ALPHA,
 	D3D11_BLEND_DEST_ALPHA,
-	D3D11_BLEND_INV_DEST_ALPHA
+	D3D11_BLEND_INV_DEST_ALPHA,
+	D3D11_BLEND_BLEND_FACTOR
 };
 
 class DepthStencilStates
@@ -77,7 +82,7 @@ public:
 			desc.FrontFace.StencilFunc = D3D11_COMPARISON_ALWAYS;
 			desc.BackFace = desc.FrontFace;
 			desc.StencilWriteMask = 0xFF;
-			theDX11Context.getDevice()->CreateDepthStencilState(&desc, &state.get());
+			createDepthStencilState(&desc, &state.get());
 		}
 		return state;
 	}
@@ -131,7 +136,7 @@ public:
 				break;
 			}
 			desc.BackFace = desc.FrontFace;
-			theDX11Context.getDevice()->CreateDepthStencilState(&desc, &state.get());
+			createDepthStencilState(&desc, &state.get());
 		}
 		return state;
 	}
@@ -144,6 +149,8 @@ public:
 	}
 
 private:
+	HRESULT createDepthStencilState(const D3D11_DEPTH_STENCIL_DESC *desc, ID3D11DepthStencilState **state);
+
 	std::unordered_map<int, ComPtr<ID3D11DepthStencilState>> states;
 	std::array<ComPtr<ID3D11DepthStencilState>, ModifierVolumeMode::Count> mvStates;
 };
@@ -153,7 +160,7 @@ class BlendStates
 public:
 	ComPtr<ID3D11BlendState> getState(bool enable, int srcBlend = 0, int destBlend = 0, bool disableWrite = false)
 	{
-		int hash = enable | (srcBlend << 1) | (destBlend << 4) | (disableWrite << 7);
+		int hash = enable | (srcBlend << 1) | (destBlend << 5) | (disableWrite << 9);
 		auto& state = states[hash];
 		if (!state)
 		{
@@ -166,7 +173,7 @@ public:
 			desc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_SRC_ALPHA;
 			desc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ZERO;
 			desc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
-			theDX11Context.getDevice()->CreateBlendState(&desc, &state.get());
+			createBlendState(&desc, &state.get());
 		}
 		return state;
 	}
@@ -176,5 +183,7 @@ public:
 	}
 
 private:
+	HRESULT createBlendState(const D3D11_BLEND_DESC *, ID3D11BlendState **state);
+
 	std::unordered_map<int, ComPtr<ID3D11BlendState>> states;
 };

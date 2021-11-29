@@ -49,17 +49,18 @@ bool DX11Context::init(bool keepCurrentWindow)
 		{
 		case GAMING_DEVICE_DEVICE_ID_XBOX_ONE:
 		case GAMING_DEVICE_DEVICE_ID_XBOX_ONE_S:
-			NOTICE_LOG(RENDERER, "XBox One [S] detected. Setting resolution to 1920x1080.");
-			settings.display.width = 1920;
-			settings.display.height = 1080;
-			break;
-
 		case GAMING_DEVICE_DEVICE_ID_XBOX_ONE_X:
 		case GAMING_DEVICE_DEVICE_ID_XBOX_ONE_X_DEVKIT:
+			{
+				Windows::Graphics::Display::Core::HdmiDisplayInformation^ dispInfo = Windows::Graphics::Display::Core::HdmiDisplayInformation::GetForCurrentView();
+				Windows::Graphics::Display::Core::HdmiDisplayMode^ displayMode = dispInfo->GetCurrentDisplayMode();
+				NOTICE_LOG(RENDERER, "HDMI resolution: %d x %d", displayMode->ResolutionWidthInRawPixels, displayMode->ResolutionHeightInRawPixels);
+				settings.display.width = displayMode->ResolutionWidthInRawPixels;
+				settings.display.height = displayMode->ResolutionHeightInRawPixels;
+			}
+			break;
+
 		default:
-			NOTICE_LOG(RENDERER, "XBox One X detected. Setting resolution to 3840x2160.");
-			settings.display.width = 3840;
-			settings.display.height = 2160;
 		    break;
 		}
 	}
@@ -79,7 +80,7 @@ bool DX11Context::init(bool keepCurrentWindow)
 		D3D11_CREATE_DEVICE_BGRA_SUPPORT, // | D3D11_CREATE_DEVICE_DEBUG, // FIXME
 	    featureLevels,
 	    ARRAYSIZE(featureLevels),
-	    D3D11_SDK_VERSION, // UWP apps must set this to D3D11_SDK_VERSION.
+	    D3D11_SDK_VERSION,
 	    &pDevice.get(),
 	    nullptr,
 	    &pDeviceContext.get());
@@ -152,7 +153,8 @@ bool DX11Context::init(bool keepCurrentWindow)
 	imguiDriver = std::unique_ptr<ImGuiDriver>(new DX11Driver());
 	resize();
 	gui_init();
-// TODO overlay.init(pDevice);
+	shaders.init(pDevice);
+	overlay.init(pDevice, pDeviceContext, &shaders, &samplers);
 	return ImGui_ImplDX11_Init(pDevice, pDeviceContext);
 }
 
@@ -162,7 +164,9 @@ void DX11Context::term()
 	GraphicsContext::instance = nullptr;
 	ID3D11RenderTargetView* views[1] {};
 	pDeviceContext->OMSetRenderTargets(ARRAY_SIZE(views), views, nullptr);
-//TODO	overlay.term();
+	overlay.term();
+	samplers.term();
+	shaders.term();
 	imguiDriver.reset();
 	ImGui_ImplDX11_Shutdown();
 	gui_term();
@@ -200,15 +204,15 @@ void DX11Context::EndImGuiFrame()
 		if (renderer != nullptr)
 			renderer->RenderLastFrame();
 	}
-//	if (overlayOnly)
-//	{
-//		if (crosshairsNeeded() || config::FloatVMUs)
-//			overlay.draw(settings.display.width, settings.display.height, config::FloatVMUs, true);
-//	}
-//	else
-//	{
-//		overlay.draw(settings.display.width, settings.display.height, true, false);
-//	}
+	if (overlayOnly)
+	{
+		if (crosshairsNeeded() || config::FloatVMUs)
+			overlay.draw(settings.display.width, settings.display.height, config::FloatVMUs, true);
+	}
+	else
+	{
+		overlay.draw(settings.display.width, settings.display.height, true, false);
+	}
 	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 	frameRendered = true;
 }

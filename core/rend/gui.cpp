@@ -382,7 +382,7 @@ static void gui_newFrame()
 static void delayedKeysUp()
 {
 	ImGuiIO& io = ImGui::GetIO();
-	for (int i = 0; i < ARRAY_SIZE(keysUpNextFrame); i++)
+	for (u32 i = 0; i < ARRAY_SIZE(keysUpNextFrame); i++)
 		if (keysUpNextFrame[i])
 			io.KeysDown[i] = false;
 	memset(keysUpNextFrame, 0, sizeof(keysUpNextFrame));

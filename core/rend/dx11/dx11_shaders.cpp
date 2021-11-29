@@ -127,6 +127,7 @@ cbuffer constantBuffer : register(b0)
 
 cbuffer polyConstantBuffer : register(b1)
 {
+	float4 clipTest;
 	float paletteIndex;
 	float trilinearAlpha;
 };
@@ -169,6 +170,12 @@ struct PSO
 
 PSO main(in Pixel inpix)
 { 
+#if pp_ClipInside == 1
+	// Clip inside the box
+	if (inpix.pos.x >= clipTest.x && inpix.pos.x <= clipTest.z
+			&& inpix.pos.y >= clipTest.y && inpix.pos.y <= clipTest.w)
+		discard;
+#endif
 #if pp_Gouraud == 1
 	float4 color = inpix.col / inpix.uv.w;
 	#if pp_BumpMap == 1 || pp_Offset == 1
@@ -296,6 +303,11 @@ VertexOut main(in VertexIn vin)
 )";
 
 const char * const QuadPixelShader = R"(
+cbuffer constantBuffer : register(b0)
+{
+	float4 color;
+};
+
 struct VertexIn
 {
 	float4 pos : SV_POSITION;
@@ -307,7 +319,7 @@ Texture2D texture0;
 
 float4 main(in VertexIn vin) : SV_Target
 {
-	return texture0.Sample(sampler0, vin.uv);
+	return color * texture0.Sample(sampler0, vin.uv);
 }
 
 )";
@@ -332,7 +344,8 @@ enum PixelMacroEnum {
 	MacroFogClamping,
 	MacroTriLinear,
 	MacroPalette,
-	MacroAlphaTest
+	MacroAlphaTest,
+	MacroClipInside
 };
 
 static D3D_SHADER_MACRO PixelMacros[]
@@ -349,12 +362,13 @@ static D3D_SHADER_MACRO PixelMacros[]
 	{ "pp_TriLinear", "0" },
 	{ "pp_Palette", "0" },
 	{ "cp_AlphaTest", "0" },
+	{ "pp_ClipInside", "0" },
 	{ nullptr, nullptr }
 };
 
 const ComPtr<ID3D11PixelShader>& DX11Shaders::getShader(bool pp_Texture, bool pp_UseAlpha, bool pp_IgnoreTexA, u32 pp_ShadInstr,
 		bool pp_Offset, u32 pp_FogCtrl, bool pp_BumpMap, bool fog_clamping,
-		bool trilinear, bool palette, bool gouraud, bool alphaTest)
+		bool trilinear, bool palette, bool gouraud, bool alphaTest, bool clipInside)
 {
 	const u32 hash = (int)pp_Texture
 			| (pp_UseAlpha << 1)
@@ -367,7 +381,8 @@ const ComPtr<ID3D11PixelShader>& DX11Shaders::getShader(bool pp_Texture, bool pp
 			| (trilinear << 10)
 			| (palette << 11)
 			| (gouraud << 12)
-			| (alphaTest << 13);
+			| (alphaTest << 13)
+			| (clipInside << 13);
 	auto& shader = shaders[hash];
 	if (shader == nullptr)
 	{
@@ -385,6 +400,7 @@ const ComPtr<ID3D11PixelShader>& DX11Shaders::getShader(bool pp_Texture, bool pp
 		PixelMacros[MacroTriLinear].Definition = MacroValues[trilinear];
 		PixelMacros[MacroPalette].Definition = MacroValues[palette];
 		PixelMacros[MacroAlphaTest].Definition = MacroValues[alphaTest];
+		PixelMacros[MacroClipInside].Definition = MacroValues[clipInside];
 
 		shader = compilePS(PixelShader, "main", PixelMacros);
 		verify(shader != nullptr);

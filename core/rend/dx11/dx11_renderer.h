@@ -97,6 +97,8 @@ private:
 	ComPtr<ID3D11RenderTargetView> rttRenderTarget;
 	ComPtr<ID3D11Texture2D> rttDepthTex;
 	ComPtr<ID3D11DepthStencilView> rttDepthTexView;
+	ComPtr<ID3D11Texture2D> whiteTexture;
+	ComPtr<ID3D11ShaderResourceView> whiteTextureView;
 
 	ComPtr<ID3D11RasterizerState> rasterCullNone, rasterCullFront, rasterCullBack;
 
@@ -104,8 +106,8 @@ private:
 	u32 height = 0;
 	TransformMatrix<COORD_DIRECTX> matrices;
 	DX11TextureCache texCache;
-	DX11Shaders shaders;
-	Samplers samplers;
+	DX11Shaders *shaders;
+	Samplers *samplers;
 	DepthStencilStates depthStencilStates;
 	BlendStates blendStates;
 	std::vector<SortTrigDrawParam> pidx_sort;

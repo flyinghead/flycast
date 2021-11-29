@@ -17,6 +17,7 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #include "dx11_renderer.h"
+#include "dx11context.h"
 #include "hw/pvr/ta.h"
 #include "hw/pvr/pvr_mem.h"
 #include "rend/gui.h"
@@ -52,6 +53,7 @@ struct PixelConstants
 
 struct PixelPolyConstants
 {
+	float clipTest[4];
 	float paletteIndex;
 	float trilinearAlpha;
 };
@@ -62,11 +64,12 @@ bool DX11Renderer::Init()
 	device = theDX11Context.getDevice();
 	deviceContext = theDX11Context.getDeviceContext();
 
-	shaders.init(device);
-	bool success = (bool)shaders.getVertexShader(true);
-	ComPtr<ID3DBlob> blob = shaders.getVertexShaderBlob();
+	shaders = &theDX11Context.getShaders();
+	samplers = &theDX11Context.getSamplers();
+	bool success = (bool)shaders->getVertexShader(true);
+	ComPtr<ID3DBlob> blob = shaders->getVertexShaderBlob();
 	success = success && SUCCEEDED(device->CreateInputLayout(MainLayout, ARRAY_SIZE(MainLayout), blob->GetBufferPointer(), blob->GetBufferSize(), &mainInputLayout.get()));
-	blob = shaders.getMVVertexShaderBlob();
+	blob = shaders->getMVVertexShaderBlob();
 	success = success && SUCCEEDED(device->CreateInputLayout(ModVolLayout, ARRAY_SIZE(ModVolLayout), blob->GetBufferPointer(), blob->GetBufferSize(), &modVolInputLayout.get()));
 
 	// Constants buffers
@@ -140,9 +143,32 @@ bool DX11Renderer::Init()
 		viewDesc.Texture2D.MipLevels = 1;
 		device->CreateShaderResourceView(fogTexture, &viewDesc, &fogTextureView.get());
 	}
+	// White texture
+	{
+		D3D11_TEXTURE2D_DESC desc{};
+		desc.Width = 8;
+		desc.Height = 8;
+		desc.ArraySize = 1;
+		desc.SampleDesc.Count = 1;
+		desc.Usage = D3D11_USAGE_DEFAULT;
+		desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+		desc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+		desc.MipLevels = 1;
+		device->CreateTexture2D(&desc, nullptr, &whiteTexture.get());
+
+		D3D11_SHADER_RESOURCE_VIEW_DESC viewDesc{};
+		viewDesc.Format = desc.Format;
+		viewDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+		viewDesc.Texture2D.MipLevels = 1;
+		device->CreateShaderResourceView(whiteTexture, &viewDesc, &whiteTextureView.get());
+
+		u32 texData[8 * 8];
+		memset(texData, 0xff, sizeof(texData));
+		deviceContext->UpdateSubresource(whiteTexture, 0, nullptr, texData, 8 * sizeof(u32), 8 * sizeof(u32) * 8);
+	}
 
 	quad = std::unique_ptr<Quad>(new Quad());
-	quad->init(device, deviceContext, &shaders);
+	quad->init(device, deviceContext, shaders);
 
 	fog_needs_update = true;
 	palette_updated = true;
@@ -166,8 +192,6 @@ void DX11Renderer::Term()
 	fbTextureView.reset();
 	fbRenderTarget.reset();
 	quad.reset();
-	samplers.term();
-	shaders.term();
 	deviceContext.reset();
 	device.reset();
 }
@@ -451,9 +475,10 @@ void DX11Renderer::renderDCFramebuffer()
 	vp.MinDepth = 0.f;
 	vp.MaxDepth = 1.f;
 	deviceContext->RSSetViewports(1, &vp);
+	deviceContext->OMSetBlendState(blendStates.getState(false), nullptr, 0xffffffff);
 
 	float bar = (width - height * 640.f / 480.f) / 2.f;
-	quad->draw(dcfbTextureView, samplers.getSampler(true), bar / width * 2.f - 1.f, -1.f, (width - bar * 2.f) / width * 2.f, 2.f);
+	quad->draw(dcfbTextureView, samplers->getSampler(true), nullptr, bar / width * 2.f - 1.f, -1.f, (width - bar * 2.f) / width * 2.f, 2.f);
 }
 
 void DX11Renderer::renderFramebuffer()
@@ -498,7 +523,8 @@ void DX11Renderer::renderFramebuffer()
 	w *= 2.f / outwidth;
 	y = y * 2.f / outheight - 1.f;
 	h *= 2.f / outheight;
-	quad->draw(fbTextureView, samplers.getSampler(true), x, y, w, h, config::Rotate90);
+	deviceContext->OMSetBlendState(blendStates.getState(false), nullptr, 0xffffffff);
+	quad->draw(fbTextureView, samplers->getSampler(true), nullptr, x, y, w, h, config::Rotate90);
 }
 
 void DX11Renderer::setCullMode(int mode)
@@ -543,9 +569,9 @@ void DX11Renderer::setRenderState(const PolyParam *gp)
 	DX11Texture *texture = (DX11Texture *)gp->texture;
 	bool gpuPalette = texture != nullptr ? texture->gpuPalette : false;
 
-	ComPtr<ID3D11VertexShader> vertexShader = shaders.getVertexShader(gp->pcw.Gouraud);
+	ComPtr<ID3D11VertexShader> vertexShader = shaders->getVertexShader(gp->pcw.Gouraud);
 	deviceContext->VSSetShader(vertexShader, nullptr, 0);
-	ComPtr<ID3D11PixelShader> pixelShader = shaders.getShader(
+	ComPtr<ID3D11PixelShader> pixelShader = shaders->getShader(
 			gp->pcw.Texture,
 			gp->tsp.UseAlpha,
 			gp->tsp.IgnoreTexA,
@@ -557,7 +583,8 @@ void DX11Renderer::setRenderState(const PolyParam *gp)
 			constants.trilinearAlpha != 1.f,
 			gpuPalette,
 			gp->pcw.Gouraud,
-			Type == ListType_Punch_Through);
+			Type == ListType_Punch_Through,
+			clipmode == TileClipping::Inside);
 	deviceContext->PSSetShader(pixelShader, nullptr, 0);
 
 	if (gpuPalette)
@@ -567,7 +594,24 @@ void DX11Renderer::setRenderState(const PolyParam *gp)
 		else
 			constants.paletteIndex = (float)((gp->tcw.PalSelect >> 4) << 8);
 	}
-	if (constants.trilinearAlpha != 1.f || gpuPalette)
+
+	if (clipmode == TileClipping::Outside)
+	{
+		RECT rect { clip_rect[0], clip_rect[1], clip_rect[0] + clip_rect[2], clip_rect[1] + clip_rect[3] };
+		deviceContext->RSSetScissorRects(1, &rect);
+	}
+	else
+	{
+		deviceContext->RSSetScissorRects(1, &scissorRect);
+		if (clipmode == TileClipping::Inside)
+		{
+			constants.clipTest[0] = clip_rect[0];
+			constants.clipTest[1] = clip_rect[1];
+			constants.clipTest[2] = clip_rect[0] + clip_rect[2];
+			constants.clipTest[3] = clip_rect[1] + clip_rect[3];
+		}
+	}
+	if (constants.trilinearAlpha != 1.f || gpuPalette || clipmode == TileClipping::Inside)
 	{
 		D3D11_MAPPED_SUBRESOURCE mappedSubres;
 		deviceContext->Map(pxlPolyConstants, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedSubres);
@@ -575,28 +619,10 @@ void DX11Renderer::setRenderState(const PolyParam *gp)
 		deviceContext->Unmap(pxlPolyConstants, 0);
 	}
 
-	/* TODO
-	if (clipmode == TileClipping::Inside)
-	{
-		float f[] = { clip_rect[0], clip_rect[1], clip_rect[0] + clip_rect[2], clip_rect[1] + clip_rect[3] };
-		device->SetPixelShaderConstantF(n, f, 1);
-	}
-	else */
-	if (clipmode == TileClipping::Outside)
-	{
-		RECT rect { clip_rect[0], clip_rect[1], clip_rect[0] + clip_rect[2], clip_rect[1] + clip_rect[3] };
-		// TODO cache?
-		deviceContext->RSSetScissorRects(1, &rect);
-	}
-	else
-	{
-		deviceContext->RSSetScissorRects(1, &scissorRect);
-	}
-
 	if (texture != nullptr)
 	{
         deviceContext->PSSetShaderResources(0, 1, &texture->textureView.get());
-        auto sampler = samplers.getSampler(gp->tsp.FilterMode != 0 && !gpuPalette, gp->tsp.ClampU, gp->tsp.ClampV, gp->tsp.FlipU, gp->tsp.FlipV);
+        auto sampler = samplers->getSampler(gp->tsp.FilterMode != 0 && !gpuPalette, gp->tsp.ClampU, gp->tsp.ClampV, gp->tsp.FlipU, gp->tsp.FlipV);
         deviceContext->PSSetSamplers(0, 1, &sampler.get());
 	}
 
@@ -699,9 +725,9 @@ void DX11Renderer::drawSorted(bool multipass)
 		const float blend_factor[4] = { 0.f, 0.f, 0.f, 0.f };
 		deviceContext->OMSetBlendState(blendStates.getState(false, 0, 0, true), blend_factor, 0xffffffff);
 
-		ComPtr<ID3D11VertexShader> vertexShader = shaders.getVertexShader(true);
+		ComPtr<ID3D11VertexShader> vertexShader = shaders->getVertexShader(true);
 		deviceContext->VSSetShader(vertexShader, nullptr, 0);
-		ComPtr<ID3D11PixelShader> pixelShader = shaders.getShader(
+		ComPtr<ID3D11PixelShader> pixelShader = shaders->getShader(
 				false,
 				false,
 				false,
@@ -713,6 +739,7 @@ void DX11Renderer::drawSorted(bool multipass)
 				false,
 				false,
 				true,
+				false,
 				false);
 		deviceContext->PSSetShader(pixelShader, nullptr, 0);
 
@@ -747,8 +774,8 @@ void DX11Renderer::drawModVols(int first, int count)
 	const float blend_factor[4] = { 0.f, 0.f, 0.f, 0.f };
 	deviceContext->OMSetBlendState(blendStates.getState(false, 0, 0, true), blend_factor, 0xffffffff);
 
-	deviceContext->VSSetShader(shaders.getMVVertexShader(), nullptr, 0);
-	deviceContext->PSSetShader(shaders.getModVolShader(), nullptr, 0);
+	deviceContext->VSSetShader(shaders->getMVVertexShader(), nullptr, 0);
+	deviceContext->PSSetShader(shaders->getModVolShader(), nullptr, 0);
 
 	deviceContext->RSSetScissorRects(1, &scissorRect);
 	setCullMode(0);
@@ -894,17 +921,24 @@ void DX11Renderer::readDCFramebuffer()
 	int height;
 	ReadFramebuffer<BGRAPacker>(pb, width, height);
 
-	//if (!dcfbTexture)
+	if (dcfbTexture)
 	{
-		// FIXME dimension can change
-		dcfbTexture.reset();
-		dcfbTextureView.reset();
+		D3D11_TEXTURE2D_DESC desc;
+		dcfbTexture->GetDesc(&desc);
+		if ((int)desc.Width != width || (int)desc.Height != height)
+		{
+			dcfbTexture.reset();
+			dcfbTextureView.reset();
+		}
+	}
+	if (!dcfbTexture)
+	{
 		D3D11_TEXTURE2D_DESC desc{};
 		desc.Width = width;
 		desc.Height = height;
 		desc.ArraySize = 1;
 		desc.SampleDesc.Count = 1;
-		desc.Usage = D3D11_USAGE_DEFAULT;	// TODO correct?
+		desc.Usage = D3D11_USAGE_DEFAULT;
 		desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
 		desc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
 		desc.MipLevels = 1;
@@ -960,12 +994,17 @@ void DX11Renderer::setBaseScissor()
 				float scaled_offs_x = matrices.GetSidebarWidth();
 
 				float borderColor[] { 1.f, VO_BORDER_COL.Red / 255.f, VO_BORDER_COL.Green / 255.f, VO_BORDER_COL.Blue / 255.f };
-// TODO				devCache.SetRenderState(D3DRS_SCISSORTESTENABLE, FALSE);
-//				D3DRECT rects[] {
-//						{ 0, 0, lroundf(scaled_offs_x), (long)height },
-//						{ (long)(width - scaled_offs_x), 0, (long)(width + 1), (long)height },
-//				};
-//				device->Clear(2, rects, D3DCLEAR_TARGET, borderColor, 0.f, 0);
+				D3D11_VIEWPORT vp{};
+				vp.MaxDepth = 1.f;
+				vp.Width = scaled_offs_x;
+				vp.Height = height;
+				deviceContext->RSSetViewports(1, &vp);
+				quad->draw(whiteTextureView, samplers->getSampler(false), borderColor);
+
+				vp.TopLeftX = width - scaled_offs_x;
+				vp.Width = scaled_offs_x + 1;
+				deviceContext->RSSetViewports(1, &vp);
+				quad->draw(whiteTextureView, samplers->getSampler(false), borderColor);
 			}
 		}
 		else
@@ -1121,7 +1160,7 @@ void DX11Renderer::updatePaletteTexture()
 	deviceContext->UpdateSubresource(paletteTexture, 0, nullptr, palette32_ram, 32 * sizeof(u32), 32 * sizeof(u32) * 32);
 
     deviceContext->PSSetShaderResources(1, 1, &paletteTextureView.get());
-    deviceContext->PSSetSamplers(1, 1, &samplers.getSampler(false).get());
+    deviceContext->PSSetSamplers(1, 1, &samplers->getSampler(false).get());
 }
 
 void DX11Renderer::updateFogTexture()
@@ -1135,7 +1174,7 @@ void DX11Renderer::updateFogTexture()
 	deviceContext->UpdateSubresource(fogTexture, 0, nullptr, temp_tex_buffer, 128, 128 * 2);
 
     deviceContext->PSSetShaderResources(2, 1, &fogTextureView.get());
-    deviceContext->PSSetSamplers(2, 1, &samplers.getSampler(true).get());
+    deviceContext->PSSetSamplers(2, 1, &samplers->getSampler(true).get());
 }
 
 void DX11Renderer::DrawOSD(bool clear_screen)

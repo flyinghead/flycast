@@ -22,11 +22,10 @@
 #include "types.h"
 #include <windows.h>
 #include <d3d11.h>
-#include <d3dcompiler.h>
 #include <dxgi1_2.h>
 #include "imgui_impl_dx11.h"
 #include "../dx9/comptr.h"
-// TODO #include "d3d_overlay.h"
+#include "dx11_overlay.h"
 #include "wsi/context.h"
 
 class DX11Context : public GraphicsContext
@@ -50,6 +49,12 @@ public:
 	void setFrameRendered() {
 		frameRendered = true;
 	}
+	DX11Shaders& getShaders() {
+		return shaders;
+	}
+	Samplers& getSamplers() {
+		return samplers;
+	}
 
 private:
 	void handleDeviceLost();
@@ -60,11 +65,13 @@ private:
 	ComPtr<IDXGISwapChain1> swapchain1;
 	ComPtr<ID3D11RenderTargetView> renderTargetView;
 	bool overlayOnly = false;
-	// TODO D3DOverlay overlay;
+	DX11Overlay overlay;
 	bool swapOnVSync = false;
 	bool frameRendered = false;
 	std::string adapterDesc;
 	std::string adapterVersion;
+	DX11Shaders shaders;
+	Samplers samplers;
 };
 extern DX11Context theDX11Context;
 #endif

@@ -1042,8 +1042,12 @@ endif()
 if(WIN32 AND NOT LIBRETRO)
 	target_sources(${PROJECT_NAME} PRIVATE
 		core/rend/dx11/dx11_driver.h
+		core/rend/dx11/dx11_overlay.cpp
+		core/rend/dx11/dx11_overlay.h
 		core/rend/dx11/dx11_renderer.cpp
 		core/rend/dx11/dx11_renderer.h
+		core/rend/dx11/dx11_renderstate.h
+		core/rend/dx11/dx11_renderstate.cpp
 		core/rend/dx11/dx11_shaders.cpp
 		core/rend/dx11/dx11_shaders.h
 		core/rend/dx11/dx11_texture.cpp

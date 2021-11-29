@@ -18,8 +18,10 @@
 */
 #pragma once
 #include <unordered_map>
-#include "dx11context.h"
+#include <d3d11.h>
 #include <d3dcompiler.h>
+#include "types.h"
+#include "../dx9/comptr.h"
 
 class DX11Shaders
 {
@@ -31,7 +33,7 @@ public:
 
 	const ComPtr<ID3D11PixelShader>& getShader(bool pp_Texture, bool pp_UseAlpha, bool pp_IgnoreTexA, u32 pp_ShadInstr,
 			bool pp_Offset, u32 pp_FogCtrl, bool pp_BumpMap, bool fog_clamping, bool trilinear, bool palette, bool gouraud,
-			bool alphaTest);
+			bool alphaTest, bool clipInside);
 	const ComPtr<ID3D11VertexShader>& getVertexShader(bool gouraud);
 	const ComPtr<ID3D11PixelShader>& getModVolShader();
 	const ComPtr<ID3D11VertexShader>& getMVVertexShader();
