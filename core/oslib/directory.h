@@ -87,6 +87,26 @@ inline int stat(const char *filename, struct stat *buf)
     	errno = EINVAL;
     	return -1;
     }
+#ifdef TARGET_UWP
+    WIN32_FILE_ATTRIBUTE_DATA attrs;
+	bool rc = GetFileAttributesExFromAppW(wname.c_str(),  GetFileExInfoStandard, &attrs);
+	if (!rc)
+		return -1;
+	memset(buf, 0, sizeof(struct stat));
+	if (attrs.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+		buf->st_mode = S_IFDIR;
+	else
+		buf->st_mode = S_IFREG;
+	buf->st_size = attrs.nFileSizeLow;
+
+	constexpr UINT64 WINDOWS_TICK = 10000000u;
+	constexpr UINT64 SEC_TO_UNIX_EPOCH = 11644473600llu;
+    buf->st_ctime = (unsigned)(((UINT64)attrs.ftCreationTime.dwLowDateTime | ((UINT64)attrs.ftCreationTime.dwHighDateTime << 32)) / WINDOWS_TICK - SEC_TO_UNIX_EPOCH);
+    buf->st_mtime = (unsigned)(((UINT64)attrs.ftLastWriteTime.dwLowDateTime | ((UINT64)attrs.ftLastWriteTime.dwHighDateTime << 32)) / WINDOWS_TICK - SEC_TO_UNIX_EPOCH);
+    buf->st_atime =(unsigned)(((UINT64)attrs.ftLastAccessTime.dwLowDateTime | ((UINT64)attrs.ftLastAccessTime.dwHighDateTime << 32)) / WINDOWS_TICK - SEC_TO_UNIX_EPOCH);
+
+    return 0;
+#else
     struct _stat _st;
     int rc = _wstat(wname.c_str(), &_st);
     buf->st_ctime = _st.st_ctime;
@@ -102,6 +122,7 @@ inline int stat(const char *filename, struct stat *buf)
     buf->st_size = _st.st_size;
 
     return rc;
+#endif
 }
 
 inline int access(const char *filename, int how)
@@ -111,7 +132,18 @@ inline int access(const char *filename, int how)
     	errno = EINVAL;
     	return -1;
     }
+#ifdef TARGET_UWP
+    WIN32_FILE_ATTRIBUTE_DATA attrs;
+	bool rc = GetFileAttributesExFromAppW(wname.c_str(),  GetFileExInfoStandard, &attrs);
+	if (!rc)
+		return -1;
+	if (how != R_OK && (attrs.dwFileAttributes & FILE_ATTRIBUTE_READONLY))
+		return -1;
+	else
+		return 0;
+#else
     return ::_waccess(wname.c_str(), how);
+#endif
 }
 
 inline int mkdir(const char *path, mode_t mode) {

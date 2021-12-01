@@ -29,6 +29,10 @@
 #include <sys/stat.h>
 #include <errno.h>
 
+#if defined(WINAPI_FAMILY) && (WINAPI_FAMILY == WINAPI_FAMILY_PC_APP || WINAPI_FAMILY == WINAPI_FAMILY_PHONE_APP)
+#define FindFirstFileExW FindFirstFileExFromAppW
+#endif
+
 /* Indicates that d_type field is available in dirent structure */
 #define _DIRENT_HAVE_D_TYPE
 

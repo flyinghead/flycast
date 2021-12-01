@@ -109,6 +109,15 @@ void select_file_popup(const char *prompt, StringCallback callback,
 				for (int i = 0; i < 32; i++)
 					if ((drives & (1 << i)) != 0)
 						subfolders.push_back(std::string(1, (char)('A' + i)) + ":\\");
+#ifdef TARGET_UWP
+				// Add the home directory to the list of drives as it's not accessible from the root
+				std::string home;
+				const char *home_drive = nowide::getenv("HOMEDRIVE");
+				if (home_drive != NULL)
+					home = home_drive;
+				home += nowide::getenv("HOMEPATH");
+				subfolders.push_back(home);
+#endif
 			}
 			else
 #elif __ANDROID__
