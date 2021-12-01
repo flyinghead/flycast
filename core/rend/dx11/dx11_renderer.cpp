@@ -38,6 +38,10 @@ const D3D11_INPUT_ELEMENT_DESC ModVolLayout[]
 struct VertexConstants
 {
     float transMatrix[4][4];
+    float leftPlane[4];
+    float topPlane[4];
+    float rightPlane[4];
+    float bottomPlane[4];
 };
 
 struct PixelConstants
@@ -98,7 +102,7 @@ bool DX11Renderer::Init()
 		desc.CullMode = D3D11_CULL_NONE;
 		desc.FrontCounterClockwise = true;
 		desc.ScissorEnable = true;
-		desc.DepthClipEnable = true;
+		desc.DepthClipEnable = false;
 		device->CreateRasterizerState(&desc, &rasterCullNone.get());
 		desc.CullMode = D3D11_CULL_FRONT;
 		device->CreateRasterizerState(&desc, &rasterCullFront.get());
@@ -171,7 +175,7 @@ bool DX11Renderer::Init()
 	quad->init(device, deviceContext, shaders);
 
 	fog_needs_update = true;
-	palette_updated = true;
+	forcePaletteUpdate();
 
 	if (!success)
 	{
@@ -362,9 +366,19 @@ bool DX11Renderer::Render()
 		deviceContext->RSSetViewports(1, &vp);
 	}
 	matrices.CalcMatrices(&pvrrc, width, height);
+	VertexConstants constant{};
+	memcpy(&constant.transMatrix, &matrices.GetNormalMatrix(), sizeof(constant.transMatrix));
+	constant.leftPlane[0] = 1;
+	constant.leftPlane[3] = 1;
+	constant.rightPlane[0] = -1;
+	constant.rightPlane[3] = 1;
+	constant.topPlane[1] = 1;
+	constant.topPlane[3] = 1;
+	constant.bottomPlane[1] = -1;
+	constant.bottomPlane[3] = 1;
 	D3D11_MAPPED_SUBRESOURCE mappedSubres;
 	deviceContext->Map(vtxConstants, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedSubres);
-	memcpy(mappedSubres.pData, &matrices.GetNormalMatrix(), sizeof(float) * 4 * 4);
+	memcpy(mappedSubres.pData, &constant, sizeof(constant));
 	deviceContext->Unmap(vtxConstants, 0);
 	deviceContext->VSSetConstantBuffers(0, 1, &vtxConstants.get());
 
@@ -584,7 +598,8 @@ void DX11Renderer::setRenderState(const PolyParam *gp)
 			gpuPalette,
 			gp->pcw.Gouraud,
 			Type == ListType_Punch_Through,
-			clipmode == TileClipping::Inside);
+			clipmode == TileClipping::Inside,
+			gp->pcw.Texture && gp->tsp.FilterMode == 0 && !gp->tsp.ClampU && !gp->tsp.ClampV && !gp->tsp.FlipU && !gp->tsp.FlipV);
 	deviceContext->PSSetShader(pixelShader, nullptr, 0);
 
 	if (gpuPalette)
@@ -739,6 +754,7 @@ void DX11Renderer::drawSorted(bool multipass)
 				false,
 				false,
 				true,
+				false,
 				false,
 				false);
 		deviceContext->PSSetShader(pixelShader, nullptr, 0);

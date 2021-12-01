@@ -349,7 +349,7 @@ protected:
 			paletteTexture->SetPhysicalDevice(GetContext()->GetPhysicalDevice());
 			paletteTexture->SetDevice(GetContext()->GetDevice());
 			paletteTexture->tex_type = TextureType::_8888;
-			palette_updated = true;
+			forcePaletteUpdate();
 		}
 		if (!palette_updated)
 			return;

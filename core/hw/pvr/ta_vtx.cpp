@@ -1430,7 +1430,8 @@ static void make_index(const List<PolyParam> *polys, int first, int end, bool me
 				&& poly->tcw.full == last_poly->tcw.full
 				&& poly->tsp.full == last_poly->tsp.full
 				&& poly->isp.full == last_poly->isp.full
-				// FIXME tcw1, tsp1, tileclip?
+				&& poly->tileclip == last_poly->tileclip
+				// FIXME tcw1, tsp1?
 				)
 		{
 			const u32 last_vtx = indices[last_poly->first + last_poly->count - 1];

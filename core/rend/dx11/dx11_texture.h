@@ -58,12 +58,32 @@ private:
 class Samplers
 {
 public:
-	ComPtr<ID3D11SamplerState> getSampler(bool linear, bool clampU = true, bool clampV = true, bool flipU = false, bool flipV = false);
+	ComPtr<ID3D11SamplerState> getSampler(bool linear, bool clampU = true, bool clampV = true, bool flipU = false, bool flipV = false)
+	{
+		int hash = clampU | (clampV << 1) | (flipU << 2) | (flipV << 3) | (linear << 4);
+		auto& sampler = samplers[hash];
+		if (!sampler)
+		{
+			// Create texture sampler
+			D3D11_SAMPLER_DESC desc{};
+			desc.Filter = linear ? D3D11_FILTER_MIN_MAG_MIP_LINEAR : D3D11_FILTER_MIN_MAG_MIP_POINT;
+			desc.AddressU = clampU ?  D3D11_TEXTURE_ADDRESS_CLAMP : flipU ? D3D11_TEXTURE_ADDRESS_MIRROR : D3D11_TEXTURE_ADDRESS_WRAP;
+			desc.AddressV = clampV ?  D3D11_TEXTURE_ADDRESS_CLAMP : flipV ? D3D11_TEXTURE_ADDRESS_MIRROR : D3D11_TEXTURE_ADDRESS_WRAP;
+			desc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+			desc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+			desc.MaxAnisotropy = 1;
+			desc.MaxLOD = D3D11_FLOAT32_MAX;
+			createSampler(&desc, &sampler.get());
+		}
+		return sampler;
+	}
 
 	void term() {
 		samplers.clear();
 	}
 
 private:
+	HRESULT createSampler(const D3D11_SAMPLER_DESC *desc, ID3D11SamplerState **sampler);
+
 	std::unordered_map<int, ComPtr<ID3D11SamplerState>> samplers;
 };

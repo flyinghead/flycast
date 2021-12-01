@@ -21,40 +21,40 @@
 #define SHADER_DEBUG 0 // D3DXSHADER_DEBUG|D3DXSHADER_SKIPOPTIMIZATION
 
 const char * const VertexShader = R"(
-struct vertex_in
+struct VertexIn
 {
 	float4 pos : POSITION;
 	float4 col : COLOR0;
-	float4 spc : COLOR1;
+	float4 spec : COLOR1;
 	float2 uv : TEXCOORD0;
 };
 
-struct vertex_out
+struct VertexOut
 {
 	float4 pos : POSITION;
 	float4 uv : TEXCOORD0;
 	float4 col : COLOR0;
-	float4 spc : COLOR1;
+	float4 spec : COLOR1;
 };
 
-float4x4 normal_matrix : register(c0);
+float4x4 transMatrix : register(c0);
 
-vertex_out main(in vertex_in vin)
+VertexOut main(in VertexIn vin)
 {
-	vertex_out vo;
-	vo.pos = mul(normal_matrix, vin.pos);
+	VertexOut vo;
+	vo.pos = mul(transMatrix, float4(vin.pos.xyz, 1.f));
 #if pp_Gouraud == 1
 	vo.col = vin.col * vo.pos.z;
-	vo.spc = vin.spc * vo.pos.z;
+	vo.spec = vin.spec * vo.pos.z;
 #else
 	// flat shading: no interpolation
 	vo.col = vin.col;
-	vo.spc = vin.spc;
+	vo.spec = vin.spec;
 #endif
-	vo.uv = float4(vin.uv * vo.pos.z, 0, vo.pos.z);
+	vo.uv = float4(vin.uv * vo.pos.z, 0.f, vo.pos.z);
 
-	vo.pos.w = 1.0f;
-	vo.pos.z = 0;
+	vo.pos.w = 1.f;
+	vo.pos.z = 0.f;
 
 	return vo;
 }
@@ -67,10 +67,11 @@ const char * const PixelShader = R"(
 
 struct pixel 
 {
+	float2 pos : VPOS;
 	float4 uv : TEXCOORD0;
 	float4 col : COLOR0;
 #if pp_BumpMap == 1 || pp_Offset == 1
-	float4 offs : COLOR1;
+	float4 spec : COLOR1;
 #endif
 	
 };
@@ -79,14 +80,14 @@ sampler2D samplr : register(s0);
 sampler2D tex_pal : register(s1);
 sampler2D fog_table : register(s2);
 
-float4 palette_index : register(c0);
+float4 paletteIndex : register(c0);
 float4 FOG_COL_VERT : register(c1);
 float4 FOG_COL_RAM : register(c2);
 float4 FOG_DENSITY_SCALE : register(c3);
-float4 ClipTest : register(c4);
-float4 trilinear_alpha : register(c5);
-float4 fog_clamp_min : register(c6);
-float4 fog_clamp_max : register(c7);
+float4 clipTest : register(c4);
+float4 trilinearAlpha : register(c5);
+float4 colorClampMin : register(c6);
+float4 colorClampMax : register(c7);
 
 float fog_mode2(float w)
 {
@@ -94,16 +95,16 @@ float fog_mode2(float w)
 	float exp = floor(log2(z));
 	float m = z * 16.0f / pow(2.0, exp) - 16.0f;
 	float idx = floor(m) + exp * 16.0f + 0.5f;
-	float4 fog_coef = tex2D(fog_table, float2(idx / 128.0f, 0.75f - (m - floor(m)) / 2.0f));
-	return fog_coef.a;
+	float4 fogCoef = tex2D(fog_table, float2(idx / 128.0f, 0.75f - (m - floor(m)) / 2.0f));
+	return fogCoef.a;
 }
 
-float4 fog_clamp(float4 col)
+float4 clampColor(float4 color)
 {
 #if FogClamping == 1
-	return clamp(col, fog_clamp_min, fog_clamp_max);
+	return clamp(color, colorClampMin, colorClampMax);
 #else
-	return col;
+	return color;
 #endif
 }
 
@@ -111,8 +112,8 @@ float4 fog_clamp(float4 col)
 
 float4 palettePixel(float4 coords)
 {
-	int color_idx = int(floor(tex2Dproj(samplr, coords).a * 255.0f + 0.5f) + palette_index.x);
-    float2 c = float2((fmod(float(color_idx), 32.0f) * 2.0f + 1.0f) / 64.0f, (float(color_idx / 32) * 2.0f + 1.0f) / 64.0f);
+	int colorIdx = int(floor(tex2Dproj(samplr, coords).a * 255.0f + 0.5f) + paletteIndex.x);
+    float2 c = float2((fmod(float(colorIdx), 32.0f) * 2.0f + 1.0f) / 64.0f, (float(colorIdx / 32) * 2.0f + 1.0f) / 64.0f);
 	return tex2D(tex_pal, c);
 }
 
@@ -126,24 +127,22 @@ struct PSO
 
 PSO main(in pixel inpix)
 { 
+#if pp_ClipInside == 1
 	// Clip inside the box
-/* TODO
-	#if pp_ClipInside == 1
-		if (VPOS.x >= pp_ClipTest.x && VPOS.x <= pp_ClipTest.z
-				&& VPOS.y >= pp_ClipTest.y && VPOS.y <= pp_ClipTest.w)
-			discard;
-	#endif
-*/
+	if (inpix.pos.x >= clipTest.x && inpix.pos.x <= clipTest.z
+			&& inpix.pos.y >= clipTest.y && inpix.pos.y <= clipTest.w)
+		discard;
+#endif
 
 #if pp_Gouraud == 1
 	float4 color = inpix.col / inpix.uv.w;
 	#if pp_BumpMap == 1 || pp_Offset == 1
-		float4 offset = inpix.offs / inpix.uv.w;
+		float4 specular = inpix.spec / inpix.uv.w;
 	#endif
 #else
 	float4 color = inpix.col;
 	#if pp_BumpMap == 1 || pp_Offset == 1
-		float4 offset = inpix.offs;
+		float4 specular = inpix.spec;
 	#endif
 #endif
 	#if pp_UseAlpha == 0
@@ -163,7 +162,7 @@ PSO main(in pixel inpix)
 		#if pp_BumpMap == 1
 			float s = PI / 2.0f * (texcol.a * 15.0f * 16.0f + texcol.r * 15.0f) / 255.0f;
 			float r = 2.0f * PI * (texcol.g * 15.0f * 16.0f + texcol.b * 15.0f) / 255.0f;
-			texcol[3] = clamp(offset.a + offset.r * sin(s) + offset.g * cos(s) * cos(r - 2.0f * PI * offset.b), 0.0f, 1.0f);
+			texcol[3] = clamp(specular.a + specular.r * sin(s) + specular.g * cos(s) * cos(r - 2.0f * PI * specular.b), 0.0f, 1.0f);
 			texcol.rgb = float3(1.0f, 1.0f, 1.0f);	
 		#else
 			#if pp_IgnoreTexA == 1
@@ -185,22 +184,22 @@ PSO main(in pixel inpix)
 		#endif
 		
 		#if pp_Offset == 1 && pp_BumpMap == 0
-			color.rgb += offset.rgb;
+			color.rgb += specular.rgb;
 		#endif
 	}
 	#endif
 	
-	color = fog_clamp(color);
+	color = clampColor(color);
 	
 	#if pp_FogCtrl == 0
 		color.rgb = lerp(color.rgb, FOG_COL_RAM.rgb, fog_mode2(inpix.uv.w)); 
 	#endif
 	#if pp_FogCtrl == 1 && pp_Offset == 1 && pp_BumpMap == 0
-		color.rgb = lerp(color.rgb, FOG_COL_VERT.rgb, offset.a);
+		color.rgb = lerp(color.rgb, FOG_COL_VERT.rgb, specular.a);
 	#endif
 	
 	#if pp_TriLinear == 1
-	color *= trilinear_alpha;
+	color *= trilinearAlpha;
 	#endif
 
 	//color.rgb = float3(inpix.uv.w * FOG_DENSITY_SCALE.x / 128.0f);
@@ -242,6 +241,7 @@ constexpr u32 MacroPalette = 7;
 constexpr u32 MacroBumpMap = 8;
 constexpr u32 MacroTriLinear = 9;
 constexpr u32 MacroGouraud = 10;
+constexpr u32 MacroClipInside = 11;
 
 static D3DXMACRO PixelMacros[]
 {
@@ -256,13 +256,13 @@ static D3DXMACRO PixelMacros[]
 	{ "pp_BumpMap", "0" },
 	{ "pp_TriLinear", "0" },
 	{ "pp_Gouraud", "1" },
+	{ "pp_ClipInside", "0" },
 	{0, 0}
-	//{ "pp_ClipInside", "0" },	// TODO
 };
 
 const ComPtr<IDirect3DPixelShader9>& D3DShaders::getShader(bool pp_Texture, bool pp_UseAlpha, bool pp_IgnoreTexA, u32 pp_ShadInstr,
 		bool pp_Offset, u32 pp_FogCtrl, bool pp_BumpMap, bool fog_clamping,
-		bool trilinear, bool palette, bool gouraud)
+		bool trilinear, bool palette, bool gouraud, bool clipInside)
 {
 	u32 hash = (int)pp_Texture
 			| (pp_UseAlpha << 1)
@@ -274,7 +274,8 @@ const ComPtr<IDirect3DPixelShader9>& D3DShaders::getShader(bool pp_Texture, bool
 			| (fog_clamping << 9)
 			| (trilinear << 10)
 			| (palette << 11)
-			| (gouraud << 12);
+			| (gouraud << 12)
+			| (clipInside << 13);
 	auto it = shaders.find(hash);
 	if (it == shaders.end())
 	{
@@ -291,6 +292,7 @@ const ComPtr<IDirect3DPixelShader9>& D3DShaders::getShader(bool pp_Texture, bool
 		PixelMacros[MacroTriLinear].Definition = MacroValues[trilinear];
 		PixelMacros[MacroPalette].Definition = MacroValues[palette];
 		PixelMacros[MacroGouraud].Definition = MacroValues[gouraud];
+		PixelMacros[MacroClipInside].Definition = MacroValues[clipInside];
 		ComPtr<IDirect3DPixelShader9> shader = compilePS(PixelShader, "main", PixelMacros);
 		verify((bool )shader);
 		it = shaders.insert(std::make_pair(hash, shader)).first;

@@ -13,7 +13,7 @@ extern u8* vq_codebook;
 extern u32 palette_index;
 extern u32 palette16_ram[1024];
 extern u32 palette32_ram[1024];
-extern bool pal_needs_update,fog_needs_update;
+extern bool fog_needs_update;
 extern u32 pal_hash_256[4];
 extern u32 pal_hash_16[64];
 extern bool KillTex;
@@ -22,6 +22,7 @@ extern bool palette_updated;
 extern u32 detwiddle[2][11][1024];
 
 void palette_update();
+void forcePaletteUpdate();
 
 template<class pixel_type>
 class PixelBuffer

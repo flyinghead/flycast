@@ -141,7 +141,7 @@ bool D3DRenderer::Init()
 	success &= SUCCEEDED(device->CreateTexture(32, 32, 1, D3DUSAGE_DYNAMIC, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &paletteTexture.get(), 0));
 	success &= SUCCEEDED(device->CreateTexture(128, 2, 1, D3DUSAGE_DYNAMIC, D3DFMT_A8, D3DPOOL_DEFAULT, &fogTexture.get(), 0));
 	fog_needs_update = true;
-	palette_updated = true;
+	forcePaletteUpdate();
 
 	if (!success)
 	{
@@ -198,7 +198,7 @@ void D3DRenderer::postReset()
 	verifyWin(device->CreateTexture(32, 32, 1, D3DUSAGE_DYNAMIC, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &paletteTexture.get(), 0));
 	verifyWin(device->CreateTexture(128, 2, 1, D3DUSAGE_DYNAMIC, D3DFMT_A8, D3DPOOL_DEFAULT, &fogTexture.get(), 0));
 	fog_needs_update = true;
-	palette_updated = true;
+	forcePaletteUpdate();
 }
 
 void D3DRenderer::Term()
@@ -341,7 +341,8 @@ void D3DRenderer::setGPState(const PolyParam *gp)
 			color_clamp,
 			trilinear_alpha != 1.f,
 			gpuPalette,
-			gp->pcw.Gouraud));
+			gp->pcw.Gouraud,
+			clipmode == TileClipping::Inside));
 
 	if (trilinear_alpha != 1.f)
 	{
@@ -360,13 +361,6 @@ void D3DRenderer::setGPState(const PolyParam *gp)
 	devCache.SetVertexShader(shaders.getVertexShader(gp->pcw.Gouraud));
 	devCache.SetRenderState(D3DRS_SHADEMODE, gp->pcw.Gouraud == 1 ? D3DSHADE_GOURAUD : D3DSHADE_FLAT);
 
-	/* TODO
-	if (clipmode == TileClipping::Inside)
-	{
-		float f[] = { clip_rect[0], clip_rect[1], clip_rect[0] + clip_rect[2], clip_rect[1] + clip_rect[3] };
-		device->SetPixelShaderConstantF(n, f, 1);
-	}
-	else */
 	if (clipmode == TileClipping::Outside)
 	{
 		devCache.SetRenderState(D3DRS_SCISSORTESTENABLE, TRUE);
@@ -379,6 +373,11 @@ void D3DRenderer::setGPState(const PolyParam *gp)
 		devCache.SetRenderState(D3DRS_SCISSORTESTENABLE, scissorEnable);
 		if (scissorEnable)
 			device->SetScissorRect(&scissorRect);
+		if (clipmode == TileClipping::Inside)
+		{
+			float f[] = { (float)clip_rect[0], (float)clip_rect[1], (float)(clip_rect[0] + clip_rect[2]), (float)(clip_rect[1] + clip_rect[3]) };
+			device->SetPixelShaderConstantF(4, f, 1);
+		}
 	}
 
 	const u32 stencil = (gp->pcw.Shadow != 0) ? 0x80 : 0;
@@ -1100,6 +1099,7 @@ bool D3DRenderer::Render()
 		devCache.SetRenderState(D3DRS_ALPHATESTENABLE, FALSE);
 		devCache.SetRenderState(D3DRS_FILLMODE, D3DFILL_SOLID);
 		devCache.SetRenderState(D3DRS_CLIPPLANEENABLE, 0);
+		devCache.SetRenderState(D3DRS_CLIPPING, FALSE);
 
 		setBaseScissor();
 

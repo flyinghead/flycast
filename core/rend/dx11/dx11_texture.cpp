@@ -120,22 +120,7 @@ void DX11Texture::loadCustomTexture()
 	CheckCustomTexture();
 }
 
-ComPtr<ID3D11SamplerState> Samplers::getSampler(bool linear, bool clampU, bool clampV, bool flipU, bool flipV)
+HRESULT Samplers::createSampler(const D3D11_SAMPLER_DESC *desc, ID3D11SamplerState **sampler)
 {
-	int hash = clampU | (clampV << 1) | (flipU << 2) | (flipV << 3) | (linear << 4);
-	auto& sampler = samplers[hash];
-	if (!sampler)
-	{
-		// Create texture sampler
-		D3D11_SAMPLER_DESC desc{};
-		desc.Filter = linear ? D3D11_FILTER_MIN_MAG_MIP_LINEAR : D3D11_FILTER_MIN_MAG_MIP_POINT;
-		desc.AddressU = flipU ? D3D11_TEXTURE_ADDRESS_MIRROR : clampU ?  D3D11_TEXTURE_ADDRESS_CLAMP : D3D11_TEXTURE_ADDRESS_WRAP;
-		desc.AddressV = flipV ? D3D11_TEXTURE_ADDRESS_MIRROR : clampV ?  D3D11_TEXTURE_ADDRESS_CLAMP : D3D11_TEXTURE_ADDRESS_WRAP;
-		desc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
-		desc.ComparisonFunc = D3D11_COMPARISON_NEVER;
-		desc.MaxAnisotropy = 1;
-		desc.MaxLOD = D3D11_FLOAT32_MAX;
-		theDX11Context.getDevice()->CreateSamplerState(&desc, &sampler.get());
-	}
-	return sampler;
+	return theDX11Context.getDevice()->CreateSamplerState(desc, sampler);
 }

@@ -21,6 +21,7 @@ u32 palette32_ram[1024];
 u32 pal_hash_256[4];
 u32 pal_hash_16[64];
 bool palette_updated;
+extern bool pal_needs_update;
 float fb_scale_x, fb_scale_y;
 
 // Rough approximation of LoD bias from D adjust param, only used to increase LoD
@@ -165,6 +166,12 @@ void palette_update()
 	for (int i = 0; i < 4; i++)
 		pal_hash_256[i] = XXH32(&PALETTE_RAM[i << 8], 256 * 4, 7);
 }
+
+void forcePaletteUpdate()
+{
+	pal_needs_update = true;
+}
+
 
 static std::vector<vram_block*> VramLocks[VRAM_SIZE_MAX / PAGE_SIZE];
 
