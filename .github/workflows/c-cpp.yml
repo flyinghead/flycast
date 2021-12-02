@@ -111,7 +111,7 @@ jobs:
       - name: Dump symbols
         shell: msys2 {0}
         run: |
-          dump_syms build/artifact/flycast.exe > flycast.exe.sym 2>/dev/null
+          dump_syms build/artifact/flycast.exe > flycast.exe.sym
           BUILD_ID=`head -1 flycast.exe.sym | awk '{ print $4 }'`
           mkdir -p symbols/flycast.exe/$BUILD_ID
           mv flycast.exe.sym symbols/flycast.exe/$BUILD_ID
