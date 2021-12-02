@@ -1,0 +1,1 @@
+br set -r "NSApplication run" -C "process handle -s false SIGBUS" -G true
