@@ -20,6 +20,8 @@
 #import <Foundation/Foundation.h>
 
 #include <string>
+#include <mach/task.h>
+#include <mach/mach_init.h>
 
 int darw_printf(const char* text,...)
 {
@@ -42,6 +44,10 @@ void os_SetWindowText(const char* t) {
 }
 
 void os_CreateWindow() {
+    if (getppid() != 1) {
+        /* Make LLDB ignore EXC_BAD_ACCESS for debugging */
+        task_set_exception_ports(mach_task_self(), EXC_MASK_BAD_ACCESS, MACH_PORT_NULL, EXCEPTION_DEFAULT, 0);
+    }
 }
 
 void UpdateInputState() {
