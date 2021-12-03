@@ -57,10 +57,16 @@ bool DX11Context::init(bool keepCurrentWindow)
 				NOTICE_LOG(RENDERER, "HDMI resolution: %d x %d", displayMode->ResolutionWidthInRawPixels, displayMode->ResolutionHeightInRawPixels);
 				settings.display.width = displayMode->ResolutionWidthInRawPixels;
 				settings.display.height = displayMode->ResolutionHeightInRawPixels;
+				if (settings.display.width == 3840)
+					// 4K
+					scaling = 2.f;
+				else
+					scaling = 1.f;
 			}
 			break;
 
 		default:
+			scaling = 1.f;
 		    break;
 		}
 	}
@@ -77,7 +83,7 @@ bool DX11Context::init(bool keepCurrentWindow)
 	    nullptr, // Specify nullptr to use the default adapter.
 	    D3D_DRIVER_TYPE_HARDWARE,
 	    nullptr,
-		D3D11_CREATE_DEVICE_BGRA_SUPPORT, // | D3D11_CREATE_DEVICE_DEBUG, // FIXME
+		D3D11_CREATE_DEVICE_BGRA_SUPPORT, // | D3D11_CREATE_DEVICE_DEBUG,
 	    featureLevels,
 	    ARRAYSIZE(featureLevels),
 	    D3D11_SDK_VERSION,

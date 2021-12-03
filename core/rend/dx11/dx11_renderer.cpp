@@ -346,6 +346,9 @@ bool DX11Renderer::Process(TA_context* ctx)
 
 bool DX11Renderer::Render()
 {
+	matrices.CalcMatrices(&pvrrc, width, height);
+	if (!pvrrc.isRenderFramebuffer)
+		setBaseScissor();
 	bool is_rtt = pvrrc.isRTT;
 
 	u32 texAddress = FB_W_SOF1 & VRAM_MASK;
@@ -365,7 +368,6 @@ bool DX11Renderer::Render()
 		vp.MaxDepth = 1.f;
 		deviceContext->RSSetViewports(1, &vp);
 	}
-	matrices.CalcMatrices(&pvrrc, width, height);
 	VertexConstants constant{};
 	memcpy(&constant.transMatrix, &matrices.GetNormalMatrix(), sizeof(constant.transMatrix));
 	constant.leftPlane[0] = 1;
@@ -452,8 +454,6 @@ bool DX11Renderer::Render()
 
 		ID3D11Buffer *buffers[] { pxlConstants, pxlPolyConstants };
 		deviceContext->PSSetConstantBuffers(0, ARRAY_SIZE(buffers), buffers);
-
-		setBaseScissor();
 
 		drawStrips();
 	}
@@ -1009,7 +1009,7 @@ void DX11Renderer::setBaseScissor()
 			{
 				float scaled_offs_x = matrices.GetSidebarWidth();
 
-				float borderColor[] { 1.f, VO_BORDER_COL.Red / 255.f, VO_BORDER_COL.Green / 255.f, VO_BORDER_COL.Blue / 255.f };
+				float borderColor[] { VO_BORDER_COL.Red / 255.f, VO_BORDER_COL.Green / 255.f, VO_BORDER_COL.Blue / 255.f, 1.f };
 				D3D11_VIEWPORT vp{};
 				vp.MaxDepth = 1.f;
 				vp.Width = scaled_offs_x;
