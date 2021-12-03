@@ -71,6 +71,13 @@ jobs:
           install: git base-devel mingw-w64-x86_64-toolchain mingw-w64-x86_64-cmake mingw-w64-x86_64-breakpad-git
         if: matrix.config.os == 'windows-latest'
 
+      - name: Downgrade gcc to 10.3
+        run: |
+          pacman -U --noconfirm https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-gcc-libs-10.3.0-8-any.pkg.tar.zst https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-gcc-10.3.0-8-any.pkg.tar.zst https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-gcc-ada-10.3.0-8-any.pkg.tar.zst https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-gcc-fortran-10.3.0-8-any.pkg.tar.zst https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-gcc-libgfortran-10.3.0-8-any.pkg.tar.zst https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-gcc-objc-10.3.0-8-any.pkg.tar.zst https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-libgccjit-10.3.0-8-any.pkg.tar.zst
+          pacman -U --noconfirm https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-crt-git-9.0.0.6246.ae63cde27-1-any.pkg.tar.zst https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-headers-git-9.0.0.6246.ae63cde27-1-any.pkg.tar.zst https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-libmangle-git-9.0.0.6246.ae63cde27-1-any.pkg.tar.zst https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-libwinpthread-git-9.0.0.6246.ae63cde27-1-any.pkg.tar.zst https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-tools-git-9.0.0.6246.ae63cde27-1-any.pkg.tar.zst https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-winpthreads-git-9.0.0.6246.ae63cde27-1-any.pkg.tar.zst https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-winstorecompat-git-9.0.0.6246.ae63cde27-1-any.pkg.tar.zst
+        shell: msys2 {0}
+        if: matrix.config.os == 'windows-latest'
+
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0
@@ -111,7 +118,7 @@ jobs:
       - name: Dump symbols
         shell: msys2 {0}
         run: |
-          dump_syms build/artifact/flycast.exe > flycast.exe.sym
+          dump_syms build/artifact/flycast.exe > flycast.exe.sym 2>/dev/null
           BUILD_ID=`head -1 flycast.exe.sym | awk '{ print $4 }'`
           mkdir -p symbols/flycast.exe/$BUILD_ID
           mv flycast.exe.sym symbols/flycast.exe/$BUILD_ID
