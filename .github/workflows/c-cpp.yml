@@ -42,7 +42,7 @@ jobs:
 
       - name: Set up build environment (windows-latest)
         run: echo "DXSDK_DIR=${Env:HOMEDRIVE}${Env:HOMEPATH}\ccache\" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf-8 -Append
-        if: matrix.config.os == 'windows-latest' && matrix.config.name != 'x86_64-w64-mingw32' && matrix.config.name != 'libretro-x86_64-w64-mingw32'
+        if: matrix.config.os == 'windows-latest' && matrix.config.name != 'libretro-x86_64-w64-mingw32'
 
       - uses: actions/cache@v2
         with:
@@ -60,7 +60,7 @@ jobs:
         if: matrix.config.os == 'windows-latest'
 
       - name: Download DX2010
-        if: matrix.config.os == 'windows-latest' && matrix.config.name != 'x86_64-w64-mingw32' && matrix.config.name != 'libretro-x86_64-w64-mingw32'
+        if: matrix.config.os == 'windows-latest' && matrix.config.name != 'libretro-x86_64-w64-mingw32'
         run:   |
                curl -L https://download.microsoft.com/download/a/e/7/ae743f1f-632b-4809-87a9-aa1bb3458e31/DXSDK_Jun10.exe -o _DX2010_.exe
                7z x _DX2010_.exe DXSDK/Include -o_DX2010_
@@ -75,6 +75,14 @@ jobs:
         with:
           msystem: MINGW64
           install: git base-devel mingw-w64-x86_64-toolchain mingw-w64-x86_64-cmake mingw-w64-x86_64-breakpad-git mingw-w64-x86_64-lua
+        if: endsWith(matrix.config.name, 'w64-mingw32')
+
+      - name: Downgrade gcc to 10.3
+        run: |
+          pacman -U --noconfirm https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-gcc-libs-10.3.0-8-any.pkg.tar.zst https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-gcc-10.3.0-8-any.pkg.tar.zst https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-gcc-ada-10.3.0-8-any.pkg.tar.zst https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-gcc-fortran-10.3.0-8-any.pkg.tar.zst https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-gcc-libgfortran-10.3.0-8-any.pkg.tar.zst https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-gcc-objc-10.3.0-8-any.pkg.tar.zst https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-libgccjit-10.3.0-8-any.pkg.tar.zst
+          pacman -U --noconfirm https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-crt-git-9.0.0.6246.ae63cde27-1-any.pkg.tar.zst https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-headers-git-9.0.0.6246.ae63cde27-1-any.pkg.tar.zst https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-libmangle-git-9.0.0.6246.ae63cde27-1-any.pkg.tar.zst https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-libwinpthread-git-9.0.0.6246.ae63cde27-1-any.pkg.tar.zst https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-tools-git-9.0.0.6246.ae63cde27-1-any.pkg.tar.zst https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-winpthreads-git-9.0.0.6246.ae63cde27-1-any.pkg.tar.zst https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-winstorecompat-git-9.0.0.6246.ae63cde27-1-any.pkg.tar.zst
+          pacman -U --noconfirm https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-cmake-3.20.5-2-any.pkg.tar.zst
+        shell: msys2 {0}
         if: endsWith(matrix.config.name, 'w64-mingw32')
 
       - uses: actions/checkout@v2

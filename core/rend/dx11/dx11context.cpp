@@ -59,9 +59,9 @@ bool DX11Context::init(bool keepCurrentWindow)
 				settings.display.height = displayMode->ResolutionHeightInRawPixels;
 				if (settings.display.width == 3840)
 					// 4K
-					scaling = 2.f;
+					scaling = 2.8f;
 				else
-					scaling = 1.f;
+					scaling = 1.4f;
 			}
 			break;
 
@@ -236,7 +236,6 @@ void DX11Context::resize()
 		pDeviceContext->OMSetRenderTargets(ARRAY_SIZE(views), views, nullptr);
 		renderTargetView.reset();
 #ifdef TARGET_UWP
-		// FIXME how to get correct width/height?
 		HRESULT hr = swapchain->ResizeBuffers(2, settings.display.width, settings.display.height, DXGI_FORMAT_R8G8B8A8_UNORM, 0);
 #else
 		DXGI_SWAP_CHAIN_DESC swapchainDesc;

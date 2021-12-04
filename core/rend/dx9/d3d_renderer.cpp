@@ -956,7 +956,7 @@ void D3DRenderer::readRttRenderTarget(u32 texAddress)
 		verifyWin(offscreenSurface->UnlockRect());
 
 		u16 *dst = (u16 *)&vram[texAddress];
-		WriteTextureToVRam<2, 1, 0, 3>(w, h, p, dst);
+		WriteTextureToVRam<2, 1, 0, 3>(w, h, (u8 *)tmp_buf.data(), dst);
 	}
 	else
 	{

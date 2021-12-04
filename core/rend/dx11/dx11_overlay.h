@@ -39,12 +39,16 @@ public:
 
 	void term()
 	{
+		blendStates.term();
+		depthStencilStates.term();
 		xhairTextureView.reset();
 		xhairTexture.reset();
 		for (auto& view : vmuTextureViews)
 			view.reset();
 		for (auto& tex : vmuTextures)
 			tex.reset();
+		deviceContext.reset();
+		device.reset();
 	}
 
 	void draw(u32 width, u32 height, bool vmu, bool crosshair);

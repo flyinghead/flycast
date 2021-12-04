@@ -88,7 +88,6 @@ cbuffer constantBuffer : register(b0)
 	float4 bottomPlane;
 };
 
-[clipplanes(leftPlane, topPlane, rightPlane, bottomPlane)]
 VertexOut main(in VertexIn vin)
 {
 	VertexOut vo;
@@ -528,3 +527,4 @@ ComPtr<ID3DBlob> DX11Shaders::getQuadVertexShaderBlob()
 {
 	return compileShader(QuadVertexShader, "main", "vs_4_0", nullptr);
 }
+

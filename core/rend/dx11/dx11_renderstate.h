@@ -61,6 +61,32 @@ const D3D11_BLEND SrcBlend[]
 	D3D11_BLEND_BLEND_FACTOR
 };
 
+const D3D11_BLEND DestBlendAlpha[]
+{
+	D3D11_BLEND_ZERO,
+	D3D11_BLEND_ONE,
+	D3D11_BLEND_SRC_ALPHA,
+	D3D11_BLEND_INV_SRC_ALPHA,
+	D3D11_BLEND_SRC_ALPHA,
+	D3D11_BLEND_INV_SRC_ALPHA,
+	D3D11_BLEND_DEST_ALPHA,
+	D3D11_BLEND_INV_DEST_ALPHA,
+	D3D11_BLEND_INV_BLEND_FACTOR
+};
+
+const D3D11_BLEND SrcBlendAlpha[]
+{
+	D3D11_BLEND_ZERO,
+	D3D11_BLEND_ONE,
+	D3D11_BLEND_DEST_ALPHA,
+	D3D11_BLEND_INV_DEST_ALPHA,
+	D3D11_BLEND_SRC_ALPHA,
+	D3D11_BLEND_INV_SRC_ALPHA,
+	D3D11_BLEND_DEST_ALPHA,
+	D3D11_BLEND_INV_DEST_ALPHA,
+	D3D11_BLEND_BLEND_FACTOR
+};
+
 class DepthStencilStates
 {
 public:
@@ -170,8 +196,8 @@ public:
 			desc.RenderTarget[0].SrcBlend = SrcBlend[srcBlend];
 			desc.RenderTarget[0].DestBlend = DestBlend[destBlend];
 			desc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
-			desc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_SRC_ALPHA;
-			desc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ZERO;
+			desc.RenderTarget[0].SrcBlendAlpha =  SrcBlendAlpha[srcBlend];
+			desc.RenderTarget[0].DestBlendAlpha = DestBlendAlpha[destBlend];
 			desc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
 			createBlendState(&desc, &state.get());
 		}
