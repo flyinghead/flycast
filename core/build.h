@@ -188,15 +188,15 @@
 //defaults
 
 #ifndef FEAT_SHREC
-	#if HOST_CPU == CPU_ARM || HOST_CPU == CPU_ARM64 || HOST_CPU == CPU_X86 || HOST_CPU == CPU_X64
+	#if ((HOST_CPU == CPU_ARM || HOST_CPU == CPU_ARM64) && !defined(_MSC_VER)) || HOST_CPU == CPU_X86 || HOST_CPU == CPU_X64
 		#define FEAT_SHREC DYNAREC_JIT
 	#else
-		#define FEAT_SHREC DYNAREC_NONE
+		#define FEAT_SHREC DYNAREC_CPP
 	#endif
 #endif
 
 #ifndef FEAT_AREC
-	#if HOST_CPU == CPU_ARM || HOST_CPU == CPU_ARM64 || HOST_CPU == CPU_X64
+	#if ((HOST_CPU == CPU_ARM || HOST_CPU == CPU_ARM64) && !defined(_MSC_VER)) || HOST_CPU == CPU_X64
 		#define FEAT_AREC DYNAREC_JIT
 	#else
 		#define FEAT_AREC DYNAREC_NONE
@@ -204,7 +204,7 @@
 #endif
 
 #ifndef FEAT_DSPREC
-	#if HOST_CPU == CPU_ARM || HOST_CPU == CPU_ARM64 || HOST_CPU == CPU_X86 || HOST_CPU == CPU_X64
+	#if ((HOST_CPU == CPU_ARM || HOST_CPU == CPU_ARM64) && !defined(_MSC_VER)) || HOST_CPU == CPU_X86 || HOST_CPU == CPU_X64
 		#define FEAT_DSPREC DYNAREC_JIT
 	#else
 		#define FEAT_DSPREC DYNAREC_NONE
