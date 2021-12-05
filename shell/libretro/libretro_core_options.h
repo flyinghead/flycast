@@ -72,22 +72,22 @@ struct retro_core_option_v2_category option_cats_us[] = {
    {
       "video",
       "Video",
-      "Configure visual buffers & effects, display parameters, framerate/-skip and rendering/texture parameters."
+      "Change visual buffers & effects, display parameters, framerate/-skip and rendering/texture settings."
    },
    {
       "input",
       "Input",
-      "Configure controller & light gun settings."
+      "Change controller & light gun settings."
    },
    {
       "vmu",
       "Visual Memory",
-      "Configure settings related to the Visual Memory Units/Systems (VMU)."
+      "Change settings related to the Visual Memory Units/Systems (VMU)."
    },
    {
       "hacks",
       "Emulation Hacks",
-      "Configure different emulation hacks."
+      "Change different emulation hacks."
    },
    { NULL, NULL, NULL },
 };
@@ -281,7 +281,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       CORE_OPTION_NAME "_widescreen_hack",
       "Widescreen Hack",
       NULL,
-      "Draw geometry outside of the normal 4:3 aspect ratio. May produce graphical glitches in the revealed areas",
+      "Draw geometry outside of the normal 4:3 aspect ratio. May produce graphical glitches in the revealed areas.",
       NULL,
       "hacks",
       {
@@ -357,7 +357,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       CORE_OPTION_NAME "_language",
       "Language",
       NULL,
-      "",
+      "Changes the language used by the BIOS and by any games that contain multiple languages.",
       NULL,
       NULL,
       {
