@@ -67,30 +67,6 @@ static inline bool operator!=(const ImVec2& l, const ImVec2& r)
 void fullScreenWindow(bool modal);
 void windowDragScroll();
 
-// UWP doesn't allow the UI thread to wait on a future
-template<typename F>
-void gui_deAsync(F f)
-{
-#ifdef TARGET_UWP
-	static cResetEvent event;
-	static std::future<void> future;
-
-	event.Reset();
-	future = std::async(std::launch::async, [&f] {
-		try {
-			f();
-			event.Set();
-		} catch (...) {
-			event.Set();
-			throw;
-		}
-	});
-	event.Wait();
-#else
-	f();
-#endif
-}
-
 class BackgroundGameLoader
 {
 public:
@@ -104,14 +80,14 @@ public:
 
 	void cancel()
 	{
+		if (progress.cancelled)
+			return;
 		progress.cancelled = true;
-		gui_deAsync([this] {
-			if (future.valid())
-				try {
-					future.get();
-				} catch (const FlycastException& e) {
-				}
-		});
+		if (future.valid())
+			try {
+				future.get();
+			} catch (const FlycastException& e) {
+			}
 		emu.unloadGame();
 		gui_state = GuiState::Main;
 	}
@@ -122,9 +98,7 @@ public:
 			return true;
 		if (future.wait_for(std::chrono::seconds(0)) == std::future_status::ready)
 		{
-			gui_deAsync([this] {
-				future.get();
-			});
+			future.get();
 			return true;
 		}
 		return false;

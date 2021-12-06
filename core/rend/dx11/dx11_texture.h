@@ -60,7 +60,7 @@ class Samplers
 public:
 	ComPtr<ID3D11SamplerState> getSampler(bool linear, bool clampU = true, bool clampV = true, bool flipU = false, bool flipV = false)
 	{
-		int hash = clampU | (clampV << 1) | (flipU << 2) | (flipV << 3) | (linear << 4);
+		int hash = (int)clampU | ((int)clampV << 1) | ((int)flipU << 2) | ((int)flipV << 3) | ((int)linear << 4);
 		auto& sampler = samplers[hash];
 		if (!sampler)
 		{

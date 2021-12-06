@@ -59,7 +59,7 @@ static LONG WINAPI exceptionHandler(EXCEPTION_POINTERS *ep)
 {
 	u32 dwCode = ep->ExceptionRecord->ExceptionCode;
 
-	if (dwCode < 0x80000000u)
+	if (dwCode < 0x80000000u || (dwCode & APPLICATION_ERROR_MASK) != 0)
 		// software exceptions, debug messages
 		return EXCEPTION_CONTINUE_SEARCH;
 

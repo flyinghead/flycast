@@ -353,22 +353,20 @@ static glm::vec3 intersect(const glm::vec3& A, float Adist , const glm::vec3& B,
 	return (A * std::abs(Bdist) + B * std::abs(Adist)) / (std::abs(Adist) + std::abs(Bdist));
 }
 
+// Clip the triangle 'trig' with respect to the plane defined by the given point and normal vector.
 static int sutherlandHodgmanClip(const glm::vec2& point, const glm::vec2& normal, ModTriangle& trig, ModTriangle& newTrig)
 {
 	constexpr float clipEpsilon = 0.f; //0.00001;
 	constexpr float clipEpsilon2 = 0.f; //0.01;
 
-	// Copy the source data (add an extra vertex to avoid paying for a mod at each element)
-	glm::vec3 src[4] = {
-			{ trig.x2, trig.y2, trig.z2 },
-			{ trig.x0, trig.y0, trig.z0 },
-			{ trig.x1, trig.y1, trig.z1 },
-			{ trig.x2, trig.y2, trig.z2 },
-	};
+	glm::vec3 v0(trig.x0, trig.y0, trig.z0);
+	glm::vec3 v1(trig.x1, trig.y1, trig.z1);
+	glm::vec3 v2(trig.x2, trig.y2, trig.z2);
+
 	glm::vec3 dist = glm::vec3(
-			glm::dot(glm::vec2(src[1]) - point, normal),
-			glm::dot(glm::vec2(src[2]) - point, normal),
-			glm::dot(glm::vec2(src[3]) - point, normal));
+			glm::dot(glm::vec2(v0) - point, normal),
+			glm::dot(glm::vec2(v1) - point, normal),
+			glm::dot(glm::vec2(v2) - point, normal));
 	if (!glm::any(glm::greaterThanEqual(dist , glm::vec3(clipEpsilon2))))
 		// all clipped
 		return 0;
@@ -376,55 +374,127 @@ static int sutherlandHodgmanClip(const glm::vec2& point, const glm::vec2& normal
 		// none clipped
 		return 3;
 
-	float srcDist[4] { dist[2], dist[0], dist[1], dist[2] };
-	glm::vec3 dst[4];
-	int numDst = 0;
-	// For each edge
-	for (int i = 0; i < 3; ++i)
+	// There are either 1 or 2 vertices above the clipping plane.
+	glm::bvec3 above = glm::greaterThanEqual(dist, glm::vec3(0.f));
+	bool nextIsAbove;
+	glm::vec3 v3;
+	// Find the CCW-most vertex above the plane.
+	if (above[1] && !above[0])
 	{
-		glm::vec3& A = src[i], B = src[i + 1];
-		float Adist = srcDist[i], Bdist = srcDist[i + 1];
-		if (Adist >= clipEpsilon2)
-		{
-			if (Bdist >= clipEpsilon2)
-				// Both are inside , so emit B only
-				dst[numDst++] = B;
-			else
-				// Exiting: emit the intersection only
-				dst[numDst++] = intersect(A, Adist , B, Bdist);
-		}
-		else if (Bdist >= clipEpsilon2)
-		{
-			// Entering: emit both the intersection and B
-			dst[numDst++] = intersect(A, Adist , B, Bdist);
-			dst[numDst++] = B;
-		}
+		// Cycle once CCW. Use v3 as a temp
+		nextIsAbove = above[2];
+		v3 = v0;
+		v0 = v1;
+		v1 = v2;
+		v2 = v3;
+		dist = glm::vec3(dist.y, dist.z, dist.x);
 	}
-	if (numDst > 0)
+	else if (above[2] && !above[1])
 	{
-		trig.x0 = dst[0].x;
-		trig.y0 = dst[0].y;
-		trig.z0 = dst[0].z;
-		trig.x1 = dst[1].x;
-		trig.y1 = dst[1].y;
-		trig.z1 = dst[1].z;
-		trig.x2 = dst[2].x;
-		trig.y2 = dst[2].y;
-		trig.z2 = dst[2].z;
-		if (numDst == 4)
-		{
-			newTrig.x0 = trig.x0;
-			newTrig.y0 = trig.y0;
-			newTrig.z0 = trig.z0;
-			newTrig.x1 = trig.x2;
-			newTrig.y1 = trig.y2;
-			newTrig.z1 = trig.z2;
-			newTrig.x2 = dst[3].x;
-			newTrig.y2 = dst[3].y;
-			newTrig.z2 = dst[3].z;
-		}
+		// Cycle once CW. Use v3 as a temp.
+		nextIsAbove = above[0];
+		v3 = v2;
+		v2 = v1;
+		v1 = v0;
+		v0 = v3;
+		dist = glm::vec3(dist.z, dist.x, dist.y);
 	}
-	return numDst;
+	else
+		nextIsAbove = above[1];
+	trig.x0 = v0.x;
+	trig.y0 = v0.y;
+	trig.z0 = v0.z;
+	// We always need to clip v2-v0.
+	v3 = intersect(v0, dist[0], v2, dist[2]);
+	if (nextIsAbove)
+	{
+		v2 = intersect(v1, dist[1], v2, dist[2]);
+		trig.x1 = v1.x;
+		trig.y1 = v1.y;
+		trig.z1 = v1.z;
+		trig.x2 = v2.x;
+		trig.y2 = v2.y;
+		trig.z2 = v2.z;
+		newTrig.x0 = v0.x;
+		newTrig.y0 = v0.y;
+		newTrig.z0 = v0.z;
+		newTrig.x1 = v2.x;
+		newTrig.y1 = v2.y;
+		newTrig.z1 = v2.z;
+		newTrig.x2 = v3.x;
+		newTrig.y2 = v3.y;
+		newTrig.z2 = v3.z;
+
+		return 4;
+	}
+	else
+	{
+		v1 = intersect(v0, dist[0], v1, dist[1]);
+		trig.x1 = v1.x;
+		trig.y1 = v1.y;
+		trig.z1 = v1.z;
+		trig.x2 = v3.x;
+		trig.y2 = v3.y;
+		trig.z2 = v3.z;
+
+		return 3;
+	}
+}
+
+static std::vector<ModTriangle> clipModVols()
+{
+	// clip triangles
+	std::vector<ModTriangle> allTrigs;
+	allTrigs.reserve(pvrrc.modtrig.used());
+
+	for (ModifierVolumeParam& param : pvrrc.global_param_mvo)
+	{
+		std::vector<ModTriangle> trigs(&pvrrc.modtrig.head()[param.first], &pvrrc.modtrig.head()[param.first + param.count]);
+		std::vector<ModTriangle> nextTrigs;
+		nextTrigs.reserve(trigs.size());
+		for (int axis = 0; axis < 3; axis++)
+		{
+			glm::vec2 point;
+			glm::vec2 normal;
+			switch (axis)
+			{
+			case 0: // left
+				point = glm::vec2(-6400.f, 0.f);
+				normal = glm::vec2(1.f, 0.f);
+				break;
+			case 1: // top
+				point = glm::vec2(0.f, -4800.f);
+				normal = glm::vec2(0.f, 1.f);
+				break;
+			case 2: // right
+				point = glm::vec2(7040.f, 0.f);
+				normal = glm::vec2(-1.f, 0.f);
+				break;
+			case 3: // bottom
+				point = glm::vec2(-0.f, 5280.f);
+				normal = glm::vec2(0.f, -1.f);
+				break;
+			}
+
+			for (ModTriangle& trig : trigs)
+			{
+				ModTriangle newTrig;
+				int size = sutherlandHodgmanClip(point, normal, trig, newTrig);
+				if (size > 0)
+				{
+					nextTrigs.push_back(trig);
+					if (size == 4)
+						nextTrigs.push_back(newTrig);
+				}
+			}
+			std::swap(trigs, nextTrigs);
+			nextTrigs.clear();
+		}
+		param.first = allTrigs.size();
+		param.count = trigs.size();
+		allTrigs.insert(allTrigs.end(), trigs.begin(), trigs.end());
+	}
+	return allTrigs;
 }
 
 bool DX11Renderer::Render()
@@ -487,62 +557,25 @@ bool DX11Renderer::Render()
 
 		if (config::ModifierVolumes && pvrrc.modtrig.used())
 		{
+			const ModTriangle *data = nullptr;
+			u32 size = 0;
+#if 1
 			// clip triangles
-			std::vector<ModTriangle> allTrigs;
-			allTrigs.reserve(pvrrc.modtrig.used());
-
-			for (ModifierVolumeParam& param : pvrrc.global_param_mvo)
+			std::vector<ModTriangle> modVolTriangles = clipModVols();
+			if (!modVolTriangles.empty())
 			{
-				std::vector<ModTriangle> trigs(&pvrrc.modtrig.head()[param.first], &pvrrc.modtrig.head()[param.first + param.count]);
-				std::vector<ModTriangle> nextTrigs;
-				nextTrigs.reserve(trigs.size());
-				for (int axis = 0; axis < 3; axis++)
-				{
-					glm::vec2 point;
-					glm::vec2 normal;
-					switch (axis)
-					{
-					case 0: // left
-						point = glm::vec2(-6400.f, 0.f);
-						normal = glm::vec2(1.f, 0.f);
-						break;
-					case 1: // top
-						point = glm::vec2(0.f, -4800.f);
-						normal = glm::vec2(0.f, 1.f);
-						break;
-					case 2: // right
-						point = glm::vec2(7040.f, 0.f);
-						normal = glm::vec2(-1.f, 0.f);
-						break;
-					case 3: // bottom
-						point = glm::vec2(-0.f, 5280.f);
-						normal = glm::vec2(0.f, -1.f);
-						break;
-					}
-
-					for (ModTriangle& trig : trigs)
-					{
-						ModTriangle newTrig;
-						int size = sutherlandHodgmanClip(point, normal, trig, newTrig);
-						if (size > 0)
-						{
-							nextTrigs.push_back(trig);
-							if (size == 4)
-								nextTrigs.push_back(newTrig);
-						}
-					}
-					std::swap(trigs, nextTrigs);
-					nextTrigs.clear();
-				}
-				param.first = allTrigs.size();
-				param.count = trigs.size();
-				allTrigs.insert(allTrigs.end(), trigs.begin(), trigs.end());
+				size = modVolTriangles.size() * sizeof(ModTriangle);
+				data = modVolTriangles.data();
 			}
-			if (!allTrigs.empty())
+#else
+			size = pvrrc.modtrig.bytes();
+			data = pvrrc.modtrig.head();
+#endif
+			if (size > 0)
 			{
-				verify(ensureBufferSize(modvolBuffer, D3D11_BIND_VERTEX_BUFFER, modvolBufferSize, allTrigs.size() * sizeof(ModTriangle)));
+				verify(ensureBufferSize(modvolBuffer, D3D11_BIND_VERTEX_BUFFER, modvolBufferSize, size));
 				deviceContext->Map(modvolBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedSubres);
-				memcpy(mappedSubres.pData, allTrigs.data(), allTrigs.size() * sizeof(ModTriangle));
+				memcpy(mappedSubres.pData, data, size);
 				deviceContext->Unmap(modvolBuffer, 0);
 			}
 		}
@@ -950,7 +983,10 @@ void DX11Renderer::drawModVols(int first, int count)
 			deviceContext->OMSetDepthStencilState(depthStencilStates.getMVState(DepthStencilStates::Xor), 0);
 
 		if (param.count > 0)
+		{
+			setCullMode(param.isp.CullMode);
 			deviceContext->Draw(param.count * 3, param.first * 3);
+		}
 
 		if (mv_mode == 1 || mv_mode == 2)
 		{

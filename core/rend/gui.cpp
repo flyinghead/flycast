@@ -432,17 +432,7 @@ void gui_open_settings()
 		{
 			gui_state = GuiState::Commands;
 			HideOSD();
-#ifdef TARGET_UWP
-			if (config::ThreadedRendering)
-			{
-				static std::future<void> f;
-				f = std::async(std::launch::async, [] {
-					emu.stop();
-				});
-			}
-			else
-#endif
-				emu.stop();
+			emu.stop();
 		}
 		else
 			chat.toggle();
@@ -2307,24 +2297,22 @@ static void gui_network_start()
 	if (networkStatus.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready)
 	{
 		ImGui::Text("Starting...");
-		gui_deAsync([] {
-			try {
-				if (networkStatus.get())
-				{
-					gui_state = GuiState::Closed;
-				}
-				else
-				{
-					emu.unloadGame();
-					gui_state = GuiState::Main;
-				}
-			} catch (const FlycastException& e) {
-				NetworkHandshake::instance->stop();
+		try {
+			if (networkStatus.get())
+			{
+				gui_state = GuiState::Closed;
+			}
+			else
+			{
 				emu.unloadGame();
-				gui_error(e.what());
 				gui_state = GuiState::Main;
 			}
-		});
+		} catch (const FlycastException& e) {
+			NetworkHandshake::instance->stop();
+			emu.unloadGame();
+			gui_error(e.what());
+			gui_state = GuiState::Main;
+		}
 	}
 	else
 	{
@@ -2340,15 +2328,13 @@ static void gui_network_start()
 	if (ImGui::Button("Cancel", ImVec2(100.f * scaling, 0.f)))
 	{
 		NetworkHandshake::instance->stop();
-		gui_deAsync([] {
-			try {
-				networkStatus.get();
-			}
-			catch (const FlycastException& e) {
-			}
-			emu.unloadGame();
-			gui_state = GuiState::Main;
-		});
+		try {
+			networkStatus.get();
+		}
+		catch (const FlycastException& e) {
+		}
+		emu.unloadGame();
+		gui_state = GuiState::Main;
 	}
 	ImGui::PopStyleVar();
 
@@ -2598,3 +2584,13 @@ void gui_error(const std::string& what)
 {
 	error_msg = what;
 }
+
+#ifdef TARGET_UWP
+// Ugly but a good workaround for MS stupidity
+// UWP doesn't allow the UI thread to wait on a thread/task. When an std::future is ready, it is possible
+// that the task has not yet completed. Calling std::future::get() at this point will throw an exception
+// AND destroy the std::future at the same time, rendering it invalid and discarding the future result.
+bool __cdecl Concurrency::details::_Task_impl_base::_IsNonBlockingThread() {
+	return false;
+}
+#endif
