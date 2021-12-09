@@ -396,8 +396,8 @@ const ComPtr<ID3D11PixelShader>& DX11Shaders::getShader(bool pp_Texture, bool pp
 			| (palette << 11)
 			| (gouraud << 12)
 			| (alphaTest << 13)
-			| (clipInside << 13)
-			| (nearestWrapFix << 14);
+			| (clipInside << 14)
+			| (nearestWrapFix << 15);
 	auto& shader = shaders[hash];
 	if (shader == nullptr)
 	{
