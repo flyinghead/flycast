@@ -199,9 +199,18 @@ VMemType vmem_platform_init(void **vmem_base_addr, void **sh4rcb_addr) {
 }
 
 // Just tries to wipe as much as possible in the relevant area.
-void vmem_platform_destroy() {
-	if (reserved_base != NULL)
+void vmem_platform_destroy()
+{
+	if (reserved_base != nullptr)
+	{
 		mem_region_release(reserved_base, reserved_size);
+		reserved_base = nullptr;
+	}
+	if (vmem_fd >= 0)
+	{
+		close(vmem_fd);
+		vmem_fd = -1;
+	}
 }
 
 // Resets a chunk of memory by deleting its data and setting its protection back.
