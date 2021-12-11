@@ -207,8 +207,7 @@ void VulkanOverlay::Draw(vk::CommandBuffer commandBuffer, vk::Extent2D viewport,
 			if (settings.platform.isConsole() && config::MapleMainDevices[i] != MDT_LightGun)
 				continue;
 
-			float x, y;
-			std::tie(x, y) = getCrosshairPosition(i);
+			auto [x, y] = getCrosshairPosition(i);
 
 #ifdef LIBRETRO
 			float w = LIGHTGUN_CROSSHAIR_SIZE * scaling / config::ScreenStretching * 100.f;

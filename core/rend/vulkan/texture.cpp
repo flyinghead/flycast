@@ -439,10 +439,10 @@ void TextureCache::Cleanup()
 
 	u32 TargetFrame = std::max((u32)120, FrameCount) - 120;
 
-	for (const auto& pair : cache)
+	for (const auto& [id, texture] : cache)
 	{
-		if (pair.second.dirty && pair.second.dirty < TargetFrame)
-			list.push_back(pair.first);
+		if (texture.dirty && texture.dirty < TargetFrame)
+			list.push_back(id);
 
 		if (list.size() > 5)
 			break;

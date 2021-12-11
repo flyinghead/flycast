@@ -28,11 +28,7 @@ gdrom_hle_state_t gd_hle_state;
 
 static void GDROM_HLE_ReadSES()
 {
-	u32 s = gd_hle_state.params[0];
-	u32 b = gd_hle_state.params[1];
-	u32 ba = gd_hle_state.params[2];
-	u32 bb = gd_hle_state.params[3];
-
+	auto [s, b, ba, bb] = gd_hle_state.params;
 	INFO_LOG(REIOS, "GDROM_HLE_ReadSES: doing nothing w/ %d, %d, %d, %d", s, b, ba, bb);
 }
 
@@ -410,10 +406,7 @@ static void GD_HLE_Command(gd_command cc)
 
 	case GDCC_SET_MODE:
 		{
-			u32 speed = gd_hle_state.params[0];
-			u32 standby = gd_hle_state.params[1];
-			u32 read_flags = gd_hle_state.params[2];
-			u32 read_retry = gd_hle_state.params[3];
+			auto [speed, standby, read_flags, read_retry] = gd_hle_state.params;
 
 			debugf("GDROM: SET_MODE speed %x standby %x read_flags %x read_retry %x", speed, standby, read_flags, read_retry);
 
