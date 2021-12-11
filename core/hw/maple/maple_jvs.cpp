@@ -935,7 +935,7 @@ void maple_naomi_jamma::handle_86_subcommand()
 
 		case 0x35:	// Receive then transmit with repeat (15 then 27)
 			receive_jvs_messages(channel);
-			// FALLTHROUGH
+			[[fallthrough]];
 
 		case 0x27:	// Transmit with repeat
 			{
