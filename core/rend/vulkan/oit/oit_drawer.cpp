@@ -459,7 +459,7 @@ void OITDrawer::MakeBuffers(int width, int height)
 			depthAttachments[1]->GetImageView(),
 	};
 	vk::FramebufferCreateInfo createInfo(vk::FramebufferCreateFlags(), pipelineManager->GetRenderPass(true, true),
-			ARRAY_SIZE(attachments), attachments, maxWidth, maxHeight, 1);
+			std::size(attachments), attachments, maxWidth, maxHeight, 1);
 	tempFramebuffers[0] = GetContext()->GetDevice().createFramebufferUnique(createInfo);
 	attachments[0] = attachments[1];
 	attachments[1] = colorAttachments[1]->GetImageView();
@@ -490,7 +490,7 @@ void OITScreenDrawer::MakeFramebuffers(const vk::Extent2D& viewport)
 				depthAttachments[1]->GetImageView(),
 		};
 		vk::FramebufferCreateInfo createInfo(vk::FramebufferCreateFlags(), screenPipelineManager->GetRenderPass(true, true),
-				ARRAY_SIZE(attachments), attachments, viewport.width, viewport.height, 1);
+				std::size(attachments), attachments, viewport.width, viewport.height, 1);
 		framebuffers.push_back(GetContext()->GetDevice().createFramebufferUnique(createInfo));
 		transitionNeeded.push_back(true);
 		clearNeeded.push_back(true);
@@ -584,7 +584,7 @@ vk::CommandBuffer OITTextureDrawer::NewFrame()
 	};
 	framebuffers.resize(GetContext()->GetSwapChainSize());
 	framebuffers[GetCurrentImage()] = device.createFramebufferUnique(vk::FramebufferCreateInfo(vk::FramebufferCreateFlags(),
-			rttPipelineManager->GetRenderPass(true, true), ARRAY_SIZE(imageViews), imageViews, widthPow2, heightPow2, 1));
+			rttPipelineManager->GetRenderPass(true, true), std::size(imageViews), imageViews, widthPow2, heightPow2, 1));
 
 	commandBuffer.setViewport(0, vk::Viewport(0.0f, 0.0f, (float)upscaledWidth, (float)upscaledHeight, 1.0f, 0.0f));
 	u32 minX = pvrrc.fb_X_CLIP.min;

@@ -170,7 +170,7 @@ void dc_serialize(Serializer& ser)
 
 	dsp::state.serialize(ser);
 
-	for (int i = 0 ; i < 3 ; i++)
+	for (std::size_t i = 0; i < std::size(timers); i++)
 	{
 		ser << timers[i].c_step;
 		ser << timers[i].m_step;
@@ -332,7 +332,7 @@ static void dc_deserialize_libretro(Deserializer& deser)
 
 	dsp::state.deserialize(deser);
 
-	for (int i = 0 ; i < 3 ; i++)
+	for (std::size_t i = 0; i < std::size(timers); i++)
 	{
 		deser >> timers[i].c_step;
 		deser >> timers[i].m_step;
@@ -467,7 +467,7 @@ static void dc_deserialize_libretro(Deserializer& deser)
 	deser >> sch_list[dma_sched_id].start;
 	deser >> sch_list[dma_sched_id].end;
 
-	for (int i = 0; i < 3; i++)
+	for (std::size_t i = 0; i < std::size(tmu_sched); i++)
 	{
 		deser >> sch_list[tmu_sched[i]].tag;
 		deser >> sch_list[tmu_sched[i]].start;
@@ -517,12 +517,12 @@ static void dc_deserialize_libretro(Deserializer& deser)
 
 	if (deser.version() < Deserializer::V6_LIBRETRO)
 	{
-		for (int i = 0; i < 64; i++)
+		for (std::size_t i = 0; i < std::size(UTLB); i++)
 		{
 			deser >> UTLB[i].Address;
 			deser >> UTLB[i].Data;
 		}
-		for (int i = 0; i < 4; i++)
+		for (std::size_t i = 0; i < std::size(ITLB); i++)
 		{
 			deser >> ITLB[i].Address;
 			deser >> ITLB[i].Data;
@@ -617,7 +617,7 @@ void dc_deserialize(Deserializer& deser)
 
 	dsp::state.deserialize(deser);
 
-	for (int i = 0 ; i < 3 ; i++)
+	for (std::size_t i = 0; i < std::size(timers); i++)
 	{
 		deser >> timers[i].c_step;
 		deser >> timers[i].m_step;

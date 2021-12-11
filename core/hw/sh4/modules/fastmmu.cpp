@@ -60,7 +60,7 @@ static void cache_entry(const TLB_Entry &entry)
 {
 	if (entry.Data.SZ0 == 0 && entry.Data.SZ1 == 0)
 		return;
-	verify(full_table_size < ARRAY_SIZE(full_table));
+	verify(full_table_size < std::size(full_table));
 
 	full_table[full_table_size].entry = entry;
 
@@ -136,7 +136,7 @@ int main(int argc, char *argv[])
 		perror(argv[1]);
 		return 1;
 	}
-	full_table_size = fread(full_table, sizeof(full_table[0]), ARRAY_SIZE(full_table), f);
+	full_table_size = fread(full_table, sizeof(full_table[0]), std::size(full_table), f);
 	fclose(f);
 	printf("Loaded %d entries\n", full_table_size);
 	std::vector<u32> addrs;

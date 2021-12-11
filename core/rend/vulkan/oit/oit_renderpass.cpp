@@ -99,8 +99,8 @@ vk::UniqueRenderPass RenderPasses::MakeRenderPass(bool initial, bool last)
 			vk::DependencyFlagBits::eByRegion);
 
     return GetContext()->GetDevice().createRenderPassUnique(vk::RenderPassCreateInfo(vk::RenderPassCreateFlags(),
-    		ARRAY_SIZE(attachmentDescriptions), attachmentDescriptions,
-    		ARRAY_SIZE(subpasses), subpasses,
+    		std::size(attachmentDescriptions), attachmentDescriptions,
+    		std::size(subpasses), subpasses,
 			dependencies.size(), dependencies.data()));
 }
 

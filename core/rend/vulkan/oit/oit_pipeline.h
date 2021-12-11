@@ -297,13 +297,13 @@ public:
 					{ 9, vk::DescriptorType::eStorageBuffer, 1, vk::ShaderStageFlagBits::eFragment },		// a-buffer pointers
 			};
 			perFrameLayout = device.createDescriptorSetLayoutUnique(
-					vk::DescriptorSetLayoutCreateInfo(vk::DescriptorSetLayoutCreateFlags(), ARRAY_SIZE(perFrameBindings), perFrameBindings));
+					vk::DescriptorSetLayoutCreateInfo(vk::DescriptorSetLayoutCreateFlags(), std::size(perFrameBindings), perFrameBindings));
 
 			vk::DescriptorSetLayoutBinding colorInputBindings[] = {
 					{ 0, vk::DescriptorType::eInputAttachment, 1, vk::ShaderStageFlagBits::eFragment },		// color input attachment
 			};
 			colorInputLayout = device.createDescriptorSetLayoutUnique(
-					vk::DescriptorSetLayoutCreateInfo(vk::DescriptorSetLayoutCreateFlags(), ARRAY_SIZE(colorInputBindings), colorInputBindings));
+					vk::DescriptorSetLayoutCreateInfo(vk::DescriptorSetLayoutCreateFlags(), std::size(colorInputBindings), colorInputBindings));
 
 			vk::DescriptorSetLayoutBinding perPolyBindings[] = {
 					{ 0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment },	// texture 0
@@ -312,7 +312,7 @@ public:
 					{ 3, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex },				// Naomi2 lights
 			};
 			perPolyLayout = device.createDescriptorSetLayoutUnique(
-					vk::DescriptorSetLayoutCreateInfo(vk::DescriptorSetLayoutCreateFlags(), ARRAY_SIZE(perPolyBindings), perPolyBindings));
+					vk::DescriptorSetLayoutCreateInfo(vk::DescriptorSetLayoutCreateFlags(), std::size(perPolyBindings), perPolyBindings));
 
 			vk::PushConstantRange pushConstants[] = {
 					vk::PushConstantRange(vk::ShaderStageFlagBits::eFragment, 0, sizeof(OITDescriptorSets::PushConstants)),
@@ -321,7 +321,7 @@ public:
 
 			vk::DescriptorSetLayout layouts[] = { *perFrameLayout, *perPolyLayout, *colorInputLayout };
 			pipelineLayout = device.createPipelineLayoutUnique(
-					vk::PipelineLayoutCreateInfo(vk::PipelineLayoutCreateFlags(), ARRAY_SIZE(layouts), layouts, ARRAY_SIZE(pushConstants), pushConstants));
+					vk::PipelineLayoutCreateInfo(vk::PipelineLayoutCreateFlags(), std::size(layouts), layouts, std::size(pushConstants), pushConstants));
 		}
 
 		pipelines.clear();
@@ -438,9 +438,9 @@ private:
 		};
 		return vk::PipelineVertexInputStateCreateInfo(
 				vk::PipelineVertexInputStateCreateFlags(),
-				ARRAY_SIZE(vertexBindingDescriptions),
+				std::size(vertexBindingDescriptions),
 				vertexBindingDescriptions,
-				full ? ARRAY_SIZE(vertexInputAttributeDescriptions) : ARRAY_SIZE(vertexInputLightAttributeDescriptions),
+				full ? std::size(vertexInputAttributeDescriptions) : std::size(vertexInputLightAttributeDescriptions),
 				full ? vertexInputAttributeDescriptions : vertexInputLightAttributeDescriptions);
 	}
 

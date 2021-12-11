@@ -851,10 +851,10 @@ static void *pico_thread_func(void *)
 	{
 		gameId = naomi_game_id;
 	}
-	for (u32 i = 0; i < ARRAY_SIZE(GamesPorts) && ports == nullptr; i++)
+	for (u32 i = 0; i < std::size(GamesPorts) && ports == nullptr; i++)
 	{
 		const auto& game = GamesPorts[i];
-		for (u32 j = 0; j < ARRAY_SIZE(game.gameId) && game.gameId[j] != nullptr; j++)
+		for (u32 j = 0; j < std::size(game.gameId) && game.gameId[j] != nullptr; j++)
 		{
 			if (gameId == game.gameId[j])
 			{
@@ -879,10 +879,10 @@ static void *pico_thread_func(void *)
 					WARN_LOG(MODEM, "UPNP Init failed");
 				else
 				{
-					for (u32 i = 0; i < ARRAY_SIZE(ports->udpPorts) && ports->udpPorts[i] != 0; i++)
+					for (u32 i = 0; i < std::size(ports->udpPorts) && ports->udpPorts[i] != 0; i++)
 						if (!upnp.AddPortMapping(ports->udpPorts[i], false))
 							WARN_LOG(MODEM, "UPNP AddPortMapping UDP %d failed", ports->udpPorts[i]);
-					for (u32 i = 0; i < ARRAY_SIZE(ports->tcpPorts) && ports->tcpPorts[i] != 0; i++)
+					for (u32 i = 0; i < std::size(ports->tcpPorts) && ports->tcpPorts[i] != 0; i++)
 						if (!upnp.AddPortMapping(ports->tcpPorts[i], true))
 							WARN_LOG(MODEM, "UPNP AddPortMapping TCP %d failed", ports->tcpPorts[i]);
 				}
@@ -998,7 +998,7 @@ static void *pico_thread_func(void *)
 	saddr.sin_addr.s_addr = INADDR_ANY;
 	if (ports != nullptr)
 	{
-		for (u32 i = 0; i < ARRAY_SIZE(ports->udpPorts) && ports->udpPorts[i] != 0; i++)
+		for (u32 i = 0; i < std::size(ports->udpPorts) && ports->udpPorts[i] != 0; i++)
 		{
 			uint16_t port = short_be(ports->udpPorts[i]);
 			sock_t sockfd = find_udp_socket(port);
@@ -1015,7 +1015,7 @@ static void *pico_thread_func(void *)
 			}
 		}
 
-		for (u32 i = 0; i < ARRAY_SIZE(ports->tcpPorts) && ports->tcpPorts[i] != 0; i++)
+		for (u32 i = 0; i < std::size(ports->tcpPorts) && ports->tcpPorts[i] != 0; i++)
 		{
 			uint16_t port = short_be(ports->tcpPorts[i]);
 			saddr.sin_port = port;

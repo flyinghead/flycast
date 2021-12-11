@@ -464,7 +464,7 @@ vk::CommandBuffer TextureDrawer::BeginRenderPass()
 	};
 	framebuffers.resize(GetContext()->GetSwapChainSize());
 	framebuffers[GetCurrentImage()] = device.createFramebufferUnique(vk::FramebufferCreateInfo(vk::FramebufferCreateFlags(),
-			rttPipelineManager->GetRenderPass(), ARRAY_SIZE(imageViews), imageViews, widthPow2, heightPow2, 1));
+			rttPipelineManager->GetRenderPass(), std::size(imageViews), imageViews, widthPow2, heightPow2, 1));
 
 	const vk::ClearValue clear_colors[] = { vk::ClearColorValue(std::array<float, 4> { 0.f, 0.f, 0.f, 1.f }), vk::ClearDepthStencilValue { 0.f, 0 } };
 	commandBuffer.beginRenderPass(vk::RenderPassBeginInfo(rttPipelineManager->GetRenderPass(),	*framebuffers[GetCurrentImage()],
@@ -583,13 +583,13 @@ void ScreenDrawer::Init(SamplerManager *samplerManager, ShaderManager *shaderMan
 				vk::AccessFlagBits::eColorAttachmentWrite, vk::AccessFlagBits::eShaderRead, vk::DependencyFlagBits::eByRegion);
 
 		renderPassLoad = GetContext()->GetDevice().createRenderPassUnique(vk::RenderPassCreateInfo(vk::RenderPassCreateFlags(),
-				ARRAY_SIZE(attachmentDescriptions), attachmentDescriptions,
-				ARRAY_SIZE(subpasses), subpasses,
+				std::size(attachmentDescriptions), attachmentDescriptions,
+				std::size(subpasses), subpasses,
 				dependencies.size(), dependencies.data()));
 		attachmentDescriptions[0].loadOp = vk::AttachmentLoadOp::eClear;
 		renderPassClear = GetContext()->GetDevice().createRenderPassUnique(vk::RenderPassCreateInfo(vk::RenderPassCreateFlags(),
-				ARRAY_SIZE(attachmentDescriptions), attachmentDescriptions,
-				ARRAY_SIZE(subpasses), subpasses,
+				std::size(attachmentDescriptions), attachmentDescriptions,
+				std::size(subpasses), subpasses,
 				dependencies.size(), dependencies.data()));
 	}
 	size_t size = GetSwapChainSize();
@@ -614,7 +614,7 @@ void ScreenDrawer::Init(SamplerManager *samplerManager, ShaderManager *shaderMan
 					vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled);
 			attachments[0] = colorAttachments.back()->GetImageView();
 			vk::FramebufferCreateInfo createInfo(vk::FramebufferCreateFlags(), *renderPassLoad,
-					ARRAY_SIZE(attachments), attachments, viewport.width, viewport.height, 1);
+					std::size(attachments), attachments, viewport.width, viewport.height, 1);
 			framebuffers.push_back(GetContext()->GetDevice().createFramebufferUnique(createInfo));
 			transitionNeeded.push_back(true);
 			clearNeeded.push_back(true);

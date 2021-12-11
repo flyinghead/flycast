@@ -781,7 +781,7 @@ static void forceFeedbackMidiReceiver(u8 data)
 		if (midiTxBuf[0] == 0x85 && midiTxBuf[1] == 0x3f)
 			MapleConfigMap::UpdateVibration(0, std::max(0.f, (float)(midiTxBuf[2] - 1) / 24.f), 0.f, 5);
 	}
-	midiTxBufIndex = (midiTxBufIndex + 1) % ARRAY_SIZE(midiTxBuf);
+	midiTxBufIndex = (midiTxBufIndex + 1) % std::size(midiTxBuf);
 }
 
 void initMidiForceFeedback()

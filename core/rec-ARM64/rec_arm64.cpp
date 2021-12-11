@@ -2267,7 +2267,7 @@ bool ngen_Rewrite(host_context_t &context, void *faultAddress)
 	u32 size = 0;
 	bool found = false;
 	u32 masked = armv8_op & STR_LDR_MASK;
-	for (u32 i = 0; i < ARRAY_SIZE(armv8_mem_ops); i++)
+	for (u32 i = 0; i < std::size(armv8_mem_ops); i++)
 	{
 		if (masked == armv8_mem_ops[i])
 		{

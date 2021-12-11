@@ -459,8 +459,8 @@ const ComPtr<ID3D11PixelShader>& DX11Shaders::getShader(bool pp_Texture, bool pp
 	auto& shader = shaders[hash];
 	if (shader == nullptr)
 	{
-		verify(pp_ShadInstr < ARRAY_SIZE(MacroValues));
-		verify(pp_FogCtrl < ARRAY_SIZE(MacroValues));
+		verify(pp_ShadInstr < std::size(MacroValues));
+		verify(pp_FogCtrl < std::size(MacroValues));
 		PixelMacros[MacroGouraud].Definition = MacroValues[gouraud];
 		PixelMacros[MacroTexture].Definition = MacroValues[pp_Texture];
 		PixelMacros[MacroUseAlpha].Definition = MacroValues[pp_UseAlpha];

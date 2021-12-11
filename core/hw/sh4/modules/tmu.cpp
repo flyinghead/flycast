@@ -288,7 +288,7 @@ void tmu_init()
 	//TMU TCPR2 0xFFD8002C 0x1FD8002C 32 Held Held Held Held Pclk
 	sh4_rio_reg(TMU,TMU_TCPR2_addr,RIO_FUNC,32,&TMU_TCPR2_read,&TMU_TCPR2_write);
 
-	for (int i = 0; i < 3; i++) {
+	for (std::size_t i = 0; i < std::size(tmu_sched); i++) {
 		tmu_sched[i] = sh4_sched_register(i, &sched_tmu_cb);
 		sh4_sched_request(tmu_sched[i], -1);
 	}

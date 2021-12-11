@@ -428,7 +428,7 @@ static void _vmem_set_p0_mappings()
 		{0x0C000000, 0x10000000,            MAP_RAM_START_OFFSET,  RAM_SIZE,  true},  // Area 3 (main RAM + 3 mirrors)
 		{0x10000000, 0x80000000,                               0,         0, false},  // Area 4-7 (unused)
 	};
-	vmem_platform_create_mappings(&mem_mappings[0], ARRAY_SIZE(mem_mappings));
+	vmem_platform_create_mappings(&mem_mappings[0], std::size(mem_mappings));
 }
 
 bool _vmem_reserve()
@@ -511,7 +511,7 @@ void _vmem_init_mappings()
 				// This is outside of the 512MB addr space. We map 8MB in all cases to help some games read past the end of aica ram
 				{0x20000000, 0x20800000,           MAP_ARAM_START_OFFSET, ARAM_SIZE,  true},  // writable aica ram
 			};
-			vmem_platform_create_mappings(&mem_mappings[0], ARRAY_SIZE(mem_mappings));
+			vmem_platform_create_mappings(&mem_mappings[0], std::size(mem_mappings));
 
 			// Point buffers to actual data pointers
 			aica_ram.data = &virt_ram_base[0x20000000];  // Points to the writable AICA addrspace
@@ -566,7 +566,7 @@ void _vmem_init_mappings()
 				{0xCC000000, 0xD0000000,            MAP_RAM_START_OFFSET,  RAM_SIZE,  true},  // Area 3 (main RAM + 3 mirrors)
 				{0xD0000000, 0x100000000L,                             0,         0, false},  // Area 4-7 (unused)
 			};
-			vmem_platform_create_mappings(&mem_mappings[0], ARRAY_SIZE(mem_mappings));
+			vmem_platform_create_mappings(&mem_mappings[0], std::size(mem_mappings));
 
 			// Point buffers to actual data pointers
 			aica_ram.data = &virt_ram_base[0x80800000];  // Points to the first AICA addrspace in P1

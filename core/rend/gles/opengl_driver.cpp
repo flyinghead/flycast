@@ -50,7 +50,7 @@ OpenGLDriver::~OpenGLDriver()
 	EventManager::unlisten(Event::Start, emuEventCallback, this);
 	EventManager::unlisten(Event::Terminate, emuEventCallback, this);
 
-	for (u32 i = 0; i < ARRAY_SIZE(vmu_lcd_status); i++)
+	for (u32 i = 0; i < std::size(vmu_lcd_status); i++)
 	{
 		if (vmu_lcd_tex_ids[i] != ImTextureID())
 		{

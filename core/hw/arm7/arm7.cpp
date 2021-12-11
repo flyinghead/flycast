@@ -93,7 +93,7 @@ void aicaarm::init()
 #endif
 	aicaarm::reset();
 
-	for (int i = 0; i < 256; i++)
+	for (std::size_t i = 0; i < std::size(cpuBitsSet); i++)
 	{
 		int count = 0;
 		for (int j = 0; j < 8; j++)

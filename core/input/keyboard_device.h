@@ -430,17 +430,17 @@ void KeyboardDeviceTemplate<Keycode>::keyboard_input(Keycode keycode, bool press
 			break;
 	}
 	const int port = maple_port();
-	if (port >= 0 && port < (int)ARRAY_SIZE(kb_shift))
+	if (port >= 0 && port < (int)std::size(kb_shift))
 		kb_shift[port] = _modifier_keys;
 
 	if (dc_keycode != 0 && dc_keycode < 0xE0)
 	{
 		gui_keyboard_key(dc_keycode, pressed, _modifier_keys);
-		if (port >= 0 && port < (int)ARRAY_SIZE(kb_key))
+		if (port >= 0 && port < (int)std::size(kb_key))
 		{
 			if (pressed)
 			{
-				if (_kb_used < ARRAY_SIZE(kb_key[port]))
+				if (_kb_used < std::size(kb_key[port]))
 				{
 					bool found = false;
 					for (u32 i = 0; !found && i < _kb_used; i++)
@@ -459,9 +459,9 @@ void KeyboardDeviceTemplate<Keycode>::keyboard_input(Keycode keycode, bool press
 					if (kb_key[port][i] == dc_keycode)
 					{
 						_kb_used--;
-						for (u32 j = i; j < ARRAY_SIZE(kb_key[port]) - 1; j++)
+						for (u32 j = i; j < std::size(kb_key[port]) - 1; j++)
 							kb_key[port][j] = kb_key[port][j + 1];
-						kb_key[port][ARRAY_SIZE(kb_key[port]) - 1] = 0;
+						kb_key[port][std::size(kb_key[port]) - 1] = 0;
 						break;
 					}
 				}
@@ -479,7 +479,7 @@ void KeyboardDeviceTemplate<Keycode>::keyboard_input(Keycode keycode, bool press
 	// Do not map keyboard keys to gamepad buttons unless the GUI is open
 	// or the corresponding maple device (if any) isn't a keyboard
 	else if (gui_is_open()
-			|| port == (int)ARRAY_SIZE(kb_key)
+			|| port == (int)std::size(kb_key)
 			|| (settings.platform.isConsole() && config::MapleMainDevices[port] != MDT_Keyboard)
 			|| (settings.platform.isNaomi() && settings.input.JammaSetup != JVS::Keyboard)
 			|| settings.platform.isAtomiswave())

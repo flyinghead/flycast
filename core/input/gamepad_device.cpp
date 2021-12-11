@@ -135,7 +135,7 @@ bool GamepadDevice::gamepad_btn_input(u32 code, bool pressed)
 		_input_detected = nullptr;
 		return true;
 	}
-	if (!input_mapper || _maple_port > (int)ARRAY_SIZE(kcode))
+	if (!input_mapper || _maple_port > (int)std::size(kcode))
 		return false;
 
 	bool rc = false;

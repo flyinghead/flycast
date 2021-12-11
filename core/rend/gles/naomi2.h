@@ -60,7 +60,7 @@ void initN2Uniforms(ShaderType *shader)
 	shader->useBaseOver = glGetUniformLocation(shader->program, "useBaseOver");
 	shader->bumpId0 = glGetUniformLocation(shader->program, "bumpId0");
 	shader->bumpId1 = glGetUniformLocation(shader->program, "bumpId1");
-	for (u32 i = 0; i < ARRAY_SIZE(shader->lights); i++)
+	for (u32 i = 0; i < std::size(shader->lights); i++)
 	{
 		char str[128];
 		sprintf(str, "lights[%d].color", i);

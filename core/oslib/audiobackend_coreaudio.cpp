@@ -217,7 +217,7 @@ static bool coreaudio_init_record(u32 sampling_freq)
 	}
 	
 	AudioQueueBufferRef buffers[2];
-	for (UInt32 i = 0; i < ARRAY_SIZE(buffers) && err == noErr; i++)
+	for (UInt32 i = 0; i < std::size(buffers) && err == noErr; i++)
 	{
 		err = AudioQueueAllocateBuffer(recordQueue, 480, &buffers[i]);
 		if (err == noErr)

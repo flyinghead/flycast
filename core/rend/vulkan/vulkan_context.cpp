@@ -442,7 +442,7 @@ bool VulkanContext::InitDevice()
             { vk::DescriptorType::eInputAttachment, 100 }
         };
 	    descriptorPool = device->createDescriptorPoolUnique(vk::DescriptorPoolCreateInfo(vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet,
-	    		40000, ARRAY_SIZE(pool_sizes), pool_sizes));
+	    		40000, std::size(pool_sizes), pool_sizes));
 
 
 	    std::string cachePath = hostfs::getShaderCachePath("vulkan_pipeline.cache");

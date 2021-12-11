@@ -62,8 +62,8 @@ class AArch64ArmRegAlloc : public ArmRegAlloc<MAX_REGS, AArch64ArmRegAlloc>
 		static const WRegister regs[] = {
 				w19, w20, w21, w22, w23, w24, w25, w27
 		};
-		static_assert(MAX_REGS == ARRAY_SIZE(regs), "MAX_REGS == ARRAY_SIZE(regs)");
-		verify(i >= 0 && (u32)i < ARRAY_SIZE(regs));
+		static_assert(MAX_REGS == std::size(regs), "MAX_REGS == std::size(regs)");
+		verify(i >= 0 && (u32)i < std::size(regs));
 		return regs[i];
 	}
 

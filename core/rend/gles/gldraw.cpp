@@ -981,9 +981,9 @@ void DrawGunCrosshair(u8 port)
 
 void termVmuLightgun()
 {
-	glcache.DeleteTextures(ARRAY_SIZE(vmuTextureId), vmuTextureId);
+	glcache.DeleteTextures(std::size(vmuTextureId), vmuTextureId);
 	memset(vmuTextureId, 0, sizeof(vmuTextureId));
-	glcache.DeleteTextures(ARRAY_SIZE(lightgunTextureId), lightgunTextureId);
+	glcache.DeleteTextures(std::size(lightgunTextureId), lightgunTextureId);
 	memset(lightgunTextureId, 0, sizeof(lightgunTextureId));
 	osdVerts.reset();
 	osdIndex.reset();

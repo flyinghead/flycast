@@ -249,7 +249,7 @@ bool VulkanContext::init(retro_hw_render_interface_vulkan *retro_render_if)
 			{ vk::DescriptorType::eInputAttachment, 50 }
 	};
 	descriptorPool = device.createDescriptorPoolUnique(vk::DescriptorPoolCreateInfo(vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet,
-			40000, ARRAY_SIZE(pool_sizes), pool_sizes));
+			40000, std::size(pool_sizes), pool_sizes));
 
 	std::string cachePath = hostfs::getShaderCachePath("vulkan_pipeline.cache");
 	FILE *f = fopen(cachePath.c_str(), "rb");

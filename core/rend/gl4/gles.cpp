@@ -605,8 +605,8 @@ static void gl4_term()
 	for (auto& buffer : gl4.vbo.tr_poly_params)
 		buffer.reset();
 	gl4_delete_shaders();
-	glDeleteVertexArrays(ARRAY_SIZE(gl4.vbo.main_vao), gl4.vbo.main_vao);
-	glDeleteVertexArrays(ARRAY_SIZE(gl4.vbo.modvol_vao), gl4.vbo.modvol_vao);
+	glDeleteVertexArrays(std::size(gl4.vbo.main_vao), gl4.vbo.main_vao);
+	glDeleteVertexArrays(std::size(gl4.vbo.modvol_vao), gl4.vbo.modvol_vao);
 #ifdef LIBRETRO
 	gl4TermVmuLightgun();
 #endif
@@ -644,7 +644,7 @@ static bool gl_create_resources()
 	glGenVertexArrays(2, &gl4.vbo.modvol_vao[0]);
 
 	//create vbos
-	for (u32 i = 0; i < ARRAY_SIZE(gl4.vbo.geometry); i++)
+	for (u32 i = 0; i < std::size(gl4.vbo.geometry); i++)
 	{
 		gl4.vbo.geometry[i] = std::unique_ptr<GlBuffer>(new GlBuffer(GL_ARRAY_BUFFER));
 		gl4.vbo.modvols[i] = std::unique_ptr<GlBuffer>(new GlBuffer(GL_ARRAY_BUFFER));

@@ -40,7 +40,7 @@ public:
 			{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,   0, 2 * sizeof(float),  D3D11_INPUT_PER_VERTEX_DATA, 0 },
 		};
 		ComPtr<ID3DBlob> blob = shaders->getQuadVertexShaderBlob();
-		if (FAILED(device->CreateInputLayout(layout, ARRAY_SIZE(layout), blob->GetBufferPointer(), blob->GetBufferSize(), &inputLayout.get())))
+		if (FAILED(device->CreateInputLayout(layout, std::size(layout), blob->GetBufferPointer(), blob->GetBufferSize(), &inputLayout.get())))
 			WARN_LOG(RENDERER, "Input layout creation failed");
 
 		// Rasterizer state

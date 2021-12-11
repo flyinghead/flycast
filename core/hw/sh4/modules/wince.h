@@ -293,7 +293,7 @@ static bool print_wince_syscall(u32 address)
 		const char *api;
 		char api_buf[128];
 
-		if (api_id < ARRAY_SIZE(wince_apis))
+		if (api_id < std::size(wince_apis))
 			api = wince_apis[api_id];
 		else
 		{
@@ -309,7 +309,7 @@ static bool print_wince_syscall(u32 address)
 		const char *method = NULL;
 		char method_buf[128];
 
-		if (api_id < ARRAY_SIZE(wince_methods) && meth_id < ARRAY_SIZE(wince_methods[api_id]))
+		if (api_id < std::size(wince_methods) && meth_id < std::size(wince_methods[api_id]))
 			method = wince_methods[api_id][meth_id];
 		if (method == NULL)
 		{

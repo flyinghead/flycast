@@ -351,10 +351,6 @@ struct OnLoad
 	OnLoad(OnLoadFP* fp) { fp(); }
 };
 
-#ifndef ARRAY_SIZE
-#define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
-#endif
-
 class FlycastException : public std::runtime_error
 {
 public:

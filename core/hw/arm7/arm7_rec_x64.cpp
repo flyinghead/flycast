@@ -53,9 +53,9 @@ static const std::array<Xbyak::Reg32, 6> alloc_regs {
 };
 #endif
 
-class X64ArmRegAlloc : public ArmRegAlloc<sizeof(alloc_regs) / sizeof(alloc_regs[0]), X64ArmRegAlloc>
+class X64ArmRegAlloc : public ArmRegAlloc<std::size(alloc_regs), X64ArmRegAlloc>
 {
-	using super = ArmRegAlloc<sizeof(alloc_regs) / sizeof(alloc_regs[0]), X64ArmRegAlloc>;
+	using super = ArmRegAlloc<std::size(alloc_regs), X64ArmRegAlloc>;
 	Arm7Compiler& assembler;
 
 	void LoadReg(int host_reg, Arm7Reg armreg);

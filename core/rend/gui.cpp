@@ -392,7 +392,7 @@ static void gui_newFrame()
 static void delayedKeysUp()
 {
 	ImGuiIO& io = ImGui::GetIO();
-	for (u32 i = 0; i < ARRAY_SIZE(keysUpNextFrame); i++)
+	for (u32 i = 0; i < std::size(keysUpNextFrame); i++)
 		if (keysUpNextFrame[i])
 			io.KeysDown[i] = false;
 	memset(keysUpNextFrame, 0, sizeof(keysUpNextFrame));
@@ -1272,15 +1272,15 @@ static void gui_display_settings()
 		{
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
 			const char *languages[] = { "Japanese", "English", "German", "French", "Spanish", "Italian", "Default" };
-			OptionComboBox("Language", config::Language, languages, ARRAY_SIZE(languages),
+			OptionComboBox("Language", config::Language, languages, std::size(languages),
 				"The language as configured in the Dreamcast BIOS");
 
 			const char *broadcast[] = { "NTSC", "PAL", "PAL/M", "PAL/N", "Default" };
-			OptionComboBox("Broadcast", config::Broadcast, broadcast, ARRAY_SIZE(broadcast),
+			OptionComboBox("Broadcast", config::Broadcast, broadcast, std::size(broadcast),
 					"TV broadcasting standard for non-VGA modes");
 
 			const char *region[] = { "Japan", "USA", "Europe", "Default" };
-			OptionComboBox("Region", config::Region, region, ARRAY_SIZE(region),
+			OptionComboBox("Region", config::Region, region, std::size(region),
 						"BIOS region");
 
 			const char *cable[] = { "VGA", "RGB Component", "TV Composite" };
@@ -1435,7 +1435,7 @@ static void gui_display_settings()
 					ImGui::PushID(port_name);
 					if (ImGui::BeginCombo(port_name, maple_ports[gamepad->maple_port() + 1]))
 					{
-						for (int j = -1; j < (int)ARRAY_SIZE(maple_ports) - 1; j++)
+						for (int j = -1; j < (int)std::size(maple_ports) - 1; j++)
 						{
 							bool is_selected = gamepad->maple_port() == j;
 							if (ImGui::Selectable(maple_ports[j + 1], &is_selected))
@@ -2752,7 +2752,7 @@ void gui_refresh_files()
 
 static void reset_vmus()
 {
-	for (u32 i = 0; i < ARRAY_SIZE(vmu_lcd_status); i++)
+	for (u32 i = 0; i < std::size(vmu_lcd_status); i++)
 		vmu_lcd_status[i] = false;
 }
 

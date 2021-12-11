@@ -40,9 +40,9 @@ vk::PipelineVertexInputStateCreateInfo GetQuadInputStateCreateInfo(bool uv)
 	};
 	return vk::PipelineVertexInputStateCreateInfo(
 			vk::PipelineVertexInputStateCreateFlags(),
-			ARRAY_SIZE(vertexBindingDescriptions),
+			std::size(vertexBindingDescriptions),
 			vertexBindingDescriptions,
-			ARRAY_SIZE(vertexInputAttributeDescriptions) - (uv ? 0 : 1),
+			std::size(vertexInputAttributeDescriptions) - (uv ? 0 : 1),
 			vertexInputAttributeDescriptions);
 }
 
@@ -88,7 +88,7 @@ void QuadPipeline::CreatePipeline()
 	);
 
 	vk::DynamicState dynamicStates[] = { vk::DynamicState::eViewport, vk::DynamicState::eScissor };
-	vk::PipelineDynamicStateCreateInfo pipelineDynamicStateCreateInfo(vk::PipelineDynamicStateCreateFlags(), ARRAY_SIZE(dynamicStates), dynamicStates);
+	vk::PipelineDynamicStateCreateInfo pipelineDynamicStateCreateInfo(vk::PipelineDynamicStateCreateFlags(), std::size(dynamicStates), dynamicStates);
 
 	vk::PipelineShaderStageCreateInfo stages[] = {
 			{ vk::PipelineShaderStageCreateFlags(), vk::ShaderStageFlagBits::eVertex, shaderManager->GetQuadVertexShader(rotate), "main" },
@@ -125,7 +125,7 @@ void QuadPipeline::Init(ShaderManager *shaderManager, vk::RenderPass renderPass,
 			{ 0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment }, // texture
 		};
 		descSetLayout = GetContext()->GetDevice().createDescriptorSetLayoutUnique(
-				vk::DescriptorSetLayoutCreateInfo(vk::DescriptorSetLayoutCreateFlags(), ARRAY_SIZE(bindings), bindings));
+				vk::DescriptorSetLayoutCreateInfo(vk::DescriptorSetLayoutCreateFlags(), std::size(bindings), bindings));
 		vk::PushConstantRange pushConstant(vk::ShaderStageFlagBits::eFragment, 0, 4 * sizeof(float));
 		pipelineLayout = GetContext()->GetDevice().createPipelineLayoutUnique(
 				vk::PipelineLayoutCreateInfo(vk::PipelineLayoutCreateFlags(), 1, &descSetLayout.get(), 1, &pushConstant));

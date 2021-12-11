@@ -52,7 +52,7 @@ static void GDROM_HLE_ReadTOC()
 	libGDR_GetToc(toc, (DiskArea)area);
 
 	// Swap results to LE
-	for (int i = 0; i < 102; i++) {
+	for (std::size_t i = 0; i < std::size(toc); i++) {
 		toc[i] = SWAP32(toc[i]);
 	}
 	if (!mmu_enabled())
@@ -64,7 +64,7 @@ static void GDROM_HLE_ReadTOC()
 			return;
 		}
 	}
-	for (int i = 0; i < 102; i++, dest += 4)
+	for (std::size_t i = 0; i < std::size(toc); i++, dest += 4)
 		WriteMem32(dest, toc[i]);
 }
 
@@ -96,7 +96,7 @@ static void read_sectors_to(u32 addr, u32 sector, u32 count)
 	{
 		libGDR_ReadSector((u8 *)temp, sector, 1, sizeof(temp));
 
-		for (std::size_t i = 0; i < ARRAY_SIZE(temp); i++)
+		for (std::size_t i = 0; i < std::size(temp); i++)
 		{
 			if (virtual_addr)
 				WriteMem32(addr, temp[i]);
@@ -742,7 +742,7 @@ void gdrom_hle_op()
 			//
 			// Returns: GDC_OK, GDC_ERR
 			DEBUG_LOG(REIOS, "GDROM: HLE CHANGE_DATA_TYPE PTR_r4:%X",r[4]);
-			for(int i=0; i<4; i++) {
+			for(std::size_t i = 0; i < std::size(SecMode); i++) {
 				SecMode[i] = ReadMem32(r[4]+(i<<2));
 				DEBUG_LOG(REIOS, "%08X", SecMode[i]);
 			}

@@ -230,7 +230,7 @@ static inline vk::Format findDepthFormat(vk::PhysicalDevice physicalDevice)
 	const vk::Format depthFormats[] = { vk::Format::eD32SfloatS8Uint, vk::Format::eD24UnormS8Uint, vk::Format::eD16UnormS8Uint };
 	vk::ImageTiling tiling;
 	vk::Format depthFormat = vk::Format::eUndefined;
-	for (size_t i = 0; i < ARRAY_SIZE(depthFormats); i++)
+	for (size_t i = 0; i < std::size(depthFormats); i++)
 	{
 		vk::FormatProperties formatProperties = physicalDevice.getFormatProperties(depthFormats[i]);
 
@@ -244,7 +244,7 @@ static inline vk::Format findDepthFormat(vk::PhysicalDevice physicalDevice)
 	if (depthFormat == vk::Format::eUndefined)
 	{
 		// Try to find a linear format
-		for (size_t i = 0; i < ARRAY_SIZE(depthFormats); i++)
+		for (size_t i = 0; i < std::size(depthFormats); i++)
 		{
 			vk::FormatProperties formatProperties = physicalDevice.getFormatProperties(depthFormats[i]);
 

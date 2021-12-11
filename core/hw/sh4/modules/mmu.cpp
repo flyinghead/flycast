@@ -219,7 +219,7 @@ u32 mmu_full_lookup(u32 va, const TLB_Entry** tlb_entry_ret, u32& rv)
 	u32 entry = -1;
 	u32 nom = 0;
 
-	for (u32 i = 0; i<64; i++)
+	for (std::size_t i = 0; i < std::size(UTLB); i++)
 	{
 		//verify(sz!=0);
 		TLB_Entry *tlb_entry = &UTLB[i];
@@ -446,7 +446,7 @@ u32 mmu_instruction_lookup(u32 va, const TLB_Entry** tlb_entry_ret, u32& rv)
 retry_ITLB_Match:
 	u32 entry = 4;
 	u32 nom = 0;
-	for (u32 i = 0; i<4; i++)
+	for (std::size_t i = 0; i < std::size(ITLB); i++)
 	{
 		if (ITLB[i].Data.V == 0)
 			continue;
@@ -519,7 +519,7 @@ void MMU_init()
 	{
 		u32 match_key = ((~ITLB_LRU_AND[e]) & 0x3F);
 		u32 match_mask = match_key | ITLB_LRU_OR[e];
-		for (u32 i = 0; i<64; i++)
+		for (u32 i = 0; i < std::size(ITLB_LRU_USE); i++)
 		{
 			if ((i & match_mask) == match_key)
 			{
@@ -530,7 +530,7 @@ void MMU_init()
 	}
 	mmu_set_state();
 	// pre-fill kernel memory
-	for (u32 vpn = ARRAY_SIZE(mmuAddressLUT) / 2; vpn < ARRAY_SIZE(mmuAddressLUT); vpn++)
+	for (u32 vpn = std::size(mmuAddressLUT) / 2; vpn < std::size(mmuAddressLUT); vpn++)
 		mmuAddressLUT[vpn] = vpn << 12;
 }
 
@@ -557,7 +557,7 @@ void mmu_flush_table()
 	ITLB[2].Data.V = 0;
 	ITLB[3].Data.V = 0;
 
-	for (u32 i = 0; i < 64; i++)
+	for (std::size_t i = 0; i < std::size(UTLB); i++)
 		UTLB[i].Data.V = 0;
 	mmuAddressLUTFlush(true);
 }

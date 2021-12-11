@@ -365,9 +365,9 @@ void OITPipelineManager::CreateModVolPipeline(ModVolMode mode, int cullMode, boo
 	// Vertex input state
 	vk::PipelineVertexInputStateCreateInfo pipelineVertexInputStateCreateInfo(
 			vk::PipelineVertexInputStateCreateFlags(),
-			ARRAY_SIZE(vertexBindingDescriptions),
+			std::size(vertexBindingDescriptions),
 			vertexBindingDescriptions,
-			ARRAY_SIZE(vertexInputAttributeDescriptions),
+			std::size(vertexInputAttributeDescriptions),
 			vertexInputAttributeDescriptions);
 	// Input assembly state
 	vk::PipelineInputAssemblyStateCreateInfo pipelineInputAssemblyStateCreateInfo(vk::PipelineInputAssemblyStateCreateFlags(),
@@ -488,9 +488,9 @@ void OITPipelineManager::CreateTrModVolPipeline(ModVolMode mode, int cullMode, b
 	// Vertex input state
 	vk::PipelineVertexInputStateCreateInfo pipelineVertexInputStateCreateInfo(
 			vk::PipelineVertexInputStateCreateFlags(),
-			ARRAY_SIZE(vertexBindingDescriptions),
+			std::size(vertexBindingDescriptions),
 			vertexBindingDescriptions,
-			ARRAY_SIZE(vertexInputAttributeDescriptions),
+			std::size(vertexInputAttributeDescriptions),
 			vertexInputAttributeDescriptions);
 	// Input assembly state
 	vk::PipelineInputAssemblyStateCreateInfo pipelineInputAssemblyStateCreateInfo(vk::PipelineInputAssemblyStateCreateFlags(),

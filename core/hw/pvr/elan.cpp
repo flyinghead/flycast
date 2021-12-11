@@ -864,7 +864,7 @@ private:
 		v.u1 = v1.u1 * a1 + v2.u1 * a2;
 		v.v1 = v1.v1 * a1 + v2.v1 * a2;
 
-		for (size_t i = 0; i < ARRAY_SIZE(v1.col); i++)
+		for (size_t i = 0; i < std::size(v1.col); i++)
 		{
 			v.col[i] = (u8)std::round(v1.col[i] * a1 + v2.col[i] * a2);
 			v.spc[i] = (u8)std::round(v1.spc[i] * a1 + v2.spc[i] * a2);

@@ -48,9 +48,9 @@ void PipelineManager::CreateModVolPipeline(ModVolMode mode, int cullMode, bool n
 		};
 		pipelineVertexInputStateCreateInfo = vk::PipelineVertexInputStateCreateInfo(
 				vk::PipelineVertexInputStateCreateFlags(),
-				ARRAY_SIZE(vertexBindingDescriptions),
+				std::size(vertexBindingDescriptions),
 				vertexBindingDescriptions,
-				ARRAY_SIZE(vertexInputAttributeDescriptions),
+				std::size(vertexInputAttributeDescriptions),
 				vertexInputAttributeDescriptions);
 		pipelineInputAssemblyStateCreateInfo = vk::PipelineInputAssemblyStateCreateInfo(vk::PipelineInputAssemblyStateCreateFlags(),
 				vk::PrimitiveTopology::eTriangleList);
@@ -454,9 +454,9 @@ void OSDPipeline::CreatePipeline()
 	};
 	vk::PipelineVertexInputStateCreateInfo vertexInputStateCreateInfo(
 				vk::PipelineVertexInputStateCreateFlags(),
-				ARRAY_SIZE(vertexBindingDescriptions),
+				std::size(vertexBindingDescriptions),
 				vertexBindingDescriptions,
-				ARRAY_SIZE(vertexInputAttributeDescriptions),
+				std::size(vertexInputAttributeDescriptions),
 				vertexInputAttributeDescriptions);
 
 	// Input assembly state
@@ -496,7 +496,7 @@ void OSDPipeline::CreatePipeline()
 	);
 
 	vk::DynamicState dynamicStates[] = { vk::DynamicState::eViewport, vk::DynamicState::eScissor };
-	vk::PipelineDynamicStateCreateInfo pipelineDynamicStateCreateInfo(vk::PipelineDynamicStateCreateFlags(), ARRAY_SIZE(dynamicStates),
+	vk::PipelineDynamicStateCreateInfo pipelineDynamicStateCreateInfo(vk::PipelineDynamicStateCreateFlags(), std::size(dynamicStates),
 			dynamicStates);
 
 	vk::PipelineShaderStageCreateInfo stages[] = {

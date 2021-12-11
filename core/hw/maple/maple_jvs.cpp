@@ -67,13 +67,13 @@ const char *GetCurrentGameButtonName(DreamcastKey key)
 	u32 arcade_key;
 	if (settings.platform.isNaomi())
 	{
-		if (pos >= ARRAY_SIZE(naomi_button_mapping))
+		if (pos >= std::size(naomi_button_mapping))
 			return nullptr;
 		arcade_key = naomi_button_mapping[pos];
 	}
 	else
 	{
-		if (pos >= ARRAY_SIZE(awave_button_mapping))
+		if (pos >= std::size(awave_button_mapping))
 			return nullptr;
 		const u32* mapping = settings.input.JammaSetup == JVS::LightGun ? awavelg_button_mapping : awave_button_mapping;
 		arcade_key = mapping[pos];
@@ -451,7 +451,7 @@ protected:
 	u16 read_analog_axis(int player_num, int player_axis, bool inverted) override {
 		if (init_in_progress)
 			return 0;
-		const MapleInputState& inputState = mapleInputState[std::min(player_num, (int)ARRAY_SIZE(mapleInputState) - 1)];
+		const MapleInputState& inputState = mapleInputState[std::min(player_num, (int)std::size(mapleInputState) - 1)];
 		if (inputState.absPos.x < 0 || inputState.absPos.x > 639 || inputState.absPos.y < 0 || inputState.absPos.y > 479)
 			return 0;
 		else
@@ -1417,7 +1417,7 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 			for (int p = 0; p < 4; p++)
 				buttons[p] = ~mapleInputState[p].kcode;
 #else
-			for (u32 i = 0; i < ARRAY_SIZE(naomi_button_mapping); i++)
+			for (u32 i = 0; i < std::size(naomi_button_mapping); i++)
 				for (int p = 0; p < 4; p++)
 					if ((mapleInputState[p].kcode & (1 << i)) == 0)
 						buttons[p] |= naomi_button_mapping[i];
@@ -1493,7 +1493,7 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 							for (; axis / 2 < player_count && axis < buffer_in[cmdi + 1]; axis += 2)
 							{
 								int playerNum = first_player + axis / 2;
-								const MapleInputState& inputState = mapleInputState[std::min(playerNum, (int)ARRAY_SIZE(mapleInputState) - 1)];
+								const MapleInputState& inputState = mapleInputState[std::min(playerNum, (int)std::size(mapleInputState) - 1)];
 								u16 x;
 								u16 y;
 								if (inputState.absPos.x < 0 || inputState.absPos.x > 639
@@ -1523,7 +1523,7 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 							u16 axis_value;
 							if (NaomiGameInputs != NULL)
 							{
-								if (player_axis >= ARRAY_SIZE(NaomiGameInputs->axes)
+								if (player_axis >= std::size(NaomiGameInputs->axes)
 										|| NaomiGameInputs->axes[player_axis].name == NULL)
 								{
 									// Next player
@@ -1640,7 +1640,7 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 					break;
 
 				case 0x30:	// substract coin
-					if (buffer_in[cmdi + 1] > 0 && first_player + buffer_in[cmdi + 1] - 1 < (int)ARRAY_SIZE(coin_count))
+					if (buffer_in[cmdi + 1] > 0 && first_player + buffer_in[cmdi + 1] - 1 < (int)std::size(coin_count))
 						coin_count[first_player + buffer_in[cmdi + 1] - 1] -= (buffer_in[cmdi + 2] << 8) + buffer_in[cmdi + 3];
 					JVS_STATUS1();	// report byte
 					cmdi += 4;
