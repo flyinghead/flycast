@@ -159,16 +159,6 @@ static void VolumePan(SampleType value, u32 vol, u32 pan, SampleType& outl, Samp
 	}
 }
 
-template<typename T>
-static void clip(T& v, T min, T max) {
-	v = std::min(max, std::max(min, v));
-}
-
-template<typename T>
-static void clip16(T& v) {
-	clip<T>(v, -32768, 32767);
-}
-
 const DSP_OUT_VOL_REG *dsp_out_vol = (DSP_OUT_VOL_REG *)&aica_reg[0x2000];
 static int beepOn;
 static int beepPeriod;
@@ -505,7 +495,7 @@ struct ChannelEx
 				f = std::max(1, f);
 				sample = f * sample + (0x2000 - f + FEG.q) * FEG.prev1 - FEG.q * FEG.prev2;
 				sample >>= 13;
-				clip16(sample);
+				sample = std::clamp(sample, -32768, 32767);
 				FEG.prev2 = FEG.prev1;
 				FEG.prev1 = sample;
 			}
@@ -678,10 +668,7 @@ struct ChannelEx
 	u32 EG_EffRate(s32 base_rate, u32 rate)
 	{
 		s32 rv = base_rate + rate * 2;
-
-		clip(rv, 0, 0x3f);
-
-		return rv;
+		return std::clamp(rv, 0, 0x3f);
 	}
 
 	//D2R,D1R,AR,DL,RR,KRS, [OCT,FNS] for now
@@ -898,10 +885,9 @@ static SampleType DecodeADPCM(u32 sample,s32 prev,s32& quant)
 	rv = sign * rv + prev;
 
 	quant = (quant * adpcm_qs[data])>>8;
+	quant = std::clamp(quant, 127, 24576);
 
-	clip(quant,127,24576);
-	clip16(rv);
-	return rv;
+	return std::clamp(rv, -32768, 32767);
 }
 
 template<s32 PCMS,bool last>
@@ -1519,8 +1505,8 @@ void AICA_Sample()
 		printf("Clipped mixl %d mixr %d\n", mixl, mixr);
 #endif
 
-	clip16(mixl);
-	clip16(mixr);
+	mixl = std::clamp(mixl, -32768, 32767);
+	mixr = std::clamp(mixr, -32768, 32767);
 
 	WriteSample(mixr,mixl);
 }
