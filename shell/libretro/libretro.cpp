@@ -941,14 +941,11 @@ static void extract_directory(char *buf, const char *path, size_t size)
 	strncpy(buf, path, size - 1);
 	buf[size - 1] = '\0';
 
-	char *base = strrchr(buf, '/');
-	if (!base)
-		base = strrchr(buf, '\\');
-
+	char *base = find_last_slash(buf);
 	if (base)
 		*base = '\0';
 	else
-		buf[0] = '\0';
+		strncpy(buf, ".", size - 1);
 }
 
 static uint32_t map_gamepad_button(unsigned device, unsigned id)
@@ -1343,11 +1340,10 @@ static void set_input_descriptors()
 
 static void extract_basename(char *buf, const char *path, size_t size)
 {
-	const char *base = strrchr(path, slash);
+	const char *base = find_last_slash(path);
 	if (!base)
 		base = path;
-
-	if (*base == slash)
+	else
 		base++;
 
 	strncpy(buf, base, size - 1);

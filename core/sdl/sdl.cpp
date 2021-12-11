@@ -544,7 +544,7 @@ bool sdl_recreate_window(u32 flags)
 
 	void *windowCtx = window;
 #ifdef _WIN32
-	if (config::RendererType == RenderType::DirectX11 || config::RendererType == RenderType::DirectX9)
+	if (isDirectX(config::RendererType))
 #ifdef TARGET_UWP
 	{
 		SDL_SysWMinfo wmInfo;

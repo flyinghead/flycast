@@ -59,7 +59,7 @@ static void loadSpecialSettings()
 				|| prod_id == "T26702N") // PBA Tour Bowling 2001
 		{
 			INFO_LOG(BOOT, "Enabling Full MMU and Extra depth scaling for Windows CE game");
-			config::ExtraDepthScale.override(0.1); // taxi 2 needs 0.01 for FMV (amd, per-tri)
+			config::ExtraDepthScale.override(0.1f); // taxi 2 needs 0.01 for FMV (amd, per-tri)
 			config::FullMMU.override(true);
 			if (!config::ForceWindowsCE)
 				config::ForceWindowsCE.override(true);

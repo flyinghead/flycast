@@ -86,7 +86,7 @@ public:
 		if (future.valid())
 			try {
 				future.get();
-			} catch (const FlycastException& e) {
+			} catch (const FlycastException&) {
 			}
 		emu.unloadGame();
 		gui_state = GuiState::Main;

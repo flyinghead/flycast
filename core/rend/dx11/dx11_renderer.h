@@ -48,16 +48,74 @@ struct DX11Renderer : public Renderer
 	void DrawOSD(bool clear_screen) override;
 	BaseTextureCacheData *GetTexture(TSP tsp, TCW tcw) override;
 
-private:
-	void readDCFramebuffer();
-	void renderDCFramebuffer();
+protected:
+	struct VertexConstants
+	{
+	    float transMatrix[4][4];
+	    float leftPlane[4];
+	    float topPlane[4];
+	    float rightPlane[4];
+	    float bottomPlane[4];
+	};
+
+	struct PixelConstants
+	{
+		float colorClampMin[4];
+		float colorClampMax[4];
+		float fog_col_vert[4];
+		float fog_col_ram[4];
+		float fogDensity;
+		float shadowScale;
+		float alphaTestValue;
+	};
+
+	struct PixelPolyConstants
+	{
+		float clipTest[4];
+		float paletteIndex;
+		float trilinearAlpha;
+	};
+
 	bool ensureBufferSize(ComPtr<ID3D11Buffer>& buffer, D3D11_BIND_FLAG bind, u32& currentSize, u32 minSize);
-	void setProvokingVertices();
-	void prepareRttRenderTarget(u32 texAddress);
-	void readRttRenderTarget(u32 texAddress);
-	void renderFramebuffer();
+	void createDepthTexAndView(ComPtr<ID3D11Texture2D>& texture, ComPtr<ID3D11DepthStencilView>& view, int width, int height, DXGI_FORMAT format = DXGI_FORMAT_D24_UNORM_S8_UINT, UINT bindFlags = 0);
+	void createTexAndRenderTarget(ComPtr<ID3D11Texture2D>& texture, ComPtr<ID3D11RenderTargetView>& renderTarget, int width, int height);
+	void configVertexShader();
+	void uploadGeometryBuffers();
+	void setupPixelShaderConstants();
 	void updateFogTexture();
 	void updatePaletteTexture();
+	void renderDCFramebuffer();
+	void readRttRenderTarget(u32 texAddress);
+	void renderFramebuffer();
+	void setCullMode(int mode);
+
+	ComPtr<ID3D11Device> device;
+	ComPtr<ID3D11DeviceContext> deviceContext;
+	ComPtr<ID3D11Texture2D> depthTex;
+	ComPtr<ID3D11DepthStencilView> depthTexView;
+	ComPtr<ID3D11InputLayout> mainInputLayout;
+	ComPtr<ID3D11InputLayout> modVolInputLayout;
+	ComPtr<ID3D11Buffer> pxlPolyConstants;
+	ComPtr<ID3D11Buffer> vertexBuffer;
+	ComPtr<ID3D11Buffer> indexBuffer;
+	ComPtr<ID3D11Buffer> modvolBuffer;
+	ComPtr<ID3D11RenderTargetView> fbRenderTarget;
+	ComPtr<ID3D11RenderTargetView> rttRenderTarget;
+
+	BlendStates blendStates;
+	DepthStencilStates depthStencilStates;
+	Samplers *samplers;
+	TransformMatrix<COORD_DIRECTX> matrices;
+	D3D11_RECT scissorRect{};
+	u32 width = 0;
+	u32 height = 0;
+	bool frameRendered = false;
+	bool frameRenderedOnce = false;
+
+private:
+	void readDCFramebuffer();
+	void setProvokingVertices();
+	void prepareRttRenderTarget(u32 texAddress);
 	void setBaseScissor();
 	void drawStrips();
 	template <u32 Type, bool SortingEnabled>
@@ -67,26 +125,15 @@ private:
 	void sortTriangles(int first, int count);
 	void drawSorted(bool multipass);
 	void drawModVols(int first, int count);
-	void setCullMode(int mode);
-	void createDepthTexAndView(ComPtr<ID3D11Texture2D>& depthTex, ComPtr<ID3D11DepthStencilView>& depthTexView, int width, int height);
-	void createTexAndRenderTarget(ComPtr<ID3D11Texture2D>& texture, ComPtr<ID3D11RenderTargetView>& renderTarget, int width, int height);
 
-	ComPtr<ID3D11Device> device;
-	ComPtr<ID3D11DeviceContext> deviceContext;
-	ComPtr<ID3D11Buffer> vertexBuffer;
 	u32 vertexBufferSize = 0;
-	ComPtr<ID3D11Buffer> modvolBuffer;
 	u32 modvolBufferSize = 0;
-	ComPtr<ID3D11Buffer> indexBuffer;
 	u32 indexBufferSize = 0;
 	ComPtr<ID3D11Buffer> sortedTriIndexBuffer;
 	u32 sortedTriIndexBufferSize = 0;
 
 	ComPtr<ID3D11Texture2D> fbTex;
-	ComPtr<ID3D11RenderTargetView> fbRenderTarget;
 	ComPtr<ID3D11ShaderResourceView> fbTextureView;
-	ComPtr<ID3D11Texture2D> depthTex;
-	ComPtr<ID3D11DepthStencilView> depthTexView;
 	ComPtr<ID3D11Texture2D> dcfbTexture;
 	ComPtr<ID3D11ShaderResourceView> dcfbTextureView;
 	ComPtr<ID3D11Texture2D> paletteTexture;
@@ -94,7 +141,6 @@ private:
 	ComPtr<ID3D11Texture2D> fogTexture;
 	ComPtr<ID3D11ShaderResourceView> fogTextureView;
 	ComPtr<ID3D11Texture2D> rttTexture;
-	ComPtr<ID3D11RenderTargetView> rttRenderTarget;
 	ComPtr<ID3D11Texture2D> rttDepthTex;
 	ComPtr<ID3D11DepthStencilView> rttDepthTexView;
 	ComPtr<ID3D11Texture2D> whiteTexture;
@@ -102,23 +148,11 @@ private:
 
 	ComPtr<ID3D11RasterizerState> rasterCullNone, rasterCullFront, rasterCullBack;
 
-	u32 width = 0;
-	u32 height = 0;
-	TransformMatrix<COORD_DIRECTX> matrices;
 	DX11TextureCache texCache;
 	DX11Shaders *shaders;
-	Samplers *samplers;
-	DepthStencilStates depthStencilStates;
-	BlendStates blendStates;
 	std::vector<SortTrigDrawParam> pidx_sort;
 	std::unique_ptr<Quad> quad;
-	ComPtr<ID3D11InputLayout> mainInputLayout;
-	ComPtr<ID3D11InputLayout> modVolInputLayout;
 	ComPtr<ID3D11Buffer> vtxConstants;
 	ComPtr<ID3D11Buffer> pxlConstants;
-	ComPtr<ID3D11Buffer> pxlPolyConstants;
-	D3D11_RECT scissorRect{};
 	bool scissorEnable = false;
-	bool frameRendered = false;
-	bool frameRenderedOnce = false;
 };

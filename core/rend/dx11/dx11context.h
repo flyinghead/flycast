@@ -46,6 +46,13 @@ public:
 	std::string getDriverVersion() override {
 		return adapterVersion;
 	}
+	bool hasPerPixel() override {
+		return true;
+	}
+	bool isIntel() const {
+		return vendorId == VENDOR_INTEL;
+	}
+
 	void setFrameRendered() {
 		frameRendered = true;
 	}
@@ -70,8 +77,11 @@ private:
 	bool frameRendered = false;
 	std::string adapterDesc;
 	std::string adapterVersion;
+	UINT vendorId = 0;
 	DX11Shaders shaders;
 	Samplers samplers;
+
+	static constexpr UINT VENDOR_INTEL = 0x8086;
 };
 extern DX11Context theDX11Context;
 #endif

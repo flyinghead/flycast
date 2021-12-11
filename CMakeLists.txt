@@ -910,7 +910,6 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/build.h
         core/cheats.cpp
         core/cheats.h
-        core/dispframe.cpp
         core/emulator.h
         core/nullDC.cpp
         core/serialize.cpp
@@ -1056,7 +1055,9 @@ if(WIN32 AND NOT LIBRETRO)
 		core/rend/dx11/dx11context.h
 		core/rend/dx11/imgui_impl_dx11.cpp
 		core/rend/dx11/imgui_impl_dx11.h
-		core/rend/dx11/dx11_driver.h)
+		core/rend/dx11/dx11_driver.h
+		core/rend/dx11/oit/dx11_oitrenderer.cpp
+		core/rend/dx11/oit/dx11_oitshaders.cpp)
 	target_link_libraries(${PROJECT_NAME} PRIVATE d3d11 d3dcompiler)
 endif()
 

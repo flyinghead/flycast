@@ -48,7 +48,7 @@ void initRenderApi(void *window, void *display)
 	}
 #endif
 #ifdef _WIN32
-	if (config::RendererType == RenderType::DirectX11)
+	if (config::RendererType == RenderType::DirectX11 || config::RendererType == RenderType::DirectX11_OIT)
 	{
 		theDX11Context.setWindow(window, display);
 		if (theDX11Context.init())

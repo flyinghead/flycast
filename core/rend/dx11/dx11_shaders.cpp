@@ -67,7 +67,7 @@ VertexOut main(in VertexIn vin)
 
 )";
 
-const char * const ModVolVertexShader = R"(
+const char *ModVolVertexShader = R"(
 struct VertexIn
 {
 	float4 pos : POSITION;
@@ -130,7 +130,7 @@ cbuffer constantBuffer : register(b0)
 	float4 FOG_COL_VERT;
 	float4 FOG_COL_RAM;
 	float fogDensity;
-	float fogScale;
+	float shadowScale;
 	float alphaTestValue;
 };
 
@@ -281,7 +281,7 @@ PSO modifierVolume(in MVPixel inpix)
 	PSO pso;
 	float w = inpix.uv.w * 100000.0f;
 	pso.z = log2(1.0f + w) / 34.0f;
-	pso.col = float4(0, 0, 0, fogScale);
+	pso.col = float4(0, 0, 0, shadowScale);
 
 	return pso;
 }

@@ -1127,7 +1127,7 @@ void error_popup()
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, padding);
 		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, padding);
 		ImGui::OpenPopup("Error");
-		if (ImGui::BeginPopupModal("Error", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
+		if (ImGui::BeginPopupModal("Error", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar))
 		{
 			ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + 400.f * scaling);
 			ImGui::TextWrapped("%s", error_msg.c_str());
@@ -1576,6 +1576,10 @@ static void gui_display_settings()
 				renderApi = 3;
 				perPixel = false;
 				break;
+			case RenderType::DirectX11_OIT:
+				renderApi = 3;
+				perPixel = true;
+				break;
 			}
 
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
@@ -1790,7 +1794,7 @@ static void gui_display_settings()
 		    	config::RendererType = RenderType::DirectX9;
 		    	break;
 		    case 3:
-		    	config::RendererType = RenderType::DirectX11;
+		    	config::RendererType = perPixel ? RenderType::DirectX11_OIT : RenderType::DirectX11;
 		    	break;
 		    }
 		}

@@ -102,6 +102,7 @@ bool DX11Context::init(bool keepCurrentWindow)
 	wdesc.convert(desc.Description);
 	adapterDesc = wdesc.c_str();
 	adapterVersion = std::to_string(desc.Revision);
+	vendorId = desc.VendorId;
 
 	ComPtr<IDXGIFactory1> dxgiFactory;
 	dxgiAdapter->GetParent(__uuidof(IDXGIFactory1), (void **)&dxgiFactory.get());
