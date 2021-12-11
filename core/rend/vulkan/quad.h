@@ -38,7 +38,7 @@ class QuadBuffer
 public:
 	QuadBuffer()
 	{
-		buffer = std::unique_ptr<BufferData>(new BufferData(sizeof(QuadVertex) * 4, vk::BufferUsageFlagBits::eVertexBuffer));
+		buffer = std::make_unique<BufferData>(sizeof(QuadVertex) * 4, vk::BufferUsageFlagBits::eVertexBuffer);
 	}
 
 	void Bind(vk::CommandBuffer commandBuffer)

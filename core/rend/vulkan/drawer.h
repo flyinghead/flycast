@@ -214,8 +214,8 @@ protected:
 		u32 bufferIndex = imageIndex + renderPass * GetSwapChainSize();
 		while (mainBuffers.size() <= bufferIndex)
 		{
-			mainBuffers.push_back(std::unique_ptr<BufferData>(new BufferData(std::max(512 * 1024u, size),
-					vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eUniformBuffer)));
+			mainBuffers.push_back(std::make_unique<BufferData>(std::max(512 * 1024u, size),
+					vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eUniformBuffer));
 		}
 		if (mainBuffers[bufferIndex]->bufferSize < size)
 		{
@@ -223,8 +223,8 @@ protected:
 			while (newSize < size)
 				newSize *= 2;
 			INFO_LOG(RENDERER, "Increasing main buffer size %d -> %d", (u32)mainBuffers[bufferIndex]->bufferSize, newSize);
-			mainBuffers[bufferIndex] = std::unique_ptr<BufferData>(new BufferData(newSize,
-					vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eUniformBuffer));
+			mainBuffers[bufferIndex] = std::make_unique<BufferData>(newSize,
+					vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eUniformBuffer);
 		}
 		return mainBuffers[bufferIndex].get();
 	}

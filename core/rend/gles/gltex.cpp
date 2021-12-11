@@ -191,7 +191,7 @@ GLuint BindRTT(bool withDepthBuffer)
 	glcache.BindTexture(GL_TEXTURE_2D, texture);
 	glTexImage2D(GL_TEXTURE_2D, 0, channels, fbw2, fbh2, 0, channels, format, 0);
 
-	gl.rtt.framebuffer = std::unique_ptr<GlFramebuffer>(new GlFramebuffer((int)fbw2, (int)fbh2, withDepthBuffer, texture));
+	gl.rtt.framebuffer = std::make_unique<GlFramebuffer>((int)fbw2, (int)fbh2, withDepthBuffer, texture);
 
 	glViewport(0, 0, fbw, fbh);
 
@@ -405,7 +405,7 @@ GLuint init_output_framebuffer(int width, int height)
 			glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 			glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 		}
-		gl.ofbo.framebuffer = std::unique_ptr<GlFramebuffer>(new GlFramebuffer(width, height, true, texture));
+		gl.ofbo.framebuffer = std::make_unique<GlFramebuffer>(width, height, true, texture);
 
 		glcache.Disable(GL_SCISSOR_TEST);
 		glcache.ClearColor(0.f, 0.f, 0.f, 0.f);

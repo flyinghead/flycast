@@ -21,6 +21,8 @@
 #include "quad.h"
 #include "vulkan_context.h"
 
+#include <memory>
+
 static VulkanContext *GetContext()
 {
 	return VulkanContext::Instance();
@@ -161,7 +163,7 @@ void QuadPipeline::Init(ShaderManager *shaderManager, vk::RenderPass renderPass,
 void QuadDrawer::Init(QuadPipeline *pipeline)
 {
 	this->pipeline = pipeline;
-	buffer = std::unique_ptr<QuadBuffer>(new QuadBuffer());
+	buffer = std::make_unique<QuadBuffer>();
 	descriptorSets.resize(VulkanContext::Instance()->GetSwapChainSize());
 	for (auto& descSet : descriptorSets)
 		descSet.reset();
