@@ -146,10 +146,10 @@ endif()
 if(WINDOWS_STORE)
 	set(USE_OPENGL OFF)
 	set(USE_VULKAN OFF)
-    target_compile_features(${PROJECT_NAME} PRIVATE c_std_11 cxx_std_17)
-else()
-    target_compile_features(${PROJECT_NAME} PRIVATE c_std_11 cxx_std_11)
 endif()
+
+target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_17)
+
 set_target_properties(${PROJECT_NAME} PROPERTIES
 	CXX_EXTENSIONS OFF
 	LINK_FLAGS_RELEASE -s)
@@ -302,7 +302,7 @@ if(NOT LIBRETRO)
 	    target_include_directories(${PROJECT_NAME} PRIVATE ${ALSA_INCLUDE_DIRS})
 	    target_link_libraries(${PROJECT_NAME} PRIVATE ${ALSA_LIBRARIES})
 	endif()
-	
+
 	if(MINGW)
 		target_link_libraries(${PROJECT_NAME} PRIVATE "-static-libgcc -static-libstdc++")
 	endif()
@@ -999,7 +999,7 @@ if(USE_OPENGL)
 		        core/rend/gles/opengl_driver.cpp
 		        core/rend/gles/opengl_driver.h)
 	endif()
-	
+
 	if(NOT (APPLE OR ANDROID OR USE_GLES OR USE_GLES2))
 	    target_sources(${PROJECT_NAME} PRIVATE
 	            core/rend/gl4/abuffer.cpp
@@ -1066,6 +1066,11 @@ if(USE_VULKAN)
 	    add_subdirectory(core/deps/volk)
 	    target_include_directories(volk PRIVATE core/khronos)
 	    target_link_libraries(${PROJECT_NAME} PRIVATE volk)
+	endif()
+
+	if (APPLE)
+		# Only available on macOS 10.12+
+		target_compile_definitions(${PROJECT_NAME} PRIVATE VMA_USE_STL_SHARED_MUTEX=0)
 	endif()
 
     target_compile_definitions(${PROJECT_NAME} PRIVATE USE_VULKAN HAVE_VULKAN)
