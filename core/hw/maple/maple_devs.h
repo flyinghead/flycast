@@ -155,7 +155,7 @@ maple_device* maple_Create(MapleDeviceType type);
 template<int Magnitude>
 void limit_joystick_magnitude(s8& joyx, s8& joyy)
 {
-	float mag = joyx * joyx + joyy * joyy;
+	float mag = (float)joyx * joyx + (float)joyy * joyy;
 	if (mag > (float)Magnitude * Magnitude)
 	{
 		mag = sqrtf(mag) / (float)Magnitude;
@@ -195,7 +195,7 @@ struct maple_base: maple_device
 
 	void wstr(const char* str, u32 len)
 	{
-		size_t ln = strlen(str);
+		u32 ln = (u32)strlen(str);
 		verify(len >= ln);
 		len -= ln;
 		while (ln--)

@@ -496,11 +496,11 @@ struct DCFlashChip : WritableChip
 		bool valid = true;
 		char sysinfo[16];
 
-		for (size_t i = 0; i < sizeof(sysinfo); i++)
+		for (u32 i = 0; i < sizeof(sysinfo); i++)
 			sysinfo[i] = Read8(0x1a000 + i);
 		valid = valid && memcmp(&sysinfo[5], "Dreamcast  ", 11) == 0;
 
-		for (size_t i = 0; i < sizeof(sysinfo); i++)
+		for (u32 i = 0; i < sizeof(sysinfo); i++)
 			sysinfo[i] = Read8(0x1a0a0 + i);
 		valid = valid && memcmp(&sysinfo[5], "Dreamcast  ", 11) == 0;
 

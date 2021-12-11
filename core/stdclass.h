@@ -149,7 +149,7 @@ public:
 		MD5_Init(&ctx);
 	}
 
-	MD5Sum& add(const void *data, size_t len) {
+	MD5Sum& add(const void *data, unsigned long len) {
 		MD5_Update(&ctx, data, len);
 		return *this;
 	}
@@ -157,21 +157,21 @@ public:
 	MD5Sum& add(std::FILE *file) {
 		std::fseek(file, 0, SEEK_SET);
 		char buf[4096];
-		size_t len = 0;
-		while ((len = std::fread(buf, 1, sizeof(buf), file)) > 0)
+		unsigned long len = 0;
+		while ((len = (unsigned long)std::fread(buf, 1, sizeof(buf), file)) > 0)
 			MD5_Update(&ctx, buf, len);
 		return *this;
 	}
 
 	template<typename T>
 	MD5Sum& add(const T& v) {
-		MD5_Update(&ctx, &v, sizeof(T));
+		MD5_Update(&ctx, &v, (unsigned long)sizeof(T));
 		return *this;
 	}
 
 	template<typename T>
 	MD5Sum& add(const std::vector<T>& v) {
-		MD5_Update(&ctx, &v[0], v.size() * sizeof(T));
+		MD5_Update(&ctx, &v[0], (unsigned long)(v.size() * sizeof(T)));
 		return *this;
 	}
 

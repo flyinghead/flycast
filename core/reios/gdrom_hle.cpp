@@ -567,7 +567,7 @@ void gdrom_hle_op()
 				{
 					try {
 						gd_hle_state.params[i] = r[5] == 0 ? 0 : ReadMem32(r[5] + i * 4);
-					} catch (SH4ThrownException& ex) {
+					} catch (SH4ThrownException&) {
 						// Ignore page faults. happens for commands not taking params
 						gd_hle_state.params[i] = 0;
 					}
@@ -600,7 +600,7 @@ void gdrom_hle_op()
 				WriteMem32(r[5] + 4, gd_hle_state.result[1]);
 				WriteMem32(r[5] + 8, gd_hle_state.result[2]);
 				WriteMem32(r[5] + 12, gd_hle_state.result[3]);
-			} catch (SH4ThrownException& ex) {
+			} catch (SH4ThrownException&) {
 			}
 			if (gd_hle_state.status == BIOS_INACTIVE || gd_hle_state.status == BIOS_ACTIVE)
 			{

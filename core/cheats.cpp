@@ -319,12 +319,14 @@ void CheatManager::loadCheatFile(const std::string& filename)
 
 	int count = cfg.get_int("", "cheats", 0);
 	cheats.clear();
-	for (int i = 0; i < count; i++)
+	for (int i = 0; count == 0 || i < count; i++)
 	{
 		std::string prefix = "cheat" + std::to_string(i) + "_";
 		Cheat cheat{};
 		cheat.description = cfg.get("", prefix + "desc", "Cheat " + std::to_string(i + 1));
 		cheat.address = cfg.get_int("", prefix + "address", -1);
+		if (count == 0 && cheat.address == (u32)-1)
+			break;
 		if (cheat.address >= RAM_SIZE)
 		{
 			WARN_LOG(COMMON, "Invalid address %x", cheat.address);

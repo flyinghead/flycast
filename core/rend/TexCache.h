@@ -84,7 +84,7 @@ public:
 
 	void set_mipmap(int level)
 	{
-		size_t offset = 0;
+		u32 offset = 0;
 		for (int i = 0; i < level; i++)
 			offset += (1 << (2 * i));
 		p_current_mipmap = p_current_line = p_current_pixel = p_buffer_start + offset;

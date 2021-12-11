@@ -198,7 +198,7 @@ protected:
 		if (strValue.empty())
 			return value;
 		else
-			return atof(strValue.c_str());
+			return (float)atof(strValue.c_str());
 	}
 
 	template <typename U = T>
@@ -382,9 +382,9 @@ public:
 	void calcDbPower()
 	{
 		// dB scaling calculation: https://www.dr-lex.be/info-stuff/volumecontrols.html
-		logarithmic_volume_scale = fmin(exp(4.605 * float(value) / 100.0) / 100.0, 1.0);
+		logarithmic_volume_scale = std::min(std::exp(4.605f * float(value) / 100.f) / 100.f, 1.f);
 		if (value < 10)
-			logarithmic_volume_scale *= value / 10.0;
+			logarithmic_volume_scale *= value / 10.f;
 	}
 };
 extern AudioVolumeOption AudioVolume;

@@ -64,10 +64,10 @@ class RingBuffer
 	std::atomic_int writeCursor { 0 };
 
 	u32 readSize() {
-		return (writeCursor - readCursor + buffer.size()) % buffer.size();
+		return (u32)((writeCursor - readCursor + buffer.size()) % buffer.size());
 	}
 	u32 writeSize() {
-		return (readCursor - writeCursor + buffer.size() - 1) % buffer.size();
+		return (u32)((readCursor - writeCursor + buffer.size() - 1) % buffer.size());
 	}
 
 public:
@@ -76,7 +76,7 @@ public:
 		if (size > writeSize())
 			return false;
 		u32 wc = writeCursor;
-		u32 chunkSize = std::min<u32>(size, buffer.size() - wc);
+		u32 chunkSize = std::min<u32>(size, (u32)buffer.size() - wc);
 		memcpy(&buffer[wc], data, chunkSize);
 		wc = (wc + chunkSize) % buffer.size();
 		size -= chunkSize;
@@ -95,7 +95,7 @@ public:
 		if (size > readSize())
 			return false;
 		u32 rc = readCursor;
-		u32 chunkSize = std::min<u32>(size, buffer.size() - rc);
+		u32 chunkSize = std::min<u32>(size, (u32)buffer.size() - rc);
 		memcpy(data, &buffer[rc], chunkSize);
 		rc = (rc + chunkSize) % buffer.size();
 		size -= chunkSize;

@@ -57,7 +57,7 @@ static void Sh4_int_Run()
 				p_sh4rcb->cntx.cycle_counter -= CPU_RATIO * 5;	// an exception requires the instruction pipeline to drain, so approx 5 cycles
 			}
 		} while (sh4_int_bCpuRun);
-	} catch (const debugger::Stop& e) {
+	} catch (const debugger::Stop&) {
 	}
 
 	sh4_int_bCpuRun = false;
@@ -79,7 +79,7 @@ static void Sh4_int_Step()
 	} catch (const SH4ThrownException& ex) {
 		Do_Exception(ex.epc, ex.expEvn, ex.callVect);
 		p_sh4rcb->cntx.cycle_counter -= CPU_RATIO * 5;	// an exception requires the instruction pipeline to drain, so approx 5 cycles
-	} catch (const debugger::Stop& e) {
+	} catch (const debugger::Stop&) {
 	}
 }
 
@@ -140,7 +140,7 @@ void ExecuteDelayslot_RTE()
 {
 	try {
 		ExecuteDelayslot();
-	} catch (const SH4ThrownException& ex) {
+	} catch (const SH4ThrownException&) {
 		throw FlycastException("Fatal: SH4 exception in RTE delay slot");
 	}
 }

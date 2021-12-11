@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <sstream>
 
-// On windows, transform / to \\
+// On windows, transform slashes to backslashes
 
 std::string normalize_path_separator(std::string path)
 {

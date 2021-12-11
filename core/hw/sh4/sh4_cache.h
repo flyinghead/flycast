@@ -112,7 +112,7 @@ public:
 	u32 ReadAddressArray(u32 addr)
 	{
 		u32 index = (addr >> 5) & 0xFF;
-		return lines[index].valid | (lines[index].address << 10);
+		return (u32)lines[index].valid | (lines[index].address << 10);
 	}
 
 	void WriteAddressArray(u32 addr, u32 data)
@@ -377,7 +377,7 @@ public:
 	u32 ReadAddressArray(u32 addr)
 	{
 		u32 index = (addr >> 5) & 0x1FF;
-		return lines[index].valid | (lines[index].dirty << 1) | (lines[index].address << 10);
+		return (u32)lines[index].valid | ((u32)lines[index].dirty << 1) | (lines[index].address << 10);
 	}
 
 	void WriteAddressArray(u32 addr, u32 data)

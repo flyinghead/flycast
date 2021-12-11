@@ -233,7 +233,7 @@ namespace flycast
 
 inline static size_t fsize(FILE *f)
 {
-	size_t p = std::ftell(f);
+	long p = std::ftell(f);
     std::fseek(f, 0, SEEK_END);
     size_t size = std::ftell(f);
     std::fseek(f, p, SEEK_SET);
