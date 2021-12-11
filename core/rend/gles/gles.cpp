@@ -15,6 +15,7 @@
 #include "naomi2.h"
 
 #include <cmath>
+#include <memory>
 
 #ifdef GLES
 #ifndef GL_RED
@@ -914,10 +915,10 @@ static bool gl_create_resources()
 		verify(glGenVertexArrays != nullptr);
 
 	//create vbos
-	gl.vbo.geometry = std::unique_ptr<GlBuffer>(new GlBuffer(GL_ARRAY_BUFFER));
-	gl.vbo.modvols = std::unique_ptr<GlBuffer>(new GlBuffer(GL_ARRAY_BUFFER));
-	gl.vbo.idxs = std::unique_ptr<GlBuffer>(new GlBuffer(GL_ELEMENT_ARRAY_BUFFER));
-	gl.vbo.idxs2 = std::unique_ptr<GlBuffer>(new GlBuffer(GL_ELEMENT_ARRAY_BUFFER));
+	gl.vbo.geometry = std::make_unique<GlBuffer>(GL_ARRAY_BUFFER);
+	gl.vbo.modvols = std::make_unique<GlBuffer>(GL_ARRAY_BUFFER);
+	gl.vbo.idxs = std::make_unique<GlBuffer>(GL_ELEMENT_ARRAY_BUFFER);
+	gl.vbo.idxs2 = std::make_unique<GlBuffer>(GL_ELEMENT_ARRAY_BUFFER);
 
 	initQuad();
 

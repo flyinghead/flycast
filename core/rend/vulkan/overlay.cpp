@@ -27,6 +27,8 @@
 #include "vmu_xhair.h"
 #endif
 
+#include <memory>
+
 VulkanOverlay::~VulkanOverlay() = default;
 
 void VulkanOverlay::Init(QuadPipeline *pipeline)
@@ -34,10 +36,10 @@ void VulkanOverlay::Init(QuadPipeline *pipeline)
 	this->pipeline = pipeline;
 	for (auto& drawer : drawers)
 	{
-		drawer = std::unique_ptr<QuadDrawer>(new QuadDrawer());
+		drawer = std::make_unique<QuadDrawer>();
 		drawer->Init(pipeline);
 	}
-	xhairDrawer = std::unique_ptr<QuadDrawer>(new QuadDrawer());
+	xhairDrawer = std::make_unique<QuadDrawer>();
 	xhairDrawer->Init(pipeline);
 }
 
@@ -54,7 +56,7 @@ void VulkanOverlay::Term()
 
 std::unique_ptr<Texture> VulkanOverlay::createTexture(vk::CommandBuffer commandBuffer, int width, int height, u8 *data)
 {
-	auto texture = std::unique_ptr<Texture>(new Texture());
+	auto texture = std::make_unique<Texture>();
 	texture->tex_type = TextureType::_8888;
 	texture->SetCommandBuffer(commandBuffer);
 	texture->UploadToGPU(width, height, data, false);

@@ -23,6 +23,8 @@
 #include "glsl.h"
 #include "gl4naomi2.h"
 
+#include <memory>
+
 //Fragment and vertex shaders code
 
 const char* ShaderHeader = R"(
@@ -646,11 +648,11 @@ static bool gl_create_resources()
 	//create vbos
 	for (u32 i = 0; i < std::size(gl4.vbo.geometry); i++)
 	{
-		gl4.vbo.geometry[i] = std::unique_ptr<GlBuffer>(new GlBuffer(GL_ARRAY_BUFFER));
-		gl4.vbo.modvols[i] = std::unique_ptr<GlBuffer>(new GlBuffer(GL_ARRAY_BUFFER));
-		gl4.vbo.idxs[i] = std::unique_ptr<GlBuffer>(new GlBuffer(GL_ELEMENT_ARRAY_BUFFER));
+		gl4.vbo.geometry[i] = std::make_unique<GlBuffer>(GL_ARRAY_BUFFER);
+		gl4.vbo.modvols[i] = std::make_unique<GlBuffer>(GL_ARRAY_BUFFER);
+		gl4.vbo.idxs[i] = std::make_unique<GlBuffer>(GL_ELEMENT_ARRAY_BUFFER);
 		// Create the buffer for Translucent poly params
-		gl4.vbo.tr_poly_params[i] = std::unique_ptr<GlBuffer>(new GlBuffer(GL_SHADER_STORAGE_BUFFER));
+		gl4.vbo.tr_poly_params[i] = std::make_unique<GlBuffer>(GL_SHADER_STORAGE_BUFFER);
 		gl4.vbo.bufferIndex = i;
 		gl4SetupMainVBO();
 		gl4SetupModvolVBO();

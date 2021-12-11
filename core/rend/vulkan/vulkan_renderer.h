@@ -43,7 +43,7 @@ protected:
 			int w, h;
 			u8 *image_data = loadOSDButtons(w, h);
 			texCommandPool.BeginFrame();
-			vjoyTexture = std::unique_ptr<Texture>(new Texture());
+			vjoyTexture = std::make_unique<Texture>();
 			vjoyTexture->tex_type = TextureType::_8888;
 			vk::CommandBuffer cmdBuffer = texCommandPool.Allocate();
 			cmdBuffer.begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));
@@ -57,14 +57,14 @@ protected:
 		}
 		if (!osdBuffer)
 		{
-			osdBuffer = std::unique_ptr<BufferData>(new BufferData(sizeof(OSDVertex) * VJOY_VISIBLE * 4,
-									vk::BufferUsageFlagBits::eVertexBuffer));
+			osdBuffer = std::make_unique<BufferData>(sizeof(OSDVertex) * VJOY_VISIBLE * 4,
+									vk::BufferUsageFlagBits::eVertexBuffer);
 		}
 #endif
 #ifdef LIBRETRO
-		quadPipeline = std::unique_ptr<QuadPipeline>(new QuadPipeline(false, false));
+		quadPipeline = std::make_unique<QuadPipeline>(false, false);
 		quadPipeline->Init(&shaderManager, renderPass, subpass);
-		overlay = std::unique_ptr<VulkanOverlay>(new VulkanOverlay());
+		overlay = std::make_unique<VulkanOverlay>();
 		overlay->Init(quadPipeline.get());
 #endif
 		return true;
@@ -234,7 +234,7 @@ protected:
 		std::unique_ptr<Texture>& curTexture = framebufferTextures[GetContext()->GetCurrentImageIndex()];
 		if (!curTexture)
 		{
-			curTexture = std::unique_ptr<Texture>(new Texture());
+			curTexture = std::make_unique<Texture>();
 			curTexture->tex_type = TextureType::_8888;
 		}
 		curTexture->SetCommandBuffer(texCommandBuffer);
@@ -309,7 +309,7 @@ protected:
 	{
 		if (!fogTexture)
 		{
-			fogTexture = std::unique_ptr<Texture>(new Texture());
+			fogTexture = std::make_unique<Texture>();
 			fogTexture->tex_type = TextureType::_8;
 			fog_needs_update = true;
 		}
@@ -329,7 +329,7 @@ protected:
 	{
 		if (!paletteTexture)
 		{
-			paletteTexture = std::unique_ptr<Texture>(new Texture());
+			paletteTexture = std::make_unique<Texture>();
 			paletteTexture->tex_type = TextureType::_8888;
 			forcePaletteUpdate();
 		}

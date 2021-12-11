@@ -5,6 +5,8 @@
 #include "rend/osd.h"
 #include "naomi2.h"
 
+#include <memory>
+
 /*
 
 Drawing and related state management
@@ -773,10 +775,10 @@ static std::unique_ptr<GlBuffer> osdIndex;
 static void setupOsdVao()
 {
 	if (osdVerts == nullptr)
-		osdVerts = std::unique_ptr<GlBuffer>(new GlBuffer(GL_ARRAY_BUFFER));
+		osdVerts = std::make_unique<GlBuffer>(GL_ARRAY_BUFFER);
 	if (osdIndex == nullptr)
 	{
-		osdIndex = std::unique_ptr<GlBuffer>(new GlBuffer(GL_ELEMENT_ARRAY_BUFFER));
+		osdIndex = std::make_unique<GlBuffer>(GL_ELEMENT_ARRAY_BUFFER);
 		GLushort indices[] = { 0, 1, 2, 1, 3 };
 		osdIndex->update(indices, sizeof(indices));
 	}

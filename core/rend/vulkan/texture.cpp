@@ -215,7 +215,7 @@ void Texture::Init(u32 width, u32 height, vk::Format format, u32 dataSize, bool 
 	vk::ImageUsageFlags usageFlags = vk::ImageUsageFlagBits::eSampled;
 	if (needsStaging)
 	{
-		stagingBufferData = std::unique_ptr<BufferData>(new BufferData(dataSize, vk::BufferUsageFlagBits::eTransferSrc));
+		stagingBufferData = std::make_unique<BufferData>(dataSize, vk::BufferUsageFlagBits::eTransferSrc);
 		usageFlags |= vk::ImageUsageFlagBits::eTransferDst;
 		initialLayout = vk::ImageLayout::eUndefined;
 	}
@@ -261,7 +261,7 @@ void Texture::SetImage(u32 srcSize, void *srcData, bool isNew, bool genMipmaps)
 	{
 		if (!stagingBufferData)
 			// This can happen if a texture is first created for RTT, then later updated
-			stagingBufferData = std::unique_ptr<BufferData>(new BufferData(srcSize, vk::BufferUsageFlagBits::eTransferSrc));
+			stagingBufferData = std::make_unique<BufferData>(srcSize, vk::BufferUsageFlagBits::eTransferSrc);
 		data = stagingBufferData->MapMemory();
 	}
 	else
@@ -405,8 +405,8 @@ void FramebufferAttachment::Init(u32 width, u32 height, vk::Format format, const
 
 	if (usage & vk::ImageUsageFlagBits::eTransferSrc)
 	{
-		stagingBufferData = std::unique_ptr<BufferData>(new BufferData(width * height * 4,
-				vk::BufferUsageFlagBits::eTransferSrc | vk::BufferUsageFlagBits::eTransferDst));
+		stagingBufferData = std::make_unique<BufferData>(width * height * 4,
+				vk::BufferUsageFlagBits::eTransferSrc | vk::BufferUsageFlagBits::eTransferDst);
 	}
 	vk::ImageCreateInfo imageCreateInfo(vk::ImageCreateFlags(), vk::ImageType::e2D, format, vk::Extent3D(extent, 1), 1, 1, vk::SampleCountFlagBits::e1,
 			vk::ImageTiling::eOptimal, usage,

@@ -19,6 +19,8 @@
 #include "gl4.h"
 #include "rend/gles/glcache.h"
 
+#include <memory>
+
 static GLuint pixels_buffer;
 static GLuint pixels_pointers;
 static GLuint atomic_buffer;
@@ -360,7 +362,7 @@ void initABuffer()
 	}
 	if (g_quadBuffer == nullptr)
 	{
-		g_quadBuffer = std::unique_ptr<GlBuffer>(new GlBuffer(GL_ARRAY_BUFFER, GL_STATIC_DRAW));
+		g_quadBuffer = std::make_unique<GlBuffer>(GL_ARRAY_BUFFER, GL_STATIC_DRAW);
 		static const float vertices[] = {
 				-1,  1, 1,
 				-1, -1, 1,
@@ -371,7 +373,7 @@ void initABuffer()
 	}
 	if (g_quadIndexBuffer == nullptr)
 	{
-		g_quadIndexBuffer = std::unique_ptr<GlBuffer>(new GlBuffer(GL_ELEMENT_ARRAY_BUFFER, GL_STATIC_DRAW));
+		g_quadIndexBuffer = std::make_unique<GlBuffer>(GL_ELEMENT_ARRAY_BUFFER, GL_STATIC_DRAW);
 		static const GLushort indices[] = { 0, 1, 2, 1, 3 };
 		g_quadIndexBuffer->update(indices, sizeof(indices));
 	}

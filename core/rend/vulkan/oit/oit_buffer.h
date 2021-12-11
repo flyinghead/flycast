@@ -39,22 +39,22 @@ public:
 		if (!pixelBuffer)
 		{
 			pixelBufferSize = config::PixelBufferSize;
-			pixelBuffer = std::unique_ptr<BufferData>(new BufferData(std::min<vk::DeviceSize>(pixelBufferSize, context->GetMaxMemoryAllocationSize()),
-					vk::BufferUsageFlagBits::eStorageBuffer, vk::MemoryPropertyFlagBits::eDeviceLocal));
+			pixelBuffer = std::make_unique<BufferData>(std::min<vk::DeviceSize>(pixelBufferSize, context->GetMaxMemoryAllocationSize()),
+					vk::BufferUsageFlagBits::eStorageBuffer, vk::MemoryPropertyFlagBits::eDeviceLocal);
 		}
 		if (!pixelCounter)
 		{
-			pixelCounter = std::unique_ptr<BufferData>(new BufferData(4,
-					vk::BufferUsageFlagBits::eStorageBuffer | vk::BufferUsageFlagBits::eTransferDst, vk::MemoryPropertyFlagBits::eDeviceLocal));
-			pixelCounterReset = std::unique_ptr<BufferData>(new BufferData(4, vk::BufferUsageFlagBits::eTransferSrc));
+			pixelCounter = std::make_unique<BufferData>(4,
+					vk::BufferUsageFlagBits::eStorageBuffer | vk::BufferUsageFlagBits::eTransferDst, vk::MemoryPropertyFlagBits::eDeviceLocal);
+			pixelCounterReset = std::make_unique<BufferData>(4, vk::BufferUsageFlagBits::eTransferSrc);
 			const int zero = 0;
 			pixelCounterReset->upload(sizeof(zero), &zero);
 		}
 		// We need to wait until this buffer is not used before deleting it
 		context->WaitIdle();
 		abufferPointer.reset();
-		abufferPointer = std::unique_ptr<BufferData>(new BufferData(maxWidth * maxHeight * sizeof(int),
-				vk::BufferUsageFlagBits::eStorageBuffer, vk::MemoryPropertyFlagBits::eDeviceLocal));
+		abufferPointer = std::make_unique<BufferData>(maxWidth * maxHeight * sizeof(int),
+				vk::BufferUsageFlagBits::eStorageBuffer, vk::MemoryPropertyFlagBits::eDeviceLocal);
 		firstFrameAfterInit = true;
 	}
 
@@ -77,8 +77,8 @@ public:
 		if (pixelBufferSize != config::PixelBufferSize)
 		{
 			pixelBufferSize = config::PixelBufferSize;
-			pixelBuffer = std::unique_ptr<BufferData>(new BufferData(std::min<vk::DeviceSize>(pixelBufferSize, VulkanContext::Instance()->GetMaxMemoryAllocationSize()),
-					vk::BufferUsageFlagBits::eStorageBuffer, vk::MemoryPropertyFlagBits::eDeviceLocal));
+			pixelBuffer = std::make_unique<BufferData>(std::min<vk::DeviceSize>(pixelBufferSize, VulkanContext::Instance()->GetMaxMemoryAllocationSize()),
+					vk::BufferUsageFlagBits::eStorageBuffer, vk::MemoryPropertyFlagBits::eDeviceLocal);
 		}
 	}
 

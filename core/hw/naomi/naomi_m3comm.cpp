@@ -84,7 +84,7 @@ bool NaomiM3Comm::receiveNetwork()
 	const u32 slot_size = swap16(*(u16*)&m68k_ram[0x204]);
 	const u32 packet_size = slot_size * slot_count;
 
-	std::unique_ptr<u8[]> buf(new u8[packet_size]);
+	std::unique_ptr<u8[]> buf = std::make_unique<u8[]>(packet_size);
 
 	u16 packetNumber;
 	if (!naomiNetwork.receive(buf.get(), packet_size, &packetNumber))

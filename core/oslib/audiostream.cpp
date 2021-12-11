@@ -34,7 +34,7 @@ bool RegisterAudioBackend(audiobackend_t *backend)
 	verify(!backend->slug.empty() && backend->slug != "auto");
 
 	if (audiobackends == nullptr)
-		audiobackends = std::unique_ptr<std::vector<audiobackend_t *>>(new std::vector<audiobackend_t *>());
+		audiobackends = std::make_unique<std::vector<audiobackend_t *>>();
 	audiobackends->push_back(backend);
 	SortAudioBackends();
 

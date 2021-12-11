@@ -21,6 +21,8 @@
 #include "drawer.h"
 #include "hw/pvr/pvr_mem.h"
 
+#include <memory>
+
 void Drawer::SortTriangles()
 {
 	sortedPolys.resize(pvrrc.render_passes.used());
@@ -367,7 +369,7 @@ bool Drawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 void TextureDrawer::Init(SamplerManager *samplerManager, ShaderManager *shaderManager, TextureCache *textureCache)
 {
 	if (!rttPipelineManager)
-		rttPipelineManager = std::unique_ptr<RttPipelineManager>(new RttPipelineManager());
+		rttPipelineManager = std::make_unique<RttPipelineManager>();
 	rttPipelineManager->Init(shaderManager);
 	Drawer::Init(samplerManager, rttPipelineManager.get());
 
@@ -400,7 +402,7 @@ vk::CommandBuffer TextureDrawer::BeginRenderPass()
 	if (!depthAttachment || widthPow2 > depthAttachment->getExtent().width || heightPow2 > depthAttachment->getExtent().height)
 	{
 		if (!depthAttachment)
-			depthAttachment = std::unique_ptr<FramebufferAttachment>(new FramebufferAttachment(context->GetPhysicalDevice(), device));
+			depthAttachment = std::make_unique<FramebufferAttachment>(context->GetPhysicalDevice(), device);
 		else
 			GetContext()->WaitIdle();
 		depthAttachment->Init(widthPow2, heightPow2, GetContext()->GetDepthFormat(),
@@ -441,7 +443,7 @@ vk::CommandBuffer TextureDrawer::BeginRenderPass()
 		if (!colorAttachment || widthPow2 > colorAttachment->getExtent().width || heightPow2 > colorAttachment->getExtent().height)
 		{
 			if (!colorAttachment)
-				colorAttachment = std::unique_ptr<FramebufferAttachment>(new FramebufferAttachment(context->GetPhysicalDevice(), device));
+				colorAttachment = std::make_unique<FramebufferAttachment>(context->GetPhysicalDevice(), device);
 			else
 				GetContext()->WaitIdle();
 			colorAttachment->Init(widthPow2, heightPow2, vk::Format::eR8G8B8A8Unorm,
@@ -547,8 +549,8 @@ void ScreenDrawer::Init(SamplerManager *samplerManager, ShaderManager *shaderMan
 	this->viewport = viewport;
 	if (!depthAttachment)
 	{
-		depthAttachment = std::unique_ptr<FramebufferAttachment>(
-				new FramebufferAttachment(GetContext()->GetPhysicalDevice(), GetContext()->GetDevice()));
+		depthAttachment = std::make_unique<FramebufferAttachment>(
+				GetContext()->GetPhysicalDevice(), GetContext()->GetDevice());
 		depthAttachment->Init(viewport.width, viewport.height, GetContext()->GetDepthFormat(),
 				vk::ImageUsageFlagBits::eDepthStencilAttachment | vk::ImageUsageFlagBits::eTransientAttachment);
 	}
@@ -608,8 +610,8 @@ void ScreenDrawer::Init(SamplerManager *samplerManager, ShaderManager *shaderMan
 		};
 		while (colorAttachments.size() < size)
 		{
-			colorAttachments.push_back(std::unique_ptr<FramebufferAttachment>(
-					new FramebufferAttachment(GetContext()->GetPhysicalDevice(), GetContext()->GetDevice())));
+			colorAttachments.push_back(std::make_unique<FramebufferAttachment>(
+					GetContext()->GetPhysicalDevice(), GetContext()->GetDevice()));
 			colorAttachments.back()->Init(viewport.width, viewport.height, GetContext()->GetColorFormat(),
 					vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled);
 			attachments[0] = colorAttachments.back()->GetImageView();
@@ -623,7 +625,7 @@ void ScreenDrawer::Init(SamplerManager *samplerManager, ShaderManager *shaderMan
 	frameRendered = false;
 
 	if (!screenPipelineManager)
-		screenPipelineManager = std::unique_ptr<PipelineManager>(new PipelineManager());
+		screenPipelineManager = std::make_unique<PipelineManager>();
 	screenPipelineManager->Init(shaderManager, *renderPassLoad);
 	Drawer::Init(samplerManager, screenPipelineManager.get());
 }

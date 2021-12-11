@@ -22,6 +22,7 @@
 #include "hw/pvr/pvr_mem.h"
 
 #include <algorithm>
+#include <memory>
 
 void OITDrawer::DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool autosort, Pass pass,
 		const PolyParam& poly, u32 first, u32 count)
@@ -436,8 +437,8 @@ void OITDrawer::MakeBuffers(int width, int height)
 	for (auto& attachment : colorAttachments)
 	{
 		attachment.reset();
-		attachment = std::unique_ptr<FramebufferAttachment>(
-				new FramebufferAttachment(GetContext()->GetPhysicalDevice(), GetContext()->GetDevice()));
+		attachment = std::make_unique<FramebufferAttachment>(
+				GetContext()->GetPhysicalDevice(), GetContext()->GetDevice());
 		attachment->Init(maxWidth, maxHeight, GetColorFormat(),
 				vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eInputAttachment);
 	}
@@ -445,8 +446,8 @@ void OITDrawer::MakeBuffers(int width, int height)
 	for (auto& attachment : depthAttachments)
 	{
 		attachment.reset();
-		attachment = std::unique_ptr<FramebufferAttachment>(
-				new FramebufferAttachment(GetContext()->GetPhysicalDevice(), GetContext()->GetDevice()));
+		attachment = std::make_unique<FramebufferAttachment>(
+				GetContext()->GetPhysicalDevice(), GetContext()->GetDevice());
 		attachment->Init(maxWidth, maxHeight, GetContext()->GetDepthFormat(),
 				vk::ImageUsageFlagBits::eDepthStencilAttachment | vk::ImageUsageFlagBits::eInputAttachment);
 	}
@@ -479,8 +480,8 @@ void OITScreenDrawer::MakeFramebuffers(const vk::Extent2D& viewport)
 	clearNeeded.clear();
 	while (finalColorAttachments.size() < GetContext()->GetSwapChainSize())
 	{
-		finalColorAttachments.push_back(std::unique_ptr<FramebufferAttachment>(
-				new FramebufferAttachment(GetContext()->GetPhysicalDevice(), GetContext()->GetDevice())));
+		finalColorAttachments.push_back(std::make_unique<FramebufferAttachment>(
+				GetContext()->GetPhysicalDevice(), GetContext()->GetDevice()));
 		finalColorAttachments.back()->Init(viewport.width, viewport.height, GetContext()->GetColorFormat(),
 				vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled);
 		vk::ImageView attachments[] = {
@@ -557,7 +558,7 @@ vk::CommandBuffer OITTextureDrawer::NewFrame()
 		if (!colorAttachment || widthPow2 > colorAttachment->getExtent().width || heightPow2 > colorAttachment->getExtent().height)
 		{
 			if (!colorAttachment)
-				colorAttachment = std::unique_ptr<FramebufferAttachment>(new FramebufferAttachment(context->GetPhysicalDevice(), device));
+				colorAttachment = std::make_unique<FramebufferAttachment>(context->GetPhysicalDevice(), device);
 			else
 				GetContext()->WaitIdle();
 			colorAttachment->Init(widthPow2, heightPow2, vk::Format::eR8G8B8A8Unorm,
