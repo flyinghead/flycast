@@ -123,8 +123,6 @@ public:
 	}
 };
 
-#define clamp(minv, maxv, x) ((x) < (minv) ? (minv) : (x) > (maxv) ? (maxv) : (x))
-
 // Open GL
 struct RGBAPacker {
 	static u32 pack(u8 r, u8 g, u8 b, u8 a) {
@@ -148,7 +146,7 @@ inline static u32 YUV422(s32 Y, s32 Yu, s32 Yv)
 	s32 G = Y - (Yu * 11 + Yv * 22) / 32;	// Y - (Yu-128) * (11/8) * 0.25 - (Yv-128) * (11/8) * 0.5 ?
 	s32 B = Y + Yu * 110 / 64;				// Y + (Yu-128) * (11/8) * 1.25 ?
 
-	return Packer::pack(clamp(0, 255, R), clamp(0, 255, G), clamp(0, 255, B), 0xFF);
+	return Packer::pack(std::clamp(0, 255, R), std::clamp(0, 255, G), std::clamp(0, 255, B), 0xFF);
 }
 
 #define twop(x,y,bcx,bcy) (detwiddle[0][bcy][x]+detwiddle[1][bcx][y])
@@ -814,7 +812,6 @@ static inline void MakeFogTexture(u8 *tex_data)
 void dump_screenshot(u8 *buffer, u32 width, u32 height, bool alpha = false, u32 rowPitch = 0, bool invertY = true);
 
 extern const std::array<f32, 16> D_Adjust_LoD_Bias;
-#undef clamp
 
 extern float fb_scale_x, fb_scale_y;
 static inline void rend_set_fb_scale(float x, float y)
