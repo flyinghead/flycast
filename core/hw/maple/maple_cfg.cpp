@@ -86,7 +86,7 @@ void MapleConfigMap::GetInput(PlainJoystickState* pjs)
 #else
 		const u32* mapping = settings.input.JammaSetup == JVS::LightGun ? awavelg_button_mapping : awave_button_mapping;
 		pjs->kcode = ~0;
-		for (u32 i = 0; i < ARRAY_SIZE(awave_button_mapping); i++)
+		for (u32 i = 0; i < std::size(awave_button_mapping); i++)
 		{
 			if ((inputState.kcode & (1 << i)) == 0)
 				pjs->kcode &= ~mapping[i];

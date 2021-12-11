@@ -408,7 +408,7 @@ extern "C" JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_rendinitNa
 
 extern "C" JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_vjoy(JNIEnv * env, jobject obj,int id,float x, float y, float w, float h)
 {
-    if (id < ARRAY_SIZE(vjoy_pos))
+    if (id < std::size(vjoy_pos))
     {
         vjoy_pos[id][0] = x;
         vjoy_pos[id][1] = y;

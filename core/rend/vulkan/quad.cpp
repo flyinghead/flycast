@@ -40,9 +40,9 @@ vk::PipelineVertexInputStateCreateInfo GetQuadInputStateCreateInfo(bool uv)
 	};
 	return vk::PipelineVertexInputStateCreateInfo(
 			vk::PipelineVertexInputStateCreateFlags(),
-			ARRAY_SIZE(vertexBindingDescriptions),
+			std::size(vertexBindingDescriptions),
 			vertexBindingDescriptions,
-			ARRAY_SIZE(vertexInputAttributeDescriptions) - (uv ? 0 : 1),
+			std::size(vertexInputAttributeDescriptions) - (uv ? 0 : 1),
 			vertexInputAttributeDescriptions);
 }
 

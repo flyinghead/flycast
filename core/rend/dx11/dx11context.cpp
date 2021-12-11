@@ -336,7 +336,7 @@ bool DX11Context::checkTextureSupport()
 	const char * const fmtNames[] = { "B5G5R5A1", "B4G4R4A4", "B5G6R5", "B8G8R8A8", "A8" };
 	const TextureType dcTexTypes[] = { TextureType::_5551, TextureType::_4444, TextureType::_565, TextureType::_8888, TextureType::_8 };
 	UINT support;
-	for (size_t i = 0; i < ARRAY_SIZE(formats); i++)
+	for (std::size_t i = 0; i < std::size(formats); i++)
 	{
 		supportedTexFormats[(int)dcTexTypes[i]] = false;
 		pDevice->CheckFormatSupport(formats[i], &support);

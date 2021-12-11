@@ -1295,7 +1295,7 @@ void init()
 {
 	staticinitialise();
 
-	for (int i = 0; i < 16; i++)
+	for (std::size_t i = 0; i < std::size(volume_lut); i++)
 	{
 		volume_lut[i]=(s32)((1<<15)/pow(2.0,(15-i)/2.0));
 		if (i==0)
@@ -1316,7 +1316,7 @@ void init()
 		FEG_SPS[i] = CalcEgSteps(AEG_DSR_Time[i]);
 		//FEG_SPS[i] = CalcEgSteps(FEG_Time[i]);
 	}
-	for (int i=0;i<64;i++)
+	for (std::size_t i = 0; i < std::size(Chans); i++)
 		Chans[i].Init(i,aica_reg);
 
 	for (int s = 0; s < 8; s++)

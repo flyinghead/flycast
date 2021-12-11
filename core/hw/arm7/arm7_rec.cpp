@@ -668,7 +668,7 @@ void flush()
 	icPtr = ICache;
 	arm7backend_flush();
 	verify(arm_compilecode != nullptr);
-	for (u32 i = 0; i < ARRAY_SIZE(EntryPoints); i++)
+	for (u32 i = 0; i < std::size(EntryPoints); i++)
 		EntryPoints[i] = arm_compilecode;
 }
 
@@ -681,7 +681,7 @@ void init()
 #endif
 	verify(rc);
 
-	for (int i = 0; i < 256; i++)
+	for (std::size_t i = 0; i < std::size(cpuBitsSet); i++)
 	{
 		int count = 0;
 		for (int j = 0; j < 8; j++)

@@ -1549,7 +1549,7 @@ static void vtxdec_init()
 		0x3b80 ~ 0x3f80 -> actual useful range. Rest is clamping to 0 or 255 ~
 	*/
 
-	for (u32 i = 0; i < ARRAY_SIZE(f32_su8_tbl); i++)
+	for (u32 i = 0; i < std::size(f32_su8_tbl); i++)
 	{
 		u32 fr = i << 16;
 		

@@ -164,10 +164,10 @@ using namespace emucfg;
 
 static DreamcastKey getKeyId(const std::string& name)
 {
-	for (u32 i = 0; i < ARRAY_SIZE(button_list); i++)
+	for (u32 i = 0; i < std::size(button_list); i++)
 		if (name == button_list[i].option)
 			return button_list[i].id;
-	for (u32 i = 0; i < ARRAY_SIZE(axis_list); i++)
+	for (u32 i = 0; i < std::size(axis_list); i++)
 		if (name == axis_list[i].option)
 			return axis_list[i].id;
 
@@ -258,7 +258,7 @@ void InputMapping::loadv1(ConfigFile& mf)
 {
 	for (int port = 0; port < 4; port++)
 	{
-		for (u32 i = 0; i < ARRAY_SIZE(button_list); i++)
+		for (u32 i = 0; i < std::size(button_list); i++)
 		{
 			std::string option;
 			if (port == 0)
@@ -278,7 +278,7 @@ void InputMapping::loadv1(ConfigFile& mf)
 			}
 		}
 
-		for (u32 i = 0; i < ARRAY_SIZE(axis_list); i++)
+		for (u32 i = 0; i < std::size(axis_list); i++)
 		{
 			std::string option;
 			if (port == 0)
@@ -385,10 +385,10 @@ void InputMapping::set_dirty()
 
 static const char *getKeyName(DreamcastKey key)
 {
-	for (u32 i = 0; i < ARRAY_SIZE(button_list); i++)
+	for (u32 i = 0; i < std::size(button_list); i++)
 		if (key == button_list[i].id)
 			return button_list[i].option.c_str();
-	for (u32 i = 0; i < ARRAY_SIZE(axis_list); i++)
+	for (u32 i = 0; i < std::size(axis_list); i++)
 		if (key == axis_list[i].id)
 			return axis_list[i].option.c_str();
 	ERROR_LOG(INPUT, "Invalid key %x", key);

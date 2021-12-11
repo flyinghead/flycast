@@ -1298,11 +1298,11 @@ static uint32_t map_gamepad_button(unsigned device, unsigned id)
 		{
 		case RETRO_DEVICE_JOYPAD:
 			joymap = dc_joymap;
-			joymap_size = ARRAY_SIZE(dc_joymap);
+			joymap_size = std::size(dc_joymap);
 			break;
 		case RETRO_DEVICE_LIGHTGUN:
 			joymap = dc_lg_joymap;
-			joymap_size = ARRAY_SIZE(dc_lg_joymap);
+			joymap_size = std::size(dc_lg_joymap);
 			break;
 		default:
 			return 0;
@@ -1315,11 +1315,11 @@ static uint32_t map_gamepad_button(unsigned device, unsigned id)
 		{
 		case RETRO_DEVICE_JOYPAD:
 			joymap = nao_joymap;
-			joymap_size = ARRAY_SIZE(nao_joymap);
+			joymap_size = std::size(nao_joymap);
 			break;
 		case RETRO_DEVICE_LIGHTGUN:
 			joymap = nao_lg_joymap;
-			joymap_size = ARRAY_SIZE(nao_lg_joymap);
+			joymap_size = std::size(nao_lg_joymap);
 			break;
 		default:
 			return 0;
@@ -1331,11 +1331,11 @@ static uint32_t map_gamepad_button(unsigned device, unsigned id)
 		{
 		case RETRO_DEVICE_JOYPAD:
 			joymap = aw_joymap;
-			joymap_size = ARRAY_SIZE(aw_joymap);
+			joymap_size = std::size(aw_joymap);
 			break;
 		case RETRO_DEVICE_LIGHTGUN:
 			joymap = aw_lg_joymap;
-			joymap_size = ARRAY_SIZE(aw_lg_joymap);
+			joymap_size = std::size(aw_lg_joymap);
 			break;
 		default:
 			return 0;

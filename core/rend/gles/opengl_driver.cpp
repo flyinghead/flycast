@@ -60,7 +60,7 @@ OpenGLDriver::~OpenGLDriver()
 	EventManager::unlisten(Event::Terminate, emuEventCallback, this);
 
 	std::vector<GLuint> texIds;
-	texIds.reserve(ARRAY_SIZE(vmu_lcd_tex_ids) + 1 + textures.size());
+	texIds.reserve(std::size(vmu_lcd_tex_ids) + 1 + textures.size());
 	for (ImTextureID texId : vmu_lcd_tex_ids)
 		if (texId != ImTextureID())
 			texIds.push_back((GLuint)(uintptr_t)texId);

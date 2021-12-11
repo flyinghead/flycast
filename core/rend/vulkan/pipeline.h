@@ -305,9 +305,9 @@ private:
 		};
 		return vk::PipelineVertexInputStateCreateInfo(
 				vk::PipelineVertexInputStateCreateFlags(),
-				ARRAY_SIZE(vertexBindingDescriptions),
+				std::size(vertexBindingDescriptions),
 				vertexBindingDescriptions,
-				full ? ARRAY_SIZE(vertexInputAttributeDescriptions) : ARRAY_SIZE(vertexInputLightAttributeDescriptions),
+				full ? std::size(vertexInputAttributeDescriptions) : std::size(vertexInputLightAttributeDescriptions),
 				full ? vertexInputAttributeDescriptions : vertexInputLightAttributeDescriptions);
 	}
 
@@ -360,7 +360,7 @@ public:
 	    };
 
 	    rttRenderPass = GetContext()->GetDevice().createRenderPassUnique(vk::RenderPassCreateInfo(vk::RenderPassCreateFlags(), 2, attachmentDescriptions,
-	    		1, &subpass, renderToTextureBuffer ? ARRAY_SIZE(vramWriteDeps) : ARRAY_SIZE(dependencies), renderToTextureBuffer ? vramWriteDeps : dependencies));
+	    		1, &subpass, renderToTextureBuffer ? std::size(vramWriteDeps) : std::size(dependencies), renderToTextureBuffer ? vramWriteDeps : dependencies));
 
 		PipelineManager::Init(shaderManager, *rttRenderPass);
 	}

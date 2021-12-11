@@ -328,7 +328,7 @@ void DYNACALL WriteMem_P4(u32 addr,T data)
 
 			u32 va = t.VPN << 10;
 
-			for (int i = 0; i < 64; i++)
+			for (std::size_t i = 0; i < std::size(UTLB); i++)
 			{
 				if (mmu_match(va, UTLB[i].Address, UTLB[i].Data))
 				{
@@ -338,7 +338,7 @@ void DYNACALL WriteMem_P4(u32 addr,T data)
 				}
 			}
 
-			for (int i = 0; i < 4; i++)
+			for (std::size_t i = 0; i < std::size(ITLB); i++)
 			{
 				if (mmu_match(va, ITLB[i].Address, ITLB[i].Data))
 				{

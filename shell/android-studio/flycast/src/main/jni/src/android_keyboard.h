@@ -573,7 +573,7 @@ public:
 protected:
     u8 convert_keycode(int keycode) override
     {
-        if (keycode < 0 || keycode >= ARRAY_SIZE(AndroidKeycodes))
+        if (keycode < 0 || keycode >= std::size(AndroidKeycodes))
             return 0;
         else
             return AndroidKeycodes[keycode];

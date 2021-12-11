@@ -468,7 +468,7 @@ void MMU_init()
 	{
 		u32 match_key = ((~ITLB_LRU_AND[e]) & 0x3F);
 		u32 match_mask = match_key | ITLB_LRU_OR[e];
-		for (u32 i = 0; i<64; i++)
+		for (u32 i = 0; i < std::size(ITLB_LRU_USE); i++)
 		{
 			if ((i & match_mask) == match_key)
 			{
@@ -480,7 +480,7 @@ void MMU_init()
 	mmu_set_state();
 #ifdef FAST_MMU
 	// pre-fill kernel memory
-	for (u32 vpn = ARRAY_SIZE(mmuAddressLUT) / 2; vpn < ARRAY_SIZE(mmuAddressLUT); vpn++)
+	for (u32 vpn = std::size(mmuAddressLUT) / 2; vpn < std::size(mmuAddressLUT); vpn++)
 		mmuAddressLUT[vpn] = vpn << 12;
 #endif
 }

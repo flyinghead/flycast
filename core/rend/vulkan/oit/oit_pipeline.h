@@ -432,9 +432,9 @@ private:
 		};
 		return vk::PipelineVertexInputStateCreateInfo(
 				vk::PipelineVertexInputStateCreateFlags(),
-				ARRAY_SIZE(vertexBindingDescriptions),
+				std::size(vertexBindingDescriptions),
 				vertexBindingDescriptions,
-				full ? ARRAY_SIZE(vertexInputAttributeDescriptions) : ARRAY_SIZE(vertexInputLightAttributeDescriptions),
+				full ? std::size(vertexInputAttributeDescriptions) : std::size(vertexInputLightAttributeDescriptions),
 				full ? vertexInputAttributeDescriptions : vertexInputLightAttributeDescriptions);
 	}
 

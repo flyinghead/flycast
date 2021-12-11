@@ -473,7 +473,7 @@ void CheatManager::reset(const std::string& gameId)
 			}
 		}
 		if (widescreen_cheat != nullptr)
-			for (size_t i = 0; i < ARRAY_SIZE(widescreen_cheat->addresses) && widescreen_cheat->addresses[i] != 0; i++)
+			for (size_t i = 0; i < std::size(widescreen_cheat->addresses) && widescreen_cheat->addresses[i] != 0; i++)
 				verify(widescreen_cheat->addresses[i] < RAM_SIZE);
 	}
 	setActive(active);
@@ -514,7 +514,7 @@ void CheatManager::apply()
 {
 	if (widescreen_cheat != nullptr)
 	{
-		for (size_t i = 0; i < ARRAY_SIZE(widescreen_cheat->addresses) && widescreen_cheat->addresses[i] != 0; i++)
+		for (size_t i = 0; i < std::size(widescreen_cheat->addresses) && widescreen_cheat->addresses[i] != 0; i++)
 		{
 			u32 address = widescreen_cheat->addresses[i];
 			u32 curVal = readRam(address, 32);

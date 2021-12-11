@@ -153,7 +153,7 @@ struct gl4_ctx
 			return modvol_vao[bufferIndex];
 		}
 		void nextBuffer() {
-			bufferIndex = (bufferIndex + 1) % ARRAY_SIZE(geometry);
+			bufferIndex = (bufferIndex + 1) % std::size(geometry);
 		}
 	} vbo;
 };

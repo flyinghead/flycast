@@ -100,7 +100,7 @@ public:
 	{
 		ID3D11UnorderedAccessView *uavs[] { pixelsBufferView, abufferPointersView };
 		UINT initialCounts[] { 0, (UINT)-1 };
-		deviceContext->OMSetRenderTargetsAndUnorderedAccessViews(D3D11_KEEP_RENDER_TARGETS_AND_DEPTH_STENCIL, nullptr, nullptr, 1, ARRAY_SIZE(uavs), uavs, initialCounts);
+		deviceContext->OMSetRenderTargetsAndUnorderedAccessViews(D3D11_KEEP_RENDER_TARGETS_AND_DEPTH_STENCIL, nullptr, nullptr, 1, std::size(uavs), uavs, initialCounts);
 	}
 
 	void term()

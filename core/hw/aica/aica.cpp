@@ -105,7 +105,7 @@ static int AicaUpdate(int tag, int c, int j)
 
 void timeStep()
 {
-	for (int i=0;i<3;i++)
+	for (std::size_t i = 0; i < std::size(timers); i++)
 		timers[i].StepTimer(1);
 
 	SCIPD->SAMPLE_DONE = 1;
@@ -290,7 +290,7 @@ void reset(bool hard)
 		sgc::init();
 		sh4_sched_request(aica_schid, AICA_TICK);
 	}
-	for (u32 i = 0; i < 3; i++)
+	for (std::size_t i = 0; i < std::size(timers); i++)
 		timers[i].Init(aica_reg, i);
 	resetRtc(hard);
 	arm::reset();
