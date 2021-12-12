@@ -784,7 +784,7 @@ void main(in MVPixel inpix)
 
 struct IncludeManager : public ID3DInclude
 {
-	HRESULT Open(D3D_INCLUDE_TYPE IncludeType, LPCSTR pFileName, LPCVOID pParentData, LPCVOID *ppData, UINT *pBytes)
+	HRESULT STDMETHODCALLTYPE Open(D3D_INCLUDE_TYPE IncludeType, LPCSTR pFileName, LPCVOID pParentData, LPCVOID *ppData, UINT *pBytes) override
 	{
 		if (!strcmp(pFileName, "oit_header.hlsl"))
 		{
@@ -795,7 +795,7 @@ struct IncludeManager : public ID3DInclude
 		return E_FAIL;
 	}
 
-	HRESULT Close(LPCVOID pData) {
+	HRESULT STDMETHODCALLTYPE Close(LPCVOID pData) override {
 		return S_OK;
 	}
 };
