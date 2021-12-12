@@ -5,7 +5,14 @@
 #include <algorithm>
 #include <thread>
 #include <string>
+#include <cmath>
+
+#ifdef DC_PLATFORM_DREAMCAST
+
 #include "rend/gui.h"
+
+#endif
+
 #include "gdxsv_network.h"
 #include "gdx_rpc.h"
 
@@ -190,9 +197,11 @@ private:
                     maxlag_ = std::min<int>(0x7f, std::max(5, 4 + (int) std::floor(rtt / 16)));
                     NOTICE_LOG(COMMON, "set maxlag %d", (int) maxlag_);
 
+#ifdef DC_PLATFORM_DREAMCAST
                     char osd_msg[128] = {};
                     sprintf(osd_msg, "PING:%.0fms DELAY:%dfr", rtt, (int) maxlag_);
                     gui_display_notification(osd_msg, 3000);
+#endif
                     state = State::McsInBattle;
                 }
             }

@@ -44,7 +44,11 @@ public:
     }
 
     bool StartFile(const char *path) {
+#ifdef NOWIDE_CONFIG_H_INCLUDED
         FILE *fp = nowide::fopen(path, "rb");
+#else
+        FILE *fp = fopen(path, "rb");
+#endif
         if (fp == nullptr) {
             NOTICE_LOG(COMMON, "fopen failed");
             return false;
@@ -55,9 +59,88 @@ public:
             NOTICE_LOG(COMMON, "ParseFromFileDescriptor failed");
             return false;
         }
-
-        NOTICE_LOG(COMMON, "game_disk = %s", log_file_.game_disk().c_str());
         fclose(fp);
+
+        return Start();
+    }
+
+    bool StartBuffer(const char *buf, int size) {
+        bool ok = log_file_.ParseFromArray(buf, size);
+        if (!ok) {
+            NOTICE_LOG(COMMON, "ParseFromArray failed");
+            return false;
+        }
+        return Start();
+    }
+
+    void Open() {
+        recv_buf_.assign({0x0e, 0x61, 0x00, 0x22, 0x10, 0x31, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd});
+        state_ = State::McsSessionExchange;
+        ApplyPatch(true);
+    }
+
+    void Close() {
+        if (state_ != State::End) {
+            PrintDisconnectionSummary();
+        }
+        RestorePatch();
+        state_ = State::End;
+    }
+
+    u32 OnSockWrite(u32 addr, u32 size) {
+        u8 buf[InetBufSize];
+        for (int i = 0; i < size; ++i) {
+            buf[i] = gdxsv_ReadMem8(addr + i);
+        }
+
+        if (state_ <= State::LbsStartBattleFlow) {
+            lbs_tx_reader_.Write((const char *) buf, size);
+        } else {
+            mcs_tx_reader_.Write((const char *) buf, size);
+        }
+
+        if (state_ <= State::LbsStartBattleFlow) {
+            ProcessLbsMessage();
+        } else {
+            ProcessMcsMessage();
+        }
+
+        ApplyPatch(false);
+
+        return size;
+    }
+
+    u32 OnSockRead(u32 addr, u32 size) {
+        if (state_ <= State::LbsStartBattleFlow) {
+            ProcessLbsMessage();
+        }
+
+        if (recv_buf_.empty()) {
+            return 0;
+        }
+
+        int n = std::min<int>(recv_buf_.size(), size);
+        for (int i = 0; i < n; ++i) {
+            gdxsv_WriteMem8(addr + i, recv_buf_.front());
+            recv_buf_.pop_front();
+        }
+        return n;
+    }
+
+    u32 OnSockPoll() {
+        if (state_ <= State::LbsStartBattleFlow) {
+            ProcessLbsMessage();
+        }
+        if (0 < recv_delay_) {
+            recv_delay_--;
+            return 0;
+        }
+        return recv_buf_.size();
+    }
+
+private:
+    bool Start() {
+        NOTICE_LOG(COMMON, "game_disk = %s", log_file_.game_disk().c_str());
 
         McsMessageReader r;
         McsMessage msg;
@@ -129,6 +212,7 @@ public:
         NOTICE_LOG(COMMON, "users = %d", log_file_.users_size());
         NOTICE_LOG(COMMON, "patch_size = %d", log_file_.patches_size());
         NOTICE_LOG(COMMON, "msg_list.size = %d", msg_list_.size());
+        PrintDisconnectionSummary();
 
         std::fill(start_index_.begin(), start_index_.end(), 0);
         state_ = State::Start;
@@ -137,69 +221,52 @@ public:
         return true;
     }
 
-    void Open() {
-        recv_buf_.assign({0x0e, 0x61, 0x00, 0x22, 0x10, 0x31, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd});
-        state_ = State::McsSessionExchange;
-        ApplyPatch(true);
+    void PrintDisconnectionSummary() {
+        std::vector<int> last_keymsg_seq(log_file_.users_size());
+        std::vector<int> last_force_msg_index(log_file_.users_size());
+        for (int i = 0; i < msg_list_.size(); ++i) {
+            const auto& msg = msg_list_[i];
+            if (msg.Type() == McsMessage::KeyMsg1) {
+                last_keymsg_seq[msg.Sender()] = msg.FirstSeq();
+                last_force_msg_index[msg.Sender()] = 0;
+            }
+            if (msg.Type() == McsMessage::KeyMsg2) {
+                last_keymsg_seq[msg.Sender()] = msg.SecondSeq();
+                last_force_msg_index[msg.Sender()] = 0;
+            }
+            if (msg.Type() == McsMessage::ForceMsg) {
+                last_force_msg_index[msg.Sender()] = i;
+            }
+        }
+
+        NOTICE_LOG(COMMON, "== Disconnection Summary ==");
+        NOTICE_LOG(COMMON, " KeyCount LastForceMsg UserID Name");
+        for (int i = 0; i < log_file_.users_size(); ++i) {
+            NOTICE_LOG(COMMON, "%9d %12d %6s %s",
+                       last_keymsg_seq[i],
+                       last_force_msg_index[i],
+                       log_file_.users(i).user_id().c_str(),
+                       log_file_.users(i).user_name().c_str());
+        }
+
+        const auto it_seq_min = std::min_element(begin(last_keymsg_seq), end(last_keymsg_seq));
+        const auto it_seq_max = std::max_element(begin(last_keymsg_seq), end(last_keymsg_seq));
+        if (*it_seq_min != *it_seq_max) {
+            int i = it_seq_min - begin(last_keymsg_seq);
+            bool no_force_msg = last_force_msg_index[i] == 0;
+            bool other_player_send_force_msg = std::count(begin(last_force_msg_index), end(last_force_msg_index), 0) == 1;
+            if (no_force_msg && other_player_send_force_msg) {
+                NOTICE_LOG(COMMON, "!! Disconnected Player Detected !!");
+                NOTICE_LOG(COMMON, " KeyCount LastForceMsg UserID Name");
+                NOTICE_LOG(COMMON, "%9d %12d %6s %s",
+                           last_keymsg_seq[i],
+                           last_force_msg_index[i],
+                           log_file_.users(i).user_id().c_str(),
+                           log_file_.users(i).user_name().c_str());
+            }
+        }
     }
 
-    void Close() {
-        RestorePatch();
-        state_ = State::End;
-    }
-
-    u32 OnSockWrite(u32 addr, u32 size) {
-        u8 buf[InetBufSize];
-        for (int i = 0; i < size; ++i) {
-            buf[i] = gdxsv_ReadMem8(addr + i);
-        }
-
-        if (state_ <= State::LbsStartBattleFlow) {
-            lbs_tx_reader_.Write((const char *) buf, size);
-        } else {
-            mcs_tx_reader_.Write((const char *) buf, size);
-        }
-
-        if (state_ <= State::LbsStartBattleFlow) {
-            ProcessLbsMessage();
-        } else {
-            ProcessMcsMessage();
-        }
-
-        ApplyPatch(false);
-
-        return size;
-    }
-
-    u32 OnSockRead(u32 addr, u32 size) {
-        if (state_ <= State::LbsStartBattleFlow) {
-            ProcessLbsMessage();
-        }
-
-        if (recv_buf_.empty()) {
-            return 0;
-        }
-
-        int n = std::min<int>(recv_buf_.size(), size);
-        for (int i = 0; i < n; ++i) {
-            gdxsv_WriteMem8(addr + i, recv_buf_.front());
-            recv_buf_.pop_front();
-        }
-        return n;
-    }
-
-    u32 OnSockPoll() {
-        if (state_ <= State::LbsStartBattleFlow) {
-            ProcessLbsMessage();
-        }
-        if (0 < recv_delay_) {
-            recv_delay_--;
-            return 0;
-        }
-        return recv_buf_.size();
-    }
-
-private:
     void PrepareKeyMsgIndex() {
         for (int p = 0; p < log_file_.users_size(); ++p) {
             key_msg_index_[p].clear();
