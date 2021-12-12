@@ -3,6 +3,7 @@
 
 #include <regex>
 #include "version.h"
+#include "oslib/oslib.h"
 #include "imgui/imgui.h"
 #include "imgui/imgui_internal.h"
 #include "rend/gui_util.h"
