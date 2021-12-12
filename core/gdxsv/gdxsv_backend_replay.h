@@ -239,23 +239,22 @@ private:
             }
         }
 
+        NOTICE_LOG(COMMON, "== Disconnection Summary ==");
+        NOTICE_LOG(COMMON, " KeyCount LastForceMsg UserID Name");
+        for (int i = 0; i < log_file_.users_size(); ++i) {
+            NOTICE_LOG(COMMON, "%9d %12d %6s %s",
+                       last_keymsg_seq[i],
+                       last_force_msg_index[i],
+                       log_file_.users(i).user_id().c_str(),
+                       log_file_.users(i).user_name().c_str());
+        }
+
         const auto it_seq_min = std::min_element(begin(last_keymsg_seq), end(last_keymsg_seq));
         const auto it_seq_max = std::max_element(begin(last_keymsg_seq), end(last_keymsg_seq));
         if (*it_seq_min != *it_seq_max) {
-            NOTICE_LOG(COMMON, "== Disconnection Summary ==");
-            NOTICE_LOG(COMMON, " KeyCount LastForceMsg UserID Name");
-            for (int i = 0; i < log_file_.users_size(); ++i) {
-                NOTICE_LOG(COMMON, "%9d %12d %6s %s",
-                           last_keymsg_seq[i],
-                           last_force_msg_index[i],
-                           log_file_.users(i).user_id().c_str(),
-                           log_file_.users(i).user_name().c_str());
-            }
-
             int i = it_seq_min - begin(last_keymsg_seq);
             bool no_force_msg = last_force_msg_index[i] == 0;
             bool other_player_send_force_msg = std::count(begin(last_force_msg_index), end(last_force_msg_index), 0) == 1;
-
             if (no_force_msg && other_player_send_force_msg) {
                 NOTICE_LOG(COMMON, "!! Disconnected Player Detected !!");
                 NOTICE_LOG(COMMON, " KeyCount LastForceMsg UserID Name");
