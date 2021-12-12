@@ -42,9 +42,12 @@ uint pixel_list[MAX_PIXELS_PER_FRAGMENT];
 
 int fillAndSortFragmentArray(ivec2 coords)
 {
-	// Load fragments into a local memory array for sorting
 	uint idx = imageLoad(abufferPointerImg, coords).x;
-	int count = 0;
+	if (idx == EOL)
+		return 0;
+	int count = 1;
+	pixel_list[0] = idx;
+	idx = pixels[idx].next;
 	for (; idx != EOL && count < MAX_PIXELS_PER_FRAGMENT; count++)
 	{
 		const Pixel p = pixels[idx];
@@ -56,11 +59,13 @@ int fillAndSortFragmentArray(ivec2 coords)
 		{
 			pixel_list[j + 1] = pixel_list[j];
 			j--;
-			jp = pixels[pixel_list[j]];
+			if (j >= 0)
+				jp = pixels[pixel_list[j]];
 		}
 		pixel_list[j + 1] = idx;
 		idx = p.next;
 	}
+
 	return count;
 }
 
