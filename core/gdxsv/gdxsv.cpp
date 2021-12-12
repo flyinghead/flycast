@@ -612,6 +612,15 @@ bool Gdxsv::StartReplayFile(const char *path) {
         netmode = NetMode::Replay;
         return true;
     }
+
+    auto str = std::string(path);
+    if (4 <= str.length() && str.substr(0, 4) == "http") {
+        auto resp = os_FetchStringFromURL(str);
+        if (0 < resp.size() && replay_net.StartBuffer(resp.data(), resp.size())) {
+            netmode = NetMode::Replay;
+            return true;
+        }
+    }
     return false;
 }
 
