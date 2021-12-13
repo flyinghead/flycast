@@ -19,7 +19,7 @@
 #pragma once
 #include "types.h"
 #include <d3d11.h>
-#include "../dx9/comptr.h"
+#include "windows/comptr.h"
 #include <array>
 #include <unordered_map>
 

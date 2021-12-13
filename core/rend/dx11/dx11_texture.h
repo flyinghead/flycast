@@ -20,7 +20,7 @@
 #include "rend/TexCache.h"
 #include <d3d11.h>
 #include <unordered_map>
-#include "../dx9/comptr.h"
+#include "windows/comptr.h"
 
 class DX11Texture final : public BaseTextureCacheData
 {

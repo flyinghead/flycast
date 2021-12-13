@@ -192,7 +192,7 @@ void DX11Renderer::createDepthTexAndView(ComPtr<ID3D11Texture2D>& texture, ComPt
 
 	// Create the depth stencil view
 	D3D11_DEPTH_STENCIL_VIEW_DESC viewDesc{};
-	viewDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+	viewDesc.Format = format == DXGI_FORMAT_R32G8X24_TYPELESS ? DXGI_FORMAT_D32_FLOAT_S8X24_UINT : DXGI_FORMAT_D24_UNORM_S8_UINT;
 	viewDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
 	hr = device->CreateDepthStencilView(texture, &viewDesc, &view.get());
 	if (FAILED(hr))
@@ -459,8 +459,8 @@ static void clipModVols(List<ModifierVolumeParam>& params, std::vector<ModTriang
 			std::swap(trigs, nextTrigs);
 			nextTrigs.clear();
 		}
-		param.first = triangles.size();
-		param.count = trigs.size();
+		param.first = (u32)triangles.size();
+		param.count = (u32)trigs.size();
 		triangles.insert(triangles.end(), trigs.begin(), trigs.end());
 	}
 }
@@ -498,6 +498,10 @@ void DX11Renderer::configVertexShader()
 	memcpy(mappedSubres.pData, &constant, sizeof(constant));
 	deviceContext->Unmap(vtxConstants, 0);
 	deviceContext->VSSetConstantBuffers(0, 1, &vtxConstants.get());
+	deviceContext->GSSetShader(nullptr, nullptr, 0);
+	deviceContext->HSSetShader(nullptr, nullptr, 0);
+	deviceContext->DSSetShader(nullptr, nullptr, 0);
+	deviceContext->CSSetShader(nullptr, nullptr, 0);
 }
 
 void DX11Renderer::uploadGeometryBuffers()
@@ -527,7 +531,7 @@ void DX11Renderer::uploadGeometryBuffers()
 		clipModVols(pvrrc.global_param_mvo_tr, modVolTriangles);
 		if (!modVolTriangles.empty())
 		{
-			size = modVolTriangles.size() * sizeof(ModTriangle);
+			size = (u32)(modVolTriangles.size() * sizeof(ModTriangle));
 			data = modVolTriangles.data();
 		}
 #else
@@ -593,8 +597,8 @@ bool DX11Renderer::Render()
 	u32 texAddress = FB_W_SOF1 & VRAM_MASK;
 
 	// make sure to unbind the framebuffer view before setting it as render target
-	ID3D11ShaderResourceView *p = nullptr;
-    deviceContext->PSSetShaderResources(0, 1, &p);
+	ID3D11ShaderResourceView *nullView = nullptr;
+    deviceContext->PSSetShaderResources(0, 1, &nullView);
 	bool is_rtt = pvrrc.isRTT;
 	if (!is_rtt)
 		deviceContext->OMSetRenderTargets(1, &fbRenderTarget.get(), depthTexView);
@@ -626,12 +630,18 @@ bool DX11Renderer::Render()
 	}
 	else
 	{
+#ifndef LIBRETRO
 		deviceContext->OMSetRenderTargets(1, &theDX11Context.getRenderTarget().get(), nullptr);
 		renderFramebuffer();
 		DrawOSD(false);
+		theDX11Context.setFrameRendered();
+#else
+		ID3D11RenderTargetView *nullView = nullptr;
+		deviceContext->OMSetRenderTargets(1, &nullView, nullptr);
+		deviceContext->PSSetShaderResources(0, 1, &fbTextureView.get());
+#endif
 		frameRendered = true;
 		frameRenderedOnce = true;
-		theDX11Context.setFrameRendered();
 	}
 
 	return !is_rtt;
@@ -655,6 +665,7 @@ void DX11Renderer::renderDCFramebuffer()
 
 void DX11Renderer::renderFramebuffer()
 {
+#ifndef LIBRETRO
 	D3D11_VIEWPORT vp{};
 	vp.Width = (FLOAT)settings.display.width;
 	vp.Height = (FLOAT)settings.display.height;
@@ -679,16 +690,16 @@ void DX11Renderer::renderFramebuffer()
 	else
 		dx = (int)roundf((outwidth - outheight * renderAR) / 2.f);
 
-	float x = 0, y = 0, w = outwidth, h = outheight;
+	float x = 0, y = 0, w = (float)outwidth, h = (float)outheight;
 	if (dx != 0)
 	{
-		x = dx;
-		w = outwidth - 2 * dx;
+		x = (float)dx;
+		w = (float)(outwidth - 2 * dx);
 	}
 	else
 	{
-		y = dy;
-		h = outheight - 2 * dy;
+		y = (float)dy;
+		h = (float)(outheight - 2 * dy);
 	}
 	// Normalize
 	x = x * 2.f / outwidth - 1.f;
@@ -697,6 +708,7 @@ void DX11Renderer::renderFramebuffer()
 	h *= 2.f / outheight;
 	deviceContext->OMSetBlendState(blendStates.getState(false), nullptr, 0xffffffff);
 	quad->draw(fbTextureView, samplers->getSampler(true), nullptr, x, y, w, h, config::Rotate90);
+#endif
 }
 
 void DX11Renderer::setCullMode(int mode)
@@ -778,10 +790,10 @@ void DX11Renderer::setRenderState(const PolyParam *gp)
 		deviceContext->RSSetScissorRects(1, &scissorRect);
 		if (clipmode == TileClipping::Inside)
 		{
-			constants.clipTest[0] = clip_rect[0];
-			constants.clipTest[1] = clip_rect[1];
-			constants.clipTest[2] = clip_rect[0] + clip_rect[2];
-			constants.clipTest[3] = clip_rect[1] + clip_rect[3];
+			constants.clipTest[0] = (float)clip_rect[0];
+			constants.clipTest[1] = (float)clip_rect[1];
+			constants.clipTest[2] = (float)(clip_rect[0] + clip_rect[2]);
+			constants.clipTest[3] = (float)(clip_rect[1] + clip_rect[3]);
 		}
 	}
 	if (constants.trilinearAlpha != 1.f || gpuPalette || clipmode == TileClipping::Inside)
@@ -864,9 +876,9 @@ void DX11Renderer::sortTriangles(int first, int count)
 	if (pidx_sort.empty())
 		return;
 
-	const u32 bufSize = vidx_sort.size() * sizeof(u32);
+	const size_t bufSize = vidx_sort.size() * sizeof(u32);
 	// Upload sorted index buffer
-	ensureBufferSize(sortedTriIndexBuffer, D3D11_BIND_INDEX_BUFFER, sortedTriIndexBufferSize, bufSize);
+	ensureBufferSize(sortedTriIndexBuffer, D3D11_BIND_INDEX_BUFFER, sortedTriIndexBufferSize, (u32)bufSize);
 	D3D11_MAPPED_SUBRESOURCE mappedSubres;
 	deviceContext->Map(sortedTriIndexBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedSubres);
 	memcpy(mappedSubres.pData, &vidx_sort[0], bufSize);
@@ -880,7 +892,7 @@ void DX11Renderer::drawSorted(bool multipass)
 		return;
 
 	deviceContext->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	u32 count = pidx_sort.size();
+	size_t count = pidx_sort.size();
 
 	for (u32 p = 0; p < count; p++)
 	{
@@ -1169,7 +1181,7 @@ void DX11Renderer::setBaseScissor()
 				D3D11_VIEWPORT vp{};
 				vp.MaxDepth = 1.f;
 				vp.Width = scaled_offs_x;
-				vp.Height = height;
+				vp.Height = (float)height;
 				deviceContext->RSSetViewports(1, &vp);
 				quad->draw(whiteTextureView, samplers->getSampler(false), borderColor);
 
@@ -1225,10 +1237,10 @@ void DX11Renderer::prepareRttRenderTarget(u32 texAddress)
 		fbw2 *= 2;
 	if (!config::RenderToTextureBuffer)
 	{
-		fbw *= config::RenderResolution / 480.f;
-		fbh *= config::RenderResolution / 480.f;
-		fbw2 *= config::RenderResolution / 480.f;
-		fbh2 *= config::RenderResolution / 480.f;
+		fbw = (u32)(fbw * config::RenderResolution / 480.f);
+		fbh = (u32)(fbh * config::RenderResolution / 480.f);
+		fbw2 = (u32)(fbw2 * config::RenderResolution / 480.f);
+		fbh2 = (u32)(fbh2 * config::RenderResolution / 480.f);
 	}
 	createTexAndRenderTarget(rttTexture, rttRenderTarget, fbw2, fbh2);
 	createDepthTexAndView(rttDepthTex, rttDepthTexView, fbw2, fbh2);
@@ -1367,9 +1379,11 @@ void DX11Renderer::updateFogTexture()
 
 void DX11Renderer::DrawOSD(bool clear_screen)
 {
+#ifndef LIBRETRO
 	theDX11Context.setOverlay(!clear_screen);
 	gui_display_osd();
 	theDX11Context.setOverlay(false);
+#endif
 }
 
 Renderer *rend_DirectX11()

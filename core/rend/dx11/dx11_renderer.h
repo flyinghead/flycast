@@ -101,6 +101,7 @@ protected:
 	ComPtr<ID3D11Buffer> modvolBuffer;
 	ComPtr<ID3D11RenderTargetView> fbRenderTarget;
 	ComPtr<ID3D11RenderTargetView> rttRenderTarget;
+	ComPtr<ID3D11ShaderResourceView> fbTextureView;
 
 	BlendStates blendStates;
 	DepthStencilStates depthStencilStates;
@@ -133,7 +134,6 @@ private:
 	u32 sortedTriIndexBufferSize = 0;
 
 	ComPtr<ID3D11Texture2D> fbTex;
-	ComPtr<ID3D11ShaderResourceView> fbTextureView;
 	ComPtr<ID3D11Texture2D> dcfbTexture;
 	ComPtr<ID3D11ShaderResourceView> dcfbTextureView;
 	ComPtr<ID3D11Texture2D> paletteTexture;

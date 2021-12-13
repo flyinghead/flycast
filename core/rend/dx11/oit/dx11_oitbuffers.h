@@ -29,7 +29,7 @@ public:
 		pixelsBufferView.reset();
 		pixelsBuffer.reset();
 		D3D11_BUFFER_DESC desc{};
-		desc.ByteWidth = config::PixelBufferSize;
+		desc.ByteWidth = (UINT)std::min<u64>(config::PixelBufferSize, UINT_MAX);
 		desc.Usage = D3D11_USAGE_DEFAULT;
 		desc.BindFlags = D3D11_BIND_UNORDERED_ACCESS;
 		desc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;

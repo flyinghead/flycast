@@ -21,7 +21,7 @@
 #include <windows.h>
 #include <d3d9.h>
 #include <array>
-#include "comptr.h"
+#include "windows/comptr.h"
 
 class D3DOverlay
 {

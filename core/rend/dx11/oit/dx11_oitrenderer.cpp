@@ -97,14 +97,14 @@ struct DX11OITRenderer : public DX11Renderer
 		viewDesc.Texture2D.MipLevels = 1;
 		device->CreateShaderResourceView(opaqueTex, &viewDesc, &opaqueTextureView.get());
 
-		// For depth pass
-		createDepthTexAndView(depthStencilTex2, depthStencilView2, width, height, DXGI_FORMAT_R24G8_TYPELESS, D3D11_BIND_SHADER_RESOURCE);
+		// For depth pass. Use a 32-bit format for depth to avoid loss of precision
+		createDepthTexAndView(depthStencilTex2, depthStencilView2, width, height, DXGI_FORMAT_R32G8X24_TYPELESS, D3D11_BIND_SHADER_RESOURCE);
 		stencilView.reset();
-		viewDesc.Format = DXGI_FORMAT_X24_TYPELESS_G8_UINT;
+		viewDesc.Format = DXGI_FORMAT_X32_TYPELESS_G8X24_UINT;
 		device->CreateShaderResourceView(depthStencilTex2, &viewDesc, &stencilView.get());
 
 		depthView.reset();
-		viewDesc.Format = DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
+		viewDesc.Format = DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS;
 		device->CreateShaderResourceView(depthStencilTex2, &viewDesc, &depthView.get());
 	}
 
@@ -208,10 +208,10 @@ struct DX11OITRenderer : public DX11Renderer
 			deviceContext->RSSetScissorRects(1, &scissorRect);
 			if (clipmode == TileClipping::Inside)
 			{
-				constants.clipTest[0] = clip_rect[0];
-				constants.clipTest[1] = clip_rect[1];
-				constants.clipTest[2] = clip_rect[0] + clip_rect[2];
-				constants.clipTest[3] = clip_rect[1] + clip_rect[3];
+				constants.clipTest[0] = (float)clip_rect[0];
+				constants.clipTest[1] = (float)clip_rect[1];
+				constants.clipTest[2] = (float)(clip_rect[0] + clip_rect[2]);
+				constants.clipTest[3] = (float)(clip_rect[1] + clip_rect[3]);
 			}
 		}
 		constants.pp_Number = polyNumber;
@@ -412,7 +412,7 @@ struct DX11OITRenderer : public DX11Renderer
 				trPolyParams[i] = (pp->tsp.full & 0xffff00c0) | ((pp->isp.full >> 16) & 0xe400) | ((pp->pcw.full >> 7) & 1);
 				trPolyParams[i + 1] = pp->tsp1.full;
 			}
-			u32 newSize = trPolyParams.size() * sizeof(u32);
+			u32 newSize = (u32)(trPolyParams.size() * sizeof(u32));
 			if (newSize > 0)
 			{
 				if (!trPolyParamsBuffer || trPolyParamsBufferSize < newSize)
@@ -579,12 +579,18 @@ struct DX11OITRenderer : public DX11Renderer
 		}
 		else
 		{
+#ifndef LIBRETRO
 			deviceContext->OMSetRenderTargets(1, &theDX11Context.getRenderTarget().get(), nullptr);
 			renderFramebuffer();
 			DrawOSD(false);
+			theDX11Context.setFrameRendered();
+#else
+			ID3D11RenderTargetView *nullView = nullptr;
+			deviceContext->OMSetRenderTargets(1, &nullView, nullptr);
+			deviceContext->PSSetShaderResources(0, 1, &fbTextureView.get());
+#endif
 			frameRendered = true;
 			frameRenderedOnce = true;
-			theDX11Context.setFrameRendered();
 		}
 
 		return !is_rtt;

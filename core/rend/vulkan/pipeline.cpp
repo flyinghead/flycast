@@ -310,7 +310,7 @@ void PipelineManager::CreatePipeline(u32 listType, bool sortTriangles, const Pol
 	bool depthWriteEnable;
 	if (sortTriangles && !config::PerStripSorting)
 		// FIXME temporary work-around for intel driver bug
-		depthWriteEnable = GetContext()->GetVendorID() == VENDOR_INTEL;
+		depthWriteEnable = GetContext()->GetVendorID() == VulkanContext::VENDOR_INTEL;
 	else
 	{
 		// Z Write Disable seems to be ignored for punch-through.

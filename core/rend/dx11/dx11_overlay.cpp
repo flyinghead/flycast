@@ -22,6 +22,8 @@
 
 void DX11Overlay::draw(u32 width, u32 height, bool vmu, bool crosshair)
 {
+#ifndef LIBRETRO
+	// TODO
 	RECT rect { 0, 0, (LONG)width, (LONG)height };
 	deviceContext->RSSetScissorRects(1, &rect);
 	if (vmu)
@@ -155,4 +157,5 @@ void DX11Overlay::draw(u32 width, u32 height, bool vmu, bool crosshair)
 			quad.draw(xhairTextureView, samplers->getSampler(false), colors);
 		}
 	}
+#endif
 }

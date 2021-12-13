@@ -664,7 +664,8 @@ bool OptionArrowButtons(const char *name, config::Option<int>& option, int min, 
 	ImGui::PushStyleVar(ImGuiStyleVar_ButtonTextAlign, ImVec2(0.f, 0.5f)); // Left
 	ImGui::PushStyleColor(ImGuiCol_Button, ImGui::GetStyle().Colors[ImGuiCol_FrameBg]);
 	float width = ImGui::CalcItemWidth() - innerSpacing * 2.0f - ImGui::GetFrameHeight() * 2.0f;
-	ImGui::ButtonEx(std::to_string((int)option).c_str(), ImVec2(width, 0), ImGuiButtonFlags_Disabled);
+	std::string id = "##" + std::string(name);
+	ImGui::ButtonEx((std::to_string((int)option) + id).c_str(), ImVec2(width, 0), ImGuiButtonFlags_Disabled);
 	ImGui::PopStyleColor();
 	ImGui::PopStyleVar();
 
@@ -676,7 +677,6 @@ bool OptionArrowButtons(const char *name, config::Option<int>& option, int min, 
         ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
         ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
 	}
-	std::string id = "##" + std::string(name);
     if (ImGui::ArrowButton((id + "left").c_str(), ImGuiDir_Left)) { option.set(std::max(min, option - 1)); valueChanged = true; }
     ImGui::SameLine(0.0f, innerSpacing);
     if (ImGui::ArrowButton((id + "right").c_str(), ImGuiDir_Right)) { option.set(std::min(max, option + 1)); valueChanged = true; }

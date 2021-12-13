@@ -40,6 +40,10 @@
 #include "rend/vulkan/vulkan_context.h"
 #include <libretro_vulkan.h>
 #endif
+#ifdef HAVE_D3D11
+#include <libretro_d3d.h>
+#include "rend/dx11/dx11context_lr.h"
+#endif
 #include "emulator.h"
 #include "hw/sh4/sh4_mem.h"
 #include "hw/sh4/sh4_sched.h"
@@ -355,7 +359,7 @@ static void set_variable_visibility()
 	environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
 
 	// Only for per-pixel renderers
-	option_display.visible = config::RendererType == RenderType::OpenGL_OIT || config::RendererType == RenderType::Vulkan_OIT;
+	option_display.visible = config::RendererType == RenderType::OpenGL_OIT || config::RendererType == RenderType::Vulkan_OIT || config::RendererType == RenderType::DirectX11_OIT;
 	option_display.key = CORE_OPTION_NAME "_oit_abuffer_size";
 	environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
 
@@ -527,42 +531,46 @@ static void update_variables(bool first_startup)
 		boot_to_bios = false;
 
 	var.key = CORE_OPTION_NAME "_alpha_sorting";
+	var.value = nullptr;
 	RenderType previous_renderer = config::RendererType;
-	if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+	environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
+	if (var.value != nullptr && !strcmp(var.value, "per-pixel (accurate)"))
 	{
-		if (!strcmp(var.value, "per-strip (fast, least accurate)"))
+		switch (config::RendererType)
 		{
-			if (config::RendererType == RenderType::Vulkan_OIT)
-				config::RendererType = RenderType::Vulkan;
-			else if (config::RendererType != RenderType::Vulkan)
-				config::RendererType = RenderType::OpenGL;
-			config::PerStripSorting = true;
+		case RenderType::Vulkan:
+			config::RendererType = RenderType::Vulkan_OIT;
+			break;
+		case RenderType::DirectX11:
+			config::RendererType = RenderType::DirectX11_OIT;
+			break;
+		case RenderType::OpenGL:
+			config::RendererType = RenderType::OpenGL_OIT;
+			break;
+		default:
+			break;
 		}
-		else if (!strcmp(var.value, "per-triangle (normal)"))
-		{
-			if (config::RendererType == RenderType::Vulkan_OIT)
-				config::RendererType = RenderType::Vulkan;
-			else if (config::RendererType != RenderType::Vulkan)
-				config::RendererType = RenderType::OpenGL;
-			config::PerStripSorting = false;
-		}
-		else if (!strcmp(var.value, "per-pixel (accurate)"))
-		{
-			if (config::RendererType == RenderType::Vulkan)
-				config::RendererType = RenderType::Vulkan_OIT;
-			else if (config::RendererType != RenderType::Vulkan_OIT)
-				config::RendererType = RenderType::OpenGL_OIT;
-			config::PerStripSorting = false;	// Not used
-		}
+		config::PerStripSorting = false;	// Not used
 	}
 	else
 	{
-		if (config::RendererType == RenderType::Vulkan_OIT)
+		switch (config::RendererType)
+		{
+		case RenderType::Vulkan_OIT:
 			config::RendererType = RenderType::Vulkan;
-		else if (config::RendererType != RenderType::Vulkan)
+			break;
+		case RenderType::DirectX11_OIT:
+			config::RendererType = RenderType::DirectX11;
+			break;
+		case RenderType::OpenGL_OIT:
 			config::RendererType = RenderType::OpenGL;
-		config::PerStripSorting = false;
+			break;
+		default:
+			break;
+		}
+		config::PerStripSorting = var.value != nullptr && !strcmp(var.value, "per-strip (fast, least accurate)");
 	}
+
 	if (!first_startup && previous_renderer != config::RendererType) {
 		rend_term_renderer();
 		rend_init_renderer();
@@ -571,7 +579,7 @@ static void update_variables(bool first_startup)
 
 	if (first_startup)
 	{
-#if defined(HAVE_OIT) || defined(HAVE_VULKAN)
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN) || defined(HAVE_D3D11)
 		var.key = CORE_OPTION_NAME "_oit_abuffer_size";
 		if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
 		{
@@ -811,7 +819,9 @@ static void update_variables(bool first_startup)
 		if (rotate_game)
 			config::Widescreen.override(false);
 		setFramebufferSize();
-		if (prevMaxFramebufferWidth < maxFramebufferWidth || prevMaxFramebufferHeight < maxFramebufferHeight)
+		if ((prevMaxFramebufferWidth < maxFramebufferWidth || prevMaxFramebufferHeight < maxFramebufferHeight)
+				// TODO crash with dx11
+				&& config::RendererType != RenderType::DirectX11 && config::RendererType != RenderType::DirectX11_OIT)
 		{
 			retro_system_av_info avinfo;
 			setAVInfo(avinfo);
@@ -1407,10 +1417,10 @@ static bool set_vulkan_hw_render()
 	};
 	environ_cb(RETRO_ENVIRONMENT_SET_HW_RENDER_CONTEXT_NEGOTIATION_INTERFACE, (void *)&negotiation_interface);
 
-	if (config::RendererType == RenderType::OpenGL)
-		config::RendererType = RenderType::Vulkan;
-	else if (config::RendererType == RenderType::OpenGL_OIT)
+	if (config::RendererType == RenderType::OpenGL_OIT || config::RendererType == RenderType::DirectX11_OIT)
 		config::RendererType = RenderType::Vulkan_OIT;
+	else if (config::RendererType != RenderType::Vulkan_OIT)
+		config::RendererType = RenderType::Vulkan;
 	return true;
 }
 #else
@@ -1481,6 +1491,59 @@ static bool set_opengl_hw_render(u32 preferred)
 #endif
 	config::RendererType = RenderType::OpenGL;
 	return glsm_ctl(GLSM_CTL_STATE_CONTEXT_INIT, &params);
+#else
+	return false;
+#endif
+}
+
+#ifdef HAVE_D3D11
+static void dx11_context_reset()
+{
+	NOTICE_LOG(RENDERER, "DX11 context reset");
+	retro_hw_render_interface_d3d11 *hw_render = nullptr;
+	if (!environ_cb(RETRO_ENVIRONMENT_GET_HW_RENDER_INTERFACE, &hw_render) || hw_render == nullptr || hw_render->interface_type != RETRO_HW_RENDER_INTERFACE_D3D11)
+		return;
+	if (hw_render->interface_version != RETRO_HW_RENDER_INTERFACE_D3D11_VERSION)
+	{
+		WARN_LOG(RENDERER, "Unsupported interface version %d, expecting %d", hw_render->interface_version, RETRO_HW_RENDER_INTERFACE_D3D11_VERSION);
+		return;
+	}
+	rend_term_renderer();
+	theDX11Context.term();
+
+	theDX11Context.init(hw_render->device, hw_render->context);
+	if (config::RendererType == RenderType::OpenGL_OIT || config::RendererType == RenderType::Vulkan_OIT)
+		config::RendererType = RenderType::DirectX11_OIT;
+	else if (config::RendererType != RenderType::DirectX11_OIT)
+		config::RendererType = RenderType::DirectX11;
+	rend_init_renderer();
+	rend_resize_renderer();
+}
+
+static void dx11_context_destroy()
+{
+	NOTICE_LOG(RENDERER, "DX11 context destroyed");
+	rend_term_renderer();
+	theDX11Context.term();
+}
+#endif
+
+static bool set_dx11_hw_render()
+{
+#ifdef HAVE_D3D11
+	retro_hw_render_callback hw_render_{};
+	hw_render_.context_type = RETRO_HW_CONTEXT_DIRECT3D;
+	hw_render_.version_major = 11;
+	hw_render_.version_minor = 0;
+	hw_render_.context_reset = dx11_context_reset;
+	hw_render_.context_destroy = dx11_context_destroy;
+
+	if (!environ_cb(RETRO_ENVIRONMENT_SET_HW_RENDER, &hw_render_))
+	{
+		WARN_LOG(RENDERER, "DX11 hardware rendering not available");
+		return false;
+	}
+	return true;
 #else
 	return false;
 #endif
@@ -1633,10 +1696,16 @@ bool retro_load_game(const struct retro_game_info *game)
 	{
 		foundRenderApi = set_vulkan_hw_render();
 	}
+	else if (preferred == RETRO_HW_CONTEXT_DIRECT3D)
+	{
+		foundRenderApi = set_dx11_hw_render();
+	}
 	else
 	{
 		// fallback when not supported (or auto-switching disabled), let's try all supported drivers
-		foundRenderApi = set_vulkan_hw_render();
+		foundRenderApi = set_dx11_hw_render();
+		if (!foundRenderApi)
+			foundRenderApi = set_vulkan_hw_render();
 #if defined(HAVE_OPENGLES)
 		if (!foundRenderApi)
 			foundRenderApi = set_opengl_hw_render(RETRO_HW_CONTEXT_OPENGLES3);

@@ -18,18 +18,37 @@
 */
 #pragma once
 #include <unordered_map>
+#include <memory>
 #include <d3d11.h>
 #include <d3dcompiler.h>
 #include "types.h"
-#include "../dx9/comptr.h"
+#include "windows/comptr.h"
 
-class DX11Shaders
+class CachedDX11Shaders
+{
+protected:
+	void enableCache(bool enable) { this->enabled = enable; }
+	void saveCache(const std::string& filename);
+	void loadCache(const std::string& filename);
+	u64 hashShader(const char* source, const char* function, const char* profile, const D3D_SHADER_MACRO *pDefines = nullptr, const char *includeFile = nullptr);
+	bool lookupShader(u64 hash, ComPtr<ID3DBlob>& blob);
+	void cacheShader(u64 hash, const ComPtr<ID3DBlob>& blob);
+
+private:
+	struct ShaderBlob
+	{
+		u32 size;
+		std::unique_ptr<u8[]> blob;
+	};
+	std::unordered_map<u64, ShaderBlob> shaderCache;
+	bool enabled = true;
+};
+
+class DX11Shaders : CachedDX11Shaders
 {
 public:
-	void init(const ComPtr<ID3D11Device>& device)
-	{
-		this->device = device;
-	}
+	void init(const ComPtr<ID3D11Device>& device);
+	void term();
 
 	const ComPtr<ID3D11PixelShader>& getShader(bool pp_Texture, bool pp_UseAlpha, bool pp_IgnoreTexA, u32 pp_ShadInstr,
 			bool pp_Offset, u32 pp_FogCtrl, bool pp_BumpMap, bool fog_clamping, bool trilinear, bool palette, bool gouraud,
@@ -40,18 +59,6 @@ public:
 	const ComPtr<ID3D11PixelShader>& getQuadPixelShader();
 	const ComPtr<ID3D11VertexShader>& getQuadVertexShader(bool rotate);
 
-	void term()
-	{
-		shaders.clear();
-		gouraudVertexShader.reset();
-		flatVertexShader.reset();
-		modVolShader.reset();
-		modVolVertexShader.reset();
-		quadVertexShader.reset();
-		quadRotateVertexShader.reset();
-		quadPixelShader.reset();
-		device.reset();
-	}
 	ComPtr<ID3DBlob> getVertexShaderBlob();
 	ComPtr<ID3DBlob> getMVVertexShaderBlob();
 	ComPtr<ID3DBlob> getQuadVertexShaderBlob();
@@ -70,4 +77,6 @@ private:
 	ComPtr<ID3D11PixelShader> quadPixelShader;
 	ComPtr<ID3D11VertexShader> quadVertexShader;
 	ComPtr<ID3D11VertexShader> quadRotateVertexShader;
+
+	constexpr static const char *CacheFile = "dx11_shader_cache.bin";
 };

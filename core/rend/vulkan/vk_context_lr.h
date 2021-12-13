@@ -88,6 +88,15 @@ public:
 	f32 GetMaxSamplerAnisotropy() const { return samplerAnisotropy ? maxSamplerAnisotropy : 1.f; }
 	u32 GetVendorID() const { return vendorID; }
 
+	constexpr static int VENDOR_AMD = 0x1022;
+	// AMD GPU products use the ATI vendor Id
+	constexpr static int VENDOR_ATI = 0x1002;
+	constexpr static int VENDOR_ARM = 0x13B5;
+	constexpr static int VENDOR_INTEL = 0x8086;
+	constexpr static int VENDOR_NVIDIA = 0x10DE;
+	constexpr static int VENDOR_QUALCOMM = 0x5143;
+	constexpr static int VENDOR_MESA = 0x10005;
+
 private:
 	VMAllocator allocator;
 

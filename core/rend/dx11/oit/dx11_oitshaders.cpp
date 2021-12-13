@@ -17,6 +17,7 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #include "dx11_oitshaders.h"
+#include "../dx11context.h"
 
 const char * const VertexShader = R"(
 struct VertexIn
@@ -322,7 +323,7 @@ float4 clampColor(float4 color)
 
 float4 palettePixel(Texture2D tex, sampler texSampler, float2 coords)
 {
-	int colorIdx = int(floor(tex.Sample(texSampler, coords).a * 255.0f + 0.5f) + paletteIndex);
+	uint colorIdx = int(floor(tex.Sample(texSampler, coords).a * 255.0f + 0.5f) + paletteIndex);
     float2 c = float2((fmod(float(colorIdx), 32.0f) * 2.0f + 1.0f) / 64.0f, (float(colorIdx / 32) * 2.0f + 1.0f) / 64.0f);
 	return paletteTexture.Sample(paletteSampler, c);
 }
@@ -541,6 +542,7 @@ PSO main(in VertexIn inpix)
 		InterlockedExchange(abufferPointers[coords], idx, pixel.next);
 		Pixels[idx] = pixel;
 		
+		pso.col = 0.f;
 	#endif
 
 	return pso;
@@ -789,7 +791,7 @@ struct IncludeManager : public ID3DInclude
 		if (!strcmp(pFileName, "oit_header.hlsl"))
 		{
 			*ppData = OITShaderHeader;
-			*pBytes = strlen(OITShaderHeader);
+			*pBytes = (UINT)strlen(OITShaderHeader);
 			return S_OK;
 		}
 		return E_FAIL;
@@ -961,12 +963,20 @@ const ComPtr<ID3D11PixelShader>& DX11OITShaders::getTrModVolShader(int type)
 
 ComPtr<ID3DBlob> DX11OITShaders::compileShader(const char* source, const char* function, const char* profile, const D3D_SHADER_MACRO *pDefines)
 {
-	ComPtr<ID3DBlob> shaderBlob;
-	ComPtr<ID3DBlob> errorBlob;
-	IncludeManager includeManager;
+	// add the include file even if not included
+	u64 hash = hashShader(source, function, profile, pDefines, OITShaderHeader);
 
-	if (FAILED(D3DCompile(source, strlen(source), nullptr, pDefines, &includeManager, function, profile, 0, 0, &shaderBlob.get(), &errorBlob.get())))
-		ERROR_LOG(RENDERER, "Shader compilation failed: %s", errorBlob->GetBufferPointer());
+	ComPtr<ID3DBlob> shaderBlob;
+	if (!lookupShader(hash, shaderBlob))
+	{
+		ComPtr<ID3DBlob> errorBlob;
+		IncludeManager includeManager;
+
+		if (FAILED(D3DCompile(source, strlen(source), nullptr, pDefines, &includeManager, function, profile, 0, 0, &shaderBlob.get(), &errorBlob.get())))
+			ERROR_LOG(RENDERER, "Shader compilation failed: %s", errorBlob->GetBufferPointer());
+		else
+			cacheShader(hash, shaderBlob);
+	}
 
 	return shaderBlob;
 }
@@ -1006,4 +1016,11 @@ ComPtr<ID3DBlob> DX11OITShaders::getVertexShaderBlob()
 ComPtr<ID3DBlob> DX11OITShaders::getMVVertexShaderBlob()
 {
 	return compileShader(ModVolVertexShader, "main", "vs_5_0", nullptr);
+}
+
+void DX11OITShaders::init(const ComPtr<ID3D11Device>& device)
+{
+	this->device = device;
+	enableCache(!theDX11Context.hasShaderCache());
+	loadCache(CacheFile);
 }

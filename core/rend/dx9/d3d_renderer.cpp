@@ -471,11 +471,11 @@ void D3DRenderer::sortTriangles(int first, int count)
 	if (pidx_sort.empty())
 		return;
 
-	const u32 bufSize = vidx_sort.size() * sizeof(u32);
+	const size_t bufSize = vidx_sort.size() * sizeof(u32);
 	// Upload sorted index buffer
-	ensureIndexBufferSize(sortedTriIndexBuffer, sortedTriIndexBufferSize, bufSize);
+	ensureIndexBufferSize(sortedTriIndexBuffer, sortedTriIndexBufferSize, (u32)bufSize);
 	void *ptr;
-	sortedTriIndexBuffer->Lock(0, bufSize, &ptr, D3DLOCK_DISCARD);
+	sortedTriIndexBuffer->Lock(0, (UINT)bufSize, &ptr, D3DLOCK_DISCARD);
 	memcpy(ptr, &vidx_sort[0], bufSize);
 	sortedTriIndexBuffer->Unlock();
 	device->SetIndices(sortedTriIndexBuffer);
@@ -486,7 +486,7 @@ void D3DRenderer::drawSorted(bool multipass)
 	if (pidx_sort.empty())
 		return;
 
-	u32 count = pidx_sort.size();
+	u32 count = (u32)pidx_sort.size();
 
 	for (u32 p = 0; p < count; p++)
 	{
@@ -900,10 +900,10 @@ void D3DRenderer::prepareRttRenderTarget(u32 texAddress)
 		fbw2 *= 2;
 	if (!config::RenderToTextureBuffer)
 	{
-		fbw *= config::RenderResolution / 480.f;
-		fbh *= config::RenderResolution / 480.f;
-		fbw2 *= config::RenderResolution / 480.f;
-		fbh2 *= config::RenderResolution / 480.f;
+		fbw = (u32)(fbw * config::RenderResolution / 480.f);
+		fbh = (u32)(fbh * config::RenderResolution / 480.f);
+		fbw2 = (u32)(fbw2 * config::RenderResolution / 480.f);
+		fbh2 = (u32)(fbh2 * config::RenderResolution / 480.f);
 	}
 	rttTexture.reset();
 	device->CreateTexture(fbw2, fbh2, 1, D3DUSAGE_RENDERTARGET, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &rttTexture.get(), NULL);
@@ -1033,6 +1033,24 @@ bool D3DRenderer::Render()
 	if (!pvrrc.isRenderFramebuffer)
 	{
 		setProvokingVertices();
+		// Set clip planes at (-1,0) (1,0) (0,-1) and (0,1).
+		// Helps avoiding interpolation errors on large triangles.
+		devCache.SetRenderState(D3DRS_CLIPPLANEENABLE, 15);
+		float v[4] {};
+		v[3] = 1.f;
+		// left
+		v[0] = 1.f;
+		device->SetClipPlane(0, v);
+		// right
+		v[0] = -1.f;
+		device->SetClipPlane(1, v);
+		// top
+		v[0] = 0.f;
+		v[1] = 1.f;
+		device->SetClipPlane(2, v);
+		// bottom
+		v[1] = -1.f;
+		device->SetClipPlane(3, v);
 
 		verify(ensureVertexBufferSize(vertexBuffer, vertexBufferSize, pvrrc.verts.bytes()));
 		void *ptr;
@@ -1098,7 +1116,6 @@ bool D3DRenderer::Render()
 		devCache.SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
 		devCache.SetRenderState(D3DRS_ALPHATESTENABLE, FALSE);
 		devCache.SetRenderState(D3DRS_FILLMODE, D3DFILL_SOLID);
-		devCache.SetRenderState(D3DRS_CLIPPLANEENABLE, 0);
 		devCache.SetRenderState(D3DRS_CLIPPING, FALSE);
 
 		setBaseScissor();
@@ -1110,6 +1127,7 @@ bool D3DRenderer::Render()
 		}
 		drawStrips();
 		device->EndScene();
+		devCache.SetRenderState(D3DRS_CLIPPLANEENABLE, 0);
 	}
 	else
 	{

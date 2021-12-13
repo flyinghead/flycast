@@ -23,7 +23,7 @@
 #include <windows.h>
 #include <d3d9.h>
 #include "imgui_impl_dx9.h"
-#include "comptr.h"
+#include "windows/comptr.h"
 #include "d3d_overlay.h"
 #include "wsi/context.h"
 

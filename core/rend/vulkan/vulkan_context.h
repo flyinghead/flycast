@@ -28,15 +28,6 @@ public:
 	InvalidVulkanContext() : std::runtime_error("Invalid Vulkan context") {}
 };
 
-#define VENDOR_AMD 0x1022
-// AMD GPU products use the ATI vendor Id
-#define VENDOR_ATI 0x1002
-#define VENDOR_ARM 0x13B5
-#define VENDOR_INTEL 0x8086
-#define VENDOR_NVIDIA 0x10DE
-#define VENDOR_QUALCOMM 0x5143
-#define VENDOR_MESA 0x10005
-
 #ifdef LIBRETRO
 #include "vk_context_lr.h"
 #else
@@ -132,6 +123,14 @@ public:
 		vkDebugMarkerSetObjectNameEXT((VkDevice)*device, &nameInfo);
 	}
 #endif
+	constexpr static int VENDOR_AMD = 0x1022;
+	// AMD GPU products use the ATI vendor Id
+	constexpr static int VENDOR_ATI = 0x1002;
+	constexpr static int VENDOR_ARM = 0x13B5;
+	constexpr static int VENDOR_INTEL = 0x8086;
+	constexpr static int VENDOR_NVIDIA = 0x10DE;
+	constexpr static int VENDOR_QUALCOMM = 0x5143;
+	constexpr static int VENDOR_MESA = 0x10005;
 
 private:
 	void CreateSwapChain();

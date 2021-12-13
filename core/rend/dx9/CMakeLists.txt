@@ -12,7 +12,6 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
         USE_SDL)
 
 target_sources(${PROJECT_NAME} PRIVATE
-	comptr.h
 	d3d_overlay.h
 	d3d_overlay.cpp
 	d3d_renderer.h

@@ -21,7 +21,7 @@
 #include <windows.h>
 #include <d3d11.h>
 #include <array>
-#include "../dx9/comptr.h"
+#include "windows/comptr.h"
 #include "dx11_quad.h"
 #include "dx11_texture.h"
 #include "dx11_renderstate.h"

@@ -18,46 +18,32 @@
 */
 #pragma once
 #include "build.h"
-#ifdef LIBRETRO
-#include "dx11context_lr.h"
-#elif defined(_WIN32)
+#if defined(HAVE_D3D11)
 #include "types.h"
 #include <windows.h>
 #include <d3d11.h>
-#include <dxgi1_2.h>
-#include "imgui_impl_dx11.h"
 #include "windows/comptr.h"
-#include "dx11_overlay.h"
+//#include "dx11_overlay.h"
+#include "dx11_shaders.h"
+#include "dx11_texture.h"
 #include "wsi/context.h"
 
 class DX11Context : public GraphicsContext
 {
 public:
-	bool init(bool keepCurrentWindow = false);
+	bool init(ID3D11Device *device, ID3D11DeviceContext *deviceContext);
 	void term() override;
-	void EndImGuiFrame();
-	void Present();
+
 	const ComPtr<ID3D11Device>& getDevice() const { return pDevice; }
 	const ComPtr<ID3D11DeviceContext>& getDeviceContext() const { return pDeviceContext; }
-	ComPtr<ID3D11RenderTargetView>& getRenderTarget() { return renderTargetView; }
-	void resize() override;
-	void setOverlay(bool overlayOnly) { this->overlayOnly = overlayOnly; }
-	std::string getDriverName() override {
-		return adapterDesc;
-	}
-	std::string getDriverVersion() override {
-		return adapterVersion;
-	}
-	bool hasPerPixel() override {
-		return true;
-	}
+
+	std::string getDriverName() override { return ""; }
+	std::string getDriverVersion() override { return ""; }
+
 	bool isIntel() const {
 		return vendorId == VENDOR_INTEL;
 	}
 
-	void setFrameRendered() {
-		frameRendered = true;
-	}
 	DX11Shaders& getShaders() {
 		return shaders;
 	}
@@ -69,19 +55,8 @@ public:
 	}
 
 private:
-	void handleDeviceLost();
-
 	ComPtr<ID3D11Device> pDevice;
 	ComPtr<ID3D11DeviceContext> pDeviceContext;
-	ComPtr<IDXGISwapChain> swapchain;
-	ComPtr<IDXGISwapChain1> swapchain1;
-	ComPtr<ID3D11RenderTargetView> renderTargetView;
-	bool overlayOnly = false;
-	DX11Overlay overlay;
-	bool swapOnVSync = false;
-	bool frameRendered = false;
-	std::string adapterDesc;
-	std::string adapterVersion;
 	UINT vendorId = 0;
 	bool _hasShaderCache = false;
 	DX11Shaders shaders;

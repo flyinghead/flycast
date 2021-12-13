@@ -18,20 +18,19 @@
 */
 #pragma once
 #include <unordered_map>
+#include <memory>
 #include <d3d11.h>
 #include <d3dcompiler.h>
 #include "types.h"
-#include "../../dx9/comptr.h"
+#include "windows/comptr.h"
+#include "../dx11_shaders.h"
 
-class DX11OITShaders
+class DX11OITShaders : CachedDX11Shaders
 {
 public:
 	enum Pass { Depth, Color, OIT };
 
-	void init(const ComPtr<ID3D11Device>& device)
-	{
-		this->device = device;
-	}
+	void init(const ComPtr<ID3D11Device>& device);
 
 	const ComPtr<ID3D11PixelShader>& getShader(bool pp_Texture, bool pp_UseAlpha, bool pp_IgnoreTexA, u32 pp_ShadInstr,
 			bool pp_Offset, u32 pp_FogCtrl, bool pp_BumpMap, bool fog_clamping,
@@ -45,6 +44,7 @@ public:
 
 	void term()
 	{
+		saveCache(CacheFile);
 		shaders.clear();
 		gouraudVertexShader.reset();
 		flatVertexShader.reset();
@@ -76,4 +76,6 @@ private:
 	ComPtr<ID3D11PixelShader> finalShader;
 	ComPtr<ID3D11PixelShader> clearShader;
 	ComPtr<ID3D11VertexShader> finalVertexShader;
+
+	constexpr static const char *CacheFile = "dx11oit_shader_cache.bin";
 };

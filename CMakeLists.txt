@@ -774,6 +774,7 @@ endif()
 
 if(WIN32)
 	target_sources(${PROJECT_NAME} PRIVATE
+			core/windows/comptr.h
 			core/windows/fault_handler.cpp
 			core/windows/unwind_info.cpp
 			core/windows/win_vmem.cpp)
@@ -1038,7 +1039,14 @@ if(WIN32 AND NOT LIBRETRO AND NOT WINDOWS_STORE)
 	target_link_libraries(${PROJECT_NAME} PRIVATE dx9renderer)
 endif()
 
-if(WIN32 AND NOT LIBRETRO)
+if(WIN32)
+	if(LIBRETRO)
+		target_compile_definitions(${PROJECT_NAME} PRIVATE HAVE_D3D11)
+	else()
+		target_sources(${PROJECT_NAME} PRIVATE
+			core/rend/dx11/imgui_impl_dx11.cpp
+			core/rend/dx11/imgui_impl_dx11.h)
+	endif()
 	target_sources(${PROJECT_NAME} PRIVATE
 		core/rend/dx11/dx11_driver.h
 		core/rend/dx11/dx11_overlay.cpp
@@ -1053,11 +1061,13 @@ if(WIN32 AND NOT LIBRETRO)
 		core/rend/dx11/dx11_texture.h
 		core/rend/dx11/dx11context.cpp
 		core/rend/dx11/dx11context.h
-		core/rend/dx11/imgui_impl_dx11.cpp
-		core/rend/dx11/imgui_impl_dx11.h
+		core/rend/dx11/dx11context_lr.cpp
+		core/rend/dx11/dx11context_lr.h
 		core/rend/dx11/dx11_driver.h
+		core/rend/dx11/oit/dx11_oitbuffers.h
 		core/rend/dx11/oit/dx11_oitrenderer.cpp
-		core/rend/dx11/oit/dx11_oitshaders.cpp)
+		core/rend/dx11/oit/dx11_oitshaders.cpp
+		core/rend/dx11/oit/dx11_oitshaders.h)
 	target_link_libraries(${PROJECT_NAME} PRIVATE d3d11 d3dcompiler)
 endif()
 
