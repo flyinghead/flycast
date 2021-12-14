@@ -863,11 +863,11 @@ void retro_run()
 	if (environ_cb(RETRO_ENVIRONMENT_GET_FASTFORWARDING, &fastforward))
 		settings.input.fastForwardMode = fastforward;
 
+	is_dupe = true;
 	try {
 		if (config::ThreadedRendering)
 		{
 			// Render
-			is_dupe = true;
 			for (int i = 0; i < 5 && is_dupe; i++)
 				is_dupe = !emu.render();
 		}
@@ -886,9 +886,6 @@ void retro_run()
 		glsm_ctl(GLSM_CTL_STATE_UNBIND, nullptr);
 
 	video_cb(is_dupe ? 0 : RETRO_HW_FRAME_BUFFER_VALID, framebufferWidth, framebufferHeight, 0);
-
-	if (!config::ThreadedRendering)
-		is_dupe = true;
 }
 
 static bool loadGame()
@@ -1511,7 +1508,7 @@ static void dx11_context_reset()
 	rend_term_renderer();
 	theDX11Context.term();
 
-	theDX11Context.init(hw_render->device, hw_render->context);
+	theDX11Context.init(hw_render->device, hw_render->context, hw_render->D3DCompile, hw_render->featureLevel);
 	if (config::RendererType == RenderType::OpenGL_OIT || config::RendererType == RenderType::Vulkan_OIT)
 		config::RendererType = RenderType::DirectX11_OIT;
 	else if (config::RendererType != RenderType::DirectX11_OIT)

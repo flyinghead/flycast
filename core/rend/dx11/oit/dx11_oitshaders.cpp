@@ -972,7 +972,7 @@ ComPtr<ID3DBlob> DX11OITShaders::compileShader(const char* source, const char* f
 		ComPtr<ID3DBlob> errorBlob;
 		IncludeManager includeManager;
 
-		if (FAILED(D3DCompile(source, strlen(source), nullptr, pDefines, &includeManager, function, profile, 0, 0, &shaderBlob.get(), &errorBlob.get())))
+		if (FAILED(this->D3DCompile(source, strlen(source), nullptr, pDefines, &includeManager, function, profile, 0, 0, &shaderBlob.get(), &errorBlob.get())))
 			ERROR_LOG(RENDERER, "Shader compilation failed: %s", errorBlob->GetBufferPointer());
 		else
 			cacheShader(hash, shaderBlob);
@@ -1018,9 +1018,10 @@ ComPtr<ID3DBlob> DX11OITShaders::getMVVertexShaderBlob()
 	return compileShader(ModVolVertexShader, "main", "vs_5_0", nullptr);
 }
 
-void DX11OITShaders::init(const ComPtr<ID3D11Device>& device)
+void DX11OITShaders::init(const ComPtr<ID3D11Device>& device, pD3DCompile D3DCompile)
 {
 	this->device = device;
+	this->D3DCompile = D3DCompile;
 	enableCache(!theDX11Context.hasShaderCache());
 	loadCache(CacheFile);
 }

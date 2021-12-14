@@ -31,14 +31,18 @@
 class DX11Context : public GraphicsContext
 {
 public:
-	bool init(ID3D11Device *device, ID3D11DeviceContext *deviceContext);
+	bool init(ID3D11Device *device, ID3D11DeviceContext *deviceContext, pD3DCompile D3DCompile, D3D_FEATURE_LEVEL featureLevel);
 	void term() override;
 
 	const ComPtr<ID3D11Device>& getDevice() const { return pDevice; }
 	const ComPtr<ID3D11DeviceContext>& getDeviceContext() const { return pDeviceContext; }
+	const pD3DCompile getCompiler() const { return this->D3DCompile; }
 
 	std::string getDriverName() override { return ""; }
 	std::string getDriverVersion() override { return ""; }
+	bool hasPerPixel() override {
+		return featureLevel >= D3D_FEATURE_LEVEL_11_0;
+	}
 
 	bool isIntel() const {
 		return vendorId == VENDOR_INTEL;
@@ -57,10 +61,12 @@ public:
 private:
 	ComPtr<ID3D11Device> pDevice;
 	ComPtr<ID3D11DeviceContext> pDeviceContext;
+	pD3DCompile D3DCompile = nullptr;
 	UINT vendorId = 0;
 	bool _hasShaderCache = false;
 	DX11Shaders shaders;
 	Samplers samplers;
+	D3D_FEATURE_LEVEL featureLevel{};
 
 	static constexpr UINT VENDOR_INTEL = 0x8086;
 };

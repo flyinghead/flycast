@@ -47,7 +47,7 @@ private:
 class DX11Shaders : CachedDX11Shaders
 {
 public:
-	void init(const ComPtr<ID3D11Device>& device);
+	void init(const ComPtr<ID3D11Device>& device, pD3DCompile D3DCompile);
 	void term();
 
 	const ComPtr<ID3D11PixelShader>& getShader(bool pp_Texture, bool pp_UseAlpha, bool pp_IgnoreTexA, u32 pp_ShadInstr,
@@ -77,6 +77,7 @@ private:
 	ComPtr<ID3D11PixelShader> quadPixelShader;
 	ComPtr<ID3D11VertexShader> quadVertexShader;
 	ComPtr<ID3D11VertexShader> quadRotateVertexShader;
+	pD3DCompile D3DCompile = nullptr;
 
 	constexpr static const char *CacheFile = "dx11_shader_cache.bin";
 };

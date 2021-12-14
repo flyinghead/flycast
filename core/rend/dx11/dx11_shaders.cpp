@@ -487,7 +487,7 @@ ComPtr<ID3DBlob> DX11Shaders::compileShader(const char* source, const char* func
 	if (!lookupShader(hash, shaderBlob))
 	{
 		ComPtr<ID3DBlob> errorBlob;
-		if (FAILED(D3DCompile(source, strlen(source), nullptr, pDefines, nullptr, function, profile, 0, 0, &shaderBlob.get(), &errorBlob.get())))
+		if (FAILED(this->D3DCompile(source, strlen(source), nullptr, pDefines, nullptr, function, profile, 0, 0, &shaderBlob.get(), &errorBlob.get())))
 			ERROR_LOG(RENDERER, "Shader compilation failed: %s", errorBlob->GetBufferPointer());
 		else
 			cacheShader(hash, shaderBlob);
@@ -538,9 +538,10 @@ ComPtr<ID3DBlob> DX11Shaders::getQuadVertexShaderBlob()
 	return compileShader(QuadVertexShader, "main", "vs_4_0", nullptr);
 }
 
-void DX11Shaders::init(const ComPtr<ID3D11Device>& device)
+void DX11Shaders::init(const ComPtr<ID3D11Device>& device, pD3DCompile D3DCompile)
 {
 	this->device = device;
+	this->D3DCompile = D3DCompile;
 	enableCache(!theDX11Context.hasShaderCache());
 	loadCache(CacheFile);
 }

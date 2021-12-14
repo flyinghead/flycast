@@ -77,7 +77,7 @@ struct DX11OITRenderer : public DX11Renderer
 		desc.ByteWidth = (((desc.ByteWidth - 1) >> 4) + 1) << 4;
 		bool success = SUCCEEDED(device->CreateBuffer(&desc, nullptr, &pxlPolyConstants.get()));
 
-		shaders.init(device);
+		shaders.init(device, theDX11Context.getCompiler());
 		buffers.init(device, deviceContext);
 		ComPtr<ID3DBlob> blob = shaders.getVertexShaderBlob();
 		mainInputLayout.reset();

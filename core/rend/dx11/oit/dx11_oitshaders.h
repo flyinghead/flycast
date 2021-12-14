@@ -30,7 +30,7 @@ class DX11OITShaders : CachedDX11Shaders
 public:
 	enum Pass { Depth, Color, OIT };
 
-	void init(const ComPtr<ID3D11Device>& device);
+	void init(const ComPtr<ID3D11Device>& device, pD3DCompile D3DCompile);
 
 	const ComPtr<ID3D11PixelShader>& getShader(bool pp_Texture, bool pp_UseAlpha, bool pp_IgnoreTexA, u32 pp_ShadInstr,
 			bool pp_Offset, u32 pp_FogCtrl, bool pp_BumpMap, bool fog_clamping,
@@ -76,6 +76,7 @@ private:
 	ComPtr<ID3D11PixelShader> finalShader;
 	ComPtr<ID3D11PixelShader> clearShader;
 	ComPtr<ID3D11VertexShader> finalVertexShader;
+	pD3DCompile D3DCompile = nullptr;
 
 	constexpr static const char *CacheFile = "dx11oit_shader_cache.bin";
 };

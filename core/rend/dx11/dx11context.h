@@ -40,6 +40,8 @@ public:
 	const ComPtr<ID3D11Device>& getDevice() const { return pDevice; }
 	const ComPtr<ID3D11DeviceContext>& getDeviceContext() const { return pDeviceContext; }
 	ComPtr<ID3D11RenderTargetView>& getRenderTarget() { return renderTargetView; }
+	const pD3DCompile getCompiler() const { return D3DCompile; }
+
 	void resize() override;
 	void setOverlay(bool overlayOnly) { this->overlayOnly = overlayOnly; }
 	std::string getDriverName() override {
@@ -49,7 +51,7 @@ public:
 		return adapterVersion;
 	}
 	bool hasPerPixel() override {
-		return true;
+		return featureLevel >= D3D_FEATURE_LEVEL_11_0;
 	}
 	bool isIntel() const {
 		return vendorId == VENDOR_INTEL;
@@ -86,6 +88,7 @@ private:
 	bool _hasShaderCache = false;
 	DX11Shaders shaders;
 	Samplers samplers;
+	D3D_FEATURE_LEVEL featureLevel{};
 
 	static constexpr UINT VENDOR_INTEL = 0x8086;
 };

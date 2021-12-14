@@ -89,7 +89,7 @@ bool DX11Context::init(bool keepCurrentWindow)
 	    ARRAYSIZE(featureLevels),
 	    D3D11_SDK_VERSION,
 	    &pDevice.get(),
-	    nullptr,
+	    &featureLevel,
 	    &pDeviceContext.get());
 
 	ComPtr<IDXGIDevice2> dxgiDevice;
@@ -168,7 +168,7 @@ bool DX11Context::init(bool keepCurrentWindow)
 	imguiDriver = std::unique_ptr<ImGuiDriver>(new DX11Driver());
 	resize();
 	gui_init();
-	shaders.init(pDevice);
+	shaders.init(pDevice, &D3DCompile);
 	overlay.init(pDevice, pDeviceContext, &shaders, &samplers);
 	return ImGui_ImplDX11_Init(pDevice, pDeviceContext);
 }
