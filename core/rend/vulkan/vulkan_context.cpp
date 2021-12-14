@@ -446,7 +446,7 @@ bool VulkanContext::InitDevice()
 	    		10000, ARRAY_SIZE(pool_sizes), pool_sizes));
 
 
-	    std::string cachePath = hostfs::getVulkanCachePath();
+	    std::string cachePath = hostfs::getShaderCachePath("vulkan_pipeline.cache");
 	    FILE *f = nowide::fopen(cachePath.c_str(), "rb");
 	    if (f == nullptr)
 	    	pipelineCache = device->createPipelineCacheUnique(vk::PipelineCacheCreateInfo());
@@ -940,7 +940,7 @@ void VulkanContext::term()
         std::vector<u8> cacheData = device->getPipelineCacheData(*pipelineCache);
         if (!cacheData.empty())
         {
-            std::string cachePath = hostfs::getVulkanCachePath();
+            std::string cachePath = hostfs::getShaderCachePath("vulkan_pipeline.cache");
             FILE *f = nowide::fopen(cachePath.c_str(), "wb");
             if (f != nullptr)
             {

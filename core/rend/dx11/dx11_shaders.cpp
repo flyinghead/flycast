@@ -564,7 +564,7 @@ void CachedDX11Shaders::saveCache(const std::string& filename)
 {
 	if (!enabled)
 		return;
-	std::string path = get_writable_data_path(filename);
+	std::string path = hostfs::getShaderCachePath(filename);
 	FILE *fp = nowide::fopen(path.c_str(), "wb");
 	if (fp == nullptr)
 	{
@@ -589,7 +589,7 @@ void CachedDX11Shaders::loadCache(const std::string& filename)
 {
 	if (!enabled)
 		return;
-	std::string path = get_writable_data_path(filename);
+	std::string path = hostfs::getShaderCachePath(filename);
 	FILE *fp = nowide::fopen(path.c_str(), "rb");
 	if (fp != nullptr)
 	{

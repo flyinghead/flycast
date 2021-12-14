@@ -25,7 +25,9 @@ DX11Context theDX11Context;
 bool DX11Context::init(ID3D11Device *device, ID3D11DeviceContext *deviceContext, pD3DCompile D3DCompile, D3D_FEATURE_LEVEL featureLevel)
 {
 	NOTICE_LOG(RENDERER, "DX11 Context initializing");
+	device->AddRef();
 	pDevice.reset(device);
+	deviceContext->AddRef();
 	pDeviceContext.reset(deviceContext);
 	this->D3DCompile = D3DCompile;
 	this->featureLevel = featureLevel;

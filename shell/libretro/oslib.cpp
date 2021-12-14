@@ -107,9 +107,9 @@ std::string getSavestatePath(int index, bool writable)
 	return "";
 }
 
-std::string getVulkanCachePath()
+std::string getShaderCachePath(const std::string& filename)
 {
-	return std::string(game_dir_no_slash) + std::string(path_default_slash()) + "vulkan_pipeline.cache";
+	return std::string(game_dir_no_slash) + std::string(path_default_slash()) + filename;
 }
 
 std::string getTextureLoadPath(const std::string& gameId)

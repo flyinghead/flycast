@@ -43,7 +43,7 @@ namespace hostfs
 	std::string getTextureLoadPath(const std::string& gameId);
 	std::string getTextureDumpPath();
 
-	std::string getVulkanCachePath();
+	std::string getShaderCachePath(const std::string& filename);
 
 	std::string getBiosFontPath();
 }
