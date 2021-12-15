@@ -617,7 +617,7 @@ dirent_first(
         /* Failed to re-open directory: no directory entry in memory */
         dirp->cached = 0;
         datap = NULL;
-
+        dirent_set_errno(GetLastError()); /* Not a valid errno but better than nothing */
     }
     return datap;
 }
@@ -651,6 +651,8 @@ dirent_next(
             FindClose (dirp->handle);
             dirp->handle = INVALID_HANDLE_VALUE;
             p = NULL;
+            if (GetLastError() != ERROR_NO_MORE_FILES)
+            	dirent_set_errno(GetLastError());
         }
 
     } else {

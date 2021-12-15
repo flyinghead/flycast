@@ -80,18 +80,30 @@ inline int closedir(DIR *dirstream)
 	return ::_wclosedir((_WDIR *)dirstream);
 }
 
+inline static void _set_errno(int error)
+{
+#ifdef _MSC_VER
+	::_set_errno (error);
+#else
+	errno = error;
+#endif
+}
+
 inline int stat(const char *filename, struct stat *buf)
 {
 	nowide::wstackstring wname;
     if (!wname.convert(filename)) {
-    	errno = EINVAL;
+    	_set_errno(EINVAL);
     	return -1;
     }
 #ifdef TARGET_UWP
     WIN32_FILE_ATTRIBUTE_DATA attrs;
 	bool rc = GetFileAttributesExFromAppW(wname.c_str(),  GetFileExInfoStandard, &attrs);
 	if (!rc)
+	{
+		_set_errno(GetLastError());
 		return -1;
+	}
 	memset(buf, 0, sizeof(struct stat));
 	if (attrs.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
 		buf->st_mode = S_IFDIR;
@@ -129,16 +141,27 @@ inline int access(const char *filename, int how)
 {
 	nowide::wstackstring wname;
     if (!wname.convert(filename)) {
-    	errno = EINVAL;
+    	_set_errno(EINVAL);
     	return -1;
     }
 #ifdef TARGET_UWP
     WIN32_FILE_ATTRIBUTE_DATA attrs;
 	bool rc = GetFileAttributesExFromAppW(wname.c_str(),  GetFileExInfoStandard, &attrs);
 	if (!rc)
+	{
+		if (GetLastError() == ERROR_FILE_NOT_FOUND || GetLastError() == ERROR_PATH_NOT_FOUND)
+			_set_errno(ENOENT);
+		else  if (GetLastError() == ERROR_ACCESS_DENIED)
+			_set_errno(EACCES);
+		else
+			_set_errno(GetLastError());
 		return -1;
+	}
 	if (how != R_OK && (attrs.dwFileAttributes & FILE_ATTRIBUTE_READONLY))
+	{
+		_set_errno(EACCES);
 		return -1;
+	}
 	else
 		return 0;
 #else
@@ -237,7 +260,10 @@ public:
 				{
 					struct stat st;
 					if (flycast::stat(childPath.c_str(), &st) != 0)
+					{
+						WARN_LOG(COMMON, "Cannot stat file '%s' errno 0x%x", childPath.c_str(), errno);
 						continue;
+					}
 					if (S_ISDIR(st.st_mode))
 						isDir = true;
 				}
@@ -250,7 +276,7 @@ public:
 				DIR *childDir = flycast::opendir(childPath.c_str());
 				if (childDir == nullptr)
 				{
-					INFO_LOG(COMMON, "Cannot read directory '%s'", childPath.c_str());
+					WARN_LOG(COMMON, "Cannot read subdirectory '%s' errno 0x%x", childPath.c_str(), errno);
 				}
 				else
 				{
@@ -275,7 +301,7 @@ public:
 	{
 		DIR *dir = flycast::opendir(root.c_str());
 		if (dir == nullptr)
-			INFO_LOG(COMMON, "Cannot read directory '%s'", root.c_str());
+			WARN_LOG(COMMON, "Cannot read directory '%s' errno 0x%x", root.c_str(), errno);
 
 		return {dir, root};
 	}

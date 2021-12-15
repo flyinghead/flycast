@@ -84,7 +84,10 @@ void CHDDisc::tryOpen(const char* file)
 {
 	fp = nowide::fopen(file, "rb");
 	if (fp == nullptr)
+	{
+		WARN_LOG(COMMON, "Cannot open file '%s' errno %d", file, errno);
 		throw FlycastException(std::string("Cannot open CHD file ") + file);
+	}
 
 	chd_error err = chd_open_file(fp, CHD_OPEN_READ, 0, &chd);
 
@@ -117,23 +120,23 @@ void CHDDisc::tryOpen(const char* file)
 		char type[16], subtype[16], pgtype[16], pgsub[16];
 		int tkid=-1, frames=0, pregap=0, postgap=0, padframes=0;
 
-		err = chd_get_metadata(chd, CDROM_TRACK_METADATA2_TAG, tracks.size(), temp, sizeof(temp), &temp_len, &tag, &flags);
+		err = chd_get_metadata(chd, CDROM_TRACK_METADATA2_TAG, (u32)tracks.size(), temp, sizeof(temp), &temp_len, &tag, &flags);
 		if (err == CHDERR_NONE)
 		{
 			//"TRACK:%d TYPE:%s SUBTYPE:%s FRAMES:%d PREGAP:%d PGTYPE:%s PGSUB:%s POSTGAP:%d"
 			sscanf(temp, CDROM_TRACK_METADATA2_FORMAT, &tkid, type, subtype, &frames, &pregap, pgtype, pgsub, &postgap);
 		}
-		else if (CHDERR_NONE== (err = chd_get_metadata(chd, CDROM_TRACK_METADATA_TAG, tracks.size(), temp, sizeof(temp), &temp_len, &tag, &flags)) )
+		else if (CHDERR_NONE== (err = chd_get_metadata(chd, CDROM_TRACK_METADATA_TAG, (u32)tracks.size(), temp, sizeof(temp), &temp_len, &tag, &flags)) )
 		{
 			//CDROM_TRACK_METADATA_FORMAT	"TRACK:%d TYPE:%s SUBTYPE:%s FRAMES:%d"
 			sscanf(temp, CDROM_TRACK_METADATA_FORMAT, &tkid, type, subtype, &frames);
 		}
 		else
 		{
-			err = chd_get_metadata(chd, GDROM_OLD_METADATA_TAG, tracks.size(), temp, sizeof(temp), &temp_len, &tag, &flags);
+			err = chd_get_metadata(chd, GDROM_OLD_METADATA_TAG, (u32)tracks.size(), temp, sizeof(temp), &temp_len, &tag, &flags);
 			if (err != CHDERR_NONE)
 			{
-				err = chd_get_metadata(chd, GDROM_TRACK_METADATA_TAG, tracks.size(), temp, sizeof(temp), &temp_len, &tag, &flags);
+				err = chd_get_metadata(chd, GDROM_TRACK_METADATA_TAG, (u32)tracks.size(), temp, sizeof(temp), &temp_len, &tag, &flags);
 			}
 			if (err == CHDERR_NONE)
 			{

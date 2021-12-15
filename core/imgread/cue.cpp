@@ -53,7 +53,10 @@ Disc* cue_parse(const char* file, std::vector<u8> *digest)
 	FILE *fsource = nowide::fopen(file, "rb");
 
 	if (fsource == nullptr)
+	{
+		WARN_LOG(COMMON, "Cannot open file '%s' errno %d", file, errno);
 		throw FlycastException(std::string("Cannot open CUE file ") + file);
+	}
 
 	size_t cue_len = flycast::fsize(fsource);
 
@@ -107,7 +110,7 @@ Disc* cue_parse(const char* file, std::vector<u8> *digest)
 						current_fad += 11400;
 
 					Session ses;
-					ses.FirstTrack = disc->tracks.size() + 1;
+					ses.FirstTrack = (u8)disc->tracks.size() + 1;
 					ses.StartFAD = current_fad;
 					disc->sessions.push_back(ses);
 					DEBUG_LOG(GDROM, "session[%zd]: 1st track: %d FAD:%d", disc->sessions.size(), ses.FirstTrack, ses.StartFAD);
