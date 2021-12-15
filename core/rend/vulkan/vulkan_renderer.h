@@ -213,10 +213,10 @@ public:
 			cmdBuffer.setViewport(0, 1, &viewport);
 			const vk::Rect2D scissor({ 0, 0 }, { (u32)settings.display.width, (u32)settings.display.height });
 			cmdBuffer.setScissor(0, 1, &scissor);
-			osdBuffer->upload(osdVertices.size() * sizeof(OSDVertex), osdVertices.data());
+			osdBuffer->upload((u32)(osdVertices.size() * sizeof(OSDVertex)), osdVertices.data());
 			const vk::DeviceSize zero = 0;
 			cmdBuffer.bindVertexBuffers(0, 1, &osdBuffer->buffer.get(), &zero);
-			for (size_t i = 0; i < osdVertices.size(); i += 4)
+			for (u32 i = 0; i < (u32)osdVertices.size(); i += 4)
 				cmdBuffer.draw(4, 1, i, 0);
 			if (clear_screen)
 				GetContext()->EndFrame();

@@ -102,7 +102,7 @@ public:
 					std::make_pair(samplerHash, VulkanContext::Instance()->GetDevice().createSamplerUnique(
 						vk::SamplerCreateInfo(vk::SamplerCreateFlags(), filter, filter,
 							vk::SamplerMipmapMode::eNearest, uRepeat, vRepeat, vk::SamplerAddressMode::eClampToEdge, mipLodBias,
-							anisotropicFiltering, std::min<float>(config::AnisotropicFiltering, VulkanContext::Instance()->GetMaxSamplerAnisotropy()),
+							anisotropicFiltering, std::min((float)config::AnisotropicFiltering, VulkanContext::Instance()->GetMaxSamplerAnisotropy()),
 							false, vk::CompareOp::eNever,
 							0.0f, 256.0f, vk::BorderColor::eFloatOpaqueBlack)))).first->second.get();
 	}

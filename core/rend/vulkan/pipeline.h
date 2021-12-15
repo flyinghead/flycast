@@ -97,7 +97,7 @@ public:
 		{
 			std::vector<vk::DescriptorSetLayout> layouts(10, perPolyLayout);
 			perPolyDescSets = GetContext()->GetDevice().allocateDescriptorSetsUnique(
-					vk::DescriptorSetAllocateInfo(GetContext()->GetDescriptorPool(), layouts.size(), &layouts[0]));
+					vk::DescriptorSetAllocateInfo(GetContext()->GetDescriptorPool(), (u32)layouts.size(), &layouts[0]));
 		}
 		vk::DescriptorImageInfo imageInfo(samplerManager->GetSampler(tsp), texture->GetReadOnlyImageView(), vk::ImageLayout::eShaderReadOnlyOptimal);
 

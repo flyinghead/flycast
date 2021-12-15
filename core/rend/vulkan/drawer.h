@@ -105,7 +105,7 @@ public:
 	vk::CommandBuffer GetCurrentCommandBuffer() const { return currentCommandBuffer; }
 
 protected:
-	virtual size_t GetSwapChainSize() { return GetContext()->GetSwapChainSize(); }
+	virtual u32 GetSwapChainSize() { return GetContext()->GetSwapChainSize(); }
 	virtual vk::CommandBuffer BeginRenderPass() = 0;
 	void NewImage()
 	{
@@ -147,7 +147,7 @@ protected:
 		}
 		if (mainBuffers[bufferIndex]->bufferSize < size)
 		{
-			u32 newSize = mainBuffers[bufferIndex]->bufferSize;
+			u32 newSize = (u32)mainBuffers[bufferIndex]->bufferSize;
 			while (newSize < size)
 				newSize *= 2;
 			INFO_LOG(RENDERER, "Increasing main buffer size %d -> %d", (u32)mainBuffers[bufferIndex]->bufferSize, newSize);
@@ -207,7 +207,7 @@ public:
 
 protected:
 	vk::CommandBuffer BeginRenderPass() override;
-	size_t GetSwapChainSize() override { return 2; }
+	u32 GetSwapChainSize() override { return 2; }
 
 private:
 	std::unique_ptr<PipelineManager> screenPipelineManager;
