@@ -157,6 +157,11 @@ bool DX11Context::init(bool keepCurrentWindow)
 	}
 	if (FAILED(hr))
 		return false;
+
+#ifndef TARGET_UWP
+	// Prevent DXGI from monitoring our message queue for ALT+Enter
+	dxgiFactory->MakeWindowAssociation((HWND)window, DXGI_MWA_NO_WINDOW_CHANGES);
+#endif
 	D3D11_FEATURE_DATA_SHADER_CACHE cacheSupport{};
 	if (SUCCEEDED(pDevice->CheckFeatureSupport(D3D11_FEATURE_SHADER_CACHE, &cacheSupport, (UINT)sizeof(cacheSupport))))
 	{
@@ -250,19 +255,12 @@ void DX11Context::resize()
 		return;
 	if (swapchain)
 	{
-		BOOL fullscreen;
-		swapchain->GetFullscreenState(&fullscreen, nullptr);
-		NOTICE_LOG(RENDERER, "DX11Context::resize: current display is %d x %d fullscreen %d", settings.display.width, settings.display.height, fullscreen);
 		ID3D11RenderTargetView *nullRTV = nullptr;
 		pDeviceContext->OMSetRenderTargets(1, &nullRTV, nullptr);
 		renderTargetView.reset();
 #ifdef TARGET_UWP
 		HRESULT hr = swapchain->ResizeBuffers(2, settings.display.width, settings.display.height, DXGI_FORMAT_R8G8B8A8_UNORM, 0);
 #else
-		DXGI_SWAP_CHAIN_DESC swapchainDesc;
-	    swapchain->GetDesc(&swapchainDesc);
-		NOTICE_LOG(RENDERER, "current swapchain desc: %d x %d windowed %d", swapchainDesc.BufferDesc.Width, swapchainDesc.BufferDesc.Height, swapchainDesc.Windowed);
-
 		HRESULT hr = swapchain->ResizeBuffers(0, 0, 0, DXGI_FORMAT_UNKNOWN, DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH);
 		if (hr == DXGI_ERROR_DEVICE_REMOVED || hr == DXGI_ERROR_DEVICE_RESET)
 		{
@@ -301,7 +299,7 @@ void DX11Context::resize()
 			settings.display.width = desc.Width;
 			settings.display.height = desc.Height;
 #endif
-			NOTICE_LOG(RENDERER, "swapchain desc: %d x %d", desc.Width, desc.Height);
+			NOTICE_LOG(RENDERER, "Swapchain resized: %d x %d", desc.Width, desc.Height);
 		}
 		else
 		{
