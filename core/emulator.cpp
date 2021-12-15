@@ -123,6 +123,12 @@ static void loadSpecialSettings()
 			INFO_LOG(BOOT, "Enabling Extra depth scaling for game %s", prod_id.c_str());
 			config::ExtraDepthScale.override(1e26f);
 		}
+		// Test Drive V-Rally
+		else if (prod_id == "T15110N" || prod_id == "T15105D 50")
+		{
+			INFO_LOG(BOOT, "Enabling Extra depth scaling for game %s", prod_id.c_str());
+			config::ExtraDepthScale.override(0.1f);
+		}
 
 		std::string areas(ip_meta.area_symbols, sizeof(ip_meta.area_symbols));
 		bool region_usa = areas.find('U') != std::string::npos;

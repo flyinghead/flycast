@@ -276,7 +276,7 @@ bool OITDrawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 
 	oitBuffers->OnNewFrame(cmdBuffer);
 
-	SetProvokingVertices();
+	setFirstProvokingVertex(pvrrc);
 
 	// Upload vertex and index buffers
 	UploadMainBuffer(vtxUniforms, fragUniforms);

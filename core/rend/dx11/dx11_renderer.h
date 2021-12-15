@@ -115,7 +115,6 @@ protected:
 
 private:
 	void readDCFramebuffer();
-	void setProvokingVertices();
 	void prepareRttRenderTarget(u32 texAddress);
 	void setBaseScissor();
 	void drawStrips();

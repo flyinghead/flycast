@@ -20,6 +20,12 @@
 #include "../dx11context.h"
 
 const char * const VertexShader = R"(
+#if pp_Gouraud == 1
+#define INTERPOLATION
+#else
+#define INTERPOLATION nointerpolation
+#endif
+
 struct VertexIn
 {
 	float4 pos : POSITION;
@@ -35,11 +41,11 @@ struct VertexOut
 {
 	float4 pos : SV_POSITION;
 	float4 uv : TEXCOORD0;
-	float4 col : COLOR0;
-	float4 spec : COLOR1;
+	INTERPOLATION float4 col : COLOR0;
+	INTERPOLATION float4 spec : COLOR1;
 	float4 uv1 : TEXCOORD1;
-	float4 col1 : COLOR2;
-	float4 spec1 : COLOR3;
+	INTERPOLATION float4 col1 : COLOR2;
+	INTERPOLATION float4 spec1 : COLOR3;
 };
 
 cbuffer constantBuffer : register(b0)
@@ -240,6 +246,12 @@ const char * const PixelShader = R"(
 
 #include "oit_header.hlsl"
 
+#if pp_Gouraud == 1
+#define INTERPOLATION
+#else
+#define INTERPOLATION nointerpolation
+#endif
+
 #define PI 3.1415926f
 #define PASS_DEPTH 0
 #define PASS_COLOR 1
@@ -255,11 +267,11 @@ struct VertexIn
 {
 	float4 pos : SV_POSITION;
 	float4 uv : TEXCOORD0;
-	float4 col : COLOR0;
-	float4 spec : COLOR1;
+	INTERPOLATION float4 col : COLOR0;
+	INTERPOLATION float4 spec : COLOR1;
 	float4 uv1 : TEXCOORD1;
-	float4 col1 : COLOR2;
-	float4 spec1 : COLOR3;
+	INTERPOLATION float4 col1 : COLOR2;
+	INTERPOLATION float4 spec1 : COLOR3;
 };
 
 Texture2D texture0 : register(t0);

@@ -22,6 +22,12 @@
 #include <xxhash.h>
 
 const char * const VertexShader = R"(
+#if pp_Gouraud == 1
+#define INTERPOLATION
+#else
+#define INTERPOLATION nointerpolation
+#endif
+
 struct VertexIn
 {
 	float4 pos : POSITION;
@@ -34,8 +40,8 @@ struct VertexOut
 {
 	float4 pos : SV_POSITION;
 	float4 uv : TEXCOORD0;
-	float4 col : COLOR0;
-	float4 spec : COLOR1;
+	INTERPOLATION float4 col : COLOR0;
+	INTERPOLATION float4 spec : COLOR1;
 };
 
 cbuffer constantBuffer : register(b0)
@@ -107,14 +113,20 @@ VertexOut main(in VertexIn vin)
 
 const char * const PixelShader = R"(
 
+#if pp_Gouraud == 1
+#define INTERPOLATION
+#else
+#define INTERPOLATION nointerpolation
+#endif
+
 #define PI 3.1415926f
 
 struct Pixel 
 {
 	float4 pos : SV_POSITION;
 	float4 uv : TEXCOORD0;
-	float4 col : COLOR0;
-	float4 spec : COLOR1;
+	INTERPOLATION float4 col : COLOR0;
+	INTERPOLATION float4 spec : COLOR1;
 };
 
 Texture2D texture0 : register(t0);

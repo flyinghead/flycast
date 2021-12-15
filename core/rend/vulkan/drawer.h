@@ -41,7 +41,6 @@ protected:
 	VulkanContext *GetContext() const { return VulkanContext::Instance(); }
 	TileClipping SetTileClip(u32 val, vk::Rect2D& clipRect);
 	void SetBaseScissor(const vk::Extent2D& viewport = vk::Extent2D());
-	void SetProvokingVertices();
 
 	void SetScissor(const vk::CommandBuffer& cmdBuffer, const vk::Rect2D& scissor)
 	{

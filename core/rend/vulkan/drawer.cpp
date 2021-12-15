@@ -103,35 +103,6 @@ void BaseDrawer::SetBaseScissor(const vk::Extent2D& viewport)
 	}
 }
 
-// Vulkan uses the color values of the first vertex for flat shaded triangle strips.
-// On Dreamcast the last vertex is the provoking one so we must copy it onto the first.
-void BaseDrawer::SetProvokingVertices()
-{
-	auto setProvokingVertex = [](const List<PolyParam>& list) {
-        u32 *idx_base = pvrrc.idx.head();
-        Vertex *vtx_base = pvrrc.verts.head();
-		const PolyParam *pp_end = list.LastPtr(0);
-		for (const PolyParam *pp = list.head(); pp != pp_end; pp++)
-		{
-			if (!pp->pcw.Gouraud && pp->count > 2)
-			{
-				for (u32 i = 0; i < pp->count - 2; i++)
-				{
-					Vertex *vertex = &vtx_base[idx_base[pp->first + i]];
-					Vertex *lastVertex = &vtx_base[idx_base[pp->first + i + 2]];
-					memcpy(vertex->col, lastVertex->col, 4);
-					memcpy(vertex->spc, lastVertex->spc, 4);
-					memcpy(vertex->col1, lastVertex->col1, 4);
-					memcpy(vertex->spc1, lastVertex->spc1, 4);
-				}
-			}
-		}
-	};
-	setProvokingVertex(pvrrc.global_param_op);
-	setProvokingVertex(pvrrc.global_param_pt);
-	setProvokingVertex(pvrrc.global_param_tr);
-}
-
 void Drawer::DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sortTriangles, const PolyParam& poly, u32 first, u32 count)
 {
 	vk::Rect2D scissorRect;
@@ -338,7 +309,7 @@ bool Drawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 		return true;
 	}
 
-	SetProvokingVertices();
+	setFirstProvokingVertex(pvrrc);
 
 	// Upload vertex and index buffers
 	VertexShaderUniforms vtxUniforms;

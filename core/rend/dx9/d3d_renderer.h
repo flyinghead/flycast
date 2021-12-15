@@ -135,7 +135,6 @@ private:
 	void drawSorted(bool multipass);
 	void setMVS_Mode(ModifierVolumeMode mv_mode, ISP_Modvol ispc);
 	void drawModVols(int first, int count);
-	void setProvokingVertices();
 	void setTexMode(D3DSAMPLERSTATETYPE state, u32 clamp, u32 mirror);
 	void setBaseScissor();
 	void prepareRttRenderTarget(u32 texAddress);
