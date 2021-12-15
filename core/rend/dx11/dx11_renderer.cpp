@@ -601,10 +601,11 @@ bool DX11Renderer::Render()
     deviceContext->PSSetShaderResources(0, 1, &nullView);
 	bool is_rtt = pvrrc.isRTT;
 	if (!is_rtt)
+	{
 		deviceContext->OMSetRenderTargets(1, &fbRenderTarget.get(), depthTexView);
+		deviceContext->ClearDepthStencilView(depthTexView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 0.f, 0);
+	}
 	configVertexShader();
-
-	deviceContext->ClearDepthStencilView(depthTexView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 0.f, 0);
 
 	deviceContext->IASetInputLayout(mainInputLayout);
 
@@ -1213,6 +1214,7 @@ void DX11Renderer::prepareRttRenderTarget(u32 texAddress)
 	}
 	createTexAndRenderTarget(rttTexture, rttRenderTarget, fbw2, fbh2);
 	createDepthTexAndView(rttDepthTex, rttDepthTexView, fbw2, fbh2);
+	deviceContext->ClearDepthStencilView(rttDepthTexView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 0.f, 0);
 	deviceContext->OMSetRenderTargets(1, &rttRenderTarget.get(), rttDepthTexView);
 
 	D3D11_VIEWPORT vp{};

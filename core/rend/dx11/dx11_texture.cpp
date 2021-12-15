@@ -65,6 +65,17 @@ void DX11Texture::UploadToGPU(int width, int height, u8* temp_tex_buffer, bool m
 	}
 	desc.MipLevels = mipmapLevels;
 
+	if (texture != nullptr)
+	{
+		// Recreate the texture if its dimensions or format have changed
+		D3D11_TEXTURE2D_DESC curDesc;
+		texture->GetDesc(&curDesc);
+		if (desc.Width != curDesc.Width || desc.Height != curDesc.Height || desc.Format != curDesc.Format || desc.MipLevels != curDesc.MipLevels)
+		{
+			textureView.reset();
+			texture.reset();
+		}
+	}
 	if (texture == nullptr)
 	{
 		if (mipmapped && !mipmapsIncluded)
