@@ -109,13 +109,14 @@ void QuadPipeline::CreatePipeline()
 	  &pipelineColorBlendStateCreateInfo,         // pColorBlendState
 	  &pipelineDynamicStateCreateInfo,            // pDynamicState
 	  *pipelineLayout,                            // layout
-	  renderPass                                  // renderPass
+	  renderPass,                                 // renderPass
+	  subpass                                     // subpass
 	);
 
 	pipeline = GetContext()->GetDevice().createGraphicsPipelineUnique(GetContext()->GetPipelineCache(), graphicsPipelineCreateInfo);
 }
 
-void QuadPipeline::Init(ShaderManager *shaderManager, vk::RenderPass renderPass)
+void QuadPipeline::Init(ShaderManager *shaderManager, vk::RenderPass renderPass, int subpass)
 {
 	this->shaderManager = shaderManager;
 	if (!pipelineLayout)
@@ -156,6 +157,7 @@ void QuadPipeline::Init(ShaderManager *shaderManager, vk::RenderPass renderPass)
 	if (this->renderPass != renderPass)
 	{
 		this->renderPass = renderPass;
+		this->subpass = subpass;
 		pipeline.reset();
 	}
 }

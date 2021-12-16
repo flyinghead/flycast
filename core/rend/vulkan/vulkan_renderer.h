@@ -67,7 +67,7 @@ protected:
 #endif
 #ifdef LIBRETRO
 		quadPipeline = std::unique_ptr<QuadPipeline>(new QuadPipeline(false, false));
-		quadPipeline->Init(&shaderManager, renderPass);
+		quadPipeline->Init(&shaderManager, renderPass, subpass);
 		overlay = std::unique_ptr<VulkanOverlay>(new VulkanOverlay());
 		overlay->Init(quadPipeline.get());
 #endif
@@ -147,7 +147,7 @@ public:
 		{
 #ifdef LIBRETRO
 			if (!ctx->rend.isRTT)
-				overlay->Prepare(texCommandBuffer, true, true);
+				overlay->Prepare(texCommandBuffer, true, true, textureCache);
 #endif
 			CheckFogTexture();
 			CheckPaletteTexture();

@@ -40,14 +40,15 @@ public:
 #include "wsi/context.h"
 
 struct ImDrawData;
+struct TextureCache;
 void ImGui_ImplVulkan_RenderDrawData(ImDrawData *draw_data);
 static vk::Format findDepthFormat(vk::PhysicalDevice physicalDevice);
 
 class VulkanContext : public GraphicsContext
 {
 public:
-	VulkanContext() { verify(contextInstance == nullptr); contextInstance = this; }
-	~VulkanContext() { verify(contextInstance == this); contextInstance = nullptr; }
+	VulkanContext();
+	~VulkanContext();
 
 	bool init();
 	void term() override;
@@ -210,6 +211,8 @@ private:
 	vk::Extent2D lastFrameExtent;
 
 	std::unique_ptr<VulkanOverlay> overlay;
+	// only used to delay the destruction of overlay textures
+	std::unique_ptr<TextureCache> textureCache;
 
 #ifdef VK_DEBUG
 #ifndef __ANDROID__

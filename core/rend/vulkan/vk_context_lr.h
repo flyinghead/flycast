@@ -46,8 +46,8 @@ public:
 	vk::DescriptorPool GetDescriptorPool() const { return *descriptorPool; }
 	u32 GetSwapChainSize() const { u32 m = retro_render_if->get_sync_index_mask(retro_render_if->handle); u32 n = 1; while (m >>= 1) n++; return n; }
 	int GetCurrentImageIndex() const { return retro_render_if->get_sync_index(retro_render_if->handle); }
-	// FIXME that's not quite correct
-	void WaitIdle() const { retro_render_if->wait_sync_index(retro_render_if->handle); }
+
+	void WaitIdle() const { queue.waitIdle(); }
 	void SubmitCommandBuffers(u32 bufferCount, vk::CommandBuffer *buffers, vk::Fence fence) {
 		retro_render_if->lock_queue(retro_render_if->handle);
 		queue.submit(vk::SubmitInfo(0, nullptr, nullptr, bufferCount, buffers, 0, nullptr), fence);

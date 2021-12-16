@@ -693,6 +693,12 @@ void OITTextureDrawer::EndFrame()
 
 vk::CommandBuffer OITScreenDrawer::NewFrame()
 {
+	if (frameRendered)
+	{
+		// in case the previous image was never presented
+		frameRendered = false;
+		NewImage();
+	}
 	vk::CommandBuffer commandBuffer = commandPool->Allocate();
 	commandBuffer.begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));
 

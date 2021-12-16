@@ -656,10 +656,10 @@ void VulkanContext::CreateSwapChain()
 	    	renderCompleteSemaphores.push_back(device->createSemaphoreUnique(vk::SemaphoreCreateInfo()));
 	    	imageAcquiredSemaphores.push_back(device->createSemaphoreUnique(vk::SemaphoreCreateInfo()));
 	    }
-	    quadPipeline->Init(shaderManager.get(), *renderPass);
-	    quadPipelineWithAlpha->Init(shaderManager.get(), *renderPass);
+	    quadPipeline->Init(shaderManager.get(), *renderPass, 0);
+	    quadPipelineWithAlpha->Init(shaderManager.get(), *renderPass, 0);
 	    quadDrawer->Init(quadPipeline.get());
-	    quadRotatePipeline->Init(shaderManager.get(), *renderPass);
+	    quadRotatePipeline->Init(shaderManager.get(), *renderPass, 0);
 	    quadRotateDrawer->Init(quadRotatePipeline.get());
 	    overlay->Init(quadPipelineWithAlpha.get());
 
@@ -739,6 +739,7 @@ bool VulkanContext::init()
 #error "Unknown Vulkan platform"
 #endif
 	overlay = std::unique_ptr<VulkanOverlay>(new VulkanOverlay());
+	textureCache = std::unique_ptr<TextureCache>(new TextureCache());
 
 	return InitDevice();
 }
@@ -758,6 +759,7 @@ void VulkanContext::NewFrame()
 	device->resetCommandPool(*commandPools[currentImage], vk::CommandPoolResetFlagBits::eReleaseResources);
 	vk::CommandBuffer commandBuffer = *commandBuffers[currentImage];
 	commandBuffer.begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));
+	textureCache->SetCurrentIndex(GetCurrentImageIndex());
 	verify(!rendering);
 	rendering = true;
 }
@@ -884,7 +886,7 @@ std::string VulkanContext::getDriverVersion()
 
 vk::CommandBuffer VulkanContext::PrepareOverlay(bool vmu, bool crosshair)
 {
-	return overlay->Prepare(*commandPools[GetCurrentImageIndex()], vmu, crosshair);
+	return overlay->Prepare(*commandPools[GetCurrentImageIndex()], vmu, crosshair, *textureCache);
 }
 
  void VulkanContext::DrawOverlay(float scaling, bool vmu, bool crosshair)
@@ -1145,6 +1147,18 @@ void VulkanContext::SetWindowSize(u32 width, u32 height)
 
 		resize();
 	}
+}
+
+VulkanContext::VulkanContext()
+{
+	verify(contextInstance == nullptr);
+	contextInstance = this;
+}
+
+VulkanContext::~VulkanContext()
+{
+	verify(contextInstance == this);
+	contextInstance = nullptr;
 }
 
 void ImGui_ImplVulkan_RenderDrawData(ImDrawData *draw_data)
