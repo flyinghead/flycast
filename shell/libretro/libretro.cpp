@@ -73,13 +73,6 @@ constexpr char slash = path_default_slash_c();
                                             * background or not.
                                             */
 
-#define RETRO_ENVIRONMENT_GET_CLEAR_ALL_THREAD_WAITS_CB (3 | RETRO_ENVIRONMENT_RETROARCH_START_BLOCK)
-                                            /* retro_environment_t * --
-                                            * Provides the callback to the frontend method which will cancel
-                                            * all currently waiting threads.  Used when coordination is needed
-                                            * between the core and the frontend to gracefully stop all threads.
-                                            */
-
 #define RETRO_ENVIRONMENT_POLL_TYPE_OVERRIDE (4 | RETRO_ENVIRONMENT_RETROARCH_START_BLOCK)
                                             /* unsigned * --
                                             * Tells the frontend to override the poll type behavior. 
@@ -97,6 +90,11 @@ constexpr char slash = path_default_slash_c();
 #include "libretro_core_option_defines.h"
 #include "libretro_core_options.h"
 #include "vmu_xhair.h"
+
+extern void retro_audio_init(void);
+extern void retro_audio_deinit(void);
+extern void retro_audio_flush_buffer(void);
+extern void retro_audio_upload(void);
 
 std::string arcadeFlashPath;
 static bool boot_to_bios;
@@ -145,7 +143,6 @@ static retro_input_poll_t         poll_cb;
 static retro_input_state_t        input_cb;
 retro_audio_sample_batch_t audio_batch_cb;
 static retro_environment_t        environ_cb;
-static retro_environment_t        frontend_clear_thread_waits_cb;
 
 static retro_rumble_interface rumble;
 
@@ -264,8 +261,6 @@ void retro_init()
 	unsigned color_mode = RETRO_PIXEL_FORMAT_XRGB8888;
 	environ_cb(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &color_mode);
 
-	environ_cb(RETRO_ENVIRONMENT_GET_CLEAR_ALL_THREAD_WAITS_CB, &frontend_clear_thread_waits_cb);
-
 	init_kb_map();
 	struct retro_keyboard_callback kb_callback = { &retro_keyboard_event };
 	environ_cb(RETRO_ENVIRONMENT_SET_KEYBOARD_CALLBACK, &kb_callback);
@@ -274,6 +269,7 @@ void retro_init()
 		libretro_supports_bitmasks = true;
 
 	init_disk_control_interface();
+	retro_audio_init();
 
 	if (!_vmem_reserve())
 		ERROR_LOG(VMEM, "Cannot reserve memory space");
@@ -294,6 +290,8 @@ void retro_deinit()
 	os_UninstallFaultHandler();
 	libretro_supports_bitmasks = false;
 	LogManager::Shutdown();
+
+	retro_audio_deinit();
 }
 
 static void set_variable_visibility()
@@ -891,6 +889,11 @@ void retro_run()
 	if (config::RendererType.isOpenGL())
 		glsm_ctl(GLSM_CTL_STATE_UNBIND, nullptr);
 
+	if (!config::ThreadedRendering || config::LimitFPS)
+		retro_audio_upload();
+	else
+		retro_audio_flush_buffer();
+
 	video_cb(is_dupe ? 0 : RETRO_HW_FRAME_BUFFER_VALID, framebufferWidth, framebufferHeight, 0);
 
 	if (!config::ThreadedRendering)
@@ -931,6 +934,7 @@ void retro_reset()
 	setGameGeometry(geometry);
 	environ_cb(RETRO_ENVIRONMENT_SET_GEOMETRY, &geometry);
 	blankVmus();
+	retro_audio_flush_buffer();
 
 	if (config::ThreadedRendering)
 		dc_resume();
@@ -1722,11 +1726,7 @@ bool retro_load_game_special(unsigned game_type, const struct retro_game_info *i
 void retro_unload_game()
 {
 	INFO_LOG(COMMON, "Flycast unloading game");
-	if (frontend_clear_thread_waits_cb != nullptr)
-		frontend_clear_thread_waits_cb(1, nullptr);
 	dc_stop();
-	if (frontend_clear_thread_waits_cb != nullptr)
-		frontend_clear_thread_waits_cb(0, nullptr);
 	free(game_data);
 	game_data = nullptr;
 	disk_paths.clear();
@@ -1825,6 +1825,7 @@ bool retro_unserialize(const void * data, size_t size)
     }
 
     bool result = dc_loadstate(&data, size);
+    retro_audio_flush_buffer();
 
     if (config::ThreadedRendering)
     {
