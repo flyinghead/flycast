@@ -458,9 +458,10 @@ void _vmem_init_mappings()
 {
 	_vmem_term_mappings();
 	// Fallback to statically allocated buffers, this results in slow-ops being generated.
-	if (vmemstatus == MemTypeError) {
+	if (vmemstatus == MemTypeError)
+	{
 		WARN_LOG(VMEM, "Warning! nvmem is DISABLED (due to failure or not being built-in");
-		virt_ram_base = 0;
+		virt_ram_base = nullptr;
 
 		// Allocate it all and initialize it.
 		p_sh4rcb = (Sh4RCB*)malloc_pages(sizeof(Sh4RCB));

@@ -77,13 +77,6 @@ constexpr char slash = path_default_slash_c();
                                             * background or not.
                                             */
 
-#define RETRO_ENVIRONMENT_GET_CLEAR_ALL_THREAD_WAITS_CB (3 | RETRO_ENVIRONMENT_RETROARCH_START_BLOCK)
-                                            /* retro_environment_t * --
-                                            * Provides the callback to the frontend method which will cancel
-                                            * all currently waiting threads.  Used when coordination is needed
-                                            * between the core and the frontend to gracefully stop all threads.
-                                            */
-
 #define RETRO_ENVIRONMENT_POLL_TYPE_OVERRIDE (4 | RETRO_ENVIRONMENT_RETROARCH_START_BLOCK)
                                             /* unsigned * --
                                             * Tells the frontend to override the poll type behavior. 
@@ -102,6 +95,11 @@ constexpr char slash = path_default_slash_c();
 #include "libretro_core_options.h"
 #include "vmu_xhair.h"
 
+extern void retro_audio_init(void);
+extern void retro_audio_deinit(void);
+extern void retro_audio_flush_buffer(void);
+extern void retro_audio_upload(void);
+
 std::string arcadeFlashPath;
 static bool boot_to_bios;
 
@@ -113,6 +111,8 @@ static bool digital_triggers = false;
 static bool allow_service_buttons = false;
 
 static bool libretro_supports_bitmasks = false;
+
+static bool categoriesSupported = false;
 
 u32 kcode[4] = {0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF};
 u8 rt[4];
@@ -161,7 +161,6 @@ static retro_input_poll_t         poll_cb;
 static retro_input_state_t        input_cb;
 retro_audio_sample_batch_t audio_batch_cb;
 static retro_environment_t        environ_cb;
-static retro_environment_t        frontend_clear_thread_waits_cb;
 
 static retro_rumble_interface rumble;
 
@@ -235,7 +234,7 @@ void retro_set_environment(retro_environment_t cb)
 {
 	environ_cb = cb;
 
-	libretro_set_core_options(environ_cb);
+	libretro_set_core_options(environ_cb, &categoriesSupported);
 
 	static const struct retro_controller_description ports_default[] =
 	{
@@ -281,8 +280,6 @@ void retro_init()
 	unsigned color_mode = RETRO_PIXEL_FORMAT_XRGB8888;
 	environ_cb(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &color_mode);
 
-	environ_cb(RETRO_ENVIRONMENT_GET_CLEAR_ALL_THREAD_WAITS_CB, &frontend_clear_thread_waits_cb);
-
 	init_kb_map();
 	struct retro_keyboard_callback kb_callback = { &retro_keyboard_event };
 	environ_cb(RETRO_ENVIRONMENT_SET_KEYBOARD_CALLBACK, &kb_callback);
@@ -291,6 +288,7 @@ void retro_init()
 		libretro_supports_bitmasks = true;
 
 	init_disk_control_interface();
+	retro_audio_init();
 
 	if (!_vmem_reserve())
 		ERROR_LOG(VMEM, "Cannot reserve memory space");
@@ -312,6 +310,8 @@ void retro_deinit()
 	os_UninstallFaultHandler();
 	libretro_supports_bitmasks = false;
 	LogManager::Shutdown();
+
+	retro_audio_deinit();
 }
 
 static void set_variable_visibility()
@@ -349,6 +349,10 @@ static void set_variable_visibility()
 	environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
 	option_display.key = CORE_OPTION_NAME "_per_content_vmus";
 	environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+
+	/* only show, if categories not supported */
+	option_display.visible = ((settings.platform.system == DC_PLATFORM_DREAMCAST)
+	                           && (!categoriesSupported));
 	option_display.key = CORE_OPTION_NAME "_show_vmu_screen_settings";
 	environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
 
@@ -374,7 +378,9 @@ static void set_variable_visibility()
 		option_display.visible = true;
 		var.key = CORE_OPTION_NAME "_show_vmu_screen_settings";
 
-		if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+		if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var)
+			&& var.value
+			&& !categoriesSupported)
 			if (!strcmp(var.value, "disabled"))
 				option_display.visible = false;
 	}
@@ -400,11 +406,18 @@ static void set_variable_visibility()
 		environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
 	}
 
+	/* only show, if categories not supported */
+	option_display.visible = !categoriesSupported;
+	option_display.key = CORE_OPTION_NAME "_show_lightgun_settings";
+	environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+
 	// Show/hide light gun options
 	option_display.visible = true;
 	var.key = CORE_OPTION_NAME "_show_lightgun_settings";
 
-	if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+	if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var)
+		&& var.value
+		&& !categoriesSupported)
 		if (!strcmp(var.value, "disabled"))
 			option_display.visible = false;
 
@@ -885,6 +898,11 @@ void retro_run()
 	if (isOpenGL(config::RendererType))
 		glsm_ctl(GLSM_CTL_STATE_UNBIND, nullptr);
 
+	if (!config::ThreadedRendering || config::LimitFPS)
+		retro_audio_upload();
+	else
+		retro_audio_flush_buffer();
+
 	video_cb(is_dupe ? 0 : RETRO_HW_FRAME_BUFFER_VALID, framebufferWidth, framebufferHeight, 0);
 }
 
@@ -918,6 +936,7 @@ void retro_reset()
 	setGameGeometry(geometry);
 	environ_cb(RETRO_ENVIRONMENT_SET_GEOMETRY, &geometry);
 	blankVmus();
+	retro_audio_flush_buffer();
 
 	emu.start();
 }
@@ -1435,11 +1454,6 @@ static bool set_opengl_hw_render(u32 preferred)
 	params.context_reset         = context_reset;
 	params.context_destroy       = context_destroy;
 	params.environ_cb            = environ_cb;
-#ifdef TARGET_NO_STENCIL
-	params.stencil               = false;
-#else
-	params.stencil               = true;
-#endif
 	params.imm_vbo_draw          = NULL;
 	params.imm_vbo_disable       = NULL;
 #if defined(__APPLE__) && defined(HAVE_OPENGL)
@@ -1468,9 +1482,11 @@ static bool set_opengl_hw_render(u32 preferred)
 	else
 #endif
 	{
+#ifndef HAVE_OPENGLES
 		params.context_type          = (retro_hw_context_type)preferred;
 		params.major                 = 3;
 		params.minor                 = preferred == RETRO_HW_CONTEXT_OPENGL_CORE ? 2 : 0;
+#endif
 		config::RendererType = RenderType::OpenGL;
 	}
 
@@ -1767,9 +1783,7 @@ bool retro_load_game_special(unsigned game_type, const struct retro_game_info *i
 void retro_unload_game()
 {
 	INFO_LOG(COMMON, "Flycast unloading game");
-	frontend_clear_thread_waits_cb(1, nullptr);
 	emu.stop();
-	frontend_clear_thread_waits_cb(0, nullptr);
 	game_data.clear();
 	disk_paths.clear();
 	disk_labels.clear();
@@ -1832,6 +1846,7 @@ bool retro_unserialize(const void * data, size_t size)
 	try {
 		Deserializer deser(data, size);
 		dc_loadstate(deser);
+	    retro_audio_flush_buffer();
 		emu.start();
 
 		return true;

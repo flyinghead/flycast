@@ -17,19 +17,11 @@
 #include "stdclass.h"
 
 #ifndef MAP_NOSYNC
-#define MAP_NOSYNC       0 //missing from linux :/ -- could be the cause of android slowness ?
+#define MAP_NOSYNC 0
 #endif
 
 #ifdef __ANDROID__
-	#include <linux/ashmem.h>
-	#ifndef ASHMEM_DEVICE
-		#define ASHMEM_DEVICE "/dev/ashmem"
-		#undef PAGE_MASK
-		#define PAGE_MASK (PAGE_SIZE-1)
-	#else
-		#define PAGE_SIZE 4096
-		#define PAGE_MASK (PAGE_SIZE-1)
-	#endif
+#include <linux/ashmem.h>
 
 // Only available in SDK 26+. Required in SDK 29+ (android 10)
 extern "C" int __attribute__((weak)) ASharedMemory_create(const char*, size_t);
@@ -37,16 +29,22 @@ extern "C" int __attribute__((weak)) ASharedMemory_create(const char*, size_t);
 // Android specific ashmem-device stuff for creating shared memory regions
 int ashmem_create_region(const char *name, size_t size)
 {
+	int fd = -1;
 	if (ASharedMemory_create != nullptr)
-		return ASharedMemory_create(name, size);
+	{
+		fd = ASharedMemory_create(name, size);
+		if (fd < 0)
+			WARN_LOG(VMEM, "ASharedMemory_create failed: errno %d", errno);
+	}
 
-	int fd = open(ASHMEM_DEVICE, O_RDWR);
 	if (fd < 0)
-		return -1;
-
-	if (ioctl(fd, ASHMEM_SET_SIZE, size) < 0) {
-		close(fd);
-		return -1;
+	{
+		fd = open("/dev/ashmem", O_RDWR);
+		if (fd >= 0 && ioctl(fd, ASHMEM_SET_SIZE, size) < 0)
+		{
+			close(fd);
+			fd = -1;
+		}
 	}
 
 	return fd;
@@ -133,17 +131,18 @@ static int allocate_shared_filemem(unsigned size) {
 		fd = open(path.c_str(), O_CREAT|O_RDWR|O_TRUNC, S_IRWXU|S_IRWXG|S_IRWXO);
 		unlink(path.c_str());
 	}
-	// If we can't open the file, fallback to slow mem.
-	if (fd < 0)
-		return -1;
-
-	// Finally make the file as big as we need!
-	if (ftruncate(fd, size)) {
-		// Can't get as much memory as needed, fallback.
-		close(fd);
-		return -1;
+	if (fd >= 0)
+	{
+		// Finally make the file as big as we need!
+		if (ftruncate(fd, size)) {
+			// Can't get as much memory as needed, fallback.
+			close(fd);
+			fd = -1;
+		}
 	}
 #endif
+	if (fd < 0)
+		WARN_LOG(VMEM, "Virtual memory file allocation failed: errno %d", errno);
 
 	return fd;
 }
@@ -199,9 +198,18 @@ VMemType vmem_platform_init(void **vmem_base_addr, void **sh4rcb_addr) {
 }
 
 // Just tries to wipe as much as possible in the relevant area.
-void vmem_platform_destroy() {
-	if (reserved_base != NULL)
+void vmem_platform_destroy()
+{
+	if (reserved_base != nullptr)
+	{
 		mem_region_release(reserved_base, reserved_size);
+		reserved_base = nullptr;
+	}
+	if (vmem_fd >= 0)
+	{
+		close(vmem_fd);
+		vmem_fd = -1;
+	}
 }
 
 // Resets a chunk of memory by deleting its data and setting its protection back.

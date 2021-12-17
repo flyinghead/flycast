@@ -44,7 +44,7 @@ public:
 	void setRetroEnvironment(retro_environment_t retroEnv) {
 		this->retroEnv = retroEnv;
 	}
-	void setOptionDefinitions(const retro_core_option_definition *optionDefs) {
+	void setOptionDefinitions(const retro_core_option_v2_definition *optionDefs) {
 		this->optionDefs = optionDefs;
 	}
 
@@ -57,7 +57,7 @@ private:
 	std::vector<BaseOption *> options;
 	std::string gameId;
 	retro_environment_t retroEnv = nullptr;
-	const retro_core_option_definition *optionDefs;
+	const retro_core_option_v2_definition *optionDefs;
 
 	template<typename T, bool>
 	friend class Option;
@@ -106,8 +106,8 @@ public:
 	T& operator=(const T& v) { set(v); return value; }
 
 protected:
-	const retro_core_option_definition *findDefinition(const std::string& name) const {
-		for (const retro_core_option_definition *pDef = settings.optionDefs; pDef->key != nullptr; pDef++)
+	const retro_core_option_v2_definition *findDefinition(const std::string& name) const {
+		for (const retro_core_option_v2_definition *pDef = settings.optionDefs; pDef->key != nullptr; pDef++)
 			if (name == pDef->key)
 				return pDef;
 		return nullptr;
@@ -120,7 +120,7 @@ protected:
 		retro_variable var { name.c_str() };
 		if (settings.retroEnv(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value != nullptr)
 		{
-			const retro_core_option_definition *def = findDefinition(name);
+			const retro_core_option_v2_definition *def = findDefinition(name);
 			verify(def != nullptr);
 			if (!strcmp(var.value, def->values[1].value)) // TODO change defs so that choice 1 is true (and choice 0 is false)
 				return true;
@@ -138,7 +138,7 @@ protected:
 		retro_variable var { name.c_str() };
 		if (settings.retroEnv(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value != nullptr)
 		{
-			const retro_core_option_definition *def = findDefinition(name);
+			const retro_core_option_v2_definition *def = findDefinition(name);
 			verify(def != nullptr);
 			for (int i = 0; def->values[i].value != nullptr; i++)
 				if (!strcmp(var.value, def->values[i].value))

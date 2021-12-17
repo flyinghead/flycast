@@ -2978,15 +2978,7 @@ static bool glsm_state_ctx_init(glsm_ctx_params_t *params)
       return false;
 
 #ifdef HAVE_OPENGLES
-#if defined(HAVE_OPENGLES_3_1)
-   hw_render.context_type       = RETRO_HW_CONTEXT_OPENGLES_VERSION;
-   hw_render.version_major      = 3;
-   hw_render.version_minor      = 1;
-#elif defined(HAVE_OPENGLES3)
-   hw_render.context_type       = RETRO_HW_CONTEXT_OPENGLES3;
-#else
    hw_render.context_type       = RETRO_HW_CONTEXT_OPENGLES2;
-#endif
 #else
    hw_render.context_type       = RETRO_HW_CONTEXT_OPENGL;
    if (params->context_type != RETRO_HW_CONTEXT_NONE)
