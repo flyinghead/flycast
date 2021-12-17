@@ -113,7 +113,7 @@ __forceinline
 	else
 		ShaderUniforms.trilinear_alpha = 1.f;
 
-	bool color_clamp = gp->tsp.ColorClamp && (pvrrc.fog_clamp_min != 0 || pvrrc.fog_clamp_max != 0xffffffff);
+	bool color_clamp = gp->tsp.ColorClamp && (pvrrc.fog_clamp_min.full != 0 || pvrrc.fog_clamp_max.full != 0xffffffff);
 	int fog_ctrl = config::Fog ? gp->tsp.FogCtrl : 2;
 
 	int clip_rect[4] = {};
@@ -703,7 +703,7 @@ bool render_output_framebuffer()
 		else
 			glViewport(-fx, 0, settings.display.width + fx * 2, settings.display.height);
 		glBindFramebuffer(GL_FRAMEBUFFER, gl.ofbo.origFbo);
-		glcache.ClearColor(VO_BORDER_COL.Red / 255.f, VO_BORDER_COL.Green / 255.f, VO_BORDER_COL.Blue / 255.f, 1.f);
+		glcache.ClearColor(VO_BORDER_COL.red(), VO_BORDER_COL.green(), VO_BORDER_COL.blue(), 1.f);
 		glClear(GL_COLOR_BUFFER_BIT);
 		drawQuad(gl.ofbo.tex, config::Rotate90);
 	}
@@ -714,7 +714,7 @@ bool render_output_framebuffer()
 			return false;
 		glBindFramebuffer(GL_READ_FRAMEBUFFER, gl.ofbo.fbo);
 		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, gl.ofbo.origFbo);
-		glcache.ClearColor(VO_BORDER_COL.Red / 255.f, VO_BORDER_COL.Green / 255.f, VO_BORDER_COL.Blue / 255.f, 1.f);
+		glcache.ClearColor(VO_BORDER_COL.red(), VO_BORDER_COL.green(), VO_BORDER_COL.blue(), 1.f);
 		glClear(GL_COLOR_BUFFER_BIT);
 		glBlitFramebuffer(fx, 0, gl.ofbo.width - fx, gl.ofbo.height,
 				sx, 0, settings.display.width - sx, settings.display.height,

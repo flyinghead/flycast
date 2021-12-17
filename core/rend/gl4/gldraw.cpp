@@ -134,7 +134,7 @@ static void SetGPState(const PolyParam* gp)
 	{
 		// Two volumes mode only supported for OP and PT
 		bool two_volumes_mode = (gp->tsp1.full != (u32)-1) && Type != ListType_Translucent;
-		bool color_clamp = gp->tsp.ColorClamp && (pvrrc.fog_clamp_min != 0 || pvrrc.fog_clamp_max != 0xffffffff);
+		bool color_clamp = gp->tsp.ColorClamp && (pvrrc.fog_clamp_min.full != 0 || pvrrc.fog_clamp_max.full != 0xffffffff);
 
 		int fog_ctrl = config::Fog ? gp->tsp.FogCtrl : 2;
 		gpuPalette = gp->texture != nullptr ? gp->texture->gpuPalette : false;

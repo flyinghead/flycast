@@ -319,7 +319,7 @@ bool DX11Renderer::Process(TA_context* ctx)
 
 //
 // Efficient Triangle and Quadrilateral Clipping within Shaders. M. McGuire
-// Journal of Graphics GPU and Game Tools · November 2011
+// Journal of Graphics GPU and Game Tools ï¿½ November 2011
 //
 static glm::vec3 intersect(const glm::vec3& A, float Adist , const glm::vec3& B, float Bdist)
 {
@@ -556,30 +556,17 @@ void DX11Renderer::setupPixelShaderConstants()
 {
 	PixelConstants pixelConstants;
 	// VERT and RAM fog color constants
-	u8* fog_colvert_bgra = (u8*)&FOG_COL_VERT;
-	u8* fog_colram_bgra = (u8*)&FOG_COL_RAM;
-	pixelConstants.fog_col_vert[0] = fog_colvert_bgra[2] / 255.0f;
-	pixelConstants.fog_col_vert[1] = fog_colvert_bgra[1] / 255.0f;
-	pixelConstants.fog_col_vert[2] = fog_colvert_bgra[0] / 255.0f;
-	pixelConstants.fog_col_ram[0] = fog_colram_bgra[2] / 255.0f;
-	pixelConstants.fog_col_ram[1] = fog_colram_bgra[1] / 255.0f;
-	pixelConstants.fog_col_ram[2] = fog_colram_bgra[0] / 255.0f;
+	FOG_COL_VERT.getRGBColor(pixelConstants.fog_col_vert);
+	FOG_COL_RAM.getRGBColor(pixelConstants.fog_col_ram);
 
 	// Fog density
 	pixelConstants.fogDensity = FOG_DENSITY.get() * config::ExtraDepthScale;
 	// Shadow scale
-	pixelConstants.shadowScale = 1.f - FPU_SHAD_SCALE.scale_factor / 256.f;
+	pixelConstants.shadowScale = FPU_SHAD_SCALE.scale_factor / 256.f;
 
 	// Color clamping
-	pixelConstants.colorClampMin[0] = ((pvrrc.fog_clamp_min >> 16) & 0xFF) / 255.0f;
-	pixelConstants.colorClampMin[1] = ((pvrrc.fog_clamp_min >> 8) & 0xFF) / 255.0f;
-	pixelConstants.colorClampMin[2] = ((pvrrc.fog_clamp_min >> 0) & 0xFF) / 255.0f;
-	pixelConstants.colorClampMin[3] = ((pvrrc.fog_clamp_min >> 24) & 0xFF) / 255.0f;
-
-	pixelConstants.colorClampMax[0] = ((pvrrc.fog_clamp_max >> 16) & 0xFF) / 255.0f;
-	pixelConstants.colorClampMax[1] = ((pvrrc.fog_clamp_max >> 8) & 0xFF) / 255.0f;
-	pixelConstants.colorClampMax[2] = ((pvrrc.fog_clamp_max >> 0) & 0xFF) / 255.0f;
-	pixelConstants.colorClampMax[3] = ((pvrrc.fog_clamp_max >> 24) & 0xFF) / 255.0f;
+	pvrrc.fog_clamp_min.getRGBAColor(pixelConstants.colorClampMin);
+	pvrrc.fog_clamp_max.getRGBAColor(pixelConstants.colorClampMax);
 
 	// Punch-through alpha ref
 	pixelConstants.alphaTestValue = (PT_ALPHA_REF & 0xFF) / 255.0f;
@@ -650,7 +637,9 @@ bool DX11Renderer::Render()
 
 void DX11Renderer::renderDCFramebuffer()
 {
-	FLOAT colors[4] = { VO_BORDER_COL.Red / 255.f, VO_BORDER_COL.Green / 255.f, VO_BORDER_COL.Blue / 255.f, 1.f };
+	float colors[4];
+	VO_BORDER_COL.getRGBColor(colors);
+	colors[3] = 1.f;
 	deviceContext->ClearRenderTargetView(fbRenderTarget, colors);
 	D3D11_VIEWPORT vp{};
 	vp.Width = (FLOAT)width;
@@ -676,7 +665,9 @@ void DX11Renderer::renderFramebuffer()
 
 	const D3D11_RECT r = { 0, 0, settings.display.width, settings.display.height };
 	deviceContext->RSSetScissorRects(1, &r);
-	FLOAT colors[4] = { VO_BORDER_COL.Red / 255.f, VO_BORDER_COL.Green / 255.f, VO_BORDER_COL.Blue / 255.f, 1.f };
+	float colors[4];
+	VO_BORDER_COL.getRGBColor(colors);
+	colors[3] = 1.f;
 	deviceContext->ClearRenderTargetView(theDX11Context.getRenderTarget(), colors);
 	int outwidth = settings.display.width;
 	int outheight = settings.display.height;
@@ -746,7 +737,7 @@ void DX11Renderer::setRenderState(const PolyParam *gp)
 	else
 		constants.trilinearAlpha = 1.f;
 
-	bool color_clamp = gp->tsp.ColorClamp && (pvrrc.fog_clamp_min != 0 || pvrrc.fog_clamp_max != 0xffffffff);
+	bool color_clamp = gp->tsp.ColorClamp && (pvrrc.fog_clamp_min.full != 0 || pvrrc.fog_clamp_max.full != 0xffffffff);
 	int fog_ctrl = config::Fog ? gp->tsp.FogCtrl : 2;
 
 	int clip_rect[4] = {};
@@ -1147,7 +1138,9 @@ void DX11Renderer::setBaseScissor()
 			{
 				float scaled_offs_x = matrices.GetSidebarWidth();
 
-				float borderColor[] { VO_BORDER_COL.Red / 255.f, VO_BORDER_COL.Green / 255.f, VO_BORDER_COL.Blue / 255.f, 1.f };
+				float borderColor[4];
+				VO_BORDER_COL.getRGBColor(borderColor);
+				borderColor[3] = 1.f;
 				D3D11_VIEWPORT vp{};
 				vp.MaxDepth = 1.f;
 				vp.Width = scaled_offs_x;

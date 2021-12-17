@@ -33,25 +33,8 @@ class VulkanOverlay
 public:
 	~VulkanOverlay();
 
-	void Init(QuadPipeline *pipeline)
-	{
-		this->pipeline = pipeline;
-		for (auto& drawer : drawers)
-		{
-			drawer = std::unique_ptr<QuadDrawer>(new QuadDrawer());
-			drawer->Init(pipeline);
-		}
-		xhairDrawer = std::unique_ptr<QuadDrawer>(new QuadDrawer());
-		xhairDrawer->Init(pipeline);
-	}
-
-	void Term()
-	{
-		commandBuffers.clear();
-		for (auto& drawer : drawers)
-			drawer.reset();
-		xhairDrawer.reset();
-	}
+	void Init(QuadPipeline *pipeline);
+	void Term();
 
 	vk::CommandBuffer Prepare(vk::CommandPool commandPool, bool vmu, bool crosshair, TextureCache& textureCache);
 	void Prepare(vk::CommandBuffer commandBuffer, bool vmu, bool crosshair, TextureCache& textureCache);

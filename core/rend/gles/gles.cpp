@@ -1180,28 +1180,14 @@ bool RenderFrame(int width, int height)
 	ShaderUniforms.depth_coefs[3] = 0;
 
 	//VERT and RAM fog color constants
-	u8* fog_colvert_bgra = (u8*)&FOG_COL_VERT;
-	u8* fog_colram_bgra = (u8*)&FOG_COL_RAM;
-	ShaderUniforms.ps_FOG_COL_VERT[0] = fog_colvert_bgra[2] / 255.0f;
-	ShaderUniforms.ps_FOG_COL_VERT[1] = fog_colvert_bgra[1] / 255.0f;
-	ShaderUniforms.ps_FOG_COL_VERT[2] = fog_colvert_bgra[0] / 255.0f;
-
-	ShaderUniforms.ps_FOG_COL_RAM[0] = fog_colram_bgra[2] / 255.0f;
-	ShaderUniforms.ps_FOG_COL_RAM[1] = fog_colram_bgra[1] / 255.0f;
-	ShaderUniforms.ps_FOG_COL_RAM[2] = fog_colram_bgra[0] / 255.0f;
+	FOG_COL_VERT.getRGBColor(ShaderUniforms.ps_FOG_COL_VERT);
+	FOG_COL_RAM.getRGBColor(ShaderUniforms.ps_FOG_COL_RAM);
 
 	//Fog density constant
 	ShaderUniforms.fog_den_float = FOG_DENSITY.get() * config::ExtraDepthScale;
 
-	ShaderUniforms.fog_clamp_min[0] = ((pvrrc.fog_clamp_min >> 16) & 0xFF) / 255.0f;
-	ShaderUniforms.fog_clamp_min[1] = ((pvrrc.fog_clamp_min >> 8) & 0xFF) / 255.0f;
-	ShaderUniforms.fog_clamp_min[2] = ((pvrrc.fog_clamp_min >> 0) & 0xFF) / 255.0f;
-	ShaderUniforms.fog_clamp_min[3] = ((pvrrc.fog_clamp_min >> 24) & 0xFF) / 255.0f;
-	
-	ShaderUniforms.fog_clamp_max[0] = ((pvrrc.fog_clamp_max >> 16) & 0xFF) / 255.0f;
-	ShaderUniforms.fog_clamp_max[1] = ((pvrrc.fog_clamp_max >> 8) & 0xFF) / 255.0f;
-	ShaderUniforms.fog_clamp_max[2] = ((pvrrc.fog_clamp_max >> 0) & 0xFF) / 255.0f;
-	ShaderUniforms.fog_clamp_max[3] = ((pvrrc.fog_clamp_max >> 24) & 0xFF) / 255.0f;
+	pvrrc.fog_clamp_min.getRGBAColor(ShaderUniforms.fog_clamp_min);
+	pvrrc.fog_clamp_max.getRGBAColor(ShaderUniforms.fog_clamp_max);
 	
 	glcache.UseProgram(gl.modvol_shader.program);
 
@@ -1257,7 +1243,7 @@ bool RenderFrame(int width, int height)
     glClearStencil(0);
 	glClear(GL_STENCIL_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); glCheck();
 	if (!is_rtt)
-		glcache.ClearColor(VO_BORDER_COL.Red / 255.f, VO_BORDER_COL.Green / 255.f, VO_BORDER_COL.Blue / 255.f, 1.f);
+		glcache.ClearColor(VO_BORDER_COL.red(), VO_BORDER_COL.green(), VO_BORDER_COL.blue(), 1.f);
 
 	if (!is_rtt && (FB_R_CTRL.fb_enable == 0 || VO_CONTROL.blank_video == 1))
 	{

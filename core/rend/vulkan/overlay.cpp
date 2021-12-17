@@ -29,6 +29,29 @@
 
 VulkanOverlay::~VulkanOverlay() = default;
 
+void VulkanOverlay::Init(QuadPipeline *pipeline)
+{
+	this->pipeline = pipeline;
+	for (auto& drawer : drawers)
+	{
+		drawer = std::unique_ptr<QuadDrawer>(new QuadDrawer());
+		drawer->Init(pipeline);
+	}
+	xhairDrawer = std::unique_ptr<QuadDrawer>(new QuadDrawer());
+	xhairDrawer->Init(pipeline);
+}
+
+void VulkanOverlay::Term()
+{
+	commandBuffers.clear();
+	for (auto& drawer : drawers)
+		drawer.reset();
+	xhairDrawer.reset();
+	for (auto& tex : vmuTextures)
+		tex.reset();
+	xhairTexture.reset();
+}
+
 std::unique_ptr<Texture> VulkanOverlay::createTexture(vk::CommandBuffer commandBuffer, int width, int height, u8 *data)
 {
 	VulkanContext *context = VulkanContext::Instance();

@@ -361,8 +361,8 @@ void rend_start_render()
 			ctx->rend.fb_Y_CLIP.min = 0;
 			ctx->rend.fb_Y_CLIP.max = 479;
 
-			ctx->rend.fog_clamp_min = 0;
-			ctx->rend.fog_clamp_max = 0xffffffff;
+			ctx->rend.fog_clamp_min.full = 0;
+			ctx->rend.fog_clamp_max.full = 0xffffffff;
 		}
 		else
 		{

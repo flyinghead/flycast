@@ -267,7 +267,7 @@ void D3DRenderer::readDCFramebuffer()
 
 void D3DRenderer::renderDCFramebuffer()
 {
-	device->ColorFill(framebufferSurface, 0, D3DCOLOR_ARGB(255, VO_BORDER_COL.Red, VO_BORDER_COL.Green, VO_BORDER_COL.Blue));
+	device->ColorFill(framebufferSurface, 0, D3DCOLOR_ARGB(255, VO_BORDER_COL._red, VO_BORDER_COL._green, VO_BORDER_COL._blue));
 	u32 bar = (width - height * 640 / 480) / 2;
 	RECT rd{ (LONG)bar, 0, (LONG)(width - bar), (LONG)height };
 	device->StretchRect(dcfbSurface, nullptr, framebufferSurface, &rd, D3DTEXF_LINEAR);
@@ -322,7 +322,7 @@ void D3DRenderer::setGPState(const PolyParam *gp)
 	else
 		trilinear_alpha = 1.f;
 
-	bool color_clamp = gp->tsp.ColorClamp && (pvrrc.fog_clamp_min != 0 || pvrrc.fog_clamp_max != 0xffffffff);
+	bool color_clamp = gp->tsp.ColorClamp && (pvrrc.fog_clamp_min.full != 0 || pvrrc.fog_clamp_max.full != 0xffffffff);
 	int fog_ctrl = config::Fog ? gp->tsp.FogCtrl : 2;
 
 	int clip_rect[4] = {};
@@ -817,7 +817,7 @@ void D3DRenderer::setBaseScissor()
 			{
 				float scaled_offs_x = matrices.GetSidebarWidth();
 
-				D3DCOLOR borderColor = D3DCOLOR_ARGB(255, VO_BORDER_COL.Red, VO_BORDER_COL.Green, VO_BORDER_COL.Blue);
+				D3DCOLOR borderColor = D3DCOLOR_ARGB(255, VO_BORDER_COL._red, VO_BORDER_COL._green, VO_BORDER_COL._blue);
 				devCache.SetRenderState(D3DRS_SCISSORTESTENABLE, FALSE);
 				D3DRECT rects[] {
 						{ 0, 0, lroundf(scaled_offs_x), (long)height },
@@ -1046,10 +1046,10 @@ bool D3DRenderer::Render()
 		devCache.SetVertexShader(shaders.getVertexShader(true));
 
 		// VERT and RAM fog color constants
-		u8* fog_colvert_bgra = (u8*)&FOG_COL_VERT;
-		u8* fog_colram_bgra = (u8*)&FOG_COL_RAM;
-		float ps_FOG_COL_VERT[4] = { fog_colvert_bgra[2] / 255.0f, fog_colvert_bgra[1] / 255.0f, fog_colvert_bgra[0] / 255.0f, 1 };
-		float ps_FOG_COL_RAM[4] = { fog_colram_bgra[2] / 255.0f, fog_colram_bgra[1] / 255.0f, fog_colram_bgra[0] / 255.0f, 1 };
+		float ps_FOG_COL_VERT[4];
+		float ps_FOG_COL_RAM[4];
+		FOG_COL_VERT.getRGBColor(ps_FOG_COL_VERT);
+		FOG_COL_RAM.getRGBColor(ps_FOG_COL_RAM);
 		device->SetPixelShaderConstantF(1, ps_FOG_COL_VERT, 1);
 		device->SetPixelShaderConstantF(2, ps_FOG_COL_RAM, 1);
 
@@ -1059,20 +1059,11 @@ bool D3DRenderer::Render()
 		device->SetPixelShaderConstantF(3, fogDensityAndScale, 1);
 
 		// Color clamping
-		float fog_clamp_min[] {
-			((pvrrc.fog_clamp_min >> 16) & 0xFF) / 255.0f,
-			((pvrrc.fog_clamp_min >> 8) & 0xFF) / 255.0f,
-			((pvrrc.fog_clamp_min >> 0) & 0xFF) / 255.0f,
-			((pvrrc.fog_clamp_min >> 24) & 0xFF) / 255.0f
-		};
-		device->SetPixelShaderConstantF(6, fog_clamp_min, 1);
-		float fog_clamp_max[] {
-			((pvrrc.fog_clamp_max >> 16) & 0xFF) / 255.0f,
-			((pvrrc.fog_clamp_max >> 8) & 0xFF) / 255.0f,
-			((pvrrc.fog_clamp_max >> 0) & 0xFF) / 255.0f,
-			((pvrrc.fog_clamp_max >> 24) & 0xFF) / 255.0f
-		};
-		device->SetPixelShaderConstantF(7, fog_clamp_max, 1);
+		float color_clamp[4];
+		pvrrc.fog_clamp_min.getRGBAColor(color_clamp);
+		device->SetPixelShaderConstantF(6, color_clamp, 1);
+		pvrrc.fog_clamp_max.getRGBAColor(color_clamp);
+		device->SetPixelShaderConstantF(7, color_clamp, 1);
 
 		devCache.SetRenderState(D3DRS_ZENABLE, D3DZB_TRUE);
 
@@ -1141,7 +1132,7 @@ void D3DRenderer::Resize(int w, int h)
 void D3DRenderer::renderFramebuffer()
 {
 	devCache.SetRenderState(D3DRS_SCISSORTESTENABLE, FALSE);
-	device->ColorFill(backbuffer, 0, D3DCOLOR_ARGB(255, VO_BORDER_COL.Red, VO_BORDER_COL.Green, VO_BORDER_COL.Blue));
+	device->ColorFill(backbuffer, 0, D3DCOLOR_ARGB(255, VO_BORDER_COL._red, VO_BORDER_COL._green, VO_BORDER_COL._blue));
 	int fx = 0;
 	int sx = 0;
 	float screenAR = (float)settings.display.width / settings.display.height;

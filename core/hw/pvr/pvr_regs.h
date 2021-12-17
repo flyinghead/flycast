@@ -113,19 +113,71 @@ union FB_R_SIZE_type
 	};
 	u32 full;
 };
-union VO_BORDER_COL_type
+
+template<typename T>
+struct RGBAColorTemplate
 {
-	struct
+	float red() const { return ((T *)this)->_red / 255.f; }
+	float green() const { return ((T *)this)->_green / 255.f; }
+	float blue() const { return ((T *)this)->_blue / 255.f; }
+	float alpha() const { return ((T *)this)->_alpha / 255.f; }
+
+	void getRGBColor(float rgb[3])
 	{
-		u32 Blue   : 8; //0
-		u32 Green  : 8; //8
-		u32 Red    : 8; //16
-		u32 Chroma : 1; //24
-		u32 res    : 7; //25
-	};
-	u32 full;
+		rgb[0] = red();
+		rgb[1] = green();
+		rgb[2] = blue();
+	}
+
+	void getRGBAColor(float rgba[4])
+	{
+		getRGBColor(rgba);
+		rgba[3] = alpha();
+	}
 };
 
+struct VO_BORDER_COL_type : RGBAColorTemplate<VO_BORDER_COL_type>
+{
+	union {
+		struct
+		{
+			u32 _blue   : 8;
+			u32 _green  : 8;
+			u32 _red    : 8;
+			u32 _chroma : 1;
+			u32 _res    : 7;
+		};
+		u32 full;
+	};
+};
+
+struct RGBColor : RGBAColorTemplate<RGBColor>
+{
+	union {
+		struct
+		{
+			u32 _blue  : 8;
+			u32 _green : 8;
+			u32 _red   : 8;
+			u32 _res   : 8;
+		};
+		u32 full;
+	};
+};
+
+struct RGBAColor : RGBAColorTemplate<RGBAColor>
+{
+	union {
+		struct
+		{
+			u32 _blue  : 8;
+			u32 _green : 8;
+			u32 _red   : 8;
+			u32 _alpha : 8;
+		};
+		u32 full;
+	};
+};
 
 union SPG_STATUS_type
 {
@@ -474,11 +526,11 @@ union FOG_DENSITY_type
 #define SDRAM_ARB_CFG     PvrReg(SDRAM_ARB_CFG_addr,u32)                  // RW  Texture memory arbiter control
 #define SDRAM_CFG         PvrReg(SDRAM_CFG_addr,u32)                      // RW  Texture memory control
 
-#define FOG_COL_RAM       PvrReg(FOG_COL_RAM_addr,u32)                    // RW  Color for Look Up table Fog
-#define FOG_COL_VERT      PvrReg(FOG_COL_VERT_addr,u32)                   // RW  Color for vertex Fog
+#define FOG_COL_RAM       PvrReg(FOG_COL_RAM_addr, RGBColor)              // RW  Color for Look Up table Fog
+#define FOG_COL_VERT      PvrReg(FOG_COL_VERT_addr, RGBColor)             // RW  Color for vertex Fog
 #define FOG_DENSITY       PvrReg(FOG_DENSITY_addr, FOG_DENSITY_type)      // RW  Fog scale value
-#define FOG_CLAMP_MAX     PvrReg(FOG_CLAMP_MAX_addr,u32)                  // RW  Color clamping maximum value
-#define FOG_CLAMP_MIN     PvrReg(FOG_CLAMP_MIN_addr,u32)                  // RW  Color clamping minimum value
+#define FOG_CLAMP_MAX     PvrReg(FOG_CLAMP_MAX_addr, RGBAColor)           // RW  Color clamping maximum value
+#define FOG_CLAMP_MIN     PvrReg(FOG_CLAMP_MIN_addr, RGBAColor)           // RW  Color clamping minimum value
 #define SPG_TRIGGER_POS   PvrReg(SPG_TRIGGER_POS_addr,u32)                // RW  External trigger signal HV counter value
 #define SPG_HBLANK_INT    PvrReg(SPG_HBLANK_INT_addr,SPG_HBLANK_INT_type) // RW  H-blank interrupt control
 #define SPG_VBLANK_INT    PvrReg(SPG_VBLANK_INT_addr,SPG_VBLANK_INT_type) // RW  V-blank interrupt control

@@ -952,6 +952,7 @@ void VulkanContext::term()
         }
     }
 	overlay.reset();
+	textureCache.reset();
 	ShaderCompiler::Term();
 	swapChain.reset();
 	imageViews.clear();

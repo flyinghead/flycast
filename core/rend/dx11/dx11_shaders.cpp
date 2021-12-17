@@ -296,7 +296,7 @@ PSO modifierVolume(in MVPixel inpix)
 	PSO pso;
 	float w = inpix.uv.w * 100000.0f;
 	pso.z = log2(1.0f + w) / 34.0f;
-	pso.col = float4(0, 0, 0, shadowScale);
+	pso.col = float4(0, 0, 0, 1.f - shadowScale);
 
 	return pso;
 }

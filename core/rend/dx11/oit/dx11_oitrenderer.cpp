@@ -164,7 +164,7 @@ struct DX11OITRenderer : public DX11Renderer
 		}
 		else
 		{
-			bool color_clamp = gp->tsp.ColorClamp && (pvrrc.fog_clamp_min != 0 || pvrrc.fog_clamp_max != 0xffffffff);
+			bool color_clamp = gp->tsp.ColorClamp && (pvrrc.fog_clamp_min.full != 0 || pvrrc.fog_clamp_max.full != 0xffffffff);
 
 			int fog_ctrl = config::Fog ? gp->tsp.FogCtrl : 2;
 			gpuPalette = gp->texture != nullptr ? gp->texture->gpuPalette : false;

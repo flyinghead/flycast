@@ -94,5 +94,5 @@ public:
 
 
 static inline vk::ClearColorValue getBorderColor() {
-	return vk::ClearColorValue(std::array<float, 4>{ VO_BORDER_COL.Red / 255.f, VO_BORDER_COL.Green / 255.f, VO_BORDER_COL.Blue / 255.f, 1.f });
+	return vk::ClearColorValue(std::array<float, 4>{ VO_BORDER_COL.red(), VO_BORDER_COL.green(), VO_BORDER_COL.blue(), 1.f });
 }
