@@ -3950,7 +3950,7 @@ Game Games[] =
         "wrungp",
         "Wave Runner GP (USA, Rev A)",
         0x06800000,
-        0xffffffff, // not populated
+		0x284ae7c3,
         NULL,
         M2,
         REGION_AUSTRALIA,
