@@ -412,14 +412,24 @@ static void dc_deserialize_libretro(Deserializer& deser)
 
 	int i;
 	deser >> i;
-	if (i == 0)
-		do_sqw_nommu = &do_sqw_nommu_area_3;
-	else if (i == 1)
-		do_sqw_nommu = &do_sqw_nommu_area_3_nonvmem;
-	else if (i == 2)
-		do_sqw_nommu = &TAWriteSQ ;
-	else if (i == 3)
+	switch (i)
+	{
+	case 0:
+	case 1:
+		if (_nvmem_enabled())
+			do_sqw_nommu = &do_sqw_nommu_area_3;
+		else
+			do_sqw_nommu = &do_sqw_nommu_area_3_nonvmem;
+		break;
+	case 2:
+		do_sqw_nommu = &TAWriteSQ;
+		break;
+	case 3:
 		do_sqw_nommu = &do_sqw_nommu_full;
+		break;
+	default:
+		throw Deserializer::Exception("Invalid SQ handler index");
+	}
 
 	deser >> (*p_sh4rcb).sq_buffer;
 
@@ -682,14 +692,24 @@ void dc_deserialize(Deserializer& deser)
 
 	int i;
 	deser >> i;
-	if (i == 0)
-		do_sqw_nommu = &do_sqw_nommu_area_3;
-	else if (i == 1)
-		do_sqw_nommu = &do_sqw_nommu_area_3_nonvmem;
-	else if (i == 2)
+	switch (i)
+	{
+	case 0:
+	case 1:
+		if (_nvmem_enabled())
+			do_sqw_nommu = &do_sqw_nommu_area_3;
+		else
+			do_sqw_nommu = &do_sqw_nommu_area_3_nonvmem;
+		break;
+	case 2:
 		do_sqw_nommu = &TAWriteSQ;
-	else if (i == 3)
+		break;
+	case 3:
 		do_sqw_nommu = &do_sqw_nommu_full;
+		break;
+	default:
+		throw Deserializer::Exception("Invalid SQ handler index");
+	}
 
 	deser >> (*p_sh4rcb).sq_buffer;
 
