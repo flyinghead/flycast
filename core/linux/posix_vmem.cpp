@@ -39,7 +39,7 @@ int ashmem_create_region(const char *name, size_t size)
 
 	if (fd < 0)
 	{
-		fd = open("/dev/ashmem", O_RDWR);
+		fd = open("/" ASHMEM_NAME_DEF, O_RDWR);
 		if (fd >= 0 && ioctl(fd, ASHMEM_SET_SIZE, size) < 0)
 		{
 			close(fd);
