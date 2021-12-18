@@ -10,11 +10,11 @@ jobs:
     strategy:
       matrix:
         config:
-          - {name: i686-pc-windows-msvc, os: windows-latest, cmakeArgs: '-DCMAKE_SYSTEM_VERSION="10.0.18362.0" -G "Visual Studio 16 2019" -A Win32 -DCMAKE_TOOLCHAIN_FILE=${{ github.workspace }}\vcpkg\scripts\buildsystems\vcpkg.cmake -DVCPKG_TARGET_TRIPLET=x86-windows-static', buildType: Release}
+          - {name: i686-pc-windows-msvc, os: windows-latest, cmakeArgs: -DCMAKE_SYSTEM_VERSION="10.0.18362.0" -G "Visual Studio 16 2019" -A Win32 -DVCPKG_TARGET_TRIPLET=x86-windows-static, buildType: Release}
           - {name: apple-darwin, os: macos-latest, cmakeArgs: -G "Xcode", destDir: osx, buildType: Release}
           - {name: apple-ios, os: macos-latest, cmakeArgs: -DCMAKE_SYSTEM_NAME=iOS -G "Xcode", destDir: ios, buildType: Release}
           - {name: x86_64-pc-linux-gnu, os: ubuntu-latest, buildType: Release}
-          - {name: x86_64-pc-windows-msvc, os: windows-latest, cmakeArgs: '-DCMAKE_SYSTEM_VERSION="10.0.18362.0" -G "Visual Studio 16 2019" -A x64 -DCMAKE_TOOLCHAIN_FILE=${{ github.workspace }}\vcpkg\scripts\buildsystems\vcpkg.cmake -DVCPKG_TARGET_TRIPLET=x64-windows-static', buildType: Release}
+          - {name: x86_64-pc-windows-msvc, os: windows-latest, cmakeArgs: -DCMAKE_SYSTEM_VERSION="10.0.18362.0" -G "Visual Studio 16 2019" -A x64 -DVCPKG_TARGET_TRIPLET=x64-windows-static, buildType: Release}
           - {name: x86_64-w64-mingw32, os: windows-latest, cmakeArgs: -G "MinGW Makefiles", destDir: win, buildType: RelWithDebInfo}
           - {name: libretro-x86_64-pc-linux-gnu, os: ubuntu-latest, cmakeArgs: -DLIBRETRO=ON -DCMAKE_POSITION_INDEPENDENT_CODE=TRUE, buildType: Release}
           - {name: libretro-x86_64-w64-mingw32, os: windows-latest, cmakeArgs: -DLIBRETRO=ON -G "MinGW Makefiles", buildType: Release}
@@ -122,7 +122,7 @@ jobs:
         run: |
           cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.config.buildType }} -DCMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE=artifact -DCMAKE_LIBRARY_OUTPUT_DIRECTORY=artifact ${{ matrix.config.cmakeArgs }}
           cmake --build build --config Release --parallel 2
-        if: endsWith(matrix.config.name, 'w64-mingw32') != true
+        if: endsWith(matrix.config.name, 'w64-mingw32') != true && endsWith(matrix.config.name, 'msvc') != true
 
       - name: CMake (windows)
         shell: msys2 {0}
@@ -131,6 +131,12 @@ jobs:
           cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.config.buildType }} -DCMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE=artifact -DCMAKE_RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO=artifact -DCMAKE_LIBRARY_OUTPUT_DIRECTORY=artifact ${{ matrix.config.cmakeArgs }}
           cmake --build build --config Release --parallel 2
         if: endsWith(matrix.config.name, 'w64-mingw32')
+
+      - name: CMake (windows-msvc)
+        run: |
+          cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.config.buildType }} -DCMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE=artifact -DCMAKE_TOOLCHAIN_FILE=${{ env.VCPKG_ROOT }}\scripts\buildsystems\vcpkg.cmake ${{ matrix.config.cmakeArgs }}
+          cmake --build build --config Release --parallel 2
+        if: endsWith(matrix.config.name, 'msvc')
 
       - name: Unit Tests
         run: |
