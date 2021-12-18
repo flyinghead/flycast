@@ -279,6 +279,7 @@ static void rend_create_renderer()
 	switch (config::RendererType)
 	{
 	default:
+#ifdef USE_OPENGL
 	case RenderType::OpenGL:
 		renderer = rend_GLES2();
 		break;
@@ -286,6 +287,7 @@ static void rend_create_renderer()
 	case RenderType::OpenGL_OIT:
 		renderer = rend_GL4();
 		break;
+#endif
 #endif
 #ifdef USE_VULKAN
 	case RenderType::Vulkan:

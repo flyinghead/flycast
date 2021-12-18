@@ -68,11 +68,14 @@ void initRenderApi(void *window, void *display)
 		config::RendererType = RenderType::OpenGL;
 	}
 #endif
+#ifdef USE_OPENGL
 	if (!isOpenGL(config::RendererType))
 		config::RendererType = RenderType::OpenGL;
 	theGLContext.setWindow(window, display);
-	if (!theGLContext.init())
-		exit(1);
+	if (theGLContext.init())
+		return;
+#endif
+	die("Cannot initialize the graphics API");
 }
 
 void termRenderApi()

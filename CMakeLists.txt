@@ -17,6 +17,7 @@ option(USE_HOST_LIBZIP "Use host libzip" ON)
 option(USE_OPENMP "Use OpenMP if available" ON)
 option(USE_VULKAN "Build with Vulkan support" ON)
 option(LIBRETRO "Build libretro core" OFF)
+option(USE_OPENGL "Use Open GL API" ON)
 
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/shell/cmake")
 
@@ -134,6 +135,7 @@ else()
 endif()
 
 if(WINDOWS_STORE)
+	set(USE_OPENGL OFF)
     target_compile_features(${PROJECT_NAME} PRIVATE c_std_11 cxx_std_17)
 else()
     target_compile_features(${PROJECT_NAME} PRIVATE c_std_11 cxx_std_11)
@@ -241,30 +243,13 @@ if(NOT LIBRETRO)
 	    target_link_libraries(${PROJECT_NAME} PRIVATE ${ALSA_LIBRARIES})
 	endif()
 	
-	if(WIN32 AND NOT WINDOWS_STORE)
-		# Build SDL
-		file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/core/deps/SDL")
-		if(CMAKE_GENERATOR MATCHES "Visual Studio")
-			set(SDL_CMAKE_ARCH_ARG -A ${CMAKE_GENERATOR_PLATFORM})
-		endif()
-		execute_process(COMMAND ${CMAKE_COMMAND}
-			"-DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/core/deps/SDL"
-			-DLIBC=ON
-			-DBUILD_SHARED_LIBS=OFF
-			-G "${CMAKE_GENERATOR}"
-			${SDL_CMAKE_ARCH_ARG}
-			"${CMAKE_CURRENT_SOURCE_DIR}/core/deps/SDL"
-	    	WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/core/deps/SDL")
-		execute_process(COMMAND ${CMAKE_COMMAND} --build "${CMAKE_CURRENT_BINARY_DIR}/core/deps/SDL" --config Release --target install)
-	endif()
-	
 	if(MINGW)
 		target_link_libraries(${PROJECT_NAME} PRIVATE "-static-libgcc -static-libstdc++")
 	endif()
 	
-	if(WINDOWS_STORE)
+	if(WIN32)
 		find_package(SDL2 CONFIG REQUIRED)
-	elseif((APPLE AND NOT IOS) OR WIN32)
+	elseif(APPLE AND NOT IOS)
 	    find_package(SDL2 HINTS "${CMAKE_CURRENT_BINARY_DIR}/core/deps/SDL/cmake")
 	elseif(NOT ANDROID AND NOT IOS)
 	    find_package(SDL2)
@@ -383,7 +368,7 @@ if(UNIX AND NOT APPLE AND NOT ANDROID)
 		if(NOT SDL2_FOUND)
 			target_link_libraries(${PROJECT_NAME} PRIVATE EGL)
 		endif()
-	else()
+	elseif(USE_OPENGL)
 	    set(OpenGL_GL_PREFERENCE LEGACY)
 	    find_package(OpenGL REQUIRED)
 	    target_link_libraries(${PROJECT_NAME} PRIVATE OpenGL::GL)
@@ -410,12 +395,6 @@ if(UNIX AND NOT APPLE AND NOT ANDROID)
     endif()
 
     target_link_libraries(${PROJECT_NAME} PRIVATE ${CMAKE_DL_LIBS} rt)
-endif()
-
-if(WINDOWS_STORE)
-	find_package(unofficial-angle CONFIG REQUIRED)
-	target_compile_definitions(${PROJECT_NAME} PRIVATE GLES GLES3)
-	target_link_libraries(${PROJECT_NAME} PRIVATE unofficial::angle::libEGL unofficial::angle::libGLESv2)
 endif()
 
 if(ASAN)
@@ -893,29 +872,60 @@ target_sources(${PROJECT_NAME} PRIVATE
 
 target_sources(${PROJECT_NAME} PRIVATE
         core/wsi/context.h
-        core/wsi/egl.cpp
-        core/wsi/egl.h
-        core/wsi/gl_context.cpp
-        core/wsi/gl_context.h
         core/wsi/libretro.cpp
         core/wsi/libretro.h
-        core/wsi/osx.cpp
-        core/wsi/osx.h
-        core/wsi/sdl.cpp
-        core/wsi/sdl.h
-        core/wsi/switcher.cpp
-        core/wsi/wgl.cpp
-        core/wsi/wgl.h
-        core/wsi/xgl.cpp
-        core/wsi/xgl.h)
+        core/wsi/switcher.cpp)
 
-if(NOT APPLE AND NOT LIBRETRO)
-    target_sources(${PROJECT_NAME} PRIVATE
-            core/wsi/gl32funcs.c
-            core/wsi/gl32funcs.h)
-endif()
-if(NOT (NINTENDO_SWITCH AND LIBRETRO))
-	target_sources(${PROJECT_NAME} PRIVATE core/wsi/gl4funcs.cpp)
+if(USE_OPENGL)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE USE_OPENGL)
+	target_sources(${PROJECT_NAME} PRIVATE
+	        core/wsi/egl.cpp
+	        core/wsi/egl.h
+	        core/wsi/gl_context.cpp
+	        core/wsi/gl_context.h
+	        core/wsi/osx.cpp
+	        core/wsi/osx.h
+	        core/wsi/sdl.cpp
+	        core/wsi/sdl.h
+	        core/wsi/wgl.cpp
+	        core/wsi/wgl.h
+	        core/wsi/xgl.cpp
+	        core/wsi/xgl.h)
+
+	if(NOT APPLE AND NOT LIBRETRO)
+	    target_sources(${PROJECT_NAME} PRIVATE
+	            core/wsi/gl32funcs.c
+	            core/wsi/gl32funcs.h)
+	endif()
+	if(NOT (NINTENDO_SWITCH AND LIBRETRO))
+		target_sources(${PROJECT_NAME} PRIVATE core/wsi/gl4funcs.cpp)
+	endif()
+
+	target_sources(${PROJECT_NAME} PRIVATE
+	        core/rend/gles/glcache.h
+	        core/rend/gles/gldraw.cpp
+	        core/rend/gles/gles.cpp
+	        core/rend/gles/gles.h
+	        core/rend/gles/gltex.cpp
+	        core/rend/gles/quad.cpp
+	        core/rend/gles/postprocess.cpp
+	        core/rend/gles/postprocess.h)
+
+	if(NOT LIBRETRO)
+		target_sources(${PROJECT_NAME} PRIVATE
+		        core/rend/gles/imgui_impl_opengl3.cpp
+		        core/rend/gles/imgui_impl_opengl3.h
+		        core/rend/gles/opengl_driver.cpp
+		        core/rend/gles/opengl_driver.h)
+	endif()
+	
+	if(NOT (APPLE OR ANDROID OR USE_GLES OR USE_GLES2))
+	    target_sources(${PROJECT_NAME} PRIVATE
+	            core/rend/gl4/abuffer.cpp
+	            core/rend/gl4/gl4.h
+	            core/rend/gl4/gldraw.cpp
+	            core/rend/gl4/gles.cpp)
+	endif()
 endif()
 
 target_sources(${PROJECT_NAME} PRIVATE
@@ -932,14 +942,6 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/debug/gdb_server.h)
 
 target_sources(${PROJECT_NAME} PRIVATE
-        core/rend/gles/glcache.h
-        core/rend/gles/gldraw.cpp
-        core/rend/gles/gles.cpp
-        core/rend/gles/gles.h
-        core/rend/gles/gltex.cpp
-        core/rend/gles/quad.cpp
-        core/rend/gles/postprocess.cpp
-        core/rend/gles/postprocess.h
         core/rend/CustomTexture.cpp
         core/rend/CustomTexture.h
 		core/rend/osd.cpp
@@ -951,10 +953,6 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/rend/TexCache.h)
 if(NOT LIBRETRO)
 	target_sources(${PROJECT_NAME} PRIVATE
-	        core/rend/gles/imgui_impl_opengl3.cpp
-	        core/rend/gles/imgui_impl_opengl3.h
-	        core/rend/gles/opengl_driver.cpp
-	        core/rend/gles/opengl_driver.h
 	        core/rend/game_scanner.h
 	        core/rend/imgui_driver.h
 	        core/rend/gui.cpp
@@ -967,14 +965,6 @@ if(NOT LIBRETRO)
 	        core/rend/gui_util.h
 	        core/rend/mainui.cpp
 	        core/rend/mainui.h)
-endif()
-
-if(NOT (APPLE OR ANDROID OR USE_GLES OR USE_GLES2))
-    target_sources(${PROJECT_NAME} PRIVATE
-    	core/rend/gl4/abuffer.cpp
-    	core/rend/gl4/gl4.h
-    	core/rend/gl4/gldraw.cpp
-    	core/rend/gl4/gles.cpp)
 endif()
 
 if(USE_VULKAN)

@@ -1672,35 +1672,43 @@ static void gui_display_settings()
 		    	OptionCheckbox("Rotate Screen 90°", config::Rotate90, "Rotate the screen 90° counterclockwise");
 		    	OptionCheckbox("Delay Frame Swapping", config::DelayFrameSwapping,
 		    			"Useful to avoid flashing screen or glitchy videos. Not recommended on slow platforms");
-#if defined(USE_VULKAN) || defined(USE_DX9) || defined(_WIN32)
-		    	ImGui::Text("Graphics API:");
-		    	u32 columns = 1;
+		    	constexpr int apiCount = 0
+					#ifdef USE_VULKAN
+		    			+ 1
+					#endif
+					#ifdef USE_DX9
+						+ 1
+					#endif
+					#ifdef USE_OPENGL
+						+ 1
+					#endif
+					#ifdef _WIN32
+						+ 1
+					#endif
+						;
+
+		    	if (apiCount > 1)
+		    	{
+		    		ImGui::Text("Graphics API:");
+					ImGui::Columns(apiCount, "renderApi", false);
+#ifdef USE_OPENGL
+					ImGui::RadioButton("Open GL", &renderApi, 0);
+					ImGui::NextColumn();
+#endif
 #ifdef USE_VULKAN
-	            columns++;
+					ImGui::RadioButton("Vulkan", &renderApi, 1);
+					ImGui::NextColumn();
+#endif
+#ifdef USE_DX9
+					ImGui::RadioButton("DirectX 9", &renderApi, 2);
+					ImGui::NextColumn();
 #endif
 #ifdef _WIN32
-	            columns++;
-#ifdef USE_DX9
-	            columns++;
+					ImGui::RadioButton("DirectX 11", &renderApi, 3);
+					ImGui::NextColumn();
 #endif
-#endif
-	            ImGui::Columns(columns, "renderApi", false);
-		    	ImGui::RadioButton("Open GL", &renderApi, 0);
-            	ImGui::NextColumn();
-#ifdef USE_VULKAN
-		    	ImGui::RadioButton("Vulkan", &renderApi, 1);
-            	ImGui::NextColumn();
-#endif
-#ifdef _WIN32
-#ifdef USE_DX9
-		    	ImGui::RadioButton("DirectX 9", &renderApi, 2);
-            	ImGui::NextColumn();
-#endif
-		    	ImGui::RadioButton("DirectX 11", &renderApi, 3);
-            	ImGui::NextColumn();
-#endif
-		    	ImGui::Columns(1, NULL, false);
-#endif
+					ImGui::Columns(1, nullptr, false);
+		    	}
 
 	            const std::array<float, 9> scalings{ 0.5f, 1.f, 1.5f, 2.f, 2.5f, 3.f, 4.f, 4.5f, 5.f };
 	            const std::array<std::string, 9> scalingsText{ "Half", "Native", "x1.5", "x2", "x2.5", "x3", "x4", "x4.5", "x5" };
@@ -2015,7 +2023,7 @@ static void gui_display_settings()
 				strcpy(LuaFileName, config::LuaFileName.get().c_str());
 				ImGui::InputText("Lua Filename", LuaFileName, sizeof(LuaFileName), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
 				ImGui::SameLine();
-				ShowHelpMarker("Specify lua filename to use. Should be located in Flycasts root directory. Defaults to flycast.lua when empty.");
+				ShowHelpMarker("Specify lua filename to use. Should be located in Flycast config directory. Defaults to flycast.lua when empty.");
 				config::LuaFileName = LuaFileName;
 
 			}
