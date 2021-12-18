@@ -97,13 +97,6 @@ jobs:
       - name: Create artifact directory
         run: mkdir -p build/artifact
 
-      - name: Build SDL (macos)
-        run: |
-          cd shell/apple
-          mkdir artifacts
-          brew install --build-from-source ./sdl2.rb
-        if: matrix.config.name == 'apple-darwin'
-
       - name: Bootstrap vcpkg (msvc)
         run: |
           git clone https://github.com/microsoft/vcpkg

@@ -16,7 +16,6 @@ target_sources(breakpad_client PRIVATE
     	src/common/string_conversion.h)
 
 if(APPLE)
-	enable_language(OBJC)
 	set_target_properties(breakpad_client PROPERTIES
 	    FRAMEWORK TRUE
 	    FRAMEWORK_VERSION C
