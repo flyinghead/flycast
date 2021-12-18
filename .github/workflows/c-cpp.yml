@@ -48,20 +48,6 @@ jobs:
         run: echo "DXSDK_DIR=${Env:HOMEDRIVE}${Env:HOMEPATH}\ccache\" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf-8 -Append
         if: matrix.config.os == 'windows-latest' && matrix.config.name != 'libretro-x86_64-w64-mingw32'
 
-      - name: bootstrap vcpkg
-        run: |
-          git clone https://github.com/microsoft/vcpkg
-          mkdir vcpkg\bincache
-          vcpkg\bootstrap-vcpkg.bat
-        if: endsWith(matrix.config.name, 'msvc')
-
-      - uses: actions/cache@v2
-        id: cache-vcpkg
-        with:
-          path: ${{ env.VCPKG_DEFAULT_BINARY_CACHE }}
-          key: vcpkg-${{ hashFiles( 'vcpkg.json' ) }}
-        if: endsWith(matrix.config.name, 'msvc')
-
       - uses: actions/cache@v2
         with:
           path: /tmp/ccache
@@ -117,6 +103,20 @@ jobs:
           mkdir artifacts
           brew install --build-from-source ./sdl2.rb
         if: matrix.config.name == 'apple-darwin'
+
+      - name: Bootstrap vcpkg (msvc)
+        run: |
+          git clone https://github.com/microsoft/vcpkg
+          mkdir vcpkg\bincache
+          vcpkg\bootstrap-vcpkg.bat
+        if: endsWith(matrix.config.name, 'msvc')
+
+      - uses: actions/cache@v2
+        id: cache-vcpkg
+        with:
+          path: ${{ env.VCPKG_DEFAULT_BINARY_CACHE }}
+          key: vcpkg-${{ hashFiles( 'vcpkg.json' ) }}
+        if: endsWith(matrix.config.name, 'msvc')
 
       - name: CMake
         run: |
