@@ -94,9 +94,6 @@ jobs:
           fetch-depth: 0
           submodules: true
 
-      - name: Create artifact directory
-        run: mkdir -p build/artifact
-
       - name: Bootstrap vcpkg (msvc)
         run: |
           git clone https://github.com/microsoft/vcpkg
@@ -113,59 +110,57 @@ jobs:
 
       - name: CMake
         run: |
-          cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.config.buildType }} -DCMAKE_RUNTIME_OUTPUT_DIRECTORY=artifact -DCMAKE_LIBRARY_OUTPUT_DIRECTORY=artifact ${{ matrix.config.cmakeArgs }}
+          cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.config.buildType }} -DCMAKE_INSTALL_PREFIX=artifact ${{ matrix.config.cmakeArgs }}
           cmake --build build --config ${{ matrix.config.buildType }} --parallel 2
+          cmake --build build --config ${{ matrix.config.buildType }} --target install
         if: endsWith(matrix.config.name, 'w64-mingw32') != true && endsWith(matrix.config.name, 'msvc') != true
 
       - name: CMake (windows)
         shell: msys2 {0}
         run: |
           unset temp tmp
-          cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.config.buildType }} -DCMAKE_RUNTIME_OUTPUT_DIRECTORY=artifact -DCMAKE_LIBRARY_OUTPUT_DIRECTORY=artifact ${{ matrix.config.cmakeArgs }}
+          cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.config.buildType }} -DCMAKE_INSTALL_PREFIX=artifact ${{ matrix.config.cmakeArgs }}
           cmake --build build --config ${{ matrix.config.buildType }} --parallel 2
+          cmake --build build --config ${{ matrix.config.buildType }} --target install
         if: endsWith(matrix.config.name, 'w64-mingw32')
 
       - name: CMake (windows-msvc)
         run: |
-          cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.config.buildType }} -DCMAKE_RUNTIME_OUTPUT_DIRECTORY=artifact -DCMAKE_TOOLCHAIN_FILE=${{ env.VCPKG_ROOT }}\scripts\buildsystems\vcpkg.cmake ${{ matrix.config.cmakeArgs }}
+          cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.config.buildType }} -DCMAKE_INSTALL_PREFIX=artifact -DCMAKE_TOOLCHAIN_FILE=${{ env.VCPKG_ROOT }}\scripts\buildsystems\vcpkg.cmake ${{ matrix.config.cmakeArgs }}
           cmake --build build --config ${{ matrix.config.buildType }} --parallel 2
+          cmake --build build --config ${{ matrix.config.buildType }} --target install
         if: endsWith(matrix.config.name, 'msvc')
 
       - name: Unit Tests
         run: |
-          mkdir -p build/tests
-          cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.config.buildType }} -DCMAKE_RUNTIME_OUTPUT_DIRECTORY=tests -DENABLE_CTEST=ON ${{ matrix.config.cmakeArgs }}
+          cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.config.buildType }} -DENABLE_CTEST=ON ${{ matrix.config.cmakeArgs }}
           cmake --build build --config ${{ matrix.config.buildType }} --parallel 2
-          ./build/tests/flycast
+          ./build/flycast
         if: matrix.config.name == 'x86_64-pc-linux-gnu'
 
       - name: Dump symbols
         shell: msys2 {0}
         run: |
-          dump_syms build/artifact/flycast.exe > flycast.exe.sym 2>/dev/null
+          dump_syms artifact/bin/flycast.exe > flycast.exe.sym 2>/dev/null
           BUILD_ID=`head -1 flycast.exe.sym | awk '{ print $4 }'`
           mkdir -p symbols/flycast.exe/$BUILD_ID
           mv flycast.exe.sym symbols/flycast.exe/$BUILD_ID
-          strip build/artifact/flycast.exe
+          strip artifact/bin/flycast.exe
         if: matrix.config.name == 'x86_64-w64-mingw32'
 
       - uses: actions/upload-artifact@v2
         with:
           name: flycast-${{ matrix.config.name }}
-          path: build/artifact
+          path: artifact/bin
 
       - name: Package app (macos)
-        run: |
-          cd build/artifact
-          rm -rf Flycast.swiftmodule
-          zip -r flycast.app.zip Flycast.app
-          rm -rf Flycast.app
+        run: zip -rm artifact/bin/flycast.app.zip artifact/bin/Flycast.app
         if: matrix.config.name == 'apple-darwin'
 
       - name: Package app (windows)
         run: |
-          powershell Compress-Archive build/artifact/flycast.exe build/artifact/flycast.zip 
-          rm build/artifact/flycast.exe
+          powershell Compress-Archive artifact/bin/flycast.exe artifact/bin/flycast.zip 
+          rm artifact/bin/flycast.exe
         if: matrix.config.name == 'x86_64-w64-mingw32'
 
       - name: Configure AWS Credentials
@@ -178,11 +173,10 @@ jobs:
         if: github.repository == 'flyinghead/flycast' && github.event_name == 'push' && matrix.config.destDir != ''
 
       - name: Upload to S3
-        run: aws s3 sync build/artifact s3://flycast-builds/${{ matrix.config.destDir }}/${GITHUB_REF#refs/}-$GITHUB_SHA --acl public-read --follow-symlinks
+        run: aws s3 sync artifact/bin s3://flycast-builds/${{ matrix.config.destDir }}/${GITHUB_REF#refs/}-$GITHUB_SHA --acl public-read --follow-symlinks
         shell: bash
         if: ${{ steps.aws-credentials.outputs.aws-account-id != '' }}
 
       - name: Upload symbols to S3
         run: aws s3 sync symbols s3://flycast-symbols/${{ matrix.config.destDir }} --follow-symlinks
-        if: ${{ steps.aws-credentials.outputs.aws-account-id != '' && matrix.config.os == 'windows-latest' }}
-        
+        if: ${{ steps.aws-credentials.outputs.aws-account-id != '' && matrix.config.name == 'x86_64-w64-mingw32' }}

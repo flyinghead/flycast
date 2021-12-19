@@ -20,7 +20,7 @@ if [[ -z "${VULKAN_SDK}" ]]; then
     echo 'Warning: VULKAN_SDK is not set in environment variable'
 fi
 
-cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE=artifact -DCMAKE_LIBRARY_OUTPUT_DIRECTORY=artifact $option -DCMAKE_XCODE_GENERATE_SCHEME=YES -G "Xcode"
+cmake -B build -DCMAKE_BUILD_TYPE=Release $option -DCMAKE_XCODE_GENERATE_SCHEME=YES -G "Xcode"
 
 nl=$'\n'
 sed -i '' -E "s/launchStyle/customLLDBInitFile = \"\$(SRCROOT)\/shell\/apple\/\\${lldbinitfolder}\/LLDBInitFile\"\\${nl}launchStyle/g" build/flycast.xcodeproj/xcshareddata/xcschemes/flycast.xcscheme
