@@ -250,7 +250,7 @@ if(NOT LIBRETRO)
 	if(NOT ANDROID AND NOT IOS)
 		find_package(SDL2 QUIET)
 		if(NOT SDL2_FOUND)
-			add_subdirectory(core/deps/SDL)
+			add_subdirectory(core/deps/SDL EXCLUDE_FROM_ALL)
 			if(MSVC AND CMAKE_SIZEOF_VOID_P EQUAL 4)
 				target_compile_definitions(SDL2-static PRIVATE HAVE_LIBC)
 			endif()
@@ -1253,6 +1253,8 @@ if(NOT LIBRETRO)
 				shell/apple/emulator-ios/emulator/LaunchScreen.storyboard
 				shell/apple/emulator-ios/emulator/PadViewController.xib)
 			target_sources(${PROJECT_NAME} PRIVATE ${IOS_RESOURCES})
+			source_group("Resources" FILES ${IOS_RESOURCES})
+			set_source_files_properties(${IOS_RESOURCES} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
 
 			set_target_properties(${PROJECT_NAME} PROPERTIES
 				OUTPUT_NAME "Flycast"
@@ -1269,7 +1271,6 @@ if(NOT LIBRETRO)
 
 				XCODE_ATTRIBUTE_DEBUG_INFORMATION_FORMAT "dwarf-with-dsym"
 				XCODE_ATTRIBUTE_GCC_PREFIX_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/shell/apple/emulator-ios/emulator/flycast-ios-Prefix.pch"
-				RESOURCE "${IOS_RESOURCES}"
 				XCODE_ATTRIBUTE_GCC_PRECOMPILE_PREFIX_HEADER "YES"
 				XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED "NO"
 				XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY ""
@@ -1299,21 +1300,20 @@ if(NOT LIBRETRO)
 				COMMENT "Building IPA"
 				COMMAND mkdir -p ${CMAKE_CURRENT_BINARY_DIR}/Payload
 				COMMAND rm -rf ${CMAKE_CURRENT_BINARY_DIR}/Payload/*
-				COMMAND cp -r ${CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE}/Flycast.app ${CMAKE_CURRENT_BINARY_DIR}/Payload
+				COMMAND cp -r ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>-${CMAKE_OSX_SYSROOT}/Flycast.app ${CMAKE_CURRENT_BINARY_DIR}/Payload
 				COMMAND for lib in ${CMAKE_CURRENT_BINARY_DIR}/Payload/Flycast.app/Frameworks/*.dylib
 				COMMAND do xcrun bitcode_strip -r $lib -o $lib
 				COMMAND done
 				COMMAND ldid -S${CMAKE_CURRENT_SOURCE_DIR}/shell/apple/emulator-ios/emulator/flycast.entitlements ${CMAKE_CURRENT_BINARY_DIR}/Payload/Flycast.app/Flycast
-				COMMAND ${CMAKE_COMMAND} -E tar "cfv" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE}/Flycast.ipa" --format=zip ${CMAKE_CURRENT_BINARY_DIR}/Payload
-				COMMAND rm -rf ${CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE}/Flycast.app ${CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE}/Flycast.swiftmodule)
+				COMMAND ${CMAKE_COMMAND} -E tar "cfv" "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>-${CMAKE_OSX_SYSROOT}/Flycast.ipa" --format=zip ${CMAKE_CURRENT_BINARY_DIR}/Payload)
 		else()
 			target_sources(${PROJECT_NAME} PRIVATE
 					shell/apple/emulator-osx/emulator-osx/SDLMain.h
 					shell/apple/emulator-osx/emulator-osx/SDLMain.mm
 					shell/apple/emulator-osx/emulator-osx/osx-main.mm)
 			set(ASSETS shell/apple/emulator-osx/emulator-osx/Images.xcassets)
-			target_sources(${PROJECT_NAME} PRIVATE ${XIB} ${ASSETS})
-			source_group("Resources" FILES ${XIB} ${ASSETS})
+			target_sources(${PROJECT_NAME} PRIVATE ${ASSETS})
+			source_group("Resources" FILES ${ASSETS})
 			set_source_files_properties(${ASSETS} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
 		
 			set_target_properties(${PROJECT_NAME} PROPERTIES
@@ -1350,10 +1350,9 @@ if(NOT LIBRETRO)
 				${OPENGL_LIBRARY}
 				${IOSURFACE_LIBRARY})
 
-			set(output_dir $<$<CONFIG:Release>:${CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE}>$<$<CONFIG:RelWithDebInfo>:${CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO}>$<$<CONFIG:MinSizeRel>:${CMAKE_RUNTIME_OUTPUT_DIRECTORY_MINSIZEREL}>$<$<CONFIG:Debug>:${CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG}>)
 			add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
             	COMMAND ${CMAKE_COMMAND} -E copy "$ENV{VULKAN_SDK}/lib/libMoltenVK.dylib"
-            		${CMAKE_CURRENT_BINARY_DIR}/$<$<STREQUAL:$<GENEX_EVAL:${output_dir}>,>:$<CONFIG>>${output_dir}/Flycast.app/Contents/Frameworks/libvulkan.dylib)
+            		${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/Flycast.app/Contents/Frameworks/libvulkan.dylib)
 		endif()
 	elseif(UNIX OR NINTENDO_SWITCH)
 	    if(NOT BUILD_TESTING)
@@ -1424,10 +1423,13 @@ if(NINTENDO_SWITCH)
 	endif()
 endif()
 
-if(UNIX AND NOT APPLE AND NOT ANDROID)
-	install(TARGETS ${PROJECT_NAME}
-		DESTINATION "${CMAKE_INSTALL_BINDIR}"
-	)
+if(IOS)
+	install(FILES "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>-${CMAKE_OSX_SYSROOT}/Flycast.ipa" TYPE BIN)
+else()
+	install(TARGETS ${PROJECT_NAME} DESTINATION "${CMAKE_INSTALL_BINDIR}")
+endif()
+
+if(UNIX AND NOT APPLE AND NOT ANDROID AND NOT LIBRETRO)
 	install(FILES shell/linux/man/${PROJECT_NAME}.1
 		DESTINATION "${CMAKE_INSTALL_MANDIR}/man1"
 	)
