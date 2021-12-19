@@ -113,29 +113,29 @@ jobs:
 
       - name: CMake
         run: |
-          cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.config.buildType }} -DCMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE=artifact -DCMAKE_LIBRARY_OUTPUT_DIRECTORY=artifact ${{ matrix.config.cmakeArgs }}
-          cmake --build build --config Release --parallel 2
+          cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.config.buildType }} -DCMAKE_RUNTIME_OUTPUT_DIRECTORY=artifact -DCMAKE_LIBRARY_OUTPUT_DIRECTORY=artifact ${{ matrix.config.cmakeArgs }}
+          cmake --build build --config ${{ matrix.config.buildType }} --parallel 2
         if: endsWith(matrix.config.name, 'w64-mingw32') != true && endsWith(matrix.config.name, 'msvc') != true
 
       - name: CMake (windows)
         shell: msys2 {0}
         run: |
           unset temp tmp
-          cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.config.buildType }} -DCMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE=artifact -DCMAKE_RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO=artifact -DCMAKE_LIBRARY_OUTPUT_DIRECTORY=artifact ${{ matrix.config.cmakeArgs }}
-          cmake --build build --config Release --parallel 2
+          cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.config.buildType }} -DCMAKE_RUNTIME_OUTPUT_DIRECTORY=artifact -DCMAKE_LIBRARY_OUTPUT_DIRECTORY=artifact ${{ matrix.config.cmakeArgs }}
+          cmake --build build --config ${{ matrix.config.buildType }} --parallel 2
         if: endsWith(matrix.config.name, 'w64-mingw32')
 
       - name: CMake (windows-msvc)
         run: |
-          cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.config.buildType }} -DCMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE=artifact -DCMAKE_TOOLCHAIN_FILE=${{ env.VCPKG_ROOT }}\scripts\buildsystems\vcpkg.cmake ${{ matrix.config.cmakeArgs }}
-          cmake --build build --config Release --parallel 2
+          cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.config.buildType }} -DCMAKE_RUNTIME_OUTPUT_DIRECTORY=artifact -DCMAKE_TOOLCHAIN_FILE=${{ env.VCPKG_ROOT }}\scripts\buildsystems\vcpkg.cmake ${{ matrix.config.cmakeArgs }}
+          cmake --build build --config ${{ matrix.config.buildType }} --parallel 2
         if: endsWith(matrix.config.name, 'msvc')
 
       - name: Unit Tests
         run: |
           mkdir -p build/tests
-          cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.config.buildType }} -DCMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE=tests -DENABLE_CTEST=ON ${{ matrix.config.cmakeArgs }}
-          cmake --build build --config Release --parallel 2
+          cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.config.buildType }} -DCMAKE_RUNTIME_OUTPUT_DIRECTORY=tests -DENABLE_CTEST=ON ${{ matrix.config.cmakeArgs }}
+          cmake --build build --config ${{ matrix.config.buildType }} --parallel 2
           ./build/tests/flycast
         if: matrix.config.name == 'x86_64-pc-linux-gnu'
 
