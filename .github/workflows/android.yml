@@ -10,7 +10,7 @@ jobs:
       - name: Set up build environment
         run: |
           sudo apt-get update
-          sudo apt-get -y install ccache ninja-build
+          sudo apt-get -y install ccache ninja-build libcurl-dev
           echo "CCACHE_DIR=/tmp/ccache" >> $GITHUB_ENV
 
       # Workaround for https://github.com/actions/virtual-environments/issues/3078
