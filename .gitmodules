@@ -7,3 +7,6 @@
 [submodule "core/deps/luabridge"]
 	path = core/deps/luabridge
 	url = https://github.com/vinniefalco/LuaBridge.git
+[submodule "core/deps/breakpad"]
+	path = core/deps/breakpad
+	url = https://github.com/flyinghead/mingw-breakpad
