@@ -63,12 +63,13 @@ jobs:
       - name: Build dump_syms
         working-directory: core/deps/breakpad
         run: |
-          cmake -B build -DCMAKE_BUILD_TYPE=Release -G Ninja
-          cmake --build build --config Release --target dump_syms
+          ./configure --prefix=$PWD
+          make -j2
+          make install
 
       - name: Extract symbols
         run: |
-          DUMP_SYMS=./core/deps/breakpad/build/dump_syms
+          DUMP_SYMS=./core/deps/breakpad/bin/dump_syms
           SO_DIR=shell/android-studio/flycast/build/intermediates/cmake/release/obj
           for arch in arm64-v8a armeabi-v7a x86 x86_64 ; do
             $DUMP_SYMS $SO_DIR/$arch/libflycast.so > libflycast.so.sym
