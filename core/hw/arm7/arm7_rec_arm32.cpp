@@ -59,9 +59,9 @@ const std::array<Register, 6> alloc_regs{
 	r5, r6, r7, r9, r10, r11
 };
 
-class Arm32ArmRegAlloc : public ArmRegAlloc<alloc_regs.size(), Arm32ArmRegAlloc>
+class Arm32ArmRegAlloc : public ArmRegAlloc<ARRAY_SIZE(alloc_regs), Arm32ArmRegAlloc>
 {
-	using super = ArmRegAlloc<alloc_regs.size(), Arm32ArmRegAlloc>;
+	using super = ArmRegAlloc<ARRAY_SIZE(alloc_regs), Arm32ArmRegAlloc>;
 
 	void LoadReg(int host_reg, Arm7Reg armreg, ArmOp::Condition cc = ArmOp::AL)
 	{
