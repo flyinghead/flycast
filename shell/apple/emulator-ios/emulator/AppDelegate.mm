@@ -39,7 +39,7 @@ static bool emulatorRunning;
 	// Allow audio playing AND recording
 	AVAudioSession *session = [AVAudioSession sharedInstance];
 	NSError *error = nil;
-	[session setCategory:AVAudioSessionCategoryPlayAndRecord
+	[session setCategory:AVAudioSessionCategoryAmbient
 			 withOptions:AVAudioSessionCategoryOptionMixWithOthers | AVAudioSessionCategoryOptionDefaultToSpeaker
 						| AVAudioSessionCategoryOptionAllowBluetooth | AVAudioSessionCategoryOptionAllowBluetoothA2DP
 						| AVAudioSessionCategoryOptionAllowAirPlay
