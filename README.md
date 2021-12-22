@@ -15,7 +15,7 @@ Join us on our [**Discord server**](https://discord.gg/X8YWP8w) for a chat.
 
 ## Install
 
-### Flatpak
+### Flatpak (Linux)
 
 1. [Set up Flatpak](https://www.flatpak.org/setup/)
 
@@ -26,6 +26,10 @@ Join us on our [**Discord server**](https://discord.gg/X8YWP8w) for a chat.
 3. Run Flycast
 
 `flatpak run org.flycast.Flycast`
+
+### Xbox One
+
+Open [gamr13's github page](https://gamr13.github.io/) from your console.
 
 ### Binaries
 
