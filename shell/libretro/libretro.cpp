@@ -113,6 +113,15 @@ static bool allow_service_buttons = false;
 static bool libretro_supports_bitmasks = false;
 
 static bool categoriesSupported = false;
+static bool platformIsDreamcast = true;
+static bool platformIsArcade = false;
+static bool threadedRenderingEnabled = true;
+static bool oitEnabled = false;
+#if defined(HAVE_TEXUPSCALE)
+static bool textureUpscaleEnabled = false;
+#endif
+static bool vmuScreenSettingsShown = true;
+static bool lightgunSettingsShown = true;
 
 u32 kcode[4] = {0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF};
 u8 rt[4];
@@ -193,6 +202,9 @@ static std::vector<std::string> disk_paths;
 static std::vector<std::string> disk_labels;
 static bool disc_tray_open = false;
 
+void UpdateInputState();
+static bool set_variable_visibility(void);
+
 void retro_set_video_refresh(retro_video_refresh_t cb)
 {
 	video_cb = cb;
@@ -234,7 +246,20 @@ void retro_set_environment(retro_environment_t cb)
 {
 	environ_cb = cb;
 
-	libretro_set_core_options(environ_cb, &categoriesSupported);
+	// An annoyance: retro_set_environment() can be called
+	// multiple times, and depending upon the current frontend
+	// state various environment callbacks may be disabled.
+	// This means the reported 'categories_supported' status
+	// may change on subsequent iterations. We therefore have
+	// to record whether 'categories_supported' is true on any
+	// iteration, and latch the result
+	bool optionCategoriesSupported = false;
+	libretro_set_core_options(environ_cb, &optionCategoriesSupported);
+	categoriesSupported |= optionCategoriesSupported;
+
+	struct retro_core_options_update_display_callback update_display_cb;
+	update_display_cb.callback = set_variable_visibility;
+	environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_UPDATE_DISPLAY_CALLBACK, &update_display_cb);
 
 	static const struct retro_controller_description ports_default[] =
 	{
@@ -309,126 +334,222 @@ void retro_deinit()
 	}
 	os_UninstallFaultHandler();
 	libretro_supports_bitmasks = false;
+	categoriesSupported = false;
+	platformIsDreamcast = true;
+	platformIsArcade = false;
+	threadedRenderingEnabled = true;
+	oitEnabled = false;
+#if defined(HAVE_TEXUPSCALE)
+	textureUpscaleEnabled = false;
+#endif
+	vmuScreenSettingsShown = true;
+	lightgunSettingsShown = true;
 	LogManager::Shutdown();
 
 	retro_audio_deinit();
 }
 
-static void set_variable_visibility()
+static bool set_variable_visibility(void)
 {
 	struct retro_core_option_display option_display;
 	struct retro_variable var;
+	bool updated = false;
 
-	// Show/hide NAOMI/Atomiswave options
-	option_display.visible = ((settings.platform.system == DC_PLATFORM_NAOMI) ||
-			(settings.platform.system == DC_PLATFORM_ATOMISWAVE));
+	bool platformWasDreamcast = platformIsDreamcast;
+	bool platformWasArcade = platformIsArcade;
 
-	option_display.key = CORE_OPTION_NAME "_allow_service_buttons";
-	environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
-	option_display.key = CORE_OPTION_NAME "_enable_naomi_15khz_dipswitch";
-	environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+	platformIsDreamcast = (settings.platform.system == DC_PLATFORM_DREAMCAST);
+	platformIsArcade = (settings.platform.system == DC_PLATFORM_NAOMI) ||
+			(settings.platform.system == DC_PLATFORM_ATOMISWAVE);
 
-	// Show/hide Dreamcast options
-	option_display.visible = (settings.platform.system == DC_PLATFORM_DREAMCAST);
+	// Show/hide platform-dependent options
+	if (first_run || (platformIsDreamcast != platformWasDreamcast) || (platformIsArcade != platformWasArcade))
+	{
+		// Show/hide NAOMI/Atomiswave options
+		option_display.visible = platformIsArcade;
+		option_display.key = CORE_OPTION_NAME "_allow_service_buttons";
+		environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
 
-	option_display.key = CORE_OPTION_NAME "_boot_to_bios";
-	environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
-	option_display.key = CORE_OPTION_NAME "_hle_bios";
-	environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
-	option_display.key = CORE_OPTION_NAME "_gdrom_fast_loading";
-	environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
-	option_display.key = CORE_OPTION_NAME "_cable_type";
-	environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
-	option_display.key = CORE_OPTION_NAME "_broadcast";
-	environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
-	option_display.key = CORE_OPTION_NAME "_language";
-	environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
-	option_display.key = CORE_OPTION_NAME "_force_wince";
-	environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
-	option_display.key = CORE_OPTION_NAME "_enable_purupuru";
-	environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
-	option_display.key = CORE_OPTION_NAME "_per_content_vmus";
-	environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+		// Show/hide Dreamcast options
+		option_display.visible = platformIsDreamcast;
+		option_display.key = CORE_OPTION_NAME "_boot_to_bios";
+		environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+		option_display.key = CORE_OPTION_NAME "_hle_bios";
+		environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+		option_display.key = CORE_OPTION_NAME "_gdrom_fast_loading";
+		environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+		option_display.key = CORE_OPTION_NAME "_cable_type";
+		environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+		option_display.key = CORE_OPTION_NAME "_broadcast";
+		environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+		option_display.key = CORE_OPTION_NAME "_language";
+		environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+		option_display.key = CORE_OPTION_NAME "_force_wince";
+		environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+		option_display.key = CORE_OPTION_NAME "_enable_purupuru";
+		environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+		option_display.key = CORE_OPTION_NAME "_per_content_vmus";
+		environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
 
-	/* only show, if categories not supported */
-	option_display.visible = ((settings.platform.system == DC_PLATFORM_DREAMCAST)
-	                           && (!categoriesSupported));
-	option_display.key = CORE_OPTION_NAME "_show_vmu_screen_settings";
-	environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+		vmuScreenSettingsShown = option_display.visible;
+		for (unsigned i = 0; i < 4; i++)
+		{
+			char key[256];
+			option_display.key = key;
+
+			snprintf(key, sizeof(key), "%s%u%s", CORE_OPTION_NAME "_vmu", i + 1, "_screen_display");
+			environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+			snprintf(key, sizeof(key), "%s%u%s", CORE_OPTION_NAME "_vmu", i + 1, "_screen_position");
+			environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+			snprintf(key, sizeof(key), "%s%u%s", CORE_OPTION_NAME "_vmu", i + 1, "_screen_size_mult");
+			environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+			snprintf(key, sizeof(key), "%s%u%s", CORE_OPTION_NAME "_vmu", i + 1, "_pixel_on_color");
+			environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+			snprintf(key, sizeof(key), "%s%u%s", CORE_OPTION_NAME "_vmu", i + 1, "_pixel_off_color");
+			environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+			snprintf(key, sizeof(key), "%s%u%s", CORE_OPTION_NAME "_vmu", i + 1, "_screen_opacity");
+			environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+		}
+
+		// Show/hide manual option visibility toggles
+		// > Only show if categories are not supported
+		option_display.visible = platformIsDreamcast && !categoriesSupported;
+		option_display.key = CORE_OPTION_NAME "_show_vmu_screen_settings";
+		environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+
+		updated = true;
+	}
+
+	// Show/hide additional manual option visibility toggles
+	// > Only show if categories are not supported
+	if (first_run)
+	{
+		option_display.visible = !categoriesSupported;
+		option_display.key = CORE_OPTION_NAME "_show_lightgun_settings";
+		environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+		updated = true;
+	}
 
 	// Show/hide settings-dependent options
-	option_display.visible = config::ThreadedRendering;
 
-	option_display.key = CORE_OPTION_NAME "_auto_skip_frame";
-	environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+	// Only for threaded renderer
+	bool threadedRenderingWasEnabled = threadedRenderingEnabled;
+	threadedRenderingEnabled = true;
+	var.key = CORE_OPTION_NAME "_threaded_rendering";
+	if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value && !strcmp(var.value, "disabled"))
+		threadedRenderingEnabled = false;
 
+	if (first_run || (threadedRenderingEnabled != threadedRenderingWasEnabled))
+	{
+		option_display.visible = threadedRenderingEnabled;
+		option_display.key = CORE_OPTION_NAME "_auto_skip_frame";
+		environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+		updated = true;
+	}
+
+#if defined(HAVE_OIT) || defined(HAVE_VULKAN)
 	// Only for per-pixel renderers
-	option_display.visible = config::RendererType == RenderType::OpenGL_OIT || config::RendererType == RenderType::Vulkan_OIT || config::RendererType == RenderType::DirectX11_OIT;
-	option_display.key = CORE_OPTION_NAME "_oit_abuffer_size";
-	environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+	bool oitWasEnabled = oitEnabled;
+	oitEnabled = false;
+	var.key = CORE_OPTION_NAME "_alpha_sorting";
+	if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value && !strcmp(var.value, "per-pixel (accurate)"))
+		oitEnabled = true;
 
+	if (first_run || (oitEnabled != oitWasEnabled))
+	{
+		option_display.visible = oitEnabled;
+		option_display.key = CORE_OPTION_NAME "_oit_abuffer_size";
+		environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+		updated = true;
+	}
+#endif
+
+#if defined(HAVE_TEXUPSCALE)
 	// Only if texture upscaling is enabled
-	option_display.visible = config::TextureUpscale > 1;
-	option_display.key = CORE_OPTION_NAME "_texupscale_max_filtered_texture_size";
-	environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+	bool textureUpscaleWasEnabled = textureUpscaleEnabled;
+	textureUpscaleEnabled = false;
+	var.key = CORE_OPTION_NAME "_texupscale";
+	if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value && strcmp(var.value, "off"))
+		textureUpscaleEnabled = true;
+
+	if (first_run || (textureUpscaleEnabled != textureUpscaleWasEnabled))
+	{
+		option_display.visible = textureUpscaleEnabled;
+		option_display.key = CORE_OPTION_NAME "_texupscale_max_filtered_texture_size";
+		environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+		updated = true;
+	}
+#endif
+
+	// If categories are supported, no further action is required
+	if (categoriesSupported)
+		return updated;
 
 	// Show/hide VMU screen options
-	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
+	bool vmuScreenSettingsWereShown = vmuScreenSettingsShown;
+
+	if (platformIsDreamcast)
 	{
-		option_display.visible = true;
+		vmuScreenSettingsShown = true;
 		var.key = CORE_OPTION_NAME "_show_vmu_screen_settings";
 
-		if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var)
-			&& var.value
-			&& !categoriesSupported)
-			if (!strcmp(var.value, "disabled"))
-				option_display.visible = false;
+		if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value && !strcmp(var.value, "disabled"))
+			vmuScreenSettingsShown = false;
 	}
 	else
-		option_display.visible = false;
+		vmuScreenSettingsShown = false;
 
-	for (int i = 0; i < 4; i++)
+	if (first_run || (vmuScreenSettingsShown != vmuScreenSettingsWereShown))
 	{
-		char key[256];
-		option_display.key = key;
+		option_display.visible = vmuScreenSettingsShown;
 
-		snprintf(key, sizeof(key), "%s%u%s", CORE_OPTION_NAME "_vmu", i + 1, "_screen_display");
-		environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
-		snprintf(key, sizeof(key), "%s%u%s", CORE_OPTION_NAME "_vmu", i + 1, "_screen_position");
-		environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
-		snprintf(key, sizeof(key), "%s%u%s", CORE_OPTION_NAME "_vmu", i + 1, "_screen_size_mult");
-		environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
-		snprintf(key, sizeof(key), "%s%u%s", CORE_OPTION_NAME "_vmu", i + 1, "_pixel_on_color");
-		environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
-		snprintf(key, sizeof(key), "%s%u%s", CORE_OPTION_NAME "_vmu", i + 1, "_pixel_off_color");
-		environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
-		snprintf(key, sizeof(key), "%s%u%s", CORE_OPTION_NAME "_vmu", i + 1, "_screen_opacity");
-		environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+		for (unsigned i = 0; i < 4; i++)
+		{
+			char key[256];
+			option_display.key = key;
+
+			snprintf(key, sizeof(key), "%s%u%s", CORE_OPTION_NAME "_vmu", i + 1, "_screen_display");
+			environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+			snprintf(key, sizeof(key), "%s%u%s", CORE_OPTION_NAME "_vmu", i + 1, "_screen_position");
+			environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+			snprintf(key, sizeof(key), "%s%u%s", CORE_OPTION_NAME "_vmu", i + 1, "_screen_size_mult");
+			environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+			snprintf(key, sizeof(key), "%s%u%s", CORE_OPTION_NAME "_vmu", i + 1, "_pixel_on_color");
+			environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+			snprintf(key, sizeof(key), "%s%u%s", CORE_OPTION_NAME "_vmu", i + 1, "_pixel_off_color");
+			environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+			snprintf(key, sizeof(key), "%s%u%s", CORE_OPTION_NAME "_vmu", i + 1, "_screen_opacity");
+			environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+		}
+
+		updated = true;
 	}
-
-	/* only show, if categories not supported */
-	option_display.visible = !categoriesSupported;
-	option_display.key = CORE_OPTION_NAME "_show_lightgun_settings";
-	environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
 
 	// Show/hide light gun options
-	option_display.visible = true;
+	bool lightgunSettingsWereShown = lightgunSettingsShown;
+	lightgunSettingsShown = true;
 	var.key = CORE_OPTION_NAME "_show_lightgun_settings";
 
-	if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var)
-		&& var.value
-		&& !categoriesSupported)
-		if (!strcmp(var.value, "disabled"))
-			option_display.visible = false;
+	if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value && !strcmp(var.value, "disabled"))
+		lightgunSettingsShown = false;
 
-	for (int i = 0; i < 4; i++)
+	if (first_run || (lightgunSettingsShown != lightgunSettingsWereShown))
 	{
-		char key[256];
-		option_display.key = key;
+		option_display.visible = lightgunSettingsShown;
 
-		snprintf(key, sizeof(key), "%s%u%s", CORE_OPTION_NAME "_lightgun", i + 1, "_crosshair");
-		environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+		for (unsigned i = 0; i < 4; i++)
+		{
+			char key[256];
+			option_display.key = key;
+
+			snprintf(key, sizeof(key), "%s%u%s", CORE_OPTION_NAME "_lightgun", i + 1, "_crosshair");
+			environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+		}
+
+		updated = true;
 	}
+
+	return updated;
 }
 
 static void setFramebufferSize()
@@ -865,10 +986,7 @@ void retro_run()
 
 	// On the first call, we start the emulator
 	if (first_run)
-	{
 		emu.start();
-		first_run = false;
-	}
 
 	poll_cb();
 	UpdateInputState();
@@ -904,6 +1022,8 @@ void retro_run()
 		retro_audio_flush_buffer();
 
 	video_cb(is_dupe ? 0 : RETRO_HW_FRAME_BUFFER_VALID, framebufferWidth, framebufferHeight, 0);
+
+	first_run = false;
 }
 
 static bool loadGame()
@@ -1639,8 +1759,6 @@ bool retro_load_game(const struct retro_game_info *game)
 			}
 		}
 	}
-	// System may have changed - have to update hidden core options
-	set_variable_visibility();
 
 	if (game->path[0] == '\0')
 	{
@@ -1771,6 +1889,9 @@ bool retro_load_game(const struct retro_game_info *game)
 
 	if (devices_need_refresh)
 		refresh_devices(true);
+
+	// System may have changed - have to update hidden core options
+	set_variable_visibility();
 
 	return true;
 }
