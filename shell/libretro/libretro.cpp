@@ -1574,6 +1574,7 @@ static bool set_opengl_hw_render(u32 preferred)
 	params.context_reset         = context_reset;
 	params.context_destroy       = context_destroy;
 	params.environ_cb            = environ_cb;
+	params.stencil               = true;
 	params.imm_vbo_draw          = NULL;
 	params.imm_vbo_disable       = NULL;
 #if defined(__APPLE__) && defined(HAVE_OPENGL)
