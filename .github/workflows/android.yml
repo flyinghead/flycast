@@ -10,21 +10,20 @@ jobs:
       - name: Set up build environment
         run: |
           sudo apt-get update
-          sudo apt-get -y install ccache ninja-build libcurl4-openssl-dev
-          echo "CCACHE_DIR=/tmp/ccache" >> $GITHUB_ENV
+          sudo apt-get -y install ccache libcurl4-openssl-dev ninja-build
 
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           fetch-depth: 0
           submodules: true
 
-      - uses: actions/cache@v2
+      - uses: actions/cache@v3
         with:
-          path: /tmp/ccache
+          path: ~/.ccache
           key: android-ccache-${{ github.sha }}
           restore-keys: android-ccache-
 
-      - uses: actions/cache@v2
+      - uses: actions/cache@v3
         with:
           path: |
             ~/.gradle/caches
@@ -36,7 +35,7 @@ jobs:
         working-directory: shell/android-studio
         run: ./gradlew assembleRelease --parallel
 
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         with:
           name: flycast-release.apk
           path: shell/android-studio/flycast/build/outputs/apk/release/flycast-release.apk
