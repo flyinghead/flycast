@@ -18,12 +18,18 @@ jobs:
       - name: Set up build environment
         run: |
           sudo apt-get update
-          sudo apt-get -y install awscli ninja-build
+          sudo apt-get -y install awscli ccache ninja-build
 
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0
           submodules: true
+
+      - uses: actions/cache@v2
+        with:
+          path: ~/.ccache
+          key: ccache-switch-${{ matrix.config.name }}-${{ github.sha }}
+          restore-keys: ccache-switch-${{ matrix.config.name }}-
 
       - name: CMake
         run: |
