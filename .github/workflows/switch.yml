@@ -12,7 +12,7 @@ jobs:
       matrix:
         config:
           - {name: standalone, destDir: switch}
-          - {name: libretro, cmakeArgs: -DCMAKE_ARCHIVE_OUTPUT_DIRECTORY=artifact -DLIBRETRO=ON}
+          - {name: libretro, cmakeArgs: -DLIBRETRO=ON}
 
     steps:
       - name: Set up build environment
@@ -33,23 +33,17 @@ jobs:
 
       - name: CMake
         run: |
-          $DEVKITPRO/portlibs/switch/bin/aarch64-none-elf-cmake -B build -DCMAKE_BUILD_TYPE=Release -G Ninja ${{ matrix.config.cmakeArgs }}
-          cmake --build build --config Release
-
-      - name: Prepare upload
-        run: |
-          mkdir build/artifact
-          mv build/flycast.nro build/artifact/flycast.nro
-        if: hashFiles('build/flycast.nro') != ''
+          $DEVKITPRO/portlibs/switch/bin/aarch64-none-elf-cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=artifact -G Ninja ${{ matrix.config.cmakeArgs }}
+          cmake --build build --config Release --target install
 
       - uses: actions/upload-artifact@v2
         with:
           name: flycast-switch-${{ matrix.config.name }}
-          path: build/artifact
+          path: artifact/bin
 
       - name: Package app
-        run: zip -m build/artifact/flycast.nro.zip build/artifact/flycast.nro
-        if: hashFiles('build/artifact/flycast.nro') != ''
+        run: zip -m artifact/bin/flycast.nro.zip artifact/bin/flycast.nro
+        if: hashFiles('artifact/bin/flycast.nro') != ''
 
       - name: Configure AWS Credentials
         id: aws-credentials
@@ -61,5 +55,5 @@ jobs:
         if: github.repository == 'flyinghead/flycast' && github.event_name == 'push' && matrix.config.destDir != ''
 
       - name: Upload to S3
-        run: aws s3 sync build/artifact s3://flycast-builds/${{ matrix.config.destDir }}/${GITHUB_REF#refs/}-$GITHUB_SHA --acl public-read --follow-symlinks
+        run: aws s3 sync artifact/bin s3://flycast-builds/${{ matrix.config.destDir }}/${GITHUB_REF#refs/}-$GITHUB_SHA --acl public-read --follow-symlinks
         if: ${{ steps.aws-credentials.outputs.aws-account-id != '' }}
