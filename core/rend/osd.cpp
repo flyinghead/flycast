@@ -106,8 +106,8 @@ const std::vector<OSDVertex>& GetOSDVertices()
 	DrawButton2(vjoy_pos[2], kcode[0] & DC_DPAD_RIGHT);
 	DrawButton2(vjoy_pos[3], kcode[0] & DC_DPAD_DOWN);
 
-	DrawButton2(vjoy_pos[4], kcode[0] & DC_BTN_X);
-	DrawButton2(vjoy_pos[5], kcode[0] & DC_BTN_Y);
+	DrawButton2(vjoy_pos[4], kcode[0] & (settings.platform.system == DC_PLATFORM_DREAMCAST ? DC_BTN_X : DC_BTN_C));
+	DrawButton2(vjoy_pos[5], kcode[0] & (settings.platform.system == DC_PLATFORM_DREAMCAST ? DC_BTN_Y : DC_BTN_X));
 	DrawButton2(vjoy_pos[6], kcode[0] & DC_BTN_B);
 	DrawButton2(vjoy_pos[7], kcode[0] & DC_BTN_A);
 
@@ -220,3 +220,30 @@ const u32 *getCrosshairTextureData()
 {
 	return (u32 *)lightgunCrosshairData;
 }
+
+#ifndef LIBRETRO
+#include "input/mouse.h"
+
+std::pair<float, float> getCrosshairPosition(int playerNum)
+{
+	float fx = mo_x_abs[playerNum];
+	float fy = mo_y_abs[playerNum];
+	float width = 640.f;
+	float height = 480.f;
+
+	if (config::Rotate90)
+	{
+		float t = fy;
+		fy = 639.f - fx;
+		fx = t;
+		std::swap(width, height);
+	}
+	float scale = height / settings.display.height;
+	fy /= scale;
+	scale /= config::ScreenStretching / 100.f;
+	fx = fx / scale + (settings.display.width - width / scale) / 2.f;
+
+	return std::make_pair(fx, fy);
+}
+
+#endif

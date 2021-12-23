@@ -16,7 +16,7 @@ public class VJoy {
 	public static final int key_CONT_DPAD_RIGHT = 0x0080;
 	public static final int key_CONT_Y          = 0x0200;
 	public static final int key_CONT_X          = 0x0400;
-    public static final int key_CONT_FFORWARD   = 0x100000;
+    public static final int key_CONT_FFORWARD   = 0x3000002;
 
     public static final int BTN_LTRIG = -1;
     public static final int BTN_RTRIG = -2;

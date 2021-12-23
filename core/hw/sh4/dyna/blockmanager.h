@@ -101,3 +101,7 @@ static inline bool bm_IsRamPageProtected(u32 addr)
 	addr &= RAM_MASK;
 	return !unprotected_pages[addr / PAGE_SIZE];
 }
+void bm_LockPage(u32 addr, u32 size = PAGE_SIZE);
+void bm_UnlockPage(u32 addr, u32 size = PAGE_SIZE);
+u32 bm_getRamOffset(void *p);
+

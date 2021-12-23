@@ -456,8 +456,7 @@ void recInit()
 	verify(vmem_platform_prepare_jit_block(DynCode, CodeSize, (void**)&pCodeBuffer));
 #endif
 #if defined(TARGET_IPHONE) || defined(TARGET_ARM_MAC)
-	if (DynCode == nullptr)
-		DynCode = pCodeBuffer;
+	DynCode = pCodeBuffer;
 #endif
 }
 

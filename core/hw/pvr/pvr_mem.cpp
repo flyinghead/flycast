@@ -9,6 +9,7 @@
 #include "ta.h"
 #include "hw/holly/sb.h"
 #include "hw/holly/holly_intc.h"
+#include "serialize.h"
 
 static u32 pvr_map32(u32 offset32);
 
@@ -172,29 +173,28 @@ static void YUV_data(const SQBuffer *data, u32 count)
 	verify(count==0);
 }
 
-void YUV_serialize(void **data, unsigned int *total_size)
+void YUV_serialize(Serializer& ser)
 {
-	REICAST_S(YUV_tempdata);
-	REICAST_S(YUV_dest);
-	REICAST_S(YUV_blockcount);
-	REICAST_S(YUV_x_curr);
-	REICAST_S(YUV_y_curr);
-	REICAST_S(YUV_x_size);
-	REICAST_S(YUV_y_size);
-	REICAST_S(YUV_index);
+	ser << YUV_tempdata;
+	ser << YUV_dest;
+	ser << YUV_blockcount;
+	ser << YUV_x_curr;
+	ser << YUV_y_curr;
+	ser << YUV_x_size;
+	ser << YUV_y_size;
+	ser << YUV_index;
 }
-
-void YUV_unserialize(void **data, unsigned int *total_size, serialize_version_enum version)
+void YUV_deserialize(Deserializer& deser)
 {
-	REICAST_US(YUV_tempdata);
-	REICAST_US(YUV_dest);
-	REICAST_US(YUV_blockcount);
-	REICAST_US(YUV_x_curr);
-	REICAST_US(YUV_y_curr);
-	REICAST_US(YUV_x_size);
-	REICAST_US(YUV_y_size);
-	if (version >= V16)
-		REICAST_US(YUV_index);
+	deser >> YUV_tempdata;
+	deser >> YUV_dest;
+	deser >> YUV_blockcount;
+	deser >> YUV_x_curr;
+	deser >> YUV_y_curr;
+	deser >> YUV_x_size;
+	deser >> YUV_y_size;
+	if (deser.version() >= Deserializer::V16)
+		deser >> YUV_index;
 	else
 		YUV_index = 0;
 }

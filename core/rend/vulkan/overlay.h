@@ -26,37 +26,18 @@
 #include <vector>
 
 class Texture;
+class TextureCache;
 
 class VulkanOverlay
 {
 public:
 	~VulkanOverlay();
 
-	void Init(QuadPipeline *pipeline)
-	{
-		this->pipeline = pipeline;
-		alphaPipeline = std::unique_ptr<QuadPipeline>(new QuadPipeline(true));
-		alphaPipeline->Init(*pipeline);
-		for (auto& drawer : drawers)
-		{
-			drawer = std::unique_ptr<QuadDrawer>(new QuadDrawer());
-			drawer->Init(pipeline);
-		}
-		xhairDrawer = std::unique_ptr<QuadDrawer>(new QuadDrawer());
-		xhairDrawer->Init(alphaPipeline.get());
-	}
+	void Init(QuadPipeline *pipeline);
+	void Term();
 
-	void Term()
-	{
-		commandBuffers.clear();
-		alphaPipeline.reset();
-		for (auto& drawer : drawers)
-			drawer.reset();
-		xhairDrawer.reset();
-	}
-
-	vk::CommandBuffer Prepare(vk::CommandPool commandPool, bool vmu, bool crosshair);
-	void Prepare(vk::CommandBuffer commandBuffer, bool vmu, bool crosshair);
+	vk::CommandBuffer Prepare(vk::CommandPool commandPool, bool vmu, bool crosshair, TextureCache& textureCache);
+	void Prepare(vk::CommandBuffer commandBuffer, bool vmu, bool crosshair, TextureCache& textureCache);
 	void Draw(vk::CommandBuffer commandBuffer, vk::Extent2D viewport, float scaling, bool vmu, bool crosshair);
 
 private:
@@ -67,7 +48,6 @@ private:
 	std::array<std::unique_ptr<QuadDrawer>, 8> drawers;
 	QuadPipeline *pipeline = nullptr;
 
-	std::unique_ptr<QuadPipeline> alphaPipeline;
 	std::unique_ptr<Texture> xhairTexture;
 	std::unique_ptr<QuadDrawer> xhairDrawer;
 };

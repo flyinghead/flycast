@@ -21,6 +21,7 @@ u32 palette32_ram[1024];
 u32 pal_hash_256[4];
 u32 pal_hash_16[64];
 bool palette_updated;
+extern bool pal_needs_update;
 float fb_scale_x, fb_scale_y;
 
 // Rough approximation of LoD bias from D adjust param, only used to increase LoD
@@ -91,7 +92,7 @@ void palette_update()
 	pal_needs_update = false;
 	palette_updated = true;
 
-	if (!config::RendererType.isDirectX())
+	if (!isDirectX(config::RendererType))
 	{
 		switch(PAL_RAM_CTRL&3)
 		{
@@ -166,6 +167,12 @@ void palette_update()
 		pal_hash_256[i] = XXH32(&PALETTE_RAM[i << 8], 256 * 4, 7);
 }
 
+void forcePaletteUpdate()
+{
+	pal_needs_update = true;
+}
+
+
 static std::vector<vram_block*> VramLocks[VRAM_SIZE_MAX / PAGE_SIZE];
 
 //List functions
@@ -209,27 +216,22 @@ std::mutex vramlist_lock;
 
 void libCore_vramlock_Lock(u32 start_offset64, u32 end_offset64, BaseTextureCacheData *texture)
 {
-	vram_block* block=(vram_block* )malloc(sizeof(vram_block));
- 
-	if (end_offset64>(VRAM_SIZE-1))
+	if (end_offset64 > VRAM_SIZE - 1)
 	{
 		WARN_LOG(PVR, "vramlock_Lock_64: end_offset64>(VRAM_SIZE-1) \n Tried to lock area out of vram , possibly bug on the pvr plugin");
-		end_offset64=(VRAM_SIZE-1);
+		end_offset64 = VRAM_SIZE - 1;
 	}
 
-	if (start_offset64>end_offset64)
+	if (start_offset64 > end_offset64)
 	{
 		WARN_LOG(PVR, "vramlock_Lock_64: start_offset64>end_offset64 \n Tried to lock negative block , possibly bug on the pvr plugin");
-		start_offset64=0;
+		return;
 	}
 
-	
-
-	block->end=end_offset64;
-	block->start=start_offset64;
-	block->len=end_offset64-start_offset64+1;
-	block->userdata = texture;
-	block->type=64;
+	vram_block *block = new vram_block();
+	block->end = end_offset64;
+	block->start = start_offset64;
+	block->texture = texture;
 
 	{
 		std::lock_guard<std::mutex> lock(vramlist_lock);
@@ -241,7 +243,7 @@ void libCore_vramlock_Lock(u32 start_offset64, u32 end_offset64, BaseTextureCach
 			texture->lock_block = block;
 		}
 		else
-			free(block);
+			delete block;
 	}
 }
 
@@ -290,7 +292,7 @@ bool VramLockedWrite(u8* address)
 static void libCore_vramlock_Unlock_block_wb(vram_block* block)
 {
 	vramlock_list_remove(block);
-	free(block);
+	delete block;
 }
 
 #ifndef TARGET_NO_OPENMP
@@ -979,9 +981,9 @@ template void WriteTextureToVRam<2, 1, 0, 3>(u32 width, u32 height, u8 *data, u1
 
 static void rend_text_invl(vram_block* bl)
 {
-	BaseTextureCacheData* tcd = (BaseTextureCacheData*)bl->userdata;
-	tcd->dirty = FrameCount;
-	tcd->lock_block = nullptr;
+	BaseTextureCacheData* texture = bl->texture;
+	texture->dirty = FrameCount;
+	texture->lock_block = nullptr;
 
 	libCore_vramlock_Unlock_block_wb(bl);
 }

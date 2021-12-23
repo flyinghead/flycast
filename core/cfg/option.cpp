@@ -24,7 +24,6 @@ namespace config {
 
 Option<bool> DynarecEnabled("Dynarec.Enabled", true);
 Option<bool> DynarecIdleSkip("Dynarec.idleskip", true);
-Option<bool> DynarecSafeMode("Dynarec.safe-mode");
 
 // General
 
@@ -41,7 +40,6 @@ Option<int> SavestateSlot("Dreamcast.SavestateSlot");
 // Sound
 
 Option<bool> DSPEnabled("aica.DSPEnabled", false);
-Option<bool> DisableSound("aica.NoSound");
 #if HOST_CPU == CPU_ARM
 Option<int> AudioBufferSize("aica.BufferSize", 5644);	// 128 ms
 #else
@@ -98,6 +96,7 @@ Option<bool> VSync("rend.vsync", true);
 Option<u64> PixelBufferSize("rend.PixelBufferSize", 512 * 1024 * 1024);
 Option<int> AnisotropicFiltering("rend.AnisotropicFiltering", 1);
 Option<bool> ThreadedRendering("rend.ThreadedRendering", true);
+Option<bool> DupeFrames("rend.DupeFrames", false);
 
 // Misc
 
@@ -118,6 +117,11 @@ Option<bool> ActAsServer("ActAsServer", false, "network");
 OptionString DNS("DNS", "46.101.91.123", "network");
 OptionString NetworkServer("server", "", "network");
 Option<bool> EmulateBBA("EmulateBBA", false, "network");
+Option<bool> GGPOEnable("GGPO", false, "network");
+Option<int> GGPODelay("GGPODelay", 0, "network");
+Option<bool> NetworkStats("Stats", true, "network");
+Option<int> GGPOAnalogAxes("GGPOAnalogAxes", 0, "network");
+Option<bool> GGPOChat("GGPOChat", true, "network");
 
 #ifdef SUPPORT_DISPMANX
 Option<bool> DispmanxMaintainAspect("maintain_aspect", true, "dispmanx");
@@ -154,6 +158,10 @@ std::array<std::array<Option<MapleDeviceType>, 2>, 4> MapleExpansionDevices {
 };
 #ifdef _WIN32
 Option<bool> UseRawInput("RawInput", false, "input");
+#endif
+
+#ifdef USE_LUA
+OptionString LuaFileName("LuaFileName", "flycast.lua");
 #endif
 
 } // namespace config

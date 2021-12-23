@@ -35,7 +35,11 @@ if (NOT WIN32)
     target_compile_definitions(miniupnpc-private INTERFACE _XOPEN_SOURCE=600)
   endif ()
 else ()
-  target_compile_definitions(miniupnpc-private INTERFACE _WIN32_WINNT=0x0501) # XP or higher for getnameinfo and friends
+  if (WINDOWS_STORE)
+    target_compile_definitions(miniupnpc-private INTERFACE _WIN32_WINNT=0x0A00 _WINSOCK_DEPRECATED_NO_WARNINGS)
+  else ()
+    target_compile_definitions(miniupnpc-private INTERFACE _WIN32_WINNT=0x0501) # XP or higher for getnameinfo and friends
+  endif ()
 endif ()
 
 if (CMAKE_SYSTEM_NAME STREQUAL "Darwin")

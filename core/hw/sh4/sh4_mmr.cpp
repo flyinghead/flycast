@@ -775,6 +775,8 @@ void sh4_mmr_init()
 	serial_init();
 	tmu_init();
 	ubc_init();
+
+	MMU_init();
 }
 
 void sh4_mmr_reset(bool hard)
@@ -813,11 +815,14 @@ void sh4_mmr_reset(bool hard)
 	serial_reset();
 	tmu_reset(hard);
 	ubc_reset();
+
+	MMU_reset();
 }
 
 void sh4_mmr_term()
 {
-	//free any alloc'd resources [if any]
+	MMU_term();
+
 	ubc_term();
 	tmu_term();
 	serial_term();

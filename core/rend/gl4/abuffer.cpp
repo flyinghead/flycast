@@ -42,9 +42,12 @@ uint pixel_list[MAX_PIXELS_PER_FRAGMENT];
 
 int fillAndSortFragmentArray(ivec2 coords)
 {
-	// Load fragments into a local memory array for sorting
 	uint idx = imageLoad(abufferPointerImg, coords).x;
-	int count = 0;
+	if (idx == EOL)
+		return 0;
+	int count = 1;
+	pixel_list[0] = idx;
+	idx = pixels[idx].next;
 	for (; idx != EOL && count < MAX_PIXELS_PER_FRAGMENT; count++)
 	{
 		const Pixel p = pixels[idx];
@@ -56,11 +59,13 @@ int fillAndSortFragmentArray(ivec2 coords)
 		{
 			pixel_list[j + 1] = pixel_list[j];
 			j--;
-			jp = pixels[pixel_list[j]];
+			if (j >= 0)
+				jp = pixels[pixel_list[j]];
 		}
 		pixel_list[j + 1] = idx;
 		idx = p.next;
 	}
+
 	return count;
 }
 
@@ -190,6 +195,8 @@ void main(void)
 )";
 
 static const char *tr_modvol_shader_source = R"(
+noperspective in vec3 vtx_uv;
+
 // Must match ModifierVolumeMode enum values
 #define MV_XOR		 0
 #define MV_OR		 1
@@ -198,9 +205,6 @@ static const char *tr_modvol_shader_source = R"(
 
 void main(void)
 {
-#if MV_MODE == MV_XOR || MV_MODE == MV_OR
-	setFragDepth();
-#endif
 	ivec2 coords = ivec2(gl_FragCoord.xy);
 	
 	uint idx = imageLoad(abufferPointerImg, coords).x;
@@ -212,10 +216,10 @@ void main(void)
 		if (getShadowEnable(pp))
 		{
 #if MV_MODE == MV_XOR
-			if (gl_FragDepth >= pixel.depth)
+			if (vtx_uv.z >= pixel.depth)
 				atomicXor(pixels[idx].seq_num, SHADOW_STENCIL);
 #elif MV_MODE == MV_OR
-			if (gl_FragDepth >= pixel.depth)
+			if (vtx_uv.z >= pixel.depth)
 				atomicOr(pixels[idx].seq_num, SHADOW_STENCIL);
 #elif MV_MODE == MV_INCLUSION
 			uint prev_val = atomicAnd(pixels[idx].seq_num, ~(SHADOW_STENCIL));
@@ -318,7 +322,8 @@ void initABuffer()
 		for (int mode = 0; mode < ModeCount; mode++)
 		{
 			modVolShader.setConstant("MV_MODE", mode);
-			gl4CompilePipelineShader(&g_abuffer_tr_modvol_shaders[mode], modVolShader.generate().c_str(), vertexShader.generate().c_str());
+			g_abuffer_tr_modvol_shaders[mode].pp_Gouraud = false;
+			gl4CompilePipelineShader(&g_abuffer_tr_modvol_shaders[mode], modVolShader.generate().c_str(), nullptr);
 		}
 	}
 	if (g_quadBuffer == 0)

@@ -154,6 +154,19 @@ static inline uint64_t long_long_be(uint64_t le)
     be = b[7] + (b6 << 8) + (b5 << 16) + (b4 << 24) + (b3 << 32) + (b2 << 40) + (b1 << 48) + (b0 << 56);
     return be;
 }
+
+#   elif defined(_MSC_VER)
+
+static inline uint16_t short_be(uint16_t le) {
+	return _byteswap_ushort(le);
+}
+static inline uint32_t long_be(uint32_t le) {
+	return _byteswap_ulong(le);
+}
+static inline uint64_t long_long_be(uint64_t le) {
+	return _byteswap_uint64(le);
+}
+
 #   else
 /*
    extern uint32_t __builtin_bswap32(uint32_t);

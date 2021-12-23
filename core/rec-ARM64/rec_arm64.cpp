@@ -300,10 +300,9 @@ public:
 		// scheduler
 		if (mmu_enabled())
 		{
-			Mov(x1, reinterpret_cast<uintptr_t>(&cycle_counter));
-			Ldr(w0, MemOperand(x1));
+			Ldr(w0, sh4_context_mem_operand(&Sh4cntx.cycle_counter));
 			Subs(w0, w0, block->guest_cycles);
-			Str(w0, MemOperand(x1));
+			Str(w0, sh4_context_mem_operand(&Sh4cntx.cycle_counter));
 		}
 		else
 		{
@@ -1390,12 +1389,9 @@ public:
 		Label reenterLabel;
 		if (mmu_enabled())
 		{
-			Ldr(x1, reinterpret_cast<uintptr_t>(&cycle_counter));
-			// Push context, cycle_counter address
+			// Push context
 			Stp(x0, x1, MemOperand(sp, -16, PreIndex));
 			unwinder.allocStack(0, 16);
-			Mov(w0, SH4_TIMESLICE);
-			Str(w0, MemOperand(x1));
 
 			Ldr(x0, reinterpret_cast<uintptr_t>(&jmp_stack));
 			Mov(x1, sp);
@@ -1410,7 +1406,7 @@ public:
 			// Use x28 as sh4 context pointer
 			Mov(x28, x0);
 			// Use x27 as cycle_counter
-			Mov(w27, SH4_TIMESLICE);
+			Ldr(w27, sh4_context_mem_operand(&Sh4cntx.cycle_counter));
 		}
 		Label do_interrupts;
 
@@ -1427,10 +1423,9 @@ public:
 		}
 		else
 		{
-			Ldr(x1, MemOperand(sp, 8));	// &cycle_counter
-			Ldr(w0, MemOperand(x1));	// cycle_counter
+			Ldr(w0, sh4_context_mem_operand(&Sh4cntx.cycle_counter));
 			Add(w0, w0, SH4_TIMESLICE);
-			Str(w0, MemOperand(x1));
+			Str(w0, sh4_context_mem_operand(&Sh4cntx.cycle_counter));
 		}
 		Mov(x29, lr);				// Trashing pc here but it will be reset at the end of the block or in DoInterrupts
 		GenCallRuntime(UpdateSystem);
@@ -1450,6 +1445,9 @@ public:
 		if (mmu_enabled())
 			// Pop context
 			Add(sp, sp, 16);
+		else
+			// save cycle counter
+			Str(w27, sh4_context_mem_operand(&Sh4cntx.cycle_counter));
 		// Restore registers
 		Ldp(x29, x30, MemOperand(sp, 144));
 		Ldp(d12, d13, MemOperand(sp, 128));

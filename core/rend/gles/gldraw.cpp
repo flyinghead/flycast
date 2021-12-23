@@ -66,9 +66,6 @@ const u32 SrcBlendGL[] =
 	GL_ONE_MINUS_DST_ALPHA
 };
 
-extern int screen_width;
-extern int screen_height;
-
 PipelineShader* CurrentShader;
 u32 gcflip;
 
@@ -116,7 +113,7 @@ __forceinline
 	else
 		ShaderUniforms.trilinear_alpha = 1.f;
 
-	bool color_clamp = gp->tsp.ColorClamp && (pvrrc.fog_clamp_min != 0 || pvrrc.fog_clamp_max != 0xffffffff);
+	bool color_clamp = gp->tsp.ColorClamp && (pvrrc.fog_clamp_min.full != 0 || pvrrc.fog_clamp_max.full != 0xffffffff);
 	int fog_ctrl = config::Fog ? gp->tsp.FogCtrl : 2;
 
 	int clip_rect[4] = {};
@@ -686,7 +683,7 @@ bool render_output_framebuffer()
 	glcache.Disable(GL_SCISSOR_TEST);
 	int fx = 0;
 	int sx = 0;
-	float screenAR = (float)screen_width / screen_height;
+	float screenAR = (float)settings.display.width / settings.display.height;
 	int fbwidth = gl.ofbo.width;
 	int fbheight = gl.ofbo.height;
 	if (config::Rotate90)
@@ -695,18 +692,18 @@ bool render_output_framebuffer()
 	if (renderAR > screenAR)
 		fx = (int)roundf((fbwidth - screenAR * fbheight) / 2.f);
 	else
-		sx = (int)roundf((screen_width - renderAR * screen_height) / 2.f);
+		sx = (int)roundf((settings.display.width - renderAR * settings.display.height) / 2.f);
 
 	if (gl.gl_major < 3 || config::Rotate90)
 	{
 		if (gl.ofbo.tex == 0)
 			return false;
 		if (sx != 0)
-			glViewport(sx, 0, screen_width - sx * 2, screen_height);
+			glViewport(sx, 0, settings.display.width - sx * 2, settings.display.height);
 		else
-			glViewport(-fx, 0, screen_width + fx * 2, screen_height);
+			glViewport(-fx, 0, settings.display.width + fx * 2, settings.display.height);
 		glBindFramebuffer(GL_FRAMEBUFFER, gl.ofbo.origFbo);
-		glcache.ClearColor(0.f, 0.f, 0.f, 0.f);
+		glcache.ClearColor(VO_BORDER_COL.red(), VO_BORDER_COL.green(), VO_BORDER_COL.blue(), 1.f);
 		glClear(GL_COLOR_BUFFER_BIT);
 		drawQuad(gl.ofbo.tex, config::Rotate90);
 	}
@@ -717,10 +714,10 @@ bool render_output_framebuffer()
 			return false;
 		glBindFramebuffer(GL_READ_FRAMEBUFFER, gl.ofbo.fbo);
 		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, gl.ofbo.origFbo);
-		glcache.ClearColor(0.f, 0.f, 0.f, 0.f);
+		glcache.ClearColor(VO_BORDER_COL.red(), VO_BORDER_COL.green(), VO_BORDER_COL.blue(), 1.f);
 		glClear(GL_COLOR_BUFFER_BIT);
 		glBlitFramebuffer(fx, 0, gl.ofbo.width - fx, gl.ofbo.height,
-				sx, 0, screen_width - sx, screen_height,
+				sx, 0, settings.display.width - sx, settings.display.height,
 				GL_COLOR_BUFFER_BIT, GL_LINEAR);
     	glBindFramebuffer(GL_FRAMEBUFFER, gl.ofbo.origFbo);
 #endif

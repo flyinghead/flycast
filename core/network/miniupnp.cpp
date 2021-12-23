@@ -29,6 +29,7 @@
 
 bool MiniUPnP::Init()
 {
+	DEBUG_LOG(NETWORK, "MiniUPnP::Init");
 	int error = 0;
 #if MINIUPNPC_API_VERSION >= 14
 	UPNPDev *devlist = upnpDiscover(2000, nullptr, nullptr, UPNP_LOCAL_PORT_ANY, 0, 2, &error);
@@ -37,29 +38,36 @@ bool MiniUPnP::Init()
 #endif
 	if (devlist == nullptr)
 	{
-		WARN_LOG(MODEM, "UPnP discover failed: error %d", error);
+		WARN_LOG(NETWORK, "UPnP discover failed: error %d", error);
 		return false;
 	}
 	error = UPNP_GetValidIGD(devlist, &urls, &data, lanAddress, sizeof(lanAddress));
 	freeUPNPDevlist(devlist);
 	if (error != 1)
 	{
-		WARN_LOG(MODEM, "Internet Gateway not found: error %d", error);
+		WARN_LOG(NETWORK, "Internet Gateway not found: error %d", error);
 		return false;
 	}
 	wanAddress[0] = 0;
+	initialized = true;
 	if (UPNP_GetExternalIPAddress(urls.controlURL, data.first.servicetype, wanAddress) != 0)
-		WARN_LOG(MODEM, "Cannot determine external IP address");
+		WARN_LOG(NETWORK, "Cannot determine external IP address");
+	DEBUG_LOG(NETWORK, "MiniUPnP: public IP is %s", wanAddress);
 	return true;
 }
 
 void MiniUPnP::Term()
 {
+	if (!initialized)
+		return;
+	DEBUG_LOG(NETWORK, "MiniUPnP::Term");
 	for (const auto& port : mappedPorts)
 		UPNP_DeletePortMapping(urls.controlURL, data.first.servicetype, port.first.c_str(),
 							   port.second ? "TCP" : "UDP", nullptr);
 	mappedPorts.clear();
 	FreeUPNPUrls(&urls);
+	initialized = false;
+	DEBUG_LOG(NETWORK, "MiniUPnP: terminated");
 }
 
 bool MiniUPnP::AddPortMapping(int port, bool tcp)
@@ -75,10 +83,11 @@ bool MiniUPnP::AddPortMapping(int port, bool tcp)
 								"86400");  // port map lease duration (in seconds) or zero for "as long as possible"
 	if (error != 0)
 	{
-		WARN_LOG(MODEM, "Port %d redirection failed: error %d", port, error);
+		WARN_LOG(NETWORK, "Port %d redirection failed: error %d", port, error);
 		return false;
 	}
 	mappedPorts.emplace_back(portStr, tcp);
+	DEBUG_LOG(NETWORK, "MiniUPnP: forwarding %s port %d", tcp ? "TCP" : "UDP", port);
 	return true;
 }
 #endif

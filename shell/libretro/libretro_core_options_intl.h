@@ -574,20 +574,6 @@ struct retro_core_option_v2_definition option_defs_ar[] = {
       "Default",
    },
    {
-      CORE_OPTION_NAME "_div_matching",
-      CORE_OPTION_NAME_DIV_MATCHING_LABEL_AR,
-      NULL,
-      CORE_OPTION_NAME_DIV_MATCHING_INFO_0_AR,
-      NULL,
-      NULL,
-      {
-         { "auto",     OPTION_VAL_AUTO_AR },
-         { "disabled", NULL },
-         { NULL, NULL },
-      },
-      "auto",
-   },
-   {
       CORE_OPTION_NAME "_force_wince",
       CORE_OPTION_NAME_FORCE_WINCE_LABEL_AR,
       NULL,

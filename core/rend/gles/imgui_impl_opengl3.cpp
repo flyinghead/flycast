@@ -79,23 +79,25 @@ static int          g_AttribLocationPosition = 0, g_AttribLocationUV = 0, g_Attr
 static unsigned int g_VboHandle = 0, g_ElementsHandle = 0;
 
 // Functions
-bool    ImGui_ImplOpenGL3_Init(const char* glsl_version)
+static bool ImGui_ImplOpenGL3_CreateDeviceObjects();
+static void ImGui_ImplOpenGL3_DestroyDeviceObjects();
+static void ImGui_ImplOpenGL3_DrawBackground();
+
+bool    ImGui_ImplOpenGL3_Init()
 {
     ImGuiIO& io = ImGui::GetIO();
     io.BackendRendererName = "imgui_impl_opengl3";
 
     // Store GLSL version string so we can refer to it later in case we recreate shaders. Note: GLSL version is NOT the same as GL version. Leave this to NULL if unsure.
-    if (glsl_version == NULL)
-    {
-    	if (theGLContext.IsGLES())
-            glsl_version = "#version 100";		// OpenGL ES 2.0
-    	else
+    const char* glsl_version;
+    if (theGLContext.isGLES())
+    	glsl_version = "#version 100";		// OpenGL ES 2.0
+    else
 #if defined(__APPLE__)
-    		glsl_version = "#version 140";		// OpenGL 3.1
+    	glsl_version = "#version 140";		// OpenGL 3.1
 #else
-    		glsl_version = "#version 130";		// OpenGL 3.0
+    	glsl_version = "#version 130";		// OpenGL 3.0
 #endif
-    }
     IM_ASSERT((int)strlen(glsl_version) + 2 < IM_ARRAYSIZE(g_GlslVersionString));
     strcpy(g_GlslVersionString, glsl_version);
     strcat(g_GlslVersionString, "\n");
@@ -132,7 +134,7 @@ void    ImGui_ImplOpenGL3_RenderDrawData(ImDrawData* draw_data)
     glActiveTexture(GL_TEXTURE0);
     bool clip_origin_lower_left = true;
 #ifdef GL_CLIP_ORIGIN
-    if (theGLContext.GetMajorVersion() >= 4 && glClipControl != NULL)
+    if (theGLContext.getMajorVersion() >= 4 && glClipControl != NULL)
     {
 		GLenum last_clip_origin = 0; glGetIntegerv(GL_CLIP_ORIGIN, (GLint*)&last_clip_origin); // Support for GL 4.5's glClipControl(GL_UPPER_LEFT)
 		if (last_clip_origin == GL_UPPER_LEFT)
@@ -171,12 +173,12 @@ void    ImGui_ImplOpenGL3_RenderDrawData(ImDrawData* draw_data)
     glUniform1i(g_AttribLocationTex, 0);
     glUniformMatrix4fv(g_AttribLocationProjMtx, 1, GL_FALSE, &ortho_projection[0][0]);
 #ifndef GLES2
-    if (theGLContext.GetMajorVersion() >= 3 && glBindSampler != NULL)
+    if (theGLContext.getMajorVersion() >= 3 && glBindSampler != NULL)
     	glBindSampler(0, 0); // We use combined texture/sampler state. Applications using GL 3.3 may set that otherwise.
 #endif
     GLuint vao_handle = 0;
 #ifndef GLES2
-    if (theGLContext.GetMajorVersion() >= 3)
+    if (theGLContext.getMajorVersion() >= 3)
     {
 		// Recreate the VAO every time
 		// (This is to easily allow multiple GL contexts. VAO are not shared among GL contexts, and we don't track creation/deletion of windows so we don't have an obvious key to use to cache them.)
@@ -238,7 +240,7 @@ void    ImGui_ImplOpenGL3_RenderDrawData(ImDrawData* draw_data)
 #endif
 }
 
-bool ImGui_ImplOpenGL3_CreateFontsTexture()
+static bool ImGui_ImplOpenGL3_CreateFontsTexture()
 {
     // Build texture atlas
     ImGuiIO& io = ImGui::GetIO();
@@ -251,7 +253,7 @@ bool ImGui_ImplOpenGL3_CreateFontsTexture()
     glcache.BindTexture(GL_TEXTURE_2D, g_FontTexture);
     glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    if (theGLContext.GetMajorVersion() >= 3)
+    if (theGLContext.getMajorVersion() >= 3)
     	glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
 
@@ -261,7 +263,7 @@ bool ImGui_ImplOpenGL3_CreateFontsTexture()
     return true;
 }
 
-void ImGui_ImplOpenGL3_DestroyFontsTexture()
+static void ImGui_ImplOpenGL3_DestroyFontsTexture()
 {
     if (g_FontTexture)
     {
@@ -308,7 +310,7 @@ static bool CheckProgram(GLuint handle, const char* desc)
     return (GLboolean)status == GL_TRUE;
 }
 
-bool ImGui_ImplOpenGL3_CreateDeviceObjects()
+static bool ImGui_ImplOpenGL3_CreateDeviceObjects()
 {
     // Parse GLSL version string
     int glsl_version = 130;
@@ -472,7 +474,7 @@ bool ImGui_ImplOpenGL3_CreateDeviceObjects()
     return true;
 }
 
-void ImGui_ImplOpenGL3_DestroyDeviceObjects()
+static void ImGui_ImplOpenGL3_DestroyDeviceObjects()
 {
     if (g_VboHandle) glDeleteBuffers(1, &g_VboHandle);
     if (g_ElementsHandle) glDeleteBuffers(1, &g_ElementsHandle);
@@ -486,7 +488,7 @@ void ImGui_ImplOpenGL3_DestroyDeviceObjects()
     ImGui_ImplOpenGL3_DestroyFontsTexture();
 }
 
-void ImGui_ImplOpenGL3_DrawBackground()
+static void ImGui_ImplOpenGL3_DrawBackground()
 {
 #ifndef TARGET_IPHONE
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);

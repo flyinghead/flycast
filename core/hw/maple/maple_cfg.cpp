@@ -2,8 +2,15 @@
 #include "maple_helper.h"
 #include "maple_if.h"
 #include "hw/naomi/naomi_cart.h"
-#include "input/gamepad_device.h"
 #include "cfg/option.h"
+#include "stdclass.h"
+#include "serialize.h"
+
+MapleInputState mapleInputState[4];
+extern bool maple_ddt_pending_reset;
+extern std::vector<std::pair<u32, std::vector<u32>>> mapleDmaOut;
+
+void (*MapleConfigMap::UpdateVibration)(u32 port, float power, float inclination, u32 duration_ms);
 
 static u8 GetBtFromSgn(s8 val)
 {
@@ -11,7 +18,7 @@ static u8 GetBtFromSgn(s8 val)
 }
 
 u32 awave_button_mapping[32] = {
-		AWAVE_SERVICE_KEY,	// DC_BTN_C
+		AWAVE_BTN2_KEY,		// DC_BTN_C
 		AWAVE_BTN1_KEY,		// DC_BTN_B
 		AWAVE_BTN0_KEY,		// DC_BTN_A
 		AWAVE_START_KEY,	// DC_BTN_START
@@ -19,18 +26,18 @@ u32 awave_button_mapping[32] = {
 		AWAVE_DOWN_KEY,		// DC_DPAD_DOWN
 		AWAVE_LEFT_KEY,		// DC_DPAD_LEFT
 		AWAVE_RIGHT_KEY,	// DC_DPAD_RIGHT
-		AWAVE_TEST_KEY,		// DC_BTN_Z
-		AWAVE_BTN3_KEY,		// DC_BTN_Y
-		AWAVE_BTN2_KEY,		// DC_BTN_X
+		AWAVE_BTN4_KEY,		// DC_BTN_Z (duplicated)
+		AWAVE_BTN4_KEY,		// DC_BTN_Y
+		AWAVE_BTN3_KEY,		// DC_BTN_X
 		AWAVE_COIN_KEY,		// DC_BTN_D
-		AWAVE_BTN4_KEY,		// DC_DPAD2_UP
-		0,					// DC_DPAD2_DOWN
+		AWAVE_SERVICE_KEY,	// DC_DPAD2_UP
+		AWAVE_TEST_KEY,		// DC_DPAD2_DOWN
 		0,					// DC_DPAD2_LEFT
 		0,					// DC_DPAD2_RIGHT
 };
 
 u32 awavelg_button_mapping[32] = {
-		AWAVE_SERVICE_KEY,	// DC_BTN_C
+		AWAVE_BTN1_KEY,		// DC_BTN_C
 		AWAVE_BTN0_KEY,		// DC_BTN_B
 		AWAVE_TRIGGER_KEY,	// DC_BTN_A
 		AWAVE_START_KEY,	// DC_BTN_START
@@ -38,12 +45,12 @@ u32 awavelg_button_mapping[32] = {
 		AWAVE_DOWN_KEY,		// DC_DPAD_DOWN
 		AWAVE_LEFT_KEY,		// DC_DPAD_LEFT
 		AWAVE_RIGHT_KEY,	// DC_DPAD_RIGHT
-		AWAVE_TEST_KEY,		// DC_BTN_Z
-		AWAVE_BTN2_KEY,		// DC_BTN_Y
-		AWAVE_BTN1_KEY,		// DC_BTN_X
+		AWAVE_BTN4_KEY,		// DC_BTN_Z
+		AWAVE_BTN3_KEY,		// DC_BTN_Y
+		AWAVE_BTN2_KEY,		// DC_BTN_X
 		AWAVE_COIN_KEY,		// DC_BTN_D
-		AWAVE_BTN3_KEY,		// DC_DPAD2_UP
-		AWAVE_BTN4_KEY,		// DC_DPAD2_DOWN
+		AWAVE_SERVICE_KEY,	// DC_DPAD2_UP
+		AWAVE_TEST_KEY,		// DC_DPAD2_DOWN
 		0,					// DC_DPAD2_LEFT
 		0,					// DC_DPAD2_RIGHT
 
@@ -62,26 +69,26 @@ void MapleConfigMap::SetVibration(float power, float inclination, u32 duration_m
 
 void MapleConfigMap::GetInput(PlainJoystickState* pjs)
 {
-	u32 player_num = playerNum();
+	const MapleInputState& inputState = mapleInputState[playerNum()];
 
 	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
 	{
-		pjs->kcode = kcode[player_num];
-		pjs->joy[PJAI_X1] = GetBtFromSgn(joyx[player_num]);
-		pjs->joy[PJAI_Y1] = GetBtFromSgn(joyy[player_num]);
-		pjs->trigger[PJTI_R] = rt[player_num];
-		pjs->trigger[PJTI_L] = lt[player_num];
+		pjs->kcode = inputState.kcode;
+		pjs->joy[PJAI_X1] = GetBtFromSgn(inputState.fullAxes[PJAI_X1]);
+		pjs->joy[PJAI_Y1] = GetBtFromSgn(inputState.fullAxes[PJAI_Y1]);
+		pjs->trigger[PJTI_R] = inputState.halfAxes[PJTI_R];
+		pjs->trigger[PJTI_L] = inputState.halfAxes[PJTI_L];
 	}
 	else if (settings.platform.system == DC_PLATFORM_ATOMISWAVE)
 	{
 #ifdef LIBRETRO
-		pjs->kcode = kcode[player_num];
+		pjs->kcode = inputState.kcode;
 #else
 		const u32* mapping = settings.input.JammaSetup == JVS::LightGun ? awavelg_button_mapping : awave_button_mapping;
 		pjs->kcode = ~0;
 		for (u32 i = 0; i < ARRAY_SIZE(awave_button_mapping); i++)
 		{
-			if ((kcode[player_num] & (1 << i)) == 0)
+			if ((inputState.kcode & (1 << i)) == 0)
 				pjs->kcode &= ~mapping[i];
 		}
 #endif
@@ -96,16 +103,16 @@ void MapleConfigMap::GetInput(PlainJoystickState* pjs)
 						switch (NaomiGameInputs->axes[axis].axis)
 						{
 						case 0:
-							pjs->joy[axis] = GetBtFromSgn(joyx[player_num]);
+							pjs->joy[axis] = GetBtFromSgn(inputState.fullAxes[PJAI_X1]);
 							break;
 						case 1:
-							pjs->joy[axis] = GetBtFromSgn(joyy[player_num]);
+							pjs->joy[axis] = GetBtFromSgn(inputState.fullAxes[PJAI_Y1]);
 							break;
 						case 2:
-							pjs->joy[axis] = GetBtFromSgn(joyrx[player_num]);
+							pjs->joy[axis] = GetBtFromSgn(inputState.fullAxes[PJAI_X2]);
 							break;
 						case 3:
-							pjs->joy[axis] = GetBtFromSgn(joyry[player_num]);
+							pjs->joy[axis] = GetBtFromSgn(inputState.fullAxes[PJAI_Y2]);
 							break;
 						default:
 							pjs->joy[axis] = 0x80;
@@ -117,13 +124,13 @@ void MapleConfigMap::GetInput(PlainJoystickState* pjs)
 						switch (NaomiGameInputs->axes[axis].axis)
 						{
 						case 4:
-							pjs->joy[axis] = rt[player_num];
+							pjs->joy[axis] = inputState.halfAxes[PJTI_R];
 							break;
 						case 5:
-							pjs->joy[axis] = lt[player_num];
+							pjs->joy[axis] = inputState.halfAxes[PJTI_L];
 							break;
 						default:
-							pjs->joy[axis] = 0x80;
+							pjs->joy[axis] = 0;
 							break;
 						}
 					}
@@ -138,10 +145,10 @@ void MapleConfigMap::GetInput(PlainJoystickState* pjs)
 		}
 		else
 		{
-			pjs->joy[PJAI_X1] = GetBtFromSgn(joyx[player_num]);
-			pjs->joy[PJAI_Y1] = GetBtFromSgn(joyy[player_num]);
-			pjs->joy[PJAI_X2] = rt[player_num];
-			pjs->joy[PJAI_Y2] = lt[player_num];
+			pjs->joy[PJAI_X1] = GetBtFromSgn(inputState.fullAxes[PJAI_X1]);
+			pjs->joy[PJAI_Y1] = GetBtFromSgn(inputState.fullAxes[PJAI_Y1]);
+			pjs->joy[PJAI_X2] = inputState.halfAxes[PJTI_R];
+			pjs->joy[PJAI_Y2] = inputState.halfAxes[PJTI_L];
 		}
 	}
 }
@@ -152,30 +159,35 @@ void MapleConfigMap::SetImage(u8 *img)
 
 void MapleConfigMap::GetAbsCoordinates(int& x, int& y)
 {
-	x = mo_x_abs[playerNum()];
-	y = mo_y_abs[playerNum()];
+	const MapleInputState& inputState = mapleInputState[playerNum()];
+	x = inputState.absPos.x;
+	y = inputState.absPos.y;
 }
 
 void MapleConfigMap::GetMouseInput(u8& buttons, int& x, int& y, int& wheel)
 {
-	u32 playerNum = this->playerNum();
-	buttons = mo_buttons[playerNum] & 0xff;
-	x = (int)std::round(mo_x_delta[playerNum]);
-	y = (int)std::round(mo_y_delta[playerNum]);
-	wheel = (int)std::round(mo_wheel_delta[playerNum]);
-	mo_x_delta[playerNum] = 0;
-	mo_y_delta[playerNum] = 0;
-	mo_wheel_delta[playerNum] = 0;
+	const MapleInputState& inputState = mapleInputState[playerNum()];
+	buttons = inputState.mouseButtons;
+	x = inputState.relPos.x;
+	y = inputState.relPos.y * (invertMouseY ? -1 : 1);
+	wheel = inputState.relPos.wheel;
+}
+
+void MapleConfigMap::GetKeyboardInput(u8& shift, u8 keys[6])
+{
+	const MapleInputState& inputState = mapleInputState[playerNum()];
+	shift = inputState.keyboard.shift;
+	memcpy(keys, inputState.keyboard.key, sizeof(inputState.keyboard.key));
 }
 
 bool maple_atomiswave_coin_chute(int slot)
 {
 #ifdef LIBRETRO
-	return kcode[slot] & AWAVE_COIN_KEY;
+	return mapleInputState[slot].kcode & AWAVE_COIN_KEY;
 #else
 	for (int i = 0; i < 16; i++)
 	{
-		if ((kcode[slot] & (1 << i)) == 0 && awave_button_mapping[i] == AWAVE_COIN_KEY)
+		if ((mapleInputState[slot].kcode & (1 << i)) == 0 && awave_button_mapping[i] == AWAVE_COIN_KEY)
 			return true;
 	}
 	return false;
@@ -192,12 +204,15 @@ static void mcfg_Create(MapleDeviceType type, u32 bus, u32 port, s32 player_num 
 	MapleDevices[bus][port] = dev;
 }
 
-void mcfg_CreateNAOMIJamma()
+static void createNaomiDevices()
 {
 	mcfg_DestroyDevices();
 	mcfg_Create(MDT_NaomiJamma, 0, 5);
 	if (settings.input.JammaSetup == JVS::Keyboard)
+	{
 		mcfg_Create(MDT_Keyboard, 1, 5, 0);
+		mcfg_Create(MDT_Keyboard, 2, 5, 1);
+	}
 	else
 	{
 		// Connect VMU B1
@@ -209,7 +224,7 @@ void mcfg_CreateNAOMIJamma()
 	}
 }
 
-void mcfg_CreateAtomisWaveControllers()
+static void createAtomiswaveDevices()
 {
 	mcfg_DestroyDevices();
 	// Looks like two controllers needs to be on bus 0 and 1 for digital inputs
@@ -243,10 +258,15 @@ void mcfg_CreateAtomisWaveControllers()
 		// Waiwai drive needs two track-balls
 		mcfg_Create(MDT_Mouse, 2, 5, 0);
 		mcfg_Create(MDT_Mouse, 3, 5, 1);
+		if (settings.content.gameId == "DRIVE")
+		{
+			MapleDevices[2][5]->config->invertMouseY = true;
+			MapleDevices[3][5]->config->invertMouseY = true;
+		}
 	}
 }
 
-void mcfg_CreateDevices()
+static void createDreamcastDevices()
 {
 	for (int bus = 0; bus < MAPLE_PORTS; ++bus)
 	{
@@ -296,6 +316,46 @@ void mcfg_CreateDevices()
 	}
 }
 
+static void vmuDigest()
+{
+	if (!config::GGPOEnable)
+		return;
+	MD5Sum md5;
+	for (int i = 0; i < MAPLE_PORTS; i++)
+		for (int j = 0; j < 6; j++)
+		{
+			const maple_device* device = MapleDevices[i][j];
+			if (device != nullptr)
+			{
+				size_t size;
+				const void *data = device->getData(size);
+				if (data != nullptr)
+					md5.add(data, size);
+			}
+		}
+	md5.getDigest(settings.network.md5.vmu);
+}
+
+void mcfg_CreateDevices()
+{
+	switch (settings.platform.system)
+	{
+	case DC_PLATFORM_DREAMCAST:
+		createDreamcastDevices();
+		break;
+	case DC_PLATFORM_NAOMI:
+		createNaomiDevices();
+		break;
+	case DC_PLATFORM_ATOMISWAVE:
+		createAtomiswaveDevices();
+		break;
+	default:
+		die("Unknown system");
+		break;
+	}
+	vmuDigest();
+}
+
 void mcfg_DestroyDevices()
 {
 	for (int i = 0; i < MAPLE_PORTS; i++)
@@ -309,8 +369,16 @@ void mcfg_DestroyDevices()
 		}
 }
 
-void mcfg_SerializeDevices(void **data, unsigned int *total_size)
+void mcfg_SerializeDevices(Serializer& ser)
 {
+	ser << maple_ddt_pending_reset;
+	ser << (u32)mapleDmaOut.size();
+	for (const auto& pair : mapleDmaOut)
+	{
+		ser << pair.first;	// u32 address
+		ser << (u32)pair.second.size();
+		ser.serialize(pair.second.data(), pair.second.size());
+	}
 	for (int i = 0; i < MAPLE_PORTS; i++)
 		for (int j = 0; j < 6; j++)
 		{
@@ -318,25 +386,50 @@ void mcfg_SerializeDevices(void **data, unsigned int *total_size)
 			maple_device* device = MapleDevices[i][j];
 			if (device != nullptr)
 				deviceType =  device->get_device_type();
-			REICAST_S(deviceType);
+			ser << deviceType;
 			if (device != nullptr)
-				device->serialize(data, total_size);
+				device->serialize(ser);
 		}
 }
 
-void mcfg_UnserializeDevices(void **data, unsigned int *total_size, serialize_version_enum version)
+void mcfg_DeserializeDevices(Deserializer& deser)
 {
 	mcfg_DestroyDevices();
+	u8 eeprom[sizeof(maple_naomi_jamma::eeprom)];
+	if (deser.version() < Deserializer::V23)
+	{
+		deser >> eeprom;
+		deser.skip(128);	// Unused eeprom space
+		deser.skip<bool>(); // EEPROM_loaded
+	}
+	deser >> maple_ddt_pending_reset;
+	mapleDmaOut.clear();
+	if (deser.version() >= Deserializer::V23)
+	{
+		u32 size;
+		deser >> size;
+		for (u32 i = 0; i < size; i++)
+		{
+			u32 address;
+			deser >> address;
+			u32 dataSize;
+			deser >> dataSize;
+			mapleDmaOut.emplace_back(address, std::vector<u32>(dataSize));
+			deser.deserialize(mapleDmaOut.back().second.data(), dataSize);
+		}
+	}
 
 	for (int i = 0; i < MAPLE_PORTS; i++)
 		for (int j = 0; j < 6; j++)
 		{
 			u8 deviceType;
-			REICAST_US(deviceType);
+			deser >> deviceType;
 			if (deviceType != MDT_None)
 			{
 				mcfg_Create((MapleDeviceType)deviceType, i, j);
-				MapleDevices[i][j]->unserialize(data, total_size, version);
+				MapleDevices[i][j]->deserialize(deser);
 			}
 		}
+	if (deser.version() < Deserializer::V23 && EEPROM != nullptr)
+		memcpy(EEPROM, eeprom, sizeof(eeprom));
 }

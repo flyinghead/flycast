@@ -30,12 +30,13 @@ PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormatARB;
 PFNWGLCREATECONTEXTATTRIBSARBPROC wglCreateContextAttribsARB;
 PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT;
 
-bool WGLGraphicsContext::Init()
+bool WGLGraphicsContext::init()
 {
 	if (ourOpenGLRenderingContext != NULL)
 		// Already initialized
 		return true;
 
+	instance = this;
 	CreateMainWindow();
 	PIXELFORMATDESCRIPTOR pfd =
 	{
@@ -58,11 +59,11 @@ bool WGLGraphicsContext::Init()
 	};
 
 	int  letWindowsChooseThisPixelFormat;
-	letWindowsChooseThisPixelFormat = ChoosePixelFormat(ourWindowHandleToDeviceContext, &pfd);
-	SetPixelFormat(ourWindowHandleToDeviceContext,letWindowsChooseThisPixelFormat, &pfd);
+	letWindowsChooseThisPixelFormat = ChoosePixelFormat((HDC)display, &pfd);
+	SetPixelFormat((HDC)display,letWindowsChooseThisPixelFormat, &pfd);
 
-	HGLRC tempOpenGLContext = wglCreateContext(ourWindowHandleToDeviceContext);
-	wglMakeCurrent(ourWindowHandleToDeviceContext, tempOpenGLContext);
+	HGLRC tempOpenGLContext = wglCreateContext((HDC)display);
+	wglMakeCurrent((HDC)display, tempOpenGLContext);
 
 	wglChoosePixelFormatARB = (PFNWGLCHOOSEPIXELFORMATARBPROC)wglGetProcAddress("wglChoosePixelFormatARB");
 	if(!wglChoosePixelFormatARB)
@@ -85,7 +86,7 @@ bool WGLGraphicsContext::Init()
 		0
 	};
 
-	ourOpenGLRenderingContext = wglCreateContextAttribsARB(ourWindowHandleToDeviceContext, 0, attribs);
+	ourOpenGLRenderingContext = wglCreateContextAttribsARB((HDC)display, 0, attribs);
 
 	if (!ourOpenGLRenderingContext)
 	{
@@ -93,13 +94,13 @@ bool WGLGraphicsContext::Init()
 		// Try Gl 3.1
 		attribs[1] = 3;
 		attribs[3] = 1;
-		ourOpenGLRenderingContext = wglCreateContextAttribsARB(ourWindowHandleToDeviceContext, 0, attribs);
+		ourOpenGLRenderingContext = wglCreateContextAttribsARB((HDC)display, 0, attribs);
 	}
 
 	bool rv = true;
 
 	if (ourOpenGLRenderingContext)
-		wglMakeCurrent(ourWindowHandleToDeviceContext, ourOpenGLRenderingContext);
+		wglMakeCurrent((HDC)display, ourOpenGLRenderingContext);
 	else
 		rv = false;
 
@@ -110,30 +111,28 @@ bool WGLGraphicsContext::Init()
 	}
 
 	RECT r;
-	GetClientRect(ourWindow, &r);
-	screen_width = r.right - r.left;
-	screen_height = r.bottom - r.top;
+	GetClientRect((HWND)window, &r);
+	settings.display.width = r.right - r.left;
+	settings.display.height = r.bottom - r.top;
 
 	if (rv)
-		PostInit();
+		postInit();
 
 	return rv;
 }
 
-void WGLGraphicsContext::Swap()
+void WGLGraphicsContext::swap()
 {
-#ifdef TEST_AUTOMATION
 	do_swap_automation();
-#endif
-	wglSwapLayerBuffers(ourWindowHandleToDeviceContext, WGL_SWAP_MAIN_PLANE);
+	wglSwapLayerBuffers((HDC)display, WGL_SWAP_MAIN_PLANE);
 }
 
-void WGLGraphicsContext::Term()
+void WGLGraphicsContext::term()
 {
-	PreTerm();
+	preTerm();
 	if (ourOpenGLRenderingContext != NULL)
 	{
-		wglMakeCurrent(ourWindowHandleToDeviceContext, NULL);
+		wglMakeCurrent((HDC)display, NULL);
 		wglDeleteContext(ourOpenGLRenderingContext);
 		ourOpenGLRenderingContext = NULL;
 	}

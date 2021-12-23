@@ -111,7 +111,7 @@ size_t get_last_slash_pos(const std::string& path)
 
 std::string get_game_save_prefix()
 {
-	std::string save_file = settings.imgread.ImagePath;
+	std::string save_file = settings.content.path;
 	size_t lastindex = get_last_slash_pos(save_file);
 	if (lastindex != std::string::npos)
 		save_file = save_file.substr(lastindex + 1);
@@ -120,7 +120,7 @@ std::string get_game_save_prefix()
 
 std::string get_game_basename()
 {
-	std::string game_dir = settings.imgread.ImagePath;
+	std::string game_dir = settings.content.path;
 	size_t lastindex = game_dir.find_last_of('.');
 	if (lastindex != std::string::npos)
 		game_dir = game_dir.substr(0, lastindex);
@@ -129,7 +129,7 @@ std::string get_game_basename()
 
 std::string get_game_dir()
 {
-	std::string game_dir = settings.imgread.ImagePath;
+	std::string game_dir = settings.content.path;
 	size_t lastindex = get_last_slash_pos(game_dir);
 	if (lastindex != std::string::npos)
 		game_dir = game_dir.substr(0, lastindex + 1);

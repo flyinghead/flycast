@@ -45,7 +45,7 @@ static u32 getSectorSize(const std::string& type) {
 			return 0;
 }
 
-Disc* cue_parse(const char* file)
+Disc* cue_parse(const char* file, std::vector<u8> *digest)
 {
 	if (get_file_extension(file) != "cue")
 		return nullptr;
@@ -53,7 +53,10 @@ Disc* cue_parse(const char* file)
 	FILE *fsource = nowide::fopen(file, "rb");
 
 	if (fsource == nullptr)
+	{
+		WARN_LOG(COMMON, "Cannot open file '%s' errno %d", file, errno);
 		throw FlycastException(std::string("Cannot open CUE file ") + file);
+	}
 
 	size_t cue_len = flycast::fsize(fsource);
 
@@ -69,9 +72,11 @@ Disc* cue_parse(const char* file)
 		WARN_LOG(GDROM, "Failed or truncated read of cue file '%s'", file);
 	std::fclose(fsource);
 
-	std::istringstream cuesheet(cue_data);
+	std::istringstream istream(cue_data);
 
 	std::string basepath = OS_dirname(file);
+
+	MD5Sum md5;
 
 	Disc* disc = new Disc();
 	u32 current_fad = 150;
@@ -79,9 +84,11 @@ Disc* cue_parse(const char* file)
 	u32 track_number = -1;
 	std::string track_type;
 	u32 session_number = 0;
+	std::string line;
 
-	while (!cuesheet.eof())
+	while (std::getline(istream, line))
 	{
+		std::stringstream cuesheet(line);
 		std::string token;
 		cuesheet >> token;
 
@@ -103,7 +110,7 @@ Disc* cue_parse(const char* file)
 						current_fad += 11400;
 
 					Session ses;
-					ses.FirstTrack = disc->tracks.size() + 1;
+					ses.FirstTrack = (u8)disc->tracks.size() + 1;
 					ses.StartFAD = current_fad;
 					disc->sessions.push_back(ses);
 					DEBUG_LOG(GDROM, "session[%zd]: 1st track: %d FAD:%d", disc->sessions.size(), ses.FirstTrack, ses.StartFAD);
@@ -115,7 +122,10 @@ Disc* cue_parse(const char* file)
 				if (token == "HIGH-DENSITY")
 					current_fad = 45000 + 150;
 				else if (token != "SINGLE-DENSITY")
-					WARN_LOG(GDROM, "CUE parse error: unrecognized REM token %s. Expected SINGLE-DENSITY, HIGH-DENSITY or SESSION", token.c_str());
+				{
+					INFO_LOG(GDROM, "CUE parse: unrecognized REM token %s. Expected SINGLE-DENSITY, HIGH-DENSITY or SESSION", token.c_str());
+					continue;
+				}
 				cuesheet >> token;
 				if (token != "AREA")
 					WARN_LOG(GDROM, "CUE parse error: unrecognized REM token %s. Expected AREA", token.c_str());
@@ -183,6 +193,8 @@ Disc* cue_parse(const char* file)
 				t.EndFAD = current_fad - 1;
 				DEBUG_LOG(GDROM, "file[%zd] \"%s\": session %d type %s FAD:%d -> %d", disc->tracks.size() + 1, track_filename.c_str(), session_number, track_type.c_str(), t.StartFAD, t.EndFAD);
 				
+				if (digest != nullptr)
+					md5.add(track_file);
 				t.file = new RawTrackFile(track_file, 0, t.StartFAD, sector_size);
 				disc->tracks.push_back(t);
 				
@@ -212,6 +224,8 @@ Disc* cue_parse(const char* file)
 	for (Track& t : disc->tracks)
 		if (t.CTRL == 0)
 			t.StartFAD += 150;
+	if (digest != nullptr)
+		*digest = md5.getDigest();
 
 	return disc;
 }

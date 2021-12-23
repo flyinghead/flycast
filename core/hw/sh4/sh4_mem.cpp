@@ -7,11 +7,9 @@
 #include "sh4_mem.h"
 #include "hw/holly/sb_mem.h"
 #include "sh4_mmr.h"
-#include "modules/modules.h"
 #include "hw/pvr/pvr_mem.h"
 #include "hw/sh4/sh4_core.h"
 #include "hw/mem/_vmem.h"
-#include "modules/mmu.h"
 #include "sh4_cache.h"
 
 //main system mem
@@ -183,7 +181,6 @@ void mem_Init()
 
 	sh4_area0_Init();
 	sh4_mmr_init();
-	MMU_init();
 }
 
 //Reset Sysmem/Regs -- Pvr is not changed , bios/flash are not zeroed out
@@ -199,12 +196,10 @@ void mem_Reset(bool hard)
 	//Reset registers
 	sh4_area0_Reset(hard);
 	sh4_mmr_reset(true);
-	MMU_reset();
 }
 
 void mem_Term()
 {
-	MMU_term();
 	sh4_mmr_term();
 	sh4_area0_Term();
 

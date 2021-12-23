@@ -23,7 +23,7 @@
 #include "hw/holly/sb_mem.h"
 #include "hw/maple/maple_devs.h"
 
-extern MemChip *sys_nvmem;
+extern WritableChip *sys_nvmem;
 
 static u16 eeprom_crc(const u8 *buf, int size)
 {
@@ -101,7 +101,6 @@ void write_naomi_flash(u32 addr, u8 value)
 //
 void write_naomi_eeprom(u32 offset, u8 value)
 {
-	load_naomi_eeprom();
 	if (offset >= 3 && offset < 20)
 	{
 		EEPROM[offset] = value;

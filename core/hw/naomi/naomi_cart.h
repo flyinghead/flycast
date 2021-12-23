@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <string>
 #include "types.h"
+#include "emulator.h"
 
 class Cartridge
 {
@@ -10,7 +11,10 @@ public:
 	Cartridge(u32 size);
 	virtual ~Cartridge();
 
-	virtual void Init() {}
+	virtual void Init(LoadProgress *progress = nullptr, std::vector<u8> *digest = nullptr) {
+		if (digest != nullptr)
+			digest->clear();
+	}
 	virtual u32 ReadMem(u32 address, u32 size) = 0;
 	virtual void WriteMem(u32 address, u32 data, u32 size) = 0;
 
@@ -20,8 +24,8 @@ public:
 	virtual void* GetDmaPtr(u32 &size) = 0;
 	virtual void AdvancePtr(u32 size) = 0;
 	virtual std::string GetGameId();
-	virtual void Serialize(void **data, unsigned int *total_size) {}
-	virtual void Unserialize(void **data, unsigned int *total_size) {}
+	virtual void Serialize(Serializer& ser) const {}
+	virtual void Deserialize(Deserializer& deser) {}
 	virtual void SetKey(u32 key) { }
 	virtual void SetKeyData(u8 *key_data) { }
 
@@ -39,8 +43,8 @@ public:
 	void WriteMem(u32 address, u32 data, u32 size) override;
 	void* GetDmaPtr(u32 &size) override;
 	void AdvancePtr(u32 size) override {}
-	void Serialize(void** data, unsigned int* total_size) override;
-	void Unserialize(void** data, unsigned int* total_size) override;
+	void Serialize(Serializer& ser) const override;
+	void Deserialize(Deserializer& deser) override;
 
 	void SetKey(u32 key) override { this->key = key; }
 
@@ -68,8 +72,8 @@ public:
 	bool Read(u32 offset, u32 size, void* dst) override;
 	bool Write(u32 offset, u32 size, u32 data) override;
 	u16 ReadCipheredData(u32 offset);
-	void Serialize(void** data, unsigned int* total_size) override;
-	void Unserialize(void** data, unsigned int* total_size) override;
+	void Serialize(Serializer& ser) const override;
+	void Deserialize(Deserializer& deser) override;
 	void* GetDmaPtr(u32& size) override;
 	std::string GetGameId() override;
 
@@ -83,7 +87,7 @@ public:
 	NaomiCartException(const std::string& reason) : FlycastException(reason) {}
 };
 
-void naomi_cart_LoadRom(const char* file);
+void naomi_cart_LoadRom(const char* file, LoadProgress *progress);
 void naomi_cart_Close();
 int naomi_cart_GetPlatform(const char *path);
 void naomi_cart_LoadBios(const char *filename);

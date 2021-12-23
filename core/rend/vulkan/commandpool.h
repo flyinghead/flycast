@@ -57,7 +57,7 @@ public:
 	void EndFrame()
 	{
 		std::vector<vk::CommandBuffer> commandBuffers = vk::uniqueToRaw(inFlightBuffers[index]);
-		VulkanContext::Instance()->SubmitCommandBuffers(commandBuffers.size(), commandBuffers.data(), *fences[index]);
+		VulkanContext::Instance()->SubmitCommandBuffers((u32)commandBuffers.size(), commandBuffers.data(), *fences[index]);
 	}
 
 	void BeginFrame()

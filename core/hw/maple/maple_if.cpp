@@ -5,6 +5,8 @@
 #include "hw/holly/sb.h"
 #include "hw/sh4/sh4_mem.h"
 #include "hw/sh4/sh4_sched.h"
+#include "network/ggpo.h"
+#include "input/gamepad_device.h"
 
 enum MaplePattern
 {
@@ -36,6 +38,8 @@ static void maple_handle_reconnect();
 //ddt/etc are just hacked for wince to work
 //now with proper maple delayed DMA maybe its time to look into it ?
 bool maple_ddt_pending_reset;
+// pending DMA xfers
+std::vector<std::pair<u32, std::vector<u32>>> mapleDmaOut;
 
 void maple_vblank()
 {
@@ -146,6 +150,8 @@ static void maple_DoDma()
 	}
 #endif
 
+	ggpo::getInput(mapleInputState);
+
 	const bool swap_msb = (SB_MMSEL == 0);
 	u32 xfer_count=0;
 	bool last = false;
@@ -171,6 +177,7 @@ static void maple_DoDma()
 			{
 				asic_RaiseInterrupt(holly_MAPLE_OVERRUN);
 				SB_MDST = 0;
+				mapleDmaOut.clear();
 				return;
 			}
 #else
@@ -181,13 +188,12 @@ static void maple_DoDma()
 				header_2|=(3<<26);
 			}
 #endif
-			u32* p_out=(u32*)GetMemPtr(header_2,4);
-
-			u32* p_data =(u32*) GetMemPtr(addr + 8,(plen)*sizeof(u32));
-			if (p_data == NULL)
+			u32* p_data = (u32 *)GetMemPtr(addr + 8, plen * sizeof(u32));
+			if (p_data == nullptr)
 			{
 				INFO_LOG(MAPLE, "MAPLE ERROR : INVALID SB_MDSTAR value 0x%X", addr);
-				SB_MDST=0;
+				SB_MDST = 0;
+				mapleDmaOut.clear();
 				return;
 			}
 			const u32 frame_header = swap_msb ? SWAP32(p_data[0]) : p_data[0];
@@ -209,37 +215,33 @@ static void maple_DoDma()
 				if (swap_msb)
 				{
 					static u32 maple_in_buf[1024 / 4];
-					static u32 maple_out_buf[1024 / 4];
 					maple_in_buf[0] = frame_header;
 					for (u32 i = 1; i < inlen; i++)
 						maple_in_buf[i] = SWAP32(p_data[i]);
 					p_data = maple_in_buf;
-					p_out = maple_out_buf;
 				}
-				u32 outlen = MapleDevices[bus][port]->RawDma(&p_data[0], inlen * 4 + 4, &p_out[0]);
+				u32 outbuf[1024 / 4];
+				u32 outlen = MapleDevices[bus][port]->RawDma(&p_data[0], inlen * 4 + 4, outbuf);
 				xfer_count += outlen;
 #ifdef STRICT_MODE
 				if (!check_mdapro(header_2 + outlen - 1))
 				{
-					// TODO: This isn't correct (with SB_MMSEL=1) since the interrupt
-					// should be raised before the memory is written to
 					asic_RaiseInterrupt(holly_MAPLE_OVERRUN);
 					SB_MDST = 0;
+					mapleDmaOut.clear();
 					return;
 				}
 #endif
 				if (swap_msb)
-				{
-					u32 *final_out = (u32 *)GetMemPtr(header_2, outlen);
 					for (u32 i = 0; i < outlen / 4; i++)
-						final_out[i] = SWAP32(p_out[i]);
-				}
+						outbuf[i] = SWAP32(outbuf[i]);
+				mapleDmaOut.emplace_back(header_2, std::vector<u32>(outbuf, outbuf + outlen / 4));
 			}
 			else
 			{
 				if (port != 5 && command != 1)
 					INFO_LOG(MAPLE, "MAPLE: Unknown device bus %d port %d cmd %d reci %d", bus, port, command, reci);
-				p_out[0]=0xFFFFFFFF;
+				mapleDmaOut.emplace_back(header_2, std::vector<u32>(1, 0xFFFFFFFF));
 			}
 
 			//goto next command
@@ -274,23 +276,30 @@ static void maple_DoDma()
 		}
 	}
 
-	//printf("Maple XFER size %d bytes - %.2f ms\n",xfer_count,xfer_count*100.0f/(2*1024*1024/8));
+	//printf("Maple XFER size %d bytes - %.2f ms\n", xfer_count, xfer_count * 1000.0f / (2 * 1024 * 1024 / 8));
 	if (!occupy)
 		sh4_sched_request(maple_schid, std::min((u64)xfer_count * (SH4_MAIN_CLOCK / (2 * 1024 * 1024 / 8)), (u64)SH4_MAIN_CLOCK));
 }
 
 static int maple_schd(int tag, int c, int j)
 {
-	if (SB_MDEN&1)
+	if (SB_MDEN & 1)
 	{
-		SB_MDST=0;
+		for (const auto& pair : mapleDmaOut)
+		{
+			size_t size = pair.second.size() * sizeof(u32);
+			u32 *p = (u32 *)GetMemPtr(pair.first, size);
+			memcpy(p, pair.second.data(), size);
+		}
+		SB_MDST = 0;
 		asic_RaiseInterrupt(holly_MAPLE_DMA);
 	}
 	else
 	{
 		INFO_LOG(MAPLE, "WARNING: MAPLE DMA ABORT");
-		SB_MDST=0; //I really wonder what this means, can the DMA be continued ?
+		SB_MDST = 0; //I really wonder what this means, can the DMA be continued ?
 	}
+	mapleDmaOut.clear();
 
 	return 0;
 }
@@ -329,7 +338,9 @@ void maple_Reset(bool hard)
 
 void maple_Term()
 {
-	
+	mcfg_DestroyDevices();
+	sh4_sched_unregister(maple_schid);
+	maple_schid = -1;
 }
 
 static u64 reconnect_time;

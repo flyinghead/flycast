@@ -322,4 +322,9 @@ void tmu_reset(bool hard)
 
 void tmu_term()
 {
+	for (int& sched_id : tmu_sched)
+	{
+		sh4_sched_unregister(sched_id);
+		sched_id = -1;
+	}
 }

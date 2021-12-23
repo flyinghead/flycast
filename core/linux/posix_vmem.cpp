@@ -39,7 +39,7 @@ int ashmem_create_region(const char *name, size_t size)
 
 	if (fd < 0)
 	{
-		fd = open("/dev/ashmem", O_RDWR);
+		fd = open("/" ASHMEM_NAME_DEF, O_RDWR);
 		if (fd >= 0 && ioctl(fd, ASHMEM_SET_SIZE, size) < 0)
 		{
 			close(fd);
@@ -313,6 +313,9 @@ bool vmem_platform_prepare_jit_block(void *code_area, unsigned size, void **code
 	return (ptr_rw != MAP_FAILED);
 }
 #endif // !__SWITCH__
+
+void vmem_platform_jit_set_exec(void* code, size_t size, bool enable) {
+}
 
 // Some OSes restrict cache flushing, cause why not right? :D
 

@@ -31,7 +31,7 @@
 
 namespace debugger {
 
-static void emuEventCallback(Event event);
+static void emuEventCallback(Event event, void *);
 
 class GdbServer
 {
@@ -73,6 +73,8 @@ public:
 
 	void term()
 	{
+		EventManager::unlisten(Event::Resume, emuEventCallback);
+		EventManager::unlisten(Event::Terminate, emuEventCallback);
 		stop();
 		if (VALID(clientSocket))
 		{
@@ -863,7 +865,7 @@ void subroutineReturn()
 	gdbServer.agent.subroutineReturn();
 }
 
-static void emuEventCallback(Event event)
+static void emuEventCallback(Event event, void *)
 {
 	switch (event)
 	{

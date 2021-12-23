@@ -20,6 +20,7 @@
 #import "FlycastViewController.h"
 #import <Network/Network.h>
 #import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
+#import <AVFoundation/AVFoundation.h>
 
 #import <OpenGLES/ES3/gl.h>
 #import <OpenGLES/ES3/glext.h>
@@ -40,7 +41,7 @@
 #include "ios_mouse.h"
 
 //@import AltKit;
-#import "AltKit/AltKit-Swift.h"
+#import "AltKit-Swift.h"
 
 std::string iosJitStatus;
 static bool iosJitAuthorized;
@@ -53,7 +54,7 @@ std::map<GCMouse *, std::shared_ptr<IOSMouse>> IOSMouse::mice;
 void common_linux_setup();
 
 static bool lockedPointer;
-static void updatePointerLock(Event event)
+static void updatePointerLock(Event event, void *)
 {
     if (@available(iOS 14.0, *)) {
         bool hasChanged = NO;
@@ -77,6 +78,70 @@ static void updatePointerLock(Event event)
     }
 }
 
+static bool recordingAVSession;
+static void updateAudioSession(Event event, void *)
+{
+	if (event == Event::Resume)
+	{
+		AVAudioSession *session = [AVAudioSession sharedInstance];
+		NSError *error = nil;
+		bool hasMicrophone = false;
+		for (int bus = 0; bus < 4 && !hasMicrophone; bus++)
+		{
+			switch (config::MapleMainDevices[bus])
+			{
+				case MDT_SegaController:
+					for (int port = 0; port < 2; port++)
+						if (config::MapleExpansionDevices[bus][port] == MDT_Microphone)
+							hasMicrophone = true;
+					break;
+				case MDT_LightGun:
+				case MDT_AsciiStick:
+				case MDT_TwinStick:
+					if (config::MapleExpansionDevices[bus][0] == MDT_Microphone)
+						hasMicrophone = true;
+					break;
+				default:
+					break;
+			}
+		}
+		bool configChanged = false;
+		if (recordingAVSession && !hasMicrophone)
+		{
+			recordingAVSession = false;
+			configChanged = true;
+			// Allow playback only
+			[session setCategory:AVAudioSessionCategoryAmbient
+					 withOptions:AVAudioSessionCategoryOptionMixWithOthers | AVAudioSessionCategoryOptionDefaultToSpeaker
+				| AVAudioSessionCategoryOptionAllowBluetooth | AVAudioSessionCategoryOptionAllowBluetoothA2DP
+				| AVAudioSessionCategoryOptionAllowAirPlay
+						   error:&error];
+			NSLog(@"AVAudioSession set to Playback only");
+		}
+		else if (!recordingAVSession && hasMicrophone)
+		{
+			// TODO delay until actual recording starts?
+			recordingAVSession = true;
+			configChanged = true;
+			// Allow audio playing AND recording
+			[session setCategory:AVAudioSessionCategoryPlayAndRecord
+					 withOptions:AVAudioSessionCategoryOptionMixWithOthers | AVAudioSessionCategoryOptionDefaultToSpeaker
+				| AVAudioSessionCategoryOptionAllowBluetooth | AVAudioSessionCategoryOptionAllowBluetoothA2DP
+				| AVAudioSessionCategoryOptionAllowAirPlay
+						   error:&error];
+			NSLog(@"AVAudioSession set to Play and Record");
+		}
+		if (configChanged)
+		{
+			if (error != nil)
+				NSLog(@"AVAudioSession.setCategory:  %@", error);
+			[session setActive:YES error:&error];
+			if (error != nil)
+				NSLog(@"AVAudioSession.setActive:  %@", error);
+		}
+	}
+}
+
 @interface FlycastViewController () <UIDocumentPickerDelegate>
 
 @property (strong, nonatomic) EAGLContext *context;
@@ -95,7 +160,6 @@ static void updatePointerLock(Event event)
 
 @end
 
-extern int screen_width,screen_height;
 extern int screen_dpi;
 
 @implementation FlycastViewController
@@ -226,19 +290,19 @@ extern int screen_dpi;
     self.iCadeReader.delegate = self;
     self.iCadeReader.active = YES;
 	// TODO iCade handlers
-	
-	screen_width = roundf([[UIScreen mainScreen] nativeBounds].size.width);
-    screen_height = roundf([[UIScreen mainScreen] nativeBounds].size.height);
-	if (screen_width < screen_height)
-		std::swap(screen_width, screen_height);
+	EventManager::listen(Event::Resume, updateAudioSession);
+
+	settings.display.width = roundf([[UIScreen mainScreen] nativeBounds].size.width);
+    settings.display.height = roundf([[UIScreen mainScreen] nativeBounds].size.height);
+	if (settings.display.width < settings.display.height)
+		std::swap(settings.display.width, settings.display.height);
 	float scale = 1;
 	if ([[UIScreen mainScreen] respondsToSelector:@selector(scale)]) {
 	  scale = [[UIScreen mainScreen] scale];
 	}
 	screen_dpi = roundf(160 * scale);
-	InitRenderApi();
+	initRenderApi();
 	mainui_init();
-	mainui_enabled = true;
 
 	[self altKitStart];
 }
@@ -265,6 +329,10 @@ extern int screen_dpi;
 
 - (void)dealloc
 {
+	EventManager::unlisten(Event::Resume, updatePointerLock);
+	EventManager::unlisten(Event::Pause, updatePointerLock);
+	EventManager::unlisten(Event::Terminate, updatePointerLock);
+	EventManager::unlisten(Event::Resume, updateAudioSession);
     if ([EAGLContext currentContext] == self.context) {
         [EAGLContext setCurrentContext:nil];
     }
@@ -341,9 +409,9 @@ extern int screen_dpi;
 - (void)glkView:(GLKView *)view drawInRect:(CGRect)rect
 {
 #if !TARGET_OS_TV
-	if (dc_is_running() != [self.padController isControllerVisible] && !IOSGamepad::controllerConnected())
+	if (emu.running() != [self.padController isControllerVisible] && !IOSGamepad::controllerConnected())
 	{
-		if (dc_is_running())
+		if (emu.running())
 			[self.padController showController:self.view];
 		else
 			[self.padController hideController];

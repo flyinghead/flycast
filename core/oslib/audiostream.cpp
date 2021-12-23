@@ -92,14 +92,7 @@ void WriteSample(s16 r, s16 l)
 
 void InitAudio()
 {
-	if (cfgLoadInt("audio", "disable", 0)) {
-		INFO_LOG(AUDIO, "WARNING: Audio disabled in config!");
-		return;
-	}
-
-	cfgSaveInt("audio", "disable", 0);
-
-	verify(audiobackend_current == nullptr);
+	TermAudio();
 
 	SortAudioBackends();
 

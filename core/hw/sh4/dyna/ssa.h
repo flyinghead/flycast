@@ -329,7 +329,7 @@ private:
 		std::set<RegValue> uses;
 
 		memset(last_versions, -1, sizeof(last_versions));
-		for (int opnum = block->oplist.size() - 1; opnum >= 0; opnum--)
+		for (int opnum = (int)block->oplist.size() - 1; opnum >= 0; opnum--)
 		{
 			shil_opcode& op = block->oplist[opnum];
 			bool dead_code = false;

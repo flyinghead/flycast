@@ -27,6 +27,7 @@ using namespace Xbyak::util;
 
 #include "arm7_rec.h"
 #include "oslib/oslib.h"
+#include "hw/mem/_vmem.h"
 
 namespace aicaarm {
 
@@ -995,15 +996,27 @@ void X64ArmRegAlloc::StoreReg(int host_reg, Arm7Reg armreg)
 
 void arm7backend_compile(const std::vector<ArmOp>& block_ops, u32 cycles)
 {
+	void* protStart = recompiler::currentCode();
+	size_t protSize = recompiler::spaceLeft();
+	vmem_platform_jit_set_exec(protStart, protSize, false);
+
 	Arm7Compiler assembler;
 	assembler.compile(block_ops, cycles);
+
+	vmem_platform_jit_set_exec(protStart, protSize, true);
 }
 
 void arm7backend_flush()
 {
+	void* protStart = recompiler::currentCode();
+	size_t protSize = recompiler::spaceLeft();
+	vmem_platform_jit_set_exec(protStart, protSize, false);
 	unwinder.clear();
+
 	Arm7Compiler assembler;
 	assembler.generateMainLoop();
+
+	vmem_platform_jit_set_exec(protStart, protSize, true);
 }
 
 }

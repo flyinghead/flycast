@@ -1,5 +1,8 @@
 #pragma once
 #include "types.h"
+#if defined(__SWITCH__)
+#include <malloc.h>
+#endif
 
 void os_SetWindowText(const char* text);
 double os_GetSeconds();
@@ -40,7 +43,7 @@ namespace hostfs
 	std::string getTextureLoadPath(const std::string& gameId);
 	std::string getTextureDumpPath();
 
-	std::string getVulkanCachePath();
+	std::string getShaderCachePath(const std::string& filename);
 
 	std::string getBiosFontPath();
 }
@@ -105,3 +108,29 @@ inline size_t UnwindInfo::end(u32 offset, ptrdiff_t rwRxOffset) {
 inline void UnwindInfo::clear() {
 }
 #endif
+
+
+static inline void *allocAligned(size_t alignment, size_t size)
+{
+#ifdef _WIN32
+	return _aligned_malloc(size, alignment);
+#elif defined(__SWITCH__)
+   return memalign(alignment, size);
+#else
+	void *data;
+	if (posix_memalign(&data, alignment, size) != 0)
+		return nullptr;
+	else
+		return data;
+#endif
+}
+
+static inline void freeAligned(void *p)
+{
+#ifdef _WIN32
+	_aligned_free(p);
+#else
+	free(p);
+#endif
+}
+

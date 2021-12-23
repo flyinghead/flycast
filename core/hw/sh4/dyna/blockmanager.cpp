@@ -260,41 +260,41 @@ void bm_Reset()
 	}
 }
 
-static void bm_LockPage(u32 addr)
+void bm_LockPage(u32 addr, u32 size)
 {
 	addr = addr & (RAM_MASK - PAGE_MASK);
 	if (_nvmem_enabled())
 	{
-		mem_region_lock(virt_ram_base + 0x0C000000 + addr, PAGE_SIZE);
+		mem_region_lock(virt_ram_base + 0x0C000000 + addr, size);
 		if (_nvmem_4gb_space())
 		{
-			mem_region_lock(virt_ram_base + 0x8C000000 + addr, PAGE_SIZE);
-			mem_region_lock(virt_ram_base + 0xAC000000 + addr, PAGE_SIZE);
+			mem_region_lock(virt_ram_base + 0x8C000000 + addr, size);
+			mem_region_lock(virt_ram_base + 0xAC000000 + addr, size);
 			// TODO wraps
 		}
 	}
 	else
 	{
-		mem_region_lock(&mem_b[addr], PAGE_SIZE);
+		mem_region_lock(&mem_b[addr], size);
 	}
 }
 
-static void bm_UnlockPage(u32 addr)
+void bm_UnlockPage(u32 addr, u32 size)
 {
 	addr = addr & (RAM_MASK - PAGE_MASK);
 	if (_nvmem_enabled())
 	{
-		mem_region_unlock(virt_ram_base + 0x0C000000 + addr, PAGE_SIZE);
+		mem_region_unlock(virt_ram_base + 0x0C000000 + addr, size);
 		if (_nvmem_4gb_space())
 		{
-			mem_region_unlock(virt_ram_base + 0x8C000000 + addr, PAGE_SIZE);
-			mem_region_unlock(virt_ram_base + 0xAC000000 + addr, PAGE_SIZE);
+			mem_region_unlock(virt_ram_base + 0x8C000000 + addr, size);
+			mem_region_unlock(virt_ram_base + 0xAC000000 + addr, size);
 			// TODO wraps
 		}
 	}
 	else
 	{
-		mem_region_unlock(&mem_b[addr], PAGE_SIZE);
+		mem_region_unlock(&mem_b[addr], size);
 	}
 }
 
@@ -557,6 +557,10 @@ void RuntimeBlockInfo::Discard()
 
 void RuntimeBlockInfo::SetProtectedFlags()
 {
+#ifdef TARGET_NO_EXCEPTIONS
+	this->read_only = false;
+	return;
+#endif
 	// Don't write protect rom and BIOS/IP.BIN (Grandia II)
 	if (!IsOnRam(addr) || (addr & 0x1FFF0000) == 0x0c000000)
 	{
@@ -589,49 +593,60 @@ void bm_RamWriteAccess(u32 addr)
 	addr &= RAM_MASK;
 	if (unprotected_pages[addr / PAGE_SIZE])
 	{
-		ERROR_LOG(DYNAREC, "Page %08x already unprotected", addr);
-		die("Fatal error");
+		//ERROR_LOG(DYNAREC, "Page %08x already unprotected", addr);
+		//die("Fatal error");
+		return;
 	}
 	unprotected_pages[addr / PAGE_SIZE] = true;
 	bm_UnlockPage(addr);
 	std::set<RuntimeBlockInfo*>& block_list = blocks_per_page[addr / PAGE_SIZE];
-	std::vector<RuntimeBlockInfo*> list_copy;
-	list_copy.insert(list_copy.begin(), block_list.begin(), block_list.end());
-	if (!list_copy.empty())
-		DEBUG_LOG(DYNAREC, "bm_RamWriteAccess write access to %08x pc %08x", addr, next_pc);
-	for (auto& block : list_copy)
+	if (!block_list.empty())
 	{
-		bm_DiscardBlock(block);
+		std::vector<RuntimeBlockInfo*> list_copy;
+		list_copy.insert(list_copy.begin(), block_list.begin(), block_list.end());
+		if (!list_copy.empty())
+			DEBUG_LOG(DYNAREC, "bm_RamWriteAccess write access to %08x pc %08x", addr, next_pc);
+		for (auto& block : list_copy)
+		{
+			bm_DiscardBlock(block);
+		}
+		verify(block_list.empty());
 	}
-	verify(block_list.empty());
 }
 
-bool bm_RamWriteAccess(void *p)
+u32 bm_getRamOffset(void *p)
 {
 	if (_nvmem_enabled())
 	{
 		if (_nvmem_4gb_space())
 		{
 			if ((u8 *)p < virt_ram_base || (u8 *)p >= virt_ram_base + 0x100000000L)
-				return false;
+				return -1;
 		}
 		else
 		{
 			if ((u8 *)p < virt_ram_base || (u8 *)p >= virt_ram_base + 0x20000000)
-				return false;
+				return -1;
 		}
 		u32 addr = (u8*)p - virt_ram_base;
 		if (!IsOnRam(addr) || ((addr >> 29) > 0 && (addr >> 29) < 4))	// system RAM is not mapped to 20, 40 and 60 because of laziness
-			return false;
-		bm_RamWriteAccess(addr);
+			return -1;
+		return addr & RAM_MASK;
 	}
 	else
 	{
 		if ((u8 *)p < &mem_b[0] || (u8 *)p >= &mem_b[RAM_SIZE])
-			return false;
-		bm_RamWriteAccess((u32)((u8 *)p - &mem_b[0]));
+			return -1;
+		return (u32)((u8 *)p - &mem_b[0]);
 	}
+}
 
+bool bm_RamWriteAccess(void *p)
+{
+	u32 offset = bm_getRamOffset(p);
+	if (offset == (u32)-1)
+		return false;
+	bm_RamWriteAccess(offset);
 	return true;
 }
 

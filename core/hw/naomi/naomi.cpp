@@ -15,6 +15,7 @@
 #include "naomi_regs.h"
 #include "naomi_m3comm.h"
 #include "network/naomi_network.h"
+#include "serialize.h"
 
 //#define NAOMI_COMM
 
@@ -652,62 +653,73 @@ void libExtDevice_WriteMem_A0_006(u32 addr,u32 data,u32 size) {
 	INFO_LOG(NAOMI, "Unhandled write @ %x (%d): %x", addr, size, data);
 }
 
-void naomi_Serialize(void **data, unsigned int *total_size)
+void naomi_Serialize(Serializer& ser)
 {
-	REICAST_S(GSerialBuffer);
-	REICAST_S(BSerialBuffer);
-	REICAST_S(GBufPos);
-	REICAST_S(BBufPos);
-	REICAST_S(GState);
-	REICAST_S(BState);
-	REICAST_S(GOldClk);
-	REICAST_S(BOldClk);
-	REICAST_S(BControl);
-	REICAST_S(BCmd);
-	REICAST_S(BLastCmd);
-	REICAST_S(GControl);
-	REICAST_S(GCmd);
-	REICAST_S(GLastCmd);
-	REICAST_S(SerStep);
-	REICAST_S(SerStep2);
-	REICAST_SA(BSerial,69);
-	REICAST_SA(GSerial,69);
-	REICAST_S(reg_dimm_command);
-	REICAST_S(reg_dimm_offsetl);
-	REICAST_S(reg_dimm_parameterl);
-	REICAST_S(reg_dimm_parameterh);
-	REICAST_S(reg_dimm_status);
-	REICAST_S(aw_maple_devs);
+	ser << GSerialBuffer;
+	ser << BSerialBuffer;
+	ser << GBufPos;
+	ser << BBufPos;
+	ser << GState;
+	ser << BState;
+	ser << GOldClk;
+	ser << BOldClk;
+	ser << BControl;
+	ser << BCmd;
+	ser << BLastCmd;
+	ser << GControl;
+	ser << GCmd;
+	ser << GLastCmd;
+	ser << SerStep;
+	ser << SerStep2;
+	ser.serialize(BSerial, 69);
+	ser.serialize(GSerial, 69);
+	ser << reg_dimm_command;
+	ser << reg_dimm_offsetl;
+	ser << reg_dimm_parameterl;
+	ser << reg_dimm_parameterh;
+	ser << reg_dimm_status;
+	ser << aw_maple_devs;
+	ser << coin_chute_time;
+	ser << aw_ram_test_skipped;
+	// TODO serialize m3comm?
 }
-
-void naomi_Unserialize(void **data, unsigned int *total_size, serialize_version_enum version)
+void naomi_Deserialize(Deserializer& deser)
 {
-	REICAST_US(GSerialBuffer);
-	REICAST_US(BSerialBuffer);
-	REICAST_US(GBufPos);
-	REICAST_US(BBufPos);
-	REICAST_US(GState);
-	REICAST_US(BState);
-	REICAST_US(GOldClk);
-	REICAST_US(BOldClk);
-	REICAST_US(BControl);
-	REICAST_US(BCmd);
-	REICAST_US(BLastCmd);
-	REICAST_US(GControl);
-	REICAST_US(GCmd);
-	REICAST_US(GLastCmd);
-	REICAST_US(SerStep);
-	REICAST_US(SerStep2);
-	REICAST_USA(BSerial,69);
-	REICAST_USA(GSerial,69);
-	REICAST_US(reg_dimm_command);
-	REICAST_US(reg_dimm_offsetl);
-	REICAST_US(reg_dimm_parameterl);
-	REICAST_US(reg_dimm_parameterh);
-	REICAST_US(reg_dimm_status);
-	if (version < V11)
-		REICAST_SKIP(1); // NaomiDataRead
-	else if (version >= V14)
-		REICAST_US(aw_maple_devs);
-
+	if (deser.version() < Deserializer::V9_LIBRETRO)
+	{
+		deser.skip<u32>();		// naomi_updates
+		deser.skip<u32>();		// BoardID
+	}
+	deser >> GSerialBuffer;
+	deser >> BSerialBuffer;
+	deser >> GBufPos;
+	deser >> BBufPos;
+	deser >> GState;
+	deser >> BState;
+	deser >> GOldClk;
+	deser >> BOldClk;
+	deser >> BControl;
+	deser >> BCmd;
+	deser >> BLastCmd;
+	deser >> GControl;
+	deser >> GCmd;
+	deser >> GLastCmd;
+	deser >> SerStep;
+	deser >> SerStep2;
+	deser.deserialize(BSerial, 69);
+	deser.deserialize(GSerial, 69);
+	deser >> reg_dimm_command;
+	deser >> reg_dimm_offsetl;
+	deser >> reg_dimm_parameterl;
+	deser >> reg_dimm_parameterh;
+	deser >> reg_dimm_status;
+	if (deser.version() < Deserializer::V11)
+		deser.skip<u8>();
+	else if (deser.version() >= Deserializer::V14)
+		deser >> aw_maple_devs;
+	if (deser.version() >= Deserializer::V20)
+	{
+		deser >> coin_chute_time;
+		deser >> aw_ram_test_skipped;
+	}
 }

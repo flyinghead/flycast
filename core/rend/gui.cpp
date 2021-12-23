@@ -25,11 +25,12 @@
 #include "hw/maple/maple_devs.h"
 #include "hw/naomi/naomi_cart.h"
 #include "imgui/imgui.h"
-#include "gles/imgui_impl_opengl3.h"
 #include "imgui/roboto_medium.h"
-#include "network/naomi_network.h"
+#include "network/net_handshake.h"
+#include "network/ggpo.h"
 #include "wsi/context.h"
 #include "input/gamepad_device.h"
+#include "input/mouse.h"
 #include "gui_util.h"
 #include "gui_android.h"
 #include "game_scanner.h"
@@ -40,14 +41,15 @@
 #include "log/LogManager.h"
 #include "emulator.h"
 #include "rend/mainui.h"
+#include "lua/lua.h"
+#include "gui_chat.h"
+#include "imgui_driver.h"
 
 static bool game_started;
 
-extern u8 kb_shift[MAPLE_PORTS]; // shift keys pressed (bitmask)
-extern u8 kb_key[MAPLE_PORTS][6];		// normal keys pressed
-
 int screen_dpi = 96;
 int insetLeft, insetRight, insetTop, insetBottom;
+std::unique_ptr<ImGuiDriver> imguiDriver;
 
 static bool inited = false;
 float scaling = 1;
@@ -57,19 +59,22 @@ static u32 mouseButtons;
 static int mouseX, mouseY;
 static float mouseWheel;
 static std::string error_msg;
+static bool error_msg_shown;
 static std::string osd_message;
 static double osd_message_end;
 static std::mutex osd_message_mutex;
+static void (*showOnScreenKeyboard)(bool show);
+static bool keysUpNextFrame[512];
 
 static int map_system = 0;
-static void display_vmus();
 static void reset_vmus();
-static void term_vmus();
-static void displayCrosshairs();
+void error_popup();
 
-GameScanner scanner;
+static GameScanner scanner;
+static BackgroundGameLoader gameLoader;
+static Chat chat;
 
-static void emuEventCallback(Event event)
+static void emuEventCallback(Event event, void *)
 {
 	switch (event)
 	{
@@ -77,15 +82,8 @@ static void emuEventCallback(Event event)
 		game_started = true;
 		break;
 	case Event::Start:
-		GamepadDevice::load_system_mappings();
-		if (settings.platform.system == DC_PLATFORM_NAOMI)
-			SetNaomiNetworkConfig(-1);
-		if (config::AutoLoadState && settings.imgread.ImagePath[0] != '\0')
-			dc_loadstate(config::SavestateSlot);
-		break;
 	case Event::Terminate:
-		if (config::AutoSaveState && settings.imgread.ImagePath[0] != '\0')
-			dc_savestate(config::SavestateSlot);
+		GamepadDevice::load_system_mappings();
 		break;
 	default:
 		break;
@@ -141,10 +139,6 @@ void gui_init()
     ImGui::GetStyle().TouchExtraPadding = ImVec2(1, 1);	// from 0,0
 #endif
 
-    // Setup Platform/Renderer bindings
-    if (config::RendererType.isOpenGL())
-    	ImGui_ImplOpenGL3_Init();
-
     // Load Fonts
     // - If no fonts are loaded, dear imgui will use the default font. You can also load multiple fonts and use ImGui::PushFont()/PopFont() to select them.
     // - AddFontFromFileTTF() will return the ImFont* so you can store it if you need to select the font among multiple.
@@ -159,8 +153,11 @@ void gui_init()
     //io.Fonts->AddFontFromFileTTF("../../misc/fonts/ProggyTiny.ttf", 10.0f);
     //ImFont* font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f, NULL, io.Fonts->GetGlyphRangesJapanese());
     //IM_ASSERT(font != NULL);
-#if !(defined(_WIN32) || defined(__APPLE__) || defined(__SWITCH__)) || defined(TARGET_IPHONE)
+#if !defined(_WIN32) && !defined(__SWITCH__)
     scaling = std::max(1.f, screen_dpi / 100.f * 0.75f);
+   	// Limit scaling on small low-res screens
+    if (settings.display.width <= 640 || settings.display.height <= 480)
+    	scaling = std::min(1.4f, scaling);
 #endif
     if (scaling > 1)
 		ImGui::GetStyle().ScaleAllSizes(scaling);
@@ -256,11 +253,12 @@ void gui_init()
 
     // TODO Linux, iOS, ...
 #endif
-    INFO_LOG(RENDERER, "Screen DPI is %d, size %d x %d. Scaling by %.2f", screen_dpi, screen_width, screen_height, scaling);
+    NOTICE_LOG(RENDERER, "Screen DPI is %d, size %d x %d. Scaling by %.2f", screen_dpi, settings.display.width, settings.display.height, scaling);
 
     EventManager::listen(Event::Resume, emuEventCallback);
     EventManager::listen(Event::Start, emuEventCallback);
-    EventManager::listen(Event::Terminate, emuEventCallback);
+	EventManager::listen(Event::Terminate, emuEventCallback);
+    ggpo::receiveChatMessages([](int playerNum, const std::string& msg) { chat.receive(playerNum, msg); });
 }
 
 void gui_keyboard_input(u16 wc)
@@ -277,10 +275,37 @@ void gui_keyboard_inputUTF8(const std::string& s)
 		io.AddInputCharactersUTF8(s.c_str());
 }
 
+void gui_keyboard_key(u8 keyCode, bool pressed, u8 modifiers)
+{
+	if (!inited)
+		return;
+	ImGuiIO& io = ImGui::GetIO();
+	if (!pressed && io.KeysDown[keyCode])
+	{
+		keysUpNextFrame[keyCode] = true;
+		return;
+	}
+	io.KeyCtrl = (modifiers & (0x01 | 0x10)) != 0;
+	io.KeyShift = (modifiers & (0x02 | 0x20)) != 0;
+	io.KeysDown[keyCode] = pressed;
+}
+
+bool gui_keyboard_captured()
+{
+	ImGuiIO& io = ImGui::GetIO();
+	return io.WantCaptureKeyboard;
+}
+
+bool gui_mouse_captured()
+{
+	ImGuiIO& io = ImGui::GetIO();
+	return io.WantCaptureMouse;
+}
+
 void gui_set_mouse_position(int x, int y)
 {
-	mouseX = x;
-	mouseY = y;
+	mouseX = std::round(x * settings.display.pointScale);
+	mouseY = std::round(y * settings.display.pointScale);
 }
 
 void gui_set_mouse_button(int button, bool pressed)
@@ -296,35 +321,15 @@ void gui_set_mouse_wheel(float delta)
 	mouseWheel += delta;
 }
 
-static void ImGui_Impl_NewFrame()
+static void gui_newFrame()
 {
-	if (config::RendererType.isOpenGL())
-		ImGui_ImplOpenGL3_NewFrame();
-#ifdef _WIN32
-	else if (config::RendererType.isDirectX())
-		ImGui_ImplDX9_NewFrame();
-#endif
-	ImGui::GetIO().DisplaySize.x = screen_width;
-	ImGui::GetIO().DisplaySize.y = screen_height;
+	imguiDriver->newFrame();
+	ImGui::GetIO().DisplaySize.x = settings.display.width;
+	ImGui::GetIO().DisplaySize.y = settings.display.height;
 
 	ImGuiIO& io = ImGui::GetIO();
 
-	// Read keyboard modifiers inputs
-	io.KeyCtrl = 0;
-	io.KeyShift = 0;
-	io.KeyAlt = false;
-	io.KeySuper = false;
-	memset(&io.KeysDown[0], 0, sizeof(io.KeysDown));
-	for (int port = 0; port < 4; port++)
-	{
-		io.KeyCtrl |= (kb_shift[port] & (0x01 | 0x10)) != 0;
-		io.KeyShift |= (kb_shift[port] & (0x02 | 0x20)) != 0;
-
-		for (int i = 0; i < IM_ARRAYSIZE(kb_key[0]); i++)
-			if (kb_key[port][i] != 0)
-				io.KeysDown[kb_key[port][i]] = true;
-	}
-	if (mouseX < 0 || mouseX >= screen_width || mouseY < 0 || mouseY >= screen_height)
+	if (mouseX < 0 || mouseX >= settings.display.width || mouseY < 0 || mouseY >= settings.display.height)
 		io.MousePos = ImVec2(-FLT_MAX, -FLT_MAX);
 	else
 		io.MousePos = ImVec2(mouseX, mouseY);
@@ -369,6 +374,30 @@ static void ImGui_Impl_NewFrame()
 		io.NavInputs[ImGuiNavInput_LStickDown] = 0.f;
 
 	ImGui::GetStyle().Colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.06f, 0.06f, 0.06f, 0.94f);
+
+	if (showOnScreenKeyboard != nullptr)
+		showOnScreenKeyboard(io.WantTextInput);
+}
+
+static void delayedKeysUp()
+{
+	ImGuiIO& io = ImGui::GetIO();
+	for (u32 i = 0; i < ARRAY_SIZE(keysUpNextFrame); i++)
+		if (keysUpNextFrame[i])
+			io.KeysDown[i] = false;
+	memset(keysUpNextFrame, 0, sizeof(keysUpNextFrame));
+}
+
+static void gui_endFrame()
+{
+    ImGui::Render();
+    imguiDriver->renderDrawData(ImGui::GetDrawData());
+    delayedKeysUp();
+}
+
+void gui_setOnScreenKeyboardCallback(void (*callback)(bool show))
+{
+	showOnScreenKeyboard = callback;
 }
 
 void gui_set_insets(int left, int right, int top, int bottom)
@@ -399,8 +428,14 @@ void gui_open_settings()
 {
 	if (gui_state == GuiState::Closed)
 	{
-		gui_state = GuiState::Commands;
-		HideOSD();
+		if (!ggpo::active())
+		{
+			gui_state = GuiState::Commands;
+			HideOSD();
+			emu.stop();
+		}
+		else
+			chat.toggle();
 	}
 	else if (gui_state == GuiState::VJoyEdit)
 	{
@@ -408,28 +443,25 @@ void gui_open_settings()
 	}
 	else if (gui_state == GuiState::Loading)
 	{
-		dc_cancel_load();
-		gui_state = GuiState::Main;
+		gameLoader.cancel();
 	}
 	else if (gui_state == GuiState::Commands)
 	{
 		gui_state = GuiState::Closed;
 		GamepadDevice::load_system_mappings();
-		dc_resume();
+		emu.start();
 	}
 }
 
 void gui_start_game(const std::string& path)
 {
-	dc_term_game();
+	emu.unloadGame();
 	reset_vmus();
+    chat.reset();
 
 	scanner.stop();
 	gui_state = GuiState::Loading;
-	static std::string path_copy;
-	path_copy = path;	// path may be a local var
-
-	dc_load_game(path.empty() ? NULL : path_copy.c_str());
+	gameLoader.load(path);
 }
 
 void gui_stop_game(const std::string& message)
@@ -437,16 +469,17 @@ void gui_stop_game(const std::string& message)
 	if (!commandLineStart)
 	{
 		// Exit to main menu
-		dc_term_game();
+		emu.unloadGame();
 		gui_state = GuiState::Main;
 		game_started = false;
-		settings.imgread.ImagePath[0] = '\0';
 		reset_vmus();
 		if (!message.empty())
-			error_msg = "Flycast has stopped.\n\n" + message;
+			gui_error("Flycast has stopped.\n\n" + message);
 	}
 	else
 	{
+		if (!message.empty())
+			ERROR_LOG(COMMON, "Flycast has stopped: %s", message.c_str());
 		// Exit emulator
 		dc_exit();
 	}
@@ -454,27 +487,29 @@ void gui_stop_game(const std::string& message)
 
 static void gui_display_commands()
 {
-	if (dc_is_running())
-		dc_stop();
-
-   	display_vmus();
+   	imguiDriver->displayVmus();
 
     centerNextWindow();
     ImGui::SetNextWindowSize(ImVec2(330 * scaling, 0));
 
     ImGui::Begin("##commands", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize);
 
-	if (settings.imgread.ImagePath[0] == '\0')
+    bool loadSaveStateDisabled = settings.content.path.empty() || settings.network.online;
+	if (loadSaveStateDisabled)
 	{
         ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
         ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
 	}
-	if (ImGui::Button("Load State", ImVec2(110 * scaling, 50 * scaling)))
+
+	// Load State
+	if (ImGui::Button("Load State", ImVec2(110 * scaling, 50 * scaling)) && !loadSaveStateDisabled)
 	{
 		gui_state = GuiState::Closed;
 		dc_loadstate(config::SavestateSlot);
 	}
 	ImGui::SameLine();
+
+	// Slot #
 	std::string slot = "Slot " + std::to_string((int)config::SavestateSlot + 1);
 	if (ImGui::Button(slot.c_str(), ImVec2(80 * scaling - ImGui::GetStyle().FramePadding.x, 50 * scaling)))
 		ImGui::OpenPopup("slot_select_popup");
@@ -489,18 +524,22 @@ static void gui_display_commands()
         ImGui::EndPopup();
     }
 	ImGui::SameLine();
-	if (ImGui::Button("Save State", ImVec2(110 * scaling, 50 * scaling)))
+
+	// Save State
+	if (ImGui::Button("Save State", ImVec2(110 * scaling, 50 * scaling)) && !loadSaveStateDisabled)
 	{
 		gui_state = GuiState::Closed;
 		dc_savestate(config::SavestateSlot);
 	}
-	if (settings.imgread.ImagePath[0] == '\0')
+	if (loadSaveStateDisabled)
 	{
         ImGui::PopItemFlag();
         ImGui::PopStyleVar();
 	}
 
 	ImGui::Columns(2, "buttons", false);
+
+	// Settings
 	if (ImGui::Button("Settings", ImVec2(150 * scaling, 50 * scaling)))
 	{
 		gui_state = GuiState::Settings;
@@ -513,6 +552,8 @@ static void gui_display_commands()
 	}
 
 	ImGui::NextColumn();
+
+	// Insert/Eject Disk
 	const char *disk_label = libGDR_GetDiscType() == Open ? "Insert Disk" : "Eject Disk";
 	if (ImGui::Button(disk_label, ImVec2(150 * scaling, 50 * scaling)))
 	{
@@ -527,11 +568,25 @@ static void gui_display_commands()
 		}
 	}
 	ImGui::NextColumn();
-	if (ImGui::Button("Cheats", ImVec2(150 * scaling, 50 * scaling)))
+
+	// Cheats
+	if (settings.network.online)
+	{
+        ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
+        ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
+	}
+	if (ImGui::Button("Cheats", ImVec2(150 * scaling, 50 * scaling)) && !settings.network.online)
 	{
 		gui_state = GuiState::Cheats;
 	}
+	if (settings.network.online)
+	{
+        ImGui::PopItemFlag();
+        ImGui::PopStyleVar();
+	}
 	ImGui::Columns(1, nullptr, false);
+
+	// Exit
 	if (ImGui::Button("Exit", ImVec2(300 * scaling + ImGui::GetStyle().ColumnsMinSpacing + ImGui::GetStyle().FramePadding.x * 2 - 1,
 			50 * scaling)))
 	{
@@ -539,6 +594,13 @@ static void gui_display_commands()
 	}
 
 	ImGui::End();
+}
+
+inline static void header(const char *title)
+{
+	ImGui::PushStyleVar(ImGuiStyleVar_ButtonTextAlign, ImVec2(0.f, 0.5f)); // Left
+	ImGui::ButtonEx(title, ImVec2(-1, 0), ImGuiButtonFlags_Disabled);
+	ImGui::PopStyleVar();
 }
 
 const char *maple_device_types[] = { "None", "Sega Controller", "Light Gun", "Keyboard", "Mouse", "Twin Stick", "Ascii Stick" };
@@ -605,46 +667,100 @@ static const char *maple_expansion_device_name(MapleDeviceType type)
 }
 
 const char *maple_ports[] = { "None", "A", "B", "C", "D", "All" };
-const DreamcastKey button_keys[] = {
-		DC_BTN_START, DC_BTN_A, DC_BTN_B, DC_BTN_X, DC_BTN_Y, DC_DPAD_UP, DC_DPAD_DOWN, DC_DPAD_LEFT, DC_DPAD_RIGHT,
-		EMU_BTN_MENU, EMU_BTN_ESCAPE, EMU_BTN_FFORWARD, EMU_BTN_TRIGGER_LEFT, EMU_BTN_TRIGGER_RIGHT,
-		DC_BTN_C, DC_BTN_D, DC_BTN_Z, DC_DPAD2_UP, DC_DPAD2_DOWN, DC_DPAD2_LEFT, DC_DPAD2_RIGHT,
-		DC_BTN_RELOAD,
-		EMU_BTN_ANA_UP, EMU_BTN_ANA_DOWN, EMU_BTN_ANA_LEFT, EMU_BTN_ANA_RIGHT
+
+struct Mapping {
+	DreamcastKey key;
+	const char *name;
 };
-const char *button_names[] = {
-		"Start", "A", "B", "X", "Y", "DPad Up", "DPad Down", "DPad Left", "DPad Right",
-		"Menu", "Exit", "Fast-forward", "Left Trigger", "Right Trigger",
-		"C", "D", "Z", "Right Dpad Up", "Right DPad Down", "Right DPad Left", "Right DPad Right",
-		"Reload",
-		"Left Stick Up", "Left Stick Down", "Left Stick Left", "Left Stick Right"
+
+const Mapping dcButtons[] = {
+	{ EMU_BTN_NONE, "Directions" },
+	{ DC_DPAD_UP, "Up" },
+	{ DC_DPAD_DOWN, "Down" },
+	{ DC_DPAD_LEFT, "Left" },
+	{ DC_DPAD_RIGHT, "Right" },
+
+	{ DC_AXIS_UP, "Thumbstick Up" },
+	{ DC_AXIS_DOWN, "Thumbstick Down" },
+	{ DC_AXIS_LEFT, "Thumbstick Left" },
+	{ DC_AXIS_RIGHT, "Thumbstick Right" },
+
+	{ DC_DPAD2_UP, "DPad2 Up" },
+	{ DC_DPAD2_DOWN, "DPad2 Down" },
+	{ DC_DPAD2_LEFT, "DPad2 Left" },
+	{ DC_DPAD2_RIGHT, "DPad2 Right" },
+
+	{ EMU_BTN_NONE, "Buttons" },
+	{ DC_BTN_A, "A" },
+	{ DC_BTN_B, "B" },
+	{ DC_BTN_X, "X" },
+	{ DC_BTN_Y, "Y" },
+	{ DC_BTN_C, "C" },
+	{ DC_BTN_D, "D" },
+	{ DC_BTN_Z, "Z" },
+
+	{ EMU_BTN_NONE, "Triggers" },
+	{ DC_AXIS_LT, "Left Trigger" },
+	{ DC_AXIS_RT, "Right Trigger" },
+
+	{ EMU_BTN_NONE, "System Buttons" },
+	{ DC_BTN_START, "Start" },
+	{ DC_BTN_RELOAD, "Reload" },
+
+	{ EMU_BTN_NONE, "Emulator" },
+	{ EMU_BTN_MENU, "Menu" },
+	{ EMU_BTN_ESCAPE, "Exit" },
+	{ EMU_BTN_FFORWARD, "Fast-forward" },
+
+	{ EMU_BTN_NONE, nullptr }
 };
-const char *arcade_button_names[] = {
-		"Start", "Button 1", "Button 2", "Button 3", "Button 4", "Up", "Down", "Left", "Right",
-		"Menu", "Exit", "Fast-forward", "N/A", "N/A",
-		"Service", "Coin", "Test", "Button 5", "Button 6", "Button 7", "Button 8",
-		"Reload",
-		"N/A", "N/A", "N/A", "N/A"
+
+const Mapping arcadeButtons[] = {
+	{ EMU_BTN_NONE, "Directions" },
+	{ DC_DPAD_UP, "Up" },
+	{ DC_DPAD_DOWN, "Down" },
+	{ DC_DPAD_LEFT, "Left" },
+	{ DC_DPAD_RIGHT, "Right" },
+
+	{ DC_AXIS_UP, "Thumbstick Up" },
+	{ DC_AXIS_DOWN, "Thumbstick Down" },
+	{ DC_AXIS_LEFT, "Thumbstick Left" },
+	{ DC_AXIS_RIGHT, "Thumbstick Right" },
+
+	{ DC_AXIS2_UP, "R.Thumbstick Up" },
+	{ DC_AXIS2_DOWN, "R.Thumbstick Down" },
+	{ DC_AXIS2_LEFT, "R.Thumbstick Left" },
+	{ DC_AXIS2_RIGHT, "R.Thumbstick Right" },
+
+	{ EMU_BTN_NONE, "Buttons" },
+	{ DC_BTN_A, "Button 1" },
+	{ DC_BTN_B, "Button 2" },
+	{ DC_BTN_C, "Button 3" },
+	{ DC_BTN_X, "Button 4" },
+	{ DC_BTN_Y, "Button 5" },
+	{ DC_BTN_Z, "Button 6" },
+	{ DC_DPAD2_LEFT, "Button 7" },
+	{ DC_DPAD2_RIGHT, "Button 8" },
+//	{ DC_DPAD2_RIGHT, "Button 9" }, // TODO
+
+	{ EMU_BTN_NONE, "Triggers" },
+	{ DC_AXIS_LT, "Left Trigger" },
+	{ DC_AXIS_RT, "Right Trigger" },
+
+	{ EMU_BTN_NONE, "System Buttons" },
+	{ DC_BTN_START, "Start" },
+	{ DC_BTN_RELOAD, "Reload" },
+	{ DC_BTN_D, "Coin" },
+	{ DC_DPAD2_UP, "Service" },
+	{ DC_DPAD2_DOWN, "Test" },
+
+	{ EMU_BTN_NONE, "Emulator" },
+	{ EMU_BTN_MENU, "Menu" },
+	{ EMU_BTN_ESCAPE, "Exit" },
+	{ EMU_BTN_FFORWARD, "Fast-forward" },
+
+	{ EMU_BTN_NONE, nullptr }
 };
-const DreamcastKey axis_keys[] = {
-		DC_AXIS_X, DC_AXIS_Y, DC_AXIS_LT, DC_AXIS_RT, DC_AXIS_X2, DC_AXIS_Y2, EMU_AXIS_DPAD1_X, EMU_AXIS_DPAD1_Y,
-		EMU_AXIS_DPAD2_X, EMU_AXIS_DPAD2_Y, EMU_AXIS_BTN_START, EMU_AXIS_BTN_A, EMU_AXIS_BTN_B, EMU_AXIS_BTN_X, EMU_AXIS_BTN_Y,
-		EMU_AXIS_BTN_C, EMU_AXIS_BTN_D, EMU_AXIS_BTN_Z, EMU_AXIS_DPAD2_UP, EMU_AXIS_DPAD2_DOWN, EMU_AXIS_DPAD2_LEFT, EMU_AXIS_DPAD2_RIGHT
-};
-const char *axis_names[] = {
-		"Left Stick X", "Left Stick Y", "Left Trigger", "Right Trigger", "Right Stick X", "Right Stick Y", "DPad X", "DPad Y",
-		"Right DPad X", "Right DPad Y", "Start", "A", "B", "X", "Y",
-		"C", "D", "Z", "N/A", "N/A", "N/A", "N/A"
-};
-const char *arcade_axis_names[] = {
-		"Left Stick X", "Left Stick Y", "Left Trigger", "Right Trigger", "Right Stick X", "Right Stick Y", "DPad X", "DPad Y",
-		"Right DPad X", "Right DPad Y", "Start", "Button 1", "Button 2", "Button 3", "Button 4",
-		"Service", "Coin", "Test", "Button 5", "Button 6", "Button 7", "Button 8"
-};
-static_assert(ARRAY_SIZE(button_keys) == ARRAY_SIZE(button_names), "invalid size");
-static_assert(ARRAY_SIZE(button_keys) == ARRAY_SIZE(arcade_button_names), "invalid size");
-static_assert(ARRAY_SIZE(axis_keys) == ARRAY_SIZE(axis_names), "invalid size");
-static_assert(ARRAY_SIZE(axis_keys) == ARRAY_SIZE(arcade_axis_names), "invalid size");
 
 static MapleDeviceType maple_expansion_device_type_from_index(int idx)
 {
@@ -664,20 +780,66 @@ static MapleDeviceType maple_expansion_device_type_from_index(int idx)
 
 static std::shared_ptr<GamepadDevice> mapped_device;
 static u32 mapped_code;
+static bool analogAxis;
+static bool positiveDirection;
 static double map_start_time;
 static bool arcade_button_mode;
 static u32 gamepad_port;
 
-static void detect_input_popup(int index, bool analog)
+static void unmapControl(const std::shared_ptr<InputMapping>& mapping, u32 gamepad_port, DreamcastKey key)
+{
+	mapping->clear_button(gamepad_port, key);
+	mapping->clear_axis(gamepad_port, key);
+}
+
+static DreamcastKey getOppositeDirectionKey(DreamcastKey key)
+{
+	switch (key)
+	{
+	case DC_DPAD_UP:
+		return DC_DPAD_DOWN;
+	case DC_DPAD_DOWN:
+		return DC_DPAD_UP;
+	case DC_DPAD_LEFT:
+		return DC_DPAD_RIGHT;
+	case DC_DPAD_RIGHT:
+		return DC_DPAD_LEFT;
+	case DC_DPAD2_UP:
+		return DC_DPAD2_DOWN;
+	case DC_DPAD2_DOWN:
+		return DC_DPAD2_UP;
+	case DC_DPAD2_LEFT:
+		return DC_DPAD2_RIGHT;
+	case DC_DPAD2_RIGHT:
+		return DC_DPAD2_LEFT;
+	case DC_AXIS_UP:
+		return DC_AXIS_DOWN;
+	case DC_AXIS_DOWN:
+		return DC_AXIS_UP;
+	case DC_AXIS_LEFT:
+		return DC_AXIS_RIGHT;
+	case DC_AXIS_RIGHT:
+		return DC_AXIS_LEFT;
+	case DC_AXIS2_UP:
+		return DC_AXIS2_DOWN;
+	case DC_AXIS2_DOWN:
+		return DC_AXIS2_UP;
+	case DC_AXIS2_LEFT:
+		return DC_AXIS2_RIGHT;
+	case DC_AXIS2_RIGHT:
+		return DC_AXIS2_LEFT;
+	default:
+		return EMU_BTN_NONE;
+	}
+}
+static void detect_input_popup(const Mapping *mapping)
 {
 	ImVec2 padding = ImVec2(20 * scaling, 20 * scaling);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, padding);
 	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, padding);
-	if (ImGui::BeginPopupModal(analog ? "Map Axis" : "Map Button", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
+	if (ImGui::BeginPopupModal("Map Control", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
 	{
-		ImGui::Text("Waiting for %s '%s'...", analog ? "axis" : "button",
-				analog ? arcade_button_mode ? arcade_axis_names[index] : axis_names[index]
-						: arcade_button_mode ? arcade_button_names[index] : button_names[index]);
+		ImGui::Text("Waiting for control '%s'...", mapping->name);
 		double now = os_GetSeconds();
 		ImGui::Text("Time out in %d s", (int)(5 - (now - map_start_time)));
 		if (mapped_code != (u32)-1)
@@ -685,17 +847,21 @@ static void detect_input_popup(int index, bool analog)
 			std::shared_ptr<InputMapping> input_mapping = mapped_device->get_input_mapping();
 			if (input_mapping != NULL)
 			{
-				if (analog)
+				unmapControl(input_mapping, gamepad_port, mapping->key);
+				if (analogAxis)
 				{
-					u32 previous_mapping = input_mapping->get_axis_code(gamepad_port, axis_keys[index]);
-					bool inverted = false;
-					if (previous_mapping != (u32)-1)
-						inverted = input_mapping->get_axis_inverted(gamepad_port, previous_mapping);
-					// FIXME Allow inverted to be set
-					input_mapping->set_axis(gamepad_port, axis_keys[index], mapped_code, inverted);
+					input_mapping->set_axis(gamepad_port, mapping->key, mapped_code, positiveDirection);
+					DreamcastKey opposite = getOppositeDirectionKey(mapping->key);
+					// Map the axis opposite direction to the corresponding opposite dc button or axis,
+					// but only if the opposite direction axis isn't used and the dc button or axis isn't mapped.
+					if (opposite != EMU_BTN_NONE
+							&& input_mapping->get_axis_id(gamepad_port, mapped_code, !positiveDirection) == EMU_BTN_NONE
+							&& input_mapping->get_axis_code(gamepad_port, opposite).first == (u32)-1
+							&& input_mapping->get_button_code(gamepad_port, opposite) == (u32)-1)
+						input_mapping->set_axis(gamepad_port, opposite, mapped_code, !positiveDirection);
 				}
 				else
-					input_mapping->set_button(gamepad_port, button_keys[index], mapped_code);
+					input_mapping->set_button(gamepad_port, mapping->key, mapped_code);
 			}
 			mapped_device = NULL;
 			ImGui::CloseCurrentPopup();
@@ -710,6 +876,32 @@ static void detect_input_popup(int index, bool analog)
 	ImGui::PopStyleVar(2);
 }
 
+static void displayLabelOrCode(const char *label, u32 code, const char *suffix = "")
+{
+	if (label != nullptr)
+		ImGui::Text("%s%s", label, suffix);
+	else
+		ImGui::Text("[%d]%s", code, suffix);
+}
+
+static void displayMappedControl(const std::shared_ptr<GamepadDevice>& gamepad, DreamcastKey key)
+{
+	std::shared_ptr<InputMapping> input_mapping = gamepad->get_input_mapping();
+	u32 code = input_mapping->get_button_code(gamepad_port, key);
+	if (code != (u32)-1)
+	{
+		displayLabelOrCode(gamepad->get_button_name(code), code);
+		return;
+	}
+	std::pair<u32, bool> pair = input_mapping->get_axis_code(gamepad_port, key);
+	code = pair.first;
+	if (code != (u32)-1)
+	{
+		displayLabelOrCode(gamepad->get_axis_name(code), code, pair.second ? "+" : "-");
+		return;
+	}
+}
+
 static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamepad)
 {
 	fullScreenWindow(true);
@@ -717,24 +909,33 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 	if (ImGui::BeginPopupModal("Controller Mapping", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove))
 	{
 		const ImGuiStyle& style = ImGui::GetStyle();
-		const float width = (ImGui::GetIO().DisplaySize.x - insetLeft - insetRight - style.ItemSpacing.x) / 2 - style.WindowBorderSize - style.WindowPadding.x;
-		const float col_width = (width - style.GrabMinSize - style.ItemSpacing.x
+		const float winWidth = ImGui::GetIO().DisplaySize.x - insetLeft - insetRight - (style.WindowBorderSize + style.WindowPadding.x) * 2;
+		const float col_width = (winWidth - style.GrabMinSize - style.ItemSpacing.x
 				- (ImGui::CalcTextSize("Map").x + style.FramePadding.x * 2.0f + style.ItemSpacing.x)
 				- (ImGui::CalcTextSize("Unmap").x + style.FramePadding.x * 2.0f + style.ItemSpacing.x)) / 2;
+
+		static int item_current_map_idx = 0;
+		static int last_item_current_map_idx = 2;
 
 		std::shared_ptr<InputMapping> input_mapping = gamepad->get_input_mapping();
 		if (input_mapping == NULL || ImGui::Button("Done", ImVec2(100 * scaling, 30 * scaling)))
 		{
 			ImGui::CloseCurrentPopup();
 			gamepad->save_mapping(map_system);
+			last_item_current_map_idx = 2;
+			ImGui::EndPopup();
+			ImGui::PopStyleVar();
+			return;
 		}
 		ImGui::SetItemDefaultFocus();
 
+		float portWidth = 0;
 		if (gamepad->maple_port() == MAPLE_PORTS)
 		{
 			ImGui::SameLine();
-			float w = ImGui::CalcItemWidth();
-			ImGui::PushItemWidth(w / 2);
+			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(ImGui::GetStyle().FramePadding.x, (30 * scaling - ImGui::GetFontSize()) / 2));
+			portWidth = ImGui::CalcTextSize("AA").x + ImGui::GetStyle().ItemSpacing.x * 2.0f + ImGui::GetFontSize();
+			ImGui::SetNextItemWidth(portWidth);
 			if (ImGui::BeginCombo("Port", maple_ports[gamepad_port + 1]))
 			{
 				for (u32 j = 0; j < MAPLE_PORTS; j++)
@@ -747,97 +948,162 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 				}
 				ImGui::EndCombo();
 			}
-			ImGui::PopItemWidth();
+			portWidth += ImGui::CalcTextSize("Port").x + ImGui::GetStyle().ItemSpacing.x + ImGui::GetStyle().FramePadding.x;
+			ImGui::PopStyleVar();
 		}
-		ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Dreamcast Controls").x
-			- ImGui::GetStyle().FramePadding.x * 3.0f - ImGui::GetStyle().ItemSpacing.x * 3.0f);
+		float comboWidth = ImGui::CalcTextSize("Dreamcast Controls").x + ImGui::GetStyle().ItemSpacing.x + ImGui::GetFontSize() + ImGui::GetStyle().FramePadding.x * 4;
+		float gameConfigWidth = 0;
+		if (!settings.content.gameId.empty())
+			gameConfigWidth = ImGui::CalcTextSize(gamepad->isPerGameMapping() ? "Delete Game Config" : "Make Game Config").x + ImGui::GetStyle().ItemSpacing.x + ImGui::GetStyle().FramePadding.x * 2;
+		ImGui::SameLine(0, ImGui::GetContentRegionAvail().x - comboWidth - gameConfigWidth - ImGui::GetStyle().ItemSpacing.x - 100 * scaling * 2 - portWidth);
 
 		ImGui::AlignTextToFramePadding();
 
+		if (!settings.content.gameId.empty())
+		{
+			if (gamepad->isPerGameMapping())
+			{
+				if (ImGui::Button("Delete Game Config", ImVec2(0, 30 * scaling)))
+				{
+					gamepad->setPerGameMapping(false);
+					if (!gamepad->find_mapping(map_system))
+						gamepad->resetMappingToDefault(arcade_button_mode, true);
+				}
+			}
+			else
+			{
+				if (ImGui::Button("Make Game Config", ImVec2(0, 30 * scaling)))
+					gamepad->setPerGameMapping(true);
+			}
+			ImGui::SameLine();
+		}
+		if (ImGui::Button("Reset...", ImVec2(100 * scaling, 30 * scaling)))
+			ImGui::OpenPopup("Confirm Reset");
+
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(20 * scaling, 20 * scaling));
+		if (ImGui::BeginPopupModal("Confirm Reset", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
+		{
+			ImGui::Text("Are you sure you want to reset the mappings to default?");
+			static bool hitbox;
+			if (arcade_button_mode)
+			{
+				ImGui::Text("Controller Type:");
+				if (ImGui::RadioButton("Gamepad", !hitbox))
+					hitbox = false;
+				ImGui::SameLine();
+				if (ImGui::RadioButton("Arcade / Hit Box", hitbox))
+					hitbox = true;
+			}
+			ImGui::NewLine();
+			ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(20 * scaling, ImGui::GetStyle().ItemSpacing.y));
+			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(10 * scaling, 10 * scaling));
+			if (ImGui::Button("Yes"))
+			{
+				gamepad->resetMappingToDefault(arcade_button_mode, !hitbox);
+				gamepad->save_mapping(map_system);
+				ImGui::CloseCurrentPopup();
+			}
+			ImGui::SameLine();
+			if (ImGui::Button("No"))
+				ImGui::CloseCurrentPopup();
+			ImGui::PopStyleVar(2);;
+
+			ImGui::EndPopup();
+		}
+		ImGui::PopStyleVar(1);;
+
+		ImGui::SameLine();
+
 		const char* items[] = { "Dreamcast Controls", "Arcade Controls" };
-		static int item_current_map_idx = 0;
-		static int last_item_current_map_idx = 2;
 
 		// Here our selection data is an index.
 
-		ImGui::PushItemWidth(ImGui::CalcTextSize("Dreamcast Controls").x + ImGui::GetStyle().ItemSpacing.x * 2.0f * 3);
-
-		ImGui::Combo("", &item_current_map_idx, items, IM_ARRAYSIZE(items));
-
-		if (item_current_map_idx != last_item_current_map_idx)
+		ImGui::SetNextItemWidth(comboWidth);
+		// Make the combo height the same as the Done and Reset buttons
+		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(ImGui::GetStyle().FramePadding.x, (30 * scaling - ImGui::GetFontSize()) / 2));
+		ImGui::Combo("##arcadeMode", &item_current_map_idx, items, IM_ARRAYSIZE(items));
+		ImGui::PopStyleVar();
+		if (last_item_current_map_idx != 2 && item_current_map_idx != last_item_current_map_idx)
 		{
 			gamepad->save_mapping(map_system);
 		}
-
+		const Mapping *systemMapping = dcButtons;
 		if (item_current_map_idx == 0)
 		{
 			arcade_button_mode = false;
 			map_system = DC_PLATFORM_DREAMCAST;
+			systemMapping = dcButtons;
 		}
 		else if (item_current_map_idx == 1)
 		{
 			arcade_button_mode = true;
 			map_system = DC_PLATFORM_NAOMI;
+			systemMapping = arcadeButtons;
 		}
 
 		if (item_current_map_idx != last_item_current_map_idx)
 		{
-			gamepad->find_mapping(map_system);
+			if (!gamepad->find_mapping(map_system))
+				if (map_system == DC_PLATFORM_DREAMCAST || !gamepad->find_mapping(DC_PLATFORM_DREAMCAST))
+					gamepad->resetMappingToDefault(arcade_button_mode, true);
 			input_mapping = gamepad->get_input_mapping();
 
 			last_item_current_map_idx = item_current_map_idx;
 		}
 
 		char key_id[32];
-		ImGui::BeginGroup();
-		ImGui::Text("  Buttons  ");
 
-		ImGui::BeginChildFrame(ImGui::GetID("buttons"), ImVec2(width, 0), ImGuiWindowFlags_None);
-		ImGui::Columns(3, "bindings", false);
-		ImGui::SetColumnWidth(0, col_width);
-		ImGui::SetColumnWidth(1, col_width);
+		ImGui::BeginChildFrame(ImGui::GetID("buttons"), ImVec2(0, 0), ImGuiWindowFlags_None);
 
-		gamepad->find_mapping(map_system);
-		for (u32 j = 0; j < ARRAY_SIZE(button_keys); j++)
+		for (; systemMapping->name != nullptr; systemMapping++)
 		{
-			sprintf(key_id, "key_id%d", j);
+			if (systemMapping->key == EMU_BTN_NONE)
+			{
+				ImGui::Columns(1, nullptr, false);
+				header(systemMapping->name);
+				ImGui::Columns(3, "bindings", false);
+				ImGui::SetColumnWidth(0, col_width);
+				ImGui::SetColumnWidth(1, col_width);
+				continue;
+			}
+			sprintf(key_id, "key_id%d", systemMapping->key);
 			ImGui::PushID(key_id);
 
-			const char *btn_name = arcade_button_mode ? arcade_button_names[j] : button_names[j];
-			const char *game_btn_name = GetCurrentGameButtonName(button_keys[j]);
-			if (game_btn_name != nullptr)
-				ImGui::Text("%s - %s", btn_name, game_btn_name);
+			const char *game_btn_name = nullptr;
+			if (arcade_button_mode)
+			{
+				game_btn_name = GetCurrentGameButtonName(systemMapping->key);
+				if (game_btn_name == nullptr)
+					game_btn_name = GetCurrentGameAxisName(systemMapping->key);
+			}
+			if (game_btn_name != nullptr && game_btn_name[0] != '\0')
+				ImGui::Text("%s - %s", systemMapping->name, game_btn_name);
 			else
-				ImGui::Text("%s", btn_name);
+				ImGui::Text("%s", systemMapping->name);
 
 			ImGui::NextColumn();
-			u32 code = input_mapping->get_button_code(gamepad_port, button_keys[j]);
-			if (code != (u32)-1)
-			{
-				const char *label = gamepad->get_button_name(code);
-				if (label != nullptr)
-					ImGui::Text("%s", label);
-				else
-					ImGui::Text("[%d]", code);
-			}
+			displayMappedControl(gamepad, systemMapping->key);
+
 			ImGui::NextColumn();
 			if (ImGui::Button("Map"))
 			{
 				map_start_time = os_GetSeconds();
-				ImGui::OpenPopup("Map Button");
+				ImGui::OpenPopup("Map Control");
 				mapped_device = gamepad;
 				mapped_code = -1;
-				gamepad->detect_btn_input([](u32 code)
+				gamepad->detectButtonOrAxisInput([](u32 code, bool analog, bool positive)
 						{
 							mapped_code = code;
+							analogAxis = analog;
+							positiveDirection = positive;
 						});
 			}
-			detect_input_popup(j, false);
+			detect_input_popup(systemMapping);
 			ImGui::SameLine();
 			if (ImGui::Button("Unmap"))
 			{
 				input_mapping = gamepad->get_input_mapping();
-				input_mapping->clear_button(gamepad_port, button_keys[j], j);
+				unmapControl(input_mapping, gamepad_port, systemMapping->key);
 			}
 			ImGui::NextColumn();
 			ImGui::PopID();
@@ -847,80 +1113,21 @@ static void controller_mapping_popup(const std::shared_ptr<GamepadDevice>& gamep
 	    windowDragScroll();
 
 		ImGui::EndChildFrame();
-		ImGui::EndGroup();
-
-		ImGui::SameLine();
-
-		ImGui::BeginGroup();
-		ImGui::Text("  Analog Axes  ");
-		ImGui::BeginChildFrame(ImGui::GetID("analog"), ImVec2(width, 0), ImGuiWindowFlags_None);
-		ImGui::Columns(3, "anabindings", false);
-		ImGui::SetColumnWidth(0, col_width);
-		ImGui::SetColumnWidth(1, col_width);
-
-		for (u32 j = 0; j < ARRAY_SIZE(axis_keys); j++)
-		{
-			sprintf(key_id, "axis_id%d", j);
-			ImGui::PushID(key_id);
-
-			const char *axis_name = arcade_button_mode ? arcade_axis_names[j] : axis_names[j];
-			const char *game_axis_name = GetCurrentGameAxisName(axis_keys[j]);
-			if (game_axis_name != nullptr)
-				ImGui::Text("%s - %s", axis_name, game_axis_name);
-			else
-				ImGui::Text("%s", axis_name);
-
-			ImGui::NextColumn();
-			u32 code = input_mapping->get_axis_code(gamepad_port, axis_keys[j]);
-			if (code != (u32)-1)
-			{
-				const char *label = gamepad->get_axis_name(code);
-				if (label != nullptr)
-					ImGui::Text("%s", label);
-				else
-					ImGui::Text("[%d]", code);
-			}
-			ImGui::NextColumn();
-			if (ImGui::Button("Map"))
-			{
-				map_start_time = os_GetSeconds();
-				ImGui::OpenPopup("Map Axis");
-				mapped_device = gamepad;
-				mapped_code = -1;
-				gamepad->detect_axis_input([](u32 code)
-						{
-							mapped_code = code;
-						});
-			}
-			detect_input_popup(j, true);
-			ImGui::SameLine();
-			if (ImGui::Button("Unmap"))
-			{
-				input_mapping = gamepad->get_input_mapping();
-				input_mapping->clear_axis(gamepad_port, axis_keys[j], j);
-			}
-			ImGui::NextColumn();
-			ImGui::PopID();
-		}
-		ImGui::Columns(1, nullptr, false);
-	    scrollWhenDraggingOnVoid();
-	    windowDragScroll();
-		ImGui::EndChildFrame();
-		ImGui::EndGroup();
+		error_popup();
 		ImGui::EndPopup();
 	}
 	ImGui::PopStyleVar();
 }
 
-static void error_popup()
+void error_popup()
 {
-	if (!error_msg.empty())
+	if (!error_msg_shown && !error_msg.empty())
 	{
 		ImVec2 padding = ImVec2(20 * scaling, 20 * scaling);
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, padding);
 		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, padding);
 		ImGui::OpenPopup("Error");
-		if (ImGui::BeginPopupModal("Error", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
+		if (ImGui::BeginPopupModal("Error", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar))
 		{
 			ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + 400.f * scaling);
 			ImGui::TextWrapped("%s", error_msg.c_str());
@@ -939,6 +1146,7 @@ static void error_popup()
 		}
 		ImGui::PopStyleVar();
 		ImGui::PopStyleVar();
+		error_msg_shown = true;
 	}
 }
 
@@ -990,15 +1198,9 @@ static void contentpath_warning_popup()
                 config::ContentPath.get().push_back(selection);
             }
             scanner.refresh();
+            return true;
         });
     }
-}
-
-inline static void header(const char *title)
-{
-	ImGui::PushStyleVar(ImGuiStyleVar_ButtonTextAlign, ImVec2(0.f, 0.5f)); // Left
-	ImGui::ButtonEx(title, ImVec2(-1, 0), ImGuiButtonFlags_Disabled);
-	ImGui::PopStyleVar();
 }
 
 static void gui_display_settings()
@@ -1124,6 +1326,7 @@ static void gui_display_settings()
                 				config::ContentPath.get().push_back(selection);
                 				scanner.refresh();
                 			}
+                			return true;
                 		});
                 ImGui::PopStyleVar();
                 scrollWhenDraggingOnVoid();
@@ -1223,7 +1426,6 @@ static void gui_display_settings()
 					if (gamepad->remappable() && ImGui::Button("Map"))
 					{
 						gamepad_port = 0;
-						gamepad->verify_or_create_system_mappings();
 						ImGui::OpenPopup("Controller Mapping");
 					}
 
@@ -1249,7 +1451,7 @@ static void gui_display_settings()
 
 	    	ImGui::Spacing();
 	    	OptionSlider("Mouse sensitivity", config::MouseSensitivity, 1, 500);
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(TARGET_UWP)
 	    	OptionCheckbox("Use Raw Input", config::UseRawInput, "Supports multiple pointing devices (mice, light guns) and keyboards");
 #endif
 
@@ -1370,20 +1572,18 @@ static void gui_display_settings()
 				renderApi = 2;
 				perPixel = false;
 				break;
+			case RenderType::DirectX11:
+				renderApi = 3;
+				perPixel = false;
+				break;
+			case RenderType::DirectX11_OIT:
+				renderApi = 3;
+				perPixel = true;
+				break;
 			}
 
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
-#if !defined(__APPLE__)
-			bool has_per_pixel = false;
-			if (renderApi == 0)
-				has_per_pixel = !theGLContext.IsGLES() && theGLContext.GetMajorVersion() >= 4;
-#ifdef USE_VULKAN
-			else
-				has_per_pixel = VulkanContext::Instance()->SupportsFragmentShaderStoresAndAtomics();
-#endif
-#else
-			bool has_per_pixel = false;
-#endif
+			const bool has_per_pixel = GraphicsContext::Instance()->hasPerPixel();
 		    header("Transparent Sorting");
 		    {
 		    	int renderer = perPixel ? 2 : config::PerStripSorting ? 1 : 0;
@@ -1453,32 +1653,62 @@ static void gui_display_settings()
 		    			"Modify the game so that it displays in 16:9 anamorphic format and use horizontal screen stretching. Only some games are supported.");
 #ifndef TARGET_IPHONE
 		    	OptionCheckbox("VSync", config::VSync, "Synchronizes the frame rate with the screen refresh rate. Recommended");
+		    	ImGui::Indent();
+		    	if (!config::VSync || !isVulkan(config::RendererType))
+		    	{
+			        ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
+			        ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
+		    	}
+	    		OptionCheckbox("Duplicate frames", config::DupeFrames, "Duplicate frames on high refresh rate monitors (120 Hz and higher)");
+		    	if (!config::VSync || !isVulkan(config::RendererType))
+		    	{
+			        ImGui::PopItemFlag();
+			        ImGui::PopStyleVar();
+		    	}
+		    	ImGui::Unindent();
 #endif
 		    	OptionCheckbox("Show FPS Counter", config::ShowFPS, "Show on-screen frame/sec counter");
 		    	OptionCheckbox("Show VMU In-game", config::FloatVMUs, "Show the VMU LCD screens while in-game");
 		    	OptionCheckbox("Rotate Screen 90°", config::Rotate90, "Rotate the screen 90° counterclockwise");
 		    	OptionCheckbox("Delay Frame Swapping", config::DelayFrameSwapping,
 		    			"Useful to avoid flashing screen or glitchy videos. Not recommended on slow platforms");
-#if defined(USE_VULKAN) || defined(_WIN32)
-		    	ImGui::Text("Graphics API:");
-#if defined(USE_VULKAN) && defined(_WIN32)
-	            constexpr u32 columns = 3;
-#else
-	            constexpr u32 columns = 2;
+		    	constexpr int apiCount = 0
+					#ifdef USE_VULKAN
+		    			+ 1
+					#endif
+					#ifdef USE_DX9
+						+ 1
+					#endif
+					#ifdef USE_OPENGL
+						+ 1
+					#endif
+					#ifdef _WIN32
+						+ 1
+					#endif
+						;
+
+		    	if (apiCount > 1)
+		    	{
+		    		ImGui::Text("Graphics API:");
+					ImGui::Columns(apiCount, "renderApi", false);
+#ifdef USE_OPENGL
+					ImGui::RadioButton("Open GL", &renderApi, 0);
+					ImGui::NextColumn();
 #endif
-	            ImGui::Columns(columns, "renderApi", false);
-		    	ImGui::RadioButton("Open GL", &renderApi, 0);
-            	ImGui::NextColumn();
 #ifdef USE_VULKAN
-		    	ImGui::RadioButton("Vulkan", &renderApi, 1);
-            	ImGui::NextColumn();
+					ImGui::RadioButton("Vulkan", &renderApi, 1);
+					ImGui::NextColumn();
+#endif
+#ifdef USE_DX9
+					ImGui::RadioButton("DirectX 9", &renderApi, 2);
+					ImGui::NextColumn();
 #endif
 #ifdef _WIN32
-		    	ImGui::RadioButton("DirectX", &renderApi, 2);
-            	ImGui::NextColumn();
+					ImGui::RadioButton("DirectX 11", &renderApi, 3);
+					ImGui::NextColumn();
 #endif
-		    	ImGui::Columns(1, NULL, false);
-#endif
+					ImGui::Columns(1, nullptr, false);
+		    	}
 
 	            const std::array<float, 9> scalings{ 0.5f, 1.f, 1.5f, 2.f, 2.5f, 3.f, 4.f, 4.5f, 5.f };
 	            const std::array<std::string, 9> scalingsText{ "Half", "Native", "x1.5", "x2", "x2.5", "x3", "x4", "x4.5", "x5" };
@@ -1571,12 +1801,14 @@ static void gui_display_settings()
 		    case 2:
 		    	config::RendererType = RenderType::DirectX9;
 		    	break;
+		    case 3:
+		    	config::RendererType = perPixel ? RenderType::DirectX11_OIT : RenderType::DirectX11;
+		    	break;
 		    }
 		}
 		if (ImGui::BeginTabItem("Audio"))
 		{
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, normal_padding);
-			OptionCheckbox("Disable Sound", config::DisableSound, "Disable the emulator sound output");
 			OptionCheckbox("Enable DSP", config::DSPEnabled,
 					"Enable the Dreamcast Digital Sound Processor. Only recommended on fast platforms");
 			if (OptionSlider("Volume Level", config::AudioVolume, 0, 100, "Adjust the emulator's audio level"))
@@ -1703,8 +1935,6 @@ static void gui_display_settings()
 		    {
 		    	ImGui::Spacing();
 		    	header("Dynarec Options");
-		    	OptionCheckbox("Safe Mode", config::DynarecSafeMode,
-		    			"Do not optimize integer division. Not recommended");
 		    	OptionCheckbox("Idle Skip", config::DynarecIdleSkip, "Skip wait loops. Recommended");
 		    }
 	    	ImGui::Spacing();
@@ -1712,9 +1942,35 @@ static void gui_display_settings()
 		    {
 		    	OptionCheckbox("Broadband Adapter Emulation", config::EmulateBBA,
 		    			"Emulate the Ethernet Broadband Adapter (BBA) instead of the Modem");
+		    	OptionCheckbox("Enable GGPO Networking", config::GGPOEnable,
+		    			"Enable networking using GGPO");
 		    	OptionCheckbox("Enable Naomi Networking", config::NetworkEnable,
 		    			"Enable networking for supported Naomi games");
-		    	if (config::NetworkEnable)
+		    	if (config::GGPOEnable)
+		    	{
+					OptionCheckbox("Play as Player 1", config::ActAsServer,
+							"Deselect to play as player 2");
+					char server_name[256];
+					strcpy(server_name, config::NetworkServer.get().c_str());
+					ImGui::InputText("Peer", server_name, sizeof(server_name), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
+					ImGui::SameLine();
+					ShowHelpMarker("Your peer IP address and optional port");
+					config::NetworkServer.set(server_name);
+					OptionSlider("Frame Delay", config::GGPODelay, 0, 20,
+						"Sets Frame Delay, advisable for sessions with ping >100 ms");
+
+					ImGui::Text("Left Thumbstick:");
+					OptionRadioButton<int>("Disabled", config::GGPOAnalogAxes, 0, "Left thumbstick not used");
+					ImGui::SameLine();
+					OptionRadioButton<int>("Horizontal", config::GGPOAnalogAxes, 1, "Use the left thumbstick horizontal axis only");
+					ImGui::SameLine();
+					OptionRadioButton<int>("Full", config::GGPOAnalogAxes, 2, "Use the left thumbstick horizontal and vertical axes");
+
+					OptionCheckbox("Enable Chat", config::GGPOChat, "Open the chat window when a chat message is received");
+					OptionCheckbox("Network Statistics", config::NetworkStats,
+			    			"Display network statistics on screen");
+		    	}
+		    	else if (config::NetworkEnable)
 		    	{
 					OptionCheckbox("Act as Server", config::ActAsServer,
 							"Create a local server for Naomi network games");
@@ -1735,6 +1991,8 @@ static void gui_display_settings()
 		    	OptionCheckbox("HLE BIOS", config::UseReios, "Force high-level BIOS emulation");
 	            OptionCheckbox("Force Windows CE", config::ForceWindowsCE,
 	            		"Enable full MMU emulation and other Windows CE settings. Do not enable unless necessary");
+	            OptionCheckbox("Multi-threaded emulation", config::ThreadedRendering,
+	            		"Run the emulated CPU and GPU on different threads");
 #ifndef __ANDROID
 	            OptionCheckbox("Serial Console", config::SerialConsole,
 	            		"Dump the Dreamcast serial console to stdout");
@@ -1756,6 +2014,20 @@ static void gui_display_settings()
 		    }
 			ImGui::PopStyleVar();
 			ImGui::EndTabItem();
+
+			#ifdef USE_LUA
+			header("Lua Scripting");
+			{
+				char LuaFileName[256];
+
+				strcpy(LuaFileName, config::LuaFileName.get().c_str());
+				ImGui::InputText("Lua Filename", LuaFileName, sizeof(LuaFileName), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
+				ImGui::SameLine();
+				ShowHelpMarker("Specify lua filename to use. Should be located in Flycast config directory. Defaults to flycast.lua when empty.");
+				config::LuaFileName = LuaFileName;
+
+			}
+			#endif
 		}
 		if (ImGui::BeginTabItem("About"))
 		{
@@ -1797,6 +2069,8 @@ static void gui_display_settings()
 #else
 					"macOS"
 #endif
+#elif defined(TARGET_UWP)
+					"Windows Universal Platform"
 #elif defined(_WIN32)
 					"Windows"
 #elif defined(__SWITCH__)
@@ -1811,34 +2085,14 @@ static void gui_display_settings()
 #endif
 		    }
 	    	ImGui::Spacing();
-	    	if (config::RendererType.isOpenGL())
-	    	{
+	    	if (isOpenGL(config::RendererType))
 				header("Open GL");
-	    		ImGui::Text("Renderer: %s", (const char *)glGetString(GL_RENDERER));
-	    		ImGui::Text("Version: %s", (const char *)glGetString(GL_VERSION));
-	    	}
-#ifdef USE_VULKAN
-	    	else if (config::RendererType.isVulkan())
-	    	{
+	    	else if (isVulkan(config::RendererType))
 				header("Vulkan");
-				std::string name = VulkanContext::Instance()->GetDriverName();
-				ImGui::Text("Driver Name: %s", name.c_str());
-				std::string version = VulkanContext::Instance()->GetDriverVersion();
-				ImGui::Text("Version: %s", version.c_str());
-	    	}
-#endif
-#ifdef _WIN32
-	    	else if (config::RendererType.isDirectX())
-	    	{
-				if (ImGui::CollapsingHeader("DirectX", ImGuiTreeNodeFlags_DefaultOpen))
-				{
-		    		std::string name = theDXContext.getDriverName();
-		    		ImGui::Text("Driver Name: %s", name.c_str());
-		    		std::string version = theDXContext.getDriverVersion();
-		    		ImGui::Text("Version: %s", version.c_str());
-				}
-	    	}
-#endif
+	    	else if (isDirectX(config::RendererType))
+				header("DirectX");
+			ImGui::Text("Driver Name: %s", GraphicsContext::Instance()->getDriverName().c_str());
+			ImGui::Text("Version: %s", GraphicsContext::Instance()->getDriverVersion().c_str());
 
 #ifdef __ANDROID__
 		    ImGui::Separator();
@@ -1895,13 +2149,21 @@ static void gui_display_content()
     ImGui::Unindent(10 * scaling);
 
     static ImGuiTextFilter filter;
-#if !defined(__ANDROID__) && !defined(TARGET_IPHONE)
+#if !defined(__ANDROID__) && !defined(TARGET_IPHONE) && !defined(TARGET_UWP)
 	ImGui::SameLine(0, 32 * scaling);
 	filter.Draw("Filter");
 #endif
     if (gui_state != GuiState::SelectDisk)
     {
+#ifdef TARGET_UWP
+    	void gui_load_game();
+		ImGui::SameLine(ImGui::GetContentRegionMax().x - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 4.0f  - ImGui::GetStyle().ItemSpacing.x - ImGui::CalcTextSize("Load...").x);
+		if (ImGui::Button("Load..."))
+			gui_load_game();
+		ImGui::SameLine();
+#else
 		ImGui::SameLine(ImGui::GetContentRegionMax().x - ImGui::CalcTextSize("Settings").x - ImGui::GetStyle().FramePadding.x * 2.0f);
+#endif
 		if (ImGui::Button("Settings"))
 			gui_state = GuiState::Settings;
     }
@@ -1916,10 +2178,7 @@ static void gui_display_content()
 
 		ImGui::PushID("bios");
 		if (ImGui::Selectable("Dreamcast BIOS"))
-		{
-			gui_state = GuiState::Closed;
 			gui_start_game("");
-		}
 		ImGui::PopID();
 
 		{
@@ -1941,19 +2200,18 @@ static void gui_display_content()
 					{
 						if (gui_state == GuiState::SelectDisk)
 						{
-							strcpy(settings.imgread.ImagePath, game.path.c_str());
+							settings.content.path = game.path;
 							try {
-								DiscSwap();
+								DiscSwap(game.path);
 								gui_state = GuiState::Closed;
 							} catch (const FlycastException& e) {
-								error_msg = e.what();
+								gui_error(e.what());
 							}
 						}
 						else
 						{
 							std::string gamePath(game.path);
 							scanner.get_mutex().unlock();
-							gui_state = GuiState::Closed;
 							gui_start_game(gamePath);
 							scanner.get_mutex().lock();
 							ImGui::PopID();
@@ -1973,43 +2231,60 @@ static void gui_display_content()
     ImGui::PopStyleVar();
     ImGui::PopStyleVar();
 
-	error_popup();
     contentpath_warning_popup();
 }
 
-static void systemdir_selected_callback(bool cancelled, std::string selection)
+static bool systemdir_selected_callback(bool cancelled, std::string selection)
 {
-	if (!cancelled)
+	if (cancelled)
 	{
-		selection += "/";
-		set_user_config_dir(selection);
-		add_system_data_dir(selection);
+		gui_state = GuiState::Main;
+		return true;
+	}
+	selection += "/";
 
-		std::string data_path = selection + "data/";
-		set_user_data_dir(data_path);
-		if (!file_exists(data_path))
+	std::string data_path = selection + "data/";
+	if (!file_exists(data_path))
+	{
+		if (!make_directory(data_path))
 		{
-			if (!make_directory(data_path))
-			{
-				WARN_LOG(BOOT, "Cannot create 'data' directory");
-				set_user_data_dir(selection);
-			}
-		}
-
-		if (cfgOpen())
-		{
-			config::Settings::instance().load(false);
-			// Make sure the renderer type doesn't change mid-flight
-			config::RendererType = RenderType::OpenGL;
-			gui_state = GuiState::Main;
-			if (config::ContentPath.get().empty())
-			{
-				scanner.stop();
-				config::ContentPath.get().push_back(selection);
-			}
-			SaveSettings();
+			WARN_LOG(BOOT, "Cannot create 'data' directory: %s", data_path.c_str());
+			gui_error("Invalid selection:\nFlycast cannot write to this directory.");
+			return false;
 		}
 	}
+	else
+	{
+		// Test
+		std::string testPath = data_path + "writetest.txt";
+		FILE *file = fopen(testPath.c_str(), "w");
+		if (file == nullptr)
+		{
+			WARN_LOG(BOOT, "Cannot write in the 'data' directory");
+			gui_error("Invalid selection:\nFlycast cannot write to this directory.");
+			return false;
+		}
+		fclose(file);
+		unlink(testPath.c_str());
+	}
+	set_user_config_dir(selection);
+	add_system_data_dir(selection);
+	set_user_data_dir(data_path);
+
+	if (cfgOpen())
+	{
+		config::Settings::instance().load(false);
+		// Make sure the renderer type doesn't change mid-flight
+		config::RendererType = RenderType::OpenGL;
+		gui_state = GuiState::Main;
+		if (config::ContentPath.get().empty())
+		{
+			scanner.stop();
+			config::ContentPath.get().push_back(selection);
+		}
+		SaveSettings();
+	}
+	return true;
 }
 
 static void gui_display_onboarding()
@@ -2019,12 +2294,6 @@ static void gui_display_onboarding()
 }
 
 static std::future<bool> networkStatus;
-
-static void start_network()
-{
-	networkStatus = naomiNetwork.startNetworkAsync();
-	gui_state = GuiState::NetworkStart;
-}
 
 static void gui_network_start()
 {
@@ -2039,21 +2308,28 @@ static void gui_network_start()
 
 	if (networkStatus.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready)
 	{
-		if (networkStatus.get())
-		{
-			gui_state = GuiState::Closed;
-			ImGui::Text("STARTING...");
-		}
-		else
-		{
+		ImGui::Text("Starting...");
+		try {
+			if (networkStatus.get())
+			{
+				gui_state = GuiState::Closed;
+			}
+			else
+			{
+				emu.unloadGame();
+				gui_state = GuiState::Main;
+			}
+		} catch (const FlycastException& e) {
+			NetworkHandshake::instance->stop();
+			emu.unloadGame();
+			gui_error(e.what());
 			gui_state = GuiState::Main;
-			settings.imgread.ImagePath[0] = '\0';
 		}
 	}
 	else
 	{
-		ImGui::Text("STARTING NETWORK...");
-		if (config::ActAsServer)
+		ImGui::Text("Starting Network...");
+		if (NetworkHandshake::instance->canStartNow())
 			ImGui::Text("Press Start to start the game now.");
 	}
 	ImGui::Text("%s", get_notification().c_str());
@@ -2063,17 +2339,21 @@ static void gui_network_start()
 	ImGui::SetCursorPosY(126.f * scaling);
 	if (ImGui::Button("Cancel", ImVec2(100.f * scaling, 0.f)))
 	{
-		naomiNetwork.terminate();
-		networkStatus.get();
+		NetworkHandshake::instance->stop();
+		try {
+			networkStatus.get();
+		}
+		catch (const FlycastException& e) {
+		}
+		emu.unloadGame();
 		gui_state = GuiState::Main;
-		settings.imgread.ImagePath[0] = '\0';
 	}
 	ImGui::PopStyleVar();
 
 	ImGui::End();
 
 	if ((kcode[0] & DC_BTN_START) == 0)
-		naomiNetwork.startNow();
+		NetworkHandshake::instance->startNow();
 }
 
 static void gui_display_loadscreen()
@@ -2086,43 +2366,44 @@ static void gui_display_loadscreen()
     ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(20 * scaling, 10 * scaling));
     ImGui::AlignTextToFramePadding();
     ImGui::SetCursorPosX(20.f * scaling);
-	if (dc_is_load_done())
-	{
-		try {
-			dc_get_load_status();
-			if (NaomiNetworkSupported())
+	try {
+		if (gameLoader.ready())
+		{
+			if (NetworkHandshake::instance != nullptr)
 			{
-				start_network();
+				networkStatus = NetworkHandshake::instance->start();
+				gui_state = GuiState::NetworkStart;
 			}
 			else
 			{
 				gui_state = GuiState::Closed;
-				ImGui::Text("STARTING...");
+				ImGui::Text("Starting...");
 			}
-		} catch (const FlycastException& ex) {
-			ERROR_LOG(BOOT, "%s", ex.what());
-			error_msg = ex.what();
-#ifdef TEST_AUTOMATION
-			die("Game load failed");
-#endif
-			gui_state = GuiState::Main;
-			settings.imgread.ImagePath[0] = '\0';
 		}
-	}
-	else
-	{
-		ImGui::Text("LOADING... ");
-		ImGui::SameLine();
-		ImGui::Text("%s", get_notification().c_str());
-
-		float currentwidth = ImGui::GetContentRegionAvail().x;
-		ImGui::SetCursorPosX((currentwidth - 100.f * scaling) / 2.f + ImGui::GetStyle().WindowPadding.x);
-		ImGui::SetCursorPosY(126.f * scaling);
-		if (ImGui::Button("Cancel", ImVec2(100.f * scaling, 0.f)))
+		else
 		{
-			dc_cancel_load();
-			gui_state = GuiState::Main;
+			const char *label = gameLoader.getProgress().label;
+			if (label == nullptr)
+				label = "Loading...";
+			ImGui::Text("%s", label);
+			ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(0.557f, 0.268f, 0.965f, 1.f));
+			ImGui::ProgressBar(gameLoader.getProgress().progress, ImVec2(-1, 20.f * scaling), "");
+			ImGui::PopStyleColor();
+
+			float currentwidth = ImGui::GetContentRegionAvail().x;
+			ImGui::SetCursorPosX((currentwidth - 100.f * scaling) / 2.f + ImGui::GetStyle().WindowPadding.x);
+			ImGui::SetCursorPosY(126.f * scaling);
+			if (ImGui::Button("Cancel", ImVec2(100.f * scaling, 0.f)))
+				gameLoader.cancel();
 		}
+	} catch (const FlycastException& ex) {
+		ERROR_LOG(BOOT, "%s", ex.what());
+		gui_error(ex.what());
+#ifdef TEST_AUTOMATION
+		die("Game load failed");
+#endif
+		emu.unloadGame();
+		gui_state = GuiState::Main;
 	}
 	ImGui::PopStyleVar();
 
@@ -2135,19 +2416,19 @@ void gui_display_ui()
 		return;
 	if (gui_state == GuiState::Main)
 	{
-		std::string game_file = settings.imgread.ImagePath;
-		if (!game_file.empty())
+		if (!settings.content.path.empty())
 		{
 #ifndef __ANDROID__
 			commandLineStart = true;
 #endif
-			gui_start_game(game_file);
+			gui_start_game(settings.content.path);
 			return;
 		}
 	}
 
-	ImGui_Impl_NewFrame();
+	gui_newFrame();
 	ImGui::NewFrame();
+	error_msg_shown = false;
 
 	switch (gui_state)
 	{
@@ -2189,11 +2470,11 @@ void gui_display_ui()
 		die("Unknown UI state");
 		break;
 	}
-    ImGui::Render();
-    ImGui_impl_RenderDrawData(ImGui::GetDrawData());
+	error_popup();
+	gui_endFrame();
 
 	if (gui_state == GuiState::Closed)
-		dc_resume();
+		emu.start();
 }
 
 static float LastFPSTime;
@@ -2228,9 +2509,9 @@ void gui_display_osd()
 	if (message.empty())
 		message = getFPSNotification();
 
-	if (!message.empty() || config::FloatVMUs || crosshairsNeeded())
+//	if (!message.empty() || config::FloatVMUs || crosshairsNeeded() || (ggpo::active() && config::NetworkStats))
 	{
-		ImGui_Impl_NewFrame();
+		gui_newFrame();
 		ImGui::NewFrame();
 
 		if (!message.empty())
@@ -2245,13 +2526,19 @@ void gui_display_osd()
 			ImGui::TextColored(ImVec4(1, 1, 0, 0.7), "%s", message.c_str());
 			ImGui::End();
 		}
-		displayCrosshairs();
+		imguiDriver->displayCrosshairs();
 		if (config::FloatVMUs)
-			display_vmus();
-//		gui_plot_render_time(screen_width, screen_height);
+			imguiDriver->displayVmus();
+//		gui_plot_render_time(settings.display.width, settings.display.height);
+		if (ggpo::active())
+		{
+			if (config::NetworkStats)
+				ggpo::displayStats();
+			chat.display();
+		}
+		lua::overlay();
 
-		ImGui::Render();
-		ImGui_impl_RenderDrawData(ImGui::GetDrawData());
+		gui_endFrame();
 	}
 }
 
@@ -2260,16 +2547,20 @@ void gui_open_onboarding()
 	gui_state = GuiState::Onboarding;
 }
 
+void gui_cancel_load()
+{
+	gameLoader.cancel();
+}
+
 void gui_term()
 {
 	if (inited)
 	{
 		inited = false;
-		term_vmus();
-		if (config::RendererType.isOpenGL())
-			ImGui_ImplOpenGL3_Shutdown();
 		ImGui::DestroyContext();
 	    EventManager::unlisten(Event::Resume, emuEventCallback);
+	    EventManager::unlisten(Event::Start, emuEventCallback);
+	    EventManager::unlisten(Event::Terminate, emuEventCallback);
 	}
 }
 
@@ -2295,148 +2586,23 @@ void gui_refresh_files()
 	subfolders_read = false;
 }
 
-#define VMU_WIDTH (70 * 48 * scaling / 32)
-#define VMU_HEIGHT (70 * scaling)
-#define VMU_PADDING (8 * scaling)
-static ImTextureID vmu_lcd_tex_ids[8];
-
-static ImTextureID crosshairTexId;
-
-static const int vmu_coords[8][2] = {
-		{ 0 , 0 },
-		{ 0 , 0 },
-		{ 1 , 0 },
-		{ 1 , 0 },
-		{ 0 , 1 },
-		{ 0 , 1 },
-		{ 1 , 1 },
-		{ 1 , 1 },
-};
-
-static void display_vmus()
-{
-	if (!game_started)
-		return;
-	if (!config::RendererType.isOpenGL())
-		return;
-    ImGui::SetNextWindowBgAlpha(0);
-    ImGui::SetNextWindowPos(ImVec2(0, 0));
-    ImGui::SetNextWindowSize(ImGui::GetIO().DisplaySize);
-
-    ImGui::Begin("vmu-window", NULL, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoInputs
-    		| ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoFocusOnAppearing);
-	for (int i = 0; i < 8; i++)
-	{
-		if (!vmu_lcd_status[i])
-			continue;
-
-		if (vmu_lcd_tex_ids[i] != (ImTextureID)0)
-			ImGui_ImplOpenGL3_DeleteTexture(vmu_lcd_tex_ids[i]);
-		vmu_lcd_tex_ids[i] = ImGui_ImplOpenGL3_CreateVmuTexture(vmu_lcd_data[i]);
-
-	    int x = vmu_coords[i][0];
-	    int y = vmu_coords[i][1];
-	    ImVec2 pos;
-	    if (x == 0)
-	    	pos.x = VMU_PADDING;
-	    else
-	    	pos.x = ImGui::GetIO().DisplaySize.x - VMU_WIDTH - VMU_PADDING;
-	    if (y == 0)
-	    {
-	    	pos.y = VMU_PADDING;
-	    	if (i & 1)
-	    		pos.y += VMU_HEIGHT + VMU_PADDING;
-	    }
-	    else
-	    {
-	    	pos.y = ImGui::GetIO().DisplaySize.y - VMU_HEIGHT - VMU_PADDING;
-	    	if (i & 1)
-	    		pos.y -= VMU_HEIGHT + VMU_PADDING;
-	    }
-	    ImVec2 pos_b(pos.x + VMU_WIDTH, pos.y + VMU_HEIGHT);
-		ImGui::GetWindowDrawList()->AddImage(vmu_lcd_tex_ids[i], pos, pos_b, ImVec2(0, 1), ImVec2(1, 0), 0xC0ffffff);
-	}
-    ImGui::End();
-}
-
-std::pair<float, float> getCrosshairPosition(int playerNum)
-{
-	float fx = mo_x_abs[playerNum];
-	float fy = mo_y_abs[playerNum];
-	float width = 640.f;
-	float height = 480.f;
-
-	if (config::Rotate90)
-	{
-		float t = fy;
-		fy = 639.f - fx;
-		fx = t;
-		std::swap(width, height);
-	}
-	float scale = height / screen_height;
-	fy /= scale;
-	scale /= config::ScreenStretching / 100.f;
-	fx = fx / scale + (screen_width - width / scale) / 2.f;
-
-	return std::make_pair(fx, fy);
-}
-
-static void displayCrosshairs()
-{
-	if (!game_started)
-		return;
-	if (!config::RendererType.isOpenGL())
-		return;
-	if (!crosshairsNeeded())
-		return;
-
-	if (crosshairTexId == ImTextureID())
-		crosshairTexId = ImGui_ImplOpenGL3_CreateCrosshairTexture(getCrosshairTextureData());
-    ImGui::SetNextWindowBgAlpha(0);
-    ImGui::SetNextWindowPos(ImVec2(0, 0));
-    ImGui::SetNextWindowSize(ImGui::GetIO().DisplaySize);
-
-    ImGui::Begin("xhair-window", NULL, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoInputs
-    		| ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoFocusOnAppearing);
-	for (u32 i = 0; i < config::CrosshairColor.size(); i++)
-	{
-		if (config::CrosshairColor[i] == 0)
-			continue;
-		if (settings.platform.system == DC_PLATFORM_DREAMCAST && config::MapleMainDevices[i] != MDT_LightGun)
-			continue;
-
-		ImVec2 pos;
-		std::tie(pos.x, pos.y) = getCrosshairPosition(i);
-		pos.x -= (XHAIR_WIDTH * scaling) / 2.f;
-		pos.y += (XHAIR_WIDTH * scaling) / 2.f;
-		ImVec2 pos_b(pos.x + XHAIR_WIDTH * scaling, pos.y - XHAIR_HEIGHT * scaling);
-
-		ImGui::GetWindowDrawList()->AddImage(crosshairTexId, pos, pos_b, ImVec2(0, 1), ImVec2(1, 0), config::CrosshairColor[i]);
-	}
-	ImGui::End();
-}
-
 static void reset_vmus()
 {
 	for (u32 i = 0; i < ARRAY_SIZE(vmu_lcd_status); i++)
 		vmu_lcd_status[i] = false;
 }
 
-static void term_vmus()
+void gui_error(const std::string& what)
 {
-	if (!config::RendererType.isOpenGL())
-		return;
-	for (u32 i = 0; i < ARRAY_SIZE(vmu_lcd_status); i++)
-	{
-		if (vmu_lcd_tex_ids[i] != ImTextureID())
-		{
-			ImGui_ImplOpenGL3_DeleteTexture(vmu_lcd_tex_ids[i]);
-			vmu_lcd_tex_ids[i] = ImTextureID();
-		}
-	}
-	if (crosshairTexId != ImTextureID())
-	{
-		ImGui_ImplOpenGL3_DeleteTexture(crosshairTexId);
-		crosshairTexId = ImTextureID();
-	}
+	error_msg = what;
 }
+
+#ifdef TARGET_UWP
+// Ugly but a good workaround for MS stupidity
+// UWP doesn't allow the UI thread to wait on a thread/task. When an std::future is ready, it is possible
+// that the task has not yet completed. Calling std::future::get() at this point will throw an exception
+// AND destroy the std::future at the same time, rendering it invalid and discarding the future result.
+bool __cdecl Concurrency::details::_Task_impl_base::_IsNonBlockingThread() {
+	return false;
+}
+#endif

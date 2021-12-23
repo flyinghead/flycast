@@ -2046,9 +2046,9 @@ void ngen_Compile(RuntimeBlockInfo* block, bool force_checks, bool reset, bool s
 	}
 	else
 	{
-		ass.Ldr(r0, MemOperand(sp));
+		ass.Ldr(r0, MemOperand(r8, rcbOffset(cntx.cycle_counter)));
 		ass.Sub(SetFlags, r0, r0, cyc);
-		ass.Str(r0, MemOperand(sp));
+		ass.Str(r0, MemOperand(r8, rcbOffset(cntx.cycle_counter)));
 		// FIXME condition?
 		ass.Mov(r4, block->vaddr);
 		storeSh4Reg(r4, reg_nextpc);
@@ -2184,14 +2184,15 @@ static void generate_mainloop()
 	Label longjumpLabel;
 	if (!mmu_enabled())
 	{
-		ass.Mov(r8, r0);								// r8: context
-		ass.Mov(r9, SH4_TIMESLICE);						// r9: cycle counter
+		// r8: context
+		ass.Mov(r8, r0);
+		// r9: cycle counter
+		ass.Ldr(r9, MemOperand(r0, rcbOffset(cntx.cycle_counter)));
 	}
 	else
 	{
+		ass.Sub(sp, sp, 4);
 		ass.Push(r0);									// push context
-		ass.Mov(r1, SH4_TIMESLICE);
-		ass.Push(r1);									// cycle counter on stack
 
 		ass.Mov(r0, reinterpret_cast<uintptr_t>(&jmp_stack));
 		ass.Mov(r1, sp);
@@ -2199,7 +2200,7 @@ static void generate_mainloop()
 
 		ass.Bind(&longjumpLabel);
 
-		ass.Ldr(r8, MemOperand(sp, 4));					// r8: context
+		ass.Ldr(r8, MemOperand(sp));					// r8: context
 		ass.Mov(r9, (uintptr_t)mmuAddressLUT);			// r9: mmu LUT
 	}
 	ass.Ldr(r4, MemOperand(r8, rcbOffset(cntx.pc)));	// r4: pc
@@ -2213,9 +2214,9 @@ static void generate_mainloop()
 		ass.Add(r9, r9, SH4_TIMESLICE);
 	else
 	{
-		ass.Ldr(r0, MemOperand(sp));
+		ass.Ldr(r0, MemOperand(r8, rcbOffset(cntx.cycle_counter)));
 		ass.Add(r0, r0, SH4_TIMESLICE);
-		ass.Str(r0, MemOperand(sp));
+		ass.Str(r0, MemOperand(r8, rcbOffset(cntx.cycle_counter)));
 	}
 	ass.Mov(r4, lr);
 	call((void *)UpdateSystem);
@@ -2256,7 +2257,9 @@ static void generate_mainloop()
 // cleanup:
 	ass.Bind(&cleanup);
 	if (mmu_enabled())
-		ass.Add(sp, sp, 8);	// pop cycle counter & context
+		ass.Add(sp, sp, 8);	// pop context & alignment
+	else
+		ass.Str(r9, MemOperand(r8, rcbOffset(cntx.cycle_counter)));
 	{
 		UseScratchRegisterScope scope(&ass);
 		scope.ExcludeAll();

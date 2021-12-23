@@ -43,6 +43,7 @@ static const std::string native_separator = "/";
 #define PSEUDO_ROOT ":"
 
 extern int insetLeft, insetRight, insetTop, insetBottom;
+void error_popup();
 
 void select_file_popup(const char *prompt, StringCallback callback,
 		bool selectFile, const std::string& selectExtension)
@@ -85,7 +86,7 @@ void select_file_popup(const char *prompt, StringCallback callback,
 	fullScreenWindow(true);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
 
-	if (ImGui::BeginPopupModal(prompt, NULL, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize ))
+	if (ImGui::BeginPopup(prompt, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize ))
 	{
 		std::string path = select_current_directory;
 		std::string::size_type last_sep = path.find_last_of(separators);
@@ -108,6 +109,15 @@ void select_file_popup(const char *prompt, StringCallback callback,
 				for (int i = 0; i < 32; i++)
 					if ((drives & (1 << i)) != 0)
 						subfolders.push_back(std::string(1, (char)('A' + i)) + ":\\");
+#ifdef TARGET_UWP
+				// Add the home directory to the list of drives as it's not accessible from the root
+				std::string home;
+				const char *home_drive = nowide::getenv("HOMEDRIVE");
+				if (home_drive != NULL)
+					home = home_drive;
+				home += nowide::getenv("HOMEPATH");
+				subfolders.push_back(home);
+#endif
 			}
 			else
 #elif __ANDROID__
@@ -273,8 +283,8 @@ void select_file_popup(const char *prompt, StringCallback callback,
     			if (ImGui::Selectable(name.c_str()))
     			{
     				subfolders_read = false;
-    				callback(false, select_current_directory + native_separator + name);
-    				ImGui::CloseCurrentPopup();
+    				if (callback(false, select_current_directory + native_separator + name))
+    					ImGui::CloseCurrentPopup();
     			}
         	}
         	else
@@ -293,9 +303,11 @@ void select_file_popup(const char *prompt, StringCallback callback,
 		{
 			if (ImGui::Button("Select Current Directory", ImVec2(0, 30 * gui_get_scaling())))
 			{
-				subfolders_read = false;
-				callback(false, select_current_directory);
-				ImGui::CloseCurrentPopup();
+				if (callback(false, select_current_directory))
+				{
+					subfolders_read = false;
+					ImGui::CloseCurrentPopup();
+				}
 			}
 			ImGui::SameLine();
 		}
@@ -305,7 +317,7 @@ void select_file_popup(const char *prompt, StringCallback callback,
 			callback(true, "");
 			ImGui::CloseCurrentPopup();
 		}
-
+		error_popup();
 		ImGui::EndPopup();
 	}
 	ImGui::PopStyleVar();
@@ -652,7 +664,8 @@ bool OptionArrowButtons(const char *name, config::Option<int>& option, int min, 
 	ImGui::PushStyleVar(ImGuiStyleVar_ButtonTextAlign, ImVec2(0.f, 0.5f)); // Left
 	ImGui::PushStyleColor(ImGuiCol_Button, ImGui::GetStyle().Colors[ImGuiCol_FrameBg]);
 	float width = ImGui::CalcItemWidth() - innerSpacing * 2.0f - ImGui::GetFrameHeight() * 2.0f;
-	ImGui::ButtonEx(std::to_string((int)option).c_str(), ImVec2(width, 0), ImGuiButtonFlags_Disabled);
+	std::string id = "##" + std::string(name);
+	ImGui::ButtonEx((std::to_string((int)option) + id).c_str(), ImVec2(width, 0), ImGuiButtonFlags_Disabled);
 	ImGui::PopStyleColor();
 	ImGui::PopStyleVar();
 
@@ -664,7 +677,6 @@ bool OptionArrowButtons(const char *name, config::Option<int>& option, int min, 
         ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
         ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
 	}
-	std::string id = "##" + std::string(name);
     if (ImGui::ArrowButton((id + "left").c_str(), ImGuiDir_Left)) { option.set(std::max(min, option - 1)); valueChanged = true; }
     ImGui::SameLine(0.0f, innerSpacing);
     if (ImGui::ArrowButton((id + "right").c_str(), ImGuiDir_Right)) { option.set(std::min(max, option + 1)); valueChanged = true; }

@@ -19,18 +19,37 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #pragma once
-#include "gl_context.h"
-#include "rend/dx9/dxcontext.h"
-#ifdef USE_VULKAN
-#include "rend/vulkan/vulkan_context.h"
+#include <string>
 
-extern VulkanContext theVulkanContext;
-#endif
-void InitRenderApi();
-void TermRenderApi();
+void initRenderApi(void *window = nullptr, void *display = nullptr);
+void termRenderApi();
+void switchRenderApi();
 
-static inline void SwitchRenderApi()
+class GraphicsContext
 {
-	TermRenderApi();
-	InitRenderApi();
-}
+public:
+	virtual ~GraphicsContext() = default;
+	virtual void term() = 0;
+	virtual void resize() {}
+	virtual std::string getDriverName() = 0;
+	virtual std::string getDriverVersion() = 0;
+	virtual bool hasPerPixel() { return false; }
+
+	void setWindow(void *window, void *display = nullptr) {
+		this->window = window;
+		this->display = display;
+	}
+	void getWindow(void **pwindow, void **pdisplay) const {
+		*pwindow = window;
+		*pdisplay = display;
+	}
+
+	static GraphicsContext *Instance() {
+		return instance;
+	}
+
+protected:
+	void *window = nullptr;
+	void *display = nullptr;
+	static GraphicsContext *instance;
+};

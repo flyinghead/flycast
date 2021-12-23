@@ -24,17 +24,18 @@
 #include "quad.h"
 #include "rend/TexCache.h"
 #include "libretro_vulkan.h"
+#include "wsi/context.h"
 
 static vk::Format findDepthFormat(vk::PhysicalDevice physicalDevice);
 
-class VulkanContext
+class VulkanContext : public GraphicsContext
 {
 public:
 	VulkanContext() { verify(contextInstance == nullptr); contextInstance = this; }
 	~VulkanContext() { verify(contextInstance == this); contextInstance = nullptr; }
 
-	bool Init(retro_hw_render_interface_vulkan *render_if);
-	void Term();
+	bool init(retro_hw_render_interface_vulkan *render_if);
+	void term() override;
 
 	u32 GetGraphicsQueueFamilyIndex() const { return retro_render_if->queue_index; }
 	void PresentFrame(vk::Image image, vk::ImageView imageView, const vk::Extent2D& extent);
@@ -43,10 +44,10 @@ public:
 	vk::Device GetDevice() const { return device; }
 	vk::PipelineCache GetPipelineCache() const { return *pipelineCache; }
 	vk::DescriptorPool GetDescriptorPool() const { return *descriptorPool; }
-	size_t GetSwapChainSize() const { u32 m = retro_render_if->get_sync_index_mask(retro_render_if->handle); u32 n = 1; while (m >>= 1) n++; return n; }
+	u32 GetSwapChainSize() const { u32 m = retro_render_if->get_sync_index_mask(retro_render_if->handle); u32 n = 1; while (m >>= 1) n++; return n; }
 	int GetCurrentImageIndex() const { return retro_render_if->get_sync_index(retro_render_if->handle); }
-	// FIXME that's not quite correct
-	void WaitIdle() const { retro_render_if->wait_sync_index(retro_render_if->handle); }
+
+	void WaitIdle() const { queue.waitIdle(); }
 	void SubmitCommandBuffers(u32 bufferCount, vk::CommandBuffer *buffers, vk::Fence fence) {
 		retro_render_if->lock_queue(retro_render_if->handle);
 		queue.submit(vk::SubmitInfo(0, nullptr, nullptr, bufferCount, buffers, 0, nullptr), fence);
@@ -68,8 +69,8 @@ public:
 			return true;
 		}
 	}
-	std::string GetDriverName() const { vk::PhysicalDeviceProperties props; physicalDevice.getProperties(&props); return props.deviceName; }
-	std::string GetDriverVersion() const {
+	std::string getDriverName() override { vk::PhysicalDeviceProperties props; physicalDevice.getProperties(&props); return props.deviceName; }
+	std::string getDriverVersion() override {
 		vk::PhysicalDeviceProperties props;
 		physicalDevice.getProperties(&props);
 
@@ -86,6 +87,15 @@ public:
 	vk::DeviceSize GetMaxMemoryAllocationSize() const { return maxMemoryAllocationSize; }
 	f32 GetMaxSamplerAnisotropy() const { return samplerAnisotropy ? maxSamplerAnisotropy : 1.f; }
 	u32 GetVendorID() const { return vendorID; }
+
+	constexpr static int VENDOR_AMD = 0x1022;
+	// AMD GPU products use the ATI vendor Id
+	constexpr static int VENDOR_ATI = 0x1002;
+	constexpr static int VENDOR_ARM = 0x13B5;
+	constexpr static int VENDOR_INTEL = 0x8086;
+	constexpr static int VENDOR_NVIDIA = 0x10DE;
+	constexpr static int VENDOR_QUALCOMM = 0x5143;
+	constexpr static int VENDOR_MESA = 0x10005;
 
 private:
 	VMAllocator allocator;

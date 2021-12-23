@@ -25,12 +25,13 @@
 #endif
 #include "hw/pvr/Renderer_if.h"
 #include "emulator.h"
+#include "dx9_driver.h"
 
 DXContext theDXContext;
-extern int screen_width, screen_height; // FIXME
 
-bool DXContext::Init(bool keepCurrentWindow)
+bool DXContext::init(bool keepCurrentWindow)
 {
+	GraphicsContext::instance = this;
 #ifdef USE_SDL
 	if (!keepCurrentWindow && !sdl_recreate_window(0))
 		return false;
@@ -40,37 +41,61 @@ bool DXContext::Init(bool keepCurrentWindow)
 	if (!pD3D)
 		return false;
 	memset(&d3dpp, 0, sizeof(d3dpp));
-	d3dpp.hDeviceWindow = hWnd;
+	d3dpp.hDeviceWindow = (HWND)window;
 	d3dpp.Windowed = true;
 	d3dpp.SwapEffect = D3DSWAPEFFECT_DISCARD;
 	d3dpp.BackBufferFormat = D3DFMT_UNKNOWN;
 	d3dpp.EnableAutoDepthStencil = FALSE;						// No need for depth/stencil buffer for the backbuffer
-#ifndef TEST_AUTOMATION
 	swapOnVSync = !settings.input.fastForwardMode && config::VSync;
-	d3dpp.PresentationInterval = swapOnVSync ? D3DPRESENT_INTERVAL_ONE : D3DPRESENT_INTERVAL_IMMEDIATE;
+	if (swapOnVSync)
+	{
+		switch ((int)(settings.display.refreshRate / 60))
+		{
+		case 0:
+		case 1:
+			d3dpp.PresentationInterval = D3DPRESENT_INTERVAL_ONE;
+			break;
+		case 2:
+			d3dpp.PresentationInterval = D3DPRESENT_INTERVAL_TWO;
+			break;
+		case 3:
+			d3dpp.PresentationInterval = D3DPRESENT_INTERVAL_THREE;
+			break;
+		case 4:
+		default:
+			d3dpp.PresentationInterval = D3DPRESENT_INTERVAL_FOUR;
+			break;
+		}
+	}
+	else
+		d3dpp.PresentationInterval = D3DPRESENT_INTERVAL_IMMEDIATE;
 	// TODO should be 0 in windowed mode
 	//d3dpp.FullScreen_RefreshRateInHz = swapOnVSync ? 60 : 0;
-#else
-	d3dpp.PresentationInterval = D3DPRESENT_INTERVAL_IMMEDIATE;	// Present without vsync, maximum unthrottled framerate
-#endif
-	if (FAILED(pD3D->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, hWnd,
+	if (FAILED(pD3D->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, (HWND)window,
 			D3DCREATE_HARDWARE_VERTEXPROCESSING, &d3dpp, &pDevice.get())))
 	    return false;
+	imguiDriver = std::unique_ptr<ImGuiDriver>(new DX9Driver());
 	gui_init();
 	overlay.init(pDevice);
 	return ImGui_ImplDX9_Init(pDevice.get());
 }
 
-void DXContext::Term()
+void DXContext::term()
 {
+	GraphicsContext::instance = nullptr;
 	overlay.term();
+	imguiDriver.reset();
 	ImGui_ImplDX9_Shutdown();
+	gui_term();
 	pDevice.reset();
 	pD3D.reset();
 }
 
 void DXContext::Present()
 {
+	if (!frameRendered)
+		return;
+	frameRendered = false;
 	HRESULT result = pDevice->Present(NULL, NULL, NULL, NULL);
 	// Handle loss of D3D9 device
 	if (result == D3DERR_DEVICELOST)
@@ -83,7 +108,6 @@ void DXContext::Present()
 		WARN_LOG(RENDERER, "Present failed %x", result);
 	else
 	{
-#ifndef TEST_AUTOMATION
 		if (swapOnVSync != (!settings.input.fastForwardMode && config::VSync))
 		{
 			DEBUG_LOG(RENDERER, "Switch vsync %d", !swapOnVSync);
@@ -92,16 +116,15 @@ void DXContext::Present()
 				renderer->Term();
 				delete renderer;
 			}
-			Term();
-			Init(true);
+			term();
+			init(true);
 			if (renderer != nullptr)
 			{
 				renderer = new D3DRenderer();
 				renderer->Init();
-				dc_resize_renderer();
+				rend_resize_renderer();
 			}
 		}
-#endif
 	}
 }
 
@@ -122,15 +145,16 @@ void DXContext::EndImGuiFrame()
 		if (overlayOnly)
 		{
 			if (crosshairsNeeded() || config::FloatVMUs)
-				overlay.draw(screen_width, screen_height, config::FloatVMUs, true);
+				overlay.draw(settings.display.width, settings.display.height, config::FloatVMUs, true);
 		}
 		else
 		{
-			overlay.draw(screen_width, screen_height, true, false);
+			overlay.draw(settings.display.width, settings.display.height, true, false);
 		}
 		ImGui_ImplDX9_RenderDrawData(ImGui::GetDrawData());
 		pDevice->EndScene();
 	}
+	frameRendered = true;
 }
 
 void DXContext::resize()
@@ -138,10 +162,10 @@ void DXContext::resize()
 	if (!pDevice)
 		return;
 	RECT rect;
-	GetClientRect(hWnd, &rect);
-	d3dpp.BackBufferWidth = screen_width = rect.right;
-	d3dpp.BackBufferHeight = screen_height = rect.bottom;
-	if (screen_width == 0 || screen_height == 0)
+	GetClientRect((HWND)window, &rect);
+	d3dpp.BackBufferWidth = settings.display.width = rect.right;
+	d3dpp.BackBufferHeight = settings.display.height = rect.bottom;
+	if (settings.display.width == 0 || settings.display.height == 0)
 		// window minimized
 		return;
 	resetDevice();

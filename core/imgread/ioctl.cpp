@@ -1,4 +1,5 @@
-#ifdef _WIN32
+#include "build.h"
+#if defined(_WIN32) && !defined(TARGET_UWP)
 #include "types.h"
 #include "common.h"
 
@@ -331,7 +332,7 @@ bool PhysicalTrack::Read(u32 FAD,u8* dst,SectorFormat* sector_type,u8* subcode,S
 }
 
 
-Disc* ioctl_parse(const char* file)
+Disc* ioctl_parse(const char* file, std::vector<u8> *digest)
 {
 	
 	if (strlen(file)==3 && GetDriveType(file)==DRIVE_CDROM)
@@ -342,6 +343,8 @@ Disc* ioctl_parse(const char* file)
 
 		if (rv->Build(fn))
 		{
+			if (digest != nullptr)
+				digest->clear();
 			return rv;
 		}
 		else
@@ -355,5 +358,4 @@ Disc* ioctl_parse(const char* file)
 		return 0;
 	}
 }
-
 #endif

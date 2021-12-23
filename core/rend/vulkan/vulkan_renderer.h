@@ -66,8 +66,8 @@ protected:
 		}
 #endif
 #ifdef LIBRETRO
-		quadPipeline = std::unique_ptr<QuadPipeline>(new QuadPipeline(true));
-		quadPipeline->Init(&shaderManager, renderPass);
+		quadPipeline = std::unique_ptr<QuadPipeline>(new QuadPipeline(false, false));
+		quadPipeline->Init(&shaderManager, renderPass, subpass);
 		overlay = std::unique_ptr<VulkanOverlay>(new VulkanOverlay());
 		overlay->Init(quadPipeline.get());
 #endif
@@ -77,6 +77,7 @@ protected:
 public:
 	void Term() override
 	{
+		GetContext()->WaitIdle();
 		GetContext()->PresentFrame(nullptr, nullptr, vk::Extent2D());
 #ifdef LIBRETRO
 		overlay->Term();
@@ -146,7 +147,7 @@ public:
 		{
 #ifdef LIBRETRO
 			if (!ctx->rend.isRTT)
-				overlay->Prepare(texCommandBuffer, true, true);
+				overlay->Prepare(texCommandBuffer, true, true, textureCache);
 #endif
 			CheckFogTexture();
 			CheckPaletteTexture();
@@ -190,13 +191,13 @@ public:
 				GetContext()->BeginRenderPass();
 				GetContext()->PresentLastFrame();
 			}
-			const float dc2s_scale_h = screen_height / 480.0f;
-			const float sidebarWidth =  (screen_width - dc2s_scale_h * 640.0f) / 2;
+			const float dc2s_scale_h = settings.display.height / 480.0f;
+			const float sidebarWidth =  (settings.display.width - dc2s_scale_h * 640.0f) / 2;
 
 			std::vector<OSDVertex> osdVertices = GetOSDVertices();
-			const float x1 = 2.0f / (screen_width / dc2s_scale_h);
+			const float x1 = 2.0f / (settings.display.width / dc2s_scale_h);
 			const float y1 = 2.0f / 480;
-			const float x2 = 1 - 2 * sidebarWidth / screen_width;
+			const float x2 = 1 - 2 * sidebarWidth / settings.display.width;
 			const float y2 = 1;
 			for (OSDVertex& vtx : osdVertices)
 			{
@@ -208,14 +209,14 @@ public:
 			cmdBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, osdPipeline.GetPipeline());
 
 			osdPipeline.BindDescriptorSets(cmdBuffer);
-			const vk::Viewport viewport(0, 0, (float)screen_width, (float)screen_height, 0, 1.f);
+			const vk::Viewport viewport(0, 0, (float)settings.display.width, (float)settings.display.height, 0, 1.f);
 			cmdBuffer.setViewport(0, 1, &viewport);
-			const vk::Rect2D scissor({ 0, 0 }, { (u32)screen_width, (u32)screen_height });
+			const vk::Rect2D scissor({ 0, 0 }, { (u32)settings.display.width, (u32)settings.display.height });
 			cmdBuffer.setScissor(0, 1, &scissor);
-			osdBuffer->upload(osdVertices.size() * sizeof(OSDVertex), osdVertices.data());
+			osdBuffer->upload((u32)(osdVertices.size() * sizeof(OSDVertex)), osdVertices.data());
 			const vk::DeviceSize zero = 0;
 			cmdBuffer.bindVertexBuffers(0, 1, &osdBuffer->buffer.get(), &zero);
-			for (size_t i = 0; i < osdVertices.size(); i += 4)
+			for (u32 i = 0; i < (u32)osdVertices.size(); i += 4)
 				cmdBuffer.draw(4, 1, i, 0);
 			if (clear_screen)
 				GetContext()->EndFrame();
@@ -348,7 +349,7 @@ protected:
 			paletteTexture->SetPhysicalDevice(GetContext()->GetPhysicalDevice());
 			paletteTexture->SetDevice(GetContext()->GetDevice());
 			paletteTexture->tex_type = TextureType::_8888;
-			palette_updated = true;
+			forcePaletteUpdate();
 		}
 		if (!palette_updated)
 			return;

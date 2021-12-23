@@ -30,7 +30,8 @@ public:
 	}
 
 	const ComPtr<IDirect3DPixelShader9>& getShader(bool pp_Texture, bool pp_UseAlpha, bool pp_IgnoreTexA, u32 pp_ShadInstr,
-			bool pp_Offset, u32 pp_FogCtrl, bool pp_BumpMap, bool fog_clamping, bool trilinear, bool palette, bool gouraud);
+			bool pp_Offset, u32 pp_FogCtrl, bool pp_BumpMap, bool fog_clamping, bool trilinear, bool palette, bool gouraud,
+			bool clipInside);
 	const ComPtr<IDirect3DVertexShader9>& getVertexShader(bool gouraud);
 	const ComPtr<IDirect3DPixelShader9>& getModVolShader();
 	void term() {

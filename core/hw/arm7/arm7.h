@@ -99,6 +99,7 @@ typedef union
 alignas(8) extern reg_pair arm_Reg[RN_ARM_REG_COUNT];
 
 #define ARM_CYCLES_PER_SAMPLE 256
+extern int arm7ClockTicks;
 
 void CPUFiq();
 void CPUUpdateCPSR();

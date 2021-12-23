@@ -3,9 +3,7 @@
 #include "hw/pvr/pvr_mem.h"
 #include "hw/sh4/dyna/blockmanager.h"
 #include "hw/sh4/sh4_mem.h"
-#if defined(__SWITCH__)
-#include <malloc.h>
-#endif
+#include "oslib/oslib.h"
 
 #define HANDLER_MAX 0x1F
 #define HANDLER_COUNT (HANDLER_MAX+1)
@@ -332,11 +330,6 @@ void _vmem_mirror_mapping(u32 new_region,u32 start,u32 size)
 //init/reset/term
 void _vmem_init()
 {
-	_vmem_reset();
-}
-
-void _vmem_reset()
-{
 	//clear read tables
 	memset(_vmem_RF8,0,sizeof(_vmem_RF8));
 	memset(_vmem_RF16,0,sizeof(_vmem_RF16));
@@ -363,22 +356,16 @@ void _vmem_term()
 
 u8* virt_ram_base;
 bool vmem_4gb_space;
-static VMemType vmemstatus;
+static VMemType vmemstatus = MemTypeError;
 
-static void* malloc_pages(size_t size) {
-#ifdef _WIN32
-	return _aligned_malloc(size, PAGE_SIZE);
-#elif defined(_ISOC11_SOURCE)
-	return aligned_alloc(PAGE_SIZE, size);
-#elif defined(__SWITCH__)
-   return memalign(PAGE_SIZE, size);
-#else
-	void *data;
-	if (posix_memalign(&data, PAGE_SIZE, size) != 0)
-		return NULL;
-	else
-		return data;
-#endif
+static void *malloc_pages(size_t size)
+{
+	return allocAligned(PAGE_SIZE, size);
+}
+
+static void free_pages(void *p)
+{
+	freeAligned(p);
 }
 
 #if FEAT_SHREC != DYNAREC_NONE
@@ -441,7 +428,8 @@ bool _vmem_reserve()
 {
 	static_assert((sizeof(Sh4RCB) % PAGE_SIZE) == 0, "sizeof(Sh4RCB) not multiple of PAGE_SIZE");
 
-	vmemstatus = MemTypeError;
+	if (vmemstatus != MemTypeError)
+		return true;
 
 	// Use vmem only if settings mandate so, and if we have proper exception handlers.
 #if !defined(TARGET_NO_EXCEPTIONS)
@@ -453,27 +441,16 @@ bool _vmem_reserve()
 
 static void _vmem_term_mappings()
 {
-	if (vmemstatus == MemTypeError) {
-		if (p_sh4rcb != NULL)
-		{
-			free(p_sh4rcb);
-			p_sh4rcb = NULL;
-		}
-		if (mem_b.data != NULL)
-		{
-			free(mem_b.data);
-			mem_b.data = NULL;
-		}
-		if (vram.data != NULL)
-		{
-			free(vram.data);
-			vram.data = NULL;
-		}
-		if (aica_ram.data != NULL)
-		{
-			free(aica_ram.data);
-			aica_ram.data = NULL;
-		}
+	if (vmemstatus == MemTypeError)
+	{
+		free_pages(p_sh4rcb);
+		p_sh4rcb = nullptr;
+		free_pages(mem_b.data);
+		mem_b.data = nullptr;
+		free_pages(vram.data);
+		vram.data = nullptr;
+		free_pages(aica_ram.data);
+		aica_ram.data = nullptr;
 	}
 }
 
@@ -591,10 +568,12 @@ void _vmem_init_mappings()
 	aica_ram.Zero();
 	vram.Zero();
 	mem_b.Zero();
+	NOTICE_LOG(VMEM, "BASE %p RAM(%d MB) %p VRAM64(%d MB) %p ARAM(%d MB) %p",
+			virt_ram_base,
+			RAM_SIZE / 1024 / 1024, mem_b.data,
+			VRAM_SIZE / 1024 / 1024, vram.data,
+			ARAM_SIZE / 1024 / 1024, aica_ram.data);
 }
-
-#define freedefptr(x) \
-	if (x) { free(x); x = NULL; }
 
 void _vmem_release()
 {
@@ -606,11 +585,9 @@ void _vmem_release()
 	else
 	{
 		_vmem_unprotect_vram(0, VRAM_SIZE);
-		freedefptr(p_sh4rcb);
-		freedefptr(vram.data);
-		freedefptr(aica_ram.data);
-		freedefptr(mem_b.data);
+		_vmem_term_mappings();
 	}
+	vmemstatus = MemTypeError;
 }
 
 void _vmem_protect_vram(u32 addr, u32 size)

@@ -20,4 +20,6 @@
 
 #ifdef LIBRETRO
 LibretroGraphicsContext theGLContext;
+
+GraphicsContext *GraphicsContext::instance;
 #endif

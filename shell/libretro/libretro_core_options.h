@@ -214,7 +214,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
    },
    {
       CORE_OPTION_NAME "_internal_resolution",
-      "Internal Resolution (Restart Required)",
+      "Internal Resolution",
       NULL,
       "Modify rendering resolution.",
       NULL,
@@ -487,20 +487,6 @@ struct retro_core_option_v2_definition option_defs_us[] = {
          { NULL, NULL },
       },
       "enabled",
-   },
-   {
-      CORE_OPTION_NAME "_div_matching",
-      "DIV Matching",
-      NULL,
-      "Optimize integer division",
-      NULL,
-      "performance",
-      {
-         { "auto",     "Auto" },
-         { "disabled", NULL },
-         { NULL, NULL },
-      },
-      "auto",
    },
    {
       CORE_OPTION_NAME "_auto_skip_frame",

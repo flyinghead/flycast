@@ -21,7 +21,9 @@
 #pragma once
 #include <SDL.h>
 #include "types.h"
-#ifndef GLES
+#if defined(__APPLE__) && !defined(TARGET_IPHONE)
+#include <OpenGL/gl3.h>
+#elif !defined(GLES)
 #include <GL4/gl3w.h>
 #else
 #include <GLES32/gl32.h>
@@ -37,13 +39,11 @@ extern "C" void load_gles_symbols();
 class SDLGLGraphicsContext : public GLGraphicsContext
 {
 public:
-	bool Init();
-	void Term();
-	void Swap();
-	void SetWindow(SDL_Window *window) { this->window = window; }
+	bool init();
+	void term() override;
+	void swap();
 
 private:
-	SDL_Window* window = nullptr;
 	SDL_GLContext glcontext = nullptr;
 	bool swapOnVSync = false;
 	int swapInterval = 1;

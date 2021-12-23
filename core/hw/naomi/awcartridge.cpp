@@ -162,6 +162,7 @@ ROM board internal layouts:
 */
 #include "awcartridge.h"
 #include "awave_regs.h"
+#include "serialize.h"
 
 u32 AWCartridge::ReadMem(u32 address, u32 size) {
 	verify(size != 1);
@@ -333,7 +334,7 @@ u16 AWCartridge::decrypt(u16 cipherText, u32 address, const u8 key)
 }
 
 
-void AWCartridge::Init()
+void AWCartridge::Init(LoadProgress *progress, std::vector<u8> *digest)
 {
 	mpr_offset = decrypt16(0x58/2) | (decrypt16(0x5a/2) << 16);
 	INFO_LOG(NAOMI, "AWCartridge::SetKey rombd_key %02x mpr_offset %08x", rombd_key, mpr_offset);
@@ -423,28 +424,28 @@ std::string AWCartridge::GetGameId()
 	return game_id;
 }
 
-void AWCartridge::Serialize(void **data, unsigned int *total_size)
+void AWCartridge::Serialize(Serializer& ser) const
 {
-	REICAST_S(mpr_offset);
-	REICAST_S(mpr_bank);
-	REICAST_S(epr_offset);
-	REICAST_S(mpr_file_offset);
-	REICAST_S(mpr_record_index);
-	REICAST_S(mpr_first_file_index);
-	REICAST_S(dma_offset);
-	REICAST_S(dma_limit);
-	Cartridge::Serialize(data, total_size);
+	ser << mpr_offset;
+	ser << mpr_bank;
+	ser << epr_offset;
+	ser << mpr_file_offset;
+	ser << mpr_record_index;
+	ser << mpr_first_file_index;
+	ser << dma_offset;
+	ser << dma_limit;
+	Cartridge::Serialize(ser);
 }
 
-void AWCartridge::Unserialize(void **data, unsigned int *total_size)
+void AWCartridge::Deserialize(Deserializer& deser)
 {
-	REICAST_US(mpr_offset);
-	REICAST_US(mpr_bank);
-	REICAST_US(epr_offset);
-	REICAST_US(mpr_file_offset);
-	REICAST_US(mpr_record_index);
-	REICAST_US(mpr_first_file_index);
-	REICAST_US(dma_offset);
-	REICAST_US(dma_limit);
-	Cartridge::Unserialize(data, total_size);
+	deser >> mpr_offset;
+	deser >> mpr_bank;
+	deser >> epr_offset;
+	deser >> mpr_file_offset;
+	deser >> mpr_record_index;
+	deser >> mpr_first_file_index;
+	deser >> dma_offset;
+	deser >> dma_limit;
+	Cartridge::Deserialize(deser);
 }

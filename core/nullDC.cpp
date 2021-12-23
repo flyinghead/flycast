@@ -1,7 +1,5 @@
 #ifndef LIBRETRO
 #include "types.h"
-#include <future>
-
 #include "emulator.h"
 #include "hw/mem/_vmem.h"
 #include "cfg/cfg.h"
@@ -9,19 +7,20 @@
 #include "log/LogManager.h"
 #include "rend/gui.h"
 #include "oslib/oslib.h"
-#include "hw/sh4/sh4_if.h"
 #include "debug/gdb_server.h"
 #include "archive/rzip.h"
 #include "rend/mainui.h"
 #include "input/gamepad_device.h"
-
-static std::future<void> loadingDone;
+#include "lua/lua.h"
+#include "stdclass.h"
+#include "serialize.h"
 
 int flycast_init(int argc, char* argv[])
 {
 #if defined(TEST_AUTOMATION)
 	setbuf(stdout, 0);
 	setbuf(stderr, 0);
+	settings.aica.muteAudio = true;
 #endif
 	if (!_vmem_reserve())
 	{
@@ -45,25 +44,19 @@ int flycast_init(int argc, char* argv[])
 		LogManager::Init();
 		config::Settings::instance().load(false);
 	}
-	// Force the renderer type now since we're not switching
-	config::RendererType.commit();
 
 	os_CreateWindow();
 	os_SetupInput();
 
-	// Needed to avoid crash calling dc_is_running() in gui
-	if (!_nvmem_enabled())
-		dc_init();
-	Get_Sh4Interpreter(&sh4_cpu);
-	sh4_cpu.Init();
 	debugger::init();
+	lua::init();
 
 	return 0;
 }
 
 void dc_exit()
 {
-	dc_stop();
+	emu.stop();
 	mainui_stop();
 }
 
@@ -78,42 +71,28 @@ void SaveSettings()
 #endif
 }
 
-void dc_term()
+void flycast_term()
 {
-	dc_cancel_load();
-	dc_term_emulator();
-	SaveSettings();
+	gui_cancel_load();
+	lua::term();
+	emu.term();
 }
 
 void dc_savestate(int index)
 {
-	unsigned int total_size = 0;
-	void *data = nullptr;
+	Serializer ser;
+	dc_serialize(ser);
 
-	if (!dc_serialize(&data, &total_size))
-	{
-		WARN_LOG(SAVESTATE, "Failed to save state - could not initialize total size") ;
-		gui_display_notification("Save state failed", 2000);
-    	return;
-	}
-
-	data = malloc(total_size);
+	void *data = malloc(ser.size());
 	if (data == nullptr)
 	{
-		WARN_LOG(SAVESTATE, "Failed to save state - could not malloc %d bytes", total_size);
+		WARN_LOG(SAVESTATE, "Failed to save state - could not malloc %d bytes", (int)ser.size());
 		gui_display_notification("Save state failed - memory full", 2000);
     	return;
 	}
 
-	void *data_ptr = data;
-
-	if (!dc_serialize(&data_ptr, &total_size))
-	{
-		WARN_LOG(SAVESTATE, "Failed to save state - could not serialize data") ;
-		gui_display_notification("Save state failed", 2000);
-		free(data);
-    	return;
-	}
+	ser = Serializer(data, ser.size());
+	dc_serialize(ser);
 
 	std::string filename = hostfs::getSavestatePath(index, true);
 #if 0
@@ -127,7 +106,7 @@ void dc_savestate(int index)
     	return;
 	}
 
-	std::fwrite(data, 1, total_size, f) ;
+	std::fwrite(data, 1, ser.size(), f) ;
 	std::fclose(f);
 #else
 	RZipFile zipFile;
@@ -138,7 +117,7 @@ void dc_savestate(int index)
 		free(data);
     	return;
 	}
-	if (zipFile.Write(data, total_size) != total_size)
+	if (zipFile.Write(data, ser.size()) != ser.size())
 	{
 		WARN_LOG(SAVESTATE, "Failed to save state - error writing %s", filename.c_str());
 		gui_display_notification("Error saving state", 2000);
@@ -150,7 +129,7 @@ void dc_savestate(int index)
 #endif
 
 	free(data);
-	INFO_LOG(SAVESTATE, "Saved state to %s size %d", filename.c_str(), total_size) ;
+	INFO_LOG(SAVESTATE, "Saved state to %s size %d", filename.c_str(), (int)ser.size()) ;
 	gui_display_notification("State saved", 1000);
 }
 
@@ -159,13 +138,22 @@ void dc_loadstate(int index)
 	u32 total_size = 0;
 	FILE *f = nullptr;
 
-	dc_stop();
+	emu.stop();
 
 	std::string filename = hostfs::getSavestatePath(index, false);
 	RZipFile zipFile;
 	if (zipFile.Open(filename, false))
 	{
 		total_size = (u32)zipFile.Size();
+		if (index == -1 && config::GGPOEnable)
+		{
+			f = zipFile.rawFile();
+			long pos = std::ftell(f);
+			MD5Sum().add(f)
+					.getDigest(settings.network.md5.savestate);
+			std::fseek(f, pos, SEEK_SET);
+			f = nullptr;
+		}
 	}
 	else
 	{
@@ -177,6 +165,9 @@ void dc_loadstate(int index)
 			gui_display_notification("Save state not found", 2000);
 			return;
 		}
+		if (index == -1 && config::GGPOEnable)
+			MD5Sum().add(f)
+					.getDigest(settings.network.md5.savestate);
 		std::fseek(f, 0, SEEK_END);
 		total_size = (u32)std::ftell(f);
 		std::fseek(f, 0, SEEK_SET);
@@ -212,46 +203,18 @@ void dc_loadstate(int index)
 		return;
 	}
 
-	const void *data_ptr = data;
-	dc_loadstate(&data_ptr, total_size);
+	try {
+		Deserializer deser(data, total_size);
+		dc_loadstate(deser);
+		if (deser.size() != total_size)
+			WARN_LOG(SAVESTATE, "Savestate size %d but only %d bytes used", total_size, (int)deser.size());
+	} catch (const Deserializer::Exception& e) {
+		ERROR_LOG(SAVESTATE, "%s", e.what());
+	}
 
 	free(data);
 	EventManager::event(Event::LoadState);
     INFO_LOG(SAVESTATE, "Loaded state from %s size %d", filename.c_str(), total_size) ;
 }
 
-void dc_load_game(const char *path)
-{
-	loading_canceled = false;
-
-	loadingDone = std::async(std::launch::async, [path] {
-		dc_start_game(path);
-	});
-}
-
-bool dc_is_load_done()
-{
-	if (!loadingDone.valid())
-		return true;
-	if (loadingDone.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready)
-		return true;
-	return false;
-}
-
-void dc_cancel_load()
-{
-	if (loadingDone.valid())
-	{
-		loading_canceled = true;
-		loadingDone.get();
-	}
-	settings.imgread.ImagePath[0] = '\0';
-}
-
-void dc_get_load_status()
-{
-	if (loadingDone.valid())
-		loadingDone.get();
-}
 #endif
-

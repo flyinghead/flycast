@@ -100,7 +100,7 @@ protected:
 		}
 		if (mainBuffers[bufferIndex]->bufferSize < size)
 		{
-			u32 newSize = mainBuffers[bufferIndex]->bufferSize;
+			u32 newSize = (u32)mainBuffers[bufferIndex]->bufferSize;
 			while (newSize < size)
 				newSize *= 2;
 			INFO_LOG(RENDERER, "Increasing main buffer size %d -> %d", (u32)mainBuffers[bufferIndex]->bufferSize, newSize);

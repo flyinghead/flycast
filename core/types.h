@@ -131,9 +131,21 @@ enum HollyInterruptID
 		//bit 27 = G2 : Time out in CPU accessing
 };
 
-
+#ifndef TARGET_UWP
 #include "nowide/cstdlib.hpp"
 #include "nowide/cstdio.hpp"
+#else
+#include "nowide/config.hpp"
+#include "nowide/convert.hpp"
+#include "nowide/stackstring.hpp"
+#include "nowide/cenv.hpp"
+
+#include <cstdio>
+#include <stdio.h>
+namespace nowide {
+FILE *fopen(char const *file_name, char const *mode);
+}
+#endif
 
 #if defined(__APPLE__)
 int darw_printf(const char* Text,...);
@@ -157,6 +169,7 @@ inline static void JITWriteProtect(bool enabled) {
 #include <vector>
 #include <string>
 #include <map>
+#include <stdexcept>
 
 #define INLINE __forceinline
 
@@ -185,19 +198,6 @@ inline static void JITWriteProtect(bool enabled) {
 
 void os_DebugBreak();
 #define dbgbreak os_DebugBreak()
-
-bool rc_serialize(const void *src, unsigned int src_size, void **dest, unsigned int *total_size) ;
-bool rc_unserialize(void *src, unsigned int src_size, void **dest, unsigned int *total_size);
-bool dc_serialize(void **data, unsigned int *total_size);
-bool dc_unserialize(void **data, unsigned int *total_size);
-
-#define REICAST_S(v) rc_serialize(&(v), sizeof(v), data, total_size)
-#define REICAST_US(v) rc_unserialize(&(v), sizeof(v), data, total_size)
-
-#define REICAST_SA(v_arr,num) rc_serialize((v_arr), sizeof((v_arr)[0])*(num), data, total_size)
-#define REICAST_USA(v_arr,num) rc_unserialize((v_arr), sizeof((v_arr)[0])*(num), data, total_size)
-
-#define REICAST_SKIP(size) do { if (*data) *(u8**)data += (size); *total_size += (size); } while (false)
 
 #ifndef _MSC_VER
 #define stricmp strcasecmp
@@ -296,7 +296,19 @@ enum class RenderType {
 	Vulkan = 4,
 	Vulkan_OIT = 5,
 	DirectX9 = 1,
+	DirectX11 = 2,
+	DirectX11_OIT = 6,
 };
+
+static inline bool isOpenGL(RenderType renderType)  {
+	return renderType == RenderType::OpenGL || renderType == RenderType::OpenGL_OIT;
+}
+static inline bool isVulkan(RenderType renderType) {
+	return renderType == RenderType::Vulkan || renderType == RenderType::Vulkan_OIT;
+}
+static inline bool isDirectX(RenderType renderType) {
+	return renderType == RenderType::DirectX9 || renderType == RenderType::DirectX11 || renderType == RenderType::DirectX11_OIT;
+}
 
 enum class KeyboardLayout {
 	JP = 1,
@@ -331,6 +343,13 @@ struct settings_t
 		u32 flash_size;
 	} platform;
 
+	struct {
+		int width = 640;
+		int height = 480;
+		float pointScale = 1.f;
+		float refreshRate = 0;
+	} display;
+
 	struct
 	{
 		bool disable_nvmem;
@@ -339,12 +358,14 @@ struct settings_t
 	struct
 	{
 		bool NoBatch;
+		bool muteAudio;
 	} aica;
 
 	struct
 	{
-		char ImagePath[512];
-	} imgread;
+		std::string path;
+		std::string gameId;
+	} content;
 
 	struct {
 		JVS JammaSetup;
@@ -352,7 +373,21 @@ struct settings_t
 		bool fastForwardMode;
 	} input;
 
-	bool gameStarted;
+	struct
+	{
+		bool online;
+		struct
+		{
+			u8 game[16];
+			u8 bios[16];
+			u8 savestate[16];
+			u8 nvmem[16];
+			u8 nvmem2[16];
+			u8 eeprom[16];
+			u8 vmu[16];
+		} md5;
+	} network;
+	bool disableRenderer;
 };
 
 extern settings_t settings;
@@ -369,11 +404,6 @@ inline bool is_s8(u32 v) { return (s8)v==(s32)v; }
 inline bool is_u8(u32 v) { return (u8)v==(s32)v; }
 inline bool is_s16(u32 v) { return (s16)v==(s32)v; }
 inline bool is_u16(u32 v) { return (u16)v==(u32)v; }
-
-//PVR
-s32 libPvr_Init();
-void libPvr_Reset(bool hard);
-void libPvr_Term();
 
 // 0x00600000 - 0x006007FF [NAOMI] (modem area for dreamcast)
 u32  libExtDevice_ReadMem_A0_006(u32 addr,u32 size);
@@ -445,34 +475,11 @@ public:
 	FlycastException(const std::string& reason) : std::runtime_error(reason) {}
 };
 
-enum serialize_version_enum {
-	V1,
-	V2,
-	V3,
-	V4,
-	V5_LIBRETRO,
-	V6_LIBRETRO,
-	V7_LIBRETRO,
-	V8_LIBRETRO,
-	V9_LIBRETRO,
-	V10_LIBRETRO,
-	V11_LIBRETRO,
-	V12_LIBRETRO,
-	V13_LIBRETRO,
-
-	V5 = 800,
-	V6 = 801,
-	V7 = 802,
-	V8 = 803,
-	V9 = 804,
-	V10 = 805,
-	V11 = 806,
-	V12 = 807,
-	V13 = 808,
-	V14 = 809,
-	V15 = 810,
-	V16 = 811,
-	V17 = 812,
-	V18 = 813,
-	VCUR_FLYCAST = V18,
+class LoadCancelledException : public FlycastException
+{
+public:
+	LoadCancelledException() : FlycastException("") {}
 };
+
+class Serializer;
+class Deserializer;

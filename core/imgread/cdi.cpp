@@ -3,7 +3,7 @@
 
 #include "deps/chdpsr/cdipsr.h"
 
-Disc* cdi_parse(const char* file)
+Disc* cdi_parse(const char* file, std::vector<u8> *digest)
 {
 	if (get_file_extension(file) != "cdi")
 		return nullptr;
@@ -11,7 +11,10 @@ Disc* cdi_parse(const char* file)
 	FILE *fsource = nowide::fopen(file, "rb");
 
 	if (fsource == nullptr)
+	{
+		WARN_LOG(COMMON, "Cannot open file '%s' errno %d", file, errno);
 		throw FlycastException(std::string("Cannot open CDI file ") + file);
+	}
 
 	image_s image = { 0 };
 	track_s track = { 0 };
@@ -78,10 +81,10 @@ Disc* cdi_parse(const char* file)
 #endif
 				if (ft)
 				{
-					ft=false;
+					ft = false;
 					Session s;
-					s.StartFAD=track.pregap_length + track.start_lba;
-					s.FirstTrack=track.global_current_track;
+					s.StartFAD = track.pregap_length + track.start_lba;
+					s.FirstTrack = (u8)track.global_current_track;
 					rv->sessions.push_back(s);
 				}
 
@@ -129,6 +132,8 @@ Disc* cdi_parse(const char* file)
 
 		image.remaining_sessions--;
 	}
+	if (digest != nullptr)
+		*digest = MD5Sum().add(fsource).getDigest();
 	std::fclose(fsource);
 
 	rv->type=GuessDiscType(CD_M1,CD_M2,CD_DA);

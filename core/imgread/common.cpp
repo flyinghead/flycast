@@ -1,31 +1,31 @@
 #include "common.h"
+#include "hw/gdrom/gdromv3.h"
+#include "cfg/option.h"
+#include "stdclass.h"
 
-Disc* chd_parse(const char* file);
-Disc* gdi_parse(const char* file);
-Disc* cdi_parse(const char* file);
-Disc* cue_parse(const char* file);
-#ifdef _WIN32
-Disc* ioctl_parse(const char* file);
-#endif
+Disc* chd_parse(const char* file, std::vector<u8> *digest);
+Disc* gdi_parse(const char* file, std::vector<u8> *digest);
+Disc* cdi_parse(const char* file, std::vector<u8> *digest);
+Disc* cue_parse(const char* file, std::vector<u8> *digest);
+Disc* ioctl_parse(const char* file, std::vector<u8> *digest);
 
 u32 NullDriveDiscType;
 Disc* disc;
 
-Disc*(*drivers[])(const char* path)=
+constexpr Disc* (*drivers[])(const char* path, std::vector<u8> *digest)
 {
 	chd_parse,
 	gdi_parse,
 	cdi_parse,
 	cue_parse,
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(TARGET_UWP)
 	ioctl_parse,
 #endif
-	0
 };
 
 u8 q_subchannel[96];
 
-bool ConvertSector(u8* in_buff , u8* out_buff , int from , int to,int sector)
+static bool convertSector(u8* in_buff , u8* out_buff , int from , int to,int sector)
 {
 	//get subchannel data, if any
 	if (from == 2448)
@@ -80,50 +80,54 @@ bool ConvertSector(u8* in_buff , u8* out_buff , int from , int to,int sector)
 	return true;
 }
 
-Disc* OpenDisc(const char* fn)
+Disc* OpenDisc(const std::string& path, std::vector<u8> *digest)
 {
-	Disc* rv = NULL;
+	for (auto driver : drivers)
+	{
+		Disc *disc = driver(path.c_str(), digest);
 
-	for (unat i=0; drivers[i] && !rv; i++) {  // ;drivers[i] && !(rv=drivers[i](fn));
-		rv = drivers[i](fn);
-
-		if (rv && cdi_parse == drivers[i]) {
-			const char warn_str[] = "Warning: CDI Image Loaded! Many CDI images are known to be defective, GDI, CUE or CHD format is preferred. "
-					"Please only file bug reports when using images known to be good (GDI, CUE or CHD).";
-			WARN_LOG(GDROM, "%s", warn_str);
-
-			break;
+		if (disc != nullptr)
+		{
+			if (cdi_parse == driver) {
+				const char warn_str[] = "Warning: CDI Image Loaded! Many CDI images are known to be defective, GDI, CUE or CHD format is preferred. "
+						"Please only file bug reports when using images known to be good (GDI, CUE or CHD).";
+				WARN_LOG(GDROM, "%s", warn_str);
+			}
+			return disc;
 		}
 	}
 
-	return rv;
+	return nullptr;
 }
 
-bool InitDrive_(char* fn)
+static bool loadDisk(const std::string& path)
 {
 	TermDrive();
 
 	//try all drivers
-	disc = OpenDisc(fn);
+	std::vector<u8> digest;
+	disc = OpenDisc(path, config::GGPOEnable ? &digest : nullptr);
 
 	if (disc != NULL)
 	{
-		INFO_LOG(GDROM, "gdrom: Opened image \"%s\"", fn);
-		NullDriveDiscType = Busy;
+		if (config::GGPOEnable)
+			MD5Sum().add(digest)
+					.getDigest(settings.network.md5.game);
+		INFO_LOG(GDROM, "gdrom: Opened image \"%s\"", path.c_str());
 	}
 	else
 	{
-		INFO_LOG(GDROM, "gdrom: Failed to open image \"%s\"", fn);
-		NullDriveDiscType = NoDisk; //no disc :)
+		INFO_LOG(GDROM, "gdrom: Failed to open image \"%s\"", path.c_str());
+		NullDriveDiscType = NoDisk;
 	}
 	libCore_gdrom_disc_change();
 
 	return disc != NULL;
 }
 
-bool InitDrive()
+bool InitDrive(const std::string& path)
 {
-	bool rc = DiscSwap();
+	bool rc = DiscSwap(path);
 	// not needed at startup and confuses some games
 	sns_asc = 0;
 	sns_ascq = 0;
@@ -142,21 +146,22 @@ void DiscOpenLid()
 	sns_key = 0x6;
 }
 
-bool DiscSwap()
+bool DiscSwap(const std::string& path)
 {
 	// These Additional Sense Codes mean "The lid was closed"
 	sns_asc = 0x28;
 	sns_ascq = 0x00;
 	sns_key = 0x6;
 
-	if (settings.imgread.ImagePath[0] == '\0')
+	if (path.empty())
 	{
+		TermDrive();
 		NullDriveDiscType = NoDisk;
 		gd_setdisc();
 		return true;
 	}
 
-	if (InitDrive_(settings.imgread.ImagePath))
+	if (loadDisk(path))
 		return true;
 
 	NullDriveDiscType = NoDisk;
@@ -196,13 +201,13 @@ static u32 CreateTrackInfo_se(u32 ctrl, u32 addr, u32 tracknum)
 	return *(u32*)p;
 }
 
-void GetDriveSector(u8 * buff,u32 StartSector,u32 SectorCount,u32 secsz)
+void libGDR_ReadSector(u8 *buff, u32 startSector, u32 sectorCount, u32 sectorSize)
 {
 	if (disc != nullptr)
-		disc->ReadSectors(StartSector, SectorCount, buff, secsz);
+		disc->ReadSectors(startSector, sectorCount, buff, sectorSize);
 }
 
-void GetDriveToc(u32* to,DiskArea area)
+void libGDR_GetToc(u32* to, DiskArea area)
 {
 	if (!disc)
 		return;
@@ -240,7 +245,7 @@ void GetDriveToc(u32* to,DiskArea area)
 		to[i]=CreateTrackInfo(disc->tracks[i].CTRL,disc->tracks[i].ADDR,disc->tracks[i].StartFAD);
 }
 
-void GetDriveSessionInfo(u8* to,u8 session)
+void libGDR_GetSessionInfo(u8* to, u8 session)
 {
 	if (!disc)
 		return;
@@ -273,4 +278,70 @@ DiscType GuessDiscType(bool m1, bool m2, bool da)
 		return CdRom_Extra;
 	else
 		return CdRom;
+}
+
+void Disc::ReadSectors(u32 FAD, u32 count, u8* dst, u32 fmt, LoadProgress *progress)
+{
+	u8 temp[2448];
+	SectorFormat secfmt;
+	SubcodeFormat subfmt;
+
+	for (u32 i = 1; i <= count; i++)
+	{
+		if (progress != nullptr)
+		{
+			if (progress->cancelled)
+				throw LoadCancelledException();
+			progress->label = "Loading...";
+			progress->progress = (float)i / count;
+		}
+		if (ReadSector(FAD,temp,&secfmt,q_subchannel,&subfmt))
+		{
+			//TODO: Proper sector conversions
+			if (secfmt==SECFMT_2352)
+			{
+				convertSector(temp,dst,2352,fmt,FAD);
+			}
+			else if (fmt == 2048 && secfmt==SECFMT_2336_MODE2)
+				memcpy(dst,temp+8,2048);
+			else if (fmt==2048 && (secfmt==SECFMT_2048_MODE1 || secfmt==SECFMT_2048_MODE2_FORM1 ))
+			{
+				memcpy(dst,temp,2048);
+			}
+			else if (fmt==2352 && (secfmt==SECFMT_2048_MODE1 || secfmt==SECFMT_2048_MODE2_FORM1 ))
+			{
+				INFO_LOG(GDROM, "GDR:fmt=2352;secfmt=2048");
+				memcpy(dst,temp,2048);
+			}
+			else if (fmt==2048 && secfmt==SECFMT_2448_MODE2)
+			{
+				// Pier Solar and the Great Architects
+				convertSector(temp, dst, 2448, fmt, FAD);
+			}
+			else
+			{
+				WARN_LOG(GDROM, "ERROR: UNABLE TO CONVERT SECTOR. THIS IS FATAL. Format: %d Sector format: %d", fmt, secfmt);
+				//verify(false);
+			}
+		}
+		else
+		{
+			WARN_LOG(GDROM, "Sector Read miss FAD: %d", FAD);
+		}
+		dst+=fmt;
+		FAD++;
+	}
+}
+
+void libGDR_ReadSubChannel(u8 * buff, u32 len)
+{
+	memcpy(buff, q_subchannel, len);
+}
+
+u32 libGDR_GetDiscType()
+{
+	if (disc)
+		return disc->type;
+	else
+		return NullDriveDiscType;
 }

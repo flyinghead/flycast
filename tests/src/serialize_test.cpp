@@ -11,7 +11,7 @@ protected:
 	void SetUp() override {
 		if (!_vmem_reserve())
 			die("_vmem_reserve failed");
-		dc_init();
+		emu.init();
 		dc_reset(true);
 	}
 };
@@ -28,10 +28,10 @@ TEST_F(SerializeTest, SizeTest)
 	MapleExpansionDevices[1][1] = MDT_SegaVMU;
 	mcfg_CreateDevices();
 
-	unsigned int total_size = 0;
-	void *data = nullptr;
-	ASSERT_TRUE(dc_serialize(&data, &total_size));
-	ASSERT_EQ(28187879u, total_size);
+	std::vector<char> data(30000000);
+	Serializer ser(data.data(), data.size());
+	dc_serialize(ser);
+	ASSERT_EQ(28191583u, ser.size());
 }
 
 

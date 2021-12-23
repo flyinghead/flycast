@@ -116,8 +116,8 @@
 				pos.y = std::max<CGFloat>(std::min<CGFloat>(25.0, pos.y), -25.0);
 				self.joyXConstraint.constant = pos.x;
 				self.joyYConstraint.constant = pos.y;
-				virtualGamepad->gamepad_axis_input(IOS_AXIS_LX, (s8)std::round(pos.x * 127.0 / 25.0));
-				virtualGamepad->gamepad_axis_input(IOS_AXIS_LY, (s8)std::round(pos.y * 127.0 / 25.0));
+				virtualGamepad->gamepad_axis_input(IOS_AXIS_LX, (s8)std::round(pos.x * 32767.0 / 25.0));
+				virtualGamepad->gamepad_axis_input(IOS_AXIS_LY, (s8)std::round(pos.y * 32767.0 / 25.0));
 				break;
 			}
 		}

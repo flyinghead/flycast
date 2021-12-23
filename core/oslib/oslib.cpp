@@ -19,6 +19,7 @@
 #include "oslib.h"
 #include "stdclass.h"
 #include "cfg/cfg.h"
+#include "cfg/option.h"
 
 namespace hostfs
 {
@@ -56,6 +57,12 @@ std::string findFlash(const std::string& prefix, const std::string& names)
 		std::string fullpath = get_readonly_data_path(name);
 		if (file_exists(fullpath))
 			return fullpath;
+		for (const auto& path : config::ContentPath.get())
+		{
+			fullpath = path + "/" + name;
+			if (file_exists(fullpath))
+				return fullpath;
+		}
 
 		start = semicolon;
 		if (start != npos)
@@ -72,12 +79,21 @@ std::string getFlashSavePath(const std::string& prefix, const std::string& name)
 
 std::string findNaomiBios(const std::string& name)
 {
-	return get_readonly_data_path(name);
+	std::string fullpath = get_readonly_data_path(name);
+	if (file_exists(fullpath))
+		return fullpath;
+	for (const auto& path : config::ContentPath.get())
+	{
+		fullpath = path + "/" + name;
+		if (file_exists(fullpath))
+			return fullpath;
+	}
+	return "";
 }
 
 std::string getSavestatePath(int index, bool writable)
 {
-	std::string state_file = settings.imgread.ImagePath;
+	std::string state_file = settings.content.path;
 	size_t lastindex = state_file.find_last_of('/');
 #ifdef _WIN32
 	size_t lastindex2 = state_file.find_last_of('\\');
@@ -93,19 +109,21 @@ std::string getSavestatePath(int index, bool writable)
 		state_file = state_file.substr(0, lastindex);
 
 	char index_str[4] = "";
-	if (index != 0) // When index is 0, use same name before multiple states is added
-		sprintf(index_str, "_%d", index);
+	if (index > 0) // When index is 0, use same name before multiple states is added
+		sprintf(index_str, "_%d", std::min(99, index));
 
 	state_file = state_file + index_str + ".state";
+	if (index == -1)
+		state_file += ".net";
 	if (writable)
 		return get_writable_data_path(state_file);
 	else
 		return get_readonly_data_path(state_file);
 }
 
-std::string getVulkanCachePath()
+std::string getShaderCachePath(const std::string& filename)
 {
-	return get_writable_data_path("vulkan_pipeline.cache");
+	return get_writable_data_path(filename);
 }
 
 std::string getTextureLoadPath(const std::string& gameId)

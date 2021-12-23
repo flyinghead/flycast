@@ -19,7 +19,7 @@ class AWCartridge: public Cartridge
 public:
 	AWCartridge(u32 size) : Cartridge(size) {}
 
-	void Init() override;
+	void Init(LoadProgress *progress = nullptr, std::vector<u8> *digest = nullptr) override;
 	u32 ReadMem(u32 address, u32 size) override;
 	void WriteMem(u32 address, u32 data, u32 size) override;
 
@@ -28,8 +28,8 @@ public:
 	std::string GetGameId() override;
 
 	void SetKey(u32 key) override;
-	void Serialize(void **data, unsigned int *total_size) override;
-	void Unserialize(void **data, unsigned int *total_size) override;
+	void Serialize(Serializer& ser) const override;
+	void Deserialize(Deserializer& deser) override;
 
 private:
 	void device_reset();

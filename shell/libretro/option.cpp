@@ -25,7 +25,6 @@ namespace config {
 
 Option<bool> DynarecEnabled("", true);
 Option<bool> DynarecIdleSkip("", true);
-Option<bool> DynarecSafeMode(CORE_OPTION_NAME "_div_matching");
 
 // General
 
@@ -42,7 +41,6 @@ Option<int> SavestateSlot("");
 // Sound
 
 Option<bool> DSPEnabled(CORE_OPTION_NAME "_enable_dsp", false);
-Option<bool> DisableSound("");
 #if HOST_CPU == CPU_ARM
 Option<int> AudioBufferSize("", 5644);	// 128 ms
 #else
@@ -109,6 +107,10 @@ Option<bool> ActAsServer("", false);
 OptionString DNS("", "46.101.91.123");
 OptionString NetworkServer("", "");
 Option<bool> EmulateBBA("", false); // TODO
+Option<bool> GGPOEnable("", false);
+Option<int> GGPODelay("", 0);
+Option<bool> NetworkStats("", false);
+Option<int> GGPOAnalogAxes("", 0);
 
 // Maple
 

@@ -8,8 +8,10 @@
 #include "x11.h"
 #include "rend/gui.h"
 #include "input/gamepad.h"
+#include "input/mouse.h"
 #include "icon.h"
 #include "wsi/context.h"
+#include "wsi/gl_context.h"
 #include "hw/maple/maple_devs.h"
 #include "emulator.h"
 
@@ -369,11 +371,7 @@ void x11_window_create()
 		{
 			XMapWindow(x11_disp, x11_win);
 		}
-		theGLContext.SetDisplayAndWindow(x11_disp, x11_win);
-#ifdef USE_VULKAN
-		theVulkanContext.SetWindow((void *)x11_win, (void *)x11_disp);
-#endif
-		InitRenderApi();
+		initRenderApi((void *)x11_win, (void *)x11_disp);
 
 		XFlush(x11_disp);
 
@@ -400,7 +398,7 @@ void x11_window_set_text(const char* text)
 void x11_window_destroy()
 {
 	destroy_empty_cursor();
-	TermRenderApi();
+	termRenderApi();
 
 	// close XWindow
 	if (x11_win)

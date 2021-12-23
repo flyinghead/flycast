@@ -28,7 +28,6 @@
 #include "hw/mem/_vmem.h"
 #include "oslib/oslib.h"
 
-static int cycle_counter;
 static void (*mainloop)();
 static void (*ngen_FailedToFindBlock_)();
 
@@ -110,7 +109,7 @@ void X86Compiler::compile(RuntimeBlockInfo* block, bool force_checks, bool optim
 
 	checkBlock(force_checks, block);
 
-	sub(dword[&cycle_counter], block->guest_cycles);
+	sub(dword[&Sh4cntx.cycle_counter], block->guest_cycles);
 	Xbyak::Label no_up;
 	jns(no_up);
 	call((const void *)intc_sched);
@@ -396,8 +395,6 @@ void X86Compiler::genMainloop()
 
 	mov(ecx, dword[&Sh4cntx.pc]);
 
-	mov(dword[&cycle_counter], SH4_TIMESLICE);
-
 	mov(eax, 0);
 	//next_pc _MUST_ be on ecx
 	Xbyak::Label cleanup;
@@ -452,7 +449,7 @@ void X86Compiler::genMainloop()
 	unwinder.endProlog(0);
 	Xbyak::Label intc_schedLabel;
 	L(intc_schedLabel);
-	add(dword[&cycle_counter], SH4_TIMESLICE);
+	add(dword[&Sh4cntx.cycle_counter], SH4_TIMESLICE);
 	call((void *)UpdateSystem);
 	cmp(eax, 0);
 	jnz(do_iter);

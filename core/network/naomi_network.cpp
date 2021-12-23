@@ -28,6 +28,7 @@
 #include "hw/naomi/naomi_cart.h"
 #include "hw/naomi/naomi_flashrom.h"
 #include "cfg/option.h"
+#include "emulator.h"
 
 #ifdef _MSC_VER
 #if defined(_WIN64)
@@ -618,6 +619,7 @@ void NaomiNetwork::shutdown()
 	}
 	if (VALID(client_sock))
 		closeSocket(client_sock);
+	emu.setNetworkState(false);
 }
 
 void NaomiNetwork::terminate()
@@ -636,7 +638,9 @@ std::future<bool> NaomiNetwork::startNetworkAsync()
 	network_stopping = false;
 	start_now = false;
 	return std::async(std::launch::async, [this] {
-		return startNetwork();
+		bool res = startNetwork();
+		emu.setNetworkState(res);
+		return res;
 	});
 }
 

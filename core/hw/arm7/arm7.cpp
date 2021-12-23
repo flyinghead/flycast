@@ -48,32 +48,34 @@ static void CPUUpdateFlags();
 static void CPUSoftwareInterrupt(int comment);
 static void CPUUndefinedException();
 
-#if FEAT_AREC == DYNAREC_NONE
-
 //
 // ARM7 interpreter
 //
-static int clockTicks;
+int arm7ClockTicks;
+
+#if FEAT_AREC == DYNAREC_NONE
 
 static void runInterpreter(u32 CycleCount)
 {
 	if (!Arm7Enabled)
 		return;
 
-	clockTicks -= CycleCount;
-	while (clockTicks < 0)
+	arm7ClockTicks -= CycleCount;
+	while (arm7ClockTicks < 0)
 	{
 		if (reg[INTR_PEND].I)
 			CPUFiq();
 
 		reg[15].I = armNextPC + 8;
+
+		int& clockTicks = arm7ClockTicks;
 		#include "arm-new.h"
 	}
 }
 
 void aicaarm::avoidRaceCondition()
 {
-	clockTicks = std::min(clockTicks, -50);
+	arm7ClockTicks = std::min(arm7ClockTicks, -50);
 }
 
 void aicaarm::run(u32 samples)

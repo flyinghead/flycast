@@ -1,9 +1,8 @@
 #include "ta_ctx.h"
 #include "spg.h"
 #include "cfg/option.h"
-#if defined(__SWITCH__)
-#include <malloc.h>
-#endif
+#include "Renderer_if.h"
+#include "serialize.h"
 
 extern u32 fskip;
 extern u32 FrameCount;
@@ -14,37 +13,6 @@ tad_context ta_tad;
 
 TA_context*  vd_ctx;
 rend_context vd_rc;
-
-// helper for 32 byte aligned memory allocation
-void* OS_aligned_malloc(size_t align, size_t size)
-{
-#ifdef __MINGW32__
-	return __mingw_aligned_malloc(size, align);
-#elif defined(_WIN32)
-	return _aligned_malloc(size, align);
-#elif defined(__SWITCH__)
-   return memalign(align, size);
-#else
-	void *result;
-	if (posix_memalign(&result, align, size))
-		return NULL;
-	else
-		return result;
-#endif
-}
-
-// helper for 32 byte aligned memory de-allocation
-void OS_aligned_free(void *ptr)
-{
-#ifdef __MINGW32__
-	__mingw_aligned_free(ptr);
-#elif defined(_WIN32)
-	_aligned_free(ptr);
-#else
-	free(ptr);
-#endif
-}
-
 
 void SetCurrentTARC(u32 addr)
 {
@@ -72,7 +40,6 @@ void SetCurrentTARC(u32 addr)
 	}
 }
 
-static std::mutex mtx_rqueue;
 TA_context* rqueue;
 cResetEvent frame_finished;
 
@@ -80,64 +47,55 @@ bool QueueRender(TA_context* ctx)
 {
 	verify(ctx != 0);
 	
-	bool skipFrame = false;
-	RenderCount++;
-	if (RenderCount % (config::SkipFrame + 1) != 0)
-		skipFrame = true;
-	else if (config::ThreadedRendering && rqueue != nullptr
-			&& (config::AutoSkipFrame == 0 || (config::AutoSkipFrame == 1 && SH4FastEnough)))
-		// The previous render hasn't completed yet so we wait.
-		// If autoskipframe is enabled (normal level), we only do so if the CPU is running
-		// fast enough over the last frames
-		frame_finished.Wait();
+	bool skipFrame = settings.disableRenderer;
+	if (!skipFrame)
+	{
+		RenderCount++;
+		if (RenderCount % (config::SkipFrame + 1) != 0)
+			skipFrame = true;
+		else if (config::ThreadedRendering && rqueue != nullptr
+				&& (config::AutoSkipFrame == 0 || (config::AutoSkipFrame == 1 && SH4FastEnough)))
+			// The previous render hasn't completed yet so we wait.
+			// If autoskipframe is enabled (normal level), we only do so if the CPU is running
+			// fast enough over the last frames
+			frame_finished.Wait();
+	}
 
 	if (skipFrame || rqueue)
 	{
 		tactx_Recycle(ctx);
-		fskip++;
+		if (!settings.disableRenderer)
+			fskip++;
 		return false;
 	}
-
+	// disable net rollbacks until the render thread has processed the frame
+	rend_disable_rollback();
 	frame_finished.Reset();
-	mtx_rqueue.lock();
-	TA_context* old = rqueue;
-	rqueue=ctx;
-	mtx_rqueue.unlock();
+	verify(rqueue == nullptr);
+	rqueue = ctx;
 
-	verify(!old);
 
 	return true;
 }
 
 TA_context* DequeueRender()
 {
-	mtx_rqueue.lock();
-	TA_context* rv = rqueue;
-	mtx_rqueue.unlock();
-
-	if (rv)
+	if (rqueue != nullptr)
 		FrameCount++;
 
-	return rv;
+	return rqueue;
 }
 
 bool rend_framePending() {
-	mtx_rqueue.lock();
-	TA_context* rv = rqueue;
-	mtx_rqueue.unlock();
-
-	return rv != 0;
+	return rqueue != nullptr;
 }
 
 void FinishRender(TA_context* ctx)
 {
-	if (ctx != NULL)
+	if (ctx != nullptr)
 	{
 		verify(rqueue == ctx);
-		mtx_rqueue.lock();
-		rqueue = NULL;
-		mtx_rqueue.unlock();
-
+		rqueue = nullptr;
 		tactx_Recycle(ctx);
 	}
 	frame_finished.Set();
@@ -250,54 +208,80 @@ void tactx_Term()
 
 const u32 NULL_CONTEXT = ~0u;
 
-void SerializeTAContext(void **data, unsigned int *total_size)
+static void serializeContext(Serializer& ser, const TA_context *ctx)
 {
-	if (ta_ctx == nullptr)
+	if (ser.dryrun())
 	{
-		REICAST_S(NULL_CONTEXT);
+		// Maximum size: address, size, data, render pass count, render passes
+		ser.skip(4 + 4 + TA_DATA_SIZE + 4 + ARRAY_SIZE(tad_context::render_passes) * 4);
 		return;
 	}
-	REICAST_S(ta_ctx->Address);
-	const u32 taSize = ta_tad.thd_data - ta_tad.thd_root;
-	REICAST_S(taSize);
-	if (*data == nullptr)
+	if (ctx == nullptr)
 	{
-		// Maximum size
-		REICAST_SKIP(TA_DATA_SIZE + 4 + ARRAY_SIZE(ta_tad.render_passes) * 4);
+		ser << NULL_CONTEXT;
 		return;
 	}
-	REICAST_SA(ta_tad.thd_root, taSize);
-	REICAST_S(ta_tad.render_pass_count);
-	for (u32 i = 0; i < ta_tad.render_pass_count; i++)
+	ser << ctx->Address;
+	const tad_context& tad = ctx == ::ta_ctx ? ta_tad : ctx->tad;
+	const u32 taSize = tad.thd_data - tad.thd_root;
+	ser << taSize;
+	ser.serialize(tad.thd_root, taSize);
+	ser << tad.render_pass_count;
+	for (u32 i = 0; i < tad.render_pass_count; i++)
 	{
-		u32 offset = (u32)(ta_tad.render_passes[i] - ta_tad.thd_root);
-		REICAST_S(offset);
+		u32 offset = (u32)(tad.render_passes[i] - tad.thd_root);
+		ser << offset;
 	}
 }
 
-void UnserializeTAContext(void **data, unsigned int *total_size, serialize_version_enum version)
+static void deserializeContext(Deserializer& deser, TA_context **pctx)
 {
 	u32 address;
-	REICAST_US(address);
+	deser >> address;
 	if (address == NULL_CONTEXT)
-		return;
-	SetCurrentTARC(address);
-	u32 size;
-	REICAST_US(size);
-	REICAST_USA(ta_tad.thd_root, size);
-	ta_tad.thd_data = ta_tad.thd_root + size;
-	if (version >= V12 || (version >= V12_LIBRETRO && version < V5))
 	{
-		REICAST_US(ta_tad.render_pass_count);
-		for (u32 i = 0; i < ta_tad.render_pass_count; i++)
+		*pctx = nullptr;
+		return;
+	}
+	*pctx = tactx_Find(address, true);
+	u32 size;
+	deser >> size;
+	tad_context& tad = (*pctx)->tad;
+	deser.deserialize(tad.thd_root, size);
+	tad.thd_data = tad.thd_root + size;
+	if (deser.version() >= Deserializer::V12 || (deser.version() >= Deserializer::V12_LIBRETRO && deser.version() < Deserializer::V5))
+	{
+		deser >> tad.render_pass_count;
+		for (u32 i = 0; i < tad.render_pass_count; i++)
 		{
 			u32 offset;
-			REICAST_US(offset);
-			ta_tad.render_passes[i] = ta_tad.thd_root + offset;
+			deser >> offset;
+			tad.render_passes[i] = tad.thd_root + offset;
 		}
 	}
 	else
 	{
-		ta_tad.render_pass_count = 0;
+		tad.render_pass_count = 0;
 	}
+}
+
+void SerializeTAContext(Serializer& ser)
+{
+	serializeContext(ser, ta_ctx);
+	if (TA_CURRENT_CTX != CORE_CURRENT_CTX)
+		serializeContext(ser, tactx_Find(TA_CURRENT_CTX, false));
+	else
+		serializeContext(ser, nullptr);
+
+}
+void DeserializeTAContext(Deserializer& deser)
+{
+	if (::ta_ctx != nullptr)
+		SetCurrentTARC(TACTX_NONE);
+	TA_context *ta_cur_ctx;
+	deserializeContext(deser, &ta_cur_ctx);
+	if (ta_cur_ctx != nullptr)
+		SetCurrentTARC(ta_cur_ctx->Address);
+	if (deser.version() >= Deserializer::V20)
+		deserializeContext(deser, &ta_cur_ctx);
 }

@@ -16,7 +16,6 @@
     You should have received a copy of the GNU General Public License
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
  */
-#include <atomic>
 #include "emulator.h"
 #include "types.h"
 #include "stdclass.h"
@@ -35,51 +34,17 @@
 #include "hw/pvr/Renderer_if.h"
 #include "rend/CustomTexture.h"
 #include "hw/arm7/arm7_rec.h"
+#include "network/ggpo.h"
+#include "hw/mem/mem_watch.h"
+#include "network/net_handshake.h"
+#include "rend/gui.h"
+#include "lua/lua.h"
+#include "network/naomi_network.h"
+#include "serialize.h"
+#include "hw/pvr/pvr.h"
+#include <chrono>
 
-extern int screen_width, screen_height;
-
-std::atomic<bool> loading_canceled;
 settings_t settings;
-
-static void *dc_run_thread(void *);
-static cThread emuThread(&dc_run_thread, nullptr);
-static bool initDone;
-static std::string lastError;
-
-static s32 devicesInit()
-{
-	if (s32 rv = libPvr_Init())
-		return rv;
-
-#ifndef TARGET_DISPFRAME
-	if (s32 rv = libGDR_Init())
-		return rv;
-#endif
-
-	if (s32 rv = libAICA_Init())
-		return rv;
-
-	if (s32 rv = libARM_Init())
-		return rv;
-
-	return 0;
-}
-
-static void devicesTerm()
-{
-	libARM_Term();
-	libAICA_Term();
-	libGDR_Term();
-	libPvr_Term();
-}
-
-static void devicesReset(bool hard)
-{
-	libPvr_Reset(hard);
-	libGDR_Reset(hard);
-	libAICA_Reset(hard);
-	libARM_Reset(hard);
-}
 
 static void loadSpecialSettings()
 {
@@ -94,7 +59,7 @@ static void loadSpecialSettings()
 				|| prod_id == "T26702N") // PBA Tour Bowling 2001
 		{
 			INFO_LOG(BOOT, "Enabling Full MMU and Extra depth scaling for Windows CE game");
-			config::ExtraDepthScale.override(0.1); // taxi 2 needs 0.01 for FMV (amd, per-tri)
+			config::ExtraDepthScale.override(0.1f); // taxi 2 needs 0.01 for FMV (amd, per-tri)
 			config::FullMMU.override(true);
 			if (!config::ForceWindowsCE)
 				config::ForceWindowsCE.override(true);
@@ -158,6 +123,12 @@ static void loadSpecialSettings()
 			INFO_LOG(BOOT, "Enabling Extra depth scaling for game %s", prod_id.c_str());
 			config::ExtraDepthScale.override(1e26f);
 		}
+		// Test Drive V-Rally
+		else if (prod_id == "T15110N" || prod_id == "T15105D 50")
+		{
+			INFO_LOG(BOOT, "Enabling Extra depth scaling for game %s", prod_id.c_str());
+			config::ExtraDepthScale.override(0.1f);
+		}
 
 		std::string areas(ip_meta.area_symbols, sizeof(ip_meta.area_symbols));
 		bool region_usa = areas.find('U') != std::string::npos;
@@ -220,6 +191,30 @@ static void loadSpecialSettings()
 		{
 			NOTICE_LOG(BOOT, "Game doesn't support RGB. Using TV Composite instead");
 			config::Cable.override(3);
+		}
+		if (prod_id == "T9512N"			// The Grinch (US)
+			|| prod_id == "T9503D"		// The Grinch (EU)
+			|| prod_id == "T0000M"		// Hell Gate FIXME
+			|| prod_id == "MK-51012"	// Metropolis Street Racer (US)
+			|| prod_id == "MK-5102250"	// Metropolis Street Racer (EU)
+			|| prod_id == "T-31101N"	// Psychic Force 2012 (US)
+			|| prod_id == "T1101M"		// Psychic Force 2012 (JP)
+			|| prod_id == "T-8106D-50"	// Psychic Force 2012 (EU)
+			|| prod_id == "T-9707N"		// San Francisco Rush 2049 (US)
+			|| prod_id == "T-9709D-50"	// San Francisco Rush 2049 (EU)
+			|| prod_id == "MK-51146"	// Sega Smashpack vol.1 (Sega Swirl)
+			|| prod_id == "MK-51152"	// World Series Baseball 2K2
+			|| prod_id == "T20401M"		// Zero Gunner
+			|| prod_id == "12502D-50"	// Caesar's palace 2000 (EU)
+			|| prod_id == "T7001D  50"	// Jimmy White's 2 Cueball
+			|| prod_id == "T17717D 50"	// The Next Tetris (EU)
+			|| prod_id == "T40506D 50"	// KISS (EU)
+			|| prod_id == "T40505D 50"	// Railroad Tycoon 2 (EU)
+			|| prod_id == "T18702M"		// Miss Moonlight
+			|| prod_id == "T0019M")		// KenJu Atomiswave DC Conversion
+		{
+			NOTICE_LOG(BOOT, "Forcing real BIOS");
+			config::UseReios.override(false);
 		}
 	}
 	else if (settings.platform.system == DC_PLATFORM_NAOMI || settings.platform.system == DC_PLATFORM_ATOMISWAVE)
@@ -336,15 +331,16 @@ static void loadSpecialSettings()
 
 void dc_reset(bool hard)
 {
+	NetworkHandshake::term();
 	if (hard)
 		_vmem_unprotect_vram(0, VRAM_SIZE);
-	devicesReset(hard);
+	sh4_sched_reset(hard);
+	pvr::reset(hard);
+	libAICA_Reset(hard);
+	libARM_Reset(hard);
 	sh4_cpu.Reset(true);
 	mem_Reset(hard);
 }
-
-static bool resetRequested;
-static bool singleStep;
 
 static void setPlatform(int platform)
 {
@@ -384,15 +380,19 @@ static void setPlatform(int platform)
 	_vmem_init_mappings();
 }
 
-void dc_init()
+void Emulator::init()
 {
-	if (initDone)
+	if (state != Uninitialized)
+	{
+		verify(state == Init);
 		return;
-
+	}
 	// Default platform
 	setPlatform(DC_PLATFORM_DREAMCAST);
 
-	devicesInit();
+	pvr::init();
+	libAICA_Init();
+	libARM_Init();
 	mem_Init();
 	reios_init();
 
@@ -411,8 +411,7 @@ void dc_init()
 		sh4_cpu.Init();
 		INFO_LOG(INTERPRETER, "Using Interpreter");
 	}
-
-	initDone = true;
+	state = Init;
 }
 
 static int getGamePlatform(const char *path)
@@ -432,129 +431,100 @@ static int getGamePlatform(const char *path)
 	return DC_PLATFORM_DREAMCAST;
 }
 
-void dc_start_game(const char *path)
+void Emulator::loadGame(const char *path, LoadProgress *progress)
 {
-	DEBUG_LOG(BOOT, "Loading game %s", path == nullptr ? "(nil)" : path);
+	init();
+	try {
+		DEBUG_LOG(BOOT, "Loading game %s", path == nullptr ? "(nil)" : path);
 
-	if (path != nullptr)
-		strcpy(settings.imgread.ImagePath, path);
-	else
-		settings.imgread.ImagePath[0] = '\0';
-
-	dc_init();
-
-	setPlatform(getGamePlatform(path));
-	mem_map_default();
-
-	config::Settings::instance().reset();
-	dc_reset(true);
-	config::Settings::instance().load(false);
-
-	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
-	{
-		if (path == NULL)
-		{
-			// Boot BIOS
-			if (!LoadRomFiles())
-				throw FlycastException("No BIOS file found in " + hostfs::getFlashSavePath("", ""));
-			TermDrive();
-			InitDrive();
-		}
+		if (path != nullptr)
+			settings.content.path = path;
 		else
+			settings.content.path.clear();
+
+		setPlatform(getGamePlatform(path));
+		mem_map_default();
+
+		config::Settings::instance().reset();
+		dc_reset(true);
+		config::Settings::instance().load(false);
+		memset(&settings.network.md5, 0, sizeof(settings.network.md5));
+
+		if (settings.platform.system == DC_PLATFORM_DREAMCAST)
 		{
-			std::string extension = get_file_extension(settings.imgread.ImagePath);
-			if (extension != "elf")
+			if (settings.content.path.empty())
 			{
-				if (InitDrive())
+				// Boot BIOS
+				if (!LoadRomFiles())
+					throw FlycastException("No BIOS file found in " + hostfs::getFlashSavePath("", ""));
+				InitDrive("");
+			}
+			else
+			{
+				std::string extension = get_file_extension(settings.content.path);
+				if (extension != "elf")
 				{
-					loadGameSpecificSettings();
-					if (config::UseReios || !LoadRomFiles())
+					if (InitDrive(settings.content.path))
 					{
-						LoadHle();
-						NOTICE_LOG(BOOT, "Did not load BIOS, using reios");
+						loadGameSpecificSettings();
+						if (config::UseReios || !LoadRomFiles())
+						{
+							LoadHle();
+							NOTICE_LOG(BOOT, "Did not load BIOS, using reios");
+							if (!config::UseReios && config::UseReios.isReadOnly())
+								gui_display_notification("This game requires a real BIOS", 15000);
+						}
+					}
+					else
+					{
+						// Content load failed. Boot the BIOS
+						settings.content.path.clear();
+						if (!LoadRomFiles())
+							throw FlycastException("This media cannot be loaded");
+						InitDrive("");
 					}
 				}
 				else
 				{
-					// Content load failed. Boot the BIOS
-					settings.imgread.ImagePath[0] = '\0';
-					if (!LoadRomFiles())
-						throw FlycastException("This media cannot be loaded");
-					InitDrive();
+					// Elf only supported with HLE BIOS
+					LoadHle();
 				}
 			}
-			else
-			{
-				// Elf only supported with HLE BIOS
-				LoadHle();
-			}
+		}
+		else if (settings.platform.system == DC_PLATFORM_NAOMI || settings.platform.system == DC_PLATFORM_ATOMISWAVE)
+		{
+			LoadRomFiles();
+			naomi_cart_LoadRom(path, progress);
+			loadGameSpecificSettings();
+			// Reload the BIOS in case a game-specific region is set
+			naomi_cart_LoadBios(path);
 		}
 		mcfg_CreateDevices();
-		FixUpFlash();
+		cheatManager.reset(settings.content.gameId);
+		if (cheatManager.isWidescreen())
+		{
+			gui_display_notification("Widescreen cheat activated", 1000);
+			config::ScreenStretching.override(134);	// 4:3 -> 16:9
+		}
+		NetworkHandshake::init();
+		settings.input.fastForwardMode = false;
+		if (!settings.content.path.empty())
+		{
+			if (config::GGPOEnable)
+				dc_loadstate(-1);
+			else if (config::AutoLoadState && !NaomiNetworkSupported())
+				dc_loadstate(config::SavestateSlot);
+		}
+		EventManager::event(Event::Start);
+		state = Loaded;
+	} catch (...) {
+		state = Error;
+		throw;
 	}
-	else if (settings.platform.system == DC_PLATFORM_NAOMI || settings.platform.system == DC_PLATFORM_ATOMISWAVE)
-	{
-		LoadRomFiles();
-		naomi_cart_LoadRom(path);
-		if (loading_canceled)
-			return;
-		loadGameSpecificSettings();
-		// Reload the BIOS in case a game-specific region is set
-		naomi_cart_LoadBios(path);
-		if (settings.platform.system == DC_PLATFORM_NAOMI)
-			mcfg_CreateNAOMIJamma();
-		else if (settings.platform.system == DC_PLATFORM_ATOMISWAVE)
-			mcfg_CreateAtomisWaveControllers();
-	}
-	cheatManager.reset(config::Settings::instance().getGameId());
-	if (cheatManager.isWidescreen())
-	{
-		gui_display_notification("Widescreen cheat activated", 1000);
-		config::ScreenStretching.override(134);	// 4:3 -> 16:9
-	}
-	settings.input.fastForwardMode = false;
-	EventManager::event(Event::Start);
-	settings.gameStarted = true;
 }
 
-bool dc_is_running()
+void Emulator::runInternal()
 {
-	return sh4_cpu.IsCpuRunning();
-}
-
-static void *dc_run_thread(void*)
-{
-	InitAudio();
-
-	try {
-		dc_run();
-	} catch (const FlycastException& e) {
-		ERROR_LOG(COMMON, "%s", e.what());
-		sh4_cpu.Stop();
-		lastError = e.what();
-	}
-
-    TermAudio();
-
-    return nullptr;
-}
-
-#ifndef TARGET_DISPFRAME
-
-void dc_run()
-{
-#if FEAT_SHREC != DYNAREC_NONE
-	if (config::DynarecEnabled)
-	{
-		Get_Sh4Recompiler(&sh4_cpu);
-		INFO_LOG(DYNAREC, "Using Recompiler");
-	}
-	else
-#endif
-	{
-		Get_Sh4Interpreter(&sh4_cpu);
-		INFO_LOG(DYNAREC, "Using Interpreter");
-	}
 	if (singleStep)
 	{
 		singleStep = false;
@@ -575,53 +545,75 @@ void dc_run()
 		} while (resetRequested);
 	}
 }
-#endif
 
-void dc_term_game()
+void Emulator::unloadGame()
 {
-	if (settings.gameStarted)
+	stop();
+	if (state == Loaded || state == Error)
 	{
-		settings.gameStarted = false;
-		EventManager::event(Event::Terminate);
-	}
-	if (initDone)
+		if (state == Loaded && config::AutoSaveState && !settings.content.path.empty())
+			dc_savestate(config::SavestateSlot);
 		dc_reset(true);
 
-	config::Settings::instance().reset();
-	config::Settings::instance().load(false);
+		config::Settings::instance().reset();
+		config::Settings::instance().load(false);
+		settings.content.path.clear();
+		settings.content.gameId.clear();
+		state = Init;
+		EventManager::event(Event::Terminate);
+	}
 }
 
-void dc_term_emulator()
+void Emulator::term()
 {
-	dc_term_game();
-	debugger::term();
-	sh4_cpu.Term();
-	custom_texture.Terminate();	// lr: avoid deadlock on exit (win32)
-	devicesTerm();
-	mem_Term();
-	_vmem_release();
+	unloadGame();
+	if (state == Init)
+	{
+		debugger::term();
+		sh4_cpu.Term();
+		custom_texture.Terminate();	// lr: avoid deadlock on exit (win32)
+		reios_term();
+		libARM_Term();
+		libAICA_Term();
+		pvr::term();
+		mem_Term();
 
-	mcfg_DestroyDevices();
+		_vmem_release();
+		state = Terminated;
+	}
 }
 
-void dc_stop()
-{
-	bool running = dc_is_running();
+void Emulator::stop() {
+	if (state != Running)
+		return;
+	state = Loaded;
 	sh4_cpu.Stop();
-	rend_cancel_emu_wait();
-	emuThread.WaitToEnd();
-	if (settings.gameStarted)
-		SaveRomFiles();
-	if (running)
-		EventManager::event(Event::Pause);
+	if (config::ThreadedRendering)
+	{
+		rend_cancel_emu_wait();
+		try {
+			auto future = threadResult;
+			future.get();
+		} catch (const FlycastException& e) {
+			WARN_LOG(COMMON, "%s", e.what());
+		}
+	}
+	else
+	{
+		// FIXME Android: need to terminate render thread before
+		TermAudio();
+	}
+	SaveRomFiles();
+	EventManager::event(Event::Pause);
 }
 
 // Called on the emulator thread for soft reset
-void dc_request_reset()
+void Emulator::requestReset()
 {
 	resetRequested = true;
 	sh4_cpu.Stop();
 }
+
 void loadGameSpecificSettings()
 {
 	char *reios_id;
@@ -647,60 +639,22 @@ void loadGameSpecificSettings()
 	// Default per-game settings
 	loadSpecialSettings();
 
+	settings.content.gameId = reios_id;
 	config::Settings::instance().setGameId(reios_id);
 
 	// Reload per-game settings
 	config::Settings::instance().load(true);
 }
 
-void dc_resize_renderer()
+void Emulator::step()
 {
-	if (renderer == nullptr)
-		return;
-	float hres;
-	int vres = config::RenderResolution;
-	if (config::Widescreen && !config::Rotate90)
-	{
-		if (config::SuperWidescreen)
-			hres = (float)config::RenderResolution * screen_width / screen_height	;
-		else
-			hres = config::RenderResolution * 16.f / 9.f;
-
-	}
-	else if (config::Rotate90)
-	{
-		vres = vres * config::ScreenStretching / 100;
-		hres = config::RenderResolution * 4.f / 3.f;
-	}
-	else
-	{
-		hres = config::RenderResolution * 4.f * config::ScreenStretching / 3.f / 100.f;
-	}
-	if (!config::Rotate90)
-		hres = std::roundf(hres / 2.f) * 2.f;
-	DEBUG_LOG(RENDERER, "dc_resize_renderer: %d x %d", (int)hres, vres);
-	renderer->Resize((int)hres, vres);
-}
-
-void dc_resume()
-{
-	SetMemoryHandlers();
-	settings.aica.NoBatch = config::ForceWindowsCE || config::DSPEnabled;
-	dc_resize_renderer();
-
-	EventManager::event(Event::Resume);
-	if (!emuThread.thread.joinable())
-		emuThread.Start();
-}
-
-void dc_step()
-{
+	// FIXME single thread is better
 	singleStep = true;
-	dc_resume();
-	dc_stop();
+	start();
+	stop();
 }
 
-bool dc_loadstate(const void **data, u32 size)
+void dc_loadstate(Deserializer& deser)
 {
 	custom_texture.Terminate();
 #if FEAT_AREC == DYNAREC_JIT
@@ -711,45 +665,38 @@ bool dc_loadstate(const void **data, u32 size)
 	bm_Reset();
 #endif
 
-	u32 usedSize = 0;
-	if (!dc_unserialize((void **)data, &usedSize))
-    	return false;
-
-	if (size != usedSize)
-		WARN_LOG(SAVESTATE, "Savestate: loaded %d bytes but used %d", size, usedSize);
+	dc_deserialize(deser);
 
 	mmu_set_state();
 	sh4_cpu.ResetCache();
-	sh4_sched_ffts();
-
-	return true;
 }
 
-std::string dc_get_last_error()
+void Emulator::setNetworkState(bool online)
 {
-	std::string error(lastError);
-	lastError.clear();
-	return error;
+	if (settings.network.online != online)
+		DEBUG_LOG(NETWORK, "Network state %d", online);
+	settings.network.online = online;
+	settings.input.fastForwardMode &= !online;
 }
 
 EventManager EventManager::Instance;
 
-void EventManager::registerEvent(Event event, Callback callback)
+void EventManager::registerEvent(Event event, Callback callback, void *param)
 {
-	unregisterEvent(event, callback);
+	unregisterEvent(event, callback, param);
 	auto it = callbacks.find(event);
 	if (it != callbacks.end())
-		it->second.push_back(callback);
+		it->second.push_back(std::make_pair(callback, param));
 	else
-		callbacks.insert({ event, { callback } });
+		callbacks.insert({ event, { std::make_pair(callback, param) } });
 }
 
-void EventManager::unregisterEvent(Event event, Callback callback) {
+void EventManager::unregisterEvent(Event event, Callback callback, void *param) {
 	auto it = callbacks.find(event);
 	if (it == callbacks.end())
 		return;
 
-	auto it2 = std::find(it->second.begin(), it->second.end(), callback);
+	auto it2 = std::find(it->second.begin(), it->second.end(), std::make_pair(callback, param));
 	if (it2 == it->second.end())
 		return;
 
@@ -761,6 +708,119 @@ void EventManager::broadcastEvent(Event event) {
 	if (it == callbacks.end())
 		return;
 
-	for (auto& callback : it->second)
-		callback(event);
+	for (auto& pair : it->second)
+		pair.first(event, pair.second);
 }
+
+void Emulator::run()
+{
+	verify(state == Running);
+	startTime = sh4_sched_now64();
+	renderTimeout = false;
+	try {
+		runInternal();
+		if (ggpo::active())
+			ggpo::nextFrame();
+	} catch (...) {
+		setNetworkState(false);
+		state = Error;
+		sh4_cpu.Stop();
+		EventManager::event(Event::Pause);
+		throw;
+	}
+}
+
+void Emulator::start()
+{
+	verify(state == Loaded);
+	state = Running;
+	SetMemoryHandlers();
+	settings.aica.NoBatch = config::ForceWindowsCE || config::DSPEnabled || config::GGPOEnable;
+	rend_resize_renderer();
+#if FEAT_SHREC != DYNAREC_NONE
+	if (config::DynarecEnabled)
+	{
+		Get_Sh4Recompiler(&sh4_cpu);
+		INFO_LOG(DYNAREC, "Using Recompiler");
+	}
+	else
+#endif
+	{
+		Get_Sh4Interpreter(&sh4_cpu);
+		INFO_LOG(DYNAREC, "Using Interpreter");
+	}
+	EventManager::event(Event::Resume);
+	memwatch::protect();
+
+	if (config::ThreadedRendering)
+	{
+		threadResult = std::async(std::launch::async, [this] {
+				InitAudio();
+
+				try {
+					while (state == Running)
+					{
+						startTime = sh4_sched_now64();
+						renderTimeout = false;
+						runInternal();
+						if (!ggpo::nextFrame())
+							break;
+					}
+					TermAudio();
+				} catch (...) {
+					setNetworkState(false);
+					state = Error;
+					sh4_cpu.Stop();
+					TermAudio();
+					throw;
+				}
+		}).share();
+	}
+	else
+	{
+		InitAudio();
+	}
+}
+
+bool Emulator::checkStatus()
+{
+	try {
+		if (threadResult.wait_for(std::chrono::seconds(0)) == std::future_status::timeout)
+			return true;
+		threadResult.get();
+		return false;
+	} catch (...) {
+		EventManager::event(Event::Pause);
+		throw;
+	}
+}
+
+bool Emulator::render()
+{
+	if (!config::ThreadedRendering)
+	{
+		if (state != Running)
+			return false;
+		run();
+		// TODO if stopping due to a user request, no frame has been rendered
+		return !renderTimeout;
+	}
+	if (!checkStatus())
+		return false;
+	return rend_single_frame(true); // FIXME stop flag?
+}
+
+void Emulator::vblank()
+{
+	lua::vblank();
+	// Time out if a frame hasn't been rendered for 50 ms
+	if (sh4_sched_now64() - startTime <= 10000000)
+		return;
+	renderTimeout = true;
+	if (ggpo::active())
+		ggpo::endOfFrame();
+	else if (!config::ThreadedRendering)
+		sh4_cpu.Stop();
+}
+
+Emulator emu;

@@ -5,27 +5,32 @@
 #include "hw/pvr/pvr_mem.h"
 #include "rend/TexCache.h"
 #include "cfg/option.h"
+#include "network/ggpo.h"
+#include "emulator.h"
+#include "serialize.h"
 
 #include <mutex>
 #include <zlib.h>
 
 void retro_rend_present();
-void retro_rend_vblank();
 #ifndef LIBRETRO
-void retro_rend_present() {}
-void retro_rend_vblank() {}
+void retro_rend_present()
+{
+	if (!config::ThreadedRendering)
+		sh4_cpu.Stop();
+}
 #endif
 
 u32 VertexCount=0;
 u32 FrameCount=1;
 
 Renderer* renderer;
-static Renderer* fallback_renderer;
 
 cResetEvent rs, re;
 static bool do_swap;
 std::mutex swap_mutex;
 u32 fb_w_cur = 1;
+static cResetEvent vramRollback;
 
 // direct framebuffer write detection
 static bool render_called = false;
@@ -33,7 +38,7 @@ u32 fb_watch_addr_start;
 u32 fb_watch_addr_end;
 bool fb_dirty;
 
-bool pend_rend = false;
+static bool pend_rend;
 
 TA_context* _pvrrc;
 
@@ -196,6 +201,7 @@ static bool rend_frame(TA_context* ctx)
 	if (!proc || (!ctx->rend.isRTT && !ctx->rend.isRenderFramebuffer))
 		// If rendering to texture, continue locking until the frame is rendered
 		re.Set();
+	rend_allow_rollback();
 
 	return proc && renderer->Render();
 }
@@ -262,6 +268,8 @@ Renderer* rend_norend();
 Renderer* rend_Vulkan();
 Renderer* rend_OITVulkan();
 Renderer* rend_DirectX9();
+Renderer* rend_DirectX11();
+Renderer* rend_OITDirectX11();
 
 static void rend_create_renderer()
 {
@@ -271,14 +279,15 @@ static void rend_create_renderer()
 	switch (config::RendererType)
 	{
 	default:
+#ifdef USE_OPENGL
 	case RenderType::OpenGL:
 		renderer = rend_GLES2();
 		break;
 #if !defined(GLES) && !defined(__APPLE__)
 	case RenderType::OpenGL_OIT:
 		renderer = rend_GL4();
-		fallback_renderer = rend_GLES2();
 		break;
+#endif
 #endif
 #ifdef USE_VULKAN
 	case RenderType::Vulkan:
@@ -288,9 +297,17 @@ static void rend_create_renderer()
 		renderer = rend_OITVulkan();
 		break;
 #endif
-#if defined(_WIN32) && !defined(LIBRETRO)
+#ifdef USE_DX9
 	case RenderType::DirectX9:
 		renderer = rend_DirectX9();
+		break;
+#endif
+#if (defined(_WIN32) && !defined(LIBRETRO)) || defined(HAVE_D3D11)
+	case RenderType::DirectX11:
+		renderer = rend_DirectX11();
+		break;
+	case RenderType::DirectX11_OIT:
+		renderer = rend_OITDirectX11();
 		break;
 #endif
 	}
@@ -299,34 +316,19 @@ static void rend_create_renderer()
 
 void rend_init_renderer()
 {
-	if (renderer == NULL)
+	if (renderer == nullptr)
 		rend_create_renderer();
 	if (!renderer->Init())
-    {
-		delete renderer;
-    	if (fallback_renderer == NULL || !fallback_renderer->Init())
-    	{
-            delete fallback_renderer;
-    		die("Renderer initialization failed\n");
-    	}
-    	INFO_LOG(PVR, "Selected renderer initialization failed. Falling back to default renderer.");
-    	renderer  = fallback_renderer;
-    	fallback_renderer = NULL;	// avoid double-free
-    }
+   		die("Renderer initialization failed\n");
 }
 
 void rend_term_renderer()
 {
-	if (renderer != NULL)
+	if (renderer != nullptr)
 	{
 		renderer->Term();
 		delete renderer;
-		renderer = NULL;
-	}
-	if (fallback_renderer != NULL)
-	{
-		delete fallback_renderer;
-		fallback_renderer = NULL;
+		renderer = nullptr;
 	}
 }
 
@@ -361,8 +363,8 @@ void rend_start_render()
 			ctx->rend.fb_Y_CLIP.min = 0;
 			ctx->rend.fb_Y_CLIP.max = 479;
 
-			ctx->rend.fog_clamp_min = 0;
-			ctx->rend.fog_clamp_max = 0xffffffff;
+			ctx->rend.fog_clamp_min.full = 0;
+			ctx->rend.fog_clamp_max.full = 0xffffffff;
 		}
 		else
 		{
@@ -377,9 +379,11 @@ void rend_start_render()
 			ctx->rend.fog_clamp_max = FOG_CLAMP_MAX;
 		}
 
+		if (!config::DelayFrameSwapping)
+			ggpo::endOfFrame();
+		palette_update();
 		if (QueueRender(ctx))
 		{
-			palette_update();
 			pend_rend = true;
 			if (!config::ThreadedRendering)
 				rend_single_frame(true);
@@ -415,7 +419,7 @@ void rend_vblank()
 	render_called = false;
 	check_framebuffer_write();
 	cheatManager.apply();
-	retro_rend_vblank();
+	emu.vblank();
 }
 
 void check_framebuffer_write()
@@ -431,6 +435,7 @@ void rend_cancel_emu_wait()
 	{
 		FinishRender(NULL);
 		re.Set();
+		rend_allow_rollback();
 	}
 }
 
@@ -456,6 +461,76 @@ void rend_swap_frame(u32 fb_r_sof)
 			rend_single_frame(true);
 			swap_mutex.lock();
 		}
+		if (config::DelayFrameSwapping)
+        	ggpo::endOfFrame();
 	}
 	swap_mutex.unlock();
+}
+
+void rend_disable_rollback()
+{
+	vramRollback.Reset();
+}
+
+void rend_allow_rollback()
+{
+	vramRollback.Set();
+}
+
+void rend_start_rollback()
+{
+	if (config::ThreadedRendering)
+		vramRollback.Wait();
+}
+
+void rend_serialize(Serializer& ser)
+{
+	ser << fb_w_cur;
+	ser << render_called;
+	ser << fb_dirty;
+	ser << fb_watch_addr_start;
+	ser << fb_watch_addr_end;
+}
+void rend_deserialize(Deserializer& deser)
+{
+	if ((deser.version() >= Deserializer::V12_LIBRETRO && deser.version() < Deserializer::V5) || deser.version() >= Deserializer::V12)
+		deser >> fb_w_cur;
+	else
+		fb_w_cur = 1;
+	if (deser.version() >= Deserializer::V20)
+	{
+		deser >> render_called;
+		deser >> fb_dirty;
+		deser >> fb_watch_addr_start;
+		deser >> fb_watch_addr_end;
+	}
+	pend_rend = false;
+}
+
+void rend_resize_renderer()
+{
+	if (renderer == nullptr)
+		return;
+	float hres;
+	int vres = config::RenderResolution;
+	if (config::Widescreen && !config::Rotate90)
+	{
+		if (config::SuperWidescreen)
+			hres = (float)config::RenderResolution * settings.display.width / settings.display.height;
+		else
+			hres = config::RenderResolution * 16.f / 9.f;
+	}
+	else if (config::Rotate90)
+	{
+		vres = vres * config::ScreenStretching / 100;
+		hres = config::RenderResolution * 4.f / 3.f;
+	}
+	else
+	{
+		hres = config::RenderResolution * 4.f * config::ScreenStretching / 3.f / 100.f;
+	}
+	if (!config::Rotate90)
+		hres = std::roundf(hres / 2.f) * 2.f;
+	DEBUG_LOG(RENDERER, "rend_resize_renderer: %d x %d", (int)hres, vres);
+	renderer->Resize((int)hres, vres);
 }

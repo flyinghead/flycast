@@ -5,6 +5,7 @@
 #include "maple_helper.h"
 #include <cmath>
 #include "input/gamepad.h"
+#include "serialize.h"
 
 enum MapleFunctionID
 {
@@ -133,17 +134,18 @@ struct maple_device
 	virtual ~maple_device();
 
 	virtual u32 RawDma(u32* buffer_in, u32 buffer_in_len, u32* buffer_out) = 0;
-	virtual bool serialize(void **data, unsigned int *total_size) {
-		REICAST_S(player_num);
-		return true;
+
+	virtual void serialize(Serializer& ser) const {
+		ser << player_num;
 	}
-	virtual bool unserialize(void **data, unsigned int *total_size, serialize_version_enum version) {
-		if (version >= V14)
-			REICAST_US(player_num);
-		return true;
+	virtual void deserialize(Deserializer& deser) {
+		if (deser.version() >= Deserializer::V14)
+			deser >> player_num;
 	}
+
 	virtual MapleDeviceType get_device_type() = 0;
 	virtual bool get_lightgun_pos() { return false; }
+	virtual const void *getData(size_t& size) const { size = 0; return nullptr; }
 };
 
 maple_device* maple_Create(MapleDeviceType type);
@@ -153,7 +155,7 @@ maple_device* maple_Create(MapleDeviceType type);
 template<int Magnitude>
 void limit_joystick_magnitude(s8& joyx, s8& joyy)
 {
-	float mag = joyx * joyx + joyy * joyy;
+	float mag = (float)joyx * joyx + (float)joyy * joyy;
 	if (mag > (float)Magnitude * Magnitude)
 	{
 		mag = sqrtf(mag) / (float)Magnitude;
@@ -162,22 +164,7 @@ void limit_joystick_magnitude(s8& joyx, s8& joyy)
 	}
 }
 
-extern u8 EEPROM[0x100];
-void load_naomi_eeprom();
-
-// Mouse position and buttons
-extern u8 mo_buttons[4];
-extern s32 mo_x_abs[4];
-extern s32 mo_y_abs[4];
-extern f32 mo_x_delta[4];
-extern f32 mo_y_delta[4];
-extern f32 mo_wheel_delta[4];
-
-extern s32 mo_x_prev[4];
-extern s32 mo_y_prev[4];
-
-void SetMousePosition(int x, int y, int width, int height, u32 mouseId = 0);
-void SetRelativeMousePosition(float xrel, float yrel, u32 mouseId = 0);
+extern u8 *EEPROM;
 
 #define SWAP32(a) ((((a) & 0xff) << 24)  | (((a) & 0xff00) << 8) | (((a) >> 8) & 0xff00) | (((a) >> 24) & 0xff))
 
@@ -208,7 +195,7 @@ struct maple_base: maple_device
 
 	void wstr(const char* str, u32 len)
 	{
-		size_t ln = strlen(str);
+		u32 ln = (u32)strlen(str);
 		verify(len >= ln);
 		len -= ln;
 		while (ln--)
@@ -270,7 +257,7 @@ class jvs_io_board;
 
 struct maple_naomi_jamma : maple_base
 {
-	const u8 ALL_NODES = 0xff;
+	static constexpr u8 ALL_NODES = 0xff;
 
 	std::vector<std::unique_ptr<jvs_io_board>> io_boards;
 	bool crazy_mode = false;
@@ -278,9 +265,10 @@ struct maple_naomi_jamma : maple_base
 	u8 jvs_repeat_request[32][256];
 	u8 jvs_receive_buffer[32][258];
 	u32 jvs_receive_length[32] = { 0 };
+	u8 eeprom[128];
 
 	maple_naomi_jamma();
-	~maple_naomi_jamma() override;
+	~maple_naomi_jamma();
 
 	MapleDeviceType get_device_type() override
 	{
@@ -302,6 +290,6 @@ struct maple_naomi_jamma : maple_base
 	u32 RawDma(u32* buffer_in, u32 buffer_in_len, u32* buffer_out) override;
 	u32 dma(u32 cmd) override { return 0; }
 
-	bool serialize(void **data, unsigned int *total_size) override;
-	bool unserialize(void **data, unsigned int *total_size, serialize_version_enum version) override;
+	void serialize(Serializer& ser) const override;
+	void deserialize(Deserializer& deser) override;
 };

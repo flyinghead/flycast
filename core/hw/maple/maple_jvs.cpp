@@ -20,41 +20,17 @@
 #include <memory>
 #include "maple_devs.h"
 #include "hw/naomi/naomi_cart.h"
-#include "input/gamepad_device.h"
 #include <xxhash.h>
 #include "oslib/oslib.h"
+#include "stdclass.h"
+#include "cfg/option.h"
 
 #define LOGJVS(...) DEBUG_LOG(JVS, __VA_ARGS__)
 
-u8 EEPROM[0x100];
-bool EEPROM_loaded = false;
-
-void load_naomi_eeprom()
-{
-	if (!EEPROM_loaded)
-	{
-		EEPROM_loaded = true;
-		std::string eeprom_file = hostfs::getArcadeFlashPath() + ".eeprom";
-		FILE* f = nowide::fopen(eeprom_file.c_str(), "rb");
-		if (f)
-		{
-			if (std::fread(EEPROM, 1, 0x80, f) != 0x80)
-				WARN_LOG(MAPLE, "Failed or truncated read of EEPROM '%s'", eeprom_file.c_str());
-			std::fclose(f);
-			DEBUG_LOG(MAPLE, "Loaded EEPROM from %s", eeprom_file.c_str());
-		}
-		else if (naomi_default_eeprom != NULL)
-		{
-			DEBUG_LOG(MAPLE, "Using default EEPROM file");
-			memcpy(EEPROM, naomi_default_eeprom, 0x80);
-		}
-		else
-			DEBUG_LOG(MAPLE, "EEPROM file not found at %s and no default found", eeprom_file.c_str());
-	}
-}
+u8 *EEPROM;
 
 const u32 naomi_button_mapping[32] = {
-		NAOMI_SERVICE_KEY,	// DC_BTN_C
+		NAOMI_BTN2_KEY,		// DC_BTN_C
 		NAOMI_BTN1_KEY,		// DC_BTN_B
 		NAOMI_BTN0_KEY,		// DC_BTN_A
 		NAOMI_START_KEY,	// DC_BTN_START
@@ -62,12 +38,12 @@ const u32 naomi_button_mapping[32] = {
 		NAOMI_DOWN_KEY,		// DC_DPAD_DOWN
 		NAOMI_LEFT_KEY,		// DC_DPAD_LEFT
 		NAOMI_RIGHT_KEY,	// DC_DPAD_RIGHT
-		NAOMI_TEST_KEY,		// DC_BTN_Z
-		NAOMI_BTN3_KEY,		// DC_BTN_Y
-		NAOMI_BTN2_KEY,		// DC_BTN_X
+		NAOMI_BTN5_KEY,		// DC_BTN_Z
+		NAOMI_BTN4_KEY,		// DC_BTN_Y
+		NAOMI_BTN3_KEY,		// DC_BTN_X
 		NAOMI_COIN_KEY,		// DC_BTN_D
-		NAOMI_BTN4_KEY,		// DC_DPAD2_UP
-		NAOMI_BTN5_KEY,		// DC_DPAD2_DOWN
+		NAOMI_SERVICE_KEY,	// DC_DPAD2_UP
+		NAOMI_TEST_KEY,		// DC_DPAD2_DOWN
 		NAOMI_BTN6_KEY,		// DC_DPAD2_LEFT
 		NAOMI_BTN7_KEY,		// DC_DPAD2_RIGHT
 
@@ -79,7 +55,7 @@ extern u32 awavelg_button_mapping[32];
 
 const char *GetCurrentGameButtonName(DreamcastKey key)
 {
-	if (NaomiGameInputs == nullptr || key == EMU_BTN_NONE)
+	if (NaomiGameInputs == nullptr || key == EMU_BTN_NONE || key > DC_BTN_RELOAD)
 		return nullptr;
 	u32 pos = 0;
 	u32 val = (u32)key;
@@ -116,33 +92,36 @@ const char *GetCurrentGameAxisName(DreamcastKey axis)
 
 	for (int i = 0; NaomiGameInputs->axes[i].name != nullptr; i++)
 	{
-		DreamcastKey cur_axis;
 		switch (NaomiGameInputs->axes[i].axis)
 		{
 		case 0:
-			cur_axis = DC_AXIS_X;
+			if (axis != DC_AXIS_LEFT && axis != DC_AXIS_RIGHT)
+				continue;
 			break;
 		case 1:
-			cur_axis = DC_AXIS_Y;
+			if (axis != DC_AXIS_UP && axis != DC_AXIS_DOWN)
+				continue;
 			break;
 		case 2:
-			cur_axis = DC_AXIS_X2;
+			if (axis != DC_AXIS2_LEFT && axis != DC_AXIS2_RIGHT)
+				continue;
 			break;
 		case 3:
-			cur_axis = DC_AXIS_Y2;
+			if (axis != DC_AXIS2_UP && axis != DC_AXIS2_DOWN)
+				continue;
 			break;
 		case 4:
-			cur_axis = DC_AXIS_RT;
+			if (axis != DC_AXIS_RT)
+				continue;
 			break;
 		case 5:
-			cur_axis = DC_AXIS_LT;
+			if (axis != DC_AXIS_LT)
+				continue;
 			break;
 		default:
-			cur_axis = EMU_BTN_NONE;
-			break;
+			continue;
 		}
-		if (cur_axis == axis)
-			return NaomiGameInputs->axes[i].name;
+		return NaomiGameInputs->axes[i].name;
 	}
 
 	return nullptr;
@@ -167,8 +146,8 @@ public:
 	virtual ~jvs_io_board() = default;
 
 	u32 handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_out);
-	bool serialize(void **data, unsigned int *total_size);
-	bool unserialize(void **data, unsigned int *total_size, serialize_version_enum version);
+	void serialize(Serializer& ser) const;
+	void deserialize(Deserializer& deser);
 
 	bool lightgun_as_analog = false;
 
@@ -472,8 +451,8 @@ protected:
 	u16 read_analog_axis(int player_num, int player_axis, bool inverted) override {
 		if (init_in_progress)
 			return 0;
-		player_num = std::min(player_num, (int)ARRAY_SIZE(mo_x_abs));
-		if (mo_x_abs[player_num] < 0 || mo_x_abs[player_num] > 639 || mo_y_abs[player_num] < 0 || mo_y_abs[player_num] > 479)
+		const MapleInputState& inputState = mapleInputState[std::min(player_num, (int)ARRAY_SIZE(mapleInputState) - 1)];
+		if (inputState.absPos.x < 0 || inputState.absPos.x > 639 || inputState.absPos.y < 0 || inputState.absPos.y > 479)
 			return 0;
 		else
 			return 0x8000;
@@ -530,8 +509,8 @@ protected:
 
 	u16 read_joystick_x(int joy_num)
 	{
-		s8 axis_x = joyx[joy_num];
-		axis_y = joyy[joy_num];
+		s8 axis_x = mapleInputState[joy_num].fullAxes[PJAI_X1];
+		axis_y = mapleInputState[joy_num].fullAxes[PJAI_Y1];
 		limit_joystick_magnitude<64>(axis_x, axis_y);
 		return std::min(0xff, 0x80 - axis_x) << 8;
 	}
@@ -561,13 +540,13 @@ protected:
 		case 7:
 			return read_joystick_y(3);
 		case 8:
-			return rt[0] << 8;
+			return mapleInputState[0].halfAxes[PJTI_R] << 8;
 		case 9:
-			return rt[1] << 8;
+			return mapleInputState[1].halfAxes[PJTI_R] << 8;
 		case 10:
-			return rt[2] << 8;
+			return mapleInputState[2].halfAxes[PJTI_R] << 8;
 		case 11:
-			return rt[3] << 8;
+			return mapleInputState[3].halfAxes[PJTI_R] << 8;
 		default:
 			return 0x8000;
 		}
@@ -598,7 +577,7 @@ protected:
 		jvs_io_board::read_digital_in(buttons, v);
 		for (u32 player = 0; player < player_count; player++)
 		{
-			u8 trigger = rt[player] >> 2;
+			u8 trigger = mapleInputState[player].halfAxes[PJTI_R] >> 2;
 					// Ball button
 			v[player] = ((trigger & 0x20) << 3) | ((trigger & 0x10) << 5) | ((trigger & 0x08) << 7)
 					| ((trigger & 0x04) << 9) | ((trigger & 0x02) << 11) | ((trigger & 0x01) << 13)
@@ -610,8 +589,8 @@ protected:
 
 	u16 read_joystick_x(int joy_num)
 	{
-		s8 axis_x = joyx[joy_num];
-		axis_y = joyy[joy_num];
+		s8 axis_x = mapleInputState[joy_num].fullAxes[PJAI_X1];
+		axis_y = mapleInputState[joy_num].fullAxes[PJAI_Y1];
 		limit_joystick_magnitude<48>(axis_x, axis_y);
 		return (axis_x + 128) << 8;
 	}
@@ -698,11 +677,32 @@ maple_naomi_jamma::maple_naomi_jamma()
 		io_boards.push_back(std::unique_ptr<jvs_837_13844_wrungp>(new jvs_837_13844_wrungp(1, this)));
 		break;
 	}
+
+	std::string eeprom_file = hostfs::getArcadeFlashPath() + ".eeprom";
+	FILE* f = nowide::fopen(eeprom_file.c_str(), "rb");
+	if (f)
+	{
+		if (std::fread(eeprom, 1, 0x80, f) != 0x80)
+			WARN_LOG(MAPLE, "Failed or truncated read of EEPROM '%s'", eeprom_file.c_str());
+		std::fclose(f);
+		DEBUG_LOG(MAPLE, "Loaded EEPROM from %s", eeprom_file.c_str());
+	}
+	else if (naomi_default_eeprom != NULL)
+	{
+		DEBUG_LOG(MAPLE, "Using default EEPROM file");
+		memcpy(eeprom, naomi_default_eeprom, 0x80);
+	}
+	else
+		DEBUG_LOG(MAPLE, "EEPROM file not found at %s and no default found", eeprom_file.c_str());
+	if (config::GGPOEnable)
+		MD5Sum().add(eeprom, sizeof(eeprom))
+				.getDigest(settings.network.md5.eeprom);
+	EEPROM = eeprom;
 }
 
 maple_naomi_jamma::~maple_naomi_jamma()
 {
-	EEPROM_loaded = false;
+	EEPROM = nullptr;
 }
 
 void maple_naomi_jamma::send_jvs_message(u32 node_id, u32 channel, u32 length, u8 *data)
@@ -968,18 +968,19 @@ void maple_naomi_jamma::handle_86_subcommand()
 
 		case 0x0B:	//EEPROM write
 		{
-			load_naomi_eeprom();
 			int address = dma_buffer_in[1];
 			int size = dma_buffer_in[2];
 			DEBUG_LOG(MAPLE, "EEprom write %08X %08X\n", address, size);
 			//printState(Command,buffer_in,buffer_in_len);
-			memcpy(EEPROM + address, dma_buffer_in + 4, size);
+			address = address % sizeof(eeprom);
+			size = std::min((int)sizeof(eeprom) - address, size);
+			memcpy(eeprom + address, dma_buffer_in + 4, size);
 
 			std::string eeprom_file = hostfs::getArcadeFlashPath() + ".eeprom";
 			FILE* f = nowide::fopen(eeprom_file.c_str(), "wb");
 			if (f)
 			{
-				std::fwrite(EEPROM, 1, 0x80, f);
+				std::fwrite(eeprom, 1, sizeof(eeprom), f);
 				std::fclose(f);
 				INFO_LOG(MAPLE, "Saved EEPROM to %s", eeprom_file.c_str());
 			}
@@ -990,7 +991,7 @@ void maple_naomi_jamma::handle_86_subcommand()
 			w8(0x00);
 			w8(0x20);
 			w8(0x01);
-			memcpy(dma_buffer_out, EEPROM, 4);
+			memcpy(dma_buffer_out, eeprom, 4);
 			dma_buffer_out += 4;
 			*dma_count_out += 4;
 		}
@@ -998,17 +999,17 @@ void maple_naomi_jamma::handle_86_subcommand()
 
 		case 0x3:	//EEPROM read
 		{
-			load_naomi_eeprom();
 			//printf("EEprom READ\n");
-			int address = dma_buffer_in[1];
+			int address = dma_buffer_in[1] % sizeof(eeprom);
 			//printState(Command,buffer_in,buffer_in_len);
 			w8(MDRS_JVSReply);
 			w8(0x00);
 			w8(0x20);
 			w8(0x20);
-			memcpy(dma_buffer_out, EEPROM + address, 0x80);
-			dma_buffer_out += 0x80;
-			*dma_count_out += 0x80;
+			int size = sizeof(eeprom) - address;
+			memcpy(dma_buffer_out, eeprom + address, size);
+			dma_buffer_out += size;
+			*dma_count_out += size;
 		}
 		break;
 
@@ -1229,56 +1230,42 @@ u32 maple_naomi_jamma::RawDma(u32* buffer_in, u32 buffer_in_len, u32* buffer_out
 	return out_len;
 }
 
-bool maple_naomi_jamma::serialize(void **data, unsigned int *total_size)
+void maple_naomi_jamma::serialize(Serializer& ser) const
 {
-	maple_base::serialize(data, total_size);
-	REICAST_S(crazy_mode);
-	REICAST_S(jvs_repeat_request);
-	REICAST_S(jvs_receive_length);
-	REICAST_S(jvs_receive_buffer);
-	size_t board_count = io_boards.size();
-	REICAST_S(board_count);
+	maple_base::serialize(ser);
+	ser << crazy_mode;
+	ser << jvs_repeat_request;
+	ser << jvs_receive_length;
+	ser << jvs_receive_buffer;
+	ser << eeprom;
+	u32 board_count = io_boards.size();
+	ser << board_count;
 	for (u32 i = 0; i < io_boards.size(); i++)
-		io_boards[i]->serialize(data, total_size);
-
-	return true ;
+		io_boards[i]->serialize(ser);
 }
-
-bool maple_naomi_jamma::unserialize(void **data, unsigned int *total_size, serialize_version_enum version)
+void maple_naomi_jamma::deserialize(Deserializer& deser)
 {
-	maple_base::unserialize(data, total_size, version);
-	REICAST_US(crazy_mode);
-	REICAST_US(jvs_repeat_request);
-	REICAST_US(jvs_receive_length);
-	REICAST_US(jvs_receive_buffer);
-	size_t board_count;
-	REICAST_US(board_count);
+	maple_base::deserialize(deser);
+	deser >> crazy_mode;
+	deser >> jvs_repeat_request;
+	deser >> jvs_receive_length;
+	deser >> jvs_receive_buffer;
+	if (deser.version() >= Deserializer::V23)
+		deser >> eeprom;
+	u32 board_count;
+	deser >> board_count;
+	deser.skip(sizeof(size_t) - sizeof(u32), Deserializer::V23);
 	for (u32 i = 0; i < board_count; i++)
-		io_boards[i]->unserialize(data, total_size, version);
-
-	return true ;
+		io_boards[i]->deserialize(deser);
 }
 
 u16 jvs_io_board::read_analog_axis(int player_num, int player_axis, bool inverted)
 {
 	u16 v;
-	switch (player_axis)
-	{
-	case 0:
-		v = (joyx[player_num] + 128) << 8;
-		break;
-	case 1:
-		v = (joyy[player_num] + 128) << 8;
-		break;
-	case 2:
-		v = (joyrx[player_num] + 128) << 8;
-		break;
-	case 3:
-		v = (joyry[player_num] + 128) << 8;
-		break;
-	default:
-		return 0x8000;
-	}
+	if (player_axis >= 0 && player_axis < 4)
+		v = (mapleInputState[player_num].fullAxes[player_axis] + 128) << 8;
+	else
+		v = 0x8000;
 	return inverted ? 0xff00 - v : v;
 }
 
@@ -1417,11 +1404,11 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 			u32 buttons[4] {};
 #ifdef LIBRETRO
 			for (int p = 0; p < 4; p++)
-				buttons[p] = ~kcode[p];
+				buttons[p] = ~mapleInputState[p].kcode;
 #else
 			for (u32 i = 0; i < ARRAY_SIZE(naomi_button_mapping); i++)
 				for (int p = 0; p < 4; p++)
-					if ((kcode[p] & (1 << i)) == 0)
+					if ((mapleInputState[p].kcode & (1 << i)) == 0)
 						buttons[p] |= naomi_button_mapping[i];
 #endif
 			for (u32& button : buttons)
@@ -1495,10 +1482,11 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 							for (; axis / 2 < player_count && axis < buffer_in[cmdi + 1]; axis += 2)
 							{
 								int playerNum = first_player + axis / 2;
+								const MapleInputState& inputState = mapleInputState[std::min(playerNum, (int)ARRAY_SIZE(mapleInputState) - 1)];
 								u16 x;
 								u16 y;
-								if (mo_x_abs[playerNum] < 0 || mo_x_abs[playerNum] > 639
-										|| mo_y_abs[playerNum] < 0 || mo_y_abs[playerNum] > 479
+								if (inputState.absPos.x < 0 || inputState.absPos.x > 639
+										|| inputState.absPos.y < 0 || inputState.absPos.y > 479
 										|| (buttons[playerNum] & NAOMI_RELOAD_KEY) != 0)
 								{
 									x = 0;
@@ -1506,8 +1494,8 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 								}
 								else
 								{
-									x = mo_x_abs[playerNum] * 0xFFFF / 639;
-									y = mo_y_abs[playerNum] * 0xFFFF / 479;
+									x = inputState.absPos.x * 0xFFFF / 639;
+									y = inputState.absPos.y * 0xFFFF / 479;
 								}
 								LOGJVS("x,y:%4x,%4x ", x, y);
 								JVS_OUT(x >> 8);		// X, MSB
@@ -1537,9 +1525,9 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 									if (axisDesc.type == Half)
 									{
 										if (axisDesc.axis == 4)
-											axis_value = rt[player_num] << 8;
+											axis_value = mapleInputState[player_num].halfAxes[PJTI_R] << 8;
 										else if (axisDesc.axis == 5)
-											axis_value = lt[player_num] << 8;
+											axis_value = mapleInputState[player_num].halfAxes[PJTI_L] << 8;
 										else
 											axis_value = 0;
 										if (axisDesc.inverted)
@@ -1574,10 +1562,8 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 						static s16 roty = 0;
 						// TODO Add more players.
 						// I can't think of any naomi multiplayer game that uses rotary encoders
-						rotx += mo_x_delta[first_player] * 5;
-						roty -= mo_y_delta[first_player] * 5;
-						mo_x_delta[first_player] = 0;
-						mo_y_delta[first_player] = 0;
+						rotx += mapleInputState[first_player].relPos.x * 5;
+						roty -= mapleInputState[first_player].relPos.y * 5;
 						LOGJVS("rotenc ");
 						for (int chan = 0; chan < buffer_in[cmdi + 1]; chan++)
 						{
@@ -1625,8 +1611,8 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 							// Ninja Assault:
 							u32 xr = 0x19d - 0x37;
 							u32 yr = 0x1fe - 0x40;
-							x = mo_x_abs[playerNum] * xr / 639 + 0x37;
-							y = mo_y_abs[playerNum] * yr / 479 + 0x40;
+							x = mapleInputState[playerNum].absPos.x * xr / 639 + 0x37;
+							y = mapleInputState[playerNum].absPos.y * yr / 479 + 0x40;
 						}
 						LOGJVS("lightgun %4x,%4x ", x, y);
 						JVS_OUT(x >> 8);		// X, MSB
@@ -1681,18 +1667,13 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 	return length;
 }
 
-bool jvs_io_board::serialize(void **data, unsigned int *total_size)
+void jvs_io_board::serialize(Serializer& ser) const
 {
-	REICAST_S(node_id);
-	REICAST_S(lightgun_as_analog);
-
-	return true ;
+	ser << node_id;
+	ser << lightgun_as_analog;
 }
-
-bool jvs_io_board::unserialize(void **data, unsigned int *total_size, serialize_version_enum version)
+void jvs_io_board::deserialize(Deserializer& deser)
 {
-	REICAST_US(node_id);
-	REICAST_US(lightgun_as_analog);
-
-	return true ;
+	deser >> node_id;
+	deser >> lightgun_as_analog;
 }

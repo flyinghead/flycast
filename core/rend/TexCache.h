@@ -13,7 +13,7 @@ extern u8* vq_codebook;
 extern u32 palette_index;
 extern u32 palette16_ram[1024];
 extern u32 palette32_ram[1024];
-extern bool pal_needs_update,fog_needs_update;
+extern bool fog_needs_update;
 extern u32 pal_hash_256[4];
 extern u32 pal_hash_16[64];
 extern bool KillTex;
@@ -22,6 +22,7 @@ extern bool palette_updated;
 extern u32 detwiddle[2][11][1024];
 
 void palette_update();
+void forcePaletteUpdate();
 
 template<class pixel_type>
 class PixelBuffer
@@ -83,7 +84,7 @@ public:
 
 	void set_mipmap(int level)
 	{
-		size_t offset = 0;
+		u32 offset = 0;
 		for (int i = 0; i < level; i++)
 			offset += (1 << (2 * i));
 		p_current_mipmap = p_current_line = p_current_pixel = p_buffer_start + offset;
@@ -551,19 +552,18 @@ constexpr TexConvFP32 tex1555_VQ32 = texture_VQ<ConvertTwiddle<Unpacker1555_32<B
 constexpr TexConvFP32 tex4444_VQ32 = texture_VQ<ConvertTwiddle<Unpacker4444_32<BGRAPacker>>>;
 }
 
+class BaseTextureCacheData;
+
 struct vram_block
 {
 	u32 start;
 	u32 end;
-	u32 len;
-	u32 type;
 
-	void* userdata;
+	BaseTextureCacheData *texture;
 };
 
-class BaseTextureCacheData;
-
 bool VramLockedWriteOffset(size_t offset);
+bool VramLockedWrite(u8* address);
 void libCore_vramlock_Lock(u32 start_offset, u32 end_offset, BaseTextureCacheData *texture);
 
 void UpscalexBRZ(int factor, u32* source, u32* dest, int width, int height, bool has_alpha);

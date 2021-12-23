@@ -18,6 +18,9 @@
 #include "oslib/host_context.h"
 
 #include "hw/sh4/dyna/ngen.h"
+#include "rend/TexCache.h"
+#include "hw/mem/_vmem.h"
+#include "hw/mem/mem_watch.h"
 
 #ifdef __SWITCH__
 #include <ucontext.h>
@@ -26,8 +29,6 @@ extern "C" char __start__;
 #endif // __SWITCH__
 
 #if !defined(TARGET_NO_EXCEPTIONS)
-bool VramLockedWrite(u8* address);
-bool BM_LockedWrite(u8* address);
 
 void context_from_segfault(host_context_t* hctx, void* segfault_ctx);
 void context_to_segfault(host_context_t* hctx, void* segfault_ctx);
@@ -41,6 +42,9 @@ static struct sigaction next_bus_handler;
 
 void fault_handler(int sn, siginfo_t * si, void *segfault_ctx)
 {
+	// Ram watcher for net rollback
+	if (memwatch::writeAccess(si->si_addr))
+		return;
 	// code protection in RAM
 	if (bm_RamWriteAccess(si->si_addr))
 		return;

@@ -141,7 +141,7 @@ bool D3DRenderer::Init()
 	success &= SUCCEEDED(device->CreateTexture(32, 32, 1, D3DUSAGE_DYNAMIC, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &paletteTexture.get(), 0));
 	success &= SUCCEEDED(device->CreateTexture(128, 2, 1, D3DUSAGE_DYNAMIC, D3DFMT_A8, D3DPOOL_DEFAULT, &fogTexture.get(), 0));
 	fog_needs_update = true;
-	palette_updated = true;
+	forcePaletteUpdate();
 
 	if (!success)
 	{
@@ -198,7 +198,7 @@ void D3DRenderer::postReset()
 	verifyWin(device->CreateTexture(32, 32, 1, D3DUSAGE_DYNAMIC, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &paletteTexture.get(), 0));
 	verifyWin(device->CreateTexture(128, 2, 1, D3DUSAGE_DYNAMIC, D3DFMT_A8, D3DPOOL_DEFAULT, &fogTexture.get(), 0));
 	fog_needs_update = true;
-	palette_updated = true;
+	forcePaletteUpdate();
 }
 
 void D3DRenderer::Term()
@@ -267,7 +267,7 @@ void D3DRenderer::readDCFramebuffer()
 
 void D3DRenderer::renderDCFramebuffer()
 {
-	device->ColorFill(framebufferSurface, 0, D3DCOLOR_ARGB(255, VO_BORDER_COL.Red, VO_BORDER_COL.Green, VO_BORDER_COL.Blue));
+	device->ColorFill(framebufferSurface, 0, D3DCOLOR_ARGB(255, VO_BORDER_COL._red, VO_BORDER_COL._green, VO_BORDER_COL._blue));
 	u32 bar = (width - height * 640 / 480) / 2;
 	RECT rd{ (LONG)bar, 0, (LONG)(width - bar), (LONG)height };
 	device->StretchRect(dcfbSurface, nullptr, framebufferSurface, &rd, D3DTEXF_LINEAR);
@@ -322,7 +322,7 @@ void D3DRenderer::setGPState(const PolyParam *gp)
 	else
 		trilinear_alpha = 1.f;
 
-	bool color_clamp = gp->tsp.ColorClamp && (pvrrc.fog_clamp_min != 0 || pvrrc.fog_clamp_max != 0xffffffff);
+	bool color_clamp = gp->tsp.ColorClamp && (pvrrc.fog_clamp_min.full != 0 || pvrrc.fog_clamp_max.full != 0xffffffff);
 	int fog_ctrl = config::Fog ? gp->tsp.FogCtrl : 2;
 
 	int clip_rect[4] = {};
@@ -341,7 +341,8 @@ void D3DRenderer::setGPState(const PolyParam *gp)
 			color_clamp,
 			trilinear_alpha != 1.f,
 			gpuPalette,
-			gp->pcw.Gouraud));
+			gp->pcw.Gouraud,
+			clipmode == TileClipping::Inside));
 
 	if (trilinear_alpha != 1.f)
 	{
@@ -360,13 +361,6 @@ void D3DRenderer::setGPState(const PolyParam *gp)
 	devCache.SetVertexShader(shaders.getVertexShader(gp->pcw.Gouraud));
 	devCache.SetRenderState(D3DRS_SHADEMODE, gp->pcw.Gouraud == 1 ? D3DSHADE_GOURAUD : D3DSHADE_FLAT);
 
-	/* TODO
-	if (clipmode == TileClipping::Inside)
-	{
-		float f[] = { clip_rect[0], clip_rect[1], clip_rect[0] + clip_rect[2], clip_rect[1] + clip_rect[3] };
-		device->SetPixelShaderConstantF(n, f, 1);
-	}
-	else */
 	if (clipmode == TileClipping::Outside)
 	{
 		devCache.SetRenderState(D3DRS_SCISSORTESTENABLE, TRUE);
@@ -379,6 +373,11 @@ void D3DRenderer::setGPState(const PolyParam *gp)
 		devCache.SetRenderState(D3DRS_SCISSORTESTENABLE, scissorEnable);
 		if (scissorEnable)
 			device->SetScissorRect(&scissorRect);
+		if (clipmode == TileClipping::Inside)
+		{
+			float f[] = { (float)clip_rect[0], (float)clip_rect[1], (float)(clip_rect[0] + clip_rect[2]), (float)(clip_rect[1] + clip_rect[3]) };
+			device->SetPixelShaderConstantF(4, f, 1);
+		}
 	}
 
 	const u32 stencil = (gp->pcw.Shadow != 0) ? 0x80 : 0;
@@ -472,11 +471,11 @@ void D3DRenderer::sortTriangles(int first, int count)
 	if (pidx_sort.empty())
 		return;
 
-	const u32 bufSize = vidx_sort.size() * sizeof(u32);
+	const size_t bufSize = vidx_sort.size() * sizeof(u32);
 	// Upload sorted index buffer
-	ensureIndexBufferSize(sortedTriIndexBuffer, sortedTriIndexBufferSize, bufSize);
+	ensureIndexBufferSize(sortedTriIndexBuffer, sortedTriIndexBufferSize, (u32)bufSize);
 	void *ptr;
-	sortedTriIndexBuffer->Lock(0, bufSize, &ptr, D3DLOCK_DISCARD);
+	sortedTriIndexBuffer->Lock(0, (UINT)bufSize, &ptr, D3DLOCK_DISCARD);
 	memcpy(ptr, &vidx_sort[0], bufSize);
 	sortedTriIndexBuffer->Unlock();
 	device->SetIndices(sortedTriIndexBuffer);
@@ -487,7 +486,7 @@ void D3DRenderer::drawSorted(bool multipass)
 	if (pidx_sort.empty())
 		return;
 
-	u32 count = pidx_sort.size();
+	u32 count = (u32)pidx_sort.size();
 
 	for (u32 p = 0; p < count; p++)
 	{
@@ -642,6 +641,7 @@ void D3DRenderer::drawModVols(int first, int count)
 	device->SetVertexDeclaration(modVolVtxDecl);
 	device->SetStreamSource(0, modvolBuffer, 0, 3 * sizeof(float));
 
+	devCache.SetRenderState(D3DRS_ZFUNC, D3DCMP_GREATER);
 	devCache.SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
 	devCache.SetRenderState(D3DRS_STENCILENABLE, TRUE);
 	devCache.SetRenderState(D3DRS_ZWRITEENABLE, D3DZB_FALSE);
@@ -716,36 +716,6 @@ void D3DRenderer::drawModVols(int first, int count)
 	//restore states
 	devCache.SetRenderState(D3DRS_STENCILENABLE, FALSE);
 	devCache.SetRenderState(D3DRS_ZENABLE, D3DZB_TRUE);
-}
-
-// Direct3D uses the color values of the first vertex for flat shaded triangle strips.
-// On Dreamcast the last vertex is the provoking one so we must copy it onto the first.
-// TODO refactor with Vk
-void D3DRenderer::setProvokingVertices()
-{
-	auto setProvokingVertex = [](const List<PolyParam>& list) {
-        u32 *idx_base = pvrrc.idx.head();
-        Vertex *vtx_base = pvrrc.verts.head();
-		const PolyParam *pp_end = list.LastPtr(0);
-		for (const PolyParam *pp = list.head(); pp != pp_end; pp++)
-		{
-			if (!pp->pcw.Gouraud && pp->count > 2)
-			{
-				for (u32 i = 0; i < pp->count - 2; i++)
-				{
-					Vertex *vertex = &vtx_base[idx_base[pp->first + i]];
-					Vertex *lastVertex = &vtx_base[idx_base[pp->first + i + 2]];
-					memcpy(vertex->col, lastVertex->col, 4);
-					memcpy(vertex->spc, lastVertex->spc, 4);
-					//memcpy(vertex->col1, lastVertex->col1, 4);
-					//memcpy(vertex->spc1, lastVertex->spc1, 4);
-				}
-			}
-		}
-	};
-	setProvokingVertex(pvrrc.global_param_op);
-	setProvokingVertex(pvrrc.global_param_pt);
-	setProvokingVertex(pvrrc.global_param_tr);
 }
 
 void D3DRenderer::drawStrips()
@@ -847,7 +817,7 @@ void D3DRenderer::setBaseScissor()
 			{
 				float scaled_offs_x = matrices.GetSidebarWidth();
 
-				D3DCOLOR borderColor = D3DCOLOR_ARGB(255, VO_BORDER_COL.Red, VO_BORDER_COL.Green, VO_BORDER_COL.Blue);
+				D3DCOLOR borderColor = D3DCOLOR_ARGB(255, VO_BORDER_COL._red, VO_BORDER_COL._green, VO_BORDER_COL._blue);
 				devCache.SetRenderState(D3DRS_SCISSORTESTENABLE, FALSE);
 				D3DRECT rects[] {
 						{ 0, 0, lroundf(scaled_offs_x), (long)height },
@@ -900,10 +870,10 @@ void D3DRenderer::prepareRttRenderTarget(u32 texAddress)
 		fbw2 *= 2;
 	if (!config::RenderToTextureBuffer)
 	{
-		fbw *= config::RenderResolution / 480.f;
-		fbh *= config::RenderResolution / 480.f;
-		fbw2 *= config::RenderResolution / 480.f;
-		fbh2 *= config::RenderResolution / 480.f;
+		fbw = (u32)(fbw * config::RenderResolution / 480.f);
+		fbh = (u32)(fbh * config::RenderResolution / 480.f);
+		fbw2 = (u32)(fbw2 * config::RenderResolution / 480.f);
+		fbh2 = (u32)(fbh2 * config::RenderResolution / 480.f);
 	}
 	rttTexture.reset();
 	device->CreateTexture(fbw2, fbh2, 1, D3DUSAGE_RENDERTARGET, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &rttTexture.get(), NULL);
@@ -956,7 +926,7 @@ void D3DRenderer::readRttRenderTarget(u32 texAddress)
 		verifyWin(offscreenSurface->UnlockRect());
 
 		u16 *dst = (u16 *)&vram[texAddress];
-		WriteTextureToVRam<2, 1, 0, 3>(w, h, p, dst);
+		WriteTextureToVRam<2, 1, 0, 3>(w, h, (u8 *)tmp_buf.data(), dst);
 	}
 	else
 	{
@@ -1032,7 +1002,25 @@ bool D3DRenderer::Render()
 
 	if (!pvrrc.isRenderFramebuffer)
 	{
-		setProvokingVertices();
+		setFirstProvokingVertex(pvrrc);
+		// Set clip planes at (-1,0) (1,0) (0,-1) and (0,1).
+		// Helps avoiding interpolation errors on large triangles.
+		devCache.SetRenderState(D3DRS_CLIPPLANEENABLE, 15);
+		float v[4] {};
+		v[3] = 1.f;
+		// left
+		v[0] = 1.f;
+		device->SetClipPlane(0, v);
+		// right
+		v[0] = -1.f;
+		device->SetClipPlane(1, v);
+		// top
+		v[0] = 0.f;
+		v[1] = 1.f;
+		device->SetClipPlane(2, v);
+		// bottom
+		v[1] = -1.f;
+		device->SetClipPlane(3, v);
 
 		verify(ensureVertexBufferSize(vertexBuffer, vertexBufferSize, pvrrc.verts.bytes()));
 		void *ptr;
@@ -1058,36 +1046,24 @@ bool D3DRenderer::Render()
 		devCache.SetVertexShader(shaders.getVertexShader(true));
 
 		// VERT and RAM fog color constants
-		u8* fog_colvert_bgra = (u8*)&FOG_COL_VERT;
-		u8* fog_colram_bgra = (u8*)&FOG_COL_RAM;
-		float ps_FOG_COL_VERT[4] = { fog_colvert_bgra[2] / 255.0f, fog_colvert_bgra[1] / 255.0f, fog_colvert_bgra[0] / 255.0f, 1 };
-		float ps_FOG_COL_RAM[4] = { fog_colram_bgra[2] / 255.0f, fog_colram_bgra[1] / 255.0f, fog_colram_bgra[0] / 255.0f, 1 };
+		float ps_FOG_COL_VERT[4];
+		float ps_FOG_COL_RAM[4];
+		FOG_COL_VERT.getRGBColor(ps_FOG_COL_VERT);
+		FOG_COL_RAM.getRGBColor(ps_FOG_COL_RAM);
 		device->SetPixelShaderConstantF(1, ps_FOG_COL_VERT, 1);
 		device->SetPixelShaderConstantF(2, ps_FOG_COL_RAM, 1);
 
 		// Fog density and scale constants
-		u8* fog_density = (u8*)&FOG_DENSITY;
-		float fog_den_mant = fog_density[1] / 128.0f;  //bit 7 -> x. bit, so [6:0] -> fraction -> /128
-		s32 fog_den_exp = (s8)fog_density[0];
-		float fog_den_float = fog_den_mant * powf(2.0f, (float)fog_den_exp) * config::ExtraDepthScale;
+		float fog_den_float = FOG_DENSITY.get() * config::ExtraDepthScale;
 		float fogDensityAndScale[4]= { fog_den_float, 1.f - FPU_SHAD_SCALE.scale_factor / 256.f, 0, 1 };
 		device->SetPixelShaderConstantF(3, fogDensityAndScale, 1);
 
 		// Color clamping
-		float fog_clamp_min[] {
-			((pvrrc.fog_clamp_min >> 16) & 0xFF) / 255.0f,
-			((pvrrc.fog_clamp_min >> 8) & 0xFF) / 255.0f,
-			((pvrrc.fog_clamp_min >> 0) & 0xFF) / 255.0f,
-			((pvrrc.fog_clamp_min >> 24) & 0xFF) / 255.0f
-		};
-		device->SetPixelShaderConstantF(6, fog_clamp_min, 1);
-		float fog_clamp_max[] {
-			((pvrrc.fog_clamp_max >> 16) & 0xFF) / 255.0f,
-			((pvrrc.fog_clamp_max >> 8) & 0xFF) / 255.0f,
-			((pvrrc.fog_clamp_max >> 0) & 0xFF) / 255.0f,
-			((pvrrc.fog_clamp_max >> 24) & 0xFF) / 255.0f
-		};
-		device->SetPixelShaderConstantF(7, fog_clamp_max, 1);
+		float color_clamp[4];
+		pvrrc.fog_clamp_min.getRGBAColor(color_clamp);
+		device->SetPixelShaderConstantF(6, color_clamp, 1);
+		pvrrc.fog_clamp_max.getRGBAColor(color_clamp);
+		device->SetPixelShaderConstantF(7, color_clamp, 1);
 
 		devCache.SetRenderState(D3DRS_ZENABLE, D3DZB_TRUE);
 
@@ -1101,7 +1077,7 @@ bool D3DRenderer::Render()
 		devCache.SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
 		devCache.SetRenderState(D3DRS_ALPHATESTENABLE, FALSE);
 		devCache.SetRenderState(D3DRS_FILLMODE, D3DFILL_SOLID);
-		devCache.SetRenderState(D3DRS_CLIPPLANEENABLE, 0);
+		devCache.SetRenderState(D3DRS_CLIPPING, FALSE);
 
 		setBaseScissor();
 
@@ -1112,6 +1088,7 @@ bool D3DRenderer::Render()
 		}
 		drawStrips();
 		device->EndScene();
+		devCache.SetRenderState(D3DRS_CLIPPLANEENABLE, 0);
 	}
 	else
 	{
@@ -1130,6 +1107,7 @@ bool D3DRenderer::Render()
 		DrawOSD(false);
 		frameRendered = true;
 		frameRenderedOnce = true;
+		theDXContext.setFrameRendered();
 	}
 
 	return !is_rtt;
@@ -1154,10 +1132,10 @@ void D3DRenderer::Resize(int w, int h)
 void D3DRenderer::renderFramebuffer()
 {
 	devCache.SetRenderState(D3DRS_SCISSORTESTENABLE, FALSE);
-	device->ColorFill(backbuffer, 0, D3DCOLOR_ARGB(255, VO_BORDER_COL.Red, VO_BORDER_COL.Green, VO_BORDER_COL.Blue));
+	device->ColorFill(backbuffer, 0, D3DCOLOR_ARGB(255, VO_BORDER_COL._red, VO_BORDER_COL._green, VO_BORDER_COL._blue));
 	int fx = 0;
 	int sx = 0;
-	float screenAR = (float)screen_width / screen_height;
+	float screenAR = (float)settings.display.width / settings.display.height;
 	int fbwidth = width;
 	int fbheight = height;
 	if (config::Rotate90)
@@ -1166,16 +1144,16 @@ void D3DRenderer::renderFramebuffer()
 	if (renderAR > screenAR)
 		fx = (int)roundf((fbwidth - screenAR * fbheight) / 2.f);
 	else
-		sx = (int)roundf((screen_width - renderAR * screen_height) / 2.f);
+		sx = (int)roundf((settings.display.width - renderAR * settings.display.height) / 2.f);
 
 	if (!config::Rotate90)
 	{
 		RECT rs { 0, 0, (long)width, (long)height };
-		RECT rd { 0, 0, screen_width, screen_height };
+		RECT rd { 0, 0, settings.display.width, settings.display.height };
 		if (sx != 0)
 		{
 			rd.left = sx;
-			rd.right = screen_width - sx;
+			rd.right = settings.display.width - sx;
 		}
 		else
 		{
@@ -1196,7 +1174,7 @@ void D3DRenderer::renderFramebuffer()
 		device->SetSamplerState(0, D3DSAMP_MAGFILTER, D3DTEXF_LINEAR);
 
 		glm::mat4 identity = glm::identity<glm::mat4>();
-		glm::mat4 projection = glm::translate(glm::vec3(-1.f / screen_width, 1.f / screen_height, 0))
+		glm::mat4 projection = glm::translate(glm::vec3(-1.f / settings.display.width, 1.f / settings.display.height, 0))
 			* glm::rotate((float)M_PI_2, glm::vec3(0, 0, 1));
 
 		device->SetTransform(D3DTS_WORLD, (const D3DMATRIX *)&identity[0][0]);
@@ -1206,9 +1184,9 @@ void D3DRenderer::renderFramebuffer()
 		device->SetFVF(D3DFVF_XYZ | D3DFVF_TEX1);
 		D3DVIEWPORT9 viewport;
 		viewport.X = sx;
-		viewport.Y = fx * screen_width / height;
-		viewport.Width = screen_width - sx * 2;
-		viewport.Height = screen_height - 2 * fx * screen_width / height;
+		viewport.Y = fx * settings.display.width / height;
+		viewport.Width = settings.display.width - sx * 2;
+		viewport.Height = settings.display.height - 2 * fx * settings.display.width / height;
 		viewport.MinZ = 0;
 		viewport.MaxZ = 1;
 		verifyWin(device->SetViewport(&viewport));

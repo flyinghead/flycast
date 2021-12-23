@@ -6,6 +6,8 @@
 #include "input/gamepad_device.h"
 #include "oslib/oslib.h"
 #include "rend/TexCache.h"
+#include "hw/maple/maple_if.h"
+#include "serialize.h"
 
 //SPG emulation; Scanline/Raster beam registers & interrupts
 
@@ -74,6 +76,7 @@ void CalculateSync()
 	
 	Frame_Cycles = pvr_numscanlines * Line_Cycles;
 	prv_cur_scanline = 0;
+	clc_pvr_scanline = 0;
 
 	sh4_sched_request(vblank_schid, Line_Cycles);
 }
@@ -103,7 +106,10 @@ int spg_line_sched(int tag, int cycl, int jit)
 		}
 
 		if (SPG_VBLANK_INT.vblank_out_interrupt_line_number == prv_cur_scanline)
+		{
+			maple_vblank();
 			asic_RaiseInterrupt(holly_SCANINT2);
+		}
 
 		if (SPG_VBLANK.vstart == prv_cur_scanline)
 			in_vblank=1;
@@ -293,6 +299,10 @@ bool spg_Init()
 
 void spg_Term()
 {
+	sh4_sched_unregister(render_end_schid);
+	render_end_schid = -1;
+	sh4_sched_unregister(vblank_schid);
+	vblank_schid = -1;
 }
 
 void spg_Reset(bool hard)
@@ -313,51 +323,49 @@ void SetREP(TA_context* cntx)
 		sh4_sched_request(render_end_schid, 4096);
 }
 
-void spg_Serialize(void **data, unsigned int *total_size)
+void spg_Serialize(Serializer& ser)
 {
-	REICAST_S(in_vblank);
-	REICAST_S(clc_pvr_scanline);
-	REICAST_S(maple_int_pending);
-	REICAST_S(pvr_numscanlines);
-	REICAST_S(prv_cur_scanline);
-	REICAST_S(Line_Cycles);
-	REICAST_S(Frame_Cycles);
-	REICAST_S(lightgun_line);
-	REICAST_S(lightgun_hpos);
+	ser << in_vblank;
+	ser << clc_pvr_scanline;
+	ser << maple_int_pending;
+	ser << pvr_numscanlines;
+	ser << prv_cur_scanline;
+	ser << Line_Cycles;
+	ser << Frame_Cycles;
+	ser << lightgun_line;
+	ser << lightgun_hpos;
 }
-
-void spg_Unserialize(void **data, unsigned int *total_size, serialize_version_enum version)
+void spg_Deserialize(Deserializer& deser)
 {
-	REICAST_US(in_vblank);
-	REICAST_US(clc_pvr_scanline);
-	if (version < V9_LIBRETRO)
+	deser >> in_vblank;
+	deser >> clc_pvr_scanline;
+	if (deser.version() < Deserializer::V9_LIBRETRO)
 	{
-		u32 i;
-		REICAST_US(pvr_numscanlines);
-		REICAST_US(prv_cur_scanline);
-		REICAST_US(vblk_cnt);
-		REICAST_US(Line_Cycles);
-		REICAST_US(Frame_Cycles);
-		REICAST_SKIP(8);		// speed_load_mspdf
-		REICAST_US(i);			// mips_counter
-		REICAST_SKIP(8);		// full_rps
-		if (version <= V4)
-			REICAST_US(i);		// fskip
+		deser >> pvr_numscanlines;
+		deser >> prv_cur_scanline;
+		deser >> vblk_cnt;
+		deser >> Line_Cycles;
+		deser >> Frame_Cycles;
+		deser.skip<double>();	// speed_load_mspdf
+		deser.skip<u32>();		// mips_counter
+		deser.skip<double>();	// full_rps
+		if (deser.version() <= Deserializer::V4)
+			deser.skip<u32>();	// fskip
 	}
-	else if (version >= V12)
+	else if (deser.version() >= Deserializer::V12)
 	{
-		REICAST_US(maple_int_pending);
-		if (version >= V14)
+		deser >> maple_int_pending;
+		if (deser.version() >= Deserializer::V14)
 		{
-			REICAST_US(pvr_numscanlines);
-			REICAST_US(prv_cur_scanline);
-			REICAST_US(Line_Cycles);
-			REICAST_US(Frame_Cycles);
-			REICAST_US(lightgun_line);
-			REICAST_US(lightgun_hpos);
+			deser >> pvr_numscanlines;
+			deser >> prv_cur_scanline;
+			deser >> Line_Cycles;
+			deser >> Frame_Cycles;
+			deser >> lightgun_line;
+			deser >> lightgun_hpos;
 		}
 	}
-	if (version < V14)
+	if (deser.version() < Deserializer::V14)
 		CalculateSync();
 	else
 		setFramebufferScaling();

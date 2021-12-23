@@ -36,7 +36,7 @@ public:
 			vk::DescriptorSetLayoutBinding descSetLayoutBindings[] = {
 					{ 0, vk::DescriptorType::eStorageBuffer, 1, vk::ShaderStageFlagBits::eFragment },		// pixel buffer
 					{ 1, vk::DescriptorType::eStorageBuffer, 1, vk::ShaderStageFlagBits::eFragment },		// pixel counter
-					{ 2, vk::DescriptorType::eStorageImage, 1, vk::ShaderStageFlagBits::eFragment },		// a-buffer pointers
+					{ 2, vk::DescriptorType::eStorageBuffer, 1, vk::ShaderStageFlagBits::eFragment },		// a-buffer pointers
 			};
 
 			descSetLayout = context->GetDevice().createDescriptorSetLayoutUnique(
@@ -62,11 +62,9 @@ public:
 		}
 		// We need to wait until this buffer is not used before deleting it
 		context->WaitIdle();
-		abufferPointerAttachment.reset();
-		abufferPointerAttachment = std::unique_ptr<FramebufferAttachment>(
-				new FramebufferAttachment(context->GetPhysicalDevice(), context->GetDevice()));
-		abufferPointerAttachment->Init(maxWidth, maxHeight, vk::Format::eR32Uint, vk::ImageUsageFlagBits::eStorage);
-		abufferPointerTransitionNeeded = true;
+		abufferPointer.reset();
+		abufferPointer = std::unique_ptr<BufferData>(new BufferData(maxWidth * maxHeight * sizeof(int),
+				vk::BufferUsageFlagBits::eStorageBuffer, vk::MemoryPropertyFlagBits::eDeviceLocal));
 		firstFrameAfterInit = true;
 
 		if (!descSet)
@@ -77,8 +75,8 @@ public:
 		writeDescriptorSets.emplace_back(*descSet, 0, 0, 1, vk::DescriptorType::eStorageBuffer, nullptr, &pixelBufferInfo, nullptr);
 		vk::DescriptorBufferInfo pixelCounterBufferInfo(*pixelCounter->buffer, 0, 4);
 		writeDescriptorSets.emplace_back(*descSet, 1, 0, 1, vk::DescriptorType::eStorageBuffer, nullptr, &pixelCounterBufferInfo, nullptr);
-		vk::DescriptorImageInfo pointerImageInfo(vk::Sampler(), abufferPointerAttachment->GetImageView(), vk::ImageLayout::eGeneral);
-		writeDescriptorSets.emplace_back(*descSet, 2, 0, 1, vk::DescriptorType::eStorageImage, &pointerImageInfo, nullptr, nullptr);
+		vk::DescriptorBufferInfo abufferPointerInfo(*abufferPointer->buffer, 0, VK_WHOLE_SIZE);
+		writeDescriptorSets.emplace_back(*descSet, 2, 0, 1, vk::DescriptorType::eStorageBuffer, nullptr, &abufferPointerInfo, nullptr);
 		context->GetDevice().updateDescriptorSets(writeDescriptorSets, nullptr);
 	}
 
@@ -89,21 +87,7 @@ public:
 
 	void OnNewFrame(vk::CommandBuffer commandBuffer)
 	{
-		if (abufferPointerTransitionNeeded)
-		{
-			abufferPointerTransitionNeeded = false;
-
-			vk::ImageSubresourceRange imageSubresourceRange(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1);
-			vk::ImageMemoryBarrier imageMemoryBarrier(vk::AccessFlags(), vk::AccessFlagBits::eShaderRead | vk::AccessFlagBits::eShaderWrite,
-					vk::ImageLayout::eUndefined, vk::ImageLayout::eGeneral, VK_QUEUE_FAMILY_IGNORED, VK_QUEUE_FAMILY_IGNORED,
-					abufferPointerAttachment->GetImage(), imageSubresourceRange);
-			commandBuffer.pipelineBarrier(vk::PipelineStageFlagBits::eTopOfPipe, vk::PipelineStageFlagBits::eFragmentShader, {}, nullptr, nullptr,
-					imageMemoryBarrier);
-		}
-		else
-		{
-			firstFrameAfterInit = false;
-		}
+		firstFrameAfterInit = false;
 	}
 
 	void ResetPixelCounter(vk::CommandBuffer commandBuffer)
@@ -117,7 +101,7 @@ public:
 		pixelBuffer.reset();
 		pixelCounter.reset();
 		pixelCounterReset.reset();
-		abufferPointerAttachment.reset();
+		abufferPointer.reset();
 	}
 
 	vk::DescriptorSetLayout GetDescriptorSetLayout() const { return *descSetLayout; }
@@ -130,8 +114,7 @@ private:
 	std::unique_ptr<BufferData> pixelBuffer;
 	std::unique_ptr<BufferData> pixelCounter;
 	std::unique_ptr<BufferData> pixelCounterReset;
-	std::unique_ptr<FramebufferAttachment> abufferPointerAttachment;
-	bool abufferPointerTransitionNeeded = false;
+	std::unique_ptr<BufferData> abufferPointer;
 	bool firstFrameAfterInit = false;
 	int maxWidth = 0;
 	int maxHeight = 0;

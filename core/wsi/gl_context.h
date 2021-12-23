@@ -20,34 +20,52 @@
 */
 #pragma once
 #include "types.h"
+#include "context.h"
 
+#ifdef TEST_AUTOMATION
 void do_swap_automation();
-// FIXME
-extern int screen_width, screen_height;
+#else
+static inline void do_swap_automation() {}
+#endif
 
-class GLGraphicsContext
+class GLGraphicsContext : public GraphicsContext
 {
 public:
-	int GetMajorVersion() const { return majorVersion; }
-	int GetMinorVersion() const { return minorVersion; }
-	bool IsGLES() const { return isGLES; }
+	int getMajorVersion() const {
+		return majorVersion;
+	}
+	int getMinorVersion() const {
+		return minorVersion;
+	}
+	bool isGLES() const {
+		return _isGLES;
+	}
+	std::string getDriverName() override;
+	std::string getDriverVersion() override;
+
+	bool hasPerPixel() override
+	{
+		return !isGLES()
+				&& (getMajorVersion() > 4
+						|| (getMajorVersion() == 4 && getMinorVersion() >= 3));
+	}
 
 protected:
-	void PostInit();
-	void PreTerm();
+	void postInit();
+	void preTerm();
 	void findGLVersion();
 
 private:
 	int majorVersion = 0;
 	int minorVersion = 0;
-	bool isGLES = false;
+	bool _isGLES = false;
 };
 
 #if defined(LIBRETRO)
 
 #include "libretro.h"
 
-#elif defined(__APPLE__)
+#elif defined(TARGET_IPHONE)
 
 #include "osx.h"
 

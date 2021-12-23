@@ -34,9 +34,9 @@
 #include "archive/archive.h"
 #include "stdclass.h"
 #include "emulator.h"
-#include "rend/gui.h"
 #include "cfg/option.h"
 #include "oslib/oslib.h"
+#include "serialize.h"
 
 Cartridge *CurrentCartridge;
 bool bios_loaded = false;
@@ -67,6 +67,8 @@ static bool loadBios(const char *filename, Archive *child_archive, Archive *pare
 		path = hostfs::findNaomiBios(arch_name + ".7z");
 	DEBUG_LOG(NAOMI, "Loading BIOS from %s", path.c_str());
 	std::unique_ptr<Archive> bios_archive(OpenArchive(path.c_str()));
+
+	MD5Sum md5;
 
 	bool found_region = false;
 
@@ -114,6 +116,8 @@ static bool loadBios(const char *filename, Archive *child_archive, Archive *pare
 				{
 					verify(bios->blobs[romid].offset + bios->blobs[romid].length <= BIOS_SIZE);
 					u32 read = file->Read(sys_rom->data + bios->blobs[romid].offset, bios->blobs[romid].length);
+					if (config::GGPOEnable)
+						md5.add(sys_rom->data + bios->blobs[romid].offset, bios->blobs[romid].length);
 					DEBUG_LOG(NAOMI, "Mapped %s: %x bytes at %07x", bios->blobs[romid].filename, read, bios->blobs[romid].offset);
 				}
 				break;
@@ -131,6 +135,8 @@ static bool loadBios(const char *filename, Archive *child_archive, Archive *pare
 					for (int i = bios->blobs[romid].length / 2; --i >= 0; to++)
 						*to++ = *from++;
 					free(buf);
+					if (config::GGPOEnable)
+						md5.add(sys_rom->data + bios->blobs[romid].offset, bios->blobs[romid].length);
 					DEBUG_LOG(NAOMI, "Mapped %s: %x bytes (interleaved word) at %07x", bios->blobs[romid].filename, read, bios->blobs[romid].offset);
 				}
 				break;
@@ -141,6 +147,8 @@ static bool loadBios(const char *filename, Archive *child_archive, Archive *pare
 			}
 		}
 	}
+	if (config::GGPOEnable)
+		md5.getDigest(settings.network.md5.bios);
 
 	if (settings.platform.system == DC_PLATFORM_ATOMISWAVE)
 		// Reload the writeable portion of the FlashROM
@@ -197,7 +205,7 @@ void naomi_cart_LoadBios(const char *filename)
 	bios_loaded = true;
 }
 
-static void naomi_cart_LoadZip(const char *filename)
+static void naomi_cart_LoadZip(const char *filename, LoadProgress *progress)
 {
 	Game *game = FindGame(filename);
 	if (game == NULL)
@@ -257,12 +265,24 @@ static void naomi_cart_LoadZip(const char *filename)
 		CurrentCartridge->SetKey(game->key);
 		NaomiGameInputs = game->inputs;
 
-		for (int romid = 0; game->blobs[romid].filename != NULL && !loading_canceled; romid++)
+		MD5Sum md5;
+
+		int romCount = 0;
+		while (game->blobs[romCount].filename != nullptr)
+			romCount++;
+		for (int romid = 0; romid < romCount; romid++)
 		{
-			if (game->cart_type != GD)
+			if (progress != nullptr)
 			{
-				std::string progress = "ROM " + std::to_string(romid + 1);
-				gui_display_notification(progress.c_str(), 1000);
+				if (progress->cancelled)
+					throw LoadCancelledException();
+				if (game->cart_type != GD)
+				{
+					static std::string label;
+					label = "ROM " + std::to_string(romid + 1);
+					progress->label = label.c_str();
+					progress->progress = (float)(romid + 1) / romCount;
+				}
 			}
 
 			u32 len = game->blobs[romid].length;
@@ -301,6 +321,8 @@ static void naomi_cart_LoadZip(const char *filename)
 						{
 							u8 *dst = (u8 *)CurrentCartridge->GetPtr(game->blobs[romid].offset, len);
 							u32 read = file->Read(dst, game->blobs[romid].length);
+							if (config::GGPOEnable)
+								md5.add(dst, game->blobs[romid].length);
 							DEBUG_LOG(NAOMI, "Mapped %s: %x bytes at %07x", game->blobs[romid].filename, read, game->blobs[romid].offset);
 						}
 						break;
@@ -317,6 +339,8 @@ static void naomi_cart_LoadZip(const char *filename)
 							for (int i = game->blobs[romid].length / 2; --i >= 0; to++)
 								*to++ = *from++;
 							free(buf);
+							if (config::GGPOEnable)
+								md5.add((u8*)CurrentCartridge->GetPtr(game->blobs[romid].offset, len), game->blobs[romid].length);
 							DEBUG_LOG(NAOMI, "Mapped %s: %x bytes (interleaved word) at %07x", game->blobs[romid].filename, read, game->blobs[romid].offset);
 						}
 						break;
@@ -329,6 +353,8 @@ static void naomi_cart_LoadZip(const char *filename)
 
 							u32 read = file->Read(buf, game->blobs[romid].length);
 							CurrentCartridge->SetKeyData(buf);
+							if (config::GGPOEnable)
+								md5.add(buf, game->blobs[romid].length);
 							DEBUG_LOG(NAOMI, "Loaded %s: %x bytes cart key", game->blobs[romid].filename, read);
 						}
 						break;
@@ -340,6 +366,8 @@ static void naomi_cart_LoadZip(const char *filename)
 								throw NaomiCartException(std::string("Memory allocation failed"));
 
 							u32 read = file->Read(naomi_default_eeprom, game->blobs[romid].length);
+							if (config::GGPOEnable)
+								md5.add(naomi_default_eeprom, game->blobs[romid].length);
 							DEBUG_LOG(NAOMI, "Loaded %s: %x bytes default eeprom", game->blobs[romid].filename, read);
 						}
 						break;
@@ -350,31 +378,37 @@ static void naomi_cart_LoadZip(const char *filename)
 				}
 			}
 		}
-		if (loading_canceled)
-			return;
 		if (naomi_default_eeprom == NULL && game->eeprom_dump != NULL)
 			naomi_default_eeprom = game->eeprom_dump;
 		if (game->rotation_flag == ROT270)
 			config::Rotate90.override(true);
 
-		CurrentCartridge->Init();
-		if (loading_canceled)
-			return;
+		std::vector<u8> gdromDigest;
+		CurrentCartridge->Init(progress, config::GGPOEnable ? &gdromDigest : nullptr);
+
+		if (config::GGPOEnable)
+		{
+			if (game->cart_type == GD)
+			{
+				std::vector<u8> romMD5 = md5.getDigest();
+				md5 = MD5Sum().add(romMD5).add(gdromDigest);
+			}
+			md5.getDigest(settings.network.md5.game);
+		}
 
 		strcpy(naomi_game_id, CurrentCartridge->GetGameId().c_str());
 		if (naomi_game_id[0] == '\0')
 			strcpy(naomi_game_id, game->name);
 		NOTICE_LOG(NAOMI, "NAOMI GAME ID [%s]", naomi_game_id);
 
-	} catch (const FlycastException& ex) {
+	} catch (...) {
 		delete CurrentCartridge;
 		CurrentCartridge = NULL;
-
-		throw ex;
+		throw;
 	}
 }
 
-void naomi_cart_LoadRom(const char* file)
+void naomi_cart_LoadRom(const char* file, LoadProgress *progress)
 {
 	naomi_cart_Close();
 
@@ -382,7 +416,7 @@ void naomi_cart_LoadRom(const char* file)
 
 	if (extension == "zip" || extension == "7z")
 	{
-		naomi_cart_LoadZip(file);
+		naomi_cart_LoadZip(file, progress);
 		return;
 	}
 
@@ -474,6 +508,8 @@ void naomi_cart_LoadRom(const char* file)
 
 	INFO_LOG(NAOMI, "+%zd romfiles, %.2f MB set address space", files.size(), romSize / 1024.f / 1024.f);
 
+	MD5Sum md5;
+
 	// Allocate space for the rom
 	u8 *romBase = (u8 *)malloc(romSize);
 	verify(romBase != nullptr);
@@ -507,6 +543,8 @@ void naomi_cart_LoadRom(const char* file)
 		{
 			//printf("-Mapping \"%s\" at 0x%08X, size 0x%08X\n", files[i].c_str(), fstart[i], fsize[i]);
 			bool mapped = fread(romDest, 1, fsize[i], fp) == fsize[i];
+			if (config::GGPOEnable)
+				md5.add(fp);
 			fclose(fp);
 			if (!mapped)
 			{
@@ -523,6 +561,8 @@ void naomi_cart_LoadRom(const char* file)
 		free(romBase);
 		throw FlycastException("Error: Failed to load BIN/DAT file");
 	}
+	if (config::GGPOEnable)
+		md5.getDigest(settings.network.md5.game);
 
 	DEBUG_LOG(NAOMI, "Legacy ROM loaded successfully");
 
@@ -609,6 +649,7 @@ std::string Cartridge::GetGameId() {
 	}
 	while (!game_id.empty() && game_id.back() == ' ')
 		game_id.pop_back();
+
 	return game_id;
 }
 
@@ -817,22 +858,22 @@ void NaomiCartridge::WriteMem(u32 address, u32 data, u32 size)
 	DEBUG_LOG(NAOMI, "naomi?WTF? WriteMem: %X <= %X, %d", address, data, size);
 }
 
-void NaomiCartridge::Serialize(void** data, unsigned int* total_size)
+void NaomiCartridge::Serialize(Serializer& ser) const
 {
-	REICAST_S(RomPioOffset);
-	REICAST_S(RomPioAutoIncrement);
-	REICAST_S(DmaOffset);
-	REICAST_S(DmaCount);
-	Cartridge::Serialize(data, total_size);
+	ser << RomPioOffset;
+	ser << RomPioAutoIncrement;
+	ser << DmaOffset;
+	ser << DmaCount;
+	Cartridge::Serialize(ser);
 }
 
-void NaomiCartridge::Unserialize(void** data, unsigned int* total_size)
+void NaomiCartridge::Deserialize(Deserializer& deser)
 {
-	REICAST_US(RomPioOffset);
-	REICAST_US(RomPioAutoIncrement);
-	REICAST_US(DmaOffset);
-	REICAST_US(DmaCount);
-	Cartridge::Unserialize(data, total_size);
+	deser >> RomPioOffset;
+	deser >> RomPioAutoIncrement;
+	deser >> DmaOffset;
+	deser >> DmaCount;
+	Cartridge::Deserialize(deser);
 }
 
 bool M2Cartridge::Read(u32 offset, u32 size, void* dst)
@@ -922,12 +963,12 @@ std::string M2Cartridge::GetGameId()
 	return game_id;
 }
 
-void M2Cartridge::Serialize(void** data, unsigned int* total_size) {
-	REICAST_S(naomi_cart_ram);
-	NaomiCartridge::Serialize(data, total_size);
+void M2Cartridge::Serialize(Serializer& ser) const {
+	ser << naomi_cart_ram;
+	NaomiCartridge::Serialize(ser);
 }
 
-void M2Cartridge::Unserialize(void** data, unsigned int* total_size) {
-	REICAST_US(naomi_cart_ram);
-	NaomiCartridge::Unserialize(data, total_size);
+void M2Cartridge::Deserialize(Deserializer& deser) {
+	deser >> naomi_cart_ram;
+	NaomiCartridge::Deserialize(deser);
 }

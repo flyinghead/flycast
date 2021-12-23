@@ -25,8 +25,9 @@
 #include "wsi/context.h"
 #include "cfg/option.h"
 #include "emulator.h"
+#include "imgui_driver.h"
 
-bool mainui_enabled;
+static bool mainui_enabled;
 u32 MainFrameCount;
 static bool forceReinit;
 
@@ -43,22 +44,18 @@ bool mainui_rend_frame()
 		// TODO refactor android vjoy out of renderer
 		if (gui_state == GuiState::VJoyEdit && renderer != NULL)
 			renderer->DrawOSD(true);
+#ifndef TARGET_IPHONE
 		std::this_thread::sleep_for(std::chrono::milliseconds(16));
+#endif
 	}
 	else
 	{
-		if (!rend_single_frame(mainui_enabled))
-		{
-			if (!dc_is_running())
-			{
-				std::string error = dc_get_last_error();
-				if (!error.empty())
-				{
-					dc_stop();
-					EventManager::event(Event::Pause);
-					gui_stop_game(error);
-				}
-			}
+		try {
+			if (!emu.render())
+				return false;
+		} catch (const FlycastException& e) {
+			emu.unloadGame();
+			gui_stop_game(e.what());
 			return false;
 		}
 	}
@@ -70,7 +67,7 @@ bool mainui_rend_frame()
 void mainui_init()
 {
 	rend_init_renderer();
-	dc_resize_renderer();
+	rend_resize_renderer();
 }
 
 void mainui_term()
@@ -82,45 +79,23 @@ void mainui_loop()
 {
 	mainui_enabled = true;
 	mainui_init();
+	RenderType currentRenderer = config::RendererType;
 
 	while (mainui_enabled)
 	{
-		if (mainui_rend_frame())
-		{
-			if (config::RendererType.isOpenGL())
-				theGLContext.Swap();
-#ifdef USE_VULKAN
-			else if (config::RendererType.isVulkan())
-				VulkanContext::Instance()->Present();
-#endif
-#ifdef _WIN32
-			else if (config::RendererType.isDirectX())
-				theDXContext.Present();
-#endif
-		}
+		mainui_rend_frame();
+		imguiDriver->present();
 
-		if (config::RendererType.pendingChange() || forceReinit)
+		if (config::RendererType != currentRenderer || forceReinit)
 		{
-			int api = config::RendererType.isOpenGL() ? 0 : config::RendererType.isVulkan() ? 1 : 2;
-			RenderType oldRender = config::RendererType;
 			mainui_term();
-			config::RendererType.commit();
-			int newApi = config::RendererType.isOpenGL() ? 0 : config::RendererType.isVulkan() ? 1 : 2;
-			if (newApi != api || forceReinit)
-			{
-				// Switch between vulkan/opengl/directx (or full reinit)
-				RenderType newRender = config::RendererType;
-				// restore current render mode to terminate
-				config::RendererType = oldRender;
-				config::RendererType.commit();
-				TermRenderApi();
-				// set the new render mode and init
-				config::RendererType = newRender;
-				config::RendererType.commit();
-				InitRenderApi();
-			}
+			int prevApi = isOpenGL(currentRenderer) ? 0 : isVulkan(currentRenderer) ? 1 : currentRenderer == RenderType::DirectX9 ? 2 : 3;
+			int newApi = isOpenGL(config::RendererType) ? 0 : isVulkan(config::RendererType) ? 1 : config::RendererType == RenderType::DirectX9 ? 2 : 3;
+			if (newApi != prevApi || forceReinit)
+				switchRenderApi();
 			mainui_init();
 			forceReinit = false;
+			currentRenderer = config::RendererType;
 		}
 	}
 

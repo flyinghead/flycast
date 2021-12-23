@@ -37,10 +37,11 @@ static int x11_error_handler(Display *, XErrorEvent *)
 	return 0;
 }
 
-bool XGLGraphicsContext::Init()
+bool XGLGraphicsContext::init()
 {
 	typedef GLXContext (*glXCreateContextAttribsARBProc)(Display*, GLXFBConfig, GLXContext, Bool, const int*);
 
+	instance = this;
 	glXCreateContextAttribsARBProc glXCreateContextAttribsARB = 0;
 	glXCreateContextAttribsARB = (glXCreateContextAttribsARBProc)glXGetProcAddressARB((const GLubyte*)"glXCreateContextAttribsARB");
 	verify(glXCreateContextAttribsARB != 0);
@@ -56,14 +57,14 @@ bool XGLGraphicsContext::Init()
 	};
 	int (*old_handler)(Display *, XErrorEvent *) = XSetErrorHandler(&x11_error_handler);
 
-	context = glXCreateContextAttribsARB(this->display, *framebufferConfigs, 0, True, context_attribs);
+	context = glXCreateContextAttribsARB((Display *)display, *framebufferConfigs, 0, True, context_attribs);
 	if (!context)
 	{
 		INFO_LOG(RENDERER, "Open GL 4.3 not supported");
 		// Try GL 3.0
 		context_attribs[1] = 3;
 		context_attribs[3] = 0;
-		context = glXCreateContextAttribsARB(this->display, *framebufferConfigs, 0, True, context_attribs);
+		context = glXCreateContextAttribsARB((Display *)display, *framebufferConfigs, 0, True, context_attribs);
 		if (!context)
 		{
 			ERROR_LOG(RENDERER, "Open GL 3.0 not supported\n");
@@ -71,9 +72,9 @@ bool XGLGraphicsContext::Init()
 		}
 	}
 	XSetErrorHandler(old_handler);
-	XSync(this->display, False);
+	XSync((Display *)display, False);
 
-	glXMakeCurrent(this->display, this->window, context);
+	glXMakeCurrent((Display *)display, (GLXDrawable)window, context);
 
 	if (gl3wInit() == -1 || !gl3wIsSupported(3, 1))
 		return false;
@@ -81,13 +82,9 @@ bool XGLGraphicsContext::Init()
 	Window win;
 	int temp;
 	unsigned int tempu;
-	XGetGeometry(display, window, &win, &temp, &temp, (u32 *)&screen_width, (u32 *)&screen_height, &tempu, &tempu);
+	XGetGeometry((Display *)display, (GLXDrawable)window, &win, &temp, &temp, (u32 *)&settings.display.width, (u32 *)&settings.display.height, &tempu, &tempu);
 
-#ifndef TEST_AUTOMATION
 	swapOnVSync = config::VSync;
-#else
-	swapOnVSync = false;
-#endif
 	glXSwapIntervalMESA = (int (*)(unsigned))glXGetProcAddress((const GLubyte*)"glXSwapIntervalMESA");
 	if (glXSwapIntervalMESA != nullptr)
 		glXSwapIntervalMESA((unsigned)swapOnVSync);
@@ -95,10 +92,10 @@ bool XGLGraphicsContext::Init()
 	{
 		glXSwapIntervalEXT = (PFNGLXSWAPINTERVALEXTPROC)glXGetProcAddress((const GLubyte*)"glXSwapIntervalEXT");
 		if (glXSwapIntervalEXT != nullptr)
-			glXSwapIntervalEXT(display, window, (int)swapOnVSync);
+			glXSwapIntervalEXT((Display *)display, (GLXDrawable)window, (int)swapOnVSync);
 	}
 
-	PostInit();
+	postInit();
 
 	return true;
 }
@@ -154,35 +151,32 @@ bool XGLGraphicsContext::ChooseVisual(Display* x11Display, XVisualInfo** visual,
 	return true;
 }
 
-void XGLGraphicsContext::Swap()
+void XGLGraphicsContext::swap()
 {
-#ifdef TEST_AUTOMATION
 	do_swap_automation();
-#else
 	if (swapOnVSync == (settings.input.fastForwardMode || !config::VSync))
 	{
 		swapOnVSync = (!settings.input.fastForwardMode && config::VSync);
 		if (glXSwapIntervalMESA != nullptr)
 			glXSwapIntervalMESA((unsigned)swapOnVSync);
 		else if (glXSwapIntervalEXT != nullptr)
-			glXSwapIntervalEXT(display, window, (int)swapOnVSync);
+			glXSwapIntervalEXT((Display *)display, (GLXDrawable)window, (int)swapOnVSync);
 	}
-#endif
-	glXSwapBuffers(display, window);
+	glXSwapBuffers((Display *)display, (GLXDrawable)window);
 
 	Window win;
 	int temp;
 	unsigned int tempu;
-	XGetGeometry(display, window, &win, &temp, &temp, (u32 *)&screen_width, (u32 *)&screen_height, &tempu, &tempu);
+	XGetGeometry((Display *)display, (GLXDrawable)window, &win, &temp, &temp, (u32 *)&settings.display.width, (u32 *)&settings.display.height, &tempu, &tempu);
 }
 
-void XGLGraphicsContext::Term()
+void XGLGraphicsContext::term()
 {
-	PreTerm();
+	preTerm();
 	if (context)
 	{
-		glXMakeCurrent(display, None, NULL);
-		glXDestroyContext(display, context);
+		glXMakeCurrent((Display *)display, None, NULL);
+		glXDestroyContext((Display *)display, context);
 		context = (GLXContext)0;
 	}
 }

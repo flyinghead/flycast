@@ -10,19 +10,29 @@ jobs:
     strategy:
       matrix:
         config:
-          - {name: i686-pc-windows-msvc, os: windows-latest, cmakeArgs: -DCMAKE_SYSTEM_VERSION="10.0.18362.0" -G "Visual Studio 16 2019" -A Win32, buildType: Release}
+          - {name: i686-pc-windows-msvc, os: windows-latest, cmakeArgs: -DCMAKE_SYSTEM_VERSION="10.0.18362.0" -G "Visual Studio 16 2019" -A Win32 -DVCPKG_TARGET_TRIPLET=x86-windows-static, buildType: Release}
           - {name: apple-darwin, os: macos-latest, cmakeArgs: -G "Xcode", destDir: osx, buildType: Release}
           - {name: apple-ios, os: macos-latest, cmakeArgs: -DCMAKE_SYSTEM_NAME=iOS -G "Xcode", destDir: ios, buildType: Release}
           - {name: x86_64-pc-linux-gnu, os: ubuntu-latest, buildType: Release}
-          - {name: x86_64-pc-windows-msvc, os: windows-latest, cmakeArgs: -DCMAKE_SYSTEM_VERSION="10.0.18362.0" -G "Visual Studio 16 2019" -A x64, buildType: Release}
+          - {name: x86_64-pc-windows-msvc, os: windows-latest, cmakeArgs: -DCMAKE_SYSTEM_VERSION="10.0.18362.0" -G "Visual Studio 16 2019" -A x64 -DVCPKG_TARGET_TRIPLET=x64-windows-static, buildType: Release}
           - {name: x86_64-w64-mingw32, os: windows-latest, cmakeArgs: -G "MinGW Makefiles", destDir: win, buildType: RelWithDebInfo}
           - {name: libretro-x86_64-pc-linux-gnu, os: ubuntu-latest, cmakeArgs: -DLIBRETRO=ON -DCMAKE_POSITION_INDEPENDENT_CODE=TRUE, buildType: Release}
           - {name: libretro-x86_64-w64-mingw32, os: windows-latest, cmakeArgs: -DLIBRETRO=ON -G "MinGW Makefiles", buildType: Release}
+
+    env:
+      VCPKG_ROOT: ${{ github.workspace }}/vcpkg
+      VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}/vcpkg/bincache
 
     steps:
       - name: Set up build environment (macos-latest)
         run: |
           brew install ccache libao libomp pulseaudio zlib ldid
+          curl https://sdk.lunarg.com/sdk/download/1.2.189.0/mac/vulkansdk-macos-1.2.189.0.dmg --output vulkansdk-macos-1.2.189.0.dmg
+          hdiutil attach ./vulkansdk-macos-1.2.189.0.dmg
+          pushd /Volumes/vulkansdk-macos-1.2.189.0
+          sudo ./InstallVulkan.app/Contents/MacOS/InstallVulkan --root ~/VulkanSDK/1.2.189.0 --accept-licenses --default-answer --confirm-command install
+          popd
+          echo "VULKAN_SDK=$HOME/VulkanSDK/1.2.189.0/macOS" >> $GITHUB_ENV
           echo "/usr/local/opt/ccache/libexec" >> $GITHUB_PATH
           echo "CCACHE_DIR=/tmp/ccache" >> $GITHUB_ENV
         if: matrix.config.os == 'macos-latest'
@@ -30,7 +40,7 @@ jobs:
       - name: Set up build environment (ubuntu-latest)
         run: |
           sudo apt-get update
-          sudo apt-get -y install ccache libao-dev libasound2-dev libevdev-dev libgl1-mesa-dev libpulse-dev libsdl2-dev libudev-dev libzip-dev libminiupnpc-dev
+          sudo apt-get -y install ccache libao-dev libasound2-dev libevdev-dev libgl1-mesa-dev libpulse-dev libsdl2-dev libudev-dev libzip-dev libminiupnpc-dev liblua5.3-dev
           echo "CCACHE_DIR=/tmp/ccache" >> $GITHUB_ENV
         if: matrix.config.os == 'ubuntu-latest'
 
@@ -41,16 +51,16 @@ jobs:
       - uses: actions/cache@v2
         with:
           path: /tmp/ccache
-          key: ccache-${{ matrix.config.os }}-${{ github.sha }}
-          restore-keys: ccache-${{ matrix.config.os }}-
+          key: ccache-${{ matrix.config.name }}-${{ github.sha }}
+          restore-keys: ccache-${{ matrix.config.name }}-
         if: matrix.config.os != 'windows-latest'
 
       - uses: actions/cache@v2
         id: cache
         with:
           path: $HOME/ccache
-          key: ccache-${{ matrix.config.os }}-${{ github.sha }}
-          restore-keys: ccache-${{ matrix.config.os }}-
+          key: ccache-${{ matrix.config.name }}-${{ github.sha }}
+          restore-keys: ccache-${{ matrix.config.name }}-
         if: matrix.config.os == 'windows-latest'
 
       - name: Download DX2010
@@ -68,81 +78,81 @@ jobs:
         uses: msys2/setup-msys2@v2
         with:
           msystem: MINGW64
-          install: git base-devel mingw-w64-x86_64-toolchain mingw-w64-x86_64-cmake mingw-w64-x86_64-breakpad-git
-        if: matrix.config.os == 'windows-latest'
-
-      - name: Downgrade gcc to 10.3
-        run: |
-          pacman -U --noconfirm https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-gcc-libs-10.3.0-8-any.pkg.tar.zst https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-gcc-10.3.0-8-any.pkg.tar.zst https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-gcc-ada-10.3.0-8-any.pkg.tar.zst https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-gcc-fortran-10.3.0-8-any.pkg.tar.zst https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-gcc-libgfortran-10.3.0-8-any.pkg.tar.zst https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-gcc-objc-10.3.0-8-any.pkg.tar.zst https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-libgccjit-10.3.0-8-any.pkg.tar.zst
-          pacman -U --noconfirm https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-crt-git-9.0.0.6246.ae63cde27-1-any.pkg.tar.zst https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-headers-git-9.0.0.6246.ae63cde27-1-any.pkg.tar.zst https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-libmangle-git-9.0.0.6246.ae63cde27-1-any.pkg.tar.zst https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-libwinpthread-git-9.0.0.6246.ae63cde27-1-any.pkg.tar.zst https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-tools-git-9.0.0.6246.ae63cde27-1-any.pkg.tar.zst https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-winpthreads-git-9.0.0.6246.ae63cde27-1-any.pkg.tar.zst https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-winstorecompat-git-9.0.0.6246.ae63cde27-1-any.pkg.tar.zst
-          pacman -U --noconfirm https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-cmake-3.20.5-2-any.pkg.tar.zst
-        shell: msys2 {0}
-        if: matrix.config.os == 'windows-latest'
+          install: git base-devel mingw-w64-x86_64-toolchain mingw-w64-x86_64-cmake mingw-w64-x86_64-lua mingw-w64-x86_64-SDL2
+        if: endsWith(matrix.config.name, 'w64-mingw32')
 
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0
           submodules: true
 
-      - name: Create artifact directory
-        run: mkdir -p build/artifact
-
-      - name: Build SDL (macos)
+      - name: Bootstrap vcpkg (msvc)
         run: |
-          cd shell/apple
-          mkdir artifacts
-          brew install --build-from-source ./sdl2.rb
-        if: matrix.config.name == 'apple-darwin'
+          git clone https://github.com/microsoft/vcpkg
+          mkdir vcpkg\bincache
+          vcpkg\bootstrap-vcpkg.bat
+        if: endsWith(matrix.config.name, 'msvc')
+
+      - uses: actions/cache@v2
+        id: cache-vcpkg
+        with:
+          path: ${{ env.VCPKG_DEFAULT_BINARY_CACHE }}
+          key: vcpkg-${{ hashFiles( 'vcpkg.json' ) }}
+        if: endsWith(matrix.config.name, 'msvc')
 
       - name: CMake
         run: |
-          cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.config.buildType }} -DCMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE=artifact -DCMAKE_LIBRARY_OUTPUT_DIRECTORY=artifact ${{ matrix.config.cmakeArgs }}
-          cmake --build build --config Release --parallel 2
-        if: matrix.config.os != 'windows-latest'
+          cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.config.buildType }} -DCMAKE_INSTALL_PREFIX=artifact ${{ matrix.config.cmakeArgs }}
+          cmake --build build --config ${{ matrix.config.buildType }} --parallel 2
+          cmake --build build --config ${{ matrix.config.buildType }} --target install
+        if: endsWith(matrix.config.name, 'w64-mingw32') != true && endsWith(matrix.config.name, 'msvc') != true
 
       - name: CMake (windows)
         shell: msys2 {0}
         run: |
           unset temp tmp
-          cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.config.buildType }} -DCMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE=artifact -DCMAKE_RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO=artifact -DCMAKE_LIBRARY_OUTPUT_DIRECTORY=artifact ${{ matrix.config.cmakeArgs }}
-          cmake --build build --config Release --parallel 2
-        if: matrix.config.os == 'windows-latest'
+          cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.config.buildType }} -DCMAKE_INSTALL_PREFIX=artifact ${{ matrix.config.cmakeArgs }}
+          cmake --build build --config ${{ matrix.config.buildType }} --parallel 2
+          cmake --build build --config ${{ matrix.config.buildType }} --target install
+        if: endsWith(matrix.config.name, 'w64-mingw32')
+
+      - name: CMake (windows-msvc)
+        run: |
+          cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.config.buildType }} -DCMAKE_INSTALL_PREFIX=artifact -DCMAKE_TOOLCHAIN_FILE=${{ env.VCPKG_ROOT }}\scripts\buildsystems\vcpkg.cmake ${{ matrix.config.cmakeArgs }}
+          cmake --build build --config ${{ matrix.config.buildType }} --parallel 2
+          cmake --build build --config ${{ matrix.config.buildType }} --target install
+        if: endsWith(matrix.config.name, 'msvc')
 
       - name: Unit Tests
         run: |
-          mkdir -p build/tests
-          cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.config.buildType }} -DCMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE=tests -DENABLE_CTEST=ON ${{ matrix.config.cmakeArgs }}
-          cmake --build build --config Release --parallel 2
-          ./build/tests/flycast
+          cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.config.buildType }} -DENABLE_CTEST=ON ${{ matrix.config.cmakeArgs }}
+          cmake --build build --config ${{ matrix.config.buildType }} --parallel 2
+          ./build/flycast
         if: matrix.config.name == 'x86_64-pc-linux-gnu'
 
       - name: Dump symbols
         shell: msys2 {0}
         run: |
-          dump_syms build/artifact/flycast.exe > flycast.exe.sym 2>/dev/null
+          core/deps/breakpad/bin/dump_syms artifact/bin/flycast.exe > flycast.exe.sym 2>/dev/null
           BUILD_ID=`head -1 flycast.exe.sym | awk '{ print $4 }'`
           mkdir -p symbols/flycast.exe/$BUILD_ID
           mv flycast.exe.sym symbols/flycast.exe/$BUILD_ID
-          strip build/artifact/flycast.exe
+          strip artifact/bin/flycast.exe
         if: matrix.config.name == 'x86_64-w64-mingw32'
 
       - uses: actions/upload-artifact@v2
         with:
           name: flycast-${{ matrix.config.name }}
-          path: build/artifact
+          path: artifact/bin
 
       - name: Package app (macos)
-        run: |
-          cd build/artifact
-          rm -rf Flycast.swiftmodule
-          zip -r flycast.app.zip Flycast.app
-          rm -rf Flycast.app
+        run: zip -rm artifact/bin/flycast.app.zip artifact/bin/Flycast.app
         if: matrix.config.name == 'apple-darwin'
 
       - name: Package app (windows)
         run: |
-          powershell Compress-Archive build/artifact/flycast.exe build/artifact/flycast.zip 
-          rm build/artifact/flycast.exe
+          powershell Compress-Archive artifact/bin/flycast.exe artifact/bin/flycast.zip 
+          rm artifact/bin/flycast.exe
         if: matrix.config.name == 'x86_64-w64-mingw32'
 
       - name: Configure AWS Credentials
@@ -155,11 +165,10 @@ jobs:
         if: github.repository == 'flyinghead/flycast' && github.event_name == 'push' && matrix.config.destDir != ''
 
       - name: Upload to S3
-        run: aws s3 sync build/artifact s3://flycast-builds/${{ matrix.config.destDir }}/${GITHUB_REF#refs/}-$GITHUB_SHA --acl public-read --follow-symlinks
+        run: aws s3 sync artifact/bin s3://flycast-builds/${{ matrix.config.destDir }}/${GITHUB_REF#refs/}-$GITHUB_SHA --acl public-read --follow-symlinks
         shell: bash
         if: ${{ steps.aws-credentials.outputs.aws-account-id != '' }}
 
       - name: Upload symbols to S3
         run: aws s3 sync symbols s3://flycast-symbols/${{ matrix.config.destDir }} --follow-symlinks
-        if: ${{ steps.aws-credentials.outputs.aws-account-id != '' && matrix.config.os == 'windows-latest' }}
-        
+        if: ${{ steps.aws-credentials.outputs.aws-account-id != '' && matrix.config.name == 'x86_64-w64-mingw32' }}
