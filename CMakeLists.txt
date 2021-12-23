@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 3.10.2)
 
-find_program(CCACHE_FOUND ccache)
-if(CCACHE_FOUND)
-    set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE ccache)
-    set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK ccache)
+find_program(CCACHE_PROGRAM ccache)
+if(CCACHE_PROGRAM)
+	set(CMAKE_C_COMPILER_LAUNCHER ${CCACHE_PROGRAM} CACHE STRING "Compiler launcher for C.")
+	set(CMAKE_CXX_COMPILER_LAUNCHER ${CCACHE_PROGRAM} CACHE STRING "Compiler launcher for CXX.")
 endif()
 
 option(ENABLE_CTEST "Enables unit tests" OFF)
@@ -45,7 +45,7 @@ if(ENABLE_CTEST)
     include(CTest)
 endif()
 
-if(APPLE AND NOT LIBRETRO)
+if(IOS AND NOT LIBRETRO)
     set(CMAKE_Swift_LANGUAGE_VERSION 5.0)
     enable_language(Swift)
 endif()
@@ -1235,8 +1235,8 @@ if(NOT LIBRETRO)
 	
 	    target_link_libraries(${PROJECT_NAME} PRIVATE android EGL GLESv2 log)
 	elseif(APPLE)
-		set_property(TARGET ${PROJECT_NAME} PROPERTY XCODE_ATTRIBUTE_SWIFT_VERSION "5.0")
 		if(IOS)
+			set_property(TARGET ${PROJECT_NAME} PROPERTY XCODE_ATTRIBUTE_SWIFT_VERSION "5.0")
 			add_subdirectory(shell/apple/emulator-ios/AltKit)
 			target_link_libraries(${PROJECT_NAME} PRIVATE AltKit)
 

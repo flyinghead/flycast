@@ -11,7 +11,7 @@ jobs:
       VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}/vcpkg/bincache
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           fetch-depth: 0
           submodules: true
@@ -22,8 +22,7 @@ jobs:
           mkdir vcpkg\bincache
           vcpkg\bootstrap-vcpkg.bat
 
-      - uses: actions/cache@v2
-        id: cache
+      - uses: actions/cache@v3
         with:
           path: ${{ env.VCPKG_DEFAULT_BINARY_CACHE }}
           key: vcpkg-${{ hashFiles( 'vcpkg.json' ) }}
@@ -50,7 +49,7 @@ jobs:
         run: signtool sign /f shell\uwp\sign_cert.pfx /p '${{ secrets.SIGN_CERT_PWD }}' /v /fd SHA256 build\artifact\flycast.appx
         if: github.repository == 'flyinghead/flycast' && github.event_name == 'push'
 
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         with:
           name: flycast-uwp
           path: build/artifact
