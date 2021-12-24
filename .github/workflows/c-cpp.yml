@@ -146,7 +146,9 @@ jobs:
           path: artifact/bin
 
       - name: Package app (macos)
-        run: zip -rm artifact/bin/flycast.app.zip artifact/bin/Flycast.app
+        run: |
+          cd artifact/bin
+          zip -rm flycast.app.zip Flycast.app
         if: matrix.config.name == 'apple-darwin'
 
       - name: Package app (windows)
