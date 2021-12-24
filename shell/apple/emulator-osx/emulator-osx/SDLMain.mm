@@ -143,6 +143,11 @@ static NSString *getApplicationName(void)
 
 #else
 
+- (void)newInstance:(id)sender
+{
+    [NSTask launchedTaskWithLaunchPath:@"/usr/bin/open" arguments:@[@"-n", [[NSBundle mainBundle] bundlePath]]];
+}
+
 - (void)toggleMenu:(id)sender
 {
     gui_open_settings();
@@ -164,6 +169,8 @@ static void setApplicationMenu(void)
     [appleMenu addItemWithTitle:title action:@selector(orderFrontStandardAboutPanel:) keyEquivalent:@""];
     
     [appleMenu addItem:[NSMenuItem separatorItem]];
+    
+    [appleMenu addItemWithTitle:@"New Instance" action:@selector(newInstance:) keyEquivalent:@"n"];
 
     [appleMenu addItemWithTitle:@"Toggle Menu" action:@selector(toggleMenu:) keyEquivalent:@"m"];
 
@@ -379,6 +386,13 @@ static void CustomApplicationMain (int argc, char **argv)
     
     /* We're done, thank you for playing */
     exit(status);
+}
+
+- (NSMenu *)applicationDockMenu:(NSApplication *)sender
+{
+    NSMenu* menu = [[NSMenu alloc] init];
+    [menu addItemWithTitle:@"New Instance" action:@selector(newInstance:) keyEquivalent:@"n"];
+    return menu;
 }
 @end
 
