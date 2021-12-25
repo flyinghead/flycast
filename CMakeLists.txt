@@ -245,7 +245,13 @@ if(NOT LIBRETRO)
 	endif()
 
 	if(NOT ANDROID AND NOT IOS)
-		find_package(SDL2 QUIET)
+		if(APPLE)
+			# Patch SDL
+			execute_process(COMMAND git apply -p1 ${CMAKE_CURRENT_SOURCE_DIR}/core/deps/patches/SDL.patch
+				WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/core/deps/SDL) 
+		else()
+			find_package(SDL2)
+		endif()
 		if(NOT SDL2_FOUND)
 			add_subdirectory(core/deps/SDL EXCLUDE_FROM_ALL)
 			if(MSVC AND CMAKE_SIZEOF_VOID_P EQUAL 4)
