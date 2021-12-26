@@ -33,6 +33,10 @@ public:
 	void renderDrawData(ImDrawData* drawData) override;
 	void present() override;
 
+	void setFrameRendered() {
+		frameRendered = true;
+	}
+
 private:
 	void emuEvent(Event event)
 	{

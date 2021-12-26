@@ -4,6 +4,7 @@
 #include "hw/pvr/ta.h"
 #ifndef LIBRETRO
 #include "rend/gui.h"
+#include "opengl_driver.h"
 #else
 #include "vmu_xhair.h"
 #endif
@@ -770,13 +771,6 @@ bool CompilePipelineShader(PipelineShader* s)
 static void SetupOSDVBO()
 {
 #ifndef GLES2
-	if (gl.OSD_SHADER.vao != 0)
-	{
-		glBindVertexArray(gl.OSD_SHADER.vao);
-		glBindBuffer(GL_ARRAY_BUFFER, gl.OSD_SHADER.geometry);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-		return;
-	}
 	if (gl.gl_major >= 3)
 	{
 		glGenVertexArrays(1, &gl.OSD_SHADER.vao);
@@ -800,6 +794,10 @@ static void SetupOSDVBO()
 
 	glDisableVertexAttribArray(VERTEX_COL_OFFS_ARRAY);
 	glCheck();
+#ifndef GLES2
+	if (gl.gl_major >= 3)
+		glBindVertexArray(0);
+#endif
 }
 
 void gl_load_osd_resources()
@@ -1055,8 +1053,6 @@ void OSD_DRAW(bool clear_screen)
 #endif
 			SetupOSDVBO();
 
-		glBindBuffer(GL_ARRAY_BUFFER, gl.OSD_SHADER.geometry);
-
 		verify(glIsProgram(gl.OSD_SHADER.program));
 		glcache.UseProgram(gl.OSD_SHADER.program);
 
@@ -1073,6 +1069,9 @@ void OSD_DRAW(bool clear_screen)
 		glcache.BindTexture(GL_TEXTURE_2D, gl.OSD_SHADER.osd_tex);
 
 		glBindFramebuffer(GL_FRAMEBUFFER, gl.ofbo.origFbo);
+
+		glBindBuffer(GL_ARRAY_BUFFER, gl.OSD_SHADER.geometry);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
 		const std::vector<OSDVertex>& osdVertices = GetOSDVertices();
 		glBufferData(GL_ARRAY_BUFFER, osdVertices.size() * sizeof(OSDVertex), osdVertices.data(), GL_STREAM_DRAW); glCheck();
@@ -1091,12 +1090,13 @@ void OSD_DRAW(bool clear_screen)
 			glDrawArrays(GL_TRIANGLE_STRIP, i * 4, 4);
 
 		glCheck();
+		((OpenGLDriver *)imguiDriver.get())->setFrameRendered();
+#ifndef GLES2
+		if (gl.gl_major >= 3)
+			glBindVertexArray(0);
+#endif
 	}
 #endif
-#endif
-#ifndef GLES2
-	if (gl.gl_major >= 3)
-		glBindVertexArray(0);
 #endif
 }
 
