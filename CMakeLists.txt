@@ -260,7 +260,7 @@ if(NOT LIBRETRO)
 			set(SDL2_FOUND 1)
 		endif()
 
-		if(TARGET SDL2::SDL2-static)
+		if((APPLE OR WIN32) AND TARGET SDL2::SDL2-static)
 			target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2-static)
 		elseif(TARGET SDL2::SDL2)
 			target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2)
