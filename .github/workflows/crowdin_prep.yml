@@ -3,12 +3,12 @@
 name: Crowdin Source Texts Upload
 
 # on change to the English texts
-on:
-  push:
-    branches:
-      - master
-    paths:
-      - 'shell/libretro/libretro_core_options.h'
+# on:
+#   push:
+#     branches:
+#       - master
+#     paths:
+#       - 'shell/libretro/libretro_core_options.h'
 
 jobs:
   upload_source_file:
