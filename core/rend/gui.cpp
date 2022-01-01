@@ -1131,10 +1131,14 @@ void error_popup()
 {
 	if (!error_msg_shown && !error_msg.empty() && no_popup_opened())
 	{
-		ImVec2 padding = ImVec2(20 * scaling, 20 * scaling);
+		ImGui::OpenPopup("Error");
+	}
+	
+	if (!error_msg.empty())
+	{
+		ImVec2 padding = ImVec2(10 * scaling, 10 * scaling);
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, padding);
 		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, padding);
-		ImGui::OpenPopup("Error");
 		if (ImGui::BeginPopupModal("Error", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar))
 		{
 			ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + 400.f * scaling);
@@ -1165,33 +1169,34 @@ static void contentpath_warning_popup()
     if (scanner.content_path_looks_incorrect && no_popup_opened())
     {
         ImGui::OpenPopup("Incorrect Content Location?");
-        if (ImGui::BeginPopupModal("Incorrect Content Location?", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
+        scanner.content_path_looks_incorrect = false;
+    }
+    if (ImGui::BeginPopupModal("Incorrect Content Location?", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove))
+    {
+        ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + 400.f * scaling);
+        ImGui::TextWrapped("  Scanned %d folders but no game can be found!  ", scanner.empty_folders_scanned);
+        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(16 * scaling, 3 * scaling));
+        float currentwidth = ImGui::GetContentRegionAvail().x;
+        ImGui::SetCursorPosX((currentwidth - 100.f * scaling) / 2.f + ImGui::GetStyle().WindowPadding.x - 55.f * scaling);
+        if (ImGui::Button("Reselect", ImVec2(100.f * scaling, 0.f)))
         {
-            ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + 400.f * scaling);
-            ImGui::TextWrapped("  Scanned %d folders but no game can be found!  ", scanner.empty_folders_scanned);
-            ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(16 * scaling, 3 * scaling));
-            float currentwidth = ImGui::GetContentRegionAvail().x;
-            ImGui::SetCursorPosX((currentwidth - 100.f * scaling) / 2.f + ImGui::GetStyle().WindowPadding.x - 55.f * scaling);
-            if (ImGui::Button("Reselect", ImVec2(100.f * scaling, 0.f)))
-            {
-            	scanner.content_path_looks_incorrect = false;
-                ImGui::CloseCurrentPopup();
-                show_contentpath_selection = true;
-            }
-            
-            ImGui::SameLine();
-            ImGui::SetCursorPosX((currentwidth - 100.f * scaling) / 2.f + ImGui::GetStyle().WindowPadding.x + 55.f * scaling);
-            if (ImGui::Button("Cancel", ImVec2(100.f * scaling, 0.f)))
-            {
-            	scanner.content_path_looks_incorrect = false;
-                ImGui::CloseCurrentPopup();
-                scanner.stop();
-                config::ContentPath.get().clear();
-            }
-            ImGui::SetItemDefaultFocus();
-            ImGui::PopStyleVar();
-            ImGui::EndPopup();
+            scanner.content_path_looks_incorrect = false;
+            ImGui::CloseCurrentPopup();
+            show_contentpath_selection = true;
         }
+        
+        ImGui::SameLine();
+        ImGui::SetCursorPosX((currentwidth - 100.f * scaling) / 2.f + ImGui::GetStyle().WindowPadding.x + 55.f * scaling);
+        if (ImGui::Button("Cancel", ImVec2(100.f * scaling, 0.f)))
+        {
+            scanner.content_path_looks_incorrect = false;
+            ImGui::CloseCurrentPopup();
+            scanner.stop();
+            config::ContentPath.get().clear();
+        }
+        ImGui::SetItemDefaultFocus();
+        ImGui::PopStyleVar();
+        ImGui::EndPopup();
     }
     if (show_contentpath_selection)
     {
