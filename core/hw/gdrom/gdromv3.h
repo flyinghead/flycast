@@ -231,6 +231,10 @@ struct GD_HardwareInfo_t
 };
 extern GD_HardwareInfo_t GD_HardwareInfo;
 
+extern int sns_asc;
+extern int sns_ascq;
+extern int sns_key;
+
 #define GD_BUSY    0x00 // State transition
 #define GD_PAUSE   0x01 // Pause
 #define GD_STANDBY 0x02 // Standby (drive stop)

@@ -19,12 +19,38 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #include "texture.h"
-#include "rend/gui.h"
 #include "hw/maple/maple_devs.h"
 #include "overlay.h"
 #include "cfg/option.h"
+#include "rend/osd.h"
+#ifdef LIBRETRO
+#include "vmu_xhair.h"
+#endif
 
 VulkanOverlay::~VulkanOverlay() = default;
+
+void VulkanOverlay::Init(QuadPipeline *pipeline)
+{
+	this->pipeline = pipeline;
+	for (auto& drawer : drawers)
+	{
+		drawer = std::unique_ptr<QuadDrawer>(new QuadDrawer());
+		drawer->Init(pipeline);
+	}
+	xhairDrawer = std::unique_ptr<QuadDrawer>(new QuadDrawer());
+	xhairDrawer->Init(pipeline);
+}
+
+void VulkanOverlay::Term()
+{
+	commandBuffers.clear();
+	for (auto& drawer : drawers)
+		drawer.reset();
+	xhairDrawer.reset();
+	for (auto& tex : vmuTextures)
+		tex.reset();
+	xhairTexture.reset();
+}
 
 std::unique_ptr<Texture> VulkanOverlay::createTexture(vk::CommandBuffer commandBuffer, int width, int height, u8 *data)
 {
@@ -40,15 +66,8 @@ std::unique_ptr<Texture> VulkanOverlay::createTexture(vk::CommandBuffer commandB
 	return texture;
 }
 
-vk::CommandBuffer VulkanOverlay::Prepare(vk::CommandPool commandPool, bool vmu, bool crosshair)
+void VulkanOverlay::Prepare(vk::CommandBuffer cmdBuffer, bool vmu, bool crosshair, TextureCache& textureCache)
 {
-	VulkanContext *context = VulkanContext::Instance();
-	commandBuffers.resize(context->GetSwapChainSize());
-	commandBuffers[context->GetCurrentImageIndex()] = std::move(
-			VulkanContext::Instance()->GetDevice().allocateCommandBuffersUnique(vk::CommandBufferAllocateInfo(commandPool, vk::CommandBufferLevel::ePrimary, 1))
-			.front());
-	vk::CommandBuffer cmdBuffer = *commandBuffers[context->GetCurrentImageIndex()];
-	cmdBuffer.begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));
 	if (vmu)
 	{
 		for (size_t i = 0; i < vmuTextures.size(); i++)
@@ -56,12 +75,18 @@ vk::CommandBuffer VulkanOverlay::Prepare(vk::CommandPool commandPool, bool vmu, 
 			std::unique_ptr<Texture>& texture = vmuTextures[i];
 			if (!vmu_lcd_status[i])
 			{
-				texture.reset();
+				if (texture)
+				{
+					textureCache.DestroyLater(texture.get());
+					texture.reset();
+				}
 				continue;
 			}
 			if (texture != nullptr && !vmu_lcd_changed[i])
 				continue;
 
+			if (texture)
+				textureCache.DestroyLater(texture.get());
 			texture = createTexture(cmdBuffer, 48, 32, (u8*)vmu_lcd_data[i]);
 			vmu_lcd_changed[i] = false;
 		}
@@ -71,15 +96,25 @@ vk::CommandBuffer VulkanOverlay::Prepare(vk::CommandPool commandPool, bool vmu, 
 		const u32* texData = getCrosshairTextureData();
 		xhairTexture = createTexture(cmdBuffer, 16, 16, (u8*)texData);
 	}
+}
+
+vk::CommandBuffer VulkanOverlay::Prepare(vk::CommandPool commandPool, bool vmu, bool crosshair, TextureCache& textureCache)
+{
+	VulkanContext *context = VulkanContext::Instance();
+	commandBuffers.resize(context->GetSwapChainSize());
+	commandBuffers[context->GetCurrentImageIndex()] = std::move(
+			VulkanContext::Instance()->GetDevice().allocateCommandBuffersUnique(vk::CommandBufferAllocateInfo(commandPool, vk::CommandBufferLevel::ePrimary, 1))
+			.front());
+	vk::CommandBuffer cmdBuffer = *commandBuffers[context->GetCurrentImageIndex()];
+	cmdBuffer.begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));
+	Prepare(cmdBuffer, vmu, crosshair, textureCache);
 	cmdBuffer.end();
 
 	return cmdBuffer;
 }
 
-void VulkanOverlay::Draw(vk::Extent2D viewport, float scaling, bool vmu, bool crosshair)
+void VulkanOverlay::Draw(vk::CommandBuffer commandBuffer, vk::Extent2D viewport, float scaling, bool vmu, bool crosshair)
 {
-	VulkanContext *context = VulkanContext::Instance();
-	vk::CommandBuffer commandBuffer = context->GetCurrentCommandBuffer();
 	QuadVertex vtx[] = {
 		{ { -1.f, -1.f, 0.f }, { 0.f, 1.f } },
 		{ {  1.f, -1.f, 0.f }, { 1.f, 1.f } },
@@ -90,45 +125,79 @@ void VulkanOverlay::Draw(vk::Extent2D viewport, float scaling, bool vmu, bool cr
 	if (vmu)
 	{
 		f32 vmu_padding = 8.f * scaling;
-		f32 vmu_height = 70.f * scaling;
-		f32 vmu_width = 48.f / 32.f * vmu_height;
+		f32 vmu_height = 32.f * scaling;
+		f32 vmu_width = 48.f * scaling;
 
 		pipeline->BindPipeline(commandBuffer);
+		const float *color = nullptr;
+#ifndef LIBRETRO
+		vmu_height *= 2.f;
+		vmu_width *= 2.f;
 		float blendConstants[4] = { 0.75f, 0.75f, 0.75f, 0.75f };
-		commandBuffer.setBlendConstants(blendConstants);
+		color = blendConstants;
+#endif
 
 		for (size_t i = 0; i < vmuTextures.size(); i++)
 		{
 			if (!vmuTextures[i])
 				continue;
-			f32 x;
+			float x;
+			float y;
+			float w = vmu_width;
+			float h = vmu_height;
+#ifdef LIBRETRO
+			if (i & 1)
+				continue;
+			w *= vmu_screen_params[i / 2].vmu_screen_size_mult;
+			h *= vmu_screen_params[i / 2].vmu_screen_size_mult;
+			switch (vmu_screen_params[i / 2].vmu_screen_position)
+			{
+			case UPPER_LEFT:
+			default:
+				x = vmu_padding;
+				y = vmu_padding;
+				break;
+			case UPPER_RIGHT:
+				x = viewport.width - vmu_padding - w;
+				y = vmu_padding;
+				break;
+			case LOWER_LEFT:
+				x = vmu_padding;
+				y = viewport.height - vmu_padding - h;
+				break;
+			case LOWER_RIGHT:
+				x = viewport.width - vmu_padding - w;
+				y = viewport.height - vmu_padding - h;
+				break;
+			}
+#else
 			if (i & 2)
-				x = viewport.width - vmu_padding - vmu_width;
+				x = viewport.width - vmu_padding - w;
 			else
 				x = vmu_padding;
-			f32 y;
 			if (i & 4)
 			{
-				y = viewport.height - vmu_padding - vmu_height;
+				y = viewport.height - vmu_padding - h;
 				if (i & 1)
-					y -= vmu_padding + vmu_height;
+					y -= vmu_padding + h;
 			}
 			else
 			{
 				y = vmu_padding;
 				if (i & 1)
-					y += vmu_padding + vmu_height;
+					y += vmu_padding + h;
 			}
-			vk::Viewport viewport(x, y, vmu_width, vmu_height);
+#endif
+			vk::Viewport viewport(x, y, w, h);
 			commandBuffer.setViewport(0, 1, &viewport);
-			commandBuffer.setScissor(0, vk::Rect2D(vk::Offset2D(x, y), vk::Extent2D(vmu_width, vmu_height)));
+			commandBuffer.setScissor(0, vk::Rect2D(vk::Offset2D(x, y), vk::Extent2D(w, h)));
 
-			drawers[i]->Draw(commandBuffer, vmuTextures[i]->GetImageView(), vtx, true);
+			drawers[i]->Draw(commandBuffer, vmuTextures[i]->GetImageView(), vtx, true, color);
 		}
 	}
 	if (crosshair && crosshairsNeeded())
 	{
-		alphaPipeline->BindPipeline(commandBuffer);
+		pipeline->BindPipeline(commandBuffer);
 		for (size_t i = 0; i < config::CrosshairColor.size(); i++)
 		{
 			if (config::CrosshairColor[i] == 0)
@@ -138,12 +207,20 @@ void VulkanOverlay::Draw(vk::Extent2D viewport, float scaling, bool vmu, bool cr
 
 			float x, y;
 			std::tie(x, y) = getCrosshairPosition(i);
-			x -= XHAIR_WIDTH / 2;
-			y -= XHAIR_HEIGHT / 2;
-			vk::Viewport viewport(x, y, XHAIR_WIDTH, XHAIR_HEIGHT);
+
+#ifdef LIBRETRO
+			float w = LIGHTGUN_CROSSHAIR_SIZE * scaling;
+			float h = LIGHTGUN_CROSSHAIR_SIZE * scaling;
+#else
+			float w = XHAIR_WIDTH * scaling;
+			float h = XHAIR_HEIGHT * scaling;
+#endif
+			x -= w / 2;
+			y -= h / 2;
+			vk::Viewport viewport(x, y, w, h);
 			commandBuffer.setViewport(0, 1, &viewport);
 			commandBuffer.setScissor(0, vk::Rect2D(vk::Offset2D(std::max(0.f, x), std::max(0.f, y)),
-					vk::Extent2D(XHAIR_WIDTH, XHAIR_HEIGHT)));
+					vk::Extent2D(w, h)));
 			u32 color = config::CrosshairColor[i];
 			float xhairColor[4] {
 				(color & 0xff) / 255.f,
@@ -151,7 +228,7 @@ void VulkanOverlay::Draw(vk::Extent2D viewport, float scaling, bool vmu, bool cr
 				((color >> 16) & 0xff) / 255.f,
 				((color >> 24) & 0xff) / 255.f
 			};
-			xhairDrawer->Draw(commandBuffer, xhairTexture->GetImageView(), vtx, true, xhairColor);
+			xhairDrawer->Draw(commandBuffer, i == 0 ? xhairTexture->GetImageView() : vk::ImageView(), vtx, true, xhairColor);
 		}
 	}
 }

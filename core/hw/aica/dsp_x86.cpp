@@ -27,8 +27,8 @@
 #include "aica_if.h"
 #include "hw/mem/_vmem.h"
 
-#define CC_RW2RX(ptr) (ptr)
-#define CC_RX2RW(ptr) (ptr)
+namespace dsp
+{
 
 alignas(4096) static u8 CodeBuffer[32 * 1024]
 #if defined(_WIN32)
@@ -47,7 +47,7 @@ class X86DSPAssembler : public Xbyak::CodeGenerator
 public:
 	X86DSPAssembler(u8 *code_buffer, size_t size) : Xbyak::CodeGenerator(size, code_buffer) {}
 
-	void Compile(struct dsp_t *DSP)
+	void Compile(DSPState *DSP)
 	{
 		this->DSP = DSP;
 		DEBUG_LOG(AICA_ARM, "X86DSPAssembler::Compile recompiling for x86 at %p", this->getCode());
@@ -73,7 +73,7 @@ public:
 		for (int step = 0; step < 128; ++step)
 		{
 			u32 *mpro = &DSPData->MPRO[step * 4];
-			_INST op;
+			Instruction op;
 			DecodeInst(mpro, &op);
 			const u32 COEF = step;
 
@@ -116,8 +116,8 @@ public:
 					mov(dword[&DSP->B], ACC);
 				else
 				{
-					//B = DSP->TEMP[(TRA + DSP->regs.MDEC_CT) & 0x7F];
-					mov(eax, dword[&DSP->regs.MDEC_CT]);
+					//B = DSP->TEMP[(TRA + DSP->MDEC_CT) & 0x7F];
+					mov(eax, dword[&DSP->MDEC_CT]);
 					if (op.TRA)
 						add(eax, op.TRA);
 					and_(eax, 0x7f);
@@ -136,12 +136,12 @@ public:
 				X_alias = INPUTS;
 			else
 			{
-				//X = DSP->TEMP[(TRA + DSP->regs.MDEC_CT) & 0x7F];
+				//X = DSP->TEMP[(TRA + DSP->MDEC_CT) & 0x7F];
 				if (!op.ZERO && !op.BSEL && !op.NEGB)
 					mov(X, dword[&DSP->B]);
 				else
 				{
-					mov(eax, dword[&DSP->regs.MDEC_CT]);
+					mov(eax, dword[&DSP->MDEC_CT]);
 					if (op.TRA)
 						add(eax, op.TRA);
 					and_(eax, 0x7f);
@@ -233,8 +233,8 @@ public:
 
 			if (op.TWT)
 			{
-				//DSP->TEMP[(op.TWA + DSP->regs.MDEC_CT) & 0x7F] = SHIFTED;
-				mov(edx, dword[&DSP->regs.MDEC_CT]);
+				//DSP->TEMP[(op.TWA + DSP->MDEC_CT) & 0x7F] = SHIFTED;
+				mov(edx, dword[&DSP->MDEC_CT]);
 				if (op.TWA)
 					add(edx, op.TWA);
 				and_(edx, 0x7f);
@@ -265,7 +265,7 @@ public:
 				{
 					// *(u16 *)&aica_ram[ADDR & ARAM_MASK] = PACK(SHIFTED);
 					// SHIFTED is in ecx
-					call(CC_RW2RX((const void *)PACK));
+					call((const void *)PACK);
 
 					CalculateADDR(ADDR, op);
 					mov(ecx, (uintptr_t)&aica_ram[0]);
@@ -277,7 +277,7 @@ public:
 					CalculateADDR(ADDR, op);
 					mov(ecx, (uintptr_t)&aica_ram[0]);
 					movzx(ecx, word[ecx + ADDR]);
-					call(CC_RW2RX((const void *)UNPACK));
+					call((const void *)UNPACK);
 					mov(dword[&DSP->MEMVAL[(step + 2) & 3]], eax);
 				}
 				if (op.MRD || op.MWT)
@@ -310,14 +310,14 @@ public:
 				mov(dword[&DSPData->EFREG[op.EWA]], ecx);
 			}
 		}
-		// DSP->regs.MDEC_CT--
-		mov(eax, dsp.RBL + 1);
-		mov(ecx, dword[&DSP->regs.MDEC_CT]);
+		// DSP->MDEC_CT--
+		mov(eax, DSP->RBL + 1);
+		mov(ecx, dword[&DSP->MDEC_CT]);
 		sub(ecx, 1);
-		//if (dsp.regs.MDEC_CT == 0)
-		//	dsp.regs.MDEC_CT = dsp.RBL + 1;			// RBL is ring buffer length - 1
+		//if (dsp.MDEC_CT == 0)
+		//	dsp.MDEC_CT = dsp.RBL + 1;			// RBL is ring buffer length - 1
 		cmove(ecx, eax);
-		mov(dword[&DSP->regs.MDEC_CT], ecx);
+		mov(dword[&DSP->MDEC_CT], ecx);
 
 #ifndef _WIN32
 		// 16-byte alignment
@@ -333,7 +333,7 @@ public:
 	}
 
 private:
-	void CalculateADDR(const Xbyak::Reg32 ADDR, const _INST& op)
+	void CalculateADDR(const Xbyak::Reg32 ADDR, const Instruction& op)
 	{
 		//u32 ADDR = DSPData->MADRS[op.MASA];
 		mov(ADDR, dword[&DSPData->MADRS[op.MASA]]);
@@ -349,8 +349,8 @@ private:
 			add(ADDR, 1);
 		if (!op.TABLE)
 		{
-			//ADDR += DSP->regs.MDEC_CT;
-			add(ADDR, dword[&DSP->regs.MDEC_CT]);
+			//ADDR += DSP->MDEC_CT;
+			add(ADDR, dword[&DSP->MDEC_CT]);
 			//ADDR &= DSP->RBL;
 			// RBL is constant for this program
 			and_(ADDR, DSP->RBL);
@@ -368,34 +368,25 @@ private:
 		and_(ADDR, ARAM_MASK);
 	}
 
-	struct dsp_t *DSP = nullptr;
+	DSPState *DSP = nullptr;
 };
 
-void dsp_recompile()
+void recompile()
 {
-	dsp.Stopped = true;
-	for (int i = 127; i >= 0; --i)
-	{
-		u32 *IPtr = DSPData->MPRO + i * 4;
-
-		if (IPtr[0] != 0 || IPtr[1] != 0 || IPtr[2 ]!= 0 || IPtr[3] != 0)
-		{
-			dsp.Stopped = false;
-			break;
-		}
-	}
 	X86DSPAssembler assembler(pCodeBuffer, sizeof(CodeBuffer));
-	assembler.Compile(&dsp);
+	assembler.Compile(&state);
 }
 
-void dsp_rec_init()
+void recInit()
 {
 	if (!vmem_platform_prepare_jit_block(CodeBuffer, sizeof(CodeBuffer), (void**)&pCodeBuffer))
 		die("mprotect failed in x86 dsp");
 }
 
-void dsp_rec_step()
+void runStep()
 {
-	((void (*)())&pCodeBuffer[0])();
+	((void (*)())&CodeBuffer[0])();
+}
+
 }
 #endif

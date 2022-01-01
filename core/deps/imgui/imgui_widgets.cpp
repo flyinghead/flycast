@@ -1706,6 +1706,8 @@ bool ImGui::Combo(const char* label, int* current_item, bool (*items_getter)(voi
             SetItemDefaultFocus();
         PopID();
     }
+    // no drag scrolling on combo popup
+	GetCurrentWindow()->DragScrolling = false;
 
     EndCombo();
     return value_changed;

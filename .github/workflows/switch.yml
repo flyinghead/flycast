@@ -1,0 +1,59 @@
+name: Nintendo Switch CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    name: ${{ matrix.config.name }}
+    runs-on: ubuntu-latest
+    container: devkitpro/devkita64:latest
+
+    strategy:
+      matrix:
+        config:
+          - {name: standalone, destDir: switch}
+          - {name: libretro, cmakeArgs: -DLIBRETRO=ON}
+
+    steps:
+      - name: Set up build environment
+        run: |
+          sudo apt-get update
+          sudo apt-get -y install awscli ccache ninja-build
+
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+          submodules: true
+
+      - uses: actions/cache@v2
+        with:
+          path: ~/.ccache
+          key: ccache-switch-${{ matrix.config.name }}-${{ github.sha }}
+          restore-keys: ccache-switch-${{ matrix.config.name }}-
+
+      - name: CMake
+        run: |
+          $DEVKITPRO/portlibs/switch/bin/aarch64-none-elf-cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=artifact -G Ninja ${{ matrix.config.cmakeArgs }}
+          cmake --build build --config Release --target install
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: flycast-switch-${{ matrix.config.name }}
+          path: artifact/bin
+
+      - name: Package app
+        run: zip -m artifact/bin/flycast.nro.zip artifact/bin/flycast.nro
+        if: hashFiles('artifact/bin/flycast.nro') != ''
+
+      - name: Configure AWS Credentials
+        id: aws-credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: AKIAJOZQS4H2PHQWYFCA
+          aws-secret-access-key: ${{ secrets.S3_SECRET_KEY }}
+          aws-region: us-east-2
+        if: github.repository == 'flyinghead/flycast' && github.event_name == 'push' && matrix.config.destDir != ''
+
+      - name: Upload to S3
+        run: aws s3 sync artifact/bin s3://flycast-builds/${{ matrix.config.destDir }}/${GITHUB_REF#refs/}-$GITHUB_SHA --acl public-read --follow-symlinks
+        if: ${{ steps.aws-credentials.outputs.aws-account-id != '' }}

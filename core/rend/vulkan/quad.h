@@ -70,9 +70,10 @@ private:
 class QuadPipeline
 {
 public:
-	QuadPipeline(bool withAlpha = false, bool rotate = false) : withAlpha(withAlpha), rotate(rotate) {}
-	void Init(ShaderManager *shaderManager, vk::RenderPass renderPass);
-	void Init(const QuadPipeline& other) { Init(other.shaderManager, other.renderPass); }
+	QuadPipeline(bool ignoreTexAlpha, bool rotate = false)
+		: rotate(rotate), ignoreTexAlpha(ignoreTexAlpha) {}
+	void Init(ShaderManager *shaderManager, vk::RenderPass renderPass, int subpass);
+	void Init(const QuadPipeline& other) { Init(other.shaderManager, other.renderPass, other.subpass); }
 	void Term() {
 		pipeline.reset();
 		linearSampler.reset();
@@ -96,14 +97,15 @@ private:
 	void CreatePipeline();
 
 	vk::RenderPass renderPass;
+	int subpass = 0;
 	vk::UniquePipeline pipeline;
 	vk::UniqueSampler linearSampler;
 	vk::UniqueSampler nearestSampler;
 	vk::UniquePipelineLayout pipelineLayout;
 	vk::UniqueDescriptorSetLayout descSetLayout;
 	ShaderManager *shaderManager = nullptr;
-	bool withAlpha;
 	bool rotate;
+	bool ignoreTexAlpha;
 };
 
 class QuadDrawer

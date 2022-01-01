@@ -16,7 +16,7 @@ public class VJoy {
 	public static final int key_CONT_DPAD_RIGHT = 0x0080;
 	public static final int key_CONT_Y          = 0x0200;
 	public static final int key_CONT_X          = 0x0400;
-    public static final int key_CONT_FFORWARD   = 0x100000;
+    public static final int key_CONT_FFORWARD   = 0x3000002;
 
     public static final int BTN_LTRIG = -1;
     public static final int BTN_RTRIG = -2;
@@ -52,7 +52,7 @@ public class VJoy {
 				new float[] { 542,		200,	90,64,	BTN_RTRIG,								0}, // RT
 
 				new float[] { 0,		128+224,128,128,BTN_ANARING,							0}, // Analog ring
-				new float[] { 96,		320,	32,32,  BTN_ANAPOINT,							0}, // Analog point
+				new float[] { 32,		128+256,64,64,  BTN_ANAPOINT,							0}, // Analog point
 				
 				new float[] { 320-32,	12,		64,64,	key_CONT_FFORWARD,						0}, // Fast-forward
 
@@ -134,8 +134,8 @@ public class VJoy {
                 // Analog ring and point
 				new float[] { 16+vjoy_d_custom[5][0],							24+32+vjoy_d_custom[5][1],
 						128*vjoy_d_custom[5][2],128*vjoy_d_custom[5][2],-3},
-				new float[] { 96+vjoy_d_custom[5][0],							320+vjoy_d_custom[5][1],
-						32*vjoy_d_custom[5][2],32*vjoy_d_custom[5][2],	-4},
+				new float[] { 48+vjoy_d_custom[5][0],							24+64+vjoy_d_custom[5][1],
+						64*vjoy_d_custom[5][2],64*vjoy_d_custom[5][2],	-4},
 
                 // Fast-forward
 				new float[] { 320-32+vjoy_d_custom[6][0],						12+vjoy_d_custom[6][1],

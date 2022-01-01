@@ -20,6 +20,7 @@
 #include "cfg/cfg.h"
 #include "oslib/directory.h"
 #include "cfg/option.h"
+#include "oslib/oslib.h"
 
 #include <sstream>
 #define STB_IMAGE_IMPLEMENTATION
@@ -83,7 +84,7 @@ void CustomTexture::LoaderThread()
 
 std::string CustomTexture::GetGameId()
 {
-   std::string game_id(config::Settings::instance().getGameId());
+   std::string game_id(settings.content.gameId);
    const size_t str_end = game_id.find_last_not_of(' ');
    if (str_end == std::string::npos)
 	  return "";
@@ -101,15 +102,18 @@ bool CustomTexture::Init()
 		std::string game_id = GetGameId();
 		if (game_id.length() > 0)
 		{
-			textures_path = get_readonly_data_path("textures/" + game_id) + "/";
+			textures_path = hostfs::getTextureLoadPath(game_id);
 
-			DIR *dir = flycast::opendir(textures_path.c_str());
-			if (dir != nullptr)
+			if (!textures_path.empty())
 			{
-				INFO_LOG(RENDERER, "Found custom textures directory: %s", textures_path.c_str());
-				custom_textures_available = true;
-				flycast::closedir(dir);
-				loader_thread.Start();
+				DIR *dir = flycast::opendir(textures_path.c_str());
+				if (dir != nullptr)
+				{
+					NOTICE_LOG(RENDERER, "Found custom textures directory: %s", textures_path.c_str());
+					custom_textures_available = true;
+					flycast::closedir(dir);
+					loader_thread.Start();
+				}
 			}
 		}
 	}
@@ -162,7 +166,7 @@ void CustomTexture::LoadCustomTextureAsync(BaseTextureCacheData *texture_data)
 
 void CustomTexture::DumpTexture(u32 hash, int w, int h, TextureType textype, void *src_buffer)
 {
-	std::string base_dump_dir = get_writable_data_path("texdump/");
+	std::string base_dump_dir = hostfs::getTextureDumpPath();
 	if (!file_exists(base_dump_dir))
 		make_directory(base_dump_dir);
 	std::string game_id = GetGameId();
@@ -182,7 +186,7 @@ void CustomTexture::DumpTexture(u32 hash, int w, int h, TextureType textype, voi
 
 	for (int y = 0; y < h; y++)
 	{
-		if (!config::RendererType.isDirectX())
+		if (!isDirectX(config::RendererType))
 		{
 			switch (textype)
 			{

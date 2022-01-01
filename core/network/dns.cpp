@@ -18,8 +18,6 @@
     You should have received a copy of the GNU General Public License
     along with reicast.  If not, see <https://www.gnu.org/licenses/>.
  */
-#if !defined(_MSC_VER)
-
 #include "types.h"
 #include "net_platform.h"
 
@@ -150,7 +148,7 @@ char *read_name(char *reader, char *buffer, int *count)
 	return name;
 }
 
-#ifndef _WIN32
+#if !defined(_WIN32) && !defined(__SWITCH__)
 #include <ifaddrs.h>
 #include <net/if.h>
 #endif
@@ -197,7 +195,9 @@ bool is_local_address(u32 addr)
 		}
 		closesocket(sd);
 
-#else // !_WIN32
+#elif defined(__SWITCH__)
+		// TODO
+#else // !_WIN32 && !__SWITCH__
 
 		ifaddrs *myaddrs;
 		if (getifaddrs(&myaddrs) != 0)
@@ -227,4 +227,3 @@ bool is_local_address(u32 addr)
 
 	return false;
 }
-#endif

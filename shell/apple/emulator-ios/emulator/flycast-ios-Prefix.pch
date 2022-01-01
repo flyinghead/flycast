@@ -1,0 +1,14 @@
+//
+//  Copyright (c) 2015 reicast. All rights reserved.
+//
+
+#ifndef flycast_ios_flycast_ios_Prefix_pch
+#define flycast_ios_flycast_ios_Prefix_pch
+
+#ifdef __OBJC__
+    #import <UIKit/UIKit.h>
+    #import <Foundation/Foundation.h>
+#endif
+
+
+#endif

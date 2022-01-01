@@ -37,10 +37,15 @@ public:
 		set_button(DC_DPAD_LEFT, 80);
 		set_button(DC_DPAD_RIGHT, 79);
 		set_button(DC_BTN_START, 40);			// Return
-		set_button(EMU_BTN_TRIGGER_LEFT, 9);	// F
-		set_button(EMU_BTN_TRIGGER_RIGHT, 25);	// V
+		set_button(DC_AXIS_LT, 9);				// F
+		set_button(DC_AXIS_RT, 25);				// V
 		set_button(EMU_BTN_MENU, 43);			// TAB
 		set_button(EMU_BTN_FFORWARD, 44);		// Space
+		set_button(DC_AXIS_UP, 12);				// I
+		set_button(DC_AXIS_DOWN, 14);			// K
+		set_button(DC_AXIS_LEFT, 13);			// J
+		set_button(DC_AXIS_RIGHT, 15);			// L
+		set_button(DC_BTN_D, 4);				// Q (Coin)
 
 		dirty = false;
 	}
@@ -361,8 +366,7 @@ template <typename Keycode>
 class KeyboardDeviceTemplate : public KeyboardDevice
 {
 public:
-	virtual void keyboard_input(Keycode keycode, bool pressed, int modifier_keys = 0);
-	virtual ~KeyboardDeviceTemplate() = default;
+	void keyboard_input(Keycode keycode, bool pressed, int modifier_keys = 0);
 
 protected:
 	KeyboardDeviceTemplate(int maple_port, const char *apiName, bool remappable = true)
@@ -399,41 +403,40 @@ static inline void setFlag(int& v, u32 bitmask, bool set)
 template <typename Keycode>
 void KeyboardDeviceTemplate<Keycode>::keyboard_input(Keycode keycode, bool pressed, int modifier_keys)
 {
-	const int port = maple_port();
-	if (port < 0 || port > (int)ARRAY_SIZE(kb_key))
-		return;
-
 	u8 dc_keycode = convert_keycode(keycode);
-	if (port < (int)ARRAY_SIZE(kb_key))
+	// Some OSes (Mac OS) don't distinguish left and right modifier keys to we set them both.
+	// But not for Alt since Right Alt is used as a special modifier keys on some international
+	// keyboards.
+	switch (dc_keycode)
 	{
-		// Some OSes (Mac OS) don't distinguish left and right modifier keys to we set them both.
-		// But not for Alt since Right Alt is used as a special modifier keys on some international
-		// keyboards.
-		switch (dc_keycode)
-		{
-			case 0xE1: // Left Shift
-			case 0xE5: // Right Shift
-				setFlag(_modifier_keys, DC_KBMOD_LEFTSHIFT | DC_KBMOD_RIGHTSHIFT, pressed);
-				break;
-			case 0xE0: // Left Ctrl
-			case 0xE4: // Right Ctrl
-				setFlag(_modifier_keys, DC_KBMOD_LEFTCTRL | DC_KBMOD_RIGHTCTRL, pressed);
-				break;
-			case 0xE2: // Left Alt
-				setFlag(_modifier_keys, DC_KBMOD_LEFTALT, pressed);
-				break;
-			case 0xE6: // Right Alt
-				setFlag(_modifier_keys, DC_KBMOD_RIGHTALT, pressed);
-				break;
-			case 0xE7: // S2 special key
-				setFlag(_modifier_keys, DC_KBMOD_S2, pressed);
-				break;
-			default:
-				break;
-		}
+		case 0xE1: // Left Shift
+		case 0xE5: // Right Shift
+			setFlag(_modifier_keys, DC_KBMOD_LEFTSHIFT | DC_KBMOD_RIGHTSHIFT, pressed);
+			break;
+		case 0xE0: // Left Ctrl
+		case 0xE4: // Right Ctrl
+			setFlag(_modifier_keys, DC_KBMOD_LEFTCTRL | DC_KBMOD_RIGHTCTRL, pressed);
+			break;
+		case 0xE2: // Left Alt
+			setFlag(_modifier_keys, DC_KBMOD_LEFTALT, pressed);
+			break;
+		case 0xE6: // Right Alt
+			setFlag(_modifier_keys, DC_KBMOD_RIGHTALT, pressed);
+			break;
+		case 0xE7: // S2 special key
+			setFlag(_modifier_keys, DC_KBMOD_S2, pressed);
+			break;
+		default:
+			break;
+	}
+	const int port = maple_port();
+	if (port >= 0 && port < (int)ARRAY_SIZE(kb_shift))
 		kb_shift[port] = _modifier_keys;
 
-		if (dc_keycode != 0 && dc_keycode < 0xE0)
+	if (dc_keycode != 0 && dc_keycode < 0xE0)
+	{
+		gui_keyboard_key(dc_keycode, pressed, _modifier_keys);
+		if (port >= 0 && port < (int)ARRAY_SIZE(kb_key))
 		{
 			if (pressed)
 			{
@@ -466,9 +469,16 @@ void KeyboardDeviceTemplate<Keycode>::keyboard_input(Keycode keycode, bool press
 			kb_shift[port] |= modifier_keys;
 		}
 	}
+	if (gui_keyboard_captured())
+	{
+		// chat: disable the keyboard controller. Only accept emu keys (menu, escape...)
+		set_maple_port(-1);
+		gamepad_btn_input(dc_keycode, pressed);
+		set_maple_port(port);
+	}
 	// Do not map keyboard keys to gamepad buttons unless the GUI is open
 	// or the corresponding maple device (if any) isn't a keyboard
-	if (gui_is_open()
+	else if (gui_is_open()
 			|| port == (int)ARRAY_SIZE(kb_key)
 			|| (settings.platform.system == DC_PLATFORM_DREAMCAST && config::MapleMainDevices[port] != MDT_Keyboard)
 			|| (settings.platform.system == DC_PLATFORM_NAOMI && settings.input.JammaSetup != JVS::Keyboard)

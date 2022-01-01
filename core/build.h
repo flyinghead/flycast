@@ -181,13 +181,17 @@
 #define FEAT_DSPREC DYNAREC_NONE
 #endif
 
+#ifdef __SWITCH__
+#define FEAT_NO_RWX_PAGES
+#endif
+
 //defaults
 
 #ifndef FEAT_SHREC
-	#if HOST_CPU == CPU_MIPS
-		#define FEAT_SHREC DYNAREC_NONE
-	#else
+	#if HOST_CPU == CPU_ARM || HOST_CPU == CPU_ARM64 || HOST_CPU == CPU_X86 || HOST_CPU == CPU_X64
 		#define FEAT_SHREC DYNAREC_JIT
+	#else
+		#define FEAT_SHREC DYNAREC_NONE
 	#endif
 #endif
 
@@ -200,14 +204,12 @@
 #endif
 
 #ifndef FEAT_DSPREC
-	#if HOST_CPU == CPU_X86 || HOST_CPU == CPU_ARM64 || HOST_CPU == CPU_X64
+	#if HOST_CPU == CPU_ARM || HOST_CPU == CPU_ARM64 || HOST_CPU == CPU_X86 || HOST_CPU == CPU_X64
 		#define FEAT_DSPREC DYNAREC_JIT
 	#else
 		#define FEAT_DSPREC DYNAREC_NONE
 	#endif
 #endif
-
-#define USE_MINIUPNPC
 
 // Some restrictions on FEAT_NO_RWX_PAGES
 #if defined(FEAT_NO_RWX_PAGES) && FEAT_SHREC == DYNAREC_JIT
@@ -216,6 +218,19 @@
 #endif
 #endif
 
+#ifdef _WIN32
+#if defined(WINAPI_FAMILY) && (WINAPI_FAMILY == WINAPI_FAMILY_APP)
+#define TARGET_UWP
+#endif
+#if !defined(LIBRETRO) && !defined(TARGET_UWP)
+#define USE_DX9
+#endif
+#endif
+
+
+#if !defined(LIBRETRO) && !defined(TARGET_NO_EXCEPTIONS)
+#define USE_GGPO
+#endif
 
 // TARGET PLATFORM
 

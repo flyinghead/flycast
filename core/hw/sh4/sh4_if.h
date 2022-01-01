@@ -269,6 +269,7 @@ struct alignas(64) Sh4Context
 			u32 interrupt_pend;
 
 			u32 temp_reg;
+			int cycle_counter;
 		};
 		u64 raw[64-8];
 	};

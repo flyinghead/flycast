@@ -25,9 +25,9 @@ public:
 	{
 		free(dimm_data);
 	}
-	void Init() override
+	void Init(LoadProgress *progress = nullptr, std::vector<u8> *digest = nullptr) override
 	{
-		device_start();
+		device_start(progress, digest);
 		device_reset();
 	}
 	void* GetDmaPtr(u32 &size) override;
@@ -61,7 +61,7 @@ private:
 	static const u32 DES_MASK_TABLE[];
 	static const u8 DES_ROTATE_TABLE[16];
 
-	void device_start();
+	void device_start(LoadProgress *progress, std::vector<u8> *digest);
 	void device_reset();
 	void find_file(const char *name, const u8 *dir_sector, u32 &file_start, u32 &file_size);
 
@@ -70,7 +70,7 @@ private:
 	template<bool decrypt>
 	u64 des_encrypt_decrypt(u64 src, const u32 *des_subkeys);
 	u64 rev64(u64 src);
-	void read_gdrom(Disc *gdrom, u32 sector, u8* dst, u32 count = 1);
+	void read_gdrom(Disc *gdrom, u32 sector, u8* dst, u32 count = 1, LoadProgress *progress = nullptr);
 };
 
 #endif /* CORE_HW_NAOMI_GDCARTRIDGE_H_ */

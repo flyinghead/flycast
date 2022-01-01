@@ -23,12 +23,12 @@ BEGIN
     BLOCK "040904E4"
     BEGIN
       VALUE "CompanyName", "Flycast Team"
-      VALUE "FileDescription", "Flycast is a multiplatform Sega Dreamcast, Naomi and Atomiswave emulator"
+      VALUE "FileDescription", "Flycast"
       VALUE "FileVersion", GIT_VERSION
       VALUE "InternalName", "flycast"
       VALUE "LegalCopyright", "Copyright various authors. Released under the GNU General Public License."
       VALUE "OriginalFilename", "flycast.exe"
-      VALUE "ProductName", "Flycast"
+      VALUE "ProductName", "Flycast is a multiplatform Sega Dreamcast, Naomi and Atomiswave emulator"
       VALUE "ProductVersion", GIT_VERSION
     END
   END

@@ -491,7 +491,7 @@ private:
 
 			// Find the first use, but ignore vec ops
 			int first_use = -1;
-			for (size_t i = opnum + (source ? 0 : 1); i < block->oplist.size(); i++)
+			for (u32 i = opnum + (source ? 0 : 1); i < (u32)block->oplist.size(); i++)
 			{
 				op = &block->oplist[i];
 				// Vector ops don't use reg alloc

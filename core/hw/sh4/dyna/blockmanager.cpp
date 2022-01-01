@@ -128,10 +128,9 @@ RuntimeBlockInfoPtr bm_GetBlock(void* dynarec_code)
 	iter--;  // Need to go back to find the potential candidate
 
 	// However it might be out of bounds, check for that
-	if ((u8*)iter->second->code + iter->second->host_code_size <= (u8*)dynarec_code)
+	if (!iter->second->containsCode(dynarecrw))
 		return NULL;
 
-	verify(iter->second->contains_code((u8*)dynarecrw));
 	return iter->second;
 }
 
@@ -151,7 +150,7 @@ RuntimeBlockInfoPtr bm_GetStaleBlock(void* dynarec_code)
 	do
 	{
 		--it;
-		if ((*it)->contains_code((u8*)dynarecrw))
+		if ((*it)->containsCode(dynarecrw))
 			return *it;
 	} while (it != del_blocks.begin());
 
@@ -165,8 +164,8 @@ void bm_AddBlock(RuntimeBlockInfo* blk)
 		all_temp_blocks.insert(block);
 	auto iter = blkmap.find((void*)blk->code);
 	if (iter != blkmap.end()) {
-		INFO_LOG(DYNAREC, "DUP: %08X %p %08X %p", iter->second->addr, iter->second->code, block->addr, block->code);
-		verify(false);
+		ERROR_LOG(DYNAREC, "DUP: %08X %p %08X %p", iter->second->addr, iter->second->code, block->addr, block->code);
+		die("Duplicated block");
 	}
 	blkmap[(void*)block->code] = block;
 
@@ -203,7 +202,7 @@ void bm_DiscardBlock(RuntimeBlockInfo* block)
 	block_ptr->Relink();
 
 	// Remove from jump table
-	verify((void*)bm_GetCode(block_ptr->addr) == (void*)block_ptr->code);
+	verify((void*)bm_GetCode(block_ptr->addr) == CC_RW2RX((void*)block_ptr->code));
 	FPCA(block_ptr->addr) = ngen_FailedToFindBlock;
 
 	if (block_ptr->temp_block)
@@ -232,49 +231,70 @@ void bm_Reset()
 	protected_blocks = 0;
 	unprotected_blocks = 0;
 
-	// Windows cannot lock/unlock a region spanning more than one VirtualAlloc or MapViewOfFile
-	// so we have to unlock each region individually
-	// No need for this mess in 4GB mode since windows doesn't use it
-	if (settings.platform.ram_size == 16 * 1024 * 1024)
+	if (_nvmem_enabled())
 	{
-		mem_region_unlock(virt_ram_base + 0x0C000000, RAM_SIZE);
-		mem_region_unlock(virt_ram_base + 0x0D000000, RAM_SIZE);
-		mem_region_unlock(virt_ram_base + 0x0E000000, RAM_SIZE);
-		mem_region_unlock(virt_ram_base + 0x0F000000, RAM_SIZE);
+		// Windows cannot lock/unlock a region spanning more than one VirtualAlloc or MapViewOfFile
+		// so we have to unlock each region individually
+		// No need for this mess in 4GB mode since windows doesn't use it
+		if (settings.platform.ram_size == 16 * 1024 * 1024)
+		{
+			mem_region_unlock(virt_ram_base + 0x0C000000, RAM_SIZE);
+			mem_region_unlock(virt_ram_base + 0x0D000000, RAM_SIZE);
+			mem_region_unlock(virt_ram_base + 0x0E000000, RAM_SIZE);
+			mem_region_unlock(virt_ram_base + 0x0F000000, RAM_SIZE);
+		}
+		else
+		{
+			mem_region_unlock(virt_ram_base + 0x0C000000, RAM_SIZE);
+			mem_region_unlock(virt_ram_base + 0x0E000000, RAM_SIZE);
+		}
+		if (_nvmem_4gb_space())
+		{
+			mem_region_unlock(virt_ram_base + 0x8C000000u, 0x90000000u - 0x8C000000u);
+			mem_region_unlock(virt_ram_base + 0xAC000000u, 0xB0000000u - 0xAC000000u);
+		}
 	}
 	else
 	{
-		mem_region_unlock(virt_ram_base + 0x0C000000, RAM_SIZE);
-		mem_region_unlock(virt_ram_base + 0x0E000000, RAM_SIZE);
-	}
-	if (_nvmem_4gb_space())
-	{
-		mem_region_unlock(virt_ram_base + 0x8C000000u, 0x90000000u - 0x8C000000u);
-		mem_region_unlock(virt_ram_base + 0xAC000000u, 0xB0000000u - 0xAC000000u);
+		mem_region_unlock(&mem_b[0], RAM_SIZE);
 	}
 }
 
-static void bm_LockPage(u32 addr)
+void bm_LockPage(u32 addr, u32 size)
 {
 	addr = addr & (RAM_MASK - PAGE_MASK);
-	mem_region_lock(virt_ram_base + 0x0C000000 + addr, PAGE_SIZE);
-	if (_nvmem_4gb_space())
+	if (_nvmem_enabled())
 	{
-		mem_region_lock(virt_ram_base + 0x8C000000 + addr, PAGE_SIZE);
-		mem_region_lock(virt_ram_base + 0xAC000000 + addr, PAGE_SIZE);
-		// TODO wraps
+		mem_region_lock(virt_ram_base + 0x0C000000 + addr, size);
+		if (_nvmem_4gb_space())
+		{
+			mem_region_lock(virt_ram_base + 0x8C000000 + addr, size);
+			mem_region_lock(virt_ram_base + 0xAC000000 + addr, size);
+			// TODO wraps
+		}
+	}
+	else
+	{
+		mem_region_lock(&mem_b[addr], size);
 	}
 }
 
-static void bm_UnlockPage(u32 addr)
+void bm_UnlockPage(u32 addr, u32 size)
 {
 	addr = addr & (RAM_MASK - PAGE_MASK);
-	mem_region_unlock(virt_ram_base + 0x0C000000 + addr, PAGE_SIZE);
-	if (_nvmem_4gb_space())
+	if (_nvmem_enabled())
 	{
-		mem_region_unlock(virt_ram_base + 0x8C000000 + addr, PAGE_SIZE);
-		mem_region_unlock(virt_ram_base + 0xAC000000 + addr, PAGE_SIZE);
-		// TODO wraps
+		mem_region_unlock(virt_ram_base + 0x0C000000 + addr, size);
+		if (_nvmem_4gb_space())
+		{
+			mem_region_unlock(virt_ram_base + 0x8C000000 + addr, size);
+			mem_region_unlock(virt_ram_base + 0xAC000000 + addr, size);
+			// TODO wraps
+		}
+	}
+	else
+	{
+		mem_region_unlock(&mem_b[addr], size);
 	}
 }
 
@@ -537,6 +557,10 @@ void RuntimeBlockInfo::Discard()
 
 void RuntimeBlockInfo::SetProtectedFlags()
 {
+#ifdef TARGET_NO_EXCEPTIONS
+	this->read_only = false;
+	return;
+#endif
 	// Don't write protect rom and BIOS/IP.BIN (Grandia II)
 	if (!IsOnRam(addr) || (addr & 0x1FFF0000) == 0x0c000000)
 	{
@@ -569,40 +593,60 @@ void bm_RamWriteAccess(u32 addr)
 	addr &= RAM_MASK;
 	if (unprotected_pages[addr / PAGE_SIZE])
 	{
-		ERROR_LOG(DYNAREC, "Page %08x already unprotected", addr);
-		die("Fatal error");
+		//ERROR_LOG(DYNAREC, "Page %08x already unprotected", addr);
+		//die("Fatal error");
+		return;
 	}
 	unprotected_pages[addr / PAGE_SIZE] = true;
 	bm_UnlockPage(addr);
 	std::set<RuntimeBlockInfo*>& block_list = blocks_per_page[addr / PAGE_SIZE];
-	std::vector<RuntimeBlockInfo*> list_copy;
-	list_copy.insert(list_copy.begin(), block_list.begin(), block_list.end());
-	if (!list_copy.empty())
-		DEBUG_LOG(DYNAREC, "bm_RamWriteAccess write access to %08x pc %08x", addr, next_pc);
-	for (auto& block : list_copy)
+	if (!block_list.empty())
 	{
-		bm_DiscardBlock(block);
+		std::vector<RuntimeBlockInfo*> list_copy;
+		list_copy.insert(list_copy.begin(), block_list.begin(), block_list.end());
+		if (!list_copy.empty())
+			DEBUG_LOG(DYNAREC, "bm_RamWriteAccess write access to %08x pc %08x", addr, next_pc);
+		for (auto& block : list_copy)
+		{
+			bm_DiscardBlock(block);
+		}
+		verify(block_list.empty());
 	}
-	verify(block_list.empty());
+}
+
+u32 bm_getRamOffset(void *p)
+{
+	if (_nvmem_enabled())
+	{
+		if (_nvmem_4gb_space())
+		{
+			if ((u8 *)p < virt_ram_base || (u8 *)p >= virt_ram_base + 0x100000000L)
+				return -1;
+		}
+		else
+		{
+			if ((u8 *)p < virt_ram_base || (u8 *)p >= virt_ram_base + 0x20000000)
+				return -1;
+		}
+		u32 addr = (u8*)p - virt_ram_base;
+		if (!IsOnRam(addr) || ((addr >> 29) > 0 && (addr >> 29) < 4))	// system RAM is not mapped to 20, 40 and 60 because of laziness
+			return -1;
+		return addr & RAM_MASK;
+	}
+	else
+	{
+		if ((u8 *)p < &mem_b[0] || (u8 *)p >= &mem_b[RAM_SIZE])
+			return -1;
+		return (u32)((u8 *)p - &mem_b[0]);
+	}
 }
 
 bool bm_RamWriteAccess(void *p)
 {
-	if (_nvmem_4gb_space())
-	{
-		if ((u8 *)p < virt_ram_base || (u8 *)p >= virt_ram_base + 0x100000000L)
-			return false;
-	}
-	else
-	{
-		if ((u8 *)p < virt_ram_base || (u8 *)p >= virt_ram_base + 0x20000000)
-			return false;
-	}
-	u32 addr = (u8*)p - virt_ram_base;
-	if (!IsOnRam(addr) || ((addr >> 29) > 0 && (addr >> 29) < 4))	// system RAM is not mapped to 20, 40 and 60 because of laziness
+	u32 offset = bm_getRamOffset(p);
+	if (offset == (u32)-1)
 		return false;
-	bm_RamWriteAccess(addr);
-
+	bm_RamWriteAccess(offset);
 	return true;
 }
 
@@ -686,7 +730,7 @@ void print_blocks()
 						OpDesc[op]->Disassemble(temp,rpc,op);
 
 						fprintf(f,"//g: %04X %s\n", op, temp);
-					} catch (SH4ThrownException& ex) {
+					} catch (const SH4ThrownException& ex) {
 						fprintf(f,"//g: ???? (page fault)\n");
 					}
 				}

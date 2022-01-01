@@ -36,8 +36,7 @@
 	#define shil_cf_rv_u32(x) ngen_CC_Param(op,&op->x,CPT_u32rv);
 	#define shil_cf_rv_f32(x) ngen_CC_Param(op,&op->x,CPT_f32rv);
 	#define shil_cf_rv_u64(x) ngen_CC_Param(op,&op->rd,CPT_u64rvL); ngen_CC_Param(op,&op->rd2,CPT_u64rvH);
-	#define shil_cf_ext(x) ngen_CC_Call(op,(void*)&x);
-	#define shil_cf(x) shil_cf_ext(x::impl)
+	#define shil_cf(x) ngen_CC_Call(op, (void *)&x::impl);
 
 	#define shil_compile(code) static void compile(shil_opcode* op) { ngen_CC_Start(op); code ngen_CC_Finish(op); }
 #elif  SHIL_MODE==2

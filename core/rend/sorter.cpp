@@ -457,3 +457,30 @@ void GenSorted(int first, int count, std::vector<SortTrigDrawParam>& pidx_sort, 
 
 	if (tess_gen) DEBUG_LOG(RENDERER, "Generated %.2fK Triangles !", tess_gen / 1000.0);
 }
+
+// Vulkan and DirectX use the color values of the first vertex for flat shaded triangle strips.
+// On Dreamcast the last vertex is the provoking one so we must copy it onto the first.
+void setFirstProvokingVertex(rend_context& rendContext)
+{
+	auto setProvokingVertex = [&rendContext](const List<PolyParam>& list) {
+        u32 *idx_base = rendContext.idx.head();
+        Vertex *vtx_base = rendContext.verts.head();
+		for (const PolyParam& pp : list)
+		{
+			if (pp.pcw.Gouraud)
+				continue;
+			for (u32 i = 0; i + 2 < pp.count; i++)
+			{
+				Vertex& vertex = vtx_base[idx_base[pp.first + i]];
+				Vertex& lastVertex = vtx_base[idx_base[pp.first + i + 2]];
+				memcpy(vertex.col, lastVertex.col, sizeof(vertex.col));
+				memcpy(vertex.spc, lastVertex.spc, sizeof(vertex.spc));
+				memcpy(vertex.col1, lastVertex.col1, sizeof(vertex.col1));
+				memcpy(vertex.spc1, lastVertex.spc1, sizeof(vertex.spc1));
+			}
+		}
+	};
+	setProvokingVertex(rendContext.global_param_op);
+	setProvokingVertex(rendContext.global_param_pt);
+	setProvokingVertex(rendContext.global_param_tr);
+}

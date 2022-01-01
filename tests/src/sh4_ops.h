@@ -963,4 +963,26 @@ protected:
 
 		// TBC
 	}
+
+	void StatusRegTest()
+	{
+		ClearRegs();
+		sr().S = 1;
+		PrepareOp(0x0048);	// clrs
+		RunOp();
+		ASSERT_EQ(sr().S, 0u);
+
+		PrepareOp(0x0058);	// sets
+		RunOp();
+		ASSERT_EQ(sr().S, 1u);
+
+		sr().T = 1;
+		PrepareOp(0x0008);	// clrt
+		RunOp();
+		ASSERT_EQ(sr().T, 0u);
+
+		PrepareOp(0x0018);	// sett
+		RunOp();
+		ASSERT_EQ(sr().T, 1u);
+	}
 };

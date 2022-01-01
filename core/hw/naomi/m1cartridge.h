@@ -34,8 +34,8 @@ public:
 	}
 
 	void AdvancePtr(u32 size) override;
-	void Serialize(void** data, unsigned int* total_size) override;
-	void Unserialize(void** data, unsigned int* total_size) override;
+	void Serialize(Serializer& ser) const override;
+	void Deserialize(Deserializer& deser) override;
 
 	void setActelId(u32 actel_id) { this->actel_id = actel_id; }
 

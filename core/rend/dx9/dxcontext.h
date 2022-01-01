@@ -17,38 +17,40 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #pragma once
-#ifdef _WIN32
+#include "build.h"
+#if defined(_WIN32) && !defined(TARGET_UWP)
 #include "types.h"
 #include <windows.h>
 #include <d3d9.h>
 #include "imgui_impl_dx9.h"
-#include "comptr.h"
+#include "windows/comptr.h"
 #include "d3d_overlay.h"
+#include "wsi/context.h"
 
-class DXContext
+class DXContext : public GraphicsContext
 {
 public:
-	bool Init();
-	void Term();
+	bool init(bool keepCurrentWindow = false);
+	void term() override;
 	void EndImGuiFrame();
 	void Present();
 	const ComPtr<IDirect3D9>& getD3D() const { return pD3D; }
 	const ComPtr<IDirect3DDevice9>& getDevice() const { return pDevice; }
-	void resize();
+	void resize() override;
 	void setOverlay(bool overlayOnly) { this->overlayOnly = overlayOnly; }
-	std::string getDriverName() const {
+	std::string getDriverName() override {
 		D3DADAPTER_IDENTIFIER9 id;
 		pD3D->GetAdapterIdentifier(D3DADAPTER_DEFAULT, 0, &id);
 		return std::string(id.Description);
 	}
-	std::string getDriverVersion() const {
+	std::string getDriverVersion() override {
 		D3DADAPTER_IDENTIFIER9 id;
 		pD3D->GetAdapterIdentifier(D3DADAPTER_DEFAULT, 0, &id);
 		return std::to_string(id.DriverVersion.HighPart >> 16) + "." + std::to_string((u16)id.DriverVersion.HighPart)
 			+ "." + std::to_string(id.DriverVersion.LowPart >> 16) + "." + std::to_string((u16)id.DriverVersion.LowPart);
 	}
-	void setNativeWindow(HWND hWnd) {
-		this->hWnd = hWnd;
+	void setFrameRendered() {
+		frameRendered = true;
 	}
 
 private:
@@ -58,8 +60,9 @@ private:
 	ComPtr<IDirect3DDevice9> pDevice;
 	D3DPRESENT_PARAMETERS d3dpp{};
 	bool overlayOnly = false;
-	HWND hWnd = nullptr;
 	D3DOverlay overlay;
+	bool swapOnVSync = false;
+	bool frameRendered = false;
 };
 extern DXContext theDXContext;
 #endif

@@ -80,7 +80,6 @@ static void coreaudio_init()
 #else
     desc.componentSubType = kAudioUnitSubType_RemoteIO;
 #endif
-    //desc.componentSubType = kAudioUnitSubType_GenericOutput;
     desc.componentFlags = 0;
     desc.componentFlagsMask = 0;
     desc.componentManufacturer = kAudioUnitManufacturer_Apple;
@@ -194,7 +193,7 @@ static void coreaudio_term_record()
 
 static bool coreaudio_init_record(u32 sampling_freq)
 {
-	AudioStreamBasicDescription desc;
+	AudioStreamBasicDescription desc{};
 	desc.mFormatID = kAudioFormatLinearPCM;
 	desc.mSampleRate = (double)sampling_freq;
 	desc.mChannelsPerFrame = 1;
@@ -213,7 +212,7 @@ static bool coreaudio_init_record(u32 sampling_freq)
 					   &recordQueue);
 	if (err != noErr)
 	{
-		INFO_LOG(AUDIO, "AudioQueueNewInput failed: %d", err);
+		ERROR_LOG(AUDIO, "AudioQueueNewInput failed: %d", err);
 		return false;
 	}
 	
@@ -230,11 +229,11 @@ static bool coreaudio_init_record(u32 sampling_freq)
 		err = AudioQueueStart(recordQueue, nullptr);
 	if (err != noErr)
 	{
-		INFO_LOG(AUDIO, "AudioQueue init failed: %d", err);
+		ERROR_LOG(AUDIO, "AudioQueue init failed: %d", err);
 		coreaudio_term_record();
 		return false;
 	}
-	DEBUG_LOG(AUDIO, "AudioQueue initialized - sample rate %f", desc.mSampleRate);
+	INFO_LOG(AUDIO, "AudioQueue initialized - sample rate %f", desc.mSampleRate);
 
 	return true;
 }

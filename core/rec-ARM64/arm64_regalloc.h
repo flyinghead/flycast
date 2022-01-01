@@ -16,15 +16,8 @@
     You should have received a copy of the GNU General Public License
     along with reicast.  If not, see <https://www.gnu.org/licenses/>.
  */
-
-#ifndef CORE_REC_ARM64_ARM64_REGALLOC_H_
-#define CORE_REC_ARM64_ARM64_REGALLOC_H_
-
-#ifdef OLD_REGALLOC
-#include "hw/sh4/dyna/regalloc.h"
-#else
+#pragma once
 #include "hw/sh4/dyna/ssa_regalloc.h"
-#endif
 #include <aarch64/macro-assembler-aarch64.h>
 using namespace vixl::aarch64;
 
@@ -64,14 +57,9 @@ struct Arm64RegAlloc : RegAlloc<eReg, eFReg>
 		return Register::GetWRegFromCode(ereg);
 	}
 
-	const VRegister& MapVRegister(const shil_param& param, u32 index = 0)
+	const VRegister& MapVRegister(const shil_param& param)
 	{
-#ifdef OLD_REGALLOC
-		eFReg ereg = mapfv(param, index);
-#else
-		verify(index == 0);
 		eFReg ereg = mapf(param);
-#endif
 		if (ereg == (eFReg)-1)
 			die("VRegister not allocated");
 		return VRegister::GetSRegFromCode(ereg);
@@ -79,5 +67,3 @@ struct Arm64RegAlloc : RegAlloc<eReg, eFReg>
 
 	Arm64Assembler *assembler;
 };
-
-#endif /* CORE_REC_ARM64_ARM64_REGALLOC_H_ */

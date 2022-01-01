@@ -8,9 +8,17 @@
 
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <sys/time.h>
-
+// Note: alloca is not part of POSIX
+// find definition of alloca if it's not in stdlib.h:
+#if defined(_MSC_VER) || defined(__MINGW32__)
+#include <malloc.h>
+#endif
+#if defined(__linux__) || defined(__sun__)
+#include <alloca.h>
+#endif
 /*
    #define MEMORY_MEASURE
    #define TIME_PRESCALE
@@ -134,7 +142,7 @@ extern void *pico_thread_create(void *(*routine)(void *), void *arg);
 
 static inline void PICO_IDLE(void)
 {
-    usleep(5000);
+	usleep(5000);
 }
 
 #endif  /* PICO_SUPPORT_POSIX */

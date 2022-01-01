@@ -20,13 +20,18 @@ VArray2 aica_ram;
 u32 VREG;
 u32 ARMRST;
 u32 rtc_EN;
-int dma_sched_id;
+int dma_sched_id = -1;
 u32 RealTimeClock;
 int rtc_schid = -1;
 u32 SB_ADST;
 
 u32 GetRTC_now()
 {
+	// rtc kept static for netplay when savestate is not loaded
+	if (config::GGPOEnable)
+		// 1/1/70 00:00:00
+		return (20 * 365 + 5) * 24 * 60 * 60;
+
 	// The Dreamcast Epoch time is 1/1/50 00:00 but without support for time zone or DST.
 	// We compute the TZ/DST current time offset and add it to the result
 	// as if we were in the UTC time zone (as well as the DC Epoch)
@@ -163,23 +168,24 @@ void aica_Init()
 {
 	RealTimeClock = GetRTC_now();
 	if (rtc_schid == -1)
-	{
 		rtc_schid = sh4_sched_register(0, &DreamcastSecond);
-		sh4_sched_request(rtc_schid, SH4_MAIN_CLOCK);
-	}
 }
 
 void aica_Reset(bool hard)
 {
 	if (hard)
+	{
 		aica_Init();
+		sh4_sched_request(rtc_schid, SH4_MAIN_CLOCK);
+	}
 	VREG = 0;
 	ARMRST = 0;
 }
 
 void aica_Term()
 {
-
+	sh4_sched_unregister(rtc_schid);
+	rtc_schid = -1;
 }
 
 static int dma_end_sched(int tag, int cycl, int jitt)
@@ -470,4 +476,6 @@ void aica_sb_Reset(bool hard)
 
 void aica_sb_Term()
 {
+	sh4_sched_unregister(dma_sched_id);
+	dma_sched_id = -1;
 }

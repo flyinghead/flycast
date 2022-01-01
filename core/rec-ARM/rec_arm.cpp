@@ -101,18 +101,17 @@ public:
 };
 
 static Arm32Assembler ass;
-static u8 *sh4_dyna_context;
 
 static void loadSh4Reg(Register Rt, u32 Sh4_Reg)
 {
-	const int shRegOffs = (u8*)GetRegPtr(Sh4_Reg) - sh4_dyna_context;
+	const int shRegOffs = (u8*)GetRegPtr(Sh4_Reg) - (u8*)&p_sh4rcb->cntx - sizeof(Sh4cntx);
 
 	ass.Ldr(Rt, MemOperand(r8, shRegOffs));
 }
 
 static void storeSh4Reg(Register Rt, u32 Sh4_Reg)
 {
-	const int shRegOffs = (u8*)GetRegPtr(Sh4_Reg) - sh4_dyna_context;
+	const int shRegOffs = (u8*)GetRegPtr(Sh4_Reg) - (u8*)&p_sh4rcb->cntx - sizeof(Sh4cntx);
 
 	ass.Str(Rt, MemOperand(r8, shRegOffs));
 }
@@ -139,13 +138,13 @@ struct arm_reg_alloc: RegAlloc<int, int>
 
 	void Preload_FPU(u32 reg, int nreg) override
 	{
-		const s32 shRegOffs = (u8*)GetRegPtr(reg) - sh4_dyna_context;
+		const s32 shRegOffs = (u8*)GetRegPtr(reg) - (u8*)&p_sh4rcb->cntx - sizeof(Sh4cntx);
 
 		ass.Vldr(SRegister(nreg), MemOperand(r8, shRegOffs));
 	}
 	void Writeback_FPU(u32 reg, int nreg) override
 	{
-		const s32 shRegOffs = (u8*)GetRegPtr(reg) - sh4_dyna_context;
+		const s32 shRegOffs = (u8*)GetRegPtr(reg) - (u8*)&p_sh4rcb->cntx - sizeof(Sh4cntx);
 
 		ass.Vstr(SRegister(nreg), MemOperand(r8, shRegOffs));
 	}
@@ -170,14 +169,25 @@ static const void *ngen_LinkBlock_cond_Branch_stub;
 static const void *ngen_LinkBlock_cond_Next_stub;
 static void (*ngen_FailedToFindBlock_)();
 static void (*mainloop)(void *);
+static void (*handleException)();
+
+static void generate_mainloop();
 
 static std::map<shilop, ConditionType> ccmap;
 static std::map<shilop, ConditionType> ccnmap;
+static bool restarting;
+static u32 jmp_stack;
 
 void ngen_mainloop(void* context)
 {
-	sh4_dyna_context = (u8 *)context;
-	mainloop(context);
+	do {
+		restarting = false;
+		generate_mainloop();
+
+		mainloop(context);
+		if (restarting)
+			p_sh4rcb->cntx.CpuRunning = 1;
+	} while (restarting);
 }
 
 static void jump(const void *code, ConditionType cond = al)
@@ -263,37 +273,67 @@ static u32 relinkBlock(DynaRBI *block)
 			ass.Cmp(r4, block->BlockType & 1);
 		}
 
-		if (block->pBranchBlock)
-			jump((void *)block->pBranchBlock->code, CC);
-		else
-			call(ngen_LinkBlock_cond_Branch_stub, CC);
+		if (!mmu_enabled())
+		{
+			if (block->pBranchBlock)
+				jump((void *)block->pBranchBlock->code, CC);
+			else
+				call(ngen_LinkBlock_cond_Branch_stub, CC);
 
-		if (block->pNextBlock)
-			jump((void *)block->pNextBlock->code);
+			if (block->pNextBlock)
+				jump((void *)block->pNextBlock->code);
+			else
+				call(ngen_LinkBlock_cond_Next_stub);
+			ass.Nop();
+			ass.Nop();
+			ass.Nop();
+			ass.Nop();
+		}
 		else
-			call(ngen_LinkBlock_cond_Next_stub);
+		{
+			ass.Mov(Condition(CC).Negate(), r4, block->NextBlock);
+			ass.Mov(CC, r4, block->BranchBlock);
+			storeSh4Reg(r4, reg_nextpc);
+			jump(no_update);
+		}
 		break;
 	}
-
 
 	case BET_DynamicRet:
 	case BET_DynamicCall:
 	case BET_DynamicJump:
-		ass.Sub(r2, r8, -rcbOffset(fpcb));
-#if RAM_SIZE_MAX == 33554432
-		ass.Ubfx(r1, r4, 1, 24);
-#else
-		ass.Ubfx(r1, r4, 1, 23);
-#endif
-		ass.Ldr(pc, MemOperand(r2, r1, LSL, 2));
+		if (!mmu_enabled())
+		{
+			ass.Sub(r2, r8, -rcbOffset(fpcb));
+			ass.Ubfx(r1, r4, 1, 24);
+			ass.Ldr(pc, MemOperand(r2, r1, LSL, 2));
+		}
+		else
+		{
+			storeSh4Reg(r4, reg_nextpc);
+			jump(no_update);
+		}
 		break;
 
 	case BET_StaticCall:
 	case BET_StaticJump:
-		if (block->pBranchBlock == nullptr)
-			call(ngen_LinkBlock_Generic_stub);
+		if (!mmu_enabled())
+		{
+			if (block->pBranchBlock == nullptr)
+				call(ngen_LinkBlock_Generic_stub);
+			else 
+				call((void *)block->pBranchBlock->code);
+			ass.Nop();
+			ass.Nop();
+			ass.Nop();
+		}
 		else
-			call((void *)block->pBranchBlock->code);
+		{
+			ass.Mov(r4, block->BranchBlock);
+			storeSh4Reg(r4, reg_nextpc);
+			jump(no_update);
+		}
+
 		break;
 
 	case BET_StaticIntr:
@@ -815,9 +855,41 @@ static bool ngen_readm_immediate(RuntimeBlockInfo* block, shil_opcode* op, bool 
 	if (!op->rs1.is_imm())
 		return false;
 
+	u32 size = op->flags & 0x7f;
+	u32 addr = op->rs1._imm;
+	if (mmu_enabled() && mmu_is_translated(addr, size))
+	{
+		if ((addr >> 12) != (block->vaddr >> 12) && ((addr >> 12) != ((block->vaddr + block->guest_opcodes * 2 - 1) >> 12)))
+			// When full mmu is on, only consider addresses in the same 4k page
+			return false;
+		u32 paddr;
+		u32 rv;
+		switch (size)
+		{
+		case 1:
+			rv = mmu_data_translation<MMU_TT_DREAD, u8>(addr, paddr);
+			break;
+		case 2:
+			rv = mmu_data_translation<MMU_TT_DREAD, u16>(addr, paddr);
+			break;
+		case 4:
+		case 8:
+			rv = mmu_data_translation<MMU_TT_DREAD, u32>(addr, paddr);
+			break;
+		default:
+			rv = 0;
+			die("Invalid immediate size");
+			break;
+		}
+		if (rv != MMU_ERROR_NONE)
+			return false;
+		addr = paddr;
+	}
+
 	mem_op_type optp = memop_type(op);
 	bool isram = false;
-	void* ptr = _vmem_read_const(op->rs1._imm, isram, std::min(4u, memop_bytes[optp]));
+	void* ptr = _vmem_read_const(addr, isram, std::min(4u, memop_bytes[optp]));
+
 	Register rd = (optp != SZ_32F && optp != SZ_64F) ? reg.mapReg(op->rd) : r0;
 
 	if (isram)
@@ -903,9 +975,40 @@ static bool ngen_writemem_immediate(RuntimeBlockInfo* block, shil_opcode* op, bo
 	if (!op->rs1.is_imm())
 		return false;
 
+	u32 size = op->flags & 0x7f;
+	u32 addr = op->rs1._imm;
+	if (mmu_enabled() && mmu_is_translated(addr, size))
+	{
+		if ((addr >> 12) != (block->vaddr >> 12) && ((addr >> 12) != ((block->vaddr + block->guest_opcodes * 2 - 1) >> 12)))
+			// When full mmu is on, only consider addresses in the same 4k page
+			return false;
+		u32 paddr;
+		u32 rv;
+		switch (size)
+		{
+		case 1:
+			rv = mmu_data_translation<MMU_TT_DWRITE, u8>(addr, paddr);
+			break;
+		case 2:
+			rv = mmu_data_translation<MMU_TT_DWRITE, u16>(addr, paddr);
+			break;
+		case 4:
+		case 8:
+			rv = mmu_data_translation<MMU_TT_DWRITE, u32>(addr, paddr);
+			break;
+		default:
+			rv = 0;
+			die("Invalid immediate size");
+			break;
+		}
+		if (rv != MMU_ERROR_NONE)
+			return false;
+		addr = paddr;
+	}
+
 	mem_op_type optp = memop_type(op);
 	bool isram = false;
-	void* ptr = _vmem_write_const(op->rs1._imm, isram, std::min(4u, memop_bytes[optp]));
+	void* ptr = _vmem_write_const(addr, isram, std::min(4u, memop_bytes[optp]));
 
 	Register rs2 = r1;
 	SRegister rs2f = s0;
@@ -962,6 +1065,63 @@ static bool ngen_writemem_immediate(RuntimeBlockInfo* block, shil_opcode* op, bo
 	return true;
 }
 
+static void genMmuLookup(RuntimeBlockInfo* block, const shil_opcode& op, u32 write, Register& raddr)
+{
+	if (mmu_enabled())
+	{
+		Label inCache;
+		Label done;
+
+		ass.Lsr(r1, raddr, 12);
+		ass.Ldr(r1, MemOperand(r9, r1, LSL, 2));
+		ass.Cmp(r1, 0);
+		ass.B(ne, &inCache);
+		if (!raddr.Is(r0))
+			ass.Mov(r0, raddr);
+		ass.Mov(r1, write);
+		ass.Mov(r2, block->vaddr + op.guest_offs - (op.delay_slot ? 2 : 0));	// pc
+		call((void *)mmuDynarecLookup);
+		ass.B(&done);
+		ass.Bind(&inCache);
+		ass.And(r0, raddr, 0xFFF);
+		ass.Orr(r0, r0, r1);
+		ass.Bind(&done);
+		raddr = r0;
+	}
+}
+
+static void interpreter_fallback(u16 op, OpCallFP *oph, u32 pc)
+{
+	try {
+		oph(op);
+	} catch (SH4ThrownException& ex) {
+		if (pc & 1)
+		{
+			// Delay slot
+			AdjustDelaySlotException(ex);
+			pc--;
+		}
+		Do_Exception(pc, ex.expEvn, ex.callVect);
+		handleException();
+	}
+}
+
+static void do_sqw_mmu_no_ex(u32 addr, u32 pc)
+{
+	try {
+		do_sqw_mmu(addr);
+	} catch (SH4ThrownException& ex) {
+		if (pc & 1)
+		{
+			// Delay slot
+			AdjustDelaySlotException(ex);
+			pc--;
+		}
+		Do_Exception(pc, ex.expEvn, ex.callVect);
+		handleException();
+	}
+}
+
 static void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool optimise)
 {
 	switch(op->op)
@@ -971,6 +1131,7 @@ static void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool o
 			{
 				mem_op_type optp = memop_type(op);
 				Register raddr = GenMemAddr(op);
+				genMmuLookup(block, *op, 0, raddr);
 
 				if (_nvmem_enabled()) {
 					ass.Bic(r1, raddr, 0xE0000000);
@@ -1035,6 +1196,7 @@ static void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool o
 				mem_op_type optp = memop_type(op);
 
 				Register raddr = GenMemAddr(op);
+				genMmuLookup(block, *op, 1,raddr);
 
 				Register rs2 = r2;
 				SRegister rs2f = s2;
@@ -1214,7 +1376,16 @@ static void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool o
 			}
 
 			ass.Mov(r0, op->rs3._imm);
-			call((void *)OpPtr[op->rs3._imm]);
+			if (!mmu_enabled())
+			{
+				call((void *)OpPtr[op->rs3._imm]);
+			}
+			else
+			{
+				ass.Mov(r1, reinterpret_cast<uintptr_t>(*OpDesc[op->rs3._imm]->oph));	// op handler
+				ass.Mov(r2, block->vaddr + op->guest_offs - (op->delay_slot ? 1 : 0));	// pc
+				call((void *)interpreter_fallback);
+			}
 			break;
 
 #ifndef CANONICALTEST
@@ -1487,15 +1658,23 @@ static void ngen_compile_opcode(RuntimeBlockInfo* block, shil_opcode* op, bool o
 					cc = al;
 				}
 
-				if (CCN_MMUCR.AT)
+				if (mmu_enabled())
 				{
-					call((void *)do_sqw_mmu, cc);
+					ass.Mov(r1, block->vaddr + op->guest_offs - (op->delay_slot ? 1 : 0));	// pc
+					call((void *)do_sqw_mmu_no_ex, cc);
 				}
 				else
-				{	
-					ass.Ldr(r2, MemOperand(r8, rcbOffset(do_sqw_nommu)));
-					ass.Sub(r1, r8, -rcbOffset(sq_buffer));
-					ass.Blx(cc, r2);
+				{
+					if (CCN_MMUCR.AT)
+					{
+						call((void *)do_sqw_mmu, cc);
+					}
+					else
+					{
+						ass.Ldr(r2, MemOperand(r8, rcbOffset(do_sqw_nommu)));
+						ass.Sub(r1, r8, -rcbOffset(sq_buffer));
+						ass.Blx(cc, r2);
+					}
 				}
 			}
 			break;
@@ -1789,53 +1968,91 @@ void ngen_Compile(RuntimeBlockInfo* block, bool force_checks, bool reset, bool s
 	if (!block->oplist.empty())
 		reg.OpBegin(&block->oplist[0], 0);
 
-	//scheduler
-	if (force_checks)
+	// block checks
+	if (force_checks || mmu_enabled())
 	{
-		s32 sz = block->sh4_code_size;
 		u32 addr = block->addr;
 		ass.Mov(r0, addr);
-
-		while (sz > 0)
+		if (mmu_enabled())
 		{
-			if (sz > 2)
-			{
-				u32* ptr = (u32*)GetMemPtr(addr, 4);
-				if (ptr != nullptr)
-				{
-					ass.Mov(r2, (u32)ptr);
-					ass.Ldr(r2, MemOperand(r2));
-					ass.Mov(r1, *ptr);
-					ass.Cmp(r1, r2);
+			loadSh4Reg(r2, reg_nextpc);
+			ass.Mov(r1, block->vaddr);
+			ass.Cmp(r2, r1);
+			jump(ngen_blockcheckfail, ne);
+		}
 
-					jump(ngen_blockcheckfail, ne);
-				}
-				addr += 4;
-				sz -= 4;
-			}
-			else
+		if (force_checks)
+		{
+			s32 sz = block->sh4_code_size;
+			while (sz > 0)
 			{
-				u16* ptr = (u16 *)GetMemPtr(addr, 2);
-				if (ptr != nullptr)
+				if (sz > 2)
 				{
-					ass.Mov(r2, (u32)ptr);
-					ass.Ldrh(r2, MemOperand(r2));
-					ass.Mov(r1, *ptr);
-					ass.Cmp(r1, r2);
+					u32* ptr = (u32*)GetMemPtr(addr, 4);
+					if (ptr != nullptr)
+					{
+						ass.Mov(r2, (u32)ptr);
+						ass.Ldr(r2, MemOperand(r2));
+						ass.Mov(r1, *ptr);
+						ass.Cmp(r1, r2);
 
-					jump(ngen_blockcheckfail, ne);
+						jump(ngen_blockcheckfail, ne);
+					}
+					addr += 4;
+					sz -= 4;
 				}
-				addr += 2;
-				sz -= 2;
+				else
+				{
+					u16* ptr = (u16 *)GetMemPtr(addr, 2);
+					if (ptr != nullptr)
+					{
+						ass.Mov(r2, (u32)ptr);
+						ass.Ldrh(r2, MemOperand(r2));
+						ass.Mov(r1, *ptr);
+						ass.Cmp(r1, r2);
+
+						jump(ngen_blockcheckfail, ne);
+					}
+					addr += 2;
+					sz -= 2;
+				}
 			}
+		}
+		if (mmu_enabled() && block->has_fpu_op)
+		{
+			Label fpu_enabled;
+			loadSh4Reg(r1, reg_sr_status);
+			ass.Tst(r1, 1 << 15);		// test SR.FD bit
+			ass.B(eq, &fpu_enabled);
+
+			ass.Mov(r0, block->vaddr);	// pc
+			ass.Mov(r1, 0x800);			// event
+			ass.Mov(r2, 0x100);			// vector
+			call((void *)Do_Exception);
+			loadSh4Reg(r4, reg_nextpc);
+			jump(no_update);
+
+			ass.Bind(&fpu_enabled);
 		}
 	}
 
+	//scheduler
 	u32 cyc = block->guest_cycles;
 	if (!ImmediateA32::IsImmediateA32(cyc))
 		cyc &= ~3;
-
-	ass.Sub(SetFlags, r9, r9, cyc);
+	if (!mmu_enabled())
+	{
+		ass.Sub(SetFlags, r9, r9, cyc);
+	}
+	else
+	{
+		ass.Ldr(r0, MemOperand(r8, rcbOffset(cntx.cycle_counter)));
+		ass.Sub(SetFlags, r0, r0, cyc);
+		ass.Str(r0, MemOperand(r8, rcbOffset(cntx.cycle_counter)));
+		// FIXME condition?
+		ass.Mov(r4, block->vaddr);
+		storeSh4Reg(r4, reg_nextpc);
+	}
 	call(intc_sched, le);
 
 	//compile the block's opcodes
@@ -1865,33 +2082,16 @@ void ngen_Compile(RuntimeBlockInfo* block, bool force_checks, bool reset, bool s
 	}
 	reg.Cleanup();
 
-	//try to early-lookup the blocks -- to avoid rewrites in case they exist ...
-	//this isn't enabled for now, as the shared_ptr to this block doesn't exist yet
-	/*
-	if (block->BranchBlock != NullAddress)
-	{
-		block->pBranchBlock = bm_GetBlock(block->BranchBlock).get();
-		if (block->pNextBlock)
-			block->pNextBlock->AddRef(block);
-	}
-	if (block->NextBlock != NullAddress)
-	{
-		block->pNextBlock = bm_GetBlock(block->NextBlock).get();
-		if (block->pBranchBlock)
-			block->pBranchBlock->AddRef(block);
-	}
-	*/
-
 	//Relink written bytes must be added to the count !
 
 	block->relink_offset = ass.GetCursorOffset();
 	block->relink_data = 0;
 
-	emit_Skip(block->relink_offset);
-	emit_Skip(relinkBlock((DynaRBI *)block));
+	relinkBlock((DynaRBI *)block);
 	ass.Finalize();
-	u8* pEnd = ass.GetCursorAddress<u8 *>();
+	emit_Skip(ass.GetCursorOffset());
 
+	u8* pEnd = ass.GetCursorAddress<u8 *>();
 	//blk_start might not be the same, due to profiling counters ..
 	block->host_opcodes = (pEnd - blk_start) / 4;
 
@@ -1901,48 +2101,76 @@ void ngen_Compile(RuntimeBlockInfo* block, bool force_checks, bool reset, bool s
 
 void ngen_ResetBlocks()
 {
-	INFO_LOG(DYNAREC, "@@  ngen_ResetBlocks()");
+	INFO_LOG(DYNAREC, "ngen_ResetBlocks()");
+	mainloop = nullptr;
+
+	if (p_sh4rcb->cntx.CpuRunning)
+	{
+		// Force the dynarec out of mainloop() to regenerate it
+		p_sh4rcb->cntx.CpuRunning = 0;
+		restarting = true;
+	}
+	else
+		generate_mainloop();
 }
 
-void ngen_init()
+static void generate_mainloop()
 {
-	INFO_LOG(DYNAREC, "Initializing the ARM32 dynarec");
+	if (mainloop != nullptr)
+		return;
 
+	INFO_LOG(DYNAREC, "Generating main loop");
 	ass = Arm32Assembler((u8 *)emit_GetCCPtr(), emit_FreeSpace());
 
 	// Stubs
 	Label ngen_LinkBlock_Shared_stub;
-	// ngen_LinkBlock_Generic_stub
+// ngen_LinkBlock_Generic_stub
 	ngen_LinkBlock_Generic_stub = ass.GetCursorAddress<const void *>();
 	ass.Mov(r1,r4);		// djump/pc -> in case we need it ..
 	ass.B(&ngen_LinkBlock_Shared_stub);
-	// ngen_LinkBlock_cond_Branch_stub
+// ngen_LinkBlock_cond_Branch_stub
 	ngen_LinkBlock_cond_Branch_stub = ass.GetCursorAddress<const void *>();
 	ass.Mov(r1, 1);
 	ass.B(&ngen_LinkBlock_Shared_stub);
-	// ngen_LinkBlock_cond_Next_stub
+// ngen_LinkBlock_cond_Next_stub
 	ngen_LinkBlock_cond_Next_stub = ass.GetCursorAddress<const void *>();
 	ass.Mov(r1, 0);
 	ass.B(&ngen_LinkBlock_Shared_stub);
-	// ngen_LinkBlock_Shared_stub
+// ngen_LinkBlock_Shared_stub
 	ass.Bind(&ngen_LinkBlock_Shared_stub);
 	ass.Mov(r0, lr);
 	ass.Sub(r0, r0, 4);		// go before the call
 	call((void *)rdv_LinkBlock);
 	ass.Bx(r0);
-	// ngen_FailedToFindBlock_
+// ngen_FailedToFindBlock_
 	ngen_FailedToFindBlock_ = ass.GetCursorAddress<void (*)()>();
-	ass.Mov(r0, r4);
-	call((void *)rdv_FailedToFindBlock);
+	if (mmu_enabled())
+	{
+		call((void *)rdv_FailedToFindBlock_pc);
+	}
+	else
+	{
+		ass.Mov(r0, r4);
+		call((void *)rdv_FailedToFindBlock);
+	}
 	ass.Bx(r0);
-	// ngen_blockcheckfail
+// ngen_blockcheckfail
 	ngen_blockcheckfail = ass.GetCursorAddress<const void *>();
 	call((void *)rdv_BlockCheckFail);
+	if (mmu_enabled())
+	{
+		Label jumpblockLabel;
+		ass.Cmp(r0, 0);
+		ass.B(ne, &jumpblockLabel);
+		loadSh4Reg(r0, reg_nextpc);
+		call((void *)bm_GetCodeByVAddr);
+		ass.Bind(&jumpblockLabel);
+	}
 	ass.Bx(r0);
 
 	// Main loop
 	Label no_updateLabel;
-	// ngen_mainloop:
+// ngen_mainloop:
 	mainloop = ass.GetCursorAddress<void (*)(void *)>();
 	RegisterList savedRegisters = RegisterList::Union(
 			RegisterList(r4, r5, r6, r7),
@@ -1953,16 +2181,43 @@ void ngen_init()
 		scope.ExcludeAll();
 		ass.Push(savedRegisters);
 	}
-	ass.Mov(r9, SH4_TIMESLICE);							// load cycle counter
-	ass.Mov(r8, r0);									// load context
-	ass.Ldr(r4, MemOperand(r8, rcbOffset(cntx.pc)));	// load pc
+	Label longjumpLabel;
+	if (!mmu_enabled())
+	{
+		// r8: context
+		ass.Mov(r8, r0);
+		// r9: cycle counter
+		ass.Ldr(r9, MemOperand(r0, rcbOffset(cntx.cycle_counter)));
+	}
+	else
+	{
+		ass.Sub(sp, sp, 4);
+		ass.Push(r0);									// push context
+
+		ass.Mov(r0, reinterpret_cast<uintptr_t>(&jmp_stack));
+		ass.Mov(r1, sp);
+		ass.Str(r1, MemOperand(r0));
+
+		ass.Bind(&longjumpLabel);
+
+		ass.Ldr(r8, MemOperand(sp));					// r8: context
+		ass.Mov(r9, (uintptr_t)mmuAddressLUT);			// r9: mmu LUT
+	}
+	ass.Ldr(r4, MemOperand(r8, rcbOffset(cntx.pc)));	// r4: pc
 	ass.B(&no_updateLabel);								// Go to mainloop !
 	// this code is here for fall-through behavior of do_iter
 	Label do_iter;
 	Label cleanup;
-	// intc_sched:
+// intc_sched:
 	intc_sched = ass.GetCursorAddress<const void *>();
-	ass.Add(r9, r9, SH4_TIMESLICE);
+	if (!mmu_enabled())
+		ass.Add(r9, r9, SH4_TIMESLICE);
+	else
+	{
+		ass.Ldr(r0, MemOperand(r8, rcbOffset(cntx.cycle_counter)));
+		ass.Add(r0, r0, SH4_TIMESLICE);
+		ass.Str(r0, MemOperand(r8, rcbOffset(cntx.cycle_counter)));
+	}
 	ass.Mov(r4, lr);
 	call((void *)UpdateSystem);
 	ass.Mov(lr, r4);
@@ -1977,32 +2232,50 @@ void ngen_init()
 	call((void *)rdv_DoInterrupts);
 	ass.Mov(r4, r0);
 
-	// no_update:
+// no_update:
 	no_update = ass.GetCursorAddress<const void *>();
 	ass.Bind(&no_updateLabel);
-	// next_pc _MUST_ be on r4 *R4 NOT R0 anymore*
+	// next_pc _MUST_ be on r4
 	ass.Ldr(r0, MemOperand(r8, rcbOffset(cntx.CpuRunning)));
 	ass.Cmp(r0, 0);
 	ass.B(eq, &cleanup);
 
-	ass.Sub(r2, r8, -rcbOffset(fpcb));
-#if RAM_SIZE_MAX == 33554432
-	ass.Ubfx(r1, r4, 1, 24);	// 24+1 bits: 32 MB
-								// RAM wraps around so if actual RAM size is 16MB, we won't overflow
-#elif RAM_SIZE_MAX == 16777216
-	ass.Ubfx(r1, r4, 1, 23);	// 23+1 bits: 16 MB
-#else
-#error "Define RAM_SIZE_MAX"
-#endif
-	ass.Ldr(pc, MemOperand(r2, r1, LSL, 2));
-	// cleanup:
+	if (!mmu_enabled())
+	{
+		ass.Sub(r2, r8, -rcbOffset(fpcb));
+		ass.Ubfx(r1, r4, 1, 24);	// 24+1 bits: 32 MB
+									// RAM wraps around so if actual RAM size is 16MB, we won't overflow
+		ass.Ldr(pc, MemOperand(r2, r1, LSL, 2));
+	}
+	else
+	{
+		ass.Mov(r0, r4);
+		call((void *)bm_GetCodeByVAddr);
+		ass.Bx(r0);
+	}
+
+// cleanup:
 	ass.Bind(&cleanup);
+	if (mmu_enabled())
+		ass.Add(sp, sp, 8);	// pop context & alignment
+	else
+		ass.Str(r9, MemOperand(r8, rcbOffset(cntx.cycle_counter)));
 	{
 		UseScratchRegisterScope scope(&ass);
 		scope.ExcludeAll();
 		ass.Pop(savedRegisters);
 	}
 	ass.Bx(lr);
+
+	// Exception handler
+	handleException = ass.GetCursorAddress<void (*)()>();
+	if (mmu_enabled())
+	{
+		ass.Mov(r0, reinterpret_cast<uintptr_t>(&jmp_stack));
+		ass.Ldr(r1, MemOperand(r0));
+		ass.Mov(sp, r1);
+		ass.B(&longjumpLabel);
+	}
 
     // Memory handlers
     for (int s=0;s<6;s++)
@@ -2078,15 +2351,17 @@ void ngen_init()
     ngen_FailedToFindBlock = ngen_FailedToFindBlock_;
 
 	INFO_LOG(DYNAREC, "readm helpers: up to %p", ass.GetCursorAddress<void *>());
-	emit_SetBaseAddr();
+}
 
+void ngen_init()
+{
+	INFO_LOG(DYNAREC, "Initializing the ARM32 dynarec");
 
 	ccmap[shop_test] = eq;
 	ccnmap[shop_test] = ne;
 
 	ccmap[shop_seteq] = eq;
 	ccnmap[shop_seteq] = ne;
-	
 	
 	ccmap[shop_setge] = ge;
 	ccnmap[shop_setge] = lt;
@@ -2101,15 +2376,14 @@ void ngen_init()
 	ccnmap[shop_setab] = ls;
 }
 
-
-void ngen_GetFeatures(ngen_features* dst)
+void ngen_HandleException(host_context_t &context)
 {
-	dst->InterpreterFallback=false;
-	dst->OnlyDynamicEnds=false;
+	context.pc = (uintptr_t)handleException;
 }
 
 RuntimeBlockInfo* ngen_AllocateBlock()
 {
+	generate_mainloop(); // FIXME why is this needed?
 	return new DynaRBI();
 };
 #endif

@@ -27,7 +27,8 @@ VKAPI_ATTR static void VKAPI_CALL vmaAllocateDeviceMemoryCallback(
     VmaAllocator      allocator,
     uint32_t          memoryType,
     VkDeviceMemory    memory,
-    VkDeviceSize      size)
+    VkDeviceSize      size,
+	void *            userData)
 {
 	DEBUG_LOG(RENDERER, "VMAAllocator: %" PRIu64 " bytes allocated (type %d)", size, memoryType);
 }
@@ -36,14 +37,15 @@ VKAPI_ATTR static void VKAPI_CALL vmaFreeDeviceMemoryCallback(
     VmaAllocator      allocator,
     uint32_t          memoryType,
     VkDeviceMemory    memory,
-    VkDeviceSize      size)
+    VkDeviceSize      size,
+	void *            userData)
 {
 	DEBUG_LOG(RENDERER, "VMAAllocator: %" PRIu64 " bytes freed (type %d)", size, memoryType);
 }
 
 static const VmaDeviceMemoryCallbacks memoryCallbacks = { vmaAllocateDeviceMemoryCallback, vmaFreeDeviceMemoryCallback };
 
-void VMAllocator::Init(vk::PhysicalDevice physicalDevice, vk::Device device)
+void VMAllocator::Init(vk::PhysicalDevice physicalDevice, vk::Device device, vk::Instance instance)
 {
 	verify(allocator == VK_NULL_HANDLE);
 	VmaAllocatorCreateInfo allocatorInfo = { VMA_ALLOCATOR_CREATE_EXTERNALLY_SYNCHRONIZED_BIT };
@@ -52,6 +54,7 @@ void VMAllocator::Init(vk::PhysicalDevice physicalDevice, vk::Device device)
 
 	allocatorInfo.physicalDevice = (VkPhysicalDevice)physicalDevice;
 	allocatorInfo.device = (VkDevice)device;
+	allocatorInfo.instance = (VkInstance)instance;
 #if !defined(NDEBUG) || defined(DEBUGFAST)
 	allocatorInfo.pDeviceMemoryCallbacks = &memoryCallbacks;
 #endif

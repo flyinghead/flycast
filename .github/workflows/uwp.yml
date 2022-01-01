@@ -1,0 +1,70 @@
+name: Windows UWP CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    env:
+      VCPKG_ROOT: ${{ github.workspace }}/vcpkg
+      VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}/vcpkg/bincache
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+          submodules: true
+
+      - name: bootstrap vcpkg
+        run: |
+          git clone https://github.com/microsoft/vcpkg
+          mkdir vcpkg\bincache
+          vcpkg\bootstrap-vcpkg.bat
+
+      - uses: actions/cache@v2
+        id: cache
+        with:
+          path: ${{ env.VCPKG_DEFAULT_BINARY_CACHE }}
+          key: vcpkg-${{ hashFiles( 'vcpkg.json' ) }}
+
+      - name: CMake
+        run: |
+          cmake -B build -DCMAKE_BUILD_TYPE=Release  -G "Visual Studio 16 2019" -A x64 -DCMAKE_SYSTEM_NAME=WindowsStore -DCMAKE_SYSTEM_VERSION="10.0" -DCMAKE_SYSTEM_PROCESSOR=AMD64 -DCMAKE_CROSSCOMPILING=OFF -DUSE_VULKAN=OFF -DCMAKE_TOOLCHAIN_FILE=%VCPKG_ROOT%\scripts\buildsystems\vcpkg.cmake
+          cmake --build build --config Release --parallel 2
+        shell: cmd
+
+      - uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Package app
+        run: |
+          mkdir build\artifact
+          cd build\AppPackages\flycast\flycast_*_x64_Test
+          mkdir tmp
+          ren *.msix flycast.msix
+          makeappx.exe unpack /p .\flycast.msix /d tmp
+          copy ..\..\..\Release\*.dll tmp
+          makeappx pack /d tmp /p ..\..\..\artifact\flycast.appx
+
+      - name: Sign app
+        run: signtool sign /f shell\uwp\sign_cert.pfx /p '${{ secrets.SIGN_CERT_PWD }}' /v /fd SHA256 build\artifact\flycast.appx
+        if: github.repository == 'flyinghead/flycast' && github.event_name == 'push'
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: flycast-uwp
+          path: build/artifact
+
+      - name: Configure AWS Credentials
+        id: aws-credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: AKIAJOZQS4H2PHQWYFCA
+          aws-secret-access-key: ${{ secrets.S3_SECRET_KEY }}
+          aws-region: us-east-2
+        if: github.repository == 'flyinghead/flycast' && github.event_name == 'push'
+
+      - name: Upload to S3
+        run: aws s3 sync build/artifact s3://flycast-builds/xbox/${GITHUB_REF#refs/}-$GITHUB_SHA --acl public-read --follow-symlinks
+        shell: bash
+        if: ${{ steps.aws-credentials.outputs.aws-account-id != '' }}

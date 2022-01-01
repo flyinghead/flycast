@@ -25,7 +25,13 @@
 struct BufferData
 {
 	BufferData(vk::DeviceSize size, const vk::BufferUsageFlags& usage,
-			const vk::MemoryPropertyFlags& propertyFlags = vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
+			const vk::MemoryPropertyFlags& propertyFlags =
+				vk::MemoryPropertyFlagBits::eHostVisible
+#ifndef __APPLE__
+				// host coherent memory not supported on apple platforms
+				| vk::MemoryPropertyFlagBits::eHostCoherent
+#endif
+				);
 	~BufferData()
 	{
 		buffer.reset();
@@ -33,16 +39,17 @@ struct BufferData
 
 	void upload(u32 size, const void *data, u32 bufOffset = 0) const
 	{
-		verify((m_propertyFlags & vk::MemoryPropertyFlagBits::eHostCoherent) && (m_propertyFlags & vk::MemoryPropertyFlagBits::eHostVisible));
+		verify((bool)(m_propertyFlags & vk::MemoryPropertyFlagBits::eHostVisible));
 		verify(bufOffset + size <= bufferSize);
 
 		void* dataPtr = (u8 *)allocation.MapMemory() + bufOffset;
 		memcpy(dataPtr, data, size);
+		allocation.UnmapMemory();
 	}
 
 	void upload(size_t count, const u32 *sizes, const void * const *data, u32 bufOffset = 0) const
 	{
-		verify((m_propertyFlags & vk::MemoryPropertyFlagBits::eHostCoherent) && (m_propertyFlags & vk::MemoryPropertyFlagBits::eHostVisible));
+		verify((bool)(m_propertyFlags & vk::MemoryPropertyFlagBits::eHostVisible));
 
 		u32 totalSize = 0;
 		for (size_t i = 0; i < count; i++)
@@ -55,15 +62,17 @@ struct BufferData
 				memcpy(dataPtr, data[i], sizes[i]);
 			dataPtr = (u8 *)dataPtr + sizes[i];
 		}
+		allocation.UnmapMemory();
 	}
 
 	void download(u32 size, void *data, u32 bufOffset = 0) const
 	{
-		verify((m_propertyFlags & vk::MemoryPropertyFlagBits::eHostCoherent) && (m_propertyFlags & vk::MemoryPropertyFlagBits::eHostVisible));
+		verify((bool)(m_propertyFlags & vk::MemoryPropertyFlagBits::eHostVisible));
 		verify(bufOffset + size <= bufferSize);
 
 		void* dataPtr = (u8 *)allocation.MapMemory() + bufOffset;
 		memcpy(data, dataPtr, size);
+		allocation.UnmapMemory();
 	}
 
 	void *MapMemory()
@@ -72,6 +81,7 @@ struct BufferData
 	}
 	void UnmapMemory()
 	{
+		allocation.UnmapMemory();
 	}
 
 	vk::UniqueBuffer buffer;

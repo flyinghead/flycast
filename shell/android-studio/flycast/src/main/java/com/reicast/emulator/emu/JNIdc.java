@@ -9,13 +9,12 @@ public final class JNIdc
 {
 	static { System.loadLibrary("flycast"); }
 
-	public static native String initEnvironment(Emulator emulator, String homeDirectory, String locale);
+	public static native String initEnvironment(Emulator emulator, String filesDirectory, String homeDirectory, String locale);
 	public static native void setExternalStorageDirectories(Object[] pathList);
 	public static native void setGameUri(String fileName);
 	public static native void pause();
 	public static native void resume();
 	public static native void stop();
-	public static native void destroy();
 
 	public static native void rendinitNative(Surface surface, int w, int h);
 
