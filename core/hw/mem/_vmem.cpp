@@ -468,6 +468,7 @@ void _vmem_init_mappings()
 #if FEAT_SHREC != DYNAREC_NONE
 		bm_vmem_pagefill((void**)p_sh4rcb->fpcb, sizeof(p_sh4rcb->fpcb));
 #endif
+		memset(&p_sh4rcb->cntx, 0, sizeof(p_sh4rcb->cntx));
 
 		mem_b.size = RAM_SIZE;
 		mem_b.data = (u8*)malloc_pages(RAM_SIZE);
