@@ -178,8 +178,6 @@ void input_sdl_init()
 			die("SDL: error initializing Joystick subsystem");
 			
 	}
-	if (SDL_WasInit(SDL_INIT_HAPTIC) == 0)
-		SDL_InitSubSystem(SDL_INIT_HAPTIC);
 
 	SDL_SetRelativeMouseMode(SDL_FALSE);
 

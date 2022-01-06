@@ -332,5 +332,7 @@ void PostProcessor::render(GLuint output_fbo)
 	glcache.ClearColor(0.f, 0.f, 0.f, 0.f);
 	glClear(GL_COLOR_BUFFER_BIT);
 	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+#ifndef GLES2
 	glBindVertexArray(0);
+#endif
 }
