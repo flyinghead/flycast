@@ -84,6 +84,7 @@ public:
 					map_button(SDL_CONTROLLER_BUTTON_A, DC_BTN_A);
 					map_button(SDL_CONTROLLER_BUTTON_B, DC_BTN_B);
 					map_button(SDL_CONTROLLER_BUTTON_X, DC_BTN_C);
+					map_button(SDL_CONTROLLER_BUTTON_GUIDE, DC_BTN_D); // coin
 					map_button(SDL_CONTROLLER_BUTTON_Y, DC_BTN_X);
 
 					if (!map_axis(SDL_CONTROLLER_AXIS_TRIGGERLEFT, DC_AXIS_LT, true))
