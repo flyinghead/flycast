@@ -3,20 +3,124 @@
 #include "Renderer_if.h"
 #include "ta.h"
 #include "spg.h"
+#include <map>
 
 bool pal_needs_update=true;
 bool fog_needs_update=true;
 
 u8 pvr_regs[pvr_RegSize];
 
+#define PVR_REG_NAME(r) { r##_addr, #r },
+const std::map<u32, const char *> pvr_reg_names = {
+		PVR_REG_NAME(ID)
+		PVR_REG_NAME(REVISION)
+		PVR_REG_NAME(SOFTRESET)
+		PVR_REG_NAME(STARTRENDER)
+		PVR_REG_NAME(TEST_SELECT)
+		PVR_REG_NAME(PARAM_BASE)
+		PVR_REG_NAME(REGION_BASE)
+		PVR_REG_NAME(SPAN_SORT_CFG)
+		PVR_REG_NAME(VO_BORDER_COL)
+		PVR_REG_NAME(FB_R_CTRL)
+		PVR_REG_NAME(FB_W_CTRL)
+		PVR_REG_NAME(FB_W_LINESTRIDE)
+		PVR_REG_NAME(FB_R_SOF1)
+		PVR_REG_NAME(FB_R_SOF2)
+		PVR_REG_NAME(FB_R_SIZE)
+		PVR_REG_NAME(FB_W_SOF1)
+		PVR_REG_NAME(FB_W_SOF2)
+		PVR_REG_NAME(FB_X_CLIP)
+		PVR_REG_NAME(FB_Y_CLIP)
+		PVR_REG_NAME(FPU_SHAD_SCALE)
+		PVR_REG_NAME(FPU_CULL_VAL)
+		PVR_REG_NAME(FPU_PARAM_CFG)
+		PVR_REG_NAME(HALF_OFFSET)
+		PVR_REG_NAME(FPU_PERP_VAL)
+		PVR_REG_NAME(ISP_BACKGND_D)
+		PVR_REG_NAME(ISP_BACKGND_T)
+		PVR_REG_NAME(ISP_FEED_CFG)
+		PVR_REG_NAME(SDRAM_REFRESH)
+		PVR_REG_NAME(SDRAM_ARB_CFG)
+		PVR_REG_NAME(SDRAM_CFG)
+		PVR_REG_NAME(FOG_COL_RAM)
+		PVR_REG_NAME(FOG_COL_VERT)
+		PVR_REG_NAME(FOG_DENSITY)
+		PVR_REG_NAME(FOG_CLAMP_MAX)
+		PVR_REG_NAME(FOG_CLAMP_MIN)
+		PVR_REG_NAME(SPG_TRIGGER_POS)
+		PVR_REG_NAME(SPG_HBLANK_INT)
+		PVR_REG_NAME(SPG_VBLANK_INT)
+		PVR_REG_NAME(SPG_CONTROL)
+		PVR_REG_NAME(SPG_HBLANK)
+		PVR_REG_NAME(SPG_LOAD)
+		PVR_REG_NAME(SPG_VBLANK)
+		PVR_REG_NAME(SPG_WIDTH)
+		PVR_REG_NAME(TEXT_CONTROL)
+		PVR_REG_NAME(VO_CONTROL)
+		PVR_REG_NAME(VO_STARTX)
+		PVR_REG_NAME(VO_STARTY)
+		PVR_REG_NAME(SCALER_CTL)
+		PVR_REG_NAME(PAL_RAM_CTRL)
+		PVR_REG_NAME(SPG_STATUS)
+		PVR_REG_NAME(FB_BURSTCTRL)
+		PVR_REG_NAME(FB_C_SOF)
+		PVR_REG_NAME(Y_COEFF)
+		PVR_REG_NAME(PT_ALPHA_REF)
+		PVR_REG_NAME(TA_OL_BASE)
+		PVR_REG_NAME(TA_ISP_BASE)
+		PVR_REG_NAME(TA_OL_LIMIT)
+		PVR_REG_NAME(TA_ISP_LIMIT)
+		PVR_REG_NAME(TA_NEXT_OPB)
+		PVR_REG_NAME(TA_ITP_CURRENT)
+		PVR_REG_NAME(TA_GLOB_TILE_CLIP)
+		PVR_REG_NAME(TA_ALLOC_CTRL)
+		PVR_REG_NAME(TA_LIST_INIT)
+		PVR_REG_NAME(TA_YUV_TEX_BASE)
+		PVR_REG_NAME(TA_YUV_TEX_CTRL)
+		PVR_REG_NAME(TA_YUV_TEX_CNT)
+		PVR_REG_NAME(TA_LIST_CONT)
+		PVR_REG_NAME(TA_NEXT_OPB_INIT)
+		PVR_REG_NAME(SIGNATURE1)
+		PVR_REG_NAME(SIGNATURE2)
+};
+#undef PVR_REG_NAME
+
+static const char *regName(u32 paddr)
+{
+	u32 addr = paddr & pvr_RegMask;
+	static char regName[32];
+	auto it = pvr_reg_names.find(addr);
+	if (it == pvr_reg_names.end())
+	{
+		if (addr >= FOG_TABLE_START_addr && addr <= FOG_TABLE_END_addr)
+			sprintf(regName, "FOG_TABLE[%x]", addr - FOG_TABLE_START_addr);
+		else if (addr >= TA_OL_POINTERS_START_addr && addr <= TA_OL_POINTERS_END_addr)
+			sprintf(regName, "TA_OL_POINTERS[%x]", addr - TA_OL_POINTERS_START_addr);
+		else if (addr >= PALETTE_RAM_START_addr && addr <= PALETTE_RAM_END_addr)
+			sprintf(regName, "PALETTE[%x]", addr - PALETTE_RAM_START_addr);
+		else
+			sprintf(regName, "?%08x", paddr);
+		return regName;
+	}
+	else
+		return it->second;
+}
+
 u32 pvr_ReadReg(u32 addr)
 {
+	if ((addr & pvr_RegMask) != SPG_STATUS_addr)
+		DEBUG_LOG(PVR, "read %s.%c == %x", regName(addr),
+				((addr >> 26) & 7) == 2 ? 'b' : (addr & 0x2000000) ? '1' : '0',
+						PvrReg(addr, u32));
 	return PvrReg(addr,u32);
 }
 
 void pvr_WriteReg(u32 paddr,u32 data)
 {
 	u32 addr = paddr & pvr_RegMask;
+	DEBUG_LOG(PVR, "write %s.%c = %x", regName(paddr),
+			((paddr >> 26) & 7) == 2 ? 'b' : (paddr & 0x2000000) ? '1' : '0',
+					data);
 
 	switch (addr)
 	{

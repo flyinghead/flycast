@@ -406,7 +406,8 @@ void WriteMem_naomi(u32 address, u32 data, u32 size)
 		INFO_LOG(NAOMI, "called without cartridge");
 		return;
 	}
-	if (address >= NAOMI_COMM2_CTRL_addr && address <= NAOMI_COMM2_STATUS1_addr && settings.platform.system == DC_PLATFORM_NAOMI)
+	if (address >= NAOMI_COMM2_CTRL_addr && address <= NAOMI_COMM2_STATUS1_addr
+			&& (settings.platform.system == DC_PLATFORM_NAOMI || settings.platform.system == DC_PLATFORM_NAOMI2))
 		m3comm.WriteMem(address, data, size);
 	else
 		CurrentCartridge->WriteMem(address, data, size);

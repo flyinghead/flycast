@@ -471,7 +471,8 @@ union FOG_DENSITY_type
 #define TA_LIST_CONT_addr       0x00000160 // RW  TA continuation processing
 #define TA_NEXT_OPB_INIT_addr   0x00000164 // RW  Additional OPB starting address
 
-
+#define SIGNATURE1_addr         0x00000180 // ?
+#define SIGNATURE2_addr         0x00000184 // ?
 
 #define FOG_TABLE_START_addr        0x00000200 // RW  Look-up table Fog data
 #define FOG_TABLE_END_addr          0x000003FC

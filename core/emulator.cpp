@@ -217,7 +217,9 @@ static void loadSpecialSettings()
 			config::UseReios.override(false);
 		}
 	}
-	else if (settings.platform.system == DC_PLATFORM_NAOMI || settings.platform.system == DC_PLATFORM_ATOMISWAVE)
+	else if (settings.platform.system == DC_PLATFORM_NAOMI
+			|| settings.platform.system == DC_PLATFORM_NAOMI2
+			|| settings.platform.system == DC_PLATFORM_ATOMISWAVE)
 	{
 		NOTICE_LOG(BOOT, "Game ID is [%s]", naomi_game_id);
 		if (!strcmp("SAMURAI SPIRITS 6", naomi_game_id))
@@ -362,6 +364,13 @@ static void setPlatform(int platform)
 		settings.platform.bios_size = 2 * 1024 * 1024;
 		settings.platform.flash_size = 32 * 1024;	// battery-backed ram
 		break;
+	case DC_PLATFORM_NAOMI2:
+		settings.platform.ram_size = 32 * 1024 * 1024;
+		settings.platform.vram_size = 16 * 1024 * 1024; // 2x16 MB VRAM, only 16 emulated
+		settings.platform.aram_size = 8 * 1024 * 1024;
+		settings.platform.bios_size = 2 * 1024 * 1024;
+		settings.platform.flash_size = 32 * 1024;	// battery-backed ram
+		break;
 	case DC_PLATFORM_ATOMISWAVE:
 		settings.platform.ram_size = 16 * 1024 * 1024;
 		settings.platform.vram_size = 8 * 1024 * 1024;
@@ -491,7 +500,9 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 				}
 			}
 		}
-		else if (settings.platform.system == DC_PLATFORM_NAOMI || settings.platform.system == DC_PLATFORM_ATOMISWAVE)
+		else if (settings.platform.system == DC_PLATFORM_NAOMI
+				|| settings.platform.system == DC_PLATFORM_NAOMI2
+				|| settings.platform.system == DC_PLATFORM_ATOMISWAVE)
 		{
 			LoadRomFiles();
 			naomi_cart_LoadRom(path, progress);

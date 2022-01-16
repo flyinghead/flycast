@@ -65,7 +65,7 @@ const char *GetCurrentGameButtonName(DreamcastKey key)
 		val >>= 1;
 	}
 	u32 arcade_key;
-	if (settings.platform.system == DC_PLATFORM_NAOMI)
+	if (settings.platform.system == DC_PLATFORM_NAOMI || settings.platform.system == DC_PLATFORM_NAOMI2)
 	{
 		if (pos >= ARRAY_SIZE(naomi_button_mapping))
 			return nullptr;

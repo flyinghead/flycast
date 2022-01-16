@@ -120,6 +120,10 @@ static void Write_SB_ISTERR(u32 addr, u32 data)
 
 static void Write_SB_IML6NRM(u32 addr, u32 data)
 {
+	// FIXME naomi2
+	if (addr & 0x2000000)
+		// Ignore CLXB settings
+		return;
 	SB_IML6NRM=data;
 
 	asic_RL6Pending();
@@ -127,12 +131,18 @@ static void Write_SB_IML6NRM(u32 addr, u32 data)
 
 static void Write_SB_IML4NRM(u32 addr, u32 data)
 {
+	if (addr & 0x2000000)
+		// Ignore CLXB settings
+		return;
 	SB_IML4NRM=data;
 
 	asic_RL4Pending();
 }
 static void Write_SB_IML2NRM(u32 addr, u32 data)
 {
+	if (addr & 0x2000000)
+		// Ignore CLXB settings
+		return;
 	SB_IML2NRM=data;
 
 	asic_RL2Pending();
@@ -140,18 +150,27 @@ static void Write_SB_IML2NRM(u32 addr, u32 data)
 
 static void Write_SB_IML6EXT(u32 addr, u32 data)
 {
+	if (addr & 0x2000000)
+		// Ignore CLXB settings
+		return;
 	SB_IML6EXT=data;
 
 	asic_RL6Pending();
 }
 static void Write_SB_IML4EXT(u32 addr, u32 data)
 {
+	if (addr & 0x2000000)
+		// Ignore CLXB settings
+		return;
 	SB_IML4EXT=data;
 
 	asic_RL4Pending();
 }
 static void Write_SB_IML2EXT(u32 addr, u32 data)
 {
+	if (addr & 0x2000000)
+		// Ignore CLXB settings
+		return;
 	SB_IML2EXT=data;
 
 	asic_RL2Pending();
@@ -165,12 +184,18 @@ static void Write_SB_IML6ERR(u32 addr, u32 data)
 }
 static void Write_SB_IML4ERR(u32 addr, u32 data)
 {
+	if (addr & 0x2000000)
+		// Ignore CLXB settings
+		return;
 	SB_IML4ERR=data;
 
 	asic_RL4Pending();
 }
 static void Write_SB_IML2ERR(u32 addr, u32 data)
 {
+	if (addr & 0x2000000)
+		// Ignore CLXB settings
+		return;
 	SB_IML2ERR=data;
 
 	asic_RL2Pending();

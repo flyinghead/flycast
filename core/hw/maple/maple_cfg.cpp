@@ -344,6 +344,7 @@ void mcfg_CreateDevices()
 		createDreamcastDevices();
 		break;
 	case DC_PLATFORM_NAOMI:
+	case DC_PLATFORM_NAOMI2:
 		createNaomiDevices();
 		break;
 	case DC_PLATFORM_ATOMISWAVE:

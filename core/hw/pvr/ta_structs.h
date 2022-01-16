@@ -37,13 +37,6 @@ union PCW
 		u32 ParaType    : 3;
 	};
 	u8 obj_ctrl;
-	struct
-	{
-		u32 padin  : 8;
-		u32 S6X    : 1;    //set by TA preprocessing if sz64
-		u32 padin2 : 19;
-		u32 PTEOS  : 4;
-	};
 	u32 full;
 };
 

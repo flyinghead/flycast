@@ -586,6 +586,8 @@ int naomi_cart_GetPlatform(const char *path)
 		return DC_PLATFORM_NAOMI;
 	else if (game->cart_type == AW)
 		return DC_PLATFORM_ATOMISWAVE;
+	else if (game->bios != nullptr && !strcmp("naomi2", game->bios))
+		return DC_PLATFORM_NAOMI2;
 	else
 		return DC_PLATFORM_NAOMI;
 }
