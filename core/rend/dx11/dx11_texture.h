@@ -33,6 +33,7 @@ public:
 			bool mipmapsIncluded = false) override;
 	bool Delete() override;
 	void loadCustomTexture();
+	bool Force32BitTexture(TextureType type) const override;
 };
 
 class DX11TextureCache final : public BaseTextureCache<DX11Texture>
