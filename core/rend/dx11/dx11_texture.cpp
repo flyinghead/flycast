@@ -109,6 +109,7 @@ void DX11Texture::UploadToGPU(int width, int height, u8* temp_tex_buffer, bool m
 		theDX11Context.getDeviceContext()->GenerateMips(textureView);
 }
 
+#ifndef TARGET_UWP
 bool DX11Texture::Force32BitTexture(TextureType type) const
 {
 	if (IsWindows8OrGreater())
@@ -117,6 +118,7 @@ bool DX11Texture::Force32BitTexture(TextureType type) const
 	// are not supported on Windows 7
 	return type == TextureType::_565 || type == TextureType::_5551 || type == TextureType::_4444;
 }
+#endif
 
 bool DX11Texture::Delete()
 {
