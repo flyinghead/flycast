@@ -21,9 +21,10 @@
  * 32 MB RAM
  * Clock: 100 MHz
  * 16 light sources per polygon
- *   ambient, parallel, point or spot
- *   z clipping, offscreen and backface culling
- *   bump mapping/environmental mapping
+ *   ambient, parallel, point or spot (Fog lights and alpha lights also exist)
+ *   Perspective conversion
+ *   Near, far and side clipping, offscreen and backface culling
+ *   bump mapping, environmental mapping
  * dynamic & static model processing
  * model cache system
  *
@@ -77,23 +78,6 @@ static u32 reg74;
 static u32 reg30 = 0x31;
 
 static u32 elanCmd[32 / 4];
-
-void init()
-{
-	elanRAM = (u8 *)allocAligned(PAGE_SIZE, ELAN_RAM_SIZE);
-}
-
-void reset(bool hard)
-{
-	if (hard)
-		memset(elanRAM, 0, ELAN_RAM_SIZE);
-}
-
-void term()
-{
-	freeAligned(elanRAM);
-	elanRAM = nullptr;
-}
 
 template<typename T>
 T DYNACALL read_elanreg(u32 paddr)
@@ -261,18 +245,179 @@ static glm::mat4x4 curMatrix;
 static glm::mat4x4 lightMatrix;
 static glm::mat4 projectionMatrix;
 static LightModel *curLightModel;
-static ElanBase *lights[16];
+static ElanBase *curLights[MAX_LIGHTS];
+static float near = 0.001f;
+static float far = 100000.f;
 
-static struct
+struct State
 {
+	static constexpr u32 Null = 0xffffffff;
+
 	int listType = -1;
-	u32 gmp;
-	u32 matrix;
-	u32 projMatrix;
-	int userClip;
-	u32 lightModel;
-	u32 lights[16];
-} state;
+	u32 gmp = Null;
+	u32 matrix = Null;
+	u32 projMatrix = Null;
+	int userClip = 0;
+	u32 lightModel = Null;
+	u32 lights[MAX_LIGHTS] = {
+			Null, Null, Null, Null, Null, Null, Null, Null,
+			Null, Null, Null, Null, Null, Null, Null, Null
+	};
+
+	void reset()
+	{
+		listType = -1;
+		gmp = Null;
+		matrix = Null;
+		projMatrix = Null;
+		userClip = 0;
+		lightModel = Null;
+		for (auto& light : lights)
+			light = Null;
+		update();
+	}
+	void setMatrix(void *p)
+	{
+		matrix = elanRamAddress(p);
+		updateMatrix();
+	}
+
+	void updateMatrix()
+	{
+		if (matrix == Null)
+			return;
+		Matrix *mat = (Matrix *)&elanRAM[matrix];
+		DEBUG_LOG(PVR, "Matrix %f %f %f %f\n       %f %f %f %f\n       %f %f %f %f\nLight: %f %f %f\n       %f %f %f",
+				-mat->tm00, -mat->tm01, -mat->tm02, -mat->mat03,
+				mat->tm10, mat->tm11, mat->tm12, mat->mat13,
+				mat->tm20, mat->tm21, mat->tm22, -mat->mat23,
+				mat->lm00, mat->lm01, mat->lm02,
+				mat->lm10, mat->lm11, mat->lm12);
+//					DEBUG_LOG(PVR, "Matrix proj4 %f %f %f %f %f",
+//							mat->proj4, mat->proj5, mat->mproj6, mat->proj7, mat->proj8);
+		curMatrix = glm::mat4x4{
+			-mat->tm00, mat->tm10, mat->tm20, 0,
+			-mat->tm01, mat->tm11, mat->tm21, 0,
+			-mat->tm02, mat->tm12, mat->tm22, 0,
+			-mat->mat03, mat->mat13, -mat->mat23, 1
+		};
+		lightMatrix = glm::mat4x4{
+			-mat->lm00, mat->lm10, mat->tm20, 0,
+			-mat->lm01, mat->lm11, mat->tm21, 0,
+			-mat->lm02, mat->lm12, mat->tm22, 0,
+			-mat->mat03, mat->mat13, -mat->mat23, 1
+		};
+		near = mat->proj4;
+		far = mat->proj5;
+	}
+
+	void setProjectionMatrix(void *p)
+	{
+		projMatrix = elanRamAddress(p);
+		updateProjectionMatrix();
+	}
+
+	void updateProjectionMatrix()
+	{
+		if (projMatrix == Null)
+			return;
+		ProjMatrix *pm = (ProjMatrix *)&elanRAM[projMatrix];
+		DEBUG_LOG(PVR, "Proj matrix x: %f %f y: %f %f", pm->fx, pm->tx, pm->fy, pm->ty);
+		projectionMatrix = glm::mat4(
+				-pm->fx,  0,       0,  0,
+				 0,       pm->fy,  0,  0,
+				-pm->tx, -pm->ty, -1, -1,
+				 0,       0,       0,  0
+		);
+	}
+
+	void setGMP(void *p)
+	{
+		gmp = elanRamAddress(p);
+		updateGMP();
+	}
+
+	void updateGMP() {
+		if (gmp == Null)
+			curGmp = nullptr;
+		else
+		{
+			curGmp = (GMP *)&elanRAM[gmp];
+			DEBUG_LOG(PVR, "GMP paramSelect %x clip %d", curGmp->paramSelect.full, curGmp->pcw.userClip);
+		}
+	}
+
+	void setLightModel(void *p)
+	{
+		lightModel = elanRamAddress(p);
+		updateLightModel();
+	}
+
+	void updateLightModel() {
+		if (lightModel == Null)
+			curLightModel = nullptr;
+		else
+		{
+			curLightModel = (LightModel *)&elanRAM[lightModel];
+			DEBUG_LOG(PVR, "Light model mask: diffuse %04x specular %04x, ambient base %08x offset %08x", curLightModel->diffuseMask0, curLightModel->specularMask0,
+					curLightModel->ambientBase0, curLightModel->ambientOffset0);
+		}
+	}
+
+	void setLight(int lightId, void *p)
+	{
+		lights[lightId] = elanRamAddress(p);
+		updateLight(lightId);
+	}
+
+	void updateLight(int lightId)
+	{
+		if (lights[lightId] == Null)
+		{
+			elan::curLights[lightId] = nullptr;
+			return;
+		}
+		Instance *instance = (Instance *)&elanRAM[lights[lightId]];
+		if (instance->pcw.parallelLight)
+		{
+			ParallelLight *light = (ParallelLight *)instance;
+			DEBUG_LOG(PVR, "  Parallel light %d: col %d %d %d dir %d %d %d", light->lightId, light->red, light->green, light->blue,
+					light->dirX, light->dirY, light->dirZ);
+		}
+		else
+		{
+			PointLight *light = (PointLight *)instance;
+			DEBUG_LOG(PVR, "  Point light %d: dattenmode %d col %d %d %d dir %d %d %d pos %f %f %f routing %d dist %f %f angle %f %f",
+					light->lightId, light->dattenmode,
+					light->red, light->green, light->blue,
+					light->dirX, light->dirY, light->dirZ,
+					light->posX, light->posY, light->posZ,
+					light->routing, light->attnMinDistance(), light->attnMaxDistance(),
+					light->attnMinAngle(), light->attnMaxAngle());
+		}
+		elan::curLights[lightId] = instance;
+	}
+
+	void update()
+	{
+		updateMatrix();
+		updateProjectionMatrix();
+		updateGMP();
+		updateLightModel();
+		for (u32 i = 0; i < MAX_LIGHTS; i++)
+			updateLight(i);
+	}
+
+	static u32 elanRamAddress(void *p)
+	{
+		if ((u8 *)p < elanRAM || (u8 *)p >= elanRAM + ELAN_RAM_SIZE)
+			return Null;
+		else
+			return (u32)((u8 *)p - elanRAM);
+	}
+};
+
+static State state;
 
 template <typename T>
 static void setCoords(T& vtx, float x, float y, float z)
@@ -324,15 +469,15 @@ static void computeColors(glm::vec4& baseCol, glm::vec4& offsetCol, const glm::v
 	float diffuseAlphaDiff = 0;
 	float specularAlphaDiff = 0;
 
-	for (u32 lightId = 0; lightId < ARRAY_SIZE(lights); lightId++)
+	for (u32 lightId = 0; lightId < MAX_LIGHTS; lightId++)
 	{
-		const ElanBase *base = lights[lightId];
+		const ElanBase *base = curLights[lightId];
 		if (base == nullptr)
 			continue;
 		if (!curLightModel->isDiffuse(lightId) && !curLightModel->isSpecular(lightId))
 			continue;
 
-		glm::vec4 lightDir;
+		glm::vec4 lightDir; // direction to the light
 		int routing;
 		int dmode;
 		int smode = N2_LMETHOD_SINGLE_SIDED;
@@ -340,7 +485,7 @@ static void computeColors(glm::vec4& baseCol, glm::vec4& offsetCol, const glm::v
 		if (base->pcw.parallelLight)
 		{
 			ParallelLight *light = (ParallelLight *)base;
-			lightDir = glm::normalize(glm::vec4((int8_t)light->dirX, (int8_t)light->dirY, (int8_t)light->dirZ, 0));
+			lightDir = glm::normalize(glm::vec4((int8_t)light->dirX, -(int8_t)light->dirY, -(int8_t)light->dirZ, 0));
 			lightColor = unpackColor(light->red, light->green, light->blue);
 			routing = light->routing;
 			dmode = light->dmode;
@@ -738,7 +883,8 @@ static void sendPolygon(ICHList *list)
 				pp.isp = list->isp;
 				pp.tsp = list->tsp0;
 				pp.tcw = list->tcw0;
-//				pp.tsp.UseAlpha = 1; // FIXME alpha light volumes need manual settings of params?
+				if (state.listType == 2)
+					pp.tsp.UseAlpha = 1; // FIXME alpha light volumes need manual settings of params?
 //				pp.tsp.ShadInstr = 3; // FIXME
 //				if (state.listType  == 2) // FIXME
 //				{
@@ -765,7 +911,8 @@ static void sendPolygon(ICHList *list)
 			pp.isp = list->isp;
 			pp.tsp = list->tsp0;
 			pp.tcw = list->tcw0;
-//			pp.tsp.UseAlpha = 1; // FIXME alpha light volumes need manual settings of params?
+			if (state.listType == 2)
+				pp.tsp.UseAlpha = 1; // FIXME alpha light volumes need manual settings of params?
 //			pp.tsp.ShadInstr = 3; // FIXME
 //			if (state.listType  == 2) // FIXME
 //			{
@@ -790,6 +937,8 @@ static void sendPolygon(ICHList *list)
 			pp.pcw.Gouraud = list->pcw.gouraud;
 			pp.isp = list->isp;
 			pp.tsp = list->tsp0;
+			if (state.listType == 2)
+				pp.tsp.UseAlpha = 1; // FIXME alpha light volumes need manual settings of params?
 			ta_vtx_data32((const SQBuffer *)&pp);
 
 			N2_VERTEX_VR *vtx = (N2_VERTEX_VR *)((u8 *)list + sizeof(ICHList));
@@ -815,6 +964,7 @@ static void sendPolygon(ICHList *list)
 
 			//N2_VERTEX_VUB *vtx = (N2_VERTEX_VUB *)((u8 *)list + sizeof(ICHList));
 			//sendVertices(list, vtx);
+			INFO_LOG(PVR, "Unhandled poly format VTX_TYPE_VUB");
 		}
 		break;
 
@@ -846,46 +996,15 @@ static void executeCommand(u8 *data, int size)
 				break;
 
 			case PCW::matrix:
-				{
-					state.matrix = (u32)(data - elanRAM); // FIXME
-					Matrix *matrix = (Matrix *)data;
-					DEBUG_LOG(PVR, "Matrix %f %f %f %f\n       %f %f %f %f\n       %f %f %f %f\nLight: %f %f %f\n       %f %f %f",
-							-matrix->tm00, -matrix->tm01, -matrix->tm02, -matrix->mat03,
-							matrix->tm10, matrix->tm11, matrix->tm12, matrix->mat13,
-							matrix->tm20, matrix->tm21, matrix->tm22, -matrix->mat23,
-							matrix->lm00, matrix->lm01, matrix->lm02,
-							matrix->lm10, matrix->lm11, matrix->lm12);
-//					DEBUG_LOG(PVR, "Matrix proj4 %f %f %f %f %f",
-//							matrix->proj4, matrix->proj5, matrix->mproj6, matrix->proj7, matrix->proj8);
-					curMatrix = glm::mat4x4{
-						-matrix->tm00, matrix->tm10, matrix->tm20, 0,
-						-matrix->tm01, matrix->tm11, matrix->tm21, 0,
-						-matrix->tm02, matrix->tm12, matrix->tm22, 0,
-						-matrix->mat03, matrix->mat13, -matrix->mat23, 1
-					};
-					lightMatrix = glm::mat4x4{
-						-matrix->lm00, matrix->lm10, matrix->tm20, 0,
-						-matrix->lm01, matrix->lm11, matrix->tm21, 0,
-						-matrix->lm02, matrix->lm12, matrix->tm22, 0,
-						-matrix->mat03, matrix->mat13, -matrix->mat23, 1
-					};
-					size -= sizeof(Matrix);
-				}
+				state.setMatrix(data);
+				size -= sizeof(Matrix);
 				break;
+
 			case PCW::projMatrix:
-				{
-					state.projMatrix = (u32)(data - elanRAM); // FIXME
-					ProjMatrix *projMatrix = (ProjMatrix *)data;
-					DEBUG_LOG(PVR, "Proj matrix x: %f %f y: %f %f", projMatrix->fx, projMatrix->tx, projMatrix->fy, projMatrix->ty);
-					projectionMatrix = glm::mat4(
-							-projMatrix->fx, 0,               0,  0,
-							0,               projMatrix->fy,  0,  0,
-							-projMatrix->tx, -projMatrix->ty, -1, -1,
-							0,               0,               0,  0
-					);
-					size -= sizeof(ProjMatrix);
-				}
+				state.setProjectionMatrix(data);
+				size -= sizeof(ProjMatrix);
 				break;
+
 			case PCW::instance:
 				{
 					Instance *instance = (Instance *)data;
@@ -896,56 +1015,44 @@ static void executeCommand(u8 *data, int size)
 					}
 					else if (instance->id1 & 0x10)
 					{
-						state.lightModel = (u32)(data - elanRAM); // FIXME
-						curLightModel = (LightModel *)data;
-						DEBUG_LOG(PVR, "Light model mask: diffuse %04x specular %04x, ambient base %08x offset %08x", curLightModel->diffuseMask0, curLightModel->specularMask0,
-								curLightModel->ambientBase0, curLightModel->ambientOffset0);
+						state.setLightModel(data);
 					}
 					else if ((instance->id2 & 0x40000000) || (instance->id1 & 0xffffff00)) // FIXME what are these lights without id2|0x40000000? vf4
 					{
 						if (instance->pcw.parallelLight)
 						{
 							ParallelLight *light = (ParallelLight *)data;
-							DEBUG_LOG(PVR, "  Parallel light %d: col %d %d %d dir %d %d %d", light->lightId, light->red, light->green, light->blue,
-									light->dirX, light->dirY, light->dirZ);
-							lights[light->lightId] = light;
-							state.lights[light->lightId] = (u32)(data - elanRAM); // FIXME
+							state.setLight(light->lightId, data);
 						}
 						else
 						{
 							PointLight *light = (PointLight *)data;
-							DEBUG_LOG(PVR, "  Point light %d: dattenmode %d col %d %d %d dir %d %d %d pos %f %f %f routing %d dist %f %f angle %f %f",
-									light->lightId, light->dattenmode,
-									light->red, light->green, light->blue,
-									light->dirX, light->dirY, light->dirZ,
-									light->posX, light->posY, light->posZ,
-									light->routing, light->attnMinDistance(), light->attnMaxDistance(),
-									light->attnMinAngle(), light->attnMaxAngle());
-							//verify(light->dattenmode == 0); // rt66, soulsurfer
-							lights[light->lightId] = light;
-							state.lights[light->lightId] = (u32)(data - elanRAM); // FIXME
+							state.setLight(light->lightId, data);
 						}
 					}
 					else
 					{
-						DEBUG_LOG(PVR, "Other instance %08x %08x", instance->id1, instance->id2);
+						INFO_LOG(PVR, "Other instance %08x %08x", instance->id1, instance->id2);
 						for (int i = 0; i < 32; i += 4)
-							DEBUG_LOG(PVR, "    %08x: %08x", (u32)(&data[i] - elanRAM), *(u32 *)&data[i]);
+							INFO_LOG(PVR, "    %08x: %08x", (u32)(&data[i] - elanRAM), *(u32 *)&data[i]);
 					}
 					size -= sizeof(Instance);
 				}
 				break;
+
 			case PCW::model:
 				{
 					// FIXME instance and model are switched? this is used for nl_set_light_instance()
 					// or static vs. dynamic?
 					Model *model = (Model *)data;
 					// TODO fails rt66 start verify(model->id1 == 0x18000000 || model->id1 == 0x10000000);
-					DEBUG_LOG(PVR, "Model offset %x size %x", model->offset, model->size);
+					state.userClip = model->pcw.userClip;
+					DEBUG_LOG(PVR, "Model offset %x size %x clip %d", model->offset, model->size, model->pcw.userClip);
 					executeCommand(&elanRAM[model->offset & 0x1ffffff8], model->size);
 					size -= sizeof(Model);
 				}
 				break;
+
 			case PCW::registerWait:
 				{
 					RegisterWait *wait = (RegisterWait *)data;
@@ -980,15 +1087,12 @@ static void executeCommand(u8 *data, int size)
 //bad						reg74 |= 0x3c;
 						asic_RaiseInterrupt(inter);
 						TA_ITP_CURRENT += 32;
-						curLightModel = nullptr;
-						memset(lights, 0, sizeof(lights));
-						curGmp = nullptr;
-						state.gmp = -1;
-						state.listType  = -1;
+						state.reset();
 					}
 					size -= sizeof(RegisterWait);
 				}
 				break;
+
 			case PCW::link:
 				{
 					Link *link = (Link *)data;
@@ -999,15 +1103,8 @@ static void executeCommand(u8 *data, int size)
 				break;
 
 			case PCW::gmp:
-				{
-					state.gmp = (u32)(data - elanRAM); // FIXME
-					curGmp = (GMP *)data;
-					if (curGmp->pcw.userClip != 0)
-						WARN_LOG(PVR, "GMP paramSelect %x CLIP %d", curGmp->paramSelect.full, curGmp->pcw.userClip);
-					else
-						DEBUG_LOG(PVR, "GMP paramSelect %x", curGmp->paramSelect.full);
-					size -= sizeof(GMP);
-				}
+				state.setGMP(data);
+				size -= sizeof(GMP);
 				break;
 
 			case PCW::ich:
@@ -1015,9 +1112,7 @@ static void executeCommand(u8 *data, int size)
 					ICHList *ich = (ICHList *)data;
 					DEBUG_LOG(PVR, "ICH flags %x, %d verts", ich->flags, ich->vtxCount);
 					sendPolygon(ich);
-					size -= sizeof(ICHList);
-					verify(ich->vertexSize() != 0);
-					size -= ich->vertexSize() * ich->vtxCount;
+					size -= sizeof(ICHList) + ich->vertexSize() * ich->vtxCount;
 				}
 				break;
 
@@ -1041,7 +1136,6 @@ static void executeCommand(u8 *data, int size)
 			}
 			else if ((pcw & 0xd0fcff00) == 0x80800000) // User clipping
 			{
-				// FIXME this doesn't work (initD/kingrt66 rear view mirror)
 				state.userClip = ((PCW&)pcw).userClip;
 				DEBUG_LOG(PVR, "User clip type %d", state.userClip);
 				size -= 0xE0;
@@ -1066,13 +1160,13 @@ static void executeCommand(u8 *data, int size)
 				// User clipping
 				DEBUG_LOG(PVR, "User clipping %d,%d - %d,%d", ((u32 *)data)[4] * 32, ((u32 *)data)[5] * 32,
 						((u32 *)data)[6] * 32, ((u32 *)data)[7] * 32);
-//				if (((u32 *)data)[6] != 0 && ((u32 *)data)[7] != 0)
-					ta_vtx_data32((SQBuffer *)data);
+				ta_vtx_data32((SQBuffer *)data);
 				size -= 32;
 			}
 			else
 			{
-				DEBUG_LOG(PVR, "Unhandled command %x", pcw);
+				if (pcw != 0)
+					INFO_LOG(PVR, "Unhandled command %x", pcw);
 				for (int i = 0; i < 32; i += 4)
 					DEBUG_LOG(PVR, "    %08x: %08x", (u32)(&data[i] - elanRAM), *(u32 *)&data[i]);
 				size -= 32;
@@ -1102,16 +1196,33 @@ void DYNACALL write_elancmd(u32 addr, T data)
 template<typename T>
 T DYNACALL read_elanram(u32 addr)
 {
-//	DEBUG_LOG(PVR, "ELAN ram READ! (%d) %08x", (u32)sizeof(T), addr);
 	return *(T *)&elanRAM[addr & (ELAN_RAM_SIZE - 1)];
 }
 
 template<typename T>
 void DYNACALL write_elanram(u32 addr, T data)
 {
-	// fails for vf4 verify(sizeof(T) == 4);
-//	DEBUG_LOG(PVR, "ELAN ram write %08x = %x", addr, data);
 	*(T *)&elanRAM[addr & (ELAN_RAM_SIZE - 1)] = data;
+}
+
+void init()
+{
+	elanRAM = (u8 *)allocAligned(PAGE_SIZE, ELAN_RAM_SIZE);
+}
+
+void reset(bool hard)
+{
+	if (hard)
+	{
+		memset(elanRAM, 0, ELAN_RAM_SIZE);
+		state.reset();
+	}
+}
+
+void term()
+{
+	freeAligned(elanRAM);
+	elanRAM = nullptr;
 }
 
 void vmem_init()
@@ -1126,7 +1237,7 @@ void vmem_map(u32 base)
 	_vmem_map_handler(elanRegHandler, base | 8, base | 8);
 	_vmem_map_handler(elanCmdHandler, base | 9, base | 9);
 	_vmem_map_handler(elanRamHandler, base | 0xA, base | 0xB);
-//	_vmem_map_block(elanRAM, base | 0xA, base | 0xB, ELAN_RAM_SIZE - 1);
+	_vmem_map_block(elanRAM, base | 0xA, base | 0xB, ELAN_RAM_SIZE - 1);
 }
 
 void serialize(Serializer& ser)
@@ -1149,6 +1260,7 @@ void deserialize(Deserializer& deser)
 	deser >> elanCmd;
 	if (!deser.rollback())
 		deser.deserialize(elanRAM, ELAN_RAM_SIZE);
+	state.reset();
 }
 
 }

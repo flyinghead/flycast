@@ -106,7 +106,7 @@ static_assert(sizeof(Instance) % 32 == 0, "Invalid size for Instance");
 struct Matrix : public ElanBase
 {
 	// 08000200
-	float proj7;
+	float proj7; // env map U offset
 	float lm00;
 	float lm01;
 	float lm02;
@@ -116,7 +116,7 @@ struct Matrix : public ElanBase
 	float tm20;
 	float tm21;
 	float tm22;
-	float proj8;
+	float proj8; // env map V offset
 	float _res[4];
 	u32 contCmd;
 	float proj4; // near?
@@ -389,6 +389,8 @@ struct Link : public ElanBase
 	u32 _res0[4];
 };
 static_assert(sizeof(Link) % 32 == 0, "Invalid size for Link");
+
+constexpr size_t MAX_LIGHTS = 16;
 
 struct LightModel : public ElanBase
 {
