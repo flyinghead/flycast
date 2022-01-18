@@ -159,7 +159,7 @@ void gui_init()
     scaling = std::max(1.f, screen_dpi / 100.f * 0.75f);
    	// Limit scaling on small low-res screens
     if (settings.display.width <= 640 || settings.display.height <= 480)
-    	scaling = std::min(1.4f, scaling);
+    	scaling = std::min(1.2f, scaling);
 #endif
     if (scaling > 1)
 		ImGui::GetStyle().ScaleAllSizes(scaling);
