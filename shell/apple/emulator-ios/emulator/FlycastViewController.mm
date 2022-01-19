@@ -142,7 +142,7 @@ static void updateAudioSession(Event event, void *)
 	}
 }
 
-@interface FlycastViewController () <UIDocumentPickerDelegate>
+@interface FlycastViewController () <UIDocumentPickerDelegate, UITextFieldDelegate>
 
 @property (strong, nonatomic) EAGLContext *context;
 @property (strong, nonatomic) PadViewController *padController;
@@ -158,17 +158,29 @@ static void updateAudioSession(Event event, void *)
 @property (nonatomic, strong) nw_path_monitor_t monitor;
 @property (nonatomic, strong) dispatch_queue_t monitorQueue;
 
+@property (nonatomic, assign, getter=isKeyboardVisible) BOOL keyboardVisible;
+@property (nonatomic, assign) CGRect textInputRect;
+@property (nonatomic, assign) int keyboardHeight;
+
 @end
 
 extern int screen_dpi;
 
-@implementation FlycastViewController
+@implementation FlycastViewController {
+	UITextField *textField;
+	BOOL showingKeyboard;
+	NSString *changeText;
+	NSString *obligateForBackspace;
+}
 
 - (id)initWithCoder:(NSCoder *)coder
 {
 	self = [super initWithCoder:coder];
-	if (self)
+	if (self) {
 		flycastViewController = self;
+		[self initKeyboard];
+		showingKeyboard = NO;
+	}
 	return self;
 
 }
@@ -329,6 +341,7 @@ extern int screen_dpi;
 
 - (void)dealloc
 {
+	[self deinitKeyboard];
 	EventManager::unlisten(Event::Resume, updatePointerLock);
 	EventManager::unlisten(Event::Pause, updatePointerLock);
 	EventManager::unlisten(Event::Terminate, updatePointerLock);
@@ -397,6 +410,183 @@ extern int screen_dpi;
 	float scale = self.view.contentScaleFactor;
 	gui_set_insets(self.view.safeAreaInsets.left * scale, self.view.safeAreaInsets.right * scale,
 				   self.view.safeAreaInsets.top * scale, self.view.safeAreaInsets.bottom * scale);
+}
+
+#pragma mark On-screen keyboard
+// borrowed from SDL uikit view controller code
+
+@synthesize textInputRect;
+@synthesize keyboardHeight;
+@synthesize keyboardVisible;
+
+// Set ourselves up as a UITextFieldDelegate
+- (void)initKeyboard
+{
+	changeText = nil;
+	obligateForBackspace = @"                                                                "; // 64 spaces
+	textField = [[UITextField alloc] initWithFrame:CGRectZero];
+	textField.delegate = self;
+	// placeholder so there is something to delete!
+	textField.text = obligateForBackspace;
+
+	// set UITextInputTrait properties, mostly to defaults
+	textField.autocapitalizationType = UITextAutocapitalizationTypeNone;
+	textField.autocorrectionType = UITextAutocorrectionTypeNo;
+	textField.enablesReturnKeyAutomatically = NO;
+	textField.keyboardAppearance = UIKeyboardAppearanceDefault;
+	textField.keyboardType = UIKeyboardTypeDefault;
+	textField.returnKeyType = UIReturnKeyDefault;
+	textField.secureTextEntry = NO;
+
+	textField.hidden = YES;
+	keyboardVisible = NO;
+
+	NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
+#if !TARGET_OS_TV
+	[center addObserver:self selector:@selector(keyboardWillShow:) name:UIKeyboardWillShowNotification object:nil];
+	[center addObserver:self selector:@selector(keyboardWillHide:) name:UIKeyboardWillHideNotification object:nil];
+#endif
+	[center addObserver:self selector:@selector(textFieldTextDidChange:) name:UITextFieldTextDidChangeNotification object:nil];
+	gui_setOnScreenKeyboardCallback([](bool show) {
+		if (show != flycastViewController.keyboardVisible)
+		{
+			if (show)
+				[flycastViewController showKeyboard];
+			else
+				[flycastViewController hideKeyboard];
+		}
+	});
+}
+
+- (void)deinitKeyboard
+{
+	gui_setOnScreenKeyboardCallback(nullptr);
+	NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
+#if !TARGET_OS_TV
+	[center removeObserver:self name:UIKeyboardWillShowNotification object:nil];
+	[center removeObserver:self name:UIKeyboardWillHideNotification object:nil];
+#endif
+	[center removeObserver:self name:UITextFieldTextDidChangeNotification object:nil];
+}
+
+- (void)setView:(UIView *)view
+{
+	[super setView:view];
+
+	[view addSubview:textField];
+
+	if (keyboardVisible) {
+		[self showKeyboard];
+	}
+}
+
+// reveal onscreen virtual keyboard
+- (void)showKeyboard
+{
+	keyboardVisible = YES;
+	if (textField.window) {
+		showingKeyboard = YES;
+		[textField becomeFirstResponder];
+		showingKeyboard = NO;
+	}
+}
+
+// hide onscreen virtual keyboard
+- (void)hideKeyboard
+{
+	keyboardVisible = NO;
+	[textField resignFirstResponder];
+}
+
+- (void)keyboardWillShow:(NSNotification *)notification
+{
+#if !TARGET_OS_TV
+	CGRect kbrect = [[notification userInfo][UIKeyboardFrameEndUserInfoKey] CGRectValue];
+
+	// The keyboard rect is in the coordinate space of the screen/window, but we
+	// want its height in the coordinate space of the view.
+	kbrect = [self.view convertRect:kbrect fromView:nil];
+
+	[self setKeyboardHeight:(int)kbrect.size.height];
+#endif
+}
+
+- (void)keyboardWillHide:(NSNotification *)notification
+{
+	[self setKeyboardHeight:0];
+}
+
+- (void)textFieldTextDidChange:(NSNotification *)notification
+{
+	if (changeText!=nil && textField.markedTextRange == nil)
+	{
+		NSUInteger len = changeText.length;
+		if (len > 0)
+			gui_keyboard_inputUTF8([changeText UTF8String]);
+		changeText = nil;
+	}
+}
+
+- (void)updateKeyboard
+{
+	CGAffineTransform t = self.view.transform;
+	CGPoint offset = CGPointMake(0.0, 0.0);
+	CGRect frame = self.view.window.screen.bounds; // FIXME UIKit_ComputeViewFrame(window, self.view.window.screen);
+
+	if (self.keyboardHeight) {
+		int rectbottom = self.textInputRect.origin.y + self.textInputRect.size.height;
+		int keybottom = self.view.bounds.size.height - self.keyboardHeight;
+		if (keybottom < rectbottom) {
+			offset.y = keybottom - rectbottom;
+		}
+	}
+
+	// Apply this view's transform (except any translation) to the offset, in
+	// order to orient it correctly relative to the frame's coordinate space.
+	t.tx = 0.0;
+	t.ty = 0.0;
+	offset = CGPointApplyAffineTransform(offset, t);
+
+	// Apply the updated offset to the view's frame.
+	frame.origin.x += offset.x;
+	frame.origin.y += offset.y;
+
+	self.view.frame = frame;
+}
+
+- (void)setKeyboardHeight:(int)height
+{
+	keyboardVisible = height > 0;
+	keyboardHeight = height;
+	[self updateKeyboard];
+}
+
+// UITextFieldDelegate method.  Invoked when user types something.
+- (BOOL)textField:(UITextField *)_textField shouldChangeCharactersInRange:(NSRange)range replacementString:(NSString *)string
+{
+	NSUInteger len = string.length;
+	if (len == 0) {
+		changeText = nil;
+		if (textField.markedTextRange == nil) {
+			// it wants to replace text with nothing, ie a delete
+			gui_keyboard_key(0x2A, true, 0); // backspace
+			gui_keyboard_key(0x2A, false, 0);
+		}
+		if (textField.text.length < 16) {
+			textField.text = obligateForBackspace;
+		}
+	} else {
+		changeText = string;
+	}
+	return YES;
+}
+
+// Terminates the editing session
+- (BOOL)textFieldShouldReturn:(UITextField*)_textField
+{
+	gui_keyboard_key(0x28, true, 0); // Return
+	gui_keyboard_key(0x28, false, 0);
+	return YES;
 }
 
 #pragma mark - GLKView and GLKViewController delegate methods
