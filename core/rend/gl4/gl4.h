@@ -44,6 +44,16 @@ struct gl4PipelineShader
 	GLint fog_clamp_min, fog_clamp_max;
 	GLint normal_matrix;
 	GLint palette_index;
+	// Naomi2
+	GLint mvMat;
+	GLint projMat;
+	GLint glossCoef0;
+	GLint lightCount;
+	GLint ambientBase;
+	GLint ambientOffset;
+	GLint ambientMaterial;
+	GLint useBaseOver;
+	GLint envMapping;
 
 	bool cp_AlphaTest;
 	bool pp_InsideClipping;
@@ -59,6 +69,7 @@ struct gl4PipelineShader
 	bool pp_BumpMap;
 	bool fog_clamping;
 	bool palette;
+	bool naomi2;
 };
 
 
@@ -70,6 +81,15 @@ struct gl4_ctx
 
 		GLuint normal_matrix;
 	} modvol_shader;
+
+	struct
+	{
+		GLuint program;
+
+		GLuint normal_matrix;
+		GLint mvMat;
+		GLint projMat;
+	} n2ModVolShader;
 
 	std::unordered_map<u32, gl4PipelineShader> shaders;
 
@@ -88,7 +108,8 @@ extern int max_image_width;
 extern int max_image_height;
 
 extern const char *gl4PixelPipelineShader;
-bool gl4CompilePipelineShader(gl4PipelineShader* s, const char *pixel_source = nullptr, const char *vertex_source = nullptr);
+bool gl4CompilePipelineShader(gl4PipelineShader* s, const char *pixel_source = nullptr, const char *vertex_source = nullptr,
+	const char *geom_source = nullptr);
 
 void initABuffer();
 void termABuffer();

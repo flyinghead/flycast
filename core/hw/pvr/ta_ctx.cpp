@@ -11,9 +11,6 @@ static int RenderCount;
 TA_context* ta_ctx;
 tad_context ta_tad;
 
-TA_context*  vd_ctx;
-rend_context vd_rc;
-
 void SetCurrentTARC(u32 addr)
 {
 	if (addr != TACTX_NONE)

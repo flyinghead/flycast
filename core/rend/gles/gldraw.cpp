@@ -3,6 +3,7 @@
 #include "rend/sorter.h"
 #include "rend/tileclip.h"
 #include "rend/osd.h"
+#include "naomi2.h"
 
 /*
 
@@ -133,7 +134,8 @@ __forceinline
 								  gp->tcw.PixelFmt == PixelBumpMap,
 								  color_clamp,
 								  ShaderUniforms.trilinear_alpha != 1.f,
-								  gpuPalette);
+								  gpuPalette,
+								  gp->projMatrix != nullptr);
 	
 	glcache.UseProgram(CurrentShader->program);
 	if (CurrentShader->trilinear_alpha != -1)
@@ -224,7 +226,7 @@ __forceinline
 	//set Z mode, only if required
 	if (Type == ListType_Punch_Through || (Type == ListType_Translucent && SortingEnabled))
 	{
-		glcache.DepthFunc(GL_GEQUAL);
+		glcache.DepthFunc(Zfunction[6]); // >=
 	}
 	else
 	{
@@ -242,6 +244,8 @@ __forceinline
 		else
 			glcache.DepthMask(!gp->isp.ZWriteDis);
 	}
+	if (CurrentShader->naomi2)
+		setN2Uniforms(gp, CurrentShader);
 }
 
 template <u32 Type, bool SortingEnabled>
@@ -502,6 +506,10 @@ void SetupMainVBO()
 
 	glEnableVertexAttribArray(VERTEX_UV_ARRAY);
 	glVertexAttribPointer(VERTEX_UV_ARRAY, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex,u));
+
+	glEnableVertexAttribArray(VERTEX_NORM_ARRAY);
+	glVertexAttribPointer(VERTEX_NORM_ARRAY, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, nx));
+
 	glCheck();
 }
 
@@ -544,9 +552,6 @@ void DrawModVols(int first, int count)
 	glcache.Disable(GL_BLEND);
 	SetBaseClipping();
 
-	glcache.UseProgram(gl.modvol_shader.program);
-	glUniform1f(gl.modvol_shader.sp_ShaderColor, 1 - FPU_SHAD_SCALE.scale_factor / 256.f);
-
 	glcache.Enable(GL_DEPTH_TEST);
 	glcache.DepthMask(GL_FALSE);
 	glcache.DepthFunc(GL_GREATER);
@@ -556,6 +561,8 @@ void DrawModVols(int first, int count)
 	ModifierVolumeParam* params = &pvrrc.global_param_mvo.head()[first];
 
 	int mod_base = -1;
+	float *curMVMat = nullptr;
+	float *curProjMat = nullptr;
 
 	for (int cmv = 0; cmv < count; cmv++)
 	{
@@ -563,6 +570,24 @@ void DrawModVols(int first, int count)
 
 		if (param.count == 0)
 			continue;
+		if (param.projMatrix != nullptr)
+		{
+			glcache.UseProgram(gl.n2ModVolShader.program);
+			if (param.mvMatrix != curMVMat)
+			{
+				curMVMat = param.mvMatrix;
+				glUniformMatrix4fv(gl.n2ModVolShader.mvMat, 1, GL_FALSE, curMVMat);
+			}
+			if (param.projMatrix != curProjMat)
+			{
+				curProjMat = param.projMatrix;
+				glUniformMatrix4fv(gl.n2ModVolShader.projMat, 1, GL_FALSE, curProjMat);
+			}
+		}
+		else
+		{
+			glcache.UseProgram(gl.modvol_shader.program);
+		}
 
 		u32 mv_mode = param.isp.DepthMode;
 
@@ -789,7 +814,7 @@ void DrawVmuTexture(u8 vmu_screen_number)
 	glcache.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	SetupMainVBO();
-	PipelineShader *shader = GetProgram(false, false, true, true, false, 0, false, 2, false, false, false, false, false);
+	PipelineShader *shader = GetProgram(false, false, true, true, false, 0, false, 2, false, false, false, false, false, false);
 	glcache.UseProgram(shader->program);
 
 	{
@@ -883,7 +908,7 @@ void DrawGunCrosshair(u8 port)
 	glcache.BlendFunc(GL_SRC_ALPHA, GL_ONE);
 
 	SetupMainVBO();
-	PipelineShader *shader = GetProgram(false, false, true, true, false, 0, false, 2, false, false, false, false, false);
+	PipelineShader *shader = GetProgram(false, false, true, true, false, 0, false, 2, false, false, false, false, false, false);
 	glcache.UseProgram(shader->program);
 
 	{

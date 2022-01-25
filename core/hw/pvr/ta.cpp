@@ -263,6 +263,7 @@ void ta_vtx_ListCont()
 {
 	SetCurrentTARC(TA_CURRENT_CTX);
 	ta_tad.Continue();
+	ta_ctx->rend.newRenderPass();
 
 	ta_cur_state=TAS_NS;
 	ta_fsm_cl = 7;

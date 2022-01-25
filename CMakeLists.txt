@@ -919,7 +919,9 @@ if(USE_OPENGL)
 	        core/rend/gles/gltex.cpp
 	        core/rend/gles/quad.cpp
 	        core/rend/gles/postprocess.cpp
-	        core/rend/gles/postprocess.h)
+	        core/rend/gles/postprocess.h
+	        core/rend/gles/naomi2.cpp
+	        core/rend/gles/naomi2.h)
 
 	if(NOT LIBRETRO)
 		target_sources(${PROJECT_NAME} PRIVATE
@@ -934,7 +936,9 @@ if(USE_OPENGL)
 	            core/rend/gl4/abuffer.cpp
 	            core/rend/gl4/gl4.h
 	            core/rend/gl4/gldraw.cpp
-	            core/rend/gl4/gles.cpp)
+	            core/rend/gl4/gles.cpp
+	        	core/rend/gl4/naomi2.cpp
+	        	core/rend/gl4/naomi2.h)
 	endif()
 endif()
 

@@ -20,6 +20,7 @@
 #include "rend/gles/glcache.h"
 #include "rend/tileclip.h"
 #include "rend/osd.h"
+#include "naomi2.h"
 
 static gl4PipelineShader* CurrentShader;
 extern u32 gcflip;
@@ -34,7 +35,7 @@ GLuint depthSaveTexId;
 static gl4PipelineShader *gl4GetProgram(bool cp_AlphaTest, bool pp_InsideClipping,
 							bool pp_Texture, bool pp_UseAlpha, bool pp_IgnoreTexA, u32 pp_ShadInstr, bool pp_Offset,
 							u32 pp_FogCtrl, bool pp_TwoVolumes, bool pp_Gouraud, bool pp_BumpMap, bool fog_clamping,
-							bool palette, Pass pass)
+							bool palette, bool naomi2, Pass pass)
 {
 	u32 rv=0;
 
@@ -51,6 +52,7 @@ static gl4PipelineShader *gl4GetProgram(bool cp_AlphaTest, bool pp_InsideClippin
 	rv <<= 1; rv |= (int)pp_BumpMap;
 	rv <<= 1; rv |= (int)fog_clamping;
 	rv <<= 1; rv |= (int)palette;
+	rv <<= 1; rv |= (int)naomi2;
 	rv <<= 2; rv |= (int)pass;
 
 	gl4PipelineShader *shader = &gl4.shaders[rv];
@@ -69,6 +71,7 @@ static gl4PipelineShader *gl4GetProgram(bool cp_AlphaTest, bool pp_InsideClippin
 		shader->pp_BumpMap = pp_BumpMap;
 		shader->fog_clamping = fog_clamping;
 		shader->palette = palette;
+		shader->naomi2 = naomi2;
 		shader->pass = pass;
 		gl4CompilePipelineShader(shader);
 	}
@@ -128,6 +131,7 @@ static void SetGPState(const PolyParam* gp)
 				false,
 				false,
 				false,
+				gp->projMatrix != nullptr,
 				pass);
 	}
 	else
@@ -152,6 +156,7 @@ static void SetGPState(const PolyParam* gp)
 				gp->tcw.PixelFmt == PixelBumpMap,
 				color_clamp,
 				gpuPalette,
+				gp->projMatrix != nullptr,
 				pass);
 	}
 	glcache.UseProgram(CurrentShader->program);
@@ -241,8 +246,6 @@ static void SetGPState(const PolyParam* gp)
 		glActiveTexture(GL_TEXTURE0);
 	}
 
-	//set cull mode !
-	//cflip is required when exploding triangles for triangle sorting
 	//gcflip is global clip flip, needed for when rendering to texture due to mirrored Y direction
 	SetCull(gp->isp.CullMode ^ gcflip);
 
@@ -267,6 +270,8 @@ static void SetGPState(const PolyParam* gp)
 	}
 	else
 		glcache.DepthMask(GL_FALSE);
+	if (gp->projMatrix != nullptr)
+		setN2Uniforms(gp, CurrentShader);
 }
 
 template <u32 Type, bool SortingEnabled, Pass pass>
@@ -330,6 +335,9 @@ void gl4SetupMainVBO()
 
 	glEnableVertexAttribArray(VERTEX_UV1_ARRAY); glCheck();
 	glVertexAttribPointer(VERTEX_UV1_ARRAY, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, u1)); glCheck();
+
+	glEnableVertexAttribArray(VERTEX_NORM_ARRAY);
+	glVertexAttribPointer(VERTEX_NORM_ARRAY, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, nx));
 }
 
 void gl4SetupModvolVBO()
@@ -354,8 +362,6 @@ static void DrawModVols(int first, int count)
 	glcache.Disable(GL_BLEND);
 	SetBaseClipping();
 
-	glcache.UseProgram(gl4.modvol_shader.program);
-
 	glcache.Enable(GL_DEPTH_TEST);
 	glcache.DepthMask(GL_FALSE);
 	glcache.DepthFunc(GL_GREATER);
@@ -372,6 +378,14 @@ static void DrawModVols(int first, int count)
 
 		if (param.count == 0)
 			continue;
+		if (param.projMatrix != nullptr)
+		{
+			glcache.UseProgram(gl4.n2ModVolShader.program);
+			glUniformMatrix4fv(gl4.n2ModVolShader.mvMat, 1, GL_FALSE, param.mvMatrix);
+			glUniformMatrix4fv(gl4.n2ModVolShader.projMat, 1, GL_FALSE, param.projMatrix);
+		}
+		else
+			glcache.UseProgram(gl4.modvol_shader.program);
 
 		u32 mv_mode = param.isp.DepthMode;
 

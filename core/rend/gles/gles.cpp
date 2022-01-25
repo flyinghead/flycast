@@ -13,6 +13,7 @@
 #include "rend/transform_matrix.h"
 #include "wsi/gl_context.h"
 #include "emulator.h"
+#include "naomi2.h"
 
 #include <cmath>
 
@@ -68,7 +69,7 @@ const char *PixelCompatShader = R"(
 #endif
 )";
 
-static const char* GouraudSource = R"(
+const char* GouraudSource = R"(
 #if TARGET_GL == GL3 || defined(GL_NV_shader_noperspective_interpolation)
 	#define NOPERSPECTIVE noperspective
 	#if pp_Gouraud == 0
@@ -400,6 +401,8 @@ static void gl_delete_shaders()
 	gl.shaders.clear();
 	glcache.DeleteProgram(gl.modvol_shader.program);
 	gl.modvol_shader.program = 0;
+	glcache.DeleteProgram(gl.n2ModVolShader.program);
+	gl.n2ModVolShader.program = 0;
 }
 
 void termGLCommon()
@@ -491,7 +494,7 @@ void findGLVersion()
 #if defined(__APPLE__)
 			gl.glsl_version_header = "#version 150";
 #else
-			gl.glsl_version_header = "#version 130";
+			gl.glsl_version_header = "#version 150"; // FIXME GLSL 1.5 / Open GL 3.2 needed for geometry shader
 #endif
 			gl.single_channel_format = GL_RED;
 		}
@@ -565,15 +568,21 @@ GLuint gl_CompileShader(const char* shader,GLuint type)
 	return rv;
 }
 
-GLuint gl_CompileAndLink(const char* VertexShader, const char* FragmentShader)
+GLuint gl_CompileAndLink(const char *vertexShader, const char *fragmentShader, const char *geometryShader)
 {
 	//create shaders
-	GLuint vs=gl_CompileShader(VertexShader ,GL_VERTEX_SHADER);
-	GLuint ps=gl_CompileShader(FragmentShader ,GL_FRAGMENT_SHADER);
+	GLuint vs = gl_CompileShader(vertexShader, GL_VERTEX_SHADER);
+	GLuint ps = gl_CompileShader(fragmentShader, GL_FRAGMENT_SHADER);
+	GLuint gs = 0;
+	if (geometryShader != nullptr)
+		gs = gl_CompileShader(geometryShader, GL_GEOMETRY_SHADER);
 
 	GLuint program = glCreateProgram();
 	glAttachShader(program, vs);
 	glAttachShader(program, ps);
+
+	if (gs != 0)
+		glAttachShader(program, gs);
 
 	//bind vertex attribute to vbo inputs
 	glBindAttribLocation(program, VERTEX_POS_ARRAY,      "in_pos");
@@ -583,6 +592,8 @@ GLuint gl_CompileAndLink(const char* VertexShader, const char* FragmentShader)
 	glBindAttribLocation(program, VERTEX_COL_BASE1_ARRAY, "in_base1");
 	glBindAttribLocation(program, VERTEX_COL_OFFS1_ARRAY, "in_offs1");
 	glBindAttribLocation(program, VERTEX_UV1_ARRAY,       "in_uv1");
+	// Naomi 2
+	glBindAttribLocation(program, VERTEX_NORM_ARRAY,     "in_normal");
 
 #ifndef GLES
 	if (!gl.is_gles && gl.gl_major >= 3)
@@ -610,13 +621,17 @@ GLuint gl_CompileAndLink(const char* VertexShader, const char* FragmentShader)
 		free(compile_log);
 
 		// Dump the shaders source for troubleshooting
-		INFO_LOG(RENDERER, "// VERTEX SHADER\n%s\n// END", VertexShader);
-		INFO_LOG(RENDERER, "// FRAGMENT SHADER\n%s\n// END", FragmentShader);
+		INFO_LOG(RENDERER, "// VERTEX SHADER\n%s\n// END", vertexShader);
+		if (geometryShader != nullptr)
+			INFO_LOG(RENDERER, "// GEOMETRY SHADER\n%s\n// END", geometryShader);
+		INFO_LOG(RENDERER, "// FRAGMENT SHADER\n%s\n// END", fragmentShader);
 		die("shader compile fail\n");
 	}
 
 	glDeleteShader(vs);
 	glDeleteShader(ps);
+	if (gs != 0)
+		glDeleteShader(gs);
 
 	glcache.UseProgram(program);
 
@@ -628,7 +643,7 @@ GLuint gl_CompileAndLink(const char* VertexShader, const char* FragmentShader)
 PipelineShader *GetProgram(bool cp_AlphaTest, bool pp_InsideClipping,
 		bool pp_Texture, bool pp_UseAlpha, bool pp_IgnoreTexA, u32 pp_ShadInstr, bool pp_Offset,
 		u32 pp_FogCtrl, bool pp_Gouraud, bool pp_BumpMap, bool fog_clamping, bool trilinear,
-		bool palette)
+		bool palette, bool naomi2)
 {
 	u32 rv=0;
 
@@ -645,6 +660,7 @@ PipelineShader *GetProgram(bool cp_AlphaTest, bool pp_InsideClipping,
 	rv<<=1; rv|=fog_clamping;
 	rv<<=1; rv|=trilinear;
 	rv<<=1; rv|=palette;
+	rv<<=1; rv|=naomi2;
 
 	PipelineShader *shader = &gl.shaders[rv];
 	if (shader->program == 0)
@@ -662,6 +678,7 @@ PipelineShader *GetProgram(bool cp_AlphaTest, bool pp_InsideClipping,
 		shader->fog_clamping = fog_clamping;
 		shader->trilinear = trilinear;
 		shader->palette = palette;
+		shader->naomi2 = naomi2;
 		CompilePipelineShader(shader);
 	}
 
@@ -707,10 +724,17 @@ public:
 
 bool CompilePipelineShader(PipelineShader* s)
 {
-	VertexSource vertexSource(s->pp_Gouraud);
+	std::string vertexShader;
+	if (s->naomi2)
+		vertexShader = N2VertexSource(s->pp_Gouraud).generate();
+	else
+		vertexShader = VertexSource(s->pp_Gouraud).generate();
 	FragmentShaderSource fragmentSource(s);
+	std::string geometryShader;
+	if (s->naomi2)
+		geometryShader = N2GeometryShader(s->pp_Gouraud).generate();
 
-	s->program = gl_CompileAndLink(vertexSource.generate().c_str(), fragmentSource.generate().c_str());
+	s->program = gl_CompileAndLink(vertexShader.c_str(), fragmentSource.generate().c_str(), s->naomi2 ? geometryShader.c_str() : nullptr);
 
 	//setup texture 0 as the input for the shader
 	GLint gu = glGetUniformLocation(s->program, "tex");
@@ -762,6 +786,18 @@ bool CompilePipelineShader(PipelineShader* s)
 		s->fog_clamp_max = -1;
 	}
 	s->normal_matrix = glGetUniformLocation(s->program, "normal_matrix");
+
+	// Naomi2
+	s->mvMat = glGetUniformLocation(s->program, "mvMat");
+	s->projMat = glGetUniformLocation(s->program, "projMat");
+	s->glossCoef0 = glGetUniformLocation(s->program, "glossCoef0");
+	s->envMapping = glGetUniformLocation(s->program, "envMapping");
+	// Lights
+	s->lightCount = glGetUniformLocation(s->program, "lightCount");
+	s->ambientBase = glGetUniformLocation(s->program, "ambientBase");
+	s->ambientOffset = glGetUniformLocation(s->program, "ambientOffset");
+	s->ambientMaterial = glGetUniformLocation(s->program, "ambientMaterial");
+	s->useBaseOver = glGetUniformLocation(s->program, "useBaseOver");
 
 	ShaderUniforms.Set(s);
 
@@ -863,9 +899,18 @@ static void create_modvol_shader()
 			.addSource(ModifierVolumeShader);
 
 	gl.modvol_shader.program = gl_CompileAndLink(vertexShader.generate().c_str(), fragmentShader.generate().c_str());
-	gl.modvol_shader.normal_matrix  = glGetUniformLocation(gl.modvol_shader.program, "normal_matrix");
+	gl.modvol_shader.normal_matrix = glGetUniformLocation(gl.modvol_shader.program, "normal_matrix");
 	gl.modvol_shader.sp_ShaderColor = glGetUniformLocation(gl.modvol_shader.program, "sp_ShaderColor");
-	gl.modvol_shader.depth_scale    = glGetUniformLocation(gl.modvol_shader.program, "depth_scale");
+	gl.modvol_shader.depth_scale = glGetUniformLocation(gl.modvol_shader.program, "depth_scale");
+
+	N2VertexSource n2vertexShader(false, true);
+	N2GeometryShader geometryShader(false, true);
+	gl.n2ModVolShader.program = gl_CompileAndLink(n2vertexShader.generate().c_str(), fragmentShader.generate().c_str(), geometryShader.generate().c_str());
+	gl.n2ModVolShader.normal_matrix = glGetUniformLocation(gl.n2ModVolShader.program, "normal_matrix");
+	gl.n2ModVolShader.sp_ShaderColor = glGetUniformLocation(gl.n2ModVolShader.program, "sp_ShaderColor");
+	gl.n2ModVolShader.depth_scale = glGetUniformLocation(gl.n2ModVolShader.program, "depth_scale");
+	gl.n2ModVolShader.mvMat = glGetUniformLocation(gl.n2ModVolShader.program, "mvMat");
+	gl.n2ModVolShader.projMat = glGetUniformLocation(gl.n2ModVolShader.program, "projMat");
 }
 
 bool gl_create_resources()
@@ -1123,7 +1168,12 @@ bool OpenGLRenderer::Process(TA_context* ctx)
 			palette_updated = false;
 		}
 
-		if (!ta_parse_vdrc(ctx))
+		bool success;
+		if (settings.platform.system == DC_PLATFORM_NAOMI2)
+			success = ta_parse_naomi2(ctx);
+		else
+			success = ta_parse_vdrc(ctx);
+		if (!success)
 			return false;
 	}
 
@@ -1190,10 +1240,16 @@ bool RenderFrame(int width, int height)
 	pvrrc.fog_clamp_max.getRGBAColor(ShaderUniforms.fog_clamp_max);
 	
 	glcache.UseProgram(gl.modvol_shader.program);
-
 	if (gl.modvol_shader.depth_scale != -1)
 		glUniform4fv(gl.modvol_shader.depth_scale, 1, ShaderUniforms.depth_coefs);
 	glUniformMatrix4fv(gl.modvol_shader.normal_matrix, 1, GL_FALSE, &ShaderUniforms.normal_mat[0][0]);
+	glUniform1f(gl.modvol_shader.sp_ShaderColor, 1 - FPU_SHAD_SCALE.scale_factor / 256.f);
+
+	glcache.UseProgram(gl.n2ModVolShader.program);
+	if (gl.n2ModVolShader.depth_scale != -1)
+		glUniform4fv(gl.n2ModVolShader.depth_scale, 1, ShaderUniforms.depth_coefs);
+	glUniformMatrix4fv(gl.n2ModVolShader.normal_matrix, 1, GL_FALSE, &ShaderUniforms.normal_mat[0][0]);
+	glUniform1f(gl.n2ModVolShader.sp_ShaderColor, 1 - FPU_SHAD_SCALE.scale_factor / 256.f);
 
 	ShaderUniforms.PT_ALPHA=(PT_ALPHA_REF&0xFF)/255.0f;
 

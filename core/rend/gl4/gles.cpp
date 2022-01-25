@@ -21,6 +21,7 @@
 #include "rend/transform_matrix.h"
 #include "rend/osd.h"
 #include "glsl.h"
+#include "naomi2.h"
 
 //Fragment and vertex shaders code
 
@@ -461,13 +462,23 @@ struct gl4ShaderUniforms_t gl4ShaderUniforms;
 int max_image_width;
 int max_image_height;
 
-bool gl4CompilePipelineShader(gl4PipelineShader* s, const char *fragment_source /* = nullptr */, const char *vertex_source /* = nullptr */)
+bool gl4CompilePipelineShader(gl4PipelineShader* s, const char *fragment_source /* = nullptr */,
+		const char *vertex_source /* = nullptr */, const char *geom_source /* = nullptr */)
 {
-	Vertex4Source vertexSource(s->pp_Gouraud);
+	std::string vertexSource;
+	std::string geometrySource;
+	if (s->naomi2)
+	{
+		vertexSource = N2Vertex4Source(s->pp_Gouraud).generate();
+		geometrySource = N2Geometry4Shader(s->pp_Gouraud).generate();
+	}
+	else
+		vertexSource = Vertex4Source(s->pp_Gouraud).generate();
 	Fragment4ShaderSource fragmentSource(s);
 
-	s->program = gl_CompileAndLink(vertex_source != nullptr ? vertex_source : vertexSource.generate().c_str(),
-			fragment_source != nullptr ? fragment_source : fragmentSource.generate().c_str());
+	s->program = gl_CompileAndLink(vertex_source != nullptr ? vertex_source : vertexSource.c_str(),
+			fragment_source != nullptr ? fragment_source : fragmentSource.generate().c_str(),
+			geometrySource.empty() ? nullptr : geometrySource.c_str());
 
 	//setup texture 0 as the input for the shader
 	GLint gu = glGetUniformLocation(s->program, "tex0");
@@ -537,6 +548,18 @@ bool gl4CompilePipelineShader(gl4PipelineShader* s, const char *fragment_source 
 		glUniform1i(gu, 6);		// GL_TEXTURE6
 	s->palette_index = glGetUniformLocation(s->program, "palette_index");
 
+	// Naomi2
+	s->mvMat = glGetUniformLocation(s->program, "mvMat");
+	s->projMat = glGetUniformLocation(s->program, "projMat");
+	s->glossCoef0 = glGetUniformLocation(s->program, "glossCoef0");
+	s->envMapping = glGetUniformLocation(s->program, "envMapping");
+	// Lights
+	s->lightCount = glGetUniformLocation(s->program, "lightCount");
+	s->ambientBase = glGetUniformLocation(s->program, "ambientBase");
+	s->ambientOffset = glGetUniformLocation(s->program, "ambientOffset");
+	s->ambientMaterial = glGetUniformLocation(s->program, "ambientMaterial");
+	s->useBaseOver = glGetUniformLocation(s->program, "useBaseOver");
+
 	return glIsProgram(s->program)==GL_TRUE;
 }
 
@@ -550,6 +573,8 @@ static void gl4_delete_shaders()
 	gl4.shaders.clear();
 	glcache.DeleteProgram(gl4.modvol_shader.program);
 	gl4.modvol_shader.program = 0;
+	glcache.DeleteProgram(gl4.n2ModVolShader.program);
+	gl4.n2ModVolShader.program = 0;
 }
 
 static void gl4_term()
@@ -576,6 +601,14 @@ static void create_modvol_shader()
 
 	gl4.modvol_shader.program = gl_CompileAndLink(vertexShader.generate().c_str(), fragmentShader.generate().c_str());
 	gl4.modvol_shader.normal_matrix = glGetUniformLocation(gl4.modvol_shader.program, "normal_matrix");
+
+	N2Vertex4Source n2VertexShader(false, true);
+	N2Geometry4Shader geometryShader(false, true);
+	gl4.n2ModVolShader.program = gl_CompileAndLink(n2VertexShader.generate().c_str(), fragmentShader.generate().c_str(),
+			geometryShader.generate().c_str());
+	gl4.n2ModVolShader.normal_matrix = glGetUniformLocation(gl4.n2ModVolShader.program, "normal_matrix");
+	gl4.n2ModVolShader.mvMat = glGetUniformLocation(gl4.n2ModVolShader.program, "mvMat");
+	gl4.n2ModVolShader.projMat = glGetUniformLocation(gl4.n2ModVolShader.program, "projMat");
 }
 
 static bool gl_create_resources()
@@ -734,9 +767,14 @@ static bool RenderFrame(int width, int height)
 	pvrrc.fog_clamp_min.getRGBAColor(gl4ShaderUniforms.fog_clamp_min);
 	pvrrc.fog_clamp_max.getRGBAColor(gl4ShaderUniforms.fog_clamp_max);
 	
-	glcache.UseProgram(gl4.modvol_shader.program);
+	if (config::Fog)
+	{
+		glcache.UseProgram(gl4.modvol_shader.program);
+		glUniformMatrix4fv(gl4.modvol_shader.normal_matrix, 1, GL_FALSE, &gl4ShaderUniforms.normal_mat[0][0]);
 
-	glUniformMatrix4fv(gl4.modvol_shader.normal_matrix, 1, GL_FALSE, &gl4ShaderUniforms.normal_mat[0][0]);
+		glcache.UseProgram(gl4.n2ModVolShader.program);
+		glUniformMatrix4fv(gl4.n2ModVolShader.normal_matrix, 1, GL_FALSE, &gl4ShaderUniforms.normal_mat[0][0]);
+	}
 
 	gl4ShaderUniforms.PT_ALPHA=(PT_ALPHA_REF&0xFF)/255.0f;
 

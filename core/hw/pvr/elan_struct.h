@@ -25,11 +25,11 @@ namespace elan
 union PCW
 {
 	enum Command {
-		null       = 0,
-		unk_1,		// instance matrix continuation?
-		matrix       = 2,
+		null         = 0,
+		_matrix2     = 1,
+		_matrix1     = 2,
 		projMatrix   = 3,
-		instance     = 4,
+		matrixOrLight = 4,
 		gmp          = 5,
 		ich          = 7,
 		model        = 8,
@@ -86,27 +86,15 @@ struct Model : public ElanBase
 };
 static_assert(sizeof(Model) % 32 == 0, "Invalid size for Model");
 
-struct Instance : public ElanBase
+struct InstanceMatrix : public ElanBase
 {
 	// 08000400
 	u32 id1; // f
 	u32 id2; // 7f
-	u32 _res;
-	u32 offset;
-	u32 one; // 1
-	u32 size;
-	u32 _res0;
+	u32 _res[5];
 
-	bool isModelInstance() const {
-		return id1 == 0xf && id2 == 0x7f && one == 1;
-	}
-};
-static_assert(sizeof(Instance) % 32 == 0, "Invalid size for Instance");
-
-struct Matrix : public ElanBase
-{
-	// 08000200
-	float proj7; // env map U offset
+	u32 _res1; // 08000200
+	float envMapU; // env map U offset
 	float lm00;
 	float lm01;
 	float lm02;
@@ -116,10 +104,11 @@ struct Matrix : public ElanBase
 	float tm20;
 	float tm21;
 	float tm22;
-	float proj8; // env map V offset
-	float _res[4];
-	u32 contCmd;
-	float proj4; // near?
+	float envMapV; // env map V offset
+	float _res2[4];
+
+	u32 _res3; // 08000100
+	float _near;
 	float tm00;
 	float tm10;
 	float mfr2;
@@ -132,10 +121,14 @@ struct Matrix : public ElanBase
 	float mat03;
 	float mat13;
 	float mat23;
-	float proj5; // far?
+	float _far;
 	float mproj6;
+
+	bool isInstanceMatrix() const {
+		return id1 == 0xf && id2 == 0x7f;
+	}
 };
-static_assert(sizeof(Matrix) % 32 == 0, "Invalid size for Matrix");
+static_assert(sizeof(InstanceMatrix) % 32 == 0, "Invalid size for InstanceMatrix");
 
 struct ProjMatrix : public ElanBase
 {
@@ -192,11 +185,12 @@ struct GMP : public ElanBase
 	// ee110 1111 1111 constant
 	// 00000 1111 1111 bump shading?
 
-	// seen: 00110 1111 1111 (b0 and b1 set)
-	// seen: 11000 1111 1111 (e0 and e1 set, followed by vtx type2 (vtx only))
-	// seen: 11110 1111 1111 (everything! except v1uv0, rt66, vtx type2 (vtx only))
-	// seen: 00110 0000 0000 (b0 and b1, vf4)
-	// seen: 00000 1010 1010 specular and fog? soul surfer
+	// seen:
+	// 00110 1111 1111 (b0 and b1 set)
+	// 11000 1111 1111 (e0 and e1 set, followed by vtx type2 (vtx only))
+	// 11110 1111 1111 (everything! except v1uv0, rt66, vtx type2 (vtx only))
+	// 00110 0000 0000 (b0 and b1, vf4)
+	// 00000 1010 1010 specular and fog? soul surfer
 
 	u32 diffuse0;
 	u32 specular0;
@@ -234,7 +228,7 @@ union HeaderAndNormal
 	bool isStrip() const { return strip == 1 && fan == 0; }
 };
 
-struct Vertex
+struct N2_VERTEX
 {
 	HeaderAndNormal header;
 	float x;
@@ -294,7 +288,7 @@ struct BumpMap
 //
 // textured, 1 or 2 para
 //
-struct N2_VERTEX_VU : public Vertex
+struct N2_VERTEX_VU : public N2_VERTEX
 {
 	UnpackedUV uv;
 };
@@ -302,7 +296,7 @@ struct N2_VERTEX_VU : public Vertex
 //
 // textured, 1 or 2 para with unpacked normal
 //
-struct N2_VERTEX_VNU : public Vertex
+struct N2_VERTEX_VNU : public N2_VERTEX
 {
 	Normal normal;
 	UnpackedUV uv;
@@ -311,7 +305,7 @@ struct N2_VERTEX_VNU : public Vertex
 //
 // for colored vertex, 1 para
 //
-struct N2_VERTEX_VUR : public Vertex
+struct N2_VERTEX_VUR : public N2_VERTEX
 {
 	UnpackedUV uv;
 	PackedRGB rgb;
@@ -320,13 +314,13 @@ struct N2_VERTEX_VUR : public Vertex
 //
 // for bumpmapped, 1 para
 //
-struct N2_VERTEX_VUB : public Vertex
+struct N2_VERTEX_VUB : public N2_VERTEX
 {
 	UnpackedUV uv;
 	BumpMap bump;
 };
 
-struct N2_VERTEX_VR : public Vertex
+struct N2_VERTEX_VR : public N2_VERTEX
 {
 	PackedRGB rgb;
 };
@@ -358,7 +352,7 @@ struct ICHList : public ElanBase
 	{
 		switch (flags)
 		{
-			case VTX_TYPE_V: return sizeof(Vertex);
+			case VTX_TYPE_V: return sizeof(N2_VERTEX);
 			case VTX_TYPE_VU: return sizeof(N2_VERTEX_VU);
 			case VTX_TYPE_VNU: return sizeof(N2_VERTEX_VNU);
 			case VTX_TYPE_VR: return sizeof(N2_VERTEX_VR);
@@ -505,70 +499,57 @@ struct PointLight : public ElanBase
 	float posX;
 	float posY;
 	float posZ;
-	u16 distA;
-	u16 distB;
-	u16 angleA;
-	u16 angleB;
+	u16 _distA;
+	u16 _distB;
+	u16 _angleA;
+	u16 _angleB;
+
+	static float f16tof32(u16 v)
+	{
+		u32 z = v << 16;
+		return (float&)z;
+	}
+
+	float distA() const { return f16tof32(_distA); }
+	float distB() const { return f16tof32(_distB); }
+	float angleA() const { return f16tof32(_angleA); }
+	float angleB() const { return f16tof32(_angleB); }
 
 	float attnMinDistance() const {
-		float a = 0;
-		*((u16 *)&a + 1) = distA;
-		float b = 0;
-		*((u16 *)&b + 1) = distB;
-		return -b / (a - 1);
+		return -distB() / (distA() - 1);
 	}
 
 	float attnMaxDistance() const {
-		float a = 0;
-		*((u16 *)&a + 1) = distA;
-		float b = 0;
-		*((u16 *)&b + 1) = distB;
-		return -b / a;
+		return -distB() / distA();
 	}
 
 	float attnDist(float dist) const {
-		float a = 0;
-		*((u16 *)&a + 1) = distA;
-		float b = 0;
-		*((u16 *)&b + 1) = distB;
 		float rv;
 		if (dattenmode)
-			rv = b * dist + a;
+			rv = distB() * dist + distA();
 		else
-			rv = b / dist + a;
+			rv = distB() / dist + distA();
 		return std::max(0.f, std::min(1.f, rv));
 	}
 
 	bool isAttnDist() const {
-		return distA != 1 && distB != 0;
+		return distA() != 1 && distB() != 0;
 	}
 
 	float attnMinAngle() const {
-		float a = 0;
-		*((u16 *)&a + 1) = angleA;
-		float b = 0;
-		*((u16 *)&b + 1) = angleB;
-		return acosf((1 - a) / b);
+		return acosf((1 - angleA()) / angleB());
 	}
 
 	float attnMaxAngle() const {
-		float a = 0;
-		*((u16 *)&a + 1) = angleA;
-		float b = 0;
-		*((u16 *)&b + 1) = angleB;
-		return acosf(-a / b);
+		return acosf(-angleA() / angleB());
 	}
 
 	float attnAngle(float angleCos) const {
-		float a = 0;
-		*((u16 *)&a + 1) = angleA;
-		float b = 0;
-		*((u16 *)&b + 1) = angleB;
-		return std::max(0.f, std::min(1.f, angleCos * b + a));
+		return std::max(0.f, std::min(1.f, angleCos * angleB() + angleA()));
 	}
 
 	bool isAttnAngle() const {
-		return angleA != 1 && angleB != 0;
+		return angleA() != 1 && angleB() != 0;
 	}
 };
 

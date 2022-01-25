@@ -27,6 +27,8 @@
 #define VERTEX_COL_BASE1_ARRAY 4
 #define VERTEX_COL_OFFS1_ARRAY 5
 #define VERTEX_UV1_ARRAY 6
+// Naomi2
+#define VERTEX_NORM_ARRAY 7
 
 //vertex types
 extern u32 gcflip;
@@ -49,6 +51,16 @@ struct PipelineShader
 	GLint fog_clamp_min, fog_clamp_max;
 	GLint normal_matrix;
 	GLint palette_index;
+	// Naomi2
+	GLint mvMat;
+	GLint projMat;
+	GLint glossCoef0;
+	GLint lightCount;
+	GLint ambientBase;
+	GLint ambientOffset;
+	GLint ambientMaterial;
+	GLint useBaseOver;
+	GLint envMapping;
 
 	//
 	bool cp_AlphaTest;
@@ -64,6 +76,7 @@ struct PipelineShader
 	bool fog_clamping;
 	bool trilinear;
 	bool palette;
+	bool naomi2;
 };
 
 
@@ -76,8 +89,19 @@ struct gl_ctx
 		GLint depth_scale;
 		GLint sp_ShaderColor;
 		GLint normal_matrix;
-
 	} modvol_shader;
+
+	struct
+	{
+		GLuint program;
+
+		GLint depth_scale;
+		GLint sp_ShaderColor;
+		GLint normal_matrix;
+
+		GLint mvMat;
+		GLint projMat;
+	} n2ModVolShader;
 
 	std::unordered_map<u32, PipelineShader> shaders;
 
@@ -175,11 +199,12 @@ void OSD_DRAW(bool clear_screen);
 PipelineShader *GetProgram(bool cp_AlphaTest, bool pp_InsideClipping,
 		bool pp_Texture, bool pp_UseAlpha, bool pp_IgnoreTexA, u32 pp_ShadInstr, bool pp_Offset,
 		u32 pp_FogCtrl, bool pp_Gouraud, bool pp_BumpMap, bool fog_clamping, bool trilinear,
-		bool palette);
+		bool palette, bool naomi2);
 
 GLuint gl_CompileShader(const char* shader, GLuint type);
-GLuint gl_CompileAndLink(const char* VertexShader, const char* FragmentShader);
+GLuint gl_CompileAndLink(const char *vertexShader, const char *fragmentShader, const char *geometryShader = nullptr);
 bool CompilePipelineShader(PipelineShader* s);
+extern const char* GouraudSource;
 
 extern struct ShaderUniforms_t
 {

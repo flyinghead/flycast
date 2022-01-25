@@ -17,6 +17,8 @@
 #include "sorter.h"
 #include "hw/pvr/Renderer_if.h"
 #include <algorithm>
+#include <glm/glm.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 struct IndexTrig
 {
@@ -24,18 +26,6 @@ struct IndexTrig
 	u16 pid;
 	f32 z;
 };
-
-#if 0
-static float min3(float v0, float v1, float v2)
-{
-	return std::min(std::min(v0, v1), v2);
-}
-
-static float max3(float v0, float v1, float v2)
-{
-	return std::max(std::max(v0, v1), v2);
-}
-#endif
 
 static float minZ(const Vertex *v, const u32 *mod)
 {
@@ -52,6 +42,12 @@ static bool operator<(const PolyParam& left, const PolyParam& right)
 /* put any condition you want to sort on here */
 	return left.zvZ<right.zvZ;
 	//return left.zMin<right.zMax;
+}
+
+static float getProjectedZ(const Vertex *v, const glm::mat4& mat)
+{
+	// 1 / w
+	return 1 / mat[0][3] * v->x + mat[1][3] * v->y + mat[2][3] * v->z + mat[3][3];
 }
 
 void SortPParams(int first, int count)
@@ -78,14 +74,58 @@ void SortPParams(int first, int count)
 			Vertex* vtx=vtx_base+idx[0];
 			Vertex* vtx_end=vtx_base + idx[pp->count-1]+1;
 
-			u32 zv=0xFFFFFFFF;
-			while(vtx!=vtx_end)
+			if (pp->projMatrix != nullptr)
 			{
-				zv = std::min(zv, (u32&)vtx->z);
-				vtx++;
-			}
+				glm::mat4 mvMat = glm::make_mat4(pp->mvMatrix);
+				glm::mat4 projMat = glm::make_mat4(pp->projMatrix);
+				glm::vec4 min{ 1e38f, 1e38f, 1e38f, 0.f };
+				glm::vec4 max{ -1e38f, -1e38f, -1e38f, 0.f };
+				while (vtx != vtx_end)
+				{
+					glm::vec4 pos{ vtx->x, vtx->y, vtx->z, 0.f };
+					min = glm::min(min, pos);
+					max = glm::max(max, pos);
+					vtx++;
+				}
+				glm::vec4 center = (min + max) / 2.f;
+				center.w = 1;
+				glm::vec4 extents = max - center;
+				// transform
+				center = mvMat * center;
+				glm::vec3 extentX = mvMat * glm::vec4(extents.x, 0, 0, 0);
+				glm::vec3 extentY = mvMat * glm::vec4(0, extents.y, 0, 0);
+				glm::vec3 extentZ = mvMat * glm::vec4(0, 0, extents.z, 0);
+				// new AA extents
+				const float newX = std::abs(glm::dot(glm::vec3{ 1.f, 0.f, 0.f }, extentX)) +
+						std::abs(glm::dot(glm::vec3{ 1.f, 0.f, 0.f }, extentY)) +
+						std::abs(glm::dot(glm::vec3{ 1.f, 0.f, 0.f }, extentZ));
 
-			pp->zvZ=(f32&)zv;
+				const float newY = std::abs(glm::dot(glm::vec3{ 0.f, 1.f, 0.f }, extentX)) +
+						std::abs(glm::dot(glm::vec3{ 0.f, 1.f, 0.f }, extentY)) +
+						std::abs(glm::dot(glm::vec3{ 0.f, 1.f, 0.f }, extentZ));
+
+				const float newZ = std::abs(glm::dot(glm::vec3{ 0.f, 0.f, 1.f }, extentX)) +
+						std::abs(glm::dot(glm::vec3{ 0.f, 0.f, 1.f }, extentY)) +
+						std::abs(glm::dot(glm::vec3{ 0.f, 0.f, 1.f }, extentZ));
+				min = center - glm::vec4(newX, newY, newZ, 0);
+				max = center + glm::vec4(newX, newY, newZ, 0);
+				// project
+				glm::vec4 a = projMat * min;
+				glm::vec4 b = projMat * max;
+
+				pp->zvZ = 1 / std::max(a.w, b.w);
+			}
+			else
+			{
+				u32 zv=0xFFFFFFFF;
+				while(vtx!=vtx_end)
+				{
+					zv = std::min(zv, (u32&)vtx->z);
+					vtx++;
+				}
+
+				pp->zvZ=(f32&)zv;
+			}
 		}
 		pp++;
 	}
@@ -193,7 +233,9 @@ bool Intersect(const IndexTrig &left, const IndexTrig &right)
 static bool PP_EQ(const PolyParam *pp0, const PolyParam *pp1)
 {
 	return (pp0->pcw.full & PCW_DRAW_MASK) == (pp1->pcw.full & PCW_DRAW_MASK) && pp0->isp.full == pp1->isp.full
-			&& pp0->tcw.full == pp1->tcw.full && pp0->tsp.full == pp1->tsp.full && pp0->tileclip == pp1->tileclip;
+			&& pp0->tcw.full == pp1->tcw.full && pp0->tsp.full == pp1->tsp.full && pp0->tileclip == pp1->tileclip
+			&& pp0->mvMatrix == pp1->mvMatrix && pp0->projMatrix == pp1->projMatrix
+			&& pp0->lightModel == pp1->lightModel && pp0->envMapping == pp1->envMapping;
 }
 
 static void fill_id(u32 *d, const Vertex *v0, const Vertex *v1, const Vertex *v2,  const Vertex *vb)
@@ -246,15 +288,23 @@ void GenSorted(int first, int count, std::vector<SortTrigDrawParam>& pidx_sort, 
 
 	int pfsti=0;
 
-	while(pp!=pp_end)
+	while (pp != pp_end)
 	{
 		u32 ppid = (u32)(pp - pp_base);
 
-		if (pp->count>2)
+		if (pp->count > 2)
 		{
 			const u32 *idx = idx_base + pp->first;
 			u32 flip = 0;
+			glm::mat4 mat;
+			float z0, z1;
 
+			if (pp->projMatrix != nullptr)
+			{
+				mat = glm::make_mat4(pp->projMatrix) * glm::make_mat4(pp->mvMatrix);
+				z0 = getProjectedZ(vtx_base + idx[0], mat);
+				z1 = getProjectedZ(vtx_base + idx[1], mat);
+			}
 			for (u32 i = 0; i < pp->count - 2; i++)
 			{
 				const Vertex *v0, *v1;
@@ -269,88 +319,20 @@ void GenSorted(int first, int count, std::vector<SortTrigDrawParam>& pidx_sort, 
 					v1 = vtx_base + idx[i + 1];
 				}
 				const Vertex *v2 = vtx_base + idx[i + 2];
-#if 0
-				const Vertex *v3, *v4, *v5;
-				if (settings.pvr.subdivide_transp)
+				fill_id(lst[pfsti].id, v0, v1, v2, vtx_base);
+				lst[pfsti].pid = ppid;
+				if (pp->projMatrix != nullptr)
 				{
-					u32 tess_x=(max3(v0->x,v1->x,v2->x)-min3(v0->x,v1->x,v2->x))/32;
-					u32 tess_y=(max3(v0->y,v1->y,v2->y)-min3(v0->y,v1->y,v2->y))/32;
-
-					if (tess_x==1) tess_x=0;
-					if (tess_y==1) tess_y=0;
-
-					//bool tess=(maxZ(v0,v1,v2)/minZ(v0,v1,v2))>=1.2;
-
-					if (tess_x + tess_y)
-					{
-						v3=pvrrc.verts.Append(3);
-						v4=v3+1;
-						v5=v4+1;
-
-						//xyz
-						for (int i=0;i<3;i++)
-						{
-							((float*)&v3->x)[i]=((float*)&v0->x)[i]*0.5f+((float*)&v2->x)[i]*0.5f;
-							((float*)&v4->x)[i]=((float*)&v0->x)[i]*0.5f+((float*)&v1->x)[i]*0.5f;
-							((float*)&v5->x)[i]=((float*)&v1->x)[i]*0.5f+((float*)&v2->x)[i]*0.5f;
-						}
-
-						//*TODO* Make it perspective correct
-
-						//uv
-						for (int i=0;i<2;i++)
-						{
-							((float*)&v3->u)[i]=((float*)&v0->u)[i]*0.5f+((float*)&v2->u)[i]*0.5f;
-							((float*)&v4->u)[i]=((float*)&v0->u)[i]*0.5f+((float*)&v1->u)[i]*0.5f;
-							((float*)&v5->u)[i]=((float*)&v1->u)[i]*0.5f+((float*)&v2->u)[i]*0.5f;
-						}
-
-						//color
-						for (int i=0;i<4;i++)
-						{
-							v3->col[i]=v0->col[i]/2+v2->col[i]/2;
-							v4->col[i]=v0->col[i]/2+v1->col[i]/2;
-							v5->col[i]=v1->col[i]/2+v2->col[i]/2;
-						}
-
-						fill_id(lst[pfsti].id,v0,v3,v4,vtx_base);
-						lst[pfsti].pid= ppid ;
-						lst[pfsti].z = minZ(vtx_base,lst[pfsti].id);
-						pfsti++;
-
-						fill_id(lst[pfsti].id,v2,v3,v5,vtx_base);
-						lst[pfsti].pid= ppid ;
-						lst[pfsti].z = minZ(vtx_base,lst[pfsti].id);
-						pfsti++;
-
-						fill_id(lst[pfsti].id,v3,v4,v5,vtx_base);
-						lst[pfsti].pid= ppid ;
-						lst[pfsti].z = minZ(vtx_base,lst[pfsti].id);
-						pfsti++;
-
-						fill_id(lst[pfsti].id,v5,v4,v1,vtx_base);
-						lst[pfsti].pid= ppid ;
-						lst[pfsti].z = minZ(vtx_base,lst[pfsti].id);
-						pfsti++;
-
-						tess_gen+=3;
-					}
-					else
-					{
-						fill_id(lst[pfsti].id,v0,v1,v2,vtx_base);
-						lst[pfsti].pid= ppid ;
-						lst[pfsti].z = minZ(vtx_base,lst[pfsti].id);
-						pfsti++;
-					}
+					float z2 = getProjectedZ(v2, mat);
+					lst[pfsti].z = std::min(z0, std::min(z1, z2));
+					z0 = z1;
+					z1 = z2;
 				}
 				else
-#endif
 				{
-					fill_id(lst[pfsti].id,v0,v1,v2,vtx_base);
-					lst[pfsti].pid= ppid ;
-					lst[pfsti].z = minZ(vtx_base,lst[pfsti].id);
-					pfsti++;
+					lst[pfsti].z = minZ(vtx_base, lst[pfsti].id);
 				}
+				pfsti++;
 
 				flip ^= 1;
 			}

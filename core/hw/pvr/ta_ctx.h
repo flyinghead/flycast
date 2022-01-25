@@ -9,6 +9,7 @@
 #include <mutex>
 
 class BaseTextureCacheData;
+struct N2LightModel;
 
 //Vertex storage types
 struct Vertex
@@ -25,6 +26,9 @@ struct Vertex
 	u8 spc1[4];
 
 	float u1,v1;
+
+	// Naomi2 normal
+	float nx,ny,nz;
 };
 
 struct PolyParam
@@ -33,9 +37,6 @@ struct PolyParam
 	u32 count;
 
 	BaseTextureCacheData *texture;
-#if !defined(HOST_64BIT_CPU)
-	u32 _pad0;
-#endif
 
 	TSP tsp;
 	TCW tcw;
@@ -47,9 +48,13 @@ struct PolyParam
 	TSP tsp1;
 	TCW tcw1;
 	BaseTextureCacheData *texture1;
-#if !defined(HOST_64BIT_CPU)
-	u32 _pad1;
-#endif
+
+	float *mvMatrix;
+	float *projMatrix;
+	float glossCoef0;
+	float glossCoef1;
+	N2LightModel *lightModel;
+	bool envMapping;
 };
 
 struct ModifierVolumeParam
@@ -57,6 +62,9 @@ struct ModifierVolumeParam
 	u32 first;
 	u32 count;
 	ISP_Modvol isp;
+
+	float *mvMatrix;
+	float *projMatrix;
 };
 
 struct ModTriangle
@@ -98,10 +106,9 @@ struct  tad_context
 
 	void Reset(u8* ptr)
 	{
-		thd_data = thd_root = thd_old_data = ptr;
-		render_pass_count = 0;
+		thd_root = ptr;
+		Clear();
 	}
-
 };
 
 struct RenderPass {
@@ -112,6 +119,41 @@ struct RenderPass {
 	u32 pt_count;
 	u32 tr_count;
 	u32 mvo_tr_count;
+};
+
+struct N2Matrix
+{
+	float mat[16];
+};
+
+struct N2Light
+{
+	float color[4];
+	float direction[4];	// For parallel/spot
+	float position[4];		// For spot/point
+	int parallel;
+	int diffuse;
+	int specular;
+	int routing;
+	int dmode;
+	int smode;
+
+	int distAttnMode;	// For spot/point
+	float attnDistA;
+	float attnDistB;
+	float attnAngleA;	// For spot
+	float attnAngleB;
+};
+
+struct N2LightModel
+{
+	N2Light lights[16];
+	int lightCount;
+
+	float ambientBase[4];	// base ambient color
+	float ambientOffset[4];	// offset ambient color
+	bool ambientMaterial;	// ambient light is multiplied by model material/color
+	bool useBaseOver;		// base color overflows into offset color
 };
 
 struct rend_context
@@ -143,6 +185,10 @@ struct rend_context
 	List<PolyParam>   global_param_tr;
 	List<RenderPass>  render_passes;
 
+	List<N2Matrix> matrices;
+	List<N2LightModel> lightModels;
+	bool init = false;
+
 	void Clear()
 	{
 		verts.Clear();
@@ -155,11 +201,19 @@ struct rend_context
 		global_param_mvo_tr.Clear();
 		render_passes.Clear();
 
-		Overrun=false;
-		fZ_min= 1000000.0f;
-		fZ_max= 1.0f;
+		// Reserve space for background poly
+		global_param_op.Append();
+		verts.Append(4);
+
+		Overrun = false;
+		fZ_min = 1000000.0f;
+		fZ_max = 1.0f;
 		isRenderFramebuffer = false;
+		matrices.Clear();
+		lightModels.Clear();
 	}
+
+	void newRenderPass();
 };
 
 #define TA_DATA_SIZE (8 * 1024 * 1024)
@@ -205,17 +259,20 @@ struct TA_context
 	{
 		tad.Reset((u8*)allocAligned(32, TA_DATA_SIZE));
 
-		rend.verts.InitBytes(4 * 1024 * 1024, &rend.Overrun, "verts");	//up to 4 mb of vtx data/frame = ~ 96k vtx/frame
-		rend.idx.Init(120 * 1024, &rend.Overrun, "idx");				//up to 120K indexes ( idx have stripification overhead )
-		rend.global_param_op.Init(16384, &rend.Overrun, "global_param_op");
+		rend.verts.InitBytes(16 * 1024 * 1024, &rend.Overrun, "verts");	//up to 4 mb of vtx data/frame = ~ 96k vtx/frame
+		rend.idx.Init(512 * 1024, &rend.Overrun, "idx");				//up to 120K indexes ( idx have stripification overhead )
+		rend.global_param_op.Init(32768, &rend.Overrun, "global_param_op");
 		rend.global_param_pt.Init(5120, &rend.Overrun, "global_param_pt");
 		rend.global_param_mvo.Init(4096, &rend.Overrun, "global_param_mvo");
-		rend.global_param_tr.Init(10240, &rend.Overrun, "global_param_tr");
+		rend.global_param_tr.Init(32768, &rend.Overrun, "global_param_tr");
 		rend.global_param_mvo_tr.Init(4096, &rend.Overrun, "global_param_mvo_tr");
 
 		rend.modtrig.Init(16384, &rend.Overrun, "modtrig");
 		
 		rend.render_passes.Init(sizeof(RenderPass) * 10, &rend.Overrun, "render_passes");	// 10 render passes
+		rend.matrices.Init(1000, &rend.Overrun, "matrices");
+		rend.lightModels.Init(100, &rend.Overrun, "lightModels");
+		rend.init = true;
 
 		Reset();
 	}
@@ -243,15 +300,14 @@ struct TA_context
 		rend.global_param_mvo.Free();
 		rend.global_param_mvo_tr.Free();
 		rend.render_passes.Free();
+		rend.matrices.Free();
+		rend.lightModels.Free();
 	}
 };
 
 
 extern TA_context* ta_ctx;
 extern tad_context ta_tad;
-
-extern TA_context*  vd_ctx;
-extern rend_context vd_rc;
 
 TA_context* tactx_Find(u32 addr, bool allocnew=false);
 TA_context* tactx_Pop(u32 addr);
@@ -274,7 +330,14 @@ void FinishRender(TA_context* ctx);
 
 //must be moved to proper header
 void FillBGP(TA_context* ctx);
-bool UsingAutoSort(int pass_number);
 bool rend_framePending();
 void SerializeTAContext(Serializer& ser);
 void DeserializeTAContext(Deserializer& deser);
+
+void ta_add_poly(int type, const PolyParam& pp);
+void ta_add_poly(int type, const ModifierVolumeParam& mvp);
+void ta_add_vertex(const Vertex& vtx);
+void ta_add_triangle(const ModTriangle& tri);
+float* ta_add_matrix(const float *matrix);
+N2LightModel *ta_add_light(const N2LightModel& light);
+void ta_add_ta_data(u32 *data, u32 size);

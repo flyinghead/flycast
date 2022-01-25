@@ -63,6 +63,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 namespace elan {
 
@@ -242,12 +243,16 @@ T DYNACALL read_elancmd(u32 addr)
 
 static GMP *curGmp;
 static glm::mat4x4 curMatrix;
+static float *taMVMatrix;
 static glm::mat4x4 lightMatrix;
 static glm::mat4 projectionMatrix;
+static float *taProjMatrix;
 static LightModel *curLightModel;
 static ElanBase *curLights[MAX_LIGHTS];
-static float near = 0.001f;
-static float far = 100000.f;
+static float nearPlane = 0.001f;
+static float farPlane = 100000.f;
+static bool envMapping;
+static bool cullingReversed;
 
 struct State
 {
@@ -255,46 +260,53 @@ struct State
 
 	int listType = -1;
 	u32 gmp = Null;
-	u32 matrix = Null;
+	u32 instance = Null;
 	u32 projMatrix = Null;
-	int userClip = 0;
+	u32 tileclip = 0;
 	u32 lightModel = Null;
 	u32 lights[MAX_LIGHTS] = {
 			Null, Null, Null, Null, Null, Null, Null, Null,
 			Null, Null, Null, Null, Null, Null, Null, Null
 	};
+	bool lightModelUpdated = false;
+	float envMapUOffset = 0.f;
+	float envMapVOffset = 0.f;
 
 	void reset()
 	{
 		listType = -1;
 		gmp = Null;
-		matrix = Null;
+		instance = Null;
 		projMatrix = Null;
-		userClip = 0;
+		tileclip = 0;
 		lightModel = Null;
 		for (auto& light : lights)
 			light = Null;
 		update();
 	}
-	void setMatrix(void *p)
+	void setMatrix(InstanceMatrix *pinstance)
 	{
-		matrix = elanRamAddress(p);
+		instance = elanRamAddress(pinstance);
 		updateMatrix();
 	}
 
 	void updateMatrix()
 	{
-		if (matrix == Null)
+		if (instance == Null)
+		{
+			taMVMatrix = nullptr;
+			envMapUOffset = 0.f;
+			envMapVOffset = 0.f;
 			return;
-		Matrix *mat = (Matrix *)&elanRAM[matrix];
+		}
+		InstanceMatrix *mat = (InstanceMatrix *)&elanRAM[instance];
 		DEBUG_LOG(PVR, "Matrix %f %f %f %f\n       %f %f %f %f\n       %f %f %f %f\nLight: %f %f %f\n       %f %f %f",
 				-mat->tm00, -mat->tm01, -mat->tm02, -mat->mat03,
 				mat->tm10, mat->tm11, mat->tm12, mat->mat13,
 				mat->tm20, mat->tm21, mat->tm22, -mat->mat23,
 				mat->lm00, mat->lm01, mat->lm02,
 				mat->lm10, mat->lm11, mat->lm12);
-//					DEBUG_LOG(PVR, "Matrix proj4 %f %f %f %f %f",
-//							mat->proj4, mat->proj5, mat->mproj6, mat->proj7, mat->proj8);
+
 		curMatrix = glm::mat4x4{
 			-mat->tm00, mat->tm10, mat->tm20, 0,
 			-mat->tm01, mat->tm11, mat->tm21, 0,
@@ -307,8 +319,11 @@ struct State
 			-mat->lm02, mat->lm12, mat->tm22, 0,
 			-mat->mat03, mat->mat13, -mat->mat23, 1
 		};
-		near = mat->proj4;
-		far = mat->proj5;
+		nearPlane = mat->_near;
+		farPlane = mat->_far;
+		envMapUOffset = mat->envMapU;
+		envMapVOffset = mat->envMapV;
+		taMVMatrix = ta_add_matrix(glm::value_ptr(curMatrix));
 	}
 
 	void setProjectionMatrix(void *p)
@@ -320,15 +335,20 @@ struct State
 	void updateProjectionMatrix()
 	{
 		if (projMatrix == Null)
+		{
+			taProjMatrix = nullptr;
 			return;
+		}
 		ProjMatrix *pm = (ProjMatrix *)&elanRAM[projMatrix];
-		DEBUG_LOG(PVR, "Proj matrix x: %f %f y: %f %f", pm->fx, pm->tx, pm->fy, pm->ty);
+		DEBUG_LOG(PVR, "Proj matrix x: %f %f y: %f %f near %f far %f", pm->fx, pm->tx, pm->fy, pm->ty, nearPlane, farPlane);
+
 		projectionMatrix = glm::mat4(
 				-pm->fx,  0,       0,  0,
-				 0,       pm->fy,  0,  0,
+				0,        pm->fy,  0,  0,
 				-pm->tx, -pm->ty, -1, -1,
-				 0,       0,       0,  0
+				0,        0,       0,  0
 		);
+		taProjMatrix = ta_add_matrix(glm::value_ptr(projectionMatrix));
 	}
 
 	void setGMP(void *p)
@@ -353,7 +373,9 @@ struct State
 		updateLightModel();
 	}
 
-	void updateLightModel() {
+	void updateLightModel()
+	{
+		lightModelUpdated = true;
 		if (lightModel == Null)
 			curLightModel = nullptr;
 		else
@@ -372,30 +394,45 @@ struct State
 
 	void updateLight(int lightId)
 	{
+		lightModelUpdated = true;
 		if (lights[lightId] == Null)
 		{
 			elan::curLights[lightId] = nullptr;
 			return;
 		}
-		Instance *instance = (Instance *)&elanRAM[lights[lightId]];
-		if (instance->pcw.parallelLight)
+		PointLight *plight = (PointLight *)&elanRAM[lights[lightId]];
+		if (plight->pcw.parallelLight)
 		{
-			ParallelLight *light = (ParallelLight *)instance;
+			ParallelLight *light = (ParallelLight *)plight;
 			DEBUG_LOG(PVR, "  Parallel light %d: col %d %d %d dir %d %d %d", light->lightId, light->red, light->green, light->blue,
 					light->dirX, light->dirY, light->dirZ);
 		}
 		else
 		{
-			PointLight *light = (PointLight *)instance;
 			DEBUG_LOG(PVR, "  Point light %d: dattenmode %d col %d %d %d dir %d %d %d pos %f %f %f routing %d dist %f %f angle %f %f",
-					light->lightId, light->dattenmode,
-					light->red, light->green, light->blue,
-					light->dirX, light->dirY, light->dirZ,
-					light->posX, light->posY, light->posZ,
-					light->routing, light->attnMinDistance(), light->attnMaxDistance(),
-					light->attnMinAngle(), light->attnMaxAngle());
+					plight->lightId, plight->dattenmode,
+					plight->red, plight->green, plight->blue,
+					plight->dirX, plight->dirY, plight->dirZ,
+					plight->posX, plight->posY, plight->posZ,
+					plight->routing, plight->attnMinDistance(), plight->attnMaxDistance(),
+					plight->attnMinAngle(), plight->attnMaxAngle());
 		}
-		elan::curLights[lightId] = instance;
+		elan::curLights[lightId] = plight;
+	}
+
+	void setClipMode(PCW pcw)
+	{
+		tileclip = (tileclip & ~0xF0000000) | (pcw.userClip << 28);
+	}
+
+	void setClipTiles(u32 xmin, u32 ymin, u32 xmax, u32 ymax)
+	{
+		u32 t = tileclip & 0xF0000000;
+		t |= xmin & 0x3f;         // 6 bits
+		t |= (xmax & 0x3f) << 6;  // 6 bits
+		t |= (ymin & 0x1f) << 12; // 5 bits
+		t |= (ymax & 0x1f) << 17; // 5 bits
+		tileclip = t;
 	}
 
 	void update()
@@ -419,26 +456,38 @@ struct State
 
 static State state;
 
-template <typename T>
-static void setCoords(T& vtx, float x, float y, float z)
+static void setCoords(Vertex& vtx, float x, float y, float z)
 {
-	glm::vec4 v(x, y, z, 1);
-	v = projectionMatrix * curMatrix * v;
-	v.x /= v.w;
-	v.y /= v.w;
-	vtx.xyz[0] = v.x;
-	vtx.xyz[1] = v.y;
-	vtx.xyz[2] = 1 / v.w;
+	vtx.x = x;
+	vtx.y = y;
+	vtx.z = z;
 }
 
-template <typename Ts, typename Td>
-static void setUV(const Ts& vs, Td& vd)
+template <typename Ts>
+static void setUV(const Ts& vs, Vertex& vd)
 {
-	vd.u = vs.uv.u;
-	vd.v = vs.uv.v;
+	if (envMapping)
+	{
+		vd.u = state.envMapUOffset;
+		vd.v = state.envMapVOffset;
+	}
+	else
+	{
+		vd.u = vs.uv.u;
+		vd.v = vs.uv.v;
+	}
 }
 
-glm::vec4 unpackColor(u32 color)
+static void SetEnvMapUV(Vertex& vtx)
+{
+	if (envMapping)
+	{
+		vtx.u = state.envMapUOffset;
+		vtx.v = state.envMapVOffset;
+	}
+}
+
+static glm::vec4 unpackColor(u32 color)
 {
 	return glm::vec4((float)((color >> 16) & 0xff) / 255.f,
 			(float)((color >> 8) & 0xff) / 255.f,
@@ -446,12 +495,12 @@ glm::vec4 unpackColor(u32 color)
 			(float)(color >> 24) / 255.f);
 }
 
-glm::vec4 unpackColor(u8 red, u8 green, u8 blue, u8 alpha = 0)
+static glm::vec4 unpackColor(u8 red, u8 green, u8 blue, u8 alpha = 0)
 {
 	return glm::vec4((float)red / 255.f, (float)green / 255.f, (float)blue / 255.f, (float)alpha / 255.f);
 }
 
-u32 packColor(const glm::vec4& color)
+static u32 packColor(const glm::vec4& color)
 {
 	return (int)(std::max(0.f, std::min(1.f, color.a)) * 255.f) << 24
 			| (int)(std::max(0.f, std::min(1.f, color.r)) * 255.f) << 16
@@ -494,7 +543,8 @@ static void computeColors(glm::vec4& baseCol, glm::vec4& offsetCol, const glm::v
 		{
 			PointLight *light = (PointLight *)base;
 			glm::vec4 lightPos(light->posX, light->posY, light->posZ, 1);
-			lightDir = glm::normalize(lightPos - pos);
+			lightDir = glm::normalize(lightPos - pos); // FIXME normalizing 4D vec
+
 			lightColor = unpackColor(light->red, light->green, light->blue);
 			routing = light->routing;
 
@@ -597,22 +647,79 @@ static void computeColors(glm::vec4& baseCol, glm::vec4& offsetCol, const glm::v
 template<typename T>
 glm::vec4 getNormal(const T& vtx)
 {
-	return glm::normalize(lightMatrix * glm::vec4((int8_t)vtx.header.nx / 127.f, (int8_t)vtx.header.ny / 127.f, (int8_t)vtx.header.nz / 127.f, 0));
+	return glm::vec4((int8_t)vtx.header.nx / 127.f, (int8_t)vtx.header.ny / 127.f, (int8_t)vtx.header.nz / 127.f, 0);
 }
 
 template<>
 glm::vec4 getNormal(const N2_VERTEX_VNU& vtx)
 {
-	return glm::normalize(lightMatrix * glm::vec4(vtx.normal.nx, vtx.normal.ny, vtx.normal.nz, 0));
+	return glm::vec4(vtx.normal.nx, vtx.normal.ny, vtx.normal.nz, 0);
+}
+
+template<typename T>
+void setNormal(Vertex& vd, const T& vs)
+{
+	glm::vec4 normal = getNormal(vs);
+	vd.nx = normal.x;
+	vd.ny = normal.y;
+	vd.nz = normal.z;
 }
 
 template <typename T>
-static void convertVertex(const T& vs, TA_VertexParam& vd);
+static void convertVertex(const T& vs, Vertex& vd);
 
 template<>
-void convertVertex(const Vertex& vs, TA_VertexParam& vd)
+void convertVertex(const N2_VERTEX& vs, Vertex& vd)
 {
-	setCoords(vd.vtx0, vs.x, vs.y, vs.z);
+	setCoords(vd, vs.x, vs.y, vs.z);
+	setNormal(vd, vs);
+	SetEnvMapUV(vd);
+	glm::vec4 baseCol;
+	glm::vec4 offsetCol;
+	if (curGmp != nullptr)
+	{
+		baseCol = unpackColor(curGmp->diffuse0);
+		offsetCol = unpackColor(curGmp->specular0);
+		if (state.listType == 2)
+		{
+			// FIXME
+			baseCol.a = 0;
+			offsetCol.a = 1;
+		}
+		computeColors(baseCol, offsetCol, curMatrix * glm::vec4(vs.x, vs.y, vs.z, 1), getNormal(vs));
+	}
+	else
+	{
+		baseCol = glm::vec4(0);
+		offsetCol = glm::vec4(0);
+	}
+	*(u32 *)vd.col = packColor(baseCol + offsetCol);
+}
+
+template<>
+void convertVertex(const N2_VERTEX_VR& vs, Vertex& vd)
+{
+	setCoords(vd, vs.x, vs.y, vs.z);
+	setNormal(vd, vs);
+	SetEnvMapUV(vd);
+	glm::vec4 baseCol = unpackColor(vs.rgb.argb0);
+	glm::vec4 offsetCol = baseCol;
+	if (curGmp != nullptr)
+	{
+		// Not sure about offset but vf4 needs base addition
+		baseCol += unpackColor(curGmp->diffuse0);
+		offsetCol += unpackColor(curGmp->specular0);
+		computeColors(baseCol, offsetCol, curMatrix * glm::vec4(vs.x, vs.y, vs.z, 1), getNormal(vs));
+	}
+	*(u32 *)vd.col = packColor(baseCol + offsetCol);
+}
+
+template<>
+void convertVertex(const N2_VERTEX_VU& vs, Vertex& vd)
+{
+	setCoords(vd, vs.x, vs.y, vs.z);
+	setNormal(vd, vs);
+	setUV(vs, vd);
 	glm::vec4 baseCol;
 	glm::vec4 offsetCol;
 	if (curGmp != nullptr)
@@ -626,13 +733,16 @@ void convertVertex(const Vertex& vs, TA_VertexParam& vd)
 		baseCol = glm::vec4(0);
 		offsetCol = glm::vec4(0);
 	}
-	vd.vtx0.BaseCol = packColor(baseCol + offsetCol);
+	*(u32 *)vd.col = packColor(baseCol);
+	*(u32 *)vd.spc = packColor(offsetCol);
 }
 
 template<>
-void convertVertex(const N2_VERTEX_VR& vs, TA_VertexParam& vd)
+void convertVertex(const N2_VERTEX_VUR& vs, Vertex& vd)
 {
-	setCoords(vd.vtx0, vs.x, vs.y, vs.z);
+	setCoords(vd, vs.x, vs.y, vs.z);
+	setNormal(vd, vs);
+	setUV(vs, vd);
 	glm::vec4 baseCol = unpackColor(vs.rgb.argb0);
 	glm::vec4 offsetCol = baseCol;
 	if (curGmp != nullptr)
@@ -642,55 +752,17 @@ void convertVertex(const N2_VERTEX_VR& vs, TA_VertexParam& vd)
 		offsetCol += unpackColor(curGmp->specular0);
 		computeColors(baseCol, offsetCol, curMatrix * glm::vec4(vs.x, vs.y, vs.z, 1), getNormal(vs));
 	}
-	vd.vtx0.BaseCol = packColor(baseCol + offsetCol);
+	*(u32 *)vd.col = packColor(baseCol);
+	*(u32 *)vd.spc = packColor(offsetCol);
 }
 
 template<>
-void convertVertex(const N2_VERTEX_VU& vs, TA_VertexParam& vd)
-{
-	setCoords(vd.vtx3, vs.x, vs.y, vs.z);
-	setUV(vs, vd.vtx3);
-	glm::vec4 baseCol;
-	glm::vec4 offsetCol;
-	if (curGmp != nullptr)
-	{
-		baseCol = unpackColor(curGmp->diffuse0);
-		offsetCol = unpackColor(curGmp->specular0);
-		computeColors(baseCol, offsetCol, curMatrix * glm::vec4(vs.x, vs.y, vs.z, 1), getNormal(vs));
-	}
-	else
-	{
-		baseCol = glm::vec4(0);
-		offsetCol = glm::vec4(0);
-	}
-	vd.vtx3.BaseCol = packColor(baseCol);
-	vd.vtx3.OffsCol = packColor(offsetCol);
-}
-
-template<>
-void convertVertex(const N2_VERTEX_VUR& vs, TA_VertexParam& vd)
-{
-	setCoords(vd.vtx3, vs.x, vs.y, vs.z);
-	setUV(vs, vd.vtx3);
-	glm::vec4 baseCol = unpackColor(vs.rgb.argb0);
-	glm::vec4 offsetCol = baseCol;
-	if (curGmp != nullptr)
-	{
-		// Not sure about offset but vf4 needs base addition
-		baseCol += unpackColor(curGmp->diffuse0);
-		offsetCol += unpackColor(curGmp->specular0);
-		computeColors(baseCol, offsetCol, curMatrix * glm::vec4(vs.x, vs.y, vs.z, 1), getNormal(vs));
-	}
-	vd.vtx3.BaseCol = packColor(baseCol);
-	vd.vtx3.OffsCol = packColor(offsetCol);
-}
-
-template<>
-void convertVertex(const N2_VERTEX_VUB& vs, TA_VertexParam& vd)
+void convertVertex(const N2_VERTEX_VUB& vs, Vertex& vd)
 {
 	// TODO
-	setCoords(vd.vtx3, vs.x, vs.y, vs.z);
-	setUV(vs, vd.vtx3);
+	setCoords(vd, vs.x, vs.y, vs.z);
+	setNormal(vd, vs);
+	setUV(vs, vd);
 	glm::vec4 baseCol;
 	glm::vec4 offsetCol;
 	if (curGmp != nullptr)
@@ -704,49 +776,130 @@ void convertVertex(const N2_VERTEX_VUB& vs, TA_VertexParam& vd)
 		baseCol = glm::vec4(0);
 		offsetCol = glm::vec4(0);
 	}
-	vd.vtx3.BaseCol = packColor(baseCol);
-	vd.vtx3.OffsCol = packColor(offsetCol);
+	*(u32 *)vd.col = packColor(baseCol);
+	*(u32 *)vd.spc = packColor(offsetCol);
+}
+
+template <typename T>
+static void boundingBox(const T* vertices, u32 count, glm::vec3& min, glm::vec3& max)
+{
+	min = { 1e38f, 1e38f, 1e38f };
+	max = { -1e38f, -1e38f, -1e38f };
+	for (u32 i = 0; i < count; i++)
+	{
+		glm::vec3 pos{ vertices[i].x, vertices[i].y, vertices[i].z };
+		min = glm::min(min, pos);
+		max = glm::max(max, pos);
+	}
+	glm::vec4 center((min + max) / 2.f, 1);
+	glm::vec4 extents(max - glm::vec3(center), 0);
+	// transform
+	center = curMatrix * center;
+	glm::vec3 extentX = curMatrix * glm::vec4(extents.x, 0, 0, 0);
+	glm::vec3 extentY = curMatrix * glm::vec4(0, extents.y, 0, 0);
+	glm::vec3 extentZ = curMatrix * glm::vec4(0, 0, extents.z, 0);
+	// new AA extents
+	const float newX = std::abs(glm::dot(glm::vec3{ 1.f, 0.f, 0.f }, extentX)) +
+			std::abs(glm::dot(glm::vec3{ 1.f, 0.f, 0.f }, extentY)) +
+			std::abs(glm::dot(glm::vec3{ 1.f, 0.f, 0.f }, extentZ));
+
+	const float newY = std::abs(glm::dot(glm::vec3{ 0.f, 1.f, 0.f }, extentX)) +
+			std::abs(glm::dot(glm::vec3{ 0.f, 1.f, 0.f }, extentY)) +
+			std::abs(glm::dot(glm::vec3{ 0.f, 1.f, 0.f }, extentZ));
+
+	const float newZ = std::abs(glm::dot(glm::vec3{ 0.f, 0.f, 1.f }, extentX)) +
+			std::abs(glm::dot(glm::vec3{ 0.f, 0.f, 1.f }, extentY)) +
+			std::abs(glm::dot(glm::vec3{ 0.f, 0.f, 1.f }, extentZ));
+
+	min = glm::vec3(center) - glm::vec3(newX, newY, newZ);
+	max = glm::vec3(center) + glm::vec3(newX, newY, newZ);
+}
+
+template <typename T>
+static bool isInFrustum(const T* vertices, u32 count)
+{
+	glm::vec3 min;
+	glm::vec3 max;
+	boundingBox(vertices, count, min, max);
+	if (min.z > -nearPlane || max.z < -farPlane)
+		return false;
+
+	glm::vec4 pmin = projectionMatrix * glm::vec4(min, 1);
+	glm::vec4 pmax = projectionMatrix * glm::vec4(max, 1);
+	if (std::isnan(pmin.x) || std::isnan(pmin.y) || std::isnan(pmax.x) || std::isnan(pmax.y))
+		return false;
+	float w;
+	// Check the farthest side
+	if (std::abs(pmin.w) < std::abs(pmax.w))
+		w = pmax.w;
+	else
+		w = pmin.w;
+	glm::vec4 t = glm::min(pmin / w, pmax / w);
+	pmax = glm::max(pmin / w, pmax / w);
+	pmin = t;
+	if (pmax.x <= -214 || pmin.x  >= 854	// FIXME viewport dimensions
+		|| pmax.y < 0 || pmin.y >= 480)
+		return false;
+
+	//printf("AABB %f %f - %f %f\n", pmin.x, pmin.y, pmax.x, pmax.y);
+
+	return true;
 }
 
 template <typename T>
 static void sendVertices(const ICHList *list, const T* vtx)
 {
-	alignas(32) TA_VertexParam taVtx;
-	taVtx.pcw.ParaType = 7;
+	Vertex taVtx;
 	verify(list->vertexSize() > 0);
 
-	alignas(32) TA_VertexParam fanCenterVtx{};
-	alignas(32) TA_VertexParam fanLastVtx{};
+	Vertex fanCenterVtx{};
+	Vertex fanLastVtx{};
+	bool stripStart = true;
+	int outStripIndex = 0;
 	for (u32 i = 0; i < list->vtxCount; i++)
 	{
-		taVtx.pcw.EndOfStrip = vtx->header.endOfStrip;
-
 		convertVertex(*vtx, taVtx);
 
-		if (fanCenterVtx.pcw.ParaType == 0)
+		if (stripStart)
 		{
 			// Center vertex if triangle fan
 			//verify(vtx->header.isFirstOrSecond()); This fails for some strips: strip=1 fan=0 (soul surfer)
-			memcpy(&fanCenterVtx, &taVtx, sizeof(SQBuffer));
-		}
-		else if (vtx->header.isThird())
-		{
-			// End of strip if triangle fan
-			if (i + 1 < list->vtxCount && vtx[1].header.isFan())
-				taVtx.pcw.EndOfStrip = 1;
+			fanCenterVtx = taVtx;
+			if (outStripIndex > 0)
+			{
+				// use degenerate triangles to link strips
+				ta_add_vertex(fanLastVtx);
+				ta_add_vertex(taVtx);
+				outStripIndex += 2;
+				if (outStripIndex & 1)
+				{
+					ta_add_vertex(taVtx);
+					outStripIndex++;
+				}
+			}
+			stripStart = false;
 		}
 		else if (vtx->header.isFan())
 		{
+			// use degenerate triangles to link strips
+			ta_add_vertex(fanLastVtx);
+			ta_add_vertex(fanCenterVtx);
+			outStripIndex += 2;
+			if (outStripIndex & 1)
+			{
+				ta_add_vertex(fanCenterVtx);
+				outStripIndex++;
+			}
 			// Triangle fan
-			ta_vtx_data32((SQBuffer *)&fanCenterVtx);
-			ta_vtx_data32((SQBuffer *)&fanLastVtx);
-			taVtx.pcw.EndOfStrip = 1;
+			ta_add_vertex(fanCenterVtx);
+			ta_add_vertex(fanLastVtx);
+			outStripIndex += 2;
 		}
-		ta_vtx_data32((SQBuffer *)&taVtx);
-		memcpy(&fanLastVtx, &taVtx, sizeof(SQBuffer));
-		fanLastVtx.pcw.EndOfStrip = 0;
+		ta_add_vertex(taVtx);
+		outStripIndex++;
+		fanLastVtx = taVtx;
 		if (vtx->header.endOfStrip)
-			fanCenterVtx.pcw.ParaType = 0;
+			stripStart = true;
 
 		vtx++;
 	}
@@ -755,52 +908,46 @@ static void sendVertices(const ICHList *list, const T* vtx)
 template <typename T>
 static void sendMVVertices(const ICHList *list, const T* vtx)
 {
-	SQBuffer sqb[2]{};
-	TA_VertexParam& taVtx = *(TA_VertexParam *)&sqb[0];
-	taVtx.mvolA.pcw.ParaType = 7;
-	taVtx.mvolA.pcw.EndOfStrip = 1;
 	verify(list->vertexSize() > 0);
 
-	glm::vec4 vtx0{};
-	glm::vec4 vtx1{};
+	glm::vec3 vtx0{};
+	glm::vec3 vtx1{};
 	u32 stripStart = 0;
 
 	for (u32 i = 0; i < list->vtxCount; i++)
 	{
-		glm::vec4 v(vtx->x, vtx->y, vtx->z, 1);
-		v = projectionMatrix * curMatrix * v;
-		v.x /= v.w;
-		v.y /= v.w;
+		glm::vec3 v(vtx->x, vtx->y, vtx->z);
 //		printf("MV %f %f %f - strip %d fan %d eos %d _res %x\n", v.x, v.y, 1 / v.w, vtx->header.strip, vtx->header.fan, vtx->header.endOfStrip, vtx->header._res);
 		u32 triIdx = i - stripStart;
 		if (triIdx >= 2)
 		{
+			ModTriangle tri;
+
 			if (triIdx & 1)
 			{
-				taVtx.mvolA.x1 = vtx0.x;
-				taVtx.mvolA.y1 = vtx0.y;
-				taVtx.mvolA.z1 = 1 / vtx0.w;
+				tri.x1 = vtx0.x;
+				tri.y1 = vtx0.y;
+				tri.z1 = vtx0.z;
 
-				taVtx.mvolA.x0 = vtx1.x;
-				taVtx.mvolA.y0 = vtx1.y;
-				taVtx.mvolA.z0 = 1 / vtx1.w;
+				tri.x0 = vtx1.x;
+				tri.y0 = vtx1.y;
+				tri.z0 = vtx1.z;
 			}
 			else
 			{
-				taVtx.mvolA.x0 = vtx0.x;
-				taVtx.mvolA.y0 = vtx0.y;
-				taVtx.mvolA.z0 = 1 / vtx0.w;
+				tri.x0 = vtx0.x;
+				tri.y0 = vtx0.y;
+				tri.z0 = vtx0.z;
 
-				taVtx.mvolA.x1 = vtx1.x;
-				taVtx.mvolA.y1 = vtx1.y;
-				taVtx.mvolA.z1 = 1 / vtx1.w;
+				tri.x1 = vtx1.x;
+				tri.y1 = vtx1.y;
+				tri.z1 = vtx1.z;
 			}
-			taVtx.mvolA.x2 = v.x;
-			taVtx.mvolB.y2 = v.y;
-			taVtx.mvolB.z2 = 1 / v.w;
+			tri.x2 = v.x;
+			tri.y2 = v.y;
+			tri.z2 = v.z;
 
-			ta_vtx_data32(&sqb[0]);
-			ta_vtx_data32(&sqb[1]);
+			ta_add_triangle(tri);
 		}
 		if (vtx->header.endOfStrip)
 			stripStart = i + 1;
@@ -810,24 +957,126 @@ static void sendMVVertices(const ICHList *list, const T* vtx)
 	}
 }
 
+static N2LightModel *taLightModel;
+static bool usingAlphaLight;
+
+static void sendLights()
+{
+	if (!state.lightModelUpdated)
+		return;
+
+	state.lightModelUpdated = false;
+	usingAlphaLight = false;
+	N2LightModel model;
+	model.lightCount = 0;
+	if (curLightModel == nullptr)
+	{
+		model.ambientMaterial = false;
+		model.useBaseOver = false;
+		model.ambientBase[0] = model.ambientBase[1] = model.ambientBase[2] = model.ambientBase[3] = 1.f;
+		memset(model.ambientOffset, 0, sizeof(model.ambientOffset));
+		return;
+	}
+	model.ambientMaterial = curLightModel->useAmbientBase0;
+	// TODO model.ambientMaterialForSpec = curLightModel->useAmbientOffset0;
+	model.useBaseOver = curLightModel->useBaseOver;
+	memcpy(model.ambientBase, glm::value_ptr(unpackColor(curLightModel->ambientBase0)), sizeof(model.ambientBase));
+	memcpy(model.ambientOffset, glm::value_ptr(unpackColor(curLightModel->ambientOffset0)), sizeof(model.ambientOffset));
+	for (u32 i = 0; i < MAX_LIGHTS; i++)
+	{
+		bool diffuse = curLightModel->isDiffuse(i);
+		bool specular = curLightModel->isSpecular(i);
+		if (!diffuse && !specular)
+			continue;
+		if (curLights[i] == nullptr)
+		{
+			INFO_LOG(PVR, "Light %d is referenced but undefined", i);
+			continue;
+		}
+		N2Light& light = model.lights[model.lightCount];
+		light.diffuse = diffuse;
+		light.specular = specular;
+		light.parallel = curLights[i]->pcw.parallelLight;
+		if (light.parallel != 0)
+		{
+			ParallelLight *plight = (ParallelLight *)curLights[i];
+			memcpy(light.color, glm::value_ptr(unpackColor(plight->red, plight->green, plight->blue)), sizeof(light.color));
+			light.routing = plight->routing;
+			light.dmode = plight->dmode;
+			light.smode = N2_LMETHOD_SINGLE_SIDED;
+			memcpy(light.direction, glm::value_ptr(glm::normalize(glm::vec4(-(int8_t)plight->dirX, -(int8_t)plight->dirY, -(int8_t)plight->dirZ, 0))),
+					sizeof(light.direction));
+		}
+		else
+		{
+			PointLight *plight = (PointLight *)curLights[i];
+			memcpy(light.color, glm::value_ptr(unpackColor(plight->red, plight->green, plight->blue)), sizeof(light.color));
+			light.routing = plight->routing;
+			light.dmode = plight->dmode;
+			light.smode = plight->smode;
+			memcpy(light.position, glm::value_ptr(glm::vec4(plight->posX, plight->posY, plight->posZ, 1)), sizeof(light.position));
+			memcpy(light.direction, glm::value_ptr(glm::normalize(glm::vec4((int8_t)plight->dirX, (int8_t)plight->dirY, (int8_t)plight->dirZ, 0))),
+					sizeof(light.direction));
+			light.distAttnMode = plight->dattenmode;
+			light.attnDistA = plight->distA();
+			light.attnDistB = plight->distB();
+			light.attnAngleA = plight->angleA();
+			light.attnAngleB = plight->angleB();
+		}
+		usingAlphaLight = usingAlphaLight || light.routing == N2_LFUNC_ALPHADIFF_SUB;
+		model.lightCount++;
+	}
+	taLightModel = ta_add_light(model);
+}
+
+static void setStateParams(PolyParam& pp)
+{
+	sendLights();
+	pp.tileclip = state.tileclip;
+	pp.mvMatrix = taMVMatrix;
+	pp.projMatrix = taProjMatrix;
+	pp.lightModel = taLightModel;
+	pp.envMapping = false;
+	if (curGmp != nullptr)
+	{
+		pp.glossCoef0 = curGmp->gloss.getCoef0();
+		pp.glossCoef1 = curGmp->gloss.getCoef1();
+	}
+	// FIXME hack ScrInstr condition fixes lens flares in vf4
+	if (state.listType == 2 && usingAlphaLight && pp.tsp.SrcInstr == 1)
+	{
+		//printf("gmp pselect %x\n", curGmp->paramSelect.full); // ff ... not relevant
+		pp.tsp.UseAlpha = 1; // TODO alpha light volumes need manual settings of which params?
+		pp.tsp.ShadInstr = 3;
+		pp.tsp.SrcInstr = 4;
+		pp.tsp.DstInstr = 5;
+	}
+	// projFlip is for left-handed projection matrices (initd rear view mirror)
+	bool projFlip = std::signbit(taProjMatrix[0]) == std::signbit(taProjMatrix[5]);
+	pp.isp.CullMode ^= (u32)cullingReversed ^ (u32)projFlip;
+}
+
 static void sendPolygon(ICHList *list)
 {
 	switch (list->flags)
 	{
 	case ICHList::VTX_TYPE_V:
 		{
-			Vertex *vtx = (Vertex *)((u8 *)list + sizeof(ICHList));
+			N2_VERTEX *vtx = (N2_VERTEX *)((u8 *)list + sizeof(ICHList));
+			if (!isInFrustum(vtx, list->vtxCount))
+				break;
 			if (state.listType & 1)
 			{
-				TA_ModVolParam pp{};
-				pp.pcw.ParaType = 4;
-				pp.pcw.ListType = state.listType ;
-				pp.pcw.User_Clip = state.userClip;
-				pp.pcw.Volume = list->pcw.volume;
-				pp.isp = list->isp;
-				pp.isp.CullMode = 0; // FIXME required for closed volumes and not set properly
-				pp.isp.DepthMode &= 3;
-				ta_vtx_data32((const SQBuffer *)&pp);
+				ModifierVolumeParam mvp{};
+				mvp.isp.full = list->isp.full;
+				mvp.isp.CullMode = 0; // FIXME required for closed volumes and not set properly
+				if (mvp.isp.DepthMode >= 3)
+					INFO_LOG(PVR, "MV mode %d", mvp.isp.DepthMode);
+				mvp.isp.VolumeLast = list->pcw.volume;
+				mvp.isp.DepthMode &= 3;
+				mvp.mvMatrix = taMVMatrix;
+				mvp.projMatrix = taProjMatrix;
+				ta_add_poly(state.listType, mvp);
 
 				//for (int i = 0; i < list->vtxCount; i++)
 				//	printf("MV %f %f %f strip %d fan %d eos %d _res %x\n", vtx[i].x, vtx[i].y, vtx[i].z, vtx[i].header.strip, vtx[i].header.fan, vtx[i].header.endOfStrip, vtx[i].header._res);
@@ -835,18 +1084,27 @@ static void sendPolygon(ICHList *list)
 			}
 			else
 			{
-				// poly 0, vtx 0
-				TA_PolyParam0 pp{};
-				pp.pcw.ParaType = 4;
-				pp.pcw.ListType = state.listType ;
-				pp.pcw.User_Clip = state.userClip;
+				PolyParam pp{};
 				pp.pcw.Shadow = list->pcw.shadow;
 				pp.pcw.Gouraud = list->pcw.gouraud;
 				pp.isp = list->isp;
 				pp.tsp = list->tsp0;
-				ta_vtx_data32((const SQBuffer *)&pp);
+				setStateParams(pp);
+				if (curGmp != nullptr && curGmp->paramSelect.e0)
+				{
+					// Environment mapping
+					pp.pcw.Texture = 1;
+					pp.pcw.Offset = 0;
+					pp.tsp.UseAlpha = 1;
+					pp.tsp.IgnoreTexA = 0;
+					pp.envMapping = true;
+					pp.tcw = list->tcw0;
+					envMapping = true;
+				}
+				ta_add_poly(state.listType, pp);
 
 				sendVertices(list, vtx);
+				envMapping = false;
 			}
 		}
 		break;
@@ -854,17 +1112,20 @@ static void sendPolygon(ICHList *list)
 	case ICHList::VTX_TYPE_VU:
 		{
 			N2_VERTEX_VU *vtx = (N2_VERTEX_VU *)((u8 *)list + sizeof(ICHList));
+			if (!isInFrustum(vtx, list->vtxCount))
+				break;
 			if (state.listType  & 1)
 			{
-				TA_ModVolParam pp{};
-				pp.pcw.ParaType = 4;
-				pp.pcw.ListType = state.listType ;
-				pp.pcw.User_Clip = state.userClip;
-				pp.pcw.Volume = list->pcw.volume;
-				pp.isp = list->isp;
-				pp.isp.CullMode = 0; // FIXME required for closed volumes and not set properly
-				pp.isp.DepthMode &= 3;
-				ta_vtx_data32((const SQBuffer *)&pp);
+				ModifierVolumeParam mvp{};
+				mvp.isp.full = list->isp.full;
+				mvp.isp.CullMode = 0; // FIXME required for closed volumes and not set properly
+				if (mvp.isp.DepthMode >= 3)
+					INFO_LOG(PVR, "MV mode %d", mvp.isp.DepthMode);
+				mvp.isp.VolumeLast = list->pcw.volume;
+				mvp.isp.DepthMode &= 3;
+				mvp.mvMatrix = taMVMatrix;
+				mvp.projMatrix = taProjMatrix;
+				ta_add_poly(state.listType, mvp);
 
 				//for (int i = 0; i < list->vtxCount; i++)
 				//	printf("MV %f %f %f strip %d fan %d eos %d _res %x\n", vtx[i].x, vtx[i].y, vtx[i].z, vtx[i].header.strip, vtx[i].header.fan, vtx[i].header.endOfStrip, vtx[i].header._res);
@@ -872,10 +1133,8 @@ static void sendPolygon(ICHList *list)
 			}
 			else
 			{
-				TA_PolyParam0 pp{};
-				pp.pcw.ParaType = 4;
-				pp.pcw.ListType = state.listType ;
-				pp.pcw.User_Clip = state.userClip;
+				verify(curGmp == nullptr || curGmp->paramSelect.e0 == 0);
+				PolyParam pp{};
 				pp.pcw.Shadow = list->pcw.shadow;
 				pp.pcw.Texture = 1;
 				pp.pcw.Offset = list->pcw.offset;
@@ -883,15 +1142,8 @@ static void sendPolygon(ICHList *list)
 				pp.isp = list->isp;
 				pp.tsp = list->tsp0;
 				pp.tcw = list->tcw0;
-				if (state.listType == 2)
-					pp.tsp.UseAlpha = 1; // FIXME alpha light volumes need manual settings of params?
-//				pp.tsp.ShadInstr = 3; // FIXME
-//				if (state.listType  == 2) // FIXME
-//				{
-//					pp.tsp.SrcInstr = 4;
-//					pp.tsp.DstInstr = 5;
-//				}
-				ta_vtx_data32((const SQBuffer *)&pp);
+				setStateParams(pp);
+				ta_add_poly(state.listType, pp);
 
 				sendVertices(list, vtx);
 			}
@@ -900,10 +1152,11 @@ static void sendPolygon(ICHList *list)
 
 	case ICHList::VTX_TYPE_VUR:
 		{
-			TA_PolyParam0 pp{};
-			pp.pcw.ParaType = 4;
-			pp.pcw.ListType = state.listType ;
-			pp.pcw.User_Clip = state.userClip;
+			verify(curGmp == nullptr || curGmp->paramSelect.e0 == 0);
+			N2_VERTEX_VUR *vtx = (N2_VERTEX_VUR *)((u8 *)list + sizeof(ICHList));
+			if (!isInFrustum(vtx, list->vtxCount))
+				break;
+			PolyParam pp{};
 			pp.pcw.Shadow = list->pcw.shadow;
 			pp.pcw.Texture = 1;
 			pp.pcw.Offset = list->pcw.offset;
@@ -911,48 +1164,50 @@ static void sendPolygon(ICHList *list)
 			pp.isp = list->isp;
 			pp.tsp = list->tsp0;
 			pp.tcw = list->tcw0;
-			if (state.listType == 2)
-				pp.tsp.UseAlpha = 1; // FIXME alpha light volumes need manual settings of params?
-//			pp.tsp.ShadInstr = 3; // FIXME
-//			if (state.listType  == 2) // FIXME
-//			{
-//				pp.tsp.SrcInstr = 4;
-//				pp.tsp.DstInstr = 5;
-//			}
-			ta_vtx_data32((const SQBuffer *)&pp);
+			setStateParams(pp);
+			ta_add_poly(state.listType, pp);
 
-			N2_VERTEX_VUR *vtx = (N2_VERTEX_VUR *)((u8 *)list + sizeof(ICHList));
 			sendVertices(list, vtx);
 		}
 		break;
 
 	case ICHList::VTX_TYPE_VR:
 		{
-			// poly 0, vtx 0
-			TA_PolyParam0 pp{};
-			pp.pcw.ParaType = 4;
-			pp.pcw.ListType = state.listType ;
-			pp.pcw.User_Clip = state.userClip;
+			N2_VERTEX_VR *vtx = (N2_VERTEX_VR *)((u8 *)list + sizeof(ICHList));
+			if (!isInFrustum(vtx, list->vtxCount))
+				break;
+			PolyParam pp{};
 			pp.pcw.Shadow = list->pcw.shadow;
 			pp.pcw.Gouraud = list->pcw.gouraud;
 			pp.isp = list->isp;
 			pp.tsp = list->tsp0;
-			if (state.listType == 2)
-				pp.tsp.UseAlpha = 1; // FIXME alpha light volumes need manual settings of params?
-			ta_vtx_data32((const SQBuffer *)&pp);
+			setStateParams(pp);
+			if (curGmp != nullptr && curGmp->paramSelect.e0)
+			{
+				// FIXME doesn't seem to work
+				// Environment mapping
+				pp.pcw.Texture = 1;
+				pp.pcw.Offset = 0;
+				pp.tsp.UseAlpha = 1;
+				pp.tsp.IgnoreTexA = 0;
+				pp.envMapping = true;
+				pp.tcw = list->tcw0;
+				envMapping = true;
+			}
+			ta_add_poly(state.listType, pp);
 
-			N2_VERTEX_VR *vtx = (N2_VERTEX_VR *)((u8 *)list + sizeof(ICHList));
 			sendVertices(list, vtx);
+			envMapping = false;
 		}
 		break;
 
 	case ICHList::VTX_TYPE_VUB:
 		{
 			// TODO
-			TA_PolyParam0 pp{};
-			pp.pcw.ParaType = 4;
-			pp.pcw.ListType = state.listType ;
-			pp.pcw.User_Clip = state.userClip;
+			N2_VERTEX_VUB *vtx = (N2_VERTEX_VUB *)((u8 *)list + sizeof(ICHList));
+			if (!isInFrustum(vtx, list->vtxCount))
+				break;
+			PolyParam pp{};
 			pp.pcw.Shadow = list->pcw.shadow;
 			pp.pcw.Texture = 1;
 			pp.pcw.Offset = 1;
@@ -960,9 +1215,9 @@ static void sendPolygon(ICHList *list)
 			pp.isp = list->isp;
 			pp.tsp = list->tsp0;
 			pp.tcw = list->tcw0;
-			//ta_vtx_data32((const SQBuffer *)&pp);
+			setStateParams(pp);
+			//ta_add_poly(state.listType, pp);
 
-			//N2_VERTEX_VUB *vtx = (N2_VERTEX_VUB *)((u8 *)list + sizeof(ICHList));
 			//sendVertices(list, vtx);
 			INFO_LOG(PVR, "Unhandled poly format VTX_TYPE_VUB");
 		}
@@ -995,29 +1250,26 @@ static void executeCommand(u8 *data, int size)
 				size -= 32;
 				break;
 
-			case PCW::matrix:
-				state.setMatrix(data);
-				size -= sizeof(Matrix);
-				break;
-
 			case PCW::projMatrix:
 				state.setProjectionMatrix(data);
 				size -= sizeof(ProjMatrix);
 				break;
 
-			case PCW::instance:
+			case PCW::matrixOrLight:
 				{
-					Instance *instance = (Instance *)data;
-					if (instance->isModelInstance())
+					InstanceMatrix *instance = (InstanceMatrix *)data;
+					if (instance->isInstanceMatrix())
 					{
-						DEBUG_LOG(PVR, "Model instance offset %x size %x", instance->offset & 0x1ffffff8, instance->size);
-//FIXME instance? model? executeCommand(&elanRAM[instance->offset & 0x1ffffff8], instance->size);
+						//DEBUG_LOG(PVR, "Model instance");
+						state.setMatrix(instance);
+						size -= sizeof(InstanceMatrix);
+						break;
 					}
 					else if (instance->id1 & 0x10)
 					{
 						state.setLightModel(data);
 					}
-					else if ((instance->id2 & 0x40000000) || (instance->id1 & 0xffffff00)) // FIXME what are these lights without id2|0x40000000? vf4
+					else //if ((instance->id2 & 0x40000000) || (instance->id1 & 0xffffff00)) // FIXME what are these lights without id2|0x40000000? vf4
 					{
 						if (instance->pcw.parallelLight)
 						{
@@ -1030,25 +1282,24 @@ static void executeCommand(u8 *data, int size)
 							state.setLight(light->lightId, data);
 						}
 					}
-					else
-					{
-						INFO_LOG(PVR, "Other instance %08x %08x", instance->id1, instance->id2);
-						for (int i = 0; i < 32; i += 4)
-							INFO_LOG(PVR, "    %08x: %08x", (u32)(&data[i] - elanRAM), *(u32 *)&data[i]);
-					}
-					size -= sizeof(Instance);
+					//else
+					//{
+					//	WARN_LOG(PVR, "Other instance %08x %08x", instance->id1, instance->id2);
+					//	for (int i = 0; i < 32; i += 4)
+					//		INFO_LOG(PVR, "    %08x: %08x", (u32)(&data[i] - elanRAM), *(u32 *)&data[i]);
+					//}
+					size -= sizeof(LightModel);
 				}
 				break;
 
 			case PCW::model:
 				{
-					// FIXME instance and model are switched? this is used for nl_set_light_instance()
-					// or static vs. dynamic?
 					Model *model = (Model *)data;
-					// TODO fails rt66 start verify(model->id1 == 0x18000000 || model->id1 == 0x10000000);
-					state.userClip = model->pcw.userClip;
+					cullingReversed = (model->id1 & 0x08000000) == 0;
+					state.setClipMode(model->pcw);
 					DEBUG_LOG(PVR, "Model offset %x size %x clip %d", model->offset, model->size, model->pcw.userClip);
 					executeCommand(&elanRAM[model->offset & 0x1ffffff8], model->size);
+					cullingReversed = false;
 					size -= sizeof(Model);
 				}
 				break;
@@ -1084,7 +1335,6 @@ static void executeCommand(u8 *data, int size)
 							inter = holly_OPAQUE;
 							break;
 						}
-//bad						reg74 |= 0x3c;
 						asic_RaiseInterrupt(inter);
 						TA_ITP_CURRENT += 32;
 						state.reset();
@@ -1128,6 +1378,7 @@ static void executeCommand(u8 *data, int size)
 			if ((pcw & 0xd0ffff00) == 0x808c0000) // display list
 			{
 				DEBUG_LOG(PVR, "Display list type %d", (pcw >> 24) & 0xf);
+				state.reset();
 				state.listType  = (pcw >> 24) & 0xf;
 				// TODO is this the right place for this?
 				SQBuffer eol{};
@@ -1136,8 +1387,8 @@ static void executeCommand(u8 *data, int size)
 			}
 			else if ((pcw & 0xd0fcff00) == 0x80800000) // User clipping
 			{
-				state.userClip = ((PCW&)pcw).userClip;
-				DEBUG_LOG(PVR, "User clip type %d", state.userClip);
+				state.setClipMode((PCW&)pcw);
+				DEBUG_LOG(PVR, "User clip type %d", ((PCW&)pcw).userClip);
 				size -= 0xE0;
 			}
 			else if ((pcw & 0xd0ffff00) == 0x80000000) // geometry follows or linked?
@@ -1146,21 +1397,16 @@ static void executeCommand(u8 *data, int size)
 				// no possible disambiguation since 80000000 is a valid OP poly pcw (poly type 0 / vtx 0)
 				DEBUG_LOG(PVR, "Geometry type %d - %08x", (pcw >> 24) & 0xf, pcw);
 				size -= 32;
-				SQBuffer *sqb = (SQBuffer *)data + 1;
-				while (size > 32)
-				{
-					DEBUG_LOG(PVR, "vtx data %p", sqb);
-					ta_vtx_data32(sqb);
-					sqb++;
-					size -= 32;
-				}
+				ta_add_ta_data((u32 *)(data + 32), size - 32);
+				size = 32;
 			}
 			else if (pcw == 0x20000000)
 			{
 				// User clipping
-				DEBUG_LOG(PVR, "User clipping %d,%d - %d,%d", ((u32 *)data)[4] * 32, ((u32 *)data)[5] * 32,
-						((u32 *)data)[6] * 32, ((u32 *)data)[7] * 32);
-				ta_vtx_data32((SQBuffer *)data);
+				u32 *tiles = (u32 *)data + 4;
+				DEBUG_LOG(PVR, "User clipping %d,%d - %d,%d", tiles[0] * 32, tiles[1] * 32,
+						tiles[2] * 32, tiles[3] * 32);
+				state.setClipTiles(tiles[0], tiles[1], tiles[2], tiles[3]);
 				size -= 32;
 			}
 			else

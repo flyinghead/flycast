@@ -48,6 +48,9 @@ static u8 float_to_satu8_math(float val)
 	return u8(saturate01(val)*255);
 }
 
+static TA_context *vd_ctx;
+#define vd_rc (vd_ctx->rend)
+
 //vdec state variables
 static ModTriangle* lmr;
 
@@ -66,6 +69,7 @@ static u32 SFaceOffsColor;
 const u32 ListType_None = -1;
 const u32 SZ32 = 1;
 const u32 SZ64 = 2;
+static bool fetchTextures = true;
 
 #include "ta_structs.h"
 
@@ -83,8 +87,6 @@ static f32 f16(u16 v)
 	u32 z=v<<16;
 	return *(f32*)&z;
 }
-
-#define vdrc vd_rc
 
 template<int Red = 0, int Green = 1, int Blue = 2, int Alpha = 3>
 class FifoSplitter
@@ -625,7 +627,6 @@ public:
 
 	void vdec_init()
 	{
-		VDECInit();
 		TaCmd = ta_main;
 		CurrentList = ListType_None;
 		ListIsFinished[0] = ListIsFinished[1] = ListIsFinished[2] = ListIsFinished[3] = ListIsFinished[4] = false;
@@ -664,11 +665,11 @@ private:
 		static void StartList(u32 ListType)
 	{
 		if (ListType==ListType_Opaque)
-			CurrentPPlist=&vdrc.global_param_op;
+			CurrentPPlist=&vd_rc.global_param_op;
 		else if (ListType==ListType_Punch_Through)
-			CurrentPPlist=&vdrc.global_param_pt;
+			CurrentPPlist=&vd_rc.global_param_pt;
 		else if (ListType==ListType_Translucent)
-			CurrentPPlist=&vdrc.global_param_tr;
+			CurrentPPlist=&vd_rc.global_param_tr;
 
 		CurrentPP = NULL;
 	}
@@ -696,7 +697,7 @@ private:
 			d_pp = CurrentPPlist->Append();
 			CurrentPP = d_pp;
 		}
-		d_pp->first = vdrc.verts.used();
+		d_pp->first = vd_rc.verts.used();
 		d_pp->count = 0;
 
 		d_pp->isp = pp->isp;
@@ -705,7 +706,7 @@ private:
 		d_pp->pcw = pp->pcw;
 		d_pp->tileclip = tileclip_val;
 
-		if (d_pp->pcw.Texture)
+		if (d_pp->pcw.Texture && fetchTextures)
 			d_pp->texture = renderer->GetTexture(d_pp->tsp, d_pp->tcw);
 		else
 			d_pp->texture = nullptr;
@@ -713,6 +714,10 @@ private:
 		d_pp->tsp1.full = -1;
 		d_pp->tcw1.full = -1;
 		d_pp->texture1 = nullptr;
+		d_pp->mvMatrix = nullptr;
+		d_pp->projMatrix = nullptr;
+		d_pp->lightModel = nullptr;
+		d_pp->envMapping = false;
 	}
 
 	#define glob_param_bdc(pp) glob_param_bdc_( (TA_PolyParam0*)pp)
@@ -776,7 +781,7 @@ private:
 
 		CurrentPP->tsp1.full = pp->tsp1.full;
 		CurrentPP->tcw1.full = pp->tcw1.full;
-		if (pp->pcw.Texture)
+		if (pp->pcw.Texture && fetchTextures)
 			CurrentPP->texture1 = renderer->GetTexture(pp->tsp1, pp->tcw1);
 	}
 
@@ -790,7 +795,7 @@ private:
 
 		CurrentPP->tsp1.full = pp->tsp1.full;
 		CurrentPP->tcw1.full = pp->tcw1.full;
-		if (pp->pcw.Texture)
+		if (pp->pcw.Texture && fetchTextures)
 			CurrentPP->texture1 = renderer->GetTexture(pp->tsp1, pp->tcw1);
 	}
 
@@ -807,14 +812,14 @@ private:
 	__forceinline
 		static void EndPolyStrip()
 	{
-		CurrentPP->count = vdrc.verts.used() - CurrentPP->first;
+		CurrentPP->count = vd_rc.verts.used() - CurrentPP->first;
 
 		if (CurrentPP->count > 0)
 		{
 			PolyParam* d_pp = CurrentPPlist->Append();
 			*d_pp = *CurrentPP;
 			CurrentPP = d_pp;
-			d_pp->first = vdrc.verts.used();
+			d_pp->first = vd_rc.verts.used();
 			d_pp->count = 0;
 		}
 	}
@@ -823,8 +828,8 @@ private:
 	
 	static inline void update_fz(float z)
 	{
-		if ((s32&)vdrc.fZ_max<(s32&)z && (s32&)z<0x49800000)
-			vdrc.fZ_max=z;
+		if ((s32&)vd_rc.fZ_max<(s32&)z && (s32&)z<0x49800000)
+			vd_rc.fZ_max=z;
 	}
 
 		//Poly Vertex handlers
@@ -833,7 +838,7 @@ private:
 	static Vertex* vert_cvt_base_(T* vtx)
 	{
 		f32 invW=vtx->xyz[2];
-		Vertex* cv=vdrc.verts.Append();
+		Vertex* cv=vd_rc.verts.Append();
 		cv->x=vtx->xyz[0];
 		cv->y=vtx->xyz[1];
 		cv->z=invW;
@@ -845,7 +850,7 @@ private:
 
 		//Resume vertex base (for B part)
 	#define vert_res_base \
-		Vertex* cv=vdrc.verts.LastPtr();
+		Vertex* cv=vd_rc.verts.LastPtr();
 
 		//uv 16/32
 	#define vert_uv_32(u_name,v_name) \
@@ -1159,7 +1164,7 @@ private:
 			CurrentPP=d_pp;
 		}
 
-		d_pp->first = vdrc.verts.used();
+		d_pp->first = vd_rc.verts.used();
 		d_pp->count=0;
 		d_pp->isp=spr->isp; 
 		d_pp->tsp=spr->tsp; 
@@ -1167,7 +1172,7 @@ private:
 		d_pp->pcw=spr->pcw; 
 		d_pp->tileclip=tileclip_val;
 
-		if (d_pp->pcw.Texture)
+		if (d_pp->pcw.Texture && fetchTextures)
 			d_pp->texture = renderer->GetTexture(d_pp->tsp, d_pp->tcw);
 		else
 			d_pp->texture = nullptr;
@@ -1175,6 +1180,10 @@ private:
 		d_pp->tcw1.full = -1;
 		d_pp->tsp1.full = -1;
 		d_pp->texture1 = nullptr;
+		d_pp->mvMatrix = nullptr;
+		d_pp->projMatrix = nullptr;
+		d_pp->lightModel = nullptr;
+		d_pp->envMapping = false;
 
 		SFaceBaseColor=spr->BaseCol;
 		SFaceOffsColor=spr->OffsCol;
@@ -1196,7 +1205,7 @@ private:
 	{
         CurrentPP->count = 4;
 
-		Vertex* cv = vdrc.verts.Append(4);
+		Vertex* cv = vd_rc.verts.Append(4);
 
 		//Fill static stuff
 		append_sprite(0);
@@ -1290,7 +1299,7 @@ private:
 		PolyParam* d_pp = CurrentPPlist->Append();
 		*d_pp = *CurrentPP;
 		CurrentPP = d_pp;
-		d_pp->first = vdrc.verts.used();
+		d_pp->first = vd_rc.verts.used();
 		d_pp->count = 0;
 	}
 
@@ -1300,15 +1309,15 @@ private:
 	{
 		List<ModifierVolumeParam> *list = NULL;
 		if (CurrentList == ListType_Opaque_Modifier_Volume)
-			list = &vdrc.global_param_mvo;
+			list = &vd_rc.global_param_mvo;
 		else if (CurrentList == ListType_Translucent_Modifier_Volume)
-			list = &vdrc.global_param_mvo_tr;
+			list = &vd_rc.global_param_mvo_tr;
 		else
 			return;
 		if (list->used() > 0)
 		{
 			ModifierVolumeParam *p = list->LastPtr();
-			p->count = vdrc.modtrig.used() - p->first;
+			p->count = vd_rc.modtrig.used() - p->first;
 			if (p->count == 0)
 				list->PopLast();
 
@@ -1322,21 +1331,23 @@ private:
 
 		ModifierVolumeParam *p = NULL;
 		if (CurrentList == ListType_Opaque_Modifier_Volume)
-			p = vdrc.global_param_mvo.Append();
+			p = vd_rc.global_param_mvo.Append();
 		else if (CurrentList == ListType_Translucent_Modifier_Volume)
-			p = vdrc.global_param_mvo_tr.Append();
+			p = vd_rc.global_param_mvo_tr.Append();
 		else
 			return;
 		p->isp.full = param->isp.full;
 		p->isp.VolumeLast = param->pcw.Volume != 0;
-		p->first = vdrc.modtrig.used();
+		p->first = vd_rc.modtrig.used();
+		p->mvMatrix = nullptr;
+		p->projMatrix = nullptr;
 	}
 	__forceinline
 		static void AppendModVolVertexA(TA_ModVolA* mvv)
 	{
 		if (CurrentList != ListType_Opaque_Modifier_Volume && CurrentList != ListType_Translucent_Modifier_Volume)
 			return;
-		lmr=vdrc.modtrig.Append();
+		lmr=vd_rc.modtrig.Append();
 
 		lmr->x0=mvv->x0;
 		lmr->y0=mvv->y0;
@@ -1359,15 +1370,6 @@ private:
 		lmr->y2=mvv->y2;
 		lmr->z2=mvv->z2;
 		//update_fz(mvv->z2);
-	}
-
-	static void VDECInit()
-	{
-		vd_rc.Clear();
-
-		//allocate storage for BG poly
-		vd_rc.global_param_op.Append();
-		vd_rc.verts.Append(4);
 	}
 };
 
@@ -1395,6 +1397,7 @@ TaTypeLut::TaTypeLut()
 }
 
 static bool ClearZBeforePass(int pass_number);
+static bool UsingAutoSort(int pass_number);
 static void getRegionTileClipping(u32& xmin, u32& xmax, u32& ymin, u32& ymax);
 
 FifoSplitter<> TAParser;
@@ -1426,11 +1429,16 @@ static void make_index(const List<PolyParam> *polys, int first, int end, bool me
 		bool dupe_next_vtx = false;
 		if (merge
 				&& last_poly != nullptr
+				&& last_poly->count != 0
 				&& poly->pcw.full == last_poly->pcw.full
 				&& poly->tcw.full == last_poly->tcw.full
 				&& poly->tsp.full == last_poly->tsp.full
 				&& poly->isp.full == last_poly->isp.full
 				&& poly->tileclip == last_poly->tileclip
+				&& poly->mvMatrix == last_poly->mvMatrix
+				&& poly->projMatrix == last_poly->projMatrix
+				&& poly->lightModel == last_poly->lightModel
+				&& poly->envMapping == last_poly->envMapping
 				// FIXME tcw1, tsp1?
 				)
 		{
@@ -1448,7 +1456,7 @@ static void make_index(const List<PolyParam> *polys, int first, int end, bool me
 		for (u32 i = 0; i < poly->count; i++)
 		{
 			const Vertex& vtx = vertices[poly->first + i];
-			if (is_vertex_inf(vtx))
+			if (poly->projMatrix == nullptr && is_vertex_inf(vtx))
 			{
 				while (i < poly->count - 1)
 				{
@@ -1544,14 +1552,14 @@ bool ta_parse_vdrc(TA_context* ctx, bool bgraColors)
 {
 	ctx->rend_inuse.lock();
 	bool rv=false;
-	verify(vd_ctx == 0);
+	verify(vd_ctx == nullptr);
 	vd_ctx = ctx;
-	vd_rc = vd_ctx->rend;
 
 	if (bgraColors)
 		TAParserDX.vdec_init();
 	else
 		TAParser.vdec_init();
+	vd_rc.Clear();
 
 	bool empty_context = true;
 	int op_poly_count = 0;
@@ -1563,6 +1571,10 @@ bool ta_parse_vdrc(TA_context* ctx, bool bgraColors)
 	{
 		bgpp->texture = renderer->GetTexture(bgpp->tsp, bgpp->tcw);
 		empty_context = false;
+		bgpp->mvMatrix = nullptr;
+		bgpp->projMatrix = nullptr;
+		bgpp->lightModel = nullptr;
+		bgpp->envMapping = false;
 	}
 
 	for (u32 pass = 0; pass <= ctx->tad.render_pass_count; pass++)
@@ -1627,8 +1639,7 @@ bool ta_parse_vdrc(TA_context* ctx, bool bgraColors)
 		vd_rc.fb_Y_CLIP.max = std::min(vd_rc.fb_Y_CLIP.max, ymax + 31);
 	}
 
-	vd_ctx->rend = vd_rc;
-	vd_ctx = 0;
+	vd_ctx = nullptr;
 	ctx->rend_inuse.unlock();
 
 	ctx->rend.Overrun = overrun;
@@ -1636,6 +1647,149 @@ bool ta_parse_vdrc(TA_context* ctx, bool bgraColors)
 	return rv && !overrun;
 }
 
+bool ta_parse_naomi2(TA_context* ctx) // TODO BGRA colors
+{
+	ctx->rend_inuse.lock();
+
+	PolyParam &bgpp = ctx->rend.global_param_op.head()[0];
+	bgpp.mvMatrix = nullptr;
+	bgpp.projMatrix = nullptr;
+	bgpp.lightModel = nullptr;
+	bgpp.envMapping = false;
+
+	for (PolyParam& pp : ctx->rend.global_param_op)
+		if (pp.pcw.Texture)
+			pp.texture = renderer->GetTexture(pp.tsp, pp.tcw);
+	for (PolyParam& pp : ctx->rend.global_param_pt)
+		if (pp.pcw.Texture)
+			pp.texture = renderer->GetTexture(pp.tsp, pp.tcw);
+	for (PolyParam& pp : ctx->rend.global_param_tr)
+		if (pp.pcw.Texture)
+			pp.texture = renderer->GetTexture(pp.tsp, pp.tcw);
+
+	bool overrun = ctx->rend.Overrun;
+	if (overrun)
+	{
+		WARN_LOG(PVR, "ERROR: TA context overrun");
+	}
+	else
+	{
+		ctx->rend.newRenderPass();
+		int op_count = 0;
+		int pt_count = 0;
+		int tr_count = 0;
+		for (const RenderPass& pass : ctx->rend.render_passes)
+		{
+			make_index(&ctx->rend.global_param_op, op_count, pass.op_count, true, &ctx->rend);
+			make_index(&ctx->rend.global_param_pt, pt_count, pass.pt_count, true, &ctx->rend);
+			make_index(&ctx->rend.global_param_tr, tr_count, pass.tr_count, false, &ctx->rend);
+			op_count = pass.op_count;
+			pt_count = pass.pt_count;
+			tr_count = pass.tr_count;
+		}
+
+		u32 xmin, xmax, ymin, ymax;
+		getRegionTileClipping(xmin, xmax, ymin, ymax);
+		ctx->rend.fb_X_CLIP.min = std::max(ctx->rend.fb_X_CLIP.min, xmin);
+		ctx->rend.fb_X_CLIP.max = std::min(ctx->rend.fb_X_CLIP.max, xmax + 31);
+		ctx->rend.fb_Y_CLIP.min = std::max(ctx->rend.fb_Y_CLIP.min, ymin);
+		ctx->rend.fb_Y_CLIP.max = std::min(ctx->rend.fb_Y_CLIP.max, ymax + 31);
+	}
+	ctx->rend_inuse.unlock();
+
+	return !overrun;
+}
+
+static PolyParam *n2CurrentPP;
+static ModifierVolumeParam *n2CurrentMVP;
+
+void ta_add_poly(int type, const PolyParam& pp)
+{
+	verify(ta_ctx != nullptr);
+	switch (type)
+	{
+	case ListType_Opaque:
+		*ta_ctx->rend.global_param_op.Append() = pp;
+		n2CurrentPP = ta_ctx->rend.global_param_op.LastPtr();
+		break;
+	case ListType_Translucent:
+		*ta_ctx->rend.global_param_tr.Append() = pp;
+		n2CurrentPP = ta_ctx->rend.global_param_tr.LastPtr();
+		break;
+	case ListType_Punch_Through:
+		*ta_ctx->rend.global_param_pt.Append() = pp;
+		n2CurrentPP = ta_ctx->rend.global_param_pt.LastPtr();
+		break;
+	default:
+		die("wrong list type");
+		break;
+	}
+	n2CurrentPP->first = ta_ctx->rend.verts.used();
+	n2CurrentPP->count = 0;
+}
+
+void ta_add_poly(int type, const ModifierVolumeParam& mvp)
+{
+	verify(ta_ctx != nullptr);
+	switch (type)
+	{
+	case ListType_Opaque_Modifier_Volume:
+		*ta_ctx->rend.global_param_mvo.Append() = mvp;
+		n2CurrentMVP = ta_ctx->rend.global_param_mvo.LastPtr();
+		break;
+	case ListType_Translucent_Modifier_Volume:
+		*ta_ctx->rend.global_param_mvo_tr.Append() = mvp;
+		n2CurrentMVP = ta_ctx->rend.global_param_mvo_tr.LastPtr();
+		break;
+	default:
+		die("wrong list type");
+		break;
+	}
+	n2CurrentMVP->first = ta_ctx->rend.modtrig.used();
+	n2CurrentMVP->count = 0;
+}
+
+void ta_add_vertex(const Vertex& vtx)
+{
+	*ta_ctx->rend.verts.Append() = vtx;
+	n2CurrentPP->count++;
+}
+
+void ta_add_triangle(const ModTriangle& tri)
+{
+	*ta_ctx->rend.modtrig.Append() = tri;
+	n2CurrentMVP->count++;
+}
+
+float *ta_add_matrix(const float *matrix)
+{
+	N2Matrix *n2mat = ta_ctx->rend.matrices.Append();
+	memcpy(n2mat->mat, matrix, sizeof(N2Matrix::mat));
+	return n2mat->mat;
+}
+
+N2LightModel *ta_add_light(const N2LightModel& light)
+{
+	*ta_ctx->rend.lightModels.Append() = light;
+	return ta_ctx->rend.lightModels.LastPtr();
+}
+
+void ta_add_ta_data(u32 *data, u32 size)
+{
+	vd_ctx = ta_ctx;
+	fetchTextures = false;
+	//TODO if (bgraColors)
+	//	TAParserDX.vdec_init();
+	//else
+		TAParser.vdec_init();
+
+	Ta_Dma *ta_data = (Ta_Dma *)data;
+	Ta_Dma *ta_data_end = (Ta_Dma *)(data + size / 4) - 1;
+	while (ta_data <= ta_data_end)
+		ta_data = TaCmd(ta_data, ta_data_end);
+	vd_ctx = nullptr;
+	fetchTextures = true;
+}
 
 //decode a vertex in the native pvr format
 //used for bg poly
@@ -1773,6 +1927,7 @@ void FillBGP(TA_context* ctx)
 	bgpp->pcw.Offset=bgpp->isp.Offset;
 	bgpp->pcw.Texture = bgpp->isp.Texture;
 	bgpp->pcw.Shadow = ISP_BACKGND_T.shadow;
+	bgpp->projMatrix = nullptr;
 
 	float scale_x= (SCALER_CTL.hscale) ? 2.f:1.f;	//if AA hack the hacked pos value hacks
 	for (int i=0;i<3;i++)
@@ -1887,7 +2042,7 @@ static RegionArrayTile getRegionTile(int pass_number)
 	return tile;
 }
 
-bool UsingAutoSort(int pass_number)
+static bool UsingAutoSort(int pass_number)
 {
 	if (((FPU_PARAM_CFG >> 21) & 1) == 0)
 		// Type 1 region header type
@@ -1906,4 +2061,23 @@ static bool ClearZBeforePass(int pass_number)
 	RegionArrayTile tile = getRegionTile(pass_number);
 
 	return !tile.NoZClear;
+}
+
+void rend_context::newRenderPass()
+{
+	verify(init);
+	if (global_param_op.used() > 0
+			|| global_param_tr.used() > 0
+			|| global_param_pt.used() > 0)
+	{
+		RenderPass pass;
+		pass.op_count = global_param_op.used();
+		pass.tr_count = global_param_tr.used();
+		pass.pt_count = global_param_pt.used();
+		pass.mvo_count = global_param_mvo.used();
+		pass.mvo_tr_count = global_param_mvo_tr.used();
+		pass.autosort = UsingAutoSort(render_passes.used());
+		pass.z_clear = ClearZBeforePass(render_passes.used());
+		*render_passes.Append() = pass;
+	}
 }
