@@ -762,6 +762,7 @@ void gl4DrawVmuTexture(u8 vmu_screen_number)
 				false,
 				false,
 				false,
+				false,
 				Pass::Color);
 	glcache.UseProgram(CurrentShader->program);
 	gl4ShaderUniforms.Set(CurrentShader);
@@ -822,6 +823,7 @@ void gl4DrawGunCrosshair(u8 port)
 				0,
 				false,
 				2,
+				false,
 				false,
 				false,
 				false,
