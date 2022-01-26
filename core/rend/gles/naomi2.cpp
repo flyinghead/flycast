@@ -18,11 +18,6 @@
  */
 #include "naomi2.h"
 
-// FIXME GLES
-#ifndef GL_CLIP_DISTANCE0
-#define GL_CLIP_DISTANCE0 0x3000
-#endif
-
 const char* N2VertexShader = R"(
 uniform vec4 depth_scale;
 uniform mat4 normal_matrix;

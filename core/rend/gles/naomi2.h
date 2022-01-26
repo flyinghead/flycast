@@ -19,6 +19,11 @@
 #pragma once
 #include "gles.h"
 
+// FIXME GLES
+#ifndef GL_CLIP_DISTANCE0
+#define GL_CLIP_DISTANCE0 0x3000
+#endif
+
 class N2VertexSource : public OpenGlSource
 {
 public:
