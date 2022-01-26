@@ -18,8 +18,7 @@
  */
 #pragma once
 #include "gl4.h"
-
-void setN2Uniforms(const PolyParam *pp, const gl4PipelineShader *shader);
+#include "rend/gles/naomi2.h"
 
 class N2Vertex4Source : public OpenGl4Source
 {

@@ -21,7 +21,7 @@
 #include "rend/transform_matrix.h"
 #include "rend/osd.h"
 #include "glsl.h"
-#include "naomi2.h"
+#include "gl4naomi2.h"
 
 //Fragment and vertex shaders code
 
@@ -548,17 +548,8 @@ bool gl4CompilePipelineShader(gl4PipelineShader* s, const char *fragment_source 
 		glUniform1i(gu, 6);		// GL_TEXTURE6
 	s->palette_index = glGetUniformLocation(s->program, "palette_index");
 
-	// Naomi2
-	s->mvMat = glGetUniformLocation(s->program, "mvMat");
-	s->projMat = glGetUniformLocation(s->program, "projMat");
-	s->glossCoef0 = glGetUniformLocation(s->program, "glossCoef0");
-	s->envMapping = glGetUniformLocation(s->program, "envMapping");
-	// Lights
-	s->lightCount = glGetUniformLocation(s->program, "lightCount");
-	s->ambientBase = glGetUniformLocation(s->program, "ambientBase");
-	s->ambientOffset = glGetUniformLocation(s->program, "ambientOffset");
-	s->ambientMaterial = glGetUniformLocation(s->program, "ambientMaterial");
-	s->useBaseOver = glGetUniformLocation(s->program, "useBaseOver");
+	if (s->naomi2)
+		initN2Uniforms(s);
 
 	return glIsProgram(s->program)==GL_TRUE;
 }
@@ -775,6 +766,8 @@ static bool RenderFrame(int width, int height)
 		glcache.UseProgram(gl4.n2ModVolShader.program);
 		glUniformMatrix4fv(gl4.n2ModVolShader.normal_matrix, 1, GL_FALSE, &gl4ShaderUniforms.normal_mat[0][0]);
 	}
+	for (auto& it : gl4.shaders)
+		resetN2UniformCache(&it.second);
 
 	gl4ShaderUniforms.PT_ALPHA=(PT_ALPHA_REF&0xFF)/255.0f;
 

@@ -275,13 +275,13 @@ struct BumpMap
 		int8_t y;
 		int8_t z;
 		u8 _res;
-	} v0;
+	} tangent;
 	struct {
 		int8_t x;
 		int8_t y;
 		int8_t z;
 		u8 _res;
-	} v1;
+	} bitangent;
 	u32 _res;
 };
 
@@ -344,7 +344,7 @@ struct ICHList : public ElanBase
 	TSP tsp0;
 	TCW tcw0;
 	TSP tsp1;
-	TSP tcw1;
+	TCW tcw1;
 	u32 flags;
 	u32 vtxCount;
 

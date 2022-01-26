@@ -574,8 +574,10 @@ GLuint gl_CompileAndLink(const char *vertexShader, const char *fragmentShader, c
 	GLuint vs = gl_CompileShader(vertexShader, GL_VERTEX_SHADER);
 	GLuint ps = gl_CompileShader(fragmentShader, GL_FRAGMENT_SHADER);
 	GLuint gs = 0;
+#ifdef GL_GEOMETRY_SHADER // TODO Need GL 3.2 or GLES 3.2. Not defined on iOS
 	if (geometryShader != nullptr)
 		gs = gl_CompileShader(geometryShader, GL_GEOMETRY_SHADER);
+#endif
 
 	GLuint program = glCreateProgram();
 	glAttachShader(program, vs);
@@ -787,17 +789,8 @@ bool CompilePipelineShader(PipelineShader* s)
 	}
 	s->normal_matrix = glGetUniformLocation(s->program, "normal_matrix");
 
-	// Naomi2
-	s->mvMat = glGetUniformLocation(s->program, "mvMat");
-	s->projMat = glGetUniformLocation(s->program, "projMat");
-	s->glossCoef0 = glGetUniformLocation(s->program, "glossCoef0");
-	s->envMapping = glGetUniformLocation(s->program, "envMapping");
-	// Lights
-	s->lightCount = glGetUniformLocation(s->program, "lightCount");
-	s->ambientBase = glGetUniformLocation(s->program, "ambientBase");
-	s->ambientOffset = glGetUniformLocation(s->program, "ambientOffset");
-	s->ambientMaterial = glGetUniformLocation(s->program, "ambientMaterial");
-	s->useBaseOver = glGetUniformLocation(s->program, "useBaseOver");
+	if (s->naomi2)
+		initN2Uniforms(s);
 
 	ShaderUniforms.Set(s);
 
@@ -1253,10 +1246,11 @@ bool RenderFrame(int width, int height)
 
 	ShaderUniforms.PT_ALPHA=(PT_ALPHA_REF&0xFF)/255.0f;
 
-	for (const auto& it : gl.shaders)
+	for (auto& it : gl.shaders)
 	{
 		glcache.UseProgram(it.second.program);
 		ShaderUniforms.Set(&it.second);
+		resetN2UniformCache(&it.second);
 	}
 
 	//setup render target first

@@ -76,7 +76,7 @@ void SortPParams(int first, int count)
 
 			if (pp->projMatrix != nullptr)
 			{
-				glm::mat4 mvMat = glm::make_mat4(pp->mvMatrix);
+				glm::mat4 mvMat = pp->mvMatrix != nullptr ? glm::make_mat4(pp->mvMatrix) : glm::mat4(1);
 				glm::mat4 projMat = glm::make_mat4(pp->projMatrix);
 				glm::vec4 min{ 1e38f, 1e38f, 1e38f, 0.f };
 				glm::vec4 max{ -1e38f, -1e38f, -1e38f, 0.f };
@@ -301,7 +301,9 @@ void GenSorted(int first, int count, std::vector<SortTrigDrawParam>& pidx_sort, 
 
 			if (pp->projMatrix != nullptr)
 			{
-				mat = glm::make_mat4(pp->projMatrix) * glm::make_mat4(pp->mvMatrix);
+				mat = glm::make_mat4(pp->projMatrix);
+				if (pp->mvMatrix != nullptr)
+					mat *= glm::make_mat4(pp->mvMatrix);
 				z0 = getProjectedZ(vtx_base + idx[0], mat);
 				z1 = getProjectedZ(vtx_base + idx[1], mat);
 			}

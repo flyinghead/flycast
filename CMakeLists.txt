@@ -937,8 +937,8 @@ if(USE_OPENGL)
 	            core/rend/gl4/gl4.h
 	            core/rend/gl4/gldraw.cpp
 	            core/rend/gl4/gles.cpp
-	        	core/rend/gl4/naomi2.cpp
-	        	core/rend/gl4/naomi2.h)
+	        	core/rend/gl4/gl4naomi2.cpp
+	        	core/rend/gl4/gl4naomi2.h)
 	endif()
 endif()
 

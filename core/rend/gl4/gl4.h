@@ -18,6 +18,7 @@
 */
 #pragma once
 #include "rend/gles/gles.h"
+#include "hw/pvr/elan_struct.h"
 #include <unordered_map>
 
 void gl4DrawStrips(GLuint output_fbo, int width, int height);
@@ -54,6 +55,26 @@ struct gl4PipelineShader
 	GLint ambientMaterial;
 	GLint useBaseOver;
 	GLint envMapping;
+	GLint bumpMapping;
+	struct {
+		GLint color;
+		GLint direction;
+		GLint position;
+		GLint parallel;
+		GLint diffuse;
+		GLint specular;
+		GLint routing;
+		GLint dmode;
+		GLint smode;
+		GLint distAttnMode;
+		GLint attnDistA;
+		GLint attnDistB;
+		GLint attnAngleA;
+		GLint attnAngleB;
+	} lights[elan::MAX_LIGHTS];
+	float *lastMvMat;
+	float *lastProjMat;
+	N2LightModel *lastLightModel;
 
 	bool cp_AlphaTest;
 	bool pp_InsideClipping;

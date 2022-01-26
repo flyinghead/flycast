@@ -1658,14 +1658,26 @@ bool ta_parse_naomi2(TA_context* ctx) // TODO BGRA colors
 	bgpp.envMapping = false;
 
 	for (PolyParam& pp : ctx->rend.global_param_op)
+	{
 		if (pp.pcw.Texture)
 			pp.texture = renderer->GetTexture(pp.tsp, pp.tcw);
+		if (pp.tsp1.full != (u32)-1)
+			pp.texture1 = renderer->GetTexture(pp.tsp1, pp.tcw1);
+	}
 	for (PolyParam& pp : ctx->rend.global_param_pt)
+	{
 		if (pp.pcw.Texture)
 			pp.texture = renderer->GetTexture(pp.tsp, pp.tcw);
+		if (pp.tsp1.full != (u32)-1)
+			pp.texture1 = renderer->GetTexture(pp.tsp1, pp.tcw1);
+	}
 	for (PolyParam& pp : ctx->rend.global_param_tr)
+	{
 		if (pp.pcw.Texture)
 			pp.texture = renderer->GetTexture(pp.tsp, pp.tcw);
+		if (pp.tsp1.full != (u32)-1)
+			pp.texture1 = renderer->GetTexture(pp.tsp1, pp.tcw1);
+	}
 
 	bool overrun = ctx->rend.Overrun;
 	if (overrun)

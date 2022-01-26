@@ -21,6 +21,7 @@
 // FIXME GLES
 #ifndef GL_CLIP_DISTANCE0
 #define GL_CLIP_DISTANCE0 0x3000
+#define GL_CLIP_DISTANCE1 0x3001
 #endif
 
 const char* N2VertexShader = R"(
@@ -31,6 +32,7 @@ uniform float sp_FOG_DENSITY;
 uniform mat4 mvMat;
 uniform mat4 projMat;
 uniform int envMapping;
+uniform int bumpMapping;
 
 // Vertex input
 in vec3 in_pos;
@@ -54,7 +56,7 @@ INTERPOLATION out vec4 vs_offs1;
 noperspective out vec2 vs_uv1;
 #endif
 #endif
-out float gl_ClipDistance[1];
+out float gl_ClipDistance[6];
 
 void main()
 {
@@ -66,9 +68,13 @@ void main()
 	vs_base1 = in_base1;
 	vs_offs1 = in_offs1;
 	vs_uv1 = in_uv1;
+	// FIXME need offset0 and offset1 for bump maps
+	if (bumpMapping == 1)
+		computeBumpMap(vs_offs, vs_offs1, normalize(in_normal));
 #endif
 	vec4 vnorm = normalize(mvMat * vec4(in_normal, 0.0));
-	computeColors(vs_base, vs_offs, vpos.xyz, vnorm.xyz);
+	if (bumpMapping == 0)
+		computeColors(vs_base, vs_offs, vpos.xyz, vnorm.xyz);
 	vs_uv.xy = in_uv;
 	if (envMapping == 1)
 		computeEnvMap(vs_uv.xy, vpos.xyz, vnorm.xyz);
@@ -77,6 +83,7 @@ void main()
 	vpos = projMat * vpos;
 
 	gl_ClipDistance[0] = vpos.w - 0.001; // near FIXME
+	gl_ClipDistance[1] = 100000.0 - vpos.w; // far FIXME
 
 	gl_Position = vpos;
 }
@@ -84,6 +91,8 @@ void main()
 )";
 
 const char* N2ColorShader = R"(
+#define PI 3.1415926
+
 #define LMODE_SINGLE_SIDED 0
 #define LMODE_DOUBLE_SIDED 1
 #define LMODE_DOUBLE_SIDED_WITH_TOLERANCE 2
@@ -250,11 +259,50 @@ void computeEnvMap(inout vec2 uv, in vec3 position, in vec3 normal)
 	uv = clamp(uv, 0.0, 1.0);
 }
 
+void computeBumpMap(inout vec4 color0, in vec4 color1, in vec3 normal)
+{
+	vec3 tangent = color0.xyz;
+	if (tangent.x > 0.5)
+		tangent.x -= 1.0;
+	if (tangent.y > 0.5)
+		tangent.y -= 1.0;
+	if (tangent.z > 0.5)
+		tangent.z -= 1.0;
+	tangent = normalize(tangent);
+	vec3 bitangent = color1.xyz;
+	if (bitangent.x > 0.5)
+		bitangent.x -= 1.0;
+	if (bitangent.y > 0.5)
+		bitangent.y -= 1.0;
+	if (bitangent.z > 0.5)
+		bitangent.z -= 1.0;
+	bitangent = normalize(bitangent);
+
+	float scaleDegree = color0.w;
+	float scaleOffset = color1.w;
+
+	// FIXME not right
+	float sinT = normal.x;
+	float cosQ = tangent.y;
+	float sinQ = bitangent.z;
+
+	float k1 = 1.0 - scaleDegree;
+	float k2 = scaleDegree * sinT;
+	float k3 = scaleDegree * sqrt(1.0 - sinT * sinT);
+	float q = acos(cosQ);
+	if (sinQ < 0)
+		q = 2.0 * PI - q;
+	color0.x = q / PI / 2.0;
+	color0.y = k3;
+	color0.z = k2;
+	color0.w = k1;
+}
+
 )";
 
 const char *GeometryClippingShader = R"(
 layout (triangles) in;
-layout (triangle_strip, max_vertices = 6) out;
+layout (triangle_strip, max_vertices = 12) out;
 
 uniform mat4 normal_matrix;
 
@@ -289,7 +337,7 @@ struct Vertex
 	vec4 offs1;
 	vec2 uv1;
 #endif
-	float clipDist;
+	float clipDist[2];
 };
 
 Vertex interpolate(in Vertex v0, in Vertex v1, in float d0, in float d1)
@@ -307,7 +355,8 @@ Vertex interpolate(in Vertex v0, in Vertex v1, in float d0, in float d1)
 	v.uv1 = mix(v0.uv1, v1.uv1, f);
 #endif
 #endif
-	v.clipDist = mix(v0.clipDist, v1.clipDist, f);
+	v.clipDist[0] = mix(v0.clipDist[0], v1.clipDist[0], f);
+	v.clipDist[1] = mix(v0.clipDist[1], v1.clipDist[1], f);
 
 	return v;
 }
@@ -418,39 +467,27 @@ void emitVertex(in Vertex v)
 
 void main()
 {
-	Vertex vtx[6];
-	vtx[0].pos = gl_in[0].gl_Position;
-	vtx[1].pos = gl_in[1].gl_Position;
-	vtx[2].pos = gl_in[2].gl_Position;
+	Vertex vtx[12];
+	for (int i = 0; i < 3; i++)
+	{
+		vtx[i].pos = gl_in[i].gl_Position;
 #if GEOM_ONLY == 0
-	vtx[0].base = vs_base[0];
-	vtx[0].offs = vs_offs[0];
-	vtx[0].uv = vs_uv[0];
-	vtx[1].base = vs_base[1];
-	vtx[1].offs = vs_offs[1];
-	vtx[1].uv = vs_uv[1];
-	vtx[2].base = vs_base[2];
-	vtx[2].offs = vs_offs[2];
-	vtx[2].uv = vs_uv[2];
+		vtx[i].base = vs_base[i];
+		vtx[i].offs = vs_offs[i];
+		vtx[i].uv = vs_uv[i];
 #if TWO_VOLUMES == 1
-	vtx[0].base1 = vs_base1[0];
-	vtx[0].offs1 = vs_offs1[0];
-	vtx[0].uv1 = vs_uv1[0];
-	vtx[1].base1 = vs_base1[1];
-	vtx[1].offs1 = vs_offs1[1];
-	vtx[1].uv1 = vs_uv1[1];
-	vtx[2].base1 = vs_base1[2];
-	vtx[2].offs1 = vs_offs1[2];
-	vtx[2].uv1 = vs_uv1[2];
+		vtx[i].base1 = vs_base1[i];
+		vtx[i].offs1 = vs_offs1[i];
+		vtx[i].uv1 = vs_uv1[i];
 #endif
 #endif
+		vtx[i].clipDist[0] = gl_in[i].gl_ClipDistance[0];
+		vtx[i].clipDist[1] = gl_in[i].gl_ClipDistance[1];
+	}
 	int vtxCount = 3;
-	vtx[0].clipDist = gl_in[0].gl_ClipDistance[0];
-	vtx[1].clipDist = gl_in[1].gl_ClipDistance[0];
-	vtx[2].clipDist = gl_in[2].gl_ClipDistance[0];
 
 	// near-plane only
-	vec3 dist = vec3(vtx[0].clipDist, vtx[1].clipDist, vtx[2].clipDist);
+	vec3 dist = vec3(vtx[0].clipDist[0], vtx[1].clipDist[0], vtx[2].clipDist[0]);
 	Vertex v3;
 	int size = clip3(dist, vtx[0], vtx[1], vtx[2], v3);
 	if (size == 0)
@@ -494,78 +531,4 @@ N2GeometryShader::N2GeometryShader(bool gouraud, bool geometryOnly) : OpenGlSour
 	addConstant("TWO_VOLUMES", 0);
 	addSource(GouraudSource);
 	addSource(GeometryClippingShader);
-}
-
-static void setLightUniform(const PipelineShader *shader, int lightId, const char *name, int v)
-{
-	char s[128];
-	sprintf(s, "lights[%d].%s", lightId, name);
-	GLint loc = glGetUniformLocation(shader->program, s);
-	glUniform1i(loc, v);
-}
-
-static void setLightUniform(const PipelineShader *shader, int lightId, const char *name, float v)
-{
-	char s[128];
-	sprintf(s, "lights[%d].%s", lightId, name);
-	GLint loc = glGetUniformLocation(shader->program, s);
-	glUniform1f(loc, v);
-}
-
-static void setLightUniform4f(const PipelineShader *shader, int lightId, const char *name, const float *v)
-{
-	char s[128];
-	sprintf(s, "lights[%d].%s", lightId, name);
-	GLint loc = glGetUniformLocation(shader->program, s);
-	glUniform4fv(loc, 1, v);
-}
-
-void setN2Uniforms(const PolyParam *pp, const PipelineShader *shader)
-{
-	glUniformMatrix4fv(shader->mvMat, 1, GL_FALSE, &pp->mvMatrix[0]);
-	glUniformMatrix4fv(shader->projMat, 1, GL_FALSE, &pp->projMatrix[0]);
-	glUniform1f(shader->glossCoef0, pp->glossCoef0);
-	N2LightModel *const lightModel = pp->lightModel;
-	if (lightModel != nullptr)
-	{
-		glUniform1i(shader->ambientMaterial, lightModel->ambientMaterial);
-		glUniform4fv(shader->ambientBase, 1, lightModel->ambientBase);
-		glUniform4fv(shader->ambientOffset, 1, lightModel->ambientOffset);
-		glUniform1i(shader->useBaseOver, lightModel->useBaseOver);
-		glUniform1i(shader->lightCount, lightModel->lightCount);
-		for (int i = 0; i < lightModel->lightCount; i++)
-		{
-			const N2Light& light = lightModel->lights[i];
-			setLightUniform(shader, i, "parallel", light.parallel);
-
-			setLightUniform4f(shader, i, "color", light.color);
-			setLightUniform4f(shader, i, "direction", light.direction);
-			setLightUniform4f(shader, i, "position", light.position);
-
-			setLightUniform(shader, i, "diffuse", light.diffuse);
-			setLightUniform(shader, i, "specular", light.specular);
-			setLightUniform(shader, i, "routing", light.routing);
-			setLightUniform(shader, i, "dmode", light.dmode);
-			setLightUniform(shader, i, "smode", light.smode);
-			setLightUniform(shader, i, "distAttnMode", light.distAttnMode);
-
-			setLightUniform(shader, i, "attnDistA", light.attnDistA);
-			setLightUniform(shader, i, "attnDistB", light.attnDistB);
-			setLightUniform(shader, i, "attnAngleA", light.attnAngleA);
-			setLightUniform(shader, i, "attnAngleB", light.attnAngleB);
-		}
-	}
-	else
-	{
-		float white[] { 1.f, 1.f, 1.f, 1.f };
-		float black[4]{};
-		glUniform1i(shader->ambientMaterial, 0);
-		glUniform4fv(shader->ambientBase, 1, white);
-		glUniform4fv(shader->ambientOffset, 1, black);
-		glUniform1i(shader->useBaseOver, 0);
-		glUniform1i(shader->lightCount, 0);
-	}
-	glUniform1i(shader->envMapping, pp->envMapping);
-
-	glEnable(GL_CLIP_DISTANCE0);
 }

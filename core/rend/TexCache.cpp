@@ -408,6 +408,7 @@ static const TextureType PAL_TYPE[4] = {
 
 void BaseTextureCacheData::PrintTextureName()
 {
+#if !defined(NDEBUG) || defined(DEBUGFAST)
 	char str[512];
 	sprintf(str, "Texture: %s", GetPixelFormatName());
 
@@ -427,6 +428,7 @@ void BaseTextureCacheData::PrintTextureName()
 	std::string id = GetId();
 	sprintf(str + strlen(str), " id=%s", id.c_str());
 	DEBUG_LOG(RENDERER, "%s", str);
+#endif
 }
 
 //true if : dirty or paletted texture and hashes don't match

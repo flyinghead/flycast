@@ -508,142 +508,6 @@ static u32 packColor(const glm::vec4& color)
 			| (int)(std::max(0.f, std::min(1.f, color.b)) * 255.f);
 }
 
-static void computeColors(glm::vec4& baseCol, glm::vec4& offsetCol, const glm::vec4& pos, const glm::vec4& normal)
-{
-	if (curLightModel == nullptr)
-		return;
-	glm::vec4 ambient{};
-	glm::vec4 diffuse{};
-	glm::vec4 specular{};
-	float diffuseAlphaDiff = 0;
-	float specularAlphaDiff = 0;
-
-	for (u32 lightId = 0; lightId < MAX_LIGHTS; lightId++)
-	{
-		const ElanBase *base = curLights[lightId];
-		if (base == nullptr)
-			continue;
-		if (!curLightModel->isDiffuse(lightId) && !curLightModel->isSpecular(lightId))
-			continue;
-
-		glm::vec4 lightDir; // direction to the light
-		int routing;
-		int dmode;
-		int smode = N2_LMETHOD_SINGLE_SIDED;
-		glm::vec4 lightColor;
-		if (base->pcw.parallelLight)
-		{
-			ParallelLight *light = (ParallelLight *)base;
-			lightDir = glm::normalize(glm::vec4((int8_t)light->dirX, -(int8_t)light->dirY, -(int8_t)light->dirZ, 0));
-			lightColor = unpackColor(light->red, light->green, light->blue);
-			routing = light->routing;
-			dmode = light->dmode;
-		}
-		else
-		{
-			PointLight *light = (PointLight *)base;
-			glm::vec4 lightPos(light->posX, light->posY, light->posZ, 1);
-			lightDir = glm::normalize(lightPos - pos); // FIXME normalizing 4D vec
-
-			lightColor = unpackColor(light->red, light->green, light->blue);
-			routing = light->routing;
-
-			if (light->isAttnDist())
-			{
-				float distance = glm::length(lightPos - pos);
-				lightColor *= light->attnDist(distance);
-			}
-			if (light->isAttnAngle())
-			{
-				glm::vec4 spotDir = glm::normalize(glm::vec4((int8_t)light->dirX, (int8_t)light->dirY, (int8_t)light->dirZ, 0));
-				float cosAngle = glm::max(0.f, glm::dot(-lightDir, spotDir));
-				lightColor *= light->attnAngle(cosAngle);
-			}
-			dmode = light->dmode;
-			smode = light->smode;
-		}
-		verify(dmode == N2_LMETHOD_SINGLE_SIDED || dmode == N2_LMETHOD_SPECIAL_EFFECT || dmode == N2_LMETHOD_DOUBLE_SIDED);
-		verify(smode == N2_LMETHOD_SINGLE_SIDED || smode == N2_LMETHOD_SPECIAL_EFFECT || smode == N2_LMETHOD_DOUBLE_SIDED);
-		if (!(routing == N2_LFUNC_BASEDIFF_BASESPEC_ADD || routing == N2_LFUNC_BASEDIFF_OFFSSPEC_ADD
-				|| routing == N2_LFUNC_OFFSDIFF_BASESPEC_ADD || routing == N2_LFUNC_OFFSDIFF_OFFSSPEC_ADD
-				|| routing == N2_LFUNC_ALPHADIFF_SUB))
-			WARN_LOG(PVR, "routing = %d dmode %d smode %d lightCol %f %f %f %f", routing ,dmode, smode, lightColor.r, lightColor.g, lightColor.b, lightColor.a);
-		if (curLightModel->isDiffuse(lightId) && curGmp->paramSelect.d0)
-		{
-			float factor;
-			switch (dmode)
-			{
-			case N2_LMETHOD_SINGLE_SIDED:
-				factor = glm::max(glm::dot(normal, lightDir), 0.f);
-				break;
-			case N2_LMETHOD_DOUBLE_SIDED:
-				factor = glm::abs(glm::dot(normal, lightDir));
-				break;
-			case N2_LMETHOD_SPECIAL_EFFECT:
-			default:
-				factor = 1;
-				break;
-			}
-			if (routing == N2_LFUNC_ALPHADIFF_SUB)
-				// FIXME probably need to substract from baseCol.a/OffsetCol.a instead? still not working...
-				//diffuse.a = std::max(0.f, diffuse.a - lightColor.r * factor);
-				diffuseAlphaDiff -= lightColor.r * factor;
-			else if (routing == N2_LFUNC_BASEDIFF_BASESPEC_ADD || routing == N2_LFUNC_BASEDIFF_OFFSSPEC_ADD)
-				diffuse += lightColor * factor;
-			if (routing == N2_LFUNC_OFFSDIFF_BASESPEC_ADD || routing == N2_LFUNC_OFFSDIFF_OFFSSPEC_ADD)
-				specular += lightColor * factor;
-		}
-		if (curLightModel->isSpecular(lightId) && curGmp->paramSelect.s0)
-		{
-			glm::vec4 reflectDir = glm::reflect(-lightDir, normal);
-			float factor;
-			switch (smode)
-			{
-			case N2_LMETHOD_SINGLE_SIDED:
-				factor = glm::pow(glm::max(glm::dot(glm::normalize(-pos), reflectDir), 0.f), curGmp->gloss.getCoef0());
-				break;
-			case N2_LMETHOD_DOUBLE_SIDED:
-				factor = glm::pow(glm::abs(glm::dot(glm::normalize(-pos), reflectDir)), curGmp->gloss.getCoef0());
-				break;
-			case N2_LMETHOD_SPECIAL_EFFECT:
-			default:
-				factor = 1;
-				break;
-			}
-			if (routing == N2_LFUNC_ALPHADIFF_SUB)
-				//specular.a = std::max(0.f, specular.a - lightColor.r * factor);
-				specularAlphaDiff -= lightColor.r * factor;
-			else if (routing == N2_LFUNC_OFFSDIFF_OFFSSPEC_ADD || routing == N2_LFUNC_BASEDIFF_OFFSSPEC_ADD)
-				specular += lightColor * factor;
-			if (routing == N2_LFUNC_BASEDIFF_BASESPEC_ADD || routing == N2_LFUNC_OFFSDIFF_BASESPEC_ADD)
-				diffuse += lightColor * factor;
-		}
-	}
-	if (curGmp->paramSelect.a0) // ambient0 TODO check
-	{
-		if (curLightModel->useAmbientBase0)
-			diffuse += unpackColor(curLightModel->ambientBase0);
-		if (curLightModel->useAmbientOffset0)
-			specular += unpackColor(curLightModel->ambientOffset0);
-	}
-	baseCol *= diffuse;
-	offsetCol *= specular;
-	if (curGmp->paramSelect.a0)
-	{
-		if (!curLightModel->useAmbientBase0)
-			baseCol += unpackColor(curLightModel->ambientBase0);
-		if (!curLightModel->useAmbientOffset0)
-			offsetCol += unpackColor(curLightModel->ambientOffset0);
-	}
-	baseCol.a = std::max(0.f, baseCol.a + diffuseAlphaDiff);
-	offsetCol.a = std::max(0.f, offsetCol.a + specularAlphaDiff);
-	if (curLightModel->useBaseOver)
-	{
-		glm::vec4 overflow = glm::max(glm::vec4(0), baseCol - glm::vec4(1));
-		offsetCol += overflow;
-	}
-}
-
 template<typename T>
 glm::vec4 getNormal(const T& vtx)
 {
@@ -674,26 +538,35 @@ void convertVertex(const N2_VERTEX& vs, Vertex& vd)
 	setCoords(vd, vs.x, vs.y, vs.z);
 	setNormal(vd, vs);
 	SetEnvMapUV(vd);
-	glm::vec4 baseCol;
-	glm::vec4 offsetCol;
+	glm::vec4 baseCol0;
+	glm::vec4 offsetCol0;
+	glm::vec4 baseCol1;
+	glm::vec4 offsetCol1;
 	if (curGmp != nullptr)
 	{
-		baseCol = unpackColor(curGmp->diffuse0);
-		offsetCol = unpackColor(curGmp->specular0);
+		baseCol0 = unpackColor(curGmp->diffuse0);
+		offsetCol0 = unpackColor(curGmp->specular0);
+		baseCol1 = unpackColor(curGmp->diffuse1);
+		offsetCol1 = unpackColor(curGmp->specular1);
 		if (state.listType == 2)
 		{
 			// FIXME
-			baseCol.a = 0;
-			offsetCol.a = 1;
+			baseCol0.a = 0;
+			offsetCol0.a = 1;
+			baseCol1.a = 0;
+			offsetCol1.a = 1;
 		}
-		computeColors(baseCol, offsetCol, curMatrix * glm::vec4(vs.x, vs.y, vs.z, 1), getNormal(vs));
 	}
 	else
 	{
-		baseCol = glm::vec4(0);
-		offsetCol = glm::vec4(0);
+		baseCol0 = glm::vec4(0);
+		offsetCol0 = glm::vec4(0);
+		baseCol1 = glm::vec4(0);
+		offsetCol1 = glm::vec4(0);
 	}
-	*(u32 *)vd.col = packColor(baseCol + offsetCol);
+	// non-textured vertices have no offset color
+	*(u32 *)vd.col = packColor(baseCol0 + offsetCol0);
+	*(u32 *)vd.col1 = packColor(baseCol1 + offsetCol1);
 }
 
 template<>
@@ -702,16 +575,21 @@ void convertVertex(const N2_VERTEX_VR& vs, Vertex& vd)
 	setCoords(vd, vs.x, vs.y, vs.z);
 	setNormal(vd, vs);
 	SetEnvMapUV(vd);
-	glm::vec4 baseCol = unpackColor(vs.rgb.argb0);
-	glm::vec4 offsetCol = baseCol;
+	glm::vec4 baseCol0 = unpackColor(vs.rgb.argb0);
+	glm::vec4 offsetCol0 = baseCol0;
+	glm::vec4 baseCol1 = unpackColor(vs.rgb.argb1);
+	glm::vec4 offsetCol1 = baseCol1;
 	if (curGmp != nullptr)
 	{
 		// Not sure about offset but vf4 needs base addition
-		baseCol += unpackColor(curGmp->diffuse0);
-		offsetCol += unpackColor(curGmp->specular0);
-		computeColors(baseCol, offsetCol, curMatrix * glm::vec4(vs.x, vs.y, vs.z, 1), getNormal(vs));
+		baseCol0 += unpackColor(curGmp->diffuse0);
+		offsetCol0 += unpackColor(curGmp->specular0);
+		baseCol1 += unpackColor(curGmp->diffuse1);
+		offsetCol1 += unpackColor(curGmp->specular1);
 	}
-	*(u32 *)vd.col = packColor(baseCol + offsetCol);
+	// non-textured vertices have no offset color
+	*(u32 *)vd.col = packColor(baseCol0 + offsetCol0);
+	*(u32 *)vd.col1 = packColor(baseCol1 + offsetCol1);
 }
 
 template<>
@@ -720,21 +598,28 @@ void convertVertex(const N2_VERTEX_VU& vs, Vertex& vd)
 	setCoords(vd, vs.x, vs.y, vs.z);
 	setNormal(vd, vs);
 	setUV(vs, vd);
-	glm::vec4 baseCol;
-	glm::vec4 offsetCol;
+	glm::vec4 baseCol0;
+	glm::vec4 offsetCol0;
+	glm::vec4 baseCol1;
+	glm::vec4 offsetCol1;
 	if (curGmp != nullptr)
 	{
-		baseCol = unpackColor(curGmp->diffuse0);
-		offsetCol = unpackColor(curGmp->specular0);
-		computeColors(baseCol, offsetCol, curMatrix * glm::vec4(vs.x, vs.y, vs.z, 1), getNormal(vs));
+		baseCol0 = unpackColor(curGmp->diffuse0);
+		offsetCol0 = unpackColor(curGmp->specular0);
+		baseCol1 = unpackColor(curGmp->diffuse1);
+		offsetCol1 = unpackColor(curGmp->specular1);
 	}
 	else
 	{
-		baseCol = glm::vec4(0);
-		offsetCol = glm::vec4(0);
+		baseCol0 = glm::vec4(0);
+		offsetCol0 = glm::vec4(0);
+		baseCol1 = glm::vec4(0);
+		offsetCol1 = glm::vec4(0);
 	}
-	*(u32 *)vd.col = packColor(baseCol);
-	*(u32 *)vd.spc = packColor(offsetCol);
+	*(u32 *)vd.col = packColor(baseCol0);
+	*(u32 *)vd.spc = packColor(offsetCol0);
+	*(u32 *)vd.col1 = packColor(baseCol1);
+	*(u32 *)vd.spc1 = packColor(offsetCol1);
 }
 
 template<>
@@ -743,41 +628,63 @@ void convertVertex(const N2_VERTEX_VUR& vs, Vertex& vd)
 	setCoords(vd, vs.x, vs.y, vs.z);
 	setNormal(vd, vs);
 	setUV(vs, vd);
-	glm::vec4 baseCol = unpackColor(vs.rgb.argb0);
-	glm::vec4 offsetCol = baseCol;
+	glm::vec4 baseCol0 = unpackColor(vs.rgb.argb0);
+	glm::vec4 offsetCol0 = baseCol0;
+	glm::vec4 baseCol1 = unpackColor(vs.rgb.argb1);
+	glm::vec4 offsetCol1 = baseCol1;
 	if (curGmp != nullptr)
 	{
 		// Not sure about offset but vf4 needs base addition
-		baseCol += unpackColor(curGmp->diffuse0);
-		offsetCol += unpackColor(curGmp->specular0);
-		computeColors(baseCol, offsetCol, curMatrix * glm::vec4(vs.x, vs.y, vs.z, 1), getNormal(vs));
+		baseCol0 += unpackColor(curGmp->diffuse0);
+		offsetCol0 += unpackColor(curGmp->specular0);
+		baseCol1 += unpackColor(curGmp->diffuse1);
+		offsetCol1 += unpackColor(curGmp->specular1);
 	}
-	*(u32 *)vd.col = packColor(baseCol);
-	*(u32 *)vd.spc = packColor(offsetCol);
+	*(u32 *)vd.col = packColor(baseCol0);
+	*(u32 *)vd.spc = packColor(offsetCol0);
+	*(u32 *)vd.col1 = packColor(baseCol1);
+	*(u32 *)vd.spc1 = packColor(offsetCol1);
 }
 
 template<>
 void convertVertex(const N2_VERTEX_VUB& vs, Vertex& vd)
 {
-	// TODO
 	setCoords(vd, vs.x, vs.y, vs.z);
 	setNormal(vd, vs);
 	setUV(vs, vd);
-	glm::vec4 baseCol;
-	glm::vec4 offsetCol;
+	glm::vec4 baseCol0;
+	glm::vec4 baseCol1;
 	if (curGmp != nullptr)
 	{
-		baseCol = unpackColor(curGmp->diffuse0);
-		offsetCol = unpackColor(curGmp->specular0);
-		computeColors(baseCol, offsetCol, curMatrix * glm::vec4(vs.x, vs.y, vs.z, 1), getNormal(vs));
+		baseCol0 = unpackColor(curGmp->diffuse0);
+		baseCol1 = unpackColor(curGmp->diffuse1);
 	}
 	else
 	{
-		baseCol = glm::vec4(0);
-		offsetCol = glm::vec4(0);
+		baseCol0 = glm::vec4(0);
+		baseCol1 = glm::vec4(0);
 	}
-	*(u32 *)vd.col = packColor(baseCol);
-	*(u32 *)vd.spc = packColor(offsetCol);
+	*(u32 *)vd.col = packColor(baseCol0);
+	*(u32 *)vd.col1 = packColor(baseCol1);
+	// Stuff the bump map normals and parameters in the specular colors
+	vd.spc[0] = vs.bump.tangent.x;
+	vd.spc[1] = vs.bump.tangent.y;
+	vd.spc[2] = vs.bump.tangent.z;
+	vd.spc1[0] = vs.bump.bitangent.x;
+	vd.spc1[1] = vs.bump.bitangent.y;
+	vd.spc1[2] = vs.bump.bitangent.z;
+	vd.spc[3] = vs.bump.scaleFactor.bumpDegree; // always 255?
+	vd.spc1[3] = vs.bump.scaleFactor.fixedOffset; // always 0?
+//	int nx = (int8_t)vs.header.nx;
+//	int ny = (int8_t)vs.header.ny;
+//	int nz = (int8_t)vs.header.nz;
+//	printf("BumpMap vtx deg %d off %d normal %d %d %d tangent %d %d %d bitangent %d %d %d dot %d %d %d\n", vs.bump.scaleFactor.bumpDegree, vs.bump.scaleFactor.fixedOffset,
+//			nx, ny, nz,
+//			vs.bump.tangent.x, vs.bump.tangent.y, vs.bump.tangent.z, vs.bump.bitangent.x, vs.bump.bitangent.y, vs.bump.bitangent.z,
+//			nx * vs.bump.tangent.x + ny * vs.bump.tangent.y + nz * vs.bump.tangent.z,
+//			nx * vs.bump.bitangent.x + ny * vs.bump.bitangent.y + nz * vs.bump.bitangent.z,
+//			vs.bump.tangent.x * vs.bump.bitangent.x + vs.bump.tangent.y * vs.bump.bitangent.y + vs.bump.tangent.z * vs.bump.bitangent.z
+//			);
 }
 
 template <typename T>
@@ -1052,8 +959,13 @@ static void setStateParams(PolyParam& pp)
 		pp.tsp.DstInstr = 5;
 	}
 	// projFlip is for left-handed projection matrices (initd rear view mirror)
-	bool projFlip = std::signbit(taProjMatrix[0]) == std::signbit(taProjMatrix[5]);
+	bool projFlip = taProjMatrix != nullptr && std::signbit(taProjMatrix[0]) == std::signbit(taProjMatrix[5]);
 	pp.isp.CullMode ^= (u32)cullingReversed ^ (u32)projFlip;
+	if (pp.pcw.Volume == 0)
+	{
+		pp.tsp1.full = -1;
+		pp.tcw1.full = -1;
+	}
 }
 
 static void sendPolygon(ICHList *list)
@@ -1087,8 +999,10 @@ static void sendPolygon(ICHList *list)
 				PolyParam pp{};
 				pp.pcw.Shadow = list->pcw.shadow;
 				pp.pcw.Gouraud = list->pcw.gouraud;
+				pp.pcw.Volume = list->pcw.volume;
 				pp.isp = list->isp;
 				pp.tsp = list->tsp0;
+				pp.tsp1 = list->tsp1;
 				setStateParams(pp);
 				if (curGmp != nullptr && curGmp->paramSelect.e0)
 				{
@@ -1133,19 +1047,31 @@ static void sendPolygon(ICHList *list)
 			}
 			else
 			{
-				verify(curGmp == nullptr || curGmp->paramSelect.e0 == 0);
 				PolyParam pp{};
 				pp.pcw.Shadow = list->pcw.shadow;
 				pp.pcw.Texture = 1;
 				pp.pcw.Offset = list->pcw.offset;
 				pp.pcw.Gouraud = list->pcw.gouraud;
+				pp.pcw.Volume = list->pcw.volume;
 				pp.isp = list->isp;
 				pp.tsp = list->tsp0;
 				pp.tcw = list->tcw0;
+				pp.tsp1 = list->tsp1;
+				pp.tcw1 = list->tcw1;
 				setStateParams(pp);
+				if (curGmp != nullptr && curGmp->paramSelect.e0)
+				{
+					// Environment mapping
+					pp.pcw.Offset = 0;
+					pp.tsp.UseAlpha = 1;
+					pp.tsp.IgnoreTexA = 0;
+					pp.envMapping = true;
+					envMapping = true;
+				}
 				ta_add_poly(state.listType, pp);
 
 				sendVertices(list, vtx);
+				envMapping = false;
 			}
 		}
 		break;
@@ -1161,9 +1087,12 @@ static void sendPolygon(ICHList *list)
 			pp.pcw.Texture = 1;
 			pp.pcw.Offset = list->pcw.offset;
 			pp.pcw.Gouraud = list->pcw.gouraud;
+			pp.pcw.Volume = list->pcw.volume;
 			pp.isp = list->isp;
 			pp.tsp = list->tsp0;
 			pp.tcw = list->tcw0;
+			pp.tsp1 = list->tsp1;
+			pp.tcw1 = list->tcw1;
 			setStateParams(pp);
 			ta_add_poly(state.listType, pp);
 
@@ -1179,8 +1108,10 @@ static void sendPolygon(ICHList *list)
 			PolyParam pp{};
 			pp.pcw.Shadow = list->pcw.shadow;
 			pp.pcw.Gouraud = list->pcw.gouraud;
+			pp.pcw.Volume = list->pcw.volume;
 			pp.isp = list->isp;
 			pp.tsp = list->tsp0;
+			pp.tsp1 = list->tsp1;
 			setStateParams(pp);
 			if (curGmp != nullptr && curGmp->paramSelect.e0)
 			{
@@ -1204,6 +1135,7 @@ static void sendPolygon(ICHList *list)
 	case ICHList::VTX_TYPE_VUB:
 		{
 			// TODO
+			//printf("BUMP MAP fmt %d filter %d src select %d dst %d\n", list->tcw0.PixelFmt, list->tsp0.FilterMode, list->tsp0.SrcSelect, list->tsp0.DstSelect);
 			N2_VERTEX_VUB *vtx = (N2_VERTEX_VUB *)((u8 *)list + sizeof(ICHList));
 			if (!isInFrustum(vtx, list->vtxCount))
 				break;
@@ -1212,14 +1144,16 @@ static void sendPolygon(ICHList *list)
 			pp.pcw.Texture = 1;
 			pp.pcw.Offset = 1;
 			pp.pcw.Gouraud = list->pcw.gouraud;
+			pp.pcw.Volume = list->pcw.volume;
 			pp.isp = list->isp;
 			pp.tsp = list->tsp0;
 			pp.tcw = list->tcw0;
+			pp.tsp1 = list->tsp1;
+			pp.tcw1 = list->tcw1;
 			setStateParams(pp);
-			//ta_add_poly(state.listType, pp);
+			ta_add_poly(state.listType, pp);
 
-			//sendVertices(list, vtx);
-			INFO_LOG(PVR, "Unhandled poly format VTX_TYPE_VUB");
+			sendVertices(list, vtx);
 		}
 		break;
 

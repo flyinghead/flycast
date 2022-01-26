@@ -1,6 +1,7 @@
 #pragma once
 #include "hw/pvr/ta_structs.h"
 #include "hw/pvr/ta_ctx.h"
+#include "hw/pvr/elan_struct.h"
 #include "rend/TexCache.h"
 #include "wsi/gl_context.h"
 #include "glcache.h"
@@ -61,6 +62,26 @@ struct PipelineShader
 	GLint ambientMaterial;
 	GLint useBaseOver;
 	GLint envMapping;
+	GLint bumpMapping;
+	struct {
+		GLint color;
+		GLint direction;
+		GLint position;
+		GLint parallel;
+		GLint diffuse;
+		GLint specular;
+		GLint routing;
+		GLint dmode;
+		GLint smode;
+		GLint distAttnMode;
+		GLint attnDistA;
+		GLint attnDistB;
+		GLint attnAngleA;
+		GLint attnAngleB;
+	} lights[elan::MAX_LIGHTS];
+	float *lastMvMat;
+	float *lastProjMat;
+	N2LightModel *lastLightModel;
 
 	//
 	bool cp_AlphaTest;
