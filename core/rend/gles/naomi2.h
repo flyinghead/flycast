@@ -151,5 +151,5 @@ void setN2Uniforms(const PolyParam *pp, ShaderType *shader)
 	glUniform1i(shader->bumpMapping, pp->pcw.Texture == 1 && pp->tcw.PixelFmt == PixelBumpMap);
 
 	glEnable(GL_CLIP_DISTANCE0);
-	glEnable(GL_CLIP_DISTANCE1);
+	glEnable(GL_CLIP_DISTANCE0 + 1);
 }

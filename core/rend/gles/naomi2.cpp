@@ -21,7 +21,6 @@
 // FIXME GLES
 #ifndef GL_CLIP_DISTANCE0
 #define GL_CLIP_DISTANCE0 0x3000
-#define GL_CLIP_DISTANCE1 0x3001
 #endif
 
 const char* N2VertexShader = R"(
