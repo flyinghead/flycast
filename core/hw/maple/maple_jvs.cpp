@@ -770,7 +770,8 @@ void maple_naomi_jamma::send_jvs_messages(u32 node_id, u32 channel, bool use_rep
 
 bool maple_naomi_jamma::receive_jvs_messages(u32 channel)
 {
-	u32 dword_length = (jvs_receive_length[channel] + 0x10 + 3 - 1) / 4 + 1;
+	constexpr u32 headerLength = sizeof(u32) * 5 + 3;
+	u32 dword_length = (jvs_receive_length[channel] + headerLength - 1) / 4 + 1;
 
 	w8(MDRS_JVSReply);
 	w8(0x00);
@@ -806,8 +807,9 @@ bool maple_naomi_jamma::receive_jvs_messages(u32 channel)
 		w8(sense_line(jvs_receive_buffer[channel][0]));	// bit 0 is sense line level. If set during F1 <n>, more I/O boards need addressing
 
 	memcpy(dma_buffer_out, jvs_receive_buffer[channel], jvs_receive_length[channel]);
-	dma_buffer_out += dword_length * 4 - 0x10 - 3;
-	*dma_count_out += dword_length * 4 - 0x10 - 3;
+	memset(dma_buffer_out + jvs_receive_length[channel], 0, dword_length * 4 - headerLength - jvs_receive_length[channel]);
+	dma_buffer_out += dword_length * 4 - headerLength;
+	*dma_count_out += dword_length * 4 - headerLength;
 	jvs_receive_length[channel] = 0;
 
 	return true;
