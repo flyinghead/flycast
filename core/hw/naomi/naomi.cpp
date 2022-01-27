@@ -367,6 +367,10 @@ void naomi_process(u32 command, u32 offsetl, u32 parameterl, u32 parameterh)
 	DEBUG_LOG(NAOMI, "Naomi process 0x%04X 0x%04X 0x%04X 0x%04X", command, offsetl, parameterl, parameterh);
 	DEBUG_LOG(NAOMI, "Possible format 0 %d 0x%02X 0x%04X",command >> 15,(command & 0x7e00) >> 9, command & 0x1FF);
 	DEBUG_LOG(NAOMI, "Possible format 1 0x%02X 0x%02X", (command & 0xFF00) >> 8,command & 0xFF);
+	// command: param1 & 3f << 9 | param2
+	//   offsetl, paraml, paramh: params 3 4 5
+	//   HOLLY::SB_IML2EXT |= 8 when done
+
 
 	u32 param=(command&0xFF);
 	if (param==0xFF)
@@ -407,7 +411,7 @@ void WriteMem_naomi(u32 address, u32 data, u32 size)
 		return;
 	}
 	if (address >= NAOMI_COMM2_CTRL_addr && address <= NAOMI_COMM2_STATUS1_addr
-			&& (settings.platform.system == DC_PLATFORM_NAOMI || settings.platform.system == DC_PLATFORM_NAOMI2))
+			&& settings.platform.isNaomi())
 		m3comm.WriteMem(address, data, size);
 	else
 		CurrentCartridge->WriteMem(address, data, size);

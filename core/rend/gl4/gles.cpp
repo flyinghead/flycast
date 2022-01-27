@@ -1000,7 +1000,7 @@ struct OpenGL4Renderer : OpenGLRenderer
 		void gl4DrawVmuTexture(u8 vmu_screen_number);
 		void gl4DrawGunCrosshair(u8 port);
 
-		if (settings.platform.system == DC_PLATFORM_DREAMCAST)
+		if (settings.platform.isConsole())
 		{
 			for (int vmu_screen_number = 0 ; vmu_screen_number < 4 ; vmu_screen_number++)
 				if (vmu_lcd_status[vmu_screen_number * 2])

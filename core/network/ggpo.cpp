@@ -310,7 +310,7 @@ static bool save_game_state(unsigned char **buffer, int *len, int *checksum, int
 {
 	verify(!sh4_cpu.IsCpuRunning());
 	lastSavedFrame = frame;
-	size_t allocSize = (settings.platform.system == DC_PLATFORM_NAOMI ? 20 : 10) * 1024 * 1024;
+	size_t allocSize = (settings.platform.isNaomi() ? 20 : 10) * 1024 * 1024;
 	*buffer = (unsigned char *)malloc(allocSize);
 	if (*buffer == nullptr)
 	{
@@ -471,7 +471,7 @@ void startSession(int localPort, int localPlayerNum)
 	analogAxes = 0;
 	NOTICE_LOG(NETWORK, "GGPO synctest session started");
 #else
-	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
+	if (settings.platform.isConsole())
 		analogAxes = config::GGPOAnalogAxes;
 	else
 	{

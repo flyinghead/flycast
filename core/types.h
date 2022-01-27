@@ -341,6 +341,13 @@ struct settings_t
 		u32 aram_mask;
 		u32 bios_size;
 		u32 flash_size;
+
+		bool isNaomi1() const { return system == DC_PLATFORM_NAOMI; }
+		bool isNaomi2() const { return system == DC_PLATFORM_NAOMI2; }
+		bool isNaomi() const { return isNaomi1() || isNaomi2(); }
+		bool isAtomiswave() const { return system == DC_PLATFORM_ATOMISWAVE; }
+		bool isArcade() const { return !isConsole(); }
+		bool isConsole() const { return system == DC_PLATFORM_DREAMCAST; }
 	} platform;
 
 	struct {

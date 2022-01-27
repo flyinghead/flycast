@@ -60,7 +60,7 @@ public:
 
 void NetworkHandshake::init()
 {
-	if (settings.platform.system == DC_PLATFORM_NAOMI)
+	if (settings.platform.isNaomi())
 		SetNaomiNetworkConfig(-1);
 
 	if (config::GGPOEnable)

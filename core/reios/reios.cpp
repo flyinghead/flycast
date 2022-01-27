@@ -652,7 +652,7 @@ static void reios_boot()
 		reios_setup_state(0x8C010000);
 	}
 	else {
-		if (settings.platform.system == DC_PLATFORM_DREAMCAST)
+		if (settings.platform.isConsole())
 		{
 			char bootfile[sizeof(ip_meta.boot_filename) + 1] = {0};
 			memcpy(bootfile, ip_meta.boot_filename, sizeof(ip_meta.boot_filename));
@@ -661,7 +661,7 @@ static void reios_boot()
 			reios_setup_state(0xac008300);
 		}
 		else {
-			verify(settings.platform.system == DC_PLATFORM_NAOMI);
+			verify(settings.platform.isNaomi());
 			if (CurrentCartridge == NULL)
 			{
 				WARN_LOG(REIOS, "No cartridge loaded");

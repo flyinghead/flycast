@@ -371,7 +371,7 @@ void CheatManager::reset(const std::string& gameId)
 	widescreen_cheat = nullptr;
 	if (!config::WidescreenGameHacks)
 		return;
-	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
+	if (settings.platform.isConsole())
 	{
 		for (int i = 0; widescreen_cheats[i].game_id != nullptr; i++)
 		{

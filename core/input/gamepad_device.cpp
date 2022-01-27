@@ -286,7 +286,7 @@ void GamepadDevice::load_system_mappings()
 	{
 		std::shared_ptr<GamepadDevice> gamepad = GetGamepad(i);
 		if (!gamepad->find_mapping())
-			gamepad->resetMappingToDefault(settings.platform.system != DC_PLATFORM_DREAMCAST, true);
+			gamepad->resetMappingToDefault(settings.platform.isArcade(), true);
 	}
 }
 

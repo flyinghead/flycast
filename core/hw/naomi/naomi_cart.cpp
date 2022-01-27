@@ -150,7 +150,7 @@ static bool loadBios(const char *filename, Archive *child_archive, Archive *pare
 	if (config::GGPOEnable)
 		md5.getDigest(settings.network.md5.bios);
 
-	if (settings.platform.system == DC_PLATFORM_ATOMISWAVE)
+	if (settings.platform.isAtomiswave())
 		// Reload the writeable portion of the FlashROM
 		sys_rom->Reload();
 

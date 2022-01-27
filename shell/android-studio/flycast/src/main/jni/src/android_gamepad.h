@@ -246,7 +246,7 @@ public:
 			kcode = 0xffffffff;
 			joyx = joyy = rt = lt = 0;
 		}
-		if (settings.platform.system != DC_PLATFORM_DREAMCAST)
+		if (settings.platform.isArcade())
 		{
 			if (rt > 0)
 			{

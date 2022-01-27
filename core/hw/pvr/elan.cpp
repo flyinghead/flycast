@@ -1437,7 +1437,7 @@ void vmem_map(u32 base)
 
 void serialize(Serializer& ser)
 {
-	if (settings.platform.system != DC_PLATFORM_NAOMI2)
+	if (!settings.platform.isNaomi2())
 		return;
 	ser << reg10;
 	ser << reg74;
@@ -1449,7 +1449,7 @@ void serialize(Serializer& ser)
 
 void deserialize(Deserializer& deser)
 {
-	if (settings.platform.system != DC_PLATFORM_NAOMI2)
+	if (!settings.platform.isNaomi2())
 		return;
 	deser >> reg10;
 	deser >> reg74;

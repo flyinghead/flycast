@@ -132,7 +132,7 @@ void OpenGLDriver::displayCrosshairs()
 	{
 		if (config::CrosshairColor[i] == 0)
 			continue;
-		if (settings.platform.system == DC_PLATFORM_DREAMCAST && config::MapleMainDevices[i] != MDT_LightGun)
+		if (settings.platform.isConsole() && config::MapleMainDevices[i] != MDT_LightGun)
 			continue;
 
 		ImVec2 pos;

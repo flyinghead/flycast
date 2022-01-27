@@ -48,7 +48,7 @@ settings_t settings;
 
 static void loadSpecialSettings()
 {
-	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
+	if (settings.platform.isConsole())
 	{
 		std::string prod_id(ip_meta.product_number, sizeof(ip_meta.product_number));
 		prod_id = trim_trailing_ws(prod_id);
@@ -217,9 +217,7 @@ static void loadSpecialSettings()
 			config::UseReios.override(false);
 		}
 	}
-	else if (settings.platform.system == DC_PLATFORM_NAOMI
-			|| settings.platform.system == DC_PLATFORM_NAOMI2
-			|| settings.platform.system == DC_PLATFORM_ATOMISWAVE)
+	else if (settings.platform.isArcade())
 	{
 		NOTICE_LOG(BOOT, "Game ID is [%s]", naomi_game_id);
 		if (!strcmp("SAMURAI SPIRITS 6", naomi_game_id))
@@ -459,7 +457,7 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 		config::Settings::instance().load(false);
 		memset(&settings.network.md5, 0, sizeof(settings.network.md5));
 
-		if (settings.platform.system == DC_PLATFORM_DREAMCAST)
+		if (settings.platform.isConsole())
 		{
 			if (settings.content.path.empty())
 			{
@@ -500,9 +498,7 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 				}
 			}
 		}
-		else if (settings.platform.system == DC_PLATFORM_NAOMI
-				|| settings.platform.system == DC_PLATFORM_NAOMI2
-				|| settings.platform.system == DC_PLATFORM_ATOMISWAVE)
+		else if (settings.platform.isArcade())
 		{
 			LoadRomFiles();
 			naomi_cart_LoadRom(path, progress);
@@ -628,7 +624,7 @@ void Emulator::requestReset()
 void loadGameSpecificSettings()
 {
 	char *reios_id;
-	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
+	if (settings.platform.isConsole())
 	{
 		static char _disk_id[sizeof(ip_meta.product_number) + 1];
 

@@ -505,14 +505,14 @@ public:
 		{
 			case IOS_BTN_L2:
 				gamepad_axis_input(IOS_AXIS_L2, pressed ? 0x7fff : 0);
-				if (settings.platform.system != DC_PLATFORM_DREAMCAST)
+				if (settings.platform.isArcade())
 					GamepadDevice::gamepad_btn_input(IOS_BTN_L1, pressed);	// Z, btn5
 				return true;
 			case IOS_BTN_R2:
 				if (!pressed && maple_port() >= 0 && maple_port() <= 3)
 					kcode[maple_port()] |= DC_DPAD2_UP | DC_BTN_D | DC_DPAD2_DOWN;
 				gamepad_axis_input(IOS_AXIS_R2, pressed ? 0x7fff : 0);
-				if (settings.platform.system != DC_PLATFORM_DREAMCAST)
+				if (settings.platform.isArcade())
 					GamepadDevice::gamepad_btn_input(IOS_BTN_Y, pressed);	// Y, btn4
 				return true;
 			default:
@@ -527,7 +527,7 @@ public:
 					gui_open_settings();
 					return true;
 				}
-				if (settings.platform.system != DC_PLATFORM_DREAMCAST && maple_port() >= 0 && maple_port() <= 3)
+				if (settings.platform.isArcade() && maple_port() >= 0 && maple_port() <= 3)
 				{
 					u32& keycode = kcode[maple_port()];
 					if ((buttonState & (1 << IOS_BTN_R2)) != 0)

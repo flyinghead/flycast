@@ -1222,7 +1222,7 @@ static void gui_display_settings()
     	if (maple_devices_changed)
     	{
     		maple_devices_changed = false;
-    		if (game_started && settings.platform.system == DC_PLATFORM_DREAMCAST)
+    		if (game_started && settings.platform.isConsole())
     		{
     			maple_ReconnectDevices();
     			reset_vmus();

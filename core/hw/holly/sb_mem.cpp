@@ -109,7 +109,7 @@ static void add_isp_to_nvmem(DCFlashChip *flash)
 
 static void fixUpDCFlash()
 {
-	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
+	if (settings.platform.isConsole())
 	{
 		static_cast<DCFlashChip*>(sys_nvmem)->Validate();
 
@@ -172,7 +172,7 @@ static void fixUpDCFlash()
 static bool nvmem_load()
 {
 	bool rc;
-	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
+	if (settings.platform.isConsole())
 		rc = sys_nvmem->Load(getRomPrefix(), "%nvmem.bin", "nvram");
 	else
 		rc = sys_nvmem->Load(hostfs::getArcadeFlashPath() + ".nvmem");
@@ -182,7 +182,7 @@ static bool nvmem_load()
 	if (config::GGPOEnable)
 		sys_nvmem->digest(settings.network.md5.nvmem);
 	
-	if (settings.platform.system == DC_PLATFORM_ATOMISWAVE)
+	if (settings.platform.isAtomiswave())
 	{
 		sys_rom->Load(hostfs::getArcadeFlashPath() + ".nvmem2");
 		if (config::GGPOEnable)
@@ -195,7 +195,7 @@ static bool nvmem_load()
 bool LoadRomFiles()
 {
 	nvmem_load();
-	if (settings.platform.system != DC_PLATFORM_ATOMISWAVE)
+	if (!settings.platform.isAtomiswave())
 	{
 		if (sys_rom->Load(getRomPrefix(), "%boot.bin;%boot.bin.bin;%bios.bin;%bios.bin.bin", "bootrom"))
 		{
@@ -203,7 +203,7 @@ bool LoadRomFiles()
 				sys_rom->digest(settings.network.md5.bios);
 			bios_loaded = true;
 		}
-		else if (settings.platform.system == DC_PLATFORM_DREAMCAST)
+		else if (settings.platform.isConsole())
 			return false;
 	}
 
@@ -212,11 +212,11 @@ bool LoadRomFiles()
 
 void SaveRomFiles()
 {
-	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
+	if (settings.platform.isConsole())
 		sys_nvmem->Save(getRomPrefix(), "nvmem.bin", "nvmem");
 	else
 		sys_nvmem->Save(hostfs::getArcadeFlashPath() + ".nvmem");
-	if (settings.platform.system == DC_PLATFORM_ATOMISWAVE)
+	if (settings.platform.isAtomiswave())
 		((WritableChip *)sys_rom)->Save(hostfs::getArcadeFlashPath() + ".nvmem2");
 }
 

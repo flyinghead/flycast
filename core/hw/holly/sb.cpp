@@ -757,7 +757,7 @@ void sb_Reset(bool hard)
 	ModemReset();
 
 	asic_reg_Reset(hard);
-	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
+	if (settings.platform.isConsole())
 		gdrom_reg_Reset(hard);
 	else
 		naomi_reg_Reset(hard);

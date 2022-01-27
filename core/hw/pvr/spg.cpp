@@ -285,7 +285,7 @@ void read_lightgun_position(int x, int y)
 
 int rend_end_sch(int tag, int cycl, int jitt)
 {
-	if (settings.platform.system == DC_PLATFORM_NAOMI2)
+	if (settings.platform.isNaomi2())
 	{
 		asic_RaiseInterruptBothCLX(holly_RENDER_DONE);
 		asic_RaiseInterruptBothCLX(holly_RENDER_DONE_isp);

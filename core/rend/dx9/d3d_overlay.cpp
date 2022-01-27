@@ -112,7 +112,7 @@ void D3DOverlay::draw(u32 width, u32 height, bool vmu, bool crosshair)
 		{
 			if (config::CrosshairColor[i] == 0)
 				continue;
-			if (settings.platform.system == DC_PLATFORM_DREAMCAST
+			if (settings.platform.isConsole()
 					&& config::MapleMainDevices[i] != MDT_LightGun)
 				continue;
 

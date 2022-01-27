@@ -56,7 +56,7 @@ static inline bool crosshairsNeeded()
 	if (config::CrosshairColor[0] == 0 && config::CrosshairColor[1] == 0
 			&& config::CrosshairColor[2] == 0 && config::CrosshairColor[3] == 0)
 		return false;
-	if (settings.platform.system != DC_PLATFORM_DREAMCAST
+	if (settings.platform.isArcade()
 			&& settings.input.JammaSetup != JVS::LightGun
 			&& settings.input.JammaSetup != JVS::LightGunAsAnalog
 			&& settings.input.JammaSetup != JVS::Mazan)

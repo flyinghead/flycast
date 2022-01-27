@@ -263,7 +263,7 @@ void asic_reg_Reset(bool hard)
 		sb_rio_register(SB_ISTEXT_addr, RIO_WF, 0, &Write_SB_ISTEXT);
 		sb_rio_register(SB_ISTERR_addr, RIO_WF, 0, &Write_SB_ISTERR);
 
-		if (settings.platform.system == DC_PLATFORM_NAOMI2)
+		if (settings.platform.isNaomi2())
 		{
 			sb_rio_register(SB_ISTNRM_addr, RIO_FUNC, &Read_SB_ISTNRM<true>, &Write_SB_ISTNRM<true>);
 

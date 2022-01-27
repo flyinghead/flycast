@@ -1056,7 +1056,7 @@ void OSD_DRAW(bool clear_screen)
 	void DrawVmuTexture(u8 vmu_screen_number);
 	void DrawGunCrosshair(u8 port);
 
-	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
+	if (settings.platform.isConsole())
 	{
 		for (int vmu_screen_number = 0 ; vmu_screen_number < 4 ; vmu_screen_number++)
 			if (vmu_lcd_status[vmu_screen_number * 2])
@@ -1162,7 +1162,7 @@ bool OpenGLRenderer::Process(TA_context* ctx)
 		}
 
 		bool success;
-		if (settings.platform.system == DC_PLATFORM_NAOMI2)
+		if (settings.platform.isNaomi2())
 			success = ta_parse_naomi2(ctx);
 		else
 			success = ta_parse_vdrc(ctx);
