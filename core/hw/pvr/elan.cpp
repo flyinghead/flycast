@@ -452,6 +452,34 @@ struct State
 		else
 			return (u32)((u8 *)p - elanRAM);
 	}
+
+	void serialize(Serializer& ser)
+	{
+		ser << listType;
+		ser << gmp;
+		ser << instance;
+		ser << projMatrix;
+		ser << tileclip;
+		ser << lightModel;
+		ser << lights;
+	}
+
+	void deserialize(Deserializer& deser)
+	{
+		if (deser.version() < Deserializer::V24)
+		{
+			reset();
+			return;
+		}
+		deser >> listType;
+		deser >> gmp;
+		deser >> instance;
+		deser >> projMatrix;
+		deser >> tileclip;
+		deser >> lightModel;
+		deser >> lights;
+		update();
+	}
 };
 
 static State state;
@@ -735,20 +763,7 @@ static bool isInFrustum(const T* vertices, u32 count)
 	glm::vec4 pmax = projectionMatrix * glm::vec4(max, 1);
 	if (std::isnan(pmin.x) || std::isnan(pmin.y) || std::isnan(pmax.x) || std::isnan(pmax.y))
 		return false;
-	float w;
-	// Check the farthest side
-	if (std::abs(pmin.w) < std::abs(pmax.w))
-		w = pmax.w;
-	else
-		w = pmin.w;
-	glm::vec4 t = glm::min(pmin / w, pmax / w);
-	pmax = glm::max(pmin / w, pmax / w);
-	pmin = t;
-	if (pmax.x <= -214 || pmin.x  >= 854	// FIXME viewport dimensions
-		|| pmax.y < 0 || pmin.y >= 480)
-		return false;
-
-	//printf("AABB %f %f - %f %f\n", pmin.x, pmin.y, pmax.x, pmax.y);
+	// TODO ...
 
 	return true;
 }
@@ -1269,7 +1284,7 @@ static void executeCommand(u8 *data, int size)
 							inter = holly_OPAQUE;
 							break;
 						}
-						asic_RaiseInterrupt(inter);
+						asic_RaiseInterruptBothCLX(inter);
 						TA_ITP_CURRENT += 32;
 						state.reset();
 					}
@@ -1429,6 +1444,7 @@ void serialize(Serializer& ser)
 	ser << elanCmd;
 	if (!ser.rollback())
 		ser.serialize(elanRAM, ELAN_RAM_SIZE);
+	state.serialize(ser);
 }
 
 void deserialize(Deserializer& deser)
@@ -1440,7 +1456,7 @@ void deserialize(Deserializer& deser)
 	deser >> elanCmd;
 	if (!deser.rollback())
 		deser.deserialize(elanRAM, ELAN_RAM_SIZE);
-	state.reset();
+	state.deserialize(deser);
 }
 
 }

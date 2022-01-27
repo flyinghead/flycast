@@ -189,6 +189,7 @@ void dc_serialize(Serializer& ser)
 
 	register_serialize(sb_regs, ser);
 	ser << SB_ISTNRM;
+	ser << SB_ISTNRM1;
 	ser << SB_FFST_rc;
 	ser << SB_FFST;
 	ser << SB_ADST;
@@ -636,6 +637,10 @@ void dc_deserialize(Deserializer& deser)
 
 	register_deserialize(sb_regs, deser);
 	deser >> SB_ISTNRM;
+	if (deser.version() >= Deserializer::V24)
+		deser >> SB_ISTNRM1;
+	else
+		SB_ISTNRM1 = 0;
 	deser >> SB_FFST_rc;
 	deser >> SB_FFST;
 	if (deser.version() >= Deserializer::V15)

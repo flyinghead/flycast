@@ -59,7 +59,8 @@ public:
 		V21 = 816,
 		V22 = 817,
 		V23 = 818,
-		Current = V23,
+		V24 = 819,
+		Current = V24,
 
 		Next = Current + 1,
 	};

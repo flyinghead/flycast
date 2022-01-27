@@ -223,7 +223,10 @@ static NOINLINE void DYNACALL ta_handle_cmd(u32 trans)
 				ta_fsm_cl=dat->pcw.ListType;
 			//printf("List %d ended\n",ta_fsm_cl);
 
-			asic_RaiseInterrupt( ListEndInterrupt[ta_fsm_cl]);
+			if (settings.platform.system == DC_PLATFORM_NAOMI2)
+				asic_RaiseInterruptBothCLX(ListEndInterrupt[ta_fsm_cl]);
+			else
+				asic_RaiseInterrupt(ListEndInterrupt[ta_fsm_cl]);
 			ta_fsm_cl=7;
 			trans=TAS_NS;
 		}

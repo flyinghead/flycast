@@ -26,6 +26,7 @@ std::array<RegisterStruct, 0x540> sb_regs;
 // much empty space
 
 u32 SB_ISTNRM;
+u32 SB_ISTNRM1;
 
 #define SB_REG_NAME(r) { r##_addr, #r },
 const std::map<u32, const char *> sb_reg_names = {
@@ -748,6 +749,7 @@ void sb_Reset(bool hard)
 			reg.reset();
 	}
 	SB_ISTNRM = 0;
+	SB_ISTNRM1 = 0;
 	SB_FFST_rc = 0;
 	SB_FFST = 0;
 
