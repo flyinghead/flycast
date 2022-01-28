@@ -367,6 +367,11 @@ void CheatManager::reset(const std::string& gameId)
 		if (!cheatFile.empty())
 			loadCheatFile(cheatFile);
 #endif
+		if (gameId == "VF4 FINAL TUNED JAPAN")
+		{
+			active = true;
+			cheats.push_back({ Cheat::Type::setValue, "Skip DIMM version check", true, 16, 0x000205c6, 9 });
+		}
 	}
 	widescreen_cheat = nullptr;
 	if (!config::WidescreenGameHacks)
