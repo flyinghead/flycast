@@ -2077,7 +2077,6 @@ static bool ClearZBeforePass(int pass_number)
 
 void rend_context::newRenderPass()
 {
-	verify(init);
 	if (global_param_op.used() > 0
 			|| global_param_tr.used() > 0
 			|| global_param_pt.used() > 0)

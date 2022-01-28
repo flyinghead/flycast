@@ -15,7 +15,7 @@ struct vmem_mapping {
 
 // Platform specific vmemory API
 // To initialize (maybe) the vmem subsystem
-VMemType vmem_platform_init(void **vmem_base_addr, void **sh4rcb_addr);
+VMemType vmem_platform_init(void **vmem_base_addr, void **sh4rcb_addr, size_t ramSize);
 // To reset the on-demand allocated pages.
 void vmem_platform_reset_mem(void *ptr, unsigned size_bytes);
 // To handle a fault&allocate an ondemand page.
@@ -108,10 +108,6 @@ static inline bool _nvmem_4gb_space() {
 	return vmem_4gb_space;
 }
 void _vmem_bm_reset();
-
-#define MAP_RAM_START_OFFSET  0
-#define MAP_VRAM_START_OFFSET (MAP_RAM_START_OFFSET+RAM_SIZE)
-#define MAP_ARAM_START_OFFSET (MAP_VRAM_START_OFFSET+VRAM_SIZE)
 
 void _vmem_protect_vram(u32 addr, u32 size);
 void _vmem_unprotect_vram(u32 addr, u32 size);

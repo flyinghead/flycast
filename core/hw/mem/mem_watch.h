@@ -22,6 +22,7 @@
 #include "hw/sh4/dyna/blockmanager.h"
 #include "hw/sh4/sh4_mem.h"
 #include "hw/pvr/pvr_mem.h"
+#include "hw/pvr/elan.h"
 #include "rend/TexCache.h"
 #include <array>
 #include <unordered_map>
@@ -148,9 +149,26 @@ public:
 	}
 };
 
+class ElanRamWatcher : public Watcher<ElanRamWatcher>
+{
+	friend class Watcher<ElanRamWatcher>;
+
+protected:
+	void protectMem(u32 addr, u32 size);
+	void unprotectMem(u32 addr, u32 size);
+	u32 getMemOffset(void *p);
+
+public:
+	void *getMemPage(u32 addr)
+	{
+		return &elan::RAM[addr];
+	}
+};
+
 extern VramWatcher vramWatcher;
 extern RamWatcher ramWatcher;
 extern AicaRamWatcher aramWatcher;
+extern ElanRamWatcher elanWatcher;
 
 inline static bool writeAccess(void *p)
 {
@@ -166,6 +184,8 @@ inline static bool writeAccess(void *p)
 		VramLockedWrite((u8 *)p);
 		return true;
 	}
+	if (settings.platform.isNaomi2() && elanWatcher.hit(p))
+		return true;
 	return aramWatcher.hit(p);
 }
 
@@ -176,6 +196,7 @@ inline static void protect()
 	vramWatcher.protect();
 	ramWatcher.protect();
 	aramWatcher.protect();
+	elanWatcher.protect();
 }
 
 inline static void reset()
@@ -183,6 +204,7 @@ inline static void reset()
 	vramWatcher.reset();
 	ramWatcher.reset();
 	aramWatcher.reset();
+	elanWatcher.reset();
 }
 
 }

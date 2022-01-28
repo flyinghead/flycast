@@ -50,6 +50,7 @@ struct PolyParam
 	BaseTextureCacheData *texture1;
 
 	float *mvMatrix;
+	float *normalMatrix;
 	float *projMatrix;
 	float glossCoef0;
 	float glossCoef1;
@@ -187,7 +188,6 @@ struct rend_context
 
 	List<N2Matrix> matrices;
 	List<N2LightModel> lightModels;
-	bool init = false;
 
 	void Clear()
 	{
@@ -270,9 +270,8 @@ struct TA_context
 		rend.modtrig.Init(16384, &rend.Overrun, "modtrig");
 		
 		rend.render_passes.Init(sizeof(RenderPass) * 10, &rend.Overrun, "render_passes");	// 10 render passes
-		rend.matrices.Init(1000, &rend.Overrun, "matrices");
+		rend.matrices.Init(2000, &rend.Overrun, "matrices");
 		rend.lightModels.Init(100, &rend.Overrun, "lightModels");
-		rend.init = true;
 
 		Reset();
 	}

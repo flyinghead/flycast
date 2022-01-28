@@ -59,7 +59,7 @@ static const char* VertexShaderSource = R"(
 #endif
 
 // Uniforms 
-uniform mat4 normal_matrix;
+uniform mat4 ndcMat;
 
 // Input
 in vec4 in_pos;
@@ -80,7 +80,7 @@ noperspective out vec2 vtx_uv1;
 
 void main()
 {
-	vec4 vpos = normal_matrix * in_pos;
+	vec4 vpos = ndcMat * in_pos;
 	vtx_base = in_base;
 	vtx_offs = in_offs;
 	vtx_uv = vec3(in_uv * vpos.z, vpos.z);
@@ -528,7 +528,7 @@ bool gl4CompilePipelineShader(gl4PipelineShader* s, const char *fragment_source 
 		s->fog_clamp_min = -1;
 		s->fog_clamp_max = -1;
 	}
-	s->normal_matrix = glGetUniformLocation(s->program, "normal_matrix");
+	s->ndcMat = glGetUniformLocation(s->program, "ndcMat");
 
 	// Shadow stencil for OP/PT rendering pass
 	gu = glGetUniformLocation(s->program, "shadow_stencil");
@@ -591,13 +591,13 @@ static void create_modvol_shader()
 		.addSource(ModifierVolumeShader);
 
 	gl4.modvol_shader.program = gl_CompileAndLink(vertexShader.generate().c_str(), fragmentShader.generate().c_str());
-	gl4.modvol_shader.normal_matrix = glGetUniformLocation(gl4.modvol_shader.program, "normal_matrix");
+	gl4.modvol_shader.ndcMat = glGetUniformLocation(gl4.modvol_shader.program, "ndcMat");
 
 	N2Vertex4Source n2VertexShader(false, true);
 	N2Geometry4Shader geometryShader(false, true);
 	gl4.n2ModVolShader.program = gl_CompileAndLink(n2VertexShader.generate().c_str(), fragmentShader.generate().c_str(),
 			geometryShader.generate().c_str());
-	gl4.n2ModVolShader.normal_matrix = glGetUniformLocation(gl4.n2ModVolShader.program, "normal_matrix");
+	gl4.n2ModVolShader.ndcMat = glGetUniformLocation(gl4.n2ModVolShader.program, "ndcMat");
 	gl4.n2ModVolShader.mvMat = glGetUniformLocation(gl4.n2ModVolShader.program, "mvMat");
 	gl4.n2ModVolShader.projMat = glGetUniformLocation(gl4.n2ModVolShader.program, "projMat");
 }
@@ -715,7 +715,7 @@ static bool RenderFrame(int width, int height)
 	const bool is_rtt = pvrrc.isRTT;
 
 	TransformMatrix<COORD_OPENGL> matrices(pvrrc, width, height);
-	gl4ShaderUniforms.normal_mat = matrices.GetNormalMatrix();
+	gl4ShaderUniforms.ndcMat = matrices.GetNormalMatrix();
 	const glm::mat4& scissor_mat = matrices.GetScissorMatrix();
 	ViewportMatrix = matrices.GetViewportMatrix();
 
@@ -761,10 +761,10 @@ static bool RenderFrame(int width, int height)
 	if (config::Fog)
 	{
 		glcache.UseProgram(gl4.modvol_shader.program);
-		glUniformMatrix4fv(gl4.modvol_shader.normal_matrix, 1, GL_FALSE, &gl4ShaderUniforms.normal_mat[0][0]);
+		glUniformMatrix4fv(gl4.modvol_shader.ndcMat, 1, GL_FALSE, &gl4ShaderUniforms.ndcMat[0][0]);
 
 		glcache.UseProgram(gl4.n2ModVolShader.program);
-		glUniformMatrix4fv(gl4.n2ModVolShader.normal_matrix, 1, GL_FALSE, &gl4ShaderUniforms.normal_mat[0][0]);
+		glUniformMatrix4fv(gl4.n2ModVolShader.ndcMat, 1, GL_FALSE, &gl4ShaderUniforms.ndcMat[0][0]);
 	}
 	for (auto& it : gl4.shaders)
 		resetN2UniformCache(&it.second);

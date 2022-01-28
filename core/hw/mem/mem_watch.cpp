@@ -24,6 +24,7 @@ namespace memwatch
 VramWatcher vramWatcher;
 RamWatcher ramWatcher;
 AicaRamWatcher aramWatcher;
+ElanRamWatcher elanWatcher;
 
 void AicaRamWatcher::protectMem(u32 addr, u32 size)
 {
@@ -103,6 +104,64 @@ u32 AicaRamWatcher::getMemOffset(void *p)
 		if ((u8*) p < &aica_ram[0] || (u8*) p >= &aica_ram[ARAM_SIZE])
 			return -1;
 		addr = (u32) ((u8*) p - &aica_ram[0]);
+	}
+	return addr;
+}
+
+void ElanRamWatcher::protectMem(u32 addr, u32 size)
+{
+	using namespace elan;
+	size = std::min(ELAN_RAM_SIZE - addr, size) & ~PAGE_MASK;
+	if (_nvmem_enabled())
+	{
+		mem_region_lock(virt_ram_base + 0x0a000000 + addr, size);	// P0
+		if (_nvmem_4gb_space())
+		{
+			mem_region_lock(virt_ram_base + 0x8a000000 + addr, size);	// P1
+			mem_region_lock(virt_ram_base + 0xaa000000 + addr, size);	// P2
+		}
+	} else {
+		mem_region_lock(RAM + addr, size);
+	}
+}
+
+void ElanRamWatcher::unprotectMem(u32 addr, u32 size)
+{
+	using namespace elan;
+	size = std::min(ELAN_RAM_SIZE - addr, size) & ~PAGE_MASK;
+	if (_nvmem_enabled())
+	{
+		mem_region_unlock(virt_ram_base + 0x0a000000 + addr, size);	// P0
+		if (_nvmem_4gb_space())
+		{
+			mem_region_unlock(virt_ram_base + 0x8a000000 + addr, size);	// P1
+			mem_region_unlock(virt_ram_base + 0xaa000000 + addr, size);	// P2
+		}
+	} else {
+		mem_region_unlock(RAM + addr, size);
+	}
+}
+
+u32 ElanRamWatcher::getMemOffset(void *p)
+{
+	using namespace elan;
+	u32 addr;
+	if (_nvmem_enabled())
+	{
+		if ((u8 *)p < virt_ram_base || (u8 *)p >= virt_ram_base + 0x100000000L)
+			return -1;
+		addr = (u32)((u8 *)p - virt_ram_base);
+		u32 area = (addr >> 29) & 7;
+		if (area != 0 && area != 4 && area != 5) // P0, P1 or P2 only
+			return -1;
+		addr &= 0x1fffffff;
+		if (addr < 0x0a000000 || addr >= 0x0a000000 + ELAN_RAM_SIZE)
+			return -1;
+		addr &= ~(ELAN_RAM_SIZE - 1);
+	} else {
+		if ((u8 *)p < RAM || (u8 *)p >= &RAM[ELAN_RAM_SIZE])
+			return -1;
+		addr = (u32)((u8 *)p - RAM);
 	}
 	return addr;
 }

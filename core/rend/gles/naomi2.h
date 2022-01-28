@@ -48,6 +48,7 @@ template<typename ShaderType>
 void initN2Uniforms(ShaderType *shader)
 {
 	shader->mvMat = glGetUniformLocation(shader->program, "mvMat");
+	shader->normalMat = glGetUniformLocation(shader->program, "normalMat");
 	shader->projMat = glGetUniformLocation(shader->program, "projMat");
 	shader->glossCoef0 = glGetUniformLocation(shader->program, "glossCoef0");
 	shader->envMapping = glGetUniformLocation(shader->program, "envMapping");
@@ -99,12 +100,17 @@ void setN2Uniforms(const PolyParam *pp, ShaderType *shader)
 	if (pp->mvMatrix != shader->lastMvMat)
 	{
 		shader->lastMvMat = pp->mvMatrix;
-		glUniformMatrix4fv(shader->mvMat, 1, GL_FALSE, &pp->mvMatrix[0]);
+		glUniformMatrix4fv(shader->mvMat, 1, GL_FALSE, pp->mvMatrix);
+	}
+	if (pp->normalMatrix != shader->lastNormalMat)
+	{
+		shader->lastNormalMat = pp->normalMatrix;
+		glUniformMatrix4fv(shader->normalMat, 1, GL_FALSE, pp->normalMatrix);
 	}
 	if (pp->projMatrix != shader->lastProjMat)
 	{
 		shader->lastProjMat = pp->projMatrix;
-		glUniformMatrix4fv(shader->projMat, 1, GL_FALSE, &pp->projMatrix[0]);
+		glUniformMatrix4fv(shader->projMat, 1, GL_FALSE, pp->projMatrix);
 	}
 	glUniform1f(shader->glossCoef0, pp->glossCoef0);
 

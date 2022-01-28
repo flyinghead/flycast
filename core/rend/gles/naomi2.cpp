@@ -19,11 +19,9 @@
 #include "naomi2.h"
 
 const char* N2VertexShader = R"(
-uniform vec4 depth_scale;
-uniform mat4 normal_matrix;
-uniform float sp_FOG_DENSITY;
 
 uniform mat4 mvMat;
+uniform mat4 normalMat;
 uniform mat4 projMat;
 uniform int envMapping;
 uniform int bumpMapping;
@@ -50,7 +48,7 @@ INTERPOLATION out vec4 vs_offs1;
 noperspective out vec2 vs_uv1;
 #endif
 #endif
-out float gl_ClipDistance[6];
+out float gl_ClipDistance[2];
 
 void main()
 {
@@ -66,7 +64,7 @@ void main()
 	if (bumpMapping == 1)
 		computeBumpMap(vs_offs, vs_offs1, normalize(in_normal));
 #endif
-	vec4 vnorm = normalize(mvMat * vec4(in_normal, 0.0));
+	vec4 vnorm = normalize(normalMat * vec4(in_normal, 0.0));
 	if (bumpMapping == 0)
 		computeColors(vs_base, vs_offs, vpos.xyz, vnorm.xyz);
 	vs_uv.xy = in_uv;
@@ -298,7 +296,7 @@ const char *GeometryClippingShader = R"(
 layout (triangles) in;
 layout (triangle_strip, max_vertices = 12) out;
 
-uniform mat4 normal_matrix;
+uniform mat4 ndcMat;
 
 #if GEOM_ONLY == 0
 INTERPOLATION in highp vec4 vs_base[3];
@@ -421,7 +419,7 @@ int clip3(in vec3 dist, inout Vertex v0, inout Vertex v1, inout Vertex v2, out V
 void wDivide(inout Vertex v)
 {
 	v.pos = vec4(v.pos.xy / v.pos.w, 1.0 / v.pos.w, 1.0);
-	v.pos = normal_matrix * v.pos;
+	v.pos = ndcMat * v.pos;
 #if GEOM_ONLY == 1
 	v.uv = vec3(0.0, 0.0, v.pos.z);
 #else

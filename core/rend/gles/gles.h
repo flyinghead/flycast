@@ -50,10 +50,11 @@ struct PipelineShader
 	GLint sp_FOG_DENSITY;
 	GLint trilinear_alpha;
 	GLint fog_clamp_min, fog_clamp_max;
-	GLint normal_matrix;
+	GLint ndcMat;
 	GLint palette_index;
 	// Naomi2
 	GLint mvMat;
+	GLint normalMat;
 	GLint projMat;
 	GLint glossCoef0;
 	GLint lightCount;
@@ -80,6 +81,7 @@ struct PipelineShader
 		GLint attnAngleB;
 	} lights[elan::MAX_LIGHTS];
 	float *lastMvMat;
+	float *lastNormalMat;
 	float *lastProjMat;
 	N2LightModel *lastLightModel;
 
@@ -109,7 +111,7 @@ struct gl_ctx
 
 		GLint depth_scale;
 		GLint sp_ShaderColor;
-		GLint normal_matrix;
+		GLint ndcMat;
 	} modvol_shader;
 
 	struct
@@ -118,7 +120,7 @@ struct gl_ctx
 
 		GLint depth_scale;
 		GLint sp_ShaderColor;
-		GLint normal_matrix;
+		GLint ndcMat;
 
 		GLint mvMat;
 		GLint projMat;
@@ -202,7 +204,7 @@ void GetFramebufferScaling(float& scale_x, float& scale_y, float& scissoring_sca
 void GetFramebufferSize(float& dc_width, float& dc_height);
 void SetupMatrices(float dc_width, float dc_height,
 				   float scale_x, float scale_y, float scissoring_scale_x, float scissoring_scale_y,
-				   float &ds2s_offs_x, glm::mat4& normal_mat, glm::mat4& scissor_mat);
+				   float &ds2s_offs_x, glm::mat4& ndcMat, glm::mat4& scissor_mat);
 
 void SetCull(u32 CullMode);
 s32 SetTileClip(u32 val, GLint uniform);
@@ -237,7 +239,7 @@ extern struct ShaderUniforms_t
 	float trilinear_alpha;
 	float fog_clamp_min[4];
 	float fog_clamp_max[4];
-	glm::mat4 normal_mat;
+	glm::mat4 ndcMat;
 	struct {
 		bool enabled;
 		int x;
@@ -269,8 +271,8 @@ extern struct ShaderUniforms_t
 		if (s->fog_clamp_max != -1)
 			glUniform4fv(s->fog_clamp_max, 1, fog_clamp_max);
 
-		if (s->normal_matrix != -1)
-			glUniformMatrix4fv(s->normal_matrix, 1, GL_FALSE, &normal_mat[0][0]);
+		if (s->ndcMat != -1)
+			glUniformMatrix4fv(s->ndcMat, 1, GL_FALSE, &ndcMat[0][0]);
 
 		if (s->palette_index != -1)
 			glUniform1i(s->palette_index, palette_index);

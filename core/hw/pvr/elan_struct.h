@@ -96,33 +96,33 @@ struct InstanceMatrix : public ElanBase
 	u32 _res1; // 08000200
 	float envMapU; // env map U offset
 	float lm00;
-	float lm01;
-	float lm02;
 	float lm10;
+	float lm20;
+	float lm01;
 	float lm11;
+	float lm21;
+	float lm02;
 	float lm12;
-	float tm20;
-	float tm21;
-	float tm22;
+	float lm22;
 	float envMapV; // env map V offset
 	float _res2[4];
 
 	u32 _res3; // 08000100
 	float _near;
 	float tm00;
-	float tm10;
-	float mfr2;
 	float tm01;
-	float tm11;
-	float mfr6;
 	float tm02;
+	float tm10;
+	float tm11;
 	float tm12;
-	float mfr10;
-	float mat03;
-	float mat13;
-	float mat23;
+	float tm20;
+	float tm21;
+	float tm22;
+	float tm30;
+	float tm31;
+	float tm32;
 	float _far;
-	float mproj6;
+	float mproj6; // 1 / near
 
 	bool isInstanceMatrix() const {
 		return id1 == 0xf && id2 == 0x7f;

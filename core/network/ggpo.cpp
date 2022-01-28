@@ -125,10 +125,12 @@ struct MemPages
 		ram = memwatch::ramWatcher.getPages();
 		vram = memwatch::vramWatcher.getPages();
 		aram = memwatch::aramWatcher.getPages();
+		elanram = memwatch::elanWatcher.getPages();
 	}
 	memwatch::PageMap ram;
 	memwatch::PageMap vram;
 	memwatch::PageMap aram;
+	memwatch::PageMap elanram;
 };
 static std::unordered_map<int, MemPages> deltaStates;
 static int lastSavedFrame = -1;
@@ -276,12 +278,6 @@ static bool load_game_state(unsigned char *buffer, int len)
 	Deserializer deser(buffer, len, true);
 	int frame;
 	deser >> frame;
-	dc_deserialize(deser);
-	if (deser.size() != (u32)len)
-	{
-		ERROR_LOG(NETWORK, "load_game_state len %d used %d", len, (int)deser.size());
-		die("fatal");
-	}
 	for (int f = lastSavedFrame - 1; f >= frame; f--)
 	{
 		const MemPages& pages = deltaStates[f];
@@ -291,8 +287,16 @@ static bool load_game_state(unsigned char *buffer, int len)
 			memcpy(memwatch::vramWatcher.getMemPage(pair.first), &pair.second[0], PAGE_SIZE);
 		for (const auto& pair : pages.aram)
 			memcpy(memwatch::aramWatcher.getMemPage(pair.first), &pair.second[0], PAGE_SIZE);
-		DEBUG_LOG(NETWORK, "Restored frame %d pages: %d ram, %d vram, %d aica ram", f, (u32)pages.ram.size(),
-					(u32)pages.vram.size(), (u32)pages.aram.size());
+		for (const auto& pair : pages.elanram)
+			memcpy(memwatch::elanWatcher.getMemPage(pair.first), &pair.second[0], PAGE_SIZE);
+		DEBUG_LOG(NETWORK, "Restored frame %d pages: %d ram, %d vram, %d eram, %d aica ram", f, (u32)pages.ram.size(),
+					(u32)pages.vram.size(), (u32)pages.elanram.size(), (u32)pages.aram.size());
+	}
+	dc_deserialize(deser);
+	if (deser.size() != (u32)len)
+	{
+		ERROR_LOG(NETWORK, "load_game_state len %d used %d", len, (int)deser.size());
+		die("fatal");
 	}
 	rend_allow_rollback();	// ggpo might load another state right after this one
 	memwatch::reset();
@@ -374,8 +378,8 @@ static bool save_game_state(unsigned char **buffer, int *len, int *checksum, int
 #endif
 		// Save the delta to frame-1
 		deltaStates[frame - 1].load();
-		DEBUG_LOG(NETWORK, "Saved frame %d pages: %d ram, %d vram, %d aica ram", frame - 1, (u32)deltaStates[frame - 1].ram.size(),
-				(u32)deltaStates[frame - 1].vram.size(), (u32)deltaStates[frame - 1].aram.size());
+		DEBUG_LOG(NETWORK, "Saved frame %d pages: %d ram, %d vram, %d eram, %d aica ram", frame - 1, (u32)deltaStates[frame - 1].ram.size(),
+				(u32)deltaStates[frame - 1].vram.size(), (u32)deltaStates[frame - 1].elanram.size(), (u32)deltaStates[frame - 1].aram.size());
 	}
 	memwatch::protect();
 

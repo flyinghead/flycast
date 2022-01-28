@@ -93,7 +93,7 @@ const char* GouraudSource = R"(
 static const char* VertexShaderSource = R"(
 /* Vertex constants*/ 
 uniform highp vec4 depth_scale;
-uniform highp mat4 normal_matrix;
+uniform highp mat4 ndcMat;
 uniform highp float sp_FOG_DENSITY;
 
 /* Vertex input */
@@ -108,7 +108,7 @@ NOPERSPECTIVE out highp vec3 vtx_uv;
 
 void main()
 {
-	highp vec4 vpos = normal_matrix * in_pos;
+	highp vec4 vpos = ndcMat * in_pos;
 	vtx_base = in_base;
 	vtx_offs = in_offs;
 #if TARGET_GL == GLES2
@@ -787,7 +787,7 @@ bool CompilePipelineShader(PipelineShader* s)
 		s->fog_clamp_min = -1;
 		s->fog_clamp_max = -1;
 	}
-	s->normal_matrix = glGetUniformLocation(s->program, "normal_matrix");
+	s->ndcMat = glGetUniformLocation(s->program, "ndcMat");
 
 	if (s->naomi2)
 		initN2Uniforms(s);
@@ -892,14 +892,14 @@ static void create_modvol_shader()
 			.addSource(ModifierVolumeShader);
 
 	gl.modvol_shader.program = gl_CompileAndLink(vertexShader.generate().c_str(), fragmentShader.generate().c_str());
-	gl.modvol_shader.normal_matrix = glGetUniformLocation(gl.modvol_shader.program, "normal_matrix");
+	gl.modvol_shader.ndcMat = glGetUniformLocation(gl.modvol_shader.program, "ndcMat");
 	gl.modvol_shader.sp_ShaderColor = glGetUniformLocation(gl.modvol_shader.program, "sp_ShaderColor");
 	gl.modvol_shader.depth_scale = glGetUniformLocation(gl.modvol_shader.program, "depth_scale");
 
 	N2VertexSource n2vertexShader(false, true);
 	N2GeometryShader geometryShader(false, true);
 	gl.n2ModVolShader.program = gl_CompileAndLink(n2vertexShader.generate().c_str(), fragmentShader.generate().c_str(), geometryShader.generate().c_str());
-	gl.n2ModVolShader.normal_matrix = glGetUniformLocation(gl.n2ModVolShader.program, "normal_matrix");
+	gl.n2ModVolShader.ndcMat = glGetUniformLocation(gl.n2ModVolShader.program, "ndcMat");
 	gl.n2ModVolShader.sp_ShaderColor = glGetUniformLocation(gl.n2ModVolShader.program, "sp_ShaderColor");
 	gl.n2ModVolShader.depth_scale = glGetUniformLocation(gl.n2ModVolShader.program, "depth_scale");
 	gl.n2ModVolShader.mvMat = glGetUniformLocation(gl.n2ModVolShader.program, "mvMat");
@@ -1208,7 +1208,7 @@ bool RenderFrame(int width, int height)
 	vtx_max_fZ *= 1.001f;
 
 	TransformMatrix<COORD_OPENGL> matrices(pvrrc, width, height);
-	ShaderUniforms.normal_mat = matrices.GetNormalMatrix();
+	ShaderUniforms.ndcMat = matrices.GetNormalMatrix();
 	const glm::mat4& scissor_mat = matrices.GetScissorMatrix();
 	ViewportMatrix = matrices.GetViewportMatrix();
 
@@ -1235,13 +1235,13 @@ bool RenderFrame(int width, int height)
 	glcache.UseProgram(gl.modvol_shader.program);
 	if (gl.modvol_shader.depth_scale != -1)
 		glUniform4fv(gl.modvol_shader.depth_scale, 1, ShaderUniforms.depth_coefs);
-	glUniformMatrix4fv(gl.modvol_shader.normal_matrix, 1, GL_FALSE, &ShaderUniforms.normal_mat[0][0]);
+	glUniformMatrix4fv(gl.modvol_shader.ndcMat, 1, GL_FALSE, &ShaderUniforms.ndcMat[0][0]);
 	glUniform1f(gl.modvol_shader.sp_ShaderColor, 1 - FPU_SHAD_SCALE.scale_factor / 256.f);
 
 	glcache.UseProgram(gl.n2ModVolShader.program);
 	if (gl.n2ModVolShader.depth_scale != -1)
 		glUniform4fv(gl.n2ModVolShader.depth_scale, 1, ShaderUniforms.depth_coefs);
-	glUniformMatrix4fv(gl.n2ModVolShader.normal_matrix, 1, GL_FALSE, &ShaderUniforms.normal_mat[0][0]);
+	glUniformMatrix4fv(gl.n2ModVolShader.ndcMat, 1, GL_FALSE, &ShaderUniforms.ndcMat[0][0]);
 	glUniform1f(gl.n2ModVolShader.sp_ShaderColor, 1 - FPU_SHAD_SCALE.scale_factor / 256.f);
 
 	ShaderUniforms.PT_ALPHA=(PT_ALPHA_REF&0xFF)/255.0f;

@@ -43,10 +43,11 @@ struct gl4PipelineShader
 	GLint fog_control;
 	GLint trilinear_alpha;
 	GLint fog_clamp_min, fog_clamp_max;
-	GLint normal_matrix;
+	GLint ndcMat;
 	GLint palette_index;
 	// Naomi2
 	GLint mvMat;
+	GLint normalMat;
 	GLint projMat;
 	GLint glossCoef0;
 	GLint lightCount;
@@ -73,6 +74,7 @@ struct gl4PipelineShader
 		GLint attnAngleB;
 	} lights[elan::MAX_LIGHTS];
 	float *lastMvMat;
+	float *lastNormalMat;
 	float *lastProjMat;
 	N2LightModel *lastLightModel;
 
@@ -100,14 +102,14 @@ struct gl4_ctx
 	{
 		GLuint program;
 
-		GLuint normal_matrix;
+		GLuint ndcMat;
 	} modvol_shader;
 
 	struct
 	{
 		GLuint program;
 
-		GLuint normal_matrix;
+		GLuint ndcMat;
 		GLint mvMat;
 		GLint projMat;
 	} n2ModVolShader;
@@ -173,7 +175,7 @@ extern struct gl4ShaderUniforms_t
 	TCW tcw1;
 	float fog_clamp_min[4];
 	float fog_clamp_max[4];
-	glm::mat4 normal_mat;
+	glm::mat4 ndcMat;
 	struct {
 		bool enabled;
 		int x;
@@ -234,8 +236,8 @@ extern struct gl4ShaderUniforms_t
 		if (s->fog_clamp_max != -1)
 			glUniform4fv(s->fog_clamp_max, 1, fog_clamp_max);
 
-		if (s->normal_matrix != -1)
-			glUniformMatrix4fv(s->normal_matrix, 1, GL_FALSE, &normal_mat[0][0]);
+		if (s->ndcMat != -1)
+			glUniformMatrix4fv(s->ndcMat, 1, GL_FALSE, &ndcMat[0][0]);
 
 		if (s->palette_index != -1)
 			glUniform1i(s->palette_index, palette_index);
