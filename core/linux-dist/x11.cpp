@@ -48,8 +48,6 @@ int x11_height;
 static bool x11_fullscreen = false;
 static Atom wmDeleteMessage;
 
-extern bool dump_frame_switch;
-
 enum
 {
 	_NET_WM_STATE_REMOVE =0,
@@ -198,15 +196,6 @@ void input_x11_handle()
 						else
 							x11_uncapture_mouse();
 					}
-					// TODO Move this to bindable keys or in the gui menu
-#if 0
-					if (e.xkey.keycode == KEY_F10)
-					{
-						// Dump the next frame into a file
-						dump_frame_switch = e.type == KeyPress;
-					}
-					else
-#endif
 					if (e.type == KeyPress && e.xkey.keycode == KEY_F11)
 					{
 						x11_fullscreen = !x11_fullscreen;

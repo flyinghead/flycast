@@ -56,6 +56,26 @@ struct PolyParam
 	float glossCoef1;
 	N2LightModel *lightModel;
 	bool envMapping;
+
+	bool equivalent(const PolyParam& other) const
+	{
+		// FIXME need proper initialization for this to work
+		return pcw.full == other.pcw.full
+			&& isp.full == other.isp.full
+			&& tcw.full == other.tcw.full
+			&& tsp.full == other.tsp.full
+			&& tileclip == other.tileclip
+			&& tcw1.full == other.tcw1.full
+			&& tsp1.full == other.tsp1.full
+			&& mvMatrix == other.mvMatrix
+			&& normalMatrix == other.normalMatrix
+			&& projMatrix == other.projMatrix
+			&& glossCoef0 == other.glossCoef0
+			&& glossCoef1 == other.glossCoef1
+			&& lightModel == other.lightModel
+			&& envMapping == other.envMapping;
+	}
+	bool isNaomi2() const { return projMatrix != nullptr; }
 };
 
 struct ModifierVolumeParam
@@ -66,6 +86,8 @@ struct ModifierVolumeParam
 
 	float *mvMatrix;
 	float *projMatrix;
+
+	bool isNaomi2() const { return projMatrix != nullptr; }
 };
 
 struct ModTriangle
@@ -304,16 +326,12 @@ struct TA_context
 	}
 };
 
-
 extern TA_context* ta_ctx;
 extern tad_context ta_tad;
 
-TA_context* tactx_Find(u32 addr, bool allocnew=false);
 TA_context* tactx_Pop(u32 addr);
-
-TA_context* tactx_Alloc();
-void tactx_Recycle(TA_context* poped_ctx);
 void tactx_Term();
+
 /*
 	Ta Context
 
@@ -340,3 +358,4 @@ void ta_add_triangle(const ModTriangle& tri);
 float* ta_add_matrix(const float *matrix);
 N2LightModel *ta_add_light(const N2LightModel& light);
 void ta_add_ta_data(u32 *data, u32 size);
+u32 getTAContextAddress();

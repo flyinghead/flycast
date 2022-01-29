@@ -34,14 +34,12 @@ static float minZ(const Vertex *v, const u32 *mod)
 
 static bool operator<(const IndexTrig& left, const IndexTrig& right)
 {
-	return left.z<right.z;
+	return left.z < right.z;
 }
 
 static bool operator<(const PolyParam& left, const PolyParam& right)
 {
-/* put any condition you want to sort on here */
-	return left.zvZ<right.zvZ;
-	//return left.zMin<right.zMax;
+	return left.zvZ < right.zvZ;
 }
 
 static float getProjectedZ(const Vertex *v, const glm::mat4& mat)
@@ -74,7 +72,7 @@ void SortPParams(int first, int count)
 			Vertex* vtx=vtx_base+idx[0];
 			Vertex* vtx_end=vtx_base + idx[pp->count-1]+1;
 
-			if (pp->projMatrix != nullptr)
+			if (pp->isNaomi2())
 			{
 				glm::mat4 mvMat = pp->mvMatrix != nullptr ? glm::make_mat4(pp->mvMatrix) : glm::mat4(1);
 				glm::mat4 projMat = glm::make_mat4(pp->projMatrix);
@@ -134,109 +132,6 @@ void SortPParams(int first, int count)
 }
 
 const static Vertex *vtx_sort_base;
-
-#if 0
-/*
-
-	Per triangle sorting experiments
-
-*/
-
-//approximate the triangle area
-float area_x2(Vertex* v)
-{
-	return 2/3*fabs( (v[0].x-v[2].x)*(v[1].y-v[0].y) - (v[0].x-v[1].x)*(v[2].y-v[0].y)) ;
-}
-
-//approximate the distance ^2
-float distance_apprx(Vertex* a, Vertex* b)
-{
-	float xd=a->x-b->x;
-	float yd=a->y-b->y;
-
-	return xd*xd+yd*yd;
-}
-
-//was good idea, but not really working ..
-bool Intersect(Vertex* a, Vertex* b)
-{
-	float a1=area_x2(a);
-	float a2=area_x2(b);
-
-	float d = distance_apprx(a,b);
-
-	return (a1+a1)>d;
-}
-
-//root for quick-union
-u16 rid(vector<u16>& v, u16 id)
-{
-	while(id!=v[id]) id=v[id];
-	return id;
-}
-
-struct TrigBounds
-{
-	float xs,xe;
-	float ys,ye;
-	float zs,ze;
-};
-
-//find 3d bounding box for triangle
-TrigBounds bound(Vertex* v)
-{
-	TrigBounds rv = {	std::min(std::min(v[0].x, v[1].x), v[2].x), std::max(std::max(v[0].x,v[1].x),v[2].x),
-						std::min(std::min(v[0].y, v[1].y), v[2].y), std::max(std::max(v[0].y,v[1].y),v[2].y),
-						std::min(std::min(v[0].z, v[1].z), v[2].z), std::max(std::max(v[0].z,v[1].z),v[2].z),
-					};
-
-	return rv;
-}
-
-//bounding box 2d intersection
-bool Intersect(TrigBounds& a, TrigBounds& b)
-{
-	return  ( !(a.xe<b.xs || a.xs>b.xe) && !(a.ye<b.ys || a.ys>b.ye) /*&& !(a.ze<b.zs || a.zs>b.ze)*/ );
-}
-
-
-bool operator<(const IndexTrig &left, const IndexTrig &right)
-{
-	/*
-	TrigBounds l=bound(vtx_sort_base+left.id);
-	TrigBounds r=bound(vtx_sort_base+right.id);
-
-	if (!Intersect(l,r))
-	{
-		return true;
-	}
-	else
-	{
-		return (l.zs + l.ze) < (r.zs + r.ze);
-	}*/
-
-	return minZ(&vtx_sort_base[left.id])<minZ(&vtx_sort_base[right.id]);
-}
-
-//Not really working cuz of broken intersect
-bool Intersect(const IndexTrig &left, const IndexTrig &right)
-{
-	TrigBounds l=bound(vtx_sort_base+left.id);
-	TrigBounds r=bound(vtx_sort_base+right.id);
-
-	return Intersect(l,r);
-}
-
-#endif
-
-//are two poly params the same?
-static bool PP_EQ(const PolyParam *pp0, const PolyParam *pp1)
-{
-	return (pp0->pcw.full & PCW_DRAW_MASK) == (pp1->pcw.full & PCW_DRAW_MASK) && pp0->isp.full == pp1->isp.full
-			&& pp0->tcw.full == pp1->tcw.full && pp0->tsp.full == pp1->tsp.full && pp0->tileclip == pp1->tileclip
-			&& pp0->mvMatrix == pp1->mvMatrix && pp0->projMatrix == pp1->projMatrix
-			&& pp0->lightModel == pp1->lightModel && pp0->envMapping == pp1->envMapping;
-}
 
 static void fill_id(u32 *d, const Vertex *v0, const Vertex *v1, const Vertex *v2,  const Vertex *vb)
 {	
@@ -299,7 +194,7 @@ void GenSorted(int first, int count, std::vector<SortTrigDrawParam>& pidx_sort, 
 			glm::mat4 mat;
 			float z0, z1;
 
-			if (pp->projMatrix != nullptr)
+			if (pp->isNaomi2())
 			{
 				mat = glm::make_mat4(pp->projMatrix);
 				if (pp->mvMatrix != nullptr)
@@ -323,7 +218,7 @@ void GenSorted(int first, int count, std::vector<SortTrigDrawParam>& pidx_sort, 
 				const Vertex *v2 = vtx_base + idx[i + 2];
 				fill_id(lst[pfsti].id, v0, v1, v2, vtx_base);
 				lst[pfsti].pid = ppid;
-				if (pp->projMatrix != nullptr)
+				if (pp->isNaomi2())
 				{
 					float z2 = getProjectedZ(v2, mat);
 					lst[pfsti].z = std::min(z0, std::min(z1, z2));
@@ -347,58 +242,13 @@ void GenSorted(int first, int count, std::vector<SortTrigDrawParam>& pidx_sort, 
 	lst.resize(aused);
 
 	//sort them
-#if 1
 	std::stable_sort(lst.begin(),lst.end());
 
 	//Merge pids/draw cmds if two different pids are actually equal
-	if (true)
-	{
-		for (u32 k=1;k<aused;k++)
-		{
-			if (lst[k].pid!=lst[k-1].pid)
-			{
-				if (PP_EQ(&pp_base[lst[k].pid],&pp_base[lst[k-1].pid]))
-				{
-					lst[k].pid=lst[k-1].pid;
-				}
-			}
-		}
-	}
-#endif
-
-
-#if 0
-	//tries to optimise draw calls by reordering non-intersecting polygons
-	//uber slow and not very effective
-	{
-		int opid=lst[0].pid;
-
-		for (int k=1;k<aused;k++)
-		{
-			if (lst[k].pid!=opid)
-			{
-				if (opid>lst[k].pid)
-				{
-					//MOVE UP
-					for (int j=k;j>0 && lst[j].pid!=lst[j-1].pid && !Intersect(lst[j],lst[j-1]);j--)
-					{
-						swap(lst[j],lst[j-1]);
-					}
-				}
-				else
-				{
-					//move down
-					for (int j=k+1;j<aused && lst[j].pid!=lst[j-1].pid && !Intersect(lst[j],lst[j-1]);j++)
-					{
-						swap(lst[j],lst[j-1]);
-					}
-				}
-			}
-
-			opid=lst[k].pid;
-		}
-	}
-#endif
+	for (u32 k = 1; k < aused; k++)
+		if (lst[k].pid != lst[k - 1].pid)
+			if (pp_base[lst[k].pid].equivalent(pp_base[lst[k - 1].pid]))
+				lst[k].pid = lst[k - 1].pid;
 
 	//re-assemble them into drawing commands
 	vidx_sort.resize(aused*3);

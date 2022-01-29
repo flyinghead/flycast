@@ -11,6 +11,9 @@ static int RenderCount;
 TA_context* ta_ctx;
 tad_context ta_tad;
 
+static void tactx_Recycle(TA_context* poped_ctx);
+static TA_context *tactx_Find(u32 addr, bool allocnew = false);
+
 void SetCurrentTARC(u32 addr)
 {
 	if (addr != TACTX_NONE)
@@ -124,8 +127,10 @@ TA_context* tactx_Alloc()
 	return rv;
 }
 
-void tactx_Recycle(TA_context* poped_ctx)
+static void tactx_Recycle(TA_context* poped_ctx)
 {
+	if (poped_ctx->rend.isRenderFramebuffer)
+		return;
 	mtx_pool.lock();
 	{
 		if (ctx_pool.size()>2)
@@ -264,21 +269,45 @@ static void deserializeContext(Deserializer& deser, TA_context **pctx)
 
 void SerializeTAContext(Serializer& ser)
 {
-	serializeContext(ser, ta_ctx);
-	if (TA_CURRENT_CTX != CORE_CURRENT_CTX)
-		serializeContext(ser, tactx_Find(TA_CURRENT_CTX, false));
-	else
-		serializeContext(ser, nullptr);
-
+	ser << (u32)ctx_list.size();
+	int curCtx = -1;
+	for (const auto& ctx : ctx_list)
+	{
+		if (ctx == ta_ctx)
+			curCtx = (int)(&ctx - &ctx_list[0]);
+		serializeContext(ser, ctx);
+	}
+	ser << curCtx;
 }
+
 void DeserializeTAContext(Deserializer& deser)
 {
 	if (::ta_ctx != nullptr)
 		SetCurrentTARC(TACTX_NONE);
-	TA_context *ta_cur_ctx;
-	deserializeContext(deser, &ta_cur_ctx);
-	if (ta_cur_ctx != nullptr)
-		SetCurrentTARC(ta_cur_ctx->Address);
-	if (deser.version() >= Deserializer::V20)
+	if (deser.version() >= Deserializer::V25)
+	{
+		u32 listSize;
+		deser >> listSize;
+		for (const auto& ctx : ctx_list)
+			tactx_Recycle(ctx);
+		ctx_list.clear();
+		for (u32 i = 0; i < listSize; i++)
+		{
+			TA_context *ctx;
+			deserializeContext(deser, &ctx);
+		}
+		int curCtx;
+		deser >> curCtx;
+		if (curCtx != -1)
+			SetCurrentTARC(ctx_list[curCtx]->Address);
+	}
+	else
+	{
+		TA_context *ta_cur_ctx;
 		deserializeContext(deser, &ta_cur_ctx);
+		if (ta_cur_ctx != nullptr)
+			SetCurrentTARC(ta_cur_ctx->Address);
+		if (deser.version() >= Deserializer::V20)
+			deserializeContext(deser, &ta_cur_ctx);
+	}
 }

@@ -1,6 +1,7 @@
 #include "ta.h"
 #include "ta_ctx.h"
 #include "hw/holly/holly_intc.h"
+#include "pvr_mem.h"
 
 /*
 	Threaded TA Implementation
@@ -262,19 +263,40 @@ static NOINLINE void DYNACALL ta_handle_cmd(u32 trans)
 
 static OnLoad ol_fillfsm(&fill_fsm);
 
+static u32 opbSize(int n)
+{
+	return n == 0 ? 0 : 16 << n;
+}
+
+static void markObjectListBlocks()
+{
+	u32 opBlockSize = opbSize(TA_ALLOC_CTRL & 3);
+	if (opBlockSize == 0)
+		return;
+	u32 addr = TA_OL_BASE;
+	for (int y = 0; y <= TA_GLOB_TILE_CLIP.tile_y_num; y++)
+		for (int x = 0; x <= TA_GLOB_TILE_CLIP.tile_x_num; x++)
+		{
+			pvr_write32p(addr, TA_OL_BASE);
+			addr += opBlockSize;
+		}
+}
+
 void ta_vtx_ListCont()
 {
-	SetCurrentTARC(TA_CURRENT_CTX);
+	SetCurrentTARC(TA_OL_BASE);
 	ta_tad.Continue();
 	ta_ctx->rend.newRenderPass();
+	markObjectListBlocks();
 
 	ta_cur_state=TAS_NS;
 	ta_fsm_cl = 7;
 }
 void ta_vtx_ListInit()
 {
-	SetCurrentTARC(TA_CURRENT_CTX);
+	SetCurrentTARC(TA_OL_BASE);
 	ta_tad.ClearPartial();
+	markObjectListBlocks();
 
 	ta_cur_state=TAS_NS;
 	ta_fsm_cl = 7;

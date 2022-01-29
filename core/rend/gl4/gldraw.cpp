@@ -131,7 +131,7 @@ static void SetGPState(const PolyParam* gp)
 				false,
 				false,
 				false,
-				gp->projMatrix != nullptr,
+				gp->isNaomi2(),
 				pass);
 	}
 	else
@@ -156,7 +156,7 @@ static void SetGPState(const PolyParam* gp)
 				gp->tcw.PixelFmt == PixelBumpMap,
 				color_clamp,
 				gpuPalette,
-				gp->projMatrix != nullptr,
+				gp->isNaomi2(),
 				pass);
 	}
 	glcache.UseProgram(CurrentShader->program);
@@ -270,7 +270,7 @@ static void SetGPState(const PolyParam* gp)
 	}
 	else
 		glcache.DepthMask(GL_FALSE);
-	if (gp->projMatrix != nullptr)
+	if (gp->isNaomi2())
 		setN2Uniforms(gp, CurrentShader);
 }
 
@@ -378,7 +378,7 @@ static void DrawModVols(int first, int count)
 
 		if (param.count == 0)
 			continue;
-		if (param.projMatrix != nullptr)
+		if (param.isNaomi2())
 		{
 			glcache.UseProgram(gl4.n2ModVolShader.program);
 			glUniformMatrix4fv(gl4.n2ModVolShader.mvMat, 1, GL_FALSE, param.mvMatrix);

@@ -576,7 +576,3 @@ union FOG_DENSITY_type
 #define FOG_TABLE        (&PvrReg(FOG_TABLE_START_addr,u32))      // RW Look-up table Fog data
 #define TA_OL_POINTERS   (&PvrReg(TA_OL_POINTERS_START_addr),u32) // R  TA object List Pointer data
 #define PALETTE_RAM      (&PvrReg(PALETTE_RAM_START_addr,u32))    // RW Palette RAM
-
-
-#define TA_CURRENT_CTX (TA_ISP_BASE & 0xF00000)
-#define CORE_CURRENT_CTX (PARAM_BASE & 0xF00000)

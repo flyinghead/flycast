@@ -1430,17 +1430,7 @@ static void make_index(const List<PolyParam> *polys, int first, int end, bool me
 		if (merge
 				&& last_poly != nullptr
 				&& last_poly->count != 0
-				&& poly->pcw.full == last_poly->pcw.full
-				&& poly->tcw.full == last_poly->tcw.full
-				&& poly->tsp.full == last_poly->tsp.full
-				&& poly->isp.full == last_poly->isp.full
-				&& poly->tileclip == last_poly->tileclip
-				&& poly->mvMatrix == last_poly->mvMatrix
-				&& poly->projMatrix == last_poly->projMatrix
-				&& poly->lightModel == last_poly->lightModel
-				&& poly->envMapping == last_poly->envMapping
-				// FIXME tcw1, tsp1?
-				)
+				&& poly->equivalent(*last_poly))
 		{
 			const u32 last_vtx = indices[last_poly->first + last_poly->count - 1];
 			*ctx->idx.Append() = last_vtx;
@@ -1456,7 +1446,7 @@ static void make_index(const List<PolyParam> *polys, int first, int end, bool me
 		for (u32 i = 0; i < poly->count; i++)
 		{
 			const Vertex& vtx = vertices[poly->first + i];
-			if (poly->projMatrix == nullptr && is_vertex_inf(vtx))
+			if (!poly->isNaomi2() && is_vertex_inf(vtx))
 			{
 				while (i < poly->count - 1)
 				{
@@ -2073,6 +2063,33 @@ static bool ClearZBeforePass(int pass_number)
 	RegionArrayTile tile = getRegionTile(pass_number);
 
 	return !tile.NoZClear;
+}
+
+u32 getTAContextAddress()
+{
+	u32 addr = REGION_BASE;
+	const bool type1_tile = ((FPU_PARAM_CFG >> 21) & 1) == 0;
+	int tile_size = (type1_tile ? 5 : 6) * 4;
+	bool empty_first_region = true;
+	for (int i = type1_tile ? 4 : 5; i > 0; i--)
+		if ((pvr_read32p<u32>(addr + i * 4) & 0x80000000) == 0)
+		{
+			empty_first_region = false;
+			break;
+		}
+	if (empty_first_region)
+		addr += tile_size;
+
+	RegionArrayTile tile;
+	tile.full = pvr_read32p<u32>(addr);
+	if (type1_tile && tile.PreSort)
+		// Windows CE weirdness
+		tile_size = 6 * 4;
+
+	u32 opbAddr = pvr_read32p<u32>(addr + 4);
+	u32 ta_ol_base = pvr_read32p<u32>(opbAddr);
+
+	return ta_ol_base;
 }
 
 void rend_context::newRenderPass()

@@ -135,7 +135,7 @@ __forceinline
 								  color_clamp,
 								  ShaderUniforms.trilinear_alpha != 1.f,
 								  gpuPalette,
-								  gp->projMatrix != nullptr);
+								  gp->isNaomi2());
 	
 	glcache.UseProgram(CurrentShader->program);
 	if (CurrentShader->trilinear_alpha != -1)
@@ -570,7 +570,7 @@ void DrawModVols(int first, int count)
 
 		if (param.count == 0)
 			continue;
-		if (param.projMatrix != nullptr)
+		if (param.isNaomi2())
 		{
 			glcache.UseProgram(gl.n2ModVolShader.program);
 			if (param.mvMatrix != curMVMat)
