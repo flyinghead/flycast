@@ -35,4 +35,4 @@ Open [**gamr13's github page**](https://gamr13.github.io/) from your console.
 
 Get fresh builds for your system [**on the builds page**](https://flyinghead.github.io/flycast-builds/).
 
-**New:** Now automated test results are available as well.
+**New:** Now automated test results are available as well. 
