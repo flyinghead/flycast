@@ -404,9 +404,7 @@ static void tcp_callback(uint16_t ev, pico_socket *s)
 				{
 					set_tcp_nodelay(sockfd);
 
-					tcp_sockets.emplace(std::piecewise_construct,
-					              std::forward_as_tuple(sock_a),
-					              std::forward_as_tuple(sock_a, sockfd));
+					tcp_sockets.try_emplace(sock_a, sock_a, sockfd);
 				}
 			}
 		}
@@ -564,10 +562,7 @@ static void read_native_sockets()
     	set_non_blocking(sockfd);
     	set_tcp_nodelay(sockfd);
 
-		tcp_sockets.emplace(std::piecewise_construct,
-		              std::forward_as_tuple(ps),
-		              std::forward_as_tuple(ps, sockfd));
-
+		tcp_sockets.try_emplace(ps, ps, sockfd);
 	}
 
 	// Check connecting outbound TCP sockets
@@ -616,9 +611,7 @@ static void read_native_sockets()
 				{
 					set_tcp_nodelay(it->second);
 
-					tcp_sockets.emplace(std::piecewise_construct,
-				              std::forward_as_tuple(it->first),
-				              std::forward_as_tuple(it->first, it->second));
+					tcp_sockets.try_emplace(it->first, it->first, it->second);
 
 					read_from_dc_socket(it->first, it->second);
 				}
