@@ -86,9 +86,9 @@ public:
 				return true;
 			};
 
-			if (Arcade)
+			if constexpr (Arcade)
 			{
-				if (Gamepad)
+				if constexpr (Gamepad)
 				{
 					// 1  2  3  4  5  6
 					// A  B  X  Y  R  L

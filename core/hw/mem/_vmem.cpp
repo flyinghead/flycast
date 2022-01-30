@@ -126,19 +126,19 @@ Trv DYNACALL _vmem_readt(u32 addr)
 	else
 	{
 		const u32 id=iirf;
-		if (sz==1)
+		if constexpr (sz == 1)
 		{
 			return (T)_vmem_RF8[id](addr);
 		}
-		else if (sz==2)
+		else if constexpr (sz == 2)
 		{
 			return (T)_vmem_RF16[id](addr);
 		}
-		else if (sz==4)
+		else if constexpr (sz == 4)
 		{
 			return _vmem_RF32[id](addr);
 		}
-		else if (sz==8)
+		else if constexpr (sz == 8)
 		{
 			T rv=_vmem_RF32[id](addr);
 			rv|=(T)((u64)_vmem_RF32[id](addr+4)<<32);
@@ -176,19 +176,19 @@ void DYNACALL _vmem_writet(u32 addr, T data)
 	else
 	{
 		const u32 id=iirf;
-		if (sz==1)
+		if constexpr (sz == 1)
 		{
 			 _vmem_WF8[id](addr,data);
 		}
-		else if (sz==2)
+		else if constexpr (sz == 2)
 		{
 			 _vmem_WF16[id](addr,data);
 		}
-		else if (sz==4)
+		else if constexpr (sz == 4)
 		{
 			 _vmem_WF32[id](addr,data);
 		}
-		else if (sz==8)
+		else if constexpr (sz == 8)
 		{
 			_vmem_WF32[id](addr,(u32)data);
 			_vmem_WF32[id](addr+4,(u32)((u64)data>>32));

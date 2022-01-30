@@ -325,7 +325,7 @@ u64 GDCartridge::des_encrypt_decrypt(u64 src, const u32 *des_subkeys)
 	permutate(l, r, 0x55555555, 1);
 
 	int subkey;
-	if(decrypt)
+	if constexpr (decrypt)
 		subkey = 30;
 	else
 		subkey = 0;
@@ -346,7 +346,7 @@ u64 GDCartridge::des_encrypt_decrypt(u64 src, const u32 *des_subkeys)
 		l ^= DES_SBOX3[ (temp>>16) & 0x3f ];
 		l ^= DES_SBOX1[ (temp>>24) & 0x3f ];
 		subkey++;
-		if(decrypt)
+		if constexpr (decrypt)
 			subkey -= 4;
 
 		temp = ((l<<1) | (l>>31)) ^ des_subkeys[subkey];
@@ -362,7 +362,7 @@ u64 GDCartridge::des_encrypt_decrypt(u64 src, const u32 *des_subkeys)
 		r ^= DES_SBOX3[ (temp>>16) & 0x3f ];
 		r ^= DES_SBOX1[ (temp>>24) & 0x3f ];
 		subkey++;
-		if(decrypt)
+		if constexpr (decrypt)
 			subkey -= 4;
 	}
 
