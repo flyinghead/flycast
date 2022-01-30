@@ -199,7 +199,7 @@ static void multi_xfer()
 			int remaining = 2048 - gd_hle_state.multi_read_offset;
 			if (size >= 4 && remaining >= 4 && (dest & 3) == 0)
 			{
-				if (dma)
+				if constexpr (dma)
 					WriteMem32_nommu(dest, *(u32*)&buf[gd_hle_state.multi_read_offset]);
 				else
 					WriteMem32(dest, *(u32*)&buf[gd_hle_state.multi_read_offset]);
@@ -210,7 +210,7 @@ static void multi_xfer()
 			}
 			else if (size >= 2 && remaining >= 2 && (dest & 1) == 0)
 			{
-				if (dma)
+				if constexpr (dma)
 					WriteMem16_nommu(dest, *(u16*)&buf[gd_hle_state.multi_read_offset]);
 				else
 					WriteMem16(dest, *(u16*)&buf[gd_hle_state.multi_read_offset]);
@@ -221,7 +221,7 @@ static void multi_xfer()
 			}
 			else
 			{
-				if (dma)
+				if constexpr (dma)
 					WriteMem8_nommu(dest, buf[gd_hle_state.multi_read_offset]);
 				else
 					WriteMem8(dest, buf[gd_hle_state.multi_read_offset]);

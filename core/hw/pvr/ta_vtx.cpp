@@ -189,7 +189,7 @@ class TAParserTempl : public BaseTAParser
 		TA_VertexParam* vp=(TA_VertexParam*)data;
 		u32 rv=0;
 
-		if (part==2)
+		if constexpr (part == 2)
 		{
 			TaCmd=ta_main;
 		}
@@ -218,18 +218,18 @@ break;
 #define ver_64B_def(num) \
 case num : {\
 /*process first half*/\
-	if (part!=2)\
+	if constexpr (part != 2)\
 	{\
 	rv+=SZ32;\
 	AppendPolyVertex##num##A(&vp->vtx##num##A);\
 	}\
 	/*process second half*/\
-	if (part==0)\
+	if constexpr (part == 0)\
 	{\
 	AppendPolyVertex##num##B(&vp->vtx##num##B);\
 	rv+=SZ32;\
 	}\
-	else if (part==2)\
+	else if constexpr (part == 2)\
 	{\
 	AppendPolyVertex##num##B((TA_Vertex##num##B*)data);\
 	rv+=SZ32;\
@@ -369,7 +369,7 @@ strip_end:
 	template <int t>
 	static Ta_Dma* TACALL ta_poly_B_32(Ta_Dma* data,Ta_Dma* data_end)
 	{
-		if (t==2)
+		if constexpr (t == 2)
 			AppendPolyParam2B((TA_PolyParam2B*)data);
 		else
 			AppendPolyParam4B((TA_PolyParam4B*)data);

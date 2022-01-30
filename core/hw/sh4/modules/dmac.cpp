@@ -111,7 +111,7 @@ static const InterruptID dmac_itr[] = { sh4_DMAC_DMTE0, sh4_DMAC_DMTE1, sh4_DMAC
 template<u32 ch>
 static void WriteCHCR(u32 addr, u32 data)
 {
-	if (ch == 0 || ch == 1)
+	if constexpr (ch == 0 || ch == 1)
 		DMAC_CHCR(ch).full = data & 0xff0ffff7;
 	else
 		// no AL or RL on channels 2 and 3

@@ -196,14 +196,14 @@ T DYNACALL ReadMem_P4(u32 addr)
 
 	case 0xF0:
 		DEBUG_LOG(SH4, "IC Address read %08x", addr);
-		if (sz == 4)
+		if constexpr (sz == 4)
 			return icache.ReadAddressArray(addr);
 		else
 			return 0;
 
 	case 0xF1:
 		DEBUG_LOG(SH4, "IC Data read %08x", addr);
-		if (sz == 4)
+		if constexpr (sz == 4)
 			return icache.ReadDataArray(addr);
 		else
 			return 0;
@@ -222,14 +222,14 @@ T DYNACALL ReadMem_P4(u32 addr)
 
 	case 0xF4:
 		DEBUG_LOG(SH4, "OC Address read %08x", addr);
-		if (sz == 4)
+		if constexpr (sz == 4)
 			return ocache.ReadAddressArray(addr);
 		else
 			return 0;
 
 	case 0xF5:
 		DEBUG_LOG(SH4, "OC Data read %08x", addr);
-		if (sz == 4)
+		if constexpr (sz == 4)
 			return ocache.ReadDataArray(addr);
 		else
 			return 0;
@@ -278,13 +278,13 @@ void DYNACALL WriteMem_P4(u32 addr,T data)
 
 	case 0xF0:
 		DEBUG_LOG(SH4, "IC Address write %08x = %x", addr, data);
-		if (sz == 4)
+		if constexpr (sz == 4)
 			icache.WriteAddressArray(addr, data);
 		return;
 
 	case 0xF1:
 		DEBUG_LOG(SH4, "IC Data write %08x = %x", addr, data);
-		if (sz == 4)
+		if constexpr (sz == 4)
 			icache.WriteDataArray(addr, data);
 		return;
 
@@ -310,13 +310,13 @@ void DYNACALL WriteMem_P4(u32 addr,T data)
 
 	case 0xF4:
 //		DEBUG_LOG(SH4, "OC Address write %08x = %x", addr, data);
-		if (sz == 4)
+		if constexpr (sz == 4)
 			ocache.WriteAddressArray(addr, data);
 		return;
 
 	case 0xF5:
 		DEBUG_LOG(SH4, "OC Data write %08x = %x", addr, data);
-		if (sz == 4)
+		if constexpr (sz == 4)
 			ocache.WriteDataArray(addr, data);
 		return;
 

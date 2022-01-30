@@ -52,7 +52,7 @@ T DYNACALL ReadMem_area0(u32 paddr)
 		// System/Boot ROM
 		if (addr < (System == DC_PLATFORM_ATOMISWAVE ? 0x20000 : 0x200000))
 		{
-			if (Mirror)
+			if constexpr (Mirror)
 			{
 				INFO_LOG(MEMORY, "Read from area0 BIOS mirror [Unassigned], addr=%x", addr);
 				return 0;
@@ -64,7 +64,7 @@ T DYNACALL ReadMem_area0(u32 paddr)
 		// Flash memory
 		if (addr < 0x00200000 + settings.platform.flash_size)
 		{
-			if (Mirror)
+			if constexpr (Mirror)
 			{
 				INFO_LOG(MEMORY, "Read from area0 Flash mirror [Unassigned], addr=%x", addr);
 				return 0;
@@ -87,7 +87,7 @@ T DYNACALL ReadMem_area0(u32 paddr)
 		// TA / PVR core registers
 		if (addr >= 0x005F8000 && addr <= 0x005F9FFF)
 		{
-			if (sz != 4)
+			if constexpr (sz != 4)
 				// House of the Dead 2
 				return 0;
 			return (T)pvr_ReadReg(paddr);
@@ -149,7 +149,7 @@ void DYNACALL WriteMem_area0(u32 paddr, T data)
 	{
 	case 0:
 		 // System/Boot ROM
-		if (!Mirror)
+		if constexpr (!Mirror)
 		{
 			if (System == DC_PLATFORM_ATOMISWAVE)
 			{
