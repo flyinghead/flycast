@@ -586,7 +586,7 @@ void startSession(int localPort, int localPlayerNum)
 
 void stopSession()
 {
-	std::lock_guard<std::recursive_mutex> lock(ggpoMutex);
+	std::lock_guard lock(ggpoMutex);
 	if (ggpoSession == nullptr)
 		return;
 	ggpo_close_session(ggpoSession);
@@ -597,7 +597,7 @@ void stopSession()
 
 void getInput(MapleInputState inputState[4])
 {
-	std::lock_guard<std::recursive_mutex> lock(ggpoMutex);
+	std::lock_guard lock(ggpoMutex);
 	if (ggpoSession == nullptr)
 	{
 		getLocalInput(inputState);
@@ -665,7 +665,7 @@ bool nextFrame()
 	}
 	lastFrameTime = now;
 
-	std::lock_guard<std::recursive_mutex> lock(ggpoMutex);
+	std::lock_guard lock(ggpoMutex);
 	if (ggpoSession == nullptr)
 		return false;
 	// will call save_game_state
@@ -756,7 +756,7 @@ std::future<bool> startNetwork()
 	synchronized = false;
 	return std::async(std::launch::async, []{
 		{
-			std::lock_guard<std::recursive_mutex> lock(ggpoMutex);
+			std::lock_guard lock(ggpoMutex);
 #ifdef SYNC_TEST
 			startSession(0, 0);
 #else
@@ -781,7 +781,7 @@ std::future<bool> startNetwork()
 		while (!synchronized && active())
 		{
 			{
-				std::lock_guard<std::recursive_mutex> lock(ggpoMutex);
+				std::lock_guard lock(ggpoMutex);
 				if (ggpoSession == nullptr)
 					break;
 				GGPOErrorCode result = ggpo_idle(ggpoSession, 0);

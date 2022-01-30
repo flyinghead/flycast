@@ -55,7 +55,7 @@ static void storeReg(Register host_reg, Arm7Reg guest_reg, ConditionType cc = al
 	ass.Str(cc, host_reg, MemOperand(r8, (u8*)&arm_Reg[guest_reg].I - (u8*)&arm_Reg[0].I));
 }
 
-const std::array<Register, 6> alloc_regs{
+const std::array alloc_regs {
 	r5, r6, r7, r9, r10, r11
 };
 

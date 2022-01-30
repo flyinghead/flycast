@@ -164,7 +164,7 @@ cResetEvent::~cResetEvent() = default;
 
 void cResetEvent::Set()//Signal
 {
-    std::lock_guard<std::mutex> lock(mutx);
+    std::lock_guard lock(mutx);
 
     state = true;
     cond.notify_one();
@@ -172,14 +172,14 @@ void cResetEvent::Set()//Signal
 
 void cResetEvent::Reset()
 {
-    std::lock_guard<std::mutex> lock(mutx);
+    std::lock_guard lock(mutx);
 
     state = false;
 }
 
 bool cResetEvent::Wait(u32 msec)
 {
-	std::unique_lock<std::mutex> lock(mutx);
+	std::unique_lock lock(mutx);
 
 	if (!state)
 		cond.wait_for(lock, std::chrono::milliseconds(msec));
@@ -192,7 +192,7 @@ bool cResetEvent::Wait(u32 msec)
 
 void cResetEvent::Wait()
 {
-    std::unique_lock<std::mutex> lock(mutx);
+    std::unique_lock lock(mutx);
 
     if (!state) {
         cond.wait(lock);

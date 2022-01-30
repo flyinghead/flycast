@@ -42,7 +42,7 @@ void CustomTexture::LoaderThread()
 		do {
 			texture = nullptr;
 			{
-				std::unique_lock<std::mutex> lock(work_queue_mutex);
+				std::unique_lock lock(work_queue_mutex);
 				if (!work_queue.empty())
 				{
 					texture = work_queue.back();
@@ -126,7 +126,7 @@ void CustomTexture::Terminate()
 	{
 		initialized = false;
 		{
-			std::unique_lock<std::mutex> lock(work_queue_mutex);
+			std::unique_lock lock(work_queue_mutex);
 			work_queue.clear();
 		}
 		wakeup_thread.Set();
@@ -158,7 +158,7 @@ void CustomTexture::LoadCustomTextureAsync(BaseTextureCacheData *texture_data)
 
 	texture_data->custom_load_in_progress++;
 	{
-		std::unique_lock<std::mutex> lock(work_queue_mutex);
+		std::unique_lock lock(work_queue_mutex);
 		work_queue.insert(work_queue.begin(), texture_data);
 	}
 	wakeup_thread.Set();

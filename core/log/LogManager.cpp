@@ -46,7 +46,7 @@ public:
 		if (!IsEnabled() || !IsValid())
 			return;
 
-		std::lock_guard<std::mutex> lk(m_log_lock);
+		std::lock_guard lk(m_log_lock);
 		m_logfile << msg << std::flush;
 	}
 

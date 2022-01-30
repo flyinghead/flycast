@@ -33,24 +33,23 @@ namespace aicaarm {
 
 static void (*arm_dispatch)();
 
+static const std::array call_regs
 #ifdef _WIN32
-static const Xbyak::Reg32 call_regs[] = { ecx, edx, r8d, r9d };
+	{ ecx, edx, r8d, r9d };
 #else
-static const Xbyak::Reg32 call_regs[] = { edi, esi, edx, ecx  };
+	{ edi, esi, edx, ecx };
 #endif
+
 static void (**entry_points)();
 static UnwindInfo unwinder;
 
 class Arm7Compiler;
 
+static const std::array alloc_regs
 #ifdef _WIN32
-static const std::array<Xbyak::Reg32, 8> alloc_regs {
-		ebx, ebp, edi, esi, r12d, r13d, r14d, r15d
-};
+	{ ebx, ebp, edi, esi, r12d, r13d, r14d, r15d };
 #else
-static const std::array<Xbyak::Reg32, 6> alloc_regs {
-		ebx, ebp, r12d, r13d, r14d, r15d
-};
+	{ ebx, ebp, r12d, r13d, r14d, r15d };
 #endif
 
 class X64ArmRegAlloc : public ArmRegAlloc<std::size(alloc_regs), X64ArmRegAlloc>

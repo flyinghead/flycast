@@ -704,7 +704,7 @@ private:
 
 	void sendChar(char c)
 	{
-		std::unique_lock<std::mutex> lock(outMutex);
+		std::unique_lock lock(outMutex);
 		int rc = ::send(clientSocket, &c, 1, 0);
 		if (rc <= 0)
 			throw Error("gdb: I/O error");
@@ -803,7 +803,7 @@ private:
 
 	void sendPacket(const std::string& pkt)
 	{	DEBUG_LOG(NETWORK, "gdb: sending pkt");
-		std::unique_lock<std::mutex> lock(outMutex);
+		std::unique_lock lock(outMutex);
 		std::string data{'$'};
 		u8 checksum = 0;
 		for (char c : pkt)

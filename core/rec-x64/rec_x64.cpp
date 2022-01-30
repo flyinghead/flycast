@@ -127,19 +127,19 @@ static void do_sqw_mmu_no_ex(u32 addr, u32 pc)
 	}
 }
 
-const std::array<Xbyak::Reg32, 4> call_regs
+const std::array call_regs
 #ifdef _WIN32
 	{ ecx, edx, r8d, r9d };
 #else
 	{ edi, esi, edx, ecx };
 #endif
-const std::array<Xbyak::Reg64, 4> call_regs64
+const std::array call_regs64
 #ifdef _WIN32
 	{ rcx, rdx, r8, r9 };
 #else
 	{ rdi, rsi, rdx, rcx };
 #endif
-const std::array<Xbyak::Xmm, 4> call_regsxmm { xmm0, xmm1, xmm2, xmm3 };
+const std::array call_regsxmm { xmm0, xmm1, xmm2, xmm3 };
 
 #ifdef _WIN32
 constexpr u32 STACK_ALIGN = 0x28;	// 32-byte shadow space + 8 byte alignment

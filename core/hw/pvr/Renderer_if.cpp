@@ -81,7 +81,7 @@ bool rend_single_frame(const bool& enabled)
 	if (frame_rendered)
 	{
 		{
-			std::lock_guard<std::mutex> lock(swap_mutex);
+			std::lock_guard lock(swap_mutex);
 			if (config::DelayFrameSwapping && !_pvrrc->rend.isRenderFramebuffer && fb_w_cur != FB_R_SOF1 && !do_swap)
 				// Delay swap
 				frame_rendered = false;

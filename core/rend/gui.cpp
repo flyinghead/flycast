@@ -2281,14 +2281,14 @@ static void gui_display_settings()
 
 void gui_display_notification(const char *msg, int duration)
 {
-	std::lock_guard<std::mutex> lock(osd_message_mutex);
+	std::lock_guard lock(osd_message_mutex);
 	osd_message = msg;
 	osd_message_end = os_GetSeconds() + (double)duration / 1000.0;
 }
 
 static std::string get_notification()
 {
-	std::lock_guard<std::mutex> lock(osd_message_mutex);
+	std::lock_guard lock(osd_message_mutex);
 	if (!osd_message.empty() && os_GetSeconds() >= osd_message_end)
 		osd_message.clear();
 	return osd_message;

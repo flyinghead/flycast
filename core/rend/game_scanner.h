@@ -51,7 +51,7 @@ class GameScanner
 
 	void insert_game(const GameMedia& game)
 	{
-		std::lock_guard<std::mutex> guard(mutex);
+		std::lock_guard guard(mutex);
 		game_list.insert(std::upper_bound(game_list.begin(), game_list.end(), game), game);
 	}
 
@@ -128,7 +128,7 @@ public:
 
 	void stop()
 	{
-		std::lock_guard<std::mutex> guard(threadMutex);
+		std::lock_guard guard(threadMutex);
 		running = false;
         empty_folders_scanned = 0;
         content_path_looks_incorrect = false;
@@ -138,7 +138,7 @@ public:
 
 	void fetch_game_list()
 	{
-		std::lock_guard<std::mutex> guard(threadMutex);
+		std::lock_guard guard(threadMutex);
 		if (scan_done || running)
 			return;
 		if (scan_thread && scan_thread->joinable())
@@ -156,7 +156,7 @@ public:
 							arcade_gdroms.insert(game->gdrom_name);
 					}
 				{
-					std::lock_guard<std::mutex> guard(mutex);
+					std::lock_guard guard(mutex);
 					game_list.clear();
 				}
 				for (const auto& path : config::ContentPath.get())

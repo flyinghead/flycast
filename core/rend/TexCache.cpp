@@ -222,7 +222,7 @@ bool VramLockedWriteOffset(size_t offset)
 	std::vector<vram_block *>& list = VramLocks[addr_hash];
 
 	{
-		std::lock_guard<std::mutex> lockguard(vramlist_lock);
+		std::lock_guard lockguard(vramlist_lock);
 
 		for (auto& lock : list)
 		{
@@ -432,7 +432,7 @@ void BaseTextureCacheData::protectVRam()
 	block->texture = this;
 
 	{
-		std::lock_guard<std::mutex> lock(vramlist_lock);
+		std::lock_guard lock(vramlist_lock);
 
 		if (lock_block == nullptr)
 		{
@@ -447,7 +447,7 @@ void BaseTextureCacheData::protectVRam()
 
 void BaseTextureCacheData::unprotectVRam()
 {
-	std::lock_guard<std::mutex> lock(vramlist_lock);
+	std::lock_guard lock(vramlist_lock);
 	if (lock_block)
 		libCore_vramlock_Unlock_block_wb(lock_block);
 	lock_block = nullptr;
