@@ -525,7 +525,7 @@ void RuntimeBlockInfo::AddRef(const RuntimeBlockInfoPtr& other)
 
 void RuntimeBlockInfo::RemRef(const RuntimeBlockInfoPtr& other)
 {
-	bm_List::iterator it = std::find(pre_refs.begin(), pre_refs.end(), other);
+	auto it = std::find(pre_refs.begin(), pre_refs.end(), other);
 	if (it != pre_refs.end())
 		pre_refs.erase(it);
 }
