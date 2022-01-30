@@ -703,7 +703,6 @@ public:
 template<typename Texture>
 class BaseTextureCache
 {
-	using TexCacheIter = typename std::unordered_map<u64, Texture>::iterator;
 public:
 	Texture *getTextureCacheData(TSP tsp, TCW tcw)
 	{
@@ -723,7 +722,7 @@ public:
 		else
 			key |= (u64)(tcw.full & TCWTextureCacheMask.full) << 32;
 
-		TexCacheIter it = cache.find(key);
+		auto it = cache.find(key);
 
 		Texture* texture;
 		if (it != cache.end())
