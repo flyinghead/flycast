@@ -195,8 +195,22 @@ void rend_start_render(TA_context *ctx)
 	pend_rend = false;
 	if (ctx == nullptr)
 	{
-		u32 ta_ol_base = getTAContextAddress();
-		ctx = tactx_Pop(ta_ol_base);
+		u32 addresses[MAX_PASSES];
+		int count = getTAContextAddresses(addresses);
+		if (count > 0)
+		{
+			ctx = tactx_Pop(addresses[0]);
+			if (ctx != nullptr)
+			{
+				TA_context *linkedCtx = ctx;
+				for (int i = 1; i < count; i++)
+				{
+					linkedCtx->nextContext = tactx_Pop(addresses[i]);
+					if (linkedCtx->nextContext != nullptr)
+						linkedCtx = linkedCtx->nextContext;
+				}
+			}
+		}
 	}
 
 	// No end of render interrupt when rendering the framebuffer
@@ -258,7 +272,6 @@ void rend_vblank()
 		ctx.Alloc();
 		ctx.rend.isRenderFramebuffer = true;
 		rend_start_render(&ctx);
-		ctx.Free();
 		fb_dirty = false;
 	}
 	render_called = false;

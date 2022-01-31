@@ -381,7 +381,8 @@ static void DrawModVols(int first, int count)
 		if (param.isNaomi2())
 		{
 			glcache.UseProgram(gl4.n2ModVolShader.program);
-			glUniformMatrix4fv(gl4.n2ModVolShader.mvMat, 1, GL_FALSE, param.mvMatrix);
+			if (param.mvMatrix != nullptr)
+				glUniformMatrix4fv(gl4.n2ModVolShader.mvMat, 1, GL_FALSE, param.mvMatrix);
 			glUniformMatrix4fv(gl4.n2ModVolShader.projMat, 1, GL_FALSE, param.projMatrix);
 		}
 		else

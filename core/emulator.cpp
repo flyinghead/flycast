@@ -96,7 +96,7 @@ static void loadSpecialSettings()
 				// JSR (EU)
 				|| prod_id == "MK-5105850")
 		{
-			INFO_LOG(BOOT, "Enabling render to texture buffer for game %s", prod_id.c_str());
+			INFO_LOG(BOOT, "Enabling RTT Copy to VRAM for game %s", prod_id.c_str());
 			config::RenderToTextureBuffer.override(true);
 		}
 		if (prod_id == "HDR-0176" || prod_id == "RDC-0057")
@@ -229,6 +229,11 @@ static void loadSpecialSettings()
 		{
 			INFO_LOG(BOOT, "Enabling translucent depth multipass for game %s", naomi_game_id);
 			config::TranslucentPolygonDepthMask.override(true);
+		}
+		if (!strcmp(naomi_game_id, "BEACH SPIKERS JAPAN"))
+		{
+			INFO_LOG(BOOT, "Enabling RTT Copy to VRAM for game %s", naomi_game_id);
+			config::RenderToTextureBuffer.override(true);
 		}
 		// Input configuration
 		settings.input.JammaSetup = JVS::Default;

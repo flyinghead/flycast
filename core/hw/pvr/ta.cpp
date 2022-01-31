@@ -282,23 +282,13 @@ static void markObjectListBlocks()
 		}
 }
 
-void ta_vtx_ListCont()
-{
-	SetCurrentTARC(TA_OL_BASE);
-	ta_tad.Continue();
-	ta_ctx->rend.newRenderPass();
-	markObjectListBlocks();
-
-	ta_cur_state=TAS_NS;
-	ta_fsm_cl = 7;
-}
 void ta_vtx_ListInit()
 {
 	SetCurrentTARC(TA_OL_BASE);
 	ta_tad.ClearPartial();
 	markObjectListBlocks();
 
-	ta_cur_state=TAS_NS;
+	ta_cur_state = TAS_NS;
 	ta_fsm_cl = 7;
 }
 void ta_vtx_SoftReset()

@@ -23,7 +23,7 @@
 class N2Vertex4Source : public OpenGl4Source
 {
 public:
-	N2Vertex4Source(bool gouraud, bool geometryOnly = false);
+	N2Vertex4Source(bool gouraud, bool geometryOnly, bool texture);
 };
 
 class N2Geometry4Shader : public OpenGl4Source

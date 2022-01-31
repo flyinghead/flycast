@@ -66,7 +66,12 @@ void main()
 #endif
 	vec4 vnorm = normalize(normalMat * vec4(in_normal, 0.0));
 	if (bumpMapping == 0)
+	{
 		computeColors(vs_base, vs_offs, vpos.xyz, vnorm.xyz);
+#if pp_Texture == 0
+		vs_base += vs_offs;
+#endif
+	}
 	vs_uv.xy = in_uv;
 	if (envMapping == 1)
 		computeEnvMap(vs_uv.xy, vpos.xyz, vnorm.xyz);
@@ -136,9 +141,14 @@ uniform int useBaseOver;
 // model attributes
 uniform float glossCoef0;
 uniform float glossCoef1;
+uniform int constantColor;
+uniform int modelDiffuse;
+uniform int modelSpecular;
 
 void computeColors(inout vec4 baseCol, inout vec4 offsetCol, in vec3 position, in vec3 normal)
 {
+	if (constantColor == 1)
+		return;
 	vec3 diffuse = vec3(0.0);
 	vec3 specular = vec3(0.0);
 	float diffuseAlpha = 0.0;
@@ -223,12 +233,16 @@ void computeColors(inout vec4 baseCol, inout vec4 offsetCol, in vec3 position, i
 		diffuse += ambientBase.rgb;
 		specular += ambientOffset.rgb;
 	}
-	baseCol.rgb *= diffuse;
-	offsetCol.rgb *= specular;
+	if (modelDiffuse == 1)
+		baseCol.rgb *= diffuse;
+	if (modelSpecular == 1)
+		offsetCol.rgb *= specular;
 	if (ambientMaterial == 0)
 	{
-		baseCol.rgb += ambientBase.rgb;
-		offsetCol.rgb += ambientOffset.rgb;
+		if (modelDiffuse == 1)
+			baseCol.rgb += ambientBase.rgb;
+		if (modelSpecular == 1)
+			offsetCol.rgb += ambientOffset.rgb;
 	}
 	baseCol.a = max(0.0, baseCol.a + diffuseAlpha);
 	offsetCol.a = max(0.0, offsetCol.a + specularAlpha);
@@ -503,11 +517,12 @@ void main()
 
 )";
 
-N2VertexSource::N2VertexSource(bool gouraud, bool geometryOnly) : OpenGlSource()
+N2VertexSource::N2VertexSource(bool gouraud, bool geometryOnly, bool texture) : OpenGlSource()
 {
 	addConstant("pp_Gouraud", gouraud);
 	addConstant("GEOM_ONLY", geometryOnly);
 	addConstant("TWO_VOLUMES", 0);
+	addConstant("pp_Texture", (int)texture);
 
 	addSource(VertexCompatShader);
 	addSource(GouraudSource);

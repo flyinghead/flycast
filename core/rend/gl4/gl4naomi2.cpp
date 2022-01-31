@@ -31,11 +31,12 @@ static const char *gouraudSource = R"(
 #define NOPERSPECTIVE noperspective
 )";
 
-N2Vertex4Source::N2Vertex4Source(bool gouraud, bool geometryOnly) : OpenGl4Source()
+N2Vertex4Source::N2Vertex4Source(bool gouraud, bool geometryOnly, bool texture) : OpenGl4Source()
 {
 	addConstant("pp_Gouraud", gouraud);
 	addConstant("GEOM_ONLY", geometryOnly);
 	addConstant("TWO_VOLUMES", 1);
+	addConstant("pp_Texture", (int)texture);
 
 	addSource(gouraudSource);
 	if (!geometryOnly)

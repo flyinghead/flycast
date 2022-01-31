@@ -150,7 +150,7 @@ void pvr_WriteReg(u32 paddr,u32 data)
 
 	case TA_LIST_CONT_addr:
 		//a write of anything works ?
-		ta_vtx_ListCont();
+		ta_vtx_ListInit();
 		break;
 	
 	case SPG_CONTROL_addr:

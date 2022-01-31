@@ -115,7 +115,7 @@ T DYNACALL read_elanreg(u32 paddr)
 			return (T)0xe1ad0000;
 		case 4: // revision
 			return 0x1;	// 1 or x10
-							// 10 breaks vstriker?
+						// TODO 10 breaks vstriker, vf4
 		case 0xc:
 			// command queue size
 			// loops until < 2 (v1) or 3 (v10)
@@ -412,17 +412,18 @@ struct State
 		if (plight->pcw.parallelLight)
 		{
 			ParallelLight *light = (ParallelLight *)plight;
-			DEBUG_LOG(PVR, "  Parallel light %d: col %d %d %d dir %d %d %d", light->lightId, light->red, light->green, light->blue,
+			DEBUG_LOG(PVR, "  Parallel light %d: [%x] col %d %d %d dir %d %d %d", light->lightId, plight->pcw.full,
+					light->red, light->green, light->blue,
 					light->dirX, light->dirY, light->dirZ);
 		}
 		else
 		{
-			DEBUG_LOG(PVR, "  Point light %d: dattenmode %d col %d %d %d dir %d %d %d pos %f %f %f routing %d dist %f %f angle %f %f",
-					plight->lightId, plight->dattenmode,
+			DEBUG_LOG(PVR, "  Point light %d: [%x] routing %d dmode %d smode %d col %d %d %d dir %d %d %d pos %f %f %f dist %f %f angle %f %f",
+					plight->lightId, plight->pcw.full, plight->routing, plight->dmode, plight->smode,
 					plight->red, plight->green, plight->blue,
 					plight->dirX, plight->dirY, plight->dirZ,
 					plight->posX, plight->posY, plight->posZ,
-					plight->routing, plight->attnMinDistance(), plight->attnMaxDistance(),
+					plight->attnMinDistance(), plight->attnMaxDistance(),
 					plight->attnMinAngle(), plight->attnMaxAngle());
 		}
 		elan::curLights[lightId] = plight;
@@ -565,6 +566,21 @@ void setNormal(Vertex& vd, const T& vs)
 	vd.nz = normal.z;
 }
 
+static void addModelColors(glm::vec4& baseCol0, glm::vec4& offsetCol0, glm::vec4& baseCol1, glm::vec4& offsetCol1)
+{
+	if (curGmp != nullptr)
+	{
+		if (curGmp->paramSelect.d0)
+			baseCol0 += unpackColor(curGmp->diffuse0);
+		if (curGmp->paramSelect.s0)
+			offsetCol0 += unpackColor(curGmp->specular0);
+		if (curGmp->paramSelect.d1)
+			baseCol1 += unpackColor(curGmp->diffuse1);
+		if (curGmp->paramSelect.s1)
+			offsetCol1 += unpackColor(curGmp->specular1);
+	}
+}
+
 template <typename T>
 static void convertVertex(const T& vs, Vertex& vd);
 
@@ -574,35 +590,16 @@ void convertVertex(const N2_VERTEX& vs, Vertex& vd)
 	setCoords(vd, vs.x, vs.y, vs.z);
 	setNormal(vd, vs);
 	SetEnvMapUV(vd);
-	glm::vec4 baseCol0;
-	glm::vec4 offsetCol0;
-	glm::vec4 baseCol1;
-	glm::vec4 offsetCol1;
-	if (curGmp != nullptr)
-	{
-		baseCol0 = unpackColor(curGmp->diffuse0);
-		offsetCol0 = unpackColor(curGmp->specular0);
-		baseCol1 = unpackColor(curGmp->diffuse1);
-		offsetCol1 = unpackColor(curGmp->specular1);
-		if (state.listType == 2)
-		{
-			// FIXME
-			baseCol0.a = 0;
-			offsetCol0.a = 1;
-			baseCol1.a = 0;
-			offsetCol1.a = 1;
-		}
-	}
-	else
-	{
-		baseCol0 = glm::vec4(0);
-		offsetCol0 = glm::vec4(0);
-		baseCol1 = glm::vec4(0);
-		offsetCol1 = glm::vec4(0);
-	}
-	// non-textured vertices have no offset color
-	*(u32 *)vd.col = packColor(baseCol0 + offsetCol0);
-	*(u32 *)vd.col1 = packColor(baseCol1 + offsetCol1);
+	glm::vec4 baseCol0(0);
+	glm::vec4 offsetCol0(0);
+	glm::vec4 baseCol1(0);
+	glm::vec4 offsetCol1(0);
+	addModelColors(baseCol0, offsetCol0, baseCol1, offsetCol1);
+
+	*(u32 *)vd.col = packColor(baseCol0);
+	*(u32 *)vd.spc = packColor(offsetCol0);
+	*(u32 *)vd.col1 = packColor(baseCol1);
+	*(u32 *)vd.spc1 = packColor(offsetCol1);
 }
 
 template<>
@@ -612,20 +609,14 @@ void convertVertex(const N2_VERTEX_VR& vs, Vertex& vd)
 	setNormal(vd, vs);
 	SetEnvMapUV(vd);
 	glm::vec4 baseCol0 = unpackColor(vs.rgb.argb0);
-	glm::vec4 offsetCol0 = baseCol0;
+	glm::vec4 offsetCol0(0);
 	glm::vec4 baseCol1 = unpackColor(vs.rgb.argb1);
-	glm::vec4 offsetCol1 = baseCol1;
-	if (curGmp != nullptr)
-	{
-		// Not sure about offset but vf4 needs base addition
-		baseCol0 += unpackColor(curGmp->diffuse0);
-		offsetCol0 += unpackColor(curGmp->specular0);
-		baseCol1 += unpackColor(curGmp->diffuse1);
-		offsetCol1 += unpackColor(curGmp->specular1);
-	}
-	// non-textured vertices have no offset color
-	*(u32 *)vd.col = packColor(baseCol0 + offsetCol0);
-	*(u32 *)vd.col1 = packColor(baseCol1 + offsetCol1);
+	glm::vec4 offsetCol1(0);
+	addModelColors(baseCol0, offsetCol0, baseCol1, offsetCol1);
+	*(u32 *)vd.col = packColor(baseCol0);
+	*(u32 *)vd.spc = packColor(offsetCol0);
+	*(u32 *)vd.col1 = packColor(baseCol1);
+	*(u32 *)vd.spc1 = packColor(offsetCol1);
 }
 
 template<>
@@ -634,24 +625,11 @@ void convertVertex(const N2_VERTEX_VU& vs, Vertex& vd)
 	setCoords(vd, vs.x, vs.y, vs.z);
 	setNormal(vd, vs);
 	setUV(vs, vd);
-	glm::vec4 baseCol0;
-	glm::vec4 offsetCol0;
-	glm::vec4 baseCol1;
-	glm::vec4 offsetCol1;
-	if (curGmp != nullptr)
-	{
-		baseCol0 = unpackColor(curGmp->diffuse0);
-		offsetCol0 = unpackColor(curGmp->specular0);
-		baseCol1 = unpackColor(curGmp->diffuse1);
-		offsetCol1 = unpackColor(curGmp->specular1);
-	}
-	else
-	{
-		baseCol0 = glm::vec4(0);
-		offsetCol0 = glm::vec4(0);
-		baseCol1 = glm::vec4(0);
-		offsetCol1 = glm::vec4(0);
-	}
+	glm::vec4 baseCol0(0);
+	glm::vec4 offsetCol0(0);
+	glm::vec4 baseCol1(0);
+	glm::vec4 offsetCol1(0);
+	addModelColors(baseCol0, offsetCol0, baseCol1, offsetCol1);
 	*(u32 *)vd.col = packColor(baseCol0);
 	*(u32 *)vd.spc = packColor(offsetCol0);
 	*(u32 *)vd.col1 = packColor(baseCol1);
@@ -665,17 +643,10 @@ void convertVertex(const N2_VERTEX_VUR& vs, Vertex& vd)
 	setNormal(vd, vs);
 	setUV(vs, vd);
 	glm::vec4 baseCol0 = unpackColor(vs.rgb.argb0);
-	glm::vec4 offsetCol0 = baseCol0;
+	glm::vec4 offsetCol0(0);
 	glm::vec4 baseCol1 = unpackColor(vs.rgb.argb1);
-	glm::vec4 offsetCol1 = baseCol1;
-	if (curGmp != nullptr)
-	{
-		// Not sure about offset but vf4 needs base addition
-		baseCol0 += unpackColor(curGmp->diffuse0);
-		offsetCol0 += unpackColor(curGmp->specular0);
-		baseCol1 += unpackColor(curGmp->diffuse1);
-		offsetCol1 += unpackColor(curGmp->specular1);
-	}
+	glm::vec4 offsetCol1(0);
+	addModelColors(baseCol0, offsetCol0, baseCol1, offsetCol1);
 	*(u32 *)vd.col = packColor(baseCol0);
 	*(u32 *)vd.spc = packColor(offsetCol0);
 	*(u32 *)vd.col1 = packColor(baseCol1);
@@ -924,14 +895,14 @@ static void sendLights()
 		light.diffuse = diffuse;
 		light.specular = specular;
 		light.parallel = curLights[i]->pcw.parallelLight;
-		if (light.parallel != 0)
+		if (light.parallel)
 		{
 			ParallelLight *plight = (ParallelLight *)curLights[i];
 			memcpy(light.color, glm::value_ptr(unpackColor(plight->red, plight->green, plight->blue)), sizeof(light.color));
 			light.routing = plight->routing;
 			light.dmode = plight->dmode;
 			light.smode = N2_LMETHOD_SINGLE_SIDED;
-			memcpy(light.direction, glm::value_ptr(glm::normalize(glm::vec4(-(int8_t)plight->dirX, (int8_t)plight->dirY, -(int8_t)plight->dirZ, 0))),
+			memcpy(light.direction, glm::value_ptr(glm::normalize(glm::vec4(-(int8_t)plight->dirX, -(int8_t)plight->dirY, -(int8_t)plight->dirZ, 0))),
 					sizeof(light.direction));
 		}
 		else
@@ -941,14 +912,27 @@ static void sendLights()
 			light.routing = plight->routing;
 			light.dmode = plight->dmode;
 			light.smode = plight->smode;
-			memcpy(light.position, glm::value_ptr(glm::vec4(plight->posX, plight->posY, plight->posZ, 1)), sizeof(light.position));
-			memcpy(light.direction, glm::value_ptr(glm::normalize(glm::vec4((int8_t)plight->dirX, (int8_t)plight->dirY, (int8_t)plight->dirZ, 0))),
-					sizeof(light.direction));
-			light.distAttnMode = plight->dattenmode;
-			light.attnDistA = plight->distA();
-			light.attnDistB = plight->distB();
-			light.attnAngleA = plight->angleA();
-			light.attnAngleB = plight->angleB();
+			if (plight->posX == 0 && plight->posY == 0 && plight->posZ == 0
+					&& plight->_distA == 0 && plight->_distB == 0
+					&& plight->_angleA == 0 && plight->_angleB == 0)
+			{
+				// Lights not using distance or angle attenuation are converted into parallel lights on the CPU side?
+				DEBUG_LOG(PVR, "Point -> parallel light[%d] dir %d %d %d", i, -(int8_t)plight->dirX, -(int8_t)plight->dirY, -(int8_t)plight->dirZ);
+				light.parallel = true;
+				memcpy(light.direction, glm::value_ptr(glm::normalize(glm::vec4(-(int8_t)plight->dirX, -(int8_t)plight->dirY, -(int8_t)plight->dirZ, 0))),
+						sizeof(light.direction));
+			}
+			else
+			{
+				memcpy(light.direction, glm::value_ptr(glm::normalize(glm::vec4((int8_t)plight->dirX, (int8_t)plight->dirY, (int8_t)plight->dirZ, 0))),
+						sizeof(light.direction));
+				memcpy(light.position, glm::value_ptr(glm::vec4(plight->posX, plight->posY, plight->posZ, 1)), sizeof(light.position));
+				light.distAttnMode = plight->dattenmode;
+				light.attnDistA = plight->distA();
+				light.attnDistB = plight->distB();
+				light.attnAngleA = plight->angleA();
+				light.attnAngleB = plight->angleB();
+			}
 		}
 		usingAlphaLight = usingAlphaLight || light.routing == N2_LFUNC_ALPHADIFF_SUB;
 		model.lightCount++;
@@ -969,6 +953,9 @@ static void setStateParams(PolyParam& pp)
 	{
 		pp.glossCoef0 = curGmp->gloss.getCoef0();
 		pp.glossCoef1 = curGmp->gloss.getCoef1();
+		pp.constantColor = curGmp->paramSelect.b0;
+		pp.diffuseColor = curGmp->paramSelect.d0;
+		pp.specularColor = curGmp->paramSelect.s0;
 	}
 	// FIXME hack ScrInstr condition fixes lens flares in vf4
 	if (state.listType == 2 && usingAlphaLight && pp.tsp.SrcInstr == 1)
@@ -1348,11 +1335,10 @@ static void executeCommand(u8 *data, int size)
 			}
 			else if ((pcw & 0xd0ffff00) == 0x80000000) // geometry follows or linked?
 			{
-				// FIXME this matches TA polys such as a2000009
-				// no possible disambiguation since 80000000 is a valid OP poly pcw (poly type 0 / vtx 0)
 				DEBUG_LOG(PVR, "Geometry type %d - %08x", (pcw >> 24) & 0xf, pcw);
+				state.listType = (pcw >> 24) & 0xf;
 				size -= 32;
-				ta_add_ta_data((u32 *)(data + 32), size - 32);
+				ta_add_ta_data(state.listType, (u32 *)(data + 32), size - 32);
 				size = 32;
 			}
 			else if (pcw == 0x20000000)

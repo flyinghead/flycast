@@ -56,6 +56,9 @@ struct PolyParam
 	float glossCoef1;
 	N2LightModel *lightModel;
 	bool envMapping;
+	bool constantColor;
+	bool diffuseColor;
+	bool specularColor;
 
 	bool equivalent(const PolyParam& other) const
 	{
@@ -73,7 +76,10 @@ struct PolyParam
 			&& glossCoef0 == other.glossCoef0
 			&& glossCoef1 == other.glossCoef1
 			&& lightModel == other.lightModel
-			&& envMapping == other.envMapping;
+			&& envMapping == other.envMapping
+			&& constantColor == other.constantColor
+			&& diffuseColor == other.diffuseColor
+			&& specularColor == other.specularColor;
 	}
 	bool isNaomi2() const { return projMatrix != nullptr; }
 };
@@ -95,18 +101,17 @@ struct ModTriangle
 	f32 x0,y0,z0,x1,y1,z1,x2,y2,z2;
 };
 
+constexpr size_t MAX_PASSES = 10;
+
 struct  tad_context
 {
 	u8* thd_data;
 	u8* thd_root;
 	u8* thd_old_data;
-	u8 *render_passes[10];
-	u32 render_pass_count;
 
 	void Clear()
 	{
 		thd_old_data = thd_data = thd_root;
-		render_pass_count = 0;
 	}
 
 	void ClearPartial()
@@ -115,13 +120,6 @@ struct  tad_context
 		thd_data = thd_root;
 	}
 
-	void Continue()
-	{
-		render_passes[render_pass_count] = End();
-		if (render_pass_count < sizeof(render_passes) / sizeof(u8*) - 1)
-			render_pass_count++;
-	}
-	
 	u8* End()
 	{
 		return thd_data == thd_root ? thd_old_data : thd_data;
@@ -244,15 +242,13 @@ struct rend_context
 struct TA_context
 {
 	u32 Address;
-	u32 LastUsed;
 
-	std::mutex thd_inuse;
 	std::mutex rend_inuse;
 
 	tad_context tad;
 	rend_context rend;
 
-	
+	TA_context *nextContext = nullptr;
 	/*
 		Dreamcast games use up to 20k vtx, 30k idx, 1k (in total) parameters.
 		at 30 fps, thats 600kvtx (900 stripped)
@@ -269,12 +265,10 @@ struct TA_context
 			sa2:    idx: 36094, vtx: 24520, op: 1330, pt: 10, tr: 177, mvo: 39, modt: 360, ov: 0
 	*/
 
-	void MarkRend(u32 render_pass)
+	void MarkRend()
 	{
-		verify(render_pass <= tad.render_pass_count);
-
-		rend.proc_start = render_pass == 0 ? tad.thd_root : tad.render_passes[render_pass - 1];
-		rend.proc_end = render_pass == tad.render_pass_count ? tad.End() : tad.render_passes[render_pass];
+		rend.proc_start = tad.thd_root;
+		rend.proc_end = tad.End();
 	}
 
 	void Alloc()
@@ -291,7 +285,7 @@ struct TA_context
 
 		rend.modtrig.Init(16384, &rend.Overrun, "modtrig");
 		
-		rend.render_passes.Init(sizeof(RenderPass) * 10, &rend.Overrun, "render_passes");	// 10 render passes
+		rend.render_passes.Init(sizeof(RenderPass) * MAX_PASSES, &rend.Overrun, "render_passes");	// 10 render passes
 		rend.matrices.Init(2000, &rend.Overrun, "matrices");
 		rend.lightModels.Init(100, &rend.Overrun, "lightModels");
 
@@ -308,7 +302,7 @@ struct TA_context
 		rend_inuse.unlock();
 	}
 
-	void Free()
+	~TA_context()
 	{
 		verify(tad.End() - tad.thd_root <= TA_DATA_SIZE);
 		freeAligned(tad.thd_root);
@@ -357,5 +351,5 @@ void ta_add_vertex(const Vertex& vtx);
 void ta_add_triangle(const ModTriangle& tri);
 float* ta_add_matrix(const float *matrix);
 N2LightModel *ta_add_light(const N2LightModel& light);
-void ta_add_ta_data(u32 *data, u32 size);
-u32 getTAContextAddress();
+void ta_add_ta_data(int listType, u32 *data, u32 size);
+int getTAContextAddresses(u32 *addresses);

@@ -45,18 +45,23 @@ struct gl4PipelineShader
 	GLint fog_clamp_min, fog_clamp_max;
 	GLint ndcMat;
 	GLint palette_index;
+
 	// Naomi2
 	GLint mvMat;
 	GLint normalMat;
 	GLint projMat;
 	GLint glossCoef0;
+	GLint envMapping;
+	GLint bumpMapping;
+	GLint constantColor;
+	GLint modelDiffuse;
+	GLint modelSpecular;
+
 	GLint lightCount;
 	GLint ambientBase;
 	GLint ambientOffset;
 	GLint ambientMaterial;
 	GLint useBaseOver;
-	GLint envMapping;
-	GLint bumpMapping;
 	struct {
 		GLint color;
 		GLint direction;
@@ -73,6 +78,7 @@ struct gl4PipelineShader
 		GLint attnAngleA;
 		GLint attnAngleB;
 	} lights[elan::MAX_LIGHTS];
+
 	float *lastMvMat;
 	float *lastNormalMat;
 	float *lastProjMat;

@@ -70,6 +70,7 @@ const u32 ListType_None = -1;
 const u32 SZ32 = 1;
 const u32 SZ64 = 2;
 static bool fetchTextures = true;
+static u32 forcedListType = ListType_None;
 
 #include "ta_structs.h"
 
@@ -98,7 +99,7 @@ class FifoSplitter
 		verify(CurrentList==ListType_None);
 		//verify(ListIsFinished[new_list]==false);
 		//printf("Starting list %d\n",new_list);
-		CurrentList=new_list;
+		CurrentList = forcedListType != ListType_None ? forcedListType : new_list;
 		StartList(CurrentList);
 	}
 
@@ -1567,11 +1568,12 @@ bool ta_parse_vdrc(TA_context* ctx, bool bgraColors)
 		bgpp->envMapping = false;
 	}
 
-	for (u32 pass = 0; pass <= ctx->tad.render_pass_count; pass++)
+	TA_context *childCtx = ctx;
+	while (childCtx != nullptr)
 	{
-		ctx->MarkRend(pass);
-		vd_rc.proc_start = ctx->rend.proc_start;
-		vd_rc.proc_end = ctx->rend.proc_end;
+		childCtx->MarkRend();
+		vd_rc.proc_start = childCtx->rend.proc_start;
+		vd_rc.proc_end = childCtx->rend.proc_end;
 
 		Ta_Dma* ta_data = (Ta_Dma *)vd_rc.proc_start;
 		Ta_Dma* ta_data_end = (Ta_Dma *)vd_rc.proc_end - 1;
@@ -1579,9 +1581,10 @@ bool ta_parse_vdrc(TA_context* ctx, bool bgraColors)
 		while (ta_data <= ta_data_end)
 			ta_data = TaCmd(ta_data, ta_data_end);
 
-		if (ctx->rend.Overrun)
+		if (vd_ctx->rend.Overrun)
 			break;
 
+		int pass = vd_rc.render_passes.used();
 		bool empty_pass = vd_rc.global_param_op.used() == (pass == 0 ? 0 : (int)vd_rc.render_passes.LastPtr()->op_count)
 				&& vd_rc.global_param_pt.used() == (pass == 0 ? 0 : (int)vd_rc.render_passes.LastPtr()->pt_count)
 				&& vd_rc.global_param_tr.used() == (pass == 0 ? 0 : (int)vd_rc.render_passes.LastPtr()->tr_count);
@@ -1607,10 +1610,11 @@ bool ta_parse_vdrc(TA_context* ctx, bool bgraColors)
 			render_pass->autosort = UsingAutoSort(pass);
 			render_pass->z_clear = ClearZBeforePass(pass);
 		}
+		childCtx = childCtx->nextContext;
 	}
 	rv = !empty_context;
 
-	bool overrun = ctx->rend.Overrun;
+	bool overrun = vd_ctx->rend.Overrun;
 	if (overrun)
 		WARN_LOG(PVR, "ERROR: TA context overrun");
 	else if (config::RenderResolution > 480)
@@ -1776,10 +1780,11 @@ N2LightModel *ta_add_light(const N2LightModel& light)
 	return ta_ctx->rend.lightModels.LastPtr();
 }
 
-void ta_add_ta_data(u32 *data, u32 size)
+void ta_add_ta_data(int listType, u32 *data, u32 size)
 {
 	vd_ctx = ta_ctx;
 	fetchTextures = false;
+	forcedListType = listType;
 	//TODO if (bgraColors)
 	//	TAParserDX.vdec_init();
 	//else
@@ -1789,8 +1794,14 @@ void ta_add_ta_data(u32 *data, u32 size)
 	Ta_Dma *ta_data_end = (Ta_Dma *)(data + size / 4) - 1;
 	while (ta_data <= ta_data_end)
 		ta_data = TaCmd(ta_data, ta_data_end);
+	Ta_Dma eol{};
+	eol.pcw.ParaType = ParamType_End_Of_List;
+	eol.pcw.ListType = listType;
+	TaCmd(&eol, &eol);
+
 	vd_ctx = nullptr;
 	fetchTextures = true;
+	forcedListType = ListType_None;
 }
 
 //decode a vertex in the native pvr format
@@ -2065,7 +2076,7 @@ static bool ClearZBeforePass(int pass_number)
 	return !tile.NoZClear;
 }
 
-u32 getTAContextAddress()
+int getTAContextAddresses(u32 *addresses)
 {
 	u32 addr = REGION_BASE;
 	const bool type1_tile = ((FPU_PARAM_CFG >> 21) & 1) == 0;
@@ -2085,11 +2096,19 @@ u32 getTAContextAddress()
 	if (type1_tile && tile.PreSort)
 		// Windows CE weirdness
 		tile_size = 6 * 4;
+	u32 x = tile.X;
+	u32 y = tile.Y;
+	u32 count = 0;
+	do {
+		tile.full = pvr_read32p<u32>(addr);
+		if (tile.X != x || tile.Y != y)
+			break;
+		u32 opbAddr = pvr_read32p<u32>(addr + 4);
+		addresses[count++] = pvr_read32p<u32>(opbAddr);
+		addr += tile_size;
+	} while (!tile.LastRegion && count < MAX_PASSES);
 
-	u32 opbAddr = pvr_read32p<u32>(addr + 4);
-	u32 ta_ol_base = pvr_read32p<u32>(opbAddr);
-
-	return ta_ol_base;
+	return count;
 }
 
 void rend_context::newRenderPass()

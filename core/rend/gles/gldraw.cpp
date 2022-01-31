@@ -576,7 +576,8 @@ void DrawModVols(int first, int count)
 			if (param.mvMatrix != curMVMat)
 			{
 				curMVMat = param.mvMatrix;
-				glUniformMatrix4fv(gl.n2ModVolShader.mvMat, 1, GL_FALSE, curMVMat);
+				if (curMVMat != nullptr)
+					glUniformMatrix4fv(gl.n2ModVolShader.mvMat, 1, GL_FALSE, curMVMat);
 			}
 			if (param.projMatrix != curProjMat)
 			{

@@ -5,7 +5,6 @@
 
 struct TA_context;
 
-void ta_vtx_ListCont();
 void ta_vtx_ListInit();
 void ta_vtx_SoftReset();
 

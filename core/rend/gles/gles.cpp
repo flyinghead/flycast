@@ -728,7 +728,7 @@ bool CompilePipelineShader(PipelineShader* s)
 {
 	std::string vertexShader;
 	if (s->naomi2)
-		vertexShader = N2VertexSource(s->pp_Gouraud).generate();
+		vertexShader = N2VertexSource(s->pp_Gouraud, false, s->pp_Texture).generate();
 	else
 		vertexShader = VertexSource(s->pp_Gouraud).generate();
 	FragmentShaderSource fragmentSource(s);
@@ -896,7 +896,7 @@ static void create_modvol_shader()
 	gl.modvol_shader.sp_ShaderColor = glGetUniformLocation(gl.modvol_shader.program, "sp_ShaderColor");
 	gl.modvol_shader.depth_scale = glGetUniformLocation(gl.modvol_shader.program, "depth_scale");
 
-	N2VertexSource n2vertexShader(false, true);
+	N2VertexSource n2vertexShader(false, true, false);
 	N2GeometryShader geometryShader(false, true);
 	gl.n2ModVolShader.program = gl_CompileAndLink(n2vertexShader.generate().c_str(), fragmentShader.generate().c_str(), geometryShader.generate().c_str());
 	gl.n2ModVolShader.ndcMat = glGetUniformLocation(gl.n2ModVolShader.program, "ndcMat");

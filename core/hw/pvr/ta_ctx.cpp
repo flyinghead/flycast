@@ -11,7 +11,7 @@ static int RenderCount;
 TA_context* ta_ctx;
 tad_context ta_tad;
 
-static void tactx_Recycle(TA_context* poped_ctx);
+static void tactx_Recycle(TA_context* ctx);
 static TA_context *tactx_Find(u32 addr, bool allocnew = false);
 
 void SetCurrentTARC(u32 addr)
@@ -101,69 +101,40 @@ void FinishRender(TA_context* ctx)
 	frame_finished.Set();
 }
 
-static std::mutex mtx_pool;
-
-static std::vector<TA_context*> ctx_pool;
 static std::vector<TA_context*> ctx_list;
 
-TA_context* tactx_Alloc()
+static TA_context *tactx_Alloc()
 {
-	TA_context* rv = 0;
+	TA_context *ctx = new TA_context();
+	ctx->Alloc();
 
-	mtx_pool.lock();
-	if (!ctx_pool.empty())
-	{
-		rv = ctx_pool[ctx_pool.size()-1];
-		ctx_pool.pop_back();
-	}
-	mtx_pool.unlock();
-	
-	if (!rv)
-	{
-		rv = new TA_context();
-		rv->Alloc();
-	}
-
-	return rv;
+	return ctx;
 }
 
-static void tactx_Recycle(TA_context* poped_ctx)
+static void tactx_Recycle(TA_context* ctx)
 {
-	if (poped_ctx->rend.isRenderFramebuffer)
+	if (ctx->rend.isRenderFramebuffer)
 		return;
-	mtx_pool.lock();
-	{
-		if (ctx_pool.size()>2)
-		{
-			poped_ctx->Free();
-			delete poped_ctx;
-		}
-		else
-		{
-			poped_ctx->Reset();
-			ctx_pool.push_back(poped_ctx);
-		}
-	}
-	mtx_pool.unlock();
+	if (ctx->nextContext != nullptr)
+		tactx_Recycle(ctx->nextContext);
+	delete ctx;
 }
 
-TA_context* tactx_Find(u32 addr, bool allocnew)
+static TA_context *tactx_Find(u32 addr, bool allocnew)
 {
-	for (size_t i=0; i<ctx_list.size(); i++)
-	{
-		if (ctx_list[i]->Address==addr)
-			return ctx_list[i];
-	}
+	for (TA_context *ctx : ctx_list)
+		if (ctx->Address == addr)
+			return ctx;
 
 	if (allocnew)
 	{
-		TA_context* rv = tactx_Alloc();
-		rv->Address=addr;
-		ctx_list.push_back(rv);
+		TA_context *ctx = tactx_Alloc();
+		ctx->Address = addr;
+		ctx_list.push_back(ctx);
 
-		return rv;
+		return ctx;
 	}
-	return 0;
+	return nullptr;
 }
 
 TA_context* tactx_Pop(u32 addr)
@@ -190,22 +161,9 @@ void tactx_Term()
 	if (ta_ctx != nullptr)
 		SetCurrentTARC(TACTX_NONE);
 
-	for (size_t i = 0; i < ctx_list.size(); i++)
-	{
-		ctx_list[i]->Free();
-		delete ctx_list[i];
-	}
+	for (TA_context *ctx : ctx_list)
+		delete ctx;
 	ctx_list.clear();
-	mtx_pool.lock();
-	{
-		for (size_t i = 0; i < ctx_pool.size(); i++)
-		{
-			ctx_pool[i]->Free();
-			delete ctx_pool[i];
-		}
-	}
-	ctx_pool.clear();
-	mtx_pool.unlock();
 }
 
 const u32 NULL_CONTEXT = ~0u;
@@ -214,8 +172,8 @@ static void serializeContext(Serializer& ser, const TA_context *ctx)
 {
 	if (ser.dryrun())
 	{
-		// Maximum size: address, size, data, render pass count, render passes
-		ser.skip(4 + 4 + TA_DATA_SIZE + 4 + ARRAY_SIZE(tad_context::render_passes) * 4);
+		// Maximum size: address, size, data
+		ser.skip(4 + 4 + TA_DATA_SIZE);
 		return;
 	}
 	if (ctx == nullptr)
@@ -228,12 +186,6 @@ static void serializeContext(Serializer& ser, const TA_context *ctx)
 	const u32 taSize = tad.thd_data - tad.thd_root;
 	ser << taSize;
 	ser.serialize(tad.thd_root, taSize);
-	ser << tad.render_pass_count;
-	for (u32 i = 0; i < tad.render_pass_count; i++)
-	{
-		u32 offset = (u32)(tad.render_passes[i] - tad.thd_root);
-		ser << offset;
-	}
 }
 
 static void deserializeContext(Deserializer& deser, TA_context **pctx)
@@ -251,19 +203,12 @@ static void deserializeContext(Deserializer& deser, TA_context **pctx)
 	tad_context& tad = (*pctx)->tad;
 	deser.deserialize(tad.thd_root, size);
 	tad.thd_data = tad.thd_root + size;
-	if (deser.version() >= Deserializer::V12 || (deser.version() >= Deserializer::V12_LIBRETRO && deser.version() < Deserializer::V5))
+	if ((deser.version() >= Deserializer::V12 && deser.version() < Deserializer::V26)
+			|| (deser.version() >= Deserializer::V12_LIBRETRO && deser.version() < Deserializer::V5))
 	{
-		deser >> tad.render_pass_count;
-		for (u32 i = 0; i < tad.render_pass_count; i++)
-		{
-			u32 offset;
-			deser >> offset;
-			tad.render_passes[i] = tad.thd_root + offset;
-		}
-	}
-	else
-	{
-		tad.render_pass_count = 0;
+		u32 render_pass_count;
+		deser >> render_pass_count;
+		deser.skip(sizeof(u32) * render_pass_count);
 	}
 }
 
@@ -273,7 +218,7 @@ void SerializeTAContext(Serializer& ser)
 	int curCtx = -1;
 	for (const auto& ctx : ctx_list)
 	{
-		if (ctx == ta_ctx)
+		if (ctx == ::ta_ctx)
 			curCtx = (int)(&ctx - &ctx_list[0]);
 		serializeContext(ser, ctx);
 	}
