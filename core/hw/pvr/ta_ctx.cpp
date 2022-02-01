@@ -113,8 +113,6 @@ static TA_context *tactx_Alloc()
 
 static void tactx_Recycle(TA_context* ctx)
 {
-	if (ctx->rend.isRenderFramebuffer)
-		return;
 	if (ctx->nextContext != nullptr)
 		tactx_Recycle(ctx->nextContext);
 	delete ctx;

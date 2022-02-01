@@ -60,6 +60,7 @@
 #include "emulator.h"
 #include "serialize.h"
 #include "elan_struct.h"
+#include "network/ggpo.h"
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/transform.hpp>
@@ -82,7 +83,7 @@ static u32 elanCmd[32 / 4];
 template<typename T>
 T DYNACALL read_elanreg(u32 paddr)
 {
-	verify(sizeof(T) == 4);
+	//verify(sizeof(T) == 4);
 	u32 addr = paddr & 0x01ffffff;
 	switch (addr >> 16)
 	{
@@ -158,7 +159,7 @@ T DYNACALL read_elanreg(u32 paddr)
 template<typename T>
 void DYNACALL write_elanreg(u32 paddr, T data)
 {
-	verify(sizeof(T) == 4);
+	//verify(sizeof(T) == 4);
 	u32 addr = paddr & 0x01ffffff;
 	switch (addr >> 16)
 	{
@@ -240,6 +241,27 @@ T DYNACALL read_elancmd(u32 addr)
 	return 0;
 }
 
+static glm::vec4 unpackColor(u32 color)
+{
+	return glm::vec4((float)((color >> 16) & 0xff) / 255.f,
+			(float)((color >> 8) & 0xff) / 255.f,
+			(float)(color & 0xff) / 255.f,
+			(float)(color >> 24) / 255.f);
+}
+
+static glm::vec4 unpackColor(u8 red, u8 green, u8 blue, u8 alpha = 0)
+{
+	return glm::vec4((float)red / 255.f, (float)green / 255.f, (float)blue / 255.f, (float)alpha / 255.f);
+}
+
+static u32 packColor(const glm::vec4& color)
+{
+	return (int)(std::max(0.f, std::min(1.f, color.a)) * 255.f) << 24
+			| (int)(std::max(0.f, std::min(1.f, color.r)) * 255.f) << 16
+			| (int)(std::max(0.f, std::min(1.f, color.g)) * 255.f) << 8
+			| (int)(std::max(0.f, std::min(1.f, color.b)) * 255.f);
+}
+
 static GMP *curGmp;
 static glm::mat4x4 curMatrix;
 static float *taMVMatrix;
@@ -252,6 +274,10 @@ static float nearPlane = 0.001f;
 static float farPlane = 100000.f;
 static bool envMapping;
 static bool cullingReversed;
+static glm::vec4 gmpDiffuseColor0;
+static glm::vec4 gmpSpecularColor0;
+static glm::vec4 gmpDiffuseColor1;
+static glm::vec4 gmpSpecularColor1;
 
 struct State
 {
@@ -365,13 +391,36 @@ struct State
 		updateGMP();
 	}
 
-	void updateGMP() {
+	void updateGMP()
+	{
 		if (gmp == Null)
+		{
 			curGmp = nullptr;
+			gmpDiffuseColor0 = glm::vec4(0);
+			gmpSpecularColor0 = glm::vec4(0);
+			gmpDiffuseColor1 = glm::vec4(0);
+			gmpSpecularColor1 = glm::vec4(0);
+		}
 		else
 		{
 			curGmp = (GMP *)&RAM[gmp];
 			DEBUG_LOG(PVR, "GMP paramSelect %x clip %d", curGmp->paramSelect.full, curGmp->pcw.userClip);
+			if (curGmp->paramSelect.d0)
+				gmpDiffuseColor0 = unpackColor(curGmp->diffuse0);
+			else
+				gmpDiffuseColor0 = glm::vec4(0);
+			if (curGmp->paramSelect.s0)
+				gmpSpecularColor0 = unpackColor(curGmp->specular0);
+			else
+				gmpSpecularColor0 = glm::vec4(0);
+			if (curGmp->paramSelect.d1)
+				gmpDiffuseColor1 = unpackColor(curGmp->diffuse1);
+			else
+				gmpDiffuseColor1 = glm::vec4(0);
+			if (curGmp->paramSelect.s1)
+				gmpSpecularColor1 = unpackColor(curGmp->specular1);
+			else
+				gmpSpecularColor1 = glm::vec4(0);
 		}
 	}
 
@@ -524,27 +573,6 @@ static void SetEnvMapUV(Vertex& vtx)
 	}
 }
 
-static glm::vec4 unpackColor(u32 color)
-{
-	return glm::vec4((float)((color >> 16) & 0xff) / 255.f,
-			(float)((color >> 8) & 0xff) / 255.f,
-			(float)(color & 0xff) / 255.f,
-			(float)(color >> 24) / 255.f);
-}
-
-static glm::vec4 unpackColor(u8 red, u8 green, u8 blue, u8 alpha = 0)
-{
-	return glm::vec4((float)red / 255.f, (float)green / 255.f, (float)blue / 255.f, (float)alpha / 255.f);
-}
-
-static u32 packColor(const glm::vec4& color)
-{
-	return (int)(std::max(0.f, std::min(1.f, color.a)) * 255.f) << 24
-			| (int)(std::max(0.f, std::min(1.f, color.r)) * 255.f) << 16
-			| (int)(std::max(0.f, std::min(1.f, color.g)) * 255.f) << 8
-			| (int)(std::max(0.f, std::min(1.f, color.b)) * 255.f);
-}
-
 template<typename T>
 glm::vec3 getNormal(const T& vtx)
 {
@@ -568,17 +596,10 @@ void setNormal(Vertex& vd, const T& vs)
 
 static void addModelColors(glm::vec4& baseCol0, glm::vec4& offsetCol0, glm::vec4& baseCol1, glm::vec4& offsetCol1)
 {
-	if (curGmp != nullptr)
-	{
-		if (curGmp->paramSelect.d0)
-			baseCol0 += unpackColor(curGmp->diffuse0);
-		if (curGmp->paramSelect.s0)
-			offsetCol0 += unpackColor(curGmp->specular0);
-		if (curGmp->paramSelect.d1)
-			baseCol1 += unpackColor(curGmp->diffuse1);
-		if (curGmp->paramSelect.s1)
-			offsetCol1 += unpackColor(curGmp->specular1);
-	}
+	baseCol0 += gmpDiffuseColor0;
+	offsetCol0 += gmpSpecularColor0;
+	baseCol1 += gmpDiffuseColor1;
+	offsetCol1 += gmpSpecularColor1;
 }
 
 template <typename T>
@@ -949,6 +970,7 @@ static void setStateParams(PolyParam& pp)
 	pp.projMatrix = taProjMatrix;
 	pp.lightModel = taLightModel;
 	pp.envMapping = false;
+	bool modelUsesAlphaLight = false;
 	if (curGmp != nullptr)
 	{
 		pp.glossCoef0 = curGmp->gloss.getCoef0();
@@ -956,9 +978,10 @@ static void setStateParams(PolyParam& pp)
 		pp.constantColor = curGmp->paramSelect.b0;
 		pp.diffuseColor = curGmp->paramSelect.d0;
 		pp.specularColor = curGmp->paramSelect.s0;
+		modelUsesAlphaLight = curGmp->paramSelect.a0 && !pp.constantColor;
 	}
 	// FIXME hack ScrInstr condition fixes lens flares in vf4
-	if (state.listType == 2 && usingAlphaLight && pp.tsp.SrcInstr == 1)
+	if (state.listType == 2 && usingAlphaLight && modelUsesAlphaLight) // && pp.tsp.SrcInstr == 1)
 	{
 		//printf("gmp pselect %x\n", curGmp->paramSelect.full); // ff ... not relevant
 		pp.tsp.UseAlpha = 1; // TODO alpha light volumes need manual settings of which params?
@@ -1172,10 +1195,11 @@ static void sendPolygon(ICHList *list)
 	}
 }
 
+template<bool Active = true>
 static void executeCommand(u8 *data, int size)
 {
-	verify(size >= 0);
-	verify(size < (int)ELAN_RAM_SIZE);
+//	verify(size >= 0);
+//	verify(size < (int)ELAN_RAM_SIZE);
 //	if (0x2b00 == (u32)(data - RAM))
 //		for (int i = 0; i < size; i += 4)
 //			DEBUG_LOG(PVR, "Elan Parse %08x: %08x", (u32)(&data[i] - RAM), *(u32 *)&data[i]);
@@ -1193,7 +1217,8 @@ static void executeCommand(u8 *data, int size)
 				break;
 
 			case PCW::projMatrix:
-				state.setProjectionMatrix(data);
+				if (Active)
+					state.setProjectionMatrix(data);
 				size -= sizeof(ProjMatrix);
 				break;
 
@@ -1203,33 +1228,37 @@ static void executeCommand(u8 *data, int size)
 					if (instance->isInstanceMatrix())
 					{
 						//DEBUG_LOG(PVR, "Model instance");
-						state.setMatrix(instance);
+						if (Active)
+							state.setMatrix(instance);
 						size -= sizeof(InstanceMatrix);
 						break;
 					}
-					else if (instance->id1 & 0x10)
+					if (Active)
 					{
-						state.setLightModel(data);
-					}
-					else //if ((instance->id2 & 0x40000000) || (instance->id1 & 0xffffff00)) // FIXME what are these lights without id2|0x40000000? vf4
-					{
-						if (instance->pcw.parallelLight)
+						if (instance->id1 & 0x10)
 						{
-							ParallelLight *light = (ParallelLight *)data;
-							state.setLight(light->lightId, data);
+							state.setLightModel(data);
 						}
-						else
+						else //if ((instance->id2 & 0x40000000) || (instance->id1 & 0xffffff00)) // FIXME what are these lights without id2|0x40000000? vf4
 						{
-							PointLight *light = (PointLight *)data;
-							state.setLight(light->lightId, data);
+							if (instance->pcw.parallelLight)
+							{
+								ParallelLight *light = (ParallelLight *)data;
+								state.setLight(light->lightId, data);
+							}
+							else
+							{
+								PointLight *light = (PointLight *)data;
+								state.setLight(light->lightId, data);
+							}
 						}
+						//else
+						//{
+						//	WARN_LOG(PVR, "Other instance %08x %08x", instance->id1, instance->id2);
+						//	for (int i = 0; i < 32; i += 4)
+						//		INFO_LOG(PVR, "    %08x: %08x", (u32)(&data[i] - RAM), *(u32 *)&data[i]);
+						//}
 					}
-					//else
-					//{
-					//	WARN_LOG(PVR, "Other instance %08x %08x", instance->id1, instance->id2);
-					//	for (int i = 0; i < 32; i += 4)
-					//		INFO_LOG(PVR, "    %08x: %08x", (u32)(&data[i] - RAM), *(u32 *)&data[i]);
-					//}
 					size -= sizeof(LightModel);
 				}
 				break;
@@ -1237,10 +1266,13 @@ static void executeCommand(u8 *data, int size)
 			case PCW::model:
 				{
 					Model *model = (Model *)data;
-					cullingReversed = (model->id1 & 0x08000000) == 0;
-					state.setClipMode(model->pcw);
-					DEBUG_LOG(PVR, "Model offset %x size %x clip %d", model->offset, model->size, model->pcw.userClip);
-					executeCommand(&RAM[model->offset & 0x1ffffff8], model->size);
+					if (Active)
+					{
+						cullingReversed = (model->id1 & 0x08000000) == 0;
+						state.setClipMode(model->pcw);
+						DEBUG_LOG(PVR, "Model offset %x size %x clip %d", model->offset, model->size, model->pcw.userClip);
+					}
+					executeCommand<Active>(&RAM[model->offset & 0x1ffffff8], model->size);
 					cullingReversed = false;
 					size -= sizeof(Model);
 				}
@@ -1279,7 +1311,8 @@ static void executeCommand(u8 *data, int size)
 						}
 						asic_RaiseInterruptBothCLX(inter);
 						TA_ITP_CURRENT += 32;
-						state.reset();
+						if (Active)
+							state.reset();
 					}
 					size -= sizeof(RegisterWait);
 				}
@@ -1289,21 +1322,25 @@ static void executeCommand(u8 *data, int size)
 				{
 					Link *link = (Link *)data;
 					DEBUG_LOG(PVR, "Link to %x (%x)", link->offset & 0x1ffffff8, link->size);
-					executeCommand(&RAM[link->offset & 0x1ffffff8], link->size);
+					executeCommand<Active>(&RAM[link->offset & 0x1ffffff8], link->size);
 					size -= sizeof(Link);
 				}
 				break;
 
 			case PCW::gmp:
-				state.setGMP(data);
+				if (Active)
+					state.setGMP(data);
 				size -= sizeof(GMP);
 				break;
 
 			case PCW::ich:
 				{
 					ICHList *ich = (ICHList *)data;
-					DEBUG_LOG(PVR, "ICH flags %x, %d verts", ich->flags, ich->vtxCount);
-					sendPolygon(ich);
+					if (Active)
+					{
+						DEBUG_LOG(PVR, "ICH flags %x, %d verts", ich->flags, ich->vtxCount);
+						sendPolygon(ich);
+					}
 					size -= sizeof(ICHList) + ich->vertexSize() * ich->vtxCount;
 				}
 				break;
@@ -1319,43 +1356,58 @@ static void executeCommand(u8 *data, int size)
 			u32 pcw = *(u32 *)data;
 			if ((pcw & 0xd0ffff00) == 0x808c0000) // display list
 			{
-				DEBUG_LOG(PVR, "Display list type %d", (pcw >> 24) & 0xf);
-				state.reset();
-				state.listType  = (pcw >> 24) & 0xf;
-				// TODO is this the right place for this?
-				SQBuffer eol{};
-				ta_vtx_data32(&eol);
+				if (Active)
+				{
+					DEBUG_LOG(PVR, "Display list type %d", (pcw >> 24) & 0xf);
+					state.reset();
+					state.listType  = (pcw >> 24) & 0xf;
+					// TODO is this the right place for this?
+					SQBuffer eol{};
+					ta_vtx_data32(&eol);
+				}
 				size -= 24 * 4;
 			}
 			else if ((pcw & 0xd0fcff00) == 0x80800000) // User clipping
 			{
-				state.setClipMode((PCW&)pcw);
-				DEBUG_LOG(PVR, "User clip type %d", ((PCW&)pcw).userClip);
+				if (Active)
+				{
+					state.setClipMode((PCW&)pcw);
+					DEBUG_LOG(PVR, "User clip type %d", ((PCW&)pcw).userClip);
+				}
 				size -= 0xE0;
 			}
 			else if ((pcw & 0xd0ffff00) == 0x80000000) // geometry follows or linked?
 			{
-				DEBUG_LOG(PVR, "Geometry type %d - %08x", (pcw >> 24) & 0xf, pcw);
-				state.listType = (pcw >> 24) & 0xf;
-				size -= 32;
-				ta_add_ta_data(state.listType, (u32 *)(data + 32), size - 32);
+				if (Active)
+				{
+					DEBUG_LOG(PVR, "Geometry type %d - %08x", (pcw >> 24) & 0xf, pcw);
+					state.listType = (pcw >> 24) & 0xf;
+					size -= 32;
+					ta_add_ta_data(state.listType, (u32 *)(data + 32), size - 32);
+				}
 				size = 32;
 			}
 			else if (pcw == 0x20000000)
 			{
 				// User clipping
-				u32 *tiles = (u32 *)data + 4;
-				DEBUG_LOG(PVR, "User clipping %d,%d - %d,%d", tiles[0] * 32, tiles[1] * 32,
-						tiles[2] * 32, tiles[3] * 32);
-				state.setClipTiles(tiles[0], tiles[1], tiles[2], tiles[3]);
+				if (Active)
+				{
+					u32 *tiles = (u32 *)data + 4;
+					DEBUG_LOG(PVR, "User clipping %d,%d - %d,%d", tiles[0] * 32, tiles[1] * 32,
+							tiles[2] * 32, tiles[3] * 32);
+					state.setClipTiles(tiles[0], tiles[1], tiles[2], tiles[3]);
+				}
 				size -= 32;
 			}
 			else
 			{
-				if (pcw != 0)
-					INFO_LOG(PVR, "Unhandled command %x", pcw);
-				for (int i = 0; i < 32; i += 4)
-					DEBUG_LOG(PVR, "    %08x: %08x", (u32)(&data[i] - RAM), *(u32 *)&data[i]);
+				if (Active)
+				{
+					if (pcw != 0)
+						INFO_LOG(PVR, "Unhandled command %x", pcw);
+					for (int i = 0; i < 32; i += 4)
+						DEBUG_LOG(PVR, "    %08x: %08x", (u32)(&data[i] - RAM), *(u32 *)&data[i]);
+				}
 				size -= 32;
 			}
 		}
@@ -1366,15 +1418,16 @@ static void executeCommand(u8 *data, int size)
 template<typename T>
 void DYNACALL write_elancmd(u32 addr, T data)
 {
-	verify(sizeof(T) == 4);
 //	DEBUG_LOG(PVR, "ELAN cmd %08x = %x", addr, data);
-	addr &= 0xff;
-	verify(addr < 0x20);
+	addr &= 0x1f;
 	*(T *)&((u8 *)elanCmd)[addr] = data;
 
 	if (addr == 0x1c)
 	{
-		executeCommand((u8 *)elanCmd, sizeof(elanCmd));
+		if (!ggpo::rollbacking())
+			executeCommand<true>((u8 *)elanCmd, sizeof(elanCmd));
+		else
+			executeCommand<false>((u8 *)elanCmd, sizeof(elanCmd));
 		reg74 |= 2;
 		reg74 &= ~0x3c;
 	}

@@ -288,7 +288,7 @@ bool D3DRenderer::Process(TA_context* ctx)
 	}
 	else
 	{
-		if (!ta_parse_vdrc(ctx, true))
+		if (!ta_parse_vdrc(ctx))
 			return false;
 	}
 

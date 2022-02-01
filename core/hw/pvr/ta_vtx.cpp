@@ -1424,24 +1424,47 @@ static void make_index(const List<PolyParam> *polys, int first, int end, bool me
 
 	PolyParam *last_poly = nullptr;
 	const PolyParam *end_poly = &polys->head()[end];
+	bool cullingReversed = false;
 	for (PolyParam *poly = &polys->head()[first]; poly != end_poly; poly++)
 	{
 		int first_index;
 		bool dupe_next_vtx = false;
 		if (merge
 				&& last_poly != nullptr
-				&& last_poly->count != 0
-				&& poly->equivalent(*last_poly))
+				&& last_poly->count != 0)
 		{
-			const u32 last_vtx = indices[last_poly->first + last_poly->count - 1];
-			*ctx->idx.Append() = last_vtx;
-			dupe_next_vtx = true;
-			first_index = last_poly->first;
+			if (poly->equivalent(*last_poly))
+			{
+				const u32 last_vtx = indices[last_poly->first + last_poly->count - 1];
+				*ctx->idx.Append() = last_vtx;
+				if (cullingReversed)
+					*ctx->idx.Append() = last_vtx;
+				dupe_next_vtx = true;
+				first_index = last_poly->first;
+				cullingReversed = false;
+			}
+			else if (poly->equivalentInverseCull(*last_poly))
+			{
+				const u32 last_vtx = indices[last_poly->first + last_poly->count - 1];
+				*ctx->idx.Append() = last_vtx;
+				if (!cullingReversed)
+					*ctx->idx.Append() = last_vtx;
+				dupe_next_vtx = true;
+				first_index = last_poly->first;
+				cullingReversed = true;
+			}
+			else
+			{
+				last_poly = poly;
+				first_index = ctx->idx.used();
+				cullingReversed = false;
+			}
 		}
 		else
 		{
 			last_poly = poly;
 			first_index = ctx->idx.used();
+			cullingReversed = false;
 		}
 		int last_good_vtx = -1;
 		for (u32 i = 0; i < poly->count; i++)
@@ -1475,7 +1498,7 @@ static void make_index(const List<PolyParam> *polys, int first, int end, bool me
 					dupe_next_vtx = false;
 				}
 				const u32 count = ctx->idx.used() - first_index;
-				if ((i ^ count) & 1)
+				if (((i ^ count) & 1) ^ cullingReversed)
 					*ctx->idx.Append() = last_good_vtx;
 				*ctx->idx.Append() = last_good_vtx;
 			}
@@ -1539,14 +1562,14 @@ static void fix_texture_bleeding(const List<PolyParam> *list)
 	}
 }
 
-bool ta_parse_vdrc(TA_context* ctx, bool bgraColors)
+bool ta_parse_vdrc(TA_context* ctx)
 {
 	ctx->rend_inuse.lock();
 	bool rv=false;
 	verify(vd_ctx == nullptr);
 	vd_ctx = ctx;
 
-	if (bgraColors)
+	if (isDirectX(config::RendererType))
 		TAParserDX.vdec_init();
 	else
 		TAParser.vdec_init();
@@ -1641,7 +1664,7 @@ bool ta_parse_vdrc(TA_context* ctx, bool bgraColors)
 	return rv && !overrun;
 }
 
-bool ta_parse_naomi2(TA_context* ctx) // TODO BGRA colors
+bool ta_parse_naomi2(TA_context* ctx)
 {
 	ctx->rend_inuse.lock();
 
@@ -1709,6 +1732,13 @@ bool ta_parse_naomi2(TA_context* ctx) // TODO BGRA colors
 static PolyParam *n2CurrentPP;
 static ModifierVolumeParam *n2CurrentMVP;
 
+const float identityMat[] {
+	1.f, 0.f, 0.f, 0.f,
+	0.f, 1.f, 0.f, 0.f,
+	0.f, 0.f, 1.f, 0.f,
+	0.f, 0.f, 0.f, 1.f
+};
+
 void ta_add_poly(int type, const PolyParam& pp)
 {
 	verify(ta_ctx != nullptr);
@@ -1732,6 +1762,12 @@ void ta_add_poly(int type, const PolyParam& pp)
 	}
 	n2CurrentPP->first = ta_ctx->rend.verts.used();
 	n2CurrentPP->count = 0;
+	if (n2CurrentPP->mvMatrix == nullptr)
+		n2CurrentPP->mvMatrix = identityMat;
+	if (n2CurrentPP->normalMatrix == nullptr)
+		n2CurrentPP->normalMatrix = identityMat;
+	if (n2CurrentPP->projMatrix == nullptr)
+		n2CurrentPP->projMatrix = identityMat;
 }
 
 void ta_add_poly(int type, const ModifierVolumeParam& mvp)
@@ -1753,6 +1789,10 @@ void ta_add_poly(int type, const ModifierVolumeParam& mvp)
 	}
 	n2CurrentMVP->first = ta_ctx->rend.modtrig.used();
 	n2CurrentMVP->count = 0;
+	if (n2CurrentMVP->mvMatrix == nullptr)
+		n2CurrentMVP->mvMatrix = identityMat;
+	if (n2CurrentMVP->projMatrix == nullptr)
+		n2CurrentMVP->projMatrix = identityMat;
 }
 
 void ta_add_vertex(const Vertex& vtx)
@@ -1785,9 +1825,9 @@ void ta_add_ta_data(int listType, u32 *data, u32 size)
 	vd_ctx = ta_ctx;
 	fetchTextures = false;
 	forcedListType = listType;
-	//TODO if (bgraColors)
-	//	TAParserDX.vdec_init();
-	//else
+	if (!isDirectX(config::RendererType))
+		TAParserDX.vdec_init();
+	else
 		TAParser.vdec_init();
 
 	Ta_Dma *ta_data = (Ta_Dma *)data;

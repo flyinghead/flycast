@@ -115,7 +115,7 @@ static bool absPointerPos;
 static bool keyboardGame;
 static bool mouseGame;
 static int inputSize;
-static bool inRollback;
+bool inRollback;
 static void (*chatCallback)(int playerNum, const std::string& msg);
 
 struct MemPages

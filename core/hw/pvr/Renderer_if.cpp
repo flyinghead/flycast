@@ -243,7 +243,7 @@ void rend_start_render(TA_context *ctx)
 			ctx->rend.fog_clamp_max = FOG_CLAMP_MAX;
 		}
 
-		if (!config::DelayFrameSwapping)
+		if (!config::DelayFrameSwapping && !ctx->rend.isRTT)
 			ggpo::endOfFrame();
 		palette_update();
 		if (QueueRender(ctx))
@@ -268,10 +268,10 @@ void rend_vblank()
 	if (!render_called && fb_dirty && FB_R_CTRL.fb_enable)
 	{
 		DEBUG_LOG(PVR, "Direct framebuffer write detected");
-		TA_context ctx;
-		ctx.Alloc();
-		ctx.rend.isRenderFramebuffer = true;
-		rend_start_render(&ctx);
+		TA_context *ctx = new TA_context();
+		ctx->Alloc();
+		ctx->rend.isRenderFramebuffer = true;
+		rend_start_render(ctx);
 		fb_dirty = false;
 	}
 	render_called = false;

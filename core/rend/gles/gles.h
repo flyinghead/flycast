@@ -86,10 +86,10 @@ struct PipelineShader
 		GLint attnAngleB;
 	} lights[elan::MAX_LIGHTS];
 
-	float *lastMvMat;
-	float *lastNormalMat;
-	float *lastProjMat;
-	N2LightModel *lastLightModel;
+	const float *lastMvMat;
+	const float *lastNormalMat;
+	const float *lastProjMat;
+	const N2LightModel *lastLightModel;
 
 	//
 	bool cp_AlphaTest;

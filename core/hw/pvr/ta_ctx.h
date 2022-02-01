@@ -49,12 +49,12 @@ struct PolyParam
 	TCW tcw1;
 	BaseTextureCacheData *texture1;
 
-	float *mvMatrix;
-	float *normalMatrix;
-	float *projMatrix;
+	const float *mvMatrix;
+	const float *normalMatrix;
+	const float *projMatrix;
 	float glossCoef0;
 	float glossCoef1;
-	N2LightModel *lightModel;
+	const N2LightModel *lightModel;
 	bool envMapping;
 	bool constantColor;
 	bool diffuseColor;
@@ -81,6 +81,27 @@ struct PolyParam
 			&& diffuseColor == other.diffuseColor
 			&& specularColor == other.specularColor;
 	}
+
+	bool equivalentInverseCull(const PolyParam& other) const
+	{
+		return pcw.full == other.pcw.full
+			&& isp.full == (other.isp.full ^ 0x08000000)
+			&& tcw.full == other.tcw.full
+			&& tsp.full == other.tsp.full
+			&& tileclip == other.tileclip
+			&& tcw1.full == other.tcw1.full
+			&& tsp1.full == other.tsp1.full
+			&& mvMatrix == other.mvMatrix
+			&& normalMatrix == other.normalMatrix
+			&& projMatrix == other.projMatrix
+			&& glossCoef0 == other.glossCoef0
+			&& glossCoef1 == other.glossCoef1
+			&& lightModel == other.lightModel
+			&& envMapping == other.envMapping
+			&& constantColor == other.constantColor
+			&& diffuseColor == other.diffuseColor
+			&& specularColor == other.specularColor;
+	}
 	bool isNaomi2() const { return projMatrix != nullptr; }
 };
 
@@ -90,8 +111,8 @@ struct ModifierVolumeParam
 	u32 count;
 	ISP_Modvol isp;
 
-	float *mvMatrix;
-	float *projMatrix;
+	const float *mvMatrix;
+	const float *projMatrix;
 
 	bool isNaomi2() const { return projMatrix != nullptr; }
 };

@@ -104,14 +104,12 @@ void setN2Uniforms(const PolyParam *pp, ShaderType *shader)
 	if (pp->mvMatrix != shader->lastMvMat)
 	{
 		shader->lastMvMat = pp->mvMatrix;
-		if (pp->mvMatrix != nullptr)
-			glUniformMatrix4fv(shader->mvMat, 1, GL_FALSE, pp->mvMatrix);
+		glUniformMatrix4fv(shader->mvMat, 1, GL_FALSE, pp->mvMatrix);
 	}
 	if (pp->normalMatrix != shader->lastNormalMat)
 	{
 		shader->lastNormalMat = pp->normalMatrix;
-		if (pp->normalMatrix != nullptr)
-			glUniformMatrix4fv(shader->normalMat, 1, GL_FALSE, pp->normalMatrix);
+		glUniformMatrix4fv(shader->normalMat, 1, GL_FALSE, pp->normalMatrix);
 	}
 	if (pp->projMatrix != shader->lastProjMat)
 	{
@@ -123,7 +121,7 @@ void setN2Uniforms(const PolyParam *pp, ShaderType *shader)
 	glUniform1i(shader->modelDiffuse, (int)pp->diffuseColor);
 	glUniform1i(shader->modelSpecular, (int)pp->specularColor);
 
-	N2LightModel *const lightModel = pp->lightModel;
+	const N2LightModel *const lightModel = pp->lightModel;
 	if (lightModel != shader->lastLightModel)
 	{
 		shader->lastLightModel = lightModel;
