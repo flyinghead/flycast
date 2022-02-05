@@ -52,13 +52,43 @@ struct PolyParam
 	const float *mvMatrix;
 	const float *normalMatrix;
 	const float *projMatrix;
-	float glossCoef0;
-	float glossCoef1;
+	float glossCoef[2];
 	const N2LightModel *lightModel;
-	bool envMapping;
-	bool constantColor;
-	bool diffuseColor;
-	bool specularColor;
+	bool envMapping[2];
+	bool constantColor[2];
+	bool diffuseColor[2];
+	bool specularColor[2];
+
+	void init()
+	{
+		first = 0;
+		count = 0;
+		texture = nullptr;
+		tsp.full = 0;
+		tcw.full = 0;
+		pcw.full = 0;
+		isp.full = 0;
+		zvZ = 0;
+		tileclip = 0;
+		tsp1.full = -1;
+		tcw1.full = -1;
+		texture1 = nullptr;
+
+		mvMatrix = nullptr;
+		normalMatrix = nullptr;
+		projMatrix = nullptr;
+		glossCoef[0] = 0;
+		glossCoef[1] = 0;
+		lightModel = nullptr;
+		envMapping[0] = false;
+		envMapping[1] = false;
+		constantColor[0] = false;
+		constantColor[1] = false;
+		diffuseColor[0] = false;
+		diffuseColor[1] = false;
+		specularColor[0] = false;
+		specularColor[1] = false;
+	}
 
 	bool equivalent(const PolyParam& other) const
 	{
@@ -73,13 +103,17 @@ struct PolyParam
 			&& mvMatrix == other.mvMatrix
 			&& normalMatrix == other.normalMatrix
 			&& projMatrix == other.projMatrix
-			&& glossCoef0 == other.glossCoef0
-			&& glossCoef1 == other.glossCoef1
+			&& glossCoef[0] == other.glossCoef[0]
+			&& glossCoef[1] == other.glossCoef[1]
 			&& lightModel == other.lightModel
-			&& envMapping == other.envMapping
-			&& constantColor == other.constantColor
-			&& diffuseColor == other.diffuseColor
-			&& specularColor == other.specularColor;
+			&& envMapping[0] == other.envMapping[0]
+			&& constantColor[0] == other.constantColor[0]
+			&& diffuseColor[0] == other.diffuseColor[0]
+			&& specularColor[0] == other.specularColor[0]
+			&& envMapping[1] == other.envMapping[1]
+			&& constantColor[1] == other.constantColor[1]
+			&& diffuseColor[1] == other.diffuseColor[1]
+			&& specularColor[1] == other.specularColor[1];
 	}
 
 	bool equivalentInverseCull(const PolyParam& other) const
@@ -94,13 +128,17 @@ struct PolyParam
 			&& mvMatrix == other.mvMatrix
 			&& normalMatrix == other.normalMatrix
 			&& projMatrix == other.projMatrix
-			&& glossCoef0 == other.glossCoef0
-			&& glossCoef1 == other.glossCoef1
+			&& glossCoef[0] == other.glossCoef[0]
+			&& glossCoef[1] == other.glossCoef[1]
 			&& lightModel == other.lightModel
-			&& envMapping == other.envMapping
-			&& constantColor == other.constantColor
-			&& diffuseColor == other.diffuseColor
-			&& specularColor == other.specularColor;
+			&& envMapping[0] == other.envMapping[0]
+			&& constantColor[0] == other.constantColor[0]
+			&& diffuseColor[0] == other.diffuseColor[0]
+			&& specularColor[0] == other.specularColor[0]
+			&& envMapping[1] == other.envMapping[1]
+			&& constantColor[1] == other.constantColor[1]
+			&& diffuseColor[1] == other.diffuseColor[1]
+			&& specularColor[1] == other.specularColor[1];
 	}
 	bool isNaomi2() const { return projMatrix != nullptr; }
 };
@@ -113,6 +151,15 @@ struct ModifierVolumeParam
 
 	const float *mvMatrix;
 	const float *projMatrix;
+
+	void init()
+	{
+		first = 0;
+		count = 0;
+		isp.full = 0;
+		mvMatrix = nullptr;
+		projMatrix = nullptr;
+	}
 
 	bool isNaomi2() const { return projMatrix != nullptr; }
 };
@@ -174,8 +221,8 @@ struct N2Light
 	float direction[4];	// For parallel/spot
 	float position[4];		// For spot/point
 	int parallel;
-	int diffuse;
-	int specular;
+	int diffuse[2];
+	int specular[2];
 	int routing;
 	int dmode;
 	int smode;
@@ -192,10 +239,11 @@ struct N2LightModel
 	N2Light lights[16];
 	int lightCount;
 
-	float ambientBase[4];	// base ambient color
-	float ambientOffset[4];	// offset ambient color
-	bool ambientMaterial;	// ambient light is multiplied by model material/color
-	bool useBaseOver;		// base color overflows into offset color
+	float ambientBase[2][4];	// base ambient colors
+	float ambientOffset[2][4];	// offset ambient colors
+	bool ambientMaterialBase[2];	// base ambient light is multiplied by model material/color
+	bool ambientMaterialOffset[2];	// offset ambient light is multiplied by model material/color
+	bool useBaseOver;			// base color overflows into offset color
 };
 
 struct rend_context

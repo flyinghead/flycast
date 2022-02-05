@@ -469,8 +469,8 @@ bool gl4CompilePipelineShader(gl4PipelineShader* s, const char *fragment_source 
 	std::string geometrySource;
 	if (s->naomi2)
 	{
-		vertexSource = N2Vertex4Source(s->pp_Gouraud, false, s->pp_Texture).generate();
-		geometrySource = N2Geometry4Shader(s->pp_Gouraud).generate();
+		vertexSource = N2Vertex4Source(s).generate();
+		geometrySource = N2Geometry4Shader(s).generate();
 	}
 	else
 		vertexSource = Vertex4Source(s->pp_Gouraud).generate();
@@ -593,8 +593,8 @@ static void create_modvol_shader()
 	gl4.modvol_shader.program = gl_CompileAndLink(vertexShader.generate().c_str(), fragmentShader.generate().c_str());
 	gl4.modvol_shader.ndcMat = glGetUniformLocation(gl4.modvol_shader.program, "ndcMat");
 
-	N2Vertex4Source n2VertexShader(false, true, false);
-	N2Geometry4Shader geometryShader(false, true);
+	N2Vertex4Source n2VertexShader;
+	N2Geometry4Shader geometryShader;
 	gl4.n2ModVolShader.program = gl_CompileAndLink(n2VertexShader.generate().c_str(), fragmentShader.generate().c_str(),
 			geometryShader.generate().c_str());
 	gl4.n2ModVolShader.ndcMat = glGetUniformLocation(gl4.n2ModVolShader.program, "ndcMat");

@@ -23,7 +23,7 @@ const char* N2VertexShader = R"(
 uniform mat4 mvMat;
 uniform mat4 normalMat;
 uniform mat4 projMat;
-uniform int envMapping;
+uniform int envMapping[2];
 uniform int bumpMapping;
 
 // Vertex input
@@ -33,7 +33,7 @@ in vec4 in_base;
 in vec4 in_offs;
 in vec2 in_uv;
 in vec3 in_normal;
-#if TWO_VOLUMES == 1
+#if pp_TwoVolumes == 1
 in vec4 in_base1;
 in vec4 in_offs1;
 in vec2 in_uv1;
@@ -42,7 +42,7 @@ in vec2 in_uv1;
 INTERPOLATION out highp vec4 vs_base;
 INTERPOLATION out highp vec4 vs_offs;
 NOPERSPECTIVE out highp vec3 vs_uv;
-#if TWO_VOLUMES == 1
+#if pp_TwoVolumes == 1
 INTERPOLATION out vec4 vs_base1;
 INTERPOLATION out vec4 vs_offs1;
 noperspective out vec2 vs_uv1;
@@ -56,24 +56,33 @@ void main()
 #if GEOM_ONLY == 0
 	vs_base = in_base;
 	vs_offs = in_offs;
-#if TWO_VOLUMES == 1
-	vs_base1 = in_base1;
-	vs_offs1 = in_offs1;
-	vs_uv1 = in_uv1;
-	// FIXME need offset0 and offset1 for bump maps
-	if (bumpMapping == 1)
-		computeBumpMap(vs_offs, vs_offs1, normalize(in_normal));
-#endif
 	vec4 vnorm = normalize(normalMat * vec4(in_normal, 0.0));
+	#if pp_TwoVolumes == 1
+		vs_base1 = in_base1;
+		vs_offs1 = in_offs1;
+		vs_uv1 = in_uv1;
+		// FIXME need offset0 and offset1 for bump maps
+		if (bumpMapping == 1)
+			computeBumpMap(vs_offs, vs_offs1, normalize(in_normal));
+		else
+		{
+			computeColors(vs_base1, vs_offs1, 1, vpos.xyz, vnorm.xyz);
+			#if pp_Texture == 0
+				vs_base1 += vs_offs1;
+			#endif
+		}
+		if (envMapping[1] == 1)
+			computeEnvMap(vs_uv1.xy, vpos.xyz, vnorm.xyz);
+	#endif
 	if (bumpMapping == 0)
 	{
-		computeColors(vs_base, vs_offs, vpos.xyz, vnorm.xyz);
-#if pp_Texture == 0
-		vs_base += vs_offs;
-#endif
+		computeColors(vs_base, vs_offs, 0, vpos.xyz, vnorm.xyz);
+		#if pp_Texture == 0
+				vs_base += vs_offs;
+		#endif
 	}
 	vs_uv.xy = in_uv;
-	if (envMapping == 1)
+	if (envMapping[0] == 1)
 		computeEnvMap(vs_uv.xy, vpos.xyz, vnorm.xyz);
 #endif
 
@@ -118,8 +127,8 @@ struct N2Light
 	vec4 direction;	// For parallel/spot
 	vec4 position;	// For spot/point
 	int parallel;
-	int diffuse;
-	int specular;
+	int diffuse[2];
+	int specular[2];
 	int routing;
 	int dmode;
 	int smode;
@@ -133,21 +142,21 @@ struct N2Light
 uniform N2Light lights[16];
 uniform int lightCount;
 
-uniform vec4 ambientBase;
-uniform vec4 ambientOffset;
-uniform int ambientMaterial;
+uniform vec4 ambientBase[2];
+uniform vec4 ambientOffset[2];
+uniform int ambientMaterialBase[2];
+uniform int ambientMaterialOffset[2];
 uniform int useBaseOver;
 
 // model attributes
-uniform float glossCoef0;
-uniform float glossCoef1;
-uniform int constantColor;
-uniform int modelDiffuse;
-uniform int modelSpecular;
+uniform float glossCoef[2];
+uniform int constantColor[2];
+uniform int modelDiffuse[2];
+uniform int modelSpecular[2];
 
-void computeColors(inout vec4 baseCol, inout vec4 offsetCol, in vec3 position, in vec3 normal)
+void computeColors(inout vec4 baseCol, inout vec4 offsetCol, in int volIdx, in vec3 position, in vec3 normal)
 {
-	if (constantColor == 1)
+	if (constantColor[volIdx] == 1)
 		return;
 	vec3 diffuse = vec3(0.0);
 	vec3 specular = vec3(0.0);
@@ -173,14 +182,14 @@ void computeColors(inout vec4 baseCol, inout vec4 offsetCol, in vec3 position, i
 					distance = 1.0 / distance;
 				lightColor *= clamp(light.attnDistB * distance + light.attnDistA, 0.0, 1.0);
 			}
-			if (light.attnAngleA != 1.0 && light.attnAngleB != 0.0)
+			if (light.attnAngleA != 1.0 || light.attnAngleB != 0.0)
 			{
-				vec3 spotDir = normalize(light.direction.xyz);
-				float cosAngle = max(0.0, dot(-lightDir, spotDir));
+				vec3 spotDir = light.direction.xyz;
+				float cosAngle = 1.0 - max(0.0, dot(lightDir, spotDir));
 				lightColor *= clamp(cosAngle * light.attnAngleB + light.attnAngleA, 0.0, 1.0);
 			}
 		}
-		if (light.diffuse == 1)
+		if (light.diffuse[volIdx] == 1)
 		{
 			float factor;
 			switch (light.dmode)
@@ -203,17 +212,17 @@ void computeColors(inout vec4 baseCol, inout vec4 offsetCol, in vec3 position, i
 			if (light.routing == ROUTING_OFFSDIFF_BASESPEC_ADD || light.routing == ROUTING_OFFSDIFF_OFFSSPEC_ADD)
 				specular += lightColor * factor;
 		}
-		if (light.specular == 1)
+		if (light.specular[volIdx] == 1)
 		{
 			vec3 reflectDir = reflect(-lightDir, normal);
 			float factor;
 			switch (light.smode)
 			{
 			case LMODE_SINGLE_SIDED:
-				factor = clamp(pow(max(dot(normalize(-position), reflectDir), 0.0), glossCoef0), 0.0, 1.0);
+				factor = clamp(pow(max(dot(normalize(-position), reflectDir), 0.0), glossCoef[volIdx]), 0.0, 1.0);
 				break;
 			case LMODE_DOUBLE_SIDED:
-				factor = clamp(pow(abs(dot(normalize(-position), reflectDir)), glossCoef0), 0.0, 1.0);
+				factor = clamp(pow(abs(dot(normalize(-position), reflectDir)), glossCoef[volIdx]), 0.0, 1.0);
 				break;
 			case LMODE_SPECIAL_EFFECT:
 			default:
@@ -228,22 +237,23 @@ void computeColors(inout vec4 baseCol, inout vec4 offsetCol, in vec3 position, i
 				diffuse += lightColor * factor;
 		}
 	}
-	if (ambientMaterial == 1)
-	{
-		diffuse += ambientBase.rgb;
-		specular += ambientOffset.rgb;
-	}
-	if (modelDiffuse == 1)
+	// ambient with material
+	if (ambientMaterialBase[volIdx] == 1)
+		diffuse += ambientBase[volIdx].rgb;
+	if (ambientMaterialOffset[volIdx] == 1)
+		specular += ambientOffset[volIdx].rgb;
+
+	if (modelDiffuse[volIdx] == 1)
 		baseCol.rgb *= diffuse;
-	if (modelSpecular == 1)
+	if (modelSpecular[volIdx] == 1)
 		offsetCol.rgb *= specular;
-	if (ambientMaterial == 0)
-	{
-		if (modelDiffuse == 1)
-			baseCol.rgb += ambientBase.rgb;
-		if (modelSpecular == 1)
-			offsetCol.rgb += ambientOffset.rgb;
-	}
+
+	// ambient w/o material
+	if (ambientMaterialBase[volIdx] == 0 && modelDiffuse[volIdx] == 1)
+		baseCol.rgb += ambientBase[volIdx].rgb;
+	if (ambientMaterialOffset[volIdx] == 0 && modelSpecular[volIdx] == 1)
+		offsetCol.rgb += ambientOffset[volIdx].rgb;
+
 	baseCol.a = max(0.0, baseCol.a + diffuseAlpha);
 	offsetCol.a = max(0.0, offsetCol.a + specularAlpha);
 	if (useBaseOver == 1)
@@ -316,7 +326,7 @@ uniform mat4 ndcMat;
 INTERPOLATION in highp vec4 vs_base[3];
 INTERPOLATION in highp vec4 vs_offs[3];
 NOPERSPECTIVE in highp vec3 vs_uv[3];
-#if TWO_VOLUMES == 1
+#if pp_TwoVolumes == 1
 INTERPOLATION in highp vec4 vs_base1[3];
 INTERPOLATION in highp vec4 vs_offs1[3];
 NOPERSPECTIVE in highp vec2 vs_uv1[3];
@@ -324,7 +334,7 @@ NOPERSPECTIVE in highp vec2 vs_uv1[3];
 
 INTERPOLATION out highp vec4 vtx_base;
 INTERPOLATION out highp vec4 vtx_offs;
-#if TWO_VOLUMES == 1
+#if pp_TwoVolumes == 1
 INTERPOLATION out highp vec4 vtx_base1;
 INTERPOLATION out highp vec4 vtx_offs1;
 NOPERSPECTIVE out highp vec2 vtx_uv1;
@@ -338,7 +348,7 @@ struct Vertex
 	vec4 base;
 	vec4 offs;
 	vec3 uv;
-#if TWO_VOLUMES == 1
+#if pp_TwoVolumes == 1
 	vec4 base1;
 	vec4 offs1;
 	vec2 uv1;
@@ -355,7 +365,7 @@ Vertex interpolate(in Vertex v0, in Vertex v1, in float d0, in float d1)
 	v.base = mix(v0.base, v1.base, f);
 	v.offs = mix(v0.offs, v1.offs, f);
 	v.uv = mix(v0.uv, v1.uv, f);
-#if TWO_VOLUMES == 1
+#if pp_TwoVolumes == 1
 	v.base1 = mix(v0.base1, v1.base1, f);
 	v.offs1 = mix(v0.offs1, v1.offs1, f);
 	v.uv1 = mix(v0.uv1, v1.uv1, f);
@@ -440,13 +450,13 @@ void wDivide(inout Vertex v)
 #if pp_Gouraud == 1
 	v.base *= v.pos.z;
 	v.offs *= v.pos.z;
-#if TWO_VOLUMES == 1
+#if pp_TwoVolumes == 1
 	v.base1 *= v.pos.z;
 	v.offs1 *= v.pos.z;
 #endif
 #endif
 	v.uv = vec3(v.uv.xy * v.pos.z, v.pos.z);
-#if TWO_VOLUMES == 1
+#if pp_TwoVolumes == 1
 	v.uv1 *= v.pos.z;
 #endif
 #endif
@@ -460,7 +470,7 @@ void emitVertex(in Vertex v)
 #if GEOM_ONLY == 0
 	vtx_base = v.base;
 	vtx_offs = v.offs;
-#if TWO_VOLUMES == 1
+#if pp_TwoVolumes == 1
 	vtx_base1 = v.base1;
 	vtx_offs1 = v.offs1;
 	vtx_uv1 = v.uv1;
@@ -481,7 +491,7 @@ void main()
 		vtx[i].base = vs_base[i];
 		vtx[i].offs = vs_offs[i];
 		vtx[i].uv = vs_uv[i];
-#if TWO_VOLUMES == 1
+#if pp_TwoVolumes == 1
 		vtx[i].base1 = vs_base1[i];
 		vtx[i].offs1 = vs_offs1[i];
 		vtx[i].uv1 = vs_uv1[i];
@@ -521,7 +531,7 @@ N2VertexSource::N2VertexSource(bool gouraud, bool geometryOnly, bool texture) : 
 {
 	addConstant("pp_Gouraud", gouraud);
 	addConstant("GEOM_ONLY", geometryOnly);
-	addConstant("TWO_VOLUMES", 0);
+	addConstant("pp_TwoVolumes", 0);
 	addConstant("pp_Texture", (int)texture);
 
 	addSource(VertexCompatShader);
@@ -535,7 +545,7 @@ N2GeometryShader::N2GeometryShader(bool gouraud, bool geometryOnly) : OpenGlSour
 {
 	addConstant("pp_Gouraud", gouraud);
 	addConstant("GEOM_ONLY", geometryOnly);
-	addConstant("TWO_VOLUMES", 0);
+	addConstant("pp_TwoVolumes", 0);
 	addSource(GouraudSource);
 	addSource(GeometryClippingShader);
 }

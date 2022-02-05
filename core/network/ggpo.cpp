@@ -30,6 +30,8 @@ void UpdateInputState();
 namespace ggpo
 {
 
+bool inRollback;
+
 static void getLocalInput(MapleInputState inputState[4])
 {
 	if (!config::ThreadedRendering)
@@ -115,7 +117,6 @@ static bool absPointerPos;
 static bool keyboardGame;
 static bool mouseGame;
 static int inputSize;
-bool inRollback;
 static void (*chatCallback)(int playerNum, const std::string& msg);
 
 struct MemPages

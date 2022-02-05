@@ -698,8 +698,8 @@ private:
 			d_pp = CurrentPPlist->Append();
 			CurrentPP = d_pp;
 		}
+		d_pp->init();
 		d_pp->first = vd_rc.verts.used();
-		d_pp->count = 0;
 
 		d_pp->isp = pp->isp;
 		d_pp->tsp = pp->tsp;
@@ -709,16 +709,6 @@ private:
 
 		if (d_pp->pcw.Texture && fetchTextures)
 			d_pp->texture = renderer->GetTexture(d_pp->tsp, d_pp->tcw);
-		else
-			d_pp->texture = nullptr;
-
-		d_pp->tsp1.full = -1;
-		d_pp->tcw1.full = -1;
-		d_pp->texture1 = nullptr;
-		d_pp->mvMatrix = nullptr;
-		d_pp->projMatrix = nullptr;
-		d_pp->lightModel = nullptr;
-		d_pp->envMapping = false;
 	}
 
 	#define glob_param_bdc(pp) glob_param_bdc_( (TA_PolyParam0*)pp)
@@ -1156,38 +1146,27 @@ private:
 		static void AppendSpriteParam(TA_SpriteParam* spr)
 	{
 		//printf("Sprite\n");
-		PolyParam* d_pp=CurrentPP;
+		PolyParam* d_pp = CurrentPP;
 		if (CurrentPP == NULL || CurrentPP->count != 0)
 		{
 			if (CurrentPPlist == nullptr)	// wldkickspw
 				return;
-			d_pp=CurrentPPlist->Append(); 
-			CurrentPP=d_pp;
+			d_pp = CurrentPPlist->Append();
+			CurrentPP = d_pp;
 		}
-
+		d_pp->init();
 		d_pp->first = vd_rc.verts.used();
-		d_pp->count=0;
-		d_pp->isp=spr->isp; 
-		d_pp->tsp=spr->tsp; 
-		d_pp->tcw=spr->tcw; 
-		d_pp->pcw=spr->pcw; 
-		d_pp->tileclip=tileclip_val;
+		d_pp->isp = spr->isp;
+		d_pp->tsp = spr->tsp;
+		d_pp->tcw = spr->tcw;
+		d_pp->pcw = spr->pcw;
+		d_pp->tileclip = tileclip_val;
 
 		if (d_pp->pcw.Texture && fetchTextures)
 			d_pp->texture = renderer->GetTexture(d_pp->tsp, d_pp->tcw);
-		else
-			d_pp->texture = nullptr;
 
-		d_pp->tcw1.full = -1;
-		d_pp->tsp1.full = -1;
-		d_pp->texture1 = nullptr;
-		d_pp->mvMatrix = nullptr;
-		d_pp->projMatrix = nullptr;
-		d_pp->lightModel = nullptr;
-		d_pp->envMapping = false;
-
-		SFaceBaseColor=spr->BaseCol;
-		SFaceOffsColor=spr->OffsCol;
+		SFaceBaseColor = spr->BaseCol;
+		SFaceOffsColor = spr->OffsCol;
         
         d_pp->isp.CullMode ^= 1;
 	}
@@ -1337,12 +1316,12 @@ private:
 			p = vd_rc.global_param_mvo_tr.Append();
 		else
 			return;
+		p->init();
 		p->isp.full = param->isp.full;
 		p->isp.VolumeLast = param->pcw.Volume != 0;
 		p->first = vd_rc.modtrig.used();
-		p->mvMatrix = nullptr;
-		p->projMatrix = nullptr;
 	}
+
 	__forceinline
 		static void AppendModVolVertexA(TA_ModVolA* mvv)
 	{
@@ -1588,7 +1567,8 @@ bool ta_parse_vdrc(TA_context* ctx)
 		bgpp->mvMatrix = nullptr;
 		bgpp->projMatrix = nullptr;
 		bgpp->lightModel = nullptr;
-		bgpp->envMapping = false;
+		bgpp->envMapping[0] = false;
+		bgpp->envMapping[1] = false;
 	}
 
 	TA_context *childCtx = ctx;
@@ -1672,7 +1652,8 @@ bool ta_parse_naomi2(TA_context* ctx)
 	bgpp.mvMatrix = nullptr;
 	bgpp.projMatrix = nullptr;
 	bgpp.lightModel = nullptr;
-	bgpp.envMapping = false;
+	bgpp.envMapping[0] = false;
+	bgpp.envMapping[1] = false;
 
 	for (PolyParam& pp : ctx->rend.global_param_op)
 	{

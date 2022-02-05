@@ -50,25 +50,26 @@ struct gl4PipelineShader
 	GLint mvMat;
 	GLint normalMat;
 	GLint projMat;
-	GLint glossCoef0;
-	GLint envMapping;
+	GLint glossCoef[2];
+	GLint envMapping[2];
 	GLint bumpMapping;
-	GLint constantColor;
-	GLint modelDiffuse;
-	GLint modelSpecular;
+	GLint constantColor[2];
+	GLint modelDiffuse[2];
+	GLint modelSpecular[2];
 
 	GLint lightCount;
-	GLint ambientBase;
-	GLint ambientOffset;
-	GLint ambientMaterial;
+	GLint ambientBase[2];
+	GLint ambientOffset[2];
+	GLint ambientMaterialBase[2];
+	GLint ambientMaterialOffset[2];
 	GLint useBaseOver;
 	struct {
 		GLint color;
 		GLint direction;
 		GLint position;
 		GLint parallel;
-		GLint diffuse;
-		GLint specular;
+		GLint diffuse[2];
+		GLint specular[2];
 		GLint routing;
 		GLint dmode;
 		GLint smode;

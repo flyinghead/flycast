@@ -76,8 +76,13 @@ struct ElanBase
 struct Model : public ElanBase
 {
 	// 08000800
-	u32 id1; // 18000000
-	u32 _res;
+	struct {
+		u32 _res:27;
+		u32 cwCulling:1;
+		u32 openVolume:1;
+		u32 _res0:3;
+	} param;
+	TSP tsp;
 	u32 zero; // 0
 	u32 offset;
 	u32 one; // 1
@@ -192,6 +197,7 @@ struct GMP : public ElanBase
 	// 00110 0000 0000 (b0 and b1, vf4)
 	// 00000 1010 1010 specular and fog? soul surfer
 	// 00010 0010 0010 b0, s0 s1 (initd, headlights)
+	// 00010 1111 1111 2-volume (clubk2k3 road surface)
 
 	u32 diffuse0;
 	u32 specular0;
@@ -410,12 +416,18 @@ struct LightModel : public ElanBase
 	u32 ambientBase1;
 	u32 ambientOffset1;
 
-	bool isDiffuse(int lightId) const {
-		return (diffuseMask0 & (1 << lightId)) != 0;
+	bool isDiffuse(int lightId, int volume) const {
+		if (volume == 0)
+			return (diffuseMask0 & (1 << lightId)) != 0;
+		else
+			return (diffuseMask1 & (1 << lightId)) != 0;
 	}
 
-	bool isSpecular(int lightId) const {
-		return (specularMask0 & (1 << lightId)) != 0;
+	bool isSpecular(int lightId, int volume) const {
+		if (volume == 0)
+			return (specularMask0 & (1 << lightId)) != 0;
+		else
+			return (specularMask1 & (1 << lightId)) != 0;
 	}
 };
 
@@ -471,6 +483,16 @@ struct ParallelLight : public ElanBase
 		u32 _res1:2;
 	};
 	u32 _res2[5];
+
+	float getDirX() const {
+		return (((int8_t)dirX << 4) | (int)((pcw.full >> 16) & 0xf)) / 2047.f;
+	}
+	float getDirY() const {
+		return (((int8_t)dirY << 4) | (int)((pcw.full >> 4) & 0xf)) / 2047.f;
+	}
+	float getDirZ() const {
+		return (((int8_t)dirZ << 4) | (int)((pcw.full >> 0) & 0xf)) / 2047.f;
+	}
 };
 
 struct PointLight : public ElanBase
@@ -502,6 +524,16 @@ struct PointLight : public ElanBase
 	u16 _angleA;
 	u16 _angleB;
 
+	float getDirX() const {
+		return (((int8_t)dirX << 4) | (int)((pcw.full >> 16) & 0xf)) / 2047.f;
+	}
+	float getDirY() const {
+		return (((int8_t)dirY << 4) | (int)((pcw.full >> 4) & 0xf)) / 2047.f;
+	}
+	float getDirZ() const {
+		return (((int8_t)dirZ << 4) | (int)((pcw.full >> 0) & 0xf)) / 2047.f;
+	}
+
 	static float f16tof32(u16 v)
 	{
 		u32 z = v << 16;
@@ -531,23 +563,11 @@ struct PointLight : public ElanBase
 	}
 
 	bool isAttnDist() const {
-		return distA() != 1 && distB() != 0;
-	}
-
-	float attnMinAngle() const {
-		return acosf((1 - angleA()) / angleB());
-	}
-
-	float attnMaxAngle() const {
-		return acosf(-angleA() / angleB());
-	}
-
-	float attnAngle(float angleCos) const {
-		return std::max(0.f, std::min(1.f, angleCos * angleB() + angleA()));
+		return distA() != 1 || distB() != 0;
 	}
 
 	bool isAttnAngle() const {
-		return angleA() != 1 && angleB() != 0;
+		return angleA() != 1 || angleB() != 0;
 	}
 };
 

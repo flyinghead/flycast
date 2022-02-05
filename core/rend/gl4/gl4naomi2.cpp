@@ -31,25 +31,43 @@ static const char *gouraudSource = R"(
 #define NOPERSPECTIVE noperspective
 )";
 
-N2Vertex4Source::N2Vertex4Source(bool gouraud, bool geometryOnly, bool texture) : OpenGl4Source()
+N2Vertex4Source::N2Vertex4Source(const gl4PipelineShader* shader) : OpenGl4Source()
 {
-	addConstant("pp_Gouraud", gouraud);
-	addConstant("GEOM_ONLY", geometryOnly);
-	addConstant("TWO_VOLUMES", 1);
-	addConstant("pp_Texture", (int)texture);
+	if (shader == nullptr)
+	{
+		addConstant("GEOM_ONLY", 1);
+		addConstant("pp_TwoVolumes", 0);
+		addConstant("pp_Gouraud", 0);
+		addConstant("pp_Texture", 0);
+	}
+	else
+	{
+		addConstant("GEOM_ONLY", shader->pass == Pass::Depth); // geometry only for depth pass
+		addConstant("pp_TwoVolumes", shader->pp_TwoVolumes);
+		addConstant("pp_Gouraud", shader->pp_Gouraud);
+		addConstant("pp_Texture", shader->pp_Texture);
+	}
 
 	addSource(gouraudSource);
-	if (!geometryOnly)
+	if (shader != nullptr)
 		addSource(N2ColorShader);
 	addSource(N2VertexShader);
 }
 
-N2Geometry4Shader::N2Geometry4Shader(bool gouraud, bool geometryOnly) : OpenGl4Source()
+N2Geometry4Shader::N2Geometry4Shader(const gl4PipelineShader* shader) : OpenGl4Source()
 {
-	addConstant("pp_Gouraud", gouraud);
-	addConstant("GEOM_ONLY", geometryOnly);
-	addConstant("TWO_VOLUMES", 1);
-
+	if (shader == nullptr)
+	{
+		addConstant("GEOM_ONLY", 1);
+		addConstant("pp_TwoVolumes", 0);
+		addConstant("pp_Gouraud", 0);
+	}
+	else
+	{
+		addConstant("GEOM_ONLY", shader->pass == Pass::Depth); // geometry only for depth pass
+		addConstant("pp_TwoVolumes", shader->pp_TwoVolumes);
+		addConstant("pp_Gouraud", shader->pp_Gouraud);
+	}
 	addSource(gouraudSource);
 	addSource(GeometryClippingShader);
 }

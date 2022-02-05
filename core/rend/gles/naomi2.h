@@ -39,9 +39,9 @@ public:
 template<typename ShaderType>
 void resetN2UniformCache(ShaderType *shader)
 {
-	shader->lastMvMat = nullptr;
-	shader->lastProjMat = nullptr;
-	shader->lastLightModel = nullptr;
+	shader->lastMvMat = (float *)1;
+	shader->lastProjMat = (float *)1;
+	shader->lastLightModel = (N2LightModel *)1;
 }
 
 template<typename ShaderType>
@@ -50,18 +50,28 @@ void initN2Uniforms(ShaderType *shader)
 	shader->mvMat = glGetUniformLocation(shader->program, "mvMat");
 	shader->normalMat = glGetUniformLocation(shader->program, "normalMat");
 	shader->projMat = glGetUniformLocation(shader->program, "projMat");
-	shader->glossCoef0 = glGetUniformLocation(shader->program, "glossCoef0");
-	shader->envMapping = glGetUniformLocation(shader->program, "envMapping");
+	shader->glossCoef[0] = glGetUniformLocation(shader->program, "glossCoef[0]");
+	shader->glossCoef[1] = glGetUniformLocation(shader->program, "glossCoef[1]");
+	shader->envMapping[0] = glGetUniformLocation(shader->program, "envMapping[0]");
+	shader->envMapping[1] = glGetUniformLocation(shader->program, "envMapping[1]");
 	shader->bumpMapping = glGetUniformLocation(shader->program, "bumpMapping");
-	shader->constantColor = glGetUniformLocation(shader->program, "constantColor");
-	shader->modelDiffuse = glGetUniformLocation(shader->program, "modelDiffuse");
-	shader->modelSpecular = glGetUniformLocation(shader->program, "modelSpecular");
+	shader->constantColor[0] = glGetUniformLocation(shader->program, "constantColor[0]");
+	shader->constantColor[1] = glGetUniformLocation(shader->program, "constantColor[1]");
+	shader->modelDiffuse[0] = glGetUniformLocation(shader->program, "modelDiffuse[0]");
+	shader->modelDiffuse[1] = glGetUniformLocation(shader->program, "modelDiffuse[1]");
+	shader->modelSpecular[0] = glGetUniformLocation(shader->program, "modelSpecular[0]");
+	shader->modelSpecular[1] = glGetUniformLocation(shader->program, "modelSpecular[1]");
 
 	// Lights
 	shader->lightCount = glGetUniformLocation(shader->program, "lightCount");
-	shader->ambientBase = glGetUniformLocation(shader->program, "ambientBase");
-	shader->ambientOffset = glGetUniformLocation(shader->program, "ambientOffset");
-	shader->ambientMaterial = glGetUniformLocation(shader->program, "ambientMaterial");
+	shader->ambientBase[0] = glGetUniformLocation(shader->program, "ambientBase[0]");
+	shader->ambientBase[1] = glGetUniformLocation(shader->program, "ambientBase[1]");
+	shader->ambientOffset[0] = glGetUniformLocation(shader->program, "ambientOffset[0]");
+	shader->ambientOffset[1] = glGetUniformLocation(shader->program, "ambientOffset[1]");
+	shader->ambientMaterialBase[0] = glGetUniformLocation(shader->program, "ambientMaterialBase[0]");
+	shader->ambientMaterialBase[1] = glGetUniformLocation(shader->program, "ambientMaterialBase[1]");
+	shader->ambientMaterialOffset[0] = glGetUniformLocation(shader->program, "ambientMaterialOffset[0]");
+	shader->ambientMaterialOffset[1] = glGetUniformLocation(shader->program, "ambientMaterialOffset[1]");
 	shader->useBaseOver = glGetUniformLocation(shader->program, "useBaseOver");
 	for (u32 i = 0; i < ARRAY_SIZE(shader->lights); i++)
 	{
@@ -74,10 +84,14 @@ void initN2Uniforms(ShaderType *shader)
 		shader->lights[i].position = glGetUniformLocation(shader->program, str);
 		sprintf(str, "lights[%d].parallel", i);
 		shader->lights[i].parallel = glGetUniformLocation(shader->program, str);
-		sprintf(str, "lights[%d].diffuse", i);
-		shader->lights[i].diffuse = glGetUniformLocation(shader->program, str);
-		sprintf(str, "lights[%d].specular", i);
-		shader->lights[i].specular = glGetUniformLocation(shader->program, str);
+		sprintf(str, "lights[%d].diffuse[0]", i);
+		shader->lights[i].diffuse[0] = glGetUniformLocation(shader->program, str);
+		sprintf(str, "lights[%d].diffuse[1]", i);
+		shader->lights[i].diffuse[1] = glGetUniformLocation(shader->program, str);
+		sprintf(str, "lights[%d].specular[0]", i);
+		shader->lights[i].specular[0] = glGetUniformLocation(shader->program, str);
+		sprintf(str, "lights[%d].specular[1]", i);
+		shader->lights[i].specular[1] = glGetUniformLocation(shader->program, str);
 		sprintf(str, "lights[%d].routing", i);
 		shader->lights[i].routing = glGetUniformLocation(shader->program, str);
 		sprintf(str, "lights[%d].dmode", i);
@@ -116,10 +130,14 @@ void setN2Uniforms(const PolyParam *pp, ShaderType *shader)
 		shader->lastProjMat = pp->projMatrix;
 		glUniformMatrix4fv(shader->projMat, 1, GL_FALSE, pp->projMatrix);
 	}
-	glUniform1f(shader->glossCoef0, pp->glossCoef0);
-	glUniform1i(shader->constantColor, (int)pp->constantColor);
-	glUniform1i(shader->modelDiffuse, (int)pp->diffuseColor);
-	glUniform1i(shader->modelSpecular, (int)pp->specularColor);
+	for (int i = 0; i < 2; i++)
+	{
+		glUniform1f(shader->glossCoef[i], pp->glossCoef[i]);
+		glUniform1i(shader->envMapping[i], (int)pp->envMapping[i]);
+		glUniform1i(shader->constantColor[i], (int)pp->constantColor[i]);
+		glUniform1i(shader->modelDiffuse[i], (int)pp->diffuseColor[i]);
+		glUniform1i(shader->modelSpecular[i], (int)pp->specularColor[i]);
+	}
 
 	const N2LightModel *const lightModel = pp->lightModel;
 	if (lightModel != shader->lastLightModel)
@@ -127,9 +145,13 @@ void setN2Uniforms(const PolyParam *pp, ShaderType *shader)
 		shader->lastLightModel = lightModel;
 		if (lightModel != nullptr)
 		{
-			glUniform1i(shader->ambientMaterial, lightModel->ambientMaterial);
-			glUniform4fv(shader->ambientBase, 1, lightModel->ambientBase);
-			glUniform4fv(shader->ambientOffset, 1, lightModel->ambientOffset);
+			for (int vol = 0; vol < 2; vol++)
+			{
+				glUniform1i(shader->ambientMaterialBase[vol], lightModel->ambientMaterialBase[vol]);
+				glUniform1i(shader->ambientMaterialOffset[vol], lightModel->ambientMaterialOffset[vol]);
+				glUniform4fv(shader->ambientBase[vol], 1, lightModel->ambientBase[vol]);
+				glUniform4fv(shader->ambientOffset[vol], 1, lightModel->ambientOffset[vol]);
+			}
 			glUniform1i(shader->useBaseOver, lightModel->useBaseOver);
 			glUniform1i(shader->lightCount, lightModel->lightCount);
 			for (int i = 0; i < lightModel->lightCount; i++)
@@ -141,8 +163,11 @@ void setN2Uniforms(const PolyParam *pp, ShaderType *shader)
 				glUniform4fv(shader->lights[i].direction, 1, light.direction);
 				glUniform4fv(shader->lights[i].position, 1, light.position);
 
-				glUniform1i(shader->lights[i].diffuse, light.diffuse);
-				glUniform1i(shader->lights[i].specular, light.specular);
+				for (int vol = 0; vol < 2; vol++)
+				{
+					glUniform1i(shader->lights[i].diffuse[vol], light.diffuse[vol]);
+					glUniform1i(shader->lights[i].specular[vol], light.specular[vol]);
+				}
 				glUniform1i(shader->lights[i].routing, light.routing);
 				glUniform1i(shader->lights[i].dmode, light.dmode);
 				glUniform1i(shader->lights[i].smode, light.smode);
@@ -158,14 +183,17 @@ void setN2Uniforms(const PolyParam *pp, ShaderType *shader)
 		{
 			float white[] { 1.f, 1.f, 1.f, 1.f };
 			float black[4]{};
-			glUniform1i(shader->ambientMaterial, 0);
-			glUniform4fv(shader->ambientBase, 1, white);
-			glUniform4fv(shader->ambientOffset, 1, black);
+			for (int vol = 0; vol < 2; vol++)
+			{
+				glUniform1i(shader->ambientMaterialBase[vol], 0);
+				glUniform1i(shader->ambientMaterialOffset[vol], 0);
+				glUniform4fv(shader->ambientBase[vol], 1, white);
+				glUniform4fv(shader->ambientOffset[vol], 1, black);
+			}
 			glUniform1i(shader->useBaseOver, 0);
 			glUniform1i(shader->lightCount, 0);
 		}
 	}
-	glUniform1i(shader->envMapping, pp->envMapping);
 	glUniform1i(shader->bumpMapping, pp->pcw.Texture == 1 && pp->tcw.PixelFmt == PixelBumpMap);
 
 	glEnable(GL_CLIP_DISTANCE0);

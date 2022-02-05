@@ -23,11 +23,11 @@
 class N2Vertex4Source : public OpenGl4Source
 {
 public:
-	N2Vertex4Source(bool gouraud, bool geometryOnly, bool texture);
+	N2Vertex4Source(const gl4PipelineShader* shader = nullptr);
 };
 
 class N2Geometry4Shader : public OpenGl4Source
 {
 public:
-	N2Geometry4Shader(bool gouraud, bool geometryOnly = false);
+	N2Geometry4Shader(const gl4PipelineShader* shader = nullptr);
 };
