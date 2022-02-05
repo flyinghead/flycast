@@ -7063,7 +7063,7 @@ Game Games[] =
 			{ "mpr-23703.ic11", 0xa800000, 0x1000000, 0x702b8b4a },
         },
 		nullptr,
-		&driving_inputs,
+		&clubkart_inputs,
     },
 	{
     	"clubkrta",
@@ -7090,7 +7090,7 @@ Game Games[] =
 			{ "mpr-23703.ic11", 0xa800000, 0x1000000, 0x702b8b4a },
         },
 		nullptr,
-		&driving_inputs,
+		&clubkart_inputs,
     },
     {
     	"clubkrtc",
@@ -7117,7 +7117,7 @@ Game Games[] =
 			{ "mpr-23703.ic11", 0xa800000, 0x1000000, 0x702b8b4a },
         },
 		nullptr,
-		&driving_inputs,
+		&clubkart_inputs,
     },
     {
     	"clubkrt",
@@ -7144,7 +7144,7 @@ Game Games[] =
 			{ "mpr-23703.ic11", 0xa800000, 0x1000000, 0x702b8b4a },
         },
 		nullptr,
-		&driving_inputs,
+		&clubkart_inputs,
     },
     {
     	"clubkprz",
@@ -7177,7 +7177,7 @@ Game Games[] =
             { "copy",          0x400000,  0xc00000, 0x00000000, Copy, 0x1000000 },
         },
 		nullptr,
-		&driving_inputs,
+		&clubkart_inputs,
     },
     {
     	"clubkpzb",
@@ -7210,7 +7210,7 @@ Game Games[] =
             { "copy",            0x400000,  0xc00000, 0x00000000, Copy, 0x1000000 },
         },
 		nullptr,
-		&driving_inputs,
+		&clubkart_inputs,
     },
     {
     	"clubk2k3",
@@ -7245,7 +7245,7 @@ Game Games[] =
             { "copy",            0x400000,  0xc00000, 0x00000000, Copy, 0x1000000 },
         },
 		nullptr,
-		&driving_inputs,
+		&clubkart_inputs,
     },
     {
     	"clubk2kp",
@@ -7280,7 +7280,7 @@ Game Games[] =
 			{ "rom19.ic19s", 0x9800000, 0x800000, 0x7ee9743b },
         },
 		nullptr,
-		&driving_inputs,
+		&clubkart_inputs,
     },
     {
     	"clubk2kpa",
@@ -7318,7 +7318,7 @@ Game Games[] =
 			{ "rom21.ic21s", 0xa800000, 0x800000, 0x21bd0a9c }, // not used by game, garbage
         },
 		nullptr,
-		&driving_inputs,
+		&clubkart_inputs,
     },
 	//
 	// Naomi 2 GD-ROM
@@ -7412,7 +7412,7 @@ Game Games[] =
 			{ "317-0331-jpn.pic", 0, 0x4000, 0x0a3bf606 },
 		},
 		"gds-0020b",
-		&driving_inputs,
+		&initd_inputs,
     },
     {
     	"initdo",
@@ -7428,7 +7428,7 @@ Game Games[] =
 			{ "317-0331-jpn.pic", 0, 0x4000, 0x0a3bf606 },
 		},
 		"gds-0020",
-		&driving_inputs,
+		&initd_inputs,
     },
     {
     	"vf4evo",
@@ -7489,7 +7489,7 @@ Game Games[] =
 			{ "317-0343-com.pic", 0, 0x4000, 0x80eea4eb },
 		},
 		"gds-0025a",
-		&driving_inputs,
+		&initd_inputs,
     },
     {
     	"initdexpo",
@@ -7505,7 +7505,7 @@ Game Games[] =
 			{ "317-0343-com.pic", 0, 0x4000, 0x80eea4eb },
 		},
 		"gds-0025",
-		&driving_inputs,
+		&initd_inputs,
     },
     {
     	"initdv2j",
@@ -7521,7 +7521,7 @@ Game Games[] =
 			{ "317-0345-jpn.pic", 0, 0x4000, 0x56e1274a },
 		},
 		"gds-0026b",
-		&driving_inputs,
+		&initd_inputs,
     },
     {
     	"initdv2jo",
@@ -7537,7 +7537,7 @@ Game Games[] =
 			{ "317-0345-jpn.pic", 0, 0x4000, 0x56e1274a },
 		},
 		"gds-0026",
-		&driving_inputs,
+		&initd_inputs,
     },
     {
     	"initdv2ja",
@@ -7553,7 +7553,7 @@ Game Games[] =
 			{ "317-0345-jpn.pic", 0, 0x4000, 0x56e1274a },
 		},
 		"gds-0026a",
-		&driving_inputs,
+		&initd_inputs,
     },
     {
     	"initdv2e",
@@ -7569,7 +7569,7 @@ Game Games[] =
 			{ "317-0357-exp.pic", 0, 0x4000, 0x38f84b4d },
 		},
 		"gds-0027",
-		&driving_inputs,
+		&initd_inputs,
     },
     {
     	"clubkcyco",
@@ -7585,7 +7585,7 @@ Game Games[] =
 			{ "317-0358-com.pic", 0, 0x4000, 0xdd33e50f },
 		},
 		"gds-0029",
-		&driving_inputs,
+		&clubkart_inputs,
     },
     {
     	"clubkcyc",
@@ -7601,7 +7601,7 @@ Game Games[] =
 			{ "317-0358-com.pic", 0, 0x4000, 0xdd33e50f },
 		},
 		"gds-0029a",
-		&driving_inputs,
+		&clubkart_inputs,
     },
     {
     	"initdv3j",
@@ -7617,7 +7617,7 @@ Game Games[] =
 			{ "317-0379-jpn.pic", 0, 0x4000, 0x7f024ff6 },
 		},
 		"gds-0032c",
-		&driving_inputs,
+		&initd_inputs,
     },
     {
     	"initdv3jb",
@@ -7633,7 +7633,7 @@ Game Games[] =
 			{ "317-0379-jpn.pic", 0, 0x4000, 0x7f024ff6 },
 		},
 		"gds-0032b",
-		&driving_inputs,
+		&initd_inputs,
     },
     {
     	"initdv3e",
@@ -7649,7 +7649,7 @@ Game Games[] =
 			{ "317-0384-com.pic", 0, 0x4000, 0x081ccd51 },
 		},
 		"gds-0033",
-		&driving_inputs,
+		&initd_inputs,
     },
     {
     	"vf4tuned",
@@ -7710,7 +7710,7 @@ Game Games[] =
 			{ "317-0406-com.pic", 0, 0x4000, 0xfe91a7af },
 		},
 		"gds-0039b",
-		&driving_inputs,
+		&initd_inputs,
     },
     {
     	"inidv3ca",
@@ -7726,6 +7726,6 @@ Game Games[] =
 			{ "317-0406-com.pic", 0, 0x4000, 0xfe91a7af },
 		},
 		"gds-0039a",
-		&driving_inputs,
+		&initd_inputs,
     },
 };

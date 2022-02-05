@@ -605,10 +605,11 @@ static InputDescriptors rumblef_inputs = AW_5_BUTTONS("LP", "SP", "Dodge", "LK",
 static InputDescriptors kingrt66_inputs = {
 	{
 			{ NAOMI_BTN0_KEY, "HORN" },
+			{ NAOMI_BTN1_KEY, "WIPER" },
 			{ NAOMI_DOWN_KEY, "VIEW" },
 			{ NAOMI_BTN2_KEY, "SHIFT L", 0, NAOMI_DOWN_KEY },	// This button uses P2 inputs for P1
-			{ NAOMI_BTN1_KEY, "SHIFT H", 0, NAOMI_UP_KEY },		// This button uses P2 inputs for P1
-			{ NAOMI_BTN3_KEY, "SHIFT R", 0, NAOMI_LEFT_KEY | NAOMI_DOWN_KEY },
+			{ NAOMI_BTN3_KEY, "SHIFT H", 0, NAOMI_UP_KEY },		// This button uses P2 inputs for P1
+			{ NAOMI_BTN4_KEY, "SHIFT R", 0, NAOMI_LEFT_KEY | NAOMI_DOWN_KEY },
 																// This button uses P2 inputs for P1
 			NAO_START_DESC
 			NAO_BASE_BTN_DESC
@@ -620,7 +621,7 @@ static InputDescriptors kingrt66_inputs = {
 	},
 };
 
-static InputDescriptors driving_inputs = {
+static InputDescriptors clubkart_inputs = {
 	{
 			{ NAOMI_DOWN_KEY, "VIEW" },
 			NAO_START_DESC
@@ -633,11 +634,25 @@ static InputDescriptors driving_inputs = {
 	},
 };
 
+static InputDescriptors initd_inputs = {
+	{
+			{ NAOMI_DOWN_KEY, "VIEW" },
+			{ NAOMI_BTN0_KEY, "GEAR UP", 0, NAOMI_UP_KEY },		// This button uses P2 inputs for P1
+			{ NAOMI_BTN1_KEY, "GEAR DOWN", 0, NAOMI_DOWN_KEY },	// This button uses P2 inputs for P1
+			NAO_START_DESC
+			NAO_BASE_BTN_DESC
+	},
+	{
+			{ "HANDLE", Full, 0 },
+			{ "ACCEL", Half, 4 },
+			{ "BRAKE", Half, 5 },
+	},
+};
 
 static InputDescriptors wldrider_inputs = {
 	{
-			{ NAOMI_LEFT_KEY, "PUSH" },
-			{ NAOMI_RIGHT_KEY, "PULL" },
+			{ NAOMI_UP_KEY, "PUSH", NAOMI_LEFT_KEY },
+			{ NAOMI_DOWN_KEY, "PULL", NAOMI_RIGHT_KEY },
 			NAO_START_DESC
 			NAO_BASE_BTN_DESC
 	},
