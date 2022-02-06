@@ -643,7 +643,7 @@ struct retro_core_option_v2_definition option_defs_ar[] = {
       },
       "disabled",
    },
-#ifdef HAVE_TEXUPSCALE
+#ifndef TARGET_NO_OPENMP
    {
       CORE_OPTION_NAME "_texupscale",
       CORE_OPTION_NAME_TEXUPSCALE_LABEL_AR,
@@ -2178,7 +2178,7 @@ struct retro_core_option_v2_definition option_defs_ast[] = {
       },
       "disabled",
    },
-#ifdef HAVE_TEXUPSCALE
+#ifndef TARGET_NO_OPENMP
    {
       CORE_OPTION_NAME "_texupscale",
       CORE_OPTION_NAME_TEXUPSCALE_LABEL_AST,
@@ -3713,7 +3713,7 @@ struct retro_core_option_v2_definition option_defs_ca[] = {
       },
       "disabled",
    },
-#ifdef HAVE_TEXUPSCALE
+#ifndef TARGET_NO_OPENMP
    {
       CORE_OPTION_NAME "_texupscale",
       CORE_OPTION_NAME_TEXUPSCALE_LABEL_CA,
@@ -5248,7 +5248,7 @@ struct retro_core_option_v2_definition option_defs_chs[] = {
       },
       "disabled",
    },
-#ifdef HAVE_TEXUPSCALE
+#ifndef TARGET_NO_OPENMP
    {
       CORE_OPTION_NAME "_texupscale",
       CORE_OPTION_NAME_TEXUPSCALE_LABEL_CHS,
@@ -6783,7 +6783,7 @@ struct retro_core_option_v2_definition option_defs_cht[] = {
       },
       "disabled",
    },
-#ifdef HAVE_TEXUPSCALE
+#ifndef TARGET_NO_OPENMP
    {
       CORE_OPTION_NAME "_texupscale",
       CORE_OPTION_NAME_TEXUPSCALE_LABEL_CHT,
@@ -8318,7 +8318,7 @@ struct retro_core_option_v2_definition option_defs_cs[] = {
       },
       "disabled",
    },
-#ifdef HAVE_TEXUPSCALE
+#ifndef TARGET_NO_OPENMP
    {
       CORE_OPTION_NAME "_texupscale",
       CORE_OPTION_NAME_TEXUPSCALE_LABEL_CS,
@@ -9853,7 +9853,7 @@ struct retro_core_option_v2_definition option_defs_cy[] = {
       },
       "disabled",
    },
-#ifdef HAVE_TEXUPSCALE
+#ifndef TARGET_NO_OPENMP
    {
       CORE_OPTION_NAME "_texupscale",
       CORE_OPTION_NAME_TEXUPSCALE_LABEL_CY,
@@ -11388,7 +11388,7 @@ struct retro_core_option_v2_definition option_defs_da[] = {
       },
       "disabled",
    },
-#ifdef HAVE_TEXUPSCALE
+#ifndef TARGET_NO_OPENMP
    {
       CORE_OPTION_NAME "_texupscale",
       CORE_OPTION_NAME_TEXUPSCALE_LABEL_DA,
@@ -12923,7 +12923,7 @@ struct retro_core_option_v2_definition option_defs_de[] = {
       },
       "disabled",
    },
-#ifdef HAVE_TEXUPSCALE
+#ifndef TARGET_NO_OPENMP
    {
       CORE_OPTION_NAME "_texupscale",
       CORE_OPTION_NAME_TEXUPSCALE_LABEL_DE,
@@ -14458,7 +14458,7 @@ struct retro_core_option_v2_definition option_defs_el[] = {
       },
       "disabled",
    },
-#ifdef HAVE_TEXUPSCALE
+#ifndef TARGET_NO_OPENMP
    {
       CORE_OPTION_NAME "_texupscale",
       CORE_OPTION_NAME_TEXUPSCALE_LABEL_EL,
@@ -15993,7 +15993,7 @@ struct retro_core_option_v2_definition option_defs_eo[] = {
       },
       "disabled",
    },
-#ifdef HAVE_TEXUPSCALE
+#ifndef TARGET_NO_OPENMP
    {
       CORE_OPTION_NAME "_texupscale",
       CORE_OPTION_NAME_TEXUPSCALE_LABEL_EO,
@@ -17528,7 +17528,7 @@ struct retro_core_option_v2_definition option_defs_es[] = {
       },
       "disabled",
    },
-#ifdef HAVE_TEXUPSCALE
+#ifndef TARGET_NO_OPENMP
    {
       CORE_OPTION_NAME "_texupscale",
       CORE_OPTION_NAME_TEXUPSCALE_LABEL_ES,
@@ -19063,7 +19063,7 @@ struct retro_core_option_v2_definition option_defs_fa[] = {
       },
       "disabled",
    },
-#ifdef HAVE_TEXUPSCALE
+#ifndef TARGET_NO_OPENMP
    {
       CORE_OPTION_NAME "_texupscale",
       CORE_OPTION_NAME_TEXUPSCALE_LABEL_FA,
@@ -20598,7 +20598,7 @@ struct retro_core_option_v2_definition option_defs_fi[] = {
       },
       "disabled",
    },
-#ifdef HAVE_TEXUPSCALE
+#ifndef TARGET_NO_OPENMP
    {
       CORE_OPTION_NAME "_texupscale",
       CORE_OPTION_NAME_TEXUPSCALE_LABEL_FI,
@@ -22133,7 +22133,7 @@ struct retro_core_option_v2_definition option_defs_fr[] = {
       },
       "disabled",
    },
-#ifdef HAVE_TEXUPSCALE
+#ifndef TARGET_NO_OPENMP
    {
       CORE_OPTION_NAME "_texupscale",
       CORE_OPTION_NAME_TEXUPSCALE_LABEL_FR,
@@ -23668,7 +23668,7 @@ struct retro_core_option_v2_definition option_defs_gl[] = {
       },
       "disabled",
    },
-#ifdef HAVE_TEXUPSCALE
+#ifndef TARGET_NO_OPENMP
    {
       CORE_OPTION_NAME "_texupscale",
       CORE_OPTION_NAME_TEXUPSCALE_LABEL_GL,
@@ -25203,7 +25203,7 @@ struct retro_core_option_v2_definition option_defs_he[] = {
       },
       "disabled",
    },
-#ifdef HAVE_TEXUPSCALE
+#ifndef TARGET_NO_OPENMP
    {
       CORE_OPTION_NAME "_texupscale",
       CORE_OPTION_NAME_TEXUPSCALE_LABEL_HE,
@@ -26738,7 +26738,7 @@ struct retro_core_option_v2_definition option_defs_hu[] = {
       },
       "disabled",
    },
-#ifdef HAVE_TEXUPSCALE
+#ifndef TARGET_NO_OPENMP
    {
       CORE_OPTION_NAME "_texupscale",
       CORE_OPTION_NAME_TEXUPSCALE_LABEL_HU,
@@ -28273,7 +28273,7 @@ struct retro_core_option_v2_definition option_defs_id[] = {
       },
       "disabled",
    },
-#ifdef HAVE_TEXUPSCALE
+#ifndef TARGET_NO_OPENMP
    {
       CORE_OPTION_NAME "_texupscale",
       CORE_OPTION_NAME_TEXUPSCALE_LABEL_ID,
@@ -29808,7 +29808,7 @@ struct retro_core_option_v2_definition option_defs_it[] = {
       },
       "disabled",
    },
-#ifdef HAVE_TEXUPSCALE
+#ifndef TARGET_NO_OPENMP
    {
       CORE_OPTION_NAME "_texupscale",
       CORE_OPTION_NAME_TEXUPSCALE_LABEL_IT,
@@ -31343,7 +31343,7 @@ struct retro_core_option_v2_definition option_defs_ja[] = {
       },
       "disabled",
    },
-#ifdef HAVE_TEXUPSCALE
+#ifndef TARGET_NO_OPENMP
    {
       CORE_OPTION_NAME "_texupscale",
       CORE_OPTION_NAME_TEXUPSCALE_LABEL_JA,
@@ -32878,7 +32878,7 @@ struct retro_core_option_v2_definition option_defs_ko[] = {
       },
       "disabled",
    },
-#ifdef HAVE_TEXUPSCALE
+#ifndef TARGET_NO_OPENMP
    {
       CORE_OPTION_NAME "_texupscale",
       CORE_OPTION_NAME_TEXUPSCALE_LABEL_KO,
@@ -34413,7 +34413,7 @@ struct retro_core_option_v2_definition option_defs_mt[] = {
       },
       "disabled",
    },
-#ifdef HAVE_TEXUPSCALE
+#ifndef TARGET_NO_OPENMP
    {
       CORE_OPTION_NAME "_texupscale",
       CORE_OPTION_NAME_TEXUPSCALE_LABEL_MT,
@@ -35948,7 +35948,7 @@ struct retro_core_option_v2_definition option_defs_nl[] = {
       },
       "disabled",
    },
-#ifdef HAVE_TEXUPSCALE
+#ifndef TARGET_NO_OPENMP
    {
       CORE_OPTION_NAME "_texupscale",
       CORE_OPTION_NAME_TEXUPSCALE_LABEL_NL,
@@ -37483,7 +37483,7 @@ struct retro_core_option_v2_definition option_defs_no[] = {
       },
       "disabled",
    },
-#ifdef HAVE_TEXUPSCALE
+#ifndef TARGET_NO_OPENMP
    {
       CORE_OPTION_NAME "_texupscale",
       CORE_OPTION_NAME_TEXUPSCALE_LABEL_NO,
@@ -39018,7 +39018,7 @@ struct retro_core_option_v2_definition option_defs_oc[] = {
       },
       "disabled",
    },
-#ifdef HAVE_TEXUPSCALE
+#ifndef TARGET_NO_OPENMP
    {
       CORE_OPTION_NAME "_texupscale",
       CORE_OPTION_NAME_TEXUPSCALE_LABEL_OC,
@@ -40553,7 +40553,7 @@ struct retro_core_option_v2_definition option_defs_pl[] = {
       },
       "disabled",
    },
-#ifdef HAVE_TEXUPSCALE
+#ifndef TARGET_NO_OPENMP
    {
       CORE_OPTION_NAME "_texupscale",
       CORE_OPTION_NAME_TEXUPSCALE_LABEL_PL,
@@ -42088,7 +42088,7 @@ struct retro_core_option_v2_definition option_defs_pt_br[] = {
       },
       "disabled",
    },
-#ifdef HAVE_TEXUPSCALE
+#ifndef TARGET_NO_OPENMP
    {
       CORE_OPTION_NAME "_texupscale",
       CORE_OPTION_NAME_TEXUPSCALE_LABEL_PT_BR,
@@ -43623,7 +43623,7 @@ struct retro_core_option_v2_definition option_defs_pt_pt[] = {
       },
       "disabled",
    },
-#ifdef HAVE_TEXUPSCALE
+#ifndef TARGET_NO_OPENMP
    {
       CORE_OPTION_NAME "_texupscale",
       CORE_OPTION_NAME_TEXUPSCALE_LABEL_PT_PT,
@@ -45158,7 +45158,7 @@ struct retro_core_option_v2_definition option_defs_ro[] = {
       },
       "disabled",
    },
-#ifdef HAVE_TEXUPSCALE
+#ifndef TARGET_NO_OPENMP
    {
       CORE_OPTION_NAME "_texupscale",
       CORE_OPTION_NAME_TEXUPSCALE_LABEL_RO,
@@ -46693,7 +46693,7 @@ struct retro_core_option_v2_definition option_defs_ru[] = {
       },
       "disabled",
    },
-#ifdef HAVE_TEXUPSCALE
+#ifndef TARGET_NO_OPENMP
    {
       CORE_OPTION_NAME "_texupscale",
       CORE_OPTION_NAME_TEXUPSCALE_LABEL_RU,
@@ -48228,7 +48228,7 @@ struct retro_core_option_v2_definition option_defs_si[] = {
       },
       "disabled",
    },
-#ifdef HAVE_TEXUPSCALE
+#ifndef TARGET_NO_OPENMP
    {
       CORE_OPTION_NAME "_texupscale",
       CORE_OPTION_NAME_TEXUPSCALE_LABEL_SI,
@@ -49763,7 +49763,7 @@ struct retro_core_option_v2_definition option_defs_sk[] = {
       },
       "disabled",
    },
-#ifdef HAVE_TEXUPSCALE
+#ifndef TARGET_NO_OPENMP
    {
       CORE_OPTION_NAME "_texupscale",
       CORE_OPTION_NAME_TEXUPSCALE_LABEL_SK,
@@ -51298,7 +51298,7 @@ struct retro_core_option_v2_definition option_defs_sr[] = {
       },
       "disabled",
    },
-#ifdef HAVE_TEXUPSCALE
+#ifndef TARGET_NO_OPENMP
    {
       CORE_OPTION_NAME "_texupscale",
       CORE_OPTION_NAME_TEXUPSCALE_LABEL_SR,
@@ -52833,7 +52833,7 @@ struct retro_core_option_v2_definition option_defs_sv[] = {
       },
       "disabled",
    },
-#ifdef HAVE_TEXUPSCALE
+#ifndef TARGET_NO_OPENMP
    {
       CORE_OPTION_NAME "_texupscale",
       CORE_OPTION_NAME_TEXUPSCALE_LABEL_SV,
@@ -54368,7 +54368,7 @@ struct retro_core_option_v2_definition option_defs_tr[] = {
       },
       "disabled",
    },
-#ifdef HAVE_TEXUPSCALE
+#ifndef TARGET_NO_OPENMP
    {
       CORE_OPTION_NAME "_texupscale",
       CORE_OPTION_NAME_TEXUPSCALE_LABEL_TR,
@@ -55903,7 +55903,7 @@ struct retro_core_option_v2_definition option_defs_uk[] = {
       },
       "disabled",
    },
-#ifdef HAVE_TEXUPSCALE
+#ifndef TARGET_NO_OPENMP
    {
       CORE_OPTION_NAME "_texupscale",
       CORE_OPTION_NAME_TEXUPSCALE_LABEL_UK,
@@ -57438,7 +57438,7 @@ struct retro_core_option_v2_definition option_defs_val[] = {
       },
       "disabled",
    },
-#ifdef HAVE_TEXUPSCALE
+#ifndef TARGET_NO_OPENMP
    {
       CORE_OPTION_NAME "_texupscale",
       CORE_OPTION_NAME_TEXUPSCALE_LABEL_VAL,
@@ -58973,7 +58973,7 @@ struct retro_core_option_v2_definition option_defs_vn[] = {
       },
       "disabled",
    },
-#ifdef HAVE_TEXUPSCALE
+#ifndef TARGET_NO_OPENMP
    {
       CORE_OPTION_NAME "_texupscale",
       CORE_OPTION_NAME_TEXUPSCALE_LABEL_VN,

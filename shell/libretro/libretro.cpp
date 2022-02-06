@@ -117,7 +117,7 @@ static bool platformIsDreamcast = true;
 static bool platformIsArcade = false;
 static bool threadedRenderingEnabled = true;
 static bool oitEnabled = false;
-#if defined(HAVE_TEXUPSCALE)
+#ifndef TARGET_NO_OPENMP
 static bool textureUpscaleEnabled = false;
 #endif
 static bool vmuScreenSettingsShown = true;
@@ -339,7 +339,7 @@ void retro_deinit()
 	platformIsArcade = false;
 	threadedRenderingEnabled = true;
 	oitEnabled = false;
-#if defined(HAVE_TEXUPSCALE)
+#ifndef TARGET_NO_OPENMP
 	textureUpscaleEnabled = false;
 #endif
 	vmuScreenSettingsShown = true;
@@ -464,7 +464,7 @@ static bool set_variable_visibility(void)
 	}
 #endif
 
-#if defined(HAVE_TEXUPSCALE)
+#ifndef TARGET_NO_OPENMP
 	// Only if texture upscaling is enabled
 	bool textureUpscaleWasEnabled = textureUpscaleEnabled;
 	textureUpscaleEnabled = false;
