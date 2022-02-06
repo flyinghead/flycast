@@ -61,6 +61,7 @@ private:
 
 	template<typename T, bool>
 	friend class Option;
+	friend class IntOption;
 };
 
 // Missing in C++11
@@ -182,4 +183,21 @@ protected:
 	Settings& settings;
 };
 
+// Uses the setting value converted to int instead of the value index
+class IntOption : public Option<int> {
+public:
+	IntOption(const std::string& name, int defaultValue = 0)
+		: Option<int>(name, defaultValue)
+	{
+	}
+
+	void load() override {
+		retro_variable var { name.c_str() };
+		if (settings.retroEnv(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value != nullptr)
+			set(atoi(var.value));
+	}
+};
+
 extern Option<bool> PowerVR2Filter;
+extern IntOption TextureUpscale;
+extern IntOption MaxFilteredTextureSize;
