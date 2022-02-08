@@ -663,3 +663,18 @@ static InputDescriptors wldrider_inputs = {
 			{ "Rear Brake", Full, 2 },
 	},
 };
+
+static InputDescriptors soulsurfer_inputs = {
+	{
+			{ NAOMI_LEFT_KEY, "LEFT", NAOMI_BTN0_KEY },
+			{ NAOMI_RIGHT_KEY, "RIGHT", NAOMI_BTN1_KEY },
+			{ NAOMI_BTN4_KEY, "FLOORMAT" }, // TODO this should always be on
+			NAO_START_DESC
+			NAO_BASE_BTN_DESC
+	},
+	{
+			{ "SWING", Full, 2 },
+			{ "ROLL", Full, 0 },
+			{ "PITCH", Full, 1, true },
+	},
+};

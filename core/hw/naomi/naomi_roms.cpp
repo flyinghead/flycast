@@ -7001,7 +7001,9 @@ Game Games[] =
 			{ "rom19.ic19s", 0x9800000, 0x800000, 0x4f8ec86a },
 			{ "rom20.ic20s", 0xa000000, 0x800000, 0xc90b960d },
 			{ "rom21.ic21s", 0xa800000, 0x800000, 0x1477c064 },
-        }
+        },
+		nullptr,
+    	&soulsurfer_inputs,
     },
     {
     	"vf4evoct",

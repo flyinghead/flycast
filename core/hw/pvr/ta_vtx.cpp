@@ -1806,7 +1806,7 @@ void ta_add_ta_data(int listType, u32 *data, u32 size)
 	vd_ctx = ta_ctx;
 	fetchTextures = false;
 	forcedListType = listType;
-	if (!isDirectX(config::RendererType))
+	if (isDirectX(config::RendererType))
 		TAParserDX.vdec_init();
 	else
 		TAParser.vdec_init();

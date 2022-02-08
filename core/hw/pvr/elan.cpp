@@ -567,11 +567,15 @@ static void setUV(const Ts& vs, Vertex& vd)
 	{
 		vd.u = state.envMapUOffset;
 		vd.v = state.envMapVOffset;
+		vd.u1 = state.envMapUOffset;
+		vd.v1 = state.envMapVOffset;
 	}
 	else
 	{
 		vd.u = vs.uv.u;
 		vd.v = vs.uv.v;
+		vd.u1 = vs.uv.u;
+		vd.v1 = vs.uv.v;
 	}
 }
 
@@ -581,6 +585,8 @@ static void SetEnvMapUV(Vertex& vtx)
 	{
 		vtx.u = state.envMapUOffset;
 		vtx.v = state.envMapVOffset;
+		vtx.u1 = state.envMapUOffset;
+		vtx.v1 = state.envMapVOffset;
 	}
 }
 
@@ -914,6 +920,7 @@ static void sendLights()
 			model.ambientBase[i][0] = model.ambientBase[i][1] = model.ambientBase[i][2] = model.ambientBase[i][3] = 1.f;
 		}
 		memset(model.ambientOffset, 0, sizeof(model.ambientOffset));
+		taLightModel = nullptr;
 		return;
 	}
 	model.ambientMaterialBase[0] = curLightModel->useAmbientBase0;
