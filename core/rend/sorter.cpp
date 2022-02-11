@@ -75,43 +75,30 @@ void SortPParams(int first, int count)
 			if (pp->isNaomi2())
 			{
 				glm::mat4 mvMat = pp->mvMatrix != nullptr ? glm::make_mat4(pp->mvMatrix) : glm::mat4(1);
-				glm::mat4 projMat = glm::make_mat4(pp->projMatrix);
-				glm::vec4 min{ 1e38f, 1e38f, 1e38f, 0.f };
-				glm::vec4 max{ -1e38f, -1e38f, -1e38f, 0.f };
+				glm::vec3 min{ 1e38f, 1e38f, 1e38f };
+				glm::vec3 max{ -1e38f, -1e38f, -1e38f };
 				while (vtx != vtx_end)
 				{
-					glm::vec4 pos{ vtx->x, vtx->y, vtx->z, 0.f };
+					glm::vec3 pos{ vtx->x, vtx->y, vtx->z };
 					min = glm::min(min, pos);
 					max = glm::max(max, pos);
 					vtx++;
 				}
-				glm::vec4 center = (min + max) / 2.f;
-				center.w = 1;
-				glm::vec4 extents = max - center;
+				glm::vec4 center((min + max) / 2.f, 1);
+				glm::vec4 extents(max - glm::vec3(center), 0);
 				// transform
 				center = mvMat * center;
 				glm::vec3 extentX = mvMat * glm::vec4(extents.x, 0, 0, 0);
 				glm::vec3 extentY = mvMat * glm::vec4(0, extents.y, 0, 0);
 				glm::vec3 extentZ = mvMat * glm::vec4(0, 0, extents.z, 0);
 				// new AA extents
-				const float newX = std::abs(glm::dot(glm::vec3{ 1.f, 0.f, 0.f }, extentX)) +
-						std::abs(glm::dot(glm::vec3{ 1.f, 0.f, 0.f }, extentY)) +
-						std::abs(glm::dot(glm::vec3{ 1.f, 0.f, 0.f }, extentZ));
+				glm::vec3 newExtent = glm::abs(extentX) + glm::abs(extentY) + glm::abs(extentZ);
 
-				const float newY = std::abs(glm::dot(glm::vec3{ 0.f, 1.f, 0.f }, extentX)) +
-						std::abs(glm::dot(glm::vec3{ 0.f, 1.f, 0.f }, extentY)) +
-						std::abs(glm::dot(glm::vec3{ 0.f, 1.f, 0.f }, extentZ));
+				min = glm::vec3(center) - newExtent;
+				max = glm::vec3(center) + newExtent;
 
-				const float newZ = std::abs(glm::dot(glm::vec3{ 0.f, 0.f, 1.f }, extentX)) +
-						std::abs(glm::dot(glm::vec3{ 0.f, 0.f, 1.f }, extentY)) +
-						std::abs(glm::dot(glm::vec3{ 0.f, 0.f, 1.f }, extentZ));
-				min = center - glm::vec4(newX, newY, newZ, 0);
-				max = center + glm::vec4(newX, newY, newZ, 0);
 				// project
-				glm::vec4 a = projMat * min;
-				glm::vec4 b = projMat * max;
-
-				pp->zvZ = 1 / std::max(a.w, b.w);
+				pp->zvZ = -1 / std::min(min.z, max.z);
 			}
 			else
 			{
@@ -247,8 +234,13 @@ void GenSorted(int first, int count, std::vector<SortTrigDrawParam>& pidx_sort, 
 	//Merge pids/draw cmds if two different pids are actually equal
 	for (u32 k = 1; k < aused; k++)
 		if (lst[k].pid != lst[k - 1].pid)
-			if (pp_base[lst[k].pid].equivalent(pp_base[lst[k - 1].pid]))
+		{
+			const PolyParam& curPoly = pp_base[lst[k].pid];
+			const PolyParam& prevPoly = pp_base[lst[k - 1].pid];
+			if (curPoly.equivalentIgnoreCullingDirection(prevPoly)
+					&& (curPoly.isp.CullMode < 2 || curPoly.isp.CullMode == prevPoly.isp.CullMode))
 				lst[k].pid = lst[k - 1].pid;
+		}
 
 	//re-assemble them into drawing commands
 	vidx_sort.resize(aused*3);

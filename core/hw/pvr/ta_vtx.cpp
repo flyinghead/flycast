@@ -828,11 +828,11 @@ private:
 	template<class T>
 	static Vertex* vert_cvt_base_(T* vtx)
 	{
-		f32 invW=vtx->xyz[2];
-		Vertex* cv=vd_rc.verts.Append();
-		cv->x=vtx->xyz[0];
-		cv->y=vtx->xyz[1];
-		cv->z=invW;
+		f32 invW = vtx->xyz[2];
+		Vertex* cv = vd_rc.verts.Append();
+		cv->x = vtx->xyz[0];
+		cv->y = vtx->xyz[1];
+		cv->z = invW;
 		update_fz(invW);
 		return cv;
 	}
@@ -1410,34 +1410,25 @@ static void make_index(const List<PolyParam> *polys, int first, int end, bool me
 		bool dupe_next_vtx = false;
 		if (merge
 				&& last_poly != nullptr
-				&& last_poly->count != 0)
+				&& last_poly->count != 0
+				&& poly->equivalentIgnoreCullingDirection(*last_poly))
 		{
-			if (poly->equivalent(*last_poly))
+			const u32 last_vtx = indices[last_poly->first + last_poly->count - 1];
+			*ctx->idx.Append() = last_vtx;
+			if (poly->isp.CullMode < 2 || poly->isp.CullMode == last_poly->isp.CullMode)
 			{
-				const u32 last_vtx = indices[last_poly->first + last_poly->count - 1];
-				*ctx->idx.Append() = last_vtx;
 				if (cullingReversed)
 					*ctx->idx.Append() = last_vtx;
-				dupe_next_vtx = true;
-				first_index = last_poly->first;
 				cullingReversed = false;
-			}
-			else if (poly->equivalentInverseCull(*last_poly))
-			{
-				const u32 last_vtx = indices[last_poly->first + last_poly->count - 1];
-				*ctx->idx.Append() = last_vtx;
-				if (!cullingReversed)
-					*ctx->idx.Append() = last_vtx;
-				dupe_next_vtx = true;
-				first_index = last_poly->first;
-				cullingReversed = true;
 			}
 			else
 			{
-				last_poly = poly;
-				first_index = ctx->idx.used();
-				cullingReversed = false;
+				if (!cullingReversed)
+					*ctx->idx.Append() = last_vtx;
+				cullingReversed = true;
 			}
+			dupe_next_vtx = true;
+			first_index = last_poly->first;
 		}
 		else
 		{
@@ -1552,7 +1543,6 @@ bool ta_parse_vdrc(TA_context* ctx)
 		TAParserDX.vdec_init();
 	else
 		TAParser.vdec_init();
-	vd_rc.Clear();
 
 	bool empty_context = true;
 	int op_poly_count = 0;
@@ -1571,6 +1561,8 @@ bool ta_parse_vdrc(TA_context* ctx)
 		bgpp->envMapping[1] = false;
 	}
 
+	const bool mergeTranslucent = !config::PerStripSorting || config::RendererType == RenderType::OpenGL_OIT;
+			// TODO || config::RendererType == RenderType::Vulkan_OIT || config::RendererType == RenderType::DirectX11_OIT
 	TA_context *childCtx = ctx;
 	while (childCtx != nullptr)
 	{
@@ -1607,7 +1599,7 @@ bool ta_parse_vdrc(TA_context* ctx)
 			pt_poly_count = render_pass->pt_count;
 			render_pass->tr_count = vd_rc.global_param_tr.used();
 			make_index(&vd_rc.global_param_tr, tr_poly_count,
-					render_pass->tr_count, false, &vd_rc);
+					render_pass->tr_count, mergeTranslucent, &vd_rc);
 			tr_poly_count = render_pass->tr_count;
 			render_pass->mvo_tr_count = vd_rc.global_param_mvo_tr.used();
 			render_pass->autosort = UsingAutoSort(pass);
@@ -1688,11 +1680,13 @@ bool ta_parse_naomi2(TA_context* ctx)
 		int op_count = 0;
 		int pt_count = 0;
 		int tr_count = 0;
+		const bool mergeTranslucent = !config::PerStripSorting || config::RendererType == RenderType::OpenGL_OIT;
+				// TODO || config::RendererType == RenderType::Vulkan_OIT || config::RendererType == RenderType::DirectX11_OIT;
 		for (const RenderPass& pass : ctx->rend.render_passes)
 		{
 			make_index(&ctx->rend.global_param_op, op_count, pass.op_count, true, &ctx->rend);
 			make_index(&ctx->rend.global_param_pt, pt_count, pass.pt_count, true, &ctx->rend);
-			make_index(&ctx->rend.global_param_tr, tr_count, pass.tr_count, false, &ctx->rend);
+			make_index(&ctx->rend.global_param_tr, tr_count, pass.tr_count, mergeTranslucent, &ctx->rend);
 			op_count = pass.op_count;
 			pt_count = pass.pt_count;
 			tr_count = pass.tr_count;

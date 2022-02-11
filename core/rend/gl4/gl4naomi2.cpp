@@ -20,7 +20,6 @@
 
 extern const char *N2VertexShader;
 extern const char *N2ColorShader;
-extern const char *GeometryClippingShader;
 
 static const char *gouraudSource = R"(
 #if pp_Gouraud == 0
@@ -43,7 +42,7 @@ N2Vertex4Source::N2Vertex4Source(const gl4PipelineShader* shader) : OpenGl4Sourc
 	else
 	{
 		addConstant("GEOM_ONLY", shader->pass == Pass::Depth); // geometry only for depth pass
-		addConstant("pp_TwoVolumes", shader->pp_TwoVolumes);
+		addConstant("pp_TwoVolumes", shader->pp_TwoVolumes || shader->pp_BumpMap);
 		addConstant("pp_Gouraud", shader->pp_Gouraud);
 		addConstant("pp_Texture", shader->pp_Texture);
 	}
@@ -52,22 +51,4 @@ N2Vertex4Source::N2Vertex4Source(const gl4PipelineShader* shader) : OpenGl4Sourc
 	if (shader != nullptr)
 		addSource(N2ColorShader);
 	addSource(N2VertexShader);
-}
-
-N2Geometry4Shader::N2Geometry4Shader(const gl4PipelineShader* shader) : OpenGl4Source()
-{
-	if (shader == nullptr)
-	{
-		addConstant("GEOM_ONLY", 1);
-		addConstant("pp_TwoVolumes", 0);
-		addConstant("pp_Gouraud", 0);
-	}
-	else
-	{
-		addConstant("GEOM_ONLY", shader->pass == Pass::Depth); // geometry only for depth pass
-		addConstant("pp_TwoVolumes", shader->pp_TwoVolumes);
-		addConstant("pp_Gouraud", shader->pp_Gouraud);
-	}
-	addSource(gouraudSource);
-	addSource(GeometryClippingShader);
 }

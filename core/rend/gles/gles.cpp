@@ -444,11 +444,10 @@ static void gles_term()
 	glDeleteVertexArrays(1, &gl.vbo.modvolVAO);
 	gl.vbo.modvolVAO = 0;
 #endif
-	glDeleteBuffers(1, &gl.vbo.geometry);
-	gl.vbo.geometry = 0;
-	glDeleteBuffers(1, &gl.vbo.modvols);
-	glDeleteBuffers(1, &gl.vbo.idxs);
-	glDeleteBuffers(1, &gl.vbo.idxs2);
+	gl.vbo.geometry.reset();
+	gl.vbo.modvols.reset();
+	gl.vbo.idxs.reset();
+	gl.vbo.idxs2.reset();
 	termGLCommon();
 
 	gl_delete_shaders();
@@ -494,7 +493,7 @@ void findGLVersion()
 #if defined(__APPLE__)
 			gl.glsl_version_header = "#version 150";
 #else
-			gl.glsl_version_header = "#version 150"; // FIXME GLSL 1.5 / Open GL 3.2 needed for geometry shader
+			gl.glsl_version_header = "#version 130";
 #endif
 			gl.single_channel_format = GL_RED;
 		}
@@ -568,29 +567,22 @@ GLuint gl_CompileShader(const char* shader,GLuint type)
 	return rv;
 }
 
-GLuint gl_CompileAndLink(const char *vertexShader, const char *fragmentShader, const char *geometryShader)
+GLuint gl_CompileAndLink(const char *vertexShader, const char *fragmentShader)
 {
 	//create shaders
 	GLuint vs = gl_CompileShader(vertexShader, GL_VERTEX_SHADER);
 	GLuint ps = gl_CompileShader(fragmentShader, GL_FRAGMENT_SHADER);
-	GLuint gs = 0;
-#ifdef GL_GEOMETRY_SHADER // TODO Need GL 3.2 or GLES 3.2. Not defined on iOS
-	if (geometryShader != nullptr)
-		gs = gl_CompileShader(geometryShader, GL_GEOMETRY_SHADER);
-#endif
 
 	GLuint program = glCreateProgram();
 	glAttachShader(program, vs);
 	glAttachShader(program, ps);
-
-	if (gs != 0)
-		glAttachShader(program, gs);
 
 	//bind vertex attribute to vbo inputs
 	glBindAttribLocation(program, VERTEX_POS_ARRAY,      "in_pos");
 	glBindAttribLocation(program, VERTEX_COL_BASE_ARRAY, "in_base");
 	glBindAttribLocation(program, VERTEX_COL_OFFS_ARRAY, "in_offs");
 	glBindAttribLocation(program, VERTEX_UV_ARRAY,       "in_uv");
+	// Per-pixel attributes
 	glBindAttribLocation(program, VERTEX_COL_BASE1_ARRAY, "in_base1");
 	glBindAttribLocation(program, VERTEX_COL_OFFS1_ARRAY, "in_offs1");
 	glBindAttribLocation(program, VERTEX_UV1_ARRAY,       "in_uv1");
@@ -624,16 +616,12 @@ GLuint gl_CompileAndLink(const char *vertexShader, const char *fragmentShader, c
 
 		// Dump the shaders source for troubleshooting
 		INFO_LOG(RENDERER, "// VERTEX SHADER\n%s\n// END", vertexShader);
-		if (geometryShader != nullptr)
-			INFO_LOG(RENDERER, "// GEOMETRY SHADER\n%s\n// END", geometryShader);
 		INFO_LOG(RENDERER, "// FRAGMENT SHADER\n%s\n// END", fragmentShader);
 		die("shader compile fail\n");
 	}
 
 	glDeleteShader(vs);
 	glDeleteShader(ps);
-	if (gs != 0)
-		glDeleteShader(gs);
 
 	glcache.UseProgram(program);
 
@@ -732,11 +720,8 @@ bool CompilePipelineShader(PipelineShader* s)
 	else
 		vertexShader = VertexSource(s->pp_Gouraud).generate();
 	FragmentShaderSource fragmentSource(s);
-	std::string geometryShader;
-	if (s->naomi2)
-		geometryShader = N2GeometryShader(s->pp_Gouraud).generate();
 
-	s->program = gl_CompileAndLink(vertexShader.c_str(), fragmentSource.generate().c_str(), s->naomi2 ? geometryShader.c_str() : nullptr);
+	s->program = gl_CompileAndLink(vertexShader.c_str(), fragmentSource.generate().c_str());
 
 	//setup texture 0 as the input for the shader
 	GLint gu = glGetUniformLocation(s->program, "tex");
@@ -897,8 +882,7 @@ static void create_modvol_shader()
 	gl.modvol_shader.depth_scale = glGetUniformLocation(gl.modvol_shader.program, "depth_scale");
 
 	N2VertexSource n2vertexShader(false, true, false);
-	N2GeometryShader geometryShader(false, true);
-	gl.n2ModVolShader.program = gl_CompileAndLink(n2vertexShader.generate().c_str(), fragmentShader.generate().c_str(), geometryShader.generate().c_str());
+	gl.n2ModVolShader.program = gl_CompileAndLink(n2vertexShader.generate().c_str(), fragmentShader.generate().c_str());
 	gl.n2ModVolShader.ndcMat = glGetUniformLocation(gl.n2ModVolShader.program, "ndcMat");
 	gl.n2ModVolShader.sp_ShaderColor = glGetUniformLocation(gl.n2ModVolShader.program, "sp_ShaderColor");
 	gl.n2ModVolShader.depth_scale = glGetUniformLocation(gl.n2ModVolShader.program, "depth_scale");
@@ -908,7 +892,7 @@ static void create_modvol_shader()
 
 bool gl_create_resources()
 {
-	if (gl.vbo.geometry != 0)
+	if (gl.vbo.geometry != nullptr)
 		// Assume the resources have already been created
 		return true;
 
@@ -919,10 +903,10 @@ bool gl_create_resources()
 		verify(glGenVertexArrays != nullptr);
 
 	//create vbos
-	glGenBuffers(1, &gl.vbo.geometry);
-	glGenBuffers(1, &gl.vbo.modvols);
-	glGenBuffers(1, &gl.vbo.idxs);
-	glGenBuffers(1, &gl.vbo.idxs2);
+	gl.vbo.geometry = std::unique_ptr<GlBuffer>(new GlBuffer(GL_ARRAY_BUFFER));
+	gl.vbo.modvols = std::unique_ptr<GlBuffer>(new GlBuffer(GL_ARRAY_BUFFER));
+	gl.vbo.idxs = std::unique_ptr<GlBuffer>(new GlBuffer(GL_ELEMENT_ARRAY_BUFFER));
+	gl.vbo.idxs2 = std::unique_ptr<GlBuffer>(new GlBuffer(GL_ELEMENT_ARRAY_BUFFER));
 
 	create_modvol_shader();
 	initQuad();
@@ -1184,10 +1168,10 @@ static void upload_vertex_indices()
 		short_idx.Init(pvrrc.idx.used(), &overrun, NULL);
 		for (u32 *p = pvrrc.idx.head(); p < pvrrc.idx.LastPtr(0); p++)
 			*(short_idx.Append()) = *p;
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, short_idx.bytes(), short_idx.head(), GL_STREAM_DRAW);
+		gl.vbo.idxs->update(short_idx.head(), short_idx.bytes());
 	}
 	else
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER,pvrrc.idx.bytes(),pvrrc.idx.head(),GL_STREAM_DRAW);
+		gl.vbo.idxs->update(pvrrc.idx.head(), pvrrc.idx.bytes());
 	glCheck();
 }
 
@@ -1304,19 +1288,13 @@ bool RenderFrame(int width, int height)
 	{
 		//move vertex to gpu
 		//Main VBO
-		glBindBuffer(GL_ARRAY_BUFFER, gl.vbo.geometry); glCheck();
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl.vbo.idxs); glCheck();
-
-		glBufferData(GL_ARRAY_BUFFER,pvrrc.verts.bytes(),pvrrc.verts.head(),GL_STREAM_DRAW); glCheck();
+		gl.vbo.geometry->update(pvrrc.verts.head(), pvrrc.verts.bytes());
 
 		upload_vertex_indices();
 
 		//Modvol VBO
 		if (pvrrc.modtrig.used())
-		{
-			glBindBuffer(GL_ARRAY_BUFFER, gl.vbo.modvols); glCheck();
-			glBufferData(GL_ARRAY_BUFFER,pvrrc.modtrig.bytes(),pvrrc.modtrig.head(),GL_STREAM_DRAW); glCheck();
-		}
+			gl.vbo.modvols->update(pvrrc.modtrig.head(), pvrrc.modtrig.bytes());
 
 		if (!wide_screen_on)
 		{

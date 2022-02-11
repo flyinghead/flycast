@@ -70,6 +70,8 @@ struct PipelineShader
 	GLint ambientMaterialBase[2];
 	GLint ambientMaterialOffset[2];
 	GLint useBaseOver;
+	GLint bumpId0;
+	GLint bumpId1;
 	struct {
 		GLint color;
 		GLint direction;
@@ -109,6 +111,46 @@ struct PipelineShader
 	bool naomi2;
 };
 
+class GlBuffer
+{
+public:
+	GlBuffer(GLenum type, GLenum usage =  GL_STREAM_DRAW)
+		: type(type), usage(usage), size(0) {
+		glGenBuffers(1, &name);
+	}
+
+	~GlBuffer() {
+		glDeleteBuffers(1, &name);
+	}
+
+	void bind() const {
+		glBindBuffer(type, name);
+	}
+
+	GLuint getName() const {
+		return name;
+	}
+
+	void update(const void *data, GLsizeiptr size)
+	{
+		bind();
+		if (size > this->size)
+		{
+			glBufferData(type, size, data, usage);
+			this->size = size;
+		}
+		else
+		{
+			glBufferSubData(type, 0, size, data);
+		}
+	}
+
+private:
+	GLenum type;
+	GLenum usage;
+	GLsizeiptr size;
+	GLuint name;
+};
 
 struct gl_ctx
 {
@@ -146,9 +188,12 @@ struct gl_ctx
 
 	struct
 	{
-		GLuint geometry,modvols,idxs,idxs2;
 		GLuint mainVAO;
 		GLuint modvolVAO;
+		std::unique_ptr<GlBuffer> geometry;
+		std::unique_ptr<GlBuffer> modvols;
+		std::unique_ptr<GlBuffer> idxs;
+		std::unique_ptr<GlBuffer> idxs2;
 	} vbo;
 
 	struct
@@ -232,7 +277,7 @@ PipelineShader *GetProgram(bool cp_AlphaTest, bool pp_InsideClipping,
 		bool palette, bool naomi2);
 
 GLuint gl_CompileShader(const char* shader, GLuint type);
-GLuint gl_CompileAndLink(const char *vertexShader, const char *fragmentShader, const char *geometryShader = nullptr);
+GLuint gl_CompileAndLink(const char *vertexShader, const char *fragmentShader);
 bool CompilePipelineShader(PipelineShader* s);
 extern const char* GouraudSource;
 

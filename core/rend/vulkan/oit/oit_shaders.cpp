@@ -58,6 +58,7 @@ void main()
 	vtx_base1 *= vpos.z;
 	vtx_offs1 *= vpos.z;
 #endif
+	// FIXME need pushConstants.pp_Number and gl_VertexID...
 	vpos.w = 1.0;
 	vpos.z = 0.0;
 	gl_Position = vpos;
@@ -464,7 +465,7 @@ int fillAndSortFragmentArray(ivec2 coords)
 		Pixel jp = PixelBuffer.pixels[pixel_list[j]];
 		while (j >= 0
 			   && (jp.depth > p.depth
-				   || (jp.depth == p.depth && getPolyNumber(jp) > getPolyNumber(p))))
+				   || (jp.depth == p.depth && getPolyIndex(jp) > getPolyIndex(p))))
 		{
 			pixel_list[j + 1] = pixel_list[j];
 			j--;
@@ -489,7 +490,7 @@ vec4 resolveAlphaBlend(ivec2 coords) {
 	for (int i = 0; i < num_frag; i++)
 	{
 		const Pixel pixel = PixelBuffer.pixels[pixel_list[i]];
-		const PolyParam pp = TrPolyParam.tr_poly_params[getPolyNumber(pixel)];
+		const PolyParam pp = TrPolyParam.tr_poly_params[getPolyIndex(pixel)];
 		bool area1 = false;
 		bool shadowed = false;
 		if (isShadowed(pixel))
@@ -617,7 +618,7 @@ void main()
 	while (idx != EOL && list_len < MAX_PIXELS_PER_FRAGMENT)
 	{
 		const Pixel pixel = PixelBuffer.pixels[idx];
-		const PolyParam pp = TrPolyParam.tr_poly_params[getPolyNumber(pixel)];
+		const PolyParam pp = TrPolyParam.tr_poly_params[getPolyIndex(pixel)];
 		if (getShadowEnable(pp))
 		{
 #if MV_MODE == MV_XOR

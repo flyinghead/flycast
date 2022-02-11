@@ -264,10 +264,10 @@ static glm::vec4 unpackColor(u8 red, u8 green, u8 blue, u8 alpha = 0)
 
 static u32 packColor(const glm::vec4& color)
 {
-	return (int)(std::max(0.f, std::min(1.f, color.a)) * 255.f) << 24
-			| (int)(std::max(0.f, std::min(1.f, color.r)) * 255.f) << 16
-			| (int)(std::max(0.f, std::min(1.f, color.g)) * 255.f) << 8
-			| (int)(std::max(0.f, std::min(1.f, color.b)) * 255.f);
+	return (int)(std::min(1.f, color.a) * 255.f) << 24
+			| (int)(std::min(1.f, color.r) * 255.f) << 16
+			| (int)(std::min(1.f, color.g) * 255.f) << 8
+			| (int)(std::min(1.f, color.b) * 255.f);
 }
 
 static GMP *curGmp;
@@ -472,7 +472,8 @@ struct State
 		if (plight->pcw.parallelLight)
 		{
 			ParallelLight *light = (ParallelLight *)plight;
-			DEBUG_LOG(PVR, "  Parallel light %d: [%x] col %d %d %d dir %f %f %f", light->lightId, plight->pcw.full,
+			DEBUG_LOG(PVR, "  Parallel light %d: [%x] routing %d dmode %d col %d %d %d dir %f %f %f", light->lightId, plight->pcw.full,
+					light->routing, light->dmode,
 					light->red, light->green, light->blue,
 					light->getDirX(), light->getDirY(), light->getDirZ());
 		}
@@ -697,18 +698,11 @@ void convertVertex(const N2_VERTEX_VUB& vs, Vertex& vd)
 	setCoords(vd, vs.x, vs.y, vs.z);
 	setNormal(vd, vs);
 	setUV(vs, vd);
-	glm::vec4 baseCol0;
-	glm::vec4 baseCol1;
-	if (curGmp != nullptr)
-	{
-		baseCol0 = unpackColorRGBA(curGmp->diffuse0);
-		baseCol1 = unpackColorRGBA(curGmp->diffuse1);
-	}
-	else
-	{
-		baseCol0 = glm::vec4(0);
-		baseCol1 = glm::vec4(0);
-	}
+	glm::vec4 baseCol0(0);
+	glm::vec4 offsetCol0(0);
+	glm::vec4 baseCol1(0);
+	glm::vec4 offsetCol1(0);
+	addModelColors(baseCol0, offsetCol0, baseCol1, offsetCol1);
 	*(u32 *)vd.col = packColor(baseCol0);
 	*(u32 *)vd.col1 = packColor(baseCol1);
 	// Stuff the bump map normals and parameters in the specular colors
@@ -758,7 +752,7 @@ static void boundingBox(const T* vertices, u32 count, glm::vec3& min, glm::vec3&
 }
 
 template <typename T>
-static bool isInFrustum(const T* vertices, u32 count)
+static bool isBetweenNearAndFar(const T* vertices, u32 count, bool& needNearClipping)
 {
 	glm::vec3 min;
 	glm::vec3 max;
@@ -770,20 +764,160 @@ static bool isInFrustum(const T* vertices, u32 count)
 	glm::vec4 pmax = projectionMatrix * glm::vec4(max, 1);
 	if (std::isnan(pmin.x) || std::isnan(pmin.y) || std::isnan(pmax.x) || std::isnan(pmax.y))
 		return false;
-//	// Check the farthest side
-//	float w = std::max(pmin.w, pmax.w);
-//	glm::vec2 smin = glm::min(glm::vec2(pmin) / w, glm::vec2(pmax) / w);
-//	glm::vec2 smax = glm::max(glm::vec2(pmin) / w, glm::vec2(pmax) / w);
-//
-//	if (smax.x <= -214 || smin.x  >= 854	// FIXME viewport dimensions
-//		|| smax.y < 0 || smin.y >= 480)
-//		return false;
+
+	needNearClipping = max.z > -nearPlane;
 
 	return true;
 }
 
+class TriangleStripClipper
+{
+public:
+	TriangleStripClipper(bool enabled) : enabled(enabled) {}
+
+	void add(const Vertex& vtx)
+	{
+		if (enabled)
+		{
+			float z = vtx.x * curMatrix[0][2] + vtx.y * curMatrix[1][2] + vtx.z * curMatrix[2][2] + curMatrix[3][2];
+			float dist = -z - nearPlane;
+			clip(vtx, dist);
+			count++;
+		}
+		else
+		{
+			ta_add_vertex(vtx);
+		}
+	}
+
+private:
+	void sendVertex(const Vertex& r)
+	{
+		if (dupeNext)
+			ta_add_vertex(r);
+		dupeNext = false;
+		ta_add_vertex(r);
+	}
+
+	// Three-Dimensional Homogeneous Clipping of Triangle Strips
+	// Patrick-Gilles Maillot. Graphics Gems II - 1991
+	void clip(const Vertex& r, float rDist)
+	{
+		clipCode >>= 1;
+		clipCode |= (int)(rDist < 0) << 2;
+		if (count == 1)
+		{
+			switch (clipCode >> 1) {
+			case 0: // Q and R inside
+				sendVertex(q);
+				sendVertex(r);
+				break;
+			case 1: // Q outside, R inside
+				sendVertex(interpolate(q, qDist, r, rDist));
+				sendVertex(r);
+				break;
+			case 2: // Q inside, R outside
+				sendVertex(q);
+				sendVertex(interpolate(q, qDist, r, rDist));
+				break;
+			case 3: // Q and R outside
+				break;
+			}
+		}
+		else if (count >= 2)
+		{
+			switch (clipCode)
+			{
+			case 0: // all inside
+				sendVertex(r);
+				break;
+			case 1: // P outside, Q and R inside
+				sendVertex(interpolate(r, rDist, p, pDist));
+				sendVertex(q);
+				sendVertex(r);
+				break;
+			case 2: // P inside, Q outside and R inside
+				sendVertex(r);
+				sendVertex(interpolate(q, qDist, r, rDist));
+				sendVertex(r);
+				break;
+			case 3: // P and Q outside, R inside
+				{
+					Vertex tmp = interpolate(r, rDist, p, pDist);
+					sendVertex(tmp);
+					sendVertex(tmp);
+					sendVertex(tmp); // One more to preserve strip swap order
+					sendVertex(interpolate(q, qDist, r, rDist));
+					sendVertex(r);
+				}
+				break;
+			case 4: // P and Q inside, R outside
+				sendVertex(interpolate(r, rDist, p, pDist));
+				sendVertex(q);
+				sendVertex(interpolate(q, qDist, r, rDist));
+				break;
+			case 5: // P outside, Q inside, R outside
+				sendVertex(interpolate(q, qDist, r, rDist));
+				break;
+			case 6: // P inside, Q and R outside
+				{
+					Vertex tmp = interpolate(r, rDist, p, pDist);
+					sendVertex(tmp);
+					sendVertex(tmp);
+					sendVertex(tmp); // One more to preserve strip swap order
+				}
+				break;
+			case 7: // P, Q and R outside
+				dupeNext = !dupeNext;
+				break;
+			}
+		}
+		p = q;
+		pDist = qDist;
+		q = r;
+		qDist = rDist;
+	}
+
+	Vertex interpolate(const Vertex& v1, float f1, const Vertex& v2, float f2)
+	{
+		Vertex v;
+		float a2 = std::abs(f1) / (std::abs(f1) + std::abs(f2));
+		float a1 = 1 - a2;
+		v.x = v1.x * a1 + v2.x * a2;
+		v.y = v1.y * a1 + v2.y * a2;
+		v.z = v1.z * a1 + v2.z * a2;
+
+		v.u = v1.u * a1 + v2.u * a2;
+		v.v = v1.v * a1 + v2.v * a2;
+		v.u1 = v1.u1 * a1 + v2.u1 * a2;
+		v.v1 = v1.v1 * a1 + v2.v1 * a2;
+
+		for (size_t i = 0; i < ARRAY_SIZE(v1.col); i++)
+		{
+			v.col[i] = (u8)std::round(v1.col[i] * a1 + v2.col[i] * a2);
+			v.spc[i] = (u8)std::round(v1.spc[i] * a1 + v2.spc[i] * a2);
+			v.col1[i] = (u8)std::round(v1.col1[i] * a1 + v2.col1[i] * a2);
+			v.spc1[i] = (u8)std::round(v1.spc1[i] * a1 + v2.spc1[i] * a2);
+		}
+		v.nx = v1.nx * a1 + v2.nx * a2;
+		v.ny = v1.ny * a1 + v2.ny * a2;
+		v.nz = v1.nz * a1 + v2.nz * a2;
+
+		return v;
+	}
+
+	bool enabled;
+	int count = 0;
+	int clipCode = 0;
+	Vertex p;
+	float pDist = 0;
+	Vertex q;
+	float qDist = 0;
+	bool dupeNext = false;
+};
+
 template <typename T>
-static void sendVertices(const ICHList *list, const T* vtx)
+static void sendVertices(const ICHList *list, const T* vtx, bool needClipping)
 {
 	Vertex taVtx;
 	verify(list->vertexSize() > 0);
@@ -792,6 +926,8 @@ static void sendVertices(const ICHList *list, const T* vtx)
 	Vertex fanLastVtx{};
 	bool stripStart = true;
 	int outStripIndex = 0;
+	TriangleStripClipper clipper(needClipping);
+
 	for (u32 i = 0; i < list->vtxCount; i++)
 	{
 		convertVertex(*vtx, taVtx);
@@ -804,12 +940,12 @@ static void sendVertices(const ICHList *list, const T* vtx)
 			if (outStripIndex > 0)
 			{
 				// use degenerate triangles to link strips
-				ta_add_vertex(fanLastVtx);
-				ta_add_vertex(taVtx);
+				clipper.add(fanLastVtx);
+				clipper.add(taVtx);
 				outStripIndex += 2;
 				if (outStripIndex & 1)
 				{
-					ta_add_vertex(taVtx);
+					clipper.add(taVtx);
 					outStripIndex++;
 				}
 			}
@@ -818,20 +954,20 @@ static void sendVertices(const ICHList *list, const T* vtx)
 		else if (vtx->header.isFan())
 		{
 			// use degenerate triangles to link strips
-			ta_add_vertex(fanLastVtx);
-			ta_add_vertex(fanCenterVtx);
+			clipper.add(fanLastVtx);
+			clipper.add(fanCenterVtx);
 			outStripIndex += 2;
 			if (outStripIndex & 1)
 			{
-				ta_add_vertex(fanCenterVtx);
+				clipper.add(fanCenterVtx);
 				outStripIndex++;
 			}
 			// Triangle fan
-			ta_add_vertex(fanCenterVtx);
-			ta_add_vertex(fanLastVtx);
+			clipper.add(fanCenterVtx);
+			clipper.add(fanLastVtx);
 			outStripIndex += 2;
 		}
-		ta_add_vertex(taVtx);
+		clipper.add(taVtx);
 		outStripIndex++;
 		fanLastVtx = taVtx;
 		if (vtx->header.endOfStrip)
@@ -841,8 +977,141 @@ static void sendVertices(const ICHList *list, const T* vtx)
 	}
 }
 
+class ModifierVolumeClipper
+{
+public:
+	ModifierVolumeClipper(bool enabled) : enabled(enabled) {}
+
+	void add(ModTriangle& tri)
+	{
+		if (enabled)
+		{
+			glm::vec3 dist{
+				tri.x0 * curMatrix[0][2] + tri.y0 * curMatrix[1][2] + tri.z0 * curMatrix[2][2] + curMatrix[3][2],
+				tri.x1 * curMatrix[0][2] + tri.y1 * curMatrix[1][2] + tri.z1 * curMatrix[2][2] + curMatrix[3][2],
+				tri.x2 * curMatrix[0][2] + tri.y2 * curMatrix[1][2] + tri.z2 * curMatrix[2][2] + curMatrix[3][2]
+			};
+			dist = -dist - nearPlane;
+			ModTriangle newTri;
+			int n = sutherlandHodgmanClip(dist, tri, newTri);
+			switch (n)
+			{
+			case 0:
+				// fully clipped
+				break;
+			case 3:
+				ta_add_triangle(tri);
+				break;
+			case 4:
+				ta_add_triangle(tri);
+				ta_add_triangle(newTri);
+				break;
+			}
+		}
+		else
+		{
+			ta_add_triangle(tri);
+		}
+	}
+
+private:
+	//
+	// Efficient Triangle and Quadrilateral Clipping within Shaders. M. McGuire
+	// Journal of Graphics GPU and Game Tools - November 2011
+	//
+	glm::vec3 intersect(const glm::vec3& A, float Adist , const glm::vec3& B, float Bdist)
+	{
+		return (A * std::abs(Bdist) + B * std::abs(Adist)) / (std::abs(Adist) + std::abs(Bdist));
+	}
+
+	// Clip the triangle 'trig' with respect to the provided distances to the clipping plane.
+	int sutherlandHodgmanClip(glm::vec3& dist, ModTriangle& trig, ModTriangle& newTrig)
+	{
+		constexpr float clipEpsilon = 0.f; //0.00001;
+		constexpr float clipEpsilon2 = 0.f; //0.01;
+
+		if (!glm::any(glm::greaterThanEqual(dist , glm::vec3(clipEpsilon2))))
+			// all clipped
+			return 0;
+		if (glm::all(glm::greaterThanEqual(dist , glm::vec3(-clipEpsilon))))
+			// none clipped
+			return 3;
+
+		// There are either 1 or 2 vertices above the clipping plane.
+		glm::bvec3 above = glm::greaterThanEqual(dist, glm::vec3(0.f));
+		bool nextIsAbove;
+		glm::vec3 v0(trig.x0, trig.y0, trig.z0);
+		glm::vec3 v1(trig.x1, trig.y1, trig.z1);
+		glm::vec3 v2(trig.x2, trig.y2, trig.z2);
+		glm::vec3 v3;
+		// Find the CCW-most vertex above the plane.
+		if (above[1] && !above[0])
+		{
+			// Cycle once CCW. Use v3 as a temp
+			nextIsAbove = above[2];
+			v3 = v0;
+			v0 = v1;
+			v1 = v2;
+			v2 = v3;
+			dist = glm::vec3(dist.y, dist.z, dist.x);
+		}
+		else if (above[2] && !above[1])
+		{
+			// Cycle once CW. Use v3 as a temp.
+			nextIsAbove = above[0];
+			v3 = v2;
+			v2 = v1;
+			v1 = v0;
+			v0 = v3;
+			dist = glm::vec3(dist.z, dist.x, dist.y);
+		}
+		else
+			nextIsAbove = above[1];
+		trig.x0 = v0.x;
+		trig.y0 = v0.y;
+		trig.z0 = v0.z;
+		// We always need to clip v2-v0.
+		v3 = intersect(v0, dist[0], v2, dist[2]);
+		if (nextIsAbove)
+		{
+			v2 = intersect(v1, dist[1], v2, dist[2]);
+			trig.x1 = v1.x;
+			trig.y1 = v1.y;
+			trig.z1 = v1.z;
+			trig.x2 = v2.x;
+			trig.y2 = v2.y;
+			trig.z2 = v2.z;
+			newTrig.x0 = v0.x;
+			newTrig.y0 = v0.y;
+			newTrig.z0 = v0.z;
+			newTrig.x1 = v2.x;
+			newTrig.y1 = v2.y;
+			newTrig.z1 = v2.z;
+			newTrig.x2 = v3.x;
+			newTrig.y2 = v3.y;
+			newTrig.z2 = v3.z;
+
+			return 4;
+		}
+		else
+		{
+			v1 = intersect(v0, dist[0], v1, dist[1]);
+			trig.x1 = v1.x;
+			trig.y1 = v1.y;
+			trig.z1 = v1.z;
+			trig.x2 = v3.x;
+			trig.y2 = v3.y;
+			trig.z2 = v3.z;
+
+			return 3;
+		}
+	}
+
+	bool enabled;
+};
+
 template <typename T>
-static void sendMVPolygon(ICHList *list, const T *vtx)
+static void sendMVPolygon(ICHList *list, const T *vtx, bool needClipping)
 {
 	ModifierVolumeParam mvp{};
 	mvp.isp.full = list->isp.full;
@@ -854,6 +1123,7 @@ static void sendMVPolygon(ICHList *list, const T *vtx)
 	mvp.projMatrix = taProjMatrix;
 	ta_add_poly(state.listType, mvp);
 
+	ModifierVolumeClipper clipper(needClipping);
 	glm::vec3 vtx0{};
 	glm::vec3 vtx1{};
 	u32 stripStart = 0;
@@ -890,7 +1160,7 @@ static void sendMVPolygon(ICHList *list, const T *vtx)
 			tri.y2 = v.y;
 			tri.z2 = v.z;
 
-			ta_add_triangle(tri);
+			clipper.add(tri);
 		}
 		if (vtx->header.endOfStrip)
 			stripStart = i + 1;
@@ -928,6 +1198,8 @@ static void sendLights()
 	model.ambientMaterialOffset[0] = curLightModel->useAmbientOffset0;
 	model.ambientMaterialOffset[1] = curLightModel->useAmbientOffset1;
 	model.useBaseOver = curLightModel->useBaseOver;
+	model.bumpId1 = -1;
+	model.bumpId2 = -1;
 	memcpy(model.ambientBase[0], glm::value_ptr(unpackColorBGRA(curLightModel->ambientBase0)), sizeof(model.ambientBase[0]));
 	memcpy(model.ambientBase[1], glm::value_ptr(unpackColorBGRA(curLightModel->ambientBase1)), sizeof(model.ambientBase[1]));
 	memcpy(model.ambientOffset[0], glm::value_ptr(unpackColorBGRA(curLightModel->ambientOffset0)), sizeof(model.ambientOffset[0]));
@@ -948,6 +1220,10 @@ static void sendLights()
 			INFO_LOG(PVR, "Light %d is referenced but undefined", i);
 			continue;
 		}
+		if (i == curLightModel->bumpId1)
+			model.bumpId1 = model.lightCount;
+		if (i == curLightModel->bumpId2)
+			model.bumpId2 = model.lightCount;
 		light.parallel = curLights[i]->pcw.parallelLight;
 		if (light.parallel)
 		{
@@ -1053,20 +1329,23 @@ static void setStateParams(PolyParam& pp, const ICHList *list)
 		pp.specularColor[1] = false;
 	}
 //	else if (pp.pcw.Volume == 1)
-//		printf("2-Volume poly listType %d gmp params %x\n", state.listType, curGmp->paramSelect.full);
+//		printf("2-Volume poly listType %d vtxtype %x gmp params %x diff tcw %08x tsp %08x\n", state.listType, list->flags, curGmp->paramSelect.full,
+//				pp.tcw.full ^ pp.tcw1.full, pp.tsp.full ^ pp.tsp1.full);
 }
 
 static void sendPolygon(ICHList *list)
 {
+	bool needClipping;
+
 	switch (list->flags)
 	{
 	case ICHList::VTX_TYPE_V:
 		{
 			N2_VERTEX *vtx = (N2_VERTEX *)((u8 *)list + sizeof(ICHList));
-			if (!isInFrustum(vtx, list->vtxCount))
+			if (!isBetweenNearAndFar(vtx, list->vtxCount, needClipping))
 				break;
 			if (state.listType & 1)
-				sendMVPolygon(list, vtx);
+				sendMVPolygon(list, vtx, needClipping);
 			else
 			{
 				PolyParam pp{};
@@ -1081,7 +1360,7 @@ static void sendPolygon(ICHList *list)
 				setStateParams(pp, list);
 				ta_add_poly(state.listType, pp);
 
-				sendVertices(list, vtx);
+				sendVertices(list, vtx, needClipping);
 			}
 		}
 		break;
@@ -1089,10 +1368,10 @@ static void sendPolygon(ICHList *list)
 	case ICHList::VTX_TYPE_VU:
 		{
 			N2_VERTEX_VU *vtx = (N2_VERTEX_VU *)((u8 *)list + sizeof(ICHList));
-			if (!isInFrustum(vtx, list->vtxCount))
+			if (!isBetweenNearAndFar(vtx, list->vtxCount, needClipping))
 				break;
 			if (state.listType  & 1)
-				sendMVPolygon(list, vtx);
+				sendMVPolygon(list, vtx, needClipping);
 			else
 			{
 				PolyParam pp{};
@@ -1109,7 +1388,7 @@ static void sendPolygon(ICHList *list)
 				setStateParams(pp, list);
 				ta_add_poly(state.listType, pp);
 
-				sendVertices(list, vtx);
+				sendVertices(list, vtx, needClipping);
 			}
 		}
 		break;
@@ -1118,7 +1397,7 @@ static void sendPolygon(ICHList *list)
 		{
 			verify(curGmp == nullptr || curGmp->paramSelect.e0 == 0);
 			N2_VERTEX_VUR *vtx = (N2_VERTEX_VUR *)((u8 *)list + sizeof(ICHList));
-			if (!isInFrustum(vtx, list->vtxCount))
+			if (!isBetweenNearAndFar(vtx, list->vtxCount, needClipping))
 				break;
 			PolyParam pp{};
 			pp.pcw.Shadow = list->pcw.shadow;
@@ -1134,14 +1413,14 @@ static void sendPolygon(ICHList *list)
 			setStateParams(pp, list);
 			ta_add_poly(state.listType, pp);
 
-			sendVertices(list, vtx);
+			sendVertices(list, vtx, needClipping);
 		}
 		break;
 
 	case ICHList::VTX_TYPE_VR:
 		{
 			N2_VERTEX_VR *vtx = (N2_VERTEX_VR *)((u8 *)list + sizeof(ICHList));
-			if (!isInFrustum(vtx, list->vtxCount))
+			if (!isBetweenNearAndFar(vtx, list->vtxCount, needClipping))
 				break;
 			PolyParam pp{};
 			pp.pcw.Shadow = list->pcw.shadow;
@@ -1155,7 +1434,7 @@ static void sendPolygon(ICHList *list)
 			setStateParams(pp, list);
 			ta_add_poly(state.listType, pp);
 
-			sendVertices(list, vtx);
+			sendVertices(list, vtx, needClipping);
 		}
 		break;
 
@@ -1164,7 +1443,7 @@ static void sendPolygon(ICHList *list)
 			// TODO
 			//printf("BUMP MAP fmt %d filter %d src select %d dst %d\n", list->tcw0.PixelFmt, list->tsp0.FilterMode, list->tsp0.SrcSelect, list->tsp0.DstSelect);
 			N2_VERTEX_VUB *vtx = (N2_VERTEX_VUB *)((u8 *)list + sizeof(ICHList));
-			if (!isInFrustum(vtx, list->vtxCount))
+			if (!isBetweenNearAndFar(vtx, list->vtxCount, needClipping))
 				break;
 			PolyParam pp{};
 			pp.pcw.Shadow = list->pcw.shadow;
@@ -1180,7 +1459,7 @@ static void sendPolygon(ICHList *list)
 			setStateParams(pp, list);
 			ta_add_poly(state.listType, pp);
 
-			sendVertices(list, vtx);
+			sendVertices(list, vtx, needClipping);
 		}
 		break;
 

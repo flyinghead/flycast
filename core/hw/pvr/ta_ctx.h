@@ -90,15 +90,14 @@ struct PolyParam
 		specularColor[1] = false;
 	}
 
-	bool equivalent(const PolyParam& other) const
+	bool equivalentIgnoreCullingDirection(const PolyParam& other) const
 	{
-		// FIXME need proper initialization for this to work
-		return pcw.full == other.pcw.full
-			&& isp.full == other.isp.full
-			&& tcw.full == other.tcw.full
+		return ((pcw.full ^ other.pcw.full) & 0x300CE) == 0
+			&& ((isp.full ^ other.isp.full) & 0xF4000000) == 0
+			&& ((tcw.full ^ other.tcw.full) & 0xFE1FFFFF) == 0
 			&& tsp.full == other.tsp.full
 			&& tileclip == other.tileclip
-			&& tcw1.full == other.tcw1.full
+			&& ((tcw1.full ^ other.tcw1.full) & 0xFE1FFFFF) == 0
 			&& tsp1.full == other.tsp1.full
 			&& mvMatrix == other.mvMatrix
 			&& normalMatrix == other.normalMatrix
@@ -116,30 +115,6 @@ struct PolyParam
 			&& specularColor[1] == other.specularColor[1];
 	}
 
-	bool equivalentInverseCull(const PolyParam& other) const
-	{
-		return pcw.full == other.pcw.full
-			&& isp.full == (other.isp.full ^ 0x08000000)
-			&& tcw.full == other.tcw.full
-			&& tsp.full == other.tsp.full
-			&& tileclip == other.tileclip
-			&& tcw1.full == other.tcw1.full
-			&& tsp1.full == other.tsp1.full
-			&& mvMatrix == other.mvMatrix
-			&& normalMatrix == other.normalMatrix
-			&& projMatrix == other.projMatrix
-			&& glossCoef[0] == other.glossCoef[0]
-			&& glossCoef[1] == other.glossCoef[1]
-			&& lightModel == other.lightModel
-			&& envMapping[0] == other.envMapping[0]
-			&& constantColor[0] == other.constantColor[0]
-			&& diffuseColor[0] == other.diffuseColor[0]
-			&& specularColor[0] == other.specularColor[0]
-			&& envMapping[1] == other.envMapping[1]
-			&& constantColor[1] == other.constantColor[1]
-			&& diffuseColor[1] == other.diffuseColor[1]
-			&& specularColor[1] == other.specularColor[1];
-	}
 	bool isNaomi2() const { return projMatrix != nullptr; }
 };
 
@@ -244,6 +219,8 @@ struct N2LightModel
 	bool ambientMaterialBase[2];	// base ambient light is multiplied by model material/color
 	bool ambientMaterialOffset[2];	// offset ambient light is multiplied by model material/color
 	bool useBaseOver;			// base color overflows into offset color
+	int bumpId1;				// Light index for vol0 bump mapping
+	int bumpId2;				// Light index for vol1 bump mapping
 };
 
 struct rend_context
@@ -291,7 +268,7 @@ struct rend_context
 		render_passes.Clear();
 
 		// Reserve space for background poly
-		global_param_op.Append();
+		global_param_op.Append()->init();
 		verts.Append(4);
 
 		Overrun = false;

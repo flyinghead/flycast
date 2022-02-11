@@ -116,6 +116,11 @@ bool getShadowEnable(const PolyParam pp) \n\
  \n\
 uint getPolyNumber(const Pixel pixel) \n\
 { \n\
+	return (pixel.seq_num & 0x3FFFFFFFu) >> 18; \n\
+} \n\
+ \n\
+uint getPolyIndex(const Pixel pixel) \n\
+{ \n\
 	return pixel.seq_num & 0x3FFFFFFFu; \n\
 } \n\
  \n\

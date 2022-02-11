@@ -282,7 +282,6 @@ static void SortTriangles(int first, int count)
 	if (!pidx_sort.empty())
 	{
 		//Bind and upload sorted index buffer
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl.vbo.idxs2); glCheck();
 		if (gl.index_type == GL_UNSIGNED_SHORT)
 		{
 			static bool overrun;
@@ -292,10 +291,10 @@ static void SortTriangles(int first, int count)
 			short_vidx.Init(vidx_sort.size(), &overrun, NULL);
 			for (size_t i = 0; i < vidx_sort.size(); i++)
 				*(short_vidx.Append()) = vidx_sort[i];
-			glBufferData(GL_ELEMENT_ARRAY_BUFFER, short_vidx.bytes(), short_vidx.head(), GL_STREAM_DRAW);
+			gl.vbo.idxs2->update(short_vidx.head(), short_vidx.bytes());
 		}
 		else
-			glBufferData(GL_ELEMENT_ARRAY_BUFFER, vidx_sort.size() * sizeof(u32), &vidx_sort[0], GL_STREAM_DRAW);
+			gl.vbo.idxs2->update(&vidx_sort[0], vidx_sort.size() * sizeof(u32));
 		glCheck();
 	}
 }
@@ -374,7 +373,7 @@ void DrawSorted(bool multipass)
 			}
 		}
 		// Re-bind the previous index buffer for subsequent render passes
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl.vbo.idxs);
+		gl.vbo.idxs->bind();
 	}
 }
 
@@ -481,8 +480,8 @@ void SetupMainVBO()
 	if (gl.vbo.mainVAO != 0)
 	{
 		glBindVertexArray(gl.vbo.mainVAO);
-		glBindBuffer(GL_ARRAY_BUFFER, gl.vbo.geometry);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl.vbo.idxs);
+		gl.vbo.geometry->bind();
+		gl.vbo.idxs->bind();
 		return;
 	}
 	if (gl.gl_major >= 3)
@@ -491,8 +490,8 @@ void SetupMainVBO()
 		glBindVertexArray(gl.vbo.mainVAO);
 	}
 #endif
-	glBindBuffer(GL_ARRAY_BUFFER, gl.vbo.geometry);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl.vbo.idxs);
+	gl.vbo.geometry->bind();
+	gl.vbo.idxs->bind();
 
 	//setup vertex buffers attrib pointers
 	glEnableVertexAttribArray(VERTEX_POS_ARRAY);
@@ -519,8 +518,7 @@ static void SetupModvolVBO()
 	if (gl.vbo.modvolVAO != 0)
 	{
 		glBindVertexArray(gl.vbo.modvolVAO);
-		glBindBuffer(GL_ARRAY_BUFFER, gl.vbo.modvols);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+		gl.vbo.modvols->bind();
 		return;
 	}
 	if (gl.gl_major >= 3)
@@ -529,8 +527,7 @@ static void SetupModvolVBO()
 		glBindVertexArray(gl.vbo.modvolVAO);
 	}
 #endif
-	glBindBuffer(GL_ARRAY_BUFFER, gl.vbo.modvols); glCheck();
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	gl.vbo.modvols->bind();
 
 	//setup vertex buffers attrib pointers
 	glEnableVertexAttribArray(VERTEX_POS_ARRAY);
@@ -755,6 +752,47 @@ bool render_output_framebuffer()
 
 GLuint vmuTextureId[4]={0,0,0,0};
 GLuint lightgunTextureId[4]={0,0,0,0};
+static GLuint osdVao;
+static std::unique_ptr<GlBuffer> osdVerts;
+static std::unique_ptr<GlBuffer> osdIndex;
+
+static void setupOsdVao()
+{
+	if (osdVerts == nullptr)
+		osdVerts = std::unique_ptr<GlBuffer>(new GlBuffer(GL_ARRAY_BUFFER));
+	if (osdIndex == nullptr)
+	{
+		osdIndex = std::unique_ptr<GlBuffer>(new GlBuffer(GL_ELEMENT_ARRAY_BUFFER));
+		GLushort indices[] = { 0, 1, 2, 1, 3 };
+		osdIndex->update(indices, sizeof(indices));
+	}
+#ifndef GLES2
+	if (osdVao != 0)
+	{
+		glBindVertexArray(osdVao);
+		osdVerts->bind();
+		osdIndex->bind();
+		return;
+	}
+	if (gl.gl_major >= 3)
+	{
+		glGenVertexArrays(1, &osdVao);
+		glBindVertexArray(osdVao);
+	}
+#endif
+	osdVerts->bind();
+	osdIndex->bind();
+
+	//setup vertex buffers attrib pointers
+	glEnableVertexAttribArray(VERTEX_POS_ARRAY);
+	glVertexAttribPointer(VERTEX_POS_ARRAY, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, x));
+
+	glEnableVertexAttribArray(VERTEX_COL_BASE_ARRAY);
+	glVertexAttribPointer(VERTEX_COL_BASE_ARRAY, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Vertex), (void*)offsetof(Vertex, col));
+
+	glEnableVertexAttribArray(VERTEX_UV_ARRAY);
+	glVertexAttribPointer(VERTEX_UV_ARRAY, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, u));
+}
 
 void UpdateVmuTexture(int vmu_screen_number)
 {
@@ -813,7 +851,9 @@ void DrawVmuTexture(u8 vmu_screen_number)
 	glcache.Enable(GL_BLEND);
 	glcache.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-	SetupMainVBO();
+	setupOsdVao();
+	osdVerts->bind();
+	osdIndex->bind();
 	PipelineShader *shader = GetProgram(false, false, true, true, false, 0, false, 2, false, false, false, false, false, false);
 	glcache.UseProgram(shader->program);
 
@@ -824,10 +864,7 @@ void DrawVmuTexture(u8 vmu_screen_number)
 				{ x+w, y+h, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 1, 0 },
 				{ x+w, y,   1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 1, 1 },
 		};
-		GLushort indices[] = { 0, 1, 2, 1, 3 };
-
-		glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STREAM_DRAW);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STREAM_DRAW);
+		osdVerts->update(vertices, sizeof(vertices));
 	}
 
 	glDrawElements(GL_TRIANGLE_STRIP, 5, GL_UNSIGNED_SHORT, (void *)0);
@@ -907,7 +944,9 @@ void DrawGunCrosshair(u8 port)
 	glcache.Enable(GL_BLEND);
 	glcache.BlendFunc(GL_SRC_ALPHA, GL_ONE);
 
-	SetupMainVBO();
+	setupOsdVao();
+	osdVerts->bind();
+	osdIndex->bind();
 	PipelineShader *shader = GetProgram(false, false, true, true, false, 0, false, 2, false, false, false, false, false, false);
 	glcache.UseProgram(shader->program);
 
@@ -918,10 +957,7 @@ void DrawGunCrosshair(u8 port)
 				{ x+w, y+h, 1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 1, 1 },
 				{ x+w, y,   1, { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, 1, 0 },
 		};
-		GLushort indices[] = { 0, 1, 2, 1, 3 };
-
-		glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STREAM_DRAW);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STREAM_DRAW);
+		osdVerts->update(vertices, sizeof(vertices));
 	}
 
 	glDrawElements(GL_TRIANGLE_STRIP, 5, GL_UNSIGNED_SHORT, (void *)0);
@@ -935,5 +971,14 @@ void termVmuLightgun()
 	memset(vmuTextureId, 0, sizeof(vmuTextureId));
 	glcache.DeleteTextures(ARRAY_SIZE(lightgunTextureId), lightgunTextureId);
 	memset(lightgunTextureId, 0, sizeof(lightgunTextureId));
+	osdVerts.reset();
+	osdIndex.reset();
+#ifndef GLES2
+	if (gl.gl_major >= 3 && osdVao != 0)
+	{
+		glDeleteVertexArrays(1, &osdVao);
+		osdVao = 0;
+	}
+#endif
 }
 #endif

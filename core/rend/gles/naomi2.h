@@ -19,11 +19,6 @@
 #pragma once
 #include "gles.h"
 
-// FIXME GLES
-#ifndef GL_CLIP_DISTANCE0
-#define GL_CLIP_DISTANCE0 0x3000
-#endif
-
 class N2VertexSource : public OpenGlSource
 {
 public:
@@ -73,6 +68,8 @@ void initN2Uniforms(ShaderType *shader)
 	shader->ambientMaterialOffset[0] = glGetUniformLocation(shader->program, "ambientMaterialOffset[0]");
 	shader->ambientMaterialOffset[1] = glGetUniformLocation(shader->program, "ambientMaterialOffset[1]");
 	shader->useBaseOver = glGetUniformLocation(shader->program, "useBaseOver");
+	shader->bumpId0 = glGetUniformLocation(shader->program, "bumpId0");
+	shader->bumpId1 = glGetUniformLocation(shader->program, "bumpId1");
 	for (u32 i = 0; i < ARRAY_SIZE(shader->lights); i++)
 	{
 		char str[128];
@@ -153,6 +150,9 @@ void setN2Uniforms(const PolyParam *pp, ShaderType *shader)
 				glUniform4fv(shader->ambientOffset[vol], 1, lightModel->ambientOffset[vol]);
 			}
 			glUniform1i(shader->useBaseOver, lightModel->useBaseOver);
+			glUniform1i(shader->bumpId0, lightModel->bumpId1);
+			glUniform1i(shader->bumpId1, lightModel->bumpId2);
+
 			glUniform1i(shader->lightCount, lightModel->lightCount);
 			for (int i = 0; i < lightModel->lightCount; i++)
 			{
@@ -195,7 +195,4 @@ void setN2Uniforms(const PolyParam *pp, ShaderType *shader)
 		}
 	}
 	glUniform1i(shader->bumpMapping, pp->pcw.Texture == 1 && pp->tcw.PixelFmt == PixelBumpMap);
-
-	glEnable(GL_CLIP_DISTANCE0);
-	glEnable(GL_CLIP_DISTANCE0 + 1);
 }

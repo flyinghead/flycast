@@ -23,8 +23,10 @@ const char* N2VertexShader = R"(
 uniform mat4 mvMat;
 uniform mat4 normalMat;
 uniform mat4 projMat;
+uniform mat4 ndcMat;
 uniform int envMapping[2];
 uniform int bumpMapping;
+uniform int pp_Number;
 
 // Vertex input
 in vec3 in_pos;
@@ -39,57 +41,81 @@ in vec4 in_offs1;
 in vec2 in_uv1;
 #endif
 // output
-INTERPOLATION out highp vec4 vs_base;
-INTERPOLATION out highp vec4 vs_offs;
-NOPERSPECTIVE out highp vec3 vs_uv;
+INTERPOLATION out highp vec4 vtx_base;
+INTERPOLATION out highp vec4 vtx_offs;
 #if pp_TwoVolumes == 1
-INTERPOLATION out vec4 vs_base1;
-INTERPOLATION out vec4 vs_offs1;
-noperspective out vec2 vs_uv1;
+INTERPOLATION out vec4 vtx_base1;
+INTERPOLATION out vec4 vtx_offs1;
+noperspective out vec2 vtx_uv1;
 #endif
 #endif
-out float gl_ClipDistance[2];
+NOPERSPECTIVE out highp vec3 vtx_uv;
+flat out uint vtx_index;
+
+void wDivide(inout vec4 vpos)
+{
+	vpos = vec4(vpos.xy / vpos.w, 1.0 / vpos.w, 1.0);
+	vpos = ndcMat * vpos;
+#if GEOM_ONLY == 1
+	vtx_uv = vec3(0.0, 0.0, vpos.z);
+#else
+#if pp_Gouraud == 1
+	vtx_base *= vpos.z;
+	vtx_offs *= vpos.z;
+#if pp_TwoVolumes == 1
+	vtx_base1 *= vpos.z;
+	vtx_offs1 *= vpos.z;
+#endif
+#endif
+	vtx_uv = vec3(vtx_uv.xy * vpos.z, vpos.z);
+#if pp_TwoVolumes == 1
+	vtx_uv1 *= vpos.z;
+#endif
+#endif
+	vpos.w = 1.0;
+	vpos.z = 0.0;
+}
 
 void main()
 {
 	vec4 vpos = mvMat * vec4(in_pos, 1.0);
 #if GEOM_ONLY == 0
-	vs_base = in_base;
-	vs_offs = in_offs;
+	vtx_base = in_base;
+	vtx_offs = in_offs;
 	vec4 vnorm = normalize(normalMat * vec4(in_normal, 0.0));
 	#if pp_TwoVolumes == 1
-		vs_base1 = in_base1;
-		vs_offs1 = in_offs1;
-		vs_uv1 = in_uv1;
+		vtx_base1 = in_base1;
+		vtx_offs1 = in_offs1;
+		vtx_uv1 = in_uv1;
 		// FIXME need offset0 and offset1 for bump maps
 		if (bumpMapping == 1)
-			computeBumpMap(vs_offs, vs_offs1, normalize(in_normal));
+			computeBumpMap(vtx_offs, vtx_offs1, vpos.xyz, vnorm.xyz, normalMat);
 		else
 		{
-			computeColors(vs_base1, vs_offs1, 1, vpos.xyz, vnorm.xyz);
+			computeColors(vtx_base1, vtx_offs1, 1, vpos.xyz, vnorm.xyz);
 			#if pp_Texture == 0
-				vs_base1 += vs_offs1;
+				vtx_base1 += vtx_offs1;
 			#endif
 		}
 		if (envMapping[1] == 1)
-			computeEnvMap(vs_uv1.xy, vpos.xyz, vnorm.xyz);
+			computeEnvMap(vtx_uv1.xy, vpos.xyz, vnorm.xyz);
 	#endif
 	if (bumpMapping == 0)
 	{
-		computeColors(vs_base, vs_offs, 0, vpos.xyz, vnorm.xyz);
+		computeColors(vtx_base, vtx_offs, 0, vpos.xyz, vnorm.xyz);
 		#if pp_Texture == 0
-				vs_base += vs_offs;
+				vtx_base += vtx_offs;
 		#endif
 	}
-	vs_uv.xy = in_uv;
+	vtx_uv.xy = in_uv;
 	if (envMapping[0] == 1)
-		computeEnvMap(vs_uv.xy, vpos.xyz, vnorm.xyz);
+		computeEnvMap(vtx_uv.xy, vpos.xyz, vnorm.xyz);
 #endif
 
 	vpos = projMat * vpos;
+	wDivide(vpos);
 
-	gl_ClipDistance[0] = vpos.w - 0.001; // near FIXME
-	gl_ClipDistance[1] = 100000.0 - vpos.w; // far FIXME
+	vtx_index = (uint(pp_Number) << 18) + uint(gl_VertexID);
 
 	gl_Position = vpos;
 }
@@ -147,6 +173,8 @@ uniform vec4 ambientOffset[2];
 uniform int ambientMaterialBase[2];
 uniform int ambientMaterialOffset[2];
 uniform int useBaseOver;
+uniform int bumpId0;
+uniform int bumpId1;
 
 // model attributes
 uniform float glossCoef[2];
@@ -275,8 +303,11 @@ void computeEnvMap(inout vec2 uv, in vec3 position, in vec3 normal)
 	uv = clamp(uv, 0.0, 1.0);
 }
 
-void computeBumpMap(inout vec4 color0, in vec4 color1, in vec3 normal)
+void computeBumpMap(inout vec4 color0, in vec4 color1, in vec3 position, in vec3 normal, in mat4 normalMat)
 {
+	// TODO
+	//if (bumpId0 == -1)
+		return;
 	vec3 tangent = color0.xyz;
 	if (tangent.x > 0.5)
 		tangent.x -= 1.0;
@@ -284,7 +315,7 @@ void computeBumpMap(inout vec4 color0, in vec4 color1, in vec3 normal)
 		tangent.y -= 1.0;
 	if (tangent.z > 0.5)
 		tangent.z -= 1.0;
-	tangent = normalize(tangent);
+	tangent = normalize(normalMat * vec4(tangent, 0.0)).xyz;
 	vec3 bitangent = color1.xyz;
 	if (bitangent.x > 0.5)
 		bitangent.x -= 1.0;
@@ -292,237 +323,35 @@ void computeBumpMap(inout vec4 color0, in vec4 color1, in vec3 normal)
 		bitangent.y -= 1.0;
 	if (bitangent.z > 0.5)
 		bitangent.z -= 1.0;
-	bitangent = normalize(bitangent);
+	bitangent = normalize(normalMat * vec4(bitangent, 0.0)).xyz;
 
 	float scaleDegree = color0.w;
 	float scaleOffset = color1.w;
 
-	// FIXME not right
-	float sinT = normal.x;
-	float cosQ = tangent.y;
-	float sinQ = bitangent.z;
+	N2Light light = lights[bumpId0];
+	vec3 lightDir; // direction to the light
+	if (light.parallel == 1)
+		lightDir = normalize(light.direction.xyz);
+	else
+		lightDir = normalize(light.position.xyz - position);
 
+	float n = dot(lightDir, normal);
+	float cosQ = dot(lightDir, tangent);
+	float sinQ = dot(lightDir, bitangent);
+
+	float sinT = clamp(n, 0.0, 1.0);
 	float k1 = 1.0 - scaleDegree;
 	float k2 = scaleDegree * sinT;
-	float k3 = scaleDegree * sqrt(1.0 - sinT * sinT);
+	float k3 = scaleDegree * sqrt(1.0 - sinT * sinT); // cos T
+
 	float q = acos(cosQ);
 	if (sinQ < 0)
 		q = 2.0 * PI - q;
-	color0.x = q / PI / 2.0;
-	color0.y = k3;
-	color0.z = k2;
-	color0.w = k1;
-}
 
-)";
-
-const char *GeometryClippingShader = R"(
-layout (triangles) in;
-layout (triangle_strip, max_vertices = 12) out;
-
-uniform mat4 ndcMat;
-
-#if GEOM_ONLY == 0
-INTERPOLATION in highp vec4 vs_base[3];
-INTERPOLATION in highp vec4 vs_offs[3];
-NOPERSPECTIVE in highp vec3 vs_uv[3];
-#if pp_TwoVolumes == 1
-INTERPOLATION in highp vec4 vs_base1[3];
-INTERPOLATION in highp vec4 vs_offs1[3];
-NOPERSPECTIVE in highp vec2 vs_uv1[3];
-#endif
-
-INTERPOLATION out highp vec4 vtx_base;
-INTERPOLATION out highp vec4 vtx_offs;
-#if pp_TwoVolumes == 1
-INTERPOLATION out highp vec4 vtx_base1;
-INTERPOLATION out highp vec4 vtx_offs1;
-NOPERSPECTIVE out highp vec2 vtx_uv1;
-#endif
-#endif
-NOPERSPECTIVE out highp vec3 vtx_uv; // For depth
-
-struct Vertex
-{
-	vec4 pos;
-	vec4 base;
-	vec4 offs;
-	vec3 uv;
-#if pp_TwoVolumes == 1
-	vec4 base1;
-	vec4 offs1;
-	vec2 uv1;
-#endif
-	float clipDist[2];
-};
-
-Vertex interpolate(in Vertex v0, in Vertex v1, in float d0, in float d1)
-{
-	Vertex v;
-	float f = d0 / (d0 - d1);
-	v.pos = mix(v0.pos, v1.pos, f);
-#if GEOM_ONLY == 0
-	v.base = mix(v0.base, v1.base, f);
-	v.offs = mix(v0.offs, v1.offs, f);
-	v.uv = mix(v0.uv, v1.uv, f);
-#if pp_TwoVolumes == 1
-	v.base1 = mix(v0.base1, v1.base1, f);
-	v.offs1 = mix(v0.offs1, v1.offs1, f);
-	v.uv1 = mix(v0.uv1, v1.uv1, f);
-#endif
-#endif
-	v.clipDist[0] = mix(v0.clipDist[0], v1.clipDist[0], f);
-	v.clipDist[1] = mix(v0.clipDist[1], v1.clipDist[1], f);
-
-	return v;
-}
- 
-//
-// Efficient Triangle and Quadrilateral Clipping within Shaders. M. McGuire
-// Journal of Graphics GPU and Game Tools, November 2011
-//
-const float clipEpsilon  = 0.00001;
-const float clipEpsilon2 = 0.0; // 0.01;
-
-/**
- Computes the intersection of triangle v0-v1-v2 with the half-space (x,y,z) * n > 0.
- The result is a convex polygon in v0-v1-v2-v3. Vertex v3 may be degenerate
- and equal to the first vertex. 
-
- \return number of vertices; 0, 3, or 4
-*/
-int clip3(in vec3 dist, inout Vertex v0, inout Vertex v1, inout Vertex v2, out Vertex v3)
-{
-	if (!any(greaterThanEqual(dist, vec3(clipEpsilon2))))
-		// All clipped
-		return 0;
-    
-	if (all(greaterThanEqual(dist, vec3(-clipEpsilon)))) {
-		// None clipped (original triangle vertices are unmodified)
-		v3 = v0;
-		return 3;
-    }
-        
-	bvec3 above = greaterThanEqual(dist, vec3(0.0));
-
-	// There are either 1 or 2 vertices above the clipping plane.
-	bool nextIsAbove;
-
-	// Find the CCW-most vertex above the plane by cycling
-	// the vertices in place.  There are three cases.
-	if (above[1] && !above[0]) {
-		nextIsAbove = above[2];
-		// Cycle once CCW.  Use v3 as a temp
-		v3 = v0; v0 = v1; v1 = v2; v2 = v3;
-		dist = dist.yzx;
-	}
-	else if (above[2] && !above[1]) {
-		// Cycle once CW.  Use v3 as a temp.
-		nextIsAbove = above[0];
-		v3 = v2; v2 = v1; v1 = v0; v0 = v3;
-		dist = dist.zxy;
-	}
-	else {
-		nextIsAbove = above[1];
-	}
-
-	// We always need to clip v2-v0.
-	v3 = interpolate(v0, v2, dist[0], dist[2]);
-
-	if (nextIsAbove) {
-		v2 = interpolate(v1, v2, dist[1], dist[2]);
-		return 4;
-	} else {
-		v1 = interpolate(v0, v1, dist[0], dist[1]);
-		v2 = v3;
-		v3 = v0;
-		return 3;
-	}
-}
-
-void wDivide(inout Vertex v)
-{
-	v.pos = vec4(v.pos.xy / v.pos.w, 1.0 / v.pos.w, 1.0);
-	v.pos = ndcMat * v.pos;
-#if GEOM_ONLY == 1
-	v.uv = vec3(0.0, 0.0, v.pos.z);
-#else
-#if pp_Gouraud == 1
-	v.base *= v.pos.z;
-	v.offs *= v.pos.z;
-#if pp_TwoVolumes == 1
-	v.base1 *= v.pos.z;
-	v.offs1 *= v.pos.z;
-#endif
-#endif
-	v.uv = vec3(v.uv.xy * v.pos.z, v.pos.z);
-#if pp_TwoVolumes == 1
-	v.uv1 *= v.pos.z;
-#endif
-#endif
-	v.pos.w = 1.0;
-	v.pos.z = 0.0;
-}
-
-void emitVertex(in Vertex v)
-{
-	wDivide(v);
-#if GEOM_ONLY == 0
-	vtx_base = v.base;
-	vtx_offs = v.offs;
-#if pp_TwoVolumes == 1
-	vtx_base1 = v.base1;
-	vtx_offs1 = v.offs1;
-	vtx_uv1 = v.uv1;
-#endif
-#endif
-	vtx_uv = v.uv;
-	gl_Position = v.pos;
-	EmitVertex();
-}
-
-void main()
-{
-	Vertex vtx[12];
-	for (int i = 0; i < 3; i++)
-	{
-		vtx[i].pos = gl_in[i].gl_Position;
-#if GEOM_ONLY == 0
-		vtx[i].base = vs_base[i];
-		vtx[i].offs = vs_offs[i];
-		vtx[i].uv = vs_uv[i];
-#if pp_TwoVolumes == 1
-		vtx[i].base1 = vs_base1[i];
-		vtx[i].offs1 = vs_offs1[i];
-		vtx[i].uv1 = vs_uv1[i];
-#endif
-#endif
-		vtx[i].clipDist[0] = gl_in[i].gl_ClipDistance[0];
-		vtx[i].clipDist[1] = gl_in[i].gl_ClipDistance[1];
-	}
-	int vtxCount = 3;
-
-	// near-plane only
-	vec3 dist = vec3(vtx[0].clipDist[0], vtx[1].clipDist[0], vtx[2].clipDist[0]);
-	Vertex v3;
-	int size = clip3(dist, vtx[0], vtx[1], vtx[2], v3);
-	if (size == 0)
-		vtxCount = 0;
-	else if (size == 4)
-	{
-		vtx[3] = vtx[0];
-		vtx[4] = vtx[2];
-		vtx[5] = v3;
-		vtxCount = 6;
-	}
-
-	for (int i = 0; i + 2 < vtxCount; i += 3)
-	{
-		emitVertex(vtx[i]);
-		emitVertex(vtx[i + 1]);
-		emitVertex(vtx[i + 2]);
-		EndPrimitive();
-	}
+	color0.r = k2;
+	color0.g = k3;
+	color0.b = q / PI / 2.0;
+	color0.a = k1;
 }
 
 )";
@@ -539,13 +368,4 @@ N2VertexSource::N2VertexSource(bool gouraud, bool geometryOnly, bool texture) : 
 	if (!geometryOnly)
 		addSource(N2ColorShader);
 	addSource(N2VertexShader);
-}
-
-N2GeometryShader::N2GeometryShader(bool gouraud, bool geometryOnly) : OpenGlSource()
-{
-	addConstant("pp_Gouraud", gouraud);
-	addConstant("GEOM_ONLY", geometryOnly);
-	addConstant("pp_TwoVolumes", 0);
-	addSource(GouraudSource);
-	addSource(GeometryClippingShader);
 }

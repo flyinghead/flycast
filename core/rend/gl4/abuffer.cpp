@@ -25,8 +25,8 @@ static GLuint atomic_buffer;
 static gl4PipelineShader g_abuffer_final_shader;
 static gl4PipelineShader g_abuffer_clear_shader;
 static gl4PipelineShader g_abuffer_tr_modvol_shaders[ModeCount];
-static GLuint g_quadBuffer;
-static GLuint g_quadIndexBuffer;
+static std::unique_ptr<GlBuffer> g_quadBuffer;
+static std::unique_ptr<GlBuffer> g_quadIndexBuffer;
 static GLuint g_quadVertexArray;
 
 constexpr int MAX_PIXELS_PER_FRAGMENT = 32;
@@ -55,7 +55,7 @@ int fillAndSortFragmentArray(ivec2 coords)
 		Pixel jp = pixels[pixel_list[j]];
 		while (j >= 0
 			   && (jp.depth > p.depth
-				   || (jp.depth == p.depth && getPolyNumber(jp) > getPolyNumber(p))))
+				   || (jp.depth == p.depth && getPolyIndex(jp) > getPolyIndex(p))))
 		{
 			pixel_list[j + 1] = pixel_list[j];
 			j--;
@@ -178,6 +178,9 @@ void main(void)
 	// Visualize the number of layers in use
 	//FragColor = vec4(float(fillAndSortFragmentArray(coords)) / MAX_PIXELS_PER_FRAGMENT * 4, 0, 0, 1);
 	FragColor = resolveAlphaBlend(coords);
+
+	// Reset pointers
+	imageStore(abufferPointerImg, coords, uvec4(EOL));
 }
 )";
 
@@ -257,9 +260,9 @@ void initABuffer()
 		if (pixels_pointers == 0)
 			pixels_pointers = glcache.GenTexture();
 		glActiveTexture(GL_TEXTURE4);
-		glBindTexture(GL_TEXTURE_2D, pixels_pointers);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glcache.BindTexture(GL_TEXTURE_2D, pixels_pointers);
+		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_R32UI, max_image_width, max_image_height, 0, GL_RED_INTEGER, GL_UNSIGNED_INT, 0);
 		glBindImageTexture(4, pixels_pointers, 0, false, 0,  GL_READ_WRITE, GL_R32UI);
 		glCheck();
@@ -326,32 +329,30 @@ void initABuffer()
 			gl4CompilePipelineShader(&g_abuffer_tr_modvol_shaders[mode], modVolShader.generate().c_str(), nullptr);
 		}
 	}
-	if (g_quadBuffer == 0)
+	if (g_quadBuffer == nullptr)
 	{
-		glGenBuffers(1, &g_quadBuffer);
-		glBindBuffer(GL_ARRAY_BUFFER, g_quadBuffer); glCheck();
+		g_quadBuffer = std::unique_ptr<GlBuffer>(new GlBuffer(GL_ARRAY_BUFFER, GL_STATIC_DRAW));
 		static const float vertices[] = {
 				-1,  1, 1,
 				-1, -1, 1,
 				 1,  1, 1,
 				 1, -1, 1,
 		};
-		glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+		g_quadBuffer->update(vertices, sizeof(vertices));
 	}
-	if (g_quadIndexBuffer == 0)
+	if (g_quadIndexBuffer == nullptr)
 	{
-		glGenBuffers(1, &g_quadIndexBuffer);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, g_quadIndexBuffer);
+		g_quadIndexBuffer = std::unique_ptr<GlBuffer>(new GlBuffer(GL_ELEMENT_ARRAY_BUFFER, GL_STATIC_DRAW));
 		static const GLushort indices[] = { 0, 1, 2, 1, 3 };
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+		g_quadIndexBuffer->update(indices, sizeof(indices));
 	}
 
 	if (g_quadVertexArray == 0)
 	{
 		glGenVertexArrays(1, &g_quadVertexArray);
 		glBindVertexArray(g_quadVertexArray);
-		glBindBuffer(GL_ARRAY_BUFFER, g_quadBuffer);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, g_quadIndexBuffer);
+		g_quadBuffer->bind();
+		g_quadIndexBuffer->bind();
 		glEnableVertexAttribArray(0);
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, (void*)0);
 		glBindVertexArray(0);
@@ -392,16 +393,8 @@ void termABuffer()
 		glDeleteVertexArrays(1, &g_quadVertexArray);
 		g_quadVertexArray = 0;
 	}
-	if (g_quadBuffer != 0)
-	{
-		glDeleteBuffers(1, &g_quadBuffer);
-		g_quadBuffer = 0;
-	}
-	if (g_quadIndexBuffer != 0)
-	{
-		glDeleteBuffers(1, &g_quadIndexBuffer);
-		g_quadIndexBuffer = 0;
-	}
+	g_quadIndexBuffer.reset();
+	g_quadIndexBuffer.reset();
 	glcache.DeleteProgram(g_abuffer_final_shader.program);
 	g_abuffer_final_shader.program = 0;
 	glcache.DeleteProgram(g_abuffer_clear_shader.program);
@@ -426,8 +419,8 @@ void reshapeABuffer(int w, int h)
 static void abufferDrawQuad()
 {
 	glBindVertexArray(g_quadVertexArray);
-	glBindBuffer(GL_ARRAY_BUFFER, g_quadBuffer);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, g_quadIndexBuffer);
+	g_quadBuffer->bind();
+	g_quadIndexBuffer->bind();
 	glDrawElements(GL_TRIANGLE_STRIP, 5, GL_UNSIGNED_SHORT, (GLvoid *)0);
 	glBindVertexArray(0);
 	glCheck();
@@ -437,8 +430,8 @@ void DrawTranslucentModVols(int first, int count)
 {
 	if (count == 0 || pvrrc.modtrig.used() == 0)
 		return;
-	glBindVertexArray(gl4.vbo.modvol_vao);
-	glBindBuffer(GL_ARRAY_BUFFER, gl4.vbo.modvols);
+	glBindVertexArray(gl4.vbo.getModVolVAO());
+	gl4.vbo.getModVolBuffer()->bind();
 
 	glActiveTexture(GL_TEXTURE2);
 	glBindTexture(GL_TEXTURE_2D, 0);
@@ -447,7 +440,7 @@ void DrawTranslucentModVols(int first, int count)
 	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D, 0);
 	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, 0);
+	glcache.BindTexture(GL_TEXTURE_2D, 0);
 
 	glcache.Disable(GL_DEPTH_TEST);
 	glcache.Disable(GL_STENCIL_TEST);
@@ -500,7 +493,7 @@ void DrawTranslucentModVols(int first, int count)
 			mod_base = -1;
 		}
 	}
-	glBindVertexArray(gl4.vbo.main_vao);
+	glBindVertexArray(gl4.vbo.getMainVAO());
 }
 
 void checkOverflowAndReset()
@@ -543,15 +536,6 @@ void renderABuffer()
 	glcache.Disable(GL_SCISSOR_TEST);
 	glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GL_BUFFER_UPDATE_BARRIER_BIT);
 
-	abufferDrawQuad();
-
-	glCheck();
-
-	// Clear A-buffer pointers
-	glcache.UseProgram(g_abuffer_clear_shader.program);
-	gl4ShaderUniforms.Set(&g_abuffer_clear_shader);
-
-	glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 	abufferDrawQuad();
 
 	glActiveTexture(GL_TEXTURE0);
