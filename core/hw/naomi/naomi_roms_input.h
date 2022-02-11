@@ -628,7 +628,7 @@ static InputDescriptors clubkart_inputs = {
 			NAO_BASE_BTN_DESC
 	},
 	{
-			{ "HANDLE", Full, 0 },
+			{ "HANDLE", Full, 0, true },
 			{ "ACCEL", Half, 4 },
 			{ "BRAKE", Half, 5 },
 	},

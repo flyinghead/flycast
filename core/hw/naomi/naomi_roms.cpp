@@ -6826,7 +6826,7 @@ Game Games[] =
 		0x2cee834a,
 		"naomi2",
 		M2,
-		REGION_AUSTRALIA,
+		REGION_EXPORT_ONLY,
 		ROT0,
         {
 			{ "epr-23663.ic22", 0x0000000, 0x0400000, 0x6910a008 },
@@ -6851,7 +6851,7 @@ Game Games[] =
 		0x2cee834a,
 		"naomi2",
 		M2,
-		REGION_AUSTRALIA, // No japan
+		REGION_EXPORT_ONLY,
 		ROT0,
 		{
 			{ "epr-23663b.ic22", 0x0000000, 0x0400000, 0x15733e44 },
@@ -6902,7 +6902,7 @@ Game Games[] =
 		0x2eef2f96,
 		"naomi2",
 		M2,
-		REGION_AUSTRALIA, // No japan
+		REGION_EXPORT_ONLY,
 		ROT0,
         {
 			{ "epr-23785.ic22", 0x0000000, 0x0400000, 0x9bd98d4b },
@@ -7016,7 +7016,7 @@ Game Games[] =
 		0x1e5bb0cd,
 		"naomi2",
 		M1,
-		REGION_AUSTRALIA, // No japan
+		REGION_EXPORT_ONLY,
 		ROT0,
         {
 			{ "epr-23934.ic11",  0x0000000, 0x400000, 0x656a7d84 },
@@ -7411,7 +7411,7 @@ Game Games[] =
 		0,
 		"naomi2",
 		GD,
-		REGION_AUSTRALIA, // no usa
+		REGION_JAPAN,
 		ROT0,
         {
 			{ "317-0331-jpn.pic", 0, 0x4000, 0x0a3bf606 },
@@ -7520,7 +7520,7 @@ Game Games[] =
 		0,
 		"naomi2",
 		GD,
-		REGION_AUSTRALIA, // no usa
+		REGION_JAPAN,
 		ROT0,
         {
 			{ "317-0345-jpn.pic", 0, 0x4000, 0x56e1274a },
@@ -7648,7 +7648,7 @@ Game Games[] =
 		0,
 		"naomi2",
 		GD,
-		REGION_AUSTRALIA, // no japan
+		REGION_EXPORT_ONLY,
 		ROT0,
         {
 			{ "317-0384-com.pic", 0, 0x4000, 0x081ccd51 },
@@ -7709,7 +7709,7 @@ Game Games[] =
 		0,
 		"naomi2",
 		GD,
-		REGION_AUSTRALIA, // us and europe only, no japan
+		REGION_EXPORT_ONLY,
 		ROT0,
         {
 			{ "317-0406-com.pic", 0, 0x4000, 0xfe91a7af },

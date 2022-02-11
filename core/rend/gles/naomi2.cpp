@@ -345,7 +345,7 @@ void computeBumpMap(inout vec4 color0, in vec4 color1, in vec3 position, in vec3
 	float k3 = scaleDegree * sqrt(1.0 - sinT * sinT); // cos T
 
 	float q = acos(cosQ);
-	if (sinQ < 0)
+	if (sinQ < 0.0)
 		q = 2.0 * PI - q;
 
 	color0.r = k2;
