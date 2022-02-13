@@ -233,7 +233,7 @@ __forceinline
 		glcache.DepthFunc(Zfunction[gp->isp.DepthMode]);
 	}
 
-	if (SortingEnabled && !config::PerStripSorting)
+	if (SortingEnabled /* && !config::PerStripSorting */) // Looks glitchy too but less missing graphics (but wrong depth order...)
 		glcache.DepthMask(GL_FALSE);
 	else
 	{

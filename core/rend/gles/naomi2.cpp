@@ -30,7 +30,7 @@ uniform int pp_Number;
 
 // Vertex input
 in vec3 in_pos;
-#if GEOM_ONLY == 0
+#if POSITION_ONLY == 0
 in vec4 in_base;
 in vec4 in_offs;
 in vec2 in_uv;
@@ -56,7 +56,7 @@ void wDivide(inout vec4 vpos)
 {
 	vpos = vec4(vpos.xy / vpos.w, 1.0 / vpos.w, 1.0);
 	vpos = ndcMat * vpos;
-#if GEOM_ONLY == 1
+#if POSITION_ONLY == 1
 	vtx_uv = vec3(0.0, 0.0, vpos.z);
 #else
 #if pp_Gouraud == 1
@@ -79,7 +79,7 @@ void wDivide(inout vec4 vpos)
 void main()
 {
 	vec4 vpos = mvMat * vec4(in_pos, 1.0);
-#if GEOM_ONLY == 0
+#if POSITION_ONLY == 0
 	vtx_base = in_base;
 	vtx_offs = in_offs;
 	vec4 vnorm = normalize(normalMat * vec4(in_normal, 0.0));
@@ -203,7 +203,7 @@ void computeColors(inout vec4 baseCol, inout vec4 offsetCol, in int volIdx, in v
 		else
 		{
 			lightDir = normalize(light.position.xyz - position);
-			if (light.attnDistA != 1.0 && light.attnDistB != 0.0)
+			if (light.attnDistA != 1.0 || light.attnDistB != 0.0)
 			{
 				float distance = length(light.position.xyz - position);
 				if (light.distAttnMode == 0)
@@ -359,7 +359,7 @@ void computeBumpMap(inout vec4 color0, in vec4 color1, in vec3 position, in vec3
 N2VertexSource::N2VertexSource(bool gouraud, bool geometryOnly, bool texture) : OpenGlSource()
 {
 	addConstant("pp_Gouraud", gouraud);
-	addConstant("GEOM_ONLY", geometryOnly);
+	addConstant("POSITION_ONLY", geometryOnly);
 	addConstant("pp_TwoVolumes", 0);
 	addConstant("pp_Texture", (int)texture);
 

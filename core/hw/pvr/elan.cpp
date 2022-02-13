@@ -241,19 +241,11 @@ T DYNACALL read_elancmd(u32 addr)
 	return 0;
 }
 
-static glm::vec4 unpackColorBGRA(u32 color)
+static glm::vec4 unpackColor(u32 color)
 {
 	return glm::vec4((float)((color >> 16) & 0xff) / 255.f,
 			(float)((color >> 8) & 0xff) / 255.f,
 			(float)(color & 0xff) / 255.f,
-			(float)(color >> 24) / 255.f);
-}
-
-static glm::vec4 unpackColorRGBA(u32 color)
-{
-	return glm::vec4((float)(color & 0xff) / 255.f,
-			(float)((color >> 8) & 0xff) / 255.f,
-			(float)((color >> 16) & 0xff) / 255.f,
 			(float)(color >> 24) / 255.f);
 }
 
@@ -262,13 +254,23 @@ static glm::vec4 unpackColor(u8 red, u8 green, u8 blue, u8 alpha = 0)
 	return glm::vec4((float)red / 255.f, (float)green / 255.f, (float)blue / 255.f, (float)alpha / 255.f);
 }
 
-static u32 packColor(const glm::vec4& color)
+static u32 packColorBGRA(const glm::vec4& color)
 {
 	return (int)(std::min(1.f, color.a) * 255.f) << 24
 			| (int)(std::min(1.f, color.r) * 255.f) << 16
 			| (int)(std::min(1.f, color.g) * 255.f) << 8
 			| (int)(std::min(1.f, color.b) * 255.f);
 }
+
+static u32 packColorRGBA(const glm::vec4& color)
+{
+	return (int)(std::min(1.f, color.r) * 255.f)
+			| (int)(std::min(1.f, color.g) * 255.f) << 8
+			| (int)(std::min(1.f, color.b) * 255.f) << 16
+			| (int)(std::min(1.f, color.a) * 255.f) << 24;
+}
+
+u32 (*packColor)(const glm::vec4& color) = packColorRGBA;
 
 static GMP *curGmp;
 static glm::mat4x4 curMatrix;
@@ -319,6 +321,10 @@ struct State
 		for (auto& light : lights)
 			light = Null;
 		update();
+		if (isDirectX(config::RendererType))
+			packColor = packColorBGRA;
+		else
+			packColor = packColorRGBA;
 	}
 	void setMatrix(InstanceMatrix *pinstance)
 	{
@@ -417,19 +423,19 @@ struct State
 			curGmp = (GMP *)&RAM[gmp];
 			DEBUG_LOG(PVR, "GMP paramSelect %x", curGmp->paramSelect.full);
 			if (curGmp->paramSelect.d0)
-				gmpDiffuseColor0 = unpackColorRGBA(curGmp->diffuse0);
+				gmpDiffuseColor0 = unpackColor(curGmp->diffuse0);
 			else
 				gmpDiffuseColor0 = glm::vec4(0);
 			if (curGmp->paramSelect.s0)
-				gmpSpecularColor0 = unpackColorRGBA(curGmp->specular0);
+				gmpSpecularColor0 = unpackColor(curGmp->specular0);
 			else
 				gmpSpecularColor0 = glm::vec4(0);
 			if (curGmp->paramSelect.d1)
-				gmpDiffuseColor1 = unpackColorRGBA(curGmp->diffuse1);
+				gmpDiffuseColor1 = unpackColor(curGmp->diffuse1);
 			else
 				gmpDiffuseColor1 = glm::vec4(0);
 			if (curGmp->paramSelect.s1)
-				gmpSpecularColor1 = unpackColorRGBA(curGmp->specular1);
+				gmpSpecularColor1 = unpackColor(curGmp->specular1);
 			else
 				gmpSpecularColor1 = glm::vec4(0);
 		}
@@ -647,9 +653,9 @@ void convertVertex(const N2_VERTEX_VR& vs, Vertex& vd)
 	setCoords(vd, vs.x, vs.y, vs.z);
 	setNormal(vd, vs);
 	SetEnvMapUV(vd);
-	glm::vec4 baseCol0 = unpackColorRGBA(vs.rgb.argb0);
+	glm::vec4 baseCol0 = unpackColor(vs.rgb.argb0);
 	glm::vec4 offsetCol0(0);
-	glm::vec4 baseCol1 = unpackColorRGBA(vs.rgb.argb1);
+	glm::vec4 baseCol1 = unpackColor(vs.rgb.argb1);
 	glm::vec4 offsetCol1(0);
 	addModelColors(baseCol0, offsetCol0, baseCol1, offsetCol1);
 	*(u32 *)vd.col = packColor(baseCol0);
@@ -681,9 +687,9 @@ void convertVertex(const N2_VERTEX_VUR& vs, Vertex& vd)
 	setCoords(vd, vs.x, vs.y, vs.z);
 	setNormal(vd, vs);
 	setUV(vs, vd);
-	glm::vec4 baseCol0 = unpackColorRGBA(vs.rgb.argb0);
+	glm::vec4 baseCol0 = unpackColor(vs.rgb.argb0);
 	glm::vec4 offsetCol0(0);
-	glm::vec4 baseCol1 = unpackColorRGBA(vs.rgb.argb1);
+	glm::vec4 baseCol1 = unpackColor(vs.rgb.argb1);
 	glm::vec4 offsetCol1(0);
 	addModelColors(baseCol0, offsetCol0, baseCol1, offsetCol1);
 	*(u32 *)vd.col = packColor(baseCol0);
@@ -1200,10 +1206,11 @@ static void sendLights()
 	model.useBaseOver = curLightModel->useBaseOver;
 	model.bumpId1 = -1;
 	model.bumpId2 = -1;
-	memcpy(model.ambientBase[0], glm::value_ptr(unpackColorBGRA(curLightModel->ambientBase0)), sizeof(model.ambientBase[0]));
-	memcpy(model.ambientBase[1], glm::value_ptr(unpackColorBGRA(curLightModel->ambientBase1)), sizeof(model.ambientBase[1]));
-	memcpy(model.ambientOffset[0], glm::value_ptr(unpackColorBGRA(curLightModel->ambientOffset0)), sizeof(model.ambientOffset[0]));
-	memcpy(model.ambientOffset[1], glm::value_ptr(unpackColorBGRA(curLightModel->ambientOffset1)), sizeof(model.ambientOffset[1]));
+	memcpy(model.ambientBase[0], glm::value_ptr(unpackColor(curLightModel->ambientBase0)), sizeof(model.ambientBase[0]));
+	memcpy(model.ambientBase[1], glm::value_ptr(unpackColor(curLightModel->ambientBase1)), sizeof(model.ambientBase[1]));
+	memcpy(model.ambientOffset[0], glm::value_ptr(unpackColor(curLightModel->ambientOffset0)), sizeof(model.ambientOffset[0]));
+	memcpy(model.ambientOffset[1], glm::value_ptr(unpackColor(curLightModel->ambientOffset1)), sizeof(model.ambientOffset[1]));
+
 	for (u32 i = 0; i < MAX_LIGHTS; i++)
 	{
 		N2Light& light = model.lights[model.lightCount];

@@ -34,14 +34,14 @@ N2Vertex4Source::N2Vertex4Source(const gl4PipelineShader* shader) : OpenGl4Sourc
 {
 	if (shader == nullptr)
 	{
-		addConstant("GEOM_ONLY", 1);
+		addConstant("POSITION_ONLY", 1);
 		addConstant("pp_TwoVolumes", 0);
 		addConstant("pp_Gouraud", 0);
 		addConstant("pp_Texture", 0);
 	}
 	else
 	{
-		addConstant("GEOM_ONLY", shader->pass == Pass::Depth); // geometry only for depth pass
+		addConstant("POSITION_ONLY", shader->pass == Pass::Depth); // geometry only for depth pass
 		addConstant("pp_TwoVolumes", shader->pp_TwoVolumes || shader->pp_BumpMap);
 		addConstant("pp_Gouraud", shader->pp_Gouraud);
 		addConstant("pp_Texture", shader->pp_Texture);

@@ -19,6 +19,7 @@
 #include "dx11_shaders.h"
 #include "dx11context.h"
 #include "stdclass.h"
+#include "dx11_naomi2.h"
 #include <xxhash.h>
 
 const char * const VertexShader = R"(
@@ -356,6 +357,9 @@ const char * const MacroValues[] { "0", "1", "2", "3" };
 static D3D_SHADER_MACRO VertexMacros[]
 {
 	{ "pp_Gouraud", "1" },
+	{ "POSITION_ONLY", "0" },
+	{ "pp_TwoVolumes", "0" },
+	{ "LIGHT_ON", "1" },
 	{ nullptr, nullptr }
 };
 
@@ -439,24 +443,48 @@ const ComPtr<ID3D11PixelShader>& DX11Shaders::getShader(bool pp_Texture, bool pp
 	return shader;
 }
 
-const ComPtr<ID3D11VertexShader>& DX11Shaders::getVertexShader(bool gouraud)
+const ComPtr<ID3D11VertexShader>& DX11Shaders::getVertexShader(bool gouraud, bool naomi2)
 {
-	ComPtr<ID3D11VertexShader>& vertexShader = gouraud ? gouraudVertexShader : flatVertexShader;
+	int index = (int)gouraud | ((int)naomi2 << 1);
+	ComPtr<ID3D11VertexShader>& vertexShader = vertexShaders[index];
 	if (!vertexShader)
 	{
 		VertexMacros[0].Definition = MacroValues[gouraud];
-		vertexShader = compileVS(VertexShader, "main", VertexMacros);
+		if (!naomi2)
+		{
+			vertexShader = compileVS(VertexShader, "main", VertexMacros);
+		}
+		else
+		{
+			VertexMacros[1].Definition = MacroValues[false];
+			VertexMacros[2].Definition = MacroValues[false];
+			VertexMacros[3].Definition = MacroValues[true];
+			std::string source(DX11N2VertexShader);
+			source += std::string("\n") + DX11N2ColorShader;
+			vertexShader = compileVS(source.c_str(), "main", VertexMacros);
+		}
 	}
 
 	return vertexShader;
 }
 
-const ComPtr<ID3D11VertexShader>& DX11Shaders::getMVVertexShader()
+const ComPtr<ID3D11VertexShader>& DX11Shaders::getMVVertexShader(bool naomi2)
 {
-	if (!modVolVertexShader)
-		modVolVertexShader = compileVS(ModVolVertexShader, "main", nullptr);
+	if (!modVolVertexShaders[naomi2])
+	{
+		if (!naomi2)
+			modVolVertexShaders[0] = compileVS(ModVolVertexShader, "main", nullptr);
+		else
+		{
+			VertexMacros[0].Definition = MacroValues[false];
+			VertexMacros[1].Definition = MacroValues[true];
+			VertexMacros[2].Definition = MacroValues[false];
+			VertexMacros[3].Definition = MacroValues[false];
+			modVolVertexShaders[1] = compileVS(DX11N2VertexShader, "main", VertexMacros);
+		}
+	}
 
-	return modVolVertexShader;
+	return modVolVertexShaders[naomi2];
 }
 
 const ComPtr<ID3D11PixelShader>& DX11Shaders::getModVolShader()
@@ -536,13 +564,22 @@ ComPtr<ID3D11PixelShader> DX11Shaders::compilePS(const char* source, const char*
 
 ComPtr<ID3DBlob> DX11Shaders::getVertexShaderBlob()
 {
-	VertexMacros[0].Definition = MacroValues[0];
-	return compileShader(VertexShader, "main", "vs_4_0", VertexMacros);
+	VertexMacros[0].Definition = MacroValues[true];
+	// FIXME code dup
+	VertexMacros[1].Definition = MacroValues[false];
+	VertexMacros[2].Definition = MacroValues[false];
+	std::string source(DX11N2VertexShader);
+	source += std::string("\n") + DX11N2ColorShader;
+	return compileShader(source.c_str(), "main", "vs_4_0", VertexMacros);
 }
 
 ComPtr<ID3DBlob> DX11Shaders::getMVVertexShaderBlob()
 {
-	return compileShader(ModVolVertexShader, "main", "vs_4_0", nullptr);
+	// FIXME code dup
+	VertexMacros[0].Definition = MacroValues[false];
+	VertexMacros[1].Definition = MacroValues[true];
+	VertexMacros[2].Definition = MacroValues[false];
+	return compileShader(DX11N2VertexShader, "main", "vs_4_0", VertexMacros);
 }
 
 ComPtr<ID3DBlob> DX11Shaders::getQuadVertexShaderBlob()
@@ -562,10 +599,11 @@ void DX11Shaders::term()
 {
 	saveCache(CacheFile);
 	shaders.clear();
-	gouraudVertexShader.reset();
-	flatVertexShader.reset();
+	for (auto& shader : vertexShaders)
+		shader.reset();
 	modVolShader.reset();
-	modVolVertexShader.reset();
+	for (auto& shader : modVolVertexShaders)
+		shader.reset();
 	quadVertexShader.reset();
 	quadRotateVertexShader.reset();
 	quadPixelShader.reset();

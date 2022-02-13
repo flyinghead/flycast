@@ -192,6 +192,8 @@ void setN2Uniforms(const PolyParam *pp, ShaderType *shader)
 			}
 			glUniform1i(shader->useBaseOver, 0);
 			glUniform1i(shader->lightCount, 0);
+			glUniform1i(shader->bumpId0, -1);
+			glUniform1i(shader->bumpId1, -1);
 		}
 	}
 	glUniform1i(shader->bumpMapping, pp->pcw.Texture == 1 && pp->tcw.PixelFmt == PixelBumpMap);

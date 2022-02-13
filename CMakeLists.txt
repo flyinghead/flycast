@@ -1079,6 +1079,8 @@ if(WIN32)
 		core/rend/dx11/dx11context_lr.cpp
 		core/rend/dx11/dx11context_lr.h
 		core/rend/dx11/dx11_driver.h
+		core/rend/dx11/dx11_naomi2.cpp
+		core/rend/dx11/dx11_naomi2.h
 		core/rend/dx11/oit/dx11_oitbuffers.h
 		core/rend/dx11/oit/dx11_oitrenderer.cpp
 		core/rend/dx11/oit/dx11_oitshaders.cpp

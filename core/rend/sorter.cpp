@@ -42,10 +42,10 @@ static bool operator<(const PolyParam& left, const PolyParam& right)
 	return left.zvZ < right.zvZ;
 }
 
-static float getProjectedZ(const Vertex *v, const glm::mat4& mat)
+static float getProjectedZ(const Vertex *v, const float *mat)
 {
-	// 1 / w
-	return 1 / mat[0][3] * v->x + mat[1][3] * v->y + mat[2][3] * v->z + mat[3][3];
+	// -1 / z
+	return -1 / (mat[2] * v->x + mat[1 * 4 + 2] * v->y + mat[2 * 4 + 2] * v->z + mat[3 * 4 + 2]);
 }
 
 void SortPParams(int first, int count)
@@ -178,16 +178,12 @@ void GenSorted(int first, int count, std::vector<SortTrigDrawParam>& pidx_sort, 
 		{
 			const u32 *idx = idx_base + pp->first;
 			u32 flip = 0;
-			glm::mat4 mat;
-			float z0, z1;
+			float z0 = 0, z1 = 0;
 
 			if (pp->isNaomi2())
 			{
-				mat = glm::make_mat4(pp->projMatrix);
-				if (pp->mvMatrix != nullptr)
-					mat *= glm::make_mat4(pp->mvMatrix);
-				z0 = getProjectedZ(vtx_base + idx[0], mat);
-				z1 = getProjectedZ(vtx_base + idx[1], mat);
+				z0 = getProjectedZ(vtx_base + idx[0], pp->mvMatrix);
+				z1 = getProjectedZ(vtx_base + idx[1], pp->mvMatrix);
 			}
 			for (u32 i = 0; i < pp->count - 2; i++)
 			{
@@ -207,7 +203,7 @@ void GenSorted(int first, int count, std::vector<SortTrigDrawParam>& pidx_sort, 
 				lst[pfsti].pid = ppid;
 				if (pp->isNaomi2())
 				{
-					float z2 = getProjectedZ(v2, mat);
+					float z2 = getProjectedZ(v2, pp->mvMatrix);
 					lst[pfsti].z = std::min(z0, std::min(z1, z2));
 					z0 = z1;
 					z1 = z2;

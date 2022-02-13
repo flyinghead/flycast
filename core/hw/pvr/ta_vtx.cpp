@@ -1561,8 +1561,10 @@ bool ta_parse_vdrc(TA_context* ctx)
 		bgpp->envMapping[1] = false;
 	}
 
-	const bool mergeTranslucent = !config::PerStripSorting || config::RendererType == RenderType::OpenGL_OIT;
-			// TODO || config::RendererType == RenderType::Vulkan_OIT || config::RendererType == RenderType::DirectX11_OIT
+	const bool mergeTranslucent = !config::PerStripSorting
+			|| config::RendererType == RenderType::OpenGL_OIT
+			|| config::RendererType == RenderType::DirectX11_OIT;
+			// TODO || config::RendererType == RenderType::Vulkan_OIT
 	TA_context *childCtx = ctx;
 	while (childCtx != nullptr)
 	{
@@ -1680,8 +1682,10 @@ bool ta_parse_naomi2(TA_context* ctx)
 		int op_count = 0;
 		int pt_count = 0;
 		int tr_count = 0;
-		const bool mergeTranslucent = !config::PerStripSorting || config::RendererType == RenderType::OpenGL_OIT;
-				// TODO || config::RendererType == RenderType::Vulkan_OIT || config::RendererType == RenderType::DirectX11_OIT;
+		const bool mergeTranslucent = !config::PerStripSorting
+				|| config::RendererType == RenderType::OpenGL_OIT
+				|| config::RendererType == RenderType::DirectX11_OIT;
+				// TODO || config::RendererType == RenderType::Vulkan_OIT
 		for (const RenderPass& pass : ctx->rend.render_passes)
 		{
 			make_index(&ctx->rend.global_param_op, op_count, pass.op_count, true, &ctx->rend);
