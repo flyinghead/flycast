@@ -68,7 +68,7 @@ const char *PixelCompatShader = R"(
 )";
 
 static const char* GouraudSource = R"(
-#if TARGET_GL == GL3 || defined(GL_NV_shader_noperspective_interpolation)
+#if TARGET_GL == GL3
 	#define NOPERSPECTIVE noperspective
 	#if pp_Gouraud == 0
 		#define INTERPOLATION flat
