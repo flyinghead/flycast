@@ -4,7 +4,6 @@
 #include "hw/pvr/ta.h"
 #ifndef LIBRETRO
 #include "rend/gui.h"
-#include "opengl_driver.h"
 #else
 #include "vmu_xhair.h"
 #endif
@@ -1090,7 +1089,7 @@ void OSD_DRAW(bool clear_screen)
 			glDrawArrays(GL_TRIANGLE_STRIP, i * 4, 4);
 
 		glCheck();
-		((OpenGLDriver *)imguiDriver.get())->setFrameRendered();
+		imguiDriver->setFrameRendered();
 #ifndef GLES2
 		if (gl.gl_major >= 3)
 			glBindVertexArray(0);
