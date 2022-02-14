@@ -23,7 +23,7 @@
 #include <windows.h>
 #include <d3d11.h>
 #include "windows/comptr.h"
-//#include "dx11_overlay.h"
+#include "dx11_overlay.h"
 #include "dx11_shaders.h"
 #include "dx11_texture.h"
 #include "wsi/context.h"
@@ -57,6 +57,7 @@ public:
 	bool hasShaderCache() const {
 		return _hasShaderCache;
 	}
+	void drawOverlay(int width, int height);
 
 private:
 	ComPtr<ID3D11Device> pDevice;
@@ -66,6 +67,7 @@ private:
 	bool _hasShaderCache = false;
 	DX11Shaders shaders;
 	Samplers samplers;
+	DX11Overlay overlay;
 	D3D_FEATURE_LEVEL featureLevel{};
 
 	static constexpr UINT VENDOR_INTEL = 0x8086;

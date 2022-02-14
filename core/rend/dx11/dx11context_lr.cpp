@@ -19,6 +19,7 @@
 #ifdef HAVE_D3D11
 #include "dx11context_lr.h"
 #include <dxgi1_2.h>
+#include "rend/osd.h"
 
 DX11Context theDX11Context;
 
@@ -51,7 +52,7 @@ bool DX11Context::init(ID3D11Device *device, ID3D11DeviceContext *deviceContext,
 	}
 
 	shaders.init(pDevice, D3DCompile);
-//	overlay.init(pDevice, pDeviceContext, &shaders, &samplers);
+	overlay.init(pDevice, pDeviceContext, &shaders, &samplers);
 	return true;
 }
 
@@ -59,7 +60,7 @@ void DX11Context::term()
 {
 	NOTICE_LOG(RENDERER, "DX11 Context terminating");
 	GraphicsContext::instance = nullptr;
-//	overlay.term();
+	overlay.term();
 	samplers.term();
 	shaders.term();
 	if (pDeviceContext)
@@ -70,6 +71,11 @@ void DX11Context::term()
 	pDeviceContext.reset();
 	pDevice.reset();
 	NOTICE_LOG(RENDERER, "DX11 Context terminated");
+}
+
+void DX11Context::drawOverlay(int width, int height)
+{
+	overlay.draw(width, height, true, true);
 }
 
 #endif
