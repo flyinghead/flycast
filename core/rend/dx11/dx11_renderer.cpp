@@ -531,10 +531,10 @@ void DX11Renderer::uploadGeometryBuffers()
 	{
 		const ModTriangle *data = nullptr;
 		u32 size = 0;
+		std::vector<ModTriangle> modVolTriangles;
 		if (!settings.platform.isNaomi2()) // TODO for naomi2 as well?
 		{
 			// clip triangles
-			std::vector<ModTriangle> modVolTriangles;
 			modVolTriangles.reserve(pvrrc.modtrig.used());
 			clipModVols(pvrrc.global_param_mvo, modVolTriangles);
 			clipModVols(pvrrc.global_param_mvo_tr, modVolTriangles);
