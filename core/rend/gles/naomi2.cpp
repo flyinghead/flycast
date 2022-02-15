@@ -82,34 +82,42 @@ void main()
 #if POSITION_ONLY == 0
 	vtx_base = in_base;
 	vtx_offs = in_offs;
+	#if LIGHT_ON == 1
 	vec4 vnorm = normalize(normalMat * vec4(in_normal, 0.0));
+	#endif
 	#if pp_TwoVolumes == 1
 		vtx_base1 = in_base1;
 		vtx_offs1 = in_offs1;
 		vtx_uv1 = in_uv1;
-		// FIXME need offset0 and offset1 for bump maps
-		if (bumpMapping == 1)
-			computeBumpMap(vtx_offs, vtx_offs1, vpos.xyz, vnorm.xyz, normalMat);
-		else
+		#if LIGHT_ON == 1
+			// FIXME need offset0 and offset1 for bump maps
+			if (bumpMapping == 1)
+				computeBumpMap(vtx_offs, vtx_offs1, vpos.xyz, vnorm.xyz, normalMat);
+			else
+			{
+				computeColors(vtx_base1, vtx_offs1, 1, vpos.xyz, vnorm.xyz);
+				#if pp_Texture == 0
+					vtx_base1 += vtx_offs1;
+				#endif
+			}
+			if (envMapping[1] == 1)
+				computeEnvMap(vtx_uv1.xy, vpos.xyz, vnorm.xyz);
+		#endif
+	#endif
+	#if LIGHT_ON == 1
+		if (bumpMapping == 0)
 		{
-			computeColors(vtx_base1, vtx_offs1, 1, vpos.xyz, vnorm.xyz);
+			computeColors(vtx_base, vtx_offs, 0, vpos.xyz, vnorm.xyz);
 			#if pp_Texture == 0
-				vtx_base1 += vtx_offs1;
+					vtx_base += vtx_offs;
 			#endif
 		}
-		if (envMapping[1] == 1)
-			computeEnvMap(vtx_uv1.xy, vpos.xyz, vnorm.xyz);
 	#endif
-	if (bumpMapping == 0)
-	{
-		computeColors(vtx_base, vtx_offs, 0, vpos.xyz, vnorm.xyz);
-		#if pp_Texture == 0
-				vtx_base += vtx_offs;
-		#endif
-	}
 	vtx_uv.xy = in_uv;
-	if (envMapping[0] == 1)
-		computeEnvMap(vtx_uv.xy, vpos.xyz, vnorm.xyz);
+	#if LIGHT_ON == 1
+		if (envMapping[0] == 1)
+			computeEnvMap(vtx_uv.xy, vpos.xyz, vnorm.xyz);
+	#endif
 #endif
 
 	vpos = projMat * vpos;
@@ -362,6 +370,7 @@ N2VertexSource::N2VertexSource(bool gouraud, bool geometryOnly, bool texture) : 
 	addConstant("POSITION_ONLY", geometryOnly);
 	addConstant("pp_TwoVolumes", 0);
 	addConstant("pp_Texture", (int)texture);
+	addConstant("LIGHT_ON", 1);
 
 	addSource(VertexCompatShader);
 	addSource(GouraudSource);

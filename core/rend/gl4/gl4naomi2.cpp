@@ -38,17 +38,19 @@ N2Vertex4Source::N2Vertex4Source(const gl4PipelineShader* shader) : OpenGl4Sourc
 		addConstant("pp_TwoVolumes", 0);
 		addConstant("pp_Gouraud", 0);
 		addConstant("pp_Texture", 0);
+		addConstant("LIGHT_ON", 0);
 	}
 	else
 	{
-		addConstant("POSITION_ONLY", shader->pass == Pass::Depth); // geometry only for depth pass
+		addConstant("POSITION_ONLY", 0);
 		addConstant("pp_TwoVolumes", shader->pp_TwoVolumes || shader->pp_BumpMap);
 		addConstant("pp_Gouraud", shader->pp_Gouraud);
 		addConstant("pp_Texture", shader->pp_Texture);
+		addConstant("LIGHT_ON", shader->pass != Pass::Depth);
 	}
 
 	addSource(gouraudSource);
-	if (shader != nullptr)
+	if (shader != nullptr && shader->pass != Pass::Depth)
 		addSource(N2ColorShader);
 	addSource(N2VertexShader);
 }
