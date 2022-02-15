@@ -585,6 +585,7 @@ struct DX11OITRenderer : public DX11Renderer
 			DrawOSD(false);
 			theDX11Context.setFrameRendered();
 #else
+			theDX11Context.drawOverlay(width, height);
 			ID3D11RenderTargetView *nullView = nullptr;
 			deviceContext->OMSetRenderTargets(1, &nullView, nullptr);
 			deviceContext->PSSetShaderResources(0, 1, &fbTextureView.get());
