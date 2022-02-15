@@ -7427,7 +7427,7 @@ Game Games[] =
 		0,
 		"naomi2",
 		GD,
-		REGION_AUSTRALIA,
+		REGION_JAPAN,
 		ROT0,
         {
 			{ "317-0331-jpn.pic", 0, 0x4000, 0x0a3bf606 },
@@ -7443,7 +7443,7 @@ Game Games[] =
 		0,
 		"naomi2",
 		GD,
-		REGION_AUSTRALIA,
+		REGION_JAPAN,
 		ROT0,
         {
 			{ "317-0338-jpn.pic", 0, 0x4000, 0xb177ba7d },
@@ -7458,7 +7458,7 @@ Game Games[] =
 		0,
 		"naomi2",
 		GD,
-		REGION_AUSTRALIA,
+		REGION_JAPAN,
 		ROT0,
         {
 			{ "317-0338-jpn.pic", 0, 0x4000, 0xb177ba7d },
@@ -7473,7 +7473,7 @@ Game Games[] =
 		0,
 		"naomi2",
 		GD,
-		REGION_AUSTRALIA,
+		REGION_JAPAN,
 		ROT0,
         {
 			{ "317-0338-jpn.pic", 0, 0x4000, 0xb177ba7d },
@@ -7488,7 +7488,7 @@ Game Games[] =
 		0,
 		"naomi2",
 		GD,
-		REGION_AUSTRALIA,
+		REGION_EXPORT_ONLY,
 		ROT0,
         {
 			{ "317-0343-com.pic", 0, 0x4000, 0x80eea4eb },
@@ -7504,7 +7504,7 @@ Game Games[] =
 		0,
 		"naomi2",
 		GD,
-		REGION_AUSTRALIA,
+		REGION_EXPORT_ONLY,
 		ROT0,
         {
 			{ "317-0343-com.pic", 0, 0x4000, 0x80eea4eb },
@@ -7536,7 +7536,7 @@ Game Games[] =
 		0,
 		"naomi2",
 		GD,
-		REGION_AUSTRALIA,
+		REGION_JAPAN,
 		ROT0,
         {
 			{ "317-0345-jpn.pic", 0, 0x4000, 0x56e1274a },
@@ -7552,7 +7552,7 @@ Game Games[] =
 		0,
 		"naomi2",
 		GD,
-		REGION_AUSTRALIA,
+		REGION_JAPAN,
 		ROT0,
         {
 			{ "317-0345-jpn.pic", 0, 0x4000, 0x56e1274a },
@@ -7568,7 +7568,7 @@ Game Games[] =
 		0,
 		"naomi2",
 		GD,
-		REGION_AUSTRALIA,
+		REGION_EXPORT_ONLY,
 		ROT0,
         {
 			{ "317-0357-exp.pic", 0, 0x4000, 0x38f84b4d },
@@ -7616,7 +7616,7 @@ Game Games[] =
 		0,
 		"naomi2",
 		GD,
-		REGION_AUSTRALIA,
+		REGION_JAPAN,
 		ROT0,
         {
 			{ "317-0379-jpn.pic", 0, 0x4000, 0x7f024ff6 },
@@ -7632,7 +7632,7 @@ Game Games[] =
 		0,
 		"naomi2",
 		GD,
-		REGION_AUSTRALIA,
+		REGION_JAPAN,
 		ROT0,
         {
 			{ "317-0379-jpn.pic", 0, 0x4000, 0x7f024ff6 },
@@ -7725,7 +7725,7 @@ Game Games[] =
 		0,
 		"naomi2",
 		GD,
-		REGION_AUSTRALIA,
+		REGION_EXPORT_ONLY,
 		ROT0,
         {
 			{ "317-0406-com.pic", 0, 0x4000, 0xfe91a7af },

@@ -157,7 +157,7 @@ u32 ElanRamWatcher::getMemOffset(void *p)
 		addr &= 0x1fffffff;
 		if (addr < 0x0a000000 || addr >= 0x0a000000 + ELAN_RAM_SIZE)
 			return -1;
-		addr &= ELAN_RAM_SIZE - 1;
+		addr &= ELAN_RAM_MASK;
 	} else {
 		if ((u8 *)p < RAM || (u8 *)p >= &RAM[ELAN_RAM_SIZE])
 			return -1;

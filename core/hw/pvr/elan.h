@@ -33,4 +33,5 @@ void deserialize(Deserializer& deser);
 
 extern u8 *RAM;
 constexpr u32 ELAN_RAM_SIZE = 32 * 1024 * 1024;
+constexpr u32 ELAN_RAM_MASK = ELAN_RAM_SIZE - 1;
 }

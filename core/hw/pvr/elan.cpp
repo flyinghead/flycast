@@ -81,40 +81,27 @@ static u32 reg30 = 0x31;
 
 static u32 elanCmd[32 / 4];
 
-template<typename T>
-T DYNACALL read_elanreg(u32 paddr)
+static u32 DYNACALL read_elanreg(u32 paddr)
 {
-	//verify(sizeof(T) == 4);
 	u32 addr = paddr & 0x01ffffff;
 	switch (addr >> 16)
 	{
 	case 0x5F:
 		if (addr >= 0x005F6800 && addr <= 0x005F7CFF)
-		{
-			// 5F6908: Tests for errors 4, 8, 10, 2 and 1 (render isp buf ovf, render hazard, ISP param ovf, ob list ptr ovf, ta ill param)
-			// 5f6900: then int 4 and 40 (EoR TSP, EoT YUV)
-			return (T)sb_ReadMem(paddr, sizeof(T));
-		}
-		else if (addr >= 0x005F8000 && addr <= 0x005F9FFF)
-		{
-			if (sizeof(T) != 4)
-				// House of the Dead 2
-				return 0;
-			return (T)pvr_ReadReg(paddr);
-		}
-		else
-		{
-			INFO_LOG(MEMORY, "Read from area2 not implemented [Unassigned], addr=%x", addr);
-			return 0;
-		}
+			return sb_ReadMem(paddr, sizeof(u32));
+		if (addr >= 0x005F8000 && addr <= 0x005F9FFF)
+			return pvr_ReadReg(paddr);
 
-	default:
-//		if ((addr & 0xFF) != 0x74)
-			DEBUG_LOG(PVR, "ELAN read(%d) %08x [pc %08x]", (u32)sizeof(T), addr, p_sh4rcb->cntx.pc);
+		INFO_LOG(PVR, "Read from area2 not implemented [Unassigned], addr=%x", addr);
+		return 0;
+
+	case 0x80:
+		//if ((addr & 0xFF) != 0x74)
+		DEBUG_LOG(PVR, "ELAN read %08x [pc %08x]", addr, p_sh4rcb->cntx.pc);
 		switch (addr & 0xFF)
 		{
 		case 0: // magic number
-			return (T)0xe1ad0000;
+			return 0xe1ad0000;
 		case 4: // revision
 			return 0x10;	// 1 or x10
 		case 0xc:
@@ -127,10 +114,10 @@ T DYNACALL read_elanreg(u32 paddr)
 			// b2 enable pvr #2
 			// rewritten by bios as reg10 & ~1
 			return reg10;
-		case 0x14: // SDRAM refresh (never read?)
-			return (T)0x2029; //default 0x1429
+		case 0x14: // SDRAM refresh
+			return 0x2029; //default 0x1429
 		case 0x1c: // SDRAM CFG
-			return (T)0x87320961;
+			return 0x87320961;
 		case 0x30: // Macro tiler config
 			// 0 0 l l  l l l l  t t t t  0 0 r r  r r r r  b b b b  0 0 V H  0 0 0 T
 			// lllll: left tile
@@ -151,43 +138,32 @@ T DYNACALL read_elanreg(u32 paddr)
 			// 6 bits?
 			return 0;
 		default:
-			return (T)0;
+			return 0;
 		}
+
+	default:
+		INFO_LOG(PVR, "Read from area2 not implemented [Unassigned], addr=%x", addr);
+		return 0;
 	}
 }
 
-template<typename T>
-void DYNACALL write_elanreg(u32 paddr, T data)
+static void DYNACALL write_elanreg(u32 paddr, u32 data)
 {
-	//verify(sizeof(T) == 4);
 	u32 addr = paddr & 0x01ffffff;
 	switch (addr >> 16)
 	{
 	case 0x5F:
 		if (addr>= 0x005F6800 && addr <= 0x005F7CFF)
-			sb_WriteMem(paddr, data, sizeof(T));
+			sb_WriteMem(paddr, data, sizeof(u32));
 		else if (addr >= 0x005F8000 && addr <= 0x005F9FFF)
-		{
-			if (addr == 0x5F8040 && data == 0xFF00FF)
-			{
-				ERROR_LOG(PVR, "ELAN SCREWED pr %x pc %x", p_sh4rcb->cntx.pr, p_sh4rcb->cntx.pc);
-				throw FlycastException("Boot aborted");
-			}
-			else if ((addr & 0x1fff) == SOFTRESET_addr && data == 0)
-				reg74 &= 3;
-			else if ((addr & 0x1fff) == STARTRENDER_addr)
-				reg74 &= 3;
-
-			//if ((paddr & 0x1c000000) == 0x08000000 && (addr & 0x1fff) == SOFTRESET_addr && data == 0)
-			//	reg74 |= 2;
 			pvr_WriteReg(paddr, data);
-		}
 		else
-			INFO_LOG(COMMON, "Write to area2 not implemented [Unassigned], addr=%x,data=%x,size=%d", addr, data, (u32)sizeof(T));
+			INFO_LOG(PVR, "Write to area2 not implemented [Unassigned], addr=%x, data=%x", addr, data);
 		break;
-	default:
-//		if ((addr & 0xFF) != 0x74)
-			DEBUG_LOG(PVR, "ELAN write(%d) %08x = %x", (u32)sizeof(T), addr, data);
+
+	case 0x80:
+		//if ((addr & 0xFF) != 0x74)
+		DEBUG_LOG(PVR, "ELAN write %08x = %x", addr, data);
 		switch (addr & 0xFF)
 		{
 		case 0x0:
@@ -231,14 +207,12 @@ void DYNACALL write_elanreg(u32 paddr, T data)
 		default:
 			break;
 		}
-	}
-}
+		break;
 
-template<typename T>
-T DYNACALL read_elancmd(u32 addr)
-{
-	DEBUG_LOG(PVR, "ELAN cmd READ! (%d) %08x", (u32)sizeof(T), addr);
-	return 0;
+	default:
+		INFO_LOG(PVR, "Write to area2 not implemented [Unassigned], addr=%x, data=%x", addr, data);
+		break;
+	}
 }
 
 static glm::vec4 unpackColor(u32 color)
@@ -270,7 +244,7 @@ static u32 packColorRGBA(const glm::vec4& color)
 			| (int)(std::min(1.f, color.a) * 255.f) << 24;
 }
 
-u32 (*packColor)(const glm::vec4& color) = packColorRGBA;
+static u32 (*packColor)(const glm::vec4& color) = packColorRGBA;
 
 static GMP *curGmp;
 static glm::mat4x4 curMatrix;
@@ -598,7 +572,7 @@ static void SetEnvMapUV(Vertex& vtx)
 }
 
 template<typename T>
-glm::vec3 getNormal(const T& vtx)
+static glm::vec3 getNormal(const T& vtx)
 {
 	return { (int8_t)vtx.header.nx / 127.f, (int8_t)vtx.header.ny / 127.f, (int8_t)vtx.header.nz / 127.f };
 }
@@ -610,7 +584,7 @@ glm::vec3 getNormal(const N2_VERTEX_VNU& vtx)
 }
 
 template<typename T>
-void setNormal(Vertex& vd, const T& vs)
+static void setNormal(Vertex& vd, const T& vs)
 {
 	glm::vec3 normal = getNormal(vs);
 	vd.nx = normal.x;
@@ -1621,13 +1595,13 @@ static void executeCommand(u8 *data, int size)
 					{
 						// elan v10 only
 						DEBUG_LOG(PVR, "Texture DMA from eram %x -> %x (%x)", link->offset & 0x01fffff8, link->_res & VRAM_MASK, link->size);
-						memcpy(&vram[link->_res & VRAM_MASK], &RAM[link->offset & (ELAN_RAM_SIZE - 1)], link->size);
+						memcpy(&vram[link->_res & VRAM_MASK], &RAM[link->offset & ELAN_RAM_MASK], link->size);
 						reg74 |= 1;
 					}
 					else
 					{
 						DEBUG_LOG(PVR, "Link to %x (%x)", link->offset & 0x1ffffff8, link->size);
-						executeCommand<Active>(&RAM[link->offset & (ELAN_RAM_SIZE - 1)], link->size);
+						executeCommand<Active>(&RAM[link->offset & ELAN_RAM_MASK], link->size);
 					}
 					size -= sizeof(Link);
 				}
@@ -1721,14 +1695,13 @@ static void executeCommand(u8 *data, int size)
 	}
 }
 
-template<typename T>
-void DYNACALL write_elancmd(u32 addr, T data)
+static void DYNACALL write_elancmd(u32 addr, u32 data)
 {
 //	DEBUG_LOG(PVR, "ELAN cmd %08x = %x", addr, data);
-	addr &= 0x1f;
-	*(T *)&((u8 *)elanCmd)[addr] = data;
+	addr = (addr & (sizeof(elanCmd) - 1)) / sizeof(u32);
+	elanCmd[addr] = data;
 
-	if (addr == 0x1c)
+	if (addr == 7)
 	{
 		if (!ggpo::rollbacking())
 			executeCommand<true>((u8 *)elanCmd, sizeof(elanCmd));
@@ -1736,20 +1709,19 @@ void DYNACALL write_elancmd(u32 addr, T data)
 			executeCommand<false>((u8 *)elanCmd, sizeof(elanCmd));
 		if (!(reg74 & 1))
 			reg74 |= 2;
-		reg74 &= ~0x3c;
 	}
 }
 
 template<typename T>
-T DYNACALL read_elanram(u32 addr)
+static T DYNACALL read_elanram(u32 addr)
 {
-	return *(T *)&RAM[addr & (ELAN_RAM_SIZE - 1)];
+	return *(T *)&RAM[addr & ELAN_RAM_MASK];
 }
 
 template<typename T>
-void DYNACALL write_elanram(u32 addr, T data)
+static void DYNACALL write_elanram(u32 addr, T data)
 {
-	*(T *)&RAM[addr & (ELAN_RAM_SIZE - 1)] = data;
+	*(T *)&RAM[addr & ELAN_RAM_MASK] = data;
 }
 
 void init()
@@ -1771,8 +1743,8 @@ void term()
 
 void vmem_init()
 {
-	elanRegHandler = _vmem_register_handler_Template(read_elanreg, write_elanreg);
-	elanCmdHandler = _vmem_register_handler_Template(read_elancmd, write_elancmd);
+	elanRegHandler = _vmem_register_handler(nullptr, nullptr, read_elanreg, nullptr, nullptr, write_elanreg);
+	elanCmdHandler = _vmem_register_handler(nullptr, nullptr, nullptr, nullptr, nullptr, write_elancmd);
 	elanRamHandler = _vmem_register_handler_Template(read_elanram, write_elanram);
 }
 
@@ -1781,7 +1753,7 @@ void vmem_map(u32 base)
 	_vmem_map_handler(elanRegHandler, base | 8, base | 8);
 	_vmem_map_handler(elanCmdHandler, base | 9, base | 9);
 	_vmem_map_handler(elanRamHandler, base | 0xA, base | 0xB);
-	_vmem_map_block(RAM, base | 0xA, base | 0xB, ELAN_RAM_SIZE - 1);
+	_vmem_map_block(RAM, base | 0xA, base | 0xB, ELAN_RAM_MASK);
 }
 
 void serialize(Serializer& ser)
