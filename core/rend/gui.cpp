@@ -758,6 +758,7 @@ const Mapping arcadeButtons[] = {
 	{ EMU_BTN_MENU, "Menu" },
 	{ EMU_BTN_ESCAPE, "Exit" },
 	{ EMU_BTN_FFORWARD, "Fast-forward" },
+	{ EMU_BTN_INSERT_CARD, "Insert Card" },
 
 	{ EMU_BTN_NONE, nullptr }
 };

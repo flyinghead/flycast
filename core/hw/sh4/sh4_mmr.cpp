@@ -812,7 +812,7 @@ void sh4_mmr_reset(bool hard)
 	dmac_reset();
 	intc_reset();
 	rtc_reset();
-	serial_reset();
+	serial_reset(hard);
 	tmu_reset(hard);
 	ubc_reset();
 

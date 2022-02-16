@@ -38,10 +38,14 @@ const char *CallbackTable = "flycast_callbacks";
 static lua_State *L;
 using namespace luabridge;
 
+static std::recursive_mutex mutex;
+using lock_guard = std::lock_guard<std::recursive_mutex>;
+
 static void emuEventCallback(Event event, void *)
 {
 	if (L == nullptr)
 		return;
+	lock_guard lock(mutex);
 	try {
 		LuaRef v = LuaRef::getGlobal(L, CallbackTable);
 		if (!v.isTable())
@@ -72,30 +76,28 @@ static void emuEventCallback(Event event, void *)
 	}
 }
 
-template<const char *Tag>
-void eventCallback()
+static void eventCallback(const char *tag)
 {
 	if (L == nullptr)
 		return;
+	lock_guard lock(mutex);
 	try {
 		LuaRef v = LuaRef::getGlobal(L, CallbackTable);
-		if (v.isTable() && v[Tag].isFunction())
-			v[Tag]();
+		if (v.isTable() && v[tag].isFunction())
+			v[tag]();
 	} catch (const LuaException& e) {
-		WARN_LOG(COMMON, "Lua exception[%s]: %s", Tag, e.what());
+		WARN_LOG(COMMON, "Lua exception[%s]: %s", tag, e.what());
 	}
 }
 
-const char VBlankEvent[] { "vblank" };
 void vblank()
 {
-	eventCallback<VBlankEvent>();
+	eventCallback("vblank");
 }
 
-const char OverlayEvent[] { "overlay" };
 void overlay()
 {
-	eventCallback<OverlayEvent>();
+	eventCallback("overlay");
 }
 
 template<typename T>

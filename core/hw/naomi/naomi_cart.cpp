@@ -37,6 +37,7 @@
 #include "cfg/option.h"
 #include "oslib/oslib.h"
 #include "serialize.h"
+#include "card_reader.h"
 
 Cartridge *CurrentCartridge;
 bool bios_loaded = false;
@@ -401,6 +402,14 @@ static void naomi_cart_LoadZip(const char *filename, LoadProgress *progress)
 			strcpy(naomi_game_id, game->name);
 		NOTICE_LOG(NAOMI, "NAOMI GAME ID [%s]", naomi_game_id);
 
+		if (CurrentCartridge->GetGameId() == "INITIAL D"
+				|| CurrentCartridge->GetGameId() == "INITIAL D Ver.2"
+				|| CurrentCartridge->GetGameId() == "INITIAL D Ver.3"
+				|| CurrentCartridge->GetGameId() == "INITIAL D CYCRAFT")
+		{
+			card_reader::initialDCardReader.init();
+		}
+
 	} catch (...) {
 		delete CurrentCartridge;
 		CurrentCartridge = NULL;
@@ -674,7 +683,7 @@ u32 NaomiCartridge::ReadMem(u32 address, u32 size)
 	switch(address & 255)
 	{
 	case 0x3c:	// 5f703c: DIMM COMMAND
-		DEBUG_LOG(NAOMI, "DIMM COMMAND read<%d>", size);
+		//DEBUG_LOG(NAOMI, "DIMM COMMAND read<%d>", size);
 		return 0xffff; //reg_dimm_command
 	case 0x40:	// 5f7040: DIMM OFFSETL
 		DEBUG_LOG(NAOMI, "DIMM OFFSETL read<%d>", size);
@@ -686,7 +695,7 @@ u32 NaomiCartridge::ReadMem(u32 address, u32 size)
 		DEBUG_LOG(NAOMI, "DIMM PARAMETERH read<%d>", size);
 		return reg_dimm_parameterh;
 	case 0x04C:	// 5f704c: DIMM STATUS
-		DEBUG_LOG(NAOMI, "DIMM STATUS read<%d>", size);
+		DEBUG_LOG(NAOMI, "DIMM STATUS read<%d>: %x", size, reg_dimm_status);
 		return reg_dimm_status;
 
 	case NAOMI_ROM_OFFSETH_addr&255:
@@ -758,23 +767,24 @@ void NaomiCartridge::WriteMem(u32 address, u32 data, u32 size)
 			 reg_dimm_status |= 1;*/
 		 }
 		 reg_dimm_command = data;
-		 DEBUG_LOG(NAOMI, "DIMM COMMAND Write: %X <= %X, %d", address, data, size);
+		 DEBUG_LOG(NAOMI, "DIMM COMMAND Write<%d>: %x", size, data);
 		 return;
 
 	case 0x40:	// 5f7040: DIMM OFFSETL
 		reg_dimm_offsetl = data;
-		DEBUG_LOG(NAOMI, "DIMM OFFSETL Write: %X <= %X, %d", address, data, size);
+		DEBUG_LOG(NAOMI, "DIMM OFFSETL Write<%d>: %x", size, data);
 		return;
 	case 0x44:	// 5f7044: DIMM PARAMETERL
 		reg_dimm_parameterl = data;
-		DEBUG_LOG(NAOMI, "DIMM PARAMETERL Write: %X <= %X, %d", address, data, size);
+		DEBUG_LOG(NAOMI, "DIMM PARAMETERL Write<%d>: %x", size, data);
 		return;
 	case 0x48:	// 5f7048: DIMM PARAMETERH
 		reg_dimm_parameterh = data;
-		DEBUG_LOG(NAOMI, "DIMM PARAMETERH Write: %X <= %X, %d", address, data, size);
+		DEBUG_LOG(NAOMI, "DIMM PARAMETERH Write<%d>: %x", size, data);
 		return;
 
 	case 0x4C:	// 5f704c: DIMM STATUS
+		DEBUG_LOG(NAOMI, "DIMM STATUS Write<%d>: %x", size, data);
 		if (data&0x100)
 		{
 			asic_CancelInterrupt(holly_EXP_PCI);
@@ -787,7 +797,6 @@ void NaomiCartridge::WriteMem(u32 address, u32 data, u32 size)
 			naomi_process(reg_dimm_command, reg_dimm_offsetl, reg_dimm_parameterl, reg_dimm_parameterh);
 		}
 		reg_dimm_status = data & ~0x100;
-		DEBUG_LOG(NAOMI, "DIMM STATUS Write: %X <= %X, %d", address, data, size);
 		return;
 
 		//These are known to be valid on normal ROMs and DIMM board
@@ -853,6 +862,9 @@ void NaomiCartridge::WriteMem(u32 address, u32 data, u32 size)
 		//This should be valid
 	case NAOMI_BOARDID_READ_addr&255:
 		DEBUG_LOG(NAOMI, "naomi WriteMem: %X <= %X, %d", address, data, size);
+		return;
+
+	case NAOMI_LED_addr & 0xff:
 		return;
 
 	default: break;
