@@ -94,10 +94,10 @@ struct PolyParam
 	{
 		return ((pcw.full ^ other.pcw.full) & 0x300CE) == 0
 			&& ((isp.full ^ other.isp.full) & 0xF4000000) == 0
-			&& ((tcw.full ^ other.tcw.full) & 0xFE1FFFFF) == 0
+			&& tcw.full == other.tcw.full
 			&& tsp.full == other.tsp.full
 			&& tileclip == other.tileclip
-			&& ((tcw1.full ^ other.tcw1.full) & 0xFE1FFFFF) == 0
+			&& tcw1.full == other.tcw1.full
 			&& tsp1.full == other.tsp1.full
 			&& mvMatrix == other.mvMatrix
 			&& normalMatrix == other.normalMatrix

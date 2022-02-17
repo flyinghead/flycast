@@ -270,10 +270,25 @@ static u32 opbSize(int n)
 
 static void markObjectListBlocks()
 {
+	u32 addr = TA_OL_BASE;
+	// opaque
 	u32 opBlockSize = opbSize(TA_ALLOC_CTRL & 3);
 	if (opBlockSize == 0)
-		return;
-	u32 addr = TA_OL_BASE;
+	{
+		// skip modvols OPBs
+		addr += opbSize((TA_ALLOC_CTRL >> 4) & 3) * (TA_GLOB_TILE_CLIP.tile_y_num + 1) * (TA_GLOB_TILE_CLIP.tile_x_num + 1);
+		// transparent
+		opBlockSize = opbSize((TA_ALLOC_CTRL >> 8) & 3);
+		if (opBlockSize == 0)
+		{
+			// skip TR modvols OPBs
+			addr += opbSize((TA_ALLOC_CTRL >> 12) & 3) * (TA_GLOB_TILE_CLIP.tile_y_num + 1) * (TA_GLOB_TILE_CLIP.tile_x_num + 1);
+			// punch-through
+			opBlockSize = opbSize((TA_ALLOC_CTRL >> 16) & 3);
+			if (opBlockSize == 0)
+				return;
+		}
+	}
 	for (int y = 0; y <= TA_GLOB_TILE_CLIP.tile_y_num; y++)
 		for (int x = 0; x <= TA_GLOB_TILE_CLIP.tile_x_num; x++)
 		{

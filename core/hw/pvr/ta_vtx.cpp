@@ -2122,7 +2122,24 @@ int getTAContextAddresses(u32 *addresses)
 		tile.full = pvr_read32p<u32>(addr);
 		if (tile.X != x || tile.Y != y)
 			break;
+		// Try the opaque pointer
 		u32 opbAddr = pvr_read32p<u32>(addr + 4);
+		if (opbAddr == 0xffffffff)
+		{
+			// Try the translucent pointer
+			opbAddr = pvr_read32p<u32>(addr + 12);
+			if (opbAddr == 0xffffffff)
+			{
+				// Try the punch-through pointer
+				if (tile_size >= 24)
+					opbAddr = pvr_read32p<u32>(addr + 20);
+				if (opbAddr == 0xffffffff)
+				{
+					INFO_LOG(PVR, "Can't find any non-null OPB for pass %d", count);
+					break;
+				}
+			}
+		}
 		addresses[count++] = pvr_read32p<u32>(opbAddr);
 		addr += tile_size;
 	} while (!tile.LastRegion && count < MAX_PASSES);
