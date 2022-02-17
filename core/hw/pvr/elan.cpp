@@ -1568,7 +1568,8 @@ static void executeCommand(u8 *data, int size)
 							break;
 						default:
 							WARN_LOG(PVR, "Unknown interrupt mask %x", wait->mask);
-							die("unexpected");
+							// initdv2j: happens at end of race, garbage data after end of model due to wrong size?
+							//die("unexpected");
 							inter = holly_OPAQUE;
 							break;
 						}
