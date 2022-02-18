@@ -1446,7 +1446,8 @@ static void sendPolygon(ICHList *list)
 
 	default:
 		WARN_LOG(PVR, "Unhandled poly format %x", list->flags);
-		die("Unsupported");
+		// initdv2 crash (area conquered screen after the 4th race)
+		//die("Unsupported");
 		break;
 	}
 	envMapping = false;
@@ -1570,13 +1571,16 @@ static void executeCommand(u8 *data, int size)
 							WARN_LOG(PVR, "Unknown interrupt mask %x", wait->mask);
 							// initdv2j: happens at end of race, garbage data after end of model due to wrong size?
 							//die("unexpected");
-							inter = holly_OPAQUE;
+							inter = (HollyInterruptID)-1;
 							break;
 						}
-						asic_RaiseInterruptBothCLX(inter);
-						TA_ITP_CURRENT += 32;
-						if (Active)
-							state.reset();
+						if (inter != (HollyInterruptID)-1)
+						{
+							asic_RaiseInterruptBothCLX(inter);
+							TA_ITP_CURRENT += 32;
+							if (Active)
+								state.reset();
+						}
 					}
 					size -= sizeof(RegisterWait);
 				}
