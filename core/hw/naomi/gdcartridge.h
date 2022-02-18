@@ -33,7 +33,6 @@ public:
 	void* GetDmaPtr(u32 &size) override;
 	void AdvancePtr(u32 size) override;
 	bool Read(u32 offset, u32 size, void* dst) override;
-	std::string GetGameId() override;
 
 	void SetGDRomName(const char *name, const char *parentName) { this->gdrom_name = name; this->gdrom_parent_name = parentName; }
 
