@@ -213,6 +213,20 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "disabled",
    },
    {
+      CORE_OPTION_NAME "_force_freeplay",
+      "Set NAOMI Games to Free Play",
+      NULL,
+      "Modify to coin settings of the game to free play.",
+      NULL,
+      "system",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "enabled",
+   },
+   {
       CORE_OPTION_NAME "_internal_resolution",
       "Internal Resolution",
       NULL,

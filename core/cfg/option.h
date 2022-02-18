@@ -355,6 +355,7 @@ extern Option<bool> ForceWindowsCE;
 extern Option<bool> AutoLoadState;
 extern Option<bool> AutoSaveState;
 extern Option<int> SavestateSlot;
+extern Option<bool> ForceFreePlay;
 
 // Sound
 

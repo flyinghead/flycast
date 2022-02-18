@@ -187,7 +187,6 @@ Game Games[] =
         0x7f805c3f,
         NULL,
         M1,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "epr-23377.ic11",  0x0000000, 0x0400000 },
@@ -225,7 +224,6 @@ Game Games[] =
         0x820857c9,
         "naomi",    // Needs Export BIOS
         M1,
-        REGION_EXPORT_ONLY,
         ROT0,
         {
             { "epr-24212.ic11",   0x0000000, 0x400000 },
@@ -270,7 +268,6 @@ Game Games[] =
         0xc18b6e7c,
         NULL,
         M1,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "epr-23085a.ic11", 0x0000000, 0x0400000 },
@@ -313,7 +310,6 @@ Game Games[] =
         0x3892fb3a,
         NULL,
         M1,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "epr-24217.ic11",  0x0000000, 0x0400000 },
@@ -348,7 +344,6 @@ Game Games[] =
         0xcd9b4896,
         NULL,
         M1,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "epr-23227.ic11",  0x0000000, 0x0400000 },
@@ -380,7 +375,6 @@ Game Games[] =
         0xa0f37ca7,
         NULL,
         M1,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "epr-23844.ic11",  0x0000000, 0x400000 },
@@ -406,7 +400,6 @@ Game Games[] =
         0x9dbde9cd,
         NULL,
         M1,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "epr-24065a.ic11", 0x0000000, 0x0400000 },
@@ -431,7 +424,6 @@ Game Games[] =
         0x9dbde9cd,
         NULL,
         M1,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "epr-24148.ic11",  0x0000000, 0x400000 },
@@ -452,7 +444,6 @@ Game Games[] =
         0x9dbde9cd,
         NULL,
         M1,
-        REGION_JAPAN,
         ROT0,
         {
             { "rom0.ic22", 0x0000000, 0x400000 },
@@ -474,7 +465,6 @@ Game Games[] =
         0x2f6f0f8d,
         NULL,
         M1,
-        REGION_JAPAN,
         ROT0,
         {
             { "epr-23071.ic11",  0x0000000, 0x0200000 },
@@ -502,7 +492,6 @@ Game Games[] =
         0x2d2d4743,
         NULL,
         M1,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "epr-22327a.ic11", 0x0000000, 0x400000 },
@@ -539,7 +528,6 @@ Game Games[] =
         0x403431d2,
         NULL,
         M1,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "epr-23964.ic11",  0x0000000, 0x400000 },
@@ -561,7 +549,6 @@ Game Games[] =
         0x3892fb3a,
         NULL,
         M1,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "epr-24217-1002.ic11", 0x0000000, 0x0400000 },
@@ -597,7 +584,6 @@ Game Games[] =
         0x2807cf54,
         NULL,
         M2,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "epr-22185a.ic22", 0x0000000, 0x400000 },
@@ -636,7 +622,6 @@ Game Games[] =
         0x2807cf54,
         NULL,
         M2,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "epr-22185.ic22",  0x0000000, 0x400000 },
@@ -690,7 +675,6 @@ Game Games[] =
         0x2807cf54,
         NULL,
         M2,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "epr-22185t.ic22", 0x0000000, 0x400000 },
@@ -744,7 +728,6 @@ Game Games[] =
         0x2807cf54,
         NULL,
         M2,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "epr-23298.ic22",  0x0000000, 0x400000 },
@@ -795,7 +778,6 @@ Game Games[] =
         0x2807cf54,
         NULL,
         M2,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "epr-23299.ic22",  0x0000000, 0x400000 },
@@ -845,7 +827,6 @@ Game Games[] =
         0x28070e41,
         "naomi",
         M2,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "epr-21787b.ic22", 0x0000000, 0x400000 },
@@ -880,7 +861,6 @@ Game Games[] =
         0x28070e41,
         "naomi",
         M2,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "epr-21739a.ic22", 0x000000,  0x400000 },
@@ -910,7 +890,6 @@ Game Games[] =
         0x28174343,
         NULL,
         M2,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "epr-23586t.ic22", 0x0000000, 0x0400000 },
@@ -934,7 +913,6 @@ Game Games[] =
         0x28174343,
         NULL,
         M2,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "epr-23586a.ic22", 0x0000000, 0x0400000 },
@@ -958,7 +936,6 @@ Game Games[] =
         0x00000000,
         NULL,
         M2,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "epr-23511c.ic22", 0x0000000, 0x0400000 },
@@ -984,7 +961,6 @@ Game Games[] =
         0x00000000,
         NULL,
         M2,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "epr-23511a.ic22", 0x000000,  0x400000  },
@@ -1010,7 +986,6 @@ Game Games[] =
         0x00000000,
         NULL,
         M2,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "epr-23511.ic22", 0x000000,  0x400000  },
@@ -1036,7 +1011,6 @@ Game Games[] =
         0x281c2347,
         NULL,
         M2,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "epr-23450.ic22", 0x0000000, 0x0400000 },
@@ -1062,7 +1036,6 @@ Game Games[] =
         0x28428247,
         NULL,
         M2,
-        REGION_JAPAN,
         ROT0,
         {
             { "epr-23674.ic22", 0x0000000, 0x400000 },
@@ -1102,7 +1075,6 @@ Game Games[] =
         0x280d2f45,
         NULL,
         M2,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "epr-21684.ic22",  0x0000000, 0x400000 },
@@ -1134,7 +1106,6 @@ Game Games[] =
         0x28103347,
         NULL,
         M2,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "epr-23428a.ic22", 0x0000000, 0x0400000 },
@@ -1159,7 +1130,6 @@ Game Games[] =
         0x28103347,
         NULL,
         M2,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "epr-23428.ic22", 0x0000000, 0x400000  },
@@ -1183,7 +1153,6 @@ Game Games[] =
         0x000e2010,
         NULL,
         M2,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "epr-23210.ic22",  0x0000000, 0x0400000 },
@@ -1213,7 +1182,6 @@ Game Games[] =
         0x000b64d0,
         NULL,
         M2,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "epr-23524a.ic22", 0x0000000, 0x0400000 },
@@ -1241,7 +1209,6 @@ Game Games[] =
         0x000b64d0,
         NULL,
         M2,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "dcox_us.ic22",  0x0000000, 0x0400000, 0x0580a27e },
@@ -1269,7 +1236,6 @@ Game Games[] =
         0x000b64d0,
         NULL,
         M2,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "epr-23524.ic22", 0x0000000, 0x0400000 },
@@ -1297,7 +1263,6 @@ Game Games[] =
         0xffffffff, // not populated
         NULL,
         M2,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "epr-22284a.ic22", 0x0000000, 0x400000 },
@@ -1329,7 +1294,6 @@ Game Games[] =
         0x280fee35,
         NULL,
         M2,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "epr-22099b.ic22", 0x0000000, 0x0400000 },
@@ -1359,7 +1323,6 @@ Game Games[] =
         0x2a436bb7,
         NULL,
         M2,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "epr-22306b.ic22", 0x0000000, 0x0400000 },
@@ -1386,7 +1349,6 @@ Game Games[] =
         0xffffffff, // not populated
         NULL,
         M2,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "epr-22336d.ic22", 0x0000000, 0x0400000, 0xe6c0cb0c },
@@ -1409,7 +1371,6 @@ Game Games[] =
         0xffffffff, // not populated
         NULL,
         M2,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "epr-22336a.ic22", 0x0000000, 0x0400000, 0x56dee69a },
@@ -1432,7 +1393,6 @@ Game Games[] =
         0xffffffff, // not populated
         NULL,
         M2,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "epr-22336b.ic22", 0x0000000, 0x0400000, 0x8df5434b },
@@ -1455,7 +1415,6 @@ Game Games[] =
         0xffffffff, // not populated
         NULL,
         M2,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "epr-22336c.ic22", 0x0000000, 0x0400000, 0x50053f82 },
@@ -1478,7 +1437,6 @@ Game Games[] =
         0x0008ad01,
         NULL,
         M2,
-        REGION_EXPORT,
         ROT0,
         {
             { "epr-22207.ic22", 0x0000000, 0x0400000 },
@@ -1523,7 +1481,6 @@ Game Games[] =
         0x0008ad01,
         NULL,
         M2,
-        REGION_EXPORT,
         ROT0,
         {
             { "epr-22121a.ic22", 0x0000000, 0x0400000 },
@@ -1568,7 +1525,6 @@ Game Games[] =
         0x0008ad01,
         NULL,
         M2,
-        REGION_EXPORT,
         ROT0,
         {
             { "doa2verm.ic22",   0x0000000, 0x0400000 },
@@ -1612,7 +1568,6 @@ Game Games[] =
         0x2804ae71,
         NULL,
         M2,
-        REGION_JAPAN,
         ROT0,
         {
             { "epr-22141b.ic22", 0x0000000, 0x0200000 },
@@ -1650,7 +1605,6 @@ Game Games[] =
         0x280e6ae1,
         NULL,
         M2,
-        REGION_JAPAN,
         ROT0,
         {
             { "epr-21575.ic22",  0x0000000, 0x0200000 },
@@ -1690,7 +1644,6 @@ Game Games[] =
         0x280e8f84,
         "f355dlx",
         M2,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "epr-21902.ic22",  0x0000000, 0x0400000 },
@@ -1735,7 +1688,6 @@ Game Games[] =
         0x2806efd4,
         "f355bios",
         M2,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "epr-22848.ic22",  0x0000000, 0x400000, 0xa29edec2 },
@@ -1772,7 +1724,6 @@ Game Games[] =
         0x2806efd4,
         "f355bios",
         M2,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "epr-22848p.ic22", 0x0000000, 0x400000, 0x2c43b053 },
@@ -1809,7 +1760,6 @@ Game Games[] =
         0x281666c6,
         "f355bios",
         M2,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "epr-23399.ic22",  0x0000000, 0x400000 },
@@ -1847,7 +1797,6 @@ Game Games[] =
         0x28074a61,
         NULL,
         M2,
-        REGION_JAPAN,
         ROT0,
         {
             { "epr-21820.ic22", 0x0000000, 0x0200000 },
@@ -1877,7 +1826,6 @@ Game Games[] =
         0x00076110,
         NULL,
         M2,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "epr-23356.ic22",  0x0000000, 0x0400000 },
@@ -1910,7 +1858,6 @@ Game Games[] =
         0x000e8010,
         NULL,
         M2,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "epr-23638.ic22", 0x0000000, 0x0400000 },
@@ -1939,7 +1886,6 @@ Game Games[] =
         0x000680d0,
         NULL,
         M2,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "bhf2vere.2f", 0x0000000, 0x0800000 },
@@ -1972,7 +1918,6 @@ Game Games[] =
         0x000680d0,
         NULL,
         M2,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "bhf1vere.2f",  0x0000000, 0x0800000 },
@@ -2005,7 +1950,6 @@ Game Games[] =
         0x000b25d0,
         NULL,
         M2,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "epr-22270.ic22", 0x0000000, 0x0200000 },
@@ -2029,7 +1973,6 @@ Game Games[] =
         0x00038510,
         NULL,
         M2,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "epr-23716a.ic22", 0x0000000, 0x0400000 },
@@ -2059,7 +2002,6 @@ Game Games[] =
         0xfffffff, // not populated
         "hod2bios",
         M2,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "epr-21585.ic22",  0x0000000, 0x200000 },
@@ -2099,7 +2041,6 @@ Game Games[] =
         0xfffffff, // not populated
         "hod2bios",
         M2,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "epr-21385.ic22",  0x0000000, 0x200000 },
@@ -2139,7 +2080,6 @@ Game Games[] =
         0xfffffff, // not populated
         "hod2bios",
         M2,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "epr-21805.ic22",  0x0000000, 0x200000 },
@@ -2179,7 +2119,6 @@ Game Games[] =
         0xfffffff, // not populated
         "hod2bios",
         M2,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "hotd2proto.ic22", 0x000000,  0x200000 },
@@ -2219,7 +2158,6 @@ Game Games[] =
         0x294bc3e3,
         NULL,
         M2,
-        REGION_JAPAN,
         ROT0,
         {
             { "epr-22294a.ic22", 0x0000000, 0x400000 },
@@ -2251,7 +2189,6 @@ Game Games[] =
         0x280fab95,
         NULL,
         M2,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "epr-22826a.ic22", 0x0000000, 0x400000 },
@@ -2277,7 +2214,6 @@ Game Games[] =
         0x280b8ef5,
         NULL,
         M2,
-        REGION_JAPAN,
         ROT0,
         {
             { "epr-22993.ic22",  0x0000000, 0x200000 },
@@ -2309,7 +2245,6 @@ Game Games[] =
         0x280fea94,
         NULL,
         M2,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "maz2vera.2d", 0x0800000, 0x0800000 },
@@ -2337,7 +2272,6 @@ Game Games[] =
         0x280fea94,
         NULL,
         M2,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "maz3vera.2d", 0x0800000, 0x0800000 },
@@ -2364,7 +2298,6 @@ Game Games[] =
         0xffffffff, // not populated
         NULL,
         M2,
-        REGION_JAPAN,
         ROT0,
         {
             { "epr-24241.ic22", 0x00000000, 0x00400000 },
@@ -2385,7 +2318,6 @@ Game Games[] =
         0xffffffff, // not populated
         NULL,
         M2,
-        REGION_JAPAN,
         ROT0,
         {
             { "epr-24286.ic22", 0x0000000, 0x0400000, 0x00000000 },
@@ -2408,7 +2340,6 @@ Game Games[] =
         0xffffffff, // not populated
         NULL,
         M2,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "rom1.ic1s", 0x0800000, 0x800000, 0x9cdc8dcb },
@@ -2430,7 +2361,6 @@ Game Games[] =
         0x0002c840,
         NULL,
         M2,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "epr-23062a.ic22", 0x0000000, 0x0400000, 0x96038276 },
@@ -2466,7 +2396,6 @@ Game Games[] =
         0x000ca510,
         NULL,
         M2,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "nja2vera.2d", 0x0800000, 0x0800000 },
@@ -2498,7 +2427,6 @@ Game Games[] =
         0x000ca510,
         NULL,
         M2,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "nja4vera.2d",     0x0800000, 0x0800000 },
@@ -2531,7 +2459,6 @@ Game Games[] =
         0x000ca510,
         NULL,
         M2,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "nja1vera.2d",     0x0800000, 0x0800000 },
@@ -2565,7 +2492,6 @@ Game Games[] =
         0x000ca510,
         NULL,
         M2,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "nja3vera.2d", 0x0800000, 0x0800000 },
@@ -2599,7 +2525,6 @@ Game Games[] =
         0xffffffff, // not populated
         NULL,
         M2,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "epr-24053.ic22", 0x0000000, 0x0400000 },
@@ -2620,7 +2545,6 @@ Game Games[] =
         0x280fea94,
         NULL,
         M2,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "epr-22163.ic22", 0x0000000, 0x0400000 },
@@ -2662,7 +2586,6 @@ Game Games[] =
         0x000725d0,
         NULL,
         M2,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "epr-23548a.ic22", 0x0000000, 0x0400000 },
@@ -2691,7 +2614,6 @@ Game Games[] =
         0x000e69c1,
         NULL,
         M2,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "epr-21597.ic22",0x0000000, 0x0200000 },
@@ -2719,7 +2641,6 @@ Game Games[] =
         0x000b8dc0,
         NULL,
         M2,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "epr-23127.ic22", 0x0000000, 0x0400000 },
@@ -2747,7 +2668,6 @@ Game Games[] =
         0x000b8dc0,
         NULL,
         M2,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "00.ic1",  0x0000000, 0x0800000 },
@@ -2775,7 +2695,6 @@ Game Games[] =
         0x000acd40,
         NULL,
         M2,
-        REGION_JAPAN,
         ROT0,
         {
             { "epr-22206.ic22", 0x0000000, 0x400000 },
@@ -2811,7 +2730,6 @@ Game Games[] =
         0x280b1e40,
         NULL,
         M2,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "epr-21779a.ic22", 0x0000000, 0x400000 },
@@ -2840,7 +2758,6 @@ Game Games[] =
         0x280b1e40,
         NULL,
         M2,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "epr-21779.ic22", 0x0000000, 0x400000 },
@@ -2869,7 +2786,6 @@ Game Games[] =
         0x280a8b5d,
         NULL,
         M2,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "epr-22966b.ic22",0x0000000, 0x0400000 }, // was also found in cartridge with Rev.A case label
@@ -2901,7 +2817,6 @@ Game Games[] =
         0x280a8b5d,
         NULL,
         M2,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "epr-22966a.ic22", 0x0000000, 0x0400000 },
@@ -2933,7 +2848,6 @@ Game Games[] =
         0x280a8b5d,
         NULL,
         M2,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "sambaproto.ic22", 0x000000,   0x0400000  },
@@ -2963,7 +2877,6 @@ Game Games[] =
         0x281702cf,
         NULL,
         M2,
-        REGION_JAPAN,
         ROT0,
         {
             { "epr-23600.ic22", 0x00000000, 0x0400000 },
@@ -2990,7 +2903,6 @@ Game Games[] =
         0x2808ae51,
         NULL,
         M2,
-        REGION_AUSTRALIA,
         ROT0,
         {
             {  "epr-22909.ic22", 0x0000000, 0x200000 },
@@ -3014,7 +2926,6 @@ Game Games[] =
         0xffffffff, // not populated
         NULL,
         M2,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "epr-22060.ic22",  0x0000000, 0x0400000 },
@@ -3042,7 +2953,6 @@ Game Games[] =
         0xffffffff, // not populated
         NULL,
         M2,
-        REGION_AUSTRALIA,
         ROT270,
         {
             { "epr-23627.ic22", 0x0000000, 0x0400000 },
@@ -3069,7 +2979,6 @@ Game Games[] =
         0xffffffff, // not populated
         NULL,
         M2,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "epr-23626.ic22", 0x0000000, 0x200000 },
@@ -3108,7 +3017,6 @@ Game Games[] =
         0xffffffff, // not populated
         NULL,
         M2,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "epr-23625.ic22", 0x0000000, 0x0400000 },
@@ -3132,7 +3040,6 @@ Game Games[] =
         0xffffffff, // not populated
         NULL,
         M2,
-        REGION_AUSTRALIA,
         ROT270,
         {
             { "epr-24122a.ic22", 0x0000000, 0x0400000 },
@@ -3155,7 +3062,6 @@ Game Games[] =
         0xffffffff, // not populated
         NULL,
         M2,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "rom1.ic1s",   0x00800000, 0x00800000 },
@@ -3176,7 +3082,6 @@ Game Games[] =
         0xffffffff, // not populated
         NULL,
         M2,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "epr-24107a.ic22", 0x00000000, 0x00400000 },
@@ -3203,7 +3108,6 @@ Game Games[] =
         0xffffffff, // not populated
         NULL,
         M2,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "epr-24087b.ic22", 0x00000000, 0x00400000 },
@@ -3225,7 +3129,6 @@ Game Games[] =
         0xffffffff, // not populated
         NULL,
         M2,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "epr-24097a.ic22", 0x00000000, 0x00400000 },
@@ -3247,7 +3150,6 @@ Game Games[] =
         0xffffffff, // not populated
         NULL,
         M2,
-        REGION_AUSTRALIA,
         ROT270,
         {
             { "epr-23739b.ic22", 0x00000000, 0x00400000 },
@@ -3270,7 +3172,6 @@ Game Games[] =
         0x28048a01,
         NULL,
         M2,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "epr-22059.ic22",  0x0000000, 0x200000 },
@@ -3310,7 +3211,6 @@ Game Games[] =
         0x281a66ca,
         NULL,
         M2,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "epr-23341.ic22", 0x0000000, 0x0400000 },
@@ -3346,7 +3246,6 @@ Game Games[] =
         0xffffffff, // not populated
         NULL,
         M2,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "epr-22221.ic22",  0x0000000, 0x0400000 },
@@ -3376,7 +3275,6 @@ Game Games[] =
         0x00078d01,
         NULL,
         M2,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "epr-22977b.ic22", 0x0000000, 0x0400000 },
@@ -3405,7 +3303,6 @@ Game Games[] =
         0x28132303,
         NULL,
         M2,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "epr-23323a.ic22", 0x0000000, 0x400000 },
@@ -3443,7 +3340,6 @@ Game Games[] =
         0x28132303,
         NULL,
         M2,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "epr-23786a.ic22", 0x0000000, 0x400000 },
@@ -3481,7 +3377,6 @@ Game Games[] =
         0x000368e1,
         NULL,
         M2,
-        REGION_JAPAN,
         ROT0,
         {
             { "epr-21979.ic22", 0x0000000, 0x0200000 },
@@ -3512,7 +3407,6 @@ Game Games[] =
         0x28028ea5,
         NULL,
         M2,
-        REGION_JAPAN,
         ROT0,
         {
             //ROM_REGION16_BE( 0x80, "main_eeprom", 0 )
@@ -3541,7 +3435,6 @@ Game Games[] =
 		0x281e1242,
 		NULL,
 		M2,
-		REGION_JAPAN,
 		ROT0,
 		{
 			{ "epr-23468a.ic22", 0x0000000, 0x0400000 },
@@ -3577,7 +3470,6 @@ Game Games[] =
         0xffffffff, // not populated
         NULL,
         M2,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "epr-23021a.ic22", 0x0000000, 0x0400000 },
@@ -3618,7 +3510,6 @@ Game Games[] =
         0xffffffff, // not populated
         NULL,
         M2,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "epr-23021.ic22",  0x0000000, 0x0400000 },
@@ -3658,7 +3549,6 @@ Game Games[] =
         0x052e2901,
         NULL,
         M2,
-        REGION_JAPAN,
         ROT0,
         {
             { "trf1vera.2f", 0x0000000, 0x0800000 },
@@ -3692,7 +3582,6 @@ Game Games[] =
         0x2802ca85,
         NULL,
         M2,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "epr-22035.ic22",0x0000000, 0x0400000 },
@@ -3721,7 +3610,6 @@ Game Games[] =
         0xffffffff, // not populated
         NULL,
         M2,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "epr-23073.ic22",  0x0000000, 0x0400000 },
@@ -3759,7 +3647,6 @@ Game Games[] =
         0x28068b58,
         NULL,
         M2,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "epr-22949.ic22",  0x0000000, 0x0400000 },
@@ -3796,7 +3683,6 @@ Game Games[] =
         0x28068b58,
         NULL,
         M2,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "vnbaearly.ic22",  0x0000000, 0x0400000 },
@@ -3833,7 +3719,6 @@ Game Games[] =
         0x28068b58,
         NULL,
         M2,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "11-15.ic22",      0x0000000, 0x0400000 },
@@ -3870,7 +3755,6 @@ Game Games[] =
         0x28010715,
         NULL,
         M2,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "epr-23198.ic22",  0x0000000, 0x400000 },
@@ -3902,7 +3786,6 @@ Game Games[] =
         0x28088b08,
         NULL,
         M2,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "epr-21929c.ic22",0x0000000, 0x0400000 },
@@ -3934,7 +3817,6 @@ Game Games[] =
         0x28088b08,
         NULL,
         M2,
-        REGION_AUSTRALIA,
         ROT0,
         {
             {"epr-21929.ic22",   0x0000000, 0x0400000 },
@@ -3965,7 +3847,6 @@ Game Games[] =
         0x2803eb15,
         NULL,
         M2,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "epr-22927.ic22", 0x0000000, 0x0400000 },
@@ -3995,7 +3876,6 @@ Game Games[] =
         0xffffffff, // not populated
         NULL,
         M2,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "epr-24059.ic22", 0x0000000, 0x0400000 },
@@ -4020,7 +3900,6 @@ Game Games[] =
 		0x284ae7c3,
         NULL,
         M2,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "epr-23725a.ic22", 0x0000000, 0x400000  },
@@ -4051,7 +3930,6 @@ Game Games[] =
         0x052e2901,
         NULL,
         M2,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "wk2vera.2d",  0x0800000, 0x0800000 },
@@ -4078,7 +3956,6 @@ Game Games[] =
         0x052e2901,
         NULL,
         M2,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "wk1vera.2d",  0x0800000, 0x0800000 },
@@ -4104,7 +3981,6 @@ Game Games[] =
         0x052e2901,
         NULL,
         M2,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "wk3vera.2d", 0x0800000, 0x0800000 },
@@ -4130,7 +4006,6 @@ Game Games[] =
         0x052e2901,
         NULL,
         M2,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "wkc1vera.2d", 0x0800000, 0x0800000 },
@@ -4156,7 +4031,6 @@ Game Games[] =
         0x052e2901,
         NULL,
         M2,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "wkc2vera.2d", 0x0800000, 0x0800000 },
@@ -4183,7 +4057,6 @@ Game Games[] =
         0x281627c3,
         NULL,
         M2,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "epr-22261.ic22", 0x0000000, 0x0400000 },
@@ -4208,7 +4081,6 @@ Game Games[] =
         0x0007c010,
         NULL,
         M2,
-        REGION_JAPAN,
         ROT0,
         {
             { "epr-23689.ic22", 0x0000000, 0x0400000 },
@@ -4231,7 +4103,6 @@ Game Games[] =
         0x28012b41,
         NULL,
         M2,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "epr-21707a.ic22", 0x0000000, 0x0200000 },
@@ -4270,7 +4141,6 @@ Game Games[] =
         0x28012b41,
         NULL,
         M2,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "epr-21707.ic22",0x0000000, 0x0200000 },
@@ -4310,7 +4180,6 @@ Game Games[] =
         0x5504,
         "naomi",
         M4,
-        REGION_JAPAN,
         ROT0,
         {
             { "ic8.bin", 0x0000000, 0x4000000 },
@@ -4333,7 +4202,6 @@ Game Games[] =
         0x5504,
         "naomi",
         M4,
-        REGION_EXPORT,
         ROT0,
         {
             { "fpr-24382.ic8",  0x0000000, 0x4000000 },
@@ -4354,7 +4222,6 @@ Game Games[] =
         0x5504,
         "naomi",
         M4,
-        REGION_EXPORT,
         ROT0,
         {
             { "fpr-24382.ic8",  0x0000000, 0x4000000 },
@@ -4376,7 +4243,6 @@ Game Games[] =
         0x5504,
         "naomi",
         M4,
-        REGION_JAPAN,
         ROT270,
         {
             { "fpr-24437.ic8",  0x0000000, 0x4000000 },
@@ -4398,7 +4264,6 @@ Game Games[] =
         0x5505,
         "naomi",
         M4,
-        REGION_EXPORT,
         ROT0,
         {
             { "fpr-24408.ic8",  0x00000000, 0x4000000 },
@@ -4426,7 +4291,6 @@ Game Games[] =
         0x5504,
         "naomi",
         M4,
-        REGION_JAPAN,
         ROT270,
         {
             { "ic8.bin",  0x0000000, 0x4000000 },
@@ -4448,7 +4312,6 @@ Game Games[] =
         0x5586,
         "naomi",
         M4,
-        REGION_JAPAN,
         ROT0,
         {
             { "ic8.bin",       0x00000000, 0x4000000 },
@@ -4474,7 +4337,6 @@ Game Games[] =
         0x5506,
         "naomi",
         M4,
-        REGION_JAPAN,
         ROT0,
         {
             { "ic8.bin",       0x00000000, 0x4000000 },
@@ -4499,7 +4361,6 @@ Game Games[] =
         0x5502,
         "naomi",
         M4,
-        REGION_EXPORT,
         ROT0,
         {
             { "fpr-24333.ic8", 0x0000000, 0x4000000 },
@@ -4517,7 +4378,6 @@ Game Games[] =
         0x5582,
         "naomi",
         M4,
-        REGION_EXPORT,
         ROT0,
         {
             { "fpr-24333.ic8", 0x0000000, 0x4000000 },
@@ -4541,7 +4401,6 @@ Game Games[] =
         0x5502,
         "naomi",
         M4,
-        REGION_EXPORT,
         ROT0,
         {
             { "fpr-24417.ic8", 0x0000000, 0x4000000 },
@@ -4563,7 +4422,6 @@ Game Games[] =
         0x5505,
         "naomi",
         M4,
-        REGION_JAPAN,
         ROT0,
         {
             { "fpr-24365.ic8",  0x00000000, 0x4000000, 0x11489cda },
@@ -4591,7 +4449,6 @@ Game Games[] =
         0x5504,
         "naomi",
         M4,
-        REGION_JAPAN,
         ROT0,
         {
             { "ic8.bin", 0x0000000, 0x4000000 },
@@ -4612,7 +4469,6 @@ Game Games[] =
         0x5504,
         "naomi",
         M4,
-        REGION_JAPAN,
         ROT0,
         {
             { "fpr-24423.ic8",  0x00000000, 0x4000000 },
@@ -4633,7 +4489,6 @@ Game Games[] =
         0x5504,
         "naomi",
         M4,
-        REGION_JAPAN,
         ROT270,
         {
             { "fpr-24413.ic8",  0x0000000, 0x4000000 },
@@ -4656,7 +4511,6 @@ Game Games[] =
         0x5502,
         "naomi",
         M4,
-        REGION_JAPAN,
         ROT0,
         {
             { "fpr-24338.ic8", 0x0000000, 0x4000000 },
@@ -4677,7 +4531,6 @@ Game Games[] =
         0x5502,
         "naomi",
         M4,
-        REGION_AUSTRALIA,
         ROT270,
         {
             { "fpr-24489.ic8",  0x00000000, 0x4000000 },
@@ -4696,7 +4549,6 @@ Game Games[] =
         0,
         "naomi",
         GD,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "317-5091-jpn.pic", 0, 0x4000 },
@@ -4713,7 +4565,6 @@ Game Games[] =
         0,
         "naomi",
         GD,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "317-5097-jpn.pic", 0, 0x4000 },
@@ -4732,7 +4583,6 @@ Game Games[] =
         0,
         "naomi",
         GD,
-        REGION_JAPAN,
         ROT0,
         {
             { "317-5102-com.pic", 0, 0x4000 },
@@ -4751,7 +4601,6 @@ Game Games[] =
         0,
         "naomi",
         GD,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "317-5085-jpn.pic", 0, 0x4000 },
@@ -4769,7 +4618,6 @@ Game Games[] =
         0,
         "naomi",
         GD,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "317-5083-com.pic", 0, 0x4000 },
@@ -4787,7 +4635,6 @@ Game Games[] =
         0,
         "naomi",
         GD,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "317-0298-com.pic",  0, 0x4000 },
@@ -4806,7 +4653,6 @@ Game Games[] =
         0,
         "naomi",
         GD,
-        REGION_JAPAN,
         ROT0,
         {
             { "317-5076-jpn.pic", 0, 0x4000 },
@@ -4827,7 +4673,6 @@ Game Games[] =
         0,
         "naomi",
         GD,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "317-5078-com.pic", 0, 0x4000 },
@@ -4847,7 +4692,6 @@ Game Games[] =
         0,
         "naomi",
         GD,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "317-5078-com.pic", 0, 0x4000 },
@@ -4866,7 +4710,6 @@ Game Games[] =
         0,
         "naomi",
         GD,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "317-0363-com.pic", 0, 0x4000 },
@@ -4884,7 +4727,6 @@ Game Games[] =
         0,
         "naomi",
         GD,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "317-0363-com.pic", 0, 0x4000 },
@@ -4902,7 +4744,6 @@ Game Games[] =
         0,
         "naomi",
         GD,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "317-0389-com.pic", 0, 0x4000 },
@@ -4920,7 +4761,6 @@ Game Games[] =
         0,
         "naomi",
         GD,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "317-0426-jpn.pic", 0, 0x4000 },
@@ -4938,7 +4778,6 @@ Game Games[] =
         0,
         "naomi",
         GD,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "317-0308-com.pic", 0, 0x4000 },
@@ -4955,7 +4794,6 @@ Game Games[] =
         0,
         "naomi",
         GD,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "317-5082-com.pic", 0, 0x4000 },
@@ -4973,7 +4811,6 @@ Game Games[] =
         0,
         "naomi",
         GD,
-        REGION_JAPAN,
         ROT0,
         {
             { "317-5126-jpn.pic", 0, 0x4000 },
@@ -4992,7 +4829,6 @@ Game Games[] =
         0,
         "naomi",
         GD,
-        REGION_JAPAN,
         ROT0,
         {
             { "317-5092-jpn.pic", 0, 0x4000 },
@@ -5010,7 +4846,6 @@ Game Games[] =
         0,
         "naomi",
         GD,
-        REGION_JAPAN,
         ROT0,
         {
             { "317-5092-jpn.pic" , 0, 0x4000 },
@@ -5028,7 +4863,6 @@ Game Games[] =
         0,
         "naomi",
         GD,
-        REGION_JAPAN,
         ROT0,
         {
             { "317-5111-jpn.pic", 0, 0x4000 },
@@ -5047,7 +4881,6 @@ Game Games[] =
         0,
         "naomi",
         GD,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "317-5069-com.pic", 0, 0x4000 },
@@ -5067,7 +4900,6 @@ Game Games[] =
         0,
         "naomi",
         GD,
-        REGION_USA,
         ROT0,
         {
             { "317-5079-com.pic", 0, 0x4000 },
@@ -5087,7 +4919,6 @@ Game Games[] =
         0,
         "naomi",
         GD,
-        REGION_AUSTRALIA,
         ROT270,
         {
             { "317-5081-jpn.pic", 0, 0x4000 },
@@ -5107,7 +4938,6 @@ Game Games[] =
         0,
         "naomi",
         GD,
-        REGION_JAPAN,
         ROT0,
         {
             { "317-5122-jpn.pic", 0, 0x4000 },
@@ -5127,7 +4957,6 @@ Game Games[] =
         0,
         "naomi",
         GD,
-        REGION_JAPAN,
         ROT270,
         {
             { "317-5125-com.pic", 0, 0x4000 },
@@ -5146,7 +4975,6 @@ Game Games[] =
         0,
         "naomi",
         GD,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "317-0323-com.pic", 0, 0x4000 },
@@ -5164,7 +4992,6 @@ Game Games[] =
         0,
         "naomi",
         GD,
-        REGION_JAPAN,
         ROT0,
         {
             { "317-5115-jpn.pic", 0, 0x4000 },
@@ -5181,7 +5008,6 @@ Game Games[] =
         0,
         "naomi",
         GD,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "317-0325-jpn.pic", 0, 0x4000 },
@@ -5200,7 +5026,6 @@ Game Games[] =
         0,
         "naomi",
         GD,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "317-0325-jpn.pic", 0, 0x4000 },
@@ -5219,7 +5044,6 @@ Game Games[] =
         0,
         "naomi",
         GD,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "317-0332-jpn.pic", 0, 0x4000 },
@@ -5238,7 +5062,6 @@ Game Games[] =
         0,
         "naomi",
         GD,
-        REGION_JAPAN,
         ROT0,
         {
             { "317-5124-jpn.pic", 0, 0x4000 },
@@ -5257,7 +5080,6 @@ Game Games[] =
         0,
         "naomi",
         GD,
-        REGION_JAPAN,
         ROT0,
         {
             { "317-5104-jpn.pic", 0, 0x4000 },
@@ -5276,7 +5098,6 @@ Game Games[] =
         0,
         "naomi",
         GD,
-        REGION_JAPAN,
         ROT0,
         {
             { "317-5104-jpn.pic", 0, 0x4000 },
@@ -5295,7 +5116,6 @@ Game Games[] =
         0,
         "naomi",
         GD,
-        REGION_JAPAN,
         ROT0,
         {
             { "317-5124-jpn.pic", 0, 0x4000 },
@@ -5314,7 +5134,6 @@ Game Games[] =
         0,
         "naomi",
         GD,
-        REGION_JAPAN,
         ROT0,
         {
             { "317-5084-jpn.pic", 0, 0x4000 },
@@ -5332,7 +5151,6 @@ Game Games[] =
         0,
         "naomi",
         GD,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "317-0333-com.pic", 0, 0x4000 },
@@ -5351,7 +5169,6 @@ Game Games[] =
         0,
         "naomi",
         GD,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "317-0307-com.pic", 0, 0x4000 },
@@ -5370,7 +5187,6 @@ Game Games[] =
         0,
         "naomi",
         GD,
-        REGION_JAPAN,
         ROT270,
         {
             { "317-5100-jpn.pic", 0, 0x4000 },
@@ -5391,7 +5207,6 @@ Game Games[] =
         0,
         "naomi",
         GD,
-		REGION_JAPAN,
         ROT0,
         {
             { "317-0375-com.pic", 0, 0x4000 },
@@ -5411,7 +5226,6 @@ Game Games[] =
         0,
         "naomi",
         GD,
-        REGION_JAPAN,
         ROT0,
         {
             { "317-0375-com.pic", 0, 0x4000 },
@@ -5424,14 +5238,13 @@ Game Games[] =
     },
 	// Puyo Puyo Fever (Prototype)
 	{
-		"puyofevp",
+		"puyofevp", // FIXME bootid
 		"puyofev",
 		"Puyo Puyo Fever (Prototype)",
 		0x0c000000,
 		0xff9d4d3c,
 		"naomi",
 		M1,
-		REGION_JAPAN,
 		ROT0,
 		{
 				{ "ic17s.bin", 0x01000000, 0x800000, 0xf51ce63b, InterleavedWord },
@@ -5473,7 +5286,6 @@ Game Games[] =
         0,
         "naomi",
         GD,
-        REGION_AUSTRALIA,
         ROT270,
         {
             { "317-5090-jpn.pic", 0, 0x4000 },
@@ -5491,7 +5303,6 @@ Game Games[] =
         0,
         "naomi",
         GD,
-        REGION_JAPAN,
         ROT270,
         {
             { "317-5110-jpn.pic", 0, 0x4000 },
@@ -5510,7 +5321,6 @@ Game Games[] =
         0,
         "naomi",
         GD,
-        REGION_JAPAN,
         ROT270,
         {
             { "317-5110-jpn.pic", 0, 0x4000 },
@@ -5528,7 +5338,6 @@ Game Games[] =
         0,
         "naomi",
         GD,
-        REGION_JAPAN,
         ROT0,
         {
             { "317-5107-jpn.pic", 0, 0x4000 },
@@ -5548,7 +5357,6 @@ Game Games[] =
         0,
         "naomi",
         GD,
-        REGION_JAPAN,
         ROT0,
         {
             { "317-5107-jpn.pic", 0, 0x4000 },
@@ -5568,7 +5376,6 @@ Game Games[] =
         0,
         "naomi",
         GD,
-        REGION_JAPAN, // one of the few exceptions that doesn't work with USA bios while they work with Export bios, so it's safer to restrict it to Japan bios
         ROT0,
         {
             { "317-5123-com.pic", 0, 0x4000 },
@@ -5587,7 +5394,6 @@ Game Games[] =
         0,
         "naomi",
         GD,
-        REGION_JAPAN,
         ROT0,
         {
             { "317-5072-com.pic", 0, 0x4000 },
@@ -5607,7 +5413,6 @@ Game Games[] =
         0,
         "naomi",
         GD,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "317-0299-com.pic", 0, 0x4000 },
@@ -5624,7 +5429,6 @@ Game Games[] =
         0,
         "naomi",
         GD,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "317-0321-com.pic", 0, 0x4000 },
@@ -5641,7 +5445,6 @@ Game Games[] =
         0,
         "naomi",
         GD,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "317-0315-com.pic", 0, 0x4000 },
@@ -5658,7 +5461,6 @@ Game Games[] =
         0,
         "naomi",
         GD,
-        REGION_AUSTRALIA,
         ROT270,
         {
             { "317-5095-jpn.pic", 0, 0x4000 },
@@ -5676,7 +5478,6 @@ Game Games[] =
         0,
         "naomi",
         GD,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "317-0302-com.pic",  0, 0x4000 },
@@ -5695,7 +5496,6 @@ Game Games[] =
         0,
         "naomi",
         GD,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "317-0303-com.pic", 0, 0x4000 },
@@ -5714,7 +5514,6 @@ Game Games[] =
         0,
         "naomi",
         GD,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "317-0300-com.pic", 0, 0x4000 },
@@ -5732,7 +5531,6 @@ Game Games[] =
         0,
         "naomi",
         GD,
-        REGION_JAPAN,
         ROT0,
         {
             { "317-5108-jpn.pic", 0, 0x4000 },
@@ -5750,7 +5548,6 @@ Game Games[] =
         0,
         "naomi",
         GD,
-        REGION_JAPAN,
         ROT0,
         {
             { "317-5108-jpn.pic", 0, 0x4000 },
@@ -5768,7 +5565,6 @@ Game Games[] =
         0,
         "naomi",
         GD,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "317-5077-jpn.pic", 0, 0x4000 },
@@ -5785,7 +5581,6 @@ Game Games[] =
         0,
         "naomi",
         GD,
-        REGION_JAPAN,
         ROT0,
         {
             { "317-5127-jpn.pic", 0, 0x4000 },
@@ -5802,7 +5597,6 @@ Game Games[] =
         0,
         "naomi",
         GD,
-        REGION_JAPAN,
         ROT0,
         {
             { "317-5093-jpn.pic", 0, 0x4000 },
@@ -5820,7 +5614,6 @@ Game Games[] =
         0,
         "naomi",
         GD,
-        REGION_JAPAN,
         ROT270,
         {
             { "317-5121-jpn.pic", 0, 0x4000 },
@@ -5841,7 +5634,6 @@ Game Games[] =
         0,
         "naomi",
         GD,
-        REGION_JAPAN,
         ROT270,
         {
             { "317-5121-jpn.pic", 0, 0x4000 },
@@ -5861,7 +5653,6 @@ Game Games[] =
         0,
         "naomi",
         GD,
-        REGION_JAPAN,
         ROT270,
         {
             { "317-5103-jpn.pic", 0, 0x4000 },
@@ -5882,7 +5673,6 @@ Game Games[] =
         0,
         "naomi",
         GD,
-        REGION_JAPAN,
         ROT270,
         {
             { "317-5117-jpn.pic", 0, 0x4000 },
@@ -5902,7 +5692,6 @@ Game Games[] =
         0,
         "naomi",
         GD,
-        REGION_JAPAN,
         ROT0,
         {
             { "317-5096-jpn.pic", 0, 0x4000 },
@@ -5920,7 +5709,6 @@ Game Games[] =
         0,
         "naomi",
         GD,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "317-0330-com.pic", 0, 0x4000 },
@@ -5938,7 +5726,6 @@ Game Games[] =
         0,
         "naomi",
         GD,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "317-0318-com.pic", 0, 0x4000 },
@@ -5957,7 +5744,6 @@ Game Games[] =
         0,
         "naomi",
         GD,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "317-0312-com.pic", 0, 0x4000 },
@@ -5976,7 +5762,6 @@ Game Games[] =
         0,
         "naomi",
         GD,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "317-0309-com.pic", 0, 0x4000 },
@@ -5995,7 +5780,6 @@ Game Games[] =
         0,
         "naomi",
         GD,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "317-0352-jpn.pic", 0, 0x4000 },
@@ -6015,7 +5799,6 @@ Game Games[] =
         0x45,
         "awbios",
         AW,
-        REGION_AUSTRALIA,
         ROT270,
         {
             { "vm2001f01.u3",  0x0000000, 0x800000 },
@@ -6034,7 +5817,6 @@ Game Games[] =
         0x45,
         "awbios",
         AW,
-        REGION_AUSTRALIA,
         ROT270,
         {
             { "u3",  0x0000000, 0x1000000 },
@@ -6054,7 +5836,6 @@ Game Games[] =
         0x2a,
         "awbios",
         AW,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "vera.u3",      0x00000000, 0x01000000 },
@@ -6077,7 +5858,6 @@ Game Games[] =
         0x2a,
         "awbios",
         AW,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "610-0811.u3",  0x00000000, 0x01000000 },
@@ -6100,7 +5880,6 @@ Game Games[] =
         0x45,
         "awbios",
         AW,
-        REGION_AUSTRALIA,
         ROT270,
         {
             { "u3", 0x0000000, 0x1000000 },
@@ -6123,7 +5902,6 @@ Game Games[] =
         0x2a,
         "awbios",
         AW,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "608-2161.u3",  0x0000000, 0x1000100 },
@@ -6146,7 +5924,6 @@ Game Games[] =
         0x90,
         "awbios",
         AW,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "ax0601p01.ic18", 0x0000000, 0x0800000 },
@@ -6171,7 +5948,6 @@ Game Games[] =
         0x2a,
         "awbios",
         AW,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "695-0014.u3",  0x0000000, 0x1000000 },
@@ -6194,7 +5970,6 @@ Game Games[] =
         0x40,
         "awbios",
         AW,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "ax0401p01.ic18", 0x0000000, 0x0800000 },
@@ -6217,7 +5992,6 @@ Game Games[] =
         0xc2,
         "awbios",
         AW,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "ax1901p01.ic18", 0x0000000, 0x0800000 },
@@ -6242,7 +6016,6 @@ Game Games[] =
         0x6b,
         "awbios",
         AW,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "ax1701p01.ic18", 0x0000000, 0x0800000 },
@@ -6266,7 +6039,6 @@ Game Games[] =
         0xed,
         "awbios",
         AW,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "ax1201p01.ic18", 0x0000000, 0x0800000 },
@@ -6292,7 +6064,6 @@ Game Games[] =
         0xc9,
         "awbios",
         AW,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "ax0801p01.ic18", 0x0000000, 0x0800000 },
@@ -6317,7 +6088,6 @@ Game Games[] =
         0x99,
         "awbios",
         AW,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "ax2201en_p01.ic18", 0x0000000, 0x0800000 },
@@ -6341,7 +6111,6 @@ Game Games[] =
         0x99,
         "awbios",
         AW,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "ax2201jp_p01.ic18", 0x0000000, 0x0800000 },
@@ -6366,7 +6135,6 @@ Game Games[] =
         0xd3,
         "awbios",
         AW,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "ax3201p01.fmem1", 0x00000000, 0x0800000 },
@@ -6391,7 +6159,6 @@ Game Games[] =
         0x35,
         "awbios",
         AW,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "ax1301p01.ic18", 0x0000000, 0x0800000 },
@@ -6416,7 +6183,6 @@ Game Games[] =
         0x55,
         "awbios",
         AW,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "ax0501p01.ic18", 0x0000000, 0x0800000 },
@@ -6439,7 +6205,6 @@ Game Games[] =
         0x82,
         "awbios",
         AW,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "ax3001p01.fmem1", 0x0000000, 0x0800000 },
@@ -6461,7 +6226,6 @@ Game Games[] =
         0xa0,
         "awbios",
         AW,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "ax3301en_p01.fmem1", 0x00000000, 0x0800000 },
@@ -6486,7 +6250,6 @@ Game Games[] =
         0xa0,
         "awbios",
         AW,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "ax3301p01.fmem1", 0x00000000, 0x0800000 },
@@ -6511,7 +6274,6 @@ Game Games[] =
         0x88,
         "awbios",
         AW,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "ax1601p01.ic18", 0x0000000, 0x0800000 },
@@ -6532,7 +6294,6 @@ Game Games[] =
         0xaa,
         "awbios",
         AW,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "ax1801p01.ic18", 0x0000000, 0x0800000 },
@@ -6557,7 +6318,6 @@ Game Games[] =
         0x25,
         "awbios",
         AW,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "ic12", 0x00000000, 0x00800000 },
@@ -6590,7 +6350,6 @@ Game Games[] =
         0x07,
         "awbios",
         AW,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "ax3401p01.fmem1", 0x0000000, 0x0800000 },
@@ -6613,7 +6372,6 @@ Game Games[] =
         0x25,
         "awbios",
         AW,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "ic12", 0x00000000, 0x00800000 },
@@ -6646,7 +6404,6 @@ Game Games[] =
         0x77,
         "awbios",
         AW,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "ax1401p01.ic18", 0x0000000, 0x0800000 },
@@ -6669,7 +6426,6 @@ Game Games[] =
         0x1d,
         "awbios",
         AW,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "ax2901p01.fmem1", 0x00000000, 0x0800000 },
@@ -6694,7 +6450,6 @@ Game Games[] =
         0x64,
         "awbios",
         AW,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "ax0101p01.ic18", 0x0000000, 0x0800000 },
@@ -6714,7 +6469,6 @@ Game Games[] =
         0x25,
         "awbios",
         AW,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "ic12", 0x00000000, 0x00800000 },
@@ -6735,7 +6489,6 @@ Game Games[] =
         0xdb,
         "awbios",
         AW,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "ax2001p01.ic18", 0x0000000, 0x0800000 },
@@ -6758,7 +6511,6 @@ Game Games[] =
         0x45,
         "awbios",
         AW,
-        REGION_AUSTRALIA,
         ROT270,
         {
             { "u3", 0x0000000, 0x1000000 },
@@ -6775,7 +6527,6 @@ Game Games[] =
         0xe4,
         "awbios",
         AW,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "ax2401p01.ic18", 0x0000000, 0x0800000 },
@@ -6796,7 +6547,6 @@ Game Games[] =
         0x2a,
         "awbios",
         AW,
-        REGION_AUSTRALIA,
         ROT0,
         {
             { "610-0752.u3",    0x0000000, 0x1000000 },
@@ -6826,7 +6576,6 @@ Game Games[] =
 		0x2cee834a,
 		"naomi2",
 		M2,
-		REGION_EXPORT_ONLY,
 		ROT0,
         {
 			{ "epr-23663.ic22", 0x0000000, 0x0400000, 0x6910a008 },
@@ -6851,7 +6600,6 @@ Game Games[] =
 		0x2cee834a,
 		"naomi2",
 		M2,
-		REGION_EXPORT_ONLY,
 		ROT0,
 		{
 			{ "epr-23663b.ic22", 0x0000000, 0x0400000, 0x15733e44 },
@@ -6876,7 +6624,6 @@ Game Games[] =
 		0x2ce7a703,
 		"naomi2",
 		M2,
-		REGION_AUSTRALIA,
 		ROT0,
         {
 			{ "epr-23622.ic22", 0x0000000, 0x0400000, 0x8acafa5b },
@@ -6902,7 +6649,6 @@ Game Games[] =
 		0x2eef2f96,
 		"naomi2",
 		M2,
-		REGION_EXPORT_ONLY,
 		ROT0,
         {
 			{ "epr-23785.ic22", 0x0000000, 0x0400000, 0x9bd98d4b },
@@ -6927,7 +6673,6 @@ Game Games[] =
 		0xffffffff,
 		"naomi2",
 		M2,
-		REGION_AUSTRALIA,
 		ROT0,
         {
 			{ "epr-23819a.ic22", 0x0000000, 0x00400000, 0x92f11b29 },
@@ -6953,7 +6698,6 @@ Game Games[] =
 		0xffffffff,
 		"naomi2",
 		M2,
-		REGION_AUSTRALIA,
 		ROT0,
         {
 			{ "epr-23819-1-11.ic22", 0x0000000, 0x00400000, 0xa9602240 },
@@ -6979,7 +6723,6 @@ Game Games[] =
 		0xffffffff,
 		"naomi2",
 		M2,
-		REGION_AUSTRALIA,
 		ROT0,
         {
 			{ "epr-23838c.ic22", 0x000000, 0x400000, 0x5e5fb00f },
@@ -7016,7 +6759,6 @@ Game Games[] =
 		0x1e5bb0cd,
 		"naomi2",
 		M1,
-		REGION_EXPORT_ONLY,
 		ROT0,
         {
 			{ "epr-23934.ic11",  0x0000000, 0x400000, 0x656a7d84 },
@@ -7051,7 +6793,6 @@ Game Games[] =
 		0x2ce7d742,
 		"naomi2",
 		M2,
-		REGION_AUSTRALIA,
 		ROT0,
         {
 			{ "epr-23704.ic22", 0x0000000, 0x0400000, 0xff700a0d },
@@ -7078,7 +6819,6 @@ Game Games[] =
 		0x2ce7d742,
 		"naomi2",
 		M2,
-		REGION_AUSTRALIA,
 		ROT0,
         {
 			{ "epr-23704a.ic22", 0x0000000, 0x0400000, 0x45ea13c3 },
@@ -7105,7 +6845,6 @@ Game Games[] =
 		0x2ce7d742,
 		"naomi2",
 		M2,
-		REGION_AUSTRALIA,
 		ROT0,
         {
 			{ "epr-23704c.ic22", 0x0000000, 0x0400000, 0x9aaba862 },
@@ -7132,7 +6871,6 @@ Game Games[] =
 		0x2ce7d742,
 		"naomi2",
 		M2,
-		REGION_AUSTRALIA,
 		ROT0,
         {
 			{ "epr-23704d.ic22", 0x0000000, 0x0400000, 0x60ac770c },
@@ -7159,7 +6897,6 @@ Game Games[] =
 		0x997681fe,
 		"naomi2",
 		M1,
-		REGION_AUSTRALIA,
 		ROT0,
         {
 			{ "epr-24082a.ic11", 0x000000, 0x400000, 0x7c331cb8 },
@@ -7192,7 +6929,6 @@ Game Games[] =
 		0x997681fe,
 		"naomi2",
 		M1,
-		REGION_AUSTRALIA,
 		ROT0,
         {
 			{ "epr-24149.ic11", 0x000000, 0x400000, 0x175b57a5 },
@@ -7225,7 +6961,6 @@ Game Games[] =
 		0xd8b0fa4c,
 		"naomi2",
 		M1,
-		REGION_AUSTRALIA,
 		ROT0,
         {
 			{ "epr-24173a.ic11", 0x0000000, 0x400000, 0xd35ae42a },
@@ -7260,7 +6995,6 @@ Game Games[] =
 		0xffffffff,
 		"naomi2",
 		M2,
-		REGION_AUSTRALIA,
 		ROT0,
         {
         	{ "ic22.bin",    0x0000000, 0x400000, 0x334fc561 }, // flash ROM module
@@ -7295,7 +7029,6 @@ Game Games[] =
 		0xffffffff,
 		"naomi2",
 		M2,
-		REGION_AUSTRALIA,
 		ROT0,
         {
            	{ "rom0.ic22",   0x0000000, 0x400000, 0x8514f0bf }, // one of ROM header bytes was clearly bad, manually fixed, but there might be more
@@ -7336,7 +7069,6 @@ Game Games[] =
 		0,
 		"naomi2",
 		GD,
-		REGION_AUSTRALIA,
 		ROT0,
         {
 			{ "317-0304-com.bin", 0, 0x4000, 0x8e82d17a },
@@ -7351,7 +7083,6 @@ Game Games[] =
 		0,
 		"naomi2",
 		GD,
-		REGION_AUSTRALIA,
 		ROT0,
         {
 			{ "317-0314-com.pic", 0, 0x4000, 0xfa0b6c70 },
@@ -7366,7 +7097,6 @@ Game Games[] =
 		0,
 		"naomi2",
 		GD,
-		REGION_AUSTRALIA,
 		ROT0,
         {
 			{ "317-0314-com.pic", 0, 0x4000, 0xfa0b6c70 },
@@ -7381,7 +7111,6 @@ Game Games[] =
 		0,
 		"naomi2",
 		GD,
-		REGION_AUSTRALIA,
 		ROT0,
         {
 			{ "317-0314-com.pic", 0, 0x4000, 0xfa0b6c70 },
@@ -7396,7 +7125,6 @@ Game Games[] =
 		0,
 		"naomi2",
 		GD,
-		REGION_AUSTRALIA,
 		ROT0,
         {
 			{ "317-0317-com.pic", 0, 0x4000, 0xef65fe73 },
@@ -7411,7 +7139,6 @@ Game Games[] =
 		0,
 		"naomi2",
 		GD,
-		REGION_JAPAN,
 		ROT0,
         {
 			{ "317-0331-jpn.pic", 0, 0x4000, 0x0a3bf606 },
@@ -7427,7 +7154,6 @@ Game Games[] =
 		0,
 		"naomi2",
 		GD,
-		REGION_JAPAN,
 		ROT0,
         {
 			{ "317-0331-jpn.pic", 0, 0x4000, 0x0a3bf606 },
@@ -7443,7 +7169,6 @@ Game Games[] =
 		0,
 		"naomi2",
 		GD,
-		REGION_JAPAN,
 		ROT0,
         {
 			{ "317-0338-jpn.pic", 0, 0x4000, 0xb177ba7d },
@@ -7458,7 +7183,6 @@ Game Games[] =
 		0,
 		"naomi2",
 		GD,
-		REGION_JAPAN,
 		ROT0,
         {
 			{ "317-0338-jpn.pic", 0, 0x4000, 0xb177ba7d },
@@ -7473,7 +7197,6 @@ Game Games[] =
 		0,
 		"naomi2",
 		GD,
-		REGION_JAPAN,
 		ROT0,
         {
 			{ "317-0338-jpn.pic", 0, 0x4000, 0xb177ba7d },
@@ -7488,7 +7211,6 @@ Game Games[] =
 		0,
 		"naomi2",
 		GD,
-		REGION_EXPORT_ONLY,
 		ROT0,
         {
 			{ "317-0343-com.pic", 0, 0x4000, 0x80eea4eb },
@@ -7504,7 +7226,6 @@ Game Games[] =
 		0,
 		"naomi2",
 		GD,
-		REGION_EXPORT_ONLY,
 		ROT0,
         {
 			{ "317-0343-com.pic", 0, 0x4000, 0x80eea4eb },
@@ -7520,7 +7241,6 @@ Game Games[] =
 		0,
 		"naomi2",
 		GD,
-		REGION_JAPAN,
 		ROT0,
         {
 			{ "317-0345-jpn.pic", 0, 0x4000, 0x56e1274a },
@@ -7536,7 +7256,6 @@ Game Games[] =
 		0,
 		"naomi2",
 		GD,
-		REGION_JAPAN,
 		ROT0,
         {
 			{ "317-0345-jpn.pic", 0, 0x4000, 0x56e1274a },
@@ -7552,7 +7271,6 @@ Game Games[] =
 		0,
 		"naomi2",
 		GD,
-		REGION_JAPAN,
 		ROT0,
         {
 			{ "317-0345-jpn.pic", 0, 0x4000, 0x56e1274a },
@@ -7568,7 +7286,6 @@ Game Games[] =
 		0,
 		"naomi2",
 		GD,
-		REGION_EXPORT_ONLY,
 		ROT0,
         {
 			{ "317-0357-exp.pic", 0, 0x4000, 0x38f84b4d },
@@ -7584,7 +7301,6 @@ Game Games[] =
 		0,
 		"naomi2",
 		GD,
-		REGION_AUSTRALIA,
 		ROT0,
         {
 			{ "317-0358-com.pic", 0, 0x4000, 0xdd33e50f },
@@ -7600,7 +7316,6 @@ Game Games[] =
 		0,
 		"naomi2",
 		GD,
-		REGION_AUSTRALIA,
 		ROT0,
         {
 			{ "317-0358-com.pic", 0, 0x4000, 0xdd33e50f },
@@ -7616,7 +7331,6 @@ Game Games[] =
 		0,
 		"naomi2",
 		GD,
-		REGION_JAPAN,
 		ROT0,
         {
 			{ "317-0379-jpn.pic", 0, 0x4000, 0x7f024ff6 },
@@ -7632,7 +7346,6 @@ Game Games[] =
 		0,
 		"naomi2",
 		GD,
-		REGION_JAPAN,
 		ROT0,
         {
 			{ "317-0379-jpn.pic", 0, 0x4000, 0x7f024ff6 },
@@ -7648,7 +7361,6 @@ Game Games[] =
 		0,
 		"naomi2",
 		GD,
-		REGION_EXPORT_ONLY,
 		ROT0,
         {
 			{ "317-0384-com.pic", 0, 0x4000, 0x081ccd51 },
@@ -7664,7 +7376,6 @@ Game Games[] =
 		0,
 		"naomi2",
 		GD,
-		REGION_AUSTRALIA,
 		ROT0,
         {
 			{ "317-0387-com.pic", 0, 0x4000, 0x8728aeaa },
@@ -7679,7 +7390,6 @@ Game Games[] =
 		0,
 		"naomi2",
 		GD,
-		REGION_AUSTRALIA,
 		ROT0,
         {
 			{ "317-0387-com.pic", 0, 0x4000, 0x8728aeaa },
@@ -7694,7 +7404,6 @@ Game Games[] =
 		0,
 		"naomi2",
 		GD,
-		REGION_AUSTRALIA,
 		ROT0,
         {
 			{ "317-0387-com.pic", 0, 0x4000, 0x8728aeaa },
@@ -7709,7 +7418,6 @@ Game Games[] =
 		0,
 		"naomi2",
 		GD,
-		REGION_EXPORT_ONLY,
 		ROT0,
         {
 			{ "317-0406-com.pic", 0, 0x4000, 0xfe91a7af },
@@ -7725,7 +7433,6 @@ Game Games[] =
 		0,
 		"naomi2",
 		GD,
-		REGION_EXPORT_ONLY,
 		ROT0,
         {
 			{ "317-0406-com.pic", 0, 0x4000, 0xfe91a7af },

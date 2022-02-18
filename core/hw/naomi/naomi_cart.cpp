@@ -38,6 +38,7 @@
 #include "oslib/oslib.h"
 #include "serialize.h"
 #include "card_reader.h"
+#include "naomi_flashrom.h"
 
 Cartridge *CurrentCartridge;
 bool bios_loaded = false;
@@ -188,12 +189,9 @@ void naomi_cart_LoadBios(const char *filename)
 	const char *bios = "naomi";
 	if (game->bios != nullptr)
 		bios = game->bios;
-	u32 region_flag = std::min((int)config::Region, (int)game->region_flag);
-	if (game->region_flag == REGION_EXPORT_ONLY)
-	   region_flag = REGION_EXPORT;
-	if (!loadBios(bios, archive.get(), parent_archive.get(), region_flag))
+	if (!loadBios(bios, archive.get(), parent_archive.get(), config::Region))
 	{
-		WARN_LOG(NAOMI, "Warning: Region %d bios not found in %s", region_flag, bios);
+		WARN_LOG(NAOMI, "Warning: Region %d bios not found in %s", (int)config::Region, bios);
 		if (!loadBios(bios, archive.get(), parent_archive.get(), -1))
 		{
 			// If a specific BIOS is needed for this game, fail.
@@ -206,7 +204,7 @@ void naomi_cart_LoadBios(const char *filename)
 	bios_loaded = true;
 }
 
-static void naomi_cart_LoadZip(const char *filename, LoadProgress *progress)
+static void loadMameRom(const char *filename, LoadProgress *progress)
 {
 	Game *game = FindGame(filename);
 	if (game == NULL)
@@ -396,19 +394,8 @@ static void naomi_cart_LoadZip(const char *filename, LoadProgress *progress)
 			}
 			md5.getDigest(settings.network.md5.game);
 		}
-
-		strcpy(naomi_game_id, CurrentCartridge->GetGameId().c_str());
-		if (naomi_game_id[0] == '\0')
-			strcpy(naomi_game_id, game->name);
-		NOTICE_LOG(NAOMI, "NAOMI GAME ID [%s]", naomi_game_id);
-
-		if (CurrentCartridge->GetGameId() == "INITIAL D"
-				|| CurrentCartridge->GetGameId() == "INITIAL D Ver.2"
-				|| CurrentCartridge->GetGameId() == "INITIAL D Ver.3"
-				|| CurrentCartridge->GetGameId() == "INITIAL D CYCRAFT")
-		{
-			card_reader::initialDCardReader.init();
-		}
+		// Default game name if ROM boot id isn't found
+		strcpy(naomi_game_id, game->name);
 
 	} catch (...) {
 		delete CurrentCartridge;
@@ -417,18 +404,8 @@ static void naomi_cart_LoadZip(const char *filename, LoadProgress *progress)
 	}
 }
 
-void naomi_cart_LoadRom(const char* file, LoadProgress *progress)
+static void loadDecryptedRom(const char* file, LoadProgress *progress)
 {
-	naomi_cart_Close();
-
-	std::string extension = get_file_extension(file);
-
-	if (extension == "zip" || extension == "7z")
-	{
-		naomi_cart_LoadZip(file, progress);
-		return;
-	}
-
 	// Try to load BIOS from naomi.zip
 	if (!loadBios("naomi", NULL, NULL, config::Region))
 	{
@@ -446,6 +423,7 @@ void naomi_cart_LoadRom(const char* file, LoadProgress *progress)
 	std::vector<u32> fsize;
 	u32 romSize = 0;
 
+	std::string extension = get_file_extension(file);
 	if (extension == "lst")
 	{
 		// LST file
@@ -576,8 +554,48 @@ void naomi_cart_LoadRom(const char* file, LoadProgress *progress)
 	DEBUG_LOG(NAOMI, "Legacy ROM loaded successfully");
 
 	CurrentCartridge = new DecryptedCartridge(romBase, romSize);
-	strcpy(naomi_game_id, CurrentCartridge->GetGameId().c_str());
-	NOTICE_LOG(NAOMI, "NAOMI GAME ID [%s]", naomi_game_id);
+}
+
+void naomi_cart_LoadRom(const char* file, LoadProgress *progress)
+{
+	naomi_cart_Close();
+
+	std::string extension = get_file_extension(file);
+
+	if (extension == "zip" || extension == "7z")
+		loadMameRom(file, progress);
+	else
+		loadDecryptedRom(file, progress);
+
+	RomBootID bootId;
+	if (CurrentCartridge->GetBootId(&bootId))
+	{
+		std::string gameId = trim_trailing_ws(std::string(bootId.gameTitle[0], &bootId.gameTitle[0][32]));
+		strcpy(naomi_game_id, gameId.c_str());
+		NOTICE_LOG(NAOMI, "NAOMI GAME ID [%s] region %x players %x vertical %x", naomi_game_id, (u8)bootId.country, bootId.cabinet, bootId.vertical);
+
+		if (gameId == "INITIAL D"
+				|| gameId == "INITIAL D Ver.2"
+				|| gameId == "INITIAL D Ver.3"
+				|| gameId == "INITIAL D CYCRAFT")
+		{
+			card_reader::initialDCardReader.init();
+		}
+	}
+	else
+		NOTICE_LOG(NAOMI, "NAOMI GAME ID [%s]", naomi_game_id);
+}
+
+void naomi_cart_ConfigureEEPROM()
+{
+	if (!settings.platform.isNaomi())
+		return;
+
+	RomBootID bootId;
+	if (CurrentCartridge->GetBootId(&bootId))
+		configure_naomi_eeprom(&bootId);
+	else
+		WARN_LOG(NAOMI, "Can't read ROM boot ID");
 }
 
 void naomi_cart_Close()
@@ -649,19 +667,25 @@ void* Cartridge::GetPtr(u32 offset, u32& size)
 	return &RomPtr[offset];
 }
 
-std::string Cartridge::GetGameId() {
-	if (RomSize < 0x30 + 0x20)
-		return "(ROM too small)";
-
-	std::string game_id((char *)RomPtr + 0x30, 0x20);
-	if (game_id == "AWNAOMI                         " && RomSize >= 0xFF50)
+bool NaomiCartridge::GetBootId(RomBootID *bootId)
+{
+	if (RomSize < sizeof(RomBootID))
+		return false;
+	u8 *p = (u8 *)bootId;
+	u32 size = sizeof(RomBootID);
+	DmaOffset = 0;
+	while (size > 0)
 	{
-		game_id = std::string((char *)RomPtr + 0xFF30, 0x20);
+		u32 chunkSize = size;
+		void *src = GetDmaPtr(chunkSize);
+		if (chunkSize == 0)
+			return false;
+		memcpy(p, src, chunkSize);
+		p += chunkSize;
+		size -= chunkSize;
+		AdvancePtr(chunkSize);
 	}
-	while (!game_id.empty() && game_id.back() == ' ')
-		game_id.pop_back();
-
-	return game_id;
+	return true;
 }
 
 void* NaomiCartridge::GetDmaPtr(u32& size)
@@ -694,7 +718,7 @@ u32 NaomiCartridge::ReadMem(u32 address, u32 size)
 	case 0x48:	// 5f7048: DIMM PARAMETERH
 		DEBUG_LOG(NAOMI, "DIMM PARAMETERH read<%d>", size);
 		return reg_dimm_parameterh;
-	case 0x04C:	// 5f704c: DIMM STATUS
+	case 0x4c:	// 5f704c: DIMM STATUS
 		DEBUG_LOG(NAOMI, "DIMM STATUS read<%d>: %x", size, reg_dimm_status);
 		return reg_dimm_status;
 
@@ -965,16 +989,21 @@ u16 M2Cartridge::ReadCipheredData(u32 offset)
 
 }
 
-std::string M2Cartridge::GetGameId()
+bool M2Cartridge::GetBootId(RomBootID *bootId)
 {
-	std::string game_id = NaomiCartridge::GetGameId();
-	if ((game_id.size() < 2 || ((u8)game_id[0] == 0xff && (u8)game_id[1] == 0xff)) && RomSize >= 0x800050)
+	if (RomSize < sizeof(RomBootID))
+		return false;
+	RomBootID *pBootId = (RomBootID *)RomPtr;
+	if ((pBootId->gameTitle[0][0] == '\0'
+			|| ((u8)pBootId->gameTitle[0][0] == 0xff && (u8)pBootId->gameTitle[0][1] == 0xff)))
 	{
-		game_id = std::string((char *)RomPtr + 0x800030, 0x20);
-		while (!game_id.empty() && game_id.back() == ' ')
-			game_id.pop_back();
+		if (RomSize < 0x800000 + sizeof(RomBootID))
+			return false;
+		pBootId = (RomBootID *)(RomPtr + 0x800000);
 	}
-	return game_id;
+	memcpy(bootId, pBootId, sizeof(RomBootID));
+
+	return true;
 }
 
 void M2Cartridge::Serialize(Serializer& ser) const {

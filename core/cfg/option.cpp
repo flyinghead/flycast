@@ -36,6 +36,7 @@ Option<bool> ForceWindowsCE("Dreamcast.ForceWindowsCE");
 Option<bool> AutoLoadState("Dreamcast.AutoLoadState");
 Option<bool> AutoSaveState("Dreamcast.AutoSaveState");
 Option<int> SavestateSlot("Dreamcast.SavestateSlot");
+Option<bool> ForceFreePlay("ForceFreePlay", true);
 
 // Sound
 

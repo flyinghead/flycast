@@ -20,6 +20,8 @@
  */
 #pragma once
 #include "types.h"
+#include "naomi_cart.h"
 
 void write_naomi_flash(u32 addr, u8 value);
 void write_naomi_eeprom(u32 offset, u8 value);
+void configure_naomi_eeprom(const RomBootID *bootId);

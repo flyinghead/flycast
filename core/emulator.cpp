@@ -512,6 +512,9 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 			naomi_cart_LoadBios(path);
 		}
 		mcfg_CreateDevices();
+		if (settings.platform.isNaomi())
+			// Must be done after the maple devices are created and EEPROM is accessible
+			naomi_cart_ConfigureEEPROM();
 		cheatManager.reset(settings.content.gameId);
 		if (cheatManager.isWidescreen())
 		{

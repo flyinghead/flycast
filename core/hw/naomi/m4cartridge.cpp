@@ -273,26 +273,21 @@ M4Cartridge::~M4Cartridge()
 	free(m_key_data);
 }
 
-std::string M4Cartridge::GetGameId()
+bool M4Cartridge::GetBootId(RomBootID *bootId)
 {
-	if (RomSize < 0x30 + 0x20)
-		return "(ROM too small)";
-
-	std::string game_id;
-	if (RomPtr[0] == 'N' && RomPtr[1] == 'A')
-		game_id = std::string((char *)(RomPtr + 0x30), 0x20);
-	else
+	if (RomSize < sizeof(RomBootID))
+		return false;
+	RomBootID *pBootId = (RomBootID *)RomPtr;
+	if (memcmp(pBootId->boardName, "NAOMI", 5))
 	{
 		rom_cur_address = 0;
 		enc_reset();
 		enc_fill();
-
-		game_id = std::string((char *)(buffer + 0x30), 0x20);
+		pBootId = (RomBootID *)buffer;
 	}
+	memcpy(bootId, pBootId, sizeof(RomBootID));
 
-	while (!game_id.empty() && game_id.back() == ' ')
-		game_id.pop_back();
-	return game_id;
+	return true;
 }
 
 void M4Cartridge::Serialize(Serializer& ser) const

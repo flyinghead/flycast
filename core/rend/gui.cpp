@@ -1378,6 +1378,7 @@ static void gui_display_settings()
 			ImGui::SameLine();
 			OptionCheckbox("Save", config::AutoSaveState,
 					"Save the state of the game when stopping");
+			OptionCheckbox("Naomi Free Play", config::ForceFreePlay, "Configure Naomi games in Free Play mode.");
 
 			ImGui::PopStyleVar();
 			ImGui::EndTabItem();
