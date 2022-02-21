@@ -106,7 +106,7 @@ void gui_cheats()
     ImGui::Unindent(10 * scaling);
     ImGui::PopStyleVar();
 
-	ImGui::BeginChild(ImGui::GetID("cheats"), ImVec2(0, 0), true);
+	ImGui::BeginChild(ImGui::GetID("cheats"), ImVec2(0, 0), true, ImGuiWindowFlags_DragScrolling);
     {
 		if (cheatManager.cheatCount() == 0)
 			ImGui::Text("(No cheat loaded)");

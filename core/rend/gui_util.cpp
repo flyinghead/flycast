@@ -215,7 +215,8 @@ void select_file_popup(const char *prompt, StringCallback callback,
 		}
 
 		ImGui::Text("%s", error_message.empty() ? select_current_directory.c_str() : error_message.c_str());
-		ImGui::BeginChild(ImGui::GetID("dir_list"), ImVec2(0, - 30 * gui_get_scaling() - ImGui::GetStyle().ItemSpacing.y), true);
+		ImGui::BeginChild(ImGui::GetID("dir_list"), ImVec2(0, - 30 * gui_get_scaling() - ImGui::GetStyle().ItemSpacing.y),
+				true, ImGuiWindowFlags_DragScrolling);
 
 		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(8 * gui_get_scaling(), 20 * gui_get_scaling()));		// from 8, 4
 
@@ -326,10 +327,16 @@ void select_file_popup(const char *prompt, StringCallback callback,
 // See https://github.com/ocornut/imgui/issues/3379
 void scrollWhenDraggingOnVoid(ImGuiMouseButton mouse_button)
 {
-    ImGuiContext& g = *ImGui::GetCurrentContext();
-    ImGuiWindow* window = g.CurrentWindow;
-    while ((window->Flags & ImGuiWindowFlags_ChildWindow) && window->ScrollMax.x == 0.0f && window->ScrollMax.y == 0.0f)
-        window = window->ParentWindow;
+	ImGuiContext& g = *ImGui::GetCurrentContext();
+	ImGuiWindow* window = g.CurrentWindow;
+	while (window != nullptr
+			&& (window->Flags & ImGuiWindowFlags_ChildWindow)
+			&& !(window->Flags & ImGuiWindowFlags_DragScrolling)
+			&& window->ScrollMax.x == 0.0f
+			&& window->ScrollMax.y == 0.0f)
+		window = window->ParentWindow;
+	if (window == nullptr || !(window->Flags & ImGuiWindowFlags_DragScrolling))
+		return;
     bool hovered = false;
     bool held = false;
     ImGuiButtonFlags button_flags = (mouse_button == ImGuiMouseButton_Left) ? ImGuiButtonFlags_MouseButtonLeft

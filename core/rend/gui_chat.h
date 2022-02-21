@@ -62,7 +62,8 @@ public:
 		ImGui::SetNextWindowFocus();
 		if (ImGui::Begin("Chat", &visible, ImGuiWindowFlags_NoScrollbar))
 		{
-			ImGui::BeginChild(ImGui::GetID("log"), ImVec2(0, -ImGui::GetStyle().ItemSpacing.x - ImGui::GetFontSize() - ImGui::GetStyle().FramePadding.x * 2), true);
+			ImGui::BeginChild(ImGui::GetID("log"), ImVec2(0, -ImGui::GetStyle().ItemSpacing.x - ImGui::GetFontSize() - ImGui::GetStyle().FramePadding.x * 2),
+					true, ImGuiWindowFlags_DragScrolling);
 			ImGui::PushTextWrapPos(ImGui::GetContentRegionAvail().x);
 			for (const auto& p : lines)
 				ImGui::TextColored(p.first, "%s", p.second.c_str());
