@@ -1376,7 +1376,6 @@ static void sendPolygon(ICHList *list)
 
 	case ICHList::VTX_TYPE_VUR:
 		{
-			verify(curGmp == nullptr || curGmp->paramSelect.e0 == 0);
 			N2_VERTEX_VUR *vtx = (N2_VERTEX_VUR *)((u8 *)list + sizeof(ICHList));
 			if (!isBetweenNearAndFar(vtx, list->vtxCount, needClipping))
 				break;
