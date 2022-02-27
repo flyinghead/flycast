@@ -417,7 +417,9 @@ static void free_buffer(void *buffer)
 {
 	if (buffer != nullptr)
 	{
-		int frame = *(u32 *)buffer;
+		Deserializer deser(buffer, 1024 * 1024, true);
+		int frame;
+		deser >> frame;
 		deltaStates.erase(frame);
 		free(buffer);
 	}

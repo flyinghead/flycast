@@ -418,8 +418,10 @@ extern Option<bool> RenderToTextureBuffer;
 extern Option<bool> TranslucentPolygonDepthMask;
 extern Option<bool> ModifierVolumes;
 constexpr bool Clipping = true;
+#ifndef LIBRETRO
 extern Option<int> TextureUpscale;
 extern Option<int> MaxFilteredTextureSize;
+#endif
 extern Option<float> ExtraDepthScale;
 extern Option<bool> CustomTextures;
 extern Option<bool> DumpTextures;

@@ -18,12 +18,18 @@
 */
 #include "dx11_overlay.h"
 #include "rend/osd.h"
+#ifdef LIBRETRO
+#include "vmu_xhair.h"
+#else
 #include "rend/gui.h"
+#endif
 
 void DX11Overlay::draw(u32 width, u32 height, bool vmu, bool crosshair)
 {
-#ifndef LIBRETRO
-	// TODO
+#ifdef LIBRETRO
+	const float scaling = 1;
+#endif
+
 	RECT rect { 0, 0, (LONG)width, (LONG)height };
 	deviceContext->RSSetScissorRects(1, &rect);
 	if (vmu)
@@ -32,8 +38,12 @@ void DX11Overlay::draw(u32 width, u32 height, bool vmu, bool crosshair)
 		float vmu_height = 70.f * scaling;
 		float vmu_width = 48.f / 32.f * vmu_height;
 
+#ifndef LIBRETRO
 		const float blend_factor[4] = { 0.75f, 0.75f, 0.75f, 0.75f };
 		deviceContext->OMSetBlendState(blendStates.getState(true, 8, 8), blend_factor, 0xffffffff);
+#else
+		deviceContext->OMSetBlendState(blendStates.getState(true, 4, 5), nullptr, 0xffffffff);
+#endif
 
 		for (size_t i = 0; i < vmuTextures.size(); i++)
 		{
@@ -54,7 +64,7 @@ void DX11Overlay::draw(u32 width, u32 height, bool vmu, bool crosshair)
 				desc.SampleDesc.Count = 1;
 				desc.Usage = D3D11_USAGE_DEFAULT;
 				desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
-				desc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+				desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 				desc.MipLevels = 1;
 
 				if (SUCCEEDED(device->CreateTexture2D(&desc, nullptr, &vmuTextures[i].get())))
@@ -72,12 +82,39 @@ void DX11Overlay::draw(u32 width, u32 height, bool vmu, bool crosshair)
 				}
 				vmu_lcd_changed[i] = false;
 			}
-			float x;
+			float x, y;
+			float w = vmu_width;
+			float h = vmu_height;
+#ifdef LIBRETRO
+			if (i & 1)
+				continue;
+			w *= vmu_screen_params[i / 2].vmu_screen_size_mult;
+			h *= vmu_screen_params[i / 2].vmu_screen_size_mult;
+			switch (vmu_screen_params[i / 2].vmu_screen_position)
+			{
+			case UPPER_LEFT:
+			default:
+				x = vmu_padding;
+				y = vmu_padding;
+				break;
+			case UPPER_RIGHT:
+				x = width - vmu_padding - w;
+				y = vmu_padding;
+				break;
+			case LOWER_LEFT:
+				x = vmu_padding;
+				y = height - vmu_padding - h;
+				break;
+			case LOWER_RIGHT:
+				x = width - vmu_padding - w;
+				y = height - vmu_padding - h;
+				break;
+			}
+#else
 			if (i & 2)
 				x = width - vmu_padding - vmu_width;
 			else
 				x = vmu_padding;
-			float y;
 			if (i & 4)
 			{
 				y = height - vmu_padding - vmu_height;
@@ -90,11 +127,12 @@ void DX11Overlay::draw(u32 width, u32 height, bool vmu, bool crosshair)
 				if (i & 1)
 					y += vmu_padding + vmu_height;
 			}
+#endif
 			D3D11_VIEWPORT vp{};
 			vp.TopLeftX = x;
 			vp.TopLeftY = y;
-			vp.Width = vmu_width;
-			vp.Height = vmu_height;
+			vp.Width = w;
+			vp.Height = h;
 			vp.MinDepth = 0.f;
 			vp.MaxDepth = 1.f;
 			deviceContext->RSSetViewports(1, &vp);
@@ -113,7 +151,7 @@ void DX11Overlay::draw(u32 width, u32 height, bool vmu, bool crosshair)
 			desc.SampleDesc.Count = 1;
 			desc.Usage = D3D11_USAGE_DEFAULT;
 			desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
-			desc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+			desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 			desc.MipLevels = 1;
 
 			if (SUCCEEDED(device->CreateTexture2D(&desc, nullptr, &xhairTexture.get())))
@@ -137,7 +175,11 @@ void DX11Overlay::draw(u32 width, u32 height, bool vmu, bool crosshair)
 
 			float x, y;
 			std::tie(x, y) = getCrosshairPosition(i);
+#ifdef LIBRETRO
+			float halfWidth = LIGHTGUN_CROSSHAIR_SIZE / 2.f;
+#else
 			float halfWidth = XHAIR_WIDTH * gui_get_scaling() / 2.f;
+#endif
 			D3D11_VIEWPORT vp{};
 			vp.TopLeftX = x - halfWidth;
 			vp.TopLeftY = y - halfWidth;
@@ -157,5 +199,4 @@ void DX11Overlay::draw(u32 width, u32 height, bool vmu, bool crosshair)
 			quad.draw(xhairTextureView, samplers->getSampler(false), colors);
 		}
 	}
-#endif
 }

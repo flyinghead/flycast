@@ -117,7 +117,7 @@ static bool platformIsDreamcast = true;
 static bool platformIsArcade = false;
 static bool threadedRenderingEnabled = true;
 static bool oitEnabled = false;
-#if defined(HAVE_TEXUPSCALE)
+#ifndef TARGET_NO_OPENMP
 static bool textureUpscaleEnabled = false;
 #endif
 static bool vmuScreenSettingsShown = true;
@@ -339,7 +339,7 @@ void retro_deinit()
 	platformIsArcade = false;
 	threadedRenderingEnabled = true;
 	oitEnabled = false;
-#if defined(HAVE_TEXUPSCALE)
+#ifndef TARGET_NO_OPENMP
 	textureUpscaleEnabled = false;
 #endif
 	vmuScreenSettingsShown = true;
@@ -464,7 +464,7 @@ static bool set_variable_visibility(void)
 	}
 #endif
 
-#if defined(HAVE_TEXUPSCALE)
+#ifndef TARGET_NO_OPENMP
 	// Only if texture upscaling is enabled
 	bool textureUpscaleWasEnabled = textureUpscaleEnabled;
 	textureUpscaleEnabled = false;
@@ -1574,7 +1574,11 @@ static bool set_opengl_hw_render(u32 preferred)
 	params.context_reset         = context_reset;
 	params.context_destroy       = context_destroy;
 	params.environ_cb            = environ_cb;
+#if defined(TARGET_NO_STENCIL)
+	params.stencil               = false;
+#else
 	params.stencil               = true;
+#endif
 	params.imm_vbo_draw          = NULL;
 	params.imm_vbo_disable       = NULL;
 #if defined(__APPLE__) && defined(HAVE_OPENGL)

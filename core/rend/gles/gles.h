@@ -6,6 +6,9 @@
 #include "glcache.h"
 #include "postprocess.h"
 #include "rend/shader_util.h"
+#ifndef LIBRETRO
+#include "rend/imgui_driver.h"
+#endif
 
 #include <unordered_map>
 #include <glm/glm.hpp>
@@ -286,6 +289,9 @@ struct OpenGLRenderer : Renderer
 	{
 		if (!frameRendered)
 			return false;
+#ifndef LIBRETRO
+		imguiDriver->setFrameRendered();
+#endif
 		frameRendered = false;
 		return true;
 	}

@@ -26,6 +26,7 @@
 #include "d3d_texture.h"
 #include "d3d_shaders.h"
 #include "rend/sorter.h"
+#include "rend/imgui_driver.h"
 
 class RenderStateCache
 {
@@ -108,6 +109,7 @@ struct D3DRenderer : public Renderer
 	{
 		if (!frameRendered)
 			return false;
+		imguiDriver->setFrameRendered();
 		frameRendered = false;
 		return true;
 	}

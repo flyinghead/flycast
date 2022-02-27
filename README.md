@@ -27,6 +27,14 @@ Join us on our [**Discord server**](https://discord.gg/X8YWP8w) for a chat.
 
 `flatpak run org.flycast.Flycast`
 
+### Homebrew (MacOS)
+
+1. [Set up Homebrew](https://brew.sh)
+
+2. Install Flycast via Homebrew
+
+`brew install --cask flycast`
+
 ### Xbox One
 
 Open [**gamr13's github page**](https://gamr13.github.io/) from your console.
