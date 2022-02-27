@@ -14,6 +14,10 @@
 #include "emulator.h"
 #include "rend/mainui.h"
 #include "cfg/option.h"
+#include "stdclass.h"
+#ifdef USE_BREAKPAD
+#include "client/linux/handler/exception_handler.h"
+#endif
 
 #include <android/log.h>
 #include <android/native_window.h>
@@ -82,8 +86,6 @@ extern "C" JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_screenDpi(
     screen_dpi = screenDpi;
 }
 
-extern int screen_width,screen_height;
-
 std::shared_ptr<AndroidMouse> mouse;
 
 float vjoy_pos[15][8];
@@ -96,7 +98,7 @@ jmethodID saveAndroidSettingsMid;
 jmethodID launchFromUrlMid;
 static ANativeWindow *g_window = 0;
 
-static void emuEventCallback(Event event)
+static void emuEventCallback(Event event, void *)
 {
 	switch (event)
 	{
@@ -133,8 +135,30 @@ void os_SetWindowText(char const *Text)
 {
 }
 
-extern "C" JNIEXPORT jstring JNICALL Java_com_reicast_emulator_emu_JNIdc_initEnvironment(JNIEnv *env, jobject obj, jobject emulator, jstring homeDirectory, jstring locale)
+#if defined(USE_BREAKPAD)
+static bool dumpCallback(const google_breakpad::MinidumpDescriptor& descriptor, void* context, bool succeeded)
 {
+    if (succeeded)
+    	__android_log_print(ANDROID_LOG_ERROR, "Flycast", "Minidump saved to '%s'\n", descriptor.path());
+	return succeeded;
+}
+
+static google_breakpad::ExceptionHandler *exceptionHandler;
+#endif
+
+extern "C" JNIEXPORT jstring JNICALL Java_com_reicast_emulator_emu_JNIdc_initEnvironment(JNIEnv *env, jobject obj, jobject emulator, jstring filesDirectory, jstring homeDirectory, jstring locale)
+{
+#if defined(USE_BREAKPAD)
+    if (exceptionHandler == nullptr)
+    {
+        jstring directory = homeDirectory != NULL && env->GetStringLength(homeDirectory) > 0 ? homeDirectory : filesDirectory;
+    	const char *jchar = env->GetStringUTFChars(directory, 0);
+    	std::string path(jchar);
+        env->ReleaseStringUTFChars(directory, jchar);
+        google_breakpad::MinidumpDescriptor descriptor(path);
+        exceptionHandler = new google_breakpad::ExceptionHandler(descriptor, nullptr, dumpCallback, nullptr, true, -1);
+    }
+#endif
     // Initialize platform-specific stuff
     common_linux_setup();
 
@@ -191,7 +215,7 @@ extern "C" JNIEXPORT jstring JNICALL Java_com_reicast_emulator_emu_JNIdc_initEnv
     	EventManager::listen(Event::Pause, emuEventCallback);
     	EventManager::listen(Event::Resume, emuEventCallback);
         jstring msg = NULL;
-        int rc = reicast_init(0, NULL);
+        int rc = flycast_init(0, NULL);
         if (rc == -4)
             msg = env->NewStringUTF("Cannot find configuration");
         else if (rc == 69)
@@ -228,14 +252,12 @@ extern "C" JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_setGameUri
         // Get filename string from Java
         const char* file_path = env->GetStringUTFChars(fileName, 0);
         NOTICE_LOG(BOOT, "Game Disk URI: '%s'", file_path);
-        strncpy(settings.imgread.ImagePath, strlen(file_path) >= 7 && !memcmp(file_path, "file://", 7) ? file_path + 7 : file_path, sizeof(settings.imgread.ImagePath));
-        settings.imgread.ImagePath[sizeof(settings.imgread.ImagePath) - 1] = '\0';
+        settings.content.path = strlen(file_path) >= 7 && !memcmp(file_path, "file://", 7) ? file_path + 7 : file_path;
         env->ReleaseStringUTFChars(fileName, file_path);
         // TODO game paused/settings/...
         if (game_started) {
-            dc_stop();
+            emu.unloadGame();
             gui_state = GuiState::Main;
-       		dc_reset(true);
         }
     }
 }
@@ -265,7 +287,7 @@ extern "C" JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_pause(JNIE
 {
     if (game_started)
     {
-        dc_stop();
+        emu.stop();
         game_started = true; // restart when resumed
         if (config::AutoSaveState)
             dc_savestate(config::SavestateSlot);
@@ -275,37 +297,28 @@ extern "C" JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_pause(JNIE
 extern "C" JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_resume(JNIEnv *env,jobject obj)
 {
     if (game_started)
-        dc_resume();
+        emu.start();
 }
 
 extern "C" JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_stop(JNIEnv *env,jobject obj)
 {
-    if (dc_is_running()) {
-        dc_stop();
+    if (emu.running()) {
+        emu.stop();
         if (config::AutoSaveState)
             dc_savestate(config::SavestateSlot);
     }
-    dc_term_game();
+    emu.unloadGame();
     gui_state = GuiState::Main;
-    settings.imgread.ImagePath[0] = '\0';
-}
-
-extern "C" JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_destroy(JNIEnv *env,jobject obj)
-{
-    dc_term();
+    settings.content.path.clear();
 }
 
 static void *render_thread_func(void *)
 {
-#ifdef USE_VULKAN
-	theVulkanContext.SetWindow((void *)g_window, nullptr);
-#endif
-	theGLContext.SetNativeWindow((EGLNativeWindowType)g_window);
-	InitRenderApi();
+	initRenderApi(g_window);
 
 	mainui_loop();
 
-	TermRenderApi();
+	termRenderApi();
 	ANativeWindow_release(g_window);
     g_window = NULL;
 
@@ -325,8 +338,8 @@ extern "C" JNIEXPORT void JNICALL Java_com_reicast_emulator_emu_JNIdc_rendinitNa
 		}
 		else
 		{
-		    screen_width = width;
-		    screen_height = height;
+			settings.display.width = width;
+			settings.display.height = height;
 		    mainui_reinit();
 		}
 	}
@@ -530,11 +543,20 @@ extern "C" JNIEXPORT void JNICALL Java_com_reicast_emulator_periph_InputDeviceMa
     GamepadDevice::Register(mouse);
 }
 
-extern "C" JNIEXPORT void JNICALL Java_com_reicast_emulator_periph_InputDeviceManager_joystickAdded(JNIEnv *env, jobject obj, jint id, jstring name, jint maple_port, jstring junique_id)
+extern "C" JNIEXPORT void JNICALL Java_com_reicast_emulator_periph_InputDeviceManager_joystickAdded(JNIEnv *env, jobject obj, jint id, jstring name,
+		jint maple_port, jstring junique_id, jintArray fullAxes, jintArray halfAxes)
 {
     const char* joyname = env->GetStringUTFChars(name,0);
     const char* unique_id = env->GetStringUTFChars(junique_id, 0);
-    std::shared_ptr<AndroidGamepadDevice> gamepad = std::make_shared<AndroidGamepadDevice>(maple_port, id, joyname, unique_id);
+
+    jsize size = jvm_attacher.getEnv()->GetArrayLength(fullAxes);
+    std::vector<int> full(size);
+    jvm_attacher.getEnv()->GetIntArrayRegion(fullAxes, 0, size, (jint*)&full[0]);
+    size = jvm_attacher.getEnv()->GetArrayLength(halfAxes);
+    std::vector<int> half(size);
+    jvm_attacher.getEnv()->GetIntArrayRegion(halfAxes, 0, size, (jint*)&half[0]);
+
+    std::shared_ptr<AndroidGamepadDevice> gamepad = std::make_shared<AndroidGamepadDevice>(maple_port, id, joyname, unique_id, full, half);
     AndroidGamepadDevice::AddAndroidGamepad(gamepad);
     env->ReleaseStringUTFChars(name, joyname);
     env->ReleaseStringUTFChars(name, unique_id);
@@ -546,11 +568,11 @@ extern "C" JNIEXPORT void JNICALL Java_com_reicast_emulator_periph_InputDeviceMa
         AndroidGamepadDevice::RemoveAndroidGamepad(device);
 }
 
-extern "C" JNIEXPORT void JNICALL Java_com_reicast_emulator_periph_InputDeviceManager_virtualGamepadEvent(JNIEnv *env, jobject obj, jint kcode, jint joyx, jint joyy, jint lt, jint rt)
+extern "C" JNIEXPORT void JNICALL Java_com_reicast_emulator_periph_InputDeviceManager_virtualGamepadEvent(JNIEnv *env, jobject obj, jint kcode, jint joyx, jint joyy, jint lt, jint rt, jboolean fastForward)
 {
     std::shared_ptr<AndroidGamepadDevice> device = AndroidGamepadDevice::GetAndroidGamepad(AndroidGamepadDevice::VIRTUAL_GAMEPAD_ID);
     if (device != NULL)
-        device->virtual_gamepad_event(kcode, joyx, joyy, lt, rt);
+        device->virtual_gamepad_event(kcode, joyx, joyy, lt, rt, fastForward);
 }
 
 extern "C" JNIEXPORT jboolean JNICALL Java_com_reicast_emulator_periph_InputDeviceManager_joystickButtonEvent(JNIEnv *env, jobject obj, jint id, jint key, jboolean pressed)
@@ -568,20 +590,15 @@ static std::map<std::pair<jint, jint>, jint> previous_axis_values;
 extern "C" JNIEXPORT jboolean JNICALL Java_com_reicast_emulator_periph_InputDeviceManager_joystickAxisEvent(JNIEnv *env, jobject obj, jint id, jint key, jint value)
 {
     std::shared_ptr<AndroidGamepadDevice> device = AndroidGamepadDevice::GetAndroidGamepad(id);
-    // Only handle Left Stick on an Xbox 360 controller if there was actual
-    // motion on the stick, otherwise event can be handled as a DPAD event
-    if (device != NULL && previous_axis_values[std::make_pair(id, key)] != value)
-    {
-    	previous_axis_values[std::make_pair(id, key)] = value;
+    if (device != nullptr)
     	return device->gamepad_axis_input(key, value);
-    }
     else
     	return false;
 }
 
 extern "C" JNIEXPORT void JNICALL Java_com_reicast_emulator_periph_InputDeviceManager_mouseEvent(JNIEnv *env, jobject obj, jint xpos, jint ypos, jint buttons)
 {
-	mouse->setAbsPos(xpos, ypos, screen_width, screen_height);
+	mouse->setAbsPos(xpos, ypos, settings.display.width, settings.display.height);
 	mouse->setButton(Mouse::LEFT_BUTTON, (buttons & 1) != 0);
 	mouse->setButton(Mouse::RIGHT_BUTTON, (buttons & 2) != 0);
 	mouse->setButton(Mouse::MIDDLE_BUTTON, (buttons & 4) != 0);

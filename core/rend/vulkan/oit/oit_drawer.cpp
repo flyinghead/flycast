@@ -163,6 +163,12 @@ void OITDrawer::DrawModifierVolumes(const vk::CommandBuffer& cmdBuffer, int firs
 			cmdBuffer.draw((param.first + param.count - mod_base) * 3, 1, mod_base * 3, 0);
 
 			mod_base = -1;
+			if (Translucent)
+			{
+				vk::MemoryBarrier barrier(vk::AccessFlagBits::eShaderWrite, vk::AccessFlagBits::eShaderRead);
+				cmdBuffer.pipelineBarrier(vk::PipelineStageFlagBits::eFragmentShader, vk::PipelineStageFlagBits::eFragmentShader,
+						vk::DependencyFlagBits::eByRegion, barrier, nullptr, nullptr);
+			}
 		}
 	}
 	const vk::DeviceSize offset = 0;
@@ -262,12 +268,15 @@ bool OITDrawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 
 	OITDescriptorSets::FragmentShaderUniforms fragUniforms = MakeFragmentUniforms<OITDescriptorSets::FragmentShaderUniforms>();
 	fragUniforms.shade_scale_factor = FPU_SHAD_SCALE.scale_factor / 256.f;
+	// sizeof(Pixel) == 16
+	fragUniforms.pixelBufferSize = std::min<u64>(config::PixelBufferSize, GetContext()->GetMaxMemoryAllocationSize()) / 16;
+	fragUniforms.viewportWidth = maxWidth;
 
 	currentScissor = vk::Rect2D();
 
 	oitBuffers->OnNewFrame(cmdBuffer);
 
-	SetProvokingVertices();
+	setFirstProvokingVertex(pvrrc);
 
 	// Upload vertex and index buffers
 	UploadMainBuffer(vtxUniforms, fragUniforms);
@@ -295,8 +304,8 @@ bool OITDrawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 	cmdBuffer.pushConstants<OITDescriptorSets::PushConstants>(pipelineManager->GetPipelineLayout(), vk::ShaderStageFlagBits::eFragment, 0, pushConstants);
 
 	const std::array<vk::ClearValue, 4> clear_colors = {
-			vk::ClearColorValue(std::array<float, 4>{0.f, 0.f, 0.f, 1.f}),
-			vk::ClearColorValue(std::array<float, 4>{0.f, 0.f, 0.f, 1.f}),
+			pvrrc.isRTT ? vk::ClearColorValue(std::array<float, 4>{0.f, 0.f, 0.f, 1.f}) : getBorderColor(),
+			pvrrc.isRTT ? vk::ClearColorValue(std::array<float, 4>{0.f, 0.f, 0.f, 1.f}) : getBorderColor(),
 			vk::ClearDepthStencilValue{ 0.f, 0 },
 			vk::ClearDepthStencilValue{ 0.f, 0 },
 	};
@@ -329,27 +338,35 @@ bool OITDrawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
     					targetFramebuffer, viewport, clear_colors.size(), clear_colors.data()),
     			vk::SubpassContents::eInline);
 
-        // Depth + stencil subpass
-		DrawList(cmdBuffer, ListType_Opaque, false, Pass::Depth, pvrrc.global_param_op, previous_pass.op_count, current_pass.op_count);
-		DrawList(cmdBuffer, ListType_Punch_Through, false, Pass::Depth, pvrrc.global_param_pt, previous_pass.pt_count, current_pass.pt_count);
+    	if (!pvrrc.isRTT && (FB_R_CTRL.fb_enable == 0 || VO_CONTROL.blank_video == 1))
+    	{
+    		// Video output disabled
+			cmdBuffer.nextSubpass(vk::SubpassContents::eInline);
+    	}
+    	else
+    	{
+			// Depth + stencil subpass
+			DrawList(cmdBuffer, ListType_Opaque, false, Pass::Depth, pvrrc.global_param_op, previous_pass.op_count, current_pass.op_count);
+			DrawList(cmdBuffer, ListType_Punch_Through, false, Pass::Depth, pvrrc.global_param_pt, previous_pass.pt_count, current_pass.pt_count);
 
-		DrawModifierVolumes<false>(cmdBuffer, previous_pass.mvo_count, current_pass.mvo_count - previous_pass.mvo_count);
+			DrawModifierVolumes<false>(cmdBuffer, previous_pass.mvo_count, current_pass.mvo_count - previous_pass.mvo_count);
 
-		// Color subpass
-		cmdBuffer.nextSubpass(vk::SubpassContents::eInline);
+			// Color subpass
+			cmdBuffer.nextSubpass(vk::SubpassContents::eInline);
 
-		// OP + PT
-		DrawList(cmdBuffer, ListType_Opaque, false, Pass::Color, pvrrc.global_param_op, previous_pass.op_count, current_pass.op_count);
-		DrawList(cmdBuffer, ListType_Punch_Through, false, Pass::Color, pvrrc.global_param_pt, previous_pass.pt_count, current_pass.pt_count);
+			// OP + PT
+			DrawList(cmdBuffer, ListType_Opaque, false, Pass::Color, pvrrc.global_param_op, previous_pass.op_count, current_pass.op_count);
+			DrawList(cmdBuffer, ListType_Punch_Through, false, Pass::Color, pvrrc.global_param_pt, previous_pass.pt_count, current_pass.pt_count);
 
-		// TR
-		if (current_pass.autosort)
-		{
-			if (!oitBuffers->isFirstFrameAfterInit())
-				DrawList(cmdBuffer, ListType_Translucent, true, Pass::OIT, pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count);
-		}
-		else
-			DrawList(cmdBuffer, ListType_Translucent, false, Pass::Color, pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count);
+			// TR
+			if (current_pass.autosort)
+			{
+				if (!oitBuffers->isFirstFrameAfterInit())
+					DrawList(cmdBuffer, ListType_Translucent, true, Pass::OIT, pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count);
+			}
+			else
+				DrawList(cmdBuffer, ListType_Translucent, false, Pass::Color, pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count);
+    	}
 
 		// Final subpass
 		cmdBuffer.nextSubpass(vk::SubpassContents::eInline);
@@ -367,7 +384,7 @@ bool OITDrawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 		if (!oitBuffers->isFirstFrameAfterInit())
 		{
 			// Tr modifier volumes
-			if (GetContext()->GetVendorID() != VENDOR_QUALCOMM)	// Adreno bug
+			if (GetContext()->GetVendorID() != VulkanContext::VENDOR_QUALCOMM)	// Adreno bug
 				DrawModifierVolumes<true>(cmdBuffer, previous_pass.mvo_tr_count, current_pass.mvo_tr_count - previous_pass.mvo_tr_count);
 
 			vk::Pipeline pipeline = pipelineManager->GetFinalPipeline();
@@ -676,6 +693,12 @@ void OITTextureDrawer::EndFrame()
 
 vk::CommandBuffer OITScreenDrawer::NewFrame()
 {
+	if (frameRendered)
+	{
+		// in case the previous image was never presented
+		frameRendered = false;
+		NewImage();
+	}
 	vk::CommandBuffer commandBuffer = commandPool->Allocate();
 	commandBuffer.begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));
 

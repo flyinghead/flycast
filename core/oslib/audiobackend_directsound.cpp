@@ -1,4 +1,5 @@
-#ifdef _WIN32
+#include "build.h"
+#if defined(_WIN32) && !defined(TARGET_UWP)
 #include "audiostream.h"
 #include <initguid.h>
 #include <dsound.h>
@@ -6,16 +7,27 @@
 #include <atomic>
 #include <thread>
 #include "stdclass.h"
+#include "windows/comptr.h"
 
 HWND getNativeHwnd();
 #define verifyc(x) verify(!FAILED(x))
 
-static IDirectSound8* dsound;
-static IDirectSoundBuffer8* buffer;
+#ifdef __CRT_UUID_DECL
+__CRT_UUID_DECL(IDirectSoundBuffer8, 0x6825A449,0x7524,0x4D82,0x92,0x0F,0x50,0xE3,0x6A,0xB3,0xAB,0x1E);
+__CRT_UUID_DECL(IDirectSoundNotify,	0xB0210783,0x89cd,0x11d0,0xAF,0x08,0x00,0xA0,0xC9,0x25,0xCD,0x16);
+__CRT_UUID_DECL(IDirectSoundCaptureBuffer8, 0x00990DF4,0x0DBB,0x4872,0x83,0x3E,0x6D,0x30,0x3E,0x80,0xAE,0xB6);
+#else
+struct __declspec(uuid("{6825A449-7524-4D82-920F-50E36AB3AB1E}")) IDirectSoundBuffer8;
+struct __declspec(uuid("{B0210783-89cd-11d0-AF08-00A0C925CD16}")) IDirectSoundNotify;
+struct __declspec(uuid("{00990DF4-0DBB-4872-833E-6D303E80AEB6}")) IDirectSoundCaptureBuffer8;
+#endif
+
+static ComPtr<IDirectSound8> dsound;
+static ComPtr<IDirectSoundBuffer8> buffer;
 static std::vector<HANDLE> notificationEvents;
 
-static IDirectSoundCapture8 *dcapture;
-static IDirectSoundCaptureBuffer8 *capture_buffer;
+static ComPtr<IDirectSoundCapture8> dcapture;
+static ComPtr<IDirectSoundCaptureBuffer8> capture_buffer;
 
 static std::atomic_bool audioThreadRunning;
 static std::thread audioThread;
@@ -62,7 +74,7 @@ static void audioThreadMain()
 
 static void directsound_init()
 {
-	verifyc(DirectSoundCreate8(NULL, &dsound, NULL));
+	verifyc(DirectSoundCreate8(NULL, &dsound.get(), NULL));
 	verifyc(dsound->SetCooperativeLevel(getNativeHwnd(), DSSCL_PRIORITY));
 
 	// Set up WAV format structure.
@@ -84,14 +96,13 @@ static void directsound_init()
 	desc.lpwfxFormat = &wfx;
 
 	// Create the buffer
-	IDirectSoundBuffer* buffer_;
-	verifyc(dsound->CreateSoundBuffer(&desc, &buffer_, 0));
-	verifyc(buffer_->QueryInterface(IID_IDirectSoundBuffer8, (void**)&buffer));
-	buffer_->Release();
+	ComPtr<IDirectSoundBuffer> buffer_;
+	verifyc(dsound->CreateSoundBuffer(&desc, &buffer_.get(), 0));
+	verifyc(buffer_.as(buffer));
 
 	// Set up notifications
-	IDirectSoundNotify *bufferNotify;
-	verifyc(buffer->QueryInterface(IID_IDirectSoundNotify8, (void**)&bufferNotify));
+	ComPtr<IDirectSoundNotify> bufferNotify;
+	verifyc(buffer.as(bufferNotify));
 	notificationEvents.clear();
 	std::vector<DSBPOSITIONNOTIFY> posNotify;
 	for (int i = 0; notificationOffset(i) < desc.dwBufferBytes; i++)
@@ -100,7 +111,6 @@ static void directsound_init()
 		posNotify.push_back({ notificationOffset(i), notificationEvents.back() });
 	}
 	bufferNotify->SetNotificationPositions(posNotify.size(), &posNotify[0]);
-	bufferNotify->Release();
 
 	// Clear the buffers
 	void *p1, *p2;
@@ -116,6 +126,7 @@ static void directsound_init()
 
 	// Play the buffer !
 	verifyc(buffer->Play(0, 0, DSBPLAY_LOOPING));
+	INFO_LOG(AUDIO, "DirectSound playback started");
 }
 
 static u32 directsound_push(const void* frame, u32 samples, bool wait)
@@ -134,13 +145,14 @@ static void directsound_term()
 
 	for (HANDLE event : notificationEvents)
 		CloseHandle(event);
-	buffer->Release();
-	dsound->Release();
+	buffer.reset();
+	dsound.reset();
+	INFO_LOG(AUDIO, "DirectSound playback stopped");
 }
 
 static bool directsound_init_record(u32 sampling_freq)
 {
-	if (FAILED(DirectSoundCaptureCreate8(&DSDEVID_DefaultVoiceCapture, &dcapture, NULL)))
+	if (FAILED(DirectSoundCaptureCreate8(&DSDEVID_DefaultVoiceCapture, &dcapture.get(), NULL)))
 	{
 		INFO_LOG(AUDIO, "DirectSound capture device creation failed");
 		return false;
@@ -160,16 +172,14 @@ static bool directsound_init_record(u32 sampling_freq)
 	dscbd.dwFXCount = 0;
 	dscbd.lpDSCFXDesc = NULL;
 
-	LPDIRECTSOUNDCAPTUREBUFFER pDSCB;
-	if (FAILED(hr = dcapture->CreateCaptureBuffer(&dscbd, &pDSCB, NULL)))
+	ComPtr<IDirectSoundCaptureBuffer> pDSCB;
+	if (FAILED(hr = dcapture->CreateCaptureBuffer(&dscbd, &pDSCB.get(), NULL)))
 	{
 		INFO_LOG(AUDIO, "DirectSound capture buffer creation failed");
-		dcapture->Release();
-		dcapture = NULL;
+		dcapture.reset();
 		return false;
 	}
-	pDSCB->QueryInterface(IID_IDirectSoundCaptureBuffer8, (LPVOID*)&capture_buffer);
-	pDSCB->Release();
+	pDSCB.as(capture_buffer);
 	capture_buffer->Start(DSCBSTART_LOOPING);
 	INFO_LOG(AUDIO, "DirectSound capture device and buffer created");
 
@@ -192,13 +202,11 @@ static u32 directsound_record(void *buffer, u32 samples)
 
 static void directsound_term_record()
 {
-	if (dcapture == NULL)
+	if (!dcapture)
 		return;
 	capture_buffer->Stop();
-	capture_buffer->Release();
-	capture_buffer = NULL;
-	dcapture->Release();
-	dcapture = NULL;
+	capture_buffer.reset();
+	dcapture.reset();
 }
 
 static audiobackend_t audiobackend_directsound = {

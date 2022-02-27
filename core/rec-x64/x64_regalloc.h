@@ -18,14 +18,8 @@
  */
 #pragma once
 
-//#define OLD_REGALLOC
-
 #include <xbyak/xbyak.h>
-#ifdef OLD_REGALLOC
-#include "hw/sh4/dyna/regalloc.h"
-#else
 #include "hw/sh4/dyna/ssa_regalloc.h"
-#endif
 
 #ifdef _WIN32
 static Xbyak::Operand::Code alloc_regs[] = { Xbyak::Operand::RBX, Xbyak::Operand::RBP, Xbyak::Operand::RDI, Xbyak::Operand::RSI,
@@ -61,13 +55,9 @@ struct X64RegAlloc : RegAlloc<Xbyak::Operand::Code, s8>
 		return Xbyak::Reg32(ereg);
 	}
 
-	Xbyak::Xmm MapXRegister(const shil_param& param, u32 index = 0)
+	Xbyak::Xmm MapXRegister(const shil_param& param)
 	{
-#ifdef OLD_REGALLOC
-		s8 ereg = mapfv(param, index);
-#else
 		s8 ereg = mapf(param);
-#endif
 		if (ereg == -1)
 			die("VRegister not allocated");
 		return Xbyak::Xmm(ereg);
@@ -75,16 +65,7 @@ struct X64RegAlloc : RegAlloc<Xbyak::Operand::Code, s8>
 
 	bool IsMapped(const Xbyak::Xmm &xmm, size_t opid)
 	{
-#ifndef OLD_REGALLOC
 		return regf_used((s8)xmm.getIdx());
-#else
-		for (size_t sid = 0; sid < all_spans.size(); sid++)
-		{
-			if (all_spans[sid]->nregf == xmm.getIdx() && all_spans[sid]->contains(opid))
-				return true;
-		}
-		return false;
-#endif
 	}
 
 	BlockCompiler *compiler;

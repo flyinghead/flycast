@@ -4,14 +4,9 @@
 #include "pvr_regs.h"
 #include "helper_classes.h"
 #include "stdclass.h"
+#include "oslib/oslib.h"
 
 #include <mutex>
-
-// helper for 32 byte aligned memory allocation
-void* OS_aligned_malloc(size_t align, size_t size);
-
-// helper for 32 byte aligned memory de-allocation
-void OS_aligned_free(void *ptr);
 
 class BaseTextureCacheData;
 
@@ -134,8 +129,8 @@ struct rend_context
 	FB_X_CLIP_type    fb_X_CLIP;
 	FB_Y_CLIP_type    fb_Y_CLIP;
 	
-	u32 fog_clamp_min;
-	u32 fog_clamp_max;
+	RGBAColor fog_clamp_min;
+	RGBAColor fog_clamp_max;
 
 	List<Vertex>      verts;
 	List<u32>         idx;
@@ -208,7 +203,7 @@ struct TA_context
 
 	void Alloc()
 	{
-		tad.Reset((u8*)OS_aligned_malloc(32, TA_DATA_SIZE));
+		tad.Reset((u8*)allocAligned(32, TA_DATA_SIZE));
 
 		rend.verts.InitBytes(4 * 1024 * 1024, &rend.Overrun, "verts");	//up to 4 mb of vtx data/frame = ~ 96k vtx/frame
 		rend.idx.Init(120 * 1024, &rend.Overrun, "idx");				//up to 120K indexes ( idx have stripification overhead )
@@ -238,7 +233,7 @@ struct TA_context
 	void Free()
 	{
 		verify(tad.End() - tad.thd_root <= TA_DATA_SIZE);
-		OS_aligned_free(tad.thd_root);
+		freeAligned(tad.thd_root);
 		rend.verts.Free();
 		rend.idx.Free();
 		rend.global_param_op.Free();
@@ -281,5 +276,5 @@ void FinishRender(TA_context* ctx);
 void FillBGP(TA_context* ctx);
 bool UsingAutoSort(int pass_number);
 bool rend_framePending();
-void SerializeTAContext(void **data, unsigned int *total_size);
-void UnserializeTAContext(void **data, unsigned int *total_size, serialize_version_enum version);
+void SerializeTAContext(Serializer& ser);
+void DeserializeTAContext(Deserializer& deser);

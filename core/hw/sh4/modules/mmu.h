@@ -157,3 +157,7 @@ static inline u32 mmuDynarecLookup(u32 vaddr, u32 write, u32 pc)
 
 	return paddr;
 }
+
+void MMU_init();
+void MMU_reset();
+void MMU_term();

@@ -24,7 +24,6 @@ bool start_pico();
 void stop_pico();
 void write_pico(u8 b);
 int read_pico();
-bool networkStarted();
 
 void pico_receive_eth_frame(const u8 *frame, u32 size);
 // implemented in bba

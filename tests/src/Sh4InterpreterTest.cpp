@@ -25,7 +25,7 @@ protected:
 	void SetUp() override {
 		if (!_vmem_reserve())
 			die("_vmem_reserve failed");
-		dc_init();
+		emu.init();
 		mem_map_default();
 		dc_reset(true);
 		ctx = &p_sh4rcb->cntx;
@@ -88,4 +88,7 @@ TEST_F(Sh4InterpreterTest, CmpTest)
 {
 	Sh4OpTest::CmpTest();
 }
-
+TEST_F(Sh4InterpreterTest, StatusRegTest)
+{
+	Sh4OpTest::StatusRegTest();
+}

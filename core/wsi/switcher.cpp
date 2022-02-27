@@ -18,49 +18,80 @@
     You should have received a copy of the GNU General Public License
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
+#ifndef LIBRETRO
 #include "context.h"
 #include "rend/gui.h"
 #include "cfg/option.h"
 
+#include "gl_context.h"
+#include "rend/dx9/dxcontext.h"
+#include "rend/dx11/dx11context.h"
 #ifdef USE_VULKAN
+#include "rend/vulkan/vulkan_context.h"
+
 VulkanContext theVulkanContext;
 #endif
 
-void InitRenderApi()
+GraphicsContext *GraphicsContext::instance;
+
+void initRenderApi(void *window, void *display)
 {
 #ifdef USE_VULKAN
-	if (config::RendererType.isVulkan())
+	if (isVulkan(config::RendererType))
 	{
-		if (theVulkanContext.Init())
+		theVulkanContext.setWindow(window, display);
+		if (theVulkanContext.init())
 			return;
 		// Fall back to Open GL
 		WARN_LOG(RENDERER, "Vulkan init failed. Falling back to Open GL.");
 		config::RendererType = RenderType::OpenGL;
-		config::RendererType.commit();
 	}
 #endif
 #ifdef _WIN32
-	if (config::RendererType.isDirectX())
+	if (config::RendererType == RenderType::DirectX11 || config::RendererType == RenderType::DirectX11_OIT)
 	{
-		if (theDXContext.Init())
+		theDX11Context.setWindow(window, display);
+		if (theDX11Context.init())
+			return;
+		WARN_LOG(RENDERER, "DirectX 11 init failed. Falling back to DirectX 9.");
+		config::RendererType = RenderType::DirectX9;
+	}
+#endif
+#ifdef USE_DX9
+	if (config::RendererType == RenderType::DirectX9)
+	{
+		theDXContext.setWindow(window, display);
+		if (theDXContext.init())
 			return;
 		// Fall back to Open GL
-		WARN_LOG(RENDERER, "DirectX init failed. Falling back to Open GL.");
+		WARN_LOG(RENDERER, "DirectX 9 init failed. Falling back to Open GL.");
 		config::RendererType = RenderType::OpenGL;
-		config::RendererType.commit();
 	}
 #endif
-	if (!theGLContext.Init())
-		exit(1);
+#ifdef USE_OPENGL
+	if (!isOpenGL(config::RendererType))
+		config::RendererType = RenderType::OpenGL;
+	theGLContext.setWindow(window, display);
+	if (theGLContext.init())
+		return;
+#endif
+	die("Cannot initialize the graphics API");
 }
 
-void TermRenderApi()
+void termRenderApi()
 {
-#ifdef USE_VULKAN
-	theVulkanContext.Term();
-#endif
-#ifdef _WIN32
-	theDXContext.Term();
-#endif
-	theGLContext.Term();
+	if (GraphicsContext::Instance() != nullptr)
+		GraphicsContext::Instance()->term();
+	verify(GraphicsContext::Instance() == nullptr);
 }
+
+void switchRenderApi()
+{
+	void *window = nullptr;
+	void *display = nullptr;
+	if (GraphicsContext::Instance() != nullptr)
+		GraphicsContext::Instance()->getWindow(&window,  &display);
+	termRenderApi();
+	initRenderApi(window, display);
+}
+#endif

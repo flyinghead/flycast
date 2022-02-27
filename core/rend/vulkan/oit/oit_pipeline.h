@@ -53,6 +53,8 @@ public:
 		float cp_AlphaTestValue;
 		float sp_FOG_DENSITY;
 		float shade_scale_factor;	// new for OIT
+		u32 pixelBufferSize;
+		u32 viewportWidth;
 	};
 
 	struct PushConstants
@@ -92,8 +94,8 @@ public:
 	{
 		if (perFrameDescSets.empty())
 		{
-			perFrameDescSets = std::move(GetContext()->GetDevice().allocateDescriptorSetsUnique(
-					vk::DescriptorSetAllocateInfo(GetContext()->GetDescriptorPool(), 1, &perFrameLayout)));
+			perFrameDescSets = GetContext()->GetDevice().allocateDescriptorSetsUnique(
+					vk::DescriptorSetAllocateInfo(GetContext()->GetDescriptorPool(), 1, &perFrameLayout));
 		}
 		perFrameDescSetsInFlight.emplace_back(std::move(perFrameDescSets.back()));
 		perFrameDescSets.pop_back();
@@ -166,7 +168,7 @@ public:
 		{
 			std::vector<vk::DescriptorSetLayout> layouts(10, perPolyLayout);
 			perPolyDescSets = GetContext()->GetDevice().allocateDescriptorSetsUnique(
-					vk::DescriptorSetAllocateInfo(GetContext()->GetDescriptorPool(), layouts.size(), &layouts[0]));
+					vk::DescriptorSetAllocateInfo(GetContext()->GetDescriptorPool(), (u32)layouts.size(), &layouts[0]));
 		}
 		vk::DescriptorImageInfo imageInfo0(samplerManager->GetSampler(tsp0), texture0->GetReadOnlyImageView(), vk::ImageLayout::eShaderReadOnlyOptimal);
 

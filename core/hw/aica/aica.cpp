@@ -258,10 +258,7 @@ s32 libAICA_Init()
 
 	sgc_Init();
 	if (aica_schid == -1)
-	{
 		aica_schid = sh4_sched_register(0, &AicaUpdate);
-		sh4_sched_request(aica_schid, AICA_TICK);
-	}
 
 	return 0;
 }
@@ -272,6 +269,7 @@ void libAICA_Reset(bool hard)
 	{
 		init_mem();
 		sgc_Init();
+		sh4_sched_request(aica_schid, AICA_TICK);
 	}
 	for (u32 i = 0; i < 3; i++)
 		timers[i].Init(aica_reg, i);
@@ -282,4 +280,6 @@ void libAICA_Term()
 {
 	sgc_Term();
 	term_mem();
+	sh4_sched_unregister(aica_schid);
+	aica_schid = -1;
 }

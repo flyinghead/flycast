@@ -38,9 +38,9 @@ struct Pixel { \n\
 #define DST_ALPHA			6 \n\
 #define INVERSE_DST_ALPHA	7 \n\
  \n\
-void setFragDepth(void) \n\
+void setFragDepth(float z) \n\
 { \n\
-	float w = 100000.0 * gl_FragCoord.w; \n\
+	float w = 100000.0 * z; \n\
 	gl_FragDepth = log2(1.0 + w) / 34.0; \n\
 } \n\
 \n\
@@ -139,6 +139,6 @@ uint packColors(vec4 v) \n\
  \n\
 vec4 unpackColors(uint u) \n\
 { \n\
-	return vec4(float((u >> 24) & 255) / 255.0, float((u >> 16) & 255) / 255.0, float((u >> 8) & 255) / 255.0, float(u & 255) / 255.0); \n\
+	return vec4(float((u >> 24) & 255u) / 255.0, float((u >> 16) & 255u) / 255.0, float((u >> 8) & 255u) / 255.0, float(u & 255u) / 255.0); \n\
 } \n\
 "

@@ -117,7 +117,6 @@ void gdxsv_emu_settings() {
         // Others
         config::DynarecEnabled = true;
         config::DynarecIdleSkip = true;
-        config::DynarecSafeMode = false;
         config::DSPEnabled = false;
 
         maple_ReconnectDevices();
@@ -133,7 +132,6 @@ void gdxsv_emu_settings() {
     AudioLatency=16ms
     DynarecEnabled=yes
     DynarecIdleSkip=yes
-    DynarecSafeMode=no
     DSPEnabled=no)");
 
     bool widescreen = config::Widescreen.get() && config::WidescreenGameHacks.get();

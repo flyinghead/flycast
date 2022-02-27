@@ -42,6 +42,7 @@ class GameScanner
 {
 	std::vector<GameMedia> game_list;
 	std::mutex mutex;
+	std::mutex threadMutex;
 	std::unique_ptr<std::thread> scan_thread;
 	bool scan_done = false;
 	bool running = false;
@@ -127,6 +128,7 @@ public:
 
 	void stop()
 	{
+		std::lock_guard<std::mutex> guard(threadMutex);
 		running = false;
         empty_folders_scanned = 0;
         content_path_looks_incorrect = false;
@@ -136,8 +138,11 @@ public:
 
 	void fetch_game_list()
 	{
+		std::lock_guard<std::mutex> guard(threadMutex);
 		if (scan_done || running)
 			return;
+		if (scan_thread && scan_thread->joinable())
+			scan_thread->join();
 		running = true;
 		scan_thread = std::unique_ptr<std::thread>(
 			new std::thread([this]()

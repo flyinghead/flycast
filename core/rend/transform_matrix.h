@@ -26,8 +26,6 @@
 #include <glm/glm.hpp>
 #include <glm/gtx/transform.hpp>
 
-extern int screen_width, screen_height;
-
 // Dreamcast:
 // +Y is down
 // Open GL:
@@ -82,15 +80,15 @@ public:
 		constexpr int rttFlipY = System == COORD_DIRECTX ? -1 : 1;
 		constexpr int framebufferFlipY = System == COORD_DIRECTX ? -1 : 1;
 
-		renderViewport = { width == 0 ? screen_width : width, height == 0 ? screen_height : height };
+		renderViewport = { width == 0 ? settings.display.width : width, height == 0 ? settings.display.height : height };
 		this->renderingContext = renderingContext;
 
 		GetFramebufferScaling(false, scale_x, scale_y);
 
 		if (renderingContext->isRTT)
 		{
-			dcViewport.x = renderingContext->fb_X_CLIP.max - renderingContext->fb_X_CLIP.min + 1;
-			dcViewport.y = renderingContext->fb_Y_CLIP.max - renderingContext->fb_Y_CLIP.min + 1;
+			dcViewport.x = (float)(renderingContext->fb_X_CLIP.max - renderingContext->fb_X_CLIP.min + 1);
+			dcViewport.y = (float)(renderingContext->fb_Y_CLIP.max - renderingContext->fb_Y_CLIP.min + 1);
 			normalMatrix = glm::translate(glm::vec3(-1, -rttFlipY, 0))
 				* glm::scale(glm::vec3(2.0f / dcViewport.x, 2.0f / dcViewport.y * rttFlipY, 1.f));
 			scissorMatrix = normalMatrix;
@@ -210,7 +208,7 @@ private:
 			if (SCALER_CTL.vscalefactor > 0x400)
 			{
 				// Interlace mode A (single framebuffer)
-				if (SCALER_CTL.interlace == 0 && !scissor)
+				if (SCALER_CTL.interlace == 0)
 					scale_y *= roundf((float)SCALER_CTL.vscalefactor / 0x400);
 				else if (SCALER_CTL.interlace == 1 && scissor)
 					// Interlace mode B (alternating framebuffers)

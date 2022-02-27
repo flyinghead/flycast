@@ -24,7 +24,7 @@ android {
 
         externalNativeBuild {
             cmake {
-                arguments "-DANDROID_STL=c++_shared", "-DANDROID_ARM_MODE=arm"
+                arguments "-DANDROID_ARM_MODE=arm"
             }
         }
 

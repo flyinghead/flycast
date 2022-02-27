@@ -9,6 +9,7 @@
  */
 
 #include "m4cartridge.h"
+#include "serialize.h"
 
 
 // Decoder for M4-type NAOMI cart encryption
@@ -294,31 +295,30 @@ std::string M4Cartridge::GetGameId()
 	return game_id;
 }
 
-void M4Cartridge::Serialize(void** data, unsigned int* total_size)
+void M4Cartridge::Serialize(Serializer& ser) const
 {
-	REICAST_S(buffer);
-	REICAST_S(rom_cur_address);
-	REICAST_S(buffer_actual_size);
-	REICAST_S(iv);
-	REICAST_S(counter);
-	REICAST_S(encryption);
-	REICAST_S(cfi_mode);
-	REICAST_S(xfer_ready);
+	ser << buffer;
+	ser << rom_cur_address;
+	ser << buffer_actual_size;
+	ser << iv;
+	ser << counter;
+	ser << encryption;
+	ser << cfi_mode;
+	ser << xfer_ready;
 
-	NaomiCartridge::Serialize(data, total_size);
+	NaomiCartridge::Serialize(ser);
 }
 
-void M4Cartridge::Unserialize(void** data, unsigned int* total_size)
+void M4Cartridge::Deserialize(Deserializer& deser)
 {
-	REICAST_US(buffer);
-	REICAST_US(rom_cur_address);
-	REICAST_US(buffer_actual_size);
-	REICAST_US(iv);
-	REICAST_US(counter);
-	REICAST_US(encryption);
-	REICAST_US(cfi_mode);
-	REICAST_US(xfer_ready);
+	deser >> buffer;
+	deser >> rom_cur_address;
+	deser >> buffer_actual_size;
+	deser >> iv;
+	deser >> counter;
+	deser >> encryption;
+	deser >> cfi_mode;
+	deser >> xfer_ready;
 
-	NaomiCartridge::Unserialize(data, total_size);
+	NaomiCartridge::Deserialize(deser);
 }
-

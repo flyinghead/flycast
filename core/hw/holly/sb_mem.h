@@ -12,4 +12,3 @@ void sh4_area0_Term();
 bool LoadRomFiles();
 void SaveRomFiles();
 bool LoadHle();
-void FixUpFlash();

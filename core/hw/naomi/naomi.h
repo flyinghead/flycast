@@ -1,14 +1,14 @@
 /*
 **	naomi.h
 */
-
 #pragma once
+#include "types.h"
 
 void naomi_reg_Init();
 void naomi_reg_Term();
 void naomi_reg_Reset(bool hard);
-void naomi_Serialize(void **data, unsigned int *total_size);
-void naomi_Unserialize(void **data, unsigned int *total_size, serialize_version_enum version);
+void naomi_Serialize(Serializer& ser);
+void naomi_Deserialize(Deserializer& deser);
 
 u32  ReadMem_naomi(u32 Addr, u32 size);
 void WriteMem_naomi(u32 Addr, u32 data, u32 size);

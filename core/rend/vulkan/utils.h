@@ -20,6 +20,8 @@
 */
 #pragma once
 #include "vulkan.h"
+#include "rend/shader_util.h"
+#include "hw/pvr/pvr_regs.h"
 
 enum class ModVolMode { Xor, Or, Inclusion, Exclusion, Final };
 
@@ -74,4 +76,23 @@ static inline u32 findMemoryType(vk::PhysicalDeviceMemoryProperties const& memor
 	}
 	verify(typeIndex != u32(~0));
 	return typeIndex;
+}
+
+static const char GouraudSource[] = R"(
+#if pp_Gouraud == 0
+#define INTERPOLATION flat
+#else
+#define INTERPOLATION noperspective
+#endif
+)";
+
+class VulkanSource : public ShaderSource
+{
+public:
+	VulkanSource() : ShaderSource("#version 450") {}
+};
+
+
+static inline vk::ClearColorValue getBorderColor() {
+	return vk::ClearColorValue(std::array<float, 4>{ VO_BORDER_COL.red(), VO_BORDER_COL.green(), VO_BORDER_COL.blue(), 1.f });
 }

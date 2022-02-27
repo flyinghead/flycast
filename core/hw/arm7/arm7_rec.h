@@ -444,6 +444,14 @@ static inline void advance(u32 size) {
 	icPtr += size;
 }
 
+extern ptrdiff_t rx_offset;
+static inline void *writeToExec(void * addr) {
+	return (char *)addr + rx_offset;
+}
+static inline void *execToWrite(void * addr) {
+	return (char *)addr - rx_offset;
+}
+
 }
 
 void arm7backend_compile(const std::vector<ArmOp>& block_ops, u32 cycles);

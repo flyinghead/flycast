@@ -4,11 +4,9 @@
 #include "hw/arm7/arm7.h"
 #include "hw/aica/aica_if.h"
 #include "hw/arm7/arm7_rec.h"
+#include "emulator.h"
 
 extern bool Arm7Enabled;
-
-void dc_init();
-void dc_reset(bool hard);
 
 static const u32 N_FLAG = 1 << 31;
 static const u32 Z_FLAG = 1 << 30;
@@ -26,7 +24,7 @@ protected:
 	void SetUp() override {
 		if (!_vmem_reserve())
 			die("_vmem_reserve failed");
-		dc_init();
+		emu.init();
 		dc_reset(true);
 		Arm7Enabled = true;
 	}

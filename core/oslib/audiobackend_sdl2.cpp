@@ -76,7 +76,10 @@ static void sdl2_audiocb(void* userdata, Uint8* stream, int len) {
 
 static void sdl2_audio_init() {
 	if (!SDL_WasInit(SDL_INIT_AUDIO))
-		SDL_InitSubSystem(SDL_INIT_AUDIO);
+	{
+		if (SDL_InitSubSystem(SDL_INIT_AUDIO))
+			ERROR_LOG(AUDIO, "SDL2 error initializing audio subsystem: %s", SDL_GetError());
+	}
 
 	audiobuf.sample_buffer = new uint32_t[config::AudioBufferSize]();
 
@@ -86,17 +89,19 @@ static void sdl2_audio_init() {
 	wav_spec.freq = 44100;
 	wav_spec.format = AUDIO_S16;
 	wav_spec.channels = 2;
-	wav_spec.samples = SAMPLE_COUNT;  // Must be power of two
+	wav_spec.samples = SAMPLE_COUNT * 2;  // Must be power of two
 	wav_spec.callback = sdl2_audiocb;
 	
 	// Try 44.1KHz which should be faster since it's native.
 	audiodev = SDL_OpenAudioDevice(NULL, 0, &wav_spec, &out_spec, 0);
-	if (!audiodev) {
+	if (!audiodev)
+	{
+		WARN_LOG(AUDIO, "SDL2: SDL_OpenAudioDevice failed: %s", SDL_GetError());
 		needs_resampling = true;
 		wav_spec.freq = 48000;
 		audiodev = SDL_OpenAudioDevice(NULL, 0, &wav_spec, &out_spec, 0);
 		if (!audiodev)
-			ERROR_LOG(AUDIO, "SDL2: SDL_OpenAudioDevice failed");
+			ERROR_LOG(AUDIO, "SDL2: SDL_OpenAudioDevice failed: %s", SDL_GetError());
 		else
 			INFO_LOG(AUDIO, "SDL2: Using resampling to 48 KHz");
 	}

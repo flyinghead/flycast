@@ -49,15 +49,17 @@ u8* icPtr;
 u8* ICache;
 void (*EntryPoints[ARAM_SIZE_MAX / 4])();
 
-#ifdef _WIN32
-alignas(4096) static u8 ARM7_TCB[ICacheSize];
-#elif defined(__unix__)
+#if defined(_WIN32) || defined(TARGET_IPHONE) || defined(TARGET_ARM_MAC)
+static u8 *ARM7_TCB;
+#elif defined(__unix__) || defined(__SWITCH__)
 alignas(4096) static u8 ARM7_TCB[ICacheSize] __attribute__((section(".text")));
 #elif defined(__APPLE__)
 alignas(4096) static u8 ARM7_TCB[ICacheSize] __attribute__((section("__TEXT, .text")));
 #else
 #error ARM7_TCB ALLOC
 #endif
+
+ptrdiff_t rx_offset;
 
 #pragma pack(push,1)
 union ArmOpBits
@@ -560,7 +562,7 @@ void compile()
 	// also the size of the EntryPoints table. This way the dynarec
 	// main loop doesn't have to worry about the actual aica
 	// ram size. The aica ram always wraps to 8 MB anyway.
-	EntryPoints[(pc & (ARAM_SIZE_MAX - 1)) / 4] = (void (*)())rv;
+	EntryPoints[(pc & (ARAM_SIZE_MAX - 1)) / 4] = (void (*)())writeToExec(rv);
 
 	block_ops.clear();
 
@@ -654,8 +656,11 @@ void flush()
 
 void init()
 {
-	if (!vmem_platform_prepare_jit_block(ARM7_TCB, ICacheSize, (void**)&ICache))
-		die("vmem_platform_prepare_jit_block failed");
+#ifdef FEAT_NO_RWX_PAGES
+	verify(vmem_platform_prepare_jit_block(ARM7_TCB, ICacheSize, (void**)&ICache, &rx_offset));
+#else
+	verify(vmem_platform_prepare_jit_block(ARM7_TCB, ICacheSize, (void**)&ICache));
+#endif
 
 	icPtr = ICache;
 

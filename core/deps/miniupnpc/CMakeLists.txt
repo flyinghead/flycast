@@ -29,12 +29,17 @@ if (NOT WIN32)
   target_compile_definitions(miniupnpc-private INTERFACE
     MINIUPNPC_SET_SOCKET_TIMEOUT
     _BSD_SOURCE _DEFAULT_SOURCE)
-  if (NOT CMAKE_SYSTEM_NAME STREQUAL "Darwin" AND NOT CMAKE_SYSTEM_NAME STREQUAL "FreeBSD" AND NOT CMAKE_SYSTEM_NAME STREQUAL "SunOS")
+  if (NOT CMAKE_SYSTEM_NAME STREQUAL "Darwin" AND NOT CMAKE_SYSTEM_NAME STREQUAL "FreeBSD" 
+	AND NOT CMAKE_SYSTEM_NAME STREQUAL "SunOS" AND NOT CMAKE_SYSTEM_NAME STREQUAL "iOS")
     # add_definitions (-D_POSIX_C_SOURCE=200112L)
     target_compile_definitions(miniupnpc-private INTERFACE _XOPEN_SOURCE=600)
   endif ()
 else ()
-  target_compile_definitions(miniupnpc-private INTERFACE _WIN32_WINNT=0x0501) # XP or higher for getnameinfo and friends
+  if (WINDOWS_STORE)
+    target_compile_definitions(miniupnpc-private INTERFACE _WIN32_WINNT=0x0A00 _WINSOCK_DEPRECATED_NO_WARNINGS)
+  else ()
+    target_compile_definitions(miniupnpc-private INTERFACE _WIN32_WINNT=0x0501) # XP or higher for getnameinfo and friends
+  endif ()
 endif ()
 
 if (CMAKE_SYSTEM_NAME STREQUAL "Darwin")

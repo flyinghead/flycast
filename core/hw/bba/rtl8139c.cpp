@@ -50,6 +50,7 @@
 /* For crc32 */
 #include <zlib.h>
 #include "rtl8139c.h"
+#include "serialize.h"
 
 /* debug RTL8139 card */
 //#define DEBUG_RTL8139 1
@@ -2327,132 +2328,132 @@ void rtl8139_destroy(RTL8139State *state)
 	free(state);
 }
 
-void rtl8139_serialize(RTL8139State *s, void **data, unsigned int *total_size)
+void rtl8139_serialize(RTL8139State *s, Serializer& ser)
 {
-	REICAST_SA(s->parent_obj.config, 256);
-	REICAST_SA(s->parent_obj.cmask, 256);
-	REICAST_SA(s->parent_obj.wmask, 256);
-	REICAST_S(s->parent_obj.io_regions);
+	ser.serialize(s->parent_obj.config, 256);
+	ser.serialize(s->parent_obj.cmask, 256);
+	ser.serialize(s->parent_obj.wmask, 256);
+	ser << s->parent_obj.io_regions;
 
-	REICAST_S(s->phys);
-	REICAST_S(s->mult);
-	REICAST_S(s->TxStatus);
-	REICAST_S(s->TxAddr);
+	ser << s->phys;
+	ser << s->mult;
+	ser << s->TxStatus;
+	ser << s->TxAddr;
 
-	REICAST_S(s->RxBuf);
-	REICAST_S(s->RxBufferSize);
-	REICAST_S(s->RxBufPtr);
-	REICAST_S(s->RxBufAddr);
+	ser << s->RxBuf;
+	ser << s->RxBufferSize;
+	ser << s->RxBufPtr;
+	ser << s->RxBufAddr;
 
-	REICAST_S(s->IntrStatus);
-	REICAST_S(s->IntrMask);
+	ser << s->IntrStatus;
+	ser << s->IntrMask;
 
-	REICAST_S(s->TxConfig);
-	REICAST_S(s->RxConfig);
-	REICAST_S(s->RxMissed);
-	REICAST_S(s->CSCR);
+	ser << s->TxConfig;
+	ser << s->RxConfig;
+	ser << s->RxMissed;
+	ser << s->CSCR;
 
-	REICAST_S(s->Cfg9346);
-	REICAST_S(s->Config0);
-	REICAST_S(s->Config1);
-	REICAST_S(s->Config3);
-	REICAST_S(s->Config4);
-	REICAST_S(s->Config5);
+	ser << s->Cfg9346;
+	ser << s->Config0;
+	ser << s->Config1;
+	ser << s->Config3;
+	ser << s->Config4;
+	ser << s->Config5;
 
-	REICAST_S(s->clock_enabled);
-	REICAST_S(s->bChipCmdState);
+	ser << s->clock_enabled;
+	ser << s->bChipCmdState;
 
-	REICAST_S(s->MultiIntr);
+	ser << s->MultiIntr;
 
-	REICAST_S(s->BasicModeCtrl);
-	REICAST_S(s->BasicModeStatus);
-	REICAST_S(s->NWayAdvert);
-	REICAST_S(s->NWayLPAR);
-	REICAST_S(s->NWayExpansion);
+	ser << s->BasicModeCtrl;
+	ser << s->BasicModeStatus;
+	ser << s->NWayAdvert;
+	ser << s->NWayLPAR;
+	ser << s->NWayExpansion;
 
-	REICAST_S(s->conf.macaddr);
+	ser << s->conf.macaddr;
 
-	REICAST_S(s->currTxDesc);
+	ser << s->currTxDesc;
 
-	REICAST_S(s->eeprom.contents);
-	REICAST_S(s->eeprom.mode);
-	REICAST_S(s->eeprom.tick);
-	REICAST_S(s->eeprom.address);
-	REICAST_S(s->eeprom.input);
-	REICAST_S(s->eeprom.output);
+	ser << s->eeprom.contents;
+	ser << s->eeprom.mode;
+	ser << s->eeprom.tick;
+	ser << s->eeprom.address;
+	ser << s->eeprom.input;
+	ser << s->eeprom.output;
 
-	REICAST_S(s->eeprom.eecs);
-	REICAST_S(s->eeprom.eesk);
-	REICAST_S(s->eeprom.eedi);
-	REICAST_S(s->eeprom.eedo);
+	ser << s->eeprom.eecs;
+	ser << s->eeprom.eesk;
+	ser << s->eeprom.eedi;
+	ser << s->eeprom.eedo;
 
-	REICAST_S(s->TCTR);
-	REICAST_S(s->TimerInt);
-	REICAST_S(s->TCTR_base);
+	ser << s->TCTR;
+	ser << s->TimerInt;
+	ser << s->TCTR_base;
 }
 
-bool rtl8139_unserialize(RTL8139State *s, void **data, unsigned int *total_size)
+bool rtl8139_deserialize(RTL8139State *s, Deserializer& deser)
 {
-	REICAST_USA(s->parent_obj.config, 256);
-	REICAST_USA(s->parent_obj.cmask, 256);
-	REICAST_USA(s->parent_obj.wmask, 256);
-	REICAST_US(s->parent_obj.io_regions);
+	deser.deserialize(s->parent_obj.config, 256);
+	deser.deserialize(s->parent_obj.cmask, 256);
+	deser.deserialize(s->parent_obj.wmask, 256);
+	deser >> s->parent_obj.io_regions;
 
-	REICAST_US(s->phys);
-	REICAST_US(s->mult);
-	REICAST_US(s->TxStatus);
-	REICAST_US(s->TxAddr);
+	deser >> s->phys;
+	deser >> s->mult;
+	deser >> s->TxStatus;
+	deser >> s->TxAddr;
 
-	REICAST_US(s->RxBuf);
-	REICAST_US(s->RxBufferSize);
-	REICAST_US(s->RxBufPtr);
-	REICAST_US(s->RxBufAddr);
+	deser >> s->RxBuf;
+	deser >> s->RxBufferSize;
+	deser >> s->RxBufPtr;
+	deser >> s->RxBufAddr;
 
-	REICAST_US(s->IntrStatus);
-	REICAST_US(s->IntrMask);
+	deser >> s->IntrStatus;
+	deser >> s->IntrMask;
 
-	REICAST_US(s->TxConfig);
-	REICAST_US(s->RxConfig);
-	REICAST_US(s->RxMissed);
-	REICAST_US(s->CSCR);
+	deser >> s->TxConfig;
+	deser >> s->RxConfig;
+	deser >> s->RxMissed;
+	deser >> s->CSCR;
 
-	REICAST_US(s->Cfg9346);
-	REICAST_US(s->Config0);
-	REICAST_US(s->Config1);
-	REICAST_US(s->Config3);
-	REICAST_US(s->Config4);
-	REICAST_US(s->Config5);
+	deser >> s->Cfg9346;
+	deser >> s->Config0;
+	deser >> s->Config1;
+	deser >> s->Config3;
+	deser >> s->Config4;
+	deser >> s->Config5;
 
-	REICAST_US(s->clock_enabled);
-	REICAST_US(s->bChipCmdState);
+	deser >> s->clock_enabled;
+	deser >> s->bChipCmdState;
 
-	REICAST_US(s->MultiIntr);
+	deser >> s->MultiIntr;
 
-	REICAST_US(s->BasicModeCtrl);
-	REICAST_US(s->BasicModeStatus);
-	REICAST_US(s->NWayAdvert);
-	REICAST_US(s->NWayLPAR);
-	REICAST_US(s->NWayExpansion);
+	deser >> s->BasicModeCtrl;
+	deser >> s->BasicModeStatus;
+	deser >> s->NWayAdvert;
+	deser >> s->NWayLPAR;
+	deser >> s->NWayExpansion;
 
-	REICAST_US(s->conf.macaddr);
+	deser >> s->conf.macaddr;
 
-	REICAST_US(s->currTxDesc);
+	deser >> s->currTxDesc;
 
-	REICAST_US(s->eeprom.contents);
-	REICAST_US(s->eeprom.mode);
-	REICAST_US(s->eeprom.tick);
-	REICAST_US(s->eeprom.address);
-	REICAST_US(s->eeprom.input);
-	REICAST_US(s->eeprom.output);
+	deser >> s->eeprom.contents;
+	deser >> s->eeprom.mode;
+	deser >> s->eeprom.tick;
+	deser >> s->eeprom.address;
+	deser >> s->eeprom.input;
+	deser >> s->eeprom.output;
 
-	REICAST_US(s->eeprom.eecs);
-	REICAST_US(s->eeprom.eesk);
-	REICAST_US(s->eeprom.eedi);
-	REICAST_US(s->eeprom.eedo);
+	deser >> s->eeprom.eecs;
+	deser >> s->eeprom.eesk;
+	deser >> s->eeprom.eedi;
+	deser >> s->eeprom.eedo;
 
-	REICAST_US(s->TCTR);
-	REICAST_US(s->TimerInt);
-	REICAST_US(s->TCTR_base);
+	deser >> s->TCTR;
+	deser >> s->TimerInt;
+	deser >> s->TCTR_base;
 
 	return s->bChipCmdState & CmdRxEnb;
 }

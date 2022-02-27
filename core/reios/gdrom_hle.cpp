@@ -23,7 +23,7 @@
 
 #define debugf(...) DEBUG_LOG(REIOS, __VA_ARGS__)
 
-gdrom_hle_state_t gd_hle_state = { 0xffffffff, 2, BIOS_INACTIVE };
+gdrom_hle_state_t gd_hle_state;
 
 static void GDROM_HLE_ReadSES()
 {
@@ -49,7 +49,7 @@ static void GDROM_HLE_ReadTOC()
 	}
 
 	u32 toc[102];
-	libGDR_GetToc(toc, area);
+	libGDR_GetToc(toc, (DiskArea)area);
 
 	// Swap results to LE
 	for (int i = 0; i < 102; i++) {
@@ -74,7 +74,7 @@ static void read_sectors_to(u32 addr, u32 sector, u32 count)
 	gd_hle_state.cur_sector = sector + count - 1;
 	if (virtual_addr)
 		gd_hle_state.xfer_end_time = 0;
-	else if (count > 5)
+	else if (count > 5 && !config::FastGDRomLoad)
 		// Large Transfers: GD-ROM rate (approx. 1.8 MB/s)
 		gd_hle_state.xfer_end_time = sh4_sched_now64() + (u64)count * 2048 * 1000000L / 10240;
 	else
@@ -567,7 +567,7 @@ void gdrom_hle_op()
 				{
 					try {
 						gd_hle_state.params[i] = r[5] == 0 ? 0 : ReadMem32(r[5] + i * 4);
-					} catch (SH4ThrownException& ex) {
+					} catch (SH4ThrownException&) {
 						// Ignore page faults. happens for commands not taking params
 						gd_hle_state.params[i] = 0;
 					}
@@ -600,7 +600,7 @@ void gdrom_hle_op()
 				WriteMem32(r[5] + 4, gd_hle_state.result[1]);
 				WriteMem32(r[5] + 8, gd_hle_state.result[2]);
 				WriteMem32(r[5] + 12, gd_hle_state.result[3]);
-			} catch (SH4ThrownException& ex) {
+			} catch (SH4ThrownException&) {
 			}
 			if (gd_hle_state.status == BIOS_INACTIVE || gd_hle_state.status == BIOS_ACTIVE)
 			{
@@ -644,9 +644,7 @@ void gdrom_hle_op()
 		case GDROM_INIT:
 			// Initialize the GDROM subsystem. Should be called before any requests are enqueued.
 			DEBUG_LOG(REIOS, "GDROM: HLE GDROM_INIT");
-			gd_hle_state.last_request_id = 0xFFFFFFFF;
-			gd_hle_state.next_request_id = 2;
-			gd_hle_state.status = BIOS_INACTIVE;
+			gd_hle_state = {};
 			break;
 
 		case GDROM_RESET:

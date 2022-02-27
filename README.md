@@ -1,7 +1,9 @@
 # Flycast
 
-[![C/C++ CI](https://github.com/flyinghead/flycast/actions/workflows/c-cpp.yml/badge.svg)](https://github.com/flyinghead/flycast/actions/workflows/c-cpp.yml)
 [![Android CI](https://github.com/flyinghead/flycast/actions/workflows/android.yml/badge.svg)](https://github.com/flyinghead/flycast/actions/workflows/android.yml)
+[![C/C++ CI](https://github.com/flyinghead/flycast/actions/workflows/c-cpp.yml/badge.svg)](https://github.com/flyinghead/flycast/actions/workflows/c-cpp.yml)
+[![Nintendo Switch CI](https://github.com/flyinghead/flycast/actions/workflows/switch.yml/badge.svg)](https://github.com/flyinghead/flycast/actions/workflows/switch.yml)
+[![Windows UWP CI](https://github.com/flyinghead/flycast/actions/workflows/uwp.yml/badge.svg)](https://github.com/flyinghead/flycast/actions/workflows/uwp.yml)
 
 ![flycast logo](https://github.com/flyinghead/flycast/raw/master/shell/linux/flycast.png)
 
@@ -13,7 +15,7 @@ Join us on our [**Discord server**](https://discord.gg/X8YWP8w) for a chat.
 
 ## Install
 
-### Flatpak
+### Flatpak (Linux)
 
 1. [Set up Flatpak](https://www.flatpak.org/setup/)
 
@@ -25,12 +27,12 @@ Join us on our [**Discord server**](https://discord.gg/X8YWP8w) for a chat.
 
 `flatpak run org.flycast.Flycast`
 
+### Xbox One
+
+Open [**gamr13's github page**](https://gamr13.github.io/) from your console.
+
 ### Binaries
 
-Get fresh builds for your system [on the builds page](https://flyinghead.github.io/flycast-builds/).
+Get fresh builds for your system [**on the builds page**](https://flyinghead.github.io/flycast-builds/).
 
 **New:** Now automated test results are available as well.
-
-## Disclaimer
-
-All code contributed to this fork is *not* bound by the Individual Contributor License Agreement of the upstream repository (https://github.com/reicast/reicast-emulator) and shall *not* be considered as a contribution to the upstream repository.

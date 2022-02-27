@@ -27,6 +27,7 @@
 #include "hw/sh4/sh4_sched.h"
 #include "oslib/oslib.h"
 #include "network/picoppp.h"
+#include "serialize.h"
 
 #define MODEM_COUNTRY_RES 0
 #define MODEM_COUNTRY_JAP 1
@@ -319,9 +320,16 @@ void ModemInit()
 	modem_sched = sh4_sched_register(0, &modem_sched_func);
 }
 
-void ModemTerm()
+void ModemReset()
 {
 	stop_pico();
+}
+
+void ModemTerm()
+{
+	ModemReset();
+	sh4_sched_unregister(modem_sched);
+	modem_sched = -1;
 }
 
 static void schedule_callback(int ms)
@@ -739,4 +747,26 @@ void ModemWriteMem_A0_006(u32 addr, u32 data, u32 size)
 	}
 
 	LOG("modem reg %03X write %X -- wtf is it?",reg,data);
+}
+
+void ModemSerialize(Serializer& ser)
+{
+	ser << modem_regs;
+	ser << dspram;
+	ser << state;
+	ser << connect_state;
+	ser << last_dial_time;
+	ser << data_sent;
+}
+void ModemDeserialize(Deserializer& deser)
+{
+	if (deser.version() >= Deserializer::V20)
+	{
+		deser >> modem_regs;
+		deser >> dspram;
+		deser >> state;
+		deser >> connect_state;
+		deser >> last_dial_time;
+		deser >> data_sent;
+	}
 }

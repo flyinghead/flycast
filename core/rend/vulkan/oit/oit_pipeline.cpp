@@ -143,7 +143,7 @@ void OITPipelineManager::CreatePipeline(u32 listType, bool autosort, const PolyP
 	OITShaderManager::FragmentShaderParams params = {};
 	params.alphaTest = listType == ListType_Punch_Through;
 	params.bumpmap = pp.tcw.PixelFmt == PixelBumpMap;
-	params.clamping = pp.tsp.ColorClamp && (pvrrc.fog_clamp_min != 0 || pvrrc.fog_clamp_max != 0xffffffff);
+	params.clamping = pp.tsp.ColorClamp && (pvrrc.fog_clamp_min.full != 0 || pvrrc.fog_clamp_max.full != 0xffffffff);
 	params.insideClipTest = (pp.tileclip >> 28) == 3;
 	params.fog = config::Fog ? pp.tsp.FogCtrl : 2;
 	params.gouraud = pp.pcw.Gouraud;

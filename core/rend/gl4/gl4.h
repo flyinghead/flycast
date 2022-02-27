@@ -18,7 +18,6 @@
 */
 #pragma once
 #include "rend/gles/gles.h"
-#include "glsl.h"
 #include <unordered_map>
 
 void gl4DrawStrips(GLuint output_fbo, int width, int height);
@@ -89,7 +88,7 @@ extern int max_image_width;
 extern int max_image_height;
 
 extern const char *gl4PixelPipelineShader;
-bool gl4CompilePipelineShader(gl4PipelineShader* s, const char *pixel_source = gl4PixelPipelineShader, const char *vertex_source = NULL);
+bool gl4CompilePipelineShader(gl4PipelineShader* s, const char *pixel_source = nullptr, const char *vertex_source = nullptr);
 
 void initABuffer();
 void termABuffer();
@@ -106,33 +105,13 @@ extern GLuint geom_fbo;
 extern GLuint texSamplers[2];
 extern GLuint depth_fbo;
 
-#define SHADER_HEADER "#version 430 \n\
-\n\
-layout(r32ui, binding = 4) uniform coherent restrict uimage2D abufferPointerImg; \n\
-\n\
-layout(binding = 0, offset = 0) uniform atomic_uint buffer_index; \n\
-\n" \
-OIT_POLY_PARAM \
-"\
-layout (binding = 0, std430) coherent restrict buffer PixelBuffer { \n\
-	Pixel pixels[]; \n\
-}; \n\
-\n\
-uint getNextPixelIndex() \n\
-{ \n\
-	uint index = atomicCounterIncrement(buffer_index); \n\
-	if (index >= pixels.length()) \n\
-		// Buffer overflow \n\
-		discard; \n\
-	 \n\
-	return index; \n\
-} \n\
-\n\
-layout (binding = 1, std430) readonly buffer TrPolyParamBuffer { \n\
-	PolyParam tr_poly_params[]; \n\
-}; \n\
- \n\
-"
+extern const char* ShaderHeader;
+
+class OpenGl4Source : public ShaderSource
+{
+public:
+	OpenGl4Source() : ShaderSource("#version 430") {}
+};
 
 void gl4SetupMainVBO();
 void gl4SetupModvolVBO();

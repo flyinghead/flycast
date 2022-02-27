@@ -35,7 +35,3 @@ void tmu_term();
 void ccn_init();
 void ccn_reset(bool hard);
 void ccn_term();
-
-void MMU_init();
-void MMU_reset();
-void MMU_term();

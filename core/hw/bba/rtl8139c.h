@@ -214,5 +214,5 @@ ssize_t rtl8139_receive(RTL8139State *s, const uint8_t *buf, size_t size);
 
 RTL8139State *rtl8139_init(NICConf *conf);
 void rtl8139_destroy(RTL8139State *state);
-void rtl8139_serialize(RTL8139State *state, void **data, unsigned int *total_size);
-bool rtl8139_unserialize(RTL8139State *state, void **data, unsigned int *total_size);
+void rtl8139_serialize(RTL8139State *state, Serializer& ser);
+bool rtl8139_deserialize(RTL8139State *state, Deserializer& deser);

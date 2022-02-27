@@ -13,7 +13,6 @@
 #include "hw/pvr/pvr_sb_regs.h"
 #include "emulator.h"
 #include "hw/bba/bba.h"
-#include "cfg/option.h"
 
 std::array<RegisterStruct, 0x540> sb_regs;
 
@@ -92,8 +91,8 @@ static void sb_write_zero(u32 addr, u32 data)
 static void sb_write_gdrom_unlock(u32 addr, u32 data)
 {
 	/* CS writes 0x42fe, AtomisWave 0xa677, Naomi Dev BIOS 0x3ff */
-	verify(data==0 || data==0x001fffff || data==0x42fe || data == 0xa677
-			|| data == 0x3ff);
+	if (data != 0 && data != 0x001fffff && data != 0x42fe && data != 0xa677 && data != 0x3ff)
+		WARN_LOG(HOLLY, "ERROR: Unexpected GD-ROM unlock code: %x", data);
 }
 
 void sb_rio_register(u32 reg_addr, RegIO flags, RegReadAddrFP* rf, RegWriteAddrFP* wf)
@@ -148,7 +147,7 @@ static void sb_write_SB_SFRES(u32 addr, u32 data)
 	if ((u16)data==0x7611)
 	{
 		NOTICE_LOG(SH4, "SB/HOLLY: System reset requested");
-		dc_request_reset();
+		emu.requestReset();
 	}
 }
 
@@ -582,10 +581,8 @@ void sb_Init()
 	maple_Init();
 	aica_sb_Init();
 
-	if (config::EmulateBBA)
-		bba_Init();
-	else
-		ModemInit();
+	bba_Init();
+	ModemInit();
 }
 
 void sb_Reset(bool hard)
@@ -599,10 +596,8 @@ void sb_Reset(bool hard)
 	SB_FFST_rc = 0;
 	SB_FFST = 0;
 
-	if (config::EmulateBBA)
-		bba_Reset(hard);
-	else
-		ModemTerm();
+	bba_Reset(hard);
+	ModemReset();
 
 	asic_reg_Reset(hard);
 	if (settings.platform.system == DC_PLATFORM_DREAMCAST)
@@ -616,10 +611,8 @@ void sb_Reset(bool hard)
 
 void sb_Term()
 {
-	if (config::EmulateBBA)
-		bba_Term();
-	else
-		ModemTerm();
+	bba_Term();
+	ModemTerm();
 	aica_sb_Term();
 	maple_Term();
 	pvr_sb_Term();

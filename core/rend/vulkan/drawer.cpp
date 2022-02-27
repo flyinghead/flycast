@@ -103,35 +103,6 @@ void BaseDrawer::SetBaseScissor(const vk::Extent2D& viewport)
 	}
 }
 
-// Vulkan uses the color values of the first vertex for flat shaded triangle strips.
-// On Dreamcast the last vertex is the provoking one so we must copy it onto the first.
-void BaseDrawer::SetProvokingVertices()
-{
-	auto setProvokingVertex = [](const List<PolyParam>& list) {
-        u32 *idx_base = pvrrc.idx.head();
-        Vertex *vtx_base = pvrrc.verts.head();
-		const PolyParam *pp_end = list.LastPtr(0);
-		for (const PolyParam *pp = list.head(); pp != pp_end; pp++)
-		{
-			if (!pp->pcw.Gouraud && pp->count > 2)
-			{
-				for (u32 i = 0; i < pp->count - 2; i++)
-				{
-					Vertex *vertex = &vtx_base[idx_base[pp->first + i]];
-					Vertex *lastVertex = &vtx_base[idx_base[pp->first + i + 2]];
-					memcpy(vertex->col, lastVertex->col, 4);
-					memcpy(vertex->spc, lastVertex->spc, 4);
-					memcpy(vertex->col1, lastVertex->col1, 4);
-					memcpy(vertex->spc1, lastVertex->spc1, 4);
-				}
-			}
-		}
-	};
-	setProvokingVertex(pvrrc.global_param_op);
-	setProvokingVertex(pvrrc.global_param_pt);
-	setProvokingVertex(pvrrc.global_param_tr);
-}
-
 void Drawer::DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sortTriangles, const PolyParam& poly, u32 first, u32 count)
 {
 	vk::Rect2D scissorRect;
@@ -183,10 +154,28 @@ void Drawer::DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sor
 	cmdBuffer.drawIndexed(count, 1, first, 0, 0);
 }
 
-void Drawer::DrawSorted(const vk::CommandBuffer& cmdBuffer, const std::vector<SortTrigDrawParam>& polys)
+void Drawer::DrawSorted(const vk::CommandBuffer& cmdBuffer, const std::vector<SortTrigDrawParam>& polys, bool multipass)
 {
 	for (const SortTrigDrawParam& param : polys)
 		DrawPoly(cmdBuffer, ListType_Translucent, true, *param.ppid, pvrrc.idx.used() + param.first, param.count);
+	if (multipass && config::TranslucentPolygonDepthMask)
+	{
+		// Write to the depth buffer now. The next render pass might need it. (Cosmic Smash)
+		for (const SortTrigDrawParam& param : polys)
+		{
+			if (param.ppid->isp.ZWriteDis)
+				continue;
+			vk::Pipeline pipeline = pipelineManager->GetDepthPassPipeline(param.ppid->isp.CullMode);
+			cmdBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline);
+			vk::Rect2D scissorRect;
+			TileClipping tileClip = SetTileClip(param.ppid->tileclip, scissorRect);
+			if (tileClip == TileClipping::Outside)
+				SetScissor(cmdBuffer, scissorRect);
+			else
+				SetScissor(cmdBuffer, baseScissor);
+			cmdBuffer.drawIndexed(param.count, 1, pvrrc.idx.used() + param.first, 0, 0);
+		}
+	}
 }
 
 void Drawer::DrawList(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sortTriangles, const List<PolyParam>& polys, u32 first, u32 last)
@@ -314,8 +303,13 @@ bool Drawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 	currentScissor = vk::Rect2D();
 
 	vk::CommandBuffer cmdBuffer = BeginRenderPass();
+	if (!pvrrc.isRTT && (FB_R_CTRL.fb_enable == 0 || VO_CONTROL.blank_video == 1))
+	{
+		// Video output disabled
+		return true;
+	}
 
-	SetProvokingVertices();
+	setFirstProvokingVertex(pvrrc);
 
 	// Upload vertex and index buffers
 	VertexShaderUniforms vtxUniforms;
@@ -355,7 +349,7 @@ bool Drawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
         {
 			if (!config::PerStripSorting)
 			{
-				DrawSorted(cmdBuffer, sortedPolys[render_pass]);
+				DrawSorted(cmdBuffer, sortedPolys[render_pass], render_pass + 1 < pvrrc.render_passes.used());
 			}
 			else
 			{
@@ -442,7 +436,7 @@ vk::CommandBuffer TextureDrawer::BeginRenderPass()
 			break;
 		}
 
-		TSP tsp = { 0 };
+		TSP tsp = { { 0 } };
 		for (tsp.TexU = 0; tsp.TexU <= 7 && (8u << tsp.TexU) < origWidth; tsp.TexU++);
 		for (tsp.TexV = 0; tsp.TexV <= 7 && (8u << tsp.TexV) < origHeight; tsp.TexV++);
 

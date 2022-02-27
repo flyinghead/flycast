@@ -1,5 +1,6 @@
 #pragma once
 #include "types.h"
+#include "md5/md5.h"
 
 #include <condition_variable>
 #include <mutex>
@@ -10,15 +11,12 @@
 #ifdef __ANDROID__
 #include <sys/mman.h>
 #undef PAGE_MASK
-#define PAGE_MASK (PAGE_SIZE-1)
-#else
-#if defined(__APPLE__) && defined(__aarch64__)
+#elif defined(__APPLE__) && defined(__aarch64__)
 #define PAGE_SIZE 16384
 #else
 #define PAGE_SIZE 4096
 #endif
 #define PAGE_MASK (PAGE_SIZE-1)
-#endif
 
 class cThread
 {
@@ -77,10 +75,6 @@ size_t get_last_slash_pos(const std::string& path);
 bool mem_region_lock(void *start, std::size_t len);
 bool mem_region_unlock(void *start, std::size_t len);
 bool mem_region_set_exec(void *start, std::size_t len);
-void *mem_region_reserve(void *start, std::size_t len);
-bool mem_region_release(void *start, std::size_t len);
-void *mem_region_map_file(void *file_handle, void *dest, std::size_t len, std::size_t offset, bool readwrite);
-bool mem_region_unmap_file(void *start, std::size_t len);
 
 class VArray2 {
 public:
@@ -135,3 +129,59 @@ static inline std::string trim_trailing_ws(const std::string& str,
 
     return str.substr(0, strEnd + 1);
 }
+
+static inline std::string trim_ws(const std::string& str,
+                 const std::string& whitespace = " ")
+{
+    const auto strStart = str.find_first_not_of(whitespace);
+	if (strStart == std::string::npos)
+		return "";
+
+    return str.substr(strStart, str.find_last_not_of(whitespace) + 1 - strStart);
+}
+
+class MD5Sum
+{
+	MD5_CTX ctx;
+
+public:
+	MD5Sum() {
+		MD5_Init(&ctx);
+	}
+
+	MD5Sum& add(const void *data, unsigned long len) {
+		MD5_Update(&ctx, data, len);
+		return *this;
+	}
+
+	MD5Sum& add(std::FILE *file) {
+		std::fseek(file, 0, SEEK_SET);
+		char buf[4096];
+		unsigned long len = 0;
+		while ((len = (unsigned long)std::fread(buf, 1, sizeof(buf), file)) > 0)
+			MD5_Update(&ctx, buf, len);
+		return *this;
+	}
+
+	template<typename T>
+	MD5Sum& add(const T& v) {
+		MD5_Update(&ctx, &v, (unsigned long)sizeof(T));
+		return *this;
+	}
+
+	template<typename T>
+	MD5Sum& add(const std::vector<T>& v) {
+		MD5_Update(&ctx, &v[0], (unsigned long)(v.size() * sizeof(T)));
+		return *this;
+	}
+
+	void getDigest(u8 digest[16]) {
+		MD5_Final(digest, &ctx);
+	}
+
+	std::vector<u8> getDigest() {
+		std::vector<u8> v(16);
+		MD5_Final(v.data(), &ctx);
+		return v;
+	}
+};

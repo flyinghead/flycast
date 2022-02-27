@@ -26,6 +26,9 @@
 #include "hw/sh4/sh4_opcode_list.h"
 #include "hw/sh4/sh4_core.h"
 #include "hw/mem/_vmem.h"
+#include "oslib/oslib.h"
+
+extern UnwindInfo unwinder;
 
 namespace MemSize {
 enum {
@@ -154,6 +157,7 @@ void X86Compiler::genMemHandlers()
 						alignStack(-12);
 #else
 						sub(esp, 8);
+						unwinder.allocStackPtr(getCurr(), 8);
 #endif
 						movss(dword[esp], xmm0);
 						movss(dword[esp + 4], xmm1);
@@ -232,6 +236,7 @@ void X86Compiler::genMemHandlers()
 							alignStack(-12);
 #else
 							sub(esp, 8);
+							unwinder.allocStackPtr(getCurr(), 8);
 #endif
 							movss(dword[esp], xmm0);
 							movss(dword[esp + 4], xmm1);

@@ -87,12 +87,9 @@ void pvr_WriteReg(u32 paddr,u32 data)
 		return;
 
 	case FB_R_SOF1_addr:
-		data &= 0x00fffffc;
-		rend_swap_frame(data);
-		break;
-
 	case FB_R_SOF2_addr:
 		data &= 0x00fffffc;
+		rend_swap_frame(data);
 		break;
 
 	case FB_W_SOF1_addr:
@@ -126,7 +123,7 @@ void Regs_Reset(bool hard)
 	REVISION            = 0x00000011;
 	SOFTRESET           = 0x00000007;
 	SPG_HBLANK_INT.full = 0x031D0000;
-	SPG_VBLANK_INT.full = 0x01500104;
+	SPG_VBLANK_INT.full = 0x00150104;
 	FPU_PARAM_CFG       = 0x0007DF77;
 	HALF_OFFSET         = 0x00000007;
 	ISP_FEED_CFG        = 0x00402000;

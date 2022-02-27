@@ -19,6 +19,7 @@ using namespace Xbyak::util;
 #include "hw/sh4/sh4_mem.h"
 #include "x64_regalloc.h"
 #include "xbyak_base.h"
+#include "oslib/oslib.h"
 
 struct DynaRBI : RuntimeBlockInfo
 {
@@ -31,7 +32,6 @@ struct DynaRBI : RuntimeBlockInfo
 	}
 };
 
-static int cycle_counter;
 static void (*mainloop)();
 static void (*handleException)();
 
@@ -66,6 +66,10 @@ namespace MemType {
 
 static const void *MemHandlers[MemType::Count][MemSize::Count][MemOp::Count];
 static const u8 *MemHandlerStart, *MemHandlerEnd;
+static UnwindInfo unwinder;
+#ifndef _WIN32
+static float xmmSave[4];
+#endif
 
 void ngen_mainloop(void *)
 {
@@ -74,19 +78,12 @@ void ngen_mainloop(void *)
 		mainloop();
 	} catch (const SH4ThrownException&) {
 		ERROR_LOG(DYNAREC, "SH4ThrownException in mainloop");
-	} catch (...) {
-		ERROR_LOG(DYNAREC, "Uncaught unknown exception in mainloop");
+		throw FlycastException("Fatal: Unhandled SH4 exception");
 	}
 }
 
 void ngen_init()
 {
-}
-
-void ngen_GetFeatures(ngen_features* dst)
-{
-	dst->InterpreterFallback = false;
-	dst->OnlyDynamicEnds = false;
 }
 
 RuntimeBlockInfo* ngen_AllocateBlock()
@@ -108,7 +105,7 @@ static void handle_sh4_exception(SH4ThrownException& ex, u32 pc)
 		pc--;
 	}
 	Do_Exception(pc, ex.expEvn, ex.callVect);
-	cycle_counter += 4;	// probably more is needed
+	p_sh4rcb->cntx.cycle_counter += 4;	// probably more is needed
 	handleException();
 }
 
@@ -144,6 +141,12 @@ const std::array<Xbyak::Reg64, 4> call_regs64
 #endif
 const std::array<Xbyak::Xmm, 4> call_regsxmm { xmm0, xmm1, xmm2, xmm3 };
 
+#ifdef _WIN32
+constexpr u32 STACK_ALIGN = 0x28;	// 32-byte shadow space + 8 byte alignment
+#else
+constexpr u32 STACK_ALIGN = 8;
+#endif
+
 class BlockCompiler : public BaseXbyakRec<BlockCompiler, true>
 {
 public:
@@ -160,11 +163,8 @@ public:
 
 		CheckBlock(force_checks, block);
 
-#ifdef _WIN32
-		sub(rsp, 0x28);		// 32-byte shadow space + 8 byte alignment
-#else
-		sub(rsp, 0x8);		// align stack
-#endif
+		sub(rsp, STACK_ALIGN);
+
 		if (mmu_enabled() && block->has_fpu_op)
 		{
 			Xbyak::Label fpu_enabled;
@@ -178,14 +178,9 @@ public:
 			jmp(exit_block, T_NEAR);
 			L(fpu_enabled);
 		}
-#ifdef FEAT_NO_RWX_PAGES
-		// Use absolute addressing for this one
-		// TODO(davidgfnet) remove the ifsef using CC_RX2RW/CC_RW2RX
-		mov(rax, (uintptr_t)&cycle_counter);
+		mov(rax, (uintptr_t)&p_sh4rcb->cntx.cycle_counter);
 		sub(dword[rax], block->guest_cycles);
-#else
-		sub(dword[rip + &cycle_counter], block->guest_cycles);
-#endif
+
 		regalloc.DoAlloc(block);
 
 		for (current_opid = 0; current_opid < block->oplist.size(); current_opid++)
@@ -516,11 +511,7 @@ public:
 		}
 
 		L(exit_block);
-#ifdef _WIN32
-		add(rsp, 0x28);
-#else
-		add(rsp, 0x8);
-#endif
+		add(rsp, STACK_ALIGN);
 		ret();
 
 		ready();
@@ -628,23 +619,30 @@ public:
 
 	void genMainloop()
 	{
+		unwinder.start((void *)getCurr());
+
 		push(rbx);
+		unwinder.pushReg(getSize(), Xbyak::Operand::RBX);
 		push(rbp);
+		unwinder.pushReg(getSize(), Xbyak::Operand::RBP);
 #ifdef _WIN32
 		push(rdi);
+		unwinder.pushReg(getSize(), Xbyak::Operand::RDI);
 		push(rsi);
+		unwinder.pushReg(getSize(), Xbyak::Operand::RSI);
 #endif
 		push(r12);
+		unwinder.pushReg(getSize(), Xbyak::Operand::R12);
 		push(r13);
+		unwinder.pushReg(getSize(), Xbyak::Operand::R13);
 		push(r14);
+		unwinder.pushReg(getSize(), Xbyak::Operand::R14);
 		push(r15);
-#ifdef _WIN32
-		sub(rsp, 40);				// 32-byte shadow space + 8 for stack 16-byte alignment
-#else
-		sub(rsp, 8);				// stack 16-byte alignment
-#endif
+		unwinder.pushReg(getSize(), Xbyak::Operand::R15);
+		sub(rsp, STACK_ALIGN);
+		unwinder.allocStack(getSize(), STACK_ALIGN);
+		unwinder.endProlog(getSize());
 
-		mov(dword[rip + &cycle_counter], SH4_TIMESLICE);
 		mov(qword[rip + &jmp_rsp], rsp);
 
 	//run_loop:
@@ -664,22 +662,19 @@ public:
 		mov(call_regs[0], dword[rax]);
 		call(bm_GetCodeByVAddr);
 		call(rax);
-		mov(ecx, dword[rip + &cycle_counter]);
+		mov(rax, (uintptr_t)&p_sh4rcb->cntx.cycle_counter);
+		mov(ecx, dword[rax]);
 		test(ecx, ecx);
 		jg(slice_loop);
 
 		add(ecx, SH4_TIMESLICE);
-		mov(dword[rip + &cycle_counter], ecx);
+		mov(dword[rax], ecx);
 		call(UpdateSystem_INTC);
 		jmp(run_loop);
 
 	//end_run_loop:
 		L(end_run_loop);
-#ifdef _WIN32
-		add(rsp, 40);
-#else
-		add(rsp, 8);
-#endif
+		add(rsp, STACK_ALIGN);
 		pop(r15);
 		pop(r14);
 		pop(r13);
@@ -691,6 +686,19 @@ public:
 		pop(rbp);
 		pop(rbx);
 		ret();
+		size_t unwindSize = unwinder.end(getSize());
+		setSize(getSize() + unwindSize);
+
+		unwinder.start((void *)getCurr());
+		size_t startOffset = getSize();
+#ifdef _WIN32
+		// 32-byte shadow space + 8 for stack 16-byte alignment
+		unwinder.allocStack(0, 40);
+#else
+		// stack 16-byte alignment
+		unwinder.allocStack(0, 8);
+#endif
+		unwinder.endProlog(0);
 
 	//handleException:
 		Xbyak::Label handleExceptionLabel;
@@ -699,6 +707,12 @@ public:
 		jmp(run_loop);
 
 		genMemHandlers();
+
+		size_t savedSize = getSize();
+		setSize(CODE_SIZE - 128 - startOffset);
+		unwindSize = unwinder.end(getSize());
+		verify(unwindSize <= 128);
+		setSize(savedSize);
 
 		ready();
 		mainloop = (void (*)())getCode();
@@ -1179,16 +1193,16 @@ private:
 						{
 							switch (size) {
 							case MemSize::S8:
-								sub(rsp, 8);
+								sub(rsp, STACK_ALIGN);
 								call((const void *)_vmem_ReadMem8);
 								movsx(eax, al);
-								add(rsp, 8);
+								add(rsp, STACK_ALIGN);
 								break;
 							case MemSize::S16:
-								sub(rsp, 8);
+								sub(rsp, STACK_ALIGN);
 								call((const void *)_vmem_ReadMem16);
 								movsx(eax, ax);
-								add(rsp, 8);
+								add(rsp, STACK_ALIGN);
 								break;
 							case MemSize::S32:
 								jmp((const void *)_vmem_ReadMem32);	// tail call
@@ -1204,7 +1218,7 @@ private:
 						{
 							switch (size) {
 							case MemSize::S8:
-								jmp((const void *)_vmem_WriteMem8);	// tail call
+								jmp((const void *)_vmem_WriteMem8);		// tail call
 								continue;
 							case MemSize::S16:
 								jmp((const void *)_vmem_WriteMem16);	// tail call
@@ -1233,36 +1247,14 @@ private:
 		if (current_opid == (size_t)-1)
 			return;
 
-		bool xmm8_mapped = regalloc.IsMapped(xmm8, current_opid);
-		bool xmm9_mapped = regalloc.IsMapped(xmm9, current_opid);
-		bool xmm10_mapped = regalloc.IsMapped(xmm10, current_opid);
-		bool xmm11_mapped = regalloc.IsMapped(xmm11, current_opid);
-
-		// Need to save xmm registers as they are not preserved in linux/mach
-		if (xmm8_mapped || xmm9_mapped || xmm10_mapped || xmm11_mapped)
-		{
-			u32 stack_size = 4 * (xmm8_mapped + xmm9_mapped + xmm10_mapped + xmm11_mapped);
-			stack_size = (((stack_size + 15) >> 4) << 4); // Stack needs to be 16-byte aligned before the call
-			sub(rsp, stack_size);
-			int offset = 0;
-			if (xmm8_mapped)
-			{
-				movd(ptr[rsp + offset], xmm8);
-				offset += 4;
-			}
-			if (xmm9_mapped)
-			{
-				movd(ptr[rsp + offset], xmm9);
-				offset += 4;
-			}
-			if (xmm10_mapped)
-			{
-				movd(ptr[rsp + offset], xmm10);
-				offset += 4;
-			}
-			if (xmm11_mapped)
-				movd(ptr[rsp + offset], xmm11);
-		}
+		if (regalloc.IsMapped(xmm8, current_opid))
+			movd(ptr[rip + &xmmSave[0]], xmm8);
+		if (regalloc.IsMapped(xmm9, current_opid))
+			movd(ptr[rip + &xmmSave[1]], xmm9);
+		if (regalloc.IsMapped(xmm10, current_opid))
+			movd(ptr[rip + &xmmSave[2]], xmm10);
+		if (regalloc.IsMapped(xmm11, current_opid))
+			movd(ptr[rip + &xmmSave[3]], xmm11);
 #endif
 	}
 
@@ -1272,38 +1264,14 @@ private:
 		if (current_opid == (size_t)-1)
 			return;
 
-		bool xmm8_mapped = regalloc.IsMapped(xmm8, current_opid);
-		bool xmm9_mapped = regalloc.IsMapped(xmm9, current_opid);
-		bool xmm10_mapped = regalloc.IsMapped(xmm10, current_opid);
-		bool xmm11_mapped = regalloc.IsMapped(xmm11, current_opid);
-		if (xmm8_mapped || xmm9_mapped || xmm10_mapped || xmm11_mapped)
-		{
-			u32 stack_size = 4 * (xmm8_mapped + xmm9_mapped + xmm10_mapped + xmm11_mapped);
-			int offset = stack_size - 4;
-			stack_size = (((stack_size + 15) >> 4) << 4); // Stack needs to be 16-byte aligned before the call
-			if (xmm11_mapped)
-			{
-				movd(xmm11, ptr[rsp + offset]);
-				offset -= 4;
-			}
-			if (xmm10_mapped)
-			{
-				movd(xmm10, ptr[rsp + offset]);
-				offset -= 4;
-			}
-			if (xmm9_mapped)
-			{
-				movd(xmm9, ptr[rsp + offset]);
-				offset -= 4;
-			}
-			if (xmm8_mapped)
-			{
-				movd(xmm8, ptr[rsp + offset]);
-				offset -= 4;
-			}
-			verify(offset == -4);
-			add(rsp, stack_size);
-		}
+		if (regalloc.IsMapped(xmm8, current_opid))
+			movd(xmm8, ptr[rip + &xmmSave[0]]);
+		if (regalloc.IsMapped(xmm9, current_opid))
+			movd(xmm9, ptr[rip + &xmmSave[1]]);
+		if (regalloc.IsMapped(xmm10, current_opid))
+			movd(xmm10, ptr[rip + &xmmSave[2]]);
+		if (regalloc.IsMapped(xmm11, current_opid))
+			movd(xmm11, ptr[rip + &xmmSave[3]]);
 #endif
 	}
 
@@ -1352,6 +1320,9 @@ static BlockCompiler* ccCompiler;
 void ngen_Compile(RuntimeBlockInfo* block, bool smc_checks, bool reset, bool staging, bool optimise)
 {
 	verify(emit_FreeSpace() >= 16 * 1024);
+	void* protStart = emit_GetCCPtr();
+	size_t protSize = emit_FreeSpace();
+	vmem_platform_jit_set_exec(protStart, protSize, false);
 
 	BlockCompiler compiler;
 	::ccCompiler = &compiler;
@@ -1361,6 +1332,7 @@ void ngen_Compile(RuntimeBlockInfo* block, bool smc_checks, bool reset, bool sta
 		ERROR_LOG(DYNAREC, "Fatal xbyak error: %s", e.what());
 	}
 	::ccCompiler = nullptr;
+	vmem_platform_jit_set_exec(protStart, protSize, true);
 }
 
 void ngen_CC_Start(shil_opcode* op)
@@ -1384,14 +1356,20 @@ void ngen_CC_Finish(shil_opcode* op)
 
 bool ngen_Rewrite(host_context_t &context, void *faultAddress)
 {
+	void* protStart = emit_GetCCPtr();
+	size_t protSize = emit_FreeSpace();
+	vmem_platform_jit_set_exec(protStart, protSize, false);
+
 	u8 *retAddr = *(u8 **)context.rsp - 5;
 	BlockCompiler compiler(retAddr);
+	bool rc = false;
 	try {
-		return compiler.rewriteMemAccess(context);
+		rc = compiler.rewriteMemAccess(context);
+		vmem_platform_jit_set_exec(protStart, protSize, true);
 	} catch (const Xbyak::Error& e) {
 		ERROR_LOG(DYNAREC, "Fatal xbyak error: %s", e.what());
-		return false;
 	}
+	return rc;
 }
 
 void ngen_HandleException(host_context_t &context)
@@ -1401,9 +1379,14 @@ void ngen_HandleException(host_context_t &context)
 
 void ngen_ResetBlocks()
 {
+	unwinder.clear();
 	// Avoid generating the main loop more than once
 	if (mainloop != nullptr && mainloop != emit_GetCCPtr())
 		return;
+
+	void* protStart = emit_GetCCPtr();
+	size_t protSize = emit_FreeSpace();
+	vmem_platform_jit_set_exec(protStart, protSize, false);
 
 	BlockCompiler compiler;
 	try {
@@ -1411,6 +1394,7 @@ void ngen_ResetBlocks()
 	} catch (const Xbyak::Error& e) {
 		ERROR_LOG(DYNAREC, "Fatal xbyak error: %s", e.what());
 	}
+	vmem_platform_jit_set_exec(protStart, protSize, true);
 }
 
 #endif
