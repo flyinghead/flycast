@@ -103,17 +103,24 @@ void gdxsv_emu_settings() {
     gui_header("gdxsv Shortcut Settings");
     if (ImGui::Button("Apply Recommended Settings")) {
         // Video
+#if defined(_WIN32)
+        config::RendererType.set(RenderType::DirectX11);
+#else
         config::RendererType.set(RenderType::OpenGL);
+#endif
         config::VSync = true;
         config::AutoSkipFrame = 2;
         config::SkipFrame = 0;
         config::RenderResolution = 960;
         config::DelayFrameSwapping = false;
+        config::ThreadedRendering = true;
         // Controls
         config::MapleMainDevices[0].set(MapleDeviceType::MDT_SegaController);
         config::MapleExpansionDevices[0][0].set(MDT_SegaVMU);
         // Audio
         config::AudioBufferSize = 706;
+        config::AudioVolume.set(50);
+        config::AudioVolume.calcDbPower();
         // Others
         config::DynarecEnabled = true;
         config::DynarecIdleSkip = true;
@@ -123,13 +130,15 @@ void gdxsv_emu_settings() {
     }
     ImGui::SameLine();
     ShowHelpMarker(R"(Use gdxsv recommended settings:
-    Renderer=OpenGL
+    Renderer=DirectX11(Windows) OpenGL(OtherOS)
     VSync=yes
     AutoSkipFrame=2
     SkipFrame=0
     RenderResolution=960
     DelayFrameSwapping=no
+    ThreadedRendering=yes
     AudioLatency=16ms
+    AudioVolume=50
     DynarecEnabled=yes
     DynarecIdleSkip=yes
     DSPEnabled=no)");
