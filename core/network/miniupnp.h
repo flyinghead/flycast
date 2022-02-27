@@ -20,7 +20,7 @@
 #include <vector>
 #include <utility>
 #ifndef FEAT_NO_MINIUPNPC
-#include <miniupnpc/miniupnpc.h>
+#include <miniupnpc.h>
 
 class MiniUPnP
 {

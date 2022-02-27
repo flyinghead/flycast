@@ -1,11 +1,22 @@
 #! /bin/sh
-# $Id: updateminiupnpcstrings.sh,v 1.7 2011/01/04 11:41:53 nanard Exp $
+# $Id: updateminiupnpcstrings.sh,v 1.9 2021/09/28 21:37:53 nanard Exp $
 # project miniupnp : http://miniupnp.free.fr/
-# (c) 2009 Thomas Bernard
+# (c) 2009-2021 Thomas Bernard
 
 FILE=miniupnpcstrings.h
-TMPFILE=miniupnpcstrings.h.tmp
 TEMPLATE_FILE=${FILE}.in
+
+if [ -n "$1" ] ; then
+  FILE="$1"
+fi
+if [ -n "$2" ] ; then
+  TEMPLATE_FILE="$2"
+fi
+TMPFILE=`mktemp -t miniupnpcstringsXXXXXX`
+if [ ! -f "$TMPFILE" ] ; then
+	echo "mktemp failure"
+	exit 1
+fi
 
 # detecting the OS name and version
 OS_NAME=`uname -s`
@@ -37,7 +48,7 @@ if [ "$OS_NAME" = "AmigaOS" ]; then
 fi
 
 echo "Detected OS [$OS_NAME] version [$OS_VERSION]"
-MINIUPNPC_VERSION=`cat VERSION.miniupnpc`
+MINIUPNPC_VERSION=`cat VERSION`
 echo "MiniUPnPc version [${MINIUPNPC_VERSION}]"
 
 EXPR="s|OS_STRING \".*\"|OS_STRING \"${OS_NAME}/${OS_VERSION}\"|"
@@ -49,5 +60,5 @@ sed -e "$EXPR" < $TEMPLATE_FILE > $TMPFILE
 EXPR="s|MINIUPNPC_VERSION_STRING \".*\"|MINIUPNPC_VERSION_STRING \"${MINIUPNPC_VERSION}\"|"
 echo "setting MINIUPNPC_VERSION_STRING macro value to ${MINIUPNPC_VERSION} in $FILE."
 sed -e "$EXPR" < $TMPFILE > $FILE
-rm $TMPFILE
+rm $TMPFILE && echo "$TMPFILE deleted"
 

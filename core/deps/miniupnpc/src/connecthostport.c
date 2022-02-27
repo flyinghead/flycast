@@ -25,7 +25,7 @@
 #else /* #ifdef _WIN32 */
 #include <unistd.h>
 #include <sys/types.h>
-#if defined(MINIUPNPC_SET_SOCKET_TIMEOUT) || defined(__APPLE__)
+#ifdef MINIUPNPC_SET_SOCKET_TIMEOUT
 #include <sys/time.h>
 #endif /* #ifdef MINIUPNPC_SET_SOCKET_TIMEOUT */
 #include <sys/param.h>
