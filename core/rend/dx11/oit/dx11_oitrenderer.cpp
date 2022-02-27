@@ -137,7 +137,7 @@ struct DX11OITRenderer : public DX11Renderer
 
 		int clip_rect[4] = {};
 		TileClipping clipmode = GetTileClip(gp->tileclip, matrices.GetViewportMatrix(), clip_rect);
-		bool gpuPalette = false;
+		bool gpuPalette = gp->texture != nullptr ? gp->texture->gpuPalette : false;
 		// Two volumes mode only supported for OP and PT
 		bool two_volumes_mode = (gp->tsp1.full != (u32)-1) && Type != ListType_Translucent;
 		bool useTexture;
@@ -146,15 +146,16 @@ struct DX11OITRenderer : public DX11Renderer
 		if (pass == DX11OITShaders::Depth)
 		{
 			useTexture = Type == ListType_Punch_Through ? gp->pcw.Texture : false;
-			pixelShader = shaders.getShader(useTexture,
+			pixelShader = shaders.getShader(
 					useTexture,
+					gp->tsp.UseAlpha,
 					gp->tsp.IgnoreTexA,
 					0,
 					false,
 					2,
 					false,
 					false,
-					false,
+					gpuPalette,
 					gp->pcw.Gouraud,
 					useTexture,
 					clipmode == TileClipping::Inside,
@@ -167,7 +168,6 @@ struct DX11OITRenderer : public DX11Renderer
 			bool color_clamp = gp->tsp.ColorClamp && (pvrrc.fog_clamp_min.full != 0 || pvrrc.fog_clamp_max.full != 0xffffffff);
 
 			int fog_ctrl = config::Fog ? gp->tsp.FogCtrl : 2;
-			gpuPalette = gp->texture != nullptr ? gp->texture->gpuPalette : false;
 			useTexture = gp->pcw.Texture;
 
 			pixelShader = shaders.getShader(
@@ -585,6 +585,7 @@ struct DX11OITRenderer : public DX11Renderer
 			DrawOSD(false);
 			theDX11Context.setFrameRendered();
 #else
+			theDX11Context.drawOverlay(width, height);
 			ID3D11RenderTargetView *nullView = nullptr;
 			deviceContext->OMSetRenderTargets(1, &nullView, nullptr);
 			deviceContext->PSSetShaderResources(0, 1, &fbTextureView.get());

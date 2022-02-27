@@ -33,7 +33,7 @@ public:
 	void renderDrawData(ImDrawData* drawData) override;
 	void present() override;
 
-	void setFrameRendered() {
+	void setFrameRendered() override {
 		frameRendered = true;
 	}
 

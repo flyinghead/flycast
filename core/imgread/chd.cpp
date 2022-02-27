@@ -3,11 +3,13 @@
 
 #include <libchdr/chd.h>
 
-/* tracks are padded to a multiple of this many frames */
-constexpr uint32_t CD_TRACK_PADDING = 4;
-
 struct CHDDisc : Disc
 {
+	// tracks are padded to a multiple of this many frames
+	static constexpr u32 CD_TRACK_PADDING = 4;
+	// lead out, lead in and pregap between 2 sessions of MIL-CDs
+	static constexpr u32 SESSION_GAP = 11400;
+
 	chd_file *chd = nullptr;
 	FILE *fp = nullptr;
 	u8* hunk_mem = nullptr;
@@ -18,7 +20,7 @@ struct CHDDisc : Disc
 
 	void tryOpen(const char* file);
 
-	~CHDDisc() override
+	~CHDDisc()
 	{
 		delete[] hunk_mem;
 
@@ -32,15 +34,13 @@ struct CHDDisc : Disc
 struct CHDTrack : TrackFile
 {
 	CHDDisc* disc;
-	u32 StartFAD;
 	s32 Offset;
 	u32 fmt;
 	bool swap_bytes;
 
-	CHDTrack(CHDDisc* disc, u32 StartFAD, s32 Offset, u32 fmt, bool swap_bytes)
+	CHDTrack(CHDDisc* disc, s32 Offset, u32 fmt, bool swap_bytes)
 	{
 		this->disc = disc;
-		this->StartFAD = StartFAD;
 		this->Offset = Offset;
 		this->fmt = fmt;
 		this->swap_bytes = swap_bytes;
@@ -70,15 +70,43 @@ struct CHDTrack : TrackFile
 				dst[i + 1] = b;
 			}
 		}
-		*sector_type=fmt==2352?SECFMT_2352:SECFMT_2048_MODE1;
+		switch (fmt)
+		{
+		case 2048:
+			*sector_type = SECFMT_2048_MODE1;
+			break;
+		case 2336:
+			*sector_type = SECFMT_2336_MODE2;
+			break;
+		case 2352:
+		default:
+			*sector_type = SECFMT_2352;
+			break;
+		}
 
 		//While space is reserved for it, the images contain no actual subcodes
 		//memcpy(subcode,disc->hunk_mem+hunk_ofs*(2352+96)+2352,96);
-		*subcode_type=SUBFMT_NONE;
+		*subcode_type = SUBFMT_NONE;
 
 		return true;
 	}
 };
+
+static u32 getSectorSize(const std::string& type)
+{
+	if (type == "AUDIO")
+		return 2352;	// PCM Audio
+	else if (type == "MODE1" || type == "MODE1/2048")
+		return 2048;	// CDROM Mode1 Data (cooked)
+	else if (type == "MODE1_RAW" || type == "MODE1/2352")
+		return 2352;	// CDROM Mode1 Data (raw)
+	else if (type == "MODE2" || type == "MODE2/2336")
+		return 2336;	// CDROM XA Mode2 Data
+	else if (type == "MODE2_RAW" || type == "MODE2/2352" || type == "CDI/2352")
+		return 2352;	// CDROM XA Mode2 Data
+
+	throw FlycastException("chd: track type " + type + " is not supported");
+}
 
 void CHDDisc::tryOpen(const char* file)
 {
@@ -114,6 +142,8 @@ void CHDDisc::tryOpen(const char* file)
 	u32 total_frames = 150;
 
 	u32 Offset = 0;
+	bool isGdrom = head->version < 5;	// MIL-CDs only supported starting with CHD v5
+	bool needAudioSwap = false;
 
 	for(;;)
 	{
@@ -137,26 +167,23 @@ void CHDDisc::tryOpen(const char* file)
 			if (err != CHDERR_NONE)
 			{
 				err = chd_get_metadata(chd, GDROM_TRACK_METADATA_TAG, (u32)tracks.size(), temp, sizeof(temp), &temp_len, &tag, &flags);
+				if (err == CHDERR_NONE)
+					needAudioSwap = true;
 			}
-			if (err == CHDERR_NONE)
-			{
-				//GDROM_TRACK_METADATA_FORMAT	"TRACK:%d TYPE:%s SUBTYPE:%s FRAMES:%d PAD:%d PREGAP:%d PGTYPE:%s PGSUB:%s POSTGAP:%d"
-				sscanf(temp, GDROM_TRACK_METADATA_FORMAT, &tkid, type, subtype, &frames, &padframes, &pregap, pgtype, pgsub, &postgap);
-			}
-			else
-			{
+
+			if (err != CHDERR_NONE)
 				break;
-			}
+			//GDROM_TRACK_METADATA_FORMAT	"TRACK:%d TYPE:%s SUBTYPE:%s FRAMES:%d PAD:%d PREGAP:%d PGTYPE:%s PGSUB:%s POSTGAP:%d"
+			sscanf(temp, GDROM_TRACK_METADATA_FORMAT, &tkid, type, subtype, &frames, &padframes, &pregap, pgtype, pgsub, &postgap);
+			isGdrom = true;
 		}
 
-		if (tkid != (int)tracks.size() + 1
-				|| (strcmp(type, "MODE1_RAW") != 0 && strcmp(type, "AUDIO") != 0 && strcmp(type, "MODE1") != 0)
-				|| strcmp(subtype, "NONE") != 0
-				|| pregap != 0
-				|| postgap != 0)
-		{
-			throw FlycastException((std::string("chd: track type ") + type) + " is not supported");
-		}
+		if (tkid != (int)tracks.size() + 1)
+			throw FlycastException("Unexpected track number");
+
+		if (strcmp(subtype, "NONE") != 0 || pregap != 0 || postgap != 0)
+			throw FlycastException("Unsupported subtype or pre/postgap");
+
 		DEBUG_LOG(GDROM, "%s", temp);
 		Track t;
 		t.StartFAD = total_frames;
@@ -164,9 +191,10 @@ void CHDDisc::tryOpen(const char* file)
 		t.EndFAD = total_frames - 1;
 		t.CTRL = strcmp(type,"AUDIO") == 0 ? 0 : 4;
 
-		t.file = new CHDTrack(this, t.StartFAD, Offset - t.StartFAD, strcmp(type, "MODE1") ? 2352 : 2048,
-							  // audio tracks are byteswapped in CHDv5+
-							  t.CTRL == 0 && head->version >= 5);
+		u32 sectorSize = getSectorSize(type);
+		t.file = new CHDTrack(this, Offset - t.StartFAD, sectorSize,
+							  // audio tracks are byteswapped in recent CHDv5+
+							  t.CTRL == 0 && needAudioSwap);
 
 		// CHD files are padded, so we have to respect the offset
 		int padded = (frames + CD_TRACK_PADDING - 1) / CD_TRACK_PADDING;
@@ -175,10 +203,32 @@ void CHDDisc::tryOpen(const char* file)
 		tracks.push_back(t);
 	}
 
-	if (total_frames!=549300 || tracks.size()<3)
-		WARN_LOG(GDROM, "WARNING: chd: Total frames is wrong: %u frames (549300 expected) in %zu tracks", total_frames, tracks.size());
+	if (isGdrom && (total_frames != 549300 || tracks.size() < 3))
+		WARN_LOG(GDROM, "WARNING: chd: Total GD-Rom frames is wrong: %u frames (549300 expected) in %zu tracks", total_frames, tracks.size());
 
-	FillGDSession();
+	if (isGdrom)
+		FillGDSession();
+	else
+	{
+		type = CdRom_XA;
+
+		Session ses;
+		ses.FirstTrack = 1;
+		ses.StartFAD = tracks[0].StartFAD;
+		sessions.push_back(ses);
+		DEBUG_LOG(GDROM, "session 1: FAD %d", ses.StartFAD);
+
+		ses.FirstTrack = tracks.size();
+		// session 1 lead-out: 01:30:00, session 2 lead-in: 01:00:00, pregap: 00:02:00
+		tracks.back().StartFAD += SESSION_GAP;
+		tracks.back().EndFAD += SESSION_GAP;
+		((CHDTrack *)tracks.back().file)->Offset -= SESSION_GAP;
+		ses.StartFAD = tracks.back().StartFAD;
+		sessions.push_back(ses);
+		DEBUG_LOG(GDROM, "session 2: track %d FAD %d", ses.FirstTrack, ses.StartFAD);
+
+		EndFAD = LeadOut.StartFAD = total_frames + SESSION_GAP - 1;
+}
 }
 
 

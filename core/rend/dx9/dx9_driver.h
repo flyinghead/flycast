@@ -30,9 +30,20 @@ public:
 
 	void renderDrawData(ImDrawData *drawData) override {
 		theDXContext.EndImGuiFrame();
+		if (gui_is_open())
+			frameRendered = true;
 	}
 
 	void present() override {
-		theDXContext.Present();
+		if (frameRendered)
+			theDXContext.Present();
+		frameRendered = false;
 	}
+
+	void setFrameRendered() override {
+		frameRendered = true;
+	}
+
+private:
+	bool frameRendered = false;
 };

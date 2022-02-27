@@ -27,6 +27,9 @@
 #include "dx11_shaders.h"
 #include "rend/sorter.h"
 #include "dx11_renderstate.h"
+#ifndef LIBRETRO
+#include "dx11_driver.h"
+#endif
 
 struct DX11Renderer : public Renderer
 {
@@ -41,6 +44,9 @@ struct DX11Renderer : public Renderer
 		if (!frameRendered)
 			return false;
 		frameRendered = false;
+#ifndef LIBRETRO
+		imguiDriver->setFrameRendered();
+#endif
 		return true;
 	}
 
