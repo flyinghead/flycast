@@ -22,8 +22,8 @@ jobs:
           - {name: apple-darwin, os: macos-latest, cmakeArgs: -G "Xcode", destDir: osx, buildType: Release, packageName: flycast-gdxsv-macos-x86_64.zip}
 # - {name: apple-ios, os: macos-latest, cmakeArgs: -DCMAKE_SYSTEM_NAME=iOS -G "Xcode", destDir: ios, buildType: Release}
           - {name: x86_64-pc-linux-gnu, os: ubuntu-latest, buildType: Release, packageName: flycast-gdxsv-linux-x86_64.zip}
-# - {name: x86_64-pc-windows-msvc, os: windows-2019, cmakeArgs: -DCMAKE_SYSTEM_VERSION="10.0.18362.0" -G "Visual Studio 16 2019" -A x64 -DVCPKG_TARGET_TRIPLET=x64-windows-static, buildType: Release}
-          - {name: x86_64-w64-mingw32, os: windows-2019, cmakeArgs: -G "MinGW Makefiles", destDir: win, buildType: RelWithDebInfo, packageName: flycast-gdxsv-windows-x86_64.zip}
+          - {name: x86_64-pc-windows-msvc, os: windows-2019, cmakeArgs: -DCMAKE_SYSTEM_VERSION="10.0.18362.0" -G "Visual Studio 16 2019" -A x64 -DVCPKG_TARGET_TRIPLET=x64-windows-static, buildType: Release, packageName: flycast-gdxsv-windows-msvc.zip}
+# - {name: x86_64-w64-mingw32, os: windows-2019, cmakeArgs: -G "MinGW Makefiles", destDir: win, buildType: RelWithDebInfo, packageName: flycast-gdxsv-windows-x86_64.zip}
 # - {name: libretro-x86_64-pc-linux-gnu, os: ubuntu-latest, cmakeArgs: -DLIBRETRO=ON -DCMAKE_POSITION_INDEPENDENT_CODE=TRUE, buildType: Release}
 # - {name: libretro-x86_64-w64-mingw32, os: windows-2019, cmakeArgs: -DLIBRETRO=ON -G "MinGW Makefiles", buildType: Release}
 
