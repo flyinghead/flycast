@@ -113,7 +113,7 @@ void gdxsv_emu_settings() {
         config::SkipFrame = 0;
         config::RenderResolution = 960;
         config::DelayFrameSwapping = false;
-        config::ThreadedRendering = true;
+        config::ThreadedRendering = false;
         // Controls
         config::MapleMainDevices[0].set(MapleDeviceType::MDT_SegaController);
         config::MapleExpansionDevices[0][0].set(MDT_SegaVMU);
@@ -136,7 +136,7 @@ void gdxsv_emu_settings() {
     SkipFrame=0
     RenderResolution=960
     DelayFrameSwapping=no
-    ThreadedRendering=yes
+    ThreadedRendering=no
     AudioLatency=16ms
     AudioVolume=50
     DynarecEnabled=yes
