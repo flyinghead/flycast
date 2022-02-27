@@ -166,7 +166,7 @@ jobs:
           mv artifact/bin/flycast.exe artifact/bin/flycast-gdxsv.exe
           powershell Compress-Archive artifact/bin/flycast-gdxsv.exe artifact/bin/${{ matrix.config.packageName }} 
           rm artifact/bin/flycast-gdxsv.exe
-        if: matrix.config.name == 'x86_64-w64-mingw32'
+        if: matrix.config.name == 'x86_64-w64-mingw32' || endsWith(matrix.config.name, 'msvc')
 
       - name: Package app (linux)
         run: |
