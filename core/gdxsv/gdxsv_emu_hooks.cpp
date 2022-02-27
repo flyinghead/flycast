@@ -113,11 +113,14 @@ void gdxsv_emu_settings() {
         config::SkipFrame = 0;
         config::RenderResolution = 960;
         config::DelayFrameSwapping = false;
+        config::ThreadedRendering = true;
         // Controls
         config::MapleMainDevices[0].set(MapleDeviceType::MDT_SegaController);
         config::MapleExpansionDevices[0][0].set(MDT_SegaVMU);
         // Audio
         config::AudioBufferSize = 706;
+        config::AudioVolume.set(50);
+        config::AudioVolume.calcDbPower();
         // Others
         config::DynarecEnabled = true;
         config::DynarecIdleSkip = true;
@@ -133,7 +136,9 @@ void gdxsv_emu_settings() {
     SkipFrame=0
     RenderResolution=960
     DelayFrameSwapping=no
+    ThreadedRendering=yes
     AudioLatency=16ms
+    AudioVolume=50
     DynarecEnabled=yes
     DynarecIdleSkip=yes
     DSPEnabled=no)");
