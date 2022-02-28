@@ -1,9 +1,9 @@
-/* $Id: miniupnpc.c,v 1.154 2019/04/23 12:12:13 nanard Exp $ */
+/* $Id: miniupnpc.c,v 1.159 2021/03/02 23:36:32 nanard Exp $ */
 /* vim: tabstop=4 shiftwidth=4 noexpandtab
  * Project : miniupnp
  * Web : http://miniupnp.free.fr/ or https://miniupnp.tuxfamily.org/
  * Author : Thomas BERNARD
- * copyright (c) 2005-2020 Thomas Bernard
+ * copyright (c) 2005-2021 Thomas Bernard
  * This software is subjet to the conditions detailed in the
  * provided LICENSE file. */
 #include <stdlib.h>
@@ -320,6 +320,8 @@ upnpDiscoverDevices(const char * const deviceTypes[],
 			return devlist;
 		}
 	}
+#else	/* !defined(_WIN32) && !defined(__amigaos__) && !defined(__amigaos4__) */
+	(void)minissdpdsock; /* unused */
 #endif	/* !defined(_WIN32) && !defined(__amigaos__) && !defined(__amigaos4__) */
 
 	/* direct discovery if minissdpd responses are not sufficient */

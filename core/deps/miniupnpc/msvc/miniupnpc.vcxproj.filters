@@ -18,102 +18,105 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\connecthostport.c">
+    <ClCompile Include="..\src\addr_is_reserved.c">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
-    <ClCompile Include="..\igd_desc_parse.c">
+    <ClCompile Include="..\src\connecthostport.c">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
-    <ClCompile Include="..\minisoap.c">
+    <ClCompile Include="..\src\igd_desc_parse.c">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
-    <ClCompile Include="..\minissdpc.c">
+    <ClCompile Include="..\src\minisoap.c">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
-    <ClCompile Include="..\miniupnpc.c">
+    <ClCompile Include="..\src\minissdpc.c">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
-    <ClCompile Include="..\miniwget.c">
+    <ClCompile Include="..\src\miniupnpc.c">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
-    <ClCompile Include="..\minixml.c">
+    <ClCompile Include="..\src\miniwget.c">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
-    <ClCompile Include="..\portlistingparse.c">
+    <ClCompile Include="..\src\minixml.c">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
-    <ClCompile Include="..\receivedata.c">
+    <ClCompile Include="..\src\portlistingparse.c">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
-    <ClCompile Include="..\upnpcommands.c">
+    <ClCompile Include="..\src\receivedata.c">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
-    <ClCompile Include="..\upnpdev.c">
+    <ClCompile Include="..\src\upnpcommands.c">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
-    <ClCompile Include="..\upnperrors.c">
+    <ClCompile Include="..\src\upnpdev.c">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
-    <ClCompile Include="..\upnpreplyparse.c">
+    <ClCompile Include="..\src\upnperrors.c">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
-    <ClCompile Include="..\addr_is_reserved.c">
+    <ClCompile Include="..\src\upnpreplyparse.c">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\connecthostport.h">
+    <ClInclude Include="..\rc_version.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="..\igd_desc_parse.h">
+    <ClInclude Include="..\src\addr_is_reserved.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="..\minisoap.h">
+    <ClInclude Include="..\src\connecthostport.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="..\minissdpc.h">
+    <ClInclude Include="..\include\igd_desc_parse.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="..\miniupnpc.h">
+    <ClInclude Include="..\src\minisoap.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="..\miniupnpcstrings.h">
+    <ClInclude Include="..\src\minissdpc.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="..\miniupnpctypes.h">
+    <ClInclude Include="..\include\miniupnpc.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="..\miniwget.h">
+    <ClInclude Include="..\include\miniupnpcstrings.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="..\minixml.h">
+    <ClInclude Include="..\include\miniupnpctypes.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="..\portlistingparse.h">
+    <ClInclude Include="..\include\miniupnpc_declspec.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="..\receivedata.h">
+    <ClInclude Include="..\include\miniwget.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="..\upnpcommands.h">
+    <ClInclude Include="..\src\minixml.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="..\upnpdev.h">
+    <ClInclude Include="..\include\portlistingparse.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="..\upnperrors.h">
+    <ClInclude Include="..\include\receivedata.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="..\upnpreplyparse.h">
+    <ClInclude Include="..\include\upnpcommands.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="..\miniupnpc_declspec.h">
+    <ClInclude Include="..\include\upnpdev.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="..\addr_is_reserved.h">
+    <ClInclude Include="..\include\upnperrors.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="..\win32_snprintf.h">
+    <ClInclude Include="..\include\upnpreplyparse.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\win32_snprintf.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
   </ItemGroup>
@@ -121,5 +124,10 @@
     <None Include="genminiupnpcstrings.vbs">
       <Filter>scripts</Filter>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="../miniupnpc.rc">
+      <Filter>Fichiers de ressources</Filter>
+    </ResourceCompile>
   </ItemGroup>
 </Project>
