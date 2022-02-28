@@ -84,10 +84,14 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <AdditionalIncludeDirectories>..;..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <PreBuildEvent>
       <Command>genminiupnpcstrings.vbs</Command>
     </PreBuildEvent>
+    <ResourceCompile>
+      <PreprocessorDefinitions>INTERNAL_NAME="\"miniupnpc.dll\0\"";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug Dll|Win32'">
     <ClCompile>
@@ -100,6 +104,7 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <AdditionalIncludeDirectories>..;..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <PreBuildEvent>
       <Command>genminiupnpcstrings.vbs</Command>
@@ -107,6 +112,9 @@
     <Link>
       <AdditionalDependencies>ws2_32.lib;IPHlpApi.Lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <ResourceCompile>
+      <PreprocessorDefinitions>INTERNAL_NAME="\"miniupnpc.dll\0\"";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -119,10 +127,14 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <AdditionalIncludeDirectories>..;..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <PreBuildEvent>
       <Command>genminiupnpcstrings.vbs</Command>
     </PreBuildEvent>
+    <ResourceCompile>
+      <PreprocessorDefinitions>INTERNAL_NAME="\"miniupnpc.dll\0\"";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release Dll|Win32'">
     <ClCompile>
@@ -135,6 +147,7 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <AdditionalIncludeDirectories>..;..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <PreBuildEvent>
       <Command>genminiupnpcstrings.vbs</Command>
@@ -142,45 +155,47 @@
     <Link>
       <AdditionalDependencies>ws2_32.lib;IPHlpApi.Lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <ResourceCompile>
+      <PreprocessorDefinitions>INTERNAL_NAME="\"miniupnpc.dll\0\"";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\addr_is_reserved.c" />
-    <ClCompile Include="..\connecthostport.c" />
-    <ClCompile Include="..\igd_desc_parse.c" />
-    <ClCompile Include="..\minisoap.c" />
-    <ClCompile Include="..\minissdpc.c" />
-    <ClCompile Include="..\miniupnpc.c" />
-    <ClCompile Include="..\miniwget.c" />
-    <ClCompile Include="..\minixml.c" />
-    <ClCompile Include="..\portlistingparse.c" />
-    <ClCompile Include="..\receivedata.c" />
-    <ClCompile Include="..\upnpcommands.c" />
-    <ClCompile Include="..\upnpdev.c" />
-    <ClCompile Include="..\upnperrors.c" />
-    <ClCompile Include="..\upnpreplyparse.c" />
+    <ClCompile Include="..\src\addr_is_reserved.c" />
+    <ClCompile Include="..\src\connecthostport.c" />
+    <ClCompile Include="..\src\igd_desc_parse.c" />
+    <ClCompile Include="..\src\minisoap.c" />
+    <ClCompile Include="..\src\minissdpc.c" />
+    <ClCompile Include="..\src\miniupnpc.c" />
+    <ClCompile Include="..\src\miniwget.c" />
+    <ClCompile Include="..\src\minixml.c" />
+    <ClCompile Include="..\src\portlistingparse.c" />
+    <ClCompile Include="..\src\receivedata.c" />
+    <ClCompile Include="..\src\upnpcommands.c" />
+    <ClCompile Include="..\src\upnpdev.c" />
+    <ClCompile Include="..\src\upnperrors.c" />
+    <ClCompile Include="..\src\upnpreplyparse.c" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\addr_is_reserved.h" />
-    <ClInclude Include="..\connecthostport.h" />
-    <ClInclude Include="..\igd_desc_parse.h" />
-    <ClInclude Include="..\minisoap.h" />
-    <ClInclude Include="..\minissdpc.h" />
-    <ClInclude Include="..\miniupnpc.h" />
+    <ClInclude Include="..\src\addr_is_reserved.h" />
+    <ClInclude Include="..\src\connecthostport.h" />
+    <ClInclude Include="..\include\igd_desc_parse.h" />
+    <ClInclude Include="..\src\minisoap.h" />
+    <ClInclude Include="..\src\minissdpc.h" />
+    <ClInclude Include="..\include\miniupnpc.h" />
     <ClInclude Include="..\miniupnpcstrings.h" />
-    <ClInclude Include="..\miniupnpctypes.h" />
-    <ClInclude Include="..\miniupnpc_declspec.h" />
-    <ClInclude Include="..\miniupnpc_socketdef.h" />
-    <ClInclude Include="..\miniwget.h" />
-    <ClInclude Include="..\miniwget_private.h" />
-    <ClInclude Include="..\minixml.h" />
-    <ClInclude Include="..\portlistingparse.h" />
-    <ClInclude Include="..\receivedata.h" />
-    <ClInclude Include="..\upnpcommands.h" />
-    <ClInclude Include="..\upnpdev.h" />
-    <ClInclude Include="..\upnperrors.h" />
-    <ClInclude Include="..\upnpreplyparse.h" />
-    <ClInclude Include="..\win32_snprintf.h" />
-	<ClInclude Include="..\rc_version.h" />
+    <ClInclude Include="..\include\miniupnpctypes.h" />
+    <ClInclude Include="..\include\miniupnpc_declspec.h" />
+    <ClInclude Include="..\include\miniwget.h" />
+    <ClInclude Include="..\src\miniwget_private.h" />
+    <ClInclude Include="..\src\minixml.h" />
+    <ClInclude Include="..\include\portlistingparse.h" />
+    <ClInclude Include="..\src\receivedata.h" />
+    <ClInclude Include="..\include\upnpcommands.h" />
+    <ClInclude Include="..\include\upnpdev.h" />
+    <ClInclude Include="..\include\upnperrors.h" />
+    <ClInclude Include="..\include\upnpreplyparse.h" />
+    <ClInclude Include="..\src\win32_snprintf.h" />
+    <ClInclude Include="..\rc_version.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="genminiupnpcstrings.vbs" />

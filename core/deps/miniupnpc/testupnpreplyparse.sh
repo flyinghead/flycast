@@ -1,8 +1,10 @@
 #!/bin/sh
 
+TESTUPNPREPLYPARSE=./build/testupnpreplyparse
+
 for f in testreplyparse/*.xml ; do
 	bf="`dirname $f`/`basename $f .xml`"
-	if ./testupnpreplyparse $f $bf.namevalue ; then
+	if $TESTUPNPREPLYPARSE $f $bf.namevalue ; then
 		echo "$f : passed"
 	else
 		echo "$f : FAILED"

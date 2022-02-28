@@ -1,5 +1,24 @@
-$Id: Changelog.txt,v 1.247 2020/12/20 18:07:34 nanard Exp $
+$Id: Changelog.txt,v 1.253 2022/02/19 23:21:56 nanard Exp $
 miniUPnP client Changelog.
+
+2022/02/20:
+  upnpc: use of @ to replace local lan address
+
+2021/11/09:
+  python module : Allow to specify the root description url
+
+VERSION 2.2.3 : released 2021/09/28
+
+2021/08/13:
+  Change directory structure : include/ and src/ directories.
+
+VERSION 2.2.2 : released 2021/03/03
+
+2021/01/15:
+  miniupnpcmodule.c: throw an exception in UPnP_discover()
+
+2020/12/30:
+  Fix usage of IP_MULTICAST_IF with struct ip_mreqn
 
 VERSION 2.2.1 : released 2020/12/20
 
