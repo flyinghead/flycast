@@ -114,6 +114,7 @@ void gdxsv_emu_settings() {
         config::RenderResolution = 960;
         config::DelayFrameSwapping = false;
         config::ThreadedRendering = false;
+        config::PerStripSorting = false;
         // Controls
         config::MapleMainDevices[0].set(MapleDeviceType::MDT_SegaController);
         config::MapleExpansionDevices[0][0].set(MDT_SegaVMU);
@@ -137,6 +138,7 @@ void gdxsv_emu_settings() {
     RenderResolution=960
     DelayFrameSwapping=no
     ThreadedRendering=no
+    PerStripSorting=no
     AudioLatency=16ms
     AudioVolume=50
     DynarecEnabled=yes
