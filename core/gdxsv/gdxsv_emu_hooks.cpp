@@ -102,48 +102,56 @@ inline static void gui_header(const char *title) {
 void gdxsv_emu_settings() {
     gui_header("gdxsv Shortcut Settings");
     if (ImGui::Button("Apply Recommended Settings")) {
+        // Controls
+        config::MapleMainDevices[0].set(MapleDeviceType::MDT_SegaController);
+        config::MapleExpansionDevices[0][0].set(MDT_SegaVMU);
         // Video
+        config::PerStripSorting = false;
+        config::AutoSkipFrame = 2;
+        config::VSync = true;
+        config::DelayFrameSwapping = false;
 #if defined(_WIN32)
         config::RendererType.set(RenderType::DirectX11);
 #else
         config::RendererType.set(RenderType::OpenGL);
 #endif
-        config::VSync = true;
-        config::AutoSkipFrame = 2;
-        config::SkipFrame = 0;
         config::RenderResolution = 960;
-        config::DelayFrameSwapping = false;
-        config::ThreadedRendering = false;
-        config::PerStripSorting = false;
-        // Controls
-        config::MapleMainDevices[0].set(MapleDeviceType::MDT_SegaController);
-        config::MapleExpansionDevices[0][0].set(MDT_SegaVMU);
+        config::SkipFrame = 0;
         // Audio
-        config::AudioBufferSize = 706;
+        config::DSPEnabled = false;
         config::AudioVolume.set(50);
         config::AudioVolume.calcDbPower();
+        config::AudioBufferSize = 706;
         // Others
         config::DynarecEnabled = true;
         config::DynarecIdleSkip = true;
-        config::DSPEnabled = false;
+        config::ThreadedRendering = false;
 
         maple_ReconnectDevices();
     }
     ImGui::SameLine();
     ShowHelpMarker(R"(Use gdxsv recommended settings:
-    Renderer=DirectX11(Windows) OpenGL(OtherOS)
-    VSync=yes
-    AutoSkipFrame=2
-    SkipFrame=0
-    RenderResolution=960
-    DelayFrameSwapping=no
-    ThreadedRendering=no
-    PerStripSorting=no
-    AudioLatency=16ms
-    AudioVolume=50
-    DynarecEnabled=yes
-    DynarecIdleSkip=yes
-    DSPEnabled=no)");
+    Control:
+      Device A: Sega Controller / Sega VMU
+    
+    Video:
+      Transparent Sorting: Per Triangle
+      Automatic Frame Skipping: Maximum
+      VSync: Yes
+      Delay Frame Swapping: No
+      Renderer: DirectX 11 (Windows) / OpenGL (OtherOS)
+      Internal Resolution: 1280x960 (x2)
+      Frame Skipping: 0
+    
+    Audio:
+      Enable DSP: No
+      Volume Level: 50%
+      Latency: 16ms
+    
+    Advanced:
+      CPU Mode: Dynarec
+      Dynarec Idle Skip: Yes
+      Multi-threaded emulation: No)");
 
     bool widescreen = config::Widescreen.get() && config::WidescreenGameHacks.get();
     bool pressed = ImGui::Checkbox("Enable 16:9 Widescreen Hack", &widescreen);
