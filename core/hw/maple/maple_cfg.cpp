@@ -166,11 +166,14 @@ void MapleConfigMap::GetAbsCoordinates(int& x, int& y)
 
 void MapleConfigMap::GetMouseInput(u8& buttons, int& x, int& y, int& wheel)
 {
-	const MapleInputState& inputState = mapleInputState[playerNum()];
+	MapleInputState& inputState = mapleInputState[playerNum()];
 	buttons = inputState.mouseButtons;
 	x = inputState.relPos.x;
 	y = inputState.relPos.y * (invertMouseY ? -1 : 1);
 	wheel = inputState.relPos.wheel;
+	inputState.relPos.x = 0;
+	inputState.relPos.y = 0;
+	inputState.relPos.wheel = 0;
 }
 
 void MapleConfigMap::GetKeyboardInput(u8& shift, u8 keys[6])

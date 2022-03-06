@@ -34,6 +34,7 @@ static void getLocalInput(MapleInputState inputState[4])
 {
 	if (!config::ThreadedRendering)
 		UpdateInputState();
+	std::lock_guard<std::mutex> lock(relPosMutex);
 	for (int player = 0; player < 4; player++)
 	{
 		MapleInputState& state = inputState[player];
@@ -49,12 +50,15 @@ static void getLocalInput(MapleInputState inputState[4])
 		state.absPos.y = mo_y_abs[player];
 		state.keyboard.shift = kb_shift[player];
 		memcpy(state.keyboard.key, kb_key[player], sizeof(kb_key[player]));
-		state.relPos.x = std::round(mo_x_delta[player]);
-		state.relPos.y = std::round(mo_y_delta[player]);
-		state.relPos.wheel = std::round(mo_wheel_delta[player]);
-		mo_x_delta[player] -= state.relPos.x;
-		mo_y_delta[player] -= state.relPos.y;
-		mo_wheel_delta[player] -= state.relPos.wheel;
+		int relX = std::round(mo_x_delta[player]);
+		int relY = std::round(mo_y_delta[player]);
+		int wheel = std::round(mo_wheel_delta[player]);
+		state.relPos.x += relX;
+		state.relPos.y += relY;
+		state.relPos.wheel += wheel;
+		mo_x_delta[player] -= relX;
+		mo_y_delta[player] -= relY;
+		mo_wheel_delta[player] -= wheel;
 	}
 }
 
@@ -706,6 +710,7 @@ bool nextFrame()
 		}
 		else if (mouseGame)
 		{
+			std::lock_guard<std::mutex> lock(relPosMutex);
 			inputs.mouseButtons = ~mo_buttons[0];
 			inputs.u.relPos.x = std::round(mo_x_delta[0]);
 			inputs.u.relPos.y = std::round(mo_y_delta[0]);
