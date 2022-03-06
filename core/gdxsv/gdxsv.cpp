@@ -293,7 +293,10 @@ void Gdxsv::HandleRPC() {
 }
 
 void Gdxsv::StartPingTest() {
-    std::thread([this]() { GcpPingTest(); }).detach();
+    std::thread([this]() {
+        std::this_thread::sleep_for(std::chrono::seconds(3));
+        GcpPingTest();
+    }).detach();
 }
 
 void Gdxsv::GcpPingTest() {
