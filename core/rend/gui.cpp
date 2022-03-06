@@ -1219,7 +1219,8 @@ static void contentpath_warning_popup()
 static void wireless_warning_popup()
 {
     static bool show_wireless_warning = true;
-    if (os_GetConnectionMedium() == "Wireless" && show_wireless_warning && no_popup_opened())
+    static std::string connection_medium = os_GetConnectionMedium();
+    if (show_wireless_warning && no_popup_opened() && connection_medium == "Wireless")
     {
         ImGui::OpenPopup("Wireless connection detected");
         show_wireless_warning = false;
