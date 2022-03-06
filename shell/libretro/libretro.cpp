@@ -21,6 +21,7 @@
 #ifndef _WIN32
 #include <sys/time.h>
 #endif
+#include <mutex>
 
 #ifdef __SWITCH__
 #include <stdlib.h>
@@ -136,9 +137,10 @@ s8 joyrx[4], joyry[4];
 // bit 3: Wheel button
 u8 mo_buttons[4] = { 0xFF, 0xFF, 0xFF, 0xFF };
 // Relative mouse coordinates [-512:511]
-f32 mo_x_delta[4];
-f32 mo_y_delta[4];
-f32 mo_wheel_delta[4];
+float mo_x_delta[4];
+float mo_y_delta[4];
+float mo_wheel_delta[4];
+std::mutex relPosMutex;
 // Absolute mouse coordinates
 // Range [0:639] [0:479]
 // but may be outside this range if the pointer is offscreen or outside the 4:3 window.
@@ -2278,8 +2280,10 @@ static void setDeviceButtonStateDirect(u32 bitmap, u32 port, int deviceType, int
 
 static void updateMouseState(u32 port)
 {
-   mo_x_delta[port] = input_cb(port, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_X);
-   mo_y_delta[port] = input_cb(port, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_Y);
+	std::lock_guard<std::mutex> lock(relPosMutex);
+
+   mo_x_delta[port] += input_cb(port, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_X);
+   mo_y_delta[port] += input_cb(port, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_Y);
 
    bool btn_state   = input_cb(port, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_LEFT);
    if (btn_state)

@@ -18,14 +18,16 @@
 */
 #pragma once
 #include "gamepad_device.h"
+#include <mutex>
 
 // Mouse position and buttons
 extern u8 mo_buttons[4];
 extern s32 mo_x_abs[4];
 extern s32 mo_y_abs[4];
-extern f32 mo_x_delta[4];
-extern f32 mo_y_delta[4];
-extern f32 mo_wheel_delta[4];
+extern float mo_x_delta[4];
+extern float mo_y_delta[4];
+extern float mo_wheel_delta[4];
+extern std::mutex relPosMutex;
 
 extern s32 mo_x_prev[4];
 extern s32 mo_y_prev[4];
