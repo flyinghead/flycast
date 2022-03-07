@@ -25,12 +25,6 @@ public:
 	N2VertexSource(bool gouraud, bool geometryOnly, bool texture);
 };
 
-class N2GeometryShader : public OpenGlSource
-{
-public:
-	N2GeometryShader(bool gouraud, bool geometryOnly = false);
-};
-
 template<typename ShaderType>
 void resetN2UniformCache(ShaderType *shader)
 {

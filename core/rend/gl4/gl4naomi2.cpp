@@ -32,6 +32,7 @@ static const char *gouraudSource = R"(
 
 N2Vertex4Source::N2Vertex4Source(const gl4PipelineShader* shader) : OpenGl4Source()
 {
+	addConstant("OIT_RENDER");
 	if (shader == nullptr)
 	{
 		addConstant("POSITION_ONLY", 1);

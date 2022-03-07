@@ -50,7 +50,9 @@ noperspective out vec2 vtx_uv1;
 #endif
 #endif
 NOPERSPECTIVE out highp vec3 vtx_uv;
+#ifdef OIT_RENDER
 flat out uint vtx_index;
+#endif
 
 void wDivide(inout vec4 vpos)
 {
@@ -83,7 +85,7 @@ void main()
 	vtx_base = in_base;
 	vtx_offs = in_offs;
 	#if LIGHT_ON == 1
-	vec4 vnorm = normalize(normalMat * vec4(in_normal, 0.0));
+	vec3 vnorm = normalize(mat3(normalMat) * in_normal);
 	#endif
 	#if pp_TwoVolumes == 1
 		vtx_base1 = in_base1;
@@ -92,22 +94,22 @@ void main()
 		#if LIGHT_ON == 1
 			// FIXME need offset0 and offset1 for bump maps
 			if (bumpMapping == 1)
-				computeBumpMap(vtx_offs, vtx_offs1, vpos.xyz, vnorm.xyz, normalMat);
+				computeBumpMap(vtx_offs, vtx_offs1, vpos.xyz, vnorm, normalMat);
 			else
 			{
-				computeColors(vtx_base1, vtx_offs1, 1, vpos.xyz, vnorm.xyz);
+				computeColors(vtx_base1, vtx_offs1, 1, vpos.xyz, vnorm);
 				#if pp_Texture == 0
 					vtx_base1 += vtx_offs1;
 				#endif
 			}
 			if (envMapping[1] == 1)
-				computeEnvMap(vtx_uv1.xy, vpos.xyz, vnorm.xyz);
+				computeEnvMap(vtx_uv1.xy, vpos.xyz, vnorm);
 		#endif
 	#endif
 	#if LIGHT_ON == 1
 		if (bumpMapping == 0)
 		{
-			computeColors(vtx_base, vtx_offs, 0, vpos.xyz, vnorm.xyz);
+			computeColors(vtx_base, vtx_offs, 0, vpos.xyz, vnorm);
 			#if pp_Texture == 0
 					vtx_base += vtx_offs;
 			#endif
@@ -116,14 +118,16 @@ void main()
 	vtx_uv.xy = in_uv;
 	#if LIGHT_ON == 1
 		if (envMapping[0] == 1)
-			computeEnvMap(vtx_uv.xy, vpos.xyz, vnorm.xyz);
+			computeEnvMap(vtx_uv.xy, vpos.xyz, vnorm);
 	#endif
 #endif
 
 	vpos = projMat * vpos;
 	wDivide(vpos);
 
+#ifdef OIT_RENDER
 	vtx_index = (uint(pp_Number) << 18) + uint(gl_VertexID);
+#endif
 
 	gl_Position = vpos;
 }
@@ -190,7 +194,7 @@ uniform int constantColor[2];
 uniform int modelDiffuse[2];
 uniform int modelSpecular[2];
 
-void computeColors(inout vec4 baseCol, inout vec4 offsetCol, in int volIdx, in vec3 position, in vec3 normal)
+void computeColors(inout vec4 baseCol, inout vec4 offsetCol, int volIdx, vec3 position, vec3 normal)
 {
 	if (constantColor[volIdx] == 1)
 		return;
@@ -201,75 +205,60 @@ void computeColors(inout vec4 baseCol, inout vec4 offsetCol, in int volIdx, in v
 
 	for (int i = 0; i < lightCount; i++)
 	{
-		N2Light light = lights[i];
 		vec3 lightDir; // direction to the light
-		vec3 lightColor = light.color.rgb;
-		if (light.parallel == 1)
+		vec3 lightColor = lights[i].color.rgb;
+		if (lights[i].parallel == 1)
 		{
-			lightDir = normalize(light.direction.xyz);
+			lightDir = normalize(lights[i].direction.xyz);
 		}
 		else
 		{
-			lightDir = normalize(light.position.xyz - position);
-			if (light.attnDistA != 1.0 || light.attnDistB != 0.0)
+			lightDir = normalize(lights[i].position.xyz - position);
+			if (lights[i].attnDistA != 1.0 || lights[i].attnDistB != 0.0)
 			{
-				float distance = length(light.position.xyz - position);
-				if (light.distAttnMode == 0)
+				float distance = length(lights[i].position.xyz - position);
+				if (lights[i].distAttnMode == 0)
 					distance = 1.0 / distance;
-				lightColor *= clamp(light.attnDistB * distance + light.attnDistA, 0.0, 1.0);
+				lightColor *= clamp(lights[i].attnDistB * distance + lights[i].attnDistA, 0.0, 1.0);
 			}
-			if (light.attnAngleA != 1.0 || light.attnAngleB != 0.0)
+			if (lights[i].attnAngleA != 1.0 || lights[i].attnAngleB != 0.0)
 			{
-				vec3 spotDir = light.direction.xyz;
+				vec3 spotDir = lights[i].direction.xyz;
 				float cosAngle = 1.0 - max(0.0, dot(lightDir, spotDir));
-				lightColor *= clamp(cosAngle * light.attnAngleB + light.attnAngleA, 0.0, 1.0);
+				lightColor *= clamp(cosAngle * lights[i].attnAngleB + lights[i].attnAngleA, 0.0, 1.0);
 			}
 		}
-		if (light.diffuse[volIdx] == 1)
+		if (lights[i].diffuse[volIdx] == 1)
 		{
 			float factor;
-			switch (light.dmode)
-			{
-			case LMODE_SINGLE_SIDED:
+			if (lights[i].dmode == LMODE_SINGLE_SIDED)
 				factor = max(dot(normal, lightDir), 0.0);
-				break;
-			case LMODE_DOUBLE_SIDED:
+			else if (lights[i].dmode == LMODE_DOUBLE_SIDED)
 				factor = abs(dot(normal, lightDir));
-				break;
-			case LMODE_SPECIAL_EFFECT:
-			default:
+			else
 				factor = 1.0;
-				break;
-			}
-			if (light.routing == ROUTING_ALPHADIFF_SUB)
+			if (lights[i].routing == ROUTING_ALPHADIFF_SUB)
 				diffuseAlpha -= lightColor.r * factor;
-			else if (light.routing == ROUTING_BASEDIFF_BASESPEC_ADD || light.routing == ROUTING_BASEDIFF_OFFSSPEC_ADD)
+			else if (lights[i].routing == ROUTING_BASEDIFF_BASESPEC_ADD || lights[i].routing == ROUTING_BASEDIFF_OFFSSPEC_ADD)
 				diffuse += lightColor * factor;
-			if (light.routing == ROUTING_OFFSDIFF_BASESPEC_ADD || light.routing == ROUTING_OFFSDIFF_OFFSSPEC_ADD)
+			if (lights[i].routing == ROUTING_OFFSDIFF_BASESPEC_ADD || lights[i].routing == ROUTING_OFFSDIFF_OFFSSPEC_ADD)
 				specular += lightColor * factor;
 		}
-		if (light.specular[volIdx] == 1)
+		if (lights[i].specular[volIdx] == 1)
 		{
 			vec3 reflectDir = reflect(-lightDir, normal);
 			float factor;
-			switch (light.smode)
-			{
-			case LMODE_SINGLE_SIDED:
+			if (lights[i].smode == LMODE_SINGLE_SIDED)
 				factor = clamp(pow(max(dot(normalize(-position), reflectDir), 0.0), glossCoef[volIdx]), 0.0, 1.0);
-				break;
-			case LMODE_DOUBLE_SIDED:
+			else if (lights[i].smode == LMODE_DOUBLE_SIDED)
 				factor = clamp(pow(abs(dot(normalize(-position), reflectDir)), glossCoef[volIdx]), 0.0, 1.0);
-				break;
-			case LMODE_SPECIAL_EFFECT:
-			default:
+			else
 				factor = 1.0;
-				break;
-			}
-			if (light.routing == ROUTING_ALPHADIFF_SUB)
+			if (lights[i].routing == ROUTING_ALPHADIFF_SUB)
 				specularAlpha -= lightColor.r * factor;
-			else if (light.routing == ROUTING_OFFSDIFF_OFFSSPEC_ADD || light.routing == ROUTING_BASEDIFF_OFFSSPEC_ADD)
+			else if (lights[i].routing == ROUTING_OFFSDIFF_OFFSSPEC_ADD || lights[i].routing == ROUTING_BASEDIFF_OFFSSPEC_ADD)
 				specular += lightColor * factor;
-			if (light.routing == ROUTING_BASEDIFF_BASESPEC_ADD || light.routing == ROUTING_OFFSDIFF_BASESPEC_ADD)
+			if (lights[i].routing == ROUTING_BASEDIFF_BASESPEC_ADD || lights[i].routing == ROUTING_OFFSDIFF_BASESPEC_ADD)
 				diffuse += lightColor * factor;
 		}
 	}
@@ -299,7 +288,7 @@ void computeColors(inout vec4 baseCol, inout vec4 offsetCol, in int volIdx, in v
 	}
 }
 
-void computeEnvMap(inout vec2 uv, in vec3 position, in vec3 normal)
+void computeEnvMap(inout vec2 uv, vec3 position, vec3 normal)
 {
 	// Spherical mapping
 	//vec3 r = reflect(normalize(position), normal);
@@ -311,7 +300,7 @@ void computeEnvMap(inout vec2 uv, in vec3 position, in vec3 normal)
 	uv = clamp(uv, 0.0, 1.0);
 }
 
-void computeBumpMap(inout vec4 color0, in vec4 color1, in vec3 position, in vec3 normal, in mat4 normalMat)
+void computeBumpMap(inout vec4 color0, vec4 color1, vec3 position, vec3 normal, mat4 normalMat)
 {
 	// TODO
 	//if (bumpId0 == -1)
@@ -336,12 +325,11 @@ void computeBumpMap(inout vec4 color0, in vec4 color1, in vec3 position, in vec3
 	float scaleDegree = color0.w;
 	float scaleOffset = color1.w;
 
-	N2Light light = lights[bumpId0];
 	vec3 lightDir; // direction to the light
-	if (light.parallel == 1)
-		lightDir = normalize(light.direction.xyz);
+	if (lights[bumpId0].parallel == 1)
+		lightDir = normalize(lights[bumpId0].direction.xyz);
 	else
-		lightDir = normalize(light.position.xyz - position);
+		lightDir = normalize(lights[bumpId0].position.xyz - position);
 
 	float n = dot(lightDir, normal);
 	float cosQ = dot(lightDir, tangent);
