@@ -100,7 +100,6 @@ int spg_line_sched(int tag, int cycl, int jit)
 			{
 				maple_int_pending = false;
 				SB_MDST = 0;
-				asic_RaiseInterrupt(holly_MAPLE_DMA);
 			}
 			asic_RaiseInterrupt(holly_SCANINT1);
 		}
@@ -227,7 +226,6 @@ int spg_line_sched(int tag, int cycl, int jit)
 			maple_int_pending = false;
 			SPG_TRIGGER_POS = ((lightgun_line & 0x3FF) << 16) | (lightgun_hpos & 0x3FF);
 			SB_MDST = 0;
-			asic_RaiseInterrupt(holly_MAPLE_DMA);
 			lightgun_line = 0xffff;
 		}
 	}
