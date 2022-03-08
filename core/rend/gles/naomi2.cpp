@@ -202,6 +202,8 @@ void computeColors(inout vec4 baseCol, inout vec4 offsetCol, int volIdx, vec3 po
 	vec3 specular = vec3(0.0);
 	float diffuseAlpha = 0.0;
 	float specularAlpha = 0.0;
+	vec3 reflectDir = reflect(normalize(position), normal);
+	const float BASE_FACTOR = 1.45;
 
 	for (int i = 0; i < lightCount; i++)
 	{
@@ -230,13 +232,12 @@ void computeColors(inout vec4 baseCol, inout vec4 offsetCol, int volIdx, vec3 po
 		}
 		if (lights[i].diffuse[volIdx] == 1)
 		{
-			float factor;
+			float factor = BASE_FACTOR;
 			if (lights[i].dmode == LMODE_SINGLE_SIDED)
-				factor = max(dot(normal, lightDir), 0.0);
+				factor *= max(dot(normal, lightDir), 0.0);
 			else if (lights[i].dmode == LMODE_DOUBLE_SIDED)
-				factor = abs(dot(normal, lightDir));
-			else
-				factor = 1.0;
+				factor *= abs(dot(normal, lightDir));
+
 			if (lights[i].routing == ROUTING_ALPHADIFF_SUB)
 				diffuseAlpha -= lightColor.r * factor;
 			else if (lights[i].routing == ROUTING_BASEDIFF_BASESPEC_ADD || lights[i].routing == ROUTING_BASEDIFF_OFFSSPEC_ADD)
@@ -246,14 +247,12 @@ void computeColors(inout vec4 baseCol, inout vec4 offsetCol, int volIdx, vec3 po
 		}
 		if (lights[i].specular[volIdx] == 1)
 		{
-			vec3 reflectDir = reflect(-lightDir, normal);
-			float factor;
+			float factor = BASE_FACTOR;
 			if (lights[i].smode == LMODE_SINGLE_SIDED)
-				factor = clamp(pow(max(dot(normalize(-position), reflectDir), 0.0), glossCoef[volIdx]), 0.0, 1.0);
+				factor *= clamp(pow(max(dot(lightDir, reflectDir), 0.0), glossCoef[volIdx]), 0.0, 1.0);
 			else if (lights[i].smode == LMODE_DOUBLE_SIDED)
-				factor = clamp(pow(abs(dot(normalize(-position), reflectDir)), glossCoef[volIdx]), 0.0, 1.0);
-			else
-				factor = 1.0;
+				factor *= clamp(pow(abs(dot(lightDir, reflectDir)), glossCoef[volIdx]), 0.0, 1.0);
+
 			if (lights[i].routing == ROUTING_ALPHADIFF_SUB)
 				specularAlpha -= lightColor.r * factor;
 			else if (lights[i].routing == ROUTING_OFFSDIFF_OFFSSPEC_ADD || lights[i].routing == ROUTING_BASEDIFF_OFFSSPEC_ADD)
@@ -279,13 +278,15 @@ void computeColors(inout vec4 baseCol, inout vec4 offsetCol, int volIdx, vec3 po
 	if (ambientMaterialOffset[volIdx] == 0 && modelSpecular[volIdx] == 1)
 		offsetCol.rgb += ambientOffset[volIdx].rgb;
 
-	baseCol.a = max(0.0, baseCol.a + diffuseAlpha);
-	offsetCol.a = max(0.0, offsetCol.a + specularAlpha);
+	baseCol.a += diffuseAlpha;
+	offsetCol.a += specularAlpha;
 	if (useBaseOver == 1)
 	{
-		vec4 overflow = max(vec4(0.0), baseCol - vec4(1.0));
+		vec4 overflow = max(baseCol - vec4(1.0), 0.0);
 		offsetCol += overflow;
 	}
+	baseCol = clamp(baseCol, 0.0, 1.0);
+	offsetCol = clamp(offsetCol, 0.0, 1.0);
 }
 
 void computeEnvMap(inout vec2 uv, vec3 position, vec3 normal)
