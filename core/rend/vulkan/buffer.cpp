@@ -38,3 +38,9 @@ BufferData::BufferData(vk::DeviceSize size, const vk::BufferUsageFlags& usage, c
 #endif
 	allocation = context->GetAllocator().AllocateForBuffer(*buffer, allocInfo);
 }
+
+BufferPacker::BufferPacker()
+{
+	uniformAlignment = VulkanContext::Instance()->GetUniformBufferAlignment();
+	storageAlignment = VulkanContext::Instance()->GetStorageBufferAlignment();
+}

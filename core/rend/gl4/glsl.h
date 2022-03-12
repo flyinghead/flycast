@@ -49,93 +49,40 @@ struct PolyParam { \n\
 	int tsp1; \n\
 }; \n\
  \n\
-#define GET_TSP_FOR_AREA int tsp = area1 ? pp.tsp1 : pp.tsp_isp_pcw; \n\
+#define GET_TSP_FOR_AREA(pp, area1) ((area1) ? (pp).tsp1 : (pp).tsp_isp_pcw) \n\
  \n\
-int getSrcBlendFunc(const PolyParam pp, bool area1) \n\
-{ \n\
-	GET_TSP_FOR_AREA \n\
-	return (tsp >> 29) & 7; \n\
-} \n\
+#define getSrcBlendFunc(pp, area1) ((GET_TSP_FOR_AREA(pp, area1) >> 29) & 7) \n\
  \n\
-int getDstBlendFunc(const PolyParam pp, bool area1) \n\
-{ \n\
-	GET_TSP_FOR_AREA \n\
-	return (tsp >> 26) & 7; \n\
-} \n\
+#define getDstBlendFunc(pp, area1) ((GET_TSP_FOR_AREA(pp, area1) >> 26) & 7) \n\
  \n\
-bool getSrcSelect(const PolyParam pp, bool area1) \n\
-{ \n\
-	GET_TSP_FOR_AREA \n\
-	return ((tsp >> 25) & 1) != 0; \n\
-} \n\
+#define getSrcSelect(pp, area1) (((GET_TSP_FOR_AREA(pp, area1) >> 25) & 1) != 0) \n\
  \n\
-bool getDstSelect(const PolyParam pp, bool area1) \n\
-{ \n\
-	GET_TSP_FOR_AREA \n\
-	return ((tsp >> 24) & 1) != 0; \n\
-} \n\
+#define getDstSelect(pp, area1) (((GET_TSP_FOR_AREA(pp, area1) >> 24) & 1) != 0) \n\
  \n\
-int getFogControl(const PolyParam pp, bool area1) \n\
-{ \n\
-	GET_TSP_FOR_AREA \n\
-	return (tsp >> 22) & 3; \n\
-} \n\
+#define getFogControl(pp, area1) ((GET_TSP_FOR_AREA(pp, area1) >> 22) & 3) \n\
  \n\
-bool getUseAlpha(const PolyParam pp, bool area1) \n\
-{ \n\
-	GET_TSP_FOR_AREA \n\
-	return ((tsp >> 20) & 1) != 0; \n\
-} \n\
+#define getUseAlpha(pp, area1) (((GET_TSP_FOR_AREA(pp, area1) >> 20) & 1) != 0) \n\
  \n\
-bool getIgnoreTexAlpha(const PolyParam pp, bool area1) \n\
-{ \n\
-	GET_TSP_FOR_AREA \n\
-	return ((tsp >> 19) & 1) != 0; \n\
-} \n\
+#define getIgnoreTexAlpha(pp, area1) (((GET_TSP_FOR_AREA(pp, area1) >> 19) & 1) != 0) \n\
  \n\
-int getShadingInstruction(const PolyParam pp, bool area1) \n\
-{ \n\
-	GET_TSP_FOR_AREA \n\
-	return (tsp >> 6) & 3; \n\
-} \n\
+#define getShadingInstruction(pp, area1) ((GET_TSP_FOR_AREA(pp, area1) >> 6) & 3) \n\
  \n\
-int getDepthFunc(const PolyParam pp) \n\
-{ \n\
-	return (pp.tsp_isp_pcw >> 13) & 7; \n\
-} \n\
+#define getDepthFunc(pp) (((pp).tsp_isp_pcw >> 13) & 7) \n\
  \n\
-bool getDepthMask(const PolyParam pp) \n\
-{ \n\
-	return ((pp.tsp_isp_pcw >> 10) & 1) != 1; \n\
-} \n\
+#define getDepthMask(pp) ((((pp).tsp_isp_pcw >> 10) & 1) != 1) \n\
  \n\
-bool getShadowEnable(const PolyParam pp) \n\
-{ \n\
-	return (pp.tsp_isp_pcw & 1) != 0; \n\
-} \n\
+#define getShadowEnable(pp) (((pp).tsp_isp_pcw & 1) != 0) \n\
  \n\
-uint getPolyNumber(const Pixel pixel) \n\
-{ \n\
-	return (pixel.seq_num & 0x3FFFFFFFu) >> 18; \n\
-} \n\
+#define getPolyNumber(pixel) (((pixel).seq_num & 0x3FFFFFFFu) >> 18) \n\
  \n\
-uint getPolyIndex(const Pixel pixel) \n\
-{ \n\
-	return pixel.seq_num & 0x3FFFFFFFu; \n\
-} \n\
+#define getPolyIndex(pixel) ((pixel).seq_num & 0x3FFFFFFFu) \n\
  \n\
 #define SHADOW_STENCIL 0x40000000u \n\
 #define SHADOW_ACC	   0x80000000u \n\
  \n\
-bool isShadowed(const Pixel pixel) \n\
-{ \n\
-	return (pixel.seq_num & SHADOW_ACC) == SHADOW_ACC; \n\
-} \n\
+#define isShadowed(pixel) (((pixel).seq_num & SHADOW_ACC) == SHADOW_ACC) \n\
  \n\
-bool isTwoVolumes(const PolyParam pp) \n\
-{ \n\
-	return pp.tsp1 != -1; \n\
-} \n\
+#define isTwoVolumes(pp) ((pp).tsp1 != -1) \n\
  \n\
 uint packColors(vec4 v) \n\
 { \n\

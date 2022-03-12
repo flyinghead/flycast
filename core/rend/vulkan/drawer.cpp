@@ -143,14 +143,32 @@ void Drawer::DrawPoly(const vk::CommandBuffer& cmdBuffer, u32 listType, bool sor
 		cmdBuffer.pushConstants<float>(pipelineManager->GetPipelineLayout(), vk::ShaderStageFlagBits::eFragment, 0, pushConstants);
 	}
 
-	if (poly.pcw.Texture)
-		GetCurrentDescSet().SetTexture((Texture *)poly.texture, poly.tsp);
-
 	vk::Pipeline pipeline = pipelineManager->GetPipeline(listType, sortTriangles, poly, gpuPalette);
 	cmdBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline);
-	if (poly.pcw.Texture)
-		GetCurrentDescSet().BindPerPolyDescriptorSets(cmdBuffer, (Texture *)poly.texture, poly.tsp);
-
+	if (poly.pcw.Texture || poly.isNaomi2())
+	{
+		vk::DeviceSize offset = 0;
+		u32 index = 0;
+		if (poly.isNaomi2())
+		{
+			switch (listType)
+			{
+			case ListType_Opaque:
+				offset = offsets.naomi2OpaqueOffset;
+				index = &poly - pvrrc.global_param_op.head();
+				break;
+			case ListType_Punch_Through:
+				offset = offsets.naomi2PunchThroughOffset;
+				index = &poly - pvrrc.global_param_pt.head();
+				break;
+			case ListType_Translucent:
+				offset = offsets.naomi2TranslucentOffset;
+				index = &poly - pvrrc.global_param_tr.head();
+				break;
+			}
+		}
+		descriptorSets.bindPerPolyDescriptorSets(cmdBuffer, poly, index, *GetMainBuffer(0)->buffer, offset, offsets.lightsOffset);
+	}
 	cmdBuffer.drawIndexed(count, 1, first, 0, 0);
 }
 
@@ -165,7 +183,7 @@ void Drawer::DrawSorted(const vk::CommandBuffer& cmdBuffer, const std::vector<So
 		{
 			if (param.ppid->isp.ZWriteDis)
 				continue;
-			vk::Pipeline pipeline = pipelineManager->GetDepthPassPipeline(param.ppid->isp.CullMode);
+			vk::Pipeline pipeline = pipelineManager->GetDepthPassPipeline(param.ppid->isp.CullMode, param.ppid->isNaomi2());
 			cmdBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline);
 			vk::Rect2D scissorRect;
 			TileClipping tileClip = SetTileClip(param.ppid->tileclip, scissorRect);
@@ -213,16 +231,19 @@ void Drawer::DrawModVols(const vk::CommandBuffer& cmdBuffer, int first, int coun
 			mod_base = param.first;
 
 		if (!param.isp.VolumeLast && mv_mode > 0)
-			pipeline = pipelineManager->GetModifierVolumePipeline(ModVolMode::Or, param.isp.CullMode);	// OR'ing (open volume or quad)
+			pipeline = pipelineManager->GetModifierVolumePipeline(ModVolMode::Or, param.isp.CullMode, param.isNaomi2());	// OR'ing (open volume or quad)
 		else
-			pipeline = pipelineManager->GetModifierVolumePipeline(ModVolMode::Xor, param.isp.CullMode);	// XOR'ing (closed volume)
+			pipeline = pipelineManager->GetModifierVolumePipeline(ModVolMode::Xor, param.isp.CullMode, param.isNaomi2());	// XOR'ing (closed volume)
+
 		cmdBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline);
+		descriptorSets.bindPerPolyDescriptorSets(cmdBuffer, param, first + cmv, *GetMainBuffer(0)->buffer, offsets.naomi2ModVolOffset);
+
 		cmdBuffer.draw(param.count * 3, 1, param.first * 3, 0);
 
 		if (mv_mode == 1 || mv_mode == 2)
 		{
 			// Sum the area
-			pipeline = pipelineManager->GetModifierVolumePipeline(mv_mode == 1 ? ModVolMode::Inclusion : ModVolMode::Exclusion, param.isp.CullMode);
+			pipeline = pipelineManager->GetModifierVolumePipeline(mv_mode == 1 ? ModVolMode::Inclusion : ModVolMode::Exclusion, param.isp.CullMode, param.isNaomi2());
 			cmdBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline);
 			cmdBuffer.draw((param.first + param.count - mod_base) * 3, 1, mod_base * 3, 0);
 			mod_base = -1;
@@ -234,65 +255,38 @@ void Drawer::DrawModVols(const vk::CommandBuffer& cmdBuffer, int first, int coun
 	std::array<float, 5> pushConstants = { 1 - FPU_SHAD_SCALE.scale_factor / 256.f, 0, 0, 0, 0 };
 	cmdBuffer.pushConstants<float>(pipelineManager->GetPipelineLayout(), vk::ShaderStageFlagBits::eFragment, 0, pushConstants);
 
-	pipeline = pipelineManager->GetModifierVolumePipeline(ModVolMode::Final, 0);
+	pipeline = pipelineManager->GetModifierVolumePipeline(ModVolMode::Final, 0, false);
 	cmdBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline);
 	cmdBuffer.drawIndexed(4, 1, 0, 0, 0);
 }
 
 void Drawer::UploadMainBuffer(const VertexShaderUniforms& vertexUniforms, const FragmentShaderUniforms& fragmentUniforms)
 {
-	// TODO Put this logic in an allocator
-	std::vector<const void *> chunks;
-	std::vector<u32> chunkSizes;
+	BufferPacker packer;
 
 	// Vertex
-	chunks.push_back(pvrrc.verts.head());
-	chunkSizes.push_back(pvrrc.verts.bytes());
-
-	u32 padding = align(pvrrc.verts.bytes(), 4);
-	offsets.modVolOffset = pvrrc.verts.bytes() + padding;
-	chunks.push_back(nullptr);
-	chunkSizes.push_back(padding);
-
+	packer.add(pvrrc.verts.head(), pvrrc.verts.bytes());
 	// Modifier Volumes
-	chunks.push_back(pvrrc.modtrig.head());
-	chunkSizes.push_back(pvrrc.modtrig.bytes());
-	padding = align(offsets.modVolOffset + pvrrc.modtrig.bytes(), 4);
-	offsets.indexOffset = offsets.modVolOffset + pvrrc.modtrig.bytes() + padding;
-	chunks.push_back(nullptr);
-	chunkSizes.push_back(padding);
-
+	offsets.modVolOffset = packer.add(pvrrc.modtrig.head(), pvrrc.modtrig.bytes());
 	// Index
-	chunks.push_back(pvrrc.idx.head());
-	chunkSizes.push_back(pvrrc.idx.bytes());
+	offsets.indexOffset = packer.add(pvrrc.idx.head(), pvrrc.idx.bytes());
 	for (const std::vector<u32>& idx : sortedIndexes)
-	{
 		if (!idx.empty())
-		{
-			chunks.push_back(&idx[0]);
-			chunkSizes.push_back(idx.size() * sizeof(u32));
-		}
-	}
+			packer.add(&idx[0], idx.size() * sizeof(u32));
 	// Uniform buffers
-	u32 indexSize = pvrrc.idx.bytes() + sortedIndexCount * sizeof(u32);
-	padding = align(offsets.indexOffset + indexSize, std::max(4, (int)GetContext()->GetUniformBufferAlignment()));
-	offsets.vertexUniformOffset = offsets.indexOffset + indexSize + padding;
-	chunks.push_back(nullptr);
-	chunkSizes.push_back(padding);
+	offsets.vertexUniformOffset = packer.addUniform(&vertexUniforms, sizeof(vertexUniforms));
+	offsets.fragmentUniformOffset = packer.addUniform(&fragmentUniforms, sizeof(fragmentUniforms));
 
-	chunks.push_back(&vertexUniforms);
-	chunkSizes.push_back(sizeof(vertexUniforms));
-	padding = align(offsets.vertexUniformOffset + sizeof(VertexShaderUniforms), std::max(4, (int)GetContext()->GetUniformBufferAlignment()));
-	offsets.fragmentUniformOffset = offsets.vertexUniformOffset + sizeof(VertexShaderUniforms) + padding;
-	chunks.push_back(nullptr);
-	chunkSizes.push_back(padding);
+	std::vector<u8> n2uniforms;
+	std::vector<u8> n2lights;
+	if (settings.platform.isNaomi2())
+	{
+		uploadNaomi2Uniforms(packer, offsets, n2uniforms, false);
+		offsets.lightsOffset = uploadNaomi2Lights(packer, n2lights);
+	}
 
-	chunks.push_back(&fragmentUniforms);
-	chunkSizes.push_back(sizeof(fragmentUniforms));
-	u32 totalSize = (u32)(offsets.fragmentUniformOffset + sizeof(FragmentShaderUniforms));
-
-	BufferData *buffer = GetMainBuffer(totalSize);
-	buffer->upload(chunks.size(), &chunkSizes[0], &chunks[0]);
+	BufferData *buffer = GetMainBuffer(packer.size());
+	packer.upload(*buffer);
 }
 
 bool Drawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
@@ -311,16 +305,27 @@ bool Drawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 
 	setFirstProvokingVertex(pvrrc);
 
+	// Do per-poly sorting
+	RenderPass previous_pass = {};
+	if (config::PerStripSorting)
+		for (int render_pass = 0; render_pass < pvrrc.render_passes.used(); render_pass++)
+		{
+			const RenderPass& current_pass = pvrrc.render_passes.head()[render_pass];
+			if (current_pass.autosort)
+				SortPParams(previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);
+			previous_pass = current_pass;
+		}
+
 	// Upload vertex and index buffers
 	VertexShaderUniforms vtxUniforms;
-	vtxUniforms.normal_matrix = matrices.GetNormalMatrix();
+	vtxUniforms.ndcMat = matrices.GetNormalMatrix();
 
 	UploadMainBuffer(vtxUniforms, fragUniforms);
 
 	// Update per-frame descriptor set and bind it
-	GetCurrentDescSet().UpdateUniforms(GetMainBuffer(0)->buffer.get(), (u32)offsets.vertexUniformOffset, (u32)offsets.fragmentUniformOffset,
+	descriptorSets.updateUniforms(GetMainBuffer(0)->buffer.get(), (u32)offsets.vertexUniformOffset, (u32)offsets.fragmentUniformOffset,
 			fogTexture->GetImageView(), paletteTexture->GetImageView());
-	GetCurrentDescSet().BindPerFrameDescriptorSets(cmdBuffer);
+	descriptorSets.bindPerFrameDescriptorSets(cmdBuffer);
 
 	// Bind vertex and index buffers
 	const vk::DeviceSize zeroOffset[] = { 0 };
@@ -332,7 +337,7 @@ bool Drawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 	std::array<float, 5> pushConstants = { 0, 0, 0, 0, 0 };
 	cmdBuffer.pushConstants<float>(pipelineManager->GetPipelineLayout(), vk::ShaderStageFlagBits::eFragment, 0, pushConstants);
 
-	RenderPass previous_pass = {};
+	previous_pass = {};
     for (int render_pass = 0; render_pass < pvrrc.render_passes.used(); render_pass++)
     {
         const RenderPass& current_pass = pvrrc.render_passes.head()[render_pass];
@@ -348,14 +353,9 @@ bool Drawer::Draw(const Texture *fogTexture, const Texture *paletteTexture)
 		if (current_pass.autosort)
         {
 			if (!config::PerStripSorting)
-			{
 				DrawSorted(cmdBuffer, sortedPolys[render_pass], render_pass + 1 < pvrrc.render_passes.used());
-			}
 			else
-			{
-				SortPParams(previous_pass.tr_count, current_pass.tr_count - previous_pass.tr_count);
 				DrawList(cmdBuffer, ListType_Translucent, true, pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count);
-			}
         }
 		else
 			DrawList(cmdBuffer, ListType_Translucent, false, pvrrc.global_param_tr, previous_pass.tr_count, current_pass.tr_count);

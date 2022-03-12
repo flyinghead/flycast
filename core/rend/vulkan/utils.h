@@ -96,3 +96,9 @@ public:
 static inline vk::ClearColorValue getBorderColor() {
 	return vk::ClearColorValue(std::array<float, 4>{ VO_BORDER_COL.red(), VO_BORDER_COL.green(), VO_BORDER_COL.blue(), 1.f });
 }
+
+static inline u32 align(vk::DeviceSize offset, u32 alignment)
+{
+	u32 pad = (u32)(offset & (alignment - 1));
+	return pad == 0 ? 0 : alignment - pad;
+}

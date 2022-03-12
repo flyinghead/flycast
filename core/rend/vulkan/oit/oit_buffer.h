@@ -30,18 +30,7 @@ public:
 	void Init(int width, int height)
 	{
 		const VulkanContext *context = VulkanContext::Instance();
-		if (!descSetLayout)
-		{
-			// Descriptor set and pipeline layout
-			vk::DescriptorSetLayoutBinding descSetLayoutBindings[] = {
-					{ 0, vk::DescriptorType::eStorageBuffer, 1, vk::ShaderStageFlagBits::eFragment },		// pixel buffer
-					{ 1, vk::DescriptorType::eStorageBuffer, 1, vk::ShaderStageFlagBits::eFragment },		// pixel counter
-					{ 2, vk::DescriptorType::eStorageBuffer, 1, vk::ShaderStageFlagBits::eFragment },		// a-buffer pointers
-			};
 
-			descSetLayout = context->GetDevice().createDescriptorSetLayoutUnique(
-					vk::DescriptorSetLayoutCreateInfo(vk::DescriptorSetLayoutCreateFlags(), ARRAY_SIZE(descSetLayoutBindings), descSetLayoutBindings));
-		}
 		if (width <= maxWidth && height <= maxHeight)
 			return;
 		maxWidth = std::max(maxWidth, width);
@@ -66,23 +55,19 @@ public:
 		abufferPointer = std::unique_ptr<BufferData>(new BufferData(maxWidth * maxHeight * sizeof(int),
 				vk::BufferUsageFlagBits::eStorageBuffer, vk::MemoryPropertyFlagBits::eDeviceLocal));
 		firstFrameAfterInit = true;
-
-		if (!descSet)
-			descSet = std::move(context->GetDevice().allocateDescriptorSetsUnique(
-					vk::DescriptorSetAllocateInfo(context->GetDescriptorPool(), 1, &descSetLayout.get())).front());
-		std::vector<vk::WriteDescriptorSet> writeDescriptorSets;
-		vk::DescriptorBufferInfo pixelBufferInfo(*pixelBuffer->buffer, 0, VK_WHOLE_SIZE);
-		writeDescriptorSets.emplace_back(*descSet, 0, 0, 1, vk::DescriptorType::eStorageBuffer, nullptr, &pixelBufferInfo, nullptr);
-		vk::DescriptorBufferInfo pixelCounterBufferInfo(*pixelCounter->buffer, 0, 4);
-		writeDescriptorSets.emplace_back(*descSet, 1, 0, 1, vk::DescriptorType::eStorageBuffer, nullptr, &pixelCounterBufferInfo, nullptr);
-		vk::DescriptorBufferInfo abufferPointerInfo(*abufferPointer->buffer, 0, VK_WHOLE_SIZE);
-		writeDescriptorSets.emplace_back(*descSet, 2, 0, 1, vk::DescriptorType::eStorageBuffer, nullptr, &abufferPointerInfo, nullptr);
-		context->GetDevice().updateDescriptorSets(writeDescriptorSets, nullptr);
 	}
 
-	void BindDescriptorSet(vk::CommandBuffer cmdBuffer, vk::PipelineLayout pipelineLayout, u32 firstSet)
+	void updateDescriptorSet(vk::DescriptorSet descSet, std::vector<vk::WriteDescriptorSet>& writeDescSets)
 	{
-		cmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, firstSet, 1, &descSet.get(), 0, nullptr);
+		static vk::DescriptorBufferInfo pixelBufferInfo({}, 0, VK_WHOLE_SIZE);
+		pixelBufferInfo.buffer = *pixelBuffer->buffer;
+		writeDescSets.emplace_back(descSet, 7, 0, 1, vk::DescriptorType::eStorageBuffer, nullptr, &pixelBufferInfo, nullptr);
+		static vk::DescriptorBufferInfo pixelCounterBufferInfo({}, 0, 4);
+		pixelCounterBufferInfo.buffer = *pixelCounter->buffer;
+		writeDescSets.emplace_back(descSet, 8, 0, 1, vk::DescriptorType::eStorageBuffer, nullptr, &pixelCounterBufferInfo, nullptr);
+		static vk::DescriptorBufferInfo abufferPointerInfo({}, 0, VK_WHOLE_SIZE);
+		abufferPointerInfo.buffer = *abufferPointer->buffer;
+		writeDescSets.emplace_back(descSet, 9, 0, 1, vk::DescriptorType::eStorageBuffer, nullptr, &abufferPointerInfo, nullptr);
 	}
 
 	void OnNewFrame(vk::CommandBuffer commandBuffer)
@@ -104,13 +89,9 @@ public:
 		abufferPointer.reset();
 	}
 
-	vk::DescriptorSetLayout GetDescriptorSetLayout() const { return *descSetLayout; }
 	bool isFirstFrameAfterInit() const { return firstFrameAfterInit; }
 
 private:
-	vk::UniqueDescriptorSet descSet;
-	vk::UniqueDescriptorSetLayout descSetLayout;
-
 	std::unique_ptr<BufferData> pixelBuffer;
 	std::unique_ptr<BufferData> pixelCounter;
 	std::unique_ptr<BufferData> pixelCounterReset;

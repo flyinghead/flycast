@@ -31,6 +31,7 @@
 
 #include <memory>
 #include <vector>
+#include <glm/gtc/type_ptr.hpp>
 
 class BaseDrawer
 {
@@ -49,11 +50,6 @@ protected:
 			cmdBuffer.setScissor(0, scissor);
 			currentScissor = scissor;
 		}
-	}
-
-	u32 align(vk::DeviceSize offset, u32 alignment)
-	{
-		return (u32)(alignment - (offset & (alignment - 1)));
 	}
 
 	template<typename T>
@@ -76,6 +72,117 @@ protected:
 		return fragUniforms;
 	}
 
+	template<typename Offsets>
+	void uploadNaomi2Uniforms(BufferPacker& packer, Offsets& offsets, std::vector<u8>& n2uniforms, bool trModVolIncluded)
+	{
+		size_t n2UniformSize = sizeof(N2VertexShaderUniforms) + align(sizeof(N2VertexShaderUniforms), GetContext()->GetUniformBufferAlignment());
+		int items = pvrrc.global_param_op.used() + pvrrc.global_param_pt.used() + pvrrc.global_param_tr.used() + pvrrc.global_param_mvo.used();
+		if (trModVolIncluded)
+			items += pvrrc.global_param_mvo_tr.used();
+		n2uniforms.resize(items * n2UniformSize);
+		size_t bufIdx = 0;
+		auto addUniform = [&](const PolyParam& pp, int polyNumber) {
+			if (pp.isNaomi2())
+			{
+				N2VertexShaderUniforms& uni = *(N2VertexShaderUniforms *)&n2uniforms[bufIdx];
+				memcpy(glm::value_ptr(uni.mvMat), pp.mvMatrix, sizeof(uni.mvMat));
+				memcpy(glm::value_ptr(uni.normalMat), pp.normalMatrix, sizeof(uni.normalMat));
+				memcpy(glm::value_ptr(uni.projMat), pp.projMatrix, sizeof(uni.projMat));
+				uni.bumpMapping = pp.pcw.Texture == 1 && pp.tcw.PixelFmt == PixelBumpMap;
+				uni.polyNumber = polyNumber;
+				for (size_t i = 0; i < 2; i++)
+				{
+					uni.envMapping[i] = pp.envMapping[i];
+					uni.glossCoef[i] = pp.glossCoef[i];
+					uni.constantColor[i] = pp.constantColor[i];
+					uni.modelDiffuse[i] = pp.diffuseColor[i];
+					uni.modelSpecular[i] = pp.specularColor[i];
+				}
+			}
+			bufIdx += n2UniformSize;
+		};
+		for (const PolyParam& pp : pvrrc.global_param_op)
+			addUniform(pp, 0);
+		size_t ptOffset = bufIdx;
+		for (const PolyParam& pp : pvrrc.global_param_pt)
+			addUniform(pp, 0);
+		size_t trOffset = bufIdx;
+		for (const PolyParam& pp : pvrrc.global_param_tr)
+			addUniform(pp, &pp - pvrrc.global_param_tr.head());
+		size_t mvOffset = bufIdx;
+		for (const ModifierVolumeParam& mvp : pvrrc.global_param_mvo)
+		{
+			if (mvp.isNaomi2())
+			{
+				N2VertexShaderUniforms& uni = *(N2VertexShaderUniforms *)&n2uniforms[bufIdx];
+				memcpy(glm::value_ptr(uni.mvMat), mvp.mvMatrix, sizeof(uni.mvMat));
+				memcpy(glm::value_ptr(uni.projMat), mvp.projMatrix, sizeof(uni.projMat));
+			}
+			bufIdx += n2UniformSize;
+		}
+		size_t trMvOffset = bufIdx;
+		if (trModVolIncluded)
+			for (const ModifierVolumeParam& mvp : pvrrc.global_param_mvo_tr)
+			{
+				if (mvp.isNaomi2())
+				{
+					N2VertexShaderUniforms& uni = *(N2VertexShaderUniforms *)&n2uniforms[bufIdx];
+					memcpy(glm::value_ptr(uni.mvMat), mvp.mvMatrix, sizeof(uni.mvMat));
+					memcpy(glm::value_ptr(uni.projMat), mvp.projMatrix, sizeof(uni.projMat));
+				}
+				bufIdx += n2UniformSize;
+			}
+		offsets.naomi2OpaqueOffset = packer.addUniform(n2uniforms.data(), bufIdx);
+		offsets.naomi2PunchThroughOffset = offsets.naomi2OpaqueOffset + ptOffset;
+		offsets.naomi2TranslucentOffset = offsets.naomi2OpaqueOffset + trOffset;
+		offsets.naomi2ModVolOffset = offsets.naomi2OpaqueOffset + mvOffset;
+		offsets.naomi2TrModVolOffset = offsets.naomi2OpaqueOffset + trMvOffset;
+	}
+
+	vk::DeviceSize uploadNaomi2Lights(BufferPacker& packer, std::vector<u8>& n2lights)
+	{
+		size_t n2LightSize = sizeof(VkN2LightConstants) + align(sizeof(VkN2LightConstants), GetContext()->GetUniformBufferAlignment());
+		n2lights.resize(pvrrc.lightModels.used() * n2LightSize);
+		size_t bufIdx = 0;
+		for (const N2LightModel& lights : pvrrc.lightModels)
+		{
+			VkN2LightConstants& vkLights = *(VkN2LightConstants *)&n2lights[bufIdx];
+			vkLights.lightCount = lights.lightCount;
+			for (int i = 0; i < lights.lightCount; i++)
+			{
+				VkN2Light& vkLight = vkLights.lights[i];
+				const N2Light& light = lights.lights[i];
+				memcpy(vkLight.color, light.color, sizeof(vkLight.color));
+				memcpy(vkLight.direction, light.direction, sizeof(vkLight.direction));
+				memcpy(vkLight.position, light.position, sizeof(vkLight.position));
+				vkLight.parallel = light.parallel;
+				vkLight.routing = light.routing;
+				vkLight.dmode = light.dmode;
+				vkLight.smode = light.smode;
+				memcpy(vkLight.diffuse, light.diffuse, sizeof(vkLight.diffuse));
+				memcpy(vkLight.specular, light.specular, sizeof(vkLight.specular));
+				vkLight.attnDistA = light.attnDistA;
+				vkLight.attnDistB = light.attnDistB;
+				vkLight.attnAngleA = light.attnAngleA;
+				vkLight.attnAngleB = light.attnAngleB;
+				vkLight.distAttnMode = light.distAttnMode;
+			}
+			memcpy(vkLights.ambientBase, lights.ambientBase, sizeof(vkLights.ambientBase));
+			memcpy(vkLights.ambientOffset, lights.ambientOffset, sizeof(vkLights.ambientOffset));
+			for (int i = 0; i < 2; i++)
+			{
+				vkLights.ambientMaterialBase[i] = lights.ambientMaterialBase[i];
+				vkLights.ambientMaterialOffset[i] = lights.ambientMaterialOffset[i];
+			}
+			vkLights.useBaseOver = lights.useBaseOver;
+			vkLights.bumpId1 = lights.bumpId1;
+			vkLights.bumpId2 = lights.bumpId2;
+
+			bufIdx += n2LightSize;
+		}
+		return packer.addUniform(n2lights.data(), bufIdx);
+	}
+
 	vk::Rect2D baseScissor;
 	vk::Rect2D currentScissor;
 	TransformMatrix<COORD_VULKAN> matrices;
@@ -95,7 +202,7 @@ protected:
 	virtual vk::CommandBuffer BeginRenderPass() = 0;
 	void NewImage()
 	{
-		GetCurrentDescSet().Reset();
+		descriptorSets.reset();
 		imageIndex = (imageIndex + 1) % GetSwapChainSize();
 		if (perStripSorting != config::PerStripSorting)
 		{
@@ -110,18 +217,10 @@ protected:
 		this->pipelineManager = pipelineManager;
 		this->samplerManager = samplerManager;
 
-		size_t size = GetSwapChainSize();
-		if (descriptorSets.size() > size)
-			descriptorSets.resize(size);
-		else
-			while (descriptorSets.size() < size)
-			{
-				descriptorSets.emplace_back();
-				descriptorSets.back().Init(samplerManager, pipelineManager->GetPipelineLayout(), pipelineManager->GetPerFrameDSLayout(), pipelineManager->GetPerPolyDSLayout());
-			}
+		descriptorSets.init(samplerManager, pipelineManager->GetPipelineLayout(), pipelineManager->GetPerFrameDSLayout(), pipelineManager->GetPerPolyDSLayout());
 	}
+
 	int GetCurrentImage() const { return imageIndex; }
-	DescriptorSets& GetCurrentDescSet() { return descriptorSets[GetCurrentImage()]; }
 
 	BufferData* GetMainBuffer(u32 size)
 	{
@@ -141,7 +240,7 @@ protected:
 					vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eUniformBuffer));
 		}
 		return mainBuffers[bufferIndex].get();
-	};
+	}
 
 	vk::CommandBuffer currentCommandBuffer;
 	SamplerManager *samplerManager = nullptr;
@@ -161,8 +260,14 @@ private:
 		vk::DeviceSize modVolOffset = 0;
 		vk::DeviceSize vertexUniformOffset = 0;
 		vk::DeviceSize fragmentUniformOffset = 0;
+		vk::DeviceSize naomi2OpaqueOffset = 0;
+		vk::DeviceSize naomi2PunchThroughOffset = 0;
+		vk::DeviceSize naomi2TranslucentOffset = 0;
+		vk::DeviceSize naomi2ModVolOffset = 0;
+		vk::DeviceSize naomi2TrModVolOffset = 0;
+		vk::DeviceSize lightsOffset = 0;
 	} offsets;
-	std::vector<DescriptorSets> descriptorSets;
+	DescriptorSets descriptorSets;
 	std::vector<std::unique_ptr<BufferData>> mainBuffers;
 	PipelineManager *pipelineManager = nullptr;
 

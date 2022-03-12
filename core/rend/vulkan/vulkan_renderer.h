@@ -140,6 +140,8 @@ public:
 		bool result;
 		if (ctx->rend.isRenderFramebuffer)
 			result = RenderFramebuffer(ctx);
+		else if (settings.platform.isNaomi2())
+			result = ta_parse_naomi2(ctx);
 		else
 			result = ta_parse_vdrc(ctx);
 

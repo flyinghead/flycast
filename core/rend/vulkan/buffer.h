@@ -21,6 +21,7 @@
 #pragma once
 #include "vulkan.h"
 #include "vmallocator.h"
+#include "utils.h"
 
 struct BufferData
 {
@@ -91,4 +92,51 @@ struct BufferData
 private:
 	vk::BufferUsageFlags    m_usage;
 	vk::MemoryPropertyFlags m_propertyFlags;
+};
+
+class BufferPacker
+{
+public:
+	BufferPacker();
+
+	vk::DeviceSize addUniform(const void *p, size_t size) {
+		return add(p, size, uniformAlignment);
+	}
+
+	vk::DeviceSize addStorage(const void *p, size_t size) {
+		return add(p, size, storageAlignment);
+	}
+
+	vk::DeviceSize add(const void *p, size_t size, u32 alignment = 4)
+	{
+		u32 padding = align(offset, std::max(4u, alignment));
+		if (padding != 0)
+		{
+			chunks.push_back(nullptr);
+			chunkSizes.push_back(padding);
+			offset += padding;
+		}
+		vk::DeviceSize start = offset;
+		chunks.push_back(p);
+		chunkSizes.push_back(size);
+		offset += size;
+
+		return start;
+	}
+
+	void upload(BufferData& bufferData, u32 bufOffset = 0)
+	{
+		bufferData.upload(chunks.size(), &chunkSizes[0], &chunks[0], bufOffset);
+	}
+
+	vk::DeviceSize size() const {
+		return offset;
+	}
+
+private:
+	std::vector<const void *> chunks;
+	std::vector<u32> chunkSizes;
+	vk::DeviceSize offset = 0;
+	vk::DeviceSize uniformAlignment;
+	vk::DeviceSize storageAlignment;
 };
