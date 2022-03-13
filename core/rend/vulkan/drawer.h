@@ -73,7 +73,7 @@ protected:
 	}
 
 	template<typename Offsets>
-	void uploadNaomi2Uniforms(BufferPacker& packer, Offsets& offsets, std::vector<u8>& n2uniforms, bool trModVolIncluded)
+	void packNaomi2Uniforms(BufferPacker& packer, Offsets& offsets, std::vector<u8>& n2uniforms, bool trModVolIncluded)
 	{
 		size_t n2UniformSize = sizeof(N2VertexShaderUniforms) + align(sizeof(N2VertexShaderUniforms), GetContext()->GetUniformBufferAlignment());
 		int items = pvrrc.global_param_op.used() + pvrrc.global_param_pt.used() + pvrrc.global_param_tr.used() + pvrrc.global_param_mvo.used();
@@ -139,7 +139,7 @@ protected:
 		offsets.naomi2TrModVolOffset = offsets.naomi2OpaqueOffset + trMvOffset;
 	}
 
-	vk::DeviceSize uploadNaomi2Lights(BufferPacker& packer, std::vector<u8>& n2lights)
+	vk::DeviceSize packNaomi2Lights(BufferPacker& packer, std::vector<u8>& n2lights)
 	{
 		size_t n2LightSize = sizeof(VkN2LightConstants) + align(sizeof(VkN2LightConstants), GetContext()->GetUniformBufferAlignment());
 		n2lights.resize(pvrrc.lightModels.used() * n2LightSize);
@@ -202,7 +202,7 @@ protected:
 	virtual vk::CommandBuffer BeginRenderPass() = 0;
 	void NewImage()
 	{
-		descriptorSets.reset();
+		descriptorSets.nextFrame();
 		imageIndex = (imageIndex + 1) % GetSwapChainSize();
 		if (perStripSorting != config::PerStripSorting)
 		{

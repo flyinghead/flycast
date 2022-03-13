@@ -26,6 +26,7 @@
 #include "vulkan_context.h"
 #include "desc_set.h"
 #include <array>
+#include <unordered_map>
 
 class DescriptorSets
 {
@@ -78,36 +79,44 @@ public:
 	void bindPerPolyDescriptorSets(vk::CommandBuffer cmdBuffer, const PolyParam& poly, int polyNumber, vk::Buffer buffer,
 			vk::DeviceSize uniformOffset, vk::DeviceSize lightOffset)
 	{
-		vk::DescriptorSet perPolyDescSet = perPolyAlloc.alloc();
-		std::vector<vk::WriteDescriptorSet> writeDescriptorSets;
-
-		vk::DescriptorImageInfo imageInfo;
-		if (poly.texture != nullptr)
+		vk::DescriptorSet perPolyDescSet;
+		auto it = perPolyDescSets.find(&poly);
+		if (it == perPolyDescSets.end())
 		{
-			imageInfo = vk::DescriptorImageInfo(samplerManager->GetSampler(poly.tsp),
-					((Texture *)poly.texture)->GetReadOnlyImageView(), vk::ImageLayout::eShaderReadOnlyOptimal);
-			writeDescriptorSets.emplace_back(perPolyDescSet, 0, 0, 1, vk::DescriptorType::eCombinedImageSampler, &imageInfo, nullptr, nullptr);
-		}
+			perPolyDescSet = perPolyAlloc.alloc();
+			std::vector<vk::WriteDescriptorSet> writeDescriptorSets;
 
-		vk::DescriptorBufferInfo uniBufferInfo;
-		vk::DescriptorBufferInfo lightBufferInfo;
-		if (poly.isNaomi2())
-		{
-			const vk::DeviceSize uniformAlignment = VulkanContext::Instance()->GetUniformBufferAlignment();
-			size_t size = sizeof(N2VertexShaderUniforms) + align(sizeof(N2VertexShaderUniforms), uniformAlignment);
-			uniBufferInfo = vk::DescriptorBufferInfo{ buffer, uniformOffset + polyNumber * size, sizeof(N2VertexShaderUniforms) };
-			writeDescriptorSets.emplace_back(perPolyDescSet, 2, 0, 1, vk::DescriptorType::eUniformBuffer, nullptr, &uniBufferInfo, nullptr);
-
-			if (poly.lightModel != nullptr)
+			vk::DescriptorImageInfo imageInfo;
+			if (poly.texture != nullptr)
 			{
-				size = sizeof(VkN2LightConstants) + align(sizeof(VkN2LightConstants), uniformAlignment);
-				lightBufferInfo = vk::DescriptorBufferInfo{ buffer, lightOffset + (poly.lightModel - pvrrc.lightModels.head()) * size, sizeof(VkN2LightConstants) };
-				writeDescriptorSets.emplace_back(perPolyDescSet, 3, 0, 1, vk::DescriptorType::eUniformBuffer, nullptr, &lightBufferInfo, nullptr);
+				imageInfo = vk::DescriptorImageInfo(samplerManager->GetSampler(poly.tsp),
+						((Texture *)poly.texture)->GetReadOnlyImageView(), vk::ImageLayout::eShaderReadOnlyOptimal);
+				writeDescriptorSets.emplace_back(perPolyDescSet, 0, 0, 1, vk::DescriptorType::eCombinedImageSampler, &imageInfo, nullptr, nullptr);
 			}
-			// TODO no light
-		}
 
-		getContext()->GetDevice().updateDescriptorSets(writeDescriptorSets, nullptr);
+			vk::DescriptorBufferInfo uniBufferInfo;
+			vk::DescriptorBufferInfo lightBufferInfo;
+			if (poly.isNaomi2())
+			{
+				const vk::DeviceSize uniformAlignment = VulkanContext::Instance()->GetUniformBufferAlignment();
+				size_t size = sizeof(N2VertexShaderUniforms) + align(sizeof(N2VertexShaderUniforms), uniformAlignment);
+				uniBufferInfo = vk::DescriptorBufferInfo{ buffer, uniformOffset + polyNumber * size, sizeof(N2VertexShaderUniforms) };
+				writeDescriptorSets.emplace_back(perPolyDescSet, 2, 0, 1, vk::DescriptorType::eUniformBuffer, nullptr, &uniBufferInfo, nullptr);
+
+				if (poly.lightModel != nullptr)
+				{
+					size = sizeof(VkN2LightConstants) + align(sizeof(VkN2LightConstants), uniformAlignment);
+					lightBufferInfo = vk::DescriptorBufferInfo{ buffer, lightOffset + (poly.lightModel - pvrrc.lightModels.head()) * size, sizeof(VkN2LightConstants) };
+					writeDescriptorSets.emplace_back(perPolyDescSet, 3, 0, 1, vk::DescriptorType::eUniformBuffer, nullptr, &lightBufferInfo, nullptr);
+				}
+				// TODO no light
+			}
+
+			getContext()->GetDevice().updateDescriptorSets(writeDescriptorSets, nullptr);
+			perPolyDescSets[&poly] = perPolyDescSet;
+		}
+		else
+			perPolyDescSet = it->second;
 		cmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 1, 1, &perPolyDescSet, 0, nullptr);
 	}
 
@@ -116,15 +125,22 @@ public:
 	{
 		if (!mvParam.isNaomi2())
 			return;
-		vk::DescriptorSet perPolyDescSet = perPolyAlloc.alloc();
+		vk::DescriptorSet perPolyDescSet;
+		auto it = perPolyDescSets.find(&mvParam);
+		if (it == perPolyDescSets.end())
+		{
+			perPolyDescSet = perPolyAlloc.alloc();
 
-		const vk::DeviceSize uniformAlignment = VulkanContext::Instance()->GetUniformBufferAlignment();
-		size_t size = sizeof(N2VertexShaderUniforms) + align(sizeof(N2VertexShaderUniforms), uniformAlignment);
-		vk::DescriptorBufferInfo uniBufferInfo{ buffer, uniformOffset + polyNumber * size, sizeof(N2VertexShaderUniforms) };
-		vk::WriteDescriptorSet writeDescriptorSet(perPolyDescSet, 2, 0, 1, vk::DescriptorType::eUniformBuffer, nullptr, &uniBufferInfo, nullptr);
+			const vk::DeviceSize uniformAlignment = VulkanContext::Instance()->GetUniformBufferAlignment();
+			size_t size = sizeof(N2VertexShaderUniforms) + align(sizeof(N2VertexShaderUniforms), uniformAlignment);
+			vk::DescriptorBufferInfo uniBufferInfo{ buffer, uniformOffset + polyNumber * size, sizeof(N2VertexShaderUniforms) };
+			vk::WriteDescriptorSet writeDescriptorSet(perPolyDescSet, 2, 0, 1, vk::DescriptorType::eUniformBuffer, nullptr, &uniBufferInfo, nullptr);
 
-		getContext()->GetDevice().updateDescriptorSets(1, &writeDescriptorSet, 0, nullptr);
-
+			getContext()->GetDevice().updateDescriptorSets(1, &writeDescriptorSet, 0, nullptr);
+			perPolyDescSets[&mvParam] = perPolyDescSet;
+		}
+		else
+			perPolyDescSet = it->second;
 		cmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 1, 1, &perPolyDescSet, 0, nullptr);
 	}
 
@@ -133,11 +149,12 @@ public:
 		cmdBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, 1, &perFrameDescSet, 0, nullptr);
 	}
 
-	void reset()
+	void nextFrame()
 	{
 		perFrameAlloc.nextFrame();
 		perPolyAlloc.nextFrame();
 		perFrameDescSet = vk::DescriptorSet{};
+		perPolyDescSets.clear();
 	}
 
 	void term()
@@ -153,6 +170,7 @@ private:
 	DynamicDescSetAlloc perFrameAlloc;
 	DynamicDescSetAlloc perPolyAlloc;
 	vk::DescriptorSet perFrameDescSet = {};
+	std::unordered_map<const void *, vk::DescriptorSet> perPolyDescSets;
 
 	SamplerManager* samplerManager = nullptr;
 };

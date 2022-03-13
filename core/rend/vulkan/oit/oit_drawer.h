@@ -75,7 +75,7 @@ protected:
 
 	void NewImage()
 	{
-		descriptorSets.reset();
+		descriptorSets.nextFrame();
 		imageIndex = (imageIndex + 1) % GetContext()->GetSwapChainSize();
 		renderPass = 0;
 	}

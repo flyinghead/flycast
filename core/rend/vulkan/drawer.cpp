@@ -281,8 +281,8 @@ void Drawer::UploadMainBuffer(const VertexShaderUniforms& vertexUniforms, const 
 	std::vector<u8> n2lights;
 	if (settings.platform.isNaomi2())
 	{
-		uploadNaomi2Uniforms(packer, offsets, n2uniforms, false);
-		offsets.lightsOffset = uploadNaomi2Lights(packer, n2lights);
+		packNaomi2Uniforms(packer, offsets, n2uniforms, false);
+		offsets.lightsOffset = packNaomi2Lights(packer, n2lights);
 	}
 
 	BufferData *buffer = GetMainBuffer(packer.size());

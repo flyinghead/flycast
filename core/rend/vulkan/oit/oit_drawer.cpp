@@ -241,8 +241,8 @@ void OITDrawer::UploadMainBuffer(const OITDescriptorSets::VertexShaderUniforms& 
 	std::vector<u8> n2lights;
 	if (settings.platform.isNaomi2())
 	{
-		uploadNaomi2Uniforms(packer, offsets, n2uniforms, true);
-		offsets.lightsOffset = uploadNaomi2Lights(packer, n2lights);
+		packNaomi2Uniforms(packer, offsets, n2uniforms, true);
+		offsets.lightsOffset = packNaomi2Lights(packer, n2lights);
 	}
 
 	BufferData *buffer = GetMainBuffer(packer.size());
