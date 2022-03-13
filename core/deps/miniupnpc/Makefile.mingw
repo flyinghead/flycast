@@ -5,8 +5,11 @@
 # This Makefile is made for MinGW
 #
 # To cross compile on a *nix machine :
-# make -f Makefile.mingw DLLWRAP=mingw32-dllwrap CC=mingw32-gcc AR=mingw32-ar
+# make -f Makefile.mingw DLLWRAP=mingw32-dllwrap CC=mingw32-gcc AR=mingw32-ar WINDRES=mingw32-windres
 #
+SRCDIR = src
+INCDIR = include
+
 CC ?= gcc
 SETUP_COMPILER_FLAG?=
 DLLWRAP = dllwrap
@@ -18,8 +21,12 @@ RM = del
 else
 RM = rm -f
 endif
-#CFLAGS = -Wall -g -DDEBUG -D_WIN32_WINNT=0X501
-CFLAGS = -Wall -Os -DNDEBUG -D_WIN32_WINNT=0X501
+#CFLAGS = -Wall -g
+#CPPFLAGS = -DDEBUG -D_WIN32_WINNT=0X501
+CFLAGS = -Wall -W -Wstrict-prototypes -Os
+CPPFLAGS = -DNDEBUG -D_WIN32_WINNT=0X501
+CPPFLAGS += -Iinclude
+CPPFLAGS += -I.
 LDLIBS = -lws2_32 -liphlpapi
 # -lwsock32
 # -liphlpapi is needed for GetBestRoute() and GetIpAddrTable()
@@ -37,9 +44,21 @@ BINARIES=upnpc-static.exe upnpc-shared.exe \
 ifneq ($(GITHUB_SHA),)
 COMMITREF=$(GITHUB_SHA)
 else
+ifneq ($(CI_COMMIT_SHORT_SHA),)
+COMMITREF=$(CI_COMMIT_SHORT_SHA)
+else
 COMMITREF=$(shell git rev-parse --short HEAD)
 endif
-DISTFILE:=$(shell echo "miniupnpc-bin-win32-`cat VERSION.miniupnpc`-$(COMMITREF).zip")
+endif
+DISTFILE:=$(shell echo "miniupnpc-bin-win32-`cat VERSION`-$(COMMITREF).zip")
+
+LIBDIR ?= lib
+# install directories
+ifeq ($(strip $(PREFIX)),)
+INSTALLPREFIX ?= /usr
+else
+INSTALLPREFIX ?= $(PREFIX)
+endif
 
 .PHONY:	all dist clean
 
@@ -74,14 +93,14 @@ miniupnpc.dll:	miniupnpc.def $(OBJSDLL)
 
 miniupnpc.lib:	miniupnpc.dll
 
-%.o:	%.c
-	$(CC) $(CFLAGS) -DMINIUPNP_STATICLIB -c -o $@ $<
+%.o:	$(SRCDIR)/%.c
+	$(CC) $(CFLAGS) $(CPPFLAGS) -DMINIUPNP_STATICLIB -c -o $@ $<
 
-dll-%.o:	%.c
-	$(CC) $(CFLAGS) -DMINIUPNP_EXPORTS -c -o $@ $<
+dll-%.o:	$(SRCDIR)/%.c
+	$(CC) $(CFLAGS) $(CPPFLAGS) -DMINIUPNP_EXPORTS -c -o $@ $<
 
-%-shared.o:	%.c
-	$(CC) $(CFLAGS) -c -o $@ $<
+%-shared.o:	$(SRCDIR)/%.c
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c -o $@ $<
 
 # --enable-stdcall-fixup
 %-static.exe:	%.o libminiupnpc.a
@@ -95,24 +114,37 @@ dll-%.o:	%.c
 # sed (if cross compiling from another platform).
 ifeq ($(OS),Windows_NT)
 wingenminiupnpcstrings.exe:	wingenminiupnpcstrings.c
-	$(CC) $(CFLAGS) -o $@ $^
+	$(CC) $(CFLAGS) $(CPPFLAGS) -o $@ $^
 
-miniupnpcstrings.h: miniupnpcstrings.h.in wingenminiupnpcstrings.exe VERSION.miniupnpc
-	wingenminiupnpcstrings.exe $< $@ rc_version.h
+miniupnpcstrings.h: miniupnpcstrings.h.in wingenminiupnpcstrings.exe VERSION
+	.\wingenminiupnpcstrings.exe $< $@ rc_version.h
 
 rc_version.h:	miniupnpcstrings.h
 else
-miniupnpcstrings.h:	miniupnpcstrings.h.in VERSION.miniupnpc
+miniupnpcstrings.h:	miniupnpcstrings.h.in VERSION
 	sed 's|OS_STRING ".*"|OS_STRING "Windows/Mingw32"|' $< | \
-	sed 's|MINIUPNPC_VERSION_STRING ".*"|MINIUPNPC_VERSION_STRING "$(shell cat VERSION.miniupnpc)"|' > $@
+	sed 's|MINIUPNPC_VERSION_STRING ".*"|MINIUPNPC_VERSION_STRING "$(shell cat VERSION)"|' > $@
 
-rc_version.h:	VERSION.miniupnpc
-	echo "#define LIBMINIUPNPC_DOTTED_VERSION \"$(shell cat VERSION.miniupnpc)\"" > $@.tmp
-	echo "#define LIBMINIUPNPC_MAJOR_VERSION $(shell cat VERSION.miniupnpc|cut -d. -f1)" >> $@.tmp
-	echo "#define LIBMINIUPNPC_MINOR_VERSION $(shell cat VERSION.miniupnpc|cut -d. -f2)" >> $@.tmp
-	echo "#define LIBMINIUPNPC_MICRO_wVERSION $(shell cat VERSION.miniupnpc|cut -d. -f3)" >> $@.tmp
+rc_version.h:	VERSION
+	echo "#define LIBMINIUPNPC_DOTTED_VERSION \"$(shell cat VERSION)\"" > $@.tmp
+	echo "#define LIBMINIUPNPC_MAJOR_VERSION $(shell cat VERSION|cut -d. -f1)" >> $@.tmp
+	echo "#define LIBMINIUPNPC_MINOR_VERSION $(shell cat VERSION|cut -d. -f2)" >> $@.tmp
+	echo "#define LIBMINIUPNPC_MICRO_VERSION $(shell cat VERSION|cut -d. -f3)" >> $@.tmp
 	mv $@.tmp $@
 endif
+
+miniupnpc.pc:	VERSION
+	$(RM) $@
+	echo "prefix=$(INSTALLPREFIX)" >> $@
+	echo "exec_prefix=\$${prefix}" >> $@
+	echo "libdir=\$${exec_prefix}/$(LIBDIR)" >> $@
+	echo "includedir=\$${prefix}/include" >> $@
+	echo "" >> $@
+	echo "Name: miniUPnPc" >> $@
+	echo "Description: UPnP IGD client lightweight library" >> $@
+	echo "Version: $(shell cat VERSION)" >> $@
+	echo "Libs: -L\$${libdir} -lminiupnpc" >> $@
+	echo "Cflags: -I\$${includedir}" >> $@
 
 winres.o:	miniupnpc.rc rc_version.h
 	$(WINDRES) -D INTERNAL_NAME=\\\"miniupnpc.dll\\0\\\" -i $< -o $@
@@ -120,25 +152,26 @@ winres.o:	miniupnpc.rc rc_version.h
 testminixml.exe:	testminixml.o minixml.o igd_desc_parse.o
 	$(CC) -static -o $@ $^
 
-minixml.o:	minixml.c minixml.h
+minixml.o:	$(SRCDIR)/minixml.c $(SRCDIR)/minixml.h
 
-upnpc.o:	miniwget.h minisoap.h miniupnpc.h igd_desc_parse.h
-upnpc.o:	upnpreplyparse.h upnpcommands.h upnperrors.h miniupnpcstrings.h
+upnpc.o:	include/miniwget.h $(SRCDIR)/minisoap.h include/miniupnpc.h include/igd_desc_parse.h
+upnpc.o:	include/upnpreplyparse.h include/upnpcommands.h include/upnperrors.h miniupnpcstrings.h
 
-miniwget.o:	miniwget.c miniwget.h miniupnpcstrings.h connecthostport.h
+miniwget.o:	$(SRCDIR)/miniwget.c include/miniwget.h miniupnpcstrings.h $(SRCDIR)/connecthostport.h
 
-minisoap.o:	minisoap.c minisoap.h miniupnpcstrings.h
+minisoap.o:	$(SRCDIR)/minisoap.c $(SRCDIR)/minisoap.h miniupnpcstrings.h
 
-miniupnpc.o:	miniupnpc.c miniupnpc.h minisoap.h miniwget.h minixml.h \
-	addr_is_reserved.h
+miniupnpc.o:	$(SRCDIR)/miniupnpc.c include/miniupnpc.h $(SRCDIR)/minisoap.h \
+	include/miniwget.h $(SRCDIR)/minixml.h $(SRCDIR)/addr_is_reserved.h
 
-igd_desc_parse.o:	igd_desc_parse.c igd_desc_parse.h
+igd_desc_parse.o:	$(SRCDIR)/igd_desc_parse.c include/igd_desc_parse.h
 
-upnpreplyparse.o:	upnpreplyparse.c upnpreplyparse.h minixml.h
+upnpreplyparse.o:	$(SRCDIR)/upnpreplyparse.c include/upnpreplyparse.h $(SRCDIR)/minixml.h
 
-upnpcommands.o:	upnpcommands.c upnpcommands.h upnpreplyparse.h miniupnpc.h portlistingparse.h
+upnpcommands.o:	$(SRCDIR)/upnpcommands.c include/upnpcommands.h include/upnpreplyparse.h \
+	include/miniupnpc.h include/portlistingparse.h
 
-minissdpc.o:	minissdpc.c minissdpc.h receivedata.h
+minissdpc.o:	$(SRCDIR)/minissdpc.c $(SRCDIR)/minissdpc.h $(SRCDIR)/receivedata.h
 
-upnpdev.o:	upnpdev.c upnpdev.h
+upnpdev.o:	$(SRCDIR)/upnpdev.c include/upnpdev.h
 

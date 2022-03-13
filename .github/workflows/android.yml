@@ -13,12 +13,6 @@ jobs:
           sudo apt-get -y install ccache ninja-build libcurl4-openssl-dev
           echo "CCACHE_DIR=/tmp/ccache" >> $GITHUB_ENV
 
-      # Workaround for https://github.com/actions/virtual-environments/issues/3078
-      - name: Downgrade CMake
-        uses: jwlawson/actions-setup-cmake@v1.9
-        with:
-          cmake-version: '3.19.x'
-
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0

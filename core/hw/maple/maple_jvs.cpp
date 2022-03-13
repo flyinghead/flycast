@@ -1566,6 +1566,8 @@ u32 jvs_io_board::handle_jvs_message(u8 *buffer_in, u32 length_in, u8 *buffer_ou
 						// I can't think of any naomi multiplayer game that uses rotary encoders
 						rotx += mapleInputState[first_player].relPos.x * 5;
 						roty -= mapleInputState[first_player].relPos.y * 5;
+						mapleInputState[first_player].relPos.x = 0;
+						mapleInputState[first_player].relPos.y = 0;
 						LOGJVS("rotenc ");
 						for (int chan = 0; chan < buffer_in[cmdi + 1]; chan++)
 						{

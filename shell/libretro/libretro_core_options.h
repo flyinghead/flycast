@@ -455,7 +455,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       },
       "disabled",
    },
-#ifdef HAVE_TEXUPSCALE
+#ifndef TARGET_NO_OPENMP
    {
       CORE_OPTION_NAME "_texupscale",
       "Texture Upscaling (xBRZ)",
@@ -464,13 +464,13 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       NULL,
       "video",
       {
-         { "off", "disabled" },
-         { "2x",  NULL },
-         { "4x",  NULL },
-         { "6x",  NULL },
+         { "1", "disabled" },
+         { "2",  "2x" },
+         { "4",  "4x" },
+         { "6",  "6x" },
          { NULL, NULL },
       },
-      "off",
+      "1",
    },
    {/* TODO: needs clarification */
       CORE_OPTION_NAME "_texupscale_max_filtered_texture_size",
@@ -1430,11 +1430,14 @@ struct retro_core_options_v2 *options_intl[RETRO_LANGUAGE_LAST] = {
    &options_ar,      /* RETRO_LANGUAGE_ARABIC */
    &options_el,      /* RETRO_LANGUAGE_GREEK */
    &options_tr,      /* RETRO_LANGUAGE_TURKISH */
-   &options_sv,      /* RETRO_LANGUAGE_SLOVAK */
+   &options_sk,      /* RETRO_LANGUAGE_SLOVAK */
    &options_fa,      /* RETRO_LANGUAGE_PERSIAN */
    &options_he,      /* RETRO_LANGUAGE_HEBREW */
    &options_ast,     /* RETRO_LANGUAGE_ASTURIAN */
    &options_fi,      /* RETRO_LANGUAGE_FINNISH */
+   &options_id,      /* RETRO_LANGUAGE_INDONESIAN */
+   &options_sv,      /* RETRO_LANGUAGE_SWEDISH */
+   &options_uk,      /* RETRO_LANGUAGE_UKRAINIAN */
 };
 #endif
 

@@ -32,6 +32,7 @@ public:
 	virtual void displayCrosshairs() {}
 
 	virtual void present() = 0;
+	virtual void setFrameRendered() {}
 };
 
 extern std::unique_ptr<ImGuiDriver> imguiDriver;

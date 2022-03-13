@@ -1,9 +1,9 @@
-/* $Id: minissdpc.c,v 1.43 2020/05/29 15:57:42 nanard Exp $ */
+/* $Id: minissdpc.c,v 1.49 2021/05/13 11:00:36 nanard Exp $ */
 /* vim: tabstop=4 shiftwidth=4 noexpandtab
  * Project : miniupnp
  * Web : http://miniupnp.free.fr/ or https://miniupnp.tuxfamily.org/
  * Author : Thomas BERNARD
- * copyright (c) 2005-2020 Thomas Bernard
+ * copyright (c) 2005-2021 Thomas Bernard
  * This software is subjet to the conditions detailed in the
  * provided LICENCE file. */
 #include <stdio.h>
@@ -33,6 +33,12 @@ typedef unsigned short uint16_t;
 #define strncasecmp memicmp
 #endif /* defined(_MSC_VER) && (_MSC_VER >= 1400) */
 #endif /* #ifndef strncasecmp */
+#if defined(WINAPI_FAMILY) && defined(WINAPI_FAMILY_PARTITION)
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_APP) && WINAPI_FAMILY != WINAPI_FAMILY_DESKTOP_APP
+#define in6addr_any in6addr_any_init
+static const IN6_ADDR in6addr_any_init = {0};
+#endif
+#endif
 #endif /* _WIN32 */
 #if defined(__amigaos__) || defined(__amigaos4__)
 #include <sys/socket.h>
@@ -66,7 +72,7 @@ struct sockaddr_un {
 #define HAS_IP_MREQN
 #endif
 
-#if !defined(HAS_IP_MREQN) && !defined(_WIN32)
+#ifndef _WIN32
 #include <sys/ioctl.h>
 #if defined(__sun) || defined(__HAIKU__)
 #include <sys/sockio.h>
@@ -454,7 +460,7 @@ parseMSEARCHReply(const char * reply, int size,
 static int upnp_gettimeofday(struct timeval * tv)
 {
 #if defined(_WIN32)
-#if defined(_WIN32_WINNT_VISTA) && (_WIN32_WINNT >= _WIN32_WINNT_VISTA)
+#if _WIN32_WINNT >= 0x0600 // _WIN32_WINNT_VISTA
 	ULONGLONG ts = GetTickCount64();
 #else
 	DWORD ts = GetTickCount();
@@ -463,14 +469,29 @@ static int upnp_gettimeofday(struct timeval * tv)
 	tv->tv_usec = (ts % 1000) * 1000;
 	return 0; /* success */
 #elif defined(CLOCK_MONOTONIC_FAST) || defined(CLOCK_MONOTONIC)
-	struct timespec ts;
-	int ret_code = clock_gettime(UPNP_CLOCKID, &ts);
-	if (ret_code == 0)
-	{
-		tv->tv_sec = ts.tv_sec;
-		tv->tv_usec = ts.tv_nsec / 1000;
+#if defined(__APPLE__)
+#if defined(__clang__)
+	if (__builtin_available(macOS 10.12, iOS 10.0, tvOS 10.0, watchOS 3.0, *)) {
+#else /* !defined(__clang__) */
+	if (clock_gettime != NULL) {
+#endif /* defined(__clang__) */
+#endif /* defined(__APPLE__) */
+		struct timespec ts;
+		int ret_code = clock_gettime(UPNP_CLOCKID, &ts);
+		if (ret_code == 0)
+		{
+			tv->tv_sec = ts.tv_sec;
+			tv->tv_usec = ts.tv_nsec / 1000;
+		}
+		return ret_code;
+#if defined(__APPLE__)
 	}
-	return ret_code;
+	else
+	{
+		/* fall-back for earlier Apple platforms */
+		return gettimeofday(tv, NULL);
+	}
+#endif /* defined(__APPLE__) */
 #else
 	return gettimeofday(tv, NULL);
 #endif
@@ -570,7 +591,17 @@ ssdpDiscoverDevices(const char * const deviceTypes[],
  * in order to give this ip to setsockopt(sudp, IPPROTO_IP, IP_MULTICAST_IF) */
 	if(!ipv6) {
 		DWORD ifbestidx;
+#if _WIN32_WINNT >= 0x0600 // _WIN32_WINNT_VISTA
+		// While we don't need IPv6 support, the IPv4 only funciton is not available in UWP apps.
+		SOCKADDR_IN destAddr;
+		memset(&destAddr, 0, sizeof(destAddr));
+		destAddr.sin_family = AF_INET;
+		destAddr.sin_addr.s_addr = inet_addr("223.255.255.255");
+		destAddr.sin_port = 0;
+		if (GetBestInterfaceEx((struct sockaddr *)&destAddr, &ifbestidx) == NO_ERROR) {
+#else
 		if (GetBestInterface(inet_addr("223.255.255.255"), &ifbestidx) == NO_ERROR) {
+#endif
 			DWORD dwRetVal = NO_ERROR;
 			PIP_ADAPTER_ADDRESSES pAddresses = NULL;
 			ULONG outBufLen = 15360;
@@ -689,7 +720,7 @@ ssdpDiscoverDevices(const char * const deviceTypes[],
 		}
 	}
 
-	if(multicastif)
+	if(multicastif && multicastif[0] != '\0')
 	{
 		if(ipv6) {
 #if !defined(_WIN32)
@@ -697,6 +728,13 @@ ssdpDiscoverDevices(const char * const deviceTypes[],
 			 * MS Windows Vista and MS Windows Server 2008.
 			 * http://msdn.microsoft.com/en-us/library/bb408409%28v=vs.85%29.aspx */
 			unsigned int ifindex = if_nametoindex(multicastif); /* eth0, etc. */
+			if(ifindex == 0)
+			{
+				if(error)
+					*error = MINISSDPC_INVALID_INPUT;
+				fprintf(stderr, "Invalid multicast interface name %s\n", multicastif);
+				goto error;
+			}
 			if(setsockopt(sudp, IPPROTO_IPV6, IPV6_MULTICAST_IF, &ifindex, sizeof(ifindex)) < 0)
 			{
 				PRINT_SOCKET_ERROR("setsockopt IPV6_MULTICAST_IF");
@@ -709,14 +747,14 @@ ssdpDiscoverDevices(const char * const deviceTypes[],
 		} else {
 			struct in_addr mc_if;
 #if defined(_WIN32)
-#if defined(_WIN32_WINNT_VISTA) && (_WIN32_WINNT >= _WIN32_WINNT_VISTA)
+#if _WIN32_WINNT >= 0x0600 // _WIN32_WINNT_VISTA
 			InetPtonA(AF_INET, multicastif, &mc_if);
 #else
 			mc_if.s_addr = inet_addr(multicastif); /* old Windows SDK do not support InetPtoA() */
 #endif
 #else
 			/* was : mc_if.s_addr = inet_addr(multicastif); */ /* ex: 192.168.x.x */
-			if (inet_pton(AF_INET, multicastif, &mc_if.s_addr) < 0) {
+			if (inet_pton(AF_INET, multicastif, &mc_if.s_addr) <= 0) {
 				mc_if.s_addr = INADDR_NONE;
 			}
 #endif
@@ -728,16 +766,11 @@ ssdpDiscoverDevices(const char * const deviceTypes[],
 					PRINT_SOCKET_ERROR("setsockopt IP_MULTICAST_IF");
 				}
 			} else {
-#ifdef HAS_IP_MREQN
 				/* was not an ip address, try with an interface name */
+#ifndef _WIN32
+#ifdef HAS_IP_MREQN
 				struct ip_mreqn reqn;	/* only defined with -D_BSD_SOURCE or -D_GNU_SOURCE */
-				memset(&reqn, 0, sizeof(struct ip_mreqn));
-				reqn.imr_ifindex = if_nametoindex(multicastif);
-				if(setsockopt(sudp, IPPROTO_IP, IP_MULTICAST_IF, (const char *)&reqn, sizeof(reqn)) < 0)
-				{
-					PRINT_SOCKET_ERROR("setsockopt IP_MULTICAST_IF");
-				}
-#elif !defined(_WIN32)
+#endif
 				struct ifreq ifr;
 				int ifrlen = sizeof(ifr);
 				strncpy(ifr.ifr_name, multicastif, IFNAMSIZ);
@@ -745,12 +778,30 @@ ssdpDiscoverDevices(const char * const deviceTypes[],
 				if(ioctl(sudp, SIOCGIFADDR, &ifr, &ifrlen) < 0)
 				{
 					PRINT_SOCKET_ERROR("ioctl(...SIOCGIFADDR...)");
+					goto error;
 				}
 				mc_if.s_addr = ((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr.s_addr;
+#ifdef HAS_IP_MREQN
+				memset(&reqn, 0, sizeof(struct ip_mreqn));
+				reqn.imr_address.s_addr = mc_if.s_addr;
+				reqn.imr_ifindex = if_nametoindex(multicastif);
+				if(reqn.imr_ifindex == 0)
+				{
+					if(error)
+						*error = MINISSDPC_INVALID_INPUT;
+					fprintf(stderr, "Invalid multicast ip address / interface name %s\n", multicastif);
+					goto error;
+				}
+				if(setsockopt(sudp, IPPROTO_IP, IP_MULTICAST_IF, (const char *)&reqn, sizeof(reqn)) < 0)
+				{
+					PRINT_SOCKET_ERROR("setsockopt IP_MULTICAST_IF");
+				}
+#else
 				if(setsockopt(sudp, IPPROTO_IP, IP_MULTICAST_IF, (const char *)&mc_if, sizeof(mc_if)) < 0)
 				{
 					PRINT_SOCKET_ERROR("setsockopt IP_MULTICAST_IF");
 				}
+#endif
 #else /* _WIN32 */
 #ifdef DEBUG
 				printf("Setting of multicast interface not supported with interface name.\n");
@@ -966,4 +1017,3 @@ error:
 	closesocket(sudp);
 	return devlist;
 }
-

@@ -18,7 +18,7 @@
 */
 #include "dx11_texture.h"
 #include "dx11context.h"
-#include <VersionHelpers.h>
+#include <versionhelpers.h>
 
 void DX11Texture::UploadToGPU(int width, int height, u8* temp_tex_buffer, bool mipmapped, bool mipmapsIncluded)
 {

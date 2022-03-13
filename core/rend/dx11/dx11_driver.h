@@ -20,6 +20,7 @@
 #include "rend/imgui_driver.h"
 #include "imgui_impl_dx11.h"
 #include "dx11context.h"
+#include "rend/gui.h"
 
 class DX11Driver final : public ImGuiDriver
 {
@@ -30,9 +31,20 @@ public:
 
 	void renderDrawData(ImDrawData *drawData) override {
 		theDX11Context.EndImGuiFrame();
+		if (gui_is_open())
+			frameRendered = true;
 	}
 
 	void present() override {
-		theDX11Context.Present();
+		if (frameRendered)
+			theDX11Context.Present();
+		frameRendered = false;
 	}
+
+	void setFrameRendered() override {
+		frameRendered = true;
+	}
+
+private:
+	bool frameRendered = false;
 };

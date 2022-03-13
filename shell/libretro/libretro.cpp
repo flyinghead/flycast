@@ -21,6 +21,7 @@
 #ifndef _WIN32
 #include <sys/time.h>
 #endif
+#include <mutex>
 
 #ifdef __SWITCH__
 #include <stdlib.h>
@@ -117,7 +118,7 @@ static bool platformIsDreamcast = true;
 static bool platformIsArcade = false;
 static bool threadedRenderingEnabled = true;
 static bool oitEnabled = false;
-#if defined(HAVE_TEXUPSCALE)
+#ifndef TARGET_NO_OPENMP
 static bool textureUpscaleEnabled = false;
 #endif
 static bool vmuScreenSettingsShown = true;
@@ -136,9 +137,10 @@ s8 joyrx[4], joyry[4];
 // bit 3: Wheel button
 u8 mo_buttons[4] = { 0xFF, 0xFF, 0xFF, 0xFF };
 // Relative mouse coordinates [-512:511]
-f32 mo_x_delta[4];
-f32 mo_y_delta[4];
-f32 mo_wheel_delta[4];
+float mo_x_delta[4];
+float mo_y_delta[4];
+float mo_wheel_delta[4];
+std::mutex relPosMutex;
 // Absolute mouse coordinates
 // Range [0:639] [0:479]
 // but may be outside this range if the pointer is offscreen or outside the 4:3 window.
@@ -339,7 +341,7 @@ void retro_deinit()
 	platformIsArcade = false;
 	threadedRenderingEnabled = true;
 	oitEnabled = false;
-#if defined(HAVE_TEXUPSCALE)
+#ifndef TARGET_NO_OPENMP
 	textureUpscaleEnabled = false;
 #endif
 	vmuScreenSettingsShown = true;
@@ -463,7 +465,7 @@ static bool set_variable_visibility(void)
 	}
 #endif
 
-#if defined(HAVE_TEXUPSCALE)
+#ifndef TARGET_NO_OPENMP
 	// Only if texture upscaling is enabled
 	bool textureUpscaleWasEnabled = textureUpscaleEnabled;
 	textureUpscaleEnabled = false;
@@ -1576,7 +1578,11 @@ static bool set_opengl_hw_render(u32 preferred)
 	params.context_reset         = context_reset;
 	params.context_destroy       = context_destroy;
 	params.environ_cb            = environ_cb;
+#if defined(TARGET_NO_STENCIL)
+	params.stencil               = false;
+#else
 	params.stencil               = true;
+#endif
 	params.imm_vbo_draw          = NULL;
 	params.imm_vbo_disable       = NULL;
 #if defined(__APPLE__) && defined(HAVE_OPENGL)
@@ -2276,8 +2282,10 @@ static void setDeviceButtonStateDirect(u32 bitmap, u32 port, int deviceType, int
 
 static void updateMouseState(u32 port)
 {
-   mo_x_delta[port] = input_cb(port, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_X);
-   mo_y_delta[port] = input_cb(port, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_Y);
+	std::lock_guard<std::mutex> lock(relPosMutex);
+
+   mo_x_delta[port] += input_cb(port, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_X);
+   mo_y_delta[port] += input_cb(port, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_Y);
 
    bool btn_state   = input_cb(port, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_LEFT);
    if (btn_state)

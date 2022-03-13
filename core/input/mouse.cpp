@@ -26,9 +26,10 @@
 // bit 3: Wheel button
 u8 mo_buttons[4] = { 0xFF, 0xFF, 0xFF, 0xFF };
 // Relative mouse coordinates [-512:511]
-f32 mo_x_delta[4];
-f32 mo_y_delta[4];
-f32 mo_wheel_delta[4];
+float mo_x_delta[4];
+float mo_y_delta[4];
+float mo_wheel_delta[4];
+std::mutex relPosMutex;
 // Absolute mouse coordinates
 // Range [0:639] [0:479]
 // but may be outside this range if the pointer is offscreen or outside the 4:3 window.
@@ -50,6 +51,7 @@ void Mouse::setRelPos(float deltax, float deltay) {
 }
 
 void Mouse::setWheel(int delta) {
+	std::lock_guard<std::mutex> lock(relPosMutex);
 	if (maple_port() >= 0 && maple_port() < (int)ARRAY_SIZE(mo_wheel_delta))
 		mo_wheel_delta[maple_port()] += delta;
 }
@@ -131,8 +133,9 @@ void SetMousePosition(int x, int y, int width, int height, u32 mouseId)
 
 	if (mo_x_prev[mouseId] != -1)
 	{
-		mo_x_delta[mouseId] += (f32)(x - mo_x_prev[mouseId]) * config::MouseSensitivity / 100.f;
-		mo_y_delta[mouseId] += (f32)(y - mo_y_prev[mouseId]) * config::MouseSensitivity / 100.f;
+		std::lock_guard<std::mutex> lock(relPosMutex);
+		mo_x_delta[mouseId] += (float)(x - mo_x_prev[mouseId]) * config::MouseSensitivity / 100.f;
+		mo_y_delta[mouseId] += (float)(y - mo_y_prev[mouseId]) * config::MouseSensitivity / 100.f;
 	}
 	mo_x_prev[mouseId] = x;
 	mo_y_prev[mouseId] = y;
@@ -152,8 +155,11 @@ void SetRelativeMousePosition(float xrel, float yrel, u32 mouseId)
 	}
 	float dx = xrel * config::MouseSensitivity / 100.f;
 	float dy = yrel * config::MouseSensitivity / 100.f;
-	mo_x_delta[mouseId] += dx;
-	mo_y_delta[mouseId] += dy;
+	{
+		std::lock_guard<std::mutex> lock(relPosMutex);
+		mo_x_delta[mouseId] += dx;
+		mo_y_delta[mouseId] += dy;
+	}
 	int minX = -width / 32;
 	int minY = -height / 32;
 	int maxX = width + width / 32;
