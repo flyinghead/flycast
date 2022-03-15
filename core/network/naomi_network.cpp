@@ -678,8 +678,7 @@ void SetNaomiNetworkConfig(int node)
 	}
 	else if (!strcmp("SLASHOUT JAPAN VERSION", naomi_game_id))
 	{
-		write_naomi_eeprom(0x30, node == -1 ? 0
-				: node == 0 ? 1 : 2);
+		write_naomi_eeprom(0x30, node + 1);
 	}
 	else if (!strcmp("SPAWN JAPAN", naomi_game_id))
 	{
@@ -709,14 +708,31 @@ void SetNaomiNetworkConfig(int node)
 		write_naomi_flash(0x224, node == -1 ? 0 : 1);	// network on
 		write_naomi_flash(0x220, node == 0 ? 0 : 1);	// node id
 	}
+	else if (!strcmp("CLUB KART IN JAPAN", naomi_game_id))
+	{
+		write_naomi_eeprom(0x34, node + 1); // also 03 = satellite
+	}
+	else if (!strcmp("INITIAL D", naomi_game_id)
+			|| !strcmp("INITIAL D Ver.2", naomi_game_id)
+			|| !strcmp("INITIAL D Ver.3", naomi_game_id))
+	{
+		write_naomi_eeprom(0x34, node == -1 ? 0x02 : node == 0 ? 0x12 : 0x22);
+	}
+	else if (!strcmp("THE KING OF ROUTE66", naomi_game_id))
+	{
+		// FIXME no input when linked
+		write_naomi_eeprom(0x3d, node == -1 ? 0x44 : node == 0 ? 0x54 : 0x64);
+	}
 }
 
 bool NaomiNetworkSupported()
 {
-	static const std::array<const char *, 12> games = {
+	static const char * const games[] = {
 		"ALIEN FRONT", "MOBILE SUIT GUNDAM JAPAN", "MOBILE SUIT GUNDAM DELUXE JAPAN", " BIOHAZARD  GUN SURVIVOR2",
 		"HEAVY METAL JAPAN", "OUTTRIGGER     JAPAN", "SLASHOUT JAPAN VERSION", "SPAWN JAPAN",
-		"SPIKERS BATTLE JAPAN VERSION", "VIRTUAL-ON ORATORIO TANGRAM", "WAVE RUNNER GP", "WORLD KICKS"
+		"SPIKERS BATTLE JAPAN VERSION", "VIRTUAL-ON ORATORIO TANGRAM", "WAVE RUNNER GP", "WORLD KICKS",
+		// Naomi 2
+		"CLUB KART IN JAPAN", "INITIAL D", "INITIAL D Ver.2", "INITIAL D Ver.3", "THE KING OF ROUTE66"
 	};
 	if (!config::NetworkEnable)
 		return false;

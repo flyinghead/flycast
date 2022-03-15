@@ -571,7 +571,8 @@ void naomi_cart_LoadRom(const char* file, LoadProgress *progress)
 	if (CurrentCartridge->GetBootId(&bootId))
 	{
 		std::string gameId = trim_trailing_ws(std::string(bootId.gameTitle[0], &bootId.gameTitle[0][32]));
-		strcpy(naomi_game_id, gameId.c_str());
+		if (strlen(gameId.c_str()) > 0)
+			strcpy(naomi_game_id, gameId.c_str());
 		NOTICE_LOG(NAOMI, "NAOMI GAME ID [%s] region %x players %x vertical %x", naomi_game_id, (u8)bootId.country, bootId.cabinet, bootId.vertical);
 
 		if (gameId == "INITIAL D"
@@ -592,7 +593,8 @@ void naomi_cart_ConfigureEEPROM()
 		return;
 
 	RomBootID bootId;
-	if (CurrentCartridge->GetBootId(&bootId))
+	if (CurrentCartridge->GetBootId(&bootId)
+			&& (!memcmp(bootId.boardName, "NAOMI", 5) || !memcmp(bootId.boardName, "Naomi2", 6)))
 		configure_naomi_eeprom(&bootId);
 	else
 		WARN_LOG(NAOMI, "Can't read ROM boot ID");
@@ -820,7 +822,7 @@ void NaomiCartridge::WriteMem(u32 address, u32 data, u32 size)
 			fclose(ramd);*/
 			naomi_process(reg_dimm_command, reg_dimm_offsetl, reg_dimm_parameterl, reg_dimm_parameterh);
 		}
-		reg_dimm_status = data & ~0x100;
+		reg_dimm_status = (data & ~0x100) | 1;
 		return;
 
 		//These are known to be valid on normal ROMs and DIMM board
