@@ -171,31 +171,26 @@ const char * const DX11N2ColorShader = R"(
 #define LMODE_THIN_SURFACE 4
 #define LMODE_BUMP_MAP 5
 
-#define ROUTING_BASEDIFF_BASESPEC_ADD 0
-#define ROUTING_BASEDIFF_OFFSSPEC_ADD 1
-#define ROUTING_OFFSDIFF_BASESPEC_ADD 2
-#define ROUTING_OFFSDIFF_OFFSSPEC_ADD 3
-#define ROUTING_ALPHADIFF_ADD 4
-#define ROUTING_ALPHAATTEN_ADD 5
-#define ROUTING_FOGDIFF_ADD 6
-#define ROUTING_FOGATTENUATION_ADD 7
-#define ROUTING_BASEDIFF_BASESPEC_SUB 8
-#define ROUTING_BASEDIFF_OFFSSPEC_SUB 9
-#define ROUTING_OFFSDIFF_BASESPEC_SUB 10
-#define ROUTING_OFFSDIFF_OFFSSPEC_SUB 11
-#define ROUTING_ALPHADIFF_SUB 12
-#define ROUTING_ALPHAATTEN_SUB 13
+#define ROUTING_SPEC_TO_OFFSET 1
+#define ROUTING_DIFF_TO_OFFSET 2
+#define ROUTING_ATTENUATION 1	// not handled
+#define ROUTING_FOG 2			// not handled
+#define ROUTING_ALPHA 4
+#define ROUTING_SUB 8
 
 struct N2Light
 {
 	float4 color;
 	float4 direction;
 	float4 position;
+
 	int parallel;
 	int routing;
 	int dmode;
 	int smode;
+
 	int4 diffuse_specular;		// diffuse0, diffuse1, specular0, specular1
+
 	float attnDistA;
 	float attnDistB;
 	float attnAngleA;
@@ -207,10 +202,12 @@ struct N2Light
 cbuffer lightConstants : register(b2)
 {
 	N2Light lights[16];
-	int lightCount;
+
 	float4 ambientBase[2];
 	float4 ambientOffset[2];
 	int4 ambientMaterial;		// base0, base1, offset0, offset1
+
+	int lightCount;
 	int useBaseOver;
 	int bumpId0;
 	int bumpId1;
@@ -256,7 +253,7 @@ void computeColors(inout float4 baseCol, inout float4 offsetCol, in int volIdx, 
 		int routing = light.routing;
 		if (light.diffuse_specular[volIdx] == 1) // If light contributes to diffuse
 		{
-			float factor = BASE_FACTOR;
+			float factor = (routing & ROUTING_SUB) != 0 ? -BASE_FACTOR : BASE_FACTOR;
 			switch (light.dmode)
 			{
 			case LMODE_SINGLE_SIDED:
@@ -266,16 +263,19 @@ void computeColors(inout float4 baseCol, inout float4 offsetCol, in int volIdx, 
 				factor *= abs(dot(normal, lightDir));
 				break;
 			}
-			if (routing == ROUTING_ALPHADIFF_SUB)
-				diffuseAlpha -= lightColor.r * factor;
-			else if (routing == ROUTING_BASEDIFF_BASESPEC_ADD || routing == ROUTING_BASEDIFF_OFFSSPEC_ADD)
-				diffuse += lightColor * factor;
-			if (routing == ROUTING_OFFSDIFF_BASESPEC_ADD || routing == ROUTING_OFFSDIFF_OFFSSPEC_ADD)
-				specular += lightColor * factor;
+			if ((routing & ROUTING_ALPHA) != 0)
+				diffuseAlpha += lightColor.r * factor;
+			else
+			{
+				if ((routing & ROUTING_DIFF_TO_OFFSET) == 0)
+					diffuse += lightColor * factor;
+				else
+					specular += lightColor * factor;
+			}
 		}
 		if (light.diffuse_specular[2 + volIdx] == 1) // If light contributes to specular
 		{
-			float factor = BASE_FACTOR;
+			float factor = (routing & ROUTING_SUB) != 0 ? -BASE_FACTOR : BASE_FACTOR;
 			switch (light.smode)
 			{
 			case LMODE_SINGLE_SIDED:
@@ -285,12 +285,15 @@ void computeColors(inout float4 baseCol, inout float4 offsetCol, in int volIdx, 
 				factor *= saturate(pow(abs(dot(lightDir, reflectDir)), glossCoef[volIdx]));
 				break;
 			}
-			if (routing == ROUTING_ALPHADIFF_SUB)
-				specularAlpha -= lightColor.r * factor;
-			else if (routing == ROUTING_OFFSDIFF_OFFSSPEC_ADD || routing == ROUTING_BASEDIFF_OFFSSPEC_ADD)
-				specular += lightColor * factor;
-			if (routing == ROUTING_BASEDIFF_BASESPEC_ADD || routing == ROUTING_OFFSDIFF_BASESPEC_ADD)
-				diffuse += lightColor * factor;
+			if ((routing & ROUTING_ALPHA) != 0)
+				specularAlpha += lightColor.r * factor;
+			else
+			{
+				if ((routing & ROUTING_SPEC_TO_OFFSET) == 0)
+					diffuse += lightColor * factor;
+				else
+					specular += lightColor * factor;
+			}
 		}
 	}
 	// ambient with material
@@ -399,46 +402,6 @@ struct N2PolyConstants
 };
 static_assert(sizeof(N2PolyConstants) == 256, "sizeof(N2PolyConstants) should be 256");
 
-struct DX11N2Light
-{
-	float color[4];			// 0
-	float direction[4];		// 16
-	float position[4];		// 32
-	int parallel;			// 48
-	int routing;			// 52
-	int dmode;				// 56
-	int smode;				// 60
-	// int4 diffuse_specular
-	int diffuse[2];			// 64
-	int specular[2];		// 72
-	float attnDistA;		// 80
-	float attnDistB;		// 84
-	float attnAngleA;		// 88
-	float attnAngleB;		// 92
-	int distAttnMode;		// 96
-	int _pad[3];
-							// 112
-};
-static_assert(sizeof(DX11N2Light) == 112, "sizeof(DX11N2Light) should be 112");
-
-struct N2LightConstants
-{
-	DX11N2Light lights[16];			// 0
-	int lightCount;					// 1792
-	int _pad0[3];
-	float ambientBase[2][4];		// 1808
-	float ambientOffset[2][4];		// 1840
-	// int4 ambientMaterial
-	int ambientMaterialBase[2];		// 1872
-	int ambientMaterialOffset[2];	// 1880
-	int useBaseOver;				// 1888
-	int bumpId1;					// 1892
-	int bumpId2;					// 1896
-	int _pad3;						// 1900
-									// 1904
-};
-static_assert(sizeof(N2LightConstants) == 1904, "sizeof(N2LightConstants) should be 1904");
-
 void  Naomi2Helper::init(ComPtr<ID3D11Device>& device, ComPtr<ID3D11DeviceContext> deviceContext)
 {
 	this->deviceContext = deviceContext;
@@ -451,7 +414,7 @@ void  Naomi2Helper::init(ComPtr<ID3D11Device>& device, ComPtr<ID3D11DeviceContex
 	if (FAILED(device->CreateBuffer(&desc, nullptr, &polyConstantsBuffer.get())))
 		WARN_LOG(RENDERER, "Per-polygon constants buffer creation failed");
 
-	desc.ByteWidth = sizeof(N2LightConstants);
+	desc.ByteWidth = sizeof(N2LightModel);
 	desc.ByteWidth = (((desc.ByteWidth - 1) >> 4) + 1) << 4;
 	if (FAILED(device->CreateBuffer(&desc, nullptr, &lightConstantsBuffer.get())))
 		WARN_LOG(RENDERER, "Light constants buffer creation failed");
@@ -481,57 +444,13 @@ void Naomi2Helper::setConstants(const PolyParam& pp, u32 polyNumber)
 	if (pp.lightModel != lastModel)
 	{
 		lastModel = pp.lightModel;
-		N2LightConstants lightConstants{};
 		if (pp.lightModel != nullptr)
-		{
-			const N2LightModel& lights = *pp.lightModel;
-			lightConstants.lightCount = lights.lightCount;
-			for (int i = 0; i < lights.lightCount; i++)
-			{
-				DX11N2Light& light = lightConstants.lights[i];
-				memcpy(light.color, lights.lights[i].color, sizeof(light.color));
-				memcpy(light.direction, lights.lights[i].direction, sizeof(light.direction));
-				memcpy(light.position, lights.lights[i].position, sizeof(light.position));
-				light.parallel = lights.lights[i].parallel;
-				light.routing = lights.lights[i].routing;
-				light.dmode = lights.lights[i].dmode;
-				light.smode = lights.lights[i].smode;
-				memcpy(light.diffuse, lights.lights[i].diffuse, sizeof(light.diffuse));
-				memcpy(light.specular, lights.lights[i].specular, sizeof(light.specular));
-				light.attnDistA = lights.lights[i].attnDistA;
-				light.attnDistB = lights.lights[i].attnDistB;
-				light.attnAngleA = lights.lights[i].attnAngleA;
-				light.attnAngleB = lights.lights[i].attnAngleB;
-				light.distAttnMode = lights.lights[i].distAttnMode;
-			}
-			memcpy(lightConstants.ambientBase, lights.ambientBase, sizeof(lightConstants.ambientBase));
-			memcpy(lightConstants.ambientOffset, lights.ambientOffset, sizeof(lightConstants.ambientOffset));
-			for (int i = 0; i < 2; i++)
-			{
-				lightConstants.ambientMaterialBase[i] = lights.ambientMaterialBase[i];
-				lightConstants.ambientMaterialOffset[i] = lights.ambientMaterialOffset[i];
-			}
-			lightConstants.useBaseOver = lights.useBaseOver;
-			lightConstants.bumpId1 = lights.bumpId1;
-			lightConstants.bumpId2 = lights.bumpId2;
-		}
+			setConstBuffer(lightConstantsBuffer, *pp.lightModel);
 		else
 		{
-			lightConstants.lightCount = 0;
-			float white[] { 1.f, 1.f, 1.f, 1.f };
-			float black[4]{};
-			for (int vol = 0; vol < 2; vol++)
-			{
-				lightConstants.ambientMaterialBase[vol] = 0;
-				lightConstants.ambientMaterialOffset[vol] = 0;
-				memcpy(lightConstants.ambientBase[vol], white, sizeof(white));
-				memcpy(lightConstants.ambientOffset[vol], black, sizeof(black));
-			}
-			lightConstants.useBaseOver = 0;
-			lightConstants.bumpId1 = -1;
-			lightConstants.bumpId2 = -1;
+			N2LightModel lightModel{};
+			setConstBuffer(lightConstantsBuffer, lightModel);
 		}
-		setConstBuffer(lightConstantsBuffer, lightConstants);
 		deviceContext->VSSetConstantBuffers(2, 1, &lightConstantsBuffer.get());
 	}
 }

@@ -263,6 +263,203 @@ static NOINLINE void DYNACALL ta_handle_cmd(u32 trans)
 
 static OnLoad ol_fillfsm(&fill_fsm);
 
+/*
+Volume,Col_Type,Texture,Offset,Gouraud,16bit_UV
+
+0   0   0   (0) x   invalid Polygon Type 0  Polygon Type 0
+0   0   1   x   x   0       Polygon Type 0  Polygon Type 3
+0   0   1   x   x   1       Polygon Type 0  Polygon Type 4
+
+0   1   0   (0) x   invalid Polygon Type 0  Polygon Type 1
+0   1   1   x   x   0       Polygon Type 0  Polygon Type 5
+0   1   1   x   x   1       Polygon Type 0  Polygon Type 6
+
+0   2   0   (0) x   invalid Polygon Type 1  Polygon Type 2
+0   2   1   0   x   0       Polygon Type 1  Polygon Type 7
+0   2   1   0   x   1       Polygon Type 1  Polygon Type 8
+0   2   1   1   x   0       Polygon Type 2  Polygon Type 7
+0   2   1   1   x   1       Polygon Type 2  Polygon Type 8
+
+0   3   0   (0) x   invalid Polygon Type 0  Polygon Type 2
+0   3   1   x   x   0       Polygon Type 0  Polygon Type 7
+0   3   1   x   x   1       Polygon Type 0  Polygon Type 8
+
+1   0   0   (0) x   invalid Polygon Type 3  Polygon Type 9
+1   0   1   x   x   0       Polygon Type 3  Polygon Type 11
+1   0   1   x   x   1       Polygon Type 3  Polygon Type 12
+
+1   2   0   (0) x   invalid Polygon Type 4  Polygon Type 10
+1   2   1   x   x   0       Polygon Type 4  Polygon Type 13
+1   2   1   x   x   1       Polygon Type 4  Polygon Type 14
+
+1   3   0   (0) x   invalid Polygon Type 3  Polygon Type 10
+1   3   1   x   x   0       Polygon Type 3  Polygon Type 13
+1   3   1   x   x   1       Polygon Type 3  Polygon Type 14
+
+Sprites :
+(0) (0) 0 (0) (0) invalid Sprite  Sprite Type 0
+(0) (0) 1  x   (0) (1)     Sprite  Sprite Type 1
+
+*/
+//helpers 0-14
+u32 TaTypeLut::poly_data_type_id(PCW pcw)
+{
+	if (pcw.Texture)
+	{
+		//textured
+		if (pcw.Volume==0)
+		{	//single volume
+			if (pcw.Col_Type==0)
+			{
+				if (pcw.UV_16bit==0)
+					return 3;           //(Textured, Packed Color , 32b uv)
+				else
+					return 4;           //(Textured, Packed Color , 16b uv)
+			}
+			else if (pcw.Col_Type==1)
+			{
+				if (pcw.UV_16bit==0)
+					return 5;           //(Textured, Floating Color , 32b uv)
+				else
+					return 6;           //(Textured, Floating Color , 16b uv)
+			}
+			else
+			{
+				if (pcw.UV_16bit==0)
+					return 7;           //(Textured, Intensity , 32b uv)
+				else
+					return 8;           //(Textured, Intensity , 16b uv)
+			}
+		}
+		else
+		{
+			//two volumes
+			if (pcw.Col_Type==0)
+			{
+				if (pcw.UV_16bit==0)
+					return 11;          //(Textured, Packed Color, with Two Volumes)
+
+				else
+					return 12;          //(Textured, Packed Color, 16bit UV, with Two Volumes)
+
+			}
+			else if (pcw.Col_Type==1)
+			{
+				//die ("invalid");
+				return 0xFFFFFFFF;
+			}
+			else
+			{
+				if (pcw.UV_16bit==0)
+					return 13;          //(Textured, Intensity, with Two Volumes)
+
+				else
+					return 14;          //(Textured, Intensity, 16bit UV, with Two Volumes)
+			}
+		}
+	}
+	else
+	{
+		//non textured
+		if (pcw.Volume==0)
+		{	//single volume
+			if (pcw.Col_Type==0)
+				return 0;               //(Non-Textured, Packed Color)
+			else if (pcw.Col_Type==1)
+				return 1;               //(Non-Textured, Floating Color)
+			else
+				return 2;               //(Non-Textured, Intensity)
+		}
+		else
+		{
+			//two volumes
+			if (pcw.Col_Type==0)
+				return 9;               //(Non-Textured, Packed Color, with Two Volumes)
+			else if (pcw.Col_Type==1)
+			{
+				//die ("invalid");
+				return 0xFFFFFFFF;
+			}
+			else
+			{
+				return 10;              //(Non-Textured, Intensity, with Two Volumes)
+			}
+		}
+	}
+}
+//0-4 | 0x80
+u32 TaTypeLut::poly_header_type_size(PCW pcw)
+{
+	if (pcw.Volume == 0)
+	{
+		if ( pcw.Col_Type<2 ) //0,1
+		{
+			return 0  | 0;              //Polygon Type 0 -- SZ32
+		}
+		else if ( pcw.Col_Type == 2 )
+		{
+			if (pcw.Texture)
+			{
+				if (pcw.Offset)
+				{
+					return 2 | 0x80;    //Polygon Type 2 -- SZ64
+				}
+				else
+				{
+					return 1 | 0;       //Polygon Type 1 -- SZ32
+				}
+			}
+			else
+			{
+				return 1 | 0;           //Polygon Type 1 -- SZ32
+			}
+		}
+		else	//col_type ==3
+		{
+			return 0 | 0;               //Polygon Type 0 -- SZ32
+		}
+	}
+	else
+	{
+		if ( pcw.Col_Type==0 ) //0
+		{
+			return 3 | 0;              //Polygon Type 3 -- SZ32
+		}
+		else if ( pcw.Col_Type==2 ) //2
+		{
+			return 4 | 0x80;           //Polygon Type 4 -- SZ64
+		}
+		else if ( pcw.Col_Type==3 ) //3
+		{
+			return 3 | 0;              //Polygon Type 3 -- SZ32
+		}
+		else
+		{
+			return 0xFFDDEEAA;//die ("data->pcw.Col_Type==1 && volume ==1");
+		}
+	}
+}
+
+TaTypeLut::TaTypeLut()
+{
+	for (int i = 0; i < 256; i++)
+	{
+		PCW pcw;
+		pcw.obj_ctrl = i;
+		u32 rv = poly_data_type_id(pcw);
+		u32 type = poly_header_type_size(pcw);
+
+		if (type & 0x80)
+			rv |= SZ64 << 30;
+		else
+			rv |= SZ32 << 30;
+
+		rv |= (type & 0x7F) << 8;
+
+		table[i] = rv;
+	}
+}
+
 static u32 opbSize(int n)
 {
 	return n == 0 ? 0 : 16 << n;
@@ -305,10 +502,13 @@ void ta_vtx_ListInit()
 
 	ta_cur_state = TAS_NS;
 	ta_fsm_cl = 7;
+	if (settings.platform.isNaomi2())
+		ta_parse_reset();
 }
+
 void ta_vtx_SoftReset()
 {
-	ta_cur_state=TAS_NS;
+	ta_cur_state = TAS_NS;
 }
 
 static INLINE

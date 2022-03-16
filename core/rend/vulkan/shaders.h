@@ -93,44 +93,6 @@ struct N2VertexShaderUniforms
 	int modelSpecular[2];
 };
 
-// std140 alignment required
-struct VkN2Light
-{
-	float color[4];
-	float direction[4];
-	float position[4];
-
-	int parallel;
-	int routing;
-	int dmode;
-	int smode;
-
-	int diffuse[2];
-	int specular[2];
-
-	float attnDistA;
-	float attnDistB;
-	float attnAngleA;
-	float attnAngleB;
-
-	int distAttnMode;
-	int _pad[3];
-};
-
-// std140 alignment required
-struct VkN2LightConstants
-{
-	VkN2Light lights[16];
-	float ambientBase[2][4];
-	float ambientOffset[2][4];
-	int ambientMaterialBase[2];
-	int ambientMaterialOffset[2];
-	int lightCount;
-	int useBaseOver;
-	int bumpId1;
-	int bumpId2;
-};
-
 class ShaderManager
 {
 public:

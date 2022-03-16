@@ -45,6 +45,7 @@ void reset(bool hard)
 		rend_reset();
 	tactx_Term();
 	elan::reset(hard);
+	ta_parse_reset();
 }
 
 void init()

@@ -278,11 +278,10 @@ void Drawer::UploadMainBuffer(const VertexShaderUniforms& vertexUniforms, const 
 	offsets.fragmentUniformOffset = packer.addUniform(&fragmentUniforms, sizeof(fragmentUniforms));
 
 	std::vector<u8> n2uniforms;
-	std::vector<u8> n2lights;
 	if (settings.platform.isNaomi2())
 	{
 		packNaomi2Uniforms(packer, offsets, n2uniforms, false);
-		offsets.lightsOffset = packNaomi2Lights(packer, n2lights);
+		offsets.lightsOffset = packNaomi2Lights(packer);
 	}
 
 	BufferData *buffer = GetMainBuffer(packer.size());

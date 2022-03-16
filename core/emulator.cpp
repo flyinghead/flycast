@@ -458,9 +458,12 @@ void Emulator::loadGame(const char *path, LoadProgress *progress)
 		mem_map_default();
 
 		config::Settings::instance().reset();
-		dc_reset(true);
 		config::Settings::instance().load(false);
+		dc_reset(true);
 		memset(&settings.network.md5, 0, sizeof(settings.network.md5));
+
+		if (settings.platform.isNaomi2() && config::RendererType == RenderType::DirectX9)
+			throw FlycastException("DirectX 9 doesn't support Naomi 2 games. Select a different graphics API");
 
 		if (settings.platform.isConsole())
 		{

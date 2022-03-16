@@ -270,11 +270,9 @@ struct State
 {
 	static constexpr u32 Null = 0xffffffff;
 
-	int listType = -1;
 	u32 gmp = Null;
 	u32 instance = Null;
 	u32 projMatrix = Null;
-	u32 tileclip = 0;
 	u32 lightModel = Null;
 	u32 lights[MAX_LIGHTS] = {
 			Null, Null, Null, Null, Null, Null, Null, Null,
@@ -286,11 +284,9 @@ struct State
 
 	void reset()
 	{
-		listType = -1;
 		gmp = Null;
 		instance = Null;
 		projMatrix = Null;
-		tileclip = 0;
 		lightModel = Null;
 		for (auto& light : lights)
 			light = Null;
@@ -470,21 +466,6 @@ struct State
 		elan::curLights[lightId] = plight;
 	}
 
-	void setClipMode(PCW pcw)
-	{
-		tileclip = (tileclip & ~0xF0000000) | (pcw.userClip << 28);
-	}
-
-	void setClipTiles(u32 xmin, u32 ymin, u32 xmax, u32 ymax)
-	{
-		u32 t = tileclip & 0xF0000000;
-		t |= xmin & 0x3f;         // 6 bits
-		t |= (xmax & 0x3f) << 6;  // 6 bits
-		t |= (ymin & 0x1f) << 12; // 5 bits
-		t |= (ymax & 0x1f) << 17; // 5 bits
-		tileclip = t;
-	}
-
 	void update()
 	{
 		updateMatrix();
@@ -505,11 +486,11 @@ struct State
 
 	void serialize(Serializer& ser)
 	{
-		ser << listType;
+		ser << ta_get_list_type();
 		ser << gmp;
 		ser << instance;
 		ser << projMatrix;
-		ser << tileclip;
+		ser << ta_get_tileclip();
 		ser << lightModel;
 		ser << lights;
 	}
@@ -521,11 +502,15 @@ struct State
 			reset();
 			return;
 		}
+		u32 listType;
 		deser >> listType;
+		ta_set_list_type(listType);
 		deser >> gmp;
 		deser >> instance;
 		deser >> projMatrix;
+		u32 tileclip;
 		deser >> tileclip;
+		ta_set_tileclip(tileclip);
 		deser >> lightModel;
 		deser >> lights;
 		update();
@@ -592,12 +577,18 @@ static void setNormal(Vertex& vd, const T& vs)
 	vd.nz = normal.z;
 }
 
-static void addModelColors(glm::vec4& baseCol0, glm::vec4& offsetCol0, glm::vec4& baseCol1, glm::vec4& offsetCol1)
+static void setModelColors(glm::vec4& baseCol0, glm::vec4& offsetCol0, glm::vec4& baseCol1, glm::vec4& offsetCol1)
 {
-	baseCol0 += gmpDiffuseColor0;
-	offsetCol0 += gmpSpecularColor0;
-	baseCol1 += gmpDiffuseColor1;
-	offsetCol1 += gmpSpecularColor1;
+	if (curGmp == nullptr)
+		return;
+	if (curGmp->paramSelect.d0)
+		baseCol0 = gmpDiffuseColor0;
+	if (curGmp->paramSelect.s0)
+		offsetCol0 = gmpSpecularColor0;
+	if (curGmp->paramSelect.d1)
+		baseCol1 = gmpDiffuseColor1;
+	if (curGmp->paramSelect.s1)
+		offsetCol1 = gmpSpecularColor1;
 }
 
 template <typename T>
@@ -609,11 +600,11 @@ void convertVertex(const N2_VERTEX& vs, Vertex& vd)
 	setCoords(vd, vs.x, vs.y, vs.z);
 	setNormal(vd, vs);
 	SetEnvMapUV(vd);
-	glm::vec4 baseCol0(0);
+	glm::vec4 baseCol0(1);
 	glm::vec4 offsetCol0(0);
-	glm::vec4 baseCol1(0);
+	glm::vec4 baseCol1(1);
 	glm::vec4 offsetCol1(0);
-	addModelColors(baseCol0, offsetCol0, baseCol1, offsetCol1);
+	setModelColors(baseCol0, offsetCol0, baseCol1, offsetCol1);
 
 	*(u32 *)vd.col = packColor(baseCol0);
 	*(u32 *)vd.spc = packColor(offsetCol0);
@@ -631,7 +622,7 @@ void convertVertex(const N2_VERTEX_VR& vs, Vertex& vd)
 	glm::vec4 offsetCol0(0);
 	glm::vec4 baseCol1 = unpackColor(vs.rgb.argb1);
 	glm::vec4 offsetCol1(0);
-	addModelColors(baseCol0, offsetCol0, baseCol1, offsetCol1);
+	setModelColors(baseCol0, offsetCol0, baseCol1, offsetCol1);
 	*(u32 *)vd.col = packColor(baseCol0);
 	*(u32 *)vd.spc = packColor(offsetCol0);
 	*(u32 *)vd.col1 = packColor(baseCol1);
@@ -644,11 +635,11 @@ void convertVertex(const N2_VERTEX_VU& vs, Vertex& vd)
 	setCoords(vd, vs.x, vs.y, vs.z);
 	setNormal(vd, vs);
 	setUV(vs, vd);
-	glm::vec4 baseCol0(0);
+	glm::vec4 baseCol0(1);
 	glm::vec4 offsetCol0(0);
-	glm::vec4 baseCol1(0);
+	glm::vec4 baseCol1(1);
 	glm::vec4 offsetCol1(0);
-	addModelColors(baseCol0, offsetCol0, baseCol1, offsetCol1);
+	setModelColors(baseCol0, offsetCol0, baseCol1, offsetCol1);
 	*(u32 *)vd.col = packColor(baseCol0);
 	*(u32 *)vd.spc = packColor(offsetCol0);
 	*(u32 *)vd.col1 = packColor(baseCol1);
@@ -665,7 +656,7 @@ void convertVertex(const N2_VERTEX_VUR& vs, Vertex& vd)
 	glm::vec4 offsetCol0(0);
 	glm::vec4 baseCol1 = unpackColor(vs.rgb.argb1);
 	glm::vec4 offsetCol1(0);
-	addModelColors(baseCol0, offsetCol0, baseCol1, offsetCol1);
+	setModelColors(baseCol0, offsetCol0, baseCol1, offsetCol1);
 	*(u32 *)vd.col = packColor(baseCol0);
 	*(u32 *)vd.spc = packColor(offsetCol0);
 	*(u32 *)vd.col1 = packColor(baseCol1);
@@ -678,11 +669,11 @@ void convertVertex(const N2_VERTEX_VUB& vs, Vertex& vd)
 	setCoords(vd, vs.x, vs.y, vs.z);
 	setNormal(vd, vs);
 	setUV(vs, vd);
-	glm::vec4 baseCol0(0);
+	glm::vec4 baseCol0(1);
 	glm::vec4 offsetCol0(0);
-	glm::vec4 baseCol1(0);
+	glm::vec4 baseCol1(1);
 	glm::vec4 offsetCol1(0);
-	addModelColors(baseCol0, offsetCol0, baseCol1, offsetCol1);
+	setModelColors(baseCol0, offsetCol0, baseCol1, offsetCol1);
 	*(u32 *)vd.col = packColor(baseCol0);
 	*(u32 *)vd.col1 = packColor(baseCol1);
 	// Stuff the bump map normals and parameters in the specular colors
@@ -1101,7 +1092,7 @@ static void sendMVPolygon(ICHList *list, const T *vtx, bool needClipping)
 	mvp.isp.DepthMode &= 3;
 	mvp.mvMatrix = taMVMatrix;
 	mvp.projMatrix = taProjMatrix;
-	ta_add_poly(state.listType, mvp);
+	ta_add_poly(list->pcw.listType, mvp);
 
 	ModifierVolumeClipper clipper(needClipping);
 	glm::vec3 vtx0{};
@@ -1162,11 +1153,11 @@ static void sendLights()
 	model.lightCount = 0;
 	if (curLightModel == nullptr)
 	{
-		model.useBaseOver = false;
+		model.useBaseOver = 0;
 		for (int i = 0; i < 2; i++)
 		{
-			model.ambientMaterialBase[i] = false;
-			model.ambientMaterialOffset[i] = false;
+			model.ambientMaterialBase[i] = 0;
+			model.ambientMaterialOffset[i] = 0;
 			model.ambientBase[i][0] = model.ambientBase[i][1] = model.ambientBase[i][2] = model.ambientBase[i][3] = 1.f;
 		}
 		memset(model.ambientOffset, 0, sizeof(model.ambientOffset));
@@ -1253,7 +1244,6 @@ static void sendLights()
 static void setStateParams(PolyParam& pp, const ICHList *list)
 {
 	sendLights();
-	pp.tileclip = state.tileclip;
 	pp.mvMatrix = taMVMatrix;
 	pp.normalMatrix = taNormalMatrix;
 	pp.projMatrix = taProjMatrix;
@@ -1310,7 +1300,7 @@ static void setStateParams(PolyParam& pp, const ICHList *list)
 		pp.specularColor[1] = false;
 	}
 //	else if (pp.pcw.Volume == 1)
-//		printf("2-Volume poly listType %d vtxtype %x gmp params %x diff tcw %08x tsp %08x\n", state.listType, list->flags, curGmp->paramSelect.full,
+//		printf("2-Volume poly listType %d vtxtype %x gmp params %x diff tcw %08x tsp %08x\n", ta_get_list_type(), list->flags, curGmp->paramSelect.full,
 //				pp.tcw.full ^ pp.tcw1.full, pp.tsp.full ^ pp.tsp1.full);
 }
 
@@ -1325,7 +1315,10 @@ static void sendPolygon(ICHList *list)
 			N2_VERTEX *vtx = (N2_VERTEX *)((u8 *)list + sizeof(ICHList));
 			if (!isBetweenNearAndFar(vtx, list->vtxCount, needClipping))
 				break;
-			if (state.listType & 1)
+			int listType = ta_get_list_type();
+			if (listType == -1)
+				listType = list->pcw.listType;
+			if (listType & 1)
 				sendMVPolygon(list, vtx, needClipping);
 			else
 			{
@@ -1339,7 +1332,7 @@ static void sendPolygon(ICHList *list)
 				pp.tsp = list->tsp0;
 				pp.tsp1 = list->tsp1;
 				setStateParams(pp, list);
-				ta_add_poly(state.listType, pp);
+				ta_add_poly(pp);
 
 				sendVertices(list, vtx, needClipping);
 			}
@@ -1351,7 +1344,10 @@ static void sendPolygon(ICHList *list)
 			N2_VERTEX_VU *vtx = (N2_VERTEX_VU *)((u8 *)list + sizeof(ICHList));
 			if (!isBetweenNearAndFar(vtx, list->vtxCount, needClipping))
 				break;
-			if (state.listType  & 1)
+			int listType = ta_get_list_type();
+			if (listType == -1)
+				listType = list->pcw.listType;
+			if (listType  & 1)
 				sendMVPolygon(list, vtx, needClipping);
 			else
 			{
@@ -1367,7 +1363,7 @@ static void sendPolygon(ICHList *list)
 				pp.tsp1 = list->tsp1;
 				pp.tcw1 = list->tcw1;
 				setStateParams(pp, list);
-				ta_add_poly(state.listType, pp);
+				ta_add_poly(pp);
 
 				sendVertices(list, vtx, needClipping);
 			}
@@ -1391,7 +1387,7 @@ static void sendPolygon(ICHList *list)
 			pp.tsp1 = list->tsp1;
 			pp.tcw1 = list->tcw1;
 			setStateParams(pp, list);
-			ta_add_poly(state.listType, pp);
+			ta_add_poly(pp);
 
 			sendVertices(list, vtx, needClipping);
 		}
@@ -1412,7 +1408,7 @@ static void sendPolygon(ICHList *list)
 			pp.tsp = list->tsp0;
 			pp.tsp1 = list->tsp1;
 			setStateParams(pp, list);
-			ta_add_poly(state.listType, pp);
+			ta_add_poly(pp);
 
 			sendVertices(list, vtx, needClipping);
 		}
@@ -1437,7 +1433,7 @@ static void sendPolygon(ICHList *list)
 			pp.tsp1 = list->tsp1;
 			pp.tcw1 = list->tcw1;
 			setStateParams(pp, list);
-			ta_add_poly(state.listType, pp);
+			ta_add_poly(pp);
 
 			sendVertices(list, vtx, needClipping);
 		}
@@ -1526,7 +1522,7 @@ static void executeCommand(u8 *data, int size)
 					if (Active)
 					{
 						cullingReversed = model->param.cwCulling == 0;
-						state.setClipMode(model->pcw);
+						ta_set_tileclip((model->pcw.userClip << 28) | (ta_get_tileclip() & 0x0fffffff));
 						openModifierVolume = model->param.openVolume;
 						shadowedVolume = model->pcw.shadow;
 						modelTSP = model->tsp;
@@ -1591,20 +1587,20 @@ static void executeCommand(u8 *data, int size)
 					if (link->offset & 0x80000000)
 					{
 						// elan v10 only
-						DEBUG_LOG(PVR, "Texture DMA from %x to %x (%x)", DMAC_SAR(2), link->_res & 0x1ffffff8, link->size);
-						memcpy(&vram[link->_res & VRAM_MASK], &mem_b[DMAC_SAR(2) & RAM_MASK], link->size);
+						DEBUG_LOG(PVR, "Texture DMA from %x to %x (%x)", DMAC_SAR(2), link->vramAddress & 0x1ffffff8, link->size);
+						memcpy(&vram[link->vramAddress & VRAM_MASK], &mem_b[DMAC_SAR(2) & RAM_MASK], link->size);
 						reg74 |= 1;
 					}
 					else if (link->offset & 0x20000000)
 					{
 						// elan v10 only
-						DEBUG_LOG(PVR, "Texture DMA from eram %x -> %x (%x)", link->offset & 0x01fffff8, link->_res & VRAM_MASK, link->size);
-						memcpy(&vram[link->_res & VRAM_MASK], &RAM[link->offset & ELAN_RAM_MASK], link->size);
+						DEBUG_LOG(PVR, "Texture DMA from eram %x -> %x (%x)", link->offset & ELAN_RAM_MASK, link->vramAddress & VRAM_MASK, link->size);
+						memcpy(&vram[link->vramAddress & VRAM_MASK], &RAM[link->offset & ELAN_RAM_MASK], link->size);
 						reg74 |= 1;
 					}
 					else
 					{
-						DEBUG_LOG(PVR, "Link to %x (%x)", link->offset & 0x1ffffff8, link->size);
+						DEBUG_LOG(PVR, "Link to %8x (%x)", link->offset, link->size);
 						executeCommand<Active>(&RAM[link->offset & ELAN_RAM_MASK], link->size);
 					}
 					size -= sizeof(Link);
@@ -1630,69 +1626,84 @@ static void executeCommand(u8 *data, int size)
 				break;
 
 			default:
-				DEBUG_LOG(PVR, "Unhandled Elan command %x", cmd->pcw.n2Command);
+				WARN_LOG(PVR, "Unhandled Elan command %x", cmd->pcw.n2Command);
 				size -= 32;
 				break;
 			}
 		}
 		else
 		{
-			u32 pcw = *(u32 *)data;
-			if ((pcw & 0xd0ffff00) == 0x808c0000) // display list
+			if (Active)
 			{
-				if (Active)
-				{
-					DEBUG_LOG(PVR, "Display list type %d", (pcw >> 24) & 0xf);
-					state.reset();
-					state.listType  = (pcw >> 24) & 0xf;
-					// TODO is this the right place for this?
-					SQBuffer eol{};
-					ta_vtx_data32(&eol);
+				u32 pcw = *(u32 *)data;
+				DEBUG_LOG(PVR, "Geometry type %d - %08x", (pcw >> 24) & 0xf, pcw);
+				try {
+					size -= ta_add_ta_data((u32 *)data, size);
+				} catch (const TAParserException& e) {
+					size = 0;
 				}
-				size -= 24 * 4;
-			}
-			else if ((pcw & 0xd0fcff00) == 0x80800000) // User clipping
-			{
-				if (Active)
-				{
-					state.setClipMode((PCW&)pcw);
-					DEBUG_LOG(PVR, "User clip type %d", ((PCW&)pcw).userClip);
-				}
-				size -= 0xE0;
-			}
-			else if ((pcw & 0xd0ffff00) == 0x80000000) // geometry follows or linked?
-			{
-				if (Active)
-				{
-					DEBUG_LOG(PVR, "Geometry type %d - %08x", (pcw >> 24) & 0xf, pcw);
-					state.listType = (pcw >> 24) & 0xf;
-					size -= 32;
-					ta_add_ta_data(state.listType, (u32 *)(data + 32), size - 32);
-				}
-				size = 32;
-			}
-			else if (pcw == 0x20000000)
-			{
-				// User clipping
-				if (Active)
-				{
-					u32 *tiles = (u32 *)data + 4;
-					DEBUG_LOG(PVR, "User clipping %d,%d - %d,%d", tiles[0] * 32, tiles[1] * 32,
-							tiles[2] * 32, tiles[3] * 32);
-					state.setClipTiles(tiles[0], tiles[1], tiles[2], tiles[3]);
-				}
-				size -= 32;
 			}
 			else
 			{
-				if (Active)
+				u32 vertexSize = 32;
+				int listType = ta_get_list_type();
+				int i = 0;
+				while (i < size)
 				{
-					if (pcw != 0)
-						INFO_LOG(PVR, "Unhandled command %x", pcw);
-					for (int i = 0; i < 32; i += 4)
-						DEBUG_LOG(PVR, "    %08x: %08x", (u32)(&data[i] - RAM), *(u32 *)&data[i]);
+					PCW pcw = *(PCW *)&data[i];
+					if (pcw.naomi2 == 1)
+						break;
+					switch (pcw.paraType)
+					{
+					case ParamType_End_Of_List:
+						listType = -1;
+						i += 32;
+						break;
+					case ParamType_Object_List_Set:
+					case ParamType_User_Tile_Clip:
+						i += 32;
+						break;
+					case ParamType_Polygon_or_Modifier_Volume:
+						{
+							static const u32 * const PolyTypeLut = TaTypeLut::instance().table;
+
+							if (listType == -1)
+								listType = pcw.listType;
+							if (listType & 1)
+							{
+								// modifier volumes
+								vertexSize = 64;
+								i += 32;
+							}
+							else
+							{
+								u32 polyId = PolyTypeLut[pcw.objectControl];
+								u32 polySize = polyId >> 30;
+								u32 vertexType = (u8)polyId;
+								if (vertexType == 5 || vertexType == 6 || (vertexType >= 11 && vertexType <= 14))
+									vertexSize = 64;
+								else
+									vertexSize = 32;
+								i += polySize == SZ64 ? 64 : 32;
+							}
+						}
+						break;
+					case ParamType_Sprite:
+						if (listType == -1)
+							listType = pcw.listType;
+						vertexSize = 64;
+						i += 32;
+						break;
+					case ParamType_Vertex_Parameter:
+						i += vertexSize;
+						break;
+					default:
+						WARN_LOG(PVR, "Invalid param type %d", pcw.paraType);
+						i = size;
+						break;
+					}
 				}
-				size -= 32;
+				size -= i;
 			}
 		}
 		data += oldSize - size;

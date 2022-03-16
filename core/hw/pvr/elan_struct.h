@@ -65,6 +65,7 @@ union PCW
 		u32 endOfStrip  : 1;
 		u32 paraType    : 3;
 	};
+	u8 objectControl;
 	u32 full;
 };
 
@@ -382,7 +383,7 @@ struct Link : public ElanBase
 {
 	// 08000f00
 	u32 offset;
-	u32 _res; // 09000000
+	u32 vramAddress; // for texture DMA xfers, otherwise 09000000
 	u32 size;
 	u32 _res0[4];
 };

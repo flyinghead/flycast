@@ -139,48 +139,20 @@ protected:
 		offsets.naomi2TrModVolOffset = offsets.naomi2OpaqueOffset + trMvOffset;
 	}
 
-	vk::DeviceSize packNaomi2Lights(BufferPacker& packer, std::vector<u8>& n2lights)
+	vk::DeviceSize packNaomi2Lights(BufferPacker& packer)
 	{
-		size_t n2LightSize = sizeof(VkN2LightConstants) + align(sizeof(VkN2LightConstants), GetContext()->GetUniformBufferAlignment());
-		n2lights.resize(pvrrc.lightModels.used() * n2LightSize);
-		size_t bufIdx = 0;
-		for (const N2LightModel& lights : pvrrc.lightModels)
-		{
-			VkN2LightConstants& vkLights = *(VkN2LightConstants *)&n2lights[bufIdx];
-			vkLights.lightCount = lights.lightCount;
-			for (int i = 0; i < lights.lightCount; i++)
-			{
-				VkN2Light& vkLight = vkLights.lights[i];
-				const N2Light& light = lights.lights[i];
-				memcpy(vkLight.color, light.color, sizeof(vkLight.color));
-				memcpy(vkLight.direction, light.direction, sizeof(vkLight.direction));
-				memcpy(vkLight.position, light.position, sizeof(vkLight.position));
-				vkLight.parallel = light.parallel;
-				vkLight.routing = light.routing;
-				vkLight.dmode = light.dmode;
-				vkLight.smode = light.smode;
-				memcpy(vkLight.diffuse, light.diffuse, sizeof(vkLight.diffuse));
-				memcpy(vkLight.specular, light.specular, sizeof(vkLight.specular));
-				vkLight.attnDistA = light.attnDistA;
-				vkLight.attnDistB = light.attnDistB;
-				vkLight.attnAngleA = light.attnAngleA;
-				vkLight.attnAngleB = light.attnAngleB;
-				vkLight.distAttnMode = light.distAttnMode;
-			}
-			memcpy(vkLights.ambientBase, lights.ambientBase, sizeof(vkLights.ambientBase));
-			memcpy(vkLights.ambientOffset, lights.ambientOffset, sizeof(vkLights.ambientOffset));
-			for (int i = 0; i < 2; i++)
-			{
-				vkLights.ambientMaterialBase[i] = lights.ambientMaterialBase[i];
-				vkLights.ambientMaterialOffset[i] = lights.ambientMaterialOffset[i];
-			}
-			vkLights.useBaseOver = lights.useBaseOver;
-			vkLights.bumpId1 = lights.bumpId1;
-			vkLights.bumpId2 = lights.bumpId2;
+		size_t n2LightSize = sizeof(N2LightModel) + align(sizeof(N2LightModel), GetContext()->GetUniformBufferAlignment());
+		if (n2LightSize == sizeof(N2LightModel))
+			return packer.addUniform(pvrrc.lightModels.head(), pvrrc.lightModels.bytes());
 
-			bufIdx += n2LightSize;
+		vk::DeviceSize offset = (vk::DeviceSize)-1;
+		for (const N2LightModel& model : pvrrc.lightModels)
+		{
+			vk::DeviceSize o = packer.addUniform(&model, sizeof(N2LightModel));
+			if (offset == (vk::DeviceSize)-1)
+				offset = o;
 		}
-		return packer.addUniform(n2lights.data(), bufIdx);
+		return offset;
 	}
 
 	vk::Rect2D baseScissor;

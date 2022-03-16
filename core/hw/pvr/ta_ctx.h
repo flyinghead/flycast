@@ -195,30 +195,34 @@ struct N2Light
 	float color[4];
 	float direction[4];	// For parallel/spot
 	float position[4];		// For spot/point
+
 	int parallel;
-	int diffuse[2];
-	int specular[2];
 	int routing;
 	int dmode;
 	int smode;
 
-	int distAttnMode;	// For spot/point
+	int diffuse[2];
+	int specular[2];
+
 	float attnDistA;
 	float attnDistB;
 	float attnAngleA;	// For spot
 	float attnAngleB;
+	int distAttnMode;	// For spot/point
+	int _pad[3];
 };
 
 struct N2LightModel
 {
 	N2Light lights[16];
-	int lightCount;
 
 	float ambientBase[2][4];	// base ambient colors
 	float ambientOffset[2][4];	// offset ambient colors
-	bool ambientMaterialBase[2];	// base ambient light is multiplied by model material/color
-	bool ambientMaterialOffset[2];	// offset ambient light is multiplied by model material/color
-	bool useBaseOver;			// base color overflows into offset color
+	int ambientMaterialBase[2];	// base ambient light is multiplied by model material/color
+	int ambientMaterialOffset[2];// offset ambient light is multiplied by model material/color
+
+	int lightCount;
+	int useBaseOver;			// base color overflows into offset color
 	int bumpId1;				// Light index for vol0 bump mapping
 	int bumpId2;				// Light index for vol1 bump mapping
 };
@@ -391,11 +395,22 @@ bool rend_framePending();
 void SerializeTAContext(Serializer& ser);
 void DeserializeTAContext(Deserializer& deser);
 
-void ta_add_poly(int type, const PolyParam& pp);
-void ta_add_poly(int type, const ModifierVolumeParam& mvp);
+void ta_add_poly(const PolyParam& pp);
+void ta_add_poly(int listType, const ModifierVolumeParam& mvp);
 void ta_add_vertex(const Vertex& vtx);
 void ta_add_triangle(const ModTriangle& tri);
 float* ta_add_matrix(const float *matrix);
 N2LightModel *ta_add_light(const N2LightModel& light);
-void ta_add_ta_data(int listType, u32 *data, u32 size);
+u32 ta_add_ta_data(u32 *data, u32 size);
 int getTAContextAddresses(u32 *addresses);
+u32 ta_get_tileclip();
+void ta_set_tileclip(u32 tileclip);
+u32 ta_get_list_type();
+void ta_set_list_type(u32 listType);
+void ta_parse_reset();
+
+class TAParserException : public FlycastException
+{
+public:
+	TAParserException() : FlycastException("") {}
+};

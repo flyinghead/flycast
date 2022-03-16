@@ -188,8 +188,8 @@ public:
 
 				if (poly.lightModel != nullptr)
 				{
-					size = sizeof(VkN2LightConstants) + align(sizeof(VkN2LightConstants), uniformAlignment);
-					lightBufferInfo = vk::DescriptorBufferInfo{ buffer, lightOffset + (poly.lightModel - pvrrc.lightModels.head()) * size, sizeof(VkN2LightConstants) };
+					size = sizeof(N2LightModel) + align(sizeof(N2LightModel), uniformAlignment);
+					lightBufferInfo = vk::DescriptorBufferInfo{ buffer, lightOffset + (poly.lightModel - pvrrc.lightModels.head()) * size, sizeof(N2LightModel) };
 					writeDescriptorSets.emplace_back(perPolyDescSet, 3, 0, 1, vk::DescriptorType::eUniformBuffer, nullptr, &lightBufferInfo, nullptr);
 				}
 				// TODO no light

@@ -3,6 +3,9 @@
 #include "ta_ctx.h"
 #include "hw/sh4/sh4_if.h"
 
+constexpr u32 SZ32 = 1;
+constexpr u32 SZ64 = 2;
+
 struct TA_context;
 
 void ta_vtx_ListInit();
@@ -25,4 +28,6 @@ public:
 
 private:
 	TaTypeLut();
+	u32 poly_data_type_id(PCW pcw);
+	u32 poly_header_type_size(PCW pcw);
 };

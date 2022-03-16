@@ -351,20 +351,12 @@ layout (std140, set = 1, binding = 2) uniform N2VertexShaderUniforms
 #define LMODE_THIN_SURFACE 4
 #define LMODE_BUMP_MAP 5
 
-#define ROUTING_BASEDIFF_BASESPEC_ADD 0
-#define ROUTING_BASEDIFF_OFFSSPEC_ADD 1
-#define ROUTING_OFFSDIFF_BASESPEC_ADD 2
-#define ROUTING_OFFSDIFF_OFFSSPEC_ADD 3
-#define ROUTING_ALPHADIFF_ADD 4
-#define ROUTING_ALPHAATTEN_ADD 5
-#define ROUTING_FOGDIFF_ADD 6
-#define ROUTING_FOGATTENUATION_ADD 7
-#define ROUTING_BASEDIFF_BASESPEC_SUB 8
-#define ROUTING_BASEDIFF_OFFSSPEC_SUB 9
-#define ROUTING_OFFSDIFF_BASESPEC_SUB 10
-#define ROUTING_OFFSDIFF_OFFSSPEC_SUB 11
-#define ROUTING_ALPHADIFF_SUB 12
-#define ROUTING_ALPHAATTEN_SUB 13
+#define ROUTING_SPEC_TO_OFFSET 1
+#define ROUTING_DIFF_TO_OFFSET 2
+#define ROUTING_ATTENUATION 1	// not handled
+#define ROUTING_FOG 2			// not handled
+#define ROUTING_ALPHA 4
+#define ROUTING_SUB 8
 
 struct N2Light
 {
@@ -442,33 +434,39 @@ void computeColors(inout vec4 baseCol, inout vec4 offsetCol, in int volIdx, in v
 		}
 		if (n2Lights.lights[i].diffuse[volIdx] == 1)
 		{
-			float factor = BASE_FACTOR;
+			float factor = (n2Lights.lights[i].routing & ROUTING_SUB) != 0 ? -BASE_FACTOR : BASE_FACTOR;
 			if (n2Lights.lights[i].dmode == LMODE_SINGLE_SIDED)
 				factor *= max(dot(normal, lightDir), 0.0);
 			else if (n2Lights.lights[i].dmode == LMODE_DOUBLE_SIDED)
 				factor *= abs(dot(normal, lightDir));
 
-			if (n2Lights.lights[i].routing == ROUTING_ALPHADIFF_SUB)
-				diffuseAlpha -= lightColor.r * factor;
-			else if (n2Lights.lights[i].routing == ROUTING_BASEDIFF_BASESPEC_ADD || n2Lights.lights[i].routing == ROUTING_BASEDIFF_OFFSSPEC_ADD)
-				diffuse += lightColor * factor;
-			if (n2Lights.lights[i].routing == ROUTING_OFFSDIFF_BASESPEC_ADD || n2Lights.lights[i].routing == ROUTING_OFFSDIFF_OFFSSPEC_ADD)
-				specular += lightColor * factor;
+			if ((n2Lights.lights[i].routing & ROUTING_ALPHA) != 0)
+				diffuseAlpha += lightColor.r * factor;
+			else
+			{
+				if ((n2Lights.lights[i].routing & ROUTING_DIFF_TO_OFFSET) == 0)
+					diffuse += lightColor * factor;
+				else
+					specular += lightColor * factor;
+			}
 		}
 		if (n2Lights.lights[i].specular[volIdx] == 1)
 		{
-			float factor = BASE_FACTOR;
+			float factor = (n2Lights.lights[i].routing & ROUTING_SUB) != 0 ? -BASE_FACTOR : BASE_FACTOR;
 			if (n2Lights.lights[i].smode == LMODE_SINGLE_SIDED)
 				factor *= clamp(pow(max(dot(lightDir, reflectDir), 0.0), n2Uniform.glossCoef[volIdx]), 0.0, 1.0);
 			else if (n2Lights.lights[i].smode == LMODE_DOUBLE_SIDED)
 				factor *= clamp(pow(abs(dot(lightDir, reflectDir)), n2Uniform.glossCoef[volIdx]), 0.0, 1.0);
 
-			if (n2Lights.lights[i].routing == ROUTING_ALPHADIFF_SUB)
-				specularAlpha -= lightColor.r * factor;
-			else if (n2Lights.lights[i].routing == ROUTING_OFFSDIFF_OFFSSPEC_ADD || n2Lights.lights[i].routing == ROUTING_BASEDIFF_OFFSSPEC_ADD)
-				specular += lightColor * factor;
-			if (n2Lights.lights[i].routing == ROUTING_BASEDIFF_BASESPEC_ADD || n2Lights.lights[i].routing == ROUTING_OFFSDIFF_BASESPEC_ADD)
-				diffuse += lightColor * factor;
+			if ((n2Lights.lights[i].routing & ROUTING_ALPHA) != 0)
+				specularAlpha += lightColor.r * factor;
+			else
+			{
+				if ((n2Lights.lights[i].routing & ROUTING_SPEC_TO_OFFSET) == 0)
+					diffuse += lightColor * factor;
+				else
+					specular += lightColor * factor;
+			}
 		}
 	}
 	// ambient with material
@@ -514,7 +512,7 @@ void computeEnvMap(inout vec2 uv, in vec3 position, in vec3 normal)
 void computeBumpMap(inout vec4 color0, in vec4 color1, in vec3 position, in vec3 normal, in mat4 normalMat)
 {
 	// TODO
-	if (n2Lights.bumpId0 == -1)
+	//if (n2Lights.bumpId0 == -1)
 		return;
 	normal = normalize(normal);
 	vec3 tangent = color0.xyz;
@@ -524,7 +522,6 @@ void computeBumpMap(inout vec4 color0, in vec4 color1, in vec3 position, in vec3
 		tangent.y -= 1.0;
 	if (tangent.z > 0.5)
 		tangent.z -= 1.0;
-	//tangent = normalize(normalMat * vec4(tangent, 0.0)).xyz;
 	tangent = normalize(tangent);
 	vec3 bitangent = color1.xyz;
 	if (bitangent.x > 0.5)
@@ -533,7 +530,6 @@ void computeBumpMap(inout vec4 color0, in vec4 color1, in vec3 position, in vec3
 		bitangent.y -= 1.0;
 	if (bitangent.z > 0.5)
 		bitangent.z -= 1.0;
-	//bitangent = normalize(normalMat * vec4(bitangent, 0.0)).xyz;
 	bitangent = normalize(bitangent);
 
 	float scaleDegree = color0.w;
@@ -563,6 +559,7 @@ void computeBumpMap(inout vec4 color0, in vec4 color1, in vec3 position, in vec3
 	color0.g = k3;
 	color0.b = q / PI / 2.0;
 	color0.a = k1;
+	color0 = clamp(color0, 0.0, 1.0);
 }
 )";
 
