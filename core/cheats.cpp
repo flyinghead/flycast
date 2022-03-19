@@ -299,7 +299,7 @@ const WidescreenCheat CheatManager::naomi_widescreen_cheats[] =
 		{ "METAL SLUG 6", nullptr, { 0xE93478, 0xE9347C, 0 }, { 0x3F400000, 0x3F8872B0 } },
 		{ "TOY FIGHTER", nullptr, { 0x133E58, 0 }, { 0x43700000 } },
 		{ "LUPIN THE THIRD  -THE SHOOTING-", nullptr, { 0x045490 }, { 0x3F400000 } },
-
+		{ "VF4 FINAL TUNED JAPAN", nullptr, { 0x02B834, 0x0AFB90 }, { 0x3FE38E39, 0x3FE38E39 } },
 		{ nullptr },
 };
 CheatManager cheatManager;
