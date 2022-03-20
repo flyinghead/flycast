@@ -260,7 +260,8 @@ static void loadSpecialSettings()
 			INFO_LOG(BOOT, "Enabling specific JVS setup for game %s", naomi_game_id);
 			settings.input.JammaSetup = JVS::SegaMarineFishing;
 		}
-		else if (!strcmp("RINGOUT 4X4 JAPAN", naomi_game_id))
+		else if (!strcmp("RINGOUT 4X4 JAPAN", naomi_game_id)
+				|| !strcmp("VIRTUA ATHLETE", naomi_game_id))
 		{
 			INFO_LOG(BOOT, "Enabling specific JVS setup for game %s", naomi_game_id);
 			settings.input.JammaSetup = JVS::DualIOBoards4P;
