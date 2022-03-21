@@ -306,6 +306,10 @@ const WidescreenCheat CheatManager::naomi_widescreen_cheats[] =
 		{ "SPIKERS BATTLE JAPAN VERSION", nullptr, { 0x3626C4 }, { 0x43A551B0 } },
 		{ "  18WHEELER", "18wheelr", { 0x5C64A8 }, { 0x43700000 } },
 		{ "BEACH SPIKERS JAPAN", nullptr, { 0x065A7C }, { 0x44558000 } },
+		{ "GUN SPIKE", nullptr, { 0x21A94 }, { 0x3FE38E39 } },
+		{ "INITIAL D Ver.3", "initdv3e", { 0x1D0B34 }, { 0x3FE38E39 } },
+		{ "AIRLINE PILOTS IN JAPAN", "alpilotj", { 0x1D62550 }, { 0x43700000 } },
+		{ "MONKEY BALL JAPAN VERSION", nullptr, { 0x345B4, 0x45244, 0x454CC }, { 0x3FE38E39, 0x3FE38E39, 0x3FE38E39 } },
 
 		{ nullptr },
 };
