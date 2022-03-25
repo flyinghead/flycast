@@ -374,6 +374,7 @@ void rend_start_render()
 
 			ctx->rend.fb_X_CLIP = FB_X_CLIP;
 			ctx->rend.fb_Y_CLIP = FB_Y_CLIP;
+			ctx->rend.fb_W_LINESTRIDE = FB_W_LINESTRIDE.stride;
 
 			ctx->rend.fog_clamp_min = FOG_CLAMP_MIN;
 			ctx->rend.fog_clamp_max = FOG_CLAMP_MAX;

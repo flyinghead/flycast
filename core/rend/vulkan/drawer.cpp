@@ -377,13 +377,13 @@ void TextureDrawer::Init(SamplerManager *samplerManager, ShaderManager *shaderMa
 
 vk::CommandBuffer TextureDrawer::BeginRenderPass()
 {
-	DEBUG_LOG(RENDERER, "RenderToTexture packmode=%d stride=%d - %d x %d @ %06x", FB_W_CTRL.fb_packmode, FB_W_LINESTRIDE.stride * 8,
+	DEBUG_LOG(RENDERER, "RenderToTexture packmode=%d stride=%d - %d x %d @ %06x", FB_W_CTRL.fb_packmode, pvrrc.fb_W_LINESTRIDE * 8,
 			pvrrc.fb_X_CLIP.max + 1, pvrrc.fb_Y_CLIP.max + 1, FB_W_SOF1 & VRAM_MASK);
 	matrices.CalcMatrices(&pvrrc);
 
 	textureAddr = FB_W_SOF1 & VRAM_MASK;
-	u32 origWidth = pvrrc.fb_X_CLIP.max + 1;
-	u32 origHeight = pvrrc.fb_Y_CLIP.max + 1;
+	u32 origWidth = pvrrc.getFramebufferWidth();
+	u32 origHeight = pvrrc.getFramebufferHeight();
 	u32 heightPow2 = 8;
 	while (heightPow2 < origHeight)
 		heightPow2 *= 2;
@@ -516,8 +516,8 @@ void TextureDrawer::EndRenderPass()
 {
 	currentCommandBuffer.endRenderPass();
 
-	u32 clippedWidth = pvrrc.fb_X_CLIP.max + 1;
-	u32 clippedHeight = pvrrc.fb_Y_CLIP.max + 1;
+	u32 clippedWidth = pvrrc.getFramebufferWidth();
+	u32 clippedHeight = pvrrc.getFramebufferHeight();
 
 	if (config::RenderToTextureBuffer)
 	{
@@ -552,7 +552,7 @@ void TextureDrawer::EndRenderPass()
 		PixelBuffer<u32> tmpBuf;
 		tmpBuf.init(clippedWidth, clippedHeight);
 		colorAttachment->GetBufferData()->download(clippedWidth * clippedHeight * 4, tmpBuf.data());
-		WriteTextureToVRam(clippedWidth, clippedHeight, (u8 *)tmpBuf.data(), dst);
+		WriteTextureToVRam(clippedWidth, clippedHeight, (u8 *)tmpBuf.data(), dst, -1, pvrrc.fb_W_LINESTRIDE * 8);
 	}
 	else
 	{
