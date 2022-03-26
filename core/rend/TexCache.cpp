@@ -939,6 +939,8 @@ void WriteTextureToVRam(u32 width, u32 height, u8 *data, u16 *dst, u32 fb_w_ctrl
 	u32 padding = (linestride == ~0u ? FB_W_LINESTRIDE.stride * 8 : linestride);
 	if (padding / 2 > width)
 		padding = padding / 2 - width;
+	else
+		padding = 0;
 
 	const u16 kval_bit = (fb_w_ctrl.fb_kval & 0x80) << 8;
 	const u8 fb_alpha_threshold = fb_w_ctrl.fb_alpha_threshold;
