@@ -17,6 +17,7 @@
     along with Flycast.  If not, see <https://www.gnu.org/licenses/>.
 */
 #include "option.h"
+#include "network/naomi_network.h"
 
 namespace config {
 
@@ -117,7 +118,9 @@ Option<bool> NetworkEnable("Enable", false, "network");
 Option<bool> ActAsServer("ActAsServer", false, "network");
 OptionString DNS("DNS", "46.101.91.123", "network");
 OptionString NetworkServer("server", "", "network");
+Option<int> LocalPort("LocalPort", NaomiNetwork::SERVER_PORT, "network");
 Option<bool> EmulateBBA("EmulateBBA", false, "network");
+Option<bool> EnableUPnP("EnableUPnP", true, "network");
 Option<bool> GGPOEnable("GGPO", false, "network");
 Option<int> GGPODelay("GGPODelay", 0, "network");
 Option<bool> NetworkStats("Stats", true, "network");

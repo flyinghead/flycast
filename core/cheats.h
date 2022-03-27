@@ -81,6 +81,7 @@ public:
 private:
 	u32 readRam(u32 addr, u32 bits);
 	void writeRam(u32 addr, u32 value, u32 bits);
+	void setActive(bool active);
 
 	static const WidescreenCheat widescreen_cheats[];
 	static const WidescreenCheat naomi_widescreen_cheats[];

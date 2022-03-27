@@ -25,6 +25,7 @@
 #include "reios/reios.h"
 #include "cfg/cfg.h"
 #include "cfg/ini.h"
+#include "emulator.h"
 
 const WidescreenCheat CheatManager::widescreen_cheats[] =
 {
@@ -315,6 +316,20 @@ const WidescreenCheat CheatManager::naomi_widescreen_cheats[] =
 };
 CheatManager cheatManager;
 
+static void vblankCallback(Event event, void *param)
+{
+	((CheatManager *)param)->apply();
+}
+
+void CheatManager::setActive(bool active)
+{
+	this->active = active;
+	if (active || widescreen_cheat != nullptr)
+		EventManager::listen(Event::VBlank, vblankCallback, this);
+	else
+		EventManager::unlisten(Event::VBlank, vblankCallback, this);
+}
+
 void CheatManager::loadCheatFile(const std::string& filename)
 {
 #ifndef LIBRETRO
@@ -360,7 +375,7 @@ void CheatManager::loadCheatFile(const std::string& filename)
 		if (cheat.type != Cheat::Type::disabled)
 			cheats.push_back(cheat);
 	}
-	active = !cheats.empty();
+	setActive(!cheats.empty());
 	INFO_LOG(COMMON, "%d cheats loaded", (int)cheats.size());
 	cfgSaveStr("cheats", gameId, filename);
 #endif
@@ -368,10 +383,11 @@ void CheatManager::loadCheatFile(const std::string& filename)
 
 void CheatManager::reset(const std::string& gameId)
 {
+	widescreen_cheat = nullptr;
 	if (this->gameId != gameId)
 	{
 		cheats.clear();
-		active = false;
+		setActive(false);
 		this->gameId = gameId;
 #ifndef LIBRETRO
 		std::string cheatFile = cfgLoadStr("cheats", gameId, "");
@@ -380,51 +396,51 @@ void CheatManager::reset(const std::string& gameId)
 #endif
 		if (gameId == "VF4 FINAL TUNED JAPAN")
 		{
-			active = true;
+			setActive(true);
 			cheats.emplace_back(Cheat::Type::setValue, "Skip DIMM version check", true, 16, 0x000205c6, 9);
 		}
 	}
-	widescreen_cheat = nullptr;
-	if (!config::WidescreenGameHacks)
-		return;
-	if (settings.platform.isConsole())
+	if (config::WidescreenGameHacks)
 	{
-		for (int i = 0; widescreen_cheats[i].game_id != nullptr; i++)
+		if (settings.platform.isConsole())
 		{
-			if (!strcmp(gameId.c_str(), widescreen_cheats[i].game_id)
-					&& (widescreen_cheats[i].area_or_version == nullptr
-							|| !strncmp(ip_meta.area_symbols, widescreen_cheats[i].area_or_version, sizeof(ip_meta.area_symbols))
-							|| !strncmp(ip_meta.product_version, widescreen_cheats[i].area_or_version, sizeof(ip_meta.product_version))))
+			for (int i = 0; widescreen_cheats[i].game_id != nullptr; i++)
 			{
-				widescreen_cheat = &widescreen_cheats[i];
-				NOTICE_LOG(COMMON, "Applying widescreen hack to game %s", gameId.c_str());
-				break;
+				if (!strcmp(gameId.c_str(), widescreen_cheats[i].game_id)
+						&& (widescreen_cheats[i].area_or_version == nullptr
+								|| !strncmp(ip_meta.area_symbols, widescreen_cheats[i].area_or_version, sizeof(ip_meta.area_symbols))
+								|| !strncmp(ip_meta.product_version, widescreen_cheats[i].area_or_version, sizeof(ip_meta.product_version))))
+				{
+					widescreen_cheat = &widescreen_cheats[i];
+					NOTICE_LOG(COMMON, "Applying widescreen hack to game %s", gameId.c_str());
+					break;
+				}
 			}
 		}
-	}
-	else
-	{
-		std::string romName = get_file_basename(settings.content.path);
-		size_t folder_pos = get_last_slash_pos(romName);
-		if (folder_pos != std::string::npos)
-			romName = romName.substr(folder_pos + 1);
+		else
+		{
+			std::string romName = get_file_basename(settings.content.path);
+			size_t folder_pos = get_last_slash_pos(romName);
+			if (folder_pos != std::string::npos)
+				romName = romName.substr(folder_pos + 1);
 
-		for (int i = 0; naomi_widescreen_cheats[i].game_id != nullptr; i++)
-		{
-			if (!strcmp(gameId.c_str(), naomi_widescreen_cheats[i].game_id)
-					&& (naomi_widescreen_cheats[i].area_or_version == nullptr
-							|| !strcmp(romName.c_str(), naomi_widescreen_cheats[i].area_or_version)))
+			for (int i = 0; naomi_widescreen_cheats[i].game_id != nullptr; i++)
 			{
-				widescreen_cheat = &naomi_widescreen_cheats[i];
-				NOTICE_LOG(COMMON, "Applying widescreen hack to game %s", gameId.c_str());
-				break;
+				if (!strcmp(gameId.c_str(), naomi_widescreen_cheats[i].game_id)
+						&& (naomi_widescreen_cheats[i].area_or_version == nullptr
+								|| !strcmp(romName.c_str(), naomi_widescreen_cheats[i].area_or_version)))
+				{
+					widescreen_cheat = &naomi_widescreen_cheats[i];
+					NOTICE_LOG(COMMON, "Applying widescreen hack to game %s", gameId.c_str());
+					break;
+				}
 			}
 		}
+		if (widescreen_cheat != nullptr)
+			for (size_t i = 0; i < ARRAY_SIZE(widescreen_cheat->addresses) && widescreen_cheat->addresses[i] != 0; i++)
+				verify(widescreen_cheat->addresses[i] < RAM_SIZE);
 	}
-	if (widescreen_cheat == nullptr)
-		return;
-	for (size_t i = 0; i < ARRAY_SIZE(widescreen_cheat->addresses) && widescreen_cheat->addresses[i] != 0; i++)
-		verify(widescreen_cheat->addresses[i] < RAM_SIZE);
+	setActive(active);
 }
 
 u32 CheatManager::readRam(u32 addr, u32 bits)
@@ -756,7 +772,7 @@ void CheatManager::addGameSharkCheat(const std::string& name, const std::string&
 			throw FlycastException("Unsupported cheat type");
 		}
 	}
-	active = !cheats.empty();
+	setActive(!cheats.empty());
 #ifndef LIBRETRO
 	std::string path = cfgLoadStr("cheats", gameId, "");
 	if (path == "")

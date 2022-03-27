@@ -68,6 +68,9 @@ static void emuEventCallback(Event event, void *)
 		case Event::LoadState:
 			key = "loadState";
 			break;
+		case Event::VBlank:
+			key = "vblank";
+			break;
 		}
 		if (v[key].isFunction())
 			v[key]();
@@ -88,11 +91,6 @@ static void eventCallback(const char *tag)
 	} catch (const LuaException& e) {
 		WARN_LOG(COMMON, "Lua exception[%s]: %s", tag, e.what());
 	}
-}
-
-void vblank()
-{
-	eventCallback("vblank");
 }
 
 void overlay()
@@ -624,6 +622,7 @@ void init()
     EventManager::listen(Event::Pause, emuEventCallback);
     EventManager::listen(Event::Terminate, emuEventCallback);
     EventManager::listen(Event::LoadState, emuEventCallback);
+    EventManager::listen(Event::VBlank, emuEventCallback);
 
 	doExec(initFile);
 }
@@ -637,6 +636,7 @@ void term()
     EventManager::unlisten(Event::Pause, emuEventCallback);
     EventManager::unlisten(Event::Terminate, emuEventCallback);
     EventManager::unlisten(Event::LoadState, emuEventCallback);
+    EventManager::unlisten(Event::VBlank, emuEventCallback);
 	lua_close(L);
 	L = nullptr;
 }

@@ -25,3 +25,5 @@ extern u32 reg_dimm_offsetl;
 extern u32 reg_dimm_parameterl;
 extern u32 reg_dimm_parameterh;
 extern u32 reg_dimm_status;
+
+void initdFFBInit();

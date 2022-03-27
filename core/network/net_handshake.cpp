@@ -46,7 +46,7 @@ public:
 	}
 
 	void stop() override {
-		naomiNetwork.terminate();
+		naomiNetwork.shutdown();
 	}
 
 	bool canStartNow() override {

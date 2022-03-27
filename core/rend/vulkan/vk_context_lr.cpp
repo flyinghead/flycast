@@ -127,7 +127,7 @@ bool VkCreateDevice(retro_vulkan_context* context, VkInstance instance, VkPhysic
 	bool getMemReq2Supported = false;
 	VulkanContext::Instance()->dedicatedAllocationSupported = false;
 	std::vector<const char *> deviceExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
-	for (int i = 0; i < num_required_device_extensions; i++)
+	for (unsigned i = 0; i < num_required_device_extensions; i++)
 		deviceExtensions.push_back(required_device_extensions[i]);
 	for (const auto& property : physicalDevice.enumerateDeviceExtensionProperties())
 	{

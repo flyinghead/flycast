@@ -38,7 +38,6 @@
 #include "hw/mem/mem_watch.h"
 #include "network/net_handshake.h"
 #include "rend/gui.h"
-#include "lua/lua.h"
 #include "network/naomi_network.h"
 #include "serialize.h"
 #include "hw/pvr/pvr.h"
@@ -831,7 +830,7 @@ bool Emulator::render()
 
 void Emulator::vblank()
 {
-	lua::vblank();
+	EventManager::event(Event::VBlank);
 	// Time out if a frame hasn't been rendered for 50 ms
 	if (sh4_sched_now64() - startTime <= 10000000)
 		return;

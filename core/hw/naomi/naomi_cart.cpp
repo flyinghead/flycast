@@ -581,6 +581,7 @@ void naomi_cart_LoadRom(const char* file, LoadProgress *progress)
 				|| gameId == "INITIAL D CYCRAFT")
 		{
 			card_reader::initialDCardReader.init();
+			initdFFBInit();
 		}
 	}
 	else

@@ -873,7 +873,7 @@ static void *pico_thread_func(void *)
 		std::async(std::launch::async, [ports]() {
 			// Initialize miniupnpc and map network ports
 			MiniUPnP upnp;
-			if (ports != nullptr)
+			if (ports != nullptr && config::EnableUPnP)
 			{
 				if (!upnp.Init())
 					WARN_LOG(MODEM, "UPNP Init failed");

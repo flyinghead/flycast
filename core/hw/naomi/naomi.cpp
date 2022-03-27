@@ -9,12 +9,12 @@
 #include "hw/maple/maple_cfg.h"
 #include "hw/sh4/sh4_sched.h"
 #include "hw/sh4/modules/dmac.h"
+#include "hw/aica/aica_if.h"
 
 #include "naomi.h"
 #include "naomi_cart.h"
 #include "naomi_regs.h"
 #include "naomi_m3comm.h"
-#include "network/naomi_network.h"
 #include "serialize.h"
 
 //#define NAOMI_COMM
@@ -45,6 +45,9 @@ P-Z		(0x50-0x5A)
 */
 static u8 BSerial[]="\xB7"/*CRC1*/"\x19"/*CRC2*/"0123234437897584372973927387463782196719782697849162342198671923649";
 static u8 GSerial[]="\xB7"/*CRC1*/"\x19"/*CRC2*/"0123234437897584372973927387463782196719782697849162342198671923649";
+
+static u8 midiTxBuf[4];
+static u32 midiTxBufIndex;
 
 static unsigned int ShiftCRC(unsigned int CRC,unsigned int rounds)
 {
@@ -537,7 +540,6 @@ void naomi_reg_Term()
 	}
 #endif
 	m3comm.closeNetwork();
-	naomiNetwork.terminate();
 }
 
 void naomi_reg_Reset(bool hard)
@@ -570,7 +572,6 @@ void naomi_reg_Reset(bool hard)
 	reg_dimm_parameterh = 0;
 	reg_dimm_status = 0x11;
 	m3comm.closeNetwork();
-	naomiNetwork.terminate();
 	if (hard)
 		naomi_cart_Close();
 }
@@ -686,6 +687,8 @@ void naomi_Serialize(Serializer& ser)
 	ser << aw_maple_devs;
 	ser << coin_chute_time;
 	ser << aw_ram_test_skipped;
+	ser << midiTxBuf;
+	ser << midiTxBufIndex;
 	// TODO serialize m3comm?
 }
 void naomi_Deserialize(Deserializer& deser)
@@ -727,4 +730,33 @@ void naomi_Deserialize(Deserializer& deser)
 		deser >> coin_chute_time;
 		deser >> aw_ram_test_skipped;
 	}
+	if (deser.version() >= Deserializer::V27)
+	{
+		deser >> midiTxBuf;
+		deser >> midiTxBufIndex;
+	}
+	else
+	{
+		midiTxBufIndex = 0;
+	}
+}
+
+static void initFFBMidiReceiver(u8 data)
+{
+	if (data & 0x80)
+		midiTxBufIndex = 0;
+	midiTxBuf[midiTxBufIndex] = data;
+	if (midiTxBufIndex == 3 && ((midiTxBuf[0] ^ midiTxBuf[1] ^ midiTxBuf[2]) & 0x7f) == midiTxBuf[3])
+	{
+		// decoding from FFB Arcade Plugin (by Boomslangnz)
+		// https://github.com/Boomslangnz/FFBArcadePlugin/blob/master/Game%20Files/Demul.cpp
+		if (midiTxBuf[0] == 0x85 && midiTxBuf[1] == 0x3f)
+			MapleConfigMap::UpdateVibration(0, std::max(0.f, (float)(midiTxBuf[2] - 1) / 24.f), 0.f, 5);
+	}
+	midiTxBufIndex = (midiTxBufIndex + 1) % ARRAY_SIZE(midiTxBuf);
+}
+
+void initdFFBInit()
+{
+	aica_setMidiReceiver(initFFBMidiReceiver);
 }

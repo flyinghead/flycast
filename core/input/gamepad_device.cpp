@@ -345,6 +345,7 @@ bool GamepadDevice::find_mapping(int system /* = settings.platform.system */)
 				if (cloneMapping)
 					input_mapper = std::make_shared<InputMapping>(*input_mapper);
 				perGameMapping = perGame;
+				rumblePower = input_mapper->rumblePower;
 				return true;
 			}
 			if (!perGame)

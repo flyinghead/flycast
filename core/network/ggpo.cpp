@@ -760,8 +760,11 @@ std::future<bool> startNetwork()
 #ifdef SYNC_TEST
 			startSession(0, 0);
 #else
-			miniupnp.Init();
-			miniupnp.AddPortMapping(SERVER_PORT, false);
+			if (config::EnableUPnP)
+			{
+				miniupnp.Init();
+				miniupnp.AddPortMapping(SERVER_PORT, false);
+			}
 
 			try {
 				if (config::ActAsServer)

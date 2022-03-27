@@ -1390,12 +1390,13 @@ static void gui_display_settings()
 			header("Physical Devices");
 		    {
 				ImGui::Columns(4, "physicalDevices", false);
-				ImGui::Text("System");
+				ImVec4 gray{ 0.5f, 0.5f, 0.5f, 1.f };
+				ImGui::TextColored(gray, "System");
 				ImGui::SetColumnWidth(-1, ImGui::CalcTextSize("System").x + ImGui::GetStyle().FramePadding.x * 2.0f + ImGui::GetStyle().ItemSpacing.x);
 				ImGui::NextColumn();
-				ImGui::Text("Name");
+				ImGui::TextColored(gray, "Name");
 				ImGui::NextColumn();
-				ImGui::Text("Port");
+				ImGui::TextColored(gray, "Port");
 				ImGui::SetColumnWidth(-1, ImGui::CalcTextSize("None").x * 1.6f + ImGui::GetStyle().FramePadding.x * 2.0f + ImGui::GetFrameHeight()
 					+ ImGui::GetStyle().ItemInnerSpacing.x	+ ImGui::GetStyle().ItemSpacing.x);
 				ImGui::NextColumn();
@@ -1445,7 +1446,16 @@ static void gui_display_settings()
 						ImGui::SameLine();
 						OptionSlider("Haptic", config::VirtualGamepadVibration, 0, 60);
 					}
+					else
 #endif
+					if (gamepad->is_rumble_enabled())
+					{
+						ImGui::SameLine(0, 16 * scaling);
+						int power = gamepad->get_rumble_power();
+						ImGui::SetNextItemWidth(150 * scaling);
+						if (ImGui::SliderInt("Rumble", &power, 0, 100))
+							gamepad->set_rumble_power(power);
+					}
 					ImGui::NextColumn();
 					ImGui::PopID();
 				}
@@ -1951,6 +1961,7 @@ static void gui_display_settings()
 		    			"Enable networking for supported Naomi games");
 		    	if (config::GGPOEnable)
 		    	{
+		    		config::NetworkEnable = false;
 					OptionCheckbox("Play as Player 1", config::ActAsServer,
 							"Deselect to play as player 2");
 					char server_name[256];
@@ -1983,10 +1994,19 @@ static void gui_display_settings()
 						strcpy(server_name, config::NetworkServer.get().c_str());
 						ImGui::InputText("Server", server_name, sizeof(server_name), ImGuiInputTextFlags_CharsNoBlank, nullptr, nullptr);
 						ImGui::SameLine();
-						ShowHelpMarker("The server to connect to. Leave blank to find a server automatically");
+						ShowHelpMarker("The server to connect to. Leave blank to find a server automatically on the default port");
 						config::NetworkServer.set(server_name);
 					}
+					char localPort[256];
+					sprintf(localPort, "%d", (int)config::LocalPort);
+					ImGui::InputText("Local Port", localPort, sizeof(localPort), ImGuiInputTextFlags_CharsDecimal, nullptr, nullptr);
+					ImGui::SameLine();
+					ShowHelpMarker("The local UDP port to use");
+					config::LocalPort.set(atoi(localPort));
 		    	}
+				OptionCheckbox("Enable UPnP", config::EnableUPnP);
+				ImGui::SameLine();
+				ShowHelpMarker("Automatically configure your network router for netplay");
 		    }
 	    	ImGui::Spacing();
 		    header("Other");

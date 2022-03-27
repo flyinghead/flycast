@@ -107,7 +107,9 @@ Option<bool> NetworkEnable("", false);
 Option<bool> ActAsServer("", false);
 OptionString DNS("", "46.101.91.123");
 OptionString NetworkServer("", "");
+Option<int> LocalPort("", 0);
 Option<bool> EmulateBBA("", false); // TODO
+Option<bool> EnableUPnP("", true); // TODO
 Option<bool> GGPOEnable("", false);
 Option<int> GGPODelay("", 0);
 Option<bool> NetworkStats("", false);

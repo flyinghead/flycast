@@ -105,6 +105,7 @@ public:
 		if (id == VIRTUAL_GAMEPAD_ID)
 		{
 			input_mapper = std::make_shared<IdentityInputMapping>();
+			rumbleEnabled = true;
 		}
 		else
 		{
