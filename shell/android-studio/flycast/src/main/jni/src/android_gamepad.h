@@ -302,7 +302,7 @@ public:
 	void rumble(float power, float inclination, u32 duration_ms) override
     {
         jboolean has_vibrator = jvm_attacher.getEnv()->CallBooleanMethod(input_device_manager, input_device_manager_rumble, android_id, power, inclination, duration_ms);
-        _rumble_enabled = has_vibrator;
+        rumbleEnabled = has_vibrator;
     }
 	bool is_virtual_gamepad() override { return android_id == VIRTUAL_GAMEPAD_ID; }
 

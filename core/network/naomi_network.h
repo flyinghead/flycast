@@ -175,9 +175,9 @@ private:
 
 	void send(const sockaddr_in *addr, const Packet *packet, u32 size)
 	{
-		ssize_t rc = sendto(sock, (const char *)packet, size, 0,
+		int rc = sendto(sock, (const char *)packet, size, 0,
 				(sockaddr *)addr, sizeof(*addr));
-		if (rc != size)
+		if (rc != (int)size)
 			throw Exception("Send failed: errno " + std::to_string(get_last_error()));
 		DEBUG_LOG(NETWORK, "Sent port %d pckt %d size %x", ntohs(addr->sin_port), packet->type, size - (u32)packet->size(0));
 	}

@@ -314,7 +314,7 @@ public:
 					NSLog(@"Haptic engine error: \(error)");
 				else {
 					this->hapticEngine = hapticEngine;
-					_rumble_enabled = true;
+					rumbleEnabled = true;
 				}
 			}
 		}
