@@ -155,7 +155,7 @@ private:
 			if (rc == -1)
 			{
 				int error = get_last_error();
-				if (error == EWOULDBLOCK || error == EAGAIN)
+				if (error == L_EWOULDBLOCK || error == L_EAGAIN)
 					break;
 				throw Exception("Receive error: errno " + std::to_string(error));
 			}
