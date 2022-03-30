@@ -157,6 +157,11 @@ private:
 				int error = get_last_error();
 				if (error == L_EWOULDBLOCK || error == L_EAGAIN)
 					break;
+#ifdef _WIN32
+				if (error == WSAECONNRESET)
+					// Happens if the previous send resulted in an ICMP Port Unreachable message
+					break;
+#endif
 				throw Exception("Receive error: errno " + std::to_string(error));
 			}
 			if (rc < (int)packet.size(0))

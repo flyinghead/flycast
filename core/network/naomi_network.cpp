@@ -88,10 +88,10 @@ bool NaomiNetwork::startNetwork()
 	slaves.clear();
 
 	using namespace std::chrono;
-	const auto timeout = seconds(20);
 
 	if (config::ActAsServer)
 	{
+		const auto timeout = seconds(20);
 		NOTICE_LOG(NETWORK, "Waiting for slave connections");
 		steady_clock::time_point start_time = steady_clock::now();
 
@@ -131,6 +131,7 @@ bool NaomiNetwork::startNetwork()
 	}
 	else
 	{
+		const auto timeout = seconds(30);
 		serverIp = INADDR_BROADCAST;
 		u16 serverPort = SERVER_PORT;
 		if (!config::NetworkServer.get().empty())
