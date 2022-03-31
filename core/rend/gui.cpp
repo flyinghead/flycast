@@ -1710,8 +1710,8 @@ static void gui_display_settings()
 					ImGui::Columns(1, nullptr, false);
 		    	}
 
-	            const std::array<float, 9> scalings{ 0.5f, 1.f, 1.5f, 2.f, 2.5f, 3.f, 4.f, 4.5f, 5.f };
-	            const std::array<std::string, 9> scalingsText{ "Half", "Native", "x1.5", "x2", "x2.5", "x3", "x4", "x4.5", "x5" };
+	            const std::array<float, 13> scalings{ 0.5f, 1.f, 1.5f, 2.f, 2.5f, 3.f, 4.f, 4.5f, 5.f, 6.f, 7.f, 8.f, 9.f };
+	            const std::array<std::string, 13> scalingsText{ "Half", "Native", "x1.5", "x2", "x2.5", "x3", "x4", "x4.5", "x5", "x6", "x7", "x8", "x9" };
 	            std::array<int, scalings.size()> vres;
 	            std::array<std::string, scalings.size()> resLabels;
 	            u32 selected = 0;
@@ -1760,7 +1760,7 @@ static void gui_display_settings()
                 
                 ImGui::Text("Internal Resolution");
                 ImGui::SameLine();
-                ShowHelpMarker("Internal render resolution. Higher is better but more demanding");
+                ShowHelpMarker("Internal render resolution. Higher is better, but more demanding on the GPU. Values higher than your display resolution (but no more than double your display resolution) can be used for supersampling, which provides high-quality antialiasing without reducing sharpness.");
 
 		    	OptionSlider("Horizontal Stretching", config::ScreenStretching, 100, 150,
 		    			"Stretch the screen horizontally");
