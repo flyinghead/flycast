@@ -211,30 +211,42 @@ static void SetGPState(const PolyParam* gp)
 				SetTextureRepeatMode(i, GL_TEXTURE_WRAP_S, tsp.ClampU, tsp.FlipU);
 				SetTextureRepeatMode(i, GL_TEXTURE_WRAP_T, tsp.ClampV, tsp.FlipV);
 
+				bool nearest_filter;
+				if (config::TextureFiltering == 0) {
+					nearest_filter = tsp.FilterMode == 0;
+				} else if (config::TextureFiltering == 1) {
+					nearest_filter = true;
+				} else {
+					nearest_filter = false;
+				}
+
+				bool mipmapped = gp->tcw.MipMapped != 0 && gp->tcw.ScanOrder == 0 && config::UseMipmaps;
+
 				//set texture filter mode
-				if (tsp.FilterMode == 0)
+				if (nearest_filter)
 				{
-					//disable filtering, mipmaps
-					glSamplerParameteri(texSamplers[i], GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+					//nearest-neighbor filtering
+					glSamplerParameteri(texSamplers[i], GL_TEXTURE_MIN_FILTER, mipmapped ? GL_NEAREST_MIPMAP_LINEAR : GL_NEAREST);
 					glSamplerParameteri(texSamplers[i], GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 				}
 				else
 				{
 					//bilinear filtering
 					//PowerVR supports also trilinear via two passes, but we ignore that for now
-					bool mipmapped = gp->tcw.MipMapped != 0 && gp->tcw.ScanOrder == 0 && config::UseMipmaps;
 					glSamplerParameteri(texSamplers[i], GL_TEXTURE_MIN_FILTER, mipmapped ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR);
 					glSamplerParameteri(texSamplers[i], GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-					if (mipmapped)
-						glSamplerParameterf(texSamplers[i], GL_TEXTURE_LOD_BIAS, D_Adjust_LoD_Bias[tsp.MipMapD]);
-					if (gl.max_anisotropy > 1.f)
-					{
-						if (config::AnisotropicFiltering > 1)
-							glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY,
-									std::min<float>(config::AnisotropicFiltering, gl.max_anisotropy));
-						else
-							glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY, 1.f);
-					}
+				}
+
+				if (mipmapped)
+					glSamplerParameterf(texSamplers[i], GL_TEXTURE_LOD_BIAS, D_Adjust_LoD_Bias[tsp.MipMapD]);
+
+				if (gl.max_anisotropy > 1.f)
+				{
+					if (config::AnisotropicFiltering > 1)
+						glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY,
+								std::min<float>(config::AnisotropicFiltering, gl.max_anisotropy));
+					else
+						glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY, 1.f);
 				}
 			}
 		}

@@ -95,6 +95,7 @@ Option<int> RenderResolution("rend.Resolution", 480);
 Option<bool> VSync("rend.vsync", true);
 Option<u64> PixelBufferSize("rend.PixelBufferSize", 512 * 1024 * 1024);
 Option<int> AnisotropicFiltering("rend.AnisotropicFiltering", 1);
+Option<int> TextureFiltering("rend.TextureFiltering", 0); // Default
 Option<bool> ThreadedRendering("rend.ThreadedRendering", true);
 Option<bool> DupeFrames("rend.DupeFrames", false);
 
