@@ -84,14 +84,20 @@ public:
 		const auto& it = samplers.find(samplerHash);
 		if (it != samplers.end())
 			return it->second.get();
-		vk::Filter filter = tsp.FilterMode == 0 ? vk::Filter::eNearest : vk::Filter::eLinear;
+		vk::Filter filter;
+		if (config::TextureFiltering == 0) {
+			filter = tsp.FilterMode == 0 ? vk::Filter::eNearest : vk::Filter::eLinear;
+		} else if (config::TextureFiltering == 1) {
+			filter = vk::Filter::eNearest;
+		} else {
+			filter = vk::Filter::eLinear;
+		}
 		vk::SamplerAddressMode uRepeat = tsp.ClampU ? vk::SamplerAddressMode::eClampToEdge
 				: tsp.FlipU ? vk::SamplerAddressMode::eMirroredRepeat : vk::SamplerAddressMode::eRepeat;
 		vk::SamplerAddressMode vRepeat = tsp.ClampV ? vk::SamplerAddressMode::eClampToEdge
 				: tsp.FlipV ? vk::SamplerAddressMode::eMirroredRepeat : vk::SamplerAddressMode::eRepeat;
 
-		bool anisotropicFiltering = config::AnisotropicFiltering > 1 && VulkanContext::Instance()->SupportsSamplerAnisotropy()
-				&& filter == vk::Filter::eLinear;
+		bool anisotropicFiltering = config::AnisotropicFiltering > 1 && VulkanContext::Instance()->SupportsSamplerAnisotropy();
 #ifndef __APPLE__
 		float mipLodBias = D_Adjust_LoD_Bias[tsp.MipMapD];
 #else

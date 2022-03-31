@@ -166,6 +166,7 @@ CONFIG_ACCESSORS(RenderResolution)
 CONFIG_ACCESSORS(VSync)
 CONFIG_ACCESSORS(PixelBufferSize)
 CONFIG_ACCESSORS(AnisotropicFiltering)
+CONFIG_ACCESSORS(TextureFiltering)
 CONFIG_ACCESSORS(ThreadedRendering)
 
 // Audio
@@ -487,6 +488,7 @@ static void luaRegister(lua_State *L)
 					CONFIG_PROPERTY(VSync, bool)
 					CONFIG_PROPERTY(PixelBufferSize, u64)
 					CONFIG_PROPERTY(AnisotropicFiltering, int)
+					CONFIG_PROPERTY(TextureFiltering, int)
 					CONFIG_PROPERTY(ThreadedRendering, bool)
 				.endNamespace()
 
@@ -589,7 +591,7 @@ static std::string getLuaFile()
 
 	return initFile;
 
-} 
+}
 
 static void doExec(const std::string& path)
 {
