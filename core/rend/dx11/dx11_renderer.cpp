@@ -800,7 +800,15 @@ void DX11Renderer::setRenderState(const PolyParam *gp)
 	if (texture != nullptr)
 	{
         deviceContext->PSSetShaderResources(0, 1, &texture->textureView.get());
-        auto sampler = samplers->getSampler(gp->tsp.FilterMode != 0 && !gpuPalette, gp->tsp.ClampU, gp->tsp.ClampV, gp->tsp.FlipU, gp->tsp.FlipV);
+		bool linearFiltering;
+		if (config::TextureFiltering == 0)
+			linearFiltering = gp->tsp.FilterMode != 0 && !gpuPalette;
+		else if (config::TextureFiltering == 1)
+			linearFiltering = false;
+		else
+			linearFiltering = true;
+
+        auto sampler = samplers->getSampler(linearFiltering, gp->tsp.ClampU, gp->tsp.ClampV, gp->tsp.FlipU, gp->tsp.FlipV);
         deviceContext->PSSetSamplers(0, 1, &sampler.get());
 	}
 

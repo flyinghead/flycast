@@ -178,5 +178,6 @@ private:
 	bool resetting = false;
 	bool frameRendered = false;
 	bool frameRenderedOnce = false;
+	int maxAnisotropy = 1;
 };
 

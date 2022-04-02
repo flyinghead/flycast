@@ -126,6 +126,7 @@ bool D3DRenderer::Init()
 		WARN_LOG(RENDERER, "Pixel shader version %x", caps.PixelShaderVersion);
 		return false;
 	}
+	maxAnisotropy = caps.MaxAnisotropy;
 
 	device = theDXContext.getDevice();
 	devCache.setDevice(device);
@@ -391,7 +392,15 @@ void D3DRenderer::setGPState(const PolyParam *gp)
 		setTexMode(D3DSAMP_ADDRESSV, gp->tsp.ClampV, gp->tsp.FlipV);
 
 		//set texture filter mode
-		if (gp->tsp.FilterMode == 0 || gpuPalette)
+		bool linearFiltering;
+		if (config::TextureFiltering == 0)
+			linearFiltering = gp->tsp.FilterMode != 0 && !gpuPalette;
+		else if (config::TextureFiltering == 1)
+			linearFiltering = false;
+		else
+			linearFiltering = true;
+
+		if (!linearFiltering)
 		{
 			//disable filtering, mipmaps
 			devCache.SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_POINT);
@@ -404,6 +413,7 @@ void D3DRenderer::setGPState(const PolyParam *gp)
 			devCache.SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_LINEAR);
 			devCache.SetSamplerState(0, D3DSAMP_MAGFILTER, D3DTEXF_LINEAR);
 			devCache.SetSamplerState(0, D3DSAMP_MIPFILTER, D3DTEXF_LINEAR);		// LINEAR for Trilinear filtering
+			devCache.SetSamplerState(0, D3DSAMP_MAXANISOTROPY, std::min(maxAnisotropy, (int)config::AnisotropicFiltering));
 		}
 	}
 

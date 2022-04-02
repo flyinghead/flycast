@@ -69,12 +69,20 @@ public:
 		{
 			// Create texture sampler
 			D3D11_SAMPLER_DESC desc{};
-			desc.Filter = linear ? D3D11_FILTER_MIN_MAG_MIP_LINEAR : D3D11_FILTER_MIN_MAG_MIP_POINT;
+			if (linear)
+			{
+				if (config::AnisotropicFiltering > 1)
+					desc.Filter = D3D11_FILTER_ANISOTROPIC;
+				else
+					desc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+			}
+			else
+				desc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
 			desc.AddressU = clampU ?  D3D11_TEXTURE_ADDRESS_CLAMP : flipU ? D3D11_TEXTURE_ADDRESS_MIRROR : D3D11_TEXTURE_ADDRESS_WRAP;
 			desc.AddressV = clampV ?  D3D11_TEXTURE_ADDRESS_CLAMP : flipV ? D3D11_TEXTURE_ADDRESS_MIRROR : D3D11_TEXTURE_ADDRESS_WRAP;
 			desc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
 			desc.ComparisonFunc = D3D11_COMPARISON_NEVER;
-			desc.MaxAnisotropy = 1;
+			desc.MaxAnisotropy = config::AnisotropicFiltering;
 			desc.MaxLOD = D3D11_FLOAT32_MAX;
 			createSampler(&desc, &sampler.get());
 		}
