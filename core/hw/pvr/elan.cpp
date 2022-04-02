@@ -502,6 +502,7 @@ struct State
 			reset();
 			return;
 		}
+		ta_parse_reset();
 		u32 listType;
 		deser >> listType;
 		ta_set_list_type(listType);
