@@ -38,7 +38,7 @@ struct MaxSpeedNetPipe : public SerialPipe
 		parseMaxspeedPacket(data);
 		if (txPacketSize != 0 && txBuffer.size() == txPacketSize)
 		{
-			sendto(sock, &txBuffer[0], txPacketSize, 0, (const sockaddr *)&peerAddress, sizeof(peerAddress));
+			sendto(sock, (const char *)&txBuffer[0], txPacketSize, 0, (const sockaddr *)&peerAddress, sizeof(peerAddress));
 			txBuffer.clear();
 		}
 	}
