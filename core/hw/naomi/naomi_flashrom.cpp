@@ -264,3 +264,47 @@ void configure_naomi_eeprom(const RomBootID *bootId)
 	if (config::ForceFreePlay)
 		write_naomi_eeprom(9, 27 - 1);
 }
+
+static u32 aw_crc32(const void *data, size_t len)
+{
+	constexpr u32 POLY = 0xEDB88320;
+	const u8 *buffer = (const u8 *)data;
+	u32 crc = -1;
+
+	while (len--)
+	{
+		crc = crc ^ *buffer++;
+		for (int bit = 0; bit < 8; bit++)
+		{
+			if (crc & 1)
+				crc = (crc >> 1) ^ POLY;
+			else
+				crc = crc >> 1;
+		}
+	}
+	return ~crc;
+}
+
+void configure_maxspeed_flash(bool enableNetwork, bool master)
+{
+	if (enableNetwork)
+	{
+		sys_nvmem->data[0x3358] = 0;
+		sys_nvmem->data[0x46ac] = 0;
+		sys_nvmem->data[0x335c] = !master;
+		sys_nvmem->data[0x46b0] = !master;
+	}
+	else
+	{
+		sys_nvmem->data[0x3358] = 1;
+		sys_nvmem->data[0x46ac] = 1;
+	}
+	u32 crc = aw_crc32(&sys_nvmem->data[0x2200], 0x1354);
+	*(u32 *)&sys_nvmem->data[0x34] = crc;
+	*(u32 *)&sys_nvmem->data[0x38] = crc;
+	*(u32 *)&sys_nvmem->data[0x84] = crc;
+	*(u32 *)&sys_nvmem->data[0x88] = crc;
+	crc = aw_crc32(&sys_nvmem->data[0x20], 0x44);
+	*(u32 *)&sys_nvmem->data[0x64] = crc;
+	*(u32 *)&sys_nvmem->data[0xb4] = crc;
+}

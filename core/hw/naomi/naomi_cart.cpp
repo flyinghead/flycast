@@ -39,6 +39,7 @@
 #include "serialize.h"
 #include "card_reader.h"
 #include "naomi_flashrom.h"
+#include "network/net_serial_maxspeed.h"
 
 Cartridge *CurrentCartridge;
 bool bios_loaded = false;
@@ -46,6 +47,8 @@ bool bios_loaded = false;
 char naomi_game_id[33];
 InputDescriptors *NaomiGameInputs;
 u8 *naomi_default_eeprom;
+
+MaxSpeedNetPipe maxSpeedNetPipe;
 
 extern MemChip *sys_rom;
 
@@ -583,6 +586,11 @@ void naomi_cart_LoadRom(const char* file, LoadProgress *progress)
 			card_reader::initialDCardReader.init();
 			initdFFBInit();
 		}
+		else if (gameId == "MAXIMUM SPEED")
+		{
+			maxSpeedNetPipe.init();
+			configure_maxspeed_flash(config::NetworkEnable, config::ActAsServer);
+		}
 	}
 	else
 		NOTICE_LOG(NAOMI, "NAOMI GAME ID [%s]", naomi_game_id);
@@ -607,6 +615,7 @@ void naomi_cart_Close()
 	CurrentCartridge = nullptr;
 	NaomiGameInputs = nullptr;
 	bios_loaded = false;
+	maxSpeedNetPipe.shutdown();
 }
 
 int naomi_cart_GetPlatform(const char *path)
