@@ -383,7 +383,7 @@ void do_swap_automation()
 		dump_screenshot(img, gl.ofbo.width, gl.ofbo.height);
 		delete[] img;
 		dc_exit();
-		theGLContext.term();
+		flycast_term();
 		exit(0);
 	}
 }

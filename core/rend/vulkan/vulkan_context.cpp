@@ -1102,7 +1102,7 @@ void VulkanContext::DoSwapAutomation()
 			device->unmapMemory(*deviceMemory);
 		}
 		dc_exit();
-		Term();
+		flycast_term();
 		exit(0);
 	}
 #endif
