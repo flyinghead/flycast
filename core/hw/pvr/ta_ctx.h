@@ -239,8 +239,9 @@ struct rend_context
 	bool isRTT;
 	bool isRenderFramebuffer;
 	
-	FB_X_CLIP_type    fb_X_CLIP;
-	FB_Y_CLIP_type    fb_Y_CLIP;
+	FB_X_CLIP_type fb_X_CLIP;
+	FB_Y_CLIP_type fb_Y_CLIP;
+	u32 fb_W_LINESTRIDE;
 	
 	RGBAColor fog_clamp_min;
 	RGBAColor fog_clamp_max;
@@ -284,6 +285,17 @@ struct rend_context
 	}
 
 	void newRenderPass();
+
+	u32 getFramebufferWidth() const {
+		u32 w = fb_X_CLIP.max + 1;
+		if (fb_W_LINESTRIDE != 0)
+			// Happens for Flag to Flag, Virtua Tennis?
+			w = std::min(fb_W_LINESTRIDE * 4, w);
+		return w;
+	}
+	u32 getFramebufferHeight() const {
+		return fb_Y_CLIP.max + 1;
+	}
 };
 
 #define TA_DATA_SIZE (8 * 1024 * 1024)

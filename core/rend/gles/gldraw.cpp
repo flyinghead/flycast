@@ -175,37 +175,49 @@ __forceinline
 		SetTextureRepeatMode(GL_TEXTURE_WRAP_S, gp->tsp.ClampU, gp->tsp.FlipU);
 		SetTextureRepeatMode(GL_TEXTURE_WRAP_T, gp->tsp.ClampV, gp->tsp.FlipV);
 
+		bool nearest_filter;
+		if (config::TextureFiltering == 0) {
+			nearest_filter = gp->tsp.FilterMode == 0 || gpuPalette;
+		} else if (config::TextureFiltering == 1) {
+			nearest_filter = true;
+		} else {
+			nearest_filter = false;
+		}
+
+		bool mipmapped = texture->IsMipmapped();
+
 		//set texture filter mode
-		if (gp->tsp.FilterMode == 0 || gpuPalette)
+		if (nearest_filter)
 		{
-			//disable filtering, mipmaps
-			glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+			//nearest-neighbor filtering
+			glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, mipmapped ? GL_NEAREST_MIPMAP_LINEAR : GL_NEAREST);
 			glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 		}
 		else
 		{
 			//bilinear filtering
 			//PowerVR supports also trilinear via two passes, but we ignore that for now
-			bool mipmapped = texture->IsMipmapped();
 			glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, mipmapped ? GL_LINEAR_MIPMAP_NEAREST : GL_LINEAR);
 			glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		}
+
 #ifdef GL_TEXTURE_LOD_BIAS
-			if (!gl.is_gles && gl.gl_major >= 3 && mipmapped)
-				glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_LOD_BIAS, D_Adjust_LoD_Bias[gp->tsp.MipMapD]);
+		if (!gl.is_gles && gl.gl_major >= 3 && mipmapped)
+			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_LOD_BIAS, D_Adjust_LoD_Bias[gp->tsp.MipMapD]);
 #endif
-			if (gl.max_anisotropy > 1.f)
+
+		if (gl.max_anisotropy > 1.f)
+		{
+			if (config::AnisotropicFiltering > 1)
 			{
-				if (config::AnisotropicFiltering > 1)
-				{
-					glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY,
-							std::min<float>(config::AnisotropicFiltering, gl.max_anisotropy));
-					// Set the recommended minification filter for best results
-					if (mipmapped)
-						glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-				}
-				else
-					glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY, 1.f);
+				glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY,
+						std::min<float>(config::AnisotropicFiltering, gl.max_anisotropy));
+				// Set the recommended minification filter for best results
+				if (mipmapped)
+					glcache.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 			}
+			else
+				glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY, 1.f);
 		}
 	}
 
@@ -305,7 +317,7 @@ void DrawSorted(bool multipass)
 	if (!pidx_sort.empty())
 	{
 		u32 count=pidx_sort.size();
-		
+
 		{
 			//set some 'global' modes for all primitives
 
@@ -321,7 +333,7 @@ void DrawSorted(bool multipass)
 					SetGPState<ListType_Translucent,true>(params);
 					glDrawElements(GL_TRIANGLES, pidx_sort[p].count, gl.index_type,
 							(GLvoid*)(gl.get_index_size() * pidx_sort[p].first)); glCheck();
-				
+
 #if 0
 					//Verify restriping -- only valid if no sort
 					int fs=pidx_sort[p].first;
@@ -442,12 +454,12 @@ void SetMVS_Mode(ModifierVolumeMode mv_mode, ISP_Modvol ispc)
 		if (mv_mode == Inclusion)
 		{
 			// Inclusion volume
-			//res : old : final 
+			//res : old : final
 			//0   : 0      : 00
 			//0   : 1      : 01
 			//1   : 0      : 01
 			//1   : 1      : 01
-			
+
 			// if (1<=st) st=1; else st=0;
 			glcache.StencilFunc(GL_LEQUAL,1,3);
 			glcache.StencilOp(GL_ZERO, GL_ZERO, GL_REPLACE);
@@ -460,7 +472,7 @@ void SetMVS_Mode(ModifierVolumeMode mv_mode, ISP_Modvol ispc)
 				(actually, i think there was also another, racing game)
 			*/
 			// The initial value for exclusion volumes is 1 so we need to invert the result before and'ing.
-			//res : old : final 
+			//res : old : final
 			//0   : 0   : 00
 			//0   : 1   : 01
 			//1   : 0   : 00

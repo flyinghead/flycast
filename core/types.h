@@ -193,7 +193,6 @@ inline static void JITWriteProtect(bool enabled) {
 #include "log/Log.h"
 
 #define VER_EMUNAME		"Flycast"
-#define VER_FULLNAME	VER_EMUNAME " (built " __DATE__ "@" __TIME__ ")"
 #define VER_SHORTNAME	VER_EMUNAME
 
 void os_DebugBreak();

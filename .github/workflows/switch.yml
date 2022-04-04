@@ -20,12 +20,12 @@ jobs:
           sudo apt-get update
           sudo apt-get -y install awscli ccache ninja-build
 
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           fetch-depth: 0
           submodules: true
 
-      - uses: actions/cache@v2
+      - uses: actions/cache@v3
         with:
           path: ~/.ccache
           key: ccache-switch-${{ matrix.config.name }}-${{ github.sha }}
@@ -36,7 +36,7 @@ jobs:
           $DEVKITPRO/portlibs/switch/bin/aarch64-none-elf-cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=artifact -G Ninja ${{ matrix.config.cmakeArgs }}
           cmake --build build --config Release --target install
 
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         with:
           name: flycast-switch-${{ matrix.config.name }}
           path: artifact/bin

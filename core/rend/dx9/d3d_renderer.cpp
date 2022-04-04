@@ -126,6 +126,7 @@ bool D3DRenderer::Init()
 		WARN_LOG(RENDERER, "Pixel shader version %x", caps.PixelShaderVersion);
 		return false;
 	}
+	maxAnisotropy = caps.MaxAnisotropy;
 
 	device = theDXContext.getDevice();
 	devCache.setDevice(device);
@@ -391,7 +392,15 @@ void D3DRenderer::setGPState(const PolyParam *gp)
 		setTexMode(D3DSAMP_ADDRESSV, gp->tsp.ClampV, gp->tsp.FlipV);
 
 		//set texture filter mode
-		if (gp->tsp.FilterMode == 0 || gpuPalette)
+		bool linearFiltering;
+		if (config::TextureFiltering == 0)
+			linearFiltering = gp->tsp.FilterMode != 0 && !gpuPalette;
+		else if (config::TextureFiltering == 1)
+			linearFiltering = false;
+		else
+			linearFiltering = true;
+
+		if (!linearFiltering)
 		{
 			//disable filtering, mipmaps
 			devCache.SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_POINT);
@@ -404,6 +413,7 @@ void D3DRenderer::setGPState(const PolyParam *gp)
 			devCache.SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_LINEAR);
 			devCache.SetSamplerState(0, D3DSAMP_MAGFILTER, D3DTEXF_LINEAR);
 			devCache.SetSamplerState(0, D3DSAMP_MIPFILTER, D3DTEXF_LINEAR);		// LINEAR for Trilinear filtering
+			devCache.SetSamplerState(0, D3DSAMP_MAXANISOTROPY, std::min(maxAnisotropy, (int)config::AnisotropicFiltering));
 		}
 	}
 
@@ -857,10 +867,10 @@ void D3DRenderer::setBaseScissor()
 
 void D3DRenderer::prepareRttRenderTarget(u32 texAddress)
 {
-	u32 fbw = pvrrc.fb_X_CLIP.max + 1;
-	u32 fbh = pvrrc.fb_Y_CLIP.max + 1;
+	u32 fbw = pvrrc.getFramebufferWidth();
+	u32 fbh = pvrrc.getFramebufferHeight();
 	DEBUG_LOG(RENDERER, "RTT packmode=%d stride=%d - %d x %d @ %06x",
-			FB_W_CTRL.fb_packmode, FB_W_LINESTRIDE.stride * 8, fbw, fbh, texAddress);
+			FB_W_CTRL.fb_packmode, pvrrc.fb_W_LINESTRIDE * 8, fbw, fbh, texAddress);
 	// Find the smallest power of two texture that fits the viewport
 	u32 fbh2 = 2;
 	while (fbh2 < fbh)
@@ -893,8 +903,8 @@ void D3DRenderer::prepareRttRenderTarget(u32 texAddress)
 
 void D3DRenderer::readRttRenderTarget(u32 texAddress)
 {
-	u32 w = pvrrc.fb_X_CLIP.max + 1;
-	u32 h = pvrrc.fb_Y_CLIP.max + 1;
+	u32 w = pvrrc.getFramebufferWidth();
+	u32 h = pvrrc.getFramebufferHeight();
 	const u8 fb_packmode = FB_W_CTRL.fb_packmode;
 	if (config::RenderToTextureBuffer)
 	{
@@ -926,7 +936,7 @@ void D3DRenderer::readRttRenderTarget(u32 texAddress)
 		verifyWin(offscreenSurface->UnlockRect());
 
 		u16 *dst = (u16 *)&vram[texAddress];
-		WriteTextureToVRam<2, 1, 0, 3>(w, h, (u8 *)tmp_buf.data(), dst);
+		WriteTextureToVRam<2, 1, 0, 3>(w, h, (u8 *)tmp_buf.data(), dst, -1, pvrrc.fb_W_LINESTRIDE * 8);
 	}
 	else
 	{

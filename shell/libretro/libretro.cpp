@@ -1017,12 +1017,12 @@ void retro_run()
 	if (isOpenGL(config::RendererType))
 		glsm_ctl(GLSM_CTL_STATE_UNBIND, nullptr);
 
+	video_cb(is_dupe ? 0 : RETRO_HW_FRAME_BUFFER_VALID, framebufferWidth, framebufferHeight, 0);
+
 	if (!config::ThreadedRendering || config::LimitFPS)
 		retro_audio_upload();
 	else
 		retro_audio_flush_buffer();
-
-	video_cb(is_dupe ? 0 : RETRO_HW_FRAME_BUFFER_VALID, framebufferWidth, framebufferHeight, 0);
 
 	first_run = false;
 }

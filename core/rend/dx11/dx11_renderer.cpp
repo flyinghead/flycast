@@ -812,7 +812,15 @@ void DX11Renderer::setRenderState(const PolyParam *gp)
 	if (texture != nullptr)
 	{
         deviceContext->PSSetShaderResources(0, 1, &texture->textureView.get());
-        auto sampler = samplers->getSampler(gp->tsp.FilterMode != 0 && !gpuPalette, gp->tsp.ClampU, gp->tsp.ClampV, gp->tsp.FlipU, gp->tsp.FlipV);
+		bool linearFiltering;
+		if (config::TextureFiltering == 0)
+			linearFiltering = gp->tsp.FilterMode != 0 && !gpuPalette;
+		else if (config::TextureFiltering == 1)
+			linearFiltering = false;
+		else
+			linearFiltering = true;
+
+        auto sampler = samplers->getSampler(linearFiltering, gp->tsp.ClampU, gp->tsp.ClampV, gp->tsp.FlipU, gp->tsp.FlipV);
         deviceContext->PSSetSamplers(0, 1, &sampler.get());
 	}
 
@@ -1213,10 +1221,10 @@ void DX11Renderer::setBaseScissor()
 
 void DX11Renderer::prepareRttRenderTarget(u32 texAddress)
 {
-	u32 fbw = pvrrc.fb_X_CLIP.max + 1;
-	u32 fbh = pvrrc.fb_Y_CLIP.max + 1;
+	u32 fbw = pvrrc.getFramebufferWidth();
+	u32 fbh = pvrrc.getFramebufferHeight();
 	DEBUG_LOG(RENDERER, "RTT packmode=%d stride=%d - %d x %d @ %06x",
-			FB_W_CTRL.fb_packmode, FB_W_LINESTRIDE.stride * 8, fbw, fbh, texAddress);
+			FB_W_CTRL.fb_packmode, pvrrc.fb_W_LINESTRIDE * 8, fbw, fbh, texAddress);
 	// Find the smallest power of two texture that fits the viewport
 	u32 fbh2 = 2;
 	while (fbh2 < fbh)
@@ -1246,8 +1254,8 @@ void DX11Renderer::prepareRttRenderTarget(u32 texAddress)
 
 void DX11Renderer::readRttRenderTarget(u32 texAddress)
 {
-	u32 w = pvrrc.fb_X_CLIP.max + 1;
-	u32 h = pvrrc.fb_Y_CLIP.max + 1;
+	u32 w = pvrrc.getFramebufferWidth();
+	u32 h = pvrrc.getFramebufferHeight();
 	const u8 fb_packmode = FB_W_CTRL.fb_packmode;
 	if (config::RenderToTextureBuffer)
 	{
@@ -1293,7 +1301,7 @@ void DX11Renderer::readRttRenderTarget(u32 texAddress)
 		deviceContext->Unmap(stagingTex, 0);
 
 		u16 *dst = (u16 *)&vram[texAddress];
-		WriteTextureToVRam<2, 1, 0, 3>(w, h, (u8 *)tmp_buf.data(), dst);
+		WriteTextureToVRam<2, 1, 0, 3>(w, h, (u8 *)tmp_buf.data(), dst, -1, pvrrc.fb_W_LINESTRIDE * 8);
 	}
 	else
 	{
