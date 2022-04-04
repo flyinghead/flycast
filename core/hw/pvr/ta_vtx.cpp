@@ -112,10 +112,10 @@ protected:
 
 	static void reset()
 	{
-		memset(FaceBaseColor, 0, sizeof(FaceBaseColor));
-		memset(FaceOffsColor, 0, sizeof(FaceOffsColor));
-		memset(FaceBaseColor1, 0, sizeof(FaceBaseColor1));
-		memset(FaceOffsColor1, 0, sizeof(FaceOffsColor1));
+		memset(FaceBaseColor, 0xff, sizeof(FaceBaseColor));
+		memset(FaceOffsColor, 0xff, sizeof(FaceOffsColor));
+		memset(FaceBaseColor1, 0xff, sizeof(FaceBaseColor1));
+		memset(FaceOffsColor1, 0xff, sizeof(FaceOffsColor1));
 		SFaceBaseColor = 0;
 		SFaceOffsColor = 0;
 		lmr = nullptr;
