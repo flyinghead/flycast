@@ -35,7 +35,7 @@ private:
 	void connectNetwork();
 	bool receiveNetwork();
 	void sendNetwork();
-	void connectedState(bool success);
+	void connectedState();
 
 	u16 comm_ctrl = 0xC000;
 	u16 comm_offset = 0;

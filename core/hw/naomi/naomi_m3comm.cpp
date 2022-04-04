@@ -72,8 +72,11 @@ void NaomiM3Comm::connectNetwork()
 	packet_number = 0;
 	slot_count = naomiNetwork.getSlotCount();
 	slot_id = naomiNetwork.getSlotId();
-	connectedState(true);
-	EventManager::listen(Event::VBlank, vblankCallback, this);
+	if (slot_count >= 2)
+	{
+		connectedState();
+		EventManager::listen(Event::VBlank, vblankCallback, this);
+	}
 }
 
 bool NaomiM3Comm::receiveNetwork()
@@ -140,11 +143,8 @@ u32 NaomiM3Comm::ReadMem(u32 address, u32 size)
 	}
 }
 
-void NaomiM3Comm::connectedState(bool success)
+void NaomiM3Comm::connectedState()
 {
-	if (!success)
-		return;
-	verify(slot_count >= 2);
 	memset(&comm_ram[0xf000], 0, 16);
 	comm_ram[0xf000] = 1;
 	comm_ram[0xf001] = 1;
