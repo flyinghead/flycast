@@ -393,7 +393,7 @@ void termABuffer()
 		glDeleteVertexArrays(1, &g_quadVertexArray);
 		g_quadVertexArray = 0;
 	}
-	g_quadIndexBuffer.reset();
+	g_quadBuffer.reset();
 	g_quadIndexBuffer.reset();
 	glcache.DeleteProgram(g_abuffer_final_shader.program);
 	g_abuffer_final_shader.program = 0;

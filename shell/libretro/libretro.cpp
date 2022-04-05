@@ -289,6 +289,8 @@ static void retro_keyboard_event(bool down, unsigned keycode, uint32_t character
 // Now comes the interesting stuff
 void retro_init()
 {
+	static bool emuInited;
+
 	// Logging
 	struct retro_log_callback log;
 	if (environ_cb(RETRO_ENVIRONMENT_GET_LOG_INTERFACE, &log))
@@ -322,6 +324,12 @@ void retro_init()
 
 	os_InstallFaultHandler();
 	MapleConfigMap::UpdateVibration = updateVibration;
+
+#if defined(__GNUC__) && !defined(_WIN32)
+	if (!emuInited)
+#endif
+		emu.init();
+	emuInited = true;
 }
 
 void retro_deinit()
@@ -335,6 +343,12 @@ void retro_deinit()
 		std::lock_guard<std::mutex> lock(mtx_serialization);
 	}
 	os_UninstallFaultHandler();
+	
+#if defined(__GNUC__) && !defined(_WIN32)
+	_vmem_release();
+#else
+	emu.term();
+#endif
 	libretro_supports_bitmasks = false;
 	categoriesSupported = false;
 	platformIsDreamcast = true;
@@ -1913,13 +1927,11 @@ bool retro_load_game_special(unsigned game_type, const struct retro_game_info *i
 void retro_unload_game()
 {
 	INFO_LOG(COMMON, "Flycast unloading game");
-	emu.stop();
+	emu.unloadGame();
 	game_data.clear();
 	disk_paths.clear();
 	disk_labels.clear();
 	blankVmus();
-
-	emu.term();
 }
 
 
