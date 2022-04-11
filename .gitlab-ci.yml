@@ -54,14 +54,14 @@ include:
 
   ################################## CONSOLES ################################  
   # Nintendo Switch
-  - project: 'libretro-infrastructure/ci-templates'
-    file: '/libnx-static.yml'
+#  - project: 'libretro-infrastructure/ci-templates'
+#    file: '/libnx-static.yml'
 
 # Stages for building
 stages:
   - build-prepare
   - build-shared
-  - build-static
+#  - build-static
 
 ##############################################################################
 #################################### STAGES ##################################
@@ -125,8 +125,7 @@ android-x86:
 
 ################################### CONSOLES #################################
 # Nintendo Switch
-libretro-build-libnx-aarch64:
-  extends:
-    - .libretro-libnx-static-retroarch-master
-    - .core-defs
-    
+#libretro-build-libnx-aarch64:
+#  extends:
+#    - .libretro-libnx-static-retroarch-master
+#    - .core-defs
