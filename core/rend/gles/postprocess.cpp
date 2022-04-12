@@ -279,10 +279,7 @@ void PostProcessor::term()
 	depthBuffer = 0;
 	glDeleteBuffers(1, &vertexBuffer);
 	vertexBuffer = 0;
-#ifndef GLES2
-	if (vertexArray != 0)
-		glDeleteVertexArrays(1, &vertexArray);
-#endif
+	deleteVertexArray(vertexArray);
 	vertexArray = 0;
 	PostProcessShader::term();
 	glCheck();
@@ -311,11 +308,9 @@ void PostProcessor::render(GLuint output_fbo)
 	glcache.Disable(GL_BLEND);
 
 	PostProcessShader::select(FB_W_CTRL.fb_dither, SPG_CONTROL.interlace, FB_R_CTRL.vclk_div == 1 && SPG_CONTROL.interlace == 0);
-#ifndef GLES2
 	if (vertexArray != 0)
-		glBindVertexArray(vertexArray);
+		bindVertexArray(vertexArray);
 	else
-#endif
 	{
 		glEnableVertexAttribArray(0);
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, (void*)0);
@@ -332,7 +327,5 @@ void PostProcessor::render(GLuint output_fbo)
 	glcache.ClearColor(0.f, 0.f, 0.f, 0.f);
 	glClear(GL_COLOR_BUFFER_BIT);
 	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-#ifndef GLES2
-	glBindVertexArray(0);
-#endif
+	bindVertexArray(0);
 }

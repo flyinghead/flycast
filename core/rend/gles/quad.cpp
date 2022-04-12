@@ -51,14 +51,6 @@ static GLuint quadVertexArray;
 static GLuint quadBuffer;
 static GLuint quadIndexBuffer;
 
-static void bindVAO(GLuint vao)
-{
-#ifndef GLES2
-	if (gl.gl_major >= 3)
-		glBindVertexArray(vao);
-#endif
-}
-
 static void setupVertexAttribs()
 {
 	glEnableVertexAttribArray(VERTEX_POS_ARRAY);
@@ -112,11 +104,11 @@ void initQuad()
 #ifndef GLES2
 		if (gl.gl_major >= 3)
 		{
-			bindVAO(quadVertexArray);
+			bindVertexArray(quadVertexArray);
 			glBindBuffer(GL_ARRAY_BUFFER, quadBuffer);
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quadIndexBuffer);
 			setupVertexAttribs();
-			bindVAO(0);
+			bindVertexArray(0);
 			glBindBuffer(GL_ARRAY_BUFFER, 0);
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 		}
@@ -139,9 +131,7 @@ void termQuad()
 	}
 	if (quadVertexArray != 0)
 	{
-#ifndef GLES2
-		glDeleteVertexArrays(1, &quadVertexArray);
-#endif
+		deleteVertexArray(quadVertexArray);
 		quadVertexArray = 0;
 	}
 	if (shader != 0)
@@ -178,10 +168,10 @@ void drawQuad(GLuint texId, bool rotate, bool swapY)
 	if (gl.gl_major < 3)
 		setupVertexAttribs();
 	else
-		bindVAO(quadVertexArray);
+		bindVertexArray(quadVertexArray);
 
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STREAM_DRAW);
 	glDrawElements(GL_TRIANGLE_STRIP, 5, GL_UNSIGNED_SHORT, (GLvoid *)0);
-	bindVAO(0);
+	bindVertexArray(0);
 	glCheck();
 }
