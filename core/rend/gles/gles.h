@@ -429,3 +429,19 @@ public:
 extern "C" struct retro_hw_render_callback hw_render;
 void termVmuLightgun();
 #endif
+
+inline static void bindVertexArray(GLuint vao)
+{
+#ifndef GLES2
+	if (gl.gl_major >= 3)
+		glBindVertexArray(vao);
+#endif
+}
+
+inline static void deleteVertexArray(GLuint vao)
+{
+#ifndef GLES2
+	if (gl.gl_major >= 3)
+		glDeleteVertexArrays(1, &vao);
+#endif
+}

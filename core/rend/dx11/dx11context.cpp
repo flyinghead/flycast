@@ -44,33 +44,21 @@ bool DX11Context::init(bool keepCurrentWindow)
 #ifdef TARGET_UWP
 	GAMING_DEVICE_MODEL_INFORMATION info {};
 	GetGamingDeviceModelInformation(&info);
-	if (info.vendorId == GAMING_DEVICE_VENDOR_ID_MICROSOFT)
+	if (info.vendorId == GAMING_DEVICE_VENDOR_ID_MICROSOFT && info.deviceId != GAMING_DEVICE_DEVICE_ID_NONE)
 	{
-		switch (info.deviceId)
-		{
-		case GAMING_DEVICE_DEVICE_ID_XBOX_ONE:
-		case GAMING_DEVICE_DEVICE_ID_XBOX_ONE_S:
-		case GAMING_DEVICE_DEVICE_ID_XBOX_ONE_X:
-		case GAMING_DEVICE_DEVICE_ID_XBOX_ONE_X_DEVKIT:
-			{
-				Windows::Graphics::Display::Core::HdmiDisplayInformation^ dispInfo = Windows::Graphics::Display::Core::HdmiDisplayInformation::GetForCurrentView();
-				Windows::Graphics::Display::Core::HdmiDisplayMode^ displayMode = dispInfo->GetCurrentDisplayMode();
-				NOTICE_LOG(RENDERER, "HDMI resolution: %d x %d", displayMode->ResolutionWidthInRawPixels, displayMode->ResolutionHeightInRawPixels);
-				settings.display.width = displayMode->ResolutionWidthInRawPixels;
-				settings.display.height = displayMode->ResolutionHeightInRawPixels;
-				if (settings.display.width == 3840)
-					// 4K
-					scaling = 2.8f;
-				else
-					scaling = 1.4f;
-			}
-			break;
-
-		default:
-			scaling = 1.f;
-		    break;
-		}
+		Windows::Graphics::Display::Core::HdmiDisplayInformation^ dispInfo = Windows::Graphics::Display::Core::HdmiDisplayInformation::GetForCurrentView();
+		Windows::Graphics::Display::Core::HdmiDisplayMode^ displayMode = dispInfo->GetCurrentDisplayMode();
+		NOTICE_LOG(RENDERER, "HDMI resolution: %d x %d", displayMode->ResolutionWidthInRawPixels, displayMode->ResolutionHeightInRawPixels);
+		settings.display.width = displayMode->ResolutionWidthInRawPixels;
+		settings.display.height = displayMode->ResolutionHeightInRawPixels;
+		if (settings.display.width == 3840)
+			// 4K
+			scaling = 2.8f;
+		else
+			scaling = 1.4f;
 	}
+	else
+		scaling = 1.f;
 #endif
 
 	D3D_FEATURE_LEVEL featureLevels[] =

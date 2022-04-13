@@ -97,7 +97,8 @@ public:
 		vk::SamplerAddressMode vRepeat = tsp.ClampV ? vk::SamplerAddressMode::eClampToEdge
 				: tsp.FlipV ? vk::SamplerAddressMode::eMirroredRepeat : vk::SamplerAddressMode::eRepeat;
 
-		bool anisotropicFiltering = config::AnisotropicFiltering > 1 && VulkanContext::Instance()->SupportsSamplerAnisotropy();
+		bool anisotropicFiltering = config::AnisotropicFiltering > 1 && VulkanContext::Instance()->SupportsSamplerAnisotropy()
+				&& filter == vk::Filter::eLinear;
 #ifndef __APPLE__
 		float mipLodBias = D_Adjust_LoD_Bias[tsp.MipMapD];
 #else
@@ -107,7 +108,7 @@ public:
 		return samplers.emplace(
 					std::make_pair(samplerHash, VulkanContext::Instance()->GetDevice().createSamplerUnique(
 						vk::SamplerCreateInfo(vk::SamplerCreateFlags(), filter, filter,
-							vk::SamplerMipmapMode::eNearest, uRepeat, vRepeat, vk::SamplerAddressMode::eClampToEdge, mipLodBias,
+							vk::SamplerMipmapMode::eLinear, uRepeat, vRepeat, vk::SamplerAddressMode::eClampToEdge, mipLodBias,
 							anisotropicFiltering, std::min((float)config::AnisotropicFiltering, VulkanContext::Instance()->GetMaxSamplerAnisotropy()),
 							false, vk::CompareOp::eNever,
 							0.0f, 256.0f, vk::BorderColor::eFloatOpaqueBlack)))).first->second.get();

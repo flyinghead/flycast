@@ -1056,8 +1056,32 @@ if(USE_VULKAN)
 endif()
 
 if(WIN32 AND NOT LIBRETRO AND NOT WINDOWS_STORE)
-	add_subdirectory(core/rend/dx9)
-	target_link_libraries(${PROJECT_NAME} PRIVATE dx9renderer)
+	set(REND_DX9_FILES
+		core/rend/dx9/d3d_overlay.h
+		core/rend/dx9/d3d_overlay.cpp
+		core/rend/dx9/d3d_renderer.h
+		core/rend/dx9/d3d_renderer.cpp
+		core/rend/dx9/d3d_shaders.h
+		core/rend/dx9/d3d_shaders.cpp
+		core/rend/dx9/d3d_texture.h
+		core/rend/dx9/d3d_texture.cpp
+		core/rend/dx9/dx9_driver.h
+		core/rend/dx9/dxcontext.cpp
+		core/rend/dx9/dxcontext.h
+		core/rend/dx9/imgui_impl_dx9.h
+		core/rend/dx9/imgui_impl_dx9.cpp)
+	target_sources(${PROJECT_NAME} PRIVATE ${REND_DX9_FILES})
+
+	if(NOT MINGW)
+		set_source_files_properties(${REND_DX9_FILES} PROPERTIES INCLUDE_DIRECTORIES "$ENV{DXSDK_DIR}/Include")
+		if (CMAKE_SIZEOF_VOID_P EQUAL 8)
+			target_link_directories(${PROJECT_NAME} PUBLIC "$ENV{DXSDK_DIR}/Lib/x64")
+		else()
+			target_link_directories(${PROJECT_NAME} PUBLIC "$ENV{DXSDK_DIR}/Lib/x86")
+		endif()
+	endif()
+
+	target_link_libraries(${PROJECT_NAME} PUBLIC d3d9 d3dx9)
 endif()
 
 if(WIN32)
@@ -1302,7 +1326,8 @@ if(NOT LIBRETRO)
 				XCODE_ATTRIBUTE_TARGETED_DEVICE_FAMILY "1,2"
 				XCODE_ATTRIBUTE_CLANG_ENABLE_OBJC_ARC YES
 				XCODE_ATTRIBUTE_COMBINE_HIDPI_IMAGES NO
-				XCODE_ATTRIBUTE_ASSETCATALOG_COMPILER_APPICON_NAME "AppIcon")
+				XCODE_ATTRIBUTE_ASSETCATALOG_COMPILER_APPICON_NAME "AppIcon"
+				XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER "com.flyinghead.Flycast")
 				
 			find_library(UIKIT UIKit)
 			find_library(FOUNDATION Foundation)
@@ -1356,6 +1381,7 @@ if(NOT LIBRETRO)
 				MACOSX_BUNDLE_BUNDLE_VERSION "1"
 				MACOSX_BUNDLE_COPYRIGHT "Copyright © 2019 Flycast contributors. All rights reserved."
 				XCODE_ATTRIBUTE_ASSETCATALOG_COMPILER_APPICON_NAME "AppIcon"
+				XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER "com.flyinghead.Flycast"
 				BUILD_WITH_INSTALL_RPATH TRUE
 				INSTALL_RPATH "@loader_path/../Frameworks"
 			)

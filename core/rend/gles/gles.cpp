@@ -437,12 +437,10 @@ void termGLCommon()
 
 static void gles_term()
 {
-#ifndef GLES2
-	glDeleteVertexArrays(1, &gl.vbo.mainVAO);
+	deleteVertexArray(gl.vbo.mainVAO);
 	gl.vbo.mainVAO = 0;
-	glDeleteVertexArrays(1, &gl.vbo.modvolVAO);
+	deleteVertexArray(gl.vbo.modvolVAO);
 	gl.vbo.modvolVAO = 0;
-#endif
 	gl.vbo.geometry.reset();
 	gl.vbo.modvols.reset();
 	gl.vbo.idxs.reset();
@@ -807,10 +805,7 @@ static void SetupOSDVBO()
 
 	glDisableVertexAttribArray(VERTEX_COL_OFFS_ARRAY);
 	glCheck();
-#ifndef GLES2
-	if (gl.gl_major >= 3)
-		glBindVertexArray(0);
-#endif
+	bindVertexArray(0);
 }
 
 void gl_load_osd_resources()
@@ -857,10 +852,8 @@ void gl_free_osd_resources()
     }
 	glDeleteBuffers(1, &gl.OSD_SHADER.geometry);
 	gl.OSD_SHADER.geometry = 0;
-#ifndef GLES2
-	glDeleteVertexArrays(1, &gl.OSD_SHADER.vao);
+	deleteVertexArray(gl.OSD_SHADER.vao);
 	gl.OSD_SHADER.vao = 0;
-#endif
 }
 
 static void create_modvol_shader()
@@ -1115,13 +1108,10 @@ void OSD_DRAW(bool clear_screen)
 
 		glCheck();
 		imguiDriver->setFrameRendered();
-#ifndef GLES2
-		if (gl.gl_major >= 3)
-			glBindVertexArray(0);
-#endif
 	}
 #endif
 #endif
+	bindVertexArray(0);
 }
 
 bool OpenGLRenderer::Process(TA_context* ctx)
@@ -1383,10 +1373,7 @@ bool RenderFrame(int width, int height)
 	else
 		render_output_framebuffer();
 #endif
-#ifndef GLES2
-	if (gl.gl_major >= 3)
-		glBindVertexArray(0);
-#endif
+	bindVertexArray(0);
 
 	return !is_rtt;
 }
