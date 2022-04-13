@@ -398,6 +398,7 @@ void CheatManager::reset(const std::string& gameId)
 		{
 			setActive(true);
 			cheats.emplace_back(Cheat::Type::setValue, "Skip DIMM version check", true, 16, 0x000205c6, 9);
+			cheats.back().builtIn = true;
 		}
 	}
 	if (config::WidescreenGameHacks)
@@ -789,10 +790,11 @@ void CheatManager::saveCheatFile(const std::string& filename)
 #ifndef LIBRETRO
 	emucfg::ConfigFile cfg;
 
-	cfg.set_int("", "cheats", cheats.size());
 	int i = 0;
 	for (const Cheat& cheat : cheats)
 	{
+		if (cheat.builtIn)
+			continue;
 		std::string prefix = "cheat" + std::to_string(i) + "_";
 		cfg.set_int("", prefix + "address", cheat.address);
 		cfg.set_int("", prefix + "address_bit_position", cheat.valueMask);
@@ -832,6 +834,7 @@ void CheatManager::saveCheatFile(const std::string& filename)
 		cfg.set_int("", prefix + "repeat_add_to_address", cheat.repeatAddressIncrement);
 		i++;
 	}
+	cfg.set_int("", "cheats", i);
 	FILE *fp = nowide::fopen(filename.c_str(), "w");
 	if (fp == nullptr)
 		throw FlycastException("Can't save cheat file");

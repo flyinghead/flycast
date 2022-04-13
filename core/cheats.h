@@ -53,12 +53,14 @@ struct Cheat
 	u32 repeatValueIncrement;
 	u32 repeatAddressIncrement;
 	u32 destAddress;
+	bool builtIn;
 
 	Cheat(Type type = Type::disabled, const std::string& description = "", bool enabled = false, u32 size = 0, u32 address = 0,
 			u8 valueMask = 0, u32 repeatCount = 1, u32 repeatValueIncrement = 0,
-			u32 repeatAddressIncrement = 0, u32 destAddress = 0)
+			u32 repeatAddressIncrement = 0, u32 destAddress = 0, bool builtIn = false)
 		: type(type), description(description), enabled(enabled), size(size), address(address), valueMask(valueMask),
-		  repeatCount(repeatCount), repeatValueIncrement(repeatValueIncrement), repeatAddressIncrement(repeatAddressIncrement), destAddress(destAddress)
+		  repeatCount(repeatCount), repeatValueIncrement(repeatValueIncrement), repeatAddressIncrement(repeatAddressIncrement),
+		  destAddress(destAddress), builtIn(builtIn)
 	{
 	}
 };
