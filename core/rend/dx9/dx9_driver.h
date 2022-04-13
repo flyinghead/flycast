@@ -24,7 +24,15 @@
 class DX9Driver final : public ImGuiDriver
 {
 public:
-    void newFrame() override {
+	DX9Driver(IDirect3DDevice9* device) {
+		ImGui_ImplDX9_Init(device);
+	}
+
+	~DX9Driver() {
+		ImGui_ImplDX9_Shutdown();
+	}
+
+	void newFrame() override {
     	ImGui_ImplDX9_NewFrame();
 	}
 

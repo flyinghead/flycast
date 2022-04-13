@@ -399,21 +399,19 @@ int main(int argc, char* argv[])
 
 	mainui_loop();
 
-	flycast_term();
-
-	os_UninstallFaultHandler();
-
 #if defined(USE_EVDEV)
 	input_evdev_close();
 #endif
-
 #if defined(SUPPORT_X11)
 	x11_window_destroy();
 #endif
-
 #if defined(USE_SDL)
 	sdl_window_destroy();
 #endif
+
+	flycast_term();
+	os_UninstallFaultHandler();
+
 #if defined(__SWITCH__)
 	socketExit();
 #endif

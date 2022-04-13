@@ -467,11 +467,9 @@ bool sdl_recreate_window(u32 flags)
         if (SetProcessDpiAwareness) {
             SetProcessDpiAwareness(PROCESS_PER_MONITOR_DPI_AWARE);
             
-            float ddpi;
-            if (SDL_GetDisplayDPI(0, &ddpi, NULL, NULL) != -1){ //SDL_WINDOWPOS_UNDEFINED is Display 0
+            if (SDL_GetDisplayDPI(0, &settings.display.dpi, NULL, NULL) != -1){ //SDL_WINDOWPOS_UNDEFINED is Display 0
                 //When using HiDPI mode, set correct DPI scaling
-                scaling = ddpi/96.f;
-                hdpiScaling = scaling;
+            	hdpiScaling = settings.display.dpi / 96.f;
             }
         }
         SDL_UnloadObject(shcoreDLL);
@@ -484,13 +482,13 @@ bool sdl_recreate_window(u32 flags)
 	{
 		windowPos.w  = 1280;
 		windowPos.h = 720;
-		scaling = 1.5f;
+		settings.display.uiScale = 1.5f;
 	}
 	else
 	{
 		windowPos.w  = 1920;
 		windowPos.h = 1080;
-		scaling = 1.0f;
+		settings.display.uiScale = 1.4f;
 	}
 #else
 	windowPos.x = cfgLoadInt("window", "left", windowPos.x);

@@ -82,7 +82,7 @@ struct retro_core_option_v2_category option_cats_us[] = {
    {
       "performance",
       "Performance",
-      "Configure threaded rendering, integer division optimisations and frame skip settings."
+      "Configure threaded rendering and frame skip settings."
    },
    {
       "hacks",

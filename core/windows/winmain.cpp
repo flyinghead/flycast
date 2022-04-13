@@ -877,10 +877,6 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 
 	mainui_loop();
 
-	flycast_term();
-
-	os_UninstallFaultHandler();
-
 #ifdef USE_SDL
 	sdl_window_destroy();
 #else
@@ -893,6 +889,9 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 		cfgSaveInt("window", "height", settings.display.height);
 	}
 #endif
+
+	flycast_term();
+	os_UninstallFaultHandler();
 
 	return 0;
 }

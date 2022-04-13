@@ -18,7 +18,6 @@
 */
 #include "dx11context.h"
 #ifndef LIBRETRO
-#include "rend/gui.h"
 #include "rend/osd.h"
 #ifdef USE_SDL
 #include "sdl/sdl.h"
@@ -26,6 +25,7 @@
 #include "hw/pvr/Renderer_if.h"
 #include "emulator.h"
 #include "dx11_driver.h"
+#include "imgui_impl_dx11.h"
 #ifdef TARGET_UWP
 #include <windows.h>
 #include <gamingdeviceinformation.h>
@@ -53,12 +53,10 @@ bool DX11Context::init(bool keepCurrentWindow)
 		settings.display.height = displayMode->ResolutionHeightInRawPixels;
 		if (settings.display.width == 3840)
 			// 4K
-			scaling = 2.8f;
+			settings.display.uiScale = 2.8f;
 		else
-			scaling = 1.4f;
+			settings.display.uiScale = 1.4f;
 	}
-	else
-		scaling = 1.f;
 #endif
 
 	D3D_FEATURE_LEVEL featureLevels[] =
@@ -158,12 +156,12 @@ bool DX11Context::init(bool keepCurrentWindow)
 			NOTICE_LOG(RENDERER, "No system-provided shader cache");
 	}
 
-	imguiDriver = std::unique_ptr<ImGuiDriver>(new DX11Driver());
+	imguiDriver = std::unique_ptr<ImGuiDriver>(new DX11Driver(pDevice, pDeviceContext));
 	resize();
-	gui_init();
 	shaders.init(pDevice, &D3DCompile);
 	overlay.init(pDevice, pDeviceContext, &shaders, &samplers);
-	return ImGui_ImplDX11_Init(pDevice, pDeviceContext);
+
+	return true;
 }
 
 void DX11Context::term()
@@ -174,8 +172,6 @@ void DX11Context::term()
 	samplers.term();
 	shaders.term();
 	imguiDriver.reset();
-	ImGui_ImplDX11_Shutdown();
-	gui_term();
 	renderTargetView.reset();
 	swapchain1.reset();
 	swapchain.reset();

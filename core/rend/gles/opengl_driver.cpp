@@ -76,9 +76,9 @@ void OpenGLDriver::displayVmus()
 
 	ImGui::Begin("vmu-window", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoInputs
 			| ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoFocusOnAppearing);
-	const float width = VMU_WIDTH * scaling;
-	const float height = VMU_HEIGHT * scaling;
-	const float padding = VMU_PADDING * scaling;
+	const float width = VMU_WIDTH * settings.display.uiScale;
+	const float height = VMU_HEIGHT * settings.display.uiScale;
+	const float padding = VMU_PADDING * settings.display.uiScale;
 	for (int i = 0; i < 8; i++)
 	{
 		if (!vmu_lcd_status[i])
@@ -137,9 +137,9 @@ void OpenGLDriver::displayCrosshairs()
 
 		ImVec2 pos;
 		std::tie(pos.x, pos.y) = getCrosshairPosition(i);
-		pos.x -= (XHAIR_WIDTH * scaling) / 2.f;
-		pos.y += (XHAIR_WIDTH * scaling) / 2.f;
-		ImVec2 pos_b(pos.x + XHAIR_WIDTH * scaling, pos.y - XHAIR_HEIGHT * scaling);
+		pos.x -= (XHAIR_WIDTH * settings.display.uiScale) / 2.f;
+		pos.y += (XHAIR_WIDTH * settings.display.uiScale) / 2.f;
+		ImVec2 pos_b(pos.x + XHAIR_WIDTH * settings.display.uiScale, pos.y - XHAIR_HEIGHT * settings.display.uiScale);
 
 		ImGui::GetWindowDrawList()->AddImage(crosshairTexId, pos, pos_b, ImVec2(0, 1), ImVec2(1, 0), config::CrosshairColor[i]);
 	}

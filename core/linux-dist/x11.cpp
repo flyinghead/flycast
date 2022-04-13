@@ -279,7 +279,7 @@ void x11_window_create()
 		int x11Screen = XDefaultScreen(x11_disp);
 		float xdpi = (float)DisplayWidth(x11_disp, x11Screen) / DisplayWidthMM(x11_disp, x11Screen) * 25.4;
 		float ydpi = (float)DisplayHeight(x11_disp, x11Screen) / DisplayHeightMM(x11_disp, x11Screen) * 25.4;
-		screen_dpi = std::max(xdpi, ydpi);
+		settings.display.dpi = std::max(xdpi, ydpi);
 
 		int depth = CopyFromParent;
 

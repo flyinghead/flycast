@@ -2,7 +2,6 @@
 #include "input/mouse.h"
 #include "oslib/oslib.h"
 #include "sdl.h"
-#include "rend/gui.h"
 
 template<bool Arcade = false, bool Gamepad = false>
 class DefaultInputMapping : public InputMapping

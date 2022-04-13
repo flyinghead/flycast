@@ -354,6 +354,8 @@ struct settings_t
 		int height = 480;
 		float pointScale = 1.f;
 		float refreshRate = 0;
+		float dpi = 96.f;
+		float uiScale = 1.f;
 	} display;
 
 	struct

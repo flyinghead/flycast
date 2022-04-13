@@ -56,8 +56,8 @@ public:
 
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0);
-		ImGui::SetNextWindowPos(ImVec2((settings.display.width - 400 * scaling) / 2, settings.display.height - 220 * scaling), ImGuiCond_FirstUseEver);
-		ImGui::SetNextWindowSize(ImVec2(400 * scaling, 220 * scaling), ImGuiCond_FirstUseEver);
+		ImGui::SetNextWindowPos(ImVec2(settings.display.width / 2, settings.display.height) - ScaledVec2(200.f, 220.f), ImGuiCond_FirstUseEver);
+		ImGui::SetNextWindowSize(ScaledVec2(400, 220), ImGuiCond_FirstUseEver);
 		ImGui::SetNextWindowBgAlpha(0.7f);
 		ImGui::SetNextWindowFocus();
 		if (ImGui::Begin("Chat", &visible, ImGuiWindowFlags_NoScrollbar))

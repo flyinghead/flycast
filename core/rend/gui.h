@@ -21,6 +21,7 @@
 #include "cfg/option.h"
 
 void gui_init();
+void gui_initFonts();
 void gui_open_settings();
 void gui_display_ui();
 void gui_display_notification(const char *msg, int duration);
@@ -45,9 +46,6 @@ void gui_start_game(const std::string& path);
 void gui_error(const std::string& what);
 void gui_setOnScreenKeyboardCallback(void (*callback)(bool show));
 
-extern int screen_dpi;
-extern float scaling;
-
 enum class GuiState {
 	Closed,
 	Commands,
@@ -70,7 +68,4 @@ static inline bool gui_is_open()
 static inline bool gui_is_content_browser()
 {
 	return gui_state == GuiState::Main;
-}
-static inline float gui_get_scaling() {
-	return scaling;
 }

@@ -43,6 +43,7 @@ public:
 
 private:
 	bool makeCurrent();
+	void setSwapInterval();
 
 	EGLDisplay display = EGL_NO_DISPLAY;
 	EGLSurface surface = EGL_NO_SURFACE;

@@ -20,22 +20,16 @@
 #include "rend/osd.h"
 #ifdef LIBRETRO
 #include "vmu_xhair.h"
-#else
-#include "rend/gui.h"
 #endif
 
 void DX11Overlay::draw(u32 width, u32 height, bool vmu, bool crosshair)
 {
-#ifdef LIBRETRO
-	const float scaling = 1;
-#endif
-
 	RECT rect { 0, 0, (LONG)width, (LONG)height };
 	deviceContext->RSSetScissorRects(1, &rect);
 	if (vmu)
 	{
-		float vmu_padding = 8.f * scaling;
-		float vmu_height = 70.f * scaling;
+		float vmu_padding = 8.f * settings.display.uiScale;
+		float vmu_height = 70.f * settings.display.uiScale;
 		float vmu_width = 48.f / 32.f * vmu_height;
 
 #ifndef LIBRETRO
@@ -178,7 +172,7 @@ void DX11Overlay::draw(u32 width, u32 height, bool vmu, bool crosshair)
 #ifdef LIBRETRO
 			float halfWidth = LIGHTGUN_CROSSHAIR_SIZE / 2.f;
 #else
-			float halfWidth = XHAIR_WIDTH * gui_get_scaling() / 2.f;
+			float halfWidth = XHAIR_WIDTH * settings.display.uiScale / 2.f;
 #endif
 			D3D11_VIEWPORT vp{};
 			vp.TopLeftX = x - halfWidth;

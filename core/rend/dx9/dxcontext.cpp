@@ -18,7 +18,6 @@
 */
 #include "dxcontext.h"
 #include "d3d_renderer.h"
-#include "rend/gui.h"
 #include "rend/osd.h"
 #ifdef USE_SDL
 #include "sdl/sdl.h"
@@ -26,6 +25,7 @@
 #include "hw/pvr/Renderer_if.h"
 #include "emulator.h"
 #include "dx9_driver.h"
+#include "imgui_impl_dx9.h"
 
 DXContext theDXContext;
 
@@ -74,10 +74,10 @@ bool DXContext::init(bool keepCurrentWindow)
 	if (FAILED(pD3D->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, (HWND)window,
 			D3DCREATE_HARDWARE_VERTEXPROCESSING, &d3dpp, &pDevice.get())))
 	    return false;
-	imguiDriver = std::unique_ptr<ImGuiDriver>(new DX9Driver());
-	gui_init();
+	imguiDriver = std::unique_ptr<ImGuiDriver>(new DX9Driver(pDevice));
 	overlay.init(pDevice);
-	return ImGui_ImplDX9_Init(pDevice.get());
+
+	return true;
 }
 
 void DXContext::term()
@@ -85,8 +85,6 @@ void DXContext::term()
 	GraphicsContext::instance = nullptr;
 	overlay.term();
 	imguiDriver.reset();
-	ImGui_ImplDX9_Shutdown();
-	gui_term();
 	pDevice.reset();
 	pD3D.reset();
 }
