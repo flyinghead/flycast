@@ -286,14 +286,12 @@ bool D3DRenderer::Process(TA_context* ctx)
 	if (ctx->rend.isRenderFramebuffer)
 	{
 		readDCFramebuffer();
+		return true;
 	}
 	else
 	{
-		if (!ta_parse_vdrc(ctx))
-			return false;
+		return ta_parse(ctx);
 	}
-
-	return true;
 }
 
 inline void D3DRenderer::setTexMode(D3DSAMPLERSTATETYPE state, u32 clamp, u32 mirror)

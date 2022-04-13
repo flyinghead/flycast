@@ -1275,7 +1275,7 @@ static void fix_texture_bleeding(const List<PolyParam> *list)
 	}
 }
 
-bool ta_parse_vdrc(TA_context* ctx)
+static bool ta_parse_vdrc(TA_context* ctx)
 {
 	ctx->rend_inuse.lock();
 	bool rv=false;
@@ -1377,7 +1377,7 @@ bool ta_parse_vdrc(TA_context* ctx)
 	return rv && !overrun;
 }
 
-bool ta_parse_naomi2(TA_context* ctx)
+static bool ta_parse_naomi2(TA_context* ctx)
 {
 	ctx->rend_inuse.lock();
 
@@ -1438,6 +1438,14 @@ bool ta_parse_naomi2(TA_context* ctx)
 	ctx->rend_inuse.unlock();
 
 	return !overrun;
+}
+
+bool ta_parse(TA_context *ctx)
+{
+	if (settings.platform.isNaomi2())
+		return ta_parse_naomi2(ctx);
+	else
+		return ta_parse_vdrc(ctx);
 }
 
 static PolyParam *n2CurrentPP;

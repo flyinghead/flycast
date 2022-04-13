@@ -1123,6 +1123,7 @@ bool OpenGLRenderer::Process(TA_context* ctx)
 	if (ctx->rend.isRenderFramebuffer)
 	{
 		RenderFramebuffer();
+		return true;
 	}
 	else
 	{
@@ -1136,17 +1137,8 @@ bool OpenGLRenderer::Process(TA_context* ctx)
 			UpdatePaletteTexture(getPaletteTextureSlot());
 			palette_updated = false;
 		}
-
-		bool success;
-		if (settings.platform.isNaomi2())
-			success = ta_parse_naomi2(ctx);
-		else
-			success = ta_parse_vdrc(ctx);
-		if (!success)
-			return false;
+		return ta_parse(ctx);
 	}
-
-	return true;
 }
 
 static void upload_vertex_indices()
