@@ -90,14 +90,15 @@ static void map_area4(u32 base)
 template <class T>
 T DYNACALL ReadMem_extdev_T(u32 addr)
 {
-	return (T)libExtDevice_ReadMem_A5(addr, sizeof(T));
+	INFO_LOG(SH4, "Read ext. device (Area 5) undefined @ %08x", addr);
+	return (T)0;
 }
 
 //Write Ext.Device
 template <class T>
 void DYNACALL WriteMem_extdev_T(u32 addr,T data)
 {
-	libExtDevice_WriteMem_A5(addr, data, sizeof(T));
+	INFO_LOG(SH4, "Write ext. device (Area 5) undefined @ %08x: %x", addr, (u32)data);
 }
 
 _vmem_handler area5_handler;

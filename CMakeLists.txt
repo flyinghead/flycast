@@ -620,7 +620,6 @@ target_sources(${PROJECT_NAME} PRIVATE
         core/hw/arm7/arm7_rec.cpp
         core/hw/arm7/arm7_rec.h
         core/hw/arm7/arm-new.h
-        core/hw/arm7/vbaARM.cpp
         core/hw/bba/bba.h
         core/hw/bba/bba.cpp
         core/hw/bba/rtl8139c.h

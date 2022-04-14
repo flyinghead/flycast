@@ -2899,27 +2899,18 @@ static void retro_keyboard_event(bool down, unsigned keycode, uint32_t character
 	}
 }
 
-int msgboxf(const char* text, unsigned int type, ...)
+void fatal_error(const char* text, ...)
 {
 	if (log_cb)
 	{
 		va_list args;
 		char temp[2048];
-
-		switch (type)
-		{
-		case MBX_ICONERROR:
-			va_start(args, type);
-			vsprintf(temp, text, args);
-			va_end(args);
-			strcat(temp, "\n");
-			log_cb(RETRO_LOG_ERROR, temp);
-			break;
-		default:
-			break;
-		}
+		va_start(args, text);
+		vsprintf(temp, text, args);
+		va_end(args);
+		strcat(temp, "\n");
+		log_cb(RETRO_LOG_ERROR, temp);
 	}
-	return 0;
 }
 
 void os_DebugBreak()

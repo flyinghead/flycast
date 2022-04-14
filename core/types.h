@@ -202,14 +202,10 @@ void os_DebugBreak();
 #define stricmp strcasecmp
 #endif
 
-int msgboxf(const char* text, unsigned int type, ...);
+void fatal_error(const char* text, ...);
 
-#define MBX_OK                       0
-#define MBX_ICONEXCLAMATION          0
-#define MBX_ICONERROR                0
-
-#define verify(x) do { if ((x) == false){ msgboxf("Verify Failed  : " #x "\n in %s -> %s : %d", MBX_ICONERROR, (__FUNCTION__), (__FILE__), __LINE__); dbgbreak;}} while (false)
-#define die(reason) do { msgboxf("Fatal error : %s\n in %s -> %s : %d", MBX_ICONERROR,(reason), (__FUNCTION__), (__FILE__), __LINE__); dbgbreak;} while (false)
+#define verify(x) do { if ((x) == false){ fatal_error("Verify Failed  : " #x "\n in %s -> %s : %d", (__FUNCTION__), (__FILE__), __LINE__); dbgbreak;}} while (false)
+#define die(reason) do { fatal_error("Fatal error : %s\n in %s -> %s : %d", (reason), (__FUNCTION__), (__FILE__), __LINE__); dbgbreak;} while (false)
 
 
 //will be removed sometime soon
@@ -407,28 +403,6 @@ extern settings_t settings;
 #define VRAM_SIZE settings.platform.vram_size
 #define VRAM_MASK settings.platform.vram_mask
 #define BIOS_SIZE settings.platform.bios_size
-
-inline bool is_s8(u32 v) { return (s8)v==(s32)v; }
-inline bool is_u8(u32 v) { return (u8)v==(s32)v; }
-inline bool is_s16(u32 v) { return (s16)v==(s32)v; }
-inline bool is_u16(u32 v) { return (u16)v==(u32)v; }
-
-// 0x00600000 - 0x006007FF [NAOMI] (modem area for dreamcast)
-u32  libExtDevice_ReadMem_A0_006(u32 addr,u32 size);
-void libExtDevice_WriteMem_A0_006(u32 addr,u32 data,u32 size);
-
-//Area 0 , 0x01000000- 0x01FFFFFF	[Ext. Device]
-static inline u32 libExtDevice_ReadMem_A0_010(u32 addr,u32 size) { return 0; }
-static inline void libExtDevice_WriteMem_A0_010(u32 addr,u32 data,u32 size) { }
-
-//Area 5
-static inline u32 libExtDevice_ReadMem_A5(u32 addr,u32 size){ return 0; }
-static inline void libExtDevice_WriteMem_A5(u32 addr,u32 data,u32 size) { }
-
-//ARM
-s32 libARM_Init();
-void libARM_Reset(bool hard);
-void libARM_Term();
 
 template<u32 sz>
 u32 ReadMemArr(const u8 *array, u32 addr)

@@ -353,7 +353,10 @@ T DYNACALL ReadMem_area0(u32 paddr)
 	default:
 		// G2 Ext area
 		if (System == DC_PLATFORM_NAOMI || System == DC_PLATFORM_NAOMI2)
-			return (T)libExtDevice_ReadMem_A0_010(addr, sz);
+		{
+			INFO_LOG(MEMORY, "Read<%d> from G2 Ext area not implemented @ %08x", sz, addr);
+			return (T)0;
+		}
 		else if (config::EmulateBBA)
 			return (T)bba_ReadMem(addr, sz);
 		else
@@ -466,12 +469,12 @@ void DYNACALL WriteMem_area0(u32 paddr, T data)
 	default:
 		// G2 Ext area
 		if (System == DC_PLATFORM_NAOMI || System == DC_PLATFORM_NAOMI2)
-			libExtDevice_WriteMem_A0_010(addr, data, sz);
+			INFO_LOG(MEMORY, "Write<%d> to G2 Ext area not implemented @ %08x: %x", sz, addr, (u32)data);
 		else if (config::EmulateBBA)
 			bba_WriteMem(addr, data, sz);
 		return;
 	}
-	INFO_LOG(COMMON, "Write to area0_32 not implemented [Unassigned], addr=%x,data=%x,size=%d", addr, data, sz);
+	INFO_LOG(MEMORY, "Write to area0_32 not implemented [Unassigned], addr=%x,data=%x,size=%d", addr, data, sz);
 }
 
 //Init/Res/Term

@@ -2649,18 +2649,17 @@ void gui_term()
 	}
 }
 
-int msgboxf(const char* text, unsigned int type, ...) {
+void fatal_error(const char* text, ...)
+{
     va_list args;
 
     char temp[2048];
-    va_start(args, type);
+    va_start(args, text);
     vsnprintf(temp, sizeof(temp), text, args);
     va_end(args);
     ERROR_LOG(COMMON, "%s", temp);
 
     gui_display_notification(temp, 2000);
-
-    return 1;
 }
 
 extern bool subfolders_read;
