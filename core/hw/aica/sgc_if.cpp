@@ -27,6 +27,7 @@
 #include "hw/gdrom/gdrom_if.h"
 #include "cfg/option.h"
 #include "serialize.h"
+#include "hw/hwreg.h"
 
 #include <algorithm>
 #include <cmath>
@@ -126,8 +127,6 @@ static const s32 qtable[32] = {
 0x1A00,0x1A80,0x1B00,0x1B80,
 0x1C00,0x1D00,0x1E00,0x1F00
 };
-
-static void (*midiReceiver)(u8 data);
 
 //Remove the fractional part by chopping..
 static SampleType FPs(SampleType a, int bits) {
@@ -1321,7 +1320,6 @@ void sgc_Init()
 	beepCounter = 0;
 
 	dsp::init();
-	midiReceiver = nullptr;
 }
 
 void sgc_Term()
@@ -1372,22 +1370,6 @@ void ReadCommonReg(u32 reg,bool byte)
 			//printf("[%d] CA read %d\n",chan,Chans[chan].CA);
 		}
 		break;
-	}
-}
-
-void WriteCommonReg8(u32 reg,u32 data)
-{
-	WriteMemArr<1>(aica_reg, reg, data);
-	if (reg == 0x2804 || reg == 0x2805)
-	{
-		using namespace dsp;
-		state.RBL = (8192 << CommonData->RBL) - 1;
-		state.RBP = (CommonData->RBP * 2048) & ARAM_MASK;
-		state.dirty = true;
-	}
-	else if (reg == 0x280c) {	// MOBUF
-		if (midiReceiver != nullptr)
-			midiReceiver(data);
 	}
 }
 
@@ -1779,8 +1761,4 @@ void channel_deserialize(Deserializer& deser)
 		deser.skip(4 * 64); 		// mxlr
 		deser.skip(4);			// samples_gen
 	}
-}
-
-void aica_setMidiReceiver(void (*handler)(u8 data)) {
-	midiReceiver = handler;
 }

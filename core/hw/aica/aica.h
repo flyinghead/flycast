@@ -303,8 +303,8 @@ extern InterruptInfo* SCIRE;
 extern CommonData_struct* CommonData;
 extern DSPData_struct*	  DSPData;
 
-template<u32 sz>
-void WriteAicaReg(u32 reg,u32 data);
+template<typename T>
+void WriteAicaReg(u32 reg, T data);
 
 class AicaTimer
 {

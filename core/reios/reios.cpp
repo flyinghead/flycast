@@ -427,10 +427,10 @@ static void setup_syscall(u32 hook_addr, u32 syscall_addr) {
 static void reios_setup_state(u32 boot_addr)
 {
 	// Set up AICA interrupt masks
-	libAICA_WriteReg(SCIEB_addr, 0x48, 2);
-	libAICA_WriteReg(SCILV0_addr, 0x18, 1);
-	libAICA_WriteReg(SCILV1_addr, 0x50, 1);
-	libAICA_WriteReg(SCILV2_addr, 0x08, 1);
+	aicaWriteReg(SCIEB_addr, (u16)0x48);
+	aicaWriteReg(SCILV0_addr, (u8)0x18);
+	aicaWriteReg(SCILV1_addr, (u8)0x50);
+	aicaWriteReg(SCILV2_addr, (u8)0x08);
 
 	/*
 	Post Boot registers from actual bios boot

@@ -4,6 +4,7 @@
 
 #pragma once
 #include "types.h"
+#include "hw/hwreg.h"
 #include <array>
 
 u32 sb_ReadMem(u32 addr,u32 sz);

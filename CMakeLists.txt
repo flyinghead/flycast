@@ -595,6 +595,7 @@ if(NOT LIBRETRO)
 endif()
 
 target_sources(${PROJECT_NAME} PRIVATE
+        core/hw/hwreg.h
         core/hw/aica/aica.cpp
         core/hw/aica/aica.h
         core/hw/aica/aica_if.cpp
