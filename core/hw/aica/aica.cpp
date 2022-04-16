@@ -233,6 +233,7 @@ void WriteAicaReg(u32 reg, T data)
 
 template void WriteAicaReg<>(u32 reg, u8 data);
 template void WriteAicaReg<>(u32 reg, u16 data);
+template void WriteAicaReg<>(u32 reg, u32 data);
 
 //misc :p
 s32 libAICA_Init()
